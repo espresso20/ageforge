@@ -31,6 +31,8 @@ type Model struct {
 	AgeReady             bool
 	Epoch                int // epoch index (0 Stone … 6 Cosmic)
 	EpochKey, EpochName  string
+	// Reached marks, by age index, the ages the player reached this run.
+	Reached []bool
 
 	Clock   Clock
 	Weather Weather
@@ -229,6 +231,7 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 	if m.AgeName == "" {
 		m.AgeName = cat.AgeNames[m.AgeIdx]
 	}
+	m.Reached = reachedAges(cat, st, m.AgeIdx)
 	m.Clock = ClockAt(st.Tick)
 	m.Weather = weatherFor(st, m.Clock, m.Epoch)
 	m.buildings(st, since)
@@ -244,6 +247,36 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 	return m
 }
 
+// reachedAges marks the ages the player reached this run: the ones in the
+// run's stats, and the current one. Every run starts in the first age, so a
+// record without it (an old save, a test fixture) is taken as incomplete,
+// and since ages come in order every age up to the current one counts.
+func reachedAges(cat *Catalog, st *game.GameState, cur int) []bool {
+	out := make([]bool, len(cat.AgeNames))
+	seen := st.Stats.AgesReached
+	full := false
+	for _, k := range seen {
+		full = full || len(cat.Ages) > 0 && k == cat.Ages[0]
+	}
+	for a := range out {
+		out[a] = !full && a <= cur
+	}
+	if full {
+		for _, k := range seen {
+			if a, ok := cat.AgeIdx[k]; ok && a < len(out) {
+				out[a] = true
+			}
+		}
+		if cur < len(out) {
+			out[cur] = true
+		}
+	}
+	return out
+}
+
+// ReachedAge reports whether the player reached age a this run.
+func (m *Model) ReachedAge(a int) bool { return a >= 0 && a < len(m.Reached) && m.Reached[a] }
+
 func layoutKey(m *Model) uint64 {
 	b2i := func(b bool) int64 {
 		if b {
@@ -255,6 +288,11 @@ func layoutKey(m *Model) uint64 {
 		HashStr(m.Catastrophe.Pending), int64(m.Expeditions.Completed))
 	for _, b := range m.Buildings {
 		h = Hash(int64(h), HashStr(b.Key), int64(b.Count), int64(b.Ruins), int64(b.Workers), b2i(b.Legacy), int64(b.Delta))
+	}
+	for a, r := range m.Reached {
+		if r != (a <= m.AgeIdx) { // a run that skipped ages (only then, so the usual keys stay as they were)
+			h = Hash(int64(h), int64(a), b2i(r))
+		}
 	}
 	for _, t := range m.Town.Tiles {
 		h = Hash(int64(h), int64(t.X), int64(t.Y), HashStr(t.Key), b2i(t.Fresh), b2i(t.Legacy), b2i(t.Ruin))

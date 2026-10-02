@@ -396,36 +396,17 @@ func (o *orb) compactGalaxy() {
 	}
 }
 
-// compactMandala: a small mandala breathing over the baseline.
+// compactMandala: the mandala, laid out for the mini view's sky (as many
+// of the newest rings as it holds), breathing like the full one.
 func (o *orb) compactMandala() {
 	W, b := o.W, o.groundY
 	if b < 3 {
 		return
 	}
-	cx, cy := float64(W)/2, float64(b-1)*0.5
-	R := math.Max(1, math.Min(float64(b-1)*0.48, float64(W)/5))
-	gold := o.c(mapmodel.InkAccent, iEmit, 0)
-	dim := o.c(mapmodel.InkFrameDim, iEmit, 0)
-	void := o.c(mapmodel.InkVoid, iBack, 0)
-	for k := 0; k < 3; k++ {
-		r := R * float64(k+1) / 3
-		br := o.breath(k * 2)
-		n := max(6, int(r*6))
-		for i := 0; i < n; i++ {
-			t := float64(i)/float64(n) + float64(o.anim)/float64(2400+600*k)
-			x := int(math.Round(cx + 2*r*mapmodel.Cos(t)))
-			y := int(math.Round(cy - r*mapmodel.Sin(t)))
-			c := theme.Mix(theme.Mix(void, dim, 0.7), gold, 0.15+0.35*br)
-			ch := '·'
-			if i%max(1, n/6) == 0 {
-				ch, c = '◆', theme.Mix(theme.Mix(void, gold, 0.7), gold, br)
-			}
-			if y >= 0 && y < b {
-				o.fb.fg(x, o.Y(y), ch, c, dMandala)
-			}
-		}
-	}
-	o.fb.fg(int(cx), o.Y(int(math.Round(cy))), '✦', o.c(mapmodel.InkGlow, iEmit, 0), dMandala)
+	rings := o.m.Mandala()
+	cx, cy := W/2, (b-1)/2
+	g := mapstyle.LayMandala(len(rings), float64(min(cy, b-1-cy)), float64(min(cx, W-1-cx)))
+	o.drawMandala(g, rings, cx, cy, b)
 }
 
 // compactFringes is the Quantum's interference under the baseline,

@@ -134,9 +134,8 @@ func (v *skyView) describe(s *skyScene, p mapmodel.Pt) mapstyle.Inspection {
 			return mapstyle.Inspection{Title: "Echo of the old town", Lines: []string{name + ", as it stood on the ground"}}
 		}
 	case skRing:
-		if e := int(c.ref); e >= 0 && e < len(m.Catalog.EpochName) {
-			return mapstyle.Inspection{Title: "Ring of the " + m.Catalog.EpochName[e],
-				Lines: []string{plural(len(s.marks[e]), "kind of building", "kinds of building") + " you raised"}}
+		if k := int(c.ref); k >= 0 && k < len(s.rings) {
+			return describeRing(s, k)
 		}
 	}
 	in := mapstyle.Inspection{Title: skyVoidNames[s.sky][0], Lines: []string{skyVoidNames[s.sky][1]}}

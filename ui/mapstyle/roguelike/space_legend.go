@@ -45,7 +45,7 @@ const (
 	slPylon
 	slCloud
 	slEcho
-	slEra
+	slCrown
 	slCore
 	slCiv
 	slRuin
@@ -59,8 +59,10 @@ const (
 	// slPart plus an index in mapmodel.LineageOrder is that lineage's part;
 	// slMover plus a skyMoverKind is that mover's row.
 	slPart
-	slMover  = slPart + 18
-	numSkyLg = slMover + skyLgID(numSkyMoverKinds)
+	slMover = slPart + 18
+	// slEra plus an epoch is that era's ring on the mandala.
+	slEra    = slMover + skyLgID(numSkyMoverKinds)
+	numSkyLg = slEra + 7
 )
 
 var skyLgInfo = [slPart]struct {
@@ -76,7 +78,7 @@ var skyLgInfo = [slPart]struct {
 	slBeacon: {"colony beacon", 1}, slRelay: {"relay chain", 2}, slSpiral: {"the galaxy", 0},
 	slLane: {"trade lane", 3}, slSystem: {"star system", 3}, slStarbase: {"starbase ring", 2},
 	slPylon: {"docking pylon", 2}, slCloud: {"probability cloud", 0}, slEcho: {"echo of the old town", 0},
-	slEra: {"ring of an era", 1}, slCore: {"the core", 1}, slCiv: {"civ", 3}, slRuin: {"ruins", 4},
+	slCrown: {"the crown", 1}, slCore: {"the core", 1}, slCiv: {"civ", 3}, slRuin: {"ruins", 4},
 	slLegacy: {"older section (dim)", 4}, slUnder: {"understaffed (dim)", 4}, slFresh: {"new since last visit", 4},
 	slFlagged: {"short of hands", 4}, slSparkle: {"transporter beam", 5}, slPulsar: {"the pulsar", 0}, slDebris: {"debris", 0},
 }
@@ -97,8 +99,13 @@ func (v *skyView) skyLgLabel(id skyLgID) (string, uint8) {
 			return mapmodel.SkyPartOf(sky, mapmodel.LineageOrder[i]).Name, 1
 		}
 		return "", 1
-	case id < numSkyLg:
+	case id < slEra:
 		return skyMoverKinds[id-slMover].Info().Name, 5
+	case id < numSkyLg:
+		if e := int(id - slEra); v.sc != nil && e < len(v.sc.m.Catalog.EpochName) {
+			return v.sc.m.Catalog.EpochName[e], 1
+		}
+		return "", 1
 	}
 	return "", 0
 }
@@ -181,8 +188,13 @@ func (v *skyView) legendCell(s *skyScene, c skyCell, l look) {
 		}
 	case skEcho:
 		v.reg(slEcho, l)
-	case skRing:
-		v.reg(slEra, l)
+	case skRing, skMark:
+		if c.k == skMark && c.ref>>10 == mdPetal {
+			v.reg(slCrown, l)
+		} else if c.k == skMark && int(c.ref>>10) < len(s.rings) {
+			e := s.rings[c.ref>>10].Epoch
+			v.reg(slEra+skyLgID(e), look{r: l.r, ink: l.ink, lv: 2})
+		}
 	case skCore:
 		v.reg(slCore, l)
 	case skField:

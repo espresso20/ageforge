@@ -25,6 +25,17 @@ const (
 	SymStarship    // a starship
 	SymPhaseShip   // a ship that tunnels
 	SymMote        // a mote of light
+	// the Transcendent mandala (ui/mapstyle/mandala.go): each era's bead,
+	// Stone to Cosmic (EraSym), the crown's petal and the core
+	SymEraStone
+	SymEraIron
+	SymEraSteel
+	SymEraElectric
+	SymEraDigital
+	SymEraNeon
+	SymEraCosmic
+	SymPetal
+	SymCore
 	skySymEnd
 )
 
@@ -44,6 +55,24 @@ var skyGlyphs = [skySymEnd - skySymBase]Glyph{
 	SymStarship - skySymBase:    {'A', '●', 0xf0fb}, // fighter jet
 	SymPhaseShip - skySymBase:   {'%', '◈', 0xf219}, // diamond
 	SymMote - skySymBase:        {'.', '∘', 0xf005}, // star
+
+	// The mandala's beads: one per era, each the same mirrored left to
+	// right and top to bottom, so the rings stay symmetric.
+	SymEraStone - skySymBase:    {'o', '•', 0},
+	SymEraIron - skySymBase:     {'x', '×', 0},
+	SymEraSteel - skySymBase:    {'+', '¤', 0},
+	SymEraElectric - skySymBase: {'=', '≡', 0},
+	SymEraDigital - skySymBase:  {'#', '▣', 0},
+	SymEraNeon - skySymBase:     {'@', '◉', 0},
+	SymEraCosmic - skySymBase:   {'*', '✧', 0},
+	SymPetal - skySymBase:       {'%', '◆', 0},
+	SymCore - skySymBase:        {'O', '✦', 0},
+}
+
+// EraSym is the bead of era e (0 Stone … 6 Cosmic) on the mandala.
+func EraSym(e int) Sym {
+	e = max(0, min(e, int(SymEraCosmic-SymEraStone)))
+	return SymEraStone + Sym(e)
 }
 
 // skyGlyph is the sky table's record for s, if s is one of its symbols.

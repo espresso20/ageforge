@@ -1444,7 +1444,42 @@ func ridgeItems(m *mapmodel.Model, W, cam int) []ridgeItem {
 		}
 		out = append(out, ridgeItem{x: x - shift, i: len(out)})
 	}
+	if m.Sky() == mapmodel.SkyMandala {
+		clearOfMandala(out, W)
+	}
 	return out
+}
+
+// mandalaZone is the half-width of the middle of a view W wide that the
+// Transcendent mandala keeps to (orbit_mandala.go).
+func mandalaZone(W int) int { return W * 17 / 100 }
+
+// clearOfMandala moves the far objects that would hang over the
+// Transcendent mandala out to either side of it (the side they were on),
+// and spaces each side's objects so no two names run together: no name is
+// written across the rings.
+func clearOfMandala(items []ridgeItem, W int) {
+	cx, z := W/2, mandalaZone(W)+10
+	var left, right []int
+	for i := range items {
+		if items[i].x < cx {
+			left = append(left, i)
+		} else {
+			right = append(right, i)
+		}
+	}
+	sort.SliceStable(left, func(a, b int) bool { return items[left[a]].x > items[left[b]].x })
+	sort.SliceStable(right, func(a, b int) bool { return items[right[a]].x < items[right[b]].x })
+	edge := cx - z
+	for _, i := range left {
+		items[i].x = min(items[i].x, edge)
+		edge = items[i].x - 18
+	}
+	edge = cx + z
+	for _, i := range right {
+		items[i].x = max(items[i].x, edge)
+		edge = items[i].x + 18
+	}
 }
 
 func textLen(s string) int { return mapstyle.TextLen(s) }

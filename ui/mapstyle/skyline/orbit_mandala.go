@@ -7,18 +7,19 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
 // orbit_mandala.go is the Transcendent Age: beyond matter, geometry. White
 // and gold light on deep indigo. Over the baseline, anchored to the view,
-// a mandala built from the civilization's history breathes slowly: one ring
-// per era, the Stone Era innermost and the Cosmic Era outermost, each ring
-// carrying a mark for every building type raised in its ages (in the
-// symbol it had then), spokes of light between the rings, and at the heart
-// the Transcendent Age's own buildings round a bright core. The lots are
-// pure light, pillars, diamonds and circles on a thin mirror line with
-// their faint reflection below it. Nothing moves but a mote of light or
-// two, drifting home.
+// stands the mandala both styles draw (mapstyle.LayMandala): a bright core,
+// a crown of eight petals for the age's own buildings, and one ring for
+// every era the player passed through, the Stone Era innermost, each strung
+// with its era's glyph in its era's muted colour, every ring's beads on the
+// same spokes. It is strictly symmetric about the core, on clear indigo.
+// The lots are pure light, pillars, diamonds and circles on a thin mirror
+// line, and the mirror holds a faint reflection of all of it. The light
+// breathes outward ring by ring; a mote of light or two drifts home.
 
 // mandalaBackdrop draws everything behind the lots.
 func (o *orb) mandalaBackdrop() {
@@ -27,117 +28,76 @@ func (o *orb) mandalaBackdrop() {
 	o.mirror()
 }
 
-// mandalaGeom is the mandala's centre (column, row) and outer radius in
-// rows; a row is two columns wide, so the rings are round.
-func (o *orb) mandalaGeom() (float64, float64, float64) {
+// mandalaGeom is the mandala's centre cell (column, scene row) and the
+// rows and columns it may reach round it: the sky over the mirror line, in
+// the middle of the view (the far objects keep out of it: clearOfMandala).
+func (o *orb) mandalaGeom() (cx, cy int, ry, rx float64) {
 	gy := o.groundY
-	ry := math.Min(float64(gy-1)*0.5, float64(o.W)/4.2)
-	return float64(o.W) / 2, float64(gy-1) * 0.5, math.Max(2, ry)
+	cx, cy = o.W/2, (gy-1)/2
+	return cx, cy, float64(min(cy, gy-1-cy)), float64(min(cx, o.W-1-cx, mandalaZone(o.W)-3))
 }
 
-// breath is how bright ring k is at this frame: a slow pulse (about twelve
-// seconds) that runs outward ring by ring.
-func (o *orb) breath(k int) float64 {
-	return 0.5 + 0.5*mapmodel.Sin(float64(o.anim-7*k)/96)
-}
+// breath is how bright ring k of n is at this frame (the core is -1): one
+// slow wave of light rolling outward ring by ring.
+func (o *orb) breath(k, n int) float64 { return mapstyle.Breath(o.anim, k, n) }
 
-// mandala draws the rings of the eras as thin lines of light in half-block
-// pixels, spokes between every other pair, each era's marks spread round
-// its ring, and the crown at the heart round a bright core.
+// mandala draws the mandala: the sky under it cleared of stars, then each
+// ring's dotted line and beads, the crown and the core.
 func (o *orb) mandala() {
-	cx, cy, R := o.mandalaGeom()
 	rings := o.m.Mandala()
-	if len(rings) == 0 {
-		return
-	}
+	cx, cy, ry, rx := o.mandalaGeom()
+	g := mapstyle.LayMandala(len(rings), ry, rx)
+	o.drawMandala(g, rings, cx, cy, o.groundY)
+}
+
+// drawMandala draws layout g of rings centred on (cx, cy), above row
+// limit, the stars cleared from under it.
+func (o *orb) drawMandala(g mapstyle.MandalaGeom, rings []mapmodel.MandalaRing, cx, cy, limit int) {
 	void := o.c(mapmodel.InkVoid, iBack, 0)
-	dim := o.c(mapmodel.InkFrameDim, iEmit, 0)
 	gold := o.c(mapmodel.InkAccent, iEmit, 0)
 	white := o.c(mapmodel.InkLight, iEmit, 0)
 	core := o.c(mapmodel.InkGlow, iEmit, 0)
-	n := len(rings)
-	Rp := 2 * R // the outer radius in pixels (a column is as wide as half a row is tall)
-	rad := func(k int) float64 { return Rp * (0.24 + 0.76*float64(k+1)/float64(n)) }
-	rot := func(k int) float64 {
-		dir := 1.0
-		if k%2 == 1 {
-			dir = -1
-		}
-		return dir * float64(o.anim) / float64(2400+400*k)
-	}
-	ink := make([]tcell.Color, n)
-	for k := range ink {
-		c := white
-		if k%2 == 0 {
-			c = gold
-		}
-		ink[k] = theme.Mix(theme.Mix(void, dim, 0.5), c, 0.12+0.42*o.breath(k))
-	}
-	cpy := 2*cy + 1
-	o.pixels(int(cx-Rp)-1, int(cx+Rp)+1, int((cpy-Rp)/2)-1, min(o.groundY-1, int((cpy+Rp)/2)+1), dMandala,
-		func(x, py int) (tcell.Color, bool) {
-			dx, dy := float64(x)+0.5-cx, float64(py)+0.5-cpy
-			d := math.Sqrt(float64(dx*dx) + float64(dy*dy))
-			if d > Rp+0.6 {
-				return 0, false
+	dim := o.c(mapmodel.InkFrameDim, iEmit, 0)
+	ext := g.Extent + 1.5
+	for y := max(0, cy-int(ext)-1); y <= min(limit-1, cy+int(ext)+1); y++ {
+		for x := max(0, cx-int(2*ext)-1); x <= min(o.W-1, cx+int(2*ext)+1); x++ {
+			dx, dy := float64(x-cx)/mapstyle.MandalaAspect, float64(y-cy)
+			if dx*dx+dy*dy < ext*ext {
+				o.fb.set(x, o.Y(y), ' ', void, void, dMandala)
 			}
-			for k := 0; k < n; k++ {
-				r := rad(k)
-				if math.Abs(d-r) < 0.55 {
-					return ink[k], true
-				}
-				if k%2 == 0 && k < n-1 && d > r+0.6 && d < rad(k+1)-0.6 {
-					// spokes out to the next ring, turning with it
-					a := turns(dx, dy) - rot(k)*0.5
-					f := a*12 - math.Floor(a*12)
-					if f < 0.06 || f > 0.94 {
-						return theme.Mix(void, ink[k], 0.6), true
-					}
-				}
-			}
-			return 0, false
-		})
-	at := func(r, t float64) (int, int) {
-		return int(math.Round(cx + r*mapmodel.Cos(t))), int(math.Round((cpy - r*mapmodel.Sin(t) - 0.5) / 2))
-	}
-	put := func(x, y int, ch rune, c tcell.Color) {
-		if y >= 0 && y < o.groundY {
-			o.fb.fg(x, o.Y(y), ch, c, dMandala)
 		}
 	}
-	// the eras' marks round their rings
-	for k := 0; k < n; k++ {
-		b := o.breath(k)
-		marks := rings[k].Marks
-		for i, mk := range marks {
-			x, y := at(rad(k), float64(i)/float64(len(marks))+rot(k))
-			c := white
-			if k%2 == 0 {
-				c = gold
-			}
-			if mk.Wonder {
-				c = theme.Mix(gold, core, 0.4)
-			}
-			put(x, y, mapmodel.R(mk.Sym, o.tier), theme.Mix(theme.Mix(void, c, 0.65), c, b))
+	off := len(rings) - g.Rings
+	era := make([]tcell.Color, g.Rings)
+	for k := range era {
+		era[k] = o.resolve(mapstyle.EraLight(rings[k+off].Epoch), iEmit, 0)
+	}
+	crown := len(o.m.Crown()) > 0
+	bc := o.breath(-1, len(rings))
+	for _, mc := range g.Cells {
+		x, y := cx+mc.DX, cy+mc.DY
+		if y < 0 || y >= limit {
+			continue
 		}
+		var ch rune
+		var c tcell.Color
+		switch mc.Part {
+		case mapstyle.MdCore:
+			ch, c = mapmodel.R(mapmodel.SymCore, o.tier), theme.Mix(white, core, 0.5+0.5*bc)
+		case mapstyle.MdPetal:
+			ch, c = mapmodel.R(mapmodel.SymPetal, o.tier), theme.Mix(theme.Mix(void, gold, 0.6), gold, bc)
+			if !crown {
+				ch, c = '◇', theme.Mix(void, dim, 0.7) // the crown not yet raised
+			}
+		case mapstyle.MdLine:
+			ch, c = '·', theme.Mix(void, era[mc.Ring], 0.3+0.35*o.breath(mc.Ring+off, len(rings)))
+		case mapstyle.MdBead:
+			e := rings[mc.Ring+off].Epoch
+			ch = mapmodel.R(mapmodel.EraSym(e), o.tier)
+			c = theme.Mix(theme.Mix(void, era[mc.Ring], 0.7), theme.Mix(era[mc.Ring], white, 0.3), o.breath(mc.Ring+off, len(rings)))
+		}
+		o.fb.fg(x, o.Y(y), ch, c, dMandala)
 	}
-	// petals round the heart, the crown and the core
-	r0 := rad(0) * 0.62
-	b := o.breath(-2)
-	for j := 0; j < 8; j++ {
-		x, y := at(r0, float64(j)/8-float64(o.anim)/3000)
-		put(x, y, '◇', theme.Mix(theme.Mix(void, gold, 0.5), gold, b))
-	}
-	crown := o.m.Crown()
-	for i, mk := range crown {
-		x, y := at(r0*0.55, float64(i)/float64(max(1, len(crown)))+float64(o.anim)/2000)
-		put(x, y, mapmodel.R(mk.Sym, o.tier), theme.Mix(white, core, b))
-	}
-	ix, iy := int(math.Round(cx)), int(math.Floor(cy))
-	put(ix, iy, '✦', theme.Mix(white, core, 0.5+0.5*b))
-	halo := theme.Mix(void, white, 0.3+0.35*b)
-	put(ix-1, iy, '·', halo)
-	put(ix+1, iy, '·', halo)
 }
 
 // mirror is the thin line of light the lots stand on.
@@ -165,7 +125,8 @@ var reflectRunes = map[rune]rune{'▀': '▄', '▄': '▀', '◢': '◥', '◥'
 	'┘': '┐', '┐': '┘', '╩': '╦', '╦': '╩', '╚': '╔', '╔': '╚', '╝': '╗', '╗': '╝'}
 
 // reflect mirrors the lots under the mirror line, faint and fading, with
-// a slow ripple.
+// a slow ripple, and the mandala behind them, fainter and still (a ripple
+// would set its rings wobbling).
 func (o *orb) reflect() {
 	gy := o.groundY
 	void := o.c(mapmodel.InkVoid, iBack, 0)
@@ -174,6 +135,14 @@ func (o *orb) reflect() {
 		a := 0.62 + 0.3*float64(k)/float64(max(1, depth))
 		dx := int(math.Round(0.8 * mapmodel.Sin(float64(k)/4+float64(o.anim)/40)))
 		for x := 0; x < o.W; x++ {
+			if src := o.fb.at(x, o.Y(gy-k)); src != nil && src.d == dMandala && src.ch != ' ' {
+				ch := src.ch
+				if r, ok := reflectRunes[ch]; ok {
+					ch = r
+				}
+				o.fb.fg(x, o.Y(gy+k), ch, theme.Mix(src.fg, void, math.Min(0.92, a+0.12)), dReflect)
+				continue
+			}
 			src := o.fb.at(clampInt(x+dx, 0, o.W-1), o.Y(gy-k))
 			if src == nil || src.d < dWonder || src.d > dRow2 {
 				continue
