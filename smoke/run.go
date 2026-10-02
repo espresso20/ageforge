@@ -203,8 +203,11 @@ type Stats struct {
 	ActionErrors          map[string]int `json:"bot_action_errors"`
 
 	// CatastrophesByCycle counts CatastrophesRolled per prestige cycle (the
-	// Last Passage included), for the catastrophes-per-run comparison.
+	// Last Passage included), for the catastrophes-per-run comparison;
+	// LastPassagesByCycle counts the Last Passages among them, which the
+	// fated-doom model leaves out.
 	CatastrophesByCycle map[int]int `json:"catastrophes_by_cycle,omitempty"`
+	LastPassagesByCycle map[int]int `json:"last_passages_by_cycle,omitempty"`
 
 	HarbingerThreads  map[string]int `json:"harbinger_threads_by_target_epoch"`
 	HarbingerHandoffs map[string]int `json:"harbinger_handoffs_by_target_epoch"`
@@ -356,6 +359,7 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	r.res.Stats.EpochEvents = make(map[string]int)
 	r.res.Stats.TimedEvents = make(map[string]int)
 	r.res.Stats.CatastrophesByCycle = make(map[int]int)
+	r.res.Stats.LastPassagesByCycle = make(map[int]int)
 	r.res.Stats.HarbingerThreads = make(map[string]int)
 	r.res.Stats.HarbingerHandoffs = make(map[string]int)
 	r.res.Stats.HarbingerVerdicts = make(map[string]int)
@@ -387,6 +391,9 @@ func (r *runner) subscribe() {
 		if t == "catastrophe" {
 			s.CatastrophesRolled++
 			s.CatastrophesByCycle[r.cycle]++
+			if k, _ := e.Payload["event_key"].(string); k == config.LastPassageKey {
+				s.LastPassagesByCycle[r.cycle]++
+			}
 		}
 	})
 	bus.Subscribe(game.EventFateRolled, r.onFateRolled)

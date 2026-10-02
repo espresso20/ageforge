@@ -62,8 +62,9 @@ func (s *Summary) writeFates(sb *strings.Builder) {
 		return
 	}
 	fmt.Fprintf(sb, "\n## Fated dooms\n\nEvery era's hidden fate as the bot lived it, from the engine's fate events (the bot itself never sees them). On entering an era from the Iron Era on a doom is fated %.0f%% of the time, its strike tick drawn across the era's ages at their pacing targets; its harbinger comes a lead before it, and it strikes at its tick or at an advance the player reaches first.\n\n", game.FateChance*100)
-	sb.WriteString("| seed | eras entered | fated | false prophets | struck | spared | revealed | cleared or open | struck or spared at an advance | endured | succumbed | catastrophes in cycle 1 (expected) |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+	sb.WriteString("| seed | eras entered | fated | false prophets | struck | spared | revealed | cleared or open | struck or spared at an advance | endured | succumbed | fated catastrophes in cycle 1 (expected) | Last Passage in cycle 1 |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
 	var perRun, expRun []float64
+	passages := 0
 	for _, r := range s.Runs {
 		var eras, fated, falses, struck, spared, revealed, cleared, atAdv int
 		exp1 := 0.0
@@ -94,13 +95,18 @@ func (s *Summary) writeFates(sb *strings.Builder) {
 				exp1 += f.Expected
 			}
 		}
-		cat1 := r.Stats.CatastrophesByCycle[1]
-		fmt.Fprintf(sb, "| %d | %d | %d | %d | %d | %d | %d | %d | %d | %d | %d | %d (%.2f) |\n", r.Seed, eras, fated, falses, struck, spared,
-			revealed, cleared, atAdv, r.Stats.CatastrophesEndured, r.Stats.CatastrophesSuccumbed, cat1, exp1)
+		// The Last Passage is the prestige's own roll, outside the fate
+		// model (and never met on a first run to the Modern Age, the
+		// baseline's), so the comparison leaves it out.
+		lp1 := r.Stats.LastPassagesByCycle[1]
+		cat1 := r.Stats.CatastrophesByCycle[1] - lp1
+		fmt.Fprintf(sb, "| %d | %d | %d | %d | %d | %d | %d | %d | %d | %d | %d | %d (%.2f) | %d |\n", r.Seed, eras, fated, falses, struck, spared,
+			revealed, cleared, atAdv, r.Stats.CatastrophesEndured, r.Stats.CatastrophesSuccumbed, cat1, exp1, lp1)
 		for _, c := range r.Cycles {
 			if c.Cycle == 1 && c.Prestiged {
 				perRun = append(perRun, float64(cat1))
 				expRun = append(expRun, exp1)
+				passages += lp1
 			}
 		}
 	}
@@ -165,8 +171,12 @@ func (s *Summary) writeFates(sb *strings.Builder) {
 	if len(perRun) > 0 {
 		mean, se := meanSE(perRun)
 		expMean, _ := meanSE(expRun)
-		fmt.Fprintf(sb, "\nCatastrophes per first run (cycle 1 to its prestige, %d seeds): %.2f ± %.2f measured, %.2f expected from the faith the bot kept. Before fated dooms (%s, %d seeds): %.2f expected, %.2f measured.\n",
+		fmt.Fprintf(sb, "\nCatastrophes per first run (cycle 1 to its prestige, %d seeds, the Last Passage left out): %.2f ± %.2f measured, %.2f expected from the faith the bot kept. Before fated dooms (%s, %d seeds): %.2f expected, %.2f measured.",
 			len(perRun), mean, se, expMean, BaselineCommit, BaselineSeeds, BaselineCatastrophesExpected, BaselineCatastrophesMeasured)
+		if passages > 0 {
+			fmt.Fprintf(sb, " The Last Passage struck %d time(s) on top, at those prestiges.", passages)
+		}
+		sb.WriteString("\n")
 	}
 }
 
