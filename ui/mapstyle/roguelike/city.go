@@ -138,10 +138,8 @@ type cityLand struct {
 	// lines is every line laid over the city, oldest kinds first.
 	lines []cityLine
 	// vents are the steam vents, reactors the reactor cores, for the
-	// ambient effects.
+	// ambient effects and the conduits.
 	vents, reactors []mapmodel.Pt
-	// tether is the space elevator, from the square to the top of the map.
-	tether int // index into lines + 1, 0 for none
 	// win is the window the greenery fade is measured over (x0, y0, x1,
 	// y1, inclusive): about what the settlement zoom shows round the square;
 	// measure marks the cells of it the measure reads: open land the town

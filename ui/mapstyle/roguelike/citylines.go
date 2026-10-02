@@ -329,5 +329,4 @@ func (s *scene) tetherLine(cl *cityLand) {
 	}
 	s.addLine(cl, cityLine{feat: mapmodel.FeatTether, pts: pts, ink: theme.CityTether, elev: true, layer: 9,
 		name: "the tether"})
-	cl.tether = len(cl.lines)
 }
