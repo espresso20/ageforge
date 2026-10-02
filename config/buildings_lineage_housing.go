@@ -173,13 +173,14 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 13 — information_age
 	b = append(b, BuildingDef{
 		Name: "Smart Complex", Key: "smart_complex", Category: "housing",
-		BaseCost:    map[string]float64{"steel": 120e9, "electricity": 50e9, "data": 5e9},
-		CostScale:   1.12,
-		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 61440}},
-		BuildTicks:  3600,
-		RequiredAge: "information_age",
-		Description: "AI-managed smart living complex.",
-		LineageKey:  "housing", LineageTier: 13,
+		BaseCost:     map[string]float64{"steel": 120e9, "electricity": 50e9, "data": 5e9},
+		CostScale:    1.12,
+		Effects:      []Effect{{Type: "capacity", Target: "population", Value: 61440}},
+		BuildTicks:   3600,
+		RequiredAge:  "information_age",
+		RequiredTech: "internet_of_things",
+		Description:  "AI-managed smart living complex.",
+		LineageKey:   "housing", LineageTier: 13,
 		EpochKey: "digital_era",
 	})
 	// tier 14 — digital_age

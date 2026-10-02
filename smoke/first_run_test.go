@@ -118,3 +118,68 @@ func TestQuietStretch(t *testing.T) {
 		t.Errorf("pacing table lacks the quiet column:\n%s", sb.String())
 	}
 }
+
+// TestQuietStretchEnforced: under -pacing enforce a first-cycle age whose
+// median longest quiet stretch is over QuietMax fails the set; one seed over
+// it, a later cycle or report mode does not.
+func TestQuietStretchEnforced(t *testing.T) {
+	target := PacingTargets["atomic_age"].Seconds()
+	row := func(seed int64, cycle int, quietH float64) *RunResult {
+		return &RunResult{Seed: seed, Ages: []AgeSplit{{Cycle: cycle, Age: "atomic_age", Seconds: target, QuietSecs: quietH * 3600}}}
+	}
+	enforce := DefaultConfig()
+	enforce.Pacing = PacingEnforce
+
+	sum := NewSummary("progression", enforce, time.Now(), []*RunResult{row(1, 1, 13), row(2, 1, 14), row(3, 1, 6)})
+	if len(sum.QuietFailures) != 1 || !sum.Failed {
+		t.Fatalf("median 13h quiet: failures %+v, failed %v; want one failure", sum.QuietFailures, sum.Failed)
+	}
+	var sb strings.Builder
+	sum.writePacingTable(&sb)
+	if !strings.Contains(sb.String(), "(over 12.0h)") {
+		t.Errorf("pacing table does not flag the long quiet stretch:\n%s", sb.String())
+	}
+
+	if sum := NewSummary("progression", enforce, time.Now(), []*RunResult{row(1, 1, 20), row(2, 1, 8), row(3, 1, 6)}); len(sum.QuietFailures) != 0 || sum.Failed {
+		t.Errorf("one seed over 12h failed the set: %+v", sum.QuietFailures)
+	}
+	if sum := NewSummary("progression", enforce, time.Now(), []*RunResult{row(1, 2, 20), row(2, 2, 20), row(3, 2, 20)}); len(sum.QuietFailures) != 0 {
+		t.Errorf("a later cycle was graded: %+v", sum.QuietFailures)
+	}
+	if sum := NewSummary("progression", DefaultConfig(), time.Now(), []*RunResult{row(1, 1, 20), row(2, 1, 20), row(3, 1, 20)}); len(sum.QuietFailures) != 0 || sum.Failed {
+		t.Errorf("report mode failed on a quiet stretch: %+v", sum.QuietFailures)
+	}
+}
+
+// TestInformationBand: the Information Age is held to 1.2x its target, the
+// other ages to PacingHigh.
+func TestInformationBand(t *testing.T) {
+	info := PacingTargets["information_age"].Seconds()
+	if v := Verdict("information_age", 1.3*info, true); v != VerdictSlow {
+		t.Errorf("Information at 1.3x: %q, want slow", v)
+	}
+	if v := Verdict("information_age", 1.15*info, true); v != VerdictOK {
+		t.Errorf("Information at 1.15x: %q, want ok", v)
+	}
+	digital := PacingTargets["digital_age"].Seconds()
+	if v := Verdict("digital_age", 1.3*digital, true); v != VerdictOK {
+		t.Errorf("Digital at 1.3x: %q, want ok", v)
+	}
+}
+
+// TestQuietStretchScope: ages after QuietLastAge are reported, not failed.
+func TestQuietStretchScope(t *testing.T) {
+	enforce := DefaultConfig()
+	enforce.Pacing = PacingEnforce
+	space := PacingTargets["space_age"].Seconds()
+	runs := []*RunResult{
+		{Seed: 1, Ages: []AgeSplit{{Cycle: 1, Age: "space_age", Seconds: space, QuietSecs: 30 * 3600}}},
+		{Seed: 2, Ages: []AgeSplit{{Cycle: 1, Age: "space_age", Seconds: space, QuietSecs: 30 * 3600}}},
+	}
+	if sum := NewSummary("progression", enforce, time.Now(), runs); len(sum.QuietFailures) != 0 {
+		t.Errorf("space_age quiet stretch failed the set: %+v", sum.QuietFailures)
+	}
+	if !quietGraded("fusion_age") || !quietGraded("primitive_age") || quietGraded("space_age") {
+		t.Error("quietGraded scope is not Primitive to Fusion")
+	}
+}

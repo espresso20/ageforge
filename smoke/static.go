@@ -56,7 +56,8 @@ type GateProblem struct {
 	From string `json:"from"`
 	To   string `json:"to"`
 	// Kind is "resource", "building", "wonder", "unbuildable", "unsourced",
-	// "flow", "ladder" (a gate) or "dead_building" (a building whose price has
+	// "flow", "ladder", "tech_locked" (a gate needs a building whose tech
+	// can't be finished in the age it is built in) or "dead_building" (a building whose price has
 	// no source in its own age; From is that age, To is empty).
 	Kind     string `json:"kind"`
 	Key      string `json:"key"` // resource, building or wonder key
@@ -226,6 +227,36 @@ func carryoverStock(res string, amount float64, age string, defs map[string]conf
 		return math.Min(amount, game.CarryoverStarterBuildings*entry)
 	}
 	return amount * game.CarryoverResidualPct
+}
+
+// techReachable reports whether tech can be finished by the end of age: it
+// and every prerequisite, all the way down, open in age or earlier. A gate
+// that needs a building behind a tech that isn't would soft-lock the run.
+func techReachable(tech, age string) bool {
+	techs := config.TechByKey()
+	order := map[string]int{}
+	for i, a := range config.AgeOrder() {
+		order[a] = i
+	}
+	seen := map[string]bool{}
+	var ok func(string) bool
+	ok = func(k string) bool {
+		if seen[k] {
+			return true
+		}
+		seen[k] = true
+		t, found := techs[k]
+		if !found || order[t.Age] > order[age] {
+			return false
+		}
+		for _, p := range t.Prerequisites {
+			if !ok(p) {
+				return false
+			}
+		}
+		return true
+	}
+	return ok(tech)
 }
 
 // coldStarts computes the cold start of every age, in order.
@@ -471,6 +502,15 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 					needs[res] = wonder
 				}
 				amount[res] += c
+			}
+		}
+		gated := sortedKeys(to.BuildingReqs)
+		if wonder != "" {
+			gated = append(gated, wonder)
+		}
+		for _, bld := range gated {
+			if t := defs[bld].RequiredTech; t != "" && !techReachable(t, from.Key) {
+				out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "tech_locked", Key: bld})
 			}
 		}
 		for _, res := range sortedKeys(needs) {

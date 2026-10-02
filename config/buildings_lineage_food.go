@@ -188,13 +188,14 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 13 — information_age  rate=4096.00
 	b = append(b, BuildingDef{
 		Name: "Smart Farm", Key: "smart_farm", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 80e9, "data": 8e9, "steel": 150e9},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "food", Value: 4096.00}},
-		BuildTicks:  3600,
-		RequiredAge: "information_age",
-		Description: "Sensor-driven smart farming.",
-		LineageKey:  "food", LineageTier: 13,
+		BaseCost:     map[string]float64{"electricity": 80e9, "data": 8e9, "steel": 150e9},
+		CostScale:    1.30,
+		Effects:      []Effect{{Type: "production", Target: "food", Value: 4096.00}},
+		BuildTicks:   3600,
+		RequiredAge:  "information_age",
+		RequiredTech: "internet_of_things",
+		Description:  "Sensor-driven smart farming.",
+		LineageKey:   "food", LineageTier: 13,
 		WorkerDomain: "food", WorkerCapacity: 15,
 		EpochKey: "digital_era", OutputResource: "food",
 	})

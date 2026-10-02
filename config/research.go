@@ -468,6 +468,21 @@ func Technologies() []TechDef {
 				{Type: "bonus", Target: "military_power", Value: 1.5},
 			},
 		},
+		{
+			// Mid-age unlock (Pacing v2): the Atomic Age's techs were done
+			// in its first third, then nothing new for most of a day. The
+			// cost is what holds it to the middle: knowledge runs about
+			// 200 million an hour here, so the bot affords it some 15 hours
+			// in and finishes it near the middle of the old quiet stretch.
+			Name: "Civilian Reactors", Key: "civilian_reactors",
+			Age: "atomic_age", Cost: 3400000000, ResearchTicks: 15000,
+			Prerequisites: []string{"nuclear_deterrence"},
+			Description:   "The reactors built for the arms race find steadier work on the grid. Opens the Nuclear Plant.",
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 5.0},
+				{Type: "production", Target: "uranium", Value: 0.5},
+			},
+		},
 
 		// === MODERN AGE === (~1.1 hr each)
 		{
@@ -555,6 +570,19 @@ func Technologies() []TechDef {
 				{Type: "production", Target: "food", Value: 8.0},
 			},
 		},
+		{
+			// Mid-age unlock (Pacing v2): knowledge runs about 280 million
+			// an hour here, so it is afforded some 15 hours in and finishes
+			// about 18 hours in, after the age's first techs.
+			Name: "Internet of Things", Key: "internet_of_things",
+			Age: "information_age", Cost: 4500000000, ResearchTicks: 26000,
+			Prerequisites: []string{"social_media", "cybersecurity", "medical_nanobots"},
+			Description:   "The fridges and the tractors go online and start reporting back. Opens the Smart Farm and the Smart Complex.",
+			Effects: []Effect{
+				{Type: "production", Target: "data", Value: 3.0},
+				{Type: "production", Target: "food", Value: 8.0},
+			},
+		},
 
 		// === DIGITAL AGE === (~1.8 hr each)
 		{
@@ -609,13 +637,30 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// Pacing v2: priced to finish about 26 hours into the age
+			// (knowledge runs about 450 million an hour here), with
+			// Holography after it near the end. The Cyberpunk Age's techs
+			// used to be done in its first 11 hours.
 			Name: "Cybernetics", Key: "cybernetics",
-			Age: "cyberpunk_age", Cost: 5500000, ResearchTicks: 50000,
+			Age: "cyberpunk_age", Cost: 14000000000, ResearchTicks: 50000,
 			Prerequisites: []string{"neural_interface"},
 			Description:   "Mechanical augmentation of the human body.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.5},
 				{Type: "bonus", Target: "military_power", Value: 1.0},
+			},
+		},
+		{
+			// Mid-age unlock (Pacing v2), paced with Cybernetics: afforded
+			// about 14 hours after Cybernetics starts, so it finishes about
+			// 37 hours in, during the age's long saving-up for its wonder.
+			Name: "Holography", Key: "holography",
+			Age: "cyberpunk_age", Cost: 6300000000, ResearchTicks: 50000,
+			Prerequisites: []string{"cybernetics", "blockchain"},
+			Description:   "Light learns to lie convincingly, and every wall becomes an ad. Opens the Holographic Theater.",
+			Effects: []Effect{
+				{Type: "production", Target: "culture", Value: 5.0},
+				{Type: "production", Target: "crypto", Value: 2.0},
 			},
 		},
 
@@ -631,8 +676,13 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// Pacing v2: Plasma Physics, Superconductors and Maglev Transit
+			// now run one after another (each needs the one before) and are
+			// priced in knowledge, which runs about 600 million an hour in
+			// this age, to finish about 17, 24 and 32 hours in. The age used
+			// to go 26 hours from its last tech to its wonder.
 			Name: "Plasma Physics", Key: "plasma_physics",
-			Age: "fusion_age", Cost: 9000000, ResearchTicks: 62000,
+			Age: "fusion_age", Cost: 9500000000, ResearchTicks: 62000,
 			Prerequisites: []string{"fusion_power"},
 			Description:   "Mastery of superheated matter states.",
 			Effects: []Effect{
@@ -641,13 +691,26 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// Paced with Plasma Physics (see there).
 			Name: "Superconductors", Key: "superconductors",
-			Age: "fusion_age", Cost: 11000000, ResearchTicks: 70000,
-			Prerequisites: []string{"fusion_power"},
+			Age: "fusion_age", Cost: 4800000000, ResearchTicks: 70000,
+			Prerequisites: []string{"plasma_physics"},
 			Description:   "Zero-resistance materials raise all production and storage.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.5},
 				{Type: "storage", Target: "all", Value: 50000},
+			},
+		},
+		{
+			// Mid-age unlock (Pacing v2), paced with Plasma Physics (see
+			// there).
+			Name: "Maglev Transit", Key: "maglev_transit",
+			Age: "fusion_age", Cost: 5400000000, ResearchTicks: 70000,
+			Prerequisites: []string{"superconductors"},
+			Description:   "Superconducting rails float the freight across the city at the speed of a mild panic. Opens the Energy Exchange.",
+			Effects: []Effect{
+				{Type: "production", Target: "plasma", Value: 1.0},
+				{Type: "production", Target: "gold", Value: 5.0},
 			},
 		},
 

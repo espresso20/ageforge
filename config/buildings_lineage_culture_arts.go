@@ -201,10 +201,11 @@ func buildingsLineageCultureArts() []BuildingDef {
 			{Type: "storage", Target: "culture", Value: 2500000},
 			{Type: "morale", Value: 0.0023},
 		},
-		BuildTicks:  1000000,
-		RequiredAge: "cyberpunk_age",
-		Description: "Full-immersion holographic cultural performances.",
-		LineageKey:  "culture_arts", LineageTier: 11,
+		BuildTicks:   1000000,
+		RequiredAge:  "cyberpunk_age",
+		RequiredTech: "holography",
+		Description:  "Full-immersion holographic cultural performances.",
+		LineageKey:   "culture_arts", LineageTier: 11,
 		EpochKey: "neon_era", OutputResource: "culture",
 	})
 	// tier 12 — fusion_age  rate=2000  cap=+5000000

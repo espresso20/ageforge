@@ -388,7 +388,9 @@ func (ge *GameEngine) planBuildInvalid(key string, planned int) string {
 	// The next age's buildings may be planned ahead: they wait (checkPlanItem)
 	// until an advance unlocks them.
 	future := def.RequiredAge != "" && def.RequiredAge == ge.progress.GetNextAge(ge.age)
-	if !ge.Buildings.IsUnlocked(key) && !future {
+	// A building its tech still holds back may be planned too: it waits
+	// (checkPlanItem) until the research is done.
+	if !ge.Buildings.AgeUnlocked(key) && !future {
 		return "not unlocked yet"
 	}
 	if def.RequiredAge != "" && def.RequiredAge != ge.age && !future {
@@ -535,6 +537,9 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		def := ge.Buildings.defs[it.Key]
 		if def.RequiredAge != "" && def.RequiredAge != ge.age {
 			return planCheck{blocked: "waits for the " + ge.progress.GetAgeName(def.RequiredAge)}
+		}
+		if def.RequiredTech != "" && !ge.Research.IsResearched(def.RequiredTech) {
+			return planCheck{blocked: "waits for " + ge.techName(def.RequiredTech)}
 		}
 		if def.Category == "wonder" {
 			if DevGodMode || ge.Buildings.IsWonderBankFull(it.Key) {

@@ -278,7 +278,7 @@ Starting age. No requirements.
 | Power Stations | 15 |
 | Physics Laboratories | 15 |
 
-**Unlocks:** Housing Project, Atomic Vault, Agricultural Complex, Petroleum Refinery, Uranium Processing Works, Research Campus, Spiritual Center, Bunker Complex, Corporate HQ, Nuclear Plant, Advanced Alloy Plant, Breeder Reactor, Cinema, Particle Accelerator · **Resource:** Uranium
+**Unlocks:** Housing Project, Atomic Vault, Agricultural Complex, Petroleum Refinery, Uranium Processing Works, Research Campus, Spiritual Center, Bunker Complex, Corporate HQ, Nuclear Plant (after Civilian Reactors), Advanced Alloy Plant, Breeder Reactor, Cinema, Particle Accelerator · **Resource:** Uranium
 
 ---
 
@@ -314,7 +314,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Tower Blocks | 30 |
 | Oil Refineries | 15 |
 
-**Unlocks:** Smart Complex, Info Vault, Smart Farm, Smart Refinery, Precision Mine, Innovation Hub, Digital Temple, Cyber Command, Venture Hub, Smart Grid Node, Aerospace Foundry, Microgrid Array, Server Farm, Media Center, Global Network · **New domain:** hacker
+**Unlocks:** Smart Complex (after Internet of Things), Info Vault, Smart Farm (after Internet of Things), Smart Refinery, Precision Mine, Innovation Hub, Digital Temple, Cyber Command, Venture Hub, Smart Grid Node, Aerospace Foundry, Microgrid Array, Server Farm, Media Center, Global Network · **New domain:** hacker
 
 ---
 
@@ -346,7 +346,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Data Centers | 15 |
 | Neural Grids | 15 |
 
-**Unlocks:** Arcology Pod, Cyber Vault, Vat Farm, Nanobot Vat, Dark Crystal Mine, Neuro Research Center, Neon Sanctuary, Combat Aug Center, Black Market, Augmentation Foundry, Dark Matter Refinery, Dark Energy Tap, Cyber Hub, Holographic Theater, Neon Citadel · **Resources:** Crypto, Dark Matter Crystals
+**Unlocks:** Arcology Pod, Cyber Vault, Vat Farm, Nanobot Vat, Dark Crystal Mine, Neuro Research Center, Neon Sanctuary, Combat Aug Center, Black Market, Augmentation Foundry, Dark Matter Refinery, Dark Energy Tap, Cyber Hub, Holographic Theater (after Holography), Neon Citadel · **Resources:** Crypto, Dark Matter Crystals
 
 ---
 
@@ -363,7 +363,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Arcology Pods | 25 |
 | Black Markets | 15 |
 
-**Unlocks:** Habitat Ring, Fusion Vault, Bio Reactor Farm, Molecular Synthesizer, Exotic Mineral Extractor, Theoretical Institute, Quantum Chapel, Plasma Command, Energy Exchange, Fusion Reactor, Exotic Matter Forge, Tokamak Array, Quantum Server Farm, Neural Art Complex, Stellar Cradle · **Resource:** Plasma
+**Unlocks:** Habitat Ring, Fusion Vault, Bio Reactor Farm, Molecular Synthesizer, Exotic Mineral Extractor, Theoretical Institute, Quantum Chapel, Plasma Command, Energy Exchange (after Maglev Transit), Fusion Reactor, Exotic Matter Forge, Tokamak Array, Quantum Server Farm, Neural Art Complex, Stellar Cradle · **Resource:** Plasma
 
 ---
 
