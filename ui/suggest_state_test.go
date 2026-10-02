@@ -182,8 +182,10 @@ func TestSuggestFromGameState(t *testing.T) {
 	if got := comp("assign "); !slices.Contains(got, "assign "+worker) {
 		t.Errorf("assign offers %v, want the built %s", got, worker)
 	}
-	if got := comp("sell "); !slices.Equal(got, []string{"sell " + worker}) {
-		t.Errorf("sell offers %v, want just %s", got, worker)
+	// Nothing can be sold in the Primitive Age, so sell still offers nothing
+	// (TestSuggestSellOnlyWhatSellTakes covers the later ages).
+	if got := comp("sell "); len(got) != 0 {
+		t.Errorf("sell offers %v in the Primitive Age, want nothing", got)
 	}
 
 	// Themes: the unlocked ones and list; diplomacy: only civilizations met.
@@ -202,5 +204,55 @@ func TestSuggestFromGameState(t *testing.T) {
 	}
 	if got := comp("load al"); !slices.Equal(got, []string{"load alpha"}) {
 		t.Errorf("load al = %v, want the alpha save", got)
+	}
+}
+
+// TestSuggestSellOnlyWhatSellTakes: sell offers exactly the built buildings
+// SellBuilding takes. It used to offer every built building, wonders and
+// storage included, and then refuse them (storage became permanent in #163).
+// The guard builds two of every building, takes the suggestions, then tries
+// to sell one copy of each: a building is offered if and only if the sale
+// goes through.
+func TestSuggestSellOnlyWhatSellTakes(t *testing.T) {
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	eng := game.NewGameEngine()
+	counts := map[string]int{}
+	for key := range config.BuildingByKey() {
+		counts[key] = 2
+	}
+	eng.Buildings.LoadCounts(counts)
+	comp := NewAutoCompleter(eng)
+
+	// The Primitive Age refuses every sale, so nothing is offered.
+	if got := comp("sell "); len(got) != 0 {
+		t.Errorf("sell offers %d buildings in the Primitive Age, want none: %v", len(got), got)
+	}
+
+	if err := eng.SummonHarbingerForTest("iron_age"); err != nil {
+		t.Fatal(err)
+	}
+	offered := map[string]bool{}
+	for _, line := range comp("sell ") {
+		offered[strings.TrimPrefix(line, "sell ")] = true
+	}
+	if len(offered) == 0 {
+		t.Fatal("sell offers nothing with every building built")
+	}
+	byKey := config.BuildingByKey()
+	sawWonder, sawStorage := false, false
+	for key := range counts {
+		cat := byKey[key].Category
+		sawWonder = sawWonder || cat == "wonder"
+		sawStorage = sawStorage || cat == "storage"
+		err := eng.SellBuilding(key, 1)
+		switch {
+		case offered[key] && err != nil:
+			t.Errorf("sell offers %s (%s), but selling it is refused: %v", key, cat, err)
+		case !offered[key] && err == nil:
+			t.Errorf("sell does not offer %s (%s), but selling it goes through", key, cat)
+		}
+	}
+	if !sawWonder || !sawStorage {
+		t.Errorf("the guard built no wonder (%v) or no storage (%v); it checks nothing", sawWonder, sawStorage)
 	}
 }

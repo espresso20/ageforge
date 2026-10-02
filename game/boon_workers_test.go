@@ -150,3 +150,35 @@ func TestBoonTempWorkersSaved(t *testing.T) {
 		t.Errorf("loading a save with no boon crew kept %d loans from the game in memory", n)
 	}
 }
+
+// TestBoonCrewsInSnapshot: the crews on loan reach the UI through the
+// diplomacy snapshot, one entry per crew with its time left, so the Factions
+// panel can list them. The snapshot holds a copy.
+func TestBoonCrewsInSnapshot(t *testing.T) {
+	ge := newSeededEngine(1)
+	if crews := ge.GetState().Diplomacy.BoonCrews; len(crews) != 0 {
+		t.Fatalf("a fresh game shows boon crews: %+v", crews)
+	}
+	lendBoonCrew(ge, "merchant_guild", 4, 10)
+	lendBoonCrew(ge, "riverlands_tribes", 6, 20)
+	ge.StepTicks(3)
+
+	crews := ge.GetState().Diplomacy.BoonCrews
+	want := []BoonWorkerLoan{
+		{FactionKey: "merchant_guild", Count: 4, TicksLeft: 7},
+		{FactionKey: "riverlands_tribes", Count: 6, TicksLeft: 17},
+	}
+	if len(crews) != len(want) || crews[0] != want[0] || crews[1] != want[1] {
+		t.Fatalf("snapshot crews = %+v, want %+v", crews, want)
+	}
+	crews[0].Count = 99
+	if got := ge.GetState().Diplomacy.BoonCrews[0].Count; got != 4 {
+		t.Errorf("changing the snapshot changed the engine's crew: count %d, want 4", got)
+	}
+
+	ge.StepTicks(7)
+	crews = ge.GetState().Diplomacy.BoonCrews
+	if len(crews) != 1 || crews[0].FactionKey != "riverlands_tribes" {
+		t.Errorf("after the first crew went home the snapshot shows %+v, want only the riverlands_tribes crew", crews)
+	}
+}

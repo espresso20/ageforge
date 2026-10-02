@@ -823,7 +823,8 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 	}
 
 	return DiplomacyState{
-		Factions: factions,
+		Factions:  factions,
+		BoonCrews: dm.boonLoansForSave(),
 	}
 }
 
