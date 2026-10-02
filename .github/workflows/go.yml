@@ -24,7 +24,8 @@ jobs:
   check:
     name: gofmt, vet, build, test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Race tests now run about 13 minutes on a busy runner; 15 left no slack.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
