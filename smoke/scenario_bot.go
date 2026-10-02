@@ -46,6 +46,14 @@ func foldBotSet(e *Env, res *Result, name, scenario string, cfg Config, started 
 		res.fail(KindPacing+"/pacing_"+p.Verdict, "%s: cycle 1 %s took %s (median of %d seeds, %s to %s) against a %s target (band %gx to %gx)",
 			name, p.Age, dur(p.MedianSecs), p.Samples, dur(p.MinSecs), dur(p.MaxSecs), dur(p.TargetSecs), PacingLow, PacingHigh)
 	}
+	if f := sum.FirstRun; sum.FirstRunFailed && f != nil {
+		med := "never, for most seeds"
+		if f.MedianSecs >= 0 {
+			med = days(f.MedianSecs)
+		}
+		res.fail(KindPacing+"/first_run_"+f.Verdict, "%s: the first run to the Modern Age took %s (median of %d seeds, %d got there, %s to %s), outside %s to %s",
+			name, med, f.Samples, f.Reached, days(f.MinSecs), days(f.MaxSecs), days(FirstRunLow.Seconds()), days(FirstRunHigh.Seconds()))
+	}
 	for _, r := range runs {
 		for _, a := range r.Anomalies {
 			f := res.fail(a.Kind+"/"+a.Check, "%s: %s (cycle %d, %s, tick %d, seen %dx)", name, a.Message, a.Cycle, a.Age, a.Tick, a.Count)
@@ -113,13 +121,17 @@ func progressionConfig(e *Env, o Overrides) (Config, []int64) {
 	case e.Tier == TierDeep:
 		// One cycle to a Quantum Age prestige, the final epoch's passage:
 		// every age from the Primitive to the Galactic is graded, and the
-		// Invite makes the Last Passage come (endured) on every seed.
+		// Invite makes the Last Passage come (endured) on every seed. The
+		// targets to it sum to about 557 hours on the one-week curve.
 		seeds = e.seeds(3)
 		cfg.Cycles, cfg.PrestigeAge, cfg.FinalAge, cfg.MaxSim = 1, DeepPrestigeAge, "", 1000*time.Hour
 		cfg.InviteCosmic = true
 	case e.full():
+		// Two cycles to the Digital Age: on the one-week curve the bot needs
+		// about 460 hours (570 at the targets), so 1,000 leaves room for a
+		// slow seed.
 		seeds = e.seeds(8)
-		cfg.Cycles, cfg.FinalAge, cfg.MaxSim = 2, "digital_age", 600*time.Hour
+		cfg.Cycles, cfg.FinalAge, cfg.MaxSim = 2, "digital_age", 1000*time.Hour
 	default:
 		seeds = e.seeds(3)
 		cfg.Cycles, cfg.StopAge, cfg.MaxSim = 1, "bronze_age", 300*time.Hour
@@ -168,8 +180,12 @@ func describeProgression(res *Result, sum *Summary) {
 	}
 	res.Summary = fmt.Sprintf("%d seed(s) ended %s; %d anomaly(ies); %d age(s) off the pacing band", len(sum.Runs),
 		strings.Join(parts, ", "), sum.Anomalies, slow)
+	if f := sum.FirstRun; f != nil && f.MedianSecs >= 0 {
+		res.Summary += fmt.Sprintf("; first run to the Modern Age %s (%s)", days(f.MedianSecs), verdictMark(f.Verdict))
+	}
 	var sb strings.Builder
 	sum.writePacingTable(&sb)
+	sum.writeFirstRun(&sb)
 	res.section("Pacing per age", "%s", sb.String())
 	res.section("Full bot report", "See progression.md next to this report for runs, events, harbingers and state dumps.")
 }
@@ -194,7 +210,11 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range mp {
 		res.fail("milestone_"+p.Kind, "%s", p.Why)
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s)", len(problems), len(slack), short, len(mp))
+	hp := StaticHarbingerPrices()
+	for _, p := range hp {
+		res.fail("harbinger_price", "%s %s costs %s %s, over the %s storage buildable in %s", p.Epoch, p.Answer, num(p.Price), p.Resource, num(p.MaxStorage), p.Age)
+	}
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage", len(problems), len(slack), short, len(mp), len(hp))
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, rows)
@@ -202,4 +222,7 @@ func runStatic(e *Env, res *Result) {
 	var mf strings.Builder
 	writeMilestones(&mf, mp, mr)
 	res.section("Milestone feasibility", "%s", mf.String())
+	var hf strings.Builder
+	writeHarbingerPrices(&hf, hp)
+	res.section("Harbinger prices against storage", "%s", hf.String())
 }
