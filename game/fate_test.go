@@ -1178,3 +1178,56 @@ func newProgressManagerMet(t *testing.T, ge *GameEngine) *ProgressManager {
 	pm.ageWonders = map[string]string{}
 	return pm
 }
+
+// The Cosmic Era's doom is a catastrophe like the rest: storage is permanent
+// (see isDestroyable), so neither Endure nor Succumb's ruins take it when the
+// Reality Tear strikes.
+func TestCosmicDoomSparesStorage(t *testing.T) {
+	for _, choice := range []string{"endure", "succumb"} {
+		t.Run(choice, func(t *testing.T) {
+			ge := cosmicDoom(t, "galactic_age", 60000)
+			setFaith(ge, 10, 100) // low faith: the doom at 90%
+			for _, k := range []string{"stash", "storage_pit", "warehouse", "granary"} {
+				ge.Buildings.counts[k] = 10
+			}
+			food := pickWorkerBuildings(t, "food")[0]
+			ge.Buildings.counts[food] = 2
+			before := storageCounts(ge)
+			destroyable := ge.Buildings.DestroyableCount()
+			tickTo(ge, arrivalTick(ge))
+			strike := ge.fate.StrikeTick
+			tickTo(ge, strike-1)
+			ge.rng = riggedRNG(0.01) // under any strike chance
+			tickTo(ge, strike)
+			if ge.pendingCatastrophe != "cosmic_era" {
+				t.Fatalf("pending %q at the strike, want the Reality Tear", ge.pendingCatastrophe)
+			}
+			if choice == "endure" {
+				if err := ge.Endure(); err != nil {
+					t.Fatal(err)
+				}
+				for k, n := range before {
+					if got := ge.Buildings.GetCount(k); got != n {
+						t.Errorf("%s: %d after Endure, want %d (storage is permanent)", k, got, n)
+					}
+				}
+				if got := ge.Buildings.DestroyableCount(); got >= destroyable {
+					t.Errorf("destroyable buildings %d -> %d: Endure took nothing", destroyable, got)
+				}
+				return
+			}
+			if err := ge.Succumb(); err != nil {
+				t.Fatal(err)
+			}
+			ruins := ge.Buildings.GetAllRuins()
+			if len(ruins) == 0 {
+				t.Fatal("Succumb left no ruins")
+			}
+			for k, n := range ruins {
+				if config.BuildingByKey()[k].Category == "storage" {
+					t.Errorf("Succumb ruined %d %s: storage is permanent", n, k)
+				}
+			}
+		})
+	}
+}
