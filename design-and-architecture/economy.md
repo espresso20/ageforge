@@ -125,9 +125,9 @@ measure the game rather than the bot (see the bot's strategy comment in `smoke/b
 
 **Idle targets.** The targets describe an attentive player. The player AgeForge is built
 for checks in a few times a day, so the check-in player has targets of its own, in
-`smoke/idle_targets.go`: the first prestige within **7.5 days at 1-hour check-ins, 8 days
-at 3-hour and 11.5 days at 8-hour**, the median of three seeds (measured at 6.32, 6.63 and
-9.84 days when the one-week curve landed). The bot plays those
+`smoke/idle_targets.go`: the first prestige within **7 days at 1-hour check-ins, 8 days
+at 3-hour and 11 days at 8-hour**, the median of three seeds (measured at 5.63, 6.50 and
+9.20 days, worker shares on, when the one-week curve landed). The bot plays those
 (`Bot.CheckIn`, `Bot.planAhead`): at each visit it spends and builds storage, then leaves a
 build plan for the hours until the next one, with wonder overflow on. The nightly's `idle`
 scenario enforces them, and reports each interval as a ratio to the greedy bot on the same
