@@ -80,6 +80,11 @@ type DiplomacyManager struct {
 	// lentBatches tracks worker loans in flight so they can be returned on time.
 	lentBatches []LentWorkerBatch
 
+	// boonLoans are the crews faction boons lent (faction_boon.go). They live
+	// here so a new run, which builds a new DiplomacyManager along with a new
+	// worker pool, drops them too.
+	boonLoans []BoonWorkerLoan
+
 	// pendingLends / pendingReturns / pendingWar / pendingRaids accumulate side
 	// effects produced during Tick that the engine must apply to other systems
 	// (the worker pool, the event log). They are drained via TakePending*.

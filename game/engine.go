@@ -1486,6 +1486,8 @@ func (ge *GameEngine) processDiplomacy() {
 	for _, n := range ge.Diplomacy.TakePendingReturns() {
 		ge.Workers.KillWorker(n)
 	}
+	// And the crews faction boons lent, when their time is up.
+	ge.returnBoonWorkers()
 	ge.applyWarRaids()
 
 	// Embassies passively generate opinion toward non-hostile factions.

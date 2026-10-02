@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Faction-encounter → boon glue (Phase 2b of the faction redesign).
@@ -166,7 +167,8 @@ func factionProfile(def config.FactionDef, state FactionState, age string) boon.
 //   - InjectTimedEffects → EventManager.InjectEvent(ActiveEvent{...}), the timed
 //     "<res>_rate" / "production_all" / "tick_speed" modifier path.
 //   - GrantResource      → ResourceManager.Add.
-//   - GrantTempWorkers   → WorkerManager.AddLentWorkers.
+//   - GrantTempWorkers   → WorkerManager.AddLentWorkers, plus a loan record
+//     that sends them home when it runs out (returnBoonWorkers).
 //
 // name/key identify the granting faction so the injected event is stable per
 // faction (same key as Phase 1: factionBuffKey) and legible in save/UI.
@@ -207,11 +209,83 @@ func (a boonApplier) GrantResource(resource string, amount float64) {
 	a.ge.Resources.Add(resource, amount)
 }
 
-// GrantTempWorkers lends workers into the pool. The loan window (ticks) is not
-// yet enforced by a return timer here — AddLentWorkers matches how allied civs
-// already lend labour; wiring the timed return is a later concern.
+// GrantTempWorkers lends workers into the pool and records the loan, so they
+// go home when ticks run out (returnBoonWorkers).
 func (a boonApplier) GrantTempWorkers(count, ticks int) {
+	if count <= 0 {
+		return
+	}
 	a.ge.Workers.AddLentWorkers(count)
+	a.ge.Diplomacy.addBoonLoan(BoonWorkerLoan{FactionKey: a.key, Count: count, TicksLeft: ticks})
+}
+
+// BoonWorkerLoan is a crew of workers a faction boon lent (Extra Hands). Like
+// the timed boons, it counts down in live ticks; offline catch-up does not
+// run it down.
+type BoonWorkerLoan struct {
+	FactionKey string `json:"faction_key"`
+	Count      int    `json:"count"`
+	TicksLeft  int    `json:"ticks_left"`
+}
+
+// addBoonLoan records a boon crew on loan.
+func (dm *DiplomacyManager) addBoonLoan(l BoonWorkerLoan) {
+	dm.boonLoans = append(dm.boonLoans, l)
+}
+
+// tickBoonLoans counts every boon loan down one tick, drops the ones whose
+// time is up and returns them, oldest first.
+func (dm *DiplomacyManager) tickBoonLoans() []BoonWorkerLoan {
+	var due []BoonWorkerLoan
+	kept := dm.boonLoans[:0]
+	for _, l := range dm.boonLoans {
+		l.TicksLeft--
+		if l.TicksLeft <= 0 {
+			due = append(due, l)
+			continue
+		}
+		kept = append(kept, l)
+	}
+	if len(kept) == 0 {
+		kept = nil
+	}
+	dm.boonLoans = kept
+	return due
+}
+
+// boonLoansForSave returns the boon crews on loan for serialization.
+func (dm *DiplomacyManager) boonLoansForSave() []BoonWorkerLoan {
+	return append([]BoonWorkerLoan(nil), dm.boonLoans...)
+}
+
+// loadBoonLoans restores the boon crews on loan from a save, replacing any
+// held now. Their workers are already in the saved pool, so they are not
+// added again.
+func (dm *DiplomacyManager) loadBoonLoans(loans []BoonWorkerLoan) {
+	dm.boonLoans = append([]BoonWorkerLoan(nil), loans...)
+}
+
+// returnBoonWorkers sends home the boon crews whose time is up. They leave
+// through KillWorker, as the diplomacy loans do: idle workers go first, then
+// the largest assignments give way. The line is routine unless the crew was
+// staffing buildings. Runs every live tick, under the write lock.
+func (ge *GameEngine) returnBoonWorkers() {
+	for _, l := range ge.Diplomacy.tickBoonLoans() {
+		idle := ge.Workers.IdleCount("")
+		gone := ge.Workers.KillWorker(l.Count)
+		if gone <= 0 {
+			continue
+		}
+		line := fmt.Sprintf("%s from the %s went home.", textfmt.Count(gone, "worker", "workers"), CivName(l.FactionKey))
+		switch staffed := gone - max(idle, 0); {
+		case staffed == 1:
+			ge.addLog("info", line+" One of them was staffing a building.")
+		case staffed > 1:
+			ge.addLog("info", fmt.Sprintf("%s %d of them were staffing buildings.", line, staffed))
+		default:
+			ge.addLog(LogRoutine, line)
+		}
+	}
 }
 
 // DrainResource removes a fraction of the resource's CURRENT stockpile, reusing

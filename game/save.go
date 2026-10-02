@@ -240,6 +240,9 @@ type TradeSave struct {
 type DiplomacySave struct {
 	Factions    map[string]FactionStateSave `json:"factions"`
 	LentWorkers []LentWorkerBatch           `json:"lent_workers,omitempty"`
+	// BoonWorkers are the faction-boon crews still on loan. omitempty, so a
+	// save with none keeps its bytes.
+	BoonWorkers []BoonWorkerLoan `json:"boon_workers,omitempty"`
 }
 
 // PrestigeSave holds prestige state for save
@@ -584,6 +587,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Diplomacy: DiplomacySave{
 			Factions:    ge.Diplomacy.GetFactionsForSave(),
 			LentWorkers: ge.Diplomacy.GetLentBatchesForSave(),
+			BoonWorkers: ge.Diplomacy.boonLoansForSave(),
 		},
 		SpeedMultiplier:        ge.speedMultiplier,
 		WonderBanks:            ge.Buildings.GetWonderBanks(),
@@ -805,6 +809,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// those workers were already counted into the saved worker pool when first
 	// lent, so we must NOT re-add them here (that would double-count on every load).
 	ge.Diplomacy.LoadState(save.Diplomacy.Factions, save.Diplomacy.LentWorkers)
+	ge.Diplomacy.loadBoonLoans(save.Diplomacy.BoonWorkers)
 
 	// Restore wonder banks
 	if save.WonderBanks != nil {
