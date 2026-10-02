@@ -336,27 +336,27 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap is deli
 |----------|-----|--------|-----|
 | Stash | Primitive | +500 | 50 |
 | Storage Pit | Stone | +2.2K | 25 |
-| Warehouse | Bronze | +11K | 25 |
+| Warehouse | Bronze | +18K | 25 |
 | Granary | Iron | +26K | 25 |
-| Classical Vault | Classical | +110K | 25 |
-| Strongroom | Medieval | +410K | 25 |
+| Classical Vault | Classical | +130K | 25 |
+| Strongroom | Medieval | +470K | 25 |
 | Renaissance Vault | Renaissance | +2.7M | 25 |
-| Colonial Warehouse | Colonial | +33M | 25 |
-| Industrial Depot | Industrial | +170M | 25 |
-| Victorian Vault | Victorian | +1.1B | 25 |
-| Electric Warehouse | Electric | +3.5B | 25 |
+| Colonial Warehouse | Colonial | +38M | 25 |
+| Industrial Depot | Industrial | +190M | 25 |
+| Victorian Vault | Victorian | +1.3B | 25 |
+| Electric Warehouse | Electric | +3.9B | 25 |
 | Atomic Vault | Atomic | +20B | 25 |
 | Modern Depot | Modern | +90B | 25 |
-| Info Vault | Information | +790B | 25 |
+| Info Vault | Information | +930B | 25 |
 | Digital Archive | Digital | +1.5T | 25 |
-| Cyber Vault | Cyberpunk | +8T | 25 |
+| Cyber Vault | Cyberpunk | +8.6T | 25 |
 | Fusion Vault | Fusion | +30T | 25 |
 | Orbital Depot | Space | +200T | 25 |
 | Stellar Vault | Interstellar | +2Q | 25 |
 | Galactic Vault | Galactic | +20Q | 25 |
 | Quantum Vault | Quantum | +200Q | 25 |
 
-A full stack of an age's storage (with every earlier age's) holds at least an hour and a half of that age's typical production of each resource it builds with (about 3.9 hours or more from the Bronze Age on, where each tick produces less), so a player who checks in every hour or so loses nothing to full storage. For longer absences the [build plan](plan.md) spends income as it arrives and [wonder overflow](wonders.md#overflow) banks what full storage would waste.
+A full stack of an age's storage (with every earlier age's) holds at least **4.5 hours** of that age's typical production of each resource it builds with from the Bronze Age on, and an hour and a half in the Primitive and Stone Ages, which fill fast and are meant to. A player who checks in every few hours loses little to full storage. For longer absences the [build plan](plan.md) spends income as it arrives, and what full storage would still waste goes to the [wonder](wonders.md#overflow) and then [toward the plan's next copies](plan.md#overflow-pays-the-plan).
 
 > **Tip:** Stash is capped at 50. Build them out before you leave the Primitive Age, then start on Storage Pits as soon as you enter the Stone Age. Full storage stops all resource accumulation, so build storage first whenever you enter a new age.
 
