@@ -151,7 +151,7 @@ Definitions:
   1/4 in the Renaissance, 1/3 in the Victorian and 2/3 in the Space Age. `PaybackAdjust`
   stretches it for an age the smooth curve leaves too fast (the Renaissance, 1.3x, see the
   appendix of 2026-09-28) and shortens it for one that runs too slow (the Information and
-  Cyberpunk Ages, 0.85x, Pacing v2's mid-age unlocks: both ran 1.2 to 1.5x their targets).
+  Cyberpunk Ages, 0.8x, Pacing v2's mid-age unlocks: both ran 1.2 to 1.5x their targets).
 
 Then `rate = priceUnits(first copy) × priceLevel(output) / payback / n`, where a building
 with n construction-resource outputs splits its value between them. Staffing still scales it

@@ -190,11 +190,11 @@ func PaybackTicks(age string) float64 {
 // The Information and Cyberpunk Ages go the other way: the smoke bot ran
 // them at 1.2 to 1.5x their targets (Information on every curve), and the
 // overshoot is spent waiting, the longest stretches of those ages with
-// nothing new to do. Their producers repay faster (0.85x).
+// nothing new to do. Their producers repay faster (0.8x).
 var PaybackAdjust = map[string]float64{
 	"renaissance_age": 1.3,
-	"information_age": 0.85,
-	"cyberpunk_age":   0.85,
+	"information_age": 0.8,
+	"cyberpunk_age":   0.8,
 }
 
 // epochProgress counts epochs of three ages each, continuously: 1 in the

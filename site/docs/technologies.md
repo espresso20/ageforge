@@ -97,7 +97,7 @@ Prerequisites are listed by tech key.
 
 Research time is capped at **one eighth of the tech's age target** (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)), so the handful of techs each age offers fits inside it. From the Bronze to the Colonial Age most techs sit below that cap, at their own research times; in every other age each tech sits at the cap, so all techs of that age share the same tick count. Ticks below are at 1× speed (one tick is 2 seconds), before any `research_speed` bonus.
 
-**Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). Their knowledge cost is what times them: each is priced so a player affords it about halfway through the age, after its other techs, so a long stretch of saving up has something new in the middle. In the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another, each needing the one before and priced to finish about 17, 24 and 32 hours in. A gated building stays hidden from the build list until its tech is done; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built.
+**Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). Their knowledge cost is what times them: each is priced so a player affords it about halfway through the age, after its other techs, so a long stretch of saving up has something new in the middle. In the Cyberpunk Age, Cybernetics is priced to finish about 30 hours in, with Holography some 13 hours later. In the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another, each needing the one before and priced to finish about 17, 24 and 32 hours in. A gated building stays hidden from the build list until its tech is done; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built.
 
 ### Primitive Age (~2 min/tech at 1× speed)
 
@@ -268,8 +268,8 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 |---|---|---|---|---|---|
 | `neural_interface` | Neural Interface | 6M kp | 10,530 | `machine_learning` | +30% worker output, +200% knowledge output |
 | `blockchain` | Blockchain | 5M kp | 10,530 | `cybersecurity`, `cloud_computing` | +2.0 crypto/tick, +200% gold output |
-| `cybernetics` | Cybernetics | 5.5M kp | 10,530 | `neural_interface` | +50% all production, +100% military power |
-| `holography` | Holography | 12B kp | 10,530 | `cybernetics`, `blockchain` | +5.0 culture/tick, +2.0 crypto/tick; opens the Holographic Theater |
+| `cybernetics` | Cybernetics | 14B kp | 10,530 | `neural_interface` | +50% all production, +100% military power |
+| `holography` | Holography | 6.3B kp | 10,530 | `cybernetics`, `blockchain` | +5.0 culture/tick, +2.0 crypto/tick; opens the Holographic Theater |
 
 ---
 
@@ -278,7 +278,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `fusion_power` | Fusion Power | 10M kp | 11,700 | `nuclear_fission`, `cybernetics` | +20.0 electricity/tick, +1.0 plasma/tick |
-| `plasma_physics` | Plasma Physics | 10.6B kp | 11,700 | `fusion_power` | +3.0 plasma/tick, +30% all production |
+| `plasma_physics` | Plasma Physics | 9.5B kp | 11,700 | `fusion_power` | +3.0 plasma/tick, +30% all production |
 | `superconductors` | Superconductors | 4.8B kp | 11,700 | `plasma_physics` | +50% all production, +50K storage for every resource |
 | `maglev_transit` | Maglev Transit | 5.4B kp | 11,700 | `superconductors` | +1.0 plasma/tick, +5.0 gold/tick; opens the Energy Exchange |
 

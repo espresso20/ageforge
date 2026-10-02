@@ -637,8 +637,12 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// Pacing v2: priced to finish about 30 hours into the age
+			// (knowledge runs about 450 million an hour here), with
+			// Holography after it near the end. The Cyberpunk Age's techs
+			// used to be done in its first 11 hours.
 			Name: "Cybernetics", Key: "cybernetics",
-			Age: "cyberpunk_age", Cost: 5500000, ResearchTicks: 50000,
+			Age: "cyberpunk_age", Cost: 14000000000, ResearchTicks: 50000,
 			Prerequisites: []string{"neural_interface"},
 			Description:   "Mechanical augmentation of the human body.",
 			Effects: []Effect{
@@ -647,12 +651,11 @@ func Technologies() []TechDef {
 			},
 		},
 		{
-			// Mid-age unlock (Pacing v2): knowledge runs about 450 million
-			// an hour here, so it is afforded some 30 hours in and finishes
-			// about 35 hours in, mid-way through the age's long build-up to
-			// its wonder.
+			// Mid-age unlock (Pacing v2), paced with Cybernetics: afforded
+			// about 14 hours after Cybernetics starts, so it finishes about
+			// 44 hours in, during the age's long saving-up for its wonder.
 			Name: "Holography", Key: "holography",
-			Age: "cyberpunk_age", Cost: 12000000000, ResearchTicks: 50000,
+			Age: "cyberpunk_age", Cost: 6300000000, ResearchTicks: 50000,
 			Prerequisites: []string{"cybernetics", "blockchain"},
 			Description:   "Light learns to lie convincingly, and every wall becomes an ad. Opens the Holographic Theater.",
 			Effects: []Effect{
@@ -679,7 +682,7 @@ func Technologies() []TechDef {
 			// this age, to finish about 17, 24 and 32 hours in. The age used
 			// to go 26 hours from its last tech to its wonder.
 			Name: "Plasma Physics", Key: "plasma_physics",
-			Age: "fusion_age", Cost: 10600000000, ResearchTicks: 62000,
+			Age: "fusion_age", Cost: 9500000000, ResearchTicks: 62000,
 			Prerequisites: []string{"fusion_power"},
 			Description:   "Mastery of superheated matter states.",
 			Effects: []Effect{
