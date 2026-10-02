@@ -134,7 +134,7 @@ func buildUniverse() map[ArgKind]map[string]bool {
 	}
 	b, r := set(buildings), set(resources)
 	return map[ArgKind]map[string]bool{
-		ArgBuilding: b, ArgPlanBuilding: b, ArgBuiltBuilding: b, ArgWorkerBuilding: b,
+		ArgBuilding: b, ArgPlanBuilding: b, ArgSellBuilding: b, ArgWorkerBuilding: b,
 		ArgStaffedBuilding: b, ArgUpgradeBuilding: b,
 		ArgTech: set(techs), ArgPlanTech: set(techs),
 		ArgResource: r, ArgWonderResource: r, ArgTradeFrom: r, ArgTradeTo: r,
@@ -397,8 +397,8 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return buildableBuildingKeys(st)
 	case ArgPlanBuilding:
 		return plannableBuildingKeys(st)
-	case ArgBuiltBuilding:
-		return builtBuildingKeys(st)
+	case ArgSellBuilding:
+		return sellableBuildingKeys(st)
 	case ArgWorkerBuilding:
 		return workerBuildingKeys(st)
 	case ArgStaffedBuilding:
@@ -645,11 +645,18 @@ func tradeKeys(state game.GameState, from string) []string {
 	return keys
 }
 
-// builtBuildingKeys returns the buildings with at least one copy, sorted.
-func builtBuildingKeys(state game.GameState) []string {
+// sellableBuildingKeys is what `sell` suggests: the buildings with at least
+// one copy that SellBuilding would take, sorted. It refuses wonders and
+// storage (both permanent) and everything in the Primitive Age, so none of
+// those are offered. A building with a copy under construction stays on the
+// list: that refusal passes once the copy is done, and its reply says so.
+func sellableBuildingKeys(state game.GameState) []string {
+	if state.Age == "primitive_age" {
+		return nil
+	}
 	var keys []string
 	for key, bs := range state.Buildings {
-		if bs.Count > 0 {
+		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" {
 			keys = append(keys, key)
 		}
 	}

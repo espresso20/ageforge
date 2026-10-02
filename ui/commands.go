@@ -32,7 +32,7 @@ const (
 	ArgWord                           // one of Arg.Words and nothing else
 	ArgBuilding                       // a building buildable now (build)
 	ArgPlanBuilding                   // a building the plan takes: this age's, then the next age's
-	ArgBuiltBuilding                  // a building with at least one copy (sell)
+	ArgSellBuilding                   // a built building sell takes: no wonder or storage
 	ArgWorkerBuilding                 // a built building that takes workers (assign)
 	ArgStaffedBuilding                // a building with workers in it (unassign, dismiss)
 	ArgUpgradeBuilding                // a building with an upgrade available
@@ -154,7 +154,7 @@ func registry() []*Command {
 			Args: []Arg{{Kind: ArgBuilding, Optional: true}, optCountMax},
 			Help: []Usage{{"build <building> [count|max]", "Build copies of a building (default 1)"}}},
 		{Name: "sell", Section: secActions, Dangerous: true,
-			Args: []Arg{{Kind: ArgBuiltBuilding}, optCount},
+			Args: []Arg{{Kind: ArgSellBuilding}, optCount},
 			Help: []Usage{{"sell <building> [count]", "Demolish copies of a building and get back 50% of the build cost (not wonders or storage)"}}},
 		{Name: "advance", Section: secActions,
 			Help: []Usage{{"advance", "Advance to the next age (when ready)"}}},
