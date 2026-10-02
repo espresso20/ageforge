@@ -1,6 +1,7 @@
 package smoke
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -27,6 +28,9 @@ func TestGateCovenant(t *testing.T) {
 		case "building":
 			t.Errorf("%s -> %s: copy #%d of %s costs %s %s, over 1/%g of the %s storage buildable in %s",
 				g.From, g.To, g.Count, g.Key, num(g.Need), g.Resource, g.Margin, num(g.MaxStorage), g.From)
+		case "ladder":
+			t.Errorf("%s -> %s: the first %s costs %s %s, over 1/%g of the %s storage the gate forces (%s); a player who met the gate with nothing to spare could never raise a cap in %s",
+				g.From, g.To, g.Key, num(g.Need), g.Resource, g.Margin, num(g.MaxStorage), g.ForcedBy, g.To)
 		default:
 			t.Errorf("%s -> %s: needs %s %s, more than 1/%g of the %s storage buildable in %s",
 				g.From, g.To, num(g.Need), g.Resource, g.Margin, num(g.MaxStorage), g.From)
@@ -114,7 +118,10 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 // TestGateCovenantCatchesBrokenGates keeps the guard honest: the pre-fix
 // numbers must each be flagged. 50 longhouses was the Stone Age wall, 30
 // barracks for Medieval named a Bronze Age building the age lock forbids
-// building later, 80K food cannot fit 1.25x under Stone Age storage, and
+// building later (and, with the gate left asking only 220K stone, nothing
+// made a player hold enough storage for a 340K stone Strongroom, the only
+// storage the Medieval Age builds: the storage ladder), 80K food cannot fit
+// 1.25x under Stone Age storage, and
 // iron does not exist before the Bronze Age; and a Bronze Age smithy priced
 // in coal (which unlocks in the Renaissance) could never be built. The 80K
 // food is also far more than a Stone Age economy makes in 45 minutes, with no
@@ -158,7 +165,7 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 	}
 	defs["stellar_cradle"] = cradle
 	problems, _ := staticGates(ages, defs)
-	want := map[string]bool{"building/longhouse": false, "resource/food": false, "unbuildable/barracks": false,
+	want := map[string]bool{"building/longhouse": false, "resource/food": false, "unbuildable/barracks": false, "ladder/keep": false,
 		"unsourced/bronze_age requirement": false, "dead_building/smithy": false,
 		"flow/bronze_age requirement": false, "flow/renaissance_age requirement": false, "flow/sistine_chapel": false,
 		"wonder/sistine_chapel": false, "unsourced/stellar_cradle": false}
@@ -230,5 +237,55 @@ func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
 	}
 	if problems, _ := staticGates(ages, oldPost()); len(problems) > 0 {
 		t.Errorf("with a required Bronze Age market carried into the Iron Age, want no problems, got %+v", problems)
+	}
+}
+
+// TestGateCovenantCatchesBrokenLadder: the storage ladder. Entering the
+// Victorian Age, the only storage a player can build is the Victorian Vault
+// (about 210M steel for the first copy), so the gate must make them hold
+// more than that first. Today the 30th tenement (381M stone) does. A retune
+// to 10 tenements would leave the fifth steel mill (210M steel) as the
+// biggest price the gate forces, and a vault priced at twice today's would
+// outgrow even the 381M; either way a player who met the gate with nothing
+// to spare could never raise a cap in the Victorian Age.
+func TestGateCovenantCatchesBrokenLadder(t *testing.T) {
+	ladderRows := func(problems []GateProblem) []GateProblem {
+		var out []GateProblem
+		for _, g := range problems {
+			if g.Kind != "ladder" || g.Key != "victorian_vault" {
+				t.Errorf("unexpected problem %+v", g)
+				continue
+			}
+			out = append(out, g)
+		}
+		return out
+	}
+
+	ages := config.Ages()
+	for i := range ages {
+		if ages[i].Key == "victorian_age" {
+			reqs := map[string]int{}
+			for k, v := range ages[i].BuildingReqs {
+				reqs[k] = v
+			}
+			reqs["tenement"] = 10
+			ages[i].BuildingReqs = reqs
+		}
+	}
+	problems, _ := staticGates(ages, config.BuildingByKey())
+	if rows := ladderRows(problems); len(rows) != 1 || rows[0].From != "industrial_age" || rows[0].Resource != "steel" {
+		t.Errorf("10 tenements: want one ladder row for the vault's steel, got %+v", rows)
+	}
+
+	defs := config.BuildingByKey()
+	vault := defs["victorian_vault"]
+	vault.BaseCost = map[string]float64{}
+	for k, v := range defs["victorian_vault"].BaseCost {
+		vault.BaseCost[k] = 2 * v
+	}
+	defs["victorian_vault"] = vault
+	problems, _ = staticGates(config.Ages(), defs)
+	if rows := ladderRows(problems); len(rows) != 1 || !strings.Contains(rows[0].ForcedBy, "tenement #30") {
+		t.Errorf("a doubled vault: want one ladder row against the 30th tenement, got %+v", rows)
 	}
 }
