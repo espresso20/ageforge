@@ -123,10 +123,10 @@ func distance(a, b signature) float64 { return (tv(a.glyph, b.glyph) + tv(a.colo
 // disparityFloor is how unlike two next-door ages of the sky arc must look,
 // on the scale of distance (0 the same picture, 1 nothing in common). The
 // same age a few frames later sits under 0.02 (things move, stars twinkle).
-// When the guard was written next-door ages measured from 0.47 (the
-// roguelike's Interstellar to Galactic) to 0.74 (Fusion to Space), so 0.30
-// leaves room to tune an age without letting two neighbours drift into
-// looking like one.
+// When the guard was written next-door ages measured from 0.40 (the
+// skyline's Interstellar to Galactic) to 0.74 (the roguelike's Fusion to
+// Space), so 0.30 leaves room to tune an age without letting two
+// neighbours drift into looking like one.
 const disparityFloor = 0.30
 
 // frameSig draws a model in a style at 160x48 and signs the picture.
