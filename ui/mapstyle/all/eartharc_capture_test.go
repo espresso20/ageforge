@@ -160,7 +160,7 @@ body{background:#111;color:#ccc;font-family:ui-monospace,Menlo,monospace;margin:
 h1{font-size:16px;font-weight:normal}h2{font-size:14px;margin:18px 0 6px;color:#8cf}
 table{border-collapse:collapse}td,th{padding:4px;vertical-align:top;text-align:left;font-weight:normal}
 th{color:#999;font-size:12px}img{display:block;border:1px solid #333}
-.wide img{width:480px}.mini img{width:240px}a{color:#8cf;font-size:11px}
+.wide img{width:300px}.mini img{width:200px}a{color:#8cf;font-size:11px}
 </style></head><body><h1>Earth arc: Modern to Fusion, before and after</h1>
 <p>Thumbnails show composition and color; click through for the real cell-by-cell render (8 animated frames).</p>
 `)
