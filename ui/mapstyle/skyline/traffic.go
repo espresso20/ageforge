@@ -98,6 +98,65 @@ func vtpl1(r, m string, body, accent theme.SkyHue, sym mapmodel.Sym) vtemplate {
 	return vt(rows, mask, body, accent, sym)
 }
 
+// moverTags ties the vehicle book to the shared traffic roster
+// (mapmodel/movers.go). A tagged vehicle never shows before the age that
+// introduces its mover (the no-spoilers rule): a band that straddles that
+// age falls back to the band below's vehicle. Untagged drawings (porters,
+// warbands, canoes, barges, balloons, zeppelins, biplanes, jeeps,
+// helicopters, starships and the like) are the skyline's own.
+var moverTags = map[*vtemplate]mapmodel.Mover{
+	&tHunter: mapmodel.MoverHunter, &tWalker: mapmodel.MoverWalker, &tPair: mapmodel.MoverWalker,
+	&tOxCart: mapmodel.MoverOxCart, &tCart: mapmodel.MoverOxCart, &tTradeCart: mapmodel.MoverOxCart,
+	&tRider: mapmodel.MoverRider, &tTrireme: mapmodel.MoverRowboat,
+	&tSail: mapmodel.MoverSailShip, &tGalleon: mapmodel.MoverSailShip,
+	&tCoach: mapmodel.MoverWagon, &tTradeCoach: mapmodel.MoverWagon,
+	&tSteamTrain: mapmodel.MoverSteamTrain, &tTram: mapmodel.MoverTram, &tStreetcar: mapmodel.MoverTram,
+	&tSteamer: mapmodel.MoverSteamship, &tCar: mapmodel.MoverEarlyCar, &tTruck: mapmodel.MoverTruck,
+	&tJet: mapmodel.MoverPlane, &tAirliner: mapmodel.MoverPlane, &tCargoJet: mapmodel.MoverPlane,
+	&tFreighter: mapmodel.MoverBoxShip, &tMaglev: mapmodel.MoverMaglev, &tHoverTram: mapmodel.MoverMaglev,
+	&tDrone: mapmodel.MoverDrone, &tFlyCar: mapmodel.MoverHovercar, &tFlyCargo: mapmodel.MoverHovercar,
+	&tHoverCar: mapmodel.MoverHovercar, &tHoverTank: mapmodel.MoverHovercar,
+	&tShuttle: mapmodel.MoverShuttle, &tSatellite: mapmodel.MoverSatellite,
+}
+
+// introduced reports whether the age with index age may show vehicle t:
+// its mover has been introduced by then, or it has none.
+func introduced(t *vtemplate, age int) bool {
+	k, ok := moverTags[t]
+	return !ok || mapmodel.Introduced(k, age)
+}
+
+// fromBook is a band table's vehicle for band: its own or, while that is
+// not introduced yet, the nearest band below's.
+func fromBook(book *[9]*vtemplate, band, age int) *vtemplate {
+	b := band
+	for b > 0 && !introduced(book[b], age) {
+		b--
+	}
+	return book[b]
+}
+
+// the band tables: soldiers, the ships of the trade routes, the bay's boats
+var (
+	armyBook = [9]*vtemplate{&tWarriors, &tChariot, &tRider, &tRider, &tSoldiers, &tJeep, &tHoverTank, &tHoverTank, &tHoverTank}
+	shipBook = [9]*vtemplate{&tCanoe, &tTrireme, &tSail, &tGalleon, &tSteamer, &tFreighter, &tFreighter, &tFreighter, &tFreighter}
+	boatBook = [9]*vtemplate{&tCanoe, &tTrireme, &tSail, &tBarge, &tBarge, &tBarge, &tHoverCar, &tHoverCar, &tHoverCar}
+)
+
+// hasViaduct reports whether a frame of the age draws the viaduct: the
+// colonial to electric bands, from the railway's coming (the Industrial
+// Age, when the roster brings the steam train).
+func hasViaduct(age int) bool {
+	b := bandOf(age)
+	return (b == 3 || b == 4) && mapmodel.Introduced(mapmodel.MoverSteamTrain, age)
+}
+
+// hasRails reports whether a frame of the age draws the neon city's maglev
+// rails: the digital band, once the maglev has come (the Cyberpunk Age).
+func hasRails(age int) bool {
+	return bandOf(age) == 6 && mapmodel.Introduced(mapmodel.MoverMaglev, age)
+}
+
 // vehicle is one placed vehicle in frame terms.
 type vehicle struct {
 	kind  vkind
@@ -205,6 +264,157 @@ type lane struct {
 	d uint8
 }
 
+// lanes is one frame's picking context: the lanes its streams run on, the
+// works it draws (viaduct, maglev rails) and the age whose roster it shows.
+type lanes struct {
+	age, groundY       int
+	street, back, high lane
+	sky                [3]lane
+	day                bool // birds fly
+	viaduct, rails     bool
+}
+
+// walk picks stream i's vehicle in band: pick gives a band's own choice
+// (nil: that band has nothing for the stream, which is skipped), and
+// while the choice is a mover the age has not introduced yet, the band
+// below's is taken instead.
+func (l *lanes) walk(band, i int, pick func(l *lanes, b, i int) (*vtemplate, lane)) (*vtemplate, lane) {
+	for b := band; b >= 0; b-- {
+		t, ln := pick(l, b, i)
+		if t == nil || introduced(t, l.age) {
+			return t, ln
+		}
+	}
+	return nil, lane{}
+}
+
+// landRoute is band b's vehicle for land trade route i. The steam train
+// takes the viaduct and the maglev its rails only once the frame draws
+// them; before that the band's road traffic carries the goods.
+func (l *lanes) landRoute(b, i int) (*vtemplate, lane) {
+	switch b {
+	case 0:
+		return &tPorters, l.street
+	case 1:
+		return &tOxCart, l.street
+	case 2:
+		return &tTradeCart, l.street
+	case 3:
+		if i%3 == 2 && l.viaduct {
+			return &tSteamTrain, lane{viaductY(l.groundY) - 1, dLane0}
+		}
+		return &tTradeCoach, [2]lane{l.street, l.back}[i%2]
+	case 4:
+		if i%2 == 0 && l.viaduct {
+			return &tSteamTrain, lane{viaductY(l.groundY) - 1, dLane0}
+		}
+		return &tTram, l.street
+	case 5:
+		return &tTruck, l.street
+	case 6:
+		if !l.rails {
+			return &tTruck, l.street
+		}
+		ry := railYs(l.groundY)
+		r := ry[i%len(ry)]
+		return &tMaglev, lane{r.y - 1, r.d - 1}
+	}
+	return &tHoverTram, lane{l.groundY - 4, dLane0}
+}
+
+// airRoute is band b's aircraft for air trade route i; nil before band 5,
+// so an air route walked down that far goes overland.
+func (l *lanes) airRoute(b, i int) (*vtemplate, lane) {
+	switch {
+	case b >= 8:
+		return &tWarpShip, l.sky[i%3]
+	case b >= 6:
+		return &tFlyCargo, l.sky[i%3]
+	case b == 5:
+		return &tCargoJet, l.high
+	}
+	return nil, lane{}
+}
+
+// privateCar is band b's private vehicle number i.
+func (l *lanes) privateCar(b, i int) (*vtemplate, lane) {
+	ln := [2]lane{l.street, l.back}[i%2]
+	switch b {
+	case 0:
+		if i > 1 {
+			return nil, ln
+		}
+		return &tWalker, ln
+	case 1:
+		if i > 2 {
+			return nil, ln
+		}
+		return &tDonkey, ln
+	case 2:
+		if i > 3 {
+			return nil, ln
+		}
+		return &tCart, ln
+	case 3:
+		return &tCoach, ln
+	case 4:
+		return &tStreetcar, ln
+	case 5:
+		return &tCar, ln
+	case 6:
+		return &tFlyCar, l.sky[i%3]
+	}
+	return &tHoverCar, l.sky[i%3]
+}
+
+// ambient is band b's own life number i: birds, balloons, aircraft.
+func (l *lanes) ambient(b, i int) (*vtemplate, lane) {
+	seed := 900 + i
+	ln := l.high
+	ln.y = max(1, l.groundY/6+int(hash(seed, 37)%uint64(max(1, l.groundY/4))))
+	switch b {
+	case 0, 1, 2:
+		if !l.day || i > 2 {
+			return nil, ln
+		}
+		return &tBird, ln
+	case 3:
+		if i > 1 {
+			return nil, ln
+		}
+		return &tBalloon, ln
+	case 4:
+		if i > 2 {
+			return nil, ln
+		}
+		return [2]*vtemplate{&tZeppelin, &tBiplane}[i%2], ln
+	case 5:
+		// jets, airliners and helicopters: the whole mix waits for the
+		// plane, and until it comes the sky keeps band 4's airships
+		if !mapmodel.Introduced(mapmodel.MoverPlane, l.age) {
+			return l.ambient(4, i)
+		}
+		t := [3]*vtemplate{&tJet, &tAirliner, &tHeli}[i%3]
+		if t == &tHeli {
+			ln = l.sky[1]
+		}
+		return t, ln
+	case 6:
+		ln = l.sky[i%3]
+		ln.y -= int(hash(seed, 41) % 3)
+		return &tDrone, ln
+	case 7:
+		if i > 2 {
+			return nil, ln
+		}
+		return &tHoverCar, l.sky[i%3]
+	}
+	if i > 1 {
+		return nil, ln
+	}
+	return &tStarship, lane{max(1, l.groundY/8+i*3), dAir}
+}
+
 // trafficFor returns the vehicles for a model at an animation frame, for a
 // view of width w scrolled to cam with the ground at scene row groundY.
 // Streams wrap per screen but are anchored to the world, so scrolling moves
@@ -215,13 +425,19 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 	}
 	band := bandOf(m.AgeIdx)
 	c := trafficCounts(m)
-	day := m.Clock.Daylight > 0.5 && m.Weather.Kind != mapmodel.Rain && m.Weather.Kind != mapmodel.Storm
-	var out []vehicle
-	street := lane{groundY + 1, dStreet}
-	back := lane{groundY - 1, dLane0}
 	gy := float64(groundY)
-	sky := []lane{{int(gy * 0.62), dLane0}, {int(gy * 0.48), dLane1}, {int(gy * 0.34), dLane2}}
-	high := lane{max(1, groundY/6), dAirLow}
+	ls := lanes{
+		age:     m.AgeIdx,
+		groundY: groundY,
+		street:  lane{groundY + 1, dStreet},
+		back:    lane{groundY - 1, dLane0},
+		high:    lane{max(1, groundY/6), dAirLow},
+		sky:     [3]lane{{int(gy * 0.62), dLane0}, {int(gy * 0.48), dLane1}, {int(gy * 0.34), dLane2}},
+		day:     m.Clock.Daylight > 0.5 && m.Weather.Kind != mapmodel.Rain && m.Weather.Kind != mapmodel.Storm,
+		viaduct: hasViaduct(m.AgeIdx),
+		rails:   hasRails(m.AgeIdx),
+	}
+	var out []vehicle
 	add := func(kind vkind, t *vtemplate, seed int, ln lane, speed float64) {
 		v := vehicle{kind: kind, t: t, seed: seed, depth: ln.d, y: ln.y}
 		v.west = hash(seed, 17)%2 == 0 && kind != vkArmy
@@ -249,7 +465,8 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 	// trade routes: one stream per running route, drawn by how its goods
 	// travel (mapmodel.Route.Mode). Sea routes sail the bays (up to three
 	// ships a bay); with no bay they come overland. Air routes fly once the
-	// age has aircraft (band 5 on), and walk or roll before that.
+	// age has aircraft (the plane, from the Modern Age), and walk or roll
+	// before that.
 	modes := runningModes(m, c.route)
 	bays := false
 	for _, d := range m.Skyline.Districts {
@@ -263,46 +480,16 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 		}
 		seed := 100 + i
 		var t *vtemplate
-		ln := street
-		if mode == mapmodel.ModeAir && band >= 5 {
-			switch band {
-			case 5:
-				t, ln = &tCargoJet, high
-			case 6, 7:
-				t, ln = &tFlyCargo, sky[i%3]
-			default:
-				t, ln = &tWarpShip, sky[i%3]
-			}
+		var ln lane
+		if mode == mapmodel.ModeAir {
+			t, ln = ls.walk(band, i, (*lanes).airRoute)
+		}
+		if t == nil {
+			t, ln = ls.walk(band, i, (*lanes).landRoute)
+		}
+		if t != nil {
 			add(vkRoute, t, seed, ln, sp(seed, 0.25, 0.45))
-			continue
 		}
-		switch band {
-		case 0:
-			t = &tPorters
-		case 1:
-			t = &tOxCart
-		case 2:
-			t = &tTradeCart
-		case 3:
-			t, ln = &tTradeCoach, [2]lane{street, back}[i%2]
-			if i%3 == 2 {
-				t, ln = &tSteamTrain, lane{viaductY(groundY) - 1, dLane0}
-			}
-		case 4:
-			t, ln = &tSteamTrain, lane{viaductY(groundY) - 1, dLane0}
-			if i%2 == 1 {
-				t, ln = &tTram, street
-			}
-		case 5:
-			t = &tTruck
-		case 6:
-			ry := railYs(groundY)
-			r := ry[i%len(ry)]
-			t, ln = &tMaglev, lane{r.y - 1, r.d - 1}
-		default:
-			t, ln = &tHoverTram, lane{groundY - 4, dLane0}
-		}
-		add(vkRoute, t, seed, ln, sp(seed, 0.25, 0.45))
 	}
 	// people at work
 	for i := 0; i < c.foot; i++ {
@@ -316,98 +503,30 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 		case band == 8 && i%2 == 0:
 			t = &tMote
 		}
-		ln := [2]lane{street, back}[i%2]
+		ln := [2]lane{ls.street, ls.back}[i%2]
 		add(vkFoot, t, seed, ln, sp(seed, 0.08, 0.18))
 	}
 	// soldiers and wars
 	for i := 0; i < c.army; i++ {
 		seed := 500 + i
-		t := [9]*vtemplate{&tWarriors, &tChariot, &tRider, &tRider, &tSoldiers, &tJeep, &tHoverTank, &tHoverTank, &tHoverTank}[band]
-		add(vkArmy, t, seed, street, sp(seed, 0.12, 0.25))
+		add(vkArmy, fromBook(&armyBook, band, m.AgeIdx), seed, ls.street, sp(seed, 0.12, 0.25))
 	}
 	for i := 0; i < c.war; i++ {
-		add(vkArmy, &tWarband, 600+i, street, 0.22)
+		add(vkArmy, &tWarband, 600+i, ls.street, 0.22)
 	}
 	// private traffic
 	for i := 0; i < c.private; i++ {
 		seed := 700 + i
-		var t *vtemplate
-		ln := [2]lane{street, back}[i%2]
-		switch band {
-		case 0:
-			if i > 1 {
-				continue
-			}
-			t = &tWalker
-		case 1:
-			if i > 2 {
-				continue
-			}
-			t = &tDonkey
-		case 2:
-			if i > 3 {
-				continue
-			}
-			t = &tCart
-		case 3:
-			t = &tCoach
-		case 4:
-			t = &tStreetcar
-		case 5:
-			t = &tCar
-		case 6, 7:
-			t, ln = &tFlyCar, sky[i%3]
-			if band == 7 {
-				t = &tHoverCar
-			}
-		default:
-			t, ln = &tHoverCar, sky[i%3]
+		if t, ln := ls.walk(band, i, (*lanes).privateCar); t != nil {
+			add(vkPrivate, t, seed, ln, sp(seed, 0.3, 0.6))
 		}
-		add(vkPrivate, t, seed, ln, sp(seed, 0.3, 0.6))
 	}
 	// the age's own life
 	for i := 0; i < c.ambient; i++ {
 		seed := 900 + i
-		var t *vtemplate
-		ln := high
-		ln.y = max(1, groundY/6+int(hash(seed, 37)%uint64(max(1, groundY/4))))
-		switch band {
-		case 0, 1, 2:
-			if !day || i > 2 {
-				continue
-			}
-			t = &tBird
-		case 3:
-			if i > 1 {
-				continue
-			}
-			t = &tBalloon
-		case 4:
-			t = [2]*vtemplate{&tZeppelin, &tBiplane}[i%2]
-			if i > 2 {
-				continue
-			}
-		case 5:
-			t = [3]*vtemplate{&tJet, &tAirliner, &tHeli}[i%3]
-			if t == &tHeli {
-				ln = sky[1]
-			}
-		case 6:
-			t, ln = &tDrone, sky[i%3]
-			ln.y -= int(hash(seed, 41) % 3)
-		case 7:
-			if i > 2 {
-				continue
-			}
-			t = &tHoverCar
-			ln = sky[i%3]
-		default:
-			if i > 1 {
-				continue
-			}
-			t, ln = &tStarship, lane{max(1, groundY/8+i*3), dAir}
+		if t, ln := ls.walk(band, i, (*lanes).ambient); t != nil {
+			add(vkAmbient, t, seed, ln, sp(seed, 0.2, 0.7))
 		}
-		add(vkAmbient, t, seed, ln, sp(seed, 0.2, 0.7))
 	}
 	out = append(out, bayTraffic(m, anim, cam, w, groundY, band, sea)...)
 	out = append(out, launches(m, anim, cam, w, groundY, band)...)
@@ -418,16 +537,15 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 // bay) and one boat of the age on every bay in view.
 func bayTraffic(m *mapmodel.Model, anim, cam, w, groundY, band, routes int) []vehicle {
 	var out []vehicle
-	ships := [9]*vtemplate{&tCanoe, &tTrireme, &tSail, &tGalleon, &tSteamer, &tFreighter, &tFreighter, &tFreighter, &tFreighter}
-	boats := [9]*vtemplate{&tCanoe, &tTrireme, &tSail, &tBarge, &tBarge, &tBarge, &tHoverCar, &tHoverCar, &tHoverCar}
+	ship, boat := fromBook(&shipBook, band, m.AgeIdx), fromBook(&boatBook, band, m.AgeIdx)
 	for di, d := range m.Skyline.Districts {
 		if !d.Bay || d.BayX+d.BayW < cam || d.BayX > cam+w {
 			continue
 		}
 		for i := 0; i <= min(routes, 3); i++ {
-			kind, t := vkRoute, ships[band]
+			kind, t := vkRoute, ship
 			if i == routes || i == 3 {
-				kind, t = vkAmbient, boats[band]
+				kind, t = vkAmbient, boat
 			}
 			seed := di*10 + i
 			v := vehicle{kind: kind, t: t, seed: seed, depth: dShip, y: groundY}
@@ -447,10 +565,11 @@ func bayTraffic(m *mapmodel.Model, anim, cam, w, groundY, band, routes int) []ve
 	return out
 }
 
-// launches: in the fusion and space ages rockets climb from the launch
-// complexes on screen, one at a time.
+// launches: once the roster brings the shuttle (the Space Age), rockets
+// climb from the launch complexes on screen, one at a time.
 func launches(m *mapmodel.Model, anim, cam, w, groundY, band int) []vehicle {
-	if band != 7 || (m.Building("launch_complex") == nil && m.Building("space_program") == nil) {
+	if band != 7 || !introduced(&tShuttle, m.AgeIdx) ||
+		(m.Building("launch_complex") == nil && m.Building("space_program") == nil) {
 		return nil
 	}
 	const period = 160
@@ -486,11 +605,15 @@ func railYs(groundY int) []lane {
 
 // structures draws the static traffic works: viaducts, maglev rails and
 // the hover-tram guideway, at their depths (so nearer towers hide them).
+// The viaduct waits for the railway and the rails for the maglev.
 func (s *scene) structures() {
 	gy := s.groundY
 	metal := s.p.col(5, 0, sMetal, 1)
 	switch s.band {
 	case 3, 4:
+		if !hasViaduct(s.m.AgeIdx) {
+			return
+		}
 		y := viaductY(gy)
 		stone := s.p.col(4, 2, sTrim, 1)
 		for x := 0; x < s.W; x++ {
@@ -505,6 +628,9 @@ func (s *scene) structures() {
 			}
 		}
 	case 6:
+		if !hasRails(s.m.AgeIdx) {
+			return
+		}
 		neon := s.p.hue(theme.SkyNeonCyan, mEmit, 1)
 		for i, r := range railYs(gy) {
 			hz := i + 1
@@ -610,13 +736,14 @@ func (s *scene) traffic() {
 		}
 		s.fb.fg(x, s.Y(min(cy, s.groundY-2)), '◘', s.p.hue(theme.SkyHarbingerHolo, mEmit, 0), dRow2-1)
 	}
-	if s.m.AgeIdx >= 17 {
+	sats := introduced(&tSatellite, s.m.AgeIdx)
+	if sats && s.m.AgeIdx >= 17 {
 		for i := 0; i < 3; i++ {
 			x := (int(hash(i, 91)%uint64(s.W)) + s.anim/(3+i)) % s.W
 			_, y := s.orbitY(x)
 			s.fb.fg(x, s.Y(y+1), '·', s.p.hue(theme.SkyWhite, mEmit, 2), dAir)
 		}
-	} else if s.m.AgeIdx >= 12 && s.p.night > 0.5 {
+	} else if sats && s.p.night > 0.5 {
 		for i := 0; i < 2; i++ {
 			x := (int(hash(i, 91)%uint64(s.W)) + s.anim/5) % s.W
 			s.fb.fg(x, s.Y(1+i*2), mapmodel.R(mapmodel.SymSatellite, s.tier), s.p.hue(theme.SkyWhite, mEmit, 2), dAir)

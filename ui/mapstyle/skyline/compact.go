@@ -202,12 +202,33 @@ func (s *scene) compactScene() {
 		}
 		s.fb.fg(x, s.Y(S), ch, theme.Legible(p.hue(h, mEmit, 0), road, 2), dStreet)
 	}
-	if s.band >= 5 && S >= 4 {
-		sym := [4]mapmodel.Sym{mapmodel.SymPlane, mapmodel.SymDrone, mapmodel.SymCar, mapmodel.SymRocket}[min(3, s.band-5)]
+	if sym := compactSkySym(s.band, m.AgeIdx); sym != mapmodel.SymNone && S >= 4 {
 		for i := 0; i < 1+c.private/4; i++ {
 			x := (int(hash(i, 29)%uint64(W)) + s.anim/(2+i%2)) % W
 			y := 1 + int(hash(i, 31)%uint64(max(1, S/2)))
 			s.fb.fg(x, s.Y(y), mapmodel.R(sym, s.tier), p.hue(theme.SkyAircraft, mEmit, 0), dAirLow)
 		}
 	}
+}
+
+// compactSky is what flies over the compact view from band 5 on, with the
+// mover each stands for: planes, drones, hovercars, then starships.
+var compactSky = [4]struct {
+	sym   mapmodel.Sym
+	mover mapmodel.Mover
+}{
+	{mapmodel.SymPlane, mapmodel.MoverPlane}, {mapmodel.SymDrone, mapmodel.MoverDrone},
+	{mapmodel.SymCar, mapmodel.MoverHovercar}, {mapmodel.SymRocket, mapmodel.MoverNone},
+}
+
+// compactSkySym is the compact view's sky marker for a band and age:
+// band's own or, while its mover is not introduced yet, the band below's
+// (SymNone before band 5 and before the first plane).
+func compactSkySym(band, age int) mapmodel.Sym {
+	for i := min(3, band-5); i >= 0; i-- {
+		if c := compactSky[i]; c.mover == mapmodel.MoverNone || mapmodel.Introduced(c.mover, age) {
+			return c.sym
+		}
+	}
+	return mapmodel.SymNone
 }
