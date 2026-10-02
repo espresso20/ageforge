@@ -171,8 +171,14 @@ type GameSave struct {
 	WorkerShares   map[string]float64 `json:"worker_shares,omitempty"`
 	AutoRecruitOff bool               `json:"auto_recruit_off,omitempty"`
 	StaffHoldUntil int                `json:"staff_hold_until,omitempty"`
-	Signature      string             `json:"_sig,omitempty"`
-	Proof          string             `json:"_proof,omitempty"`
+	// PacingWeek marks saves written on the one-week curve (Pacing v2:
+	// config.AgeTargets × config.PacingStretch from the Bronze Age on).
+	// Always written; false on older saves, which get a one-time log line
+	// on load saying the ages ahead are longer (pacingNotice). omitempty, so
+	// those saves keep their bytes and signatures.
+	PacingWeek bool   `json:"pacing_week,omitempty"`
+	Signature  string `json:"_sig,omitempty"`
+	Proof      string `json:"_proof,omitempty"`
 }
 
 // hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
@@ -643,6 +649,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		WorkerShares:           cloneShares(ge.workerShares),
 		AutoRecruitOff:         ge.autoRecruitOff,
 		StaffHoldUntil:         ge.staffHoldUntil,
+		PacingWeek:             true,
 	}
 }
 
@@ -957,6 +964,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Apply offline progress for time since save
 	ge.applyOfflineProgress(time.Since(save.Timestamp))
 
+	// A save from before the one-week curve hears once that the ages ahead
+	// are longer; its next save carries PacingWeek, so the line never repeats.
+	if !save.PacingWeek {
+		ge.addLog("info", pacingNotice)
+	}
+
 	// Load succeeded: this is now the active slot a bare `save` writes to. We're
 	// still under the write lock (ge.mu.Lock at the top of this function), so set
 	// the field DIRECTLY — calling SetActiveSaveName would re-acquire the lock and
@@ -1016,6 +1029,10 @@ func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[st
 	}
 	return out
 }
+
+// pacingNotice is the line a save written before the one-week curve gets
+// on its first load (GameSave.PacingWeek).
+const pacingNotice = "Pacing update: a first run now takes about a week. From the Bronze Age on, each age lasts about 2.6 times as long, and events, raids, trade routes and other timers stretch to match, so each age holds as many of them. Your game carries on where you left it."
 
 // copyBoolMap returns a deep copy of a map[string]bool.
 func copyBoolMap(m map[string]bool) map[string]bool {
