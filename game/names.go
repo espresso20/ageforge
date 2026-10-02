@@ -89,15 +89,24 @@ func BuildingCount(n int, key string) string {
 	return textfmt.Int(n) + " " + pluralName(n, name)
 }
 
-// pluralName pluralizes a display name for a count.
+// pluralName pluralizes a display name for a count. "X of Y" pluralizes its
+// head ("Monuments of Ages"). A name ending in s is already plural or
+// invariant (Barracks, Ironworks, Standing Stones) unless it ends in ss or
+// us, the singular endings that take "es" (Fortresses, Campuses, Nexuses).
 func pluralName(n int, name string) string {
 	if n == 1 || n == -1 {
 		return name
 	}
+	if head, rest, ok := strings.Cut(name, " of "); ok {
+		return pluralName(n, head) + " of " + rest
+	}
 	switch {
-	case strings.HasSuffix(name, "s"), strings.HasSuffix(name, "x"),
-		strings.HasSuffix(name, "ch"), strings.HasSuffix(name, "sh"):
+	case strings.HasSuffix(name, "ss"), strings.HasSuffix(name, "us"),
+		strings.HasSuffix(name, "x"), strings.HasSuffix(name, "ch"),
+		strings.HasSuffix(name, "sh"):
 		return name + "es"
+	case strings.HasSuffix(name, "s"):
+		return name
 	case strings.HasSuffix(name, "y") && len(name) > 1 && !strings.ContainsRune("aeiou", rune(name[len(name)-2])):
 		return name[:len(name)-1] + "ies"
 	}
