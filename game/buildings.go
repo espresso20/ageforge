@@ -32,6 +32,11 @@ type BuildingManager struct {
 	ruins           map[string]int                // ruins from Succumb — produce at 50% base rate, no worker scaling
 	pendingUpgrades map[string]string             // oldKey -> newKey: player-driven upgrade awaiting payment
 
+	// researched reports whether a tech is finished. A building with a
+	// RequiredTech stays locked until it is, even in its own age. nil (a bare
+	// manager with no engine) gates nothing.
+	researched func(tech string) bool
+
 	// order is every def key, sorted, fixed at construction (defs never change
 	// after that). eachBuilt walks it so float sums across buildings come out
 	// the same on every run (see sortedKeys) without sorting on every tick.
@@ -91,9 +96,21 @@ func (bm *BuildingManager) UnlockBuilding(key string) {
 	bm.unlocked[key] = true
 }
 
-// IsUnlocked returns whether a building type is available
+// IsUnlocked returns whether a building type is available: its age has
+// unlocked it and its tech, if it needs one, is researched.
 func (bm *BuildingManager) IsUnlocked(key string) bool {
+	return bm.unlocked[key] && !bm.TechLocked(key)
+}
+
+// AgeUnlocked reports whether an age has unlocked key, whatever its tech.
+func (bm *BuildingManager) AgeUnlocked(key string) bool {
 	return bm.unlocked[key]
+}
+
+// TechLocked reports whether key needs a tech that is not researched yet.
+func (bm *BuildingManager) TechLocked(key string) bool {
+	t := bm.defs[key].RequiredTech
+	return t != "" && bm.researched != nil && !bm.researched(t)
 }
 
 // SuggestKey returns the closest building key to the input, or "" if none is close
@@ -314,7 +331,7 @@ func applyCostMult(raw, mult float64) float64 {
 
 // Build constructs a building. Returns false if can't afford or not unlocked.
 func (bm *BuildingManager) Build(key string, resources *ResourceManager) bool {
-	if !bm.unlocked[key] {
+	if !bm.IsUnlocked(key) {
 		return false
 	}
 	def, ok := bm.defs[key]
@@ -465,7 +482,7 @@ func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float
 	if def.Category != "wonder" {
 		return 0, fmt.Errorf("%s is not a wonder", def.Name)
 	}
-	if !bm.unlocked[wonderKey] {
+	if !bm.IsUnlocked(wonderKey) {
 		return 0, fmt.Errorf("%s is not unlocked yet", def.Name)
 	}
 	if bm.counts[wonderKey] > 0 {
@@ -965,7 +982,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 			Category:    def.Category,
 			Description: def.Description,
 			Flavor:      def.Flavor,
-			Unlocked:    bm.unlocked[key],
+			Unlocked:    bm.IsUnlocked(key),
 			AgeKey:      def.RequiredAge,
 			NextCost:    cost,
 		}
@@ -975,9 +992,12 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)
-			state.CanBuild = bm.unlocked[key] && count == 0 && state.WonderBankFull
+			state.CanBuild = state.Unlocked && count == 0 && state.WonderBankFull
 		} else {
-			state.CanBuild = bm.unlocked[key] && !state.AtMaxCount && resources.CanAfford(cost)
+			state.CanBuild = state.Unlocked && !state.AtMaxCount && resources.CanAfford(cost)
+		}
+		if bm.unlocked[key] && bm.TechLocked(key) {
+			state.NeedsTech = def.RequiredTech
 		}
 		// Phase 6: worker fields
 		if def.WorkerDomain != "" {

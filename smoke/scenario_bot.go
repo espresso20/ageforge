@@ -44,7 +44,11 @@ func foldBotSet(e *Env, res *Result, name, scenario string, cfg Config, started 
 	sum := NewSummary(name, cfg, started, runs)
 	for _, p := range sum.PacingFailures {
 		res.fail(KindPacing+"/pacing_"+p.Verdict, "%s: cycle 1 %s took %s (median of %d seeds, %s to %s) against a %s target (band %gx to %gx)",
-			name, p.Age, dur(p.MedianSecs), p.Samples, dur(p.MinSecs), dur(p.MaxSecs), dur(p.TargetSecs), PacingLow, PacingHigh)
+			name, p.Age, dur(p.MedianSecs), p.Samples, dur(p.MinSecs), dur(p.MaxSecs), dur(p.TargetSecs), PacingLow, pacingHigh(p.Age))
+	}
+	for _, p := range sum.QuietFailures {
+		res.fail(KindPacing+"/quiet_stretch", "%s: cycle 1 %s went %s with no new building type or tech (median of %d seeds), over the %s limit",
+			name, p.Age, dur(p.QuietSecs), p.Samples, dur(QuietMax.Seconds()))
 	}
 	if f := sum.FirstRun; sum.FirstRunFailed && f != nil {
 		med := "never, for most seeds"

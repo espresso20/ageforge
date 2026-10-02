@@ -142,13 +142,14 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 9 — atomic_age  output=electricity  rate=51.20
 	b = append(b, BuildingDef{
 		Name: "Nuclear Plant", Key: "nuclear_plant", Category: "production",
-		BaseCost:    map[string]float64{"steel": 6e9, "electricity": 2.5e9, "uranium": 500e6},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 51.20}},
-		BuildTicks:  3600,
-		RequiredAge: "atomic_age",
-		Description: "Nuclear fission power generation.",
-		LineageKey:  "engineering", LineageTier: 9,
+		BaseCost:     map[string]float64{"steel": 6e9, "electricity": 2.5e9, "uranium": 500e6},
+		CostScale:    1.35,
+		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 51.20}},
+		BuildTicks:   3600,
+		RequiredAge:  "atomic_age",
+		RequiredTech: "civilian_reactors",
+		Description:  "Nuclear fission power generation.",
+		LineageKey:   "engineering", LineageTier: 9,
 		WorkerDomain: "engineering", WorkerCapacity: 11,
 		EpochKey: "electric_era", OutputResource: "electricity",
 	})

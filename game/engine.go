@@ -360,7 +360,6 @@ func NewGameEngine() *GameEngine {
 	ge := &GameEngine{
 		age:              "primitive_age",
 		Resources:        NewResourceManager(),
-		Buildings:        NewBuildingManager(),
 		Workers:          NewWorkerManager(),
 		Research:         NewResearchManager(),
 		Military:         NewMilitaryManager(),
@@ -384,6 +383,7 @@ func NewGameEngine() *GameEngine {
 		legacyBonuses:    make(map[string]bool),
 		History:          NewHistoryCollector(),
 	}
+	ge.Buildings = ge.newBuildingManager()
 	ge.applyAgeUnlocks("primitive_age")
 	// Give starting resources — enough for first hut + a little food
 	ge.Resources.Add("food", 25)
@@ -401,6 +401,31 @@ func NewGameEngine() *GameEngine {
 	// seed; Reset re-rolls a fresh one.
 	ge.SeedRNG(newSeed())
 	return ge
+}
+
+// newBuildingManager is a BuildingManager whose tech-gated buildings read
+// this engine's research (whichever ResearchManager it holds at the time).
+func (ge *GameEngine) newBuildingManager() *BuildingManager {
+	bm := NewBuildingManager()
+	bm.researched = func(tech string) bool { return ge.Research != nil && ge.Research.IsResearched(tech) }
+	return bm
+}
+
+// techLockErr is why a building can't be built yet when a tech it needs is
+// not researched (nil when nothing holds it back that way).
+func (ge *GameEngine) techLockErr(def config.BuildingDef) error {
+	if def.RequiredTech == "" || ge.Research.IsResearched(def.RequiredTech) {
+		return nil
+	}
+	return fmt.Errorf("%s needs %s first. Research it to build here.", def.Name, ge.techName(def.RequiredTech))
+}
+
+// techName is a tech's display name (its key if it has no def).
+func (ge *GameEngine) techName(key string) string {
+	if d, ok := ge.Research.defs[key]; ok {
+		return d.Name
+	}
+	return key
 }
 
 // newSeed returns a fresh master seed for a new run.
@@ -2995,6 +3020,9 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 	if !exists {
 		return ge.unknownBuildingErr(key)
 	}
+	if err := ge.techLockErr(def); err != nil && ge.Buildings.AgeUnlocked(key) {
+		return err
+	}
 	if !ge.Buildings.IsUnlocked(key) {
 		return fmt.Errorf("%s is not unlocked yet.", def.Name)
 	}
@@ -3091,6 +3119,9 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	def, exists := ge.Buildings.defs[key]
 	if !exists {
 		return 0, ge.unknownBuildingErr(key)
+	}
+	if err := ge.techLockErr(def); err != nil && ge.Buildings.AgeUnlocked(key) {
+		return 0, err
 	}
 	if !ge.Buildings.IsUnlocked(key) {
 		return 0, fmt.Errorf("%s is not unlocked yet.", def.Name)
@@ -3835,7 +3866,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.tick = 0
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
-	ge.Buildings = NewBuildingManager()
+	ge.Buildings = ge.newBuildingManager()
 	ge.Workers = NewWorkerManager()
 	ge.Research = NewResearchManager()
 	ge.Military = NewMilitaryManager()
@@ -3953,7 +3984,7 @@ func (ge *GameEngine) Reset() {
 	ge.sessionStart = nil
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
-	ge.Buildings = NewBuildingManager()
+	ge.Buildings = ge.newBuildingManager()
 	ge.Workers = NewWorkerManager()
 	ge.Research = NewResearchManager()
 	ge.Military = NewMilitaryManager()
@@ -4526,6 +4557,9 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	newDef, hasNew := byKey[newKey]
 	if !hasPending || !hasNew {
 		return fmt.Errorf("%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
+	}
+	if err := ge.techLockErr(newDef); err != nil {
+		return err
 	}
 
 	oldCount := ge.Buildings.GetCount(key)

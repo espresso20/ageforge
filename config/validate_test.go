@@ -201,6 +201,12 @@ func TestConfig_BuildingKeysExist(t *testing.T) {
 					"  Got:      %q  <-- this technology doesn't exist\n"+
 					"  Fix:      Check config/research.go for valid tech keys%s\n",
 					bld.Key, bld.Name, bld.RequiredTech, hintFromMap(bld.RequiredTech, techKeys))
+			} else if tech := TechByKey()[bld.RequiredTech]; tech.Age != bld.RequiredAge {
+				// A building can only be built in its own age (the age
+				// lock), so a tech from any other age would open it too
+				// early (never, in practice) or too late (never at all).
+				t.Errorf("building %q needs tech %q from %s, but is built in %s: the tech must open in the building's age",
+					bld.Key, bld.RequiredTech, tech.Age, bld.RequiredAge)
 			}
 		}
 		for res := range bld.BaseCost {

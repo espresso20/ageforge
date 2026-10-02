@@ -28,6 +28,9 @@ type Summary struct {
 	// PacingFailures are the first-cycle ages whose median across seeds left
 	// the band, under -pacing enforce (see NewSummary).
 	PacingFailures []PacingRow `json:"pacing_failures,omitempty"`
+	// QuietFailures are the first-cycle ages whose median longest quiet
+	// stretch is over QuietMax, under -pacing enforce.
+	QuietFailures []PacingRow `json:"quiet_failures,omitempty"`
 	// FirstRun is the first run to the Modern Age (nil when no run got
 	// there, as in the fast tier, which stops at the Bronze Age).
 	// FirstRunFailed marks a median outside FirstRunLow-FirstRunHigh under
@@ -273,6 +276,10 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 				s.PacingFailures = append(s.PacingFailures, p)
 				s.Failed = true
 			}
+			if p.Cycle == 1 && !p.Unfinished && !p.Prestiged && p.QuietSecs > QuietMax.Seconds() {
+				s.QuietFailures = append(s.QuietFailures, p)
+				s.Failed = true
+			}
 		}
 	}
 	// The first run to the Modern Age, graded like an age: on its median,
@@ -346,7 +353,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	fmt.Fprintf(&sb, ". Took %s of wall time.\n\n", time.Duration(s.WallMs)*time.Millisecond)
 	sb.WriteString("Times are simulated wall-clock at 1x speed (tick_speed bonuses included). ")
 	if s.Config.Pacing == PacingEnforce {
-		sb.WriteString("Pacing is enforced: a first-cycle age whose median across seeds is outside its target band fails the set, and any age past its timeout fails its run (later cycles and ages left by prestige are graded only), as do panics, soft-locks and invariant violations.\n\n")
+		sb.WriteString("Pacing is enforced: a first-cycle age whose median across seeds is outside its target band, or whose median longest quiet stretch is over " + dur(QuietMax.Seconds()) + ", fails the set, and any age past its timeout fails its run (later cycles and ages left by prestige are graded only), as do panics, soft-locks and invariant violations.\n\n")
 	} else {
 		sb.WriteString("Pacing is report-only: ages are graded against their targets but never fail the run; panics, soft-locks and invariant violations do.\n\n")
 	}
@@ -362,7 +369,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	}
 
 	sb.WriteString("\n## Pacing per age\n\n")
-	fmt.Fprintf(&sb, "Time spent in each age, from entering it to entering the next, across seeds, against the target in smoke/targets.go (pass: %gx to %gx the target; the verdict grades the median). The longest quiet stretch is the median of each seed's longest stretch in the age with no new building type built and no tech finished (reported only).\n\n", PacingLow, PacingHigh)
+	fmt.Fprintf(&sb, "Time spent in each age, from entering it to entering the next, across seeds, against the target in smoke/targets.go (pass: %gx to %gx the target, %s; the verdict grades the median). The longest quiet stretch is the median of each seed's longest stretch in the age with no new building type built and no tech finished; under enforce a first-cycle age over %s fails.\n\n", PacingLow, PacingHigh, highForText(), dur(QuietMax.Seconds()))
 	s.writePacingTable(&sb)
 	s.writeFirstRun(&sb)
 	for _, r := range s.Runs {
@@ -474,8 +481,26 @@ func (s *Summary) writePacingTable(sb *strings.Builder) {
 			ratio = fmt.Sprintf("%.2gx", p.Ratio)
 		}
 		fmt.Fprintf(sb, "| %d | %s | %d | %s | %s | %s | %s | %s | %s | %s |\n", p.Cycle, age, p.Samples,
-			dur(p.MinSecs), dur(p.MedianSecs), dur(p.MaxSecs), target, ratio, verdictMark(p.Verdict), dur(p.QuietSecs))
+			dur(p.MinSecs), dur(p.MedianSecs), dur(p.MaxSecs), target, ratio, verdictMark(p.Verdict), quietMark(p))
 	}
+}
+
+// quietMark renders a row's longest quiet stretch, flagged when it is over
+// QuietMax.
+func quietMark(p PacingRow) string {
+	if p.QuietSecs > QuietMax.Seconds() && !p.Prestiged {
+		return dur(p.QuietSecs) + " (over " + dur(QuietMax.Seconds()) + ")"
+	}
+	return dur(p.QuietSecs)
+}
+
+// highForText lists the ages PacingHighFor holds to a tighter band.
+func highForText() string {
+	var parts []string
+	for _, a := range sortedKeys(PacingHighFor) {
+		parts = append(parts, fmt.Sprintf("%s at most %gx", a, PacingHighFor[a]))
+	}
+	return strings.Join(parts, ", ")
 }
 
 func countTotal(m map[string]int) int {

@@ -223,6 +223,9 @@ type BuildingState struct {
 	Flavor      string // cosmetic personality line; mirrors BuildingDef.Flavor, may be empty
 	Unlocked    bool
 	AgeKey      string // age this building first becomes available
+	// NeedsTech is the tech key a building of an unlocked age still waits
+	// for (Unlocked is false until it is researched); "" otherwise.
+	NeedsTech string
 	// Cost for next building
 	NextCost   map[string]float64
 	CanBuild   bool

@@ -201,13 +201,14 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 14 — fusion_age  rate=819.20
 	b = append(b, BuildingDef{
 		Name: "Energy Exchange", Key: "energy_exchange", Category: "production",
-		BaseCost:    map[string]float64{"plasma": 4.2e12, "electricity": 12e12, "steel": 16e12},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 819.20}},
-		BuildTicks:  3600,
-		RequiredAge: "fusion_age",
-		Description: "Interplanetary energy trading exchange.",
-		LineageKey:  "trade", LineageTier: 14,
+		BaseCost:     map[string]float64{"plasma": 4.2e12, "electricity": 12e12, "steel": 16e12},
+		CostScale:    1.40,
+		Effects:      []Effect{{Type: "production", Target: "gold", Value: 819.20}},
+		BuildTicks:   3600,
+		RequiredAge:  "fusion_age",
+		RequiredTech: "maglev_transit",
+		Description:  "Interplanetary energy trading exchange.",
+		LineageKey:   "trade", LineageTier: 14,
 		WorkerDomain: "trade", WorkerCapacity: 12,
 		EpochKey: "neon_era", OutputResource: "gold",
 	})

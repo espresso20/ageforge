@@ -516,7 +516,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.tick = 0
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
-	ge.Buildings = NewBuildingManager()
+	ge.Buildings = ge.newBuildingManager()
 	ge.Workers = NewWorkerManager()
 	ge.Research = NewResearchManager()
 	ge.Military = NewMilitaryManager()
