@@ -259,3 +259,41 @@ func TestThemeUnlocksFollowAccountRecords(t *testing.T) {
 		t.Error("the second account's run did not unlock the theme after a switch")
 	}
 }
+
+// TestAccountWipeWordingMatchesWipe: `account wipe` said game saves were not affected,
+// but a wipe deletes the account's whole slot, saves included, after backing it up. The
+// replies must say so, and the wipe must do what they say.
+func TestAccountWipeWordingMatchesWipe(t *testing.T) {
+	defer game.SetDataDirForTest(t.TempDir())()
+	alice, err := game.CreateAccount("Alice")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng := game.NewGameEngine()
+	eng.SetAccount(alice)
+	if err := eng.StartNewNamedGame("Rome"); err != nil {
+		t.Fatal(err)
+	}
+	save := slotSavePath(filepath.Dir(game.DataDir()), alice.AccountID, "Rome")
+	if _, err := os.Stat(save); err != nil {
+		t.Fatalf("no save in the slot to wipe: %v", err)
+	}
+
+	if msg := HandleCommand("account wipe", eng).Message; !strings.Contains(msg, "every save in its slot") || strings.Contains(msg, "not affected") {
+		t.Errorf("account wipe = %q; it must say the account's saves are deleted", msg)
+	}
+	if msg := HandleCommand("account", eng).Message; !strings.Contains(msg, "stats and saves for good") {
+		t.Errorf("account does not say a wipe deletes saves:\n%s", msg)
+	}
+
+	backup, err := game.WipeAccountByID(alice.AccountID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(save); !os.IsNotExist(err) {
+		t.Errorf("the save survived the wipe (stat err = %v)", err)
+	}
+	if _, err := os.Stat(filepath.Join(backup, "saves", "Rome.json")); err != nil {
+		t.Errorf("the backup taken before the wipe has no copy of the save: %v", err)
+	}
+}
