@@ -392,7 +392,7 @@ func TestSkyNoLaterAge(t *testing.T) {
 // TestSkyPerformance: a sky frame and a scene build stay well inside the
 // map's 125 ms redraw.
 func TestSkyPerformance(t *testing.T) {
-	if testing.Short() {
+	if testing.Short() || raceOn {
 		t.Skip("timing")
 	}
 	for _, age := range skyAges {

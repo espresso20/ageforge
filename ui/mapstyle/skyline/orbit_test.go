@@ -3,6 +3,7 @@ package skyline
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -223,11 +224,22 @@ func TestSkyInspect(t *testing.T) {
 		if kinds[tCiv] == 0 || kinds[tHarbinger] == 0 {
 			t.Errorf("%s: Tab did not reach the civs and the harbinger: %v", age, kinds)
 		}
-		// the status line names the lot in the scene's terms, with its command
+		// the status line names every lot in the scene's terms, with its
+		// command (the details give way before the command does)
+		order := make([]target, 0, len(want))
 		for tg := range want {
+			order = append(order, tg)
+		}
+		sort.Slice(order, func(i, j int) bool {
+			if order[i].key != order[j].key {
+				return order[i].key < order[j].key
+			}
+			return order[i].cp < order[j].cp
+		})
+		for _, tg := range order {
 			def := m.Catalog.Defs[tg.key]
 			part := mapmodel.SkyPartOf(sc, def.Lineage)
-			if def.Wonder || part.Name == mapmodel.LineageNames[def.Lineage] {
+			if def.Wonder || part.Name == mapmodel.LineageNames[def.Lineage] || tg.cp > 0 {
 				continue
 			}
 			v.cur = tg
@@ -239,7 +251,6 @@ func TestSkyInspect(t *testing.T) {
 			if c := v.fb.at(0, 47); c == nil {
 				t.Fatal("no status line")
 			}
-			break
 		}
 		// the cursor lands on a lot: its bracket under the baseline
 		for tg := range want {

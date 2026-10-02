@@ -726,6 +726,21 @@ func (o *orb) status(bg tcell.Color) {
 			if o.v.cur.kind == tLot {
 				lines = o.skyLines(in.lines)
 			}
+			// the command outlasts the details: drop them from the end
+			// until the line fits, keeping at least the first
+			fits := func(n int) bool {
+				w := textLen(" ▲ ") + textLen(in.title)
+				for _, l := range lines[:n] {
+					w += 2 + textLen(l)
+				}
+				if in.cmd != "" {
+					w += textLen("  type: ") + textLen(in.cmd)
+				}
+				return w <= o.W
+			}
+			for len(lines) > 1 && !fits(len(lines)) {
+				lines = lines[:len(lines)-1]
+			}
 			parts := []seg{{" ▲ ", theme.RoleAccent}, {in.title, theme.RoleText}}
 			for _, l := range lines {
 				parts = append(parts, seg{"  " + l, theme.RoleDim})
