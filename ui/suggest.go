@@ -142,6 +142,7 @@ func buildUniverse() map[ArgKind]map[string]bool {
 		ArgExpedition: set(expeditions), ArgCampaign: set(expeditions),
 		ArgRouteAvailable: set(routes), ArgRouteActive: set(routes),
 		ArgPrestigeUpgrade: set(upgrades),
+		ArgDomain:          set(config.WorkerDomains()),
 	}
 }
 
@@ -449,8 +450,27 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 			nums[i] = strconv.Itoa(i + 1)
 		}
 		return nums
+	case ArgDomain:
+		return shareDomainKeys(st)
 	}
 	return nil
+}
+
+// shareDomainKeys is what `workers share` suggests: the domains you have
+// worker buildings in or a share set for, in domain order, then the rest.
+func shareDomainKeys(st game.GameState) []string {
+	var first, rest []string
+	seen := map[string]bool{}
+	for _, r := range game.ShareRows(st) {
+		first = append(first, r.Domain)
+		seen[r.Domain] = true
+	}
+	for _, d := range config.WorkerDomains() {
+		if !seen[d] {
+			rest = append(rest, d)
+		}
+	}
+	return append(first, rest...)
 }
 
 // byRank sorts keys by rank (lower first), then alphabetically.

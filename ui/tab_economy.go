@@ -47,7 +47,7 @@ var onboardingSteps = []onboardingStep{
 	{Commands: []string{"gather wood 5", "gather food"}, Join: "/", Note: "collect by hand"},
 	{Commands: []string{"build gathering_camp", "build wood_camp"}, Join: "and", Note: "food runs short first"},
 	{Commands: []string{"build hut"}, Note: "shelter; raises your housing"},
-	{Commands: []string{"recruit 3", "assign gathering_camp 3"}, Join: "then", Note: "staffed camps make 5x"},
+	{Commands: []string{"workers"}, Note: "workers come on their own and staff the camps (staffed camps make 5x)"},
 	{Commands: []string{"wonder collect all"}, Note: "then build the [gold]wonder[-] once its bank is full. You need it to advance."},
 }
 

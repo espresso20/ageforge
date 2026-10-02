@@ -53,6 +53,8 @@ const (
 	ArgAccount                        // a local account's name
 	ArgPlanItem                       // a plan item's number
 	ArgDeal                           // a trade deal's number, of the civilization in the previous argument
+	ArgDomain                         // a worker domain (workers share)
+	ArgPercent                        // a percent: a number, with or without a % sign
 )
 
 // Arg is one argument slot.
@@ -196,6 +198,20 @@ func registry() []*Command {
 		{Name: "dismiss", Section: secWorkers, Dangerous: true,
 			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
 			Help: []Usage{{"dismiss <building> [count|all]", "Dismiss workers from a building; they leave your population (default 1)"}}},
+		{Name: "workers", Section: secWorkers, BareOK: true, Panel: "Workers: domains, shares & assignments",
+			Help: []Usage{{"workers", "Open the Workers panel (domains, shares, assignments)"}},
+			Subs: []*Command{
+				{Name: "share", BareOK: true,
+					Args: []Arg{{Kind: ArgDomain, Words: []string{"auto"}}, {Kind: ArgPercent, Words: []string{"auto"}, Optional: true}},
+					Help: []Usage{
+						{"workers share", "Show your worker shares: each domain's part of the workforce"},
+						{"workers share <domain> [percent|auto]", "Set a domain's share of your workers (0 keeps it empty; auto, the default, follows its buildings' slots); no percent shows it"},
+						{"workers share auto", "Put every domain back on auto"},
+					}},
+				{Name: "auto-recruit", Aliases: []string{"autorecruit"},
+					Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
+					Help: []Usage{{"workers auto-recruit [on|off]", "Show or set whether the game recruits into empty worker slots as housing and food allow (on by default)"}}},
+			}},
 
 		// Research, Expeditions & Army
 		{Name: "research", Aliases: []string{"res"}, Section: secResearch, Panel: "Technology tree & progress",
@@ -347,7 +363,6 @@ func registry() []*Command {
 		// Panels only
 		panel("milestones", "Milestone goals & rewards", "ms"),
 		panel("stats", "Empire statistics"),
-		panel("workers", "Worker domains & assignments"),
 		panel("logs", "Recent game log entries"),
 		panel("epoch", "Epoch progress & catastrophe"),
 		panel("history", "Civilization history timeline"),
@@ -531,6 +546,9 @@ func slotTakes(a Arg, w string, valid func(Arg, string) bool) bool {
 		return false
 	case ArgNumber, ArgPlanItem, ArgDeal:
 		_, err := strconv.ParseFloat(w, 64)
+		return err == nil
+	case ArgPercent:
+		_, err := strconv.ParseFloat(strings.TrimSuffix(w, "%"), 64)
 		return err == nil
 	}
 	return valid(a, w)

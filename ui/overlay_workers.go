@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -28,8 +29,10 @@ func workersProvider(state game.GameState, _ int) string {
 
 	if !wt.Unlocked || total == 0 {
 		fmt.Fprintf(&sb, "[white]Workers  [yellow]0[white] / [green]%d[white]\n\n", maxPop)
-		fmt.Fprint(&sb, "[gray]No workers yet.\n")
-		fmt.Fprint(&sb, "Recruit with: [cyan]recruit [count|max][-]\n")
+		fmt.Fprint(&sb, "[gray]No workers yet. They come on their own once you have housing and a building with worker slots,\n")
+		fmt.Fprint(&sb, "or recruit by hand with: [cyan]recruit [count|max][-]\n\n")
+		sb.WriteString(workerSection("Shares"))
+		writeShares(&sb, state)
 		return sb.String()
 	}
 
@@ -89,6 +92,11 @@ func workersProvider(state game.GameState, _ int) string {
 			sb.WriteString("  [red]⚠ Food is falling. Workers starve when it runs out.[-]\n")
 		}
 	}
+	sb.WriteString("\n")
+
+	// ── Shares ───────────────────────────────────
+	sb.WriteString(workerSection("Shares"))
+	writeShares(&sb, state)
 	sb.WriteString("\n")
 
 	// ── Building slots ───────────────────────────
@@ -215,4 +223,44 @@ func workersProvider(state game.GameState, _ int) string {
 	}
 
 	return sb.String()
+}
+
+// writeShares is the Workers panel's Shares section: what auto-recruit is
+// doing, then each domain's share of the workforce (set, or auto: by its
+// buildings' slots) with its workers and slots.
+func writeShares(sb *strings.Builder, state game.GameState) {
+	fmt.Fprintf(sb, "  [white]Auto-recruit:[-] %s\n", recruitLine(state))
+	rows := game.ShareRows(state)
+	if len(rows) == 0 {
+		sb.WriteString("  [gray]No worker buildings yet: every domain is on auto.[-]\n")
+		return
+	}
+	for _, r := range rows {
+		share := fmt.Sprintf("[white]%4s[-] [gray]auto[-]", textfmt.Percent(r.Percent/100))
+		if r.Set {
+			share = fmt.Sprintf("[yellow]%4s[-] [yellow]set[-] ", game.SharePercent(math.Round(r.Percent)))
+		}
+		fmt.Fprintf(sb, "  [cyan]%-12s[-] %s  %s [cyan]%d[white]/[green]%d[-]\n",
+			r.Name, share, assignBar(r.Workers, r.Slots, 10), r.Workers, r.Slots)
+	}
+	sb.WriteString("  [gray]Set a share with:[-] [cyan]workers share <domain> <percent|auto>[-]\n")
+}
+
+// recruitLine says what auto-recruit is doing (game.RecruitStatus).
+func recruitLine(state game.GameState) string {
+	switch game.RecruitStatus(state) {
+	case game.RecruitOff:
+		return "[gray]off (turn it on with[-] [cyan]workers auto-recruit on[-][gray])[-]"
+	case game.RecruitHeld:
+		return "[yellow]waiting[-] [gray]after your last worker command, " + formatTicks(state.Workers.HoldTicks, state) + " more[-]"
+	case game.RecruitHousing:
+		return "[green]on[-] [gray](no housing left: build housing for more workers)[-]"
+	case game.RecruitSlots:
+		return "[green]on[-] [gray](every worker slot is filled)[-]"
+	case game.RecruitFood:
+		return "[green]on[-] [yellow](waiting for food: build or staff food buildings)[-]"
+	case game.RecruitStarve:
+		return "[green]on[-] [red](paused: food has run out)[-]"
+	}
+	return "[green]on[-] [gray](recruiting as slots open)[-]"
 }
