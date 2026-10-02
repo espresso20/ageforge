@@ -404,12 +404,13 @@ func screenHas(s tcell.SimulationScreen, rs []rune) bool {
 // as a saucer flying over, a saucer hovering or a small figure walking, and
 // at no other time; inspecting it reports mapstyle.KindAlien and a fun line;
 // it never takes a legend row and never shows in the mini view. Before the
-// Space Age it is a rare joke, drawn the same way.
+// Space Age it is a rare joke, drawn the same way. (From the Galactic Age
+// the aliens are ordinary traffic and the model schedules no visits.)
 func TestVisitor(t *testing.T) {
 	for _, c := range []struct {
 		age  string
 		late bool
-	}{{"space_age", true}, {"galactic_age", true}, {"primitive_age", false}, {"medieval_age", false}} {
+	}{{"space_age", true}, {"interstellar_age", true}, {"primitive_age", false}, {"medieval_age", false}} {
 		m := modelFor(t, fixture.Options{Age: c.age, Seed: 7})
 		if (m.AgeIdx >= m.Catalog.SpaceAge()) != c.late {
 			t.Fatalf("%s: wrong side of the Space Age", c.age)

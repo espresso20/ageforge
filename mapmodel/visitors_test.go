@@ -84,24 +84,40 @@ func TestSightingSchedule(t *testing.T) {
 }
 
 // TestModelSighting: the model asks for the late schedule from the Space Age
-// on and the long-odds one before it.
+// on and the long-odds one before it, and from the Galactic Age, when the
+// aliens are ordinary traffic, for none at all.
 func TestModelSighting(t *testing.T) {
 	cat := NewCatalog()
 	sa := cat.SpaceAge()
 	if sa < 0 || config.AgeOrder()[sa] != "space_age" {
 		t.Fatalf("SpaceAge %d", sa)
 	}
+	ga := cat.SkySceneAge(SkyGalaxy)
+	if ga <= sa || config.AgeOrder()[ga] != "galactic_age" {
+		t.Fatalf("the Galactic Age is %d", ga)
+	}
 	for _, c := range []struct {
-		age  int
-		late bool
-	}{{0, false}, {sa - 1, false}, {sa, true}, {len(cat.Ages) - 1, true}} {
+		age        int
+		late, none bool
+	}{{0, false, false}, {sa - 1, false, false}, {sa, true, false}, {ga - 1, true, false}, {ga, true, true},
+		{len(cat.Ages) - 1, true, true}} {
 		m := &Model{Seed: 9, AgeIdx: c.age, Catalog: cat}
+		seen := 0
 		for f := 0; f < 20*SightingBlock; f += 97 {
 			got, ok := m.SightingAt(f)
 			want, wok := SightingAt(9, c.late, f)
+			if c.none {
+				want, wok = Sighting{}, false
+			}
 			if got != want || ok != wok {
 				t.Fatalf("age %d frame %d: model %v %v, schedule %v %v", c.age, f, got, ok, want, wok)
 			}
+			if ok {
+				seen++
+			}
+		}
+		if c.late && !c.none && seen == 0 {
+			t.Errorf("age %d: no visit in 20 blocks", c.age)
 		}
 	}
 }

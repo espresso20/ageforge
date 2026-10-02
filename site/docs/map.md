@@ -64,8 +64,8 @@ Every era brings its own traffic to the town. Nothing appears before the age tha
 | Steel | Wagons; sailing ships. From the Industrial Age a railway crosses the town, with steam trains trailing smoke |
 | Electric | Trams and steamships; from the Electric Age, the first motor cars |
 | Digital | Cars and trucks, streaming down the highways, planes overhead, container ships and freight trains; satellites cross the night sky; from the Information Age a news helicopter circles the town, and from the Digital Age delivery drones buzz over the streets |
-| Neon | Maglevs on the old railway and hovercars; in the Cyberpunk Age sky trains on every elevated line, drone swarms and crowds in the alleys; from the Fusion Age maglevs on the skyways and climbers riding the space elevator's tether; from the Space Age, shuttles lift off from the launch pad |
-| Cosmic | Orbital habitats drift overhead, and satellites are out day and night |
+| Neon | Maglevs on the old railway and hovercars; in the Cyberpunk Age sky trains on every elevated line, drone swarms and crowds in the alleys; from the Fusion Age maglevs on the skyways and climbers riding the space elevator's tether |
+| Space Age and later | The map has left the ground: see [The sky](#the-sky) |
 
 People stroll. Carts are a little quicker, cars quicker still, and trains and maglevs the quickest. How much moves follows how big and busy your town is. The railway runs along one of the town's street rows, so it never moves as the town grows; a street it crosses stays a street. Traffic draws on streets, rails, water and open sky, never over a building or a name. The legend lists what is about, and the inspect cursor says what anything moving is ("A steam train, hauling ore.").
 
@@ -86,6 +86,8 @@ From the Modern Age the land round your town becomes a city. Your own buildings 
 **The green fades by a rule.** The Modern Age keeps all its parks and gardens; the Information Age keeps about half; the Digital Age keeps only its reserve, about 15% of the Modern green; from the Cyberpunk Age there is none at all (even the farms are vats). It is measured over the settlement view round the town square.
 
 The city is laid from your save's world and the age alone, so the same save always grows the same city, and a new building never moves any of it. Nothing of a later age shows early: the legend lists, and the inspect cursor names, only what your age has built. The city's features list under **land** in the legend (a busy legend pairs its short labels two to a row so the traffic still fits), and the inspect cursor says what each one is ("Megacorp tower", "Server farm", "Space elevator"). At the region zoom the satellite mosaic shows the city's concrete, green and waste, and from the Cyberpunk Age the night pass shows the megacity as a carpet of lights.
+
+From the Space Age the settlement and district zooms show the sky instead of the town (see [The sky](#the-sky)). The region zoom stays the known world: `PgUp` from the sky climbs to it, and `PgDn` comes back down.
 
 ### Three zooms
 
@@ -145,6 +147,21 @@ The mini map wears the age's window light, and shows the megacity's rain and the
 | `End` | The present |
 | `Tab` / `Shift-Tab` | Put the inspect cursor out, then step through every target |
 | `↑` `↓` | Move between the building rows and the ridge (while inspecting) |
+
+---
+
+## The sky
+
+From the Space Age the Map leaves the ground, in both styles. Each of the last ages has a sky of its own, with its own colors, its own landmark, its own traffic and something always gently moving, and it is still your civilization: every building you own becomes something up there, each lineage its own kind of thing (homes are habitat modules in orbit, for instance), and the picture grows as you build. Like the town, it never reshuffles: what is drawn stays where it is. The legend names what you see, the inspect cursor and `Tab` work on all of it (a module tells you its building, its workers and the command for it), the flows overlay marks what is short of hands, and the mini map follows along.
+
+**The Space Age: actual space.** Your planet's curved limb fills the bottom of the map. Its night side is your own world, land and sea, with cloud swirls drifting over it, amber city lights where your town stands and the civilizations you have met glowing in their colors. The space elevator's tether rises from the town to the station:
+
+- In the **roguelike**, a ring station seen from above: your buildings dock round the ring, a sector for each lineage, growing outward ring by ring. Solar wings run out along the truss, hulls rise on the shipyard's slips, foundry tanks glow, relay satellites ride a low orbit, mining outposts sit on the rocks of the asteroid belt, and your military holds a base on the moon. Climbers ride the tether, shuttles climb from the town, satellites and mining drones go about their rounds.
+- In the **skyline**, the ground drops away: the planet's curved horizon fills the bottom of the panorama, its city lights thickest under your busiest districts, and your districts stand in orbit on the station's long truss, every building a module in its old place. The tether you raised in the Fusion Age carries on from the planet up into the station, climbers riding it, the moon hangs to one side with its base lit, and an asteroid belt crosses the sky. Lit windows still mean staffed; up here producers show glowing vents instead of smoke.
+
+**The Cosmic Era.** We won't spoil it, except to say that each of its ages looks like no other, and every one is built from your own buildings: the home system shrinks to a little orrery while your lineages settle colony worlds and a warp gate rises; then something worthy of a starship captain; then a place where reality bends; and at the very end, calm. If you have glimpsed a visitor in the sky before, you may find it is not so rare out there.
+
+In the roguelike each sky has a hub (the station, the home sun, the base's core): `Home` takes the cursor there, and `PgDn` gives a closer view with names.
 
 ---
 

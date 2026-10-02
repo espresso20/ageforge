@@ -34,6 +34,10 @@ func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) 
 }
 
 func (v *view) composeCompact(f mapstyle.Frame, W, H int) {
+	if sky := f.Model.Sky(); sky != mapmodel.SkyGround {
+		v.composeSkyCompact(f, W, H, sky) // the sky arc: orbit_compact.go
+		return
+	}
 	m := f.Model
 	lay := v.clay
 	if lay == nil || lay.m != m {

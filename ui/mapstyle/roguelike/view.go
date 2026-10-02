@@ -28,7 +28,7 @@ var zoomNames = [3]string{"REGION", "SETTLEMENT", "DISTRICT"}
 func Entry() mapstyle.Entry {
 	return mapstyle.Entry{Name: "roguelike", Title: "Roguelike",
 		Blurb: "A glyph world with an inspect cursor: your town, its people and the lands around it.",
-		New:   func() mapstyle.Style { return newView() }}
+		New:   func() mapstyle.Style { return withSky(newView()) }}
 }
 
 // view is one open map. What it draws is a function of the frame, the

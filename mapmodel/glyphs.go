@@ -299,8 +299,12 @@ var glyphTable = [numSyms]Glyph{
 	SymAlien:    {'Q', '☿', 0xf21b}, // a figure in disguise
 }
 
-// G returns a symbol's glyph record.
+// G returns a symbol's glyph record, the Earth arc's (glyphs_city.go) and
+// the sky arc's (glyphs_space.go) included.
 func G(s Sym) Glyph {
+	if g, ok := skyGlyph(s); ok {
+		return g
+	}
 	if s >= numSyms {
 		return extGlyph(s) // a block kept in its own file (glyphs_city.go)
 	}
@@ -316,7 +320,11 @@ func AllGlyphs() []Glyph {
 	for s := Sym(1); s < numSyms; s++ {
 		out = append(out, glyphTable[s])
 	}
-	return append(out, extGlyphs()...)
+	out = append(out, extGlyphs()...)
+	for _, s := range skySyms() {
+		out = append(out, G(s))
+	}
+	return out
 }
 
 // LineageSym is the one symbol a lineage keeps across every age, so a player
@@ -392,6 +400,11 @@ func Fold(r rune, t GlyphTier) rune {
 	}
 	for _, g := range glyphTable {
 		if g.Unicode == r || g.Nerd == r {
+			return g.ASCII
+		}
+	}
+	for _, g := range skyGlyphs {
+		if g.Unicode == r || g.Nerd != 0 && g.Nerd == r {
 			return g.ASCII
 		}
 	}
