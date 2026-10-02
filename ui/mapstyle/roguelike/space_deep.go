@@ -24,7 +24,7 @@ const (
 	deepGateY          = 20.0
 	deepGateRX         = 15.0
 	deepGateRY         = 7.5
-	deepGateCells      = 3 // gate ring cells one engineering unit raises
+	deepGateCells      = 2 // gate ring cells one engineering unit raises
 )
 
 // colonySite is a colony world: its centre, its lineage's face colour and
@@ -143,7 +143,6 @@ var deepOrbits = [4][2]float64{{4, 1.7}, {8, 3.2}, {11.5, 4.5}, {15, 6}}
 // raise it a few cells each.
 func (b *skyBase) gateFrame() {
 	ps, rs := smoothRing(deepGateX, deepGateY, deepGateRX, deepGateRY)
-	b.gateMid, b.gateR = pt(int(deepGateX), int(deepGateY)), [2]float64{deepGateRX, deepGateRY}
 	foot := 0
 	for i, p := range ps {
 		if p.Y > ps[foot].Y || p.Y == ps[foot].Y && abs(p.X-int(deepGateX)) < abs(ps[foot].X-int(deepGateX)) {
@@ -171,14 +170,18 @@ func (b *skyBase) gateFrame() {
 		b.put(ps[j].X, ps[j].Y, skyCell{r: '·', ink: mapmodel.InkFrameDim, lv: 1, k: skSlot, ref: scaffold})
 	}
 	var slots []mapmodel.Pt
-	for i := 0; i < n; i += deepGateCells {
+	for i := 0; i < gateEngCells(n); i += deepGateCells {
 		slots = append(slots, b.gate[i])
 	}
 	b.addBand(mapmodel.LinEngineer, slots)
 }
 
+// gateEngCells is how much of a gate ring of n cells engineering can raise:
+// three quarters of it. The keystone arc at the top is the Warp Nexus's.
+func gateEngCells(n int) int { return n * 3 / 4 }
+
 // gateRune is the stroke the gate's ring takes where engineering unit n
-// stands.
+// stands (one unit raises deepGateCells cells).
 func gateRune(b *skyBase, n int) rune {
 	if i := n * deepGateCells; i < len(b.gateStroke) {
 		return b.gateStroke[i]
@@ -256,7 +259,6 @@ func (b *skyBase) relayChain() {
 		}
 	}
 	b.addBand(mapmodel.LinHacker, slots)
-	b.lanes["route"] = route
 }
 
 // arks reserves the colony arks' formation in the lower left, the front
@@ -293,26 +295,40 @@ func (b *skyBase) escort() {
 func (s *skyScene) deepLife() {
 	b := s.b
 	m := s.m
-	built := false
+	built, progress := false, 0.0
 	for _, w := range m.Wonders {
-		built = built || w.Key == "warp_nexus" && w.Built
-	}
-	gate := b.frameNamed(slGate)
-	raised := 0
-	for n, p := range b.slots[mapmodel.LinEngineer] {
-		if s.at(p.X, p.Y).k == skUnit {
-			raised = max(raised, (n+1)*deepGateCells)
+		if w.Key == "warp_nexus" {
+			built, progress = w.Built, w.Progress
 		}
 	}
-	if built {
-		raised = len(b.gate)
+	gate := b.frameNamed(slGate)
+	n := len(b.gate)
+	eng, key := 0, 0 // cells engineering has raised; keystone cells the wonder has
+	for i, p := range b.slots[mapmodel.LinEngineer] {
+		if s.at(p.X, p.Y).k == skUnit {
+			eng = max(eng, (i+1)*deepGateCells)
+		}
 	}
-	for i := 0; i < raised && i < len(b.gate); i++ {
+	eng = min(eng, gateEngCells(n))
+	switch {
+	case built:
+		eng, key = gateEngCells(n), n-gateEngCells(n)
+	default:
+		key = int(progress * float64(n-gateEngCells(n)))
+	}
+	raise := func(i int) {
 		p := b.gate[i]
 		if c := s.cell(p.X, p.Y); c.k != skUnit {
 			*c = skyCell{r: b.gateStroke[i], ink: mapmodel.InkFrame, lv: 2, k: skFrame, ref: gate}
 		}
 	}
+	for i := 0; i < eng; i++ {
+		raise(i)
+	}
+	for i := gateEngCells(n); i < gateEngCells(n)+key && i < n; i++ {
+		raise(i)
+	}
+	raised := eng
 	if built {
 		for _, p := range discCells(deepGateX, deepGateY, deepGateRX-1.5, deepGateRY-1) {
 			if c := s.cell(p.X, p.Y); c.k == skVoid || c.k == skStar || c.k == skNebula {
@@ -328,7 +344,11 @@ func (s *skyScene) deepLife() {
 			}
 		}
 	} else {
-		for _, i := range []int{raised, raised + 1} { // welding at both fronts
+		fronts := []int{raised, raised + 1} // welding at both fronts
+		if key > 0 {
+			fronts = append(fronts, gateEngCells(n)+key, gateEngCells(n)+key+1)
+		}
+		for _, i := range fronts {
 			if i < len(b.gate) {
 				p := b.gate[i]
 				if c := s.cell(p.X, p.Y); c.k == skSlot {

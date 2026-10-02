@@ -446,3 +446,44 @@ func BenchmarkSkyScene(b *testing.B) {
 		})
 	}
 }
+
+// TestSkyGateRises: the warp gate is the Interstellar Age's construction
+// site: engineering raises at most three quarters of its ring, the Warp
+// Nexus's banked share fills the keystone, and only the finished wonder
+// closes the ring and opens its field.
+func TestSkyGateRises(t *testing.T) {
+	gateState := func(s *skyScene) (raised, scaffold, field int) {
+		for _, p := range s.b.gate {
+			switch s.at(p.X, p.Y).k {
+			case skFrame, skUnit:
+				raised++
+			case skSlot:
+				scaffold++
+			}
+		}
+		for _, c := range s.cells {
+			if c.k == skField {
+				field++
+			}
+		}
+		return
+	}
+	st := fixture.State(fixture.Options{Age: "interstellar_age", Seed: 3, Scale: 4})
+	m := testBuilder.Build(&st, nil)
+	s := newSkyScene(m, newSkyBase(m, m.Sky()))
+	raised, scaffold, field := gateState(s)
+	if scaffold == 0 || field > 0 {
+		t.Errorf("without the Warp Nexus the gate is finished: %d raised, %d scaffold, %d field", raised, scaffold, field)
+	}
+	if raised < len(s.b.gate)/2 {
+		t.Errorf("a big engineering lineage raised only %d of %d gate cells", raised, len(s.b.gate))
+	}
+	bs := st.Buildings["warp_nexus"]
+	bs.Count = 1
+	st.Buildings["warp_nexus"] = bs
+	m = testBuilder.Build(&st, nil)
+	s = newSkyScene(m, newSkyBase(m, m.Sky()))
+	if raised, scaffold, field = gateState(s); scaffold > 0 || field == 0 || raised != len(s.b.gate) {
+		t.Errorf("with the Warp Nexus: %d raised, %d scaffold, %d field", raised, scaffold, field)
+	}
+}

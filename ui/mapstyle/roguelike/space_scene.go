@@ -147,12 +147,9 @@ type skyBase struct {
 	planet     planetGeom    // Space: the homeworld below
 	gate       []mapmodel.Pt // Interstellar: the warp gate's ring, in build order
 	gateStroke []rune        // and its strokes
-	gateMid    mapmodel.Pt
-	gateR      [2]float64
 	colony     map[string]colonySite
-	lanes      map[string][]mapmodel.Pt // named paths the traffic runs
-	systems    []mapmodel.Pt            // Galactic: star system sites, by faction slot
-	rings      []mandalaRing            // Transcendent
+	systems    []mapmodel.Pt // Galactic: star system sites, by faction slot
+	rings      []mandalaRing // Transcendent
 }
 
 // skyScene is one model laid out on its base.
@@ -236,8 +233,7 @@ func (b *skyBase) free(x, y int) bool {
 // newSkyBase lays the seed-only layer of a scene.
 func newSkyBase(m *mapmodel.Model, sky mapmodel.SkyScene) *skyBase {
 	b := &skyBase{seed: m.Seed, sky: sky, cells: make([]skyCell, skyW*skyH), slots: map[string][]mapmodel.Pt{},
-		bands: map[string][]int{}, colony: map[string]colonySite{}, lanes: map[string][]mapmodel.Pt{},
-		hub: pt(skyW/2, skyH/2)}
+		bands: map[string][]int{}, colony: map[string]colonySite{}, hub: pt(skyW/2, skyH/2)}
 	b.starfield()
 	switch sky {
 	case mapmodel.SkyOrbit:
@@ -696,28 +692,6 @@ func halo(in map[mapmodel.Pt]bool, cx, cy, rx, ry float64) []mapmodel.Pt {
 	}
 	sortClockwise(out, cx, cy)
 	return out
-}
-
-// boxRing draws a ring of cells in box drawing that joins each cell to its
-// ring neighbours.
-func (b *skyBase) boxRing(ps []mapmodel.Pt, set []rune, c skyCell) {
-	on := map[mapmodel.Pt]bool{}
-	for _, p := range ps {
-		on[p] = true
-	}
-	for _, p := range ps {
-		m := 0
-		for bit, d := range dirs4 {
-			if on[pt(p.X+d[0], p.Y+d[1])] {
-				m |= 1 << bit
-			}
-		}
-		c.r = set[m]
-		if m == 0 {
-			c.r = '·'
-		}
-		b.put(p.X, p.Y, c)
-	}
 }
 
 // band is lineage lin's slots in band j (nil past the last band).
