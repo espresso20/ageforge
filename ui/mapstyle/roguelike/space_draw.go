@@ -45,8 +45,8 @@ type skyPal struct {
 // palette returns the scene's palette, rebuilt when the theme or the scene
 // changes. It also readies the ground view's palette, whose classes give
 // the chrome, the relations and the state colours.
-func (v *skyView) palette(sky mapmodel.SkyScene, epoch int) *skyPal {
-	gp := v.g.palette(epoch)
+func (v *skyView) palette(sky mapmodel.SkyScene, epoch, age int) *skyPal {
+	gp := v.g.palette(epoch, age)
 	key := theme.Active().Key
 	if v.sp != nil && v.sp.key == key && v.sp.sky == sky {
 		return v.sp
@@ -195,12 +195,12 @@ func (v *skyView) begin(f mapstyle.Frame) *skyScene {
 		clear(v.seen)
 	}
 	s := v.sceneFor(f.Model)
-	ep := 5
+	ep, age := 5, -1
 	sky := mapmodel.SkyOrbit
 	if s != nil {
-		ep, sky = s.m.Epoch, s.sky
+		ep, sky, age = s.m.Epoch, s.sky, s.m.AgeIdx
 	}
-	v.palette(sky, ep)
+	v.palette(sky, ep, age)
 	return s
 }
 

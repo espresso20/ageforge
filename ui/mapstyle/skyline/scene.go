@@ -240,10 +240,12 @@ func (s *scene) elevatorX() int {
 
 // tetherX is the world column of the space elevator, or -1: it rises from
 // the Fusion district, east of its middle, in the Fusion Age and stays
-// there for the ages after.
+// there through the Space Age, where the sky arc (orbit_space.go) carries
+// it from the planet up to the station. From the Interstellar Age the map
+// is out in deep space, with no planet to anchor it.
 func tetherX(m *mapmodel.Model) int {
 	fusion, ok := m.Catalog.AgeIdx["fusion_age"]
-	if !ok || m.AgeIdx < fusion || len(m.Skyline.Districts) <= fusion {
+	if !ok || m.AgeIdx < fusion || len(m.Skyline.Districts) <= fusion || m.Sky() > mapmodel.SkyOrbit {
 		return -1
 	}
 	d := m.Skyline.Districts[fusion]

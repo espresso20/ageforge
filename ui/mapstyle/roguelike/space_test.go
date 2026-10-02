@@ -487,3 +487,33 @@ func TestSkyGateRises(t *testing.T) {
 		t.Errorf("with the Warp Nexus: %d raised, %d scaffold, %d field", raised, scaffold, field)
 	}
 }
+
+// TestSkyTetherOnlyInSpace: the Space Age's tether rises in one unbroken
+// column from the heart of the town on the night side up to the ring
+// station (the Fusion Age raised it from the town square); out in deep
+// space there is none.
+func TestSkyTetherOnlyInSpace(t *testing.T) {
+	for _, age := range skyAges {
+		m := modelFor(t, fixture.Options{Age: age, Seed: 3})
+		s := newSkyScene(m, newSkyBase(m, m.Sky()))
+		cols := map[int]int{}
+		for i, c := range s.cells {
+			if c.k == skTether {
+				cols[i%skyW]++
+			}
+		}
+		if m.Sky() != mapmodel.SkyOrbit {
+			if len(cols) > 0 {
+				t.Errorf("%s: a tether out in deep space", age)
+			}
+			continue
+		}
+		foot := s.b.planet.foot
+		if len(cols) != 1 || cols[foot.X] < foot.Y-(orbHubY+orbRYc) {
+			t.Errorf("%s: tether cells by column %v, want one unbroken column at %d", age, cols, foot.X)
+		}
+		if c := s.at(foot.X, orbHubY+orbRYc+1); c.k != skTether {
+			t.Errorf("%s: the tether does not reach the ring", age)
+		}
+	}
+}

@@ -30,20 +30,20 @@ func arcModel(age string) *mapmodel.Model {
 	return skyBuilder.Build(&st, nil)
 }
 
-// signature is what a frame's picture is made of (not the header, legend
+// skySignature is what a frame's picture is made of (not the header, legend
 // or status lines every age shares): how often each glyph is drawn, and how
 // often each colour is (the ink of every drawn glyph and every background
 // that is not the picture's own void, on an 8x8x8 grid, with the void
 // itself counted at a quarter weight). Empty space is left out of the glyph
 // count: every age has plenty of it, and it is what is drawn on it that
 // makes an age look like itself.
-type signature struct {
+type skySignature struct {
 	glyph  map[rune]float64
 	colour map[int]float64
 }
 
-func sigOf(scr tcell.SimulationScreen, x0, y0, x1, y1 int) signature {
-	s := signature{glyph: map[rune]float64{}, colour: map[int]float64{}}
+func skySigOf(scr tcell.SimulationScreen, x0, y0, x1, y1 int) skySignature {
+	s := skySignature{glyph: map[rune]float64{}, colour: map[int]float64{}}
 	bucket := func(c tcell.Color) int {
 		r, g, b := c.RGB()
 		if r < 0 {
@@ -94,12 +94,12 @@ func sigOf(scr tcell.SimulationScreen, x0, y0, x1, y1 int) signature {
 	return s
 }
 
-// tv is the total variation distance of two distributions: 0 alike, 1
+// skyTV is the total variation distance of two distributions: 0 alike, 1
 // nothing in common.
-func tv[K comparable](a, b map[K]float64) float64 {
+func skyTV[K comparable](a, b map[K]float64) float64 {
 	d := 0.0
 	for k, v := range a {
-		d += abs(v - b[k])
+		d += skyAbs(v - b[k])
 	}
 	for k, v := range b {
 		if _, ok := a[k]; !ok {
@@ -109,19 +109,21 @@ func tv[K comparable](a, b map[K]float64) float64 {
 	return d / 2
 }
 
-func abs(v float64) float64 {
+func skyAbs(v float64) float64 {
 	if v < 0 {
 		return -v
 	}
 	return v
 }
 
-// distance is how unlike two frames are: the mean of the glyph and the
+// skyDistance is how unlike two frames are: the mean of the glyph and the
 // colour distances.
-func distance(a, b signature) float64 { return (tv(a.glyph, b.glyph) + tv(a.colour, b.colour)) / 2 }
+func skyDistance(a, b skySignature) float64 {
+	return (skyTV(a.glyph, b.glyph) + skyTV(a.colour, b.colour)) / 2
+}
 
 // disparityFloor is how unlike two next-door ages of the sky arc must look,
-// on the scale of distance (0 the same picture, 1 nothing in common). The
+// on the scale of skyDistance (0 the same picture, 1 nothing in common). The
 // same age a few frames later sits under 0.02 (things move, stars twinkle).
 // When the guard was written next-door ages measured from 0.40 (the
 // skyline's Interstellar to Galactic) to 0.74 (the roguelike's Fusion to
@@ -129,15 +131,15 @@ func distance(a, b signature) float64 { return (tv(a.glyph, b.glyph) + tv(a.colo
 // neighbours drift into looking like one.
 const disparityFloor = 0.30
 
-// frameSig draws a model in a style at 160x48 and signs the picture.
-func frameSig(t *testing.T, style string, m *mapmodel.Model, anim int) signature {
+// skyFrameSig draws a model in a style at 160x48 and signs the picture.
+func skyFrameSig(t *testing.T, style string, m *mapmodel.Model, anim int) skySignature {
 	t.Helper()
 	v, _ := Registry().New(style)
 	scr := capture.NewScreen(160, 48)
 	defer scr.Fini()
 	v.Draw(scr, mapstyle.Rect{W: 160, H: 48}, mapstyle.Frame{Model: m, Anim: anim, Tier: mapmodel.TierUnicode})
 	scr.Show()
-	return sigOf(scr, 0, 1, 132, 43)
+	return skySigOf(scr, 0, 1, 132, 43)
 }
 
 // TestSkyDisparity: in both styles every age of the sky arc, and the Fusion
@@ -154,17 +156,17 @@ func TestSkyDisparity(t *testing.T) {
 		models[i] = arcModel(a)
 	}
 	for _, style := range Registry().Names() {
-		sigs := make([]signature, len(arcAges))
+		sigs := make([]skySignature, len(arcAges))
 		for i, m := range models {
-			sigs[i] = frameSig(t, style, m, 400)
-			if self := distance(sigs[i], frameSig(t, style, m, 403)); self > disparityFloor/3 {
+			sigs[i] = skyFrameSig(t, style, m, 400)
+			if self := skyDistance(sigs[i], skyFrameSig(t, style, m, 403)); self > disparityFloor/3 {
 				t.Errorf("%s %s: a frame later it is already %.2f away from itself", style, arcAges[i], self)
 			}
 		}
 		for i := 1; i < len(arcAges); i++ {
-			d := distance(sigs[i-1], sigs[i])
+			d := skyDistance(sigs[i-1], sigs[i])
 			t.Logf("%s: %s to %s %.2f (glyphs %.2f, colours %.2f)", style, arcAges[i-1], arcAges[i], d,
-				tv(sigs[i-1].glyph, sigs[i].glyph), tv(sigs[i-1].colour, sigs[i].colour))
+				skyTV(sigs[i-1].glyph, sigs[i].glyph), skyTV(sigs[i-1].colour, sigs[i].colour))
 			if d < disparityFloor {
 				t.Errorf("%s: %s and %s look too alike: %.2f, under %.2f", style, arcAges[i-1], arcAges[i], d, disparityFloor)
 			}

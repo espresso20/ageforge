@@ -576,3 +576,69 @@ func cellDump(scr tcell.SimulationScreen) string {
 	}
 	return b.String()
 }
+
+// TestSkyTetherCarriesOn: the space elevator the Earth arc raises in the
+// Fusion Age is the one the Space Age carries up to the station: it stands
+// on the same world column, it is drawn once, from the planet's limb up,
+// and the cursor can still inspect it. From the Interstellar Age, out in
+// deep space, there is none, and no Tab target for it.
+func TestSkyTetherCarriesOn(t *testing.T) {
+	fus := skyModel("fusion_age", 6, 0)
+	spc := skyModel("space_age", 6, 0)
+	vf := newView()
+	sf := vf.compose(mapstyle.Frame{Model: fus}, 160, 48)
+	wf := sf.elevatorX() + sf.cam
+	if sf.elevatorX() < 0 {
+		t.Fatal("the Fusion Age has no tether")
+	}
+	if w := tetherX(spc); w != wf {
+		t.Errorf("the Space Age's tether stands at world column %d, the Fusion Age's at %d", w, wf)
+	}
+	vs := newView()
+	vs.follow, vs.cam = false, max(0, wf-80)
+	ss := vs.compose(mapstyle.Frame{Model: spc}, 160, 48)
+	x := wf - ss.cam
+	if x < 0 || x >= ss.W {
+		t.Fatalf("the tether is off the view at column %d", x)
+	}
+	// columns carrying a long run of the tether's cable
+	cables := 0
+	for cx := 0; cx < ss.W; cx++ {
+		run, best := 0, 0
+		for y := 0; y < ss.S; y++ {
+			if c := vs.fb.at(cx, ss.Y(y)); c != nil && c.d == dTether && c.ch == '│' {
+				run++
+				best = max(best, run)
+			} else {
+				run = 0
+			}
+		}
+		if best >= 6 {
+			cables++
+			if cx != x {
+				t.Errorf("a tether's cable at column %d, not the elevator's %d", cx, x)
+			}
+		}
+	}
+	if cables != 1 {
+		t.Errorf("%d tether cables in the Space Age, want 1", cables)
+	}
+	reached := false
+	for _, tg := range targets(spc, 160, ss.cam) {
+		reached = reached || tg.kind == tTether && tg.x == wf
+	}
+	if !reached {
+		t.Error("the Space Age's tether is not a Tab target")
+	}
+	for _, age := range []string{"interstellar_age", "galactic_age", "transcendent_age"} {
+		m := skyModel(age, 6, 0)
+		if tetherX(m) >= 0 {
+			t.Errorf("%s: a tether out in deep space", age)
+		}
+		for _, tg := range targets(m, 160, 0) {
+			if tg.kind == tTether {
+				t.Errorf("%s: a Tab target for a tether that is not drawn", age)
+			}
+		}
+	}
+}

@@ -314,17 +314,16 @@ func (o *orb) moon() {
 	}
 }
 
-// tetherX is the space elevator's screen column: at the Space Age
-// district's east end, where the Fusion Age's tether went up. -1 before
-// the Space Age.
+// tetherX is the space elevator's screen column: the column the Fusion
+// Age's tether went up from (tetherX in scene.go), so the elevator the
+// Earth arc raised is the one that carries on up to the station. -1 when
+// there is none.
 func (o *orb) tetherX() int {
-	ds := o.m.Skyline.Districts
-	sa := o.m.Catalog.SpaceAge()
-	if sa < 0 || sa >= len(ds) {
+	x := tetherX(o.m)
+	if x < 0 {
 		return -1
 	}
-	d := ds[sa]
-	return d.X0 + d.LandW - 4 - o.cam
+	return x - o.cam
 }
 
 // tether is the space elevator's cable, from its anchor on the limb up
