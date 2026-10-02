@@ -18,8 +18,8 @@ import (
 // Quantum layout, in plane cells.
 const (
 	qX, qY         = skyW / 2, 21
-	qInRX, qInRY   = 13.5, 5.0
-	qOutRX, qOutRY = 26.0, 9.0
+	qInRX, qInRY   = 16.5, 6.2
+	qOutRX, qOutRY = 29.0, 10.4
 )
 
 // layQuantum lays the Quantum Age's base.
@@ -76,11 +76,12 @@ func (b *skyBase) recursion() {
 	inner := ring(qInRX, qInRY, mapmodel.InkFrame)
 	outer := ring(qOutRX, qOutRY, mapmodel.InkAccent)
 	tips, pyl := pylons(qOutRX, qOutRY, 6, outer)
-	// the smaller selves, inside the habitat ring
-	for _, k := range []float64{0.44, 0.2} {
-		ring(qInRX*k, qInRY*k+0.4, mapmodel.InkFrame)
-		out2 := ring(qOutRX*k, qOutRY*k+0.5, mapmodel.InkAccent)
-		pylons(qOutRX*k, qOutRY*k+0.5, max(1, int(5*k)), out2)
+	// the smaller selves, inside the habitat ring: the same two rings and
+	// a stub of each pylon, each level half the one outside it
+	for _, k := range []float64{0.5, 0.23} {
+		ring(qInRX*k, qInRY*k, mapmodel.InkFrame)
+		out2 := ring(qOutRX*k, qOutRY*k, mapmodel.InkAccent)
+		pylons(qOutRX*k, qOutRY*k, 1, out2)
 	}
 	b.hubAt(qX, qY)
 	b.at(qX, qY).alt = '◈'
