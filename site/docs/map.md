@@ -63,13 +63,29 @@ Every era brings its own traffic to the town. Nothing appears before the age tha
 | Iron | Ox carts and riders on the streets; rowboats on the river and lakes |
 | Steel | Wagons; sailing ships. From the Industrial Age a railway crosses the town, with steam trains trailing smoke |
 | Electric | Trams and steamships; from the Electric Age, the first motor cars |
-| Digital | Cars and trucks, planes overhead, container ships and freight trains; satellites cross the night sky |
-| Neon | Maglevs on the old railway, drones and hovercars; from the Space Age, shuttles lift off from the launch pad |
+| Digital | Cars and trucks, streaming down the highways, planes overhead, container ships and freight trains; satellites cross the night sky; from the Information Age a news helicopter circles the town, and from the Digital Age delivery drones buzz over the streets |
+| Neon | Maglevs on the old railway and hovercars; in the Cyberpunk Age sky trains on every elevated line, drone swarms and crowds in the alleys; from the Fusion Age maglevs on the skyways and climbers riding the space elevator's tether; from the Space Age, shuttles lift off from the launch pad |
 | Cosmic | Orbital habitats drift overhead, and satellites are out day and night |
 
 People stroll. Carts are a little quicker, cars quicker still, and trains and maglevs the quickest. How much moves follows how big and busy your town is. The railway runs along one of the town's street rows, so it never moves as the town grows; a street it crosses stays a street. Traffic draws on streets, rails, water and open sky, never over a building or a name. The legend lists what is about, and the inspect cursor says what anything moving is ("A steam train, hauling ore.").
 
 Keep an eye on the sky in the late game.
+
+### The city, from the Modern Age to the Fusion Age
+
+From the Modern Age the land round your town becomes a city. Your own buildings still make the town in the middle; the city is everything between and beyond them, and each age draws its own, with its own colors, a signature structure, a signature mover and one effect that moves:
+
+| Age | The city | Signature mover | Moving effect |
+|---|---|---|---|
+| **Modern** | A glass belt round the ring boulevard, suburbs of houses on green lawns along asphalt streets, parks still green but fenced into their blocks, and highways out of town. Daylight blues and grays | Cars streaming down the highways | Headlights and tail lights on the highways at night |
+| **Information** | Office blocks over most of the land, server farms, satellite dishes and fiber lines along the streets. About half the green is left, as parks and rooftop gardens, and the first smog gathers at the city's edge | A news helicopter circling the town | Screens flickering in the windows |
+| **Digital** | The last green: one walled reserve, and nothing else. The rest is pale concrete and data halls, and past the city, landfill under the smog | Delivery drones | The data glow, pulsing round the data halls and hacker dens |
+| **Cyberpunk** | The megacity. Every cell is built or derelict: megablocks, megacorp towers with their initials in neon, arcologies, flickering neon signs and holo-ads, steam vents, scrap and toxic ground. The water runs in toxic canals, and three to five elevated sky rails cross it all. Night falls on the map, neon on black | Sky trains, a couple on every rail, with drone swarms, hovercars and crowds in the alleys: the busiest map in the game | Acid rain, and the neon flickering |
+| **Fusion** | The megacity powered: deep blue towers, fusion reactors in their plasma rings, power conduits running in to the town, maglev skyways, launch towers, clean cooling water, and the space elevator's tether rising from the town square to the top of the map | Climbers riding the tether | Plasma pulsing round the reactors and down the conduits |
+
+**The green fades by a rule.** The Modern Age keeps all its parks and gardens; the Information Age keeps about half; the Digital Age keeps only its reserve, about 15% of the Modern green; from the Cyberpunk Age there is none at all (even the farms are vats). It is measured over the settlement view round the town square.
+
+The city is laid from your save's world and the age alone, so the same save always grows the same city, and a new building never moves any of it. Nothing of a later age shows early: the legend lists, and the inspect cursor names, only what your age has built. The city's features list under **land** in the legend (a busy legend pairs its short labels two to a row so the traffic still fits), and the inspect cursor says what each one is ("Megacorp tower", "Server farm", "Space elevator"). At the region zoom the satellite mosaic shows the city's concrete, green and waste, and from the Cyberpunk Age the night pass shows the megacity as a carpet of lights.
 
 ### Three zooms
 
@@ -106,6 +122,18 @@ The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has
 - **Traffic follows real state.** Trade routes travel by land, sea or air depending on the route: harbor and ship routes sail the bays, warp and stellar routes fly once your age has aircraft, and rails and caravans stay on land.
 - **Vehicles arrive with their age.** The skyline and the roguelike share one list of what moves in which age, so a vehicle shows in neither style before the age that introduces it.
 - In the **Monochrome** and **Parchment** themes the skyline is drawn as a two-tone (duotone) picture.
+
+### The city on the skyline
+
+From the Modern Age the skyline shows the same city as the roguelike, side on:
+
+- **Modern:** street trees and parks fenced along the verge, an elevated freeway with its cars streaming (headlights at night), and the glass city lighting its own horizon after dark.
+- **Information:** half the trees, satellite dishes on the modern roofs and gardens on a few, cable lines strung between masts, cold screens in the windows, the Information district's towers in indigo glass, a hazier sky and smog gathering at the edges of the view.
+- **Digital:** one walled reserve in front of the Digital district and nothing else green, a gray-brown smog sky, bare concrete towers, and the data glow round the data halls and down the road.
+- **Cyberpunk:** the far ridge built over with towers, neon up every distant tower, holo-ads hanging in the air, three to five elevated rails with sky trains on each, drone swarms and hovercars, acid rain day and night, and a smog-dark day in which the neon never washes out.
+- **Fusion:** reactor domes and launch towers behind the city, a glow round the reactors, plasma pulsing down the road, an electric blue horizon, and the space elevator's tether rising from the Fusion district off the top of the screen with its climbers. The tether is an inspect target (Tab reaches it after the harbinger).
+
+The mini map wears the age's window light, and shows the megacity's rain and the tether. With the legend on, the status line names the age's city.
 
 ### Skyline keys
 
