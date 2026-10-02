@@ -3,6 +3,7 @@ package config
 import (
 	"math"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,8 +39,66 @@ import (
 const TickSeconds = 2.0
 
 // AgeTargets is the time a player should spend in each age at 1x, entering
-// it to entering the next. The final age's entry only sizes its buildings.
-var AgeTargets = map[string]time.Duration{
+// it to entering the next: baseAgeTargets × AgeStretch, about a week to the
+// Modern Age and the first prestige. The final age's entry only sizes its
+// buildings.
+var AgeTargets = stretchedTargets()
+
+// PacingStretch is how much longer every age from the Bronze Age on runs than
+// on the curve its clocks were typed for (baseAgeTargets, about three days to
+// the Modern Age). AgeTargets multiplies baseAgeTargets by it, and every
+// clock counted in ticks (the random-event delay, event and boon durations,
+// raids, routes, expeditions, cooldowns) is multiplied by it through
+// StretchTicks, so an age holds as many events, raids and routes as it did
+// before, each lasting the same share of it. A future change to the curve is
+// this one number, plus the texts the tests flag.
+const PacingStretch = 2.6
+
+// unstretchedAges keep their base length: the Primitive and Stone Ages are
+// the first hour of the game, and stay one.
+var unstretchedAges = map[string]bool{"primitive_age": true, "stone_age": true}
+
+// AgeStretch is the factor age's clocks run at: 1 for the Primitive and
+// Stone Ages (and an unknown age), PacingStretch from the Bronze Age on.
+func AgeStretch(age string) float64 {
+	if _, ok := baseAgeTargets[age]; !ok || unstretchedAges[age] {
+		return 1
+	}
+	return PacingStretch
+}
+
+// StretchTicks re-times a clock typed in ticks for age: ticks × AgeStretch,
+// rounded to the nearest tick. Anything that counts real time per age (a
+// delay, a duration, a cooldown, a cadence) goes through it, so the same
+// number of ticks covers the same share of a longer age.
+func StretchTicks(age string, ticks int) int {
+	s := AgeStretch(age)
+	if s == 1 {
+		return ticks
+	}
+	return int(math.Round(float64(float64(ticks) * s)))
+}
+
+// withDuration writes a stretched clock into a flavor text: "{dur}" becomes
+// DurationText(ticks). Epoch events and awakenings quote their durations, and
+// those follow the curve.
+func withDuration(text string, ticks int) string {
+	return strings.ReplaceAll(text, "{dur}", DurationText(ticks))
+}
+
+// stretchedTargets is baseAgeTargets × AgeStretch, to the second.
+func stretchedTargets() map[string]time.Duration {
+	out := make(map[string]time.Duration, len(baseAgeTargets))
+	for age, d := range baseAgeTargets {
+		secs := math.Round(float64(d.Seconds() * AgeStretch(age)))
+		out[age] = time.Duration(secs) * time.Second
+	}
+	return out
+}
+
+// baseAgeTargets is the curve the game's tick clocks were written for, before
+// the one-week stretch. Edit a target here; AgeTargets follows.
+var baseAgeTargets = map[string]time.Duration{
 	"primitive_age":    15 * time.Minute,
 	"stone_age":        45 * time.Minute,
 	"bronze_age":       90 * time.Minute,

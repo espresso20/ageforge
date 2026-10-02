@@ -85,8 +85,10 @@ func TestMergeProgression(t *testing.T) {
 		return &back
 	}
 	e := &Env{Tier: TierDeep, Pacing: PacingEnforce}
+	bronze := PacingTargets["bronze_age"].Seconds()
+	onTarget, near, slow := bronze, 1.1*bronze, 7.4*bronze
 	// One seed's Bronze Age is far too slow; the median of three is on target.
-	sess, err := MergeProgression(e, []*Session{part(1, 5400), part(2, 40000), part(3, 6000)})
+	sess, err := MergeProgression(e, []*Session{part(1, onTarget), part(2, slow), part(3, near)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,10 +100,10 @@ func TestMergeProgression(t *testing.T) {
 		t.Fatalf("want 3 pooled runs, got %+v", prog)
 	}
 	// Two of three slow: the median fails.
-	if sess, _ = MergeProgression(e, []*Session{part(1, 40000), part(2, 40000), part(3, 6000)}); !sess.Failed {
+	if sess, _ = MergeProgression(e, []*Session{part(1, slow), part(2, slow), part(3, near)}); !sess.Failed {
 		t.Errorf("median past the band, want a failure")
 	}
-	if _, err := MergeProgression(e, []*Session{part(1, 5400), part(1, 5400)}); err == nil {
+	if _, err := MergeProgression(e, []*Session{part(1, onTarget), part(1, onTarget)}); err == nil {
 		t.Errorf("a seed reported twice must be refused")
 	}
 }

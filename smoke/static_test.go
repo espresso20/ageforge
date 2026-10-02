@@ -62,8 +62,14 @@ func TestStorageCovenant(t *testing.T) {
 // storage the Renaissance to Victorian Ages had before the covenant (500K,
 // 10M, 50M and 350M per copy, where a full store held under half an hour of
 // gold or steel) must each be flagged, and so must halving every storage
-// building, which puts nearly every age under.
+// building, which puts nearly every age under. The covenant counts hours of
+// typical income, and on the one-week curve a tick from the Bronze Age on
+// makes 1/config.PacingStretch as much, so every store holds that much
+// longer: the broken numbers are divided by the stretch of the building's age
+// to stay as short as they were.
 func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
+	defsByKey := config.BuildingByKey()
+	stretch := func(k string) float64 { return config.AgeStretch(defsByKey[k].RequiredAge) }
 	old := map[string]float64{
 		"renaissance_vault":  500e3,
 		"colonial_warehouse": 10e6,
@@ -89,7 +95,7 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 	}
 	broken := withStorage(func(k string, v float64) float64 {
 		if o, ok := old[k]; ok {
-			return o
+			return o / stretch(k)
 		}
 		return v
 	})
@@ -105,7 +111,7 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 		}
 	}
 	halved := 0
-	for _, r := range staticStorage(withStorage(func(_ string, v float64) float64 { return v / 2 }), config.TypicalIncome) {
+	for _, r := range staticStorage(withStorage(func(k string, v float64) float64 { return v / 2 / stretch(k) }), config.TypicalIncome) {
 		if !r.OK() {
 			halved++
 		}

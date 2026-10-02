@@ -8,35 +8,47 @@ import (
 
 // Pacing targets: how long a player should spend in each age at 1x game
 // time, from entering it to entering the next. This table is the pacing
-// contract the balance work aims at (≈3 days of play to the Modern Age, the
-// first prestige). It mirrors config.AgeTargets, which the game derives its
-// economy from: edit that one, then make this match
+// contract the balance work aims at (the one-week curve: about 7 days of play
+// to the Modern Age, the first prestige). It mirrors config.AgeTargets, which
+// the game derives its economy from (the base curve × config.PacingStretch
+// from the Bronze Age on): edit that one, then make this match
 // (TestPacingTargetsMatchConfig). The report, the per-age timeouts and
 // `-pacing enforce` all read this copy. See CONTRIBUTING.md, "Pacing targets".
 var PacingTargets = map[string]time.Duration{
 	"primitive_age":    15 * time.Minute,
 	"stone_age":        45 * time.Minute,
-	"bronze_age":       90 * time.Minute,
-	"iron_age":         150 * time.Minute,
-	"classical_age":    210 * time.Minute,
-	"medieval_age":     270 * time.Minute,
-	"renaissance_age":  6 * time.Hour,
-	"colonial_age":     7 * time.Hour,
-	"industrial_age":   8 * time.Hour,
-	"victorian_age":    9 * time.Hour,
-	"electric_age":     10 * time.Hour,
-	"atomic_age":       12 * time.Hour,
-	"modern_age":       12 * time.Hour,
-	"information_age":  14 * time.Hour,
-	"digital_age":      16 * time.Hour,
-	"cyberpunk_age":    18 * time.Hour,
-	"fusion_age":       20 * time.Hour,
-	"space_age":        22 * time.Hour,
-	"interstellar_age": 24 * time.Hour,
-	"galactic_age":     24 * time.Hour,
-	"quantum_age":      24 * time.Hour,
+	"bronze_age":       3*time.Hour + 54*time.Minute,
+	"iron_age":         6*time.Hour + 30*time.Minute,
+	"classical_age":    9*time.Hour + 6*time.Minute,
+	"medieval_age":     11*time.Hour + 42*time.Minute,
+	"renaissance_age":  15*time.Hour + 36*time.Minute,
+	"colonial_age":     18*time.Hour + 12*time.Minute,
+	"industrial_age":   20*time.Hour + 48*time.Minute,
+	"victorian_age":    23*time.Hour + 24*time.Minute,
+	"electric_age":     26 * time.Hour,
+	"atomic_age":       31*time.Hour + 12*time.Minute,
+	"modern_age":       31*time.Hour + 12*time.Minute,
+	"information_age":  36*time.Hour + 24*time.Minute,
+	"digital_age":      41*time.Hour + 36*time.Minute,
+	"cyberpunk_age":    46*time.Hour + 48*time.Minute,
+	"fusion_age":       52 * time.Hour,
+	"space_age":        57*time.Hour + 12*time.Minute,
+	"interstellar_age": 62*time.Hour + 24*time.Minute,
+	"galactic_age":     62*time.Hour + 24*time.Minute,
+	"quantum_age":      62*time.Hour + 24*time.Minute,
 	// transcendent_age is the last age: nothing to pace.
 }
+
+// The first run to the Modern Age, for the greedy bot (the median across the
+// seeds of the progression scenario): FirstRunLow to FirstRunHigh of 1x play.
+// The targets sum to about 7 days; the bot, a near-perfect player, lands near
+// 5.3 (build and research times are capped copies of hand-typed values, so
+// they grow less than the targets). Under -pacing enforce a median outside the
+// band fails the set, like an age outside its own band.
+const (
+	FirstRunLow  = 115*time.Hour + 12*time.Minute // 4.8 days
+	FirstRunHigh = 148*time.Hour + 48*time.Minute // 6.2 days
+)
 
 // The tolerance band: an age passes when its time is within
 // [PacingLow, PacingHigh] x its target.
