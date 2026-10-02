@@ -162,6 +162,26 @@ const (
 	SymFood
 	SymPop
 	SymBuild
+	// movers: the traffic each age adds (movers.go). Walkers, steam and
+	// freight trains, steamships, planes, drones and satellites reuse the
+	// symbols above.
+	SymHunter
+	SymOxCart
+	SymRider
+	SymRowboat
+	SymWagon
+	SymSailShip
+	SymTram
+	SymAuto
+	SymTruck
+	SymBoxShip
+	SymMaglev
+	SymHovercar
+	SymShuttle
+	SymOrbital
+	// the rare visitor (never in a legend)
+	SymUFO
+	SymAlien
 	numSyms
 )
 
@@ -258,6 +278,25 @@ var glyphTable = [numSyms]Glyph{
 	SymFood:  {'f', '♣', 0xf06c},
 	SymPop:   {'p', '☺', 0xf0c0},
 	SymBuild: {'#', '▲', 0xf275},
+
+	// Movers that never share an age may share a shape (an ox cart and a
+	// car are both a box on the street); movers that do share an age differ.
+	SymHunter:   {'i', '♂', 0xf1b0}, // paw
+	SymOxCart:   {'c', '▭', 0xf0d1}, // truck
+	SymRider:    {'R', '♞', 0xf21c}, // motorcycle: Font Awesome 4 has no horse
+	SymRowboat:  {'u', '◡', 0xf21a}, // ship
+	SymWagon:    {'w', '▮', 0xf0d1},
+	SymSailShip: {'A', '△', 0xf21a},
+	SymTram:     {'B', '◫', 0xf207}, // bus
+	SymAuto:     {'a', '▭', 0xf1b9}, // car
+	SymTruck:    {'r', '▮', 0xf0d1},
+	SymBoxShip:  {'D', '▥', 0xf21a},
+	SymMaglev:   {'=', '▰', 0xf239}, // subway
+	SymHovercar: {'z', '◇', 0xf1ba}, // taxi
+	SymShuttle:  {'^', '▴', 0xf197}, // space shuttle
+	SymOrbital:  {'0', '◎', 0xf1cd}, // life ring
+	SymUFO:      {'O', '◉', 0xf192}, // dot in a circle
+	SymAlien:    {'Q', '☿', 0xf21b}, // a figure in disguise
 }
 
 // G returns a symbol's glyph record.
