@@ -45,15 +45,17 @@ const (
 	lgSmoke
 	lgRail
 	lgGuideway
-	// lgMover plus a mapmodel.Mover is that mover's row (the walkers keep
-	// lgWorker); lgLineage plus an index in mapmodel.LineageOrder is that
-	// lineage's.
-	lgMover
+	// lgCity plus a mapmodel.CityFeature is that city feature's row (the
+	// Earth arc's land, city.go); lgMover plus a mapmodel.Mover is that
+	// mover's row (the walkers keep lgWorker); lgLineage plus an index in
+	// mapmodel.LineageOrder is that lineage's.
+	lgCity
+	lgMover   = lgCity + lgID(mapmodel.NumCityFeatures)
 	lgLineage = lgMover + lgID(mapmodel.NumMovers)
 	numLg     = lgLineage + 18
 )
 
-var lgInfo = [lgMover]struct {
+var lgInfo = [lgCity]struct {
 	label string
 	group uint8
 }{
@@ -66,7 +68,8 @@ var lgInfo = [lgMover]struct {
 	{"railway", 2}, {"maglev line", 2},
 }
 
-// lgTraffic is the legend group the movers list under.
+// lgTraffic is the legend group the movers list under. The Earth arc's
+// city lists under the land, which it has built over.
 const lgTraffic = 6
 
 var lgGroups = [7]string{"land", "buildings", "ways and walls", "civs", "state", "life", "traffic"}
@@ -74,8 +77,10 @@ var lgGroups = [7]string{"land", "buildings", "ways and walls", "civs", "state",
 // lgLabel is a legend row's label and group ("" for a row with none).
 func lgLabel(id lgID) (string, uint8) {
 	switch {
-	case id < lgMover:
+	case id < lgCity:
 		return lgInfo[id].label, lgInfo[id].group
+	case id < lgMover:
+		return mapmodel.CityFeature(id - lgCity).Info().Name, 0
 	case id < lgLineage:
 		if k := mapmodel.Mover(id - lgMover); k != mapmodel.MoverWalker {
 			return k.Info().Name, lgTraffic
@@ -176,6 +181,11 @@ func (v *view) tile(x, y int) glyph {
 	if s.vis[i] == 1 { // remembered, not in sight
 		g := v.terrain(x, y, t, false)
 		return glyph{r: g.r, c: mapmodel.CMemory, sal: min(g.sal, 1)}
+	}
+	if cl := s.city; cl != nil && cl.ov[i] != 0 && c.k != kTile && c.k != kWonder && c.k != kSite && c.k != kCentre {
+		if g, ok := v.cityLineGlyph(x, y, i, t); ok { // a line laid over the city
+			return g
+		}
 	}
 	if c.rail && len(s.rail) > 0 && c.k != kTile && c.k != kWonder && c.k != kSite && c.k != kCentre {
 		return v.railGlyph(t)
@@ -335,8 +345,21 @@ func (v *view) wonder(x, y int, wd *mapmodel.TownWonder) glyph {
 	return g
 }
 
-// terrain is the ground's glyph; water shimmers with the frame.
+// terrain is the ground's glyph: the Earth arc's city where it has built
+// over the land (under its smog), else the land as it was.
 func (v *view) terrain(x, y int, t mapmodel.Terrain, trampled bool) glyph {
+	if v.sc.city == nil || v.pal.city == nil {
+		return v.land(x, y, t, trampled)
+	}
+	i := y*v.sc.w.W + x
+	if g, ok := v.cityGlyph(x, y, t); ok {
+		return v.smogged(i, g)
+	}
+	return v.smogged(i, v.land(x, y, t, trampled))
+}
+
+// land is the land as it was; water shimmers with the frame.
+func (v *view) land(x, y int, t mapmodel.Terrain, trampled bool) glyph {
 	h := mapmodel.Hash(v.sc.w.Seed, 11, int64(x), int64(y))
 	g := glyph{r: ' ', c: mapmodel.CGround}
 	switch t {

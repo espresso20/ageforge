@@ -63,6 +63,7 @@ type regionBuf struct {
 	land, off []bool
 	terr      []mapmodel.Terrain
 	vis, lvl  []uint8
+	urb       []uint8 // the Earth arc city's biome under the cell (cityview.go)
 	dist      []int8
 	st        []glyph
 	over      []rune
@@ -73,13 +74,13 @@ type regionBuf struct {
 func (b *regionBuf) reset(n int) {
 	if cap(b.land) < n {
 		*b = regionBuf{land: make([]bool, n), off: make([]bool, n), terr: make([]mapmodel.Terrain, n),
-			vis: make([]uint8, n), lvl: make([]uint8, n), dist: make([]int8, n), st: make([]glyph, n),
+			vis: make([]uint8, n), lvl: make([]uint8, n), urb: make([]uint8, n), dist: make([]int8, n), st: make([]glyph, n),
 			over: make([]rune, n), oc: make([]mapmodel.Class, n), queue: make([]int, 0, n)}
 	}
 	b.land, b.off, b.terr, b.vis, b.lvl = b.land[:n], b.off[:n], b.terr[:n], b.vis[:n], b.lvl[:n]
-	b.dist, b.st, b.over, b.oc = b.dist[:n], b.st[:n], b.over[:n], b.oc[:n]
+	b.urb, b.dist, b.st, b.over, b.oc = b.urb[:n], b.dist[:n], b.st[:n], b.over[:n], b.oc[:n]
 	for i := 0; i < n; i++ {
-		b.over[i], b.st[i].r = 0, 0
+		b.over[i], b.st[i].r, b.urb[i] = 0, 0, 0
 	}
 }
 
@@ -92,10 +93,12 @@ func (v *view) sample(g geom) {
 	s, rb := v.sc, &v.rbuf
 	n := g.w * g.h
 	rb.reset(n)
+	cl := s.city
 	for i := 0; i < n; i++ {
 		x0, y0 := g.vx+i%g.w*g.scale, g.vy+i/g.w*g.scale
 		land, tot, best, vis := 0, 0, mapmodel.TDeep, uint8(0)
 		stg := glyph{sal: -1}
+		var urb [numBiomes]int
 		for j := 0; j < g.scale*g.scale; j++ {
 			x, y := x0+j%g.scale, y0+j/g.scale
 			if !s.in(x, y) {
@@ -111,10 +114,24 @@ func (v *view) sample(g geom) {
 				best = t
 			}
 			vis = max(vis, s.vis[k])
-			if c := s.cells[k]; c.k != kNone && s.vis[k] == 2 && (c.k != kSite || s.m.Factions[c.civ-1].Discovered) {
+			if c := s.cells[k]; (c.k != kNone || cl != nil && cl.mark[k]) && s.vis[k] == 2 && (c.k != kSite || s.m.Factions[c.civ-1].Discovered) {
 				if gl := v.tile(x, y); gl.sal >= 30 && gl.sal > stg.sal {
 					stg = gl
 				}
+			}
+			if cl != nil {
+				urb[cl.biomeAt(s, k)]++
+			}
+		}
+		if cl != nil { // the city's look wins a cell it covers a third of
+			b, bn := bNature, 0
+			for u := bBuilt; u < numBiomes; u++ {
+				if urb[u] > bn {
+					b, bn = u, urb[u]
+				}
+			}
+			if bn*3 >= tot && tot > 0 {
+				rb.urb[i] = b
 			}
 		}
 		rb.off[i], rb.land[i] = tot == 0, tot > 0 && land*2 >= tot
@@ -180,12 +197,21 @@ func (v *view) plateTerrain(p *plate, g geom, cx, cy int) glyph {
 	switch {
 	case p.biome:
 		out.bg = pal.biome[t]
+		if u := rb.urb[i]; u != bNature && pal.city != nil {
+			out.bg = pal.city.biome[u]
+			if u == bGreen && h < p.marks {
+				out.r, out.c = '♣', mapmodel.CFlora
+			}
+			return out
+		}
 		if land && (t == mapmodel.TMountain || t == mapmodel.THills && h < 0.3) {
 			out.r, out.c = '^', mapmodel.CRock
 		} else if land && t == mapmodel.TForest && h < p.marks {
 			out.r, out.c = '♣', mapmodel.CFlora
 		}
 		return out
+	case p.night && land && rb.urb[i] != bNature && pal.city != nil:
+		return v.cityLights(cx, cy, h)
 	case !land:
 		if p.space || p.contour {
 			out.bg = pal.WaterBg

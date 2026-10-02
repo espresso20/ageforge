@@ -85,6 +85,10 @@ type scene struct {
 	lanes     [][]mapmodel.Pt // lanes on the street network
 	lanesDone bool
 	roads     int // road cells movers may use
+
+	// city is the Earth arc's city over the land (city.go), nil outside
+	// the Modern to the Fusion Age.
+	city *cityLand
 }
 
 func (s *scene) in(x, y int) bool { return s.w.In(x, y) }
@@ -143,6 +147,7 @@ func layScene(m *mapmodel.Model, traffic bool) *scene {
 	if traffic {
 		s.railway()
 	}
+	s.layCity()
 	s.visibility()
 	s.life()
 	s.hazards()
