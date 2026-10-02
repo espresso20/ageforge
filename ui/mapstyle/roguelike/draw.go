@@ -125,6 +125,7 @@ func (v *view) drawLife(cv *mapstyle.Canvas) {
 			v.on(cv, p, r, mapmodel.CIdle, true, lgIdle)
 		}
 		v.drawTraffic(cv, true)
+		v.drawCityFX(cv)
 	}
 	for ri, rt := range m.Routes {
 		fi := factionIndex(m, rt.Civ)

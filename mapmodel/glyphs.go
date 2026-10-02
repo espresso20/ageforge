@@ -302,7 +302,7 @@ var glyphTable = [numSyms]Glyph{
 // G returns a symbol's glyph record.
 func G(s Sym) Glyph {
 	if s >= numSyms {
-		return glyphTable[SymNone]
+		return extGlyph(s) // a block kept in its own file (glyphs_city.go)
 	}
 	return glyphTable[s]
 }
@@ -316,7 +316,7 @@ func AllGlyphs() []Glyph {
 	for s := Sym(1); s < numSyms; s++ {
 		out = append(out, glyphTable[s])
 	}
-	return out
+	return append(out, extGlyphs()...)
 }
 
 // LineageSym is the one symbol a lineage keeps across every age, so a player

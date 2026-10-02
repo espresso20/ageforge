@@ -90,7 +90,8 @@ func TestNoMoverBeforeItsAge(t *testing.T) {
 		}
 	}
 	for _, k := range moverTags {
-		if !seen[k] && k != mapmodel.MoverSatellite { // satellites are drawn by traffic(), not trafficFor
+		// satellites and the tether's climbers are drawn by traffic(), not trafficFor
+		if !seen[k] && k != mapmodel.MoverSatellite && k != mapmodel.MoverClimber {
 			t.Errorf("no %s in any age: the sweep missed a stream", k.Info().Key)
 		}
 	}
@@ -155,8 +156,8 @@ func TestNoMoverBeforeItsAge(t *testing.T) {
 	for _, c := range []struct {
 		age  int
 		want mapmodel.Sym
-	}{{10, mapmodel.SymNone}, {11, mapmodel.SymNone}, {12, mapmodel.SymPlane}, {14, mapmodel.SymPlane},
-		{15, mapmodel.SymDrone}, {16, mapmodel.SymCar}, {19, mapmodel.SymRocket}} {
+	}{{10, mapmodel.SymNone}, {11, mapmodel.SymNone}, {12, mapmodel.SymPlane}, {13, mapmodel.SymPlane},
+		{14, mapmodel.SymDrone}, {15, mapmodel.SymDrone}, {16, mapmodel.SymCar}, {19, mapmodel.SymRocket}} {
 		if got := compactSkySym(bandOf(c.age), c.age); got != c.want {
 			t.Errorf("age %d: compact sky marker %v, want %v", c.age, got, c.want)
 		}
@@ -202,7 +203,7 @@ func TestMoverFallbacks(t *testing.T) {
 		{"cyberpunk_age", 1, kind(vkPrivate), []*vtemplate{&tFlyCar}, 0},
 		{"atomic_age", 1, kind(vkAmbient), []*vtemplate{&tZeppelin, &tBiplane}, 3},
 		{"modern_age", 1, kind(vkAmbient), []*vtemplate{&tJet, &tAirliner, &tHeli}, 0},
-		{"digital_age", 1, kind(vkAmbient), []*vtemplate{&tJet, &tAirliner, &tHeli}, 0},
+		{"digital_age", 1, kind(vkAmbient), []*vtemplate{&tDrone, &tHeli}, 0}, // the drones arrive
 		{"cyberpunk_age", 1, kind(vkAmbient), []*vtemplate{&tDrone}, 0},
 		{"digital_age", 1, kind(vkArmy), []*vtemplate{&tJeep, &tWarband}, 0},
 		{"cyberpunk_age", 1, kind(vkArmy), []*vtemplate{&tHoverTank, &tWarband}, 0},

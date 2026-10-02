@@ -36,6 +36,12 @@ const (
 	MoverShuttle
 	MoverSatellite
 	MoverHabitat
+	// The Earth arc (glyphs_city.go): the news helicopter, the sky train,
+	// the megacity's crowds and the space elevator's climbers.
+	MoverNewsHeli
+	MoverSkyTrain
+	MoverCrowd
+	MoverClimber
 	NumMovers
 )
 
@@ -101,10 +107,12 @@ type moverDef struct {
 // hunters; Iron ox carts, riders and rowboats; Steel wagons, sailing ships
 // and, from the Industrial Age, the railway and its steam trains; Electric
 // trams, steamships and early cars; Digital cars, trucks, planes, container
-// ships and freight trains; Neon maglevs, drones and hovercars, with
-// shuttles from the Space Age's launch pads; Cosmic orbital habitats.
-// Satellites cross the night sky from the Modern Age, as the skyline has
-// always drawn them.
+// ships and freight trains, news helicopters from the Information Age and
+// drones from the Digital Age; Neon maglevs and hovercars, with the
+// megacity's sky trains and crowds, the space elevator's climbers from the
+// Fusion Age and shuttles from the Space Age's launch pads; Cosmic orbital
+// habitats. Satellites cross the night sky from the Modern Age, as the
+// skyline has always drawn them.
 var moverDefs = [NumMovers]moverDef{
 	MoverWalker: {key: "walker", name: "worker at work", title: "Worker", sym: SymWorker, class: CLife, way: WayFoot,
 		from: "primitive_age", pace: 5, lines: []string{"On the way to work.", "Heading home after a shift."}},
@@ -157,7 +165,7 @@ var moverDefs = [NumMovers]moverDef{
 		from: "cyberpunk_age", pace: 1, cars: 4,
 		lines: []string{"A maglev, gliding on its rail.", "A maglev, running silent."}},
 	MoverDrone: {key: "drone", name: "drone", title: "Drone", sym: SymDrone, class: CLife, way: WaySky,
-		from: "cyberpunk_age", pace: 2, lines: []string{"A delivery drone, on its rounds.", "A drone, watching the streets."}},
+		from: "digital_age", pace: 2, lines: []string{"A delivery drone, on its rounds.", "A drone, watching the streets."}},
 	MoverHovercar: {key: "hovercar", name: "hovercar", title: "Hovercar", sym: SymHovercar, class: CCivic,
 		way: WayStreet, from: "cyberpunk_age", pace: 2,
 		lines: []string{"A hovercar, skimming the street.", "A hovercar, cutting corners."}},
@@ -169,6 +177,23 @@ var moverDefs = [NumMovers]moverDef{
 	MoverHabitat: {key: "habitat", name: "orbital habitat", title: "Orbital habitat", sym: SymOrbital, class: CWealth,
 		way: WaySky, from: "interstellar_age", pace: 12,
 		lines: []string{"An orbital habitat, home to thousands.", "An orbital habitat, turning slowly."}},
+
+	// The Earth arc (the Modern Age to the Fusion Age). The sky train runs
+	// the megacity's elevated lines (the maglev takes them over once fusion
+	// powers the city); the climber rides the space elevator's tether, which
+	// rises in the Fusion Age and stays.
+	MoverNewsHeli: {key: "news_helicopter", name: "news helicopter", title: "News helicopter", sym: SymNewsHeli,
+		class: CLife, way: WaySky, from: "information_age", until: "digital_age", pace: 2,
+		lines: []string{"A news helicopter, circling the story.", "A traffic helicopter, counting the jams."}},
+	MoverSkyTrain: {key: "sky_train", name: "sky train", title: "Sky train", sym: SymSkyTrain, class: CCivic,
+		way: WayRail, from: "cyberpunk_age", until: "cyberpunk_age", pace: 1, cars: 3,
+		lines: []string{"A sky train, threading the towers.", "A sky train, packed to the doors."}},
+	MoverCrowd: {key: "crowd", name: "crowd", title: "Crowd", sym: SymCrowd, class: CLife, way: WayFoot,
+		from: "cyberpunk_age", pace: 6,
+		lines: []string{"A crowd, under the neon.", "A crowd, pushing for the sky train."}},
+	MoverClimber: {key: "climber", name: "tether climber", title: "Tether climber", sym: SymClimber, class: CWealth,
+		way: WaySky, from: "fusion_age", pace: 4,
+		lines: []string{"A climber, riding the tether up.", "A climber, hauling cargo to orbit."}},
 }
 
 var moverTable = buildMovers()

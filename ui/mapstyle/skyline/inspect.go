@@ -21,7 +21,8 @@ const (
 	tLot
 	tCiv
 	tHarbinger
-	tUFO // the visitor's saucer: ↑ past the ridge reaches it, Tab never does
+	tUFO    // the visitor's saucer: ↑ past the ridge reaches it, Tab never does
+	tTether // the space elevator, from the Fusion Age (city.go)
 )
 
 // target names what the cursor is on, stably across model rebuilds.
@@ -63,6 +64,9 @@ func targets(m *mapmodel.Model, w, cam int) []tgt {
 			t.target = target{kind: tCiv, key: it.fac.Key}
 		}
 		out = append(out, t)
+	}
+	if x := tetherX(m); x >= 0 { // the space elevator stands as tall as the ridge
+		out = append(out, tgt{target: target{kind: tTether}, row: ridgeRow, x: x})
 	}
 	return out
 }
@@ -239,6 +243,11 @@ func (v *view) inspection(m *mapmodel.Model, anim int) (in inspectionData, ok bo
 			in.lines = append(in.lines, strconv.Itoa(f.TradeCount)+" trades")
 		}
 		in.cmd = m.FactionCommand(f)
+	case tTether:
+		info := mapmodel.FeatTether.Info()
+		in.title = info.Title
+		in.lines = append(in.lines, info.Lines...)
+		in.cmd = mapmodel.CmdStatus
 	case tHarbinger:
 		h := m.Harbinger
 		if h == nil {

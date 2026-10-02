@@ -121,6 +121,8 @@ func (v *view) sceneFor(m *mapmodel.Model) *scene {
 type pal struct {
 	*mapstyle.Palette
 	key    string
+	age    int            // the age the Earth arc's look was tuned for (-1: none)
+	city   *cityPal       // the Earth arc's inks, nil outside it
 	dim    tcell.Color    // understaffed buildings
 	tint   tcell.Color    // the plate's paper (hide, parchment)
 	biome  [8]tcell.Color // satellite colour cells, by terrain
@@ -129,18 +131,26 @@ type pal struct {
 	memo   map[[2]tcell.Color]tcell.Color
 }
 
-func (v *view) palette(epoch int) *pal {
+func (v *view) palette(epoch, age int) *pal {
 	key := theme.Active().Key
-	if v.pal != nil && v.pal.key == key && v.pal.Epoch == epoch {
+	look, city := mapmodel.CityLookAt(age)
+	if !city {
+		age = -1
+	}
+	if v.pal != nil && v.pal.key == key && v.pal.Epoch == epoch && v.pal.age == age {
 		return v.pal
 	}
 	base := *mapstyle.NewPalette(epoch)
-	p := &pal{Palette: &base, key: key, memo: map[[2]tcell.Color]tcell.Color{}}
+	p := &pal{Palette: &base, key: key, age: age, memo: map[[2]tcell.Color]tcell.Color{}}
 	bg := p.Bg
 	if dials[epochIdx(epoch)].night { // the land recedes so lit structures glow
 		for _, c := range []mapmodel.Class{mapmodel.CGround, mapmodel.CFlora, mapmodel.CRock, mapmodel.CHill, mapmodel.CWater} {
 			p.Fg[c] = theme.Legible(theme.Mix(p.Fg[c], bg, 0.35), bg, 1.5)
 		}
+	}
+	if city {
+		p.cityLook(look)
+		bg = p.Bg
 	}
 	p.dim = theme.Legible(theme.Mix(bg, theme.Color(theme.RoleDim), 0.6), bg, 1.6)
 	p.tint = bg

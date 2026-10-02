@@ -135,8 +135,9 @@ func (s *scene) traffic() {
 			}
 		case mapmodel.WayRail:
 			// One train to a line (it is a single track), two cars longer in
-			// a busy town; it waits a while at each end of the line.
-			if len(s.rail) > 8 {
+			// a busy town; it waits a while at each end of the line. The sky
+			// train keeps to the megacity's elevated lines (cityMovers).
+			if len(s.rail) > 8 && k != mapmodel.MoverSkyTrain {
 				add(k, [][]mapmodel.Pt{s.rail}, 0, false, 30)
 				if busy > 0.6 {
 					s.movers[len(s.movers)-1].cars += 2
@@ -148,6 +149,7 @@ func (s *scene) traffic() {
 	}
 	s.streetMovers(street, min(perKindMax, 1+int(float64(busy*2.5))), add)
 	s.waterMovers(water, busy, add)
+	s.cityMovers(add)
 }
 
 // streetMovers shares the street network among the age's street movers,

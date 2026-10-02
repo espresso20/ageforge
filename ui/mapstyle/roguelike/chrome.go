@@ -23,11 +23,11 @@ const sideW = 26
 func (v *view) begin(f mapstyle.Frame) *scene {
 	v.anim, v.tier, v.seen = f.Anim, f.Tier, [numLg]lgEntry{}
 	s := v.sceneFor(f.Model)
-	ep := 0
+	ep, age := 0, -1
 	if s != nil {
-		ep = s.epoch
+		ep, age = s.epoch, s.m.AgeIdx
 	}
-	v.palette(ep)
+	v.palette(ep, age)
 	return s
 }
 
@@ -283,26 +283,68 @@ func (v *view) box(cv *mapstyle.Canvas, x, y, w, maxH int) {
 	}
 }
 
-// drawLegend lists what this frame actually drew, by group.
+// legendPair is the widest label a packed legend row pairs: two short
+// labels share a row when the legend would not fit one to a row.
+const legendPair = 9
+
+// drawLegend lists what this frame actually drew, by group. When the
+// rows would run past the bottom (a busy late-age town), short labels
+// pair up two to a row so the traffic at the end still fits.
 func (v *view) drawLegend(cv *mapstyle.Canvas, x, y, w, h int) {
 	cv.Text(x, y, w, "LEGEND", v.cls(mapmodel.CAccent).Bold(true))
-	row, end := y+1, y+h
-	for grp := uint8(0); grp < uint8(len(lgGroups)); grp++ {
-		head := false
-		for id := lgID(0); id < numLg; id++ {
-			label, g := lgLabel(id)
-			if e := v.seen[id]; e.on && g == grp && label != "" {
-				if !head && row+1 < end {
-					cv.Text(x, row, w, lgGroups[grp], v.cls(mapmodel.CDim))
-					row, head = row+1, true
-				}
-				if !head || row >= end {
-					return
-				}
-				cv.Put(x+1, row, e.r, e.st)
-				cv.Text(x+3, row, w-3, label, v.cls(mapmodel.CText))
-				row++
+	type row struct {
+		e     lgEntry
+		label string
+	}
+	var groups [len(lgGroups)][]row
+	need := 0
+	for id := lgID(0); id < numLg; id++ {
+		label, g := lgLabel(id)
+		if e := v.seen[id]; e.on && label != "" {
+			if len(groups[g]) == 0 {
+				need++
 			}
+			groups[g] = append(groups[g], row{e, label})
+			need++
+		}
+	}
+	pack := need > h-1 && w >= 2*legendPair+5
+	put := func(px, py, pw int, r row) {
+		cv.Put(px, py, r.e.r, r.e.st)
+		cv.Text(px+2, py, pw-2, r.label, v.cls(mapmodel.CText))
+	}
+	at, end := y+1, y+h
+	for grp, rows := range groups {
+		if len(rows) == 0 {
+			continue
+		}
+		if at+1 >= end {
+			return
+		}
+		cv.Text(x, at, w, lgGroups[grp], v.cls(mapmodel.CDim))
+		at++
+		var held *row // a short label waiting for a partner
+		for i := range rows {
+			r := &rows[i]
+			switch {
+			case at >= end:
+				return
+			case !pack || mapstyle.TextLen(r.label) > legendPair:
+				put(x+1, at, w-1, *r)
+				at++
+			case held == nil:
+				held = r
+				continue
+			default:
+				put(x, at, legendPair+2, *held)
+				put(x+legendPair+3, at, w-legendPair-3, *r)
+				held = nil
+				at++
+			}
+		}
+		if held != nil && at < end {
+			put(x+1, at, w-1, *held)
+			at++
 		}
 	}
 }

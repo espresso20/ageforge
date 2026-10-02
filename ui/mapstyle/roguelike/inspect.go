@@ -19,7 +19,7 @@ func (v *view) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
 	if s == nil || !v.inspect {
 		return insp{}, false
 	}
-	v.palette(s.epoch)
+	v.palette(s.epoch, s.m.AgeIdx)
 	v.tier, v.anim = f.Tier, f.Anim
 	p, region := v.cur, v.zoom == zRegion && v.g.zoom == zRegion
 	if region && v.g.scale > 1 { // the most salient tile in the cell
@@ -98,6 +98,12 @@ func (v *view) describe(s *scene, p mapmodel.Pt) insp {
 		}
 	}
 	t := w.At(p.X, p.Y)
+	if s.city != nil && c.k != kTile && c.k != kWonder && c.k != kSite && c.k != kCentre &&
+		(s.city.ov[p.Y*w.W+p.X] != 0 || !c.rail) { // a line over the railway, or no railway
+		if in, ok := v.describeCity(s, p, c.k); ok {
+			return in
+		}
+	}
 	if c.rail && len(s.rail) > 0 && c.k != kTile && c.k != kWonder && c.k != kSite && c.k != kCentre {
 		return insp{Title: v.railName(), Lines: []string{v.railLine()}}
 	}
