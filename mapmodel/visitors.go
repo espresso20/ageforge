@@ -3,6 +3,9 @@ package mapmodel
 // visitors.go schedules the rare visitor: from the Space Age on, now and
 // then a saucer crosses the sky or hovers over the town, or a small figure
 // walks a street, and is gone. Before the Space Age it is a long-odds joke.
+// In the Galactic Age the visitors graduate: their saucers become ordinary
+// traffic (MoverAlienShip, one colour per species in Aliens), so from then
+// on the model schedules no surprise visits.
 // The schedule is a pure function of the save's seed, the age and the
 // animation frame (the maps animate at about 8 frames a second on the wall
 // clock), never of package math/rand, so captures and tests reproduce it.
@@ -100,12 +103,16 @@ func (c *Catalog) SpaceAge() int {
 	return -1
 }
 
-// SightingAt is the model's visit at animation frame anim, if any.
+// SightingAt is the model's visit at animation frame anim, if any. From the
+// Galactic Age there are none: the aliens are traffic by then.
 func (m *Model) SightingAt(anim int) (Sighting, bool) {
 	late := false
 	if m.Catalog != nil {
 		sa := m.Catalog.SpaceAge()
 		late = sa >= 0 && m.AgeIdx >= sa
+		if ga := m.Catalog.SkySceneAge(SkyGalaxy); ga >= 0 && m.AgeIdx >= ga {
+			return Sighting{}, false
+		}
 	}
 	return SightingAt(m.Seed, late, anim)
 }

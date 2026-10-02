@@ -226,8 +226,11 @@ func buildMovers() [NumMovers]MoverInfo {
 	return out
 }
 
-// Info returns a mover's roster entry.
+// Info returns a mover's roster entry (the sky arc's movers too).
 func (k Mover) Info() MoverInfo {
+	if k >= NumMovers && k < numAllMovers {
+		return skyMoverTable[k-NumMovers]
+	}
 	if k >= NumMovers {
 		return moverTable[MoverNone]
 	}
@@ -241,13 +244,97 @@ func Introduced(k Mover, age int) bool {
 	return i.From >= 0 && age >= i.From
 }
 
-// MoversAt lists the movers about in the age with index age, in roster order.
+// MoversAt lists the movers about in the age with index age, in roster
+// order (the sky arc's last).
 func MoversAt(age int) []Mover {
 	var out []Mover
-	for k := Mover(1); k < NumMovers; k++ {
-		if moverTable[k].In(age) {
+	for k := Mover(1); k < numAllMovers; k++ {
+		if k.Info().In(age) {
 			out = append(out, k)
 		}
+	}
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// The sky arc's movers (Space Age to Transcendent Age)
+//
+// From the Space Age both map styles leave the ground (sky.go), and these
+// movers travel the sky scenes' own lanes: the asteroid belt, the gulfs
+// between colony worlds, the lanes of the starbase. (The tether's climbers
+// are the Earth arc's MoverClimber: the elevator rises in the Fusion Age and
+// the sky scenes carry it on.) They number on from NumMovers in a range of
+// their own, so the ground roster above (and the arrays the styles size by
+// NumMovers) is untouched; Info, Introduced and MoversAt cover both ranges.
+// WaySpace keeps them off the ground's streets, rails, water and sky.
+// ---------------------------------------------------------------------------
+
+// WaySpace is open space: the lanes of the sky scenes.
+const WaySpace Way = 16
+
+const (
+	MoverMiningDrone Mover = NumMovers + iota // a drone hauling ore from the belt
+	MoverGenShip                              // a generation ship, trailing its engines
+	MoverStarship                             // a starship, jumping to warp
+	MoverAlienShip                            // an alien saucer: the visitor, now ordinary traffic
+	MoverPhaseShip                            // a ship that tunnels between possibilities
+	MoverMote                                 // a mote of light, drifting home
+	numAllMovers
+)
+
+// NumSkyMovers is how many movers the sky arc adds.
+const NumSkyMovers = int(numAllMovers - NumMovers)
+
+// SkyMoverFirst is the first of the sky arc's movers; they run to
+// SkyMoverFirst + NumSkyMovers.
+const SkyMoverFirst = MoverMiningDrone
+
+var skyMoverDefs = [numAllMovers - NumMovers]moverDef{
+	MoverMiningDrone - NumMovers: {key: "mining_drone", name: "mining drone", title: "Mining drone", sym: SymMiningDrone,
+		class: CWork, way: WaySpace, from: "space_age", until: "interstellar_age", pace: 2,
+		lines: []string{"A mining drone, hauling ore from the belt.", "A mining drone, out for another rock."}},
+	MoverGenShip - NumMovers: {key: "generation_ship", name: "generation ship", title: "Generation ship", sym: SymGenShip,
+		class: CLife, way: WaySpace, from: "interstellar_age", until: "interstellar_age", pace: 6,
+		lines: []string{"A generation ship: its crew's grandchildren will land.", "A generation ship, a town in a hull."}},
+	MoverStarship - NumMovers: {key: "starship", name: "starship", title: "Starship", sym: SymStarship,
+		class: CLife, way: WaySpace, from: "galactic_age", until: "galactic_age", pace: 1,
+		lines: []string{"A starship, about to jump to warp.", "A starship, home from the far side of the arm."}},
+	MoverAlienShip - NumMovers: {key: "alien_ship", name: "alien ship", title: "Alien ship", sym: SymUFO,
+		class: CFresh, way: WaySpace, from: "galactic_age", until: "galactic_age", pace: 2,
+		lines: []string{"An alien ship, on ordinary business.", "An alien ship, docking like anyone else."}},
+	MoverPhaseShip - NumMovers: {key: "phase_ship", name: "phase ship", title: "Phase ship", sym: SymPhaseShip,
+		class: CCivic, way: WaySpace, from: "quantum_age", until: "quantum_age", pace: 2,
+		lines: []string{"A phase ship, in several places at once.", "A phase ship, arriving before it left."}},
+	MoverMote - NumMovers: {key: "mote", name: "mote of light", title: "Mote of light", sym: SymMote,
+		class: CText, way: WaySpace, from: "transcendent_age", pace: 12,
+		lines: []string{"A mote of light, drifting home.", "A mote of light. It was a city once."}},
+}
+
+var skyMoverTable = buildSkyMovers()
+
+func buildSkyMovers() [numAllMovers - NumMovers]MoverInfo {
+	idx := map[string]int{}
+	for i, k := range config.AgeOrder() {
+		idx[k] = i
+	}
+	age := func(k string) int {
+		if k == "" {
+			return -1
+		}
+		if i, ok := idx[k]; ok {
+			return i
+		}
+		return -2 // an unknown age key: never about (TestSkyMoverRoster fails on it)
+	}
+	var out [numAllMovers - NumMovers]MoverInfo
+	for i, d := range skyMoverDefs {
+		info := MoverInfo{Key: d.key, Name: d.name, Title: d.title, Sym: d.sym, Class: d.class, Way: d.way,
+			From: age(d.from), Until: age(d.until), Pace: max(1, d.pace), Cars: max(1, d.cars),
+			Smoke: d.smoke, Night: d.night, Lines: d.lines}
+		if info.From < 0 || info.Until == -2 {
+			info.From, info.Until = -1, -1
+		}
+		out[i] = info
 	}
 	return out
 }
