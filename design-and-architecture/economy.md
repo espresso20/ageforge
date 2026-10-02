@@ -50,8 +50,10 @@ loses nothing at a cap. Longer absences are the build plan's and wonder overflow
 which put the income to work instead of holding it, so storage keeps its pressure. At 2
 hours (every age's storage about a third bigger again) 8-hour check-ins improved by about
 5% and 3-hour ones not at all (measured with an earlier bot), so the extra storage wasn't
-earning its keep. The lever is the age's storage per
-copy, raised only where an age falls short; there is no flat multiplier. `smoke.StaticStorage`
+earning its keep. The one-week curve (2026-10-01) left the threshold at 1.5 hours, but from
+the Bronze Age on typical income per tick fell to 1/2.6 while storage stayed as typed, so
+there max storage now holds about 3.9 hours or more of typical income. The lever is the
+age's storage per copy, raised only where an age falls short; there is no flat multiplier. `smoke.StaticStorage`
 checks it, `TestStorageCovenant` fails `go test ./...` when a change breaks it, and
 `TestStorageCovenantCatchesBrokenStorage` feeds it the old numbers.
 
@@ -61,23 +63,42 @@ checks it, `TestStorageCovenant` fails `go test ./...` when a change breaks it, 
 
 AgeForge is a terminal idle game that players check a few times a day, and it grants up to
 24 hours of offline progress, so game time is close to calendar time. The targets
-(`config.AgeTargets`, 2026-09-27):
+(`config.AgeTargets`, 2026-09-27; the one-week curve since 2026-10-01):
 
 | Age | Target | Age | Target | Age | Target |
 |-----|--------|-----|--------|-----|--------|
-| Primitive | 15 min | Renaissance | 6 h | Information | 14 h |
-| Stone | 45 min | Colonial | 7 h | Digital | 16 h |
-| Bronze | 1.5 h | Industrial | 8 h | Cyberpunk | 18 h |
-| Iron | 2.5 h | Victorian | 9 h | Fusion | 20 h |
-| Classical | 3.5 h | Electric | 10 h | Space | 22 h |
-| Medieval | 4.5 h | Atomic | 12 h | Interstellar, Galactic, Quantum | 24 h each |
-| | | Modern | 12 h | | |
+| Primitive | 15 min | Renaissance | 15 h 36 min | Information | 36 h 24 min |
+| Stone | 45 min | Colonial | 18 h 12 min | Digital | 41 h 36 min |
+| Bronze | 3 h 54 min | Industrial | 20 h 48 min | Cyberpunk | 46 h 48 min |
+| Iron | 6 h 30 min | Victorian | 23 h 24 min | Fusion | 52 h |
+| Classical | 9 h 6 min | Electric | 26 h | Space | 57 h 12 min |
+| Medieval | 11 h 42 min | Atomic | 31 h 12 min | Interstellar, Galactic, Quantum | 62 h 24 min each |
+| | | Modern | 31 h 12 min | | |
 
-That is about three days to the Modern Age, where the first prestige unlocks, and about
-twelve days to the Quantum Age. **The first prestige is a three-day goal, not a several-week
+That is about a week (167.4 hours) to the Modern Age, where the first prestige unlocks, and
+about 23 days to the Quantum Age. **The first prestige is a one-week goal, not a several-week
 one**: the old "several weeks of calendar time" target, and the per-building build-time
 table that went with it (hours to weeks per building from the Victorian Age on), described
 a game no one could finish; no run reached the Modern Age at all.
+
+**The stretch (2026-10-01).** The table is `baseAgeTargets`, the three-day curve the game's
+tick clocks were written for (1.5 h Bronze to 12 h Atomic, 24 h per Cosmic age), times
+`config.AgeStretch(age)`: 1 for the Primitive and Stone Ages, which stay the first hour of the
+game, and `config.PacingStretch` (2.6) from the Bronze Age on. What derives from the targets
+follows by itself (the caps and paybacks below, so construction-resource output per tick from
+the Bronze Age on is 1/2.6 of the base curve's, and the harbinger's Appease prices). Every clock
+counted in ticks goes through `config.StretchTicks(age, ticks)`, so an age holds as many events,
+raids and routes as before, each lasting the same share of it: the random-event delay, event
+durations and cooldowns, epoch events and awakenings, diplomacy cadences, war raids, worker
+loans and deal rotation, trade route cycles, expeditions and campaigns, the Geographic
+Society's dispatch interval, faction boons and setbacks (whose instant lumps are divided by
+the stretch instead), the festival and the black market, and milestone chain boosts; Survivor
+and Enduring Civilization ask for 2.6 times the ticks of play. Left as they were: the Endure
+debuff (for now), the offline cap (24 hours at 50%), the Storage Covenant threshold, market
+pressure decay, morale drift and starvation, which run on the real clock, and the hand-set
+food, faith, culture and soldier rates. A future change to the curve is that one number. Saves
+need no migration: one written before the stretch logs a single line on its next load, and its
+next save carries `pacing_week`.
 
 Derived from the targets:
 - **Payback** (Law 3) sets production.
@@ -87,11 +108,16 @@ Derived from the targets:
 - **Research time** is at most 1/8 of the tech's age target, so the handful of techs an age
   offers fit in it one at a time.
 - The per-building wait falls out of these: with a dozen producers each repaying in the
-  payback time, the next copy is minutes away early and an hour or two late.
+  payback time, the next copy is minutes away early and a few hours late.
 
 **Measuring it.** The smoke harness plays a greedy bot on fixed seeds and reports the time
 spent in each age; `smoke/targets.go` holds the same table (a test keeps the two equal) and
-`-pacing enforce` fails a set of runs whose median for a first-cycle age leaves 0.5x-2x of it. CI runs enforced:
+`-pacing enforce` fails a set of runs whose median for a first-cycle age leaves 0.5x-2x of it,
+or whose median first run to the Modern Age leaves `FirstRunLow` to `FirstRunHigh` (4.8 to 6.2
+days: the greedy bot, a near-perfect player, lands near 5.3, because build and research times
+are capped copies of hand-typed values and grow less than the targets). The pacing table also
+reports each age's longest quiet stretch, the median of each seed's longest stretch with no new
+building type built and no tech finished (reported only). CI runs enforced:
 the per-PR fast tier grades the Primitive and Stone Ages, the nightly every age to the first
 prestige, and a weekly deep run every age to the Galactic (five seeds to a Quantum Age
 prestige). The bot has to play like a reasonable person for this to
@@ -99,11 +125,13 @@ measure the game rather than the bot (see the bot's strategy comment in `smoke/b
 
 **Idle targets.** The targets describe an attentive player. The player AgeForge is built
 for checks in a few times a day, so the check-in player has targets of its own, in
-`smoke/idle_targets.go`: the first prestige within **3.5 days at 1-hour check-ins, 5 days
-at 3-hour and 8 days at 8-hour**, the median of three seeds. The bot plays those
+`smoke/idle_targets.go`: the first prestige within **7.5 days at 1-hour check-ins, 8 days
+at 3-hour and 11.5 days at 8-hour**, the median of three seeds (measured at 6.32, 6.63 and
+9.84 days when the one-week curve landed). The bot plays those
 (`Bot.CheckIn`, `Bot.planAhead`): at each visit it spends and builds storage, then leaves a
 build plan for the hours until the next one, with wonder overflow on. The nightly's `idle`
-scenario enforces them; the per-age greedy targets don't apply, since a check-in player
+scenario enforces them, and reports each interval as a ratio to the greedy bot on the same
+seeds (reported, not graded); the per-age greedy targets don't apply, since a check-in player
 can only act at a visit.
 
 ### Law 3: The Payback Rule

@@ -50,7 +50,7 @@ Build → Staff → Research → Advance → Repeat
 
 ## Step-by-step: First 15 minutes
 
-The Primitive Age is tuned to take about **15 minutes** at 1x speed, the Stone Age about **45 minutes**, and the Bronze Age about **1.5 hours**. See [How Long Each Age Takes](ages.md#how-long-each-age-takes) for the full curve.
+The Primitive Age is tuned to take about **15 minutes** at 1x speed, the Stone Age about **45 minutes**, and the Bronze Age just under **4 hours** (3h 54m). See [How Long Each Age Takes](ages.md#how-long-each-age-takes) for the full curve.
 
 ### 1. Build a gathering camp and a wood camp
 Food runs out before anything else. Get production going first:

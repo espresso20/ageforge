@@ -252,12 +252,12 @@ Level 1 prices. Level 2 costs double.
 | Era | Appease (level 1) | Brace (level 1) |
 |-----|-------------------|-----------------|
 | Stone Era | refused: nothing can strike there | refused |
-| Iron Era | 5.4K faith | 26.4K knowledge, 26.4K stone, 6.36K iron, 21.6K gold |
-| Steel Era | 74K faith, 770K culture | 3.6M knowledge, 1.8M gold, 288K steel |
-| Electric Era | 1.2M faith, 16M culture | 56.4M steel, 924K oil, 3.96M electricity |
-| Digital Era | 12M faith, 180M culture | 156M gold, 117.6B electricity, 19.2B data |
-| Neon Era | 130M faith, 2B culture | 288B electricity, 46.8B data, 3B crypto |
-| Cosmic Era | 1.2B faith, 19B culture | 1.56T dark matter, 75.6B titanium |
+| Iron Era | 14K faith | 26.4K knowledge, 26.4K stone, 6.36K iron, 21.6K gold |
+| Steel Era | 190K faith, 2M culture | 3.6M knowledge, 1.8M gold, 288K steel |
+| Electric Era | 3M faith, 42M culture | 56.4M steel, 924K oil, 3.96M electricity |
+| Digital Era | 31M faith, 460M culture | 156M gold, 117.6B electricity, 19.2B data |
+| Neon Era | 340M faith, 5.2B culture | 288B electricity, 46.8B data, 3B crypto |
+| Cosmic Era | 3.1B faith, 48B culture | 1.56T dark matter, 75.6B titanium |
 
 The Cosmic Era's passage is prestige, which you may take in any of its ages. Its Appease counts the Interstellar, Galactic and Quantum Ages, so if you prestige as soon as you arrive, Appease is out of reach; stay a day or two and it isn't. Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
 

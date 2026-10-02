@@ -327,7 +327,7 @@ See [The Last Passage](prestige.md#the-last-passage) for what can happen when yo
 | `festival` | Show festival status: culture cost, current culture, and the boost it grants |
 | `festival confirm yes` | Hold a cultural festival now: spend culture for a temporary production boost |
 
-A festival costs the larger of 2K culture or 5% of your culture storage, and gives **+20% to all production for 150 ticks** (~5 minutes). Festivals have a **300-tick cooldown** (~10 minutes), so they stay an occasional, deliberate boost. Culture also pays for cultural monuments, black-market smuggling runs, harbinger Appease (from the Steel Era) and tribute to end a war; see [Resources](resources.md#culture).
+A festival costs the larger of 2K culture or 5% of your culture storage, and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes), so they stay an occasional, deliberate boost. Culture also pays for cultural monuments, black-market smuggling runs, harbinger Appease (from the Steel Era) and tribute to end a war; see [Resources](resources.md#culture).
 
 ---
 

@@ -98,7 +98,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### ⭕ Stonehenge
-**Age:** Bronze · **Key:** `stonehenge` · **Build:** 450 ticks (15m)
+**Age:** Bronze · **Key:** `stonehenge` · **Build:** 1,170 ticks (39m)
 
 | Resource | Cost |
 |---|---|
@@ -111,7 +111,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🏟 Colosseum
-**Age:** Iron · **Key:** `colosseum` · **Build:** 750 ticks (25m)
+**Age:** Iron · **Key:** `colosseum` · **Build:** 1,950 ticks (1h 5m)
 
 | Resource | Cost |
 |---|---|
@@ -124,7 +124,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🏛 Parthenon
-**Age:** Classical · **Key:** `parthenon` · **Build:** 1,050 ticks (35m)
+**Age:** Classical · **Key:** `parthenon` · **Build:** 2,500 ticks (1h 23m 20s)
 
 | Resource | Cost |
 |---|---|
@@ -137,7 +137,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 📚 Great Library
-**Age:** Medieval · **Key:** `great_library` · **Build:** 1,350 ticks (45m)
+**Age:** Medieval · **Key:** `great_library` · **Build:** 3,510 ticks (1h 57m)
 
 | Resource | Cost |
 |---|---|
@@ -150,7 +150,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🎨 Sistine Chapel
-**Age:** Renaissance · **Key:** `sistine_chapel` · **Build:** 1,800 ticks (1h)
+**Age:** Renaissance · **Key:** `sistine_chapel` · **Build:** 4,680 ticks (2h 36m)
 
 | Resource | Cost |
 |---|---|
@@ -164,7 +164,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🏮 Grand Lighthouse
-**Age:** Colonial · **Key:** `grand_lighthouse` · **Build:** 2,100 ticks (1h 10m)
+**Age:** Colonial · **Key:** `grand_lighthouse` · **Build:** 5,460 ticks (3h 2m)
 
 | Resource | Cost |
 |---|---|
@@ -177,7 +177,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🏗 Crystal Palace
-**Age:** Industrial · **Key:** `crystal_palace` · **Build:** 2,400 ticks (1h 20m)
+**Age:** Industrial · **Key:** `crystal_palace` · **Build:** 6,240 ticks (3h 28m)
 
 | Resource | Cost |
 |---|---|
@@ -191,7 +191,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🗼 Eiffel Tower
-**Age:** Victorian · **Key:** `eiffel_tower` · **Build:** 2,700 ticks (1h 30m)
+**Age:** Victorian · **Key:** `eiffel_tower` · **Build:** 7,020 ticks (3h 54m)
 
 | Resource | Cost |
 |---|---|
@@ -204,7 +204,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🌊 Hoover Dam
-**Age:** Electric · **Key:** `hoover_dam` · **Build:** 3,000 ticks (1h 40m)
+**Age:** Electric · **Key:** `hoover_dam` · **Build:** 7,800 ticks (4h 20m)
 
 | Resource | Cost |
 |---|---|
@@ -217,7 +217,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### ⚛️ Particle Accelerator
-**Age:** Atomic · **Key:** `particle_accelerator` · **Build:** 3,600 ticks (2h)
+**Age:** Atomic · **Key:** `particle_accelerator` · **Build:** 9,360 ticks (5h 12m)
 
 | Resource | Cost |
 |---|---|
@@ -230,7 +230,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🚀 Space Program
-**Age:** Modern · **Key:** `space_program` · **Build:** 3,600 ticks (2h)
+**Age:** Modern · **Key:** `space_program` · **Build:** 9,360 ticks (5h 12m)
 
 | Resource | Cost |
 |---|---|
@@ -244,7 +244,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🌐 Global Network
-**Age:** Information · **Key:** `global_network` · **Build:** 4,200 ticks (2h 20m)
+**Age:** Information · **Key:** `global_network` · **Build:** 10,920 ticks (6h 4m)
 
 | Resource | Cost |
 |---|---|
@@ -258,7 +258,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 💻 World Simulation
-**Age:** Digital · **Key:** `world_simulation` · **Build:** 4,800 ticks (2h 40m)
+**Age:** Digital · **Key:** `world_simulation` · **Build:** 12,480 ticks (6h 56m)
 
 | Resource | Cost |
 |---|---|
@@ -271,7 +271,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🌆 Neon Citadel
-**Age:** Cyberpunk · **Key:** `neon_citadel` · **Build:** 5,400 ticks (3h)
+**Age:** Cyberpunk · **Key:** `neon_citadel` · **Build:** 14,040 ticks (7h 48m)
 
 | Resource | Cost |
 |---|---|
@@ -285,7 +285,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### ☀️ Stellar Cradle
-**Age:** Fusion · **Key:** `stellar_cradle` · **Build:** 6,000 ticks (3h 20m)
+**Age:** Fusion · **Key:** `stellar_cradle` · **Build:** 15,600 ticks (8h 40m)
 
 | Resource | Cost |
 |---|---|
@@ -298,7 +298,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🛰 Dyson Scaffold
-**Age:** Space · **Key:** `dyson_scaffold` · **Build:** 6,600 ticks (3h 40m)
+**Age:** Space · **Key:** `dyson_scaffold` · **Build:** 17,160 ticks (9h 32m)
 
 | Resource | Cost |
 |---|---|
@@ -311,7 +311,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🌀 Warp Nexus
-**Age:** Interstellar · **Key:** `warp_nexus` · **Build:** 7,200 ticks (4h)
+**Age:** Interstellar · **Key:** `warp_nexus` · **Build:** 18,720 ticks (10h 24m)
 
 | Resource | Cost |
 |---|---|
@@ -324,7 +324,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### 🌌 Cosmic Beacon
-**Age:** Galactic · **Key:** `cosmic_beacon` · **Build:** 7,200 ticks (4h)
+**Age:** Galactic · **Key:** `cosmic_beacon` · **Build:** 18,720 ticks (10h 24m)
 
 | Resource | Cost |
 |---|---|
@@ -337,7 +337,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### ⚡ Reality Anchor
-**Age:** Quantum · **Key:** `reality_anchor` · **Build:** 7,200 ticks (4h)
+**Age:** Quantum · **Key:** `reality_anchor` · **Build:** 18,720 ticks (10h 24m)
 
 | Resource | Cost |
 |---|---|
@@ -350,7 +350,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 ---
 
 ### ✨ Singularity Core
-**Age:** Transcendent · **Key:** `singularity_core` · **Build:** 7,200 ticks (4h)
+**Age:** Transcendent · **Key:** `singularity_core` · **Build:** 18,720 ticks (10h 24m)
 
 | Resource | Cost |
 |---|---|

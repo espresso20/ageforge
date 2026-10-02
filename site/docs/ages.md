@@ -22,20 +22,20 @@ Each age is tuned to a target length in game time at 1x speed. Building output, 
 
 | Age | Target | Age | Target |
 |---|---|---|---|
-| Primitive | 15m | Modern | 12h |
-| Stone | 45m | Information | 14h |
-| Bronze | 1.5h | Digital | 16h |
-| Iron | 2.5h | Cyberpunk | 18h |
-| Classical | 3.5h | Fusion | 20h |
-| Medieval | 4.5h | Space | 22h |
-| Renaissance | 6h | Interstellar | 24h |
-| Colonial | 7h | Galactic | 24h |
-| Industrial | 8h | Quantum | 24h |
-| Victorian | 9h | | |
-| Electric | 10h | | |
-| Atomic | 12h | | |
+| Primitive | 15m | Modern | 31h 12m |
+| Stone | 45m | Information | 36h 24m |
+| Bronze | 3h 54m | Digital | 41h 36m |
+| Iron | 6h 30m | Cyberpunk | 46h 48m |
+| Classical | 9h 6m | Fusion | 52h |
+| Medieval | 11h 42m | Space | 57h 12m |
+| Renaissance | 15h 36m | Interstellar | 62h 24m |
+| Colonial | 18h 12m | Galactic | 62h 24m |
+| Industrial | 20h 48m | Quantum | 62h 24m |
+| Victorian | 23h 24m | | |
+| Electric | 26h | | |
+| Atomic | 31h 12m | | |
 
-That is about three days from a fresh start to the Modern Age, where prestige unlocks. You don't have to sit through it: the game grants up to 24 hours of offline progress when you come back.
+That is about a week (167 hours) from a fresh start to the Modern Age, where prestige unlocks. From the Bronze Age on, every age runs 2.6 times as long as it did on the earlier three-day curve, and the game's timers (events, raids, trade routes, expeditions, cooldowns) stretch with it, so each age holds as many of them as before. You don't have to sit through it: the game grants up to 24 hours of offline progress when you come back.
 
 ## What Happens on Age Advance
 

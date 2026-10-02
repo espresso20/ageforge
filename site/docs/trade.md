@@ -138,29 +138,31 @@ The Trade panel doesn't list civilizations. The one diplomacy effect it shows is
 
 ### Full Trade Routes Reference
 
+Every route opens in the Bronze Age or later. From the Bronze Age on, ages and their timers run 2.6 times their base length, and the cycles below already include that.
+
 | Key | Name | Min Age | Required Building | You give (per cycle) | You get (per cycle) | Cycle (ticks) |
 |---|---|---|---|---|---|---|
-| `local_barter` | Local Barter | Bronze | Market ×1 | 10 food | 8 wood | 10 |
-| `stone_trade` | Stone Trade | Iron | Market ×2 | 15 wood | 12 stone | 12 |
-| `gold_caravan` | Gold Caravan | Classical | Market ×3 | 50 stone | 5 gold | 15 |
-| `silk_road` | Silk Road | Medieval | Market ×2 | 30 gold | 80 culture | 20 |
-| `mercantile_convoy` | Mercantile Convoy | Renaissance | Exchange ×1 | 300 stone + 200 wood | 90 gold | 16 |
-| `spice_trade` | Spice Trade | Colonial | Port ×1 | 100 gold | 200 food + 50 culture | 18 |
-| `colonial_exports` | Colonial Exports | Colonial | Port ×2 | 500 food | 150 gold | 15 |
-| `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | 400 food + 60 gold | 120 culture + 80 knowledge | 18 |
-| `tea_clippers` | Tea Clippers | Colonial | Harbor ×2 | 250 gold | 600 food + 90 culture | 20 |
-| `coal_barges` | Coal Barges | Industrial | Harbor ×2 | 300 coal | 220 gold + 150 iron | 14 |
-| `cotton_exchange` | Cotton Exchange | Industrial | Stock Exchange ×1 | 400 gold | 200 culture + 150 knowledge | 16 |
-| `steamship_line` | Steamship Line | Industrial | Harbor Authority ×2 | 250 steel + 200 coal | 900 gold | 18 |
-| `rail_freight` | Rail Freight | Industrial | Integrated Steelworks ×1 | 200 iron | 100 gold + 50 coal | 12 |
-| `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | 100 oil | 300 gold | 15 |
-| `power_exchange` | Power Exchange | Electric | Power Station ×1 | 500 electricity | 200 gold | 10 |
-| `data_trade` | Data Trade | Information | Server Farm ×1 | 100 data | 500 gold | 10 |
-| `crypto_market` | Crypto Market | Cyberpunk | Black Market ×1 | 50 crypto | 1K gold | 8 |
-| `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | 200 electricity | 1K gold | 12 |
-| `warp_commerce` | Warp Commerce | Interstellar | Warp Drive Plant ×1 | 500 gold | 200 dark matter | 15 |
-| `stellar_exchange` | Stellar Freight | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2K gold | 20 |
-| `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5K gold | 10 |
+| `local_barter` | Local Barter | Bronze | Market ×1 | 10 food | 8 wood | 26 |
+| `stone_trade` | Stone Trade | Iron | Market ×2 | 15 wood | 12 stone | 31 |
+| `gold_caravan` | Gold Caravan | Classical | Market ×3 | 50 stone | 5 gold | 39 |
+| `silk_road` | Silk Road | Medieval | Market ×2 | 30 gold | 80 culture | 52 |
+| `mercantile_convoy` | Mercantile Convoy | Renaissance | Exchange ×1 | 300 stone + 200 wood | 90 gold | 42 |
+| `spice_trade` | Spice Trade | Colonial | Port ×1 | 100 gold | 200 food + 50 culture | 47 |
+| `colonial_exports` | Colonial Exports | Colonial | Port ×2 | 500 food | 150 gold | 39 |
+| `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | 400 food + 60 gold | 120 culture + 80 knowledge | 47 |
+| `tea_clippers` | Tea Clippers | Colonial | Harbor ×2 | 250 gold | 600 food + 90 culture | 52 |
+| `coal_barges` | Coal Barges | Industrial | Harbor ×2 | 300 coal | 220 gold + 150 iron | 36 |
+| `cotton_exchange` | Cotton Exchange | Industrial | Stock Exchange ×1 | 400 gold | 200 culture + 150 knowledge | 42 |
+| `steamship_line` | Steamship Line | Industrial | Harbor Authority ×2 | 250 steel + 200 coal | 900 gold | 47 |
+| `rail_freight` | Rail Freight | Industrial | Integrated Steelworks ×1 | 200 iron | 100 gold + 50 coal | 31 |
+| `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | 100 oil | 300 gold | 39 |
+| `power_exchange` | Power Exchange | Electric | Power Station ×1 | 500 electricity | 200 gold | 26 |
+| `data_trade` | Data Trade | Information | Server Farm ×1 | 100 data | 500 gold | 26 |
+| `crypto_market` | Crypto Market | Cyberpunk | Black Market ×1 | 50 crypto | 1K gold | 21 |
+| `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | 200 electricity | 1K gold | 31 |
+| `warp_commerce` | Warp Commerce | Interstellar | Warp Drive Plant ×1 | 500 gold | 200 dark matter | 39 |
+| `stellar_exchange` | Stellar Freight | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2K gold | 52 |
+| `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5K gold | 26 |
 
 
 ---
@@ -193,7 +195,7 @@ blackmarket <resource>   # make a smuggling run for the chosen resource
 trade black <resource>   # the same, through the trade command
 ```
 
-A run costs `max(5K, 10% of your culture storage)` culture, so the price grows as you do. It has a **55% chance** to pay out. A win gives you the chosen resource worth **2.5×** the culture you staked, valued at that resource's gold exchange rate. The culture is spent up front, win or lose. After each run there's a cooldown of about 240 ticks (about 8 minutes).
+A run costs `max(5K, 10% of your culture storage)` culture, so the price grows as you do. It has a **55% chance** to pay out. A win gives you the chosen resource worth **2.5×** the culture you staked, valued at that resource's gold exchange rate. The culture is spent up front, win or lose. After each run there's a cooldown of about 624 ticks (about 21 minutes).
 
 Use it to turn a culture surplus into whatever you're short on, if you can live with the odds.
 
@@ -266,7 +268,7 @@ Opinion matters too. Friendly civilizations (friendly status, or opinion 25+) an
 
 A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25). It's capped so the goods fit in half your storage and the price in 80% of it. Amounts are rounded to three figures, never in your favor.
 
-Offers rotate after **an hour of play at 1x** (1,800 ticks) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you're away. The panel shows the time to the next set.
+Offers rotate after **2h 36m of play at 1x** (4,680 ticks) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you're away. The panel shows the time to the next set.
 
 Some examples, at neutral opinion and at each civilization's own age:
 
@@ -286,22 +288,22 @@ Every civilization has one of four personalities, which sets how its opinion dri
 | **mercantile** | rises while any of your trade routes is running, cools when none are | Rewards active trade routes |
 | **isolationist** | trends toward **neutral** (0) | Slow to befriend, slow to anger |
 
-Drift is gradual (1 point every 25 ticks) and stays within -100 to +100. It runs alongside the rival/embargo drain and the natural drift toward zero.
+Drift is gradual (1 point every 65 ticks) and stays within -100 to +100. It runs alongside the rival/embargo drain and the natural drift toward zero.
 
 ### Worker Lending
 
-A peaceful civilization with opinion 40 or more now and then **lends you** 3 to 6 workers, announced in the log. Lent workers join your pool at once (they may take you over your housing for a while) and go home after 200 ticks. If the civilization's opinion is **above 80**, the loan is **permanent**: the workers stay. A civilization lends one batch at a time, and loans show on the Factions panel as *↳ N workers on loan*.
+A peaceful civilization with opinion 40 or more now and then **lends you** 3 to 6 workers, announced in the log. Lent workers join your pool at once (they may take you over your housing for a while) and go home after 520 ticks. If the civilization's opinion is **above 80**, the loan is **permanent**: the workers stay. A civilization lends one batch at a time, and loans show on the Factions panel as *↳ N workers on loan*.
 
 ### War & Peace
 
 A civilization declares **war** only when **both** conditions hold: its opinion is **below -75**, *and* you have provoked it twice. **Raiding its trade route** (`diplomacy raid`) is one provocation and **embargoing it** is another, so a raid plus an embargo, or two embargoes, while it's deeply hostile starts a war. Anger alone never starts a war, and provocations while you're on good terms don't either.
 
-While at war, the civilization **raids** you every 40 ticks and takes 50 × its strength (1-5) of its specialty resource. War is purely a matter of these raids; there's no tactical combat. Each raid is logged with what you lost and a short account of it. A raid takes its whole amount or nothing: if you hold less than it would carry off, the log says so and you lose nothing. Your garrison blunts part of each raid that lands; see [Defense: what your army blunts](military.md#7-defense-what-your-army-blunts).
+While at war, the civilization **raids** you every 104 ticks and takes 50 × its strength (1-5) of its specialty resource. War is purely a matter of these raids; there's no tactical combat. Each raid is logged with what you lost and a short account of it. A raid takes its whole amount or nothing: if you hold less than it would carry off, the log says so and you lose nothing. Your garrison blunts part of each raid that lands; see [Defense: what your army blunts](military.md#7-defense-what-your-army-blunts).
 
 There are two ways to make **peace**:
 
 1. **Tribute.** `diplomacy tribute <civ>` pays 300 gold and 50 culture per point of the civilization's strength and ends the war at once. Opinion rises by 25, but never above 0.
-2. **Wait it out.** A war ends by itself after 300 ticks without a new provocation. Stop provoking them and it burns out.
+2. **Wait it out.** A war ends by itself after 780 ticks without a new provocation. Stop provoking them and it burns out.
 
 `dip` works in place of `diplomacy` everywhere.
 
@@ -312,12 +314,12 @@ There are two ways to make **peace**:
 | `neutral` | The default. No bonuses, no penalties. |
 | `friendly` | Set when a gift or deal brings opinion to 25 or more. Friendly civilizations offer more deals at better rates, give bigger boons and gentler setbacks. |
 | `allied` | Needs opinion 50+ and costs 500 gold. Adds the civilization's bonus to your whole production of its specialty resource and to route income of it (see [Allied Bonuses](#allied-bonuses)). |
-| `rival` | Free to declare. Opinion drops an extra 5 every 50 ticks. No trade bonus and no deals. |
+| `rival` | Free to declare. Opinion drops an extra 5 every 130 ticks. No trade bonus and no deals. |
 | `embargo` | Free to declare. The same opinion drain as rival, no trade bonus, no deals, and it counts as a provocation. Your routes that bring in its specialty are disrupted. |
 
-**Natural drift:** every 100 ticks, opinion moves 1 point toward zero. For an ally this is a slow leak, so keep trading to make up for it.
+**Natural drift:** every 260 ticks, opinion moves 1 point toward zero. For an ally this is a slow leak, so keep trading to make up for it.
 
-**Rival/embargo drain:** -5 opinion every 50 ticks. A civilization at -100 stays there. One at +80 that you declare a rival will eventually fall below the ally threshold.
+**Rival/embargo drain:** -5 opinion every 130 ticks. A civilization at -100 stays there. One at +80 that you declare a rival will eventually fall below the ally threshold.
 
 ### Raising Opinion
 
@@ -327,7 +329,7 @@ There are two ways to make **peace**:
 | Embassies | a steady trickle per tick | Spread across your non-hostile civilizations (see Embassy Buildings below). |
 | Gifts | +15 per gift | `diplomacy gift <civ>` costs 200 gold. At 25+ a neutral civilization becomes friendly. |
 | Deals | +1 per Buy, Sell or Rare deal; +5 per Goodwill deal | Only up to opinion 50. |
-| Personality | +1 every 25 ticks | Peaceful civilizations, and mercantile ones while a route is running. |
+| Personality | +1 every 65 ticks | Peaceful civilizations, and mercantile ones while a route is running. |
 
 Once a civilization is at 50 or more, spend 500 gold to ally with it. Going back to neutral (`diplomacy neutral`) is free but doesn't refund the 500 gold.
 
@@ -383,7 +385,7 @@ On first contact the log introduces the civilization's name, personality and bac
 
 **You can hold five boons at once.** Only *timed* rewards take a slot; a gift used on arrival holds nothing, so the limit only ever turns away timed rewards. While all five slots are full, an encounter that rolls a **timed** reward comes back empty (the envoys are thanked and sent home with their crates unopened), but one that rolls an **instant lump of resources or a gang of temporary workers still delivers it**, since those need no slot. A full set of boons costs you buffs, not goods.
 
-Each timed boon lasts **750-3000 ticks** (about **25 minutes to 1h 40m** at 1x; the panel shows the time left), so slots free up steadily. A busy explorer gets a reward from about four encounters in five, has at least one boon running almost all the time, and has all five slots full only **12-18%** of the time.
+Each timed boon lasts **1,950-7,800 ticks** (about **1h 5m to 4h 20m** at 1x; the panel shows the time left), so slots free up steadily. A busy explorer gets a reward from about four encounters in five, has at least one boon running almost all the time, and has all five slots full only **12-18%** of the time.
 
 **Encounters can go badly.** A **setback** takes the place of a boon whenever the mission **failed**, on about **one in three** meetings with a civilization you are **at war** with, and on about **one in four** timed rewards turned away because all five boon slots are full. A wartime meeting that doesn't turn violent is a **standoff**: the two parties see each other and withdraw, and you come home with nothing but the sighting. A civilization you are fighting never gives you a gift. Setbacks come from their own table: a handful of workers lost on the way home (to fever or bad water), part of one resource stockpile spoiled, stolen or written off, a temporary drop in one resource's output, or a production dip across your civilization while word of the expedition spreads. Setbacks get worse with the civilization's **strength** and milder with its **opinion** of you, so an ally's bad news is gentler than a rival's, and a war with a strong civilization is the worst case. They are limited: at most three timed setbacks run at once (against five boon slots), a setback expires sooner than a boon of the same size, and a spoilage takes part of a store, never all of it.
 
@@ -419,11 +421,11 @@ The peaceful civilizations (Riverlands Tribes, Plasma Nomads, Artisan League) ar
 
 **Mid-game (Colonial to Industrial):** `spice_trade` and `colonial_exports` both need a port, so build one early in the Colonial Age. They pull in opposite directions: spice trade gives you food and culture for gold, and colonial exports turn food into gold. Run both once you have 2 ports. `rail_freight` pays well but eats iron, so only start it if you have iron to spare.
 
-**Late-game (Electric onward):** each later route pays much more gold. Run all of them as fast as you can build what they need. `crypto_market` has the shortest cycle (8 ticks) and pays 1K gold, the best gold per tick until `quantum_trade` comes online.
+**Late-game (Electric onward):** each later route pays much more gold. Run all of them as fast as you can build what they need. `crypto_market` has the shortest cycle (21 ticks) and pays 1K gold, the best gold per tick until `quantum_trade` comes online.
 
 ### Diplomacy: when to ally
 
-Ally when you can afford the 500 gold and you depend on the civilization's specialty. For example, with `crypto_market` bringing in 1K gold every 8 ticks, allying with the Merchant Guild (+20% gold) adds 200 gold to every cycle, so the 500 gold pays for itself in three cycles. The same 20% also applies to all the rest of your gold production.
+Ally when you can afford the 500 gold and you depend on the civilization's specialty. For example, with `crypto_market` bringing in 1K gold every 21 ticks, allying with the Merchant Guild (+20% gold) adds 200 gold to every cycle, so the 500 gold pays for itself in three cycles. The same 20% also applies to all the rest of your gold production.
 
 There's little point rushing an alliance before you produce or import that resource. Opinion climbs on its own from route cycles, so spend your gold on construction or research until then.
 

@@ -620,12 +620,12 @@ levels):
 
 | Thread | Appease | Brace |
 |--------|---------|-------|
-| Stone | 59 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
-| Iron | 5,400 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
-| Steel | 74K faith, 770K culture | 3.6M knowledge, 1.8M gold, 288K steel |
-| Electric | 1.2M faith, 16M culture | 56.4M steel, 924K oil, 3.96M electricity |
-| Digital | 12M faith, 180M culture | 156M gold, 117.6B electricity, 19.2B data |
-| Neon | 130M faith, 2B culture | 288B electricity, 46.8B data, 3B crypto |
+| Stone | 140 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
+| Iron | 14,000 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
+| Steel | 190K faith, 2M culture | 3.6M knowledge, 1.8M gold, 288K steel |
+| Electric | 3M faith, 42M culture | 56.4M steel, 924K oil, 3.96M electricity |
+| Digital | 31M faith, 460M culture | 156M gold, 117.6B electricity, 19.2B data |
+| Neon | 340M faith, 5.2B culture | 288B electricity, 46.8B data, 3B crypto |
 
 Appease follows income, not storage (2026-09-27): faith is a flow resource at hand-set rates
 with no market, so the old 15%-of-passage-storage price was out of reach in most threads once
@@ -634,6 +634,12 @@ modeled income over the era's ages reaches level 1 before its last age ends and 
 its end. A thread usually lasts only its lead (20-60% of an age), so in practice Appease is paid from faith
 banked before the harbinger came. When storage cannot yet hold a price, `shortfall` adds "(your X
 storage must reach N first)" to the refusal.
+
+Appease is priced at the pacing targets, so it grows with the curve while faith and culture
+storage stay as typed: the one-week curve (2026-10-01) raised the Appease prices about 2.6x.
+The static smoke check (`smoke.StaticHarbingerPrices`, also run by `go test ./smoke`) holds
+every Appease and Brace price, both levels, to the most storage buildable in its era's first
+age; they all fit with room to spare.
 
 - **Appease** is applied through `harbingerAppeaseMultiplier()` (the live thread's
   `appeaseMultiplierOf`), which scales both the strike roll (`strikeChance`) and the displayed odds
@@ -788,7 +794,7 @@ its own levels):
 
 | Action | Level 1 | Basis |
 |--------|---------|-------|
-| Appease | 1.2B faith + 19B culture | a quarter of `config.FlowIncome` over the Interstellar, Galactic and Quantum Ages at their targets |
+| Appease | 3.1B faith + 48B culture | a quarter of `config.FlowIncome` over the Interstellar, Galactic and Quantum Ages at their targets |
 | Brace | 1.56T dark matter + 75.6B titanium | 12% of the most the Cosmic Era's own advances ask of each resource held since the Interstellar Age (dark matter 13T for Quantum, titanium 630B for Galactic) |
 
 Appease counts every Cosmic age but the Transcendent, which has no advance to pace

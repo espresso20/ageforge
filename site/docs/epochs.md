@@ -20,7 +20,7 @@ Ages and epochs do different jobs: **ages are about what you build; epochs are a
 
 The Cosmic Era is the only epoch with 4 ages instead of 3.
 
-Each age is paced to a target time at 1x speed, from 15 minutes for the Primitive Age up to 12 hours for the Atomic Age, then 12 to 22 hours through the Digital and Neon Eras and 24 hours for each Cosmic Era age. By epoch that is roughly 2.5 hours for the Stone Era, 10.5 for the Iron Era, 21 for the Steel Era, 31 for the Electric Era, 42 for the Digital Era and 60 for the Neon Era. The Modern Age, where prestige unlocks, arrives after about 3 days of game time (the smoke-test bot takes about 2.4 days).
+Each age is paced to a target time at 1x speed, from 15 minutes for the Primitive Age up to 31h 12m for the Atomic Age, then 31h 12m to 57h 12m through the Digital and Neon Eras and 62h 24m for each Cosmic Era age. By epoch that is 4h 54m for the Stone Era, 27h 18m for the Iron Era, 54h 36m for the Steel Era, 80h 36m for the Electric Era, 109h 12m for the Digital Era and 156 hours for the Neon Era. The Modern Age, where prestige unlocks, arrives after about a week of game time (the smoke-test bot takes about 5.3 days). From the Bronze Age on, ages and the clocks inside them (event durations, cooldowns, awakenings) run 2.6 times as long as on the earlier three-day curve.
 
 ### What each epoch is like
 
@@ -28,11 +28,11 @@ Each age is paced to a target time at 1x speed, from 15 minutes for the Primitiv
 
 **⚔ Iron Era.** Iron matters most. Your armies grow, trade routes lengthen and faith starts to carry weight. The Great Plague is the first catastrophe that can strike, and the cheapest one to Succumb to. Oracle's Prophecy and Imperial Road can speed up your mid-game.
 
-**⚙ Steel Era.** Production reaches industrial scale. A Workers' Uprising costs you 8% of your workers and 500 faith. Colonial Bounty (+5K gold) is one of the biggest windfalls in the game, and Coal Seam Discovery adds +0.4 coal/tick for 180 ticks.
+**⚙ Steel Era.** Production reaches industrial scale. A Workers' Uprising costs you 8% of your workers and 500 faith. Colonial Bounty (+5K gold) is one of the biggest windfalls in the game, and Coal Seam Discovery adds +0.4 coal/tick for 468 ticks.
 
 **⚡ Electric Era.** Grid Surge, Oil Strike and Nuclear Theory all push production or research forward. This era's catastrophe is The Nuclear Exchange. Nuclear scares and labor movements are short, bearable setbacks compared to what comes later.
 
-**▣ Digital Era.** Data replaces iron as the bottleneck. A Server Outage takes 0.5 data/tick for 120 ticks, and The Great Breach steals 5K data outright. AI Breakthrough (+0.5 knowledge/tick, +0.2 data/tick) is the event research-focused runs hope for. The Great Hack is this era's catastrophe.
+**▣ Digital Era.** Data replaces iron as the bottleneck. A Server Outage takes 0.5 data/tick for 312 ticks, and The Great Breach steals 5K data outright. AI Breakthrough (+0.5 knowledge/tick, +0.2 data/tick) is the event research-focused runs hope for. The Great Hack is this era's catastrophe.
 
 **◉ Neon Era.** Plasma is both the primary and the energy resource. Neural Uprising is the nastiest event outside the transition roll: it removes 20% of your workers, steals 500 food and drains food at the same time. Corporate Espionage steals 10K gold and 8K data at once. Keep reserves.
 
@@ -47,12 +47,12 @@ Each epoch has a single **Awakening**: a one-time production boost that fires th
 | Epoch | Awakening | Triggers On | Effect |
 |-------|-----------|-------------|--------|
 | ◈ Stone Era | Pottery Mastery | Stone Age | +1 food/tick, +0.5 stone/tick for ~8 min |
-| ⚔ Iron Era | Discovery of Metallurgy | Iron Age | +2 iron/tick for ~16 min |
-| ⚙ Steel Era | Steam Breakthrough | Industrial Age | +25% all production for ~6.5 min |
-| ⚡ Electric Era | The Grid Wakes | Victorian Age | +2 electricity/tick, +10% all production for ~10 min |
-| ▣ Digital Era | Networks Wake | Modern Age | +2 data/tick, +1 knowledge/tick for ~10 min |
-| ◉ Neon Era | Cybernetic Awakening | Cyberpunk Age | +20% all production for ~8 min |
-| ✦ Cosmic Era | First Contact Signal | Interstellar Age | +1.5 dark matter/tick, +10% all production for ~13 min |
+| ⚔ Iron Era | Discovery of Metallurgy | Iron Age | +2 iron/tick for ~43 min |
+| ⚙ Steel Era | Steam Breakthrough | Industrial Age | +25% all production for ~17 min |
+| ⚡ Electric Era | The Grid Wakes | Victorian Age | +2 electricity/tick, +10% all production for ~26 min |
+| ▣ Digital Era | Networks Wake | Modern Age | +2 data/tick, +1 knowledge/tick for ~26 min |
+| ◉ Neon Era | Cybernetic Awakening | Cyberpunk Age | +20% all production for ~22 min |
+| ✦ Cosmic Era | First Contact Signal | Interstellar Age | +1.5 dark matter/tick, +10% all production for ~35 min |
 
 See [Events](events.md#age-awakenings) for exact durations and how awakenings show up in the active-events panel.
 
@@ -122,11 +122,11 @@ Type **`epoch`** to open the Epoch panel. It shows:
 
 | Event | Effect | Duration |
 |-------|--------|----------|
-| Age of Plenty | +100% all production (double) | 216 ticks (~7 min) |
+| Age of Plenty | +100% all production (double) | 562 ticks (~18m 44s) |
 | Population Surge | +15% workers added | Instant |
 | Ancient Cache | Adds 40% of each resource's storage to that resource | Instant |
-| Trade Winds | +5 gold/tick | 144 ticks (~5 min) |
-| Cultural Festival | +30% of your culture and +20% of your faith at once, then culture +1/tick and faith +1/tick | 144 ticks |
+| Trade Winds | +5 gold/tick | 374 ticks (~12m 28s) |
+| Cultural Festival | +30% of your culture and +20% of your faith at once, then culture +1/tick and faith +1/tick | 374 ticks |
 
 ### Major events (culture over 40% of storage)
 
@@ -135,7 +135,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 | The Grand Discovery | 3 techs from your current age completed for free | Instant |
 | Worker Innovation | +10% all production for the rest of the run | Rest of run |
 | The Architect's Gift | 10 free copies of your most-built non-wonder building | Instant |
-| Peaceful Century | +20% all production | 288 ticks (~10 min) |
+| Peaceful Century | +20% all production | 749 ticks (~24m 58s) |
 
 ### Legendary event (culture over 75%, 15% chance)
 
@@ -153,14 +153,14 @@ Type **`epoch`** to open the Epoch panel. It shows:
 
 | Event | Effect | Duration |
 |-------|--------|----------|
-| The Famine | Food -3/tick | 120 ticks |
-| Merchant Betrayal | Lose half your gold, then gold -2/tick | 72 ticks |
+| The Famine | Food -3/tick | 312 ticks |
+| Merchant Betrayal | Lose half your gold, then gold -2/tick | 187 ticks |
 | The Great Fire | Up to 8 random buildings destroyed (never wonders or storage) | Instant |
-| Epidemic | Lose 20% of workers, then food -1.5/tick | 180 ticks |
-| Resource Drought | Epoch's primary resource -3/tick | 90 ticks |
-| Political Instability | Lose 60% of your faith, then knowledge -2/tick | 60 ticks |
-| Economic Crash | Lose half your gold, then gold -3/tick | 216 ticks |
-| The Dark Age | Current research canceled, lose 80% of your knowledge, then knowledge -3/tick | 144 ticks |
+| Epidemic | Lose 20% of workers, then food -1.5/tick | 468 ticks |
+| Resource Drought | Epoch's primary resource -3/tick | 234 ticks |
+| Political Instability | Lose 60% of your faith, then knowledge -2/tick | 156 ticks |
+| Economic Crash | Lose half your gold, then gold -3/tick | 562 ticks |
+| The Dark Age | Current research canceled, lose 80% of your knowledge, then knowledge -3/tick | 374 ticks |
 
 The Great Fire and Epidemic are the two you least want to see. Eight lost buildings in the early game set you back a long way, and losing 20% of your workers in the Neon or Cosmic Era hurts because workers take so long to replace.
 
@@ -169,6 +169,8 @@ The Great Fire and Epidemic are the two you least want to see. Eight lost buildi
 ## Epoch-Exclusive Random Events
 
 Apart from the transition roll, each epoch has 5 events that only enter the random event pool while you're in that epoch. They fire during normal play, not at transitions.
+
+Durations are what each event runs in its own epoch. The Stone Era's events run the listed time in the Primitive and Stone Ages and 2.6 times as long in the Bronze Age; every later era's durations already include that stretch.
 
 ### Stone Era ◈
 
@@ -184,60 +186,60 @@ Apart from the transition roll, each epoch has 5 events that only enter the rand
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Iron Vein Strike | Good | Iron +0.3/tick for 180 ticks |
-| Locust Swarm | Bad | Food -0.35/tick for 120 ticks, -12% workers |
+| Iron Vein Strike | Good | Iron +0.3/tick for 468 ticks |
+| Locust Swarm | Bad | Food -0.35/tick for 312 ticks, -12% workers |
 | Conquered Village | Good | +2K gold (instant) |
-| Imperial Road | Good | Gold +0.2/tick for 216 ticks |
-| Oracle's Prophecy | Good | Faith +0.3/tick, knowledge +0.15/tick for 144 ticks |
+| Imperial Road | Good | Gold +0.2/tick for 562 ticks |
+| Oracle's Prophecy | Good | Faith +0.3/tick, knowledge +0.15/tick for 374 ticks |
 
 ### Steel Era ⚙
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Coal Seam Discovery | Good | Coal +0.4/tick for 180 ticks |
-| Workers' Uprising | Bad | Food -0.15/tick for 120 ticks, 500 faith stolen, -8% workers |
+| Coal Seam Discovery | Good | Coal +0.4/tick for 468 ticks |
+| Workers' Uprising | Bad | Food -0.15/tick for 312 ticks, 500 faith stolen, -8% workers |
 | Colonial Bounty | Good | +5K gold (instant) |
-| Steam Age Inventor | Good | +2K knowledge, then knowledge +0.2/tick for 144 ticks |
-| Industrial Blight | Bad | Food -0.2/tick for 144 ticks, 300 faith stolen |
+| Steam Age Inventor | Good | +2K knowledge, then knowledge +0.2/tick for 374 ticks |
+| Industrial Blight | Bad | Food -0.2/tick for 374 ticks, 300 faith stolen |
 
 ### Electric Era ⚡
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Grid Surge | Good | Electricity +0.35/tick for 144 ticks |
-| Oil Strike | Good | Oil +0.5/tick for 180 ticks, +3K gold |
-| The Broadcast | Good | +5K culture, then faith +0.2/tick for 180 ticks |
-| Labor Movement | Bad | Food -0.1/tick, gold -0.1/tick for 60 ticks |
-| Nuclear Theory | Good | +8K knowledge, then knowledge +0.25/tick for 180 ticks |
+| Grid Surge | Good | Electricity +0.35/tick for 374 ticks |
+| Oil Strike | Good | Oil +0.5/tick for 468 ticks, +3K gold |
+| The Broadcast | Good | +5K culture, then faith +0.2/tick for 468 ticks |
+| Labor Movement | Bad | Food -0.1/tick, gold -0.1/tick for 156 ticks |
+| Nuclear Theory | Good | +8K knowledge, then knowledge +0.25/tick for 468 ticks |
 
 ### Digital Era ▣
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| The Great Breach | Bad | 5K data stolen, knowledge -0.2/tick for 120 ticks |
+| The Great Breach | Bad | 5K data stolen, knowledge -0.2/tick for 312 ticks |
 | Viral Moment | Good | +20K culture (instant) |
-| Tech Monopoly | Good | Gold +0.4/tick for 180 ticks |
-| Server Outage | Bad | Data -0.5/tick for 120 ticks |
-| AI Breakthrough | Good | Knowledge +0.5/tick, data +0.2/tick for 216 ticks |
+| Tech Monopoly | Good | Gold +0.4/tick for 468 ticks |
+| Server Outage | Bad | Data -0.5/tick for 312 ticks |
+| AI Breakthrough | Good | Knowledge +0.5/tick, data +0.2/tick for 562 ticks |
 
 ### Neon Era ◉
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Plasma Windfall | Good | Plasma +0.5/tick, electricity +0.3/tick for 180 ticks |
+| Plasma Windfall | Good | Plasma +0.5/tick, electricity +0.3/tick for 468 ticks |
 | Void Rift | Good | +5K dark matter (instant) |
-| Neural Uprising | Bad | 500 food stolen, food -0.1/tick for 120 ticks, -20% workers |
+| Neural Uprising | Bad | 500 food stolen, food -0.1/tick for 312 ticks, -20% workers |
 | Corporate Espionage | Bad | -10K gold, -8K data (instant) |
-| Stellar Migration | Mixed | +1K food (instant), then food -0.15/tick for 144 ticks |
+| Stellar Migration | Mixed | +1K food (instant), then food -0.15/tick for 374 ticks |
 
 ### Cosmic Era ✦
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Reality Fracture | Bad | Quantum flux -0.4/tick, knowledge -0.1/tick for 120 ticks |
+| Reality Fracture | Bad | Quantum flux -0.4/tick, knowledge -0.1/tick for 312 ticks |
 | Dimensional Harvest | Good | +2K antimatter, +5K quantum flux (instant) |
-| Galactic Council | Good | +20K gold, then gold +0.2/tick for 216 ticks |
-| Entropy Wave | Bad | Quantum flux -0.2/tick, knowledge -0.2/tick for 144 ticks |
+| Galactic Council | Good | +20K gold, then gold +0.2/tick for 562 ticks |
+| Entropy Wave | Bad | Quantum flux -0.2/tick, knowledge -0.2/tick for 374 ticks |
 | Transcendence Signal | Good | +100K knowledge, +50K culture (instant) |
 
 ---

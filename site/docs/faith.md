@@ -29,12 +29,12 @@ The Economy panel shows your current faith band alongside the epoch odds.
 Faith does not drain on its own. It goes down only when:
 
 - the **Political Instability** epoch event fires (you lose 60% of your current faith),
-- a random event takes some: **Workers' Uprising** (500 faith) and **Industrial Blight** (300 faith) in the Steel Era, or **Heresy** (-0.5 faith/tick for 12 ticks) from the Medieval Age on,
+- a random event takes some: **Workers' Uprising** (500 faith) and **Industrial Blight** (300 faith) in the Steel Era, or **Heresy** (-0.5 faith/tick for 31 ticks) from the Medieval Age on,
 - you **Appease** a [harbinger](harbinger.md), which costs faith and culture,
 - you build the **Sistine Chapel** (see [Faith Costs](#faith-costs)),
 - you **Endure** a catastrophe, which cuts every stored resource, faith included (see [Catastrophe](catastrophe.md#endure)).
 
-Otherwise your faith total only grows. The Cultural Festival epoch event goes the other way: it adds 20% to your faith at once and +1 faith/tick for 144 ticks.
+Otherwise your faith total only grows. The Cultural Festival epoch event goes the other way: it adds 20% to your faith at once and +1 faith/tick for 374 ticks.
 
 ---
 

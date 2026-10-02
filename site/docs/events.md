@@ -10,7 +10,7 @@ Random events are the fires, windfalls, plagues, gold rushes and quantum fluctua
 
 ### The Timing Window
 
-A **global timer** spaces out all random events. After an event fires, the next one can't fire for 150 to 600 ticks (roughly 5 to 20 minutes at 1x speed), picked at random in that range. This prevents event spam and keeps each event feeling like a notable moment.
+A **global timer** spaces out all random events. After an event fires, the next one can't fire for 150 to 600 ticks (roughly 5 to 20 minutes at 1x speed), picked at random in that range. From the Bronze Age on, where each age runs 2.6 times as long, the wait is 390 to 1,560 ticks (roughly 13 to 52 minutes), so an age still sees about as many events. This prevents event spam and keeps each event feeling like a notable moment.
 
 The first event of any new game waits for the same 150 to 600 tick window, giving you time to get established first.
 
@@ -42,6 +42,8 @@ Events are either **instant** or **timed**:
 
 - **Instant (duration 0):** The effect is applied once. No active event entry; the log message is all you'll see.
 - **Timed (duration above 0):** The event stays active for the listed number of ticks. Its per-tick effects apply the whole time. When it expires, the log prints an "ended" message that sums up what it cost you when it fired (workers who fled, resources stolen).
+
+The durations and cooldowns in the random event tables below are base lengths, exact in the Primitive and Stone Ages. From the Bronze Age on, a timed event lasts 2.6 times its listed duration (rounded to the nearest tick) and its cooldown is 2.6 times as long; instant amounts don't change.
 
 At 1x speed (2 seconds per tick):
 
@@ -179,13 +181,15 @@ Awakenings are one-time boosts, one per epoch, that fire the first time you ente
 
 | Epoch | Trigger Age | Awakening | Temporary Effect | Duration |
 |-------|-------------|-----------|------------------|----------|
-| Stone Era ◈ | Stone Age | Pottery Mastery | +1.0 food/tick, +0.5 stone/tick | 250 ticks (~8 min) |
-| Iron Era ⚔ | Iron Age | Discovery of Metallurgy | +2.0 iron/tick | 500 ticks (~16 min) |
-| Steel Era ⚙ | Industrial Age | Steam Breakthrough | +25% to all production | 200 ticks (~6.5 min) |
-| Electric Era ⚡ | Victorian Age | The Grid Wakes | +2.0 electricity/tick, +10% all production | 300 ticks (~10 min) |
-| Digital Era ▣ | Modern Age | Networks Wake | +2.0 data/tick, +1.0 knowledge/tick | 300 ticks (~10 min) |
-| Neon Era ◉ | Cyberpunk Age | Cybernetic Awakening | +20% to all production | 250 ticks (~8 min) |
-| Cosmic Era ✦ | Interstellar Age | First Contact Signal | +1.5 dark matter/tick, +10% all production | 400 ticks (~13 min) |
+| Stone Era ◈ | Stone Age | Pottery Mastery | +1.0 food/tick, +0.5 stone/tick | 250 ticks (~8m 20s) |
+| Iron Era ⚔ | Iron Age | Discovery of Metallurgy | +2.0 iron/tick | 1,300 ticks (~43m 20s) |
+| Steel Era ⚙ | Industrial Age | Steam Breakthrough | +25% to all production | 520 ticks (~17m 20s) |
+| Electric Era ⚡ | Victorian Age | The Grid Wakes | +2.0 electricity/tick, +10% all production | 780 ticks (~26 min) |
+| Digital Era ▣ | Modern Age | Networks Wake | +2.0 data/tick, +1.0 knowledge/tick | 780 ticks (~26 min) |
+| Neon Era ◉ | Cyberpunk Age | Cybernetic Awakening | +20% to all production | 650 ticks (~21m 40s) |
+| Cosmic Era ✦ | Interstellar Age | First Contact Signal | +1.5 dark matter/tick, +10% all production | 1,040 ticks (~34m 40s) |
+
+Every awakening after the Stone Age's fires from the Bronze Age on, so its duration is already 2.6 times the base length.
 
 Awakenings appear in the active events list like any timed event and count down over their duration, so you can see how long the boost has left. Each one also prints a short line of flavor text in the log when it fires.
 
@@ -214,7 +218,7 @@ When an event takes resources or workers, the next log line says exactly what yo
 - After a worker loss, check your assignments: some buildings may now be understaffed.
 - Use `recruit` to replace lost workers as soon as your food allows.
 
-**Crypto Winter** (`crypto_winter`): takes 4.5 crypto when it fires. The event then stays listed for 14 ticks.
+**Crypto Winter** (`crypto_winter`): takes 4.5 crypto when it fires. The event then stays listed for 36 ticks (the table's 14, stretched: it only fires from the Cyberpunk Age on).
 
 ### Making the Most of Good Events
 
@@ -222,7 +226,7 @@ When an event takes resources or workers, the next log line says exactly what yo
 
 **Knowledge windfalls:** `skilled_immigrants`, `ancient_discovery` and `first_contact` give instant knowledge. If you're saving up for a tech, a windfall can cover the last of the cost. Research is paid in full when you start it, so check whether you can now afford the next one.
 
-**Renaissance Fair:** adds culture and gold per tick for 15 ticks. It is small, so treat it as a bonus rather than something to plan around.
+**Renaissance Fair:** adds culture and gold per tick for 39 ticks (the table's 15, stretched: it only fires from the Renaissance Age on). It is small, so treat it as a bonus rather than something to plan around.
 
 ---
 
@@ -230,9 +234,9 @@ When an event takes resources or workers, the next log line says exactly what yo
 
 For players who want the full mechanics:
 
-**Global timer:** After any event fires, the next event can't fire for 150 to 600 ticks (random in that range). At 2 seconds per tick that is 5 to 20 minutes of real time. The first event of a new game has the same delay.
+**Global timer:** After any event fires, the next event can't fire for 150 to 600 ticks (random in that range). At 2 seconds per tick that is 5 to 20 minutes of real time. From the Bronze Age on it is 390 to 1,560 ticks, 13 to 52 minutes. The first event of a new game has the same delay.
 
-**Per-event cooldown:** Each event also has its own cooldown. Even after the global timer runs out, a specific event cannot come back until its own cooldown has passed since it last fired. For example, `plague` has a 200-tick cooldown, so it cannot fire again for 200 ticks after its last occurrence.
+**Per-event cooldown:** Each event also has its own cooldown. Even after the global timer runs out, a specific event cannot come back until its own cooldown has passed since it last fired. For example, `plague` has a 200-tick cooldown, so it cannot fire again for 200 ticks after its last occurrence (520 ticks from the Bronze Age on).
 
 **Anti-streak rule:**
 - After 3 or more good events in a row, the next draw is limited to bad or mixed events (a 3% chance skips this and allows any).
@@ -250,7 +254,7 @@ Mixed events (like `earthquake` or `plasma_storm`) reset both streak counters, w
 
 - **Check `logs` regularly.** Events fire in the background. A plague or mine collapse you didn't notice may already have taken workers, and the "ended" entry shows the actual losses.
 
-- **Bad timed events are temporary (except worker loss).** A drought takes 0.5 food/tick for 10 ticks, which is 20 seconds at 1x. Don't make permanent decisions (like restructuring worker assignments) because of a short debuff.
+- **Bad timed events are temporary (except worker loss).** In the Stone Age a drought takes 0.5 food/tick for 10 ticks, which is 20 seconds at 1x; from the Bronze Age on it lasts 26 ticks, under a minute. Don't make permanent decisions (like restructuring worker assignments) because of a short debuff.
 
 - **Bank resources before the late game.** Thefts take fixed amounts, and the amounts get bigger in later epochs. Early thefts are small, but The Great Breach (Digital Era) steals 5K data and Corporate Espionage (Neon Era) takes 10K gold at once (both epoch-exclusive events). A surplus absorbs the hit, and both are raids, so a garrison that keeps up with the age blunts them.
 
