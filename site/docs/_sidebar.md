@@ -3,40 +3,45 @@
 - **Getting Started**
   - [Overview](/)
   - [Installation](getting-started.md)
-  - [First 10 Minutes](first-ten-minutes.md)
-
-- **Gameplay**
+  - [Your First Age](first-ten-minutes.md)
   - [How to Play](how-to-play.md)
-  - [The Map](map.md)
-  - [All Commands](commands.md)
-  - [The Build Plan](plan.md)
-  - [Saving & Loading](saving-and-loading.md)
-  - [Account & Recovery](account.md)
-  - [Themes & Accessibility](themes.md)
+
+- **Core Loop**
   - [Resources](resources.md)
-  - [Workers](villagers.md)
+  - [Workers](workers-and-domains.md)
+  - [Buildings](buildings.md)
+  - [The Build Plan](plan.md)
+  - [Technologies](technologies.md)
+  - [The Map](map.md)
 
 - **Progression**
   - [The 22 Ages](ages.md)
-  - [Buildings](buildings.md)
-  - [Technologies](technologies.md)
+  - [Wonders](wonders.md)
   - [Milestones & Chains](milestones.md)
-
-- **Deep Dive**
   - [Epochs](epochs.md)
-  - [Events](events.md)
-  - [Catastrophe System](catastrophe.md)
+  - [Prestige](prestige.md)
+
+- **Eras and Dooms**
+  - [Catastrophes](catastrophe.md)
   - [The Harbinger](harbinger.md)
   - [Faith](faith.md)
+
+- **The World**
+  - [Trade](trade.md)
+  - [Army & Missions](military.md)
+  - [Events](events.md)
+
+- **Systems**
   - [Morale](morale.md)
   - [Knowledge](knowledge.md)
-  - [Workers & Domains (Reference)](workers-and-domains.md)
 
-- **Advanced**
-  - [Military & Expeditions](military.md)
-  - [Trade & Diplomacy](trade.md)
-  - [Wonders](wonders.md)
-  - [Prestige System](prestige.md)
+- **Reference**
+  - [All Commands](commands.md)
   - [Civilization History](history.md)
 
-- [← Back to Site](/)
+- **Your Game**
+  - [Saving & Loading](saving-and-loading.md)
+  - [Accounts & Recovery](account.md)
+  - [Themes & Accessibility](themes.md)
+
+- [← Back to the site](/ ':ignore :target=_self')

@@ -1,619 +1,521 @@
-// ── AgeForge site JS ─────────────────────────────────────────────────────────
+// AgeForge landing page: the scroll-through-time map and the try-it prompt.
+// No libraries. The map frames come from frames.js, written by
+// TestWriteSiteFrames (ui/mapstyle/all/site_frames_test.go) from real runs.
 
-// ── Starfield canvas (multi-layer parallax + nebulae) ────────────────────────
 (function () {
-  const canvas = document.getElementById("starfield");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
+  "use strict";
 
-  // Track scroll for parallax
-  let scrollY = 0;
-  window.addEventListener("scroll", () => { scrollY = window.scrollY; }, { passive: true });
+  const root = document.documentElement;
+  root.classList.add("js");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-  // Three depth layers: [background, mid, foreground]
-  const LAYER_DEFS = [
-    { count: 160, rMin: 0.15, rMax: 0.65, sMin: 0.03, sMax: 0.12, parallax: 0.00, aMin: 0.15, aMax: 0.50 },
-    { count:  70, rMin: 0.65, rMax: 1.35, sMin: 0.06, sMax: 0.25, parallax: 0.04, aMin: 0.30, aMax: 0.78 },
-    { count:  22, rMin: 1.35, rMax: 2.40, sMin: 0.10, sMax: 0.38, parallax: 0.11, aMin: 0.55, aMax: 1.00 },
-  ];
+  // ── The map ────────────────────────────────────────────────────────────
 
-  // Nebula blobs: fixed viewport fractions, very subtle color clouds
-  const NEBULAE = [
-    { fx: 0.12, fy: 0.22, fr: 0.32, r: 70, g: 35, b: 155 },   // indigo upper-left
-    { fx: 0.82, fy: 0.10, fr: 0.26, r:  0, g: 75, b: 160 },   // cobalt upper-right
-    { fx: 0.55, fy: 0.68, fr: 0.38, r: 150, g: 25, b: 80 },   // ruby lower-center
-    { fx: 0.22, fy: 0.82, fr: 0.22, r: 15, g: 80, b: 120 },   // teal lower-left
-  ];
+  const F = window.AGEFORGE_FRAMES;
+  const timeline = document.getElementById("timeline");
+  const stage = timeline && timeline.querySelector(".stage");
+  const pane = document.getElementById("pane");
+  const screen = document.getElementById("screen");
+  const map = document.getElementById("map");
+  const scan = document.getElementById("scan");
+  const hudAge = document.getElementById("hud-age");
+  const hudN = document.getElementById("hud-n");
+  const ticks = document.getElementById("ticks");
+  const hero = document.getElementById("hero");
+  const live = document.getElementById("age-live");
 
-  let layers = [];
+  // What each frame shows, for the pane's text alternative.
+  const ALT = {
+    primitive_age: "a few huts and a campfire in a forest by a river",
+    stone_age: "a village of huts and fields around the Sacred Grove, by the river",
+    iron_age: "a walled town of streets and workshops beside the water",
+    renaissance_age: "a large walled city, with ships on the water",
+    victorian_age: "a railway running through a dense city",
+    modern_age: "suburbs and glass towers spreading past the old walls",
+    cyberpunk_age: "a neon megacity of megablocks and sky rails",
+    space_age: "a ring station in orbit, with docks and solar arrays",
+    interstellar_age: "colony worlds around the home sun, linked by warp gates",
+    galactic_age: "a starbase among the civilizations of the galaxy",
+    quantum_age: "a flickering structure of probability drawn in colored light",
+    transcendent_age: "a slowly breathing mandala of light",
+  };
 
-  function mkStars(def) {
-    return Array.from({ length: def.count }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: def.rMin + Math.random() * (def.rMax - def.rMin),
-      speed: def.sMin + Math.random() * (def.sMax - def.sMin),
-      phase: Math.random() * Math.PI * 2,
-    }));
+  if (F && map && timeline) {
+    initMap();
+  } else {
+    // No frames: the static first frame stays, and the scroll stays short.
+    root.classList.remove("js");
   }
 
-  function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-    layers = LAYER_DEFS.map(def => ({ ...def, stars: mkStars(def) }));
-  }
+  function initMap() {
+    const ages = F.ages;
+    const N = ages.length;
+    const W = F.w;
+    const H = F.h;
+    const code = map.querySelector("code") || map;
 
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const t = Date.now() / 1000;
+    // One rule per style, so a frame is only text and class names.
+    const css = F.styles
+      .map(function (s, i) {
+        return (
+          ".map .s" + i + "{color:" + F.palette[s[0]] + ";background:" + F.palette[s[1]] +
+          (s[2] ? ";font-weight:700" : "") + "}"
+        );
+      })
+      .join("");
+    const style = document.createElement("style");
+    style.textContent = css;
+    document.head.appendChild(style);
 
-    // Nebulae (no parallax; ambient color wash behind everything)
-    for (const n of NEBULAE) {
-      const cx = n.fx * canvas.width;
-      const cy = n.fy * canvas.height;
-      const r  = n.fr * Math.max(canvas.width, canvas.height);
-      const g  = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      g.addColorStop(0,   `rgba(${n.r},${n.g},${n.b},0.048)`);
-      g.addColorStop(0.5, `rgba(${n.r},${n.g},${n.b},0.020)`);
-      g.addColorStop(1,   `rgba(${n.r},${n.g},${n.b},0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fill();
+    timeline.style.setProperty("--steps", String(N - 1));
+
+    function esc(c) {
+      if (c === "&") return "&amp;";
+      if (c === "<") return "&lt;";
+      if (c === ">") return "&gt;";
+      const o = c.codePointAt(0);
+      if (o > 127 && (o < 0x2500 || o > 0x259f)) return "<i>" + c + "</i>";
+      return c;
     }
 
-    // Star layers: foreground layers shift more with scroll (parallax depth)
-    for (const layer of layers) {
-      for (const s of layer.stars) {
-        const sy  = ((s.y + scrollY * layer.parallax) % canvas.height + canvas.height) % canvas.height;
-        const alpha = layer.aMin + (layer.aMax - layer.aMin) *
-          Math.abs(Math.sin(t * s.speed + s.phase));
+    function rowHTML(r) {
+      const cells = Array.from(r.t);
+      let x = 0;
+      let out = "";
+      for (let k = 0; k + 1 < r.r.length; k += 2) {
+        const s = r.r[k];
+        const n = r.r[k + 1];
+        let text = "";
+        for (let j = x; j < x + n; j++) text += esc(cells[j]);
+        out += s === 0 ? text : '<span class="s' + s + '">' + text + "</span>";
+        x += n;
+      }
+      return out;
+    }
 
-        // Halo glow for the largest (foreground) stars
-        if (s.r > 1.3) {
-          const halo = ctx.createRadialGradient(s.x, sy, 0, s.x, sy, s.r * 5);
-          halo.addColorStop(0, `rgba(201,209,217,${(alpha * 0.35).toFixed(3)})`);
-          halo.addColorStop(1, "rgba(201,209,217,0)");
-          ctx.fillStyle = halo;
-          ctx.beginPath();
-          ctx.arc(s.x, sy, s.r * 5, 0, Math.PI * 2);
-          ctx.fill();
+    // Rows of every frame, rendered once on first use. A later frame's
+    // unchanged rows point at the first frame's.
+    const cache = [];
+    function frameRows(a, f) {
+      if (!cache[a]) cache[a] = [];
+      if (!cache[a][f]) {
+        const src = ages[a].frames[f];
+        cache[a][f] = src.map(function (r, y) {
+          if (r) return rowHTML(r);
+          return frameRows(a, 0)[y];
+        });
+      }
+      return cache[a][f];
+    }
+
+    // The rows on screen.
+    code.innerHTML = "";
+    const rows = [];
+    const shown = [];
+    for (let y = 0; y < H; y++) {
+      const el = document.createElement("span");
+      el.className = "row";
+      code.appendChild(el);
+      rows.push(el);
+      shown.push(null);
+    }
+    function setRow(y, html) {
+      if (shown[y] !== html) {
+        rows[y].innerHTML = html;
+        shown[y] = html;
+      }
+    }
+    function paint(a, f) {
+      const r = frameRows(a, f);
+      for (let y = 0; y < H; y++) setRow(y, r[y]);
+    }
+
+    // The progress strip: 22 cells, one per age.
+    const total = 22;
+    const cells = [];
+    for (let i = 1; i <= total; i++) {
+      const c = document.createElement("span");
+      if (ages.some(function (a) { return a.n === i; })) c.className = "stop";
+      ticks.appendChild(c);
+      cells.push(c);
+    }
+
+    // ── Sizing: fit the whole frame, or crop to the town on a phone ──
+    let ch = 0.6;
+    let fs = 12;
+    function measure() {
+      const probe = document.createElement("span");
+      probe.style.cssText = "position:absolute;visibility:hidden;font-size:100px;white-space:pre";
+      probe.textContent = "0000000000";
+      map.appendChild(probe);
+      ch = probe.getBoundingClientRect().width / 1000 || 0.6;
+      map.removeChild(probe);
+    }
+    function fit() {
+      const mobile = window.innerWidth <= 720;
+      const padX = mobile ? 32 : 40;
+      const availW = stage.clientWidth - padX - 2;
+      let availH = stage.clientHeight - 56 - 44 - 36 - 2;
+      if (mobile && hero) availH -= hero.offsetHeight + 70;
+      let cols = W;
+      fs = Math.min(availW / (cols * ch), availH / (H * 1.2));
+      const minFs = 8.5;
+      if (fs < minFs) {
+        cols = Math.max(56, Math.min(W, Math.floor(availW / (minFs * ch))));
+        fs = Math.min(availW / (cols * ch), availH / (H * 1.2));
+      }
+      fs = Math.max(4, Math.floor(fs * 10) / 10);
+      const cw = ch * fs;
+      // The town sits left of the legend; center a crop on it.
+      const center = 49;
+      const off = Math.max(0, Math.min(W - cols, Math.round(center - cols / 2)));
+      root.style.setProperty("--fs", fs + "px");
+      screen.style.width = Math.ceil(cols * cw) + "px";
+      screen.style.height = Math.ceil(H * 1.2 * fs) + "px";
+      map.style.transform = off ? "translateX(" + -off * cw + "px)" : "";
+      // The headline scales with the pane it sits on.
+      const paneW = cols * cw;
+      const mobileHero = window.innerWidth <= 720;
+      const heroFs = mobileHero ? Math.min(44, Math.max(30, window.innerWidth * 0.1)) : Math.min(104, Math.max(30, paneW * 0.075));
+      root.style.setProperty("--hero-fs", heroFs.toFixed(1) + "px");
+      root.style.setProperty("--hero-tag", Math.min(16, Math.max(11, heroFs * 0.19)).toFixed(1) + "px");
+    }
+    measure();
+    fit();
+    let resizeT = 0;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeT);
+      resizeT = setTimeout(fit, 80);
+    });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        measure();
+        fit();
+      });
+    }
+
+    // ── Which age the scroll is on ──
+    let cur = -1;
+    let frame = 0;
+    function label(a) {
+      const age = ages[a];
+      hudAge.textContent = age.name;
+      hudN.textContent = String(age.n);
+      cells.forEach(function (c, i) {
+        c.classList.toggle("on", i + 1 <= age.n);
+        c.classList.toggle("now", i + 1 === age.n);
+      });
+      const what = ALT[age.key] ? ": " + ALT[age.key] : "";
+      pane.setAttribute(
+        "aria-label",
+        "The AgeForge map in the " + age.name + ", age " + age.n + " of 22" + what + ", drawn in colored terminal characters."
+      );
+    }
+
+    let liveT = 0;
+    function announce(a) {
+      clearTimeout(liveT);
+      liveT = setTimeout(function () {
+        if (live) live.textContent = "Map: " + ages[a].name + ", age " + ages[a].n + " of 22.";
+      }, 900);
+    }
+
+    // ── The transition: a scanline wipes down, glyph noise at its edge ──
+    let anim = null;
+    const NOISE = "░▒▓.:-=+*";
+    function noiseRow() {
+      let s = "";
+      for (let x = 0; x < W; x++) {
+        const r = Math.random();
+        s += r < 0.45 ? NOISE[Math.floor(Math.random() * NOISE.length)] : " ";
+      }
+      return '<span class="noise">' + s + "</span>";
+    }
+    function finish() {
+      if (!anim) return;
+      cancelAnimationFrame(anim.raf);
+      paint(anim.to, 0);
+      scan.style.opacity = "0";
+      anim = null;
+    }
+    function go(a) {
+      if (a === cur) return;
+      const from = cur;
+      cur = a;
+      frame = 0;
+      label(a);
+      announce(a);
+      finish();
+      if (from < 0 || reduceMotion.matches) {
+        paint(a, 0);
+        return;
+      }
+      const target = frameRows(a, 0);
+      const t0 = performance.now();
+      const dur = 460;
+      const rowPx = 1.2 * fs;
+      anim = { to: a, raf: 0 };
+      const step = function (now) {
+        const t = Math.min(1, (now - t0) / dur);
+        const band = Math.floor(t * (H + 3));
+        for (let y = 0; y < H; y++) {
+          if (y < band - 2) setRow(y, target[y]);
+          else if (y <= band) setRow(y, noiseRow());
         }
-
-        ctx.beginPath();
-        ctx.arc(s.x, sy, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(201,209,217,${alpha.toFixed(3)})`;
-        ctx.fill();
-      }
+        scan.style.opacity = t < 1 ? "1" : "0";
+        scan.style.transform = "translateY(" + Math.min(H, band) * rowPx + "px)";
+        if (t < 1) anim.raf = requestAnimationFrame(step);
+        else finish();
+      };
+      anim.raf = requestAnimationFrame(step);
     }
 
-    requestAnimationFrame(draw);
+    let ticking = false;
+    let atTop = true;
+    function onScroll() {
+      ticking = false;
+      const rect = timeline.getBoundingClientRect();
+      const span = timeline.offsetHeight - window.innerHeight;
+      const p = span > 0 ? Math.min(1, Math.max(0, -rect.top / span)) : 0;
+      const top = -rect.top < 40;
+      if (top !== atTop) {
+        atTop = top;
+        document.body.classList.toggle("scrolled", !top);
+      }
+      go(Math.min(N - 1, Math.floor(p * N)));
+    }
+    window.addEventListener(
+      "scroll",
+      function () {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(onScroll);
+        }
+      },
+      { passive: true }
+    );
+    onScroll();
+
+    // ── Ambient motion: each age's few frames, while the map is in view ──
+    let visible = true;
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (entries) {
+        visible = entries[0].isIntersecting;
+      }).observe(pane);
+    }
+    setInterval(function () {
+      if (anim || !visible || document.hidden || reduceMotion.matches || cur < 0) return;
+      const n = ages[cur].frames.length;
+      if (n < 2) return;
+      frame = (frame + 1) % n;
+      paint(cur, frame);
+    }, 260);
   }
 
-  resize();
-  window.addEventListener("resize", resize);
-  draw();
-})();
+  // ── Install command ────────────────────────────────────────────────────
 
-// ── Nav scroll shadow ─────────────────────────────────────────────────────────
-window.addEventListener(
-  "scroll",
-  () => {
-    document
-      .getElementById("nav")
-      .classList.toggle("scrolled", window.scrollY > 10);
-  },
-  { passive: true },
-);
+  const BASE = "https://github.com/espresso20/ageforge/releases/latest/download/";
+  const OS = {
+    mac: {
+      cmd: "curl -fLo ageforge " + BASE + "ageforge-macos-arm64 && chmod +x ageforge && ./ageforge",
+      note: "Apple Silicon. On an Intel Mac, swap in <code>ageforge-macos-amd64</code>.",
+    },
+    linux: {
+      cmd: "curl -fLo ageforge " + BASE + "ageforge-linux-amd64 && chmod +x ageforge && ./ageforge",
+      note: "x86_64. On ARM, swap in <code>ageforge-linux-arm64</code>.",
+    },
+    win: {
+      cmd: "iwr " + BASE + "ageforge-windows-amd64.exe -OutFile ageforge.exe; .\\ageforge.exe",
+      note: "PowerShell, in Windows Terminal.",
+    },
+  };
+  const cmdEl = document.getElementById("cmd");
+  const noteEl = document.getElementById("cmd-note");
+  const copyBtn = document.getElementById("copy");
+  const tabs = Array.prototype.slice.call(document.querySelectorAll(".os-tab"));
 
-// ── Intersection observer (fade-in) ──────────────────────────────────────────
-const obs = new IntersectionObserver(
-  (entries) => {
-    for (const e of entries) {
-      if (e.isIntersecting) {
-        e.target.classList.add("visible");
-        obs.unobserve(e.target);
-      }
-    }
-  },
-  { threshold: 0.1 },
-);
-document.querySelectorAll("[data-anim]").forEach((el) => obs.observe(el));
-
-// ── Ages timeline ─────────────────────────────────────────────────────────────
-const AGES = [
-  { name: 'Primitive\nAge',     icon: '🪨', era: 'primitive',   desc: 'Survival. Nothing but your hands and wits.' },
-  { name: 'Stone\nAge',         icon: '⛏️', era: 'primitive',   desc: 'Stone tools, quarries and the first real houses.' },
-  { name: 'Bronze\nAge',        icon: '🛡', era: 'ancient',     desc: 'Metalworking begins.' },
-  { name: 'Iron\nAge',          icon: '⚔️',  era: 'ancient',     desc: 'Iron tools and weapons reshape society.' },
-  { name: 'Classical\nAge',     icon: '🏛',  era: 'classical',   desc: 'Great empires rise. Philosophy and art flourish.' },
-  { name: 'Medieval\nAge',      icon: '🏰', era: 'medieval',    desc: 'Kingdoms clash. Feudalism takes hold.' },
-  { name: 'Renaissance\nAge',   icon: '🎨', era: 'renaissance', desc: 'Art, science, and exploration bloom.' },
-  { name: 'Colonial\nAge',      icon: '⚓', era: 'renaissance', desc: 'Navies and colonies reshape the known world.' },
-  { name: 'Industrial\nAge',    icon: '🏭', era: 'industrial',  desc: 'Steam power ignites exponential growth.' },
-  { name: 'Victorian\nAge',     icon: '🎩', era: 'industrial',  desc: 'Empires at their absolute peak of confidence.' },
-  { name: 'Electric\nAge',      icon: '⚡', era: 'electric',    desc: 'Electricity rewires every corner of civilization.' },
-  { name: 'Atomic\nAge',        icon: '☢️',  era: 'atomic',      desc: 'The atom brings enormous power and new dangers.' },
-  { name: 'Modern\nAge',        icon: '🌐', era: 'atomic',      desc: 'Global infrastructure. Mass production. Superpowers.' },
-  { name: 'Information\nAge',   icon: '📡', era: 'digital',     desc: 'Data becomes the most valuable resource on Earth.' },
-  { name: 'Digital\nAge',       icon: '💻', era: 'digital',     desc: 'Code shapes reality. The physical world goes virtual.' },
-  { name: 'Cyberpunk\nAge',     icon: '🤖', era: 'cyber',       desc: 'Megacorps rule. Augmented streets glow neon.' },
-  { name: 'Fusion\nAge',        icon: '🔬', era: 'cyber',       desc: 'Clean unlimited energy. The energy crisis: solved.' },
-  { name: 'Space\nAge',         icon: '🚀', era: 'cosmic',      desc: 'Humanity escapes the cradle and reaches for the stars.' },
-  { name: 'Interstellar\nAge',  icon: '🛸', era: 'cosmic',      desc: 'Colony ships cross the void to distant star systems.' },
-  { name: 'Galactic\nAge',      icon: '🌌', era: 'cosmic',      desc: 'An empire that spans hundreds of star systems.' },
-  { name: 'Quantum\nAge',       icon: '⚛️',  era: 'cosmic',      desc: 'Reality itself becomes programmable.' },
-  { name: 'Transcendent\nAge',  icon: '✨', era: 'cosmic',      desc: 'Beyond physical form. The final age of civilization.' },
-];
-
-const track = document.getElementById('ages-track');
-if (track) {
-  AGES.forEach((age, i) => {
-    const node = document.createElement('div');
-    node.className = 'age-node';
-    node.dataset.era = age.era;
-    // Stagger the float animation so adjacent cards aren't in sync
-    node.style.animationDelay = `${((i * 0.55) % 7).toFixed(2)}s`;
-    node.innerHTML = `
-      <div class="age-dot">${age.icon}</div>
-      <div class="age-order">AGE ${String(i).padStart(2, '0')}</div>
-      <div class="age-name">${age.name}</div>
-      <div class="age-desc">${age.desc}</div>
-    `;
-    track.appendChild(node);
+  function pickOS(key) {
+    if (!OS[key] || !cmdEl) return;
+    // Break the long URL after slashes, not mid-word; copying still gets
+    // the plain text.
+    cmdEl.innerHTML = OS[key].cmd
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/\//g, "/<wbr>");
+    noteEl.innerHTML = OS[key].note;
+    tabs.forEach(function (t) {
+      t.setAttribute("aria-selected", t.dataset.os === key ? "true" : "false");
+    });
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      pickOS(t.dataset.os);
+    });
   });
+  const ua = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.userAgent || "";
+  let os = "mac";
+  if (/win/i.test(ua) && !/darwin|mac/i.test(ua)) os = "win";
+  else if (/linux|x11|cros/i.test(ua) && !/android/i.test(ua)) os = "linux";
+  pickOS(os);
 
-  // ── Arrow navigation ────────────────────────────────────────────────────
-  const agesScroll = document.getElementById('ages-scroll');
-  const prevBtn    = document.getElementById('ages-prev');
-  const nextBtn    = document.getElementById('ages-next');
-
-  if (agesScroll && prevBtn && nextBtn) {
-    let agesIdx = 0;
-
-    function scrollToAge(idx) {
-      const cards = track.querySelectorAll('.age-node');
-      if (!cards.length) return;
-      agesIdx = Math.max(0, Math.min(idx, cards.length - 1));
-      // Use getBoundingClientRect so the position is correct regardless of
-      // which ancestor is the offsetParent.
-      const card = cards[agesIdx];
-      const containerRect = agesScroll.getBoundingClientRect();
-      const cardRect = card.getBoundingClientRect();
-      const scrollLeft = agesScroll.scrollLeft + (cardRect.left - containerRect.left);
-      agesScroll.scrollTo({ left: scrollLeft, behavior: 'smooth' });
-    }
-
-    prevBtn.addEventListener('click', () => scrollToAge(agesIdx - 1));
-    nextBtn.addEventListener('click', () => scrollToAge(agesIdx + 1));
-
-    // Keep agesIdx in sync when user swipes/scrolls manually
-    agesScroll.addEventListener('scrollend', () => {
-      const cards = [...track.querySelectorAll('.age-node')];
-      const containerMid = agesScroll.getBoundingClientRect().left + agesScroll.offsetWidth / 2;
-      let best = 0, bestDist = Infinity;
-      cards.forEach((c, i) => {
-        const d = Math.abs(c.getBoundingClientRect().left + c.offsetWidth / 2 - containerMid);
-        if (d < bestDist) { bestDist = d; best = i; }
-      });
-      agesIdx = best;
-    }, { passive: true });
-  }
-}
-
-// ── Platform tabs ─────────────────────────────────────────────────────────────
-function activateTab(id) {
-  document.querySelectorAll(".ptab").forEach((t) => t.classList.remove("active"));
-  document.querySelectorAll(".pane").forEach((p) => p.classList.remove("active"));
-  const btn = document.querySelector(`.ptab[data-tab="${id}"]`);
-  const pane = document.getElementById("pane-" + id);
-  if (btn) btn.classList.add("active");
-  if (pane) pane.classList.add("active");
-}
-
-document.querySelectorAll(".ptab").forEach((tab) => {
-  tab.addEventListener("click", () => activateTab(tab.dataset.tab));
-});
-
-// Auto-select tab based on visitor OS
-(function () {
-  const ua = navigator.userAgent;
-  if (/Windows/i.test(ua)) activateTab("win");
-  else if (/Linux/i.test(ua)) activateTab("linux");
-  // Mac is already the default active tab; no action needed
-})();
-
-// ── Copy buttons on all codeblocks ───────────────────────────────────────────
-document.querySelectorAll(".codeblock").forEach((block) => {
-  const btn = document.createElement("button");
-  btn.className = "copy-btn";
-  btn.textContent = "Copy";
-  btn.setAttribute("aria-label", "Copy code");
-
-  btn.addEventListener("click", () => {
-    const code = block.querySelector("code");
-    const text = code ? code.innerText : block.innerText;
-    navigator.clipboard.writeText(text.trim()).then(() => {
+  function copyInstall(btn) {
+    const text = cmdEl ? cmdEl.textContent : "";
+    const done = function () {
+      if (!btn) return;
+      const old = btn.textContent;
       btn.textContent = "Copied";
-      btn.classList.add("copied");
-      setTimeout(() => {
-        btn.textContent = "Copy";
-        btn.classList.remove("copied");
-      }, 2000);
-    });
-  });
-
-  block.appendChild(btn);
-});
-
-// ── Terminal mockup: static HTML lines, typewriter per line ──────────────────
-const m = (s) => `<span class="tc-m">${s}</span>`; // muted
-const g = (s) => `<span class="tc-g">${s}</span>`; // gold
-const gr = (s) => `<span class="tc-gr">${s}</span>`; // green
-const rd = (s) => `<span class="tc-rd">${s}</span>`; // red
-const cy = (s) => `<span class="tc-cy">${s}</span>`; // cyan
-const pu = (s) => `<span class="tc-pu">${s}</span>`; // purple
-const yw = (s) => `<span class="tc-yw">${s}</span>`; // yellow
-
-// Fixed-width helpers (no ANSI, just spaces)
-const pad = (s, n) => s.padEnd(n);
-const lpad = (s, n) => s.padStart(n);
-const bar = (n, t) => g("█".repeat(n)) + m("░".repeat(t - n));
-
-const TERM_LINES = [
-  // ── row 1: status bar
-  g("  🏛 Stone Age") +
-    m("  ") +
-    m('"Founder"') +
-    "                      " +
-    m("Tick: ") +
-    g("1.25K") +
-    m("  Pop: ") +
-    "18/30" +
-    m("  ×1"),
-
-  // ── row 2: age progress
-  m(
-    "  ─────────────────────────────────────────────────────────────────────────────────────────────",
-  ),
-
-  // ── row 3: next age bar
-  g("  Next: Bronze Age") +
-    "  " +
-    rd("food:3.10K/8.00K") +
-    " " +
-    bar(4, 7) +
-    "  " +
-    rd("stone:890/4.00K") +
-    " " +
-    bar(2, 7) +
-    "  " +
-    gr("wood:1.24K/8.00K") +
-    " " +
-    bar(5, 7),
-
-  // ── row 4: panel hint
-  m("  Panels: ") +
-    g("research") +
-    m("  army  trade  stats  wonders  logs  epoch  help"),
-
-  // ── row 5: divider
-  m(
-    "  ─────────────────────────────────────────────────────────────────────────────────────────────",
-  ),
-
-  // ── row 6: column headers
-  m("  ──────────────────── Resources ─────────────────────") +
-    m("│") +
-    m("──────────────── Buildings ──────────────"),
-
-  // ── row 7-10: resources left, buildings right
-  "  " +
-    cy(pad("food", 10)) +
-    lpad("3.10K", 6) +
-    m("/") +
-    pad("8.00K", 6) +
-    " " +
-    bar(4, 6) +
-    " " +
-    gr(lpad("+8", 4)) +
-    m("/t") +
-    m("               │") +
-    "  " +
-    m("── Housing ──"),
-
-  "  " +
-    cy(pad("wood", 10)) +
-    lpad("1.24K", 6) +
-    m("/") +
-    pad("6.00K", 6) +
-    " " +
-    bar(3, 6) +
-    " " +
-    gr(lpad("+12", 4)) +
-    m("/t") +
-    m("               │") +
-    "  " +
-    gr("✓") +
-    " " +
-    g(pad("Hut", 16)) +
-    m("[12]  wood:8"),
-
-  "  " +
-    cy(pad("stone", 10)) +
-    lpad("  890", 6) +
-    m("/") +
-    pad("4.00K", 6) +
-    " " +
-    bar(2, 6) +
-    " " +
-    gr(lpad("+4", 4)) +
-    m("/t") +
-    m("               │") +
-    "  " +
-    m("·") +
-    " " +
-    m(pad("Stash", 16)) +
-    m("[ 5]  wood:45"),
-
-  "  " +
-    cy(pad("knowledge", 10)) +
-    lpad("  450", 6) +
-    m("/") +
-    pad("2.00K", 6) +
-    " " +
-    bar(2, 6) +
-    " " +
-    gr(lpad("+3", 4)) +
-    m("/t") +
-    m("               │") +
-    "  " +
-    m("── Production ──"),
-
-  // ── row 11: worker header / building row
-  m("  ───────────────────── Workers ──────────────────────") +
-    m("│") +
-    "  " +
-    gr("✓") +
-    " " +
-    g(pad("Gathering Camp", 16)) +
-    m("[ 3]  wood:200"),
-
-  // ── row 12-13: workers / buildings
-  "  " +
-    m("Pop: ") +
-    "18" +
-    m("/30  Idle: ") +
-    g("2") +
-    m("  Food: ") +
-    rd("-4/t") +
-    "    " +
-    m("                 │") +
-    "  " +
-    gr("✓") +
-    " " +
-    g(pad("Woodcutter Camp", 16)) +
-    m("[ 2]  wood:350"),
-
-  "  " +
-    pu(pad("worker", 10)) +
-    m("×12 ") +
-    g("(2 idle)") +
-    m("  food:8") +
-    "      " +
-    m("                │") +
-    "  " +
-    m("·") +
-    " " +
-    m(pad("Stone Pit", 16)) +
-    m("[ 0]  stone:15"),
-
-  "  " +
-    pu(pad("elder", 10)) +
-    m("× 6") +
-    m("  knowledge:3") +
-    "          " +
-    m("                │"),
-
-  // ── row 14: divider + logs
-  m(
-    "  ─────────────────────────────────────────────────────────────────────────────────────────────",
-  ),
-  "  " + m("[ 1242] ") + gr("✓ Built Gathering Camp (#3)"),
-  "  " + m("[ 1244] ") + yw("★ Milestone achieved: First Storehouse"),
-  "  " + m("[ 1247] ") + m("· wood +12/t  |  food +8/t  |  knowledge +3/t"),
-  m(
-    "  ─────────────────────────────────────────────────────────────────────────────────────────────",
-  ),
-  // ── last row: prompt
-  g("  > "),
-];
-
-const termPre = document.getElementById("term-pre");
-const termCursor = document.getElementById("term-cursor");
-
-if (termPre) {
-  // Add terminal colour classes to the stylesheet dynamically
-  const style = document.createElement("style");
-  style.textContent = `
-    .tc-m  { color: #8b949e; }
-    .tc-g  { color: #f0a500; }
-    .tc-gr { color: #3fb950; }
-    .tc-rd { color: #f85149; }
-    .tc-cy { color: #39d0c8; }
-    .tc-pu { color: #d2a8ff; }
-    .tc-yw { color: #e3c07b; }
-  `;
-  document.head.appendChild(style);
-
-  // Reveal lines one by one with a short delay between each
-  let lineIdx = 0;
-  function revealNextLine() {
-    if (lineIdx >= TERM_LINES.length) {
-      // Show cursor after last line
-      if (termCursor) termCursor.style.display = "inline";
-      return;
-    }
-    const div = document.createElement("div");
-    div.innerHTML = TERM_LINES[lineIdx];
-    termPre.appendChild(div);
-    lineIdx++;
-    setTimeout(revealNextLine, lineIdx < 5 ? 60 : 30);
-  }
-  if (termCursor) termCursor.style.display = "none";
-  setTimeout(revealNextLine, 500);
-}
-
-// ── Scroll animations fallback ────────────────────────────────────────────────
-// Stagger feat-cards
-document.querySelectorAll(".feat-card").forEach((card, i) => {
-  card.style.transitionDelay = i * 80 + "ms";
-  obs.observe(card);
-});
-document.querySelectorAll(".step").forEach((step, i) => {
-  step.style.transitionDelay = i * 60 + "ms";
-  obs.observe(step);
-});
-
-// ── Screenshots carousel ──────────────────────────────────────────────────────
-(function () {
-  const track   = document.getElementById('ss-track');
-  const scroll  = document.getElementById('ss-scroll');
-  const prevBtn = document.getElementById('ss-prev');
-  const nextBtn = document.getElementById('ss-next');
-  const empty   = document.getElementById('ss-empty');
-
-  if (!track) return;
-
-  const REPO_CONTENTS = 'https://api.github.com/repos/espresso20/ageforge/contents/site/screenshots';
-  const IMAGE_EXTS    = /\.(png|jpg|jpeg|gif|webp|avif)$/i;
-
-  // ── Lightbox ──────────────────────────────────────────────────────────────
-  const lightbox = document.createElement('div');
-  lightbox.className = 'ss-lightbox';
-  lightbox.innerHTML = `
-    <button class="ss-lightbox-close" aria-label="Close">&#x2715;</button>
-    <img src="" alt="" />
-    <div class="ss-lightbox-caption"></div>
-  `;
-  document.body.appendChild(lightbox);
-
-  const lbImg     = lightbox.querySelector('img');
-  const lbCaption = lightbox.querySelector('.ss-lightbox-caption');
-  const lbClose   = lightbox.querySelector('.ss-lightbox-close');
-
-  function openLightbox(src, caption) {
-    lbImg.src = src;
-    lbImg.alt = caption;
-    lbCaption.textContent = caption;
-    lightbox.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeLightbox() {
-    lightbox.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  lbClose.addEventListener('click', closeLightbox);
-  lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  function toCaption(filename) {
-    return filename
-      .replace(/\.[^.]+$/, '')
-      .replace(/[-_]+/g, ' ')
-      .replace(/\b\w/g, c => c.toUpperCase());
-  }
-
-  // ── Build carousel ────────────────────────────────────────────────────────
-  function buildCarousel(files) {
-    const images = files.filter(f => f.type === 'file' && IMAGE_EXTS.test(f.name));
-    if (!images.length) {
-      if (empty) empty.style.display = '';
-      return;
-    }
-
-    images.forEach(file => {
-      const caption = toCaption(file.name);
-      const card = document.createElement('div');
-      card.className = 'ss-card';
-      card.innerHTML = `
-        <div class="ss-frame">
-          <img src="${file.download_url}" alt="${caption}" loading="lazy" decoding="async" />
-        </div>
-        <div class="ss-caption">${caption}</div>
-      `;
-      card.addEventListener('click', () => openLightbox(file.download_url, caption));
-      track.appendChild(card);
-    });
-
-    // Arrow navigation: same pattern as ages carousel
-    let idx = 0;
-
-    function scrollTo(i) {
-      const cards = track.querySelectorAll('.ss-card');
-      if (!cards.length) return;
-      idx = Math.max(0, Math.min(i, cards.length - 1));
-      const containerRect = scroll.getBoundingClientRect();
-      const cardRect = cards[idx].getBoundingClientRect();
-      scroll.scrollTo({ left: scroll.scrollLeft + (cardRect.left - containerRect.left), behavior: 'smooth' });
-    }
-
-    prevBtn.addEventListener('click', () => scrollTo(idx - 1));
-    nextBtn.addEventListener('click', () => scrollTo(idx + 1));
-
-    scroll.addEventListener('scrollend', () => {
-      const cards = [...track.querySelectorAll('.ss-card')];
-      const mid = scroll.getBoundingClientRect().left + scroll.offsetWidth / 2;
-      let best = 0, bestDist = Infinity;
-      cards.forEach((c, i) => {
-        const d = Math.abs(c.getBoundingClientRect().left + c.offsetWidth / 2 - mid);
-        if (d < bestDist) { bestDist = d; best = i; }
+      btn.classList.add("done");
+      setTimeout(function () {
+        btn.textContent = old;
+        btn.classList.remove("done");
+      }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () {
+        selectText(cmdEl);
       });
-      idx = best;
-    }, { passive: true });
+    } else {
+      selectText(cmdEl);
+    }
+  }
+  function selectText(el) {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  if (copyBtn) {
+    copyBtn.addEventListener("click", function () {
+      copyInstall(copyBtn);
+    });
   }
 
-  fetch(REPO_CONTENTS, { headers: { Accept: 'application/vnd.github+json' } })
-    .then(r => r.ok ? r.json() : [])
-    .then(buildCarousel)
-    .catch(() => { if (empty) empty.style.display = ''; });
-})();
+  // ── The try-it prompt: a handful of commands, in the game's voice ──────
 
-// ── Hamburger menu ────────────────────────────────────────────────────────
-(function () {
-    const btn   = document.getElementById('nav-hamburger');
-    const menu  = document.getElementById('nav-mobile-menu');
-    const close = document.getElementById('nav-mobile-close');
-    if (!btn || !menu) return;
+  const input = document.getElementById("repl-input");
+  const out = document.getElementById("repl-out");
+  const ghost = document.getElementById("ghost");
+  if (!input || !out) return;
 
-    function openMenu() {
-        menu.classList.add('open');
-        menu.setAttribute('aria-hidden', 'false');
-        btn.classList.add('open');
-        btn.setAttribute('aria-expanded', 'true');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeMenu() {
-        menu.classList.remove('open');
-        menu.setAttribute('aria-hidden', 'true');
-        btn.classList.remove('open');
-        btn.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-    }
+  const frameCount = F && F.ages ? F.ages.length : 0;
+  const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen"];
+  const REPLIES = {
+    help: [
+      ["ok", "Commands that work here: help, play, build hut, advance, map."],
+      ["ok", "The game has dozens more, a Help panel, and completion as you type."],
+    ],
+    play: [
+      ["ok", "A new run doesn't start in a browser tab. AgeForge opens full screen in your terminal."],
+      ["ok", "Your first campfire is one paste away."],
+    ],
+    "build hut": [
+      ["err", "Cannot afford Hut: need 14 wood (have 0)."],
+      ["ok", "There is no wood on a web page. In the game you start with 50."],
+    ],
+    advance: [
+      ["err", "Not ready to advance. The Next Age bar lists what is missing."],
+      ["ok", "Top of the list: a running copy of AgeForge."],
+    ],
+    map: [
+      ["ok", "You just scrolled through it: " + (WORDS[frameCount] || "a dozen") + " ages, drawn by the game from a real run."],
+      ["ok", "In the game it is live, built from your own buildings, in two styles."],
+    ],
+    quit: [["ok", "In the game, Esc saves and returns to the main menu. Here, closing the tab works too."]],
+  };
+  const ALIASES = { h: "help", "?": "help", "b hut": "build hut", exit: "quit" };
+  const NAMES = ["help", "play", "build hut", "advance", "map"];
 
-    btn.addEventListener('click', openMenu);
-    close.addEventListener('click', closeMenu);
-
-    // Close on any nav link click (scrolls to section)
-    menu.querySelectorAll('.nav-mobile-link').forEach(function (link) {
-        link.addEventListener('click', closeMenu);
+  function line(cls, text) {
+    const p = document.createElement("p");
+    p.className = "r-" + cls;
+    p.textContent = text;
+    out.appendChild(p);
+    return p;
+  }
+  function hint() {
+    const p = document.createElement("p");
+    p.className = "r-hint";
+    p.appendChild(document.createTextNode("→ The real thing is one paste away: "));
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = "copy the install command";
+    b.addEventListener("click", function () {
+      copyInstall(b);
     });
+    p.appendChild(b);
+    out.appendChild(p);
+  }
+  function distance(a, b) {
+    const d = [];
+    for (let i = 0; i <= a.length; i++) d[i] = [i];
+    for (let j = 0; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      }
+    }
+    return d[a.length][b.length];
+  }
+  function run(raw) {
+    const typed = raw.trim();
+    if (!typed) return;
+    line("echo", typed);
+    let key = typed.toLowerCase().replace(/\s+/g, " ");
+    key = ALIASES[key] || key;
+    if (REPLIES[key]) {
+      REPLIES[key].forEach(function (l) {
+        line(l[0], l[1]);
+      });
+    } else {
+      const word = typed.split(/\s+/)[0];
+      let best = "";
+      let bestD = 3;
+      NAMES.forEach(function (n) {
+        const d = distance(key, n);
+        if (d < bestD) {
+          bestD = d;
+          best = n;
+        }
+      });
+      line("err", "Unknown command '" + word + "'." + (best ? " Did you mean '" + best + "'?" : "") + " Type help for all commands.");
+    }
+    hint();
+    while (out.children.length > 14) out.removeChild(out.firstChild);
+    out.scrollTop = out.scrollHeight;
+  }
 
-    // Close on Escape key
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && menu.classList.contains('open')) closeMenu();
-    });
+  // Ghost text, as in the game: the best completion shows dim after the
+  // cursor; Tab or the right arrow takes it.
+  function completion() {
+    const v = input.value.toLowerCase();
+    if (!v) return "";
+    for (let i = 0; i < NAMES.length; i++) {
+      if (NAMES[i].indexOf(v) === 0 && NAMES[i] !== v) return NAMES[i];
+    }
+    return "";
+  }
+  function drawGhost() {
+    const c = completion();
+    ghost.innerHTML = "";
+    if (!c) return;
+    const typed = document.createElement("b");
+    typed.textContent = input.value;
+    ghost.appendChild(typed);
+    ghost.appendChild(document.createTextNode(c.slice(input.value.length)));
+  }
+  input.addEventListener("input", drawGhost);
+  input.addEventListener("keydown", function (e) {
+    const atEnd = input.selectionStart === input.value.length;
+    if ((e.key === "Tab" || (e.key === "ArrowRight" && atEnd)) && completion()) {
+      e.preventDefault();
+      input.value = completion();
+      drawGhost();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      run(input.value);
+      input.value = "";
+      drawGhost();
+    }
+  });
 })();

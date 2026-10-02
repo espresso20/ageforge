@@ -3,180 +3,144 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Changelog — AgeForge</title>
+        <title>Changelog: AgeForge</title>
         <meta name="description" content="AgeForge release history and update notes." />
-        <meta name="theme-color" content="#f0a500" />
+        <meta name="theme-color" content="#07090c" />
+        <link
+            rel="icon"
+            href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230d1117'/%3E%3Cpath d='M8 2.5 13.5 8 8 13.5 2.5 8z' fill='%23ffd700'/%3E%3C/svg%3E"
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap"
             rel="stylesheet"
         />
         <link rel="stylesheet" href="style.css" />
         <style>
-            .cl-hero {
-                padding: 7rem 2rem 3rem;
-                text-align: center;
-            }
-            .cl-hero h1 {
-                font-family: var(--font-px);
-                font-size: clamp(1rem, 3vw, 1.6rem);
-                color: var(--gold);
-                text-shadow: var(--glow-gold);
-                margin-bottom: 0.75rem;
-            }
-            .cl-hero p {
-                color: var(--muted);
-                font-family: var(--font-mono);
-                font-size: 0.85rem;
-            }
-
+            .cl-head,
             .cl-feed {
-                max-width: 760px;
+                width: min(760px, calc(100% - 32px));
                 margin: 0 auto;
-                padding: 2rem 1.5rem 6rem;
             }
-
+            .cl-head {
+                padding: 110px 0 28px;
+            }
+            .cl-head h1 {
+                margin: 0 0 6px;
+                font-size: clamp(30px, 5vw, 48px);
+                font-weight: 800;
+                letter-spacing: -0.02em;
+            }
+            .cl-head p {
+                margin: 0;
+                color: var(--dim);
+                font-size: 14px;
+            }
+            .cl-feed {
+                padding: 12px 0 72px;
+            }
             .cl-entry {
-                border-left: 3px solid var(--border);
-                padding: 0 0 2.5rem 2rem;
                 position: relative;
+                padding: 0 0 40px 26px;
+                border-left: 2px solid var(--line);
             }
             .cl-entry::before {
-                content: "";
+                content: "◆";
                 position: absolute;
-                left: -6px;
-                top: 6px;
-                width: 9px;
-                height: 9px;
-                border-radius: 50%;
-                background: var(--gold);
-                box-shadow: 0 0 8px rgba(240,165,0,0.6);
+                left: -8px;
+                top: 0;
+                color: var(--accent-ink);
+                background: var(--bg);
+                font-size: 13px;
+                line-height: 1.4;
             }
             .cl-entry:last-child {
                 border-left-color: transparent;
             }
-
             .cl-tag {
-                display: inline-block;
-                font-family: var(--font-px);
-                font-size: 0.65rem;
-                color: var(--gold);
-                background: rgba(240,165,0,0.08);
-                border: 1px solid rgba(240,165,0,0.3);
-                border-radius: var(--radius);
-                padding: 0.3rem 0.7rem;
-                margin-bottom: 0.35rem;
+                color: var(--accent-ink);
+                font-weight: 800;
             }
             .cl-date {
-                font-family: var(--font-mono);
-                font-size: 0.72rem;
-                color: var(--muted);
-                margin-left: 0.75rem;
+                margin-left: 12px;
+                color: var(--dim);
+                font-size: 13px;
             }
             .cl-body {
-                margin-top: 0.9rem;
-                color: var(--text);
-                font-family: var(--font-mono);
-                font-size: 0.82rem;
-                line-height: 1.75;
-                white-space: pre-wrap;
+                margin-top: 10px;
+                font-size: 14px;
+                line-height: 1.7;
             }
             .cl-body h3 {
-                font-family: var(--font-mono);
-                font-size: 0.78rem;
-                font-weight: 700;
-                margin: 1rem 0 0.35rem;
+                margin: 18px 0 6px;
+                font-size: 12px;
+                letter-spacing: 0.14em;
                 text-transform: uppercase;
-                letter-spacing: 0.05em;
+                color: var(--dim);
             }
-            .cl-body h3:first-child { margin-top: 0; }
-
-            /* colour-code section headers */
-            .cl-body .sec-added   { color: var(--green); }
-            .cl-body .sec-fixed   { color: var(--blue); }
-            .cl-body .sec-changed { color: var(--cyan); }
-            .cl-body .sec-other   { color: var(--muted); }
-
-            .cl-body li { margin-left: 1.2em; }
-
+            .cl-body h3:first-child {
+                margin-top: 0;
+            }
+            .cl-body ul {
+                margin: 0;
+                padding-left: 1.2em;
+            }
+            .cl-body li {
+                margin: 0 0 6px;
+            }
+            .cl-body code {
+                padding: 0 4px;
+                border: 1px solid var(--line);
+                border-radius: 4px;
+                font-size: 0.92em;
+            }
             .cl-gh-link {
                 display: inline-block;
-                margin-top: 0.75rem;
-                font-family: var(--font-mono);
-                font-size: 0.72rem;
-                color: var(--muted);
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 0.25rem 0.6rem;
-                transition: color 0.2s, border-color 0.2s;
+                margin-top: 8px;
+                color: var(--dim);
+                font-size: 13px;
             }
-            .cl-gh-link:hover {
-                color: var(--gold);
-                border-color: var(--gold-dim);
+            .cl-loading,
+            .cl-empty,
+            .cl-error {
+                padding: 48px 0;
+                color: var(--dim);
+                font-size: 14px;
             }
-
-            /* states */
-            .cl-loading, .cl-empty, .cl-error {
-                text-align: center;
-                padding: 4rem 1rem;
-                font-family: var(--font-mono);
-                font-size: 0.85rem;
-                color: var(--muted);
+            .cl-error {
+                color: #f85149;
             }
-            .cl-error { color: var(--red); }
-
-            .cl-dot-spin {
-                display: inline-block;
-                animation: spin 1s linear infinite;
-                margin-right: 0.5rem;
-            }
-            @keyframes spin { to { transform: rotate(360deg); } }
         </style>
     </head>
     <body>
-        <!-- ═══ NAV ═══════════════════════════════════════════════════════ -->
-        <nav class="nav" id="nav">
-            <div class="nav-inner">
-                <a href="index.html" class="nav-logo">
-                    <span class="nav-logo-text">AgeForge</span>
-                </a>
-                <div class="nav-links">
-                    <a href="index.html#ages">Ages</a>
-                    <a href="index.html#how-to-play">How to Play</a>
-                    <a href="index.html#download">Download</a>
-                    <a href="changelog.html" class="active">Changelog</a>
-                    <a href="docs/" class="nav-wiki">📖 Wiki</a>
-                    <a
-                        href="https://discord.gg/EPvyd5vjpj"
-                        target="_blank"
-                        rel="noopener"
-                        class="nav-discord"
-                    >Discord</a>
-                    <a
-                        href="https://github.com/espresso20/ageforge"
-                        target="_blank"
-                        rel="noopener"
-                        class="nav-gh"
-                    >GitHub</a>
-                </div>
-            </div>
-        </nav>
+        <header class="bar">
+            <a class="bar-mark" href="index.html" aria-label="AgeForge home">◆</a>
+            <nav class="bar-nav" aria-label="Site">
+                <a href="docs/">Docs</a>
+                <a href="https://github.com/espresso20/ageforge" rel="noopener">GitHub</a>
+                <a href="changelog.html" aria-current="page">Changelog</a>
+            </nav>
+        </header>
 
-        <!-- ═══ HERO ══════════════════════════════════════════════════════ -->
-        <section class="cl-hero">
+        <header class="cl-head">
             <h1>Changelog</h1>
-            <p>Every release, what changed, and why.</p>
-        </section>
+            <p>Every release and what changed in it.</p>
+        </header>
 
-        <!-- ═══ FEED ══════════════════════════════════════════════════════ -->
         <main class="cl-feed" id="cl-feed">
-            <div class="cl-loading">
-                <span class="cl-dot-spin">◆</span> Loading releases…
-            </div>
+            <div class="cl-loading">Loading releases…</div>
         </main>
 
-        <!-- ═══ SCRIPTS ══════════════════════════════════════════════════ -->
+        <footer class="foot">
+            <nav class="foot-nav" aria-label="More">
+                <a href="index.html">Home</a>
+                <a href="docs/">Docs</a>
+                <a href="https://github.com/espresso20/ageforge/releases" rel="noopener">Releases on GitHub</a>
+                <a href="https://discord.gg/EPvyd5vjpj" rel="noopener">Discord</a>
+            </nav>
+        </footer>
+
         <script src="changelog.js"></script>
     </body>
 </html>
