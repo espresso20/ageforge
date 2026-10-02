@@ -12,11 +12,13 @@ import (
 
 // logsProvider generates the logs overlay text from the current game state.
 // Shows the last ~50 game log entries, skipping debug entries, newest at the bottom.
+// Every line starts with its tick number, which the main window's log leaves
+// out (log_routing.go).
 func logsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
 	sb.WriteString("[gold]═══ Game log ═══[-]\n")
-	sb.WriteString(theme.Paint(theme.RoleDim, " Every line, routine confirmations (marked ·) included. The main log keeps the notable ones.") + "\n\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, " Every line, with tick numbers. Routine confirmations are marked ·.") + "\n\n")
 
 	logs := state.Log
 
@@ -61,7 +63,8 @@ func logsProvider(state game.GameState, _ int) string {
 			color = "cyan"
 			prefix = "[i[]"
 		case game.LogRoutine:
-			// Routine confirmations show only here (log_routing.go).
+			// Routine confirmations: plain text, marked with a dot. The
+			// main log shows them too, unmarked (log_routing.go).
 			color = theme.TagName(theme.RoleText)
 			prefix = " · "
 		}

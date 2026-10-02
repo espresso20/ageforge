@@ -18,9 +18,10 @@ import (
 //   - submitInput (dashboard.go) drops every reply of Type "success", on the
 //     rule that the engine already logged the event. A success reply whose
 //     text the engine never logged is a message the player never sees, so
-//     such a reply must be Type "info" (or carry no text). The line may go
-//     to either log: a routine confirmation shows only in the logs panel
-//     (log_routing.go), which still counts.
+//     such a reply must be Type "info" (or carry no text). The line must
+//     reach the main window's log, where the player looks after typing a
+//     command; a routine confirmation counts, as it shows there too
+//     (log_routing.go).
 //   - Lists built from Go maps come out in a new order on every call unless
 //     they are sorted, so the list commands must print the same text twice.
 
@@ -64,12 +65,12 @@ var replyGuardCases = []struct{ age, cmd string }{
 	{"", "account backup"},
 }
 
-// playerLogCount is the number of log entries a player can see in either
-// log: the main window's or the logs panel (debug lines are for dumps only).
+// playerLogCount is the number of log entries the main window's log shows
+// (debug lines are for dumps only). The logs panel shows the same lines.
 func playerLogCount(ge *game.GameEngine) int {
 	n := 0
 	for _, e := range ge.GetLogs() {
-		if mainLogShows(e) || logsPanelShows(e) {
+		if mainLogShows(e) {
 			n++
 		}
 	}

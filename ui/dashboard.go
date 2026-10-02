@@ -863,8 +863,8 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 
 func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
-	// Notable entries only: routine confirmations and debug lines stay out
-	// (log_routing.go); the logs panel has the routine ones.
+	// Every line but debug ones, routine confirmations included, so the
+	// player sees what each command did (log_routing.go).
 	var visible []game.LogEntry
 	for _, entry := range state.Log {
 		if mainLogShows(entry) {
@@ -875,9 +875,10 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 	if len(visible) > 20 {
 		start = len(visible) - 20
 	}
-	// Tick stamp rendered in the theme's Dim (brighter post part-1) so it recedes
-	// without going illegible; message color keys off entry type for scannability.
-	dim := theme.Tag(theme.RoleDim)
+	// No tick number: the line starts with what happened, and the logs panel
+	// keeps the tick. The color keys off the entry type for scannability;
+	// routine confirmations take the plain text color, so notable lines
+	// still stand out among them.
 	for _, entry := range visible[start:] {
 		color := "white"
 		switch entry.Type {
@@ -892,7 +893,7 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 		case "info":
 			color = "cyan"
 		}
-		fmt.Fprintf(&sb, "%sT%d[-] [%s]%s[-]\n", dim, entry.Tick, color, entry.Message)
+		fmt.Fprintf(&sb, "[%s]%s[-]\n", color, entry.Message)
 	}
 	d.logTV.SetText(safeTags(sb.String()))
 	d.logTV.ScrollToEnd()
