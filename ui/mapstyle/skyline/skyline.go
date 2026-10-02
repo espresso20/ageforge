@@ -43,6 +43,9 @@ type view struct {
 
 	lay     *layout
 	clay    *layout // the compact view's
+	slay    *layout // the sky arc's (orbit.go), full and compact,
+	sclay   *layout
+	glay    *layout // and the ground skyline behind the Quantum Age's echo
 	sprites map[spriteKey]*sprite
 	fb      fb
 	vis     []int
@@ -206,6 +209,9 @@ func presentCam(m *mapmodel.Model, w int) int {
 
 // compose builds the frame into v.fb.
 func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
+	if sky := f.Model.Sky(); sky != mapmodel.SkyGround {
+		return v.composeSky(f, W, H, sky) // the sky arc: orbit.go
+	}
 	m := f.Model
 	v.lastW = W
 	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H, S: H - 3, top: 1, sel: -1}
