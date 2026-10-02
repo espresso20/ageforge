@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -11,14 +12,14 @@ import (
 
 // logRoutingDashboard builds a dashboard over newCaseTestEngine (the
 // Primitive Age, stocked so every command below succeeds).
-func logRoutingDashboard(t *testing.T) (*Dashboard, *game.GameEngine) {
+func logRoutingDashboard(t *testing.T) (*Dashboard, *game.GameEngine, *tview.Pages) {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := newCaseTestEngine(t, "")
 	pages := tview.NewPages()
 	d := NewDashboard(tview.NewApplication(), eng, pages)
 	pages.AddPage("dashboard", d.Root(), true, true)
-	return d, eng
+	return d, eng, pages
 }
 
 // submitForTest types line at the prompt and presses Enter.
@@ -27,43 +28,137 @@ func submitForTest(d *Dashboard, line string) {
 	d.submitInput()
 }
 
-// TestRoutineLinesSkipTheMainLog: routine confirmations (a build started,
-// workers recruited and assigned, a gather, a plan item) reach the logs
-// panel and never the main window's log, while errors and notable events
-// still reach the main log (playtest 2026-09-29: "Started building Hut"
-// belongs in the logs panel only).
-func TestRoutineLinesSkipTheMainLog(t *testing.T) {
-	d, eng := logRoutingDashboard(t)
+// tickPrefixRe matches a log line that starts with a tick number ("T133 ").
+var tickPrefixRe = regexp.MustCompile(`^\s*T\d+\s`)
+
+// logLineWith returns the first line of text that contains part, or "".
+func logLineWith(text, part string) string {
+	for _, line := range strings.Split(text, "\n") {
+		if strings.Contains(line, part) {
+			return line
+		}
+	}
+	return ""
+}
+
+// TestCommandRepliesReachTheMainLog: the main window's log says what each
+// command did, routine confirmations included (a gather, a build started or
+// queued, workers recruited and assigned, a plan item), with no tick number
+// in front. The logs panel shows the same lines with their tick numbers and
+// category tags. Errors and notable events reach both logs in their colors.
+// Playtest 2026-09-29 asked for the tick number ("T133 Started building
+// Hut") to leave the main window; a first fix took the whole line out.
+func TestCommandRepliesReachTheMainLog(t *testing.T) {
+	d, eng, _ := logRoutingDashboard(t)
 	eng.Resources.LoadAmounts(map[string]float64{"food": 100}) // room to gather into
-	routine := map[string]string{
-		"gather food":             "Gathered ",
-		"build hut":               "Started building Hut",
-		"recruit":                 "Recruited ",
-		"assign gathering_camp":   "Assigned ",
-		"unassign gathering_camp": "Unassigned ",
-		"plan build hut":          "Planned ",
-		"plan clear":              "Cleared the plan",
+	replies := []struct{ cmd, line string }{
+		{"gather food", "Gathered "},
+		{"build hut", "Started building Hut"},
+		{"build hut 2", "Queued 2 Huts"},
+		{"recruit", "Recruited "},
+		{"assign gathering_camp", "Assigned "},
+		{"unassign gathering_camp", "Unassigned "},
+		{"plan build hut", "Planned "},
+		{"plan clear", "Cleared the plan"},
+		{"build no_such_building", "Unknown building"},
 	}
-	for _, cmd := range []string{"gather food", "build hut", "recruit", "assign gathering_camp", "unassign gathering_camp", "plan build hut", "plan clear"} {
-		submitForTest(d, cmd)
+	for _, r := range replies {
+		submitForTest(d, r.cmd)
 	}
-	submitForTest(d, "build no_such_building")
+	const ready = "✦ Ready to advance to the Stone Age."
+	eng.AddLog("event", ready+" Type 'advance' when you're ready.")
 
 	st := eng.GetState()
 	d.refreshLog(st)
 	main := d.logTV.GetText(true)
 	panel := guardRendered(logsProvider(st, guardPanelWidth))
-	for cmd, line := range routine {
-		if strings.Contains(main, line) {
-			t.Errorf("%q: the main log shows the routine line %q:\n%s", cmd, line, main)
+	for _, r := range append(replies, struct{ cmd, line string }{"(an event)", ready}) {
+		if got := logLineWith(main, r.line); got == "" {
+			t.Errorf("%s: the main log lacks %q:\n%s", r.cmd, r.line, main)
+		} else if tickPrefixRe.MatchString(got) {
+			t.Errorf("%s: the main log line starts with a tick number: %q", r.cmd, got)
 		}
-		if !strings.Contains(panel, line) {
-			t.Errorf("%q: the logs panel lacks %q:\n%s", cmd, line, panel)
+		if got := logLineWith(panel, r.line); got == "" {
+			t.Errorf("%s: the logs panel lacks %q:\n%s", r.cmd, r.line, panel)
+		} else if !tickPrefixRe.MatchString(got) {
+			t.Errorf("%s: the logs panel line has no tick number: %q", r.cmd, got)
 		}
 	}
-	for _, notable := range []string{"Unknown building", "Welcome to AgeForge"} {
-		if !strings.Contains(main, notable) {
-			t.Errorf("the main log lacks the notable line %q:\n%s", notable, main)
+	for _, line := range strings.Split(strings.TrimSpace(main), "\n") {
+		if tickPrefixRe.MatchString(line) {
+			t.Errorf("a main log line starts with a tick number: %q", line)
+		}
+	}
+
+	// The main log keeps its look: each category's color, the message's own
+	// marker (✦), no category tag. The logs panel keeps its tags.
+	raw := d.logTV.GetText(false)
+	for _, want := range []string{"[red]Unknown building", "[gold]" + ready, "[white]Gathered "} {
+		if !strings.Contains(raw, want) {
+			t.Errorf("the main log lacks %q:\n%s", want, raw)
+		}
+	}
+	for _, c := range []struct{ line, tag string }{{"Unknown building", "[X]"}, {ready, "[*]"}, {"Gathered ", "·"}} {
+		if got := logLineWith(main, c.line); strings.Contains(got, c.tag) {
+			t.Errorf("the main log line carries the logs panel's tag %q: %q", c.tag, got)
+		}
+		got := logLineWith(panel, c.line)
+		if i := strings.Index(got, c.line); i < 0 || !strings.Contains(got[:i], c.tag) {
+			t.Errorf("the logs panel line lacks the tag %q before the message: %q", c.tag, got)
+		}
+	}
+}
+
+// TestMainLogOnScreen draws the dashboard and reads its Log box: the
+// command's line is on screen with no tick number in front of it.
+func TestMainLogOnScreen(t *testing.T) {
+	d, eng, pages := logRoutingDashboard(t)
+	eng.Resources.LoadAmounts(map[string]float64{"food": 100})
+	submitForTest(d, "gather food")
+	submitForTest(d, "build hut")
+	d.refresh()
+	screen := drawDashboard(t, d, pages, 160, 48)
+	for _, line := range []string{"Gathered ", "Started building Hut"} {
+		row := logLineWith(screen, line)
+		if row == "" {
+			t.Errorf("the main window lacks %q:\n%s", line, screen)
+			continue
+		}
+		if regexp.MustCompile(`T\d+\s+` + regexp.QuoteMeta(line)).MatchString(row) {
+			t.Errorf("the main window shows a tick number before %q: %q", line, row)
+		}
+	}
+}
+
+// TestMapSettingRepliesInTheMainLog: the map settings' confirmations
+// (routine lines once an account keeps the setting) read as plain sentences
+// in the main window's log.
+func TestMapSettingRepliesInTheMainLog(t *testing.T) {
+	d, eng := mapTestDashboard(t, true)
+	cases := []struct{ cmd, line string }{
+		{"minimap off", "Mini map off. Type minimap on to bring it back."},
+		{"minimap on", "Mini map on. It shows above the Buildings list"},
+		{"map style skyline", "Map style set to Skyline."},
+		{"map glyphs ascii", "Map glyphs set to ascii."},
+		{"map flows on", "Flows overlay on: full stores"},
+	}
+	for _, c := range cases {
+		d.runForTest(c.cmd)
+		logs := eng.GetLogs()
+		if last := logs[len(logs)-1]; last.Type != game.LogRoutine {
+			t.Errorf("%s: logged %q as %q, want %q (the routine path goes untested)", c.cmd, last.Message, last.Type, game.LogRoutine)
+		}
+	}
+	d.refreshLog(eng.GetState())
+	main := d.logTV.GetText(true)
+	for _, c := range cases {
+		got := logLineWith(main, c.line)
+		if got == "" {
+			t.Errorf("%s: the main log lacks %q:\n%s", c.cmd, c.line, main)
+			continue
+		}
+		if !strings.HasPrefix(got, c.line) {
+			t.Errorf("%s: the main log line does not start with the reply: %q", c.cmd, got)
 		}
 	}
 }
@@ -79,7 +174,7 @@ func TestLogRoutingRule(t *testing.T) {
 		{"warning", true, true},
 		{"error", true, true},
 		{"event", true, true},
-		{game.LogRoutine, false, true},
+		{game.LogRoutine, true, true},
 		{"debug", false, false},
 	} {
 		e := game.LogEntry{Type: c.typ, Message: "x"}

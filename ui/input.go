@@ -23,7 +23,8 @@ import (
 // CommandResult is the return value of HandleCommand. The caller (Dashboard)
 // logs Message if it is non-empty and Type != "success" (successes are
 // ephemeral and only shown as toast/log entries by the engine itself).
-// A routine confirmation (Type game.LogRoutine) goes only to the logs panel.
+// A routine confirmation (Type game.LogRoutine) shows in both logs like any
+// other reply; the logs panel marks it with a dot (log_routing.go).
 // If OverlayName is set the Dashboard opens that named overlay panel.
 type CommandResult struct {
 	Message     string
@@ -2479,7 +2480,7 @@ func cmdMapStyle(args []string, engine *game.GameEngine) CommandResult {
 		return usageError(usageFor("map style"), fmt.Errorf("there is no map style %q", args[0]))
 	}
 	// A routine confirmation (the map shows the change); without an account
-	// the reply carries a caveat, so it stays in the main log.
+	// the reply carries a caveat, so it is an info line instead.
 	res := CommandResult{Type: game.LogRoutine, Message: fmt.Sprintf("Map style set to %s.", styleTitle(reg, name)),
 		MapPref: mapPref{Key: "style", Value: name}}
 	if acct == nil {
@@ -2511,7 +2512,7 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	res := CommandResult{Type: game.LogRoutine, Message: fmt.Sprintf("Map glyphs set to %s.", name),
 		MapPref: mapPref{Key: "glyphs", Value: name}}
 	if name == "nerd" {
-		res.Type = "info" // the advice belongs in the main log
+		res.Type = "info" // advice, not a plain confirmation
 		res.Message += " If the map shows boxes or question marks, type icons."
 	}
 	if acct == nil {

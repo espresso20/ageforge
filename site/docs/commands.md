@@ -20,7 +20,9 @@ Commands that can't be undone are never run from a completion: `Enter` on `plan 
 
 ## The log
 
-The log in the main window keeps what is worth noticing: events, milestones, finished research, age advances, harbingers, warnings and errors. A routine confirmation of something a panel already shows goes only to the **Logs** panel (`logs`), marked with a `·`: a build started, queued or finished, a sale, an upgrade, workers recruited, assigned, unassigned or dismissed, a gather, a wonder deposit, a trade, a trade route started or stopped, a research started, an expedition sent, a gift, and a plan item added or started. A finished wonder still reaches the main log.
+The log in the main window says what each command did and what happened in the game: a build started, queued or finished, a gather, a sale, workers recruited or assigned, a trade, a research started, a plan item added, and events, milestones, age advances, harbingers, warnings and errors. Each line starts with what happened, with no tick number. Routine confirmations are in the plain text color, so events, warnings and errors stand out.
+
+The **Logs** panel (`logs`) shows the same lines with the tick each one happened on and a mark for its kind: `[*]` an event, `[+]` a success, `[i]` a note, `[!]` a warning, `[X]` an error, and `·` a routine confirmation.
 
 ---
 
@@ -406,7 +408,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | `theme list` | List every theme by name and key, marking the active one and noting each theme's light/dark variant and which are accessible |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
 | `quit` | Save your game and quit |
-| `logs` | Open the **Logs** panel: recent game log entries, routine confirmations included (see [The log](#the-log)) |
+| `logs` | Open the **Logs** panel: recent game log entries with their tick numbers (see [The log](#the-log)) |
 | `dump` | Export logs to a file for debugging, in the `logs/` folder of your active account (`data/accounts/<id>/logs/`). The export prints raw tick counts alongside the wall-clock readings |
 | `help` | Open the Help panel: full command reference and list of available panels |
 

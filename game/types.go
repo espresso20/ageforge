@@ -265,7 +265,8 @@ type LogEntry struct {
 	Tick    int
 	Message string
 	// Type is the category: "info", "success", "warning", "error", "event",
-	// LogRoutine or "debug". It decides the color and which log shows it.
+	// LogRoutine or "debug". It decides the color, the logs panel's tag, and
+	// whether a player sees the line at all ("debug" is for dumps only).
 	Type string
 }
 
@@ -276,11 +277,13 @@ type LogEntry struct {
 // route started or stopped, a research started, an expedition sent, a gift,
 // a plan item added or started.
 //
-// The rule, for any new line: routine confirmations go only to the logs
-// panel; the main window's log keeps notable events, warnings and errors.
-// Every other category shows in both logs, and "debug" in neither (dumps
-// only). Every command that succeeds still writes a line somewhere
-// (TestSuccessRepliesAreLogged).
+// The rule, for any new line: a plain confirmation of something a panel
+// already shows is LogRoutine; anything worth noticing takes another
+// category. Every category but "debug" (dumps only) shows in both logs, so
+// the main window always says what a command did. There, routine lines take
+// the plain text color and the notable ones stand out in theirs; the logs
+// panel marks routine lines with a dot. Every command that succeeds writes a
+// line the main log shows (TestSuccessRepliesAreLogged).
 const LogRoutine = "routine"
 
 // StatsSnapshot is the stats for UI display

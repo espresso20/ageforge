@@ -344,7 +344,7 @@ main.go         Entry point; wires engine + UI.
 - **GameState Snapshot**: `engine.GetState()` returns a read-only snapshot. The UI refreshes from snapshots every 500ms and never touches engine internals.
 - **Event Bus**: Systems communicate via `game.EventBus` (pub/sub, synchronous under write lock). Subscribe in `ui/dashboard.go` for toasts, in managers for cross-system reactions.
 - **No Global State**: Pass dependencies explicitly. No singletons.
-- **Two logs**: the main window's log keeps notable events, warnings and errors; a routine confirmation whose effect a panel already shows (a build started, workers assigned, a plan item added) is logged as `game.LogRoutine` and shows only in the Logs panel. `ui/log_routing.go` decides which log shows an entry, and `TestSuccessRepliesAreLogged` checks that every command that succeeds still writes a line to one of them.
+- **Two logs**: the main window's log and the Logs panel show the same lines (everything but `debug`, which only dumps carry), so the main window always says what a command did. The main log leaves out the tick number and prints each line in its category's color; the Logs panel keeps the tick on every line, tags each category and marks a routine confirmation (`game.LogRoutine`: a build started, workers assigned, a plan item added) with a `·`. `ui/log_routing.go` decides which log shows an entry, and `TestSuccessRepliesAreLogged` checks that every command that succeeds writes a line the main log shows.
 
 ### Critical: Event Bus Deadlock
 
