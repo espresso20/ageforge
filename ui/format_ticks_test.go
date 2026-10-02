@@ -8,7 +8,7 @@ import (
 
 // oneSecondTick is a snapshot whose tick is exactly one second, so a tick count
 // and a second count are the same number and the cases below read as durations.
-var oneSecondTick = game.GameState{TickIntervalMs: 1000, SpeedMultiplier: 1.0}
+var oneSecondTick = game.GameState{TickIntervalMs: 1000}
 
 func TestFormatTicks(t *testing.T) {
 	cases := []struct {
@@ -35,13 +35,13 @@ func TestFormatTicks(t *testing.T) {
 }
 
 // TestFormatTicksUsesSnapshotInterval pins the conversion to state.TickIntervalMs.
-// That field ALREADY has the tick-speed bonus and the speed multiplier folded in
-// (see GetState), so the helper must not apply SpeedMultiplier a second time —
-// a doubled multiplier here would quietly halve every countdown in the game.
+// That field ALREADY has the tick-speed bonus folded in (see GetState), so the
+// helper must not scale it a second time: a doubled bonus here would quietly
+// shorten every countdown in the game.
 func TestFormatTicksUsesSnapshotInterval(t *testing.T) {
-	fast := game.GameState{TickIntervalMs: 500, SpeedMultiplier: 4.0}
+	fast := game.GameState{TickIntervalMs: 500, TickSpeedBonus: 3.0}
 	if got := formatTicks(120, fast); got != "~1m" {
-		t.Errorf("120 ticks at 500ms = %q, want ~1m (SpeedMultiplier must not be reapplied)", got)
+		t.Errorf("120 ticks at 500ms = %q, want ~1m (the tick speed bonus must not be reapplied)", got)
 	}
 }
 

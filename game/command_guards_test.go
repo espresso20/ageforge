@@ -111,9 +111,6 @@ func TestEngineAmountGuards(t *testing.T) {
 		if _, err := ge.BankWonderResource("great_monolith", "stone", amt); err == nil {
 			t.Errorf("BankWonderResource(%v) succeeded", amt)
 		}
-		if err := ge.SetSpeedMultiplier(amt); err == nil {
-			t.Errorf("SetSpeedMultiplier(%v) succeeded", amt)
-		}
 	}
 	for key, r := range ge.Resources.resources {
 		if math.IsNaN(r.Amount) || math.IsInf(r.Amount, 0) || r.Amount < 0 {

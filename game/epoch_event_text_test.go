@@ -9,10 +9,9 @@ import (
 )
 
 // epoch_event_text_test.go pins the effect text in config (epoch event
-// FlavorText, wonder descriptions) to what the engine really applies. The
-// effects live in applyGoodEpochEvent / applyChallengingEpochEvent, so the
-// check has to run here: it applies each event to a fresh engine and measures
-// what changed.
+// FlavorText) to what the engine really applies. The effects live in
+// applyGoodEpochEvent / applyChallengingEpochEvent, so the check has to run
+// here: it applies each event to a fresh engine and measures what changed.
 
 // TestEpochEventTextMatchesEffects: every timed effect, instant percentage
 // and worker change an epoch event applies appears in its FlavorText with the
@@ -142,17 +141,5 @@ func TestEpochAndAwakeningLogsDoNotRepeatText(t *testing.T) {
 		if got := len(ge.log) - before; got != 1 {
 			t.Errorf("awakening %s logged %d lines, want 1: %v", def.Key, got, ge.log[before:])
 		}
-	}
-}
-
-// TestWonderSpeedCapStepMatchesConfig: wonder descriptions say each wonder
-// raises the speed cap by config.WonderSpeedCapStep; MaxSpeedForAge must
-// agree.
-func TestWonderSpeedCapStepMatchesConfig(t *testing.T) {
-	ge := NewGameEngine()
-	base := ge.MaxSpeedForAge()
-	ge.Buildings.counts["sacred_grove"] = 1
-	if got := ge.MaxSpeedForAge() - base; got != config.WonderSpeedCapStep {
-		t.Fatalf("one wonder raises the speed cap by %v; config.WonderSpeedCapStep is %v", got, config.WonderSpeedCapStep)
 	}
 }

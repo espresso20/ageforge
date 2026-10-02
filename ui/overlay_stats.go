@@ -236,9 +236,6 @@ func statsProvider(state game.GameState, _ int) string {
 // here rather than re-deriving bonuses from config: Total drives each headline,
 // Breakdown drives the per-source attribution, and the two can never disagree
 // because they read the same contributions.
-//
-// SpeedMultiplier is intentionally NOT a resolver modifier — it's a wonder-gate
-// concept layered on top of tick speed — so it gets its own line, as before.
 func renderActiveMultipliers(state game.GameState) string {
 	var sb strings.Builder
 
@@ -270,14 +267,6 @@ func renderActiveMultipliers(state game.GameState) string {
 		}
 		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [%s]%+.0f%%[-]   %s\n",
 			multiplierTargetLabel(target), headColor, netPct, breakdown)
-		wrote = true
-	}
-
-	// SpeedMultiplier: a wonder gate, not a resolver modifier. Render it on its
-	// own line so it stays visible.
-	if state.SpeedMultiplier > 1.0 {
-		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]×%.2f[-]   [gray]speed setting[-]\n",
-			"Game speed", state.SpeedMultiplier)
 		wrote = true
 	}
 

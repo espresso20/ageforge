@@ -50,7 +50,7 @@ func TestHostileNumericArguments(t *testing.T) {
 	templates := []string{
 		"recruit %s", "assign gathering_camp %s", "unassign gathering_camp %s",
 		"dismiss gathering_camp %s", "sell hut %s", "build hut %s", "upgrade hut %s",
-		"gather food %s", "trade food wood %s", "wonder collect food %s", "speed %s",
+		"gather food %s", "trade food wood %s", "wonder collect food %s",
 	}
 	for _, tpl := range templates {
 		for _, n := range hostileNumbers {
@@ -69,9 +69,6 @@ func TestHostileNumericArguments(t *testing.T) {
 				if math.IsNaN(rs.Amount) || math.IsInf(rs.Amount, 0) || rs.Amount < 0 {
 					t.Fatalf("after %q: resource %s = %v", cmd, key, rs.Amount)
 				}
-			}
-			if st.SpeedMultiplier < 1 || math.IsNaN(st.SpeedMultiplier) {
-				t.Fatalf("after %q: speed %v", cmd, st.SpeedMultiplier)
 			}
 		}
 	}

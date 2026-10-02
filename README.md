@@ -58,7 +58,6 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather resource
 - **Trade System**: 21 trade routes and resource exchange with supply/demand pressure
 - **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, trade deals and trade bonuses
 - **Prestige**: Reset-and-grow system with 9 upgrades and passive production bonuses (requires Modern Age)
-- **Game Speed**: each wonder built raises the speed cap by 0.5x; set the speed with `speed`
 - **Command-driven interface**: everything is typed at one prompt; panels (research, army, trade, stats, wonders, logs, epoch, map and more) open by name, and `help` lists every command
 - **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
 - **Save/Load**: JSON save system with auto-save every 60s and offline progress; saves live in `data/` next to the binary
@@ -110,7 +109,6 @@ The full list is in the in-game `help` panel and on the [Commands](https://agefo
 - `factions` (alias `diplomacy`): open the Factions panel; `diplomacy ally|rival|gift|embargo|neutral <civ>` acts on a civilization
 - `wonder collect <resource|all> [amount|max]`: bank resources into the current wonder
 - `prestige`: view prestige status; `prestige confirm yes` resets with bonuses (requires Modern Age)
-- `speed [1.0|1.5|2.0|...]`: set game speed, up to your speed cap
 - `status` / `rates`: detailed overview / resource rate breakdown
 - `save [name]` / `load [name]` / `saves`: save, load or list saves
 - `quit`: save and quit

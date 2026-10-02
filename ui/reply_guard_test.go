@@ -44,7 +44,6 @@ var replyGuardCases = []struct{ age, cmd string }{
 	{"", "plan build hut"},
 	{"", "plan trade food wood"},
 	{"", "plan trade food wood 50"},
-	{"", "speed 1.0"},
 	{"", "theme " + theme.DefaultKey},
 	{"", "prestige buy gather_boost"},
 	{"", "save my_branch"},

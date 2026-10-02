@@ -141,7 +141,7 @@ var retiredDocText = []struct {
 	{regexp.MustCompile(`(?i)(^|[^-\w])standings?\b`), "a civilization's attitude is opinion"},
 	{regexp.MustCompile(`(?i)\bpop(ulation)? cap\b`), "the limit on workers is housing"},
 	{regexp.MustCompile(`(?i)\bmilitary cap\b`), "not a stat the game has"},
-	{regexp.MustCompile(`(?i)unlocks \+0\.5x`), "wonders raise the speed cap; nothing speeds up by itself"},
+	{regexp.MustCompile(`(?i)\bspeed cap\b|unlocks \+0\.5x`), "there is no speed setting: the game runs at 1x and wonders raise no cap"},
 	{regexp.MustCompile(`production_all`), "write all production"},
 	{regexp.MustCompile(`(?i)\b(harbour|colours?|centre|civilisation|defence|labour|theatre|organis|cancelled|fervour)`), "US spelling"},
 	{regexp.MustCompile(`(?i)\b(economy|epoch|stats|trade|military) tab\b`), "the game has panels, not tabs"},

@@ -250,19 +250,6 @@ func TestEngine_GetState_Consistency(t *testing.T) {
 	}
 }
 
-func TestEngine_SpeedMultiplier(t *testing.T) {
-	ge := NewGameEngine()
-
-	err := ge.SetSpeedMultiplier(1.5)
-	if err == nil {
-		t.Error("SetSpeedMultiplier(1.5) should fail with no wonders")
-	}
-
-	if ge.GetSpeedMultiplier() != 1.0 {
-		t.Errorf("default speed = %v, want 1.0", ge.GetSpeedMultiplier())
-	}
-}
-
 func TestEngine_Reset(t *testing.T) {
 	ge := NewGameEngine()
 

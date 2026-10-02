@@ -50,7 +50,6 @@ const (
 	ArgRouteAvailable                 // a trade route that can start
 	ArgRouteActive                    // a running trade route
 	ArgPrestigeUpgrade                // a prestige upgrade with a tier left
-	ArgSpeed                          // a speed multiplier
 	ArgAccount                        // a local account's name
 	ArgPlanItem                       // a plan item's number
 	ArgDeal                           // a trade deal's number, of the civilization in the previous argument
@@ -290,8 +289,6 @@ func registry() []*Command {
 		// Game
 		{Name: "rates", Section: secGame, Help: []Usage{{"rates", "Show resource rate breakdown"}}},
 		{Name: "status", Aliases: []string{"s"}, Section: secGame, Help: []Usage{{"status", "Show detailed status"}}},
-		{Name: "speed", Section: secGame, Args: []Arg{{Kind: ArgSpeed, Optional: true}},
-			Help: []Usage{{"speed [1.0|1.5|2.0|...]", "Set game speed (each wonder built raises the speed cap)"}}},
 		{Name: "theme", Section: secGame, Panel: "Theme picker: palettes & accessibility",
 			Args: []Arg{{Kind: ArgTheme, Optional: true}},
 			Help: []Usage{
@@ -532,7 +529,7 @@ func slotTakes(a Arg, w string, valid func(Arg, string) bool) bool {
 		return true
 	case ArgWord:
 		return false
-	case ArgNumber, ArgSpeed, ArgPlanItem, ArgDeal:
+	case ArgNumber, ArgPlanItem, ArgDeal:
 		_, err := strconv.ParseFloat(w, 64)
 		return err == nil
 	}

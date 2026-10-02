@@ -224,7 +224,7 @@ The test suite covers all game systems with **86 tests** across 11 files:
 | `game/progress_test.go` | 5 | Age order, next age, display names, advancement check, requirements |
 | `game/bus_test.go` | 4 | Subscribe/publish, multiple subscribers, no subscribers, event isolation |
 | `game/events_test.go` | 3 | Inject event, expiration, save/load |
-| `game/engine_test.go` | 19 | Full integration: init, gather, build, recruit, assign, research, speed, reset, milestones, save/load |
+| `game/engine_test.go` | 19 | Full integration: init, gather, build, recruit, assign, research, reset, milestones, save/load |
 
 The **config validation tests** are the primary safety net. They cross-reference every string key in every config file against the canonical key lists. A typo like `"foods"` or `"woodcutter_camps"` anywhere will fail the test.
 
@@ -423,7 +423,7 @@ minimum: 200ms
 ```
 
 `tick_speed_bonus`: research + milestones + prestige (+1%/level) + active chain boosts.
-`speed_multiplier`: player-set in 0.5× steps, capped at `1.0 + (wonders_built × 0.5)`.
+`speed_multiplier`: always 1.0 for players. Game speed is fixed so the calendar paces the game: there is no player speed setting and wonders raise no cap. Only the dev console's `/speed` changes it, for the session; a load clamps it back to 1.0 (`clampPlayerSpeed`), and prestige, Succumb and a wipe reset it.
 
 ### Resource Rates (per tick, in order)
 

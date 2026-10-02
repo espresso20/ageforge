@@ -88,6 +88,7 @@ All notable changes to AgeForge are documented here.
 - **Catastrophe odds are visible**: the bare `catastrophe` command and the Epoch tab show the chance for the next transition (12–18% by faith).
 
 ### Fixed
+- **Game speed carried across prestige.** Prestige reset everything but the speed setting, so a run that prestiged at 7x started the next run at 7x. A prestige now goes back to 1x, as Succumb and a wipe already did, and a save that carries a higher speed loads at 1x, offline catch-up included.
 - **The catastrophe modal showed the unbraced losses after you bought Brace.** Its Endure section now shows what Endure will actually cost, with Brace and your garrison applied, and says what each took off. The reconstruction debuff reads in minutes, not ticks.
 - **War raids reported losses that never happened.** A raid that finds less than it would carry off takes nothing, and the log now says so instead of "lost 150 dark_matter". Raid lines use resource names, not keys.
 - **Events never said how much they actually took.** Events that steal resources or drive off workers now log what left your stores when they strike ("You lost 10 food and 5 gold."), under the event line that gives the most it can take. Timed events used to report workers lost only when they ended.
@@ -111,6 +112,7 @@ All notable changes to AgeForge are documented here.
 - **Four trade routes opened before you could build what they need.** Cotton Exchange and Steamship Line wanted a Seaport (Modern Age) and Rail Freight wanted Steam Works (Victorian Age), all from the Industrial Age; Warp Commerce opened in the Space Age and wanted a Warp Drive Plant (Interstellar Age). Cotton Exchange now needs 1 Stock Exchange, Steamship Line 2 Harbor Authorities and Rail Freight 1 Integrated Steelworks, all Industrial Age buildings; Warp Commerce now opens in the Interstellar Age.
 
 ### Removed
+- **The `speed` command and the wonder speed cap.** Game speed is fixed at 1x so the calendar paces the game. Each wonder raised the speed cap by 0.5x and every age advance needs its age's wonder, so a player who kept `speed` at the cap ran at 7x by the Atomic Age and reached the Modern Age in about 13 hours instead of about 54, which undercut every pacing target. The command is gone from Help, completion and the Commands page, and typing it gets the unknown-command reply; wonders no longer mention a speed cap, and the status bar and Stats panel no longer show the speed setting. Game speed bonuses from techs, prestige, events and milestone chains still apply, and the dev console keeps `/speed`.
 - **The old City Map and World Map** (`ui/citymap`, about 29.7k lines with its tests), replaced by the Map panel, along with the unused `assets/` embed package and the `map_demos/` PNGs. `citymap` and `worldmap` remain as aliases of `map`.
 - **`catastrophe invoke`.** Deliberately facing a catastrophe (to Succumb for a legacy bonus) moves to the Harbinger's Invite. The command only ever worked in the Stone Era anyway, where it made a free invoke-and-Succumb loop. Developers can still force one with the dev console's `/catastrophe`.
 

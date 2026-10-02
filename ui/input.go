@@ -109,8 +109,6 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdBlackMarket(args, engine)
 	case "rates":
 		return cmdRates(engine)
-	case "speed":
-		return cmdSpeed(args, engine)
 	case "upgrade":
 		return cmdUpgrade(args, engine)
 	case "advance":
@@ -1178,25 +1176,6 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		lines = append(lines, "  [gray]No active resource rates[-]")
 	}
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
-}
-
-func cmdSpeed(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) == 0 {
-		mult := engine.GetSpeedMultiplier()
-		maxSpeed := engine.GetMaxSpeed()
-		return CommandResult{
-			Message: fmt.Sprintf("Current speed: [cyan]%.1fx[-] (speed cap: [green]%.1fx[-]; each wonder built raises it by %sx)", mult, maxSpeed, config.FormatAmount(config.WonderSpeedCapStep)),
-			Type:    "info",
-		}
-	}
-	n, err := parseAmount(args[0])
-	if err != nil {
-		return usageError("Usage: speed <1.0|1.5|2.0|...>", err)
-	}
-	if err := engine.SetSpeedMultiplier(n); err != nil {
-		return errorResult(err)
-	}
-	return CommandResult{Type: "success"} // the engine logs the new speed
 }
 
 func cmdSaveList() CommandResult {

@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
@@ -42,7 +41,6 @@ func renderCurrentWonderSummary(state game.GameState) string {
 	for _, eff := range current.def.Effects {
 		fmt.Fprintf(&sb, "   %s\n", formatEffect(eff))
 	}
-	fmt.Fprintf(&sb, "   [gold]%s[-]\n", wonderSpeedCapText)
 
 	// Bank progress if not built
 	if !built && hasBs {
@@ -102,20 +100,16 @@ func wondersProvider(state game.GameState, _ int) string {
 	wonders := getWonderList()
 	builtCount := 0
 	totalCount := len(wonders)
-	maxSpeed := 1.0
 
 	// Pre-count built wonders for header
 	for _, w := range wonders {
 		if bs, ok := state.Buildings[w.key]; ok && bs.Count > 0 {
 			builtCount++
-			maxSpeed += config.WonderSpeedCapStep
 		}
 	}
 
 	// Header
 	fmt.Fprintf(&sb, "[gold]═══ Wonders: %d / %d ═══[-]\n", builtCount, totalCount)
-	fmt.Fprintf(&sb, " [cyan]Speed cap: %.1fx[-]   [gray]Each wonder raises the speed cap by %sx (set it with: speed %.1f).[-]\n\n",
-		maxSpeed, config.FormatAmount(config.WonderSpeedCapStep), 1.0+config.WonderSpeedCapStep)
 
 	// List each wonder. A locked wonder of an age the player cannot see named
 	// yet is only counted (spoilers.go).
@@ -142,7 +136,6 @@ func wondersProvider(state game.GameState, _ int) string {
 					fmt.Fprintf(&sb, "     %s\n", formatEffect(eff))
 				}
 			}
-			fmt.Fprintf(&sb, "   [gold]%s[-]\n", wonderSpeedCapText)
 		} else if unlocked {
 			if bs.WonderBankFull {
 				fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   [green](bank full, ready to build)[-]\n",
@@ -206,7 +199,6 @@ func wondersProvider(state game.GameState, _ int) string {
 					fmt.Fprintf(&sb, "     %s\n", formatEffect(eff))
 				}
 			}
-			fmt.Fprintf(&sb, "   [gold]%s once built[-]\n", wonderSpeedCapText)
 		} else {
 			fmt.Fprintf(&sb, " [gray]? ???[-]   [gray]%s, locked[-]\n", w.ageName)
 		}
@@ -217,9 +209,9 @@ func wondersProvider(state game.GameState, _ int) string {
 		sb.WriteString(" " + theme.Paint(theme.RoleDim, fmt.Sprintf("? ???   %s in ages still to come, locked", textfmt.Count(laterLocked, "more wonder", "more wonders"))) + "\n\n")
 	}
 
-	// Speed summary footer
+	// Summary footer
 	if builtCount == 0 {
-		sb.WriteString("[gray]No wonders built yet. Each one you build raises the speed cap.[-]\n")
+		sb.WriteString("[gray]No wonders built yet.[-]\n")
 	} else {
 		var builtNames []string
 		for _, w := range wonders {

@@ -20,7 +20,7 @@ Commands that can't be undone are never run from a completion: `Enter` on `plan 
 
 ## The log
 
-The log in the main window keeps what is worth noticing: events, milestones, finished research, age advances, harbingers, warnings and errors. A routine confirmation of something a panel already shows goes only to the **Logs** panel (`logs`), marked with a `·`: a build started, queued or finished, a sale, an upgrade, workers recruited, assigned, unassigned or dismissed, a gather, a wonder deposit, a trade, a trade route started or stopped, a research started, an expedition sent, a gift, a speed change, and a plan item added or started. A finished wonder still reaches the main log.
+The log in the main window keeps what is worth noticing: events, milestones, finished research, age advances, harbingers, warnings and errors. A routine confirmation of something a panel already shows goes only to the **Logs** panel (`logs`), marked with a `·`: a build started, queued or finished, a sale, an upgrade, workers recruited, assigned, unassigned or dismissed, a gather, a wonder deposit, a trade, a trade route started or stopped, a research started, an expedition sent, a gift, and a plan item added or started. A finished wonder still reaches the main log.
 
 ---
 
@@ -28,7 +28,7 @@ The log in the main window keeps what is worth noticing: events, milestones, fin
 
 The game shows every duration and countdown as an approximate wall-clock time, not a tick count: `~38s`, `~4m 44s`, `~1h 12m`. Expedition lengths, which are rolled at each launch, show as a range from the shortest to the longest possible roll. Readings carry two units of precision at most.
 
-The `~` matters. A tick is not a fixed amount of real time: tick speed bonuses and the game speed both shorten it, so every reading is worked out from your **current** tick rate and changes when that rate does. Finish a tech that grants tick speed and the countdown you were watching gets shorter.
+The `~` matters. A tick is not a fixed amount of real time: tick speed bonuses shorten it, so every reading is worked out from your **current** tick rate and changes when that rate does. Finish a tech that grants tick speed and the countdown you were watching gets shorter. There is no speed setting: the game runs at 1x, and only those bonuses make ticks come faster.
 
 Balance values are *defined* in ticks (a tech costs so many ticks of research, an event lasts so many ticks), and this wiki quotes those tick figures where the tick count is the mechanic. One tick is 2 seconds at 1x. The `dump` debug export prints the raw tick counts alongside the wall-clock readings.
 
@@ -152,7 +152,6 @@ Tech keys are shown in the **Research** panel (`research`): dim gray when locked
 | `army` | Open the **Army** panel: soldier overview and military campaigns |
 | `campaign list` | List the military campaigns available in your current age (`campaign` alone does the same) |
 | `campaign <key>` | Wage a military campaign. It spends soldiers, plus any resource cost (e.g. `campaign raid_bandits`) |
-| `speed [multiplier]` | Set the game speed. The speed cap starts at 1.0x and each wonder you build raises it by 0.5x (1.0, 1.5, 2.0, ...) |
 
 ```
 expedition
@@ -162,7 +161,6 @@ expedition scout_ruins
 army
 campaign list
 campaign raid_bandits
-speed 1.5
 ```
 
 Timed missions come in two kinds, on two panels. **Scouting** expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) cost only resources, **0 soldiers**, and are available early, before soldiers appear in the Iron Age. You send these with `expedition <key>` from the **Expeditions** panel. **Military campaigns** (everything else) **spend soldiers** at launch, plus any resource cost. You wage these with `campaign <key>` from the **Army** panel. Either way you pay the cost whether the mission succeeds or fails; only the reward differs. One scouting expedition **and** one military campaign can run at the same time, but not two of the same kind.

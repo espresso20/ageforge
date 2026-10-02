@@ -1,6 +1,6 @@
 # Wonders
 
-22 unique wonders can be built exactly once per civilization. Each grants permanent civilization-wide bonuses and, once completed, raises your **speed cap by 0.5x**, the highest game speed you can pick with `speed`. They are the strongest single buildings in the game.
+22 unique wonders can be built exactly once per civilization. Each grants permanent civilization-wide bonuses. They are the strongest single buildings in the game.
 
 ---
 
@@ -381,6 +381,6 @@ These figures are the morale **ceiling**, how high the morale percentage can cli
 - Bank resources over several deposits as they come in, rather than waiting to cover the whole price at once. Overflow does some of this for you.
 - **Great Library** and **Global Network** each give +30% knowledge output, and the two stack.
 - **Grand Lighthouse**, the Rocketry tech and the prestige `expedition_loot` upgrade all raise expedition rewards, and they stack.
-- Build each age's wonder early. It is required for `advance`, and each one raises the speed cap by 0.5x, so you can set a faster `speed` sooner.
+- Build each age's wonder early. It is required for `advance`, and its bonuses last for the rest of the run.
 - **Crystal Palace** (+15% all production) in the Industrial Age is one of the biggest single boosts in the game.
 - Each wonder also raises the morale cap by 5 points (100% base, 210% with all 22). See [Morale](morale.md).

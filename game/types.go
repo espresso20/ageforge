@@ -33,7 +33,6 @@ type GameState struct {
 	SaveExists           bool
 	TickSpeedBonus       float64
 	TickIntervalMs       int
-	SpeedMultiplier      float64
 	CheaterBadge         bool
 	EliteBadge           bool
 	// Seed is this run's master RNG seed (see GameEngine.seed) — surfaced for
@@ -267,7 +266,7 @@ type LogEntry struct {
 // wonder's completion excepted), a sale, an upgrade, workers recruited,
 // assigned, unassigned or dismissed, a gather, a wonder deposit, a trade, a
 // route started or stopped, a research started, an expedition sent, a gift,
-// a speed change, a plan item added or started.
+// a plan item added or started.
 //
 // The rule, for any new line: routine confirmations go only to the logs
 // panel; the main window's log keeps notable events, warnings and errors.
