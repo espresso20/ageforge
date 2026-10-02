@@ -160,29 +160,63 @@ func planItemTitle(v game.PlanItemView) string {
 }
 
 // planItemDetail is the second part of an item's line: the progress bar and
-// what it is short of, the reason it is blocked, or what it will pay.
+// what it is short of, the reason it is blocked, or what it will pay. A build
+// item's overflow bank shows wherever it holds something.
 func planItemDetail(v game.PlanItemView, state game.GameState) string {
 	switch v.Status {
 	case game.PlanStatusBlocked:
-		return theme.Paint(theme.RoleDim, v.Note)
+		note := v.Note
+		if len(v.Banked) > 0 {
+			note += " (" + formatPlanCost(v.Banked) + " banked from overflow)"
+		}
+		return theme.Paint(theme.RoleDim, note)
 	case game.PlanStatusWaiting:
 		detail := wonderProgressBar(v.Progress, 8) + fmt.Sprintf(" %3.0f%%", v.Progress*100)
 		if v.Short != "" {
 			cost := v.Cost[v.Short]
-			free := v.Progress * cost
-			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), FormatNumber(free), FormatNumber(cost))
-			if held := state.Resources[v.Short].Amount - free; held >= 1 {
-				line += fmt.Sprintf(" (%s held for items above)", FormatNumber(held))
+			covered := v.Progress * cost
+			banked := v.Banked[v.Short]
+			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), FormatNumber(covered), FormatNumber(cost))
+			var notes []string
+			if banked >= 1 {
+				notes = append(notes, FormatNumber(banked)+" banked")
+			}
+			if held := state.Resources[v.Short].Amount - (covered - banked); held >= 1 {
+				notes = append(notes, FormatNumber(held)+" held for items above")
+			}
+			if len(notes) > 0 {
+				line += " (" + strings.Join(notes, ", ") + ")"
 			}
 			detail += theme.Paint(theme.RoleDim, line)
 		}
 		return detail
 	default:
-		if len(v.Cost) == 0 {
+		due := planDue(v)
+		switch {
+		case len(v.Cost) == 0:
 			return theme.Paint(theme.RoleDim, "starts next tick")
+		case len(due) == 0:
+			return theme.Paint(theme.RoleDim, "starts next tick, paid from its bank")
+		case len(v.Banked) > 0:
+			return theme.Paint(theme.RoleDim, "starts next tick for "+formatPlanCost(due)+" and its bank")
 		}
 		return theme.Paint(theme.RoleDim, "starts next tick for "+formatPlanCost(v.Cost))
 	}
+}
+
+// planDue is what an item's next start takes from the stores: its price less
+// what its bank covers (parts under 1 left out).
+func planDue(v game.PlanItemView) map[string]float64 {
+	if len(v.Banked) == 0 {
+		return v.Cost
+	}
+	due := map[string]float64{}
+	for res, c := range v.Cost {
+		if d := c - v.Banked[res]; d >= 1 {
+			due[res] = d
+		}
+	}
+	return due
 }
 
 // formatPlanCost is "48 wood, 20 stone", resources in key order.
@@ -207,7 +241,7 @@ func sortedMapKeys(m map[string]float64) []string {
 func planPanelText(state game.GameState, sel int, note string, noteGood, clearArmed bool) string {
 	var sb strings.Builder
 	sb.WriteString(theme.Paint(theme.RoleAccent, "═══ Build plan ═══") + "\n")
-	sb.WriteString(theme.Paint(theme.RoleDim, " Started in order as resources come in, while you play and while you are away.\n Each item is paid when it starts. A waiting item holds its price back from the\n items below it; items below may still start with what it doesn't need.") + "\n\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, " Started in order as resources come in, while you play and while you are away.\n Each item is paid when it starts. A waiting item holds its price back from the\n items below it; items below may still start with what it doesn't need.\n Overflow from full storage is banked toward items' next copies, in order.") + "\n\n")
 
 	if len(state.Plan) == 0 {
 		sb.WriteString(" The plan is empty.\n\n")
@@ -261,6 +295,9 @@ func planListText(state game.GameState) string {
 			}
 		case game.PlanStatusBlocked:
 			status = "blocked: " + v.Note
+		}
+		if len(v.Banked) > 0 {
+			status += ", " + formatPlanCost(v.Banked) + " banked"
 		}
 		fmt.Fprintf(&sb, "  %d. %s  %s\n", i+1, tview.Escape(planItemTitle(v)), theme.Paint(theme.RoleDim, status))
 	}

@@ -154,29 +154,19 @@ func (ge *GameEngine) bankPlanOverflow(losses []overflowLoss, into map[string]fl
 				continue
 			}
 		}
-		needs := false
-		for _, l := range losses {
-			if l.amount > 0 && def.BaseCost[l.res] > 0 {
-				needs = true
-				break
-			}
-		}
-		if !needs {
-			continue
-		}
-		cost, _ := ge.Buildings.BuildBatchCost(it.Key, 1, ge.buildQueue)
 		for j := range losses {
 			l := &losses[j]
-			if l.amount <= 0 {
+			if l.amount <= 0 || def.BaseCost[l.res] <= 0 {
 				continue
 			}
-			want := cost[l.res] - it.Banked[l.res]
+			// One resource's price at a time: no map per item per tick.
+			want := ge.Buildings.NextCost(it.Key, l.res, ge.buildQueue) - it.Banked[l.res]
 			if want <= planBankEpsilon {
 				continue
 			}
 			dep := min(l.amount, want)
 			if it.Banked == nil {
-				it.Banked = make(map[string]float64, len(cost))
+				it.Banked = make(map[string]float64, len(def.BaseCost))
 			}
 			it.Banked[l.res] += dep
 			if into != nil {

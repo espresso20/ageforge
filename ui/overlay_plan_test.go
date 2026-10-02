@@ -136,3 +136,33 @@ func TestPlanPanel_KeysAndText(t *testing.T) {
 		t.Error("an unbound key was consumed")
 	}
 }
+
+// A build item's overflow bank shows in every status, and the ready line
+// says what the stores still pay.
+func TestPlanPanel_ShowsBanks(t *testing.T) {
+	st := game.GameState{Resources: map[string]game.ResourceState{"stone": {Amount: 900}, "wood": {Amount: 50}}}
+	waiting := game.PlanItemView{Kind: game.PlanBuild, Key: "longhouse", Name: "Longhouse", Count: 1,
+		Cost: map[string]float64{"stone": 1000, "wood": 100}, Banked: map[string]float64{"stone": 400},
+		Status: game.PlanStatusWaiting, Progress: 0.6, Short: "stone"}
+	if got := plainText(planItemDetail(waiting, st)); !strings.Contains(got, "stone 600 / 1K (400 banked, 700 held for items above)") {
+		t.Errorf("waiting line = %q", got)
+	}
+	blocked := waiting
+	blocked.Status, blocked.Note, blocked.Short = game.PlanStatusBlocked, "needs more stone storage", ""
+	if got := plainText(planItemDetail(blocked, st)); got != "needs more stone storage (400 stone banked from overflow)" {
+		t.Errorf("blocked line = %q", got)
+	}
+	ready := waiting
+	ready.Status, ready.Short, ready.Progress = game.PlanStatusReady, "", 1
+	if got := plainText(planItemDetail(ready, st)); got != "starts next tick for 600 stone, 100 wood and its bank" {
+		t.Errorf("ready line = %q", got)
+	}
+	ready.Banked = map[string]float64{"stone": 1000, "wood": 100}
+	if got := plainText(planItemDetail(ready, st)); got != "starts next tick, paid from its bank" {
+		t.Errorf("fully banked ready line = %q", got)
+	}
+	st.Plan = []game.PlanItemView{blocked}
+	if got := plainText(planListText(st)); !strings.Contains(got, "blocked: needs more stone storage, 400 stone banked") {
+		t.Errorf("plan list = %q", got)
+	}
+}
