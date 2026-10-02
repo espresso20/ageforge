@@ -446,7 +446,7 @@ minimum: 200ms
 3. Per-resource multiplier (e.g. `gold_rate` bonus)
 4. Gather rate bonus: additive on villager rates
 5. Diplomacy trade bonuses: multiplicative on positive rates
-6. Food drain: `sum(villager_count × food_cost_per_type)` subtracted
+6. Food drain: `worker_count × food_cost_per_worker` (the current age's rate, see Food Economy) subtracted
 7. Era Mastery: every net rate × k, last of all, after the ×3 cap and the food drain (`Breakdown.MasteryRate`). Storage is × k too. k is 1 on the frontier; see Era Mastery below
 
 ### Building Costs
@@ -460,7 +460,7 @@ Example with a 30-wood base cost and scale 1.3: 1st=30, 2nd=39, 3rd=50, 4th=66..
 
 ### Food Economy
 
-Workers: 0.10/tick · Soldiers: 0.25/tick · Astronauts: 0.40/tick. Keep ~⅓ of workforce on food. The worker shares routine recruits only while the net food rate stays above a small margin: one worker's food, or `recruitFoodMarginShare` (5%) of the food production if that is more (`game/shares.go`).
+All workers are one pool, and each eats the food cost of the current age's food worker class (`config/workers.go`, read by `FoodCostPerWorker` in `game/villagers.go`): 0.06/tick in the Primitive Age, ×1.12 per age after that, about 0.23/tick in the Modern Age and 0.58/tick from the Quantum Age on (0.1/tick is only the fallback when no class matches). Soldiers are a resource and eat nothing. Keep ~⅓ of workforce on food. The worker shares routine recruits only while the net food rate stays above a small margin: one worker's food, or `recruitFoodMarginShare` (5%) of the food production if that is more (`game/shares.go`).
 
 ### Expeditions
 
