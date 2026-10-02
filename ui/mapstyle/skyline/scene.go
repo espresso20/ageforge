@@ -52,6 +52,10 @@ type scene struct {
 	vis     []int
 	sel     int // the lot under the cursor, -1
 	ridge   []ridgeItem
+	// city is the Earth arc's look for this frame (city.go), inCity
+	// whether the age has one.
+	city   mapmodel.CityLook
+	inCity bool
 }
 
 // Y converts a scene row to a frame row.
@@ -122,6 +126,9 @@ func (s *scene) celestial() {
 		x, y := arc(u)
 		low := 1 - mapmodel.Sin(u/2)
 		c := p.final(theme.Mix(theme.SkyColor(theme.SkySun), theme.SkyColor(theme.SkySunLow), low*low))
+		if p.gloom { // a pale disc behind the smog
+			c = theme.Mix(c, p.skyAt(max(0, y), s.groundY), 0.75)
+		}
 		for dx := -1; dx <= 1; dx++ {
 			s.fb.fg(x+dx, s.Y(y-1), '▄', c, dSkyObj)
 			s.fb.fill(x+dx, s.Y(y), c, dSkyObj)
@@ -195,15 +202,23 @@ func (s *scene) skyStructures() {
 				s.fb.fg(x, s.Y(y), '•', lc, dSkyObj)
 			}
 		}
-		if x := s.elevatorX(); x >= 0 && x < s.W {
-			tc := s.p.col(9, 0, sMetal, 2)
+	}
+	if x := s.elevatorX(); x >= 0 && x < s.W { // the space elevator, from the Fusion Age
+		tc := s.p.col(9, 0, sMetal, 2)
+		if s.fusion() { // newly strung: a beam of plasma light off the top of the screen
+			tc = s.p.cityHue(theme.CityTether, mEmit, 1)
+			glow := s.p.cityHue(theme.CityElectric, mEmit, 1)
 			for y := 0; y < gy-1; y++ {
-				s.fb.fg(x, s.Y(y), '│', tc, dRow2)
+				s.fb.tint(x-1, s.Y(y), glow, 0.18, dRow2+1)
+				s.fb.tint(x+1, s.Y(y), glow, 0.18, dRow2+1)
 			}
-			s.fb.set(x-1, s.Y(gy-1), '▄', tc, s.fb.showAt(x-1, s.Y(gy-1)), dRow2)
-			s.fb.set(x+1, s.Y(gy-1), '▄', tc, s.fb.showAt(x+1, s.Y(gy-1)), dRow2)
-			s.fb.fill(x, s.Y(gy-1), tc, dRow2)
 		}
+		for y := 0; y < gy-1; y++ {
+			s.fb.fg(x, s.Y(y), '│', tc, dRow2)
+		}
+		s.fb.set(x-1, s.Y(gy-1), '▄', tc, s.fb.showAt(x-1, s.Y(gy-1)), dRow2)
+		s.fb.set(x+1, s.Y(gy-1), '▄', tc, s.fb.showAt(x+1, s.Y(gy-1)), dRow2)
+		s.fb.fill(x, s.Y(gy-1), tc, dRow2)
 	}
 }
 
@@ -215,14 +230,24 @@ func (s *scene) orbitY(x int) (float64, int) {
 	return fy, int(fy)
 }
 
-// elevatorX is the screen column of the space elevator (the space age
-// district's), or -1.
+// elevatorX is the screen column of the space elevator, or -1.
 func (s *scene) elevatorX() int {
-	if s.m.AgeIdx < 17 || len(s.m.Skyline.Districts) <= 17 {
+	if x := tetherX(s.m); x >= 0 {
+		return x - s.cam
+	}
+	return -1
+}
+
+// tetherX is the world column of the space elevator, or -1: it rises from
+// the Fusion district, east of its middle, in the Fusion Age and stays
+// there for the ages after.
+func tetherX(m *mapmodel.Model) int {
+	fusion, ok := m.Catalog.AgeIdx["fusion_age"]
+	if !ok || m.AgeIdx < fusion || len(m.Skyline.Districts) <= fusion {
 		return -1
 	}
-	d := s.m.Skyline.Districts[17]
-	return d.X0 + d.LandW - 4 - s.cam
+	d := m.Skyline.Districts[fusion]
+	return d.X0 + d.LandW*3/4
 }
 
 func (s *scene) clouds() {
@@ -238,6 +263,12 @@ func (s *scene) clouds() {
 	}
 	if k := s.m.Weather.Kind; k == mapmodel.Rain || k == mapmodel.Storm {
 		base = theme.Shade(base, 0.7)
+	}
+	if s.p.gloom { // the megacity's clouds are smog
+		base = theme.Mix(base, theme.CityColor(theme.CitySmog), 0.6)
+		base = theme.Shade(base, 0.55)
+	} else if s.inCity && s.city.Smog > 0 { // and the data age's are browning
+		base = theme.Mix(base, theme.CityColor(theme.CitySmog), float64(0.8*s.city.Smog))
 	}
 	c, under := s.p.final(base), s.p.final(theme.Shade(base, 0.78))
 	for i := 0; i < n; i++ {
@@ -315,6 +346,12 @@ func (s *scene) paintRidge(tops []float64, col tcell.Color, d uint8) {
 }
 
 func (s *scene) farRidge() {
+	if s.megacity() { // the megacity has built the ridge over
+		s.megacityRidge()
+		s.ridgeTowns()
+		s.harbinger()
+		return
+	}
 	amp := float64(s.groundY) * 0.42
 	tops := s.ridgeTops(0, 0.15, amp, 1.0/30)
 	h := theme.SkyRidge
@@ -322,6 +359,9 @@ func (s *scene) farRidge() {
 		h = theme.SkyRidgeCosmic
 	}
 	col := s.p.hill(h, 0.42)
+	if s.inCity && s.city.Smog > 0 { // the outskirts under the smog
+		col = theme.Mix(col, s.p.cityHue(theme.CitySmog, mLit, 3), float64(0.7*s.city.Smog))
+	}
 	s.paintRidge(tops, col, dRidge)
 	snow := s.p.hill(theme.SkySnowCap, 0.3)
 	for x, t := range tops {
@@ -432,6 +472,11 @@ func (s *scene) harbinger() {
 }
 
 func (s *scene) nearLayer() {
+	if s.megacity() {
+		s.megacityNear()
+		s.midTown()
+		return
+	}
 	a := s.m.AgeIdx
 	tops := s.ridgeTops(1, 0.4, float64(s.groundY)*0.16, 1.0/18)
 	h := theme.SkyHillYoung
@@ -441,7 +486,11 @@ func (s *scene) nearLayer() {
 	case a > 7:
 		h = theme.SkyHillIndustrial
 	}
-	s.paintRidge(tops, s.p.hill(h, 0.22), dHills)
+	hc := s.p.hill(h, 0.22)
+	if s.inCity && s.city.Smog > 0 {
+		hc = theme.Mix(hc, s.p.cityHue(theme.CitySmog, mLit, 2), float64(0.5*s.city.Smog))
+	}
+	s.paintRidge(tops, hc, dHills)
 	if a <= 9 {
 		tc := s.p.hill(theme.SkyForest, 0.15)
 		for x, t := range tops {
@@ -528,6 +577,10 @@ func (s *scene) midTown() {
 				s.fb.set(x, s.Y(top), '▀', neon, col, dTown)
 			}
 		}
+		if s.megacity() { // the megacity never sleeps: neon and windows, day and night
+			s.megacityGlow(x, top, blk, first, col)
+			continue
+		}
 		if s.p.night > 0.4 && a > 5 && !last {
 			for y := top + 1; y < s.groundY; y += 2 {
 				if hash(int(mx), y, 71)%4 == 0 {
@@ -557,6 +610,10 @@ func (s *scene) lots() {
 	night := p.night
 	s.vis = s.lay.visible(s.cam-12, s.cam+s.W+12, s.vis)
 	white := theme.SkyColor(theme.SkyWhite)
+	fade := s.inCity && mapmodel.Greenery(s.m.AgeIdx) < 1 // the greenery fade (city.go)
+	screens := s.inCity && s.city.Key == "information_age"
+	mega := s.megacity()
+	cool := s.p.cityHue(theme.CityScreenCool, mEmit, 0)
 	for _, li := range s.vis {
 		lv := &s.lay.lots[li]
 		spr := lv.spr
@@ -566,6 +623,7 @@ func (s *scene) lots() {
 		sel := li == s.sel
 		dim := s.v.flows && flagged(lv)
 		flick := lv.fam == 8 && hash(int(lv.ml.Seed), s.anim/3)%9 == 0
+		tint := s.districtTint(lv.ml.Age, hz)
 		phase := 0.0
 		if lv.fam == 10 {
 			phase = 0.5 + 0.5*mapmodel.Sin(float64(s.anim)/48+hashf(int(lv.ml.Seed)))
@@ -579,6 +637,12 @@ func (s *scene) lots() {
 					continue
 				}
 				fg := p.col(lv.fam, lv.vr, c.fg, hz)
+				if tint != 0 && !c.fg.emissive() {
+					fg = theme.Mix(fg, tint, 0.32)
+				}
+				if mega && (c.fg.emissive() || c.fg == sGlass || c.fg == sGlassHi) {
+					fg = s.neonFix(fg, hz)
+				}
 				ch := c.ch
 				switch {
 				case c.fg == sWin && night > 0.25 && s.windowLit(lv, sx, sy):
@@ -588,7 +652,13 @@ func (s *scene) lots() {
 					} else if lv.ml.Age >= 15 && k%3 == 0 {
 						h = theme.SkyWinNeon
 					}
-					fg = theme.Mix(fg, p.hue(h, mEmit, hz), math.Min(1, (night-0.25)*2))
+					lit := p.hue(h, mEmit, hz)
+					if s.inCity { // the age's own light in the windows (city.go)
+						lit = s.windowLight(lv, sx, sy, lit, hz)
+					}
+					fg = theme.Mix(fg, lit, math.Min(1, (night-0.25)*2))
+				case screens && c.fg == sWin && lv.ml.Age >= 10 && hash(int(lv.ml.Seed), sx, sy, s.anim/3)%23 == 0:
+					fg = cool // a screen flickers in a window
 				case flick && (c.fg == sNeon1 || c.fg == sNeon2 || c.fg == sNeon3):
 					fg = p.col(lv.fam, lv.vr, sWallDark, hz)
 				case phase > 0 && c.fg == sGlow:
@@ -597,6 +667,8 @@ func (s *scene) lots() {
 					if (sx+s.anim/3)%4 == 0 {
 						ch = '▀'
 					}
+				case fade && (c.fg == sLeaf || c.fg == sLeafDark || c.fg == sField1 || c.fg == sField2):
+					fg = s.leafFade(lv, sx, sy, fg, hz)
 				}
 				if dim {
 					fg = theme.Shade(fg, 0.55)
@@ -615,6 +687,12 @@ func (s *scene) lots() {
 					continue
 				}
 				bg := p.col(lv.fam, lv.vr, c.bg, hz)
+				if tint != 0 && !c.bg.emissive() {
+					bg = theme.Mix(bg, tint, 0.32)
+				}
+				if mega && (c.bg.emissive() || c.bg == sGlass || c.bg == sGlassHi) {
+					bg = s.neonFix(bg, hz)
+				}
 				if dim {
 					bg = theme.Shade(bg, 0.55)
 				}
@@ -800,6 +878,7 @@ func (s *scene) ground() {
 	}
 	mc := p.hue(mh, mode, 0)
 	di := -1
+	paved := s.inCity && mapmodel.Greenery(a) <= 0.15 // the city has paved the old grass
 	for x := 0; x < s.W; x++ {
 		wx := s.wx(x)
 		if di < 0 || di >= len(s.m.Skyline.Districts) || !inDistrict(s.m.Skyline.Districts[di], wx) {
@@ -816,7 +895,7 @@ func (s *scene) ground() {
 		}
 		top, under := theme.SkyGroundGrass, theme.SkyGroundSoil
 		switch {
-		case dAge > 11:
+		case dAge > 11 || paved || dAge <= 3 && s.inCity && !s.greenKept(hashf(wx/6, 817)):
 			top, under = theme.SkyGroundSlab, theme.SkyGroundSlabDark
 		case dAge > 7:
 			top, under = theme.SkyGroundBrick, theme.SkyGroundBrickDark
@@ -847,11 +926,11 @@ func (s *scene) ground() {
 		}
 		s.fb.set(x, s.Y(gy+1), ch, mc, rc, dGround)
 		vg, vb := theme.SkyVerge, theme.SkyVergeDark
-		if a >= 12 && dAge >= 0 {
+		if a >= 12 && (dAge >= 0 || s.inCity && s.city.Greenery < 1) {
 			vg, vb = theme.SkyVergeUrban, theme.SkyVergeUrbanDark
 		}
 		vch := ' '
-		if h := hash(wx, 8) % 7; h < 2 {
+		if h := hash(wx, 8) % 7; h < 2 && vg == theme.SkyVerge {
 			vch = [2]rune{'"', ','}[h]
 		}
 		s.fb.set(x, s.Y(gy+2), vch, p.hue(vg, mLit, 0), p.hue(vb, mLit, 0), dGround)
@@ -861,6 +940,7 @@ func (s *scene) ground() {
 	}
 	s.streetFurniture()
 	s.frontier()
+	s.cityGround()
 }
 
 func inDistrict(d mapmodel.District, x int) bool { return x >= d.X0 && x < d.X0+d.W }
@@ -1056,6 +1136,7 @@ func (s *scene) towerCrane(x, i int, p float64) {
 // ------------------------------------------------------------------ weather
 
 func (s *scene) weather() {
+	s.citySmog()
 	k := s.m.Weather.Kind
 	drops := 0
 	col := theme.Mix(s.p.hue(theme.SkyRain, mLit, 0), s.p.sky[2], 0.3)
@@ -1064,9 +1145,11 @@ func (s *scene) weather() {
 		drops = s.W * s.S / 22
 	case k == mapmodel.Storm:
 		drops = s.W * s.S / 10
-	case s.m.Epoch == 5 && s.p.night > 0.5 && k != mapmodel.Snow:
+	case s.m.Epoch == 5 && s.p.night > 0.5 && k != mapmodel.Snow && !s.inCity:
 		drops = s.W * s.S / 70 // the neon era's night drizzle
 		col = theme.Mix(col, s.p.hue(theme.SkyNeonMagenta, mEmit, 0), 0.35)
+	case s.cyberpunk() && k != mapmodel.Snow:
+		s.cityRain() // the megacity's acid rain, day and night
 	}
 	for i := 0; i < drops; i++ {
 		y := int((hash(i, 1)%uint64(s.S+10) + uint64(s.anim*2)) % uint64(s.S+2))
@@ -1280,6 +1363,13 @@ func (s *scene) cursor() {
 		if lv.ml.Wonder {
 			name = s.m.Catalog.Defs[lv.ml.Key].Name
 		}
+	case t.kind == tTether:
+		if x := s.elevatorX(); x >= 0 && x < s.W {
+			s.fb.fg(x-1, s.Y(s.groundY/2), '►', acc, dTop)
+			lbl := " " + mapmodel.FeatTether.Info().Title + " "
+			s.fb.text(clampInt(x-textLen(lbl)/2, 0, max(0, s.W-textLen(lbl))), s.Y(s.groundY/2-2), lbl, bgc, acc, dTop)
+		}
+		return
 	case t.kind == tUFO:
 		if x, y, ok := saucerAt(s.m, s.anim, s.W); ok {
 			mark, my := '▼', y-1

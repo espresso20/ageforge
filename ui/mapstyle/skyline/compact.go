@@ -46,6 +46,7 @@ func (v *view) composeCompact(f mapstyle.Frame, W, H int) {
 	v.fb.reset(W, H)
 	s := &scene{v: v, m: m, lay: lay, p: p, mp: mp, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H,
 		S: H - 1, top: 1, groundY: H - 2, sel: -1, band: bandOf(m.AgeIdx)}
+	s.city, s.inCity = mapmodel.CityLookAt(m.AgeIdx)
 	bg := chromeBg()
 	if H >= 2 {
 		s.compactScene()
@@ -132,6 +133,9 @@ func (s *scene) compactScene() {
 	top := float64(max(1, S-1)) * 0.75
 	fire := m.Catastrophe.Pending != ""
 	win := p.hue(theme.SkyWinWarm, mEmit, 0)
+	if s.inCity { // the age's own light in the windows (city.go)
+		win = s.compactWindow()
+	}
 	smoke := p.hue(theme.SkySmoke, mLit, 0)
 	fresh := s.mp.Fg[mapmodel.CFresh]
 	gold := p.hue(theme.SkyWonderGold, mEmit, 0)
@@ -180,6 +184,7 @@ func (s *scene) compactScene() {
 			}
 		}
 	}
+	s.compactCity(a0, a1)
 	// the road, with the traffic on it
 	rh, mh := roadHues(m.AgeIdx)
 	road := p.hue(rh, mLit, 0)

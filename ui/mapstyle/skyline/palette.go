@@ -30,6 +30,7 @@ var hazeK = [numHaze]float64{0, 0.10, 0.22, 0.52, 0.72}
 type pal struct {
 	day, twilight, night, stars float64
 	light, mono                 bool
+	gloom                       bool // the megacity's smog-dark day: neon never washes out
 	duoLo, duoHi                tcell.Color
 	sky                         [4]tcell.Color
 	lightTint, horizon          tcell.Color
@@ -37,6 +38,7 @@ type pal struct {
 	mats                        [theme.SkyFamilies][theme.SkyVariants]theme.SkyMaterial
 	matCache                    []tcell.Color
 	hueCache                    []tcell.Color
+	cityCache                   []tcell.Color // the Earth arc's city colours (city.go)
 }
 
 // newPal builds the frame palette for a model on the active theme.
@@ -81,6 +83,7 @@ func newPal(m *mapmodel.Model) *pal {
 		p.sky[3] = theme.Mix(p.sky[3], theme.SkyColor(theme.SkyBruise), float64(0.45*pr))
 		p.sky[2] = theme.Mix(p.sky[2], theme.SkyColor(theme.SkyBruiseHigh), float64(0.30*pr))
 	}
+	p.citySky(m)
 	p.lightTint = theme.Mix(theme.SkyColor(theme.SkyLightNight), theme.SkyColor(theme.SkyLightDay), p.day)
 	p.lightTint = theme.Mix(p.lightTint, theme.SkyColor(theme.SkyLightDusk), float64(p.twilight*0.6))
 	p.stars = smoothstep(0.35, 0.9, p.night)
@@ -199,7 +202,7 @@ func (p *pal) col(fam, variant int, s slot, depth int) tcell.Color {
 		if p.light {
 			c = theme.Mix(c, theme.Shade(c, 0.8), p.night) // ink on paper
 		}
-	} else if p.day > 0.5 {
+	} else if p.day > 0.5 && !p.gloom {
 		c = theme.Mix(c, theme.Tint(m.Wall, p.lightTint), float64(0.35*p.day)) // neon washes out by day
 	}
 	c = p.final(theme.Mix(c, p.horizon, p.haze(depth)))
@@ -297,3 +300,42 @@ func hash(v ...int) uint64 {
 }
 
 func hashf(v ...int) float64 { return float64(hash(v...)%100000) / 100000 }
+
+// citySky tints the Earth arc's skies: smog browning the horizon from the
+// Information Age, the megacity's day a smog-dark dusk the sun never gets
+// through, the powered city's horizon glowing electric blue.
+func (p *pal) citySky(m *mapmodel.Model) {
+	look, ok := mapmodel.CityLookAt(m.AgeIdx)
+	if !ok {
+		return
+	}
+	c := theme.CityColor
+	switch look.Key {
+	case "cyberpunk_age":
+		murk := [4]tcell.Color{c(theme.CityNight), c(theme.CityTower), theme.Mix(c(theme.CityTower), c(theme.CitySmog), 0.5),
+			theme.Mix(c(theme.CitySmog), c(theme.CityNeonMagenta), 0.3)}
+		for i := range p.sky {
+			p.sky[i] = theme.Mix(p.sky[i], murk[i], float64(0.7*p.day))
+		}
+		p.gloom = true
+	case "fusion_age": // the plasma's glow on the horizon, electric blue
+		p.sky[3] = theme.Mix(p.sky[3], c(theme.CityElectric), float64(0.15+float64(0.4*p.night)))
+		p.sky[2] = theme.Mix(p.sky[2], c(theme.CityElectric), float64(0.22*p.night))
+		p.sky[1] = theme.Mix(p.sky[1], c(theme.CityCooling), float64(0.3*p.night))
+	case "modern_age": // a crisp blue day; by night the glass city lights its own horizon
+		glow := theme.Mix(c(theme.CityHeadlight), c(theme.CityScreen), 0.5)
+		p.sky[3] = theme.Mix(p.sky[3], glow, float64(0.45*p.night))
+		p.sky[2] = theme.Mix(p.sky[2], glow, float64(0.2*p.night))
+	default: // the smog: a haze paling the sky and browning the horizon, a grey-brown sky in the Digital Age
+		k := [4]float64{0.26, 0.36, 0.5, 0.62}
+		light := c(theme.CityScreen) // the Information Age's sodium light in the smog by night
+		if look.Key == "digital_age" {
+			k = [4]float64{0.35, 0.5, 0.62, 0.72}
+			light = c(theme.CityGlow) // the Digital Age's data glow
+		}
+		smog := theme.Mix(c(theme.CitySmog), light, float64(0.45*p.night))
+		for i := range p.sky {
+			p.sky[i] = theme.Mix(p.sky[i], smog, k[i])
+		}
+	}
+}

@@ -214,10 +214,15 @@ func (s *scene) status(bg tcell.Color) {
 		return
 	}
 	if s.v.legend {
-		s.segs(0, y, bg, []seg{{" lit windows ", theme.RoleText}, {"staffed  ", theme.RoleDim},
+		parts := []seg{{" lit windows ", theme.RoleText}, {"staffed  ", theme.RoleDim},
 			{"smoke ", theme.RoleText}, {"producing  ", theme.RoleDim}, {"▼ ", theme.RolePositive}, {"new  ", theme.RoleDim},
 			{"IDLE LOW FULL ", theme.RoleWarning}, {"flows  ", theme.RoleDim}, {"pennants ", theme.RoleText},
-			{"your standing with each civ", theme.RoleDim}})
+			{"your standing with each civ", theme.RoleDim}}
+		if s.inCity { // the age's look, in a word or two (city.go)
+			parts = append(parts, seg{"  │ ", theme.RoleDim}, seg{s.city.Name + ": ", theme.RoleText},
+				seg{s.city.Structure, theme.RoleDim})
+		}
+		s.segs(0, y, bg, parts)
 		return
 	}
 	where := "the wilds"

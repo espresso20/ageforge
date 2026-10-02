@@ -24,6 +24,7 @@ const (
 	vkArmy                 // patrols and warbands
 	vkPrivate              // wealth
 	vkAmbient              // the age's own life: birds, balloons, aircraft
+	vkCity                 // the Earth arc's city: freeway cars, sky trains, swarms (city.go)
 )
 
 // vtemplate is a vehicle drawing facing east. mask letters: b body,
@@ -82,6 +83,8 @@ var (
 	tFlyCar     = vtpl1("▄█▄", "bnb", theme.SkyCarBlue, theme.SkyNeonPink, mapmodel.SymCar)
 	tFlyCargo   = vtpl1("▄██▄", "gnng", theme.SkyHullModern, theme.SkyNeonCyan, mapmodel.SymCar)
 	tMaglev     = vtpl1("▐████►", "mbbbbn", theme.SkyCarWhite, theme.SkyNeonCyan, mapmodel.SymTrain)
+	tSkyTrain   = vtpl1("▐▀▀▀▌▐▀▀▀▌▐▀▀▀►", "mnnnmmnnnmmnnnb", theme.SkyHullModern, theme.SkyNeonPink, mapmodel.SymSkyTrain)
+	tClimber    = vtpl1("◘", "c", theme.SkyWhite, theme.SkyWhite, mapmodel.SymClimber) // drawn by traffic(), on the tether
 	tHoverTank  = vtpl1("▄▀█▄", "rbbb", theme.SkyHullModern, theme.SkyWarRed, mapmodel.SymMilitary)
 	tHoverTram  = vtpl1("▐▀▀▀▀▌", "bggggb", theme.SkyCarWhite, theme.SkyNeonCyan, mapmodel.SymTrain)
 	tHoverCar   = vtpl1("◄▄►", "cbc", theme.SkyCarWhite, theme.SkyNeonCyan, mapmodel.SymCar)
@@ -117,6 +120,7 @@ var moverTags = map[*vtemplate]mapmodel.Mover{
 	&tDrone: mapmodel.MoverDrone, &tFlyCar: mapmodel.MoverHovercar, &tFlyCargo: mapmodel.MoverHovercar,
 	&tHoverCar: mapmodel.MoverHovercar, &tHoverTank: mapmodel.MoverHovercar,
 	&tShuttle: mapmodel.MoverShuttle, &tSatellite: mapmodel.MoverSatellite,
+	&tSkyTrain: mapmodel.MoverSkyTrain, &tHeli: mapmodel.MoverNewsHeli, &tClimber: mapmodel.MoverClimber,
 }
 
 // introduced reports whether the age with index age may show vehicle t:
@@ -395,6 +399,9 @@ func (l *lanes) ambient(b, i int) (*vtemplate, lane) {
 			return l.ambient(4, i)
 		}
 		t := [3]*vtemplate{&tJet, &tAirliner, &tHeli}[i%3]
+		if t == &tHeli && !introduced(&tHeli, l.age) {
+			t = &tJet // the news helicopter waits for the Information Age
+		}
 		if t == &tHeli {
 			ln = l.sky[1]
 		}
@@ -402,6 +409,9 @@ func (l *lanes) ambient(b, i int) (*vtemplate, lane) {
 	case 6:
 		ln = l.sky[i%3]
 		ln.y -= int(hash(seed, 41) % 3)
+		if i%3 == 2 && mapmodel.MoverNewsHeli.Info().In(l.age) {
+			return &tHeli, l.sky[1] // the Digital Age's sky still has its news helicopters
+		}
 		return &tDrone, ln
 	case 7:
 		if i > 2 {
@@ -528,6 +538,25 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 			add(vkAmbient, t, seed, ln, sp(seed, 0.2, 0.7))
 		}
 	}
+	// the Earth arc's city: freeway cars, sky trains, swarms and hovercars
+	cityTraffic(m, groundY, func(t *vtemplate, seed int, ln lane, speed float64, west bool, dx int) {
+		v := vehicle{kind: vkCity, t: t, seed: seed, depth: ln.d, y: ln.y, west: west}
+		if west {
+			speed = -speed
+		}
+		pad := 12
+		span := w + 2*pad
+		pos := float64(hash(seed, 23)%uint64(span)) + float64(float64(anim)*speed) - float64(cam)
+		x := int(math.Floor(pos)) % span
+		if x < 0 {
+			x += span
+		}
+		v.x = x - pad + dx
+		if t == &tCar || t == &tFlyCar {
+			v.body = [4]theme.SkyHue{theme.SkyCarRed, theme.SkyCarBlue, theme.SkyCarWhite, theme.SkyCarYellow}[hash(seed, 3)%4]
+		}
+		out = append(out, v)
+	})
 	out = append(out, bayTraffic(m, anim, cam, w, groundY, band, sea)...)
 	out = append(out, launches(m, anim, cam, w, groundY, band)...)
 	return out
@@ -594,14 +623,9 @@ func launches(m *mapmodel.Model, anim, cam, w, groundY, band int) []vehicle {
 // viaductY is the row of the viaduct deck (colonial to electric ages).
 func viaductY(groundY int) int { return groundY - max(4, groundY/6) }
 
-// railYs are the maglev rails of the neon cities: rows and depths.
-func railYs(groundY int) []lane {
-	r := []lane{{groundY - max(5, groundY*3/10), dLane0 + 2}, {groundY - max(9, groundY*11/20), dLane1 + 2}}
-	if groundY >= 48 {
-		r = append(r, lane{groundY - groundY*3/4, dLane2 + 2})
-	}
-	return r
-}
+// railYs are the maglev rails of the neon cities: rows and depths, the
+// megacity's three to five (city.go).
+func railYs(groundY int) []lane { return cityRailYs(groundY) }
 
 // structures draws the static traffic works: viaducts, maglev rails and
 // the hover-tram guideway, at their depths (so nearer towers hide them).
@@ -609,6 +633,10 @@ func railYs(groundY int) []lane {
 func (s *scene) structures() {
 	gy := s.groundY
 	metal := s.p.col(5, 0, sMetal, 1)
+	if hasFreeway(s.m.AgeIdx) {
+		s.freeway() // the Modern to the Digital Age's elevated freeway (city.go)
+	}
+	s.cables()
 	switch s.band {
 	case 3, 4:
 		if !hasViaduct(s.m.AgeIdx) {
@@ -711,6 +739,14 @@ func (s *scene) traffic() {
 			}
 			s.fb.fg(x, s.Y(y), ch, s.p.hue(h, md, 0), v.depth)
 		})
+		if night && v.kind == vkCity && (v.t == &tCar || v.t == &tTruck) { // headlights down the freeway
+			hx, tx := v.x+v.width(), v.x-1
+			if v.west {
+				hx, tx = v.x-1, v.x+v.width()
+			}
+			s.fb.fg(hx, s.Y(v.y), '▪', s.p.cityHue(theme.CityHeadlight, mEmit, 0), v.depth)
+			s.fb.fg(tx, s.Y(v.y), '·', s.p.cityHue(theme.CityTaillight, mEmit, 0), v.depth)
+		}
 		if night && s.band >= 5 && v.depth == dStreet && v.kind != vkFoot {
 			hx := v.x + v.width()
 			if v.west {
@@ -730,11 +766,19 @@ func (s *scene) traffic() {
 		}
 	}
 	if x := s.elevatorX(); x >= 0 && x < s.W {
-		cy := (s.anim / 2) % (s.groundY * 2)
-		if cy >= s.groundY {
-			cy = s.groundY*2 - cy
+		if s.fusion() && introduced(&tClimber, s.m.AgeIdx) { // climbers riding the tether up and away
+			span := max(1, s.groundY-1)
+			for k := 0; k < 3; k++ {
+				y := s.groundY - 2 - (s.anim/3+k*span/3)%span
+				s.fb.fg(x, s.Y(y), mapmodel.R(mapmodel.SymClimber, s.tier), s.p.cityHue(theme.CityPlasma, mEmit, 0), dRow2-1)
+			}
+		} else {
+			cy := (s.anim / 2) % (s.groundY * 2)
+			if cy >= s.groundY {
+				cy = s.groundY*2 - cy
+			}
+			s.fb.fg(x, s.Y(min(cy, s.groundY-2)), '◘', s.p.hue(theme.SkyHarbingerHolo, mEmit, 0), dRow2-1)
 		}
-		s.fb.fg(x, s.Y(min(cy, s.groundY-2)), '◘', s.p.hue(theme.SkyHarbingerHolo, mEmit, 0), dRow2-1)
 	}
 	sats := introduced(&tSatellite, s.m.AgeIdx)
 	if sats && s.m.AgeIdx >= 17 {

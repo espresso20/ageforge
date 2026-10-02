@@ -214,6 +214,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	s.p, s.mp = v.palettes(m)
 	s.lay = v.layoutFor(m, s.groundY)
 	s.vis = v.vis
+	s.city, s.inCity = mapmodel.CityLookAt(m.AgeIdx)
 	defer func() { v.vis = s.vis }()
 	if v.follow {
 		v.cam = presentCam(m, W)
@@ -242,6 +243,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	s.farRidge()
 	s.nearLayer()
 	s.lots()
+	s.cityRoofs()
 	s.ground()
 	s.traffic()
 	s.visitor()
@@ -257,7 +259,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 func (v *view) revealTarget(m *mapmodel.Model, t tgt, W int) {
 	v.reveal = false
 	x := t.x - v.cam
-	if t.kind != tLot {
+	if t.kind != tLot && t.kind != tTether { // the tether stands in the world, like a building
 		x = t.x - v.cam // ridge targets are placed in screen terms already
 		if x >= 4 && x < W-4 {
 			return
