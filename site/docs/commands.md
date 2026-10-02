@@ -65,7 +65,7 @@ gather wood 5
 
 ## Build Plan
 
-A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. Full rules on the [Build Plan](plan.md) page.
+A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, and what a full store would throw away (after the wonder's share) is banked toward its items' next copies. Full rules on the [Build Plan](plan.md) page.
 
 | Command | Description |
 |---|---|
@@ -76,7 +76,7 @@ A list of builds and techs the game starts for you, in order, as the resources c
 | `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too; they wait for the advance. |
 | `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as you can pay its price. While it waits it holds its price back from the items below, and it drops out if the offer rotates away. See [Trade deals](trade.md#trade-deals). |
 | `plan list` | Print the plan with each item's status |
-| `plan remove <n>` | Remove item `n` |
+| `plan remove <n>` | Remove item `n` (what overflow banked for it goes back to your stores, up to their caps) |
 | `plan up <n>` | Move item `n` one place up |
 | `plan down <n>` | Move item `n` one place down |
 | `plan clear` | Empty the plan |
@@ -247,7 +247,7 @@ build great_monolith
 
 A deposit says how much went in and the bank's new total. When nothing can go in, the command says why: the wonder is already built, it doesn't need that resource (and which ones it does), that part of the bank is already full, you have none on hand, or you asked for more than you have. `wonder bank all` banks what it can and lists what it skipped. Autocomplete after `wonder bank` offers only the resources the wonder still needs.
 
-**Overflow.** While overflow is on, production that a full store would throw away goes into the current age's wonder bank instead, for every resource the wonder still needs and only up to what it still needs. It never takes from what you hold, works during offline catch-up too, and says so in the log when it finishes a resource's part of the bank. See [Wonders](wonders.md#overflow).
+**Overflow.** While overflow is on, production that a full store would throw away goes into the current age's wonder bank instead, for every resource the wonder still needs and only up to what it still needs. It never takes from what you hold, works during offline catch-up too, and says so in the log when it finishes a resource's part of the bank. What the wonder doesn't need goes toward your build plan's queued copies (see [Build Plan](plan.md#overflow-pays-the-plan)). See [Wonders](wonders.md#overflow).
 
 The **Wonders** panel (`wonders`) shows a progress bar for each required resource, and a color sprite thumbnail next to each completed wonder. Completed wonders also appear on the Map as landmarks drawn in their era's look, and the cursor jumps to them with Tab (see [Map](#map) below).
 

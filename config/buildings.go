@@ -64,6 +64,17 @@ type BuildingDef struct {
 //	Primitive 30–100 → Stone 200–1k → Bronze 1.5k–5k → Iron 8k–25k →
 //	Classical 40k–120k → Medieval 200k–600k → Renaissance 1M–3M →
 //	Colonial 5M–15M → Industrial 25M–75M → Victorian 125M–375M → ...
+//
+// Storage per copy is sized by the Storage Covenant (config.StorageHold): a
+// full stack of an age's storage, with every earlier age's, holds 4.5 hours
+// of the age's typical income from the Bronze Age on (1.5 hours before).
+// Pacing v2's away-proofing raised only the ages that fell short, to two
+// significant figures: Warehouse 11K -> 18K (Bronze held 3.0 hours),
+// Classical Vault 110K -> 130K, Strongroom 410K -> 470K, Colonial Warehouse
+// 33M -> 38M, Industrial Depot 170M -> 190M, Victorian Vault 1.1B -> 1.3B,
+// Electric Warehouse 3.5B -> 3.9B, Info Vault 790B -> 930B and Cyber Vault
+// 8T -> 8.6T. Prices were left alone, so the storage ladder (smoke/static.go)
+// is unchanged.
 func baseBuildingsRaw() []BuildingDef {
 	return []BuildingDef{
 		// ===== PRIMITIVE AGE (costs: 30-100) =====
@@ -108,7 +119,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"wood": 2000, "stone": 1500, "iron": 300},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 11000}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 18000}},
 			BuildTicks:  80,
 			RequiredAge: "bronze_age",
 			Description: "Proper storage building.",
@@ -132,7 +143,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"stone": 50000, "iron": 12000, "gold": 10000},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 110000}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 130000}},
 			BuildTicks:  150,
 			RequiredAge: "classical_age",
 			Description: "Stone vault for valuables.",
@@ -147,7 +158,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"stone": 200000, "iron": 60000, "gold": 40000},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 410000}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 470000}},
 			BuildTicks:  200,
 			RequiredAge: "medieval_age",
 			Description: "Fortified storehouse.",
@@ -171,7 +182,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"wood": 1.5e6, "stone": 1e6, "gold": 600000},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 33e6}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 38e6}},
 			BuildTicks:  300,
 			RequiredAge: "colonial_age",
 			Description: "Trade goods warehouse.",
@@ -183,7 +194,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"steel": 15e6, "iron": 20e6, "coal": 10e6},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 170e6}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 190e6}},
 			BuildTicks:  400,
 			RequiredAge: "industrial_age",
 			Description: "Industrial-scale storage.",
@@ -195,7 +206,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"steel": 125e6, "gold": 100e6, "iron": 75e6},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.1e9}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.3e9}},
 			BuildTicks:  500,
 			RequiredAge: "victorian_age",
 			Description: "Reinforced vault.",
@@ -207,7 +218,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"steel": 750e6, "electricity": 125e6, "iron": 500e6},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 3.5e9}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 3.9e9}},
 			BuildTicks:  600,
 			RequiredAge: "electric_age",
 			Description: "Climate-controlled storage.",
@@ -246,7 +257,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"steel": 100e9, "electricity": 40e9, "data": 625e6},
 			CostScale:   1.25,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 790e9}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 930e9}},
 			BuildTicks:  900,
 			RequiredAge: "information_age",
 			Description: "Digital-physical storage hybrid.",
@@ -270,7 +281,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"steel": 3e12, "data": 60e9, "crypto": 10e9},
 			CostScale:   1.25,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8e12}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8.6e12}},
 			BuildTicks:  1400,
 			RequiredAge: "cyberpunk_age",
 			Description: "Encrypted digital vault.",

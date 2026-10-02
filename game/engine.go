@@ -328,6 +328,10 @@ type GameEngine struct {
 	// the current age's wonder (overflow.go). The player's preference: saved,
 	// kept across prestige and Succumb, cleared by Reset.
 	wonderOverflowOff bool
+	// overflowScratch is applyTickRates' reusable list of what the caps cut
+	// off this tick, so a tick with overflow allocates nothing for it. Not
+	// state: never saved, emptied before each use.
+	overflowScratch []overflowLoss
 	// Worker shares (shares.go). workerShares is the split the player set,
 	// domain → percent (nil: every domain on auto); saved, put back on auto
 	// by prestige, Succumb and Reset. autoRecruitOff turns off the routine's
@@ -1994,6 +1998,10 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// uses fall back to a small residual percentage. Players who didn't over-
 	// accumulate keep what they had (amount below the cap is untouched).
 	// Faith is excluded — it's cumulative.
+	// The plan's overflow banks go back to the stores first, so the trim
+	// treats them like anything else held: a bank never carries more into the
+	// new age than the stores could (overflow.go).
+	ge.returnPlanBanks("for the advance")
 	entryCosts := config.AgeEntryCosts(newAge)
 	for key, r := range ge.Resources.resources {
 		if key == "faith" {
@@ -2974,6 +2982,15 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 // plan starts its builds through it too, with quiet set so the per-copy
 // "Started building" line gives way to the plan's own summary.
 func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
+	return ge.startBuildPaid(key, quiet, nil)
+}
+
+// startBuildPaid is startBuildLocked with part of the price already paid:
+// prepaid (a plan item's overflow bank, at most the price per resource) is
+// taken off what the stores pay. The caller takes it out of the bank once
+// the build has started. Parts of the price left within planBankEpsilon of
+// prepaid count as paid.
+func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]float64) error {
 	def, exists := ge.Buildings.defs[key]
 	if !exists {
 		return ge.unknownBuildingErr(key)
@@ -3018,6 +3035,9 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 		// Use queue-aware cost so that items already in the build queue are
 		// factored into the cost curve (fixes queue-blindness exploit).
 		cost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
+		if len(prepaid) > 0 {
+			cost, _ = splitBank(cost, prepaid)
+		}
 		if !ge.Resources.Pay(cost) {
 			return fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(cost))
 		}
@@ -4261,9 +4281,9 @@ const (
 	OfflineEfficiency = 0.5
 	// OfflineStepTicks is the step the offline catch-up advances by: each
 	// step credits that many ticks of production (at OfflineEfficiency, up
-	// to the caps, overflow to the wonder bank), moves construction and
-	// research on, and lets the build plan start what the step paid for. A
-	// minute at 1x: 24 hours away is 1,440 steps.
+	// to the caps, overflow to the wonder bank, then to the plan's banks),
+	// moves construction and research on, and lets the build plan start what
+	// the step paid for. A minute at 1x: 24 hours away is 1,440 steps.
 	OfflineStepTicks = 30
 )
 
@@ -4303,6 +4323,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	gains := make(map[string]float64)
 	banked := make(map[string]float64)
 	bankedInto := ""
+	planBanked := make(map[string]float64)
 	var starts planStarts
 	var staffed staffCounts
 	for done := 0; done < offlineTicks; {
@@ -4313,14 +4334,22 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 			n = k
 		}
 		w := ge.overflowWonder()
+		losses := ge.overflowScratch[:0]
 		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
 			func(res string, g float64) { gains[res] += g },
 			func(res string, lost float64) {
 				if b := ge.bankOverflow(w, res, lost); b > 0 {
 					banked[res] += b
 					bankedInto = w
+					lost -= b
+				}
+				if lost > 0 {
+					losses = append(losses, overflowLoss{res: res, amount: lost})
 				}
 			})
+		ge.overflowScratch = losses
+		// What the wonder didn't take goes toward the plan's queued copies.
+		ge.bankPlanOverflow(losses, planBanked)
 		ge.tick += n
 		done += n
 		ge.Trade.DecayPressure(n) // the plan's trades meet a market that recovers as time passes
@@ -4353,6 +4382,9 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 	if len(banked) > 0 {
 		ge.addLog("info", fmt.Sprintf("Overflow banked into %s: %s.", ge.Buildings.defs[bankedInto].Name, Amounts(banked)))
+	}
+	if len(planBanked) > 0 {
+		ge.addLog("info", fmt.Sprintf("Overflow banked toward your plan: %s.", Amounts(planBanked)))
 	}
 	if !starts.empty() {
 		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.Buildings.defs)+".")

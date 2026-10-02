@@ -547,7 +547,7 @@ func flowIncomes() map[string]map[string]float64 {
 // construction resources included: FlowCopies fully staffed copies of every
 // producer of res up to age, every earlier wonder and every tech up to age,
 // times the production_all bonus held by then. It is what the Storage
-// Covenant (StorageHoldHours) sizes storage against.
+// Covenant (StorageHold) sizes storage against.
 func TypicalIncome(res, age string) float64 {
 	return typicalIncomes()[age][res]
 }
@@ -564,15 +564,35 @@ func typicalIncomes() map[string]map[string]float64 {
 	return typicalIncomeMap
 }
 
-// StorageHoldHours is the Storage Covenant (economy.md, Law 1): the most
-// storage buildable in an age must hold at least this many hours of the age's
-// TypicalIncome at 1x, for every construction resource of the age. Typical
-// income is a moderate investment (five copies of each producer); the smoke
-// bot ends an age making one to three times it, so 1.5 hours of it is about
-// an hour of a well-built economy: a player who checks in hourly loses
-// nothing at a cap, and one who checks in less often leans on the build plan
-// and wonder overflow rather than on storage, which keeps its pressure.
-const StorageHoldHours = 1.5
+// The Storage Covenant (economy.md, Law 1): the most storage buildable in an
+// age must hold at least StorageHold(age) hours of the age's TypicalIncome at
+// 1x, for every construction resource of the age. Typical income is a
+// moderate investment (five copies of each producer); the smoke bot ends an
+// age making one to three times it.
+//
+//   - StorageHoldHours, 4.5 hours from the Bronze Age on: about three hours
+//     of a well-built economy, so a player who checks in every few hours
+//     loses little at a cap. Longer absences lean on the build plan, which
+//     overflow now pays, and on wonder overflow, so storage keeps its
+//     pressure. Pacing v2's away-proofing raised it from 1.5 hours; on the
+//     one-week curve most ages already held about 3.9, and the ages that
+//     didn't reach 4.5 had their storage per copy raised (Bronze the most).
+//   - EarlyStorageHoldHours, 1.5 hours for the Primitive and Stone Ages: the
+//     first hour of the game, which keeps its pace (the ages AgeStretch
+//     leaves at 1x), where storage is meant to fill fast and be built often.
+const (
+	StorageHoldHours      = 4.5
+	EarlyStorageHoldHours = 1.5
+)
+
+// StorageHold is the Storage Covenant's hours for age: EarlyStorageHoldHours
+// for the Primitive and Stone Ages, StorageHoldHours from the Bronze Age on.
+func StorageHold(age string) float64 {
+	if unstretchedAges[age] {
+		return EarlyStorageHoldHours
+	}
+	return StorageHoldHours
+}
 
 func computeFlowIncomes(defs []BuildingDef, techs []TechDef, order []string) map[string]map[string]float64 {
 	return computeIncomes(defs, techs, order, IsFlowResource)

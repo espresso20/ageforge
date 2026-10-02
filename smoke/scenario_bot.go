@@ -203,7 +203,7 @@ func runStatic(e *Env, res *Result) {
 	for _, r := range rows {
 		if !r.OK() {
 			short++
-			res.fail("storage_covenant", "%s: max %s storage %s holds %.2f h of typical income %s/tick (want %g h)", r.Age, r.Resource, num(r.MaxStorage), r.Hours, num(r.Income), config.StorageHoldHours)
+			res.fail("storage_covenant", "%s: max %s storage %s holds %.2f h of typical income %s/tick (want %g h)", r.Age, r.Resource, num(r.MaxStorage), r.Hours, num(r.Income), r.Want())
 		}
 	}
 	mp, mr := StaticMilestones()

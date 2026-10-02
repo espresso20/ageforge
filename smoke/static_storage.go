@@ -9,7 +9,8 @@ import (
 )
 
 // The Storage Covenant (design-and-architecture/economy.md, Law 1): the most
-// storage buildable in an age must hold at least config.StorageHoldHours of
+// storage buildable in an age must hold at least config.StorageHold(age)
+// hours (4.5 from the Bronze Age on, 1.5 in the Primitive and Stone Ages) of
 // the age's typical production (config.TypicalIncome) of every construction
 // resource of the age. It sizes storage to time, where the Gate Covenant
 // sizes it to prices: a store that fills in minutes wastes most of what a
@@ -26,8 +27,11 @@ type StorageRow struct {
 	Hours float64 `json:"hours"`
 }
 
+// Want is the hours the covenant asks of the row's age.
+func (r StorageRow) Want() float64 { return config.StorageHold(r.Age) }
+
 // OK reports whether the row keeps the covenant.
-func (r StorageRow) OK() bool { return r.Hours >= config.StorageHoldHours }
+func (r StorageRow) OK() bool { return r.Hours >= r.Want() }
 
 // StaticStorage checks every age against the Storage Covenant and returns
 // one row per age (its tightest resource), failing or not.
@@ -58,13 +62,13 @@ func staticStorage(defs map[string]config.BuildingDef, income func(res, age stri
 
 // writeStorage renders the Storage Covenant check.
 func writeStorage(sb *strings.Builder, rows []StorageRow) {
-	fmt.Fprintf(sb, "The most storage buildable in each age must hold %g hours of the age's typical production (config.TypicalIncome: five staffed copies of every producer so far, earlier wonders and techs, with the production bonus) of each of its construction resources (the Storage Covenant, economy.md). One row per age, its tightest resource. `go test ./smoke` fails on any row marked ✗.\n\n", config.StorageHoldHours)
-	sb.WriteString("| age | resource | typical income | max storage | holds | |\n|---|---|---|---|---|---|\n")
+	fmt.Fprintf(sb, "The most storage buildable in each age must hold %g hours of the age's typical production (%g hours in the Primitive and Stone Ages; config.TypicalIncome: five staffed copies of every producer so far, earlier wonders and techs, with the production bonus) of each of its construction resources (the Storage Covenant, economy.md). One row per age, its tightest resource. `go test ./smoke` fails on any row marked ✗.\n\n", config.StorageHoldHours, config.EarlyStorageHoldHours)
+	sb.WriteString("| age | resource | typical income | max storage | holds | needs | |\n|---|---|---|---|---|---|---|\n")
 	for _, r := range rows {
 		mark := "✓"
 		if !r.OK() {
 			mark = "✗"
 		}
-		fmt.Fprintf(sb, "| %s | %s | %s/tick | %s | %.2f h | %s |\n", r.Age, r.Resource, num(r.Income), num(r.MaxStorage), r.Hours, mark)
+		fmt.Fprintf(sb, "| %s | %s | %s/tick | %s | %.2f h | %g h | %s |\n", r.Age, r.Resource, num(r.Income), num(r.MaxStorage), r.Hours, r.Want(), mark)
 	}
 }

@@ -24,7 +24,7 @@ A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it 
 
 ### Overflow
 
-**Wonder overflow** is on by default. When a resource the current age's wonder still needs would be clamped at its storage limit, the part the limit would cut off goes into the wonder's bank instead of being lost, up to what the wonder still needs of it. It never takes anything you hold: only what production was about to waste. It works during offline catch-up too.
+**Wonder overflow** is on by default. When a resource the current age's wonder still needs would be clamped at its storage limit, the part the limit would cut off goes into the wonder's bank instead of being lost, up to what the wonder still needs of it. It never takes anything you hold: only what production was about to waste. It works during offline catch-up too. What the wonder doesn't need then goes toward your [build plan](plan.md#overflow-pays-the-plan)'s queued copies, with or without wonder overflow, so the wonder always comes first.
 
 ```
 wonder overflow        # is it on?
