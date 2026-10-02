@@ -73,7 +73,7 @@ Pay a cost and keep your civilization. With no Brace and no soldiers, enduring c
 | Buildings destroyed | 20% of your buildings other than wonders and storage, rounded down (`floor(those buildings / 5)`), at least 1 if you have any. Wonders and storage are never destroyed and don't count. Brace lowers this to 15% or 10%, and your garrison lowers it further. |
 | Stored resources | Every unlocked resource drops to 15% of its stored amount. Brace raises this to 30% or 45%, and your garrison raises it further. |
 | Workers | 25% of the worker pool is lost. |
-| Production | Reconstruction Effort: all production −10% for 216 ticks. |
+| Production | Reconstruction Effort: all production −10% for 562 ticks (about 18m 44s). |
 | Morale | −10 points. |
 
 For how Brace and soldiers change these numbers, see [Brace](#brace) and [Your garrison](#your-garrison) below.
@@ -124,7 +124,7 @@ The buildings and stock it saved go into the **Saved this run** line of the Army
 
 The Last Passage is different: its Endure costs prestige points, not buildings and stock, and soldiers do not change it.
 
-The −10% applies to every building, including the ones that survived, for the full 216 ticks. Negative production modifiers are floored at 10% of base, but a single −10% lands in full whatever other bonuses you hold. The same flooring covers per-resource rate modifiers and worker output, and any active debuff shows in the Active Multipliers panel.
+The −10% applies to every building, including the ones that survived, for the full 562 ticks. Negative production modifiers are floored at 10% of base, but a single −10% lands in full whatever other bonuses you hold. The same flooring covers per-resource rate modifiers and worker output, and any active debuff shows in the Active Multipliers panel.
 
 If morale was already low, the −10 can push it into the low band, where output is penalized. Morale drifts back toward 50% on its own; a food surplus speeds that up.
 
@@ -140,7 +140,7 @@ Storage is spared because it is what raises your caps, and once its age has pass
 
 1. The log lists every lost building by name. Rebuild food and housing first.
 2. Reassign or recruit workers for the rebuilt capacity.
-3. Wait out the 216-tick reconstruction debuff; it can't be removed early.
+3. Wait out the 562-tick reconstruction debuff; it can't be removed early.
 
 ---
 

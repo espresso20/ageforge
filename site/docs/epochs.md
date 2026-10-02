@@ -255,7 +255,7 @@ A catastrophe strikes at its fated moment inside an era, not at a transition (se
 - **All resources** reduced to 15% of current amounts
 - If you braced when the harbinger warned you, 15% or 10% of buildings are destroyed instead, and 30% or 45% of resources are kept. See [Brace](harbinger.md#brace-soften-an-endure)
 - **25% of workers** lost, the same share from every building
-- **-10% all production** for 216 ticks (reconstruction), and morale -10
+- **-10% all production** for 562 ticks (reconstruction, about 18m 44s), and morale -10
 - The epoch is marked endured, and the civilization log records it
 
 Best when you've built a large, mature civilization that would be painful to restart, or you already hold this epoch's legacy bonus.

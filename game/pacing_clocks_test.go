@@ -298,6 +298,46 @@ func TestChainBoostStretch(t *testing.T) {
 	}
 }
 
+// TestEndureDebuffStretch: Endure's Reconstruction Effort lasts its typed 216
+// ticks stretched for the age the doom strikes in, and the log line says so.
+func TestEndureDebuffStretch(t *testing.T) {
+	if got := EndureDebuffTicksIn(baseAge); got != endureDebuffTicks {
+		t.Errorf("stone debuff = %d, want %d", got, endureDebuffTicks)
+	}
+	if got := EndureDebuffTicksIn(stretchedAge); got != 562 {
+		t.Errorf("iron debuff = %d, want 562 (216 x 2.6)", got)
+	}
+	ge := catEngine(t, stretchedAge, 1)
+	if err := ge.forceCatastrophe(); err != nil {
+		t.Fatal(err)
+	}
+	if err := ge.Endure(); err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, ae := range ge.Events.active {
+		if ae.Key == "endure_reconstruction" {
+			found = true
+			if ae.TicksLeft != 562 {
+				t.Errorf("reconstruction lasts %d ticks, want 562", ae.TicksLeft)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("no Reconstruction Effort after Endure")
+	}
+	want := approxTicks(562, ge.tickIntervalLocked())
+	quoted := false
+	for _, l := range ge.log {
+		if strings.Contains(l.Message, "Reconstruction: all production") && strings.Contains(l.Message, want) {
+			quoted = true
+		}
+	}
+	if !quoted {
+		t.Errorf("no reconstruction log line quoting %s", want)
+	}
+}
+
 // lastLog is the newest log message.
 func lastLog(ge *GameEngine) string {
 	if len(ge.log) == 0 {

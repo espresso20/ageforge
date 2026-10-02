@@ -183,7 +183,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 ║   • 20% of buildings destroyed (wonders and storage are spared)  ║
 ║   • All resources reduced to 15%                                 ║
 ║   • 25% of workers lost; workers of destroyed buildings go idle  ║
-║   • Production -10% for 216 ticks, morale -10                    ║
+║   • Production -10% for 562 ticks, morale -10                    ║
 ║   ✓ Age, research, wonders and prestige preserved                ║
 ║   ✓ Survived marker on the epoch badge                           ║
 ║                                                                  ║
@@ -208,7 +208,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 - All unlocked resources drop to 15% of their stored amounts (30% / 45% braced).
 - 25% of the single worker pool is lost; every building's assignment shrinks by the same share,
   whatever its worker domain.
-- Reconstruction Effort: `production_all` −10% for 216 ticks. Morale −0.10.
+- Reconstruction Effort: `production_all` −10% for 562 ticks (216 on the base curve, stretched by `EndureDebuffTicksIn`; dooms strike from the Iron Era on, where every age runs 2.6x). Morale −0.10.
 - "Survived" marker on the epoch badge and a civilization-log entry.
 - Research, wonders, age and prestige are untouched.
 - The army's garrison softens the building and stock losses; see Army defense below.

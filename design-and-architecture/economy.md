@@ -92,9 +92,9 @@ raids and routes as before, each lasting the same share of it: the random-event 
 durations and cooldowns, epoch events and awakenings, diplomacy cadences, war raids, worker
 loans and deal rotation, trade route cycles, expeditions and campaigns, the Geographic
 Society's dispatch interval, faction boons and setbacks (whose instant lumps are divided by
-the stretch instead), the festival and the black market, and milestone chain boosts; Survivor
-and Enduring Civilization ask for 2.6 times the ticks of play. Left as they were: the Endure
-debuff (for now), the offline cap (24 hours at 50%), the Storage Covenant threshold, market
+the stretch instead), the festival and the black market, milestone chain boosts and Endure's
+reconstruction debuff; Survivor and Enduring Civilization ask for 2.6 times the ticks of play.
+Left as they were: the offline cap (24 hours at 50%), the Storage Covenant threshold, market
 pressure decay, morale drift and starvation, which run on the real clock, and the hand-set
 food, faith, culture and soldier rates. A future change to the curve is that one number. Saves
 need no migration: one written before the stretch logs a single line on its next load, and its

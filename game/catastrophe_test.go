@@ -219,7 +219,8 @@ func TestEndure_ResourcesDebuffMoraleAndRecord(t *testing.T) {
 	for _, ev := range ge.Events.GetActiveForSave() {
 		if ev.Key == "endure_reconstruction" {
 			found = true
-			if ev.TicksLeft != 216 || len(ev.Effects) != 1 || ev.Effects[0].Type != "production_all" || ev.Effects[0].Value != -0.10 {
+			// 216 ticks on the base curve, stretched for the Iron Age.
+			if ev.TicksLeft != config.StretchTicks("iron_age", 216) || len(ev.Effects) != 1 || ev.Effects[0].Type != "production_all" || ev.Effects[0].Value != -0.10 {
 				t.Errorf("reconstruction debuff = %+v", ev)
 			}
 		}
