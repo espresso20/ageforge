@@ -126,7 +126,7 @@ func NewBot(ge *game.GameEngine) *Bot {
 type plan struct {
 	// storeK is Era Mastery's speed in this age: a storage building adds
 	// its effect × storeK (storage grows with k).
-	storeK float64
+	storeK   float64
 	st       game.GameState
 	amt      map[string]float64 // spendable amounts, decremented as the bot spends
 	storage  map[string]float64 // caps, raised locally as storage is bought
