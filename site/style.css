@@ -134,8 +134,9 @@ code {
     height: 100svh;
 }
 
+/* Each frame holds for one --step of scroll; script.js sets --steps. */
 .js .timeline {
-    height: calc(100vh + var(--steps, 11) * var(--step, 60vh));
+    height: calc(100vh + var(--steps, 3.2) * var(--step, 80vh));
 }
 
 .stage {
@@ -275,23 +276,6 @@ code {
     overflow: visible;
 }
 
-.map .noise {
-    color: #ffd700;
-    opacity: 0.55;
-}
-
-.scan {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.9), transparent);
-    box-shadow: 0 0 14px rgba(255, 215, 0, 0.55);
-    opacity: 0;
-    pointer-events: none;
-}
-
 .screen::after {
     content: "";
     position: absolute;
@@ -377,6 +361,25 @@ code {
 
 .scrolled .cue {
     opacity: 0;
+}
+
+/* The quiet line under the last frame. */
+.rest {
+    position: absolute;
+    bottom: 13px;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0 16px;
+    text-align: center;
+    color: var(--dim);
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.6s;
+}
+
+.at-last .rest {
+    opacity: 1;
 }
 
 /* ── Below the scroll ─────────────────────────────────────────────────── */
@@ -708,6 +711,10 @@ code {
         gap: 16px;
     }
 
+    .timeline {
+        --step: 85vh;
+    }
+
     .stage {
         padding: 56px 16px 40px;
     }
@@ -760,6 +767,7 @@ code {
 @media (prefers-reduced-motion: reduce) {
     .hero,
     .cue,
+    .rest,
     .ticks span {
         transition: none;
     }

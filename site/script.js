@@ -17,27 +17,19 @@
   const pane = document.getElementById("pane");
   const screen = document.getElementById("screen");
   const map = document.getElementById("map");
-  const scan = document.getElementById("scan");
   const hudAge = document.getElementById("hud-age");
   const hudN = document.getElementById("hud-n");
   const ticks = document.getElementById("ticks");
   const hero = document.getElementById("hero");
   const live = document.getElementById("age-live");
 
-  // What each frame shows, for the pane's text alternative.
+  // What each frame shows, for the pane's text alternative. Only the ages
+  // the page shows are described: the rest are left for players to find.
   const ALT = {
     primitive_age: "a few huts and a campfire in a forest by a river",
-    stone_age: "a village of huts and fields around the Sacred Grove, by the river",
-    iron_age: "a walled town of streets and workshops beside the water",
-    renaissance_age: "a large walled city, with ships on the water",
-    victorian_age: "a railway running through a dense city",
-    modern_age: "suburbs and glass towers spreading past the old walls",
+    victorian_age: "a railway running through a dense walled city by the water",
     cyberpunk_age: "a neon megacity of megablocks and sky rails",
-    space_age: "a ring station in orbit, with docks and solar arrays",
-    interstellar_age: "colony worlds around the home sun, linked by warp gates",
     galactic_age: "a starbase among the civilizations of the galaxy",
-    quantum_age: "a flickering structure of probability drawn in colored light",
-    transcendent_age: "a slowly breathing mandala of light",
   };
 
   if (F && map && timeline) {
@@ -67,7 +59,14 @@
     style.textContent = css;
     document.head.appendChild(style);
 
-    timeline.style.setProperty("--steps", String(N - 1));
+    // How far the scroll runs, in steps (--step in style.css). The first
+    // frame gives way after half a step, so the scroll soon shows what it
+    // does; each frame after it holds a whole step; the last holds a little
+    // less before the page moves on.
+    const FIRST_HOLD = 0.5;
+    const LAST_HOLD = 0.7;
+    const STEPS = FIRST_HOLD + Math.max(0, N - 2) + LAST_HOLD;
+    timeline.style.setProperty("--steps", String(STEPS));
 
     function esc(c) {
       if (c === "&") return "&amp;";
@@ -78,31 +77,51 @@
       return c;
     }
 
-    function rowHTML(r) {
-      const cells = Array.from(r.t);
-      let x = 0;
-      let out = "";
-      for (let k = 0; k + 1 < r.r.length; k += 2) {
-        const s = r.r[k];
-        const n = r.r[k + 1];
-        let text = "";
-        for (let j = x; j < x + n; j++) text += esc(cells[j]);
-        out += s === 0 ? text : '<span class="s' + s + '">' + text + "</span>";
-        x += n;
+    // A frame as cells: per row, its characters and each cell's style. A
+    // later frame's unchanged rows point at the first frame's.
+    const cellCache = [];
+    function frameCells(a, f) {
+      if (!cellCache[a]) cellCache[a] = [];
+      if (!cellCache[a][f]) {
+        cellCache[a][f] = ages[a].frames[f].map(function (r, y) {
+          if (!r) return frameCells(a, 0)[y];
+          const c = Array.from(r.t);
+          const st = new Array(c.length);
+          let x = 0;
+          for (let k = 0; k + 1 < r.r.length; k += 2) {
+            for (let j = 0; j < r.r[k + 1]; j++) st[x++] = r.r[k];
+          }
+          return { c: c, s: st };
+        });
       }
+      return cellCache[a][f];
+    }
+
+    // One row of cells as HTML: a span per run of one style (none for the
+    // plain style).
+    function cellsHTML(c, st) {
+      let out = "";
+      let run = "";
+      let cur = -1;
+      for (let x = 0; x < c.length; x++) {
+        if (st[x] !== cur) {
+          if (run) out += cur === 0 ? run : '<span class="s' + cur + '">' + run + "</span>";
+          run = "";
+          cur = st[x];
+        }
+        run += esc(c[x]);
+      }
+      if (run) out += cur === 0 ? run : '<span class="s' + cur + '">' + run + "</span>";
       return out;
     }
 
-    // Rows of every frame, rendered once on first use. A later frame's
-    // unchanged rows point at the first frame's.
+    // Rows of every frame as HTML, rendered once on first use.
     const cache = [];
     function frameRows(a, f) {
       if (!cache[a]) cache[a] = [];
       if (!cache[a][f]) {
-        const src = ages[a].frames[f];
-        cache[a][f] = src.map(function (r, y) {
-          if (r) return rowHTML(r);
-          return frameRows(a, 0)[y];
+        cache[a][f] = frameCells(a, f).map(function (row) {
+          return cellsHTML(row.c, row.s);
         });
       }
       return cache[a][f];
@@ -220,52 +239,82 @@
       }, 900);
     }
 
-    // ── The transition: a scanline wipes down, glyph noise at its edge ──
+    // ── The transition: a quiet dissolve. Cells change one at a time, in a
+    // scattered order, from what is on screen to the next age's frame. ──
+    const DISSOLVE_MS = 480;
     let anim = null;
-    const NOISE = "░▒▓.:-=+*";
-    function noiseRow() {
-      let s = "";
-      for (let x = 0; x < W; x++) {
-        const r = Math.random();
-        s += r < 0.45 ? NOISE[Math.floor(Math.random() * NOISE.length)] : " ";
-      }
-      return '<span class="noise">' + s + "</span>";
-    }
-    function finish() {
-      if (!anim) return;
-      cancelAnimationFrame(anim.raf);
-      paint(anim.to, 0);
-      scan.style.opacity = "0";
+    function stop() {
+      if (anim) cancelAnimationFrame(anim.raf);
       anim = null;
+    }
+    function scattered(n) {
+      const order = new Uint16Array(n);
+      for (let i = 0; i < n; i++) order[i] = i;
+      for (let i = n - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = order[i];
+        order[i] = order[j];
+        order[j] = t;
+      }
+      return order;
     }
     function go(a) {
       if (a === cur) return;
       const from = cur;
+      const fromFrame = frame;
       cur = a;
       frame = 0;
       label(a);
       announce(a);
-      finish();
+      document.body.classList.toggle("at-last", a === N - 1);
       if (from < 0 || reduceMotion.matches) {
+        stop();
         paint(a, 0);
         return;
       }
-      const target = frameRows(a, 0);
+      // Start from what is on screen: a whole frame, or a dissolve already
+      // under way, which then heads for the new frame instead.
+      const mix = anim
+        ? anim.mix
+        : frameCells(from, fromFrame).map(function (row) {
+            return { c: row.c.slice(), s: row.s.slice() };
+          });
+      stop();
+      const to = frameCells(a, 0);
+      const order = scattered(W * H);
       const t0 = performance.now();
-      const dur = 460;
-      const rowPx = 1.2 * fs;
-      anim = { to: a, raf: 0 };
+      let done = 0;
+      let drawn = 0;
+      anim = { mix: mix, raf: 0 };
       const step = function (now) {
-        const t = Math.min(1, (now - t0) / dur);
-        const band = Math.floor(t * (H + 3));
-        for (let y = 0; y < H; y++) {
-          if (y < band - 2) setRow(y, target[y]);
-          else if (y <= band) setRow(y, noiseRow());
+        const p = Math.min(1, Math.max(0, (now - t0) / DISSOLVE_MS));
+        if (p < 1 && now - drawn < 30) {
+          anim.raf = requestAnimationFrame(step);
+          return;
         }
-        scan.style.opacity = t < 1 ? "1" : "0";
-        scan.style.transform = "translateY(" + Math.min(H, band) * rowPx + "px)";
-        if (t < 1) anim.raf = requestAnimationFrame(step);
-        else finish();
+        drawn = now;
+        // Ease in and out, so the change starts and settles gently.
+        const upto = p >= 1 ? order.length : Math.floor(p * p * (3 - 2 * p) * order.length);
+        const dirty = [];
+        for (; done < upto; done++) {
+          const y = Math.floor(order[done] / W);
+          const x = order[done] - y * W;
+          const row = mix[y];
+          if (row.c[x] !== to[y].c[x] || row.s[x] !== to[y].s[x]) {
+            row.c[x] = to[y].c[x];
+            row.s[x] = to[y].s[x];
+            dirty[y] = true;
+          }
+        }
+        for (let y = 0; y < H; y++) {
+          if (dirty[y]) setRow(y, cellsHTML(mix[y].c, mix[y].s));
+        }
+        if (p < 1) {
+          anim.raf = requestAnimationFrame(step);
+        } else {
+          anim = null;
+          paint(a, 0);
+        }
       };
       anim.raf = requestAnimationFrame(step);
     }
@@ -282,7 +331,8 @@
         atTop = top;
         document.body.classList.toggle("scrolled", !top);
       }
-      go(Math.min(N - 1, Math.floor(p * N)));
+      const at = p * STEPS;
+      go(at < FIRST_HOLD ? 0 : Math.min(N - 1, 1 + Math.floor(at - FIRST_HOLD)));
     }
     window.addEventListener(
       "scroll",

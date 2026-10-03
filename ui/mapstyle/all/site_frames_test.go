@@ -20,10 +20,11 @@ import (
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 )
 
-// siteAges are the ages the landing page scrolls through, oldest first.
-var siteAges = []string{"primitive_age", "stone_age", "iron_age", "renaissance_age", "victorian_age",
-	"modern_age", "cyberpunk_age", "space_age", "interstellar_age", "galactic_age", "quantum_age",
-	"transcendent_age"}
+// siteAges are the ages the landing page scrolls through, oldest first: four
+// of the 22, far enough apart to show the arc. The rest are left for players
+// to find, so the page shows no more than these. Its closing line
+// (site/index.html, "That was four of the 22 ages") says how many in words.
+var siteAges = []string{"primitive_age", "victorian_age", "cyberpunk_age", "galactic_age"}
 
 // TestWriteSiteFrames writes site/frames.js, the roguelike map frames the
 // landing page's scroll steps through: one per age in siteAges, drawn from
