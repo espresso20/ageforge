@@ -317,7 +317,7 @@ With something typed, `Tab` and `Enter` act on the prompt instead. Each style li
 | `prestige confirm yes` | Prestige now (requires the Modern Age). In the Cosmic Era an open Reality Tear settles first, then it rolls the Last Passage; if either comes, prestige waits for your choice |
 | `prestige shop` | List the prestige upgrades |
 | `prestige buy <key>` | Buy a prestige upgrade |
-| `stats` | Open the **Stats** panel: empire statistics, active events, resource rates, active multipliers, your prestige points and the upgrades you have bought |
+| `stats` | Open the **Stats** panel: empire statistics, active events, resource rates, active multipliers, your prestige points, your [Era Mastery](prestige.md#era-mastery) in the current age and the upgrades you have bought |
 
 ```
 prestige confirm yes

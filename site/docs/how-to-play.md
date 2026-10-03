@@ -58,6 +58,8 @@ The status bar also carries your prestige level and civilization title once you 
 
 A first run takes about **a week of real time** to reach the Modern Age, where you can prestige for the first time. The first hour is quick: the Primitive Age takes about 15 minutes and the Stone Age about 45. From the Bronze Age on, every age takes hours: the Bronze Age 3h 54m, the Iron Age 6h 30m, and longer from there. See [How Long Each Age Takes](ages.md#how-long-each-age-takes) for the full curve. A tick is 2 seconds of real time.
 
+That is the first run. After a prestige, every age the run completed runs faster the next time, twice as fast after one completion and up to 4.2x after ten, so later runs reach the Modern Age much sooner (see [Era Mastery](prestige.md#era-mastery)).
+
 You don't need to watch it. Check in a few times a day, spend what has built up, and set the game up for the hours you're away:
 
 - **Offline progress.** When you load a save, the game credits the time since you saved it, up to **24 hours**, at **50%** of your production. It runs that time in steps, so construction and research finish, the build plan starts what the income pays for, and your worker shares recruit and staff as the hours pass. The welcome-back lines in the log say what happened.

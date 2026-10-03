@@ -20,7 +20,7 @@ The game tracks and graphs seven metrics:
 
 Each metric gets its own braille line graph covering the whole stored history. Beside each graph is the current value, a trend arrow (↑ growing, ↓ shrinking, → stable), and the recorded min/max.
 
-**All production** shows only one part of your all-production bonus: wonders, techs, prestige and boons add theirs on top, and the total is capped (see [The all-production cap](resources.md#the-all-production-cap)). The Stats panel's Active Multipliers lists every source.
+**All production** shows only one part of your all-production bonus: wonders, techs, monuments and boons add theirs on top, and the total is capped (see [The all-production cap](resources.md#the-all-production-cap)). The Stats panel's Active Multipliers lists every source.
 
 ---
 

@@ -416,11 +416,10 @@ Three techs raise game speed: ticks come more often, so production, construction
 | Clockwork Automation (Industrial) | +10% | the run |
 | Quantum Computing (Quantum) | +15% | the run |
 | Prestige upgrade Temporal Mastery | +5% per tier, +25% at tier 5 | every run |
-| Prestige level | +1% per level | every run |
 | Milestone chain boosts | +250% or +300% | a few minutes, once per chain |
 | Time Dilation boons | +8% to +15%, before scaling | 1,950 to 3,900 ticks |
 
-With the three techs and Temporal Mastery maxed, the game runs 55% faster (more with prestige levels), and that multiplies with research speed. See [Prestige](prestige.md#passive-prestige-bonuses), [Milestones](milestones.md) and [Boons](factions.md#boons).
+With the three techs and Temporal Mastery maxed, the game runs 55% faster, and that multiplies with research speed. See [Prestige Upgrades](prestige.md#prestige-upgrades), [Milestones](milestones.md) and [Boons](factions.md#boons). [Era Mastery](prestige.md#era-mastery) is a different thing: it leaves the clock alone and makes each tick of a mastered age produce more, with builds and research needing fewer ticks.
 
 ---
 

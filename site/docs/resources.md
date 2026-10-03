@@ -155,7 +155,7 @@ What Geological Extraction is good for is stone (up to the Bronze Age), uranium 
 
 Every resource has a small base storage (10 to 50). **Storage buildings** raise the cap of every resource at once: one per age from the Stash to the Quantum Vault, up to 25 copies each (50 Stashes). A few technologies raise every cap too, culture buildings add culture storage, and military buildings add soldier storage. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table.
 
-**How much it holds.** A full stack of an age's storage, with every earlier age's, holds at least **4.5 hours** of that age's typical production of each resource its buildings cost, from the Bronze Age on. The Primitive and Stone Ages hold an hour and a half: they fill fast and are meant to. A player who checks in every few hours loses little to a full store.
+**How much it holds.** A full stack of an age's storage, with every earlier age's, holds at least **4.5 hours** of that age's typical production of each resource its buildings cost, from the Bronze Age on. The Primitive and Stone Ages hold an hour and a half: they fill fast and are meant to. A player who checks in every few hours loses little to a full store. On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production, so a store still holds the same hours of income.
 
 **Storage is permanent.**
 
@@ -172,11 +172,13 @@ Every resource has a small base storage (10 to 50). **Storage buildings** raise 
 
 ## The all-production cap
 
-Every "+X% all production" bonus in the game adds into one pool: wonders, technologies, milestones, cultural monuments, events (festivals included), faction boons, prestige upgrades and the Cosmic Legacy. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + that pool**, clamped between **x0.1 and x3.0**.
+Every "+X% all production" bonus in the game adds into one pool: wonders, technologies, milestones, cultural monuments, events (festivals included), faction boons and the Cosmic Legacy. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + that pool**, clamped between **x0.1 and x3.0**.
 
 Techs and wonders alone reach the x3.0 cap from about the Electric Age. After that, a late "+X% all production" bonus adds nothing you can see while you are over the cap. It isn't wasted: a penalty comes out of the raw pool first, so the surplus absorbs it, and the bonus matters again whenever a setback pulls the pool back under the cap.
 
 Bonuses to one resource ("+30% gold") have their own pool for that resource, with the same x0.1 to x3.0 clamp. The Stats panel's Active Multipliers shows the raw sums, so it can read above +200%.
+
+[Era Mastery](prestige.md#era-mastery) is not part of either pool. On known ground it multiplies every resource's net rate by the age's speed after the cap and after food drain, so a mastered age is not held to x3.
 
 ---
 

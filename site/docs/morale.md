@@ -119,7 +119,7 @@ The worship buildings also make faith, which adds its own lift once your faith r
 
 - **Status bar**: `Morale 62% (production +5%)`, green when morale boosts production and red when it costs production. At exactly 50% it reads just `Morale 50%`.
 - **Workers panel** (`workers`): a colored morale bar with the same reading, for example `▲ Morale 62% (production +5%)`, or `Morale 50% (production steady)` at neutral.
-- **Stats panel** (`stats`): when morale is off neutral it appears under **Active Multipliers** in the **All Production** line as a `Morale ×N.NN` factor, next to your research, wonder, prestige and active-event bonuses. Each source is listed and colored on its own, so a penalty is never hidden by a bonus on the same line.
+- **Stats panel** (`stats`): when morale is off neutral it appears under **Active Multipliers** in the **All Production** line as a `Morale ×N.NN` factor, next to your research, wonder, milestone and active-event bonuses. Each source is listed and colored on its own, so a penalty is never hidden by a bonus on the same line.
 - **Load Game browser**: each save's detail pane shows its morale.
 
 On the colorblind-safe and high-contrast [themes](themes.md) the boost and penalty colors are blue and orange instead of green and red.

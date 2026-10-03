@@ -72,7 +72,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 
 ## Wonders and the all-production cap
 
-Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%), Warp Nexus (+80%), Cosmic Beacon (+50%), Reality Anchor (+50%) and Singularity Core (+200%). Every all-production bonus in the game, from wonders, techs, milestones, events and prestige alike, adds into one pool, and output is multiplied by at most x3 (see [The all-production cap](resources.md#the-all-production-cap)). Techs and wonders alone reach the cap from about the Electric Age, so the late wonders' all-production bonuses mostly matter after a setback pulls the pool back down. Their flat outputs (dark matter, antimatter, quantum flux and the rest) count in full.
+Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%), Warp Nexus (+80%), Cosmic Beacon (+50%), Reality Anchor (+50%) and Singularity Core (+200%). Every all-production bonus in the game, from wonders, techs, milestones, monuments, events and boons alike, adds into one pool, and output is multiplied by at most x3 (see [The all-production cap](resources.md#the-all-production-cap)). Techs and wonders alone reach the cap from about the Electric Age, so the late wonders' all-production bonuses mostly matter after a setback pulls the pool back down. Their flat outputs (dark matter, antimatter, quantum flux and the rest) count in full.
 
 ---
 
