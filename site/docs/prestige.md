@@ -1,6 +1,6 @@
 # Prestige System
 
-Prestige is the endgame reset loop. When you reach the **Modern Age** (Age 12), you can sacrifice your entire civilization to earn **Prestige Points** and purchase permanent upgrades that carry into every future run. Every age the run completed also runs faster from then on: see [Era Mastery](#era-mastery).
+Prestige is the endgame reset loop. When you reach the **Modern Age** (Age 12), you can give up your entire civilization to earn **Prestige Points** and buy permanent upgrades that carry into every future run. Every age the run completed also runs faster from then on: see [Era Mastery](#era-mastery).
 
 ```
 prestige confirm yes
@@ -14,7 +14,7 @@ prestige confirm yes
 
 You can prestige from the **Modern Age (Age 12)** or any later age. There is no upper limit: if you push on to the Quantum Age before prestiging, you earn more points.
 
-At 1x speed a run is paced to reach the Modern Age in about **a week of game time** (the smoke-test bot gets there in about 5.3 days). The ages before it range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. The game grants up to 24 hours of offline progress, so time away counts. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
+A first run is paced to reach the Modern Age in about **a week of real time** (the smoke-test bot gets there in about 5.3 days). The ages before it range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. See [How Long Each Age Takes](ages.md#how-long-each-age-takes). The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
 
 Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first. From the Digital or Neon Era, a doom fated for your era that hasn't struck yet ends with the run when you prestige.
 
@@ -26,7 +26,7 @@ To check your current prestige status:
 prestige
 ```
 
-This shows your current level, available points, points you would earn right now, and whether you have reached the age prestige needs. To view the upgrade shop without committing:
+This shows your current level, available points, points you would earn right now, whether you have reached the age prestige needs, and your [Era Mastery](#era-mastery): how fast the age you are in runs and which ages your next prestige would raise. To view the upgrade shop without committing:
 
 ```
 prestige shop
@@ -46,97 +46,46 @@ Every prestige, from any age, ends with one closing line in the log, written for
 
 ## Prestige Points Formula
 
-Points earned per prestige run are calculated as:
+Points earned per prestige are calculated as:
 
 ```
-base      = age_index  (0 = Primitive, 1 = Stone, ..., 12 = Modern, 20 = Quantum, 21 = Transcendent)
-bonus     = floor(milestones / 10) + floor(techs / 15) + floor(total_built / 50)
+base      = age index  (0 = Primitive, 1 = Stone, ..., 12 = Modern, 20 = Quantum, 21 = Transcendent)
+bonus     = floor(milestones / 10) + floor(techs / 15) + floor(structures / 50)
 raw       = base + bonus
-points    = floor(raw / sqrt(prestige_level + 1))
+points    = floor(raw / sqrt(prestige level + 1))
 ```
 
-The `sqrt(level + 1)` divisor gives **diminishing returns**: each run pays fewer points for the same achievements as your prestige level grows. Every prestige pays at least 1 point.
+Milestones, techs and structures are this run's: all three start over when you prestige or Succumb. Structures are every building you finished this run, wonders included; upgrades don't count, and selling or losing a building doesn't take it back.
+
+The `sqrt(level + 1)` divisor gives **diminishing returns**. It uses your prestige level before this prestige, so your first prestige (level 0) is divided by 1, your second by about 1.41, your third by about 1.73 and your fifth by about 2.24. Every prestige pays at least 1 point.
 
 ### What contributes to points
 
-| Source | Points per unit |
-|--------|----------------|
-| Age index (each age beyond Primitive) | 1 pt each |
-| Every 10 milestones completed | +1 pt |
-| Every 15 techs researched | +1 pt |
-| Every 50 buildings constructed (lifetime) | +1 pt |
+| Source | Points |
+|--------|--------|
+| Age index (each age beyond Primitive) | 1 each (12 at the Modern Age) |
+| Every 10 milestones completed this run | +1 |
+| Every 15 techs researched this run | +1 |
+| Every 50 structures built this run | +1 |
 
-Reaching the Modern Age for the first time usually pays **4 to 8 points**, depending on how you played. Pushing to a late age (Quantum is index 20) before prestiging gives 20 or more before the divisor.
+### A first run, worked through
 
----
+A first run that prestiges as soon as it enters the Modern Age has usually researched every tech up to the Atomic Age (about 45) and completed 35 to 40 milestones. Say 45 techs, 37 milestones and 475 structures:
 
-## The Last Passage
+```
+base   = 12                      (Modern Age)
+bonus  = floor(37 / 10)  = 3
+       + floor(45 / 15)  = 3
+       + floor(475 / 50) = 9
+raw    = 12 + 3 + 3 + 9  = 27
+points = floor(27 / sqrt(0 + 1)) = 27
+```
 
-A [harbinger](harbinger.md) comes to warn of a doom fated inside your era, and the Cosmic Era can hold one too: the Reality Tear. But the Cosmic Era has no next epoch, so its passage is prestige itself: the **Last Passage**. A second harbinger thread warns of it from the moment you enter the era, with a new figure each age: the Distress Beacon, the Elder Relay, your future self, then your unmade self. While the Reality Tear's harbinger speaks, the Last Passage's thread waits behind it with its answers intact, and takes up the warning again once the doom has struck or passed you by.
+That is what the smoke-test bot earns on its first prestige: 27 or 28 points. Structures are the part you control most: every 50 more you build is another point, so a run that builds 1,000 structures earns 10 more than one that builds 500.
 
-Prestige from before the Cosmic Era never rolls for it.
+The same achievements at prestige level 1 pay floor(27 / 1.41) = 19, and at level 2, floor(27 / 1.73) = 15.
 
-### The roll
-
-When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once, with odds set by your faith fill (see [Faith and the Odds](catastrophe.md#faith-and-the-odds)):
-
-| Faith fill | Chance of the Last Passage |
-|------------|----------------------------|
-| under 25% | 18% |
-| 25 to 75% | 15% |
-| over 75% | 12% |
-
-Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most). Invite makes it certain.
-
-`prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
-
-- **Nothing comes.** The verdict is Spared, and prestige completes as normal.
-- **It comes.** Prestige does **not** complete yet. A choice opens, titled **✦ The Last Passage**, in the same style as the catastrophe choice.
-
-### The Reality Tear comes first
-
-Prestige is the Cosmic Era's passage, so its fated doom can't be outrun past it. If that doom is still open when you confirm prestige:
-
-- **No harbinger yet.** It comes at the prestige, and the prestige waits for one more try: "... Type 'harbinger' to answer, or confirm prestige again to meet it."
-- **Then the strike rolls,** before the Last Passage. A hit holds the prestige behind the pending Reality Tear: Endure it, then prestige again, which rolls the Last Passage (or Succumb, which resets the run with no prestige). A miss (spared) lets the same confirm go on to the Last Passage roll.
-- **Both pending at once.** If the two are ever pending together, the Reality Tear is answered first: the choice window shows it first, and the Last Passage's Endure and Succumb are refused until it is ("The Reality Tear came first. Answer it before the Last Passage.").
-
-### While it is pending
-
-- **Esc** closes the choice. The status bar shows a **☄ LAST PASSAGE** warning telling you to type `catastrophe`, and a bare `catastrophe` reopens the choice.
-- Only prestige is blocked. You can still advance ages, build and play on.
-- It is saved with your game, and the Load Game browser lists it as the pending choice.
-
-### Endure or Succumb
-
-Both finish the prestige and raise your prestige level. Both add a line to the civilization log and count toward the Stats panel's tally of endured and succumbed catastrophes.
-
-**Endure** keeps part of this run's prestige points. Brace raises the share:
-
-| Brace level | Points kept |
-|-------------|-------------|
-| none | 50% |
-| 1 | 70% |
-| 2 | 85% |
-
-The result is rounded down, so a small run can keep 0 points. Here Brace changes only the points share: buildings and resources reset anyway. The log records a Vindicated verdict, or Fulfilled if you invited it.
-
-**Succumb** earns no points from this run and grants the [Cosmic Legacy](#cosmic-legacy). If you already carry it, Succumb is closed ("You already carry the Cosmic Legacy. Succumb is closed to you.") and Endure is the only choice.
-
-### Choosing it on purpose
-
-Inviting the Last Passage's thread is how you take the Cosmic Legacy on purpose. Invite is free, can't be undone and closes Appease; your next prestige brings the Last Passage. Brace levels still raise the Endure share, in case you change your mind. See [Invite](harbinger.md#invite-choose-the-catastrophe).
-
----
-
-## Cosmic Legacy
-
-A one-time, permanent reward for Succumbing to the Last Passage.
-
-- **+10% production** (all resources), active from tick 1 of every run.
-- Shows as **Cosmic Legacy** in the Stats panel, under Active Multipliers and in the Legacy Bonuses list. `prestige` shows `Cosmic Legacy: +10% production (permanent)`.
-- Survives every prestige and every Succumb. Only wiping the game clears it.
-- You earn it once. While you hold it, Succumb is closed at the Last Passage.
+Pushing past the Modern Age adds 1 point per age, plus whatever milestones, techs and structures the extra ages bring: usually a point or two per age, for 31 to 62 hours of play each. A run that reaches the Quantum Age (index 20) has a base of 20 before the bonus.
 
 ---
 
@@ -144,17 +93,19 @@ A one-time, permanent reward for Succumbing to the Last Passage.
 
 9 upgrades, each with 5 tiers. Costs are in Prestige Points. All upgrades persist across every reset, including prestige and Succumb.
 
-| Upgrade | Key | Effect per Tier | Max Tier | Cost (T1 → T5) |
-|---------|-----|-----------------|----------|----------------|
-| Gather Boost | `gather_boost` | +5% worker output | 5 | 2 / 3 / 4 / 6 / 8 |
-| Storage Bonus | `storage_bonus` | +20 storage for every resource | 5 | 2 / 3 / 4 / 6 / 8 |
-| Knowledge Production | `research_speed` | +5% knowledge production | 5 | 2 / 3 / 5 / 8 / 10 |
-| Military Power | `military_power` | +5% military power | 5 | 2 / 3 / 5 / 8 / 10 |
-| Starting Food | `starting_food` | +25 starting food | 5 | 1 / 2 / 3 / 4 / 5 |
-| Starting Wood | `starting_wood` | +25 starting wood | 5 | 1 / 2 / 3 / 4 / 5 |
-| Housing Bonus | `population_cap` | +2 housing | 5 | 2 / 3 / 5 / 8 / 10 |
-| Expedition Loot | `expedition_loot` | +5% expedition rewards | 5 | 2 / 3 / 5 / 8 / 10 |
-| Temporal Mastery | `tick_speed` | +5% tick speed | 5 | 6 / 10 / 17 / 23 / 33 |
+| Upgrade | Key | Effect per Tier | Max Tier | Cost (T1 to T5) | Total |
+|---------|-----|-----------------|----------|-----------------|-------|
+| Gather Boost | `gather_boost` | +5% worker output | 5 | 2 / 3 / 4 / 6 / 8 | 23 |
+| Storage Bonus | `storage_bonus` | +20 storage for every resource | 5 | 2 / 3 / 4 / 6 / 8 | 23 |
+| Knowledge Production | `research_speed` | +5% knowledge production | 5 | 2 / 3 / 5 / 8 / 10 | 28 |
+| Military Power | `military_power` | +5% military power | 5 | 2 / 3 / 5 / 8 / 10 | 28 |
+| Starting Food | `starting_food` | +25 starting food | 5 | 1 / 2 / 3 / 4 / 5 | 15 |
+| Starting Wood | `starting_wood` | +25 starting wood | 5 | 1 / 2 / 3 / 4 / 5 | 15 |
+| Housing Bonus | `population_cap` | +2 housing | 5 | 2 / 3 / 5 / 8 / 10 | 28 |
+| Expedition Loot | `expedition_loot` | +5% expedition rewards | 5 | 2 / 3 / 5 / 8 / 10 | 28 |
+| Temporal Mastery | `tick_speed` | +5% game speed | 5 | 6 / 10 / 17 / 23 / 33 | 89 |
+
+Buying every tier of every upgrade costs 277 points.
 
 ```
 prestige shop                # view available upgrades and costs
@@ -163,7 +114,7 @@ prestige buy tick_speed      # buy the next tier of Temporal Mastery
 prestige buy starting_food   # buy the next tier of Starting Food
 ```
 
-You can buy prestige upgrades **before you prestige again**. Points left over from earlier runs can be spent as soon as you log in, so there is no reason to wait.
+You can buy prestige upgrades at any time, not only right after a prestige. Points left over from earlier runs can be spent as soon as you log in.
 
 ### Effect Types
 
@@ -172,6 +123,15 @@ You can buy prestige upgrades **before you prestige again**. Points left over fr
 | Percentage | Gather Boost, Knowledge Production, Military Power, Expedition Loot, Temporal Mastery | Adds a percentage to that rate. Gather Boost at tier 3 is +15% worker output. |
 | Flat | Storage Bonus, Housing Bonus | Adds a flat amount. Storage Bonus at tier 5 is +100 storage for every resource. |
 | Starting resource | Starting Food, Starting Wood | Adds to what you start each run with. At tier 5 you begin with +125 food or wood. |
+
+**What each one is worth.**
+
+- **Temporal Mastery** makes ticks come faster: +5% game speed per tier, +25% at tier 5, on top of the game speed from techs and milestone chains. Production, construction, research and every timer in ticks run that much faster in real time. Game speed isn't part of the all-production pool, so [the all-production cap](resources.md#the-all-production-cap) doesn't limit it.
+- **Gather Boost** adds a share of your workers' base output on top of everything else. It sits outside the all-production cap too. Late in a run, when other bonuses have multiplied output, the same +5% of base output is a smaller share of the total.
+- **Knowledge Production** raises knowledge output, which pays for techs. It does not shorten research times.
+- **Military Power** raises your Defense Rating, so your garrison blunts more of a raid and of an Endure (see [Your garrison](catastrophe.md#your-garrison)).
+- **Starting Food, Starting Wood, Storage Bonus and Housing Bonus** are flat amounts. They help in the first minutes of a run and barely register after that.
+- **Expedition Loot** raises expedition rewards, which are fixed amounts, small next to a late-game economy.
 
 ---
 
@@ -267,6 +227,38 @@ On known ground the early ages are short: at 4x the Primitive and Stone Ages are
 
 ---
 
+## Recommended Upgrade Priorities
+
+These follow from the costs and effects above. A first prestige pays about 27 points; later ones pay less as the divisor grows.
+
+### First prestige (about 27 points)
+
+| Priority | Upgrade | Cost | Why |
+|----------|---------|------|-----|
+| 1st | `tick_speed` tiers 1-2 | 16 | +10% game speed: the whole run, timers included, goes faster, and no cap limits it |
+| 2nd | `gather_boost` tiers 1-3 | 9 | +15% worker output, cheap, outside the all-production cap |
+| 3rd | `starting_food` and `starting_wood` tier 1 | 2 | Spend the leftovers; they speed up the first minutes |
+
+### Second and third prestige (about 15 to 19 points each)
+
+| Priority | Upgrade | Cost | Why |
+|----------|---------|------|-----|
+| 1st | `tick_speed` tier 3 | 17 | Another +5% game speed |
+| 2nd | `gather_boost` tiers 4-5 | 14 | Finishes Gather Boost at +25% |
+| 3rd | `research_speed` tier 1 | 2 | More knowledge for techs |
+
+### Later runs
+
+| Priority | Upgrade | Cost | Why |
+|----------|---------|------|-----|
+| 1st | `tick_speed` tiers 4-5 | 56 | Temporal Mastery at +25% |
+| 2nd | `research_speed` tiers 2-5 | 26 | Knowledge Production at +25% |
+| 3rd | `military_power` | 28 for all 5 | Worth it if raids or Endures cost you; skip it if they don't |
+
+Storage Bonus, Housing Bonus and Expedition Loot come last: flat storage and housing stop mattering early in a run, and expedition rewards are small fixed amounts.
+
+---
+
 ## What Resets vs Persists
 
 ### Resets on Prestige
@@ -275,6 +267,7 @@ On known ground the early ages are short: at 4x the Primitive and Stone Ages are
 - All workers (recruited and assigned)
 - All research (tech tree reverts)
 - Milestones and milestone chains
+- The run's structure count
 - Current epoch and epoch event history
 - Age (returns to Primitive Age)
 - The run's timers: the ready-to-advance notice, a famine in progress and the Geographic Society's survey countdown
@@ -302,27 +295,7 @@ Culture resets with every other resource. A new run starts with none.
 
 ## Legacy Bonuses
 
-Legacy bonuses are earned by choosing **Succumb** during a catastrophe event. They are separate from prestige upgrades but interact with them on every subsequent run.
-
-Each Succumb grants:
-- **Ancient Knowledge**: a permanent +25% research speed per distinct epoch succumbed (a second Succumb in the same epoch adds nothing; +150% at most, Iron to Cosmic)
-- **Epoch Legacy Bonus**: a permanent production multiplier for the main resources of that epoch
-
-| Epoch | Legacy Production Bonus |
-|-------|------------------------|
-| Stone Era | wood +20%, stone +20% |
-| Iron Era | iron +20% |
-| Steel Era | steel +25%, coal +25% |
-| Electric Era | electricity +25%, uranium +25% |
-| Digital Era | data +30%, titanium ore +30% |
-| Neon Era | plasma +30%, dark matter crystals +30% |
-| Cosmic Era | dark matter +35% |
-
-These bonuses apply from **tick 1** of every new run, including after prestige. A player who has Succumbed in the Iron Era and Steel Era starts every run with iron, steel and coal production already multiplied, and +50% research speed.
-
-Succumbs in different epochs stack; a second Succumb in an epoch you already hold adds nothing. Catastrophes strike from the Iron Era on, so six legacy bonuses are reachable (the Stone Era one only exists on saves that already hold it). The Cosmic Era's comes from Succumbing to the Reality Tear; Succumbing to the Last Passage grants the Cosmic Legacy instead.
-
-Legacy bonuses survive prestige the same way ruins do.
+Each Succumb to a catastrophe grants that epoch's **legacy bonus**, a permanent production bonus for the epoch's main resources, and **Ancient Knowledge**, +25% research speed per distinct epoch succumbed. Both survive prestige and apply from tick 1 of every run. See [Succumb](catastrophe.md#succumb) and the [Legacy Bonus Table](catastrophe.md#legacy-bonus-table).
 
 ---
 
@@ -332,7 +305,7 @@ When you prestige, any ruins you've accumulated from Succumb events carry forwar
 
 On a fresh prestige run with accumulated ruins, your food, wood, or other resources may already be ticking up before you've built a single building. Each Succumb adds up to 8 ruins, and the collection is capped at 24; past the cap the lowest-value (earliest-age) ruins crumble first, so later falls upgrade the collection.
 
-See [Catastrophe](catastrophe.md) for how ruins are generated.
+See [Catastrophe](catastrophe.md#succumb) for how ruins are made.
 
 ---
 
@@ -376,41 +349,72 @@ See [Technologies](technologies.md) for the full tech tree and the other free-re
 
 ---
 
-## Recommended Upgrade Priorities
+## The Last Passage
 
-### First prestige (4 to 8 points)
+A [harbinger](harbinger.md) comes to warn of a doom fated inside your era, and the Cosmic Era can hold one too: the Reality Tear. But the Cosmic Era has no next epoch, so its passage is prestige itself: the **Last Passage**. A second harbinger thread warns of it from the moment you enter the era, with a new figure each age: the Distress Beacon, the Elder Relay, your future self, then your unmade self. While the Reality Tear's harbinger speaks, the Last Passage's thread waits behind it with its answers intact, and takes up the warning again once the doom has struck or passed you by.
 
-| Priority | Upgrade | Why |
-|----------|---------|-----|
-| 1st | `starting_food` + `starting_wood` | Makes the Primitive Age much faster; 1 pt each at tier 1 |
-| 2nd | `gather_boost` tier 1-2 | Faster early gathering in every run |
-| 3rd | `research_speed` tier 1 | More knowledge early means earlier techs and faster ages |
+Prestige from before the Cosmic Era never rolls for it.
 
-### Second and third prestige (10 to 20 points)
+### The roll
 
-| Priority | Upgrade | Why |
-|----------|---------|-----|
-| 1st | `storage_bonus` tier 1-2 | Keeps early storage limits from holding back growth |
-| 2nd | `research_speed` tier 2-3 | The gains add up at higher tiers |
-| 3rd | `population_cap` tier 1 | +2 housing is small, but housing runs short early on |
+When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith fill at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most). Invite makes it certain.
 
-### Late game (20+ points available)
+`prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
 
-| Priority | Upgrade | Why |
-|----------|---------|-----|
-| 1st | `tick_speed`: start buying tiers | The strongest upgrade over many runs |
-| 2nd | Max out `research_speed` | All 5 tiers give +25% knowledge output and stack with Ancient Knowledge |
-| 3rd | `expedition_loot` | More resources from late-game expeditions |
+- **Nothing comes.** The verdict is Spared, and prestige completes as normal.
+- **It comes.** Prestige does **not** complete yet. A choice opens, titled **✦ The Last Passage**, in the same style as the catastrophe choice.
 
-**Temporal Mastery** (`tick_speed`) is the most expensive upgrade (33 points for tier 5) and also the strongest: each tier makes the whole game tick 5% faster. At tier 5 the game ticks 25% faster, on top of the tick speed from techs and milestone chains.
+### The Reality Tear comes first
+
+Prestige is the Cosmic Era's passage, so its fated doom can't be outrun past it. If that doom is still open when you confirm prestige:
+
+- **No harbinger yet.** It comes at the prestige, and the prestige waits for one more try: "... Type 'harbinger' to answer, or confirm prestige again to meet it."
+- **Then the strike rolls,** before the Last Passage. A hit holds the prestige behind the pending Reality Tear: Endure it, then prestige again, which rolls the Last Passage (or Succumb, which resets the run with no prestige). A miss (spared) lets the same confirm go on to the Last Passage roll.
+- **Both pending at once.** If the two are ever pending together, the Reality Tear is answered first: the choice window shows it first, and the Last Passage's Endure and Succumb are refused until it is ("The Reality Tear came first. Answer it before the Last Passage.").
+
+### While it is pending
+
+- **Esc** closes the choice. The status bar shows a **☄ LAST PASSAGE** warning telling you to type `catastrophe` (or `cat`), and a bare `catastrophe` reopens the choice.
+- Only prestige is blocked. You can still advance ages, build and play on.
+- It is saved with your game, and the Load Game browser lists it as the pending choice.
+
+### Endure or Succumb
+
+Both finish the prestige and raise your prestige level. Both add a line to the civilization log and count toward the Stats panel's tally of endured and succumbed catastrophes.
+
+**Endure** keeps part of this run's prestige points. Brace raises the share:
+
+| Brace level | Points kept |
+|-------------|-------------|
+| none | 50% |
+| 1 | 70% |
+| 2 | 85% |
+
+The result is rounded down, so a small run can keep 0 points. Here Brace changes only the points share: buildings and resources reset anyway, and your soldiers don't change it. The log records a Vindicated verdict, or Fulfilled if you invited it.
+
+**Succumb** earns no points from this run and grants the [Cosmic Legacy](#cosmic-legacy). If you already carry it, Succumb is closed ("You already carry the Cosmic Legacy. Succumb is closed to you.") and Endure is the only choice.
+
+### Choosing it on purpose
+
+Inviting the Last Passage's thread is how you take the Cosmic Legacy on purpose. Invite is free, can't be undone and closes Appease; your next prestige brings the Last Passage. Brace levels still raise the Endure share, in case you change your mind. See [The Harbinger](harbinger.md).
+
+---
+
+## Cosmic Legacy
+
+A one-time, permanent reward for Succumbing to the Last Passage.
+
+- **+10% all production**, active from tick 1 of every run. It adds into the same all-production pool as everything else, so it is limited by [the x3 cap](resources.md#the-all-production-cap) too.
+- Shows as **Cosmic Legacy** in the Stats panel, under Active Multipliers and in the Legacy Bonuses list. `prestige` shows `Cosmic Legacy: +10% production (permanent)`.
+- Survives every prestige and every Succumb. Only wiping the game clears it.
+- You earn it once. While you hold it, Succumb is closed at the Last Passage.
 
 ---
 
 ## Tips
 
 - Spend banked points from earlier runs as soon as you log in. You don't need to prestige to spend them.
-- Milestones reset on prestige. Each run earns them again, and they count toward that run's points.
-- Aim to finish one more wonder each run than the last. Wonder bonuses stack with prestige upgrades.
-- Don't rush the first prestige. Reaching later ages (Information, Digital and beyond) first gives many more points than resetting at the Modern Age.
+- Milestones and the structure count reset on prestige. Each run earns them again, and they count toward that run's points.
+- Build wide before you prestige: every 50 structures is a point, and structures are usually the biggest part of the bonus.
+- Pushing past the Modern Age pays in mastery more than in points. Each extra age usually adds a point or two and takes a day or more on a first run, but every age the run completes gains a mastery level, so the next run is faster further in.
 - Prestiging from the Cosmic Era is a gamble. Appease before you confirm to lower the odds, Brace if you would Endure, Invite if you want the Cosmic Legacy.
-- Push past the Modern Age before you prestige when you can. Every age the run completes gains a mastery level, so the next run is faster further in.

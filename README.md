@@ -16,7 +16,7 @@
   </a>
   &nbsp;
   <a href="https://golang.org">
-    <img src="https://img.shields.io/badge/Go-1.24-00ADD8?style=for-the-badge&logo=go&logoColor=white&labelColor=1a1a1a" alt="Go 1.24">
+    <img src="https://img.shields.io/badge/Go-1.26-00ADD8?style=for-the-badge&logo=go&logoColor=white&labelColor=1a1a1a" alt="Go 1.26">
   </a>
   &nbsp;
   <a href="https://github.com/espresso20/ageforge/actions/workflows/go.yml">
@@ -38,27 +38,32 @@
 
 <br>
 
-AgeForge is a text-based idle/clicker game where you forge an empire from nothing and take it through 22 ages of history, all within your terminal.
+AgeForge is an idle civilization game for the terminal: you forge an empire from nothing and take it through 22 ages of history, from a campfire to the Transcendent Age, one typed command at a time.
+
+> Version note: this README and the [wiki](https://ageforge.io/docs/) describe the game on master, version 4.0, which is coming soon. The latest release is 3.6, which still has some older systems (the `speed` command, the old city map).
 
 ## Overview
 
-A new game starts in the Primitive Age with 25 food and 50 wood. Gather resources, build structures, recruit workers, research technologies, send scouting expeditions and military campaigns, trade with other civilizations, and advance through ages that take days of real-time play.
+A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, let workers staff your buildings, research technologies, send expeditions and campaigns, trade and make deals with other civilizations, and advance through the ages. The first run is slow on purpose: about a week of real time to the Modern Age and your first prestige. The game keeps playing while you are away (up to 24 hours, at half rate), and the build plan spends your income for you.
 
 ## Features
 
 - **Resource Management**: 26 resources across 22 ages with storage limits and production chains
 - **Building System**: 301 buildings (250 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 4 standalone: the Nano Foundry and 3 diplomatic buildings) with scaling costs and construction queues
-- **Worker System**: 12 domains (food, faith, knowledge, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy) with per-domain class progression and food economy
+- **Worker System**: 12 domains (food, faith, knowledge, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy); workers arrive on their own and follow your worker shares (`workers share knowledge 40`), with auto-recruit as housing and food allow
 - **Tech Tree**: 77 technologies with prerequisites and permanent bonuses
-- **Military**: 13 campaigns that cost soldiers and 3 scouting expeditions that cost resources, each with a chance of failure and set rewards
-- **Epoch System**: 7 epochs with faith-gated event rolls, catastrophe choices from the Iron Era on (Endure/Succumb), and legacy bonuses that carry across runs
+- **Military**: 13 campaigns that cost soldiers and 3 scouting expeditions that cost resources; your garrison's Defense Rating blunts raids, war raids and catastrophe losses
+- **Epochs and Catastrophes**: 7 epochs; from the Iron Era on a doom may be fated to strike at any moment of an era, and a harbinger comes first (Appease, Brace or Invite). When it strikes you Endure or Succumb, and Succumb's legacy bonuses carry across runs. In the Cosmic Era prestige itself is the Last Passage
+- **Build Plan**: queue builds, techs, trades and an advance (up to 60 items); the game starts each one as the resources come in, and production a full store would waste goes to the current wonder, then to the plan
+- **The Map**: your town drawn from your real buildings, in two styles (a roguelike glyph world and a side-on skyline), changing with every age, with a mini map on the dashboard
 - **Random Events**: 61 events (26 base + 35 epoch-exclusive) with streak balancing
 - **Milestones**: 77 milestones across 6 chains with civilization titles and temporary speed boosts
 - **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements; on each advance, lineage buildings with a next tier can be upgraded to it (`upgrade`)
 - **Trade System**: 21 trade routes and resource exchange with supply/demand pressure
-- **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, trade deals and trade bonuses
+- **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, rotating faction trade deals, boons and setbacks
 - **Prestige**: Reset-and-grow system with 9 upgrades and Era Mastery: every age a run completes runs faster on later runs, up to 4.2x (requires Modern Age)
-- **Command-driven interface**: everything is typed at one prompt; panels (research, army, trade, stats, wonders, logs, epoch, map and more) open by name, and `help` lists every command
+- **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name, and `help` lists every command
+- **Themes and accounts**: 11 themes, dark and light, including colorblind-safe and high-contrast palettes; local accounts with backups and a recovery code
 - **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
 - **Save/Load**: JSON save system with auto-save every 60s and offline progress; saves live in `data/` next to the binary
 
@@ -84,38 +89,27 @@ Or use `make`:
 ## How to Play
 
 ### Getting Started
-1. `build hut`: a hut costs 14 wood and gives +10 housing
-2. `build gathering_camp`: workers arrive on their own to staff it, as housing and food allow
-3. `workers`: see them, and steer the split with `workers share knowledge 40`
-4. `gather wood`: top up by hand while production is small
-5. Workers eat food, so keep enough of them producing it
+1. `gather wood` and `gather food`: top up by hand while production is small
+2. `build gathering_camp` and `build wood_camp`: your first food and wood producers
+3. `build hut`: a hut costs 14 wood and gives +10 housing; workers arrive on their own to staff your buildings, as housing and food allow
+4. `workers`: see them, and steer the split with `workers share knowledge 40`
+5. Bank the Sacred Grove, the Primitive Age's wonder, then `advance`
+
+The [first-age walkthrough](https://ageforge.io/docs/#/first-ten-minutes) goes step by step.
 
 ### Commands
-The full list is in the in-game `help` panel and on the [Commands](https://ageforge.io/docs/#/commands) wiki page. The ones you will use most:
+Everything is typed at the prompt. The full reference is the in-game `help` panel and the [Commands](https://ageforge.io/docs/#/commands) wiki page; the ones you will use most:
 
-- `gather <food|wood|stone> [n]`: gather by hand (until the Medieval Age)
-- `build <building> [count|max]`: construct buildings
-- `upgrade`: list buildings you can upgrade; `upgrade <building> [count|all]` upgrades them to the next age tier
-- `recruit [count|max]`: recruit workers into free housing
-- `assign <building> [n|all]`: assign workers to a building
-- `unassign <building> [n|all]`: return workers to the idle pool
-- `workers share <domain> [percent|auto]`: set a domain's share of your workers (workers arrive and go to work on their own; every domain follows its buildings' slots until you set one)
-- `research <tech>`: start researching a technology
-- `advance`: advance to the next age once it is ready (`plan advance` does it for you as soon as it is)
-- `plan`: queue builds, techs and trades that start when the resources come in
-- `campaign <key>`: wage a military campaign (costs soldiers)
-- `expedition <key>`: send a scouting expedition (costs resources)
-- `trade <give> <get> <amount to give>`: exchange resources
-- `trade route start|stop <route>`: manage trade routes
-- `factions` (alias `diplomacy`): open the Factions panel; `diplomacy ally|rival|gift|embargo|neutral <civ>` acts on a civilization
+- `build <building> [count|max]`, `research <tech>`, `advance`
+- `plan`: the build plan (`plan build`, `plan research`, `plan advance`)
+- `workers share <domain> [percent|auto]`: steer where your workers go
 - `wonder collect <resource|all> [amount|max]`: bank resources into the current wonder
-- `prestige`: view prestige status; `prestige confirm yes` resets with bonuses (requires Modern Age)
-- `status` / `rates`: detailed overview / resource rate breakdown
-- `save [name]` / `load [name]` / `saves`: save, load or list saves
-- `quit`: save and quit
+- `trade`, `factions`, `army`, `map`, `stats`: open a panel
+- `prestige`: view prestige status (it opens in the Modern Age)
+- `save [name]` / `load [name]`, and `quit` to save and quit
 
 ### Keys
-- Tab / Shift+Tab: cycle command completions
+- Tab or →: take the completion shown in dim text after the cursor; Tab again cycles through the others
 - ↑ / ↓: step through command history
 - PgUp / PgDn: scroll the main view
 - Esc: close the open panel; with no panel open, save, stop the game and return to the main menu
@@ -146,4 +140,4 @@ Optional details (bullet then Enter, empty Enter when done):
   ·
 ```
 
-Produces: `feat: add iron smeltery building` with the bullets as body. This drives the auto-generated changelog on every release.
+Produces: `feat: add iron smeltery building` with the bullets as body. These subjects feed the release notes.

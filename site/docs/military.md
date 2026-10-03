@@ -1,36 +1,36 @@
-# Military & Expeditions
+# Army & Missions
 
-Soldiers pay for campaigns, and campaigns bring back gold, resources and knowledge you couldn't produce as fast on your own. Waging a campaign costs soldiers. Scouting expeditions cost none, only a little food and wood. The soldiers you keep in stock are your garrison: they blunt raids and soften catastrophes. Ignore the army and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. Both kinds of mission are also how you meet other civilizations, and soldiers count toward several milestones and prestige upgrades.
+Soldiers are a resource your military buildings train. You spend them on **campaigns**; **scouting expeditions** cost a little food and wood instead. Mission loot is a fixed bundle that never grows with the age, so it matters early and hardly at all later. What missions are really for is meeting the other civilizations: every resolved mission can bring an encounter, which is how you make first contact and collect boons (or, when a run fails, setbacks). The soldiers you keep in stock are your garrison: they blunt raids and soften catastrophes. Ignore the army and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. The soldiers you train also count toward the military milestones.
 
 ---
 
-## 1. Overview
+## Overview
 
 The military system covers four things:
 
-- **Campaigns.** You spend stockpiled soldiers on a timed military mission (`campaign <key>`) that pays resources, gold and knowledge. Scouting expeditions (`expedition <key>`) are the soldier-free kind of mission; see [§4](#4-expeditions).
-- **Defense rating.** A figure on the Army panel worked out from your soldier count and military power. Measured against the raid threat of your current age, it blunts part of what raids, war raids and an Endure take from you (at most 45%); see [§7](#7-defense-what-your-army-blunts).
+- **Missions.** Scouting expeditions (`expedition <key>`) cost resources; military campaigns (`campaign <key>`) cost soldiers. Each one resolves after a rolled time, pays a fixed bundle of loot and may bring an encounter with a civilization; see [Missions](#missions).
+- **Defense rating.** A figure on the Army panel worked out from your soldier count and military power. Measured against the raid threat of your current age, it blunts part of what raids, war raids and an Endure take from you (at most 45%); see [Defense](#defense-what-your-army-blunts).
 - **Milestones.** Five military milestones form a chain with a title at the end. The early ones grant permanent military power; the later ones grant all production.
 - **Prestige.** The `military_power` and `expedition_loot` prestige upgrades carry over through resets.
 
-**Soldiers are a resource**, not a count of workers. Your military buildings produce and store them: staff a War Camp or Barracks with workers and it adds to the `soldiers` resource every tick, the same way a Farm adds food. Soldiers unlock in the **Iron Age**. Before that, the scouting expeditions (see [§4](#4-expeditions)) let you explore for resources without any soldiers.
+**Soldiers are a resource**, not a count of workers. Your military buildings produce and store them: staff a War Camp or Barracks with workers and it adds to the `soldiers` resource every tick, the same way a Farm adds food. Soldiers unlock in the **Iron Age**. Before that, the scouting expeditions (see [Missions](#missions)) let you explore without any soldiers.
 
 There are two kinds of mission:
 
 | Kind | Command | Costs | Available |
 |---|---|---|---|
 | Scouting expedition | `expedition <key>` | resources only, 0 soldiers | from the start; there are three: `scout_party`, `scout_ruins`, `naval_expedition` |
-| Military campaign | `campaign <key>` | soldiers, plus resources for some | the first opens in the Bronze Age, but you have no soldiers until the Iron Age |
+| Military campaign | `campaign <key>` | soldiers | the first opens in the Bronze Age, but you have no soldiers until the Iron Age |
 
 ---
 
-## 2. Soldiers
+## Soldiers
 
 ### What soldiers are
 
 Soldiers are a stockpiled resource (`soldiers`) that unlocks in the **Iron Age**. You bank them the way you bank food or wood, then spend them on campaigns.
 
-Staffed military buildings produce soldiers every tick. A fully staffed building makes about its soldier cap ÷ 50 per tick (at least 0.1/tick), so more workers and more buildings mean faster soldiers. Your soldier storage is the sum of every military building's soldier cap, plus every storage effect that raises all resources (the general storage buildings and the "all storage" techs). That second part is most of it: by the Iron Age a typical civilization can hold a couple of hundred thousand soldiers, far more than the military buildings' own caps. Campaigns spend soldiers from the stockpile at launch (see [§4](#4-expeditions)).
+Staffed military buildings produce soldiers every tick. A fully staffed building makes about its soldier cap ÷ 50 per tick (at least 0.1/tick), so more workers and more buildings mean faster soldiers. Your soldier storage is the sum of every military building's soldier cap, plus every storage effect that raises all resources (the general storage buildings and the "all storage" techs). That second part is most of it: by the Iron Age a typical civilization can hold a couple of hundred thousand soldiers, far more than the military buildings' own caps. Campaigns spend soldiers from the stockpile at launch (see [Missions](#missions)).
 
 ### Producing soldiers
 
@@ -44,7 +44,7 @@ assign barracks all     # fill a building for its full soldier output
 
 ### Food drain
 
-Every worker eats the same amount of food, whatever building it works in: the current age's food cost per worker. In the Iron Age that is about 0.08 food/tick, and it rises by ×1.12 with each age after that. Military workers cost no more food than farmers do, and soldiers themselves eat nothing once they're trained. A big military workforce still costs food because it's a big workforce, so check your food rate before you staff up.
+Every worker eats the same amount of food, whatever building it works in (see [Food drain](workers-and-domains.md#food-drain)). Military workers cost no more food than farmers do, and soldiers themselves eat nothing once they're trained. A big military workforce still costs food because it's a big workforce, so check your food rate before you staff up.
 
 ### Losing soldiers
 
@@ -70,13 +70,13 @@ The running scouting expedition shows in the separate **Expeditions** panel (`ex
 
 ---
 
-## 3. Military Buildings
+## Military Buildings
 
 Military buildings give workers somewhere to work, produce soldiers every tick while staffed, and each one adds its soldier cap to your soldier storage. Your soldier storage is their combined cap plus every storage effect that raises all resources (see Soldiers above).
 
-All military buildings belong to the **military lineage** (22 tiers, Stone Age through Transcendent Age). Each extra copy of a building costs 35% more than the one before.
+All military buildings belong to the **military lineage** (22 tiers, Stone Age through Transcendent Age). Each extra copy of a building costs 15% more than the one before.
 
-A fully staffed military building produces about **its soldier cap ÷ 50 per tick** (at least 0.1/tick). A staffed Barracks (cap 20) makes about 0.4 soldiers/tick; a Castle Keep (cap 320) makes about 6.4/tick. Output scales with staffing the same way every other building's does; see [§5](#5-military-domain-workers).
+A fully staffed military building produces about **its soldier cap ÷ 50 per tick** (at least 0.1/tick). A staffed Barracks (cap 20) makes about 0.4 soldiers/tick; a Castle Keep (cap 320) makes about 6.4/tick. Output scales with staffing the same way every other building's does; see [Military Domain Workers](#military-domain-workers).
 
 | Tier | Key | Name | Age Unlocked | Soldier Cap | Worker Slots |
 |------|-----|------|-------------|-------------|--------------|
@@ -103,24 +103,26 @@ A fully staffed military building produces about **its soldier cap ÷ 50 per tic
 | 20 | `probability_war_room` | Probability War Room | Quantum Age | +10.5M | 30 |
 | 21 | `omniversal_war_council` | Omniversal War Council | Transcendent Age | +21.0M | 35 |
 
-The soldier cap counts per building: two Barracks give 40 soldier storage and, when both are staffed, twice the soldier output. Build up both before you go after the campaigns that cost many soldiers.
+The soldier cap counts per building: two Barracks give 40 soldier storage and, when both are staffed, twice the soldier output.
 
 ---
 
-## 4. Expeditions
+## Missions
 
-### What expeditions are
+### What missions are
 
-Expeditions are timed missions paid from your stockpiles. There are two kinds:
+Missions are timed and paid from your stockpiles. There are two kinds:
 
-- **Scouting** (`scout_party`, `scout_ruins`, `naval_expedition`) costs resources and 0 soldiers. These are open before soldiers exist.
-- **Military campaigns** (the other 13) cost soldiers, plus resources for some.
+- **Scouting expeditions** (`scout_party`, `scout_ruins`, `naval_expedition`) cost resources and 0 soldiers. These are open before soldiers exist.
+- **Military campaigns** (the other 13) cost soldiers.
 
-The cost comes out of your stockpiles the moment you launch, and there's no refund. The mission then runs for a number of ticks rolled at launch within its own range, and resolves. Success and failure differ only in the reward: a success pays full loot, a failure pays 30% of it, and the cost is gone either way. You can run one scouting expedition and one campaign at the same time, but not two of the same kind.
+The cost comes out of your stockpiles the moment you launch, and there's no refund. The mission then runs for a number of ticks rolled at launch within its own range, and resolves. A success pays full loot and a failure 30% of it; the cost is gone either way. A failure is also less likely to meet a civilization, and a meeting on a failed run never brings a gift, usually a setback (see [What missions are worth](#what-missions-are-worth)). You can run one scouting expedition and one campaign at the same time, but not two of the same kind.
+
+Times on this page are at the base tick of 2 seconds. Tick-speed bonuses (some techs, a prestige upgrade, a Time Dilation boon) make every tick a little shorter.
 
 ### Cost, age range and rewards
 
-Campaigns spend soldiers at launch, and you can't launch one you can't afford. Some missions also charge resources up front: `scout_party` costs 30 food and 30 wood, and `naval_expedition` costs 150 food and 100 wood.
+Campaigns spend soldiers at launch, and you can't launch one you can't afford. The scouting expeditions charge resources up front: `scout_party` costs 30 food and 30 wood, `scout_ruins` 40 food and 30 wood, and `naval_expedition` 150 food and 100 wood.
 
 Every mission has a first age, and some have a last age after which they disappear. `scout_party` runs from the Primitive Age through the Bronze Age and is gone once you reach the Iron Age, when soldiers arrive. `scout_ruins` opens in the Bronze Age and `naval_expedition` in the Renaissance Age.
 
@@ -158,9 +160,9 @@ It sends the cheapest scouting mission your age offers that you can currently af
 
 Its parties are ordinary parties. They succeed and fail at the same odds, pay the same loot, and roll civilization encounters, boons and setbacks exactly like the ones you send.
 
-The more you invest, the faster it goes. A single unstaffed Society sends about one party every 2,340 ticks (about 1h 18m at 1x), roughly what you'd manage by remembering to send one now and then. Staffing it fully cuts that by about a third, and each extra Society shortens the wait again, down to a floor of about **one party every 260 ticks** (about 8m 40s) with six fully staffed Societies. More than that only helps when a party comes home late.
+The more you invest, the faster it goes. A single unstaffed Society sends about one party every 2,340 ticks (about 1h 18m), roughly what you'd manage by remembering to send one now and then. Staffing it fully cuts that by about a third, and each extra Society shortens the wait again, down to a floor of about **one party every 260 ticks** (about 8m 40s) with six fully staffed Societies. More than that only helps when a party comes home late. Societies are staffed by military-domain workers, so they count toward the [military share of your population](#morale-and-military-ratio).
 
-The pace is set in ticks, so the real-time figures above are approximate and shrink as your tick speed rises. The **Expeditions** panel (`expedition`) shows one line for it: the time until the next party leaves, or a warning that a party is due and your stores are too thin to outfit it. The full status (Societies built, staffing, the interval, and a countdown with a progress bar) is on the **Factions** panel (`factions`); see [The Factions panel](trade.md#the-factions-panel). Both show wall-clock time rather than ticks; see [Timers and durations](commands.md#timers-and-durations).
+The **Expeditions** panel (`expedition`) shows one line for it: the time until the next party leaves, or a warning that a party is due and your stores are too thin to outfit it. The full status (Societies built, staffing, the interval, and a countdown with a progress bar) is on the **Factions** panel (`factions`); see [The Factions panel](factions.md#the-factions-panel). Both show approximate wall-clock time rather than ticks.
 
 A Society is always slower than doing it yourself, by design. A fully invested Society runs at about **60% of the pace of a player who chains expeditions by hand and runs campaigns alongside them**. That keeps an idle empire meeting other civilizations and keeps its boons topped up, while playing by hand stays worth it.
 
@@ -176,7 +178,7 @@ success if a random roll (0 to 1) beats difficulty
 
 Military power lowers the effective difficulty. With no military power, a 0.8-difficulty mission succeeds about 20% of the time. With +2.0 military power its difficulty drops to 0.2 (about 80% success), and at +2.5 it reaches the 0.05 floor, about 95%.
 
-The soldier and resource cost is already spent at launch, so the outcome only changes the reward:
+The soldier and resource cost is already spent at launch, so the outcome only changes the reward and the encounter:
 
 | Outcome | Reward |
 |---|---|
@@ -187,7 +189,7 @@ A failure costs no extra soldiers. The launch cost is the whole cost, win or los
 
 Every resolution logs a plain line: which mission, whether it succeeded, and that loot came in. About one resolution in three also gets a short gray account of how it went underneath. It's kept rare on purpose so those lines stay worth reading. The account depends on the kind of mission, whether it succeeded and your age (a Bronze Age party and a Quantum Age crew come home to different places). It won't repeat a sentence you saw in roughly the last screenful of log, and it's cosmetic only: it never contains a number that isn't on the line above it.
 
-### Full expedition table
+### Full mission table
 
 This table covers all 16 missions. The three scouting expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) are sent with `expedition <key>`; every other row is a campaign, waged with `campaign <key>`. The Soldier Cost column is spent from your soldiers at launch.
 
@@ -214,46 +216,21 @@ That is 3 scouting expeditions and 13 campaigns.
 
 The Duration column is each mission's range in ticks, as the panel shows it. From the Bronze Age on, where ages and their timers run 2.6 times as long, every range is 2.6 times its base length, so the column already includes that. The actual time is rolled evenly within that range at launch, so nothing resolves in under 100 ticks (156 from the Bronze Age on), and `scout_party` runs 100-160 ticks (about 130 on average; 260-416 in the Bronze Age). The time-left readout counts down the rolled value.
 
-There are no soldiers before the Iron Age, so scouting fills the gap. `scout_party` costs 30 food and 30 wood, runs 100-160 ticks (260-416 in the Bronze Age) and pays about 60 food, 60 wood and 20 stone, a net gain worth repeating through the Primitive, Stone and Bronze ages. It disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 40 food and 30 wood) carries scouting on from there, and `naval_expedition` (Renaissance Age, 150 food and 100 wood) is the late scouting option.
+There are no soldiers before the Iron Age, so scouting fills the gap. `scout_party` costs 30 food and 30 wood, runs 100-160 ticks (260-416 in the Bronze Age) and pays about 60 food, 60 wood and 20 stone, a net gain worth repeating through the Primitive, Stone and Bronze ages. It disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 40 food and 30 wood) carries scouting on from there, and `naval_expedition` (Renaissance Age, 150 food and 100 wood) is the late scouting option, harder (0.50) than `scout_ruins` (0.20).
 
-`campaign trade_escort` (Iron Age, 3 soldiers, 156-260 ticks, 0.30 difficulty) is the cheap, repeatable early campaign for steady gold. For resources without soldiers, chain the scouting expeditions (`expedition scout_party`, then `expedition scout_ruins`). Durations are rolled, so keep one of each kind running rather than counting on a fixed timer.
+`campaign trade_escort` (Iron Age, 3 soldiers, 156-260 ticks, 0.30 difficulty) is the cheapest, easiest campaign to keep running. Durations are rolled, so keep one of each kind running rather than counting on a fixed timer.
 
-### Civilization encounters
+### What missions are worth
 
-Every time a mission resolves, win or lose, the game rolls a chance to **encounter a civilization**. An encounter either makes **first contact** with a civilization your age makes eligible, or **meets again** one you already know. This is the main way you discover civilizations: an age only makes a civilization *eligible*, and a resolved mission is what turns it up. If you never send any, each civilization is discovered anyway about two ages after its first age, much later than an explorer would meet it.
+**Loot is fixed.** Every mission pays the same bundle in every age it runs, and the bundles were sized for a much smaller economy. World Domination's 1K gold arrives in the Modern Age, where a typical building costs tens of billions of gold. Early on, `scout_party` and the first campaigns are a real help; from about the Iron Age, loot is small change.
 
-Scouting expeditions find civilizations far more often than campaigns, and a success finds them more often than a failure. A failed run can still find someone, rarely, and what it brings home is trouble rather than a gift (see *Setbacks* below).
+**Encounters are the payoff.** Every resolved mission rolls a chance to meet a civilization: about 18% for a successful scouting run and 8% for a successful campaign, and much less for failures (6% and 2%). An encounter is how you make first contact, and it usually brings a boon: a timed production boost, a lump of resources or a crew of workers. It brings a setback instead when the run failed, and sometimes when the civilization is at war with you. A player who keeps a scouting party and a campaign in the field all the time meets someone about every 975 ticks (about 32 minutes). The full rules (what the boons and setbacks are, the five-boon limit, war) are on [Factions & Diplomacy](factions.md#encounters-boons-and-setbacks).
 
-| Resolution | Encounter chance |
-|---|---|
-| Scouting success | ~18% |
-| Scouting failure | ~6% |
-| Campaign success | ~8% |
-| Campaign failure | ~2% |
-
-The chance is rolled once per resolved mission, and missions aren't quick: the shortest scouting run takes 156-260 ticks (about 5m 12s to 8m 40s), rolled fresh each launch. A player who keeps a scouting party and a campaign in the field all the time meets someone about every **975 ticks** (about 32 minutes at 1x). Encounters are occasional, so the point of chaining missions is that the rewards you do get overlap.
-
-From the Industrial Age a fully invested **Geographic Society** (see [Automatic dispatch](#automatic-dispatch-the-geographic-society)) keeps encounters coming while you're away, at about **60%** of the hands-on rate: about one meeting every 1,660 ticks (about 55 minutes at 1x). A single Society is slower, closer to one every 6,500 ticks (about 3h 36m). That gives three real paces: chaining missions yourself, letting the Societies work, and doing neither.
-
-An encounter from a **successful** mission can also grant a **boon**, a reward rolled from a shared catalog: a timed boost to one resource, to all production or to knowledge; a tick-speed surge; an instant lump of resources; or temporary workers. The roll is weighted by the civilization's character (personality, specialty and strength) and by its **opinion** of you. Allies give bigger boons, and rare ones. Instant gifts scale with your age, so a caravan of supplies is still worth having in the Quantum Age. The log names the civilization and the reward.
-
-**You can hold five boons at a time.** Only *timed* rewards take one of the five slots; an instant gift is used on arrival and holds nothing. While all five slots are full, a timed reward is turned away (the envoys are thanked, fed and sent home with their crates unopened), but an instant lump of resources or a gang of temporary workers still arrives, because neither needs a slot. A full set of boons costs you the buffs, never the goods.
-
-Timed boons last **1,950-7,800 ticks** each, so slots free up on their own while you explore. A player who explores without a break gets a reward from about four encounters in five, has at least one boon running over 95% of the time, and has all five slots full only **12-18%** of the time. Only the sixth timed boon at once goes to waste.
-
-**Setbacks.** Some encounters go badly and bring a **setback** instead of a boon:
-
-- every encounter from a **failed** mission;
-- about **one in three** encounters with a civilization you are **at war** with (the rest are standoffs: contact is made and nothing is gained or lost, and an enemy never gives a gift);
-- about **one in four** of the timed rewards turned away because all five boon slots are full.
-
-A setback is one of: a few workers lost on the road home, part of one resource stockpile spoiled or carried off, a temporary drop in one resource's output, or a production dip across your whole civilization for a while. It's worse when the civilization is **strong** and milder when its **opinion** of you is high, so a friend's bad news is gentler than an enemy's, and a strong civilization you're at war with is the worst case. Setbacks are capped more tightly than boons: at most **three** timed setbacks run at once (against five boon slots), they expire sooner than a boon of the same size, and a spoilage never empties a store.
-
-Missions stay worth running after you've met everyone, but a failed run costs you something, and a run that resolves while all five boon slots are full pays in goods rather than buffs. See [Trade & Diplomacy](trade.md#diplomacy-civilization-encounters) for the civilization roster and diplomacy.
+So keep one scouting expedition and one campaign running after you have met everyone, and prefer missions you're likely to win: a success is three to four times as likely to meet someone, and a failure that does meet someone brings trouble home.
 
 ---
 
-## 5. Military Domain Workers
+## Military Domain Workers
 
 Workers in military buildings take a class name that changes with the age:
 
@@ -297,7 +274,7 @@ Staffing sets output: a building runs at `20% + 80% × (assigned ÷ worker slots
 
 ---
 
-## 6. Military Power Bonus
+## Military Power Bonus
 
 Military power is a running total that lowers mission difficulty (see [Success chance](#success-chance)) and feeds the defense rating:
 
@@ -305,7 +282,7 @@ Military power is a running total that lowers mission difficulty (see [Success c
 defense = soldiers × 2.0 × (1 + military power)
 ```
 
-The defense rating is what your garrison is measured by against raids and catastrophes (see [§7](#7-defense-what-your-army-blunts)), so military power pays twice: it raises mission success chances, and it makes the same soldiers blunt more. A +1.0 bonus doubles the defense rating of the same army.
+The defense rating is what your garrison is measured by against raids and catastrophes (see [Defense](#defense-what-your-army-blunts)), so military power pays twice: it raises mission success chances, and it makes the same soldiers blunt more. A +1.0 bonus doubles the defense rating of the same army.
 
 Sources add together:
 
@@ -315,13 +292,13 @@ Sources add together:
 | Milestones | Complete military milestones | +0.05 to +0.10 each |
 | Prestige upgrade | `prestige buy military_power` (5 tiers, 2/3/5/8/10 points) | +0.05 per tier |
 
-There's no cap on military power, but difficulty never drops below **0.05** (a 5% minimum failure chance). Past about +2.5 to +3.0, more military power stops helping on most missions.
+There's no cap on military power, but difficulty never drops below **0.05** (a 5% minimum failure chance). At about +2.7 even the hardest mission (0.85) reaches that floor, so past it more military power no longer helps missions; it still raises your defense rating.
 
 The expedition reward bonus (from techs, milestones, the `expedition_loot` prestige upgrade and some wonders) is separate. It multiplies the loot on a success: `rewards × (1 + expedition reward bonus)`.
 
 ---
 
-## 7. Defense: what your army blunts
+## Defense: what your army blunts
 
 Soldiers you keep in stock are your **garrison**. They are never spent by defending: the garrison takes a share off what raids and catastrophes cost you, and the soldiers stay where they are.
 
@@ -330,12 +307,12 @@ Soldiers you keep in stock are your **garrison**. They are never spent by defend
 Your defense rating is measured against the **raid threat** of the age you are in:
 
 ```
-defense    = soldierCount × 2.0 × (1 + militaryBonus)
-threat     = 160,000 × 2^(age order)      # Primitive Age = order 0
-mitigation = 45% × defense / (defense + threat)
+defense  = soldiers × 2.0 × (1 + military power)
+threat   = 160,000 × 2^(age order)      # Primitive Age = order 0
+blunted  = 45% × defense ÷ (defense + threat)
 ```
 
-`mitigation` is the share of a raid's losses the garrison blunts. It is 0 with no soldiers, half the ceiling (22.5%) when your defense equals the threat, and it approaches 45% without ever reaching it. More soldiers always help, but each doubling helps less than the last:
+The blunted share is the part of a raid's losses the garrison takes off. It is 0 with no soldiers, half the ceiling (22.5%) when your defense equals the threat, and it approaches 45% without ever reaching it. More soldiers always help, but each doubling helps less than the last:
 
 | Defense vs threat | Share blunted |
 |-------------------|---------------|
@@ -382,7 +359,7 @@ A deliberate army is what pushes toward the 45% ceiling: more military buildings
 ### What it blunts
 
 1. **Raid events.** Random events that are attacks by outsiders: Bandit Raid, Pirate Attack, Data Breach, The Great Breach, Corporate Espionage, and the Stone Era's Tribal Raid and Beast Stampede. The garrison cuts the resources they steal and the workers they drive off by its share (at least one worker still flees if the event takes workers). A raid's production penalty is not blunted. See [Raids and your garrison](events.md#raids-and-your-garrison). The log adds a line under the event: "Your garrison blunted about N% of the raid: you kept ...".
-2. **War raids.** While a civilization is at war with you, each raid it makes takes a resource. The garrison keeps its share of that resource. A raid bigger than your stock still takes nothing, as before; the army never makes a raid that missed land. The raid's log line adds "Your garrison kept X gold from them (about N% of the raid)." (with the raid's resource in place of gold).
+2. **War raids.** While a civilization is at war with you, each raid it makes takes a resource. The garrison keeps its share of that resource. A raid bigger than your stock still takes nothing, as before; the army never makes a raid that missed land. The raid's log line adds "Your garrison kept X gold from them (about N% of the raid)." (with the raid's resource in place of gold). See [War & Peace](factions.md#war-amp-peace).
 3. **Endure.** When you Endure a catastrophe, the garrison blunts its share of the buildings destroyed and the stock lost, after the Harbinger's Brace, measured against the threat of the age the catastrophe strikes in (see below).
 
 Nothing else. Disasters and unrest (earthquakes, plague, mine collapses, industrial accidents, uprisings) are not raids, and soldiers do nothing against them. Endure's 25% worker loss, its production debuff and its morale hit are unchanged.
@@ -405,7 +382,7 @@ A catastrophe strikes at a fated moment anywhere in its era (Iron to Cosmic), so
 | 2 | 20% | 8% | 56% |
 | 2 | 40% or more | 8% (cap) | 66% (cap) |
 
-The catastrophe window shows the real numbers after Brace and garrison, with a line for each; the Harbinger panel's Brace preview counts the garrison too. After an Endure the log says "Your garrison held the line: ...". See [Your garrison](catastrophe.md#your-garrison) and [Brace](harbinger.md#brace-soften-an-endure).
+The catastrophe window shows the real numbers after Brace and garrison, with a line for each; the Harbinger panel's Brace preview counts the garrison too. After an Endure the log says "Your garrison held the line: ...". See [Endure](catastrophe.md#endure) and [Brace](harbinger.md#brace-soften-an-endure).
 
 The Last Passage in the Cosmic Era costs prestige points, not buildings or stock, and the garrison doesn't change it.
 
@@ -419,9 +396,9 @@ You hold 2,108,000 soldiers with no `military_power` bonus: defense 2,108,000 ×
 
 ---
 
-## 8. Military Milestones
+## Military Milestones
 
-The five military milestones form a chain. Completing all five grants a title, and between them they give **+0.25 military power** and **+25% all production**. Soldier counts in these milestones are soldiers trained over the run, not the number in stock.
+The five military milestones form a chain. Completing all five grants a title, and between them they give **+0.25 military power** and **+25% all production** (which adds into [the all-production cap](resources.md#the-all-production-cap)). Soldier counts in these milestones are soldiers trained over the run, not the number in stock; missions don't count toward any of them.
 
 | Key | Name | Requirement | Min Age | Reward |
 |-----|------|-------------|----------|--------|
@@ -437,33 +414,34 @@ The five military milestones form a chain. Completing all five grants a title, a
 
 ---
 
-## 9. Strategy
+## Strategy
 
-### Early game (Iron Age to Classical Age)
+### Early game (Stone Age to Classical Age)
 
-- Before the Iron Age, run `expedition scout_party` on repeat. It costs 30 food and 30 wood and pays about 60 food, 60 wood and 20 stone, with no soldiers needed.
-- Build a **War Camp** in the Stone Age even though soldiers don't exist yet. It gives you soldier storage and starts producing as soon as soldiers unlock.
-- Soldiers unlock in the **Iron Age**. Staff your military buildings (the Hunting Lodge costs only 25 wood) and train 5 soldiers for `first_soldiers` and its +0.05 military power.
-- `campaign trade_escort` (3 soldiers, Iron Age, 156-260 ticks) is the best early campaign: cheap, with a fair gold reward.
+- Before the Iron Age, run `expedition scout_party` on repeat. It costs 30 food and 30 wood and pays about 60 food, 60 wood and 20 stone, with no soldiers needed. From the Bronze Age its encounters can also meet your first civilization.
+- War Camps and Barracks train nothing before the Iron Age, when soldiers unlock. Build Barracks for `iron_legion` (10 Barracks), not for early soldiers.
+- Once soldiers unlock, staff your military buildings (the Hunting Lodge costs only wood) and train 5 soldiers for `first_soldiers` and its +0.05 military power.
+- `campaign trade_escort` (3 soldiers, Iron Age, 156-260 ticks, 0.30 difficulty) is the easiest early campaign: keep it running next to a scouting party for the encounters.
 - Workers in military buildings eat the same food as everyone else, but every worker you move there is one fewer farmer. Keep your food rate positive.
 
 ### Mid game (Classical to Industrial Age)
 
 - Go for `iron_legion` (train 500 soldiers, build 10 Barracks) for its +5% all production.
-- `campaign conquer_territory` (10 soldiers, 156-260 ticks, 0.60 difficulty) gives the most per soldier in this range. `expedition naval_expedition` is a scouting option (0 soldiers, 150 food and 100 wood, Renaissance Age, 156-260 ticks, 0.50 difficulty), so it doesn't touch your soldier stockpile.
-- Build **Legion Forts** and **Military Academies** to raise your soldier storage. The cap doubles with each tier, so each new tier holds far more soldiers.
+- Pick the easiest campaign you can afford rather than the one with the best loot. With no military power, `conquer_territory` (0.60) fails more often than it wins, and each failure that meets someone brings a setback.
+- For scouting, `scout_ruins` (0.20) is cheaper and easier than `naval_expedition` (0.50), so it meets more civilizations per run. The Geographic Society sends the cheapest one on its own.
+- The age gates ask for military buildings (15 Hunting Lodges, 15 Military Academies, 3 Castle Keeps), and staffed they build your garrison too.
 - Research military techs as they appear. Even +0.2 military power makes a visible difference against 0.6-difficulty missions.
 
 ### Late game (Modern Age onward)
 
-- `campaign world_domination` costs 50 soldiers but pays 1K gold, worth it once your soldier production can refill the cost.
-- `campaign cyber_raid` and `campaign neon_heist` are the best value in the Information to Cyberpunk range. `neon_heist` (0.55 difficulty) is easier than `cyber_raid` (0.60) for comparable loot.
-- Buy `expedition_loot` prestige tiers across resets. At tier 5 (+25% rewards), stacked with research bonuses, mission rewards grow a lot.
-- Late-game military techs push most missions down to the 0.05 difficulty floor. The `military_superpower` milestone adds +15% all production on top.
+- Campaign soldier costs (at most 100) are tiny next to what your buildings train by now, so wage whatever campaign is open. The loot doesn't matter; the encounter roll does.
+- Late-game military techs push most missions down to the 0.05 difficulty floor, so nearly every run succeeds and its encounters can bring boons.
+- `expedition_loot` prestige tiers add up to +25% of a small fixed bundle. Spend prestige points elsewhere first.
+- The `military_superpower` milestone (train 2,000 soldiers) adds +15% all production.
 
 ### Defense rating
 
-The Army panel shows your **defense rating** (`soldiers × 2.0 × (1 + military power)`). It is measured against the raid threat of your age, and the resulting share (at most 45%) comes off raid events, war raids from civilizations at war with you, and the buildings and stock an Endure takes. It never stops a raid or a catastrophe from happening, and it does nothing against disasters such as plague or earthquakes. A civilization at war with you raids every 104 ticks and takes 50 × its strength (1-5) of its specialty resource; your garrison keeps its share of that, but only staying out of wars, or ending them with tribute, stops the raids: see [War & Peace](trade.md#war-amp-peace). See [§7](#7-defense-what-your-army-blunts) for the numbers.
+The Army panel shows your **defense rating** (soldiers × 2.0 × (1 + military power)). It is measured against the raid threat of your age, and the resulting share (at most 45%) comes off raid events, war raids from civilizations at war with you, and the buildings and stock an Endure takes. It never stops a raid or a catastrophe from happening, and it does nothing against disasters such as plague or earthquakes. A civilization at war with you raids every 104 ticks and takes 50 × its strength (1-5) of its specialty resource; your garrison keeps its share of that, but only staying out of wars, or ending them with tribute, stops the raids: see [War & Peace](factions.md#war-amp-peace). See [Defense](#defense-what-your-army-blunts) for the numbers.
 
 - **Keep up with the age.** The threat doubles every age, so a garrison you stop growing fades fast. Adding the current age's military buildings keeps pace, since each tier's soldier cap doubles too.
 - **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat doubles and your garrison blunts less than the preview showed.
@@ -481,7 +459,7 @@ Soldiers eat nothing, and a worker in a military building eats no more than any 
 
 ### Morale and military ratio
 
-A large army has a second cost: **morale**. If more than **30% of your population** works in military buildings, morale drops every tick, and the further over 30% you are, the faster it drops:
+A large army has a second cost: **morale**. If more than **30% of your population** works in military buildings (Geographic Societies included), morale drops every tick, and the further over 30% you are, the faster it drops:
 
 | Military share | Over 30% by | Morale lost per tick |
 |---------------|---------|--------------|
@@ -492,7 +470,7 @@ A large army has a second cost: **morale**. If more than **30% of your populatio
 
 Morale multiplies the output of every worker in your civilization, on a continuous curve centered on 50%. Below 50% it cuts production, down to ×0.50 at the 10% floor. Above 50% it raises production, up to +20% at the top. An oversized army that drags morale down therefore slows every domain at once (food, knowledge, trade and the rest), and the army's food gets harder to cover as your farmers produce less. A lean army leaves room to push morale above 50% instead.
 
-**Keep military workers at 25-28% of your population or less.** That leaves a buffer below 30% if you lose workers to an event. If you need a large soldier stockpile for an expensive campaign, staff your military buildings heavily to bank soldiers, then move the extra workers back to civilian buildings once you've launched. The stored soldiers stay, and the morale drain stops.
+**Keep military workers at 25-28% of your population or less.** That leaves a buffer below 30% if you lose workers to an event. If you need a large soldier stockpile, staff your military buildings heavily to bank soldiers, then move the extra workers back to civilian buildings. The stored soldiers stay, and the morale drain stops.
 
 Morale drifts back toward 50% by itself, a little each tick, once you're back under 30%. If morale is falling and more than 30% of your workers are in military buildings, unassign some of them or recruit more workers for other buildings.
 
@@ -500,13 +478,13 @@ See [Morale](morale.md) for the full system.
 
 ---
 
-## 10. Tips & Common Mistakes
+## Tips & Common Mistakes
 
 **Don't recruit past your food income.** A food deficit stalls all production, because starving workers can't work. Work out the extra food before `recruit max`.
 
-**Don't wage hard campaigns without military power.** `campaign siege_castle` (0.70) and `campaign world_domination` (0.80) fail often with no bonus. Research a few military techs first.
+**Don't wage hard campaigns without military power.** `campaign siege_castle` (0.70) and `campaign world_domination` (0.80) fail often with no bonus, and a failure meets fewer civilizations and brings setbacks home. Research a few military techs first.
 
-**A failed mission still costs its launch.** The soldiers and any resources are spent when you launch. Failure doesn't refund them; it only cuts the reward to 30%. Don't launch a hard campaign unless you can afford to lose the soldiers for a small payout.
+**A failed mission still costs its launch.** The soldiers and any resources are spent when you launch. Failure doesn't refund them; it only cuts the reward to 30%.
 
 **Workers need a built building.** You can't assign workers to a building you haven't built yet.
 
@@ -514,4 +492,4 @@ See [Morale](morale.md) for the full system.
 
 **Keep missions running.** There's no cooldown beyond the mission's own duration (100 to 160 ticks in the Primitive and Stone Ages, 156 to 416 from the Bronze Age on, rolled at launch). When one resolves, send the next.
 
-**Prestige keeps military strength.** The `military_power` upgrade (5 tiers × 0.05 = +0.25 military power) and `expedition_loot` (5 tiers × 5% = +25% rewards) both carry over through resets. Buy them early in your second and third runs.
+**Prestige keeps military strength.** The `military_power` upgrade (5 tiers × 0.05 = +0.25 military power) carries over through resets and helps both missions and defense. `expedition_loot` (5 tiers × 5% = +25% rewards) carries over too, but it only scales fixed loot.

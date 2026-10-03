@@ -21,6 +21,12 @@
       loadSidebar: true,
       loadNavbar: '_navbar.md',
       subMaxLevel: 2,
+      // Retired pages land on the pages that replaced them.
+      alias: {
+        '/city-map': '/map',
+        '/world-map': '/map',
+        '/villagers': '/workers-and-domains',
+      },
       auto2top: true,
       search: {
         maxAge: 86400000,

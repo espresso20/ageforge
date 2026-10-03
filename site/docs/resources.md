@@ -1,6 +1,6 @@
 # Resources
 
-AgeForge has **26 resources** that unlock progressively as you advance through the 22 ages. Resources accumulate passively based on your buildings and worker assignments. Each resource has a small base storage, so you need Storage lineage buildings to hold meaningful quantities.
+AgeForge has **26 resources** that unlock as you advance through the 22 ages. They accumulate on their own from your buildings and the workers in them. Every resource starts with a small base storage, so storage buildings decide how much of anything you can hold.
 
 ---
 
@@ -10,121 +10,115 @@ AgeForge has **26 resources** that unlock progressively as you advance through t
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Food | `food` | Primitive Age | 50 | Feeds all workers every tick, so the rate must stay positive |
-| Wood | `wood` | Primitive Age | 50 | Primary early building material |
-| Knowledge | `knowledge` | Primitive Age | 30 | Pays for all research; storage starts low, so build the Knowledge lineage early |
-| Faith | `faith` | Primitive Age | 50 | Does not drain on its own; its fill % of storage sets the epoch roll odds |
+| Food | `food` | Primitive Age | 50 | Every worker eats it every tick, so the rate must stay positive |
+| Wood | `wood` | Primitive Age | 50 | The first building material |
+| Knowledge | `knowledge` | Primitive Age | 30 | Pays for research; buildings also cost it from the Medieval to the Colonial Age |
+| Faith | `faith` | Primitive Age | 50 | Never drains on its own; its fill % of storage sets the epoch and catastrophe odds, and faith income lifts morale |
 | Stone | `stone` | Stone Age | 50 | Durable construction material |
-| Iron | `iron` | Bronze Age | 50 | Metal for tools, weapons, and early engineering |
-| Gold | `gold` | Bronze Age | 50 | Currency for trade, diplomacy, and mid-game buildings |
-
-### Knowledge & Faith
-
-Both have mechanics beyond simple accumulation. See their sections below.
-
-### Culture
-
-| Resource | Key | Unlocks | Base Storage | Notes |
-|----------|-----|---------|--------------|-------|
+| Iron | `iron` | Bronze Age | 50 | Metal for tools, weapons and early engineering |
+| Gold | `gold` | Bronze Age | 50 | Currency for the market, diplomacy and many buildings |
 | Culture | `culture` | Classical Age | 50 | Spent on monuments, festivals and more; its fill % of storage decides which good epoch events you can get |
 
-See the section below.
+### Ores
 
-### Ore Intermediates
-
-These resources are produced by Geological Extraction buildings and consumed by the Metallurgy lineage. They are intermediate materials, not used directly in buildings or tech.
+These four come from Geological Extraction mines. Nothing in the game spends them; see [What the ores are for](#what-the-ores-are-for).
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Marble | `marble` | Iron Age | 30 | Polished stone from quarries |
-| Iron Ore | `iron_ore` | Iron Age | 30 | Raw ore before smelting; feeds the Metallurgy lineage |
-| Titanium Ore | `titanium_ore` | Space Age | 20 | Raw titanium ore; the Metallurgy lineage refines it into titanium |
-| Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | 10 | Crystallized dark matter; refines into dark matter |
-| Nanobots | `nanobots` | Modern Age | 20 | Microscopic machines. Built by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital Era on; several digital and cyberpunk buildings use them as a build material |
+| Marble | `marble` | Iron Age | 30 | Mined by the Iron and Classical Age marble quarries |
+| Iron Ore | `iron_ore` | Iron Age | 30 | Mined from the Iron to the Industrial Age |
+| Titanium Ore | `titanium_ore` | Space Age | 20 | Mined by Modern to Digital Age mines, which produce nothing until it unlocks |
+| Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | 10 | Mined from the Cyberpunk to the Space Age |
 
 ### Industrial Resources
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Coal | `coal` | Renaissance Age | 50 | Fuel for smelting; Organic Extraction output in the Steel Era |
-| Steel | `steel` | Medieval Age | 30 | Refined metal for advanced construction |
-| Oil | `oil` | Industrial Age | 50 | Fuel for machines; Organic Extraction output in the Electric Era |
+| Steel | `steel` | Medieval Age | 30 | Refined metal for advanced construction; made from the Renaissance Age |
+| Coal | `coal` | Renaissance Age | 50 | Fuel; Organic Extraction makes it from the Renaissance to the Industrial Age |
+| Oil | `oil` | Industrial Age | 50 | Fuel for machines; made from the Victorian Age |
 | Electricity | `electricity` | Victorian Age | 50 | Powers modern infrastructure |
-| Uranium | `uranium` | Atomic Age | 30 | Radioactive reactor fuel |
+| Uranium | `uranium` | Atomic Age | 30 | Reactor fuel, mined by Geological Extraction |
 
 ### Advanced Resources
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Data | `data` | Modern Age | 50 | Digital information and analytics; produced by the Hacker domain |
-| Crypto | `crypto` | Cyberpunk Age | 50 | Decentralized digital currency |
-| Plasma | `plasma` | Fusion Age | 30 | Superheated ionized gas for energy |
-| Titanium | `titanium` | Space Age | 30 | Lightweight refined metal for space construction |
-| Dark Matter | `dark_matter` | Interstellar Age | 20 | Exotic refined matter for warp technology |
+| Data | `data` | Modern Age | 50 | Made by Hacker buildings from the Information Age; in the Modern Age the market sells it |
+| Nanobots | `nanobots` | Modern Age | 20 | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them |
+| Crypto | `crypto` | Cyberpunk Age | 50 | No building makes it: it comes from the Neon Citadel wonder, the Blockchain tech and the market |
+| Plasma | `plasma` | Fusion Age | 30 | Superheated gas for energy |
+| Titanium | `titanium` | Space Age | 30 | Light metal for space construction |
+| Dark Matter | `dark_matter` | Interstellar Age | 20 | Exotic matter for warp technology |
 | Antimatter | `antimatter` | Galactic Age | 20 | Annihilation fuel for megastructures |
-| Quantum Flux | `quantum_flux` | Quantum Age | 10 | Unstable quantum energy for reality manipulation |
+| Quantum Flux | `quantum_flux` | Quantum Age | 10 | Unstable quantum energy |
 
 ### Military
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Soldiers | `soldiers` | Iron Age | Sum of military buildings' soldier caps | Produced by military buildings when workers are assigned; spent on campaigns |
+| Soldiers | `soldiers` | Iron Age | 0 | Made by military buildings when workers staff them; spent on campaigns |
 
-Soldiers are a true stockpiled resource (the 26th), produced and stored by your military buildings. See [Soldiers](#soldiers) below and [Military](military.md) for the full mechanics.
+Soldiers are a true stockpiled resource (the 26th). See [Soldiers](#soldiers) below and [Military](military.md) for the full mechanics.
 
 ---
 
 ## Food
 
-Food is the most critical resource. Every worker in every domain eats food each tick, and the amount scales with their class tier (base food cost × 1.12^tier). If food hits zero, one worker dies every 5 ticks until food is restored.
+Food is the most critical resource. Every worker eats food every tick, whatever building it staffs, and every worker eats the same amount: the current age's rate. That is **0.06 food/tick** per worker in the Primitive Age, rising 12% with each age to about 0.23 in the Modern Age and 0.58 in the Quantum Age. When you advance, the new rate applies to every worker at once. See [Food Drain](workers-and-domains.md#food-drain) for the full table.
+
+If food runs out, one worker starves every 5 ticks (10 seconds) until there is food in stock again. See [Starvation](workers-and-domains.md#starvation).
 
 **How to increase food:**
-- Assign food-domain workers to Food lineage buildings (`assign gathering_camp 5`)
-- Build more Food lineage buildings to increase total worker capacity
-- Research Fire Mastery, Animal Husbandry, Agriculture and related techs for extra food per tick
+- Build more Food lineage buildings (`gathering_camp`, `forager_post`, `farm`, ...). Workers come to staff them on their own.
+- Give food a bigger [worker share](workers-and-domains.md#worker-shares), or `assign gathering_camp 3` by hand
+- Research Fire Mastery, Animal Husbandry, Agriculture and the other food techs
 
-**Watch the food rate** in the Economy panel. Keep the rate (`+N/t`) positive before recruiting new workers into any domain.
+**Watch the food rate** in the Economy panel. Auto-recruit keeps a food margin for you; `recruit max` does not.
 
 ---
 
 ## Knowledge
 
-Knowledge pays for all research. Technologies cost knowledge to unlock, and your knowledge storage sets how much you can bank.
+Knowledge pays for research. Every technology costs knowledge, and from the Medieval to the Colonial Age buildings cost it too. The Modern Age's wonder, the Space Program, costs 600B knowledge.
 
 **How to increase knowledge:**
-- Assign knowledge-domain workers to Knowledge lineage buildings
-- Build Knowledge lineage buildings (Story Circle → Library → University → ...)
-- Knowledge storage starts at 30, so build Knowledge buildings early to raise it
+- Build Knowledge lineage buildings (Story Circle, Elders' Hall, Scriptorium, ...). Workers come to staff them.
+- Give knowledge a bigger [worker share](workers-and-domains.md#worker-shares): `workers share knowledge 40`
+- Buy it at the market with gold (see below)
 
-Each Knowledge building has its own fully staffed rate: 0.2 knowledge/tick for a Story Circle, 0.6 for an Elders' Hall, 2.0 for a Scriptorium, 1.6 for an Agora and 3.2 for a Library. From the Medieval to the Colonial Age buildings also cost knowledge, so it counts as a construction resource there and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set) (a Monastery Library makes 30.1/tick, a University 79.9). See [Knowledge](knowledge.md) for the full lineage.
+Knowledge storage starts at 30 and grows with your storage buildings, like every other resource. A tech priced above your knowledge storage can't start until you build more storage.
+
+Each Knowledge building has its own fully staffed rate: 0.2 knowledge/tick for a Story Circle, 0.6 for an Elders' Hall, 2.0 for a Scriptorium, 1.6 for an Agora and 3.2 for a Library. While buildings cost knowledge (Medieval to Colonial), it counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): a Monastery Library makes 30.1/tick, a University 79.9. See [Knowledge](knowledge.md) for the full lineage.
+
+**Gold for knowledge.** From the Medieval Age on, the market sells knowledge for gold. From the Medieval to the Colonial Age it trades at parity like any construction resource (1 gold buys 0.2 knowledge in the Medieval Age, 0.07 in the Colonial Age). From the Industrial Age on the rate is a fixed **5 knowledge per gold**, the practical way to pay for something like the Space Program.
 
 ---
 
 ## Faith
 
-Faith accumulates from Faith lineage buildings and faith-domain workers. It does not drain on its own. It goes down only when something spends or removes it: the Political Instability epoch event (removes 60% of your faith), a few random events (Heresy, Workers' Uprising, Industrial Blight), Appeasing a [harbinger](harbinger.md), building the Sistine Chapel, and Enduring a catastrophe. The Renaissance Age asks for faith but only checks it; advancing does not spend it. The faith resource unlocks at the Primitive Age. Early faith workers (Devotee, Believer, Worshipper, Celebrant, Initiate) exist from the Primitive through the Classical Age with lower food costs. The formal, costlier Faith domain tier (Acolyte, base 2.0 food/tick) begins at the Medieval Age.
+Faith comes from Faith lineage buildings (Shrine, Standing Stones, Altar, ...), and much faster with workers in them. It never drains on its own. It goes down only when something spends or removes it: see [Faith](faith.md).
 
-Your faith level as a **percentage of your storage** sets the epoch event roll odds:
+Faith does two jobs:
 
-| Faith % of storage | Epoch Roll (Good Chance) |
-|----------------|--------------------------|
-| Less than 25% | 40% |
-| 25% to 75% | 50% |
-| More than 75% | 60% |
+- **Odds.** Your faith as a percentage of your faith storage sets the odds of a good epoch event and of a fated catastrophe striking. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
+- **Morale.** Your faith income (faith per tick, not the stockpile) lifts morale a little every tick, up to a limit, and worship buildings lift it too. See [Morale](morale.md).
 
-**Advice:** Assign Faith workers (Acolytes and their successors) well before you expect an epoch transition. Faith lineage buildings produce a little on their own, but workers speed it up a lot.
+Faith can't be bought at the market.
+
+**Advice:** Keep faith workers in your faith buildings well before an epoch transition. The buildings make only a trickle with no one in them.
 
 ---
 
 ## Culture
 
-Culture comes from the Culture/Arts lineage (Amphitheater onward). These buildings produce culture without workers, so you can build them while your workers stay on other domains.
+Culture comes from the Culture/Arts lineage (Amphitheater onward). These buildings take no workers and produce culture on their own, so you can build them while your workers stay elsewhere. Each one also raises culture storage and lifts morale.
 
 Culture has two jobs. Its **fill % of storage** decides which tier of good epoch event you can get at an epoch transition: over 40% makes Major events eligible, and over 75% adds a 15% chance at the Legendary one (see [Epochs](epochs.md)). And culture is **spent**, on the things below. Prestige resets culture along with every other resource.
 
 ### Culture sinks
 
-**Cultural Monuments** are four one-off buildings (one of each) built with the normal `build <key>` command. Each costs a large lump of culture plus other materials and gives a small **permanent** all production bonus once built.
+**Cultural Monuments** are four one-off buildings (one of each) built with the normal `build <key>` command. Each costs a large lump of culture plus other materials and gives a small **permanent** all-production bonus once built (it counts toward [the all-production cap](#the-all-production-cap)).
 
 | Monument | Age | Culture Cost | Permanent Bonus |
 |----------|-----|--------------|-----------------|
@@ -133,43 +127,58 @@ Culture has two jobs. Its **fill % of storage** decides which tier of good epoch
 | Eternal Library | Industrial | 140K | +3% all production |
 | Monument of Ages | Modern | 7.1M | +5% all production |
 
-**The `festival` command** spends a lump of culture (2K, or 5% of your culture storage if that is more) for **+20% all production for 390 ticks**, then goes on a **780-tick cooldown**. See [Commands](commands.md).
+**The `festival` command** spends a lump of culture (2K, or 5% of your culture storage if that is more) for **+20% all production for 13 minutes** (390 ticks), then waits **26 minutes** (780 ticks) before the next one. See [Commands](commands.md).
 
 Culture also pays for:
 
-- **Smuggling runs** on the black market (Colonial Age on): a culture stake that may pay out a haul of the resource you pick. See [Trade & Diplomacy](trade.md).
+- **Smuggling runs** on the black market (Colonial Age on): a culture stake that may pay out a haul of the resource you pick. See [Trade](trade.md).
 - **Appease**, together with faith, when a [harbinger](harbinger.md) warns of a catastrophe.
-- **Tribute**, together with gold, to end a war with a civilization.
+- **Tribute**, together with gold, to end a war with a civilization. See [Factions](factions.md).
 - The **Sistine Chapel** wonder in the Renaissance Age.
 
 ---
 
-## Ore Processing Chain
+## What the ores are for
 
-The metallurgy pipeline requires two lineages working together:
+Geological Extraction mines produce marble, iron ore, titanium ore and dark matter crystals. **Nothing spends them.** No building, technology, wonder, age requirement or market pair asks for any of the four, and the Metallurgy lineage doesn't refine them: metallurgy buildings make iron, steel, titanium, dark matter, antimatter and quantum flux and consume nothing, like every other producer.
 
-```
-Geological Extraction buildings  →  raw ore  →  Metallurgy buildings  →  refined metal
-     (masonry workers)                              (metallurgy workers)
-```
+The ores count toward two milestones:
 
-| Raw Ore | Refined Output | Notes |
-|---------|---------------|-------|
-| Iron Ore | Iron / Steel | Iron Age ore; Metallurgy lineage starts in the Iron Age |
-| Titanium Ore | Titanium | Space Age ore |
-| Dark Matter Crystals | Dark Matter | Cyberpunk Age ore |
+- **Industrial Titan** (Industrial Age): stockpile 10,000 coal and 5,000 iron ore.
+- **Mining Syndicate**: build 25 stone pits and 10 iron mines.
 
-You need both the Geological Extraction buildings (to produce ore) and the Metallurgy buildings (to refine it), staffed with the right workers, to keep metal flowing. Ore with no smelters, or smelters with no ore, both produce nothing.
+What Geological Extraction is good for is stone (up to the Bronze Age), uranium (from the Atomic Age) and antimatter (from the Galactic Age). Its other buildings, from the Iron Age's marble quarry to the Space Age's crystal mine, make only ore. Within a domain, workers fill the newest buildings first, so an ore mine draws masonry workers away from your older stone quarries. Build ore mines for the milestones, not for production. No building of the Iron Age or later makes stone: your older quarries keep making it, and the market sells it (see [Buying at the Market](#buying-at-the-market)). For the same reason, don't `upgrade` your quarries in the Iron Age: the upgrade turns them into marble quarries, which make ore instead of stone.
 
 ---
 
 ## Resource Storage
 
-The 25 civilian resources share storage from the Storage lineage buildings. Each Storage tier raises storage for every one of them at once. The base storage is very small (10 to 50 units), so you will hit it early. Soldiers are the exception: their storage comes from your military buildings, not the Storage lineage (see [Soldiers](#soldiers)).
+Every resource has a small base storage (10 to 50). **Storage buildings** raise the cap of every resource at once: one per age from the Stash to the Quantum Vault, up to 25 copies each (50 Stashes). A few technologies raise every cap too, culture buildings add culture storage, and military buildings add soldier storage. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table.
 
-**Priority:** Build a new Storage lineage building as your first or second action when entering any new age.
+**How much it holds.** A full stack of an age's storage, with every earlier age's, holds at least **4.5 hours** of that age's typical production of each resource its buildings cost, from the Bronze Age on. The Primitive and Stone Ages hold an hour and a half: they fill fast and are meant to. A player who checks in every few hours loses little to a full store. On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production, so a store still holds the same hours of income.
 
-Late-game resources (Plasma, Titanium, Dark Matter, Antimatter, Quantum Flux) have especially low base storage (10 to 30 units) and fill up almost at once without dedicated storage. See [Buildings](buildings.md) for the full Storage lineage progression.
+**Storage is permanent.**
+
+- It never upgrades. When you advance, your storage stays as it is and keeps counting.
+- An earlier age's storage can't be built once its age has passed, so build each age's storage while you can.
+- It can't be sold.
+- Catastrophes don't destroy it.
+
+**Production a full store would waste goes somewhere useful first.** It goes into the current age's [wonder](wonders.md#overflow) bank, up to what the wonder still needs, then into your [build plan](plan.md#overflow-pays-the-plan), toward the next copy of each queued building in plan order. Only what neither needs is lost. This works during offline catch-up too.
+
+**Priority:** build this age's storage early in every age. Late resources (plasma, titanium, dark matter, antimatter, quantum flux) start at 10 to 30 storage and fill almost at once without it.
+
+---
+
+## The all-production cap
+
+Every "+X% all production" bonus in the game adds into one pool: wonders, technologies, milestones, cultural monuments, events (festivals included), faction boons and the Cosmic Legacy. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + that pool**, clamped between **x0.1 and x3.0**.
+
+Techs and wonders alone reach the x3.0 cap from about the Electric Age. After that, a late "+X% all production" bonus adds nothing you can see while you are over the cap. It isn't wasted: a penalty comes out of the raw pool first, so the surplus absorbs it, and the bonus matters again whenever a setback pulls the pool back under the cap.
+
+Bonuses to one resource ("+30% gold") have their own pool for that resource, with the same x0.1 to x3.0 clamp. The Stats panel's Active Multipliers shows the raw sums, so it can read above +200%.
+
+[Era Mastery](prestige.md#era-mastery) is not part of either pool. On known ground it multiplies every resource's net rate by the age's speed after the cap and after food drain, so a mastered age is not held to x3.
 
 ---
 
@@ -181,7 +190,7 @@ Every building rate in the game is the **fully staffed** rate shown in the build
 
 ## Buying at the Market
 
-Once you own any trade-lineage building (a `market` or its successors), the market trades **any two construction resources of your current age** at their **price parity less a 20% fee**. Each age has a price level per resource (the typical first-copy price in that resource), and one unit buys `0.8 × (price level of what you buy) / (price level of what you sell)`. In the Space Age, for example, steel and titanium are priced 180T and 250T, so 1 steel buys 1.11 titanium and 1 titanium buys 0.576 steel. Any pair of construction resources works (steel → titanium in the Space Age, data → crypto in the Cyberpunk Age, gold → stone). Fixed pairs involving food, culture, faith and similar resources keep their listed rates. Repeated trades of one pair push its rate down (floor 50%), and a round trip always loses value, so trading never beats building. See [Trade & Diplomacy](trade.md#resource-exchange).
+Once you own any trade-lineage building (a `market` or its successors), the market trades **any two construction resources of your current age** at their **price parity less a 20% fee**. Each age has a price level per resource (the typical first-copy price in that resource), and one unit buys `0.8 × (price level of what you buy) / (price level of what you sell)`. In the Space Age, for example, steel and titanium are priced 180T and 245T, so 1 steel buys 1.09 titanium and 1 titanium buys 0.588 steel. Any pair of construction resources works (steel → titanium in the Space Age, data → crypto in the Cyberpunk Age). A listed pair with a resource that isn't a construction resource of the age (food, culture, faith, or knowledge outside the Medieval to Colonial Ages) trades at its fixed rate. Repeated trades of one pair push its rate down (floor 50%), and a round trip always loses value, so trading never beats building. See [Trade](trade.md#resource-exchange).
 
 Some construction resources have **no producing building in certain ages**, and the market is where you get them. Producers you built in earlier ages keep running, but the current age has none to build:
 
@@ -191,29 +200,29 @@ Some construction resources have **no producing building in certain ages**, and 
 - **Titanium** from the Interstellar Age on (in the Space Age the Orbital Refinery makes it; earlier titanium smelters make only a trickle)
 - **Crypto** in the Cyberpunk Age (apart from the Neon Citadel wonder and the Blockchain tech)
 
-The same goes for wood in the Colonial Age, coal in the Electric Age and data in the Modern Age. Faith cannot be bought at the market at all.
+The same goes for wood in the Colonial Age, coal in the Electric Age, data in the Modern Age, plasma in the Galactic Age, dark matter from the Quantum Age on and antimatter in the Transcendent Age. Faith can't be bought at the market at all. A [build plan](plan.md) trade item (`plan trade <give> <get>`) buys these as the resources come in, while you are away too.
 
 ---
 
 ## Gold
 
-Gold pays for trade, diplomacy gifts, and many mid-to-late game buildings.
+Gold pays for the market, diplomacy gifts and many mid-to-late game buildings.
 
 **How to increase gold:**
-- Assign trade-domain workers to Trade lineage buildings (Market, Bank, Stock Exchange, ...)
-- Complete trade routes that export surplus resources
-- Research Currency, Mercantilism, and related technologies
+- Build Trade lineage buildings (Market, Trading Post, Merchant Quarter, ...) and staff them
+- Research Currency, Mercantilism and the other gold techs
+- Trade routes pay small fixed amounts on top (see [Trade](trade.md))
 
 ---
 
 ## Soldiers
 
-Soldiers are a stockpiled resource (the 26th) that unlocks at the **Iron Age**. Unlike civilian resources, soldiers are both **produced** and **stored** only by your military buildings.
+Soldiers are a stockpiled resource (the 26th) that unlocks at the **Iron Age**. Only military buildings produce them.
 
-**How soldiers are produced:** Each military building you own (War Camp, Barracks, and successors) produces soldiers every tick when military-domain workers are assigned to it, the same way food or wood production scales with assigned workers. A fully staffed military building produces roughly its soldier cap ÷ 50 soldiers per tick (minimum 0.1/tick).
+**How soldiers are produced:** each military building (War Camp, Barracks and their successors) produces soldiers every tick when military-domain workers staff it, the same way food or wood production scales with workers. A fully staffed military building produces its soldier cap ÷ 50 soldiers per tick (at least 0.1/tick). War Camps and Barracks come before the Iron Age but make no soldiers until it.
 
-**How soldiers are stored:** Your soldier storage is the **sum of every military building's soldier cap**. The Storage lineage adds nothing here; building more (and higher-tier) military buildings is the only way to raise it. A single War Camp holds 10 soldiers, a Barracks adds 20, and caps double per tier up the military lineage.
+**How soldiers are stored:** each military building adds its soldier cap to soldier storage: a War Camp 10, a Barracks 20, doubling with each tier up the lineage. Your shared storage (storage buildings and storage techs) counts toward the soldier cap too.
 
-**How soldiers are spent:** Launching a campaign costs soldiers, taken from your stockpile at launch whether the campaign succeeds or fails. Scouting expeditions cost none. Enduring a catastrophe also cuts your soldiers along with every other stored resource.
+**How soldiers are spent:** launching a campaign costs soldiers, taken from your stockpile at launch whether the campaign succeeds or fails. Scouting expeditions cost none. Enduring a catastrophe also cuts your soldiers along with every other stored resource.
 
 See [Military](military.md) for production formulas, per-building soldier caps, and the full campaign and expedition table.

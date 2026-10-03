@@ -41,14 +41,14 @@ Older builds kept a single account at the top level (a flat `data/account.json` 
 
 The **first time you launch the game**, AgeForge asks you to **name your account**. The prompt comes up before the main menu, filled in with a suggested empire-style name you can keep, edit or reroll. When you submit, the game **asks you to confirm the name before creating the account**. The name *is* your identity, so a typo would quietly create a different, empty account. Choose **Create** to lock it in, or **Re-type** to fix it. The confirmation also reminds you to **re-enter the name exactly** to restore your account on another device. Whatever you settle on becomes your account's display name and your **identity**.
 
-> **Your name *is* your identity.** The account ID is **derived from your name**: `sha256(normalize(name))`, taking the first 16 bytes as a 32-character hex ID. Normalizing lowercases the name, trims it and collapses internal spacing before hashing, so `Imperium`, `imperium`, and the same name with stray surrounding spaces all give the *same* ID. The display name keeps your original casing. Because the ID comes from the name, **re-entering the exact same name on a new machine gives the exact same account ID**. That is the simplest way to restore your identity (see [Restoring on a new machine](#restoring-on-a-new-machine)).
+> **Your name *is* your identity.** The account ID is **derived from your name**: a SHA-256 hash of the normalized name, cut to a 32-character hex ID. Normalizing lowercases the name, trims it and collapses internal spacing before hashing, so `Imperium`, `imperium`, and the same name with stray surrounding spaces all give the *same* ID. The display name keeps your original casing. Because the ID comes from the name, **re-entering the exact same name on a new machine gives the exact same account ID**. That is the simplest way to restore your identity (see [Restoring on a new machine](#restoring-on-a-new-machine)).
 
 The account holds two distinct things:
 
 | Part | What it is |
 |---|---|
 | **Identity** | Your chosen name and the account ID derived from it |
-| **Data** | Your earned account-wide progress: theme unlocks, lifetime stats, achievements, prefs |
+| **Data** | Your earned account-wide progress (theme unlocks, lifetime stats, achievements) and your prefs: your theme, map style, map glyphs and mini map setting |
 
 The split matters because the two halves are recovered very differently (see below). Your **identity** is carried by either your account name *or* the recovery code (both point at the same ID). The **data** is backed up separately with an account **export** (see [Exporting & importing accounts](#exporting-amp-importing-accounts)).
 

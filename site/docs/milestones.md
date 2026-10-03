@@ -1,6 +1,6 @@
 # Milestones & Chains
 
-AgeForge has 77 milestones, and 33 of them form 6 chains. Completing every milestone in a chain grants your civilization a **title** and a **temporary tick speed boost**. Some milestones stay hidden until you make progress toward them.
+AgeForge has 77 milestones, and 33 of them form 6 chains. Completing every milestone in a chain grants your civilization a **title** and a **temporary game speed boost**. Some milestones stay hidden until you make progress toward them.
 
 Every milestone and every chain can be completed. See [Can every milestone be done?](#can-every-milestone-be-done) below.
 
@@ -10,9 +10,9 @@ Every milestone and every chain can be completed. See [Can every milestone be do
 
 ## Civilization titles
 
-When a chain is completed, its title overrides any count-based fallback. The boost adds to tick speed, so +300% runs the game four times as fast for its duration:
+When a chain is completed, its title overrides any count-based fallback. The boost adds to game speed, so +300% runs the game four times as fast for its duration:
 
-| Chain | Title | Tick speed boost |
+| Chain | Title | Game speed boost |
 |---|---|---|
 | Settlement | "The Founders" | +300% for 180 ticks |
 | Scholar | "The Enlightened" | +300% for 180 ticks |
@@ -51,7 +51,7 @@ If no chain is completed, fallback titles apply:
 
 Housing caps your population, so the ladder climbs with the ages: Small Village comes around the Stone Age, Bustling Town the Bronze Age, Growing City the Classical Age, Metropolis the Renaissance and Megalopolis the Electric Age, well before prestige opens.
 
-**Chain reward:** Title "The Founders" · tick speed +300% for 180 ticks
+**Chain reward:** Title "The Founders" · game speed +300% for 180 ticks
 
 ---
 
@@ -70,7 +70,7 @@ Housing caps your population, so the ladder climbs with the ages: Small Village 
 
 The tech tree reaches 50 techs in the Information Age, so finishing this chain means playing past the Modern Age before you prestige.
 
-**Chain reward:** Title "The Enlightened" · tick speed +300% for 180 ticks
+**Chain reward:** Title "The Enlightened" · game speed +300% for 180 ticks
 
 ---
 
@@ -88,9 +88,9 @@ The tech tree reaches 50 techs in the Information Age, so finishing this chain m
 
 Stone Pits can only be built in the Stone Age, so build them before you advance. Structures count every building you finish this run, wonders included (upgrades don't count, and the count starts over when you prestige).
 
-The `-5% build cost` rewards here (Master Builder, Grand Architect) are real discounts: they reduce the actual cumulative cost of every building you queue, and the saving shows up in the cost the build menu displays. Stacked with the other build-cost rewards across the game (and the Civil Engineering tech), the reductions reach roughly −24%, floored at 10% of base. See [Buildings](buildings.md#build-cost-reductions).
+The `-5% build cost` rewards here (Master Builder, Grand Architect) are real discounts: they reduce the actual cumulative cost of every building you queue, and the saving shows up in the cost the build menu displays. Stacked with the other build-cost rewards across the game (and the Civil Engineering tech), the reductions reach −32%, floored at 10% of base. See [Buildings](buildings.md#build-cost-reductions).
 
-**Chain reward:** Title "The Architects" · tick speed +250% for 150 ticks
+**Chain reward:** Title "The Architects" · game speed +250% for 150 ticks
 
 ---
 
@@ -108,7 +108,7 @@ The `-5% build cost` rewards here (Master Builder, Grand Architect) are real dis
 
 Soldier counts are soldiers trained over the run, not the size of your current army.
 
-**Chain reward:** Title "The Conquerors" · tick speed +250% for 150 ticks
+**Chain reward:** Title "The Conquerors" · game speed +250% for 150 ticks
 
 The late tiers pay out all production rather than military power alone, so finishing the Military chain speeds up your whole economy, not just campaigns and combat.
 
@@ -129,7 +129,7 @@ One more military milestone sits outside the chain: train 100 soldiers and build
 | Trade Empire *(hidden)* | Build 20 Trading Posts and Merchant Quarters in any mix (Renaissance Age) | +10% all production |
 | Maritime Empire *(hidden)* | Build 5 Harbors, 5 Ports and 2 Seaports (Modern Age) | +10% all production, +10% gold rate |
 
-**Chain reward:** Title "The Merchants" · tick speed +250% for 150 ticks
+**Chain reward:** Title "The Merchants" · game speed +250% for 150 ticks
 
 Trade Empire counts Trading Posts and Merchant Quarters together, so upgrading posts into quarters keeps your progress; they must still be there in the Renaissance Age. Maritime Empire needs Seaports, a Modern Age building, so this chain finishes in the Modern Age.
 
@@ -149,7 +149,7 @@ The last three milestones pay out all production, so completing the chain lifts 
 | Medieval Lord | Medieval Age | +50 faith, +25 steel |
 | Enlightened | Renaissance Age | +75 culture, +15% knowledge rate |
 
-**Chain reward:** Title "The Ancients" · tick speed +250% for 150 ticks
+**Chain reward:** Title "The Ancients" · game speed +250% for 150 ticks
 
 ---
 
@@ -174,6 +174,8 @@ The last three milestones pay out all production, so completing the chain lifts 
 | Galactic Emperor *(hidden)* | Galactic Age | +20% all production |
 | Quantum Master *(hidden)* | Quantum Age | +20% all production |
 | Transcended *(hidden)* | Transcendent Age | +50% all production |
+
+Most of these rewards, and many of the chain rewards above, are all production. Every all-production bonus in the game shares one pool, which multiplies output by at most x3 (see [The all-production cap](resources.md#the-all-production-cap)). Techs and wonders alone fill it from about the Electric Age, so the later all-production rewards mostly matter after a setback pulls the pool back down; the per-resource, research and expedition rewards are separate.
 
 ---
 
@@ -257,9 +259,9 @@ Some milestones count buildings you can only build in their own age: Stone Pits,
 
 ## Tips
 
-- **Scholar and Settlement chains** carry the biggest boosts (+300% tick speed for 180 ticks). Builder, Military, Trade and Ancient Ages each grant +250% for 150 ticks.
+- **Scholar and Settlement chains** carry the biggest boosts (+300% game speed for 180 ticks). Builder, Military, Trade and Ancient Ages each grant +250% for 150 ticks.
 - The **Milestones panel** (`milestones`) groups every milestone by category: Settlement, Builder, Scholar, Military, Trade, Faith, Epoch and Ages. A chain's progress sits on its group's heading.
 - **Hidden milestones** appear in the Milestones panel once you have more than 50% progress toward them or have completed the preceding age.
 - **No spoilers:** a milestone that needs an age past your next one stays hidden (counted in the section's "+ N hidden milestones") until that age is your next one, or until you have reached it before on your account. The panel never names an age you haven't reached.
-- Chain boosts add to any other tick speed bonuses you hold, so two chains finishing close together overlap.
+- Chain boosts add to any other game speed bonuses you hold, so two chains finishing close together overlap.
 - The **Military, Trade and Scholar** capstones pay out all production bonuses, so completing any of those chains helps your whole economy, not just its own domain.
