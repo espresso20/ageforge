@@ -28,6 +28,10 @@ type ResearchManager struct {
 	// order is every tech key, sorted, fixed at construction. Per-tick walks
 	// over researched techs use it so summed effects never follow map order.
 	order []string
+	// timeK is the Era Mastery speed the next research starts at: its time
+	// is divided by it after the research-speed step (MasteryTicks). The
+	// engine sets it before each start; 0 or 1 leaves times alone.
+	timeK float64
 }
 
 // NewResearchManager creates a new research manager
@@ -86,6 +90,7 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 			ticks = 1
 		}
 	}
+	ticks = MasteryTicks(ticks, rm.timeK)
 	rm.ticksLeft = ticks
 	rm.totalTicks = ticks
 	return nil
@@ -131,6 +136,7 @@ func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) e
 	if ticks < 1 {
 		ticks = 1
 	}
+	ticks = MasteryTicks(ticks, rm.timeK)
 	rm.ticksLeft = ticks
 	rm.totalTicks = ticks
 	return nil

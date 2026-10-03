@@ -57,7 +57,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather resource
 - **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements; on each advance, lineage buildings with a next tier can be upgraded to it (`upgrade`)
 - **Trade System**: 21 trade routes and resource exchange with supply/demand pressure
 - **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, trade deals and trade bonuses
-- **Prestige**: Reset-and-grow system with 9 upgrades and passive production bonuses (requires Modern Age)
+- **Prestige**: Reset-and-grow system with 9 upgrades and Era Mastery: every age a run completes runs faster on later runs, up to 4.2x (requires Modern Age)
 - **Command-driven interface**: everything is typed at one prompt; panels (research, army, trade, stats, wonders, logs, epoch, map and more) open by name, and `help` lists every command
 - **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
 - **Save/Load**: JSON save system with auto-save every 60s and offline progress; saves live in `data/` next to the binary

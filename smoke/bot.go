@@ -124,6 +124,9 @@ func NewBot(ge *game.GameEngine) *Bot {
 
 // plan is the bot's working view of one decision.
 type plan struct {
+	// storeK is Era Mastery's speed in this age: a storage building adds
+	// its effect × storeK (storage grows with k).
+	storeK   float64
 	st       game.GameState
 	amt      map[string]float64 // spendable amounts, decremented as the bot spends
 	storage  map[string]float64 // caps, raised locally as storage is bought
@@ -170,6 +173,7 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 		extra:   make(map[string]int),
 		capNeed: make(map[string]float64),
 	}
+	p.storeK = max(st.Mastery.K, 1)
 	for k, r := range st.Resources {
 		p.amt[k] = r.Amount
 		p.storage[k] = r.Storage
@@ -545,7 +549,7 @@ func (b *Bot) planAhead(st game.GameState) {
 			}
 			per := 0.0
 			for _, e := range b.defs[key].Effects {
-				per += storer(res)(e)
+				per += float64(storer(res)(e) * p.storeK)
 			}
 			want := 1
 			if per > 0 {
@@ -556,7 +560,7 @@ func (b *Bot) planAhead(st game.GameState) {
 				if e.Type == "storage" {
 					for r := range p.storage {
 						if e.Target == r || e.Target == "all" {
-							p.storage[r] += float64(e.Value * float64(n))
+							p.storage[r] += float64(float64(e.Value*float64(n)) * p.storeK)
 						}
 					}
 				}
@@ -1344,10 +1348,10 @@ func (b *Bot) tryBuild(p *plan, key, kind string) bool {
 		if e.Type == "storage" {
 			if e.Target == "all" {
 				for r := range p.storage {
-					p.storage[r] += e.Value
+					p.storage[r] += float64(e.Value * p.storeK)
 				}
 			} else {
-				p.storage[e.Target] += e.Value
+				p.storage[e.Target] += float64(e.Value * p.storeK)
 			}
 		}
 	}

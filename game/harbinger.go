@@ -485,7 +485,7 @@ func (ge *GameEngine) summonHarbinger() error {
 		f.Claim = CatastropheTierMedium
 	}
 	f.Invited, f.Resolved, f.ResolvedTick, f.AtAdvance, f.Arrived = false, "", 0, false, false
-	f.StrikeTick = ge.tick + int(f.LeadFrac*expectedAgeTicks(ge.age))
+	f.StrikeTick = ge.tick + int(f.LeadFrac*ge.expectedAgeTicks(ge.age))
 	if !ge.fateArrive() {
 		return fmt.Errorf("No harbinger could come in this age.")
 	}
@@ -510,7 +510,7 @@ func (ge *GameEngine) SummonHarbingerForTest(age string) error {
 	ge.harbinger, ge.parkedHarbinger = nil, nil
 	if config.IsFinalEpoch(ge.currentEpoch) && (ge.fate == nil || ge.fate.EpochKey != ge.currentEpoch) {
 		// A quiet fate, so the Last Passage thread it brings is the one shown.
-		ge.fate = &FateSave{EpochKey: ge.currentEpoch, EntryTick: ge.tick, Window: int(math.Round(expectedEraTicks(ge.currentEpoch)))}
+		ge.fate = &FateSave{EpochKey: ge.currentEpoch, EntryTick: ge.tick, Window: int(math.Round(ge.expectedEraTicks(ge.currentEpoch)))}
 	}
 	for _, a := range config.AgeOrder() {
 		ge.applyAgeUnlocks(a)

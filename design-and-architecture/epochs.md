@@ -265,7 +265,7 @@ Constants and the reasoning for them are in `config/defense.go`; the engine side
   never stored, emitted into the resolver as source `legacy` (shows in Active Multipliers). It
   survives save/load, Succumb and prestige by construction. Saves from before this change stored
   +25% in `permanentBonuses`; it is stripped on load (`succumb_research_derived` marks new saves).
-- Full reset to the Primitive Age. Prestige level, points and upgrades are kept; no points earned.
+- Full reset to the Primitive Age. Prestige level, points, upgrades and Era Mastery are kept; no points earned, and no mastery gained (the record stays, so catch-up runs the ages 6 or more behind it at `config.CatchUpK`).
 
 ### The 7 Catastrophes
 
@@ -344,21 +344,23 @@ the Cosmic Era's parked one). Player docs:
   Tear. Before the gate a fate can only hold a false prophet.
 - A fated doom (or a false prophet) gets `StrikeTick = EntryTick + offset × Window`, with `offset`
   uniform in [0, 1) and `Window = expectedEraTicks(epoch)`, the sum of the era's
-  `expectedAgeTicks` (Iron 10.5 h, Steel 21 h, Electric 31 h, Digital 42 h, Neon 60 h, Cosmic 96 h
-  at 1x). The doom can fall in any of its ages, mid-age included.
+  `expectedAgeTicks` (Iron 27.3 h, Steel 54.6 h, Electric 80.6 h, Digital 109.2 h, Neon 156 h,
+  Cosmic 249.6 h at 1x on the one-week curve). The doom can fall in any of its ages, mid-age included.
 - `LeadFrac` is uniform in [`harbingerLeadMin`, `harbingerLeadMax`] = [0.20, 0.60].
 - Five `ge.rng` draws every time (fated, false prophet, offset, lead, claim), whatever the outcome,
   so the stream's shape never depends on the fate.
 - `GameSave.Fate` persists it, so a reload cannot re-roll it.
 - `expectedAgeTicks(age)` is the one measure of expected duration: the era's window, the lead, the
-  "this age" forecast and the shortest warning. It is `config.AgeTargetTicks` today, so a pacing
-  change, or a later per-age speed-up, carries through in one place.
+  "this age" forecast and the shortest warning. It is `config.AgeTargetTicks` divided by the age's
+  Era Mastery speed (`PrestigeManager.AgeSpeed`, catch-up included), so a pacing change or a
+  mastered era carries through in one place. Mastery is fixed for a run, so the k under a rolled
+  fate never changes; `baseAgeTicks` / `baseEraTicks` are the k = 1 figures.
 
 ### The harbinger's arrival
 
-- Due at `fateArrivalTick() = StrikeTick − LeadFrac × expectedAgeTicks(current age)`: 30-90 minutes
-  before the strike in the Iron Age, 1.6-4.8 hours in the Industrial Age, 2.4-7.2 hours in the
-  Atomic Age. The lead follows the current age, so advancing into a longer age can bring the
+- Due at `fateArrivalTick() = StrikeTick − LeadFrac × expectedAgeTicks(current age)`: 1.3-3.9 hours
+  before the strike in the Iron Age, 4.2-12.5 hours in the Industrial Age, 6.2-18.7 hours in the
+  Atomic Age (at k = 1; ÷ k on known ground). The lead follows the current age, so advancing into a longer age can bring the
   harbinger at that advance (`harbingerOnAgeAdvance` checks `fateHarbingerDue`).
 - `fateTick()` brings it when due. An arrival tick before `EntryTick` only means it comes on
   entry: never before the era began.

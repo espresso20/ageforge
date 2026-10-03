@@ -77,6 +77,7 @@ func (s *Session) WriteSummary(w io.Writer) error {
 		sb.WriteString("\n### Pacing (progression)\n\n")
 		p.writePacingTable(&sb)
 		p.writeFirstRun(&sb)
+		p.writeLaterRun(&sb)
 	}
 	n := 0
 	for _, r := range s.Scenarios {

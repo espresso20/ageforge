@@ -17,7 +17,7 @@ AgeForge is a full-screen text interface built with Go and tview/tcell. It runs 
 | [The 22 Ages](ages.md) | Every age, its requirements and unlocks |
 | [Buildings](buildings.md) | All 301 buildings including wonders |
 | [Technologies](technologies.md) | All 77 techs with effects |
-| [Prestige System](prestige.md) | Permanent upgrades across resets |
+| [Prestige System](prestige.md) | Permanent upgrades and Era Mastery across resets |
 
 ---
 
@@ -30,7 +30,7 @@ AgeForge is a full-screen text interface built with Go and tview/tcell. It runs 
 - **16 Expeditions** (scouting missions and military campaigns), each a gamble of cost against reward
 - **21 Trade routes** and an 11-civilization diplomacy roster
 - **77 Milestones** in 6 chains, with civilization titles
-- **9 Prestige upgrades**: permanent bonuses across resets
+- **9 Prestige upgrades**: permanent bonuses across resets, plus **Era Mastery**: the ages you have completed run up to 4.2x faster
 - **The Map**: your empire drawn from your real buildings, in two styles (a roguelike glyph world with three zooms, and a side-on skyline with one district per age). An inspect cursor gives you the command for whatever it is on, and a mini map sits on the dashboard.
 
 ---

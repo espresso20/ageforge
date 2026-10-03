@@ -91,6 +91,17 @@ type Config struct {
 	InviteCosmic bool
 	// Style labels the run in reports ("greedy", "idle", ...).
 	Style string
+	// Preset starts every run from a returning player's Era Mastery
+	// (PresetVeteran, PresetReturning; "" is a new player), through
+	// GameEngine.SetMasteryForTest. Ages are then graded against their
+	// target ÷ k, and the first run to the Modern Age against the preset's
+	// band (firstRunBand).
+	Preset string
+	// PushCycles makes every cycle after the first a push: it plays for as
+	// long as cycle 1 took, then prestiges from wherever it got (Era
+	// Mastery's later-run check: cycle 2 covers cycle 1's ages faster and
+	// ends deeper; see LaterRunRow).
+	PushCycles bool
 
 	// TraceDir, if set, receives trace-<seed>.log with every bot action.
 	TraceDir string
@@ -160,6 +171,9 @@ type AgeSplit struct {
 	Seconds float64 `json:"seconds_1x"`
 	// Unfinished marks the age a run ended in without advancing.
 	Unfinished bool `json:"unfinished,omitempty"`
+	// K is the age's Era Mastery speed on this visit (0 means 1): the age
+	// is graded against its target ÷ K.
+	K float64 `json:"k,omitempty"`
 	// Prestiged marks an age the run left by prestige rather than by
 	// advancing. It is not a completed age (a run that prestiges on entering
 	// the first allowed age spends no time in it), so it is reported but never
@@ -341,6 +355,11 @@ type runner struct {
 	// advancing is set while control calls AdvanceAge, so the age-advance
 	// bus handler leaves that advance to control.
 	advancing bool
+	// speeds is every age's Era Mastery speed as of the last snapshot
+	// (MasteryState.Speeds). Mastery is fixed for a run and the record only
+	// moves ages already left behind, so a split can read its age's k from
+	// here even when a bus handler closes it.
+	speeds map[string]float64
 }
 
 // Run plays one seed to completion and returns what happened.
@@ -348,6 +367,7 @@ func Run(cfg Config, seed int64) *RunResult {
 	start := time.Now()
 	ge := game.NewGameEngine()
 	ge.SeedRNG(seed)
+	applyPreset(ge, cfg.Preset)
 	r := newRunner(cfg, seed, ge)
 	defer func() {
 		r.res.WallMillis = time.Since(start).Milliseconds()
@@ -550,8 +570,12 @@ func (r *runner) finish() {
 // split is the pacing record of the current age so far.
 func (r *runner) split(unfinished bool) AgeSplit {
 	secs := (r.sim - r.ageS0).Seconds()
-	a := AgeSplit{Cycle: r.cycle, Age: r.age, Ticks: r.ticks - r.ageT0, Seconds: secs,
-		Unfinished: unfinished, TimedOut: r.timedOut, Verdict: Verdict(r.age, secs, !unfinished)}
+	k := r.speeds[r.age]
+	if k <= 1 {
+		k = 0
+	}
+	a := AgeSplit{Cycle: r.cycle, Age: r.age, Ticks: r.ticks - r.ageT0, Seconds: secs, K: k,
+		Unfinished: unfinished, TimedOut: r.timedOut, Verdict: VerdictK(r.age, secs, !unfinished, k)}
 	if t, ok := Target(r.age); ok {
 		a.TargetSecs = t.Seconds()
 	}
@@ -626,6 +650,9 @@ func (r *runner) anomaly(kind, check, msg string, st game.GameState, withDump bo
 // watermarks.
 func (r *runner) enterAge(st game.GameState) {
 	r.age = st.Age
+	if st.Mastery.Speeds != nil {
+		r.speeds = st.Mastery.Speeds
+	}
 	r.ageT0, r.ageS0 = r.ticks, r.sim
 	r.hiBuild, r.hiTech, r.lastRes = -1, -1, -1
 	r.lastProg = r.sim
@@ -650,6 +677,7 @@ func (r *runner) closeAgeByPrestige() {
 
 // observe updates pacing, event counts and the soft-lock detector.
 func (r *runner) observe(st game.GameState) {
+	r.speeds = st.Mastery.Speeds
 	if st.Age != r.age {
 		// An age change the runner did not make (Succumb resets to primitive).
 		r.closeAge()
@@ -808,7 +836,18 @@ func (r *runner) control(st *game.GameState) bool {
 		// Past the last prestige: play on to FinalAge.
 		return r.cfg.FinalAge == "" || r.ageIdx[st.Age] >= r.ageIdx[r.cfg.FinalAge]
 	}
-	if st.Prestige.CanPrestige && (r.cfg.PrestigeAge == "" || r.ageIdx[st.Age] >= r.ageIdx[r.cfg.PrestigeAge]) {
+	push := r.cfg.PushCycles && r.cycle > 1 && len(r.res.Cycles) > 0
+	if push {
+		// A push cycle plays for as long as cycle 1 took, then prestiges
+		// from wherever it got; short of the prestige age it just ends.
+		if (r.sim - r.cycS0).Seconds() < r.res.Cycles[0].Seconds {
+			return false
+		}
+		if !st.Prestige.CanPrestige {
+			return true
+		}
+	}
+	if st.Prestige.CanPrestige && (push || r.cfg.PrestigeAge == "" || r.ageIdx[st.Age] >= r.ageIdx[r.cfg.PrestigeAge]) {
 		before := *st
 		expected := PrestigePoints(before)
 		if before.Prestige.PendingPoints != expected {

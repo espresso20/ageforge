@@ -38,3 +38,17 @@ const IdleSeeds = 3
 // IdleBudgetFactor is how far past its target an idle run may go before it
 // stops (a run that stops short of the prestige misses the target).
 const IdleBudgetFactor = 2.0
+
+// VeteranIdleWatch is the veteran check-in player's watch line (Era Mastery,
+// Pacing v2 PR 5): the idle scenario also plays the veteran preset actively
+// and at 3- and 8-hour check-ins, and reports each check-in run's time to
+// the first prestige over the active veteran's on the same seed. Measured
+// when Era Mastery landed (2 seeds): 1.83x at 3 hours and 3.40x at 8 hours,
+// because a veteran's early ages are shorter than one visit and the plan
+// only looks one age ahead. These lines sit about 20% above that and only
+// warn; Pacing v2 PR 6's legacy kit (a plan template that chains ages
+// between visits) is meant to bring them to 1.5x and 2.0x, and enforces it.
+var VeteranIdleWatch = map[time.Duration]float64{
+	3 * time.Hour: 2.2,
+	8 * time.Hour: 4.1,
+}

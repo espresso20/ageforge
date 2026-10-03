@@ -163,11 +163,11 @@ func statsProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n[gold]═══ Prestige ═══[-]\n\n")
 	p := state.Prestige
 
-	fmt.Fprintf(&sb, " [gold]Level:[-] [cyan]%d[-]", p.Level)
-	if p.PassiveBonus > 0 {
-		fmt.Fprintf(&sb, "  [green]%s all production[-]", textfmt.SignedPercent(p.PassiveBonus))
+	fmt.Fprintf(&sb, " [gold]Level:[-] [cyan]%d[-]\n", p.Level)
+	fmt.Fprintf(&sb, " [gold]Era Mastery:[-] %s\n", masteryNowText(state))
+	if next := masteryNextText(state); next != "" {
+		fmt.Fprintf(&sb, " [gray]Next prestige: %s.[-]\n", next)
 	}
-	sb.WriteString("\n")
 	fmt.Fprintf(&sb, " [gold]Points:[-] [cyan]%d[-] available / %d total\n", p.Available, p.TotalEarned)
 
 	if p.CanPrestige {

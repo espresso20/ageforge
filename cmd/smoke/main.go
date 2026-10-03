@@ -56,6 +56,8 @@ func run() int {
 	deals := flag.String("deals", "off", "bot policy for faction trade deals: off (ignore them, the default the pacing targets assume) or on (take deals for what the age needs, paid from surplus)")
 	prestigeAge := flag.String("prestige-age", "", "progression: age at which to prestige (default: first age where prestige is allowed)")
 	cycles := flag.Int("cycles", 0, "progression: prestige cycles to play (0 = tier default)")
+	preset := flag.String("preset", "", "start every bot run as a returning player with Era Mastery: "+strings.Join(smoke.PresetNames(), " or ")+" (ages are then graded against their target ÷ k)")
+	pushCycles := flag.Bool("push-cycles", false, "every cycle after the first plays for as long as cycle 1 took, then prestiges (on by default in the full tier's progression)")
 	finalAge := flag.String("final-age", "-", "progression: after the last prestige keep playing to this age (\"\" = stop at prestige; default: tier preset)")
 	stopAge := flag.String("stop-age", "", "progression: end each run as soon as this age is entered")
 	softlock := flag.Duration("softlock", 0, "simulated 1x span without progress that counts as a soft-lock (0 = default 30m)")
@@ -105,6 +107,11 @@ func run() int {
 	base.Harbinger = *harbinger
 	base.Pacing = *pacing
 	base.NoPlan, base.NoOverflow, base.NoShares = *noPlan, *noOverflow, *noShares
+	if !smoke.ValidPreset(*preset) {
+		fmt.Fprintf(os.Stderr, "unknown -preset %q (want %s)\n", *preset, strings.Join(smoke.PresetNames(), " or "))
+		return 2
+	}
+	base.Preset, base.PushCycles = *preset, *pushCycles
 	switch *deals {
 	case "on", "off":
 		base.Deals = *deals == "on"

@@ -1435,6 +1435,9 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		if b.BonusRate != 0 {
 			parts = append(parts, fmt.Sprintf("Bonuses: %s", textfmt.RateValue(b.BonusRate)))
 		}
+		if b.MasteryRate != 0 {
+			parts = append(parts, fmt.Sprintf("Era Mastery: %s", textfmt.RateValue(b.MasteryRate)))
+		}
 		if b.FoodDrain != 0 {
 			parts = append(parts, fmt.Sprintf("Drain: %s", textfmt.RateValue(b.FoodDrain)))
 		}
@@ -1861,9 +1864,7 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 	lines = append(lines, fmt.Sprintf("  Level: [cyan]%d[-]", p.Level))
 	lines = append(lines, fmt.Sprintf("  Points: [cyan]%d[-] available / [cyan]%d[-] total earned", p.Available, p.TotalEarned))
 
-	if p.PassiveBonus > 0 {
-		lines = append(lines, fmt.Sprintf("  Passive Bonus: [green]+%.0f%%[-] production", p.PassiveBonus*100))
-	}
+	lines = append(lines, masteryStatusLines(state)...)
 
 	if state.LastPassage.CosmicLegacy {
 		lines = append(lines, fmt.Sprintf("  Cosmic Legacy: [gold]+%.0f%%[-] production (permanent)", game.CosmicLegacyProductionBonus*100))

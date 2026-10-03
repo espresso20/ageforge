@@ -109,6 +109,63 @@ func runIdle(e *Env, res *Result) {
 	res.Summary = "first prestige, median of " + fmt.Sprint(len(seeds)) + " seeds: " + strings.Join(parts, ", ")
 	res.section("Idle targets", "%s", idleTargetTable(results, active, len(seeds)))
 	res.section("Time per age", "%s", idleAgeTable(results))
+	if vet := runVeteranIdle(e, res, seeds); vet != "" {
+		res.Summary += "; veteran " + vet
+	}
+}
+
+// runVeteranIdle plays the Era Mastery veteran preset actively and at each
+// VeteranIdleWatch interval on seeds, and reports each check-in run's first
+// prestige over the active veteran's on the same seed. Over its watch line a
+// ratio warns; it never fails (Pacing v2 PR 6 enforces the kit's targets).
+// Returns the summary fragment.
+func runVeteranIdle(e *Env, res *Result, seeds []int64) string {
+	ref := e.Base
+	ref.Preset, ref.Cycles, ref.FinalAge, ref.MaxSim, ref.Pacing = PresetVeteran, 1, "", 200*time.Hour, PacingReport
+	active := firstPrestiges(runBotSet(e, res, "idle-veteran-active", "idle", ref, seeds))
+	var act []float64
+	for _, v := range active {
+		act = append(act, v)
+	}
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "The veteran preset (mastery 10 through the Space Age) playing actively, then checking in. Active: %s. The ratio is each check-in run's first prestige over the active veteran's on the same seed (median); over the watch line it warns, never fails.\n\n", firstStr(act))
+	sb.WriteString("| check-in | first prestige, median (min–max) | vs active | watch line |\n|---|---|---|---|\n")
+	var parts []string
+	for _, ci := range []time.Duration{3 * time.Hour, 8 * time.Hour} {
+		base := e.Base
+		base.Preset, base.Cycles, base.CheckIn, base.MaxSim = PresetVeteran, 1, ci, 600*time.Hour
+		cfg, err := ApplyStyle(base, StyleIdle)
+		if err != nil {
+			res.fail("config", "%v", err)
+			return ""
+		}
+		cfg.Pacing = PacingReport
+		got := firstPrestiges(runBotSet(e, res, "idle-veteran-"+shortDur(ci), "idle", cfg, seeds))
+		var firsts, ratios []float64
+		for _, seed := range seeds {
+			if secs, ok := got[seed]; ok {
+				firsts = append(firsts, secs)
+				if a := active[seed]; a > 0 {
+					ratios = append(ratios, secs/a)
+				}
+			}
+		}
+		ratio := "-"
+		if len(ratios) > 0 {
+			_, r, _ := spread(ratios)
+			ratio = fmt.Sprintf("%.2fx", r)
+			parts = append(parts, fmt.Sprintf("%s %.2fx", shortDur(ci), r))
+			if w := VeteranIdleWatch[ci]; r > w {
+				res.warn("veteran_idle_ratio", "the veteran checking in every %s took %.2fx the active veteran's time to the first prestige (median), over the %gx watch line", shortDur(ci), r, w)
+			}
+		}
+		fmt.Fprintf(&sb, "| %s | %s | %s | %gx |\n", shortDur(ci), firstStr(firsts), ratio, VeteranIdleWatch[ci])
+	}
+	res.section("Veteran check-ins (Era Mastery)", "%s", sb.String())
+	if len(parts) == 0 {
+		return ""
+	}
+	return strings.Join(parts, ", ") + " active"
 }
 
 func firstStr(v []float64) string {

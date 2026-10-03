@@ -107,7 +107,7 @@ plan up 3
 | `workers share auto` | Put every domain back on auto, the default: workers follow your buildings' worker slots |
 | `workers auto-recruit [on\|off]` (or `workers autorecruit`) | Bare, show whether auto-recruit is on. `on` (the default) lets the game recruit into empty worker slots while housing and food allow; `off` leaves recruiting to you |
 | `status` (or `s`) | Print a status summary: age and tick, every unlocked resource with amount, storage and rate, and your population by class with idle counts and assignments |
-| `rates` | Print where each resource's rate comes from: buildings, workers, research, events, trade, bonuses and food drain |
+| `rates` | Print where each resource's rate comes from: buildings, workers, research, events, trade, bonuses, [Era Mastery](prestige.md#era-mastery) and food drain |
 
 Workers take the domain class of the building they work in (Gatherer, Lumberjack, etc.). You don't have to recruit or assign them yourself. With auto-recruit on (the default), the game recruits into empty worker slots while housing and food allow, and every 5 ticks (10 seconds at 1x) it puts idle workers to work by your **worker shares**. A share is a domain's percent of your whole workforce. Domains without one are on auto and split the rest by their worker slots, so with no shares set your workers follow your buildings. The game never takes a worker out of a building to keep to the shares, except out of a domain set to 0, so your own `assign` and `unassign` stick. After any worker command it waits a minute before it places anyone. `unassign` returns workers to idle; `dismiss` lowers your population. The full rules are in [Worker Shares](workers-and-domains.md#worker-shares).
 
@@ -302,7 +302,7 @@ Each style lists its keys along its bottom edge, and [The Map](map.md) has the f
 
 | Command | Description |
 |---|---|
-| `prestige` | View prestige status and available points. In the Cosmic Era it also shows the chance of the Last Passage and which figure is warning of it, and shows the Cosmic Legacy if you hold it |
+| `prestige` | View prestige status and available points, the [Era Mastery](prestige.md#era-mastery) speed of the age you are in and the ages your next prestige would raise. In the Cosmic Era it also shows the chance of the Last Passage and which figure is warning of it, and shows the Cosmic Legacy if you hold it |
 | `prestige confirm` | Explain what confirming would do. In the Cosmic Era this includes what Endure (share of this run's points) and Succumb (the Cosmic Legacy) would give you if the Last Passage comes |
 | `prestige confirm yes` | Prestige now (requires the Modern Age). In the Cosmic Era an open Reality Tear settles first, then it rolls the Last Passage; if either comes, prestige waits for your choice |
 | `prestige shop` | List the prestige upgrades |
@@ -336,7 +336,7 @@ A festival costs the larger of 2K culture or 5% of your culture storage, and giv
 | Command | Description |
 |---|---|
 | `milestones` (or `ms`) | Open the **Milestones** panel: chain progress, earned titles and active speed boosts |
-| `epoch` | Open the **Epoch** panel |
+| `epoch` | Open the **Epoch** panel (epoch events, catastrophe outlook, legacy bonuses and Era Mastery) |
 
 See [Milestones](milestones.md) and [Epochs](epochs.md).
 

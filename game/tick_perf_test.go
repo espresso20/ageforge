@@ -29,6 +29,15 @@ func newLateGameEngine(tb testing.TB) *GameEngine {
 	ge.Buildings.counts["harbor"] = 4
 	ge.Buildings.counts["harbor_authority"] = 3
 
+	// Era Mastery in play: a full mastery map and a record deep enough that
+	// the industrial age runs at catch-up speed (k ≠ 1), so the per-tick
+	// scaling and the snapshot's mastery view are in the measurement.
+	for _, a := range config.AgeOrder() {
+		ge.Prestige.SetMastery(a, 3)
+	}
+	ge.Prestige.SetRecord("space_age")
+	ge.Prestige.NoteAgeEntered(ge.age)
+
 	for key := range ge.Resources.resources {
 		setRes(ge, key, 1e6)
 	}

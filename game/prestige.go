@@ -13,14 +13,27 @@ import (
 // milestones, techs, and buildings built. Points are spent on persistent upgrades
 // that carry over to the next run.
 //
-// Passive bonuses stack per level: +2% production_all and +1% tick_speed per
-// prestige level (applied independently of purchased upgrades).
-// Upgrade bonuses accumulate on top of passive bonuses in GetBonuses().
+// It also holds Era Mastery (mastery.go): each age's mastery, the record
+// (the deepest age ever entered) and this run's furthest age. The manager
+// survives prestige and Succumb and is replaced only by Reset, so mastery
+// lasts as long as the account's game does. The old passive (+2% production
+// and +1% tick speed per level) retired into mastery.
 type PrestigeManager struct {
 	level       int
 	totalEarned int
 	available   int
 	upgrades    map[string]int // upgrade key -> tier purchased (0 = not bought)
+
+	// Era Mastery: age key -> mastery (ages at 0 left out), the record and
+	// this run's furthest age ("" for none yet), and whether a save from
+	// before Era Mastery has had its one-time seeding (seedMasteryLocked).
+	// speeds is every age's k, rebuilt whenever mastery or the record
+	// changes (rebuildSpeeds).
+	mastery       map[string]int
+	record        string
+	runFurthest   string
+	masterySeeded bool
+	speeds        map[string]float64
 
 	// upgradeList / upgradeDefs are the static shop table, built once so
 	// GetBonuses (hit every tick via the resolver) and Snapshot (every UI
@@ -36,11 +49,19 @@ func NewPrestigeManager() *PrestigeManager {
 	for _, def := range list {
 		defs[def.Key] = def
 	}
-	return &PrestigeManager{
+	pm := &PrestigeManager{
 		upgrades:    make(map[string]int),
 		upgradeList: list,
 		upgradeDefs: defs,
+		mastery:     make(map[string]int),
+		// A new game has no past prestiges to seed mastery from, and it
+		// starts in the first age: its record and its run's furthest age.
+		masterySeeded: true,
+		record:        ageKeys()[0],
+		runFurthest:   ageKeys()[0],
 	}
+	pm.rebuildSpeeds()
+	return pm
 }
 
 // CalculatePoints computes prestige points earned for the current run.
@@ -116,15 +137,11 @@ func (pm *PrestigeManager) BuyUpgrade(key string) error {
 	return nil
 }
 
-// GetBonuses returns all prestige bonuses (passive + upgrades) as a bonus map
+// GetBonuses returns the bought upgrades' bonuses as a bonus map. The old
+// passive (+2% production and +1% tick speed per level) retired into Era
+// Mastery (mastery.go), which speeds up the ages a run completed instead.
 func (pm *PrestigeManager) GetBonuses() map[string]float64 {
 	bonuses := make(map[string]float64)
-
-	// Passive bonus: +2% production_all and +1% tick_speed per prestige level
-	if pm.level > 0 {
-		bonuses["production_all"] = float64(pm.level) * 0.02
-		bonuses["tick_speed"] = float64(pm.level) * 0.01
-	}
 
 	// Upgrade bonuses (rate and flat bonuses, not starting resources)
 	// List order, not map order: float sums must be the same every run.
@@ -188,14 +205,11 @@ func (pm *PrestigeManager) Snapshot() PrestigeState {
 			Effect:      formatPrestigeEffect(def, tier),
 		}
 	}
-	passiveBonus := float64(pm.level) * 0.02
-
 	return PrestigeState{
-		Level:        pm.level,
-		TotalEarned:  pm.totalEarned,
-		Available:    pm.available,
-		Upgrades:     upgrades,
-		PassiveBonus: passiveBonus,
+		Level:       pm.level,
+		TotalEarned: pm.totalEarned,
+		Available:   pm.available,
+		Upgrades:    upgrades,
 	}
 }
 

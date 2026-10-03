@@ -42,7 +42,8 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 			add("nan_resource", fmt.Sprintf("%s has a non-finite value: amount=%v rate=%v storage=%v", key, rs.Amount, rs.Rate, rs.Storage))
 		case rs.Amount < 0:
 			add("negative_resource", fmt.Sprintf("%s is negative: %v", key, rs.Amount))
-		case rs.Amount > float64(rs.Storage*(1+1e-9))+1e-6:
+		case rs.Amount > float64(rs.Storage*(1+1e-9))+1e-6 && !rs.OverCapGrace:
+			// Graced stock (Era Mastery's grace rule) may sit over the cap.
 			add("over_storage", fmt.Sprintf("%s amount %s is above its storage cap %s", key, num(rs.Amount), num(rs.Storage)))
 		}
 	}
@@ -164,17 +165,23 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 	for _, k := range sortedKeys(st.Resources) {
 		caps[k] = st.Resources[k].Storage
 	}
+	// Storage grows with Era Mastery's k, a building's share included.
+	k := st.Mastery.K
+	if k <= 0 {
+		k = 1
+	}
 	raise := func(def config.BuildingDef, n float64) {
 		for _, e := range def.Effects {
 			if e.Type != "storage" || e.Value <= 0 {
 				continue
 			}
+			add := float64(float64(e.Value*n) * k)
 			if e.Target != "all" {
-				caps[e.Target] += float64(e.Value * n)
+				caps[e.Target] += add
 				continue
 			}
 			for _, r := range sortedKeys(caps) {
-				caps[r] += float64(e.Value * n)
+				caps[r] += add
 			}
 		}
 	}

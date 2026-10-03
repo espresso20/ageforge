@@ -187,6 +187,7 @@ func Scenarios() []Scenario {
 		{Name: "static", Desc: "Gate Covenant check from config alone: every age gate fits storage and has a source, and every milestone can be completed", Run: runStatic},
 		{Name: "docsync", Desc: "site and README headline numbers, lineage count and command reference match config and the command table", Run: runDocsync},
 		{Name: "progression", Desc: "greedy bot plays seeds end to end: panics, soft-locks, invariants, and the pacing table", Paced: true, Run: runProgression},
+		{Name: "veteran", Desc: "Era Mastery's veteran preset (mastery 10 through the Space Age): each age against its target ÷ k, the Primitive and Stone Ages under an hour, the Modern Age in 1.1 to 1.5 days", Paced: true, Run: runVeteran},
 		{Name: "saveload", Desc: "save at a checkpoint per age, load into a fresh engine, continue, and compare against the uninterrupted run", Run: runSaveload},
 		{Name: "offline", Desc: "close the game for 1h, 8h and 30h through the offline-gains path: positive, sane, capped at 24h", Run: runOffline},
 		{Name: "fuzz", Desc: "random, malformed and hostile commands through the real command handler: no panics, invariants hold, ticks go on", Run: runFuzz},

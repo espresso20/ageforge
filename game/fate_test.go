@@ -31,7 +31,7 @@ func fateEngine(t *testing.T, age string, seed int64) *GameEngine {
 // quietFate gives ge's current era a quiet fate (nothing fated) without
 // drawing, so a later tick keeps it.
 func quietFate(ge *GameEngine) {
-	ge.fate = &FateSave{EpochKey: ge.currentEpoch, EntryTick: ge.tick, Window: int(math.Round(expectedEraTicks(ge.currentEpoch)))}
+	ge.fate = &FateSave{EpochKey: ge.currentEpoch, EntryTick: ge.tick, Window: int(math.Round(baseEraTicks(ge.currentEpoch)))}
 }
 
 // forceFate fates a doom in ge's era striking offset ticks after it began.
@@ -50,7 +50,7 @@ func tickTo(ge *GameEngine, tick int) {
 
 // arrivalTick is when ge's fated harbinger is due in the current age.
 func arrivalTick(ge *GameEngine) int {
-	return ge.fate.StrikeTick - int(ge.fate.LeadFrac*expectedAgeTicks(ge.age))
+	return ge.fate.StrikeTick - int(ge.fate.LeadFrac*baseAgeTicks(ge.age))
 }
 
 // readyToAdvance makes ge's next advance allowed without meeting the
@@ -75,7 +75,7 @@ func TestFateRollIsSeededAndShaped(t *testing.T) {
 
 	// The shape, over many rolls of one seeded stream (one engine: building
 	// thousands is slow under -race).
-	window := int(math.Round(expectedEraTicks("iron_era")))
+	window := int(math.Round(baseEraTicks("iron_era")))
 	const n = 6000
 	fated, falses, offsets := 0, 0, 0.0
 	ge := catEngine(t, "iron_age", 7)
@@ -175,7 +175,7 @@ func TestFateRolledOnEnteringAnEra(t *testing.T) {
 	if ge.fate == nil || ge.fate.EpochKey != "steel_era" || ge.fate.EntryTick != 777 {
 		t.Fatalf("fate after entering the Steel Era = %+v", ge.fate)
 	}
-	if want := int(math.Round(expectedEraTicks("steel_era"))); ge.fate.Window != want {
+	if want := int(math.Round(baseEraTicks("steel_era"))); ge.fate.Window != want {
 		t.Errorf("window %d, want %d (the era's ages at their targets)", ge.fate.Window, want)
 	}
 	if len(rolled) != 1 || rolled[0].Payload["epoch_key"] != "steel_era" {
@@ -404,7 +404,7 @@ func TestHarbingerArrivesALeadBeforeTheStrike(t *testing.T) {
 	if early.harbinger == nil || early.harbinger.ArrivedTick != 10 {
 		t.Fatalf("early strike: thread %+v, want one arrived at the current tick", early.harbinger)
 	}
-	if want := 10 + int(harbingerLeadMin*expectedAgeTicks("iron_age")); early.fate.StrikeTick != want || early.pendingCatastrophe != "" {
+	if want := 10 + int(harbingerLeadMin*baseAgeTicks("iron_age")); early.fate.StrikeTick != want || early.pendingCatastrophe != "" {
 		t.Errorf("early strike: fated for %d (pending %q), want held to %d", early.fate.StrikeTick, early.pendingCatastrophe, want)
 	}
 
@@ -412,9 +412,9 @@ func TestHarbingerArrivesALeadBeforeTheStrike(t *testing.T) {
 	// figure comes at the advance. The Iron Age's lead (half of 4,500 ticks)
 	// falls short; the Classical Age's (half of 6,300) reaches.
 	adv := fateEngine(t, "iron_age", 5)
-	forceFate(t, adv, int(expectedAgeTicks("iron_age"))+int(0.45*expectedAgeTicks("classical_age")))
+	forceFate(t, adv, int(baseAgeTicks("iron_age"))+int(0.45*baseAgeTicks("classical_age")))
 	adv.fate.LeadFrac = 0.5
-	adv.tick = int(expectedAgeTicks("iron_age")) - 10
+	adv.tick = int(baseAgeTicks("iron_age")) - 10
 	adv.harbingerTickCheck()
 	if adv.harbinger != nil {
 		t.Fatal("setup: the harbinger came in the Iron Age")
@@ -440,16 +440,16 @@ func TestForecastTiersByEra(t *testing.T) {
 	}{
 		{"iron_age", func([]string) int { return 100 }, WhenUntold, false},
 		// The strike falls in the Classical Age's span of the schedule.
-		{"classical_age", func(a []string) int { return int(expectedAgeTicks(a[0]) + 0.5*expectedAgeTicks(a[1])) }, WhenThisAge, false},
+		{"classical_age", func(a []string) int { return int(baseAgeTicks(a[0]) + 0.5*baseAgeTicks(a[1])) }, WhenThisAge, false},
 		// It falls in the Medieval Age's span, the Oracle can only say "this era".
 		{"classical_age", func(a []string) int {
-			return int(expectedAgeTicks(a[0]) + expectedAgeTicks(a[1]) + 0.9*expectedAgeTicks(a[2]))
+			return int(baseAgeTicks(a[0]) + baseAgeTicks(a[1]) + 0.9*baseAgeTicks(a[2]))
 		}, WhenThisEra, false},
 		// The era's last age cannot be outlasted.
-		{"medieval_age", func(a []string) int { return int(expectedEraTicks("iron_era")) - 1 }, WhenThisAge, false},
-		{"renaissance_age", func(a []string) int { return int(expectedAgeTicks(a[0]) / 2) }, WhenThisAge, false},
-		{"industrial_age", func(a []string) int { return int(expectedEraTicks("steel_era")) - 1 }, WhenThisAge, true},
-		{"victorian_age", func(a []string) int { return int(expectedEraTicks("electric_era")) - 1 }, WhenThisEra, true},
+		{"medieval_age", func(a []string) int { return int(baseEraTicks("iron_era")) - 1 }, WhenThisAge, false},
+		{"renaissance_age", func(a []string) int { return int(baseAgeTicks(a[0]) / 2) }, WhenThisAge, false},
+		{"industrial_age", func(a []string) int { return int(baseEraTicks("steel_era")) - 1 }, WhenThisAge, true},
+		{"victorian_age", func(a []string) int { return int(baseEraTicks("electric_era")) - 1 }, WhenThisEra, true},
 	} {
 		t.Run(tc.age+"_"+tc.want, func(t *testing.T) {
 			ge := fateEngine(t, tc.age, 1)
@@ -692,7 +692,7 @@ func TestStrikeLandsAtTheTransitionWhenOutrun(t *testing.T) {
 		// brings the doom first.
 		ge := fateEngine(t, "classical_age", 3)
 		ages := config.EpochByKey()["iron_era"].Ages
-		forceFate(t, ge, int(expectedAgeTicks(ages[0])+0.8*expectedAgeTicks(ages[1])))
+		forceFate(t, ge, int(baseAgeTicks(ages[0])+0.8*baseAgeTicks(ages[1])))
 		tickTo(ge, arrivalTick(ge))
 		if ge.harbinger == nil || ge.harbinger.When != WhenThisAge {
 			t.Fatalf("setup: thread %+v", ge.harbinger)
@@ -706,7 +706,7 @@ func TestStrikeLandsAtTheTransitionWhenOutrun(t *testing.T) {
 	t.Run("before the era ends", func(t *testing.T) {
 		// "Before the era ends": an advance inside the era does not bring it.
 		ge := fateEngine(t, "classical_age", 3)
-		forceFate(t, ge, int(expectedEraTicks("iron_era"))-10)
+		forceFate(t, ge, int(baseEraTicks("iron_era"))-10)
 		ge.fate.LeadFrac = harbingerLeadMax
 		delete(ge.harbingerArrived, "iron_era")
 		ge.fateArrive()
@@ -869,7 +869,7 @@ func TestFalseProphetRevealedAfterItsWindow(t *testing.T) {
 	t.Run("timed, revealed at the age's end", func(t *testing.T) {
 		ge := fateEngine(t, "classical_age", 17)
 		ages := config.EpochByKey()["iron_era"].Ages
-		if err := ge.ForceFalseProphetForTest("iron_era", int(expectedAgeTicks(ages[0])+0.7*expectedAgeTicks(ages[1]))); err != nil {
+		if err := ge.ForceFalseProphetForTest("iron_era", int(baseAgeTicks(ages[0])+0.7*baseAgeTicks(ages[1]))); err != nil {
 			t.Fatal(err)
 		}
 		tickTo(ge, arrivalTick(ge))
@@ -895,7 +895,7 @@ func TestFalseProphetRevealedAfterItsWindow(t *testing.T) {
 		// In the Stone Era nothing can strike: a false prophet who has not
 		// come by its end never comes, and the advance is not held up.
 		ge := fateEngine(t, "bronze_age", 18)
-		if err := ge.ForceFalseProphetForTest("stone_era", int(expectedEraTicks("stone_era"))-1); err != nil {
+		if err := ge.ForceFalseProphetForTest("stone_era", int(baseEraTicks("stone_era"))-1); err != nil {
 			t.Fatal(err)
 		}
 		tickTo(ge, 10)
@@ -978,7 +978,7 @@ func TestCosmicEraRollsAFateBesideTheLastPassage(t *testing.T) {
 	if err := ge.AdvanceAge(); err != nil {
 		t.Fatal(err)
 	}
-	if f := ge.fate; f == nil || f.EpochKey != "cosmic_era" || f.FalseProphet || f.Window != int(math.Round(expectedEraTicks("cosmic_era"))) {
+	if f := ge.fate; f == nil || f.EpochKey != "cosmic_era" || f.FalseProphet || f.Window != int(math.Round(baseEraTicks("cosmic_era"))) {
 		t.Fatalf("cosmic fate = %+v", ge.fate)
 	}
 	lp := ge.lastPassageThread()

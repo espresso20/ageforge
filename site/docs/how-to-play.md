@@ -14,7 +14,7 @@ Build → Staff → Research → Advance → Repeat
 2. **Staff** them: workers arrive on their own while housing and food allow and go to work by your [worker shares](workers-and-domains.md#worker-shares). Steer the split with `workers share`, or `recruit` and `assign` by hand
 3. **Research** technologies that multiply your output
 4. **Advance** to the next age with `advance` once its requirements are met and the age's wonder is built
-5. **Prestige** once you reach the Modern Age (or later) for permanent bonuses
+5. **Prestige** once you reach the Modern Age (or later) for permanent upgrades. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
 
 ---
 

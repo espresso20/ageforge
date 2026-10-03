@@ -24,6 +24,8 @@ func epochProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n")
 	epochProviderLegacyBonuses(&sb, state)
 	sb.WriteString("\n")
+	writeMasterySection(&sb, state)
+	sb.WriteString("\n")
 	epochProviderCivilizationLog(&sb, state)
 
 	return sb.String()

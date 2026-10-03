@@ -96,7 +96,7 @@ These follow the same rules:
 - Produced by buildings (worker-modified)
 - Drained by worker food costs, building queue costs, tech research costs
 - Capped by storage buildings (see lineages.md Storage table)
-- Reset to 0 on prestige (prestige bonuses increase production rate multiplier, not stored amount)
+- Reset to 0 on prestige (prestige upgrades and Era Mastery raise rates and caps, not the stored amount)
 - Storage cap must always satisfy **Law 1 (Storage Covenant)** from economy.md
 
 ---

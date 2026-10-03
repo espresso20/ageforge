@@ -85,6 +85,24 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 	if d := firstDiff(up.GetState(), ctl.GetState(), twinSkip); !check("twin engines agree", d == "", "two engines played from seed %d differ at %s", seed, d) {
 		return steps
 	}
+	// Era Mastery twin check: the same state at mastery 1 (k = 2) in its
+	// age runs every rate at exactly double and holds double the storage.
+	{
+		kb, kk := hookedEngine(e, seed), hookedEngine(e, seed)
+		age := kb.GetState().Age
+		kb.SetMasteryForTest(nil, age)
+		kk.SetMasteryForTest(map[string]int{age: 1}, age)
+		bs, ks := kb.GetState(), kk.GetState()
+		var bad []string
+		for _, r := range sortedKeys(bs.Resources) {
+			b, k := bs.Resources[r], ks.Resources[r]
+			if k.Rate != 2*b.Rate || k.Storage != 2*b.Storage {
+				bad = append(bad, fmt.Sprintf("%s rate %g vs %g, storage %g vs %g", r, k.Rate, b.Rate, k.Storage, b.Storage))
+			}
+		}
+		check("mastery twin: k = 2 doubles rates and storage", ks.Mastery.K == 2 && len(bad) == 0, "k %v; %s", ks.Mastery.K, strings.Join(bad, "; "))
+	}
+
 	both := func(f func(ge *game.GameEngine) error) error {
 		if err := f(up); err != nil {
 			return err
@@ -133,7 +151,7 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 		for _, p := range probs {
 			msgs = append(msgs, p.msg)
 		}
-		check(label+": legacy, ruins, upgrades and passive bonus carry over", len(probs) == 0, "%s", strings.Join(msgs, "; "))
+		check(label+": legacy, ruins, upgrades and mastery carry over", len(probs) == 0, "%s", strings.Join(msgs, "; "))
 		return before, after, true
 	}
 	if _, _, ok := prestige(up, "prestige 1"); !ok {
@@ -162,7 +180,8 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 			{"starting_food", u2.Resources["food"].Amount - c2.Resources["food"].Amount, 25 * float64(bought["starting_food"])},
 			{"starting_wood", u2.Resources["wood"].Amount - c2.Resources["wood"].Amount, 25 * float64(bought["starting_wood"])},
 			{"population_cap", float64(u2.Workers.MaxPop - c2.Workers.MaxPop), 2 * float64(bought["population_cap"])},
-			{"storage_bonus", u2.Resources["food"].Storage - c2.Resources["food"].Storage, 20 * float64(bought["storage_bonus"])},
+			// Storage grows with Era Mastery's k, which both twins share.
+			{"storage_bonus", u2.Resources["food"].Storage - c2.Resources["food"].Storage, float64(20*float64(bought["storage_bonus"])) * u2.Mastery.K},
 			{"tick_speed", u2.TickSpeedBonus - c2.TickSpeedBonus, 0.05 * float64(bought["tick_speed"])},
 		}
 		for _, ef := range effects {
@@ -201,8 +220,15 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 			want := int(math.Floor(float64(full) * game.LastPassageKeepFor(b4.LastPassage.BraceLevel)))
 			check("endured passage pays its share", paid == want, "an endured Last Passage paid %d of %d points; the documented share is %d", paid, full, want)
 			check("cosmic legacy survives an endured passage", a4.LastPassage.CosmicLegacy, "the Cosmic Legacy was lost")
-			check("legacy bonuses and ruins survive every prestige", len(prestigeCarryProblems(before, a4, "plain")) == 0,
-				"%v", prestigeCarryProblems(before, a4, "plain"))
+			// Several prestiges apart, so mastery has moved more than one
+			// level: only what must never be lost is compared.
+			var lost []problem
+			for _, p := range prestigeCarryProblems(before, a4, "plain") {
+				if p.check != "prestige_mastery" {
+					lost = append(lost, p)
+				}
+			}
+			check("legacy bonuses and ruins survive every prestige", len(lost) == 0, "%v", lost)
 		}
 	}
 	return steps

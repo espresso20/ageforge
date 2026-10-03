@@ -24,7 +24,7 @@ const (
 //
 // Source is a stable id used purely for attribution in a Breakdown — it never
 // affects the math. Examples: "research:masonry", "wonder:colossus",
-// "prestige:passive", "morale", "event:peaceful_century",
+// "prestige", "morale", "event:peaceful_century",
 // "milestone_chain:settlement".
 //
 // Target names the multiplier bucket this contributes to, e.g.

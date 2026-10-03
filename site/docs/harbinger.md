@@ -16,19 +16,19 @@ A fated doom strikes at a random moment anywhere in the era: in any of its ages,
 
 | Era | Expected length at 1x | Figures, in order | Can a doom be fated? |
 |-----|-----------------------|-------------------|----------------------|
-| Stone Era | 2.5 h | the Wild Man, the Hermit, the Soothsayer | No. Its harbingers are always [false prophets](#false-prophets). |
-| Iron Era | 10.5 h | the Desert Prophet, the Oracle, the Town Crier | Yes, 27% of the time |
-| Steel Era | 21 h | the Court Astrologer, the Pamphleteer, the Newsboy | Yes, 27% of the time |
-| Electric Era | 31 h | the Doomsayer, the Telegraph, the Civil Defense Broadcast | Yes, 27% of the time |
-| Digital Era | 42 h | the Evening News, the Chain Email, the Viral Video | Yes, 27% of the time |
-| Neon Era | 60 h | the Ghost in the Net, the Reactor Warden, the Deep Space Monitor | Yes, 27% of the time |
-| Cosmic Era | 96 h | the Distress Beacon, the Elder Relay, your future self, your unmade self | Yes, 27% of the time: the Reality Tear. A second thread warns of [the Last Passage](#the-last-passage). |
+| Stone Era | 4.9 h | the Wild Man, the Hermit, the Soothsayer | No. Its harbingers are always [false prophets](#false-prophets). |
+| Iron Era | 27.3 h | the Desert Prophet, the Oracle, the Town Crier | Yes, 27% of the time |
+| Steel Era | 54.6 h | the Court Astrologer, the Pamphleteer, the Newsboy | Yes, 27% of the time |
+| Electric Era | 80.6 h | the Doomsayer, the Telegraph, the Civil Defense Broadcast | Yes, 27% of the time |
+| Digital Era | 109.2 h | the Evening News, the Chain Email, the Viral Video | Yes, 27% of the time |
+| Neon Era | 156 h | the Ghost in the Net, the Reactor Warden, the Deep Space Monitor | Yes, 27% of the time |
+| Cosmic Era | 249.6 h | the Distress Beacon, the Elder Relay, your future self, your unmade self | Yes, 27% of the time: the Reality Tear. A second thread warns of [the Last Passage](#the-last-passage). |
 
 The fate is saved with your game, so reloading can't re-roll it.
 
 Until a harbinger arrives, nothing in the game tells a fated era from a quiet one: not the panels, the Epoch panel, the `catastrophe` command, the status bar, the log or the map. A quiet era is safe, for now.
 
-Every window on this page (the era's length, the harbinger's lead, what a figure means by "this age") is measured against the ages' target times, so the hours here follow the target table.
+Every window on this page (the era's length, the harbinger's lead, what a figure means by "this age") is measured against the ages' target times, so the hours here follow the target table. They are the hours at 1x, on the frontier. On known ground each age's target is first divided by its [Era Mastery](prestige.md#era-mastery) speed, so a mastered era is shorter and its doom and its warning both fall inside it: at 4x every window here is a quarter as long. Mastery is fixed for a run, so a fate rolled when you enter an era never shifts.
 
 ### When the harbinger arrives
 
@@ -36,12 +36,12 @@ A harbinger comes only when a doom is fated, or as a false prophet (see [False p
 
 | Era | Lead in its first age | Lead in its last age |
 |-----|-----------------------|----------------------|
-| Iron Era | 30 to 90 minutes (Iron Age) | 54 minutes to 2.7 hours (Medieval Age) |
-| Steel Era | 1.2 to 3.6 hours (Renaissance Age) | 1.6 to 4.8 hours (Industrial Age) |
-| Electric Era | 1.8 to 5.4 hours (Victorian Age) | 2.4 to 7.2 hours (Atomic Age) |
-| Digital Era | 2.4 to 7.2 hours (Modern Age) | 3.2 to 9.6 hours (Digital Age) |
-| Neon Era | 3.6 to 10.8 hours (Cyberpunk Age) | 4.4 to 13.2 hours (Space Age) |
-| Cosmic Era | 4.8 to 14.4 hours (Interstellar Age) | 4.8 to 14.4 hours (Transcendent Age) |
+| Iron Era | 1.3 to 3.9 hours (Iron Age) | 2.3 to 7 hours (Medieval Age) |
+| Steel Era | 3.1 to 9.4 hours (Renaissance Age) | 4.2 to 12.5 hours (Industrial Age) |
+| Electric Era | 4.7 to 14 hours (Victorian Age) | 6.2 to 18.7 hours (Atomic Age) |
+| Digital Era | 6.2 to 18.7 hours (Modern Age) | 8.3 to 25 hours (Digital Age) |
+| Neon Era | 9.4 to 28.1 hours (Cyberpunk Age) | 11.4 to 34.3 hours (Space Age) |
+| Cosmic Era | 12.5 to 37.4 hours (Interstellar Age) | 12.5 to 37.4 hours (Transcendent Age) |
 
 Rules:
 
