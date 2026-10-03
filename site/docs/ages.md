@@ -18,7 +18,7 @@ Every age can be finished, and an automated test checks this in every release. T
 
 ## How Long Each Age Takes
 
-Each age is tuned to a target length in game time at 1x speed. Building output, prices, wonder costs and requirements are all sized to it: a staffed production building earns back the price of its first copy in a fraction of the age's target, and nothing takes longer to build than a sixth of it.
+Each age is tuned to a target length in real time. Building output, prices, wonder costs and requirements are all sized to it: a staffed production building earns back the price of its first copy in a fraction of the age's target, and nothing takes longer to build than a sixth of it.
 
 | Age | Target | Age | Target |
 |---|---|---|---|
@@ -35,7 +35,7 @@ Each age is tuned to a target length in game time at 1x speed. Building output, 
 | Electric | 26h | | |
 | Atomic | 31h 12m | | |
 
-That is about a week (167 hours) from a fresh start to the Modern Age, where prestige unlocks. From the Bronze Age on, every age runs 2.6 times as long as it did on the earlier three-day curve, and the game's timers (events, raids, trade routes, expeditions, cooldowns) stretch with it, so each age holds as many of them as before. You don't have to sit through it: the game grants up to 24 hours of offline progress when you come back.
+That is about a week (167 hours) from a fresh start to the Modern Age, where prestige unlocks. From the Bronze Age on, every age runs 2.6 times as long as it did on the earlier three-day curve, and the game's timers (events, raids, trade routes, expeditions, cooldowns) stretch with it, so each age holds as many of them as before. You don't have to sit through it: the game keeps playing while you are away, for up to 24 hours at 50% of your normal production.
 
 These are first-run lengths. On later runs an age a past run completed is **known ground** and runs faster: 2x after one completion, up to 4.2x after ten, with production and storage multiplied and build and research times divided by the same factor. Ages 6 or more behind the deepest age you have ever entered run at least 4x. See [Era Mastery](prestige.md#era-mastery).
 
@@ -43,7 +43,7 @@ These are first-run lengths. On later runs an age a past run completed is **know
 
 When your civilization crosses into a new age:
 
-1. **Carryover is capped.** Each resource the new age *uses as a build cost* is capped to roughly **8× the cheapest new-age starter building's cost** in that resource, enough to pay for a handful of opening buildings. If you were already below that cap, your stockpile carries over untouched. Anything above the cap is lost, so stockpiling before an advance doesn't pay. Resources the new age does **not** build with (mainly food) keep **10%** of what you had, and **faith is exempt** (it carries over in full). You enter each age with a small head start.
+1. **Carryover is capped.** Each resource the new age *uses as a build cost* is capped to roughly **8× the cheapest new-age starter building's cost** in that resource, enough to pay for a handful of opening buildings. If you were already below that cap, your stockpile carries over untouched. Anything above the cap is lost, so stockpiling before an advance doesn't pay. Resources the new age does **not** build with (mainly food) keep **10%** of what you had, and **faith is exempt** (it carries over in full). Whatever the [build plan](plan.md) had banked from overflow goes back to your stores first, so it is trimmed like the rest. You enter each age with a small head start.
 2. **Buildings whose next tier arrives in the new age are marked as upgradeable.** They are not converted automatically. Storage buildings never upgrade: every stash, storage pit or vault you built keeps counting toward your storage for the rest of the run. Each upgradeable building shows a gold hint in the Economy panel:
    ```
    ↑ Upgrade available → Forager Post  type: upgrade gathering_camp
@@ -67,7 +67,7 @@ See [Buildings: Building Upgrades](buildings.md#building-upgrades) for the full 
 
 ## Epoch Overview
 
-Every 3 ages you cross an **epoch boundary**. Epoch transitions trigger an event roll (see [Epochs](epochs.md)) and may shift your buildings' output resources.
+Ages are grouped into epochs of 3 (the Cosmic Era has 4), and the advance into a new epoch crosses an **epoch boundary**. An epoch transition triggers an event roll (see [Epochs](epochs.md)); the stockpile trim above applies to it like any other advance.
 
 | Ages | Epoch | Symbol |
 |------|-------|--------|
@@ -90,13 +90,13 @@ Starting age. No requirements.
 **Unlocks:**
 - Buildings: Hut, Stash, Gathering Camp, Wood Camp, Story Circle, Shrine, Sacred Grove
 - Resources: Food, Wood, Knowledge, Faith
-- Worker domains: food, knowledge, faith
+- Worker domains: food, lumber, knowledge, faith
 
 ---
 
 ## Age 1: Stone Age 🪓
 
-> *Stone tools and the first settled villages.*
+> *Stone tools and the first permanent camps.*
 
 | Requirement | Amount |
 |---|---|
@@ -106,13 +106,13 @@ Starting age. No requirements.
 | Huts | 10 |
 | Story Circles | 5 |
 
-**Unlocks:** Longhouse, Storage Pit, Forager Post, Woodcutter Camp, Stone Camp, Stone Pit, Elders' Hall, Standing Stones, War Camp, Great Monolith · **Resource:** Stone · **New domains:** lumber, masonry
+**Unlocks:** Longhouse, Storage Pit, Forager Post, Woodcutter Camp, Stone Camp, Stone Pit, Elders' Hall, Standing Stones, War Camp, Great Monolith · **Resource:** Stone · **New domains:** masonry, military
 
 ---
 
 ## Age 2: Bronze Age 🛡
 
-> *Metalworking begins.*
+> *Metalworking arrives, and with it trade.*
 
 | Requirement | Amount |
 |---|---|
@@ -143,7 +143,7 @@ Starting age. No requirements.
 | Quarries | 8 |
 | Scriptoria | 5 |
 
-**Unlocks:** Townhouse, Granary, Field Works, Timber Yard, Marble Quarry, Agora, Temple, Hunting Lodge, Legion Fort, Trading Post, Ironworks, Smelter, Colosseum · **Resources:** Marble, Iron Ore · **New domains:** military, metallurgy
+**Unlocks:** Townhouse, Granary, Field Works, Timber Yard, Marble Quarry, Agora, Temple, Hunting Lodge, Legion Fort, Trading Post, Ironworks, Smelter, Colosseum · **Resources:** Marble, Iron Ore, Soldiers · **New domain:** metallurgy
 
 ---
 
@@ -161,7 +161,7 @@ Starting age. No requirements.
 | Agoras | 12 |
 | Trading Posts | 10 |
 
-**Unlocks:** Villa, Classical Vault, Terrace Farm, Wood Workshop, Marble Works, Library, Oracle House, Military Academy, Merchant Quarter, Aqueduct, Forge, Amphitheater, Parthenon · **Resource:** Culture
+**Unlocks:** Villa, Classical Vault, Terrace Farm, Wood Workshop, Marble Works, Library, Oracle House, Military Academy, Merchant Quarter, Aqueduct, Forge, Amphitheater, Parthenon, Cultural Obelisk · **Resource:** Culture
 
 ---
 
@@ -179,7 +179,7 @@ Starting age. No requirements.
 | Libraries | 15 |
 | Military Academies | 15 |
 
-**Unlocks:** Manor, Strongroom, Demesne, Sawmill, Stonemasons' Guild, Monastery Library, Cathedral, Castle Keep, Guildhall, Workshop, Ironmonger, Great Hall, Great Library · **Resource:** Steel
+**Unlocks:** Manor, Strongroom, Demesne, Sawmill, Stonemason's Guild, Monastery Library, Cathedral, Castle Keep, Guildhall, Workshop, Ironmonger, Great Hall, Great Library, Grand Amphitheater · **Resource:** Steel
 
 ---
 
@@ -215,7 +215,7 @@ Starting age. No requirements.
 | Universities | 8 |
 | Art Studios | 8 |
 
-**Unlocks:** Settlement Block, Colonial Warehouse, Plantation, Coal Works, Deep Iron Mine, Natural Philosophy Hall, Mission, Fort, Port, Dockyard, Colonial Steelworks, Concert Hall, Grand Lighthouse
+**Unlocks:** Settlement Block, Colonial Warehouse, Plantation, Coal Works, Deep Iron Mine, Natural Philosophy Hall, Mission, Fort, Port, Harbor, Dockyard, Colonial Steelworks, Concert Hall, Embassy, Grand Lighthouse
 
 ---
 
@@ -231,7 +231,7 @@ Starting age. No requirements.
 | Plantations | 8 |
 | Ports | 10 |
 
-**Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Colliery, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Integrated Steelworks, Steel Mill, Coal Plant, Opera House, Geographic Society, Crystal Palace · **Resource:** Oil
+**Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Colliery, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Harbor Authority, Integrated Steelworks, Steel Mill, Coal Plant, Opera House, Grand Embassy, Geographic Society, Crystal Palace, Eternal Library · **Resource:** Oil · **New domain:** energy
 
 ---
 
@@ -247,13 +247,13 @@ Starting age. No requirements.
 | Integrated Steelworks | 5 |
 | Tenements | 30 |
 
-**Unlocks:** Row House, Victorian Vault, Mechanized Farm, Oil Derrick, Uranium Mine, Academy, Grand Cathedral, Garrison, Bank, Steam Works, Bessemer Plant, Steam Turbine, Grand Museum, Eiffel Tower · **Resource:** Electricity · **New domain:** energy
+**Unlocks:** Row House, Victorian Vault, Mechanized Farm, Oil Derrick, Uranium Mine, Academy, Grand Cathedral, Garrison, Bank, Steam Works, Bessemer Plant, Steam Turbine, Grand Museum, Eiffel Tower · **Resource:** Electricity
 
 ---
 
 ## Age 10: Electric Age ⚡
 
-> *Electric power reaches every home.*
+> *Electric light and power reach daily life.*
 
 | Requirement | Amount |
 |---|---|
@@ -270,7 +270,7 @@ Starting age. No requirements.
 
 ## Age 11: Atomic Age ☢️
 
-> *Nuclear power, for good and ill.*
+> *Nuclear power, for better and worse.*
 
 | Requirement | Amount |
 |---|---|
@@ -300,7 +300,7 @@ Starting age. No requirements.
 
 Prestige becomes available at this age. Type `prestige confirm yes` to reset with permanent upgrades. See [Prestige System](prestige.md).
 
-**Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Power Grid Hub, Titanium Smelter, Oil Refinery, TV Studio, Space Program · **Resources:** Data, Nanobots, Titanium Ore
+**Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport, Power Grid Hub, Titanium Smelter, Oil Refinery, TV Studio, Space Program, Nano Foundry, Monument of Ages · **Resources:** Data, Nanobots
 
 ---
 
@@ -317,7 +317,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Tower Blocks | 30 |
 | Oil Refineries | 15 |
 
-**Unlocks:** Smart Complex (after Internet of Things), Info Vault, Smart Farm (after Internet of Things), Smart Refinery, Precision Mine, Innovation Hub, Digital Temple, Cyber Command, Venture Hub, Smart Grid Node, Aerospace Foundry, Microgrid Array, Server Farm, Media Center, Global Network · **New domain:** hacker
+**Unlocks:** Smart Complex (after Internet of Things), Info Vault, Smart Farm (after Internet of Things), Smart Refinery, Precision Mine, Innovation Hub, Digital Temple, Cyber Command, Venture Hub, Container Terminal, Smart Grid Node, Aerospace Foundry, Microgrid Array, Server Farm, Media Center, Global Network · **New domain:** hacker
 
 ---
 
@@ -333,7 +333,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Media Centers | 15 |
 | Innovation Hubs | 15 |
 
-**Unlocks:** Megaplex, Digital Archive, Nano Farm, Bio Fabrication Lab, Nano Drill Complex, AI Research Lab, Cyber Shrine, Drone Warfare Center, Crypto Exchange, Neural Grid, Nano Alloy Plant, Quantum Battery Array, Data Center, VR Studio, World Simulation
+**Unlocks:** Megaplex, Digital Archive, Nano Farm, Bio Fabrication Lab, Nano Drill Complex, AI Research Lab, Cyber Shrine, Drone Warfare Center, Crypto Exchange, Logistics Hub, Neural Grid, Nano Alloy Plant, Quantum Battery Array, Data Center, VR Studio, World Simulation
 
 ---
 
@@ -355,7 +355,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 
 ## Age 16: Fusion Age 🔬
 
-> *Fusion brings cheap, clean energy.*
+> *Fusion brings clean, plentiful energy.*
 
 | Requirement | Amount |
 |---|---|
@@ -364,7 +364,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Data | 78B |
 | Augmentation Foundries | 15 |
 | Arcology Pods | 25 |
-| Black Markets | 15 |
+| Black Market Hubs | 15 |
 
 **Unlocks:** Habitat Ring, Fusion Vault, Bio Reactor Farm, Molecular Synthesizer, Exotic Mineral Extractor, Theoretical Institute, Quantum Chapel, Plasma Command, Energy Exchange (after Maglev Transit), Fusion Reactor, Exotic Matter Forge, Tokamak Array, Quantum Server Farm, Neural Art Complex, Stellar Cradle · **Resource:** Plasma
 
@@ -383,13 +383,13 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Tokamak Arrays | 10 |
 | Plasma Commands | 10 |
 
-**Unlocks:** Orbital Habitat, Orbital Depot, Hydroponic Bay, Quantum Organic Extractor, Asteroid Crystal Mine, Deep Space Observatory, Orbital Sanctuary, Space Force Base, Asteroid Market, Launch Complex, Orbital Refinery, Solar Collector Array, Orbital Data Relay, Zero-G Gallery, Dyson Scaffold · **Resource:** Titanium · **New domain:** astronaut
+**Unlocks:** Orbital Habitat, Orbital Depot, Hydroponic Bay, Quantum Organic Extractor, Asteroid Crystal Mine, Deep Space Observatory, Orbital Sanctuary, Space Force Base, Asteroid Market, Launch Complex, Orbital Refinery, Solar Collector Array, Orbital Data Relay, Zero G Gallery, Dyson Scaffold · **Resources:** Titanium, Titanium Ore
 
 ---
 
 ## Age 18: Interstellar Age 🛸
 
-> *Ships set out between the stars.*
+> *Ships cross the space between stars.*
 
 | Requirement | Amount |
 |---|---|
@@ -437,7 +437,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 
 ## Age 21: Transcendent Age ✨
 
-> *The final age.*
+> *The last age. There is nowhere further to go.*
 
 | Requirement | Amount |
 |---|---|
@@ -447,7 +447,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Reality Forges | 15 |
 | Probability War Rooms | 15 |
 
-The end of the progression. Prestige has been available since Modern Age (Age 12). Reaching the Transcendent Age gives the most prestige points, so it is the best time to prestige if you haven't already.
+The end of the progression. Prestige has been available since the Modern Age (Age 12). A prestige from the Transcendent Age pays the most points a single run can, though each late age adds only a point or two (see [Prestige Points Formula](prestige.md#prestige-points-formula)).
 
 **Unlocks:** Singularity Core, Transcendent Nexus, Omniversal War Council, Omniversal Bazaar, Singularity Engine
 

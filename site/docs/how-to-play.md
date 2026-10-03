@@ -1,6 +1,6 @@
 # How to Play
 
-AgeForge is a **command-driven idle empire builder**. Resources accumulate passively, buildings construct over time, and you steer by typing commands at the `>` prompt.
+AgeForge is a **command-driven idle civilization game**. Resources accumulate on their own, buildings construct over time, and you steer by typing commands at the `>` prompt. A first run takes about a week of real time, so the game is built for checking in a few times a day.
 
 ---
 
@@ -16,24 +16,29 @@ Build → Staff → Research → Advance → Repeat
 4. **Advance** to the next age with `advance` once its requirements are met and the age's wonder is built
 5. **Prestige** once you reach the Modern Age (or later) for permanent upgrades. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
 
+New to the game? [Your First Age](first-ten-minutes.md) walks you through the Primitive Age step by step, from the first `gather` to the Sacred Grove.
+
 ---
 
 ## The screen layout
 
 ```
-┌─ Status bar ──────────────────────────────────────────────────────────┐
-│ Stone Age  Tick: 1247  |  Pop: 18/30  Morale: 54%  |  panel hint      │
-├─ Age progress ────────────────────────────────────────────────────────┤
-│ Next: Bronze Age  food:3102/4000 █████░  stone:890/4000 ███░░  ...    │
-├─ Economy panel (PgUp / PgDn scroll) ─────────────┬─ Panels ───────────┤
-│  Resources, buildings, build queue               │  panel names       │
-│  ...                                             │  ...               │
-│  Log                                             ├─ Workers ──────────┤
-│  ...                                             │  pop, idle, drain  │
-├──────────────────────────────────────────────────┴────────────────────┤
-│ > _                                                                   │
-└───────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Name · Stone Age  ◈ Stone Era  |  Pop: 18/30  Morale 54%  |  hint        │  status bar
+│ Next Age: Bronze Age  ✗ Food 3.1K/4K  ✓ Knowledge 1.5K/1.5K  ✗ Stone ... │  next age row
+├─ Resources ──────────┬─ Buildings ──────────────────────┬─ Panels ───────┤
+│ amounts and rates    │ (mini map on a large terminal)   │ panel names    │
+├─ Under construction ─┤ what you can build, what you own │ ...            │
+│ progress bars        │ PgUp / PgDn scroll               │                │
+├─ Log ────────────────┤                                  ├─ Workers ──────┤
+│ ...                  │                                  │ pop, idle,     │
+│                      │                                  │ housing, food  │
+├─ Command ────────────┴──────────────────────────────────┴────────────────┤
+│ > _                                                                      │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
+
+The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row marks each requirement ✓ or ✗, and names the age's wonder until it stands. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
 
 ---
 
@@ -41,114 +46,53 @@ Build → Staff → Research → Advance → Repeat
 
 - Type a panel's name to open it: `research`, `army`, `trade`, `factions`, `map`, `help` and so on.
 - `help` opens the Help panel: a full command reference plus the list of every panel you can open.
-- **PgUp / PgDn** scroll the Economy panel.
+- **Tab** or **→** takes the completion shown in dim text after the cursor; press **Tab** again for the next one.
+- **PgUp / PgDn** scroll the Buildings list.
 - **↑ / ↓** step through your command history.
 - **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the main menu.
 - Common commands have short names: `b` is `build`, `r` is `recruit`, `a` is `assign`, `s` is `status`, `t` is `trade`. See [Command shortcuts](commands.md#command-shortcuts) for the full list.
 
 ---
 
-## Step-by-step: First 15 minutes
+## A week-long first run
 
-The Primitive Age is tuned to take about **15 minutes** at 1x speed, the Stone Age about **45 minutes**, and the Bronze Age just under **4 hours** (3h 54m). See [How Long Each Age Takes](ages.md#how-long-each-age-takes) for the full curve.
+A first run takes about **a week of real time** to reach the Modern Age, where you can prestige for the first time. The first hour is quick: the Primitive Age takes about 15 minutes and the Stone Age about 45. From the Bronze Age on, every age takes hours: the Bronze Age 3h 54m, the Iron Age 6h 30m, and longer from there. See [How Long Each Age Takes](ages.md#how-long-each-age-takes) for the full curve. A tick is 2 seconds of real time.
 
-### 1. Build a gathering camp and a wood camp
-Food runs out before anything else. Get production going first:
-```
-build gathering_camp
-build wood_camp
-```
-A fully staffed gathering camp makes **+1.0 food/tick**; a staffed wood camp about **+0.57 wood/tick**.
+You don't need to watch it. Check in a few times a day, spend what has built up, and set the game up for the hours you're away:
 
-### 2. Build huts (housing)
-You start with no housing, so you can't recruit anyone yet. Each hut gives +10 housing:
-```
-build hut
-```
-Queue another while the first is building. More housing means more workers.
+- **Offline progress.** When you load a save, the game credits the time since you saved it, up to **24 hours**, at **50%** of your production. It runs that time in steps, so construction and research finish, the build plan starts what the income pays for, and your worker shares recruit and staff as the hours pass. The welcome-back lines in the log say what happened.
+- **The build plan.** Queue up to 60 builds, techs, trades and an advance with `plan build`, `plan research`, `plan trade` and `plan advance`. The game starts each item, in order, as the resources come in, and pays for it only when it starts. See [The Build Plan](plan.md).
+- **Overflow.** Production a full store would waste goes into your age's wonder bank (`wonder overflow`, on by default), and what the wonder doesn't need goes toward the plan's queued copies.
+- **Storage.** From the Bronze Age on, an age's storage built out in full holds about 4.5 hours of that age's typical income. Past that, anything overflow doesn't take is lost, so build storage before a long absence.
 
-### 3. Build stashes (storage)
-Resources hit their storage limit quickly. Add storage:
-```
-build stash
-```
+---
 
-### 4. Watch your first workers arrive
-Once a hut stands, workers come on their own (auto-recruit) and go to the camps' empty slots, as long as your food income can feed them. See them in the Workers panel:
-```
-workers
-```
-A staffed camp makes **5x** what an empty one does (an unstaffed building runs at 20%). You don't pick a domain: a worker takes the domain of the building it works in. You can still `recruit` and `assign` by hand; workers you place stay where you put them.
+## Catastrophes and the harbinger
 
-### 5. Steer the split (optional)
-Every domain starts on auto, following your buildings' worker slots. To lean on one, give it a share of your workforce:
-```
-workers share knowledge 40
-```
-See [Worker Shares](workers-and-domains.md#worker-shares) for how the split works.
-
-### 6. Build a story circle for knowledge
-Knowledge workers produce knowledge. Build a story circle and workers come to staff it:
-```
-build story_circle
-```
-A fully staffed story circle makes **+0.2 knowledge/tick**.
-
-### 7. Research tool making
-Once you have 800 knowledge:
-```
-research tool_making
-```
-This gives a permanent +15% worker output.
-
-### 8. Build the age's wonder
-Every age has a wonder, and you can't advance until it stands. For the Primitive Age that's the Sacred Grove (1K wood, 500 food):
-```
-wonder collect all
-build sacred_grove
-```
-`wonder collect all` banks every resource the wonder still needs, as far as your stock goes. Run it again as your stock refills.
-
-### 9. Watch the age bar and advance
-The second row shows what you need for the next age. The Stone Age asks for 1K food, 1K wood, 150 knowledge, 10 huts and 5 story circles, plus the Sacred Grove. Keep building and assigning until the requirements fill up, then type `advance`. The age never advances by itself; if you'll be away, queue `plan advance` and the plan advances for you once everything is ready.
+From the Iron Era on, each era may hide a fated catastrophe. It can strike at any moment in the era, but never unannounced: a **harbinger** comes first, with a `⚑ Harbinger` badge on the status bar. Type `harbinger` to read it, and answer if you like: **Appease** lowers the odds, **Brace** softens the blow, **Invite** makes it certain. When a catastrophe strikes, nothing is lost until you choose: **Endure** (lose part of your buildings, stores and workers, and keep your age) or **Succumb** (fall back to the Primitive Age and keep a permanent legacy bonus). Higher faith lowers the odds of a strike. See [Catastrophes](catastrophe.md) and [The Harbinger](harbinger.md).
 
 ---
 
 ## Resource management tips
 
-- Each resource has a storage limit. Once a resource is full, anything more it would produce is wasted.
-- **Food drain:** every worker eats the same amount, whatever building it staffs. That amount is set by your age: 0.06 food/tick per worker in the Primitive Age, rising 12% with each age to about 0.58 in the Quantum Age. Keep food production above total drain. If food hits zero, one worker dies every 5 ticks (10 seconds at 1x) until food recovers.
+- Each resource has a storage limit. Once a resource is full, anything more it would produce is wasted, unless wonder overflow banks it.
+- **Food drain:** every worker eats the same amount, whatever building it staffs. That amount is set by your age: 0.06 food/tick per worker in the Primitive Age, rising 12% with each age. Keep food production above total drain. If food hits zero, one worker dies every 5 ticks (10 seconds) until food recovers. See [Food drain](workers-and-domains.md#food-drain) and [Starvation](workers-and-domains.md#starvation).
 - **Food** runs out first early on. Keep your gathering camps staffed before anything else, then build up knowledge.
-- Watch the `Rate` column in the Economy panel. A negative rate is draining you.
+- Watch the rates in the Resources box. A negative rate is draining you.
 
 ## Morale
 
-Morale is a percentage multiplier on **all worker output**: `production = base × count × (0.20 + 0.80 × assigned/capacity) × morale`. It **starts at 50%** (neutral), has a **10% floor**, and is capped at **100% + 5% per wonder** built.
+Morale is a percentage that multiplies **all worker output**. It **starts at 50%**, which is neutral. Above 50% your workers get a bonus that grows to **+20%** at the morale cap (100%, plus 5% for every wonder you build); below 50% they take a penalty that deepens to **x0.50** at the 10% floor. Morale drifts back toward 50% each tick, so a bonus has to be kept up.
 
-The effect is a continuous curve centered on 50%. At exactly 50% production is normal. Above 50% production gets a bonus that grows steadily up to **+20%** at the cap. Below 50% it gets a penalty that deepens to **×0.50** at the 10% floor. Morale drifts back toward 50% each tick, so you have to keep a bonus going.
-
-**What raises it:** worship and culture buildings, your faith production rate, good events, age advances.
-**What lowers it:** starvation, military workers over 30% of population, idle workers over 50% of population, bad events and catastrophes.
-
-**How to use it:** keep food positive, build worship and culture buildings to reach the **+20%** bonus, keep the army under 30% of population, and build wonders to raise the cap.
-
-**Where to see it:** a colored bar in the Workers panel (`workers`) and the `Morale: NN%` figure in the status bar. Green means a bonus, red a penalty.
-
-For the full morale system see [Morale](morale.md).
+Worship and culture buildings, your faith income, good events and age advances raise it. Starvation, a large army, many idle workers, bad events and catastrophes lower it. It shows as `Morale NN%` on the status bar, green for a bonus and red for a penalty, and as a bar in the Workers panel. See [Morale](morale.md) for the full system.
 
 ---
 
 ## Workers
 
-Workers fall into 12 domains, each tied to specific buildings. Workers arrive on their own while housing and food allow and go to work by your worker shares (`workers share`; every domain on auto by default). You can also recruit with `recruit [count|max]` and assign with `assign <building> [count|all]`. A worker takes the domain of the building it is assigned to.
+Workers fall into 12 worker domains (food, lumber, masonry, knowledge, faith and so on), each tied to its own buildings. A worker takes the domain of the building it works in. Workers arrive on their own while housing and food allow and go to work by your worker shares (`workers share`; every domain is on auto by default). You can also recruit with `recruit [count|max]` and assign with `assign <building> [count|all]`.
 
-**Core domains**: food, knowledge, faith, military, trade, engineering
-**Production domains**: lumber, masonry, metallurgy, energy
-**Late-game domains**: hacker, astronaut
-
-Assigned workers raise a building's output. A building with no workers still produces at 20% (the floor), and a fully staffed one at 100%.
-
-Only food workers make food, but every worker eats it. Keep food production above total worker drain.
+Assigned workers raise a building's output. A building with no workers still produces at 20% (the floor), and a fully staffed one at 100%. Only food workers make food, but every worker eats it. See [Workers & Domains](workers-and-domains.md) for the full guide.
 
 ---
 
@@ -157,36 +101,38 @@ Only food workers make food, but every worker eats it. Keep food production abov
 | Age | Priority buildings |
 |---|---|
 | Primitive | Gathering Camp, Wood Camp, Hut, Stash, Story Circle, Shrine, Sacred Grove |
-| Stone Age | Stone Pit, Woodcutter Camp, Forager Post, Longhouse, Elders' Hall, Storage Pit, Great Monolith |
-| Bronze Age | Farm, Lumber Mill, Quarry, Scriptorium, Market, Smithy, Warehouse, Stonehenge |
-| Iron Age | Smelter, Agora, Trading Post, Hunting Lodge, Granary, Colosseum |
-| Classical | Library, Military Academy, Merchant Quarter, Forge, Amphitheater, Aqueduct, Parthenon |
-| Medieval | Guildhall, Castle Keep, Monastery Library, Cathedral, Great Library |
+| Stone Age | Stone Camp, Stone Pit, Woodcutter Camp, Forager Post, Longhouse, Elders' Hall, Storage Pit, Great Monolith |
+| Bronze Age | House, Farm, Lumber Mill, Quarry, Smithy, Scriptorium, Market, Warehouse, Stonehenge |
+| Iron Age | Townhouse, Field Works, Smelter, Trading Post, Agora, Granary, Colosseum |
+| Classical | Villa, Terrace Farm, Library, Merchant Quarter, Forge, Aqueduct, Classical Vault, Parthenon |
+| Medieval | Manor, Demesne, Guildhall, Monastery Library, Cathedral, Strongroom, Great Library |
 
 ### Upgrading buildings after an age advance
 
-Advancing an age does **not** convert your buildings. Instead, each one that has a newer version gets a pending upgrade marker, and a gold hint in the Economy panel names the target building. Use `upgrade <building>` to convert your existing copies to the new tier. For example, `upgrade gathering_camp` after entering the Stone Age turns your Gathering Camps into Forager Posts. An upgrade costs only the difference between the old and new price (with 50% of the old building's value credited back), so it is always cheaper than demolishing and rebuilding. Upgrade your food buildings first after every advance. Storage buildings never upgrade: the ones you built keep counting, so start on the new age's storage. See [Buildings](buildings.md#building-upgrades) for the full guide.
+Advancing an age does **not** convert your buildings. Instead, each one that has a newer version gets a pending upgrade marker, and a gold hint in the Economy panel names the target building. Use `upgrade <building>` to convert your existing copies to the new tier. For example, `upgrade gathering_camp` after entering the Stone Age turns your Gathering Camps into Forager Posts. An upgrade costs the new building's price minus what the old copy would sell for (half what it cost), takes effect at once and keeps the building's workers. Upgrade your food buildings first after every advance. Storage buildings never upgrade: the ones you built keep counting, so start on the new age's storage. See [Buildings](buildings.md#building-upgrades) for the full guide.
 
 ---
 
 ## What are wonders?
 
-Wonders are unique mega-structures (22 total, one per age) that grant **permanent civilization bonuses**. You need your age's wonder to **advance** to the next age. Each one costs about the same share of its age's economy, and you **bank** the resources before you build it. Stonehenge, the Bronze Age wonder, needs about 34K stone, 19K wood and 3.4K iron:
+Wonders are unique mega-structures (22 wonders in all, one per age) that grant **permanent civilization bonuses**. You need your age's wonder to **advance** to the next age. Each one costs about the same share of its age's economy, and you **bank** the resources before you build it. Stonehenge, the Bronze Age wonder, needs about 34K stone, 19K wood and 3.4K iron:
 
 ```
 wonder collect all
 build stonehenge
 ```
 
-`wonder collect all` banks as much of every needed resource as you have; repeat it until the bank is full, then build. Each wonder can be built only once. They are listed in the **Wonders** panel (`wonders`).
+`wonder collect all` banks as much of every needed resource as you have; repeat it until the bank is full, then build. Wonder overflow fills the bank too, from production your full stores would waste. Each wonder can be built only once. They are listed in the **Wonders** panel (`wonders`). See [Wonders](wonders.md).
 
 ---
 
 ## The Map
 
-Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes). It has two styles, and `s` in the panel switches between them:
+Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes). It has two styles:
 
-- **Roguelike** (the default): a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. Zoom out (`x`) to the whole known world and the civilizations you have met, or in (`z`) to a district with building names.
-- **Skyline**: your empire side-on as a panorama, one district for every age you have lived through. Windows light only where workers are staffed, and trade routes travel by land, sea or air.
+- **Roguelike** (the default): a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. It has three zooms: **PgUp** zooms out to the region, the known world with the civilizations you have met, and **PgDn** zooms in to a district with building names.
+- **Skyline**: your empire side-on as a panorama, one district for every age you have lived through. Windows light only where workers are staffed, and trade routes travel by land, sea or air. `←` and `→` scroll it, and PgUp and PgDn move half a screen.
 
-In both styles an inspect cursor tells you what it is on and the command to type for it. Press Enter to put that command into the prompt. `map style` and `map glyphs` choose the style and the glyph set, and are saved with your account. On a large terminal the dashboard also shows a **mini map** above the Buildings list. `citymap` and `worldmap` still work and open the Map. See [The Map](map.md) for all the keys.
+Switch with `map style skyline` or `map style roguelike` (or the shorter `style skyline`). `map glyphs` chooses the glyph set; both are saved with your account.
+
+The prompt keeps working while the Map is open. Letters you type go to the prompt, and the Map takes only the keys that print nothing: the arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab, Shift+Tab and Enter. In both styles an inspect cursor tells you what it is on and the command to type for it; Tab jumps between buildings and wonders, and Enter puts that command into the prompt. Esc closes the Map. On a large terminal the dashboard also shows a **mini map** above the Buildings list. `citymap` and `worldmap` still work and open the Map. See [The Map](map.md) for all the keys.

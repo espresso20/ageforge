@@ -1,6 +1,6 @@
 # Saving & Loading
 
-AgeForge keeps your civilization in named saves, with a regular autosave and a save browser. This page covers where saves live, the commands that manage them, and how to read the Load Game browser.
+AgeForge keeps your civilization in named saves, with a regular autosave and a save browser. This page covers where saves live, the commands that manage them, how to read the Load Game browser, and how to delete saves.
 
 ---
 
@@ -114,6 +114,25 @@ Saves can carry a tag in the list, explained on screen in a bordered **Key** box
 ## Save integrity
 
 Saves are signed. If a save file is edited outside the game, the integrity check fails and the browser flags the file `⚠ modified`. A `⚠ corrupt` file is one the game couldn't read at all; it stays in the list, dimmed, but cannot be loaded.
+
+---
+
+## Deleting saves
+
+To delete one save, highlight it in the Load Game browser and press `d`; the game asks you to confirm first.
+
+To delete them all, choose **Delete all saves** (`x`) on the main menu. After you confirm, it deletes **every save of your active account**: the autosave, your named saves and every branch. The runs in them, and the prestige they carried, are gone. **No backup is made, and it cannot be undone.**
+
+Your account itself is kept: its name, theme unlocks, lifetime stats and achievements stay, and so do any backups already in `data/backups/`. Other accounts' saves are not touched. To keep a copy, back the account up first with `account backup` (or `b` in the Accounts panel).
+
+Compare **wiping an account** (`w` in the Accounts panel). A wipe deletes the account itself, identity and unlocks included, along with every save in its slot, but it backs the whole slot up to `data/backups/` first. See [Wiping an account](account.md#wiping-an-account).
+
+| | Delete all saves | Wipe an account |
+|---|---|---|
+| Where | Main menu (`x`) | Accounts panel (`w`), behind a type-the-name confirm |
+| Saves | Every save of the active account | Every save of that account |
+| Account name, unlocks, lifetime stats, achievements | Kept | Deleted |
+| Backup first | No | Yes, to `data/backups/` |
 
 ---
 

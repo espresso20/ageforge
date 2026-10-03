@@ -1,6 +1,6 @@
 # Wonders
 
-22 unique wonders can be built exactly once per civilization. Each grants permanent civilization-wide bonuses. They are the strongest single buildings in the game.
+22 unique wonders can be built exactly once per run, one in each age. Each grants civilization-wide bonuses that last until you prestige or Succumb, and every age advance needs its age's wonder.
 
 ---
 
@@ -66,7 +66,13 @@ The flow resources (food, faith, culture) aren't priced that way. Those parts ar
 
 Wonders are banked a deposit at a time, but each part of a wonder's price fits in the most storage you can build in its age, so you never have to bank one resource in several rounds while sitting at its storage limit.
 
-No wonder takes longer to build than a sixth of its age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). Build times below are at 1x speed; one tick is 2 seconds.
+No wonder takes longer to build than a sixth of its age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). Build times below are in ticks, with the real time beside them; one tick is 2 seconds.
+
+---
+
+## Wonders and the all-production cap
+
+Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%), Warp Nexus (+80%), Cosmic Beacon (+50%), Reality Anchor (+50%) and Singularity Core (+200%). Every all-production bonus in the game, from wonders, techs, milestones, events and prestige alike, adds into one pool, and output is multiplied by at most x3 (see [The all-production cap](resources.md#the-all-production-cap)). Techs and wonders alone reach the cap from about the Electric Age, so the late wonders' all-production bonuses mostly matter after a setback pulls the pool back down. Their flat outputs (dark matter, antimatter, quantum flux and the rest) count in full.
 
 ---
 
@@ -116,8 +122,8 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 | Resource | Cost |
 |---|---|
 | Stone | 320K |
-| Iron | 72K |
-| Gold | 64K |
+| Iron | 71K |
+| Gold | 63K |
 
 **Bonus:** +100 housing · +2.0 culture/t
 
@@ -145,7 +151,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 | Gold | 2.7M |
 | Knowledge | 840K |
 
-**Bonus:** +2.0 knowledge/t · **+30% knowledge output** (permanent multiplier)
+**Bonus:** +2.0 knowledge/t · **+30% knowledge output**
 
 ---
 
@@ -304,7 +310,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 |---|---|
 | Titanium | 910T |
 | Plasma | 660T |
-| Steel | 5.6Q |
+| Steel | 5.5Q |
 
 **Bonus:** +200.0 electricity/t · +30.0 plasma/t
 
@@ -360,7 +366,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 
 **Bonus:** **+200% all production** · +20.0 quantum flux/t
 
-> The Singularity Core is the last wonder. It has the biggest bill in the game and the biggest single production bonus.
+> The Singularity Core is the last wonder and has the biggest bill in the game. Its +200% all production is the largest bonus on paper, but by the Transcendent Age the pool is far past the x3 cap.
 
 ---
 
@@ -382,5 +388,5 @@ These figures are the morale **ceiling**, how high the morale percentage can cli
 - **Great Library** and **Global Network** each give +30% knowledge output, and the two stack.
 - **Grand Lighthouse**, the Rocketry tech and the prestige `expedition_loot` upgrade all raise expedition rewards, and they stack.
 - Build each age's wonder early. It is required for `advance`, and its bonuses last for the rest of the run.
-- **Crystal Palace** (+15% all production) in the Industrial Age is one of the biggest single boosts in the game.
+- **Crystal Palace** (+15% all production) lands in the Industrial Age, before the all-production pool usually reaches its cap, so it counts in full.
 - Each wonder also raises the morale cap by 5 points (100% base, 210% with all 22). See [Morale](morale.md).

@@ -7,20 +7,24 @@ Faith is a resource that accumulates from Faith lineage buildings and faith-doma
 ## Why Faith Matters
 
 1. **Epoch roll odds.** Your faith % sets the chance of a good (rather than bad) event at each epoch transition.
-2. **Catastrophe odds.** When a doom fated for your era reaches its moment, your faith % at that moment sets the chance it strikes: 90%, 75% or 60%, from low faith to high. It sets the odds of the Last Passage at a Cosmic Era prestige the same way (18%, 15% or 12%).
+2. **Catastrophe odds.** When a doom fated for your era reaches its moment, your faith % at that moment sets the chance it strikes. It sets the odds of the Last Passage at a Cosmic Era prestige the same way. The table below is the one place these odds are listed.
 3. **Worker morale.** Producing faith lifts worker [morale](morale.md) a little each tick. The lift scales with your faith **production rate** (faith/tick), not your stored faith, and it is **capped** per tick, so even a huge late-game faith income can't max out morale in one step. A steady faith income is an ongoing morale source on top of the epoch odds.
 
 ---
 
 ## Faith Threshold Bands
 
-| Condition | Epoch Good-Roll Odds | Fated Doom Strikes | Last Passage |
-|-----------|---------------------|--------------------|--------------|
-| Faith < 25% of storage | 40% | 90% | 18% |
-| Faith 25 to 75% of storage (or no faith storage yet) | 50% | 75% | 15% |
-| Faith > 75% of storage | 60% | 60% | 12% |
+| Faith fill | Good epoch event | Fated doom strikes | Last Passage |
+|------------|------------------|--------------------|--------------|
+| under 25% of storage | 40% | 90% | 18% |
+| 25 to 75% of storage (or no faith storage yet) | 50% | 75% | 15% |
+| over 75% of storage | 60% | 60% | 12% |
 
-The Economy panel shows your current faith band alongside the epoch odds.
+- The faith that counts is the faith you hold at the moment of the roll: when you cross into a new epoch, when a fated doom reaches its moment, or when you confirm a Cosmic Era prestige. Faith you held when the harbinger came doesn't count.
+- A harbinger's **Appease** multiplies the doom and Last Passage chances by 0.6 per level (0.36 at two levels, the most), and **Invite** makes the catastrophe certain. See [The Harbinger](harbinger.md).
+- The Economy panel's faith row shows your band and the epoch odds.
+
+**What high faith is worth.** A doom is fated in 27% of the eras from the Iron Era on (see [When It Triggers](catastrophe.md#when-it-triggers)). A first run to a Modern Age prestige lives through three eras that can hold a doom (the Iron, Steel and Electric Eras; the Digital Era's doom rarely strikes before you prestige there), so it can expect about 0.73 catastrophes at low faith, 0.61 at mid faith and 0.49 at high faith. High faith saves you about a quarter of a catastrophe per run, and brings more good epoch events. A deep run to a Quantum Age prestige lives through all six such eras: about 1.46 catastrophes at low faith, plus the Last Passage roll.
 
 ---
 
@@ -74,15 +78,14 @@ Shrine → Standing Stones → Altar → Temple → Oracle House → Cathedral �
 
 Faith is a **flow resource**: unlike construction resources, whose rates follow the [Payback Rule](buildings.md#how-production-rates-are-set), faith rates are set by hand and double each tier, and the requirements that ask for faith are sized to them. Faith cannot be bought at the market. Early on, the big faith sources are not the lineage buildings: the **Stonehenge** wonder (Bronze Age) adds 0.6 faith/tick, the **Theology** tech (Medieval Age) 0.3 faith/tick and the **Sistine Chapel** wonder (Renaissance Age) 1.8 faith/tick.
 
-**Recruit and assign Faith workers:**
+**Staffing faith buildings.** A Shrine holds 2 workers; later faith buildings hold more (the Workers column above). By default [worker shares](workers-and-domains.md#worker-shares) staff your faith buildings along with everything else, so a new Shrine fills on its own while housing and food allow. To push more of your workforce into faith, give the domain a share, or assign by hand:
 
 ```
-recruit 3
-assign shrine 3
-assign temple 5
+workers share faith 20    # keep 20% of your workers on faith buildings
+assign shrine 2           # put 2 workers on your Shrines
 ```
 
-Workers are recruited generically (no domain argument). They become Faith workers when assigned to a faith-domain building.
+Workers aren't recruited into a domain. A worker counts as a Faith worker while it staffs a faith building.
 
 ---
 
@@ -103,7 +106,7 @@ Bank faith through the Medieval Age so the Renaissance requirement doesn't hold 
 
 | Stage | Target Setup |
 |-------|-------------|
-| Early game | 1 Shrine + 2 or 3 Faith workers |
+| Early game | A few Shrines, 2 Faith workers each |
 | Mid game | Multiple Temples / Cathedrals with full Faith worker assignment |
 | Late game | Keep faith above 75% before every epoch boundary and while a harbinger warns you |
 
@@ -126,4 +129,4 @@ Before reaching the last age of an epoch (e.g. the Bronze Age before the Iron Er
 - Spare materials to rebuild with, in case The Great Fire destroys up to 8 buildings (never wonders or storage)
 - A gold income that can absorb Economic Crash or Merchant Betrayal, which each take half your gold and then drain more per tick
 
-See [Epochs](epochs.md) for the full event table and Catastrophe mechanics.
+See [Epochs](epochs.md) for the event tables and [Catastrophe](catastrophe.md) for what a doom does.

@@ -16,27 +16,27 @@ Ages and epochs do different jobs: **ages are about what you build; epochs are a
 | 4 | ⚡ | Electric Era | Victorian → Electric → Atomic | steel | electricity | The Nuclear Exchange |
 | 5 | ▣ | Digital Era | Modern → Information → Digital | data | electricity | The Great Hack |
 | 6 | ◉ | Neon Era | Cyberpunk → Fusion → Space | plasma | plasma | Corporate Armageddon |
-| 7 | ✦ | Cosmic Era | Interstellar → Galactic → Quantum → Transcendent | dark_matter | antimatter | The Reality Tear (and the Last Passage at prestige) |
+| 7 | ✦ | Cosmic Era | Interstellar → Galactic → Quantum → Transcendent | dark matter | antimatter | The Reality Tear (and the Last Passage at prestige) |
 
 The Cosmic Era is the only epoch with 4 ages instead of 3.
 
-Each age is paced to a target time at 1x speed, from 15 minutes for the Primitive Age up to 31h 12m for the Atomic Age, then 31h 12m to 57h 12m through the Digital and Neon Eras and 62h 24m for each Cosmic Era age. By epoch that is 4h 54m for the Stone Era, 27h 18m for the Iron Era, 54h 36m for the Steel Era, 80h 36m for the Electric Era, 109h 12m for the Digital Era and 156 hours for the Neon Era. The Modern Age, where prestige unlocks, arrives after about a week of game time (the smoke-test bot takes about 5.3 days). From the Bronze Age on, ages and the clocks inside them (event durations, cooldowns, awakenings) run 2.6 times as long as on the earlier three-day curve.
+Each age has a target length in real time, from 15 minutes for the Primitive Age up to 31h 12m for the Atomic Age, then 31h 12m to 57h 12m through the Digital and Neon Eras and 62h 24m for each Cosmic Era age (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). By epoch that is 4h 54m for the Stone Era, 27h 18m for the Iron Era, 54h 36m for the Steel Era, 80h 36m for the Electric Era, 109h 12m for the Digital Era, 156 hours for the Neon Era and 249h 36m for the Cosmic Era. The Modern Age, where prestige unlocks, arrives after about a week (the smoke-test bot takes about 5.3 days). From the Bronze Age on, ages and the clocks inside them (event durations, cooldowns, awakenings) run 2.6 times as long as on the earlier three-day curve. The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production.
 
 ### What each epoch is like
 
-**◈ Stone Era.** Your settlement scratches out survival. Food is the bottleneck and wood is the building block. Events are small and local: river floods, wandering sages, tribal raids. Every resource counts, and your faith storage is tiny. No catastrophe can strike here.
+**◈ Stone Era.** Your settlement scratches out survival. Food is the bottleneck and wood is the building block. Events are small and local: river floods, wandering sages, tribal raids. Your faith storage is tiny. No catastrophe can strike here.
 
-**⚔ Iron Era.** Iron matters most. Your armies grow, trade routes lengthen and faith starts to carry weight. The Great Plague is the first catastrophe that can strike, and the cheapest one to Succumb to. Oracle's Prophecy and Imperial Road can speed up your mid-game.
+**⚔ Iron Era.** Iron matters most. Your armies grow, trade routes lengthen and faith starts to carry weight. The Great Plague is the first catastrophe that can strike, and the cheapest one to Succumb to, since the run you give up is still short.
 
-**⚙ Steel Era.** Production reaches industrial scale. A Workers' Uprising costs you 8% of your workers and 500 faith. Colonial Bounty (+5K gold) is one of the biggest windfalls in the game, and Coal Seam Discovery adds +0.4 coal/tick for 468 ticks.
+**⚙ Steel Era.** Production reaches industrial scale. A Workers' Uprising costs you 8% of your workers and 500 faith, and Coal Seam Discovery adds +0.4 coal/tick for 468 ticks.
 
-**⚡ Electric Era.** Grid Surge, Oil Strike and Nuclear Theory all push production or research forward. This era's catastrophe is The Nuclear Exchange. Nuclear scares and labor movements are short, bearable setbacks compared to what comes later.
+**⚡ Electric Era.** Grid Surge, Oil Strike and Nuclear Theory give small pushes to production and research. This era's catastrophe is The Nuclear Exchange. Nuclear scares and labor movements are short, bearable setbacks.
 
-**▣ Digital Era.** Data replaces iron as the bottleneck. A Server Outage takes 0.5 data/tick for 312 ticks, and The Great Breach steals 5K data outright. AI Breakthrough (+0.5 knowledge/tick, +0.2 data/tick) is the event research-focused runs hope for. The Great Hack is this era's catastrophe.
+**▣ Digital Era.** Data replaces iron as the bottleneck. Server Outage, The Great Breach and AI Breakthrough move data and knowledge around in amounts that are small next to Digital Era output. The Great Hack is this era's catastrophe.
 
-**◉ Neon Era.** Plasma is both the primary and the energy resource. Neural Uprising is the nastiest event outside the transition roll: it removes 20% of your workers, steals 500 food and drains food at the same time. Corporate Espionage steals 10K gold and 8K data at once. Keep reserves.
+**◉ Neon Era.** Plasma is both the primary and the energy resource. Neural Uprising is the nastiest event outside the transition roll: it removes 20% of your workers, steals 500 food and drains food at the same time. Corporate Espionage takes 10K gold and 8K data, a small sum by now.
 
-**✦ Cosmic Era.** Dark matter and antimatter arrive in amounts that make earlier resources look small. The Transcendence Signal event (+100K knowledge, +50K culture) is the largest single windfall in the game. Reality fractures and entropy waves are manageable if your production is strong. The Reality Tear catastrophe is the hardest reset decision of the run. With no epoch after it, the Cosmic Era's passage is prestige itself: the **Last Passage**, which a second harbinger thread warns of from the Interstellar Age on. See [The Last Passage](prestige.md#the-last-passage).
+**✦ Cosmic Era.** Dark matter and antimatter arrive in amounts that make earlier resources look small. Reality fractures and entropy waves are manageable if your production is strong. The Reality Tear catastrophe is the hardest reset decision of the run. With no epoch after it, the Cosmic Era's passage is prestige itself: the [Last Passage](prestige.md#the-last-passage), which a second harbinger thread warns of from the Interstellar Age on.
 
 ---
 
@@ -66,17 +66,9 @@ Every time you cross into a **new epoch** (the first age advance that crosses an
 
 The outcome is decided in steps.
 
-**Step 1: good or bad?** Your faith, as a share of faith storage, sets the odds:
+**Step 1: good or bad?** Your faith, as a share of faith storage, sets the odds of a good event: 40% below 25% faith, 50% from 25% to 75% (or with no faith storage yet), 60% above 75%. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
 
-| Faith % of Storage | Good Event Chance | Bad Roll Chance |
-|------------------------|-------------------|-----------------|
-| Under 25% (Low Faith) | 40% | 60% |
-| 25-75% (Mid Faith) | 50% | 50% |
-| Over 75% (High Faith) | 60% | 40% |
-
-**Step 2: if the roll is bad,** you get a Challenging event, applied at once with no choice. A transition never brings a catastrophe. Instead, entering an era from the Iron Era on rolls in secret whether a doom is fated to strike somewhere inside it (27% of the time). See [Catastrophe](catastrophe.md#when-it-triggers).
-
-**The Harbinger.** A fated doom never strikes unannounced: a harbinger comes some while before it, and each age's figure takes up the warning until it resolves. Appeasing it multiplies the chance the doom strikes by 0.6 per level (two levels at most); inviting it makes the strike certain. See [The Harbinger](harbinger.md). The Cosmic Era has no transition out, so a second thread there warns of the [Last Passage](prestige.md#the-last-passage), which rolls when you confirm prestige, after any open doom has settled.
+**Step 2: if the roll is bad,** you get a Challenging event, applied at once with no choice. A transition never brings a catastrophe. Entering an era from the Iron Era on also rolls, in secret, whether a doom is fated somewhere inside it; a [harbinger](harbinger.md) always warns before it strikes. See [When It Triggers](catastrophe.md#when-it-triggers).
 
 **Step 3: if the roll is good,** your culture, as a share of culture storage, decides which tiers you can draw from:
 
@@ -133,7 +125,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 
 | Event | Effect | Duration |
 |-------|--------|----------|
-| The Grand Discovery | 3 techs from your current age completed for free | Instant |
+| The Grand Discovery | Up to 3 techs from your current age completed for free (fewer if fewer are left) | Instant |
 | Worker Innovation | +10% all production for the rest of the run | Rest of run |
 | The Architect's Gift | 10 free copies of your most-built non-wonder building | Instant |
 | Peaceful Century | +20% all production | 749 ticks (~24m 58s) |
@@ -144,7 +136,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 |-------|--------|----------|
 | Epoch Blessing | +15% all production for the rest of the run, recorded in history | Rest of run |
 
-> Worker Innovation and Epoch Blessing last until you Succumb or prestige. They stack with each other and with your other lasting bonuses (legacy bonuses, prestige upgrades, the Cosmic Legacy). A run that lands both feels faster in every age after.
+> Worker Innovation and Epoch Blessing last until you Succumb or prestige. Like Age of Plenty and Peaceful Century, they add to all production, and every all-production bonus shares one pool that multiplies output by at most x3 (see [The all-production cap](resources.md#the-all-production-cap)). Techs and wonders alone reach the cap from about the Electric Age, so these events lift output most when they land early in a run, or after a setback.
 
 ---
 
@@ -163,7 +155,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 | Economic Crash | Lose half your gold, then gold -3/tick | 562 ticks |
 | The Dark Age | Current research canceled, lose 80% of your knowledge, then knowledge -3/tick | 374 ticks |
 
-The Great Fire and Epidemic are the two you least want to see. Eight lost buildings in the early game set you back a long way, and losing 20% of your workers in the Neon or Cosmic Era hurts because workers take so long to replace.
+The Great Fire and Epidemic are the two you least want to see. Eight lost buildings in the early game set you back a long way. Lost workers come back on their own: with auto-recruit on (the default), the game recruits into the empty worker slots as housing and food allow (see [Worker shares](workers-and-domains.md#worker-shares)), but output dips until they do.
 
 ---
 
@@ -247,58 +239,21 @@ Durations are what each event runs in its own epoch. The Stone Era's events run 
 
 ## Endure vs Succumb
 
-A catastrophe strikes at its fated moment inside an era, not at a transition (see [Catastrophe](catastrophe.md#when-it-triggers)). When it hits, nothing happens until you choose. The game keeps running, but **you can't advance ages or prestige while a catastrophe is pending**. Press Esc to close the choice and look around; a status-bar badge reminds you it is waiting, and typing `catastrophe` reopens it. There is no Defer button.
-
-### Endure: pay the price and keep your run
-
-- **20% of your buildings** destroyed at random (wonders and storage are spared and don't count)
-- Workers of destroyed buildings go back to the idle pool
-- **All resources** reduced to 15% of current amounts
-- If you braced when the harbinger warned you, 15% or 10% of buildings are destroyed instead, and 30% or 45% of resources are kept. See [Brace](harbinger.md#brace-soften-an-endure)
-- **25% of workers** lost, the same share from every building
-- **-10% all production** for 562 ticks (reconstruction, about 18m 44s), and morale -10
-- The epoch is marked endured, and the civilization log records it
-
-Best when you've built a large, mature civilization that would be painful to restart, or you already hold this epoch's legacy bonus.
-
-### Succumb: reset and earn lasting power
-
-- **Up to 8 ruins** from your current buildings, never wonders or storage (50% base rate in later runs, no workers). Ruins are capped at 24 in total; past the cap the lowest-value ruins crumble first
-- **Legacy Bonus:** a permanent production bonus for this epoch's primary resource(s), active in all future runs including after prestige
-- **Ancient Knowledge:** a permanent +25% research speed per distinct epoch succumbed (a second Succumb in the same epoch adds nothing)
-- Full reset to the Primitive Age: resources, buildings, workers and research. No prestige points are earned; prestige level, upgrades and [Era Mastery](prestige.md#era-mastery) are kept. Succumb raises no mastery, but on the rebuild every age 6 or more behind your record runs at least 4x ([catch-up](prestige.md#catch-up))
-
-**Legacy bonuses by epoch:**
-
-| Epoch | Legacy Bonus |
-|-------|-------------|
-| ◈ Stone Era | wood +20%, stone +20% (no catastrophe strikes in the Stone Era, so only saves that already hold it have it) |
-| ⚔ Iron Era | iron +20% |
-| ⚙ Steel Era | steel +25%, coal +25% |
-| ⚡ Electric Era | electricity +25%, uranium +25% |
-| ▣ Digital Era | data +30%, titanium_ore +30% |
-| ◉ Neon Era | plasma +30%, dark_matter_crystals +30% |
-| ✦ Cosmic Era | dark_matter +35% |
-
-Best when the reset costs you little and you don't hold the era's legacy bonus yet. The Iron Era is the cheapest era to fall in.
-
-**The stacking math:** six epochs can be succumbed in (Iron to Cosmic), so Ancient Knowledge tops out at +150% research speed.
-
-**Choosing to fall:** you can't trigger a catastrophe directly, but when a harbinger comes you can **Invite** it, which guarantees the strike when its moment comes. See [The Harbinger](harbinger.md).
+A catastrophe strikes at its fated moment inside an era, not at a transition, and waits for you to choose: **Endure** (lose a share of your buildings, stock and workers, and keep the run) or **Succumb** (reset to the Primitive Age for ruins, the epoch's legacy bonus and Ancient Knowledge). The rules and numbers live on one page: see [Endure](catastrophe.md#endure), [Succumb](catastrophe.md#succumb) and the [Legacy Bonus Table](catastrophe.md#legacy-bonus-table).
 
 ---
 
 ## Random Event Types (Reference)
 
-These are the effect types events can apply:
+These are the kinds of effect events can apply:
 
-| Effect Type | What It Does |
-|-------------|-------------|
-| `instant_resource` | Adds a fixed amount of a resource once (no duration, no active-event entry) |
-| `production` | Adds a flat amount per tick to one resource's rate while the event lasts (negative for a penalty) |
-| `production_all` | Percentage bonus or penalty to all production (used by the Endure debuff and by epoch events) |
-| `steal_resource` | Removes a fixed amount of a resource once |
-| `worker_loss` | Removes a percentage of your workers |
+| Effect | What It Does |
+|--------|-------------|
+| Instant resource | Adds a fixed amount of a resource once (no duration, no active-event entry) |
+| Production | Adds a flat amount per tick to one resource's rate while the event lasts (negative for a penalty) |
+| All production | A percentage bonus or penalty to all production (used by the Endure debuff and by epoch events), added to the capped all-production pool |
+| Theft | Removes a fixed amount of a resource once |
+| Worker loss | Removes a percentage of your workers |
 
 A duration of 0 means the effect happens once. A duration above 0 means the event appears in the active-events panel and ticks down until it expires.
 
@@ -310,7 +265,7 @@ A duration of 0 means the effect happens once. A duration above 0 means the even
 
 Keep faith at 50-70% of storage. Invest in culture buildings at a moderate pace. Take transition events as they come without over-optimizing.
 
-At 50% faith the odds are already a coin flip. With decent culture (over 40% of storage) you're eligible for Major events. You won't hit Legendary, but The Grand Discovery and Worker Innovation are both strong. With a steady 50% good rate, over the 6 transitions of a run you can expect about 3 good events and 3 challenging ones. Catastrophes come separately: at mid faith a first run can expect about 0.6 of them.
+At 50% faith the odds are already a coin flip. With decent culture (over 40% of storage) you're eligible for Major events. You won't hit Legendary, but The Grand Discovery and Worker Innovation are both strong. A first run to the Modern Age crosses 4 epoch transitions (into the Iron, Steel, Electric and Digital Eras), so at a steady 50% good rate you can expect about 2 good events and 2 challenging ones. Catastrophes come separately: at mid faith a first run can expect about 0.6 of them.
 
 Best for: a first or second run, players who don't want to commit hard to one strategy, relaxed sessions.
 
@@ -318,9 +273,9 @@ Best for: a first or second run, players who don't want to commit hard to one st
 
 Build faith production aggressively. Keep faith above 75% of storage going into every epoch transition, and through each era, since a fated doom rolls on the faith you hold when it strikes.
 
-Going from 50% to over 75% faith moves your odds from 50/50 to 60/40. Over 6 transitions that's about 0.6 extra good events compared to a neutral run. It also cuts your catastrophe exposure: a fated doom strikes 60% of the time instead of 75%.
+Going from 50% to over 75% faith moves your odds from 50/50 to 60/40. Over the 4 transitions of a first run that's about 0.4 extra good events compared to a neutral run. It also cuts your catastrophe exposure: a fated doom strikes 60% of the time instead of 75% (see [Faith](faith.md#faith-threshold-bands)).
 
-Trade-offs: faith buildings typically draw on food workers, so you compete with your gathering and farming capacity. Don't let food go critical in the early Stone Era chasing faith.
+Trade-offs: every worker on a faith building is one not growing food, so you compete with your gathering and farming capacity. Don't let food go critical in the early Stone Era chasing faith.
 
 Best for: players who want steady income and dislike variance. It also suits runs where you plan to Endure rather than Succumb, because good events let you build strength before the hit.
 
@@ -328,9 +283,9 @@ Best for: players who want steady income and dislike variance. It also suits run
 
 Put culture buildings first and push culture as close to full storage as you can, aiming for the over-75% bracket before each epoch boundary.
 
-The Legendary tier is the goal. Epoch Blessing (+15% all production) and Worker Innovation (+10%) are the two strongest transition events, and both last the rest of the run. Landing Epoch Blessing in the Iron or Steel Era pays off across 4 or 5 more epochs of play. Even one or two Legendary draws in a run pay for the culture investment.
+The Legendary tier is the goal. Epoch Blessing (+15% all production) and Worker Innovation (+10%) are the two strongest transition events, and both last the rest of the run. They pay off most when they land at the Iron or Steel Era transition: from about the Electric Age, techs and wonders alone fill the x3 all-production cap, and a late Blessing adds little until a setback pulls the pool back down.
 
-Culture also opens Major events (over 40% of storage), which are strictly better than Minor events. The Grand Discovery (3 free techs) and The Architect's Gift (10 free buildings) can skip you ahead a long way.
+Culture also opens Major events (over 40% of storage), which are strictly better than Minor events. The Grand Discovery (up to 3 free techs) and The Architect's Gift (10 free buildings) can skip you ahead a long way.
 
 Trade-offs: culture buildings cost a lot. This approach is slower to build production in the early epochs but speeds up in the mid-game once Major and Legendary events start landing.
 
@@ -342,7 +297,7 @@ Spend as little as possible on faith and culture. Build production only. Accept 
 
 Time spent on faith and culture buildings is time not spent on production buildings. Challenging events (not catastrophes) are mostly temporary drains. A Resource Drought or Merchant Betrayal is annoying but recoverable. If your production is high enough, you shrug off events that would cripple a weaker economy.
 
-This gets dangerous in the Neon and Cosmic Eras, where event amounts are larger. A Neural Uprising (-20% workers, food stolen) or Corporate Espionage (-10K gold, -8K data) can snowball without reserves.
+Worker losses are what bite later on. A Neural Uprising takes 20% of your workers in the Neon Era; auto-recruit refills them as housing and food allow, but output dips until it does. The fixed thefts are small next to a late economy.
 
 Best for: experienced players who know the age costs, speedrun-minded sessions, players who plan to Succumb quickly anyway.
 
@@ -380,17 +335,16 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 
 **Each epoch you Succumb in adds +25% research speed permanently.** Repeat Succumbs in the same epoch add nothing, so the value is in collecting different epochs. This is the main argument for a deliberate early Succumb in the Iron Era.
 
-**One doom per era per run.** Once an era's doom has struck or passed you by, nothing more strikes in that era. None can strike before the Iron Era. The Cosmic Era adds the Last Passage at prestige.
-
-**Listen to the harbinger.** It comes only when a doom is on its way (or, before the Industrial Age, now and then as a false prophet), and in the Cosmic Era a second thread warns of the Last Passage. It gives you only part of an age before the strike, so answer promptly: Appease if you want to keep your run, Brace if Endure is the plan, Invite if you want the legacy bonus. See [The Harbinger](harbinger.md).
+**Listen to the harbinger.** It gives you only part of an age before its doom strikes, so answer promptly. See [The Harbinger](harbinger.md).
 
 ---
 
 ## Epoch Transitions: What Carries, What Resets
 
 **At epoch transitions (a normal age advance into a new epoch):**
-- Your civilization carries on: nothing resets and no resources are lost
-- A doom still open in the era you leave rolls first, at the advance (see [No Outrunning a Doom](harbinger.md#no-outrunning-a-doom))
+- Your buildings, workers, research and wonders carry on
+- Your stockpiles are trimmed, as at every age advance: each resource the new age builds with is capped at 8 times the cost of the cheapest new building that uses it, resources no new building uses keep 10%, and faith is untouched. Hoarding before a boundary doesn't pay. See [What Happens on Age Advance](ages.md#what-happens-on-age-advance)
+- A doom still open in the era you leave rolls first, at the advance (see [When It Triggers](catastrophe.md#when-it-triggers))
 - The epoch event fires once (the transition roll)
 - From the Iron Era on, the new era's fate is rolled in secret: a doom is fated somewhere inside it 27% of the time
 - Active events from the previous epoch keep ticking down
@@ -398,22 +352,8 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 - The Epoch panel records the transition and its outcome
 - Your status bar icon and color change
 
-**After Succumb:**
-- Resources, buildings, workers, research: reset to zero
-- Ruins (up to 8 new from the last run, 24 in total) placed in your fresh civilization, producing passively
-- All legacy bonuses active and applied
-- Ancient Knowledge active: +25% research speed per epoch succumbed
-- Epoch event history and catastrophe history kept
-- Prestige level, upgrades and Era Mastery kept (a Succumb raises no mastery)
-- Ages 6 or more behind your record run at least 4x while you rebuild ([catch-up](prestige.md#catch-up))
+**After Succumb:** the run starts over in the Primitive Age with your ruins, legacy bonuses, Ancient Knowledge, prestige upgrades and [Era Mastery](prestige.md#era-mastery). A Succumb raises no mastery, but while you rebuild, ages 6 or more behind your record run at least 4x ([catch-up](prestige.md#catch-up)). See [What carries forward](catastrophe.md#what-carries-forward).
 
-**After Prestige (end of a full run):**
-- Similar to Succumb, but chosen deliberately, from the Modern Age on, and it earns prestige points
-- Refused while a catastrophe is pending
-- From the Cosmic Era it first settles an open doom, then can bring the [Last Passage](prestige.md#the-last-passage), which holds the prestige until you Endure (keep part of the run's points) or Succumb (no points, but the permanent Cosmic Legacy)
-- Legacy bonuses, Ancient Knowledge and ruins carry
-- Every age below the run's furthest age gains a mastery level, so it runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
-- The civilization log carries; the per-run epoch event history is cleared
-- Prestige upgrades available
+**After Prestige:** like Succumb, but chosen, from the Modern Age on, and it earns prestige points. It is refused while a catastrophe is pending, and from the Cosmic Era it can bring the [Last Passage](prestige.md#the-last-passage). Every age below the run's furthest age gains a mastery level, so it runs faster on the next run. The per-run epoch event history is cleared; the civilization log carries. See [What Resets vs Persists](prestige.md#what-resets-vs-persists).
 
 Each run builds on the last. Three runs in, you have ruins producing for free, stacked research speed, legacy bonuses on the resources that matter most, and the ages your runs completed going two to three times as fast, and you still play through all 22 ages.

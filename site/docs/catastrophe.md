@@ -2,7 +2,7 @@
 
 A catastrophe is a civilization-threatening event that forces a permanent choice: **Endure** or **Succumb**. From the **Iron Era** on, a doom may be fated in secret to strike at any moment inside an era, and a harbinger always comes to warn you first. You can't trigger one directly; the only way to choose one is to **Invite** it when a harbinger comes.
 
-> **The Harbinger.** A doom never strikes unannounced. Some while before it does, a harbinger arrives, and each age's figure takes up the warning until the doom resolves. In the Cosmic Era a second thread also warns of the Last Passage at your next prestige. While a harbinger is present you can **Appease** it (spend faith and culture to lower the real odds), **Brace** (spend resources so an Endure costs less) or **Invite** the catastrophe (guarantee it, for a deliberate Succumb). See [The Harbinger](harbinger.md).
+> **The Harbinger.** A doom never strikes unannounced: some while before it does, a harbinger arrives to warn you, and you can answer it (lower the odds, soften an Endure, or invite the fall). [The Harbinger](harbinger.md) covers the warning and the answers; this page covers what fate decides and what a catastrophe does.
 
 When a catastrophe hits, nothing is destroyed yet. The game keeps running and the choice waits for you.
 
@@ -19,30 +19,36 @@ If a catastrophe strikes while the age-advance splash is on screen, the splash c
 There are 7 epochs across 22 ages (Cosmic spans 4 ages, the rest 3). Every run starts in the Stone Era. A catastrophe never comes with a new epoch: an epoch transition only rolls a good or a challenging event (see [Epochs](epochs.md)). Instead, each era from the Iron Era on, the Cosmic Era included, can hold one doom:
 
 1. **Fated or not?** When you enter the era, a hidden roll decides: a doom is fated there 27% of the time. Nothing is ever fated in the Stone Era. The fate is saved with your game, so reloading can't re-roll it.
-2. **When?** A fated doom strikes at a random moment anywhere in the era, mid-age included. The moment is drawn across the era's expected length from when you entered it: its ages' target times added up, 27.3 hours for the Iron Era at 1x, 54.6 for the Steel Era, 80.6 for the Electric Era, 109.2 for the Digital Era, 156 for the Neon Era and 249.6 for the Cosmic Era. On known ground each age counts its target divided by its [Era Mastery](prestige.md#era-mastery) speed, so a mastered era's doom still falls inside the shorter era.
+2. **When?** A fated doom strikes at a random moment anywhere in the era, mid-age included. The moment is drawn across the era's expected length, counted from when you entered it: its ages' [target times](ages.md#how-long-each-age-takes) added up. On known ground each age counts its target divided by its [Era Mastery](prestige.md#era-mastery) speed, so a mastered era's doom still falls inside the shorter era.
 3. **A warning first.** A harbinger arrives before the strike, 20% to 60% of the current age's target time ahead of it (divided by the age's speed on known ground, so warnings in a mastered era are shorter in proportion). Until then, nothing in the game tells a fated era from a quiet one: a quiet era is safe, for now. See [The Harbinger](harbinger.md).
-4. **Does it hit?** At the fated moment the strike rolls on your faith fill at that moment: **90% below 25% faith, 75% between 25% and 75% (or when faith has no storage yet), 60% above 75%**. Each level of Appease multiplies the chance by 0.6 (two levels at most), and Invite makes it certain. A miss means you were spared.
+4. **Does it hit?** At the fated moment the strike rolls on your faith fill at that moment: 90%, 75% or 60% from low to high faith (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). Each level of Appease multiplies the chance by 0.6 (two levels at most), and Invite makes it certain. A miss means you were spared.
+
+| Era | Ages | Expected length (the strike window, on a first run) |
+|-----|------|-------------------------------------|
+| Iron Era | Iron, Classical, Medieval | 27h 18m |
+| Steel Era | Renaissance, Colonial, Industrial | 54h 36m |
+| Electric Era | Victorian, Electric, Atomic | 80h 36m |
+| Digital Era | Modern, Information, Digital | 109h 12m |
+| Neon Era | Cyberpunk, Fusion, Space | 156h |
+| Cosmic Era | Interstellar, Galactic, Quantum, Transcendent | 249h 36m |
+
+The window is counted in ticks, so game speed bonuses shorten it in real time along with everything else.
 
 A few more rules apply:
 
-- **One doom per era per run.** Once an era's doom has struck or passed you by, nothing more strikes in that era. Succumb and prestige start a new run, and each era rolls again. That makes 6 catastrophes the most a run can have, one for each era from Iron to Cosmic, plus the Last Passage if you prestige from the Cosmic Era.
-- **You can't outrun it.** If you advance out of the era before the doom's moment, the strike rolls at that advance, before it goes through: a hit makes the advance wait behind the catastrophe, a miss lets it through. The same goes for leaving an age once the harbinger has said the doom falls before this age is out, and in the Cosmic Era, whose passage is prestige, for confirming prestige. See [No Outrunning a Doom](harbinger.md#no-outrunning-a-doom).
+- **One doom per era per run.** Once an era's doom has struck or passed you by, nothing more strikes in that era. Succumb and prestige start a new run, and each era rolls again. That makes 6 catastrophes the most a run can have, one for each era from Iron to Cosmic, plus the [Last Passage](prestige.md#the-last-passage) if you prestige from the Cosmic Era.
+- **You can't outrun it.** If you advance out of the era before the doom's moment, the strike rolls at that advance, before it goes through: a hit makes the advance wait behind the catastrophe, a miss lets it through. The same goes for leaving an age once the harbinger has said the doom falls before this age is out, and in the Cosmic Era, whose passage is prestige, for confirming prestige. See [The Harbinger](harbinger.md).
 - **Offline too.** A doom strikes at its moment while you are away and waits, pending, for you to come back. The log shows the warning and the strike.
 - **Prestige from the Digital or Neon Era ends it.** A doom that hasn't struck there when you prestige is gone with the run. In the Cosmic Era an open doom settles before the Last Passage rolls.
 - **Never on top of another.** A new catastrophe never replaces one that is still pending.
 
-The `catastrophe` command (with nothing after it) shows the outlook as you can know it when nothing is pending. With a harbinger present it repeats the warning, for example "The Oracle warns of doom before this age is out: medium risk of catastrophe (no figures this early), faith 40% full." (the odds as a figure from the Industrial Age on, a low / medium / high severity before it). With none, it reads "No harbinger has come: the Iron Era is quiet, for now. A doom is always foretold before it strikes." In the Stone Era it says no catastrophe can strike there, and once the era's doom has struck or passed you by, that nothing more will strike before the era ends. In the Cosmic Era it shows the risk of the Last Passage, along with how full your faith is, and above it the Reality Tear's warning while that doom's harbinger speaks, for example "Your future self warns of doom before this age is out: 90% catastrophe chance (high), faith 0% full." The Epoch panel shows the same outlook. Neither can give away a false prophet. See [Epochs](epochs.md) for the event tables.
+The `catastrophe` command (alias `cat`), with nothing after it, shows the outlook as you can know it when nothing is pending. With a harbinger present it repeats the warning, for example "The Oracle warns of doom before this age is out: medium risk of catastrophe (no figures this early), faith 40% full." (the odds as a figure from the Industrial Age on, a low / medium / high severity before it). With none, it reads "No harbinger has come: the Iron Era is quiet, for now. A doom is always foretold before it strikes." In the Stone Era it says no catastrophe can strike there, and once the era's doom has struck or passed you by, that nothing more will strike before the era ends. In the Cosmic Era it shows the risk of the Last Passage, along with how full your faith is, and above it the Reality Tear's warning while that doom's harbinger speaks, for example "Your future self warns of doom before this age is out: 90% catastrophe chance (high), faith 0% full." The Epoch panel shows the same outlook. Neither can give away a false prophet. See [Epochs](epochs.md) for the event tables.
 
 ---
 
 ## The Last Passage
 
-The Cosmic Era has no next epoch, so its passage is prestige. When you confirm prestige in the Cosmic Era, an open Reality Tear settles first: if its harbinger hasn't come, it comes now and the prestige waits for one more try; then its strike rolls, and a hit holds the prestige until you answer it. After that, the **Last Passage** rolls once: 18% / 15% / 12% by faith, ×0.6 per level of Appease on its own harbinger thread, certain if invited. If it comes, the prestige waits for your choice:
-
-- **Endure** completes the prestige but keeps only 50% of the run's prestige points (70% or 85% if you braced).
-- **Succumb** completes the prestige with no points from this run and grants the **Cosmic Legacy**, a permanent +10% production. You can earn it once; after that, Succumb is closed.
-
-It behaves like a pending catastrophe: Esc closes the choice, a **☄ LAST PASSAGE** badge shows in the status bar, the bare `catastrophe` command reopens it, and it is saved with your game. Unlike a catastrophe, it blocks only prestige. Either choice adds a line to the civilization log and counts as Endured or Succumbed. If the Reality Tear and the Last Passage are ever pending at once, the Reality Tear is answered first: the window shows it first, and the Last Passage's choice is refused until it is ("The Reality Tear came first. Answer it before the Last Passage."). See [The Last Passage](prestige.md#the-last-passage).
+The Cosmic Era has no next epoch, so its passage is prestige, and a Cosmic Era prestige can bring the **Last Passage**: a choice between keeping part of the run's prestige points (Endure) and the permanent Cosmic Legacy (Succumb). It blocks only prestige, and like a catastrophe it waits behind a ☄ badge until you answer it with `catastrophe`. See [The Last Passage](prestige.md#the-last-passage).
 
 ---
 
@@ -60,7 +66,7 @@ Each epoch has a named catastrophe:
 | Neon Era | Corporate Armageddon | The megacorps end the world with a fusion bomb. |
 | Cosmic Era | The Reality Tear | Exotic matter cracks spacetime open. |
 
-The name and story are flavor. Endure and Succumb work the same way in every epoch; only the legacy bonus differs.
+The name and story are flavor. Endure and Succumb work the same way in every epoch; only the legacy bonus differs. The Reality Tear is the Cosmic Era's fated doom like any other era's; the Last Passage at a Cosmic Era prestige is a separate roll (see [The Last Passage](#the-last-passage)).
 
 ---
 
@@ -90,7 +96,7 @@ If the harbinger warned you and you paid to **Brace**, Endure costs less. Brace 
 | 1 | 15% | 30% |
 | 2 | 10% | 45% |
 
-Buildings destroyed are rounded down, with at least 1 if you have any. The Brace is attached to the pending catastrophe, so it still applies if you press Esc and Endure later, or save and load first. It does nothing for Succumb. See [Brace](harbinger.md#brace-soften-an-endure).
+Buildings destroyed are rounded down, with at least 1 if you have any. The Brace is attached to the pending catastrophe, so it still applies if you press Esc and Endure later, or save and load first. It does nothing for Succumb. See [The Harbinger](harbinger.md) for what Brace costs.
 
 ### Your garrison
 
@@ -124,7 +130,7 @@ The buildings and stock it saved go into the **Saved this run** line of the Army
 
 The Last Passage is different: its Endure costs prestige points, not buildings and stock, and soldiers do not change it.
 
-The −10% applies to every building, including the ones that survived, for the full 562 ticks. Negative production modifiers are floored at 10% of base, but a single −10% lands in full whatever other bonuses you hold. The same flooring covers per-resource rate modifiers and worker output, and any active debuff shows in the Active Multipliers panel.
+The −10% applies to every building, including the ones that survived, for the full 562 ticks. It goes into the all-production pool, whose multiplier never drops below x0.1 or rises above x3 (see [The all-production cap](resources.md#the-all-production-cap)). While your pool is under the cap the debuff lands in full; if your bonuses already sit more than 10 points over the cap, it is absorbed. The same floor covers per-resource rate modifiers and worker output, and any active debuff shows in the Active Multipliers panel.
 
 If morale was already low, the −10 can push it into the low band, where output is penalized. Morale drifts back toward 50% on its own; a food surplus speeds that up.
 
@@ -134,12 +140,12 @@ If morale was already low, the −10 can push it into the low band, where output
 
 Every built building except wonders and storage goes into a pool in a fixed order (sorted by building key). The pool is shuffled with your run's seeded random generator and the first N are destroyed. Destroyed buildings are removed entirely; they don't become ruins. Because the generator is seeded per run, the same run state destroys the same buildings.
 
-Storage is spared because it is what raises your caps, and once its age has passed it can never be rebuilt. Losing some could leave your caps too small to pay for this age's storage, and then they could never rise again.
+Storage is never destroyed by an Endure (nor by The Great Fire epoch event), because it is what raises your caps, and once its age has passed it can never be rebuilt. Losing some could leave your caps too small to pay for this age's storage, and then they could never rise again.
 
 **Recovery checklist:**
 
 1. The log lists every lost building by name. Rebuild food and housing first.
-2. Reassign or recruit workers for the rebuilt capacity.
+2. Let the workers come back: with auto-recruit on (the default), the game recruits into empty worker slots as housing and food allow. See [Worker shares](workers-and-domains.md#worker-shares).
 3. Wait out the 562-tick reconstruction debuff; it can't be removed early.
 
 ---
@@ -152,13 +158,14 @@ Up to 8 of your buildings other than wonders and storage become **ruins**, picke
 
 You also get the epoch's **legacy bonus** (table below), permanently, and **Ancient Knowledge**: +25% research speed for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another 25%.
 
-Then the civilization resets to the Primitive Age: buildings, resources, workers, research, milestones, events and the build queue. You start with 15 food and 12 wood, plus prestige starting bonuses. No prestige points are earned, but your prestige level, points and upgrades are kept. Morale restarts at 50%, and the civilization log gets a line.
+Then the civilization resets to the Primitive Age: buildings, resources, workers, research, milestones, events and the build queue. You start with 15 food and 12 wood, plus your Starting Food and Starting Wood prestige upgrades. No prestige points are earned, but your prestige level, points, upgrades and [Era Mastery](prestige.md#era-mastery) are kept. A Succumb raises no mastery, but on the rebuild every age 6 or more behind your record runs at least 4x ([catch-up](prestige.md#catch-up)). Morale restarts at 50%, and the civilization log gets a line.
 
 ### What carries forward
 
 | Item | After Succumb |
 |------|---------------|
 | Prestige level, points and upgrades | Kept |
+| Era Mastery and your record (the deepest age you have ever entered) | Kept. A Succumb raises no mastery |
 | Ruins | Kept, plus up to 8 new, capped at 24 |
 | Legacy flags (bonuses and Ancient Knowledge) | Kept, plus this epoch |
 | Civilization log | Kept |
@@ -195,15 +202,7 @@ Rate bonuses add to your other rate bonuses for that resource and apply from tic
 
 ## Faith and the Odds
 
-| Faith fill | Good epoch event | Fated doom strikes | Last Passage |
-|------------|------------------|--------------------|--------------|
-| under 25% | 40% | 90% | 18% |
-| 25 to 75% (or no faith storage) | 50% | 75% | 15% |
-| over 75% | 60% | 60% | 12% |
-
-A doom rolls on your faith fill at the moment it strikes, so the faith that counts is the faith you hold then, not when the harbinger came. A first run to a Modern Age prestige lives through three eras that can hold a doom (the Iron, Steel and Electric Eras; the Digital Era's doom rarely strikes before you prestige there), so it can expect about 0.73 catastrophes at low faith, 0.61 at mid faith and 0.49 at high faith. High faith saves you about a quarter of a catastrophe, and gives you more good events. A deep run to a Quantum Age prestige lives through all six such eras, about 1.46 catastrophes at low faith, plus the Last Passage. See [Faith](faith.md).
-
-A harbinger's Appease multiplies these chances by 0.6 per level (0.36 at two levels), and Invite makes the catastrophe certain. See [The Harbinger](harbinger.md).
+Your faith fill when a fated doom's moment comes sets the chance it strikes (90%, 75% or 60% from low to high faith), and a Cosmic Era prestige rolls the Last Passage on it the same way. The full table, and what high faith saves you over a run, are on the [Faith](faith.md#faith-threshold-bands) page. A harbinger's Appease multiplies these chances by 0.6 per level, and Invite makes the catastrophe certain.
 
 ---
 
@@ -227,7 +226,7 @@ The Epoch panel's history marks each past epoch's catastrophe as **Endured**, **
 
 ### Succumb beats Endure when
 
-- the reset is cheap (early epochs, or a run you were going to prestige soon anyway),
+- the reset is cheap (early epochs, where the run you give up is still short; a Succumb pays no prestige points, so think twice once you have reached the Modern Age and could prestige instead),
 - you don't hold this epoch's legacy yet,
 - you have plenty of runs ahead to cash in the research bonus.
 

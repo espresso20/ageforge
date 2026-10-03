@@ -1,6 +1,8 @@
 # Installation
 
-AgeForge is a single static binary with no runtime dependencies.
+AgeForge is a single static binary with no runtime dependencies. Download the one for your system from the latest GitHub release, or build it from source.
+
+> **Version note:** the downloads below are the 3.6 release. This wiki describes version 4.0, which is not released yet, so 3.6 still has some older systems (for example the `speed` command and the old city map); build from source to play 4.0 now.
 
 ---
 
@@ -46,7 +48,7 @@ Download `ageforge-windows-amd64.exe` from the [GitHub Releases](https://github.
 
 ## Build from source
 
-Requires **Go 1.24+**.
+Requires **Go 1.26+**.
 
 ```bash
 git clone https://github.com/espresso20/ageforge.git
@@ -61,9 +63,21 @@ go build -o ageforge .
 
 AgeForge draws a full-screen text interface. It works best with:
 
-- a terminal **at least 130 columns** wide (the game caps its content at 130)
+- a terminal **at least 120 columns wide and 40 rows tall**. A smaller one works, but the dashboard's mini map hides to leave the Buildings list room
 - 24-bit (truecolor) ANSI color, which modern terminals support
 - a **monospace font**, such as JetBrains Mono, Cascadia Code or Fira Code
+
+---
+
+## Updating
+
+The main menu has **Check for updates** (`u`). It asks GitHub for the latest release and, if it is newer than yours, offers to download and install it. The download is checked against the release's published checksums. On macOS and Linux it replaces the `ageforge` binary in place, and the new version runs the next time you start the game. On Windows it saves the new `.exe` beside the old one for you to swap in.
+
+Release builds also check in the background when the main menu opens. If a newer release exists, **Update available (u)** appears beside the version number.
+
+A build from source is a development build: it skips the background check, and Check for updates says it isn't available. Update it with `git pull` and `go build -o ageforge .` again.
+
+Updating replaces only the binary: your `data/` folder, with your accounts and saves, stays as it is.
 
 ---
 
