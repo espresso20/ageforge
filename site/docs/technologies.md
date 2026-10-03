@@ -1,6 +1,6 @@
 # Technologies
 
-Research is your civilization's strongest long-term lever. 77 technologies span all 22 ages, and each one permanently changes your production, military strength, storage, or the pace of the game. Research is **sequential**: only one technology can be in progress at a time, and it must finish (or be canceled) before you can start the next.
+Research is your civilization's strongest long-term lever. 77 technologies span all 22 ages, and each one permanently changes your production, military strength, storage, or the pace of the game. Only one technology is researched at a time, but the [build plan](plan.md) can queue the next ones and start each as soon as the slot frees up.
 
 ---
 
@@ -8,28 +8,37 @@ Research is your civilization's strongest long-term lever. 77 technologies span 
 
 ### Starting Research
 
-Research costs **knowledge points (kp)**, deducted immediately when you start. There is no refund if you cancel: the knowledge is gone the moment you type the command.
+Research costs **knowledge points (kp)**, deducted immediately when you start. There is no refund if you cancel: the knowledge is gone the moment the tech starts.
 
-Once started, the tech counts down in **ticks**. Each game tick decrements the counter by 1. When it hits zero, the effects are applied instantly and permanently.
+Once started, the tech counts down in **ticks**. Each game tick takes 1 off the counter. When it hits zero, the effects are applied instantly and permanently.
 
-**Formula for adjusted tick count:**
+**Tick count with research speed:**
 ```
-adjusted_ticks = max(1,  base_ticks × (1.0 − research_speed_bonus))
+ticks = base ticks × (1 − research speed), rounded down, never below 1
 ```
 
-A `research_speed` bonus of `0.30` (30%) cuts the tick count to 70% of base. It cuts ticks, not time. Ticks can also run faster through `tick_speed` bonuses, and the two multiply, so a civilization with high research speed **and** high tick speed researches much faster.
+A research speed of +30% cuts the tick count to 70% of base. It cuts the number of ticks, not their length. A tick is 2 seconds of real time at base; game speed bonuses make each tick shorter (see [Game speed](#game-speed)). The two multiply, so a civilization with high research speed **and** high game speed researches much faster.
 
-The adjusted ticks are locked in at the moment you start the tech. Gaining more `research_speed` mid-research does not retroactively shorten the current countdown.
+The tick count is locked in when you start the tech. Gaining more research speed mid-research does not shorten the current countdown.
 
 **Era Mastery.** On known ground (an age a past run completed) the adjusted ticks are then divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick: 2x after one completion, up to 4.2x after ten. The Research panel shows the shortened times.
 
 ### Knowledge Cost is Upfront
 
-Knowledge is removed from your stockpile when you issue the `research` command, before any ticks pass. If you don't have enough, the command fails. If your knowledge income drops to zero during a long research countdown, **research still completes**: the ticks count down whatever your knowledge income is, because the cost was already paid.
+Knowledge is removed from your stockpile when the tech starts, before any ticks pass. If you don't have enough, the command fails, and since you can't hold more knowledge than your storage, your knowledge storage must be at least the tech's cost. If your knowledge income drops to zero during a long research countdown, **research still completes**: the ticks count down whatever your knowledge income is, because the cost was already paid.
 
-### Only One Slot
+### One Slot, and the Plan as a Queue
 
-There is no queue. If you try to start a second tech while one is in progress, you get an error showing the active tech and how many ticks remain. Plan your research order in advance.
+There is one research slot. If you type `research` for a second tech while one is in progress, you get an error naming the active tech and the time it has left.
+
+To line techs up, add them to the [build plan](plan.md) with `plan research <tech>` (or `plan res`). The plan starts each one as soon as the slot is free and you hold its knowledge, in plan order, and it keeps doing so while you are away:
+
+- Only the first research item in the plan can take the slot when it frees up. A tech further down waits its turn even if it is cheaper.
+- A planned tech holds back its knowledge cost while it waits, so plan items below it can't spend that knowledge.
+- A tech's prerequisites must be researched, in progress, or planned above it. The plan refuses a tech that fails this, and drops a planned one whose prerequisite you remove from above it.
+- You can plan the next age's techs; they wait for the advance.
+
+See [How it runs](plan.md#how-it-runs) for the rest of the plan's rules.
 
 ### When Research Completes
 
@@ -39,17 +48,23 @@ Effects are applied the tick the counter hits zero. You'll see a success message
 
 ## Research Speed Sources
 
-`research_speed` reduces the tick count when research starts. Its sources add together. The table also lists the prestige upgrade whose key (`research_speed`) suggests it belongs here:
+Research speed reduces the tick count when research starts. Its sources add together:
 
-| Source | How much | Notes |
+| Source | Research speed | Notes |
 |---|---|---|
-| **Tech bonuses** | None in the current tree | No tech has a research speed effect today |
-| **Ancient Knowledge** (Succumb) | +0.25 (25%) per epoch | Granted permanently for each distinct epoch you Succumb in (Iron to Cosmic, up to +150%); survives Succumb, prestige and save/load |
-| **Prestige: Knowledge Production** | +0.05 per tier, max 5 tiers (+25%) | Raises knowledge output, not `research_speed` (see the note below) |
+| **Tech Pioneer** milestone (research 15 techs) | +5% | Scholar Chain |
+| **Philosophes** milestone (35 techs, from the Classical Age) | +5% | |
+| **Renaissance Mind** milestone (42 techs, from the Renaissance Age) | +10% | Scholar Chain, hidden until you get close |
+| **Tech Master** milestone (50 techs, from the Information Age) | +10% | Scholar Chain, hidden; also +5% all production |
+| **Tech Ascendant** milestone (all 77 techs, Transcendent Age) | +20% | Hidden. It arrives with your last tech, so it never shortens one |
+| **Ancient Knowledge** (Succumb) | +25% per epoch | For each distinct epoch you Succumb in (Iron to Cosmic, up to +150%); kept through Succumb, prestige and save/load. See [Ancient Knowledge](catastrophe.md#ancient-knowledge) |
+| **Techs** | none | No tech has a research speed effect |
 
-> **Note on Prestige "Knowledge Production":** Despite its key (`research_speed`), this prestige upgrade raises knowledge output (how fast you make knowledge), not the `research_speed` bonus that cuts tick counts. More knowledge lets you afford techs sooner, but each tech still takes the same number of ticks.
+Milestone research speed lasts for the run: milestones start over at prestige and at Succumb. Five milestones add +50% in total, +30% of it before your last tech. See [Milestones](milestones.md).
 
-No tech in the current tree grants `research_speed`, so the tick reduction comes from Succumb's Ancient Knowledge. Many techs raise knowledge output instead (see [Knowledge output](#knowledge-output) below).
+Nothing caps research speed except that a tech always takes at least 1 tick. Once your total reaches +100%, every tech finishes on the tick after you start it.
+
+> **Note on the prestige upgrade Knowledge Production:** its key is `research_speed` (`prestige buy research_speed`), but it raises knowledge output by 5% per tier, not research speed. More knowledge lets you afford techs sooner; each tech still takes the same number of ticks. Many techs raise knowledge output too (see [Knowledge output](#knowledge-output) below).
 
 ---
 
@@ -69,9 +84,16 @@ is equivalent to `research bronze_working`.
 ---
 
 ```
+plan research <tech_key>
+```
+Adds a tech to the build plan, which starts it when the research slot is free and you hold its knowledge (see [One Slot, and the Plan as a Queue](#one-slot-and-the-plan-as-a-queue)). `plan res` is the short form.
+
+---
+
+```
 research list
 ```
-Lists all technologies available in the current age with their status (researched, in progress, available, locked by prerequisite). Also shows the active research and the approximate wall-clock time left on it (e.g. `~4m 44s`). See [Timers and durations](commands.md#timers-and-durations).
+Prints the techs you can start now (age reached, prerequisites done, not yet researched) with their keys and knowledge costs, then the active research and the approximate wall-clock time left on it (e.g. `~4m 44s`). See [Timers and durations](commands.md#timers-and-durations).
 
 ---
 
@@ -85,7 +107,7 @@ Cancels the current research. **No refund.** The knowledge cost is lost. Only us
 ```
 research
 ```
-With no arguments, opens the **Research panel**. It groups techs by age: researched techs show as complete, available ones are highlighted, and locked ones are dimmed. Ages past your next one are not listed: one line counts the techs they hold, so the tree never spoils an age you haven't reached.
+With no arguments, opens the **Research panel** (so does `techs`). It groups techs by age: researched techs show as complete, available ones are highlighted, and locked ones are dimmed. Ages past your next one are not listed: one line counts the techs they hold, so the tree never spoils an age you haven't reached.
 
 ---
 
@@ -97,11 +119,11 @@ With no arguments, opens the **Research panel**. It groups techs by age: researc
 
 Prerequisites are listed by tech key.
 
-Research time is capped at **one eighth of the tech's age target** (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)), so the handful of techs each age offers fits inside it. From the Bronze to the Colonial Age most techs sit below that cap, at their own research times; in every other age each tech sits at the cap, so all techs of that age share the same tick count. Ticks below are at 1× speed (one tick is 2 seconds), before any `research_speed` bonus.
+Research time is capped at **one eighth of the tech's age target** (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)), so the handful of techs each age offers fits inside it. From the Bronze to the Colonial Age most techs sit below that cap, at their own research times; in every other age each tech sits at the cap, so all techs of that age share the same tick count. Ticks and times below are base values (2 seconds a tick), before research speed and game speed bonuses. "+X% all production" effects add into one pool that is clamped at x3.0, so from about the Electric Age most of them no longer raise your output (see [The all-production cap](resources.md#the-all-production-cap) and [All production](#all-production) below).
 
-**Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). Their knowledge cost is what times them: each is priced so a player affords it about halfway through the age, after its other techs, so a long stretch of saving up has something new in the middle. In the Cyberpunk Age, Cybernetics is priced to finish about 26 hours in, with Holography some 11 hours later. In the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another, each needing the one before and priced to finish about 17, 24 and 32 hours in. A gated building stays hidden from the build list until its tech is done; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built.
+**Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). Their knowledge cost is what times them: each is priced so a player affords it about halfway through the age, after its other techs, so a long stretch of saving up has something new in the middle. In the Cyberpunk Age, Cybernetics is priced to finish about 26 hours in, with Holography some 11 hours later. In the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another, each needing the one before and priced to finish about 17, 24 and 32 hours in. A gated building stays hidden from the build list until its tech is done, and `build` and `upgrade` refuse it until then; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built. See [Buildings a tech opens](buildings.md#buildings-a-tech-opens).
 
-### Primitive Age (~2 min/tech at 1× speed)
+### Primitive Age (~2 min/tech)
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
@@ -163,7 +185,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | `banking` | Banking | 30K kp | 2,100 | `currency`, `mathematics` | +50% gold output, +100 gold storage |
 | `feudalism` | Feudalism | 22K kp | 1,700 | `military_tactics` | +5 housing |
 | `alchemy` | Alchemy | 28K kp | 2,200 | `mathematics` | +15% knowledge output, +0.1 gold/tick |
-| `chronometry` | Chronometry | 20K kp | 1,900 | none | +5% tick speed |
+| `chronometry` | Chronometry | 20K kp | 1,900 | none | +5% game speed |
 
 ---
 
@@ -196,7 +218,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | `industrialization` | Industrialization | 120K kp | 4,680 | `steam_power` | +50% all production, +0.5 steel/tick |
 | `railroads` | Railroads | 90K kp | 4,680 | `steam_power`, `road_building` | +100% gold output, +200 storage for every resource |
 | `rifling` | Rifling | 80K kp | 4,680 | `gunpowder` | +50% military power |
-| `clockwork_automation` | Clockwork Automation | 50K kp | 4,680 | `chronometry` | +10% tick speed |
+| `clockwork_automation` | Clockwork Automation | 50K kp | 4,680 | `chronometry` | +10% game speed |
 
 ---
 
@@ -320,7 +342,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 |---|---|---|---|---|---|
 | `quantum_mechanics` | Quantum Mechanics | 150M kp | 14,040 | `antimatter_synthesis` | +2.0 quantum flux/tick, +100% all production |
 | `reality_manipulation` | Reality Manipulation | 200M kp | 14,040 | `quantum_mechanics` | +5.0 quantum flux/tick, +100% all production |
-| `quantum_computing` | Quantum Computing | 150M kp | 14,040 | `clockwork_automation` | **+15% tick speed** |
+| `quantum_computing` | Quantum Computing | 150M kp | 14,040 | `clockwork_automation` | **+15% game speed** |
 
 ---
 
@@ -336,7 +358,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 
 ### All production
 
-These are the biggest single techs in the game. Each adds a percentage to all production. The bonuses from every source add together, and the total multiplies every positive production rate.
+Each of these adds a percentage to all production. The bonuses from every source (techs, wonders, milestones, monuments, events, boons, prestige) add into one pool, and the game multiplies every positive production rate by 1 + that pool, **clamped at x3.0** (+200%). See [The all-production cap](resources.md#the-all-production-cap).
 
 | Tech | Bonus |
 |---|---|
@@ -358,13 +380,13 @@ These are the biggest single techs in the game. Each adds a percentage to all pr
 | Reality Manipulation | +1.00 |
 | Transcendence | +2.00 |
 
-By the Transcendent Age, the all-production bonuses from techs alone add up to +9.5 (+950%), before wonders and other sources.
+The techs through the Electric Age add +190%; with the Crystal Palace and Hoover Dam wonders that passes the cap, and Advanced Electrics (Modern) takes the techs past it on their own. By the Transcendent Age they add +950% on paper. The Stats panel's Active Multipliers shows that raw sum, but output never goes past x3.0. From the Modern Age on, an all-production tech adds nothing you can see while you are over the cap; it still counts as a buffer, because a penalty (such as the Reconstruction Effort after you Endure) comes out of the raw pool first.
 
 ---
 
 ### Knowledge output
 
-These techs multiply the output of every knowledge building, which pays for the expensive late-game techs:
+These techs raise your knowledge output, which pays for later techs:
 
 | Tech | Bonus |
 |---|---|
@@ -380,27 +402,31 @@ These techs multiply the output of every knowledge building, which pays for the 
 | Internet | +120% |
 | Neural Interface | +200% |
 
+Knowledge output bonuses have a pool of their own (shared with the Great Library and Global Network wonders, scholar milestones and the Knowledge Production prestige upgrade), clamped at +200% like all production. The techs through Radio add +195%, so with the Great Library you are at the cap by about the Electric Age, and Computers, Satellite Technology, Internet and Neural Interface add nothing you can see unless something pulls the pool down.
+
 ---
 
-### Tick speed
+### Game speed
 
-Three techs make ticks fire more often. They stack with each other and with the Prestige "Temporal Mastery" upgrade (+5% per tier, 5 tiers):
+Three techs raise game speed: ticks come more often, so production, construction, research and every timer run faster in real time. Game speed isn't part of the all-production pool, so its cap doesn't apply. The bonuses add up with the game's other game speed sources:
 
-| Source | Bonus |
-|---|---|
-| Chronometry (Medieval) | +5% |
-| Clockwork Automation (Industrial) | +10% |
-| Quantum Computing (Quantum) | +15% |
-| Prestige: Temporal Mastery (max) | +25% |
-| **Total (all maxed)** | **+55%** |
+| Source | Bonus | Lasts |
+|---|---|---|
+| Chronometry (Medieval) | +5% | the run |
+| Clockwork Automation (Industrial) | +10% | the run |
+| Quantum Computing (Quantum) | +15% | the run |
+| Prestige upgrade Temporal Mastery | +5% per tier, +25% at tier 5 | every run |
+| Prestige level | +1% per level | every run |
+| Milestone chain boosts | +250% or +300% | a few minutes, once per chain |
+| Time Dilation boons | +8% to +15%, before scaling | 1,950 to 3,900 ticks |
 
-Tick speed multiplies with research speed: with a clock 55% faster, late-game techs that would take hours finish much sooner in wall-clock time.
+With the three techs and Temporal Mastery maxed, the game runs 55% faster (more with prestige levels), and that multiplies with research speed. See [Prestige](prestige.md#passive-prestige-bonuses), [Milestones](milestones.md) and [Boons](factions.md#boons).
 
 ---
 
 ### Military power
 
-Applied to expedition success and military calculations.
+Military power lowers mission difficulty and raises your defense rating. See [Military Power Bonus](military.md#military-power-bonus).
 
 | Tech | Bonus |
 |---|---|
@@ -440,6 +466,8 @@ These raise the positive production of one resource, or worker output:
 | Steel Forging | iron | +30% |
 | Tool Making | worker output | +15% |
 | Neural Interface | worker output | +30% |
+
+Each resource's bonuses share a pool clamped at +200%, as knowledge's do. The gold techs from Currency to Mercantilism already add +230%, so from the Colonial Age on Railroads, Telecommunications and Blockchain add no gold you can see. Worker output bonuses have no such ceiling.
 
 ---
 
@@ -540,17 +568,15 @@ These techs add a flat amount to a resource's production each tick. Unlike the p
 
 ---
 
-## Knowledge Workers
+## Paying for Research
 
-The knowledge domain lineage produces all your research fuel. Workers in knowledge buildings are called **Shamans** in the Primitive Age, eventually becoming **Quantum Theorists** in the Quantum Age. Assign them using:
+Knowledge comes from the Knowledge lineage (Story Circle, Elders' Hall and on up to the Reality Academy), staffed by knowledge workers: **Shamans** in the Primitive Age, **Quantum Theorists** by the Quantum Age. Assign them with `assign <building_key> [count|all]`. The rates for every tier are on the [Knowledge](knowledge.md) page.
 
-```
-assign <building_key> [count|all]
-```
+The seven mid-age techs of the Atomic to Fusion Ages (Civilian Reactors, Internet of Things, Cybernetics, Holography, Plasma Physics, Superconductors, Maglev Transit) cost billions, far more than the lineage makes: a fully staffed Research Campus makes about 102 knowledge a tick, under 6M over the whole Atomic Age. For those the market is the practical source: from the Industrial Age on, gold buys knowledge at a flat 5 knowledge per gold. See [Knowledge at the Market](knowledge.md#knowledge-at-the-market). `plan trade gold knowledge` buys it as gold comes in, and a `plan research` item behind it starts the tech once the knowledge is there.
 
-Knowledge building rates, per fully staffed copy: the early lineage is set by hand (Story Circle 0.2, Elders' Hall 0.6, Scriptorium 2.0, Agora 1.6, Library 3.2 knowledge/tick). In the Medieval, Renaissance and Colonial ages, where knowledge is also a building material, the rate is derived from the building's price like any other producer (Monastery Library 30.1, University 79.9, Natural Philosophy Hall 297). From the Industrial Age on, knowledge buildings follow `rate = 0.05 × 2^tier` (Research Institute 12.8, Academy 25.6, and so on). A fully staffed high-tier knowledge building produces far more per tick than several low-tier ones. Upgrade your knowledge lineage early and put workers in the highest-tier building you can afford.
+Either way, your knowledge storage must hold a tech's full cost before you can pay for it.
 
-The prestige **Knowledge Production** upgrade adds +5% knowledge output per tier. Five tiers give your knowledge buildings a permanent +25% from the start of each run.
+The prestige **Knowledge Production** upgrade adds +5% knowledge output per tier, +25% at tier 5, from the start of every run.
 
 ---
 
@@ -560,43 +586,39 @@ The prestige **Knowledge Production** upgrade adds +5% knowledge output per tier
 
 Your first research bottleneck is knowledge income, not tick count. Rush `primitive_writing` → `mathematics` → `philosophy` to stack knowledge output bonuses in the first ages. Each percent you earn early pays off across every later tech.
 
-### The Research Speed Snowball
+### The Knowledge Snowball
 
 Knowledge bonuses feed on themselves: each one makes the next tech arrive sooner. The chain looks like:
 ```
 primitive_writing → mathematics → philosophy → printing_press → …
 ```
-Each of these raises knowledge output, so the next tech arrives sooner in wall-clock time.
+Each of these raises knowledge output, so the next tech arrives sooner in real time. The snowball stops at the +200% cap, which you reach by about the Electric Age (see [Knowledge output](#knowledge-output)).
 
-### Tick Speed: A Hidden Multiplier
+### Game Speed: A Hidden Multiplier
 
-`chronometry` (Medieval, no prerequisites) is one of the cheapest techs for what it does. +5% tick speed makes everything that runs on ticks (research, building, expeditions) finish 5% faster. Research it early, then chain `clockwork_automation` in the Industrial Age for another +10%.
+`chronometry` (Medieval, no prerequisites) is one of the cheapest techs for what it does. +5% game speed runs everything that counts in ticks (production, building, research, expeditions) 5% faster. Research it early, then chain `clockwork_automation` in the Industrial Age for another +10%. Line them up with `plan research chronometry` as soon as you enter the Medieval Age.
 
 ### When to Cancel
 
-Canceling costs you the full knowledge payment, with no refund. It only makes sense when:
-- You've reached a new age and a different tech gives a bonus you need now.
-- An epoch event is about to fire and you want to pivot to a prerequisite for something the event might complete for free (see Grand Discovery below).
-
-As a rule: if you're more than halfway through the tick count, finish it.
+Canceling costs you the full knowledge payment and the progress, with no refund. It only makes sense when a different tech gives a bonus you need now, badly enough to pay for the first one twice. As a rule: if you're more than halfway through the tick count, finish it, and put the urgent tech at the top of your plan so it starts next.
 
 ### The Grand Discovery Epoch Event
 
-The **Grand Discovery** (`good_major` epoch event) instantly completes up to 3 available, unresearched technologies from your current age, for free. It fires during positive epoch events when your culture is high enough to unlock major events.
+**The Grand Discovery**, a major good epoch event, instantly completes up to 3 unresearched techs of your current age or earlier, for free. It can come at an epoch transition when your culture is over 40% of its storage (see [Good Epoch Events](epochs.md#good-epoch-events)).
 
-You can't choose which 3 techs it picks, but you can shape the pool by researching first the techs you don't want it to spend a slot on. If you have 3 desirable expensive techs you haven't started yet when the event fires, all three can complete in a single event.
+It doesn't weigh which techs are worth most: it takes the first three unresearched techs in alphabetical order of their keys, prerequisites or not. You can shape what it takes by researching the alphabetically early techs of your age first, which leaves the slots for the rest.
 
-If Grand Discovery completes the tech you are researching, the research slot clears automatically.
+If Grand Discovery completes the tech you are researching, the research slot clears automatically (the knowledge you paid for it is not refunded).
 
 ### The Ancient Civilization Memory
 
-A second way to skip the research grind exists, but only at the very start of a fresh prestige run. While you are still in the Primitive or Stone age, an **ancient cache** has a ~40% chance (once per run) to offer one technology suited to your age that you haven't researched. Accepting it starts that tech at once, **free of prerequisites, the age requirement and knowledge cost**, but at **half research speed** (twice the normal tick count). The reachable tier scales with prestige level (one extra age of reach per two levels), so a high-prestige run can pull in a tech from an age it hasn't reached yet.
+A second way to skip the research grind comes only at the start of a new run, after a prestige or a Succumb, while you are still in the Primitive or Stone Age. An **ancient cache** has a ~40% chance (once per run) to offer one technology suited to your age that you haven't researched. Accepting it starts that tech at once, **free of prerequisites, the age requirement and knowledge cost**, but at **half research speed** (twice the normal tick count). The reachable tier scales with prestige level (one extra age of reach per two levels), so a high-prestige run can pull in a tech from an age it hasn't reached yet.
 
-Unlike Grand Discovery, this is a prestige-run mechanic and never fires on your first-ever run (it needs prestige level 1 or higher). See [Prestige](prestige.md#ancient-civilization-memory) for full conditions.
+Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige level 1 or higher. See [Prestige](prestige.md#ancient-civilization-memory) for full conditions.
 
 ### Late-Game Knowledge Scaling
 
-Knowledge costs rise steeply: from 800 kp (Primitive) to 500M kp (Transcendent). In the Space and Interstellar ages, single techs cost tens of millions of kp. Build up your knowledge lineage and take every knowledge output tech before you reach those ages, or the wait gets very long.
+Knowledge costs rise steeply, from 800 kp (Primitive) to hundreds of millions in the last ages, and the seven mid-age techs of the Atomic to Fusion Ages cost billions (Cybernetics 14B). Raise your knowledge storage ahead of them, and plan on buying most of that knowledge with gold (see [Paying for Research](#paying-for-research)).
 
 ---
 
@@ -604,16 +626,16 @@ Knowledge costs rise steeply: from 800 kp (Primitive) to 500M kp (Transcendent).
 
 **Knowledge is deducted upfront.** Don't start a tech if your stockpile barely covers the cost. One bad event (The Dark Age cuts knowledge by 80% and cancels your active research) can set you back a long way.
 
-**Prerequisites stack.** Before typing `research mathematics`, check that you have both `primitive_writing` and `currency`. Use `research list` to see what's locked and why.
+**Prerequisites stack.** Before typing `research mathematics`, check that you have both `primitive_writing` and `currency`. `research list` shows only the techs you can start now; the Research panel (`research`) shows the locked ones dimmed. Or plan the whole chain: `plan research` takes a tech whose prerequisites are planned above it.
 
 **The Dark Age epoch event** cancels your active research and drains 80% of your knowledge stockpile. If an epoch transition is close, consider whether to delay an expensive research start until after its event resolves.
 
-**Prestige resets research** entirely, with every tech and its bonus. The only research benefits that survive a prestige are the **Ancient Knowledge** bonus (+25% research speed per epoch) from Succumbing and the knowledge output bonus from the prestige upgrade shop.
+**Prestige resets research** entirely, with every tech, its bonus and the milestones that gave research speed. The research benefits that survive a prestige are the **Ancient Knowledge** bonus (+25% research speed per epoch) from Succumbing, and the prestige upgrades Knowledge Production (knowledge output) and Temporal Mastery (game speed).
 
-**Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but grants +25% research speed permanently, and each further epoch you Succumb in adds another +25%. Players who Succumb at least once and invest in the Research Speed prestige upgrade begin each subsequent run with noticeably faster research from tick one.
+**Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but grants +25% research speed permanently, and each further epoch you Succumb in adds another +25%. Players who Succumb at least once begin each later run with faster research from tick one; pair it with Knowledge Production so you can afford the techs as fast as they finish. See [Succumb](catastrophe.md#succumb).
 
 **Don't overlook `civil_engineering`.** −5% build cost plus +100 storage for every resource is good value in the Classical Age and keeps helping for the rest of the run.
 
 ---
 
-*See also: [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire; [Prestige](prestige.md) for the Knowledge Production upgrade and the Ancient Civilization Memory; [Buildings](buildings.md) for the knowledge lineage.*
+*See also: [Knowledge](knowledge.md) for making and buying knowledge; [The Build Plan](plan.md) for queuing research; [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire; [Prestige](prestige.md) for the Knowledge Production upgrade and the Ancient Civilization Memory; [Buildings](buildings.md) for the buildings techs open.*

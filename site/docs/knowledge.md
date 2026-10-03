@@ -67,7 +67,7 @@ The full knowledge cost is paid **up front**, the moment research starts. Nothin
 
 To queue techs, add them to the [Build Plan](plan.md) with `plan research <tech>` (or `plan res`). The plan starts them one at a time, in order, as the knowledge comes in, and keeps doing so while you are away. A tech's prerequisites must be researched, in progress or planned above it. You can also plan the next age's techs; they wait for the advance.
 
-Research speed shortens how long each tech takes. It comes from milestones (five in the scholar chain add +50% in total) and from Ancient Knowledge, the Succumb reward: +25% per distinct epoch you have succumbed to, kept through prestige (see the [Legacy Bonus Table](catastrophe.md#legacy-bonus-table)). See [Technologies](technologies.md) for the full tech tree.
+Research speed shortens how long each tech takes. It comes from milestones (five milestones, three of them in the Scholar chain, add +50% in total) and from Ancient Knowledge, the Succumb reward: +25% per distinct epoch you have succumbed to, kept through prestige (see the [Legacy Bonus Table](catastrophe.md#legacy-bonus-table)). See [Technologies](technologies.md) for the full tech tree.
 
 ---
 

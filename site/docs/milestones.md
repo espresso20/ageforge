@@ -88,7 +88,7 @@ The tech tree reaches 50 techs in the Information Age, so finishing this chain m
 
 Stone Pits can only be built in the Stone Age, so build them before you advance. Structures count every building you finish this run, wonders included (upgrades don't count, and the count starts over when you prestige).
 
-The `-5% build cost` rewards here (Master Builder, Grand Architect) are real discounts: they reduce the actual cumulative cost of every building you queue, and the saving shows up in the cost the build menu displays. Stacked with the other build-cost rewards across the game (and the Civil Engineering tech), the reductions reach roughly −24%, floored at 10% of base. See [Buildings](buildings.md#build-cost-reductions).
+The `-5% build cost` rewards here (Master Builder, Grand Architect) are real discounts: they reduce the actual cumulative cost of every building you queue, and the saving shows up in the cost the build menu displays. Stacked with the other build-cost rewards across the game (and the Civil Engineering tech), the reductions reach −32%, floored at 10% of base. See [Buildings](buildings.md#build-cost-reductions).
 
 **Chain reward:** Title "The Architects" · game speed +250% for 150 ticks
 

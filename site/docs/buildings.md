@@ -1,6 +1,6 @@
 # Buildings
 
-AgeForge uses a **14-lineage system** with 301 total buildings spanning production lineages, storage, wonders, cultural monuments and a handful of one-off administrative buildings. Buildings belong to lineages that span the full 22-age arc. When you advance an age, buildings that have a next-tier equivalent do **not** change on their own. They get a pending upgrade marker, and you upgrade them at your own pace with the `upgrade` command.
+AgeForge uses a **14-lineage system** with 301 total buildings spanning production lineages, storage, wonders, cultural monuments and four standalone buildings (two embassies, the Geographic Society and the Nano Foundry). Buildings belong to lineages that span the full 22-age arc. When you advance an age, buildings that have a next-tier equivalent do **not** change on their own. They get a pending upgrade marker, and you upgrade them at your own pace with the `upgrade` command.
 
 For the full wonder list see [Wonders](wonders.md).
 
@@ -28,6 +28,8 @@ build <key> max          build as many as you can afford right now
 build                    list all available buildings with costs and count built
 ```
 
+`b` is short for `build`. To build copies as the resources come in, rather than now, add them to the [build plan](plan.md) with `plan build <key> [count]`.
+
 **`max`** builds as many copies as you can afford along the full cost curve and stops as soon as the next copy would cost more than you have. It does **not** divide your resources by the first copy's price; each copy is priced at its own step of the curve before the game decides to continue.
 
 ## Building Upgrades
@@ -38,23 +40,26 @@ Storage buildings never get an upgrade: your stashes, storage pits and vaults ke
 
 ### The upgrade hint
 
-In the Economy panel's building list, a building with an upgrade waiting shows a gold hint line:
+In the Economy panel's building list, a building with an upgrade waiting shows a gold hint line under it:
 
 ```
-↑ Upgrade available → Forager Post   type: upgrade gathering_camp
+↑ Upgrade available: Forager Post. Type: upgrade gathering_camp
 ```
 
-The log also announces each upgrade when you advance. Until you upgrade, the old building keeps producing normally, with no penalty for leaving it pending. The reason to upgrade is the higher production rate of the new tier.
+The log also lists each upgrade when you advance (`↑ 12 Gathering Camps can upgrade to Forager Post. Type 'upgrade gathering_camp'.`). Until you upgrade, the old building keeps producing normally, with no penalty for leaving it pending. The reason to upgrade is the higher production rate of the new tier.
 
 ### Upgrade commands
 
 ```
+upgrade                    list the upgrades you can make
 upgrade <building>         upgrade ALL copies of that building (default)
 upgrade <building> <n>     upgrade exactly n copies
 upgrade <building> all     same as no count argument
 ```
 
-There is no global `upgrade all` command. Upgrades are per building, so you control the order and pacing.
+Bare `upgrade` prints one line per building with an upgrade waiting: the old and new keys, how many copies, the cost to upgrade all of them, and a check mark if you can afford it (a cross if not).
+
+There is no global `upgrade all` command. Upgrades are per building, so you control the order and pacing. An upgrade takes effect at once: there is no build time.
 
 An upgrade stops at the new building's max count. If the target is capped and has room for fewer copies than you asked for, only that many are upgraded and the rest stay as they are; if it is already full, the upgrade is refused.
 
@@ -67,11 +72,11 @@ upgrade forager_post all
 
 ### Upgrade cost
 
-Each copy you upgrade costs the price of a new copy minus half of what the old copy cost. In other words, **you trade in the old building at 50% of its price toward the new one.** Old copies are traded in from the most expensive down, and new copies are priced up the new building's cost curve as usual. Build-cost reductions apply to the new copy's price but not to the trade-in value.
+Each copy you upgrade costs the price of a new copy minus the old copy's sell value (half of what it cost). In other words, **you trade in the old building at 50% of its price toward the new one.** The sum is done per resource, and no resource goes below zero. Old copies are traded in from the most expensive down, and new copies are priced up the new building's cost curve as usual. Build-cost reductions apply to the new copy's price but not to the trade-in value.
 
-The cost of a copy never goes below zero, and upgrading is always cheaper than selling the old building and building the new one from scratch.
+Because it is done per resource, the trade-in only counts in resources the new building costs. If the old building cost wood and the new one costs none, that part of its value is lost; so is any trade-in beyond the new price in a resource. An upgrade therefore never costs less than selling the old copy and building a new one, and sometimes a little more. What it saves is time: it is instant, with no build time, and the workers stay.
 
-At high building counts (10 or more), the trade-in value of the most expensive old copies can cover the whole price of the new copy, so those upgrades are free. This is intentional: it rewards civilizations that invested heavily in a lineage before advancing.
+How much the trade-in covers depends on how many old copies you have. With 10, the most expensive copy typically covers 10% to 40% of the first new copy's price. Around 20 to 25 copies it can cover all of it, if the two buildings cost the same resources; those upgrades are free.
 
 ### Workers and upgrades
 
@@ -89,12 +94,15 @@ Once a building has a pending upgrade:
 
 Don't let pending upgrades pile up during high-demand periods. Upgrading your food lineage before a resource squeeze is almost always the right call.
 
+**Upgrade before you advance again.** Upgrade offers are made only when you advance, one tier at a time. Copies you carry through a second advance can still upgrade into the tier they were offered, but the copies that upgrade produces may never be offered another upgrade (Wood Camps upgraded to Woodcutter Camps in the Bronze Age, for example, get no offer in the Iron Age or after). Build the newer tier fresh instead, and clear each age's upgrades before you leave it.
+
 ### Strategic advice
 
 - **Upgrade high-count buildings early.** The most expensive old copies give the biggest trade-in, so a civilization with 15 Gathering Camps gets proportionally cheaper upgrades than one with 3.
-- **Upgrade before a food crunch.** A Forager Post makes 1.5 food/tick fully staffed against a Gathering Camp's 1. If an epoch catastrophe is coming, upgraded food buildings give you a wider safety margin.
-- **You control the order.** You might upgrade your food lineage as soon as you advance and leave military or knowledge buildings pending until you've banked enough resources. There is no time pressure, because pending buildings still produce.
-- **Don't sell pending buildings for cash.** The 50% sell refund is already built into the upgrade price, so you get that value back when you upgrade. Selling instead throws away the upgrade discount.
+- **Upgrade before a food crunch.** A Forager Post makes 1.5 food/tick fully staffed against a Gathering Camp's 1. If a [harbinger](harbinger.md) warns that a catastrophe is coming, upgraded food buildings give you a wider safety margin.
+- **You control the order.** You might upgrade your food lineage as soon as you advance and leave military or knowledge buildings pending until you've banked enough resources. Within the age there is no time pressure, because pending buildings still produce; just finish before your next advance (see above).
+- **Keep pending buildings until you upgrade them.** Selling a pending copy pays back its 50% at once, about what it brings as a trade-in, but the copy stops producing. Sell only when you need those resources right now.
+- **A tech-gated tier waits for its tech.** In the ages where the new tier needs a tech first (see [Buildings a tech opens](#buildings-a-tech-opens)), `upgrade` refuses until the tech is done, even though the hint already shows.
 
 ---
 
@@ -162,7 +170,7 @@ Most buildings unlock the moment you enter their age. Five wait for a tech from 
 | Holographic Theater | Cyberpunk | Holography |
 | Energy Exchange | Fusion | Maglev Transit |
 
-Until the tech is done the building is missing from the build list, and `build` and `upgrade` say which tech it needs. The build plan takes it early and waits. Copies you already have keep working. See [Technologies](technologies.md#tech-tree-by-age).
+Until the tech is done the building is missing from the build list, and `build` and `upgrade` say which tech it needs. Each of these buildings is its lineage's tier for that age, so the upgrade hint for the old tier shows when you advance, but the upgrade itself waits for the tech. The build plan takes it early and waits. Copies you already have keep working. See [Technologies](technologies.md#tech-tree-by-age).
 
 ---
 
@@ -197,7 +205,7 @@ You keep all your progress and production. A Gathering Camp in the Food lineage 
 | 13 | Hacker/Digital | hacker | data | 8 | Server Farm | Reality Processor |
 | 14 | Harbor | trade | gold (+trade-route income) | 5 | Harbor | Logistics Hub |
 
-> Lineages 8 to 14 start in later ages (Trade and Engineering in the Bronze Age, Culture/Arts in the Classical, Metallurgy in the Iron, Energy in the Industrial, Hacker/Digital in the Information and Harbor in the Colonial), so they have fewer tiers. The Housing and Culture/Arts lineages have no worker domain: they work without workers. The **Harbor** lineage also raises trade income: besides producing gold, each harbor adds a percentage bonus to the income of *every* active trade route. See [Trade & Diplomacy](trade.md#harbor-lineage-trade-route-income).
+> Lineages 8 to 14 start in later ages (Trade and Engineering in the Bronze Age, Culture/Arts in the Classical, Metallurgy in the Iron, Energy in the Industrial, Hacker/Digital in the Information and Harbor in the Colonial), so they have fewer tiers. The Housing and Culture/Arts lineages have no worker domain: they work without workers. The **Harbor** lineage also raises trade income: besides producing gold, each harbor adds a percentage bonus to the income of *every* active trade route. See [Trade](trade.md#harbor-lineage-trade-route-income).
 
 ---
 
@@ -210,9 +218,10 @@ A building can have one or more of these effects. Knowing them helps you decide 
 | Production | Adds an amount of a resource each tick, scaled by how many workers it has (see below). Most production buildings do this. |
 | Storage | Raises the storage of one resource, or storage for every resource (storage buildings). |
 | Housing | Raises your housing, the number of workers you can have (housing buildings). |
-| Bonus | A percentage bonus to a rate, such as the wonders' bonus to all production. |
+| Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production (which adds into [the all-production cap](resources.md#the-all-production-cap)). |
+| Trade route income | Raises the income of every trade route (Harbor lineage). |
 | Morale | Restores a little morale every tick (Faith and Culture/Arts buildings). |
-| Opinion | Raises opinion with every civilization you are not hostile with, each tick, scaled by workers (embassies). |
+| Opinion | Raises opinion with the non-hostile civilizations you have met, each tick, scaled by workers (the two embassies; see [Factions & Diplomacy](factions.md#embassy-buildings)). |
 
 The **Faith lineage** (shrines, temples and their later tiers) and the **Culture/Arts lineage** restore civilization morale every tick just by existing; they don't need workers for it. That makes them your main way to push morale above neutral, where it raises all worker output. See [Morale](morale.md).
 
@@ -271,7 +280,7 @@ The Renaissance's payback is 1.3x what the curve gives (about 3.8 hours): it is 
 
 The Information and Cyberpunk Ages go the other way, at 0.8x: they ran 1.2 to 1.5x their targets, and the extra time was spent waiting.
 
-Times are game time at 1x speed (1 tick = 2 seconds). Some construction resources have no producer in certain ages (stone after the Bronze Age, for example); the market sells them at parity instead. See [Resources](resources.md#buying-at-the-market).
+Times are at the base tick of 2 seconds; game speed bonuses shorten them in real time. Some construction resources have no producer in certain ages (stone after the Bronze Age, for example); the market sells them at parity instead. See [Resources](resources.md#buying-at-the-market).
 
 ---
 
@@ -376,7 +385,7 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap is deli
 
 A full stack of an age's storage (with every earlier age's) holds at least **4.5 hours** of that age's typical production of each resource it builds with from the Bronze Age on, and an hour and a half in the Primitive and Stone Ages, which fill fast and are meant to. A player who checks in every few hours loses little to full storage. For longer absences the [build plan](plan.md) spends income as it arrives, and what full storage would still waste goes to the [wonder](wonders.md#overflow) and then [toward the plan's next copies](plan.md#overflow-pays-the-plan).
 
-> **Tip:** Stash is capped at 50. Build them out before you leave the Primitive Age, then start on Storage Pits as soon as you enter the Stone Age. Full storage stops all resource accumulation, so build storage first whenever you enter a new age.
+> **Tip:** Stash is capped at 50. Build them out before you leave the Primitive Age, then start on Storage Pits as soon as you enter the Stone Age. A full store stops that resource piling up: what it would waste goes into the current wonder's bank while the wonder still needs it (unless you typed `wonder overflow off`), then toward your plan's next copies, and anything neither needs is lost. So build storage first whenever you enter a new age.
 
 Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its capacity for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
 
@@ -386,9 +395,9 @@ Storage is also permanent: catastrophes never destroy it or turn it into ruins, 
 
 ## Cultural Monuments (4)
 
-Cultural Monuments are one-off structures (one copy each) that turn surplus **culture** into a permanent payoff. Each costs a large lump of culture plus other materials of its age, and gives a permanent bonus to all production once built. Unlike wonders, they need no resource banking: build them with the normal `build <key>` command.
+Cultural Monuments are one-off structures (one copy each) that turn surplus **culture** into a lasting payoff. Each costs a large lump of culture plus other materials of its age, and gives a bonus to all production while it stands (an Endure can destroy it like any building but wonders and storage). Unlike wonders, they need no resource banking: build them with the normal `build <key>` command. Their bonuses add into the same pool as every other all-production bonus, which is clamped at x3.0; from about the Electric Age techs and wonders already fill it, so the Monument of Ages mostly cushions setbacks. See [The all-production cap](resources.md#the-all-production-cap).
 
-| Monument | Age | Culture Cost | Permanent Bonus |
+| Monument | Age | Culture Cost | Bonus |
 |----------|-----|--------------|-----------------|
 | Cultural Obelisk | Classical | 710 | +1% all production |
 | Grand Amphitheater | Medieval | 7.1K | +2% all production |
@@ -403,9 +412,9 @@ Monuments are one way to spend culture; the `festival` command is another. See [
 
 Unlocked in the **Industrial Age**, the Geographic Society is the one building that plays part of the game for you. It costs gold, steel and coal, holds **8 military workers**, and produces no resource. Instead it **sends out scouting expeditions on its own**, so an empire left to run keeps exploring and keeps meeting the world's civilizations, which is where civilization boons come from.
 
-You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party roughly every 2,340 ticks (about **1h 18m** at 1x speed), and six fully staffed ones bottom out at around one every 260 ticks (about **8m 40s**). These times shrink as your tick speed rises; the **Factions** panel shows the countdown to the next dispatch in wall-clock time. It sends **scouting parties only**, never military campaigns. It never runs two at once or bypasses the single scouting slot, and it pays the full resource cost of every party, skipping the cycle if you can't cover it.
+You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party about every 2,340 ticks (**1h 18m** at the base tick), and six fully staffed ones bottom out at around one every 260 ticks (about **8m 40s**). Game speed bonuses shorten these in real time; the **Factions** panel shows the countdown to the next dispatch in wall-clock time. It sends **scouting parties only**, never military campaigns. It uses your one scouting slot only when it is free, and it pays the full resource cost of every party: if your stores can't outfit one, it waits and sends it as soon as they can.
 
-It is deliberately **slower than sending expeditions yourself**: even fully built and staffed, it runs at about 60% of the pace of a player chaining expeditions by hand. Treat it as a floor under your exploration rather than a substitute for it. Full details in [Military & Expeditions](military.md#automatic-dispatch-the-geographic-society).
+It is deliberately **slower than sending expeditions yourself**: even fully built and staffed, it runs at about 60% of the pace of a player chaining expeditions by hand. Treat it as a floor under your exploration rather than a substitute for it. Full details in [Army & Missions](military.md#automatic-dispatch-the-geographic-society).
 
 ---
 
@@ -414,13 +423,15 @@ It is deliberately **slower than sending expeditions yourself**: even fully buil
 Wonders are unique buildings: you can build each wonder only once. You bank resources toward a wonder before you can build it:
 
 ```
-wonder collect <resource> <amount|all>   bank resources toward the active wonder
-build <wonder_key>                       start construction once it is fully funded
+wonder collect <resource|all> [amount|all|max]   bank resources toward the current wonder
+build <wonder_key>                              start construction once it is fully funded
 ```
+
+Full stores bank into the wonder on their own ([overflow](wonders.md#overflow)), and a wonder in your [build plan](plan.md) banks and starts by itself once what you hold covers the rest.
 
 You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 40 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/6 of the age's target time to build.
 
-Wonders give civilization-wide bonuses.
+Every wonder adds a little production of one or two resources, and many add more: a percentage to all production (the Crystal Palace, Hoover Dam and the last four wonders), to knowledge output or to expedition rewards, or housing or storage. All-production bonuses add into [the all-production cap](resources.md#the-all-production-cap), which techs and wonders fill from about the Electric Age.
 
 Endure and the Great Fire never destroy wonders, and Succumb never turns them into ruins. They stay for the rest of the run, like storage.
 

@@ -125,7 +125,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 
 | Event | Effect | Duration |
 |-------|--------|----------|
-| The Grand Discovery | Up to 3 techs from your current age completed for free (fewer if fewer are left) | Instant |
+| The Grand Discovery | Up to 3 techs from your current age or earlier completed for free (fewer if fewer are left) | Instant |
 | Worker Innovation | +10% all production for the rest of the run | Rest of run |
 | The Architect's Gift | 10 free copies of your most-built non-wonder building | Instant |
 | Peaceful Century | +20% all production | 749 ticks (~24m 58s) |
