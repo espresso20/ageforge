@@ -820,13 +820,13 @@ func (r *runner) control(st *game.GameState) bool {
 	if st.AgeReady {
 		pendingBefore := st.PendingCatastrophe
 		from := st.Age
-		if r.bot.RecordPlan {
-			r.ge.NotePlanForTest(game.PlanAdvance, "", 1)
-		}
 		r.advancing = true
 		err := r.ge.AdvanceAge()
 		r.advancing = false
 		if err == nil {
+			if r.bot.RecordPlan {
+				r.ge.NoteAdvanceForTest(from)
+			}
 			after := r.ge.GetState()
 			if pendingBefore != "" {
 				r.anomaly(KindInvariant, "advance_with_pending_catastrophe",

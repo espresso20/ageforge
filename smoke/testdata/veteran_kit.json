@@ -1660,10 +1660,6 @@
     },
     {
       "age": "atomic_age",
-      "kind": "advance"
-    },
-    {
-      "age": "atomic_age",
       "kind": "build",
       "key": "financial_district",
       "count": 2
@@ -1693,6 +1689,10 @@
       "key": "uranium",
       "to": "stone",
       "amount": 44709986821.994835
+    },
+    {
+      "age": "atomic_age",
+      "kind": "advance"
     }
   ],
   "research": [

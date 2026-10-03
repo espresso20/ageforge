@@ -64,7 +64,7 @@ func TestFirstRunBand(t *testing.T) {
 	if sum := NewSummary("progression", cfg, time.Now(), []*RunResult{firstRunOf(1, 0.1, false)}); sum.FirstRun != nil || sum.FirstRunFailed {
 		t.Errorf("no seed reached the Modern Age, yet the first run was graded: %+v", sum.FirstRun)
 	}
-	if got, ok := firstRunToModern(firstRunOf(4, 5.25, true), map[string]int{"primitive_age": 0, "stone_age": 1, "bronze_age": 2, game.PrestigeMinAge: 12}); !ok || got != 5.25*86400 {
+	if got, ok := firstRunToModern(firstRunOf(4, 5.25, true), map[string]int{"primitive_age": 0, "stone_age": 1, "bronze_age": 2, game.PrestigeRunAge: 12}); !ok || got != 5.25*86400 {
 		t.Errorf("firstRunToModern = %v, %v; want %v, true", got, ok, 5.25*86400)
 	}
 }

@@ -654,3 +654,21 @@ func TestPrestigeRecordedByAge(t *testing.T) {
 		t.Errorf("account stats JSON %s has no prestiges_by_age", data)
 	}
 }
+
+// TestPlanLogTradeRemoval: a trade item removed after it bought something
+// stays written as what it bought; one that bought nothing goes.
+func TestPlanLogTradeRemoval(t *testing.T) {
+	ge := newSeededEngine(22)
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.planLog = []PlanTemplateItem{
+		{Age: "primitive_age", Kind: PlanTrade, Key: "wood", To: "food", Amount: 500},
+		{Age: "primitive_age", Kind: PlanTrade, Key: "food", To: "wood"},
+	}
+	ge.unlogPlanItemLocked(PlanItem{Kind: PlanTrade, Key: "wood", To: "food", Amount: 380, Got: 120})
+	ge.unlogPlanItemLocked(PlanItem{Kind: PlanTrade, Key: "food", To: "wood"})
+	want := []PlanTemplateItem{{Age: "primitive_age", Kind: PlanTrade, Key: "wood", To: "food", Amount: 120}}
+	if !reflect.DeepEqual(ge.planLog, want) {
+		t.Errorf("plan log after removing the trades: %+v, want %+v", ge.planLog, want)
+	}
+}

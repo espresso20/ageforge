@@ -200,9 +200,10 @@ func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
 }
 
 // unlogPlanItemLocked takes back what the player removed from the plan: a
-// build loses the copies it never started (it.Count), any other item its
-// entry. The entry looked for is the current age's, then the latest earlier
-// one. Caller holds the write lock.
+// build loses the copies it never started (it.Count), a trade that bought
+// something keeps what it bought (it.Got) as its amount, and any other item
+// loses its entry. The entry looked for is the current age's, then the
+// latest earlier one. Caller holds the write lock.
 func (ge *GameEngine) unlogPlanItemLocked(it PlanItem) {
 	if it.Kind == PlanDeal {
 		return
@@ -237,11 +238,15 @@ func (ge *GameEngine) unlogPlanItemLocked(it PlanItem) {
 	if idx < 0 {
 		return
 	}
-	if it.Kind == PlanBuild {
+	switch {
+	case it.Kind == PlanBuild:
 		ge.planLog[idx].Count -= it.Count
 		if ge.planLog[idx].Count > 0 {
 			return
 		}
+	case it.Kind == PlanTrade && it.Got > 0:
+		ge.planLog[idx].Amount = it.Got
+		return
 	}
 	ge.planLog = slices.Delete(ge.planLog, idx, idx+1)
 	if len(ge.planLog) == 0 {
@@ -792,6 +797,24 @@ func (ge *GameEngine) EnterAgeForTest(age string) error {
 	}
 	ge.advanceAge(age)
 	return nil
+}
+
+// NoteAdvanceForTest records in the run's plan log an advance item for age
+// (the age just left), as if the player had planned the advance they made.
+// A test hook for other packages (the smoke suite records a bot's advances
+// to make the canned veteran template); not reachable from play.
+func (ge *GameEngine) NoteAdvanceForTest(age string) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if _, ok := ageOrders()[age]; !ok || templateAgeCount(ge.planLog, age) >= MaxPlanItems {
+		return
+	}
+	for _, e := range ge.planLog {
+		if e.Age == age && e.Kind == PlanAdvance {
+			return
+		}
+	}
+	ge.planLog = append(ge.planLog, PlanTemplateItem{Age: age, Kind: PlanAdvance})
 }
 
 // NoteTradeForTest records in the run's plan log a trade item selling give
