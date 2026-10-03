@@ -1,6 +1,12 @@
 package game
 
-import "strings"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // DevConsoleCommand is the dev console's entry point: it handles the commands
 // defined in this file and hands everything else to DevExecCommand
@@ -11,6 +17,8 @@ import "strings"
 //	/catastrophe — make the current epoch's catastrophe pending now (testing)
 //	/harbinger   — bring the current age's harbinger now (testing)
 //	/lastpassage — make the Last Passage pending now, final epoch only (testing)
+//	/mastery <age|all> <0-10> — set Era Mastery for one age or every age
+//	/record <age> — set the record (the deepest age ever entered)
 func DevConsoleCommand(cmd string, ge *GameEngine) string {
 	if !DevModeActive {
 		return ""
@@ -37,5 +45,59 @@ func DevConsoleCommand(cmd string, ge *GameEngine) string {
 		ge.markDevTouched()
 		return "the Last Passage is pending"
 	}
+	if len(parts) > 0 && strings.ToLower(parts[0]) == "/mastery" {
+		if len(parts) != 3 {
+			return "usage: /mastery <age|all> <0-10>"
+		}
+		m, err := strconv.Atoi(parts[2])
+		if err != nil || m < 0 || m > config.MasteryCap {
+			return fmt.Sprintf("mastery must be 0 to %d", config.MasteryCap)
+		}
+		if err := ge.devSetMastery(strings.ToLower(parts[1]), m); err != nil {
+			return "mastery refused: " + err.Error()
+		}
+		ge.markDevTouched()
+		return fmt.Sprintf("mastery %d set for %s", m, parts[1])
+	}
+	if len(parts) > 0 && strings.ToLower(parts[0]) == "/record" {
+		if len(parts) != 2 {
+			return "usage: /record <age>"
+		}
+		if err := ge.devSetRecord(strings.ToLower(parts[1])); err != nil {
+			return "record refused: " + err.Error()
+		}
+		ge.markDevTouched()
+		return "record set to " + parts[1]
+	}
 	return DevExecCommand(cmd, ge)
+}
+
+// devSetMastery sets age's mastery (or every age's, for "all") and reruns
+// the rates at the new speed (a drop applies the grace rule).
+func (ge *GameEngine) devSetMastery(age string, m int) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if age == "all" {
+		for _, a := range ageKeys() {
+			ge.Prestige.SetMastery(a, m)
+		}
+	} else if _, ok := ageOrders()[age]; ok {
+		ge.Prestige.SetMastery(age, m)
+	} else {
+		return fmt.Errorf("unknown age %q", age)
+	}
+	ge.recalculateRates()
+	return nil
+}
+
+// devSetRecord sets the record and reruns the rates (catch-up may change).
+func (ge *GameEngine) devSetRecord(age string) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if _, ok := ageOrders()[age]; !ok {
+		return fmt.Errorf("unknown age %q", age)
+	}
+	ge.Prestige.SetRecord(age)
+	ge.recalculateRates()
+	return nil
 }

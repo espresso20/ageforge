@@ -394,6 +394,8 @@ var devCommands = []devCommand{
 	{"/catastrophe", "/catastrophe", "Force the current epoch's catastrophe (Iron Era on)"},
 	{"/harbinger", "/harbinger", "Fate a doom now and bring its harbinger (a false prophet in the Stone Era)"},
 	{"/lastpassage", "/lastpassage", "Make the Last Passage pending (final epoch)"},
+	{"/mastery", "/mastery <age|all> <0-10>", "Set Era Mastery for one age or every age"},
+	{"/record", "/record <age_key>", "Set the record (the deepest age ever entered)"},
 }
 
 // CommandInfo is a registry entry as the smoke suite sees it.

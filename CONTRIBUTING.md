@@ -388,6 +388,8 @@ A hidden dev console is available for playtesting without grinding through all 2
 | `/prestige <n>` | Set prestige level 0-9 |
 | `/speed <n>` | Set tick speed multiplier |
 | `/god` | Toggle godmode: zero costs, instant builds |
+| `/mastery <age\|all> <0-10>` | Set Era Mastery for one age or every age |
+| `/record <key>` | Set the record (the deepest age ever entered), which catch-up reads |
 
 The passphrase is stored as a SHA256 hash in `game/devmode.go`, never plain text. Dev mode never persists to disk; it resets on every restart.
 

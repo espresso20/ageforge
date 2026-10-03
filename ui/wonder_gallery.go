@@ -193,7 +193,12 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			}
 			fmt.Fprintf(&sb, "  %s\n", wonderOverflowLine(state.WonderOverflow))
 		}
-		fmt.Fprintf(&sb, "\n[gray]Build time: %s[-]\n", formatTicks(current.def.BuildTicks, state))
+		// Era Mastery: a wonder builds in its own age, at that age's speed.
+		ticks := current.def.BuildTicks
+		if k := state.Mastery.Speeds[current.def.RequiredAge]; k > 1 {
+			ticks = game.MasteryTicks(ticks, k)
+		}
+		fmt.Fprintf(&sb, "\n[gray]Build time: %s[-]\n", formatTicks(ticks, state))
 	}
 
 	// Wonder count

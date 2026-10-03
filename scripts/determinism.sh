@@ -12,7 +12,8 @@
 set -euo pipefail
 
 # The fixed runs: three seeds of the progression bot through a prestige (at
-# the Modern Age) with a state digest every 2000 ticks. About 1-3 minutes.
+# the Modern Age) and one seed of the Era Mastery veteran preset, with a state
+# digest every 2000 ticks. About 1-3 minutes.
 SEED_BASE=1
 SEEDS=3
 STOP_AGE=digital_age
@@ -26,8 +27,14 @@ fingerprint() {
 	(cd "$out/config" && find . -type f | LC_ALL=C sort | xargs shasum -a 256) >"$out/config.sha256"
 	go run ./cmd/smoke -tier fast -scenario progression -seed-base "$SEED_BASE" -seeds "$SEEDS" \
 		-stop-age "$STOP_AGE" -digest-every "$DIGEST_EVERY" -pacing report -out "$out/smoke" >/dev/null
+	# One seed of the Era Mastery veteran preset, so k-scaled play (rates,
+	# storage, build and research times at k = 4.16) replays everywhere too.
+	go run ./cmd/smoke -tier fast -scenario progression -preset veteran -seed-base "$SEED_BASE" -seeds 1 \
+		-stop-age "$STOP_AGE" -digest-every "$DIGEST_EVERY" -pacing report -out "$out/veteran" >/dev/null
 	# Everything in the report but wall-clock times must match.
-	jq -S 'del(.. | .wall_ms?, .started?)' "$out/smoke/report.json" >"$out/report.json"
+	jq -S --slurpfile v "$out/veteran/report.json" \
+		'.scenarios += ($v[0].scenarios | map(.name = "veteran-preset")) | del(.. | .wall_ms?, .started?)' \
+		"$out/smoke/report.json" >"$out/report.json"
 	echo "fingerprint $(go env GOOS)/$(go env GOARCH): $(cat "$out/config.sha256" "$out/report.json" | shasum -a 256 | cut -c1-16)"
 	runs "$out" | sed 's/^/  /'
 }

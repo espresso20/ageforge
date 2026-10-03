@@ -162,7 +162,7 @@ func researchProvider(state game.GameState, _ int) string {
 			}
 
 			fmt.Fprintf(&sb, "  [cyan]○[-]  %-40s [gray]%s knowledge · %s[-]%s\n",
-				techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(def.ResearchTicks, state), affordStr)
+				techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(masteryTicks(def.ResearchTicks, state), state), affordStr)
 
 			if ts.Description != "" {
 				fmt.Fprintf(&sb, "     [gray]%s[-]\n", ts.Description)
@@ -254,7 +254,7 @@ func researchProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "  [yellow]⟳[-]  [yellow]%-24s[-]  [gray](in progress)[-]\n", ts.Name)
 
 			} else if ts.Available {
-				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-40s[-]  [gray]%s knowledge · %s[-]", techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(def.ResearchTicks, state))
+				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-40s[-]  [gray]%s knowledge · %s[-]", techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(masteryTicks(def.ResearchTicks, state), state))
 				// Show prereqs if any
 				if len(ts.Prerequisites) > 0 {
 					var prereqNames []string

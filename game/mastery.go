@@ -18,7 +18,7 @@ import (
 //     everything else (recalculateRates), shown as its own breakdown line;
 //   - storage: × k, so the hours a store holds are the same at any k;
 //   - build and research times: ÷ k, rounded up, at least one tick
-//     (masteryTicks);
+//     (MasteryTicks);
 //   - the fate window and the harbinger's lead: ÷ k (expectedAgeTicks).
 //
 // Events, raids, trade routes and the other real-clock timers are never
@@ -38,9 +38,9 @@ import (
 // on every call).
 var ageKeys = sync.OnceValue(config.AgeOrder)
 
-// masteryTicks divides ticks by k, rounded up, never below one tick. k ≤ 1
+// MasteryTicks divides ticks by k, rounded up, never below one tick. k ≤ 1
 // (the frontier, or a manager no engine has set) leaves ticks as they are.
-func masteryTicks(ticks int, k float64) int {
+func MasteryTicks(ticks int, k float64) int {
 	if k <= 1 || ticks <= 0 {
 		return ticks
 	}
@@ -361,5 +361,5 @@ func (ge *GameEngine) SetMasteryForTest(mastery map[string]int, record string) {
 // buildTicksLocked is def's construction time in the current age: its
 // BuildTicks ÷ k on known ground. Must be called with the lock held.
 func (ge *GameEngine) buildTicksLocked(def config.BuildingDef) int {
-	return masteryTicks(def.BuildTicks, ge.speedK())
+	return MasteryTicks(def.BuildTicks, ge.speedK())
 }

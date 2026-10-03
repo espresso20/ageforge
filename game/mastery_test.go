@@ -47,8 +47,8 @@ func TestMasteryTicks(t *testing.T) {
 	}{
 		{100, 1, 100}, {100, 0, 100}, {101, 2, 51}, {100, 2, 50}, {1, 4, 1}, {3, 4, 1}, {100, config.MasteryK(10), 25}, {0, 2, 0},
 	} {
-		if got := masteryTicks(c.ticks, c.k); got != c.want {
-			t.Errorf("masteryTicks(%d, %v) = %d, want %d", c.ticks, c.k, got, c.want)
+		if got := MasteryTicks(c.ticks, c.k); got != c.want {
+			t.Errorf("MasteryTicks(%d, %v) = %d, want %d", c.ticks, c.k, got, c.want)
 		}
 	}
 	if SpeedText(2) != "2x" || SpeedText(1+math.Sqrt(2)) != "2.4x" || SpeedText(config.MasteryK(10)) != "4.2x" {
@@ -133,8 +133,8 @@ func TestMasteryTwinEngines(t *testing.T) {
 			t.Fatalf("research %s: %v", tech.Key, err)
 		}
 	}
-	if b, k := base.Research.totalTicks, known.Research.totalTicks; k != masteryTicks(b, 2) || k >= b {
-		t.Errorf("research takes %d ticks at k = 2 against %d at k = 1, want %d", k, b, masteryTicks(b, 2))
+	if b, k := base.Research.totalTicks, known.Research.totalTicks; k != MasteryTicks(b, 2) || k >= b {
+		t.Errorf("research takes %d ticks at k = 2 against %d at k = 1, want %d", k, b, MasteryTicks(b, 2))
 	}
 }
 
