@@ -190,13 +190,18 @@ func (v *skyView) legendCell(s *skyScene, c skyCell, l look) {
 		v.reg(slEcho, l)
 	case skRing, skMark:
 		if c.k == skMark && c.ref>>10 == mdPetal {
-			v.reg(slCrown, l)
+			v.reg(slCrown, look{r: mapmodel.R(mapmodel.SymPetal, v.tier), ink: c.ink, lv: 3, bold: true})
 		} else if c.k == skMark && int(c.ref>>10) < len(s.rings) {
 			e := s.rings[c.ref>>10].Epoch
-			v.reg(slEra+skyLgID(e), look{r: l.r, ink: l.ink, lv: 2})
+			v.reg(slEra+skyLgID(e), look{r: l.r, ink: c.ink, lv: 3, bold: true})
 		}
 	case skCore:
-		v.reg(slCore, l)
+		switch {
+		case s.sky != mapmodel.SkyMandala:
+			v.reg(slCore, l)
+		case c.ref != mdRay:
+			v.reg(slCore, look{r: l.r, ink: c.ink, lv: 3, bold: true})
+		}
 	case skField:
 		v.reg(slField, l)
 	case skCiv:

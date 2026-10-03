@@ -59,12 +59,12 @@ func TestSkyMandalaSymmetric(t *testing.T) {
 							continue
 						}
 						glyphs[c.ch] = true
-						for _, q := range [2][2]int{{2*cx - x, y}, {x, 2*cy - y}} {
+						for i, q := range [2][2]int{{2*cx - x, y}, {x, 2*cy - y}} {
 							mc := v.fb.at(q[0], s.Y(q[1]))
 							if mc == nil || mc.d < dMandala || q[1] >= s.groundY {
 								continue // covered by something nearer, or under the mirror line
 							}
-							if mc.d != dMandala || mc.ch != c.ch || mc.fg != c.fg {
+							if mc.d != dMandala || mdMirror(mc.ch, i == 0) != c.ch || mc.fg != c.fg || mc.bg != c.bg {
 								t.Errorf("%dx%d %d eras frame %d: %q at (%d,%d), its mirror (%d,%d) %q", W, H, eras, anim, c.ch, x, y, q[0], q[1], mc.ch)
 							}
 						}
@@ -88,4 +88,53 @@ func TestSkyMandalaSymmetric(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestSkyMandalaPixelBands: where the rings stand too close for bands of
+// glyphs they are drawn in half-block pixels, and no cell ever holds two
+// rings, nor a ring and a cell of the layout's own.
+func TestSkyMandalaPixelBands(t *testing.T) {
+	for _, sz := range [][2]float64{{12, 24}, {16, 31}, {5, 10}, {4, 19}} {
+		for n := 1; n <= 7; n++ {
+			g := mapstyle.LayMandala(n, sz[0], sz[1])
+			if g.Lines {
+				continue
+			}
+			lit := 0
+			for dy := -int(sz[0]) - 1; dy <= int(sz[0])+1; dy++ {
+				for dx := -int(sz[1]) - 1; dx <= int(sz[1])+1; dx++ {
+					up, lo := pixelRing(g, dx, dy, 0), pixelRing(g, dx, dy, 1)
+					if up >= 0 && lo >= 0 && up != lo {
+						t.Errorf("%v n=%d: (%d,%d) holds rings %d and %d", sz, n, dx, dy, up, lo)
+					}
+					if up >= 0 || lo >= 0 {
+						lit++
+					}
+				}
+			}
+			if lit == 0 {
+				t.Errorf("%v n=%d: no pixel bands", sz, n)
+			}
+		}
+	}
+}
+
+// mdMirror is r seen in a mirror: across the vertical axis (lr) or the
+// horizontal one. The petal points, the core's rays and the half-block
+// pixels turn with the mirror; every other glyph is its own mirror image.
+func mdMirror(r rune, lr bool) rune {
+	pairs := map[rune]rune{'╱': '╲', '╲': '╱'}
+	if lr {
+		for a, b := range map[rune]rune{'◄': '►', '◤': '◥', '◣': '◢'} {
+			pairs[a], pairs[b] = b, a
+		}
+	} else {
+		for a, b := range map[rune]rune{'▲': '▼', '◤': '◣', '◥': '◢', '▀': '▄'} {
+			pairs[a], pairs[b] = b, a
+		}
+	}
+	if m, ok := pairs[r]; ok {
+		return m
+	}
+	return r
 }

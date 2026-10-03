@@ -58,7 +58,7 @@ var skyGlyphs = [skySymEnd - skySymBase]Glyph{
 
 	// The mandala's beads: one per era, each the same mirrored left to
 	// right and top to bottom, so the rings stay symmetric.
-	SymEraStone - skySymBase:    {'o', '•', 0},
+	SymEraStone - skySymBase:    {'o', '●', 0},
 	SymEraIron - skySymBase:     {'x', '×', 0},
 	SymEraSteel - skySymBase:    {'+', '¤', 0},
 	SymEraElectric - skySymBase: {'=', '≡', 0},

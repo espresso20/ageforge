@@ -37,8 +37,8 @@ func (o *orb) mandalaGeom() (cx, cy int, ry, rx float64) {
 	return cx, cy, float64(min(cy, gy-1-cy)), float64(min(cx, o.W-1-cx, mandalaZone(o.W)-3))
 }
 
-// breath is how bright ring k of n is at this frame (the core is -1): one
-// slow wave of light rolling outward ring by ring.
+// breath is how brightly the wave of light lights ring k of n at this frame
+// (the core is -1): a crest rolling outward ring by ring.
 func (o *orb) breath(k, n int) float64 { return mapstyle.Breath(o.anim, k, n) }
 
 // mandala draws the mandala: the sky under it cleared of stars, then each
@@ -51,29 +51,47 @@ func (o *orb) mandala() {
 }
 
 // drawMandala draws layout g of rings centred on (cx, cy), above row
-// limit, the stars cleared from under it.
+// limit: the sky under it cleared of stars, the core's gold glow, the
+// rings' bands (in their era's glyph where there is room, else in
+// half-block pixels, two to a cell, so neighbouring rings keep a dark gap
+// between them), the beads, the crown and the core.
 func (o *orb) drawMandala(g mapstyle.MandalaGeom, rings []mapmodel.MandalaRing, cx, cy, limit int) {
 	void := o.c(mapmodel.InkVoid, iBack, 0)
 	gold := o.c(mapmodel.InkAccent, iEmit, 0)
 	white := o.c(mapmodel.InkLight, iEmit, 0)
 	core := o.c(mapmodel.InkGlow, iEmit, 0)
-	dim := o.c(mapmodel.InkFrameDim, iEmit, 0)
+	inDisc := func(x, y int, r float64) bool {
+		dx, dy := float64(x-cx)/mapstyle.MandalaAspect, float64(y-cy)
+		return float64(dx*dx)+float64(dy*dy) < float64(r*r)
+	}
+	crown := len(o.m.Crown()) > 0
 	ext := g.Extent + 1.5
 	for y := max(0, cy-int(ext)-1); y <= min(limit-1, cy+int(ext)+1); y++ {
 		for x := max(0, cx-int(2*ext)-1); x <= min(o.W-1, cx+int(2*ext)+1); x++ {
-			dx, dy := float64(x-cx)/mapstyle.MandalaAspect, float64(y-cy)
-			if float64(dx*dx)+float64(dy*dy) < float64(ext*ext) {
+			switch {
+			case x == cx && y == cy:
+				o.fb.set(x, o.Y(y), ' ', void, theme.Mix(void, gold, 0.8), dMandala) // the core burns gold
+			case crown && g.Petals > 0 && inDisc(x, y, 1.9):
+				o.fb.set(x, o.Y(y), ' ', void, theme.Mix(void, gold, 0.25), dMandala) // and glows with the crown
+			case inDisc(x, y, ext):
 				o.fb.set(x, o.Y(y), ' ', void, void, dMandala)
 			}
 		}
 	}
-	off := len(rings) - g.Rings
-	era := make([]tcell.Color, g.Rings)
-	for k := range era {
-		era[k] = o.resolve(mapstyle.EraLight(rings[k+off].Epoch), iEmit, 0)
+	n := len(rings)
+	off := n - g.Rings
+	ring := make([]tcell.Color, g.Rings) // each ring's colour this frame: its era's, flashing white in the wave
+	for k := range ring {
+		ring[k] = theme.Mix(o.resolve(mapstyle.EraLight(rings[k+off].Epoch), iEmit, 0), white, 0.8*o.breath(k+off, n))
 	}
-	crown := len(o.m.Crown()) > 0
-	bc := o.breath(-1, len(rings))
+	if !g.Lines && g.Rings > 0 && o.tier != mapmodel.TierASCII {
+		o.mandalaPixels(g, ring, cx, cy, limit)
+	}
+	petal := gold
+	if !crown {
+		petal = white // the crown still to be raised
+	}
+	bc := o.breath(-1, n)
 	for _, mc := range g.Cells {
 		x, y := cx+mc.DX, cy+mc.DY
 		if y < 0 || y >= limit {
@@ -83,21 +101,66 @@ func (o *orb) drawMandala(g mapstyle.MandalaGeom, rings []mapmodel.MandalaRing, 
 		var c tcell.Color
 		switch mc.Part {
 		case mapstyle.MdCore:
-			ch, c = mapmodel.R(mapmodel.SymCore, o.tier), theme.Mix(white, core, 0.5+0.5*bc)
+			ch, c = mapmodel.R(mapmodel.SymCore, o.tier), core
+		case mapstyle.MdRay:
+			ch, c = mapstyle.RayRune(mc.DX, mc.DY), theme.Mix(gold, white, bc)
 		case mapstyle.MdPetal:
-			ch, c = mapmodel.R(mapmodel.SymPetal, o.tier), theme.Mix(theme.Mix(void, gold, 0.6), gold, bc)
-			if !crown {
-				ch, c = '◇', theme.Mix(void, dim, 0.7) // the crown not yet raised
+			ch, c = mapmodel.R(mapmodel.SymPetal, o.tier), theme.Mix(petal, white, bc)
+			if mc.Tip {
+				ch = mapstyle.PetalTip(mc.DX, mc.DY)
 			}
 		case mapstyle.MdLine:
-			ch, c = '·', theme.Mix(void, era[mc.Ring], 0.3+0.35*o.breath(mc.Ring+off, len(rings)))
+			ch, c = mapmodel.R(mapmodel.EraSym(rings[mc.Ring+off].Epoch), o.tier), theme.Mix(ring[mc.Ring], void, 0.15)
 		case mapstyle.MdBead:
-			e := rings[mc.Ring+off].Epoch
-			ch = mapmodel.R(mapmodel.EraSym(e), o.tier)
-			c = theme.Mix(theme.Mix(void, era[mc.Ring], 0.7), theme.Mix(era[mc.Ring], white, 0.3), o.breath(mc.Ring+off, len(rings)))
+			ch, c = mapmodel.R(mapmodel.EraSym(rings[mc.Ring+off].Epoch), o.tier), theme.Mix(ring[mc.Ring], white, 0.2)
 		}
 		o.fb.fg(x, o.Y(y), ch, c, dMandala)
 	}
+}
+
+// mandalaPixels draws the rings as thin bands of half-block pixels (a
+// pixel is half a row tall and a column wide, so they come out round),
+// leaving the cells of the layout itself to its glyphs. Rings stand at
+// least two pixels apart, so no cell ever holds two of them.
+func (o *orb) mandalaPixels(g mapstyle.MandalaGeom, ring []tcell.Color, cx, cy, limit int) {
+	taken := map[[2]int]bool{}
+	for _, mc := range g.Cells {
+		taken[[2]int{mc.DX, mc.DY}] = true
+	}
+	reach := int(g.Extent) + 1
+	for dy := -reach; dy <= reach; dy++ {
+		y := cy + dy
+		if y < 0 || y >= limit {
+			continue
+		}
+		for dx := -2 * reach; dx <= 2*reach; dx++ {
+			if taken[[2]int{dx, dy}] {
+				continue
+			}
+			up, lo := pixelRing(g, dx, dy, 0), pixelRing(g, dx, dy, 1)
+			switch {
+			case up >= 0 && lo >= 0:
+				o.fb.fg(cx+dx, o.Y(y), '█', ring[up], dMandala)
+			case up >= 0:
+				o.fb.fg(cx+dx, o.Y(y), '▀', ring[up], dMandala)
+			case lo >= 0:
+				o.fb.fg(cx+dx, o.Y(y), '▄', ring[lo], dMandala)
+			}
+		}
+	}
+}
+
+// pixelRing is the ring lit in the upper (h 0) or lower (h 1) half of the
+// cell at (dx, dy) from the core, or -1: a ring is a band a pixel wide.
+func pixelRing(g mapstyle.MandalaGeom, dx, dy, h int) int {
+	px, py := float64(dx), float64(2*dy+h)-0.5
+	d := math.Sqrt(float64(px*px) + float64(py*py))
+	for k, r := range g.Radii {
+		if math.Abs(d-2*r) < 0.55 {
+			return k
+		}
+	}
+	return -1
 }
 
 // mirror is the thin line of light the lots stand on.

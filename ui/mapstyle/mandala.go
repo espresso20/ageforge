@@ -10,11 +10,12 @@ import (
 )
 
 // mandala.go is the Transcendent Age's mandala as geometry both styles
-// draw: a bright core, a crown of eight petals round it, and one ring per
-// era the player passed through, the Stone Era innermost. A ring is a
-// dotted line with the era's glyph as beads on it (only the beads when the
-// rings stand too close for a line), and every ring's beads sit on the same
-// sixteen spokes, so the spokes show without a stroke of their own.
+// draw: a bright core (a star, when there is room), a crown of eight solid
+// petals round it, and one ring per era the player passed through, the
+// Stone Era innermost. A ring is a band of its era's glyph, cell after cell
+// (only beads when the rings stand too close for a band), and every ring's
+// beads sit on the same spokes, so the spokes show without a stroke of
+// their own. A wave of light rolls out from the core ring by ring (Breath).
 //
 // The layout is strictly symmetric about the centre cell: each quadrant is
 // worked out once and mirrored, so rounding can never make one side differ
@@ -29,17 +30,19 @@ type MandalaPart uint8
 
 const (
 	MdCore  MandalaPart = iota + 1 // the core, the one centre cell
-	MdPetal                        // a petal of the crown
-	MdLine                         // a ring's dotted line
-	MdBead                         // a ring's bead: its era's glyph
+	MdRay                          // a ray of the core's star
+	MdPetal                        // a petal of the crown (Tip: its outer point)
+	MdLine                         // a ring's band, between its beads
+	MdBead                         // a ring's bead, on a spoke
 )
 
 // MandalaCell is one cell of the mandala, as an offset from its centre.
 type MandalaCell struct {
 	DX, DY int
 	Part   MandalaPart
-	Ring   int // the ring, 0 innermost (lines and beads)
-	Idx    int // a bead's or petal's number, clockwise from the top
+	Ring   int  // the ring, 0 innermost (lines and beads)
+	Idx    int  // a bead's or petal's number, clockwise from the top
+	Tip    bool // a petal's outer point
 }
 
 // MandalaGeom is a mandala laid out for a space.
@@ -62,6 +65,9 @@ const (
 	// mdCrownMin is the smallest mandala (its outer radius in rows) with
 	// room for the crown: a smaller one gives the space to the eras' rings.
 	mdCrownMin = 8.0
+	// mdGrandMin is the smallest with room for the grand crown: petals with
+	// points and a star for a core.
+	mdGrandMin = 16.0
 )
 
 // LayMandala lays out n rings round a centre cell with ry rows above and
@@ -76,9 +82,13 @@ func LayMandala(n int, ry, rx float64) MandalaGeom {
 		return g
 	}
 	r0 := math.Min(mdLineGap, R) // a clear cell round the core
-	if R >= mdCrownMin {
-		g.PetalR = clampF(0.16*R, 1.5, 3)
-		g.Petals = 8
+	grand := R >= mdGrandMin
+	switch {
+	case grand:
+		g.PetalR, g.Petals = 3, 8
+		r0 = g.PetalR + 3
+	case R >= mdCrownMin:
+		g.PetalR, g.Petals = clampF(0.16*R, 1.5, 3), 8
 		r0 = g.PetalR + 2
 	}
 	rings := max(0, min(n, 1+int((R-r0)/mdBeadGap)))
@@ -95,8 +105,25 @@ func LayMandala(n int, ry, rx float64) MandalaGeom {
 		g.Extent = g.Radii[rings-1]
 	}
 	g.Cells = append(g.Cells, MandalaCell{Part: MdCore})
+	rays := [][2]int{{1, 0}} // the core's star: a short ray either side
+	if grand {
+		rays = [][2]int{{0, 1}, {1, 1}, {1, 0}, {2, 0}} // and up, down and the diagonals
+	}
+	for _, p := range rays {
+		if g.Petals > 0 {
+			g.Cells = append(g.Cells, mirrorAt(p, MdRay, 0, 0)...)
+		}
+	}
 	for j := 0; g.Petals > 0 && j <= g.Petals/4; j++ {
-		g.Cells = append(g.Cells, mirrorIdx(spokeAt(g.PetalR, float64(j)/float64(g.Petals)), MdPetal, 0, j, g.Petals)...)
+		t := float64(j) / float64(g.Petals)
+		base := spokeAt(g.PetalR, t)
+		g.Cells = append(g.Cells, mirrorIdx(base, MdPetal, 0, j, g.Petals)...)
+		if tip := spokeAt(g.PetalR+0.7, t); grand && tip != base {
+			for _, c := range mirrorIdx(tip, MdPetal, 0, j, g.Petals) {
+				c.Tip = true
+				g.Cells = append(g.Cells, c)
+			}
+		}
 	}
 	spacing := 5.0 // cells between beads on a lined ring
 	if !g.Lines {
@@ -216,18 +243,68 @@ func mirrorIdx(p [2]int, part MandalaPart, ring, i, b int) []MandalaCell {
 	return out
 }
 
-// Breath is how bright ring k of n is at frame anim, 0 to 1: one slow wave
-// of light (about twelve seconds at the maps' frame rate) rolling outward
-// from the core, ring by ring. The core is ring -1.
+// MandalaPulse is how many frames one wave of light takes to roll from the
+// core out past the last ring: six seconds at the maps' eight frames a
+// second.
+const MandalaPulse = 48
+
+// Breath is how brightly the wave of light lights ring k of n at frame anim,
+// 0 to 1 (the core and the crown are ring -1): a crest about a ring wide
+// rolling outward from the core, ring by ring, once every MandalaPulse
+// frames, with nothing ahead of it or behind it. It starts and ends out of
+// sight, so the wave never jumps.
 func Breath(anim, k, n int) float64 {
-	return 0.5 + float64(0.5*mapmodel.Sin(float64(anim)/96-float64(k+1)/float64(max(1, n)+2)))
+	span := float64(max(0, n)) + 3.9
+	f := float64(((anim % MandalaPulse) + MandalaPulse) % MandalaPulse)
+	w := float64(span*f)/MandalaPulse - 2.7
+	d := (float64(k) - w) / 1.2
+	if float64(d*d) >= 1 {
+		return 0
+	}
+	e := 1 - float64(d*d)
+	return float64(e * e)
+}
+
+// PetalTip is the glyph of a petal's point at offset (dx, dy): a solid
+// triangle pointing away from the core.
+func PetalTip(dx, dy int) rune {
+	switch {
+	case dx == 0 && dy < 0:
+		return '▲'
+	case dx == 0:
+		return '▼'
+	case dy == 0 && dx > 0:
+		return '►'
+	case dy == 0:
+		return '◄'
+	case dx > 0 && dy < 0:
+		return '◥'
+	case dx > 0:
+		return '◢'
+	case dy > 0:
+		return '◣'
+	}
+	return '◤'
+}
+
+// RayRune is the stroke of the core's ray at offset (dx, dy).
+func RayRune(dx, dy int) rune {
+	switch {
+	case dx == 0:
+		return '│'
+	case dy == 0:
+		return '─'
+	case dx*dy < 0:
+		return '╱'
+	}
+	return '╲'
 }
 
 // EraLight is the colour of an era's ring before a style resolves it
-// against its theme: the era's own hue, muted toward the mandala's light so
-// the rings stay serene on the indigo.
+// against its theme: the era's own hue, lifted a little toward the
+// mandala's light so every era reads on the indigo.
 func EraLight(epoch int) tcell.Color {
-	return theme.Mix(theme.MapHueColor(theme.EpochHue(epoch)), theme.SpaceColor(theme.SpaceLight), 0.38)
+	return theme.Mix(theme.MapHueColor(theme.EpochHue(epoch)), theme.SpaceColor(theme.SpaceLight), 0.15)
 }
 
 func clampF(v, lo, hi float64) float64 { return math.Max(lo, math.Min(hi, v)) }

@@ -24,6 +24,7 @@ const (
 	mdRY     = 20           // rows the mandala may reach above and below it
 	mdRX     = 60           // and columns either side
 	mdPetal  = 1023         // the ring number a petal's ref carries
+	mdRay    = -1           // a ray of the core's ref
 )
 
 // layMandala is the mandala's seed-only layer: a sparse starfield and the
@@ -49,18 +50,19 @@ func (s *skyScene) mandala() {
 			*c = skyCell{r: ' ', k: skVoid}
 		}
 	}
-	// the core's light grows with everything built in this last age
+	// the core's light spreads as the crown grows
 	total := 0
 	for _, mk := range s.crown {
 		total += mk.Count
 	}
-	if total > 0 && g.PetalR > 0 {
-		r := min(g.PetalR+0.6, 0.8+float64(0.32*mapmodel.Log2(1+float64(total))))
+	if total > 0 && g.Petals > 0 {
+		r := min(g.PetalR+1, 1.2+float64(0.45*mapmodel.Log2(1+float64(total))))
 		for _, p := range discCells(mdX, mdY, mapstyle.MandalaAspect*r, r) {
 			c := s.cell(p.X, p.Y)
 			c.bg, c.soft = mapmodel.InkAccent, true
 		}
 	}
+	s.cell(mdX, mdY).bg, s.cell(mdX, mdY).soft = mapmodel.InkAccent, false // the core burns gold
 	singularity := false
 	for _, w := range m.Wonders {
 		singularity = singularity || w.Key == "singularity_core" && w.Built
@@ -69,30 +71,15 @@ func (s *skyScene) mandala() {
 		p := pt(mdX+mc.DX, mdY+mc.DY)
 		c := s.cell(p.X, p.Y)
 		bg, soft := c.bg, c.soft
+		*c = s.mandalaCell(mc, off, singularity)
+		c.bg, c.soft = bg, soft
 		switch mc.Part {
-		case mapstyle.MdCore:
-			*c = skyCell{sym: mapmodel.SymCore, ink: mapmodel.InkGlow, lv: 3, k: skCore, bold: true, fx: fxBreathe}
-			if singularity {
-				c.sym, c.r = mapmodel.SymNone, '☼'
-			}
 		case mapstyle.MdPetal:
-			*c = skyCell{sym: mapmodel.SymPetal, ink: mapmodel.InkAccent, lv: 2, k: skMark, ref: mdPetal<<10 | int32(mc.Idx),
-				fx: fxBreathe, bold: len(s.crown) > 0}
-			if len(s.crown) == 0 { // the crown not yet raised
-				c.sym, c.r, c.ink, c.lv = mapmodel.SymNone, '◇', mapmodel.InkFrameDim, 1
-			}
-			if mc.Idx < len(s.crown) {
+			if !mc.Tip && mc.Idx < len(s.crown) {
 				s.anchorAt(s.crown[mc.Idx].Key, p)
 			}
-		case mapstyle.MdLine:
-			k := mc.Ring + off
-			*c = skyCell{r: '·', ink: inkEra + mapmodel.SkyInk(s.rings[k].Epoch), lv: 1, k: skRing, ref: int32(k),
-				fx: fxBreathe, ph: uint8(k + 1)}
 		case mapstyle.MdBead:
-			k := mc.Ring + off
-			r := s.rings[k]
-			*c = skyCell{sym: mapmodel.EraSym(r.Epoch), ink: inkEra + mapmodel.SkyInk(r.Epoch), lv: 2, k: skMark,
-				ref: int32(k<<10 | mc.Idx), fx: fxBreathe, ph: uint8(k + 1)}
+			r := s.rings[mc.Ring+off]
 			if mc.Idx < len(r.Marks) {
 				s.anchorAt(r.Marks[mc.Idx].Key, p)
 			}
@@ -100,8 +87,44 @@ func (s *skyScene) mandala() {
 				s.labels = append(s.labels, skyLabel{p: p, text: m.Catalog.EpochName[r.Epoch], ink: mapmodel.InkFrame, far: true})
 			}
 		}
-		c.bg, c.soft = bg, soft
 	}
+}
+
+// mandalaCell is the scene cell for a cell of the mandala's layout (whose
+// rings start at ring off of s.rings): the core a white star with gold
+// rays, the petals solid gold (white while the crown is still to be
+// raised), and the rings bands of their era's glyph in the era's colour,
+// brightest on the spokes.
+func (s *skyScene) mandalaCell(mc mapstyle.MandalaCell, off int, singularity bool) skyCell {
+	switch mc.Part {
+	case mapstyle.MdCore:
+		c := skyCell{sym: mapmodel.SymCore, ink: mapmodel.InkGlow, lv: 3, k: skCore, bold: true, fx: fxBreathe}
+		if singularity {
+			c.sym, c.r = mapmodel.SymNone, '☼'
+		}
+		return c
+	case mapstyle.MdRay:
+		return skyCell{r: mapstyle.RayRune(mc.DX, mc.DY), ink: mapmodel.InkAccent, lv: 3, k: skCore, ref: mdRay,
+			bold: true, fx: fxBreathe}
+	case mapstyle.MdPetal:
+		c := skyCell{sym: mapmodel.SymPetal, ink: mapmodel.InkAccent, lv: 3, k: skMark, ref: mdPetal<<10 | int32(mc.Idx),
+			bold: true, fx: fxBreathe}
+		if mc.Tip {
+			c.sym, c.r = mapmodel.SymNone, mapstyle.PetalTip(mc.DX, mc.DY)
+		}
+		if len(s.crown) == 0 {
+			c.ink = mapmodel.InkLight // the crown still to be raised
+		}
+		return c
+	}
+	k := mc.Ring + off
+	e := s.rings[k].Epoch
+	c := skyCell{sym: mapmodel.EraSym(e), ink: inkEra + mapmodel.SkyInk(e), lv: 2, k: skRing, ref: int32(k),
+		fx: fxBreathe, ph: uint8(k + 1)}
+	if mc.Part == mapstyle.MdBead {
+		c.k, c.ref, c.lv, c.bold = skMark, int32(k<<10|mc.Idx), 3, true
+	}
+	return c
 }
 
 // anchorAt makes p the Tab target of building key, if it has none yet.
@@ -132,29 +155,20 @@ func (s *skyScene) mandalaLife() {
 	}
 }
 
-// breathe is the slow wave of light: it rolls out from the core ring by
-// ring (the cell's phase is its ring plus one, the core and crown 0). Only
-// the brightness changes; no glyph ever does.
+// breathe is the wave of light (mapstyle.Breath): a bright crest rolling
+// out from the core ring by ring (the cell's phase is its ring plus one,
+// the core and crown 0), lifting each band a step and flashing it white at
+// its peak. Only the light changes; no glyph ever does.
 func (v *skyView) breathe(s *skyScene, c skyCell, l look, x, y int) look {
 	b := mapstyle.Breath(v.anim, int(c.ph)-1, len(s.rings))
-	switch c.k {
-	case skRing:
-		l.lv = 0
-		if b > 0.45 {
-			l.lv = 1
-		}
-		if b > 0.9 {
-			l.lv = 2
-		}
-	case skMark:
-		if c.lv >= 2 {
-			l.lv = 2
-			if b > 0.7 {
-				l.lv = 3
-			}
-		}
-	case skCore:
-		l.lv, l.bold = 3, b > 0.3
+	switch {
+	case b > 0.7:
+		l.lv, l.ink, l.bold = 3, mapmodel.InkLight, true
+	case b > 0.25:
+		l.lv, l.bold = 3, true
+	}
+	if c.k == skCore && c.ref != mdRay {
+		l.ink = mapmodel.InkGlow
 	}
 	return l
 }
@@ -248,22 +262,7 @@ func (v *skyView) compactMandala(cv *mapstyle.Canvas, w, h int) {
 				c = skyCell{r: ' ', k: skVoid}
 			}
 			if mc, ok := at[pt(x, y)]; ok {
-				switch k := mc.Ring + off; mc.Part {
-				case mapstyle.MdCore:
-					c = skyCell{sym: mapmodel.SymCore, ink: mapmodel.InkGlow, lv: 3, k: skCore, bold: true, fx: fxBreathe}
-				case mapstyle.MdPetal:
-					c = skyCell{sym: mapmodel.SymPetal, ink: mapmodel.InkAccent, lv: 2, k: skMark, fx: fxBreathe}
-					if len(s.crown) == 0 {
-						c.sym, c.r, c.ink, c.lv = mapmodel.SymNone, '◇', mapmodel.InkFrameDim, 1
-					}
-				case mapstyle.MdLine:
-					c = skyCell{r: '·', ink: inkEra + mapmodel.SkyInk(s.rings[k].Epoch), lv: 1, k: skRing, fx: fxBreathe,
-						ph: uint8(k + 1)}
-				case mapstyle.MdBead:
-					e := s.rings[k].Epoch
-					c = skyCell{sym: mapmodel.EraSym(e), ink: inkEra + mapmodel.SkyInk(e), lv: 2, k: skMark, fx: fxBreathe,
-						ph: uint8(k + 1)}
-				}
+				c = s.mandalaCell(mc, off, false)
 			}
 			l := v.resolve(s, c, x, y)
 			cv.Put(x, y, l.r, v.style(l))

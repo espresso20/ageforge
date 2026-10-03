@@ -50,9 +50,9 @@ func TestSkyMandalaSymmetric(t *testing.T) {
 						continue
 					}
 					r, _, sty, _ := scr.GetContent(hx+dx, hy+dy)
-					for _, o := range [2][2]int{{-dx, dy}, {dx, -dy}} {
+					for i, o := range [2][2]int{{-dx, dy}, {dx, -dy}} {
 						or, _, osty, _ := scr.GetContent(hx+o[0], hy+o[1])
-						if or != r || osty != sty {
+						if mirrored(or, i == 0) != r || osty != sty {
 							t.Errorf("%d eras, frame %d: %q at (%d,%d) from the core, %q at (%d,%d)", eras, anim, r, dx, dy, or, o[0], o[1])
 						}
 					}
@@ -89,11 +89,11 @@ func TestSkyMandalaSymmetric(t *testing.T) {
 			case c.k == skRing:
 				got[int(c.ref)]++
 			case c.k == skMark && c.ref>>10 != mdPetal:
-				k := int(c.ref >> 10)
-				got[k]++
-				if c.sym != mapmodel.EraSym(s.rings[k].Epoch) {
-					t.Errorf("%d eras: ring %d carries %v, not its era's glyph", eras, k, c.sym)
-				}
+				got[int(c.ref>>10)]++
+			}
+			if k := int(c.ref >> 10); c.k == skMark && k != mdPetal && c.sym != mapmodel.EraSym(s.rings[k].Epoch) ||
+				c.k == skRing && c.sym != mapmodel.EraSym(s.rings[c.ref].Epoch) {
+				t.Errorf("%d eras: a ring cell carries %v, not its era's glyph", eras, c.sym)
 			}
 		}
 		for k := 0; k < eras; k++ {
@@ -102,6 +102,26 @@ func TestSkyMandalaSymmetric(t *testing.T) {
 			}
 		}
 	}
+}
+
+// mirrored is r seen in a mirror: across the vertical axis (lr) or the
+// horizontal one. The mandala's petal points and the core's rays turn with
+// the mirror; every other glyph it draws is its own mirror image.
+func mirrored(r rune, lr bool) rune {
+	pairs := map[rune]rune{'╱': '╲', '╲': '╱'}
+	if lr {
+		for a, b := range map[rune]rune{'◄': '►', '◤': '◥', '◣': '◢'} {
+			pairs[a], pairs[b] = b, a
+		}
+	} else {
+		for a, b := range map[rune]rune{'▲': '▼', '◤': '◣', '◥': '◢', '▀': '▄'} {
+			pairs[a], pairs[b] = b, a
+		}
+	}
+	if m, ok := pairs[r]; ok {
+		return m
+	}
+	return r
 }
 
 // TestSkyMandalaStill: the breath changes brightness only: every frame

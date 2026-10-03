@@ -39,7 +39,7 @@ func TestMandalaSymmetric(t *testing.T) {
 					switch {
 					case !ok:
 						t.Errorf("n=%d %v: %v at (%d,%d) has no mirror %s", n, sz, c.Part, c.DX, c.DY, m.axis)
-					case o.Part != c.Part || o.Ring != c.Ring:
+					case o.Part != c.Part || o.Ring != c.Ring || o.Tip != c.Tip:
 						t.Errorf("n=%d %v: (%d,%d) is %v ring %d, its mirror %s %v ring %d", n, sz, c.DX, c.DY, c.Part, c.Ring, m.axis, o.Part, o.Ring)
 					case (c.Part == MdBead || c.Part == MdPetal) && o.Idx != m.idx:
 						t.Errorf("n=%d %v: %v %d at (%d,%d) mirrors %s to number %d, want %d", n, sz, c.Part, c.Idx, c.DX, c.DY, m.axis, o.Idx, m.idx)
@@ -138,34 +138,41 @@ func TestMandalaRingsApart(t *testing.T) {
 	}
 }
 
-// TestMandalaBreath: the light rolls outward (each ring peaks a little
-// after the one inside it) and changes slowly: no ring's brightness jumps
-// between two frames.
+// TestMandalaBreath: the wave of light is a clear crest that rolls outward
+// (each ring lit a little after the one inside it, fully at its peak), comes
+// round every MandalaPulse frames, leaves every ring dark for part of the
+// wave, and changes smoothly: no ring jumps between two frames, not even
+// when the wave starts over.
 func TestMandalaBreath(t *testing.T) {
-	for f := 0; f < 400; f++ {
-		for k := -1; k < 7; k++ {
-			if d := Breath(f+1, k, 7) - Breath(f, k, 7); d > 0.08 || d < -0.08 {
-				t.Fatalf("frame %d ring %d: the light jumps by %.3f", f, k, d)
+	for _, n := range []int{1, 4, 7} {
+		for f := -MandalaPulse; f < 3*MandalaPulse; f++ {
+			for k := -1; k < n; k++ {
+				b := Breath(f, k, n)
+				if d := Breath(f+1, k, n) - b; d > 0.35 || d < -0.35 {
+					t.Fatalf("n=%d frame %d ring %d: the light jumps by %.3f", n, f, k, d)
+				}
+				if b != Breath(f+MandalaPulse, k, n) {
+					t.Fatalf("n=%d frame %d ring %d: the wave does not come round", n, f, k)
+				}
 			}
 		}
-	}
-	// from the core's peak, each ring's next peak comes a little later, and
-	// well inside one breath
-	at := func(k, from int) int {
-		best, f0 := -1.0, from
-		for f := from; f < from+96; f++ {
-			if b := Breath(f, k, 7); b > best {
-				best, f0 = b, f
+		prev := -1
+		for k := -1; k < n; k++ {
+			peak, at, dark := -1.0, 0, false
+			for f := 0; f < MandalaPulse; f++ {
+				b := Breath(f, k, n)
+				if b > peak {
+					peak, at = b, f
+				}
+				dark = dark || b == 0
 			}
+			if peak < 0.9 || !dark {
+				t.Errorf("n=%d ring %d: the crest peaks at %.2f, dark for part of the wave %v", n, k, peak, dark)
+			}
+			if at <= prev {
+				t.Errorf("n=%d ring %d peaks at frame %d, no later than the ring inside it (%d)", n, k, at, prev)
+			}
+			prev = at
 		}
-		return f0
-	}
-	prev := at(-1, 0)
-	for k := 0; k < 7; k++ {
-		p := at(k, prev)
-		if p <= prev || p > prev+24 {
-			t.Errorf("ring %d peaks %d frames after the ring inside it", k, p-prev)
-		}
-		prev = p
 	}
 }
