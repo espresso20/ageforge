@@ -6,6 +6,29 @@ function escHtml(s) {
     return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
+// Inline markdown in a changelog line: `code`, **bold**, *italic* and
+// [links](...). Repo-relative links go to GitHub; wiki pages go to the
+// wiki (site/docs/map.md#traffic becomes docs/#/map?id=traffic).
+function inline(s) {
+    const codes = [];
+    let out = escHtml(s).replace(/`([^`]+)`/g, (m, c) => {
+        codes.push(c);
+        return "\u0000" + (codes.length - 1) + "\u0000";
+    });
+    out = out
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/(^|[^*\w])\*([^*\s][^*]*)\*(?!\*)/g, "$1<em>$2</em>")
+        .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, text, url) => `<a href="${linkTo(url)}">${text}</a>`);
+    return out.replace(/\u0000(\d+)\u0000/g, (m, i) => `<code>${codes[+i]}</code>`);
+}
+
+function linkTo(url) {
+    if (/^https?:\/\//.test(url)) return url;
+    const wiki = url.match(/^(?:\.\.\/)*site\/docs\/([\w-]+)\.md(?:#([\w-]+))?$/);
+    if (wiki) return "docs/#/" + wiki[1] + (wiki[2] ? "?id=" + wiki[2] : "");
+    return `https://github.com/${REPO}/blob/master/` + url.replace(/^(\.\.\/)+/, "");
+}
+
 // Parse CHANGELOG.md into an array of {version, date, body} objects.
 // Handles entries like:  ## [v3.3.0] — 2026-03-18
 function parseChangelog(text) {
@@ -20,7 +43,7 @@ function parseChangelog(text) {
         if (/unreleased/i.test(heading)) continue;
 
         // Extract version + date from:  [v3.3.0] — 2026-03-18
-        const m = heading.match(/\[([^\]]+)\](?:\s*[—-]+\s*(\S+))?/);
+        const m = heading.match(/\[([^\]]+)\](?:\s*[—–-]+\s*(\S+))?/);
         if (!m) continue;
 
         const version = m[1];
@@ -34,7 +57,7 @@ function parseChangelog(text) {
 
 // Convert the body of a changelog entry (### sections + lists) to HTML.
 function renderBody(md) {
-    if (!md) return "<em style='color:var(--muted)'>No notes for this release.</em>";
+    if (!md) return "<em style='color:var(--dim)'>No notes for this release.</em>";
     const lines = md.split("\n");
     let html = "";
     let inList = false;
@@ -48,15 +71,15 @@ function renderBody(md) {
             if (/added/i.test(text))   cls = "sec-added";
             if (/fixed/i.test(text))   cls = "sec-fixed";
             if (/changed/i.test(text)) cls = "sec-changed";
-            html += `<h3 class="${cls}">${escHtml(text)}</h3>`;
+            html += `<h3 class="${cls}">${inline(text)}</h3>`;
         } else if (/^[-*] (.+)/.test(line)) {
             if (!inList) { html += "<ul>"; inList = true; }
-            html += `<li>${escHtml(line.replace(/^[-*] /, ""))}</li>`;
+            html += `<li>${inline(line.replace(/^[-*] /, ""))}</li>`;
         } else if (line === "") {
             if (inList) { html += "</ul>"; inList = false; }
         } else {
             if (inList) { html += "</ul>"; inList = false; }
-            html += `<p>${escHtml(line)}</p>`;
+            html += `<p>${inline(line)}</p>`;
         }
     }
     if (inList) html += "</ul>";
@@ -107,7 +130,7 @@ async function loadChangelog() {
             <div class="cl-error">
                 Could not load changelog: ${msg}<br><br>
                 <a href="${GH_RELEASES}" target="_blank" rel="noopener"
-                   style="color:var(--muted);text-decoration:underline">
+                   style="color:var(--dim);text-decoration:underline">
                     View releases on GitHub ↗
                 </a>
             </div>`;

@@ -1,0 +1,260 @@
+//go:build mapcapture
+
+package all
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/gdamore/tcell/v2"
+
+	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+)
+
+// siteAges are the ages the landing page scrolls through, oldest first: four
+// of the 22, far enough apart to show the arc. The rest are left for players
+// to find, so the page shows no more than these. Its closing line
+// (site/index.html, "That was four of the 22 ages") says how many in words.
+var siteAges = []string{"primitive_age", "victorian_age", "cyberpunk_age", "galactic_age"}
+
+// TestWriteSiteFrames writes site/frames.js, the roguelike map frames the
+// landing page's scroll steps through: one per age in siteAges, drawn from
+// the smoke-bot states (run TestGenerateStates in ui/mapstyle/capture
+// first), with a few animation frames each.
+//
+//	go test -tags mapcapture -run TestWriteSiteFrames ./ui/mapstyle/all
+//
+// MAP_STATES_DIR picks the states folder (default map_captures/states),
+// SITE_FRAMES_OUT the output (default site/frames.js) and SITE_FRAMES_AGES a
+// comma-separated age list in place of siteAges.
+//
+// Format: a palette of colors, a table of styles (fg, bg, bold as palette
+// indexes), and per age its frames, each a list of rows: the row's text and
+// its style runs (style, length, style, length, ...). A row of a later frame
+// that matches the first frame's is null.
+func TestWriteSiteFrames(t *testing.T) {
+	root := filepath.Join("..", "..", "..")
+	states := envOr("MAP_STATES_DIR", filepath.Join(root, "map_captures", "states"))
+	out := envOr("SITE_FRAMES_OUT", filepath.Join(root, "site", "frames.js"))
+	ages := siteAges
+	if v := os.Getenv("SITE_FRAMES_AGES"); v != "" {
+		ages = strings.Split(v, ",")
+	}
+	const w, h, anim = 120, 36, 4
+
+	orig := theme.Active().Key
+	t.Cleanup(func() { _ = theme.SetActive(orig) })
+	if err := theme.SetActive("forge"); err != nil {
+		t.Fatal(err)
+	}
+	defBg, defFg := theme.Color(theme.RoleBackground), theme.Color(theme.RoleText)
+
+	var palette []string
+	palIdx := map[string]int{}
+	color := func(c tcell.Color) int {
+		hx := capture.Hex(c)
+		if i, ok := palIdx[hx]; ok {
+			return i
+		}
+		palIdx[hx] = len(palette)
+		palette = append(palette, hx)
+		return palIdx[hx]
+	}
+	var styles [][3]int
+	styIdx := map[[3]int]int{}
+	style := func(fg, bg tcell.Color, bold bool) int {
+		k := [3]int{color(fg), color(bg), 0}
+		if bold {
+			k[2] = 1
+		}
+		if i, ok := styIdx[k]; ok {
+			return i
+		}
+		styIdx[k] = len(styles)
+		styles = append(styles, k)
+		return styIdx[k]
+	}
+	type age struct {
+		Key    string   `json:"key"`
+		Name   string   `json:"name"`
+		N      int      `json:"n"`
+		Frames [][]*row `json:"frames"`
+	}
+	style(defFg, defBg, false) // style 0 is plain text on the background
+	names, order := map[string]string{}, map[string]int{}
+	for _, a := range config.Ages() {
+		names[a.Key], order[a.Key] = a.Name, a.Order
+	}
+
+	reg, b := Registry(), mapmodel.NewBuilder(nil)
+	var doc []age
+	for _, key := range ages {
+		st, err := capture.LoadState(filepath.Join(states, key+".json.gz"))
+		if err != nil {
+			t.Fatalf("%s: %v (run TestGenerateStates first)", key, err)
+		}
+		m := mapmodel.NewBuilder(b.Catalog()).Build(&st, nil)
+		view, ok := reg.New("roguelike")
+		if !ok {
+			t.Fatal("no roguelike style")
+		}
+		scr := capture.NewScreen(w, h)
+		a := age{Key: key, Name: names[key], N: order[key] + 1}
+		for i := 0; i < anim; i++ {
+			scr.Clear()
+			view.Draw(scr, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: m, Tier: mapmodel.TierUnicode, Anim: i * 3})
+			scr.Show()
+			cells, cw, ch := scr.GetContents()
+			var rows []*row
+			for y := 0; y < ch; y++ {
+				var text strings.Builder
+				var runs []int
+				cur, n := -1, 0
+				for x := 0; x < cw; x++ {
+					c := cells[y*cw+x]
+					r := ' '
+					if len(c.Runes) > 0 {
+						r = c.Runes[0]
+					}
+					fg, bg, attr := c.Style.Decompose()
+					if fg == tcell.ColorDefault || r == ' ' {
+						fg = defFg // a space only needs its background
+					}
+					if bg == tcell.ColorDefault {
+						bg = defBg
+					}
+					s := style(fg, bg, attr&tcell.AttrBold != 0)
+					text.WriteRune(r)
+					if s != cur {
+						if n > 0 {
+							runs = append(runs, cur, n)
+						}
+						cur, n = s, 0
+					}
+					n++
+				}
+				rows = append(rows, &row{T: text.String(), R: append(runs, cur, n)})
+			}
+			if i > 0 {
+				for y, r := range rows {
+					if f := a.Frames[0][y]; f.T == r.T && equalInts(f.R, r.R) {
+						rows[y] = nil
+					}
+				}
+			}
+			a.Frames = append(a.Frames, rows)
+		}
+		scr.Fini()
+		doc = append(doc, a)
+	}
+	raw, err := json.Marshal(map[string]any{"w": w, "h": h, "bg": capture.Hex(defBg), "palette": palette, "styles": styles, "ages": doc})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := "// Generated by TestWriteSiteFrames (ui/mapstyle/all/site_frames_test.go). Do not edit.\nwindow.AGEFORGE_FRAMES = " + string(raw) + ";\n"
+	if err := os.WriteFile(out, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// The landing page carries the first frame as static HTML, so the map
+	// is there before (and without) JavaScript.
+	index := envOr("SITE_INDEX", filepath.Join(filepath.Dir(out), "index.html"))
+	if page, err := os.ReadFile(index); err == nil {
+		const start, end = "<!-- frame:start (written by TestWriteSiteFrames) -->", "<!-- frame:end -->"
+		i, j := strings.Index(string(page), start), strings.Index(string(page), end)
+		if i < 0 || j < i {
+			t.Fatalf("%s has no frame markers", index)
+		}
+		html := staticFrame(doc[0].Frames[0], styles, palette)
+		page = []byte(string(page[:i+len(start)]) + "\n" + html + string(page[j:]))
+		if err := os.WriteFile(index, page, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Logf("wrote %s: %d bytes, %d ages, %d colors, %d styles", out, len(body), len(doc), len(palette), len(styles))
+}
+
+// staticFrame renders one frame the way the landing page's script does:
+// one block per row, a span per style run (none for the plain style), and
+// each character outside ASCII and the box and block drawing ranges in an
+// <i> one character wide, so a fallback font can't break the grid. A style
+// block with the rules the frame uses comes first.
+func staticFrame(rows []*row, styles [][3]int, palette []string) string {
+	used := map[int]bool{}
+	var b strings.Builder
+	b.WriteString(`<pre class="map" id="map" aria-hidden="true"><code>`)
+	for _, r := range rows {
+		b.WriteString(`<span class="row">`)
+		cells := []rune(r.T)
+		x := 0
+		for k := 0; k+1 < len(r.R); k += 2 {
+			s, n := r.R[k], r.R[k+1]
+			plain := s == 0
+			if !plain {
+				used[s] = true
+				fmt.Fprintf(&b, `<span class="s%d">`, s)
+			}
+			for _, c := range cells[x : x+n] {
+				switch {
+				case c == '&':
+					b.WriteString("&amp;")
+				case c == '<':
+					b.WriteString("&lt;")
+				case c == '>':
+					b.WriteString("&gt;")
+				case c > 127 && (c < 0x2500 || c > 0x259f):
+					b.WriteString("<i>" + string(c) + "</i>")
+				default:
+					b.WriteRune(c)
+				}
+			}
+			if !plain {
+				b.WriteString("</span>")
+			}
+			x += n
+		}
+		b.WriteString("</span>")
+	}
+	b.WriteString("</code></pre>\n<style>")
+	keys := make([]int, 0, len(used))
+	for k := range used {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+	for _, k := range keys {
+		st := styles[k]
+		bold := ""
+		if st[2] == 1 {
+			bold = ";font-weight:700"
+		}
+		fmt.Fprintf(&b, ".s%d{color:%s;background:%s%s}", k, palette[st[0]], palette[st[1]], bold)
+	}
+	b.WriteString("</style>\n")
+	return b.String()
+}
+
+// row is one row of a frame: its text and its style runs.
+type row struct {
+	T string `json:"t"`
+	R []int  `json:"r"`
+}
+
+func equalInts(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}

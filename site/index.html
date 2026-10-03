@@ -3,927 +3,194 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>AgeForge: Terminal Empire Builder</title>
+        <title>AgeForge: 22 ages in one terminal</title>
         <meta
             name="description"
-            content="An idle empire builder across 22 ages, from primitive survival to the Transcendent Age. A full-screen game that runs in your terminal."
+            content="AgeForge is an idle civilization game that runs in your terminal: 22 ages from a campfire to the Transcendent Age, on a map that changes every age."
         />
-        <meta
-            property="og:title"
-            content="AgeForge: Terminal Empire Builder"
-        />
+        <meta property="og:title" content="AgeForge: 22 ages in one terminal" />
         <meta
             property="og:description"
-            content="22 ages, 301 buildings and 77 technologies, played in your terminal."
+            content="An idle civilization game for the terminal. 22 ages, 301 buildings and 77 technologies."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://raw.githubusercontent.com/espresso20/ageforge/master/ageforge-3.png" />
-        <meta name="theme-color" content="#f0a500" />
+        <meta property="og:image" content="https://raw.githubusercontent.com/espresso20/ageforge/master/site/og.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="theme-color" content="#07090c" />
+        <link
+            rel="icon"
+            href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230d1117'/%3E%3Cpath d='M8 2.5 13.5 8 8 13.5 2.5 8z' fill='%23ffd700'/%3E%3C/svg%3E"
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap"
             rel="stylesheet"
         />
         <link rel="stylesheet" href="style.css" />
+        <script src="frames.js" defer></script>
+        <script src="script.js" defer></script>
     </head>
     <body>
-        <!-- ═══ NAV ═══════════════════════════════════════════════════════════════════ -->
-        <nav class="nav" id="nav">
-            <div class="nav-inner">
-                <a href="#" class="nav-logo">
-                    <img src="ageforge-3.png" alt="AgeForge" class="nav-logo-img">
-                    <span class="logo-word">AgeForge</span>
-                </a>
-                <div class="nav-links">
-                    <a href="#ages">Ages</a>
-                    <a href="#how-to-play">How to Play</a>
-                    <a href="#download">Download</a>
-                    <a href="changelog.html">Changelog</a>
-                    <a href="docs/" class="nav-wiki">📖 Wiki</a>
-                    <a
-                        href="https://discord.gg/EPvyd5vjpj"
-                        target="_blank"
-                        rel="noopener"
-                        class="nav-discord"
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="18"
-                            height="18"
-                            fill="currentColor"
-                            aria-label="Discord"
-                        >
-                            <path
-                                d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"
-                            />
-                        </svg>
-                        Discord
-                    </a>
-                    <a
-                        href="https://github.com/espresso20/ageforge"
-                        target="_blank"
-                        rel="noopener"
-                        class="nav-gh"
-                    >
-                        <svg
-                            viewBox="0 0 16 16"
-                            width="18"
-                            height="18"
-                            fill="currentColor"
-                            aria-label="GitHub"
-                        >
-                            <path
-                                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
-                            />
-                        </svg>
-                        GitHub
-                    </a>
-                    <a
-                        href="https://trello.com/b/tf31C2cz/ageforge"
-                        target="_blank"
-                        rel="noopener"
-                        class="nav-trello"
-                    >
-                        Project Progress
-                    </a>
-                </div>
-                <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-            </div>
-        </nav>
+        <a class="skip" href="#about">Skip to what AgeForge is</a>
 
-        <!-- ═══ MOBILE MENU ══════════════════════════════════════════════════════════════ -->
-        <div class="nav-mobile-menu" id="nav-mobile-menu" aria-hidden="true">
-            <button class="nav-mobile-close" id="nav-mobile-close" aria-label="Close menu">✕</button>
-            <a href="#ages" class="nav-mobile-link">Ages</a>
-            <a href="#how-to-play" class="nav-mobile-link">How to Play</a>
-            <a href="#download" class="nav-mobile-link">Download</a>
-            <a href="changelog.html" class="nav-mobile-link">Changelog</a>
-            <a href="docs/" class="nav-mobile-link">📖 Wiki</a>
-            <a href="https://discord.gg/EPvyd5vjpj" target="_blank" rel="noopener" class="nav-mobile-link nav-mobile-discord">Discord</a>
-            <a href="https://github.com/espresso20/ageforge" target="_blank" rel="noopener" class="nav-mobile-link nav-mobile-gh">GitHub</a>
-            <a href="https://trello.com/b/tf31C2cz/ageforge" target="_blank" rel="noopener" class="nav-mobile-link">Project Progress</a>
-        </div>
+        <header class="bar">
+            <a class="bar-mark" href="#top" aria-label="AgeForge, back to the top">◆</a>
+            <nav class="bar-nav" aria-label="Site">
+                <a href="docs/">Docs</a>
+                <a href="https://github.com/espresso20/ageforge" rel="noopener">GitHub</a>
+                <a href="changelog.html">Changelog</a>
+            </nav>
+        </header>
 
-        <!-- ═══ HERO ═══════════════════════════════════════════════════════════════════ -->
-        <section class="hero" id="hero">
-            <canvas class="starfield" id="starfield"></canvas>
-            <div class="scanlines" aria-hidden="true"></div>
+        <main id="top">
+            <!-- The scroll is the timeline: the stage stays pinned while the
+                 section scrolls past, and script.js steps the map through the
+                 ages in frames.js. Without JavaScript the first frame stands. -->
+            <section class="timeline" id="timeline" aria-label="The map through the ages">
+                <div class="stage">
+                    <div class="pane-wrap" id="pane-wrap">
+                    <figure class="pane" id="pane" role="img" aria-label="The AgeForge map in the Primitive Age: a few huts and a campfire in a forest by a river, drawn in colored terminal characters.">
+                        <div class="pane-bar" aria-hidden="true">
+                            <span class="pane-name">ageforge</span>
+                            <span class="hud" id="hud">
+                                <span class="hud-age" id="hud-age">Primitive Age</span>
+                                <span class="hud-n">· <span id="hud-n">1</span> of 22</span>
+                            </span>
+                        </div>
+                        <div class="ticks" id="ticks" aria-hidden="true"></div>
+                        <div class="screen" id="screen">
+                            <!-- frame:start (written by TestWriteSiteFrames) -->
+<pre class="map" id="map" aria-hidden="true"><code><span class="row"> <span class="s1"><i>◆</i></span><span class="s2"> </span><span class="s1">Corstead</span> <i>·</i> Primitive Age <i>·</i> Stone Era                                  <i>☼</i> 16:03  pop 70  idle 0  civs 0/11<span class="s2">  SETTLEMENT </span></span><span class="row">                 <span class="s3">.,</span>       <span class="s3">,</span> <span class="s3"><i>·</i><i>·</i>~~~~~<i>·</i></span><span class="s4"><i>·</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i></span><span class="s4"><i>·</i><i>·</i></span><span class="s3">~</span><span class="s6">~~~~</span><span class="s4"><i>·</i></span><span class="s3"><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i>~~~~~~~~</span>                <span class="s7">│</span> <span class="s1">LEGEND</span>                  </span><span class="row">                <span class="s3">.</span>      <span class="s3">,</span> <span class="s3">'</span>  <span class="s3"><i>·</i><i>·</i>~</span><span class="s6">~~~~</span><span class="s4"><i>·</i><i>·</i></span><span class="s5"><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i></span><span class="s4"><i>·</i><i>·</i><i>·</i></span><span class="s6">~~~~~~~~~</span><span class="s3">~~~~~~~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>                <span class="s7">│</span> <span class="s8">land</span>                    </span><span class="row">                       <span class="s3"><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>·</i></span><span class="s4"><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i></span><span class="s5"><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i></span>  <span class="s5"><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~~<i>≈</i>~~~~~~~~</span><span class="s3">~~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i>~<i>≈</i><i>≈</i></span>              <span class="s7">│</span>  <span class="s6"><i>≈</i></span> water                </span><span class="row">              <span class="s3">.</span>    <span class="s3"><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i></span> <span class="s4">,</span>  <span class="s5"><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i></span><span class="s4">.</span>  <span class="s4">.</span><span class="s5"><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s4">',<i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i><i>≈</i>~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i>~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>            <span class="s7">│</span>  <span class="s6">~</span> shallows             </span><span class="row">             <span class="s3">.</span>  <span class="s3">.</span> <span class="s3"><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span>  <span class="s5"><i>♣</i><i>♣</i><i>τ</i><i>♣</i></span>    <span class="s4">'</span> <span class="s4">.</span> <span class="s4">.</span>   <span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>            <span class="s7">│</span>  <span class="s5"><i>♣</i></span> forest               </span><span class="row">           <span class="s3">.,</span>  <span class="s3">.</span>  <span class="s3"><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i></span> <span class="s5"><i>♣</i><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i></span>   <span class="s4">.'</span>     <span class="s9"><i>Ψ</i></span> <span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~~~~~~~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>         <span class="s7">│</span>  <span class="s10">^</span> hills                </span><span class="row">         <span class="s3">'</span>     <span class="s3">..</span> <span class="s3"><i>♣</i><i>♣</i><i>♣</i></span><span class="s5"><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i></span><span class="s4">.</span>  <span class="s4">.</span> <span class="s4">.</span>    <span class="s4">.</span> <span class="s4"><i>·</i><i>·</i><i>·</i></span><span class="s6">~~~~~~~~~~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i>~<i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i>~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>        <span class="s7">│</span> <span class="s8">buildings</span>               </span><span class="row">         <span class="s3">.</span>    <span class="s3">.</span>   <span class="s3"><i>♣</i><i>♣</i><i>τ</i></span><span class="s5"><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i></span>  <span class="s5"><i>τ</i></span> <span class="s5"><i>♣</i><i>♣</i></span>  <span class="s4">.</span> <span class="s4">.<i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i></span><span class="s6">~~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>        <span class="s7">│</span>  <span class="s11">*</span> town square          </span><span class="row">                  <span class="s3">.</span><span class="s5"><i>♣</i><i>τ</i><i>♣</i><i>♣</i></span><span class="s4">.</span> <span class="s5"><i>♣</i><i>τ</i><i>τ</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span>       <span class="s4">.</span>   <span class="s4">.</span> <span class="s4">.</span> <span class="s4"><i>·</i><i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>       <span class="s7">│</span>  <span class="s12"><i>★</i></span> wonder               </span><span class="row">        <span class="s3">.</span>       <span class="s3">.</span>  <span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span>    <span class="s5"><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i></span><span class="s4">.</span>  <span class="s4">.</span>    <span class="s4">.'</span>      <span class="s4"><i>·</i></span><span class="s6">~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>      <span class="s7">│</span>  <span class="s13"><i>∩</i></span> housing              </span><span class="row">                <span class="s4">.</span>  <span class="s4">'</span><span class="s5"><i>♣</i><i>τ</i><i>♣</i></span><span class="s4">'</span>  <span class="s4">.'</span><span class="s5"><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>τ</i></span>      <span class="s4">,.</span><span class="s5"><i>♣</i><i>♣</i></span> <span class="s4">,</span> <span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i>~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>     <span class="s7">│</span>  <span class="s5">"</span> farms and food       </span><span class="row">              <span class="s3">'</span>  <span class="s4">'</span>  <span class="s5"><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i></span> <span class="s4">.</span>  <span class="s4"><i>τ</i></span><span class="s5"><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>τ</i><i>♣</i></span><span class="s10">^^^</span><span class="s5"><i>♣</i><i>τ</i></span>  <span class="s4">.</span>   <span class="s4"><i>♣</i><i>♣</i><i>♣</i></span><span class="s5"><i>τ</i></span> <span class="s4">,<i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i>~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>      <span class="s7">│</span>  <span class="s14"><i>♠</i></span> wood and fibre       </span><span class="row">          <span class="s3">.</span>     <span class="s3">,</span><span class="s4">.</span> <span class="s4">'</span> <span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s14"><i>♠</i><i>♠</i></span><span class="s4"><i>τ</i></span><span class="s14"><i>♠</i></span><span class="s5"><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s2"><i>☺</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i></span><span class="s10">^^^^^^</span><span class="s5"><i>τ</i><i>♣</i></span><span class="s4">'</span>   <span class="s9"><i>§</i><i>§</i><i>§</i></span><span class="s4"><i>τ</i></span><span class="s5"><i>♣</i></span><span class="s4">,</span> <span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>     <span class="s7">│</span>  <span class="s9"><i>§</i></span> knowledge            </span><span class="row">      <span class="s3">'</span>       <span class="s3">,.</span>  <span class="s4">'</span> <span class="s5"><i>♣</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s14"><i>♠</i><i>♠</i><i>♠</i></span><span class="s2"><i>☺</i></span><span class="s14"><i>♠</i><i>♠</i></span><span class="s5"><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s13"><i>∩</i></span><span class="s4"><i>♣</i></span><span class="s13"><i>∩</i><i>∩</i><i>∩</i></span><span class="s5"><i>♣</i></span><span class="s4">^</span><span class="s13"><i>∩</i></span><span class="s10">^^^^^^</span><span class="s5"><i>♣</i></span><span class="s9"><i>§</i></span><span class="s4"><i>τ</i></span><span class="s5"><i>♣</i><i>τ</i><i>♣</i></span><span class="s9"><i>§</i></span><span class="s4"><i>♣</i></span><span class="s5"><i>♣</i><i>♣</i></span><span class="s6"><i>≈</i><i>≈</i>~~<i>≈</i>~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>    <span class="s7">│</span>  <span class="s15"><i>□</i></span> storage              </span><span class="row">         <span class="s3">.</span>      <span class="s4">'</span>   <span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s4"><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span> <span class="s4">.</span><span class="s5"><i>♣</i></span><span class="s4"><i>♣</i><i>♣</i></span><span class="s2"><i>♂</i></span><span class="s4"><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s2"><i>☺</i></span><span class="s4"><i>♣</i><i>♣</i><i>τ</i>^^^<i>♣</i>^</span><span class="s5"><i>♣</i></span><span class="s2"><i>☺</i></span><span class="s6"><i>≈</i>~<i>≈</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i></span><span class="s4">.</span><span class="s6"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i>~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>     <span class="s7">│</span> <span class="s8">state</span>                   </span><span class="row">     <span class="s3">'</span> <span class="s3">.</span>  <span class="s3">.</span>     <span class="s4">'</span>  <span class="s4">.</span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s14"><i>♠</i><i>♠</i></span> <span class="s14"><i>♠</i><i>♠</i></span><span class="s5"><i>♣</i><i>♣</i></span><span class="s4"><i>♣</i></span><span class="s5">"<i>τ</i><i>♣</i><i>♣</i></span><span class="s2"><i>☺</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i></span><span class="s4"><i>♣</i><i>τ</i><i>♣</i></span><span class="s16">*</span><span class="s4">^^<i>τ</i></span><span class="s5"><i>♣</i><i>♣</i><i>τ</i><i>♣</i></span><span class="s6"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>  <span class="s4"><i>·</i></span><span class="s6">~~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i>~<i>≈</i></span>     <span class="s7">│</span>  <span class="s9"><i>Ψ</i></span> harbinger            </span><span class="row">         <span class="s3">,</span>      <span class="s4">'</span>  <span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s4">.,.</span><span class="s5">'"""</span><span class="s4"><i>♣</i></span><span class="s5">"<i>τ</i><i>♣</i></span><span class="s13"><i>∩</i></span><span class="s4"><i>♣</i></span><span class="s13"><i>∩</i><i>∩</i><i>∩</i><i>∩</i></span><span class="s4"><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s5"><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span>   <span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>     <span class="s7">│</span> <span class="s8">life</span>                    </span><span class="row">       <span class="s3">,</span> <span class="s3">'</span>          <span class="s5"><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i></span><span class="s4"><i>♣</i><i>τ</i><i>♣</i>.</span>   <span class="s2"><i>♂</i></span><span class="s4"><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s2"> </span><span class="s12"><i>▲</i></span><span class="s2"> </span><span class="s15">Sacred</span> <span class="s15">Grove</span><span class="s5"><i>♣</i><i>♣</i></span>   <span class="s4"><i>·</i><i>·</i></span><span class="s6">~~<i>≈</i>~<i>≈</i><i>≈</i>~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>     <span class="s7">│</span>  <span class="s2"><i>☺</i></span> worker at work       </span><span class="row">     <span class="s3">..</span>    <span class="s3">'</span>  <span class="s3">'</span>     <span class="s4">.</span>  <span class="s4">.</span> <span class="s4"><i>♣</i></span><span class="s5">"""'</span> <span class="s5">"'""</span><span class="s4"><i>♣</i></span><span class="s5"><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i></span><span class="s12"><i>▲</i>█<i>▲</i></span><span class="s15"><i>□</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s10">^</span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i></span>    <span class="s4">,<i>·</i><i>·</i></span><span class="s6">~~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i>~<i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>      <span class="s7">│</span> <span class="s8">traffic</span>                 </span><span class="row">          <span class="s3">.</span>       <span class="s4">..</span>   <span class="s4">,</span>       <span class="s4">.</span><span class="s5">"</span><span class="s4">.</span><span class="s5">"</span><span class="s4"><i>♣</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>♣</i></span><span class="s4"><i>♣</i></span><span class="s15"><i>□</i></span><span class="s5"><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s4">,</span>   <span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i>~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>       <span class="s7">│</span>  <span class="s2"><i>♂</i></span> hunter               </span><span class="row">       <span class="s3">.</span>  <span class="s3">.</span>    <span class="s3">.</span>    <span class="s4">,,</span>       <span class="s4">.</span> <span class="s4">,.</span> <span class="s4">.</span> <span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s4"><i>♣</i><i>♣</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i></span><span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i>~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span><span class="s3"><i>≈</i><i>≈</i><i>≈</i>~~~~<i>≈</i><i>≈</i><i>≈</i><i>≈</i><i>≈</i></span>     <span class="s7">│</span>                         </span><span class="row">                   <span class="s4">,'.'</span>  <span class="s4">.</span>     <span class="s4">,.</span>     <span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s10">^^</span><span class="s5"><i>♣</i><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i></span><span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~~~~~<i>≈</i><i>≈</i>~~</span><span class="s3">~~~~<i>≈</i>~~~~<i>≈</i><i>≈</i><i>≈</i></span>     <span class="s7">│</span>                         </span><span class="row">            <span class="s3">'</span>  <span class="s3"><i>·</i><i>·</i><i>·</i></span><span class="s4"><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i></span>  <span class="s4">.'</span>            <span class="s4">.</span>  <span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i></span> <span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~~~~~~~~</span><span class="s3">~~~~~~<i>·</i><i>·</i>~~~~</span>       <span class="s7">│</span>                         </span><span class="row">         <span class="s3">'</span> <span class="s3">.</span>  <span class="s3"><i>·</i><i>·</i>~~~~</span><span class="s6">~~</span><span class="s4"><i>·</i><i>·</i></span> <span class="s4">.</span>       <span class="s4">'</span> <span class="s4">..</span>      <span class="s4">,,</span>   <span class="s5"><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s4"><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i></span><span class="s6">~~~~</span><span class="s4"><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i></span><span class="s6">~~</span><span class="s3">~~<i>≈</i><i>≈</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i>~~~</span>       <span class="s7">│</span>                         </span><span class="row">           <span class="s3">.</span>  <span class="s3"><i>·</i><i>·</i>~~~~~~</span><span class="s4"><i>·</i><i>·</i></span> <span class="s4">.</span>    <span class="s4">.</span> <span class="s4">.</span>   <span class="s4">,</span>   <span class="s4">,</span>       <span class="s4">.</span><span class="s5"><i>♣</i><i>♣</i></span><span class="s4">.</span> <span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~~~~<i>≈</i>~</span><span class="s4"><i>·</i><i>·</i><i>·</i><i>·</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s3"><i>♣</i>~<i>≈</i><i>≈</i><i>≈</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>·</i><i>·</i><i>·</i>~</span>       <span class="s7">│</span>                         </span><span class="row">         <span class="s3">.</span>    <span class="s3"><i>·</i><i>·</i>~~~~<i>·</i><i>·</i><i>·</i></span>       <span class="s4">.</span>  <span class="s4">.</span>   <span class="s4">,</span>   <span class="s4">.</span>    <span class="s4">.</span>    <span class="s4">.<i>·</i><i>·</i></span><span class="s6">~~~~~~<i>≈</i>~</span><span class="s4"><i>·</i><i>·</i><i>·</i></span><span class="s5"><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i></span><span class="s3"><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>≈</i><i>≈</i><i>≈</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span>          <span class="s7">│</span>                         </span><span class="row">               <span class="s3"><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i></span>          <span class="s4">.</span>       <span class="s5"><i>♣</i><i>♣</i></span>   <span class="s4">.</span>     <span class="s5"><i>♣</i><i>τ</i></span><span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~~~~</span><span class="s4"><i>·</i><i>·</i></span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>τ</i></span><span class="s3"><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>≈</i><i>≈</i><i>♣</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i></span>          <span class="s7">│</span>                         </span><span class="row">                    <span class="s3">.</span>   <span class="s3">..</span>    <span class="s4">.'</span>  <span class="s4">'</span><span class="s5"><i>♣</i></span> <span class="s4">'</span>    <span class="s4">,</span>    <span class="s4">.</span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i></span><span class="s4"><i>·</i><i>·</i><i>·</i></span><span class="s6">~~~~~</span><span class="s4"><i>·</i><i>·</i></span><span class="s5"><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>τ</i><i>♣</i></span><span class="s3"><i>♣</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>≈</i><i>≈</i><i>≈</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i></span>           <span class="s7">│</span>                         </span><span class="row">                <span class="s3">,</span>               <span class="s4">.</span><span class="s5"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>τ</i></span>       <span class="s4"><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i></span><span class="s5"><i>♣</i></span><span class="s4"><i>·</i><i>·</i></span><span class="s6">~~~~<i>≈</i></span><span class="s4"><i>·</i><i>·</i></span><span class="s5"><i>♣</i><i>♣</i></span><span class="s3"><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>≈</i><i>≈</i><i>≈</i><i>♣</i><i>♣</i><i>τ</i></span>              <span class="s7">│</span>                         </span><span class="row">                    <span class="s3">.'</span>    <span class="s3"><i>·</i><i>·</i><i>·</i><i>·</i></span><span class="s4"><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i><i>·</i></span><span class="s6">~~~~~</span><span class="s4"><i>·</i><i>·</i><i>·</i><i>·</i></span><span class="s6">~~~~~</span><span class="s4"><i>·</i></span><span class="s3"><i>·</i><i>♣</i><i>τ</i><i>τ</i><i>τ</i><i>τ</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>τ</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i></span>               <span class="s7">│</span>                         </span><span class="row">                         <span class="s3"><i>·</i><i>·</i>~~~~~~~~</span><span class="s6">~~~~~~~~~~~~~~~~~~~~~~~</span><span class="s3">~~~<i>·</i><i>·</i><i>τ</i><i>♣</i><i>♣</i><i>τ</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i><i>♣</i>^<i>♣</i><i>♣</i><i>♣</i></span>                 <span class="s7">│</span>                         </span><span class="row"> <span class="s17">stuck:</span> <span class="s17">2</span> <span class="s17">stores</span> <span class="s17">full</span>                                                                                                   </span><span class="row"> <span class="s2"><i>▸</i> The hearth of Corstead <i>·</i> 70 people, 0 idle <i>·</i> Stone Age is within reach <i>·</i> 2 stores full</span>                               </span><span class="row">   <span class="s8">type:</span> <span class="s1">advance</span>                                                                                                        </span><span class="row"> <span class="s18">SETTLEMENT</span>                                   <span class="s8">arrows</span> <span class="s8">move</span>  <span class="s8">Shift</span> <span class="s8">fast</span>  <span class="s8">PgUp</span> <span class="s8">PgDn</span> <span class="s8">zoom</span>  <span class="s8">Tab</span> <span class="s8">next</span>  <span class="s8">Home</span> <span class="s8">center</span>  <span class="s8">map</span> <span class="s8">flows</span> </span></code></pre>
+<style>.s1{color:#ffd700;background:#0d1117;font-weight:700}.s2{color:#ffffff;background:#0d1117;font-weight:700}.s3{color:#5b626c;background:#0d1117}.s4{color:#6f796a;background:#0d1117}.s5{color:#3fa84f;background:#0d1117}.s6{color:#3a99ca;background:#101a26}.s7{color:#ffd700;background:#0d1117}.s8{color:#a8b3c0;background:#0d1117}.s9{color:#e2c038;background:#0d1117}.s10{color:#75746a;background:#0d1117}.s11{color:#edbf52;background:#0d1117;font-weight:700}.s12{color:#eabf52;background:#0d1117;font-weight:700}.s13{color:#ecdcc9;background:#0d1117}.s14{color:#d1a152;background:#0d1117}.s15{color:#eabf52;background:#0d1117}.s16{color:#ffffff;background:#21304a;font-weight:700}.s17{color:#f2cc60;background:#0d1117}.s18{color:#39c5cf;background:#0d1117}</style>
+<!-- frame:end -->
+                        </div>
+                    </figure>
 
-            <div class="hero-layout">
-                <!-- Left: copy -->
-                <div class="hero-copy">
-                    <img src="ageforge-3.png" alt="" class="hero-logo" aria-hidden="true">
-                    <div class="hero-badge">⚡ IDLE · STRATEGY · TERMINAL</div>
-                    <h1 class="hero-title">AGE<br />FORGE</h1>
-                    <p class="hero-sub">
-                        Build civilizations from stone tools to the stars.<br />
-                        22 Ages · 301 Buildings · 77 Technologies.<br />
-                        Played in your terminal.
-                    </p>
-                    <div class="hero-btns">
-                        <a href="#download" class="btn btn-gold"
-                            >⬇ Download Free</a
-                        >
-                        <a href="docs/" class="btn btn-ghost"
-                            >📖 Read the Wiki</a
-                        >
+                    <div class="hero" id="hero">
+                        <h1 class="hero-title">AgeForge</h1>
+                        <p class="hero-line"><span>22 ages.</span> <span>One terminal.</span></p>
                     </div>
-                    <div class="hero-stats">
-                        <div class="hstat">
-                            <span class="hstat-n">22</span
-                            ><span class="hstat-l">Ages</span>
-                        </div>
-                        <div class="hstat">
-                            <span class="hstat-n">301</span
-                            ><span class="hstat-l">Buildings</span>
-                        </div>
-                        <div class="hstat">
-                            <span class="hstat-n">77</span
-                            ><span class="hstat-l">Techs</span>
-                        </div>
-                        <div class="hstat">
-                            <span class="hstat-n">∞</span
-                            ><span class="hstat-l">Prestige</span>
-                        </div>
                     </div>
+
+                    <p class="cue" id="cue" aria-hidden="true">scroll through time ↓</p>
+                    <p class="rest" id="rest">That was four of the 22 ages. The rest are left for you to find.</p>
+                    <p class="sr-only" id="age-live" aria-live="polite"></p>
                 </div>
+            </section>
 
-                <!-- Right: terminal mockup -->
-                <div class="hero-terminal">
-                    <div class="term-chrome">
-                        <div class="term-titlebar">
-                            <span class="dot dot-r"></span>
-                            <span class="dot dot-y"></span>
-                            <span class="dot dot-g"></span>
-                            <span class="term-name">ageforge · 130×40</span>
-                        </div>
-                        <div class="term-screen">
-                            <div class="term-pre" id="term-pre"></div>
-                            <span class="term-cursor" id="term-cursor">█</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <a href="#features" class="scroll-hint" aria-label="Scroll down"
-                >▼</a
-            >
-        </section>
-
-        <!-- ═══ FEATURES ════════════════════════════════════════════════════════════════ -->
-        <section class="features" id="features">
-            <div class="section-wrap">
-                <h2 class="section-title">
-                    An entire civilization in one terminal
-                </h2>
-                <p class="section-sub">
-                    It runs in your terminal, with no installer and no
-                    account to create.
+            <section class="about" id="about">
+                <p class="about-text">
+                    AgeForge is an idle civilization game that runs in your
+                    terminal. You start with a campfire and a few huts, and
+                    everything after that is a typed command. The first run is
+                    slow on purpose: about a week of real time to your first
+                    prestige, and your workers keep going while you're away.
+                    Later runs go quicker: Era Mastery makes every age you
+                    have completed run faster, twice as fast after one
+                    prestige and up to 4.2 times after ten.
+                    The map is drawn from the buildings you actually own, and
+                    it changes with every age. Harbingers warn you before a
+                    catastrophe hits, and eleven other civilizations will trade
+                    with you, make deals, or declare war.
                 </p>
-                <div class="feat-grid">
-                    <div class="feat-card" data-anim>
-                        <div class="feat-icon">🏗</div>
-                        <h3>Build an Empire</h3>
-                        <p>
-                            301 buildings across 22 ages, from crude huts to the
-                            Colosseum, the Eiffel Tower and the Dyson Scaffold.
-                            Each wonder you build gives a lasting bonus.
-                        </p>
-                    </div>
-                    <div class="feat-card" data-anim>
-                        <div class="feat-icon">🔬</div>
-                        <h3>Research Technologies</h3>
-                        <p>
-                            77 technologies raise production and unlock new
-                            buildings and mechanics. Techs have prerequisites,
-                            so you plan a path through the tree.
-                        </p>
-                    </div>
-                    <div class="feat-card" data-anim>
-                        <div class="feat-icon">⚔️</div>
-                        <h3>Campaigns &amp; Expeditions</h3>
-                        <p>
-                            13 military campaigns spend soldiers to raid bandit
-                            camps, escort merchants or conquer territory for
-                            loot; a failed campaign still brings some back.
-                            3 scouting expeditions cost food and wood instead.
-                        </p>
-                    </div>
-                    <div class="feat-card" data-anim>
-                        <div class="feat-icon">💹</div>
-                        <h3>Trade &amp; Diplomacy</h3>
-                        <p>
-                            21 trade routes and an 11-civilization roster, each
-                            with a personality, a backstory and an opinion of
-                            you. Send gifts, form alliances or declare rivals.
-                            Allies lend you workers; provoked civilizations
-                            declare war.
-                        </p>
-                    </div>
-                    <div class="feat-card" data-anim>
-                        <div class="feat-icon">⭐</div>
-                        <h3>Prestige System</h3>
-                        <p>
-                            From the Modern Age on, you can reset your
-                            civilization for points to spend on 9 prestige
-                            upgrades. Each run starts with the upgrades you
-                            bought, and every age a past run completed runs
-                            faster, up to 4.2x.
-                        </p>
-                    </div>
-                    <div class="feat-card" data-anim>
-                        <div class="feat-icon">🏆</div>
-                        <h3>Milestones &amp; Titles</h3>
-                        <p>
-                            77 milestones across 6 chains. Completing a chain
-                            earns a civilization title (The Founders, The
-                            Enlightened, The Architects and more) and a
-                            temporary speed boost.
-                        </p>
-                    </div>
-                    <div class="feat-card" data-anim>
-                        <div class="feat-icon">🌋</div>
-                        <h3>Epochs &amp; Catastrophes</h3>
-                        <p>
-                            The 22 ages fall into 7 epochs of three ages each
-                            (the Cosmic Era has four). From the Iron Era on, a
-                            doom may be fated in secret to strike at any
-                            moment in an era, and a harbinger comes before it
-                            does: appease it, brace for the blow, or invite
-                            the fall. When it strikes, choose to
-                            <strong>Endure</strong> (keep going, with losses)
-                            or <strong>Succumb</strong> (reset and claim a
-                            legacy bonus); your faith level tips the odds.
-                            In the Cosmic Era the harbingers also warn of
-                            prestige itself: the Last Passage.
-                            Legacy bonuses carry over across prestige runs.
-                        </p>
-                    </div>
-                    <div class="feat-card" data-anim>
-                        <div class="feat-icon">🗺</div>
-                        <h3>A Living Map</h3>
-                        <p>
-                            Your empire drawn from your real buildings, in two
-                            styles: a roguelike glyph world that zooms from a
-                            district out to the known world, or a side-on
-                            skyline with one district for every age. Point the
-                            inspect cursor at anything and it gives you the
-                            command for it. A mini map rides on the dashboard.
-                        </p>
-                    </div>
-                    <div class="feat-card" data-anim>
-                        <div class="feat-icon">🎨</div>
-                        <h3>Accessibility-First Theming</h3>
-                        <p>
-                            11 themes you can switch while playing, dark and
-                            light (Daylight), including colorblind-safe and
-                            high-contrast palettes. Gains and
-                            losses read by shape as well as color, and your choice
-                            persists per account across every save.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══ AGES ═════════════════════════════════════════════════════════════════════ -->
-        <section class="ages-section" id="ages">
-            <div class="section-wrap">
-                <h2 class="section-title">22 Ages of History</h2>
-                <p class="section-sub">
-                    Each age, from survival in the wilds to the Transcendent
-                    Age, unlocks new buildings, resources and mechanics.
+                <p class="about-note">
+                    Version note: this page shows AgeForge 4.0, which is
+                    coming soon. Until it ships, the command below installs
+                    the current 3.6 release.
                 </p>
-                <div class="ages-carousel">
-                    <button
-                        class="ages-arrow"
-                        id="ages-prev"
-                        aria-label="Previous ages"
-                    >
-                        &#8592;
-                    </button>
-                    <div class="ages-scroll" id="ages-scroll">
-                        <div class="ages-track" id="ages-track">
-                            <!-- injected by script.js -->
-                        </div>
-                    </div>
-                    <button
-                        class="ages-arrow"
-                        id="ages-next"
-                        aria-label="Next ages"
-                    >
-                        &#8594;
-                    </button>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- ═══ SCREENSHOTS ══════════════════════════════════════════════════════════════ -->
-        <section class="ss-section" id="screenshots">
-            <div class="section-wrap">
-                <h2 class="section-title">Game Screenshots</h2>
-                <p class="section-sub">
-                    Captured from the game.
-                </p>
-                <div class="ss-carousel">
-                    <button class="ages-arrow" id="ss-prev" aria-label="Previous screenshot">&#8592;</button>
-                    <div class="ages-scroll" id="ss-scroll">
-                        <div class="ages-track" id="ss-track">
-                            <!-- injected by script.js from GitHub Contents API -->
+            <section class="install" id="install" aria-labelledby="install-title">
+                <h2 class="install-title" id="install-title">Install</h2>
+                <div class="term">
+                    <div class="term-head">
+                        <div class="os" role="tablist" aria-label="Operating system">
+                            <button role="tab" type="button" class="os-tab" id="os-mac" aria-selected="true" data-os="mac">macOS</button>
+                            <button role="tab" type="button" class="os-tab" id="os-linux" aria-selected="false" data-os="linux">Linux</button>
+                            <button role="tab" type="button" class="os-tab" id="os-win" aria-selected="false" data-os="win">Windows</button>
                         </div>
+                        <button class="copy" id="copy" type="button">Copy</button>
                     </div>
-                    <button class="ages-arrow" id="ss-next" aria-label="Next screenshot">&#8594;</button>
-                </div>
-                <p class="ss-empty" id="ss-empty" style="display:none">The screenshots didn't load. <a href="https://github.com/espresso20/ageforge/tree/master/site/screenshots">See them on GitHub</a>.</p>
-            </div>
-        </section>
+                    <div class="cmd">
+                        <span class="ps" aria-hidden="true">$</span>
+                        <code id="cmd">curl -fLo ageforge https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64 &amp;&amp; chmod +x ageforge &amp;&amp; ./ageforge</code>
+                    </div>
+                    <p class="cmd-note" id="cmd-note">Apple Silicon. On an Intel Mac, swap in <code>ageforge-macos-amd64</code>.</p>
 
-        <!-- ═══ HOW TO PLAY ══════════════════════════════════════════════════════════════ -->
-        <section class="howto" id="how-to-play">
-            <div class="section-wrap">
-                <h2 class="section-title">How to Play</h2>
-                <p class="section-sub">
-                    You play AgeForge by typing commands. Buildings take a few
-                    ticks to finish and resources pile up on their own; you
-                    decide what to do with them.
-                </p>
-
-                <div class="steps">
-                    <div class="step" data-anim>
-                        <div class="step-num">01</div>
-                        <div class="step-body">
-                            <h3>Launch the game</h3>
-                            <p>
-                                Run the binary in your terminal. The game opens
-                                full screen, with nothing to set up.
-                            </p>
-                            <div class="codeblock"><code>./ageforge</code></div>
+                    <div class="repl" id="repl">
+                        <div class="repl-out" id="repl-out" aria-live="polite">
+                            <p class="r-sys">Try it here first: type <code>help</code>, <code>play</code>, <code>build hut</code>, <code>advance</code> or <code>map</code>.</p>
                         </div>
-                    </div>
-                    <div class="step" data-anim>
-                        <div class="step-num">02</div>
-                        <div class="step-body">
-                            <h3>Build your first structures</h3>
-                            <p>
-                                Type commands at the <code>&gt;</code> prompt.
-                                Each hut adds +10 housing; each stash adds +500
-                                storage for every resource.
-                            </p>
-                            <div class="codeblock">
-                                <code>build hut<br />build stash</code>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="step" data-anim>
-                        <div class="step-num">03</div>
-                        <div class="step-body">
-                            <h3>Staff your buildings</h3>
-                            <p>
-                                Workers arrive on their own as housing and food
-                                allow, and go to work by your worker shares.
-                                Steer the split, or assign by hand.
-                            </p>
-                            <div class="codeblock">
-                                <code
-                                    >workers<br />workers share knowledge
-                                    40</code
-                                >
-                            </div>
-                        </div>
-                    </div>
-                    <div class="step" data-anim>
-                        <div class="step-num">04</div>
-                        <div class="step-body">
-                            <h3>Research technologies</h3>
-                            <p>
-                                Spend knowledge on technologies that multiply
-                                output and unlock new buildings and mechanics.
-                            </p>
-                            <div class="codeblock">
-                                <code
-                                    >research tool_making<br />research
-                                    fire_mastery</code
-                                >
-                            </div>
-                        </div>
-                    </div>
-                    <div class="step" data-anim>
-                        <div class="step-num">05</div>
-                        <div class="step-body">
-                            <h3>Advance through the ages</h3>
-                            <p>
-                                The status bar shows what the next age needs.
-                                Once you have it, type <code>advance</code>, or
-                                queue <code>plan advance</code> to go as soon as
-                                it's ready.
-                            </p>
-                            <div class="codeblock">
-                                <code>advance</code><br /><span class="code-success"
-                                    >→ Advanced from Primitive Age to Stone Age</span
-                                >
-                            </div>
-                        </div>
-                    </div>
-                    <div class="step" data-anim>
-                        <div class="step-num">06</div>
-                        <div class="step-body">
-                            <h3>Prestige and start again</h3>
-                            <p>
-                                From the Modern Age on, you can prestige: reset
-                                the run for points, spend them on permanent
-                                upgrades, and start again. The ages you
-                                completed run faster the next time.
-                            </p>
-                            <div class="codeblock">
-                                <code>prestige confirm yes</code>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══ COMMANDS ══════════════════════════════════════════════════════════════════ -->
-        <section class="commands-section" id="commands">
-            <div class="section-wrap">
-                <h2 class="section-title">Commands at a glance</h2>
-                <p class="section-sub">
-                    Everything happens at the command prompt. Type a panel's
-                    name to open it; <code>Esc</code> closes it.
-                </p>
-                <div class="cmd-grid">
-                    <div class="cmd-group">
-                        <h4 class="cmd-group-title">Building</h4>
-                        <div class="cmd-row">
-                            <code>build &lt;building&gt; [count|max]</code
-                            ><span>Construct buildings</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>upgrade</code
-                            ><span>List buildings you can upgrade</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>upgrade &lt;building&gt; [count|all]</code
-                            ><span>Upgrade to the next age tier (default: all)</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>gather &lt;food|wood|stone&gt; [n]</code
-                            ><span>Gather by hand (until the Medieval Age)</span>
-                        </div>
-                    </div>
-                    <div class="cmd-group">
-                        <h4 class="cmd-group-title">Workers</h4>
-                        <div class="cmd-row">
-                            <code>recruit [count|max]</code
-                            ><span>Recruit workers into free housing</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>assign &lt;building&gt; [n|all]</code
-                            ><span>Assign workers to a building</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>unassign &lt;building&gt; [n|all]</code
-                            ><span>Return workers to the idle pool</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>workers share &lt;domain&gt; [percent|auto]</code
-                            ><span>Set a domain's share of your workers</span>
-                        </div>
-                    </div>
-                    <div class="cmd-group">
-                        <h4 class="cmd-group-title">Research</h4>
-                        <div class="cmd-row">
-                            <code>research &lt;tech&gt;</code
-                            ><span>Start researching a technology</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>research list</code
-                            ><span>Show available technologies</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>research cancel</code
-                            ><span>Cancel active research</span>
-                        </div>
-                    </div>
-                    <div class="cmd-group">
-                        <h4 class="cmd-group-title">Military &amp; Scouting</h4>
-                        <div class="cmd-row">
-                            <code>army</code
-                            ><span>Open the Army panel</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>campaign &lt;key&gt;</code
-                            ><span>Wage a military campaign (costs soldiers)</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>expedition &lt;key&gt;</code
-                            ><span>Send a scouting expedition (costs resources)</span>
-                        </div>
-                    </div>
-                    <div class="cmd-group">
-                        <h4 class="cmd-group-title">Trade &amp; Diplomacy</h4>
-                        <div class="cmd-row">
-                            <code>trade route start &lt;route&gt;</code
-                            ><span>Start a trade route</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>trade route stop &lt;route&gt;</code
-                            ><span>Stop a trade route</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>diplomacy ally &lt;civ&gt;</code
-                            ><span>Ally with a civilization (costs gold)</span>
-                        </div>
-                    </div>
-                    <div class="cmd-group">
-                        <h4 class="cmd-group-title">Wonders &amp; Prestige</h4>
-                        <div class="cmd-row">
-                            <code>wonder collect &lt;resource|all&gt; [amount|max]</code
-                            ><span>Bank resources into the current wonder</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>prestige shop</code
-                            ><span>View prestige points &amp; upgrades</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>prestige confirm yes</code
-                            ><span>Trigger prestige reset</span>
-                        </div>
-                    </div>
-                </div>
-                <p class="cmd-more">
-                    Full command reference →
-                    <a href="docs/#/commands">Wiki: Commands</a>
-                </p>
-
-                <h2 class="section-title" style="margin-top:2.5rem">Controls</h2>
-                <p class="section-sub">You play entirely from the keyboard, and the prompt always has focus.</p>
-                <div class="cmd-grid">
-                    <div class="cmd-group">
-                        <h4 class="cmd-group-title">Navigation</h4>
-                        <div class="cmd-row">
-                            <code>Tab / Shift+Tab</code
-                            ><span>Cycle command completions</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>↑ ↓</code
-                            ><span>Step through command history</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>PgUp PgDn</code
-                            ><span>Scroll the main view</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>Esc</code
-                            ><span>Close the open panel; with none open, save and return to the main menu</span>
-                        </div>
-                    </div>
-                    <div class="cmd-group">
-                        <h4 class="cmd-group-title">Panels</h4>
-                        <div class="cmd-row">
-                            <code>milestones</code
-                            ><span>Open milestones panel</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>research</code
-                            ><span>Open research panel</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>army · trade · stats · wonders · logs · epoch</code
-                            ><span>Open other panels</span>
-                        </div>
-                    </div>
-                    <div class="cmd-group">
-                        <h4 class="cmd-group-title">Other</h4>
-                        <div class="cmd-row">
-                            <code>save [name]</code
-                            ><span>Save (a name starts a new save)</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>load [name]</code
-                            ><span>Load a save (no name: open the save browser)</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>saves</code
-                            ><span>List all saves</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══ DOWNLOAD ══════════════════════════════════════════════════════════════════ -->
-        <section class="download" id="download">
-            <div class="section-wrap">
-                <h2 class="section-title">Download &amp; Install</h2>
-                <p class="section-sub">
-                    A single static binary, with no runtime or dependencies to
-                    install.
-                </p>
-
-                <div class="ptabs">
-                    <button class="ptab active" data-tab="mac">🍎 macOS</button>
-                    <button class="ptab" data-tab="linux">🐧 Linux</button>
-                    <button class="ptab" data-tab="win">🪟 Windows</button>
-                    <button class="ptab" data-tab="src">⚙ From Source</button>
-                </div>
-
-                <div class="pane active" id="pane-mac">
-                    <div class="dl-direct">
-                        <a
-                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64"
-                            class="btn btn-gold btn-lg"
-                            >⬇ Download for macOS (Apple Silicon)</a
-                        >
-                        <a
-                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-amd64"
-                            class="dl-btn-alt"
-                            >Intel Mac →</a
-                        >
-                    </div>
-
-                    <div class="post-download">
-                        <span class="post-download-label"
-                            >After downloading, open Terminal and run:</span
-                        >
-                        <div class="codeblock">
-                            <code
-                                >chmod +x ~/Downloads/ageforge-macos-arm64
-                                &amp;&amp;
-                                ~/Downloads/ageforge-macos-arm64</code
-                            >
-                        </div>
-                    </div>
-
-
-                    <div class="post-download">
-                        <span class="post-download-label"
-                            >🔒 <strong>macOS security prompt?</strong> Right-click
-                            the file → Open → Open Anyway. Or:</span
-                        >
-                            <div class="codeblock">
-                                <code
-                                    >xattr -d com.apple.quarantine
-                                    ~/Downloads/ageforge-macos-arm64</code
-                                >
-                            </div>
-                    </div>
-                    <!--<p class="install-note">
-                        🔒 <strong>macOS security prompt?</strong> Right-click
-                        the file → Open → Open Anyway. Or:
-                        <code
-                            >xattr -d com.apple.quarantine
-                            ~/Downloads/ageforge-macos-arm64</code
-                        >
-                    </p>-->
-
-                    <details class="nerdy-path">
-                        <summary>Prefer the command line?</summary>
-                        <div class="install-steps">
-                            <div class="install-step">
-                                <span class="istep-label"
-                                    >Download + make executable + run</span
-                                >
-                                <div class="codeblock">
-                                    <code
-                                        >curl -L
-                                        https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64
-                                        -o ageforge &amp;&amp; chmod +x ageforge
-                                        &amp;&amp; ./ageforge</code
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                    </details>
-                </div>
-
-                <div class="pane" id="pane-linux">
-                    <div class="dl-direct">
-                        <a
-                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64"
-                            class="btn btn-gold btn-lg"
-                            >⬇ Download for Linux (x86_64)</a
-                        >
-                        <a
-                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-arm64"
-                            class="dl-btn-alt"
-                            >ARM64 →</a
-                        >
-                    </div>
-
-                    <div class="post-download">
-                        <span class="post-download-label"
-                            >After downloading, open a terminal and run:</span
-                        >
-                        <div class="codeblock">
-                            <code
-                                >chmod +x ~/Downloads/ageforge-linux-amd64
-                                &amp;&amp;
-                                ~/Downloads/ageforge-linux-amd64</code
-                            >
-                        </div>
-                    </div>
-
-                    <details class="nerdy-path">
-                        <summary>Prefer the command line?</summary>
-                        <div class="install-steps">
-                            <div class="install-step">
-                                <span class="istep-label"
-                                    >Download + make executable + run</span
-                                >
-                                <div class="codeblock">
-                                    <code
-                                        >curl -L
-                                        https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64
-                                        -o ageforge &amp;&amp; chmod +x ageforge
-                                        &amp;&amp; ./ageforge</code
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                    </details>
-                </div>
-
-                <div class="pane" id="pane-win">
-                    <div class="dl-direct">
-                        <a
-                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-windows-amd64.exe"
-                            class="btn btn-gold btn-lg"
-                            >⬇ Download for Windows</a
-                        >
-                    </div>
-
-                    <div class="post-download">
-                        <span class="post-download-label"
-                            >After downloading, open Windows Terminal and
-                            run:</span
-                        >
-                        <div class="codeblock">
-                            <code
-                                >cd %USERPROFILE%\Downloads &amp;&amp;
-                                .\ageforge-windows-amd64.exe</code
-                            >
-                        </div>
-                    </div>
-
-                    <p class="install-note">
-                        🔒 <strong>SmartScreen warning?</strong> Click "More
-                        info" → "Run anyway".<br />
-                        ⚠ Use <strong>Windows Terminal</strong>; cmd.exe
-                        doesn't support ANSI colors.
-                    </p>
-                </div>
-
-                <div class="pane" id="pane-src">
-                    <div class="install-steps">
-                        <div class="install-step">
-                            <span class="istep-label">Requires Go 1.24+</span>
-                            <div class="codeblock">
-                                <code
-                                    >git clone
-                                    https://github.com/espresso20/ageforge.git<br />cd
-                                    ageforge<br />go build -o ageforge .<br />./ageforge</code
-                                >
-                            </div>
-                        </div>
+                        <label class="repl-in" for="repl-input">
+                            <span class="ps" aria-hidden="true">❯</span>
+                            <span class="repl-field">
+                                <span class="ghost" id="ghost" aria-hidden="true"></span>
+                                <input id="repl-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" aria-label="Type a command" />
+                            </span>
+                        </label>
                     </div>
                 </div>
 
-                <div class="dl-cta">
-                    <a
-                        href="https://github.com/espresso20/ageforge/releases/latest"
-                        target="_blank"
-                        rel="noopener"
-                        class="btn btn-gold btn-lg"
-                    >
-                        ⬇ Latest Release on GitHub
-                    </a>
-                    <a
-                        href="https://github.com/espresso20/ageforge"
-                        target="_blank"
-                        rel="noopener"
-                        class="btn btn-ghost btn-lg"
-                    >
-                        ★ Star on GitHub
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══ COMMUNITY + SUPPORT ════════════════════════════════════════════════════════ -->
-        <section class="community-support">
-            <div class="section-wrap cs-grid">
-                <!-- Discord -->
-                <div class="cs-card cs-discord">
-                    <div class="cs-icon">
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="36"
-                            height="36"
-                            fill="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"
-                            />
-                        </svg>
-                    </div>
-                    <div class="cs-body">
-                        <h3 class="cs-title">Join the Community</h3>
+                <details class="more">
+                    <summary>Other ways to install</summary>
+                    <div class="more-body">
+                        <p>Direct downloads from the latest release:</p>
+                        <ul class="dl">
+                            <li><a href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64">macOS, Apple Silicon</a></li>
+                            <li><a href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-amd64">macOS, Intel</a></li>
+                            <li><a href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64">Linux, x86_64</a></li>
+                            <li><a href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-arm64">Linux, ARM64</a></li>
+                            <li><a href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-windows-amd64.exe">Windows, x86_64</a></li>
+                        </ul>
                         <p>
-                            Share strategies, report bugs, suggest features, and
-                            chat with other players on Discord.
+                            macOS blocks a file downloaded in a browser:
+                            right-click it, choose Open, then Open Anyway, or
+                            run <code>xattr -d com.apple.quarantine ageforge-macos-arm64</code>.
+                            On Windows, use Windows Terminal; if SmartScreen
+                            warns you, choose More info, then Run anyway.
                         </p>
-                        <a
-                            href="https://discord.gg/EPvyd5vjpj"
-                            target="_blank"
-                            rel="noopener"
-                            class="btn cs-btn-discord"
-                        >
-                            Join Discord
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Buy Me a Coffee -->
-                <div class="cs-card cs-coffee">
-                    <div class="cs-icon">☕</div>
-                    <div class="cs-body">
-                        <h3 class="cs-title">Support the Project</h3>
+                        <p>Build from source (Go 1.26 or newer):</p>
+                        <pre class="src"><code>git clone https://github.com/espresso20/ageforge.git
+cd ageforge
+go build -o ageforge .
+./ageforge</code></pre>
                         <p>
-                            AgeForge is free, with its source on GitHub, and
-                            built by one person. If it's eaten your afternoons,
-                            a coffee goes a long way.
+                            Saves live in a <code>data</code> folder next to
+                            the binary. The
+                            <a href="docs/#/getting-started">install guide</a>
+                            covers terminals, fonts and updates.
                         </p>
-                        <a
-                            href="https://buymeacoffee.com/adamroffler"
-                            target="_blank"
-                            rel="noopener"
-                            class="bmc-btn"
-                        >
-                            <svg
-                                viewBox="0 0 24 24"
-                                width="18"
-                                height="18"
-                                fill="currentColor"
-                                aria-hidden="true"
-                            >
-                                <path
-                                    d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.542-.601-.919-.698-.316-.083-.658-.075-.977-.04-.552.063-1.035.384-1.386.815-.24.290-.402.635-.461 1.003-.059.37-.032.763.06 1.124.11.42.268.84.445 1.24.18.404.390.800.616 1.183.227.384.47.760.728 1.122l-.079.056c-.317.224-.666.42-1.028.554-.36.133-.737.208-1.120.224-.38.015-.760-.035-1.133-.118-.374-.082-.750-.198-1.113-.340-.363-.142-.72-.309-1.063-.5-.345-.19-.678-.406-.998-.638-.32-.23-.628-.478-.921-.74l-.038-.034C6.027 9.73 5.408 10.504 5 11.343c-.404.838-.56 1.782-.41 2.707.148.924.575 1.797 1.235 2.479.658.68 1.539 1.164 2.484 1.369.948.204 1.950.129 2.879-.183.93-.31 1.786-.855 2.487-1.554l.020-.020c.352.360.74.677 1.15.950.41.27.845.488 1.29.648.447.16.906.26 1.370.29.468.03.940-.003 1.400-.1.464-.1.925-.27 1.343-.517.42-.246.8-.564 1.096-.937.298-.37.513-.80.625-1.254.113-.454.113-.93.010-1.385-.105-.46-.318-.896-.605-1.275-.282-.375-.64-.688-1.04-.921l-.035-.020.095-.083c.318-.276.578-.604.764-.968.187-.364.300-.762.336-1.164.033-.40-.006-.805-.125-1.195-.117-.387-.315-.754-.574-1.073-.26-.317-.58-.585-.943-.783-.36-.196-.762-.32-1.17-.355-.408-.034-.82.02-1.21.154l.003-.008z"
-                                />
-                            </svg>
-                            Buy me a coffee
-                        </a>
                     </div>
-                </div>
-            </div>
-        </section>
+                </details>
+            </section>
 
-        <!-- ═══ FOOTER ════════════════════════════════════════════════════════════════════ -->
-        <footer class="footer">
-            <div class="footer-inner">
-                <div class="footer-brand">
-                    <img src="ageforge-3.png" alt="" class="footer-logo" aria-hidden="true">
-                    <span class="footer-name">AgeForge</span>
-                </div>
-                <p class="footer-tag">
-                    A terminal idle game built with Go + tview/tcell
-                </p>
-                <nav class="footer-links">
-                    <a href="https://github.com/espresso20/ageforge">GitHub</a>
-                    <a href="docs/">Wiki</a>
-                    <a href="https://github.com/espresso20/ageforge/releases"
-                        >Releases</a
-                    >
-                    <a href="https://github.com/espresso20/ageforge/issues"
-                        >Issues</a
-                    >
-                    <a
-                        href="https://github.com/espresso20/ageforge/blob/master/LICENSE"
-                        >License</a
-                    >
-                    <a
-                        href="https://discord.gg/EPvyd5vjpj"
-                        target="_blank"
-                        rel="noopener"
-                        >💬 Discord</a
-                    >
-                    <a
-                        href="https://buymeacoffee.com/adamroffler"
-                        target="_blank"
-                        rel="noopener"
-                        >☕ Support</a
-                    >
-                </nav>
-                <p class="footer-copy">AgeForge Non-Commercial License · Made with ♥ and Go</p>
-            </div>
+            <section class="numbers" aria-label="AgeForge by the numbers">
+                <ul class="stats">
+                    <li class="hstat"><span class="hstat-n">22</span><span class="hstat-l">Ages</span></li>
+                    <li class="hstat"><span class="hstat-n">7</span><span class="hstat-l">Epochs</span></li>
+                    <li class="hstat"><span class="hstat-n">301</span><span class="hstat-l">Buildings</span></li>
+                    <li class="hstat"><span class="hstat-n">77</span><span class="hstat-l">Techs</span></li>
+                    <li class="hstat"><span class="hstat-n">26</span><span class="hstat-l">Resources</span></li>
+                    <li class="hstat"><span class="hstat-n">77</span><span class="hstat-l">Milestones</span></li>
+                    <li class="hstat"><span class="hstat-n">11</span><span class="hstat-l">Themes</span></li>
+                </ul>
+            </section>
+        </main>
+
+        <footer class="foot">
+            <nav class="foot-nav" aria-label="More">
+                <a href="docs/">Docs</a>
+                <a href="changelog.html">Changelog</a>
+                <a href="https://github.com/espresso20/ageforge" rel="noopener">GitHub</a>
+                <a href="https://discord.gg/EPvyd5vjpj" rel="noopener">Discord</a>
+                <a href="https://trello.com/b/tf31C2cz/ageforge" rel="noopener">Project board</a>
+                <a href="https://buymeacoffee.com/adamroffler" rel="noopener">Buy the developer a coffee</a>
+            </nav>
+            <p class="foot-line">
+                Made by one person in Go, with tview and tcell.
+                <a href="https://github.com/espresso20/ageforge/blob/master/LICENSE">AgeForge Non-Commercial License</a>.
+            </p>
         </footer>
-
-        <script src="script.js"></script>
     </body>
 </html>
