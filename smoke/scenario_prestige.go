@@ -133,7 +133,7 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 		for _, p := range probs {
 			msgs = append(msgs, p.msg)
 		}
-		check(label+": legacy, ruins, upgrades and passive bonus carry over", len(probs) == 0, "%s", strings.Join(msgs, "; "))
+		check(label+": legacy, ruins, upgrades and mastery carry over", len(probs) == 0, "%s", strings.Join(msgs, "; "))
 		return before, after, true
 	}
 	if _, _, ok := prestige(up, "prestige 1"); !ok {
@@ -162,7 +162,8 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 			{"starting_food", u2.Resources["food"].Amount - c2.Resources["food"].Amount, 25 * float64(bought["starting_food"])},
 			{"starting_wood", u2.Resources["wood"].Amount - c2.Resources["wood"].Amount, 25 * float64(bought["starting_wood"])},
 			{"population_cap", float64(u2.Workers.MaxPop - c2.Workers.MaxPop), 2 * float64(bought["population_cap"])},
-			{"storage_bonus", u2.Resources["food"].Storage - c2.Resources["food"].Storage, 20 * float64(bought["storage_bonus"])},
+			// Storage grows with Era Mastery's k, which both twins share.
+			{"storage_bonus", u2.Resources["food"].Storage - c2.Resources["food"].Storage, float64(20*float64(bought["storage_bonus"])) * u2.Mastery.K},
 			{"tick_speed", u2.TickSpeedBonus - c2.TickSpeedBonus, 0.05 * float64(bought["tick_speed"])},
 		}
 		for _, ef := range effects {
@@ -201,8 +202,15 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 			want := int(math.Floor(float64(full) * game.LastPassageKeepFor(b4.LastPassage.BraceLevel)))
 			check("endured passage pays its share", paid == want, "an endured Last Passage paid %d of %d points; the documented share is %d", paid, full, want)
 			check("cosmic legacy survives an endured passage", a4.LastPassage.CosmicLegacy, "the Cosmic Legacy was lost")
-			check("legacy bonuses and ruins survive every prestige", len(prestigeCarryProblems(before, a4, "plain")) == 0,
-				"%v", prestigeCarryProblems(before, a4, "plain"))
+			// Several prestiges apart, so mastery has moved more than one
+			// level: only what must never be lost is compared.
+			var lost []problem
+			for _, p := range prestigeCarryProblems(before, a4, "plain") {
+				if p.check != "prestige_mastery" {
+					lost = append(lost, p)
+				}
+			}
+			check("legacy bonuses and ruins survive every prestige", len(lost) == 0, "%v", lost)
 		}
 	}
 	return steps

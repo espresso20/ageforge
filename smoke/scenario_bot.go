@@ -56,7 +56,15 @@ func foldBotSet(e *Env, res *Result, name, scenario string, cfg Config, started 
 			med = days(f.MedianSecs)
 		}
 		res.fail(KindPacing+"/first_run_"+f.Verdict, "%s: the first run to the Modern Age took %s (median of %d seeds, %d got there, %s to %s), outside %s to %s",
-			name, med, f.Samples, f.Reached, days(f.MinSecs), days(f.MaxSecs), days(FirstRunLow.Seconds()), days(FirstRunHigh.Seconds()))
+			name, med, f.Samples, f.Reached, days(f.MinSecs), days(f.MaxSecs), days(f.LowSecs), days(f.HighSecs))
+	}
+	if x := sum.Early; sum.EarlyFailed && x != nil {
+		res.fail(KindPacing+"/known_ground_early", "%s: the Primitive and Stone Ages on known ground took %s together (median of %d seeds), over the %s limit",
+			name, dur(x.MedianSecs), x.Samples, dur(VeteranEarlyMax.Seconds()))
+	}
+	if l := sum.LaterRun; sum.LaterRunFailed && l != nil {
+		res.fail(KindPacing+"/later_run", "%s: cycle 2 covered cycle 1's ages %.2fx faster (median; want %gx or more) and ended %+.1f ages deeper (median; want %+d or more)",
+			name, l.MedianSpeedup, LaterRunMinSpeedup, l.MedianDepth, LaterRunMinDepth)
 	}
 	for _, r := range runs {
 		for _, a := range r.Anomalies {
@@ -97,6 +105,9 @@ func reproCmd(tier, scenario string, cfg Config, seed int64) string {
 	if cfg.CheckIn > 0 && cfg.CheckIn != IdleCheckIn {
 		parts = append(parts, "-check-in "+cfg.CheckIn.String())
 	}
+	if cfg.Preset != "" && scenario != "veteran" {
+		parts = append(parts, "-preset "+cfg.Preset)
+	}
 	parts = append(parts, "-trace -v")
 	return strings.Join(parts, " ")
 }
@@ -131,11 +142,12 @@ func progressionConfig(e *Env, o Overrides) (Config, []int64) {
 		cfg.Cycles, cfg.PrestigeAge, cfg.FinalAge, cfg.MaxSim = 1, DeepPrestigeAge, "", 1000*time.Hour
 		cfg.InviteCosmic = true
 	case e.full():
-		// Two cycles to the Digital Age: on the one-week curve the bot needs
-		// about 460 hours (570 at the targets), so 1,000 leaves room for a
-		// slow seed.
+		// Two cycles: the first to a Modern Age prestige, graded as a first
+		// run; the second a push (Era Mastery's later-run check): it plays
+		// for as long as the first took, then prestiges from wherever it got.
+		// About 260 hours for the bot; 1,000 leaves room for a slow seed.
 		seeds = e.seeds(8)
-		cfg.Cycles, cfg.FinalAge, cfg.MaxSim = 2, "digital_age", 1000*time.Hour
+		cfg.Cycles, cfg.FinalAge, cfg.MaxSim, cfg.PushCycles = 2, "", 1000*time.Hour, true
 	default:
 		seeds = e.seeds(3)
 		cfg.Cycles, cfg.StopAge, cfg.MaxSim = 1, "bronze_age", 300*time.Hour
@@ -190,6 +202,7 @@ func describeProgression(res *Result, sum *Summary) {
 	var sb strings.Builder
 	sum.writePacingTable(&sb)
 	sum.writeFirstRun(&sb)
+	sum.writeLaterRun(&sb)
 	res.section("Pacing per age", "%s", sb.String())
 	res.section("Full bot report", "See progression.md next to this report for runs, events, harbingers and state dumps.")
 }

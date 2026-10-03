@@ -82,9 +82,45 @@ func prestigeCarryProblems(before, after game.GameState, ending string) []proble
 				fmt.Sprintf("prestige upgrade %s fell from tier %d to %d", key, before.Prestige.Upgrades[key].Tier, t)})
 		}
 	}
-	if want := float64(float64(after.Prestige.Level) * 0.02); math.Abs(after.Prestige.PassiveBonus-want) > 1e-9 {
+	if after.Prestige.PassiveBonus != 0 {
 		out = append(out, problem{"prestige_passive_bonus",
-			fmt.Sprintf("passive bonus is %.4f at level %d; the documented +2%%/level is %.4f", after.Prestige.PassiveBonus, after.Prestige.Level, want)})
+			fmt.Sprintf("passive bonus is %.4f at level %d; it retired into Era Mastery and must be 0", after.Prestige.PassiveBonus, after.Prestige.Level)})
+	}
+	return append(out, masteryCarryProblems(before, after)...)
+}
+
+// masteryCarryProblems checks Era Mastery across a prestige: every age below
+// the run's furthest (the age prestiged from, or deeper if the run went
+// deeper) gains one level up to config.MasteryCap, every other age keeps
+// its level, and the record never moves back.
+func masteryCarryProblems(before, after game.GameState) []problem {
+	var out []problem
+	order := map[string]int{}
+	for i, a := range config.AgeOrder() {
+		order[a] = i
+	}
+	far := order[before.Age]
+	if o, ok := order[before.Mastery.RunFurthest]; ok && o > far {
+		far = o
+	}
+	for _, a := range config.AgeOrder() {
+		was, now := before.Mastery.Ages[a], after.Mastery.Ages[a]
+		want := was
+		if order[a] < far {
+			want = min(was+1, config.MasteryCap)
+		}
+		if now != want {
+			out = append(out, problem{"prestige_mastery",
+				fmt.Sprintf("%s mastery went %d -> %d at a prestige from %s; want %d", a, was, now, before.Age, want)})
+		}
+	}
+	rec := order[before.Age]
+	if o, ok := order[before.Mastery.Record]; ok && o > rec {
+		rec = o
+	}
+	if o, ok := order[after.Mastery.Record]; !ok || o < rec {
+		out = append(out, problem{"prestige_record",
+			fmt.Sprintf("the record is %q after a prestige from %s (record before: %q)", after.Mastery.Record, before.Age, before.Mastery.Record)})
 	}
 	return out
 }

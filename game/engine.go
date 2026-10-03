@@ -3895,7 +3895,10 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	}
 
 	ge.Prestige.Prestige(points)
-	// Era Mastery: every age this run completed gains a level.
+	// Era Mastery: every age this run completed gains a level. The age
+	// prestiged from counts as entered even if a test hook or the dev
+	// console moved the run there without an advance.
+	ge.Prestige.NoteAgeEntered(ge.age)
 	masteryLine := masteryCommitLine(ge.Prestige.CommitRun())
 
 	// Preserve cross-run state before resetting managers
