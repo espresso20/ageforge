@@ -85,6 +85,24 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 	if d := firstDiff(up.GetState(), ctl.GetState(), twinSkip); !check("twin engines agree", d == "", "two engines played from seed %d differ at %s", seed, d) {
 		return steps
 	}
+	// Era Mastery twin check: the same state at mastery 1 (k = 2) in its
+	// age runs every rate at exactly double and holds double the storage.
+	{
+		kb, kk := hookedEngine(e, seed), hookedEngine(e, seed)
+		age := kb.GetState().Age
+		kb.SetMasteryForTest(nil, age)
+		kk.SetMasteryForTest(map[string]int{age: 1}, age)
+		bs, ks := kb.GetState(), kk.GetState()
+		var bad []string
+		for _, r := range sortedKeys(bs.Resources) {
+			b, k := bs.Resources[r], ks.Resources[r]
+			if k.Rate != 2*b.Rate || k.Storage != 2*b.Storage {
+				bad = append(bad, fmt.Sprintf("%s rate %g vs %g, storage %g vs %g", r, k.Rate, b.Rate, k.Storage, b.Storage))
+			}
+		}
+		check("mastery twin: k = 2 doubles rates and storage", ks.Mastery.K == 2 && len(bad) == 0, "k %v; %s", ks.Mastery.K, strings.Join(bad, "; "))
+	}
+
 	both := func(f func(ge *game.GameEngine) error) error {
 		if err := f(up); err != nil {
 			return err
