@@ -13,6 +13,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
@@ -21,9 +22,10 @@ import (
 // TestWriteMandalaCaptures draws the Transcendent Age's mandala in both
 // styles from the smoke bot's transcendent_age state (run
 // TestGenerateStates in ui/mapstyle/capture first): a run through all
-// seven eras, and the same run as if it had passed through only the first
+// seven eras, the same run as if it had passed through only the first
 // four (its record of ages reached cut down; the map shows a ring only for
-// an era reached). Each goes full size and as the mini map, as an animated
+// an era reached), and the same run with buildings of the Transcendent Age
+// itself (the bot's state has none: the crown is still to be raised). Each goes full size and as the mini map, as an animated
 // HTML file, its first frame as text and as cells (decimal rune and hex
 // colours per cell, for an outside renderer), with four frames of the wave
 // of light and the full view again with the cursor out and with the legend
@@ -56,10 +58,16 @@ func TestWriteMandalaCaptures(t *testing.T) {
 		four.Stats.AgesReached = append(four.Stats.AgesReached, e.Ages...)
 	}
 	four.Stats.AgesReached = append(four.Stats.AgesReached, st.Age)
+	crown := st // the bot stops the moment it arrives: give the age some buildings of its own
+	for i := 1; i <= 3; i++ {
+		crown = fixture.Grow(crown, i)
+	}
+	crown.Tick = st.Tick
 	for _, run := range []struct {
 		name string
 		m    *mapmodel.Model
-	}{{"7eras", mapmodel.NewBuilder(nil).Build(&st, nil)}, {"4eras", mapmodel.NewBuilder(nil).Build(&four, nil)}} {
+	}{{"7eras", mapmodel.NewBuilder(nil).Build(&st, nil)}, {"4eras", mapmodel.NewBuilder(nil).Build(&four, nil)},
+		{"crown", mapmodel.NewBuilder(nil).Build(&crown, nil)}} {
 		for _, style := range Registry().Names() {
 			for _, mini := range []bool{false, true} {
 				w, h := 160, 48
