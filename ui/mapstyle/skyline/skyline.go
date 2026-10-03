@@ -101,6 +101,9 @@ func (v *view) SetOption(o mapstyle.Option, on bool) {
 // away. The flows overlay is the map flows command (SetOption).
 func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	m := f.Model
+	if m != nil && m.Sky() == mapmodel.SkyMandala {
+		return v.mandalaKey(ev, f) // no panorama to scroll: orbit_mandala.go
+	}
 	w := v.viewW()
 	key := ev.Key()
 	shift := ev.Modifiers()&tcell.ModShift != 0

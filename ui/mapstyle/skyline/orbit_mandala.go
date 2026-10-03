@@ -103,6 +103,47 @@ func (o *orb) mandalaStars() {
 	}
 }
 
+// mandalaKey is HandleKey in the Transcendent Age. There is no panorama to
+// scroll, so the camera stays where it was (and follows the present again
+// after a prestige): Tab and the arrows put the cursor out and move it,
+// round a ring and from ring to ring; Home takes it to the core; Esc puts
+// it away.
+func (v *view) mandalaKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
+	m, key := f.Model, ev.Key()
+	move := func(dx, drow, tab int) {
+		if !v.inspect { // the first key only puts the cursor out
+			v.inspect, dx, drow, tab = true, 0, 0, 0
+		}
+		v.step(m, f.Anim, dx, drow, tab)
+	}
+	switch key {
+	case tcell.KeyTab, tcell.KeyBacktab:
+		d := 1
+		if key == tcell.KeyBacktab || ev.Modifiers()&tcell.ModShift != 0 {
+			d = -1
+		}
+		move(0, 0, d)
+	case tcell.KeyLeft:
+		move(-1, 0, 0)
+	case tcell.KeyRight:
+		move(1, 0, 0)
+	case tcell.KeyUp:
+		move(0, 1, 0)
+	case tcell.KeyDown:
+		move(0, -1, 0)
+	case tcell.KeyHome:
+		v.inspect, v.cur = true, target{kind: tCore}
+	case tcell.KeyEscape:
+		if !v.inspect {
+			return false
+		}
+		v.inspect = false
+	default:
+		return false
+	}
+	return true
+}
+
 // breath is how brightly the wave of light lights ring k of n at this frame
 // (the core is -1): a crest rolling outward ring by ring.
 func (o *orb) breath(k, n int) float64 { return mapstyle.Breath(o.anim, k, n) }
@@ -256,6 +297,7 @@ func (o *orb) mandalaLegend() []seg {
 func (o *orb) mandalaHints() []seg {
 	return []seg{{" Tab ", theme.RoleAccent}, {"inspect  ", theme.RoleDim}, {"◄► ", theme.RoleAccent},
 		{"round a ring  ", theme.RoleDim}, {"↑↓ ", theme.RoleAccent}, {"ring to ring  ", theme.RoleDim},
+		{"Home ", theme.RoleAccent}, {"the core  ", theme.RoleDim},
 		{"map flows ", theme.RoleAccent}, {"flows  ", theme.RoleDim}, {"│ ", theme.RoleDim},
 		{"beyond form, in light", theme.RoleLabel}}
 }

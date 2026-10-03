@@ -269,6 +269,28 @@ func TestSkyMandalaInspect(t *testing.T) {
 	if v.cur.kind != tCore {
 		t.Errorf("down from the outermost ring ended on %+v, not the core", v.cur)
 	}
+	// with the cursor away an arrow only puts it out again, where it was;
+	// Home takes it to the core; and nothing scrolls a panorama that is gone
+	v.cur = target{kind: tMark, key: rings[1].Marks[0].Key}
+	at, cam, follow := v.cur, v.cam, v.follow
+	key(tcell.KeyEscape)
+	if _, ok := v.Inspect(f); ok {
+		t.Error("Esc did not put the cursor away")
+	}
+	key(tcell.KeyRight)
+	if _, ok := v.Inspect(f); !ok || v.cur != at {
+		t.Errorf("an arrow with the cursor away put it on %+v, want it back on %+v", v.cur, at)
+	}
+	key(tcell.KeyHome)
+	if v.cur.kind != tCore {
+		t.Errorf("Home put the cursor on %+v, not the core", v.cur)
+	}
+	for _, k := range []tcell.Key{tcell.KeyPgUp, tcell.KeyPgDn, tcell.KeyEnd, tcell.KeyLeft, tcell.KeyRight, tcell.KeyHome} {
+		key(k)
+	}
+	if v.cam != cam || v.follow != follow {
+		t.Errorf("the keys moved the camera: %d (following %v), was %d (%v)", v.cam, v.follow, cam, follow)
+	}
 	// a building on a ring says which era's ring it shines on
 	v.cur = target{kind: tMark, key: rings[0].Marks[0].Key}
 	if in, _ := v.Inspect(f); len(in.Lines) == 0 || !strings.Contains(in.Lines[0], m.Catalog.EpochName[rings[0].Epoch]) {
