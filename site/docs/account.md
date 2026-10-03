@@ -220,12 +220,14 @@ Some progress is **account-wide**: it builds up across *every* game you play on 
 
 (These two also show for each account in the [Accounts panel](#the-accounts-panel), so you can compare your civilizations at a glance.)
 
+The account also records each prestige under the age it was made from (`prestiges_by_age` in the stats of `account.json`), so an early taste (a prestige from the Medieval Age to the Atomic Age) can be told from a full run (the Modern Age or deeper); see [Early Tastes and Full Runs](prestige.md#early-tastes-and-full-runs). No panel shows it, and Total Prestiges still counts every prestige, tastes included. Prestiges made before the account kept this record count only in the total. An export carries it, and an import keeps the higher count for each age.
+
 **Achievements** are one-time, account-wide badges. Once unlocked, they stay unlocked; they stay with your account and travel in an export. The current set:
 
 | Achievement | Unlocks when |
 |---|---|
 | **First Prestige** | You complete your first prestige |
-| **Serial Reincarnator** | You reach 10 lifetime prestiges |
+| **Serial Reincarnator** | You reach 10 lifetime prestiges (early tastes count) |
 | **Age of Iron** | Any civilization reaches the Iron Age |
 | **Into the Modern Age** | Any civilization reaches the Modern Age |
 

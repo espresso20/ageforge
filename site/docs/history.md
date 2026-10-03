@@ -16,7 +16,7 @@ The game tracks and graphs seven metrics:
 | **Faith** | The faith you have stored |
 | **Morale** | Civilization morale as a percentage (see [Morale](morale.md)) |
 | **All production** | The permanent all-production bonus your milestones and epoch events have added, as a percentage |
-| **Game speed** | Your game speed bonus from techs, the Temporal Mastery prestige upgrade and events (0.15 means ticks come 15% faster) |
+| **Game speed** | Your game speed bonus from techs and events (0.15 means ticks come 15% faster) |
 
 Each metric gets its own braille line graph covering the whole stored history. Beside each graph is the current value, a trend arrow (↑ growing, ↓ shrinking, → stable), and the recorded min/max.
 

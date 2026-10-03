@@ -97,7 +97,7 @@ Within a domain, buildings fill in this order: buildings that are not superseded
 
 **Build plan.** A copy the [build plan](plan.md#how-it-runs) finishes is staffed from idle workers first: into the copy itself, or, with shares set, wherever the shares say. If idle workers run out, the plan moves workers out of superseded buildings, the same line's first; with shares set, only from the copy's own domain, so the split holds. It never moves food workers or workers in this age's buildings. The routine then recruits for what is still empty.
 
-**Saving.** Shares, the auto-recruit switch and the minute's wait are saved with your game. Prestige and Succumb put every share back on auto. Auto-recruit is a preference and stays as you set it across prestige and Succumb, like wonder overflow. A new game resets both: every domain on auto, auto-recruit on. Older saves load with every domain on auto and auto-recruit on.
+**Saving.** Shares, the auto-recruit switch and the minute's wait are saved with your game. Prestige and Succumb put every share back on auto, unless you own **Worker Shares** from the prestige [legacy kit](prestige.md#worker-shares) (`prestige buy legacy_workers`, 36 points): then the shares you had when the run ended carry over into the new run, and its log says so ("Worker Shares: your shares carry over.", with the split). The game remembers your shares at every prestige and Succumb even before you buy it, so bought later, it sets them at once (unless you have set some since). Auto-recruit is a preference and stays as you set it across prestige and Succumb, like wonder overflow. A new game resets both: every domain on auto, auto-recruit on. Older saves load with every domain on auto and auto-recruit on.
 
 ---
 

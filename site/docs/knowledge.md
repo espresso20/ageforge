@@ -67,6 +67,8 @@ The full knowledge cost is paid **up front**, the moment research starts. Nothin
 
 To queue techs, add them to the [Build Plan](plan.md) with `plan research <tech>` (or `plan res`). The plan starts them one at a time, in order, as the knowledge comes in, and keeps doing so while you are away. A tech's prerequisites must be researched, in progress or planned above it. You can also plan the next age's techs; they wait for the advance.
 
+The plan is the only research queue: the game never chooses what you research next. The techs you plan are remembered with the plan, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) they are planned again on later runs, in the age you planned them in.
+
 Research speed shortens how long each tech takes. It comes from milestones (five milestones, three of them in the Scholar chain, add +50% in total) and from Ancient Knowledge, the Succumb reward: +25% per distinct epoch you have succumbed to, kept through prestige (see the [Legacy Bonus Table](catastrophe.md#legacy-bonus-table)). On known ground, [Era Mastery](prestige.md#era-mastery) then divides the time again by the age's speed. See [Technologies](technologies.md) for the full tech tree.
 
 ---

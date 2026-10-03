@@ -4,7 +4,7 @@ All commands are typed at the `>` prompt at the bottom of the screen. `↑`/`↓
 
 Counts (`recruit 5`, `build farm 3`, `sell hut 2`, ...) are whole numbers from 1 to 1,000,000, and amounts (`gather`, `trade`, `wonder collect`) are positive numbers. Anything else is refused with the command's usage line; the game doesn't guess.
 
-Command names and the game keys they take (buildings, techs, resources, civilizations, themes, expeditions, trade routes, prestige upgrades) are not case-sensitive: `sell Hut` is `sell hut`, and `research Tool Making` is `research tool_making`.
+Command names and the game keys they take (buildings, techs, resources, civilizations, themes, expeditions, trade routes, legacy kit items) are not case-sensitive: `sell Hut` is `sell hut`, and `research Tool Making` is `research tool_making`.
 
 This page lists every command. Each section links to the page that explains the system behind it.
 
@@ -32,7 +32,7 @@ The **Logs** panel (`logs`) shows the same lines with the tick each one happened
 
 The game shows every duration and countdown as an approximate wall-clock time, not a tick count: `~38s`, `~4m 44s`, `~1h 12m`. Expedition lengths, which are rolled at each launch, show as a range from the shortest to the longest possible roll. Readings carry two units of precision at most.
 
-The `~` matters. A tick is 2 seconds of real time, and tick speed bonuses (from some techs, prestige, milestone speed boosts and some boons) make it shorter. Every reading is worked out from your **current** tick rate and changes when that rate does: finish a tech that grants tick speed and the countdown you were watching gets shorter. There is no speed setting; only those bonuses make ticks come faster.
+The `~` matters. A tick is 2 seconds of real time, and tick speed bonuses (from some techs, milestone speed boosts and some boons) make it shorter. Every reading is worked out from your **current** tick rate and changes when that rate does: finish a tech that grants tick speed and the countdown you were watching gets shorter. There is no speed setting; only those bonuses make ticks come faster.
 
 Balance values are *defined* in ticks (a tech costs so many ticks of research, an event lasts so many ticks), and this wiki quotes those tick figures where the tick count is the mechanic. The `dump` debug export prints the raw tick counts alongside the wall-clock readings.
 
@@ -69,7 +69,7 @@ See [Buildings](buildings.md) and [Ages](ages.md).
 
 ## Build Plan
 
-A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, and what a full store would throw away (after the wonder's share) is banked toward its items' next copies. Full rules on the [Build Plan](plan.md) page.
+A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, and what a full store would throw away (after the wonder's share) is banked toward its items' next copies. Full rules on the [Build Plan](plan.md) page. With the prestige legacy kit's [Plan Template](prestige.md#plan-template), later runs add each age's part of the plan you wrote when they enter that age.
 
 | Command | Description |
 |---|---|
@@ -154,7 +154,7 @@ research agriculture
 research iron_smelting
 ```
 
-Tech keys are shown in the **Research** panel (`research`): dim gray when locked, a gold circle when available. To queue techs, use `plan research`. See [Technologies](technologies.md) and [Knowledge](knowledge.md).
+Tech keys are shown in the **Research** panel (`research`): dim gray when locked, a gold circle when available. To queue techs, use `plan research`. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Knowledge](knowledge.md).
 
 ---
 
@@ -312,20 +312,20 @@ With something typed, `Tab` and `Enter` act on the prompt instead. Each style li
 
 | Command | Description |
 |---|---|
-| `prestige` | View prestige status and available points, the [Era Mastery](prestige.md#era-mastery) speed of the age you are in and the ages your next prestige would raise. In the Cosmic Era it also shows the chance of the Last Passage and which figure is warning of it, and shows the Cosmic Legacy if you hold it |
-| `prestige confirm` | Explain what confirming would do. In the Cosmic Era this includes what Endure (share of this run's points) and Succumb (the Cosmic Legacy) would give you if the Last Passage comes |
-| `prestige confirm yes` | Prestige now (requires the Modern Age). In the Cosmic Era an open Reality Tear settles first, then it rolls the Last Passage; if either comes, prestige waits for your choice |
-| `prestige shop` | List the prestige upgrades |
-| `prestige buy <key>` | Buy a prestige upgrade |
-| `stats` | Open the **Stats** panel: empire statistics, active events, resource rates, active multipliers, your prestige points, your [Era Mastery](prestige.md#era-mastery) in the current age and the upgrades you have bought |
+| `prestige` | View prestige status and available points, how many legacy kit items you own, the points a prestige would pay now and what prestiging from the next age would pay (and how many more), the [Era Mastery](prestige.md#era-mastery) speed of the age you are in and the ages your next prestige would raise. Before the Modern Age it notes that a prestige now is an early taste. In the Cosmic Era it also shows the chance of the Last Passage and which figure is warning of it, and shows the Cosmic Legacy if you hold it |
+| `prestige confirm` | Explain what confirming would do: the points you would earn, what resets, and what you keep (prestige points, the legacy kit and what it remembers, and Era Mastery). In the Cosmic Era this includes what Endure (share of this run's points) and Succumb (the Cosmic Legacy) would give you if the Last Passage comes |
+| `prestige confirm yes` | Prestige now: a new run, keeping your points, the legacy kit and Era Mastery. It requires the Medieval Age, and before the Modern Age it is an early taste that pays little. In the Cosmic Era an open Reality Tear settles first, then it rolls the Last Passage; if either comes, prestige waits for your choice |
+| `prestige shop` | View the legacy kit: each item's price, or "owned", and what the kit remembers from your runs (plan items and the ages they cover, worker shares, civilizations met) |
+| `prestige buy <item>` | Buy a legacy kit item: `legacy_plan` (Plan Template, 9 points), `legacy_workers` (Worker Shares, 36) or `legacy_factions` (Old Friends, 54). It works at once, on the run you are in |
+| `stats` | Open the **Stats** panel: empire statistics, active events, resource rates, active multipliers, your prestige points, what a prestige pays now and from the next age, your [Era Mastery](prestige.md#era-mastery) in the current age and the legacy kit items you own |
 
 ```
 prestige confirm yes
-prestige buy gather_boost
-prestige buy tick_speed
+prestige buy legacy_plan
+prestige buy legacy_workers
 ```
 
-See [Prestige](prestige.md), and [The Last Passage](prestige.md#the-last-passage) for what can happen when you prestige from the Cosmic Era.
+A prestige pays for every age the run completed, and each era's ages pay three times what the era before paid: 9 points from the Medieval Age, 120 from the Modern Age, 363 for a run through the Digital Age. See [Prestige](prestige.md) for the [points](prestige.md#prestige-points-formula) and [the legacy kit](prestige.md#the-legacy-kit), and [The Last Passage](prestige.md#the-last-passage) for what can happen when you prestige from the Cosmic Era.
 
 ---
 

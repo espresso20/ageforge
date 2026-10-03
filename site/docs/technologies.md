@@ -38,6 +38,8 @@ To line techs up, add them to the [build plan](plan.md) with `plan research <tec
 - A tech's prerequisites must be researched, in progress, or planned above it. The plan refuses a tech that fails this, and drops a planned one whose prerequisite you remove from above it.
 - You can plan the next age's techs; they wait for the advance.
 
+The plan is the only research queue, and the game never chooses what you research next. The techs you plan are remembered with the rest of your plan: with the prestige legacy kit's [Plan Template](prestige.md#plan-template) owned, they are planned again on later runs, in the age you planned them in. Techs you start by hand with `research` are not remembered.
+
 See [How it runs](plan.md#how-it-runs) for the rest of the plan's rules.
 
 ### When Research Completes
@@ -64,7 +66,7 @@ Milestone research speed lasts for the run: milestones start over at prestige an
 
 Nothing caps research speed except that a tech always takes at least 1 tick. Once your total reaches +100%, every tech finishes on the tick after you start it.
 
-> **Note on the prestige upgrade Knowledge Production:** its key is `research_speed` (`prestige buy research_speed`), but it raises knowledge output by 5% per tier, not research speed. More knowledge lets you afford techs sooner; each tech still takes the same number of ticks. Many techs raise knowledge output too (see [Knowledge output](#knowledge-output) below).
+> **Research speed is not knowledge output.** Many techs raise knowledge output (see [Knowledge output](#knowledge-output) below). More knowledge lets you afford techs sooner; each tech still takes the same number of ticks.
 
 ---
 
@@ -358,7 +360,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 
 ### All production
 
-Each of these adds a percentage to all production. The bonuses from every source (techs, wonders, milestones, monuments, events, boons, prestige) add into one pool, and the game multiplies every positive production rate by 1 + that pool, **clamped at x3.0** (+200%). See [The all-production cap](resources.md#the-all-production-cap).
+Each of these adds a percentage to all production. The bonuses from every source (techs, wonders, milestones, monuments, events, boons, the Cosmic Legacy) add into one pool, and the game multiplies every positive production rate by 1 + that pool, **clamped at x3.0** (+200%). See [The all-production cap](resources.md#the-all-production-cap).
 
 | Tech | Bonus |
 |---|---|
@@ -402,7 +404,7 @@ These techs raise your knowledge output, which pays for later techs:
 | Internet | +120% |
 | Neural Interface | +200% |
 
-Knowledge output bonuses have a pool of their own (shared with the Great Library and Global Network wonders, scholar milestones and the Knowledge Production prestige upgrade), clamped at +200% like all production. The techs through Radio add +195%, so with the Great Library you are at the cap by about the Electric Age, and Computers, Satellite Technology, Internet and Neural Interface add nothing you can see unless something pulls the pool down.
+Knowledge output bonuses have a pool of their own (shared with the Great Library and Global Network wonders and scholar milestones), clamped at +200% like all production. The techs through Radio add +195%, so with the Great Library you are at the cap by about the Electric Age, and Computers, Satellite Technology, Internet and Neural Interface add nothing you can see unless something pulls the pool down.
 
 ---
 
@@ -415,11 +417,10 @@ Three techs raise game speed: ticks come more often, so production, construction
 | Chronometry (Medieval) | +5% | the run |
 | Clockwork Automation (Industrial) | +10% | the run |
 | Quantum Computing (Quantum) | +15% | the run |
-| Prestige upgrade Temporal Mastery | +5% per tier, +25% at tier 5 | every run |
 | Milestone chain boosts | +250% or +300% | a few minutes, once per chain |
 | Time Dilation boons | +8% to +15%, before scaling | 1,950 to 3,900 ticks |
 
-With the three techs and Temporal Mastery maxed, the game runs 55% faster, and that multiplies with research speed. See [Prestige Upgrades](prestige.md#prestige-upgrades), [Milestones](milestones.md) and [Boons](factions.md#boons). [Era Mastery](prestige.md#era-mastery) is a different thing: it leaves the clock alone and makes each tick of a mastered age produce more, with builds and research needing fewer ticks.
+With all three techs the game runs 30% faster, and that multiplies with research speed. See [Milestones](milestones.md) and [Boons](factions.md#boons). [Era Mastery](prestige.md#era-mastery) is a different thing: it leaves the clock alone and makes each tick of a mastered age produce more, with builds and research needing fewer ticks.
 
 ---
 
@@ -575,8 +576,6 @@ The seven mid-age techs of the Atomic to Fusion Ages (Civilian Reactors, Interne
 
 Either way, your knowledge storage must hold a tech's full cost before you can pay for it.
 
-The prestige **Knowledge Production** upgrade adds +5% knowledge output per tier, +25% at tier 5, from the start of every run.
-
 ---
 
 ## Strategy
@@ -629,12 +628,12 @@ Knowledge costs rise steeply, from 800 kp (Primitive) to hundreds of millions in
 
 **The Dark Age epoch event** cancels your active research and drains 80% of your knowledge stockpile. If an epoch transition is close, consider whether to delay an expensive research start until after its event resolves.
 
-**Prestige resets research** entirely, with every tech, its bonus and the milestones that gave research speed. The research benefits that survive a prestige are the **Ancient Knowledge** bonus (+25% research speed per epoch) from Succumbing, and the prestige upgrades Knowledge Production (knowledge output) and Temporal Mastery (game speed).
+**Prestige resets research** entirely, with every tech, its bonus and the milestones that gave research speed. What survives a prestige is the **Ancient Knowledge** bonus (+25% research speed per epoch) from Succumbing, faster research times in the ages a past run completed ([Era Mastery](prestige.md#era-mastery)), and, with the legacy kit's [Plan Template](prestige.md#plan-template), the techs you put in your build plan, which are planned again in the age you planned them in.
 
-**Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but grants +25% research speed permanently, and each further epoch you Succumb in adds another +25%. Players who Succumb at least once begin each later run with faster research from tick one; pair it with Knowledge Production so you can afford the techs as fast as they finish. See [Succumb](catastrophe.md#succumb).
+**Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but grants +25% research speed permanently, and each further epoch you Succumb in adds another +25%. Players who Succumb at least once begin each later run with faster research from tick one. See [Succumb](catastrophe.md#succumb).
 
 **Don't overlook `civil_engineering`.** −5% build cost plus +100 storage for every resource is good value in the Classical Age and keeps helping for the rest of the run.
 
 ---
 
-*See also: [Knowledge](knowledge.md) for making and buying knowledge; [The Build Plan](plan.md) for queuing research; [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire; [Prestige](prestige.md) for the Knowledge Production upgrade and the Ancient Civilization Memory; [Buildings](buildings.md) for the buildings techs open.*
+*See also: [Knowledge](knowledge.md) for making and buying knowledge; [The Build Plan](plan.md) for queuing research; [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire; [Prestige](prestige.md) for the Plan Template and the Ancient Civilization Memory; [Buildings](buildings.md) for the buildings techs open.*

@@ -25,6 +25,8 @@ If you never send a mission, each civilization is discovered anyway **two ages a
 
 On first contact the log introduces the civilization: its name, personality and backstory. Until then it doesn't exist as far as the game is concerned. No panel, log line or refusal names a civilization you haven't met, its age, specialty or personality. `diplomacy` and `plan deal` refuse an unmet civilization the same way they refuse a name that doesn't exist, and completion only offers the civilizations you know.
 
+**Old friends after a prestige.** Prestige and Succumb end every relationship: the next run starts having met no one. The game remembers every civilization you have met, in any run, and with **Old Friends** from the prestige [legacy kit](prestige.md#old-friends) (`prestige buy legacy_factions`, 54 points) each of them is met again as soon as your age reaches its own, with no mission and no two-age wait, at neutral opinion. The log says so: "Old friends: the Riverlands Tribes remember your people and make contact again." Civilizations you have never met still have to be found by the rules above.
+
 ---
 
 ## The Factions panel

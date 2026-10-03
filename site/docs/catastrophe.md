@@ -39,7 +39,7 @@ A few more rules apply:
 - **One doom per era per run.** Once an era's doom has struck or passed you by, nothing more strikes in that era. Succumb and prestige start a new run, and each era rolls again. That makes 6 catastrophes the most a run can have, one for each era from Iron to Cosmic, plus the [Last Passage](prestige.md#the-last-passage) if you prestige from the Cosmic Era.
 - **You can't outrun it.** If you advance out of the era before the doom's moment, the strike rolls at that advance, before it goes through: a hit makes the advance wait behind the catastrophe, a miss lets it through. The same goes for leaving an age once the harbinger has said the doom falls before this age is out, and in the Cosmic Era, whose passage is prestige, for confirming prestige. See [The Harbinger](harbinger.md).
 - **Offline too.** A doom strikes at its moment while you are away and waits, pending, for you to come back. The log shows the warning and the strike.
-- **Prestige from the Digital or Neon Era ends it.** A doom that hasn't struck there when you prestige is gone with the run. In the Cosmic Era an open doom settles before the Last Passage rolls.
+- **Prestige before the Cosmic Era ends it.** Prestige opens at the Medieval Age, and a doom that hasn't struck in your era when you prestige is gone with the run. So an early taste in the Medieval Age escapes an Iron Era doom, but it costs you the run. In the Cosmic Era an open doom settles before the Last Passage rolls.
 - **Never on top of another.** A new catastrophe never replaces one that is still pending.
 
 The `catastrophe` command (alias `cat`), with nothing after it, shows the outlook as you can know it when nothing is pending. With a harbinger present it repeats the warning, for example "The Oracle warns of doom before this age is out: medium risk of catastrophe (no figures this early), faith 40% full." (the odds as a figure from the Industrial Age on, a low / medium / high severity before it). With none, it reads "No harbinger has come: the Iron Era is quiet, for now. A doom is always foretold before it strikes." In the Stone Era it says no catastrophe can strike there, and once the era's doom has struck or passed you by, that nothing more will strike before the era ends. In the Cosmic Era it shows the risk of the Last Passage, along with how full your faith is, and above it the Reality Tear's warning while that doom's harbinger speaks, for example "Your future self warns of doom before this age is out: 90% catastrophe chance (high), faith 0% full." The Epoch panel shows the same outlook. Neither can give away a false prophet. See [Epochs](epochs.md) for the event tables.
@@ -158,13 +158,14 @@ Up to 8 of your buildings other than wonders and storage become **ruins**, picke
 
 You also get the epoch's **legacy bonus** (table below), permanently, and **Ancient Knowledge**: +25% research speed for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another 25%.
 
-Then the civilization resets to the Primitive Age: buildings, resources, workers, research, milestones, events and the build queue. You start with 15 food and 12 wood, plus your Starting Food and Starting Wood prestige upgrades. No prestige points are earned, but your prestige level, points, upgrades and [Era Mastery](prestige.md#era-mastery) are kept. A Succumb raises no mastery, but on the rebuild every age 6 or more behind your record runs at least 4x ([catch-up](prestige.md#catch-up)). Morale restarts at 50%, and the civilization log gets a line.
+Then the civilization resets to the Primitive Age: buildings, resources, workers, research, milestones, events, the build queue and the build plan. You start with 15 food and 12 wood. No prestige points are earned, but your prestige level, points, [legacy kit](prestige.md#the-legacy-kit) and [Era Mastery](prestige.md#era-mastery) are kept, and the kit items you own work on the rebuild (the Plan Template puts the first age's part of your plan back, Worker Shares sets your shares). A Succumb raises no mastery, but on the rebuild every age 6 or more behind your record runs at least 4x ([catch-up](prestige.md#catch-up)). Morale restarts at 50%, and the civilization log gets a line.
 
 ### What carries forward
 
 | Item | After Succumb |
 |------|---------------|
-| Prestige level, points and upgrades | Kept |
+| Prestige level, points and the legacy kit | Kept |
+| What the legacy kit remembers | Kept, plus the fallen run's plan (the techs you planned included), worker shares and civilizations met |
 | Era Mastery and your record (the deepest age you have ever entered) | Kept. A Succumb raises no mastery |
 | Ruins | Kept, plus up to 8 new, capped at 24 |
 | Legacy flags (bonuses and Ancient Knowledge) | Kept, plus this epoch |
@@ -226,7 +227,7 @@ The Epoch panel's history marks each past epoch's catastrophe as **Endured**, **
 
 ### Succumb beats Endure when
 
-- the reset is cheap (early epochs, where the run you give up is still short; a Succumb pays no prestige points, so think twice once you have reached the Modern Age and could prestige instead),
+- the reset is cheap (early epochs, where the run you give up is still short; a Succumb pays no prestige points, so think twice once the run is deep enough for a prestige to pay well: 120 points from the Modern Age),
 - you don't hold this epoch's legacy yet,
 - you have plenty of runs ahead to cash in the research bonus.
 

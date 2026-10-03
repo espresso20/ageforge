@@ -11,7 +11,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 ## At a glance
 
 - **22 ages in 7 epochs**, from the Primitive Age to the Transcendent Age.
-- **A slow first run**: about a week of real time to reach the Modern Age and your first prestige. The Primitive Age takes about 15 minutes and the Stone Age about 45; from the Bronze Age on, each age takes hours. The game is paced for checking in a few times a day.
+- **A slow first run**: about a week of real time to reach the Modern Age and a full run's prestige. The Primitive Age takes about 15 minutes and the Stone Age about 45; from the Bronze Age on, each age takes hours. The game is paced for checking in a few times a day.
 - **Offline progress**: when you load a save, the game credits the time since you saved, up to 24 hours at 50% of your production. Construction and research finish, the build plan runs and your workers keep staffing as that time passes.
 - **Workers that staff themselves**: workers arrive on their own while housing and food allow (auto-recruit) and go to work by your worker shares across 12 worker domains. You can still recruit and assign by hand.
 - **The build plan**: queue up to 60 builds, techs, trades and an advance. The game starts each one as the resources come in, while you play and while you are away.
@@ -23,7 +23,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 - **Factions**: an 11-civilization roster to meet, with opinion, diplomacy, trade deals, boons and setbacks, embassies and war.
 - **The army**: soldiers defend you against raids and fight campaigns. There are 16 expeditions in all (scouting missions and military campaigns), each a gamble of cost against reward.
 - **77 milestones** in 6 chains, with civilization titles.
-- **Prestige** from the Modern Age on: start over with prestige points to spend on 9 prestige upgrades that last across runs.
+- **Prestige** from the Medieval Age on: start over with prestige points, which pay more the deeper the run went, to spend on 3 legacy kit items that carry your plan, worker shares and the civilizations you met into every later run.
 - **Era Mastery**: every age a run completes runs faster on your later runs, twice as fast after one completion and up to 4.2x after ten, so later runs reach the Modern Age much sooner than the first.
 
 ---

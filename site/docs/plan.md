@@ -72,9 +72,19 @@ It works during offline catch-up too, and the welcome back says how much overflo
 
 Offline progress covers up to **24 hours**; time away beyond that isn't credited. When you come back, the offline catch-up runs in one-minute steps: each step credits that minute's production (at the usual 50% offline rate, up to your storage), moves construction and research on, and lets the plan start what the step paid for. Buildings under construction and research finish while you're away, and the plan's queued techs start one after another. What a full store would waste during a step goes to the wonder and then toward the plan, as in live play. Each step also runs the [worker shares](workers-and-domains.md#worker-shares) routine: it puts idle workers to work by your shares and, with auto-recruit on, recruits into empty worker slots as housing and food allow, so what the plan builds gets staffed while you're away. The welcome back says what it did, for example "While you were away, your worker shares recruited 12 workers (population 40/50), put 3 idle workers to work." A day away resolves in a few milliseconds. With an empty plan, nothing under construction and no workers for the shares routine to place or recruit, the steps pay the same total as one lump payment would.
 
+## The Plan Template
+
+The game remembers the plan you write, age by age, for the prestige [legacy kit](prestige.md#the-legacy-kit). Each item is recorded with the age you added it in: builds, techs, trades and advances. A build counts the copies you added, and removing an item takes back the copies it never started; a trade removed after it bought something stays recorded for the amount it bought. Deals aren't recorded, since a civilization's offers end with the run.
+
+At each prestige and Succumb the record becomes the **template**. An age the run wrote in takes this run's part; an age the run never reached keeps what an older run wrote there, so a short run never wipes a deeper one.
+
+With the kit's **Plan Template** (`prestige buy legacy_plan`, 9 points) owned, the start of every run and every advance add that age's part of the template to the plan, the advance item included if you planned one. A plan written once then chains ages while you are away: the plan advances, the next age's part goes in, and the plan works through it. The items go through the same checks as the plan commands and the 60-item limit, and one log line says what went in (`Plan Template: added 12 items for the Bronze Age.`). The items it adds count as written again, so the template carries forward from run to run. See [Plan Template](prestige.md#plan-template) for the details.
+
+The techs you planned come along with everything else: a `plan research` item is planned again in the age you added it in. Only planned techs carry over this way. The game never chooses what you research next, and a tech you started by hand with `research` is not part of the template.
+
 ## Saving
 
-The plan is saved with your game, banks included, and comes back exactly as it was. Prestige, Succumb and a new game clear it.
+The plan is saved with your game, banks included, and comes back exactly as it was. Prestige, Succumb and a new game clear it; with the Plan Template owned, a new run (or the rebuild after a Succumb) starts with the first age's part of your template.
 
 ## See also
 

@@ -11,7 +11,7 @@ The military system covers four things:
 - **Missions.** Scouting expeditions (`expedition <key>`) cost resources; military campaigns (`campaign <key>`) cost soldiers. Each one resolves after a rolled time, pays a fixed bundle of loot and may bring an encounter with a civilization; see [Missions](#missions).
 - **Defense rating.** A figure on the Army panel worked out from your soldier count and military power. Measured against the raid threat of your current age, it blunts part of what raids, war raids and an Endure take from you (at most 45%); see [Defense](#defense-what-your-army-blunts).
 - **Milestones.** Five military milestones form a chain with a title at the end. The early ones grant permanent military power; the later ones grant all production.
-- **Prestige.** The `military_power` and `expedition_loot` prestige upgrades carry over through resets.
+- **Prestige.** The army resets with the run, and nothing you buy with prestige points raises military power or mission rewards. What carries over is who your missions found: with the legacy kit's [Old Friends](prestige.md#old-friends), every civilization you have met is met again on later runs without a mission.
 
 **Soldiers are a resource**, not a count of workers. Your military buildings produce and store them: staff a War Camp or Barracks with workers and it adds to the `soldiers` resource every tick, the same way a Farm adds food. Soldiers unlock in the **Iron Age**. Before that, the scouting expeditions (see [Missions](#missions)) let you explore without any soldiers.
 
@@ -118,7 +118,7 @@ Missions are timed and paid from your stockpiles. There are two kinds:
 
 The cost comes out of your stockpiles the moment you launch, and there's no refund. The mission then runs for a number of ticks rolled at launch within its own range, and resolves. A success pays full loot and a failure 30% of it; the cost is gone either way. A failure is also less likely to meet a civilization, and a meeting on a failed run never brings a gift, usually a setback (see [What missions are worth](#what-missions-are-worth)). You can run one scouting expedition and one campaign at the same time, but not two of the same kind.
 
-Times on this page are at the base tick of 2 seconds. Tick-speed bonuses (some techs, a prestige upgrade, a Time Dilation boon) make every tick a little shorter.
+Times on this page are at the base tick of 2 seconds. Tick-speed bonuses (some techs, a Time Dilation boon) make every tick a little shorter.
 
 ### Cost, age range and rewards
 
@@ -290,11 +290,10 @@ Sources add together:
 |--------|-------------|---------------|
 | Techs | Several military techs grant military power | +0.2 to +1.5 per tech |
 | Milestones | Complete military milestones | +0.05 to +0.10 each |
-| Prestige upgrade | `prestige buy military_power` (5 tiers, 2/3/5/8/10 points) | +0.05 per tier |
 
 There's no cap on military power, but difficulty never drops below **0.05** (a 5% minimum failure chance). At about +2.7 even the hardest mission (0.85) reaches that floor, so past it more military power no longer helps missions; it still raises your defense rating.
 
-The expedition reward bonus (from techs, milestones, the `expedition_loot` prestige upgrade and some wonders) is separate. It multiplies the loot on a success: `rewards × (1 + expedition reward bonus)`.
+The expedition reward bonus (from techs, milestones and some wonders) is separate. It multiplies the loot on a success: `rewards × (1 + expedition reward bonus)`.
 
 ---
 
@@ -436,7 +435,6 @@ The five military milestones form a chain. Completing all five grants a title, a
 
 - Campaign soldier costs (at most 100) are tiny next to what your buildings train by now, so wage whatever campaign is open. The loot doesn't matter; the encounter roll does.
 - Late-game military techs push most missions down to the 0.05 difficulty floor, so nearly every run succeeds and its encounters can bring boons.
-- `expedition_loot` prestige tiers add up to +25% of a small fixed bundle. Spend prestige points elsewhere first.
 - The `military_superpower` milestone (train 2,000 soldiers) adds +15% all production.
 
 ### Defense rating
@@ -492,4 +490,4 @@ See [Morale](morale.md) for the full system.
 
 **Keep missions running.** There's no cooldown beyond the mission's own duration (100 to 160 ticks in the Primitive and Stone Ages, 156 to 416 from the Bronze Age on, rolled at launch). When one resolves, send the next.
 
-**Prestige keeps military strength.** The `military_power` upgrade (5 tiers × 0.05 = +0.25 military power) carries over through resets and helps both missions and defense. `expedition_loot` (5 tiers × 5% = +25% rewards) carries over too, but it only scales fixed loot.
+**Prestige resets the army.** Soldiers, military buildings and the military power from techs and milestones all start over with the run. What a prestige keeps from your missions is the civilizations they found: with [Old Friends](prestige.md#old-friends) from the legacy kit, each is met again as soon as you reach its age.
