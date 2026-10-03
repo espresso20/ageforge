@@ -54,8 +54,11 @@ func NewPrestigeManager() *PrestigeManager {
 		upgradeList: list,
 		upgradeDefs: defs,
 		mastery:     make(map[string]int),
-		// A new game has no past prestiges to seed mastery from.
+		// A new game has no past prestiges to seed mastery from, and it
+		// starts in the first age: its record and its run's furthest age.
 		masterySeeded: true,
+		record:        ageKeys()[0],
+		runFurthest:   ageKeys()[0],
 	}
 	pm.rebuildSpeeds()
 	return pm

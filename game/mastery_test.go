@@ -210,7 +210,7 @@ func TestMasteryCommitAtPrestige(t *testing.T) {
 		t.Errorf("Succumb changed mastery: %v -> %v", before, after)
 	}
 	ge.Reset()
-	if len(ge.Prestige.masterySave()) != 0 || ge.Prestige.Record() != "" || ge.GetState().Mastery.K != 1 {
+	if len(ge.Prestige.masterySave()) != 0 || ge.Prestige.Record() != "primitive_age" || ge.GetState().Mastery.K != 1 {
 		t.Errorf("Reset kept mastery %v, record %q", ge.Prestige.masterySave(), ge.Prestige.Record())
 	}
 }
