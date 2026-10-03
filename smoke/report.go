@@ -314,7 +314,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 	// Enforcement grades the median across seeds, like the table: one seed's
 	// age can run fast or slow on its events (a lucky Renaissance on a good
 	// epoch roll) without the game having changed pace. Only completed ages
-	// of the first cycle count; later cycles run with prestige upgrades.
+	// of the first cycle count; later cycles run on Era Mastery, with the legacy kit.
 	if cfg.Pacing == PacingEnforce {
 		for _, p := range s.Pacing {
 			if p.Cycle == 1 && !p.Unfinished && !p.Prestiged && (p.Verdict == VerdictSlow || p.Verdict == VerdictFast) {

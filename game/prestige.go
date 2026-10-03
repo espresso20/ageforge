@@ -143,7 +143,7 @@ func (pm *PrestigeManager) BuyUpgrade(key string) error {
 				active[d.Key] = true
 			}
 		}
-		return unknownKeyError("prestige upgrade", key, active, "Type prestige shop to see the upgrades.")
+		return unknownKeyError("legacy kit item", key, active, "Type prestige shop to see the kit.")
 	}
 	if def.Retired {
 		return fmt.Errorf("%s was part of the old prestige shop and can't be bought any more; its points were refunded. Type prestige shop to see the legacy kit.", def.Name)
