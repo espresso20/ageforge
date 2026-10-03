@@ -365,31 +365,14 @@ code {
 
 /* ── Below the scroll ─────────────────────────────────────────────────── */
 
-.about,
 .install,
 .numbers {
     width: min(860px, calc(100% - 32px));
     margin: 0 auto;
 }
 
-.about {
-    padding: 14vh 0 6vh;
-}
-
-.about-text {
-    margin: 0;
-    font-size: clamp(17px, 2vw, 21px);
-    line-height: 1.65;
-}
-
-.about-note {
-    margin: 22px 0 0;
-    color: var(--dim);
-    font-size: 13px;
-}
-
 .install {
-    padding: 4vh 0 8vh;
+    padding: 14vh 0 8vh;
 }
 
 .install-title {
