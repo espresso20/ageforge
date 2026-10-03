@@ -709,12 +709,7 @@ code {
     }
 
     .stage {
-        padding: 56px 16px 16px;
-        justify-content: flex-start;
-    }
-
-    .stage .pane {
-        margin-top: 4vh;
+        padding: 56px 16px 40px;
     }
 
     .hero {
