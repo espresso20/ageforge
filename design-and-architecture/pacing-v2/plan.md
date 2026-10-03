@@ -2,9 +2,8 @@
 
 > **Status (2026-10-02).** The plan below is kept as written on 2026-09-30; this note records what has happened since.
 >
-> - **Done:** PR 1 (#166), PR 2 trimmed (#170), PR 4 (#165).
-> - **In progress:** PR 3 (#172).
-> - **Remaining:** PRs 5, 6 and 7.
+> - **Done:** PR 1 (#166), PR 2 trimmed (#170), PR 3 (#172), PR 4 (#165), PR 5 (#177).
+> - **Remaining:** PRs 6 and 7.
 > - **Owner decisions:** a one-week first run, Era Mastery (Option C of the prestige audit), and the player `speed` setting retired.
 > - **PR 2 trim:** the research queue and the standing catastrophe order were cut. Offline progress is unchanged at 24 hours (not the 72 below).
 > - **Open questions:** every recommended default is accepted, except the 100% offline rate (question 2), which is deferred.

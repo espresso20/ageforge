@@ -269,7 +269,7 @@ Brace, nearly always. Appease, only if you banked faith before the harbinger cam
 
 Brace is priced in the construction resources the era's advances already ask for, so you usually hold enough the moment the harbinger arrives. Appease is priced in faith (plus culture from the Steel Era on), a quarter of what a moderate faith economy makes over the whole era. But a doom's thread lasts only its lead, 20% to 60% of an age, and faith can't be bought at the market (culture can, gold → culture). A thread is too short to earn the price, so Appease has to come out of faith you already kept in storage. That faith also lowers the strike chance on its own.
 
-In the smoke-test bot's runs (24 seeds from a new game to a Quantum Age prestige, on the one-week curve, after the switch to fated dooms), the bot saved toward both answers and bought each level as soon as it could, keeping what its next advance needed. Each real doom's thread, from the harbinger's arrival until the doom struck or passed, went like this (false prophets left out):
+In the smoke-test bot's runs (24 seeds from a new game to a Quantum Age prestige: a first run on the one-week curve, so every age at 1x), the bot saved toward both answers and bought each level as soon as it could, keeping what its next advance needed. Each real doom's thread, from the harbinger's arrival until the doom struck or passed, went like this (false prophets left out):
 
 | Thread | Threads seen | Thread length (median) | Appease level 1 affordable | Appease level 2 affordable | Brace level 1 affordable |
 |--------|--------------|------------------------|----------------------------|----------------------------|--------------------------|
