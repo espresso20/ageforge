@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -50,6 +51,10 @@ type PrestigeManager struct {
 	legacyResearch []string
 	legacyFactions []string
 	legacyShares   map[string]float64
+	// templateApplied is the age whose template slice was last added to the
+	// plan this session (for the snapshot and the smoke suite's kit check).
+	// Not saved.
+	templateApplied string
 
 	// upgradeList / upgradeDefs are the static shop table, built once so
 	// GetBonuses (hit every tick via the resolver) and Snapshot (every UI
@@ -87,8 +92,19 @@ func NewPrestigeManager() *PrestigeManager {
 // completed. No divisor and no milestone, tech or building terms: a deeper
 // run pays more, and a level costs nothing.
 func (pm *PrestigeManager) CalculatePoints(age string) int {
-	return config.DepthPoints(age)
+	return depthPoints()[age]
 }
+
+// depthPoints is config.DepthPoints for every age, built once: GetState
+// asks for two ages on every snapshot, and config rebuilds its tables on
+// every call.
+var depthPoints = sync.OnceValue(func() map[string]int {
+	out := make(map[string]int, len(ageKeys()))
+	for _, a := range ageKeys() {
+		out[a] = config.DepthPoints(a)
+	}
+	return out
+})
 
 // PrestigeMinAge is the age that opens prestige; every later age counts too.
 // A prestige from here to the Atomic Age is an early taste: it pays little

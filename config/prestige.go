@@ -179,16 +179,19 @@ func ActivePrestigeUpgrades() []PrestigeUpgradeDef {
 // Steel, 27 Electric, 81 Digital, 243 Neon and 729 Cosmic; 0 for an
 // unknown age. The 22 ages weigh 4,008 in all.
 func DepthWeight(age string) int {
-	key := EpochForAge(age)
-	ep, ok := EpochByKey()[key]
-	if !ok || key == "" {
-		return 0
+	for _, ep := range Epochs() {
+		for _, a := range ep.Ages {
+			if a != age {
+				continue
+			}
+			w := 1
+			for i := 0; i < ep.Order; i++ {
+				w *= 3
+			}
+			return w
+		}
 	}
-	w := 1
-	for i := 0; i < ep.Order; i++ {
-		w *= 3
-	}
-	return w
+	return 0
 }
 
 // DepthPoints is what a prestige from age pays: the sum of DepthWeight over

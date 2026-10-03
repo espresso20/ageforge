@@ -69,6 +69,10 @@ type Bot struct {
 	// the next visit (planAhead). The idle style sets it; the greedy bot,
 	// always there, has no use for one.
 	UsePlan bool
+	// RecordPlan writes every build the bot makes into the run's plan log
+	// (GameEngine.NotePlanForTest), as if it had planned it: how the canned
+	// veteran kit's template is made (Config.DumpLegacy).
+	RecordPlan bool
 	// UseShares makes a check-in player leave its workers to the game's
 	// worker shares, on auto: the game recruits and staffs, between visits
 	// too, instead of the bot recruiting and assigning by hand at each
@@ -274,7 +278,9 @@ func (b *Bot) Play(st game.GameState) {
 		b.act("accept_memory", st.PendingMemoryTech, b.ge.AcceptAncientMemory())
 	}
 	if w := st.CurrentAgeWonderKey; w != "" && st.Buildings[w].WonderBankFull && b.queuedCount(st, w) == 0 {
-		b.act("build_wonder", w, b.ge.BuildBuilding(w))
+		if b.act("build_wonder", w, b.ge.BuildBuilding(w)) && b.RecordPlan {
+			b.ge.NotePlanForTest(game.PlanBuild, w, 1)
+		}
 	}
 	if b.answerHarbinger(st) {
 		st = b.ge.GetState()
@@ -1339,6 +1345,9 @@ func (b *Bot) tryBuild(p *plan, key, kind string) bool {
 	}
 	if !b.act(kind, key, b.ge.BuildBuilding(key)) {
 		return false
+	}
+	if b.RecordPlan {
+		b.ge.NotePlanForTest(game.PlanBuild, key, 1)
 	}
 	for r, v := range c {
 		p.amt[r] -= v

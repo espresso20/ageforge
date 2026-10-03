@@ -1,7 +1,10 @@
 package game
 
 import (
+	"encoding/json"
 	"fmt"
+	"maps"
+	"os"
 	"slices"
 
 	"github.com/espresso20/ageforge/config"
@@ -111,14 +114,14 @@ func loadPlanTemplate(saved []PlanTemplateItem) []PlanTemplateItem {
 	return out
 }
 
-// mergePlanTemplate is the template after a run: for every age in entered,
+// mergePlanTemplate is the template after a run: for every age in touched,
 // the run's slice (empty if it wrote nothing there); for every other age,
 // the old template's slice. Ages come out in age order.
-func mergePlanTemplate(old, run []PlanTemplateItem, entered map[string]bool) []PlanTemplateItem {
+func mergePlanTemplate(old, run []PlanTemplateItem, touched map[string]bool) []PlanTemplateItem {
 	var out []PlanTemplateItem
 	for _, a := range ageKeys() {
 		src := old
-		if entered[a] {
+		if touched[a] {
 			src = run
 		}
 		for _, it := range src {
@@ -359,6 +362,7 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 	if added+skipped+full == 0 {
 		return
 	}
+	pm.templateApplied = ge.age
 	line := fmt.Sprintf("Plan Template: added %s for the %s.", textfmt.Count(added, "item", "items"), AgeName(ge.age))
 	if full > 0 {
 		line += fmt.Sprintf(" The plan is full (%d items), so %s waited out.", MaxPlanItems, textfmt.Count(full, "item", "items"))
@@ -376,7 +380,7 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 // and whose age and prerequisites are met ("" if none). Caller holds the
 // lock.
 func (ge *GameEngine) rememberedTechLocked() string {
-	order := ge.progress.GetAgeOrder()
+	order := ageOrders()
 	cur := order[ge.age]
 	defs := ge.Research.defs
 	for _, key := range ge.Prestige.legacyResearch {
@@ -405,10 +409,10 @@ func (ge *GameEngine) rememberedTechLocked() string {
 // of this age or earlier: the plan's techs come first, so Research Memory
 // waits for them. Caller holds the lock.
 func (ge *GameEngine) planHoldsResearchNowLocked() bool {
-	order := ge.progress.GetAgeOrder()
+	order := ageOrders()
 	cur := order[ge.age]
 	for _, it := range ge.plan {
-		if it.Kind == PlanResearch && order[config.TechByKey()[it.Key].Age] <= cur {
+		if it.Kind == PlanResearch && order[ge.Research.defs[it.Key].Age] <= cur {
 			return true
 		}
 	}
@@ -452,7 +456,7 @@ func (ge *GameEngine) meetOldFriendsLocked() {
 	if len(ge.Prestige.legacyFactions) == 0 || !ge.Prestige.Owns(config.LegacyFactions) {
 		return
 	}
-	order := ge.progress.GetAgeOrder()
+	order := ageOrders()
 	cur := order[ge.age]
 	for _, key := range ge.Prestige.legacyFactions {
 		def, ok := ge.Diplomacy.factionDefs[key]
@@ -489,12 +493,19 @@ func (ge *GameEngine) applyLegacySharesLocked() bool {
 // before the managers are reset.
 func (ge *GameEngine) captureLegacyLocked() {
 	pm := ge.Prestige
-	entered := map[string]bool{ge.age: true}
-	for _, a := range ge.Stats.AgesReached {
-		entered[a] = true
+	// The ages whose slice this run rewrites: those it wrote something in,
+	// and, with the template bought, every age it entered (the template was
+	// added there and logged, so an emptied slice was the player's doing).
+	touched := map[string]bool{}
+	for _, it := range ge.planLog {
+		touched[it.Age] = true
 	}
-	entered[ageKeys()[0]] = true
-	pm.legacyPlan = mergePlanTemplate(pm.legacyPlan, ge.planLog, entered)
+	if pm.Owns(config.LegacyPlan) {
+		for a := range ge.enteredAgesLocked() {
+			touched[a] = true
+		}
+	}
+	pm.legacyPlan = mergePlanTemplate(pm.legacyPlan, ge.planLog, touched)
 	if len(pm.legacyPlan) == 0 {
 		pm.legacyPlan = nil
 	}
@@ -547,6 +558,14 @@ func (ge *GameEngine) legacyOnAgeEnteredLocked() {
 func (ge *GameEngine) legacyOnPurchaseLocked(key string) {
 	switch key {
 	case config.LegacyPlan:
+		// The ages this run already passed keep their slices as written
+		// (the run's log takes them over), and this age's slice goes into
+		// the plan unless something was written here already.
+		for _, t := range ge.Prestige.legacyPlan {
+			if a := t.Age; a != ge.age && ge.enteredAgesLocked()[a] && templateAgeCount(ge.planLog, a) == 0 {
+				ge.copyTemplateSliceLocked(a)
+			}
+		}
 		if templateAgeCount(ge.planLog, ge.age) == 0 {
 			ge.applyPlanTemplateLocked()
 		}
@@ -556,6 +575,26 @@ func (ge *GameEngine) legacyOnPurchaseLocked(key string) {
 		}
 	case config.LegacyFactions:
 		ge.meetOldFriendsLocked()
+	}
+}
+
+// enteredAgesLocked is every age this run has entered: the first age, the
+// ages it reached and the current one. Caller holds the lock.
+func (ge *GameEngine) enteredAgesLocked() map[string]bool {
+	out := map[string]bool{ageKeys()[0]: true, ge.age: true}
+	for _, a := range ge.Stats.AgesReached {
+		out[a] = true
+	}
+	return out
+}
+
+// copyTemplateSliceLocked writes the template's slice for age into the
+// run's plan log without adding it to the plan. Caller holds the write lock.
+func (ge *GameEngine) copyTemplateSliceLocked(age string) {
+	for _, t := range ge.Prestige.legacyPlan {
+		if t.Age == age {
+			ge.planLog = append(ge.planLog, t)
+		}
 	}
 }
 
@@ -596,31 +635,39 @@ func (ge *GameEngine) refundShopLocked() {
 
 // LegacyKitState is what the legacy kit remembers, for the prestige shop.
 type LegacyKitState struct {
-	// PlanItems is the template's size and PlanAges how many ages it spans.
-	PlanItems int
-	PlanAges  int
+	// PlanItems is the template's size and PlanAges how many ages it spans;
+	// PlanByAge is its items per age. PlanAppliedAge is the age whose slice
+	// Plan Template last added to the plan ("" before any this run).
+	PlanItems      int
+	PlanAges       int
+	PlanByAge      map[string]int
+	PlanAppliedAge string
 	// ResearchTechs is the remembered order's length and ResearchNext the
 	// tech Research Memory would start next ("" if none or not bought).
 	ResearchTechs int
 	ResearchNext  string
-	// Factions is how many civilizations are remembered; Shares how many
-	// worker domains have a remembered share.
-	Factions int
-	Shares   int
+	// Factions is how many civilizations are remembered (FactionKeys, in
+	// roster order); Shares how many worker domains have a remembered share.
+	Factions    int
+	FactionKeys []string
+	Shares      int
 }
 
 // kitState summarizes the kit's memory for the snapshot.
 func (pm *PrestigeManager) kitState() LegacyKitState {
-	ages := map[string]bool{}
+	byAge := map[string]int{}
 	for _, it := range pm.legacyPlan {
-		ages[it.Age] = true
+		byAge[it.Age]++
 	}
 	return LegacyKitState{
-		PlanItems:     len(pm.legacyPlan),
-		PlanAges:      len(ages),
-		ResearchTechs: len(pm.legacyResearch),
-		Factions:      len(pm.legacyFactions),
-		Shares:        len(pm.legacyShares),
+		PlanItems:      len(pm.legacyPlan),
+		PlanAges:       len(byAge),
+		PlanByAge:      byAge,
+		PlanAppliedAge: pm.templateApplied,
+		ResearchTechs:  len(pm.legacyResearch),
+		Factions:       len(pm.legacyFactions),
+		FactionKeys:    slices.Clone(pm.legacyFactions),
+		Shares:         len(pm.legacyShares),
 	}
 }
 
@@ -701,4 +748,48 @@ func (ge *GameEngine) NotePlanForTest(kind, key string, count int) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	ge.logPlanAddLocked(PlanItem{Kind: kind, Key: key, Count: count}, count)
+}
+
+// WriteShopV1SaveForTest writes the running game, with the given prestige
+// state, as a signed save from the first prestige shop: no shop version and
+// no kit memory, as a build from before the legacy kit wrote it. A test hook
+// for other packages (the smoke suite's refund check loads it back); not
+// reachable from play.
+func (ge *GameEngine) WriteShopV1SaveForTest(name string, level, totalEarned, available int, upgrades map[string]int) error {
+	ge.mu.Lock()
+	ge.Prestige.LoadState(level, totalEarned, available, maps.Clone(upgrades))
+	gs := ge.buildSaveSnapshot()
+	ge.mu.Unlock()
+	stripShopV2(&gs)
+	gs.Signature = signSave(gs, saveHMACKey)
+	data, err := json.MarshalIndent(gs, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(savePath(name), data, 0o644)
+}
+
+// stripShopV2 removes what the legacy kit added to a save, leaving the
+// bytes a build from before it would have written.
+func stripShopV2(gs *GameSave) {
+	gs.Prestige.ShopVersion = 0
+	gs.Prestige.LegacyPlan, gs.Prestige.LegacyResearch, gs.Prestige.LegacyFactions, gs.Prestige.LegacyShares = nil, nil, nil, nil
+	gs.PlanLog, gs.Research.Order = nil, nil
+}
+
+// EnterAgeForTest moves the game into age through the real advance (the
+// carryover, the unlocks, the kit's template slice and old friends), with no
+// requirements and no fate checked. A test hook for other packages (the
+// smoke suite's kit checks); not reachable from play.
+func (ge *GameEngine) EnterAgeForTest(age string) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if _, ok := ageOrders()[age]; !ok {
+		return fmt.Errorf("Unknown age '%s'.", age)
+	}
+	ge.advanceAge(age)
+	return nil
 }

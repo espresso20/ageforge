@@ -54,10 +54,12 @@ func run() int {
 	noShares := flag.Bool("no-shares", false, "idle style: recruit and assign by hand at check-ins, with auto-recruit off, instead of leaving workers to worker shares (to measure what shares are worth)")
 	army := flag.String("army", "off", "bot policy for the army: off (ignore it beyond what age gates ask for, the default the pacing targets assume) or on (keep a modest garrison of the age's newest military buildings, bought from spare stock)")
 	deals := flag.String("deals", "off", "bot policy for faction trade deals: off (ignore them, the default the pacing targets assume) or on (take deals for what the age needs, paid from surplus)")
-	prestigeAge := flag.String("prestige-age", "", "progression: age at which to prestige (default: first age where prestige is allowed)")
+	prestigeAge := flag.String("prestige-age", "", "progression: age at which to prestige (default: the Modern Age; prestige opens at the Medieval Age)")
 	cycles := flag.Int("cycles", 0, "progression: prestige cycles to play (0 = tier default)")
 	preset := flag.String("preset", "", "start every bot run as a returning player with Era Mastery: "+strings.Join(smoke.PresetNames(), " or ")+" (ages are then graded against their target ÷ k)")
 	pushCycles := flag.Bool("push-cycles", false, "every cycle after the first plays for as long as cycle 1 took, then prestiges (on by default in the full tier's progression)")
+	kit := flag.Bool("kit", false, "give every bot run the veteran's legacy kit: every item bought, with the canned memory in smoke/testdata/veteran_kit.json")
+	dumpLegacy := flag.String("dump-legacy", "", "write every build the bot makes and every advance into the plan log, and the legacy kit's memory after the first prestige to this file (how smoke/testdata/veteran_kit.json is made)")
 	finalAge := flag.String("final-age", "-", "progression: after the last prestige keep playing to this age (\"\" = stop at prestige; default: tier preset)")
 	stopAge := flag.String("stop-age", "", "progression: end each run as soon as this age is entered")
 	softlock := flag.Duration("softlock", 0, "simulated 1x span without progress that counts as a soft-lock (0 = default 30m)")
@@ -112,6 +114,15 @@ func run() int {
 		return 2
 	}
 	base.Preset, base.PushCycles = *preset, *pushCycles
+	base.Kit = *kit
+	if *dumpLegacy != "" {
+		abs, err := filepath.Abs(*dumpLegacy)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 2
+		}
+		base.DumpLegacy = abs
+	}
 	switch *deals {
 	case "on", "off":
 		base.Deals = *deals == "on"

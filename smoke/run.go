@@ -26,8 +26,9 @@ import (
 type Config struct {
 	Seeds       []int64
 	Catastrophe string // "endure" or "succumb"
-	// PrestigeAge is the age at which the bot prestiges; "" means the first
-	// age where prestige is allowed.
+	// PrestigeAge is the age at which the bot prestiges; "" means the Modern
+	// Age (game.PrestigeRunAge), where a run counts as a full one. Prestige
+	// opens earlier, at the Medieval Age; the taste style prestiges there.
 	PrestigeAge string
 	// Cycles is how many times to prestige before stopping.
 	Cycles int
@@ -102,6 +103,14 @@ type Config struct {
 	// Mastery's later-run check: cycle 2 covers cycle 1's ages faster and
 	// ends deeper; see LaterRunRow).
 	PushCycles bool
+	// Kit gives every run the veteran's legacy kit: every item bought, with
+	// the canned memory in testdata/veteran_kit.json (applyKit).
+	Kit bool
+	// DumpLegacy, if set, makes the bot write every build it makes and every
+	// advance into the run's plan log, and writes the kit's memory after the
+	// first prestige to this file: how testdata/veteran_kit.json is made
+	// (-dump-legacy).
+	DumpLegacy string
 
 	// TraceDir, if set, receives trace-<seed>.log with every bot action.
 	TraceDir string
@@ -368,7 +377,11 @@ func Run(cfg Config, seed int64) *RunResult {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(seed)
 	applyPreset(ge, cfg.Preset)
+	kitErr := applyKit(ge, cfg.Kit)
 	r := newRunner(cfg, seed, ge)
+	if kitErr != nil {
+		r.anomaly(KindInvariant, "kit_canned", kitErr.Error(), ge.GetState(), true)
+	}
 	defer func() {
 		r.res.WallMillis = time.Since(start).Milliseconds()
 	}()
@@ -418,6 +431,7 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	}
 	r.bot.Deals = cfg.Deals
 	r.bot.Army = cfg.Army
+	r.bot.RecordPlan = cfg.DumpLegacy != ""
 	if cfg.NoOverflow {
 		ge.SetWonderOverflow(false)
 	}
@@ -806,6 +820,9 @@ func (r *runner) control(st *game.GameState) bool {
 	if st.AgeReady {
 		pendingBefore := st.PendingCatastrophe
 		from := st.Age
+		if r.bot.RecordPlan {
+			r.ge.NotePlanForTest(game.PlanAdvance, "", 1)
+		}
 		r.advancing = true
 		err := r.ge.AdvanceAge()
 		r.advancing = false
@@ -822,6 +839,7 @@ func (r *runner) control(st *game.GameState) bool {
 			r.res.Stats.AgesAdvanced++
 			r.closeAge()
 			r.enterAge(after)
+			r.checkKitOnAdvance(after)
 			if r.cfg.StopAge != "" && r.ageIdx[after.Age] >= r.ageIdx[r.cfg.StopAge] {
 				return true
 			}
@@ -847,7 +865,11 @@ func (r *runner) control(st *game.GameState) bool {
 			return true
 		}
 	}
-	if st.Prestige.CanPrestige && (push || r.cfg.PrestigeAge == "" || r.ageIdx[st.Age] >= r.ageIdx[r.cfg.PrestigeAge]) {
+	prestigeAge := r.cfg.PrestigeAge
+	if prestigeAge == "" {
+		prestigeAge = game.PrestigeRunAge
+	}
+	if st.Prestige.CanPrestige && (push || r.ageIdx[st.Age] >= r.ageIdx[prestigeAge]) {
 		before := *st
 		expected := PrestigePoints(before)
 		if before.Prestige.PendingPoints != expected {
@@ -884,6 +906,11 @@ func (r *runner) control(st *game.GameState) bool {
 			Points: points, Expected: expected, Ending: ending, FinalAge: before.Age, Prestiged: true,
 			Succumbed: r.succ, TechsTotal: before.Research.TotalResearched,
 		})
+		if r.cfg.DumpLegacy != "" && r.cycle == 1 {
+			if err := dumpLegacy(r.ge, r.cfg.DumpLegacy); err != nil {
+				r.note("writing the kit's memory: " + err.Error())
+			}
+		}
 		r.cycle++
 		r.succ = 0
 		r.cycT0, r.cycS0 = r.ticks, r.sim
@@ -897,7 +924,8 @@ func (r *runner) control(st *game.GameState) bool {
 	return false
 }
 
-// buyPrestigeUpgrades spends points on the cheapest upgrades first.
+// buyPrestigeUpgrades spends points on the cheapest shop items first: the
+// legacy kit in its order (9, 18, 36, 54). Retired perks show no price.
 func (r *runner) buyPrestigeUpgrades() {
 	for i := 0; i < 100; i++ {
 		ps := r.ge.GetState().Prestige

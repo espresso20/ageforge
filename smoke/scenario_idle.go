@@ -114,26 +114,28 @@ func runIdle(e *Env, res *Result) {
 	}
 }
 
-// runVeteranIdle plays the Era Mastery veteran preset actively and at each
-// VeteranIdleWatch interval on seeds, and reports each check-in run's first
-// prestige over the active veteran's on the same seed. Over its watch line a
-// ratio warns; it never fails (Pacing v2 PR 6 enforces the kit's targets).
-// Returns the summary fragment.
+// runVeteranIdle plays the Era Mastery veteran preset with the legacy kit
+// (Config.Kit: every item bought, the canned memory of a veteran's last run)
+// actively and at each VeteranIdleMax interval on seeds, and grades each
+// check-in run's first prestige over the active veteran's on the same seed
+// (the median across seeds). Over its limit a ratio fails under -pacing
+// enforce and warns otherwise. Returns the summary fragment.
 func runVeteranIdle(e *Env, res *Result, seeds []int64) string {
+	enforce := e.Pacing == PacingEnforce
 	ref := e.Base
-	ref.Preset, ref.Cycles, ref.FinalAge, ref.MaxSim, ref.Pacing = PresetVeteran, 1, "", 200*time.Hour, PacingReport
+	ref.Preset, ref.Kit, ref.Cycles, ref.FinalAge, ref.MaxSim, ref.Pacing = PresetVeteran, true, 1, "", 200*time.Hour, PacingReport
 	active := firstPrestiges(runBotSet(e, res, "idle-veteran-active", "idle", ref, seeds))
 	var act []float64
 	for _, v := range active {
 		act = append(act, v)
 	}
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "The veteran preset (mastery 10 through the Space Age) playing actively, then checking in. Active: %s. The ratio is each check-in run's first prestige over the active veteran's on the same seed (median); over the watch line it warns, never fails.\n\n", firstStr(act))
-	sb.WriteString("| check-in | first prestige, median (min–max) | vs active | watch line |\n|---|---|---|---|\n")
+	fmt.Fprintf(&sb, "The veteran preset (mastery 10 through the Space Age) with the legacy kit (every item, the canned memory in smoke/testdata/veteran_kit.json), playing actively, then checking in. Active: %s. The ratio is each check-in run's first prestige over the active veteran's on the same seed (median); over the limit it fails under -pacing enforce.\n\n", firstStr(act))
+	sb.WriteString("| check-in | first prestige, median (min–max) | vs active | limit | |\n|---|---|---|---|---|\n")
 	var parts []string
 	for _, ci := range []time.Duration{3 * time.Hour, 8 * time.Hour} {
 		base := e.Base
-		base.Preset, base.Cycles, base.CheckIn, base.MaxSim = PresetVeteran, 1, ci, 600*time.Hour
+		base.Preset, base.Kit, base.Cycles, base.CheckIn, base.MaxSim = PresetVeteran, true, 1, ci, 600*time.Hour
 		cfg, err := ApplyStyle(base, StyleIdle)
 		if err != nil {
 			res.fail("config", "%v", err)
@@ -150,22 +152,32 @@ func runVeteranIdle(e *Env, res *Result, seeds []int64) string {
 				}
 			}
 		}
-		ratio := "-"
-		if len(ratios) > 0 {
+		limit := VeteranIdleMax[ci]
+		ratio, verdict := "-", VerdictSlow
+		if len(ratios)*2 > len(seeds) {
 			_, r, _ := spread(ratios)
 			ratio = fmt.Sprintf("%.2fx", r)
 			parts = append(parts, fmt.Sprintf("%s %.2fx", shortDur(ci), r))
-			if w := VeteranIdleWatch[ci]; r > w {
-				res.warn("veteran_idle_ratio", "the veteran checking in every %s took %.2fx the active veteran's time to the first prestige (median), over the %gx watch line", shortDur(ci), r, w)
+			if r <= limit {
+				verdict = VerdictOK
 			}
 		}
-		fmt.Fprintf(&sb, "| %s | %s | %s | %gx |\n", shortDur(ci), firstStr(firsts), ratio, VeteranIdleWatch[ci])
+		if verdict != VerdictOK {
+			msg := fmt.Sprintf("the veteran with the legacy kit checking in every %s took %s the active veteran's time to the first prestige (median of %d seeds, %d reached it), over the %gx limit",
+				shortDur(ci), ratio, len(seeds), len(firsts), limit)
+			if enforce {
+				res.fail("veteran_idle_ratio", "%s", msg)
+			} else {
+				res.warn("veteran_idle_ratio", "%s (reported, not failed, without -pacing enforce)", msg)
+			}
+		}
+		fmt.Fprintf(&sb, "| %s | %s | %s | %gx | %s |\n", shortDur(ci), firstStr(firsts), ratio, limit, verdictMark(verdict))
 	}
-	res.section("Veteran check-ins (Era Mastery)", "%s", sb.String())
+	res.section("Veteran check-ins (Era Mastery and the legacy kit)", "%s", sb.String())
 	if len(parts) == 0 {
 		return ""
 	}
-	return strings.Join(parts, ", ") + " active"
+	return strings.Join(parts, ", ") + " active, with the kit"
 }
 
 func firstStr(v []float64) string {

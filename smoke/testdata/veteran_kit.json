@@ -1,0 +1,532 @@
+{
+  "plan": [
+    {
+      "age": "primitive_age",
+      "kind": "build",
+      "key": "hut",
+      "count": 10
+    },
+    {
+      "age": "primitive_age",
+      "kind": "build",
+      "key": "wood_camp",
+      "count": 8
+    },
+    {
+      "age": "primitive_age",
+      "kind": "build",
+      "key": "stash",
+      "count": 1
+    },
+    {
+      "age": "primitive_age",
+      "kind": "build",
+      "key": "story_circle",
+      "count": 5
+    },
+    {
+      "age": "primitive_age",
+      "kind": "build",
+      "key": "gathering_camp",
+      "count": 5
+    },
+    {
+      "age": "primitive_age",
+      "kind": "build",
+      "key": "sacred_grove",
+      "count": 1
+    },
+    {
+      "age": "primitive_age",
+      "kind": "advance"
+    },
+    {
+      "age": "stone_age",
+      "kind": "build",
+      "key": "stone_camp",
+      "count": 1
+    },
+    {
+      "age": "stone_age",
+      "kind": "build",
+      "key": "stone_pit",
+      "count": 5
+    },
+    {
+      "age": "stone_age",
+      "kind": "build",
+      "key": "longhouse",
+      "count": 5
+    },
+    {
+      "age": "stone_age",
+      "kind": "build",
+      "key": "storage_pit",
+      "count": 1
+    },
+    {
+      "age": "stone_age",
+      "kind": "build",
+      "key": "great_monolith",
+      "count": 1
+    },
+    {
+      "age": "stone_age",
+      "kind": "advance"
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "smithy",
+      "count": 3
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "lumber_mill",
+      "count": 8
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "farm",
+      "count": 8
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "quarry",
+      "count": 5
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "warehouse",
+      "count": 1
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "market",
+      "count": 1
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "stonehenge",
+      "count": 1
+    },
+    {
+      "age": "bronze_age",
+      "kind": "advance"
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "hunting_lodge",
+      "count": 15
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "agora",
+      "count": 7
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "ironworks",
+      "count": 11
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "smelter",
+      "count": 11
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "field_works",
+      "count": 5
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "granary",
+      "count": 1
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "trading_post",
+      "count": 10
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "timber_yard",
+      "count": 4
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "colosseum",
+      "count": 1
+    },
+    {
+      "age": "iron_age",
+      "kind": "advance"
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "classical_vault",
+      "count": 2
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "military_academy",
+      "count": 15
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "library",
+      "count": 3
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "merchant_quarter",
+      "count": 2
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "aqueduct",
+      "count": 2
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "parthenon",
+      "count": 1
+    },
+    {
+      "age": "classical_age",
+      "kind": "advance"
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "keep",
+      "count": 3
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "monastery_library",
+      "count": 8
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "guildhall",
+      "count": 3
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "great_library",
+      "count": 1
+    },
+    {
+      "age": "medieval_age",
+      "kind": "advance"
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "art_studio",
+      "count": 9
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "renaissance_vault",
+      "count": 5
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "coal_mine",
+      "count": 14
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "mill",
+      "count": 1
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "sistine_chapel",
+      "count": 1
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "university",
+      "count": 11
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "advance"
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "dockyard",
+      "count": 12
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "iron_works",
+      "count": 12
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "plantation",
+      "count": 3
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "colonial_warehouse",
+      "count": 2
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "natural_philosophy_hall",
+      "count": 9
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "grand_lighthouse",
+      "count": 1
+    },
+    {
+      "age": "colonial_age",
+      "kind": "advance"
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "coal_plant",
+      "count": 6
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "steam_coal_plant",
+      "count": 6
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "tenement",
+      "count": 30
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "crystal_palace",
+      "count": 1
+    },
+    {
+      "age": "industrial_age",
+      "kind": "advance"
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "victorian_vault",
+      "count": 2
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "academy",
+      "count": 10
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "bank",
+      "count": 3
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "steam_turbine",
+      "count": 4
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "eiffel_tower",
+      "count": 1
+    },
+    {
+      "age": "victorian_age",
+      "kind": "advance"
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "power_generator",
+      "count": 12
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "power_station",
+      "count": 15
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "physics_laboratory",
+      "count": 5
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "hoover_dam",
+      "count": 1
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "financial_district",
+      "count": 5
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "electric_warehouse",
+      "count": 3
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "electric_arc_furnace",
+      "count": 3
+    },
+    {
+      "age": "electric_age",
+      "kind": "advance"
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "bunker_complex",
+      "count": 18
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "uranium_processing_works",
+      "count": 17
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "advanced_alloy_plant",
+      "count": 14
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "atomic_vault",
+      "count": 4
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "particle_accelerator",
+      "count": 1
+    },
+    {
+      "age": "atomic_age",
+      "kind": "advance"
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "research_campus",
+      "count": 4
+    }
+  ],
+  "research": [
+    "tool_making",
+    "fire_mastery",
+    "pottery",
+    "stoneworking",
+    "bronze_working",
+    "animal_husbandry",
+    "primitive_writing",
+    "agriculture",
+    "masonry",
+    "currency",
+    "military_tactics",
+    "road_building",
+    "iron_smelting",
+    "siege_warfare",
+    "mathematics",
+    "civil_engineering",
+    "philosophy",
+    "imperial_legions",
+    "steel_forging",
+    "chronometry",
+    "theology",
+    "feudalism",
+    "alchemy",
+    "banking",
+    "patronage",
+    "navigation",
+    "printing_press",
+    "gunpowder",
+    "mercantilism",
+    "cartography",
+    "colonialism",
+    "clockwork_automation",
+    "rifling",
+    "steam_power",
+    "railroads",
+    "industrialization",
+    "electrification",
+    "telecommunications",
+    "mass_production",
+    "chemical_engineering",
+    "radio",
+    "power_distribution",
+    "nuclear_fission",
+    "rocketry",
+    "nuclear_deterrence",
+    "civilian_reactors"
+  ],
+  "factions": [
+    "riverlands_tribes",
+    "ironhold_clans",
+    "merchant_guild",
+    "artisan_league"
+  ]
+}

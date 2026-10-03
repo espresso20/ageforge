@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -20,11 +21,12 @@ import (
 //
 // Hooked: the same mechanics on demand, through the engine's exported test
 // hooks (SummonHarbingerForTest to place the game in an age,
-// ForceCatastropheForTest, ForceLastPassageForTest), never through play: a
-// Succumb for a legacy bonus and ruins, a prestige from the Modern Age,
-// upgrades bought and their effects measured against a twin engine that
-// bought none, a second prestige, a succumbed Last Passage for the Cosmic
-// Legacy, and more prestiges it must survive.
+// ForceCatastropheForTest, ForceLastPassageForTest, EnterAgeForTest), never
+// through play: a Succumb for a legacy bonus and ruins, a prestige from the
+// Modern Age, the retired perks refused, each legacy kit item bought and
+// checked, the shop refund from a signed level-5 save, a second prestige, a
+// succumbed Last Passage for the Cosmic Legacy, and more prestiges it must
+// survive.
 
 func runPrestige(e *Env, res *Result) {
 	cfg := e.Base
@@ -160,37 +162,21 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 	if _, _, ok := prestige(ctl, "prestige 1 (twin)"); !ok {
 		return steps
 	}
-	bought := map[string]int{}
-	for _, k := range []string{"starting_food", "starting_wood", "population_cap", "storage_bonus", "tick_speed", "gather_boost"} {
-		if up.BuyPrestigeUpgrade(k) == nil {
-			bought[k]++
+	// The first shop's perks are retired: none can be bought, and the legacy
+	// kit sells instead (prestigeKitHooked).
+	var sold []string
+	for _, def := range config.PrestigeUpgrades() {
+		if def.Retired && up.BuyPrestigeUpgrade(def.Key) == nil {
+			sold = append(sold, def.Key)
 		}
 	}
-	check("buy upgrades", len(bought) > 0, "could not buy any upgrade with %d points", up.GetState().Prestige.Available)
-	_, u2, ok1 := prestige(up, "prestige 2")
-	_, c2, ok2 := prestige(ctl, "prestige 2 (twin)")
-	if ok1 && ok2 {
-		type effect struct {
-			key       string
-			got, want float64
-		}
-		// Everything lands at the reset: starting resources, caps and
-		// rates are all in the first snapshot of the new run.
-		effects := []effect{
-			{"starting_food", u2.Resources["food"].Amount - c2.Resources["food"].Amount, 25 * float64(bought["starting_food"])},
-			{"starting_wood", u2.Resources["wood"].Amount - c2.Resources["wood"].Amount, 25 * float64(bought["starting_wood"])},
-			{"population_cap", float64(u2.Workers.MaxPop - c2.Workers.MaxPop), 2 * float64(bought["population_cap"])},
-			// Storage grows with Era Mastery's k, which both twins share.
-			{"storage_bonus", u2.Resources["food"].Storage - c2.Resources["food"].Storage, float64(20*float64(bought["storage_bonus"])) * u2.Mastery.K},
-			{"tick_speed", u2.TickSpeedBonus - c2.TickSpeedBonus, 0.05 * float64(bought["tick_speed"])},
-		}
-		for _, ef := range effects {
-			if bought[ef.key] == 0 {
-				continue
-			}
-			check("upgrade "+ef.key+" applies", math.Abs(ef.got-ef.want) < 1e-6,
-				"%s tier %d changed the fresh run by %.4g against the twin; the documented effect is %.4g", ef.key, bought[ef.key], ef.got, ef.want)
-		}
+	check("retired perks can't be bought", len(sold) == 0, "the shop sold retired perks: %s", strings.Join(sold, ", "))
+	prestigeKitHooked(e, check)
+	prestigeRefundHooked(check)
+	_, _, ok1 := prestige(up, "prestige 2")
+	_, _, ok2 := prestige(ctl, "prestige 2 (twin)")
+	if !ok1 || !ok2 {
+		return steps
 	}
 
 	// The Cosmic Legacy: a succumbed Last Passage, then prestiges it survives.
@@ -232,4 +218,120 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 		}
 	}
 	return steps
+}
+
+// prestigeKitHooked buys each legacy kit item after a Modern Age prestige
+// and checks it does what the shop says: a run that planned a Stone Age
+// building and an advance, set a worker share, met a civilization and
+// researched what the bot researched; then, in the next run, the shares
+// are set again, Research Memory names the first remembered tech it can
+// start, entering the Stone Age adds its template slice, and entering the
+// Bronze Age meets the civilization again.
+func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) bool) {
+	ge := hookedEngine(e, e.SeedBase)
+	st := ge.GetState()
+	planned := ""
+	for _, k := range sortedKeys(config.BuildingByKey()) {
+		d := config.BuildingByKey()[k]
+		if d.RequiredAge == st.Age && d.Category == "production" && d.MaxCount == 0 && st.Buildings[k].Unlocked {
+			planned = k
+			break
+		}
+	}
+	if !check("kit: a building to plan in "+st.Age, planned != "", "no production building is open in %s", st.Age) {
+		return
+	}
+	if _, err := ge.PlanAddBuild(planned, 2); !check("kit: plan a build", err == nil, "%v", err) {
+		return
+	}
+	if err := ge.PlanAddAdvance(); !check("kit: plan an advance", err == nil, "%v", err) {
+		return
+	}
+	if _, err := ge.SetWorkerShare("food", 40); !check("kit: set a worker share", err == nil, "%v", err) {
+		return
+	}
+	if err := ge.MeetFactionForTest("riverlands_tribes", 50); !check("kit: meet a civilization", err == nil, "%v", err) {
+		return
+	}
+	_ = ge.SummonHarbingerForTest(game.PrestigeRunAge)
+	if err := ge.DoPrestige(); !check("kit: prestige from "+game.PrestigeRunAge, err == nil, "%v", err) {
+		return
+	}
+	pts := ge.GetState().Prestige.Available
+	for _, key := range config.LegacyKit() {
+		err := ge.BuyPrestigeUpgrade(key)
+		check("kit: buy "+key, err == nil, "%v (with %d points)", err, pts)
+	}
+	after := ge.GetState()
+	check("kit: 117 points for the whole kit", after.Prestige.Available == pts-117, "%d points left of %d", after.Prestige.Available, pts)
+	check("kit: worker shares carry over", after.Workers.Shares["food"] == 40, "shares after buying Worker Shares: %v", after.Workers.Shares)
+
+	mem := ge.LegacyForTest()
+	want := ""
+	techs := config.TechByKey()
+	for _, k := range mem.Research {
+		def := techs[k]
+		ready := def.Age == "primitive_age"
+		for _, p := range def.Prerequisites {
+			ready = ready && after.Research.Techs[p].Researched
+		}
+		if ready && !after.Research.Techs[k].Researched {
+			want = k
+			break
+		}
+	}
+	check("kit: research memory replays the remembered order", after.Prestige.Kit.ResearchNext == want,
+		"the next remembered tech is %q, want %q (remembered %v)", after.Prestige.Kit.ResearchNext, want, mem.Research)
+
+	if err := ge.EnterAgeForTest(st.Age); !check("kit: enter "+st.Age, err == nil, "%v", err) {
+		return
+	}
+	var kinds []string
+	for _, it := range ge.GetState().Plan {
+		kinds = append(kinds, it.Kind+":"+it.Key)
+	}
+	got := strings.Join(kinds, ",")
+	check("kit: the template's slice is added on entering its age", strings.Contains(got, "build:"+planned) && strings.Contains(got, "advance:"),
+		"the plan in %s holds [%s], want %s and an advance", st.Age, got, planned)
+	if err := ge.EnterAgeForTest("bronze_age"); !check("kit: enter bronze_age", err == nil, "%v", err) {
+		return
+	}
+	f := ge.GetState().Diplomacy.Factions["riverlands_tribes"]
+	check("kit: old friends are met again at their age", f.Discovered && f.Opinion == 0,
+		"Riverlands Tribes in the Bronze Age: met %v, opinion %d (want met at 0)", f.Discovered, f.Opinion)
+}
+
+// prestigeRefundHooked loads a signed level-5 save from the first shop (the
+// plan's worked example) and checks the refund: 600 points, the old tiers at
+// 0 with their keys kept, the shop at its version, once.
+func prestigeRefundHooked(check func(string, bool, string, ...interface{}) bool) {
+	upgrades := map[string]int{
+		"gather_boost": 3, "storage_bonus": 3, "research_speed": 3, "military_power": 3,
+		"starting_food": 5, "starting_wood": 4, "population_cap": 3, "expedition_loot": 3,
+	}
+	src := game.NewGameEngine()
+	src.SeedRNG(5)
+	if err := src.WriteShopV1SaveForTest("level5", 5, 86, 3, upgrades); !check("refund: write a level-5 save", err == nil, "%v", err) {
+		return
+	}
+	for i, name := range []string{"first load", "second load"} {
+		ge := game.NewGameEngine()
+		if err := ge.LoadGame("level5"); !check("refund: "+name, err == nil, "%v", err) {
+			return
+		}
+		p := ge.GetState().Prestige
+		var held []string
+		for key := range upgrades {
+			if p.Upgrades[key].Tier != 0 {
+				held = append(held, key)
+			}
+		}
+		check("refund: "+name+" gives 600 points", p.Available == 600 && p.TotalEarned == 600 && len(held) == 0 && p.ShopVersion == config.PrestigeShopVersion,
+			"available %d, total %d, old tiers still held %v, shop version %d", p.Available, p.TotalEarned, held, p.ShopVersion)
+		if i == 0 {
+			if err := ge.SaveGame("level5"); !check("refund: save after the refund", err == nil, "%v", err) {
+				return
+			}
+		}
+	}
 }
