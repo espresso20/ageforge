@@ -259,13 +259,29 @@ Level 1 prices. Level 2 costs double.
 | Neon Era | 340M faith, 5.2B culture | 288B electricity, 46.8B data, 3B crypto |
 | Cosmic Era | 3.1B faith, 48B culture | 1.56T dark matter, 75.6B titanium |
 
-The Cosmic Era's passage is prestige, which you may take in any of its ages. Its Appease counts the Interstellar, Galactic and Quantum Ages, so if you prestige as soon as you arrive, Appease is out of reach; stay a day or two and it isn't. Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
+The Cosmic Era's passage is prestige, which you may take in any of its ages. Its Appease counts the Interstellar, Galactic and Quantum Ages, so if you prestige soon after you arrive, Appease is out of reach. In the smoke-test bot's runs, level 1 on the Last Passage's thread came about 4 days into the era and level 2 about 7 (see [Can you afford it?](#can-you-afford-it)). Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
 
 Both Cosmic Era threads, the Reality Tear's and the Last Passage's, share the era's price. Each keeps its own levels, so answering one doesn't answer the other.
 
 #### Can you afford it?
 
-Brace is priced in the construction resources the era's advances already ask for. Appease is priced in faith, which the market doesn't sell (culture can be bought, gold → culture), and a harbinger's thread usually lasts only its lead: 20% to 60% of an age. So Appease is easiest when you have kept faith in storage beforehand. That faith also lowers the strike chance on its own.
+Brace, nearly always. Appease, only if you banked faith before the harbinger came.
+
+Brace is priced in the construction resources the era's advances already ask for, so you usually hold enough the moment the harbinger arrives. Appease is priced in faith (plus culture from the Steel Era on), a quarter of what a moderate faith economy makes over the whole era. But a doom's thread lasts only its lead, 20% to 60% of an age, and faith can't be bought at the market (culture can, gold → culture). A thread is too short to earn the price, so Appease has to come out of faith you already kept in storage. That faith also lowers the strike chance on its own.
+
+In the smoke-test bot's runs (24 seeds from a new game to a Quantum Age prestige: a first run on the one-week curve, so every age at 1x), the bot saved toward both answers and bought each level as soon as it could, keeping what its next advance needed. Each real doom's thread, from the harbinger's arrival until the doom struck or passed, went like this (false prophets left out):
+
+| Thread | Threads seen | Thread length (median) | Appease level 1 affordable | Appease level 2 affordable | Brace level 1 affordable |
+|--------|--------------|------------------------|----------------------------|----------------------------|--------------------------|
+| Iron Era | 4 | 3.4 h | 3 of 4, on arrival | 1 of 4 | 4 of 4, on arrival |
+| Steel Era | 3 | 6.8 h | 2 of 3, after 19 minutes and 3.2 h | none | 3 of 3, within 35 minutes |
+| Electric Era | 5 | 11.7 h | 2 of 5, after 3.7 h and 12.7 h | 1 of 5 | 4 of 5, on arrival |
+| Digital Era | 7 | 12.7 h | 1 of 7 | none | 7 of 7: 4 on arrival, the rest within 5.2 h |
+| Neon Era | 7 | 14.1 h | 1 of 7 | 1 of 7 | 7 of 7, on arrival (one after 6.1 h) |
+| Cosmic Era: the Reality Tear | 4 | 13.4 h | 1 of 4 | none | 4 of 4, on arrival |
+| Cosmic Era: the Last Passage (to a Quantum Age prestige) | 24 | 8.2 days | 24 of 24, after about 4 days | 24 of 24, after about 7 days | 24 of 24, on arrival |
+
+A doom is fated in only 27% of eras, so these are 30 dooms across 24 runs: read the shares, not the exact counts. The bot keeps faith only for age requirements and the Sistine Chapel. When a harbinger came it usually held well under half the Appease price in faith (in the Neon Era, about 2%), and twice it had the faith but not the culture. Only in the Iron Era, the cheapest, did the faith it already held cover level 1 in most threads. The Last Passage's thread runs from your arrival in the Cosmic Era until you prestige, which is long enough for faith buildings to pay for both levels.
 
 Faith you spend on Appease is faith the next age requirement can't count: keep what the next age asks for, and what the Sistine Chapel still needs, before you appease.
 

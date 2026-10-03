@@ -14,6 +14,8 @@ a proposed change would break the game's balance, start here.
 | [lineages.md](lineages.md) | All 14 production lineages: full tier tables, storage buildings, wonders policy |
 | [resources.md](resources.md) | All 26 resources: faith mechanics (draining), culture mechanics (accumulating), epoch resource chain, 2-stage processing chain |
 | [epochs.md](epochs.md) | 7 epochs × 3 ages, resource transitions per epoch, Civilizational Catastrophe system (Endure vs Succumb), 63 total events across 7 epoch pools, UI epoch badge |
+| [badges/](badges/README.md) | Archived spec for the badge build: the achievements audit and badge redesign, with its 2026-10-01 addendum |
+| [pacing-v2/](pacing-v2/README.md) | Archived spec for Pacing v2: the prestige audit and the seven-PR implementation plan, with a status note |
 
 ## How to Use These Documents
 
