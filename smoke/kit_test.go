@@ -9,7 +9,7 @@ import (
 
 // TestVeteranKitCanned: the canned kit memory parses, spans the ages a
 // veteran's run to the Modern Age passes, ends each age's part with its
-// advance, and plans no research (the bot researches for itself).
+// advance, and plans the veteran's techs (each a real tech, once).
 func TestVeteranKitCanned(t *testing.T) {
 	k, err := veteranKit()
 	if err != nil {
@@ -36,10 +36,18 @@ func TestVeteranKitCanned(t *testing.T) {
 			t.Errorf("the canned template holds %d items for %s, over the plan's %d", ages[a], a, game.MaxPlanItems)
 		}
 	}
+	techs, planned := config.TechByKey(), map[string]bool{}
 	for _, it := range k.Plan {
-		if it.Kind == game.PlanResearch {
-			t.Errorf("the canned template plans research (%s in %s); the bot researches for itself", it.Key, it.Age)
+		if it.Kind != game.PlanResearch {
+			continue
 		}
+		if _, ok := techs[it.Key]; !ok || planned[it.Key] {
+			t.Errorf("the canned template plans %q in %s: unknown or planned twice", it.Key, it.Age)
+		}
+		planned[it.Key] = true
+	}
+	if len(planned) < 20 {
+		t.Errorf("the canned template plans %d techs; a veteran's run to the Modern Age researches more", len(planned))
 	}
 	if len(k.Factions) == 0 {
 		t.Error("the canned kit remembers no civilizations")

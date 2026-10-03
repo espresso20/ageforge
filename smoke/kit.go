@@ -19,10 +19,11 @@ import (
 //     check-in runs use it.
 //   - The canned memory is a veteran's last run: the active bot on the
 //     veteran preset, with every build it made (an upgrade as a build of the
-//     new tier: the plan can't upgrade), every trade (as a trade item buying
-//     what it got that age) and every advance written to the plan log, in
-//     the order it made them (Config.DumpLegacy, -dump-legacy). Regenerate
-//     it when content moves:
+//     new tier: the plan can't upgrade), every tech it researched (as a
+//     planned research item: the path it chose), every trade (as a trade
+//     item buying what it got that age) and every advance written to the
+//     plan log, in the order it made them (Config.DumpLegacy,
+//     -dump-legacy). Regenerate it when content moves:
 //
 //     go run ./cmd/smoke -scenario veteran -tier full -seeds 1 -dump-legacy smoke/testdata/veteran_kit.json
 //

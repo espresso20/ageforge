@@ -3904,8 +3904,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// console moved the run there without an advance.
 	ge.Prestige.NoteAgeEntered(ge.age)
 	masteryLine := masteryCommitLine(ge.Prestige.CommitRun())
-	// The legacy kit remembers the run (plan, research order, civilizations,
-	// shares) before the managers holding it are reset.
+	// The legacy kit remembers the run (plan, civilizations, shares) before
+	// the managers holding it are reset.
 	ge.captureLegacyLocked()
 	prestigedFrom := ge.age
 

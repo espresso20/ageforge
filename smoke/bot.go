@@ -1842,6 +1842,11 @@ func (b *Bot) research(p *plan) {
 		}
 		if ok && b.act("research", key, b.ge.StartResearch(key)) {
 			p.amt["knowledge"] -= t.Cost
+			if b.RecordPlan {
+				// The tech the bot chose, written as a planned research
+				// item: its own research path, which the template keeps.
+				b.ge.NotePlanForTest(game.PlanResearch, key, 1)
+			}
 		}
 		return
 	}

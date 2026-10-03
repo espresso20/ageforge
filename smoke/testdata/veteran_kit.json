@@ -66,9 +66,24 @@
     },
     {
       "age": "stone_age",
+      "kind": "research",
+      "key": "tool_making"
+    },
+    {
+      "age": "stone_age",
       "kind": "build",
       "key": "storage_pit",
       "count": 1
+    },
+    {
+      "age": "stone_age",
+      "kind": "research",
+      "key": "fire_mastery"
+    },
+    {
+      "age": "stone_age",
+      "kind": "research",
+      "key": "pottery"
     },
     {
       "age": "stone_age",
@@ -197,6 +212,16 @@
     },
     {
       "age": "bronze_age",
+      "kind": "research",
+      "key": "stoneworking"
+    },
+    {
+      "age": "bronze_age",
+      "kind": "research",
+      "key": "bronze_working"
+    },
+    {
+      "age": "bronze_age",
       "kind": "advance"
     },
     {
@@ -265,6 +290,11 @@
     },
     {
       "age": "iron_age",
+      "kind": "research",
+      "key": "animal_husbandry"
+    },
+    {
+      "age": "iron_age",
       "kind": "trade",
       "key": "wood",
       "to": "food",
@@ -275,6 +305,11 @@
       "kind": "build",
       "key": "trading_post",
       "count": 11
+    },
+    {
+      "age": "iron_age",
+      "kind": "research",
+      "key": "primitive_writing"
     },
     {
       "age": "iron_age",
@@ -294,6 +329,31 @@
       "key": "gold",
       "to": "stone",
       "amount": 1255736.4982193708
+    },
+    {
+      "age": "iron_age",
+      "kind": "research",
+      "key": "agriculture"
+    },
+    {
+      "age": "iron_age",
+      "kind": "research",
+      "key": "masonry"
+    },
+    {
+      "age": "iron_age",
+      "kind": "research",
+      "key": "currency"
+    },
+    {
+      "age": "iron_age",
+      "kind": "research",
+      "key": "military_tactics"
+    },
+    {
+      "age": "iron_age",
+      "kind": "research",
+      "key": "road_building"
     },
     {
       "age": "iron_age",
@@ -317,6 +377,11 @@
     },
     {
       "age": "iron_age",
+      "kind": "research",
+      "key": "iron_smelting"
+    },
+    {
+      "age": "iron_age",
       "kind": "trade",
       "key": "gold",
       "to": "iron",
@@ -330,9 +395,19 @@
     },
     {
       "age": "iron_age",
+      "kind": "research",
+      "key": "siege_warfare"
+    },
+    {
+      "age": "iron_age",
       "kind": "build",
       "key": "colosseum",
       "count": 1
+    },
+    {
+      "age": "iron_age",
+      "kind": "research",
+      "key": "mathematics"
     },
     {
       "age": "iron_age",
@@ -384,10 +459,20 @@
     },
     {
       "age": "classical_age",
+      "kind": "research",
+      "key": "civil_engineering"
+    },
+    {
+      "age": "classical_age",
       "kind": "trade",
       "key": "iron",
       "to": "stone",
       "amount": 7686861.836181595
+    },
+    {
+      "age": "classical_age",
+      "kind": "research",
+      "key": "philosophy"
     },
     {
       "age": "classical_age",
@@ -407,6 +492,11 @@
       "kind": "build",
       "key": "wood_workshop",
       "count": 4
+    },
+    {
+      "age": "classical_age",
+      "kind": "research",
+      "key": "imperial_legions"
     },
     {
       "age": "classical_age",
@@ -480,6 +570,11 @@
     },
     {
       "age": "medieval_age",
+      "kind": "research",
+      "key": "steel_forging"
+    },
+    {
+      "age": "medieval_age",
       "kind": "trade",
       "key": "wood",
       "to": "stone",
@@ -507,6 +602,11 @@
     },
     {
       "age": "medieval_age",
+      "kind": "research",
+      "key": "chronometry"
+    },
+    {
+      "age": "medieval_age",
       "kind": "build",
       "key": "guildhall",
       "count": 10
@@ -516,6 +616,11 @@
       "kind": "build",
       "key": "keep",
       "count": 3
+    },
+    {
+      "age": "medieval_age",
+      "kind": "research",
+      "key": "theology"
     },
     {
       "age": "medieval_age",
@@ -532,6 +637,11 @@
     },
     {
       "age": "medieval_age",
+      "kind": "research",
+      "key": "feudalism"
+    },
+    {
+      "age": "medieval_age",
       "kind": "build",
       "key": "demesne",
       "count": 5
@@ -544,9 +654,19 @@
     },
     {
       "age": "medieval_age",
+      "kind": "research",
+      "key": "alchemy"
+    },
+    {
+      "age": "medieval_age",
       "kind": "build",
       "key": "sawmill",
       "count": 4
+    },
+    {
+      "age": "medieval_age",
+      "kind": "research",
+      "key": "banking"
     },
     {
       "age": "medieval_age",
@@ -780,6 +900,11 @@
     },
     {
       "age": "colonial_age",
+      "kind": "research",
+      "key": "patronage"
+    },
+    {
+      "age": "colonial_age",
       "kind": "trade",
       "key": "wood",
       "to": "steel",
@@ -839,6 +964,21 @@
     },
     {
       "age": "colonial_age",
+      "kind": "research",
+      "key": "navigation"
+    },
+    {
+      "age": "colonial_age",
+      "kind": "research",
+      "key": "printing_press"
+    },
+    {
+      "age": "colonial_age",
+      "kind": "research",
+      "key": "gunpowder"
+    },
+    {
+      "age": "colonial_age",
       "kind": "trade",
       "key": "gold",
       "to": "steel",
@@ -849,6 +989,11 @@
       "kind": "build",
       "key": "exchange",
       "count": 2
+    },
+    {
+      "age": "colonial_age",
+      "kind": "research",
+      "key": "mercantilism"
     },
     {
       "age": "colonial_age",
@@ -924,6 +1069,11 @@
     },
     {
       "age": "colonial_age",
+      "kind": "research",
+      "key": "cartography"
+    },
+    {
+      "age": "colonial_age",
       "kind": "build",
       "key": "deep_iron_mine",
       "count": 5
@@ -989,6 +1139,11 @@
     },
     {
       "age": "colonial_age",
+      "kind": "research",
+      "key": "colonialism"
+    },
+    {
+      "age": "colonial_age",
       "kind": "build",
       "key": "grand_lighthouse",
       "count": 1
@@ -996,6 +1151,11 @@
     {
       "age": "colonial_age",
       "kind": "advance"
+    },
+    {
+      "age": "industrial_age",
+      "kind": "research",
+      "key": "clockwork_automation"
     },
     {
       "age": "industrial_age",
@@ -1122,6 +1282,11 @@
     },
     {
       "age": "industrial_age",
+      "kind": "research",
+      "key": "rifling"
+    },
+    {
+      "age": "industrial_age",
       "kind": "trade",
       "key": "stone",
       "to": "steel",
@@ -1162,10 +1327,25 @@
     },
     {
       "age": "industrial_age",
+      "kind": "research",
+      "key": "steam_power"
+    },
+    {
+      "age": "industrial_age",
+      "kind": "research",
+      "key": "railroads"
+    },
+    {
+      "age": "industrial_age",
       "kind": "trade",
       "key": "coal",
       "to": "iron",
       "amount": 425823420.07705915
+    },
+    {
+      "age": "industrial_age",
+      "kind": "research",
+      "key": "industrialization"
     },
     {
       "age": "industrial_age",
@@ -1201,6 +1381,11 @@
       "kind": "build",
       "key": "dockyard",
       "count": 1
+    },
+    {
+      "age": "victorian_age",
+      "kind": "research",
+      "key": "electrification"
     },
     {
       "age": "victorian_age",
@@ -1282,6 +1467,11 @@
     },
     {
       "age": "victorian_age",
+      "kind": "research",
+      "key": "telecommunications"
+    },
+    {
+      "age": "victorian_age",
       "kind": "build",
       "key": "natural_philosophy_hall",
       "count": 16
@@ -1297,6 +1487,11 @@
       "kind": "build",
       "key": "academy",
       "count": 10
+    },
+    {
+      "age": "victorian_age",
+      "kind": "research",
+      "key": "mass_production"
     },
     {
       "age": "victorian_age",
@@ -1361,6 +1556,11 @@
     },
     {
       "age": "electric_age",
+      "kind": "research",
+      "key": "chemical_engineering"
+    },
+    {
+      "age": "electric_age",
       "kind": "trade",
       "key": "iron",
       "to": "electricity",
@@ -1406,6 +1606,11 @@
     },
     {
       "age": "electric_age",
+      "kind": "research",
+      "key": "radio"
+    },
+    {
+      "age": "electric_age",
       "kind": "build",
       "key": "power_generator",
       "count": 12
@@ -1415,6 +1620,11 @@
       "kind": "build",
       "key": "power_station",
       "count": 15
+    },
+    {
+      "age": "electric_age",
+      "kind": "research",
+      "key": "power_distribution"
     },
     {
       "age": "electric_age",
@@ -1537,6 +1747,11 @@
     },
     {
       "age": "atomic_age",
+      "kind": "research",
+      "key": "nuclear_fission"
+    },
+    {
+      "age": "atomic_age",
       "kind": "trade",
       "key": "gold",
       "to": "stone",
@@ -1595,9 +1810,19 @@
     },
     {
       "age": "atomic_age",
+      "kind": "research",
+      "key": "rocketry"
+    },
+    {
+      "age": "atomic_age",
       "kind": "build",
       "key": "advanced_alloy_plant",
       "count": 14
+    },
+    {
+      "age": "atomic_age",
+      "kind": "research",
+      "key": "nuclear_deterrence"
     },
     {
       "age": "atomic_age",
@@ -1644,6 +1869,11 @@
       "kind": "build",
       "key": "power_generator",
       "count": 10
+    },
+    {
+      "age": "atomic_age",
+      "kind": "research",
+      "key": "civilian_reactors"
     },
     {
       "age": "atomic_age",
