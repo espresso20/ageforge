@@ -26,6 +26,7 @@ type GameState struct {
 	Milestones           MilestoneState
 	ActiveEvents         []ActiveEventState
 	Prestige             PrestigeState
+	Mastery              MasteryState
 	Trade                TradeState
 	Diplomacy            DiplomacyState
 	Log                  []LogEntry
@@ -202,6 +203,9 @@ type RateBreakdown struct {
 	TradeRate    float64
 	FoodDrain    float64
 	BonusRate    float64
+	// MasteryRate is what Era Mastery adds: the net rate × (k − 1) on known
+	// ground (mastery.go), 0 on new ground.
+	MasteryRate float64
 }
 
 // ResourceState represents a single resource's current state
@@ -212,6 +216,10 @@ type ResourceState struct {
 	Name      string
 	Unlocked  bool
 	Breakdown RateBreakdown
+	// OverCapGrace marks stock kept above a cap that shrank when Era
+	// Mastery's speed dropped (the grace rule, mastery.go): it stays until
+	// spent, and production adds nothing to it meanwhile.
+	OverCapGrace bool
 }
 
 // BuildingState represents a building type's current state
@@ -509,7 +517,7 @@ type PrestigeState struct {
 	Upgrades      map[string]PrestigeUpgradeState
 	PendingPoints int // points you'd get if you prestige now
 	CanPrestige   bool
-	PassiveBonus  float64 // current production_all bonus
+	PassiveBonus  float64 // retired: always 0 (the passive became Era Mastery)
 }
 
 // PrestigeUpgradeState represents one prestige upgrade for UI

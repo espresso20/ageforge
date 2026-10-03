@@ -140,17 +140,35 @@ type FateSave struct {
 // expectedAgeTicks is how long a player is expected to spend in age, in
 // ticks: the one measure of expected duration for the fate and the
 // harbinger (the era's window, the lead, the timing forecast, the shortest
-// warning). Today it is the pacing target (config.AgeTargetTicks); a
-// per-age speed-up, such as a mastered age running faster, divides it here
-// and nowhere else.
-func expectedAgeTicks(age string) float64 { return config.AgeTargetTicks(age) }
+// warning). It is the pacing target (config.AgeTargetTicks) divided by the
+// age's Era Mastery speed (mastery.go), here and nowhere else: a mastered
+// era is shorter, so its doom and its harbinger fall inside it. Mastery is
+// fixed for a run, so this never changes under a fate already rolled.
+// Read-only.
+func (ge *GameEngine) expectedAgeTicks(age string) float64 {
+	return float64(baseAgeTicks(age) / ge.Prestige.AgeSpeed(age))
+}
 
 // expectedEraTicks is epochKey's expected length: its ages' expectedAgeTicks
-// summed. 0 for an unknown epoch.
-func expectedEraTicks(epochKey string) float64 {
+// summed. 0 for an unknown epoch. Read-only.
+func (ge *GameEngine) expectedEraTicks(epochKey string) float64 {
 	total := 0.0
 	for _, a := range config.EpochByKey()[epochKey].Ages {
-		total += float64(expectedAgeTicks(a)) // rounded: the target is a product once inlined
+		total += float64(ge.expectedAgeTicks(a)) // rounded: the target is a product once inlined
+	}
+	return total
+}
+
+// baseAgeTicks is age's pacing target in ticks, before any Era Mastery
+// speed-up: expectedAgeTicks at k = 1.
+func baseAgeTicks(age string) float64 { return config.AgeTargetTicks(age) }
+
+// baseEraTicks is epochKey's expected length at k = 1: expectedEraTicks
+// with no mastery.
+func baseEraTicks(epochKey string) float64 {
+	total := 0.0
+	for _, a := range config.EpochByKey()[epochKey].Ages {
+		total += float64(baseAgeTicks(a))
 	}
 	return total
 }
@@ -178,7 +196,7 @@ func (f *FateSave) lying() bool { return f.FalseProphet && !f.Fated }
 // ge.rng whatever the outcome.
 func (ge *GameEngine) rollFate() {
 	ep := ge.currentEpoch
-	window := int(math.Round(expectedEraTicks(ep)))
+	window := int(math.Round(ge.expectedEraTicks(ep)))
 	f := &FateSave{EpochKey: ep, EntryTick: ge.tick, Window: window}
 	rng := ge.gameRNG()
 	fatedRoll, falseRoll, offsetRoll, leadRoll, claimRoll := rng.Float64(), rng.Float64(), rng.Float64(), rng.Float64(), rng.Float64()
@@ -224,7 +242,7 @@ func (ge *GameEngine) fateThread() *HarbingerSave {
 // strike, measured in the current age's target.
 func (ge *GameEngine) fateArrivalTick() int {
 	f := ge.fate
-	return f.StrikeTick - int(f.LeadFrac*expectedAgeTicks(ge.age))
+	return f.StrikeTick - int(f.LeadFrac*ge.expectedAgeTicks(ge.age))
 }
 
 // fateHarbingerDue reports whether the fate's harbinger should arrive now. A
@@ -320,7 +338,7 @@ func (ge *GameEngine) fateArrive() bool {
 	// A doom is always foretold: never sooner than the shortest lead after
 	// its harbinger comes (a strike fated for the era's first moments, before
 	// any lead could reach back, is held until then).
-	if soonest := ge.tick + int(harbingerLeadMin*expectedAgeTicks(ge.age)); f.StrikeTick < soonest {
+	if soonest := ge.tick + int(harbingerLeadMin*ge.expectedAgeTicks(ge.age)); f.StrikeTick < soonest {
 		f.StrikeTick = soonest
 	}
 	h.When = ge.fateWhen(def)
@@ -348,7 +366,7 @@ func (ge *GameEngine) fateWhen(def config.HarbingerDef) string {
 	ages := config.EpochByKey()[f.EpochKey].Ages
 	end := float64(f.EntryTick)
 	for i, a := range ages {
-		end += float64(expectedAgeTicks(a))
+		end += float64(ge.expectedAgeTicks(a))
 		if a != ge.age {
 			continue
 		}
@@ -596,7 +614,7 @@ func (ge *GameEngine) restoreFateState(save *GameSave) {
 	}
 	// (A Last Passage thread, TargetEpoch "", keeps its rules: the Cosmic
 	// Era's own fate is rolled on the first tick.)
-	window := int(math.Round(expectedEraTicks(h.EpochKey)))
+	window := int(math.Round(ge.expectedEraTicks(h.EpochKey)))
 	ge.fate = &FateSave{
 		EpochKey:     h.EpochKey,
 		Fated:        !h.FalseProphet || save.CatastropheInvited,
@@ -648,7 +666,7 @@ func (ge *GameEngine) forceFate(epochKey string, fated, falseProphet bool, strik
 	}
 	f := ge.fate
 	if f == nil || f.EpochKey != epochKey {
-		f = &FateSave{EpochKey: epochKey, EntryTick: ge.tick, Window: int(math.Round(expectedEraTicks(epochKey)))}
+		f = &FateSave{EpochKey: epochKey, EntryTick: ge.tick, Window: int(math.Round(ge.expectedEraTicks(epochKey)))}
 	}
 	if f.LeadFrac <= 0 {
 		f.LeadFrac = (harbingerLeadMin + harbingerLeadMax) / 2

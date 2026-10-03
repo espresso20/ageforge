@@ -46,7 +46,7 @@ func threadEngine(t *testing.T, epochKey string, seed int64) *GameEngine {
 	t.Helper()
 	first := epochAges(t, epochKey)[0]
 	ge := fateEngine(t, first, seed)
-	late := int(expectedEraTicks(epochKey)) - 1
+	late := int(baseEraTicks(epochKey)) - 1
 	switch {
 	case config.IsFinalEpoch(epochKey):
 		// The Last Passage thread started on the first tick; keep the era's
@@ -311,7 +311,7 @@ func TestNoHarbingerInAQuietEra(t *testing.T) {
 		for _, age := range ep.Ages {
 			walkTo(t, ge, age)
 			for step := 0; step < 10; step++ {
-				tick += int(expectedAgeTicks(age)) / 10
+				tick += int(baseAgeTicks(age)) / 10
 				tickTo(ge, tick)
 			}
 			// (The Cosmic Era's Last Passage thread is no doom's harbinger.)
@@ -332,7 +332,7 @@ func TestHarbingerOncePerEpochPerRun(t *testing.T) {
 	if ge.harbinger != nil || ge.fate.Resolved != FateSpared {
 		t.Fatalf("setup: thread %+v fate %+v", ge.harbinger, ge.fate)
 	}
-	for tick := 0; tick < int(expectedEraTicks("iron_era")); tick += 500 {
+	for tick := 0; tick < int(baseEraTicks("iron_era")); tick += 500 {
 		tickTo(ge, tick)
 	}
 	ge.advanceAge("classical_age")
@@ -348,7 +348,7 @@ func TestHandoffKeepsTheFalseProphetFlag(t *testing.T) {
 	for seed := int64(1); seed <= 20; seed++ {
 		for _, falseProphet := range []bool{false, true} {
 			ge := fateEngine(t, "iron_age", seed)
-			late := int(expectedEraTicks("iron_era")) - 1
+			late := int(baseEraTicks("iron_era")) - 1
 			var err error
 			if falseProphet {
 				err = ge.ForceFalseProphetForTest("iron_era", late)
@@ -374,7 +374,7 @@ func TestHandoffKeepsTheFalseProphetFlag(t *testing.T) {
 func TestFalseThreadClaim(t *testing.T) {
 	ge := fateEngine(t, "renaissance_age", 1)
 	setFaith(ge, 5e6, 1e7) // mid faith: a real doom would strike 75% of the time
-	if err := ge.ForceFalseProphetForTest("steel_era", int(expectedEraTicks("steel_era"))-1); err != nil {
+	if err := ge.ForceFalseProphetForTest("steel_era", int(baseEraTicks("steel_era"))-1); err != nil {
 		t.Fatal(err)
 	}
 	ge.fateArrive()
@@ -745,7 +745,7 @@ func TestHarbingerResolutionOutcomes(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			ge := fateEngine(t, "medieval_age", 9)
-			late := int(expectedEraTicks("iron_era")) - 1
+			late := int(baseEraTicks("iron_era")) - 1
 			if tc.falseProphet {
 				if err := ge.ForceFalseProphetForTest("iron_era", late); err != nil {
 					t.Fatal(err)

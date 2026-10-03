@@ -341,6 +341,10 @@ type GameEngine struct {
 	workerShares   map[string]float64
 	autoRecruitOff bool
 	staffHoldUntil int
+	// lastK is the Era Mastery speed the last rates pass ran at, so the next
+	// one sees a drop and applies the grace rule (noteGraceLocked). Not
+	// saved: LoadGame sets it to the loaded age's speed. 0 before any pass.
+	lastK float64
 }
 
 // BuildQueueItem represents a building under construction
@@ -1866,6 +1870,22 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
+	// Era Mastery (mastery.go): on known ground the whole economy runs k
+	// times faster, so every net rate is multiplied by k at the very end,
+	// after the ×3 caps, flat tech and event output, trade bonuses and the
+	// food drain. Its own breakdown line says why.
+	k := ge.speedK()
+	ge.noteGraceLocked(k)
+	if k != 1 {
+		for _, def := range ge.Resources.defs {
+			if r := ge.Resources.resources[def.Key]; r != nil && r.Rate != 0 {
+				scaled := float64(r.Rate * k)
+				r.Breakdown.MasteryRate = scaled - r.Rate
+				r.Rate = scaled
+			}
+		}
+	}
+
 	// Recalculate storage from buildings + research + milestones
 	storageBonuses := ge.Buildings.GetStorageBonuses()
 	allBonus := storageBonuses["all"]
@@ -1878,12 +1898,20 @@ func (ge *GameEngine) recalculateRates() {
 		specific += researchBonuses[def.Key]
 		specific += permanentBonuses[def.Key]
 		r := ge.Resources.resources[def.Key]
-		r.Storage = def.BaseStorage + allBonus + specific
+		// Storage grows with Era Mastery's k, as production does, so a store
+		// holds the same hours of income at any speed.
+		r.Storage = float64((def.BaseStorage + allBonus + specific) * k)
 		// Storage can shrink (a storage building sold or destroyed). Add clamps
 		// on the way in, but a resource with no production never passes through
 		// Add again, so without this it sat above its new cap indefinitely.
+		// Graced stock (the grace rule: k dropped) is the exception: it stays
+		// until spent, and loses the grace once it is under the cap.
 		if r.Amount > r.Storage {
-			r.Amount = r.Storage
+			if !ge.Resources.grace[def.Key] {
+				r.Amount = r.Storage
+			}
+		} else if ge.Resources.grace[def.Key] {
+			delete(ge.Resources.grace, def.Key)
 		}
 	}
 }
@@ -1935,7 +1963,9 @@ const (
 // Caller must hold the write lock.
 func (ge *GameEngine) advanceAge(newAge string) {
 	oldAge := ge.age
+	prevK := ge.speedK()
 	ge.age = newAge
+	ge.Prestige.NoteAgeEntered(newAge)
 	ge.ageReady = false
 	ge.Workers.SetAge(newAge)
 
@@ -2051,6 +2081,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d workers)",
 		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
 	ge.addLog("success", fmt.Sprintf("Advanced from the %s to the %s.", oldName, newName))
+	if line := ge.masteryEntryLine(newAge, prevK); line != "" {
+		ge.addLog("info", line)
+	}
 	// Cosmetic flavour echo in the log (distinct from the age splash quip — see ui/age_splash.go).
 	// Age transitions are rare, so it fires every time.
 	if q := config.PickLogFlavor(config.LogFlavorAgeAdvance, ge.quipRNG()); q != "" {
@@ -3073,15 +3106,16 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 
 	ge.addLog("debug", fmt.Sprintf("Build start: %s", def.Name))
 	if !DevGodMode && def.BuildTicks > 0 {
-		// Queue for construction
+		// Queue for construction, ÷ k on known ground (Era Mastery).
+		ticks := ge.buildTicksLocked(def)
 		ge.buildQueue = append(ge.buildQueue, BuildQueueItem{
 			BuildingKey: key,
-			TicksLeft:   def.BuildTicks,
-			TotalTicks:  def.BuildTicks,
+			TicksLeft:   ticks,
+			TotalTicks:  ticks,
 			FromPlan:    quiet,
 		})
 		if !quiet {
-			ge.addLog(LogRoutine, fmt.Sprintf("Started building %s (%s).", def.Name, ge.durationLocked(def.BuildTicks)))
+			ge.addLog(LogRoutine, fmt.Sprintf("Started building %s (%s).", def.Name, ge.durationLocked(ticks)))
 		}
 	} else {
 		// Instant build
@@ -3152,10 +3186,11 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		}
 
 		if def.BuildTicks > 0 {
+			ticks := ge.buildTicksLocked(def)
 			ge.buildQueue = append(ge.buildQueue, BuildQueueItem{
 				BuildingKey: key,
-				TicksLeft:   def.BuildTicks,
-				TotalTicks:  def.BuildTicks,
+				TicksLeft:   ticks,
+				TotalTicks:  ticks,
 			})
 		} else {
 			ge.Buildings.counts[key]++
@@ -3554,6 +3589,7 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	// Combine research_speed from all sources (see combinedResearchSpeed). This
 	// must be done before StartResearch so the combined value reduces tick count.
 	combinedResearchSpeed := ge.combinedResearchSpeed()
+	ge.Research.timeK = ge.speedK() // Era Mastery: ÷ k after the speed step
 	if err := ge.Research.StartResearchWithSpeed(techKey, ge.age, ageOrder, knowledge, combinedResearchSpeed); err != nil {
 		return err
 	}
@@ -3717,6 +3753,7 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	// Same combined research_speed sources a normal research gets; the memory
 	// penalty (2x ticks) is applied on top inside StartMemoryResearch.
 	combinedResearchSpeed := ge.combinedResearchSpeed()
+	ge.Research.timeK = ge.speedK() // Era Mastery: ÷ k after the speed step
 	if err := ge.Research.StartMemoryResearch(techKey, combinedResearchSpeed); err != nil {
 		return err
 	}
@@ -3858,6 +3895,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	}
 
 	ge.Prestige.Prestige(points)
+	// Era Mastery: every age this run completed gains a level.
+	masteryLine := masteryCommitLine(ge.Prestige.CommitRun())
 
 	// Preserve cross-run state before resetting managers
 	savedRuins := ge.Buildings.GetAllRuins()
@@ -3936,9 +3975,12 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	} else if ge.cosmicLegacy {
 		ge.addLog("info", fmt.Sprintf("Cosmic Legacy active: all production %s.", textfmt.SignedPercent(CosmicLegacyProductionBonus)))
 	}
-	pb := ge.Prestige.GetBonuses()
-	ge.addLog("info", fmt.Sprintf("Prestige bonus: all production %s, game speed %s.",
-		textfmt.SignedPercent(pb["production_all"]), textfmt.SignedPercent(ge.tickSpeedBonus)))
+	if masteryLine != "" {
+		ge.addLog("info", masteryLine)
+	}
+	if line := ge.masteryEntryLine(ge.age, 1); line != "" {
+		ge.addLog("info", line)
+	}
 	if n := ge.legacyEpochCount(); n > 0 {
 		ge.addLog("info", fmt.Sprintf("Legacy bonuses active from %s you succumbed to: research speed %s.",
 			textfmt.Count(n, "epoch", "epochs"), textfmt.SignedPercent(ge.succumbResearchBonus())))
@@ -3997,6 +4039,7 @@ func (ge *GameEngine) Reset() {
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.tickSpeedBonus = 0
+	ge.lastK = 0 // no mastery left: the wiped game runs at 1x
 	ge.speedMultiplier = 1.0
 	ge.buildQueue = nil
 	ge.plan = nil
@@ -4186,6 +4229,7 @@ func (ge *GameEngine) GetState() GameState {
 		}),
 		ActiveEvents:          ge.Events.GetActive(),
 		Prestige:              prestigeSnap,
+		Mastery:               ge.Prestige.MasterySnapshot(ge.age),
 		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources()),
 		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
 		Log:                   logCopy,

@@ -176,9 +176,12 @@ type GameSave struct {
 	// Always written; false on older saves, which get a one-time log line
 	// on load saying the ages ahead are longer (pacingNotice). omitempty, so
 	// those saves keep their bytes and signatures.
-	PacingWeek bool   `json:"pacing_week,omitempty"`
-	Signature  string `json:"_sig,omitempty"`
-	Proof      string `json:"_proof,omitempty"`
+	PacingWeek bool `json:"pacing_week,omitempty"`
+	// OverCapGrace is the resources kept above a cap that shrank when Era
+	// Mastery's speed dropped (the grace rule, mastery.go). omitempty.
+	OverCapGrace map[string]bool `json:"over_cap_grace,omitempty"`
+	Signature    string          `json:"_sig,omitempty"`
+	Proof        string          `json:"_proof,omitempty"`
 }
 
 // hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
@@ -274,6 +277,16 @@ type PrestigeSave struct {
 	TotalEarned int            `json:"total_earned"`
 	Available   int            `json:"available"`
 	Upgrades    map[string]int `json:"upgrades"`
+	// Era Mastery (mastery.go): each age's mastery (ages at 0 left out),
+	// the record (the deepest age ever entered), this run's furthest age,
+	// and the marker for the one-time seeding of saves written before Era
+	// Mastery (seedMasteryLocked). All omitempty, so those saves keep their
+	// bytes and signatures; a save without mastery_seeded is seeded once on
+	// load.
+	Mastery       map[string]int `json:"mastery,omitempty"`
+	Furthest      string         `json:"furthest,omitempty"`
+	RunFurthest   string         `json:"run_furthest,omitempty"`
+	MasterySeeded bool           `json:"mastery_seeded,omitempty"`
 }
 
 // ResearchSave holds research state for save
@@ -597,6 +610,11 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			TotalEarned: ge.Prestige.totalEarned,
 			Available:   ge.Prestige.available,
 			Upgrades:    upgrades,
+
+			Mastery:       ge.Prestige.masterySave(),
+			Furthest:      ge.Prestige.record,
+			RunFurthest:   ge.Prestige.runFurthest,
+			MasterySeeded: ge.Prestige.masterySeeded,
 		},
 		Trade: TradeSave{
 			ActiveRoutes:   tradeActiveRoutes,
@@ -650,6 +668,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		AutoRecruitOff:         ge.autoRecruitOff,
 		StaffHoldUntil:         ge.staffHoldUntil,
 		PacingWeek:             true,
+		OverCapGrace:           ge.Resources.graceSave(),
 	}
 }
 
@@ -830,6 +849,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	// Restore prestige
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
+	ge.Prestige.LoadMastery(save.Prestige.Mastery, save.Prestige.Furthest, save.Prestige.RunFurthest, save.Prestige.MasterySeeded)
 
 	// Restore trade
 	ge.Trade.LoadState(save.Trade)
@@ -953,6 +973,17 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.workerShares = cleanShares(save.WorkerShares)
 	ge.autoRecruitOff = save.AutoRecruitOff
 	ge.staffHoldUntil = min(max(save.StaffHoldUntil, 0), ge.tick+staffHoldTicks)
+
+	// Era Mastery: a save from before it gets the mastery its prestiges
+	// earned, once (after the signature check above, which covered the
+	// bytes as written); every save makes sure the run's furthest age and
+	// the record cover the ages this run reached. The graced resources come
+	// back, and the grace rule starts from the loaded age's speed, not the
+	// one this engine ran at before.
+	ge.seedMasteryLocked()
+	ge.noteRunAgesLocked()
+	ge.Resources.loadGrace(save.OverCapGrace)
+	ge.lastK = ge.speedK()
 
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()

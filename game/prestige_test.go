@@ -72,12 +72,14 @@ func TestPrestigeManager_PrestigeGrantsLevel(t *testing.T) {
 		t.Errorf("level after prestige = %v, want 1", pm.GetLevel())
 	}
 
+	// The passive retired into Era Mastery: a level alone grants nothing.
 	bonuses := pm.GetBonuses()
-	if bonuses["production_all"] <= 0 {
-		t.Error("production_all bonus should be > 0 after prestige")
+	if bonuses["production_all"] != 0 || bonuses["tick_speed"] != 0 {
+		t.Errorf("a level with no upgrades still grants production %v, tick speed %v; the passive retired into Era Mastery",
+			bonuses["production_all"], bonuses["tick_speed"])
 	}
-	if bonuses["tick_speed"] <= 0 {
-		t.Error("tick_speed bonus should be > 0 after prestige")
+	if p := pm.Snapshot().PassiveBonus; p != 0 {
+		t.Errorf("PassiveBonus = %v, want 0", p)
 	}
 }
 

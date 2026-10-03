@@ -22,6 +22,11 @@ type ResourceManager struct {
 	// order is every resource key, sorted, fixed at construction, so the
 	// per-tick walks (and the overflow they report) never follow map order.
 	order []string
+	// grace is the resources whose stock may sit above the cap (the grace
+	// rule, mastery.go): Add never cuts them down to it, and never adds
+	// while they are over. recalculateRates drops a resource from it once
+	// its stock is at or under the cap. nil when none.
+	grace map[string]bool
 }
 
 // NewResourceManager creates a resource manager with base definitions
@@ -89,9 +94,15 @@ func (rm *ResourceManager) Add(key string, amount float64) float64 {
 	if math.IsNaN(amount) {
 		return r.Amount
 	}
+	old := r.Amount
 	r.Amount += float64(amount) // callers pass products: round them, no FMA
 	if r.Amount > r.Storage {
-		r.Amount = r.Storage
+		if rm.grace[key] && old > r.Storage {
+			// Graced stock above the cap: spending lowers it, nothing raises it.
+			r.Amount = math.Min(old, r.Amount)
+		} else {
+			r.Amount = r.Storage
+		}
 	}
 	if r.Amount < 0 {
 		r.Amount = 0
@@ -229,6 +240,47 @@ func (rm *ResourceManager) LoadStorage(storage map[string]float64) {
 	}
 }
 
+// markGraceAll marks every resource holding stock for the grace rule; the
+// storage pass that follows keeps the mark only where stock is over the cap.
+func (rm *ResourceManager) markGraceAll() {
+	for _, key := range rm.order {
+		if rm.resources[key].Amount > 0 {
+			if rm.grace == nil {
+				rm.grace = make(map[string]bool)
+			}
+			rm.grace[key] = true
+		}
+	}
+}
+
+// Graced reports whether key's stock is under the grace rule.
+func (rm *ResourceManager) Graced(key string) bool { return rm.grace[key] }
+
+// graceSave is the graced set for a save (nil when empty).
+func (rm *ResourceManager) graceSave() map[string]bool {
+	if len(rm.grace) == 0 {
+		return nil
+	}
+	out := make(map[string]bool, len(rm.grace))
+	for k := range rm.grace {
+		out[k] = true
+	}
+	return out
+}
+
+// loadGrace restores the graced set from a save (known resources only).
+func (rm *ResourceManager) loadGrace(g map[string]bool) {
+	rm.grace = nil
+	for k, on := range g {
+		if _, ok := rm.resources[k]; ok && on {
+			if rm.grace == nil {
+				rm.grace = make(map[string]bool)
+			}
+			rm.grace[k] = true
+		}
+	}
+}
+
 // Snapshot returns resource states for UI
 func (rm *ResourceManager) Snapshot() map[string]ResourceState {
 	out := make(map[string]ResourceState)
@@ -241,6 +293,8 @@ func (rm *ResourceManager) Snapshot() map[string]ResourceState {
 			Name:      def.Name,
 			Unlocked:  rm.unlocked[key],
 			Breakdown: r.Breakdown,
+
+			OverCapGrace: rm.grace[key],
 		}
 	}
 	return out
