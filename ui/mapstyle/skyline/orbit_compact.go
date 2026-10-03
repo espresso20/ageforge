@@ -14,19 +14,23 @@ import (
 // 65x9 in the old layout): the void and a few stars, the age's signature
 // (the planet's arc under the truss in the Space Age; the sun, a nebula and
 // the gate in the Interstellar; the starbase and a warp streak in the
-// Galactic; the flicker in the Quantum; a small mandala in the
-// Transcendent) and the whole panorama's profile on the baseline, with the
-// full view's signals riding on it: lit windows, ▼ new, ★ wonders. The rare
-// visitor never shows here.
+// Galactic; the flicker in the Quantum) and the whole panorama's profile on
+// the baseline, with the full view's signals riding on it: lit windows, ▼
+// new, ★ wonders. The Transcendent Age is a small mandala and nothing else.
+// The rare visitor never shows here.
 
 func (v *view) composeSkyCompact(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) {
 	m := f.Model
-	lay := v.skyLayoutFor(m, sc, compactGround, true)
 	p, mp := v.palettes(m)
 	v.fb.reset(W, H)
 	S := H - 1
-	s := &scene{v: v, m: m, lay: lay, p: p, mp: mp, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H,
+	s := &scene{v: v, m: m, p: p, mp: mp, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H,
 		S: S, top: 1, groundY: compactBase(S), sel: -1, band: bandOf(m.AgeIdx)}
+	if sc == mapmodel.SkyMandala {
+		s.groundY = max(0, S) // no baseline and no panorama: the mandala has every row
+	} else {
+		s.lay = v.skyLayoutFor(m, sc, compactGround, true)
+	}
 	if S >= 1 {
 		o := newOrb(s, sc)
 		o.compactScene()
@@ -75,7 +79,7 @@ func (o *orb) compactScene() {
 	star, bright := o.c(mapmodel.InkStar, iEmit, 0), o.c(mapmodel.InkStarBright, iEmit, 0)
 	density := 0.05
 	if o.sc == mapmodel.SkyMandala {
-		density = 0.01
+		density = 0.012
 	}
 	for y := 0; y < b; y++ {
 		for x := 0; x < W; x++ {
@@ -99,11 +103,9 @@ func (o *orb) compactScene() {
 		o.compactFringes()
 	case mapmodel.SkyMandala:
 		o.compactMandala()
+		return // nothing stands under it
 	}
 	o.compactProfile()
-	if o.sc == mapmodel.SkyMandala {
-		o.compactReflect()
-	}
 }
 
 // compactSpan maps compact column x onto the panorama.
@@ -127,10 +129,7 @@ func (o *orb) compactProfile() {
 		maxH = max(maxH, lay.prof[x])
 	}
 	top := float64(b) * 0.85
-	switch o.sc {
-	case mapmodel.SkyMandala:
-		top = float64(b) * 0.45 // short light, the mandala over it
-	case mapmodel.SkyGalaxy:
+	if o.sc == mapmodel.SkyGalaxy {
 		top = float64(b) * 0.7 // the starbase stands over it
 	}
 	wonderAt := make([]bool, o.W) // the columns the recent landmarks stand in
@@ -183,7 +182,7 @@ func (o *orb) compactProfile() {
 		for k := 0; k < full; k++ {
 			y := b - 1 - k
 			o.fb.fill(x, o.Y(y), wall, dRow0)
-			if k < full-1 && lv.staff > 0 && hashf(x, y, int(o.m.Seed)) < 0.1+0.6*lv.staff && o.sc != mapmodel.SkyMandala {
+			if k < full-1 && lv.staff > 0 && hashf(x, y, int(o.m.Seed)) < 0.1+0.6*lv.staff {
 				o.fb.set(x, o.Y(y), '·', lit, wall, dRow0)
 			}
 		}
@@ -209,8 +208,6 @@ func (o *orb) compactProfile() {
 		line, ch, ld = o.c(mapmodel.InkAccent, iLit, 0), '▀', dDockRing
 	case mapmodel.SkyQuantum:
 		line, ch, ld = echo, '─', dEchoLine
-	case mapmodel.SkyMandala:
-		line, ch, ld = o.c(mapmodel.InkAccent, iEmit, 1), '─', dMirror
 	}
 	if b < o.S {
 		for x := 0; x < o.W; x++ {
@@ -396,36 +393,16 @@ func (o *orb) compactGalaxy() {
 	}
 }
 
-// compactMandala: a small mandala breathing over the baseline.
+// compactMandala: the mandala, laid out for the whole of the mini view (as
+// many of the newest rings as it holds), its light rolling outward like
+// the full one's.
 func (o *orb) compactMandala() {
-	W, b := o.W, o.groundY
-	if b < 3 {
+	if o.S < 1 {
 		return
 	}
-	cx, cy := float64(W)/2, float64(b-1)*0.5
-	R := math.Max(1, math.Min(float64(b-1)*0.48, float64(W)/5))
-	gold := o.c(mapmodel.InkAccent, iEmit, 0)
-	dim := o.c(mapmodel.InkFrameDim, iEmit, 0)
-	void := o.c(mapmodel.InkVoid, iBack, 0)
-	for k := 0; k < 3; k++ {
-		r := R * float64(k+1) / 3
-		br := o.breath(k * 2)
-		n := max(6, int(r*6))
-		for i := 0; i < n; i++ {
-			t := float64(i)/float64(n) + float64(o.anim)/float64(2400+600*k)
-			x := int(math.Round(cx + 2*r*mapmodel.Cos(t)))
-			y := int(math.Round(cy - r*mapmodel.Sin(t)))
-			c := theme.Mix(theme.Mix(void, dim, 0.7), gold, 0.15+0.35*br)
-			ch := '·'
-			if i%max(1, n/6) == 0 {
-				ch, c = '◆', theme.Mix(theme.Mix(void, gold, 0.7), gold, br)
-			}
-			if y >= 0 && y < b {
-				o.fb.fg(x, o.Y(y), ch, c, dMandala)
-			}
-		}
-	}
-	o.fb.fg(int(cx), o.Y(int(math.Round(cy))), '✦', o.c(mapmodel.InkGlow, iEmit, 0), dMandala)
+	rings := o.m.Mandala()
+	l := o.v.mandalaFor(len(rings), o.W, o.S)
+	o.drawMandala(l.g, rings, l.cx, l.cy, o.S)
 }
 
 // compactFringes is the Quantum's interference under the baseline,
@@ -445,22 +422,6 @@ func (o *orb) compactFringes() {
 			case v > 0.4:
 				o.fb.fg(x, o.Y(y), '░', c1, dFringe)
 			}
-		}
-	}
-}
-
-// compactReflect mirrors the profile under the mirror line.
-func (o *orb) compactReflect() {
-	b := o.groundY
-	void := o.c(mapmodel.InkVoid, iBack, 0)
-	for k := 1; b+k < o.S && b-k >= 0; k++ {
-		for x := 0; x < o.W; x++ {
-			src := o.fb.at(x, o.Y(b-k))
-			if src == nil || src.d != dRow0 {
-				continue
-			}
-			c := theme.Mix(src.show(), void, 0.6+0.1*float64(k))
-			o.fb.set(x, o.Y(b+k), ' ', c, c, dReflect)
 		}
 	}
 }

@@ -11,9 +11,10 @@ import (
 // scene has its own family of shapes: station modules on the truss in the
 // Space Age, small worlds and ships in formation in the Interstellar,
 // starbase decks and docked starships in the Galactic, impossible geometry
-// in the Quantum and pure light in the Transcendent. Like the ground's
-// forms they are drawn in slots, so the scene's palette (skySlots) colours
-// them and one drawing serves every theme.
+// in the Quantum. Like the ground's forms they are drawn in slots, so the
+// scene's palette (skySlots) colours them and one drawing serves every
+// theme. The Transcendent Age has no lots to dress: it is the mandala
+// alone (orbit_mandala.go).
 
 // skyForm is a lot's sky form: an archetype, its nominal height in rows at
 // scale 1 and the sprite cache key that names it.
@@ -85,30 +86,18 @@ var skyForms = [mapmodel.NumSkyScenes]map[string]formDef{
 		mapmodel.LinTrade: fd(qOrb, 10, "q.orb"), mapmodel.LinMilitary: fd(qPenrose, 9, "q.penrose"),
 		mapmodel.LinDiplomacy: fd(qKnot, 11, "q.knot"),
 	},
-	mapmodel.SkyMandala: {
-		mapmodel.LinHousing: fd(mPillar, 8.1, "m.pillar"), mapmodel.LinFood: fd(mCircle, 4.3, "m.circle"),
-		mapmodel.LinStorage: fd(mDiamond, 3.7, "m.diamond"), mapmodel.LinWood: fd(mCircle, 5, "m.circle"),
-		mapmodel.LinMines: fd(mDiamond, 4.3, "m.diamond"), mapmodel.LinMetal: fd(mPillar, 6.2, "m.pillar"),
-		mapmodel.LinEngineer: fd(mObelisk, 7.4, "m.obelisk"), mapmodel.LinEnergy: fd(mStar, 5.6, "m.star"),
-		mapmodel.LinHarbor: fd(mCircle, 5, "m.circle"), mapmodel.LinHacker: fd(mDiamond, 5, "m.diamond"),
-		mapmodel.LinKnowledge: fd(mObelisk, 8.1, "m.obelisk"), mapmodel.LinFaith: fd(mPillar, 9.3, "m.pillar"),
-		mapmodel.LinCulture: fd(mStar, 5.6, "m.star"), mapmodel.LinMonument: fd(mObelisk, 9.9, "m.obelisk"),
-		mapmodel.LinTrade: fd(mDiamond, 5.6, "m.diamond"), mapmodel.LinMilitary: fd(mCircle, 5.6, "m.circle"),
-		mapmodel.LinDiplomacy: fd(mStar, 6.2, "m.star"),
-	},
 }
 
 // skyFormFor is a lot's form in scene sc. Wonders become the scene's
-// landmarks (the sky-era wonders keep their own drawing outside the
-// Transcendent's pure light), and the present age's keystone wonder
-// (keystoneWonder) a small keystone.
+// landmarks (the sky-era wonders keep their own drawing), and the present
+// age's keystone wonder (keystoneWonder) a small keystone.
 func skyFormFor(sc mapmodel.SkyScene, def *mapmodel.Def, ml *mapmodel.Lot, keystone bool) skyForm {
 	scene := string(rune('0' + int(sc)))
 	if def.Wonder {
 		switch {
 		case keystone:
 			return skyForm{fn: keystoneFn[sc], height: 9, key: scene + "key:" + def.Key}
-		case sc != mapmodel.SkyMandala && skyEraWonder[def.Key] > 0:
+		case skyEraWonder[def.Key] > 0:
 			k := def.Key
 			return skyForm{fn: func(r *rnd, h int) *sprite { return wonderSprite(k, float64(h)/20) },
 				height: 20 * skyEraWonder[def.Key], key: scene + "w:" + def.Key}
@@ -134,16 +123,16 @@ var skyEraWonder = map[string]float64{
 
 var landmarkFn = [mapmodel.NumSkyScenes]archFn{
 	mapmodel.SkyOrbit: oLandmark, mapmodel.SkyDeep: dLandmark, mapmodel.SkyGalaxy: gLandmark,
-	mapmodel.SkyQuantum: qLandmark, mapmodel.SkyMandala: mLandmark,
+	mapmodel.SkyQuantum: qLandmark,
 }
 
 var landmarkH = [mapmodel.NumSkyScenes]float64{
-	mapmodel.SkyOrbit: 15, mapmodel.SkyDeep: 11, mapmodel.SkyGalaxy: 19, mapmodel.SkyQuantum: 15, mapmodel.SkyMandala: 10,
+	mapmodel.SkyOrbit: 15, mapmodel.SkyDeep: 11, mapmodel.SkyGalaxy: 19, mapmodel.SkyQuantum: 15,
 }
 
 var keystoneFn = [mapmodel.NumSkyScenes]archFn{
 	mapmodel.SkyOrbit: oLandmark, mapmodel.SkyDeep: dKeystone, mapmodel.SkyGalaxy: gKeystone,
-	mapmodel.SkyQuantum: qKeystone, mapmodel.SkyMandala: mLandmark,
+	mapmodel.SkyQuantum: qKeystone,
 }
 
 // ---------------------------------------------------------------- palettes
@@ -225,22 +214,6 @@ var skySlots = [mapmodel.NumSkyScenes][numSlots]slotSpec{
 		sRock: ss(mapmodel.InkRock, iLit, 0.8), sRockDark: ss(mapmodel.InkRockDark, iLit, 0.6),
 		sFire: ss(mapmodel.InkLight, iEmit, 1.0), sInk: ss(mapmodel.InkVoid, iBack, 1.0),
 		sWater: ss(mapmodel.InkGlow, iLit, 0.7), sSmoke: ss(mapmodel.InkHaze, iBack, 1.0),
-	},
-	mapmodel.SkyMandala: {
-		sWall: ss(mapmodel.InkLight, iEmit, 0.85), sWallLit: ss(mapmodel.InkGlow, iEmit, 1.0),
-		sWallShade: ss(mapmodel.InkFrameDim, iEmit, 1.0), sWallDark: ss(mapmodel.InkFrameDim, iEmit, 0.6),
-		sRoof: ss(mapmodel.InkFrame, iEmit, 1.0), sRoofShade: ss(mapmodel.InkFrame, iEmit, 0.7),
-		sTrim: ss(mapmodel.InkFrame, iEmit, 1.0), sWin: ss(mapmodel.InkFrameDim, iEmit, 0.55),
-		sMetal: ss(mapmodel.InkFrame, iEmit, 0.85), sMetalDark: ss(mapmodel.InkFrameDim, iEmit, 0.8),
-		sGlass: ss(mapmodel.InkLight, iEmit, 0.6), sGlassHi: ss(mapmodel.InkGlow, iEmit, 1.0),
-		sNeon1: ss(mapmodel.InkAccent, iEmit, 1.0), sNeon2: ss(mapmodel.InkLight, iEmit, 1.0),
-		sNeon3: ss(mapmodel.InkFrameDim, iEmit, 1.0), sGlow: ss(mapmodel.InkGlow, iEmit, 1.0),
-		sBeacon: ss(mapmodel.InkGlow, iEmit, 1.0), sLeaf: ss(mapmodel.InkAccent, iEmit, 0.8),
-		sLeafDark: ss(mapmodel.InkFrameDim, iEmit, 0.8), sTrunk: ss(mapmodel.InkFrameDim, iEmit, 0.6),
-		sField1: ss(mapmodel.InkAccent, iEmit, 0.7), sField2: ss(mapmodel.InkFrameDim, iEmit, 0.7),
-		sRock: ss(mapmodel.InkFrame, iEmit, 0.8), sRockDark: ss(mapmodel.InkFrameDim, iEmit, 0.7),
-		sFire: ss(mapmodel.InkAccent, iEmit, 1.0), sInk: ss(mapmodel.InkVoid, iBack, 1.0),
-		sWater: ss(mapmodel.InkLight, iEmit, 0.6), sSmoke: ss(mapmodel.InkHaze, iBack, 1.0),
 	},
 }
 
@@ -1581,125 +1554,4 @@ func qKeystone(r *rnd, h int) *sprite {
 	s.put(7, 4, '│', sMetal, sNone)
 	s.text(0, 5, "▄▀▄   ▄▀▄", sMetalDark, sNone)
 	return s
-}
-
-// ---------------------------------------------------------------- the Transcendent Age: pure light
-
-// mPillar: a luminous pillar, a capital and a foot of gold.
-func mPillar(r *rnd, h int) *sprite {
-	th := clampInt(h, 5, 22)
-	s := newSprite(5, th+1)
-	base := s.h - 1
-	for y := base - 1; y > base-th+1; y-- {
-		s.put(2, y, '█', sWallLit, sNone)
-		s.put(1, y, '▐', sWallShade, sNone)
-		s.put(3, y, '▌', sWallShade, sNone)
-	}
-	s.text(0, base-th+1, "▄███▄", sTrim, sNone)
-	s.text(0, base, "▀▀▀▀▀", sTrim, sNone)
-	s.put(2, base-th, '·', sGlow, sNone)
-	return s.trimTop()
-}
-
-// mDiamond: diamonds of light stacked point to point.
-func mDiamond(r *rnd, h int) *sprite {
-	n := clampInt(h/3, 1, 4)
-	s := newSprite(7, n*3+1)
-	base := s.h - 1
-	for i := 0; i < n; i++ {
-		y := base - 1 - i*3
-		s.put(3, y+1, '▀', sTrim, sNone)
-		s.text(1, y, "◢█◣", sWallLit, sNone)
-		s.put(2, y, '█', sWall, sNone)
-		s.put(1, y, '◢', sWallLit, sNone)
-		s.put(3, y, '█', sWallLit, sNone)
-		s.put(4, y, '█', sWall, sNone)
-		s.put(5, y, '◣', sWallShade, sNone)
-		s.put(2, y-1, '◢', sWallLit, sNone)
-		s.put(3, y-1, '█', sWallLit, sNone)
-		s.put(4, y-1, '◣', sWall, sNone)
-	}
-	return s.trimTop()
-}
-
-// mCircle: a ring of light on a stem, bright at its heart.
-func mCircle(r *rnd, h int) *sprite {
-	rr := clampInt(h/2, 2, 6)
-	w := 2*rr + 1
-	s := newSprite(w, rr+3)
-	base := s.h - 1
-	cpy := float64(2*(base-1)) - float64(rr)
-	cx := float64(w) / 2
-	ring(s, cx, cpy, float64(rr), float64(rr), 1.2, func(dx, dy float64) slot { return sWall })
-	mid := int(cpy) / 2
-	s.put(w/2, mid, '✦', sGlow, sNone)
-	for y := mid + rr/2 + 1; y <= base; y++ {
-		if s.at(w/2, y).ch == 0 {
-			s.put(w/2, y, '│', sTrim, sNone)
-		}
-	}
-	return s.trimTop()
-}
-
-// mObelisk: a needle of light.
-func mObelisk(r *rnd, h int) *sprite {
-	th := clampInt(h, 6, 24)
-	s := newSprite(3, th+1)
-	base := s.h - 1
-	s.put(1, base-th+1, '▲', sWallLit, sNone)
-	for y := base - th + 2; y < base; y++ {
-		s.put(1, y, '█', sWall, sNone)
-		if y > base-th/2 {
-			s.put(0, y, '▐', sWallShade, sNone)
-			s.put(2, y, '▌', sWallShade, sNone)
-		}
-	}
-	s.text(0, base, "▀█▀", sTrim, sNone)
-	return s.trimTop()
-}
-
-// mStar: a star of light on a thin stem.
-func mStar(r *rnd, h int) *sprite {
-	th := clampInt(h, 4, 14)
-	s := newSprite(7, th+1)
-	base := s.h - 1
-	cy := base - th + 2
-	s.put(3, cy, '✦', sGlow, sNone)
-	s.put(2, cy, '─', sWall, sNone)
-	s.put(4, cy, '─', sWall, sNone)
-	s.put(1, cy, '·', sTrim, sNone)
-	s.put(5, cy, '·', sTrim, sNone)
-	s.put(3, cy-1, '│', sWall, sNone)
-	s.put(3, cy+1, '│', sWall, sNone)
-	for y := cy + 2; y <= base; y++ {
-		s.put(3, y, '│', sTrim, sNone)
-	}
-	return s.trimTop()
-}
-
-// mLandmark: a wonder in the Transcendent: a rose of light, a diamond in a
-// ring on a pillar.
-func mLandmark(r *rnd, h int) *sprite {
-	rr := clampInt(h/3, 3, 7)
-	w := 2*rr + 3
-	th := clampInt(h, rr+4, 24)
-	s := newSprite(w, th+1)
-	base := s.h - 1
-	cpy := float64(2*(base-th+rr+1)) - float64(rr)
-	cx := float64(w) / 2
-	ring(s, cx, cpy, float64(rr), float64(rr), 1.3, func(dx, dy float64) slot { return sTrim })
-	disc(s, cx, cpy, float64(rr)/2, float64(rr)/2, func(dx, dy float64) slot {
-		if math.Abs(dx)+math.Abs(dy) <= 1 {
-			return sWallLit
-		}
-		return sNone
-	})
-	for y := int(cpy)/2 + rr/2 + 1; y < base; y++ {
-		if s.at(w/2, y).ch == 0 {
-			s.put(w/2, y, '║', sWall, sNone)
-		}
-	}
-	s.text(w/2-2, base, "▀▀▀▀▀", sTrim, sNone)
-	s.put(w/2, max(0, base-th), '✦', sGlow, sNone)
-	return s.trimTop()
 }

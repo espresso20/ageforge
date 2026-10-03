@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
 // space_scene.go lays a sky scene out on a fixed plane, so placement never
@@ -149,7 +150,6 @@ type skyBase struct {
 	gateStroke []rune        // and its strokes
 	colony     map[string]colonySite
 	systems    []mapmodel.Pt // Galactic: star system sites, by faction slot
-	rings      []mandalaRing // Transcendent
 }
 
 // skyScene is one model laid out on its base.
@@ -165,9 +165,10 @@ type skyScene struct {
 	units   int // units placed
 	// unitAt maps a building key to its first unit's cell (inspect, labels)
 	anchor map[string]mapmodel.Pt
-	// mandala marks on screen, by ring (Transcendent)
-	marks [][]mapmodel.MandalaMark
+	// the mandala (Transcendent): the eras' rings, the crown, the layout
+	rings []mapmodel.MandalaRing
 	crown []mapmodel.MandalaMark
+	md    mapstyle.MandalaGeom
 }
 
 // skyLabel is a name the close zoom may print.

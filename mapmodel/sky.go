@@ -206,8 +206,8 @@ type MandalaRing struct {
 	Marks []MandalaMark
 }
 
-// MandalaMark is one glyph on a ring: a building type the player raised in
-// one of the era's ages, in the symbol it had then, or a wonder.
+// MandalaMark is one building type the player raised in one of an era's
+// ages, in the symbol it had then, or a wonder.
 type MandalaMark struct {
 	Age     int
 	Key     string
@@ -217,11 +217,13 @@ type MandalaMark struct {
 	Count   int
 }
 
-// Mandala lays the player's history out in rings, one per era, each
-// holding a mark for every building type owned from that era's ages (in
-// the catalogue's skyline order, the most prominent first). The mandala's
-// own age is not in it: its buildings are the Crown. An era with nothing
-// owned is an empty ring.
+// Mandala lays the player's history out in rings, one for every era the
+// player passed through this run (reached one of its ages before the
+// mandala's own), oldest first. Each ring holds a mark for every building
+// type owned from that era's ages, in the catalogue's skyline order (the
+// most prominent first); an era with nothing still standing is a ring with
+// no marks. The mandala's own age is not in it: its buildings are the
+// Crown.
 func (m *Model) Mandala() []MandalaRing {
 	cat := m.Catalog
 	if cat == nil {
@@ -229,18 +231,26 @@ func (m *Model) Mandala() []MandalaRing {
 	}
 	last := cat.SkySceneAge(SkyMandala)
 	rings := make([]MandalaRing, len(cat.Epochs))
+	passed := make([]bool, len(cat.Epochs))
 	for e := range rings {
 		rings[e].Epoch = e
 	}
 	for a := 0; a < len(cat.ByAge) && (last < 0 || a < last); a++ {
 		e := cat.AgeEpoch[a]
+		passed[e] = passed[e] || m.ReachedAge(a)
 		for _, d := range cat.ByAge[a] {
 			if mk, ok := m.mandalaMark(d, e); ok {
 				rings[e].Marks = append(rings[e].Marks, mk)
 			}
 		}
 	}
-	return rings
+	out := make([]MandalaRing, 0, len(rings))
+	for e, r := range rings {
+		if passed[e] {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 // Crown is the mandala's centre: a mark for every building type owned from

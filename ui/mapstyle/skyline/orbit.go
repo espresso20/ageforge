@@ -19,10 +19,11 @@ import (
 // baseline in its depth row, the camera, the cursor and its Tab order, the
 // ▼ markers, the flows tags, the minimap strip, the header and the status
 // line. What changes per scene is the look: the backdrop, the baseline the
-// lots stand on (a truss, a formation line, a docking ring, a time echo, a
-// mirror), the lots' sky forms (orbit_forms.go), the traffic
+// lots stand on (a truss, a formation line, a docking ring, a time echo),
+// the lots' sky forms (orbit_forms.go), the traffic
 // (orbit_traffic.go), the palette (mapmodel.SkyPaletteOf, resolved here
-// against the theme) and one ambient effect.
+// against the theme) and one ambient effect. The last scene keeps none of
+// it: the Transcendent Age is the mandala alone (orbit_mandala.go).
 //
 // The sky keeps its layouts in slots of its own: the full view's in v.slay,
 // the compact view's in v.sclay, and the ground skyline the Quantum Age's
@@ -33,7 +34,6 @@ import (
 // scene uses, which is also how the tests check that no scene draws a later
 // one's.
 const (
-	dMirror    uint8 = 13 // the Transcendent mirror line
 	dTruss     uint8 = 14 // the Space Age truss
 	dFormation uint8 = 16 // the Interstellar formation line
 	dDockRing  uint8 = 17 // the Galactic docking ring
@@ -44,7 +44,6 @@ const (
 	dHub       uint8 = 47 // the Galactic starbase hub
 	dFractal   uint8 = 49 // the Quantum fractal landmark
 	dTether    uint8 = 50 // the Space Age tether
-	dReflect   uint8 = 52 // the Transcendent reflection
 	dFringe    uint8 = 53 // the Quantum interference fringes
 	dEcho      uint8 = 58 // the Quantum time echo
 	dTrail     uint8 = 74 // engine trails, warp streaks, afterimages
@@ -115,6 +114,9 @@ func skyScale(groundY int) float64 {
 // composeSky builds a sky frame into v.fb. It mirrors compose: the same
 // camera, cursor and chrome, the scene's own layers.
 func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *scene {
+	if sc == mapmodel.SkyMandala {
+		return v.composeMandala(f, W, H) // no panorama: the mandala alone
+	}
 	m := f.Model
 	v.lastW = W
 	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H, S: H - 3, top: 1, sel: -1}
@@ -159,14 +161,9 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 		o.galaxyBackdrop()
 	case mapmodel.SkyQuantum:
 		o.quantumBackdrop()
-	case mapmodel.SkyMandala:
-		o.mandalaBackdrop()
 	}
 	o.farObjects()
 	o.lots()
-	if sc == mapmodel.SkyMandala {
-		o.reflect()
-	}
 	o.frontier()
 	o.traffic()
 	if sc == mapmodel.SkyOrbit || sc == mapmodel.SkyDeep {
@@ -365,10 +362,6 @@ func (o *orb) farStation(it ridgeItem) {
 			put(0, 0, '◇', ic)
 			put(1, 0, ')', ic)
 		}
-	default: // the Transcendent: a point of light
-		put(0, 0, '✧', o.c(mapmodel.InkLight, iEmit, 1))
-		put(-1, 0, '·', o.c(mapmodel.InkFrameDim, iEmit, 2))
-		put(1, 0, '·', o.c(mapmodel.InkFrameDim, iEmit, 2))
 	}
 	// the pennant
 	rc := o.mp.Fg[mapmodel.RelationClass(f.Relation)]
@@ -550,9 +543,6 @@ func (o *orb) lotLights(lv *lotView, spr *sprite) {
 	for _, b := range spr.beacons {
 		on := (o.anim/3+int(hash(int(lv.ml.Seed), b.x)%7))%8 < 3
 		c := o.c(mapmodel.InkAccent3, iEmit, hz)
-		if o.sc == mapmodel.SkyMandala {
-			c = o.c(mapmodel.InkGlow, iEmit, hz)
-		}
 		if !on {
 			c = theme.Mix(c, o.c(mapmodel.InkVoid, iBack, 0), 0.55)
 		}
@@ -650,7 +640,8 @@ func (o *orb) catastrophe() {
 
 // chrome is the header, the minimap strip and the status line, in the
 // skyline's chrome: the header shows the clock without the weather (there
-// is none up here) and the legend names what the sky scenes draw.
+// is none up here) and the legend names what the sky scenes draw. The
+// mandala has no panorama for a strip to show.
 func (o *orb) chrome() {
 	bg := chromeBg()
 	for x := 0; x < o.W; x++ {
@@ -658,7 +649,9 @@ func (o *orb) chrome() {
 		o.fb.set(x, o.H-1, ' ', bg, bg, dTop)
 	}
 	o.header(bg)
-	o.minimap()
+	if o.sc != mapmodel.SkyMandala {
+		o.minimap()
+	}
 	o.status(bg)
 }
 
@@ -706,7 +699,6 @@ var skyLegend = [mapmodel.NumSkyScenes]string{
 	mapmodel.SkyDeep:    "colony beacons ",
 	mapmodel.SkyGalaxy:  "star systems ",
 	mapmodel.SkyQuantum: "echoes ",
-	mapmodel.SkyMandala: "rings ",
 }
 
 var skyLegendWhat = [mapmodel.NumSkyScenes]string{
@@ -714,7 +706,6 @@ var skyLegendWhat = [mapmodel.NumSkyScenes]string{
 	mapmodel.SkyDeep:    "your lineages  ",
 	mapmodel.SkyGalaxy:  "civs met  ",
 	mapmodel.SkyQuantum: "the town you were  ",
-	mapmodel.SkyMandala: "every era you have lived  ",
 }
 
 func (o *orb) status(bg tcell.Color) {
@@ -769,6 +760,14 @@ func (o *orb) status(bg tcell.Color) {
 		o.segs(0, y, bg, parts)
 		return
 	}
+	if o.sc == mapmodel.SkyMandala { // no city to explain, no panorama to scroll
+		parts := o.mandalaHints()
+		if o.v.legend {
+			parts = o.mandalaLegend()
+		}
+		o.segs(0, y, bg, parts)
+		return
+	}
 	if o.v.legend {
 		parts := []seg{{" lit windows ", theme.RoleText}, {"staffed  ", theme.RoleDim},
 			{"glowing vents ", theme.RoleText}, {"producing  ", theme.RoleDim}, {"▼ ", theme.RolePositive}, {"new  ", theme.RoleDim},
@@ -795,7 +794,7 @@ func (o *orb) status(bg tcell.Color) {
 // skyWhere names a district in each scene's terms.
 var skyWhere = [mapmodel.NumSkyScenes]string{
 	mapmodel.SkyOrbit: "section", mapmodel.SkyDeep: "fleet", mapmodel.SkyGalaxy: "ring",
-	mapmodel.SkyQuantum: "probability", mapmodel.SkyMandala: "light",
+	mapmodel.SkyQuantum: "probability",
 }
 
 // skyLines words a lot's inspect lines in the scene's terms: the lineage

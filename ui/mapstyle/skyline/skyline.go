@@ -45,7 +45,8 @@ type view struct {
 	clay    *layout // the compact view's
 	slay    *layout // the sky arc's (orbit.go), full and compact,
 	sclay   *layout
-	glay    *layout // and the ground skyline behind the Quantum Age's echo
+	glay    *layout        // and the ground skyline behind the Quantum Age's echo
+	md      *mandalaLayout // the Transcendent Age's mandala (orbit_mandala.go)
 	sprites map[spriteKey]*sprite
 	fb      fb
 	vis     []int
@@ -100,6 +101,9 @@ func (v *view) SetOption(o mapstyle.Option, on bool) {
 // away. The flows overlay is the map flows command (SetOption).
 func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	m := f.Model
+	if m != nil && m.Sky() == mapmodel.SkyMandala {
+		return v.mandalaKey(ev, f) // no panorama to scroll: orbit_mandala.go
+	}
 	w := v.viewW()
 	key := ev.Key()
 	shift := ev.Modifiers()&tcell.ModShift != 0

@@ -163,6 +163,8 @@ From the Space Age the Map leaves the ground, in both styles. Each of the last a
 
 In the roguelike each sky has a hub (the station, the home sun, the base's core): `Home` takes the cursor there, and `PgDn` gives a closer view with names.
 
+In the last age of all the skyline has no districts left to scroll. `Tab` still puts the cursor out, the arrows move it round and between what is there, and the bottom row says what each key does.
+
 ---
 
 ## Settings

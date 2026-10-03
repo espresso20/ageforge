@@ -25,7 +25,8 @@ const (
 	inkDanger = inkIdle + 1
 	inkAlien  = inkDanger + 1 // + species
 	inkIri    = inkAlien + 3  // + stop
-	numInks   = inkIri + 8
+	inkEra    = inkIri + 8    // + epoch: a mandala ring's era colour
+	numInks   = inkEra + 7
 )
 
 // skyPal is a sky scene's palette on the active theme: each ink at four
@@ -98,6 +99,8 @@ func newSkyPal(sky mapmodel.SkyScene, key string, gp *pal) *skyPal {
 			return gp.Fg[mapmodel.CDanger]
 		case i < inkIri:
 			return theme.SpaceColor(mapmodel.Aliens[int(i-inkAlien)%len(mapmodel.Aliens)].Hue)
+		case i >= inkEra:
+			return mapstyle.EraLight(int(i - inkEra))
 		}
 		return theme.SpaceColor(mapmodel.SkyIridescent[int(i-inkIri)%len(mapmodel.SkyIridescent)])
 	}
