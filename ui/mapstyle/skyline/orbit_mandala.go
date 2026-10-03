@@ -2,6 +2,7 @@ package skyline
 
 import (
 	"math"
+	"strconv"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -152,10 +153,15 @@ func mandalaInspection(m *mapmodel.Model, t tgt) (in inspectionData, ok bool) {
 		if in.title == "" {
 			return in, false
 		}
-		where := "a petal of the crown"
+		where, marks := "a petal of the crown", m.Crown()
 		if rings := m.Mandala(); t.row >= 2 && t.row-2 < len(rings) {
-			if e := rings[t.row-2].Epoch; e < len(m.Catalog.EpochName) {
-				where = "a light on the ring of the " + m.Catalog.EpochName[e]
+			if r := rings[t.row-2]; r.Epoch < len(m.Catalog.EpochName) {
+				where, marks = "a light on the ring of the "+m.Catalog.EpochName[r.Epoch], r.Marks
+			}
+		}
+		for j, mk := range marks { // which of the ring's lights it is
+			if mk.Key == t.key {
+				where += " (" + strconv.Itoa(j+1) + " of " + strconv.Itoa(len(marks)) + ")"
 			}
 		}
 		in.lines = append([]string{where}, in.lines...)
@@ -249,7 +255,7 @@ func (o *orb) mandalaLegend() []seg {
 // mandalaHints is the status line at rest: the keys, and where you are.
 func (o *orb) mandalaHints() []seg {
 	return []seg{{" Tab ", theme.RoleAccent}, {"inspect  ", theme.RoleDim}, {"◄► ", theme.RoleAccent},
-		{"round a ring  ", theme.RoleDim}, {"▲▼ ", theme.RoleAccent}, {"ring to ring  ", theme.RoleDim},
+		{"round a ring  ", theme.RoleDim}, {"↑↓ ", theme.RoleAccent}, {"ring to ring  ", theme.RoleDim},
 		{"map flows ", theme.RoleAccent}, {"flows  ", theme.RoleDim}, {"│ ", theme.RoleDim},
 		{"beyond form, in light", theme.RoleLabel}}
 }
@@ -261,9 +267,12 @@ func (o *orb) mandalaHints() []seg {
 // between them), the beads, the crown and the core.
 func (o *orb) drawMandala(g mapstyle.MandalaGeom, rings []mapmodel.MandalaRing, cx, cy, limit int) {
 	void := o.c(mapmodel.InkVoid, iBack, 0)
-	gold := o.c(mapmodel.InkAccent, iEmit, 0)
-	white := o.c(mapmodel.InkLight, iEmit, 0)
-	core := o.c(mapmodel.InkGlow, iEmit, 0)
+	// the light, made to stand off the void on every page (a light theme's
+	// void is pale, and its light is ink)
+	gold := theme.Legible(o.c(mapmodel.InkAccent, iEmit, 0), void, 3)
+	white := theme.Legible(o.c(mapmodel.InkLight, iEmit, 0), void, 3)
+	burn := theme.Mix(void, gold, 0.8) // the core's cell burns gold
+	core := theme.Legible(o.c(mapmodel.InkGlow, iEmit, 0), burn, 3)
 	inDisc := func(x, y int, r float64) bool {
 		dx, dy := float64(x-cx)/mapstyle.MandalaAspect, float64(y-cy)
 		return float64(dx*dx)+float64(dy*dy) < float64(r*r)
@@ -282,7 +291,7 @@ func (o *orb) drawMandala(g mapstyle.MandalaGeom, rings []mapmodel.MandalaRing, 
 		for x := max(0, cx-int(2*ext)-1); x <= min(o.W-1, cx+int(2*ext)+1); x++ {
 			switch {
 			case x == cx && y == cy:
-				o.fb.set(x, o.Y(y), ' ', void, theme.Mix(void, gold, 0.8), dMandala) // the core burns gold
+				o.fb.set(x, o.Y(y), ' ', void, burn, dMandala)
 			case inDisc(x, y, glow):
 				o.fb.set(x, o.Y(y), ' ', void, theme.Mix(void, gold, 0.25), dMandala)
 			case inDisc(x, y, ext):
