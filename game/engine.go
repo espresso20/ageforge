@@ -1463,10 +1463,7 @@ func (ge *GameEngine) processEvents() {
 
 // processExpeditions handles military expedition progress
 func (ge *GameEngine) processExpeditions() {
-	prestigeBonuses := ge.Prestige.GetBonuses()
-	wonderBonuses := ge.getWonderBonuses()
-	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"] + wonderBonuses["military_power"]
-	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"] + wonderBonuses["expedition_reward"]
+	militaryBonus, expeditionBonus := ge.militaryPower(), ge.expeditionReward()
 	for _, cat := range []string{ExpeditionScouting, ExpeditionMilitary} {
 		if active := ge.Military.ActiveByCategory(cat); active != nil {
 			ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Name, active.TicksLeft))
@@ -1642,15 +1639,7 @@ func (ge *GameEngine) checkMilestones() {
 		if ms.Flavor != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", ms.Flavor))
 		}
-		// Apply rewards
-		for _, eff := range ms.Rewards {
-			switch eff.Type {
-			case "instant_resource":
-				ge.Resources.Add(eff.Target, eff.Value)
-			case "permanent_bonus":
-				ge.permanentBonuses[eff.Target] += eff.Value
-			}
-		}
+		ge.applyMilestoneRewards(ms.Rewards)
 		// Publish milestone event
 		ge.Bus.Publish(EventData{
 			Type: EventMilestoneCompleted,
@@ -1676,15 +1665,7 @@ func (ge *GameEngine) checkMilestones() {
 		if chain.Flavor != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", chain.Flavor))
 		}
-		// Inject speed boost event
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       chain.Key + "_boost",
-			Name:      chain.Name + " Speed Boost",
-			TicksLeft: boost,
-			Effects: []config.Effect{
-				{Type: "tick_speed", Target: "tick_speed", Value: chain.BoostValue},
-			},
-		})
+		ge.startChainBoost(chain, boost)
 		// Publish chain event
 		ge.Bus.Publish(EventData{
 			Type: EventChainCompleted,
@@ -1700,6 +1681,33 @@ func (ge *GameEngine) checkMilestones() {
 
 	// Recalculate title
 	ge.Milestones.recalculateTitle()
+}
+
+// applyMilestoneRewards grants a completed milestone's rewards: an instant
+// resource goes into the store (as much as fits), a permanent bonus into
+// permanentBonuses for the rest of the run. Under the write lock.
+func (ge *GameEngine) applyMilestoneRewards(rewards []config.Effect) {
+	for _, eff := range rewards {
+		switch eff.Type {
+		case "instant_resource":
+			ge.Resources.Add(eff.Target, eff.Value)
+		case "permanent_bonus":
+			ge.permanentBonuses[eff.Target] += eff.Value
+		}
+	}
+}
+
+// startChainBoost starts a completed milestone chain's game speed boost: a
+// timed tick_speed event lasting ticks. Under the write lock.
+func (ge *GameEngine) startChainBoost(chain config.MilestoneChainDef, ticks int) {
+	ge.Events.InjectEvent(ActiveEvent{
+		Key:       chain.Key + "_boost",
+		Name:      chain.Name + " Speed Boost",
+		TicksLeft: ticks,
+		Effects: []config.Effect{
+			{Type: "tick_speed", Target: "tick_speed", Value: chain.BoostValue},
+		},
+	})
 }
 
 // recalculateRates recalculates all resource production rates
@@ -1718,21 +1726,13 @@ func (ge *GameEngine) recalculateRates() {
 	// moraleMultiplier() is a banded curve: 1.0 across the neutral band, up to
 	// 1.0+moraleMaxBonus when morale is high, down to moraleMinMult when low.
 	mMult := ge.moraleMultiplier()
-	for res, rate := range ge.Buildings.WorkerScaledProduction(ge.Workers.GetAssignedCount) {
+	production, workerOutput := ge.Buildings.productionWithWorkerOutput(ge.Workers.GetAssignedCount)
+	for res, rate := range production {
 		moraleRate := float64(rate * mMult)
 		r := ge.Resources.resources[res]
 		if r != nil {
 			r.Rate += moraleRate
 			r.Breakdown.BuildingRate += moraleRate
-		}
-	}
-
-	// Worker production (returns empty in Phase 6+ — contribution folded into BuildingRate)
-	for res, rate := range ge.Workers.GetProductionRates() {
-		r := ge.Resources.resources[res]
-		if r != nil {
-			r.Rate += rate
-			r.Breakdown.WorkerRate += rate
 		}
 	}
 
@@ -1805,19 +1805,30 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Apply gather_rate bonus to worker-generated rates. This is ADDITIVE on the
-	// base worker rates — re-add the bonus portion (the production_all multiply
-	// above has already touched these rates, so we add the gather delta on top of
-	// the base). Fix B: ungated with the same floor. A negative gather_rate now
-	// reduces worker output, but the floored factor max(productionFloor, 1+Σ)
-	// means the effective worker contribution can't drop below 10% of base.
+	// Worker output (gather_rate): workers add that share more to the
+	// buildings they staff. Worker output is what staffing adds to a building
+	// (workerOutput above: 80% of its listed rate at a full crew, morale
+	// included), and the bonus adds Σ gather_rate of it, ON TOP of the
+	// multipliers above rather than through them, so it is never under the
+	// production cap and never compounds with it. Fix B: ungated and floored,
+	// so a negative total takes worker output down to 10% of itself at most.
+	//
+	// This block read WorkerManager.GetProductionRates, which has returned
+	// nothing since worker output was folded into building output: every
+	// worker output bonus in the game was dead. It reads the staffing share
+	// of building output now.
 	gatherBonus := r.AddTotal("gather_rate")
 	gatherDelta := math.Max(productionFloor, 1.0+gatherBonus) - 1.0
 	if gatherDelta != 0 {
-		for res, rate := range ge.Workers.GetProductionRates() {
-			r := ge.Resources.resources[res]
-			if r != nil {
-				r.Rate += float64(rate * gatherDelta)
+		for _, def := range ge.Resources.defs {
+			made := float64(workerOutput[def.Key] * mMult)
+			if made == 0 {
+				continue
+			}
+			if r := ge.Resources.resources[def.Key]; r != nil {
+				bonus := float64(made * gatherDelta)
+				r.Rate += bonus
+				r.Breakdown.WorkerRate += bonus
 			}
 		}
 	}
@@ -4152,10 +4163,7 @@ func (ge *GameEngine) GetState() GameState {
 	// amount, not the derived military-worker count. The soldier milestones key
 	// off the cumulative lifetime trained count instead (ge.Stats.SoldiersTrained).
 	soldierResource := int(ge.Resources.Get("soldiers"))
-	prestigeBonuses := ge.Prestige.GetBonuses()
-	wonderBonuses := ge.getWonderBonuses()
-	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"] + wonderBonuses["military_power"]
-	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"] + wonderBonuses["expedition_reward"]
+	militaryBonus, expeditionBonus := ge.militaryPower(), ge.expeditionReward()
 
 	// Prestige snapshot with pending points
 	prestigeSnap := ge.Prestige.Snapshot()

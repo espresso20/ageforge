@@ -371,12 +371,30 @@ func (bm *BuildingManager) GetEffects() []config.Effect {
 	return effects
 }
 
+// unstaffedShare is what a building with worker slots makes with nobody in
+// it; workers add the rest, staffedShare at a full crew.
+const (
+	unstaffedShare = 0.20
+	staffedShare   = 0.80
+)
+
 // WorkerScaledProduction computes production rates per resource, applying worker fill ratios.
 // getAssigned(workerDomain, buildingKey) returns the number of assigned workers for that building type.
 // Buildings with WorkerDomain set use: rate = base × count × (0.20 + 0.80 × assigned/totalCap).
 // Buildings without workers use: rate = base × count (unchanged behaviour).
 func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key string) int) map[string]float64 {
-	rates := make(map[string]float64)
+	rates, _ := bm.productionWithWorkerOutput(getAssigned)
+	return rates
+}
+
+// productionWithWorkerOutput is WorkerScaledProduction and, beside it, the
+// part of it that workers add: base × count × 0.80 × assigned/totalCap for
+// every building with worker slots. That part is "worker output", what a
+// worker output bonus (gather_rate) raises; an unstaffed building's 20%,
+// wonders and ruins have none.
+func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(domain, key string) int) (rates, workerOutput map[string]float64) {
+	rates = make(map[string]float64)
+	workerOutput = make(map[string]float64)
 	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type != "production" {
@@ -390,7 +408,9 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 				if fillRatio > 1.0 {
 					fillRatio = 1.0
 				}
-				rate = eff.Value * float64(count) * (0.20 + float64(0.80*fillRatio))
+				byWorkers := float64(staffedShare * fillRatio)
+				rate = eff.Value * float64(count) * (unstaffedShare + byWorkers)
+				workerOutput[eff.Target] += float64(eff.Value * float64(count) * byWorkers)
 			} else {
 				rate = eff.Value * float64(count)
 			}
@@ -410,7 +430,7 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 			}
 		}
 	}
-	return rates
+	return rates, workerOutput
 }
 
 // GetPopCapacity returns total population capacity from housing buildings
