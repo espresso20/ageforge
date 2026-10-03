@@ -311,7 +311,7 @@ func (o *orb) drawMandala(g mapstyle.MandalaGeom, rings []mapmodel.MandalaRing, 
 	// void is pale, and its light is ink)
 	gold := theme.Legible(o.c(mapmodel.InkAccent, iEmit, 0), void, 3)
 	white := theme.Legible(o.c(mapmodel.InkLight, iEmit, 0), void, 3)
-	burn := theme.Mix(void, gold, 0.8) // the core's cell burns gold
+	burn := theme.Mix(void, gold, 0.55) // the core's cell burns gold
 	core := theme.Legible(o.c(mapmodel.InkGlow, iEmit, 0), burn, 3)
 	inDisc := func(x, y int, r float64) bool {
 		dx, dy := float64(x-cx)/mapstyle.MandalaAspect, float64(y-cy)
@@ -332,8 +332,10 @@ func (o *orb) drawMandala(g mapstyle.MandalaGeom, rings []mapmodel.MandalaRing, 
 			switch {
 			case x == cx && y == cy:
 				o.fb.set(x, o.Y(y), ' ', void, burn, dMandala)
-			case inDisc(x, y, glow):
-				o.fb.set(x, o.Y(y), ' ', void, theme.Mix(void, gold, 0.25), dMandala)
+			case inDisc(x, y, glow): // fading out from the core
+				dx, dy := float64(x-cx)/mapstyle.MandalaAspect, float64(y-cy)
+				fade := 1 - math.Sqrt(float64(dx*dx)+float64(dy*dy))/glow
+				o.fb.set(x, o.Y(y), ' ', void, theme.Mix(void, gold, 0.06+float64(0.3*fade)), dMandala)
 			case inDisc(x, y, ext):
 				o.fb.set(x, o.Y(y), ' ', void, void, dMandala)
 			}
