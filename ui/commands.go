@@ -141,7 +141,7 @@ func registry() []*Command {
 	confirmYes := func(form, text string) *Command {
 		return &Command{Name: "confirm", BareOK: true, Subs: []*Command{{Name: "yes", Dangerous: true}}, Help: []Usage{{form, text}}}
 	}
-	prestigeConfirm := confirmYes("prestige confirm yes", "Reset game with prestige bonus")
+	prestigeConfirm := confirmYes("prestige confirm yes", "Prestige: a new run, keeping your points, the legacy kit and Era Mastery")
 	festivalConfirm := confirmYes("festival confirm yes", "Hold the festival now")
 
 	return []*Command{

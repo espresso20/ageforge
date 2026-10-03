@@ -4830,6 +4830,10 @@ func (ge *GameEngine) prestigeUpgradeLine(key string) string {
 	if !ok {
 		return fmt.Sprintf("Bought %s.", PrestigeUpgradeName(key))
 	}
+	if def.EffectType == "legacy" {
+		// A one-tier kit item: say what it does from now on.
+		return fmt.Sprintf("Bought %s. %s.", def.Name, def.Description)
+	}
 	tier := ge.Prestige.upgrades[key]
 	total := float64(def.PerTier * float64(tier))
 	var effect string

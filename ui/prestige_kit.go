@@ -32,8 +32,7 @@ func prestigePointsLines(state game.GameState) []string {
 			ageRef(state, p.NextAge), textfmt.Count(p.NextAgePoints, "point", "points"), textfmt.Int(p.NextAgePoints-p.PendingPoints)))
 	}
 	if order := config.AgeByKey(); p.CanPrestige && order[state.Age].Order < order[game.PrestigeRunAge].Order {
-		lines = append(lines, fmt.Sprintf("  [gray]A prestige before %s is an early taste: every age you complete pays 3 times more per era, so going deeper pays far more per day.[-]",
-			ageRef(state, game.PrestigeRunAge)))
+		lines = append(lines, "  [gray]This is an early taste: each era's ages pay 3 times what the era before paid, so going deeper pays far more per day.[-]")
 	}
 	return lines
 }
