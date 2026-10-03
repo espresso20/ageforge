@@ -100,7 +100,7 @@ Buildings destroyed are rounded down, with at least 1 if you have any. The Brace
 
 ### Your garrison
 
-Soldiers soften an Endure too. After Brace has done its part, your garrison blunts its share of what is left: the same share it would blunt of a raid, measured against the raid threat of the age the catastrophe strikes in. A pending catastrophe keeps you in that age until you choose. See [Defense: what your army blunts](military.md#7-defense-what-your-army-blunts) for how the share is worked out.
+Soldiers soften an Endure too. After Brace has done its part, your garrison blunts its share of what is left: the same share it would blunt of a raid, measured against the raid threat of the age the catastrophe strikes in. A pending catastrophe keeps you in that age until you choose. See [Defense: what your army blunts](military.md#defense-what-your-army-blunts) for how the share is worked out.
 
 - **Buildings:** the braced share of buildings destroyed shrinks by the garrison's share. The number of buildings the garrison saves is rounded down, so it never saves more than its share, and at least 1 building still falls if you have any.
 - **Stock:** the garrison keeps its share of the stock that Brace would have let go.

@@ -9,7 +9,7 @@ The Map has two **styles** you can switch between, both drawn from the same map 
 
 The Map shows only what you have reached. Civilizations you have not met are nowhere on it: no name, no town, no marker where they live. It names no age or era you have not reached either (the next age appears once it is within reach), and the harbinger on the map warns of impending doom (in the Cosmic Era, it may warn of the Last Passage instead), never of the era to come.
 
-`citymap` and `worldmap` still work: both open the Map. `worldmap` opens it on the known world (the roguelike style's region zoom).
+`citymap` and `worldmap` are aliases of `map` from the old City Map and World Map: both open the Map, and `worldmap` opens it on the known world (the roguelike style's region zoom).
 
 ---
 
@@ -182,9 +182,13 @@ Three settings shape the Map. They are saved **per account**, like your theme: t
 | `minimap` | Show whether the dashboard's mini map is on |
 | `minimap off` | Hide the mini map, so the Buildings list gets the whole column |
 | `minimap on` | Show the mini map again (the default) |
-| `map flows` | The flows overlay: full stores, understaffed buildings, idle workers. `map flows on` and `map flows off` set it; bare, it switches. It lasts for the session |
+| `map flows` | The flows overlay: where your economy is stuck (see [The flows overlay](#the-flows-overlay)). `map flows on` and `map flows off` set it; bare, it switches. It lasts for the session |
 
 All of them work while the Map is open, so you see the change at once.
+
+### The flows overlay
+
+`map flows` marks where your economy is stuck: stores that are full and still filling (what flows into them is wasted), stores that are falling and will run dry within about a minute, buildings short of workers, and idle workers. In the roguelike a flows panel lists each of those, then the five lineages that make most of your output, with a bar for each one's share, so you can see what your settlement actually runs on. The skyline sums it up in one line along the bottom row (for example *Iron runs dry · 2 stores full · 12 idle workers*) and suggests a command for the idle hands. In the roguelike, the inspect cursor on the town square gives the same one-line summary.
 
 ---
 
@@ -227,4 +231,5 @@ Both styles draw their colors from your active [theme](themes.md), so switching 
 - [All Commands](commands.md#map): the `map` command reference
 - [Themes & Accessibility](themes.md)
 - [Wonders](wonders.md)
-- [Trade & Diplomacy](trade.md): the routes and civilizations the Map draws
+- [Trade](trade.md): the routes the Map draws
+- [Factions & Diplomacy](factions.md): the civilizations on the Map
