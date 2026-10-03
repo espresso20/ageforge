@@ -944,6 +944,14 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.legacyBonuses = make(map[string]bool)
 	}
 	ge.catastropheHistory = save.CatastropheHistory
+	// Era Mastery: a save from before it gets the mastery its prestiges
+	// earned, once (after the signature check above, which covered the
+	// bytes as written; it reads the legacies just restored); every save
+	// makes sure the run's furthest age and the record cover the ages this
+	// run reached. Before the fate and the harbinger, which measure time in
+	// each age's speed.
+	ge.seedMasteryLocked()
+	ge.noteRunAgesLocked()
 	ge.restoreCatastropheState(&save)
 	ge.restoreFateState(&save)
 	ge.restoreHarbingerState(&save)
@@ -974,14 +982,9 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.autoRecruitOff = save.AutoRecruitOff
 	ge.staffHoldUntil = min(max(save.StaffHoldUntil, 0), ge.tick+staffHoldTicks)
 
-	// Era Mastery: a save from before it gets the mastery its prestiges
-	// earned, once (after the signature check above, which covered the
-	// bytes as written); every save makes sure the run's furthest age and
-	// the record cover the ages this run reached. The graced resources come
-	// back, and the grace rule starts from the loaded age's speed, not the
-	// one this engine ran at before.
-	ge.seedMasteryLocked()
-	ge.noteRunAgesLocked()
+	// The graced resources come back (Era Mastery's grace rule), and the
+	// rule starts from the loaded age's speed, not the one this engine ran
+	// at before.
 	ge.Resources.loadGrace(save.OverCapGrace)
 	ge.lastK = ge.speedK()
 
