@@ -62,7 +62,7 @@ func (o *orb) drawMandala(g mapstyle.MandalaGeom, rings []mapmodel.MandalaRing, 
 	for y := max(0, cy-int(ext)-1); y <= min(limit-1, cy+int(ext)+1); y++ {
 		for x := max(0, cx-int(2*ext)-1); x <= min(o.W-1, cx+int(2*ext)+1); x++ {
 			dx, dy := float64(x-cx)/mapstyle.MandalaAspect, float64(y-cy)
-			if dx*dx+dy*dy < ext*ext {
+			if float64(dx*dx)+float64(dy*dy) < float64(ext*ext) {
 				o.fb.set(x, o.Y(y), ' ', void, void, dMandala)
 			}
 		}

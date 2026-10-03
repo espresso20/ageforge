@@ -89,7 +89,7 @@ func LayMandala(n int, ry, rx float64) MandalaGeom {
 	g.Rings = rings
 	g.Lines = r0 >= mdLineGap && (rings <= 1 || gap >= mdLineGap)
 	for k := 0; k < rings; k++ {
-		g.Radii = append(g.Radii, r0+gap*float64(k))
+		g.Radii = append(g.Radii, r0+float64(gap*float64(k)))
 	}
 	if rings > 0 {
 		g.Extent = g.Radii[rings-1]
@@ -132,7 +132,9 @@ func LayMandala(n int, ry, rx float64) MandalaGeom {
 // point at radius r rows on the spoke t turns clockwise from the top,
 // folded into the first quadrant.
 func spokeAt(r, t float64) [2]int {
-	x, y := MandalaAspect*r*mapmodel.Sin(t), r*mapmodel.Cos(t)
+	// the float64 conversions keep a product from fusing with the add (an
+	// FMA on arm64), so every machine rounds to the same cells
+	x, y := float64(MandalaAspect*r*mapmodel.Sin(t)), float64(r*mapmodel.Cos(t))
 	return [2]int{int(math.Floor(math.Abs(x) + 0.5)), int(math.Floor(math.Abs(y) + 0.5))}
 }
 
@@ -170,7 +172,7 @@ func nearest(path [][2]int, p [2]int) [2]int {
 	best, bd := path[0], math.Inf(1)
 	for _, q := range path {
 		dx, dy := float64(q[0]-p[0])/MandalaAspect, float64(q[1]-p[1])
-		if d := dx*dx + dy*dy; d < bd {
+		if d := float64(dx*dx) + float64(dy*dy); d < bd {
 			best, bd = q, d
 		}
 	}
@@ -218,7 +220,7 @@ func mirrorIdx(p [2]int, part MandalaPart, ring, i, b int) []MandalaCell {
 // of light (about twelve seconds at the maps' frame rate) rolling outward
 // from the core, ring by ring. The core is ring -1.
 func Breath(anim, k, n int) float64 {
-	return 0.5 + 0.5*mapmodel.Sin(float64(anim)/96-float64(k+1)/float64(max(1, n)+2))
+	return 0.5 + float64(0.5*mapmodel.Sin(float64(anim)/96-float64(k+1)/float64(max(1, n)+2)))
 }
 
 // EraLight is the colour of an era's ring before a style resolves it

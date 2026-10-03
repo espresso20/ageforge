@@ -55,7 +55,7 @@ func (s *skyScene) mandala() {
 		total += mk.Count
 	}
 	if total > 0 && g.PetalR > 0 {
-		r := min(g.PetalR+0.6, 0.8+0.32*mapmodel.Log2(1+float64(total)))
+		r := min(g.PetalR+0.6, 0.8+float64(0.32*mapmodel.Log2(1+float64(total))))
 		for _, p := range discCells(mdX, mdY, mapstyle.MandalaAspect*r, r) {
 			c := s.cell(p.X, p.Y)
 			c.bg, c.soft = mapmodel.InkAccent, true
