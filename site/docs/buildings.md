@@ -148,6 +148,8 @@ A handful of **milestone rewards** (Master Builder, Grand Architect and others) 
 
 Build times are capped by the age's pace: nothing takes longer to build than **1/6 of its age's target time** (wonders included), and storage buildings take at most **1/48** of it (you can queue several copies at once, up to the cap). In practice that is 2m 30s in the Primitive Age, 2h 36m in the Renaissance and 10h 24m from the Interstellar Age on (storage: 18 seconds, 19m 30s and 1h 18m). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
 
+These are first-run times. On known ground (an age a past run completed) every build time is divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick, and production and storage are multiplied by it. The time shown when you start a build is the real, shortened one.
+
 ### Buildings a tech opens
 
 Most buildings unlock the moment you enter their age. Five wait for a tech from that same age instead, so the age has something new partway through:

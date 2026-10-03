@@ -110,6 +110,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 - The current [harbinger](harbinger.md), if one is present, and for past harbinger threads this run the chain of figures and the verdict
 - Full epoch event history for the current run
 - Your legacy bonuses earned across all runs
+- **Era Mastery**: every age up to your record (the deepest age you have ever entered) with its mastery and speed, catch-up marked, and what your next prestige adds. See [Era Mastery](prestige.md#era-mastery)
 - The civilization history log (catastrophe decisions, Succumb/Endure records)
 
 ---
@@ -265,7 +266,7 @@ Best when you've built a large, mature civilization that would be painful to res
 - **Up to 8 ruins** from your current buildings, never wonders or storage (50% base rate in later runs, no workers). Ruins are capped at 24 in total; past the cap the lowest-value ruins crumble first
 - **Legacy Bonus:** a permanent production bonus for this epoch's primary resource(s), active in all future runs including after prestige
 - **Ancient Knowledge:** a permanent +25% research speed per distinct epoch succumbed (a second Succumb in the same epoch adds nothing)
-- Full reset to the Primitive Age: resources, buildings, workers and research. No prestige points are earned; prestige level and upgrades are kept
+- Full reset to the Primitive Age: resources, buildings, workers and research. No prestige points are earned; prestige level, upgrades and [Era Mastery](prestige.md#era-mastery) are kept. Succumb raises no mastery, but on the rebuild every age 6 or more behind your record runs at least 4x ([catch-up](prestige.md#catch-up))
 
 **Legacy bonuses by epoch:**
 
@@ -403,14 +404,16 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 - All legacy bonuses active and applied
 - Ancient Knowledge active: +25% research speed per epoch succumbed
 - Epoch event history and catastrophe history kept
-- Prestige bonuses kept
+- Prestige level, upgrades and Era Mastery kept (a Succumb raises no mastery)
+- Ages 6 or more behind your record run at least 4x while you rebuild ([catch-up](prestige.md#catch-up))
 
 **After Prestige (end of a full run):**
 - Similar to Succumb, but chosen deliberately, from the Modern Age on, and it earns prestige points
 - Refused while a catastrophe is pending
 - From the Cosmic Era it first settles an open doom, then can bring the [Last Passage](prestige.md#the-last-passage), which holds the prestige until you Endure (keep part of the run's points) or Succumb (no points, but the permanent Cosmic Legacy)
 - Legacy bonuses, Ancient Knowledge and ruins carry
+- Every age below the run's furthest age gains a mastery level, so it runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
 - The civilization log carries; the per-run epoch event history is cleared
 - Prestige upgrades available
 
-Each run builds on the last. Three runs in, you have ruins producing for free, stacked research speed, and legacy bonuses on the resources that matter most, and you still play through all 22 ages.
+Each run builds on the last. Three runs in, you have ruins producing for free, stacked research speed, legacy bonuses on the resources that matter most, and the ages your runs completed going two to three times as fast, and you still play through all 22 ages.

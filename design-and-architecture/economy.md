@@ -134,6 +134,49 @@ scenario enforces them, and reports each interval as a ratio to the greedy bot o
 seeds (reported, not graded); the per-age greedy targets don't apply, since a check-in player
 can only act at a visit.
 
+**Later runs: Era Mastery (Pacing v2, PR 5).** The targets describe a first run. A later
+run is shorter wherever it covers known ground. Each age's mastery m is the number of prestige
+runs that completed it (`config.MasteryCap`, 10, at most), raised by one for every age below the
+run's furthest at each prestige and fixed during a run; a Succumb raises none. The age runs
+k = 1 + √m times as fast (`config.MasteryK`: 1, 2, 2.41, 2.73, 3 ... 4.16 at m = 10):
+
+- every net rate × k, at the very end of `recalculateRates` (after the ×3 cap, flat output, trade
+  bonuses and the food drain), shown as its own `Era Mastery` breakdown line;
+- storage × k, so the Storage Covenant's hours hold at any k;
+- build and research ticks ÷ k (`game.MasteryTicks`: rounded up, at least one tick; research
+  after the research-speed step);
+- the fate window and the harbinger's lead ÷ k (`expectedAgeTicks`), so a mastered era's doom
+  and its warning fall inside the shorter era.
+
+Payback, the build cap and the research cap are all fractions of the target, so multiplying
+every rate and dividing every build and research time by k keeps Laws 1 to 4 intact at
+target ÷ k: the same economy, played k times faster. Clocks counted in ticks (events, raids,
+routes, expeditions, cooldowns) are not divided, so a mastered age holds fewer of them. The
+frontier (m = 0) runs at 1x, so a first run is unchanged. **Catch-up**: an age
+`config.CatchUpGap` (6) or more behind the record (the deepest age ever entered) runs at least
+`config.CatchUpK` (4), which brings a veteran's first seven ages to hours, not days, and also
+speeds the rebuild after a Succumb. **The grace rule**: when k drops (new ground, or out of
+catch-up), storage shrinks with it, but stock above the new cap is kept until spent and never
+added to while over (`GameSave.OverCapGrace`). The old prestige passive (+2% production and +1%
+tick speed per level) retired into mastery; the upgrade shop and the points formula are
+unchanged in this step. Saves from before it are seeded once on load: prestige level L gives
+mastery min(10, L) from the Primitive to the Atomic Age (every past prestige was a Modern Age
+prestige).
+
+Measured with the smoke bot on the one-week curve (median of three seeds): the first run reaches
+the Modern Age in 5.33 days; the second (a push cycle, playing as long as the first took) reaches
+it in 2.31 days, covers the first run's ages 2.30x faster and ends one age deeper (the Information
+Age, one seed the Digital); the veteran preset (mastery 10 through the Space Age, record in the
+Interstellar Age) reaches it in 1.29 days. Veteran check-in players lag: 3-hour check-ins take
+1.83x the active veteran's time and 8-hour 3.40x, because a veteran's early ages are shorter than
+one visit and the bot's plan looks only one age ahead. `smoke/idle_targets.go` holds watch lines
+at 2.2x and 4.1x (warn only); Pacing v2 PR 6's legacy kit is meant to close the gap. The smoke
+grading lives in `smoke/mastery.go`: ages against target ÷ k (`VerdictK`), the Primitive and
+Stone Ages on known ground together under an hour (`VeteranEarlyMax`), the veteran's run to the
+Modern Age in 1.1 to 1.5 days (`VeteranRunLow`, `VeteranRunHigh`), and a push cycle at least
+1.9x faster over cycle 1's ages and at least one age deeper (`LaterRunMinSpeedup`,
+`LaterRunMinDepth`).
+
 ### Law 3: The Payback Rule
 > A production building, fully staffed, earns back the price of its first copy in its age's
 > **payback time**, valued at the age's **price parity**. Its output is derived from its

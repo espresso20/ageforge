@@ -68,7 +68,8 @@ When three places compute the same thing, they disagree. They do.
 | Source | Storage | Accessor | Target namespace | Persisted? |
 |--------|---------|----------|------------------|-----------|
 | Research | `ResearchManager.bonuses` | `GetBonus(t)` / `GetBonuses()` | any | reconstructed from techs |
-| Prestige (passive) | `level` | `GetBonuses()` | `production_all` +2%/lvl, `tick_speed` +1%/lvl | level saved |
+| Prestige (passive) | retired | none | was `production_all` +2%/lvl and `tick_speed` +1%/lvl; retired into Era Mastery (Pacing v2, PR 5) | n/a |
+| Era Mastery | `PrestigeManager.mastery`, `record` | `AgeSpeed(age)` (`game/mastery.go`) | not a resolver target: every net rate × k at the very end of `recalculateRates` (after the ×3 cap and food drain, shown as `Breakdown.MasteryRate`), storage × k, build and research ticks ÷ k (`MasteryTicks`) | saved (`prestige.mastery`, `furthest`, `run_furthest`, `mastery_seeded`) |
 | Prestige (upgrades) | `upgrades` map | `GetBonuses()` | upgrade `EffectKey` (e.g. `gather_rate`, `build_cost`) | saved |
 | Milestones | `permanentBonuses` (on complete) | direct write | any (`permanent_bonus` effects) | saved |
 | Wonders | building `Effects` | `getWonderBonuses()` (per tick) | `bonus` targets | recomputed |
@@ -137,7 +138,7 @@ const (
 
 type Modifier struct {
     Source string  // stable id for attribution: "research:masonry",
-                   // "wonder:colossus", "prestige:passive", "morale",
+                   // "wonder:colossus", "prestige", "morale",
                    // "event:peaceful_century", "milestone_chain:settlement"
     Target string  // canonical target (see vocabulary below)
     Op     Op

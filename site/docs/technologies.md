@@ -21,6 +21,8 @@ A `research_speed` bonus of `0.30` (30%) cuts the tick count to 70% of base. It 
 
 The adjusted ticks are locked in at the moment you start the tech. Gaining more `research_speed` mid-research does not retroactively shorten the current countdown.
 
+**Era Mastery.** On known ground (an age a past run completed) the adjusted ticks are then divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick: 2x after one completion, up to 4.2x after ten. The Research panel shows the shortened times.
+
 ### Knowledge Cost is Upfront
 
 Knowledge is removed from your stockpile when you issue the `research` command, before any ticks pass. If you don't have enough, the command fails. If your knowledge income drops to zero during a long research countdown, **research still completes**: the ticks count down whatever your knowledge income is, because the cost was already paid.

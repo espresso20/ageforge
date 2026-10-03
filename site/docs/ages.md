@@ -37,6 +37,8 @@ Each age is tuned to a target length in game time at 1x speed. Building output, 
 
 That is about a week (167 hours) from a fresh start to the Modern Age, where prestige unlocks. From the Bronze Age on, every age runs 2.6 times as long as it did on the earlier three-day curve, and the game's timers (events, raids, trade routes, expeditions, cooldowns) stretch with it, so each age holds as many of them as before. You don't have to sit through it: the game grants up to 24 hours of offline progress when you come back.
 
+These are first-run lengths. On later runs an age a past run completed is **known ground** and runs faster: 2x after one completion, up to 4.2x after ten, with production and storage multiplied and build and research times divided by the same factor. Ages 6 or more behind the deepest age you have ever entered run at least 4x. See [Era Mastery](prestige.md#era-mastery).
+
 ## What Happens on Age Advance
 
 When your civilization crosses into a new age:
@@ -48,6 +50,7 @@ When your civilization crosses into a new age:
    ```
 3. **Production continues at the old rate** until you upgrade. Leaving buildings un-upgraded costs nothing; the reason to upgrade is the new tier's higher output.
 4. **New-tier buildings are available at once** in the Buildings panel, so you can build fresh copies of the new tier right away.
+5. **The age's speed is set.** On known ground the log says how much faster the age runs (`Known ground: the Bronze Age runs 2.4x faster (mastery 2).`). Stepping from known ground onto an age no run has completed logs that it runs at 1x; storage shrinks back with the speed, but stock already above the new cap stays until you spend it (see [The grace rule](prestige.md#the-grace-rule)).
 
 ### Upgrading buildings after an advance
 

@@ -1,12 +1,12 @@
 # Prestige System
 
-Prestige is the endgame reset loop. When you reach the **Modern Age** (Age 12), you can sacrifice your entire civilization to earn **Prestige Points** and purchase permanent upgrades that carry into every future run.
+Prestige is the endgame reset loop. When you reach the **Modern Age** (Age 12), you can sacrifice your entire civilization to earn **Prestige Points** and purchase permanent upgrades that carry into every future run. Every age the run completed also runs faster from then on: see [Era Mastery](#era-mastery).
 
 ```
 prestige confirm yes
 ```
 
-> Prestige resets your age, resources, buildings, workers, and research. Prestige upgrades, legacy bonuses from Succumb, the Cosmic Legacy and ruins are **permanent**.
+> Prestige resets your age, resources, buildings, workers, and research. Prestige upgrades, Era Mastery, legacy bonuses from Succumb, the Cosmic Legacy and ruins are **permanent**.
 
 ---
 
@@ -14,7 +14,7 @@ prestige confirm yes
 
 You can prestige from the **Modern Age (Age 12)** or any later age. There is no upper limit: if you push on to the Quantum Age before prestiging, you earn more points.
 
-At 1x speed a run is paced to reach the Modern Age in about **a week of game time** (the smoke-test bot gets there in about 5.3 days). The ages before it range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. The game grants up to 24 hours of offline progress, so time away counts.
+At 1x speed a run is paced to reach the Modern Age in about **a week of game time** (the smoke-test bot gets there in about 5.3 days). The ages before it range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. The game grants up to 24 hours of offline progress, so time away counts. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
 
 Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first. From the Digital or Neon Era, a doom fated for your era that hasn't struck yet ends with the run when you prestige.
 
@@ -175,23 +175,102 @@ You can buy prestige upgrades **before you prestige again**. Points left over fr
 
 ---
 
-## Passive Prestige Bonuses
+## Era Mastery
 
-Beyond the purchased upgrades, you gain **passive bonuses** just from having a higher prestige level:
+Every age remembers how many of your runs completed it. That count is the age's **mastery**, from 0 to 10, and an age you have mastered runs faster: its production, storage, build times and research times all move **k** times as fast, where k = 1 + √mastery.
+
+### How mastery grows
+
+- **Prestige raises it.** Each prestige adds one level to every age below the run's furthest age: the age you prestige from, or a deeper one if the run went deeper. A Modern Age prestige completes the Primitive to the Atomic Age, so each of those gains a level. Push on to the Information Age first and the Modern Age gains one too.
+- **It stops at 10.** An age at mastery 10 gains nothing more.
+- **It is fixed during a run.** Mastery changes only at prestige, so an age's speed never changes while you play through it.
+- **Succumb leaves it alone.** A Succumb neither raises nor lowers mastery.
+- **It stays with your save.** Mastery is saved with your game and survives every prestige and Succumb. A new game starts from zero.
+
+### How much faster
+
+| Mastery | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Speed (k) | 1 | 2 | 2.41 | 2.73 | 3 | 3.24 | 3.45 | 3.65 | 3.83 | 4 | 4.16 |
+| Shown in game | 1x | 2x | 2.4x | 2.7x | 3x | 3.2x | 3.4x | 3.6x | 3.8x | 4x | 4.2x |
+
+The first completion doubles an age's speed, and each one after it adds less.
+
+An age at mastery 0 is the **frontier**: no run has completed it, and it runs at 1x. A first run is all frontier, so it plays exactly as it always did.
+
+### What runs faster
+
+On **known ground** (an age running faster than 1x, through mastery or [catch-up](#catch-up)):
+
+- **Production.** Every resource's net rate is multiplied by k. This comes last, after the ×3 production cap and every other bonus, food drain included, so a balanced food supply stays balanced. The `rates` breakdown shows it as its own **Era Mastery** part.
+- **Storage.** Every cap is multiplied by k too, so a store holds the same hours of income it would at 1x.
+- **Build times** are divided by k, rounded up, never below one tick.
+- **Research times** are divided by k after your research speed is applied, rounded up, never below one tick. The Research and Wonders panels show the shortened times.
+- **Catastrophe timing.** A fated doom's window and the harbinger's lead shrink with each age's speed (see [Catastrophes on known ground](#catastrophes-on-known-ground)).
+
+What does not change:
+
+- **The clock.** Mastery doesn't make ticks come faster. Each tick produces more, and builds and research need fewer ticks.
+- **Timers on the clock.** Events, raids, trade routes, expeditions, campaigns and cooldowns keep their length, so a mastered age, being shorter, holds fewer of them.
+- **Prestige points and the upgrade shop.** Both work as described on this page.
+
+### Catch-up
+
+Your **record** is the deepest age you have ever entered, in any run. An age **6 or more ages behind your record** runs at least **4x**, or at its own speed if that is higher (4.2x at mastery 10). With a record in the Interstellar Age, every age up to the Modern Age runs at 4x or better, whatever its mastery.
+
+Catch-up applies after a Succumb too, even on a run that has never prestiged: the rebuild runs the ages 6 or more behind your record at least 4x. Fall in the Steel Era from the Industrial Age, and the next run's Primitive, Stone and Bronze Ages run at 4x.
+
+### The grace rule
+
+When your speed drops, as you step from known ground onto new ground or out of catch-up, storage shrinks with it. Stock already above the new cap is not cut:
+
+- it stays until you spend it;
+- production adds nothing to that resource while it is over the cap;
+- once it falls under the cap, the grace ends and the resource fills normally again.
+
+Graced stock is saved with your game.
+
+### Catastrophes on known ground
+
+A fated doom's window and the harbinger's lead are measured in each age's target time divided by its speed. In a mastered era the doom and its warning both fall inside the shorter era, and warnings are shorter in the same proportion: at 4x the harbinger's lead in the Iron Age is about 20 minutes to an hour instead of 1.3 to 3.9 hours. Mastery is fixed for the run, so a fate rolled when you enter an era never shifts under you. See [The Harbinger](harbinger.md#when-the-harbinger-arrives).
+
+### Saves from before Era Mastery
+
+The first time a save from before Era Mastery loads, it gets the mastery its past prestiges earned. Every prestige back then was a Modern Age prestige, which completes the Primitive to the Atomic Age, so a save at prestige level L gets mastery L (10 at most) in each of those ages. Its record becomes the deepest of: the age it is in, the Modern Age, the Interstellar Age if it holds the Cosmic Legacy, and the first age of every epoch it succumbed in. This happens once, and the log says so:
 
 ```
-+2% production (all resources) per prestige level
-+1% tick speed per prestige level
+Era Mastery: ages you have completed now run faster. Primitive to Atomic: mastery 5 (3.2x).
 ```
 
-These stack on top of your purchased upgrade bonuses. A prestige level 5 player has +10% production and +5% tick speed before spending a single prestige point on upgrades.
+A save at prestige level 0 gains nothing.
+
+**Example.** A level-5 save, mid-run in the Industrial Age, loads with mastery 5 (k = 3.24) in every age from the Primitive to the Atomic Age and a record in the Modern Age. The Industrial Age runs 3.2x faster at once. The run's next Modern Age prestige takes those ages to mastery 6 (k = 3.45).
+
+### What you see
+
+- `prestige` and the **Stats** panel show the age you are in: `Era Mastery: known ground, 2.4x faster (mastery 2)`, `known ground, 4x faster (catching up to your record)` or `new ground, 1x`. Under it is what your next prestige adds, for example `Next prestige: the Primitive Age to the Atomic Age gain a mastery level each.`
+- The **Epoch** panel (`epoch`) has an **Era Mastery** section: every age up to your record with its mastery and speed (catch-up marked), and the next prestige's gains. It never names an age past your record.
+- Entering an age logs its speed: `Known ground: the Bronze Age runs 2.4x faster (mastery 2).`, or `Known ground: the Bronze Age runs 4x faster while you catch up to your record.` Stepping from known ground onto an age no run has completed logs `New ground: the Modern Age runs at 1x until a prestige completes it.`
+- A prestige logs the ages that gained, for example `Era Mastery: the Primitive Age to the Atomic Age gained a mastery level each and will run faster.`
+
+### How much faster a run gets
+
+Measured with the smoke-test bot, a near-perfect player, on the one-week curve (median of three seeds):
+
+| Run | To the Modern Age |
+|-----|-------------------|
+| First run | 5.3 days |
+| Second run | 2.3 days: the first run's ages go by 2.3x faster, and the run ends an age deeper |
+| Veteran (mastery 10 through the Space Age, record in the Interstellar Age) | 1.3 days |
+
+On known ground the early ages are short: at 4x the Primitive and Stone Ages are paced at about 15 minutes together and the Bronze Age at under an hour. The start of a run rewards checking in often.
 
 ---
 
 ## What Resets vs Persists
 
 ### Resets on Prestige
-- All resources (reset to starting amounts: 15 food, 12 wood + prestige bonuses)
+- All resources (reset to starting amounts: 15 food, 12 wood, plus your Starting Food and Starting Wood upgrades)
 - All buildings and build queue
 - All workers (recruited and assigned)
 - All research (tech tree reverts)
@@ -202,6 +281,7 @@ These stack on top of your purchased upgrade bonuses. A prestige level 5 player 
 
 ### Persists Across Prestige
 - Prestige level and all purchased upgrade tiers
+- Era Mastery: every age's mastery, and your record (the deepest age you have ever entered)
 - Ruins (from past Succumb events), which carry into the new run
 - Legacy bonuses (from Succumb events), active from tick 1
 - The Cosmic Legacy, if you have earned it
@@ -322,7 +402,7 @@ See [Technologies](technologies.md) for the full tech tree and the other free-re
 | 2nd | Max out `research_speed` | All 5 tiers give +25% knowledge output and stack with Ancient Knowledge |
 | 3rd | `expedition_loot` | More resources from late-game expeditions |
 
-**Temporal Mastery** (`tick_speed`) is the most expensive upgrade (33 points for tier 5) and also the strongest: each tier makes the whole game tick 5% faster. At tier 5 you're running at 1.25× base speed before passive bonuses.
+**Temporal Mastery** (`tick_speed`) is the most expensive upgrade (33 points for tier 5) and also the strongest: each tier makes the whole game tick 5% faster. At tier 5 the game ticks 25% faster, on top of the tick speed from techs and milestone chains.
 
 ---
 
@@ -330,7 +410,7 @@ See [Technologies](technologies.md) for the full tech tree and the other free-re
 
 - Spend banked points from earlier runs as soon as you log in. You don't need to prestige to spend them.
 - Milestones reset on prestige. Each run earns them again, and they count toward that run's points.
-- Aim to finish one more wonder each run than the last. Wonder bonuses stack with prestige bonuses.
+- Aim to finish one more wonder each run than the last. Wonder bonuses stack with prestige upgrades.
 - Don't rush the first prestige. Reaching later ages (Information, Digital and beyond) first gives many more points than resetting at the Modern Age.
 - Prestiging from the Cosmic Era is a gamble. Appease before you confirm to lower the odds, Brace if you would Endure, Invite if you want the Cosmic Legacy.
-- The passive bonus grows with every level. At prestige level 10 you have +20% all production and +10% tick speed before spending a single upgrade point.
+- Push past the Modern Age before you prestige when you can. Every age the run completes gains a mastery level, so the next run is faster further in.
