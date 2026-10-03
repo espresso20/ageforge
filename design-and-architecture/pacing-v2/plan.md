@@ -6,6 +6,7 @@
 > - **Remaining:** PRs 6 and 7.
 > - **Owner decisions:** a one-week first run, Era Mastery (Option C of the prestige audit), and the player `speed` setting retired.
 > - **PR 2 trim:** the research queue and the standing catastrophe order were cut. Offline progress is unchanged at 24 hours (not the 72 below).
+> - **PR 6 trim:** Research Memory was cut by the owner on 2026-10-03, pending the tech tree redesign: the kit must not pick a research path for the player. The kit ships as three items at their planned prices: Plan Template 9, Worker Shares 36 and Old Friends 54 (99 points, not 117). Techs the player puts in the build plan still come along with the Plan Template. The veteran check-in limits were set from measurement at 1.6x (3 h) and 2.6x (8 h), not the 1.5x and 2.0x below; measured 1.46x and 2.40x.
 > - **Open questions:** every recommended default is accepted, except the 100% offline rate (question 2), which is deferred.
 
 Plan only: nothing here is built yet. Written 2026-09-30 against origin/master 47a3822.
@@ -407,10 +408,10 @@ CONTRIBUTING.md has said prestige opens at the Medieval Age for a while. This PR
   - The nine old perks stay in the file, marked retired: hidden, no effect, can't be bought. Their costs stay frozen for the refund.
   - New one-tier items; their keys are permanent:
     - `legacy_plan`, Plan Template, 9 points
-    - `legacy_research`, Research Memory, 18
+    - `legacy_research`, Research Memory, 18 (cut by the owner on 2026-10-03, pending the tech tree redesign; never shipped)
     - `legacy_workers`, Worker Shares, 36
     - `legacy_factions`, Old Friends, 54
-  - 117 points in all: a Medieval taste buys the template, and a first Modern run buys the rest.
+  - 117 points in all: a Medieval taste buys the template, and a first Modern run buys the rest. (99 as shipped, without Research Memory.)
 - **Refund on shop version change (M).** See the migration section.
 - **Plan Template (L).**
   - Record the plan as the player writes it, each item tagged with the age it was added in. A build's count is Count + Started; deals are skipped, because their offer IDs die with the run.
@@ -418,6 +419,7 @@ CONTRIBUTING.md has said prestige opens at the Medieval Age for a while. This PR
   - The live plan can't serve as the template: by prestige it only holds what's left.
   - A Succumb re-applies the template too.
 - **Research Memory (S).** Record the run's completion order, both in finishResearch (engine.go:1186) and on the Grand Discovery path (engine.go:2099). At run start, fill the research queue with it.
+  - **Cut by the owner on 2026-10-03, pending the tech tree redesign.** His reason: an item that starts techs by itself tells the player they can't pick their own research path. Nothing in PR 6 auto-picks research: no order is recorded or saved, and the fields below marked "cut" were never written by a released build. What carries a research path across a prestige is the player's own plan: `plan research` items are recorded with the plan and come back with the Plan Template.
 - **Worker Shares (S).** Keep PR 4's shares and the auto-recruit setting across the prestige.
 - **Old Friends (S).** Remember the factions met. They're met again as soon as your age reaches theirs, with no expedition and no two-age wait, at neutral opinion.
 - **Account (S).** RecordPrestige records the age prestiged from, so badges can tell a taste from a full run.
@@ -426,11 +428,11 @@ CONTRIBUTING.md has said prestige opens at the Medieval Age for a while. This PR
 **New saved fields** (all omitempty)
 - `PrestigeSave.ShopVersion int` `json:"shop_version,omitempty"`
 - `PrestigeSave.LegacyPlan []PlanTemplateItem` `json:"legacy_plan,omitempty"`
-- `PrestigeSave.LegacyResearch []string` `json:"legacy_research,omitempty"`
+- `PrestigeSave.LegacyResearch []string` `json:"legacy_research,omitempty"` (cut with Research Memory)
 - `PrestigeSave.LegacyFactions []string` `json:"legacy_factions,omitempty"`
 - `PrestigeSave.LegacyShares map[string]float64` `json:"legacy_shares,omitempty"`
 - `GameSave.PlanLog []PlanTemplateItem` `json:"plan_log,omitempty"` (this run's plan as written)
-- `ResearchSave.Order []string` `json:"order,omitempty"` (this run's completion order)
+- `ResearchSave.Order []string` `json:"order,omitempty"` (this run's completion order; cut with Research Memory)
 - In account.json stats: `PrestigesByAge map[string]int` `json:"prestiges_by_age,omitempty"`
 
 **Tests**
@@ -443,7 +445,7 @@ CONTRIBUTING.md has said prestige opens at the Medieval Age for a while. This PR
   - Retired keys can't be bought.
 - Kit:
   - template capture (age tags, counts, deals skipped) and re-apply at run start and each advance, within the 60-item cap
-  - the research queue fills in order and holds techs that aren't available yet
+  - the research queue fills in order and holds techs that aren't available yet (cut with Research Memory; as shipped: a planned tech comes along with the template, and nothing researches by itself)
   - remembered factions are met at their age
   - shares carry over
 - Account: prestiges are recorded by age.
@@ -454,7 +456,7 @@ CONTRIBUTING.md has said prestige opens at the Medieval Age for a while. This PR
 - **Static:** the weights table, and a second Medieval reset right after a Modern run gains under 10% (9 of 120).
 - **Kit carry-over** (prestige_rules.go):
   - template items present at run start and after each advance
-  - the queue filled in order
+  - the queue filled in order (cut with Research Memory)
   - remembered factions met at their age
   - shares applied
 - **scenario_prestige.go:** its hooked half (:144-165) tests the old perks and gets rewritten: old keys inert, the refund from the level-5 fixture, each kit item bought and checked.
@@ -630,7 +632,7 @@ At PR 6 (shop refund):
 - Available becomes 600, and so does TotalEarned; lifetime points are in new units from here on.
 - All nine old tiers go to 0. Keys are kept. ShopVersion becomes 2.
 - One log line: "The prestige shop changed. Your old perks were refunded as 600 points (5 prestiges at 120 each)."
-- 600 buys the whole kit (117) and leaves 483 for later shop items.
+- 600 buys the whole kit (117) and leaves 483 for later shop items. (As shipped, without Research Memory: the kit costs 99 and leaves 501.)
 - Its next prestige at Modern pays 120 points. At level 5 under the √ divisor it paid 12.
 
 Other cases:
@@ -739,7 +741,7 @@ Other cases:
    - Default: now. Without them a new run starts with zero workers and nothing recruits.
 5. **Succumb and mastery.** Should a Succumb commit mastery for the ages completed so far, so the rebuild runs at 2x? A first-run Succumb early in the Steel era costs about 27 hours of replay on the new curve; with this, about 13.
    - Default: yes, in PR 7.
-6. **Kit prices** 9 / 18 / 36 / 54.
+6. **Kit prices** 9 / 18 / 36 / 54. (As shipped: 9 / 36 / 54; the 18-point Research Memory was cut on 2026-10-03.)
    - Default: as listed. A Medieval taste buys the template; a first Modern run buys the rest.
 7. **What counts as a prestige for badges.** Every prestige, or only Modern or deeper?
    - Default: first_prestige for any prestige; the 10 and 25 rungs for Modern or deeper.
