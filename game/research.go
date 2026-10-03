@@ -32,10 +32,6 @@ type ResearchManager struct {
 	// is divided by it after the research-speed step (MasteryTicks). The
 	// engine sets it before each start; 0 or 1 leaves times alone.
 	timeK float64
-	// done is the order this run's techs finished in, Grand Discovery's
-	// included: Research Memory's source (legacy.go). Saved
-	// (ResearchSave.Order).
-	done []string
 }
 
 // NewResearchManager creates a new research manager
@@ -172,7 +168,6 @@ func (rm *ResearchManager) Tick() string {
 	if rm.ticksLeft <= 0 {
 		completed := rm.currentTech
 		rm.researched[completed] = true
-		rm.done = append(rm.done, completed)
 
 		// Apply effects as permanent bonuses
 		rm.rebuildBonuses()
@@ -231,7 +226,6 @@ func (rm *ResearchManager) ForceCompleteN(n int, currentAge string, ageOrder map
 			continue
 		}
 		rm.researched[key] = true
-		rm.done = append(rm.done, key)
 		completed = append(completed, key)
 	}
 	if len(completed) > 0 {
@@ -352,33 +346,4 @@ func (rm *ResearchManager) LoadState(researched []string, currentTech string, ti
 	rm.currentTech = currentTech
 	rm.ticksLeft = ticksLeft
 	rm.totalTicks = totalTicks
-}
-
-// Order returns the order this run's techs finished in (a copy).
-func (rm *ResearchManager) Order() []string {
-	return slices.Clone(rm.done)
-}
-
-// LoadOrder restores the completion order from a save: researched techs
-// only, each once, then any researched tech the order misses (a save from
-// before the order was kept) by age, then key. Call after LoadState.
-func (rm *ResearchManager) LoadOrder(order []string, ageOrder map[string]int) {
-	rm.done = nil
-	seen := map[string]bool{}
-	for _, k := range order {
-		if rm.researched[k] && !seen[k] {
-			seen[k] = true
-			rm.done = append(rm.done, k)
-		}
-	}
-	var rest []string
-	for _, k := range rm.order {
-		if rm.researched[k] && !seen[k] {
-			rest = append(rest, k)
-		}
-	}
-	slices.SortStableFunc(rest, func(a, b string) int {
-		return ageOrder[rm.defs[a].Age] - ageOrder[rm.defs[b].Age]
-	})
-	rm.done = append(rm.done, rest...)
 }

@@ -294,12 +294,11 @@ type PrestigeSave struct {
 	// ShopVersion is the prestige shop the save was written under (absent:
 	// the first shop). Below config.PrestigeShopVersion a load refunds the
 	// retired perks once (refundShopLocked). The legacy kit's memory
-	// (legacy.go): the plan template, the research order, the civilizations
-	// met and the worker shares. All omitempty, so saves from before them
-	// keep their bytes and signatures.
+	// (legacy.go): the plan template, the civilizations met and the worker
+	// shares. All omitempty, so saves from before them keep their bytes and
+	// signatures.
 	ShopVersion    int                `json:"shop_version,omitempty"`
 	LegacyPlan     []PlanTemplateItem `json:"legacy_plan,omitempty"`
-	LegacyResearch []string           `json:"legacy_research,omitempty"`
 	LegacyFactions []string           `json:"legacy_factions,omitempty"`
 	LegacyShares   map[string]float64 `json:"legacy_shares,omitempty"`
 }
@@ -310,9 +309,6 @@ type ResearchSave struct {
 	CurrentTech string   `json:"current_tech"`
 	TicksLeft   int      `json:"ticks_left"`
 	TotalTicks  int      `json:"total_ticks"`
-	// Order is the order this run's techs finished in (Research Memory's
-	// source). omitempty; a save without it rebuilds one by age.
-	Order []string `json:"order,omitempty"`
 }
 
 // MilitarySave holds military state for save.
@@ -603,7 +599,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			CurrentTech: ge.Research.currentTech,
 			TicksLeft:   ge.Research.ticksLeft,
 			TotalTicks:  ge.Research.totalTicks,
-			Order:       ge.Research.Order(),
 		},
 		Military: MilitarySave{
 			ActiveScout:    activeScout,
@@ -637,7 +632,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 
 			ShopVersion:    ge.Prestige.shopVersion,
 			LegacyPlan:     clonePlanTemplate(ge.Prestige.legacyPlan),
-			LegacyResearch: slices.Clone(ge.Prestige.legacyResearch),
 			LegacyFactions: slices.Clone(ge.Prestige.legacyFactions),
 			LegacyShares:   cloneShares(ge.Prestige.legacyShares),
 		},
@@ -857,7 +851,6 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	// Restore Phase 3 systems
 	ge.Research.LoadState(save.Research.Researched, save.Research.CurrentTech, save.Research.TicksLeft, save.Research.TotalTicks)
-	ge.Research.LoadOrder(save.Research.Order, ge.progress.GetAgeOrder())
 	scoutActive, militaryActive := ge.Military.migrateActives(save.Military)
 	ge.Military.LoadState(scoutActive, militaryActive, save.Military.CompletedCount, save.Military.TotalLoot)
 	ge.autoExpeditionTicksLeft = save.Military.AutoExpeditionTicksLeft
@@ -877,7 +870,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Restore prestige
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
 	ge.Prestige.LoadMastery(save.Prestige.Mastery, save.Prestige.Furthest, save.Prestige.RunFurthest, save.Prestige.MasterySeeded)
-	ge.Prestige.LoadLegacy(save.Prestige.ShopVersion, save.Prestige.LegacyPlan, save.Prestige.LegacyResearch, save.Prestige.LegacyFactions, save.Prestige.LegacyShares)
+	ge.Prestige.LoadLegacy(save.Prestige.ShopVersion, save.Prestige.LegacyPlan, save.Prestige.LegacyFactions, save.Prestige.LegacyShares)
 
 	// Restore trade
 	ge.Trade.LoadState(save.Trade)

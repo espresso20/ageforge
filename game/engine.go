@@ -4164,9 +4164,6 @@ func (ge *GameEngine) GetState() GameState {
 	if next := ge.progress.GetNextAge(ge.age); next != "" {
 		prestigeSnap.NextAge, prestigeSnap.NextAgePoints = next, ge.Prestige.CalculatePoints(next)
 	}
-	if ge.Prestige.Owns(config.LegacyResearch) {
-		prestigeSnap.Kit.ResearchNext = ge.rememberedTechLocked()
-	}
 
 	speedMult := ge.speedMultiplier
 	if speedMult < 1.0 {
@@ -4479,9 +4476,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 	if !starts.empty() {
 		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.Buildings.defs)+".")
-	}
-	if r := starts.describeRemembered(); r != "" {
-		ge.addLog("info", "While you were away, Research Memory started researching "+r+".")
 	}
 	if staffed.any() {
 		ge.addLog("info", "While you were away, your worker shares "+staffed.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")

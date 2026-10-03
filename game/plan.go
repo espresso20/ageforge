@@ -464,9 +464,6 @@ type planStarts struct {
 	advanced string
 	// deals are the deal items taken, as labels.
 	deals []string
-	// remembered are the techs Research Memory started (legacy.go). They
-	// are not the plan's, so describe leaves them out (describeRemembered).
-	remembered []string
 }
 
 func (s *planStarts) addTrade(from, to string, sold, got float64) {
@@ -493,20 +490,6 @@ func (s *planStarts) addBuild(key string) {
 
 func (s *planStarts) empty() bool {
 	return len(s.order) == 0 && len(s.techs) == 0 && len(s.tradeOrder) == 0 && s.advanced == "" && len(s.deals) == 0
-}
-
-// describeRemembered names the techs Research Memory started: "Pottery and
-// Writing" ("" for none).
-func (s *planStarts) describeRemembered() string {
-	if len(s.remembered) == 0 {
-		return ""
-	}
-	techs := config.TechByKey()
-	names := make([]string, 0, len(s.remembered))
-	for _, k := range s.remembered {
-		names = append(names, techs[k].Name)
-	}
-	return textfmt.List(names)
 }
 
 // describe renders the starts as verb-led clauses: "started building 2 Huts
@@ -703,9 +686,7 @@ func (ge *GameEngine) planCovers(cost map[string]float64, reserved map[string]fl
 // Reports whether anything started.
 func (ge *GameEngine) runPlan(starts *planStarts) bool {
 	if len(ge.plan) == 0 {
-		// Research Memory (legacy.go) runs after the plan, with nothing
-		// reserved when the plan is empty.
-		return ge.replayResearchMemory(nil, starts)
+		return false
 	}
 	started := false
 	reserved := map[string]float64{}
@@ -856,11 +837,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		ge.addLog("info", fmt.Sprintf("Plan: advancing to the %s.", ge.progress.GetAgeName(next)))
 		ge.advanceAge(next)
 		starts.advanced = ge.progress.GetAgeName(ge.age)
-		return true
-	}
-	// Research Memory (legacy.go) takes the research slot only after the
-	// plan's own items, and only knowledge they leave unreserved.
-	if ge.replayResearchMemory(reserved, starts) {
 		started = true
 	}
 	return started
@@ -958,12 +934,7 @@ func planStaffSource(def config.BuildingDef) bool {
 func (ge *GameEngine) runPlanTick() {
 	var s planStarts
 	if ge.runPlan(&s) {
-		if !s.empty() {
-			ge.addLog(LogRoutine, "Plan: "+s.describe(ge.Buildings.defs)+".")
-		}
-		if r := s.describeRemembered(); r != "" {
-			ge.addLog(LogRoutine, fmt.Sprintf("Research Memory: started researching %s (%s).", r, ge.durationLocked(ge.Research.totalTicks)))
-		}
+		ge.addLog(LogRoutine, "Plan: "+s.describe(ge.Buildings.defs)+".")
 	}
 }
 

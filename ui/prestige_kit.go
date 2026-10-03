@@ -58,19 +58,12 @@ func kitStatusLine(state game.GameState) string {
 // shop.
 func kitMemoryLines(state game.GameState) []string {
 	k := state.Prestige.Kit
-	if k.PlanItems+k.ResearchTechs+k.Factions+k.Shares == 0 {
-		return []string{"  [gray]The kit remembers your plan, research order, worker shares and the civilizations you meet. Nothing is remembered yet: it starts with your first prestige.[-]"}
+	if k.PlanItems+k.Factions+k.Shares == 0 {
+		return []string{"  [gray]The kit remembers your plan, worker shares and the civilizations you meet. Nothing is remembered yet: it starts with your first prestige.[-]"}
 	}
 	lines := []string{"  [gold]What the kit remembers from your runs[-]"}
 	if k.PlanItems > 0 {
 		lines = append(lines, fmt.Sprintf("  Plan: %s over %s.", textfmt.Count(k.PlanItems, "item", "items"), textfmt.Count(k.PlanAges, "age", "ages")))
-	}
-	if k.ResearchTechs > 0 {
-		line := fmt.Sprintf("  Research order: %s.", textfmt.Count(k.ResearchTechs, "tech", "techs"))
-		if k.ResearchNext != "" {
-			line += " Next: " + game.TechName(k.ResearchNext) + "."
-		}
-		lines = append(lines, line)
 	}
 	if k.Shares > 0 {
 		lines = append(lines, fmt.Sprintf("  Worker shares: %s.", textfmt.Count(k.Shares, "domain", "domains")))

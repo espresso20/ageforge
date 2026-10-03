@@ -359,15 +359,15 @@ func oldSave(t *testing.T, ge *GameEngine, name string) {
 	old.OverCapGrace = nil
 	// Nor the legacy kit (Pacing v2, PR 6): the first shop, no kit memory.
 	old.Prestige.ShopVersion = 0
-	old.Prestige.LegacyPlan, old.Prestige.LegacyResearch, old.Prestige.LegacyFactions, old.Prestige.LegacyShares = nil, nil, nil, nil
-	old.PlanLog, old.Research.Order = nil, nil
+	old.Prestige.LegacyPlan, old.Prestige.LegacyFactions, old.Prestige.LegacyShares = nil, nil, nil
+	old.PlanLog = nil
 	old.Signature = signSave(old, saveHMACKey)
 	data, err := json.MarshalIndent(old, "", "  ")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, field := range []string{`"mastery"`, `"furthest"`, `"run_furthest"`, `"mastery_seeded"`, `"over_cap_grace"`,
-		`"shop_version"`, `"legacy_plan"`, `"legacy_research"`, `"legacy_factions"`, `"legacy_shares"`, `"plan_log"`} {
+		`"shop_version"`, `"legacy_plan"`, `"legacy_factions"`, `"legacy_shares"`, `"plan_log"`} {
 		if strings.Contains(string(data), field) {
 			t.Fatalf("an old save still writes %s: the field must be omitempty", field)
 		}

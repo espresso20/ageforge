@@ -11,7 +11,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// The legacy kit (Pacing v2, PR 6): four prestige shop items that carry a
+// The legacy kit (Pacing v2, PR 6): three prestige shop items that carry a
 // run's automation across the reset (site/docs/prestige.md, "The legacy
 // kit").
 //
@@ -27,17 +27,9 @@ import (
 //     template bought, the start of a run and every advance add that age's
 //     slice to the plan, the advance item included, so a plan written once
 //     chains ages while the player is away. The slice is logged again as
-//     written, so the template carries forward.
-//   - Research Memory (config.LegacyResearch). The engine records the order
-//     techs finish in (ResearchManager.done, Grand Discovery included). At
-//     prestige and Succumb it becomes the remembered order (this run's
-//     order, then any older techs this run didn't reach). With the memory
-//     bought, whenever the research slot is free, the plan holds no research
-//     item of this age and knowledge covers it after the plan's
-//     reservations, the first remembered tech not yet researched whose age
-//     and prerequisites are met starts by itself (replayResearchMemory).
-//     Techs not available yet wait in place. It is not a research queue:
-//     there is nothing to edit, it replays the last run's order only.
+//     written, so the template carries forward. The techs in it are the
+//     ones the player planned (`plan research`): the kit never picks a
+//     research path by itself.
 //   - Worker Shares (config.LegacyWorkers). The shares the player set carry
 //     into the next run instead of going back to auto (startRunShares).
 //   - Old Friends (config.LegacyFactions). Every civilization met is
@@ -47,6 +39,11 @@ import (
 //
 // The kit remembers whether or not it is bought, so an item bought right
 // after a prestige works on the run that just began.
+//
+// A fourth item, Research Memory, which replayed the last run's research
+// order whenever the research slot was idle, was cut before release (the
+// owner, 2026-10-03): research is getting its own redesign, a full tech
+// tree, and nothing here should choose a research path for the player.
 
 // PlanTemplateItem is one item of the plan template, as saved: the age it
 // was written in and the item (see PlanItem; Count is a build's copies).
@@ -133,17 +130,14 @@ func mergePlanTemplate(old, run []PlanTemplateItem, touched map[string]bool) []P
 	return out
 }
 
-// mergeOrder is this run's research order followed by the older order's
-// techs this run didn't finish, each once.
-func mergeOrder(run, old []string) []string {
-	seen := make(map[string]bool, len(run)+len(old))
+// uniqueKeys is keys with every repeat after the first dropped.
+func uniqueKeys(keys []string) []string {
+	seen := make(map[string]bool, len(keys))
 	var out []string
-	for _, src := range [][]string{run, old} {
-		for _, k := range src {
-			if !seen[k] {
-				seen[k] = true
-				out = append(out, k)
-			}
+	for _, k := range keys {
+		if !seen[k] {
+			seen[k] = true
+			out = append(out, k)
 		}
 	}
 	return out
@@ -378,80 +372,6 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 	ge.addLog(LogRoutine, line)
 }
 
-// ===== Research Memory =====
-
-// rememberedTechLocked is the tech Research Memory would start next: the
-// first in the remembered order that is not researched or being researched
-// and whose age and prerequisites are met ("" if none). Caller holds the
-// lock.
-func (ge *GameEngine) rememberedTechLocked() string {
-	order := ageOrders()
-	cur := order[ge.age]
-	defs := ge.Research.defs
-	for _, key := range ge.Prestige.legacyResearch {
-		def, ok := defs[key]
-		if !ok || ge.Research.researched[key] || ge.Research.currentTech == key {
-			continue
-		}
-		if order[def.Age] > cur {
-			continue
-		}
-		ready := true
-		for _, pre := range def.Prerequisites {
-			if !ge.Research.researched[pre] {
-				ready = false
-				break
-			}
-		}
-		if ready {
-			return key
-		}
-	}
-	return ""
-}
-
-// planHoldsResearchNowLocked reports whether the plan holds a research item
-// of this age or earlier: the plan's techs come first, so Research Memory
-// waits for them. Caller holds the lock.
-func (ge *GameEngine) planHoldsResearchNowLocked() bool {
-	order := ageOrders()
-	cur := order[ge.age]
-	for _, it := range ge.plan {
-		if it.Kind == PlanResearch && order[ge.Research.defs[it.Key].Age] <= cur {
-			return true
-		}
-	}
-	return false
-}
-
-// replayResearchMemory starts the next remembered tech when Research Memory
-// is bought, the research slot is free, the plan holds no research item of
-// this age and the knowledge free after reserved (the plan's reservations;
-// nil for none) covers its cost. Runs after the plan, live and offline.
-// Reports whether it started one. Caller holds the write lock.
-func (ge *GameEngine) replayResearchMemory(reserved map[string]float64, starts *planStarts) bool {
-	if !ge.Prestige.Owns(config.LegacyResearch) || ge.Research.currentTech != "" || len(ge.Prestige.legacyResearch) == 0 {
-		return false
-	}
-	if ge.planHoldsResearchNowLocked() {
-		return false
-	}
-	key := ge.rememberedTechLocked()
-	if key == "" {
-		return false
-	}
-	cost := ge.Research.defs[key].Cost
-	if ge.planFree("knowledge", reserved) < cost {
-		return false
-	}
-	if err := ge.startResearchLocked(key, true); err != nil {
-		ge.addLog("debug", fmt.Sprintf("Research Memory: %s refused: %v", key, err))
-		return false
-	}
-	starts.remembered = append(starts.remembered, key)
-	return true
-}
-
 // ===== Old Friends =====
 
 // meetOldFriendsLocked meets again every remembered civilization whose age
@@ -491,10 +411,9 @@ func (ge *GameEngine) applyLegacySharesLocked() bool {
 
 // captureLegacyLocked is what the kit remembers when a run ends (prestige)
 // or falls (Succumb): the plan as written becomes the template age by age,
-// the research order and the civilizations met are added to what was
-// remembered, and the worker shares are kept (an unset split keeps the old
-// one unless Worker Shares is bought, when clearing them is the player's
-// choice). The run's plan log starts over. Caller holds the write lock,
+// the civilizations met are added to those remembered, and the worker
+// shares are kept (an unset split keeps the old one unless Worker Shares is
+// bought, when clearing them is the player's choice). The run's plan log starts over. Caller holds the write lock,
 // before the managers are reset.
 func (ge *GameEngine) captureLegacyLocked() {
 	pm := ge.Prestige
@@ -515,7 +434,6 @@ func (ge *GameEngine) captureLegacyLocked() {
 		pm.legacyPlan = nil
 	}
 	ge.planLog = nil
-	pm.legacyResearch = mergeOrder(ge.Research.done, pm.legacyResearch)
 	met := map[string]bool{}
 	for _, k := range pm.legacyFactions {
 		met[k] = true
@@ -558,8 +476,7 @@ func (ge *GameEngine) legacyOnAgeEnteredLocked() {
 // legacyOnPurchaseLocked puts a kit item to work the moment it is bought:
 // the template's slice for this age (unless the plan log already holds
 // something written in this age), the shares (unless some are set), and old
-// friends already within reach. Research Memory starts on the next tick.
-// Caller holds the write lock.
+// friends already within reach. Caller holds the write lock.
 func (ge *GameEngine) legacyOnPurchaseLocked(key string) {
 	switch key {
 	case config.LegacyPlan:
@@ -647,10 +564,6 @@ type LegacyKitState struct {
 	PlanAges       int
 	PlanByAge      map[string]int
 	PlanAppliedAge string
-	// ResearchTechs is the remembered order's length and ResearchNext the
-	// tech Research Memory would start next ("" if none or not bought).
-	ResearchTechs int
-	ResearchNext  string
 	// Factions is how many civilizations are remembered (FactionKeys, in
 	// roster order); Shares how many worker domains have a remembered share.
 	Factions    int
@@ -669,7 +582,6 @@ func (pm *PrestigeManager) kitState() LegacyKitState {
 		PlanAges:       len(byAge),
 		PlanByAge:      byAge,
 		PlanAppliedAge: pm.templateApplied,
-		ResearchTechs:  len(pm.legacyResearch),
 		Factions:       len(pm.legacyFactions),
 		FactionKeys:    slices.Clone(pm.legacyFactions),
 		Shares:         len(pm.legacyShares),
@@ -678,22 +590,15 @@ func (pm *PrestigeManager) kitState() LegacyKitState {
 
 // LoadLegacy restores the shop version and the kit's memory from a save,
 // cleaning what a hand edit could have broken.
-func (pm *PrestigeManager) LoadLegacy(shopVersion int, plan []PlanTemplateItem, research, factions []string, shares map[string]float64) {
+func (pm *PrestigeManager) LoadLegacy(shopVersion int, plan []PlanTemplateItem, factions []string, shares map[string]float64) {
 	pm.shopVersion = shopVersion
 	pm.legacyPlan = loadPlanTemplate(plan)
-	techs := config.TechByKey()
-	pm.legacyResearch = nil
-	for _, k := range mergeOrder(research, nil) {
-		if _, ok := techs[k]; ok {
-			pm.legacyResearch = append(pm.legacyResearch, k)
-		}
-	}
 	known := map[string]bool{}
 	for _, f := range config.BaseFactions() {
 		known[f.Key] = true
 	}
 	pm.legacyFactions = nil
-	for _, k := range mergeOrder(factions, nil) {
+	for _, k := range uniqueKeys(factions) {
 		if known[k] {
 			pm.legacyFactions = append(pm.legacyFactions, k)
 		}
@@ -707,7 +612,6 @@ func (pm *PrestigeManager) LoadLegacy(shopVersion int, plan []PlanTemplateItem, 
 // the smoke suite's canned veteran kit.
 type LegacyKit struct {
 	Plan     []PlanTemplateItem `json:"plan,omitempty"`
-	Research []string           `json:"research,omitempty"`
 	Factions []string           `json:"factions,omitempty"`
 	Shares   map[string]float64 `json:"shares,omitempty"`
 }
@@ -721,7 +625,6 @@ func (ge *GameEngine) LegacyForTest() LegacyKit {
 	pm := ge.Prestige
 	return LegacyKit{
 		Plan:     clonePlanTemplate(pm.legacyPlan),
-		Research: slices.Clone(pm.legacyResearch),
 		Factions: slices.Clone(pm.legacyFactions),
 		Shares:   cloneShares(pm.legacyShares),
 	}
@@ -735,7 +638,7 @@ func (ge *GameEngine) LegacyForTest() LegacyKit {
 func (ge *GameEngine) SetLegacyForTest(kit LegacyKit, own bool) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	ge.Prestige.LoadLegacy(ge.Prestige.shopVersion, kit.Plan, kit.Research, kit.Factions, kit.Shares)
+	ge.Prestige.LoadLegacy(ge.Prestige.shopVersion, kit.Plan, kit.Factions, kit.Shares)
 	if !own {
 		return
 	}
@@ -781,8 +684,8 @@ func (ge *GameEngine) WriteShopV1SaveForTest(name string, level, totalEarned, av
 // bytes a build from before it would have written.
 func stripShopV2(gs *GameSave) {
 	gs.Prestige.ShopVersion = 0
-	gs.Prestige.LegacyPlan, gs.Prestige.LegacyResearch, gs.Prestige.LegacyFactions, gs.Prestige.LegacyShares = nil, nil, nil, nil
-	gs.PlanLog, gs.Research.Order = nil, nil
+	gs.Prestige.LegacyPlan, gs.Prestige.LegacyFactions, gs.Prestige.LegacyShares = nil, nil, nil
+	gs.PlanLog = nil
 }
 
 // EnterAgeForTest moves the game into age through the real advance (the

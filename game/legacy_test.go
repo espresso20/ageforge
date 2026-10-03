@@ -374,77 +374,59 @@ func TestPlanTemplateWithinPlanCap(t *testing.T) {
 	}
 }
 
-// TestResearchMemoryReplaysInOrder: with Research Memory bought, an idle
-// research slot takes the first remembered tech that is available and
-// affordable, in the remembered order; a tech of a later age waits in
-// place; the plan's own research items go first.
-func TestResearchMemoryReplaysInOrder(t *testing.T) {
+// TestPlanTemplateCarriesPlannedResearch: the techs a player planned are
+// their own research path, so they come along with the template: one that
+// started (and left the plan) and one still waiting are both planned again
+// in the next run, in the age they were planned in. Nothing else is, and
+// nothing starts researching by itself.
+func TestPlanTemplateCarriesPlannedResearch(t *testing.T) {
 	isolateAccountDir(t)
 	ge := newSeededEngine(13)
-	ge.SetLegacyForTest(LegacyKit{Research: []string{"stoneworking", "fire_mastery", "tool_making"}}, false)
 	ge.mu.Lock()
-	ge.Prestige.upgrades[config.LegacyResearch] = 1
+	ge.Prestige.upgrades[config.LegacyPlan] = 1
 	ge.Resources.AddStorage("knowledge", 100000)
-	ge.Resources.Add("knowledge", 100000)
+	ge.Resources.Add("knowledge", 2000) // enough for Tool Making (800), not for Fire Mastery after it
 	ge.mu.Unlock()
-	// stoneworking is a Stone Age tech: it waits; fire_mastery needs
-	// tool_making: it waits; tool_making starts.
-	if got := ge.GetState().Prestige.Kit.ResearchNext; got != "tool_making" {
-		t.Fatalf("next remembered tech %q, want tool_making", got)
+	for _, key := range []string{"tool_making", "fire_mastery"} {
+		if err := ge.PlanAddResearch(key); err != nil {
+			t.Fatal(err)
+		}
 	}
 	ge.mu.Lock()
 	var s planStarts
-	ge.runPlan(&s)
-	cur := ge.Research.currentTech
+	ge.runPlan(&s) // Tool Making starts and leaves the plan; Fire Mastery waits behind it
+	started, left := ge.Research.currentTech, len(ge.plan)
 	ge.mu.Unlock()
-	if cur != "tool_making" || len(s.remembered) != 1 {
-		t.Fatalf("research after the replay: %q (remembered %v), want tool_making", cur, s.remembered)
-	}
-	ge.mu.Lock()
-	ge.Research.ticksLeft = 1
-	ge.processResearch()
-	ge.mu.Unlock()
-	// A plan research item of this age keeps the slot for the plan.
-	if err := ge.PlanAddResearch("fire_mastery"); err != nil {
-		t.Fatal(err)
-	}
-	ge.mu.Lock()
-	ge.Resources.Remove("knowledge", ge.Resources.Get("knowledge")) // the plan's item can't start
-	s = planStarts{}
-	ge.runPlan(&s)
-	cur = ge.Research.currentTech
-	ge.mu.Unlock()
-	if cur != "" || len(s.remembered) != 0 {
-		t.Errorf("with a plan research item waiting, memory started %q", cur)
-	}
-	if got := ge.GetState().Research.TotalResearched; got != 1 {
-		t.Errorf("researched %d techs, want 1", got)
-	}
-}
-
-// TestResearchOrderRecordsGrandDiscovery: the run's order holds techs in
-// the order they finished, Grand Discovery's free techs included, and it
-// becomes the remembered order at prestige, ahead of older techs.
-func TestResearchOrderRecordsGrandDiscovery(t *testing.T) {
-	isolateAccountDir(t)
-	ge := newSeededEngine(14)
-	ge.SetLegacyForTest(LegacyKit{Research: []string{"pottery", "tool_making"}}, false)
-	ge.mu.Lock()
-	ge.Research.currentTech, ge.Research.ticksLeft = "tool_making", 1
-	ge.processResearch()
-	free := ge.Research.ForceCompleteN(1, "primitive_age", ge.progress.GetAgeOrder())
-	order := ge.Research.Order()
-	ge.mu.Unlock()
-	if want := append([]string{"tool_making"}, free...); !reflect.DeepEqual(order, want) {
-		t.Fatalf("run order %v, want %v", order, want)
+	if started != "tool_making" || left != 1 {
+		t.Fatalf("after the plan ran: researching %q with %d items left; want tool_making, 1", started, left)
 	}
 	_ = ge.SummonHarbingerForTest("medieval_age")
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatal(err)
 	}
-	want := append(append([]string(nil), order...), "pottery")
-	if got := ge.LegacyForTest().Research; !reflect.DeepEqual(got, want) {
-		t.Errorf("remembered order %v, want %v", got, want)
+	var planned []string
+	for _, it := range ge.GetState().Plan {
+		if it.Kind == PlanResearch {
+			planned = append(planned, it.Key)
+		}
+	}
+	if want := []string{"tool_making", "fire_mastery"}; !reflect.DeepEqual(planned, want) {
+		t.Errorf("the next run's plan holds the techs %v, want %v (the player's own plan)", planned, want)
+	}
+	// With no knowledge nothing starts, and the kit starts nothing of its
+	// own when there is: only the plan's first tech takes the slot.
+	st := ge.GetState()
+	if st.Research.CurrentTech != "" || st.Research.TotalResearched != 0 {
+		t.Errorf("the new run researches %q with %d done before the player did anything", st.Research.CurrentTech, st.Research.TotalResearched)
+	}
+	ge.mu.Lock()
+	ge.plan = nil // the player drops the plan: the research slot stays idle
+	ge.Resources.AddStorage("knowledge", 100000)
+	ge.Resources.Add("knowledge", 100000)
+	ge.mu.Unlock()
+	ge.StepTicks(5)
+	if cur := ge.GetState().Research.CurrentTech; cur != "" {
+		t.Errorf("with an empty plan and knowledge to spare, %q started by itself", cur)
 	}
 }
 
@@ -565,14 +547,14 @@ func TestSuccumbReappliesTemplate(t *testing.T) {
 	}
 }
 
-// TestLegacySaveRoundTrip: the shop version, the kit's memory, the run's
-// plan log and research order survive a save and load unchanged.
+// TestLegacySaveRoundTrip: the shop version, the kit's memory (a planned
+// tech in the template included) and the run's plan log survive a save and
+// load unchanged.
 func TestLegacySaveRoundTrip(t *testing.T) {
 	isolateAccountDir(t)
 	ge := newSeededEngine(19)
 	kit := LegacyKit{
-		Plan:     []PlanTemplateItem{{Age: "stone_age", Kind: PlanBuild, Key: "stone_pit", Count: 4}, {Age: "stone_age", Kind: PlanTrade, Key: "wood", To: "stone", Amount: 50}, {Age: "stone_age", Kind: PlanAdvance}},
-		Research: []string{"tool_making", "fire_mastery"},
+		Plan:     []PlanTemplateItem{{Age: "stone_age", Kind: PlanBuild, Key: "stone_pit", Count: 4}, {Age: "stone_age", Kind: PlanResearch, Key: "pottery"}, {Age: "stone_age", Kind: PlanTrade, Key: "wood", To: "stone", Amount: 50}, {Age: "stone_age", Kind: PlanAdvance}},
 		Factions: []string{"riverlands_tribes"},
 		Shares:   map[string]float64{"knowledge": 30},
 	}
@@ -581,8 +563,6 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	ge.mu.Lock()
-	ge.Research.currentTech, ge.Research.ticksLeft = "tool_making", 1
-	ge.processResearch()
 	log := clonePlanTemplate(ge.planLog)
 	ge.mu.Unlock()
 	if err := ge.SaveGame("kit"); err != nil {
@@ -599,11 +579,11 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 		t.Errorf("kit after load: %+v, want %+v", got, kit)
 	}
 	loaded.mu.RLock()
-	gotLog, gotOrder, ver := clonePlanTemplate(loaded.planLog), loaded.Research.Order(), loaded.Prestige.shopVersion
+	gotLog, ver := clonePlanTemplate(loaded.planLog), loaded.Prestige.shopVersion
 	owned := loaded.Prestige.Owns(config.LegacyFactions)
 	loaded.mu.RUnlock()
-	if !reflect.DeepEqual(gotLog, log) || !reflect.DeepEqual(gotOrder, []string{"tool_making"}) || ver != config.PrestigeShopVersion || !owned {
-		t.Errorf("after load: plan log %+v (want %+v), order %v, shop version %d, owns Old Friends %v", gotLog, log, gotOrder, ver, owned)
+	if !reflect.DeepEqual(gotLog, log) || len(log) == 0 || ver != config.PrestigeShopVersion || !owned {
+		t.Errorf("after load: plan log %+v (want %+v), shop version %d, owns Old Friends %v", gotLog, log, ver, owned)
 	}
 }
 
@@ -619,9 +599,16 @@ func TestNewSaveWritesNoEmptyKitFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, field := range []string{`"legacy_plan"`, `"legacy_research"`, `"legacy_factions"`, `"legacy_shares"`, `"plan_log"`} {
+	for _, field := range []string{`"legacy_plan"`, `"legacy_factions"`, `"legacy_shares"`, `"plan_log"`} {
 		if strings.Contains(string(data), field) {
 			t.Errorf("a new game's save writes %s with nothing in it", field)
+		}
+	}
+	// Research Memory was cut before release: no save ever carries its
+	// fields (a remembered research order, a run's completion order).
+	for _, field := range []string{`"legacy_research"`, `"order"`} {
+		if strings.Contains(string(data), field) {
+			t.Errorf("a save writes %s, a Research Memory field", field)
 		}
 	}
 	if !strings.Contains(string(data), `"shop_version": 2`) {

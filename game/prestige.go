@@ -45,10 +45,9 @@ type PrestigeManager struct {
 	// The legacy kit's memory (legacy.go): what the runs so far wrote and
 	// did, kept whether or not the kit is bought, so an item bought after a
 	// prestige works at once. legacyPlan is the plan template, by age;
-	// legacyResearch the research order; legacyFactions the civilizations
-	// met; legacyShares the worker shares (nil: every domain on auto).
+	// legacyFactions the civilizations met; legacyShares the worker shares
+	// (nil: every domain on auto).
 	legacyPlan     []PlanTemplateItem
-	legacyResearch []string
 	legacyFactions []string
 	legacyShares   map[string]float64
 	// templateApplied is the age whose template slice was last added to the

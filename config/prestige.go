@@ -33,14 +33,13 @@ const PrestigeShopVersion = 2
 // The legacy kit's keys (Pacing v2). Saved in the upgrades map: permanent.
 const (
 	LegacyPlan     = "legacy_plan"
-	LegacyResearch = "legacy_research"
 	LegacyWorkers  = "legacy_workers"
 	LegacyFactions = "legacy_factions"
 )
 
 // LegacyKit lists the kit's keys in shop order (cheapest first).
 func LegacyKit() []string {
-	return []string{LegacyPlan, LegacyResearch, LegacyWorkers, LegacyFactions}
+	return []string{LegacyPlan, LegacyWorkers, LegacyFactions}
 }
 
 // PrestigeUpgrades returns every prestige shop upgrade, retired ones included.
@@ -120,21 +119,17 @@ func PrestigeUpgrades() []PrestigeUpgradeDef {
 			Costs:   []int{6, 10, 17, 23, 33},
 			Retired: true,
 		},
-		// The legacy kit (Pacing v2): four one-tier items that carry a run's
-		// automation across a prestige. 117 points in all: a Medieval Age
+		// The legacy kit (Pacing v2): three one-tier items that carry a run's
+		// automation across a prestige. 99 points in all: a Medieval Age
 		// prestige (9) buys the plan template, a first Modern Age run (120)
-		// the rest.
+		// the rest. (A fourth item, Research Memory at 18 points, was cut
+		// before release: research is getting its own redesign, and nothing
+		// here picks a research path for the player.)
 		{
 			Key: LegacyPlan, Name: "Plan Template",
 			Description: "Your build plan carries over: each age's part of the plan you wrote is added again when you enter that age",
 			EffectKey:   "plan", EffectType: "legacy",
 			MaxTier: 1, Costs: []int{9},
-		},
-		{
-			Key: LegacyResearch, Name: "Research Memory",
-			Description: "While nothing is being researched, the next tech in your last run's research order starts by itself",
-			EffectKey:   "research", EffectType: "legacy",
-			MaxTier: 1, Costs: []int{18},
 		},
 		{
 			Key: LegacyWorkers, Name: "Worker Shares",

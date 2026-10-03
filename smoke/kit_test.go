@@ -9,7 +9,7 @@ import (
 
 // TestVeteranKitCanned: the canned kit memory parses, spans the ages a
 // veteran's run to the Modern Age passes, ends each age's part with its
-// advance, and remembers a research order.
+// advance, and plans no research (the bot researches for itself).
 func TestVeteranKitCanned(t *testing.T) {
 	k, err := veteranKit()
 	if err != nil {
@@ -36,8 +36,13 @@ func TestVeteranKitCanned(t *testing.T) {
 			t.Errorf("the canned template holds %d items for %s, over the plan's %d", ages[a], a, game.MaxPlanItems)
 		}
 	}
-	if len(k.Research) < 20 {
-		t.Errorf("the canned research order holds %d techs", len(k.Research))
+	for _, it := range k.Plan {
+		if it.Kind == game.PlanResearch {
+			t.Errorf("the canned template plans research (%s in %s); the bot researches for itself", it.Key, it.Age)
+		}
+	}
+	if len(k.Factions) == 0 {
+		t.Error("the canned kit remembers no civilizations")
 	}
 }
 
@@ -99,8 +104,8 @@ func TestStaticDepth(t *testing.T) {
 	}
 }
 
-// TestKitCarryProblems: a lost kit item, unremembered research or
-// civilizations, dropped shares and a missing template slice are caught.
+// TestKitCarryProblems: a lost kit item, unremembered civilizations,
+// dropped shares and a missing template slice are caught.
 func TestKitCarryProblems(t *testing.T) {
 	owned := func() map[string]game.PrestigeUpgradeState {
 		m := map[string]game.PrestigeUpgradeState{}
@@ -111,25 +116,24 @@ func TestKitCarryProblems(t *testing.T) {
 	}
 	before := game.GameState{Age: "modern_age"}
 	before.Prestige.Upgrades = owned()
-	before.Research.TotalResearched = 30
 	before.Workers.Shares = map[string]float64{"food": 40}
 	before.Diplomacy.Factions = map[string]game.FactionInfo{"riverlands_tribes": {Discovered: true}}
 	good := game.GameState{Age: "primitive_age"}
 	good.Prestige.Upgrades = owned()
-	good.Prestige.Kit = game.LegacyKitState{ResearchTechs: 30, Factions: 1, PlanByAge: map[string]int{"primitive_age": 3}, PlanAppliedAge: "primitive_age"}
+	good.Prestige.Kit = game.LegacyKitState{Factions: 1, PlanByAge: map[string]int{"primitive_age": 3}, PlanAppliedAge: "primitive_age"}
 	good.Workers.Shares = map[string]float64{"food": 40}
 	if p := kitCarryProblems(before, good); len(p) != 0 {
 		t.Errorf("a clean carry-over reported %v", p)
 	}
 	bad := good
 	bad.Prestige.Upgrades = map[string]game.PrestigeUpgradeState{}
-	bad.Prestige.Kit = game.LegacyKitState{ResearchTechs: 2, PlanByAge: map[string]int{"primitive_age": 3}}
+	bad.Prestige.Kit = game.LegacyKitState{PlanByAge: map[string]int{"primitive_age": 3}}
 	bad.Workers.Shares = nil
 	got := map[string]bool{}
 	for _, p := range kitCarryProblems(before, bad) {
 		got[p.check] = true
 	}
-	for _, c := range []string{"prestige_lost_kit", "kit_research_memory", "kit_factions_memory", "kit_shares", "kit_template"} {
+	for _, c := range []string{"prestige_lost_kit", "kit_factions_memory", "kit_shares", "kit_template"} {
 		if !got[c] {
 			t.Errorf("a broken carry-over did not report %s (got %v)", c, got)
 		}

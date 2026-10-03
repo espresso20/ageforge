@@ -42,7 +42,8 @@ func TestDepthPoints(t *testing.T) {
 }
 
 // TestPrestigeShop: nine retired perks (keys kept, costs frozen) and the
-// four-item legacy kit at 9, 18, 36 and 54 points (117 in all).
+// three-item legacy kit at 9, 36 and 54 points (99 in all). Research Memory
+// (18 points) was cut before release and is not in the shop.
 func TestPrestigeShop(t *testing.T) {
 	retired, kit := 0, 0
 	prices := map[string]int{}
@@ -63,10 +64,13 @@ func TestPrestigeShop(t *testing.T) {
 			t.Errorf("%s is neither retired nor a kit item", u.Key)
 		}
 	}
-	if retired != 9 || kit != 4 || len(ActivePrestigeUpgrades()) != 4 {
-		t.Errorf("%d retired, %d kit items, %d active; want 9, 4, 4", retired, kit, len(ActivePrestigeUpgrades()))
+	if retired != 9 || kit != 3 || len(ActivePrestigeUpgrades()) != 3 {
+		t.Errorf("%d retired, %d kit items, %d active; want 9, 3, 3", retired, kit, len(ActivePrestigeUpgrades()))
 	}
-	want := map[string]int{LegacyPlan: 9, LegacyResearch: 18, LegacyWorkers: 36, LegacyFactions: 54}
+	if _, ok := PrestigeUpgradeByKey()["legacy_research"]; ok {
+		t.Error("the shop still holds legacy_research (Research Memory was cut)")
+	}
+	want := map[string]int{LegacyPlan: 9, LegacyWorkers: 36, LegacyFactions: 54}
 	sum := 0
 	for _, k := range LegacyKit() {
 		if prices[k] != want[k] {
@@ -74,7 +78,7 @@ func TestPrestigeShop(t *testing.T) {
 		}
 		sum += prices[k]
 	}
-	if sum != 117 {
-		t.Errorf("the kit costs %d in all, want 117", sum)
+	if sum != 99 {
+		t.Errorf("the kit costs %d in all, want 99", sum)
 	}
 }

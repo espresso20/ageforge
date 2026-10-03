@@ -222,11 +222,11 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 
 // prestigeKitHooked buys each legacy kit item after a Modern Age prestige
 // and checks it does what the shop says: a run that planned a Stone Age
-// building and an advance, set a worker share, met a civilization and
-// researched what the bot researched; then, in the next run, the shares
-// are set again, Research Memory names the first remembered tech it can
-// start, entering the Stone Age adds its template slice, and entering the
-// Bronze Age meets the civilization again.
+// building and an advance, set a worker share and met a civilization;
+// then, in the next run, the shares are set again, entering the Stone Age
+// adds its template slice, and entering the Bronze Age meets the
+// civilization again. A tech the player planned comes along with the
+// template too (their own research path; the kit picks none by itself).
 func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) bool) {
 	ge := hookedEngine(e, e.SeedBase)
 	st := ge.GetState()
@@ -263,25 +263,12 @@ func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) 
 		check("kit: buy "+key, err == nil, "%v (with %d points)", err, pts)
 	}
 	after := ge.GetState()
-	check("kit: 117 points for the whole kit", after.Prestige.Available == pts-117, "%d points left of %d", after.Prestige.Available, pts)
-	check("kit: worker shares carry over", after.Workers.Shares["food"] == 40, "shares after buying Worker Shares: %v", after.Workers.Shares)
-
-	mem := ge.LegacyForTest()
-	want := ""
-	techs := config.TechByKey()
-	for _, k := range mem.Research {
-		def := techs[k]
-		ready := def.Age == "primitive_age"
-		for _, p := range def.Prerequisites {
-			ready = ready && after.Research.Techs[p].Researched
-		}
-		if ready && !after.Research.Techs[k].Researched {
-			want = k
-			break
-		}
+	total := 0
+	for _, key := range config.LegacyKit() {
+		total += config.PrestigeUpgradeByKey()[key].Costs[0]
 	}
-	check("kit: research memory replays the remembered order", after.Prestige.Kit.ResearchNext == want,
-		"the next remembered tech is %q, want %q (remembered %v)", after.Prestige.Kit.ResearchNext, want, mem.Research)
+	check("kit: the whole kit costs 99 points", total == 99 && after.Prestige.Available == pts-total, "the kit cost %d; %d points left of %d", total, after.Prestige.Available, pts)
+	check("kit: worker shares carry over", after.Workers.Shares["food"] == 40, "shares after buying Worker Shares: %v", after.Workers.Shares)
 
 	if err := ge.EnterAgeForTest(st.Age); !check("kit: enter "+st.Age, err == nil, "%v", err) {
 		return
@@ -299,6 +286,37 @@ func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) 
 	f := ge.GetState().Diplomacy.Factions["riverlands_tribes"]
 	check("kit: old friends are met again at their age", f.Discovered && f.Opinion == 0,
 		"Riverlands Tribes in the Bronze Age: met %v, opinion %d (want met at 0)", f.Discovered, f.Opinion)
+
+	// The player's own research path: a tech planned in the first age is
+	// planned again when the next run starts there, and nothing else is.
+	tech := ""
+	for _, t := range config.Technologies() {
+		if t.Age == config.AgeOrder()[0] && len(t.Prerequisites) == 0 {
+			tech = t.Key
+			break
+		}
+	}
+	own := game.NewGameEngine()
+	own.SeedRNG(e.SeedBase)
+	if err := own.PlanAddResearch(tech); !check("kit: plan a tech", err == nil, "%v", err) {
+		return
+	}
+	_ = own.SummonHarbingerForTest(game.PrestigeRunAge)
+	if err := own.DoPrestige(); !check("kit: prestige with a planned tech", err == nil, "%v", err) {
+		return
+	}
+	if err := own.BuyPrestigeUpgrade(config.LegacyPlan); !check("kit: buy the template", err == nil, "%v", err) {
+		return
+	}
+	var research []string
+	for _, it := range own.GetState().Plan {
+		if it.Kind == game.PlanResearch {
+			research = append(research, it.Key)
+		}
+	}
+	check("kit: a planned tech comes along with the template", len(research) == 1 && research[0] == tech,
+		"the new run's plan holds the techs %v, want only %s (the one the player planned)", research, tech)
+	check("kit: nothing researches by itself", own.GetState().Research.CurrentTech == "", "research started by itself: %s", own.GetState().Research.CurrentTech)
 }
 
 // prestigeRefundHooked loads a signed level-5 save from the first shop (the

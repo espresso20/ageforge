@@ -176,9 +176,9 @@ func (s *Summary) writeDepth(sb *strings.Builder) {
 func kitOwned(st game.GameState, key string) bool { return st.Prestige.Upgrades[key].Tier > 0 }
 
 // kitCarryProblems checks the legacy kit across a prestige: the kit stays
-// bought, the run's research order and the civilizations met are
-// remembered, Worker Shares keeps the shares, and Plan Template starts the
-// new run's plan from the first age's slice.
+// bought, the civilizations met are remembered, Worker Shares keeps the
+// shares, and Plan Template starts the new run's plan from the first age's
+// slice.
 func kitCarryProblems(before, after game.GameState) []problem {
 	var out []problem
 	for _, key := range config.LegacyKit() {
@@ -187,10 +187,6 @@ func kitCarryProblems(before, after game.GameState) []problem {
 		}
 	}
 	bk, ak := before.Prestige.Kit, after.Prestige.Kit
-	if ak.ResearchTechs < bk.ResearchTechs || ak.ResearchTechs < before.Research.TotalResearched {
-		out = append(out, problem{"kit_research_memory",
-			fmt.Sprintf("the remembered research order holds %d techs after a prestige (before: %d, the run researched %d)", ak.ResearchTechs, bk.ResearchTechs, before.Research.TotalResearched)})
-	}
 	met := 0
 	for _, f := range before.Diplomacy.Factions {
 		if f.Discovered {
