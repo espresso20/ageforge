@@ -291,9 +291,9 @@ func PetalTip(dx, dy int) rune {
 func RayRune(dx, dy int) rune {
 	switch {
 	case dx == 0:
-		return '│'
+		return '┃'
 	case dy == 0:
-		return '─'
+		return '━'
 	case dx*dy < 0:
 		return '╱'
 	}
