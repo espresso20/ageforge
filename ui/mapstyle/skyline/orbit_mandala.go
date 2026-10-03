@@ -57,10 +57,8 @@ func (v *view) composeMandala(f mapstyle.Frame, W, H int) *scene {
 	v.lastW = W
 	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H, S: max(0, H-2), top: 1, sel: -1}
 	s.groundY = s.S // no ground: it is sky to the last row
-	s.band = bandOf(m.AgeIdx)
 	s.p, s.mp = v.palettes(m)
-	v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-W))
-	s.cam = v.cam
+	s.cam = v.cam // left as it was: there is nothing to scroll
 	if v.inspect {
 		v.resolve(m, v.targetsFor(m, W, v.cam), f.Anim)
 		v.reveal = false // nothing scrolls
