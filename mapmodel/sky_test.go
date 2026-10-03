@@ -134,9 +134,10 @@ func TestSkyUnitsGrow(t *testing.T) {
 	}
 }
 
-// TestMandala: one ring per era, each holding a mark for every type owned
-// from its ages and nothing from the Transcendent Age, whose buildings are
-// the crown; owning more types adds marks.
+// TestMandala: one ring per era (a fixture has no record of ages reached,
+// so every era counts), each holding a mark for every type owned from its
+// ages and nothing from the Transcendent Age, whose buildings are the
+// crown; owning more types adds marks.
 func TestMandala(t *testing.T) {
 	m := skyModel(t, fixture.Options{Age: "transcendent_age", Seed: 7})
 	rings := m.Mandala()
@@ -193,6 +194,58 @@ func TestMandala(t *testing.T) {
 	}
 	if skyModel(t, fixture.Options{Age: "space_age", Seed: 7}).Mandala() == nil {
 		t.Error("the mandala needs a catalogue, nothing else")
+	}
+}
+
+// TestMandalaErasReached: the mandala has a ring only for an era the run
+// passed through (reached one of its ages before the Transcendent), oldest
+// first; a record of ages without the first age is taken as incomplete and
+// counts every age up to the current one; and the layout key tells a run
+// that skipped eras from one that did not.
+func TestMandalaErasReached(t *testing.T) {
+	build := func(reached []string) *mapmodel.Model {
+		st := fixture.State(fixture.Options{Age: "transcendent_age", Seed: 7})
+		st.Stats.AgesReached = reached
+		return mapmodel.NewBuilder(skyCat).Build(&st, nil)
+	}
+	epochs := config.Epochs()
+	all := build(nil)
+	if n := len(all.Mandala()); n != len(epochs) {
+		t.Errorf("a run with no record: %d rings, want %d", n, len(epochs))
+	}
+	for _, eras := range []int{1, 4, 6} {
+		var ages []string
+		for _, e := range epochs[:eras] {
+			ages = append(ages, e.Ages...)
+		}
+		m := build(append(ages, "transcendent_age"))
+		rings := m.Mandala()
+		if len(rings) != eras {
+			t.Errorf("%d eras reached: %d rings", eras, len(rings))
+		}
+		for k, r := range rings {
+			if r.Epoch != k {
+				t.Errorf("%d eras reached: ring %d is era %d", eras, k, r.Epoch)
+			}
+		}
+		if m.LayoutKey == all.LayoutKey {
+			t.Errorf("%d eras reached: the same layout key as all seven", eras)
+		}
+	}
+	// skipping straight from the Steel Era to the Transcendent: no Cosmic
+	// ring, since none of its ages before the Transcendent was reached
+	var ages []string
+	for _, e := range epochs[:3] {
+		ages = append(ages, e.Ages...)
+	}
+	if n := len(build(append(ages, "transcendent_age")).Mandala()); n != 3 {
+		t.Errorf("a jump from the Steel Era: %d rings, want 3", n)
+	}
+	if n := len(build([]string{"iron_age", "transcendent_age"}).Mandala()); n != len(epochs) {
+		t.Errorf("a record without the first age: %d rings, want every era (%d)", n, len(epochs))
+	}
+	if full := build([]string{}); full.LayoutKey != all.LayoutKey {
+		t.Error("an empty record changed the layout key")
 	}
 }
 
