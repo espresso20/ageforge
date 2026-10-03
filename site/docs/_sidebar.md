@@ -28,6 +28,7 @@
 
 - **The World**
   - [Trade](trade.md)
+  - [Factions & Diplomacy](factions.md)
   - [Army & Missions](military.md)
   - [Events](events.md)
 
