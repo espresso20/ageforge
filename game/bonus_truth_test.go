@@ -39,6 +39,9 @@ import (
 //     the bonus is earned and the ages after it. A bonus that works clean
 //     and falls short here is CAPPED: a cap swallowed it.
 //
+// BONUS_TRUTH_REPORT=<file> go test ./game -run 'TestBonusTruth$' writes the
+// full table, with the age each capped bonus starts to fall short in.
+//
 // What a percentage promises. Bonuses of one kind add together: +30% and
 // +20% make +50%, not +56%. So "+30% gold production" promises 30 points of
 // the base rate, and that is what is measured: the change in the rate
@@ -139,6 +142,10 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 // use. Probes share them: each switches its bonus on and off again.
 type truthLab struct {
 	engines map[string]*GameEngine
+	// everyAge makes a bonus in a pool be measured in every age from the
+	// one it is earned in, not only the first three and the last: slower,
+	// and what the report needs to name the age a cap starts to bite in.
+	everyAge bool
 }
 
 func newTruthLab() *truthLab {
@@ -456,6 +463,10 @@ type truthOutcome struct {
 	Delivered float64
 	// Noise is how far float rounding alone can move Delivered.
 	Noise float64
+	// Said is the "capped" note the game shows beside the bonus while it is
+	// on ("" when it shows none): what the panels and the log tell the
+	// player about it (CapNote).
+	Said string
 	// Leaks are the meters that moved and were not part of the promise.
 	Leaks []string
 	// Skip is why nothing could be measured here ("" when measured).
@@ -931,6 +942,7 @@ type truthSnapshot struct {
 	loans     []BoonWorkerLoan
 	techs     map[string]bool
 	counts    map[string]int
+	legacy    map[string]bool
 }
 
 func takeTruthSnapshot(ge *GameEngine) truthSnapshot {
@@ -944,6 +956,10 @@ func takeTruthSnapshot(ge *GameEngine) truthSnapshot {
 		loans:     append([]BoonWorkerLoan(nil), ge.Diplomacy.boonLoans...),
 		techs:     map[string]bool{},
 		counts:    map[string]int{},
+		legacy:    map[string]bool{},
+	}
+	for k, v := range ge.legacyBonuses {
+		s.legacy[k] = v
 	}
 	for _, key := range ge.Resources.order {
 		s.stock[key] = ge.Resources.resources[key].Amount
@@ -985,6 +1001,10 @@ func (s truthSnapshot) put(ge *GameEngine) {
 	for k, v := range s.counts {
 		ge.Buildings.counts[k] = v
 	}
+	ge.legacyBonuses = map[string]bool{}
+	for k, v := range s.legacy {
+		ge.legacyBonuses[k] = v
+	}
 	ge.recalculateRates() // storage first: stock must fit before it goes back
 	for key, v := range s.stock {
 		ge.Resources.resources[key].Amount = v
@@ -1016,6 +1036,11 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 		before, skip := read(false)
 		after, _ := read(true)
 		out.Delivered, out.Skip = after-before, skip
+		said := newTruthEngine(age, mode)
+		sw := p.wire(said)
+		sw.off()
+		sw.on()
+		out.Said = said.capNoteLocked(p.Eff, true)
 		return out
 	}
 	ge := l.engine(age, mode)
@@ -1025,6 +1050,7 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 	before := readTruth(t, ge)
 	sw.on()
 	after := readTruth(t, ge)
+	out.Said = ge.capNoteLocked(p.Eff, true)
 	sw.restore()
 	snap.put(ge)
 	m := kind.measure(p, ge, before, after)
@@ -1559,24 +1585,19 @@ func truthAllyPromises() []truthPromise {
 }
 
 // truthLegacyPromises is what a Succumb leaves behind: each epoch's legacy
-// bonus, resource by resource, and Ancient Knowledge.
+// bonus, resource by resource, and Ancient Knowledge, epoch after epoch.
 func truthLegacyPromises() []truthPromise {
 	var out []truthPromise
+	var fallen []string // the epochs a catastrophe can strike in, in order
 	for _, ep := range config.Epochs() {
 		flag := func(ge *GameEngine) truthSwitch {
-			had := ge.legacyBonuses[ep.Key]
-			gone := func() { delete(ge.legacyBonuses, ep.Key) }
 			return truthSwitch{
-				off: gone,
+				off: func() { delete(ge.legacyBonuses, ep.Key) },
 				on: func() {
 					ge.legacyBonuses[ep.Key] = true
 					ge.reapplyLegacyBonuses()
 				},
-				restore: func() {
-					if gone(); had {
-						ge.legacyBonuses[ep.Key] = true
-					}
-				},
+				restore: func() {},
 			}
 		}
 		bonuses := config.LegacyBonusForEpoch(ep.Key)
@@ -1588,13 +1609,31 @@ func truthLegacyPromises() []truthPromise {
 				Text: truthEffectText(eff), Kind: "legacy_production", wire: flag,
 			})
 		}
-		if len(bonuses) == 0 {
-			continue
+		if !config.CatastropheAllowed(ep.Key) {
+			continue // no catastrophe strikes here: its legacy can't be earned
 		}
+		// Ancient Knowledge: +25% research speed for each epoch succumbed
+		// in, on top of the ones before it. The nth is measured with the
+		// first n-1 already held, as a player collects them.
+		before := append([]string(nil), fallen...)
+		fallen = append(fallen, ep.Key)
 		eff := config.Effect{Type: "permanent_bonus", Target: "research_speed", Value: SuccumbResearchBonusPerEpoch}
 		out = append(out, truthPromise{
-			Source: "ancient knowledge", Key: ep.Key, Name: "Ancient Knowledge (" + ep.Name + ")", Age: ageKeys()[0], Eff: eff, Count: 1,
-			Text: truthEffectText(eff), Kind: "legacy_research", wire: flag,
+			Source: "ancient knowledge", Key: ep.Key,
+			Name: fmt.Sprintf("Ancient Knowledge, epoch %d (%s)", len(fallen), ep.Name), Age: ageKeys()[0], Eff: eff, Count: 1,
+			Text: truthEffectText(eff), Kind: "legacy_research",
+			wire: func(ge *GameEngine) truthSwitch {
+				return truthSwitch{
+					off: func() {
+						ge.legacyBonuses = map[string]bool{}
+						for _, k := range before {
+							ge.legacyBonuses[k] = true
+						}
+					},
+					on:      func() { ge.legacyBonuses[ep.Key] = true },
+					restore: func() {},
+				}
+			},
 		})
 	}
 	return out
@@ -1668,6 +1707,10 @@ const (
 	truthWrongSize   = "WRONG SIZE"
 	truthWrongTarget = "WRONG TARGET"
 	truthUnmeasured  = "NOT MEASURED"
+	// truthUnsaid is a cap the game does not own up to: the bonus falls
+	// short and nothing beside it says "capped", or it says "capped" and
+	// the bonus is all there.
+	truthUnsaid = "CAP NOT SHOWN"
 )
 
 // truthVerdict is what the guard found for one promise.
@@ -1683,7 +1726,10 @@ type truthVerdict struct {
 	// ShortFrom is the first age the typical player gets less than promised
 	// ("" when never), and GoneFrom the first it gets nothing at all.
 	ShortFrom, GoneFrom string
-	Note                string
+	// Unsaid is where what the game says about a cap and what the bonus
+	// delivers part ways ("" when they never do).
+	Unsaid string
+	Note   string
 }
 
 // truthPoolResource is the resource whose own pool a promise sits in ("" for
@@ -1728,6 +1774,16 @@ func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
 	case c.Skip != "":
 		v.Class, v.Note = truthUnmeasured, c.Skip
 		return v
+	case !c.full() && c.Said != "":
+		// Short with nothing else in the way, and the game says a cap holds
+		// it: the bonus alone runs past its pool's limit (or, for Ancient
+		// Knowledge, the epochs before it already fill the pool).
+		v.Class, v.ShortFrom = truthCapped, v.MeasuredAge
+		if c.is(0) {
+			v.GoneFrom = v.MeasuredAge
+		}
+		v.Typical = []truthOutcome{c}
+		return v
 	case len(c.Leaks) > 0 && c.is(0) && !c.full():
 		v.Class, v.Note = truthWrongTarget, "moves "+strings.Join(c.Leaks, ", ")+" and not what it names"
 		return v
@@ -1741,11 +1797,17 @@ func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
 		v.Class, v.Note = truthWrongTarget, "also moves "+strings.Join(c.Leaks, ", ")
 		return v
 	}
-	// It works. Does the typical player get all of it?
+	// It works. Does the typical player get all of it? In the age it is
+	// earned in and the two after; a bonus in a pool also in the last age,
+	// where every pool is at its fullest, or in every age when the report
+	// wants to know where exactly a cap starts to bite.
 	keys := ageKeys()
 	ages := keys[ageOrders()[v.MeasuredAge]:]
-	if !kind.Pool {
-		ages = ages[:min(3, len(ages))]
+	if n := len(ages); n > 3 && !(kind.Pool && l.everyAge) {
+		ages = ages[:3:3]
+		if kind.Pool {
+			ages = append(ages, keys[len(keys)-1])
+		}
 	}
 	v.Class = truthOK
 	for _, age := range ages {
@@ -1754,6 +1816,9 @@ func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
 			continue
 		}
 		v.Typical = append(v.Typical, o)
+		if (o.Said != "") == o.full() && v.Unsaid == "" {
+			v.Unsaid = fmt.Sprintf("in %s it delivers %s of %s and the game says %q", AgeName(age), fmtG(o.Delivered), fmtG(o.Promised), o.Said)
+		}
 		if !o.full() {
 			v.Class = truthCapped
 			if v.ShortFrom == "" {
@@ -1789,12 +1854,20 @@ func truthPool(p truthPromise) string {
 // does not keep, and why that is accepted for now. Keys are
 // "<class>/<pool or effect>". Every entry must still be needed: the test
 // fails on one nothing uses, so a fixed promise takes its excuse with it.
-var truthAccepted = map[string]string{}
+var truthAccepted = map[string]string{
+	"CAPPED/all_production": "cap, pending design: every \"all production\" bonus shares one pool, and the engine applies at most +200% of it (x3). " +
+		"Techs and wonders alone fill it by the Electric Age, so every later one adds nothing. The panels say \"capped\" beside each.",
+	"CAPPED/resource_production:gold":      "cap, pending design: gold's own pool has the same +200% limit, and the gold techs fill it in the Colonial Age.",
+	"CAPPED/resource_production:knowledge": "cap, pending design: knowledge's own pool has the same +200% limit, and the knowledge techs and the Great Library fill it in the Electric Age.",
+	"CAPPED/research_speed": "cap, pending design: research speed takes its share off a tech's time, and a tech takes one tick at least, so nothing past +100% counts. " +
+		"Ancient Knowledge alone reaches +100% with the fourth epoch succumbed in: the fifth and sixth add nothing.",
+}
 
 // TestBonusTruth is the guard: every promise measured, every miss a failure
 // unless truthAccepted carries it.
 func TestBonusTruth(t *testing.T) {
 	lab := newTruthLab()
+	lab.everyAge = os.Getenv("BONUS_TRUTH_REPORT") != ""
 	promises := truthPromises(t, lab)
 	used := map[string]bool{}
 	var verdicts []truthVerdict
@@ -1811,6 +1884,9 @@ func TestBonusTruth(t *testing.T) {
 		}
 		v := lab.judge(t, p)
 		verdicts = append(verdicts, v)
+		if v.Unsaid != "" {
+			t.Errorf("%s: %s: %s. Every list of bonuses must say \"capped\" beside one a limit holds back, and only beside those (game/caps.go).", p.ID(), truthUnsaid, v.Unsaid)
+		}
 		if v.Class == truthOK {
 			continue
 		}

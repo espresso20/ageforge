@@ -1416,6 +1416,10 @@ func (ge *GameEngine) finishResearch(completed string) {
 	def := ge.Research.defs[completed]
 	ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
 	ge.addLog("success", fmt.Sprintf("Research complete: %s.", def.Name))
+	// A bonus a cap keeps from counting says so.
+	for _, capped := range ge.capLinesLocked(def.Effects, true) {
+		ge.addLog("info", capped)
+	}
 	// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
 	if ge.quipRNG().Intn(2) == 0 {
 		if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
@@ -1560,15 +1564,9 @@ func (ge *GameEngine) processDiplomacy() {
 	// mirroring the production worker-fill curve so a staffed embassy outperforms
 	// an empty one. perWorkerRate comes from the building's "opinion" effect.
 	totalOpinion := 0.0
-	for _, key := range []string{"embassy", "grand_embassy"} {
-		count := ge.Buildings.GetCount(key)
-		if count == 0 {
-			continue
-		}
-		def, ok := ge.Buildings.defs[key] // held defs: this runs every tick
-		if !ok {
-			continue
-		}
+	// Every built building with an "opinion" effect counts (the Embassy and
+	// the Grand Embassy today), in key order.
+	ge.Buildings.eachBuilt(func(key string, count int, def config.BuildingDef) {
 		var perWorker float64
 		for _, eff := range def.Effects {
 			if eff.Type == "opinion" {
@@ -1577,7 +1575,7 @@ func (ge *GameEngine) processDiplomacy() {
 			}
 		}
 		if perWorker <= 0 || def.WorkerCapacity <= 0 {
-			continue
+			return
 		}
 		assigned := ge.Workers.GetAssignedCount("worker", key)
 		totalCap := float64(count * def.WorkerCapacity)
@@ -1586,7 +1584,7 @@ func (ge *GameEngine) processDiplomacy() {
 			fill = 1.0
 		}
 		totalOpinion += float64(perWorker * float64(def.WorkerCapacity) * float64(count) * (0.20 + float64(0.80*fill)))
-	}
+	})
 	if totalOpinion > 0 {
 		ge.Diplomacy.AddPassiveOpinion(totalOpinion)
 	}
@@ -1635,6 +1633,10 @@ func (ge *GameEngine) checkMilestones() {
 			line += " " + parts + "."
 		}
 		ge.addLog("success", line)
+		// A reward a cap keeps from counting says so, before it is granted.
+		for _, capped := range ge.capLinesLocked(ms.Rewards, false) {
+			ge.addLog("info", capped)
+		}
 		// Cosmetic flavour quip on its own dim line (never replaces the reward text).
 		if ms.Flavor != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", ms.Flavor))
@@ -1764,8 +1766,7 @@ func (ge *GameEngine) recalculateRates() {
 	// multiplier and hand it to the BuildingManager. costMult = clamp(1 + Σ
 	// build_cost, 0.10, 1.0). GetCost/BuildBatchCost/UpgradeCost all read it, so
 	// the charged cost and the displayed cost are computed from the SAME factor.
-	costMult := clamp(1.0+r.AddTotal("build_cost"), buildCostFloor, buildCostCap)
-	ge.Buildings.SetCostMultiplier(costMult)
+	ge.Buildings.SetCostMultiplier(poolFactor("build_cost", r.AddTotal("build_cost")))
 
 	// Apply production_all bonus (multiplier on all positive rates).
 	// Pool: research + permanent + prestige + wonders + active-event production_all.
@@ -1775,8 +1776,7 @@ func (ge *GameEngine) recalculateRates() {
 	// bonuses. Now always applied as ×clamp(1+Σ, productionFloor, productionCap),
 	// so the debuff lands but production can neither drop below 10% of its
 	// pre-bonus value nor run away above ×3.0 on stacked buffs.
-	prodAllBonus := r.AddTotal("production_all")
-	prodAllFactor := clamp(1.0+prodAllBonus, productionFloor, productionCap)
+	prodAllFactor := poolFactor("production_all", r.AddTotal("production_all"))
 	if prodAllFactor != 1.0 {
 		for _, def := range ge.Resources.defs {
 			r := ge.Resources.resources[def.Key]
@@ -1793,8 +1793,7 @@ func (ge *GameEngine) recalculateRates() {
 	// the soak caught running to ×20.
 	for _, def := range ge.Resources.defs {
 		bonusKey := def.Key + "_rate"
-		bonus := r.AddTotal(bonusKey)
-		factor := clamp(1.0+bonus, productionFloor, productionCap)
+		factor := poolFactor(bonusKey, r.AddTotal(bonusKey))
 		if factor != 1.0 {
 			r := ge.Resources.resources[def.Key]
 			if r != nil && r.Rate > 0 {
@@ -1815,8 +1814,7 @@ func (ge *GameEngine) recalculateRates() {
 	// nothing since worker output was folded into building output: every
 	// worker output bonus in the game was dead. It reads the staffing share
 	// of building output now.
-	gatherBonus := r.AddTotal("gather_rate")
-	gatherDelta := math.Max(productionFloor, 1.0+gatherBonus) - 1.0
+	gatherDelta := poolFactor("gather_rate", r.AddTotal("gather_rate")) - 1.0
 	if gatherDelta != 0 {
 		for _, def := range ge.Resources.defs {
 			made := float64(workerOutput[def.Key] * mMult)
@@ -2229,6 +2227,9 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	// so the awakening visually belongs to the era it ushers in.
 	// The flavor text states the boost and its duration, so no separate effect line.
 	ge.addLog("event", fmt.Sprintf("[%s]✦ Awakening: %s. %s[-]", ep.Color, def.Name, def.FlavorText))
+	for _, capped := range ge.capLinesLocked(def.Effects, true) {
+		ge.addLog("info", capped)
+	}
 
 	ge.Bus.Publish(EventData{
 		Type: EventAwakeningFired,
@@ -2347,6 +2348,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		// ×2 all production for Duration ticks via production_all effect
 		ge.injectEpochEffects("epoch_age_of_plenty", ev,
 			[]config.Effect{{Type: "production_all", Value: 1.0}})
+		ge.logCapped(config.Effect{Type: "production_all", Value: 1.0})
 	case "population_surge":
 		// +15% workers across all domains, instant
 		before := ge.Workers.TotalPop()
@@ -2391,6 +2393,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 	case "worker_innovation":
 		// Permanent +10% production_all
 		ge.permanentBonuses["production_all"] += 0.10
+		ge.logCapped(config.Effect{Type: "production_all", Value: 0.10})
 	case "architects_gift":
 		// 10 free buildings of the most common built non-wonder type
 		const giftCount = 10
@@ -2411,9 +2414,11 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		// +20% all production for Duration ticks
 		ge.injectEpochEffects("epoch_peaceful_century", ev,
 			[]config.Effect{{Type: "production_all", Value: 0.20}})
+		ge.logCapped(config.Effect{Type: "production_all", Value: 0.20})
 	case "epoch_blessing":
 		// Permanent +15% production_all; recorded as a golden age
 		ge.permanentBonuses["production_all"] += 0.15
+		ge.logCapped(config.Effect{Type: "production_all", Value: 0.15})
 	}
 }
 
@@ -2498,6 +2503,15 @@ func (ge *GameEngine) logTimedEffects(logType string, effects []config.Effect, t
 	}
 }
 
+// logCapped logs a line for an effect that has just joined its pool and
+// that a cap keeps from counting in full (capLinesLocked); nothing when it
+// all counts. Caller holds ge.mu.
+func (ge *GameEngine) logCapped(effects ...config.Effect) {
+	for _, capped := range ge.capLinesLocked(effects, true) {
+		ge.addLog("info", capped)
+	}
+}
+
 // loseShare removes a fraction of a resource's stock and logs
 // "  → Lost 500 gold (50% of your stock)." Caller holds ge.mu.
 func (ge *GameEngine) loseShare(res string, frac float64) {
@@ -2539,6 +2553,11 @@ type FestivalStatus struct {
 	CooldownTicks int     // cooldown imposed after a festival
 	CooldownLeft  int     // ticks remaining on the current cooldown (0 if ready)
 	Ready         bool    // true when not on cooldown
+	// CapNote says what the all-production cap would leave of the buff if a
+	// festival were held now: "" when all of it would count (CapNote in
+	// caps.go). The festival costs culture, so the command shows it before
+	// the player pays.
+	CapNote string
 }
 
 // stretchTicks re-times a base-curve tick count for the current age
@@ -2569,6 +2588,7 @@ func (ge *GameEngine) FestivalStatus() FestivalStatus {
 		cd = 0
 	}
 	return FestivalStatus{
+		CapNote:       ge.capNoteLocked(config.Effect{Type: "production_all", Value: festivalBuffPercent}, false),
 		Cost:          ge.festivalCost(),
 		Culture:       ge.Resources.Get("culture"),
 		BuffPercent:   festivalBuffPercent,
@@ -2606,6 +2626,7 @@ func (ge *GameEngine) DoFestival() error {
 	ge.festivalReadyTick = ge.tick + ge.stretchTicks(festivalCooldownTicks)
 	ge.addLog("success", fmt.Sprintf("Held a cultural festival for %s: all production %s for %s.",
 		Amount(cost, "culture"), textfmt.SignedPercent(festivalBuffPercent), ge.durationLocked(buff)))
+	ge.logCapped(config.Effect{Type: "production_all", Value: festivalBuffPercent})
 	return nil
 }
 
@@ -2883,6 +2904,12 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
 	done := buildDoneLog(def)
 	ge.addLog(done, fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
+	if def.Category == "wonder" || def.Category == "monument" {
+		// Their bonuses join the pools; one a cap keeps from counting says so.
+		for _, capped := range ge.capLinesLocked(def.Effects, true) {
+			ge.addLog("info", capped)
+		}
+	}
 	// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
 	// so a long build queue stays lively without turning into wallpaper. The
 	// quip goes where its line goes, so the main log never shows one alone.
@@ -4118,6 +4145,7 @@ func (ge *GameEngine) Reset() {
 func (ge *GameEngine) GetState() GameState {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
+	resolver := ge.buildResolver()
 
 	popCap := ge.popCapLocked()
 	nextAge := ge.progress.GetNextAge(ge.age)
@@ -4305,7 +4333,8 @@ func (ge *GameEngine) GetState() GameState {
 		// pure config.*, so it's safe under the RLock held here (it never
 		// re-acquires a lock). All() returns a fresh copy — no shared mutable
 		// state escapes.
-		Modifiers: ge.buildResolver().All(),
+		Modifiers: resolver.All(),
+		Pools:     ge.bonusPoolsLocked(resolver),
 		// Account lifetime stats (Phase 6). We hold ge.mu.RLock here; LifetimeStats
 		// takes the account's OWN mutex (a.mu) — consistent lock order ge.mu → a.mu,
 		// and the Record* writers never hold a.mu while touching ge.mu, so no deadlock.

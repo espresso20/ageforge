@@ -123,7 +123,10 @@ func buildingEffectParts(d BuildingDef) []string {
 		case "bonus", "trade_route_income":
 			parts = append(parts, signed(e.Value, FormatPercent(e.Value))+" "+EffectTargetLabel(e.Target))
 		case "opinion":
-			parts = append(parts, "+"+FormatAmount(e.Value)+" opinion/tick per worker with every civilization that is not hostile")
+			// The engine splits an embassy's opinion evenly across the
+			// civilizations that take it (DiplomacyManager.AddPassiveOpinion):
+			// each one gets its share, not the whole amount.
+			parts = append(parts, "+"+FormatAmount(e.Value)+" opinion/tick per worker, split across the civilizations that are not hostile")
 		}
 	}
 	return parts

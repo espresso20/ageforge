@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/espresso20/ageforge/config"
@@ -297,6 +298,23 @@ func (rm *ResearchManager) GetResearched() []string {
 	return sortedKeys(rm.researched)
 }
 
+// flatOutput is what researched techs add per tick to each resource: their
+// "production" effects, summed in rm.order.
+func (rm *ResearchManager) flatOutput() map[string]float64 {
+	out := make(map[string]float64)
+	for _, key := range rm.order {
+		if !rm.researched[key] {
+			continue
+		}
+		for _, eff := range rm.defs[key].Effects {
+			if eff.Type == "production" {
+				out[eff.Target] += eff.Value
+			}
+		}
+	}
+	return out
+}
+
 // GetBonuses returns a copy of all bonuses
 func (rm *ResearchManager) GetBonuses() map[string]float64 {
 	out := make(map[string]float64)
@@ -364,6 +382,9 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 		TotalTicks:      rm.totalTicks,
 		TotalResearched: len(rm.researched),
 		Bonuses:         rm.GetBonuses(),
+		Flat:            rm.flatOutput(),
+		Storage:         maps.Clone(rm.storage),
+		Housing:         rm.capacity["population"],
 	}
 }
 

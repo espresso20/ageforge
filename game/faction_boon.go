@@ -346,7 +346,21 @@ func (ge *GameEngine) applyRolledFactionBoon(def config.FactionDef, b boon.Boon)
 	if b == (boon.Boon{}) {
 		return "" // no kind rolled (e.g. at-war): nothing to apply
 	}
+	// A timed buff joins a bonus pool: say so when a cap keeps it from
+	// counting, before it is applied.
+	note := ""
+	switch b.Kind {
+	case boon.RateBuff:
+		note = ge.capNoteLocked(config.Effect{Type: b.Resource + "_rate", Target: b.Resource, Value: b.Magnitude}, false)
+	case boon.AllProduction:
+		note = ge.capNoteLocked(config.Effect{Type: "production_all", Value: b.Magnitude}, false)
+	case boon.TickSpeed:
+		note = ge.capNoteLocked(config.Effect{Type: "tick_speed", Value: b.Magnitude}, false)
+	}
 	line := boon.Apply(b, boonApplier{ge: ge, name: def.Name, key: def.Key})
+	if note != "" {
+		line += " [yellow](" + note + ")[-]"
+	}
 	return fmt.Sprintf("[gold]✦ %s:[-] %s", def.Name, line)
 }
 

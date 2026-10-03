@@ -1,6 +1,7 @@
 package game
 
 import (
+	"slices"
 	"sort"
 	"strings"
 
@@ -425,6 +426,7 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 			Visible:     visible,
 			Completed:   completed,
 			RewardText:  formatRewards(def.Rewards),
+			Rewards:     slices.Clone(def.Rewards), // def is the manager's table
 			Progress:    progress,
 			ChainKey:    chainKey,
 		}

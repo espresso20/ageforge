@@ -95,25 +95,7 @@ func researchProvider(state game.GameState, _ int) string {
 
 	// === Research bonuses ===
 	sb.WriteString("\n [gold]═══ Research bonuses ═══[-]\n\n")
-	if len(state.Research.Bonuses) == 0 {
-		sb.WriteString("  [gray]No research bonuses yet.[-]\n")
-	} else {
-		keys := make([]string, 0, len(state.Research.Bonuses))
-		for k := range state.Research.Bonuses {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-
-		for _, key := range keys {
-			value := state.Research.Bonuses[key]
-			name := formatBonusName(key)
-			color := "green"
-			if value <= 0 {
-				color = "red"
-			}
-			fmt.Fprintf(&sb, "  [%s]%s[-]  %s\n\n", color, textfmt.SignedPercent(value), name)
-		}
-	}
+	sb.WriteString(researchBonusLines(state))
 
 	// === Available now ===
 	sb.WriteString(" [gold]═══ Available now ═══[-]\n")
@@ -171,7 +153,9 @@ func researchProvider(state game.GameState, _ int) string {
 			if len(def.Effects) > 0 {
 				var effStrs []string
 				for _, eff := range def.Effects {
-					effStrs = append(effStrs, formatTechEffect(eff))
+					// A bonus a cap would hold back says so before the
+					// knowledge is spent.
+					effStrs = append(effStrs, formatTechEffect(eff)+capTag(state, eff, false, "gray"))
 				}
 				fmt.Fprintf(&sb, "     [gray]Effects: %s[-]\n", strings.Join(effStrs, ", "))
 			}
@@ -242,7 +226,7 @@ func researchProvider(state game.GameState, _ int) string {
 				// Compact: show effects
 				var effStrs []string
 				for _, eff := range def.Effects {
-					effStrs = append(effStrs, formatTechEffect(eff))
+					effStrs = append(effStrs, formatTechEffect(eff)+capTag(state, eff, true, "gray"))
 				}
 				effStr := ""
 				if len(effStrs) > 0 {
@@ -296,6 +280,54 @@ func researchProvider(state game.GameState, _ int) string {
 
 	// === Footer ===
 
+	return sb.String()
+}
+
+// researchBonusLines lists what the researched techs add together: each
+// bonus pool as a percentage (with a note when a cap holds the pool, every
+// source counted), then the flat amounts as amounts: output per tick,
+// storage and housing.
+func researchBonusLines(state game.GameState) string {
+	rs := state.Research
+	if len(rs.Bonuses) == 0 && len(rs.Flat) == 0 && len(rs.Storage) == 0 && rs.Housing == 0 {
+		return "  [gray]No research bonuses yet.[-]\n"
+	}
+	var sb strings.Builder
+	for _, key := range sortedKeysOf(rs.Bonuses) {
+		value := rs.Bonuses[key]
+		if value == 0 {
+			continue
+		}
+		color := "green"
+		if value < 0 && key != "build_cost" || value > 0 && key == "build_cost" {
+			color = "red"
+		}
+		fmt.Fprintf(&sb, "  [%s]%-7s[-] %s%s\n", color, textfmt.SignedPercent(value), formatBonusName(key), poolTag(state, key))
+	}
+	var flat []string
+	for _, res := range sortedKeysOf(rs.Flat) {
+		if v := rs.Flat[res]; v != 0 {
+			flat = append(flat, rateNumber(v)+" "+game.ResourceName(res)+"/tick")
+		}
+	}
+	if len(flat) > 0 {
+		fmt.Fprintf(&sb, "  [gray]Output:[-]  %s\n", strings.Join(flat, ", "))
+	}
+	var storage []string
+	if v := rs.Storage["all"]; v != 0 {
+		storage = append(storage, textfmt.Signed(v)+" for every resource")
+	}
+	for _, res := range sortedKeysOf(rs.Storage) {
+		if v := rs.Storage[res]; v != 0 && res != "all" {
+			storage = append(storage, textfmt.Signed(v)+" "+game.ResourceName(res))
+		}
+	}
+	if len(storage) > 0 {
+		fmt.Fprintf(&sb, "  [gray]Storage:[-] %s\n", strings.Join(storage, ", "))
+	}
+	if rs.Housing != 0 {
+		fmt.Fprintf(&sb, "  [gray]Housing:[-] %s\n", textfmt.Signed(rs.Housing))
+	}
 	return sb.String()
 }
 
