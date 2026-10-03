@@ -21,7 +21,9 @@ func TestPrestige_CapsApplyImmediately(t *testing.T) {
 	plain := run(nil)
 	up := run(map[string]int{"storage_bonus": 3, "population_cap": 2, "starting_food": 3})
 
-	if got, want := up.Resources["food"].Storage-plain.Resources["food"].Storage, 60.0; got != want {
+	// The new run's Primitive Age runs at catch-up speed (Era Mastery), and
+	// storage grows with k, the upgrade's share included.
+	if got, want := up.Resources["food"].Storage-plain.Resources["food"].Storage, float64(60*up.Mastery.K); got != want {
 		t.Errorf("storage_bonus 3: food storage +%v right after prestige, want +%v", got, want)
 	}
 	if got, want := up.Workers.MaxPop-plain.Workers.MaxPop, 4; got != want {
