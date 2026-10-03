@@ -3,11 +3,15 @@ package game
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
 )
 
@@ -16,7 +20,7 @@ import (
 // Every bonus the game promises a player is switched on in a real engine and
 // the thing its text names is measured: a resource's rate, storage, housing,
 // research time, a building's price, game speed, the Defense Rating, loot.
-// The test fails when a promise does not show up at the size promised.
+// TestBonusTruth fails when a promise does not show up at the size promised.
 //
 // How one promise is measured. Two readings of the same engine, the bonus
 // off and then on, and nothing else changed between them. The bonus is one
@@ -32,8 +36,8 @@ import (
 //     says. A miss here is a broken effect: DEAD, WRONG SIZE or WRONG TARGET.
 //   - typical: the pacing model's own typical player (config.TypicalIncome):
 //     every tech up to the age and every earlier age's wonder, in the age
-//     the bonus is earned and the two ages after it. A bonus that works
-//     clean and falls short here is CAPPED: a cap swallowed it.
+//     the bonus is earned and the ages after it. A bonus that works clean
+//     and falls short here is CAPPED: a cap swallowed it.
 //
 // What a percentage promises. Bonuses of one kind add together: +30% and
 // +20% make +50%, not +56%. So "+30% gold production" promises 30 points of
@@ -137,7 +141,9 @@ type truthLab struct {
 	engines map[string]*GameEngine
 }
 
-func newTruthLab() *truthLab { return &truthLab{engines: map[string]*GameEngine{}} }
+func newTruthLab() *truthLab {
+	return &truthLab{engines: map[string]*GameEngine{}}
+}
 
 func (l *truthLab) engine(age string, mode truthMode) *GameEngine {
 	k := age + "/" + mode.String()
@@ -147,6 +153,30 @@ func (l *truthLab) engine(age string, mode truthMode) *GameEngine {
 	ge := newTruthEngine(age, mode)
 	l.engines[k] = ge
 	return ge
+}
+
+// firstMade is the first age from age on in which buildings make res ("" if
+// none do): a bonus to a resource has nothing to raise before it. With
+// income set, any income counts (a tech's or a wonder's flat output too), as
+// the typical player has it.
+func (l *truthLab) firstMade(res, age string, income bool) string {
+	keys := ageKeys()
+	for _, a := range keys[ageOrders()[age]:] {
+		if income {
+			ge := l.engine(a, truthTypical)
+			ge.recalculateRates()
+			if ge.Resources.resources[res].Rate > 0 {
+				return a
+			}
+			continue
+		}
+		ge := l.engine(a, truthClean)
+		ge.recalculateRates()
+		if ge.Resources.resources[res].Breakdown.BuildingRate > 0 {
+			return a
+		}
+	}
+	return ""
 }
 
 // ----- the meters -----
@@ -266,12 +296,119 @@ func truthMoraleLift(t *testing.T, ge *GameEngine) float64 {
 	return after - truthMoraleStart
 }
 
+// truthCrewOutput is what workers add to their buildings, per resource and
+// before any bonus: what the buildings make staffed less what they make
+// empty. It is what a worker output bonus raises.
+func truthCrewOutput(ge *GameEngine) map[string]float64 {
+	pool := ge.Workers.domains["worker"]
+	crew := pool.assignments
+	read := func() map[string]float64 {
+		ge.recalculateRates()
+		out := map[string]float64{}
+		for _, key := range ge.Resources.order {
+			out[key] = ge.Resources.resources[key].Breakdown.BuildingRate
+		}
+		return out
+	}
+	staffed := read()
+	pool.assignments = map[string]int{}
+	empty := read()
+	pool.assignments = crew
+	ge.recalculateRates()
+	out := map[string]float64{}
+	for key, v := range staffed {
+		if d := v - empty[key]; d > 0 {
+			out[key] = d
+		}
+	}
+	return out
+}
+
+// truthSureSource is a random source whose first draw is as high as a draw
+// can be, so the success roll it feeds always passes; every later draw
+// comes from an ordinary seeded stream.
+type truthSureSource struct {
+	drawn bool
+	rest  rand.Source
+}
+
+func (s *truthSureSource) Int63() int64 {
+	if !s.drawn {
+		s.drawn = true
+		return 1<<63 - 1025 // Float64 reads 1 - 2^-53
+	}
+	return s.rest.Int63()
+}
+
+func (s *truthSureSource) Seed(seed int64) { s.rest.Seed(seed) }
+
+// truthLoot is what a successful expedition brings back per unit of its
+// listed reward (1 with no bonus): an expedition of the engine's age is
+// resolved through the real tick with a sure success roll. It spends the
+// engine: call it on one made for the reading.
+func truthLoot(t *testing.T, ge *GameEngine) float64 {
+	t.Helper()
+	defs := ge.Military.GetAvailableExpeditionsByCategory(ExpeditionScouting, ge.age, ageOrders())
+	if len(defs) == 0 {
+		t.Fatalf("loot meter: no expedition in %s", ge.age)
+	}
+	def := defs[0]
+	ge.rng = rand.New(&truthSureSource{rest: rand.NewSource(1)}) // the success roll is the tick's first draw
+	ge.Military.activeByCat[ExpeditionScouting] = &ActiveExpedition{Key: def.Key, Name: def.Name, TicksLeft: 1}
+	ge.Military.totalLoot = map[string]float64{}
+	ge.processExpeditions()
+	res := sortedKeys(def.Rewards)[0]
+	return ge.Military.totalLoot[res] / def.Rewards[res]
+}
+
+// truthRouteIncome is what a trade route brings in per unit of its listed
+// import (1 with no bonus): a route of the engine's age runs one cycle
+// through the real tick. It spends the engine.
+func truthRouteIncome(t *testing.T, ge *GameEngine) (float64, string) {
+	t.Helper()
+	order := ageOrders()
+	for _, def := range ge.Trade.routeList {
+		if order[def.MinAge] > order[ge.age] || ge.Buildings.GetCount(def.RequiredBld) < def.MinCount {
+			continue
+		}
+		for res, amount := range def.Export {
+			r := ge.Resources.resources[res]
+			r.Amount = math.Max(r.Amount, amount)
+		}
+		ge.Trade.activeRoutes = map[string]*ActiveRoute{def.Key: {Key: def.Key, TicksLeft: 1}}
+		ge.Trade.totalImported = map[string]float64{}
+		ge.processTrade()
+		res := sortedKeys(def.Import)[0]
+		return ge.Trade.totalImported[res] / def.Import[res], ""
+	}
+	return 0, "no trade route runs in " + ge.age
+}
+
+// truthOpinion is the opinion one diplomacy tick adds across two neutral
+// civilizations, in all. It spends the engine.
+func truthOpinion(ge *GameEngine) float64 {
+	keys := sortedKeys(ge.Diplomacy.factionDefs)[:2]
+	ge.Diplomacy.factions = map[string]*FactionState{}
+	for _, k := range keys {
+		ge.Diplomacy.factions[k] = &FactionState{Discovered: true, Status: "neutral"}
+	}
+	ge.tick = 1 // off every drift and decay beat
+	ge.processDiplomacy()
+	// The tick may meet more civilizations (the age fallback): they share
+	// the embassy's opinion, so all of them are counted.
+	total := 0.0
+	for _, k := range sortedKeys(ge.Diplomacy.factions) {
+		fs := ge.Diplomacy.factions[k]
+		total += float64(fs.Opinion) + fs.OpinionAccum
+	}
+	return total
+}
+
 // ----- a promise -----
 
 // truthPromise is one effect of one source: what the game says it does and
 // how to switch it on.
 type truthPromise struct {
-	// ID names the promise: "tech tool_making: +15% worker output".
 	Source string // "tech", "milestone", "building", "wonder", ...
 	Key    string // the source's config key
 	Name   string // the source's display name
@@ -284,8 +421,22 @@ type truthPromise struct {
 	// Count is how many copies of the source deliver the effect together
 	// (truthCopies for a building; 1 otherwise).
 	Count float64
-	// wire prepares the three states a probe needs in ge.
+	// Also lists the meters the source moves besides this promise's own,
+	// because it is applied whole and its other promises ride along (an
+	// epoch event with two rates). A name ending in ":" is a prefix.
+	Also []string
+	// wire prepares the states a probe needs in ge.
 	wire func(ge *GameEngine) truthSwitch
+}
+
+// also reports whether meter is one the promise's source moves on the side.
+func (p truthPromise) also(meter string) bool {
+	for _, a := range p.Also {
+		if meter == a || (strings.HasSuffix(a, ":") && strings.HasPrefix(meter, a)) {
+			return true
+		}
+	}
+	return false
 }
 
 // truthSwitch moves one engine between the two readings of a probe.
@@ -303,20 +454,26 @@ type truthOutcome struct {
 	Mode      truthMode
 	Promised  float64
 	Delivered float64
+	// Noise is how far float rounding alone can move Delivered.
+	Noise float64
 	// Leaks are the meters that moved and were not part of the promise.
 	Leaks []string
 	// Skip is why nothing could be measured here ("" when measured).
 	Skip string
 }
 
-func (o truthOutcome) ok() bool {
-	return o.Skip == "" && truthClose(o.Delivered, o.Promised) && len(o.Leaks) == 0
+// full reports whether the promise was delivered in full.
+func (o truthOutcome) full() bool { return o.Skip == "" && o.is(o.Promised) }
+
+// is reports whether Delivered is want, within the reading's noise.
+func (o truthOutcome) is(want float64) bool {
+	return math.Abs(o.Delivered-want) <= 3e-6*math.Max(1, math.Abs(want))+o.Noise
 }
 
-// truthClose reports whether got is want within a part in a million (the
-// reference tech and price round to whole ticks and units).
+// truthClose reports whether got is want within a few parts in a million
+// (the reference tech and price round to whole ticks and units).
 func truthClose(got, want float64) bool {
-	return math.Abs(got-want) <= 2e-6*math.Max(1, math.Abs(want))
+	return math.Abs(got-want) <= 3e-6*math.Max(1, math.Abs(want))
 }
 
 // truthMoved reports whether a meter changed at all.
@@ -326,14 +483,33 @@ func truthMoved(before, after float64) bool {
 
 // ----- the kinds: what each effect promises and which meter reads it -----
 
-// truthKind reads what a promise delivered from two readings.
+// truthMeasured is what a meter read for one promise.
+type truthMeasured struct {
+	// Delivered is what the bonus did, in the promise's own unit.
+	Delivered float64
+	// Noise is how far float rounding alone can move Delivered: a +0.2/tick
+	// read off a rate in the billions is only good to a few thousandths.
+	Noise float64
+	// Allowed says which meters the promise may move.
+	Allowed func(meter string) bool
+	// Skip is why nothing could be measured in this engine ("" when read).
+	Skip string
+}
+
+// truthKind reads what a promise delivered.
 type truthKind struct {
-	// Unit says what Delivered and Promised count ("points of base output").
+	// Unit says what Delivered and Promised count.
 	Unit string
-	// measure returns the delivered amount, in the promise's own unit, and
-	// the meters the promise is allowed to move. A non-empty skip says why
-	// it cannot be measured in this engine.
-	measure func(p truthPromise, ge *GameEngine, before, after truthReading) (delivered float64, allowed func(meter string) bool, skip string)
+	// Pool marks a kind whose bonuses share a pool that a cap can hold: its
+	// promises are measured in every age from the one they are earned in.
+	Pool bool
+	// measure reads the cheap meters' two readings. Set for the kinds they
+	// cover.
+	measure func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured
+	// spend reads a meter that uses the engine up (a resolved expedition, a
+	// trade run, a diplomacy tick): it is read on two fresh engines, the
+	// effect off in one and on in the other. Set instead of measure.
+	spend func(t *testing.T, p truthPromise, ge *GameEngine) (reading float64, skip string)
 }
 
 func meterIs(names ...string) func(string) bool {
@@ -358,6 +534,16 @@ func meterHasPrefix(prefixes ...string) func(string) bool {
 	}
 }
 
+func anyMeter(string) bool { return true }
+
+// truthDiff is a meter's change between two readings and the float noise
+// on it: a few units in the last place of the larger reading.
+func truthDiff(before, after truthReading, meter string) (d, noise float64) {
+	a, b := before[meter], after[meter]
+	big := math.Max(math.Abs(a), math.Abs(b))
+	return b - a, 8 * (math.Nextafter(big, math.Inf(1)) - big)
+}
+
 // truthRefResources are the resources whose rate reads the all-production
 // multiplier directly: buildings make them, and no bonus of their own is in
 // the way.
@@ -373,134 +559,302 @@ func truthRefResources(ge *GameEngine, r truthReading) []string {
 	return out
 }
 
-// truthAllFactor is the all-production multiplier in force, read off the
-// reference resources: what one of them yields per unit its buildings make,
-// with flat income and upkeep taken out by differencing two of the engine's
-// own breakdown lines.
+// truthAllFactor is the all-production multiplier in force, read off a
+// reference resource: what it yields per unit its buildings make.
 func truthAllFactor(ge *GameEngine, r truthReading) (float64, bool) {
 	refs := truthRefResources(ge, r)
 	if len(refs) == 0 {
 		return 0, false
 	}
-	key := refs[0]
-	b := ge.Resources.resources[key].Breakdown
+	ge.recalculateRates()
+	b := ge.Resources.resources[refs[0]].Breakdown
 	return (b.BuildingRate + b.BonusRate) / b.BuildingRate, true
+}
+
+// truthAcross reads one promise off several resources that must agree:
+// each resource's rate change over its own base.
+func truthAcross(ge *GameEngine, before, after truthReading, base map[string]float64) truthMeasured {
+	m := truthMeasured{Allowed: meterHasPrefix("rate:")}
+	lo, hi := math.Inf(1), math.Inf(-1)
+	for _, key := range sortedKeys(base) {
+		d, noise := truthDiff(before, after, "rate:"+key)
+		scale := base[key] * ge.speedK()
+		lo, hi = math.Min(lo, d/scale), math.Max(hi, d/scale)
+		m.Noise = math.Max(m.Noise, noise/scale)
+	}
+	m.Delivered = lo
+	if hi-lo > 3e-6*math.Max(1, math.Abs(hi))+2*m.Noise {
+		m.Skip = fmt.Sprintf("resources disagree: %v to %v", lo, hi)
+	}
+	return m
 }
 
 var truthKinds = map[string]truthKind{
 	// "+X% all production": X points on every resource buildings make.
 	"all_production": {
-		Unit: "points of base output",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
-			refs := truthRefResources(ge, before)
-			if len(refs) == 0 {
-				return 0, nil, "no building output to read"
+		Unit: "points of base output", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			base := map[string]float64{}
+			for _, key := range truthRefResources(ge, before) {
+				base[key] = before["made:"+key]
 			}
-			lo, hi := math.Inf(1), math.Inf(-1)
-			for _, key := range refs {
-				d := (after["rate:"+key] - before["rate:"+key]) / before["made:"+key] / ge.speedK()
-				lo, hi = math.Min(lo, d), math.Max(hi, d)
+			if len(base) == 0 {
+				return truthMeasured{Skip: "no building output to read"}
 			}
-			if !truthClose(lo, hi) {
-				return lo, meterHasPrefix("rate:"), fmt.Sprintf("resources disagree: %v to %v", lo, hi)
-			}
-			return lo, meterHasPrefix("rate:"), ""
+			return truthAcross(ge, before, after, base)
 		},
 	},
 	// "+X% <resource> production": X points on that resource alone.
 	"resource_production": {
-		Unit: "points of base output",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
-			res := strings.TrimSuffix(p.Eff.Target, "_rate")
+		Unit: "points of base output", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			res := truthRateTarget(p.Eff)
 			made := before["made:"+res]
 			if made <= 0 {
-				return 0, nil, "no " + res + " is made here"
+				return truthMeasured{Skip: "no " + res + " is made here"}
 			}
 			all, ok := truthAllFactor(ge, before)
 			if !ok {
-				return 0, nil, "no building output to read"
+				return truthMeasured{Skip: "no building output to read"}
 			}
-			d := (after["rate:"+res] - before["rate:"+res]) / made / all / ge.speedK()
-			return d, meterIs("rate:" + res), ""
+			d, noise := truthDiff(before, after, "rate:"+res)
+			scale := made * all * ge.speedK()
+			return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("rate:" + res)}
+		},
+	},
+	// "+X% worker output": X points on what workers add to their buildings.
+	"worker_output": {
+		Unit: "points of base worker output", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			crew := truthCrewOutput(ge)
+			if len(crew) == 0 {
+				return truthMeasured{Skip: "no staffed building to read"}
+			}
+			return truthAcross(ge, before, after, crew)
 		},
 	},
 	// "+V <resource>/tick" from a tech or an event: V more per tick.
 	"flat_rate": {
 		Unit: "per tick",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
-			res := p.Eff.Target
-			return (after["rate:"+res] - before["rate:"+res]) / ge.speedK(), meterIs("rate:" + res), ""
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			d, noise := truthDiff(before, after, "rate:"+p.Eff.Target)
+			return truthMeasured{Delivered: d / ge.speedK(), Noise: noise, Allowed: meterIs("rate:" + p.Eff.Target)}
 		},
 	},
 	// "+V <resource>/tick (N workers)" on a building: each fully staffed
 	// copy makes V before bonuses.
 	"building_output": {
 		Unit: "per tick per copy",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
 			res := p.Eff.Target
-			return (after["made:"+res] - before["made:"+res]) / p.Count, meterIs("rate:"+res, "made:"+res), ""
+			d, noise := truthDiff(before, after, "made:"+res)
+			return truthMeasured{Delivered: d / p.Count, Noise: noise / p.Count, Allowed: meterIs("rate:"+res, "made:"+res)}
 		},
 	},
 	// "+V storage for every resource" or for one.
 	"storage": {
-		Unit: "storage",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
+		Unit: "storage per copy",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			scale := p.Count * ge.speedK()
 			if p.Eff.Target != "all" {
-				key := "storage:" + p.Eff.Target
-				return (after[key] - before[key]) / p.Count / ge.speedK(), meterIs(key), ""
+				d, noise := truthDiff(before, after, "storage:"+p.Eff.Target)
+				return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("storage:" + p.Eff.Target)}
 			}
+			m := truthMeasured{Allowed: meterHasPrefix("storage:")}
 			lo, hi := math.Inf(1), math.Inf(-1)
 			for _, key := range ge.Resources.order {
-				d := (after["storage:"+key] - before["storage:"+key]) / p.Count / ge.speedK()
-				lo, hi = math.Min(lo, d), math.Max(hi, d)
+				d, noise := truthDiff(before, after, "storage:"+key)
+				lo, hi = math.Min(lo, d/scale), math.Max(hi, d/scale)
+				m.Noise = math.Max(m.Noise, noise/scale)
 			}
-			if !truthClose(lo, hi) {
-				return lo, meterHasPrefix("storage:"), fmt.Sprintf("resources disagree: %v to %v", lo, hi)
+			m.Delivered = lo
+			if hi-lo > 3e-6*math.Max(1, math.Abs(hi))+2*m.Noise {
+				m.Skip = fmt.Sprintf("resources disagree: %v to %v", lo, hi)
 			}
-			return lo, meterHasPrefix("storage:"), ""
+			return m
 		},
 	},
 	// "+V housing".
 	"housing": {
-		Unit: "housing",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
-			return (after["housing"] - before["housing"]) / p.Count, meterIs("housing"), ""
+		Unit: "housing per copy",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			return truthMeasured{Delivered: (after["housing"] - before["housing"]) / p.Count, Allowed: meterIs("housing")}
 		},
 	},
 	// "-X% building costs": X points off every price.
 	"build_cost": {
-		Unit: "points of the listed price",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
-			return after["cost"] - before["cost"], meterIs("cost"), ""
+		Unit: "points of the listed price", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			return truthMeasured{Delivered: after["cost"] - before["cost"], Allowed: meterIs("cost")}
 		},
 	},
 	// "+X% game speed".
 	"game_speed": {
-		Unit: "points of game speed",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
-			return after["speed"] - before["speed"], meterIs("speed"), ""
+		Unit: "points of game speed", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			return truthMeasured{Delivered: after["speed"] - before["speed"], Allowed: meterIs("speed")}
+		},
+	},
+	// "+X% research speed": research takes X points less of its listed time
+	// (site/docs/technologies.md: ticks = base x (1 - research speed)).
+	"research_speed": {
+		Unit: "points of the listed research time", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			return truthMeasured{Delivered: before["research"] - after["research"], Allowed: meterIs("research")}
 		},
 	},
 	// "+X% military power": X points on the Defense Rating.
 	"military_power": {
-		Unit: "points of Defense Rating",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
-			return after["defense"] - before["defense"], meterIs("defense"), ""
+		Unit: "points of Defense Rating", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			return truthMeasured{Delivered: after["defense"] - before["defense"], Allowed: meterIs("defense")}
 		},
 	},
 	// A worship or culture building's morale lift per tick.
 	"morale": {
 		Unit: "morale per tick per copy",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) (float64, func(string) bool, string) {
-			return (after["morale"] - before["morale"]) / p.Count, meterIs("morale"), ""
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			return truthMeasured{Delivered: (after["morale"] - before["morale"]) / p.Count, Allowed: meterIs("morale")}
 		},
 	},
+	// "+V <resource>" at once.
+	"instant": {
+		Unit: "added to the store",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			d, noise := truthDiff(before, after, "stock:"+p.Eff.Target)
+			return truthMeasured{Delivered: d, Noise: noise, Allowed: meterIs("stock:" + p.Eff.Target)}
+		},
+	},
+	// "Up to V <resource>" lost at once (no garrison in the lab).
+	"steal": {
+		Unit: "taken from the store",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			key := "stock:" + p.Eff.Target
+			if before[key] < p.Eff.Value {
+				return truthMeasured{Skip: "the store holds less than the loss"}
+			}
+			d, noise := truthDiff(before, after, key)
+			return truthMeasured{Delivered: -d, Noise: noise, Allowed: meterIs(key)}
+		},
+	},
+	// "X% of your workers" lost at once: that share, in whole workers.
+	"worker_loss": {
+		Unit: "share of workers",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			had := before["workers"]
+			if had < 20 {
+				return truthMeasured{Skip: "too few workers to read a share off"}
+			}
+			lost := had - after["workers"]
+			// Whole workers leave: the share is right within one of them.
+			return truthMeasured{Delivered: lost / had, Noise: 1 / had, Allowed: anyMeter}
+		},
+	},
+	// "+N workers" lent, or "N workers" lost.
+	"workers": {
+		Unit: "workers",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			return truthMeasured{Delivered: after["workers"] - before["workers"], Allowed: anyMeter}
+		},
+	},
+	// "X of your <resource>" lost at once, as a share of the store.
+	"drain": {
+		Unit: "share of the store",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			key := "stock:" + p.Eff.Target
+			if before[key] <= 0 {
+				return truthMeasured{Skip: "nothing in the store"}
+			}
+			return truthMeasured{Delivered: (before[key] - after[key]) / before[key], Allowed: meterIs(key)}
+		},
+	},
+	// An ally's "+X% <specialty>": the whole rate times 1 + X, outside the
+	// production cap (site/docs/factions.md, Allied Bonuses).
+	"ally_bonus": {
+		Unit: "share of the whole rate",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			res := p.Eff.Target
+			gross := before["rate:"+res]
+			if res == "food" {
+				gross += ge.Workers.FoodDrain() * ge.speedK()
+			}
+			if gross <= 0 {
+				return truthMeasured{Skip: "no " + res + " comes in here"}
+			}
+			d, noise := truthDiff(before, after, "rate:"+res)
+			return truthMeasured{Delivered: d / gross, Noise: noise / gross, Allowed: meterIs("rate:" + res)}
+		},
+	},
+	// "+X% expedition rewards": X points on what a success brings back.
+	"expedition_reward": {
+		Unit: "points of the listed loot", Pool: true,
+		spend: func(t *testing.T, p truthPromise, ge *GameEngine) (float64, string) {
+			return truthLoot(t, ge), ""
+		},
+	},
+	// "+X% trade route income": X points on what a route brings in.
+	"route_income": {
+		Unit: "points of the listed import per copy",
+		spend: func(t *testing.T, p truthPromise, ge *GameEngine) (float64, string) {
+			v, skip := truthRouteIncome(t, ge)
+			return v / p.Count, skip
+		},
+	},
+	// "+V opinion/tick per worker", split across the civilizations that are
+	// not hostile: V for every worker slot filled, in all.
+	"opinion": {
+		Unit: "opinion per tick per worker, in all",
+		spend: func(t *testing.T, p truthPromise, ge *GameEngine) (float64, string) {
+			def := ge.Buildings.defs[p.Key]
+			return truthOpinion(ge) / p.Count / float64(def.WorkerCapacity), ""
+		},
+	},
+}
+
+// truthAlso is kind with the leak check off: for a source that is applied
+// whole (an epoch event, a Succumb's flag, a setback with two halves), where
+// the other parts move meters of their own. Only the promised one is read.
+func truthAlso(kind string, also ...string) truthKind {
+	base := truthKinds[kind]
+	return truthKind{Unit: base.Unit, Pool: base.Pool,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			m := base.measure(p, ge, before, after)
+			if allowed := m.Allowed; allowed != nil {
+				m.Allowed = anyMeter
+				if len(also) > 0 {
+					m.Allowed = func(meter string) bool { return allowed(meter) || meterIs(also...)(meter) }
+				}
+			}
+			return m
+		}}
+}
+
+func init() {
+	truthKinds["boon_all_production"] = truthAlso("all_production")
+	truthKinds["boon_drain"] = truthAlso("drain")
+	truthKinds["legacy_production"] = truthAlso("resource_production")
+	truthKinds["legacy_research"] = truthAlso("research_speed")
+	// A festival is paid for in culture: the store moves with the rates.
+	truthKinds["festival"] = truthAlso("all_production", "stock:culture")
+}
+
+// truthRateTarget is the resource a "<res>_rate" effect raises, whether the
+// key sits in the effect's target (a tech, a milestone) or its type (a boon).
+func truthRateTarget(e config.Effect) string {
+	if res, ok := strings.CutSuffix(e.Target, "_rate"); ok {
+		return res
+	}
+	if res, ok := strings.CutSuffix(e.Type, "_rate"); ok {
+		return res
+	}
+	return e.Target
 }
 
 // truthEffectKind names the meter for an effect, by the effect's type and
 // target alone. "" is an effect the guard has no meter for: the test fails
 // on it, so nothing a player is promised goes unmeasured.
 func truthEffectKind(source string, e config.Effect) string {
+	isRes := func(key string) bool { _, ok := config.ResourceByKey()[key]; return ok }
 	switch e.Type {
 	case "bonus", "permanent_bonus":
 		switch e.Target {
@@ -519,28 +873,24 @@ func truthEffectKind(source string, e config.Effect) string {
 		case "tick_speed":
 			return "game_speed"
 		}
-		if res, ok := strings.CutSuffix(e.Target, "_rate"); ok {
-			if _, known := config.ResourceByKey()[res]; known {
-				return "resource_production"
-			}
+		if res, ok := strings.CutSuffix(e.Target, "_rate"); ok && isRes(res) {
+			return "resource_production"
 		}
 	case "production":
-		if _, known := config.ResourceByKey()[e.Target]; known {
-			if source == "building" || source == "wonder" {
+		if isRes(e.Target) {
+			if source == "building" || source == "wonder" || source == "monument" {
 				return "building_output"
 			}
 			return "flat_rate"
 		}
 	case "storage":
-		if _, known := config.ResourceByKey()[e.Target]; known || e.Target == "all" {
+		if isRes(e.Target) || e.Target == "all" {
 			return "storage"
 		}
 	case "capacity":
-		if e.Target == "population" {
+		switch e.Target {
+		case "population":
 			return "housing"
-		}
-		if e.Target == "military" {
-			return "soldier_capacity"
 		}
 	case "morale":
 		return "morale"
@@ -549,11 +899,11 @@ func truthEffectKind(source string, e config.Effect) string {
 	case "trade_route_income":
 		return "route_income"
 	case "instant_resource":
-		if _, known := config.ResourceByKey()[e.Target]; known {
+		if isRes(e.Target) {
 			return "instant"
 		}
 	case "steal_resource":
-		if _, known := config.ResourceByKey()[e.Target]; known {
+		if isRes(e.Target) {
 			return "steal"
 		}
 	case "worker_loss":
@@ -563,18 +913,88 @@ func truthEffectKind(source string, e config.Effect) string {
 	case "tick_speed":
 		return "game_speed"
 	}
-	if res, ok := strings.CutSuffix(e.Type, "_rate"); ok {
-		if _, known := config.ResourceByKey()[res]; known {
-			return "resource_production"
-		}
+	if res, ok := strings.CutSuffix(e.Type, "_rate"); ok && isRes(res) {
+		return "resource_production"
 	}
 	return ""
 }
 
 // ----- measuring -----
 
-// probe measures p in ge: one reading with the effect off, one with it on.
-func (l *truthLab) probe(t *testing.T, p truthPromise, ge *GameEngine, age string, mode truthMode) truthOutcome {
+// truthSnapshot is the state a probe may disturb beyond its own switch.
+type truthSnapshot struct {
+	stock     map[string]float64
+	permanent map[string]float64
+	events    []ActiveEvent
+	workers   int
+	crew      map[string]int
+	loans     []BoonWorkerLoan
+	techs     map[string]bool
+	counts    map[string]int
+}
+
+func takeTruthSnapshot(ge *GameEngine) truthSnapshot {
+	pool := ge.Workers.domains["worker"]
+	s := truthSnapshot{
+		stock:     map[string]float64{},
+		permanent: map[string]float64{},
+		events:    append([]ActiveEvent(nil), ge.Events.active...),
+		workers:   pool.count,
+		crew:      map[string]int{},
+		loans:     append([]BoonWorkerLoan(nil), ge.Diplomacy.boonLoans...),
+		techs:     map[string]bool{},
+		counts:    map[string]int{},
+	}
+	for _, key := range ge.Resources.order {
+		s.stock[key] = ge.Resources.resources[key].Amount
+	}
+	for k, v := range ge.permanentBonuses {
+		s.permanent[k] = v
+	}
+	for k, v := range pool.assignments {
+		s.crew[k] = v
+	}
+	for k, v := range ge.Research.researched {
+		s.techs[k] = v
+	}
+	for k, v := range ge.Buildings.counts {
+		s.counts[k] = v
+	}
+	return s
+}
+
+func (s truthSnapshot) put(ge *GameEngine) {
+	pool := ge.Workers.domains["worker"]
+	ge.permanentBonuses = map[string]float64{}
+	for k, v := range s.permanent {
+		ge.permanentBonuses[k] = v
+	}
+	ge.Events.active = append([]ActiveEvent(nil), s.events...)
+	pool.count = s.workers
+	pool.assignments = map[string]int{}
+	for k, v := range s.crew {
+		pool.assignments[k] = v
+	}
+	ge.Diplomacy.boonLoans = append([]BoonWorkerLoan(nil), s.loans...)
+	ge.Research.researched = map[string]bool{}
+	for k, v := range s.techs {
+		ge.Research.researched[k] = v
+	}
+	ge.Research.rebuildBonuses()
+	ge.Buildings.counts = map[string]int{}
+	for k, v := range s.counts {
+		ge.Buildings.counts[k] = v
+	}
+	ge.recalculateRates() // storage first: stock must fit before it goes back
+	for key, v := range s.stock {
+		ge.Resources.resources[key].Amount = v
+	}
+	ge.recalculateRates()
+	ge.recalculateTickSpeed()
+}
+
+// probe measures p in age and mode.
+func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMode) truthOutcome {
 	t.Helper()
 	out := truthOutcome{Age: age, Mode: mode, Promised: p.Eff.Value}
 	kind, ok := truthKinds[p.Kind]
@@ -582,72 +1002,96 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, ge *GameEngine, age strin
 		out.Skip = "no meter for " + p.Kind
 		return out
 	}
-	stock := map[string]float64{}
-	for _, key := range ge.Resources.order {
-		stock[key] = ge.Resources.resources[key].Amount
+	if kind.spend != nil {
+		read := func(on bool) (float64, string) {
+			ge := newTruthEngine(age, mode)
+			sw := p.wire(ge)
+			if sw.off(); on {
+				sw.on()
+			}
+			ge.recalculateRates()
+			ge.recalculateTickSpeed()
+			return kind.spend(t, p, ge)
+		}
+		before, skip := read(false)
+		after, _ := read(true)
+		out.Delivered, out.Skip = after-before, skip
+		return out
 	}
+	ge := l.engine(age, mode)
+	snap := takeTruthSnapshot(ge)
 	sw := p.wire(ge)
 	sw.off()
 	before := readTruth(t, ge)
 	sw.on()
 	after := readTruth(t, ge)
 	sw.restore()
-	for _, key := range ge.Resources.order {
-		ge.Resources.resources[key].Amount = stock[key]
-	}
-	delivered, allowed, skip := kind.measure(p, ge, before, after)
-	out.Delivered, out.Skip = delivered, skip
+	snap.put(ge)
+	m := kind.measure(p, ge, before, after)
+	out.Delivered, out.Noise, out.Skip = m.Delivered, m.Noise, m.Skip
+	allowed := m.Allowed
 	if allowed == nil {
 		return out
 	}
+	faith := truthMoved(before["rate:faith"], after["rate:faith"])
 	for _, m := range sortedKeys(after) {
-		if strings.HasPrefix(m, "stock:") {
-			continue // a store that shrank clips its stock; that is storage's own doing
+		if !truthMoved(before[m], after[m]) || allowed(m) || p.also(m) {
+			continue
 		}
-		if truthMoved(before[m], after[m]) && !allowed(m) {
-			out.Leaks = append(out.Leaks, fmt.Sprintf("%s %+.4g", m, after[m]-before[m]))
+		if m == "morale" && faith {
+			continue // faith income lifts morale (site/docs/faith.md): the rate's own doing
 		}
+		if strings.HasPrefix(m, "stock:") && p.Kind == "storage" {
+			continue // a store that shrinks clips its stock
+		}
+		out.Leaks = append(out.Leaks, fmt.Sprintf("%s %+.4g", m, after[m]-before[m]))
 	}
 	return out
 }
 
-// truthAgesFrom is age and the two ages after it.
-func truthAgesFrom(age string) []string {
-	keys := ageKeys()
-	i := ageOrders()[age]
-	return keys[i:min(i+3, len(keys))]
-}
-
 // ----- the inventory -----
 
-// truthTechText words a tech effect the way the Research panel does.
-func truthBonusText(e config.Effect) string {
-	return fmt.Sprintf("%+.0f%% %s", e.Value*100, EffectTargetName(e.Target))
-}
+func truthPercent(v float64) string { return fmt.Sprintf("%+g%%", math.Round(v*1000)/10) }
 
+// truthEffectText words an effect the way the game does.
 func truthEffectText(e config.Effect) string {
 	switch e.Type {
 	case "bonus", "permanent_bonus":
-		return truthBonusText(e)
+		return truthPercent(e.Value) + " " + EffectTargetName(e.Target)
 	case "production":
 		return fmt.Sprintf("%+g %s/tick", e.Value, ResourceName(e.Target))
 	case "storage":
-		if e.Target == "all" {
+		switch e.Target {
+		case "all":
 			return fmt.Sprintf("%+g storage for every resource", e.Value)
+		case "soldiers":
+			return fmt.Sprintf("%+g soldier storage", e.Value)
 		}
 		return fmt.Sprintf("%+g %s storage", e.Value, ResourceName(e.Target))
 	case "capacity":
 		if e.Target == "population" {
 			return fmt.Sprintf("%+g housing", e.Value)
 		}
+		return fmt.Sprintf("capacity %s %+g", e.Target, e.Value)
 	case "instant_resource":
 		return fmt.Sprintf("%+g %s at once", e.Value, ResourceName(e.Target))
+	case "steal_resource":
+		return fmt.Sprintf("up to %g %s lost", e.Value, ResourceName(e.Target))
+	case "worker_loss":
+		return fmt.Sprintf("%g%% of your workers lost", e.Value*100)
 	case "morale":
-		return fmt.Sprintf("%+g morale points a tick", e.Value*100)
+		return fmt.Sprintf("%+g morale points a tick", math.Round(e.Value*1e6)/1e4)
+	case "opinion":
+		return fmt.Sprintf("%+g opinion/tick per worker", e.Value)
+	case "trade_route_income":
+		return truthPercent(e.Value) + " trade route income"
 	case "production_all":
-		return fmt.Sprintf("%+.0f%% all production", e.Value*100)
+		return truthPercent(e.Value) + " all production"
 	case "tick_speed":
-		return fmt.Sprintf("%+.0f%% game speed", e.Value*100)
+		return truthPercent(e.Value) + " game speed"
+	}
+	if res, ok := strings.CutSuffix(e.Type, "_rate"); ok {
+		return truthPercent(e.Value) + " " + ResourceName(res) + " production"
 	}
 	return fmt.Sprintf("%s %s %+g", e.Type, e.Target, e.Value)
 }
@@ -665,7 +1109,7 @@ func truthTechPromises() []truthPromise {
 				Text: truthEffectText(eff), Kind: truthEffectKind("tech", eff),
 				wire: func(ge *GameEngine) truthSwitch {
 					rm := ge.Research
-					saved, was := rm.defs[key], rm.researched[key]
+					saved := rm.defs[key]
 					set := func(effects []config.Effect) func() {
 						return func() {
 							d := saved
@@ -676,15 +1120,9 @@ func truthTechPromises() []truthPromise {
 						}
 					}
 					return truthSwitch{
-						off: set(nil),
-						on:  set([]config.Effect{eff}),
-						restore: func() {
-							rm.defs[key] = saved
-							if !was {
-								delete(rm.researched, key)
-							}
-							rm.rebuildBonuses()
-						},
+						off:     set(nil),
+						on:      set([]config.Effect{eff}),
+						restore: func() { rm.defs[key] = saved },
 					}
 				},
 			})
@@ -693,24 +1131,775 @@ func truthTechPromises() []truthPromise {
 	return out
 }
 
-func TestBonusTruthExplore(t *testing.T) {
-	lab := newTruthLab()
-	var rows []string
-	for _, p := range truthTechPromises() {
-		for _, mode := range []truthMode{truthClean, truthTypical} {
-			ages := []string{p.Age}
-			if mode == truthTypical {
-				ages = truthAgesFrom(p.Age)
+// truthMilestoneAge is the first age a milestone's conditions can be met
+// in: the latest of its own MinAge and the ages of the buildings, techs,
+// wonders and resources it names, of the housing its population needs and
+// of the tech count it asks for. Counters that only play fills (structures
+// built, soldiers trained) add no age of their own.
+func truthMilestoneAge(l *truthLab, def config.MilestoneDef) string {
+	order := ageOrders()
+	keys := ageKeys()
+	at := 0
+	later := func(age string) {
+		if i, ok := order[age]; ok && i > at {
+			at = i
+		}
+	}
+	later(def.MinAge)
+	blds := config.BuildingByKey()
+	for key := range def.MinBuildings {
+		later(blds[key].RequiredAge)
+	}
+	if len(def.MinBuildingSum.Keys) > 0 {
+		first := len(keys) - 1
+		for _, key := range def.MinBuildingSum.Keys {
+			first = min(first, order[blds[key].RequiredAge])
+		}
+		later(keys[first])
+	}
+	techs := config.TechByKey()
+	for _, key := range def.RequiredTechs {
+		later(techs[key].Age)
+	}
+	for res := range def.MinResources {
+		later(config.ResourceByKey()[res].Age)
+	}
+	if def.MinSoldiersTrained > 0 {
+		later(config.ResourceByKey()["soldiers"].Age)
+	}
+	if def.MinTechCount > 0 || def.MinWonders > 0 || def.MinPopulation > 0 {
+		for i, a := range keys {
+			n, w := 0, 0
+			for _, t := range techs {
+				if order[t.Age] <= i {
+					n++
+				}
 			}
-			for _, age := range ages {
-				ge := lab.engine(age, mode)
-				o := lab.probe(t, p, ge, age, mode)
-				rows = append(rows, fmt.Sprintf("%-60s %-8s %-16s promised %-8.4g delivered %-10.4g leaks=%v skip=%q", p.ID(), mode, age, o.Promised, o.Delivered, o.Leaks, o.Skip))
+			for _, b := range blds {
+				if b.Category == "wonder" && order[b.RequiredAge] <= i {
+					w++
+				}
+			}
+			if n >= def.MinTechCount && w >= def.MinWonders && l.engine(a, truthClean).popCapLocked() >= def.MinPopulation {
+				later(a)
+				break
 			}
 		}
 	}
-	sort.Strings(rows)
-	if path := os.Getenv("BONUS_TRUTH_DUMP"); path != "" {
-		_ = os.WriteFile(path, []byte(strings.Join(rows, "\n")+"\n"), 0o644)
+	return keys[at]
+}
+
+// truthMilestonePromises is one promise per reward of every milestone,
+// granted through the engine's own reward step.
+func truthMilestonePromises(l *truthLab) []truthPromise {
+	var out []truthPromise
+	for _, def := range config.Milestones() {
+		age := truthMilestoneAge(l, def)
+		for _, eff := range def.Rewards {
+			out = append(out, truthPromise{
+				Source: "milestone", Key: def.Key, Name: def.Name, Age: age, Eff: eff, Count: 1,
+				Text: milestoneRewardParts([]config.Effect{eff}), Kind: truthEffectKind("milestone", eff),
+				wire: func(ge *GameEngine) truthSwitch {
+					return truthSwitch{
+						off:     func() {},
+						on:      func() { ge.applyMilestoneRewards([]config.Effect{eff}) },
+						restore: func() {},
+					}
+				},
+			})
+		}
 	}
+	return out
+}
+
+// truthChainPromises is the game speed boost of every milestone chain.
+func truthChainPromises(l *truthLab) []truthPromise {
+	var out []truthPromise
+	byKey := config.MilestoneByKey()
+	for _, chain := range config.MilestoneChains() {
+		age := ageKeys()[0]
+		for _, k := range chain.MilestoneKeys {
+			if a := truthMilestoneAge(l, byKey[k]); ageOrders()[a] > ageOrders()[age] {
+				age = a
+			}
+		}
+		eff := config.Effect{Type: "tick_speed", Target: "tick_speed", Value: chain.BoostValue}
+		out = append(out, truthPromise{
+			Source: "chain", Key: chain.Key, Name: chain.Name, Age: age, Eff: eff, Count: 1,
+			Text: "Game speed " + truthPercent(chain.BoostValue) + " for a while", Kind: "game_speed",
+			wire: func(ge *GameEngine) truthSwitch {
+				return truthSwitch{
+					off:     func() {},
+					on:      func() { ge.startChainBoost(chain, chain.BoostDuration) },
+					restore: func() {},
+				}
+			},
+		})
+	}
+	return out
+}
+
+// truthBuildingPromises is one promise per effect of every building,
+// wonders and monuments included. The building stands either way (as many
+// copies as the lab holds, or one of a wonder or monument); the off reading
+// empties its effects and the on reading holds the one effect alone.
+func truthBuildingPromises() []truthPromise {
+	var out []truthPromise
+	for _, def := range config.BaseBuildings() {
+		source := "building"
+		if def.Category == "wonder" || def.Category == "monument" {
+			source = def.Category
+		}
+		for _, eff := range def.Effects {
+			key := def.Key
+			count := float64(truthCopies)
+			if source != "building" {
+				count = 1
+			}
+			out = append(out, truthPromise{
+				Source: source, Key: def.Key, Name: def.Name, Age: def.RequiredAge, Eff: eff, Count: count,
+				Text: truthEffectText(eff), Kind: truthEffectKind(source, eff),
+				wire: func(ge *GameEngine) truthSwitch {
+					bm := ge.Buildings
+					saved := bm.defs[key]
+					set := func(effects []config.Effect) func() {
+						return func() {
+							d := saved
+							d.Effects = effects
+							bm.defs[key] = d
+							bm.counts[key] = int(count)
+						}
+					}
+					return truthSwitch{
+						off:     set(nil),
+						on:      set([]config.Effect{eff}),
+						restore: func() { bm.defs[key] = saved },
+					}
+				},
+			})
+		}
+	}
+	return out
+}
+
+// truthEventAge is the first age an event can fire in.
+func truthEventAge(def config.EventDef) string {
+	age := def.MinAge
+	if ep, ok := config.EpochByKey()[def.EpochKey]; ok && len(ep.Ages) > 0 {
+		if ageOrders()[ep.Ages[0]] > ageOrders()[age] {
+			age = ep.Ages[0]
+		}
+	}
+	if _, ok := ageOrders()[age]; !ok {
+		age = ageKeys()[0]
+	}
+	return age
+}
+
+// truthEventSwitch fires one effect the way a triggered event does: a
+// timed effect joins the active events for the event's duration, an instant
+// one is applied on the spot (EventManager.Tick, applyEventEffects). An
+// instant event's timed effect is never applied, and reads as nothing.
+func truthEventSwitch(ge *GameEngine, def config.EventDef, eff config.Effect) truthSwitch {
+	return truthSwitch{
+		off: func() { ge.Resources.resources["soldiers"].Amount = 0 }, // no garrison: a raid takes its full share
+		on: func() {
+			one := def
+			one.Effects = []config.Effect{eff}
+			if one.Duration > 0 {
+				ge.Events.active = append(ge.Events.active, ActiveEvent{Key: one.Key, Name: one.Name, TicksLeft: one.Duration, Effects: one.Effects})
+			}
+			ge.applyEventEffects(one)
+		},
+		restore: func() {},
+	}
+}
+
+// truthEventPromises is one promise per effect of every random and
+// epoch-exclusive event.
+func truthEventPromises() []truthPromise {
+	var out []truthPromise
+	add := func(source string, defs []config.EventDef) {
+		for _, def := range defs {
+			for _, eff := range def.Effects {
+				out = append(out, truthPromise{
+					Source: source, Key: def.Key, Name: def.Name, Age: truthEventAge(def), Eff: eff, Count: 1,
+					Text: truthEffectText(eff), Kind: truthEffectKind(source, eff),
+					wire: func(ge *GameEngine) truthSwitch { return truthEventSwitch(ge, def, eff) },
+				})
+			}
+		}
+	}
+	add("event", config.RandomEvents())
+	add("era event", config.EpochExclusiveEvents())
+	return out
+}
+
+// truthAwakeningPromises is one promise per effect of every awakening,
+// injected as fireAwakening injects it.
+func truthAwakeningPromises() []truthPromise {
+	var out []truthPromise
+	for _, def := range config.Awakenings() {
+		for _, eff := range def.Effects {
+			out = append(out, truthPromise{
+				Source: "awakening", Key: def.Key, Name: def.Name, Age: def.TriggerAge, Eff: eff, Count: 1,
+				Text: truthEffectText(eff), Kind: truthEffectKind("awakening", eff),
+				wire: func(ge *GameEngine) truthSwitch {
+					return truthSwitch{
+						off: func() {},
+						on: func() {
+							ge.Events.InjectEvent(ActiveEvent{Key: def.Key, Name: def.Name, TicksLeft: def.Duration, Effects: []config.Effect{eff}})
+						},
+						restore: func() {},
+					}
+				},
+			})
+		}
+	}
+	return out
+}
+
+var (
+	truthAllRe  = regexp.MustCompile(`[Aa]ll production ([+-]\d+)%`)
+	truthFlatRe = regexp.MustCompile(`([A-Za-z][a-z ]*?) ([+-][\d.]+)/tick`)
+)
+
+// truthEpochEventPromises reads the rate promises out of every epoch
+// event's own text ("All production +100%", "Gold +5/tick") and measures
+// them with the whole event applied through the engine's own step. The
+// events are code, not data, so the text is the only statement of what they
+// do.
+func truthEpochEventPromises(t *testing.T) []truthPromise {
+	var out []truthPromise
+	labels := map[string]string{}
+	for _, r := range config.BaseResources() {
+		labels[strings.ToLower(r.Name)] = r.Key
+	}
+	add := func(defs []config.EpochEventDef, good bool) {
+		for _, def := range defs {
+			// Epoch events fire on entering an era, from the Iron Era on.
+			age := "iron_age"
+			wire := func(ge *GameEngine) truthSwitch {
+				return truthSwitch{
+					off: func() {},
+					on: func() {
+						// The event is applied whole. Its one-off parts (workers
+						// gained or lost, buildings burned or given, stock, free
+						// techs) are put back, so the rates read only what the
+						// text says lasts: the timed and permanent effects.
+						keep := takeTruthSnapshot(ge)
+						if good {
+							ge.applyGoodEpochEvent(def)
+						} else {
+							ge.applyChallengingEpochEvent(def, ge.currentEpoch)
+						}
+						keep.events = append([]ActiveEvent(nil), ge.Events.active...)
+						keep.permanent = map[string]float64{}
+						for k, v := range ge.permanentBonuses {
+							keep.permanent[k] = v
+						}
+						keep.put(ge)
+					},
+					restore: func() {},
+				}
+			}
+			first := len(out)
+			for _, m := range truthAllRe.FindAllStringSubmatch(def.FlavorText, -1) {
+				v, _ := strconv.ParseFloat(m[1], 64)
+				out = append(out, truthPromise{
+					Source: "epoch event", Key: def.Key, Name: def.Name, Age: age, Count: 1,
+					Eff:  config.Effect{Type: "production_all", Value: v / 100},
+					Text: m[0], Kind: "all_production", wire: wire,
+				})
+			}
+			for _, m := range truthFlatRe.FindAllStringSubmatch(def.FlavorText, -1) {
+				v, _ := strconv.ParseFloat(m[2], 64)
+				// The words before the number end in the resource's name:
+				// "then culture", "and faith", "Gold".
+				words := strings.Fields(strings.ToLower(m[1]))
+				name, res, ok := strings.Join(words, " "), "", false
+				for i := range words {
+					if res, ok = labels[strings.Join(words[i:], " ")]; ok {
+						break
+					}
+				}
+				if name == "its production" {
+					// "The epoch's main building material": the era's own.
+					res, ok = config.EpochByKey()[config.EpochForAge(age)].PrimaryResource, true
+				}
+				if !ok {
+					t.Errorf("epoch event %s promises %q, and %q is no resource: word it as \"<Resource> +N/tick\"", def.Key, m[0], name)
+					continue
+				}
+				out = append(out, truthPromise{
+					Source: "epoch event", Key: def.Key, Name: def.Name, Age: age, Count: 1,
+					Eff:  config.Effect{Type: "production", Target: res, Value: v},
+					Text: m[0], Kind: "flat_rate", wire: wire,
+				})
+			}
+			// The promises of one event ride along with each other.
+			var meters []string
+			for _, p := range out[first:] {
+				if p.Kind == "all_production" {
+					meters = append(meters, "rate:")
+				} else {
+					meters = append(meters, "rate:"+p.Eff.Target)
+				}
+			}
+			for i := first; i < len(out); i++ {
+				out[i].Also = meters
+			}
+		}
+	}
+	add(config.GoodEpochEvents(), true)
+	add(config.ChallengingEpochEvents(), false)
+	return out
+}
+
+// truthBoonPromises is every boon and setback in the catalog at the top of
+// its range, applied through the applier a civilization's gift uses.
+func truthBoonPromises() []truthPromise {
+	var out []truthPromise
+	add := func(defs []boon.Def) {
+		for _, def := range defs {
+			b := boon.Boon{Kind: def.Kind, Polarity: def.Polarity, Name: def.Name, Magnitude: def.MagMax, DurationTicks: def.DurMax, InstantAmount: def.AmountMax}
+			if def.Polarity == boon.Negative {
+				b.Magnitude = def.MagMin
+			}
+			// A boon aims at the civilization's specialty or a resource of
+			// the age; the lab aims at one a Bronze Age player makes.
+			b.Resource = "food"
+			if def.Resource != "" {
+				b.Resource = def.Resource
+			}
+			age := "bronze_age" // the first civilization is met there
+			var effs []config.Effect
+			switch def.Kind {
+			case boon.RateBuff:
+				effs = append(effs, config.Effect{Type: b.Resource + "_rate", Target: b.Resource, Value: b.Magnitude})
+			case boon.AllProduction:
+				effs = append(effs, config.Effect{Type: "production_all", Target: "production_all", Value: b.Magnitude})
+			case boon.TickSpeed:
+				effs = append(effs, config.Effect{Type: "tick_speed", Target: "tick_speed", Value: b.Magnitude})
+			case boon.InstantResource:
+				effs = append(effs, config.Effect{Type: "instant_resource", Target: b.Resource, Value: b.InstantAmount})
+			case boon.TempWorkers:
+				effs = append(effs, config.Effect{Type: "boon_workers", Value: math.Round(b.InstantAmount)})
+			case boon.WorkerLoss:
+				effs = append(effs, config.Effect{Type: "boon_workers", Value: -math.Round(b.InstantAmount)})
+			case boon.ResourceDrain:
+				effs = append(effs, config.Effect{Type: "boon_drain", Target: b.Resource, Value: b.InstantAmount})
+				if b.Magnitude != 0 {
+					effs = append(effs, config.Effect{Type: "production_all", Target: "production_all", Value: b.Magnitude})
+				}
+			}
+			for _, eff := range effs {
+				kind := truthEffectKind("boon", eff)
+				text := truthEffectText(eff)
+				switch eff.Type {
+				case "boon_workers":
+					kind, text = "workers", fmt.Sprintf("%+g workers", eff.Value)
+				case "boon_drain":
+					kind, text = "boon_drain", fmt.Sprintf("%g%% of your %s lost", eff.Value*100, ResourceName(eff.Target))
+				case "production_all":
+					if def.Kind == boon.ResourceDrain {
+						kind = "boon_all_production"
+					}
+				}
+				out = append(out, truthPromise{
+					Source: "boon", Key: strings.ReplaceAll(strings.ToLower(def.Name), " ", "_"), Name: def.Name, Age: age, Eff: eff, Count: 1,
+					Text: text, Kind: kind,
+					wire: func(ge *GameEngine) truthSwitch {
+						return truthSwitch{
+							off: func() {},
+							on: func() {
+								boon.Apply(b, boonApplier{ge: ge, name: "Lab", key: "lab", malus: def.Polarity == boon.Negative})
+							},
+							restore: func() {},
+						}
+					},
+				})
+			}
+		}
+	}
+	add(boon.Catalog())
+	add(boon.MalusCatalog())
+	return out
+}
+
+// truthAllyPromises is every civilization's allied bonus.
+func truthAllyPromises() []truthPromise {
+	var out []truthPromise
+	for _, def := range config.BaseFactions() {
+		if def.TradeBonus == 0 {
+			continue
+		}
+		eff := config.Effect{Type: "ally", Target: def.Specialty, Value: def.TradeBonus}
+		out = append(out, truthPromise{
+			Source: "ally", Key: def.Key, Name: def.Name, Age: def.MinAge, Eff: eff, Count: 1,
+			Text: truthPercent(def.TradeBonus) + " " + ResourceName(def.Specialty) + " production while allied", Kind: "ally_bonus",
+			wire: func(ge *GameEngine) truthSwitch {
+				saved, had := ge.Diplomacy.factions[def.Key]
+				gone := func() { delete(ge.Diplomacy.factions, def.Key) }
+				return truthSwitch{
+					off: gone,
+					on: func() {
+						ge.Diplomacy.factions[def.Key] = &FactionState{Discovered: true, Opinion: AllyOpinion, Status: "allied"}
+					},
+					restore: func() {
+						if gone(); had {
+							ge.Diplomacy.factions[def.Key] = saved
+						}
+					},
+				}
+			},
+		})
+	}
+	return out
+}
+
+// truthLegacyPromises is what a Succumb leaves behind: each epoch's legacy
+// bonus, resource by resource, and Ancient Knowledge.
+func truthLegacyPromises() []truthPromise {
+	var out []truthPromise
+	for _, ep := range config.Epochs() {
+		flag := func(ge *GameEngine) truthSwitch {
+			had := ge.legacyBonuses[ep.Key]
+			gone := func() { delete(ge.legacyBonuses, ep.Key) }
+			return truthSwitch{
+				off: gone,
+				on: func() {
+					ge.legacyBonuses[ep.Key] = true
+					ge.reapplyLegacyBonuses()
+				},
+				restore: func() {
+					if gone(); had {
+						ge.legacyBonuses[ep.Key] = true
+					}
+				},
+			}
+		}
+		bonuses := config.LegacyBonusForEpoch(ep.Key)
+		for _, res := range sortedKeys(bonuses) {
+			eff := config.Effect{Type: "permanent_bonus", Target: res + "_rate", Value: bonuses[res]}
+			out = append(out, truthPromise{
+				// A legacy is carried into every later run, from its first age.
+				Source: "legacy", Key: ep.Key, Name: ep.Name + " legacy", Age: ageKeys()[0], Eff: eff, Count: 1,
+				Text: truthEffectText(eff), Kind: "legacy_production", wire: flag,
+			})
+		}
+		if len(bonuses) == 0 {
+			continue
+		}
+		eff := config.Effect{Type: "permanent_bonus", Target: "research_speed", Value: SuccumbResearchBonusPerEpoch}
+		out = append(out, truthPromise{
+			Source: "ancient knowledge", Key: ep.Key, Name: "Ancient Knowledge (" + ep.Name + ")", Age: ageKeys()[0], Eff: eff, Count: 1,
+			Text: truthEffectText(eff), Kind: "legacy_research", wire: flag,
+		})
+	}
+	return out
+}
+
+// truthOtherPromises is the handful of one-off sources: the Cosmic Legacy
+// and the festival.
+func truthOtherPromises() []truthPromise {
+	cosmic := config.Effect{Type: "production_all", Target: "production_all", Value: CosmicLegacyProductionBonus}
+	festival := config.Effect{Type: "production_all", Target: "production_all", Value: festivalBuffPercent}
+	return []truthPromise{
+		{
+			Source: "cosmic legacy", Key: "cosmic_legacy", Name: "Cosmic Legacy", Age: ageKeys()[0], Eff: cosmic, Count: 1,
+			Text: truthEffectText(cosmic) + ", permanently", Kind: "all_production",
+			wire: func(ge *GameEngine) truthSwitch {
+				had := ge.cosmicLegacy
+				return truthSwitch{
+					off:     func() { ge.cosmicLegacy = false },
+					on:      func() { ge.cosmicLegacy = true },
+					restore: func() { ge.cosmicLegacy = had },
+				}
+			},
+		},
+		{
+			// Culture, the festival's price, arrives in the Classical Age.
+			Source: "festival", Key: "festival", Name: "Cultural Festival", Age: config.ResourceByKey()["culture"].Age, Eff: festival, Count: 1,
+			Text: truthEffectText(festival) + " for a while", Kind: "festival",
+			wire: func(ge *GameEngine) truthSwitch {
+				ready := ge.festivalReadyTick
+				return truthSwitch{
+					off: func() {},
+					on: func() {
+						c := ge.Resources.resources["culture"]
+						c.Amount = math.Max(c.Amount, ge.festivalCost())
+						ge.festivalReadyTick = 0
+						if err := ge.DoFestival(); err != nil {
+							panic(err)
+						}
+					},
+					restore: func() { ge.festivalReadyTick = ready },
+				}
+			},
+		},
+	}
+}
+
+// truthPromises is every promise the guard measures.
+func truthPromises(t *testing.T, l *truthLab) []truthPromise {
+	var out []truthPromise
+	out = append(out, truthTechPromises()...)
+	out = append(out, truthMilestonePromises(l)...)
+	out = append(out, truthChainPromises(l)...)
+	out = append(out, truthBuildingPromises()...)
+	out = append(out, truthEventPromises()...)
+	out = append(out, truthAwakeningPromises()...)
+	out = append(out, truthEpochEventPromises(t)...)
+	out = append(out, truthBoonPromises()...)
+	out = append(out, truthAllyPromises()...)
+	out = append(out, truthLegacyPromises()...)
+	out = append(out, truthOtherPromises()...)
+	return out
+}
+
+// ----- the verdict -----
+
+// The classes a promise can land in.
+const (
+	truthOK          = "OK"
+	truthDead        = "DEAD"
+	truthCapped      = "CAPPED"
+	truthWrongSize   = "WRONG SIZE"
+	truthWrongTarget = "WRONG TARGET"
+	truthUnmeasured  = "NOT MEASURED"
+)
+
+// truthVerdict is what the guard found for one promise.
+type truthVerdict struct {
+	P     truthPromise
+	Class string
+	// MeasuredAge is the age the clean reading was taken in: the promise's
+	// own, or the first one after it with something for the bonus to raise.
+	MeasuredAge string
+	Clean       truthOutcome
+	// Typical is the typical reading in every age measured, in order.
+	Typical []truthOutcome
+	// ShortFrom is the first age the typical player gets less than promised
+	// ("" when never), and GoneFrom the first it gets nothing at all.
+	ShortFrom, GoneFrom string
+	Note                string
+}
+
+// truthPoolResource is the resource whose own pool a promise sits in ("" for
+// a promise in no resource's pool).
+func truthPoolResource(p truthPromise) string {
+	switch p.Kind {
+	case "resource_production", "legacy_production", "ally_bonus":
+		return truthRateTarget(p.Eff)
+	}
+	return ""
+}
+
+// judge measures one promise and classes it.
+func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
+	t.Helper()
+	v := truthVerdict{P: p, MeasuredAge: p.Age}
+	kind, ok := truthKinds[p.Kind]
+	if !ok {
+		v.Class, v.Note = truthUnmeasured, "no meter for this effect"
+		return v
+	}
+	// An ally's bonus multiplies the whole rate, flat income included, and
+	// sits outside every pool: its exact reading is the typical player's.
+	exact := truthClean
+	if p.Kind == "ally_bonus" {
+		exact = truthTypical
+	}
+	// A bonus to a resource has nothing to raise before the resource comes in.
+	if res := truthPoolResource(p); res != "" {
+		first := l.firstMade(res, p.Age, exact == truthTypical)
+		if first == "" {
+			v.Class, v.Note = truthDead, "nothing makes "+ResourceName(res)+" from "+AgeName(p.Age)+" on"
+			return v
+		}
+		if first != p.Age && p.Source != "legacy" {
+			v.Note = "nothing to raise until " + AgeName(first) + ": nothing makes " + ResourceName(res) + " before it"
+		}
+		v.MeasuredAge = first
+	}
+	v.Clean = l.probe(t, p, v.MeasuredAge, exact)
+	switch c := v.Clean; {
+	case c.Skip != "":
+		v.Class, v.Note = truthUnmeasured, c.Skip
+		return v
+	case len(c.Leaks) > 0 && c.is(0) && !c.full():
+		v.Class, v.Note = truthWrongTarget, "moves "+strings.Join(c.Leaks, ", ")+" and not what it names"
+		return v
+	case c.is(0) && !c.full():
+		v.Class = truthDead
+		return v
+	case !c.full():
+		v.Class = truthWrongSize
+		return v
+	case len(c.Leaks) > 0:
+		v.Class, v.Note = truthWrongTarget, "also moves "+strings.Join(c.Leaks, ", ")
+		return v
+	}
+	// It works. Does the typical player get all of it?
+	keys := ageKeys()
+	ages := keys[ageOrders()[v.MeasuredAge]:]
+	if !kind.Pool {
+		ages = ages[:min(3, len(ages))]
+	}
+	v.Class = truthOK
+	for _, age := range ages {
+		o := l.probe(t, p, age, truthTypical)
+		if o.Skip != "" {
+			continue
+		}
+		v.Typical = append(v.Typical, o)
+		if !o.full() {
+			v.Class = truthCapped
+			if v.ShortFrom == "" {
+				v.ShortFrom = age
+			}
+			if v.GoneFrom == "" && o.is(0) {
+				v.GoneFrom = age
+			}
+		}
+		if len(o.Leaks) > 0 && v.Class == truthOK {
+			v.Class, v.Note = truthWrongTarget, "in "+AgeName(age)+" also moves "+strings.Join(o.Leaks, ", ")
+		}
+	}
+	return v
+}
+
+// truthPool names the pool a capped promise sits in, as truthAccepted keys
+// it: the meter kind, and the resource for a resource's own pool.
+func truthPool(p truthPromise) string {
+	if res := truthPoolResource(p); res != "" {
+		return "resource_production:" + res
+	}
+	switch {
+	case strings.HasSuffix(p.Kind, "all_production"), p.Kind == "festival":
+		return "all_production"
+	case strings.HasSuffix(p.Kind, "research"), p.Kind == "research_speed":
+		return "research_speed"
+	}
+	return p.Kind
+}
+
+// truthAccepted is the allow-list: the promises the guard knows the game
+// does not keep, and why that is accepted for now. Keys are
+// "<class>/<pool or effect>". Every entry must still be needed: the test
+// fails on one nothing uses, so a fixed promise takes its excuse with it.
+var truthAccepted = map[string]string{}
+
+// TestBonusTruth is the guard: every promise measured, every miss a failure
+// unless truthAccepted carries it.
+func TestBonusTruth(t *testing.T) {
+	lab := newTruthLab()
+	promises := truthPromises(t, lab)
+	used := map[string]bool{}
+	var verdicts []truthVerdict
+	for _, p := range promises {
+		if p.Kind == "" {
+			key := truthUnmeasured + "/" + p.Eff.Type + ":" + p.Eff.Target
+			if _, ok := truthAccepted[key]; ok {
+				used[key] = true
+				verdicts = append(verdicts, truthVerdict{P: p, Class: truthUnmeasured, MeasuredAge: p.Age, Note: truthAccepted[key]})
+				continue
+			}
+			t.Errorf("%s: no meter for effect type %q, target %q. An effect nothing measures can be silently ignored by the engine: give it a meter in truthEffectKind and truthKinds.", p.ID(), p.Eff.Type, p.Eff.Target)
+			continue
+		}
+		v := lab.judge(t, p)
+		verdicts = append(verdicts, v)
+		if v.Class == truthOK {
+			continue
+		}
+		key := v.Class + "/" + truthPool(p)
+		if _, ok := truthAccepted[key]; ok {
+			used[key] = true
+			continue
+		}
+		switch v.Class {
+		case truthCapped:
+			t.Errorf("%s: CAPPED. Earned in %s it delivers %s to the typical player from %s on (promised %s %s). A cap swallows it; if that is accepted, add %q to truthAccepted with the reason.",
+				p.ID(), AgeName(p.Age), truthShort(v), AgeName(v.ShortFrom), fmtG(p.Eff.Value), truthKinds[p.Kind].Unit, key)
+		default:
+			t.Errorf("%s: %s in %s. Promised %s %s, delivered %s. %s",
+				p.ID(), v.Class, AgeName(v.MeasuredAge), fmtG(v.Clean.Promised), truthKinds[p.Kind].Unit, fmtG(v.Clean.Delivered), v.Note)
+		}
+	}
+	for key := range truthAccepted {
+		if !used[key] {
+			t.Errorf("truthAccepted[%q] excuses nothing any more: remove it", key)
+		}
+	}
+	if path := os.Getenv("BONUS_TRUTH_REPORT"); path != "" {
+		if err := os.WriteFile(path, []byte(truthReport(verdicts)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func fmtG(v float64) string { return strconv.FormatFloat(math.Round(v*1e6)/1e6, 'g', -1, 64) }
+
+// truthShort says how much of a capped promise the typical player gets in
+// the first age it falls short.
+func truthShort(v truthVerdict) string {
+	for _, o := range v.Typical {
+		if o.Age == v.ShortFrom {
+			return fmtG(o.Delivered)
+		}
+	}
+	return "less"
+}
+
+// truthReport is the full table, one line per promise, grouped by class.
+func truthReport(verdicts []truthVerdict) string {
+	var sb strings.Builder
+	counts := map[string]int{}
+	for _, v := range verdicts {
+		counts[v.Class]++
+	}
+	fmt.Fprintf(&sb, "%d promises measured.\n\n", len(verdicts))
+	for _, class := range []string{truthOK, truthCapped, truthDead, truthWrongSize, truthWrongTarget, truthUnmeasured} {
+		fmt.Fprintf(&sb, "- %s: %d\n", class, counts[class])
+	}
+	for _, class := range []string{truthDead, truthWrongSize, truthWrongTarget, truthUnmeasured, truthCapped, truthOK} {
+		var rows []string
+		for _, v := range verdicts {
+			if v.Class != class {
+				continue
+			}
+			row := fmt.Sprintf("| %s | %s | %s | %s |", v.P.Source, v.P.Name, v.P.Text, AgeName(v.P.Age))
+			switch class {
+			case truthCapped:
+				gone := "never fully"
+				if v.GoneFrom != "" {
+					gone = AgeName(v.GoneFrom)
+				}
+				row += fmt.Sprintf(" %s | %s |", AgeName(v.ShortFrom), gone)
+			case truthOK:
+				row += " " + v.Note + " |"
+			default:
+				row += fmt.Sprintf(" promised %s, delivered %s. %s |", fmtG(v.Clean.Promised), fmtG(v.Clean.Delivered), v.Note)
+			}
+			rows = append(rows, row)
+		}
+		if len(rows) == 0 {
+			continue
+		}
+		sort.Strings(rows)
+		fmt.Fprintf(&sb, "\n## %s (%d)\n\n", class, len(rows))
+		switch class {
+		case truthCapped:
+			sb.WriteString("| source | name | promise | earned in | short from | nothing from |\n|---|---|---|---|---|---|\n")
+		case truthOK:
+			sb.WriteString("| source | name | promise | earned in | note |\n|---|---|---|---|---|\n")
+		default:
+			sb.WriteString("| source | name | promise | earned in | what happens |\n|---|---|---|---|---|\n")
+		}
+		sb.WriteString(strings.Join(rows, "\n"))
+		sb.WriteString("\n")
+	}
+	return sb.String()
 }

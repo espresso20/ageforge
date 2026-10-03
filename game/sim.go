@@ -74,3 +74,28 @@ func (ge *GameEngine) SetGarrisonForTest(age string, n float64) {
 	}
 	ge.Resources.Add("soldiers", n-ge.Resources.Get("soldiers"))
 }
+
+// GrantTechsForTest marks techs as researched, as finishing each would, and
+// recalculates the rates: with no keys, every tech up to the current age.
+// A test hook for other packages (the panels that list capped bonuses); not
+// reachable from play.
+func (ge *GameEngine) GrantTechsForTest(keys ...string) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if len(keys) == 0 {
+		at := ageOrders()[ge.age]
+		for _, key := range ge.Research.order {
+			if ageOrders()[ge.Research.defs[key].Age] <= at {
+				keys = append(keys, key)
+			}
+		}
+	}
+	for _, key := range keys {
+		if _, ok := ge.Research.defs[key]; ok {
+			ge.Research.researched[key] = true
+		}
+	}
+	ge.Research.rebuildBonuses()
+	ge.recalculateRates()
+	ge.recalculateTickSpeed()
+}

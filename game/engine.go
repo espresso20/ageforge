@@ -1736,8 +1736,6 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Research bonuses to production rates
-	researchBonuses := ge.Research.GetBonuses()
 	permanentBonuses := make(map[string]float64)
 	for k, v := range ge.permanentBonuses {
 		permanentBonuses[k] = v
@@ -1908,12 +1906,12 @@ func (ge *GameEngine) recalculateRates() {
 	storageBonuses := ge.Buildings.GetStorageBonuses()
 	allBonus := storageBonuses["all"]
 	// Add storage bonuses from research
-	allBonus += researchBonuses["all"] // storage type effects
+	allBonus += ge.Research.StorageBonus("all")
 	allBonus += permanentBonuses["all"]
 
 	for _, def := range ge.Resources.defs {
 		specific := storageBonuses[def.Key]
-		specific += researchBonuses[def.Key]
+		specific += ge.Research.StorageBonus(def.Key)
 		specific += permanentBonuses[def.Key]
 		r := ge.Resources.resources[def.Key]
 		// Storage grows with Era Mastery's k, as production does, so a store
@@ -3253,8 +3251,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 		return 0, fmt.Errorf("Worker type '%s' is not unlocked yet.", vType)
 	}
 
-	popCap := ge.Buildings.GetPopCapacity()
-	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
+	popCap := ge.popCapLocked()
 
 	available := popCap - ge.Workers.TotalPop()
 	if available <= 0 {
@@ -3279,9 +3276,7 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	popCap := ge.Buildings.GetPopCapacity()
-	// Add population capacity from research/milestones/prestige
-	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
+	popCap := ge.popCapLocked()
 
 	if !ge.Workers.Recruit(vType, count, popCap) {
 		totalPop := ge.Workers.TotalPop()
@@ -4124,8 +4119,7 @@ func (ge *GameEngine) GetState() GameState {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
 
-	popCap := ge.Buildings.GetPopCapacity()
-	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
+	popCap := ge.popCapLocked()
 	nextAge := ge.progress.GetNextAge(ge.age)
 	sight := ge.ageSightLocked()
 

@@ -97,8 +97,8 @@ func RateText(res string, v float64) string {
 }
 
 // buildingEffectParts lists the player-visible effects of a building, one
-// phrase each, in Effects order. Effects the engine never reads
-// (capacity:military) and per-tick morale nudges are left out.
+// phrase each, in Effects order. Per-tick morale nudges are left out (the
+// Morale wiki page lists them).
 func buildingEffectParts(d BuildingDef) []string {
 	var parts []string
 	for _, e := range d.Effects {

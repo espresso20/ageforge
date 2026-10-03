@@ -22,9 +22,19 @@ type ResearchManager struct {
 	currentTech string
 	ticksLeft   int
 	totalTicks  int
-	// bonuses accumulates effect values keyed by eff.Target (e.g. "tick_speed",
-	// "production_all", "research_speed"). These feed into engine.recalculateRates.
+	// bonuses accumulates the "bonus" effects of researched techs by target:
+	// the multiplier pools ("production_all", "<res>_rate", "gather_rate",
+	// "tick_speed", "military_power", ...). These feed the resolver.
 	bonuses map[string]float64
+	// storage and capacity accumulate the "storage" effects (by resource key,
+	// or "all") and the "capacity" effects ("population") the same way. They
+	// are kept apart from bonuses: all three were one map keyed by target
+	// alone, so a tech's flat "+0.5 food/tick" also raised food storage by
+	// 0.5, and the Research panel listed storage and housing as percentages.
+	// Flat "production" effects are read off the defs (the engine's
+	// getAllResearchProductionEffects) and are in none of them.
+	storage  map[string]float64
+	capacity map[string]float64
 	// order is every tech key, sorted, fixed at construction. Per-tick walks
 	// over researched techs use it so summed effects never follow map order.
 	order []string
@@ -42,6 +52,8 @@ func NewResearchManager() *ResearchManager {
 		order:      sortedKeys(defs),
 		researched: make(map[string]bool),
 		bonuses:    make(map[string]float64),
+		storage:    make(map[string]float64),
+		capacity:   make(map[string]float64),
 	}
 }
 
@@ -149,12 +161,21 @@ func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) e
 // came back with bonuses a few ulps off the live ones.
 func (rm *ResearchManager) rebuildBonuses() {
 	rm.bonuses = make(map[string]float64)
+	rm.storage = make(map[string]float64)
+	rm.capacity = make(map[string]float64)
 	for _, key := range rm.order {
 		if !rm.researched[key] {
 			continue
 		}
 		for _, eff := range rm.defs[key].Effects {
-			rm.bonuses[eff.Target] += eff.Value
+			switch eff.Type {
+			case "bonus":
+				rm.bonuses[eff.Target] += eff.Value
+			case "storage":
+				rm.storage[eff.Target] += eff.Value
+			case "capacity":
+				rm.capacity[eff.Target] += eff.Value
+			}
 		}
 	}
 }
@@ -247,9 +268,22 @@ func (rm *ResearchManager) IsResearched(key string) bool {
 	return rm.researched[key]
 }
 
-// GetBonus returns the accumulated bonus for a target
+// GetBonus returns the accumulated "bonus" effects for a target (a multiplier
+// pool such as "production_all" or "military_power").
 func (rm *ResearchManager) GetBonus(target string) float64 {
 	return rm.bonuses[target]
+}
+
+// StorageBonus returns the storage researched techs add for target: a
+// resource key, or "all" for every resource.
+func (rm *ResearchManager) StorageBonus(target string) float64 {
+	return rm.storage[target]
+}
+
+// CapacityBonus returns the capacity researched techs add for target
+// ("population" is housing).
+func (rm *ResearchManager) CapacityBonus(target string) float64 {
+	return rm.capacity[target]
 }
 
 // ResearchedCount returns how many techs have been researched
