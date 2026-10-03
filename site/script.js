@@ -266,7 +266,6 @@
       frame = 0;
       label(a);
       announce(a);
-      document.body.classList.toggle("at-last", a === N - 1);
       if (from < 0 || reduceMotion.matches) {
         stop();
         paint(a, 0);
