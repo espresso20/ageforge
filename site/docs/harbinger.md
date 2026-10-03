@@ -313,7 +313,7 @@ Advancing faster doesn't dodge a fated doom:
 - **No harbinger yet.** If you reach the era's last advance and no harbinger has come, it comes at that advance, and the advance waits for one more try: "The Town Crier stands in your way, warning of impending doom before this age is out. Type 'harbinger' to answer, or advance again to meet it." Your next advance brings the strike, or reveals a false prophet. In the Stone Era, where nothing can strike, a false prophet who hasn't come by the era's end never comes, and the advance goes through.
 - **The build plan** follows the same rules. A `plan advance` waits behind a pending catastrophe, and if a harbinger comes at the plan's advance, the plan tries again on the next tick.
 - **Offline** changes nothing: the harbinger arrives and the doom strikes at their own moments while you are away. A doom that strikes waits, pending, until you come back, and the log shows the warning and the strike.
-- **Prestige from the Digital or Neon Era** ends the run: a doom that hasn't struck there is gone with it.
+- **Prestige before the Cosmic Era** (it opens at the Medieval Age) ends the run: a doom that hasn't struck there is gone with it. An early taste in the Medieval Age escapes an Iron Era doom this way, at the price of the run.
 - **Prestige from the Cosmic Era** is the era's passage, so an open doom settles before the Last Passage rolls. If its harbinger hasn't come, it comes at the prestige, and the prestige waits for one more try: "... Type 'harbinger' to answer, or confirm prestige again to meet it." Then the strike rolls first. A hit holds the prestige behind the pending Reality Tear: Endure it, then prestige again, which rolls the Last Passage (or Succumb, which resets the run with no prestige). A miss lets the same confirm go on to the Last Passage roll.
 
 ---
@@ -351,7 +351,7 @@ If both are ever pending at once, the Reality Tear is answered first: the choice
 
 - Your current era's fate is saved with your game, so reloading can't re-roll it. So is the thread: the figures who have spoken, what the current one said, your Appease and Brace levels, whether you invited the catastrophe, and in the Cosmic Era a Last Passage thread waiting behind the doom's. A Brace attached to a pending catastrophe is saved too.
 - **Succumb** clears the live thread, the era's fate, the invite and any Brace. Past verdicts are kept, like the epoch event history. The new run's Stone Era rolls its fate on the first tick.
-- **Prestige** clears all of it, past verdicts included. From the Digital or Neon Era a doom that hasn't struck ends with the run; in the Cosmic Era it settles before the Last Passage rolls.
+- **Prestige** clears all of it, past verdicts included. Before the Cosmic Era a doom that hasn't struck ends with the run; in the Cosmic Era it settles before the Last Passage rolls.
 - A pending Last Passage is saved with your game, and the choice is still waiting when you load.
 
 ---

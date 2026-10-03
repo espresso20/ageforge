@@ -46,6 +46,12 @@ type Summary struct {
 	// when it misses its bar under -pacing enforce.
 	LaterRun       *LaterRunRow `json:"later_run,omitempty"`
 	LaterRunFailed bool         `json:"later_run_failed,omitempty"`
+	// Depth is the depth-pays check (new players' first runs; nil when they
+	// reached fewer than two of its ages); DepthFailed marks a deeper
+	// prestige paying under DepthPaysMin times the one before, under
+	// -pacing enforce.
+	Depth       *DepthRow `json:"depth_pays,omitempty"`
+	DepthFailed bool      `json:"depth_failed,omitempty"`
 }
 
 // FirstRunRow is the 1x time from a fresh start to entering the Modern Age
@@ -70,7 +76,7 @@ type FirstRunRow struct {
 // age before the first visit to the Modern Age or later, replays (Succumb)
 // included.
 func firstRunToModern(r *RunResult, order map[string]int) (float64, bool) {
-	modern := order[game.PrestigeMinAge]
+	modern := order[game.PrestigeRunAge]
 	secs := 0.0
 	for _, a := range r.Ages {
 		if a.Cycle != 1 {
@@ -179,6 +185,7 @@ type ConfigJSON struct {
 	Army        bool    `json:"army,omitempty"`
 	Preset      string  `json:"preset,omitempty"`
 	PushCycles  bool    `json:"push_cycles,omitempty"`
+	Kit         bool    `json:"kit,omitempty"`
 }
 
 // PacingRow aggregates one (cycle, age) across seeds. Times are 1x seconds.
@@ -217,7 +224,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 			Cycles: cfg.Cycles, FinalAge: cfg.FinalAge, DecideEvery: cfg.DecideEvery, CheckEvery: cfg.CheckEvery,
 			SoftlockSecs: cfg.SoftlockSpan.Seconds(), AgeTimeout: cfg.AgeTimeout.Seconds(), MaxSimSecs: cfg.MaxSim.Seconds(),
 			Pacing: cfg.Pacing, Style: cfg.Style, LastPassage: cfg.LastPassage, Deals: cfg.Deals, Army: cfg.Army,
-			Preset: cfg.Preset, PushCycles: cfg.PushCycles,
+			Preset: cfg.Preset, PushCycles: cfg.PushCycles, Kit: cfg.Kit,
 		},
 	}
 	type key struct {
@@ -307,7 +314,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 	// Enforcement grades the median across seeds, like the table: one seed's
 	// age can run fast or slow on its events (a lucky Renaissance on a good
 	// epoch roll) without the game having changed pace. Only completed ages
-	// of the first cycle count; later cycles run with prestige upgrades.
+	// of the first cycle count; later cycles run on Era Mastery, with the legacy kit.
 	if cfg.Pacing == PacingEnforce {
 		for _, p := range s.Pacing {
 			if p.Cycle == 1 && !p.Unfinished && !p.Prestiged && (p.Verdict == VerdictSlow || p.Verdict == VerdictFast) {
@@ -342,6 +349,11 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 		if s.LaterRun != nil && cfg.Pacing == PacingEnforce && s.LaterRun.Failed {
 			s.LaterRunFailed, s.Failed = true, true
 		}
+	}
+	// Depth pays: a deeper prestige pays more per day.
+	s.Depth = newDepth(cfg, runs, order)
+	if s.Depth != nil && cfg.Pacing == PacingEnforce && s.Depth.Failed {
+		s.DepthFailed, s.Failed = true, true
 	}
 	return s
 }
@@ -394,7 +406,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	}
 	fmt.Fprintf(&sb, "# AgeForge smoke report: %s\n\n", verdict)
 	fmt.Fprintf(&sb, "Mode `%s`, %d seed(s), catastrophe choice `%s`, prestige at `%s`, %d prestige cycle(s)",
-		s.Mode, len(s.Runs), s.Config.Catastrophe, orDefault(s.Config.PrestigeAge, "first allowed age"), s.Config.Cycles)
+		s.Mode, len(s.Runs), s.Config.Catastrophe, orDefault(s.Config.PrestigeAge, game.PrestigeRunAge), s.Config.Cycles)
 	if s.Config.FinalAge != "" {
 		fmt.Fprintf(&sb, ", then on to `%s`", s.Config.FinalAge)
 	}
@@ -428,6 +440,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	s.writeFirstRun(&sb)
 	s.writeEarly(&sb)
 	s.writeLaterRun(&sb)
+	s.writeDepth(&sb)
 	for _, r := range s.Runs {
 		for _, n := range r.Notes {
 			fmt.Fprintf(&sb, "- seed %d: %s\n", r.Seed, n)

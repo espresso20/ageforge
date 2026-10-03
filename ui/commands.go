@@ -49,7 +49,7 @@ const (
 	ArgCampaign                       // a military campaign
 	ArgRouteAvailable                 // a trade route that can start
 	ArgRouteActive                    // a running trade route
-	ArgPrestigeUpgrade                // a prestige upgrade with a tier left
+	ArgPrestigeUpgrade                // a legacy kit item not bought yet
 	ArgAccount                        // a local account's name
 	ArgPlanItem                       // a plan item's number
 	ArgDeal                           // a trade deal's number, of the civilization in the previous argument
@@ -141,7 +141,7 @@ func registry() []*Command {
 	confirmYes := func(form, text string) *Command {
 		return &Command{Name: "confirm", BareOK: true, Subs: []*Command{{Name: "yes", Dangerous: true}}, Help: []Usage{{form, text}}}
 	}
-	prestigeConfirm := confirmYes("prestige confirm yes", "Reset game with prestige bonus")
+	prestigeConfirm := confirmYes("prestige confirm yes", "Prestige: a new run, keeping your points, the legacy kit and Era Mastery")
 	festivalConfirm := confirmYes("festival confirm yes", "Hold the festival now")
 
 	return []*Command{
@@ -286,8 +286,8 @@ func registry() []*Command {
 			Help: []Usage{{"prestige", "View prestige status"}},
 			Subs: []*Command{
 				prestigeConfirm,
-				sub("shop", "prestige shop", "View prestige upgrades"),
-				sub("buy", "prestige buy <upgrade>", "Buy a prestige upgrade", Arg{Kind: ArgPrestigeUpgrade}),
+				sub("shop", "prestige shop", "View the legacy kit"),
+				sub("buy", "prestige buy <item>", "Buy a legacy kit item", Arg{Kind: ArgPrestigeUpgrade}),
 			}},
 		{Name: "festival", Section: secWonders, BareOK: true,
 			Help: []Usage{{"festival", "Spend culture for a temporary production boost"}},

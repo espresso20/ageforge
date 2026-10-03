@@ -66,6 +66,14 @@ func foldBotSet(e *Env, res *Result, name, scenario string, cfg Config, started 
 		res.fail(KindPacing+"/later_run", "%s: cycle 2 covered cycle 1's ages %.2fx faster (median; want %gx or more) and ended %+.1f ages deeper (median; want %+d or more)",
 			name, l.MedianSpeedup, LaterRunMinSpeedup, l.MedianDepth, LaterRunMinDepth)
 	}
+	if d := sum.Depth; sum.DepthFailed && d != nil {
+		var parts []string
+		for _, p := range d.Points {
+			parts = append(parts, fmt.Sprintf("%s %.1f", p.Age, p.PerDay))
+		}
+		res.fail(KindPacing+"/depth_pays", "%s: points per day by prestige age (%s) do not rise by %gx at each step deeper",
+			name, strings.Join(parts, ", "), DepthPaysMin)
+	}
 	for _, r := range runs {
 		for _, a := range r.Anomalies {
 			f := res.fail(a.Kind+"/"+a.Check, "%s: %s (cycle %d, %s, tick %d, seen %dx)", name, a.Message, a.Cycle, a.Age, a.Tick, a.Count)
@@ -107,6 +115,9 @@ func reproCmd(tier, scenario string, cfg Config, seed int64) string {
 	}
 	if cfg.Preset != "" && scenario != "veteran" {
 		parts = append(parts, "-preset "+cfg.Preset)
+	}
+	if cfg.Kit && scenario != "idle" {
+		parts = append(parts, "-kit")
 	}
 	parts = append(parts, "-trace -v")
 	return strings.Join(parts, " ")
@@ -203,6 +214,7 @@ func describeProgression(res *Result, sum *Summary) {
 	sum.writePacingTable(&sb)
 	sum.writeFirstRun(&sb)
 	sum.writeLaterRun(&sb)
+	sum.writeDepth(&sb)
 	res.section("Pacing per age", "%s", sb.String())
 	res.section("Full bot report", "See progression.md next to this report for runs, events, harbingers and state dumps.")
 }
@@ -231,7 +243,11 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range hp {
 		res.fail("harbinger_price", "%s %s costs %s %s, over the %s storage buildable in %s", p.Epoch, p.Answer, num(p.Price), p.Resource, num(p.MaxStorage), p.Age)
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage", len(problems), len(slack), short, len(mp), len(hp))
+	dp := StaticDepth()
+	for _, p := range dp {
+		res.fail("depth_points", "%s", p)
+	}
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d depth point problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(dp))
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, rows)
@@ -242,4 +258,7 @@ func runStatic(e *Env, res *Result) {
 	var hf strings.Builder
 	writeHarbingerPrices(&hf, hp)
 	res.section("Harbinger prices against storage", "%s", hf.String())
+	var df strings.Builder
+	writeDepthStatic(&df, dp)
+	res.section("Depth points", "%s", df.String())
 }

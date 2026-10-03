@@ -87,7 +87,7 @@ func TestCommandKeysIgnoreCase(t *testing.T) {
 		{"", "trade food wood 10", "trade Food WOOD 10", false},
 		{"", "plan trade food wood", "plan trade FOOD Wood", false},
 		{"", "theme " + theme.DefaultKey, "theme " + strings.ToUpper(theme.DefaultKey), false},
-		{"", "prestige buy gather_boost", "prestige buy Gather_Boost", false},
+		{"", "prestige buy legacy_plan", "prestige buy Legacy_Plan", false},
 		{bronze, "upgrade hut", "upgrade Hut", true},
 		{bronze, "research tool_making", "research Tool_Making", false},
 		{bronze, "research tool making", "research Tool Making", false},

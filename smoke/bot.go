@@ -69,6 +69,10 @@ type Bot struct {
 	// the next visit (planAhead). The idle style sets it; the greedy bot,
 	// always there, has no use for one.
 	UsePlan bool
+	// RecordPlan writes every build the bot makes into the run's plan log
+	// (GameEngine.NotePlanForTest), as if it had planned it: how the canned
+	// veteran kit's template is made (Config.DumpLegacy).
+	RecordPlan bool
 	// UseShares makes a check-in player leave its workers to the game's
 	// worker shares, on auto: the game recruits and staffs, between visits
 	// too, instead of the bot recruiting and assigning by hand at each
@@ -274,7 +278,9 @@ func (b *Bot) Play(st game.GameState) {
 		b.act("accept_memory", st.PendingMemoryTech, b.ge.AcceptAncientMemory())
 	}
 	if w := st.CurrentAgeWonderKey; w != "" && st.Buildings[w].WonderBankFull && b.queuedCount(st, w) == 0 {
-		b.act("build_wonder", w, b.ge.BuildBuilding(w))
+		if b.act("build_wonder", w, b.ge.BuildBuilding(w)) && b.RecordPlan {
+			b.ge.NotePlanForTest(game.PlanBuild, w, 1)
+		}
 	}
 	if b.answerHarbinger(st) {
 		st = b.ge.GetState()
@@ -971,7 +977,7 @@ func (b *Bot) fundAtMarket(p *plan, c map[string]float64, budget map[string]floa
 			if from == "" {
 				break
 			}
-			got, err := b.ge.ExchangeResources(from, r, sell)
+			got, err := b.exchange(from, r, sell)
 			if !b.act("trade_plan", from+"->"+r, err) {
 				break
 			}
@@ -1099,7 +1105,7 @@ func (b *Bot) trade(p *plan) {
 		if from == "" || sell < 1 {
 			continue
 		}
-		if got, err := b.ge.ExchangeResources(from, want, sell); b.act("trade", from+"->"+want, err) {
+		if got, err := b.exchange(from, want, sell); b.act("trade", from+"->"+want, err) {
 			p.amt[from] -= sell
 			p.amt[want] += got
 			b.sold[from], b.bought[want] = b.tick, b.tick
@@ -1140,7 +1146,7 @@ func (b *Bot) tradeOverflow(p *plan, rates map[string]game.ExchangeRateInfo) boo
 		if from == "" {
 			continue
 		}
-		got, err := b.ge.ExchangeResources(from, want, sell)
+		got, err := b.exchange(from, want, sell)
 		if !b.act("trade_overflow", from+"->"+want, err) {
 			return false
 		}
@@ -1215,7 +1221,7 @@ func (b *Bot) tradeInto(p *plan, rates map[string]game.ExchangeRateInfo, want st
 	if from == "" || sell < 1 {
 		return false
 	}
-	got, err := b.ge.ExchangeResources(from, want, sell)
+	got, err := b.exchange(from, want, sell)
 	if !b.act("trade", from+"->"+want, err) {
 		return false
 	}
@@ -1223,6 +1229,17 @@ func (b *Bot) tradeInto(p *plan, rates map[string]game.ExchangeRateInfo, want st
 	p.amt[want] += got
 	b.sold[from], b.bought[want] = b.tick, b.tick
 	return true
+}
+
+// exchange trades amount of from for to at the market. With RecordPlan it
+// also writes the trade into the run's plan log, as a trade item buying
+// what this one got (GameEngine.NoteTradeForTest).
+func (b *Bot) exchange(from, to string, amount float64) (float64, error) {
+	got, err := b.ge.ExchangeResources(from, to, amount)
+	if err == nil && b.RecordPlan && got > 0 {
+		b.ge.NoteTradeForTest(from, to, got)
+	}
+	return got, err
 }
 
 // recently reports whether m records res within the last 150 ticks (5 min).
@@ -1340,6 +1357,9 @@ func (b *Bot) tryBuild(p *plan, key, kind string) bool {
 	if !b.act(kind, key, b.ge.BuildBuilding(key)) {
 		return false
 	}
+	if b.RecordPlan {
+		b.ge.NotePlanForTest(game.PlanBuild, key, 1)
+	}
 	for r, v := range c {
 		p.amt[r] -= v
 	}
@@ -1429,6 +1449,11 @@ func (b *Bot) upgrade(p *plan) bool {
 				break
 			}
 			b.act("upgrade", u.FromKey, nil)
+			if b.RecordPlan {
+				// The plan can't upgrade: a template written from this run
+				// builds the new tier instead.
+				b.ge.NotePlanForTest(game.PlanBuild, u.ToKey, 1)
+			}
 			changed = true
 		}
 	}
@@ -1817,6 +1842,11 @@ func (b *Bot) research(p *plan) {
 		}
 		if ok && b.act("research", key, b.ge.StartResearch(key)) {
 			p.amt["knowledge"] -= t.Cost
+			if b.RecordPlan {
+				// The tech the bot chose, written as a planned research
+				// item: its own research path, which the template keeps.
+				b.ge.NotePlanForTest(game.PlanResearch, key, 1)
+			}
 		}
 		return
 	}

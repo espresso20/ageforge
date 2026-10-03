@@ -49,7 +49,7 @@ If no chain is completed, fallback titles apply:
 | Metropolis *(hidden)* | Population: 15,000 (Iron Age) | +10% all production |
 | Megalopolis *(hidden)* | Population: 250,000 (Classical Age) | +20% all production |
 
-Housing caps your population, so the ladder climbs with the ages: Small Village comes around the Stone Age, Bustling Town the Bronze Age, Growing City the Classical Age, Metropolis the Renaissance and Megalopolis the Electric Age, well before prestige opens.
+Housing caps your population, so the ladder climbs with the ages: Small Village comes around the Stone Age, Bustling Town the Bronze Age, Growing City the Classical Age, Metropolis the Renaissance and Megalopolis the Electric Age, well before a full run's prestige in the Modern Age.
 
 **Chain reward:** Title "The Founders" · game speed +300% for 180 ticks
 
@@ -245,7 +245,7 @@ These milestones sit outside the chains and don't count toward any chain title.
 
 ## Can every milestone be done?
 
-Yes. A milestone that doesn't name a later age fits inside a normal run: everything it asks for can be reached by the end of the Atomic Age, before prestige opens in the Modern Age. A milestone that names a later age fits in that age. The game's test suite checks this against the game's numbers on every change, so a balance change can't quietly strand one.
+Yes. A milestone that doesn't name a later age fits inside a normal run: everything it asks for can be reached by the end of the Atomic Age, before a full run's prestige in the Modern Age (an early taste from the Medieval Age ends the run before some of them). A milestone that names a later age fits in that age. The game's test suite checks this against the game's numbers on every change, so a balance change can't quietly strand one.
 
 | Chain | Can be finished by |
 |---|---|

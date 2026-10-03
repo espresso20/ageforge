@@ -386,7 +386,7 @@ These figures are the morale **ceiling**, how high the morale percentage can cli
 
 - Bank resources over several deposits as they come in, rather than waiting to cover the whole price at once. Overflow does some of this for you.
 - **Great Library** and **Global Network** each give +30% knowledge output, and the two stack.
-- **Grand Lighthouse**, the Rocketry tech and the prestige `expedition_loot` upgrade all raise expedition rewards, and they stack.
+- **Grand Lighthouse** and the Rocketry tech both raise expedition rewards, and they stack.
 - Build each age's wonder early. It is required for `advance`, and its bonuses last for the rest of the run.
 - **Crystal Palace** (+15% all production) lands in the Industrial Age, before the all-production pool usually reaches its cap, so it counts in full.
 - Each wonder also raises the morale cap by 5 points (100% base, 210% with all 22). See [Morale](morale.md).

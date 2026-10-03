@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"sort"
@@ -223,6 +224,11 @@ type AccountStats struct {
 	HighestAge           string `json:"highest_age,omitempty"`
 	CivilizationsStarted int    `json:"civilizations_started,omitempty"`
 	SavesCompleted       int    `json:"saves_completed,omitempty"`
+	// PrestigesByAge counts prestiges by the age they were made from (Pacing
+	// v2), so badges can tell an early taste (the Medieval to the Atomic
+	// Age) from a full run (the Modern Age or deeper, PrestigeRunAge).
+	// Prestiges recorded before it existed are only in TotalPrestiges.
+	PrestigesByAge map[string]int `json:"prestiges_by_age,omitempty"`
 }
 
 // AccountPrefs holds preferences that travel with the account (accounts.md §3.3).
@@ -1560,6 +1566,12 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	a.Achievements = unionStrings(a.Achievements, exp.Achievements)
 	// Max each numeric lifetime stat — bests don't regress.
 	a.Stats.TotalPrestiges = maxInt(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
+	for _, age := range sortedKeys(exp.Stats.PrestigesByAge) {
+		if a.Stats.PrestigesByAge == nil {
+			a.Stats.PrestigesByAge = map[string]int{}
+		}
+		a.Stats.PrestigesByAge[age] = maxInt(a.Stats.PrestigesByAge[age], exp.Stats.PrestigesByAge[age])
+	}
 	a.Stats.CivilizationsStarted = maxInt(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
 	a.Stats.SavesCompleted = maxInt(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
 	// HighestAge is a key, not a number: keep local unless empty, then adopt blob's.
@@ -1727,9 +1739,22 @@ func (a *Account) hasAchievementLocked(key string) bool {
 // safe to call from DoPrestige while the engine write lock is held. The write is deferred
 // to FlushIfDirty (engine autosave block, outside ge.mu).
 func (a *Account) RecordPrestige() {
+	a.RecordPrestigeFrom("")
+}
+
+// RecordPrestigeFrom is RecordPrestige for a prestige made from age, which it
+// also counts in PrestigesByAge ("" counts nowhere but the total). Same
+// IN-MEMORY-ONLY discipline as RecordPrestige.
+func (a *Account) RecordPrestigeFrom(age string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.Stats.TotalPrestiges++
+	if age != "" {
+		if a.Stats.PrestigesByAge == nil {
+			a.Stats.PrestigesByAge = map[string]int{}
+		}
+		a.Stats.PrestigesByAge[age]++
+	}
 	a.recordEvaluateLocked(-1) // -1: prestige trigger, not an age-up
 	a.dirty = true
 }
@@ -1811,5 +1836,7 @@ func (a *Account) LifetimeStats() (AccountStats, []string) {
 	defer a.mu.Unlock()
 	ach := make([]string, len(a.Achievements))
 	copy(ach, a.Achievements)
-	return a.Stats, ach
+	st := a.Stats
+	st.PrestigesByAge = maps.Clone(a.Stats.PrestigesByAge) // no alias of the live map
+	return st, ach
 }

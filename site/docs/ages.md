@@ -35,7 +35,7 @@ Each age is tuned to a target length in real time. Building output, prices, wond
 | Electric | 26h | | |
 | Atomic | 31h 12m | | |
 
-That is about a week (167 hours) from a fresh start to the Modern Age, where prestige unlocks. From the Bronze Age on, every age runs 2.6 times as long as it did on the earlier three-day curve, and the game's timers (events, raids, trade routes, expeditions, cooldowns) stretch with it, so each age holds as many of them as before. You don't have to sit through it: the game keeps playing while you are away, for up to 24 hours at 50% of your normal production.
+That is about a week (167 hours) from a fresh start to the Modern Age, where a full run's prestige comes. Prestige opens earlier, at the Medieval Age (about 20 hours in), as an early taste that pays little. From the Bronze Age on, every age runs 2.6 times as long as it did on the earlier three-day curve, and the game's timers (events, raids, trade routes, expeditions, cooldowns) stretch with it, so each age holds as many of them as before. You don't have to sit through it: the game keeps playing while you are away, for up to 24 hours at 50% of your normal production.
 
 These are first-run lengths. On later runs an age a past run completed is **known ground** and runs faster: 2x after one completion, up to 4.2x after ten, with production and storage multiplied and build and research times divided by the same factor. Ages 6 or more behind the deepest age you have ever entered run at least 4x. See [Era Mastery](prestige.md#era-mastery).
 
@@ -179,6 +179,8 @@ Starting age. No requirements.
 | Libraries | 15 |
 | Military Academies | 15 |
 
+Prestige becomes available at this age. A prestige from here to the Atomic Age is an early taste: it pays 9 points from the Medieval Age, enough for the Plan Template, while a run to the Modern Age pays 120. Type `prestige` to see what a prestige pays now and from the next age. See [Prestige System](prestige.md).
+
 **Unlocks:** Manor, Strongroom, Demesne, Sawmill, Stonemason's Guild, Monastery Library, Cathedral, Castle Keep, Guildhall, Workshop, Ironmonger, Great Hall, Great Library, Grand Amphitheater · **Resource:** Steel
 
 ---
@@ -298,7 +300,7 @@ Starting age. No requirements.
 | Bunker Complexes | 15 |
 | Research Campuses | 15 |
 
-Prestige becomes available at this age. Type `prestige confirm yes` to reset with permanent upgrades. See [Prestige System](prestige.md).
+From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset for prestige points to spend on the legacy kit. See [Prestige System](prestige.md).
 
 **Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport, Power Grid Hub, Titanium Smelter, Oil Refinery, TV Studio, Space Program, Nano Foundry, Monument of Ages · **Resources:** Data, Nanobots
 
@@ -447,7 +449,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Reality Forges | 15 |
 | Probability War Rooms | 15 |
 
-The end of the progression. Prestige has been available since the Modern Age (Age 12). A prestige from the Transcendent Age pays the most points a single run can, though each late age adds only a point or two (see [Prestige Points Formula](prestige.md#prestige-points-formula)).
+The end of the progression. Prestige has been available since the Medieval Age (Age 5), and a full run since the Modern Age (Age 12). A prestige from the Transcendent Age pays the most points a single run can, 3,279: each Cosmic Era age the run completes adds 729 (see [Prestige Points Formula](prestige.md#prestige-points-formula)).
 
 **Unlocks:** Singularity Core, Transcendent Nexus, Omniversal War Council, Omniversal Bazaar, Singularity Engine
 

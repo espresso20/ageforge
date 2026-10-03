@@ -249,12 +249,14 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 			return 0, fmt.Errorf("That plan item already holds %d, the most one item can.", maxPlanCount)
 		}
 		ge.plan[n-1].Count += add
+		ge.logPlanAddLocked(ge.plan[n-1], add)
 		return add, nil
 	}
 	if len(ge.plan) >= MaxPlanItems {
 		return 0, errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: key, Count: count})
+	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], count)
 	return count, nil
 }
 
@@ -280,6 +282,7 @@ func (ge *GameEngine) PlanAddResearch(key string) error {
 		return fmt.Errorf("Can't plan %s: %s.", def.Name, reason)
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: key, Count: 1})
+	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], 1)
 	return nil
 }
 
@@ -293,6 +296,7 @@ func (ge *GameEngine) PlanRemove(n int) (string, error) {
 	}
 	it := ge.plan[n-1]
 	ge.plan = append(ge.plan[:n-1:n-1], ge.plan[n:]...)
+	ge.unlogPlanItemLocked(it)
 	label := ge.planItemLabel(it)
 	back := map[string]float64{}
 	if ge.returnPlanBank(&it, back) {
@@ -308,6 +312,9 @@ func (ge *GameEngine) PlanClear() int {
 	defer ge.mu.Unlock()
 	n := len(ge.plan)
 	ge.returnPlanBanks("")
+	for _, it := range ge.plan {
+		ge.unlogPlanItemLocked(it)
+	}
 	ge.plan = nil
 	return n
 }

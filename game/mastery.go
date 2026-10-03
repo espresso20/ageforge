@@ -306,7 +306,7 @@ func (ge *GameEngine) seedMasteryLocked() {
 	m := config.ClampMastery(pm.level)
 	last := ""
 	for _, a := range ageKeys() {
-		if a == PrestigeMinAge {
+		if a == PrestigeRunAge {
 			break
 		}
 		if pm.mastery[a] < m {
@@ -314,7 +314,7 @@ func (ge *GameEngine) seedMasteryLocked() {
 		}
 		last = a
 	}
-	pm.NoteAgeEntered(PrestigeMinAge)
+	pm.NoteAgeEntered(PrestigeRunAge)
 	pm.runFurthest = "" // the run's own furthest comes from the run (noteRunAgesLocked)
 	if ge.cosmicLegacy {
 		pm.NoteAgeEntered("interstellar_age")

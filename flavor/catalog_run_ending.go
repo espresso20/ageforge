@@ -11,7 +11,10 @@ package flavor
 //		Subject: h.Name, // the age's harbinger, Cosmic Era only; "" before it
 //	}
 //
-// Prestige unlocks at the Modern Age, so the pools the game reaches are:
+// A full run's prestige comes from the Modern Age on, and the pools those
+// runs reach are below. (Prestige opens at the Medieval Age, but a taste,
+// from the Medieval to the Atomic Age, reaches only the era-neutral pool for
+// now: pools of its own are a follow-up.)
 //
 //   - the Modern to the Space Age: a plain register, a civilization winding
 //     down. Offices empty, the last tram runs, the orbital yards shut. Nobody
@@ -29,8 +32,8 @@ package flavor
 // than the Stream's window. The same no-digit rule applies: the game prints the
 // points.
 
-// runEndPlainAges are the ages before the Cosmic Era from which a player can
-// prestige: the Modern Age (the prestige gate) through the Space Age.
+// runEndPlainAges are the ages before the Cosmic Era from which a full run
+// prestiges: the Modern Age through the Space Age.
 var runEndPlainAges = ages("modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age", "space_age")
 
 // runEndCosmicAges are the Cosmic Era's ages, whose passage is prestige itself.

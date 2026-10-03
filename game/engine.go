@@ -324,6 +324,10 @@ type GameEngine struct {
 	// plan is the build plan the engine works through as resources come in
 	// (plan.go). Saved; cleared by prestige, Succumb and Reset.
 	plan []PlanItem
+	// planLog is the plan as written this run, age by age (legacy.go): the
+	// Plan Template's source. Saved; folded into the template and cleared by
+	// prestige and Succumb, cleared by Reset.
+	planLog []PlanTemplateItem
 	// wonderOverflowOff turns off banking what the caps would cut off into
 	// the current age's wonder (overflow.go). The player's preference: saved,
 	// kept across prestige and Succumb, cleared by Reset.
@@ -1527,6 +1531,9 @@ func (ge *GameEngine) processDiplomacy() {
 	// "traded recently" this window. TradeManager.Tick (which calls RecordTrade) runs in
 	// the same lock, so reading the active count here is safe.
 	tradedRecently := ge.Trade.ActiveRouteCount() > 0
+	// Old Friends (legacy.go): remembered civilizations within reach are
+	// met before the age fallback would meet them.
+	ge.meetOldFriendsLocked()
 	messages := ge.Diplomacy.Tick(ge.gameRNG(), ge.age, ageOrder, ge.tick, tradedRecently)
 	for _, msg := range messages {
 		ge.addLog("event", msg)
@@ -2118,6 +2125,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// epoch's thread starts. Non-blocking (log, toast, badge), so it never
 	// competes with the age splash for focus.
 	ge.harbingerOnAgeAdvance()
+
+	// The legacy kit: the new age's template slice and old friends.
+	ge.legacyOnAgeEnteredLocked()
 
 	// Age advancement celebration morale boost
 	ge.applyMorale(0.08)
@@ -3877,13 +3887,7 @@ func (ge *GameEngine) DoPrestige() error {
 // them, as how says), logs the run's last lines and resets for the new run.
 // Called by DoPrestige and by the Last Passage choice, under the write lock.
 func (ge *GameEngine) completePrestige(how prestigeEnding) {
-	ageOrder := ge.progress.GetAgeOrder()
-	full := ge.Prestige.CalculatePoints(
-		ge.age, ageOrder,
-		ge.Milestones.CompletedCount(),
-		ge.Research.ResearchedCount(),
-		ge.Stats.TotalBuilt,
-	)
+	full := ge.Prestige.CalculatePoints(ge.age)
 	points := ge.lastPassagePoints(how, full)
 	ge.recordLastPassageOutcome(how, points, full)
 	// The verdict and the ending belong to the old run; the reset below clears
@@ -3900,6 +3904,10 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// console moved the run there without an advance.
 	ge.Prestige.NoteAgeEntered(ge.age)
 	masteryLine := masteryCommitLine(ge.Prestige.CommitRun())
+	// The legacy kit remembers the run (plan, civilizations, shares) before
+	// the managers holding it are reset.
+	ge.captureLegacyLocked()
+	prestigedFrom := ge.age
 
 	// Preserve cross-run state before resetting managers
 	savedRuins := ge.Buildings.GetAllRuins()
@@ -3992,6 +4000,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 		ge.addLog("info", fmt.Sprintf("Ruins carried forward from past civilizations: %s.",
 			textfmt.Count(len(savedRuins), "type", "types")))
 	}
+	// The legacy kit: shares, the first age's template slice, old friends.
+	ge.startRunLegacyLocked()
 	ge.addLog("info", "Type [cyan]help[-] to get started again.")
 
 	// Account lifetime stat (Phase 6): record the prestige IN-MEMORY only — we hold
@@ -3999,7 +4009,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// is deferred to FlushIfDirty in the autosave block (outside ge.mu). A dev-touched
 	// run, or one that belongs to another account, records nothing.
 	if acct := ge.accountForRecordsLocked(); acct != nil {
-		acct.RecordPrestige()
+		acct.RecordPrestigeFrom(prestigedFrom)
 	}
 
 	// Roll for an Ancient Memory cache — prestige level is now >= 1, the age is
@@ -4017,6 +4027,7 @@ func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
 	}
 	ge.recalculateRates() // a storage or rate upgrade shows at once, not next tick
 	ge.addLog("success", ge.prestigeUpgradeLine(key))
+	ge.legacyOnPurchaseLocked(key)
 	return nil
 }
 
@@ -4046,6 +4057,7 @@ func (ge *GameEngine) Reset() {
 	ge.speedMultiplier = 1.0
 	ge.buildQueue = nil
 	ge.plan = nil
+	ge.planLog = nil
 	ge.log = nil
 
 	ge.applyAgeUnlocks("primitive_age")
@@ -4148,12 +4160,10 @@ func (ge *GameEngine) GetState() GameState {
 	// Prestige snapshot with pending points
 	prestigeSnap := ge.Prestige.Snapshot()
 	prestigeSnap.CanPrestige = ge.Prestige.CanPrestige(ge.age, ageOrder)
-	prestigeSnap.PendingPoints = ge.Prestige.CalculatePoints(
-		ge.age, ageOrder,
-		ge.Milestones.CompletedCount(),
-		ge.Research.ResearchedCount(),
-		ge.Stats.TotalBuilt,
-	)
+	prestigeSnap.PendingPoints = ge.Prestige.CalculatePoints(ge.age)
+	if next := ge.progress.GetNextAge(ge.age); next != "" {
+		prestigeSnap.NextAge, prestigeSnap.NextAgePoints = next, ge.Prestige.CalculatePoints(next)
+	}
 
 	speedMult := ge.speedMultiplier
 	if speedMult < 1.0 {
@@ -4813,6 +4823,10 @@ func (ge *GameEngine) prestigeUpgradeLine(key string) string {
 	def, ok := config.PrestigeUpgradeByKey()[key]
 	if !ok {
 		return fmt.Sprintf("Bought %s.", PrestigeUpgradeName(key))
+	}
+	if def.EffectType == "legacy" {
+		// A one-tier kit item: say what it does from now on.
+		return fmt.Sprintf("Bought %s. %s.", def.Name, def.Description)
 	}
 	tier := ge.Prestige.upgrades[key]
 	total := float64(def.PerTier * float64(tier))

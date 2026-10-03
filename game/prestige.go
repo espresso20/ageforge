@@ -2,16 +2,18 @@ package game
 
 import (
 	"fmt"
-	"math"
+	"sync"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // PrestigeManager manages the prestige meta-progression layer.
-// Players prestige at Modern Age or later, earning points based on age reached,
-// milestones, techs, and buildings built. Points are spent on persistent upgrades
-// that carry over to the next run.
+// Players prestige from the Medieval Age on (PrestigeMinAge), earning depth
+// points: every age the run completed pays 3^epoch (config.DepthPoints).
+// Points buy the legacy kit (legacy.go), which carries a run's automation
+// across the reset; the first shop's nine perks are retired and refunded
+// (refundShopLocked).
 //
 // It also holds Era Mastery (mastery.go): each age's mastery, the record
 // (the deepest age ever entered) and this run's furthest age. The manager
@@ -34,6 +36,24 @@ type PrestigeManager struct {
 	runFurthest   string
 	masterySeeded bool
 	speeds        map[string]float64
+
+	// shopVersion is the shop a save was written under (0 or 1: the first
+	// shop; config.PrestigeShopVersion: the legacy kit). Below the current
+	// version, a load refunds the retired perks once (refundShopLocked).
+	shopVersion int
+
+	// The legacy kit's memory (legacy.go): what the runs so far wrote and
+	// did, kept whether or not the kit is bought, so an item bought after a
+	// prestige works at once. legacyPlan is the plan template, by age;
+	// legacyFactions the civilizations met; legacyShares the worker shares
+	// (nil: every domain on auto).
+	legacyPlan     []PlanTemplateItem
+	legacyFactions []string
+	legacyShares   map[string]float64
+	// templateApplied is the age whose template slice was last added to the
+	// plan this session (for the snapshot and the smoke suite's kit check).
+	// Not saved.
+	templateApplied string
 
 	// upgradeList / upgradeDefs are the static shop table, built once so
 	// GetBonuses (hit every tick via the resolver) and Snapshot (every UI
@@ -59,42 +79,40 @@ func NewPrestigeManager() *PrestigeManager {
 		masterySeeded: true,
 		record:        ageKeys()[0],
 		runFurthest:   ageKeys()[0],
+		// A new game starts on the current shop: nothing to refund.
+		shopVersion: config.PrestigeShopVersion,
 	}
 	pm.rebuildSpeeds()
 	return pm
 }
 
-// CalculatePoints computes prestige points earned for the current run.
-// Points scale with age reached, achievements, and construction output, but
-// are divided by sqrt(level+1) to apply diminishing returns so high-prestige
-// players earn fewer points per run and cannot snowball indefinitely.
-// A minimum of 1 point is guaranteed at Medieval Age (order ≥ 5) so late-game
-// players always make some progress even after many prestiges.
-func (pm *PrestigeManager) CalculatePoints(age string, ageOrder map[string]int, milestonesCompleted, techsResearched, totalBuilt int) int {
-	// Base: 1 point per age index beyond Primitive (primitive=0, stone=1, …)
-	ageIdx, ok := ageOrder[age]
-	if !ok {
-		return 0
-	}
-	base := float64(ageIdx)
-
-	// Bonus: +1 per 10 milestones, +1 per 15 techs, +1 per 50 buildings
-	bonus := float64(milestonesCompleted/10) + float64(techsResearched/15) + float64(totalBuilt/50)
-
-	total := base + bonus
-
-	// Diminishing returns: divide by sqrt(totalPrestigeLevel + 1)
-	divisor := math.Sqrt(float64(pm.level + 1))
-	points := int(total / divisor)
-
-	if points < 1 && base >= 5 {
-		points = 1 // minimum 1 point if you've reached Medieval+
-	}
-	return points
+// CalculatePoints is what a prestige from age pays: its depth points
+// (config.DepthPoints), the sum of 3^epoch over every age the run
+// completed. No divisor and no milestone, tech or building terms: a deeper
+// run pays more, and a level costs nothing.
+func (pm *PrestigeManager) CalculatePoints(age string) int {
+	return depthPoints()[age]
 }
 
+// depthPoints is config.DepthPoints for every age, built once: GetState
+// asks for two ages on every snapshot, and config rebuilds its tables on
+// every call.
+var depthPoints = sync.OnceValue(func() map[string]int {
+	out := make(map[string]int, len(ageKeys()))
+	for _, a := range ageKeys() {
+		out[a] = config.DepthPoints(a)
+	}
+	return out
+})
+
 // PrestigeMinAge is the age that opens prestige; every later age counts too.
-const PrestigeMinAge = "modern_age"
+// A prestige from here to the Atomic Age is an early taste: it pays little
+// (the Medieval Age 9 points, the Modern Age 120).
+const PrestigeMinAge = "medieval_age"
+
+// PrestigeRunAge is the age from which a prestige counts as a full run
+// rather than a taste, for the account's records (badges count only these).
+const PrestigeRunAge = "modern_age"
 
 // CanPrestige returns true if the player has reached PrestigeMinAge or later,
 // comparing orders from the ageOrder map provided by ProgressManager.
@@ -114,27 +132,49 @@ func (pm *PrestigeManager) Prestige(points int) {
 	pm.available += points
 }
 
-// BuyUpgrade purchases the next tier of an upgrade. Returns error if can't afford or maxed.
+// BuyUpgrade purchases the next tier of an upgrade. Returns error if can't
+// afford, maxed or retired.
 func (pm *PrestigeManager) BuyUpgrade(key string) error {
-	defs := pm.upgradeDefs
-	def, ok := defs[key]
+	def, ok := pm.upgradeDefs[key]
 	if !ok {
-		return unknownKeyError("prestige upgrade", key, defs, "Type prestige shop to see the upgrades.")
+		active := map[string]bool{}
+		for _, d := range pm.upgradeList {
+			if !d.Retired {
+				active[d.Key] = true
+			}
+		}
+		return unknownKeyError("legacy kit item", key, active, "Type prestige shop to see the kit.")
+	}
+	if def.Retired {
+		return fmt.Errorf("%s was part of the old prestige shop and can't be bought any more; its points were refunded. Type prestige shop to see the legacy kit.", def.Name)
 	}
 
 	currentTier := pm.upgrades[key]
 	if currentTier >= def.MaxTier {
+		if def.MaxTier == 1 {
+			return fmt.Errorf("You already own %s.", def.Name)
+		}
 		return fmt.Errorf("%s is already at its top tier (%d).", def.Name, def.MaxTier)
 	}
 
 	cost := def.Costs[currentTier]
 	if pm.available < cost {
+		if def.MaxTier == 1 {
+			return fmt.Errorf("%s costs %s (you have %s). Prestige again to earn more.", def.Name, textfmt.Count(cost, "prestige point", "prestige points"), textfmt.Int(pm.available))
+		}
 		return fmt.Errorf("%s tier %d costs %s (you have %s). Prestige again to earn more.", def.Name, currentTier+1, textfmt.Count(cost, "prestige point", "prestige points"), textfmt.Int(pm.available))
 	}
 
 	pm.available -= cost
 	pm.upgrades[key] = currentTier + 1
 	return nil
+}
+
+// Owns reports whether the shop item key (a legacy kit item) is bought.
+// Retired perks never count.
+func (pm *PrestigeManager) Owns(key string) bool {
+	def, ok := pm.upgradeDefs[key]
+	return ok && !def.Retired && pm.upgrades[key] >= 1
 }
 
 // GetBonuses returns the bought upgrades' bonuses as a bonus map. The old
@@ -147,7 +187,7 @@ func (pm *PrestigeManager) GetBonuses() map[string]float64 {
 	// List order, not map order: float sums must be the same every run.
 	for _, def := range pm.upgradeList {
 		tier := pm.upgrades[def.Key]
-		if tier <= 0 {
+		if tier <= 0 || def.Retired {
 			continue
 		}
 		if def.EffectType == "rate_bonus" || def.EffectType == "flat_bonus" {
@@ -176,7 +216,7 @@ func (pm *PrestigeManager) GetStartingResources() map[string]float64 {
 	// List order, not map order: float sums must be the same every run.
 	for _, def := range pm.upgradeList {
 		tier := pm.upgrades[def.Key]
-		if tier <= 0 {
+		if tier <= 0 || def.Retired {
 			continue
 		}
 		if def.EffectType == "starting_resource" {
@@ -196,6 +236,9 @@ func (pm *PrestigeManager) Snapshot() PrestigeState {
 		if tier < def.MaxTier {
 			nextCost = def.Costs[tier]
 		}
+		if def.Retired {
+			nextCost = 0
+		}
 		upgrades[def.Key] = PrestigeUpgradeState{
 			Name:        def.Name,
 			Description: def.Description,
@@ -203,6 +246,8 @@ func (pm *PrestigeManager) Snapshot() PrestigeState {
 			MaxTier:     def.MaxTier,
 			NextCost:    nextCost,
 			Effect:      formatPrestigeEffect(def, tier),
+			Retired:     def.Retired,
+			Kit:         def.EffectType == "legacy",
 		}
 	}
 	return PrestigeState{
@@ -210,6 +255,8 @@ func (pm *PrestigeManager) Snapshot() PrestigeState {
 		TotalEarned: pm.totalEarned,
 		Available:   pm.available,
 		Upgrades:    upgrades,
+		ShopVersion: pm.shopVersion,
+		Kit:         pm.kitState(),
 	}
 }
 
@@ -229,8 +276,14 @@ func (pm *PrestigeManager) GetLevel() int {
 }
 
 func formatPrestigeEffect(def config.PrestigeUpgradeDef, tier int) string {
+	if def.Retired {
+		return "Retired: refunded with the old shop"
+	}
 	if tier == 0 {
 		return "Not purchased"
+	}
+	if def.EffectType == "legacy" {
+		return "Owned"
 	}
 	v := def.PerTier * float64(tier)
 	switch def.EffectType {

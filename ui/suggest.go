@@ -119,7 +119,7 @@ func buildUniverse() map[ArgKind]map[string]bool {
 	for _, r := range config.BaseTradeRoutes() {
 		routes = append(routes, r.Key)
 	}
-	for _, u := range config.PrestigeUpgrades() {
+	for _, u := range config.ActivePrestigeUpgrades() {
 		upgrades = append(upgrades, u.Key)
 	}
 	order := map[string]int{}
@@ -715,7 +715,7 @@ func expeditionKeysByCategory(state game.GameState, category string) []string {
 	return keys
 }
 
-// prestigeUpgradeKeys returns the prestige upgrades with a tier left, the
+// prestigeUpgradeKeys returns the legacy kit items not bought yet, the
 // ones the points on hand can buy first.
 func prestigeUpgradeKeys(state game.GameState) []string {
 	var keys []string

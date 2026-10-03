@@ -296,4 +296,22 @@ func runVeteran(e *Env, res *Result) {
 	if x := sum.Early; x != nil {
 		res.Summary += fmt.Sprintf("; Primitive and Stone %s (%s)", dur(x.MedianSecs), verdictMark(x.Verdict))
 	}
+	// The legacy kit after a scripted prestige, and the shop refund: a
+	// broken kit or refund fails every PR, not just the nightly.
+	var steps []string
+	seed := e.SeedBase
+	check := func(name string, ok bool, format string, args ...interface{}) bool {
+		if ok {
+			steps = append(steps, fmt.Sprintf("| %s | ok |", name))
+			return true
+		}
+		msg := fmt.Sprintf(format, args...)
+		steps = append(steps, fmt.Sprintf("| %s | %s |", name, cell(msg)))
+		f := res.fail("veteran_"+strings.ReplaceAll(name, " ", "_"), "%s", msg)
+		f.Seed, f.Repro = seed, fmt.Sprintf("go run ./cmd/smoke -scenario veteran -seed-base %d -v", seed)
+		return false
+	}
+	prestigeKitHooked(e, check)
+	prestigeRefundHooked(check)
+	res.section("Legacy kit and shop refund (test hooks, not play)", "| step | result |\n|---|---|\n%s", strings.Join(steps, "\n"))
 }

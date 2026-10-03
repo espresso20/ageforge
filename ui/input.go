@@ -1834,7 +1834,7 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "[yellow]⚠ Prestige warning[-]")
 		lines = append(lines, fmt.Sprintf("  You will earn [cyan]%d[-] prestige points.", p.PendingPoints))
 		lines = append(lines, "  [red]All progress is reset:[-] resources, buildings, workers, research and military.")
-		lines = append(lines, "  Only prestige points and upgrades are kept.")
+		lines = append(lines, "  Kept: prestige points, the legacy kit and what it remembers, and Era Mastery.")
 		lines = append(lines, lastPassageWarningLines(state)...)
 		lines = append(lines, "")
 		lines = append(lines, "  Type [cyan]prestige confirm yes[-] to proceed.")
@@ -1870,50 +1870,23 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, fmt.Sprintf("  Cosmic Legacy: [gold]+%.0f%%[-] production (permanent)", game.CosmicLegacyProductionBonus*100))
 	}
 
+	lines = append(lines, kitStatusLine(state))
+	lines = append(lines, prestigePointsLines(state)...)
 	switch {
 	case state.LastPassage.Pending:
 		lines = append(lines, "\n  [red]☄ The Last Passage has come. Prestige waits for your answer.[-]")
 		lines = append(lines, "  Type [cyan]catastrophe[-] to choose Endure or Succumb.")
 	case p.CanPrestige:
-		lines = append(lines, fmt.Sprintf("\n  [green]You can prestige now for %s.[-]", textfmt.Count(p.PendingPoints, "point", "points")))
 		lines = append(lines, lastPassageStatusLines(state)...)
 		lines = append(lines, "  Type [cyan]prestige confirm[-] to reset with bonuses.")
-	default:
-		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach %s to prestige (it would earn %s now).[-]", ageRef(state, game.PrestigeMinAge), textfmt.Count(p.PendingPoints, "point", "points")))
 	}
 
-	lines = append(lines, "\n  Type [cyan]prestige shop[-] to view upgrades.")
+	lines = append(lines, "\n  Type [cyan]prestige shop[-] to see the legacy kit.")
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
 func cmdPrestigeShop(engine *game.GameEngine) CommandResult {
-	state := engine.GetState()
-	p := state.Prestige
-	var lines []string
-
-	lines = append(lines, fmt.Sprintf("[gold]Prestige shop[-] (you have [cyan]%s[-])", textfmt.Count(p.Available, "point", "points")))
-	lines = append(lines, "")
-
-	for _, key := range []string{
-		"gather_boost", "storage_bonus", "research_speed", "military_power",
-		"starting_food", "starting_wood", "population_cap", "expedition_loot",
-		"tick_speed",
-	} {
-		u, ok := p.Upgrades[key]
-		if !ok {
-			continue
-		}
-		tierStr := fmt.Sprintf("tier %d/%d", u.Tier, u.MaxTier)
-		costStr := "[gray]maxed[-]"
-		if u.NextCost > 0 {
-			costStr = "next: [cyan]" + textfmt.Count(u.NextCost, "point", "points") + "[-]"
-		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] (%s) %s - %s (%s)",
-			key, tierStr, u.Name, u.Description, costStr))
-	}
-
-	lines = append(lines, "\n  Type [cyan]prestige buy <upgrade>[-] to buy one.")
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return CommandResult{Message: strings.Join(prestigeShopLines(engine.GetState()), "\n"), Type: "info"}
 }
 
 // cmdScoutingList prints only the available SCOUTING expeditions, with the

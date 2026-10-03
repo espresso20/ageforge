@@ -14,7 +14,7 @@ Build → Staff → Research → Advance → Repeat
 2. **Staff** them: workers arrive on their own while housing and food allow and go to work by your [worker shares](workers-and-domains.md#worker-shares). Steer the split with `workers share`, or `recruit` and `assign` by hand
 3. **Research** technologies that multiply your output
 4. **Advance** to the next age with `advance` once its requirements are met and the age's wonder is built
-5. **Prestige** once you reach the Modern Age (or later) for permanent upgrades. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
+5. **Prestige** for points that buy the [legacy kit](prestige.md#the-legacy-kit), which carries your plan, worker shares and civilizations into later runs. Prestige opens at the Medieval Age, but a run to the Modern Age (or later) pays far more. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
 
 New to the game? [Your First Age](first-ten-minutes.md) walks you through the Primitive Age step by step, from the first `gather` to the Sacred Grove.
 
@@ -56,7 +56,7 @@ The status bar also carries your prestige level and civilization title once you 
 
 ## A week-long first run
 
-A first run takes about **a week of real time** to reach the Modern Age, where you can prestige for the first time. The first hour is quick: the Primitive Age takes about 15 minutes and the Stone Age about 45. From the Bronze Age on, every age takes hours: the Bronze Age 3h 54m, the Iron Age 6h 30m, and longer from there. See [How Long Each Age Takes](ages.md#how-long-each-age-takes) for the full curve. A tick is 2 seconds of real time.
+A first run takes about **a week of real time** to reach the Modern Age, where a full run's prestige comes (prestige opens earlier, at the Medieval Age about 20 hours in, as an early taste that pays little). The first hour is quick: the Primitive Age takes about 15 minutes and the Stone Age about 45. From the Bronze Age on, every age takes hours: the Bronze Age 3h 54m, the Iron Age 6h 30m, and longer from there. See [How Long Each Age Takes](ages.md#how-long-each-age-takes) for the full curve. A tick is 2 seconds of real time.
 
 That is the first run. After a prestige, every age the run completed runs faster the next time, twice as fast after one completion and up to 4.2x after ten, so later runs reach the Modern Age much sooner (see [Era Mastery](prestige.md#era-mastery)).
 

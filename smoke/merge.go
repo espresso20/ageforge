@@ -34,7 +34,7 @@ func configFromJSON(c ConfigJSON) Config {
 	cfg.MaxSim = time.Duration(c.MaxSimSecs * float64(time.Second))
 	cfg.Pacing, cfg.Style, cfg.LastPassage = c.Pacing, c.Style, c.LastPassage
 	cfg.Deals, cfg.Army = c.Deals, c.Army
-	cfg.Preset, cfg.PushCycles = c.Preset, c.PushCycles
+	cfg.Preset, cfg.PushCycles, cfg.Kit = c.Preset, c.PushCycles, c.Kit
 	return cfg
 }
 

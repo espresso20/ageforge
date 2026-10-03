@@ -44,7 +44,7 @@ AgeForge is an idle civilization game for the terminal: you forge an empire from
 
 ## Overview
 
-A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, let workers staff your buildings, research technologies, send expeditions and campaigns, trade and make deals with other civilizations, and advance through the ages. The first run is slow on purpose: about a week of real time to the Modern Age and your first prestige. The game keeps playing while you are away (up to 24 hours, at half rate), and the build plan spends your income for you.
+A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, let workers staff your buildings, research technologies, send expeditions and campaigns, trade and make deals with other civilizations, and advance through the ages. The first run is slow on purpose: about a week of real time to the Modern Age and a full run's prestige. The game keeps playing while you are away (up to 24 hours, at half rate), and the build plan spends your income for you.
 
 ## Features
 
@@ -61,7 +61,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements; on each advance, lineage buildings with a next tier can be upgraded to it (`upgrade`)
 - **Trade System**: 21 trade routes and resource exchange with supply/demand pressure
 - **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, rotating faction trade deals, boons and setbacks
-- **Prestige**: Reset-and-grow system with 9 upgrades and Era Mastery: every age a run completes runs faster on later runs, up to 4.2x (requires Modern Age)
+- **Prestige**: Reset-and-grow system from the Medieval Age on. Points pay by depth (every completed age pays, 3 times as much for each era: 9 from the Medieval Age, 120 from the Modern Age) and buy the legacy kit, 3 kit items that carry your build plan, worker shares and the civilizations you met into later runs. Era Mastery: every age a run completes runs faster on later runs, up to 4.2x
 - **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name, and `help` lists every command
 - **Themes and accounts**: 11 themes, dark and light, including colorblind-safe and high-contrast palettes; local accounts with backups and a recovery code
 - **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
@@ -105,7 +105,7 @@ Everything is typed at the prompt. The full reference is the in-game `help` pane
 - `workers share <domain> [percent|auto]`: steer where your workers go
 - `wonder collect <resource|all> [amount|max]`: bank resources into the current wonder
 - `trade`, `factions`, `army`, `map`, `stats`: open a panel
-- `prestige`: view prestige status (it opens in the Modern Age)
+- `prestige`: view prestige status (it opens in the Medieval Age, and a run to the Modern Age pays far more); `prestige shop` and `prestige buy <item>` for the legacy kit
 - `save [name]` / `load [name]`, and `quit` to save and quit
 
 ### Keys

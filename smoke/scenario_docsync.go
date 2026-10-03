@@ -41,7 +41,7 @@ const (
 	qEpochs      = "epochs"
 	qThemes      = "themes"
 	qDomains     = "worker domains"
-	qUpgrades    = "prestige upgrades"
+	qUpgrades    = "prestige shop items"
 	qLineages    = "lineages"
 	qWonders     = "wonders"
 	qFactions    = "civilizations"
@@ -64,7 +64,7 @@ func GameCounts() map[string]int {
 		qAges: len(config.Ages()), qBuildings: len(config.BaseBuildings()), qTechs: len(config.Technologies()),
 		qMilestones: len(config.Milestones()), qChains: len(config.MilestoneChains()), qResources: len(config.BaseResources()),
 		qEpochs: len(config.Epochs()), qThemes: len(theme.All()), qDomains: len(config.WorkerDomains()),
-		qUpgrades: len(config.PrestigeUpgrades()), qFactions: len(config.BaseFactions()), qRoutes: len(config.BaseTradeRoutes()),
+		qUpgrades: len(config.ActivePrestigeUpgrades()), qFactions: len(config.BaseFactions()), qRoutes: len(config.BaseTradeRoutes()),
 	}
 	lineages := map[string]bool{}
 	for _, d := range config.BaseBuildings() {
@@ -118,6 +118,7 @@ var claimWords = []struct {
 	{regexp.MustCompile(`(?i)\b(\d+) themes\b`), qThemes, 5},
 	{regexp.MustCompile(`(?i)\b(\d+) (?:worker )?domains\b`), qDomains, 5},
 	{regexp.MustCompile(`(?i)\b(\d+) (?:prestige )?upgrades\b`), qUpgrades, 5},
+	{regexp.MustCompile(`(?i)\b(\d+) (?:legacy )?kit items\b`), qUpgrades, 3},
 	{regexp.MustCompile(`(?i)\b(\d+) wonders\b`), qWonders, 15},
 	{regexp.MustCompile(`(?i)\b(\d+) chains\b`), qChains, 3},
 	{regexp.MustCompile(`(?i)\b(\d+) expeditions\b`), qExpeditions, 5},
@@ -260,7 +261,7 @@ func dynamicWords() map[string]bool {
 	for _, t := range theme.All() {
 		out[t.Key] = true
 	}
-	for _, u := range config.PrestigeUpgrades() {
+	for _, u := range config.ActivePrestigeUpgrades() {
 		out[u.Key] = true
 	}
 	for _, f := range config.BaseFactions() {

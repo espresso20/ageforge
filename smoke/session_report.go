@@ -78,6 +78,7 @@ func (s *Session) WriteSummary(w io.Writer) error {
 		p.writePacingTable(&sb)
 		p.writeFirstRun(&sb)
 		p.writeLaterRun(&sb)
+		p.writeDepth(&sb)
 	}
 	n := 0
 	for _, r := range s.Scenarios {

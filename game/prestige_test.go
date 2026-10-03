@@ -6,57 +6,46 @@ import (
 
 func TestPrestigeManager_CanPrestige(t *testing.T) {
 	pm := NewPrestigeManager()
-	ageOrder := map[string]int{
-		"primitive_age": 0, "stone_age": 1, "bronze_age": 2,
-		"iron_age": 3, "classical_age": 4, "medieval_age": 5,
-		"renaissance_age": 6, "colonial_age": 7, "industrial_age": 8,
-		"victorian_age": 9, "gilded_age": 10, "early_modern_age": 11,
-		"modern_age": 12,
+	ageOrder := map[string]int{}
+	for i, a := range ageKeys() {
+		ageOrder[a] = i
 	}
-
-	if pm.CanPrestige("primitive_age", ageOrder) {
-		t.Error("should not be able to prestige in primitive_age")
+	for _, age := range []string{"primitive_age", "bronze_age", "classical_age"} {
+		if pm.CanPrestige(age, ageOrder) {
+			t.Errorf("CanPrestige(%s) = true; prestige opens at the Medieval Age", age)
+		}
 	}
-	if pm.CanPrestige("medieval_age", ageOrder) {
-		t.Error("should not be able to prestige in medieval_age — requires Modern Age")
-	}
-	if pm.CanPrestige("industrial_age", ageOrder) {
-		t.Error("should not be able to prestige in industrial_age — requires Modern Age")
-	}
-	if !pm.CanPrestige("modern_age", ageOrder) {
-		t.Error("should be able to prestige in modern_age")
+	for _, age := range []string{"medieval_age", "industrial_age", "modern_age", "transcendent_age"} {
+		if !pm.CanPrestige(age, ageOrder) {
+			t.Errorf("CanPrestige(%s) = false; prestige is open from the Medieval Age on", age)
+		}
 	}
 }
 
+// TestPrestigeManager_CalculatePoints: a prestige pays the depth table,
+// with no divisor and no milestone, tech or building terms.
 func TestPrestigeManager_CalculatePoints(t *testing.T) {
 	pm := NewPrestigeManager()
-	ageOrder := map[string]int{
-		"primitive_age": 0, "stone_age": 1, "bronze_age": 2,
-		"iron_age": 3, "classical_age": 4, "medieval_age": 5,
+	want := map[string]int{
+		"primitive_age": 0, "stone_age": 1, "bronze_age": 2, "iron_age": 3,
+		"medieval_age": 9, "renaissance_age": 12, "victorian_age": 39,
+		"modern_age": 120, "information_age": 201, "cyberpunk_age": 363,
+		"interstellar_age": 1092, "transcendent_age": 3279,
 	}
-
-	pts := pm.CalculatePoints("medieval_age", ageOrder, 0, 0, 0)
-	if pts < 1 {
-		t.Errorf("medieval prestige points = %v, want >= 1", pts)
+	for age, w := range want {
+		if got := pm.CalculatePoints(age); got != w {
+			t.Errorf("CalculatePoints(%s) = %d, want %d", age, got, w)
+		}
 	}
-
-	// More milestones/techs/buildings = more points
-	pts2 := pm.CalculatePoints("medieval_age", ageOrder, 20, 15, 50)
-	if pts2 <= pts {
-		t.Errorf("points with bonuses (%v) should exceed base (%v)", pts2, pts)
+	// No divisor: ten levels later a Modern Age prestige still pays 120.
+	for range 10 {
+		pm.Prestige(120)
 	}
-}
-
-func TestPrestigeManager_DiminishingReturns(t *testing.T) {
-	pm := NewPrestigeManager()
-	ageOrder := map[string]int{"medieval_age": 5}
-
-	pts1 := pm.CalculatePoints("medieval_age", ageOrder, 10, 10, 50)
-	pm.Prestige(pts1)
-
-	pts2 := pm.CalculatePoints("medieval_age", ageOrder, 10, 10, 50)
-	if pts2 >= pts1 {
-		t.Errorf("second prestige pts (%v) should be < first (%v) due to diminishing returns", pts2, pts1)
+	if got := pm.CalculatePoints("modern_age"); got != 120 {
+		t.Errorf("at level %d a Modern Age prestige pays %d, want 120 (no divisor)", pm.GetLevel(), got)
+	}
+	if got := pm.CalculatePoints("not_an_age"); got != 0 {
+		t.Errorf("an unknown age pays %d, want 0", got)
 	}
 }
 

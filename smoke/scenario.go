@@ -187,16 +187,16 @@ func Scenarios() []Scenario {
 		{Name: "static", Desc: "Gate Covenant check from config alone: every age gate fits storage and has a source, and every milestone can be completed", Run: runStatic},
 		{Name: "docsync", Desc: "site and README headline numbers, lineage count and command reference match config and the command table", Run: runDocsync},
 		{Name: "progression", Desc: "greedy bot plays seeds end to end: panics, soft-locks, invariants, and the pacing table", Paced: true, Run: runProgression},
-		{Name: "veteran", Desc: "Era Mastery's veteran preset (mastery 10 through the Space Age): each age against its target ÷ k, the Primitive and Stone Ages under an hour, the Modern Age in 1.1 to 1.5 days", Paced: true, Run: runVeteran},
+		{Name: "veteran", Desc: "Era Mastery's veteran preset (mastery 10 through the Space Age): each age against its target ÷ k, the Primitive and Stone Ages under an hour, the Modern Age in 1.1 to 1.5 days; then the legacy kit bought after a scripted prestige, and the shop refund", Paced: true, Run: runVeteran},
 		{Name: "saveload", Desc: "save at a checkpoint per age, load into a fresh engine, continue, and compare against the uninterrupted run", Run: runSaveload},
 		{Name: "offline", Desc: "close the game for 1h, 8h and 30h through the offline-gains path: positive, sane, capped at 24h", Run: runOffline},
 		{Name: "fuzz", Desc: "random, malformed and hostile commands through the real command handler: no panics, invariants hold, ticks go on", Run: runFuzz},
 		{Name: "accounts", Desc: "create, switch, export, import, back up, recover and wipe accounts in a temp data dir", Run: runAccounts},
 		{Name: "perf", Desc: "late-game tick and GetState latency against budgets, and memory growth over a long run", Run: runPerf},
 		{Name: "ui", Desc: "UI sweep under the themes, plus the dashboard and every overlay at 80x24 and 100x30", Run: runUI},
-		{Name: "styles", Desc: "the bot under different play styles: greedy, idle check-ins, harbinger buyer, succumber, cosmic legacy hunter, garrison keeper (report-only)", FullOnly: true, Run: runStyles},
-		{Name: "idle", Desc: "check-in players at 1h, 3h and 8h leaving a build plan each visit: median time to the first prestige against the idle targets", FullOnly: true, Run: runIdle},
-		{Name: "prestige", Desc: "two prestige cycles: the points formula, upgrade effects, and legacies, ruins and the Cosmic Legacy persisting", FullOnly: true, Run: runPrestige},
+		{Name: "styles", Desc: "the bot under different play styles: greedy, idle check-ins, harbinger buyer, succumber, cosmic legacy hunter, garrison keeper (report-only), early taste (prestige at the Medieval Age)", FullOnly: true, Run: runStyles},
+		{Name: "idle", Desc: "check-in players at 1h, 3h and 8h leaving a build plan each visit: median time to the first prestige against the idle targets; the veteran with the legacy kit at 3h and 8h against the active veteran", FullOnly: true, Run: runIdle},
+		{Name: "prestige", Desc: "two prestige cycles: the depth points formula, the legacy kit and the shop refund, and legacies, ruins and the Cosmic Legacy persisting", FullOnly: true, Run: runPrestige},
 	}
 }
 

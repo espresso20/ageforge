@@ -20,6 +20,9 @@ const (
 	// is graded but never fails the set, since the targets assume the greedy
 	// bot that ignores the army.
 	StyleArmy = "army"
+	// StyleTaste takes the early, optional prestige: it prestiges as soon as
+	// prestige opens, at the Medieval Age (Pacing v2).
+	StyleTaste = "taste"
 )
 
 // IdleCheckIn is how often the idle style looks at the game: decisions only
@@ -28,7 +31,7 @@ const IdleCheckIn = 3 * time.Hour
 
 // StyleNames lists the styles in report order.
 func StyleNames() []string {
-	return []string{StyleGreedy, StyleIdle, StyleHarbinger, StyleSuccumb, StyleCosmic, StyleArmy}
+	return []string{StyleGreedy, StyleIdle, StyleHarbinger, StyleSuccumb, StyleCosmic, StyleArmy, StyleTaste}
 }
 
 // firstLastPassageAge is the first age whose prestige can bring the Last
@@ -74,6 +77,8 @@ func ApplyStyle(base Config, style string) (Config, error) {
 		c.InviteCosmic = true
 		c.LastPassage = "succumb"
 		c.PrestigeAge = firstLastPassageAge()
+	case StyleTaste:
+		c.PrestigeAge = game.PrestigeMinAge
 	default:
 		return c, fmt.Errorf("unknown style %q (want %s)", style, strings.Join(StyleNames(), ", "))
 	}

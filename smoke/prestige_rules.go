@@ -2,32 +2,32 @@ package smoke
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
 // PrestigePoints is the prestige formula as site/docs/prestige.md documents
-// it: base = age index, bonus = floor(milestones/10) + floor(techs/15) +
-// floor(built/50), points = floor((base+bonus) / sqrt(level+1)), and at
-// least 1 from the Medieval Age (index 5) on.
+// it: depth points, the sum of 3^epoch over every age before the one
+// prestiged from (1 per Stone Era age, 3 Iron, 9 Steel, 27 Electric, 81
+// Digital, 243 Neon, 729 Cosmic), with no divisor. It is computed here from
+// the epoch table on its own, so a change to config.DepthPoints that leaves
+// the docs behind fails the check.
 func PrestigePoints(st game.GameState) int {
-	idx := -1
-	for i, a := range config.AgeOrder() {
-		if a == st.Age {
-			idx = i
+	total := 0
+	for _, ep := range config.Epochs() {
+		w := 1
+		for i := 0; i < ep.Order; i++ {
+			w *= 3
+		}
+		for _, a := range ep.Ages {
+			if a == st.Age {
+				return total
+			}
+			total += w
 		}
 	}
-	if idx < 0 {
-		return 0
-	}
-	raw := idx + st.Milestones.CompletedCount/10 + st.Research.TotalResearched/15 + st.Stats.TotalBuilt/50
-	p := int(float64(raw) / math.Sqrt(float64(st.Prestige.Level+1)))
-	if p < 1 && idx >= 5 {
-		p = 1
-	}
-	return p
+	return 0
 }
 
 // answerLastPassage resolves a pending Last Passage by the configured policy
@@ -86,6 +86,7 @@ func prestigeCarryProblems(before, after game.GameState, ending string) []proble
 		out = append(out, problem{"prestige_passive_bonus",
 			fmt.Sprintf("passive bonus is %.4f at level %d; it retired into Era Mastery and must be 0", after.Prestige.PassiveBonus, after.Prestige.Level)})
 	}
+	out = append(out, kitCarryProblems(before, after)...)
 	return append(out, masteryCarryProblems(before, after)...)
 }
 

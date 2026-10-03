@@ -11,6 +11,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -171,6 +172,9 @@ type GameSave struct {
 	WorkerShares   map[string]float64 `json:"worker_shares,omitempty"`
 	AutoRecruitOff bool               `json:"auto_recruit_off,omitempty"`
 	StaffHoldUntil int                `json:"staff_hold_until,omitempty"`
+	// PlanLog is this run's plan as written (legacy.go), the Plan
+	// Template's source. omitempty.
+	PlanLog []PlanTemplateItem `json:"plan_log,omitempty"`
 	// PacingWeek marks saves written on the one-week curve (Pacing v2:
 	// config.AgeTargets × config.PacingStretch from the Bronze Age on).
 	// Always written; false on older saves, which get a one-time log line
@@ -287,6 +291,16 @@ type PrestigeSave struct {
 	Furthest      string         `json:"furthest,omitempty"`
 	RunFurthest   string         `json:"run_furthest,omitempty"`
 	MasterySeeded bool           `json:"mastery_seeded,omitempty"`
+	// ShopVersion is the prestige shop the save was written under (absent:
+	// the first shop). Below config.PrestigeShopVersion a load refunds the
+	// retired perks once (refundShopLocked). The legacy kit's memory
+	// (legacy.go): the plan template, the civilizations met and the worker
+	// shares. All omitempty, so saves from before them keep their bytes and
+	// signatures.
+	ShopVersion    int                `json:"shop_version,omitempty"`
+	LegacyPlan     []PlanTemplateItem `json:"legacy_plan,omitempty"`
+	LegacyFactions []string           `json:"legacy_factions,omitempty"`
+	LegacyShares   map[string]float64 `json:"legacy_shares,omitempty"`
 }
 
 // ResearchSave holds research state for save
@@ -615,6 +629,11 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Furthest:      ge.Prestige.record,
 			RunFurthest:   ge.Prestige.runFurthest,
 			MasterySeeded: ge.Prestige.masterySeeded,
+
+			ShopVersion:    ge.Prestige.shopVersion,
+			LegacyPlan:     clonePlanTemplate(ge.Prestige.legacyPlan),
+			LegacyFactions: slices.Clone(ge.Prestige.legacyFactions),
+			LegacyShares:   cloneShares(ge.Prestige.legacyShares),
 		},
 		Trade: TradeSave{
 			ActiveRoutes:   tradeActiveRoutes,
@@ -667,6 +686,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		WorkerShares:           cloneShares(ge.workerShares),
 		AutoRecruitOff:         ge.autoRecruitOff,
 		StaffHoldUntil:         ge.staffHoldUntil,
+		PlanLog:                clonePlanTemplate(ge.planLog),
 		PacingWeek:             true,
 		OverCapGrace:           ge.Resources.graceSave(),
 	}
@@ -850,6 +870,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Restore prestige
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
 	ge.Prestige.LoadMastery(save.Prestige.Mastery, save.Prestige.Furthest, save.Prestige.RunFurthest, save.Prestige.MasterySeeded)
+	ge.Prestige.LoadLegacy(save.Prestige.ShopVersion, save.Prestige.LegacyPlan, save.Prestige.LegacyFactions, save.Prestige.LegacyShares)
 
 	// Restore trade
 	ge.Trade.LoadState(save.Trade)
@@ -952,6 +973,9 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// each age's speed.
 	ge.seedMasteryLocked()
 	ge.noteRunAgesLocked()
+	// The prestige shop: a save from before the legacy kit gets its old
+	// perks refunded, once (after the signature check, like the seeding).
+	ge.refundShopLocked()
 	ge.restoreCatastropheState(&save)
 	ge.restoreFateState(&save)
 	ge.restoreHarbingerState(&save)
@@ -975,6 +999,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// to what the plan accepts; items that can no longer start drop out, with
 	// a log line, on the next tick.
 	ge.plan = loadPlan(save.Plan)
+	ge.planLog = loadPlanTemplate(save.PlanLog)
 	ge.wonderOverflowOff = save.WonderOverflowOff
 	// The worker shares: a hand-edited map keeps its known domains, each
 	// percent from 0 to 100, and the wait can't outlast one worker command.
