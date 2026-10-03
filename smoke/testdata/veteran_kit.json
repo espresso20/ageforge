@@ -49,13 +49,19 @@
     {
       "age": "stone_age",
       "kind": "build",
+      "key": "longhouse",
+      "count": 15
+    },
+    {
+      "age": "stone_age",
+      "kind": "build",
       "key": "stone_pit",
       "count": 5
     },
     {
       "age": "stone_age",
       "kind": "build",
-      "key": "longhouse",
+      "key": "elders_hall",
       "count": 5
     },
     {
@@ -77,8 +83,26 @@
     {
       "age": "bronze_age",
       "kind": "build",
+      "key": "forager_post",
+      "count": 5
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "woodcutter_camp",
+      "count": 8
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
       "key": "smithy",
       "count": 3
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "quarry",
+      "count": 10
     },
     {
       "age": "bronze_age",
@@ -95,20 +119,75 @@
     {
       "age": "bronze_age",
       "kind": "build",
-      "key": "quarry",
-      "count": 5
-    },
-    {
-      "age": "bronze_age",
-      "kind": "build",
       "key": "warehouse",
       "count": 1
     },
     {
       "age": "bronze_age",
       "kind": "build",
+      "key": "house",
+      "count": 8
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
       "key": "market",
       "count": 1
+    },
+    {
+      "age": "bronze_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "gold",
+      "amount": 3406.836807875774
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "scriptorium",
+      "count": 5
+    },
+    {
+      "age": "bronze_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "stone",
+      "amount": 18499.391853633184
+    },
+    {
+      "age": "bronze_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "food",
+      "amount": 65862.44741136697
+    },
+    {
+      "age": "bronze_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "stone",
+      "amount": 5234.481600166142
+    },
+    {
+      "age": "bronze_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "food",
+      "amount": 3343.717239969818
+    },
+    {
+      "age": "bronze_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "stone",
+      "amount": 8169.789475872272
+    },
+    {
+      "age": "bronze_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "iron",
+      "amount": 3544.5777649691154
     },
     {
       "age": "bronze_age",
@@ -123,14 +202,54 @@
     {
       "age": "iron_age",
       "kind": "build",
-      "key": "hunting_lodge",
+      "key": "townhouse",
       "count": 15
     },
     {
       "age": "iron_age",
       "kind": "build",
+      "key": "hunting_lodge",
+      "count": 15
+    },
+    {
+      "age": "iron_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "iron",
+      "amount": 77387.33616483174
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
       "key": "agora",
+      "count": 12
+    },
+    {
+      "age": "iron_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "gold",
+      "amount": 152799.5215657231
+    },
+    {
+      "age": "iron_age",
+      "kind": "trade",
+      "key": "food",
+      "to": "stone",
+      "amount": 75574.9553202945
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "house",
       "count": 7
+    },
+    {
+      "age": "iron_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "stone",
+      "amount": 883983.5301480583
     },
     {
       "age": "iron_age",
@@ -142,6 +261,19 @@
       "age": "iron_age",
       "kind": "build",
       "key": "smelter",
+      "count": 11
+    },
+    {
+      "age": "iron_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "food",
+      "amount": 27142.181510158098
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "trading_post",
       "count": 11
     },
     {
@@ -158,15 +290,43 @@
     },
     {
       "age": "iron_age",
-      "kind": "build",
-      "key": "trading_post",
-      "count": 10
+      "kind": "trade",
+      "key": "gold",
+      "to": "stone",
+      "amount": 1255736.4982193708
+    },
+    {
+      "age": "iron_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "stone",
+      "amount": 453431.9637203646
     },
     {
       "age": "iron_age",
       "kind": "build",
       "key": "timber_yard",
       "count": 4
+    },
+    {
+      "age": "iron_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "food",
+      "amount": 84308.5997925626
+    },
+    {
+      "age": "iron_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "iron",
+      "amount": 14998.471707846198
+    },
+    {
+      "age": "iron_age",
+      "kind": "build",
+      "key": "marble_quarry",
+      "count": 6
     },
     {
       "age": "iron_age",
@@ -181,8 +341,40 @@
     {
       "age": "classical_age",
       "kind": "build",
+      "key": "library",
+      "count": 15
+    },
+    {
+      "age": "classical_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "stone",
+      "amount": 6219100.38567777
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
       "key": "classical_vault",
       "count": 2
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "marble_quarry",
+      "count": 4
+    },
+    {
+      "age": "classical_age",
+      "kind": "trade",
+      "key": "food",
+      "to": "stone",
+      "amount": 129183.69890439018
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "merchant_quarter",
+      "count": 7
     },
     {
       "age": "classical_age",
@@ -192,15 +384,65 @@
     },
     {
       "age": "classical_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "stone",
+      "amount": 7686861.836181595
+    },
+    {
+      "age": "classical_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "stone",
+      "amount": 7682621.321846898
+    },
+    {
+      "age": "classical_age",
       "kind": "build",
-      "key": "library",
+      "key": "estate_farm",
+      "count": 5
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "wood_workshop",
+      "count": 4
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "ironworks",
       "count": 3
     },
     {
       "age": "classical_age",
       "kind": "build",
-      "key": "merchant_quarter",
-      "count": 2
+      "key": "villa",
+      "count": 15
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "marble_works",
+      "count": 10
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "field_works",
+      "count": 5
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "timber_yard",
+      "count": 1
+    },
+    {
+      "age": "classical_age",
+      "kind": "build",
+      "key": "forge",
+      "count": 6
     },
     {
       "age": "classical_age",
@@ -221,20 +463,103 @@
     {
       "age": "medieval_age",
       "kind": "build",
-      "key": "keep",
+      "key": "field_works",
       "count": 3
     },
     {
       "age": "medieval_age",
       "kind": "build",
       "key": "monastery_library",
-      "count": 8
+      "count": 13
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "timber_yard",
+      "count": 7
+    },
+    {
+      "age": "medieval_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "stone",
+      "amount": 2785458.221662416
+    },
+    {
+      "age": "medieval_age",
+      "kind": "trade",
+      "key": "food",
+      "to": "stone",
+      "amount": 235509.00057372186
+    },
+    {
+      "age": "medieval_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "stone",
+      "amount": 34465097.12056176
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "castle_keep",
+      "count": 5
     },
     {
       "age": "medieval_age",
       "kind": "build",
       "key": "guildhall",
+      "count": 10
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "keep",
       "count": 3
+    },
+    {
+      "age": "medieval_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "stone",
+      "amount": 21177814.68080815
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "manor",
+      "count": 15
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "demesne",
+      "count": 5
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "forge",
+      "count": 5
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "sawmill",
+      "count": 4
+    },
+    {
+      "age": "medieval_age",
+      "kind": "build",
+      "key": "stonemasons_guild",
+      "count": 5
+    },
+    {
+      "age": "medieval_age",
+      "kind": "trade",
+      "key": "knowledge",
+      "to": "stone",
+      "amount": 7167097.011700017
     },
     {
       "age": "medieval_age",
@@ -249,8 +574,93 @@
     {
       "age": "renaissance_age",
       "kind": "build",
+      "key": "workshop",
+      "count": 2
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "aqueduct",
+      "count": 8
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "merchant_quarter",
+      "count": 2
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "stone",
+      "amount": 14352443.50434719
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "gold",
+      "amount": 4023242.584283531
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
       "key": "art_studio",
       "count": 9
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "stone",
+      "amount": 2955560.3033908214
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "food",
+      "to": "stone",
+      "amount": 1013874.78168817
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "steel",
+      "amount": 61494188.61657588
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "university",
+      "count": 19
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "exchange",
+      "count": 8
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "knowledge",
+      "to": "steel",
+      "amount": 2725041.494896021
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "knowledge",
+      "to": "stone",
+      "amount": 24291649.93460842
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "stonemasons_guild",
+      "count": 4
     },
     {
       "age": "renaissance_age",
@@ -260,9 +670,49 @@
     },
     {
       "age": "renaissance_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "steel",
+      "amount": 36405663.829564996
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "market_garden",
+      "count": 5
+    },
+    {
+      "age": "renaissance_age",
       "kind": "build",
       "key": "coal_mine",
-      "count": 14
+      "count": 18
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "steel",
+      "amount": 27451991.44129681
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "build",
+      "key": "estate",
+      "count": 8
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "stone",
+      "amount": 10165071.200136663
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "stone",
+      "amount": 2893789.8967700987
     },
     {
       "age": "renaissance_age",
@@ -272,19 +722,95 @@
     },
     {
       "age": "renaissance_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "culture",
+      "amount": 8037234.666667113
+    },
+    {
+      "age": "renaissance_age",
       "kind": "build",
       "key": "sistine_chapel",
       "count": 1
     },
     {
       "age": "renaissance_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "knowledge",
+      "amount": 9829455.36811073
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "stone",
+      "to": "knowledge",
+      "amount": 640718.9292946908
+    },
+    {
+      "age": "renaissance_age",
       "kind": "build",
-      "key": "university",
-      "count": 11
+      "key": "iron_mine",
+      "count": 9
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "knowledge",
+      "amount": 1910834.90891732
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "knowledge",
+      "amount": 1762175.8712824227
+    },
+    {
+      "age": "renaissance_age",
+      "kind": "trade",
+      "key": "steel",
+      "to": "knowledge",
+      "amount": 1442935.6202118234
     },
     {
       "age": "renaissance_age",
       "kind": "advance"
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "steel",
+      "amount": 13308183.938334016
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "steel",
+      "amount": 5463076.166037559
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "plantation",
+      "count": 8
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "knowledge",
+      "to": "steel",
+      "amount": 409126999.50477934
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "knowledge",
+      "to": "gold",
+      "amount": 34481618.04122458
     },
     {
       "age": "colonial_age",
@@ -300,9 +826,89 @@
     },
     {
       "age": "colonial_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "gold",
+      "amount": 384963.6513021551
+    },
+    {
+      "age": "colonial_age",
       "kind": "build",
-      "key": "plantation",
-      "count": 3
+      "key": "port",
+      "count": 10
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "steel",
+      "amount": 100109380.58969466
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "exchange",
+      "count": 2
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "food",
+      "to": "stone",
+      "amount": 6337112.594243265
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "merchant_quarter",
+      "count": 4
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "knowledge",
+      "to": "stone",
+      "amount": 38676427.39629322
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "aqueduct",
+      "count": 6
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "estate",
+      "count": 6
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "food",
+      "to": "wood",
+      "amount": 1998494.0425989472
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "stone",
+      "amount": 984301.4189218973
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "stone",
+      "amount": 163613832.65357915
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "wood",
+      "amount": 5744753.302187089
     },
     {
       "age": "colonial_age",
@@ -313,8 +919,73 @@
     {
       "age": "colonial_age",
       "kind": "build",
+      "key": "stonemasons_guild",
+      "count": 1
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "deep_iron_mine",
+      "count": 5
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "ironmonger",
+      "count": 9
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "monastery_library",
+      "count": 8
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
+      "key": "fortress",
+      "count": 4
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "stone",
+      "amount": 981967.3081059001
+    },
+    {
+      "age": "colonial_age",
+      "kind": "build",
       "key": "natural_philosophy_hall",
       "count": 9
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "steel",
+      "to": "stone",
+      "amount": 7208076.4541817065
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "knowledge",
+      "amount": 188051.27149630332
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "knowledge",
+      "amount": 89769.91534675173
+    },
+    {
+      "age": "colonial_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "knowledge",
+      "amount": 3884773.811153001
     },
     {
       "age": "colonial_age",
@@ -328,9 +999,114 @@
     },
     {
       "age": "industrial_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "stone",
+      "amount": 41759337.22565296
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "monastery_library",
+      "count": 2
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "estate",
+      "count": 1
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "stone",
+      "amount": 454218445.22100246
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "fortress",
+      "count": 1
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "food",
+      "to": "stone",
+      "amount": 10541336.946502147
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "stone",
+      "amount": 1509272275.299347
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "ironmonger",
+      "count": 2
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "castle_keep",
+      "count": 10
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "iron_works_complex",
+      "count": 5
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "stone",
+      "amount": 4128203.8334929724
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "steel",
+      "to": "stone",
+      "amount": 1151944963.27411
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "concert_hall",
+      "count": 9
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "coal",
+      "amount": 355645993.72385687
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "steel",
+      "to": "coal",
+      "amount": 42303914.67463994
+    },
+    {
+      "age": "industrial_age",
       "kind": "build",
       "key": "coal_plant",
       "count": 6
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "coal",
+      "amount": 25858760.3144892
     },
     {
       "age": "industrial_age",
@@ -341,8 +1117,62 @@
     {
       "age": "industrial_age",
       "kind": "build",
+      "key": "steel_mill",
+      "count": 5
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "stone",
+      "to": "steel",
+      "amount": 335.8148787397607
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
+      "key": "deep_iron_mine",
+      "count": 4
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "stone",
+      "to": "coal",
+      "amount": 44933075.15332717
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "iron",
+      "amount": 940959692.1348213
+    },
+    {
+      "age": "industrial_age",
+      "kind": "build",
       "key": "tenement",
       "count": 30
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "steel",
+      "to": "iron",
+      "amount": 923610958.8991431
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "iron",
+      "amount": 425823420.07705915
+    },
+    {
+      "age": "industrial_age",
+      "kind": "trade",
+      "key": "stone",
+      "to": "iron",
+      "amount": 562.786612331059
     },
     {
       "age": "industrial_age",
@@ -357,8 +1187,110 @@
     {
       "age": "victorian_age",
       "kind": "build",
+      "key": "coal_works",
+      "count": 18
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "settlement_block",
+      "count": 15
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "dockyard",
+      "count": 1
+    },
+    {
+      "age": "victorian_age",
+      "kind": "trade",
+      "key": "oil",
+      "to": "gold",
+      "amount": 163123042.57723713
+    },
+    {
+      "age": "victorian_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "gold",
+      "amount": 3618676500.7402163
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
       "key": "victorian_vault",
       "count": 2
+    },
+    {
+      "age": "victorian_age",
+      "kind": "trade",
+      "key": "stone",
+      "to": "iron",
+      "amount": 88577437.06596565
+    },
+    {
+      "age": "victorian_age",
+      "kind": "trade",
+      "key": "stone",
+      "to": "gold",
+      "amount": 13637.04928254453
+    },
+    {
+      "age": "victorian_age",
+      "kind": "trade",
+      "key": "stone",
+      "to": "steel",
+      "amount": 173.96068531303095
+    },
+    {
+      "age": "victorian_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "iron",
+      "amount": 4760189424.90406
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "university",
+      "count": 15
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "steam_mine",
+      "count": 9
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "agricultural_works",
+      "count": 8
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "research_institute",
+      "count": 9
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "steam_turbine",
+      "count": 10
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "natural_philosophy_hall",
+      "count": 16
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "bessemer_plant",
+      "count": 10
     },
     {
       "age": "victorian_age",
@@ -369,14 +1301,47 @@
     {
       "age": "victorian_age",
       "kind": "build",
+      "key": "steel_mill",
+      "count": 7
+    },
+    {
+      "age": "victorian_age",
+      "kind": "trade",
+      "key": "steel",
+      "to": "iron",
+      "amount": 3485861110.352522
+    },
+    {
+      "age": "victorian_age",
+      "kind": "trade",
+      "key": "steel",
+      "to": "gold",
+      "amount": 2630622146.326796
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
       "key": "bank",
       "count": 3
     },
     {
       "age": "victorian_age",
       "kind": "build",
-      "key": "steam_turbine",
-      "count": 4
+      "key": "iron_works_complex",
+      "count": 8
+    },
+    {
+      "age": "victorian_age",
+      "kind": "build",
+      "key": "stock_exchange",
+      "count": 10
+    },
+    {
+      "age": "victorian_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "iron",
+      "amount": 146421614.05074352
     },
     {
       "age": "victorian_age",
@@ -387,6 +1352,57 @@
     {
       "age": "victorian_age",
       "kind": "advance"
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "natural_philosophy_hall",
+      "count": 18
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "electricity",
+      "amount": 399464309.27282083
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "electricity",
+      "amount": 41000152595.008095
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "physics_laboratory",
+      "count": 15
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "electricity",
+      "amount": 98537555322.65057
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "electric_arc_furnace",
+      "count": 15
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "steam_works",
+      "count": 7
+    },
+    {
+      "age": "electric_age",
+      "kind": "build",
+      "key": "bessemer_plant",
+      "count": 2
     },
     {
       "age": "electric_age",
@@ -402,9 +1418,44 @@
     },
     {
       "age": "electric_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "steel",
+      "amount": 89405336.4513257
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "steel",
+      "to": "electricity",
+      "amount": 14898764747.448683
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "steel",
+      "to": "gold",
+      "amount": 9339406384.36214
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "stone",
+      "amount": 56008068644.96757
+    },
+    {
+      "age": "electric_age",
       "kind": "build",
-      "key": "physics_laboratory",
-      "count": 5
+      "key": "row_house",
+      "count": 22
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "oil",
+      "amount": 4380406.636548791
     },
     {
       "age": "electric_age",
@@ -420,15 +1471,65 @@
     },
     {
       "age": "electric_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "gold",
+      "amount": 9854976100.618595
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "electricity",
+      "to": "gold",
+      "amount": 11515997152.381414
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "coal",
+      "to": "steel",
+      "amount": 2161378496.3792048
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "iron",
+      "amount": 1743372261.0561066
+    },
+    {
+      "age": "electric_age",
       "kind": "build",
       "key": "electric_warehouse",
       "count": 3
     },
     {
       "age": "electric_age",
-      "kind": "build",
-      "key": "electric_arc_furnace",
-      "count": 3
+      "kind": "trade",
+      "key": "steel",
+      "to": "iron",
+      "amount": 1534434590.37421
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "iron",
+      "to": "gold",
+      "amount": 1540414598.6257112
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "steel",
+      "amount": 105815718989.70358
+    },
+    {
+      "age": "electric_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "coal",
+      "amount": 45700952262.37683
     },
     {
       "age": "electric_age",
@@ -436,9 +1537,49 @@
     },
     {
       "age": "atomic_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "stone",
+      "amount": 1828217467313.889
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "row_house",
+      "count": 8
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "steel",
+      "amount": 1249573916512.1802
+    },
+    {
+      "age": "atomic_age",
       "kind": "build",
       "key": "bunker_complex",
       "count": 18
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "electricity",
+      "amount": 3257915523.3683367
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "uranium",
+      "amount": 65371819802.19069
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "research_campus",
+      "count": 19
     },
     {
       "age": "atomic_age",
@@ -449,14 +1590,67 @@
     {
       "age": "atomic_age",
       "kind": "build",
+      "key": "nuclear_reactor",
+      "count": 16
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
       "key": "advanced_alloy_plant",
       "count": 14
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "electricity",
+      "to": "uranium",
+      "amount": 27823627303.013313
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "gold",
+      "to": "iron",
+      "amount": 16485325552.874445
     },
     {
       "age": "atomic_age",
       "kind": "build",
       "key": "atomic_vault",
       "count": 4
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "electricity",
+      "to": "stone",
+      "amount": 288959352059.3986
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "electricity",
+      "to": "iron",
+      "amount": 18184057763.137455
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "oil_derrick",
+      "count": 6
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "power_generator",
+      "count": 10
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "electricity",
+      "to": "steel",
+      "amount": 292175278235.6956
     },
     {
       "age": "atomic_age",
@@ -471,8 +1665,34 @@
     {
       "age": "atomic_age",
       "kind": "build",
-      "key": "research_campus",
+      "key": "financial_district",
+      "count": 2
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "corporate_hq",
       "count": 4
+    },
+    {
+      "age": "atomic_age",
+      "kind": "build",
+      "key": "steam_works",
+      "count": 5
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "uranium",
+      "to": "steel",
+      "amount": 119059371398.83907
+    },
+    {
+      "age": "atomic_age",
+      "kind": "trade",
+      "key": "uranium",
+      "to": "stone",
+      "amount": 44709986821.994835
     }
   ],
   "research": [

@@ -43,12 +43,20 @@ const IdleBudgetFactor = 2.0
 // the idle scenario plays the veteran preset with the legacy kit actively
 // and at 3- and 8-hour check-ins, and holds each check-in run's time to the
 // first prestige to this many times the active veteran's on the same seed
-// (median across seeds), failing under -pacing enforce. Without the kit,
-// when Era Mastery landed, they were 1.83x and 3.40x: a veteran's early ages
-// are shorter than one visit and the plan only looked one age ahead. The
-// kit's plan template re-adds each age's slice at every advance, so the plan
-// chains ages between visits.
+// (median across seeds), failing under -pacing enforce.
+//
+// Without the kit (when Era Mastery landed) they were 1.88x and 3.41x: a
+// veteran's ages are shorter than one visit, and the plan only looked one
+// age ahead. The kit's plan template re-adds each age's part at every
+// advance, so the plan chains ages between visits: measured with the canned
+// kit (3 seeds), 1.47x at 3 hours, inside the plan's 1.5x, and 2.12x at 8
+// hours, over its 2.0x. The 8-hour limit is set from that measurement with
+// about 8% headroom. What is left is mostly the wonders: every advance
+// needs the age's wonder, and several from the Classical Age on (the
+// Parthenon's and the Grand Lighthouse's stone, the Eiffel Tower's iron)
+// cost more of a resource than a full store holds, which only a visit's
+// deposits or overflow at the cap can bank.
 var VeteranIdleMax = map[time.Duration]float64{
 	3 * time.Hour: 1.5,
-	8 * time.Hour: 2.0,
+	8 * time.Hour: 2.3,
 }

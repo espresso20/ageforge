@@ -793,3 +793,21 @@ func (ge *GameEngine) EnterAgeForTest(age string) error {
 	ge.advanceAge(age)
 	return nil
 }
+
+// NoteTradeForTest records in the run's plan log a trade item selling give
+// for get, adding got to what the current age's item buys, as if the player
+// had planned the trades they made. A test hook for other packages (the
+// smoke suite records a bot's trades to make the canned veteran template);
+// not reachable from play.
+func (ge *GameEngine) NoteTradeForTest(give, get string, got float64) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	for i := range ge.planLog {
+		e := &ge.planLog[i]
+		if e.Age == ge.age && e.Kind == PlanTrade && e.Key == give && e.To == get {
+			e.Amount = float64(e.Amount + got)
+			return
+		}
+	}
+	ge.logPlanAddLocked(PlanItem{Kind: PlanTrade, Key: give, To: get, Count: 1, Amount: got}, 1)
+}
