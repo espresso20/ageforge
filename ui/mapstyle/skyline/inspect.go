@@ -11,8 +11,9 @@ import (
 
 // inspect.go is the cursor: what it can stand on (every silhouette, the civ
 // towns on the ridge, the harbinger, and while one is in view the rare
-// visitor's saucer), how the keys move it, and what it says about what it
-// is on, in the model's command vocabulary.
+// visitor's saucer; in the Transcendent Age the mandala's core, rings and
+// crown instead), how the keys move it, and what it says about what it is
+// on, in the model's command vocabulary.
 
 type tkind uint8
 
@@ -23,6 +24,10 @@ const (
 	tHarbinger
 	tUFO    // the visitor's saucer: ↑ past the ridge reaches it, Tab never does
 	tTether // the space elevator, from the Fusion Age (city.go)
+	// the Transcendent Age's mandala (orbit_mandala.go)
+	tCore // its core
+	tMark // a building type on its era's ring or in the crown (key)
+	tRing // a ring with nothing left standing (cp: its era)
 )
 
 // target names what the cursor is on, stably across model rebuilds.
@@ -43,7 +48,11 @@ const ridgeRow = 3
 
 // targets lists every target in Tab order: buildings west to east (front
 // row first at a column), then the ridge west to east, the harbinger last.
+// The Transcendent Age has none of them: its targets are the mandala's.
 func targets(m *mapmodel.Model, w, cam int) []tgt {
+	if m.Sky() == mapmodel.SkyMandala {
+		return mandalaTargets(m)
+	}
 	out := make([]tgt, 0, len(m.Skyline.Lots)+8)
 	for i := range m.Skyline.Lots {
 		l := &m.Skyline.Lots[i]
@@ -188,17 +197,32 @@ func (v *view) step(m *mapmodel.Model, anim, dx, drow, tab int) {
 				best, bd = j, d
 			}
 		}
+		if best < 0 && cur.kind == tMark { // round a ring: past its last, its first again
+			for j, t := range ts {
+				if t.row == cur.row && j != i && (best < 0 || (t.x-ts[best].x)*dx < 0) {
+					best = j
+				}
+			}
+		}
 		if best < 0 {
 			return
 		}
 		i = best
 	case drow != 0:
 		moved := false
-		for row := cur.row + drow; row >= 0 && row <= ridgeRow; row += drow {
+		top := ridgeRow // the mandala has a row for every ring
+		for _, t := range ts {
+			top = max(top, t.row)
+		}
+		for row := cur.row + drow; row >= 0 && row <= top; row += drow {
 			best, bd := -1, 1<<30
 			for j, t := range ts {
-				if t.row == row && abs(t.x-cur.x) < bd {
-					best, bd = j, abs(t.x-cur.x)
+				d := abs(t.x - cur.x)
+				if t.kind == tMark || t.kind == tRing { // round a ring, the far end is next to the near one
+					d = min(d, mdTurn-d)
+				}
+				if t.row == row && d < bd {
+					best, bd = j, d
 				}
 			}
 			if best >= 0 {
@@ -226,6 +250,8 @@ func (v *view) inspection(m *mapmodel.Model, anim int) (in inspectionData, ok bo
 	}
 	t := ts[i]
 	switch t.kind {
+	case tCore, tMark, tRing:
+		return mandalaInspection(m, t)
 	case tLot:
 		return lotInspection(m, t.key, t.cp), true
 	case tCiv:

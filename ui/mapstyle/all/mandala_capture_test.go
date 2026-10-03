@@ -25,7 +25,9 @@ import (
 // four (its record of ages reached cut down; the map shows a ring only for
 // an era reached). Each goes full size and as the mini map, as an animated
 // HTML file, its first frame as text and as cells (decimal rune and hex
-// colours per cell, for an outside renderer), into MANDALA_CAPTURE_DIR
+// colours per cell, for an outside renderer), with four frames of the wave
+// of light and the full view again with the cursor out and with the legend
+// on, into MANDALA_CAPTURE_DIR
 // (default map_captures/mandala/after at the repo root, which git
 // ignores). It uses only the public styles, so the same file run on an
 // older checkout writes the "before" set.
@@ -83,6 +85,19 @@ func TestWriteMandalaCaptures(t *testing.T) {
 					if i%2 == 0 && i < 8 && !mini && run.name == "7eras" { // the wave of light, a quarter of a breath apart
 						_ = os.WriteFile(filepath.Join(out, name+"_pulse"+strconv.Itoa(i/2)+".cells"), []byte(mandalaCells(scr)), 0o644)
 					}
+				}
+				if !mini && run.name == "7eras" {
+					// the cursor on a building of a ring, and the legend line
+					for i := 0; i < 60; i++ {
+						v.HandleKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), mapstyle.Frame{Model: run.m, Anim: 2000})
+					}
+					v.Draw(scr, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: run.m, Anim: 2000, Tier: mapmodel.TierUnicode})
+					_ = os.WriteFile(filepath.Join(out, name+"_inspect.cells"), []byte(mandalaCells(scr)), 0o644)
+					v.HandleKey(tcell.NewEventKey(tcell.KeyEscape, 0, tcell.ModNone), mapstyle.Frame{Model: run.m, Anim: 2000})
+					v.SetOption(mapstyle.OptInspect, false)
+					v.SetOption(mapstyle.OptLegend, true)
+					v.Draw(scr, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: run.m, Anim: 2000, Tier: mapmodel.TierUnicode})
+					_ = os.WriteFile(filepath.Join(out, name+"_legend.cells"), []byte(mandalaCells(scr)), 0o644)
 				}
 				bg := capture.Hex(theme.Color(theme.RoleBackground))
 				fg := capture.Hex(theme.Color(theme.RoleText))

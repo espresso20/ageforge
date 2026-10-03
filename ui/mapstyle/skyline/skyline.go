@@ -45,7 +45,8 @@ type view struct {
 	clay    *layout // the compact view's
 	slay    *layout // the sky arc's (orbit.go), full and compact,
 	sclay   *layout
-	glay    *layout // and the ground skyline behind the Quantum Age's echo
+	glay    *layout        // and the ground skyline behind the Quantum Age's echo
+	md      *mandalaLayout // the Transcendent Age's mandala (orbit_mandala.go)
 	sprites map[spriteKey]*sprite
 	fb      fb
 	vis     []int

@@ -2,6 +2,7 @@ package mapstyle
 
 import (
 	"math"
+	"sort"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -62,6 +63,7 @@ const (
 	mdLineGap = 2.0  // a dotted line needs a clear row between rings
 	mdBeadGap = 1.25 // beads alone need a row and a bit, or the rings jumble
 	mdMaxGap  = 3.0  // a few rings keep together rather than fill the space
+	mdEras    = 7.0  // the eras a whole history has: the rings that fill it
 	// mdCrownMin is the smallest mandala (its outer radius in rows) with
 	// room for the crown: a smaller one gives the space to the eras' rings.
 	mdCrownMin = 8.0
@@ -81,20 +83,36 @@ func LayMandala(n int, ry, rx float64) MandalaGeom {
 		g.Cells = []MandalaCell{{Part: MdCore}}
 		return g
 	}
-	r0 := math.Min(mdLineGap, R) // a clear cell round the core
-	grand := R >= mdGrandMin
-	switch {
-	case grand:
-		g.PetalR, g.Petals = 3, 8
-		r0 = g.PetalR + 3
-	case R >= mdCrownMin:
-		g.PetalR, g.Petals = clampF(0.16*R, 1.5, 3), 8
-		r0 = g.PetalR + 2
+	// The crown is the grandest that still leaves room for every ring: the
+	// rings are the player's history, and come first.
+	type crown struct {
+		petalR, r0 float64
+		grand      bool
 	}
-	rings := max(0, min(n, 1+int((R-r0)/mdBeadGap)))
+	crowns := []crown{{r0: math.Min(mdLineGap, R)}} // none: a clear cell round the core
+	if R >= mdCrownMin {
+		p := clampF(0.16*R, 1.5, 3)
+		crowns = append([]crown{{petalR: p, r0: p + 2}}, crowns...)
+	}
+	if R >= mdGrandMin {
+		crowns = append([]crown{{petalR: 3, r0: 6, grand: true}}, crowns...)
+	}
+	fit := func(c crown) int { return max(0, min(n, 1+int((R-c.r0)/mdBeadGap))) }
+	best := crowns[0]
+	for _, c := range crowns[1:] {
+		if fit(c) > fit(best) {
+			best = c
+		}
+	}
+	r0, grand, rings := best.r0, best.grand, fit(best)
+	if best.petalR > 0 {
+		g.PetalR, g.Petals = best.petalR, 8
+	}
 	gap := 0.0
 	if rings > 1 {
-		gap = math.Min(mdMaxGap, (R-r0)/float64(rings-1))
+		// all seven eras fill the space; fewer keep the spacing seven would
+		// have (or mdMaxGap, in a small space) rather than spread to fill it
+		gap = math.Min(math.Max(mdMaxGap, (R-r0)/(mdEras-1)), (R-r0)/float64(rings-1))
 	}
 	g.Rings = rings
 	g.Lines = r0 >= mdLineGap && (rings <= 1 || gap >= mdLineGap)
@@ -153,6 +171,54 @@ func LayMandala(n int, ry, rx float64) MandalaGeom {
 		}
 	}
 	return g
+}
+
+// RingCells is ring k's cells (its band and its beads), clockwise from the
+// top.
+func (g *MandalaGeom) RingCells(k int) []MandalaCell {
+	var out []MandalaCell
+	for _, c := range g.Cells {
+		if (c.Part == MdLine || c.Part == MdBead) && c.Ring == k {
+			out = append(out, c)
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool { return clockwise(out[i], out[j]) })
+	return out
+}
+
+// PetalCells is the crown's petals (each one's base cell), clockwise from
+// the top.
+func (g *MandalaGeom) PetalCells() []MandalaCell {
+	out := make([]MandalaCell, 0, g.Petals)
+	for _, c := range g.Cells {
+		if c.Part == MdPetal && !c.Tip {
+			out = append(out, c)
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Idx < out[j].Idx })
+	return out
+}
+
+// clockwise reports whether cell a comes before cell b going clockwise
+// from the top, in whole numbers (a row counts as two columns), so the
+// order is the same on every machine.
+func clockwise(a, b MandalaCell) bool {
+	half := func(c MandalaCell) int { // 0: the right half, from the top; 1: the left, from the bottom
+		if c.DX > 0 || c.DX == 0 && c.DY < 0 {
+			return 0
+		}
+		return 1
+	}
+	if ha, hb := half(a), half(b); ha != hb {
+		return ha < hb
+	}
+	if cross := a.DX*2*b.DY - 2*a.DY*b.DX; cross != 0 {
+		return cross > 0
+	}
+	if a.DY != b.DY {
+		return a.DY < b.DY
+	}
+	return a.DX < b.DX
 }
 
 // spokeAt is the first-quadrant offset (columns right, rows up) of the

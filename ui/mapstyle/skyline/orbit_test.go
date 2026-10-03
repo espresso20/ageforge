@@ -29,7 +29,8 @@ func skyModel(age string, seed int64, grow int) *mapmodel.Model {
 
 // TestSkyScenes: every sky age draws through the sky compose (a sky
 // layout in the layout slot, which layoutFor never mistakes for its own)
-// and the Fusion Age still draws on the ground.
+// and the Fusion Age still draws on the ground. The Transcendent Age has
+// no lots to lay out (TestSkyMandalaAlone).
 func TestSkyScenes(t *testing.T) {
 	for i, age := range skyAges {
 		m := skyModel(age, 3, 0)
@@ -38,6 +39,12 @@ func TestSkyScenes(t *testing.T) {
 		}
 		v := newView()
 		s := v.compose(mapstyle.Frame{Model: m, Anim: 5}, 160, 48)
+		if m.Sky() == mapmodel.SkyMandala {
+			if v.slay != nil || v.lay != nil {
+				t.Errorf("%s: a layout of lots for the mandala", age)
+			}
+			continue
+		}
 		if v.slay == nil || v.slay.groundY >= 0 || s.groundY != skyGround(45) {
 			t.Fatalf("%s: not the sky compose (layout key %d, baseline %d)", age, v.slay.groundY, s.groundY)
 		}
@@ -185,13 +192,17 @@ func TestSkyGlyphs(t *testing.T) {
 	}
 }
 
-// TestSkyInspect: in every sky age Tab reaches every lot, every target
-// says what it is with a command the model knows, and the status line
-// words a lot in the scene's terms (mapmodel.SkyPartOf).
+// TestSkyInspect: in every sky age with lots Tab reaches every one, every
+// target says what it is with a command the model knows, and the status
+// line words a lot in the scene's terms (mapmodel.SkyPartOf). The
+// Transcendent Age's cursor reads the mandala (TestSkyMandalaInspect).
 func TestSkyInspect(t *testing.T) {
 	for i, age := range skyAges {
 		m := skyModel(age, 3, 1)
 		sc := mapmodel.SkyScene(i + 1)
+		if sc == mapmodel.SkyMandala {
+			continue
+		}
 		words := commandWords(m)
 		v := newView()
 		f := mapstyle.Frame{Model: m}
@@ -282,10 +293,14 @@ func lotCells(m *mapmodel.Model) int {
 }
 
 // TestSkyGrowth: the scene is still the civilization: a grown state draws
-// more of it in every sky age, and the Space Age's cities light up more
-// under a district with more built.
+// more of it in every sky age with lots (the Transcendent Age grows its
+// core's glow: TestSkyMandalaGrowth), and the Space Age's cities light up
+// more under a district with more built.
 func TestSkyGrowth(t *testing.T) {
 	for _, age := range skyAges {
+		if age == "transcendent_age" {
+			continue
+		}
 		o := fixture.Options{Age: age, Seed: 12, Tick: tickAt(0.5)}
 		base := build(o, 0)
 		grown := build(o, 4)
@@ -322,7 +337,7 @@ var sceneOfDepth = map[uint8]mapmodel.SkyScene{
 	dGalNebula: mapmodel.SkyGalaxy, dSystem: mapmodel.SkyGalaxy,
 	dEchoLine: mapmodel.SkyQuantum, dEcho: mapmodel.SkyQuantum, dFractal: mapmodel.SkyQuantum,
 	dHaloQ: mapmodel.SkyQuantum, dFringe: mapmodel.SkyQuantum,
-	dMirror: mapmodel.SkyMandala, dMandala: mapmodel.SkyMandala, dReflect: mapmodel.SkyMandala,
+	dMandala: mapmodel.SkyMandala,
 }
 
 // TestSkyNoSpoilers: no sky age draws anything of a later scene: none of
@@ -355,6 +370,12 @@ func TestSkyNoSpoilers(t *testing.T) {
 		if sc == mapmodel.SkyGround {
 			continue
 		}
+		if sc == mapmodel.SkyMandala { // the mandala alone, and nothing moving: TestSkyMandalaAlone
+			if !own[dMandala] {
+				t.Errorf("%s: no mandala", age)
+			}
+			continue
+		}
 		if len(own) < 3 {
 			t.Errorf("%s: it drew only %d of its own signature structures", age, len(own))
 		}
@@ -379,7 +400,7 @@ func TestSkyNoSpoilers(t *testing.T) {
 			}
 		}
 		sig := map[mapmodel.SkyScene]mapmodel.Mover{mapmodel.SkyOrbit: mapmodel.MoverClimber, mapmodel.SkyDeep: mapmodel.MoverGenShip,
-			mapmodel.SkyGalaxy: mapmodel.MoverStarship, mapmodel.SkyQuantum: mapmodel.MoverPhaseShip, mapmodel.SkyMandala: mapmodel.MoverMote}
+			mapmodel.SkyGalaxy: mapmodel.MoverStarship, mapmodel.SkyQuantum: mapmodel.MoverPhaseShip}
 		if !movers[sig[sc]] {
 			t.Errorf("%s: no %s, its signature mover", age, sig[sc].Info().Key)
 		}

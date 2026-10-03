@@ -15,7 +15,8 @@ import (
 // satellites along the limb and mining drones from the belt in the Space
 // Age; generation ships trailing their engines across the Interstellar;
 // starships jumping to warp and alien saucers in the Galactic; phase ships
-// tunnelling through the Quantum; a mote of light in the Transcendent.
+// tunnelling through the Quantum. Nothing moves in the Transcendent: there
+// is nothing left to carry.
 // Every drawing names the mover it stands for in the shared roster
 // (mapmodel/movers.go) and shows only once an age has introduced it: the
 // no-spoilers rule, as the ground's moverTags keep it.
@@ -50,7 +51,6 @@ var (
 	stAlien     = skyTpl{[]string{"◄◉►"}, []string{"uuu"}, mapmodel.MoverAlienShip, mapmodel.SymUFO, true}
 	stGalShuttl = skyTpl{[]string{"▄►"}, []string{"fb"}, mapmodel.MoverShuttle, mapmodel.SymShuttle, false}
 	stPhase     = skyTpl{[]string{"◈"}, []string{"g"}, mapmodel.MoverPhaseShip, mapmodel.SymPhaseShip, true}
-	stMote      = skyTpl{[]string{"∘"}, []string{"s"}, mapmodel.MoverMote, mapmodel.SymMote, true}
 )
 
 // skyFx is a vehicle's effect.
@@ -62,7 +62,6 @@ const (
 	fxTrail         // a long engine trail behind it
 	fxWarp          // the jump to warp: a long streak ahead and a flash
 	fxPhase         // afterimages where it was
-	fxGlow          // a soft halo
 )
 
 // skyVehicle is one placed sky vehicle in frame terms.
@@ -347,18 +346,6 @@ func skyTrafficFor(g skyGeo) []skyVehicle {
 			y := 2 + int(hash(seed, 9)%uint64(max(1, gy-4)))
 			add(skyVehicle{t: &stPhase, x: x, y: y, depth: [3]uint8{dLane0, dLane1, dLane2}[i%3], west: west, seed: seed, fx: fxPhase, n: D})
 		}
-	case mapmodel.SkyMandala:
-		// a mote of light or two, drifting home to the mandala
-		for i := 0; i < 1+min(1, c.foot/6); i++ {
-			seed := 5100 + i
-			T := 900 + int(hash(seed, 3)%400)
-			t := float64((g.anim+int(hash(seed, 5)%uint64(T)))%T) / float64(T)
-			sx := float64(int(hash(seed, 7) % uint64(max(1, g.W))))
-			cx, cy := float64(g.W)/2, float64(gy-1)*0.47
-			x := sx + (cx-sx)*t + 3*mapmodel.Sin(t*2)
-			y := float64(gy-1) + (cy-float64(gy-1))*t
-			add(skyVehicle{t: &stMote, x: int(math.Round(x)), y: int(math.Round(y)), depth: dLane, seed: seed, fx: fxGlow})
-		}
 	}
 	return out
 }
@@ -522,14 +509,6 @@ func (o *orb) drawVehicle(v skyVehicle) {
 			}
 			c := theme.Mix(o.iri(x/2+o.anim/2+v.seed, iEmit, 1), void, 0.35*float64(k)+0.2)
 			o.fb.fg(x, o.Y(v.y), '◇', c, dTrail)
-		}
-	case fxGlow:
-		h := theme.Mix(o.c(mapmodel.InkLight, iEmit, 0), void, 0.6)
-		if (o.anim/6)%2 == 0 {
-			o.fb.fg(v.x-1, o.Y(v.y), '·', h, v.depth)
-			o.fb.fg(v.x+1, o.Y(v.y), '·', h, v.depth)
-		} else {
-			o.fb.fg(v.x, o.Y(v.y-1), '˙', h, v.depth)
 		}
 	}
 }
