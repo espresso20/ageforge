@@ -33,6 +33,8 @@ func configFromJSON(c ConfigJSON) Config {
 	cfg.AgeTimeout = time.Duration(c.AgeTimeout * float64(time.Second))
 	cfg.MaxSim = time.Duration(c.MaxSimSecs * float64(time.Second))
 	cfg.Pacing, cfg.Style, cfg.LastPassage = c.Pacing, c.Style, c.LastPassage
+	cfg.Deals, cfg.Army = c.Deals, c.Army
+	cfg.Preset, cfg.PushCycles = c.Preset, c.PushCycles
 	return cfg
 }
 

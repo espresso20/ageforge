@@ -5,8 +5,10 @@ name: Smoke
 # across seeds leaves 0.5x-2x of its target (config.AgeTargets) fails the
 # run, as does anything else that breaks.
 #
-#   - Nightly: the full tier, every scenario; progression stops at the
-#     Digital Age. The idle scenario enforces the check-in targets
+#   - Nightly: the full tier, every scenario; progression plays two cycles,
+#     the second a push that must cover the first's ages at least 1.9x faster
+#     and end an age deeper (Era Mastery), and the veteran scenario plays the
+#     veteran preset to a Modern prestige. The idle scenario enforces the check-in targets
 #     (smoke/idle_targets.go: first prestige at 1h, 3h and 8h check-ins).
 #     On the one-week curve it is about 4.5 hours of work, past one job's
 #     180 minutes, so it runs as four shards side by side (progression seeds
