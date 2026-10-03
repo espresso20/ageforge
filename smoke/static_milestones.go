@@ -18,7 +18,7 @@ import (
 // prices, and the cold start for what an age can supply.
 //
 // Milestones reset with the run, so a milestone is due by the end of the last
-// age a normal run plays through (the age before game.PrestigeMinAge), or by
+// age a normal run plays through (the age before game.PrestigeRunAge, the Modern Age), or by
 // the end of its own MinAge when that is later: a milestone that names a
 // later age is deep-run content and must be doable in that age. Every
 // requirement must fit by then:
@@ -110,7 +110,7 @@ func (r MilestoneReach) Share() float64 {
 // Milestone Covenant. It returns what breaks it and every milestone's
 // verdict, in config order.
 func StaticMilestones() ([]MilestoneProblem, []MilestoneReach) {
-	return staticMilestones(config.Milestones(), config.MilestoneChains(), config.MilestoneTitles(), config.BuildingByKey(), game.PrestigeMinAge)
+	return staticMilestones(config.Milestones(), config.MilestoneChains(), config.MilestoneTitles(), config.BuildingByKey(), game.PrestigeRunAge)
 }
 
 // staticMilestones is StaticMilestones over the given data, with prestige

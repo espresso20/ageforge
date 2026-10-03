@@ -172,32 +172,19 @@ func statsProvider(state game.GameState, _ int) string {
 
 	if p.CanPrestige {
 		fmt.Fprintf(&sb, " [green]Prestige now for %s.[-]\n", textfmt.Count(p.PendingPoints, "point", "points"))
+		if p.NextAge != "" {
+			fmt.Fprintf(&sb, " [gray]From %s: %s.[-]\n", ageRef(state, p.NextAge), textfmt.Count(p.NextAgePoints, "point", "points"))
+		}
 	} else if p.Level == 0 {
 		fmt.Fprintf(&sb, " [gray]Reach %s to prestige.[-]\n", ageRef(state, game.PrestigeMinAge))
 	} else {
 		fmt.Fprintf(&sb, " [yellow]Reach %s to prestige again.[-]\n", ageRef(state, game.PrestigeMinAge))
 	}
 
-	upgradeKeys := []string{
-		"gather_boost", "storage_bonus", "research_speed", "military_power",
-		"starting_food", "starting_wood", "population_cap", "expedition_loot",
-	}
-	hasPurchased := false
-	for _, key := range upgradeKeys {
-		u, ok := p.Upgrades[key]
-		if !ok || u.Tier == 0 {
-			continue
-		}
-		if !hasPurchased {
-			sb.WriteString("\n [gold]Upgrades:[-]\n")
-			hasPurchased = true
-		}
-		bar := ProgressBar(float64(u.Tier), float64(u.MaxTier), 5)
-		fmt.Fprintf(&sb, "  %s %s [green]%s[-]\n", u.Name, bar, u.Effect)
-	}
-
-	if !hasPurchased && p.Level > 0 {
-		sb.WriteString("\n [gray]No upgrades bought yet.[-]\n")
+	if kit := kitStatsLines(state); kit != "" {
+		sb.WriteString(kit)
+	} else if p.Level > 0 {
+		sb.WriteString("\n [gray]No legacy kit items bought yet.[-]\n")
 		sb.WriteString(" [gray]Browse them with: prestige shop[-]\n")
 	}
 

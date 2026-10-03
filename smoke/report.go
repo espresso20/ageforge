@@ -70,7 +70,7 @@ type FirstRunRow struct {
 // age before the first visit to the Modern Age or later, replays (Succumb)
 // included.
 func firstRunToModern(r *RunResult, order map[string]int) (float64, bool) {
-	modern := order[game.PrestigeMinAge]
+	modern := order[game.PrestigeRunAge]
 	secs := 0.0
 	for _, a := range r.Ages {
 		if a.Cycle != 1 {

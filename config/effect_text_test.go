@@ -164,6 +164,8 @@ func TestPrestigeDescriptionsMatchPerTier(t *testing.T) {
 	for _, u := range PrestigeUpgrades() {
 		var want string
 		switch u.EffectType {
+		case "legacy":
+			continue // a one-tier kit item: no per-tier figure
 		case "rate_bonus":
 			want = "+" + FormatPercent(u.PerTier)
 		default:

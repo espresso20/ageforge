@@ -249,12 +249,14 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 			return 0, fmt.Errorf("That plan item already holds %d, the most one item can.", maxPlanCount)
 		}
 		ge.plan[n-1].Count += add
+		ge.logPlanAddLocked(ge.plan[n-1], add)
 		return add, nil
 	}
 	if len(ge.plan) >= MaxPlanItems {
 		return 0, errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: key, Count: count})
+	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], count)
 	return count, nil
 }
 
@@ -280,6 +282,7 @@ func (ge *GameEngine) PlanAddResearch(key string) error {
 		return fmt.Errorf("Can't plan %s: %s.", def.Name, reason)
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: key, Count: 1})
+	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], 1)
 	return nil
 }
 
@@ -293,6 +296,7 @@ func (ge *GameEngine) PlanRemove(n int) (string, error) {
 	}
 	it := ge.plan[n-1]
 	ge.plan = append(ge.plan[:n-1:n-1], ge.plan[n:]...)
+	ge.unlogPlanItemLocked(it)
 	label := ge.planItemLabel(it)
 	back := map[string]float64{}
 	if ge.returnPlanBank(&it, back) {
@@ -308,6 +312,9 @@ func (ge *GameEngine) PlanClear() int {
 	defer ge.mu.Unlock()
 	n := len(ge.plan)
 	ge.returnPlanBanks("")
+	for _, it := range ge.plan {
+		ge.unlogPlanItemLocked(it)
+	}
 	ge.plan = nil
 	return n
 }
@@ -457,6 +464,9 @@ type planStarts struct {
 	advanced string
 	// deals are the deal items taken, as labels.
 	deals []string
+	// remembered are the techs Research Memory started (legacy.go). They
+	// are not the plan's, so describe leaves them out (describeRemembered).
+	remembered []string
 }
 
 func (s *planStarts) addTrade(from, to string, sold, got float64) {
@@ -483,6 +493,20 @@ func (s *planStarts) addBuild(key string) {
 
 func (s *planStarts) empty() bool {
 	return len(s.order) == 0 && len(s.techs) == 0 && len(s.tradeOrder) == 0 && s.advanced == "" && len(s.deals) == 0
+}
+
+// describeRemembered names the techs Research Memory started: "Pottery and
+// Writing" ("" for none).
+func (s *planStarts) describeRemembered() string {
+	if len(s.remembered) == 0 {
+		return ""
+	}
+	techs := config.TechByKey()
+	names := make([]string, 0, len(s.remembered))
+	for _, k := range s.remembered {
+		names = append(names, techs[k].Name)
+	}
+	return textfmt.List(names)
 }
 
 // describe renders the starts as verb-led clauses: "started building 2 Huts
@@ -679,7 +703,9 @@ func (ge *GameEngine) planCovers(cost map[string]float64, reserved map[string]fl
 // Reports whether anything started.
 func (ge *GameEngine) runPlan(starts *planStarts) bool {
 	if len(ge.plan) == 0 {
-		return false
+		// Research Memory (legacy.go) runs after the plan, with nothing
+		// reserved when the plan is empty.
+		return ge.replayResearchMemory(nil, starts)
 	}
 	started := false
 	reserved := map[string]float64{}
@@ -830,6 +856,11 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		ge.addLog("info", fmt.Sprintf("Plan: advancing to the %s.", ge.progress.GetAgeName(next)))
 		ge.advanceAge(next)
 		starts.advanced = ge.progress.GetAgeName(ge.age)
+		return true
+	}
+	// Research Memory (legacy.go) takes the research slot only after the
+	// plan's own items, and only knowledge they leave unreserved.
+	if ge.replayResearchMemory(reserved, starts) {
 		started = true
 	}
 	return started
@@ -927,7 +958,12 @@ func planStaffSource(def config.BuildingDef) bool {
 func (ge *GameEngine) runPlanTick() {
 	var s planStarts
 	if ge.runPlan(&s) {
-		ge.addLog(LogRoutine, "Plan: "+s.describe(ge.Buildings.defs)+".")
+		if !s.empty() {
+			ge.addLog(LogRoutine, "Plan: "+s.describe(ge.Buildings.defs)+".")
+		}
+		if r := s.describeRemembered(); r != "" {
+			ge.addLog(LogRoutine, fmt.Sprintf("Research Memory: started researching %s (%s).", r, ge.durationLocked(ge.Research.totalTicks)))
+		}
 	}
 }
 

@@ -286,8 +286,8 @@ func registry() []*Command {
 			Help: []Usage{{"prestige", "View prestige status"}},
 			Subs: []*Command{
 				prestigeConfirm,
-				sub("shop", "prestige shop", "View prestige upgrades"),
-				sub("buy", "prestige buy <upgrade>", "Buy a prestige upgrade", Arg{Kind: ArgPrestigeUpgrade}),
+				sub("shop", "prestige shop", "View the legacy kit"),
+				sub("buy", "prestige buy <item>", "Buy a legacy kit item", Arg{Kind: ArgPrestigeUpgrade}),
 			}},
 		{Name: "festival", Section: secWonders, BareOK: true,
 			Help: []Usage{{"festival", "Spend culture for a temporary production boost"}},

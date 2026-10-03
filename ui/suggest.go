@@ -119,7 +119,7 @@ func buildUniverse() map[ArgKind]map[string]bool {
 	for _, r := range config.BaseTradeRoutes() {
 		routes = append(routes, r.Key)
 	}
-	for _, u := range config.PrestigeUpgrades() {
+	for _, u := range config.ActivePrestigeUpgrades() {
 		upgrades = append(upgrades, u.Key)
 	}
 	order := map[string]int{}

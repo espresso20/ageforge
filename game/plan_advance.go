@@ -28,6 +28,7 @@ func (ge *GameEngine) PlanAddAdvance() error {
 		return errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanAdvance, Count: 1})
+	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], 1)
 	return nil
 }
 

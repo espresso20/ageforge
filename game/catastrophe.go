@@ -507,6 +507,9 @@ func (ge *GameEngine) Succumb() error {
 	savedRuins := ge.Buildings.GetAllRuins()
 
 	ge.legacyBonuses[epochKey] = true
+	// The legacy kit remembers the fallen civilization's plan, research
+	// order, civilizations met and shares before the reset.
+	ge.captureLegacyLocked()
 	savedLegacy := copyBoolMap(ge.legacyBonuses)
 	savedCatHistory := append([]string(nil), ge.catastropheHistory...)
 	savedEpochHistory := append([]EpochEventRecord(nil), ge.epochEventHistory...)
@@ -580,6 +583,8 @@ func (ge *GameEngine) Succumb() error {
 	if droppedRuins > 0 {
 		ge.addLog("info", fmt.Sprintf("%s crumbled to make room.", textfmt.Count(droppedRuins, "older, lower-value ruin", "older, lower-value ruins")))
 	}
+	// The legacy kit: shares, the first age's template slice, old friends.
+	ge.startRunLegacyLocked()
 	ge.addLog("info", "Type [cyan]help[-] to rebuild.")
 
 	// Roll for an Ancient Memory cache (only when this account has prestiged before;
