@@ -80,6 +80,9 @@ func TestWriteMandalaCaptures(t *testing.T) {
 						_ = os.WriteFile(filepath.Join(out, name+".txt"), []byte(capture.Text(scr)), 0o644)
 						_ = os.WriteFile(filepath.Join(out, name+".cells"), []byte(mandalaCells(scr)), 0o644)
 					}
+					if i%2 == 0 && i < 8 && !mini && run.name == "7eras" { // the wave of light, a quarter of a breath apart
+						_ = os.WriteFile(filepath.Join(out, name+"_pulse"+strconv.Itoa(i/2)+".cells"), []byte(mandalaCells(scr)), 0o644)
+					}
 				}
 				bg := capture.Hex(theme.Color(theme.RoleBackground))
 				fg := capture.Hex(theme.Color(theme.RoleText))

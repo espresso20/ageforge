@@ -304,7 +304,8 @@ func RayRune(dx, dy int) rune {
 // against its theme: the era's own hue, lifted a little toward the
 // mandala's light so every era reads on the indigo.
 func EraLight(epoch int) tcell.Color {
-	return theme.Mix(theme.MapHueColor(theme.EpochHue(epoch)), theme.SpaceColor(theme.SpaceLight), 0.15)
+	lift := [7]float64{0.15, 0.25, 0.15, 0.1, 0.1, 0.15, 0.35} // the grey Iron and the violet Cosmic need more to stand off the indigo
+	return theme.Mix(theme.MapHueColor(theme.EpochHue(epoch)), theme.SpaceColor(theme.SpaceLight), lift[max(0, min(epoch, 6))])
 }
 
 func clampF(v, lo, hi float64) float64 { return math.Max(lo, math.Min(hi, v)) }
