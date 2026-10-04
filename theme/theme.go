@@ -3,7 +3,7 @@
 // It is a leaf package: it depends only on gdamore/tcell/v2 and go-colorful (plus
 // rivo/tview in remap.go, solely to push chrome defaults into tview.Styles). It
 // must NOT import game/ or ui/ — themes are pure presentation and an import cycle
-// here would be a design smell. See design-and-architecture/theming.md §3.
+// here would be a design smell (the theming design §3).
 //
 // The model is a set of semantic *roles* (not literal color names): Positive is
 // "the gains color," whatever hue the active theme picks. A theme fully specifies

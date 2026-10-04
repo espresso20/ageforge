@@ -6,8 +6,8 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-// Color theme — bridge over the theme package (design-and-architecture/theming.md
-// §3.3). These were standalone tcell.Color globals; they are now thin accessors
+// Color theme — bridge over the theme package (the theming design §3.3).
+// These were standalone tcell.Color globals; they are now thin accessors
 // over theme.Color(role) so every call site keeps compiling but pulls the ACTIVE
 // theme's color and tracks live theme switches. Under Forge (the default) they
 // resolve to the game's current palette.

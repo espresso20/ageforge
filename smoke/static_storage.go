@@ -8,7 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// The Storage Covenant (design-and-architecture/economy.md, Law 1): the most
+// The Storage Covenant (the economy design's Law 1): the most
 // storage buildable in an age must hold at least config.StorageHold(age)
 // hours (4.5 from the Bronze Age on, 1.5 in the Primitive and Stone Ages) of
 // the age's typical production (config.TypicalIncome) of every construction

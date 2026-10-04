@@ -10,9 +10,9 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// The Gate Covenant (design-and-architecture/economy.md, Law 1 applied to age
-// gates). Every advance must pass these against the most storage buildable in
-// the age the player advances from, with no build_cost discounts assumed:
+// The Gate Covenant (the economy design's Law 1 applied to age gates). Every
+// advance must pass these against the most storage buildable in the age the
+// player advances from, with no build_cost discounts assumed:
 //
 //   - a resource requirement fits with GateResourceMargin to spare;
 //   - each required building can be built in that age (the age lock forbids

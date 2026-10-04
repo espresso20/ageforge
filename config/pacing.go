@@ -12,7 +12,7 @@ import (
 )
 
 // Pacing: the target curve and the rules derived from it
-// (design-and-architecture/economy.md, Laws 2 and 3).
+// (the economy design's Laws 2 and 3).
 //
 // The whole economy is paced from one table, AgeTargets: how long a player
 // should spend in each age at 1x. These rules turn it into numbers:

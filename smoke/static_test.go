@@ -12,7 +12,7 @@ import (
 // Stone Age wall, the Atomic 30-bunker wall): every age advance must pass the
 // Gate Covenant from config alone. It runs in plain `go test ./...`, so CI
 // catches a balance change that breaks a gate before any bot has to play
-// into it. See design-and-architecture/economy.md, "Gate Covenant".
+// into it. The covenant's rules are listed at the top of static.go.
 func TestGateCovenant(t *testing.T) {
 	problems, slack := StaticGates()
 	for _, g := range problems {
