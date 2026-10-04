@@ -287,7 +287,7 @@ type GameEngine struct {
 
 	// blackMarketReadyTick is the earliest tick a black-market deal may run
 	// (cooldown anti-spam). 0 = ready now. Both cooldowns are saved, and both
-	// reset with the tick counter on prestige and Reset.
+	// reset with the tick counter on prestige, Succumb and Reset.
 	blackMarketReadyTick int
 
 	// blackMarketRand is the RNG seam for the black-market win/lose roll; nil

@@ -545,6 +545,13 @@ func (ge *GameEngine) Succumb() error {
 	ge.tickSpeedBonus = 0
 	ge.ageReady = false
 	ge.starvationTicks = 0
+	// The festival and black market cooldowns are tick numbers, and the tick
+	// counter just went back to 0: left as they were, a cooldown with 780
+	// ticks to run at tick 5,001 had 5,781 to run in the new run. The
+	// automatic expedition's countdown starts over too, as at a prestige.
+	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
+	ge.autoExpeditionTicksLeft = 0
+	ge.autoExpeditionStarved = false
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
