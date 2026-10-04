@@ -208,10 +208,10 @@ A thread's price is set when its harbinger arrives and stays the same for as lon
 | Level | Cost | Chance the doom strikes |
 |-------|------|-------------------------|
 | 0 | none | unchanged |
-| 1 | a tenth of what the age the harbinger arrives in makes, in faith (and the same in culture, from the Steel Era on) | ×0.6 |
+| 1 | 15% of what the age the harbinger arrives in makes, in faith (and the same in culture, from the Steel Era on) | ×0.6 |
 | 2 | double level 1 | ×0.36 (×0.6 again) |
 
-- **A tenth of the age** is half of what the shortest warning makes. A harbinger comes 20% to 60% of an age's target length before its doom (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)), and an advance can cut that short. So level 1 is priced on faith you can gather while the warning lasts, not on faith you had to save before it. Level 2 costs double, a full shortest warning, and both levels together cost three tenths of what the age makes: the second level takes a longer warning or faith you kept in storage.
+- **15% of the age** is three quarters of what the shortest warning makes. A harbinger comes 20% to 60% of an age's target length before its doom (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)), and an advance can cut that short. So level 1 is priced on faith you can gather while the warning lasts, not on faith you had to save before it. Level 2 costs double, and both levels together cost 45% of what the age makes, more than an average warning brings in: the second level takes a long warning or faith you kept in storage.
 - **What an age makes** is what a player who invests moderately in faith makes in it: five fully staffed copies of every faith building so far, the faith of every wonder already built, the flat faith of the techs, all multiplied by the production bonus of the techs and wonders you hold by then (it reaches the ×3 cap in the Electric Age). Culture is counted the same way.
 - The price belongs to the thread. It is set from the age the harbinger arrives in and does not change when the thread passes to the next age's figure. It is the same on known ground: a mastered age makes more per tick for a shorter warning.
 - Culture is only charged if you already had it when the era began. It unlocks in the Classical Age, so Iron Era threads cost faith only.
@@ -269,24 +269,24 @@ Level 1 prices. Level 2 costs double.
 | Era | Harbinger arrives in | Appease (level 1) | The warning lasts |
 |-----|----------------------|-------------------|-------------------|
 | Stone Era | any age | refused: nothing can strike there | |
-| Iron Era | Iron Age | 880 faith | 1.3 h to 3.9 h |
-| | Classical Age | 1.5K faith | 1.8 h to 5.5 h |
-| | Medieval Age | 3.3K faith | 2.3 h to 7.0 h |
-| Steel Era | Renaissance Age | 6.1K faith, 64K culture | 3.1 h to 9.4 h |
-| | Colonial Age | 18K faith, 160K culture | 3.6 h to 10.9 h |
-| | Industrial Age | 53K faith, 580K culture | 4.2 h to 12.5 h |
-| Electric Era | Victorian Age | 140K faith, 1.8M culture | 4.7 h to 14.0 h |
-| | Electric Age | 330K faith, 4.5M culture | 5.2 h to 15.6 h |
-| | Atomic Age | 740K faith, 11M culture | 6.2 h to 18.7 h |
-| Digital Era | Modern Age | 1.5M faith, 21M culture | 6.2 h to 18.7 h |
-| | Information Age | 3.3M faith, 49M culture | 7.3 h to 21.8 h |
-| | Digital Age | 7.5M faith, 120M culture | 8.3 h to 25.0 h |
-| Neon Era | Cyberpunk Age | 17M faith, 260M culture | 9.4 h to 28.1 h |
-| | Fusion Age | 37M faith, 570M culture | 10.4 h to 31.2 h |
-| | Space Age | 82M faith, 1.3B culture | 11.4 h to 34.3 h |
-| Cosmic Era: the Reality Tear | Interstellar Age | 180M faith, 2.7B culture | 12.5 h to 37.4 h |
-| | Galactic Age | 360M faith, 5.4B culture | 12.5 h to 37.4 h |
-| | Quantum or Transcendent Age | 710M faith, 11B culture | 12.5 h to 37.4 h |
+| Iron Era | Iron Age | 1.4K faith | 1.3 h to 3.9 h |
+| | Classical Age | 2.3K faith | 1.8 h to 5.5 h |
+| | Medieval Age | 4.9K faith | 2.3 h to 7.0 h |
+| Steel Era | Renaissance Age | 9.2K faith, 95K culture | 3.1 h to 9.4 h |
+| | Colonial Age | 26K faith, 230K culture | 3.6 h to 10.9 h |
+| | Industrial Age | 79K faith, 870K culture | 4.2 h to 12.5 h |
+| Electric Era | Victorian Age | 210K faith, 2.6M culture | 4.7 h to 14.0 h |
+| | Electric Age | 490K faith, 6.7M culture | 5.2 h to 15.6 h |
+| | Atomic Age | 1.2M faith, 16M culture | 6.2 h to 18.7 h |
+| Digital Era | Modern Age | 2.2M faith, 31M culture | 6.2 h to 18.7 h |
+| | Information Age | 5M faith, 74M culture | 7.3 h to 21.8 h |
+| | Digital Age | 12M faith, 170M culture | 8.3 h to 25.0 h |
+| Neon Era | Cyberpunk Age | 25M faith, 380M culture | 9.4 h to 28.1 h |
+| | Fusion Age | 56M faith, 850M culture | 10.4 h to 31.2 h |
+| | Space Age | 130M faith, 1.9B culture | 11.4 h to 34.3 h |
+| Cosmic Era: the Reality Tear | Interstellar Age | 270M faith, 4.1B culture | 12.5 h to 37.4 h |
+| | Galactic Age | 540M faith, 8.1B culture | 12.5 h to 37.4 h |
+| | Quantum or Transcendent Age | 1.1B faith, 17B culture | 12.5 h to 37.4 h |
 | Cosmic Era: the Last Passage | on arrival in the era | 3.1B faith, 48B culture | until you prestige |
 
 The warning times are for a first run. On known ground an age and its warning are both shorter by the age's [Era Mastery](prestige.md#era-mastery) speed, and the age makes that much more per tick, so the price is the same.
@@ -332,7 +332,7 @@ In the Cosmic Era, Invite answers the thread that is speaking. Invite the Realit
 
 ### Why Appease is priced on the warning
 
-A doom's harbinger gives you a fifth to three fifths of an age. Appease used to cost a quarter of what the whole era makes in faith, which no warning is long enough to earn: it could only be paid from faith saved before anyone had warned you, and in test games it was affordable in a third of the warnings. Now level 1 is a tenth of what the age makes, half the shortest warning, so the warning itself can pay for it, and level 2 is the stretch.
+A doom's harbinger gives you a fifth to three fifths of an age. Appease used to cost a quarter of what the whole era makes in faith, which no warning is long enough to earn: it could only be paid from faith saved before anyone had warned you, and in test games it was affordable in a third of the warnings. Now level 1 is 15% of what the age makes, three quarters of the shortest warning, so the warning itself can pay for it, and level 2 is the stretch.
 
 The price is fixed when the harbinger arrives, so it doesn't climb if the thread carries into the next age, and it comes from what the age makes, not from your storage: a harbinger who comes while your stores are small is no cheaper to answer than the age warrants. Brace is priced by the era, from what its advances ask of you, and is the same in every age of it.
 

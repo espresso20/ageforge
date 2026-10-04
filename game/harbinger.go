@@ -33,9 +33,9 @@ import (
 //
 //   - Appease (faith + culture): each level multiplies the REAL strike chance
 //     by harbingerAppeaseFactor. Two levels; the second costs double. A
-//     doom's thread is priced on its warning (a tenth of what the age it
-//     arrives in makes: half the shortest warning), the Last Passage's on
-//     its era.
+//     doom's thread is priced on its warning (15% of what the age it
+//     arrives in makes: three quarters of the shortest warning), the Last
+//     Passage's on its era.
 //   - Brace (the epoch's core resources): softens an Endure if the doom
 //     strikes. Two levels, stored on the pending catastrophe so it still
 //     applies when Endure is chosen later.
@@ -84,15 +84,18 @@ const (
 	//     an advance brings the strike forward (the bot's warnings ran a
 	//     median 20% of the age's target, a quarter of them under 13%).
 	//     Level 1 is harbingerAppeaseWindowShare of what that age makes in
-	//     the shortest warning (harbingerLeadMin of its pacing target): half
-	//     of it, a tenth of the age, so the warning itself pays for it in
-	//     nearly any thread. Level 2 costs double, the whole shortest
-	//     warning, so both levels together are three tenths of the age: more
-	//     than a short warning makes, and a stretch that takes a longer
-	//     warning or faith kept beforehand (doomAppeaseCost). It used to be a
-	//     quarter of what the whole era makes, which no warning could earn:
-	//     the bot afforded level 1 in a third of the threads, and only from
-	//     faith it already held.
+	//     the shortest warning (harbingerLeadMin of its pacing target):
+	//     three quarters of it, 15% of the age, so the warning itself pays
+	//     for it in most threads. Level 2 costs double, so both levels
+	//     together are 45% of the age: more than the average warning makes,
+	//     and a stretch that takes a long warning or faith kept beforehand
+	//     (doomAppeaseCost). It used to be a quarter of what the whole era
+	//     makes, which no warning could earn: the bot afforded level 1 in
+	//     well under half the threads, and only from faith it already held.
+	//     The share is measured: at the whole shortest warning the bot
+	//     afforded level 1 in 18 of 28 threads, under the two in three
+	//     aimed for; at half of it level 1 came as often as Brace and level
+	//     2 in most threads, which is no stretch.
 	//   - The Last Passage's thread lasts from the Cosmic Era's first age to
 	//     the prestige, days rather than hours, so it keeps the era's price:
 	//     harbingerAppeaseIncomeShare of FlowIncome × config.AgeTargetTicks
@@ -109,7 +112,7 @@ const (
 	// catastrophe that may not come, so it is priced under what the epoch
 	// asks, but it draws on several resources at once.
 	harbingerAppeaseIncomeShare = 0.25
-	harbingerAppeaseWindowShare = 0.5
+	harbingerAppeaseWindowShare = 0.75
 	harbingerBraceCostFrac      = 0.12
 )
 
@@ -675,8 +678,8 @@ func threadAppeaseCost(h *HarbingerSave, level int) map[string]float64 {
 // epochKey whose harbinger arrived in age, in faith and in culture (culture
 // only if held since the epoch began): level × harbingerAppeaseWindowShare
 // of what the resource's config.FlowIncome makes in the shortest warning,
-// harbingerLeadMin of the age's pacing target (so level 1 is a tenth of what
-// the age makes), the level-1 figure rounded up to two significant figures. It does not depend on the thread's own lead,
+// harbingerLeadMin of the age's pacing target (so level 1 is 15% of what the
+// age makes), the level-1 figure rounded up to two significant figures. It does not depend on the thread's own lead,
 // which stays hidden, nor on Era Mastery: a mastered age makes k times as
 // much per tick for a warning k times shorter. Pure.
 func doomAppeaseCost(epochKey, age string, level int) map[string]float64 {
