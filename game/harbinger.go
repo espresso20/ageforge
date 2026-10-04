@@ -81,8 +81,9 @@ const (
 	//
 	//   - A fated doom's thread (and a false prophet's) lasts its lead: 20%
 	//     to 60% of the age the harbinger arrives in, and often less, since
-	//     an advance brings the strike forward (the bot's warnings ran a
-	//     median 20% of the age's target, a quarter of them under 13%).
+	//     an advance brings the strike forward (of 41 warnings the bot met,
+	//     12 ran under 20% of the age's target, 6 of them no time at all;
+	//     the median was 30%).
 	//     Level 1 is harbingerAppeaseWindowShare of what that age makes in
 	//     the shortest warning (harbingerLeadMin of its pacing target):
 	//     three quarters of it, 15% of the age, so the warning itself pays
@@ -92,10 +93,12 @@ const (
 	//     (doomAppeaseCost). It used to be a quarter of what the whole era
 	//     makes, which no warning could earn: the bot afforded level 1 in
 	//     well under half the threads, and only from faith it already held.
-	//     The share is measured: at the whole shortest warning the bot
-	//     afforded level 1 in 18 of 28 threads, under the two in three
-	//     aimed for; at half of it level 1 came as often as Brace and level
-	//     2 in most threads, which is no stretch.
+	//     The share is measured (24 seeds to a Quantum Age prestige): at
+	//     three quarters the bot afforded level 1 in 32 of 41 threads, level
+	//     2 in 21 and Brace in 36. At the whole shortest warning level 1
+	//     came in 18 of 28, under the two in three aimed for; at half of it
+	//     level 1 came as often as Brace and level 2 in most threads, which
+	//     is no stretch.
 	//   - The Last Passage's thread lasts from the Cosmic Era's first age to
 	//     the prestige, days rather than hours, so it keeps the era's price:
 	//     harbingerAppeaseIncomeShare of FlowIncome × config.AgeTargetTicks

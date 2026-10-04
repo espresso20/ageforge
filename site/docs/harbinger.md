@@ -291,29 +291,34 @@ Level 1 prices. Level 2 costs double.
 
 The warning times are for a first run. On known ground an age and its warning are both shorter by the age's [Era Mastery](prestige.md#era-mastery) speed, and the age makes that much more per tick, so the price is the same.
 
-The Cosmic Era's passage is prestige, which you may take in any of its ages. The Last Passage's thread runs from your arrival in the era until you prestige, so its Appease is priced on the era, not on a warning: a quarter of what the Interstellar, Galactic and Quantum Ages make. If you prestige soon after you arrive, it is out of reach. In the smoke-test bot's runs, level 1 on the Last Passage's thread came about 4 days into the era and level 2 about 7 (see [Can you afford it?](#can-you-afford-it)). Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
+The Cosmic Era's passage is prestige, which you may take in any of its ages. The Last Passage's thread runs from your arrival in the era until you prestige, so its Appease is priced on the era, not on a warning: a quarter of what the Interstellar, Galactic and Quantum Ages make. If you prestige soon after you arrive, it is out of reach, and in the smoke-test bot's runs it nearly always was (see [Can you afford it?](#can-you-afford-it)). Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
 
 The two Cosmic Era threads, the Reality Tear's and the Last Passage's, share the era's Brace price; each has its own Appease price, as above. Each keeps its own levels, so answering one doesn't answer the other.
 
 #### Can you afford it?
 
-Brace, nearly always. Appease, only if you banked faith before the harbinger came.
+Brace, nearly always. Appease level 1, in about three warnings out of four. Level 2, in about half.
 
-Brace is priced in the construction resources the era's advances already ask for, so you usually hold enough the moment the harbinger arrives. Appease is priced in faith (plus culture from the Steel Era on), a quarter of what a moderate faith economy makes over the whole era. But a doom's thread lasts only its lead, 20% to 60% of an age, and faith can't be bought at the market (culture can, gold → culture). A thread is too short to earn the price, so Appease has to come out of faith you already kept in storage. That faith also lowers the strike chance on its own.
+Brace is priced in the construction resources the era's advances already ask for, so you usually hold enough the moment the harbinger arrives. Appease is priced in faith (plus culture from the Steel Era on), and faith can't be bought at the market (culture can, gold → culture). Level 1 costs less than the shortest warning makes at a moderate faith economy, so a player who keeps faith buildings staffed can pay it from what they hold or gather it before the doom's moment. Level 2 takes a long warning, or faith and culture kept in storage. That faith also lowers the strike chance on its own.
 
 In the smoke-test bot's runs (24 seeds from a new game to a Quantum Age prestige: a first run on the one-week curve, so every age at 1x), the bot saved toward both answers and bought each level as soon as it could, keeping what its next advance needed. Each real doom's thread, from the harbinger's arrival until the doom struck or passed, went like this (false prophets left out):
 
 | Thread | Threads seen | Thread length (median) | Appease level 1 affordable | Appease level 2 affordable | Brace level 1 affordable |
 |--------|--------------|------------------------|----------------------------|----------------------------|--------------------------|
-| Iron Era | 4 | 3.4 h | 3 of 4, on arrival | 1 of 4 | 4 of 4, on arrival |
-| Steel Era | 3 | 6.8 h | 2 of 3, after 19 minutes and 3.2 h | none | 3 of 3, within 35 minutes |
-| Electric Era | 5 | 11.7 h | 2 of 5, after 3.7 h and 12.7 h | 1 of 5 | 4 of 5, on arrival |
-| Digital Era | 7 | 12.7 h | 1 of 7 | none | 7 of 7: 4 on arrival, the rest within 5.2 h |
-| Neon Era | 7 | 14.1 h | 1 of 7 | 1 of 7 | 7 of 7, on arrival (one after 6.1 h) |
-| Cosmic Era: the Reality Tear | 4 | 13.4 h | 1 of 4 | none | 4 of 4, on arrival |
-| Cosmic Era: the Last Passage (to a Quantum Age prestige) | 24 | 8.2 days | 24 of 24, after about 4 days | 24 of 24, after about 7 days | 24 of 24, on arrival |
+| Iron Era | 7 | 2.0 h | 7 of 7, on arrival | 6 of 7 | 6 of 7: 3 on arrival |
+| Steel Era | 6 | 2.6 h | 5 of 6, on arrival | 4 of 6 | 6 of 6: 5 on arrival |
+| Electric Era | 8 | 5.7 h | 6 of 8: 2 on arrival, the rest after 1.9 h to 12.9 h | 2 of 8 | 8 of 8: 7 on arrival |
+| Digital Era | 8 | 12.0 h | 5 of 8, after 2.7 h to 11.0 h | 3 of 8 | 7 of 8: 6 on arrival |
+| Neon Era | 6 | 19.5 h | 6 of 6: 4 on arrival, the others within 8.3 h | 4 of 6 | 6 of 6, on arrival |
+| Cosmic Era: the Reality Tear | 6 | 5.4 h | 3 of 6: 2 on arrival, one after 13.3 h | 2 of 6 | 3 of 6, on arrival |
+| All dooms | 41 | | **32 of 41** (20 on arrival) | **21 of 41** | **36 of 41** |
+| Cosmic Era: the Last Passage (to a Quantum Age prestige) | 24 runs | 5.9 days | 2 of 24 | 2 of 24 | 24 of 24, on arrival |
 
-A doom is fated in only 27% of eras, so these are 30 dooms across 24 runs: read the shares, not the exact counts. The bot keeps faith only for age requirements and the Sistine Chapel. When a harbinger came it usually held well under half the Appease price in faith (in the Neon Era, about 2%), and twice it had the faith but not the culture. Only in the Iron Era, the cheapest, did the faith it already held cover level 1 in most threads. The Last Passage's thread runs from your arrival in the Cosmic Era until you prestige, which is long enough for faith buildings to pay for both levels.
+A doom is fated in only 27% of eras, so these are 41 dooms across 24 runs: read the shares, not the exact counts. Before Appease was priced on the warning, the same bot on the same seeds could afford level 1 in well under half of its warnings, and only from faith it already held.
+
+Level 1 stayed out of reach in 9 warnings. Four of them gave no time to work with: the harbinger came at the very advance its doom struck on, which leaves only what you already hold (see [No Outrunning a Doom](#no-outrunning-a-doom)). In the other five the bot, which keeps faith only for age requirements and the Sistine Chapel, ended the warning with 30% to 90% of the price in whichever of faith and culture it was shorter of.
+
+The Last Passage's thread is a different matter. Its price is the era's, and in these runs the bot never held the 48B culture it asks for (it had the faith in most runs), so Appease there takes a culture economy built for it. Brace was affordable on arrival every time.
 
 Faith you spend on Appease is faith the next age requirement can't count: keep what the next age asks for, and what the Sistine Chapel still needs, before you appease.
 
@@ -414,7 +419,7 @@ With no harbinger present, the panel says so, explains that a harbinger comes on
 
 ## Strategy
 
-- **Bank faith before you need it.** A harbinger gives you 20% to 60% of an age's time before its doom strikes. Faith already in storage lowers the strike chance by itself and pays for Appease the moment the harbinger comes.
+- **Keep some faith in hand.** A harbinger gives you 20% to 60% of an age's time before its doom strikes, and sometimes less. Faith already in storage lowers the strike chance by itself, pays for Appease level 1 the moment the harbinger comes, and is what puts level 2 within reach.
 - **Answer before the moment.** The price doesn't change once the harbinger has come, but the thread lasts only until the doom's moment, and advancing out of the era, or out of the age a figure named, brings the strike to that advance (in the Cosmic Era, so does prestige).
 - **Want to keep your run?** Appease is the direct answer. One level cuts the chance it strikes by 40%, and it can't hurt the odds.
 - **Worried but short on faith?** Brace instead. It doesn't lower the odds, but it makes Endure much cheaper if the catastrophe comes.
