@@ -53,9 +53,9 @@ func NewMilestoneManagerWith(set *rules.Set) *MilestoneManager {
 // titles. What is completed stays.
 func (mm *MilestoneManager) Rebind(set *rules.Set) {
 	mm.rules = set
-	mm.defs = slices.Clone(set.Milestones())
-	mm.chains = slices.Clone(set.MilestoneChains())
-	mm.titles = slices.Clone(set.MilestoneTitles())
+	mm.defs = set.Milestones()
+	mm.chains = set.MilestoneChains()
+	mm.titles = set.MilestoneTitles()
 	mm.milestoneToChain = make(map[string]string)
 	for _, c := range mm.chains {
 		for _, mk := range c.MilestoneKeys {

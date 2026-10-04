@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -39,8 +40,9 @@ type catastropheModalLayout struct {
 // what Endure would cost with the Harbinger's Brace and the garrison counted
 // (game.GameState.PendingEndure). st is the snapshot, for wall-clock durations.
 func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNow float64, eo game.EndureOutcome, st game.GameState) catastropheModalLayout {
-	catName, catFlavor := config.CatastropheInfo(epochKey)
-	ep := config.EpochByKey()[epochKey]
+	set := st.Ruleset()
+	catName, catFlavor := set.Catastrophe(epochKey)
+	ep, _ := set.Era(epochKey)
 	inner := catastropheModalWidth - 2
 
 	headerLines := []string{fmt.Sprintf("[red]☄ %s[-]", tview.Escape(catName))}
@@ -66,7 +68,7 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 	}
 	per := game.SuccumbResearchTimeFactor
 	researchLine := fmt.Sprintf("  [green]✓ Ancient Knowledge: research time %s (%s in all, permanent)[-]", game.ResearchFactorText(per), game.ResearchFactorText(researchNow*per))
-	legacyLine := fmt.Sprintf("  [gold]✓ %s legacy: %s (permanent)[-]", ep.Name, legacyBonusText(epochKey))
+	legacyLine := fmt.Sprintf("  [gold]✓ %s legacy: %s (permanent)[-]", ep.Name, legacyBonusText(set, epochKey))
 	if alreadyLegacy {
 		researchLine = fmt.Sprintf("  [gray]• Ancient Knowledge already earned here (research time stays %s)[-]", game.ResearchFactorText(researchNow))
 		legacyLine = fmt.Sprintf("  [gray]• %s legacy already held; no new legacy bonus[-]", ep.Name)
@@ -332,10 +334,10 @@ func (d *Dashboard) reopenCatastropheModal() bool {
 	return true
 }
 
-// legacyBonusText returns a short summary of the epoch legacy bonus, in sorted
-// resource order.
-func legacyBonusText(epochKey string) string {
-	bonuses := config.LegacyBonusForEpoch(epochKey)
+// legacyBonusText returns a short summary of the epoch legacy bonus in set, in
+// sorted resource order.
+func legacyBonusText(set *rules.Set, epochKey string) string {
+	bonuses := set.LegacyBonus(epochKey)
 	if len(bonuses) == 0 {
 		return "none"
 	}

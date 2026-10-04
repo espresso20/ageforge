@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -17,8 +16,8 @@ import (
 func buildingsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
-	ageOrder := config.AgeOrder()
-	ageByKey := config.AgeByKey()
+	set := state.Ruleset()
+	ageOrder := set.AgeKeys()
 
 	// Find index of the current age so we only show ages up to and including it.
 	currentIdx := -1
@@ -50,7 +49,7 @@ func buildingsProvider(state game.GameState, _ int) string {
 
 	for i := 0; i <= currentIdx; i++ {
 		ageKey := ageOrder[i]
-		ageDef, ok := ageByKey[ageKey]
+		ageDef, ok := set.Age(ageKey)
 		if !ok {
 			continue
 		}

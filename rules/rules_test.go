@@ -455,18 +455,58 @@ func TestCompileKeepsNothingOfItsSource(t *testing.T) {
 	if !reflect.DeepEqual(x, y) {
 		t.Error("two compiles of the same tables differ")
 	}
-	for _, m := range []any{a.BuildingMap(), a.TechMap(), a.ResourceMap(), a.EventMap(), a.ExchangeRateMap()} {
-		v := reflect.ValueOf(m)
-		v.SetMapIndex(reflect.ValueOf("scratch"), reflect.Zero(v.Type().Elem()))
+}
+
+// TestSetHandsOutCopies: every slice and map a set returns is the caller's
+// own, as package config's were. A caller may sort it, write to it or grow
+// it without reaching the set.
+func TestSetHandsOutCopies(t *testing.T) {
+	s := Compile(FromConfig())
+	before := s.Digest()
+	age := s.AgeKeys()[3]
+	era := s.EraOf(age)
+	// Scribble over everything a method returns: zero every slice element
+	// and add a key to every map.
+	for name, got := range map[string]any{
+		"Ages": s.Ages(), "AgeKeys": s.AgeKeys(), "Indexes": s.Indexes(), "Eras": s.Eras(),
+		"LegacyBonus": s.LegacyBonus(era), "Harbingers": s.Harbingers(),
+		"Buildings": s.Buildings(), "BuildingMap": s.BuildingMap(), "AgeEntryCosts": s.AgeEntryCosts(age),
+		"Techs": s.Techs(), "TechMap": s.TechMap(), "TechsOf": s.TechsOf(age),
+		"Resources": s.Resources(), "ResourceMap": s.ResourceMap(),
+		"Milestones": s.Milestones(), "MilestoneChains": s.MilestoneChains(), "MilestoneTitles": s.MilestoneTitles(),
+		"Events": s.Events(), "EraEvents": s.EraEvents(), "EventMap": s.EventMap(),
+		"GoodEraEvents": s.GoodEraEvents(), "ChallengingEraEvents": s.ChallengingEraEvents(),
+		"Factions": s.Factions(), "TradeRoutes": s.TradeRoutes(),
+		"ExchangeRates": s.ExchangeRates(), "ExchangeRateMap": s.ExchangeRateMap(),
+		"WorkerDomains": s.WorkerDomains(), "PrestigeUpgrades": s.PrestigeUpgrades(),
+		"ShopUpgrades": s.ShopUpgrades(), "LegacyKit": s.LegacyKit(),
+		"PriceLevels": s.PriceLevels(age), "PricedResources": s.PricedResources(age),
+		"MarketPairs": s.MarketPairs(age), "Counts": s.Counts(),
+	} {
+		v := reflect.ValueOf(got)
+		if v.Len() == 0 {
+			t.Errorf("%s is empty: nothing to check", name)
+			continue
+		}
+		switch v.Kind() {
+		case reflect.Slice:
+			for i := 0; i < v.Len(); i++ {
+				v.Index(i).SetZero()
+			}
+		case reflect.Map:
+			v.SetMapIndex(reflect.ValueOf("scratch"), reflect.Zero(v.Type().Elem()))
+			for _, k := range v.MapKeys() {
+				v.SetMapIndex(k, reflect.Zero(v.Type().Elem()))
+			}
+		default:
+			t.Fatalf("%s returns a %s", name, v.Kind())
+		}
+		if got := s.Digest(); got != before {
+			t.Fatalf("%s handed out the set's own %s: writing to it changed the set", name, v.Kind())
+		}
 	}
-	if _, ok := a.Building("scratch"); ok {
-		t.Error("BuildingMap handed out the set's own map")
-	}
-	if _, ok := a.Tech("scratch"); ok {
-		t.Error("TechMap handed out the set's own map")
-	}
-	if _, ok := a.Resource("scratch"); ok {
-		t.Error("ResourceMap handed out the set's own map")
+	if s.Digest() != s.Digest() {
+		t.Error("a set's digest is not stable")
 	}
 }
 

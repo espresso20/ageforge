@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
@@ -25,22 +24,24 @@ func prestigePointsLines(state game.GameState) []string {
 		lines = append(lines, fmt.Sprintf("\n  [green]You can prestige now for %s.[-]", textfmt.Count(p.PendingPoints, "point", "points")))
 	default:
 		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach %s to prestige; a prestige there pays %s.[-]",
-			ageRef(state, game.PrestigeMinAge), textfmt.Count(config.DepthPoints(game.PrestigeMinAge), "point", "points")))
+			ageRef(state, game.PrestigeMinAge), textfmt.Count(state.Ruleset().DepthPoints(game.PrestigeMinAge), "point", "points")))
 	}
 	if p.NextAge != "" && p.CanPrestige {
 		lines = append(lines, fmt.Sprintf("  From %s it would pay %s (%s more).",
 			ageRef(state, p.NextAge), textfmt.Count(p.NextAgePoints, "point", "points"), textfmt.Int(p.NextAgePoints-p.PendingPoints)))
 	}
-	if order := config.AgeByKey(); p.CanPrestige && order[state.Age].Order < order[game.PrestigeRunAge].Order {
+	here, _ := state.Ruleset().Age(state.Age)
+	run, _ := state.Ruleset().Age(game.PrestigeRunAge)
+	if p.CanPrestige && here.Order < run.Order {
 		lines = append(lines, "  [gray]This is an early taste: each era's ages pay 3 times what the era before paid, so going deeper pays far more per day.[-]")
 	}
 	return lines
 }
 
-// kitOwned counts the kit items bought.
-func kitOwned(p game.PrestigeState) int {
+// kitOwned counts how many of the kit items in kit are bought.
+func kitOwned(p game.PrestigeState, kit []string) int {
 	n := 0
-	for _, key := range config.LegacyKit() {
+	for _, key := range kit {
 		if p.Upgrades[key].Tier > 0 {
 			n++
 		}
@@ -50,8 +51,8 @@ func kitOwned(p game.PrestigeState) int {
 
 // kitStatusLine is the one-line kit summary for `prestige`.
 func kitStatusLine(state game.GameState) string {
-	p := state.Prestige
-	return fmt.Sprintf("  Legacy kit: %d of %d owned.", kitOwned(p), len(config.LegacyKit()))
+	kit := state.Ruleset().LegacyKit()
+	return fmt.Sprintf("  Legacy kit: %d of %d owned.", kitOwned(state.Prestige, kit), len(kit))
 }
 
 // kitMemoryLines say what the kit remembers from your runs so far, for the
@@ -83,7 +84,7 @@ func prestigeShopLines(state game.GameState) []string {
 		"",
 		"  [gold]The legacy kit[-]: automation that carries over every prestige.",
 	}
-	for _, def := range config.ActivePrestigeUpgrades() {
+	for _, def := range state.Ruleset().ShopUpgrades() {
 		u, ok := p.Upgrades[def.Key]
 		if !ok {
 			continue
@@ -105,7 +106,7 @@ func prestigeShopLines(state game.GameState) []string {
 func kitStatsLines(state game.GameState) string {
 	p := state.Prestige
 	var sb strings.Builder
-	for _, key := range config.LegacyKit() {
+	for _, key := range state.Ruleset().LegacyKit() {
 		if u := p.Upgrades[key]; u.Tier > 0 {
 			if sb.Len() == 0 {
 				sb.WriteString("\n [gold]Legacy kit:[-]\n")

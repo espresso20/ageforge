@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"maps"
 	"math"
-	"slices"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
@@ -117,7 +116,7 @@ func NewTradeManagerWith(set *rules.Set) *TradeManager {
 // the exchange from set. Running routes, pressure and totals stay.
 func (tm *TradeManager) Rebind(set *rules.Set) {
 	tm.rules = set
-	tm.routeList = slices.Clone(set.TradeRoutes())
+	tm.routeList = set.TradeRoutes()
 	tm.routeDefs = make(map[string]config.TradeRouteDef, len(tm.routeList))
 	for _, def := range tm.routeList {
 		tm.routeDefs[def.Key] = def

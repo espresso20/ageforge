@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"maps"
+	"slices"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
@@ -45,10 +47,10 @@ func (s *Set) StretchTicks(age string, ticks int) int {
 
 // PriceLevels returns the median first-copy price of each construction
 // resource in age (nil for an age with no buildings).
-func (s *Set) PriceLevels(age string) map[string]float64 { return s.priceLevels[age] }
+func (s *Set) PriceLevels(age string) map[string]float64 { return maps.Clone(s.priceLevels[age]) }
 
 // PricedResources lists the construction resources of age, sorted.
-func (s *Set) PricedResources(age string) []string { return s.priced[age] }
+func (s *Set) PricedResources(age string) []string { return slices.Clone(s.priced[age]) }
 
 // DealPriceLevel is res's price level in age for faction deals: the market's
 // level for a construction resource, the flow level for a flow resource the
@@ -82,7 +84,7 @@ func (s *Set) MarketOffers(from, to, age string) (float64, bool) {
 }
 
 // MarketPairs lists what the market offers in age, each pair with its rate
-// for age as BaseRate, sorted by from, then to. The slice is the caller's.
+// for age as BaseRate, sorted by from, then to.
 func (s *Set) MarketPairs(age string) []config.ExchangeRateDef {
 	return config.MarketPairsAt(age, s.exchange, s.agePos, s.priceLevels[age])
 }

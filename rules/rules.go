@@ -12,6 +12,9 @@
 package rules
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"maps"
 	"sync"
 	"time"
@@ -140,3 +143,13 @@ var core = sync.OnceValue(func() *Set { return Compile(FromConfig()) })
 // shared from then on. It is what an engine runs on unless it is given
 // another, and what code with no engine or snapshot to hand reads.
 func Core() *Set { return core() }
+
+// Digest is a hash of everything the set holds. A set never changes, so its
+// digest never does: tests take one before and after a run to prove that
+// nothing wrote into the set. Two sets compiled from the same tables can
+// differ in the last bit of a flow price level (config.FlowDealLevels sums
+// over a map), so compare a set with itself, not with another compile.
+func (s *Set) Digest() string {
+	sum := sha256.Sum256([]byte(fmt.Sprintf("%v", *s)))
+	return hex.EncodeToString(sum[:8])
+}

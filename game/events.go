@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"math/rand"
-	"slices"
 	"sort"
 	"strings"
 
@@ -88,7 +87,7 @@ func NewEventManagerWith(set *rules.Set) *EventManager {
 // cooldowns and the next event's tick stay.
 func (em *EventManager) Rebind(set *rules.Set) {
 	em.rules = set
-	em.defs = slices.Clone(set.Events())
+	em.defs = set.Events()
 	em.defMap = set.EventMap()
 }
 

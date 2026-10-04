@@ -19,9 +19,9 @@ import (
 
 // The float rules for simulation code (CONTRIBUTING.md, "Float rules for
 // simulation code"), enforced. simPackages is the code a run's result depends
-// on: the game, its config and the packages it imports, and the smoke bot
-// (its decisions steer the runs the determinism check compares).
-var simPackages = []string{"boon", "config", "detmath", "flavor", "game", "mapmodel", "smoke"}
+// on: the game, its config, its ruleset and the packages it imports, and the
+// smoke bot (its decisions steer the runs the determinism check compares).
+var simPackages = []string{"boon", "config", "detmath", "flavor", "game", "mapmodel", "rules", "smoke"}
 
 // mapRenderPackages are the map styles. What they draw is a function of the
 // map model and the animation frame, and it should look the same on every

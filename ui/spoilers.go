@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
@@ -59,7 +58,7 @@ func currentEraName(state game.GameState) string {
 // may read: a theme earned in an age they cannot see yet says so without
 // naming it.
 func themeUnlockHint(t theme.Theme, state game.GameState) string {
-	if m, ok := config.MilestoneByKey()[t.UnlockMilestone]; ok && m.MinAge != "" && !game.SightOf(&state).Age(m.MinAge) {
+	if m, ok := state.Ruleset().Milestone(t.UnlockMilestone); ok && m.MinAge != "" && !game.SightOf(&state).Age(m.MinAge) {
 		return "Reach a later age"
 	}
 	return t.UnlockHint

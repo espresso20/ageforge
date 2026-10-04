@@ -9,7 +9,6 @@ import (
 
 	"github.com/rivo/tview"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -335,13 +334,10 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 }
 
 func (t *EconomyTab) refreshBuildings(state game.GameState) {
-	// Build age ordering from config — used to sort building groups chronologically.
-	ageOrder := config.AgeOrder()
-	ageIndex := make(map[string]int, len(ageOrder))
-	for i, k := range ageOrder {
-		ageIndex[k] = i
-	}
-	ageByKey := config.AgeByKey()
+	// Age ordering from the snapshot's ruleset, used to sort building groups
+	// chronologically.
+	set := state.Ruleset()
+	ageIndex := set.Indexes()
 
 	// Group unlocked buildings by their age key — only show current age
 	byAge := make(map[string][]string)
@@ -373,7 +369,7 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 		sort.Strings(keys)
 
 		ageName := ageKey
-		if def, ok := ageByKey[ageKey]; ok {
+		if def, ok := set.Age(ageKey); ok {
 			ageName = def.Name
 		}
 		headerColor := "gray"

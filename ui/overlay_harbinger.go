@@ -155,7 +155,7 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 	switch {
 	case o.Passage == game.PassagePrestige && o.Possible:
 		fmt.Fprintf(sb, " Prestige here could bring the Last Passage. The risk is %s.\n", harbingerRiskWords(o.Tier))
-		if harbingerNumericAge(state.Age) {
+		if harbingerNumericAge(state) {
 			fmt.Fprintf(sb, " Published odds: %s\n", theme.Paint(theme.RoleHighlight, harbingerPercent(o.Probability)))
 		}
 		sb.WriteString(theme.Paint(theme.RoleDim, " More faith in storage makes it less likely.") + "\n")
@@ -285,7 +285,7 @@ func harbingerCostLine(sb *strings.Builder, state game.GameState, blocked string
 		return
 	}
 	var parts []string
-	for _, def := range config.BaseResources() {
+	for _, def := range state.Ruleset().Resources() {
 		need, ok := cost[def.Key]
 		if !ok {
 			continue
@@ -333,9 +333,10 @@ func harbingerRiskWords(t game.CatastropheTier) string {
 	return "none"
 }
 
-// harbingerNumericAge reports whether age's forecasts print the odds.
-func harbingerNumericAge(age string) bool {
-	def, ok := config.HarbingerFor(age)
+// harbingerNumericAge reports whether the forecasts of the snapshot's age
+// print the odds.
+func harbingerNumericAge(state game.GameState) bool {
+	def, ok := state.Ruleset().Harbinger(state.Age)
 	return ok && def.ForecastPrecision == config.ForecastNumeric
 }
 

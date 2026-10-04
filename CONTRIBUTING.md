@@ -338,6 +338,8 @@ To keep the nightly emails but stop the per-PR ones, add a repository variable `
 ```
 config/         Data definitions: ages, buildings, techs, resources, milestones,
                 events, trade, diplomacy, prestige. Pure data, no logic.
+rules/          The ruleset: config's definitions and every table worked out from
+                them, compiled once into an immutable Set. Each engine owns one.
 game/           Engine, managers, tick loop. No UI imports.
 detmath/        Log, Exp, Pow with the same bits on every architecture (see Float rules).
 mapmodel/       The one map model: a GameState laid out for every map style (placement,
@@ -353,6 +355,7 @@ main.go         Entry point; wires engine + UI.
 ## Key Patterns
 
 - **Config-Driven Content**: All game content is data in `config/`. Add buildings, techs, ages, events there, not in logic files.
+- **One ruleset per engine**: an engine reads its definitions from its `rules.Set` (`ge.rules`; a manager's `rules`; a snapshot's `state.Ruleset()`), not from package-level `config` lookups, which rebuild their tables on every call. `rules.Core()` is the set built from `config`; it is what `NewGameEngine()` plays by, and what code with no engine or snapshot to hand reads. A Set never changes: anything it returns is a copy, and nothing may write into a definition's own maps. `TestConfigLookupRatchet` (`go test ./rules`) counts the direct `config` lookups and `rules.Core()` references left in `game`, `ui` and `mapmodel`; the counts may only go down.
 - **Manager Pattern**: Each system has its own manager with a clean API. No cross-manager direct calls.
 - **GameState Snapshot**: `engine.GetState()` returns a read-only snapshot. The UI refreshes from snapshots every 500ms and never touches engine internals.
 - **Event Bus**: Systems communicate via `game.EventBus` (pub/sub, synchronous under write lock). Subscribe in `ui/dashboard.go` for toasts, in managers for cross-system reactions.
@@ -361,11 +364,11 @@ main.go         Entry point; wires engine + UI.
 
 ### Critical: Event Bus Deadlock
 
-Bus handlers run synchronously under the engine's write lock. **Never call `engine.GetState()` or any lock-acquiring method inside a bus subscriber.** Use `config.*ByKey()` functions (pure data, no locks) for any lookups inside handlers.
+Bus handlers run synchronously under the engine's write lock. **Never call `engine.GetState()` or any lock-acquiring method inside a bus subscriber** (`engine.Rules()` takes the lock too). For lookups inside a handler, read a `rules.Set` taken before subscribing, or the `config.*ByKey()` functions (pure data, no locks).
 
 ### Float rules for simulation code
 
-A seed must play the same run on every machine: the same smoke numbers locally and in CI, and a save that carries on identically after moving from a Mac to a Linux box. Floating point is deterministic only if every machine does the same operations with the same rounding, and two things break that. Both rules apply to `game/`, `config/`, `boon/`, `flavor/`, `detmath/`, `mapmodel/` and `smoke/` (tests excluded), and the map styles under `ui/mapstyle/` keep the second one (`mapmodel.Sin`, `Cos`, `Log2` and `Noise` are there for them):
+A seed must play the same run on every machine: the same smoke numbers locally and in CI, and a save that carries on identically after moving from a Mac to a Linux box. Floating point is deterministic only if every machine does the same operations with the same rounding, and two things break that. Both rules apply to `game/`, `config/`, `rules/`, `boon/`, `flavor/`, `detmath/`, `mapmodel/` and `smoke/` (tests excluded), and the map styles under `ui/mapstyle/` keep the second one (`mapmodel.Sin`, `Cos`, `Log2` and `Noise` are there for them):
 
 1. **Round every product that feeds an addition or subtraction: `float64(a*b) + c`, not `a*b + c`.** Go lets the compiler fuse `a*b + c` into one fused multiply-add (FMA) instruction, which skips the rounding of `a*b`. arm64 (Apple Silicon, Graviton) always fuses and amd64 at `GOAMD64=v3` does; default amd64 never does, so the last bit differs, and a few thousand ticks later so does the run. Fusion can reach across statements and through inlined calls (`t := a*b; x += t` fuses too, and so does `x += f()` when `f` returns a product), so a plain assignment is not enough: only an explicit conversion rounds. A conversion changes nothing on amd64 v1, so these fixes never move CI numbers.
 2. **No transcendental functions from package `math`.** `math.Log`, `Exp`, `Pow` and the rest are assembly on some architectures, Go compiled with FMA on others, and `math.Exp` on amd64 even picks a path by CPU features. Use `detmath.Log`, `Log10`, `Exp` and `Pow`: the same algorithms with every product rounded. `detmath.Log` and `Log10` equal `math.Log` and `math.Log10` on amd64 bit for bit, and `detmath.Pow` with an integer exponent equals `math.Pow` everywhere. `math.Sqrt`, `Floor`, `Ceil`, `Round`, `Trunc`, `Abs`, `Mod`, `Min` and `Max` are exact and fine.

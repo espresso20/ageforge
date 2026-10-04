@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -90,7 +89,7 @@ func NewPrestigeManagerWith(set *rules.Set) *PrestigeManager {
 // the legacy kit's memory stay.
 func (pm *PrestigeManager) Rebind(set *rules.Set) {
 	pm.rules = set
-	pm.upgradeList = slices.Clone(set.PrestigeUpgrades())
+	pm.upgradeList = set.PrestigeUpgrades()
 	pm.upgradeDefs = make(map[string]config.PrestigeUpgradeDef, len(pm.upgradeList))
 	for _, def := range pm.upgradeList {
 		pm.upgradeDefs[def.Key] = def
@@ -125,9 +124,8 @@ const PrestigeRunAge = "modern_age"
 // has not seen (the no-spoiler rule): it then counts the ages to go instead.
 func EarlyPrestigeLine(sight AgeSight, from string, points int, done bool) string {
 	set := orCore(sight.set)
-	order := set.Indexes()
-	at, ok := order[from]
-	run := order[PrestigeRunAge]
+	at, ok := set.Index(from)
+	run, _ := set.Index(PrestigeRunAge)
 	if !ok || at >= run {
 		return ""
 	}

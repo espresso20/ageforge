@@ -26,17 +26,17 @@ type AgeSight struct {
 // reached the ages in reached this run and highest on their account ("" for
 // none).
 func ageSightIn(set *rules.Set, current string, reached []string, highest string) AgeSight {
-	ages := set.Indexes()
-	far := ages[current]
-	if o, ok := ages[highest]; ok && o > far {
+	here, _ := set.Index(current)
+	far := here
+	if o, ok := set.Index(highest); ok && o > far {
 		far = o
 	}
 	for _, a := range reached {
-		if o, ok := ages[a]; ok && o > far {
+		if o, ok := set.Index(a); ok && o > far {
 			far = o
 		}
 	}
-	return AgeSight{set: set, next: max(far, ages[current]+1), reached: far}
+	return AgeSight{set: set, next: max(far, here+1), reached: far}
 }
 
 // SightOf is the sight of the player in the snapshot st.

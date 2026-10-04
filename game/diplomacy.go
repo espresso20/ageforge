@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"math/rand"
-	"slices"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -189,7 +188,7 @@ func NewDiplomacyManagerWith(set *rules.Set) *DiplomacyManager {
 // one's standing stays.
 func (dm *DiplomacyManager) Rebind(set *rules.Set) {
 	dm.rules = set
-	dm.factionList = slices.Clone(set.Factions())
+	dm.factionList = set.Factions()
 	dm.factionDefs = make(map[string]config.FactionDef, len(dm.factionList))
 	for _, def := range dm.factionList {
 		dm.factionDefs[def.Key] = def

@@ -1,7 +1,9 @@
 // Package config provides all static game data: ages, buildings, techs,
 // milestones, workers, epochs, events, expeditions, trade routes, and diplomacy.
-// All functions are pure (no global state). Call them at startup or on-demand —
-// they are cheap enough to call per-tick for config lookups.
+// All functions are pure (no global state, nothing kept between calls): each
+// one rebuilds what it returns, the building table in about a millisecond.
+// That suits tests and tools. An engine does not call them as it plays: it
+// reads a rules.Set, which package rules compiles from these tables once.
 package config
 
 // AgeDef defines a single playable age. Ages are ordered by the Order field

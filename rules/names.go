@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"maps"
 	"strings"
 
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -112,11 +113,5 @@ func (s *Set) buildCounts() {
 
 // Counts returns the numbers the docs quote about the game: how many ages,
 // buildings, technologies and so on the set defines, keyed by the Count
-// constants. The map is the caller's.
-func (s *Set) Counts() map[string]int {
-	out := make(map[string]int, len(s.counts))
-	for k, v := range s.counts {
-		out[k] = v
-	}
-	return out
-}
+// constants.
+func (s *Set) Counts() map[string]int { return maps.Clone(s.counts) }

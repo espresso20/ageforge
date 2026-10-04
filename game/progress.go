@@ -2,7 +2,6 @@ package game
 
 import (
 	"maps"
-	"slices"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
@@ -30,7 +29,7 @@ func NewProgressManagerWith(set *rules.Set) *ProgressManager {
 // each age's wonder. The manager holds no state of its own.
 func (pm *ProgressManager) Rebind(set *rules.Set) {
 	pm.rules = set
-	pm.ages = slices.Clone(set.Ages())
+	pm.ages = set.Ages()
 	pm.ageIndex = make(map[string]int, len(pm.ages))
 	pm.ageWonders = make(map[string]string)
 	for i, a := range pm.ages {

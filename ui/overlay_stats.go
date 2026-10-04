@@ -58,7 +58,7 @@ func statsProvider(state game.GameState, _ int) string {
 		highestAge := "none"
 		if as.HighestAge != "" {
 			highestAge = as.HighestAge
-			if def, ok := config.AgeByKey()[as.HighestAge]; ok {
+			if def, ok := state.Ruleset().Age(as.HighestAge); ok {
 				highestAge = def.Name
 			}
 		}
@@ -115,10 +115,10 @@ func statsProvider(state game.GameState, _ int) string {
 		if len(activeEpochs) == 0 {
 			sb.WriteString("  [gray]None[-]\n")
 		} else {
-			epochByKey := config.EpochByKey()
+			set := state.Ruleset()
 			for _, epochKey := range activeEpochs {
-				bonuses := config.LegacyBonusForEpoch(epochKey)
-				epochDef, hasEpoch := epochByKey[epochKey]
+				bonuses := set.LegacyBonus(epochKey)
+				epochDef, hasEpoch := set.Era(epochKey)
 				epochLabel := epochKey
 				if hasEpoch {
 					epochLabel = epochDef.Name

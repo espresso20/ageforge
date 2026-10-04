@@ -12,10 +12,12 @@ import (
 // Set is one compiled ruleset. It never changes after Compile, so any number
 // of engines, snapshots and goroutines may share one without a lock.
 //
-// Every slice and map a method returns belongs to the set: read it, never
-// write to it. The methods named ...Map are the exception: they return a
-// fresh map the caller owns (the definitions inside it still share their
-// own maps and slices with the set).
+// Every slice and map a method returns is a fresh copy the caller owns, as
+// package config's were: sort it, append to it, keep it. What a copy holds
+// is still the set's, so never write into a definition's own maps and
+// slices (a building's BaseCost, an age's requirements, a tech's Effects).
+// A lookup by key (Age, Building, Tech, Index and the rest) copies nothing
+// but the one definition, and is what code on a hot path reads.
 type Set struct {
 	ages     []config.AgeDef
 	ageKeys  []string
@@ -271,10 +273,10 @@ func (s *Set) indexDefs() {
 // ===== Ages =====
 
 // Ages returns the ages in order.
-func (s *Set) Ages() []config.AgeDef { return s.ages }
+func (s *Set) Ages() []config.AgeDef { return slices.Clone(s.ages) }
 
 // AgeKeys returns the age keys in order.
-func (s *Set) AgeKeys() []string { return s.ageKeys }
+func (s *Set) AgeKeys() []string { return slices.Clone(s.ageKeys) }
 
 // Age returns an age's definition.
 func (s *Set) Age(key string) (config.AgeDef, bool) {
@@ -289,7 +291,7 @@ func (s *Set) Index(age string) (int, bool) {
 }
 
 // Indexes returns every age's place in the order, by key.
-func (s *Set) Indexes() map[string]int { return s.agePos }
+func (s *Set) Indexes() map[string]int { return maps.Clone(s.agePos) }
 
 // Next returns the age after age, or "" for the last age and an unknown one.
 func (s *Set) Next(age string) string {
@@ -306,7 +308,7 @@ func (s *Set) Wonder(age string) string { return s.wonders[age] }
 // ===== Eras =====
 
 // Eras returns the eras in order.
-func (s *Set) Eras() []config.EpochDef { return s.eras }
+func (s *Set) Eras() []config.EpochDef { return slices.Clone(s.eras) }
 
 // Era returns an era's definition by its key.
 func (s *Set) Era(key string) (config.EpochDef, bool) {
@@ -373,7 +375,7 @@ func (s *Set) LastPassage() (name, flavor string) { return s.lastDoom.Name, s.la
 
 // LegacyBonus returns what succumbing in era leaves behind: resource key ->
 // share of production. nil for an era that leaves nothing.
-func (s *Set) LegacyBonus(era string) map[string]float64 { return s.legacy[era] }
+func (s *Set) LegacyBonus(era string) map[string]float64 { return maps.Clone(s.legacy[era]) }
 
 // DepthWeight is what completing age pays at prestige (0 for an unknown age).
 func (s *Set) DepthWeight(age string) int { return s.depthW[age] }
@@ -383,7 +385,7 @@ func (s *Set) DepthWeight(age string) int { return s.depthW[age] }
 func (s *Set) DepthPoints(age string) int { return s.depthPts[age] }
 
 // Harbingers returns the roster in age order.
-func (s *Set) Harbingers() []config.HarbingerDef { return s.harbingers }
+func (s *Set) Harbingers() []config.HarbingerDef { return slices.Clone(s.harbingers) }
 
 // Harbinger returns the harbinger of an age.
 func (s *Set) Harbinger(age string) (config.HarbingerDef, bool) {
@@ -400,7 +402,7 @@ func (s *Set) Awakening(age string) (config.AwakeningDef, bool) {
 // ===== Buildings, techs, resources =====
 
 // Buildings returns every building, in definition order.
-func (s *Set) Buildings() []config.BuildingDef { return s.buildings }
+func (s *Set) Buildings() []config.BuildingDef { return slices.Clone(s.buildings) }
 
 // Building returns a building's definition.
 func (s *Set) Building(key string) (config.BuildingDef, bool) {
@@ -408,7 +410,7 @@ func (s *Set) Building(key string) (config.BuildingDef, bool) {
 	return b, ok
 }
 
-// BuildingMap returns a fresh map of every building by key.
+// BuildingMap returns a map of every building by key.
 func (s *Set) BuildingMap() map[string]config.BuildingDef { return maps.Clone(s.buildingByKey) }
 
 // NextTier returns the building one tier up lineage from tier that newAge
@@ -423,7 +425,7 @@ func (s *Set) NextTier(lineage string, tier int, newAge string) (config.Building
 }
 
 // AgeEntryCosts returns, per resource, the cheapest first-copy price of it
-// among the buildings age unlocks, wonders aside. The map is the caller's.
+// among the buildings age unlocks, wonders aside.
 func (s *Set) AgeEntryCosts(age string) map[string]float64 {
 	out := make(map[string]float64)
 	for _, b := range s.buildings {
@@ -443,7 +445,7 @@ func (s *Set) AgeEntryCosts(age string) map[string]float64 {
 }
 
 // Techs returns every tech, in definition order.
-func (s *Set) Techs() []config.TechDef { return s.techs }
+func (s *Set) Techs() []config.TechDef { return slices.Clone(s.techs) }
 
 // Tech returns a tech's definition.
 func (s *Set) Tech(key string) (config.TechDef, bool) {
@@ -451,14 +453,14 @@ func (s *Set) Tech(key string) (config.TechDef, bool) {
 	return t, ok
 }
 
-// TechMap returns a fresh map of every tech by key.
+// TechMap returns a map of every tech by key.
 func (s *Set) TechMap() map[string]config.TechDef { return maps.Clone(s.techByKey) }
 
 // TechsOf returns the techs of an age, in definition order.
-func (s *Set) TechsOf(age string) []config.TechDef { return s.techsByAge[age] }
+func (s *Set) TechsOf(age string) []config.TechDef { return slices.Clone(s.techsByAge[age]) }
 
 // Resources returns every resource, in definition order.
-func (s *Set) Resources() []config.ResourceDef { return s.resources }
+func (s *Set) Resources() []config.ResourceDef { return slices.Clone(s.resources) }
 
 // Resource returns a resource's definition.
 func (s *Set) Resource(key string) (config.ResourceDef, bool) {
@@ -466,7 +468,7 @@ func (s *Set) Resource(key string) (config.ResourceDef, bool) {
 	return r, ok
 }
 
-// ResourceMap returns a fresh map of every resource by key.
+// ResourceMap returns a map of every resource by key.
 func (s *Set) ResourceMap() map[string]config.ResourceDef { return maps.Clone(s.resourceByKey) }
 
 // ResourceLabel is a resource's name in running text: "iron ore", "dark
@@ -481,7 +483,7 @@ func (s *Set) ResourceLabel(key string) string {
 // ===== Milestones and events =====
 
 // Milestones returns every milestone, in definition order.
-func (s *Set) Milestones() []config.MilestoneDef { return s.milestones }
+func (s *Set) Milestones() []config.MilestoneDef { return slices.Clone(s.milestones) }
 
 // Milestone returns a milestone's definition.
 func (s *Set) Milestone(key string) (config.MilestoneDef, bool) {
@@ -490,7 +492,7 @@ func (s *Set) Milestone(key string) (config.MilestoneDef, bool) {
 }
 
 // MilestoneChains returns every milestone chain, in definition order.
-func (s *Set) MilestoneChains() []config.MilestoneChainDef { return s.chains }
+func (s *Set) MilestoneChains() []config.MilestoneChainDef { return slices.Clone(s.chains) }
 
 // MilestoneChain returns a chain's definition.
 func (s *Set) MilestoneChain(key string) (config.MilestoneChainDef, bool) {
@@ -499,22 +501,22 @@ func (s *Set) MilestoneChain(key string) (config.MilestoneChainDef, bool) {
 }
 
 // MilestoneTitles returns the fallback title ladder.
-func (s *Set) MilestoneTitles() []config.TitleDef { return s.titles }
+func (s *Set) MilestoneTitles() []config.TitleDef { return slices.Clone(s.titles) }
 
 // Events returns the random event pool.
-func (s *Set) Events() []config.EventDef { return s.events }
+func (s *Set) Events() []config.EventDef { return slices.Clone(s.events) }
 
 // EraEvents returns the events only one era can roll.
-func (s *Set) EraEvents() []config.EventDef { return s.eraEvents }
+func (s *Set) EraEvents() []config.EventDef { return slices.Clone(s.eraEvents) }
 
-// EventMap returns a fresh map of every event by key, the era ones included.
+// EventMap returns a map of every event by key, the era ones included.
 func (s *Set) EventMap() map[string]config.EventDef { return maps.Clone(s.eventByKey) }
 
 // GoodEraEvents returns the good events an era's entry can roll.
-func (s *Set) GoodEraEvents() []config.EpochEventDef { return s.goodEvents }
+func (s *Set) GoodEraEvents() []config.EpochEventDef { return slices.Clone(s.goodEvents) }
 
 // ChallengingEraEvents returns the challenging events an era's entry can roll.
-func (s *Set) ChallengingEraEvents() []config.EpochEventDef { return s.badEvents }
+func (s *Set) ChallengingEraEvents() []config.EpochEventDef { return slices.Clone(s.badEvents) }
 
 // EraEvent returns an era-entry event by key, from either pool.
 func (s *Set) EraEvent(key string) (config.EpochEventDef, bool) {
@@ -525,7 +527,7 @@ func (s *Set) EraEvent(key string) (config.EpochEventDef, bool) {
 // ===== Civilizations, trade, workers, the shop =====
 
 // Factions returns every civilization, in definition order.
-func (s *Set) Factions() []config.FactionDef { return s.factions }
+func (s *Set) Factions() []config.FactionDef { return slices.Clone(s.factions) }
 
 // Faction returns a civilization's definition.
 func (s *Set) Faction(key string) (config.FactionDef, bool) {
@@ -534,7 +536,7 @@ func (s *Set) Faction(key string) (config.FactionDef, bool) {
 }
 
 // TradeRoutes returns every trade route, in definition order.
-func (s *Set) TradeRoutes() []config.TradeRouteDef { return s.routes }
+func (s *Set) TradeRoutes() []config.TradeRouteDef { return slices.Clone(s.routes) }
 
 // TradeRoute returns a trade route's definition.
 func (s *Set) TradeRoute(key string) (config.TradeRouteDef, bool) {
@@ -543,7 +545,7 @@ func (s *Set) TradeRoute(key string) (config.TradeRouteDef, bool) {
 }
 
 // ExchangeRates returns the listed market pairs, in definition order.
-func (s *Set) ExchangeRates() []config.ExchangeRateDef { return s.exchange }
+func (s *Set) ExchangeRates() []config.ExchangeRateDef { return slices.Clone(s.exchange) }
 
 // ListedRate returns the listed market pair that sells from for to.
 func (s *Set) ListedRate(from, to string) (config.ExchangeRateDef, bool) {
@@ -551,12 +553,11 @@ func (s *Set) ListedRate(from, to string) (config.ExchangeRateDef, bool) {
 	return x, ok
 }
 
-// ExchangeRateMap returns a fresh map of the listed market pairs, keyed
-// "from:to".
+// ExchangeRateMap returns a map of the listed market pairs, keyed "from:to".
 func (s *Set) ExchangeRateMap() map[string]config.ExchangeRateDef { return maps.Clone(s.exchangeBy) }
 
 // WorkerDomains returns the worker domain keys in their fixed order.
-func (s *Set) WorkerDomains() []string { return s.domains }
+func (s *Set) WorkerDomains() []string { return slices.Clone(s.domains) }
 
 // WorkerClass returns the class a domain's workers hold in age: the class
 // written for that age, else the latest one from an earlier age, else the
@@ -588,10 +589,10 @@ func (s *Set) WorkerClass(domain, age string) (config.WorkerClassDef, bool) {
 }
 
 // PrestigeUpgrades returns the whole shop table, retired perks included.
-func (s *Set) PrestigeUpgrades() []config.PrestigeUpgradeDef { return s.upgrades }
+func (s *Set) PrestigeUpgrades() []config.PrestigeUpgradeDef { return slices.Clone(s.upgrades) }
 
 // ShopUpgrades returns the upgrades the shop sells, in shop order.
-func (s *Set) ShopUpgrades() []config.PrestigeUpgradeDef { return s.shop }
+func (s *Set) ShopUpgrades() []config.PrestigeUpgradeDef { return slices.Clone(s.shop) }
 
 // PrestigeUpgrade returns a shop upgrade's definition.
 func (s *Set) PrestigeUpgrade(key string) (config.PrestigeUpgradeDef, bool) {
@@ -600,4 +601,4 @@ func (s *Set) PrestigeUpgrade(key string) (config.PrestigeUpgradeDef, bool) {
 }
 
 // LegacyKit returns the legacy kit's keys in shop order.
-func (s *Set) LegacyKit() []string { return s.kit }
+func (s *Set) LegacyKit() []string { return slices.Clone(s.kit) }

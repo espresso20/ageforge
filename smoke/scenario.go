@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Tiers.
@@ -311,5 +312,12 @@ func runIsolated(e *Env, sc Scenario, res *Result) {
 			res.fail("harness_panic", "the %s scenario panicked outside the game: %v", sc.Name, rec).Detail = string(debug.Stack())
 		}
 	}()
+	// Every engine in the process shares the core ruleset, so nothing a
+	// scenario does (play, saves, typed commands) may write into it.
+	set := rules.Core()
+	before := set.Digest()
 	sc.Run(e, res)
+	if after := set.Digest(); after != before {
+		res.fail("ruleset_changed", "the %s scenario changed the core ruleset (digest %s, was %s): something wrote into a definition the set handed out", sc.Name, after, before)
+	}
 }

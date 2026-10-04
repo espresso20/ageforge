@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -40,8 +40,8 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 		return
 	}
 
-	epochs := config.EpochByKey()
-	ep, ok := epochs[state.EpochKey]
+	set := state.Ruleset()
+	ep, ok := set.Era(state.EpochKey)
 	if !ok {
 		fmt.Fprintf(sb, " [gold]%s %s[-]\n", state.EpochIcon, state.EpochName)
 	} else {
@@ -78,10 +78,9 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 			fmt.Fprintf(sb, " Epoch event: [%s]%s[-]   [red](catastrophe)[-]\n",
 				evColor, currentEvent.EventName)
 		} else {
-			evDefs := config.EpochEventByKey()
 			flavorStr := ""
 			durationStr := ""
-			if evDef, found := evDefs[currentEvent.EventKey]; found {
+			if evDef, found := set.EraEvent(currentEvent.EventKey); found {
 				if evDef.FlavorText != "" {
 					flavorStr = evDef.FlavorText
 				}
@@ -108,7 +107,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 	case state.LastPassage.Pending:
 		sb.WriteString(" Catastrophe: [red]the Last Passage. Type catastrophe to choose Endure or Succumb.[-]\n")
 		sb.WriteString(" [gray]  Prestige waits until you decide; nothing else does.[-]\n")
-	case !config.CatastropheAllowed(state.EpochKey):
+	case !set.CatastropheAllowed(state.EpochKey):
 		fmt.Fprintf(sb, " Catastrophe: %s\n", theme.Paint(theme.RoleDim, "none in the "+currentEraName(state)))
 	default:
 		if r := latestCatastrophe(state.EpochEventHistory, state.EpochKey); r != nil {
@@ -154,7 +153,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 		fmt.Fprintf(sb, " Harbinger: [warning]%s is here[-] [gray](%s; appease %d/%d, brace %d/%d; type 'harbinger')[-]\n",
 			capFirstUI(h.Name), status, h.AppeaseLevel, game.HarbingerMaxAppease, h.BraceLevel, game.HarbingerMaxBrace)
 	} else if r := latestHarbinger(state.HarbingerHistory, state.EpochKey); r != nil {
-		fmt.Fprintf(sb, " Harbinger: %s\n", harbingerRecordText(*r))
+		fmt.Fprintf(sb, " Harbinger: %s\n", harbingerRecordText(state.Ruleset(), *r))
 	}
 }
 
@@ -166,7 +165,7 @@ func epochProviderHarbingers(sb *strings.Builder, state game.GameState) {
 		return
 	}
 	for _, r := range state.HarbingerHistory {
-		fmt.Fprintf(sb, "   · %s\n", harbingerRecordText(r))
+		fmt.Fprintf(sb, "   · %s\n", harbingerRecordText(state.Ruleset(), r))
 	}
 }
 
@@ -182,8 +181,9 @@ func latestHarbinger(history []game.HarbingerRecord, epochKey string) *game.Harb
 	return nil
 }
 
-// harbingerRecordText renders a resolved harbinger in one line.
-func harbingerRecordText(r game.HarbingerRecord) string {
+// harbingerRecordText renders a resolved harbinger in one line, naming the
+// figures of its chain from set.
+func harbingerRecordText(set *rules.Set, r game.HarbingerRecord) string {
 	var verdict string
 	switch r.Outcome {
 	case game.HarbingerOutcomeFulfilled:
@@ -215,7 +215,7 @@ func harbingerRecordText(r game.HarbingerRecord) string {
 	if len(r.Chain) > 1 {
 		chain = chain[:0]
 		for _, a := range r.Chain {
-			if def, ok := config.HarbingerFor(a); ok {
+			if def, ok := set.Harbinger(a); ok {
 				chain = append(chain, capFirstUI(def.Name))
 			}
 		}
@@ -234,10 +234,9 @@ func harbingerRecordText(r game.HarbingerRecord) string {
 func epochProviderHistory(sb *strings.Builder, state game.GameState) {
 	sb.WriteString(" [yellow]── Epoch history ──[-]\n")
 
-	allEpochs := config.Epochs()
+	allEpochs := state.Ruleset().Eras()
 	currentEpochOrder := -1
-	epochByKey := config.EpochByKey()
-	if ep, ok := epochByKey[state.EpochKey]; ok {
+	if ep, ok := state.Ruleset().Era(state.EpochKey); ok {
 		currentEpochOrder = ep.Order
 	}
 
@@ -281,13 +280,13 @@ func epochProviderLegacyBonuses(sb *strings.Builder, state game.GameState) {
 		return
 	}
 
-	allEpochs := config.Epochs()
+	allEpochs := state.Ruleset().Eras()
 	anyShown := false
 	for _, ep := range allEpochs {
 		if !state.LegacyBonuses[ep.Key] {
 			continue
 		}
-		bonuses := config.LegacyBonusForEpoch(ep.Key)
+		bonuses := state.Ruleset().LegacyBonus(ep.Key)
 		if len(bonuses) == 0 {
 			continue
 		}
