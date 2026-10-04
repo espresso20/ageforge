@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // cappedState is a Modern Age player holding every tech so far: the techs
@@ -12,11 +13,24 @@ import (
 func cappedState(t *testing.T) (*game.GameEngine, game.GameState) {
 	t.Helper()
 	ge := game.NewGameEngine()
+	ge.SeedRNG(1) // entering an era rolls an epoch event: the same one every run
 	if err := ge.EnterAgeForTest("modern_age"); err != nil {
 		t.Fatal(err)
 	}
 	ge.GrantTechsForTest()
 	return ge, ge.GetState()
+}
+
+// earned is the "capped at +200%: +N% earned" note for pool as st has it.
+// The fixture's epoch event may add to a pool, so the tests read the figure
+// off the state instead of typing it.
+func earned(t *testing.T, st game.GameState, pool string) string {
+	t.Helper()
+	p := st.Pools[pool]
+	if !p.Limited || p.Applied != 2 {
+		t.Fatalf("%s: earned %v, applied %v, limited %v; this fixture needs it past the +200%% cap", pool, p.Earned, p.Applied, p.Limited)
+	}
+	return "capped at +200%: " + textfmt.SignedPercent(p.Earned) + " earned"
 }
 
 func section(t *testing.T, out, from, to string) string {
@@ -37,17 +51,11 @@ func section(t *testing.T, out, from, to string) string {
 func TestStatsPanelShowsCappedPools(t *testing.T) {
 	_, st := cappedState(t)
 	out := renderActiveMultipliers(st)
-	for _, pool := range []string{"production_all", "gold_rate", "knowledge_rate"} {
-		p := st.Pools[pool]
-		if !p.Limited || p.Applied != 2 {
-			t.Fatalf("%s: earned %v, applied %v, limited %v; this fixture needs it past the +200%% cap", pool, p.Earned, p.Applied, p.Limited)
-		}
-	}
 	for _, want := range []string{
-		"Gold production     [-] [green]+200%[-] [yellow]capped at +200%: +380% earned[-]",
-		"Knowledge production[-] [green]+200%[-] [yellow]capped at +200%: +335% earned[-]",
-		"[yellow]capped at +200%: +240% earned[-]",  // all production (morale rides on top of its headline)
-		"Iron production     [-] [green]+70%[-]   ", // under its cap: no note
+		"Gold production     [-] [green]+200%[-] [yellow]" + earned(t, st, "gold_rate") + "[-]",
+		"Knowledge production[-] [green]+200%[-] [yellow]" + earned(t, st, "knowledge_rate") + "[-]",
+		"[yellow]" + earned(t, st, "production_all") + "[-]", // morale rides on top of its headline
+		"Iron production     [-] [green]+70%[-]   ",          // under its cap: no note
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("Active multipliers is missing %q:\n%s", want, out)
@@ -66,8 +74,8 @@ func TestResearchPanelBonuses(t *testing.T) {
 	_, st := cappedState(t)
 	out := section(t, researchProvider(st, 120), "Research bonuses", "Available now")
 	for _, want := range []string{
-		"+240%", "All production [yellow]capped at +200%: +240% earned[-]",
-		"Gold production [yellow]capped at +200%: +380% earned[-]",
+		"+240%", "All production [yellow]" + earned(t, st, "production_all") + "[-]",
+		"Gold production [yellow]" + earned(t, st, "gold_rate") + "[-]",
 		"[gray]Output:[-]", "+2.8 food/tick", "+19 electricity/tick",
 		"[gray]Storage:[-] +375 for every resource, +100 gold",
 		"[gray]Housing:[-] +5",
@@ -90,8 +98,8 @@ func TestResearchTreeTagsCappedTechs(t *testing.T) {
 	ge, st := cappedState(t)
 	tree := section(t, researchProvider(st, 120), "Tech tree", "")
 	for _, want := range []string{
-		"+30% all production [yellow](capped at +200%: +240% earned)[gray]",
-		"+30% gold production [yellow](capped at +200%: +380% earned)[gray]",
+		"+30% all production [yellow](" + earned(t, st, "production_all") + ")[gray]",
+		"+30% gold production [yellow](" + earned(t, st, "gold_rate") + ")[gray]",
 		"+40% iron production,", // Iron Smelting: iron is under its cap
 	} {
 		if !strings.Contains(tree, want) {
@@ -130,5 +138,30 @@ func TestFestivalWarnsWhenCapped(t *testing.T) {
 	}
 	if out := cmdFestivalStatus(fresh).Message; strings.Contains(out, "capped") {
 		t.Errorf("a new game's festival status mentions a cap:\n%s", out)
+	}
+}
+
+// TestMilestonesAndWondersTagCappedRewards: a milestone reward and a wonder
+// effect the cap would swallow say so before the player works for them.
+func TestMilestonesAndWondersTagCappedRewards(t *testing.T) {
+	ge, st := cappedState(t)
+	ms := milestonesProvider(st, 120)
+	if want := "+20% all production[-] [yellow](capped: no effect now)[-]"; !strings.Contains(ms, want) {
+		t.Errorf("the Milestones panel has no capped reward %q:\n%s", want, ms)
+	}
+	if want := "+5% research speed[-]\n"; !strings.Contains(ms, want) {
+		t.Errorf("a research speed reward with room carries a note, or is gone (want %q)", want)
+	}
+	// The Information Age's wonder, the Global Network, adds knowledge
+	// production to a pool that is already full.
+	if err := ge.EnterAgeForTest("information_age"); err != nil {
+		t.Fatal(err)
+	}
+	wonders := wondersProvider(ge.GetState(), 120)
+	if want := "+30% knowledge production[-] [yellow](capped: no effect now)[-]"; !strings.Contains(wonders, want) {
+		t.Errorf("the Wonders panel has no capped wonder effect %q:\n%s", want, wonders)
+	}
+	if want := "+30 data/tick[-]\n"; !strings.Contains(wonders, want) {
+		t.Errorf("the Global Network's flat output carries a note, or is gone (want %q)", want)
 	}
 }

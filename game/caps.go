@@ -261,7 +261,7 @@ func (ge *GameEngine) grantLocked(res string, amount float64) (took float64) {
 func clippedLine(promised, took map[string]float64) string {
 	var parts []string
 	for _, res := range sortedKeys(promised) {
-		if want := promised[res]; want > 0 && took[res] < want-1e-9*want {
+		if want := promised[res]; want > 0 && took[res] < want-float64(1e-9*want) {
 			parts = append(parts, Amount(math.Max(took[res], 0), res)+" (of "+textfmt.Number(want)+")")
 		}
 	}

@@ -1134,9 +1134,13 @@ func truthEffectText(e config.Effect) string {
 // truthTechPromises is one promise per effect of every tech. The tech is
 // researched either way; the off reading empties its effects and the on
 // reading holds the one effect alone, so effects of one tech never mix.
-func truthTechPromises() []truthPromise {
+func truthTechPromises() []truthPromise { return truthTechPromisesOf(config.Technologies()) }
+
+// truthTechPromisesOf is truthTechPromises for the given techs. A tech the
+// engine does not hold yet (a test's made-up one) joins it for the probe.
+func truthTechPromisesOf(defs []config.TechDef) []truthPromise {
 	var out []truthPromise
-	for _, def := range config.Technologies() {
+	for _, def := range defs {
 		for _, eff := range def.Effects {
 			key := def.Key
 			out = append(out, truthPromise{
@@ -1144,7 +1148,12 @@ func truthTechPromises() []truthPromise {
 				Text: truthEffectText(eff), Kind: truthEffectKind("tech", eff),
 				wire: func(ge *GameEngine) truthSwitch {
 					rm := ge.Research
-					saved := rm.defs[key]
+					saved, known := rm.defs[key]
+					order := rm.order
+					if !known {
+						saved = def
+						rm.order = append(append([]string(nil), order...), key)
+					}
 					set := func(effects []config.Effect) func() {
 						return func() {
 							d := saved
@@ -1155,9 +1164,15 @@ func truthTechPromises() []truthPromise {
 						}
 					}
 					return truthSwitch{
-						off:     set(nil),
-						on:      set([]config.Effect{eff}),
-						restore: func() { rm.defs[key] = saved },
+						off: set(nil),
+						on:  set([]config.Effect{eff}),
+						restore: func() {
+							rm.defs[key] = saved
+							if !known {
+								delete(rm.defs, key)
+								rm.order = order
+							}
+						},
 					}
 				},
 			})

@@ -477,3 +477,39 @@ func TestBonusTruthCulturalFestivalWaitsForCulture(t *testing.T) {
 		t.Error("the Cultural Festival was never rolled in 80 tries in the Renaissance Age")
 	}
 }
+
+// TestBonusTruthCatchesANewTech: the guard needs no upkeep to cover a tech
+// added later, and it has teeth. Three made-up techs go through the same
+// path as the real ones: one whose bonus works, one whose effect the engine
+// never applies (an event's effect type on a tech), and one whose target is
+// a typo.
+func TestBonusTruthCatchesANewTech(t *testing.T) {
+	lab := newTruthLab()
+	techs := []config.TechDef{
+		{Key: "zz_crop_rotation", Name: "Crop Rotation", Age: "bronze_age", Effects: []config.Effect{{Type: "bonus", Target: "food_rate", Value: 0.25}}},
+		{Key: "zz_dead_letter", Name: "Dead Letter", Age: "bronze_age", Effects: []config.Effect{{Type: "production_all", Value: 0.25}}},
+		{Key: "zz_typo", Name: "Typo", Age: "bronze_age", Effects: []config.Effect{{Type: "bonus", Target: "food_rates", Value: 0.25}}},
+	}
+	got := map[string]string{}
+	for _, p := range truthTechPromisesOf(techs) {
+		if p.Kind == "" {
+			got[p.Key] = "no meter"
+			continue
+		}
+		got[p.Key] = lab.judge(t, p).Class
+	}
+	want := map[string]string{"zz_crop_rotation": truthOK, "zz_dead_letter": truthDead, "zz_typo": "no meter"}
+	for key, w := range want {
+		if got[key] != w {
+			t.Errorf("made-up tech %s is judged %q, want %q", key, got[key], w)
+		}
+	}
+	// The lab is left as it was: the made-up techs are gone.
+	for _, ge := range lab.engines {
+		for _, td := range techs {
+			if _, ok := ge.Research.defs[td.Key]; ok || ge.Research.researched[td.Key] {
+				t.Errorf("made-up tech %s is still in a lab engine", td.Key)
+			}
+		}
+	}
+}

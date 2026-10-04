@@ -361,7 +361,7 @@ func (ge *GameEngine) applyRolledFactionBoon(def config.FactionDef, b boon.Boon)
 	line := boon.Apply(b, boonApplier{ge: ge, name: def.Name, key: def.Key})
 	if b.Kind == boon.InstantResource {
 		// A lump a full store cut short says what fit.
-		if took := ge.Resources.Get(b.Resource) - stock; took < b.InstantAmount-1e-9*b.InstantAmount {
+		if took := ge.Resources.Get(b.Resource) - stock; took < b.InstantAmount-float64(1e-9*b.InstantAmount) {
 			note = "storage was nearly full: only " + Amount(math.Max(took, 0), b.Resource) + " fit"
 		}
 	}
