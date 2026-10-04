@@ -14,7 +14,7 @@ import (
 // offline catch-up. It is how a player who checks in a few times a day puts
 // the hours between visits to work.
 //
-// Rules (site/docs/plan.md, design-and-architecture/economy.md):
+// Rules (site/docs/plan.md and the economy design):
 //
 //   - An item is paid for when it starts, not when it is queued, through the
 //     same checks as `build` and `research` (age lock, MaxCount, one research

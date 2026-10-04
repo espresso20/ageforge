@@ -12,7 +12,7 @@ import (
 // Stone Age wall, the Atomic 30-bunker wall): every age advance must pass the
 // Gate Covenant from config alone. It runs in plain `go test ./...`, so CI
 // catches a balance change that breaks a gate before any bot has to play
-// into it. See design-and-architecture/economy.md, "Gate Covenant".
+// into it. The covenant's rules are listed at the top of static.go.
 func TestGateCovenant(t *testing.T) {
 	problems, slack := StaticGates()
 	for _, g := range problems {
@@ -43,7 +43,7 @@ func TestGateCovenant(t *testing.T) {
 
 // TestStorageCovenant: the most storage buildable in every age holds
 // config.StorageHold(age) hours of the age's typical production of each of
-// its construction resources (economy.md, Law 1): 4.5 from the Bronze Age
+// its construction resources (the economy design's Law 1): 4.5 from the Bronze Age
 // on, 1.5 in the Primitive and Stone Ages. A store that fills in minutes
 // throws away most of what a player makes between visits.
 func TestStorageCovenant(t *testing.T) {

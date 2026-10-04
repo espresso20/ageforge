@@ -28,14 +28,7 @@ func playerDocs(t *testing.T) []string {
 
 // devDocs are prose for contributors. They follow the punctuation rules but
 // may name Go identifiers, raw keys and code paths.
-func devDocs(t *testing.T) []string {
-	t.Helper()
-	files, err := filepath.Glob("../design-and-architecture/*.md")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return append(files, "../CONTRIBUTING.md")
-}
+func devDocs() []string { return []string{"../CONTRIBUTING.md"} }
 
 func readDoc(t *testing.T, path string) string {
 	t.Helper()
@@ -101,7 +94,7 @@ func lineOf(s string, off int) int { return strings.Count(s[:off], "\n") + 1 }
 // TestDocsNoEmDash: no em dashes in player or contributor docs, code blocks
 // included (quoted game output follows the same rule as the game).
 func TestDocsNoEmDash(t *testing.T) {
-	for _, f := range append(playerDocs(t), devDocs(t)...) {
+	for _, f := range append(playerDocs(t), devDocs()...) {
 		body := readDoc(t, f)
 		for i, line := range strings.Split(body, "\n") {
 			if strings.Contains(line, "—") {
@@ -114,7 +107,7 @@ func TestDocsNoEmDash(t *testing.T) {
 // TestDocsNoExclamations: routine prose does not shout. Code, HTML comments
 // and image markers are exempt.
 func TestDocsNoExclamations(t *testing.T) {
-	for _, f := range append(playerDocs(t), devDocs(t)...) {
+	for _, f := range append(playerDocs(t), devDocs()...) {
 		p := prose(f, readDoc(t, f))
 		if filepath.Ext(f) == ".js" {
 			p = strings.ReplaceAll(p, "!=", "  ")

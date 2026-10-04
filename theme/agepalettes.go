@@ -3,8 +3,8 @@ package theme
 import "github.com/gdamore/tcell/v2"
 
 // agepalettes.go is inert data moved out of ui/theme.go so the "no raw colors
-// outside theme/" rule holds (theming.md §3.8). It is the old per-age chrome
-// palette, kept for the Phase-4 epoch-adaptive theme (theming.md §9). Nothing
+// outside theme/" rule holds (the theming design §3.8). It is the old per-age chrome
+// palette, kept for the Phase-4 epoch-adaptive theme (the theming design §9). Nothing
 // reads it today.
 
 // AgePalette defines the color theme for an age era.
@@ -14,7 +14,7 @@ import "github.com/gdamore/tcell/v2"
 // touching chrome but never the inline [gold]/[cyan]/… body tags, which is why an
 // age advance recolored borders but not text. That half-measure is subsumed by the
 // theme package. ui.ApplyAgePalette is a no-op; this data is kept for Phase 4,
-// which reframes it as the optional epoch-adaptive Adaptive theme (theming.md §9).
+// which reframes it as the optional epoch-adaptive Adaptive theme (the theming design §9).
 type AgePalette struct {
 	Title    tcell.Color
 	Accent   tcell.Color

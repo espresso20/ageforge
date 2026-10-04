@@ -248,7 +248,7 @@ func (p *accountsPanel) doSwitch() {
 		p.status.SetText(fmt.Sprintf("[red]Switch failed: %v[-]", err))
 		return
 	}
-	// Re-apply the now-active account's persisted theme so the whole UI retints (theming.md
+	// Re-apply the now-active account's persisted theme so the whole UI retints (the theming design
 	// §6). applyAccountTheme runs SetActive + Restyle; no QueueUpdateDraw — we're on the main
 	// goroutine and tview redraws after this input event.
 	applyAccountTheme(p.engine)
@@ -271,7 +271,7 @@ func (p *accountsPanel) doNew() {
 			return
 		}
 		// A fresh (or reopened same-name) account resolves its own theme — a brand-new one
-		// starts on Forge rather than inheriting the previous account's theme (theming.md §6).
+		// starts on Forge rather than inheriting the previous account's theme (the theming design §6).
 		applyAccountTheme(p.engine)
 		p.refresh(0)
 		p.selectByID(acct.AccountID)

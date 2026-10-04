@@ -7,7 +7,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-// Milestone-gated theme unlocking — the UI side of theming.md §5.
+// Milestone-gated theme unlocking — the UI side of the theming design §5.
 //
 // WHY THIS LIVES IN THE UI GOROUTINE, NOT THE ENGINE:
 // account.UnlockTheme persists the account (file I/O via Save). The documented
@@ -36,7 +36,7 @@ type themeUnlockResult struct {
 }
 
 // evaluateThemeUnlock decides what to do with a single completed milestone/chain key
-// (theming.md §5). It is the pure-ish core, split out from the dashboard method so it
+// (the theming design §5). It is the pure-ish core, split out from the dashboard method so it
 // can be unit-tested without a tview app:
 //
 //   - If completedKey maps to no theme → no-op (the common case).
@@ -74,7 +74,7 @@ func evaluateThemeUnlock(acct *game.Account, completedKey string, firstSync bool
 	return themeUnlockResult{Toast: true, ThemeName: name}
 }
 
-// themeUnlockToast renders the unlock notification text (theming.md §7). The accent
+// themeUnlockToast renders the unlock notification text (the theming design §7). The accent
 // color comes from the active theme's role tag so the toast reads in whatever theme
 // is live. Kept separate (and pure) so the message format is testable.
 func themeUnlockToast(themeName string) string {

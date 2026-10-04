@@ -39,7 +39,7 @@ func TestUnlockedByRoundTrip(t *testing.T) {
 	}
 }
 
-// TestGatedThemeRegistryConsistency is the registry-consistency guard (theming.md
+// TestGatedThemeRegistryConsistency is the registry-consistency guard (the theming design
 // §5): every gated theme (non-Accessible, non-default) declares EXACTLY ONE of
 // UnlockMilestone / UnlockChain and a non-empty UnlockHint; every always-available
 // theme (Accessible or the default Forge) declares NEITHER and no hint.

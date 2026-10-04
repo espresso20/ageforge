@@ -6,8 +6,8 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-// Color theme — bridge over the theme package (design-and-architecture/theming.md
-// §3.3). These were standalone tcell.Color globals; they are now thin accessors
+// Color theme — bridge over the theme package (the theming design §3.3).
+// These were standalone tcell.Color globals; they are now thin accessors
 // over theme.Color(role) so every call site keeps compiling but pulls the ACTIVE
 // theme's color and tracks live theme switches. Under Forge (the default) they
 // resolve to the game's current palette.
@@ -32,14 +32,14 @@ func ColorAge() tcell.Color      { return theme.Color(theme.RoleAccent) }
 
 // BarFillColor is the tview color tag for filled progress-bar segments. Formerly a
 // fixed "#9370DB" literal; now role-derived (Accent) and emitted as a late-bound
-// named tag ([accent]) so bars retint with the theme. theming.md §3.4.
+// named tag ([accent]) so bars retint with the theme (the theming design §3.4).
 func BarFillColor() string { return theme.Tag(theme.RoleAccent) }
 
 // BarEmptyColor is the tview color tag for empty bar segments. Role-derived from
-// Dim (was a fixed "#444444"). theming.md §3.4.
+// Dim (was a fixed "#444444"; the theming design §3.4).
 func BarEmptyColor() string { return theme.Tag(theme.RoleDim) }
 
-// ApplyAgePalette is intentionally a no-op (theming.md §3.3, §9).
+// ApplyAgePalette is intentionally a no-op (the theming design §3.3, §9).
 //
 // It used to mutate the chrome color globals on every age advance, fighting the
 // theme as a second color authority. The theme package is now the single source of

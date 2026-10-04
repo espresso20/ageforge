@@ -8,7 +8,7 @@ import (
 	colorful "github.com/lucasb-eyer/go-colorful"
 )
 
-// This file implements the contrast-safety guard math (theming.md §8). Two
+// This file implements the contrast-safety guard math (the theming design §8). Two
 // independent properties:
 //
 //  1. WCAG luminance contrast (RelativeLuminance / ContrastRatio) — "is the text
@@ -30,7 +30,7 @@ func srgbToLinear(c float64) float64 {
 }
 
 // RelativeLuminance returns the WCAG relative luminance of c in [0,1]:
-// 0.2126 R + 0.7152 G + 0.0722 B over sRGB-linearized channels (theming.md §8).
+// 0.2126 R + 0.7152 G + 0.0722 B over sRGB-linearized channels (the theming design §8).
 func RelativeLuminance(c tcell.Color) float64 {
 	r, g, b := rgbUnit(c)
 	rl := srgbToLinear(r)

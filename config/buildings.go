@@ -320,7 +320,7 @@ func baseBuildingsRaw() []BuildingDef {
 			// note: 500T -> 2Q (galactic 2Q -> 20Q, quantum 10Q -> 200Q). Cosmic-era
 			// storage had fallen out of band with its own prices (median first copy
 			// 13-57% of max storage vs 3-8% everywhere else), so no age gate there
-			// fit the Storage Covenant. See economy.md "Gate Covenant".
+			// fit the Storage Covenant. See the Gate Covenant in smoke/static.go.
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2e15}},
 			BuildTicks:  6000,
 			RequiredAge: "interstellar_age",

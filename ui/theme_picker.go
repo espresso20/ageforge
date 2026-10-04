@@ -47,7 +47,7 @@ type themePicker struct {
 	app   *tview.Application
 	pages *tview.Pages
 
-	// engine is the bridge to the account layer (theming.md §6). It may be nil
+	// engine is the bridge to the account layer (the theming design §6). It may be nil
 	// (accountless play / tests); every account touch nil-guards both the engine
 	// and engine.Account(). It also drives the unlock gate (themeAvailable) so
 	// locked flavor themes can be previewed but not confirmed.
@@ -111,7 +111,7 @@ func pickerRows(all []theme.Theme) []pickerRow {
 // We capture the originally-active theme on open so Esc can revert it; Enter
 // keeps the previewed theme (and persists it) if it is unlocked.
 //
-// engine bridges to the account layer for persistence + unlock gating (theming.md
+// engine bridges to the account layer for persistence + unlock gating (the theming design
 // §6); it may be nil for accountless play/tests, in which case confirm simply
 // doesn't persist and only the always-available themes are selectable.
 func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, returnPage string) tview.Primitive {
@@ -326,10 +326,10 @@ func (p *themePicker) account() *game.Account {
 }
 
 // confirm keeps the currently-previewed theme and persists it account-wide
-// (theming.md §6). The previewed theme is already applied process-locally via the
+// (the theming design §6). The previewed theme is already applied process-locally via the
 // live preview; here we make it durable.
 //
-// Unlock gate (theming.md §4/§5): if the highlighted theme isn't available to this
+// Unlock gate (the theming design §4/§5): if the highlighted theme isn't available to this
 // account (a locked flavor theme), confirming it would be wrong, so we revert to
 // the open-time theme instead of keeping/persisting the locked preview.
 // Preview-on-highlight is still allowed to show it; only Enter is gated.
@@ -381,7 +381,7 @@ func themeGroupHeading(name string) string {
 // account. The current marker tracks the open-time active theme (not the live
 // preview) so the row stays stable as the player arrows through previews.
 //
-// available routes through themeAvailable (theming.md §4/§5): locked flavor themes
+// available routes through themeAvailable (the theming design §4/§5): locked flavor themes
 // still LIST (and can preview on highlight) but are visually marked and refused on
 // confirm.
 func themeRowLabel(t theme.Theme, activeKey string, available bool) string {
@@ -406,7 +406,7 @@ func themeRowLabel(t theme.Theme, activeKey string, available bool) string {
 //
 // available reports whether this theme is unlocked for the current account
 // (themeAvailable). A LOCKED theme shows a "🔒 Locked — <UnlockHint>" line above the
-// swatches (theming.md §7); the swatches and sample still render as a preview of
+// swatches (the theming design §7); the swatches and sample still render as a preview of
 // what the player will get, so the locked theme is enticing rather than blank. st,
 // when set, words the hint for that game (themeUnlockHint: no age the player
 // cannot see yet); nil shows it as written.
@@ -420,7 +420,7 @@ func themeDetailText(t theme.Theme, available bool, st *game.GameState) string {
 		note := "[cyan]Accessible:[-] [gray]colorblind-safe or high-contrast, always unlocked[-]"
 		if t.GainGlyph != "" || t.LossGlyph != "" {
 			// Show the signed glyphs so the shape-based ± encoding is visible in the
-			// picker itself (theming.md §7).
+			// picker itself (the theming design §7).
 			note += fmt.Sprintf(" [gray](gain %s / loss %s)[-]", t.GainGlyph, t.LossGlyph)
 		}
 		lines = append(lines, note)

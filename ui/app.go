@@ -25,7 +25,7 @@ func NewApp(engine *game.GameEngine, version string) *App {
 	// theme.Track closure in setup() applies against a known palette. The theme
 	// package init() already seeds Forge defensively; this makes the boot explicit
 	// and survives a future import reshuffle. Phase 2 swaps DefaultKey for the
-	// account's stored active theme (theming.md §6). Ignoring the error is fine —
+	// account's stored active theme (the theming design §6). Ignoring the error is fine —
 	// DefaultKey is a registered built-in.
 	_ = theme.SetActive(theme.DefaultKey)
 
@@ -40,7 +40,7 @@ func NewApp(engine *game.GameEngine, version string) *App {
 }
 
 func (a *App) setup() {
-	// Apply the account's persisted active theme (theming.md §6) before any widget
+	// Apply the account's persisted active theme (the theming design §6) before any widget
 	// is built, so the splash and every theme.Track closure in the page constructors
 	// below render in the chosen theme on the very first Draw. applyAccountTheme is
 	// fully defensive: no engine/account, an empty stored key, or an unknown/locked
@@ -73,7 +73,7 @@ func (a *App) setup() {
 			a.engine.SetAccount(newAcct)
 			// A brand-new account starts on its own theme (ActiveTheme "" → Forge)
 			// rather than inheriting whatever was previewed before it was installed
-			// (theming.md §6). Re-resolve from the freshly-wired account.
+			// (the theming design §6). Re-resolve from the freshly-wired account.
 			applyAccountTheme(a.engine)
 		})
 	}
@@ -89,7 +89,7 @@ func (a *App) SetScreen(s tcell.Screen) {
 
 // Run starts the tview application (blocks until exit)
 func (a *App) Run() error {
-	// Every theme paints its own canvas (theming.md §3.7): the terminal screen is
+	// Every theme paints its own canvas (the theming design §3.7): the terminal screen is
 	// wrapped so theme sentinels in widget chrome and tcell.ColorDefault resolve
 	// to the ACTIVE theme on every cell. Without this, tview.Styles' Ref colors
 	// would reach the terminal unresolved. A screen installed via SetScreen is

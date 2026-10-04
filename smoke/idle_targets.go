@@ -9,8 +9,7 @@ import "time"
 // days); these describe the player AgeForge is built for, who looks in a few
 // times a day and leaves a build plan behind (Bot.planAhead). The full tier's
 // idle scenario plays IdleSeeds seeds at each interval and, under -pacing
-// enforce, fails when the median misses its target. See
-// design-and-architecture/economy.md, "Idle targets".
+// enforce, fails when the median misses its target.
 //
 // These are the one-week curve's first targets: the medians measured when it
 // landed (3 seeds, worker shares on: 5.63, 6.50 and 9.20 days) with about 20%

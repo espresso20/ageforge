@@ -104,7 +104,7 @@ type Dashboard struct {
 	// Owned by the tview goroutine.
 	iconsWin *iconsWindow
 
-	// Milestone-gated theme unlocks (theming.md §5; see theme_unlock.go). Both fields
+	// Milestone-gated theme unlocks (the theming design §5; see theme_unlock.go). Both fields
 	// are owned by the UI goroutine — touched only from refresh(), which runs inside
 	// QueueUpdateDraw and never under the engine lock, so account.UnlockTheme's Save
 	// is safe here.
@@ -594,7 +594,7 @@ func (d *Dashboard) refresh() {
 	state := d.engine.GetState()
 	d.lastState = &state
 
-	// Milestone-gated theme unlocks (theming.md §5). Runs here, in the UI goroutine,
+	// Milestone-gated theme unlocks (the theming design §5). Runs here, in the UI goroutine,
 	// because account.UnlockTheme persists (file I/O) and must not run under the
 	// engine lock / in a Bus handler. GetState() above already released the lock.
 	d.processThemeUnlocks(state)
@@ -669,7 +669,7 @@ func (d *Dashboard) refresh() {
 }
 
 // processThemeUnlocks grants milestone-gated themes for newly-completed milestones/
-// chains (theming.md §5), toasting only genuinely-new unlocks during live play.
+// chains (the theming design §5), toasting only genuinely-new unlocks during live play.
 //
 // Locking: this is called from refresh() (inside QueueUpdateDraw, on the tview
 // goroutine), which does NOT hold the engine lock — it operates on the GetState()
@@ -909,7 +909,7 @@ func (d *Dashboard) showDevUnlockModal() {
 
 	const devUnlockPage = "__dev_unlock__"
 	// Transient dev-unlock modal: rebuilt each open and removed on close, so it
-	// construction-reads theme.Color without enrolling in Track (theming.md §3.3).
+	// construction-reads theme.Color without enrolling in Track (the theming design §3.3).
 	field := tview.NewInputField().
 		SetLabel("").
 		SetFieldWidth(40).
