@@ -14,7 +14,7 @@ prestige confirm yes
 
 You can prestige from the **Medieval Age (Age 5)** or any later age. A prestige from the Medieval Age to the Atomic Age is an **early taste**: it is optional and pays little (see [Early Tastes and Full Runs](#early-tastes-and-full-runs)). From the **Modern Age (Age 12)** on, a prestige is a full run. There is no upper limit: every age you complete before prestiging adds points, and each era's ages are worth three times the last era's.
 
-A first run is paced to reach the Medieval Age in about 20 hours and the Modern Age in about **a week of real time** (the smoke-test bot gets there in about 5.3 days). The ages before the Modern Age range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. See [How Long Each Age Takes](ages.md#how-long-each-age-takes). The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
+A first run is paced to reach the Medieval Age in about 20 hours and the Modern Age in about **a week of real time** (the smoke-test bot gets there in about 4.9 days). The ages before the Modern Age range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. See [How Long Each Age Takes](ages.md#how-long-each-age-takes). The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
 
 Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first. Before the Cosmic Era, a doom fated for your era that hasn't struck yet ends with the run when you prestige, so a taste in the Medieval Age escapes an Iron Era doom, at the price of the run.
 
@@ -104,7 +104,7 @@ In the Cosmic Era the [Last Passage](#the-last-passage) can take part of a run's
 
 Prestige opens at the Medieval Age, but the points reward depth. A prestige from the Medieval Age to the Atomic Age is an **early taste**; from the Modern Age on it is a **full run**.
 
-- **A taste pays little.** On a first run, a prestige pays about 11 points per day of play at the Medieval Age, 23 at the Modern Age and 37 for a run through the Digital Age (from the smoke-test bot's first-run times). Going deeper pays far more per day.
+- **A taste pays little.** On a first run, a prestige pays about 12 points per day of play at the Medieval Age, 24 at the Modern Age and 38 for a run through the Digital Age (from the smoke-test bot's first-run times). Going deeper pays far more per day.
 - **A second taste adds little.** A Medieval Age reset right after a Modern Age run adds 9 points to that run's 120 (7.5%).
 - **What a taste is for.** Its 9 points buy the [Plan Template](#plan-template), the first kit item. It raises [Era Mastery](#era-mastery) like any prestige: every age below the one you prestiged from gains a level, so a Medieval Age taste speeds up the Primitive to the Classical Age. And it ends an Iron Era doom that hasn't struck yet, though it costs you the run.
 - **The game says so, before and after.** `prestige confirm` before the Modern Age carries a line like this one, and the new run's log repeats it in the past tense right after "Prestige complete":
@@ -296,13 +296,14 @@ A save at prestige level 0 gains nothing.
 
 ### How much faster a run gets
 
-Measured with the smoke-test bot, a near-perfect player, on the one-week curve (median of three seeds):
+Measured with the smoke-test bot, a near-perfect player, on the one-week curve (medians: eight seeds for the first two runs, three for the others):
 
 | Run | To the Modern Age |
 |-----|-------------------|
-| First run | 5.3 days |
-| Second run | 2.3 days: the first run's ages go by 2.3x faster, and the run ends an age deeper |
-| Veteran (mastery 10 through the Space Age, record in the Interstellar Age) | 1.3 days |
+| First run | 4.9 days |
+| Second run | 2.2 days: the first run's ages go by 2.2x faster, and a run played as long as the first ends an age deeper |
+| Third run | 1.9 days |
+| Veteran (mastery 10 through the Space Age, record in the Interstellar Age) | 1.2 days |
 
 On known ground the early ages are short: at 4x the Primitive and Stone Ages are paced at about 15 minutes together and the Bronze Age at under an hour. The start of a run rewards checking in often.
 
@@ -484,7 +485,7 @@ A one-time, permanent reward for Succumbing to the Last Passage.
 - Spend banked points from earlier runs as soon as you log in. You don't need to prestige to spend them, and a kit item works the moment you buy it.
 - Write your plan the way you want the next run to play it, `plan advance` included. The Plan Template replays each age's part when you enter that age, so a plan that ends in an advance chains into the next age's part while you are away.
 - Queue your techs with `plan research` instead of starting them by hand. Only planned techs are recorded, so they are the ones the Plan Template lines up again on the next run.
-- Don't rush the first prestige. A Medieval Age taste pays about 11 points per day of play, a Modern Age prestige about 23 and a run through the Digital Age about 37.
+- Don't rush the first prestige. A Medieval Age taste pays about 12 points per day of play, a Modern Age prestige about 24 and a run through the Digital Age about 38.
 - Take a taste for what it does, not for its points: it buys the Plan Template early, or escapes an Iron Era doom.
 - Milestones and the structure count reset on prestige, and neither changes the points.
 - Pushing past the Modern Age pays in points and in mastery. Each Digital Era age the run completes adds 81 points, and every age it completes gains a mastery level, so the next run is faster further in.
