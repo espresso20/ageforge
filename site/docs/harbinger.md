@@ -201,18 +201,21 @@ Appease and Brace bought against a false prophet buy nothing, since no doom is c
 
 While a harbinger is present you can Appease, Brace or Invite, in any age of the era. Your answers belong to the doom, not to the figure: levels you buy and an Invite carry over when the next figure takes up the warning. Nothing expires, but a real doom's thread lasts only until the strike: usually its lead, 20% to 60% of an age, and less if an advance brings the strike forward (see [No Outrunning a Doom](#no-outrunning-a-doom)). In the Cosmic Era your answers go to the thread that is speaking (see [The Last Passage](#the-last-passage)).
 
-The price is set by the era, so it is the same in every age of it. If your storage can't hold the price yet, the refusal tells you how much storage you need.
+A thread's price is set when its harbinger arrives and stays the same for as long as the thread lasts, whoever is speaking. If your storage can't hold the price yet, the refusal tells you how much storage you need.
 
 ### Appease: lower the odds
 
 | Level | Cost | Chance the doom strikes |
 |-------|------|-------------------------|
 | 0 | none | unchanged |
-| 1 | a quarter of the era's faith income, in faith (and a quarter of its culture income, in culture, from the Steel Era on) | ×0.6 |
+| 1 | what the age the harbinger arrives in makes in the shortest warning, in faith (and the same in culture, from the Steel Era on) | ×0.6 |
 | 2 | double level 1 | ×0.36 (×0.6 again) |
 
-- The **era's income** is what a player who invests moderately in faith makes over the era's ages, each at its target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)): five fully staffed copies of every faith building so far, the faith of every wonder already built, the flat faith of the techs, all multiplied by the production bonus of the techs and wonders you hold by then (it reaches the ×3 cap in the Electric Age). Culture is counted the same way.
+- **The shortest warning** is a fifth of the age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)): a harbinger comes 20% to 60% of an age before its doom. So level 1 is priced on faith you can gather while the warning lasts, not on faith you had to save before it. Level 2 costs double, and both levels together cost three times level 1, about what the longest warning makes: the second level takes a long warning or faith you kept in storage.
+- **What an age makes** is what a player who invests moderately in faith makes in it: five fully staffed copies of every faith building so far, the faith of every wonder already built, the flat faith of the techs, all multiplied by the production bonus of the techs and wonders you hold by then (it reaches the ×3 cap in the Electric Age). Culture is counted the same way.
+- The price belongs to the thread. It is set from the age the harbinger arrives in and does not change when the thread passes to the next age's figure. It is the same on known ground: a mastered age makes more per tick for a shorter warning.
 - Culture is only charged if you already had it when the era began. It unlocks in the Classical Age, so Iron Era threads cost faith only.
+- The Last Passage's thread is priced differently, because it lasts from your arrival in the Cosmic Era until you prestige: a quarter of what the era's ages make (see [What it costs](#what-it-costs-by-epoch)).
 - Two levels at most.
 - Appease always lowers the chance a real doom strikes. Against a false prophet it only lowers the claim, since nothing is coming.
 - **Not after Invite.** Once you invite the catastrophe, Appease is refused: it will come whatever you offer.
@@ -249,19 +252,48 @@ Things to know:
 
 Level 1 prices. Level 2 costs double.
 
-| Era | Appease (level 1) | Brace (level 1) |
-|-----|-------------------|-----------------|
-| Stone Era | refused: nothing can strike there | refused |
-| Iron Era | 14K faith | 26.4K knowledge, 26.4K stone, 6.36K iron, 21.6K gold |
-| Steel Era | 190K faith, 2M culture | 3.6M knowledge, 1.8M gold, 288K steel |
-| Electric Era | 3M faith, 42M culture | 56.4M steel, 924K oil, 3.96M electricity |
-| Digital Era | 31M faith, 460M culture | 156M gold, 117.6B electricity, 19.2B data |
-| Neon Era | 340M faith, 5.2B culture | 288B electricity, 46.8B data, 3B crypto |
-| Cosmic Era | 3.1B faith, 48B culture | 1.56T dark matter, 75.6B titanium |
+**Brace** is priced by the era:
 
-The Cosmic Era's passage is prestige, which you may take in any of its ages. Its Appease counts the Interstellar, Galactic and Quantum Ages, so if you prestige soon after you arrive, Appease is out of reach. In the smoke-test bot's runs, level 1 on the Last Passage's thread came about 4 days into the era and level 2 about 7 (see [Can you afford it?](#can-you-afford-it)). Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
+| Era | Brace (level 1) |
+|-----|-----------------|
+| Stone Era | refused: nothing can strike there |
+| Iron Era | 26.4K knowledge, 26.4K stone, 6.36K iron, 21.6K gold |
+| Steel Era | 3.6M knowledge, 1.8M gold, 288K steel |
+| Electric Era | 56.4M steel, 924K oil, 3.96M electricity |
+| Digital Era | 156M gold, 117.6B electricity, 19.2B data |
+| Neon Era | 288B electricity, 46.8B data, 3B crypto |
+| Cosmic Era | 1.56T dark matter, 75.6B titanium |
 
-Both Cosmic Era threads, the Reality Tear's and the Last Passage's, share the era's price. Each keeps its own levels, so answering one doesn't answer the other.
+**Appease** is priced by the age the harbinger arrives in, and keeps that price for the whole thread:
+
+| Era | Harbinger arrives in | Appease (level 1) | The warning lasts |
+|-----|----------------------|-------------------|-------------------|
+| Stone Era | any age | refused: nothing can strike there | |
+| Iron Era | Iron Age | 1.8K faith | 1.3 h to 3.9 h |
+| | Classical Age | 3K faith | 1.8 h to 5.5 h |
+| | Medieval Age | 6.5K faith | 2.3 h to 7.0 h |
+| Steel Era | Renaissance Age | 13K faith, 130K culture | 3.1 h to 9.4 h |
+| | Colonial Age | 35K faith, 310K culture | 3.6 h to 10.9 h |
+| | Industrial Age | 110K faith, 1.2M culture | 4.2 h to 12.5 h |
+| Electric Era | Victorian Age | 280K faith, 3.5M culture | 4.7 h to 14.0 h |
+| | Electric Age | 660K faith, 9M culture | 5.2 h to 15.6 h |
+| | Atomic Age | 1.5M faith, 21M culture | 6.2 h to 18.7 h |
+| Digital Era | Modern Age | 2.9M faith, 42M culture | 6.2 h to 18.7 h |
+| | Information Age | 6.6M faith, 98M culture | 7.3 h to 21.8 h |
+| | Digital Age | 15M faith, 230M culture | 8.3 h to 25.0 h |
+| Neon Era | Cyberpunk Age | 34M faith, 510M culture | 9.4 h to 28.1 h |
+| | Fusion Age | 74M faith, 1.2B culture | 10.4 h to 31.2 h |
+| | Space Age | 170M faith, 2.5B culture | 11.4 h to 34.3 h |
+| Cosmic Era: the Reality Tear | Interstellar Age | 360M faith, 5.4B culture | 12.5 h to 37.4 h |
+| | Galactic Age | 710M faith, 11B culture | 12.5 h to 37.4 h |
+| | Quantum or Transcendent Age | 1.5B faith, 22B culture | 12.5 h to 37.4 h |
+| Cosmic Era: the Last Passage | on arrival in the era | 3.1B faith, 48B culture | until you prestige |
+
+The warning times are for a first run. On known ground an age and its warning are both shorter by the age's [Era Mastery](prestige.md#era-mastery) speed, and the age makes that much more per tick, so the price is the same.
+
+The Cosmic Era's passage is prestige, which you may take in any of its ages. The Last Passage's thread runs from your arrival in the era until you prestige, so its Appease is priced on the era, not on a warning: a quarter of what the Interstellar, Galactic and Quantum Ages make. If you prestige soon after you arrive, it is out of reach. In the smoke-test bot's runs, level 1 on the Last Passage's thread came about 4 days into the era and level 2 about 7 (see [Can you afford it?](#can-you-afford-it)). Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
+
+The two Cosmic Era threads, the Reality Tear's and the Last Passage's, share the era's Brace price; each has its own Appease price, as above. Each keeps its own levels, so answering one doesn't answer the other.
 
 #### Can you afford it?
 
@@ -298,9 +330,11 @@ Invite is for players who want to Succumb on purpose, to collect an era's legacy
 
 In the Cosmic Era, Invite answers the thread that is speaking. Invite the Reality Tear's harbinger and that doom is certain, like any era's. Invite the Last Passage's thread and your next prestige brings the Last Passage: it is how you choose the [Cosmic Legacy](prestige.md#cosmic-legacy) on purpose.
 
-### Why the price is tied to the era
+### Why Appease is priced on the warning
 
-The price comes from what the era asks of you, not from your current storage. Your storage is smallest early in the era, so a price based on it would make a harbinger who comes early cheap to answer. Tying it to the era keeps it the same in every age of the era, whoever is speaking.
+A doom's harbinger gives you a fifth to three fifths of an age. Appease used to cost a quarter of what the whole era makes in faith, which no warning is long enough to earn: it could only be paid from faith saved before anyone had warned you, and in test games it was affordable in a third of the warnings. Now level 1 is what the age makes in the shortest warning, so the warning itself can pay for it, and level 2 is the stretch.
+
+The price is fixed when the harbinger arrives, so it doesn't climb if the thread carries into the next age, and it comes from what the age makes, not from your storage: a harbinger who comes while your stores are small is no cheaper to answer than the age warrants. Brace is priced by the era, from what its advances ask of you, and is the same in every age of it.
 
 ---
 
@@ -381,7 +415,7 @@ With no harbinger present, the panel says so, explains that a harbinger comes on
 ## Strategy
 
 - **Bank faith before you need it.** A harbinger gives you 20% to 60% of an age's time before its doom strikes. Faith already in storage lowers the strike chance by itself and pays for Appease the moment the harbinger comes.
-- **Answer before the moment.** The price is the same in every age of the era, but the thread lasts only until the doom's moment, and advancing out of the era, or out of the age a figure named, brings the strike to that advance (in the Cosmic Era, so does prestige).
+- **Answer before the moment.** The price doesn't change once the harbinger has come, but the thread lasts only until the doom's moment, and advancing out of the era, or out of the age a figure named, brings the strike to that advance (in the Cosmic Era, so does prestige).
 - **Want to keep your run?** Appease is the direct answer. One level cuts the chance it strikes by 40%, and it can't hurt the odds.
 - **Worried but short on faith?** Brace instead. It doesn't lower the odds, but it makes Endure much cheaper if the catastrophe comes.
 - **Early warnings deserve a little doubt.** Before the Industrial Age a warning may be false: in the Stone Era it always is, and in the Iron and Steel Eras now and then. Your own faith fill tells you the real band (see [Faith and the odds](faith.md#faith-threshold-bands)).
