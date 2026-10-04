@@ -75,9 +75,13 @@ func workersProvider(state game.GameState, _ int) string {
 		if total > 0 {
 			drainPerWorker = foodDrain / float64(total)
 		}
+		// What is grown before anyone eats, in the units a worker eats in:
+		// on known ground the net rate is k times that, and would feed k
+		// times too many (game.FoodBeforeMastery).
+		grown := game.FoodBeforeMastery(foodRS.Rate, foodRS.Breakdown)
 		breakEven := 0
-		if drainPerWorker > 0 && foodRS.Rate+foodDrain > 0 {
-			breakEven = int((foodRS.Rate + foodDrain) / drainPerWorker)
+		if drainPerWorker > 0 && grown > 0 {
+			breakEven = int(grown / drainPerWorker)
 		}
 
 		netColor := "green"
