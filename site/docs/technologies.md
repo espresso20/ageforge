@@ -21,9 +21,17 @@ A research speed of +30% cuts the tick count to 70% of base. It cuts the number 
 
 The tick count is locked in when you start the tech. Gaining more research speed mid-research does not shorten the current countdown.
 
-The Research panel lists every tech at the time it would take if you started it now, with research speed and Era Mastery counted, and its header says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
+The Research panel lists every tech at the time it would take if you started it now, with research speed, Ancient Knowledge and Era Mastery counted, and its header says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
 
-**Era Mastery.** On known ground (an age a past run completed) the adjusted ticks are then divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick: 2x after one completion, up to 4.2x after ten. The Research panel shows the shortened times.
+**Ancient Knowledge.** For each distinct epoch you have [Succumbed](catastrophe.md#ancient-knowledge) in, the adjusted ticks are multiplied by 0.8, rounded down and never below one tick: ×0.8 after one epoch, ×0.64 after two, ×0.26 with all six. It multiplies what research speed leaves, so it never brings a tech to a single tick on its own. The Research panel's header has a line for it (`Ancient Knowledge: research time ×0.64. The times below include it.`).
+
+**Era Mastery.** On known ground (an age a past run completed) the ticks are then divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick: 2x after one completion, up to 4.2x after ten. The Research panel shows the shortened times.
+
+All together:
+
+```
+ticks = base ticks × (1 − research speed) × 0.8 ^ epochs succumbed in ÷ Era Mastery speed
+```
 
 ### Knowledge Cost is Upfront
 
@@ -61,12 +69,12 @@ Research speed reduces the tick count when research starts. Its sources add toge
 | **Renaissance Mind** milestone (42 techs, from the Renaissance Age) | +10% | Scholar Chain, hidden until you get close |
 | **Tech Master** milestone (50 techs, from the Information Age) | +10% | Scholar Chain, hidden; also +5% all production |
 | **Tech Ascendant** milestone (all 77 techs, Transcendent Age) | +20% | Hidden. It arrives with your last tech, so it never shortens one |
-| **Ancient Knowledge** (Succumb) | +25% per epoch | For each distinct epoch you Succumb in (Iron to Cosmic, up to +150%); kept through Succumb, prestige and save/load. See [Ancient Knowledge](catastrophe.md#ancient-knowledge) |
+| **Ancient Knowledge** (Succumb) | not research speed: research time ×0.8 per epoch | For each distinct epoch you Succumb in (Iron to Cosmic, ×0.26 with all six). It multiplies the time research speed leaves, so it is not in this pool and no cap holds it. Kept through Succumb, prestige and save/load. See [Ancient Knowledge](catastrophe.md#ancient-knowledge) |
 | **Techs** | none | No tech has a research speed effect |
 
 Milestone research speed lasts for the run: milestones start over at prestige and at Succumb. Five milestones add +50% in total, +30% of it before your last tech. See [Milestones](milestones.md).
 
-Nothing caps research speed except that a tech always takes at least 1 tick. Once your total reaches +100%, every tech finishes on the tick after you start it, and anything past +100% adds nothing. Ancient Knowledge alone gets there with the fourth epoch, so the fifth and sixth add nothing. The Stats panel marks the Research speed line as capped when that happens, and the log says so when a research speed bonus you just earned is past it.
+Nothing caps research speed except that a tech always takes at least 1 tick. At +100% every tech would finish on the tick after you start it, and anything past +100% would add nothing. No run reaches that: the five milestones are the only sources and add +50% between them. (Ancient Knowledge used to be +25% research speed per epoch and reached +100% alone with the fourth; it is a multiplier on research time now.) The Stats panel would mark the Research speed line as capped, and the log would say so when a research speed bonus is past it.
 
 > **Research speed is not knowledge output.** Many techs raise knowledge output (see [Knowledge output](#knowledge-output) below). More knowledge lets you afford techs sooner; each tech still takes the same number of ticks.
 
@@ -362,7 +370,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 
 ### All production
 
-Each of these adds a percentage to all production. The bonuses from every source (techs, wonders, milestones, monuments, events, boons, the Cosmic Legacy) add into one pool, and the game multiplies every positive production rate by 1 + that pool, **clamped at x3.0** (+200%). See [The all-production cap](resources.md#the-all-production-cap).
+Each of these adds a percentage to all production. The bonuses from every source (techs, wonders, milestones, monuments, events, boons) add into one pool, and the game multiplies every positive production rate by 1 + that pool, **clamped at x3.0** (+200%). See [The all-production cap](resources.md#the-all-production-cap). The [Cosmic Legacy](prestige.md#cosmic-legacy) is the one all-production bonus outside the pool: it multiplies production by 1.1 after the cap.
 
 | Tech | Bonus |
 |---|---|
@@ -632,9 +640,9 @@ Knowledge costs rise steeply, from 800 kp (Primitive) to hundreds of millions in
 
 **The Dark Age epoch event** cancels your active research and drains 80% of your knowledge stockpile. If an epoch transition is close, consider whether to delay an expensive research start until after its event resolves.
 
-**Prestige resets research** entirely, with every tech, its bonus and the milestones that gave research speed. What survives a prestige is the **Ancient Knowledge** bonus (+25% research speed per epoch) from Succumbing, faster research times in the ages a past run completed ([Era Mastery](prestige.md#era-mastery)), and, with the legacy kit's [Plan Template](prestige.md#plan-template), the techs you put in your build plan, which are planned again in the age you planned them in.
+**Prestige resets research** entirely, with every tech, its bonus and the milestones that gave research speed. What survives a prestige is **Ancient Knowledge** (research time ×0.8 per epoch) from Succumbing, faster research times in the ages a past run completed ([Era Mastery](prestige.md#era-mastery)), and, with the legacy kit's [Plan Template](prestige.md#plan-template), the techs you put in your build plan, which are planned again in the age you planned them in.
 
-**Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but grants +25% research speed permanently, and each further epoch you Succumb in adds another +25%. Players who Succumb at least once begin each later run with faster research from tick one. See [Succumb](catastrophe.md#succumb).
+**Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but cuts research time to ×0.8 permanently, and each further epoch you Succumb in multiplies it by 0.8 again. The fallen run's completed ages also gain an [Era Mastery](prestige.md#era-mastery) level, so the rebuild is quicker. Players who Succumb at least once begin each later run with faster research from tick one. See [Succumb](catastrophe.md#succumb).
 
 **Don't overlook `civil_engineering`.** −5% build cost plus +100 storage for every resource is good value in the Classical Age and keeps helping for the rest of the run.
 

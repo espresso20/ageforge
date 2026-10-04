@@ -26,9 +26,11 @@ A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it 
 
 **Wonder overflow** is on by default. When a resource the current age's wonder still needs would be clamped at its storage limit, the part the limit would cut off goes into the wonder's bank instead of being lost, up to what the wonder still needs of it. It never takes anything you hold: only what production was about to waste. It works during offline catch-up too. What the wonder doesn't need then goes toward your [build plan](plan.md#overflow-pays-the-plan)'s queued copies, with or without wonder overflow, so the wonder always comes first.
 
+A wonder you have put in your build plan is one of those queued copies. With wonder overflow off it still takes overflow, in plan order, into its own bank, so a planned wonder's bank fills while you are away either way. Turning wonder overflow off only stops a wonder you have not planned from taking it.
+
 ```
 wonder overflow        # is it on?
-wonder overflow off    # production over the storage limit is lost again
+wonder overflow off    # only a wonder in your build plan takes overflow
 wonder overflow on
 ```
 
@@ -66,7 +68,7 @@ The flow resources (food, faith, culture) aren't priced that way. Those parts ar
 
 Wonders are banked a deposit at a time, but each part of a wonder's price fits in the most storage you can build in its age, so you never have to bank one resource in several rounds while sitting at its storage limit.
 
-No wonder takes longer to build than a sixth of its age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). Build times below are in ticks, with the real time beside them; one tick is 2 seconds.
+No wonder takes longer to build than a sixth of its age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). Build times below are in ticks, with the real time beside them; one tick is 2 seconds. These are first-run times: on known ground [Era Mastery](prestige.md#era-mastery) divides them by the age's speed, and the Wonders panel shows the shorter time.
 
 ---
 
