@@ -35,9 +35,8 @@ type Set struct {
 	unknown    Catastrophe
 	lastDoom   Catastrophe
 	legacy     map[string]map[string]float64
-	depthW     map[string]int // age key -> depth weight
-	depthPts   map[string]int // age key -> depth points
-	harbingers []config.HarbingerDef
+	depthW     map[string]int                 // age key -> depth weight
+	depthPts   map[string]int                 // age key -> depth points
 	harbinger  map[string]config.HarbingerDef // by age key
 	awakenings []config.AwakeningDef
 	awakening  map[string]config.AwakeningDef // by trigger age
@@ -53,7 +52,6 @@ type Set struct {
 	milestones     []config.MilestoneDef
 	milestoneByKey map[string]config.MilestoneDef
 	chains         []config.MilestoneChainDef
-	chainByKey     map[string]config.MilestoneChainDef
 	titles         []config.TitleDef
 
 	events        []config.EventDef
@@ -66,7 +64,6 @@ type Set struct {
 	factions     []config.FactionDef
 	factionByKey map[string]config.FactionDef
 	routes       []config.TradeRouteDef
-	routeByKey   map[string]config.TradeRouteDef
 	exchange     []config.ExchangeRateDef
 	exchangeBy   map[string]config.ExchangeRateDef // "from:to"
 
@@ -111,7 +108,6 @@ func Compile(src Source) *Set {
 		goodEvents: slices.Clone(src.GoodEraEvents),
 		badEvents:  slices.Clone(src.ChallengingEraEvents),
 		awakenings: slices.Clone(src.Awakenings),
-		harbingers: slices.Clone(src.Harbingers),
 		factions:   slices.Clone(src.Factions),
 		routes:     slices.Clone(src.TradeRoutes),
 		exchange:   slices.Clone(src.ExchangeRates),
@@ -130,7 +126,7 @@ func Compile(src Source) *Set {
 		s.legacy[era] = maps.Clone(bonus)
 	}
 	s.indexAges()
-	s.indexEras(src.CatastropheGate)
+	s.indexEras(src)
 	s.indexDefs()
 	s.derive()
 	s.buildNames()
@@ -153,7 +149,7 @@ func (s *Set) indexAges() {
 	}
 }
 
-func (s *Set) indexEras(gate string) {
+func (s *Set) indexEras(src Source) {
 	s.eraByKey = make(map[string]config.EpochDef, len(s.eras))
 	s.eraPos = make(map[string]int, len(s.eras))
 	s.eraOfAge = map[string]string{}
@@ -177,7 +173,7 @@ func (s *Set) indexEras(gate string) {
 			s.eraFirst[e.Key] = s.agePos[e.Ages[0]]
 		}
 	}
-	s.gateOrder = s.eraByKey[gate].Order
+	s.gateOrder = s.eraByKey[src.CatastropheGate].Order
 	s.depthPts = make(map[string]int, len(s.ageKeys))
 	total := 0
 	for _, a := range s.ageKeys {
@@ -187,8 +183,8 @@ func (s *Set) indexEras(gate string) {
 		}
 		total += s.depthW[a]
 	}
-	s.harbinger = make(map[string]config.HarbingerDef, len(s.harbingers))
-	for _, h := range s.harbingers {
+	s.harbinger = make(map[string]config.HarbingerDef, len(src.Harbingers))
+	for _, h := range src.Harbingers {
 		s.harbinger[h.Age] = h
 	}
 	s.awakening = make(map[string]config.AwakeningDef, len(s.awakenings))
@@ -227,10 +223,6 @@ func (s *Set) indexDefs() {
 	for _, m := range s.milestones {
 		s.milestoneByKey[m.Key] = m
 	}
-	s.chainByKey = make(map[string]config.MilestoneChainDef, len(s.chains))
-	for _, c := range s.chains {
-		s.chainByKey[c.Key] = c
-	}
 	s.eventByKey = make(map[string]config.EventDef, len(s.events)+len(s.eraEvents))
 	for _, e := range s.events {
 		s.eventByKey[e.Key] = e
@@ -248,10 +240,6 @@ func (s *Set) indexDefs() {
 	s.factionByKey = make(map[string]config.FactionDef, len(s.factions))
 	for _, f := range s.factions {
 		s.factionByKey[f.Key] = f
-	}
-	s.routeByKey = make(map[string]config.TradeRouteDef, len(s.routes))
-	for _, r := range s.routes {
-		s.routeByKey[r.Key] = r
 	}
 	s.exchangeBy = make(map[string]config.ExchangeRateDef, len(s.exchange))
 	for _, x := range s.exchange {
@@ -384,9 +372,6 @@ func (s *Set) DepthWeight(age string) int { return s.depthW[age] }
 // age before it (0 for an unknown age).
 func (s *Set) DepthPoints(age string) int { return s.depthPts[age] }
 
-// Harbingers returns the roster in age order.
-func (s *Set) Harbingers() []config.HarbingerDef { return slices.Clone(s.harbingers) }
-
 // Harbinger returns the harbinger of an age.
 func (s *Set) Harbinger(age string) (config.HarbingerDef, bool) {
 	h, ok := s.harbinger[age]
@@ -494,12 +479,6 @@ func (s *Set) Milestone(key string) (config.MilestoneDef, bool) {
 // MilestoneChains returns every milestone chain, in definition order.
 func (s *Set) MilestoneChains() []config.MilestoneChainDef { return slices.Clone(s.chains) }
 
-// MilestoneChain returns a chain's definition.
-func (s *Set) MilestoneChain(key string) (config.MilestoneChainDef, bool) {
-	c, ok := s.chainByKey[key]
-	return c, ok
-}
-
 // MilestoneTitles returns the fallback title ladder.
 func (s *Set) MilestoneTitles() []config.TitleDef { return slices.Clone(s.titles) }
 
@@ -538,12 +517,6 @@ func (s *Set) Faction(key string) (config.FactionDef, bool) {
 // TradeRoutes returns every trade route, in definition order.
 func (s *Set) TradeRoutes() []config.TradeRouteDef { return slices.Clone(s.routes) }
 
-// TradeRoute returns a trade route's definition.
-func (s *Set) TradeRoute(key string) (config.TradeRouteDef, bool) {
-	r, ok := s.routeByKey[key]
-	return r, ok
-}
-
 // ExchangeRates returns the listed market pairs, in definition order.
 func (s *Set) ExchangeRates() []config.ExchangeRateDef { return slices.Clone(s.exchange) }
 
@@ -552,9 +525,6 @@ func (s *Set) ListedRate(from, to string) (config.ExchangeRateDef, bool) {
 	x, ok := s.exchangeBy[from+":"+to]
 	return x, ok
 }
-
-// ExchangeRateMap returns a map of the listed market pairs, keyed "from:to".
-func (s *Set) ExchangeRateMap() map[string]config.ExchangeRateDef { return maps.Clone(s.exchangeBy) }
 
 // WorkerDomains returns the worker domain keys in their fixed order.
 func (s *Set) WorkerDomains() []string { return slices.Clone(s.domains) }

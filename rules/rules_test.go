@@ -55,11 +55,9 @@ func TestCoreMatchesConfigTables(t *testing.T) {
 	check("EventMap", s.EventMap(), config.EventByKey())
 	check("GoodEraEvents", s.GoodEraEvents(), config.GoodEpochEvents())
 	check("ChallengingEraEvents", s.ChallengingEraEvents(), config.ChallengingEpochEvents())
-	check("Harbingers", s.Harbingers(), config.Harbingers())
 	check("Factions", s.Factions(), config.BaseFactions())
 	check("TradeRoutes", s.TradeRoutes(), config.BaseTradeRoutes())
 	check("ExchangeRates", s.ExchangeRates(), config.BaseExchangeRates())
-	check("ExchangeRateMap", s.ExchangeRateMap(), config.ExchangeRateByKey())
 	check("WorkerDomains", s.WorkerDomains(), config.WorkerDomains())
 	check("PrestigeUpgrades", s.PrestigeUpgrades(), config.PrestigeUpgrades())
 	check("ShopUpgrades", s.ShopUpgrades(), config.ActivePrestigeUpgrades())
@@ -75,11 +73,6 @@ func TestCoreMatchesConfigTables(t *testing.T) {
 			t.Errorf("Milestone(%q) differs from config", key)
 		}
 	}
-	for key, want := range config.MilestoneChainByKey() {
-		if got, ok := s.MilestoneChain(key); !ok || !reflect.DeepEqual(got, want) {
-			t.Errorf("MilestoneChain(%q) differs from config", key)
-		}
-	}
 	for key, want := range config.EpochEventByKey() {
 		if got, ok := s.EraEvent(key); !ok || got != want {
 			t.Errorf("EraEvent(%q) differs from config", key)
@@ -88,11 +81,6 @@ func TestCoreMatchesConfigTables(t *testing.T) {
 	for key, want := range config.FactionByKey() {
 		if got, ok := s.Faction(key); !ok || !reflect.DeepEqual(got, want) {
 			t.Errorf("Faction(%q) differs from config", key)
-		}
-	}
-	for key, want := range config.TradeRouteByKey() {
-		if got, ok := s.TradeRoute(key); !ok || !reflect.DeepEqual(got, want) {
-			t.Errorf("TradeRoute(%q) differs from config", key)
 		}
 	}
 	for key, want := range config.PrestigeUpgradeByKey() {
@@ -149,9 +137,6 @@ func TestCoreMatchesConfigPerAge(t *testing.T) {
 		}
 		if got, want := s.TargetTicks(age), config.AgeTargetTicks(age); got != want {
 			t.Errorf("TargetTicks(%q) = %v, config %v", age, got, want)
-		}
-		if got, want := s.Stretch(age), config.AgeStretch(age); got != want {
-			t.Errorf("Stretch(%q) = %v, config %v", age, got, want)
 		}
 		for _, ticks := range []int{-3, 0, 1, 7, 30, 144, 1000, 99999} {
 			if got, want := s.StretchTicks(age, ticks), config.StretchTicks(age, ticks); got != want {
@@ -469,15 +454,15 @@ func TestSetHandsOutCopies(t *testing.T) {
 	// and add a key to every map.
 	for name, got := range map[string]any{
 		"Ages": s.Ages(), "AgeKeys": s.AgeKeys(), "Indexes": s.Indexes(), "Eras": s.Eras(),
-		"LegacyBonus": s.LegacyBonus(era), "Harbingers": s.Harbingers(),
-		"Buildings": s.Buildings(), "BuildingMap": s.BuildingMap(), "AgeEntryCosts": s.AgeEntryCosts(age),
+		"LegacyBonus": s.LegacyBonus(era),
+		"Buildings":   s.Buildings(), "BuildingMap": s.BuildingMap(), "AgeEntryCosts": s.AgeEntryCosts(age),
 		"Techs": s.Techs(), "TechMap": s.TechMap(), "TechsOf": s.TechsOf(age),
 		"Resources": s.Resources(), "ResourceMap": s.ResourceMap(),
 		"Milestones": s.Milestones(), "MilestoneChains": s.MilestoneChains(), "MilestoneTitles": s.MilestoneTitles(),
 		"Events": s.Events(), "EraEvents": s.EraEvents(), "EventMap": s.EventMap(),
 		"GoodEraEvents": s.GoodEraEvents(), "ChallengingEraEvents": s.ChallengingEraEvents(),
 		"Factions": s.Factions(), "TradeRoutes": s.TradeRoutes(),
-		"ExchangeRates": s.ExchangeRates(), "ExchangeRateMap": s.ExchangeRateMap(),
+		"ExchangeRates": s.ExchangeRates(),
 		"WorkerDomains": s.WorkerDomains(), "PrestigeUpgrades": s.PrestigeUpgrades(),
 		"ShopUpgrades": s.ShopUpgrades(), "LegacyKit": s.LegacyKit(),
 		"PriceLevels": s.PriceLevels(age), "PricedResources": s.PricedResources(age),

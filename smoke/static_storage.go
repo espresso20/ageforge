@@ -6,12 +6,13 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The Storage Covenant (the economy design's Law 1): the most
 // storage buildable in an age must hold at least config.StorageHold(age)
 // hours (4.5 from the Bronze Age on, 1.5 in the Primitive and Stone Ages) of
-// the age's typical production (config.TypicalIncome) of every construction
+// the age's typical production (rules.Set.TypicalIncome) of every construction
 // resource of the age. It sizes storage to time, where the Gate Covenant
 // sizes it to prices: a store that fills in minutes wastes most of what a
 // player makes between visits.
@@ -36,14 +37,14 @@ func (r StorageRow) OK() bool { return r.Hours >= r.Want() }
 // StaticStorage checks every age against the Storage Covenant and returns
 // one row per age (its tightest resource), failing or not.
 func StaticStorage() []StorageRow {
-	return staticStorage(config.BuildingByKey(), config.TypicalIncome)
+	return staticStorage(config.BuildingByKey(), rules.Core().TypicalIncome)
 }
 
 func staticStorage(defs map[string]config.BuildingDef, income func(res, age string) float64) []StorageRow {
 	var out []StorageRow
 	for _, age := range config.AgeOrder() {
 		row := StorageRow{Age: age, Hours: math.Inf(1)}
-		for _, res := range sortedKeys(config.PriceLevels(age)) {
+		for _, res := range sortedKeys(rules.Core().PriceLevels(age)) {
 			inc := income(res, age)
 			if inc <= 0 {
 				continue

@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The depth check (Pacing v2, PR 6), from config alone:
@@ -42,17 +43,17 @@ func StaticDepth() []string {
 			w *= 3
 		}
 		for _, a := range ep.Ages {
-			if got := config.DepthWeight(a); got != w {
+			if got := rules.Core().DepthWeight(a); got != w {
 				out = append(out, fmt.Sprintf("%s (%s) weighs %d, want 3^%d = %d", a, ep.Key, got, ep.Order, w))
 			}
 		}
 	}
 	for _, row := range depthDocTable {
-		if got := config.DepthPoints(row.age); got != row.points {
+		if got := rules.Core().DepthPoints(row.age); got != row.points {
 			out = append(out, fmt.Sprintf("a prestige from %s pays %d, the docs say %d", row.age, got, row.points))
 		}
 	}
-	taste, run := config.DepthPoints(game.PrestigeMinAge), config.DepthPoints(game.PrestigeRunAge)
+	taste, run := rules.Core().DepthPoints(game.PrestigeMinAge), rules.Core().DepthPoints(game.PrestigeRunAge)
 	if run <= 0 || float64(taste) >= float64(DepthTasteMax*float64(run)) {
 		out = append(out, fmt.Sprintf("a second taste (%s, %d points) after a full run (%s, %d) gains %.1f%%, want under %.0f%%",
 			game.PrestigeMinAge, taste, game.PrestigeRunAge, run, float64(taste*100)/float64(max(run, 1)), DepthTasteMax*100))
@@ -67,13 +68,13 @@ func StaticDepth() []string {
 func writeDepthStatic(sb *strings.Builder, problems []string) {
 	sb.WriteString("Each completed age pays 3^epoch; a prestige pays the ages before it, with no divisor.\n\n| epoch | weight per age |\n|---|---|\n")
 	for _, ep := range config.Epochs() {
-		fmt.Fprintf(sb, "| %s | %d |\n", ep.Key, config.DepthWeight(ep.Ages[0]))
+		fmt.Fprintf(sb, "| %s | %d |\n", ep.Key, rules.Core().DepthWeight(ep.Ages[0]))
 	}
 	sb.WriteString("\n| prestige from | points |\n|---|---|\n")
 	for _, row := range depthDocTable {
-		fmt.Fprintf(sb, "| %s | %d |\n", row.age, config.DepthPoints(row.age))
+		fmt.Fprintf(sb, "| %s | %d |\n", row.age, rules.Core().DepthPoints(row.age))
 	}
-	taste, run := config.DepthPoints(game.PrestigeMinAge), config.DepthPoints(game.PrestigeRunAge)
+	taste, run := rules.Core().DepthPoints(game.PrestigeMinAge), rules.Core().DepthPoints(game.PrestigeRunAge)
 	fmt.Fprintf(sb, "\nA second taste after a full run adds %d of %d points (%.1f%%, limit %.0f%%).\n", taste, run, float64(taste*100)/float64(max(run, 1)), DepthTasteMax*100)
 	for _, p := range problems {
 		fmt.Fprintf(sb, "- %s\n", p)

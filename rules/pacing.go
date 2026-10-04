@@ -31,18 +31,15 @@ func (s *Set) Target(age string) time.Duration { return s.targets[age] }
 // TargetTicks is Target in ticks at 1x.
 func (s *Set) TargetTicks(age string) float64 { return s.targetTicks[age] }
 
-// Stretch is the factor age's tick clocks run at (1 for an unknown age).
-func (s *Set) Stretch(age string) float64 {
-	if f, ok := s.stretch[age]; ok {
-		return f
-	}
-	return 1
-}
-
-// StretchTicks re-times a clock typed in ticks for age: ticks × Stretch,
+// StretchTicks re-times a clock typed in ticks for age: ticks times the
+// factor the age's clocks run at (1 for an age the set has no factor for),
 // rounded to the nearest tick.
 func (s *Set) StretchTicks(age string, ticks int) int {
-	return config.StretchTicksBy(ticks, s.Stretch(age))
+	factor, ok := s.stretch[age]
+	if !ok {
+		factor = 1
+	}
+	return config.StretchTicksBy(ticks, factor)
 }
 
 // PriceLevels returns the median first-copy price of each construction
