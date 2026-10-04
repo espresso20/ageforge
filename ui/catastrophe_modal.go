@@ -71,14 +71,18 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		researchLine = fmt.Sprintf("  [gray]• Ancient Knowledge already earned here (research time stays %s)[-]", game.ResearchFactorText(researchNow))
 		legacyLine = fmt.Sprintf("  [gray]• %s legacy already held; no new legacy bonus[-]", ep.Name)
 	}
-	succumb := strings.Join([]string{
+	succumbLines := []string{
 		"[white]── SUCCUMB: let civilization fall ──[-]",
 		"  [red]• Full reset to the Primitive Age: buildings, resources, research[-]",
 		"  [red]• No prestige points earned (level and upgrades are kept)[-]",
 		fmt.Sprintf("  [green]✓ Up to %d buildings become ruins (50%% output, max %d ruins)[-]", game.SuccumbRuinCount, game.MaxRuins),
-		researchLine,
-		legacyLine,
-	}, "\n")
+	}
+	// A fall ends the run as a prestige does: the ages it completed gain a
+	// mastery level (none when every one of them is at the cap).
+	if len(st.Mastery.NextGains) > 0 {
+		succumbLines = append(succumbLines, "  [green]✓ Era Mastery: the ages this run completed gain a level and run faster[-]")
+	}
+	succumb := strings.Join(append(succumbLines, researchLine, legacyLine), "\n")
 
 	hint := "[gray]Esc: decide later · advancing waits · type 'catastrophe' to reopen[-]"
 

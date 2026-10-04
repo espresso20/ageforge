@@ -22,9 +22,10 @@ import (
 //   - the fate window and the harbinger's lead: ÷ k (expectedAgeTicks).
 //
 // Events, raids, trade routes and the other real-clock timers are never
-// divided. Mastery is fixed for a run: it changes only at prestige (every
-// age below the run's furthest gains one level), so k never changes mid-run
-// and a fate rolled at an era's entry stays consistent. The record (the
+// divided. Mastery is fixed for a run: it changes only when a run ends, at a
+// prestige or a Succumb (every age below the run's furthest gains one
+// level), so k never changes mid-run and a fate rolled at an era's entry
+// stays consistent. The record (the
 // deepest age ever entered) can move mid-run, but only ages already behind
 // the player feel it (catch-up), never the current one.
 //
@@ -134,9 +135,9 @@ func (pm *PrestigeManager) masteryGains() []string {
 	return out
 }
 
-// CommitRun is the prestige's mastery step: every age below this run's
-// furthest gains one level, up to the cap, and the next run starts from the
-// Primitive Age. Returns the ages that gained.
+// CommitRun is the mastery step of a run's end (a prestige or a Succumb):
+// every age below this run's furthest gains one level, up to the cap, and
+// the next run starts from the Primitive Age. Returns the ages that gained.
 func (pm *PrestigeManager) CommitRun() []string {
 	gained := pm.masteryGains()
 	for _, a := range gained {

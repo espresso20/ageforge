@@ -4,7 +4,8 @@ import "math"
 
 // Era Mastery (Pacing v2, PR 5): each age remembers how many runs completed
 // it, and an age you know runs faster. An age's mastery m is the number of
-// prestige runs that completed it, capped at MasteryCap; it runs k times
+// runs that completed it and then ended, in a prestige or a Succumb, capped
+// at MasteryCap; it runs k times
 // faster, k = 1 + √m: production × k (after the ×3 cap), storage × k, build
 // and research times ÷ k. The frontier (m = 0) runs at 1x. Events, raids and
 // the other real-clock timers are never divided.

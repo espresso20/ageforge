@@ -475,6 +475,8 @@ func (ge *GameEngine) Endure() error {
 //   - the epoch's legacy flag is set: its per-resource legacy bonus and
 //     Ancient Knowledge (research time x0.8 per distinct epoch succumbed in)
 //     are permanent
+//   - Era Mastery: every age the run completed gains a level, as at a
+//     prestige (CommitRun), so the rebuild runs on known ground
 //   - full reset to the Primitive Age: buildings, resources, workers, research,
 //     milestones, events. Prestige level, points and upgrades are kept; no
 //     prestige points are earned
@@ -507,6 +509,13 @@ func (ge *GameEngine) Succumb() error {
 	savedRuins := ge.Buildings.GetAllRuins()
 
 	ge.legacyBonuses[epochKey] = true
+	// Era Mastery: a fall ends the run as a prestige does, so every age the
+	// run completed gains a level through the same commit, and the rebuild
+	// starts on known ground. The commit starts the run's furthest age over,
+	// so a later prestige counts only what the rebuilt run completes: no age
+	// is counted twice for one run.
+	ge.Prestige.NoteAgeEntered(ge.age)
+	masteryLine := masteryCommitLine(ge.Prestige.CommitRun())
 	// The legacy kit remembers the fallen civilization's plan, research
 	// order, civilizations met and shares before the reset.
 	ge.captureLegacyLocked()
@@ -577,6 +586,12 @@ func (ge *GameEngine) Succumb() error {
 		ge.addLog("info", fmt.Sprintf("The %s legacy was already yours; no new legacy bonus.", ep.Name))
 	}
 	ge.addLog("success", fmt.Sprintf("Ancient Knowledge: research time %s for each epoch succumbed in, now %s (permanent).", ResearchFactorText(SuccumbResearchTimeFactor), ResearchFactorText(ge.succumbResearchFactor())))
+	if masteryLine != "" {
+		ge.addLog("info", masteryLine)
+	}
+	if line := ge.masteryEntryLine(ge.age, 1); line != "" {
+		ge.addLog("info", line)
+	}
 	if len(savedRuins) > 0 {
 		ge.addLog("info", fmt.Sprintf("%s from fallen civilizations carry forward (max %d).", textfmt.Count(ge.Buildings.RuinTotal(), "ruin", "ruins"), MaxRuins))
 	}
