@@ -31,7 +31,7 @@ func TestEarlyPrestigeSaysWhatItPaid(t *testing.T) {
 
 	// A first run: the Modern Age has not been seen, so it is not named.
 	ge := prestigeFrom("medieval_age")
-	want := "That was an early prestige, from the Medieval Age: it paid 9 prestige points for the 5 ages the run completed. " +
+	want := "That was an early taste: a prestige from the Medieval Age paid 9 prestige points, for the 5 ages the run completed. " +
 		"Going deeper pays far more: each era's ages are worth 3 times the era before, and a full run, 7 ages further on, pays 120 prestige points."
 	done, early := indexOfLog(ge, "Prestige complete. Level 1, 9 prestige points earned."), indexOfLog(ge, want)
 	if done < 0 || early != done+1 {
@@ -43,7 +43,7 @@ func TestEarlyPrestigeSaysWhatItPaid(t *testing.T) {
 
 	// A player who has seen the Modern Age is told it by name.
 	ge = prestigeFrom("atomic_age", "modern_age")
-	want = "That was an early prestige, from the Atomic Age: it paid 93 prestige points for the 11 ages the run completed. " +
+	want = "That was an early taste: a prestige from the Atomic Age paid 93 prestige points, for the 11 ages the run completed. " +
 		"Going deeper pays far more: each era's ages are worth 3 times the era before, and a run to the Modern Age pays 120 prestige points."
 	if indexOfLog(ge, want) < 0 {
 		t.Errorf("the log after an Atomic Age prestige should carry:\n%s\ngot:\n%s", want, strings.Join(logMessages(ge), "\n"))
@@ -51,14 +51,14 @@ func TestEarlyPrestigeSaysWhatItPaid(t *testing.T) {
 
 	// A full run carries no such line.
 	ge = prestigeFrom("modern_age")
-	if indexOfLog(ge, "early prestige") >= 0 || indexOfLog(ge, "Prestige complete. Level 1, 120 prestige points earned.") < 0 {
+	if indexOfLog(ge, "early taste") >= 0 || indexOfLog(ge, "Prestige complete. Level 1, 120 prestige points earned.") < 0 {
 		t.Errorf("a Modern Age prestige is a full run:\n%s", strings.Join(logMessages(ge), "\n"))
 	}
 
 	// The line itself, both tenses, and nothing from the Modern Age on.
 	sight := newAgeSight("medieval_age", nil, "")
 	if got, want := EarlyPrestigeLine(sight, "medieval_age", 9, false),
-		"This is an early prestige, from the Medieval Age: it pays 9 prestige points for the 5 ages this run completed. "+
+		"This is an early taste: a prestige from the Medieval Age pays 9 prestige points, for the 5 ages this run completed. "+
 			"Going deeper pays far more: each era's ages are worth 3 times the era before, and a full run, 7 ages further on, pays 120 prestige points."; got != want {
 		t.Errorf("EarlyPrestigeLine before the prestige:\n got %q\nwant %q", got, want)
 	}

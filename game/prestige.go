@@ -115,7 +115,8 @@ const PrestigeMinAge = "medieval_age"
 const PrestigeRunAge = "modern_age"
 
 // EarlyPrestigeLine is the plain line an early prestige carries: one from
-// before PrestigeRunAge, which pays little. It says what the prestige pays
+// before PrestigeRunAge (an early taste, as the prestige panel calls it),
+// which pays little. It says what the prestige pays
 // and that going deeper pays far more, so nobody takes the early prestige
 // for the game's real payout. done picks the tense: the confirm warning
 // says what it will pay, the new run's log what it paid. "" for a prestige
@@ -133,9 +134,9 @@ func EarlyPrestigeLine(sight AgeSight, from string, points int, done bool) strin
 	if !sight.Age(PrestigeRunAge) {
 		deeper = "a full run, " + textfmt.Count(run-at, "age", "ages") + " further on, pays " + full
 	}
-	lead := "This is an early prestige, from the %s: it pays %s for the %s this run completed."
+	lead := "This is an early taste: a prestige from the %s pays %s, for the %s this run completed."
 	if done {
-		lead = "That was an early prestige, from the %s: it paid %s for the %s the run completed."
+		lead = "That was an early taste: a prestige from the %s paid %s, for the %s the run completed."
 	}
 	return fmt.Sprintf(lead+" Going deeper pays far more: each era's ages are worth 3 times the era before, and %s.",
 		AgeName(from), textfmt.Count(points, "prestige point", "prestige points"), textfmt.Count(at, "age", "ages"), deeper)

@@ -38,7 +38,7 @@ When you're ready:
 prestige confirm yes
 ```
 
-`prestige confirm` on its own first says how many points you would earn, that everything else resets, and what you keep: prestige points, the legacy kit and what it remembers, and Era Mastery. Before the Modern Age it also says that this is an early prestige and what a full run pays (see [Early Tastes and Full Runs](#early-tastes-and-full-runs)). The double confirmation (`confirm yes`) is deliberate, because prestige can't be undone.
+`prestige confirm` on its own first says how many points you would earn, that everything else resets, and what you keep: prestige points, the legacy kit and what it remembers, and Era Mastery. Before the Modern Age it also says that this is an early taste, what it pays and what a full run pays (see [Early Tastes and Full Runs](#early-tastes-and-full-runs)). The double confirmation (`confirm yes`) is deliberate, because prestige can't be undone.
 
 The **Stats** panel (`stats`) has a Prestige section too: your level, Era Mastery, points, what a prestige pays now and from the next age, and the kit items you own.
 
@@ -110,7 +110,7 @@ Prestige opens at the Medieval Age, but the points reward depth. A prestige from
 - **The game says so, before and after.** `prestige confirm` before the Modern Age carries a line like this one, and the new run's log repeats it in the past tense right after "Prestige complete":
 
   ```
-  This is an early prestige, from the Medieval Age: it pays 9 prestige points for the 5 ages this run completed. Going deeper pays far more: each era's ages are worth 3 times the era before, and a full run, 7 ages further on, pays 120 prestige points.
+  This is an early taste: a prestige from the Medieval Age pays 9 prestige points, for the 5 ages this run completed. Going deeper pays far more: each era's ages are worth 3 times the era before, and a full run, 7 ages further on, pays 120 prestige points.
   ```
 
   Once you have seen the Modern Age, in this run or an earlier one, the line names it: "and a run to the Modern Age pays 120 prestige points."

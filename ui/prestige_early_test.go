@@ -22,7 +22,7 @@ func TestPrestigeConfirmSaysAnEarlyPrestigePaysLittle(t *testing.T) {
 	confirm := untag(HandleCommand("prestige confirm", engine).Message)
 	for _, want := range []string{
 		"You will earn 9 prestige points.",
-		"This is an early prestige, from the Medieval Age: it pays 9 prestige points for the 5 ages this run completed. " +
+		"This is an early taste: a prestige from the Medieval Age pays 9 prestige points, for the 5 ages this run completed. " +
 			"Going deeper pays far more: each era's ages are worth 3 times the era before, and a full run, 7 ages further on, pays 120 prestige points.",
 	} {
 		if !strings.Contains(confirm, want) {
@@ -39,7 +39,7 @@ func TestPrestigeConfirmSaysAnEarlyPrestigePaysLittle(t *testing.T) {
 		}
 	}
 	confirm = untag(HandleCommand("prestige confirm", engine).Message)
-	if strings.Contains(confirm, "early prestige") || !strings.Contains(confirm, "You will earn 120 prestige points.") {
+	if strings.Contains(confirm, "early taste") || !strings.Contains(confirm, "You will earn 120 prestige points.") {
 		t.Errorf("prestige confirm in the Modern Age is a full run's:\n%s", confirm)
 	}
 }
