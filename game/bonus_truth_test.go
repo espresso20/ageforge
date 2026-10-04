@@ -47,6 +47,12 @@ import (
 // the base rate, and that is what is measured: the change in the rate
 // divided by what the buildings make before any bonus.
 //
+// Two more things fail the guard. A cap the game does not own up to: a
+// bonus the typical player does not get in full must carry the game's own
+// "capped" note (game/caps.go), and a bonus that is delivered must not. And
+// a promise about a resource that is still locked in the age it is earned
+// in, unless its text says it is for later ("once unlocked").
+//
 // Coverage is automatic: the promises are read from config, so a new tech,
 // milestone, building or event is measured without touching this file. An
 // effect type or target the guard does not know fails the test: add a meter
@@ -1041,11 +1047,23 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 		before, skip := read(false)
 		after, _ := read(true)
 		out.Delivered, out.Skip = after-before, skip
-		said := newTruthEngine(age, mode)
-		sw := p.wire(said)
+		// What the game says about it, and whether any cheap meter moves:
+		// none is part of a promise read this way.
+		ge := l.engine(age, mode)
+		snap := takeTruthSnapshot(ge)
+		sw := p.wire(ge)
 		sw.off()
+		off := readTruth(t, ge)
 		sw.on()
-		out.Said = said.capNoteLocked(p.Eff, true)
+		on := readTruth(t, ge)
+		out.Said = ge.capNoteLocked(p.Eff, true)
+		sw.restore()
+		snap.put(ge)
+		for _, m := range sortedKeys(on) {
+			if truthMoved(off[m], on[m]) {
+				out.Leaks = append(out.Leaks, fmt.Sprintf("%s %+.4g", m, on[m]-off[m]))
+			}
+		}
 		return out
 	}
 	ge := l.engine(age, mode)
@@ -1945,8 +1963,8 @@ func truthPool(p truthPromise) string {
 // truthAccepted is the allow-list: the promises the guard knows the game
 // does not keep, and why that is accepted for now. Keys are "CAPPED/<pool>"
 // for a cap, "<class>/<source> <key>" for anything else. Every entry must
-// still be needed: the test
-// fails on one nothing uses, so a fixed promise takes its excuse with it.
+// still be needed: the test fails on one nothing uses, so a fixed promise
+// takes its excuse with it.
 var truthAccepted = map[string]string{
 	"CAPPED/all_production": "cap, pending design: every \"all production\" bonus shares one pool, and the engine applies at most +200% of it (x3). " +
 		"Techs and wonders alone fill it by the Electric Age, so every later one adds nothing. The panels say \"capped\" beside each.",
