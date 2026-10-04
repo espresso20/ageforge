@@ -418,45 +418,39 @@ func (r *runner) closeFate(ifOpen string) {
 	}
 }
 
-// PriceRow is the static price of one epoch's harbinger answers against the
-// most storage the player can build before the passage.
+// PriceRow is the static price of one thread's harbinger answers against the
+// most storage the player can build in the age its harbinger arrives in.
 type PriceRow struct {
-	Epoch       string             `json:"epoch"`
-	TargetEpoch string             `json:"target_epoch"`
-	LastAge     string             `json:"last_age"`
-	AppeaseL1   map[string]float64 `json:"appease_l1_cost"`
-	BraceL1     map[string]float64 `json:"brace_l1_cost"`
+	Epoch       string `json:"epoch"`
+	TargetEpoch string `json:"target_epoch"`
+	// Age is the age the harbinger arrives in. A doom's Appease is priced on
+	// it (what that age makes in the shortest warning); the price then holds
+	// for the whole thread, and storage only grows after it.
+	Age       string             `json:"age"`
+	AppeaseL1 map[string]float64 `json:"appease_l1_cost"`
+	BraceL1   map[string]float64 `json:"brace_l1_cost"`
 	// MaxStorage is -1 where an uncapped storage building covers the resource.
-	MaxStorage map[string]float64 `json:"max_storage_by_passage"`
+	MaxStorage map[string]float64 `json:"max_storage_in_age"`
 }
 
-// HarbingerPrices summons a harbinger on a scratch engine in each epoch whose
-// doom can be answered (game.SummonHarbingerForTest; never on the played
-// engine) and reads the level-1 prices from its view, next to the most
-// storage reachable by the epoch's last age. The Stone Era is skipped: only
-// false prophets come there, and nothing can strike.
+// HarbingerPrices is the level-1 prices of every thread whose doom can be
+// answered (game.HarbingerPriceTable): a fated doom's for each age its
+// harbinger can arrive in, and the Last Passage's, next to the most storage
+// reachable in that age. The Stone Era is skipped: only false prophets come
+// there, and nothing can strike.
 func HarbingerPrices() []PriceRow {
 	var rows []PriceRow
-	for _, ep := range config.Epochs() {
-		if len(ep.Ages) == 0 || !config.CatastropheAllowed(ep.Key) {
-			continue
-		}
-		ge := game.NewGameEngine()
-		if ge.SummonHarbingerForTest(ep.Ages[0]) != nil {
-			continue
-		}
-		v := ge.GetState().Harbinger
-		if v == nil {
-			continue
-		}
-		last := ep.Ages[len(ep.Ages)-1]
+	for _, p := range game.HarbingerPriceTable() {
 		row := PriceRow{
-			Epoch: ep.Key, TargetEpoch: v.TargetEpochKey, LastAge: last,
-			AppeaseL1: v.AppeaseCost, BraceL1: v.BraceCost, MaxStorage: map[string]float64{},
+			Epoch: p.Epoch, TargetEpoch: p.Epoch, Age: p.Age,
+			AppeaseL1: p.AppeaseL1, BraceL1: p.BraceL1, MaxStorage: map[string]float64{},
 		}
-		for _, c := range []map[string]float64{v.AppeaseCost, v.BraceCost} {
+		if p.LastPassage {
+			row.TargetEpoch = ""
+		}
+		for _, c := range []map[string]float64{p.AppeaseL1, p.BraceL1} {
 			for res := range c {
-				m := MaxStorage(last, res)
+				m := MaxStorage(p.Age, res)
 				if math.IsInf(m, 1) {
 					m = -1 // JSON has no Inf; -1 means no cap
 				}

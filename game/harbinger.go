@@ -32,7 +32,9 @@ import (
 // Answers belong to the doom, not the figure, and carry across handoffs:
 //
 //   - Appease (faith + culture): each level multiplies the REAL strike chance
-//     by harbingerAppeaseFactor. Two levels; the second costs double.
+//     by harbingerAppeaseFactor. Two levels; the second costs double. A
+//     doom's thread is priced on its warning (what the age it arrives in
+//     makes in the shortest warning), the Last Passage's on its era.
 //   - Brace (the epoch's core resources): softens an Endure if the doom
 //     strikes. Two levels, stored on the pending catastrophe so it still
 //     applies when Endure is chosen later.
@@ -67,22 +69,34 @@ const (
 	// 0.6 at level 1, 0.36 at level 2.
 	harbingerAppeaseFactor = 0.6
 
-	// Costs belong to the thread, not the player's current caps or age, so the
-	// price is the same in every age of the epoch. Level 2 costs double.
+	// Costs belong to the thread, not the player's current caps or age: a
+	// thread's price is set when its harbinger arrives and is the same in
+	// every age it lives through. Level 2 costs double.
 	//
-	// Appease: harbingerAppeaseIncomeShare of what a player who invests
-	// moderately in faith (and culture) makes over the thread's ages at their
-	// pacing targets: config.FlowIncome × config.AgeTargetTicks, summed over
-	// harbingerAppeaseAges. Faith is a flow resource at hand-set rates and the
-	// market sells none, so the price has to follow what the ages produce; the
-	// old price (15% of the passage storage) was out of reach in most threads
-	// once the pacing rebalance made ages short. At a quarter, with income
-	// growing through the thread, level 1 comes partway through and level 1
-	// plus level 2 (three quarters) before the passage. Faith also drives the
-	// roll (faith fill bands): worst case, paying drops the fill from the top
-	// band to the bottom, raising the base chance from 12% to 18% (×1.5), and
-	// ×0.6 still leaves 0.9× of where it started, so Appease always lowers
-	// the odds.
+	// Appease is priced on what a player can make while the warning lasts,
+	// not on a stock saved before it. Faith is a flow resource at hand-set
+	// rates and the market sells none, so the price follows what a player who
+	// invests moderately in faith (and culture) makes: config.FlowIncome.
+	//
+	//   - A fated doom's thread (and a false prophet's) lasts its lead: 20%
+	//     to 60% of the age the harbinger arrives in. Level 1 is
+	//     harbingerAppeaseWindowShare of what that age makes in the shortest
+	//     warning (harbingerLeadMin of its pacing target): the warning itself
+	//     pays for it in any thread. Level 2 costs double, so both levels
+	//     together are three times that: more than a short warning makes, and
+	//     a stretch that takes a long warning or faith kept beforehand
+	//     (doomAppeaseCost). It used to be a quarter of what the whole era
+	//     makes, which no warning could earn: the bot afforded level 1 in 10
+	//     of 30 threads, and only from faith it already held.
+	//   - The Last Passage's thread lasts from the Cosmic Era's first age to
+	//     the prestige, days rather than hours, so it keeps the era's price:
+	//     harbingerAppeaseIncomeShare of FlowIncome × config.AgeTargetTicks
+	//     summed over harbingerAppeaseAges (eraAppeaseCost).
+	//
+	// Faith also drives the roll (faith fill bands): worst case, paying drops
+	// the fill from the top band to the bottom, raising the base chance from
+	// 12% to 18% (×1.5), and ×0.6 still leaves 0.9× of where it started, so
+	// Appease always lowers the odds.
 	//
 	// Brace: 12% of the most the epoch asks of each core resource across its
 	// remaining advances (into its later ages and into the next epoch), for
@@ -90,6 +104,7 @@ const (
 	// catastrophe that may not come, so it is priced under what the epoch
 	// asks, but it draws on several resources at once.
 	harbingerAppeaseIncomeShare = 0.25
+	harbingerAppeaseWindowShare = 1.0
 	harbingerBraceCostFrac      = 0.12
 )
 
@@ -588,8 +603,9 @@ func harbingerAdvanceAges(epochKey string) []string {
 	return out
 }
 
-// harbingerAppeaseAges are the ages whose income prices epochKey's Appease:
-// every age of the epoch except the game's last, which has no advance to pace.
+// harbingerAppeaseAges are the ages whose income prices the Last Passage's
+// Appease in epochKey (eraAppeaseCost): every age of the epoch except the
+// game's last, which has no advance to pace.
 // In the final epoch, whose passage is prestige, a player who prestiges from
 // its first age leaves before Appease is in reach; one who stays for the
 // epoch gets the same timing as every other thread.
@@ -629,12 +645,59 @@ func harbingerHeldSinceStart(epochKey string) map[string]bool {
 	return held
 }
 
-// harbingerAppeaseCost is the price of Appease level (1 or 2) in epochKey's
-// thread, in faith and in culture (culture only if held since the epoch
-// began): level × harbingerAppeaseIncomeShare of the resource's
-// config.FlowIncome over harbingerAppeaseAges at their pacing targets, the
-// level-1 figure rounded up to two significant figures. Pure.
-func harbingerAppeaseCost(epochKey string, level int) map[string]float64 {
+// startAge is the age the thread's harbinger arrived in: the first figure of
+// its chain (the current one for a save from before chains were kept). A
+// doom's Appease is priced on it for the whole thread.
+func (h *HarbingerSave) startAge() string {
+	if len(h.Chain) > 0 {
+		return h.Chain[0]
+	}
+	return h.Age
+}
+
+// threadAppeaseCost is the price of Appease level (1 or 2) in thread h: a
+// fated doom's (or a false prophet's) is priced on the warning, from the age
+// its harbinger arrived in (doomAppeaseCost); the Last Passage's on its era
+// (eraAppeaseCost). The same in every age the thread lives through. Pure.
+func threadAppeaseCost(h *HarbingerSave, level int) map[string]float64 {
+	if h.TargetEpoch == "" {
+		return eraAppeaseCost(h.EpochKey, level)
+	}
+	return doomAppeaseCost(h.EpochKey, h.startAge(), level)
+}
+
+// doomAppeaseCost is the price of Appease level (1 or 2) for a doom of
+// epochKey whose harbinger arrived in age, in faith and in culture (culture
+// only if held since the epoch began): level × harbingerAppeaseWindowShare
+// of what the resource's config.FlowIncome makes in the shortest warning,
+// harbingerLeadMin of the age's pacing target, the level-1 figure rounded up
+// to two significant figures. It does not depend on the thread's own lead,
+// which stays hidden, nor on Era Mastery: a mastered age makes k times as
+// much per tick for a warning k times shorter. Pure.
+func doomAppeaseCost(epochKey, age string, level int) map[string]float64 {
+	held := harbingerHeldSinceStart(epochKey)
+	cost := map[string]float64{}
+	for _, k := range []string{"faith", "culture"} {
+		if !held[k] {
+			continue
+		}
+		// An income, not a timing window (see eraAppeaseCost): the raw
+		// target on purpose.
+		window := float64(harbingerLeadMin * config.AgeTargetTicks(age))
+		income := float64(config.FlowIncome(k, age) * window)
+		if l1 := ceilSignificant(float64(income*harbingerAppeaseWindowShare), 2); l1 > 0 {
+			cost[k] = l1 * float64(level)
+		}
+	}
+	return cost
+}
+
+// eraAppeaseCost is the price of Appease level (1 or 2) in the Last
+// Passage's thread of epochKey, in faith and in culture (culture only if
+// held since the epoch began): level × harbingerAppeaseIncomeShare of the
+// resource's config.FlowIncome over harbingerAppeaseAges at their pacing
+// targets, the level-1 figure rounded up to two significant figures. Pure.
+func eraAppeaseCost(epochKey string, level int) map[string]float64 {
 	held := harbingerHeldSinceStart(epochKey)
 	cost := map[string]float64{}
 	for _, k := range []string{"faith", "culture"} {
@@ -700,6 +763,41 @@ func harbingerBraceCost(epochKey string, level int) map[string]float64 {
 		cost[k] = math.Ceil(v * harbingerBraceCostFrac * float64(level))
 	}
 	return cost
+}
+
+// HarbingerPrice is the level-1 prices of one thread a run can meet, for the
+// smoke suite's price table and its storage check.
+type HarbingerPrice struct {
+	Epoch string
+	// Age is the age the harbinger arrives in: any age of the era for a
+	// doom's thread, the era's first age for the Last Passage's.
+	Age string
+	// LastPassage marks the Cosmic Era's Last Passage thread.
+	LastPassage bool
+	AppeaseL1   map[string]float64
+	BraceL1     map[string]float64
+}
+
+// HarbingerPriceTable lists the level-1 prices of every thread whose doom can
+// be answered: a fated doom's for each age its harbinger can arrive in, from
+// the Iron Era on, and the Last Passage's. The Stone Era is left out: only
+// false prophets come there, and nothing can strike. Pure.
+func HarbingerPriceTable() []HarbingerPrice {
+	var rows []HarbingerPrice
+	for _, ep := range config.Epochs() {
+		if len(ep.Ages) == 0 || !config.CatastropheAllowed(ep.Key) {
+			continue
+		}
+		for _, a := range ep.Ages {
+			rows = append(rows, HarbingerPrice{Epoch: ep.Key, Age: a,
+				AppeaseL1: doomAppeaseCost(ep.Key, a, 1), BraceL1: harbingerBraceCost(ep.Key, 1)})
+		}
+		if config.IsFinalEpoch(ep.Key) {
+			rows = append(rows, HarbingerPrice{Epoch: ep.Key, Age: ep.Ages[0], LastPassage: true,
+				AppeaseL1: eraAppeaseCost(ep.Key, 1), BraceL1: harbingerBraceCost(ep.Key, 1)})
+		}
+	}
+	return rows
 }
 
 // --- Actions ------------------------------------------------------------------
@@ -814,7 +912,7 @@ func (ge *GameEngine) HarbingerAppease() error {
 	}
 	h := ge.harbinger
 	level := h.AppeaseLevel + 1
-	cost := harbingerAppeaseCost(h.EpochKey, level)
+	cost := threadAppeaseCost(h, level)
 	if len(cost) == 0 {
 		return fmt.Errorf("Cannot appease: there is nothing to offer.")
 	}
@@ -1085,7 +1183,7 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		}
 	}
 	if v.AppeaseBlocked == "" {
-		v.AppeaseCost = harbingerAppeaseCost(h.EpochKey, h.AppeaseLevel+1)
+		v.AppeaseCost = threadAppeaseCost(h, h.AppeaseLevel+1)
 		v.AppeaseAffordable = len(v.AppeaseCost) > 0 && ge.Resources.CanAfford(v.AppeaseCost)
 	}
 	if v.BraceBlocked == "" {
