@@ -11,7 +11,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 ## At a glance
 
 - **22 ages in 7 epochs**, from the Primitive Age to the Transcendent Age.
-- **A slow first run**: about a week of real time to reach the Modern Age and a full run's prestige. The Primitive Age takes about 15 minutes and the Stone Age about 45; from the Bronze Age on, each age takes hours. The game is paced for checking in a few times a day.
+- **About a week for a first run**: that is real time, to the Modern Age and a full run's prestige. The Primitive Age takes about 15 minutes and the Stone Age about 45; from the Bronze Age on, each age takes hours. The game is paced for checking in a few times a day.
 - **Offline progress**: when you load a save, the game credits the time since you saved, up to 24 hours at 50% of your production. Construction and research finish, the build plan runs and your workers keep staffing as that time passes.
 - **Workers that staff themselves**: workers arrive on their own while housing and food allow (auto-recruit) and go to work by your worker shares across 12 worker domains. You can still recruit and assign by hand.
 - **The build plan**: queue up to 60 builds, techs, trades and an advance. The game starts each one as the resources come in, while you play and while you are away.
