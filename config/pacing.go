@@ -71,7 +71,12 @@ func AgeStretch(age string) float64 {
 // delay, a duration, a cooldown, a cadence) goes through it, so the same
 // number of ticks covers the same share of a longer age.
 func StretchTicks(age string, ticks int) int {
-	s := AgeStretch(age)
+	return StretchTicksBy(ticks, AgeStretch(age))
+}
+
+// StretchTicksBy is StretchTicks with the age's factor given: ticks × s,
+// rounded to the nearest tick, and ticks itself at a factor of 1.
+func StretchTicksBy(ticks int, s float64) int {
 	if s == 1 {
 		return ticks
 	}
