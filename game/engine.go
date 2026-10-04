@@ -2886,7 +2886,6 @@ func (ge *GameEngine) buildResolver() *Resolver {
 	r.AddAll(ge.Prestige.Modifiers())
 	r.AddAll(ge.wonderModifiers())
 	r.AddAll(ge.permanentModifiers())
-	r.AddAll(ge.legacyModifiers())
 	r.AddAll(ge.cosmicLegacyModifiers())
 	r.AddAll(ge.eventModifiers())
 	r.AddAll(ge.moraleModifiers())
@@ -3672,7 +3671,8 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	// Combine research_speed from all sources (see combinedResearchSpeed). This
 	// must be done before StartResearch so the combined value reduces tick count.
 	combinedResearchSpeed := ge.combinedResearchSpeed()
-	ge.Research.timeK = ge.speedK() // Era Mastery: ÷ k after the speed step
+	ge.Research.timeMult = ge.succumbResearchFactor() // Ancient Knowledge: × 0.8 per epoch
+	ge.Research.timeK = ge.speedK()                   // Era Mastery: ÷ k after the speed step
 	if err := ge.Research.StartResearchWithSpeed(techKey, ge.age, ageOrder, knowledge, combinedResearchSpeed); err != nil {
 		return err
 	}
@@ -3836,7 +3836,8 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	// Same combined research_speed sources a normal research gets; the memory
 	// penalty (2x ticks) is applied on top inside StartMemoryResearch.
 	combinedResearchSpeed := ge.combinedResearchSpeed()
-	ge.Research.timeK = ge.speedK() // Era Mastery: ÷ k after the speed step
+	ge.Research.timeMult = ge.succumbResearchFactor() // Ancient Knowledge: × 0.8 per epoch
+	ge.Research.timeK = ge.speedK()                   // Era Mastery: ÷ k after the speed step
 	if err := ge.Research.StartMemoryResearch(techKey, combinedResearchSpeed); err != nil {
 		return err
 	}
@@ -4066,8 +4067,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 		ge.addLog("info", line)
 	}
 	if n := ge.legacyEpochCount(); n > 0 {
-		ge.addLog("info", fmt.Sprintf("Legacy bonuses active from %s you succumbed to: research speed %s.",
-			textfmt.Count(n, "epoch", "epochs"), textfmt.SignedPercent(ge.succumbResearchBonus())))
+		ge.addLog("info", fmt.Sprintf("Ancient Knowledge from %s you succumbed in: research time %s.",
+			textfmt.Count(n, "epoch", "epochs"), ResearchFactorText(ge.succumbResearchFactor())))
 	}
 	if len(savedRuins) > 0 {
 		ge.addLog("info", fmt.Sprintf("Ruins carried forward from past civilizations: %s.",
@@ -4353,7 +4354,7 @@ func (ge *GameEngine) GetState() GameState {
 		CatastropheHistory:    slices.Clone(ge.catastropheHistory),
 		CatastrophesEndured:   endured,
 		CatastrophesSuccumbed: succumbed,
-		SuccumbResearchBonus:  ge.succumbResearchBonus(),
+		SuccumbResearchFactor: ge.succumbResearchFactor(),
 		LastPassage:           ge.lastPassageState(prestigeSnap.PendingPoints),
 		History:               ge.History.Clone(),
 		Morale:                ge.morale,

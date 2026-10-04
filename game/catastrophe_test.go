@@ -282,8 +282,8 @@ func TestSuccumb_RuinsResetAndLegacy(t *testing.T) {
 	if _, stored := ge.permanentBonuses["research_speed"]; stored {
 		t.Error("research bonus must be derived, not stored in permanentBonuses")
 	}
-	if got := ge.succumbResearchBonus(); got != 0.25 {
-		t.Errorf("research bonus = %v, want 0.25", got)
+	if got := ge.succumbResearchFactor(); got != 0.8 {
+		t.Errorf("research time factor = %v, want 0.8", got)
 	}
 	if ge.pendingCatastrophe != "" {
 		t.Error("Succumb must clear pending")
@@ -294,33 +294,94 @@ func TestSuccumb_RuinsResetAndLegacy(t *testing.T) {
 	}
 }
 
-func legacyModValue(mods []Modifier) float64 {
-	v := 0.0
-	for _, m := range mods {
-		if m.Source == "legacy" && m.Target == "research_speed" {
-			v += m.Value
-		}
-	}
-	return v
-}
+// twoEpochs is Ancient Knowledge after two epochs: x0.8 twice.
+var twoEpochs = AncientKnowledgeFactor(2)
 
 func TestSuccumb_ResearchBonusStacksAcrossDistinctEpochs(t *testing.T) {
 	ge := catEngine(t, "iron_age", 9)
 	succumbIn(t, ge, "iron_age")
 	succumbIn(t, ge, "renaissance_age") // steel era
-	if got := ge.succumbResearchBonus(); got != 0.50 {
-		t.Fatalf("after iron + steel: %v, want 0.50", got)
+	if got := ge.succumbResearchFactor(); got != twoEpochs || math.Abs(got-0.64) > 1e-12 {
+		t.Fatalf("after iron + steel: x%v, want x0.64", got)
 	}
 	succumbIn(t, ge, "classical_age") // iron era again: no new legacy
-	if got := ge.succumbResearchBonus(); got != 0.50 {
-		t.Errorf("repeat epoch must not stack: %v, want 0.50", got)
+	if got := ge.succumbResearchFactor(); got != twoEpochs {
+		t.Errorf("repeat epoch must not stack: x%v, want x0.64", got)
 	}
-	if got := ge.combinedResearchSpeed(); math.Abs(got-0.50) > 1e-9 {
-		t.Errorf("combinedResearchSpeed = %v, want 0.50", got)
+	// It multiplies research time on its own: the research speed pool, which
+	// is added up and taken off the listed time, holds none of it.
+	if got := ge.combinedResearchSpeed(); got != 0 {
+		t.Errorf("research speed pool = %v, want 0: Ancient Knowledge is not part of it", got)
 	}
-	// Flows through the resolver → Active Multipliers.
-	if got := legacyModValue(ge.GetState().Modifiers); got != 0.50 {
-		t.Errorf("resolver legacy research_speed = %v, want 0.50", got)
+	for _, m := range ge.GetState().Modifiers {
+		if m.Target == "research_speed" {
+			t.Errorf("research_speed modifier %+v: Ancient Knowledge must not be in the pool", m)
+		}
+	}
+	if got := ge.GetState().SuccumbResearchFactor; got != twoEpochs {
+		t.Errorf("GameState.SuccumbResearchFactor = %v, want %v", got, twoEpochs)
+	}
+}
+
+// Ancient Knowledge multiplies research time, x0.8 for each epoch succumbed
+// in, so it never floors research. As +25% research speed per epoch, taken
+// off the listed time, four epochs brought every tech to one tick.
+func TestAncientKnowledgeNeverFloorsResearch(t *testing.T) {
+	epochs := 0
+	ge := NewGameEngine()
+	ge.SeedRNG(3)
+	for _, ep := range config.Epochs() {
+		if config.CatastropheAllowed(ep.Key) {
+			ge.legacyBonuses[ep.Key] = true
+			epochs++
+		}
+	}
+	if epochs != 6 {
+		t.Fatalf("%d epochs a catastrophe can strike in, want 6", epochs)
+	}
+	factor := ge.succumbResearchFactor()
+	if want := math.Pow(SuccumbResearchTimeFactor, 6); math.Abs(factor-want) > 1e-12 || factor < 0.26 {
+		t.Fatalf("six epochs: x%v, want x%v", factor, want)
+	}
+	// Every tech in the game, started through the engine with all six.
+	for _, key := range ge.Research.order {
+		def := ge.Research.defs[key]
+		ge.Research.currentTech = ""
+		ge.Research.researched = map[string]bool{}
+		ge.age = def.Age
+		for _, pre := range def.Prerequisites {
+			ge.Research.researched[pre] = true
+		}
+		ge.Resources.UnlockResource("knowledge")
+		ge.Resources.AddStorage("knowledge", def.Cost)
+		ge.Resources.Add("knowledge", def.Cost)
+		if err := ge.startResearchLocked(key, true); err != nil {
+			t.Fatalf("%s: %v", key, err)
+		}
+		got := ge.Research.totalTicks
+		if want := int(float64(def.ResearchTicks) * factor); got != want || got <= 1 {
+			t.Errorf("%s: %d ticks with six epochs, want %d of its %d (never one tick)", key, got, want, def.ResearchTicks)
+		}
+		if float64(got) < 0.26*float64(def.ResearchTicks)-1 {
+			t.Errorf("%s: %d ticks is under 26%% of its %d", key, got, def.ResearchTicks)
+		}
+	}
+	// Each further epoch takes the same share off what is left.
+	prev := 1_000_000
+	for n := 1; n <= 6; n++ {
+		ticks := ResearchTicks(1_000_000, 0, AncientKnowledgeFactor(n), 1)
+		if ratio := float64(ticks) / float64(prev); math.Abs(ratio-SuccumbResearchTimeFactor) > 1e-5 {
+			t.Errorf("epoch %d: research time x%v of the epoch before, want x%v", n, ratio, SuccumbResearchTimeFactor)
+		}
+		prev = ticks
+	}
+	// On top of the research speed pool and Era Mastery it still multiplies.
+	if got, want := ResearchTicks(1000, 0.5, AncientKnowledgeFactor(2), 2), 160; got != want {
+		t.Errorf("1000 ticks at +50%% speed, two epochs, k 2: %d, want %d", got, want)
+	}
+	// A manager no engine has set leaves times alone.
+	if got := ResearchTicks(1000, 0, 0, 0); got != 1000 {
+		t.Errorf("unset factor changed 1000 ticks to %d", got)
 	}
 }
 
@@ -335,8 +396,8 @@ func TestSuccumb_ResearchBonusSurvivesPrestigeAndSaveLoad(t *testing.T) {
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatalf("DoPrestige: %v", err)
 	}
-	if got := ge.succumbResearchBonus(); got != 0.50 {
-		t.Fatalf("after DoPrestige: %v, want 0.50", got)
+	if got := ge.succumbResearchFactor(); got != twoEpochs {
+		t.Fatalf("after DoPrestige: x%v, want x%v", got, twoEpochs)
 	}
 	if err := ge.SaveGame("cat_research"); err != nil {
 		t.Fatal(err)
@@ -345,11 +406,11 @@ func TestSuccumb_ResearchBonusSurvivesPrestigeAndSaveLoad(t *testing.T) {
 	if err := ge2.LoadGame("cat_research"); err != nil {
 		t.Fatal(err)
 	}
-	if got := ge2.succumbResearchBonus(); got != 0.50 {
-		t.Errorf("after load: %v, want 0.50", got)
+	if got := ge2.succumbResearchFactor(); got != twoEpochs {
+		t.Errorf("after load: x%v, want x%v", got, twoEpochs)
 	}
-	if got := legacyModValue(ge2.GetState().Modifiers); got != 0.50 {
-		t.Errorf("after load, resolver legacy = %v, want 0.50", got)
+	if got := ge2.GetState().SuccumbResearchFactor; got != twoEpochs {
+		t.Errorf("after load, GameState.SuccumbResearchFactor = %v, want %v", got, twoEpochs)
 	}
 }
 
@@ -362,8 +423,11 @@ func TestLoad_MigratesStoredSuccumbResearchBonus(t *testing.T) {
 	if _, ok := ge.permanentBonuses["research_speed"]; ok {
 		t.Errorf("stored research bonus not stripped: %v", ge.permanentBonuses["research_speed"])
 	}
-	if got := ge.combinedResearchSpeed(); got != 0.50 {
-		t.Errorf("combined research speed = %v, want 0.50 (derived)", got)
+	if got := ge.combinedResearchSpeed(); got != 0 {
+		t.Errorf("research speed pool = %v, want 0: the stored copy is gone", got)
+	}
+	if got := ge.succumbResearchFactor(); got != twoEpochs {
+		t.Errorf("Ancient Knowledge = x%v, want x%v (derived from the legacy flags)", got, twoEpochs)
 	}
 
 	// A new-format save is trusted as-is.

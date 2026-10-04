@@ -182,11 +182,11 @@ func TestResearchPanelShowsRealTimes(t *testing.T) {
 	if strings.Contains(out, "Research speed") {
 		t.Errorf("a new game mentions research speed:\n%s", out)
 	}
-	// One epoch succumbed in: Ancient Knowledge, +25% research speed.
-	ge.SetLegacyBonusForTest("iron_era")
+	// +25% research speed, as milestones give it: a quarter off the time.
 	st := ge.GetState()
+	st.Pools["research_speed"] = game.BonusPool{Target: "research_speed", Earned: 0.25, Applied: 0.25}
 	out = researchProvider(st, 120)
-	quick := game.ResearchTicks(base, 0.25, 1)
+	quick := game.ResearchTicks(base, 0.25, 1, 1)
 	if quick >= base {
 		t.Fatalf("+25%% research speed leaves Tool Making at %d of %d ticks", quick, base)
 	}
@@ -194,6 +194,24 @@ func TestResearchPanelShowsRealTimes(t *testing.T) {
 		t.Errorf("with +25%% research speed Tool Making should list %q:\n%s", want, section(t, out, "Available now", "Tech tree"))
 	}
 	if want := "Research speed +25%: techs take 75% of their base time."; !strings.Contains(out, want) {
+		t.Errorf("the Research panel does not say %q", want)
+	}
+	// One epoch succumbed in: Ancient Knowledge, research time ×0.8. It is
+	// no part of the research speed pool, and has a line of its own.
+	ge.SetLegacyBonusForTest("iron_era")
+	st = ge.GetState()
+	out = researchProvider(st, 120)
+	if strings.Contains(out, "Research speed") {
+		t.Errorf("Ancient Knowledge shows as research speed:\n%s", out)
+	}
+	known := game.ResearchTicks(base, 0, game.SuccumbResearchTimeFactor, 1)
+	if known != base*4/5 {
+		t.Fatalf("Ancient Knowledge leaves Tool Making at %d of %d ticks, want four fifths", known, base)
+	}
+	if want := "800 knowledge · " + formatTicks(known, st); !strings.Contains(out, want) {
+		t.Errorf("with Ancient Knowledge Tool Making should list %q:\n%s", want, section(t, out, "Available now", "Tech tree"))
+	}
+	if want := "Ancient Knowledge: research time ×0.8. The times below include it."; !strings.Contains(out, want) {
 		t.Errorf("the Research panel does not say %q", want)
 	}
 }

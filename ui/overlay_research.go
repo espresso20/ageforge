@@ -81,6 +81,10 @@ func researchProvider(state game.GameState, _ int) string {
 		fmt.Fprintf(&sb, " [gray]Research speed %s: techs take %s of their base time. The times below include it.[-]%s\n",
 			textfmt.SignedPercent(p.Earned), textfmt.Percent(math.Max(0, 1-p.Applied)), poolTag(state, "research_speed"))
 	}
+	// Ancient Knowledge multiplies what is left, so it has a line of its own.
+	if f := state.SuccumbResearchFactor; f > 0 && f < 1 {
+		fmt.Fprintf(&sb, " [gray]Ancient Knowledge: research time %s. The times below include it.[-]\n", game.ResearchFactorText(f))
+	}
 	sb.WriteString("\n")
 
 	// === Currently Researching ===

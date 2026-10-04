@@ -34,7 +34,8 @@ type catastropheModalLayout struct {
 // buildCatastropheModalLayout assembles the text for epochKey's catastrophe.
 // alreadyLegacy says whether this epoch's legacy is already held (a repeat
 // Succumb in the same epoch grants no new legacy or research bonus),
-// researchNow is the current Succumb research bonus (e.g. 0.25), and eo is
+// researchNow is Ancient Knowledge's research time factor as it stands (1
+// with none, 0.8 after one epoch), and eo is
 // what Endure would cost with the Harbinger's Brace and the garrison counted
 // (game.GameState.PendingEndure). st is the snapshot, for wall-clock durations.
 func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNow float64, eo game.EndureOutcome, st game.GameState) catastropheModalLayout {
@@ -60,11 +61,14 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 	endureLines = append(endureLines, endureDefenseLines(eo)...)
 	endure := strings.Join(endureLines, "\n")
 
-	per := game.SuccumbResearchBonusPerEpoch
-	researchLine := fmt.Sprintf("  [green]✓ Ancient Knowledge: research speed +%.0f%% (total +%.0f%%, permanent)[-]", per*100, (researchNow+per)*100)
+	if researchNow <= 0 {
+		researchNow = 1
+	}
+	per := game.SuccumbResearchTimeFactor
+	researchLine := fmt.Sprintf("  [green]✓ Ancient Knowledge: research time %s (%s in all, permanent)[-]", game.ResearchFactorText(per), game.ResearchFactorText(researchNow*per))
 	legacyLine := fmt.Sprintf("  [gold]✓ %s legacy: %s (permanent)[-]", ep.Name, legacyBonusText(epochKey))
 	if alreadyLegacy {
-		researchLine = fmt.Sprintf("  [gray]• Research bonus already earned here (stays +%.0f%%)[-]", researchNow*100)
+		researchLine = fmt.Sprintf("  [gray]• Ancient Knowledge already earned here (research time stays %s)[-]", game.ResearchFactorText(researchNow))
 		legacyLine = fmt.Sprintf("  [gray]• %s legacy already held; no new legacy bonus[-]", ep.Name)
 	}
 	succumb := strings.Join([]string{
@@ -209,7 +213,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		if st.PendingCatastrophe == key {
 			outcome = st.PendingEndure
 		}
-		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchBonus, outcome, st)
+		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchFactor, outcome, st)
 	}
 
 	btnEndure := tview.NewButton(tview.Escape("[E] ENDURE")).

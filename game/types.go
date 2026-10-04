@@ -89,9 +89,10 @@ type GameState struct {
 	// survive prestige like the history does). A pending catastrophe is neither.
 	CatastrophesEndured   int
 	CatastrophesSuccumbed int
-	// SuccumbResearchBonus is the permanent research_speed bonus from Succumb
-	// (+25% per distinct epoch succumbed), e.g. 0.50 after two epochs.
-	SuccumbResearchBonus float64
+	// SuccumbResearchFactor is Ancient Knowledge: what research time is
+	// multiplied by after the research speed pool (x0.8 per distinct epoch
+	// succumbed in), e.g. 0.64 after two epochs and 1 with none.
+	SuccumbResearchFactor float64
 	// LastPassage is the Cosmic Era's prestige passage: pending choice, the
 	// Endure share and the Cosmic Legacy flag (last_passage.go).
 	LastPassage LastPassageState

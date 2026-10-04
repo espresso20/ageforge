@@ -128,6 +128,9 @@ func statsProvider(state game.GameState, _ int) string {
 			}
 		}
 	}
+	if f := state.SuccumbResearchFactor; f > 0 && f < 1 {
+		fmt.Fprintf(&sb, "  %-16s research time %s (permanent, %s for each epoch succumbed in)\n", "Ancient Knowledge:", game.ResearchFactorText(f), game.ResearchFactorText(game.SuccumbResearchTimeFactor))
+	}
 	if state.LastPassage.CosmicLegacy {
 		// Applied after the production caps, so it never carries a "capped" note.
 		fmt.Fprintf(&sb, "  %-16s all production %s, counted after the caps (permanent, through every prestige)\n", "Cosmic Legacy:", textfmt.SignedPercent(game.CosmicLegacyProductionBonus))

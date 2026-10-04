@@ -2,8 +2,10 @@ package game
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -28,7 +30,7 @@ import (
 //
 // Every method here that is not exported expects the engine write lock to be
 // held, except the read-only helpers used by GetState (catastropheOutlook,
-// succumbResearchBonus, legacyModifiers, countCatastropheOutcomes), which only
+// succumbResearchFactor, countCatastropheOutcomes), which only
 // read state and are safe under the read lock.
 
 const (
@@ -58,9 +60,12 @@ const (
 
 	// SuccumbRuinCount is how many buildings Succumb turns into ruins.
 	SuccumbRuinCount = 8
-	// SuccumbResearchBonusPerEpoch is the permanent research_speed bonus per
-	// distinct epoch succumbed (legacy flag), stacking across epochs.
-	SuccumbResearchBonusPerEpoch = 0.25
+	// SuccumbResearchTimeFactor is Ancient Knowledge: what research time is
+	// multiplied by for each distinct epoch succumbed in (legacy flag). It
+	// multiplies: x0.8, x0.64, ... x0.26 with all six epochs, so research
+	// never floors. (It used to be +25% research speed per epoch, taken off
+	// the listed time, which brought every tech to one tick at four epochs.)
+	SuccumbResearchTimeFactor = 0.8
 )
 
 // Endure consequences, exported for the catastrophe modal so its text is built
@@ -468,7 +473,8 @@ func (ge *GameEngine) Endure() error {
 //     become ruins (50% output, no workers),
 //     carried into the next run; the ruin total is capped at MaxRuins
 //   - the epoch's legacy flag is set: its per-resource legacy bonus and
-//     +25% research speed (per distinct epoch succumbed, stacking) are permanent
+//     Ancient Knowledge (research time x0.8 per distinct epoch succumbed in)
+//     are permanent
 //   - full reset to the Primitive Age: buildings, resources, workers, research,
 //     milestones, events. Prestige level, points and upgrades are kept; no
 //     prestige points are earned
@@ -552,7 +558,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.epochEventHistory = savedEpochHistory
 
 	// Per-resource legacy rate bonuses live in permanentBonuses; the research
-	// bonus is derived from the legacy flags (see legacyModifiers).
+	// bonus is derived from the legacy flags (see succumbResearchFactor).
 	ge.reapplyLegacyBonuses()
 
 	ge.applyAgeUnlocks("primitive_age")
@@ -570,7 +576,7 @@ func (ge *GameEngine) Succumb() error {
 	} else {
 		ge.addLog("info", fmt.Sprintf("The %s legacy was already yours; no new legacy bonus.", ep.Name))
 	}
-	ge.addLog("success", fmt.Sprintf("Ancient Knowledge: research speed +%.0f%% (permanent, +%.0f%% per epoch succumbed).", ge.succumbResearchBonus()*100, SuccumbResearchBonusPerEpoch*100))
+	ge.addLog("success", fmt.Sprintf("Ancient Knowledge: research time %s for each epoch succumbed in, now %s (permanent).", ResearchFactorText(SuccumbResearchTimeFactor), ResearchFactorText(ge.succumbResearchFactor())))
 	if len(savedRuins) > 0 {
 		ge.addLog("info", fmt.Sprintf("%s from fallen civilizations carry forward (max %d).", textfmt.Count(ge.Buildings.RuinTotal(), "ruin", "ruins"), MaxRuins))
 	}
@@ -607,7 +613,7 @@ func (ge *GameEngine) startReconstruction() int {
 // reapplyLegacyBonuses restores the per-resource Succumb legacy rate bonuses
 // into permanentBonuses after a reset. Must be called whenever permanentBonuses
 // is cleared (prestige or succumb resets) so cross-run bonuses are not lost.
-// The research bonus is not stored here; it is derived (legacyModifiers).
+// The research bonus is not stored here; it is derived (succumbResearchFactor).
 func (ge *GameEngine) reapplyLegacyBonuses() {
 	for _, epochKey := range sortedKeys(ge.legacyBonuses) {
 		if !ge.legacyBonuses[epochKey] {
@@ -631,27 +637,37 @@ func (ge *GameEngine) legacyEpochCount() int {
 	return n
 }
 
-// succumbResearchBonus is the permanent research_speed bonus from Succumb:
-// +25% per distinct epoch succumbed. Derived from the legacy flags, so it
-// survives save/load, Succumb and DoPrestige without being stored. Read-only.
-func (ge *GameEngine) succumbResearchBonus() float64 {
-	return float64(float64(ge.legacyEpochCount()) * SuccumbResearchBonusPerEpoch)
+// AncientKnowledgeFactor is what research time is multiplied by after
+// succumbing in epochs distinct epochs: SuccumbResearchTimeFactor for each,
+// 1 with none. Multiplied out one at a time, so it is the same on every CPU.
+func AncientKnowledgeFactor(epochs int) float64 {
+	f := 1.0
+	for i := 0; i < epochs; i++ {
+		f = float64(f * SuccumbResearchTimeFactor)
+	}
+	return f
 }
 
-// legacyModifiers emits the derived Succumb research bonus into the resolver
-// (Source "legacy"), so it shows in the Active Multipliers panel. Read-only.
-func (ge *GameEngine) legacyModifiers() []Modifier {
-	b := ge.succumbResearchBonus()
-	if b == 0 {
-		return nil
-	}
-	return []Modifier{{Source: "legacy", Target: "research_speed", Op: OpAdd, Value: b}}
+// ResearchFactorText words a research time factor for player text: "×0.8",
+// "×0.64", "×0.26" (two decimals at most).
+func ResearchFactorText(f float64) string {
+	return "×" + strconv.FormatFloat(math.Round(f*100)/100, 'f', -1, 64)
+}
+
+// succumbResearchFactor is Ancient Knowledge as it stands: what a research
+// started now has its time multiplied by, after the research speed pool has
+// taken its share (ResearchTicks). Derived from the legacy flags, so it
+// survives save/load, Succumb and DoPrestige without being stored. It is no
+// part of the research speed pool: a pool is added up and taken off the
+// listed time, and this multiplies what is left. Read-only.
+func (ge *GameEngine) succumbResearchFactor() float64 {
+	return AncientKnowledgeFactor(ge.legacyEpochCount())
 }
 
 // combinedResearchSpeed is the research speed pool: every research_speed
-// bonus the resolver holds (techs, milestones, wonders, the Succumb legacy).
-// It is the pool the Stats panel lists, so what the panel shows is what a
-// research started now gets. Read-only.
+// bonus the resolver holds (techs, milestones, wonders). It is the pool the
+// Stats panel lists, so what the panel shows is what a research started now
+// gets. Ancient Knowledge is not in it (succumbResearchFactor). Read-only.
 func (ge *GameEngine) combinedResearchSpeed() float64 {
 	return ge.buildResolver().AddTotal("research_speed")
 }
