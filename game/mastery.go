@@ -268,7 +268,7 @@ func (ge *GameEngine) masteryEntryLine(age string, prevK float64) string {
 	case k > 1:
 		return fmt.Sprintf("Known ground: the %s runs %s faster (mastery %d).", name, SpeedText(k), ge.Prestige.Mastery(age))
 	case prevK > 1:
-		return fmt.Sprintf("New ground: the %s runs at 1x until a prestige completes it.", name)
+		return fmt.Sprintf("New ground: the %s runs at 1x until a run completes it.", name)
 	}
 	return ""
 }

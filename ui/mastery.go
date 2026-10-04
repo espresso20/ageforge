@@ -70,7 +70,7 @@ func writeMasterySection(sb *strings.Builder, state game.GameState) {
 	m := state.Mastery
 	fmt.Fprintf(sb, " This age: %s\n", masteryNowText(state))
 	if m.Record == "" || (len(m.Ages) == 0 && m.K <= 1) {
-		sb.WriteString(" [gray]Ages a prestige completes run faster on your next runs: 2x after one, up to 4.2x after ten.[-]\n")
+		sb.WriteString(" [gray]An age runs faster once a run has completed it: 2x after one, up to 4.2x after ten.[-]\n")
 		return
 	}
 	sb.WriteString("\n")
