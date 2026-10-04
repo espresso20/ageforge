@@ -20,7 +20,7 @@ func main() {
 	engine := game.NewGameEngine()
 
 	// Load an EXISTING, established account and hand it to the engine so the UI/dashboard
-	// — which share this engine — can reach it via engine.Account() (accounts.md §6). We
+	// — which share this engine — can reach it via engine.Account() (the accounts design §6). We
 	// no longer auto-create here: on first run (no file, or a legacy unnamed account) the
 	// engine is left accountless and the UI prompts the player to name their account, which
 	// derives the identity (game.CreateNamedAccount). Loading is non-critical: ignore errors

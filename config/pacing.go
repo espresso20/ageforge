@@ -571,7 +571,7 @@ func typicalIncomes() map[string]map[string]float64 {
 	return typicalIncomeMap
 }
 
-// The Storage Covenant (economy.md, Law 1): the most storage buildable in an
+// The Storage Covenant (the economy design's Law 1): the most storage buildable in an
 // age must hold at least StorageHold(age) hours of the age's TypicalIncome at
 // 1x, for every construction resource of the age. Typical income is a
 // moderate investment (five copies of each producer); the smoke bot ends an

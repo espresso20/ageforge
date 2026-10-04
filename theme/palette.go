@@ -9,7 +9,7 @@ import (
 )
 
 // DefaultKey is the theme applied when nothing else is selected. Forge is the
-// shipped default (theming.md §4).
+// shipped default (the theming design §4).
 const DefaultKey = "forge"
 
 // active is the package-global current theme. It is process-wide state by design:
@@ -79,7 +79,7 @@ func SetActive(key string) error {
 }
 
 // Color returns the active theme's color for role. Path B (direct widget chrome)
-// routes through here instead of tcell color literals (theming.md §3.3).
+// routes through here instead of tcell color literals (the theming design §3.3).
 func Color(role Role) tcell.Color {
 	if role < 0 || role >= numRoles {
 		return tcell.ColorDefault

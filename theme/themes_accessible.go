@@ -2,7 +2,7 @@ package theme
 
 import "github.com/gdamore/tcell/v2"
 
-// The accessible themes (theming.md §4) are Accessible: true — never milestone-
+// The accessible themes (the theming design §4) are Accessible: true — never milestone-
 // gated, always unlocked. Their defining constraint: AgeForge uses green=gain /
 // red=loss everywhere, which collapses under red-green deficiency. So these themes
 // encode ± with BLUE (positive) vs ORANGE (negative) — the canonical deutan/protan-

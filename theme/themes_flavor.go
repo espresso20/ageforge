@@ -2,7 +2,7 @@ package theme
 
 import "github.com/gdamore/tcell/v2"
 
-// Flavor themes (theming.md §4) are cosmetic, curated palettes that unlock via
+// Flavor themes (the theming design §4) are cosmetic, curated palettes that unlock via
 // milestones. They are all Accessible: false — the gating itself lands in Phase 3b;
 // this file only DEFINES and REGISTERS them. Because they're not accessible, the
 // colorblind-distinguishability guard does not apply to them, but every WCAG AA
@@ -18,7 +18,7 @@ const (
 )
 
 // Parchment is the unlockable LIGHT-background theme: dark ink-brown text on warm cream,
-// with sepia/leather accents. It's the real contrast-guard exercise (theming.md §4,
+// with sepia/leather accents. It's the real contrast-guard exercise (the theming design §4,
 // §8) — on a light bg the role colors must be DARK enough to stay legible, so the
 // usual bright accent/positive/negative become deep, saturated versions: forest
 // green gains, wax-red losses, umber labels, sepia accent/highlight.
@@ -76,7 +76,7 @@ var Bronze = define(Theme{
 
 // Cyberpunk is neon on near-black: hot magenta accent, neon-cyan highlight, neon
 // green/pink for ±, over a near-black violet background (riffs on the cyberpunk_age
-// palette, theming.md §4).
+// palette, the theming design §4).
 var Cyberpunk = define(Theme{
 	Key:        "cyberpunk",
 	Name:       "Cyberpunk",
@@ -135,7 +135,7 @@ var Monochrome = define(Theme{
 
 // Cosmic is deep-space: a dark indigo/violet background, starlight text, and
 // nebula-pink / cyan accents with aurora-green gains (riffs on galactic_age,
-// theming.md §4).
+// the theming design §4).
 var Cosmic = define(Theme{
 	Key:        "cosmic",
 	Name:       "Cosmic",

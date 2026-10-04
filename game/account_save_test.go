@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// Phase 2 (accounts.md §6) — startup wiring + lazy save attribution.
+// Phase 2 (the accounts design §6) — startup wiring + lazy save attribution.
 //
 // These tests exercise the migration invariant from §3.5/§6: a save gains its
 // account_id ONLY by being re-written through SaveGame (which re-signs _sig over
@@ -128,7 +128,7 @@ func TestSaveStampsAccountIDAndStaysSigned(t *testing.T) {
 }
 
 // TestResetPreservesAccount asserts the account is player-level and survives a new
-// game / Reset, per accounts.md §6 ("the account is player-level and must survive
+// game / Reset, per the accounts design §6 ("the account is player-level and must survive
 // new-game/reset"). Reset reinitializes managers but must leave ge.account intact.
 func TestResetPreservesAccount(t *testing.T) {
 	isolateAccountDir(t)
@@ -157,7 +157,7 @@ func TestResetPreservesAccount(t *testing.T) {
 // TestFreshlyCreatedFlagOnlyOnFirstRun confirms the first-run signal: LoadOrCreate
 // sets FreshlyCreated only when it mints a brand-new account (no file present), and
 // a subsequent load of the existing file leaves it false. Boot code keys the
-// one-time welcome notice off this (accounts.md §6).
+// one-time welcome notice off this (the accounts design §6).
 func TestFreshlyCreatedFlagOnlyOnFirstRun(t *testing.T) {
 	isolateAccountDir(t)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-// Phase-2 bridge tests (theming.md §6): boot-apply, account-wide persistence, and
+// Phase-2 bridge tests (the theming design §6): boot-apply, account-wide persistence, and
 // the unlock gate. The active theme is process-global state, so every case that
 // switches it registers restoreForge (theme_picker_test.go) to reset to the default
 // in cleanup, keeping the suite order-independent.
@@ -134,7 +134,7 @@ func TestApplyAccountThemeFallsBackToForge(t *testing.T) {
 	}
 }
 
-// TestThemeAvailableGate covers the unlock-gating predicate (theming.md §4/§5):
+// TestThemeAvailableGate covers the unlock-gating predicate (the theming design §4/§5):
 //   - Accessible themes: always available (never gated), even accountless.
 //   - The default theme (Forge): always available.
 //   - A flavor (non-accessible, non-default) theme: available only if the account

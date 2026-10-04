@@ -8,7 +8,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-// Milestone-gated theme unlock tests (theming.md §5). These exercise the pure-ish
+// Milestone-gated theme unlock tests (the theming design §5). These exercise the pure-ish
 // evaluateThemeUnlock helper (theme_unlock.go) rather than the dashboard method, so
 // no tview app is needed; the dashboard just loops this helper over completed keys.
 

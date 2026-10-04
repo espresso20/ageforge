@@ -317,7 +317,7 @@ func TestWipeAccount(t *testing.T) {
 	}
 }
 
-// --- Phase 4: recovery code (accounts.md §3.5 / §8 / §9) ---
+// --- Phase 4: recovery code (the accounts design §3.5 / §8 / §9) ---
 
 // TestRecoveryCodeRoundTrip covers the core contract: a.RecoveryCode() →
 // ImportRecoveryCode(thatCode) yields an account with the SAME AccountID.

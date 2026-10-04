@@ -34,7 +34,7 @@ var roleTagNames = [numRoles]string{
 // raw-color guard (ui/theme_guard_test.go) accepts them and rejects every other
 // name or hex literal outside theme/.
 //
-// Discipline (theming.md §3.2): tcell.ColorNames is global, mutable, process-wide
+// Discipline (the theming design §3.2): tcell.ColorNames is global, mutable, process-wide
 // state — tcell.GetColor("gold") reads the SAME map as tview's [gold] tag parser.
 // So overwriting these keys retints every named-color resolution in the process,
 // not just inline text tags. We own exactly these keys, and applyRemap rewrites

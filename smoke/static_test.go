@@ -43,7 +43,7 @@ func TestGateCovenant(t *testing.T) {
 
 // TestStorageCovenant: the most storage buildable in every age holds
 // config.StorageHold(age) hours of the age's typical production of each of
-// its construction resources (economy.md, Law 1): 4.5 from the Bronze Age
+// its construction resources (the economy design's Law 1): 4.5 from the Bronze Age
 // on, 1.5 in the Primitive and Stone Ages. A store that fills in minutes
 // throws away most of what a player makes between visits.
 func TestStorageCovenant(t *testing.T) {

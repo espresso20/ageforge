@@ -22,7 +22,7 @@ import "github.com/gdamore/tcell/v2"
 
 // Role enumerates the semantic color slots a theme must fill. Order is fixed and
 // load-bearing: themes declare their palette as a [numRoles]tcell.Color indexed by
-// these constants (see theming.md §3.1).
+// these constants (see the theming design §3.1).
 //
 // The first nine are the original Phase-1 roles. The rest arrived with the
 // light-theme overhaul so a theme can describe its whole surface. A theme may
@@ -99,7 +99,7 @@ func (r Role) String() string {
 
 // Theme is a complete, code-defined palette plus picker metadata. Colors carry
 // true RGB via tcell.NewRGBColor so themes are not at the mercy of a terminal's
-// 16-color palette on truecolor terminals (theming.md §3.1).
+// 16-color palette on truecolor terminals (the theming design §3.1).
 type Theme struct {
 	Key        string // "forge", "deuteranopia", ... — stable identifier
 	Name       string // "Forge" — shown in the picker
@@ -109,7 +109,7 @@ type Theme struct {
 
 	Colors [numRoles]tcell.Color
 
-	// Signed sentinels for the ± distinction in accessible themes (theming.md §4):
+	// Signed sentinels for the ± distinction in accessible themes (the theming design §4):
 	// the sign is encoded by shape as well as hue so colorblind players never rely
 	// on color alone. Non-accessible themes may leave these empty.
 	GainGlyph string // e.g. "▲" / "+"
@@ -120,7 +120,7 @@ type Theme struct {
 	// onto the ramp from Background to Text instead of drawing full color.
 	Duotone bool
 
-	// Milestone-gated unlock condition (theming.md §5). A gated (flavor) theme
+	// Milestone-gated unlock condition (the theming design §5). A gated (flavor) theme
 	// declares EXACTLY ONE of these — the milestone key or chain key whose
 	// completion unlocks it account-wide. The mapping lives here, in the registry,
 	// not scattered through engine/milestone code: theme stays a leaf package, so

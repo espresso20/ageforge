@@ -3,7 +3,7 @@ package theme
 import "github.com/gdamore/tcell/v2"
 
 // Forge is the default theme: AgeForge's current dark + gold look, formalized as
-// roles (theming.md §4). Accessible is false — it relies on green/red for ± — but
+// roles (the theming design §4). Accessible is false — it relies on green/red for ± — but
 // it is the shipped default and still clears the WCAG AA luminance floors against
 // its dark background (enforced by contrast_test.go).
 //

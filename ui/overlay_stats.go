@@ -42,7 +42,7 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	// ─── Lifetime (Account) ───
-	// Cross-save aggregates persisted on the account (accounts.md §3.3, Phase 6),
+	// Cross-save aggregates persisted on the account (the accounts design §3.3, Phase 6),
 	// distinct from the per-save Statistics above. Renders a placeholder when no
 	// account is wired (AccountStats nil) so the panel never blanks out.
 	sb.WriteString("\n [yellow]── Lifetime (account) ──[-]\n")

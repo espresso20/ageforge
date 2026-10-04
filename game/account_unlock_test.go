@@ -7,7 +7,7 @@ import (
 
 // TestUnlockThemeNewlyAndHasTheme covers the core unlock contract: the first
 // UnlockTheme returns newly=true, a repeat returns false, and HasTheme reflects the
-// unlocked set throughout (accounts.md §8).
+// unlocked set throughout (the accounts design §8).
 func TestUnlockThemeNewlyAndHasTheme(t *testing.T) {
 	isolateAccountDir(t)
 

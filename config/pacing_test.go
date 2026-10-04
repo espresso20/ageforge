@@ -90,7 +90,7 @@ func TestAgeStretch(t *testing.T) {
 
 // TestPaybackRule: a production building's output of a construction
 // resource repays the price of its first copy in PaybackTicks, valued at
-// its age's parity (economy.md, Law 3).
+// its age's parity (the economy design's Law 3).
 func TestPaybackRule(t *testing.T) {
 	levels := priceLevels(BaseBuildings())
 	checked := 0
@@ -179,7 +179,7 @@ func TestMarketNeverBeatsBuilding(t *testing.T) {
 }
 
 // TestBuildAndResearchCaps: nothing takes longer to build or research than
-// its age's share (economy.md, Law 2).
+// its age's share (the economy design's Law 2).
 func TestBuildAndResearchCaps(t *testing.T) {
 	for _, d := range BaseBuildings() {
 		div := BuildTimeDivisor

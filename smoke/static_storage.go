@@ -62,7 +62,7 @@ func staticStorage(defs map[string]config.BuildingDef, income func(res, age stri
 
 // writeStorage renders the Storage Covenant check.
 func writeStorage(sb *strings.Builder, rows []StorageRow) {
-	fmt.Fprintf(sb, "The most storage buildable in each age must hold %g hours of the age's typical production (%g hours in the Primitive and Stone Ages; config.TypicalIncome: five staffed copies of every producer so far, earlier wonders and techs, with the production bonus) of each of its construction resources (the Storage Covenant, economy.md). One row per age, its tightest resource. `go test ./smoke` fails on any row marked ✗.\n\n", config.StorageHoldHours, config.EarlyStorageHoldHours)
+	fmt.Fprintf(sb, "The most storage buildable in each age must hold %g hours of the age's typical production (%g hours in the Primitive and Stone Ages; config.TypicalIncome: five staffed copies of every producer so far, earlier wonders and techs, with the production bonus) of each of its construction resources (the Storage Covenant). One row per age, its tightest resource. `go test ./smoke` fails on any row marked ✗.\n\n", config.StorageHoldHours, config.EarlyStorageHoldHours)
 	sb.WriteString("| age | resource | typical income | max storage | holds | needs | |\n|---|---|---|---|---|---|---|\n")
 	for _, r := range rows {
 		mark := "✓"

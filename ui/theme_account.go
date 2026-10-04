@@ -6,7 +6,7 @@ import (
 )
 
 // This file is the Phase-2 bridge between the leaf `theme` package (pure
-// presentation, no game dependency) and the `game` account layer (theming.md §6,
+// presentation, no game dependency) and the `game` account layer (the theming design §6,
 // §10). The bridge lives in `ui` precisely so `theme` stays importable without
 // pulling in the engine: ui imports both and wires them together here.
 //
@@ -23,7 +23,7 @@ import (
 const themeUnavailableMsg = "That theme is locked. Type 'theme list' to see how to earn it."
 
 // themeAvailable reports whether theme t may be selected/applied for the given
-// account. The policy (theming.md §4/§5/§6):
+// account. The policy (the theming design §4/§5/§6):
 //   - Accessible themes are NEVER gated — always available.
 //   - The default theme (Forge) is always available.
 //   - Any other (flavor) theme is available only if the account has unlocked it.
@@ -50,7 +50,7 @@ func themeAvailable(acct *game.Account, t theme.Theme) bool {
 }
 
 // applyAccountTheme resolves and applies the account's persisted active theme at
-// startup (theming.md §6): it must run once, before the first Draw, so the splash
+// startup (the theming design §6): it must run once, before the first Draw, so the splash
 // already wears the chosen theme.
 //
 // Resolution is defensive — any of these fall back to the default (Forge) without
@@ -91,7 +91,7 @@ func applyAccountTheme(engine *game.GameEngine) {
 // applyDefaultTheme pins the active theme to the default (Forge). Used as the
 // fallback when no account theme applies, and to reset a freshly-created/wiped
 // account onto its own (empty → default) theme rather than inheriting a previewed
-// or previous one (theming.md §6).
+// or previous one (the theming design §6).
 func applyDefaultTheme() {
 	_ = theme.SetActive(theme.DefaultKey)
 	theme.Restyle()
