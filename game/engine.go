@@ -49,7 +49,7 @@ const (
 
 	// Festival (culture sink) tuning. The tick counts here and the black
 	// market's cooldown are typed for the base curve and stretched for the
-	// current age (config.StretchTicks): from the Bronze Age on a festival
+	// current age (rules.Set.StretchTicks): from the Bronze Age on a festival
 	// lasts, and waits, PacingStretch times as long, so an age holds as many.
 	festivalBuffPercent   = 0.20 // +20% production_all while active
 	festivalBuffTicks     = 150  // ~5 minutes at 2s/tick
@@ -2644,7 +2644,7 @@ type FestivalStatus struct {
 }
 
 // stretchTicks re-times a base-curve tick count for the current age
-// (config.StretchTicks). Caller holds ge.mu.
+// (rules.Set.StretchTicks). Caller holds ge.mu.
 func (ge *GameEngine) stretchTicks(ticks int) int {
 	return ge.rules.StretchTicks(ge.age, ticks)
 }

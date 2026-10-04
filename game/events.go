@@ -31,8 +31,8 @@ type ActiveEvent struct {
 // A global cooldown (nextEventTick) ensures at most one event fires per 5-20
 // minutes of real time in the Primitive and Stone Ages, preventing event spam.
 // From the Bronze Age on the ages run config.PacingStretch times longer, and
-// so do the delay, each event's duration and its cooldown (config.StretchTicks
-// on the current age), so an age holds as many events as before.
+// so do the delay, each event's duration and its cooldown (the ruleset's
+// StretchTicks on the current age), so an age holds as many events as before.
 //
 // NOTE: InjectEvent bypasses all eligibility checks and fires immediately.
 // It is used for milestone chain boosts and epoch event effects; calling it

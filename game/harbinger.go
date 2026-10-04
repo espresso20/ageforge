@@ -17,7 +17,7 @@ import (
 // A harbinger comes only when doom is on its way. On entering an era from the
 // Iron Era on, a hidden roll decides whether a doom is fated there (fate.go);
 // if it is, a harbinger thread starts some while before the strike, with the
-// current age's roster figure (config.HarbingerFor), and lasts until the doom
+// current age's roster figure (rules.Set.Harbinger), and lasts until the doom
 // strikes or is lifted. The speaker changes with each age the thread lives
 // through, so a doom foretold late in the Classical Age passes from the Oracle
 // to the Town Crier. The thread never blocks anything and never expires. What
@@ -91,7 +91,7 @@ const (
 	//     for it in most threads. Level 2 costs double, so both levels
 	//     together are 45% of the age: more than the average warning makes,
 	//     and a stretch that takes a long warning or faith kept beforehand
-	//     (doomAppeaseCost). It used to be a quarter of what the whole era
+	//     (doomAppeaseCostIn). It used to be a quarter of what the whole era
 	//     makes, which no warning could earn: the bot afforded level 1 in
 	//     15 of 46 threads, level 2 in 6 and Brace in 41, and Appease only
 	//     from faith it already held.
@@ -103,8 +103,8 @@ const (
 	//     is no stretch.
 	//   - The Last Passage's thread lasts from the Cosmic Era's first age to
 	//     the prestige, days rather than hours, so it keeps the era's price:
-	//     harbingerAppeaseIncomeShare of FlowIncome × config.AgeTargetTicks
-	//     summed over harbingerAppeaseAges (eraAppeaseCost).
+	//     harbingerAppeaseIncomeShare of FlowIncome × the age's target ticks
+	//     summed over harbingerAppeaseAgesIn (eraAppeaseCostIn).
 	//
 	// Faith also drives the roll (faith fill bands): worst case, paying drops
 	// the fill from the top band to the bottom, raising the base chance from
@@ -695,7 +695,7 @@ func doomAppeaseCostIn(set *rules.Set, epochKey, age string, level int) map[stri
 		if !held[k] {
 			continue
 		}
-		// An income, not a timing window (see eraAppeaseCost): the raw
+		// An income, not a timing window (see eraAppeaseCostIn): the raw
 		// target on purpose.
 		window := float64(harbingerLeadMin * set.TargetTicks(age))
 		income := float64(set.FlowIncome(k, age) * window)

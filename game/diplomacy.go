@@ -12,7 +12,7 @@ import (
 // Diplomacy tuning constants. Kept here (not in config) because they govern
 // engine-side cadence rather than per-civ data. Every tick count below is
 // typed for the base curve; Tick stretches it for the current age
-// (config.StretchTicks), so an age sees as much drift, lending and raiding as
+// (rules.Set.StretchTicks), so an age sees as much drift, lending and raiding as
 // it did before the one-week curve.
 const (
 	// Opinion bounds.

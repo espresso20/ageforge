@@ -29,7 +29,7 @@ import (
 //   - Rates. Where the market trades the pair, a deal beats the market by
 //     5-25% (its rate is the market's scaled by mult / (1 - ExchangeFee),
 //     mult 0.84-1.0 of parity). Where it doesn't, the rate is the ratio of
-//     the two resources' price levels (config.DealPriceLevel, which also
+//     the two resources' price levels (rules.Set.DealPriceLevel, which also
 //     values flow resources) times the same mult. A deal never beats parity.
 //   - Personality. Mercantile civs offer one more deal, at better rates and
 //     in bigger lots, and ask more than they sell. Aggressive civs offer one

@@ -98,10 +98,10 @@ func expeditionTone(category string, success bool) flavor.Tone {
 	}
 }
 
-// topReward returns the single largest reward line — the one worth naming in a
+// topRewardIn returns the single largest reward line — the one worth naming in a
 // sentence — or ("", 0) when there is nothing to name.
 //
-// It iterates config.BaseResources() rather than the rewards map so the choice is
+// It iterates set's resources rather than the rewards map so the choice is
 // DETERMINISTIC: Go map iteration order is randomised, and picking the resource
 // off a map walk would desynchronise the prose stream from the seed. Ties break on
 // config order.

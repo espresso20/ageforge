@@ -1080,7 +1080,7 @@ func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[st
 				continue
 			}
 			// A later age's offer overwrites an earlier one; within one age the
-			// first match wins, as in config.BuildingNextTierForAge.
+			// first match wins, as in rules.Set.NextTier.
 			if order, ok := ge.progress.ageIndex[b.RequiredAge]; ok && order <= cur && order > bestOrder {
 				best, bestOrder = b.Key, order
 			}
