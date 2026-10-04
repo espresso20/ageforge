@@ -20,6 +20,14 @@ func masteryTicks(ticks int, state game.GameState) int {
 	return game.MasteryTicks(ticks, state.Mastery.K)
 }
 
+// researchTicks is what a tech listed at ticks takes to research if started
+// now: the research speed pool takes its share off, then the current age's
+// speed divides the rest (game.ResearchTicks, what the engine starts it
+// with).
+func researchTicks(ticks int, state game.GameState) int {
+	return game.ResearchTicks(ticks, state.Pools["research_speed"].Earned, state.Mastery.K)
+}
+
 // masteryNowText is the current age's ground: "known ground, 2.4x faster
 // (mastery 2)", "known ground, 4x faster (catching up)" or "new ground, 1x".
 func masteryNowText(state game.GameState) string {

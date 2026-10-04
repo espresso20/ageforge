@@ -1421,7 +1421,8 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 			parts = append(parts, fmt.Sprintf("Buildings: %s", textfmt.RateValue(b.BuildingRate)))
 		}
 		if b.WorkerRate != 0 {
-			parts = append(parts, fmt.Sprintf("Workers: %s", textfmt.RateValue(b.WorkerRate)))
+			// What worker output bonuses add (game/engine.go, gather_rate).
+			parts = append(parts, fmt.Sprintf("Worker bonus: %s", textfmt.RateValue(b.WorkerRate)))
 		}
 		if b.ResearchRate != 0 {
 			parts = append(parts, fmt.Sprintf("Research: %s", textfmt.RateValue(b.ResearchRate)))
@@ -1730,6 +1731,7 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "[gold]Hold a Cultural Festival?[-]")
 		lines = append(lines, fmt.Sprintf("  Cost: [cyan]%s[-] (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
 		lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
+		lines = append(lines, festivalCapLines(st)...)
 		lines = append(lines, fmt.Sprintf("  Cooldown afterward: [cyan]%s[-].", formatTicks(st.CooldownTicks, state)))
 		if st.Culture < st.Cost {
 			lines = append(lines, "")
@@ -1743,6 +1745,16 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 	}
 }
 
+// festivalCapLines warns, before the culture is spent, that the
+// all-production cap would hold back a festival held now: nothing when the
+// whole buff would count.
+func festivalCapLines(st game.FestivalStatus) []string {
+	if st.CapNote == "" {
+		return nil
+	}
+	return []string{"  [yellow]Right now it is " + st.CapNote + ". All production counts up to +200% (see stats).[-]"}
+}
+
 // cmdFestivalStatus renders the bare `festival` status panel.
 func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 	st := engine.FestivalStatus()
@@ -1752,6 +1764,7 @@ func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 	lines = append(lines, "  Spend a lump of culture to raise all production for a while.")
 	lines = append(lines, fmt.Sprintf("  Cost: [cyan]%s[-]  (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
 	lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
+	lines = append(lines, festivalCapLines(st)...)
 	if st.Ready {
 		if st.Culture >= st.Cost {
 			lines = append(lines, "  Status: [green]ready[-]. Type [cyan]festival confirm yes[-].")

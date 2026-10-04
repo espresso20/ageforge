@@ -103,6 +103,9 @@ func TestWriteSiteFrames(t *testing.T) {
 			t.Fatalf("%s: %v (run TestGenerateStates first)", key, err)
 		}
 		m := mapmodel.NewBuilder(b.Catalog()).Build(&st, nil)
+		// The landing page shows four ages and keeps the rest a surprise, so
+		// no frame names the age that comes next.
+		m.NextAgeName = "The next age"
 		view, ok := reg.New("roguelike")
 		if !ok {
 			t.Fatal("no roguelike style")

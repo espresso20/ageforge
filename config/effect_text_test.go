@@ -100,8 +100,14 @@ func TestEventTextMatchesEffects(t *testing.T) {
 		}
 		msg := strings.ToLower(e.LogMessage)
 		frags, hasSteal, hasRate := eventFragments(e)
+		// A timed event's length depends on the age it fires in (its
+		// Duration is stretched), so the text carries a placeholder the
+		// engine fills in, never a number of its own.
 		if hasRate && e.Duration > 0 {
-			frags = append(frags, "for "+DurationText(e.Duration))
+			frags = append(frags, "for {dur}")
+		}
+		if (hasRate && e.Duration > 0) != strings.Contains(e.LogMessage, "{dur}") {
+			t.Errorf("%s: a log line says how long a timed rate lasts with {dur}, and only then: %q", e.Key, e.LogMessage)
 		}
 		sort.Slice(frags, func(i, j int) bool { return len(frags[i]) > len(frags[j]) })
 		rest := msg

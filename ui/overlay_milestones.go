@@ -84,7 +84,7 @@ func milestonesProvider(state game.GameState, _ int) string {
 			if m.Completed {
 				fmt.Fprintf(&sb, "   [green]✓ %s[-]", m.Name)
 				if m.RewardText != "" {
-					fmt.Fprintf(&sb, "  [cyan]%s[-]", m.RewardText)
+					fmt.Fprintf(&sb, "  [cyan]%s[-]%s", m.RewardText, rewardCapTags(state, m.Rewards, true))
 				}
 				sb.WriteString("\n")
 			} else {
@@ -101,7 +101,7 @@ func milestonesProvider(state game.GameState, _ int) string {
 					}
 				}
 				if m.RewardText != "" {
-					fmt.Fprintf(&sb, "     [gray]Reward: %s[-]\n", m.RewardText)
+					fmt.Fprintf(&sb, "     [gray]Reward: %s[-]%s\n", m.RewardText, rewardCapTags(state, m.Rewards, false))
 				}
 			}
 		}
@@ -112,5 +112,16 @@ func milestonesProvider(state game.GameState, _ int) string {
 		sb.WriteString("\n")
 	}
 
+	return sb.String()
+}
+
+// rewardCapTags is the "capped" notes for a milestone's rewards, one per
+// reward a limit holds back, to append to the line that lists them: ""
+// when every reward counts in full.
+func rewardCapTags(state game.GameState, rewards []config.Effect, held bool) string {
+	var sb strings.Builder
+	for _, eff := range rewards {
+		sb.WriteString(capTag(state, eff, held, "-"))
+	}
 	return sb.String()
 }

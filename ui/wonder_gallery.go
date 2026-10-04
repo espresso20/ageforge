@@ -112,6 +112,12 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			h ^= hashKey(w.key) * 5
 		}
 	}
+	// And the "capped" note beside each perk (capTag below).
+	if current != nil {
+		for _, eff := range current.def.Effects {
+			h ^= hashKey(capNote(state, eff, state.Buildings[current.key].Count > 0)) * 31
+		}
+	}
 	if h == wp.lastHash {
 		return
 	}
@@ -155,7 +161,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	// Show effects/perks
 	fmt.Fprintf(&sb, "[cyan]Perks:[-]\n")
 	for _, eff := range current.def.Effects {
-		fmt.Fprintf(&sb, "  %s\n", formatEffect(eff))
+		fmt.Fprintf(&sb, "  %s%s\n", formatEffect(eff), capTag(state, eff, built, "-"))
 	}
 
 	// Bank progress if not built

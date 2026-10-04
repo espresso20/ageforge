@@ -215,12 +215,6 @@ func (vm *WorkerManager) GetDomainCount(domain string) int {
 	return total
 }
 
-// GetProductionRates returns empty — villager production is now handled via
-// building fill ratios in BuildingManager.WorkerScaledProduction.
-func (vm *WorkerManager) GetProductionRates() map[string]float64 {
-	return make(map[string]float64)
-}
-
 // KillWorker removes workers from starvation. Assignments are scaled down
 // proportionally so assigned count never exceeds remaining population.
 func (vm *WorkerManager) KillWorker(count int) int {

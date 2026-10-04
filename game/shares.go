@@ -343,14 +343,16 @@ func (ge *GameEngine) recruitFood() (net, perWorker, margin float64) {
 	return net, perWorker, recruitFoodMargin(net, drain, perWorker)
 }
 
-// foodWorkerFactor is what multiplies a food building's output: morale, then
-// the all-production and food bonuses, read off the last rates.
+// foodWorkerFactor is what multiplies the food a worker adds to a food
+// building: morale, times the all-production and food bonuses plus the
+// worker output bonus (which is added to them, not multiplied), read off the
+// last rates.
 func (ge *GameEngine) foodWorkerFactor() float64 {
-	f := ge.moraleMultiplier()
+	bonuses := 1.0
 	if r := ge.Resources.resources["food"]; r != nil && r.Breakdown.BuildingRate > 0 {
-		f = float64(f * math.Max(0, 1+r.Breakdown.BonusRate/r.Breakdown.BuildingRate))
+		bonuses = math.Max(0, 1+r.Breakdown.BonusRate/r.Breakdown.BuildingRate)
 	}
-	return f
+	return float64(ge.moraleMultiplier() * math.Max(0, bonuses+ge.workerBonus))
 }
 
 // foodPerWorker is the food one more worker in building key grows a tick: a
@@ -610,7 +612,7 @@ func (ge *GameEngine) foodLossOfOne(sv *staffView, factor float64) float64 {
 // popCapLocked is the housing: what the housing buildings hold plus the
 // population bonuses. Caller holds the lock.
 func (ge *GameEngine) popCapLocked() int {
-	return ge.Buildings.GetPopCapacity() + int(ge.Research.GetBonus("population")+ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"])
+	return ge.Buildings.GetPopCapacity() + int(ge.Research.CapacityBonus("population")+ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"])
 }
 
 // keepSharesLive is the routine's live run, from doTick: unless it is waiting
