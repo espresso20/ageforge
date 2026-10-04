@@ -248,7 +248,7 @@ You meet civilizations by running scouting expeditions, not by building anything
 | `wonder collect <res\|all> [amt\|all\|max]` (or `wonder bank …`) | Bank a resource toward the current wonder. With an amount, bank that much (at most what the wonder still needs). With `all`, `max` or no amount, bank as much as it still needs, up to what you have. `wonder collect all` does this for every resource the wonder still needs |
 | `wonder overflow` | Show whether overflow is on |
 | `wonder overflow on` | Bank what full stores would waste into the current wonder (the default) |
-| `wonder overflow off` | Let production over a storage cap be lost instead |
+| `wonder overflow off` | Stop banking overflow into a wonder you have not planned. A wonder in your [build plan](plan.md#overflow-pays-the-plan) still takes overflow; without one, production over a storage cap is lost |
 | `build <wonder>` | Build the wonder once its bank is full |
 | `wonders` | Open the **Wonders** panel: a progress bar for each required resource, and a sprite of each completed wonder |
 
@@ -313,7 +313,7 @@ With something typed, `Tab` and `Enter` act on the prompt instead. Each style li
 | Command | Description |
 |---|---|
 | `prestige` | View prestige status and available points, how many legacy kit items you own, the points a prestige would pay now and what prestiging from the next age would pay (and how many more), the [Era Mastery](prestige.md#era-mastery) speed of the age you are in and the ages your next prestige would raise. Before the Modern Age it notes that a prestige now is an early taste. In the Cosmic Era it also shows the chance of the Last Passage and which figure is warning of it, and shows the Cosmic Legacy if you hold it |
-| `prestige confirm` | Explain what confirming would do: the points you would earn, what resets, and what you keep (prestige points, the legacy kit and what it remembers, and Era Mastery). In the Cosmic Era this includes what Endure (share of this run's points) and Succumb (the Cosmic Legacy) would give you if the Last Passage comes |
+| `prestige confirm` | Explain what confirming would do: the points you would earn, what resets, and what you keep (prestige points, the legacy kit and what it remembers, and Era Mastery). Before the Modern Age it says that this is an early prestige, what it pays and what a full run pays. In the Cosmic Era this includes what Endure (share of this run's points) and Succumb (the Cosmic Legacy) would give you if the Last Passage comes |
 | `prestige confirm yes` | Prestige now: a new run, keeping your points, the legacy kit and Era Mastery. It requires the Medieval Age, and before the Modern Age it is an early taste that pays little. In the Cosmic Era an open Reality Tear settles first, then it rolls the Last Passage; if either comes, prestige waits for your choice |
 | `prestige shop` | View the legacy kit: each item's price, or "owned", and what the kit remembers from your runs (plan items and the ages they cover, worker shares, civilizations met) |
 | `prestige buy <item>` | Buy a legacy kit item: `legacy_plan` (Plan Template, 9 points), `legacy_workers` (Worker Shares, 36) or `legacy_factions` (Old Friends, 54). It works at once, on the run you are in |
@@ -408,7 +408,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | Command | Description |
 |---|---|
 | `status` (or `s`) | Print a status summary: age and game time, every unlocked resource with amount, storage and rate, and your population by class with idle counts, food drain and assignments |
-| `rates` | Print where each resource's rate comes from: buildings, the [worker output bonus](workers-and-domains.md#worker-output-bonuses), research, events, trade, bonuses, [Era Mastery](prestige.md#era-mastery) and food drain |
+| `rates` | Print where each resource's rate comes from: buildings, the [worker output bonus](workers-and-domains.md#worker-output-bonuses), research, events, trade, bonuses, the [Cosmic Legacy](prestige.md#cosmic-legacy), [Era Mastery](prestige.md#era-mastery) and food drain |
 | `logs` | Open the **Logs** panel: recent game log entries with their tick numbers (see [The log](#the-log)) |
 | `dump` | Export logs to a file for debugging, in the `logs/` folder of your active account (`data/accounts/<id>/logs/`). The export prints raw tick counts alongside the wall-clock readings |
 | `help` | Open the Help panel: full command reference and list of available panels |

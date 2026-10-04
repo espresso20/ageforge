@@ -551,8 +551,8 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.15},
 			},
 		},
-		// tech_master: 50 techs. The tech tree reaches 50 in the Information
-		// Age, so that is its age. Capstone broadened: keeps research_speed,
+		// tech_master: 50 techs. The tech tree reaches 50 in the Modern Age;
+		// the milestone is held to the Information Age (MinAge). Capstone broadened: keeps research_speed,
 		// adds a touch of production_all.
 		{
 			Name: "Tech Master", Key: "tech_master",

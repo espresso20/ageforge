@@ -68,7 +68,7 @@ Housing caps your population, so the ladder climbs with the ages: Small Village 
 | Renaissance Mind *(hidden)* | Research 42 techs | +10% research speed |
 | Tech Master *(hidden)* | Research 50 techs (Information Age) | +10% research speed, +5% all production |
 
-The tech tree reaches 50 techs in the Information Age, so finishing this chain means playing past the Modern Age before you prestige.
+The tech tree holds 50 techs by the Modern Age, but Tech Master only completes from the Information Age on, so finishing this chain means playing past the Modern Age before you prestige.
 
 **Chain reward:** Title "The Enlightened" · game speed +300% for 180 ticks
 
@@ -251,7 +251,7 @@ Yes. A milestone that doesn't name a later age fits inside a normal run: everyth
 |---|---|
 | Settlement, Builder, Military, Ancient Ages | the Atomic Age (a normal run) |
 | Trade | the Modern Age (Maritime Empire's Seaports) |
-| Scholar | the Information Age (Tech Master's 50 techs) |
+| Scholar | the Information Age (Tech Master's 50 techs, counted from the Information Age on) |
 
 Some milestones count buildings you can only build in their own age: Stone Pits, Temples, Trading Posts, Coal Plants, Castle Keeps and others. Build them before you advance. If a milestone still needs them in a later age (Devout Settlement's Shrines in the Stone Age, Power Grid's Coal Plants in the Victorian Age), don't upgrade them away when the game offers.
 

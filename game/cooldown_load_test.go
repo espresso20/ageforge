@@ -60,9 +60,16 @@ func TestSuccumb_CooldownsStartOver(t *testing.T) {
 		if fs.CooldownLeft != fs.CooldownTicks || bs.CooldownLeft != bs.CooldownTicks || fs.CooldownTicks != 780 {
 			t.Fatalf("tick %d: fresh cooldowns are %d of %d and %d of %d, want full ones (780 for the festival)", tick, fs.CooldownLeft, fs.CooldownTicks, bs.CooldownLeft, bs.CooldownTicks)
 		}
+		// The run's other timers start over too, as at a prestige.
+		ge.autoExpeditionTicksLeft, ge.autoExpeditionStarved = 500, true
+		ge.ageReady, ge.starvationTicks = true, 7
 		ge.pendingCatastrophe = ge.currentEpoch
 		if err := ge.Succumb(); err != nil {
 			t.Fatalf("tick %d: Succumb: %v", tick, err)
+		}
+		if ge.autoExpeditionTicksLeft != 0 || ge.autoExpeditionStarved || ge.ageReady || ge.starvationTicks != 0 {
+			t.Errorf("tick %d: after a Succumb the survey countdown is %d (starved %v), ready-to-advance %v, famine ticks %d; want a new run's",
+				tick, ge.autoExpeditionTicksLeft, ge.autoExpeditionStarved, ge.ageReady, ge.starvationTicks)
 		}
 		fs, bs = ge.FestivalStatus(), ge.BlackMarketStatus()
 		if fs.CooldownLeft > fs.CooldownTicks || bs.CooldownLeft > bs.CooldownTicks {
