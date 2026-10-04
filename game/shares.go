@@ -332,27 +332,42 @@ func (ge *GameEngine) applyStaffPlan(sv *staffView, plan []int) {
 
 // recruitFood is what the routine plans recruits with: the net food rate now
 // (the last rates, corrected for workers who came or went since), each
-// worker's food and the margin a recruit must leave.
+// worker's food and the margin a recruit must leave. All three are in the
+// units a worker eats in, before Era Mastery's speed-up (foodBeforeMastery).
 func (ge *GameEngine) recruitFood() (net, perWorker, margin float64) {
 	drain := ge.Workers.FoodDrain()
 	if r := ge.Resources.resources["food"]; r != nil {
-		// Breakdown.FoodDrain is minus the drain the last rates counted.
-		net = r.Rate - r.Breakdown.FoodDrain - drain
+		net = foodBeforeMastery(r.Rate, r.Breakdown) - drain
 	}
 	perWorker = ge.Workers.FoodCostPerWorker()
 	return net, perWorker, recruitFoodMargin(net, drain, perWorker)
 }
 
+// foodBeforeMastery is the food made per tick before any worker eats and
+// before Era Mastery multiplies the net rate, read off a food rate and its
+// breakdown. On known ground the rate is k times what is made less what is
+// eaten, while a worker's food (FoodCostPerWorker) and what a food worker
+// grows (foodPerWorker) are per tick before k. Compared as they stood, the
+// rate looked k times richer than it was, and the routine recruited more
+// workers than the food fed. Breakdown.FoodDrain is minus the drain the
+// last rates counted.
+func foodBeforeMastery(rate float64, b RateBreakdown) float64 {
+	return rate - b.MasteryRate - b.FoodDrain
+}
+
+// FoodBeforeMastery is foodBeforeMastery for the Workers panel.
+func FoodBeforeMastery(rate float64, b RateBreakdown) float64 { return foodBeforeMastery(rate, b) }
+
 // foodWorkerFactor is what multiplies the food a worker adds to a food
 // building: morale, times the all-production and food bonuses plus the
 // worker output bonus (which is added to them, not multiplied), read off the
-// last rates.
+// last rates, times the Cosmic Legacy's factor.
 func (ge *GameEngine) foodWorkerFactor() float64 {
 	bonuses := 1.0
 	if r := ge.Resources.resources["food"]; r != nil && r.Breakdown.BuildingRate > 0 {
 		bonuses = math.Max(0, 1+r.Breakdown.BonusRate/r.Breakdown.BuildingRate)
 	}
-	return float64(ge.moraleMultiplier() * math.Max(0, bonuses+ge.workerBonus))
+	return float64(float64(ge.moraleMultiplier()*math.Max(0, bonuses+ge.workerBonus)) * ge.cosmicLegacyFactor())
 }
 
 // foodPerWorker is the food one more worker in building key grows a tick: a
@@ -882,7 +897,7 @@ func RecruitStatus(st GameState) string {
 	if cls, ok := config.WorkerClassByDomainAndAge("food", st.Age); ok {
 		per = cls.FoodCost
 	}
-	net := food.Rate - food.Breakdown.FoodDrain - ws.FoodDrain
+	net := foodBeforeMastery(food.Rate, food.Breakdown) - ws.FoodDrain
 	if net-per < recruitFoodMargin(net, ws.FoodDrain, per) {
 		return RecruitFood
 	}

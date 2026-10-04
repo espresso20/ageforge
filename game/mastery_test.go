@@ -157,7 +157,8 @@ func firstPrimitiveTech(t *testing.T) config.TechDef {
 
 // TestMasteryCommitAtPrestige: a prestige raises every age below the run's
 // furthest by one, up to the cap; the age prestiged from and later ones are
-// untouched. Succumb commits nothing; Reset clears everything.
+// untouched. Reset clears everything. (A Succumb commits too:
+// TestSuccumbCommitsMastery.)
 func TestMasteryCommitAtPrestige(t *testing.T) {
 	pm := NewPrestigeManager()
 	pm.NoteAgeEntered("modern_age")
@@ -184,7 +185,7 @@ func TestMasteryCommitAtPrestige(t *testing.T) {
 		t.Errorf("record %q, run furthest %q after the prestiges", pm.Record(), pm.RunFurthest())
 	}
 
-	// On the engine: a prestige from the Modern Age commits; a Succumb does not.
+	// On the engine: a prestige from the Modern Age commits.
 	ge := newSeededEngine(3)
 	if err := ge.SummonHarbingerForTest("modern_age"); err != nil {
 		t.Log(err) // places the game; a missing harbinger is fine
@@ -198,20 +199,116 @@ func TestMasteryCommitAtPrestige(t *testing.T) {
 	if k := ge.GetState().Mastery.K; k != 4 {
 		t.Errorf("the new run's Primitive Age runs at %v; with the record 12 ages ahead it catches up at 4", k)
 	}
-	before := ge.Prestige.masterySave()
-	_ = ge.SummonHarbingerForTest("iron_age")
-	if err := ge.ForceCatastropheForTest(); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.Succumb(); err != nil {
-		t.Fatal(err)
-	}
-	if after := ge.Prestige.masterySave(); !sameMastery(before, after) {
-		t.Errorf("Succumb changed mastery: %v -> %v", before, after)
-	}
 	ge.Reset()
 	if len(ge.Prestige.masterySave()) != 0 || ge.Prestige.Record() != "primitive_age" || ge.GetState().Mastery.K != 1 {
 		t.Errorf("Reset kept mastery %v, record %q", ge.Prestige.masterySave(), ge.Prestige.Record())
+	}
+}
+
+// masteryThrough is the mastery map of a player whose ages before upTo hold
+// level m each.
+func masteryThrough(upTo string, m int) map[string]int {
+	out := map[string]int{}
+	for _, a := range ageKeys() {
+		if a == upTo {
+			break
+		}
+		out[a] = m
+	}
+	return out
+}
+
+// TestSuccumbCommitsMastery: a Succumb ends the run as a prestige does, so
+// every age the run completed gains a level through the same commit, the
+// rebuild starts on known ground, and the prestige after it counts only what
+// the rebuilt run completed.
+func TestSuccumbCommitsMastery(t *testing.T) {
+	t.Cleanup(SetDataDirForTest(t.TempDir()))
+	ge := newSeededEngine(5)
+	// A first run that reaches the Renaissance Age and falls there.
+	for _, a := range ageKeys() {
+		ge.Prestige.NoteAgeEntered(a)
+		if a == "renaissance_age" {
+			break
+		}
+	}
+	ge.age, ge.currentEpoch = "renaissance_age", config.EpochForAge("renaissance_age")
+	if g := ge.GetState().Mastery.NextGains; len(g) != 6 || g[0] != "primitive_age" || g[5] != "medieval_age" {
+		t.Fatalf("before the fall the run would raise %v, want Primitive to Medieval", g)
+	}
+	ge.pendingCatastrophe = ge.currentEpoch
+	if err := ge.Succumb(); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := ge.Prestige.masterySave(), masteryThrough("renaissance_age", 1); !sameMastery(got, want) {
+		t.Fatalf("after the Succumb mastery is %v, want %v: the six ages the run completed, one level each", got, want)
+	}
+	if ge.Prestige.Mastery("renaissance_age") != 0 {
+		t.Error("the age the run fell in was not completed and must gain nothing")
+	}
+	if ge.Prestige.RunFurthest() != "primitive_age" || ge.Prestige.Record() != "renaissance_age" {
+		t.Errorf("after the Succumb the run's furthest is %q and the record %q, want primitive_age and renaissance_age", ge.Prestige.RunFurthest(), ge.Prestige.Record())
+	}
+	if ge.Prestige.GetLevel() != 0 || ge.Prestige.Snapshot().TotalEarned != 0 {
+		t.Errorf("a Succumb is not a prestige: level %d, points %d", ge.Prestige.GetLevel(), ge.Prestige.Snapshot().TotalEarned)
+	}
+	// The rebuild starts on known ground: the Primitive Age is six ages
+	// behind the record, so it catches up at 4x.
+	st := ge.GetState()
+	if st.Mastery.K != config.CatchUpK || len(st.Mastery.NextGains) != 0 {
+		t.Errorf("the rebuild starts at %vx with next gains %v, want %vx and none", st.Mastery.K, st.Mastery.NextGains, config.CatchUpK)
+	}
+	if indexOfLog(ge, "Era Mastery: the Primitive Age to the Medieval Age gained a mastery level each") < 0 ||
+		indexOfLog(ge, "Known ground: the Primitive Age runs 4x faster") < 0 {
+		t.Errorf("the log does not say what the fall earned:\n%s", strings.Join(logMessages(ge), "\n"))
+	}
+
+	// The rebuild reaches the Medieval Age and takes the early prestige. It
+	// raises the five ages that run completed, and nothing above them: the
+	// Medieval Age, completed once, before the fall, stays at 1.
+	for _, a := range ageKeys() {
+		ge.Prestige.NoteAgeEntered(a)
+		if a == "medieval_age" {
+			break
+		}
+	}
+	ge.age, ge.currentEpoch = "medieval_age", config.EpochForAge("medieval_age")
+	if err := ge.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	want := masteryThrough("medieval_age", 2)
+	want["medieval_age"] = 1
+	if got := ge.Prestige.masterySave(); !sameMastery(got, want) {
+		t.Fatalf("after the Succumb and a Medieval prestige mastery is %v, want %v: an age is counted once per run that completed it", got, want)
+	}
+
+	// It is saved like any mastery.
+	if err := ge.SaveGame("fallen"); err != nil {
+		t.Fatal(err)
+	}
+	ge2 := NewGameEngine()
+	if err := ge2.LoadGame("fallen"); err != nil {
+		t.Fatal(err)
+	}
+	if got := ge2.Prestige.masterySave(); !sameMastery(got, want) || ge2.cheaterBadge {
+		t.Errorf("after a save and load mastery is %v (tampered: %v), want %v", got, ge2.cheaterBadge, want)
+	}
+
+	// A Succumb never passes the cap.
+	top := newSeededEngine(6)
+	for _, a := range ageKeys() {
+		top.Prestige.SetMastery(a, config.MasteryCap)
+	}
+	top.Prestige.NoteAgeEntered("iron_age")
+	top.age, top.currentEpoch = "iron_age", config.EpochForAge("iron_age")
+	top.pendingCatastrophe = top.currentEpoch
+	if err := top.Succumb(); err != nil {
+		t.Fatal(err)
+	}
+	for _, a := range ageKeys() {
+		if m := top.Prestige.Mastery(a); m != config.MasteryCap {
+			t.Errorf("%s has mastery %d after a Succumb at the cap, want %d", a, m, config.MasteryCap)
+		}
 	}
 }
 

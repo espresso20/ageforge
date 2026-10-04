@@ -114,6 +114,34 @@ const PrestigeMinAge = "medieval_age"
 // rather than a taste, for the account's records (badges count only these).
 const PrestigeRunAge = "modern_age"
 
+// EarlyPrestigeLine is the plain line an early prestige carries: one from
+// before PrestigeRunAge (an early taste, as the prestige panel calls it),
+// which pays little. It says what the prestige pays
+// and that going deeper pays far more, so nobody takes the early prestige
+// for the game's real payout. done picks the tense: the confirm warning
+// says what it will pay, the new run's log what it paid. "" for a prestige
+// from PrestigeRunAge or later. sight keeps it from naming an age the player
+// has not seen (the no-spoiler rule): it then counts the ages to go instead.
+func EarlyPrestigeLine(sight AgeSight, from string, points int, done bool) string {
+	order := ageOrders()
+	at, ok := order[from]
+	run := order[PrestigeRunAge]
+	if !ok || at >= run {
+		return ""
+	}
+	full := textfmt.Count(depthPoints()[PrestigeRunAge], "prestige point", "prestige points")
+	deeper := "a run to the " + AgeName(PrestigeRunAge) + " pays " + full
+	if !sight.Age(PrestigeRunAge) {
+		deeper = "a full run, " + textfmt.Count(run-at, "age", "ages") + " further on, pays " + full
+	}
+	lead := "This is an early taste: a prestige from the %s pays %s, for the %s this run completed."
+	if done {
+		lead = "That was an early taste: a prestige from the %s paid %s, for the %s the run completed."
+	}
+	return fmt.Sprintf(lead+" Going deeper pays far more: each era's ages are worth 3 times the era before, and %s.",
+		AgeName(from), textfmt.Count(points, "prestige point", "prestige points"), textfmt.Count(at, "age", "ages"), deeper)
+}
+
 // CanPrestige returns true if the player has reached PrestigeMinAge or later,
 // comparing orders from the ageOrder map provided by ProgressManager.
 func (pm *PrestigeManager) CanPrestige(age string, ageOrder map[string]int) bool {

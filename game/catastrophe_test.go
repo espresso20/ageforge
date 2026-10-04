@@ -282,8 +282,8 @@ func TestSuccumb_RuinsResetAndLegacy(t *testing.T) {
 	if _, stored := ge.permanentBonuses["research_speed"]; stored {
 		t.Error("research bonus must be derived, not stored in permanentBonuses")
 	}
-	if got := ge.succumbResearchBonus(); got != 0.25 {
-		t.Errorf("research bonus = %v, want 0.25", got)
+	if got := ge.succumbResearchFactor(); got != 0.8 {
+		t.Errorf("research time factor = %v, want 0.8", got)
 	}
 	if ge.pendingCatastrophe != "" {
 		t.Error("Succumb must clear pending")
@@ -294,33 +294,170 @@ func TestSuccumb_RuinsResetAndLegacy(t *testing.T) {
 	}
 }
 
-func legacyModValue(mods []Modifier) float64 {
-	v := 0.0
-	for _, m := range mods {
-		if m.Source == "legacy" && m.Target == "research_speed" {
-			v += m.Value
+// withStartingStock gives ge a starting-stock grant of food and wood, as the
+// first shop's Starting Food and Starting Wood perks were (they are retired;
+// the engine still pays whatever starting stock the shop holds).
+func withStartingStock(ge *GameEngine, food, wood float64) {
+	pm := ge.Prestige
+	list := append([]config.PrestigeUpgradeDef(nil), pm.upgradeList...)
+	for res, amount := range map[string]float64{"food": food, "wood": wood} {
+		def := config.PrestigeUpgradeDef{Key: "zz_test_start_" + res, Name: "Test " + res, EffectKey: res,
+			EffectType: "starting_resource", PerTier: amount, MaxTier: 1, Costs: []int{1}}
+		list = append(list, def)
+		pm.upgradeDefs[def.Key] = def
+		pm.upgrades[def.Key] = 1
+	}
+	pm.upgradeList = list
+}
+
+// A Succumb sizes the stores before the starting stock lands, as a prestige
+// does. The stock used to be added to stores still at their base size, so
+// anything over 50 food and 50 wood was cut off, and the new run's first
+// snapshot showed the base caps until the first tick.
+func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
+	// A run that fell in the Renaissance Age: the rebuild's Primitive Age
+	// is six ages behind the record and catches up at 4x, stores included.
+	fallen := func(seed int64) *GameEngine {
+		ge := catEngine(t, "renaissance_age", seed)
+		for _, a := range ageKeys() {
+			ge.Prestige.NoteAgeEntered(a)
+			if a == "renaissance_age" {
+				break
+			}
+		}
+		return ge
+	}
+	base := config.ResourceByKey()["food"].BaseStorage
+	if base != 50 || config.ResourceByKey()["wood"].BaseStorage != 50 {
+		t.Fatalf("base food and wood storage are %v and %v, want 50: adjust the test", base, config.ResourceByKey()["wood"].BaseStorage)
+	}
+
+	ge := fallen(21)
+	succumbIn(t, ge, "renaissance_age")
+	st := ge.GetState()
+	if k := st.Mastery.K; k != config.CatchUpK {
+		t.Fatalf("the rebuild starts at %vx, want %vx", k, config.CatchUpK)
+	}
+	for _, res := range []string{"food", "wood"} {
+		if got, want := st.Resources[res].Storage, float64(base*config.CatchUpK); got != want {
+			t.Errorf("%s storage %v in the first snapshot after a Succumb, want %v (sized before the first tick)", res, got, want)
 		}
 	}
-	return v
+	if food, wood := st.Resources["food"].Amount, st.Resources["wood"].Amount; food != 15 || wood != 12 {
+		t.Errorf("a Succumb starts with %v food and %v wood, want 15 and 12", food, wood)
+	}
+
+	// With starting stock above the base stores: all of it lands, the same
+	// amounts a prestige starts with.
+	ge = fallen(22)
+	withStartingStock(ge, 100, 90)
+	succumbIn(t, ge, "renaissance_age")
+	st = ge.GetState()
+	if food, wood := st.Resources["food"].Amount, st.Resources["wood"].Amount; food != 115 || wood != 102 {
+		t.Errorf("a Succumb with +100 food and +90 wood starts with %v food and %v wood, want 115 and 102 (it was cut off at %v)", food, wood, base)
+	}
+	pr := fallen(22)
+	withStartingStock(pr, 100, 90)
+	if err := pr.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	ps := pr.GetState()
+	for _, res := range []string{"food", "wood"} {
+		if st.Resources[res].Amount != ps.Resources[res].Amount || st.Resources[res].Storage != ps.Resources[res].Storage {
+			t.Errorf("%s after a Succumb: %v of %v; after a prestige: %v of %v. They must start alike", res,
+				st.Resources[res].Amount, st.Resources[res].Storage, ps.Resources[res].Amount, ps.Resources[res].Storage)
+		}
+	}
 }
+
+// twoEpochs is Ancient Knowledge after two epochs: x0.8 twice.
+var twoEpochs = AncientKnowledgeFactor(2)
 
 func TestSuccumb_ResearchBonusStacksAcrossDistinctEpochs(t *testing.T) {
 	ge := catEngine(t, "iron_age", 9)
 	succumbIn(t, ge, "iron_age")
 	succumbIn(t, ge, "renaissance_age") // steel era
-	if got := ge.succumbResearchBonus(); got != 0.50 {
-		t.Fatalf("after iron + steel: %v, want 0.50", got)
+	if got := ge.succumbResearchFactor(); got != twoEpochs || math.Abs(got-0.64) > 1e-12 {
+		t.Fatalf("after iron + steel: x%v, want x0.64", got)
 	}
 	succumbIn(t, ge, "classical_age") // iron era again: no new legacy
-	if got := ge.succumbResearchBonus(); got != 0.50 {
-		t.Errorf("repeat epoch must not stack: %v, want 0.50", got)
+	if got := ge.succumbResearchFactor(); got != twoEpochs {
+		t.Errorf("repeat epoch must not stack: x%v, want x0.64", got)
 	}
-	if got := ge.combinedResearchSpeed(); math.Abs(got-0.50) > 1e-9 {
-		t.Errorf("combinedResearchSpeed = %v, want 0.50", got)
+	// It multiplies research time on its own: the research speed pool, which
+	// is added up and taken off the listed time, holds none of it.
+	if got := ge.combinedResearchSpeed(); got != 0 {
+		t.Errorf("research speed pool = %v, want 0: Ancient Knowledge is not part of it", got)
 	}
-	// Flows through the resolver → Active Multipliers.
-	if got := legacyModValue(ge.GetState().Modifiers); got != 0.50 {
-		t.Errorf("resolver legacy research_speed = %v, want 0.50", got)
+	for _, m := range ge.GetState().Modifiers {
+		if m.Target == "research_speed" {
+			t.Errorf("research_speed modifier %+v: Ancient Knowledge must not be in the pool", m)
+		}
+	}
+	if got := ge.GetState().SuccumbResearchFactor; got != twoEpochs {
+		t.Errorf("GameState.SuccumbResearchFactor = %v, want %v", got, twoEpochs)
+	}
+}
+
+// Ancient Knowledge multiplies research time, x0.8 for each epoch succumbed
+// in, so it never floors research. As +25% research speed per epoch, taken
+// off the listed time, four epochs brought every tech to one tick.
+func TestAncientKnowledgeNeverFloorsResearch(t *testing.T) {
+	epochs := 0
+	ge := NewGameEngine()
+	ge.SeedRNG(3)
+	for _, ep := range config.Epochs() {
+		if config.CatastropheAllowed(ep.Key) {
+			ge.legacyBonuses[ep.Key] = true
+			epochs++
+		}
+	}
+	if epochs != 6 {
+		t.Fatalf("%d epochs a catastrophe can strike in, want 6", epochs)
+	}
+	factor := ge.succumbResearchFactor()
+	if want := math.Pow(SuccumbResearchTimeFactor, 6); math.Abs(factor-want) > 1e-12 || factor < 0.26 {
+		t.Fatalf("six epochs: x%v, want x%v", factor, want)
+	}
+	// Every tech in the game, started through the engine with all six.
+	for _, key := range ge.Research.order {
+		def := ge.Research.defs[key]
+		ge.Research.currentTech = ""
+		ge.Research.researched = map[string]bool{}
+		ge.age = def.Age
+		for _, pre := range def.Prerequisites {
+			ge.Research.researched[pre] = true
+		}
+		ge.Resources.UnlockResource("knowledge")
+		ge.Resources.AddStorage("knowledge", def.Cost)
+		ge.Resources.Add("knowledge", def.Cost)
+		if err := ge.startResearchLocked(key, true); err != nil {
+			t.Fatalf("%s: %v", key, err)
+		}
+		got := ge.Research.totalTicks
+		if want := int(float64(def.ResearchTicks) * factor); got != want || got <= 1 {
+			t.Errorf("%s: %d ticks with six epochs, want %d of its %d (never one tick)", key, got, want, def.ResearchTicks)
+		}
+		if float64(got) < 0.26*float64(def.ResearchTicks)-1 {
+			t.Errorf("%s: %d ticks is under 26%% of its %d", key, got, def.ResearchTicks)
+		}
+	}
+	// Each further epoch takes the same share off what is left.
+	prev := 1_000_000
+	for n := 1; n <= 6; n++ {
+		ticks := ResearchTicks(1_000_000, 0, AncientKnowledgeFactor(n), 1)
+		if ratio := float64(ticks) / float64(prev); math.Abs(ratio-SuccumbResearchTimeFactor) > 1e-5 {
+			t.Errorf("epoch %d: research time x%v of the epoch before, want x%v", n, ratio, SuccumbResearchTimeFactor)
+		}
+		prev = ticks
+	}
+	// On top of the research speed pool and Era Mastery it still multiplies.
+	if got, want := ResearchTicks(1000, 0.5, AncientKnowledgeFactor(2), 2), 160; got != want {
+		t.Errorf("1000 ticks at +50%% speed, two epochs, k 2: %d, want %d", got, want)
+	}
+	// A manager no engine has set leaves times alone.
+	if got := ResearchTicks(1000, 0, 0, 0); got != 1000 {
+		t.Errorf("unset factor changed 1000 ticks to %d", got)
 	}
 }
 
@@ -335,8 +472,8 @@ func TestSuccumb_ResearchBonusSurvivesPrestigeAndSaveLoad(t *testing.T) {
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatalf("DoPrestige: %v", err)
 	}
-	if got := ge.succumbResearchBonus(); got != 0.50 {
-		t.Fatalf("after DoPrestige: %v, want 0.50", got)
+	if got := ge.succumbResearchFactor(); got != twoEpochs {
+		t.Fatalf("after DoPrestige: x%v, want x%v", got, twoEpochs)
 	}
 	if err := ge.SaveGame("cat_research"); err != nil {
 		t.Fatal(err)
@@ -345,11 +482,11 @@ func TestSuccumb_ResearchBonusSurvivesPrestigeAndSaveLoad(t *testing.T) {
 	if err := ge2.LoadGame("cat_research"); err != nil {
 		t.Fatal(err)
 	}
-	if got := ge2.succumbResearchBonus(); got != 0.50 {
-		t.Errorf("after load: %v, want 0.50", got)
+	if got := ge2.succumbResearchFactor(); got != twoEpochs {
+		t.Errorf("after load: x%v, want x%v", got, twoEpochs)
 	}
-	if got := legacyModValue(ge2.GetState().Modifiers); got != 0.50 {
-		t.Errorf("after load, resolver legacy = %v, want 0.50", got)
+	if got := ge2.GetState().SuccumbResearchFactor; got != twoEpochs {
+		t.Errorf("after load, GameState.SuccumbResearchFactor = %v, want %v", got, twoEpochs)
 	}
 }
 
@@ -362,8 +499,11 @@ func TestLoad_MigratesStoredSuccumbResearchBonus(t *testing.T) {
 	if _, ok := ge.permanentBonuses["research_speed"]; ok {
 		t.Errorf("stored research bonus not stripped: %v", ge.permanentBonuses["research_speed"])
 	}
-	if got := ge.combinedResearchSpeed(); got != 0.50 {
-		t.Errorf("combined research speed = %v, want 0.50 (derived)", got)
+	if got := ge.combinedResearchSpeed(); got != 0 {
+		t.Errorf("research speed pool = %v, want 0: the stored copy is gone", got)
+	}
+	if got := ge.succumbResearchFactor(); got != twoEpochs {
+		t.Errorf("Ancient Knowledge = x%v, want x%v (derived from the legacy flags)", got, twoEpochs)
 	}
 
 	// A new-format save is trusted as-is.

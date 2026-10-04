@@ -626,6 +626,29 @@ var truthKinds = map[string]truthKind{
 			return truthAcross(ge, before, after, base)
 		},
 	},
+	// "+X% all production, after the caps" (the Cosmic Legacy): everything
+	// a resource makes, bonuses and all, times 1 + X, in every age. Read as
+	// the rise in each rate over what the resource made before it (the
+	// food drain is not production and is left out).
+	"final_production": {
+		Unit: "of what every resource makes", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			// The probe has put the engine back: the bonus is off.
+			ge.recalculateRates()
+			k := ge.speedK()
+			base := map[string]float64{}
+			for _, key := range ge.Resources.order {
+				r := ge.Resources.resources[key]
+				if made := r.Rate/k - r.Breakdown.FoodDrain - r.Breakdown.LegacyRate; made > 0 {
+					base[key] = made
+				}
+			}
+			if len(base) == 0 {
+				return truthMeasured{Skip: "nothing is made here"}
+			}
+			return truthAcross(ge, before, after, base)
+		},
+	},
 	// "+X% <resource> production": X points on that resource alone.
 	"resource_production": {
 		Unit: "points of base output", Pool: true,
@@ -723,6 +746,16 @@ var truthKinds = map[string]truthKind{
 		Unit: "points of the listed research time", Pool: true,
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
 			return truthMeasured{Delivered: before["research"] - after["research"], Allowed: meterIs("research")}
+		},
+	},
+	// "research time x(1 - X)" (Ancient Knowledge): X of the research time
+	// as it stood comes off, whatever was taken off it before.
+	"research_time": {
+		Unit: "of the research time left",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			// The reference tech rounds to whole ticks, before and after.
+			noise := 2 / (truthRefTicks * before["research"])
+			return truthMeasured{Delivered: 1 - after["research"]/before["research"], Noise: noise, Allowed: meterIs("research")}
 		},
 	},
 	// "+X% military power": X points on the Defense Rating.
@@ -855,7 +888,7 @@ func init() {
 	truthKinds["boon_all_production"] = truthAlso("all_production")
 	truthKinds["boon_drain"] = truthAlso("drain")
 	truthKinds["legacy_production"] = truthAlso("resource_production")
-	truthKinds["legacy_research"] = truthAlso("research_speed")
+	truthKinds["legacy_research"] = truthAlso("research_time")
 	// A festival is paid for in culture: the store moves with the rates.
 	truthKinds["festival"] = truthAlso("all_production", "stock:culture")
 }
@@ -1683,16 +1716,17 @@ func truthLegacyPromises() []truthPromise {
 		if !config.CatastropheAllowed(ep.Key) {
 			continue // no catastrophe strikes here: its legacy can't be earned
 		}
-		// Ancient Knowledge: +25% research speed for each epoch succumbed
+		// Ancient Knowledge: research time x0.8 for each epoch succumbed
 		// in, on top of the ones before it. The nth is measured with the
-		// first n-1 already held, as a player collects them.
+		// first n-1 already held, as a player collects them. It multiplies
+		// what is left, so it sits in no pool and no cap holds it.
 		before := append([]string(nil), fallen...)
 		fallen = append(fallen, ep.Key)
-		eff := config.Effect{Type: "permanent_bonus", Target: "research_speed", Value: SuccumbResearchBonusPerEpoch}
+		eff := config.Effect{Type: "ancient_knowledge", Target: "research_time", Value: 1 - SuccumbResearchTimeFactor}
 		out = append(out, truthPromise{
 			Source: "ancient knowledge", Key: ep.Key,
 			Name: fmt.Sprintf("Ancient Knowledge, epoch %d (%s)", len(fallen), ep.Name), Age: ageKeys()[0], Eff: eff, Count: 1,
-			Text: truthEffectText(eff), Kind: "legacy_research",
+			Text: "research time " + ResearchFactorText(SuccumbResearchTimeFactor), Kind: "legacy_research",
 			wire: func(ge *GameEngine) truthSwitch {
 				return truthSwitch{
 					off: func() {
@@ -1713,7 +1747,10 @@ func truthLegacyPromises() []truthPromise {
 // truthOtherPromises is the handful of one-off sources: the Cosmic Legacy,
 // the festival and Endure's Reconstruction Effort.
 func truthOtherPromises() []truthPromise {
-	cosmic := config.Effect{Type: "production_all", Target: "production_all", Value: CosmicLegacyProductionBonus}
+	// The Cosmic Legacy is no part of the all-production pool: it multiplies
+	// production after the caps (cosmicLegacyFactor), so its effect names no
+	// pool and no "capped" note can stand beside it.
+	cosmic := config.Effect{Type: "cosmic_legacy", Target: "production", Value: CosmicLegacyProductionBonus}
 	festival := config.Effect{Type: "production_all", Target: "production_all", Value: festivalBuffPercent}
 	rebuild := config.Effect{Type: "production_all", Target: "production_all", Value: endureDebuffProduction}
 	return []truthPromise{
@@ -1727,7 +1764,7 @@ func truthOtherPromises() []truthPromise {
 		},
 		{
 			Source: "cosmic legacy", Key: "cosmic_legacy", Name: "Cosmic Legacy", Age: ageKeys()[0], Eff: cosmic, Count: 1,
-			Text: truthEffectText(cosmic) + ", permanently", Kind: "all_production",
+			Text: truthPercent(cosmic.Value) + " all production, after the caps, permanently", Kind: "final_production",
 			wire: func(ge *GameEngine) truthSwitch {
 				had := ge.cosmicLegacy
 				return truthSwitch{
@@ -1970,8 +2007,6 @@ var truthAccepted = map[string]string{
 		"Techs and wonders alone fill it by the Electric Age, so every later one adds nothing. The panels say \"capped\" beside each.",
 	"CAPPED/resource_production:gold":      "cap, pending design: gold's own pool has the same +200% limit, and the gold techs fill it in the Colonial Age.",
 	"CAPPED/resource_production:knowledge": "cap, pending design: knowledge's own pool has the same +200% limit, and the knowledge techs and the Great Library fill it in the Electric Age.",
-	"CAPPED/research_speed": "cap, pending design: research speed takes its share off a tech's time, and a tech takes one tick at least, so nothing past +100% counts. " +
-		"Ancient Knowledge alone reaches +100% with the fourth epoch succumbed in: the fifth and sixth add nothing.",
 	"LOCKED RESOURCE/ally stellar_federation": "the Stellar Federation is met in the Space Age and its specialty, dark matter, unlocks in the Interstellar Age: " +
 		"an alliance made early pays nothing for one age. Moving the civilization or the resource is a design call.",
 }

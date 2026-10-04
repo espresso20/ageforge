@@ -287,7 +287,7 @@ type GameEngine struct {
 
 	// blackMarketReadyTick is the earliest tick a black-market deal may run
 	// (cooldown anti-spam). 0 = ready now. Both cooldowns are saved, and both
-	// reset with the tick counter on prestige and Reset.
+	// reset with the tick counter on prestige, Succumb and Reset.
 	blackMarketReadyTick int
 
 	// blackMarketRand is the RNG seam for the black-market win/lose roll; nil
@@ -1881,6 +1881,22 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
+	// The Cosmic Legacy (last_passage.go): everything a resource makes × 1.1,
+	// after the ×3 caps and every other bonus. Inside the all-production
+	// pool it added nothing once the pool was full (the Victorian Age on a
+	// typical run); here it counts in every age. It multiplies what is made,
+	// before the food drain, so it never deepens a deficit. Its own
+	// breakdown line says why.
+	if legacy := ge.cosmicLegacyFactor(); legacy != 1 {
+		for _, def := range ge.Resources.defs {
+			if r := ge.Resources.resources[def.Key]; r != nil && r.Rate > 0 {
+				scaled := float64(r.Rate * legacy)
+				r.Breakdown.LegacyRate = scaled - r.Rate
+				r.Rate = scaled
+			}
+		}
+	}
+
 	// Food consumption
 	drain := ge.Workers.FoodDrain()
 	if drain > 0 {
@@ -1896,7 +1912,8 @@ func (ge *GameEngine) recalculateRates() {
 		r := ge.Resources.resources[def.Key]
 		if r != nil {
 			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.WorkerRate +
-				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain
+				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain +
+				r.Breakdown.LegacyRate
 			r.Breakdown.BonusRate = r.Rate - knownComponents
 		}
 	}
@@ -2869,7 +2886,6 @@ func (ge *GameEngine) buildResolver() *Resolver {
 	r.AddAll(ge.Prestige.Modifiers())
 	r.AddAll(ge.wonderModifiers())
 	r.AddAll(ge.permanentModifiers())
-	r.AddAll(ge.legacyModifiers())
 	r.AddAll(ge.cosmicLegacyModifiers())
 	r.AddAll(ge.eventModifiers())
 	r.AddAll(ge.moraleModifiers())
@@ -3655,7 +3671,8 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	// Combine research_speed from all sources (see combinedResearchSpeed). This
 	// must be done before StartResearch so the combined value reduces tick count.
 	combinedResearchSpeed := ge.combinedResearchSpeed()
-	ge.Research.timeK = ge.speedK() // Era Mastery: ÷ k after the speed step
+	ge.Research.timeMult = ge.succumbResearchFactor() // Ancient Knowledge: × 0.8 per epoch
+	ge.Research.timeK = ge.speedK()                   // Era Mastery: ÷ k after the speed step
 	if err := ge.Research.StartResearchWithSpeed(techKey, ge.age, ageOrder, knowledge, combinedResearchSpeed); err != nil {
 		return err
 	}
@@ -3819,7 +3836,8 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	// Same combined research_speed sources a normal research gets; the memory
 	// penalty (2x ticks) is applied on top inside StartMemoryResearch.
 	combinedResearchSpeed := ge.combinedResearchSpeed()
-	ge.Research.timeK = ge.speedK() // Era Mastery: ÷ k after the speed step
+	ge.Research.timeMult = ge.succumbResearchFactor() // Ancient Knowledge: × 0.8 per epoch
+	ge.Research.timeK = ge.speedK()                   // Era Mastery: ÷ k after the speed step
 	if err := ge.Research.StartMemoryResearch(techKey, combinedResearchSpeed); err != nil {
 		return err
 	}
@@ -3943,6 +3961,8 @@ func (ge *GameEngine) DoPrestige() error {
 // them, as how says), logs the run's last lines and resets for the new run.
 // Called by DoPrestige and by the Last Passage choice, under the write lock.
 func (ge *GameEngine) completePrestige(how prestigeEnding) {
+	// What the player may see named, before the reset takes the run's ages.
+	sight := ge.ageSightLocked()
 	full := ge.Prestige.CalculatePoints(ge.age)
 	points := ge.lastPassagePoints(how, full)
 	ge.recordLastPassageOutcome(how, points, full)
@@ -4037,6 +4057,10 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.log = carried
 	ge.addLog("success", fmt.Sprintf("Prestige complete. Level %d, %s earned.",
 		ge.Prestige.GetLevel(), textfmt.Count(points, "prestige point", "prestige points")))
+	// An early prestige pays little: say so, and what a deeper run pays.
+	if line := EarlyPrestigeLine(sight, prestigedFrom, points, true); line != "" {
+		ge.addLog("info", line)
+	}
 	if newLegacy {
 		ge.addLog("success", fmt.Sprintf("✦ Cosmic Legacy: all production %s, permanent. It survives every prestige and every fall.", textfmt.SignedPercent(CosmicLegacyProductionBonus)))
 	} else if ge.cosmicLegacy {
@@ -4049,8 +4073,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 		ge.addLog("info", line)
 	}
 	if n := ge.legacyEpochCount(); n > 0 {
-		ge.addLog("info", fmt.Sprintf("Legacy bonuses active from %s you succumbed to: research speed %s.",
-			textfmt.Count(n, "epoch", "epochs"), textfmt.SignedPercent(ge.succumbResearchBonus())))
+		ge.addLog("info", fmt.Sprintf("Ancient Knowledge from %s you succumbed in: research time %s.",
+			textfmt.Count(n, "epoch", "epochs"), ResearchFactorText(ge.succumbResearchFactor())))
 	}
 	if len(savedRuins) > 0 {
 		ge.addLog("info", fmt.Sprintf("Ruins carried forward from past civilizations: %s.",
@@ -4336,7 +4360,7 @@ func (ge *GameEngine) GetState() GameState {
 		CatastropheHistory:    slices.Clone(ge.catastropheHistory),
 		CatastrophesEndured:   endured,
 		CatastrophesSuccumbed: succumbed,
-		SuccumbResearchBonus:  ge.succumbResearchBonus(),
+		SuccumbResearchFactor: ge.succumbResearchFactor(),
 		LastPassage:           ge.lastPassageState(prestigeSnap.PendingPoints),
 		History:               ge.History.Clone(),
 		Morale:                ge.morale,

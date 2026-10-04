@@ -21,11 +21,11 @@ func masteryTicks(ticks int, state game.GameState) int {
 }
 
 // researchTicks is what a tech listed at ticks takes to research if started
-// now: the research speed pool takes its share off, then the current age's
-// speed divides the rest (game.ResearchTicks, what the engine starts it
-// with).
+// now: the research speed pool takes its share off, Ancient Knowledge
+// multiplies what is left, then the current age's speed divides the rest
+// (game.ResearchTicks, what the engine starts it with).
 func researchTicks(ticks int, state game.GameState) int {
-	return game.ResearchTicks(ticks, state.Pools["research_speed"].Earned, state.Mastery.K)
+	return game.ResearchTicks(ticks, state.Pools["research_speed"].Earned, state.SuccumbResearchFactor, state.Mastery.K)
 }
 
 // masteryNowText is the current age's ground: "known ground, 2.4x faster
@@ -70,7 +70,7 @@ func writeMasterySection(sb *strings.Builder, state game.GameState) {
 	m := state.Mastery
 	fmt.Fprintf(sb, " This age: %s\n", masteryNowText(state))
 	if m.Record == "" || (len(m.Ages) == 0 && m.K <= 1) {
-		sb.WriteString(" [gray]Ages a prestige completes run faster on your next runs: 2x after one, up to 4.2x after ten.[-]\n")
+		sb.WriteString(" [gray]An age runs faster once a run has completed it: 2x after one, up to 4.2x after ten.[-]\n")
 		return
 	}
 	sb.WriteString("\n")

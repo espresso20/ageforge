@@ -81,7 +81,7 @@ Every 5 ticks (10 seconds), and once per step of the offline catch-up (one-minut
 
 1. moves workers out of domains set to 0 into free slots elsewhere,
 2. puts idle workers to work, each in the domain furthest below its share,
-3. with auto-recruit on, recruits into the empty worker slots as far as housing allows, while the net food rate stays at or above a margin: one worker's food, or 5% of the food production if that is more. It never recruits more workers than there are empty slots, so it never adds idle workers.
+3. with auto-recruit on, recruits into the empty worker slots as far as housing allows, while the net food rate stays at or above a margin: one worker's food, or 5% of the food production if that is more. It never recruits more workers than there are empty slots, so it never adds idle workers. On known ground ([Era Mastery](prestige.md#era-mastery)) the margin is measured before the age's speed-up, so the same buildings feed the same workforce at any speed.
 
 Within a domain, buildings fill in this order: buildings that are not superseded before those that are (a building is superseded once a higher tier of its line is open), the newest age first, then the higher tier of its line.
 

@@ -132,7 +132,7 @@ The Last Passage is different: its Endure costs prestige points, not buildings a
 
 The −10% applies to every building, including the ones that survived, for the full 562 ticks. It goes into the all-production pool, whose multiplier never drops below x0.1 or rises above x3 (see [The all-production cap](resources.md#the-all-production-cap)). While your pool is under the cap the debuff lands in full; if your bonuses already sit more than 10 points over the cap, it is absorbed, and the Endure log says so (`-10% all production is capped: no effect now`). The same floor covers per-resource rate modifiers and worker output, and any active debuff shows in the Active Multipliers panel.
 
-If morale was already low, the −10 can push it into the low band, where output is penalized. Morale drifts back toward 50% on its own; a food surplus speeds that up.
+If morale was already low, the −10 can push it into the low band, where output is penalized. Morale drifts back toward 50% on its own.
 
 **When to Endure:** your civilization is big, and a full reset would cost more than the legacy bonus is worth. Also when you already hold this epoch's legacy bonus.
 
@@ -156,9 +156,11 @@ Let the civilization fall, and keep something permanent.
 
 Up to 8 of your buildings other than wonders and storage become **ruins**, picked at random from the same seeded, fixed-order pool as Endure. Ruins produce at 50% of base rate with no workers. They carry across Succumb and prestige, but the total is capped at 24. When new ruins push past the cap, the lowest-value ruins crumble first (earliest age first, then lowest base output), so a late-game fall replaces primitive rubble. A save loaded with more than 24 ruins is trimmed the same way.
 
-You also get the epoch's **legacy bonus** (table below), permanently, and **Ancient Knowledge**: +25% research speed for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another 25%.
+You also get the epoch's **legacy bonus** (table below), permanently, and **Ancient Knowledge**: research takes 0.8 times as long for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another step.
 
-Then the civilization resets to the Primitive Age: buildings, resources, workers, research, milestones, events, the build queue and the build plan. You start with 15 food and 12 wood. No prestige points are earned, but your prestige level, points, [legacy kit](prestige.md#the-legacy-kit) and [Era Mastery](prestige.md#era-mastery) are kept, and the kit items you own work on the rebuild (the Plan Template puts the first age's part of your plan back, Worker Shares sets your shares). A Succumb raises no mastery, but on the rebuild every age 6 or more behind your record runs at least 4x ([catch-up](prestige.md#catch-up)). Morale restarts at 50%, and the civilization log gets a line.
+The run also ends as a prestige run does for [Era Mastery](prestige.md#era-mastery): every age it completed gains a mastery level, so the rebuild runs on known ground. The catastrophe box lists it when there is a level to gain.
+
+Then the civilization resets to the Primitive Age: buildings, resources, workers, research, milestones, events, the build queue and the build plan. You start with 15 food and 12 wood. No prestige points are earned, but your prestige level, points, [legacy kit](prestige.md#the-legacy-kit) and [Era Mastery](prestige.md#era-mastery) are kept, and the kit items you own work on the rebuild (the Plan Template puts the first age's part of your plan back, Worker Shares sets your shares). The ages the fallen run completed have gained a mastery level, so they run at least 2x on the rebuild, and every age 6 or more behind your record runs at least 4x ([catch-up](prestige.md#catch-up)). Storage follows that speed from the first moment of the new run. The festival and black market cooldowns start over with the run. Morale restarts at 50%, and the civilization log gets a line.
 
 ### What carries forward
 
@@ -166,7 +168,7 @@ Then the civilization resets to the Primitive Age: buildings, resources, workers
 |------|---------------|
 | Prestige level, points and the legacy kit | Kept |
 | What the legacy kit remembers | Kept, plus the fallen run's plan (the techs you planned included), worker shares and civilizations met |
-| Era Mastery and your record (the deepest age you have ever entered) | Kept. A Succumb raises no mastery |
+| Era Mastery and your record (the deepest age you have ever entered) | Kept, and every age the fallen run completed gains a mastery level |
 | Ruins | Kept, plus up to 8 new, capped at 24 |
 | Legacy flags (bonuses and Ancient Knowledge) | Kept, plus this epoch |
 | Civilization log | Kept |
@@ -177,9 +179,17 @@ Then the civilization resets to the Primitive Age: buildings, resources, workers
 
 ### Ancient Knowledge
 
-The research bonus comes straight from your legacy flags: +25% per epoch flagged. It is recomputed whenever it's needed, so save/load, Succumb and prestige can't drop or double it. It shows as **Legacy** under Research Speed in the Active Multipliers panel. Research speed counts up to +100% (a tech takes one tick at least), so the fifth and sixth epochs add nothing on their own; the panel marks the line as capped once you are past it.
+The research bonus comes straight from your legacy flags: research time ×0.8 for each epoch flagged. It is recomputed whenever it's needed, so save/load, Succumb and prestige can't drop or double it.
 
-From Iron to Cosmic there are 6 eras you can succumb in, so the most you can earn is **+150%**. The Stone Era legacy can't be earned, since no catastrophe strikes there, but a save that already holds it keeps it (+175% total). Succumbing to the Last Passage grants the Cosmic Legacy instead, not an era legacy.
+It multiplies. Research speed from milestones is added up and taken off a tech's listed time; Ancient Knowledge then multiplies what is left, and [Era Mastery](prestige.md#era-mastery) divides that. So every epoch counts and research never bottoms out:
+
+| Epochs succumbed in | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| Research time | ×0.8 | ×0.64 | ×0.51 | ×0.41 | ×0.33 | ×0.26 |
+
+(It used to be +25% research speed per epoch, taken off the listed time: four epochs brought every tech to a single tick, and the fifth and sixth added nothing.) It is not part of the Research Speed pool, so it has a line of its own: **Ancient Knowledge** in the Stats panel's Legacy Bonuses list and at the top of the Research panel, where the listed times already include it.
+
+From Iron to Cosmic there are 6 eras you can succumb in, so the most you can earn is **×0.26**. The Stone Era legacy can't be earned, since no catastrophe strikes there, but a save that already holds it keeps it (a seventh step, ×0.21). Succumbing to the Last Passage grants the Cosmic Legacy instead, not an era legacy.
 
 **When to Succumb:** you don't yet hold this epoch's legacy, and the reset is cheap for you. A catastrophe can strike anywhere in its era, early or late, so the question is how much of the run you'd be giving up at that moment.
 
@@ -241,4 +251,4 @@ Enduring costs 10 points of morale. Keep food positive, avoid over-militarizing 
 
 ### The long game
 
-Succumbing once in each era from Iron to Cosmic, over several runs, collects all six reachable legacy bonuses and +150% research speed. You can't choose where a doom is fated, but when a harbinger comes, **Invite** guarantees its strike, so you can take the fall in that era. Each run after that starts with those bonuses and up to 24 ruins producing from tick 1.
+Succumbing once in each era from Iron to Cosmic, over several runs, collects all six reachable legacy bonuses and Ancient Knowledge at ×0.26 research time. You can't choose where a doom is fated, but when a harbinger comes, **Invite** guarantees its strike, so you can take the fall in that era. Each run after that starts with those bonuses and up to 24 ruins producing from tick 1.

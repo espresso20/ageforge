@@ -43,6 +43,11 @@ type ResearchManager struct {
 	// is divided by it after the research-speed step (MasteryTicks). The
 	// engine sets it before each start; 0 or 1 leaves times alone.
 	timeK float64
+	// timeMult is Ancient Knowledge's factor for the next research
+	// (GameEngine.succumbResearchFactor): its time is multiplied by it after
+	// the research-speed step and before Era Mastery. The engine sets it
+	// before each start; 0 or 1 leaves times alone.
+	timeMult float64
 }
 
 // NewResearchManager creates a new research manager
@@ -95,19 +100,21 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 	}
 
 	rm.currentTech = key
-	ticks := ResearchTicks(def.ResearchTicks, speedBonus, rm.timeK)
+	ticks := ResearchTicks(def.ResearchTicks, speedBonus, rm.timeMult, rm.timeK)
 	rm.ticksLeft = ticks
 	rm.totalTicks = ticks
 	return nil
 }
 
 // ResearchTicks is how long a tech listed at base ticks takes to research
-// with a research speed bonus of speed on ground of speed k: research speed
-// takes its share off the listed time (+30% leaves 70% of it, rounded down,
-// one tick at least), then Era Mastery divides what is left by k
+// with a research speed bonus of speed and Ancient Knowledge's factor mult,
+// on ground of speed k: research speed takes its share off the listed time
+// (+30% leaves 70% of it, rounded down, one tick at least), Ancient
+// Knowledge multiplies what is left (x0.8 per epoch succumbed in, rounded
+// down, one tick at least), then Era Mastery divides that by k
 // (MasteryTicks). The engine starts research with it and the Research panel
 // lists times with it, so the time a tech shows is the time it takes.
-func ResearchTicks(base int, speed, k float64) int {
+func ResearchTicks(base int, speed, mult, k float64) int {
 	ticks := base
 	if speed > 0 {
 		ticks = int(float64(ticks) * (1.0 - speed))
@@ -115,7 +122,17 @@ func ResearchTicks(base int, speed, k float64) int {
 			ticks = 1
 		}
 	}
-	return MasteryTicks(ticks, k)
+	return MasteryTicks(ancientKnowledgeTicks(ticks, mult), k)
+}
+
+// ancientKnowledgeTicks multiplies ticks by Ancient Knowledge's factor mult,
+// rounded down, never below one tick. A factor of 1 or more, or one no
+// engine has set (0), leaves ticks as they are.
+func ancientKnowledgeTicks(ticks int, mult float64) int {
+	if mult <= 0 || mult >= 1 || ticks <= 0 {
+		return ticks
+	}
+	return max(1, int(float64(float64(ticks)*mult)))
 }
 
 // memoryResearchSlowdown is the tick multiplier applied to an Ancient Memory
@@ -158,7 +175,7 @@ func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) e
 	if ticks < 1 {
 		ticks = 1
 	}
-	ticks = MasteryTicks(ticks, rm.timeK)
+	ticks = MasteryTicks(ancientKnowledgeTicks(ticks, rm.timeMult), rm.timeK)
 	rm.ticksLeft = ticks
 	rm.totalTicks = ticks
 	return nil

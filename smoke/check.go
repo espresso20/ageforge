@@ -52,7 +52,7 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 		val  float64
 	}{
 		{"morale", st.Morale}, {"morale_cap", st.MoraleCap}, {"morale_multiplier", st.MoraleMultiplier},
-		{"tick_speed_bonus", st.TickSpeedBonus}, {"succumb_research_bonus", st.SuccumbResearchBonus},
+		{"tick_speed_bonus", st.TickSpeedBonus}, {"succumb_research_factor", st.SuccumbResearchFactor},
 		{"prestige_passive_bonus", st.Prestige.PassiveBonus},
 	} {
 		if bad(v.val) {

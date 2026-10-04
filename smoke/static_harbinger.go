@@ -3,20 +3,20 @@ package smoke
 import (
 	"fmt"
 	"strings"
-
-	"github.com/espresso20/ageforge/config"
 )
 
 // The harbinger price check: every Appease and Brace price, both levels, must
-// fit the most storage a player can have in the first age of its era
-// (MaxStorage), since the price is the same in every age of the thread.
-// Appease is priced on what the era's ages produce at their pacing targets
-// (config.FlowIncome × config.AgeTargetTicks), so a longer curve raises it
-// while faith and culture storage stay as typed; this is the check that
-// catches a curve change outgrowing storage. Level 2 costs double level 1
-// for both answers.
+// fit the most storage a player can have in the age the harbinger arrives in
+// (MaxStorage), since a thread's price is set then and stays the same in
+// every age it lives through, where storage is only larger. Every age a
+// harbinger can arrive in is checked (HarbingerPrices). Appease is priced on
+// what the age produces at its pacing target (a doom's thread: the shortest
+// warning's share of config.FlowIncome × config.AgeTargetTicks; the Last
+// Passage's: a share of its era's), so a longer curve raises it while faith
+// and culture storage stay as typed; this is the check that catches a curve
+// change outgrowing storage. Level 2 costs double level 1 for both answers.
 
-// HarbingerPriceProblem is one price no storage in its era's first age holds.
+// HarbingerPriceProblem is one price no storage in its arrival age holds.
 type HarbingerPriceProblem struct {
 	Epoch      string  `json:"epoch"`
 	Answer     string  `json:"answer"` // "appease 1", "appease 2", "brace 1", "brace 2"
@@ -26,18 +26,19 @@ type HarbingerPriceProblem struct {
 	MaxStorage float64 `json:"max_storage"`
 }
 
-// StaticHarbingerPrices checks every era's harbinger prices against the most
-// storage buildable in its first age.
+// StaticHarbingerPrices checks every thread's harbinger prices against the
+// most storage buildable in the age its harbinger arrives in.
 func StaticHarbingerPrices() []HarbingerPriceProblem {
 	var out []HarbingerPriceProblem
-	epochs := config.EpochByKey()
 	for _, r := range HarbingerPrices() {
-		first := epochs[r.Epoch].Ages[0]
 		check := func(answer string, cost map[string]float64, level float64) {
+			if r.TargetEpoch == "" {
+				answer += " (Last Passage)"
+			}
 			for _, res := range sortedKeys(cost) {
 				price := float64(cost[res] * level)
-				if m := MaxStorage(first, res); price > m {
-					out = append(out, HarbingerPriceProblem{Epoch: r.Epoch, Answer: answer, Resource: res, Price: price, Age: first, MaxStorage: m})
+				if m := MaxStorage(r.Age, res); price > m {
+					out = append(out, HarbingerPriceProblem{Epoch: r.Epoch, Answer: answer, Resource: res, Price: price, Age: r.Age, MaxStorage: m})
 				}
 			}
 		}
@@ -51,7 +52,7 @@ func StaticHarbingerPrices() []HarbingerPriceProblem {
 
 // writeHarbingerPrices renders the check for the static scenario.
 func writeHarbingerPrices(sb *strings.Builder, problems []HarbingerPriceProblem) {
-	sb.WriteString("Every Appease and Brace price, both levels, against the most storage buildable in the first age of its era (the price is the same in every age of the thread).\n\n")
+	sb.WriteString("Every Appease and Brace price, both levels, against the most storage buildable in the age the harbinger arrives in, for every age one can arrive in (a thread's price is set then and is the same in every age it lives through).\n\n")
 	if len(problems) == 0 {
 		sb.WriteString("No problems.\n")
 		return

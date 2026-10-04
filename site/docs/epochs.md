@@ -20,7 +20,7 @@ Ages and epochs do different jobs: **ages are about what you build; epochs are a
 
 The Cosmic Era is the only epoch with 4 ages instead of 3.
 
-Each age has a target length in real time, from 15 minutes for the Primitive Age up to 31h 12m for the Atomic Age, then 31h 12m to 57h 12m through the Digital and Neon Eras and 62h 24m for each Cosmic Era age (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). By epoch that is 4h 54m for the Stone Era, 27h 18m for the Iron Era, 54h 36m for the Steel Era, 80h 36m for the Electric Era, 109h 12m for the Digital Era, 156 hours for the Neon Era and 249h 36m for the Cosmic Era. The Modern Age, where a full run's prestige comes, arrives after about a week (the smoke-test bot takes about 5.3 days); prestige opens earlier, at the Medieval Age, as an early taste. From the Bronze Age on, ages and the clocks inside them (event durations, cooldowns, awakenings) run 2.6 times as long as on the earlier three-day curve. The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production.
+Each age has a target length in real time, from 15 minutes for the Primitive Age up to 31h 12m for the Atomic Age, then 31h 12m to 57h 12m through the Digital and Neon Eras and 62h 24m for each Cosmic Era age (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). By epoch that is 4h 54m for the Stone Era, 27h 18m for the Iron Era, 54h 36m for the Steel Era, 80h 36m for the Electric Era, 109h 12m for the Digital Era, 156 hours for the Neon Era and 249h 36m for the Cosmic Era. On a first run the Modern Age, where a full run's prestige comes, arrives after about a week (the smoke-test bot takes about 4.9 days); prestige opens earlier, at the Medieval Age, as an early taste. From the Bronze Age on, ages and the clocks inside them (event durations, cooldowns, awakenings) run 2.6 times as long as on the earlier three-day curve. The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production.
 
 ### What each epoch is like
 
@@ -102,7 +102,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 - The current [harbinger](harbinger.md), if one is present, and for past harbinger threads this run the chain of figures and the verdict
 - Full epoch event history for the current run
 - Your legacy bonuses earned across all runs
-- **Era Mastery**: every age up to your record (the deepest age you have ever entered) with its mastery and speed, catch-up marked, and what your next prestige adds. See [Era Mastery](prestige.md#era-mastery)
+- **Era Mastery**: every age up to your record (the deepest age you have ever entered) with its mastery and speed, catch-up marked, and what your next prestige adds. Before any age has mastery it shows only the current age's speed. See [Era Mastery](prestige.md#era-mastery)
 - The civilization history log (catastrophe decisions, Succumb/Endure records)
 
 ---
@@ -331,9 +331,9 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 
 **Know your epoch's primary resource before you cross in.** The Digital Era wants data production running before you arrive. The Neon Era wants plasma reactors. Don't cross an epoch boundary and then find you can't produce the era's core resource.
 
-**Succumb early, Endure late.** In the Iron and Steel Eras the reset costs little, and the legacy bonus, ruins and research speed pay off over many more epochs. In the Neon and Cosmic Eras your civilization is a huge investment, and Enduring is usually worth the hit.
+**Succumb early, Endure late.** In the Iron and Steel Eras the reset costs little, and the legacy bonus, ruins and faster research pay off over many more epochs. The ages the fallen run completed also gain an [Era Mastery](prestige.md#era-mastery) level, so the rebuild takes about half the time. In the Neon and Cosmic Eras your civilization is a huge investment, and Enduring is usually worth the hit.
 
-**Each epoch you Succumb in adds +25% research speed permanently.** Repeat Succumbs in the same epoch add nothing, so the value is in collecting different epochs. This is the main argument for a deliberate early Succumb in the Iron Era.
+**Each epoch you Succumb in multiplies research time by 0.8 permanently** (Ancient Knowledge: ×0.8, ×0.64, down to ×0.26 with all six). Repeat Succumbs in the same epoch add nothing, so the value is in collecting different epochs. This is the main argument for a deliberate early Succumb in the Iron Era.
 
 **Listen to the harbinger.** It gives you only part of an age before its doom strikes, so answer promptly. See [The Harbinger](harbinger.md).
 
@@ -352,8 +352,8 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 - The Epoch panel records the transition and its outcome
 - Your status bar icon and color change
 
-**After Succumb:** the run starts over in the Primitive Age with your ruins, legacy bonuses, Ancient Knowledge, prestige points, [legacy kit](prestige.md#the-legacy-kit) and [Era Mastery](prestige.md#era-mastery). The kit remembers the fallen run's plan, worker shares and civilizations, and the items you own work on the rebuild. A Succumb raises no mastery, but while you rebuild, ages 6 or more behind your record run at least 4x ([catch-up](prestige.md#catch-up)). See [What carries forward](catastrophe.md#what-carries-forward).
+**After Succumb:** the run starts over in the Primitive Age with your ruins, legacy bonuses, Ancient Knowledge, prestige points, [legacy kit](prestige.md#the-legacy-kit) and [Era Mastery](prestige.md#era-mastery). The kit remembers the fallen run's plan, worker shares and civilizations, and the items you own work on the rebuild. Every age the fallen run completed gains a mastery level, as at a prestige, so the rebuild runs them at least 2x, and ages 6 or more behind your record run at least 4x ([catch-up](prestige.md#catch-up)). See [What carries forward](catastrophe.md#what-carries-forward).
 
 **After Prestige:** like Succumb, but chosen, from the Medieval Age on, and it earns prestige points to spend on the [legacy kit](prestige.md#the-legacy-kit): every age the run completed pays, and each era's ages pay three times what the era before paid, so a prestige before the Modern Age is an early taste that pays little. It is refused while a catastrophe is pending. Before the Cosmic Era a doom that hasn't struck yet ends with the run, and from the Cosmic Era it can bring the [Last Passage](prestige.md#the-last-passage). Every age below the run's furthest age gains a mastery level, so it runs faster on the next run. The per-run epoch event history is cleared; the civilization log carries. See [What Resets vs Persists](prestige.md#what-resets-vs-persists).
 
-Each run builds on the last. Three runs in, you have ruins producing for free, stacked research speed, legacy bonuses on the resources that matter most, and the ages your runs completed going two to three times as fast, and you still play through all 22 ages.
+Each run builds on the last. Three runs in, you have ruins producing for free, stacked research speed, legacy bonuses on the resources that matter most, and the ages your runs completed going 2.4 to 4 times as fast, and you still play through all 22 ages.

@@ -793,8 +793,11 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.addLog("debug", fmt.Sprintf("Load: RNG position (%d, %d) is past the replay cap; streams restart from the seed", save.RNGDraws, save.QuipDraws))
 	}
 	ge.prose = flavor.StreamFromState(save.Prose)
-	ge.festivalReadyTick = save.FestivalReadyTick
-	ge.blackMarketReadyTick = save.BlackMarketReadyTick
+	// A cooldown never has longer to run than a fresh one. A save from
+	// before Succumb reset them can carry one that ends thousands of ticks
+	// on (a tick number from the fallen run): it is brought back in range.
+	ge.festivalReadyTick = min(save.FestivalReadyTick, ge.tick+ge.stretchTicks(festivalCooldownTicks))
+	ge.blackMarketReadyTick = min(save.BlackMarketReadyTick, ge.tick+ge.stretchTicks(blackMarketCooldownTicks))
 	ge.Workers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
 	if save.Storage != nil {

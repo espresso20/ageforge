@@ -48,20 +48,26 @@ const IdleBudgetFactor = 2.0
 // veteran's ages are shorter than one visit, and the plan only looked one
 // age ahead. The kit's plan template re-adds each age's part at every
 // advance, so the plan chains ages between visits. Measured with the canned
-// kit (3 seeds): 1.46x at 3 hours and 2.40x at 8 hours. The limits are set
-// from that with about 8 to 10% headroom; the Pacing v2 plan had hoped for
-// 1.5x and 2.0x.
+// kit (3 seeds): 1.47x at 3 hours and 2.34x at 8 hours (per seed 1.36 to
+// 1.54x and 2.31 to 2.35x), once auto-recruit stopped hiring more workers
+// than a mastered age's food fed (they were 1.55x and 2.42x before that
+// fix). The limits are set from that with about 9% headroom; the Pacing v2
+// plan had hoped for 1.5x and 2.0x.
 //
 // What the measurement leans on: the canned template holds the techs the
 // veteran researched as planned research items (the player's own path,
 // which the template keeps). With no techs in the template the same runs
 // take 1.65x and 3.08x, since nothing researches between visits once the
-// plan has moved on an age. What is left at 8 hours is mostly the wonders:
-// every advance needs the age's wonder, and several from the Classical Age
-// on (the Parthenon's and the Grand Lighthouse's stone, the Eiffel Tower's
-// iron) cost more of a resource than a full store holds, which only a
-// visit's deposits or overflow at the cap can bank.
+// plan has moved on an age. What is left at 8 hours is mostly stone: a
+// veteran reaches the Classical to the Renaissance Age inside one visit's
+// gap with next to no stone coming in, and the stone its required buildings
+// and its wonder (the Parthenon, the Great Library, the Sistine Chapel) take
+// is bought at the market on the next visit; the plan's own trades wait on
+// the market's recovery. The wonder's bank is not what holds it up:
+// overflow at a full store goes into the age's wonder already, and letting
+// a wonder queued in the plan take the plan's overflow too (with wonder
+// overflow off) left both ratios as they were.
 var VeteranIdleMax = map[time.Duration]float64{
 	3 * time.Hour: 1.6,
-	8 * time.Hour: 2.6,
+	8 * time.Hour: 2.55,
 }

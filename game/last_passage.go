@@ -28,7 +28,7 @@ import (
 //     Endure: prestige completes, keeping LastPassageKeep of the run's points
 //     (0.70 / 0.85 at Brace 1 / 2), floored.
 //     Succumb: prestige completes with no points from the run, and the Cosmic
-//     Legacy flag is set: +10% production_all through the resolver, forever
+//     Legacy flag is set: all production × 1.1 after the ×3 caps, forever
 //     (it survives prestige and Succumb; only a full wipe clears it). A player
 //     who already carries it can only Endure.
 //
@@ -49,8 +49,9 @@ const (
 	// unbraced. See lastPassageKeepFrac for the braced shares.
 	LastPassageKeep = 0.50
 
-	// CosmicLegacyProductionBonus is the Cosmic Legacy's permanent
-	// production_all bonus.
+	// CosmicLegacyProductionBonus is the Cosmic Legacy's permanent production
+	// bonus: everything a resource makes × (1 + this), after the ×3 caps
+	// (cosmicLegacyFactor, recalculateRates).
 	CosmicLegacyProductionBonus = 0.10
 
 	// cosmicLegacySource is the resolver Source of the Cosmic Legacy bonus.
@@ -312,15 +313,27 @@ func (ge *GameEngine) recordLastPassageOutcome(how prestigeEnding, points, full 
 	}
 }
 
-// cosmicLegacyModifiers emits the Cosmic Legacy's production bonus into the
-// resolver (Source "cosmic_legacy"), so it applies to production and shows in
-// the Active Multipliers panel. Derived from the flag, never stored as a bonus
-// value, so no reset can lose or double it. Read-only.
+// cosmicLegacyFactor is what the Cosmic Legacy multiplies production by: 1.1
+// with the legacy, 1 without. recalculateRates applies it after the ×3 caps,
+// so it is never in the all-production pool and no cap can swallow it.
+// Derived from the flag, never stored as a bonus value, so no reset can lose
+// or double it. Read-only.
+func (ge *GameEngine) cosmicLegacyFactor() float64 {
+	if !ge.cosmicLegacy {
+		return 1
+	}
+	return 1 + CosmicLegacyProductionBonus
+}
+
+// cosmicLegacyModifiers is the Cosmic Legacy as the Active Multipliers panel
+// shows it (Source "cosmic_legacy"): a multiplier of its own beside the
+// all-production pool, like morale's. The pool's sum (AddTotal) ignores it;
+// recalculateRates applies cosmicLegacyFactor itself. Read-only.
 func (ge *GameEngine) cosmicLegacyModifiers() []Modifier {
 	if !ge.cosmicLegacy {
 		return nil
 	}
-	return []Modifier{{Source: cosmicLegacySource, Target: "production_all", Op: OpAdd, Value: CosmicLegacyProductionBonus}}
+	return []Modifier{{Source: cosmicLegacySource, Target: "production_all", Op: OpMul, Value: ge.cosmicLegacyFactor()}}
 }
 
 // lastPassageState builds GameState.LastPassage. pointsNow is the run's full

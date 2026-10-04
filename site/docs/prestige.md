@@ -14,7 +14,7 @@ prestige confirm yes
 
 You can prestige from the **Medieval Age (Age 5)** or any later age. A prestige from the Medieval Age to the Atomic Age is an **early taste**: it is optional and pays little (see [Early Tastes and Full Runs](#early-tastes-and-full-runs)). From the **Modern Age (Age 12)** on, a prestige is a full run. There is no upper limit: every age you complete before prestiging adds points, and each era's ages are worth three times the last era's.
 
-A first run is paced to reach the Medieval Age in about 20 hours and the Modern Age in about **a week of real time** (the smoke-test bot gets there in about 5.3 days). The ages before the Modern Age range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. See [How Long Each Age Takes](ages.md#how-long-each-age-takes). The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
+A first run is paced to reach the Medieval Age in about 20 hours and the Modern Age in about **a week of real time** (the smoke-test bot gets there in about 4.9 days). The ages before the Modern Age range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. See [How Long Each Age Takes](ages.md#how-long-each-age-takes). The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
 
 Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first. Before the Cosmic Era, a doom fated for your era that hasn't struck yet ends with the run when you prestige, so a taste in the Medieval Age escapes an Iron Era doom, at the price of the run.
 
@@ -38,7 +38,7 @@ When you're ready:
 prestige confirm yes
 ```
 
-`prestige confirm` on its own first says how many points you would earn, that everything else resets, and what you keep: prestige points, the legacy kit and what it remembers, and Era Mastery. The double confirmation (`confirm yes`) is deliberate, because prestige can't be undone.
+`prestige confirm` on its own first says how many points you would earn, that everything else resets, and what you keep: prestige points, the legacy kit and what it remembers, and Era Mastery. Before the Modern Age it also says that this is an early taste, what it pays and what a full run pays (see [Early Tastes and Full Runs](#early-tastes-and-full-runs)). The double confirmation (`confirm yes`) is deliberate, because prestige can't be undone.
 
 The **Stats** panel (`stats`) has a Prestige section too: your level, Era Mastery, points, what a prestige pays now and from the next age, and the kit items you own.
 
@@ -104,9 +104,16 @@ In the Cosmic Era the [Last Passage](#the-last-passage) can take part of a run's
 
 Prestige opens at the Medieval Age, but the points reward depth. A prestige from the Medieval Age to the Atomic Age is an **early taste**; from the Modern Age on it is a **full run**.
 
-- **A taste pays little.** On a first run, a prestige pays about 11 points per day of play at the Medieval Age, 23 at the Modern Age and 37 for a run through the Digital Age (from the smoke-test bot's first-run times). Going deeper pays far more per day.
+- **A taste pays little.** On a first run, a prestige pays about 12 points per day of play at the Medieval Age, 24 at the Modern Age and 38 for a run through the Digital Age (from the smoke-test bot's first-run times). Going deeper pays far more per day.
 - **A second taste adds little.** A Medieval Age reset right after a Modern Age run adds 9 points to that run's 120 (7.5%).
 - **What a taste is for.** Its 9 points buy the [Plan Template](#plan-template), the first kit item. It raises [Era Mastery](#era-mastery) like any prestige: every age below the one you prestiged from gains a level, so a Medieval Age taste speeds up the Primitive to the Classical Age. And it ends an Iron Era doom that hasn't struck yet, though it costs you the run.
+- **The game says so, before and after.** `prestige confirm` before the Modern Age carries a line like this one, and the new run's log repeats it in the past tense right after "Prestige complete":
+
+  ```
+  This is an early taste: a prestige from the Medieval Age pays 9 prestige points, for the 5 ages this run completed. Going deeper pays far more: each era's ages are worth 3 times the era before, and a full run, 7 ages further on, pays 120 prestige points.
+  ```
+
+  Once you have seen the Modern Age, in this run or an earlier one, the line names it: "and a run to the Modern Age pays 120 prestige points."
 - **Your account tells them apart.** Each prestige is recorded under the age it was made from (see [Lifetime stats & achievements](account.md#lifetime-stats-amp-achievements)). Total Prestiges still counts every prestige, tastes included.
 
 ---
@@ -210,14 +217,15 @@ The level-5 save's 600 points buy the whole kit (99) and leave 501. Its next Mod
 
 ## Era Mastery
 
-Every age remembers how many of your runs completed it. That count is the age's **mastery**, from 0 to 10, and an age you have mastered runs faster: its production, storage, build times and research times all move **k** times as fast, where k = 1 + √mastery.
+Every age remembers how many of your runs completed it and then ended, in a prestige or a Succumb. That count is the age's **mastery**, from 0 to 10, and an age you have mastered runs faster: its production, storage, build times and research times all move **k** times as fast, where k = 1 + √mastery.
 
 ### How mastery grows
 
 - **Prestige raises it.** Each prestige adds one level to every age below the run's furthest age: the age you prestige from, or a deeper one if the run went deeper. A Modern Age prestige completes the Primitive to the Atomic Age, so each of those gains a level. Push on to the Information Age first and the Modern Age gains one too. An early taste counts the same way: a Medieval Age prestige raises the Primitive to the Classical Age.
 - **It stops at 10.** An age at mastery 10 gains nothing more.
-- **It is fixed during a run.** Mastery changes only at prestige, so an age's speed never changes while you play through it.
-- **Succumb leaves it alone.** A Succumb neither raises nor lowers mastery.
+- **A Succumb raises it too.** A Succumb ends the run, so every age that run completed gains a level, exactly as at a prestige, and the rebuild starts on known ground. A first run that falls in the Renaissance Age comes back with mastery 1 in the Primitive to the Medieval Age. It still earns no prestige points.
+- **No age is counted twice for one run.** The count starts over with each new run. The prestige after a Succumb raises only the ages the rebuilt run completed: fall in the Renaissance Age, rebuild, prestige from the Medieval Age, and the Primitive to the Classical Age are at mastery 2 while the Medieval Age, completed once, stays at 1.
+- **It is fixed during a run.** Mastery changes only when a run ends, so an age's speed never changes while you play through it.
 - **It stays with your save.** Mastery is saved with your game and survives every prestige and Succumb. A new game starts from zero.
 
 ### How much faster
@@ -251,7 +259,7 @@ What does not change:
 
 Your **record** is the deepest age you have ever entered, in any run. An age **6 or more ages behind your record** runs at least **4x**, or at its own speed if that is higher (4.2x at mastery 10). With a record in the Interstellar Age, every age up to the Modern Age runs at 4x or better, whatever its mastery.
 
-Catch-up applies after a Succumb too, even on a run that has never prestiged: the rebuild runs the ages 6 or more behind your record at least 4x. Fall in the Steel Era from the Industrial Age, and the next run's Primitive, Stone and Bronze Ages run at 4x.
+Catch-up applies after a Succumb too, even on a run that has never prestiged: the rebuild runs the ages 6 or more behind your record at least 4x. Fall in the Steel Era from the Industrial Age, and the next run's Primitive, Stone and Bronze Ages run at 4x; the Iron to the Colonial Age, which the fallen run completed, run at 2x.
 
 ### The grace rule
 
@@ -282,19 +290,20 @@ A save at prestige level 0 gains nothing.
 ### What you see
 
 - `prestige` and the **Stats** panel show the age you are in: `Era Mastery: known ground, 2.4x faster (mastery 2)`, `known ground, 4x faster (catching up to your record)` or `new ground, 1x`. Under it is what your next prestige adds, for example `Next prestige: the Primitive Age to the Atomic Age gain a mastery level each.`
-- The **Epoch** panel (`epoch`) has an **Era Mastery** section: every age up to your record with its mastery and speed (catch-up marked), and the next prestige's gains. It never names an age past your record.
-- Entering an age logs its speed: `Known ground: the Bronze Age runs 2.4x faster (mastery 2).`, or `Known ground: the Bronze Age runs 4x faster while you catch up to your record.` Stepping from known ground onto an age no run has completed logs `New ground: the Modern Age runs at 1x until a prestige completes it.`
-- A prestige logs the ages that gained, for example `Era Mastery: the Primitive Age to the Atomic Age gained a mastery level each and will run faster.`
+- The **Epoch** panel (`epoch`) has an **Era Mastery** section: every age up to your record with its mastery and speed (catch-up marked), and the next prestige's gains. It never names an age past your record. Before any age has mastery it shows only the current age's speed and a one-line hint.
+- Entering an age logs its speed: `Known ground: the Bronze Age runs 2.4x faster (mastery 2).`, or `Known ground: the Bronze Age runs 4x faster while you catch up to your record.` Stepping from known ground onto an age no run has completed logs `New ground: the Modern Age runs at 1x until a run completes it.`
+- A prestige or a Succumb logs the ages that gained, for example `Era Mastery: the Primitive Age to the Atomic Age gained a mastery level each and will run faster.`
 
 ### How much faster a run gets
 
-Measured with the smoke-test bot, a near-perfect player, on the one-week curve (median of three seeds):
+Measured with the smoke-test bot, a near-perfect player, on the one-week curve (medians: eight seeds for the first two runs, three for the others):
 
 | Run | To the Modern Age |
 |-----|-------------------|
-| First run | 5.3 days |
-| Second run | 2.3 days: the first run's ages go by 2.3x faster, and the run ends an age deeper |
-| Veteran (mastery 10 through the Space Age, record in the Interstellar Age) | 1.3 days |
+| First run | 4.9 days |
+| Second run | 2.2 days: the first run's ages go by 2.2x faster, and a run played as long as the first ends an age deeper |
+| Third run | 1.9 days |
+| Veteran (mastery 10 through the Space Age, record in the Interstellar Age) | 1.2 days |
 
 On known ground the early ages are short: at 4x the Primitive and Stone Ages are paced at about 15 minutes together and the Bronze Age at under an hour. The start of a run rewards checking in often.
 
@@ -337,7 +346,7 @@ Once you own all three, the shop has nothing more to sell, and the points you ea
 - Ruins (from past Succumb events), which carry into the new run
 - Legacy bonuses (from Succumb events), active from tick 1
 - The Cosmic Legacy, if you have earned it
-- Ancient Knowledge bonus (+25% research speed per distinct epoch succumbed), which comes from your legacy bonuses, so prestige never drops it
+- Ancient Knowledge (research time ×0.8 for each distinct epoch succumbed in), which comes from your legacy bonuses, so prestige never drops it
 - Civilization history and catastrophe log
 
 ### Morale on Prestige
@@ -463,8 +472,9 @@ Inviting the Last Passage's thread is how you take the Cosmic Legacy on purpose.
 
 A one-time, permanent reward for Succumbing to the Last Passage.
 
-- **+10% all production**, active from tick 1 of every run. It adds into the same all-production pool as everything else, so it is limited by [the x3 cap](resources.md#the-all-production-cap) too.
-- Shows as **Cosmic Legacy** in the Stats panel, under Active Multipliers and in the Legacy Bonuses list. `prestige` shows `Cosmic Legacy: +10% production (permanent)`.
+- **+10% all production**, active from tick 1 of every run, in every age. It is not part of the all-production pool: everything a resource makes is multiplied by 1.1 after [the x3 cap](resources.md#the-all-production-cap) and every other bonus, so no cap can hold it back. (It used to add into the pool, where it did nothing once the pool was full, from about the Victorian Age on.)
+- It multiplies what you make, before the food your workers eat is taken off, so it never deepens a food shortage.
+- Shows as **Cosmic Legacy** in the Stats panel, under Active Multipliers (`Cosmic Legacy ×1.10`, beside the pool, like morale) and in the Legacy Bonuses list. `rates` shows what it adds to each resource as its own **Cosmic Legacy** part. `prestige` shows `Cosmic Legacy: +10% production (permanent)`.
 - Survives every prestige and every Succumb. Only wiping the game clears it.
 - You earn it once. While you hold it, Succumb is closed at the Last Passage.
 
@@ -475,7 +485,7 @@ A one-time, permanent reward for Succumbing to the Last Passage.
 - Spend banked points from earlier runs as soon as you log in. You don't need to prestige to spend them, and a kit item works the moment you buy it.
 - Write your plan the way you want the next run to play it, `plan advance` included. The Plan Template replays each age's part when you enter that age, so a plan that ends in an advance chains into the next age's part while you are away.
 - Queue your techs with `plan research` instead of starting them by hand. Only planned techs are recorded, so they are the ones the Plan Template lines up again on the next run.
-- Don't rush the first prestige. A Medieval Age taste pays about 11 points per day of play, a Modern Age prestige about 23 and a run through the Digital Age about 37.
+- Don't rush the first prestige. A Medieval Age taste pays about 12 points per day of play, a Modern Age prestige about 24 and a run through the Digital Age about 38.
 - Take a taste for what it does, not for its points: it buys the Plan Template early, or escapes an Iron Era doom.
 - Milestones and the structure count reset on prestige, and neither changes the points.
 - Pushing past the Modern Age pays in points and in mastery. Each Digital Era age the run completes adds 81 points, and every age it completes gains a mastery level, so the next run is faster further in.

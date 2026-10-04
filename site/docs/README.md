@@ -24,7 +24,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 - **The army**: soldiers defend you against raids and fight campaigns. There are 16 expeditions in all (scouting missions and military campaigns), each a gamble of cost against reward.
 - **77 milestones** in 6 chains, with civilization titles.
 - **Prestige** from the Medieval Age on: start over with prestige points, which pay more the deeper the run went, to spend on 3 legacy kit items that carry your plan, worker shares and the civilizations you met into every later run.
-- **Era Mastery**: every age a run completes runs faster on your later runs, twice as fast after one completion and up to 4.2x after ten, so later runs reach the Modern Age much sooner than the first.
+- **Era Mastery**: every age a run completes runs faster on your later runs, twice as fast after one completion and up to 4.2x after ten (4x at once for ages 6 or more behind your record), so later runs reach the Modern Age much sooner than the first.
 
 ---
 

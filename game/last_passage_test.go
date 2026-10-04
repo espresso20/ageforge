@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math"
 	"math/rand"
 	"strings"
 	"testing"
@@ -49,10 +50,10 @@ func endureLastPassageIfPending(t *testing.T, ge *GameEngine) {
 }
 
 // hasCosmicLegacyModifier reports whether the resolver carries the Cosmic
-// Legacy's +10% production_all.
+// Legacy: a x1.1 multiplier beside the all-production pool, never in it.
 func hasCosmicLegacyModifier(ge *GameEngine) bool {
 	for _, m := range ge.buildResolver().All() {
-		if m.Source == cosmicLegacySource && m.Target == "production_all" && m.Op == OpAdd && m.Value == CosmicLegacyProductionBonus {
+		if m.Source == cosmicLegacySource && m.Target == "production_all" && m.Op == OpMul && m.Value == 1+CosmicLegacyProductionBonus {
 			return true
 		}
 	}
@@ -347,8 +348,13 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	}
 	ge = ge2
 	check("after save/load")
-	if got := ge.buildResolver().AddTotal("production_all"); got < CosmicLegacyProductionBonus {
-		t.Errorf("production_all after load = %v, want at least the legacy's %v (was %v)", got, CosmicLegacyProductionBonus, base)
+	// It multiplies production after the caps: the pool is as it was, and
+	// the factor is back.
+	if got := ge.buildResolver().AddTotal("production_all"); got != base {
+		t.Errorf("production_all pool after load = %v, want %v: the legacy is not part of the pool", got, base)
+	}
+	if got := ge.cosmicLegacyFactor(); got != 1+CosmicLegacyProductionBonus {
+		t.Errorf("cosmicLegacyFactor after load = %v, want %v", got, 1+CosmicLegacyProductionBonus)
 	}
 	if ge.cheaterBadge {
 		t.Error("save with the Cosmic Legacy failed its signature")
@@ -539,5 +545,90 @@ func TestRunEndingLineAtEveryPrestige(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// The Cosmic Legacy multiplies production after the x3 cap, so it counts in
+// every age. In the all-production pool it added nothing once the pool was
+// full: from the Victorian Age on for a player with the techs, wonders and
+// milestones of a normal run. Each age from there on is read with the pool
+// past its cap, where a pooled +10% is worth nothing.
+func TestCosmicLegacyCountsAfterTheCap(t *testing.T) {
+	keys := ageKeys()
+	from := ageOrders()["victorian_age"]
+	for _, age := range append([]string{keys[0]}, keys[from:]...) {
+		ge := newTruthEngine(age, truthTypical)
+		if ageOrders()[age] >= from {
+			// Milestone rewards on top of the techs and wonders: the pool is full.
+			ge.permanentBonuses["production_all"] += productionCap
+			ge.recalculateRates()
+			if p := ge.bonusPoolLocked(ge.buildResolver(), "production_all"); !p.Limited {
+				t.Fatalf("%s: the all-production pool is not at its cap (%+v): the test would prove nothing", age, p)
+			}
+		}
+		pool := ge.buildResolver().AddTotal("production_all")
+		type reading struct{ rate, gross float64 }
+		read := func() map[string]reading {
+			ge.recalculateRates()
+			out := map[string]reading{}
+			k := ge.speedK()
+			for _, key := range ge.Resources.order {
+				r := ge.Resources.resources[key]
+				// What the resource makes before the drain and Era Mastery.
+				out[key] = reading{rate: r.Rate, gross: r.Rate/k - r.Breakdown.FoodDrain}
+			}
+			return out
+		}
+		off := read()
+		ge.cosmicLegacy = true
+		on := read()
+		if got := ge.buildResolver().AddTotal("production_all"); got != pool {
+			t.Errorf("%s: the legacy moved the all-production pool from %v to %v", age, pool, got)
+		}
+		if note := ge.capNoteLocked(config.Effect{Type: "production_all", Value: CosmicLegacyProductionBonus}, false); ageOrders()[age] >= from && note == "" {
+			t.Errorf("%s: a pooled +10%% would not be capped here: the test would prove nothing", age)
+		}
+		moved := 0
+		for _, key := range ge.Resources.order {
+			if off[key].gross <= 0 {
+				if on[key].rate != off[key].rate {
+					t.Errorf("%s: %s makes nothing, but its rate moved from %v to %v", age, key, off[key].rate, on[key].rate)
+				}
+				continue
+			}
+			moved++
+			if got, want := on[key].gross/off[key].gross, 1+CosmicLegacyProductionBonus; math.Abs(got-want) > 1e-9 {
+				t.Errorf("%s: %s production x%v with the legacy, want x%v", age, key, got, want)
+			}
+			if b := ge.Resources.resources[key].Breakdown; math.Abs(b.LegacyRate-CosmicLegacyProductionBonus*off[key].gross) > 1e-9*off[key].gross {
+				t.Errorf("%s: %s breakdown says the legacy adds %v, want a tenth of %v", age, key, b.LegacyRate, off[key].gross)
+			}
+		}
+		if moved == 0 {
+			t.Errorf("%s: nothing is made here", age)
+		}
+		// The food drain is not production: the legacy leaves it alone.
+		if food := ge.Resources.resources["food"]; food.Breakdown.FoodDrain >= 0 {
+			t.Errorf("%s: no food drain to check", age)
+		} else if got, want := on["food"].rate-off["food"].rate, CosmicLegacyProductionBonus*off["food"].gross*ge.speedK(); math.Abs(got-want) > 1e-9*math.Abs(want) {
+			t.Errorf("%s: food rate rose by %v, want a tenth of what is grown (%v): the drain must not be multiplied", age, got, want)
+		}
+	}
+}
+
+// With food in deficit the legacy still only helps: it multiplies what is
+// grown, never the drain.
+func TestCosmicLegacyNeverDeepensAFoodDeficit(t *testing.T) {
+	ge := newTruthEngine("iron_age", truthClean)
+	ge.Workers.domains["worker"].count += 100000 // far more mouths than the farms feed
+	ge.recalculateRates()
+	before := ge.Resources.resources["food"].Rate
+	if before >= 0 {
+		t.Fatalf("food rate %v: want a deficit", before)
+	}
+	ge.cosmicLegacy = true
+	ge.recalculateRates()
+	if after := ge.Resources.resources["food"].Rate; after <= before {
+		t.Errorf("food rate %v with the legacy, %v without: it must rise", after, before)
 	}
 }

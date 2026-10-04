@@ -211,6 +211,66 @@ func TestShares_RecruitKeepsFoodAndStopsAtHousing(t *testing.T) {
 	}
 }
 
+// On known ground auto-recruit feeds the workers it hires. Era Mastery
+// multiplies the net food rate by k, and the food check read that rate
+// against a worker's food before k: the food looked k times richer than it
+// was, the routine hired past it, and the workers starved. With the same
+// buildings a mastered age must recruit exactly what a first run does.
+func TestShares_RecruitKeepsFoodOnKnownGround(t *testing.T) {
+	// Food-poor, as above: one gathering camp against many other slots.
+	build := map[string]int{"gathering_camp": 1, "wood_camp": 10, "story_circle": 10}
+	first := sharesEngine(t, 10, build)
+	for i := 0; i < 20; i++ {
+		first.keepSharesLive()
+	}
+	firstPop := first.Workers.TotalPop()
+	if firstPop == 0 || firstPop >= 100 {
+		t.Fatalf("first run: population %d, want some recruits, short of the housing", firstPop)
+	}
+
+	for _, m := range []int{1, 4, 9} {
+		ge := sharesEngine(t, 10, build)
+		ge.SetMasteryForTest(map[string]int{"primitive_age": m}, "primitive_age")
+		k := ge.speedK()
+		if k <= 1 {
+			t.Fatalf("mastery %d: the Primitive Age runs at %v, want known ground", m, k)
+		}
+		setAmount(ge, "food", 1000)
+		for i := 0; i < 20; i++ {
+			ge.keepSharesLive()
+		}
+		ge.recalculateRates()
+		pop := ge.Workers.TotalPop()
+		if pop != firstPop {
+			t.Errorf("mastery %d (%vx): recruited %d workers, a first run with the same buildings %d", m, k, pop, firstPop)
+		}
+		food := ge.Resources.resources["food"]
+		if food.Rate <= 0 {
+			t.Errorf("mastery %d (%vx): food rate %v after recruiting: the workers it hired will starve", m, k, food.Rate)
+		}
+		// The margin holds in a worker's own units: what is grown, less what
+		// everyone eats, leaves at least one more worker's food.
+		per := ge.Workers.FoodCostPerWorker()
+		if net := foodBeforeMastery(food.Rate, food.Breakdown) - ge.Workers.FoodDrain(); net < per {
+			t.Errorf("mastery %d (%vx): %v food a tick to spare before the speed-up, under one worker's %v", m, k, net, per)
+		}
+		st := ge.GetState()
+		if got := RecruitStatus(st); got != RecruitFood {
+			t.Errorf("mastery %d (%vx): RecruitStatus = %q, want %q", m, k, got, RecruitFood)
+		}
+		// And it stays fed: ten minutes on, the food store has not fallen
+		// and nobody has left.
+		setAmount(ge, "food", 100)
+		ge.StepTicks(300)
+		if got := ge.Resources.Get("food"); got < 100 {
+			t.Errorf("mastery %d (%vx): the food store fell from 100 to %v in 300 ticks", m, k, got)
+		}
+		if got := ge.Workers.TotalPop(); got < pop {
+			t.Errorf("mastery %d (%vx): population fell from %d to %d", m, k, pop, got)
+		}
+	}
+}
+
 // With auto-recruit off nothing is recruited, but idle workers still go to
 // work by the shares.
 func TestShares_AutoRecruitOff(t *testing.T) {

@@ -294,7 +294,28 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 		t.Errorf("multiplier label = %q", got)
 	}
 	engine.SetCosmicLegacyForTest(true)
-	if out := untag(statsProvider(engine.GetState(), 140)); !strings.Contains(out, "Cosmic Legacy:") || !strings.Contains(out, "Cosmic Legacy") {
+	out := untag(statsProvider(engine.GetState(), 140))
+	if !strings.Contains(out, "Cosmic Legacy:") || !strings.Contains(out, "Cosmic Legacy") {
 		t.Errorf("stats overlay without the Cosmic Legacy:\n%s", out)
+	}
+	// It is applied after the caps: a multiplier of its own beside the
+	// all-production pool, and never tagged as capped, however full the
+	// pool is (in the Quantum Age it is far past the cap).
+	engine.GrantTechsForTest()
+	st := engine.GetState()
+	if p := st.Pools["production_all"]; !p.Limited {
+		t.Fatalf("the all-production pool is not capped in the Quantum Age with every tech: %+v", p)
+	}
+	out = untag(statsProvider(st, 140))
+	for _, want := range []string{
+		"Cosmic Legacy:   all production +10%, counted after the caps (permanent, through every prestige)\n",
+		"Cosmic Legacy ×1.10",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("the Stats panel does not show %q:\n%s", want, out)
+		}
+	}
+	if r := untag(HandleCommand("rates", engine).Message); !strings.Contains(r, "Cosmic Legacy: +") {
+		t.Errorf("rates has no Cosmic Legacy part:\n%s", r)
 	}
 }

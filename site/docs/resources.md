@@ -172,9 +172,11 @@ Every resource has a small base storage (10 to 50). **Storage buildings** raise 
 
 ## The all-production cap
 
-Every "+X% all production" bonus in the game adds into one pool: wonders, technologies, milestones, cultural monuments, events (festivals included), faction boons and the Cosmic Legacy. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + that pool**, clamped between **x0.1 and x3.0**.
+Every "+X% all production" bonus in the game adds into one pool: wonders, technologies, milestones, cultural monuments, events (festivals included) and faction boons. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + that pool**, clamped between **x0.1 and x3.0**.
 
 Techs and wonders alone reach the x3.0 cap from about the Electric Age. After that, a late "+X% all production" bonus adds nothing you can see while you are over the cap. It isn't wasted: a penalty comes out of the raw pool first, so the surplus absorbs it, and the bonus matters again whenever a setback pulls the pool back under the cap.
+
+One bonus sits outside the pool: the [Cosmic Legacy](prestige.md#cosmic-legacy). Its +10% is applied after the cap, to everything a resource makes, so it counts in every age however full the pool is.
 
 Bonuses to one resource ("+30% gold") have their own pool for that resource, with the same x0.1 to x3.0 clamp. Gold's pool fills in the Colonial Age and knowledge's in the Electric Age, from techs alone.
 
