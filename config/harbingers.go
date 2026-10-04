@@ -1,7 +1,5 @@
 package config
 
-import "sync"
-
 // harbingers.go — the per-age roster of harbingers: the figure who turns up
 // some while before a fated doom strikes and says how worried to be (and, from
 // the Classical Age on, roughly when). This file is data only. The mechanic
@@ -123,7 +121,7 @@ func timingFor(ageIndex int) ForecastTiming {
 
 // harbingerRoster is the hand-written part of each entry, in age order. The
 // derived fields (precision, false-prophet chance) are filled in by
-// buildHarbingers from the age's position, so they cannot drift from the curve.
+// HarbingerRoster from the age's position, so they cannot drift from the curve.
 var harbingerRoster = []HarbingerDef{
 	{
 		Age: "primitive_age", Key: "wild_man", Name: "the Wild Man",
@@ -281,30 +279,15 @@ var harbingerRoster = []HarbingerDef{
 	},
 }
 
-// harbingerTables is the roster, built once. Harbingers and HarbingerFor are
-// called from the tick and advance paths and from the UI; neither should
-// rebuild the age table or the index on every call (see the tick-path rebuild
-// fix in PR #108), and the roster is immutable after init anyway.
-var harbingerTables = sync.OnceValue(buildHarbingers)
-
-type harbingerIndex struct {
-	list  []HarbingerDef
-	byAge map[string]HarbingerDef
-}
-
-// buildHarbingers fills the derived fields from each age's position in
-// AgeOrder. A roster entry for an age config does not know is a programming
-// error and panics at first use rather than shipping a harbinger that can
-// never appear.
-func buildHarbingers() harbingerIndex {
-	pos := make(map[string]int)
-	for i, k := range AgeOrder() {
-		pos[k] = i
-	}
-	idx := harbingerIndex{
-		list:  make([]HarbingerDef, 0, len(harbingerRoster)),
-		byAge: make(map[string]HarbingerDef, len(harbingerRoster)),
-	}
+// HarbingerRoster returns the roster for the given age order: one entry per
+// roster age, in roster order, with the derived fields filled in from each
+// age's position in order. A roster entry for an age order does not hold is
+// a programming error and panics rather than shipping a harbinger that can
+// never appear. Pure, and the slice is the caller's to keep: rules.Compile
+// builds a ruleset's harbingers with it.
+func HarbingerRoster(order []string) []HarbingerDef {
+	pos := AgePositions(order)
+	out := make([]HarbingerDef, 0, len(harbingerRoster))
 	for _, h := range harbingerRoster {
 		i, ok := pos[h.Age]
 		if !ok {
@@ -313,24 +296,26 @@ func buildHarbingers() harbingerIndex {
 		h.ForecastPrecision = precisionFor(i)
 		h.ForecastTiming = timingFor(i)
 		h.FalseProphetChance = falseProphetChance(i)
-		idx.list = append(idx.list, h)
-		idx.byAge[h.Age] = h
+		out = append(out, h)
 	}
-	return idx
+	return out
 }
 
-// Harbingers returns the full roster in age order. The slice is a fresh copy;
-// callers may modify it.
+// Harbingers returns the full roster in age order, built on every call. The
+// slice is a fresh copy; callers may modify it. An engine reads its
+// rules.Set.
 func Harbingers() []HarbingerDef {
-	src := harbingerTables().list
-	out := make([]HarbingerDef, len(src))
-	copy(out, src)
-	return out
+	return HarbingerRoster(AgeOrder())
 }
 
 // HarbingerFor returns the harbinger for an age key, and false for an unknown
 // age. HarbingerDef holds only values, so the returned copy is safe to keep.
+// It builds the roster on every call; an engine reads its rules.Set.
 func HarbingerFor(age string) (HarbingerDef, bool) {
-	h, ok := harbingerTables().byAge[age]
-	return h, ok
+	for _, h := range Harbingers() {
+		if h.Age == age {
+			return h, true
+		}
+	}
+	return HarbingerDef{}, false
 }

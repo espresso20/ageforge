@@ -1,9 +1,6 @@
 package config
 
-import (
-	"sort"
-	"sync"
-)
+import "sort"
 
 // Price levels for faction trade deals (game/deals.go).
 //
@@ -23,16 +20,27 @@ import (
 // priceUnits(first copy). 0 when res has neither (a flow resource nothing
 // in age produces, or a resource the age neither prices nor produces).
 func DealPriceLevel(res, age string) float64 {
-	if lv := exchangeLevels()[age][res]; lv > 0 {
-		return lv
+	defs := BaseBuildings()
+	return DealPriceLevelAt(res, priceLevels(defs)[age], FlowDealLevels(defs, AgePositions(AgeOrder()))[age])
+}
+
+// DealPriceLevelAt is DealPriceLevel against an age's price levels and its
+// flow levels (FlowDealLevels).
+func DealPriceLevelAt(res string, lv, flow map[string]float64) float64 {
+	if l := lv[res]; l > 0 {
+		return l
 	}
-	return flowDealLevels()[age][res]
+	return flow[res]
 }
 
 // PricedResources lists the construction resources of age, sorted: the ones
 // with a market price level.
 func PricedResources(age string) []string {
-	lv := exchangeLevels()[age]
+	return PricedResourcesAt(PriceLevels(age))
+}
+
+// PricedResourcesAt is PricedResources against an age's price levels.
+func PricedResourcesAt(lv map[string]float64) []string {
 	out := make([]string, 0, len(lv))
 	for r := range lv {
 		out = append(out, r)
@@ -46,28 +54,23 @@ func PricedResources(age string) []string {
 // (BaseExchangeRates) counts only once its MinAge is reached, as in
 // MarketPairs, which is what the trade panel and `trade` offer.
 func MarketOffers(from, to, age string) (float64, bool) {
-	if def, ok := exchangeByKey()[from+":"+to]; ok {
-		if ageIndex()[def.MinAge] > ageIndex()[age] {
+	return MarketOffersAt(from, to, age, ExchangeRateByKey(), AgePositions(AgeOrder()), PriceLevels(age))
+}
+
+// MarketOffersAt is MarketOffers against the listed pairs (keyed "from:to"),
+// each age's position and age's price levels.
+func MarketOffersAt(from, to, age string, listed map[string]ExchangeRateDef, pos map[string]int, lv map[string]float64) (float64, bool) {
+	if def, ok := listed[from+":"+to]; ok {
+		if pos[def.MinAge] > pos[age] {
 			return 0, false
 		}
 	}
-	return MarketRate(from, to, age)
+	return MarketRateAt(from, to, listed, lv)
 }
 
-var (
-	flowDealOnce      sync.Once
-	flowDealLevelsMap map[string]map[string]float64
-)
-
-// flowDealLevels caches the flow levels. Config is static; read-only.
-func flowDealLevels() map[string]map[string]float64 {
-	flowDealOnce.Do(func() {
-		flowDealLevelsMap = computeFlowDealLevels(BaseBuildings())
-	})
-	return flowDealLevelsMap
-}
-
-func computeFlowDealLevels(defs []BuildingDef) map[string]map[string]float64 {
+// FlowDealLevels is every age's flow levels, as age -> flow resource ->
+// level, with each age's position given (AgePositions). Pure.
+func FlowDealLevels(defs []BuildingDef, pos map[string]int) map[string]map[string]float64 {
 	levels := priceLevels(defs)
 	vals := map[string]map[string][]float64{}
 	for _, d := range defs {
@@ -85,7 +88,7 @@ func computeFlowDealLevels(defs []BuildingDef) map[string]map[string]float64 {
 			if vals[d.RequiredAge] == nil {
 				vals[d.RequiredAge] = map[string][]float64{}
 			}
-			v := float64(e.Value*PaybackTicks(d.RequiredAge)) / u
+			v := float64(e.Value*paybackTicks(d.RequiredAge, pos)) / u
 			vals[d.RequiredAge][e.Target] = append(vals[d.RequiredAge][e.Target], v)
 		}
 	}
