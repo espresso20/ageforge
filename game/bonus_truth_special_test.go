@@ -362,3 +362,118 @@ func TestBonusTruthWorkerOutput(t *testing.T) {
 		t.Errorf("a worker output penalty past the floor leaves %v food/tick, want %v (worker output at 10%%)", got, want)
 	}
 }
+
+// TestBonusTruthGrantsSayWhatFit: an event's or a milestone's text states
+// its full grant ("+250 food"). Storage takes only what fits, so when it
+// cuts the grant short the log says what the player got; with room it says
+// nothing.
+func TestBonusTruthGrantsSayWhatFit(t *testing.T) {
+	lastLine := func(ge *GameEngine) string { return ge.log[len(ge.log)-1].Message }
+	harvest := config.EventByKey()["bountiful_harvest"] // +250 food
+	reward := []config.Effect{{Type: "instant_resource", Target: "food", Value: 250}}
+
+	// A new game holds 50 food at most, and starts with 25.
+	ge := NewGameEngine()
+	ge.applyEventEffects(harvest)
+	if got, want := lastLine(ge), "  → Storage was nearly full: only 25 food (of 250) fit."; got != want {
+		t.Errorf("a clipped event grant logs %q, want %q", got, want)
+	}
+	ge.applyMilestoneRewards(reward)
+	if got, want := lastLine(ge), "  → Storage was nearly full: only 0 food (of 250) fit."; got != want {
+		t.Errorf("a clipped milestone grant logs %q, want %q", got, want)
+	}
+
+	// With room, the text is the whole truth: no extra line.
+	roomy := newTruthEngine("stone_age", truthClean)
+	lines := len(roomy.log)
+	roomy.applyEventEffects(harvest)
+	roomy.applyMilestoneRewards(reward)
+	for _, e := range roomy.log[lines:] {
+		if strings.Contains(e.Message, "Storage was nearly full") {
+			t.Errorf("a grant that fit logged %q", e.Message)
+		}
+	}
+}
+
+// TestBonusTruthAncientMemory: a tech from an ancient cache researches at
+// half speed, twice its tick count, after research speed has had its say.
+func TestBonusTruthAncientMemory(t *testing.T) {
+	const key = "stoneworking"
+	for _, speed := range []float64{0, 0.25} {
+		rm := NewResearchManager()
+		if err := rm.StartMemoryResearch(key, speed); err != nil {
+			t.Fatal(err)
+		}
+		listed := rm.defs[key].ResearchTicks
+		if want := 2 * int(float64(listed)*(1-speed)); rm.totalTicks != want {
+			t.Errorf("an ancient memory at +%v%% research speed takes %d ticks, want %d (twice %d less the bonus)", speed*100, rm.totalTicks, want, listed)
+		}
+	}
+}
+
+// TestBonusTruthEventDurations: a timed event's log line says how long the
+// event really lasts in the age it fired in. From the Bronze Age on every
+// event runs config.PacingStretch times its typed duration; the log used to
+// quote the typed one ("for ~20s" for a drought that ran 52 seconds).
+func TestBonusTruthEventDurations(t *testing.T) {
+	drought := config.EventByKey()["drought"] // food -0.5/tick, typed for 10 ticks
+	for _, c := range []struct {
+		age   string
+		ticks int
+		want  string
+	}{
+		{"stone_age", drought.Duration, "for ~20s."},
+		{"iron_age", config.StretchTicks("iron_age", drought.Duration), "for ~52s."},
+	} {
+		ge := NewGameEngine()
+		ge.SeedRNG(1)
+		ge.age, ge.currentEpoch = c.age, "no epoch: universal events only"
+		ge.tick = 100000
+		ge.Events.defs = []config.EventDef{drought}
+		ge.Events.nextEventTick = 0
+		ge.processEvents()
+		if len(ge.Events.active) != 1 || ge.Events.active[0].TicksLeft != c.ticks {
+			t.Fatalf("%s: active events %+v, want a Drought for %d ticks", c.age, ge.Events.active, c.ticks)
+		}
+		line := ""
+		for _, e := range ge.log {
+			if strings.Contains(e.Message, "Food -0.5/tick") {
+				line = e.Message
+			}
+		}
+		if !strings.HasSuffix(line, c.want) || strings.Contains(line, "{dur}") {
+			t.Errorf("%s: the log says %q, want it to end %q", c.age, line, c.want)
+		}
+	}
+	// And no event text carries a duration of its own.
+	for _, def := range append(config.RandomEvents(), config.EpochExclusiveEvents()...) {
+		if strings.Contains(def.LogMessage, "for ~") {
+			t.Errorf("event %s quotes its own duration (%q): say \"for {dur}\"", def.Key, def.LogMessage)
+		}
+	}
+}
+
+// TestBonusTruthCulturalFestivalWaitsForCulture: the Cultural Festival epoch
+// event pays in culture, which is locked until the Classical Age. Entering
+// the Iron Era it is never rolled; from the Renaissance Age it is.
+func TestBonusTruthCulturalFestivalWaitsForCulture(t *testing.T) {
+	rolled := func(age string) int {
+		ge := newTruthEngine(age, truthClean)
+		n := 0
+		for seed := int64(1); seed <= 80; seed++ {
+			ge.SeedRNG(seed)
+			ge.epochEventHistory = nil
+			ge.rollGoodEpochEvent()
+			if len(ge.epochEventHistory) == 1 && ge.epochEventHistory[0].EventKey == "cultural_festival" {
+				n++
+			}
+		}
+		return n
+	}
+	if n := rolled("iron_age"); n != 0 {
+		t.Errorf("the Cultural Festival was rolled %d times of 80 in the Iron Age, where culture is locked", n)
+	}
+	if n := rolled("renaissance_age"); n == 0 {
+		t.Error("the Cultural Festival was never rolled in 80 tries in the Renaissance Age")
+	}
+}

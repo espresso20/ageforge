@@ -135,6 +135,12 @@ type GameEngine struct {
 
 	// Permanent bonuses from milestones
 	permanentBonuses map[string]float64
+	// workerBonus is the worker output bonus the last rates pass applied
+	// (gather_rate, floored): what workers add to their buildings is raised
+	// by this share. The worker shares routine reads it to know what one
+	// more food worker grows (foodWorkerFactor). Derived every pass; not
+	// saved.
+	workerBonus float64
 
 	// Dynamic tick speed. speedMultiplier is only ever above 1 through the dev
 	// console's /speed: players have no speed setting (see playerSpeedCap).
@@ -1439,11 +1445,14 @@ func (ge *GameEngine) processEvents() {
 
 	for _, def := range triggered {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
+		// The log line says how long a timed event really lasts: its
+		// duration is stretched with the age (EventManager.Tick).
+		line := def.LogText(ge.durationLocked(config.StretchTicks(ge.age, def.Duration)))
 		// Setbacks log as warnings so they don't read like windfalls.
 		if def.Sentiment == "bad" {
-			ge.addLog("warning", def.LogMessage)
+			ge.addLog("warning", line)
 		} else {
-			ge.addLog("event", def.LogMessage)
+			ge.addLog("event", line)
 		}
 		ge.applyEventEffects(def)
 	}
@@ -1686,16 +1695,23 @@ func (ge *GameEngine) checkMilestones() {
 }
 
 // applyMilestoneRewards grants a completed milestone's rewards: an instant
-// resource goes into the store (as much as fits), a permanent bonus into
-// permanentBonuses for the rest of the run. Under the write lock.
+// resource goes into the store (as much as fits, with a log line when the
+// store cut it short), a permanent bonus into permanentBonuses for the rest
+// of the run. Under the write lock.
 func (ge *GameEngine) applyMilestoneRewards(rewards []config.Effect) {
+	granted, fit := map[string]float64{}, map[string]float64{}
 	for _, eff := range rewards {
 		switch eff.Type {
 		case "instant_resource":
-			ge.Resources.Add(eff.Target, eff.Value)
+			granted[eff.Target] += eff.Value
+			fit[eff.Target] += ge.grantLocked(eff.Target, eff.Value)
 		case "permanent_bonus":
 			ge.permanentBonuses[eff.Target] += eff.Value
 		}
+	}
+	// The reward line states the full grant: say so when a full store took less.
+	if line := clippedLine(granted, fit); line != "" {
+		ge.addLog("info", line)
 	}
 }
 
@@ -1815,6 +1831,7 @@ func (ge *GameEngine) recalculateRates() {
 	// worker output bonus in the game was dead. It reads the staffing share
 	// of building output now.
 	gatherDelta := poolFactor("gather_rate", r.AddTotal("gather_rate")) - 1.0
+	ge.workerBonus = gatherDelta
 	if gatherDelta != 0 {
 		for _, def := range ge.Resources.defs {
 			made := float64(workerOutput[def.Key] * mMult)
@@ -2283,6 +2300,12 @@ func (ge *GameEngine) rollGoodEpochEvent() {
 	pool := config.GoodEpochEvents()
 	var eligible []config.EpochEventDef
 	for _, ev := range pool {
+		// The Cultural Festival pays in culture, which is locked until the
+		// Classical Age: entering the Iron Era (the Iron Age) it would
+		// promise culture the player cannot hold. It waits for culture.
+		if ev.Key == "cultural_festival" && !ge.Resources.IsUnlocked("culture") {
+			continue
+		}
 		switch tier {
 		case "legendary":
 			eligible = append(eligible, ev) // all tiers available

@@ -428,6 +428,11 @@ type truthPromise struct {
 	// Count is how many copies of the source deliver the effect together
 	// (truthCopies for a building; 1 otherwise).
 	Count float64
+	// Later marks a promise that is for when its resource exists, and says
+	// so: a building whose text reads "once unlocked", a legacy carried into
+	// every later run. Without it, a promise about a resource that is still
+	// locked in the age it is earned in is a promise the game cannot keep.
+	Later bool
 	// Also lists the meters the source moves besides this promise's own,
 	// because it is applied whole and its other promises ride along (an
 	// epoch event with two rates). A name ending in ":" is a prefix.
@@ -1044,6 +1049,10 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 		return out
 	}
 	ge := l.engine(age, mode)
+	if res := truthPaidIn(p); res != "" && !ge.Resources.IsUnlocked(res) {
+		out.Skip = res + " is locked in " + age
+		return out
+	}
 	snap := takeTruthSnapshot(ge)
 	sw := p.wire(ge)
 	sw.off()
@@ -1282,9 +1291,14 @@ func truthBuildingPromises() []truthPromise {
 			if source != "building" {
 				count = 1
 			}
+			// An output the building's own text marks "once unlocked".
+			text, later := truthEffectText(eff), false
+			if eff.Type == "production" && config.MakesBeforeUnlock(def, eff.Target) && strings.Contains(def.Description, "/tick "+config.OnceUnlocked) {
+				text, later = text+" "+config.OnceUnlocked, true
+			}
 			out = append(out, truthPromise{
 				Source: source, Key: def.Key, Name: def.Name, Age: def.RequiredAge, Eff: eff, Count: count,
-				Text: truthEffectText(eff), Kind: truthEffectKind(source, eff),
+				Text: text, Kind: truthEffectKind(source, eff), Later: later,
 				wire: func(ge *GameEngine) truthSwitch {
 					bm := ge.Buildings
 					saved := bm.defs[key]
@@ -1401,10 +1415,27 @@ func truthEpochEventPromises(t *testing.T) []truthPromise {
 	for _, r := range config.BaseResources() {
 		labels[strings.ToLower(r.Name)] = r.Key
 	}
+	// Epoch events fire on entering an era, from the Iron Era on: the first
+	// age of each. One that pays in a resource waits for an era the
+	// resource is unlocked in (rollGoodEpochEvent holds the Cultural
+	// Festival back until culture exists).
+	var entries []string
+	for _, ep := range config.Epochs() {
+		if config.CatastropheAllowed(ep.Key) {
+			entries = append(entries, ep.Ages[0])
+		}
+	}
+	entryFor := func(res string) string {
+		for _, age := range entries {
+			if ageOrders()[config.ResourceByKey()[res].Age] <= ageOrders()[age] {
+				return age
+			}
+		}
+		return entries[len(entries)-1]
+	}
 	add := func(defs []config.EpochEventDef, good bool) {
 		for _, def := range defs {
-			// Epoch events fire on entering an era, from the Iron Era on.
-			age := "iron_age"
+			age := entries[0]
 			wire := func(ge *GameEngine) truthSwitch {
 				return truthSwitch{
 					off: func() {},
@@ -1453,6 +1484,9 @@ func truthEpochEventPromises(t *testing.T) []truthPromise {
 					// "The epoch's main building material": the era's own.
 					res, ok = config.EpochByKey()[config.EpochForAge(age)].PrimaryResource, true
 				}
+				if ok && def.Key == "cultural_festival" {
+					age = entryFor("culture")
+				}
 				if !ok {
 					t.Errorf("epoch event %s promises %q, and %q is no resource: word it as \"<Resource> +N/tick\"", def.Key, m[0], name)
 					continue
@@ -1463,7 +1497,11 @@ func truthEpochEventPromises(t *testing.T) []truthPromise {
 					Text: m[0], Kind: "flat_rate", wire: wire,
 				})
 			}
-			// The promises of one event ride along with each other.
+			// The promises of one event are measured together, in one age,
+			// and ride along with each other.
+			for i := first; i < len(out); i++ {
+				out[i].Age = age
+			}
 			var meters []string
 			for _, p := range out[first:] {
 				if p.Kind == "all_production" {
@@ -1606,7 +1644,7 @@ func truthLegacyPromises() []truthPromise {
 			out = append(out, truthPromise{
 				// A legacy is carried into every later run, from its first age.
 				Source: "legacy", Key: ep.Key, Name: ep.Name + " legacy", Age: ageKeys()[0], Eff: eff, Count: 1,
-				Text: truthEffectText(eff), Kind: "legacy_production", wire: flag,
+				Text: truthEffectText(eff), Kind: "legacy_production", wire: flag, Later: true,
 			})
 		}
 		if !config.CatastropheAllowed(ep.Key) {
@@ -1711,6 +1749,10 @@ const (
 	// short and nothing beside it says "capped", or it says "capped" and
 	// the bonus is all there.
 	truthUnsaid = "CAP NOT SHOWN"
+	// truthLocked is a promise about a resource the player cannot have yet
+	// in the age the promise is earned in, with no word of that in its text:
+	// the engine applies no rate to a locked resource.
+	truthLocked = "LOCKED RESOURCE"
 )
 
 // truthVerdict is what the guard found for one promise.
@@ -1742,6 +1784,16 @@ func truthPoolResource(p truthPromise) string {
 	return ""
 }
 
+// truthPaidIn is the resource a promise pays in or takes from ("" when it
+// is not about one resource's rate or stock).
+func truthPaidIn(p truthPromise) string {
+	switch p.Kind {
+	case "flat_rate", "building_output", "instant", "steal", "drain", "boon_drain":
+		return p.Eff.Target
+	}
+	return truthPoolResource(p)
+}
+
 // judge measures one promise and classes it.
 func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
 	t.Helper()
@@ -1751,6 +1803,22 @@ func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
 		v.Class, v.Note = truthUnmeasured, "no meter for this effect"
 		return v
 	}
+	// A resource that is still locked gathers nothing, whatever its rate
+	// reads. A promise that says it is for later is measured from the age
+	// its resource unlocks in; any other is one the game cannot keep.
+	if res := truthPaidIn(p); res != "" {
+		unlock := config.ResourceByKey()[res].Age
+		if ageOrders()[unlock] > ageOrders()[p.Age] {
+			if !p.Later {
+				v.Class, v.Note = truthLocked, ResourceName(res)+" is locked until "+AgeName(unlock)+", and nothing in the text says so"
+				return v
+			}
+			v.MeasuredAge = unlock
+			if p.Source != "legacy" {
+				v.Note = "nothing until " + AgeName(unlock) + ": " + ResourceName(res) + " is locked before it, and the description says \"" + config.OnceUnlocked + "\""
+			}
+		}
+	}
 	// An ally's bonus multiplies the whole rate, flat income included, and
 	// sits outside every pool: its exact reading is the typical player's.
 	exact := truthClean
@@ -1759,12 +1827,12 @@ func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
 	}
 	// A bonus to a resource has nothing to raise before the resource comes in.
 	if res := truthPoolResource(p); res != "" {
-		first := l.firstMade(res, p.Age, exact == truthTypical)
+		first := l.firstMade(res, v.MeasuredAge, exact == truthTypical)
 		if first == "" {
 			v.Class, v.Note = truthDead, "nothing makes "+ResourceName(res)+" from "+AgeName(p.Age)+" on"
 			return v
 		}
-		if first != p.Age && p.Source != "legacy" {
+		if first != v.MeasuredAge && p.Source != "legacy" {
 			v.Note = "nothing to raise until " + AgeName(first) + ": nothing makes " + ResourceName(res) + " before it"
 		}
 		v.MeasuredAge = first
@@ -1851,8 +1919,9 @@ func truthPool(p truthPromise) string {
 }
 
 // truthAccepted is the allow-list: the promises the guard knows the game
-// does not keep, and why that is accepted for now. Keys are
-// "<class>/<pool or effect>". Every entry must still be needed: the test
+// does not keep, and why that is accepted for now. Keys are "CAPPED/<pool>"
+// for a cap, "<class>/<source> <key>" for anything else. Every entry must
+// still be needed: the test
 // fails on one nothing uses, so a fixed promise takes its excuse with it.
 var truthAccepted = map[string]string{
 	"CAPPED/all_production": "cap, pending design: every \"all production\" bonus shares one pool, and the engine applies at most +200% of it (x3). " +
@@ -1861,6 +1930,8 @@ var truthAccepted = map[string]string{
 	"CAPPED/resource_production:knowledge": "cap, pending design: knowledge's own pool has the same +200% limit, and the knowledge techs and the Great Library fill it in the Electric Age.",
 	"CAPPED/research_speed": "cap, pending design: research speed takes its share off a tech's time, and a tech takes one tick at least, so nothing past +100% counts. " +
 		"Ancient Knowledge alone reaches +100% with the fourth epoch succumbed in: the fifth and sixth add nothing.",
+	"LOCKED RESOURCE/ally stellar_federation": "the Stellar Federation is met in the Space Age and its specialty, dark matter, unlocks in the Interstellar Age: " +
+		"an alliance made early pays nothing for one age. Moving the civilization or the resource is a design call.",
 }
 
 // TestBonusTruth is the guard: every promise measured, every miss a failure
@@ -1890,7 +1961,12 @@ func TestBonusTruth(t *testing.T) {
 		if v.Class == truthOK {
 			continue
 		}
-		key := v.Class + "/" + truthPool(p)
+		// A cap is accepted for its whole pool; anything else, one source
+		// at a time.
+		key := v.Class + "/" + p.Source + " " + p.Key
+		if v.Class == truthCapped {
+			key = v.Class + "/" + truthPool(p)
+		}
 		if _, ok := truthAccepted[key]; ok {
 			used[key] = true
 			continue
@@ -1937,10 +2013,10 @@ func truthReport(verdicts []truthVerdict) string {
 		counts[v.Class]++
 	}
 	fmt.Fprintf(&sb, "%d promises measured.\n\n", len(verdicts))
-	for _, class := range []string{truthOK, truthCapped, truthDead, truthWrongSize, truthWrongTarget, truthUnmeasured} {
+	for _, class := range []string{truthOK, truthCapped, truthDead, truthWrongSize, truthWrongTarget, truthLocked, truthUnmeasured} {
 		fmt.Fprintf(&sb, "- %s: %d\n", class, counts[class])
 	}
-	for _, class := range []string{truthDead, truthWrongSize, truthWrongTarget, truthUnmeasured, truthCapped, truthOK} {
+	for _, class := range []string{truthDead, truthWrongSize, truthWrongTarget, truthLocked, truthUnmeasured, truthCapped, truthOK} {
 		var rows []string
 		for _, v := range verdicts {
 			if v.Class != class {
