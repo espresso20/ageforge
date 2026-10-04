@@ -163,15 +163,6 @@ func effectPool(e config.Effect) (string, bool) {
 // EffectPool is effectPool for the panels.
 func EffectPool(e config.Effect) (string, bool) { return effectPool(e) }
 
-// PoolLimitText names the limit a pool is held to, for a "capped" note:
-// "+200%" for the x3 production cap, "one tick" for research.
-func PoolLimitText(p BonusPool) string {
-	if p.Target == "research_speed" {
-		return "+100%, one tick a tech"
-	}
-	return textfmt.SignedPercent(p.Limit)
-}
-
 // CapNote is the short note beside one bonus (or penalty) of v in pool p: ""
 // when all of it counts, "capped: no effect now" when none does, "capped:
 // +5% of it counts now" in between. held says it is already in the pool.
@@ -255,9 +246,9 @@ func (ge *GameEngine) grantLocked(res string, amount float64) (took float64) {
 	return ge.Resources.Add(res, amount) - before
 }
 
-// clippedLine is the log line for grants a full store cut short: "  → Only
-// 30 food fit in storage (of 250)." promised and took are by resource; ""
-// when everything fit.
+// clippedLine is the log line for grants a full store cut short: "  →
+// Storage was nearly full: only 30 food (of 250) fit." promised and took are
+// by resource; "" when everything fit.
 func clippedLine(promised, took map[string]float64) string {
 	var parts []string
 	for _, res := range sortedKeys(promised) {

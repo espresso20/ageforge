@@ -130,7 +130,7 @@ The buildings and stock it saved go into the **Saved this run** line of the Army
 
 The Last Passage is different: its Endure costs prestige points, not buildings and stock, and soldiers do not change it.
 
-The −10% applies to every building, including the ones that survived, for the full 562 ticks. It goes into the all-production pool, whose multiplier never drops below x0.1 or rises above x3 (see [The all-production cap](resources.md#the-all-production-cap)). While your pool is under the cap the debuff lands in full; if your bonuses already sit more than 10 points over the cap, it is absorbed. The same floor covers per-resource rate modifiers and worker output, and any active debuff shows in the Active Multipliers panel.
+The −10% applies to every building, including the ones that survived, for the full 562 ticks. It goes into the all-production pool, whose multiplier never drops below x0.1 or rises above x3 (see [The all-production cap](resources.md#the-all-production-cap)). While your pool is under the cap the debuff lands in full; if your bonuses already sit more than 10 points over the cap, it is absorbed, and the Endure log says so (`-10% all production is capped: no effect now`). The same floor covers per-resource rate modifiers and worker output, and any active debuff shows in the Active Multipliers panel.
 
 If morale was already low, the −10 can push it into the low band, where output is penalized. Morale drifts back toward 50% on its own; a food surplus speeds that up.
 

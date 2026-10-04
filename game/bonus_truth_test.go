@@ -1692,12 +1692,21 @@ func truthLegacyPromises() []truthPromise {
 	return out
 }
 
-// truthOtherPromises is the handful of one-off sources: the Cosmic Legacy
-// and the festival.
+// truthOtherPromises is the handful of one-off sources: the Cosmic Legacy,
+// the festival and Endure's Reconstruction Effort.
 func truthOtherPromises() []truthPromise {
 	cosmic := config.Effect{Type: "production_all", Target: "production_all", Value: CosmicLegacyProductionBonus}
 	festival := config.Effect{Type: "production_all", Target: "production_all", Value: festivalBuffPercent}
+	rebuild := config.Effect{Type: "production_all", Target: "production_all", Value: endureDebuffProduction}
 	return []truthPromise{
+		{
+			// A catastrophe can strike from the Iron Era on.
+			Source: "endure", Key: "reconstruction", Name: "Reconstruction Effort (Endure)", Age: "iron_age", Eff: rebuild, Count: 1,
+			Text: truthEffectText(rebuild) + " for a while", Kind: "all_production",
+			wire: func(ge *GameEngine) truthSwitch {
+				return truthSwitch{off: func() {}, on: func() { ge.startReconstruction() }, restore: func() {}}
+			},
+		},
 		{
 			Source: "cosmic legacy", Key: "cosmic_legacy", Name: "Cosmic Legacy", Age: ageKeys()[0], Eff: cosmic, Count: 1,
 			Text: truthEffectText(cosmic) + ", permanently", Kind: "all_production",

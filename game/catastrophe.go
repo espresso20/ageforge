@@ -425,15 +425,7 @@ func (ge *GameEngine) Endure() error {
 
 	ge.Workers.RemovePct(endureWorkerLoss)
 
-	debuff := EndureDebuffTicksIn(ge.age)
-	ge.Events.InjectEvent(ActiveEvent{
-		Key:       "endure_reconstruction",
-		Name:      "Reconstruction Effort",
-		TicksLeft: debuff,
-		Effects: []config.Effect{
-			{Type: "production_all", Value: endureDebuffProduction},
-		},
-	})
+	debuff := ge.startReconstruction()
 
 	ge.addLog("warning", fmt.Sprintf("☄ ENDURE: %s. %s", catName, catFlavor))
 	ge.addLog("warning", fmt.Sprintf("  Buildings destroyed: %d", destroyCount))
@@ -456,6 +448,8 @@ func (ge *GameEngine) Endure() error {
 	ge.addLog("warning", fmt.Sprintf("  %.0f%% of workers lost.", endureWorkerLoss*100))
 	ge.addLog("info", fmt.Sprintf("  Reconstruction: all production %.0f%% for %s. Morale %+.0f points.",
 		endureDebuffProduction*100, approxTicks(debuff, ge.tickIntervalLocked()), endureMoraleHit*100))
+	// Past the all-production cap the surplus absorbs the penalty: say so.
+	ge.logCapped(config.Effect{Type: "production_all", Value: endureDebuffProduction})
 	ge.addLog("success", fmt.Sprintf("  ✦ You endured the %s. Its badge records it.", epName))
 	// Cosmetic flavour — a wry beat after surviving the catastrophe.
 	if q := config.PickLogFlavor(config.LogFlavorCatastropheSurvived, ge.quipRNG()); q != "" {
@@ -592,6 +586,22 @@ func (ge *GameEngine) Succumb() error {
 	ge.maybeOfferAncientMemory()
 
 	return nil
+}
+
+// startReconstruction starts Endure's Reconstruction Effort, the timed
+// all-production penalty, and returns how many ticks it lasts in the current
+// age. Under the write lock.
+func (ge *GameEngine) startReconstruction() int {
+	debuff := EndureDebuffTicksIn(ge.age)
+	ge.Events.InjectEvent(ActiveEvent{
+		Key:       "endure_reconstruction",
+		Name:      "Reconstruction Effort",
+		TicksLeft: debuff,
+		Effects: []config.Effect{
+			{Type: "production_all", Value: endureDebuffProduction},
+		},
+	})
+	return debuff
 }
 
 // reapplyLegacyBonuses restores the per-resource Succumb legacy rate bonuses
