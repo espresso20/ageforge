@@ -1881,6 +1881,22 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
+	// The Cosmic Legacy (last_passage.go): everything a resource makes × 1.1,
+	// after the ×3 caps and every other bonus. Inside the all-production
+	// pool it added nothing once the pool was full (the Victorian Age on a
+	// typical run); here it counts in every age. It multiplies what is made,
+	// before the food drain, so it never deepens a deficit. Its own
+	// breakdown line says why.
+	if legacy := ge.cosmicLegacyFactor(); legacy != 1 {
+		for _, def := range ge.Resources.defs {
+			if r := ge.Resources.resources[def.Key]; r != nil && r.Rate > 0 {
+				scaled := float64(r.Rate * legacy)
+				r.Breakdown.LegacyRate = scaled - r.Rate
+				r.Rate = scaled
+			}
+		}
+	}
+
 	// Food consumption
 	drain := ge.Workers.FoodDrain()
 	if drain > 0 {
@@ -1896,7 +1912,8 @@ func (ge *GameEngine) recalculateRates() {
 		r := ge.Resources.resources[def.Key]
 		if r != nil {
 			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.WorkerRate +
-				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain
+				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain +
+				r.Breakdown.LegacyRate
 			r.Breakdown.BonusRate = r.Rate - knownComponents
 		}
 	}

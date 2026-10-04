@@ -123,7 +123,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 			"  [gray]• You already carry the Cosmic Legacy. Succumb is closed to you.[-]")
 	} else {
 		succumbLines = append(succumbLines,
-			fmt.Sprintf("  [gold]✓ Cosmic Legacy: production +%.0f%%, permanent, through every prestige[-]", game.CosmicLegacyProductionBonus*100),
+			fmt.Sprintf("  [gold]✓ Cosmic Legacy: production +%.0f%% after the caps, through every prestige[-]", game.CosmicLegacyProductionBonus*100),
 			"  [gold]✓ Earned once, kept forever[-]")
 	}
 

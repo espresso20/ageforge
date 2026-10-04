@@ -212,6 +212,10 @@ type RateBreakdown struct {
 	TradeRate    float64
 	FoodDrain    float64
 	BonusRate    float64
+	// LegacyRate is what the Cosmic Legacy adds: a tenth of everything the
+	// resource makes, after the caps and before the food drain
+	// (last_passage.go). 0 without the legacy.
+	LegacyRate float64
 	// MasteryRate is what Era Mastery adds: the net rate × (k − 1) on known
 	// ground (mastery.go), 0 on new ground.
 	MasteryRate float64

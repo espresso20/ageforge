@@ -626,6 +626,29 @@ var truthKinds = map[string]truthKind{
 			return truthAcross(ge, before, after, base)
 		},
 	},
+	// "+X% all production, after the caps" (the Cosmic Legacy): everything
+	// a resource makes, bonuses and all, times 1 + X, in every age. Read as
+	// the rise in each rate over what the resource made before it (the
+	// food drain is not production and is left out).
+	"final_production": {
+		Unit: "of what every resource makes", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			// The probe has put the engine back: the bonus is off.
+			ge.recalculateRates()
+			k := ge.speedK()
+			base := map[string]float64{}
+			for _, key := range ge.Resources.order {
+				r := ge.Resources.resources[key]
+				if made := r.Rate/k - r.Breakdown.FoodDrain - r.Breakdown.LegacyRate; made > 0 {
+					base[key] = made
+				}
+			}
+			if len(base) == 0 {
+				return truthMeasured{Skip: "nothing is made here"}
+			}
+			return truthAcross(ge, before, after, base)
+		},
+	},
 	// "+X% <resource> production": X points on that resource alone.
 	"resource_production": {
 		Unit: "points of base output", Pool: true,
@@ -1713,7 +1736,10 @@ func truthLegacyPromises() []truthPromise {
 // truthOtherPromises is the handful of one-off sources: the Cosmic Legacy,
 // the festival and Endure's Reconstruction Effort.
 func truthOtherPromises() []truthPromise {
-	cosmic := config.Effect{Type: "production_all", Target: "production_all", Value: CosmicLegacyProductionBonus}
+	// The Cosmic Legacy is no part of the all-production pool: it multiplies
+	// production after the caps (cosmicLegacyFactor), so its effect names no
+	// pool and no "capped" note can stand beside it.
+	cosmic := config.Effect{Type: "cosmic_legacy", Target: "production", Value: CosmicLegacyProductionBonus}
 	festival := config.Effect{Type: "production_all", Target: "production_all", Value: festivalBuffPercent}
 	rebuild := config.Effect{Type: "production_all", Target: "production_all", Value: endureDebuffProduction}
 	return []truthPromise{
@@ -1727,7 +1753,7 @@ func truthOtherPromises() []truthPromise {
 		},
 		{
 			Source: "cosmic legacy", Key: "cosmic_legacy", Name: "Cosmic Legacy", Age: ageKeys()[0], Eff: cosmic, Count: 1,
-			Text: truthEffectText(cosmic) + ", permanently", Kind: "all_production",
+			Text: truthPercent(cosmic.Value) + " all production, after the caps, permanently", Kind: "final_production",
 			wire: func(ge *GameEngine) truthSwitch {
 				had := ge.cosmicLegacy
 				return truthSwitch{

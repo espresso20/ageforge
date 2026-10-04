@@ -1436,6 +1436,9 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		if b.BonusRate != 0 {
 			parts = append(parts, fmt.Sprintf("Bonuses: %s", textfmt.RateValue(b.BonusRate)))
 		}
+		if b.LegacyRate != 0 {
+			parts = append(parts, fmt.Sprintf("Cosmic Legacy: %s", textfmt.RateValue(b.LegacyRate)))
+		}
 		if b.MasteryRate != 0 {
 			parts = append(parts, fmt.Sprintf("Era Mastery: %s", textfmt.RateValue(b.MasteryRate)))
 		}

@@ -346,13 +346,13 @@ func (ge *GameEngine) recruitFood() (net, perWorker, margin float64) {
 // foodWorkerFactor is what multiplies the food a worker adds to a food
 // building: morale, times the all-production and food bonuses plus the
 // worker output bonus (which is added to them, not multiplied), read off the
-// last rates.
+// last rates, times the Cosmic Legacy's factor.
 func (ge *GameEngine) foodWorkerFactor() float64 {
 	bonuses := 1.0
 	if r := ge.Resources.resources["food"]; r != nil && r.Breakdown.BuildingRate > 0 {
 		bonuses = math.Max(0, 1+r.Breakdown.BonusRate/r.Breakdown.BuildingRate)
 	}
-	return float64(ge.moraleMultiplier() * math.Max(0, bonuses+ge.workerBonus))
+	return float64(float64(ge.moraleMultiplier()*math.Max(0, bonuses+ge.workerBonus)) * ge.cosmicLegacyFactor())
 }
 
 // foodPerWorker is the food one more worker in building key grows a tick: a

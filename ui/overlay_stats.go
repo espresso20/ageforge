@@ -129,8 +129,8 @@ func statsProvider(state game.GameState, _ int) string {
 		}
 	}
 	if state.LastPassage.CosmicLegacy {
-		cosmic := config.Effect{Type: "production_all", Value: game.CosmicLegacyProductionBonus}
-		fmt.Fprintf(&sb, "  %-16s all production %s (permanent, through every prestige)%s\n", "Cosmic Legacy:", textfmt.SignedPercent(game.CosmicLegacyProductionBonus), capTag(state, cosmic, true, "-"))
+		// Applied after the production caps, so it never carries a "capped" note.
+		fmt.Fprintf(&sb, "  %-16s all production %s, counted after the caps (permanent, through every prestige)\n", "Cosmic Legacy:", textfmt.SignedPercent(game.CosmicLegacyProductionBonus))
 	}
 
 	// Milestone summary hint
