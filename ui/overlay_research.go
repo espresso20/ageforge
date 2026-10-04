@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -73,7 +74,14 @@ func researchProvider(state game.GameState, _ int) string {
 
 	// === Header ===
 	fmt.Fprint(&sb, " [label]research <key>  ·  research cancel  ·  research list[-]\n")
-	fmt.Fprintf(&sb, " [gold]Progress: %d / %d techs researched[-]\n\n", state.Research.TotalResearched, len(state.Research.Techs))
+	fmt.Fprintf(&sb, " [gold]Progress: %d / %d techs researched[-]\n", state.Research.TotalResearched, len(state.Research.Techs))
+	// Research speed has no line of its own in the tree, so it says here
+	// what it does. The times listed below already count it.
+	if p, ok := state.Pools["research_speed"]; ok && p.Earned != 0 {
+		fmt.Fprintf(&sb, " [gray]Research speed %s: techs take %s of their base time. The times below include it.[-]%s\n",
+			textfmt.SignedPercent(p.Earned), textfmt.Percent(math.Max(0, 1-p.Applied)), poolTag(state, "research_speed"))
+	}
+	sb.WriteString("\n")
 
 	// === Currently Researching ===
 	fmt.Fprintf(&sb, " [gold]═══ Researching now ═══[-]\n\n")
@@ -144,7 +152,7 @@ func researchProvider(state game.GameState, _ int) string {
 			}
 
 			fmt.Fprintf(&sb, "  [cyan]○[-]  %-40s [gray]%s knowledge · %s[-]%s\n",
-				techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(masteryTicks(def.ResearchTicks, state), state), affordStr)
+				techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(researchTicks(def.ResearchTicks, state), state), affordStr)
 
 			if ts.Description != "" {
 				fmt.Fprintf(&sb, "     [gray]%s[-]\n", ts.Description)
@@ -238,7 +246,7 @@ func researchProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "  [yellow]⟳[-]  [yellow]%-24s[-]  [gray](in progress)[-]\n", ts.Name)
 
 			} else if ts.Available {
-				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-40s[-]  [gray]%s knowledge · %s[-]", techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(masteryTicks(def.ResearchTicks, state), state))
+				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-40s[-]  [gray]%s knowledge · %s[-]", techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(researchTicks(def.ResearchTicks, state), state))
 				// Show prereqs if any
 				if len(ts.Prerequisites) > 0 {
 					var prereqNames []string

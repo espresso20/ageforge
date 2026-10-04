@@ -99,3 +99,21 @@ func (ge *GameEngine) GrantTechsForTest(keys ...string) {
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
 }
+
+// SetLegacyBonusForTest marks epochs as succumbed in, as a Succumb in each
+// would: their legacy bonuses and Ancient Knowledge apply at once. A test
+// hook for other packages (the panels that show research speed and legacy
+// bonuses); not reachable from play.
+func (ge *GameEngine) SetLegacyBonusForTest(epochs ...string) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	for _, ep := range epochs {
+		if _, ok := config.EpochByKey()[ep]; ok && !ge.legacyBonuses[ep] {
+			ge.legacyBonuses[ep] = true
+			for res, mult := range config.LegacyBonusForEpoch(ep) {
+				ge.permanentBonuses[res+"_rate"] += mult
+			}
+		}
+	}
+	ge.recalculateRates()
+}

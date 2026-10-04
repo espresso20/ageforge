@@ -638,13 +638,12 @@ func (ge *GameEngine) legacyModifiers() []Modifier {
 	return []Modifier{{Source: "legacy", Target: "research_speed", Op: OpAdd, Value: b}}
 }
 
-// combinedResearchSpeed sums research_speed from techs, permanent bonuses
-// (milestones), prestige upgrades and the Succumb legacy bonus. Read-only.
+// combinedResearchSpeed is the research speed pool: every research_speed
+// bonus the resolver holds (techs, milestones, wonders, the Succumb legacy).
+// It is the pool the Stats panel lists, so what the panel shows is what a
+// research started now gets. Read-only.
 func (ge *GameEngine) combinedResearchSpeed() float64 {
-	return ge.Research.GetBonus("research_speed") +
-		ge.permanentBonuses["research_speed"] +
-		ge.Prestige.GetBonuses()["research_speed"] +
-		ge.succumbResearchBonus()
+	return ge.buildResolver().AddTotal("research_speed")
 }
 
 // countCatastropheOutcomes counts Endure and Succumb entries in the

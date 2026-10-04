@@ -95,18 +95,27 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 	}
 
 	rm.currentTech = key
-	ticks := def.ResearchTicks
-	// Apply combined research speed bonus (tech + permanent + prestige)
-	if speedBonus > 0 {
-		ticks = int(float64(ticks) * (1.0 - speedBonus))
+	ticks := ResearchTicks(def.ResearchTicks, speedBonus, rm.timeK)
+	rm.ticksLeft = ticks
+	rm.totalTicks = ticks
+	return nil
+}
+
+// ResearchTicks is how long a tech listed at base ticks takes to research
+// with a research speed bonus of speed on ground of speed k: research speed
+// takes its share off the listed time (+30% leaves 70% of it, rounded down,
+// one tick at least), then Era Mastery divides what is left by k
+// (MasteryTicks). The engine starts research with it and the Research panel
+// lists times with it, so the time a tech shows is the time it takes.
+func ResearchTicks(base int, speed, k float64) int {
+	ticks := base
+	if speed > 0 {
+		ticks = int(float64(ticks) * (1.0 - speed))
 		if ticks < 1 {
 			ticks = 1
 		}
 	}
-	ticks = MasteryTicks(ticks, rm.timeK)
-	rm.ticksLeft = ticks
-	rm.totalTicks = ticks
-	return nil
+	return MasteryTicks(ticks, k)
 }
 
 // memoryResearchSlowdown is the tick multiplier applied to an Ancient Memory

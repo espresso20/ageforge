@@ -21,6 +21,8 @@ A research speed of +30% cuts the tick count to 70% of base. It cuts the number 
 
 The tick count is locked in when you start the tech. Gaining more research speed mid-research does not shorten the current countdown.
 
+The Research panel lists every tech at the time it would take if you started it now, with research speed and Era Mastery counted, and its header says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
+
 **Era Mastery.** On known ground (an age a past run completed) the adjusted ticks are then divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick: 2x after one completion, up to 4.2x after ten. The Research panel shows the shortened times.
 
 ### Knowledge Cost is Upfront

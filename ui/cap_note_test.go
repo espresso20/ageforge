@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
@@ -163,5 +164,36 @@ func TestMilestonesAndWondersTagCappedRewards(t *testing.T) {
 	}
 	if want := "+30 data/tick[-]\n"; !strings.Contains(wonders, want) {
 		t.Errorf("the Global Network's flat output carries a note, or is gone (want %q)", want)
+	}
+}
+
+// TestResearchPanelShowsRealTimes: a tech's listed time is the time it
+// takes to research now, research speed and Era Mastery included, and the
+// panel says what research speed does. It used to list times without
+// research speed, so the bonus never showed.
+func TestResearchPanelShowsRealTimes(t *testing.T) {
+	ge := game.NewGameEngine()
+	ge.SeedRNG(1)
+	out := researchProvider(ge.GetState(), 120)
+	base := config.TechByKey()["tool_making"].ResearchTicks
+	if want := formatTicks(base, ge.GetState()); !strings.Contains(out, "800 knowledge · "+want) {
+		t.Fatalf("with no bonus Tool Making should list its base time %s:\n%s", want, section(t, out, "Available now", "Tech tree"))
+	}
+	if strings.Contains(out, "Research speed") {
+		t.Errorf("a new game mentions research speed:\n%s", out)
+	}
+	// One epoch succumbed in: Ancient Knowledge, +25% research speed.
+	ge.SetLegacyBonusForTest("iron_era")
+	st := ge.GetState()
+	out = researchProvider(st, 120)
+	quick := game.ResearchTicks(base, 0.25, 1)
+	if quick >= base {
+		t.Fatalf("+25%% research speed leaves Tool Making at %d of %d ticks", quick, base)
+	}
+	if want := "800 knowledge · " + formatTicks(quick, st); !strings.Contains(out, want) {
+		t.Errorf("with +25%% research speed Tool Making should list %q:\n%s", want, section(t, out, "Available now", "Tech tree"))
+	}
+	if want := "Research speed +25%: techs take 75% of their base time."; !strings.Contains(out, want) {
+		t.Errorf("the Research panel does not say %q", want)
 	}
 }
