@@ -3,6 +3,8 @@ package game
 import (
 	"slices"
 	"time"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // GameState is a read-only snapshot of the entire game state for UI consumption
@@ -120,6 +122,13 @@ type GameState struct {
 	// the engine uses for its rates, so the panel can never drift from the
 	// math. Populated in GetState(); not stored in save JSON.
 	Modifiers []Modifier `json:"-"`
+	// Pools is every bonus pool a cap or floor can hold (all production,
+	// each resource's own production, worker output, research speed,
+	// building costs, game speed), with what it has earned and what the
+	// engine applies of it (caps.go). The panels read it to say "capped"
+	// beside a bonus a limit is holding back. Populated in GetState(); not
+	// stored in save JSON.
+	Pools map[string]BonusPool `json:"-"`
 	// AccountStats carries the account-wide LIFETIME (cross-save) stats and
 	// achievements for the Stats overlay (accounts.md §3.3, Phase 6). nil when
 	// no account is wired (e.g. tests that build an engine without SetAccount).
@@ -334,7 +343,14 @@ type ResearchState struct {
 	TicksLeft       int
 	TotalTicks      int
 	TotalResearched int
-	Bonuses         map[string]float64
+	// Bonuses is what researched techs add to each bonus pool, as fractions
+	// ("production_all": 0.5 is +50%). Flat is what they add per tick to each
+	// resource, Storage what they add to each store ("all": every one) and
+	// Housing what they add to housing: amounts, not fractions.
+	Bonuses map[string]float64
+	Flat    map[string]float64
+	Storage map[string]float64
+	Housing float64
 }
 
 // TechState represents one technology's state for UI
@@ -462,8 +478,11 @@ type MilestoneInfo struct {
 	Visible     bool // computed: completed || !hidden || progress > 0.5
 	Completed   bool
 	RewardText  string
-	Progress    []MilestoneProgress
-	ChainKey    string
+	// Rewards is the milestone's rewards as effects, for the panel's
+	// "capped" notes beside a bonus a limit holds back (caps.go).
+	Rewards  []config.Effect
+	Progress []MilestoneProgress
+	ChainKey string
 }
 
 // MilestoneProgress represents progress toward one condition of a milestone

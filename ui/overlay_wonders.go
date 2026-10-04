@@ -39,7 +39,7 @@ func renderCurrentWonderSummary(state game.GameState) string {
 
 	// Effects
 	for _, eff := range current.def.Effects {
-		fmt.Fprintf(&sb, "   %s\n", formatEffect(eff))
+		fmt.Fprintf(&sb, "   %s%s\n", formatEffect(eff), capTag(state, eff, built, "-"))
 	}
 
 	// Bank progress if not built
@@ -133,7 +133,7 @@ func wondersProvider(state game.GameState, _ int) string {
 			if len(w.def.Effects) > 0 {
 				sb.WriteString("   [cyan]Effects:[-]\n")
 				for _, eff := range w.def.Effects {
-					fmt.Fprintf(&sb, "     %s\n", formatEffect(eff))
+					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff), capTag(state, eff, true, "-"))
 				}
 			}
 		} else if unlocked {
@@ -196,7 +196,7 @@ func wondersProvider(state game.GameState, _ int) string {
 			if len(w.def.Effects) > 0 {
 				sb.WriteString("   [cyan]Effects when built:[-]\n")
 				for _, eff := range w.def.Effects {
-					fmt.Fprintf(&sb, "     %s\n", formatEffect(eff))
+					fmt.Fprintf(&sb, "     %s%s\n", formatEffect(eff), capTag(state, eff, false, "-"))
 				}
 			}
 		} else {

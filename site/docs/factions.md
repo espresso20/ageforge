@@ -192,7 +192,7 @@ A boon is rolled from one catalog shared by every civilization:
 | Grand Cache (rare) | a bigger instant lump of a rarer resource (knowledge, gold, uranium, plasma, ...) | grows with the age | instant |
 | Extra Hands | 3 to 8 temporary workers | | 2,600 to 5,200 ticks |
 
-The sizes are before scaling. Stronger civilizations give bigger boons (×0.98 at strength 1 up to ×1.30 at strength 5), and so do better relations: ×1.15 friendly, ×1.4 allied, ×0.7 from a rival or a civilization under embargo. Industrious Spell adds into [the all-production cap](resources.md#the-all-production-cap) like any all-production bonus.
+The sizes are before scaling. Stronger civilizations give bigger boons (×0.98 at strength 1 up to ×1.30 at strength 5), and so do better relations: ×1.15 friendly, ×1.4 allied, ×0.7 from a rival or a civilization under embargo. Industrious Spell adds into [the all-production cap](resources.md#the-all-production-cap) like any all-production bonus, and a specialty boon into its resource's own pool. When a cap holds a boon back, its log line says so (`capped: no effect now`). A lump a full store cuts short says what fit.
 
 Which boon you get depends on the civilization's character. Every civilization favors sharing its specialty. A peaceful one leans toward gentle production and knowledge gifts and rarely speeds time; an aggressive one toward Time Dilation and lumps of spoils; a mercantile one toward lumps of goods and resource surges; an isolationist one toward lumps and the rare Grand Cache. Allies make the Grand Cache more likely too.
 

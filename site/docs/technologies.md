@@ -21,6 +21,8 @@ A research speed of +30% cuts the tick count to 70% of base. It cuts the number 
 
 The tick count is locked in when you start the tech. Gaining more research speed mid-research does not shorten the current countdown.
 
+The Research panel lists every tech at the time it would take if you started it now, with research speed and Era Mastery counted, and its header says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
+
 **Era Mastery.** On known ground (an age a past run completed) the adjusted ticks are then divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick: 2x after one completion, up to 4.2x after ten. The Research panel shows the shortened times.
 
 ### Knowledge Cost is Upfront
@@ -64,7 +66,7 @@ Research speed reduces the tick count when research starts. Its sources add toge
 
 Milestone research speed lasts for the run: milestones start over at prestige and at Succumb. Five milestones add +50% in total, +30% of it before your last tech. See [Milestones](milestones.md).
 
-Nothing caps research speed except that a tech always takes at least 1 tick. Once your total reaches +100%, every tech finishes on the tick after you start it.
+Nothing caps research speed except that a tech always takes at least 1 tick. Once your total reaches +100%, every tech finishes on the tick after you start it, and anything past +100% adds nothing. Ancient Knowledge alone gets there with the fourth epoch, so the fifth and sixth add nothing. The Stats panel marks the Research speed line as capped when that happens, and the log says so when a research speed bonus you just earned is past it.
 
 > **Research speed is not knowledge output.** Many techs raise knowledge output (see [Knowledge output](#knowledge-output) below). More knowledge lets you afford techs sooner; each tech still takes the same number of ticks.
 
@@ -382,7 +384,7 @@ Each of these adds a percentage to all production. The bonuses from every source
 | Reality Manipulation | +1.00 |
 | Transcendence | +2.00 |
 
-The techs through the Electric Age add +190%; with the Crystal Palace and Hoover Dam wonders that passes the cap, and Advanced Electrics (Modern) takes the techs past it on their own. By the Transcendent Age they add +950% on paper. The Stats panel's Active Multipliers shows that raw sum, but output never goes past x3.0. From the Modern Age on, an all-production tech adds nothing you can see while you are over the cap; it still counts as a buffer, because a penalty (such as the Reconstruction Effort after you Endure) comes out of the raw pool first.
+The techs through the Electric Age add +190%; with the Crystal Palace and Hoover Dam wonders that passes the cap, and Advanced Electrics (Modern) takes the techs past it on their own. By the Transcendent Age they add +950% on paper. Output never goes past x3.0. The Stats panel's Active Multipliers shows what counts and says how much you earned (`+200% capped at +200%: +950% earned`), and the Research panel puts a "capped" note beside every tech the cap holds back, before you buy it and after. From the Modern Age on, an all-production tech adds nothing you can see while you are over the cap; it still counts as a buffer, because a penalty (such as the Reconstruction Effort after you Endure) comes out of the raw pool first.
 
 ---
 
@@ -467,7 +469,9 @@ These raise the positive production of one resource, or worker output:
 | Tool Making | worker output | +15% |
 | Neural Interface | worker output | +30% |
 
-Each resource's bonuses share a pool clamped at +200%, as knowledge's do. The gold techs from Currency to Mercantilism already add +230%, so from the Colonial Age on Railroads, Telecommunications and Blockchain add no gold you can see. Worker output bonuses have no such ceiling.
+Each resource's bonuses share a pool clamped at +200%, as knowledge's do. The gold techs from Currency to Mercantilism already add +230%, so from the Colonial Age on Railroads, Telecommunications and Blockchain add no gold you can see. The Research panel says so beside each one (`capped: no effect now`).
+
+Worker output bonuses have no such ceiling. They raise what your workers add to the buildings they staff, which is 80% of a fully staffed building's listed rate, and they are added on top of the other production bonuses. With all four techs (+65%) a fully staffed building makes 52% of its listed rate more. See [Worker output bonuses](workers-and-domains.md#worker-output-bonuses).
 
 ---
 

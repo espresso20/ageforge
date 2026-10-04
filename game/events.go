@@ -392,11 +392,16 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef) {
 		guard = ge.raidMitigation()
 	}
 	var lostRes, keptRes map[string]float64
+	var granted, fit map[string]float64 // what the event's text promised, and what storage took
 	lostWorkers, keptWorkers := 0, 0
 	for _, eff := range def.Effects {
 		switch eff.Type {
 		case "instant_resource":
-			ge.Resources.Add(eff.Target, eff.Value)
+			if granted == nil {
+				granted, fit = make(map[string]float64), make(map[string]float64)
+			}
+			granted[eff.Target] += eff.Value
+			fit[eff.Target] += ge.grantLocked(eff.Target, eff.Value)
 			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s %+.1f", eff.Type, eff.Target, eff.Value))
 		case "steal_resource":
 			current := ge.Resources.Get(eff.Target)
@@ -434,6 +439,11 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef) {
 			lostWorkers += before - ge.Workers.TotalPop()
 			ge.addLog("debug", fmt.Sprintf("Event effect: worker_loss %.0f%%", pct*100))
 		}
+	}
+	// The event's text states the full grant: say so when a full store
+	// took less.
+	if line := clippedLine(granted, fit); line != "" {
+		ge.addLog("info", line)
 	}
 	if parts := lossParts(lostRes, lostWorkers); len(parts) > 0 {
 		ge.addLog("warning", "  You lost "+joinAnd(parts)+".")

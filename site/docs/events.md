@@ -51,7 +51,9 @@ Every duration and cooldown is set as a base length, which is exact in the Primi
 
 The main log reports each event as it fires, with its effect. When an event takes resources or workers, the next line says exactly what you lost (`You lost 10 food and 5 gold.` or `You lost 8 food and 3 workers.`), counting only what actually left your stores. The **Logs** panel (`logs`) keeps the history with tick numbers, so check it after time away.
 
-Most random event log lines quote the base duration, even from the Bronze Age on (Gold Rush says `~30s` but runs about 78 seconds). That is a known game bug; the Stats panel's countdown is the one to trust.
+A timed event's log line says how long it lasts in the age it fired in (Gold Rush reads `for ~30s` in the Stone Age and `for ~1m 18s` from the Bronze Age on), and the Stats panel counts it down.
+
+An instant grant goes into your storage, and storage only takes what it has room for. When a full store cuts a grant short, the next line says what fit (`Storage was nearly full: only 25 food (of 250) fit.`). Milestone rewards and boon lumps do the same.
 
 The **Stats panel** (`stats`) lists every active timed event under "Active Events" with the time left on it (e.g. `~2m 30s`) and its ongoing effect, color-coded: **green** for a bonus, **red** for a penalty. A production-boost event shows `all production +10%` in green. (On the colorblind-safe and high-contrast [themes](themes.md), bonuses show **blue** and penalties **orange**, with `▲`/`▼` marking the sign.) Instant effects (resource grants, thefts, worker loss) are not listed there, since they already happened.
 
@@ -89,7 +91,7 @@ These 26 events belong to no epoch. They can fire in any epoch, throughout the w
 | Drought | `drought` | Primitive | 12 | Food -0.5/tick | 10 ticks (~20s); 26 (~52s) from Bronze | |
 | Bandit Raid | `bandit_raid` | Bronze | 10 | -10 food, -5 gold stolen | Instant | **Raid** (garrison blunts) |
 | Plague | `plague` | Stone | 6 | Food -1.0/tick, -15% workers | 8 ticks (~16s); 21 (~42s) from Bronze | **Workers permanently lost** |
-| Mine Collapse | `mine_collapse` | Iron | 7 | Iron -0.5/tick, coal -0.3/tick, -5% workers | 21 ticks (~42s) | **Workers permanently lost** |
+| Mine Collapse | `mine_collapse` | Iron | 7 | Iron -0.5/tick, -5% workers | 21 ticks (~42s) | **Workers permanently lost** |
 | Heresy | `heresy` | Medieval | 5 | Faith -0.5/tick | 31 ticks (~1m 2s) | |
 | Pirate Attack | `pirate_attack` | Colonial | 7 | -50 gold, -30 food stolen | Instant | **Raid** (garrison blunts) |
 | Nuclear Scare | `nuclear_scare` | Atomic | 4 | Electricity -2.0/tick, knowledge -1.0/tick | 31 ticks (~1m 2s) | |

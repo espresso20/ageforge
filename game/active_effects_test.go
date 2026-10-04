@@ -58,32 +58,40 @@ func TestRecalculateRates_NegativeResRateReducesRate(t *testing.T) {
 }
 
 // TestRecalculateRates_NegativeGatherRateReducesRate is the Part D apply-side
-// guard for the gather pool. gather_rate is applied as an additive delta on the
-// worker-generated portion of a rate; a negative pool must now pull it down. We
-// seed worker production by stubbing GetProductionRates via a real worker setup
-// would be heavy, so we drive the same code path through the engine's gather
-// application using a production building plus a gather debuff and assert the
-// floored delta reduces output. Morale pinned neutral.
+// guard for the worker output pool (gather_rate). The pool is applied as a
+// share of what workers add to the buildings they staff (80% of a building's
+// listed rate at a full crew), added on top of the other bonuses, so a
+// negative pool pulls a staffed building's output down by that share.
 //
-// Note: gather_rate scales ge.Workers.GetProductionRates(), which is empty on a
-// fresh engine (worker output is folded into BuildingRate). So we assert the
-// resolver-side invariant the engine consumes — AddTotal(gather_rate) — is
-// negative and that the floored factor the engine computes is < 1.0, which is the
-// exact term recalculateRates multiplies the worker delta by.
-func TestRecalculateRates_NegativeGatherRateFlooredFactor(t *testing.T) {
+// This test used to assert only that the resolver summed the pool and that
+// the floored factor came out under 1: the engine applied it to
+// WorkerManager.GetProductionRates, which returned nothing, so no rate ever
+// moved and the test could not tell. It measures the rate now.
+func TestRecalculateRates_NegativeGatherRateReducesRate(t *testing.T) {
 	ge := NewGameEngine()
 	ge.morale = moraleNeutral
-	ge.permanentBonuses["gather_rate"] = -0.30
+	const key = "gathering_camp"
+	def := ge.Buildings.defs[key]
+	ge.Buildings.counts[key] = 1
+	pool := ge.Workers.domains["worker"]
+	pool.count, pool.assignments[key] = def.WorkerCapacity, def.WorkerCapacity
+	listed := def.Effects[0].Value
 
-	add := ge.buildResolver().AddTotal("gather_rate")
-	if math.Abs(add-(-0.30)) > 1e-9 {
+	ge.recalculateRates()
+	base := ge.Resources.GetRate("food") + ge.Workers.FoodDrain()
+	if math.Abs(base-listed) > 1e-9 {
+		t.Fatalf("a fully staffed %s makes %.6f food/tick, want its listed %.6f", key, base, listed)
+	}
+
+	ge.permanentBonuses["gather_rate"] = -0.30
+	if add := ge.buildResolver().AddTotal("gather_rate"); math.Abs(add-(-0.30)) > 1e-9 {
 		t.Fatalf("gather_rate AddTotal = %.6f, want -0.30", add)
 	}
-	// Engine computes gatherDelta = max(productionFloor, 1+add) - 1.0; for -0.30
-	// that is 0.70 - 1.0 = -0.30 (floor not binding), i.e. a real reduction.
-	factor := math.Max(productionFloor, 1.0+add)
-	if factor >= 1.0 {
-		t.Fatalf("negative gather_rate floored factor = %.6f, want < 1.0 (debuff must apply)", factor)
+	ge.recalculateRates()
+	got := ge.Resources.GetRate("food") + ge.Workers.FoodDrain()
+	want := listed * (1 - 0.30*staffedShare)
+	if math.Abs(got-want) > 1e-9 {
+		t.Fatalf("with -30%% worker output the camp makes %.6f food/tick, want %.6f (its crew's 80%% less 30%%)", got, want)
 	}
 }
 

@@ -15,12 +15,12 @@ The game tracks and graphs seven metrics:
 | **Knowledge rate** | Knowledge production per tick |
 | **Faith** | The faith you have stored |
 | **Morale** | Civilization morale as a percentage (see [Morale](morale.md)) |
-| **All production** | The permanent all-production bonus your milestones and epoch events have added, as a percentage |
+| **All production** | Your all-production bonus as the game applies it, as a percentage: every source added together, held to the cap |
 | **Game speed** | Your game speed bonus from techs and events (0.15 means ticks come 15% faster) |
 
 Each metric gets its own braille line graph covering the whole stored history. Beside each graph is the current value, a trend arrow (↑ growing, ↓ shrinking, → stable), and the recorded min/max.
 
-**All production** shows only one part of your all-production bonus: wonders, techs, monuments and boons add theirs on top, and the total is capped (see [The all-production cap](resources.md#the-all-production-cap)). The Stats panel's Active Multipliers lists every source.
+**All production** is the bonus that counts: techs, wonders, milestones, monuments, events and boons added together and held to the cap, so it never reads above +200% (see [The all-production cap](resources.md#the-all-production-cap)). The Stats panel's Active Multipliers lists every source. Samples a save recorded before this change show only the milestone and epoch event part.
 
 ---
 

@@ -97,15 +97,22 @@ func RateText(res string, v float64) string {
 }
 
 // buildingEffectParts lists the player-visible effects of a building, one
-// phrase each, in Effects order. Effects the engine never reads
-// (capacity:military) and per-tick morale nudges are left out.
+// phrase each, in Effects order. Per-tick morale nudges are left out (the
+// Morale wiki page lists them).
 func buildingEffectParts(d BuildingDef) []string {
 	var parts []string
 	for _, e := range d.Effects {
 		switch e.Type {
 		case "production":
 			if e.Value != 0 {
-				parts = append(parts, signed(e.Value, FormatAmount(e.Value))+" "+ResourceLabel(e.Target)+"/tick")
+				part := signed(e.Value, FormatAmount(e.Value)) + " " + ResourceLabel(e.Target) + "/tick"
+				// A resource that unlocks in a later age than the building
+				// gathers nothing until then (the engine applies no rate to a
+				// locked resource), and the text owes the player that.
+				if MakesBeforeUnlock(d, e.Target) {
+					part += " " + OnceUnlocked
+				}
+				parts = append(parts, part)
 			}
 		case "capacity":
 			if e.Target == "population" {
@@ -123,10 +130,30 @@ func buildingEffectParts(d BuildingDef) []string {
 		case "bonus", "trade_route_income":
 			parts = append(parts, signed(e.Value, FormatPercent(e.Value))+" "+EffectTargetLabel(e.Target))
 		case "opinion":
-			parts = append(parts, "+"+FormatAmount(e.Value)+" opinion/tick per worker with every civilization that is not hostile")
+			// The engine splits an embassy's opinion evenly across the
+			// civilizations that take it (DiplomacyManager.AddPassiveOpinion):
+			// each one gets its share, not the whole amount.
+			parts = append(parts, "+"+FormatAmount(e.Value)+" opinion/tick per worker, split across the civilizations that are not hostile")
 		}
 	}
 	return parts
+}
+
+// OnceUnlocked is what a building's description adds to an output it cannot
+// deliver yet: "+41 uranium/tick once unlocked". It names no age, so it
+// spoils nothing about ages the player has not seen.
+const OnceUnlocked = "once unlocked"
+
+// MakesBeforeUnlock reports whether res unlocks in a later age than building
+// d does: d's output of it is nothing until then.
+func MakesBeforeUnlock(d BuildingDef, res string) bool {
+	r, ok := ResourceByKey()[res]
+	if !ok {
+		return false
+	}
+	built, okB := ageIndex()[d.RequiredAge]
+	unlocks, okR := ageIndex()[r.Age]
+	return okB && okR && unlocks > built
 }
 
 // buildingEffectText is the mechanical sentence appended to a building's

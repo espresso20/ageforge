@@ -124,12 +124,13 @@ func statsProvider(state game.GameState, _ int) string {
 					epochLabel = epochDef.Name
 				}
 
-				fmt.Fprintf(&sb, "  %-16s %s\n", epochLabel+":", legacyBonusLine(bonuses))
+				fmt.Fprintf(&sb, "  %-16s %s\n", epochLabel+":", legacyBonusLine(state, bonuses))
 			}
 		}
 	}
 	if state.LastPassage.CosmicLegacy {
-		fmt.Fprintf(&sb, "  %-16s all production %s (permanent, through every prestige)\n", "Cosmic Legacy:", textfmt.SignedPercent(game.CosmicLegacyProductionBonus))
+		cosmic := config.Effect{Type: "production_all", Value: game.CosmicLegacyProductionBonus}
+		fmt.Fprintf(&sb, "  %-16s all production %s (permanent, through every prestige)%s\n", "Cosmic Legacy:", textfmt.SignedPercent(game.CosmicLegacyProductionBonus), capTag(state, cosmic, true, "-"))
 	}
 
 	// Milestone summary hint
@@ -153,7 +154,8 @@ func statsProvider(state game.GameState, _ int) string {
 				// setback arrives as, and it is the common case: without it a
 				// boon renders as a name with no magnitude at all.
 				if plain, _ := effectMagnitude(eff); plain != "" {
-					fmt.Fprintf(&sb, " [%s]    %s[-]\n", color, plain)
+					held := config.Effect{Type: eff.Type, Target: eff.Target, Value: eff.Value}
+					fmt.Fprintf(&sb, " [%s]    %s[-]%s\n", color, plain, capTag(state, held, true, "-"))
 				}
 			}
 		}
@@ -241,7 +243,18 @@ func renderActiveMultipliers(state game.GameState) string {
 		if breakdown == "" {
 			continue // genuinely empty — every contribution was a no-op
 		}
+		// The headline is what the engine applies. A pool a cap holds shows
+		// the capped total, with a note that says how much was earned: the
+		// sources beside it still list everything, so they can add up to more.
 		total := r.Total(target)
+		if pool, ok := state.Pools[target]; ok && pool.Limited {
+			total = 1 + pool.Applied
+			for _, m := range r.Breakdown(target) {
+				if m.Op == game.OpMul {
+					total *= m.Value // morale, an ally: their own multipliers, outside the pool
+				}
+			}
+		}
 		netPct := (total - 1.0) * 100
 		// Headline color by net sign: green bonus, red penalty, white if the row
 		// only renders because opposing sources cancel out.
@@ -252,8 +265,8 @@ func renderActiveMultipliers(state game.GameState) string {
 		case netPct < -0.5:
 			headColor = "red"
 		}
-		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [%s]%+.0f%%[-]   %s\n",
-			multiplierTargetLabel(target), headColor, netPct, breakdown)
+		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [%s]%+.0f%%[-]%s   %s\n",
+			multiplierTargetLabel(target), headColor, netPct, poolTag(state, target), breakdown)
 		wrote = true
 	}
 
@@ -405,10 +418,11 @@ func rateEffectLabel(eff game.EventEffectInfo) string {
 // legacyBonusLine renders an epoch's legacy bonus map as
 // "Stone production +20%, wood production +20%", sorted by the display
 // text so the line never reorders between refreshes.
-func legacyBonusLine(bonuses map[string]float64) string {
+func legacyBonusLine(state game.GameState, bonuses map[string]float64) string {
 	parts := make([]string, 0, len(bonuses))
 	for k, v := range bonuses {
-		parts = append(parts, game.EffectTargetName(k)+" "+textfmt.SignedPercent(v))
+		held := config.Effect{Type: "permanent_bonus", Target: k + "_rate", Value: v}
+		parts = append(parts, game.EffectTargetName(k)+" "+textfmt.SignedPercent(v)+capTag(state, held, true, "-"))
 	}
 	sort.Strings(parts)
 	return textfmt.Capitalize(strings.Join(parts, ", "))

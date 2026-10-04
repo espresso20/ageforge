@@ -119,7 +119,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 | Population Surge | +15% workers added | Instant |
 | Ancient Cache | Adds 40% of each resource's storage to that resource | Instant |
 | Trade Winds | +5 gold/tick | 374 ticks (~12m 28s) |
-| Cultural Festival | +30% of your culture and +20% of your faith at once, then culture +1/tick and faith +1/tick | 374 ticks |
+| Cultural Festival | +30% of your culture and +20% of your faith at once, then culture +1/tick and faith +1/tick. Never rolled on entering the Iron Era: culture unlocks in the Classical Age | 374 ticks |
 
 ### Major events (culture over 40% of storage)
 
@@ -220,7 +220,7 @@ Durations are what each event runs in its own epoch. The Stone Era's events run 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
 | Plasma Windfall | Good | Plasma +0.5/tick, electricity +0.3/tick for 468 ticks |
-| Void Rift | Good | +5K dark matter (instant) |
+| Void Rift | Good | +5K dark matter crystals (instant) |
 | Neural Uprising | Bad | 500 food stolen, food -0.1/tick for 312 ticks, -20% workers |
 | Corporate Espionage | Bad | -10K gold, -8K data (instant) |
 | Stellar Migration | Mixed | +1K food (instant), then food -0.15/tick for 374 ticks |

@@ -294,7 +294,7 @@ func epochProviderLegacyBonuses(sb *strings.Builder, state game.GameState) {
 		anyShown = true
 
 		fmt.Fprintf(sb, "   %s%s %s:[-]  %s\n",
-			theme.NameTag(ep.Color), ep.Icon, ep.Name, legacyBonusLine(bonuses))
+			theme.NameTag(ep.Color), ep.Icon, ep.Name, legacyBonusLine(state, bonuses))
 	}
 
 	if !anyShown {

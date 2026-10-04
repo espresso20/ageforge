@@ -346,7 +346,28 @@ func (ge *GameEngine) applyRolledFactionBoon(def config.FactionDef, b boon.Boon)
 	if b == (boon.Boon{}) {
 		return "" // no kind rolled (e.g. at-war): nothing to apply
 	}
+	// A timed buff joins a bonus pool: say so when a cap keeps it from
+	// counting, before it is applied.
+	note := ""
+	switch b.Kind {
+	case boon.RateBuff:
+		note = ge.capNoteLocked(config.Effect{Type: b.Resource + "_rate", Target: b.Resource, Value: b.Magnitude}, false)
+	case boon.AllProduction:
+		note = ge.capNoteLocked(config.Effect{Type: "production_all", Value: b.Magnitude}, false)
+	case boon.TickSpeed:
+		note = ge.capNoteLocked(config.Effect{Type: "tick_speed", Value: b.Magnitude}, false)
+	}
+	stock := ge.Resources.Get(b.Resource)
 	line := boon.Apply(b, boonApplier{ge: ge, name: def.Name, key: def.Key})
+	if b.Kind == boon.InstantResource {
+		// A lump a full store cut short says what fit.
+		if took := ge.Resources.Get(b.Resource) - stock; took < b.InstantAmount-float64(1e-9*b.InstantAmount) {
+			note = "storage was nearly full: only " + Amount(math.Max(took, 0), b.Resource) + " fit"
+		}
+	}
+	if note != "" {
+		line += " [yellow](" + note + ")[-]"
+	}
 	return fmt.Sprintf("[gold]✦ %s:[-] %s", def.Name, line)
 }
 

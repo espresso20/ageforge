@@ -288,6 +288,22 @@ Times are at the base tick of 2 seconds; game speed bonuses shorten them in real
 
 Several lineages change which resource they produce as you move through the ages. Each new tier simply produces the new resource, so you don't need to rebuild or reconfigure anything.
 
+**Some tiers arrive before their resource does.** A resource gathers nothing until the age that unlocks it, whatever makes it. These buildings say `once unlocked` beside that output in their description:
+
+| Building (age) | Output | Unlocks in |
+|---|---|---|
+| War Camp (Stone), Barracks (Bronze) | soldiers | Iron Age |
+| Colosseum (Iron) | culture | Classical Age |
+| Uranium Mine (Victorian), Nuclear Extraction Plant (Electric) | uranium | Atomic Age |
+| Titanium Mine (Modern), Precision Mine (Information), Nano Drill Complex (Digital) | titanium ore | Space Age |
+| Titanium Smelter (Modern), Aerospace Foundry (Information), Nano Alloy Plant (Digital) | titanium | Space Age |
+| Augmentation Foundry (Cyberpunk) | plasma (its electricity counts at once) | Fusion Age |
+| Dark Matter Refinery (Cyberpunk), Exotic Matter Forge (Fusion) | dark matter | Interstellar Age |
+| Quantum Organic Extractor (Space), Reality Matter Weaver (Interstellar), Cosmic Organic Works (Galactic) | quantum flux | Quantum Age |
+| Stellar Core Drill, Antimatter Forge (Interstellar) | antimatter | Galactic Age |
+
+Until then they count toward age requirements and milestones and make nothing.
+
 ### Organic Extraction (Lineage 3)
 
 | Ages | Output Resource |
