@@ -1382,7 +1382,7 @@ func (ge *GameEngine) doTick() {
 			FoodRate:   foodRate,
 			KnowRate:   knowRate,
 			Faith:      faith,
-			ProdAll:    ge.permanentBonuses["production_all"],
+			ProdAll:    ge.bonusPoolLocked(ge.buildResolver(), "production_all").Applied,
 			TickSpeed:  ge.tickSpeedBonus,
 			Morale:     ge.morale,
 			AgeOrder:   ageOrder,

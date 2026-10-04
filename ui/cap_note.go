@@ -11,10 +11,15 @@ import (
 // short "capped" note beside one a limit is holding back, read off the same
 // numbers the engine applies (GameState.Pools).
 
-// capNote is the note for one bonus: "" when all of it counts, "capped: no
-// effect now" or "capped: +5% of it counts now" otherwise. held says
-// the player already has the bonus (a researched tech, a built wonder, a
-// completed milestone, an active event).
+// capNote is the note for one bonus, "" when a limit is not in its way.
+//
+// A bonus the player does not hold yet (a tech to research, a wonder to
+// build, a milestone to finish, a festival to pay for) says what it would
+// add: "capped: no effect now", or "capped: +5% of it counts now".
+//
+// A bonus the player holds (held) says where its pool stands, since no one
+// bonus of a pool is the one that goes uncounted: "capped at +200%: +405%
+// earned".
 func capNote(state game.GameState, eff config.Effect, held bool) string {
 	target, ok := game.EffectPool(eff)
 	if !ok {
@@ -24,7 +29,10 @@ func capNote(state game.GameState, eff config.Effect, held bool) string {
 	if !ok {
 		pool = game.BonusPool{Target: target}
 	}
-	return game.CapNote(pool, eff.Value, held)
+	if held {
+		return game.PoolNote(pool)
+	}
+	return game.CapNote(pool, eff.Value, false)
 }
 
 // capTag is capNote as a tag to append to a line: " [yellow](capped: no

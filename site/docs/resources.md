@@ -176,7 +176,17 @@ Every "+X% all production" bonus in the game adds into one pool: wonders, techno
 
 Techs and wonders alone reach the x3.0 cap from about the Electric Age. After that, a late "+X% all production" bonus adds nothing you can see while you are over the cap. It isn't wasted: a penalty comes out of the raw pool first, so the surplus absorbs it, and the bonus matters again whenever a setback pulls the pool back under the cap.
 
-Bonuses to one resource ("+30% gold") have their own pool for that resource, with the same x0.1 to x3.0 clamp. The Stats panel's Active Multipliers shows the raw sums, so it can read above +200%.
+Bonuses to one resource ("+30% gold") have their own pool for that resource, with the same x0.1 to x3.0 clamp. Gold's pool fills in the Colonial Age and knowledge's in the Electric Age, from techs alone.
+
+**The game tells you when a cap is holding a bonus back.** Nothing is hidden above the cap:
+
+- The Stats panel's Active Multipliers shows what counts, with a note when a pool is past its cap: `All production +200% capped at +200%: +405% earned`. The sources beside it still list everything you earned.
+- The Research panel's **Research bonuses** list carries the same note, and so does every researched tech in a capped pool. A tech you can still research says what the cap would leave of it, before you spend the knowledge: `(capped: no effect now)` or `(capped: +5% of it counts now)`.
+- The Milestones and Wonders panels put the same notes beside rewards and wonder effects.
+- The `festival` command warns you before you pay when the cap would swallow the festival.
+- The log adds a line when a bonus you just earned is capped: a tech, a milestone, a wonder, an awakening, an epoch event, a festival or a boon.
+
+[Worker output](workers-and-domains.md#worker-output-bonuses) bonuses are not in either pool and have no cap.
 
 [Era Mastery](prestige.md#era-mastery) is not part of either pool. On known ground it multiplies every resource's net rate by the age's speed after the cap and after food drain, so a mastered age is not held to x3.
 

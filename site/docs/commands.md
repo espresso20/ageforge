@@ -336,7 +336,7 @@ A prestige pays for every age the run completed, and each era's ages pay three t
 | `festival` | Show festival status: culture cost, current culture, and the boost it grants |
 | `festival confirm yes` | Hold a cultural festival now: spend culture for a temporary production boost |
 
-A festival costs the larger of 2K culture or 5% of your culture storage, and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes). The boost adds to the same pool as every other all-production bonus, so it adds little or nothing once that pool is at its cap (see [The all-production cap](resources.md#the-all-production-cap)).
+A festival costs the larger of 2K culture or 5% of your culture storage, and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes). The boost adds to the same pool as every other all-production bonus, so it adds little or nothing once that pool is at its cap (see [The all-production cap](resources.md#the-all-production-cap)). When that is the case `festival` says so before you pay (`Right now it is capped: no effect now.`).
 
 ---
 
@@ -408,7 +408,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | Command | Description |
 |---|---|
 | `status` (or `s`) | Print a status summary: age and game time, every unlocked resource with amount, storage and rate, and your population by class with idle counts, food drain and assignments |
-| `rates` | Print where each resource's rate comes from: buildings, workers, research, events, trade, bonuses, [Era Mastery](prestige.md#era-mastery) and food drain |
+| `rates` | Print where each resource's rate comes from: buildings, the [worker output bonus](workers-and-domains.md#worker-output-bonuses), research, events, trade, bonuses, [Era Mastery](prestige.md#era-mastery) and food drain |
 | `logs` | Open the **Logs** panel: recent game log entries with their tick numbers (see [The log](#the-log)) |
 | `dump` | Export logs to a file for debugging, in the `logs/` folder of your active account (`data/accounts/<id>/logs/`). The export prints raw tick counts alongside the wall-clock readings |
 | `help` | Open the Help panel: full command reference and list of available panels |

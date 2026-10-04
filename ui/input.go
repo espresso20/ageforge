@@ -1421,7 +1421,8 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 			parts = append(parts, fmt.Sprintf("Buildings: %s", textfmt.RateValue(b.BuildingRate)))
 		}
 		if b.WorkerRate != 0 {
-			parts = append(parts, fmt.Sprintf("Workers: %s", textfmt.RateValue(b.WorkerRate)))
+			// What worker output bonuses add (game/engine.go, gather_rate).
+			parts = append(parts, fmt.Sprintf("Worker bonus: %s", textfmt.RateValue(b.WorkerRate)))
 		}
 		if b.ResearchRate != 0 {
 			parts = append(parts, fmt.Sprintf("Research: %s", textfmt.RateValue(b.ResearchRate)))

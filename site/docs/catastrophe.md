@@ -177,7 +177,7 @@ Then the civilization resets to the Primitive Age: buildings, resources, workers
 
 ### Ancient Knowledge
 
-The research bonus comes straight from your legacy flags: +25% per epoch flagged. It is recomputed whenever it's needed, so save/load, Succumb and prestige can't drop or double it. It shows as **Legacy** under Research Speed in the Active Multipliers panel.
+The research bonus comes straight from your legacy flags: +25% per epoch flagged. It is recomputed whenever it's needed, so save/load, Succumb and prestige can't drop or double it. It shows as **Legacy** under Research Speed in the Active Multipliers panel. Research speed counts up to +100% (a tech takes one tick at least), so the fifth and sixth epochs add nothing on their own; the panel marks the line as capped once you are past it.
 
 From Iron to Cosmic there are 6 eras you can succumb in, so the most you can earn is **+150%**. The Stone Era legacy can't be earned, since no catastrophe strikes there, but a save that already holds it keeps it (+175% total). Succumbing to the Last Passage grants the Cosmic Legacy instead, not an era legacy.
 
