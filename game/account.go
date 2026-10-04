@@ -19,11 +19,11 @@ import (
 )
 
 // accountSchemaVersion is the on-disk schema version of account.json. Bumped only
-// for migrations; readers default unknown/older fields to zero (accounts.md §3.3).
+// for migrations; readers default unknown/older fields to zero (the accounts design §3.3).
 const accountSchemaVersion = 1
 
 // accountFileName is the fixed base name of the account file under the data dir.
-// v1 resolves a single account.json — no multi-profile layout yet (accounts.md §3.1).
+// v1 resolves a single account.json — no multi-profile layout yet (the accounts design §3.1).
 const accountFileName = "account.json"
 
 // accountsDirName is the subdirectory under the data ROOT that holds the per-account
@@ -131,7 +131,7 @@ func writeActivePointer(id string) error {
 
 // migrateLegacyAccountIfNeeded moves a pre-Phase-A FLAT layout (account.json + saves/
 // directly under the data ROOT) into the new account-scoped slot, non-destructively
-// (accounts.md Phase A). It is called at the top of LoadOrCreate/LoadAccount, BEFORE the
+// (the accounts design, Phase A). It is called at the top of LoadOrCreate/LoadAccount, BEFORE the
 // active account is resolved, so the pointer it writes is in place for that resolution.
 //
 // TRIGGER (idempotent): it runs ONLY when <root>/account.json exists AND <root>/accounts
@@ -211,13 +211,13 @@ func migrateLegacyAccountIfNeeded() error {
 	return nil
 }
 
-// AccountUnlocks holds account-wide cosmetic unlocks (DATA, accounts.md §3.3).
+// AccountUnlocks holds account-wide cosmetic unlocks (DATA, the accounts design §3.3).
 // Phase 1 only round-trips these; the unlock API lands in Phase 3.
 type AccountUnlocks struct {
 	Themes []string `json:"themes,omitempty"`
 }
 
-// AccountStats holds lifetime, cross-save aggregates (DATA, accounts.md §3.3).
+// AccountStats holds lifetime, cross-save aggregates (DATA, the accounts design §3.3).
 // Phase 1 only round-trips these; the engine hooks land in Phase 6.
 type AccountStats struct {
 	TotalPrestiges       int    `json:"total_prestiges,omitempty"`
@@ -231,7 +231,7 @@ type AccountStats struct {
 	PrestigesByAge map[string]int `json:"prestiges_by_age,omitempty"`
 }
 
-// AccountPrefs holds preferences that travel with the account (accounts.md §3.3).
+// AccountPrefs holds preferences that travel with the account (the accounts design §3.3).
 // Phase 1 only round-trips these; SetActiveTheme et al. land in Phase 3.
 type AccountPrefs struct {
 	ActiveTheme string `json:"active_theme,omitempty"`
@@ -254,8 +254,8 @@ type AccountPrefs struct {
 //
 // Integrity mirrors saves: Signature is the HMAC-SHA256 of the payload (with
 // Signature zeroed) under saveHMACKey. A tampered file still loads — Tampered is
-// set instead, the cosmetic analogue of the save CheaterBadge (accounts.md §3.4).
-// The schema follows accounts.md §3.3; all DATA fields are present so the file
+// set instead, the cosmetic analogue of the save CheaterBadge (the accounts design §3.4).
+// The schema follows the accounts design §3.3; all DATA fields are present so the file
 // round-trips, but the unlock/stats/prefs APIs that mutate them arrive in later
 // phases.
 type Account struct {
@@ -277,7 +277,7 @@ type Account struct {
 	Signature string `json:"_sig,omitempty"`
 
 	// Tampered is the cosmetic flag set when a loaded file's signature does not match
-	// (accounts.md §3.4). It mirrors the save CheaterBadge: signalling, not a lockout.
+	// (the accounts design §3.4). It mirrors the save CheaterBadge: signalling, not a lockout.
 	// It is persisted (omitempty, so clean files keep their bytes and signatures) and
 	// covered by the signature, so it sticks: the next Save re-signs the file with the
 	// flag in it instead of laundering the edit, and deleting the key by hand breaks the
@@ -286,13 +286,13 @@ type Account struct {
 
 	// FreshlyCreated is the in-memory, non-persisted signal that LoadOrCreate just
 	// minted this account on its fresh-create path (no file existed). Boot code reads
-	// it to surface a one-time, non-blocking first-run notice (accounts.md §6) without
+	// it to surface a one-time, non-blocking first-run notice (the accounts design §6) without
 	// changing LoadOrCreate's signature. json:"-" keeps it off disk; it is false for
 	// any account loaded from an existing file.
 	FreshlyCreated bool `json:"-"`
 
 	// dirty is the in-memory, non-persisted write-debounce flag for the lifetime-stats
-	// hooks (accounts.md §8 "debounce writes"). RecordPrestige/RecordAgeReached mutate
+	// hooks (the accounts design §8 "debounce writes"). RecordPrestige/RecordAgeReached mutate
 	// the in-memory stats and set dirty=true WITHOUT touching the disk — they run under
 	// the engine write lock (advanceAge/DoPrestige) where file I/O is forbidden. The
 	// engine's periodic autosave block (outside ge.mu) calls FlushIfDirty, which Saves
@@ -310,7 +310,7 @@ type Account struct {
 }
 
 // newAccountID returns a fresh, stable account ID: 16 random bytes from crypto/rand,
-// hex-encoded (accounts.md §3.3 — 128 random bits, not a v4 UUID specifically).
+// hex-encoded (the accounts design §3.3 — 128 random bits, not a v4 UUID specifically).
 func newAccountID() (string, error) {
 	var b [16]byte
 	if _, err := rand.Read(b[:]); err != nil {
@@ -411,7 +411,7 @@ func LoadAccount() (*Account, bool, error) {
 	var acct Account
 	if err := json.Unmarshal(data, &acct); err != nil {
 		// Corrupt / unparseable → back it up and report "not found" so the caller
-		// prompts for a fresh name (accounts.md §7).
+		// prompts for a fresh name (the accounts design §7).
 		backup := path + ".corrupt"
 		if renameErr := os.Rename(path, backup); renameErr != nil {
 			return nil, false, fmt.Errorf("account file is corrupt and could not be backed up: %w", renameErr)
@@ -431,7 +431,7 @@ func LoadAccount() (*Account, bool, error) {
 // CreateNamedAccount mints a signed account whose identity is derived from name:
 // AccountID = accountIDFromName(name), DisplayName = the trimmed ORIGINAL name (display
 // keeps casing/whitespace; the ID does not). Re-entering the same name reproduces the
-// same ID — that IS the cross-machine recovery story (accounts.md §3.5).
+// same ID — that IS the cross-machine recovery story (the accounts design §3.5).
 //
 // MIGRATION: if an account file already exists (e.g. a legacy random-id dev account from
 // the old LoadOrCreate auto-create), its DATA — unlocks, lifetime stats, achievements,
@@ -841,7 +841,7 @@ func shortID(id string) string {
 
 // signAccount returns the HMAC-SHA256 hex of the account payload with Signature
 // zeroed, so the signature covers the data only — identical construction to
-// signSave, sharing the hmacSign helper (accounts.md §3.4).
+// signSave, sharing the hmacSign helper (the accounts design §3.4).
 //
 // It takes a pointer (not a value) so the sync.Mutex field is never copied — a
 // value copy would trip go vet's copylocks. The signed bytes are unchanged from a
@@ -871,7 +871,7 @@ func signAccount(a *Account) string {
 
 // verifyAccount reports whether a's stored Signature matches a freshly computed
 // one. An unsigned file (empty Signature) is treated as legacy/benign-valid, the
-// same benefit-of-the-doubt verifySave grants unsigned saves (accounts.md §3.4).
+// same benefit-of-the-doubt verifySave grants unsigned saves (the accounts design §3.4).
 func verifyAccount(a *Account) bool {
 	if a.Signature == "" {
 		return true
@@ -899,7 +899,7 @@ func validAccountID(id string) bool {
 
 // Save signs the account with the shared HMAC helper and writes it atomically
 // (temp file + os.Rename) into the account's OWN slot, <root>/accounts/<AccountID>/,
-// creating it if missing. Mirrors SaveGame's write discipline (accounts.md §3.4).
+// creating it if missing. Mirrors SaveGame's write discipline (the accounts design §3.4).
 //
 // It deliberately does not resolve through the active account: whichever account is
 // active, an account's data only ever lands in its own file. So an old account object
@@ -933,7 +933,7 @@ func (a *Account) Save() error {
 
 // LoadOrCreate resolves the active account (migrating a legacy flat layout, then reading
 // the active-account pointer) and returns the live Account, creating one transparently when
-// the active slot has none (accounts.md §6/§7). Behavior by file state:
+// the active slot has none (the accounts design §6/§7). Behavior by file state:
 //
 //   - Absent: generate a fresh account (new ID, Created=now), Save it, return it.
 //   - Present + parses + signature valid (or unsigned/legacy): return it.
@@ -967,7 +967,7 @@ func LoadOrCreate() (*Account, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			// No account in the active slot → mint, sign, and persist a fresh one
-			// (accounts.md §6/§7). It becomes the active account: set the in-memory id,
+			// (the accounts design §6/§7). It becomes the active account: set the in-memory id,
 			// Save into its now-resolved slot, then persist the pointer so the next boot
 			// finds it. First genuine run → FreshlyCreated=true.
 			return createFreshActive(true)
@@ -978,7 +978,7 @@ func LoadOrCreate() (*Account, error) {
 	var acct Account
 	if err := json.Unmarshal(data, &acct); err != nil {
 		// Corrupt / unparseable → back it up to <slot>/account.json.corrupt, then mint a
-		// fresh account (accounts.md §7). The fresh account has a new ID, so it gets its
+		// fresh account (the accounts design §7). The fresh account has a new ID, so it gets its
 		// own slot and becomes the active account (pointer included), the same as the
 		// absent-file path; the .corrupt backup stays in the old slot. (It used to be saved
 		// into the old slot under its new ID, leaving a slot whose folder named a different
@@ -1021,7 +1021,7 @@ func createFreshActive(freshlyCreated bool) (*Account, error) {
 	return acct, nil
 }
 
-// --- Unlock API (accounts.md §8; theming.md §5 is the first caller) ---
+// --- Unlock API (the accounts design §8; the theming design §5 is the first caller) ---
 //
 // The account is key-agnostic: it stores and reports unlocked-theme keys and the
 // active-theme key without judging which are valid or always-unlocked. Theming
@@ -1049,7 +1049,7 @@ func (a *Account) hasThemeLocked(key string) bool {
 // theme was already unlocked it is a no-op: (false, nil) with no write. Otherwise
 // it appends the key (deduped via the membership check), persists via Save, and
 // returns (true, <Save error>) — newly is true even if the subsequent Save fails,
-// since the in-memory set did change. theming.md fires the unlock toast only on
+// since the in-memory set did change. The theming UI fires the unlock toast only on
 // newly==true, so replayed milestone checks never re-toast an owned theme.
 func (a *Account) UnlockTheme(key string) (newly bool, err error) {
 	a.mu.Lock()
@@ -1143,14 +1143,14 @@ func (a *Account) SetMapIconsHintShown() error {
 	return a.Save()
 }
 
-// --- Recovery code (identity backup, accounts.md §3.5 / §8 / §9 Phase 4) ---
+// --- Recovery code (identity backup, the accounts design §3.5 / §8 / §9 Phase 4) ---
 //
 // The recovery code encodes IDENTITY ONLY — the 16-byte account_id plus a 2-byte
 // checksum — into a short, dash-grouped, uppercase, Crockford-base32 string with an
 // `AGEF-` prefix (e.g. AGEF-7Q2K-9X4M-ZJ31-...). It restores who you are across
 // machines/reinstalls; it does NOT restore earned progress (unlocks/stats) — that is
 // DATA, backed up separately via export/import (Phase 5). The code is a convenience
-// identifier, not a credential (accounts.md §3.5): the checksum guards against TYPOS,
+// identifier, not a credential (the accounts design §3.5): the checksum guards against TYPOS,
 // not forgery, and account state is cosmetic, not security-critical.
 
 // recoveryCodePrefix is the human-readable namespace stamped on every recovery code.
@@ -1162,7 +1162,7 @@ const crockfordAlphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 // crc16CCITT computes the CRC-16/CCITT-FALSE checksum of data: 16-bit, polynomial
 // 0x1021, init 0xFFFF, no reflection, no final XOR. It is a small, standard,
-// dependency-free typo guard for the recovery code (accounts.md §3.5).
+// dependency-free typo guard for the recovery code (the accounts design §3.5).
 func crc16CCITT(data []byte) uint16 {
 	crc := uint16(0xFFFF)
 	for _, b := range data {
@@ -1265,7 +1265,7 @@ func groupBy4(s string) string {
 	return b.String()
 }
 
-// RecoveryCode returns this account's identity-recovery code (accounts.md §3.5/§8):
+// RecoveryCode returns this account's identity-recovery code (the accounts design §3.5/§8):
 // the 16 raw account-id bytes plus a 2-byte CRC-16 checksum, Crockford-base32 encoded,
 // uppercased, dash-grouped in 4s, with the AGEF- prefix. Identity only — never progress.
 func (a *Account) RecoveryCode() string {
@@ -1318,7 +1318,7 @@ func RecoveryCodeID(code string) (string, error) {
 }
 
 // ImportRecoveryCode restores the identity in a recovery code into THAT account's own
-// slot, <root>/accounts/<id>/ (accounts.md §3.5/§8), and returns the account there:
+// slot, <root>/accounts/<id>/ (the accounts design §3.5/§8), and returns the account there:
 //
 //   - The slot already holds an account (the code of an account on this machine, the
 //     player's own included): it is returned untouched. Recovering never overwrites an
@@ -1366,12 +1366,12 @@ func ImportRecoveryCode(code string) (*Account, error) {
 	return acct, nil
 }
 
-// --- Progress export / import (single-account backup, accounts.md §3.6 / §8 / §9 Phase 5/C) ---
+// --- Progress export / import (single-account backup, the accounts design §3.6 / §8 / §9 Phase 5/C) ---
 //
 // Distinct from the recovery code: the recovery code carries IDENTITY only (account id),
 // while an export is a full single-account BACKUP — identity (AccountID + DisplayName) AND
 // progress (unlocks, lifetime stats, achievements, prefs). With no server, DATA cannot be
-// reconstituted from nothing, so export is the explicit one-action backup (accounts.md §3.6).
+// reconstituted from nothing, so export is the explicit one-action backup (the accounts design §3.6).
 //
 // Phase C re-homes import: the old `(a *Account) ImportProgress` folded a blob into whatever
 // account was live, which silently cross-contaminated accounts (importing B's backup while A
@@ -1427,7 +1427,7 @@ func signProgressExport(p *progressExport) string {
 
 // ExportProgress builds a signed export blob — a full single-account BACKUP carrying this
 // account's IDENTITY (AccountID + DisplayName) AND its DATA (unlocks, lifetime stats,
-// achievements, prefs) (accounts.md §3.6, Phase C). It signs the blob with the shared HMAC
+// achievements, prefs) (the accounts design §3.6, Phase C). It signs the blob with the shared HMAC
 // helper (same zero-sig-then-marshal pattern as Save) and returns pretty JSON bytes the
 // caller writes to a file/clipboard. Because the blob carries its account id, import can
 // land it back in that account's OWN slot regardless of which account is active.
@@ -1456,7 +1456,7 @@ func (a *Account) ExportProgress() ([]byte, error) {
 
 // ImportAccountExport unmarshals and verifies a single-account export blob, then lands it
 // in the account's OWN slot — the slot named by the blob's AccountID, NOT whatever account
-// is currently active (accounts.md §3.6, Phase C). It returns the imported *Account.
+// is currently active (the accounts design §3.6, Phase C). It returns the imported *Account.
 //
 // INTEGRITY (first, before any disk mutation): the blob is unmarshalled and its signature
 // recomputed over the sig-zeroed payload; a mismatch (or a missing/empty sig — exports are
@@ -1640,19 +1640,19 @@ func maxInt(a, b int) int {
 	return b
 }
 
-// --- Lifetime stats + achievements (accounts.md §3.3 / §8 / §9 Phase 6) ---
+// --- Lifetime stats + achievements (the accounts design §3.3 / §8 / §9 Phase 6) ---
 //
 // Lifetime stats are CROSS-SAVE aggregates living on the ACCOUNT — distinct from the
 // per-save ge.Stats system, which resets on every new game/prestige. Achievements are
 // one-time, account-wide unlock keys appended on first satisfaction and never removed.
 //
-// LOCKING DISCIPLINE (the load-bearing constraint, accounts.md §8 + project rule):
+// LOCKING DISCIPLINE (the load-bearing constraint, the accounts design §8 + project rule):
 // the engine calls RecordPrestige/RecordAgeReached from UNDER the engine write lock
 // (ge.mu — advanceAge and DoPrestige both hold it). Those methods therefore MUST be
 // in-memory only: they take the account's OWN mutex (a.mu, fully independent of ge.mu),
 // do NO file I/O, and NEVER call back into ge.* (AddLog/GetState/…), or the non-reentrant
 // ge.mu would deadlock. The actual Save happens later via FlushIfDirty, called from the
-// engine's periodic-autosave block which runs OUTSIDE ge.mu (accounts.md §8 write cadence).
+// engine's periodic-autosave block which runs OUTSIDE ge.mu (the accounts design §8 write cadence).
 
 // accountAchievement is one entry in the in-file achievement table: a stable unlock key
 // plus a human-readable name and a predicate over the lifetime stats. The predicate is
@@ -1734,7 +1734,7 @@ func (a *Account) hasAchievementLocked(key string) bool {
 }
 
 // RecordPrestige increments the lifetime prestige count, evaluates prestige achievements,
-// and marks the account dirty for the next flush (accounts.md §8). It is IN-MEMORY ONLY:
+// and marks the account dirty for the next flush (the accounts design §8). It is IN-MEMORY ONLY:
 // it takes a.mu, performs no file I/O, and never calls back into the engine — so it is
 // safe to call from DoPrestige while the engine write lock is held. The write is deferred
 // to FlushIfDirty (engine autosave block, outside ge.mu).
@@ -1762,10 +1762,10 @@ func (a *Account) RecordPrestigeFrom(age string) {
 // RecordAgeReached records that the account's player has reached the given age, lifting
 // HighestAge only when ageOrder exceeds the order of the currently-stored highest age (so
 // a lower age never regresses the lifetime best), then evaluates age achievements and marks
-// the account dirty (accounts.md §8). IN-MEMORY ONLY (same discipline as RecordPrestige).
+// the account dirty (the accounts design §8). IN-MEMORY ONLY (same discipline as RecordPrestige).
 //
-// DEVIATION from accounts.md §8: the doc sketches RecordAgeReached(ageKey) with no order.
-// The account stores only the highest age KEY (AccountStats.HighestAge, accounts.md §3.3),
+// DEVIATION from the accounts design §8: the doc sketches RecordAgeReached(ageKey) with no order.
+// The account stores only the highest age KEY (AccountStats.HighestAge, the accounts design §3.3),
 // and a bare key can't be ranked without consulting the age table — which would couple the
 // account to config and re-derive order on every call. We take ageOrder explicitly from the
 // engine (which already knows it) so the comparison is a cheap int compare and the account
@@ -1795,7 +1795,7 @@ func (a *Account) highestOrderLocked() int {
 }
 
 // FlushIfDirty persists the account once if the in-memory stats/achievements have changed
-// since the last write, then clears the dirty flag (accounts.md §8 write cadence). It is the
+// since the last write, then clears the dirty flag (the accounts design §8 write cadence). It is the
 // ONLY place lifetime-stat changes touch the disk, and it MUST be called from OUTSIDE the
 // engine write lock (the autosave block / clean-exit path) — never from a Record* call site.
 //

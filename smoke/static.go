@@ -10,9 +10,9 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// The Gate Covenant (design-and-architecture/economy.md, Law 1 applied to age
-// gates). Every advance must pass these against the most storage buildable in
-// the age the player advances from, with no build_cost discounts assumed:
+// The Gate Covenant (the economy design's Law 1 applied to age gates). Every
+// advance must pass these against the most storage buildable in the age the
+// player advances from, with no build_cost discounts assumed:
 //
 //   - a resource requirement fits with GateResourceMargin to spare;
 //   - each required building can be built in that age (the age lock forbids
@@ -98,7 +98,7 @@ func (g GateSlack) Ratio() float64 { return g.MaxStorage / g.Need }
 // writeGates renders the static gate check.
 func (s *Summary) writeGates(sb *strings.Builder) {
 	sb.WriteString("\n## Static gate check\n\n")
-	fmt.Fprintf(sb, "From config alone, against the most storage buildable in the age you advance from, with no build_cost discounts: every required building must be buildable in that age, its last required copy must cost at most 1/%g of the storage, each part of the age's wonder at most 1/%g of it, every resource requirement must fit with %gx to spare, every resource the gate needs (the wonder's included) must be obtainable in that age from a cold start (by a player who skipped every building no gate required), every flow resource it needs must be made within the age's target at a moderate income or bought for at most %g price units, and the first copy of the new age's storage must fit with %gx to spare in the least storage the gate forces a player to hold, all they can be sure to enter the age with (the Gate Covenant, economy.md). No building may cost a resource with no source in its own age. `go test ./smoke` fails on any row here; the runtime invariants are what fail a run.\n\n", GateBuildingMargin, GateWonderMargin, GateResourceMargin, GateFlowMarketUnits, GateLadderMargin)
+	fmt.Fprintf(sb, "From config alone, against the most storage buildable in the age you advance from, with no build_cost discounts: every required building must be buildable in that age, its last required copy must cost at most 1/%g of the storage, each part of the age's wonder at most 1/%g of it, every resource requirement must fit with %gx to spare, every resource the gate needs (the wonder's included) must be obtainable in that age from a cold start (by a player who skipped every building no gate required), every flow resource it needs must be made within the age's target at a moderate income or bought for at most %g price units, and the first copy of the new age's storage must fit with %gx to spare in the least storage the gate forces a player to hold, all they can be sure to enter the age with (the Gate Covenant). No building may cost a resource with no source in its own age. `go test ./smoke` fails on any row here; the runtime invariants are what fail a run.\n\n", GateBuildingMargin, GateWonderMargin, GateResourceMargin, GateFlowMarketUnits, GateLadderMargin)
 	if len(s.Gates) == 0 {
 		sb.WriteString("No problems.\n")
 	} else {

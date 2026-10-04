@@ -16,7 +16,7 @@ func ageByKeyT(t *testing.T, key string) AgeDef {
 }
 
 // stone_age sits in the 2.0x band. Raw food 500 -> 1000, knowledge 75 -> 150
-// (cut for the 15-minute Primitive Age, economy.md pacing rebalance).
+// (cut for the 15-minute Primitive Age, the economy design's pacing rebalance).
 func TestNormalizeAgeRequirements_StoneAgeResourceScaling(t *testing.T) {
 	stone := ageByKeyT(t, "stone_age")
 

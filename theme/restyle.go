@@ -5,7 +5,7 @@ import "sync"
 // The restylable-widget registry routes Path B (direct widget chrome calls —
 // SetBorderColor, SetBackgroundColor, list selection, …) through a live theme
 // switch. Those setters apply once at construction, so a live switch needs each
-// long-lived chrome widget to re-pull its colors. See theming.md §3.3.
+// long-lived chrome widget to re-pull its colors. See the theming design §3.3.
 //
 // Registration discipline (§3.3): a registry someone must *remember* to populate
 // will rot — some future widget ships unthemed because nobody touched the slice.

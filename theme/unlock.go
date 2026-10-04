@@ -1,6 +1,6 @@
 package theme
 
-// Milestone-gated unlock resolution (theming.md §5).
+// Milestone-gated unlock resolution (the theming design §5).
 //
 // Gated flavor themes declare their unlock condition as a milestone-or-chain key in
 // the registry (Theme.UnlockMilestone / Theme.UnlockChain). The UI's only job is the
@@ -48,7 +48,7 @@ func init() { buildUnlockIndex() }
 // unlocks. ok is false when the key unlocks no theme (the common case — most
 // milestones grant no theme). This is the UI's unlock hook: on a newly-completed
 // milestone/chain it asks UnlockedBy, and on ok it unlocks the mapped theme via the
-// account layer (theming.md §5).
+// account layer (the theming design §5).
 func UnlockedBy(completedKey string) (themeKey string, ok bool) {
 	themeKey, ok = unlockIndex[completedKey]
 	return

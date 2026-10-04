@@ -150,7 +150,7 @@ type GameSave struct {
 	// Legacy saves lack the field → "" → a root. omitempty keeps current saves
 	// byte-identical when empty.
 	ParentName string `json:"parent_name,omitempty"`
-	// AccountID attributes this save to a player account (accounts.md §5/§6). It is
+	// AccountID attributes this save to a player account (the accounts design §5/§6). It is
 	// additive and optional: empty on legacy/no-account saves, where omitempty keeps
 	// the bytes identical. It is lazy-stamped — a save gains it the NEXT time it is
 	// written through SaveGame, which re-signs _sig over the new payload (the §3.5
@@ -190,7 +190,7 @@ type GameSave struct {
 
 // hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
 // shared integrity-signing core used by both saves (signSave) and the account file
-// (Account.Save) — one construction, reused, per the accounts.md "reuse, don't
+// (Account.Save) — one construction, reused, per the accounts design's "reuse, don't
 // reinvent" rule. The key is always saveHMACKey in practice; it stays a parameter
 // so signSave's existing signature is unchanged.
 func hmacSign(payload []byte, key string) string {
@@ -403,7 +403,7 @@ func SetDataDirForTest(dir string) (restore func()) {
 // os.Executable + EvalSymlinks. Falls back to a CWD-relative "data" if the binary path
 // cannot be determined, or to the test override (dataDirOverride) when set. This is the
 // top of the tree — the active-account pointer (<root>/active-account) and the per-account
-// slots (<root>/accounts/<id>/) live directly under it (accounts.md §3.1).
+// slots (<root>/accounts/<id>/) live directly under it (the accounts design §3.1).
 //
 // It is distinct from dataDirectory() (defined in account.go), which is the per-account
 // SCOPED dir resolving to <root>/accounts/<activeID>/. Account.json and saves resolve
@@ -425,7 +425,7 @@ func rootDataDir() string {
 
 // saveDirectory returns the ACTIVE account's save directory:
 // <root>/accounts/<activeID>/saves/. It resolves through the SCOPED dataDirectory(), so
-// saves belong to the active account (accounts.md §3.1, Phase A account-scoping). When no
+// saves belong to the active account (the accounts design §3.1, Phase A account-scoping). When no
 // account is active yet (empty id), the scoped dir collapses to <root>/accounts and saves
 // land in <root>/accounts/saves — a benign shared location for the brief pre-naming window.
 func saveDirectory() string {
@@ -436,7 +436,7 @@ func saveDirectory() string {
 // (<root>/accounts/<activeID>/), or its empty-id collapse (<root>/accounts) before an
 // account is active. Exported so the UI resolves account/export paths through the SAME
 // scoped helper saves and the account file use — so a progress export defaults next to
-// the active account's account.json, not at the shared root (accounts.md §3.6). The
+// the active account's account.json, not at the shared root (the accounts design §3.6). The
 // signature is unchanged; only the resolution moved under the active-account slot.
 func DataDir() string {
 	return dataDirectory()
@@ -697,7 +697,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 // NOT call the lock-acquiring AccountID() accessor (sync.RWMutex is not reentrant
 // and a waiting writer could deadlock). Including this in the snapshot is the entire
 // lazy-stamp mechanism: SaveGame signs the snapshot, so the account_id is covered by
-// _sig automatically — no separate migration pass (accounts.md §6 invariant).
+// _sig automatically — no separate migration pass (the accounts design §6 invariant).
 func (ge *GameEngine) accountIDLocked() string {
 	if ge.account == nil {
 		return ""

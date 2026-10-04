@@ -2,7 +2,7 @@ package theme
 
 import "github.com/gdamore/tcell/v2"
 
-// Light themes (theming.md §4). Both are always available: Daylight sits in the
+// Light themes (the theming design §4). Both are always available: Daylight sits in the
 // Standard group next to Forge, High Contrast Light in Accessibility next to its
 // dark sibling. They exist because a dark theme on a light terminal is only
 // half-fixed by painting an explicit background — plenty of players simply want

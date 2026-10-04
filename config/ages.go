@@ -36,7 +36,7 @@ type AgeDef struct {
 // sees the same normalized values. Ages() rebuilds the slice from inline literals
 // on every call, so normalization operates on fresh maps and cannot compound.
 //
-// Gate Covenant (design-and-architecture/economy.md): every BuildingReqs entry
+// Gate Covenant (from the economy design): every BuildingReqs entry
 // names a building you can build in the age you advance FROM (the age lock
 // forbids building an older age's buildings), and the last required copy costs
 // at most half the most storage buildable by then, with no discounts assumed.

@@ -252,7 +252,7 @@ type GameEngine struct {
 	History *HistoryCollector
 
 	// account is the per-player identity + meta-progression record, loaded once at
-	// boot (accounts.md §2/§8) and held here so the UI/dashboard — already sharing
+	// boot (the accounts design §2/§8) and held here so the UI/dashboard — already sharing
 	// this engine — can reach it via Account(). It is player-level, NOT per-save, so
 	// Reset() must NOT clear it (a new game keeps the same player). May be nil if
 	// LoadOrCreate failed at boot — account state is non-critical, the game runs anyway.
@@ -899,7 +899,7 @@ func (ge *GameEngine) SetActiveParentName(name string) {
 
 // SetAccount installs the per-player account (at boot, and after a switch). May be nil.
 // The account is player-level state and survives Reset (new game / succumb), so it
-// is set here rather than in NewGameEngine or Reset (accounts.md §6).
+// is set here rather than in NewGameEngine or Reset (the accounts design §6).
 //
 // The account it replaces is flushed once detached, so records it gathered since the
 // last autosave are kept; Save writes them into that account's own file, never the new
@@ -925,7 +925,7 @@ func (ge *GameEngine) Account() *Account {
 
 // AccountID returns the current account's ID, or "" if no account is held. Used by
 // buildSaveSnapshot to lazy-stamp the save's account_id on the next write — the
-// stamp rides the normal SaveGame path so _sig re-signs over it (accounts.md §6).
+// stamp rides the normal SaveGame path so _sig re-signs over it (the accounts design §6).
 func (ge *GameEngine) AccountID() string {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()

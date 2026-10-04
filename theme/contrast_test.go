@@ -6,7 +6,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// Floors per theming.md §8.
+// Floors per the theming design §8.
 const (
 	floorBodyText  = 4.5 // Text/Label/Positive/Negative/Highlight vs Background (AA)
 	floorLargeText = 3.0 // Dim and Accent vs Background (AA large-text / glyphs)

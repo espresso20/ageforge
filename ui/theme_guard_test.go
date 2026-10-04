@@ -17,7 +17,7 @@ import (
 )
 
 // TestNoRawColorsOutsideTheme is the "no raw colors outside theme/" guard
-// (theming.md §3.8). It parses every non-test Go file under ui/, game/ and
+// (the theming design §3.8). It parses every non-test Go file under ui/, game/ and
 // config/ and fails on:
 //
 //   - a tview inline color tag in a string literal whose fg or bg is a hex

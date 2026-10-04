@@ -131,7 +131,7 @@ type GameState struct {
 	// stored in save JSON.
 	Pools map[string]BonusPool `json:"-"`
 	// AccountStats carries the account-wide LIFETIME (cross-save) stats and
-	// achievements for the Stats overlay (accounts.md §3.3, Phase 6). nil when
+	// achievements for the Stats overlay (the accounts design §3.3, Phase 6). nil when
 	// no account is wired (e.g. tests that build an engine without SetAccount).
 	// Distinct from Stats above, which is the per-save ge.Stats snapshot.
 	// Populated in GetState() from ge.account.LifetimeStats(); not in save JSON.
@@ -139,7 +139,7 @@ type GameState struct {
 }
 
 // AccountStatsView is the read-only UI projection of the account's lifetime stats
-// and achievements (accounts.md §3.3 / Phase 6). It is a copy — the account never
+// and achievements (the accounts design §3.3 / Phase 6). It is a copy — the account never
 // hands the UI its mutable backing slices. Achievements holds unlocked keys; the UI
 // resolves human names via game.AchievementName.
 type AccountStatsView struct {

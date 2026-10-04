@@ -2,7 +2,7 @@ package theme
 
 import "github.com/gdamore/tcell/v2"
 
-// screen.go is the late-binding half of the background decision (theming.md
+// screen.go is the late-binding half of the background decision (the theming design
 // §3.7). tview widgets capture their colors once, at construction, from
 // tview.Styles. Before the overhaul those were concrete RGB values, so a widget
 // built under Forge kept Forge's canvas after a live switch to a light theme —

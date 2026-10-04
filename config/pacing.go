@@ -12,7 +12,7 @@ import (
 )
 
 // Pacing: the target curve and the rules derived from it
-// (design-and-architecture/economy.md, Laws 2 and 3).
+// (the economy design's Laws 2 and 3).
 //
 // The whole economy is paced from one table, AgeTargets: how long a player
 // should spend in each age at 1x. These rules turn it into numbers:
@@ -571,7 +571,7 @@ func typicalIncomes() map[string]map[string]float64 {
 	return typicalIncomeMap
 }
 
-// The Storage Covenant (economy.md, Law 1): the most storage buildable in an
+// The Storage Covenant (the economy design's Law 1): the most storage buildable in an
 // age must hold at least StorageHold(age) hours of the age's TypicalIncome at
 // 1x, for every construction resource of the age. Typical income is a
 // moderate investment (five copies of each producer); the smoke bot ends an
