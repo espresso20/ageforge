@@ -92,7 +92,8 @@ const (
 	//     and a stretch that takes a long warning or faith kept beforehand
 	//     (doomAppeaseCost). It used to be a quarter of what the whole era
 	//     makes, which no warning could earn: the bot afforded level 1 in
-	//     well under half the threads, and only from faith it already held.
+	//     15 of 46 threads, level 2 in 6 and Brace in 41, and Appease only
+	//     from faith it already held.
 	//     The share is measured (24 seeds to a Quantum Age prestige): at
 	//     three quarters the bot afforded level 1 in 32 of 41 threads, level
 	//     2 in 21 and Brace in 36. At the whole shortest warning level 1

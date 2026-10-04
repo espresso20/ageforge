@@ -314,7 +314,7 @@ In the smoke-test bot's runs (24 seeds from a new game to a Quantum Age prestige
 | All dooms | 41 | | **32 of 41** (20 on arrival) | **21 of 41** | **36 of 41** |
 | Cosmic Era: the Last Passage (to a Quantum Age prestige) | 24 runs | 5.9 days | 2 of 24 | 2 of 24 | 24 of 24, on arrival |
 
-A doom is fated in only 27% of eras, so these are 41 dooms across 24 runs: read the shares, not the exact counts. Before Appease was priced on the warning, the same bot on the same seeds could afford level 1 in well under half of its warnings, and only from faith it already held.
+A doom is fated in only 27% of eras, so these are 41 dooms across 24 runs: read the shares, not the exact counts. Before Appease was priced on the warning, the same bot on the same seeds could afford level 1 in 15 of 46 warnings and level 2 in 6, nearly always from faith it already held, against Brace in 41.
 
 Level 1 stayed out of reach in 9 warnings. Four of them gave no time to work with: the harbinger came at the very advance its doom struck on, which leaves only what you already hold (see [No Outrunning a Doom](#no-outrunning-a-doom)). In the other five the bot, which keeps faith only for age requirements and the Sistine Chapel, ended the warning with 30% to 90% of the price in whichever of faith and culture it was shorter of.
 
@@ -337,7 +337,7 @@ In the Cosmic Era, Invite answers the thread that is speaking. Invite the Realit
 
 ### Why Appease is priced on the warning
 
-A doom's harbinger gives you a fifth to three fifths of an age. Appease used to cost a quarter of what the whole era makes in faith, which no warning is long enough to earn: it could only be paid from faith saved before anyone had warned you, and in test games it was affordable in a third of the warnings. Now level 1 is 15% of what the age makes, three quarters of the shortest warning, so the warning itself can pay for it, and level 2 is the stretch.
+A doom's harbinger gives you a fifth to three fifths of an age. Appease used to cost a quarter of what the whole era makes in faith, which no warning is long enough to earn: it could only be paid from faith saved before anyone had warned you, and in test games it was affordable in a third of the warnings (15 of 46). Now level 1 is 15% of what the age makes, three quarters of the shortest warning, so the warning itself can pay for it, and level 2 is the stretch.
 
 The price is fixed when the harbinger arrives, so it doesn't climb if the thread carries into the next age, and it comes from what the age makes, not from your storage: a harbinger who comes while your stores are small is no cheaper to answer than the age warrants. Brace is priced by the era, from what its advances ask of you, and is the same in every age of it.
 
