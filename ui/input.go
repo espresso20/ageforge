@@ -1849,6 +1849,10 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		var lines []string
 		lines = append(lines, "[yellow]⚠ Prestige warning[-]")
 		lines = append(lines, fmt.Sprintf("  You will earn [cyan]%d[-] prestige points.", p.PendingPoints))
+		// An early prestige pays little: say so before the player confirms.
+		if early := game.EarlyPrestigeLine(game.SightOf(&state), state.Age, p.PendingPoints, false); early != "" {
+			lines = append(lines, "  "+early)
+		}
 		lines = append(lines, "  [red]All progress is reset:[-] resources, buildings, workers, research and military.")
 		lines = append(lines, "  Kept: prestige points, the legacy kit and what it remembers, and Era Mastery.")
 		lines = append(lines, lastPassageWarningLines(state)...)

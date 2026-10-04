@@ -3961,6 +3961,8 @@ func (ge *GameEngine) DoPrestige() error {
 // them, as how says), logs the run's last lines and resets for the new run.
 // Called by DoPrestige and by the Last Passage choice, under the write lock.
 func (ge *GameEngine) completePrestige(how prestigeEnding) {
+	// What the player may see named, before the reset takes the run's ages.
+	sight := ge.ageSightLocked()
 	full := ge.Prestige.CalculatePoints(ge.age)
 	points := ge.lastPassagePoints(how, full)
 	ge.recordLastPassageOutcome(how, points, full)
@@ -4055,6 +4057,10 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.log = carried
 	ge.addLog("success", fmt.Sprintf("Prestige complete. Level %d, %s earned.",
 		ge.Prestige.GetLevel(), textfmt.Count(points, "prestige point", "prestige points")))
+	// An early prestige pays little: say so, and what a deeper run pays.
+	if line := EarlyPrestigeLine(sight, prestigedFrom, points, true); line != "" {
+		ge.addLog("info", line)
+	}
 	if newLegacy {
 		ge.addLog("success", fmt.Sprintf("✦ Cosmic Legacy: all production %s, permanent. It survives every prestige and every fall.", textfmt.SignedPercent(CosmicLegacyProductionBonus)))
 	} else if ge.cosmicLegacy {
