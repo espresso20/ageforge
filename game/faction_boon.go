@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Faction-encounter → boon glue (Phase 2b of the faction redesign).
@@ -276,7 +277,7 @@ func (ge *GameEngine) returnBoonWorkers() {
 		if gone <= 0 {
 			continue
 		}
-		line := fmt.Sprintf("%s from the %s went home.", textfmt.Count(gone, "worker", "workers"), CivName(l.FactionKey))
+		line := fmt.Sprintf("%s from the %s went home.", textfmt.Count(gone, "worker", "workers"), ge.rules.Name(rules.KindCiv, l.FactionKey))
 		switch staffed := gone - max(idle, 0); {
 		case staffed == 1:
 			ge.addLog("info", line+" One of them was staffing a building.")

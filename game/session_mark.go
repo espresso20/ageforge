@@ -3,8 +3,6 @@ package game
 import (
 	"maps"
 	"time"
-
-	"github.com/espresso20/ageforge/config"
 )
 
 // SessionMark is the game as its save left it: captured when a save loads,
@@ -52,7 +50,7 @@ func (ge *GameEngine) sessionMarkLocked(savedAt time.Time) *SessionMark {
 		m.Civs[k] = st
 	}
 	if h := ge.harbinger; h != nil {
-		if def, ok := config.HarbingerFor(h.Age); ok {
+		if def, ok := ge.rules.Harbinger(h.Age); ok {
 			m.Harbinger = def.Name
 		}
 	}

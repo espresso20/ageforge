@@ -8,6 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Worker shares: how the workforce splits across the worker domains, and the
@@ -138,12 +139,12 @@ func recruitFoodMargin(net, drain, perWorker float64) float64 {
 	return math.Max(perWorker, float64(recruitFoodMarginShare*(net+drain)))
 }
 
-// cleanShares is a saved or typed shares map as the engine keeps it: known
-// domains only, each percent finite, from 0 to 100, to a tenth. nil when
-// nothing is left.
-func cleanShares(in map[string]float64) map[string]float64 {
+// cleanSharesIn is a saved or typed shares map as the engine keeps it: set's
+// worker domains only, each percent finite, from 0 to 100, to a tenth. nil
+// when nothing is left.
+func cleanSharesIn(set *rules.Set, in map[string]float64) map[string]float64 {
 	var out map[string]float64
-	for _, d := range config.WorkerDomains() {
+	for _, d := range set.WorkerDomains() {
 		p, ok := in[d]
 		if !ok || math.IsNaN(p) || math.IsInf(p, 0) {
 			continue
@@ -169,9 +170,9 @@ func cloneShares(m map[string]float64) map[string]float64 {
 	return out
 }
 
-// IsWorkerDomain reports whether key is one of the worker domains.
-func IsWorkerDomain(key string) bool {
-	for _, d := range config.WorkerDomains() {
+// IsWorkerDomain reports whether key is one of set's worker domains.
+func IsWorkerDomain(set *rules.Set, key string) bool {
+	for _, d := range set.WorkerDomains() {
 		if d == key {
 			return true
 		}
@@ -222,7 +223,7 @@ type staffView struct {
 // newStaffView reads the worker domains off the built buildings. Caller holds
 // the lock.
 func (ge *GameEngine) newStaffView() *staffView {
-	domains := config.WorkerDomains()
+	domains := ge.rules.WorkerDomains()
 	sv := &staffView{doms: make([]shareDomain, len(domains)), blds: make([][]string, len(domains)), food: -1}
 	idx := make(map[string]int, len(domains))
 	for i, d := range domains {
@@ -705,17 +706,17 @@ type ShareReply struct {
 	Warning bool   // the shares leave the food buildings without workers
 }
 
-// UnknownDomainError refuses a word that names no worker domain.
-func UnknownDomainError(domain string) error {
-	return fmt.Errorf("Unknown worker domain '%s'. The domains are %s.", domain, strings.Join(config.WorkerDomains(), ", "))
+// UnknownDomainError refuses a word that names none of set's worker domains.
+func UnknownDomainError(set *rules.Set, domain string) error {
+	return fmt.Errorf("Unknown worker domain '%s'. The domains are %s.", domain, strings.Join(set.WorkerDomains(), ", "))
 }
 
 // SetWorkerShare sets domain's share of the workforce to percent (0 to 100),
 // then moves workers once to match the shares and staffs and recruits as the
 // routine does.
 func (ge *GameEngine) SetWorkerShare(domain string, percent float64) (ShareReply, error) {
-	if !IsWorkerDomain(domain) {
-		return ShareReply{}, UnknownDomainError(domain)
+	if !IsWorkerDomain(ge.rules, domain) {
+		return ShareReply{}, UnknownDomainError(ge.rules, domain)
 	}
 	if math.IsNaN(percent) || math.IsInf(percent, 0) || percent < 0 || percent > 100 {
 		return ShareReply{}, fmt.Errorf("A share is a percent from 0 to 100 (got %v).", percent)
@@ -727,15 +728,15 @@ func (ge *GameEngine) SetWorkerShare(domain string, percent float64) (ShareReply
 		shares = make(map[string]float64)
 	}
 	shares[domain] = percent
-	ge.workerShares = cleanShares(shares)
+	ge.workerShares = cleanSharesIn(ge.rules, shares)
 	return ge.applySharesLocked(domain), nil
 }
 
 // ClearWorkerShare puts domain back on auto, or every domain when domain is
 // "", then moves workers once to match, as SetWorkerShare does.
 func (ge *GameEngine) ClearWorkerShare(domain string) (ShareReply, error) {
-	if domain != "" && !IsWorkerDomain(domain) {
-		return ShareReply{}, UnknownDomainError(domain)
+	if domain != "" && !IsWorkerDomain(ge.rules, domain) {
+		return ShareReply{}, UnknownDomainError(ge.rules, domain)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -744,7 +745,7 @@ func (ge *GameEngine) ClearWorkerShare(domain string) (ShareReply, error) {
 	} else {
 		shares := cloneShares(ge.workerShares)
 		delete(shares, domain)
-		ge.workerShares = cleanShares(shares)
+		ge.workerShares = cleanSharesIn(ge.rules, shares)
 	}
 	return ge.applySharesLocked(domain), nil
 }
@@ -756,7 +757,7 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 	ge.staffHoldUntil = 0
 	sv := ge.newStaffView()
 	slots := 0
-	if i := domainIndex(changed); i >= 0 {
+	if i := domainIndex(ge.rules, changed); i >= 0 {
 		slots = sv.doms[i].slots
 	}
 	moved := ge.rebalanceShares(sv)
@@ -764,7 +765,7 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 	if moved > 0 || c.any() {
 		ge.recalculateRates()
 	}
-	line := "Worker shares: " + sharesLine(ge.workerShares) + "."
+	line := "Worker shares: " + sharesLine(ge.rules, ge.workerShares) + "."
 	if moved > 0 {
 		line += " Moved " + textfmt.Count(moved, "worker", "workers") + " to match."
 	}
@@ -772,7 +773,7 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 		line += " " + textfmt.Capitalize(c.describe(ge.Workers.TotalPop(), ge.popCapLocked())) + "."
 	}
 	total := 0.0
-	for _, d := range config.WorkerDomains() {
+	for _, d := range ge.rules.WorkerDomains() {
 		total += ge.workerShares[d]
 	}
 	if total = math.Round(total*10) / 10; total > 100 {
@@ -789,9 +790,9 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 	return r
 }
 
-// domainIndex is key's place in config.WorkerDomains, -1 if it is none.
-func domainIndex(key string) int {
-	for i, d := range config.WorkerDomains() {
+// domainIndex is key's place in set's worker domains, -1 if it is none.
+func domainIndex(set *rules.Set, key string) int {
+	for i, d := range set.WorkerDomains() {
 		if d == key {
 			return i
 		}
@@ -801,17 +802,17 @@ func domainIndex(key string) int {
 
 // sharesLine names the shares: "Knowledge 40%, Food 25%, the rest on auto",
 // "all on auto".
-func sharesLine(shares map[string]float64) string {
+func sharesLine(set *rules.Set, shares map[string]float64) string {
 	if len(shares) == 0 {
 		return "all on auto (workers follow your buildings' slots)"
 	}
 	var parts []string
-	for _, d := range config.WorkerDomains() {
+	for _, d := range set.WorkerDomains() {
 		if p, ok := shares[d]; ok {
 			parts = append(parts, DomainName(d)+" "+SharePercent(p))
 		}
 	}
-	if len(shares) < len(config.WorkerDomains()) {
+	if len(shares) < len(set.WorkerDomains()) {
 		parts = append(parts, "the rest on auto")
 	}
 	return strings.Join(parts, ", ")
@@ -832,7 +833,7 @@ type ShareRow struct {
 // ShareRows is the shares table for a snapshot: each domain with worker slots
 // or a share set, in domain order, with the share it gets.
 func ShareRows(st GameState) []ShareRow {
-	domains := config.WorkerDomains()
+	domains := st.Ruleset().WorkerDomains()
 	doms := make([]shareDomain, len(domains))
 	idx := make(map[string]int, len(domains))
 	for i, d := range domains {
@@ -894,7 +895,7 @@ func RecruitStatus(st GameState) string {
 		return RecruitStarve
 	}
 	per := 0.0
-	if cls, ok := config.WorkerClassByDomainAndAge("food", st.Age); ok {
+	if cls, ok := st.Ruleset().WorkerClass("food", st.Age); ok {
 		per = cls.FoodCost
 	}
 	net := foodBeforeMastery(food.Rate, food.Breakdown) - ws.FoodDrain

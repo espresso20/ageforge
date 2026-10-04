@@ -5,10 +5,21 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
+
+// Ruleset returns the ruleset the snapshot was made from, or the core set
+// for a snapshot with none (one a test or a fixture wrote by hand).
+func (st *GameState) Ruleset() *rules.Set { return orCore(st.Rules) }
 
 // GameState is a read-only snapshot of the entire game state for UI consumption
 type GameState struct {
+	// Rules is the ruleset the snapshot was made from: the engine's at that
+	// moment. Read it through Ruleset, which also covers a snapshot written
+	// by hand. A Set never changes, so the UI can read it with no lock and
+	// never sees half of a change of rules.
+	Rules *rules.Set `json:"-"`
+
 	Tick                 int
 	Age                  string
 	AgeName              string

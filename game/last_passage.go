@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The Last Passage: the Cosmic Era's passage.
@@ -103,13 +104,13 @@ type LastPassageState struct {
 // lastPassageApplies reports whether prestige from here rolls the Last
 // Passage: the current epoch is the final one and past the Iron gate. Read-only.
 func (ge *GameEngine) lastPassageApplies() bool {
-	return config.IsFinalEpoch(ge.currentEpoch) && config.CatastropheAllowed(ge.currentEpoch)
+	return ge.rules.IsFinalEra(ge.currentEpoch) && ge.rules.CatastropheAllowed(ge.currentEpoch)
 }
 
 // lastPassageBlockErr is the error DoPrestige returns while the Last Passage
 // is pending.
-func lastPassageBlockErr() error {
-	name, _ := config.LastPassageInfo()
+func lastPassageBlockErr(set *rules.Set) error {
+	name, _ := set.LastPassage()
 	return fmt.Errorf("%s is upon you. Type 'catastrophe' to choose Endure or Succumb before you prestige.", name)
 }
 
@@ -137,7 +138,7 @@ func (ge *GameEngine) rollLastPassage() bool {
 // so the dashboard toast fires. Bus handlers must not take the engine lock.
 func (ge *GameEngine) triggerLastPassage(source string) {
 	ge.pendingLastPassage = true
-	name, _ := config.LastPassageInfo()
+	name, _ := ge.rules.LastPassage()
 	ge.addLog("warning", fmt.Sprintf("☄ %s has come. The civilization cannot pass out of this age unmarked.", name))
 	ge.addLog("warning", "  Type 'catastrophe' to choose Endure or Succumb. Only prestige waits; the run goes on until you choose.")
 	ge.Bus.Publish(EventData{
@@ -158,7 +159,7 @@ func (ge *GameEngine) forceLastPassage() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	// /age jumps the age without the epoch; line them up first.
-	if ep := config.EpochForAge(ge.age); ep != ge.currentEpoch {
+	if ep := ge.rules.EraOf(ge.age); ep != ge.currentEpoch {
 		ge.currentEpoch = ep
 	}
 	switch {
@@ -178,12 +179,12 @@ func (ge *GameEngine) forceLastPassage() error {
 // that age's epoch, and makes the Last Passage pending. Not reachable from play.
 func (ge *GameEngine) ForceLastPassageForTest(age string) error {
 	ge.mu.Lock()
-	if _, ok := config.AgeByKey()[age]; !ok {
+	if _, ok := ge.rules.Age(age); !ok {
 		ge.mu.Unlock()
 		return fmt.Errorf("Unknown age '%s'.", age)
 	}
 	ge.age = age
-	ge.currentEpoch = config.EpochForAge(age)
+	ge.currentEpoch = ge.rules.EraOf(age)
 	ge.mu.Unlock()
 	return ge.forceLastPassage()
 }
@@ -213,7 +214,7 @@ func (ge *GameEngine) resolveLastPassage(how prestigeEnding) error {
 		return fmt.Errorf("The Last Passage has not come.")
 	}
 	if ge.pendingCatastrophe != "" {
-		name, _ := config.CatastropheInfo(ge.pendingCatastrophe)
+		name, _ := ge.rules.Catastrophe(ge.pendingCatastrophe)
 		return fmt.Errorf("%s came first. Answer it before the Last Passage.", name)
 	}
 	if how == lastPassageSuccumbed && ge.cosmicLegacy {
@@ -259,7 +260,7 @@ func (ge *GameEngine) runEndingLines(how prestigeEnding, points, full int) []Log
 	saved := ge.log
 	ge.log = nil
 
-	name, flavorText := config.LastPassageInfo()
+	name, flavorText := ge.rules.LastPassage()
 	switch how {
 	case lastPassageSpared:
 		ge.resolveHarbinger("", false)
@@ -286,8 +287,8 @@ func (ge *GameEngine) runEndingLines(how prestigeEnding, points, full int) []Log
 // ended in; in the Cosmic Era the age's harbinger is the Subject.
 func (ge *GameEngine) logRunEnding() {
 	req := flavor.Request{Moment: flavor.RunEnding, Age: ge.age}
-	if config.IsFinalEpoch(config.EpochForAge(ge.age)) {
-		if def, ok := config.HarbingerFor(ge.age); ok {
+	if ge.rules.IsFinalEra(ge.rules.EraOf(ge.age)) {
+		if def, ok := ge.rules.Harbinger(ge.age); ok {
 			req.Subject = def.Name
 		}
 	}
@@ -301,8 +302,8 @@ func (ge *GameEngine) logRunEnding() {
 // carry the markers countCatastropheOutcomes matches, so the Last Passage
 // counts as a catastrophe endured or succumbed to.
 func (ge *GameEngine) recordLastPassageOutcome(how prestigeEnding, points, full int) {
-	name, _ := config.LastPassageInfo()
-	epName := config.EpochByKey()[ge.currentEpoch].Name
+	name, _ := ge.rules.LastPassage()
+	epName := eraName(ge.rules, ge.currentEpoch)
 	switch how {
 	case lastPassageEndured:
 		ge.catastropheHistory = append(ge.catastropheHistory,

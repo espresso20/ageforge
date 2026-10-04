@@ -16,9 +16,6 @@ import (
 // matter" for dark_matter).
 func resourceLabel(key string) string { return ResourceName(key) }
 
-// ageLabel is an age's display name ("Industrial Age").
-func ageLabel(key string) string { return AgeName(key) }
-
 // amountText prints an amount for a log line: "0.4", "12", "950", "12.5K".
 func amountText(v float64) string { return textfmt.Number(v) }
 

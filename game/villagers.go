@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // domainRuntime holds runtime state for one worker domain
@@ -22,6 +23,7 @@ type domainRuntime struct {
 // files may contain multiple domain entries; LoadWorkers sums them all into the
 // single pool so old saves still load correctly.
 type WorkerManager struct {
+	rules    *rules.Set
 	domains  map[string]*domainRuntime
 	unlocked map[string]bool
 	// ageKey is used for WorkerClassDef lookups (food cost per tick, displayed class name).
@@ -48,21 +50,34 @@ func (vm *WorkerManager) foodClassFor() (config.WorkerClassDef, bool) {
 
 // refreshFoodClass re-resolves the cached food worker class for vm.ageKey.
 func (vm *WorkerManager) refreshFoodClass() {
-	vm.foodClass, vm.foodClassOK = config.WorkerClassByDomainAndAge("food", vm.ageKey)
+	vm.foodClass, vm.foodClassOK = vm.rules.WorkerClass("food", vm.ageKey)
 }
 
-// NewWorkerManager creates a new single-pool worker manager.
+// NewWorkerManager creates a new single-pool worker manager on the core
+// ruleset.
+func NewWorkerManager() *WorkerManager { return NewWorkerManagerWith(rules.Core()) }
+
+// NewWorkerManagerWith creates a new single-pool worker manager on set.
 // All workers belong to a single "worker" pool — domain restrictions are removed.
-func NewWorkerManager() *WorkerManager {
+func NewWorkerManagerWith(set *rules.Set) *WorkerManager {
 	vm := &WorkerManager{
+		rules:        set,
 		domains:      make(map[string]*domainRuntime),
 		unlocked:     make(map[string]bool),
 		ageKey:       "primitive_age",
-		buildingDefs: config.BuildingByKey(),
+		buildingDefs: set.BuildingMap(),
 	}
 	vm.domains["worker"] = &domainRuntime{assignments: make(map[string]int)}
 	vm.refreshFoodClass()
 	return vm
+}
+
+// Rebind moves the manager onto set: it takes set's building definitions
+// and worker classes. The pool and its assignments stay.
+func (vm *WorkerManager) Rebind(set *rules.Set) {
+	vm.rules = set
+	vm.buildingDefs = set.BuildingMap()
+	vm.refreshFoodClass()
 }
 
 // SetAge updates the current age for WorkerClassDef lookups

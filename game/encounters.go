@@ -243,7 +243,7 @@ func encounterChance(category string, success bool) float64 {
 func (ge *GameEngine) eligibleFactions(ageOrder map[string]int, discovered bool) []config.FactionDef {
 	cur := ageOrder[ge.age]
 	var out []config.FactionDef
-	for _, def := range config.BaseFactions() {
+	for _, def := range ge.rules.Factions() {
 		if cur < ageOrder[def.MinAge] {
 			continue // age floor not reached
 		}

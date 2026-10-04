@@ -3,6 +3,7 @@ package game
 import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Game → flavor glue: the adapters that turn engine state into a flavor.Request.
@@ -65,7 +66,7 @@ func (ge *GameEngine) expeditionFlavorLine(res ExpeditionResult) string {
 	if !res.Success {
 		moment = flavor.ExpeditionFailure
 	}
-	resource, amount := topReward(res.Rewards)
+	resource, amount := topRewardIn(ge.rules, res.Rewards)
 	return ge.flavorStream().Line(flavor.Request{
 		Moment: moment,
 		Tone:   expeditionTone(res.Category, res.Success),
@@ -104,12 +105,12 @@ func expeditionTone(category string, success bool) flavor.Tone {
 // DETERMINISTIC: Go map iteration order is randomised, and picking the resource
 // off a map walk would desynchronise the prose stream from the seed. Ties break on
 // config order.
-func topReward(rewards map[string]float64) (string, float64) {
+func topRewardIn(set *rules.Set, rewards map[string]float64) (string, float64) {
 	if len(rewards) == 0 {
 		return "", 0
 	}
 	best, bestAmt := "", 0.0
-	for _, def := range config.BaseResources() {
+	for _, def := range set.Resources() {
 		if amt, ok := rewards[def.Key]; ok && amt > bestAmt {
 			best, bestAmt = def.Key, amt
 		}
@@ -156,7 +157,7 @@ func (ge *GameEngine) raidFlavorLine(raid RaidRequest) string {
 	if ge.rng == nil {
 		ge.SeedRNG(newSeed())
 	}
-	def, ok := config.FactionByKey()[raid.FactionKey]
+	def, ok := ge.rules.Faction(raid.FactionKey)
 	if !ok {
 		return ""
 	}

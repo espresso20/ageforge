@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Resource holds the runtime state of a single resource
@@ -16,6 +17,7 @@ type Resource struct {
 
 // ResourceManager manages all resources
 type ResourceManager struct {
+	rules     *rules.Set
 	resources map[string]*Resource
 	defs      map[string]config.ResourceDef
 	unlocked  map[string]bool
@@ -29,15 +31,29 @@ type ResourceManager struct {
 	grace map[string]bool
 }
 
-// NewResourceManager creates a resource manager with base definitions
-func NewResourceManager() *ResourceManager {
+// NewResourceManager creates a resource manager on the core ruleset.
+func NewResourceManager() *ResourceManager { return NewResourceManagerWith(rules.Core()) }
+
+// NewResourceManagerWith creates a resource manager with set's resources.
+func NewResourceManagerWith(set *rules.Set) *ResourceManager {
 	rm := &ResourceManager{
 		resources: make(map[string]*Resource),
-		defs:      config.ResourceByKey(),
 		unlocked:  make(map[string]bool),
 	}
-	// Initialize all resources
-	for _, def := range config.BaseResources() {
+	rm.Rebind(set)
+	return rm
+}
+
+// Rebind moves the manager onto set: it takes set's resource definitions
+// and gives every resource it did not hold yet an empty store. What it
+// already holds stays, a resource set no longer defines included.
+func (rm *ResourceManager) Rebind(set *rules.Set) {
+	rm.rules = set
+	rm.defs = set.ResourceMap()
+	for _, def := range set.Resources() {
+		if _, held := rm.resources[def.Key]; held {
+			continue
+		}
 		rm.resources[def.Key] = &Resource{
 			Amount:  0,
 			Rate:    0,
@@ -45,7 +61,6 @@ func NewResourceManager() *ResourceManager {
 		}
 	}
 	rm.order = sortedKeys(rm.resources)
-	return rm
 }
 
 // UnlockResource makes a resource visible/usable

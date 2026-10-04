@@ -2,8 +2,6 @@ package game
 
 import (
 	"time"
-
-	"github.com/espresso20/ageforge/config"
 )
 
 // MeetFactionForTest discovers civ key at opinion and rolls its trade deals,
@@ -67,7 +65,7 @@ func (ge *GameEngine) SetGarrisonForTest(age string, n float64) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	ge.age = age
-	ge.currentEpoch = config.EpochForAge(age)
+	ge.currentEpoch = ge.rules.EraOf(age)
 	ge.Resources.UnlockResource("soldiers")
 	if short := n - ge.Resources.GetStorage("soldiers"); short > 0 {
 		ge.Resources.AddStorage("soldiers", short)
@@ -83,9 +81,10 @@ func (ge *GameEngine) GrantTechsForTest(keys ...string) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	if len(keys) == 0 {
-		at := ageOrders()[ge.age]
+		order := ge.rules.Indexes()
+		at := order[ge.age]
 		for _, key := range ge.Research.order {
-			if ageOrders()[ge.Research.defs[key].Age] <= at {
+			if order[ge.Research.defs[key].Age] <= at {
 				keys = append(keys, key)
 			}
 		}
@@ -108,9 +107,9 @@ func (ge *GameEngine) SetLegacyBonusForTest(epochs ...string) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	for _, ep := range epochs {
-		if _, ok := config.EpochByKey()[ep]; ok && !ge.legacyBonuses[ep] {
+		if _, ok := ge.rules.Era(ep); ok && !ge.legacyBonuses[ep] {
 			ge.legacyBonuses[ep] = true
-			for res, mult := range config.LegacyBonusForEpoch(ep) {
+			for res, mult := range ge.rules.LegacyBonus(ep) {
 				ge.permanentBonuses[res+"_rate"] += mult
 			}
 		}

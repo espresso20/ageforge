@@ -2,35 +2,43 @@ package game
 
 import (
 	"maps"
+	"slices"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // ProgressManager handles age progression
 type ProgressManager struct {
+	rules      *rules.Set
 	ages       []config.AgeDef
 	ageIndex   map[string]int
 	ageWonders map[string]string // ageKey -> wonder building key (or "")
 }
 
-// NewProgressManager creates a new progress manager
-func NewProgressManager() *ProgressManager {
-	ages := config.Ages()
-	idx := make(map[string]int)
-	for i, a := range ages {
-		idx[a.Key] = i
-	}
-	pm := &ProgressManager{ages: ages, ageIndex: idx, ageWonders: make(map[string]string)}
-	allBuildings := config.BuildingByKey()
-	for _, age := range ages {
-		for _, bKey := range age.UnlockBuildings {
-			if def, ok := allBuildings[bKey]; ok && def.Category == "wonder" {
-				pm.ageWonders[age.Key] = bKey
-				break
-			}
+// NewProgressManager creates a new progress manager on the core ruleset.
+func NewProgressManager() *ProgressManager { return NewProgressManagerWith(rules.Core()) }
+
+// NewProgressManagerWith creates a new progress manager on set's ages.
+func NewProgressManagerWith(set *rules.Set) *ProgressManager {
+	pm := &ProgressManager{}
+	pm.Rebind(set)
+	return pm
+}
+
+// Rebind moves the manager onto set: it takes set's ages, their order and
+// each age's wonder. The manager holds no state of its own.
+func (pm *ProgressManager) Rebind(set *rules.Set) {
+	pm.rules = set
+	pm.ages = slices.Clone(set.Ages())
+	pm.ageIndex = make(map[string]int, len(pm.ages))
+	pm.ageWonders = make(map[string]string)
+	for i, a := range pm.ages {
+		pm.ageIndex[a.Key] = i
+		if w := set.Wonder(a.Key); w != "" {
+			pm.ageWonders[a.Key] = w
 		}
 	}
-	return pm
 }
 
 // GetAgeName returns the display name for an age key

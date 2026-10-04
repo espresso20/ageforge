@@ -288,6 +288,9 @@ func (s *Set) Index(age string) (int, bool) {
 	return i, ok
 }
 
+// Indexes returns every age's place in the order, by key.
+func (s *Set) Indexes() map[string]int { return s.agePos }
+
 // Next returns the age after age, or "" for the last age and an unknown one.
 func (s *Set) Next(age string) string {
 	i, ok := s.agePos[age]
@@ -541,6 +544,12 @@ func (s *Set) TradeRoute(key string) (config.TradeRouteDef, bool) {
 
 // ExchangeRates returns the listed market pairs, in definition order.
 func (s *Set) ExchangeRates() []config.ExchangeRateDef { return s.exchange }
+
+// ListedRate returns the listed market pair that sells from for to.
+func (s *Set) ListedRate(from, to string) (config.ExchangeRateDef, bool) {
+	x, ok := s.exchangeBy[from+":"+to]
+	return x, ok
+}
 
 // ExchangeRateMap returns a fresh map of the listed market pairs, keyed
 // "from:to".

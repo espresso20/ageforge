@@ -1,10 +1,6 @@
 package game
 
-import (
-	"sync"
-
-	"github.com/espresso20/ageforge/config"
-)
+import "github.com/espresso20/ageforge/rules"
 
 // spoilers.go is the no-spoiler rule for player text (playtest 2026-09-29):
 // no screen, log line or refusal names an age the player cannot see yet, an
@@ -19,39 +15,18 @@ import (
 // Refusals from the managers (research, trade routes, expeditions) only know
 // the current age, so they name the next age at most (laterAgeRef).
 
-// ageOrders maps each age key to its order, and eraFirstAges each epoch key
-// to the order of its first age. Built once: config rebuilds its tables on
-// every call, and these are asked per milestone on every GetState.
-var (
-	ageOrders = sync.OnceValue(func() map[string]int {
-		m := map[string]int{}
-		for _, a := range config.Ages() {
-			m[a.Key] = a.Order
-		}
-		return m
-	})
-	eraFirstAges = sync.OnceValue(func() map[string]int {
-		ages := ageOrders()
-		m := map[string]int{}
-		for _, e := range config.Epochs() {
-			if len(e.Ages) > 0 {
-				m[e.Key] = ages[e.Ages[0]]
-			}
-		}
-		return m
-	})
-)
-
 // AgeSight is which ages and eras the player may see named.
 type AgeSight struct {
-	next    int // the furthest age order that may be named
-	reached int // the furthest age order reached
+	set     *rules.Set // the ruleset whose ages these are; nil reads the core set
+	next    int        // the furthest age order that may be named
+	reached int        // the furthest age order reached
 }
 
-// newAgeSight is the sight of a player in current who has reached the ages
-// in reached this run and highest on their account ("" for none).
-func newAgeSight(current string, reached []string, highest string) AgeSight {
-	ages := ageOrders()
+// ageSightIn is the sight, on set's ages, of a player in current who has
+// reached the ages in reached this run and highest on their account ("" for
+// none).
+func ageSightIn(set *rules.Set, current string, reached []string, highest string) AgeSight {
+	ages := set.Indexes()
 	far := ages[current]
 	if o, ok := ages[highest]; ok && o > far {
 		far = o
@@ -61,7 +36,7 @@ func newAgeSight(current string, reached []string, highest string) AgeSight {
 			far = o
 		}
 	}
-	return AgeSight{next: max(far, ages[current]+1), reached: far}
+	return AgeSight{set: set, next: max(far, ages[current]+1), reached: far}
 }
 
 // SightOf is the sight of the player in the snapshot st.
@@ -70,7 +45,7 @@ func SightOf(st *GameState) AgeSight {
 	if st.AccountStats != nil {
 		highest = st.AccountStats.HighestAge
 	}
-	return newAgeSight(st.Age, st.Stats.AgesReached, highest)
+	return ageSightIn(st.Ruleset(), st.Age, st.Stats.AgesReached, highest)
 }
 
 // ageSightLocked is the engine's own sight. Takes the account's lock; call
@@ -81,19 +56,19 @@ func (ge *GameEngine) ageSightLocked() AgeSight {
 		s, _ := ge.account.LifetimeStats()
 		highest = s.HighestAge
 	}
-	return newAgeSight(ge.age, ge.Stats.AgesReached, highest)
+	return ageSightIn(ge.rules, ge.age, ge.Stats.AgesReached, highest)
 }
 
 // Age reports whether the player may see age named. Unknown keys: no.
 func (s AgeSight) Age(age string) bool {
-	o, ok := ageOrders()[age]
+	o, ok := orCore(s.set).Index(age)
 	return ok && o <= s.next
 }
 
 // Era reports whether the player may see the era named: they have reached
 // one of its ages.
 func (s AgeSight) Era(epoch string) bool {
-	o, ok := eraFirstAges()[epoch]
+	o, ok := orCore(s.set).EraFirstAge(epoch)
 	return ok && o <= s.reached
 }
 
@@ -101,13 +76,23 @@ func (s AgeSight) Era(epoch string) bool {
 // it named, "a later age" when not.
 func (s AgeSight) AgeRef(age string) string {
 	if s.Age(age) {
-		return "the " + AgeName(age)
+		return "the " + orCore(s.set).Name(rules.KindAge, age)
 	}
 	return "a later age"
 }
 
 // laterAgeRef is AgeRef for a refusal that only knows the current age: the
-// next age by name, anything past it as "a later age".
-func laterAgeRef(currentAge, age string) string {
-	return newAgeSight(currentAge, nil, "").AgeRef(age)
+// next age by name, anything past it as "a later age". set is the ruleset
+// of the manager that refuses.
+func laterAgeRef(set *rules.Set, currentAge, age string) string {
+	return ageSightIn(set, currentAge, nil, "").AgeRef(age)
+}
+
+// orCore is set, or the core ruleset for a value built without one: a
+// snapshot or a sight written by hand, as tests and fixtures do.
+func orCore(set *rules.Set) *rules.Set {
+	if set == nil {
+		return rules.Core()
+	}
+	return set
 }

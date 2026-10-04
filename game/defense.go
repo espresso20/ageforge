@@ -270,7 +270,7 @@ func (ge *GameEngine) applyWarRaids() {
 		// raid bigger than the stock takes nothing (Remove refuses it), so
 		// only a raid that would have landed in full is blunted: an army
 		// never turns a raid that missed into one that lands.
-		def, known := config.FactionByKey()[raid.FactionKey]
+		def, known := ge.rules.Faction(raid.FactionKey)
 		if !(ge.Resources.Get(raid.Resource) >= raid.Amount) {
 			// Remove would refuse: the raid takes nothing. Say so rather
 			// than report a loss that never happened.

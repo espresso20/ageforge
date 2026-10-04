@@ -520,8 +520,8 @@ func cmdWorkersShare(args []string, engine *game.GameEngine) CommandResult {
 	switch {
 	case domain == "auto" && len(args) == 1:
 		reply, err = engine.ClearWorkerShare("")
-	case !game.IsWorkerDomain(domain):
-		return CommandResult{Message: game.UnknownDomainError(args[0]).Error(), Type: "error"}
+	case !game.IsWorkerDomain(engine.Rules(), domain):
+		return CommandResult{Message: game.UnknownDomainError(engine.Rules(), args[0]).Error(), Type: "error"}
 	case len(args) == 1:
 		return CommandResult{Message: sharesText(engine.GetState(), domain), Type: "info"}
 	case strings.ToLower(args[1]) == "auto":

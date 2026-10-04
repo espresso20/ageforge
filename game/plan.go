@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The build plan: an ordered list of builds and techs the player wants, which
@@ -183,14 +184,13 @@ func loadBank(b map[string]float64, known func(string) bool) map[string]float64 
 	return out
 }
 
-// loadPlan is a saved plan as the engine accepts it: known kinds only, counts
-// in range, at most MaxPlanItems, banks on build items only, holding
-// positive, finite amounts of known resources. A plan the game wrote passes
-// unchanged.
-func loadPlan(saved []PlanItem) []PlanItem {
-	resources := config.ResourceByKey()
+// loadPlanIn is a saved plan as the engine accepts it: known kinds only,
+// counts in range, at most MaxPlanItems, banks on build items only, holding
+// positive, finite amounts of resources set knows. A plan the game wrote
+// passes unchanged.
+func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 	known := func(res string) bool {
-		_, ok := resources[res]
+		_, ok := set.Resource(res)
 		return ok
 	}
 	var out []PlanItem
@@ -269,9 +269,9 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 func (ge *GameEngine) PlanAddResearch(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	def, ok := config.TechByKey()[key]
+	def, ok := ge.rules.Tech(key)
 	if !ok {
-		return unknownKeyError("tech", key, config.TechByKey(), "Type research list to see what you can research.")
+		return unknownKeyError("tech", key, ge.rules.TechMap(), "Type research list to see what you can research.")
 	}
 	for _, it := range ge.plan {
 		if it.Kind == PlanResearch && it.Key == key {
@@ -369,9 +369,9 @@ func (ge *GameEngine) planItemLabel(it PlanItem) string {
 		return ge.planDealLabel(it)
 	}
 	if it.Kind == PlanResearch {
-		return "research " + config.TechByKey()[it.Key].Name
+		return "research " + techDefName(ge.rules, it.Key)
 	}
-	return BuildingCount(it.Count, it.Key)
+	return buildingCountIn(ge.rules, it.Count, it.Key)
 }
 
 // ===== Validity =====
@@ -421,7 +421,7 @@ func (ge *GameEngine) planBuildInvalid(key string, planned int) string {
 // planResearchInvalid is why tech key can never start from plan position idx
 // ("" if it can).
 func (ge *GameEngine) planResearchInvalid(key string, idx int) string {
-	def, ok := config.TechByKey()[key]
+	def, ok := ge.rules.Tech(key)
 	if !ok {
 		return "unknown technology"
 	}
@@ -447,7 +447,7 @@ func (ge *GameEngine) planResearchInvalid(key string, idx int) string {
 			}
 		}
 		if !planned {
-			return fmt.Sprintf("it needs %s first, which isn't researched or planned before it", config.TechByKey()[pre].Name)
+			return fmt.Sprintf("it needs %s first, which isn't researched or planned before it", techDefName(ge.rules, pre))
 		}
 	}
 	return ""
@@ -497,21 +497,21 @@ func (s *planStarts) empty() bool {
 
 // describe renders the starts as verb-led clauses: "started building 2 Huts
 // and 1 Farm, started researching Pottery, traded 5K coal for 1.2K food".
-// Callers prefix it ("Plan: ", "While you were away, your plan ").
-func (s *planStarts) describe(defs map[string]config.BuildingDef) string {
+// Callers prefix it ("Plan: ", "While you were away, your plan "). set names
+// the buildings and techs.
+func (s *planStarts) describe(set *rules.Set) string {
 	var parts []string
 	if len(s.order) > 0 {
 		builds := make([]string, 0, len(s.order))
 		for _, k := range s.order {
-			builds = append(builds, BuildingCount(s.builds[k], k))
+			builds = append(builds, buildingCountIn(set, s.builds[k], k))
 		}
 		parts = append(parts, "started building "+textfmt.List(builds))
 	}
 	if len(s.techs) > 0 {
-		techs := config.TechByKey()
 		names := make([]string, 0, len(s.techs))
 		for _, k := range s.techs {
-			names = append(names, techs[k].Name)
+			names = append(names, techDefName(set, k))
 		}
 		parts = append(parts, "started researching "+textfmt.List(names))
 	}
@@ -525,6 +525,12 @@ func (s *planStarts) describe(defs map[string]config.BuildingDef) string {
 		parts = append(parts, "advanced to the "+s.advanced)
 	}
 	return strings.Join(parts, ", ")
+}
+
+// techDefName is a tech's name in set ("" for a key set does not know).
+func techDefName(set *rules.Set, key string) string {
+	def, _ := set.Tech(key)
+	return def.Name
 }
 
 // planCheck is the plan walk's verdict on one item's next start.
@@ -592,7 +598,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		chk.reserve = true
 		return chk
 	case PlanResearch:
-		def := config.TechByKey()[it.Key]
+		def, _ := ge.rules.Tech(it.Key)
 		if order := ge.progress.GetAgeOrder(); order[def.Age] > order[ge.age] {
 			return planCheck{blocked: "waits for the " + ge.progress.GetAgeName(def.Age)}
 		}
@@ -614,7 +620,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		}
 		for _, pre := range def.Prerequisites {
 			if !ge.Research.IsResearched(pre) {
-				return planCheck{cost: cost, blocked: "needs " + config.TechByKey()[pre].Name + " first", reserve: true}
+				return planCheck{cost: cost, blocked: "needs " + techDefName(ge.rules, pre) + " first", reserve: true}
 			}
 		}
 		return planCheck{cost: cost, reserve: true}
@@ -937,7 +943,7 @@ func planStaffSource(def config.BuildingDef) bool {
 func (ge *GameEngine) runPlanTick() {
 	var s planStarts
 	if ge.runPlan(&s) {
-		ge.addLog(LogRoutine, "Plan: "+s.describe(ge.Buildings.defs)+".")
+		ge.addLog(LogRoutine, "Plan: "+s.describe(ge.rules)+".")
 	}
 }
 
@@ -950,7 +956,6 @@ func (ge *GameEngine) planViews() []PlanItemView {
 	}
 	reserved := map[string]float64{}
 	researchSeen := false
-	techs := config.TechByKey()
 	out := make([]PlanItemView, 0, len(ge.plan))
 	for _, it := range ge.plan {
 		if it.Kind == PlanTrade {
@@ -967,7 +972,7 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		}
 		v := PlanItemView{Kind: it.Kind, Key: it.Key, Count: it.Count, Started: it.Started}
 		if it.Kind == PlanResearch {
-			v.Name = techs[it.Key].Name
+			v.Name = techDefName(ge.rules, it.Key)
 		} else {
 			v.Name = ge.Buildings.defs[it.Key].Name
 		}
