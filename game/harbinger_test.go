@@ -525,20 +525,20 @@ func TestHarbingerCostExamples(t *testing.T) {
 		}
 	}
 
-	// A doom's Appease is priced on its warning: what the age its harbinger
-	// arrives in makes in the shortest warning, a fifth of the age. Iron Age
-	// faith: 0.75 a tick over 11,700 ticks = 8,775; a fifth is 1,755 → 1,800.
-	// The Iron Era asks no culture (it arrives in the Classical Age, after
-	// the era began).
+	// A doom's Appease is priced on its warning: half of what the age its
+	// harbinger arrives in makes in the shortest warning, a tenth of the
+	// age. Iron Age faith: 0.75 a tick over 11,700 ticks = 8,775; a tenth is
+	// 877.5 → 880. The Iron Era asks no culture (it arrives in the Classical
+	// Age, after the era began).
 	dooms := []struct {
 		epoch, age string
 		appease    map[string]float64
 	}{
-		{"iron_era", "iron_age", map[string]float64{"faith": 1800}},
-		{"iron_era", "medieval_age", map[string]float64{"faith": 6500}},
-		{"steel_era", "renaissance_age", map[string]float64{"faith": 13000, "culture": 130000}},
-		{"steel_era", "industrial_age", map[string]float64{"faith": 110000, "culture": 1200000}},
-		{"cosmic_era", "interstellar_age", map[string]float64{"faith": 360000000, "culture": 5400000000}},
+		{"iron_era", "iron_age", map[string]float64{"faith": 880}},
+		{"iron_era", "medieval_age", map[string]float64{"faith": 3300}},
+		{"steel_era", "renaissance_age", map[string]float64{"faith": 6100, "culture": 64000}},
+		{"steel_era", "industrial_age", map[string]float64{"faith": 53000, "culture": 580000}},
+		{"cosmic_era", "interstellar_age", map[string]float64{"faith": 180000000, "culture": 2700000000}},
 	}
 	for _, c := range dooms {
 		if got := doomAppeaseCost(c.epoch, c.age, 1); !reflect.DeepEqual(got, c.appease) {
@@ -1004,11 +1004,11 @@ func TestSuccumbAndPrestigeResetHarbinger(t *testing.T) {
 
 // A doom's Appease is sized to its warning, not to the era. In every age a
 // harbinger can arrive in, a moderate faith (and culture) economy
-// (config.FlowIncome) makes level 1 within the shortest warning, a fifth of
-// the age, so no thread is too short for it and nothing has to be saved
-// beforehand. Level 2 costs double, so both levels together cost more than
-// the shortest warning makes: the stretch a long warning, or faith kept
-// beforehand, pays for. It is never more than the longest warning makes.
+// (config.FlowIncome) makes level 1 in half the shortest warning, a tenth of
+// the age, so nearly no thread is too short for it and nothing has to be
+// saved beforehand. Level 2 costs double, so both levels together cost more
+// than the shortest warning makes: the stretch a longer warning, or faith
+// kept beforehand, pays for. It is never more than the longest warning makes.
 func TestAppeasePayableWithinTheWarning(t *testing.T) {
 	if harbingerAppeaseWindowShare > 1 || 3*harbingerAppeaseWindowShare <= 1 {
 		t.Fatalf("window share %v: level 1 must fit the shortest warning, and both levels must not", harbingerAppeaseWindowShare)
@@ -1031,8 +1031,8 @@ func TestAppeasePayableWithinTheWarning(t *testing.T) {
 				rate, span := config.FlowIncome(res, age), config.AgeTargetTicks(age)
 				shortest, longest := rate*span*harbingerLeadMin, rate*span*harbingerLeadMax
 				// Rounded up to two significant figures: within 10% of the share.
-				if l1 > 1.1*shortest {
-					t.Errorf("%s in %s: level 1 %s (%v) is more than the shortest warning makes (%v)", ep.Key, age, res, l1, shortest)
+				if l1 > 1.1*shortest*harbingerAppeaseWindowShare || l1 > shortest {
+					t.Errorf("%s in %s: level 1 %s (%v) is more than half the shortest warning makes (%v)", ep.Key, age, res, l1, shortest*harbingerAppeaseWindowShare)
 				}
 				if l1+cost2[res] <= shortest {
 					t.Errorf("%s in %s: both levels of %s (%v) fit the shortest warning (%v): level 2 is no stretch", ep.Key, age, res, l1+cost2[res], shortest)
