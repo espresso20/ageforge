@@ -6,15 +6,19 @@
 package fixture
 
 import (
+	"maps"
 	"sort"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Options shape a synthetic state.
 type Options struct {
+	// Rules is the ruleset the state is drawn from (nil: the core set). The
+	// snapshot carries it.
+	Rules *rules.Set
 	Age   string
 	Seed  int64
 	Tick  int     // 0: a tick that suits the age
@@ -33,18 +37,23 @@ func State(o Options) game.GameState {
 	if o.Scale == 0 {
 		o.Scale = 1
 	}
-	order := config.AgeOrder()
-	ageIdx := map[string]int{}
-	for i, a := range order {
-		ageIdx[a] = i
+	set := o.Rules
+	if set == nil {
+		set = rules.Core()
 	}
+	order := set.AgeKeys()
+	ageIdx := set.Indexes()
 	ai, ok := ageIdx[o.Age]
 	if !ok {
 		o.Age, ai = order[0], 0
 	}
-	ages := config.AgeByKey()
+	ageName := func(key string) string {
+		def, _ := set.Age(key)
+		return def.Name
+	}
 	st := game.GameState{
-		Seed: o.Seed, Tick: o.Tick, Age: o.Age, AgeName: ages[o.Age].Name,
+		Rules: set,
+		Seed:  o.Seed, Tick: o.Tick, Age: o.Age, AgeName: ageName(o.Age),
 		Buildings: map[string]game.BuildingState{}, Resources: map[string]game.ResourceState{},
 		Diplomacy: game.DiplomacyState{Factions: map[string]game.FactionInfo{}},
 	}
@@ -52,13 +61,14 @@ func State(o Options) game.GameState {
 		st.Tick = 1200 + ai*4700
 	}
 	if ai+1 < len(order) {
-		st.NextAge, st.NextAgeName = order[ai+1], ages[order[ai+1]].Name
+		st.NextAge, st.NextAgeName = order[ai+1], ageName(order[ai+1])
 	}
-	st.EpochKey = config.EpochForAge(o.Age)
-	st.EpochName = config.EpochByKey()[st.EpochKey].Name
+	st.EpochKey = set.EraOf(o.Age)
+	era, _ := set.Era(st.EpochKey)
+	st.EpochName = era.Name
 	h := func(k string, salt int64) uint64 { return mapmodel.Hash(o.Seed, mapmodel.HashStr(k), salt) }
 
-	defs := config.BuildingByKey()
+	defs := set.BuildingMap()
 	keys := make([]string, 0, len(defs))
 	for k := range defs {
 		keys = append(keys, k)
@@ -134,7 +144,7 @@ func State(o Options) game.GameState {
 	pop = staffed + idle
 	st.Workers = game.WorkerState{TotalPop: pop, MaxPop: pop + 20 + ai*30, TotalIdle: idle}
 
-	for i, r := range config.BaseResources() {
+	for i, r := range set.Resources() {
 		if ageIdx[r.Age] > ai {
 			continue
 		}
@@ -153,7 +163,7 @@ func State(o Options) game.GameState {
 
 	wars := o.Wars
 	statuses := []string{"friendly", "neutral", "allied", "rival", "neutral", "embargo"}
-	for i, f := range config.BaseFactions() {
+	for i, f := range set.Factions() {
 		fi := game.FactionInfo{Name: f.Name, Specialty: f.Specialty, Personality: f.Personality, Strength: f.Strength,
 			Discovered: ageIdx[f.MinAge] <= ai, Status: statuses[i%len(statuses)], Opinion: 40 + i*5,
 			TradeCount: i % 4}
@@ -168,7 +178,7 @@ func State(o Options) game.GameState {
 	if n == 0 {
 		n = 2
 	}
-	for _, r := range config.BaseTradeRoutes() {
+	for _, r := range set.TradeRoutes() {
 		if n <= 0 {
 			break
 		}
@@ -176,7 +186,7 @@ func State(o Options) game.GameState {
 			continue
 		}
 		st.Trade.ActiveRoutes = append(st.Trade.ActiveRoutes, game.ActiveRouteInfo{Name: r.Name, Key: r.Key,
-			Import: r.Import, Export: r.Export, CyclesDone: 3})
+			Import: maps.Clone(r.Import), Export: maps.Clone(r.Export), CyclesDone: 3})
 		n--
 	}
 
@@ -186,7 +196,7 @@ func State(o Options) game.GameState {
 		st.Military.ActiveScout = &game.ExpeditionSnapshot{Name: "Scout the hills", TicksLeft: 40}
 	}
 	if o.Harbinger {
-		if hd, ok := config.HarbingerFor(o.Age); ok {
+		if hd, ok := set.Harbinger(o.Age); ok {
 			st.Harbinger = &game.HarbingerView{Key: hd.Key, Name: hd.Name, Age: o.Age, AgeName: st.AgeName,
 				Tier: game.CatastropheTierMedium, Probability: 0.2, TargetEpochName: "impending doom"}
 		}
@@ -208,11 +218,8 @@ func Grow(st game.GameState, step int) game.GameState {
 	for k, v := range st.Buildings {
 		out.Buildings[k] = v
 	}
-	defs := config.BuildingByKey()
-	ageIdx := map[string]int{}
-	for i, a := range config.AgeOrder() {
-		ageIdx[a] = i
-	}
+	defs := st.Ruleset().BuildingMap()
+	ageIdx := st.Ruleset().Indexes()
 	ai := ageIdx[st.Age]
 	keys := make([]string, 0, len(defs))
 	for k := range defs {

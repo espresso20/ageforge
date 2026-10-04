@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Bot is a greedy, legitimate player. It only calls the same GameEngine
@@ -40,7 +41,10 @@ import (
 //
 // Every map walk goes through sorted keys so a seed replays the same decisions.
 type Bot struct {
-	ge        *game.GameEngine
+	ge *game.GameEngine
+	// rules is the engine's ruleset, read once: what the bot knows of the
+	// game's buildings, ages and techs.
+	rules     *rules.Set
 	defs      map[string]config.BuildingDef
 	nameToKey map[string]string
 	ageIdx    map[string]int
@@ -103,17 +107,19 @@ const gatherYield = 25.0
 
 // NewBot returns a bot that plays ge.
 func NewBot(ge *game.GameEngine) *Bot {
-	defs := config.BuildingByKey()
+	set := ge.Rules()
+	defs := set.BuildingMap()
 	n2k := make(map[string]string, len(defs))
 	for k, d := range defs {
 		n2k[d.Name] = k
 	}
 	idx := make(map[string]int)
-	for i, k := range config.AgeOrder() {
+	for i, k := range set.AgeKeys() {
 		idx[k] = i
 	}
 	return &Bot{
 		ge:           ge,
+		rules:        set,
 		defs:         defs,
 		nameToKey:    n2k,
 		ageIdx:       idx,
@@ -642,7 +648,6 @@ func (b *Bot) planAhead(st game.GameState) {
 // wait, reserving nothing, until the advance unlocks them, so a long absence
 // that finishes one age keeps going in the next.
 func (b *Bot) planNextAge(next string) {
-	ages := config.AgeByKey()
 	// First, producers of the next age that today's income can pay for:
 	// the best one per resource the next age makes, so its new resources
 	// (the Stone Age's stone, the Bronze Age's iron) start flowing without
@@ -694,23 +699,19 @@ func (b *Bot) planNextAge(next string) {
 		_, err := b.ge.PlanAddBuild(k, 3)
 		b.act("plan_next_storage", k, err)
 	}
-	nd := ages[next]
+	nd, _ := b.rules.Age(next)
 	for _, k := range sortedKeys(b.defs) {
 		if d := b.defs[k]; d.RequiredAge == next && d.Category == "wonder" {
 			_, err := b.ge.PlanAddBuild(k, 1)
 			b.act("plan_next_wonder", k, err)
 		}
 	}
-	after := ""
-	for i, a := range config.AgeOrder() {
-		if a == nd.Key && i+1 < len(config.AgeOrder()) {
-			after = config.AgeOrder()[i+1]
-		}
-	}
+	after := b.rules.Next(nd.Key)
 	if after == "" {
 		return
 	}
-	reqs := ages[after].BuildingReqs
+	gate, _ := b.rules.Age(after)
+	reqs := gate.BuildingReqs
 	for _, k := range sortedKeys(reqs) {
 		if b.defs[k].RequiredAge == next {
 			_, err := b.ge.PlanAddBuild(k, reqs[k])
@@ -863,10 +864,10 @@ func (b *Bot) planTechs(p *plan, st game.GameState, budget map[string]float64) {
 	if rs.CurrentTech != "" && float64(rs.TicksLeft) > b.CheckInTicks {
 		return
 	}
-	techs := config.TechByKey()
 	keys := sortedKeys(rs.Techs)
 	unblocks := func(key string) bool {
-		for _, e := range techs[key].Effects {
+		def, _ := b.rules.Tech(key)
+		for _, e := range def.Effects {
 			if e.Type == "production" && p.target[e.Target] > p.amt[e.Target] && st.Resources[e.Target].Rate <= 0 {
 				return true
 			}
@@ -1807,9 +1808,9 @@ func (b *Bot) research(p *plan) {
 	capK := p.storage["knowledge"]
 	rate := p.st.Resources["knowledge"].Rate
 	keys := sortedKeys(rs.Techs)
-	techs := config.TechByKey()
 	unblocks := func(key string) bool {
-		for _, e := range techs[key].Effects {
+		def, _ := b.rules.Tech(key)
+		for _, e := range def.Effects {
 			if e.Type == "production" && p.target[e.Target] > p.amt[e.Target] && p.st.Resources[e.Target].Rate <= 0 {
 				return true
 			}

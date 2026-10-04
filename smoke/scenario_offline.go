@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -172,7 +171,8 @@ func offlinePlan(base *game.GameEngine, name, age string, fail func(check, forma
 		pre := ge.GetState()
 		planned := 0
 		for _, key := range sortedKeys(pre.Buildings) {
-			bs, def := pre.Buildings[key], config.BuildingByKey()[key]
+			bs := pre.Buildings[key]
+			def, _ := pre.Ruleset().Building(key)
 			if bs.Unlocked && def.RequiredAge == age && def.Category == "production" && planned < 6 {
 				if n, err := ge.PlanAddBuild(key, 25); err == nil && n > 0 {
 					planned++
@@ -198,7 +198,7 @@ func offlinePlan(base *game.GameEngine, name, age string, fail func(check, forma
 		if started > 0 && !summary {
 			fail("offline_plan_log", "the plan started %d buildings offline but the log has no summary", started)
 		}
-		for _, p := range invariantProblems(post, config.BuildingByKey()) {
+		for _, p := range invariantProblems(post, post.Ruleset().BuildingMap()) {
 			fail(p.check, "after a day offline with a plan: %s", p.msg)
 		}
 		runs = append(runs, post)
@@ -283,7 +283,7 @@ func checkOffline(o offlineRun, fail func(check, format string, args ...interfac
 	if anyRate && !anyGain {
 		fail("offline_nothing", "%s away: nothing was gained", o.d)
 	}
-	for _, p := range invariantProblems(o.post, config.BuildingByKey()) {
+	for _, p := range invariantProblems(o.post, o.post.Ruleset().BuildingMap()) {
 		fail(p.check, "after %s offline: %s", o.d, p.msg)
 	}
 	welcome := false
@@ -314,7 +314,7 @@ func keepTicking(ge *game.GameEngine, n int, fail func(check, msg string)) (note
 	if st.Tick < before+n && st.PendingCatastrophe == "" {
 		fail("not_ticking", fmt.Sprintf("%d ticks stepped but the tick counter moved %d", n, st.Tick-before))
 	}
-	for _, p := range invariantProblems(st, config.BuildingByKey()) {
+	for _, p := range invariantProblems(st, st.Ruleset().BuildingMap()) {
 		fail(p.check, p.msg)
 	}
 	return nil

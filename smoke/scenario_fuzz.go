@@ -199,7 +199,7 @@ func fuzzExec(seed int64, script []fuzzStep, gen *fuzzer) (*fuzzFailure, []fuzzS
 	ge := game.NewGameEngine()
 	ge.SeedRNG(seed)
 	bot := NewBot(ge)
-	defs := config.BuildingByKey()
+	defs := ge.Rules().BuildingMap()
 	var done []fuzzStep
 	for i, s := range script {
 		if gen != nil && s.Bot == 0 {

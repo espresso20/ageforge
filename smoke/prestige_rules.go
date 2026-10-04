@@ -15,7 +15,7 @@ import (
 // the docs behind fails the check.
 func PrestigePoints(st game.GameState) int {
 	total := 0
-	for _, ep := range config.Epochs() {
+	for _, ep := range st.Ruleset().Eras() {
 		w := 1
 		for i := 0; i < ep.Order; i++ {
 			w *= 3
@@ -96,15 +96,12 @@ func prestigeCarryProblems(before, after game.GameState, ending string) []proble
 // its level, and the record never moves back.
 func masteryCarryProblems(before, after game.GameState) []problem {
 	var out []problem
-	order := map[string]int{}
-	for i, a := range config.AgeOrder() {
-		order[a] = i
-	}
+	order := after.Ruleset().Indexes()
 	far := order[before.Age]
 	if o, ok := order[before.Mastery.RunFurthest]; ok && o > far {
 		far = o
 	}
-	for _, a := range config.AgeOrder() {
+	for _, a := range after.Ruleset().AgeKeys() {
 		was, now := before.Mastery.Ages[a], after.Mastery.Ages[a]
 		want := was
 		if order[a] < far {
