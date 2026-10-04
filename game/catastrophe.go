@@ -571,6 +571,14 @@ func (ge *GameEngine) Succumb() error {
 	ge.reapplyLegacyBonuses()
 
 	ge.applyAgeUnlocks("primitive_age")
+
+	// Size the stores before the starting stock lands, as a prestige does:
+	// storage follows Era Mastery and the bonuses kept across the fall, and
+	// stock added to a store still at its base size was cut off at the base
+	// (50 food and 50 wood). It also puts the real caps and rates in the new
+	// run's first snapshot instead of leaving them to the first tick.
+	ge.recalculateRates()
+
 	ge.Resources.Add("food", 15)
 	ge.Resources.Add("wood", 12)
 	for res, amount := range ge.Prestige.GetStartingResources() {

@@ -294,6 +294,82 @@ func TestSuccumb_RuinsResetAndLegacy(t *testing.T) {
 	}
 }
 
+// withStartingStock gives ge a starting-stock grant of food and wood, as the
+// first shop's Starting Food and Starting Wood perks were (they are retired;
+// the engine still pays whatever starting stock the shop holds).
+func withStartingStock(ge *GameEngine, food, wood float64) {
+	pm := ge.Prestige
+	list := append([]config.PrestigeUpgradeDef(nil), pm.upgradeList...)
+	for res, amount := range map[string]float64{"food": food, "wood": wood} {
+		def := config.PrestigeUpgradeDef{Key: "zz_test_start_" + res, Name: "Test " + res, EffectKey: res,
+			EffectType: "starting_resource", PerTier: amount, MaxTier: 1, Costs: []int{1}}
+		list = append(list, def)
+		pm.upgradeDefs[def.Key] = def
+		pm.upgrades[def.Key] = 1
+	}
+	pm.upgradeList = list
+}
+
+// A Succumb sizes the stores before the starting stock lands, as a prestige
+// does. The stock used to be added to stores still at their base size, so
+// anything over 50 food and 50 wood was cut off, and the new run's first
+// snapshot showed the base caps until the first tick.
+func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
+	// A run that fell in the Renaissance Age: the rebuild's Primitive Age
+	// is six ages behind the record and catches up at 4x, stores included.
+	fallen := func(seed int64) *GameEngine {
+		ge := catEngine(t, "renaissance_age", seed)
+		for _, a := range ageKeys() {
+			ge.Prestige.NoteAgeEntered(a)
+			if a == "renaissance_age" {
+				break
+			}
+		}
+		return ge
+	}
+	base := config.ResourceByKey()["food"].BaseStorage
+	if base != 50 || config.ResourceByKey()["wood"].BaseStorage != 50 {
+		t.Fatalf("base food and wood storage are %v and %v, want 50: adjust the test", base, config.ResourceByKey()["wood"].BaseStorage)
+	}
+
+	ge := fallen(21)
+	succumbIn(t, ge, "renaissance_age")
+	st := ge.GetState()
+	if k := st.Mastery.K; k != config.CatchUpK {
+		t.Fatalf("the rebuild starts at %vx, want %vx", k, config.CatchUpK)
+	}
+	for _, res := range []string{"food", "wood"} {
+		if got, want := st.Resources[res].Storage, float64(base*config.CatchUpK); got != want {
+			t.Errorf("%s storage %v in the first snapshot after a Succumb, want %v (sized before the first tick)", res, got, want)
+		}
+	}
+	if food, wood := st.Resources["food"].Amount, st.Resources["wood"].Amount; food != 15 || wood != 12 {
+		t.Errorf("a Succumb starts with %v food and %v wood, want 15 and 12", food, wood)
+	}
+
+	// With starting stock above the base stores: all of it lands, the same
+	// amounts a prestige starts with.
+	ge = fallen(22)
+	withStartingStock(ge, 100, 90)
+	succumbIn(t, ge, "renaissance_age")
+	st = ge.GetState()
+	if food, wood := st.Resources["food"].Amount, st.Resources["wood"].Amount; food != 115 || wood != 102 {
+		t.Errorf("a Succumb with +100 food and +90 wood starts with %v food and %v wood, want 115 and 102 (it was cut off at %v)", food, wood, base)
+	}
+	pr := fallen(22)
+	withStartingStock(pr, 100, 90)
+	if err := pr.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	ps := pr.GetState()
+	for _, res := range []string{"food", "wood"} {
+		if st.Resources[res].Amount != ps.Resources[res].Amount || st.Resources[res].Storage != ps.Resources[res].Storage {
+			t.Errorf("%s after a Succumb: %v of %v; after a prestige: %v of %v. They must start alike", res,
+				st.Resources[res].Amount, st.Resources[res].Storage, ps.Resources[res].Amount, ps.Resources[res].Storage)
+		}
+	}
+}
+
 // twoEpochs is Ancient Knowledge after two epochs: x0.8 twice.
 var twoEpochs = AncientKnowledgeFactor(2)
 
