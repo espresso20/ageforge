@@ -22,6 +22,12 @@ import "fmt"
 // copies the player queued. It needs no switch of its own: a player who
 // wants nothing banked plans nothing. Live play logs nothing per tick (the
 // Plan panel shows each bank); the welcome-back summary totals it.
+//
+// A wonder queued in the plan is a queued build like any other: it takes
+// the plan's overflow in plan order, into its own bank (the one deposits
+// fill), up to what that bank still lacks. So a planned wonder's bank fills
+// while the player is away even with wonder overflow turned off; with it on,
+// the age's wonder has had first call already and takes nothing more here.
 
 // SetWonderOverflow turns wonder overflow on or off.
 func (ge *GameEngine) SetWonderOverflow(on bool) {
@@ -124,10 +130,12 @@ type overflowLoss struct {
 // price of its next copy still lacks of each resource, the first item first,
 // and what no item needs is lost as before. An item banks only if it could
 // start in this age: a build of this age (not the next age's, which waits for
-// the advance, so nothing is carried past the advance's stockpile trim), not
-// a wonder (it has its own bank, which wonder overflow fills first) and not
-// at its MaxCount. It adds what it banked to into, by resource, when into is
-// non-nil. Cheap when nothing overflowed or nothing is planned, so it runs
+// the advance, so nothing is carried past the advance's stockpile trim) and
+// not at its MaxCount (a wonder built or under construction is at its).
+// It adds what it banked to into, by resource, when into is
+// non-nil. A wonder of this age takes its share into its own bank
+// (bankOverflow), up to what the bank lacks, whether or not wonder overflow
+// is on. Cheap when nothing overflowed or nothing is planned, so it runs
 // every tick. Must be called with the write lock held.
 func (ge *GameEngine) bankPlanOverflow(losses []overflowLoss, into map[string]float64) {
 	if len(losses) == 0 || len(ge.plan) == 0 {
@@ -141,7 +149,7 @@ func (ge *GameEngine) bankPlanOverflow(losses []overflowLoss, into map[string]fl
 			continue
 		}
 		def, ok := ge.Buildings.defs[it.Key]
-		if !ok || def.Category == "wonder" || (def.RequiredAge != "" && def.RequiredAge != ge.age) || !ge.Buildings.IsUnlocked(it.Key) {
+		if !ok || (def.RequiredAge != "" && def.RequiredAge != ge.age) || !ge.Buildings.IsUnlocked(it.Key) {
 			continue
 		}
 		if def.MaxCount > 0 {
@@ -157,6 +165,22 @@ func (ge *GameEngine) bankPlanOverflow(losses []overflowLoss, into map[string]fl
 		for j := range losses {
 			l := &losses[j]
 			if l.amount <= 0 || def.BaseCost[l.res] <= 0 {
+				continue
+			}
+			if def.Category == "wonder" {
+				// A queued wonder: its own bank takes what it still lacks.
+				dep := ge.bankOverflow(it.Key, l.res, l.amount)
+				if dep <= 0 {
+					continue
+				}
+				if into != nil {
+					into[l.res] += dep
+				}
+				if l.amount -= dep; l.amount <= 0 {
+					if open--; open == 0 {
+						return
+					}
+				}
 				continue
 			}
 			// One resource's price at a time: no map per item per tick.

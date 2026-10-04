@@ -36,8 +36,10 @@ import (
 //     after the reservations above it, covers all of that, the plan banks it
 //     and starts the wonder. While it waits it reserves nothing: it is 40
 //     price units of its age, and holding that back would stall everything
-//     below it for hours. Deposits and wonder overflow fill the bank as
-//     before; a part bigger than a full store can only be banked that way.
+//     below it for hours. Deposits, wonder overflow and the plan's overflow
+//     (a queued wonder takes it in plan order, with wonder overflow on or
+//     off) fill the bank; a part bigger than a full store can only be banked
+//     that way.
 //   - Overflow pays the plan (overflow.go, bankPlanOverflow): what a full
 //     store would throw away, after the age's wonder has taken what it needs,
 //     goes into the banks of the plan's build items, in plan order, each up
@@ -46,8 +48,9 @@ import (
 //     what must fit under the cap, and what it pays from the stores when it
 //     starts (the bank pays the rest). So a copy priced over a cap becomes
 //     buyable once overflow has banked the part over it. Only builds that can
-//     start in this age bank: the next age's buildings wait for the advance,
-//     and a wonder has its own bank. Nothing is built that was not queued.
+//     start in this age bank: the next age's buildings wait for the advance.
+//     A queued wonder banks into its own bank. Nothing is built that was not
+//     queued.
 //   - Deal items (plan_deal.go) take a civilization's trade deal once its
 //     fixed price is free, reserving it while they wait, like one build.
 //   - Techs start in plan order: only the first research item can take the
