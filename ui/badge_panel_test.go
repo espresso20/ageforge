@@ -537,6 +537,14 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 		t.Error("the rain is not a function of its frame")
 	}
 	frame(5, true)
+	// A window with no room, as a terminal a row or two tall leaves the
+	// dashboard once the command bar is taken off: nothing is drawn, and
+	// nothing breaks.
+	for _, size := range [][2]int{{0, 0}, {40, 0}, {40, -2}, {-3, 5}} {
+		for _, effect := range []string{theme.EffectRain, theme.EffectGlitch} {
+			drawThemeEffect(tcell.NewSimulationScreen("UTF-8"), 0, 0, size[0], size[1], effect, 7, false)
+		}
+	}
 }
 
 // TestHackerThemesBelongToTheirBadges: each theme a badge gives names that

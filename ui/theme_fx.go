@@ -57,6 +57,9 @@ func fxEmpty(scr tcell.Screen, x, y, x0, x1 int, bg tcell.Color) bool {
 // drawThemeEffect draws effect into the empty cells of the box at (x, y),
 // w by h, at frame n. plain draws it with the plain tier's glyphs.
 func drawThemeEffect(scr tcell.Screen, x, y, w, h int, effect string, n int, plain bool) {
+	if w <= 0 || h <= 0 {
+		return // a window with no room: nothing to draw into
+	}
 	bg := theme.Color(theme.RoleBackground)
 	style := func(c tcell.Color, bold bool) tcell.Style {
 		return tcell.StyleDefault.Background(bg).Foreground(theme.Legible(c, bg, 1.6)).Bold(bold)
