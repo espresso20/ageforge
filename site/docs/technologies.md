@@ -45,7 +45,7 @@ To line techs up, add them to the [build plan](plan.md) with `plan research <tec
 
 - Only the first research item in the plan can take the slot when it frees up. A tech further down waits its turn even if it is cheaper.
 - A planned tech holds back its knowledge cost while it waits, so plan items below it can't spend that knowledge.
-- A tech's prerequisites must be researched, in progress, or planned above it. The plan refuses a tech that fails this, and drops a planned one whose prerequisite you remove from above it.
+- A tech's prerequisites must be researched, in progress, or planned above it, and the plan refuses a tech that fails this. A tech already in the plan that loses a prerequisite (you removed it from above, canceled it mid-research, or a game update changed what the tech needs) is not dropped: it waits, and the plan shows what it needs (`needs Philosophy first`). While it waits it holds neither the slot's turn nor its knowledge, so you can plan the missing tech below it and that one starts first.
 - You can plan the next age's techs; they wait for the advance.
 
 The plan is the only research queue, and the game never chooses what you research next. The techs you plan are remembered with the rest of your plan: with the prestige legacy kit's [Plan Template](prestige.md#plan-template) owned, they are planned again on later runs, in the age you planned them in. Techs you start by hand with `research` are not remembered.
@@ -129,7 +129,9 @@ With no arguments, opens the **Research panel** (so does `techs`). It groups tec
 
 ## Tech Tree by Age
 
-Prerequisites are listed by tech key.
+Prerequisites are listed by tech key. A tech needs every prerequisite it lists.
+
+**Changed prerequisites.** Eleven techs need different techs than they used to. Fire Mastery, Primitive Writing, Feudalism and Rocketry need nothing now. Mathematics no longer needs Currency, Philosophy no longer lists Primitive Writing (Mathematics already needs it), Civil Engineering no longer lists Masonry (Road Building already needs it), Navigation no longer needs Road Building, and Mass Production no longer needs Railroads. Alchemy needs Philosophy instead of Mathematics, and Quantum Computing needs Quantum Mechanics as well as Clockwork Automation. A save from before the change keeps everything it had: a tech you already researched stays researched and still opens the techs that need it, a research in progress finishes, and a tech in your plan waits for what it now needs.
 
 Research time is capped at **one eighth of the tech's age target** (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)), so the handful of techs each age offers fits inside it. From the Bronze to the Colonial Age most techs sit below that cap, at their own research times; in every other age each tech sits at the cap, so all techs of that age share the same tick count. Ticks and times below are base values (2 seconds a tick), before research speed and game speed bonuses. "+X% all production" effects add into one pool that is clamped at x3.0, so from about the Electric Age most of them no longer raise your output (see [The all-production cap](resources.md#the-all-production-cap) and [All production](#all-production) below).
 
@@ -140,7 +142,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `tool_making` | Tool Making | 800 kp | 56 | none | +15% worker output |
-| `fire_mastery` | Fire Mastery | 1K kp | 56 | `tool_making` | +0.1 food/tick |
+| `fire_mastery` | Fire Mastery | 1K kp | 56 | none | +0.1 food/tick |
 
 ---
 
@@ -151,7 +153,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | `stoneworking` | Stoneworking | 6K kp | 168 | `tool_making` | +20% stone output |
 | `animal_husbandry` | Animal Husbandry | 7.5K kp | 168 | `fire_mastery` | +0.2 food/tick |
 | `pottery` | Pottery | 5K kp | 168 | `fire_mastery` | +25 storage for every resource |
-| `primitive_writing` | Primitive Writing | 10K kp | 168 | `pottery` | +10% knowledge output |
+| `primitive_writing` | Primitive Writing | 10K kp | 168 | none | +10% knowledge output |
 
 ---
 
@@ -173,7 +175,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 |---|---|---|---|---|---|
 | `iron_smelting` | Iron Smelting | 30K kp | 1,100 | `bronze_working` | +40% iron output, +0.2 iron/tick |
 | `road_building` | Road Building | 25K kp | 950 | `masonry` | +20% gold output, +10% worker output |
-| `mathematics` | Mathematics | 37.5K kp | 1,200 | `primitive_writing`, `currency` | +20% knowledge output |
+| `mathematics` | Mathematics | 37.5K kp | 1,200 | `primitive_writing` | +20% knowledge output |
 | `siege_warfare` | Siege Warfare | 35K kp | 1,005 | `military_tactics` | +30% military power |
 
 ---
@@ -182,8 +184,8 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `philosophy` | Philosophy | 20K kp | 1,500 | `mathematics`, `primitive_writing` | +30% knowledge output, +0.2 culture/tick |
-| `civil_engineering` | Civil Engineering | 18K kp | 1,300 | `masonry`, `road_building` | +100 storage for every resource, −5% build cost |
+| `philosophy` | Philosophy | 20K kp | 1,500 | `mathematics` | +30% knowledge output, +0.2 culture/tick |
+| `civil_engineering` | Civil Engineering | 18K kp | 1,300 | `road_building` | +100 storage for every resource, −5% build cost |
 | `imperial_legions` | Imperial Legions | 22K kp | 1,600 | `siege_warfare`, `iron_smelting` | +40% military power |
 
 ---
@@ -195,8 +197,8 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | `steel_forging` | Steel Forging | 25K kp | 2,000 | `iron_smelting` | +0.25 steel/tick, +30% iron output |
 | `theology` | Theology | 20K kp | 1,800 | `philosophy` | +0.3 faith/tick |
 | `banking` | Banking | 30K kp | 2,100 | `currency`, `mathematics` | +50% gold output, +100 gold storage |
-| `feudalism` | Feudalism | 22K kp | 1,700 | `military_tactics` | +5 housing |
-| `alchemy` | Alchemy | 28K kp | 2,200 | `mathematics` | +15% knowledge output, +0.1 gold/tick |
+| `feudalism` | Feudalism | 22K kp | 1,700 | none | +5 housing |
+| `alchemy` | Alchemy | 28K kp | 2,200 | `philosophy` | +15% knowledge output, +0.1 gold/tick |
 | `chronometry` | Chronometry | 20K kp | 1,900 | none | +5% game speed |
 
 ---
@@ -206,7 +208,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `printing_press` | Printing Press | 50K kp | 3,000 | `theology`, `alchemy` | +40% knowledge output, +0.3 culture/tick |
-| `navigation` | Navigation | 45K kp | 2,600 | `mathematics`, `road_building` | +50% gold output, +30% expedition reward |
+| `navigation` | Navigation | 45K kp | 2,600 | `mathematics` | +50% gold output, +30% expedition reward |
 | `gunpowder` | Gunpowder | 55K kp | 3,200 | `alchemy`, `siege_warfare` | +50% military power |
 | `patronage` | Patronage | 40K kp | 2,500 | `banking` | +0.5 culture/tick, +0.12 knowledge/tick |
 
@@ -240,7 +242,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 |---|---|---|---|---|---|
 | `electrification` | Electrification | 180K kp | 5,265 | `industrialization` | +1.0 electricity/tick, +20% all production |
 | `telecommunications` | Telecommunications | 150K kp | 5,265 | `electrification` | +40% knowledge output, +50% gold output |
-| `mass_production` | Mass Production | 200K kp | 5,265 | `industrialization`, `railroads` | +40% all production, +1.0 steel/tick |
+| `mass_production` | Mass Production | 200K kp | 5,265 | `industrialization` | +40% all production, +1.0 steel/tick |
 
 ---
 
@@ -259,7 +261,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `nuclear_fission` | Nuclear Fission | 500K kp | 7,020 | `power_distribution`, `chemical_engineering` | +5.0 electricity/tick, +0.5 uranium/tick |
-| `rocketry` | Rocketry | 400K kp | 7,020 | `rifling`, `chemical_engineering` | +100% military power, +50% expedition reward |
+| `rocketry` | Rocketry | 400K kp | 7,020 | none | +100% military power, +50% expedition reward |
 | `nuclear_deterrence` | Nuclear Deterrence | 600K kp | 7,020 | `nuclear_fission`, `rocketry` | +150% military power |
 | `civilian_reactors` | Civilian Reactors | 3.4B kp | 7,020 | `nuclear_deterrence` | +5.0 electricity/tick, +0.5 uranium/tick; opens the Nuclear Plant |
 
@@ -354,7 +356,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 |---|---|---|---|---|---|
 | `quantum_mechanics` | Quantum Mechanics | 150M kp | 14,040 | `antimatter_synthesis` | +2.0 quantum flux/tick, +100% all production |
 | `reality_manipulation` | Reality Manipulation | 200M kp | 14,040 | `quantum_mechanics` | +5.0 quantum flux/tick, +100% all production |
-| `quantum_computing` | Quantum Computing | 150M kp | 14,040 | `clockwork_automation` | **+15% game speed** |
+| `quantum_computing` | Quantum Computing | 150M kp | 14,040 | `clockwork_automation`, `quantum_mechanics` | **+15% game speed** |
 
 ---
 
@@ -636,7 +638,7 @@ Knowledge costs rise steeply, from 800 kp (Primitive) to hundreds of millions in
 
 **Knowledge is deducted upfront.** Don't start a tech if your stockpile barely covers the cost. One bad event (The Dark Age cuts knowledge by 80% and cancels your active research) can set you back a long way.
 
-**Prerequisites stack.** Before typing `research mathematics`, check that you have both `primitive_writing` and `currency`. `research list` shows only the techs you can start now; the Research panel (`research`) shows the locked ones dimmed. Or plan the whole chain: `plan research` takes a tech whose prerequisites are planned above it.
+**Prerequisites stack.** Before typing `research banking`, check that you have both `currency` and `mathematics`. `research list` shows only the techs you can start now; the Research panel (`research`) shows the locked ones dimmed. Or plan the whole chain: `plan research` takes a tech whose prerequisites are planned above it.
 
 **The Dark Age epoch event** cancels your active research and drains 80% of your knowledge stockpile. If an epoch transition is close, consider whether to delay an expensive research start until after its event resolves.
 
