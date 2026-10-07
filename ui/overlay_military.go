@@ -19,7 +19,13 @@ func militaryProvider(state game.GameState, _ int) string {
 	// === Army Overview ===
 	fmt.Fprintf(&sb, " [gold]═══ Army Overview ═══[-]\n\n")
 	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %s / %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap)))
-	fmt.Fprintf(&sb, " [gold]Training:[-]  %s/tick\n", FormatRate(mil.SoldierRate))
+	if rs, ok := state.Resources["soldiers"]; ok && !rs.Unlocked {
+		// Military buildings can stand before soldiers exist: nothing trains
+		// in them until the age that brings soldiers, and the panel says so.
+		fmt.Fprintf(&sb, " [gold]Training:[-]  %s\n", theme.Paint(theme.RoleDim, "not yet. Soldiers arrive in "+ageRef(state, "iron_age")+"."))
+	} else {
+		fmt.Fprintf(&sb, " [gold]Training:[-]  %s/tick\n", FormatRate(mil.SoldierRate))
+	}
 	fmt.Fprintf(&sb, " [gold]Defense:[-]   %s\n", FormatNumber(mil.DefenseRating))
 	writeGarrison(&sb, state)
 

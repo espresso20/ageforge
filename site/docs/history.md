@@ -37,8 +37,8 @@ Population      ↑ 163 workers  min:10.0    max:198.0
   10.0   ────────────────────────────────────────────────
 ```
 
-- The labels on the left show the max, midpoint and min of the visible window.
-- The `│` markers show where you advanced an age. All 7 graphs share the same markers, so you can see how each metric responded to the advance. The ages you passed through are listed under the graphs.
+- The labels on the left show the max, midpoint and min of the visible window. A label that would only repeat the one under it is left out, so a flat line carries its value once, on the base line.
+- The `│` markers show where you advanced an age. All 7 graphs share the same markers, so you can see how each metric responded to the advance. The ages you passed through are listed under the graphs, by name.
 - Time runs left to right, from the oldest sample to now.
 
 ---

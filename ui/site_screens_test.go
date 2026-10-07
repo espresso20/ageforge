@@ -54,12 +54,11 @@ const (
 	// A panel is drawn at 100x30: the size the game's own small-terminal
 	// checks use, and room enough for every panel to read as it should.
 	sitePanelW, sitePanelH = 100, 30
-	// The dashboard is drawn at 144x46, the smallest terminal it holds
-	// together on. A resource row with its marker is 59 columns long and a
-	// construction row 57, and both wrap in anything narrower (each half of
-	// the screen is (width-22)/2 wide, borders included); the Bronze Age's
-	// seven resources need the 46 rows.
-	siteDashW, siteDashH = 144, 46
+	// The dashboard is drawn at 120x40, the size the wiki calls a large
+	// terminal: every box writes its rows for the width it is drawn at
+	// (resources_box.go, tab_economy.go), so nothing wraps there, the mini
+	// map shows, and the Bronze Age's seven resources each have a row.
+	siteDashW, siteDashH = 120, 40
 	// The themes page shows two screens side by side, so those two are the
 	// game at its smallest size.
 	sitePairW, sitePairH = 80, 24

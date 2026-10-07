@@ -42,6 +42,46 @@ func (s *scene) segs(x, y int, bg tcell.Color, parts []seg) int {
 
 func clip(str string, n int) string { return mapmodel.Clip(str, n) }
 
+// segsLen is how many cells parts take.
+func segsLen(parts []seg) int {
+	n := 0
+	for _, p := range parts {
+		n += len([]rune(p.s))
+	}
+	return n
+}
+
+// fitHints returns the first of options that fits in w cells with tail
+// after it, joined to the tail: the status line names its keys as fully as
+// the width allows and never clips the tail (where the view is). With none
+// that fits it is the last option, and the tail clips.
+func fitHints(w int, tail []seg, options ...[]seg) []seg {
+	pick := options[len(options)-1]
+	for _, opt := range options {
+		if segsLen(opt)+segsLen(tail) <= w {
+			pick = opt
+			break
+		}
+	}
+	return append(append([]seg(nil), pick...), tail...)
+}
+
+// panoramaHints is the status line at rest of a panorama (the skyline on
+// the ground and in the sky): its keys, then where the view is.
+func panoramaHints(w int, where string) []seg {
+	key, dim := theme.RoleAccent, theme.RoleDim
+	tail := []seg{{"│ ", dim}, {where, theme.RoleLabel}}
+	return fitHints(w, tail,
+		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"PgUp PgDn ", key}, {"half  ", dim}, {"Home End ", key},
+			{"oldest, present  ", dim}, {"Tab ", key}, {"inspect  ", dim}, {"map flows ", key}, {"overlay  ", dim}},
+		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"PgUp PgDn ", key}, {"half  ", dim}, {"Home End ", key},
+			{"oldest, now  ", dim}, {"Tab ", key}, {"inspect  ", dim}, {"map flows  ", key}},
+		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"PgUp PgDn ", key}, {"half  ", dim}, {"Tab ", key}, {"inspect  ", dim}},
+		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"Tab ", key}, {"inspect  ", dim}},
+		[]seg{{" ◄► Tab  ", key}},
+	)
+}
+
 func (s *scene) chrome() {
 	bg := chromeBg()
 	for x := 0; x < s.W; x++ {
@@ -229,8 +269,5 @@ func (s *scene) status(bg tcell.Color) {
 	if di := m.Skyline.DistrictAt(s.cam + s.W/2); di >= 0 {
 		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + " district"
 	}
-	s.segs(0, y, bg, []seg{{" ◄► ", theme.RoleAccent}, {"scroll  ", theme.RoleDim}, {"PgUp PgDn ", theme.RoleAccent},
-		{"half  ", theme.RoleDim}, {"Home End ", theme.RoleAccent}, {"oldest, present  ", theme.RoleDim},
-		{"Tab ", theme.RoleAccent}, {"inspect  ", theme.RoleDim}, {"map flows ", theme.RoleAccent}, {"flows  ", theme.RoleDim},
-		{"│ ", theme.RoleDim}, {where, theme.RoleLabel}})
+	s.segs(0, y, bg, panoramaHints(s.W, where))
 }

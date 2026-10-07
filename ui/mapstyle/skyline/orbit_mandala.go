@@ -293,11 +293,16 @@ func (o *orb) mandalaLegend() []seg {
 
 // mandalaHints is the status line at rest: the keys, and where you are.
 func (o *orb) mandalaHints() []seg {
-	return []seg{{" Tab ", theme.RoleAccent}, {"inspect  ", theme.RoleDim}, {"◄► ", theme.RoleAccent},
-		{"round a ring  ", theme.RoleDim}, {"↑↓ ", theme.RoleAccent}, {"ring to ring  ", theme.RoleDim},
-		{"Home ", theme.RoleAccent}, {"the core  ", theme.RoleDim},
-		{"map flows ", theme.RoleAccent}, {"flows  ", theme.RoleDim}, {"│ ", theme.RoleDim},
-		{"beyond form, in light", theme.RoleLabel}}
+	key, dim := theme.RoleAccent, theme.RoleDim
+	tail := []seg{{"│ ", dim}, {"beyond form, in light", theme.RoleLabel}}
+	return fitHints(o.W, tail,
+		[]seg{{" Tab ", key}, {"inspect  ", dim}, {"◄► ", key}, {"round a ring  ", dim}, {"↑↓ ", key},
+			{"ring to ring  ", dim}, {"Home ", key}, {"the core  ", dim}, {"map flows ", key}, {"overlay  ", dim}},
+		[]seg{{" Tab ", key}, {"inspect  ", dim}, {"◄► ", key}, {"round a ring  ", dim}, {"↑↓ ", key},
+			{"ring to ring  ", dim}, {"Home ", key}, {"the core  ", dim}},
+		[]seg{{" Tab ", key}, {"inspect  ", dim}, {"◄► ↑↓ ", key}, {"move  ", dim}},
+		[]seg{{" Tab ◄► ↑↓  ", key}},
+	)
 }
 
 // drawMandala draws layout g of rings centred on (cx, cy), above row

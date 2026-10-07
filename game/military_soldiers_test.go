@@ -112,3 +112,67 @@ func TestMilitaryBuildings_ProduceAndStoreSoldiers(t *testing.T) {
 		t.Errorf("soldiers after saturation = %v, want clamped at cap %v", atCap, expectedCap)
 	}
 }
+
+// TestLockedSoldiers_NothingTrainsOrCounts: a War Camp or a Barracks can
+// stand before the Iron Age unlocks soldiers. Until then nothing trains:
+// the soldiers rate is 0 (so the Army panel shows no training), nothing is
+// held, and the stats count nothing gathered. The unlock turns all three on.
+func TestLockedSoldiers_NothingTrainsOrCounts(t *testing.T) {
+	ge := NewGameEngine()
+	const barracks = "barracks"
+	def := config.BuildingByKey()[barracks]
+
+	ge.mu.Lock()
+	ge.Buildings.counts[barracks] = 2
+	ge.Buildings.unlocked[barracks] = true
+	ge.Resources.AddStorage("food", 1e9)
+	ge.Workers.UnlockType("worker")
+	slots := def.WorkerCapacity * 2
+	if !ge.Workers.Recruit("worker", slots, 100000) || !ge.Workers.Assign("worker", barracks, slots) {
+		ge.mu.Unlock()
+		t.Fatal("could not staff the barracks")
+	}
+	if ge.Resources.IsUnlocked("soldiers") {
+		ge.mu.Unlock()
+		t.Fatal("soldiers are unlocked in a new game; the test needs them locked")
+	}
+	ge.mu.Unlock()
+
+	run := func(ticks int) {
+		for i := 0; i < ticks; i++ {
+			ge.mu.Lock()
+			ge.Resources.Add("food", 1e6)
+			ge.mu.Unlock()
+			ge.StepTicks(1)
+		}
+	}
+	run(40)
+	st := ge.GetState()
+	if rate := st.Resources["soldiers"].Rate; rate != 0 {
+		t.Errorf("locked soldiers have a rate of %v, want 0", rate)
+	}
+	if st.Military.SoldierRate != 0 {
+		t.Errorf("the Army panel's training rate is %v with soldiers locked, want 0", st.Military.SoldierRate)
+	}
+	if st.Military.SoldierCount != 0 || st.Resources["soldiers"].Amount != 0 {
+		t.Errorf("locked soldiers were held: %d", st.Military.SoldierCount)
+	}
+	if got := st.Stats.TotalGathered["soldiers"]; got != 0 {
+		t.Errorf("the stats count %v soldiers gathered that were never held", got)
+	}
+	if got := ge.Stats.SoldiersTrained; got != 0 {
+		t.Errorf("the stats count %v soldiers trained with soldiers locked", got)
+	}
+
+	ge.mu.Lock()
+	ge.Resources.UnlockResource("soldiers")
+	ge.mu.Unlock()
+	run(10)
+	st = ge.GetState()
+	if st.Resources["soldiers"].Rate <= 0 || st.Military.SoldierCount <= 0 {
+		t.Errorf("unlocked soldiers do not train: rate %v, held %d", st.Resources["soldiers"].Rate, st.Military.SoldierCount)
+	}
+	if st.Stats.TotalGathered["soldiers"] <= 0 {
+		t.Error("the stats count no soldiers once they train")
+	}
+}

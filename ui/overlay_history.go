@@ -23,11 +23,18 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	lastTick := samples[n-1].Tick
 
 	// collect age marker ticks and names
+	// A marker holds the age's key (and saves already written hold keys
+	// too): the footer shows the age's name.
+	set := state.Ruleset()
 	var markerTicks []int
 	var markerNames []string
 	for _, m := range state.History.AgeMarkers {
 		markerTicks = append(markerTicks, m.Tick)
-		markerNames = append(markerNames, m.AgeName)
+		name := m.AgeName
+		if def, ok := set.Age(name); ok {
+			name = def.Name
+		}
+		markerNames = append(markerNames, name)
 	}
 
 	// 85% overlay, minus y-axis label (8 chars), border/padding (6 chars)
@@ -101,16 +108,17 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 
 		// graph lines with y-axis labels
 		lines := BrailleLine(vals, graphW, graphH, ageCols)
+		top, mid, bottom := historyAxisLabels(minV, maxV)
 		yLabels := []string{
-			fmt.Sprintf("[gray]%-6s[-]", fmtVal(maxV)),
+			fmt.Sprintf("[gray]%-6s[-]", top),
 			"      ",
-			fmt.Sprintf("[gray]%-6s[-]", fmtVal((maxV+minV)/2)),
+			fmt.Sprintf("[gray]%-6s[-]", mid),
 			"      ",
 		}
 		for i, line := range lines {
 			sb.WriteString(fmt.Sprintf("  %s %s%s[-]\n", yLabels[i], m.color, line))
 		}
-		sb.WriteString(fmt.Sprintf("  [gray]%-6s %s[-]\n", fmtVal(minV), strings.Repeat("─", graphW)))
+		sb.WriteString(fmt.Sprintf("  [gray]%-6s %s[-]\n", bottom, strings.Repeat("─", graphW)))
 		sb.WriteString("\n")
 	}
 
@@ -127,4 +135,19 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	}
 
 	return sb.String()
+}
+
+// historyAxisLabels is a graph's three y-axis labels: its top, its middle
+// and its base line. A label that would only repeat the one below it is
+// left blank, so a flat series (drawn along the base line) is labeled once
+// and a series that barely moves does not print the same number twice.
+func historyAxisLabels(minV, maxV float64) (top, mid, bottom string) {
+	top, mid, bottom = fmtVal(maxV), fmtVal((maxV+minV)/2), fmtVal(minV)
+	if mid == bottom || mid == top {
+		mid = ""
+	}
+	if top == bottom {
+		top = ""
+	}
+	return top, mid, bottom
 }
