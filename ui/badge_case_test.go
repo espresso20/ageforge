@@ -634,7 +634,7 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 		base := map[string]tcell.Color{
 			"bronze": pal.inkOn(inkBronze, false), "silver": pal.inkOn(inkSilver, false),
 			"gold": pal.inkOn(inkGold, false), "platinum": pal.inkOn(inkPlatinum, false),
-			"legendary": pal.inkOn(prismInk(300, stopBase), false),
+			"legendary": pal.inkOn(tierInk(config.BadgeLegendary), false),
 		}
 		names := []string{"bronze", "silver", "gold", "platinum", "legendary"}
 		for i, a := range names {

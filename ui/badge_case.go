@@ -509,11 +509,19 @@ func wrapCells(s string, w int) []string {
 	return lines
 }
 
-// tierInk is the ink a tier's name is written in.
+// tierInk is the ink a tier's name and its progress bar are drawn in: its
+// metal, or for a legendary badge one hue of its wheel.
 func tierInk(t config.BadgeTier) ink {
+	if t == config.BadgeLegendary {
+		return prismInk(legendaryHue, stopBase)
+	}
 	_, base, _ := tierInks(t)
 	return base
 }
+
+// legendaryHue is the hue that stands for the legendary tier where there
+// is room for one colour only: a violet, apart from every metal.
+const legendaryHue = 280
 
 // barSegs is a progress bar of w cells: the part done in an ink, the rest
 // dim.
