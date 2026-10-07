@@ -50,6 +50,8 @@ The `catastrophe` command (alias `cat`), with nothing after it, shows the outloo
 
 The Cosmic Era has no next epoch, so its passage is prestige, and a Cosmic Era prestige can bring the **Last Passage**: a choice between keeping part of the run's prestige points (Endure) and the permanent Cosmic Legacy (Succumb). It blocks only prestige, and like a catastrophe it waits behind a ☄ badge until you answer it with `catastrophe`. See [The Last Passage](prestige.md#the-last-passage).
 
+A harbinger warns of it from the moment you enter the era, and its Appease lowers the odds of the roll like any other: ×0.6 per level, two levels at most. Level 1 costs 1.4B faith and 21B culture, three quarters of what the Interstellar Age makes at a moderate faith and culture economy and about five times a doom's Appease there; level 2 costs double. See [What it costs](harbinger.md#what-it-costs-by-epoch).
+
 ---
 
 ## The Catastrophes
