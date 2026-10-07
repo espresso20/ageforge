@@ -70,7 +70,7 @@ It works during offline catch-up too, and the welcome back says how much overflo
 
 **ready** starts on the next tick, **waiting** is saving up (the bar is how much of the next price its bank and what is free after the items above cover), **blocked** says what it is waiting for. What an item has banked from overflow shows on its line. `C` asks for a second press before it clears.
 
-<figure class="screen" data-screen="plan"><figcaption>The Plan panel with four items: a tech held back by the research slot, two builds saving up for their next copy, and an advance that goes once the next age is ready.</figcaption></figure>
+<figure class="screen" data-screen="plan"><figcaption>The Plan panel with five items: houses saving up for their next copy, a tech held back by the research slot, two builds waiting their turn for wood, and an advance that goes once the next age is ready.</figcaption></figure>
 
 ## Offline
 

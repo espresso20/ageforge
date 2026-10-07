@@ -440,7 +440,9 @@ func (s *siteStage) bronzeTown() {
 	s.say("plan build lumber_mill 4")
 	s.say("plan build quarry 5")
 	s.say("plan advance")
-	s.wait(11)
+	// Long enough for the plan to start what it can afford and be part way
+	// to the next house.
+	s.wait(28)
 	s.holdToast()
 }
 
