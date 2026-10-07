@@ -214,12 +214,14 @@ func registry() []*Command {
 			}},
 
 		// Research, Expeditions & Army
-		{Name: "research", Aliases: []string{"res"}, Section: secResearch, Panel: "Technology tree & progress",
+		{Name: "research", Aliases: []string{"res"}, Section: secResearch, Panel: "The tech tree: a map of every tech in sight",
 			Args: []Arg{{Kind: ArgTech, Optional: true}},
 			Help: []Usage{{"research <tech>", "Research a tech"}},
 			Subs: []*Command{
 				{Name: "cancel", Dangerous: true, Help: []Usage{{"research cancel", "Cancel current research (the knowledge spent is not refunded)"}}},
 				sub("list", "research list", "List available techs"),
+				sub("tree", "research tree [close|far]", "Open the tech tree, zoomed in on big badges (close) or out on the whole tree (far)", Arg{Kind: ArgWord, Words: []string{"close", "far"}, Optional: true}),
+				sub("card", "research card <tech>", "Open the tech tree on a tech's card: what it does, costs and needs", Arg{Kind: ArgTech}),
 			}},
 		panel("techs", ""),
 		{Name: "expedition", Aliases: []string{"exp"}, Section: secResearch, Panel: "Scouting expeditions (resource cost)",
@@ -260,7 +262,7 @@ func registry() []*Command {
 				sub("ally", "diplomacy ally <civ>", "Ally with a civilization ("+game.Amount(game.AllyCost, "gold")+", needs opinion "+strconv.Itoa(game.AllyOpinion)+")", civArg...),
 				sub("rival", "diplomacy rival <civ>", "Declare a civilization your rival", civArg...),
 				sub("embargo", "diplomacy embargo <civ>", "Embargo a civilization (a provocation: it can start a war)", civArg...),
-				sub("gift", "diplomacy gift <civ>", "Send a gift: "+game.Amount(game.GiftCost, "gold")+" for +"+strconv.Itoa(game.GiftOpinion)+" opinion", civArg...),
+				sub("gift", "diplomacy gift <civ>", "Send a gift of gold for +"+strconv.Itoa(game.GiftOpinion)+" opinion (the Factions panel shows today's price)", civArg...),
 				sub("neutral", "diplomacy neutral <civ>", "Return to neutral with a civilization", civArg...),
 				sub("tribute", "diplomacy tribute <civ>", "Sue for peace with a civilization at war", civArg...),
 				sub("deals", "diplomacy deals [civ]", "List trade deals (one civilization, or every one you have met)",

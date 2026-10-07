@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
@@ -49,6 +50,7 @@ func tradeProvider(state game.GameState, _ int) string {
 
 	// === Trade routes ===
 	sb.WriteString("\n [gold]═══ Trade routes ═══[-]\n\n")
+	sb.WriteString(lockNotes(state, config.FeatureTradeRoutes, config.FeatureRouteRailFreight, config.FeatureRouteWarpCommerce, config.FeatureBlackMarket))
 
 	// Disruption banner: a war or an embargo blockades these resources, and
 	// any route importing one is suspended until the conflict ends.

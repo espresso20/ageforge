@@ -146,7 +146,9 @@ See [Workers](workers-and-domains.md) for the domain table and the efficiency fo
 
 | Command | Description |
 |---|---|
-| `research` | Open the **Research** panel |
+| `research` | Open the **Research** panel: the tech tree as a map (see [Reading the Tech Tree](technologies.md#reading-the-tech-tree)) |
+| `research tree [close\|far]` | Open the tree zoomed in on big badges (close) or out on the whole tree (far) |
+| `research card <tech>` | Open the tree on a tech's card: what it does, costs and needs |
 | `techs` | Opens the same **Research** panel |
 | `research list` | List the techs you can research now, with their knowledge cost. A ★ marks the keystone its age's wonder needs |
 | `research <tech>` | Start researching a tech |
@@ -158,7 +160,18 @@ research agriculture
 research iron_smelting
 ```
 
-Tech keys are shown in the **Research** panel (`research`): dim gray when locked, a gold circle when available. To queue techs, use `plan research`. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Knowledge](knowledge.md).
+The **Research** panel (`research`) is a map of the tech tree. Like the Map it leaves the command bar working and takes only the keys that print nothing:
+
+| Key | Action |
+|---|---|
+| Arrows | Move to the nearest tech that way; the view follows |
+| `Tab` / `Shift-Tab` | Next or previous tech you can start |
+| `PgUp` / `PgDn` | Zoom out to a tech a line, and back in |
+| `Home` | Back to your current age |
+| `Enter` | Open the selected tech's card; on the card, do what its last line says (start the tech, or add it to the build plan) |
+| `Esc` | Close the card, then the panel |
+
+With something typed, `Tab` and `Enter` act on the prompt instead. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Knowledge](knowledge.md).
 
 ---
 
@@ -226,7 +239,7 @@ Each trade pushes that pair's rate down a little, and the rate recovers over tim
 | `diplomacy ally <civ>` | Ally with a civilization. Costs 500 gold and needs opinion 50 |
 | `diplomacy rival <civ>` | Declare a rivalry |
 | `diplomacy embargo <civ>` | Embargo a civilization. This is a provocation that can start a war |
-| `diplomacy gift <civ>` | Send a gift: 200 gold for +15 opinion |
+| `diplomacy gift <civ>` | Send a gift of gold for +15 opinion: 200 gold, or 150 with Telecommunications (the Factions panel shows today's price) |
 | `diplomacy neutral <civ>` | Set a civilization back to neutral |
 | `diplomacy tribute <civ>` | Sue for peace with a civilization you are at war with (you pay gold and culture, scaled to its strength) |
 | `diplomacy raid <civ>` | Raid a civilization's trade route (-20 opinion; a provocation that can start a war) |

@@ -99,6 +99,11 @@ func helpProvider(_ game.GameState, screenW int) string {
 		[2]string{"Esc", "Close the panel"})
 	note("Settings are commands: map style, map glyphs, map flows, minimap.")
 
+	sb.WriteString("\n[gold]═══ The Research panel ═══[-]\n")
+	note("The tech tree. The prompt keeps working while it is open; the tree takes the keys that print nothing.")
+	keys(researchKeys...)
+	note("Zoom is a command too: research tree close, research tree far.")
+
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	var short []string
 	for _, c := range reg {

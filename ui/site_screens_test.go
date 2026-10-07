@@ -68,11 +68,14 @@ const (
 
 // siteStage is one staged game and the dashboard that draws it.
 type siteStage struct {
-	t     *testing.T
-	eng   *game.GameEngine
-	d     *Dashboard
-	app   *tview.Application
-	pages *tview.Pages
+	// onTree takes the tech tree's pictures, part way through the Classical
+	// Age (toMedieval calls it).
+	onTree func()
+	t      *testing.T
+	eng    *game.GameEngine
+	d      *Dashboard
+	app    *tview.Application
+	pages  *tview.Pages
 }
 
 func newSiteStage(t *testing.T) *siteStage {
@@ -491,7 +494,19 @@ func (s *siteStage) toMedieval() {
 	s.raiseAll(siteBuild{"classical_vault", 4}, siteBuild{"villa", 6}, siteBuild{"estate_farm", 4}, siteBuild{"wood_workshop", 3},
 		siteBuild{"marble_works", 3}, siteBuild{"library", 15}, siteBuild{"oracle_house", 2}, siteBuild{"military_academy", 15},
 		siteBuild{"merchant_quarter", 5}, siteBuild{"aqueduct", 2}, siteBuild{"forge", 2}, siteBuild{"amphitheater", 2})
-	s.learn("philosophy", "civil_engineering")
+	// The tech tree's pictures are taken here, with Philosophy under way:
+	// the map then has techs researched, in progress, ready to start and
+	// waiting for what they need on screen at once, and the next age dim.
+	s.stock()
+	if err := s.eng.StartResearch("philosophy"); err != nil {
+		s.t.Fatalf("researching philosophy: %v", err)
+	}
+	s.wait(300)
+	if s.onTree != nil {
+		s.onTree()
+	}
+	s.until("Philosophy researched", func(st game.GameState) bool { return st.Research.CurrentTech == "" })
+	s.learn("civil_engineering")
 	s.wonder("parthenon")
 	s.advance()
 	s.dismiss()
@@ -611,7 +626,6 @@ func TestWriteSiteScreens(t *testing.T) {
 		{"plan", "plan", ""},
 		{"rates", "stats", "Resource rates"},
 		{"workers", "workers", ""},
-		{"research", "research", ""},
 		{"trade", "trade", "Trade routes"},
 		{"wonders", "wonders", ""},
 		{"milestones", "milestones", ""},
@@ -674,6 +688,15 @@ func TestWriteSiteScreens(t *testing.T) {
 	shots.take(s, "catastrophe")
 	s.d.closeCatastropheModal()
 
+	s.onTree = func() {
+		for _, p := range [][2]string{{"research", "research tree close"}, {"research-card", "research card civil_engineering"}, {"research-far", "research tree far"}} {
+			s.open(p[1], "")
+			shots.take(s, p[0])
+			s.close()
+		}
+		s.say("research tree close")
+		s.close()
+	}
 	s.toMedieval()
 	s.quiet()
 	s.level(map[string]float64{"food": 0.47, "wood": 0.69, "stone": 0.74, "knowledge": 0.38, "gold": 0.55, "iron": 0.61, "marble": 0.43,

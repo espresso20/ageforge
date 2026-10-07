@@ -42,22 +42,25 @@ type TechLaneDef struct {
 	// Emblem is the lane's glyph, one cell wide. A tech with no emblem of
 	// its own carries it.
 	Emblem string
+	// Hue is the lane's identity colour on the tree, as "#rrggbb". The
+	// panels pass it through the theme's contrast rule before drawing.
+	Hue string
 }
 
 // TechLanes returns the lanes in the order the tree draws them, left to
 // right.
 func TechLanes() []TechLaneDef {
 	return []TechLaneDef{
-		{Key: LaneFaith, Name: "Faith & Culture", Emblem: "Ω"},
-		{Key: LaneKnowledge, Name: "Knowledge", Emblem: "§"},
-		{Key: LaneTrade, Name: "Trade & Exploration", Emblem: "$"},
-		{Key: LaneAgriculture, Name: "Agriculture", Emblem: "♣"},
-		{Key: LaneCraft, Name: "Craft & Engineering", Emblem: "⚒"},
-		{Key: LaneMaterials, Name: "Materials", Emblem: "♦"},
-		{Key: LaneMilitary, Name: "Military", Emblem: "†"},
-		{Key: LaneEnergy, Name: "Energy", Emblem: "☼"},
-		{Key: LaneSpace, Name: "Flight & Space", Emblem: "↑"},
-		{Key: LaneComputing, Name: "Computing", Emblem: "λ"},
+		{Key: LaneFaith, Name: "Faith & Culture", Emblem: "Ω", Hue: "#c9a0dc"},
+		{Key: LaneKnowledge, Name: "Knowledge", Emblem: "§", Hue: "#6fb3e0"},
+		{Key: LaneTrade, Name: "Trade & Exploration", Emblem: "$", Hue: "#e0b84f"},
+		{Key: LaneAgriculture, Name: "Agriculture", Emblem: "♣", Hue: "#7fc97f"},
+		{Key: LaneCraft, Name: "Craft & Engineering", Emblem: "⚒", Hue: "#d9925a"},
+		{Key: LaneMaterials, Name: "Materials", Emblem: "♦", Hue: "#b0b7c3"},
+		{Key: LaneMilitary, Name: "Military", Emblem: "†", Hue: "#e06c6c"},
+		{Key: LaneEnergy, Name: "Energy", Emblem: "☼", Hue: "#f2d94e"},
+		{Key: LaneSpace, Name: "Flight & Space", Emblem: "↑", Hue: "#8f9cf0"},
+		{Key: LaneComputing, Name: "Computing", Emblem: "λ", Hue: "#4fd1c5"},
 	}
 }
 
