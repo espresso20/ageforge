@@ -344,7 +344,8 @@ func TestPlanTemplateChainsAcrossAdvance(t *testing.T) {
 }
 
 // TestPlanTemplateWithinPlanCap: a slice bigger than the plan's room fills
-// it to MaxPlanItems and says how many waited out.
+// it to MaxPlanItems and says how many waited out. The slice's tech goes in
+// on top: research takes no room in the plan.
 func TestPlanTemplateWithinPlanCap(t *testing.T) {
 	isolateAccountDir(t)
 	ge := newSeededEngine(12)
@@ -360,12 +361,12 @@ func TestPlanTemplateWithinPlanCap(t *testing.T) {
 	}
 	ge.mu.Unlock()
 	ge.SetLegacyForTest(LegacyKit{Plan: plan}, true)
-	if n := len(ge.GetState().Plan); n != MaxPlanItems {
-		t.Errorf("the plan holds %d items, want the cap of %d", n, MaxPlanItems)
+	if st := ge.GetState(); PlanLoad(st.Plan) != MaxPlanItems || len(st.Plan) != MaxPlanItems+1 {
+		t.Errorf("the plan holds %d items, %d of them counted; want the cap of %d and one tech on top", len(st.Plan), PlanLoad(st.Plan), MaxPlanItems)
 	}
 	found := false
 	for _, l := range ge.GetLogs() {
-		if strings.HasPrefix(l.Message, "Plan Template: added ") && strings.Contains(l.Message, "The plan is full (60 items)") {
+		if strings.HasPrefix(l.Message, "Plan Template: added ") && strings.Contains(l.Message, "The plan is full (60 items, not counting research)") {
 			found = true
 		}
 	}

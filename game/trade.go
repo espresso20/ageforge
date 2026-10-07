@@ -39,6 +39,9 @@ type TradeManager struct {
 	// trades at the listed numbers.
 	feeScale  float64
 	routeTime float64
+	// routePay is the techs' term on what a route's run brings in, set the
+	// same way; 0 reads as 1.
+	routePay float64
 
 	// Cumulative stats for display in the Trade panel. totalExchanged sums
 	// both sides of every market trade (kept for old saves); totalSold and
@@ -145,9 +148,31 @@ func copyAmounts(m map[string]float64) map[string]float64 {
 }
 
 // SetTechTerms sets the techs' terms: feeScale multiplies every market rate
-// (a lower fee pays more), routeTime multiplies a route's time per run.
-func (tm *TradeManager) SetTechTerms(feeScale, routeTime float64) {
-	tm.feeScale, tm.routeTime = feeScale, routeTime
+// (a lower fee pays more), routeTime multiplies a route's time per run and
+// routePay what a run brings in.
+func (tm *TradeManager) SetTechTerms(feeScale, routeTime, routePay float64) {
+	tm.feeScale, tm.routeTime, tm.routePay = feeScale, routeTime, routePay
+}
+
+// routeImports is a copy of what one run of def brings in, with the techs'
+// term on trade route income: what the panels show.
+func (tm *TradeManager) routeImports(def config.TradeRouteDef) map[string]float64 {
+	out := copyAmounts(def.Import)
+	for res, amount := range out {
+		out[res] = tm.RoutePay(amount)
+	}
+	return out
+}
+
+// RoutePay is what one run of a route brings in of an import listed at
+// amount, with the techs' term on trade route income: the panels and the
+// engine read a route's imports through it. The ally and harbor bonuses
+// are added to it as further shares of the listed amount.
+func (tm *TradeManager) RoutePay(amount float64) float64 {
+	if tm.routePay > 0 && tm.routePay != 1 {
+		return float64(amount * tm.routePay)
+	}
+	return amount
 }
 
 // marketRate is the ruleset's market rate for one from in age with the
@@ -365,7 +390,10 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 					if diplomacy != nil {
 						bonus += diplomacy.GetTradeBonus(res)
 					}
-					actual := float64(amount * (1.0 + bonus))
+					// The techs' term and the ally and harbor bonuses are each
+					// a share of the listed import, so each delivers what it
+					// says whatever the others are.
+					actual := float64(amount * (tm.RoutePay(1) + bonus))
 					resources.Add(res, actual)
 					tm.totalImported[res] += actual
 				}
@@ -451,7 +479,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			TicksLeft:   route.TicksLeft,
 			CyclesDone:  route.CyclesDone,
 			Export:      copyAmounts(def.Export),
-			Import:      copyAmounts(def.Import),
+			Import:      tm.routeImports(def),
 			Disrupted:   blockedBy != "",
 			DisruptedBy: blockedBy,
 		})
@@ -476,7 +504,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			Name:        def.Name,
 			Key:         def.Key,
 			Export:      copyAmounts(def.Export),
-			Import:      copyAmounts(def.Import),
+			Import:      tm.routeImports(def),
 			CanStart:    canStart,
 			RequiredBld: def.RequiredBld,
 			MinCount:    def.MinCount,

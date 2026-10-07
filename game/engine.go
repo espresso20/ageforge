@@ -560,7 +560,8 @@ func (ge *GameEngine) Seed() int64 {
 
 const AutosaveInterval = 60 * time.Second
 
-// moraleCap returns 1.0 + 0.05 per wonder built.
+// moraleCap returns 1.0 + 0.05 per wonder built, plus what the techs add to
+// the ceiling (config.MechanicMoraleCap).
 func (ge *GameEngine) moraleCap() float64 {
 	cap := 1.0
 	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
@@ -568,7 +569,7 @@ func (ge *GameEngine) moraleCap() float64 {
 			cap += float64(0.05 * float64(count))
 		}
 	})
-	return cap
+	return cap + ge.Research.Mechanic(config.MechanicMoraleCap)
 }
 
 // clampMorale clamps ge.morale to [0.10, moraleCap()].

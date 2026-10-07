@@ -45,9 +45,9 @@ func TestWonderViewsShowTheKeystone(t *testing.T) {
 	if strings.Contains(splash, "Opened later by research:[-] Great Monolith") || strings.Contains(splash, "Great Monolith (Stoneworking)") {
 		t.Errorf("the splash lists the wonder among the buildings a tech opens later:\n%s", splash)
 	}
-	// An age whose wonder needs no tech says what it always said.
-	if s := buildAgeSplashText("bronze_age", game.AgeAdvanceSummary{}, false, game.EpochEventRecord{}); !strings.Contains(s, "[white]Bank its cost, then build it.[-]") {
-		t.Errorf("the Bronze Age splash, whose wonder has no keystone:\n%s", s)
+	// Stonehenge has its keystone too now: the Bronze Age splash names it.
+	if s := buildAgeSplashText("bronze_age", game.AgeAdvanceSummary{}, false, game.EpochEventRecord{}); !strings.Contains(s, "Bank its cost and research Calendar, its keystone, then build it.") {
+		t.Errorf("the Bronze Age splash does not name Stonehenge's keystone:\n%s", s)
 	}
 
 	ge.GrantTechsForTest("tool_making", "stoneworking")

@@ -60,8 +60,8 @@ func TestResearchCovenant(t *testing.T) {
 			worst = r
 		}
 	}
-	if keystones != 20 {
-		t.Errorf("%d ages have a keystone, want 20: every age but the Primitive and the Bronze", keystones)
+	if keystones != 21 {
+		t.Errorf("%d ages have a keystone, want 21: every age but the Primitive", keystones)
 	}
 	// The allowance is what the worst age needs, no more: when techs are
 	// added and prices fall, this says to bring TechEntryStorageCopies down.
@@ -182,8 +182,8 @@ func TestEveryKeystoneIsReachableInItsAge(t *testing.T) {
 			t.Errorf("%s's keystone %s can be finished in the %s already: it does not belong to its wonder's age", w, key, ages[i-1].Name)
 		}
 	}
-	if checked != 20 {
-		t.Errorf("%d wonders have a keystone, want 20", checked)
+	if checked != 21 {
+		t.Errorf("%d wonders have a keystone, want 21", checked)
 	}
 
 	// The Colosseum behind Philosophy, a Classical Age tech: the Iron Age

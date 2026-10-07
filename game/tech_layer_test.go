@@ -287,7 +287,7 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 	// faster. Telecommunications: deals 30% sooner, gifts 25% cheaper.
 	// Radio: festivals 20% sooner. Social Media (the next age's): 20%
 	// cheaper.
-	learn(ge, "currency", "banking", "road_building", "railroads", "cartography", "telecommunications", "radio", "social_media")
+	learn(ge, "currency", "banking", "road_building", "railroads", "cartography", "telecommunications", "radio", "social_media", "the_wheel")
 	after := read()
 	near := func(got, want, tol float64) bool { return math.Abs(got-want) <= tol }
 	if got, want := after[config.MechanicMarketFee], config.ExchangeFee-0.06; !near(got, want, 1e-9) || !near(before[config.MechanicMarketFee], config.ExchangeFee, 1e-9) {

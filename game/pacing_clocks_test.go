@@ -229,6 +229,7 @@ func TestAutoExpeditionStretch(t *testing.T) {
 func TestFestivalAndBlackMarketStretch(t *testing.T) {
 	ge := NewGameEngine()
 	ge.age = stretchedAge
+	learn(ge, "drama") // the tech that opens festivals
 	ge.Resources.UnlockResource("culture")
 	ge.Resources.LoadAmounts(map[string]float64{"culture": 1_000_000})
 	buff, cd := config.StretchTicks(stretchedAge, festivalBuffTicks), config.StretchTicks(stretchedAge, festivalCooldownTicks)

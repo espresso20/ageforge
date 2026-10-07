@@ -263,10 +263,17 @@ func TestFeatureOldSaveLocksWhatItNeverUsed(t *testing.T) {
 	}
 	stock(ge, 50)
 	clearArmy(ge)
-	// Never sent: the Naval Expedition and campaigns wait for their techs.
+	// Never sent: the Naval Expedition waits for Exploration, as every
+	// expedition past the Scout Party does, then for its own tech, and
+	// campaigns wait for theirs.
 	err := ge.LaunchExpedition("naval_expedition")
-	if err == nil || err.Error() != "The Naval Expedition needs Navigation first. Research it to send it." {
+	if err == nil || err.Error() != "Expeditions past the Scout Party need Exploration first. Research it to send one." {
 		t.Errorf("the Naval Expedition in the next age, never sent before: %v", err)
+	}
+	learn(ge, "exploration")
+	err = ge.LaunchExpedition("naval_expedition")
+	if err == nil || err.Error() != "The Naval Expedition needs Navigation first. Research it to send it." {
+		t.Errorf("the Naval Expedition with Exploration and no Navigation: %v", err)
 	}
 	err = ge.LaunchExpedition("colonial_campaign")
 	if err == nil || err.Error() != "Campaigns need Military Tactics first. Research it to send one." {
@@ -291,10 +298,10 @@ func TestFeatureOldSaveLocksWhatItNeverUsed(t *testing.T) {
 		t.Errorf("the Naval Expedition with Navigation researched: %v", err)
 	}
 
-	// The naval voyage also used the lock on expeditions past the Scout
-	// Party, which waits for a tech not in the tree yet: remembered too.
+	// The voyage went out with both its techs researched, so it granted
+	// nothing: the run keeps what it had.
 	again := saveAndLoad(t, ge, "pre_features_industrial_again")
-	if got, want := grantedList(again), "black_market expeditions route_rail_freight trade_routes"; got != want {
+	if got, want := grantedList(again), "black_market route_rail_freight trade_routes"; got != want {
 		t.Errorf("after a second load: granted %q, want %q", got, want)
 	}
 	if n, _ := treeNotices(again); n != 0 {
@@ -329,8 +336,9 @@ func TestFeatureGraceCoversASaveFromBeforeTheTree(t *testing.T) {
 
 // TestFeatureLocksRefuseAndOpen: each live lock refuses its command with the
 // name of its tech and opens when the tech is researched; the Scout Party
-// and the locks whose tech is not in the tree yet refuse nothing; and a new
-// game saves no granted feature until it uses a command without its tech.
+// and the one lock whose tech is not in the tree yet refuse nothing; and a
+// new game saves no granted feature until it uses a command without its
+// tech.
 func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 	isolateAccountDir(t)
 	at := func(age string) *GameEngine {
@@ -349,54 +357,76 @@ func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 		stock(ge, 100)
 		return ge
 	}
+	refused := func(what string, err error, want string) {
+		t.Helper()
+		if err == nil || err.Error() != want {
+			t.Errorf("%s: %v, want %q", what, err, want)
+		}
+	}
+	route := func(ge *GameEngine, key string) {
+		ge.mu.Lock()
+		ge.Buildings.counts[ge.Trade.routeDefs[key].RequiredBld] = ge.Trade.routeDefs[key].MinCount
+		ge.mu.Unlock()
+	}
 
 	// Campaigns, from the Bronze Age. The Scout Party walks out regardless.
 	ge := at("bronze_age")
 	if err := ge.LaunchExpedition("scout_party"); err != nil {
 		t.Errorf("the Scout Party: %v", err)
 	}
-	if err := ge.LaunchExpedition("raid_bandits"); err == nil || err.Error() != "Campaigns need Military Tactics first. Research it to send one." {
-		t.Errorf("a campaign without Military Tactics: %v", err)
-	}
+	refused("a campaign without Military Tactics", ge.LaunchExpedition("raid_bandits"), "Campaigns need Military Tactics first. Research it to send one.")
 	learn(ge, "military_tactics")
 	if err := ge.LaunchExpedition("raid_bandits"); err != nil {
 		t.Errorf("a campaign with Military Tactics: %v", err)
 	}
+	// Past the Scout Party, scouting waits for Exploration.
+	clearArmy(ge)
+	refused("Scout Nearby Ruins without Exploration", ge.LaunchExpedition("scout_ruins"), "Expeditions past the Scout Party need Exploration first. Research it to send one.")
+
+	// Trade routes: The Wheel first, then the route's own needs.
+	route(ge, "local_barter")
+	refused("Local Barter without The Wheel", ge.StartTradeRoute("local_barter"), "Trade routes need The Wheel first. Research it to start one.")
+	if f := ge.GetState().Features[config.FeatureTradeRoutes]; !f.Live || f.Open || f.Granted || f.TechName != "The Wheel" {
+		t.Errorf("trade routes read %+v, want a live lock, shut", f)
+	}
+	learn(ge, "the_wheel")
+	if err := ge.StartTradeRoute("local_barter"); err != nil {
+		t.Errorf("Local Barter with The Wheel: %v", err)
+	}
 	// Researched, so nothing is granted: the save stays as it was.
 	if got := grantedList(ge); got != "" {
-		t.Errorf("a campaign sent with its tech researched granted %q", got)
-	}
-	// A lock whose tech is not in the tree is open, and using its command
-	// is remembered for the day the tech arrives.
-	if err := ge.StartTradeRoute("local_barter"); err == nil || strings.Contains(err.Error(), "first. Research it") {
-		t.Errorf("Local Barter with no market: %v, want the route's own refusal", err)
-	}
-	ge.mu.Lock()
-	ge.Buildings.counts[ge.Trade.routeDefs["local_barter"].RequiredBld] = ge.Trade.routeDefs["local_barter"].MinCount
-	ge.mu.Unlock()
-	if err := ge.StartTradeRoute("local_barter"); err != nil {
-		t.Errorf("Local Barter, whose lock waits for The Wheel: %v", err)
-	}
-	if got := grantedList(ge); got != "trade_routes" {
-		t.Errorf("a route started under an inert lock granted %q, want trade_routes", got)
-	}
-	if f := ge.GetState().Features[config.FeatureTradeRoutes]; f.Live || !f.Open || !f.Granted {
-		t.Errorf("trade routes read %+v, want an inert lock, open, granted", f)
+		t.Errorf("commands used with their techs researched granted %q", got)
 	}
 	saveAndLoad(t, ge, "feature_lock_fresh")
-	if got := strings.Join(savedFeatures(t, "feature_lock_fresh"), " "); got != "trade_routes" {
-		t.Errorf("the save carries granted features %q, want trade_routes", got)
+	if got := strings.Join(savedFeatures(t, "feature_lock_fresh"), " "); got != "" {
+		t.Errorf("the save carries granted features %q, want none", got)
 	}
 
-	// The Naval Expedition, from the Renaissance Age.
-	ge = at("renaissance_age")
-	if err := ge.LaunchExpedition("naval_expedition"); err == nil || err.Error() != "The Naval Expedition needs Navigation first. Research it to send it." {
-		t.Errorf("the Naval Expedition without Navigation: %v", err)
+	// Diplomacy and festivals, from the Classical Age.
+	ge = at("classical_age")
+	meet(ge, "riverlands_tribes", 0)
+	const envoys = "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."
+	refused("a gift without Envoys", ge.SendGift("riverlands_tribes"), envoys)
+	refused("an alliance without Envoys", ge.SetDiplomaticStatus("riverlands_tribes", "allied"), envoys)
+	learn(ge, "envoys")
+	if err := ge.SendGift("riverlands_tribes"); err != nil {
+		t.Errorf("a gift with Envoys: %v", err)
 	}
-	// The other scouting expeditions wait only for Exploration, which is
-	// not in the tree yet.
+	refused("a festival without Drama", ge.DoFestival(), "Festivals need Drama first. Research it to hold one.")
+	learn(ge, "drama")
+	if err := ge.DoFestival(); err != nil {
+		t.Errorf("a festival with Drama: %v", err)
+	}
+
+	// The Naval Expedition, from the Renaissance Age: Exploration, then its
+	// own tech.
+	ge = at("renaissance_age")
+	refused("the Naval Expedition without Exploration", ge.LaunchExpedition("naval_expedition"), "Expeditions past the Scout Party need Exploration first. Research it to send one.")
+	learn(ge, "exploration")
+	refused("the Naval Expedition without Navigation", ge.LaunchExpedition("naval_expedition"), "The Naval Expedition needs Navigation first. Research it to send it.")
+	// The other scouting expeditions wait only for Exploration.
 	if err := ge.LaunchExpedition("scout_ruins"); err != nil {
-		t.Errorf("Scout Nearby Ruins: %v", err)
+		t.Errorf("Scout Nearby Ruins with Exploration: %v", err)
 	}
 	clearArmy(ge)
 	learn(ge, "navigation")
@@ -417,79 +447,97 @@ func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 		t.Errorf("the black market with Mercantilism: %v", err)
 	}
 
-	// Rail Freight, from the Industrial Age: the route's own lock.
+	// Rail Freight, from the Industrial Age: trade routes' lock, then the
+	// route's own.
 	ge = at("industrial_age")
-	ge.mu.Lock()
-	ge.Buildings.counts["iron_works_complex"] = 1
-	ge.mu.Unlock()
-	if err := ge.StartTradeRoute("rail_freight"); err == nil || err.Error() != "The Rail Freight route needs Railroads first. Research it to start it." {
-		t.Errorf("Rail Freight without Railroads: %v", err)
-	}
+	route(ge, "rail_freight")
+	refused("Rail Freight without The Wheel", ge.StartTradeRoute("rail_freight"), "Trade routes need The Wheel first. Research it to start one.")
+	learn(ge, "the_wheel")
+	refused("Rail Freight without Railroads", ge.StartTradeRoute("rail_freight"), "The Rail Freight route needs Railroads first. Research it to start it.")
 	learn(ge, "railroads")
 	if err := ge.StartTradeRoute("rail_freight"); err != nil {
 		t.Errorf("Rail Freight with Railroads: %v", err)
 	}
-	// A festival and a gift wait for techs that are not in the tree yet.
-	if err := ge.DoFestival(); err != nil {
-		t.Errorf("a festival, whose lock waits for Drama: %v", err)
+
+	// Warp Commerce's own lock waits for a tech that is not in the tree
+	// yet: it is open, and using it is remembered for the day the tech
+	// arrives.
+	ge = at("interstellar_age")
+	learn(ge, "the_wheel")
+	route(ge, "warp_commerce")
+	if err := ge.StartTradeRoute("warp_commerce"); err != nil {
+		t.Errorf("Warp Commerce, whose lock waits for Interstellar Trade: %v", err)
+	}
+	if got := grantedList(ge); got != "route_warp_commerce" {
+		t.Errorf("a route started under an inert lock granted %q, want route_warp_commerce", got)
+	}
+	if f := ge.GetState().Features[config.FeatureRouteWarpCommerce]; f.Live || !f.Open || !f.Granted {
+		t.Errorf("Warp Commerce reads %+v, want an inert lock, open, granted", f)
+	}
+	saveAndLoad(t, ge, "feature_lock_warp")
+	if got := strings.Join(savedFeatures(t, "feature_lock_warp"), " "); got != "route_warp_commerce" {
+		t.Errorf("the save carries granted features %q, want route_warp_commerce", got)
 	}
 }
 
 // TestFeatureLockSwitchesOnWithItsTech: a lock that waits for its tech
 // switches on when a ruleset adds a tech with that key, with no other
-// change. A new game on that ruleset meets the lock. A game that was
-// already using the command, saved before the tech existed, keeps it for
-// the rest of its run.
+// change. Warp Commerce's is the last one waiting. A new game on that
+// ruleset meets the lock. A game that was already using the command, saved
+// before the tech existed, keeps it for the rest of its run.
 func TestFeatureLockSwitchesOnWithItsTech(t *testing.T) {
 	isolateAccountDir(t)
 	src := rules.FromConfig()
 	src.Techs = append(src.Techs, config.TechDef{
-		Key: "the_wheel", Name: "The Wheel", Age: "bronze_age", Lane: config.LaneCraft, Cost: 10, ResearchTicks: 4,
+		Key: "interstellar_trade", Name: "Interstellar Trade", Age: "interstellar_age", Lane: config.LaneTrade, Cost: 10, ResearchTicks: 4,
 	})
-	withWheel := rules.Compile(src)
-	market := func(ge *GameEngine) {
+	withTech := rules.Compile(src)
+	const warp = "warp_commerce"
+	port := func(ge *GameEngine) {
 		ge.mu.Lock()
-		def := ge.Trade.routeDefs["local_barter"]
+		def := ge.Trade.routeDefs[warp]
 		ge.Buildings.counts[def.RequiredBld] = def.MinCount
 		ge.age = def.MinAge
 		ge.mu.Unlock()
+		learn(ge, "the_wheel") // trade routes themselves are open
+		stock(ge, 0)
 	}
 
 	// Today's tree: the route starts, and the save remembers it.
 	old := newSeededEngine(6)
-	market(old)
-	if err := old.StartTradeRoute("local_barter"); err != nil {
-		t.Fatalf("Local Barter on today's tree: %v", err)
+	port(old)
+	if err := old.StartTradeRoute(warp); err != nil {
+		t.Fatalf("Warp Commerce on today's tree: %v", err)
 	}
-	if err := old.SaveGame("before_the_wheel"); err != nil {
+	if err := old.SaveGame("before_interstellar_trade"); err != nil {
 		t.Fatal(err)
 	}
 
-	// The tree with The Wheel: a new game is refused until it researches it.
-	fresh := NewGameEngineWith(withWheel)
-	market(fresh)
-	if err := fresh.StartTradeRoute("local_barter"); err == nil || err.Error() != "Trade routes need The Wheel first. Research it to start one." {
-		t.Errorf("Local Barter on a tree with The Wheel, not researched: %v", err)
+	// The tree with the tech: a new game is refused until it researches it.
+	fresh := NewGameEngineWith(withTech)
+	port(fresh)
+	if err := fresh.StartTradeRoute(warp); err == nil || err.Error() != "The Warp Commerce route needs Interstellar Trade first. Research it to start it." {
+		t.Errorf("Warp Commerce on a tree with Interstellar Trade, not researched: %v", err)
 	}
-	learn(fresh, "the_wheel")
-	if err := fresh.StartTradeRoute("local_barter"); err != nil {
-		t.Errorf("Local Barter with The Wheel researched: %v", err)
+	learn(fresh, "interstellar_trade")
+	if err := fresh.StartTradeRoute(warp); err != nil {
+		t.Errorf("Warp Commerce with Interstellar Trade researched: %v", err)
 	}
 
-	// The game saved before The Wheel existed, loaded on the new tree: its
+	// The game saved before the tech existed, loaded on the new tree: its
 	// route is running, and it can stop it and start it again.
-	loaded := NewGameEngineWith(withWheel)
-	if err := loaded.LoadGame("before_the_wheel"); err != nil {
+	loaded := NewGameEngineWith(withTech)
+	if err := loaded.LoadGame("before_interstellar_trade"); err != nil {
 		t.Fatal(err)
 	}
-	if loaded.Research.IsResearched("the_wheel") {
-		t.Fatal("The Wheel is researched: the save does not test the grant")
+	if loaded.Research.IsResearched("interstellar_trade") {
+		t.Fatal("Interstellar Trade is researched: the save does not test the grant")
 	}
-	if err := loaded.StopTradeRoute("local_barter"); err != nil {
-		t.Fatalf("stopping Local Barter after the load: %v", err)
+	if err := loaded.StopTradeRoute(warp); err != nil {
+		t.Fatalf("stopping Warp Commerce after the load: %v", err)
 	}
-	if err := loaded.StartTradeRoute("local_barter"); err != nil {
-		t.Errorf("Local Barter in a game that ran it before The Wheel existed: %v", err)
+	if err := loaded.StartTradeRoute(warp); err != nil {
+		t.Errorf("Warp Commerce in a game that ran it before its tech existed: %v", err)
 	}
 }
 

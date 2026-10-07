@@ -200,9 +200,9 @@ When you reach the Stone Age:
 - **Woodcutter Camp**: a much better wood producer
 - **Forager Post**: a better food producer
 - **Elders' Hall**: a better knowledge building
-- **Standing Stones**: a better faith building
+- **Standing Stones**: a better faith building, once you research Ritual (it needs Language, a Primitive Age tech)
 - **Longhouse**: bigger housing (+25 housing each)
-- **Storage Pit**: +2.2K storage for every resource (up to 25)
+- **Storage Pit**: +2.75K storage for every resource (up to 25)
 - **War Camp**: an early military building. Soldiers unlock in the Iron Age, so it can wait
 - **Great Monolith**: the Stone Age wonder, required to reach the Bronze Age
 

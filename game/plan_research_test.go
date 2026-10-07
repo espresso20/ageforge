@@ -131,25 +131,36 @@ func TestPlanResearchRefusals(t *testing.T) {
 		t.Errorf("planning a researched tech: %v", err)
 	}
 
-	// Two slots left and a chain of three: nothing goes in.
+	// Research takes no room in the plan: a chain goes into a plan that is
+	// full of builds, and a full plan still refuses the next build.
 	ge = chainEngine(t)
-	for len(ge.plan) < MaxPlanItems-2 {
+	for planLoad(ge.plan) < MaxPlanItems {
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: "hut", Count: 1})
 	}
-	_, err := ge.PlanAddResearchChain("q_goal")
-	if err == nil || !strings.Contains(err.Error(), "Goal and what it needs first are 3 techs, and the plan has room for 2 more items") {
-		t.Errorf("a chain that does not fit: %v", err)
+	chain, err := ge.PlanAddResearchChain("q_goal")
+	if err != nil || len(chain) != 3 || len(researchKeys(ge)) != 3 {
+		t.Errorf("a chain of three into a plan full of builds: %v, %v", chain, err)
 	}
-	if len(researchKeys(ge)) != 0 {
-		t.Errorf("part of a chain that did not fit went in: %v", researchKeys(ge))
+	if planLoad(ge.plan) != MaxPlanItems || len(ge.plan) != MaxPlanItems+3 {
+		t.Errorf("the plan holds %d items, %d of them counted; want %d and %d", len(ge.plan), planLoad(ge.plan), MaxPlanItems+3, MaxPlanItems)
 	}
-	// A tech that needs nothing more still fits, and a full plan says so.
-	if err := ge.PlanAddResearch("q_a"); err != nil {
-		t.Errorf("one tech into two free slots: %v", err)
+	if _, err := ge.PlanAddBuild("stash", 1); err == nil || err.Error() != "The plan is full (60 items, not counting research). Remove one with plan remove <n> first." {
+		t.Errorf("a build into a full plan: %v", err)
 	}
-	_ = ge.PlanAddResearch("q_deep")
-	if err := ge.PlanAddResearch("q_left"); err == nil || !strings.HasPrefix(err.Error(), "The plan is full") {
-		t.Errorf("a full plan: %v", err)
+	if err := ge.PlanAddAdvance(); err == nil || !strings.HasPrefix(err.Error(), "The plan is full") {
+		t.Errorf("an advance into a full plan: %v", err)
+	}
+	// The save keeps all of it, and a hand-made plan cannot hold more
+	// research than the tree has techs.
+	if got := loadPlanIn(ge.rules, ge.plan); len(got) != len(ge.plan) {
+		t.Errorf("a plan of %d items loads as %d", len(ge.plan), len(got))
+	}
+	var flood []PlanItem
+	for i := 0; i < ge.rules.TechCount()+50; i++ {
+		flood = append(flood, PlanItem{Kind: PlanResearch, Key: "q_a", Count: 1})
+	}
+	if got := loadPlanIn(ge.rules, flood); len(got) != ge.rules.TechCount() {
+		t.Errorf("a save with %d research items loads %d, want the tree's %d at most", len(flood), len(got), ge.rules.TechCount())
 	}
 }
 
@@ -186,7 +197,7 @@ func TestPlanResearchTakesAnyTechInSight(t *testing.T) {
 	// queues the chain across the ages between.
 	ge.Stats.AgesReached = append(ge.Stats.AgesReached, "stone_age", "bronze_age", "iron_age", "classical_age")
 	chain, err := ge.PlanAddResearchChain("philosophy")
-	if want := []string{"primitive_writing", "mathematics", "philosophy"}; err != nil || !reflect.DeepEqual(chain, want) {
+	if want := []string{"language", "primitive_writing", "mathematics", "philosophy"}; err != nil || !reflect.DeepEqual(chain, want) {
 		t.Fatalf("Philosophy on known ground: %v, %v; want %v", chain, err, want)
 	}
 	notes := map[string]string{}

@@ -24,7 +24,7 @@ Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monaster
 | Agora | Iron | 1.6 | 3 |
 | Library | Classical | 3.2 | 4 |
 | Monastery Library | Medieval | 42.4 | 4 |
-| University | Renaissance | 89.8 | 5 |
+| University | Renaissance | 76.3 | 5 |
 | Natural Philosophy Hall | Colonial | 452 | 5 |
 | Research Institute | Industrial | 12.8 | 6 |
 | Academy | Victorian | 25.6 | 6 |
@@ -56,7 +56,7 @@ knowledge/tick = base rate × buildings × (0.20 + 0.80 × workers assigned / wo
 
 Knowledge is limited by your storage. Build **Storage lineage** buildings (Stash → Storage Pit → Warehouse → Classical Vault → ...) to raise it. Once knowledge hits its storage limit, further production is wasted. You can only pay for a tech with knowledge you hold, so your storage must be at least the tech's cost. Raise storage before you save up for an expensive one.
 
-Nothing but research makes you hold knowledge, so check your storage when you enter an age. From the Electric Age on, the cheapest tech of an age fits the storage you are sure to arrive with. Before that it can take a storage building or two of the new age first: one Stash in the Primitive Age, one building in the Medieval, Industrial and Victorian Ages, two in the Classical and Colonial Ages, and four Renaissance Vaults in the Renaissance. The age's other requirements have you building that storage anyway.
+Nothing but research makes you hold knowledge, so check your storage when you enter an age. From the Electric Age on, the cheapest tech of an age fits the storage you are sure to arrive with. Before that it can take a storage building or two of the new age first: one Stash in the Primitive Age, one building in the Classical, Industrial and Victorian Ages, two in the Colonial Age, and four Renaissance Vaults in the Renaissance. The age's other requirements have you building that storage anyway.
 
 ---
 

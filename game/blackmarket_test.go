@@ -16,7 +16,7 @@ func blackMarketSeedLose() *rand.Rand { return rand.New(rand.NewSource(1)) }
 func bmEngine(culture float64) *GameEngine {
 	ge := NewGameEngine()
 	ge.age = "colonial_age"
-	learn(ge, "mercantilism") // the tech that opens the black market
+	learn(ge, "mercantilism", "drama") // the techs that open the black market and festivals
 	if r, ok := ge.Resources.resources["culture"]; ok {
 		r.Storage = 100000 // cost = max(5000, 0.10×100000) = 10000
 		r.Amount = culture

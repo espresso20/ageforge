@@ -167,7 +167,8 @@ func TestStorageCovenantHours(t *testing.T) {
 }
 
 // TestGateCovenantCatchesBrokenGates keeps the guard honest: the pre-fix
-// numbers must each be flagged. 50 longhouses was the Stone Age wall, 30
+// numbers must each be flagged. 50 longhouses was the Stone Age wall (52
+// here: the Stone Age's storage has grown since, and the 50th now fits), 30
 // barracks for Medieval named a Bronze Age building the age lock forbids
 // building later (and, with the gate left asking only 220K stone, nothing
 // made a player hold enough storage for a 340K stone Strongroom, the only
@@ -189,7 +190,7 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 	for i := range ages {
 		switch ages[i].Key {
 		case "bronze_age":
-			ages[i].BuildingReqs = map[string]int{"longhouse": 50}
+			ages[i].BuildingReqs = map[string]int{"longhouse": 52}
 			ages[i].ResourceReqs = map[string]float64{"food": 80000, "iron": 10}
 		case "medieval_age":
 			ages[i].BuildingReqs = map[string]int{"barracks": 30}
@@ -354,15 +355,16 @@ func TestStaticFeatureLocks(t *testing.T) {
 			live = append(live, r.Key+" <- "+r.Tech+" ("+r.TechAge+")")
 		}
 	}
-	if got, want := strings.Join(live, "; "), "campaigns <- military_tactics (bronze_age); naval_expedition <- navigation (renaissance_age); black_market <- mercantilism (colonial_age); route_rail_freight <- railroads (industrial_age)"; got != want {
+	if got, want := strings.Join(live, "; "), "trade_routes <- the_wheel (bronze_age); campaigns <- military_tactics (bronze_age); expeditions <- exploration (iron_age); diplomacy <- envoys (classical_age); festivals <- drama (classical_age); naval_expedition <- navigation (renaissance_age); black_market <- mercantilism (colonial_age); route_rail_freight <- railroads (industrial_age)"; got != want {
 		t.Errorf("live locks:\n got %s\nwant %s", got, want)
 	}
-	if got, want := strings.Join(FeatureLocksWaiting(rows), " "), "trade_routes expeditions diplomacy festivals route_warp_commerce"; got != want {
+	if got, want := strings.Join(FeatureLocksWaiting(rows), " "), "route_warp_commerce"; got != want {
 		t.Errorf("locks waiting for their tech: %s; want %s", got, want)
 	}
 	var sb strings.Builder
 	writeFeatureLocks(&sb, rows)
-	if !strings.Contains(sb.String(), "| Campaigns | Military Tactics | Bronze | live |") || !strings.Contains(sb.String(), "| Festivals | `drama` | - | waits for its tech (open) |") {
+	if !strings.Contains(sb.String(), "| Campaigns | Military Tactics | Bronze | live |") || !strings.Contains(sb.String(), "| Festivals | Drama | Classical | live |") ||
+		!strings.Contains(sb.String(), "| The Warp Commerce route | `interstellar_trade` | - | waits for its tech (open) |") {
 		t.Errorf("the report's table is off:\n%s", sb.String())
 	}
 }
@@ -406,5 +408,35 @@ func TestStaticCaps(t *testing.T) {
 		if _, ok := config.AgeByKey()[age]; !ok {
 			t.Errorf("config.ProductionAllHeld lists %s, which is not an age", age)
 		}
+	}
+}
+
+// TestGateCovenantCatchesABuildingBehindAnOptionalTech is the content rule
+// for moving a building onto a tech: a tech may hold a building only if the
+// age keeps another way to make what it makes, or the tech is one no run
+// leaves the age without. The Cathedral is the Medieval Age's only faith
+// producer and the Renaissance asks for faith. Behind Theology, the age's
+// keystone, the gate still stands. Behind Alchemy, which a run may skip, it
+// has no source left, and the guard says so.
+func TestGateCovenantCatchesABuildingBehindAnOptionalTech(t *testing.T) {
+	defs := config.BuildingByKey()
+	if got := defs["cathedral"].RequiredTech; got != "theology" {
+		t.Fatalf("the Cathedral waits for %q, want theology: the test's premise", got)
+	}
+	if problems, _ := staticGates(config.Ages(), defs); len(problems) != 0 {
+		t.Fatalf("today's tables break the covenant: %+v", problems)
+	}
+	cathedral := defs["cathedral"]
+	cathedral.RequiredTech = "alchemy"
+	defs["cathedral"] = cathedral
+	problems, _ := staticGates(config.Ages(), defs)
+	found := false
+	for _, g := range problems {
+		if g.Kind == "unsourced" && g.Resource == "faith" && g.From == "medieval_age" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("with the Cathedral behind an optional tech the Renaissance's faith should have no source; problems: %+v", problems)
 	}
 }

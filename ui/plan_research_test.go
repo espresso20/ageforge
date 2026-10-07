@@ -149,7 +149,7 @@ func TestPlanningAcrossKnownAges(t *testing.T) {
 	ge.Stats.AgesReached = append(ge.Stats.AgesReached, "stone_age", "bronze_age", "iron_age", "classical_age")
 	ge.SetStockForTest("knowledge", 500)
 	res := HandleCommand("plan research philosophy", ge)
-	if want := "Planned research: Philosophy, after the 2 techs it needs first (Primitive Writing, then Mathematics). Techs start one at a time, in plan order. Philosophy waits for the Classical Age."; res.Message != want {
+	if want := "Planned research: Philosophy, after the 3 techs it needs first (Language, Primitive Writing, then Mathematics). Techs start one at a time, in plan order. Philosophy waits for the Classical Age."; res.Message != want {
 		t.Errorf("plan research philosophy:\n got %q\nwant %q", res.Message, want)
 	}
 	if res := HandleCommand("plan research theology", ge); res.Type != "error" || strings.Contains(res.Message, "Theology") {
@@ -163,13 +163,13 @@ func TestPlanningAcrossKnownAges(t *testing.T) {
 	}
 	st := ge.GetState()
 	list := plainText(planListText(st))
-	for _, want := range []string{"research Mathematics  blocked: waits for the Iron Age", "research Philosophy  blocked: waits for the Classical Age", "research Tool Making  ready"} {
+	for _, want := range []string{"research Mathematics  blocked: waits for the Iron Age", "research Philosophy  blocked: waits for the Classical Age", "research Language  ready"} {
 		if !strings.Contains(list, want) {
 			t.Errorf("plan list lacks %q:\n%s", want, list)
 		}
 	}
 	// Fire Mastery, this age's, planned last: it waits only for the slot's
-	// turn behind Tool Making, not for the later ages above it.
+	// turn behind Language and Tool Making, not for the later ages above it.
 	last := st.Plan[len(st.Plan)-1]
 	if last.Key != "fire_mastery" || last.Note != "after the research above it" {
 		t.Errorf("the last item is %s (%q), want Fire Mastery behind Tool Making", last.Key, last.Note)
@@ -180,7 +180,7 @@ func TestPlanningAcrossKnownAges(t *testing.T) {
 	if !strings.Contains(lines[0], "ahead") || strings.Contains(lines[0], "next age") {
 		t.Errorf("the title counts the known ages ahead as the next age: %q", lines[0])
 	}
-	if got := m.statusLine(st, treeView{sel: "philosophy"}); !strings.Contains(got, "waits for the Classical Age") || !strings.Contains(got, "item 3 in your plan") {
+	if got := m.statusLine(st, treeView{sel: "philosophy"}); !strings.Contains(got, "waits for the Classical Age") || !strings.Contains(got, "item 4 in your plan") {
 		t.Errorf("the status line for Philosophy: %q", got)
 	}
 	if got := m.statusLine(st, treeView{sel: "pottery"}); !strings.Contains(got, "in the next age") {

@@ -187,7 +187,7 @@ Every route opens in the Bronze Age or later. From the Bronze Age on, ages and t
 
 What a route gives is boosted by your harbors and by an ally whose specialty it brings in: `amount × (1 + harbor bonus + ally bonus)`.
 
-**Techs and routes.** Road Building and Railroads each make every route run 15% faster (28% with both: a route's next run takes 0.85 × 0.85 of the ticks listed). And **Rail Freight waits for Railroads**: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. A game that was already running the route when this rule arrived keeps it for the rest of that run.
+**Techs and routes.** Trade routes wait for **The Wheel**, a Bronze Age tech (it needs Woodworking): until it is researched `trade route start` is refused and names it, and the Trade panel says so. The market itself needs no tech. Boatbuilding makes every run bring in 10% more of what the route lists; a harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building and Railroads each make every route run 15% faster (28% with both: a route's next run takes 0.85 × 0.85 of the ticks listed). And **Rail Freight waits for Railroads**: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. A game that was already running the route when this rule arrived keeps it for the rest of that run.
 
 ---
 

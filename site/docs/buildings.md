@@ -162,10 +162,17 @@ These are first-run times. On known ground (an age a past run completed) every b
 
 ### Buildings a tech opens
 
-Most buildings unlock the moment you enter their age. Five wait for a tech from that same age instead, so the age has something new partway through:
+Most buildings unlock the moment you enter their age. Twelve wait for a tech from that same age instead, so the age has something new partway through:
 
 | Building | Age | Opened by |
 |---|---|---|
+| Standing Stones | Stone | Ritual |
+| Altar | Bronze | Calendar, the age's keystone |
+| Barracks | Bronze | Military Tactics |
+| Smelter | Iron | Iron Smelting |
+| Legion Fort | Iron | Siege Warfare |
+| Forge | Classical | Metal Casting |
+| Cathedral | Medieval | Theology, the age's keystone |
 | Nuclear Plant | Atomic | Civilian Reactors |
 | Smart Farm | Information | Internet of Things |
 | Smart Complex | Information | Internet of Things |
@@ -263,7 +270,7 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Iron | 6h 30m | 45m | 1h 5m | 8m 6s |
 | Classical | 9h 6m | 1.2h | 1h 31m | 11m 22s |
 | Medieval | 11h 42m | 1.8h | 1h 57m | 14m 36s |
-| Renaissance | 15h 36m | 4.5h | 2h 36m | 19m 30s |
+| Renaissance | 15h 36m | 5.2h | 2h 36m | 19m 30s |
 | Colonial | 18h 12m | 3.4h | 3h 2m | 22m 44s |
 | Industrial | 20h 48m | 4.2h | 3h 28m | 26m |
 | Victorian | 23h 24m | 5.1h | 3h 54m | 29m 14s |
@@ -280,7 +287,7 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Quantum | 62h 24m | 24.4h | 10h 24m | 1h 18m |
 | Transcendent | 62h 24m | 25.3h | 10h 24m | 1h 18m |
 
-The Renaissance's payback is 1.7x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. Its University makes 89.8 knowledge/tick, Exchange 1.62K gold, Mill 225 steel, Foundry 307 steel and Coal Mine 125 coal.
+The Renaissance's payback is 2x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with a fifth more knowledge and cheaper, quicker building, and the age had dropped to three quarters of its target. Its University makes 76.3 knowledge/tick, Exchange 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
 
 The Information and Cyberpunk Ages go the other way, at 0.8x: they ran 1.2 to 1.5x their targets, and the extra time was spent waiting.
 
@@ -382,12 +389,12 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap is deli
 | Building | Age | Storage per copy (every resource) | Max |
 |----------|-----|--------|-----|
 | Stash | Primitive | +500 | 50 |
-| Storage Pit | Stone | +2.5K | 25 |
-| Warehouse | Bronze | +20K | 25 |
+| Storage Pit | Stone | +2.75K | 25 |
+| Warehouse | Bronze | +21K | 25 |
 | Granary | Iron | +35K | 25 |
 | Classical Vault | Classical | +170K | 25 |
 | Strongroom | Medieval | +710K | 25 |
-| Renaissance Vault | Renaissance | +3.8M | 25 |
+| Renaissance Vault | Renaissance | +4.6M | 25 |
 | Colonial Warehouse | Colonial | +60M | 25 |
 | Industrial Depot | Industrial | +340M | 25 |
 | Victorian Vault | Victorian | +1.3B | 25 |

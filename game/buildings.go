@@ -38,10 +38,11 @@ type BuildingManager struct {
 	// RequiredTech stays locked until it is, even in its own age. nil (a bare
 	// manager with no engine) gates nothing.
 	researched func(tech string) bool
-	// graceAge is the age whose wonder needs no keystone tech ("" for none):
-	// a game saved before wonders had keystones keeps the rule it was playing
-	// by for the age it was in (GameSave.TreeGraceAge). The engine clears it
-	// at the next advance, and a new run starts without one.
+	// graceAge is the age whose buildings wait for no tech, its wonder
+	// included ("" for none): a game saved under an older version of the
+	// tree's rules keeps the rules it was playing by for the age it was in
+	// (GameSave.TreeGraceAge). The engine clears it at the next advance, and
+	// a new run starts without one.
 	graceAge string
 
 	// order is every def key, sorted, fixed at construction (defs never change
@@ -134,13 +135,13 @@ func (bm *BuildingManager) AgeUnlocked(key string) bool {
 }
 
 // TechLocked reports whether key needs a tech that is not researched yet.
-// The wonder of the grace age needs none (graceAge).
+// A building of the grace age needs none, its wonder included (graceAge).
 func (bm *BuildingManager) TechLocked(key string) bool {
 	def := bm.defs[key]
 	if def.RequiredTech == "" || bm.researched == nil || bm.researched(def.RequiredTech) {
 		return false
 	}
-	return !(def.Category == "wonder" && bm.graceAge != "" && def.RequiredAge == bm.graceAge)
+	return !(bm.graceAge != "" && def.RequiredAge == bm.graceAge)
 }
 
 // SuggestKey returns the closest building key to the input, or "" if none is close

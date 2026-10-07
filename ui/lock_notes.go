@@ -15,6 +15,25 @@ import (
 func lockNotes(state game.GameState, keys ...string) string {
 	set := state.Ruleset()
 	here, _ := set.Index(state.Age)
+	return lockNotesWhen(state, func(age string) bool {
+		at, ok := set.Index(age)
+		return ok && at <= here
+	}, keys...)
+}
+
+// lockNotesInSight is lockNotes for a panel that already lists what the
+// lock shuts: the Expeditions panel shows Scout Nearby Ruins an age before
+// Exploration can be researched. It mentions a lock as soon as its tech may
+// be seen named (the next age's too), so the list never reads as open when
+// it is not.
+func lockNotesInSight(state game.GameState, keys ...string) string {
+	return lockNotesWhen(state, game.SightOf(&state).Age, keys...)
+}
+
+// lockNotesWhen writes the notes for the locks whose tech's age shown
+// accepts.
+func lockNotesWhen(state game.GameState, shown func(age string) bool, keys ...string) string {
+	set := state.Ruleset()
 	var sb strings.Builder
 	for _, key := range keys {
 		f, ok := state.Features[key]
@@ -23,7 +42,7 @@ func lockNotes(state game.GameState, keys ...string) string {
 		}
 		def, _ := set.FeatureLock(key)
 		tech, _ := set.Tech(f.Tech)
-		if at, ok := set.Index(tech.Age); !ok || at > here {
+		if !shown(tech.Age) {
 			continue
 		}
 		sb.WriteString(" [yellow]" + def.Refusal(f.TechName) + "[-]\n")

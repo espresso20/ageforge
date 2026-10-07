@@ -428,6 +428,9 @@ func TestAncientKnowledgeNeverFloorsResearch(t *testing.T) {
 		for _, pre := range def.Prerequisites {
 			ge.Research.researched[pre] = true
 		}
+		if len(def.AnyOf) > 0 {
+			ge.Research.researched[def.AnyOf[0]] = true // one branch of an either-or group
+		}
 		ge.Resources.UnlockResource("knowledge")
 		ge.Resources.AddStorage("knowledge", def.Cost)
 		ge.Resources.Add("knowledge", def.Cost)

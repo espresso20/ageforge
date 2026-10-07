@@ -47,6 +47,8 @@ Every duration on the panel shows as approximate wall-clock time, not ticks.
 
 ## Commands
 
+Gifts, alliances, rivalries, embargoes and deals wait for **Envoys**, a Classical Age tech that needs Exploration. Until it is researched those commands are refused and name it, and the Factions panel says so. Meeting civilizations, their opinion of you and the panel itself need no tech. A game that already had an ally or a rival keeps diplomacy for the rest of that run (see [Commands a Tech Opens](technologies.md#commands-a-tech-opens)).
+
 | Command | What it does |
 |---|---|
 | `factions` | Open the Factions panel |

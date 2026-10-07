@@ -617,6 +617,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 func TestDiplomacyDealCommands(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.SeedRNG(1)
+	engine.GrantTechsForTest("envoys") // the tech that opens deals
 	if res := HandleCommand("diplomacy deals", engine); !strings.Contains(res.Message, "not met anyone") {
 		t.Errorf("deals before first contact: %q", res.Message)
 	}

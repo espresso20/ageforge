@@ -1159,8 +1159,9 @@ func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[st
 // graceTreeLocked restores the tech tree's grace age and the run's granted
 // features from save and, for a save written under an older version of the
 // tree's rules (or before them), grants the grace: the age the save is in
-// becomes the grace age, where the tree's locks do not apply (a wonder
-// needs no keystone tech, every command is open), and the commands the save
+// becomes the grace age, where the tree's locks do not apply (no building
+// of the age waits for a tech, its wonder included, and every command is
+// open), and the commands the save
 // shows in use (featuresInUse) are granted for the rest of its run. Nothing
 // researched or built is touched. It reports whether it granted one. A
 // grace age that is not the save's age (a hand-edited save) is dropped.
@@ -1196,7 +1197,10 @@ func (ge *GameEngine) grantFeaturesLocked(keys []string) {
 // its next age the grace is over, and the line says only what changed and
 // what it keeps. Must be called with the write lock held.
 func (ge *GameEngine) treeNotice(from int) string {
-	changed := "Research update: some commands now wait for a tech and say which when you try them, and a tech's bonus is smaller but always counts in full."
+	changed := "Research update: the tech tree gained new techs. Trade routes, expeditions past the Scout Party, diplomacy and festivals now each wait for one and say which when you try them, one more wonder needs its keystone, and a few buildings wait for a tech."
+	if from < 2 {
+		changed = "Research update: some commands now wait for a tech and say which when you try them, and a tech's bonus is smaller but always counts in full."
+	}
 	if from < 1 {
 		changed = "Research update: each age's wonder now needs one tech, its keystone, before it can be built, some commands wait for a tech and say which when you try them, and techs are priced by their age, with smaller bonuses that always count in full."
 	}

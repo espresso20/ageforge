@@ -19,7 +19,7 @@ There are two kinds of mission:
 
 | Kind | Command | Costs | Available |
 |---|---|---|---|
-| Scouting expedition | `expedition <key>` | resources only, 0 soldiers | from the start; there are three: `scout_party`, `scout_ruins`, `naval_expedition`. The Naval Expedition waits for the Navigation tech |
+| Scouting expedition | `expedition <key>` | resources only, 0 soldiers | from the start; there are three: `scout_party`, `scout_ruins`, `naval_expedition`. The last two wait for the Exploration tech, and the Naval Expedition for Navigation as well |
 | Military campaign | `campaign <key>` | soldiers | the first opens in the Bronze Age, once Military Tactics is researched, but you have no soldiers until the Iron Age |
 
 ---
@@ -149,7 +149,7 @@ campaign <key>          # wage a campaign (e.g. campaign raid_bandits); spends s
 
 If you mix the two up, the game points you to the right one. `expedition raid_bandits` is refused with a note to use `campaign <key>`, and a scouting key given to `campaign` sends you to `expedition <key>`.
 
-**Two techs open missions.** Campaigns wait for **Military Tactics** (Bronze Age) and the Naval Expedition for **Navigation** (Renaissance Age). Until the tech is researched the command is refused and names it: `Campaigns need Military Tactics first. Research it to send one.` The Scout Party and Scout Nearby Ruins need no tech. A game saved before this rule keeps what it was already sending for the rest of that run (see [Commands a Tech Opens](technologies.md#commands-a-tech-opens)).
+**Three techs open missions.** Campaigns wait for **Military Tactics** (Bronze Age), every scouting expedition past the Scout Party for **Exploration** (Iron Age, after Map Making or Boatbuilding), and the Naval Expedition for **Navigation** (Renaissance Age) on top. Until the tech is researched the command is refused and names it: `Campaigns need Military Tactics first. Research it to send one.` The Scout Party needs no tech. Scout Nearby Ruins is listed from the Bronze Age, an age before Exploration can be researched, and the Expeditions panel says so. Two military buildings wait for a tech too: the Barracks for Military Tactics and the Legion Fort for Siege Warfare. A game saved before this rule keeps what it was already sending for the rest of that run (see [Commands a Tech Opens](technologies.md#commands-a-tech-opens)).
 
 ### Automatic dispatch: the Geographic Society
 

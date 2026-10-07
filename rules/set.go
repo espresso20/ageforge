@@ -475,6 +475,9 @@ func (s *Set) AgeEntryCosts(age string) map[string]float64 {
 // Techs returns every tech, in definition order.
 func (s *Set) Techs() []config.TechDef { return slices.Clone(s.techs) }
 
+// TechCount is how many techs the set holds.
+func (s *Set) TechCount() int { return len(s.techs) }
+
 // Tech returns a tech's definition.
 func (s *Set) Tech(key string) (config.TechDef, bool) {
 	t, ok := s.techByKey[key]
