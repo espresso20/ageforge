@@ -139,7 +139,7 @@ func Ages() []AgeDef {
 			Description:     "Exploration and trade span the globe.",
 			Quip:            "You discover lands that were, somewhat awkwardly, already discovered.",
 			ResourceReqs:    map[string]float64{"gold": 470000, "steel": 76500, "culture": 200000},
-			BuildingReqs:    map[string]int{"exchange": 8, "university": 8, "art_studio": 8},
+			BuildingReqs:    map[string]int{"exchange": 12, "university": 12, "art_studio": 12},
 			UnlockBuildings: []string{"settlement_block", "colonial_warehouse", "plantation", "coal_works", "deep_iron_mine", "natural_philosophy_hall", "mission", "fort", "port", "harbor", "dockyard", "iron_works", "concert_hall", "embassy", "grand_lighthouse"},
 		},
 		// === 8: INDUSTRIAL AGE (Steel Era) ===
@@ -173,7 +173,7 @@ func Ages() []AgeDef {
 			Description:     "Electric light and power reach daily life.",
 			Quip:            "Lightning, domesticated. The dark is now strictly optional.",
 			ResourceReqs:    map[string]float64{"steel": 9125000, "oil": 2625000, "electricity": 850000},
-			BuildingReqs:    map[string]int{"steam_turbine": 10, "academy": 10, "bessemer_plant": 10},
+			BuildingReqs:    map[string]int{"steam_turbine": 12, "academy": 12, "bessemer_plant": 12},
 			UnlockBuildings: []string{"apartment_block", "electric_warehouse", "industrial_farm", "oil_field", "nuclear_extraction_plant", "physics_laboratory", "revival_hall", "command_post", "financial_district", "power_station", "electric_arc_furnace", "power_generator", "radio_station", "hoover_dam"},
 		},
 		// === 11: ATOMIC AGE (Electric Era) ===
