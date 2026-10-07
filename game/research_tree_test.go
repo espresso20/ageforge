@@ -105,33 +105,19 @@ func TestStartResearchWithAnEitherOrGroup(t *testing.T) {
 	}
 }
 
-// TestPlanTakesAnEitherOrGroup: the plan refuses a tech until what it needs
-// is researched, in progress or planned above it, where one key of an
-// either-or group is enough, and then runs the chain in order.
+// TestPlanTakesAnEitherOrGroup: planning a tech plans what it needs before
+// it, where one key of an either-or group is enough (the first listed when
+// they cost the same), and the plan runs the chain in order.
 func TestPlanTakesAnEitherOrGroup(t *testing.T) {
 	ge := treeEngine(t)
-	refusal := func() string {
-		err := ge.PlanAddResearch("tree_join")
-		if err == nil {
-			t.Fatal("the plan took Join too early")
-		}
-		return err.Error()
-	}
-	if got, want := refusal(), "Can't plan Join: it needs Base first, which isn't researched or planned before it."; got != want {
-		t.Errorf("no Base: %q, want %q", got, want)
-	}
-	if err := ge.PlanAddResearch("tree_base"); err != nil {
+	if err := ge.PlanAddResearch("tree_right"); err != nil {
 		t.Fatal(err)
 	}
-	if got, want := refusal(), "Can't plan Join: it needs Left or Right first, and none of them is researched or planned before it."; got != want {
-		t.Errorf("no branch: %q, want %q", got, want)
+	// Right is planned, so Join brings Base and no second branch.
+	if err := ge.PlanAddResearch("tree_join"); err != nil {
+		t.Fatal(err)
 	}
-	for _, k := range []string{"tree_right", "tree_join"} {
-		if err := ge.PlanAddResearch(k); err != nil {
-			t.Fatalf("plan %s: %v", k, err)
-		}
-	}
-	for _, want := range []string{"tree_base", "tree_right", "tree_join"} {
+	for _, want := range []string{"tree_right", "tree_base", "tree_join"} {
 		ge.runPlanTick()
 		if ge.Research.currentTech != want {
 			t.Fatalf("researching %q, want %s; plan %+v", ge.Research.currentTech, want, ge.plan)
@@ -142,14 +128,20 @@ func TestPlanTakesAnEitherOrGroup(t *testing.T) {
 		t.Errorf("after the chain: plan %+v, Join researched %v, Left researched %v", ge.plan, ge.Research.IsResearched("tree_join"), ge.Research.IsResearched("tree_left"))
 	}
 
+	// With no branch on its way, the first listed of two that cost the same.
+	ge = treeEngine(t)
+	if chain, err := ge.PlanAddResearchChain("tree_join"); err != nil || !reflect.DeepEqual(chain, []string{"tree_base", "tree_left", "tree_join"}) {
+		t.Errorf("Join alone planned %v (%v)", chain, err)
+	}
+
 	// A branch already researched or in progress counts too.
 	ge = treeEngine(t)
 	learn(ge, "tree_base")
 	if err := ge.StartResearch("tree_left"); err != nil {
 		t.Fatal(err)
 	}
-	if err := ge.PlanAddResearch("tree_join"); err != nil {
-		t.Errorf("with Left in progress the plan refused Join: %v", err)
+	if chain, err := ge.PlanAddResearchChain("tree_join"); err != nil || !reflect.DeepEqual(chain, []string{"tree_join"}) {
+		t.Errorf("with Left in progress Join planned %v (%v)", chain, err)
 	}
 }
 

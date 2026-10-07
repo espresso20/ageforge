@@ -12,7 +12,7 @@ This page lists every command. Each section links to the page that explains the 
 
 ## The prompt
 
-As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` and `plan research` the same, then the next age's; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `workers share` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders or storage, and nothing in the Primitive Age); `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
+As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` the same, then the next age's; `plan research` every unresearched tech on your tree, the ones you can start first; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `workers share` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders or storage, and nothing in the Primitive Age); `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
 
 | Key | What it does |
 |---|---|
@@ -79,7 +79,7 @@ A list of builds and techs the game starts for you, in order, as the resources c
 |---|---|
 | `plan` | Open the **Plan** panel: the items, what each costs next and whether it can start. `↑`/`↓` select, `U`/`D` move the selected item, `X` removes it, `C` twice clears the plan. |
 | `plan build <building> [count]` | Add copies of a building of this age or the next (default 1). The next age's buildings wait for the advance. Adding more of the building at the end of the plan adds to that item. |
-| `plan research <tech>` (or `plan res`) | Add a tech. Techs start one at a time, in plan order; a prerequisite can be planned before it. |
+| `plan research <tech>` (or `plan res`) | Add a tech and, before it, the techs it still needs (see [The research queue](plan.md#the-research-queue)). Techs start one at a time, in plan order. It takes any tech on your tech tree: a tech of a later age waits for its age |
 | `plan trade <give> <get> [amount to get]` | Sell `<give>` for `<get>` at the market as it comes in, until that much `<get>` is bought. With no amount, it keeps buying `<get>` until you remove the item, never past your storage cap. Needs a trade building. |
 | `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too; they wait for the advance. |
 | `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as you can pay its price. While it waits it holds its price back from the items below, and it drops out if the offer rotates away. See [Factions & Diplomacy](factions.md). |
@@ -171,7 +171,7 @@ The **Research** panel (`research`) is a map of the tech tree. Like the Map it l
 | `Enter` | Open the selected tech's card; on the card, do what its last line says (start the tech, or add it to the build plan) |
 | `Esc` | Close the card, then the panel |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Knowledge](knowledge.md).
+With something typed, `Tab` and `Enter` act on the prompt instead. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`: it adds a tech with what it still needs first. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Knowledge](knowledge.md).
 
 ---
 

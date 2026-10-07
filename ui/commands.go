@@ -171,7 +171,7 @@ func registry() []*Command {
 			Subs: []*Command{
 				sub("build", "plan build <building> [count]", "Add copies of a building (this age's, or the next age's to build after you advance)", Arg{Kind: ArgPlanBuilding}, optCount),
 				{Name: "research", Aliases: []string{"res"}, Args: []Arg{{Kind: ArgPlanTech}},
-					Help: []Usage{{"plan research <tech>", "Add a tech (techs start one at a time, in order)"}}},
+					Help: []Usage{{"plan research <tech>", "Add a tech and, before it, the techs it still needs (techs start one at a time, in order)"}}},
 				sub("trade", "plan trade <give> <get> [amount]", "Sell <give> for <get> as it comes in, until <amount> <get> is bought (no amount: until you remove it)",
 					Arg{Kind: ArgTradeFrom}, Arg{Kind: ArgTradeTo}, Arg{Kind: ArgNumber, Optional: true}),
 				sub("advance", "plan advance", "Advance as soon as the next age is ready"),

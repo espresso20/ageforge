@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -690,9 +691,32 @@ func TestWriteSiteScreens(t *testing.T) {
 
 	s.onTree = func() {
 		for _, p := range [][2]string{{"research", "research tree close"}, {"research-card", "research card civil_engineering"}, {"research-far", "research tree far"}} {
+			var queued []string
+			if p[0] == "research-far" {
+				// The zoomed-out picture shows a queue: Imperial Legions
+				// planned with the tech it still needs. The engine is asked
+				// directly so the log stays as it was, and the chain comes
+				// out again before the game goes on.
+				chain, err := s.eng.PlanAddResearchChain("imperial_legions")
+				if err != nil || len(chain) < 2 {
+					t.Fatalf("queuing Imperial Legions for the picture: %v, %v", chain, err)
+				}
+				queued = chain
+			}
 			s.open(p[1], "")
 			shots.take(s, p[0])
 			s.close()
+			for range queued {
+				plan := s.eng.GetState().Plan
+				for i := len(plan) - 1; i >= 0; i-- {
+					if plan[i].Kind == game.PlanResearch && slices.Contains(queued, plan[i].Key) {
+						if _, err := s.eng.PlanRemove(i + 1); err != nil {
+							t.Fatal(err)
+						}
+						break
+					}
+				}
+			}
 		}
 		s.say("research tree close")
 		s.close()

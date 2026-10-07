@@ -551,12 +551,15 @@ func availableTechKeys(state game.GameState) []string {
 }
 
 // plannableTechKeys is what `plan research` takes: unresearched techs of
-// this age, an earlier one or the next that are neither in progress nor
-// planned already. Prerequisites may still be missing; they can be planned
-// first. Suggested in the order research would take them: available and
-// affordable, available, then the rest.
+// any age in sight (the spoiler rule: up to the next age, and on known
+// ground every age the account has reached) that are neither in progress
+// nor planned already. Prerequisites may still be missing; the plan adds
+// them first. Suggested in the order research would take them: available
+// and affordable, available, the rest of the ages reached, then the ages
+// ahead, nearest first.
 func plannableTechKeys(state game.GameState) []string {
 	order := state.Ruleset().Indexes()
+	sight := game.SightOf(&state)
 	planned := map[string]bool{state.Research.CurrentTech: true}
 	for _, v := range state.Plan {
 		if v.Kind == game.PlanResearch {
@@ -565,7 +568,7 @@ func plannableTechKeys(state game.GameState) []string {
 	}
 	var keys []string
 	for key, ts := range state.Research.Techs {
-		if !ts.Researched && !planned[key] && (order[ts.Age] <= order[state.Age] || ts.Age == state.NextAge) {
+		if !ts.Researched && !planned[key] && sight.Age(ts.Age) {
 			keys = append(keys, key)
 		}
 	}
@@ -576,8 +579,10 @@ func plannableTechKeys(state game.GameState) []string {
 			return 0
 		case ts.Available:
 			return 1
+		case order[ts.Age] <= order[state.Age]:
+			return 2
 		}
-		return 2
+		return 2 + order[ts.Age] - order[state.Age]
 	})
 }
 

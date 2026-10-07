@@ -246,7 +246,7 @@ func planPanelText(state game.GameState, sel int, note string, noteGood, clearAr
 	if len(state.Plan) == 0 {
 		sb.WriteString(" The plan is empty.\n\n")
 		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan build <building> [count[]") + theme.Paint(theme.RoleDim, "   e.g. plan build hut 10") + "\n")
-		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan research <tech>") + theme.Paint(theme.RoleDim, "            techs start one at a time, in order") + "\n")
+		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan research <tech>") + theme.Paint(theme.RoleDim, "            with what it needs first, in order") + "\n")
 	} else {
 		for i, v := range state.Plan {
 			marker := "  "
