@@ -18,6 +18,8 @@ Saves are **per-account**: each account keeps its own `saves/` folder, so switch
 
 > **Saves from an older version:** older builds kept a single flat `data/saves/` folder. On first launch the game moves those saves into your account's `data/accounts/<id>/saves/` slot. Nothing is deleted, and you don't have to do anything.
 
+> **Saves from before the research changes:** a game saved before wonders needed a keystone tech, or before some commands waited for a tech, loads as usual. Everything it researched and built stays. In the age it was in nothing new is locked, and any command it was already using (a campaign under way, a route running, the black market) stays open for the rest of that run. The log says so once on the first load. Its techs now give what today's techs give: smaller bonuses that no cap holds back (see [How Tech Bonuses Stack](technologies.md#how-tech-bonuses-stack)).
+
 > **Saves from before the one-week pacing:** a game saved before a first run took about a week loads as usual and carries on where you left it. On that first load the log says once that from the Bronze Age on each age, and its timers, now run about 2.6 times as long. Timers already running in the save finish at their old length.
 
 ---

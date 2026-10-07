@@ -69,7 +69,14 @@ type MilitaryManager struct {
 	completedCount int
 	totalLoot      map[string]float64
 	defenseRating  float64
+	// scoutTime is the techs' term on the time a scouting expedition takes
+	// (config.MechanicExpeditionTicks). The engine sets it (SetScoutTime); 0
+	// reads as 1. Campaigns keep their time.
+	scoutTime float64
 }
+
+// SetScoutTime sets the techs' term on a scouting expedition's time.
+func (mm *MilitaryManager) SetScoutTime(f float64) { mm.scoutTime = f }
 
 // NewMilitaryManager creates a military manager on the core ruleset.
 func NewMilitaryManager() *MilitaryManager { return NewMilitaryManagerWith(rules.Core()) }
@@ -290,6 +297,9 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 		ticks = minExpeditionDurationTicks
 	}
 	ticks = mm.rules.StretchTicks(currentAge, ticks)
+	if def.Category == ExpeditionScouting {
+		ticks = techTimeTicks(ticks, mm.scoutTime)
+	}
 
 	mm.activeByCat[def.Category] = &ActiveExpedition{
 		Key:       key,

@@ -27,7 +27,7 @@ func treeSet() *rules.Set {
 		tech("tree_left", "Left", config.TechDef{}),
 		tech("tree_right", "Right", config.TechDef{}),
 		tech("tree_join", "Join", config.TechDef{Prerequisites: []string{"tree_base"}, AnyOf: []string{"tree_left", "tree_right"}}),
-		tech("tree_method", "Method", config.TechDef{Effects: []config.TechEffect{{Kind: config.EffectResearchTime, Value: 0.5}}}),
+		tech("tree_method", "Method", config.TechDef{Effects: []config.TechEffect{{Kind: config.EffectResearchTime, Value: -0.5}}}),
 	)
 	return rules.Compile(src)
 }
@@ -211,35 +211,45 @@ func TestPlanTechWaitsForWhatItNeeds(t *testing.T) {
 	}
 }
 
-// TestResearchBonusesAreKeyedByKindAndTarget: gold output, gold storage and
-// gold a tick are three things, summed apart, and the pools the rest of the
-// game reads hold the fractions only.
+// TestResearchBonusesAreKeyedByKindAndTarget: gold output and steel a tick
+// are two things, folded apart; the layer's bonuses join no pool; and the
+// pools the rest of the game reads hold only what techs share with it.
 func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 	ge := NewGameEngine()
-	// Banking: +50% gold, +100 gold storage. Alchemy: +15% knowledge, +0.1
-	// gold a tick. Pottery: +25 storage for every resource. Feudalism: +5
-	// housing.
-	learn(ge, "banking", "alchemy", "pottery", "feudalism")
+	// Banking: +8% gold, market fee 3 points lower. Alchemy: +8% knowledge.
+	// Pottery: +10% storage. Feudalism: +8% housing. Steel Forging: first
+	// steel (0.25 a tick), +8% iron. Chronometry: +5% game speed.
+	learn(ge, "banking", "alchemy", "pottery", "feudalism", "steel_forging", "chronometry")
 	rm := ge.Research
 	for _, c := range []struct {
 		kind   config.TechEffectKind
 		target string
 		want   float64
 	}{
-		{config.EffectOutput, "gold", 0.5},
-		{config.EffectFlatStorage, "gold", 100},
-		{config.EffectFlatOutput, "gold", 0.1},
-		{config.EffectOutput, "knowledge", 0.15},
-		{config.EffectFlatStorage, config.AllResources, 25},
-		{config.EffectFlatHousing, "", 5},
+		{config.EffectOutput, "gold", 0.08},
+		{config.EffectOutput, "knowledge", 0.08},
+		{config.EffectOutput, "iron", 0.08},
+		{config.EffectFlatOutput, "steel", 0.25},
+		{config.EffectFlatOutput, "gold", 0},
+		{config.EffectStorage, "", 0.10},
+		{config.EffectHousing, "", 0.08},
 		{config.EffectAllOutput, "", 0},
-		{config.EffectFlatStorage, "knowledge", 0},
+		{config.EffectGameSpeed, "", 0.05},
+		{config.EffectMechanic, config.MechanicMarketFee, -0.03},
+		// A kind that multiplies reads 1 with no tech.
+		{config.EffectBuildCost, "", 1},
+		{config.EffectBuildTime, "", 1},
+		{config.EffectResearchTime, "", 1},
+		{config.EffectMechanic, config.MechanicRouteTicks, 1},
 	} {
 		if got := rm.Bonus(c.kind, c.target); got != c.want {
 			t.Errorf("Bonus(%s, %q) = %v, want %v", c.kind, c.target, got, c.want)
 		}
 	}
-	pools := map[string]float64{"gold_rate": 0.5, "knowledge_rate": 0.15}
+	if got := rm.OutputFactor("gold"); got != 1.08 {
+		t.Errorf("the layer's factor on gold is %v, want 1.08", got)
+	}
+	pools := map[string]float64{"tick_speed": 0.05}
 	if got := rm.GetBonuses(); !reflect.DeepEqual(got, pools) {
 		t.Errorf("pools = %v, want %v", got, pools)
 	}
@@ -255,15 +265,18 @@ func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 	}
 	rs := ge.GetState().Research
 	if !reflect.DeepEqual(rs.Bonuses, pools) ||
-		!reflect.DeepEqual(rs.Flat, map[string]float64{"gold": 0.1}) ||
-		!reflect.DeepEqual(rs.Storage, map[string]float64{"gold": 100, "all": 25}) || rs.Housing != 5 {
-		t.Errorf("the snapshot holds bonuses %v, flat %v, storage %v, housing %v", rs.Bonuses, rs.Flat, rs.Storage, rs.Housing)
+		!reflect.DeepEqual(rs.Flat, map[string]float64{"steel": 0.25}) ||
+		!reflect.DeepEqual(rs.Output, map[string]float64{"gold": 0.08, "knowledge": 0.08, "iron": 0.08}) ||
+		rs.Storage != 0.10 || rs.Housing != 0.08 || rs.AllOutput != 0 ||
+		rs.BuildCost != 1 || rs.BuildTime != 1 || rs.ResearchTime != 1 ||
+		!reflect.DeepEqual(rs.Mechanics, map[string]float64{config.MechanicMarketFee: -0.03}) {
+		t.Errorf("the snapshot holds %+v", rs)
 	}
 }
 
-// TestResearchTimeIsAKindATechCanCarry: no tech shortens research today, but
-// the kind is there and the engine applies it: with a tech that takes half
-// off research time, the next research takes half as long.
+// TestResearchTimeIsAKindATechCanCarry: with a tech that takes half off
+// research time (the floor, config.ResearchTimeFloor), the next research
+// takes half as long.
 func TestResearchTimeIsAKindATechCanCarry(t *testing.T) {
 	ge := treeEngine(t)
 	if err := ge.StartResearch("tree_base"); err != nil {
@@ -272,8 +285,8 @@ func TestResearchTimeIsAKindATechCanCarry(t *testing.T) {
 	full := ge.Research.totalTicks
 	researchOut(ge)
 	learn(ge, "tree_method")
-	if got := ge.Research.Bonus(config.EffectResearchTime, ""); got != 0.5 {
-		t.Fatalf("research time bonus = %v, want 0.5", got)
+	if got := ge.Research.TimeFactor(); got != 0.5 {
+		t.Fatalf("research time factor = %v, want 0.5", got)
 	}
 	if err := ge.StartResearch("tree_left"); err != nil {
 		t.Fatal(err)

@@ -32,6 +32,8 @@ Each pair has a **base rate**: how many units of the resource you get per unit y
 base rate (give A, get B) = price level of B ÷ price level of A × 0.8
 ```
 
+**Three techs lower the fee.** Currency and Banking take 3 points off each and Blockchain 2, so with all three the market keeps 12% and pays 10% more than the rates on this page (every market rate is scaled the same way, the listed pairs included). The fee never falls under 5%.
+
 That covers every pair of them, including pairs that were never on the list: steel for titanium in the Space Age, data for crypto in the Cyberpunk Age, gold for stone. Price levels change with each age, so these rates do too. Because of the fee a round trip always loses value (0.8 × 0.8 keeps 64%), so trading never beats building. The exchange is how you get the resources no building of your age makes: stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age on, titanium, crypto.
 
 Examples from each age (base rates, before pressure; "wood → stone 0.48" means you get 0.48 stone per wood):
@@ -185,6 +187,8 @@ Every route opens in the Bronze Age or later. From the Bronze Age on, ages and t
 
 What a route gives is boosted by your harbors and by an ally whose specialty it brings in: `amount × (1 + harbor bonus + ally bonus)`.
 
+**Techs and routes.** Road Building and Railroads each make every route run 15% faster (28% with both: a route's next run takes 0.85 × 0.85 of the ticks listed). And **Rail Freight waits for Railroads**: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. A game that was already running the route when this rule arrived keeps it for the rest of that run.
+
 ---
 
 ## Harbor lineage: trade-route income
@@ -207,7 +211,7 @@ Harbors use the **trade** worker domain, the same workers who staff markets and 
 
 ## Black Market
 
-From the **Colonial Age** you can make smuggling runs on the black market. A run spends a lump of **culture** for a chance at a large haul of a resource you choose. If it fails, the culture is gone and you get nothing.
+From the **Colonial Age**, once **Mercantilism** is researched, you can make smuggling runs on the black market. A run spends a lump of **culture** for a chance at a large haul of a resource you choose. If it fails, the culture is gone and you get nothing.
 
 ```text
 blackmarket              # show cost, odds and cooldown

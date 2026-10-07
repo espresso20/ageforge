@@ -58,8 +58,12 @@ type Source struct {
 	// Harbingers is the roster, one per age, derived fields filled in.
 	Harbingers []config.HarbingerDef
 
-	Factions      []config.FactionDef
-	TradeRoutes   []config.TradeRouteDef
+	Factions    []config.FactionDef
+	TradeRoutes []config.TradeRouteDef
+	// FeatureLocks is the commands that wait for a tech, and Mechanics the
+	// mechanic numbers a tech can move.
+	FeatureLocks  []config.FeatureLockDef
+	Mechanics     []config.MechanicDef
 	ExchangeRates []config.ExchangeRateDef
 
 	WorkerClasses []config.WorkerClassDef
@@ -116,6 +120,8 @@ func FromConfig() Source {
 		Harbingers:           config.Harbingers(),
 		Factions:             config.BaseFactions(),
 		TradeRoutes:          config.BaseTradeRoutes(),
+		FeatureLocks:         config.FeatureLocks(),
+		Mechanics:            config.Mechanics(),
 		ExchangeRates:        config.BaseExchangeRates(),
 		WorkerClasses:        config.WorkerClasses(),
 		WorkerDomains:        config.WorkerDomains(),

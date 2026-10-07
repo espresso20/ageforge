@@ -63,22 +63,30 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 	eng.Buildings.LoadCounts(counts)
 	eng.StepTicks(2)
 	st = eng.GetState()
-	n = 0
-	for _, k := range sortedKeysOf(st.Resources) {
-		if rs := st.Resources[k]; rs.Unlocked {
-			eng.Resources.Add(k, rs.Storage*[]float64{0.97, 0.31, 0.62, 0.08, 0.99, 0.45}[n%6])
-			n++
+	// stock sets every store to a share of what it holds.
+	stock := func(share func(n int) float64) {
+		n := 0
+		for _, k := range sortedKeysOf(st.Resources) {
+			if rs := st.Resources[k]; rs.Unlocked {
+				eng.SetStockForTest(k, rs.Storage*share(n))
+				n++
+			}
 		}
 	}
+	// Each kind is ordered from full stores, so what is under construction
+	// does not hang on how an age's prices sit against its storage. The
+	// mixed levels follow.
 	queued := 0
 	for _, k := range sortedKeysOf(st.Buildings) {
 		if b := st.Buildings[k]; b.Unlocked && b.AgeKey == st.Age && b.Category != "wonder" && queued < 5 {
+			stock(func(int) float64 { return 1 })
 			if _, err := eng.BuildMultiple(k, 1+queued%3); err == nil {
 				queued++
 			}
 		}
 	}
-	if queued < 2 {
+	stock(func(n int) float64 { return []float64{0.97, 0.31, 0.62, 0.08, 0.99, 0.45}[n%6] })
+	if queued < 5 {
 		t.Fatalf("only %d kinds of building under construction in the %s", queued, age)
 	}
 	eng.StepTicks(3)

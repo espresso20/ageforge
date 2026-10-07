@@ -9,8 +9,10 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// cappedState is a Modern Age player holding every tech so far: the techs
-// alone put all production, gold and knowledge past their +200% caps.
+// cappedState is a Modern Age player holding every tech so far and enough
+// milestone rewards to put all production, gold and knowledge past their
+// +200% caps, with iron under its own. The techs are in a layer of their
+// own and fill no pool.
 func cappedState(t *testing.T) (*game.GameEngine, game.GameState) {
 	t.Helper()
 	ge := game.NewGameEngine()
@@ -19,6 +21,10 @@ func cappedState(t *testing.T) (*game.GameEngine, game.GameState) {
 		t.Fatal(err)
 	}
 	ge.GrantTechsForTest()
+	ge.GrantBonusForTest("production_all", 2.4)
+	ge.GrantBonusForTest("gold_rate", 3.8)
+	ge.GrantBonusForTest("knowledge_rate", 3.35)
+	ge.GrantBonusForTest("iron_rate", 0.7)
 	return ge, ge.GetState()
 }
 
@@ -67,58 +73,71 @@ func TestStatsPanelShowsCappedPools(t *testing.T) {
 	}
 }
 
-// TestResearchPanelBonuses: the Research bonuses list shows percentages
-// only for the bonus pools, with the cap note, and flat output, storage and
-// housing as amounts. It used to print every tech effect as a percentage:
-// "+37500% All production" for +375 storage.
+// TestResearchPanelBonuses: the Research bonuses list is what the techs come
+// to together. Their output bonuses are in a layer no cap holds, so none
+// carries a cap note, even here, where the pools for all production and gold
+// are past their caps. Cuts of a price or a time and the mechanic numbers
+// read as what they are, and a first source's flat output as an amount.
 func TestResearchPanelBonuses(t *testing.T) {
 	_, st := cappedState(t)
+	earned(t, st, "production_all") // the fixture's pools are past their caps
+	earned(t, st, "gold_rate")
 	out := section(t, researchProvider(st, 120), "Research bonuses", "Available now")
 	for _, want := range []string{
-		"+240%", "All production [yellow]" + earned(t, st, "production_all") + "[-]",
-		"Gold production [yellow]" + earned(t, st, "gold_rate") + "[-]",
-		"[gray]Output:[-]", "+2.8 food/tick", "+19 electricity/tick",
-		"[gray]Storage:[-] +375 for every resource, +100 gold",
-		"[gray]Housing:[-] +5",
+		"[green]+5%    [-] All production\n",
+		"[green]+26%   [-] Gold production\n",
+		"[green]+45%   [-] Knowledge production\n",
+		"[green]+20%   [-] Storage\n",
+		"[green]+13%   [-] Housing\n",
+		"[green]-6%    [-] Building costs\n",
+		"[green]-8%    [-] Construction time\n",
+		"[green]-6%    [-] Research time\n",
+		"[green]-28%   [-] Trade route time\n",
+		"[green]-6     [-] Market fee, in points\n",
+		"[green]+2     [-] Hand gathering\n",
+		"[green]+15%   [-] Game speed\n",
+		"[gray]Output:[-]  +1 data/tick, +0.25 steel/tick",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("Research bonuses is missing %q:\n%s", want, out)
 		}
 	}
-	for _, bad := range []string{"37500%", "10210%", "1900%", "+500%", "+280%"} {
-		if strings.Contains(out, bad) {
-			t.Errorf("Research bonuses shows an amount as a percentage (%s):\n%s", bad, out)
-		}
+	if strings.Contains(out, "capped") {
+		t.Errorf("a tech's bonus carries a cap note:\n%s", out)
 	}
 }
 
-// TestResearchTreeTagsCappedTechs: a researched tech whose pool is past its
-// cap carries the pool's note, a tech still to research says what the cap
-// would leave of it, and a bonus with room carries nothing.
-func TestResearchTreeTagsCappedTechs(t *testing.T) {
+// TestResearchTreeTagsNoTechAsCapped: a tech's bonus is never tagged as
+// capped, researched or still to research, whatever the pools hold: the
+// layer is applied after them. Here gold's pool and the all-production pool
+// are past their caps, and the gold techs and Industrialization read plain.
+func TestResearchTreeTagsNoTechAsCapped(t *testing.T) {
 	ge, st := cappedState(t)
+	earned(t, st, "production_all")
+	earned(t, st, "gold_rate")
 	tree := section(t, researchProvider(st, 120), "Tech tree", "")
 	for _, want := range []string{
-		"+30% all production [yellow](" + earned(t, st, "production_all") + ")[gray]",
-		"+30% gold production [yellow](" + earned(t, st, "gold_rate") + ")[gray]",
-		"+40% iron production,", // Iron Smelting: iron is under its cap
+		"+5% all production[-]",
+		"+10% gold production, market fee 3 points lower[-]",
+		"opens campaigns, +15% military power[-]",
+		"opens the black market[-]",
 	} {
 		if !strings.Contains(tree, want) {
 			t.Errorf("the tech tree is missing %q", want)
 		}
 	}
-	// One age on, the Information Age techs are offered: Internet's
-	// knowledge bonus would add nothing.
+	// One age on, the Information Age techs are offered: Internet's data
+	// bonus counts in full, and says nothing about a cap.
 	if err := ge.EnterAgeForTest("information_age"); err != nil {
 		t.Fatal(err)
 	}
 	st = ge.GetState()
 	avail := section(t, researchProvider(st, 120), "Available now", "Tech tree")
-	if want := "+120% knowledge production [yellow](capped: no effect now)[gray]"; !strings.Contains(avail, want) {
+	if want := "Effects: +5% data production[-]"; !strings.Contains(avail, want) {
 		t.Errorf("Available now is missing %q:\n%s", want, avail)
 	}
-	if want := "+3 data/tick,"; !strings.Contains(avail, want) && !strings.Contains(avail, "+3 data/tick[") {
-		t.Errorf("Available now lost Internet's flat output:\n%s", avail)
+	if out := researchProvider(st, 120); strings.Contains(section(t, out, "Available now", ""), "capped") {
+		t.Errorf("the Research panel tags a tech as capped:\n%s", out)
 	}
 }
 
@@ -189,7 +208,7 @@ func TestResearchPanelShowsRealTimes(t *testing.T) {
 	st := ge.GetState()
 	st.Pools["research_speed"] = game.BonusPool{Target: "research_speed", Earned: 0.25, Applied: 0.25}
 	out = researchProvider(st, 120)
-	quick := game.ResearchTicks(base, 0.25, 1, 1)
+	quick := game.ResearchTicks(base, 0.25, 1, 1, 1)
 	if quick >= base {
 		t.Fatalf("+25%% research speed leaves Tool Making at %d of %d ticks", quick, base)
 	}
@@ -207,7 +226,7 @@ func TestResearchPanelShowsRealTimes(t *testing.T) {
 	if strings.Contains(out, "Research speed") {
 		t.Errorf("Ancient Knowledge shows as research speed:\n%s", out)
 	}
-	known := game.ResearchTicks(base, 0, game.SuccumbResearchTimeFactor, 1)
+	known := game.ResearchTicks(base, 0, 1, game.SuccumbResearchTimeFactor, 1)
 	if known != base*4/5 {
 		t.Fatalf("Ancient Knowledge leaves Tool Making at %d of %d ticks, want four fifths", known, base)
 	}

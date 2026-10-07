@@ -141,6 +141,10 @@ type GameState struct {
 	// beside a bonus a limit is holding back. Populated in GetState(); not
 	// stored in save JSON.
 	Pools map[string]BonusPool `json:"-"`
+	// Features is every feature lock (config.FeatureLocks) by key: the tech
+	// that opens the command and whether it is open now (features.go).
+	// Populated in GetState(); not stored in save JSON.
+	Features map[string]FeatureState `json:"-"`
 	// AccountStats carries the account-wide LIFETIME (cross-save) stats and
 	// achievements for the Stats overlay (the accounts design §3.3, Phase 6). nil when
 	// no account is wired (e.g. tests that build an engine without SetAccount).
@@ -363,14 +367,30 @@ type ResearchState struct {
 	TicksLeft       int
 	TotalTicks      int
 	TotalResearched int
-	// Bonuses is what researched techs add to each bonus pool, as fractions
-	// ("production_all": 0.5 is +50%). Flat is what they add per tick to each
-	// resource, Storage what they add to each store ("all": every one) and
-	// Housing what they add to housing: amounts, not fractions.
+	// Bonuses is what researched techs add to each bonus pool they share
+	// with the rest of the game, as fractions ("military_power": 0.5 is
+	// +50%): game speed, military power, expedition rewards. Flat is what
+	// they add per tick to each resource (a first source of it).
 	Bonuses map[string]float64
 	Flat    map[string]float64
-	Storage map[string]float64
-	Housing float64
+	// The tech layer, which no cap holds. Output is the techs' bonus on
+	// each resource's output and AllOutput their bonus on every resource's
+	// (fractions; a resource's layer factor is 1 + its Output + AllOutput).
+	// Storage and Housing are their bonus on every store and on housing
+	// (fractions).
+	Output    map[string]float64
+	AllOutput float64
+	Storage   float64
+	Housing   float64
+	// BuildCost, BuildTime and ResearchTime are the techs' factors on what
+	// buildings cost, how long construction takes and how long research
+	// takes: 1 with no tech, 0.97 after one 3% cut. Mechanics is each
+	// mechanic number's tech term (config.Mechanics), for the numbers a
+	// researched tech moves.
+	BuildCost    float64
+	BuildTime    float64
+	ResearchTime float64
+	Mechanics    map[string]float64
 }
 
 // TechState represents one technology's state for UI
@@ -676,6 +696,8 @@ type TradeRouteInfo struct {
 // DiplomacyState represents the diplomacy system state for UI
 type DiplomacyState struct {
 	Factions map[string]FactionInfo
+	// GiftCost is what a gift costs now: GiftCost with the techs' cut.
+	GiftCost float64
 	// BoonCrews are the workers faction boons have lent (Extra Hands), one
 	// entry per crew, oldest first. They go home when TicksLeft runs out.
 	BoonCrews []BoonWorkerLoan

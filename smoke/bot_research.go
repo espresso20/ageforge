@@ -20,7 +20,8 @@ import (
 //     source of a resource it asks for (Steel Forging, when the Renaissance
 //     asks for steel and no Medieval building makes it);
 //  3. then the rest, cheapest first, with a tech that makes a missing
-//     resource or opens a building of this age ahead of the others.
+//     resource, opens a building of this age or opens a command the bot
+//     uses (faction deals, festivals) ahead of the others.
 //
 // While a tech of the first two groups is still to start, the bot saves its
 // knowledge for it: nothing of the third group starts, the knowledge those
@@ -105,12 +106,30 @@ func (b *Bot) madeHere(p *plan, res string) bool {
 	return false
 }
 
-// openers is the techs a building of this age still waits for.
+// botFeatures is the commands behind a feature lock that the bot uses:
+// faction deals and festivals. It researches the tech that opens one before
+// it uses it, and leaves the command alone until then (plan.open).
+var botFeatures = []string{config.FeatureDiplomacy, config.FeatureFestivals}
+
+// open reports whether the command behind feature lock key can be used now.
+// A lock the state does not list is open.
+func (p *plan) open(key string) bool {
+	f, ok := p.st.Features[key]
+	return !ok || f.Open
+}
+
+// openers is the techs a building of this age still waits for, and the
+// techs that open a command the bot uses and cannot use yet.
 func (b *Bot) openers(p *plan) map[string]bool {
 	out := map[string]bool{}
 	for bld, bs := range p.st.Buildings {
 		if bs.NeedsTech != "" && b.defs[bld].RequiredAge == p.st.Age {
 			out[bs.NeedsTech] = true
+		}
+	}
+	for _, key := range botFeatures {
+		if f := p.st.Features[key]; f.Live && !f.Open {
+			out[f.Tech] = true
 		}
 	}
 	return out

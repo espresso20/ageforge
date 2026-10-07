@@ -202,6 +202,14 @@ type AgeSplit struct {
 	// Reported per age; Pacing v2's mid-age unlocks hold it to 12 hours.
 	QuietSecs  float64 `json:"quiet_seconds_1x,omitempty"`
 	QuietAfter string  `json:"quiet_after,omitempty"`
+	// KnowledgeHour is the knowledge the age made per hour at 1x, averaged
+	// over the age as the bot's decisions sampled it: what
+	// config.KnowledgePerHour is re-measured from. PoolAll is what the
+	// all-production pool had earned when the age ended, before the clamp
+	// (2 is +200%, where the clamp sits): how full a real run's pool is,
+	// beside the static caps report's upper bound.
+	KnowledgeHour float64 `json:"knowledge_per_hour_1x,omitempty"`
+	PoolAll       float64 `json:"production_all_earned,omitempty"`
 }
 
 // CycleSplit is the time from a fresh start to prestige.
@@ -360,11 +368,17 @@ type runner struct {
 	// Quiet stretches (AgeSplit.QuietSecs): building types built so far this
 	// run and techs finished, the last new decision in this age, what it was,
 	// and the longest gap between two so far.
-	seenBld    map[string]bool
-	novTechs   int
-	quietMark  time.Duration
-	quietWhat  string
-	quietMax   time.Duration
+	seenBld   map[string]bool
+	novTechs  int
+	quietMark time.Duration
+	quietWhat string
+	quietMax  time.Duration
+	// knowSum is the knowledge rate summed over the age's sampled ticks
+	// (knowTicks of them), and poolAll the all-production pool as last
+	// seen: the age's AgeSplit reports both.
+	knowSum    float64
+	knowTicks  int
+	poolAll    float64
 	quietAfter string
 	// advancing is set while control calls AdvanceAge, so the age-advance
 	// bus handler leaves that advance to control.
@@ -605,6 +619,12 @@ func (r *runner) split(unfinished bool) AgeSplit {
 		quiet, after = gap, r.quietWhat
 	}
 	a.QuietSecs, a.QuietAfter = quiet.Seconds(), after
+	if r.knowTicks > 0 {
+		// A rate is per tick at the age's speed: per hour at 1x is that
+		// over k, times the ticks in an hour.
+		a.KnowledgeHour = r.knowSum / float64(r.knowTicks) / math.Max(r.speeds[r.age], 1) * 3600 / config.TickSeconds
+	}
+	a.PoolAll = r.poolAll
 	return a
 }
 
@@ -679,6 +699,7 @@ func (r *runner) enterAge(st game.GameState) {
 	r.timedOut = false
 	r.quietMark, r.quietWhat = r.sim, "entering "+st.Age
 	r.quietMax, r.quietAfter = 0, ""
+	r.knowSum, r.knowTicks, r.poolAll = 0, 0, 0
 }
 
 // closeAge records the age just completed. Its verdict is graded across
@@ -703,6 +724,12 @@ func (r *runner) observe(st game.GameState) {
 		r.closeAge()
 		r.enterAge(st)
 	}
+	// The age's knowledge income and its all-production pool, for its split.
+	if k, ok := st.Resources["knowledge"]; ok && k.Rate > 0 {
+		r.knowSum += float64(k.Rate * float64(r.cfg.DecideEvery))
+	}
+	r.knowTicks += r.cfg.DecideEvery
+	r.poolAll = st.Pools["production_all"].Earned
 
 	for _, ev := range st.ActiveEvents {
 		if !r.prevEvt[ev.Key] {

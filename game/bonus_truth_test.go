@@ -227,9 +227,91 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 	out["speed"] = float64(BaseTickInterval) / float64(ge.tickIntervalLocked())
 	out["research"] = truthResearchTime(t, ge)
 	out["cost"] = truthBuildCost(ge)
+	// Construction time: the share of its listed time a building takes.
+	out["buildtime"] = float64(ge.buildTicksLocked(config.BuildingDef{BuildTicks: truthRefTicks})) / truthRefTicks
+	for key, v := range truthMechanics(ge) {
+		out["mech:"+key] = v
+	}
 	out["defense"] = truthDefense(ge)
 	out["morale"] = truthMoraleLift(t, ge)
 	return out
+}
+
+// truthMechanics reads every mechanic number a tech can move
+// (config.Mechanics), each where the game uses it: what the market pays on a
+// pair it trades at parity (as the fee that leaves), a route's time per
+// run, a scouting expedition launched off a fixed roll, how long a set of
+// deals lasts, what a gift costs, the share of its price a festival costs,
+// the wait between festivals.
+// Hand gathering and raid losses are read as the engine's own term: a real
+// gather and a real raid spend the engine, and TestTechGatherAndRaids runs
+// both. A number that cannot be read in this engine is left out. It leaves
+// the engine as it found it.
+func truthMechanics(ge *GameEngine) map[string]float64 {
+	out := map[string]float64{
+		config.MechanicGatherAmount:          ge.gatherBonus(),
+		config.MechanicRaidLoss:              ge.raidLossFactor(),
+		config.MechanicRouteTicks:            float64(ge.Trade.RunTicks(truthRefTicks)) / truthRefTicks,
+		config.MechanicDealRefreshTicks:      float64(ge.Diplomacy.dealRefreshFor(ge.age)),
+		config.MechanicGiftCost:              ge.Diplomacy.GiftPrice(),
+		config.MechanicFestivalCooldownTicks: float64(ge.festivalCooldown()),
+	}
+	// A festival's price is a share of the culture store: read it against
+	// what it would be with no tech, so only the techs' cut moves it.
+	if full := math.Max(festivalMinCost, ge.Resources.GetStorage("culture")*festivalCostFraction); full > 0 {
+		out[config.MechanicFestivalCost] = ge.festivalCost() / full
+	}
+	if priced := ge.rules.PricedResources(ge.age); len(priced) >= 2 {
+		from, to := priced[0], priced[1]
+		base, ok := ge.rules.MarketRate(from, to, ge.age)
+		if paid, _ := ge.Trade.marketRate(from, to, ge.age); ok && base > 0 {
+			out[config.MechanicMarketFee] = 1 - (1-config.ExchangeFee)*paid/base
+		}
+	}
+	if defs := ge.Military.GetAvailableExpeditionsByCategory(ExpeditionScouting, ge.age, ageOrders()); len(defs) > 0 {
+		held := ge.Military.activeByCat[ExpeditionScouting]
+		delete(ge.Military.activeByCat, ExpeditionScouting)
+		if err := ge.Military.LaunchExpedition(rand.New(rand.NewSource(1)), defs[0].Key, ge.age, ageOrders()); err == nil {
+			out[config.MechanicExpeditionTicks] = float64(ge.Military.activeByCat[ExpeditionScouting].TicksLeft)
+		}
+		delete(ge.Military.activeByCat, ExpeditionScouting)
+		if held != nil {
+			ge.Military.activeByCat[ExpeditionScouting] = held
+		}
+	}
+	return out
+}
+
+// truthLayerScale is what one point of the tech layer on res is worth in its
+// final rate: what the resource's buildings and crews make after every
+// pooled bonus (the layer's base), times what multiplies the rate after the
+// layer (an ally's bonus, the Cosmic Legacy, Era Mastery). 0 when nothing
+// makes res here. Every part is read off the breakdown, and none of them
+// moves with the layer, so it reads the same whatever is researched.
+func truthLayerScale(ge *GameEngine, res string) float64 {
+	ge.recalculateRates()
+	b := ge.Resources.resources[res].Breakdown
+	base := b.BuildingRate + b.BonusRate + b.WorkerRate
+	if base <= 0 {
+		return 0
+	}
+	before := base + b.ResearchRate + b.EventRate
+	ally := 1 + b.TradeRate/before
+	legacy := 1 + b.LegacyRate/(before+b.TradeRate)
+	return base * ally * legacy * ge.speedK()
+}
+
+// truthCut reads a tech's cut of a price or a time off meter: the share
+// that comes off, whatever was taken off before (the cuts multiply).
+func truthCut(meter string, unit string) truthKind {
+	return truthKind{Unit: unit, Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			if before[meter] <= 0 {
+				return truthMeasured{Skip: "no " + meter + " to read"}
+			}
+			// The reference price and times round to whole units.
+			return truthMeasured{Delivered: after[meter]/before[meter] - 1, Noise: 2 / (truthRefTicks * before[meter]), Allowed: meterIs(meter)}
+		}}
 }
 
 // truthResearchTime is the share of its listed time a tech takes to research
@@ -443,6 +525,9 @@ type truthPromise struct {
 	// because it is applied whole and its other promises ride along (an
 	// epoch event with two rates). A name ending in ":" is a prefix.
 	Also []string
+	// Raid marks a loss a raid takes, which the techs' cut of raid losses
+	// shrinks before it lands.
+	Raid bool
 	// wire prepares the states a probe needs in ge.
 	wire func(ge *GameEngine) truthSwitch
 }
@@ -594,13 +679,18 @@ func truthAllFactor(ge *GameEngine, r truthReading) (float64, bool) {
 }
 
 // truthAcross reads one promise off several resources that must agree:
-// each resource's rate change over its own base.
-func truthAcross(ge *GameEngine, before, after truthReading, base map[string]float64) truthMeasured {
+// each resource's rate change over its own base. layered says the promise
+// sits in a pool, before the tech layer: the layer multiplies what it adds,
+// as Era Mastery's k does, and the reading is taken per point of both.
+func truthAcross(ge *GameEngine, before, after truthReading, base map[string]float64, layered bool) truthMeasured {
 	m := truthMeasured{Allowed: meterHasPrefix("rate:")}
 	lo, hi := math.Inf(1), math.Inf(-1)
 	for _, key := range sortedKeys(base) {
 		d, noise := truthDiff(before, after, "rate:"+key)
 		scale := base[key] * ge.speedK()
+		if layered {
+			scale *= ge.Research.OutputFactor(key)
+		}
 		lo, hi = math.Min(lo, d/scale), math.Max(hi, d/scale)
 		m.Noise = math.Max(m.Noise, noise/scale)
 	}
@@ -612,6 +702,113 @@ func truthAcross(ge *GameEngine, before, after truthReading, base map[string]flo
 }
 
 var truthKinds = map[string]truthKind{
+	// A tech's "+X% <resource> production": the tech layer. X of what the
+	// resource's buildings and crews make after every pooled bonus and cap,
+	// in every age: nothing caps the layer.
+	"tech_output": {
+		Unit: "of what the resource makes", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			res := p.Eff.Target
+			scale := truthLayerScale(ge, res)
+			if scale <= 0 {
+				return truthMeasured{Skip: "no " + res + " is made here"}
+			}
+			d, noise := truthDiff(before, after, "rate:"+res)
+			return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("rate:" + res)}
+		},
+	},
+	// A tech's "+X% all production": the same, on every resource.
+	"tech_all_output": {
+		Unit: "of what every resource makes", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			m := truthMeasured{Allowed: meterHasPrefix("rate:")}
+			lo, hi := math.Inf(1), math.Inf(-1)
+			for _, key := range ge.Resources.order {
+				scale := truthLayerScale(ge, key)
+				if scale <= 0 {
+					continue
+				}
+				d, noise := truthDiff(before, after, "rate:"+key)
+				lo, hi = math.Min(lo, d/scale), math.Max(hi, d/scale)
+				m.Noise = math.Max(m.Noise, noise/scale)
+			}
+			if math.IsInf(lo, 1) {
+				return truthMeasured{Skip: "nothing is made here"}
+			}
+			m.Delivered = lo
+			if hi-lo > 3e-6*math.Max(1, math.Abs(hi))+2*m.Noise {
+				m.Skip = fmt.Sprintf("resources disagree: %v to %v", lo, hi)
+			}
+			return m
+		},
+	},
+	// A tech's "+X% storage": X of every store, whatever else is researched
+	// (the techs' storage bonuses add up).
+	"tech_storage": {
+		Unit: "of every store", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			ge.recalculateRates()
+			held := 1 + ge.Research.Bonus(config.EffectStorage, "")
+			m := truthMeasured{Allowed: meterHasPrefix("storage:", "stock:")}
+			lo, hi := math.Inf(1), math.Inf(-1)
+			for _, key := range ge.Resources.order {
+				base := ge.Resources.resources[key].Storage / held
+				if base <= 0 {
+					continue
+				}
+				d, noise := truthDiff(before, after, "storage:"+key)
+				lo, hi = math.Min(lo, d/base), math.Max(hi, d/base)
+				m.Noise = math.Max(m.Noise, noise/base)
+			}
+			m.Delivered = lo
+			if hi-lo > 3e-6*math.Max(1, math.Abs(hi))+2*m.Noise {
+				m.Skip = fmt.Sprintf("resources disagree: %v to %v", lo, hi)
+			}
+			return m
+		},
+	},
+	// A tech's "+X% housing": X of housing, rounded up to a whole person
+	// (game.TechHousing), so the reading is good to a person either way.
+	"tech_housing": {
+		Unit: "of housing", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			base := float64(ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"]))
+			if base <= 0 {
+				return truthMeasured{Skip: "no housing here"}
+			}
+			return truthMeasured{Delivered: (after["housing"] - before["housing"]) / base, Noise: 1 / base, Allowed: meterIs("housing")}
+		},
+	},
+	// A tech's cut of building costs, of construction time, of research
+	// time: X of it comes off.
+	"tech_build_cost":    truthCut("cost", "of what buildings cost"),
+	"tech_build_time":    truthCut("buildtime", "of the construction time"),
+	"tech_research_time": truthCut("research", "of the research time"),
+	// A tech's step on one number of a mechanic (config.Mechanics): the
+	// number is multiplied, or added to, as the mechanic says.
+	"tech_mechanic": {
+		Unit: "of the mechanic's number", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			meter := "mech:" + p.Eff.Target
+			def := config.MechanicByKey()[p.Eff.Target]
+			a, ok := before[meter]
+			if !ok {
+				return truthMeasured{Skip: def.Name + " cannot be read here"}
+			}
+			if !def.Multiplies {
+				return truthMeasured{Delivered: after[meter] - a, Allowed: meterIs(meter)}
+			}
+			if a <= 0 {
+				return truthMeasured{Skip: def.Name + " reads zero here"}
+			}
+			// A number of ticks is whole: good to a tick either way.
+			noise := 0.0
+			if strings.HasSuffix(p.Eff.Target, "_ticks") && a > 1 {
+				noise = 2 / a
+			}
+			return truthMeasured{Delivered: after[meter]/a - 1, Noise: noise, Allowed: meterIs(meter)}
+		},
+	},
 	// "+X% all production": X points on every resource buildings make.
 	"all_production": {
 		Unit: "points of base output", Pool: true,
@@ -623,7 +820,7 @@ var truthKinds = map[string]truthKind{
 			if len(base) == 0 {
 				return truthMeasured{Skip: "no building output to read"}
 			}
-			return truthAcross(ge, before, after, base)
+			return truthAcross(ge, before, after, base, true)
 		},
 	},
 	// "+X% all production, after the caps" (the Cosmic Legacy): everything
@@ -646,7 +843,7 @@ var truthKinds = map[string]truthKind{
 			if len(base) == 0 {
 				return truthMeasured{Skip: "nothing is made here"}
 			}
-			return truthAcross(ge, before, after, base)
+			return truthAcross(ge, before, after, base, false)
 		},
 	},
 	// "+X% <resource> production": X points on that resource alone.
@@ -663,7 +860,8 @@ var truthKinds = map[string]truthKind{
 				return truthMeasured{Skip: "no building output to read"}
 			}
 			d, noise := truthDiff(before, after, "rate:"+res)
-			scale := made * all * ge.speedK()
+			// The tech layer multiplies what the pool adds, as k does.
+			scale := made * all * ge.speedK() * ge.Research.OutputFactor(res)
 			return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("rate:" + res)}
 		},
 	},
@@ -675,7 +873,7 @@ var truthKinds = map[string]truthKind{
 			if len(crew) == 0 {
 				return truthMeasured{Skip: "no staffed building to read"}
 			}
-			return truthAcross(ge, before, after, crew)
+			return truthAcross(ge, before, after, crew, true)
 		},
 	},
 	// "+V <resource>/tick" from a tech or an event: V more per tick.
@@ -700,7 +898,8 @@ var truthKinds = map[string]truthKind{
 	"storage": {
 		Unit: "storage per copy",
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
-			scale := p.Count * ge.speedK()
+			// The techs' storage bonus multiplies every store, as k does.
+			scale := p.Count * ge.speedK() * (1 + ge.Research.Bonus(config.EffectStorage, ""))
 			if p.Eff.Target != "all" {
 				d, noise := truthDiff(before, after, "storage:"+p.Eff.Target)
 				return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("storage:" + p.Eff.Target)}
@@ -723,14 +922,22 @@ var truthKinds = map[string]truthKind{
 	"housing": {
 		Unit: "housing per copy",
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
-			return truthMeasured{Delivered: (after["housing"] - before["housing"]) / p.Count, Allowed: meterIs("housing")}
+			// The techs' housing bonus multiplies housing and rounds it up
+			// to a whole person: with one, the reading is good to a person.
+			h := ge.Research.Bonus(config.EffectHousing, "")
+			if h == 0 {
+				return truthMeasured{Delivered: (after["housing"] - before["housing"]) / p.Count, Allowed: meterIs("housing")}
+			}
+			scale := p.Count * (1 + h)
+			return truthMeasured{Delivered: (after["housing"] - before["housing"]) / scale, Noise: 1 / scale, Allowed: meterIs("housing")}
 		},
 	},
 	// "-X% building costs": X points off every price.
 	"build_cost": {
 		Unit: "points of the listed price", Pool: true,
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
-			return truthMeasured{Delivered: after["cost"] - before["cost"], Allowed: meterIs("cost")}
+			// The techs' cut multiplies what the pool leaves of the price.
+			return truthMeasured{Delivered: (after["cost"] - before["cost"]) / ge.Research.Bonus(config.EffectBuildCost, ""), Allowed: meterIs("cost")}
 		},
 	},
 	// "+X% game speed".
@@ -745,7 +952,8 @@ var truthKinds = map[string]truthKind{
 	"research_speed": {
 		Unit: "points of the listed research time", Pool: true,
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
-			return truthMeasured{Delivered: before["research"] - after["research"], Allowed: meterIs("research")}
+			// The techs' cut multiplies what the pool leaves of the time.
+			return truthMeasured{Delivered: (before["research"] - after["research"]) / ge.Research.TimeFactor(), Noise: 2 / truthRefTicks, Allowed: meterIs("research")}
 		},
 	},
 	// "research time x(1 - X)" (Ancient Knowledge): X of the research time
@@ -789,7 +997,13 @@ var truthKinds = map[string]truthKind{
 				return truthMeasured{Skip: "the store holds less than the loss"}
 			}
 			d, noise := truthDiff(before, after, key)
-			return truthMeasured{Delivered: -d, Noise: noise, Allowed: meterIs(key)}
+			// A raid's take is cut by the techs' share before it lands
+			// (config.MechanicRaidLoss); any other loss is taken whole.
+			cut := 1.0
+			if p.Raid {
+				cut = ge.raidLossFactor()
+			}
+			return truthMeasured{Delivered: -d / cut, Noise: noise / cut, Allowed: meterIs(key)}
 		},
 	},
 	// "X% of your workers" lost at once: that share, in whole workers.
@@ -910,6 +1124,23 @@ func truthRateTarget(e config.Effect) string {
 // on it, so nothing a player is promised goes unmeasured.
 func truthEffectKind(source string, e config.Effect) string {
 	isRes := func(key string) bool { _, ok := config.ResourceByKey()[key]; return ok }
+	// The tech layer's kinds (TechEffect.Effect writes them "tech_<kind>").
+	if kind, ok := strings.CutPrefix(e.Type, "tech_"); ok && source == "tech" {
+		switch config.TechEffectKind(kind) {
+		case config.EffectOutput:
+			if isRes(e.Target) {
+				return "tech_output"
+			}
+		case config.EffectAllOutput, config.EffectStorage, config.EffectHousing,
+			config.EffectBuildCost, config.EffectBuildTime, config.EffectResearchTime:
+			return e.Type
+		case config.EffectMechanic:
+			if _, ok := config.MechanicByKey()[e.Target]; ok {
+				return "tech_mechanic"
+			}
+		}
+		return ""
+	}
 	switch e.Type {
 	case "bonus", "permanent_bonus":
 		switch e.Target {
@@ -1199,7 +1430,7 @@ func truthTechPromisesOf(defs []config.TechDef) []truthPromise {
 			key := def.Key
 			out = append(out, truthPromise{
 				Source: "tech", Key: def.Key, Name: def.Name, Age: def.Age, Eff: eff, Count: 1,
-				Text: truthEffectText(eff), Kind: truthEffectKind("tech", eff),
+				Text: typed.Text(), Kind: truthEffectKind("tech", eff),
 				wire: func(ge *GameEngine) truthSwitch {
 					rm := ge.Research
 					saved, known := rm.defs[key]
@@ -1433,7 +1664,7 @@ func truthEventPromises() []truthPromise {
 			for _, eff := range def.Effects {
 				out = append(out, truthPromise{
 					Source: source, Key: def.Key, Name: def.Name, Age: truthEventAge(def), Eff: eff, Count: 1,
-					Text: truthEffectText(eff), Kind: truthEffectKind(source, eff),
+					Text: truthEffectText(eff), Kind: truthEffectKind(source, eff), Raid: def.Raid,
 					wire: func(ge *GameEngine) truthSwitch { return truthEventSwitch(ge, def, eff) },
 				})
 			}
@@ -1862,6 +2093,8 @@ func truthPoolResource(p truthPromise) string {
 	switch p.Kind {
 	case "resource_production", "legacy_production", "ally_bonus":
 		return truthRateTarget(p.Eff)
+	case "tech_output":
+		return p.Eff.Target
 	}
 	return ""
 }
@@ -2006,10 +2239,9 @@ func truthPool(p truthPromise) string {
 // still be needed: the test fails on one nothing uses, so a fixed promise
 // takes its excuse with it.
 var truthAccepted = map[string]string{
-	"CAPPED/all_production": "cap, pending design: every \"all production\" bonus shares one pool, and the engine applies at most +200% of it (x3). " +
-		"Techs and wonders alone fill it by the Electric Age, so every later one adds nothing. The panels say \"capped\" beside each.",
-	"CAPPED/resource_production:gold":      "cap, pending design: gold's own pool has the same +200% limit, and the gold techs fill it in the Colonial Age.",
-	"CAPPED/resource_production:knowledge": "cap, pending design: knowledge's own pool has the same +200% limit, and the knowledge techs and the Great Library fill it in the Electric Age.",
+	"CAPPED/all_production": "cap, pending design: every \"all production\" bonus outside the tech layer shares one pool, and the engine applies at most +200% of it (x3). " +
+		"Techs no longer join it. The wonders alone fill it in the Transcendent Age (+215% with the Reality Anchor built), so the last ones add less than they say; " +
+		"with milestones a player reaches it sooner (the static caps report lists the ages). The panels say \"capped\" beside each.",
 	"LOCKED RESOURCE/ally stellar_federation": "the Stellar Federation is met in the Space Age and its specialty, dark matter, unlocks in the Interstellar Age: " +
 		"an alliance made early pays nothing for one age. Moving the civilization or the resource is a design call.",
 }

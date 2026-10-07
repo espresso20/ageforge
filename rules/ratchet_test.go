@@ -48,6 +48,7 @@ var pureConfig = map[string]bool{
 	"PriceLevelsByAge": true, "Incomes": true, "FlowDealLevels": true,
 	"ExchangeRateAt": true, "MarketRateAt": true, "MarketPairsAt": true, "MarketOffersAt": true,
 	"DealPriceLevelAt": true, "PricedResourcesAt": true,
+	"TechTerms": true, "RouteFeature": true,
 }
 
 const (

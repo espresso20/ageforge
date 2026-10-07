@@ -422,6 +422,11 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef) {
 			if loss > current {
 				loss = current
 			}
+			// A raid's take is cut by the techs first, then meets the
+			// garrison.
+			if def.Raid {
+				loss = float64(loss * ge.raidLossFactor())
+			}
 			if guard > 0 && loss > 0 {
 				kept := float64(loss * guard)
 				loss -= kept

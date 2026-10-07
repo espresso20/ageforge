@@ -36,6 +36,7 @@ func setAge(ge *GameEngine, age string) {
 // soldiers resource (SoldiersNeeded) and the Cost resources.
 func TestLaunchExpedition_SpendsSoldiersAndCost(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "military_tactics") // the tech that opens campaigns
 	setAge(ge, "iron_age")
 
 	// trade_escort: iron_age, SoldiersNeeded 3, no Cost.
@@ -167,6 +168,7 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 	var clean, won, lost int
 	for seed := int64(1); seed <= 40; seed++ {
 		ge := newSeededEngine(seed)
+		learn(ge, "military_tactics") // the tech that opens campaigns
 		setAge(ge, "iron_age")
 		setSoldiers(ge, 10)
 

@@ -54,7 +54,7 @@ Every duration on the panel shows as approximate wall-clock time, not ticks.
 | `diplomacy ally <civ>` | Ally with a civilization. Needs opinion 50 or more and costs 500 gold |
 | `diplomacy rival <civ>` | Declare a civilization your rival. Free. Opinion drains, and it offers no deals |
 | `diplomacy embargo <civ>` | Embargo a civilization. Free. Opinion drains, no deals, your routes that bring in its specialty stop, and it counts as a provocation |
-| `diplomacy gift <civ>` | Send a gift: 200 gold for +15 opinion |
+| `diplomacy gift <civ>` | Send a gift: 200 gold for +15 opinion (150 gold with Telecommunications) |
 | `diplomacy neutral <civ>` | Return to neutral. Free; an alliance's 500 gold isn't refunded |
 | `diplomacy tribute <civ>` | End a war at once: 300 gold and 50 culture per point of the civilization's strength |
 | `diplomacy raid <civ>` | Raid its trade route: -20 opinion, and a provocation |
@@ -86,7 +86,7 @@ From the Bronze Age on (which is when the first civilization becomes eligible) e
 |---|---|---|
 | Trade routes | +1 per completed route cycle | With every civilization you have met that isn't at war with you, all at once. The biggest source for most players: see [What routes are worth](trade.md#what-routes-are-worth). |
 | Embassies | a steady trickle | Spread across your non-hostile civilizations (see [Embassy Buildings](#embassy-buildings)). |
-| Gifts | +15 per gift | `diplomacy gift <civ>` costs 200 gold. |
+| Gifts | +15 per gift | `diplomacy gift <civ>` costs 200 gold, 25% less with the Telecommunications tech. |
 | Deals | +1 per Buy, Sell or Rare deal; +5 per Goodwill deal | Only up to opinion 50. |
 | Personality | ±1 every 65 ticks | See [Personalities](#personalities). |
 | Natural drift | 1 point toward 0 every 260 ticks | Not while at war. For an ally this is a slow leak. |
@@ -141,7 +141,7 @@ Opinion matters too. Friendly civilizations (friendly status, or opinion 25+) an
 
 A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25). It's capped so the goods fit in half your storage and the price in 80% of it. Amounts are rounded to three figures, never in your favor. A deal can't be taken while its goods wouldn't fit in the room left in their store.
 
-Offers rotate after **4,680 ticks of play** (about 2h 36m) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you're away. The card shows the time to the next set.
+Offers rotate after **4,680 ticks of play** (about 2h 36m; 30% sooner with the Telecommunications tech) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you're away. The card shows the time to the next set.
 
 ---
 

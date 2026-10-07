@@ -187,6 +187,7 @@ func TestDealRefreshStretch(t *testing.T) {
 func TestExpeditionClocksStretch(t *testing.T) {
 	for _, c := range []struct{ age, key string }{{baseAge, "scout_party"}, {stretchedAge, "trade_escort"}} {
 		ge := newSeededEngine(9)
+		learn(ge, "military_tactics") // the tech that opens campaigns
 		setAge(ge, c.age)
 		setSoldiers(ge, 50)
 		setResource(ge, "food", 1000)

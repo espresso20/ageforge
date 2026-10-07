@@ -30,8 +30,8 @@ func TestNanobots_FoundryProducesThroughEngine(t *testing.T) {
 }
 
 // TestNanobots_NanofabricationReducesBuildCost researches Nanofabrication and
-// asserts the charged build cost drops by ~8% — proving the tech's build_cost
-// effect flows through the resolver into the BuildingManager cost multiplier.
+// asserts the charged build cost drops by 3%: the tech's cut of building
+// costs reaches the BuildingManager's cost multiplier.
 func TestNanobots_NanofabricationReducesBuildCost(t *testing.T) {
 	ge := NewGameEngine()
 	base := ge.Buildings.defs["hut"].BaseCost["wood"]
@@ -47,7 +47,7 @@ func TestNanobots_NanofabricationReducesBuildCost(t *testing.T) {
 	ge.Research.LoadState([]string{"nanofabrication"}, "", 0, 0)
 	ge.recalculateRates()
 
-	want := math.Floor(base * 0.92) // -8% build_cost
+	want := math.Floor(base * 0.97) // buildings cost 3% less
 	charged, _ := ge.Buildings.BuildBatchCost("hut", 1, nil)
 	if charged["wood"] != want {
 		t.Errorf("post-Nanofabrication: charged wood = %v, want %v (-8%% of %v)", charged["wood"], want, base)
