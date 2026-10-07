@@ -50,10 +50,6 @@ func topReward(rewards map[string]float64) (string, float64) {
 	return topRewardIn(rules.Core(), rewards)
 }
 
-func harbingerAppeaseAges(epochKey string) []string {
-	return harbingerAppeaseAgesIn(rules.Core(), epochKey)
-}
-
 func threadAppeaseCost(h *HarbingerSave, level int) map[string]float64 {
 	return threadAppeaseCostIn(rules.Core(), h, level)
 }
@@ -62,8 +58,8 @@ func doomAppeaseCost(epochKey, age string, level int) map[string]float64 {
 	return doomAppeaseCostIn(rules.Core(), epochKey, age, level)
 }
 
-func eraAppeaseCost(epochKey string, level int) map[string]float64 {
-	return eraAppeaseCostIn(rules.Core(), epochKey, level)
+func lastPassageAppeaseCost(epochKey, age string, level int) map[string]float64 {
+	return lastPassageAppeaseCostIn(rules.Core(), epochKey, age, level)
 }
 
 func harbingerBraceBasis(epochKey string) map[string]float64 {
