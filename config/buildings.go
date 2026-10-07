@@ -170,7 +170,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"stone": 250000, "gold": 150000, "iron": 60000},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 3.8e6}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 4.6e6}},
 			BuildTicks:  250,
 			RequiredAge: "renaissance_age",
 			Description: "Ornate storage facility.",

@@ -16,8 +16,8 @@ From the Stone Age on, each age's wonder needs one technology of that age before
 |---|---|---|---|
 | Primitive | Sacred Grove | none | |
 | Stone | Great Monolith | Stoneworking | Tool Making |
-| Bronze | Stonehenge | none yet | |
-| Iron | Colosseum | Mathematics | Primitive Writing |
+| Bronze | Stonehenge | Calendar | Ritual, Language |
+| Iron | Colosseum | Mathematics | Primitive Writing, Language |
 | Classical | Parthenon | Philosophy | Mathematics |
 | Medieval | Great Library | Theology | Philosophy |
 | Renaissance | Sistine Chapel | Patronage | Banking (Currency, Mathematics) |
@@ -37,7 +37,7 @@ From the Stone Age on, each age's wonder needs one technology of that age before
 | Quantum | Reality Anchor | Quantum Mechanics | Antimatter Synthesis |
 | Transcendent | Singularity Core | Transcendence | Reality Manipulation |
 
-The Sacred Grove needs no tech, so nothing stands between a new game and the Stone Age. Stonehenge has no keystone yet: the tech it will stand on arrives with a later update.
+The Sacred Grove needs no tech, so nothing stands between a new game and the Stone Age.
 
 The age progress bar shows `✗ Keystone: <tech>` beside the wonder until the tech is researched, the Wonders panel and `wonder` show the keystone and whether it is done, and the Research panel marks every keystone with a ★. A wonder in your [build plan](plan.md) waits for its keystone and starts once it is researched.
 

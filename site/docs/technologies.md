@@ -45,11 +45,12 @@ Knowledge is removed from your stockpile when the tech starts, before any ticks 
 
 Every tech has a **kind**, and its kind decides how long it takes and what it costs.
 
-- A **keystone** is the tech an age's wonder needs before it can be built. There is one in each age from the Stone Age on (the Bronze Age's arrives with a later update), and since the next age needs the wonder, the keystone is the one tech an age asks of you. See [Keystone Techs](ages.md#keystone-techs) for the list.
-- The **spine** is every tech a keystone stands on, all the way down: Tool Making under Stoneworking, Steam Power under Industrialization. Keystones and the spine are the only techs a run has to research, 43 of the 77 today.
+- A **keystone** is the tech an age's wonder needs before it can be built. There is one in each age from the Stone Age on, and since the next age needs the wonder, the keystone is the one tech an age asks of you. See [Keystone Techs](ages.md#keystone-techs) for the list.
+- The **spine** is every tech a keystone stands on, all the way down: Tool Making under Stoneworking, Steam Power under Industrialization. Keystones and the spine are the only techs a run has to research, 47 of the 94 today.
+- A **capstone** ends a lane for its era: a bigger step that takes longer and costs more than any other tech of its age. No run has to research one. The Medieval Age has the first two, Scholasticism and Guilds.
 - Everything else is **optional**: yours to take or leave.
 
-The tech tree draws each keystone with a ★ on a double frame, its card names the wonder that waits for it, and `research list` marks it too (`★ keystone: Colosseum`).
+The tech tree draws each keystone with a ★ on a double frame and each capstone in half blocks, a keystone's card names the wonder that waits for it, and `research list` marks it too (`★ keystone: Colosseum`).
 
 ### How Research is Priced
 
@@ -62,8 +63,9 @@ No tech has a price or a time of its own. Both follow from its age and its kind.
 | Spine | 40% |
 | Keystone | 50% |
 | Optional | 50% |
+| Capstone | 80% |
 
-So no tech takes longer than a sixteenth of its age, and the techs you must research are the quick ones.
+So a tech you must research takes a sixteenth of its age at most, and a capstone, the long one, a tenth.
 
 **Cost.** An age's techs share one knowledge budget: 90% of the knowledge a well-run civilization makes in the age's target time (50% in the Primitive Age, 30% in the Transcendent Age). The budget is split by weight:
 
@@ -72,10 +74,11 @@ So no tech takes longer than a sixteenth of its age, and the techs you must rese
 | Spine | 0.6 |
 | Keystone | 0.8 |
 | Optional | 1.0 |
+| Capstone | 1.6 |
 
-A tech costs the budget times its weight, divided by the weights of all the techs in its age. So the techs you must research are the cheap ones, and a keystone always costs less than an optional tech of its age. Researching everything an age offers takes most of the knowledge the age makes, so research lasts the whole age: there is nearly always a tech coming within reach. When a later update adds techs to an age, each tech there gets a little cheaper and the age's total stays where it is. Today's ages hold two to six techs, and the tree is drawn for about nine, so each tech costs two to three times what it will once the rest arrive.
+A tech costs the budget times its weight, divided by the weights of all the techs in its age. So the techs you must research are the cheap ones, and a keystone always costs less than an optional tech of its age. Researching everything an age offers takes most of the knowledge the age makes, so research lasts the whole age: there is nearly always a tech coming within reach. When an update adds techs to an age, each tech there gets a little cheaper and the age's total stays where it is. The first six ages now hold the techs the tree is drawn for, three to nine each. The later ages still hold two to five and are drawn for about nine, so each tech there costs two to three times what it will once the rest arrive.
 
-A keystone costs a seventh to a half of what its age makes of knowledge: a seventh in the Medieval Age, about a fifth in the Stone, Iron, Renaissance and Atomic Ages, and half in the Interstellar and Galactic Ages, which hold two techs each. The techs a keystone stands on in earlier ages are cheaper still, but they add up if you skipped them, so pick up each age's spine as you go.
+A keystone costs from under a tenth to a half of what its age makes of knowledge: a seventh in the Stone Age, about a tenth from the Bronze Age to the Medieval, about a fifth in the Renaissance and Atomic Ages, and half in the Interstellar and Galactic Ages, which hold two techs each. The techs a keystone stands on in earlier ages are cheaper still, but they add up if you skipped them, so pick up each age's spine as you go.
 
 The costs and ticks in the tables below are base values. They used to be typed by hand, tech by tech: early techs cost more knowledge than their own age made (the Stone Age's four cost 28.5K against about 4K made), and from the Classical Age on the whole list cost next to nothing but for a few techs priced to land mid-age. Now the early techs are within reach in their own ages and the later ones are a real part of each age.
 
@@ -206,6 +209,7 @@ The shape says it as well as the color, so the tree reads in every theme.
 | A rounded frame `╭─────╮` | An optional tech |
 | A double frame `╔═════╗` | A tech on the spine: a keystone stands on it |
 | A double frame with a `★` | A keystone: its age's wonder cannot be built without it |
+| Half blocks `▄▄▄▄▄▄▄` | A capstone: the long, dear tech that ends a lane for its era. The blocks are broken (`▄ ▄ ▄ ▄`) while it waits |
 | A `✓` at the top right, the frame in the lane's color | Researched |
 | A `⟳`, and the bottom edge filling as a bar `╚▓▓░░░╝` | Being researched |
 | A solid, bright frame and no mark | You can start it |
@@ -273,14 +277,18 @@ Some commands wait for a tech. Until it is researched, the command is refused wi
 
 | Command | Opened by | Age |
 |---|---|---|
+| Trade routes (`trade route start <route>`) | The Wheel | Bronze |
 | Campaigns (`campaign <key>`) | Military Tactics | Bronze |
-| The Naval Expedition (`expedition naval_expedition`) | Navigation | Renaissance |
+| Expeditions past the Scout Party (`expedition scout_ruins`) | Exploration | Iron |
+| Diplomacy: gifts, alliances, rivalries, embargoes and deals (`diplomacy ...`, `plan deal`) | Envoys | Classical |
+| Festivals (`festival confirm yes`) | Drama | Classical |
+| The Naval Expedition (`expedition naval_expedition`) | Navigation, after Exploration | Renaissance |
 | The black market (`blackmarket <resource>`) | Mercantilism | Colonial |
 | The Rail Freight route (`trade route start rail_freight`) | Railroads | Industrial |
 
-The Scout Party needs no tech, and neither do trade routes, the other scouting expeditions, diplomacy or festivals today: the techs that will open them arrive with a later update.
+The Scout Party needs no tech: it is a walk into the hills, open from the first age through the Bronze Age. Scout Nearby Ruins is listed from the Bronze Age and waits for Exploration, an Iron Age tech, which needs Map Making or Boatbuilding. The market needs no tech either, only its building. The panels say which tech a command waits for (the Trade, Expeditions, Army and Factions panels, and `festival`), and the Warp Commerce route's own tech arrives with a later update.
 
-**Saves from before this change.** A game saved before commands waited for a tech keeps every command open in the age it was in, and keeps for the rest of that run any command it was already using: a campaign under way, a route running, a deal made with the smugglers. One line in the log says so when the save is first loaded. The locks start with the next age for the commands that run never used, and with the next run for the rest.
+**Saves from before a lock.** A game saved before a command waited for its tech keeps every command open in the age it was in, and keeps for the rest of that run any command it was already using: a campaign under way, a route running, an ally, a festival held. In that age its buildings and its wonder wait for no tech either. One line in the log says so when the save is first loaded. The locks start with the next age for what that run never used, and with the next run for the rest. This covers the four commands and the seven buildings that found their tech with the Stone and Iron Eras' new techs, and Stonehenge's keystone.
 
 ---
 
@@ -288,18 +296,23 @@ The Scout Party needs no tech, and neither do trade routes, the other scouting e
 
 Prerequisites are listed by tech key. A tech needs every prerequisite it lists.
 
-**Changed prerequisites.** Eleven techs need different techs than they used to. Fire Mastery, Primitive Writing, Feudalism and Rocketry need nothing now. Mathematics no longer needs Currency, Philosophy no longer lists Primitive Writing (Mathematics already needs it), Civil Engineering no longer lists Masonry (Road Building already needs it), Navigation no longer needs Road Building, and Mass Production no longer needs Railroads. Alchemy needs Philosophy instead of Mathematics, and Quantum Computing needs Quantum Mechanics as well as Clockwork Automation. A save from before the change keeps everything it had: a tech you already researched stays researched and still opens the techs that need it, a research in progress finishes, and a tech in your plan waits for what it now needs.
+**Changed prerequisites.** Thirteen techs need different techs than they used to. Fire Mastery and Rocketry need nothing now. Primitive Writing follows Language, Feudalism follows The Plough, Road Building needs The Wheel as well as Masonry, and Navigation needs Exploration as well as Mathematics. Mathematics no longer needs Currency, Philosophy no longer lists Primitive Writing (Mathematics already needs it), Civil Engineering no longer lists Masonry (Road Building already needs it), Navigation no longer needs Road Building, and Mass Production no longer needs Railroads. Alchemy needs Philosophy instead of Mathematics, and Quantum Computing needs Quantum Mechanics as well as Clockwork Automation. A save from before the change keeps everything it had: a tech you already researched stays researched and still opens the techs that need it, a research in progress finishes, and a tech in your plan waits for what it now needs.
 
-Research time is a share of the age's research cap, one eighth of the age's target: 40% for a spine tech, 50% for a keystone or an optional one (see [How Research is Priced](#how-research-is-priced)). Ticks and times below are base values (2 seconds a tick), before research speed and game speed bonuses. Every effect in the tables counts in full in every age (see [How Tech Bonuses Stack](#how-tech-bonuses-stack)).
+Research time is a share of the age's research cap, one eighth of the age's target: 40% for a spine tech, 50% for a keystone or an optional one, 80% for a capstone (see [How Research is Priced](#how-research-is-priced)). Ticks and times below are base values (2 seconds a tick), before research speed and game speed bonuses. Every effect in the tables counts in full in every age (see [How Tech Bonuses Stack](#how-tech-bonuses-stack)).
 
 **Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). What times them is where they stand in the tree: each needs most of its age's other techs first, so it comes after them. Civilian Reactors stands behind Nuclear Deterrence, Internet of Things behind three Information Age techs, Holography behind Cybernetics and Blockchain, and in the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another. A gated building stays hidden from the build list until its tech is done, and `build` and `upgrade` refuse it until then; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built. See [Buildings a tech opens](buildings.md#buildings-a-tech-opens). A wonder's keystone works the same way for building, but the wonder is listed and its bank is open from the start of the age.
+
+**Buildings of the early ages.** Seven buildings of the Stone and Iron Eras wait for a tech of their own age in the same way: the Standing Stones (Ritual), the Altar (Calendar), the Barracks (Military Tactics), the Smelter (Iron Smelting), the Legion Fort (Siege Warfare), the Forge (Metal Casting) and the Cathedral (Theology). Each either has another building of its age that makes the same thing, or waits for a tech no run leaves the age without, so no age is ever stuck behind an optional tech.
+
+**Either-or.** Exploration is the tree's one tech with two ways in: it needs Map Making or Boatbuilding, whichever you hold. The tree draws both lines dashed with an `or`, and `plan research exploration` takes the one you have or, with neither, the cheaper.
 
 ### Primitive Age (~46s to 56s/tech)
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `tool_making` | Tool Making | spine | 47 kp | 23 | none | +10% food production, +10% wood production, gathering by hand brings 2 more |
-| `fire_mastery` | Fire Mastery | optional | 78 kp | 28 | none | +10% food production, +5% housing |
+| `language` | Language | spine | 38 kp | 23 | none | +10% knowledge production |
+| `fire_mastery` | Fire Mastery | optional | 63 kp | 28 | none | +10% food production, +5% housing |
+| `tool_making` | Tool Making | spine | 38 kp | 23 | none | +10% food production, +10% wood production, gathering by hand brings 2 more |
 
 ---
 
@@ -307,10 +320,12 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `stoneworking` | Stoneworking | **keystone** (Great Monolith) | 731 kp | 84 | `tool_making` | +10% stone production |
-| `animal_husbandry` | Animal Husbandry | optional | 913 kp | 84 | `fire_mastery` | +10% food production |
-| `pottery` | Pottery | optional | 913 kp | 84 | `fire_mastery` | +10% storage |
-| `primitive_writing` | Primitive Writing | spine | 548 kp | 68 | none | +10% knowledge production |
+| `ritual` | Ritual | spine | 413 kp | 68 | `language` | Opens the Standing Stones, +10% faith production |
+| `primitive_writing` | Primitive Writing | spine | 413 kp | 68 | `language` | +10% knowledge production |
+| `pottery` | Pottery | optional | 689 kp | 84 | `fire_mastery` | +10% storage |
+| `animal_husbandry` | Animal Husbandry | optional | 689 kp | 84 | `fire_mastery` | +10% food production |
+| `woodworking` | Woodworking | optional | 689 kp | 84 | `tool_making` | +10% wood production |
+| `stoneworking` | Stoneworking | **keystone** (Great Monolith) | 551 kp | 84 | `tool_making` | +10% stone production |
 
 ---
 
@@ -318,11 +333,15 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `bronze_working` | Bronze Working | spine | 6.02K kp | 351 | `stoneworking` | +10% stone production, +10% iron production |
-| `agriculture` | Agriculture | optional | 10K kp | 439 | `animal_husbandry` | +10% food production |
-| `currency` | Currency | spine | 6.02K kp | 351 | `primitive_writing` | +10% gold production, market fee 3 points lower |
-| `masonry` | Masonry | optional | 10K kp | 439 | `stoneworking` | +10% storage |
-| `military_tactics` | Military Tactics | optional | 10K kp | 439 | `bronze_working` | Opens campaigns, +15% military power |
+| `calendar` | Calendar | **keystone** (Stonehenge) | 4.77K kp | 439 | `ritual` | Opens the Altar, +10% faith production |
+| `map_making` | Map Making | optional | 5.97K kp | 439 | `primitive_writing` | +10% knowledge production |
+| `currency` | Currency | spine | 3.58K kp | 351 | `primitive_writing` | +10% gold production, market fee 3 points lower |
+| `boatbuilding` | Boatbuilding | optional | 5.97K kp | 439 | `woodworking` | +5% food production, trade routes bring in 10% more |
+| `agriculture` | Agriculture | optional | 5.97K kp | 439 | `animal_husbandry` | +10% food production |
+| `the_wheel` | The Wheel | optional | 5.97K kp | 439 | `woodworking` | Opens trade routes, construction takes 5% less time |
+| `masonry` | Masonry | optional | 5.97K kp | 439 | `stoneworking` | +10% storage |
+| `bronze_working` | Bronze Working | spine | 3.58K kp | 351 | `stoneworking` | +10% stone production, +10% iron production |
+| `military_tactics` | Military Tactics | optional | 5.97K kp | 439 | `bronze_working` | Opens campaigns, opens the Barracks, +15% military power |
 
 ---
 
@@ -330,10 +349,13 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `iron_smelting` | Iron Smelting | spine | 39.2K kp | 585 | `bronze_working` | +8% iron production |
-| `road_building` | Road Building | optional | 65.4K kp | 731 | `masonry` | +8% gold production, trade routes take 15% less time |
-| `mathematics` | Mathematics | **keystone** (Colosseum) | 52.3K kp | 731 | `primitive_writing` | +8% knowledge production |
-| `siege_warfare` | Siege Warfare | optional | 65.4K kp | 731 | `military_tactics` | +15% military power |
+| `priesthood` | Priesthood | optional | 44.9K kp | 731 | `calendar` | Morale can rise 5 points higher |
+| `mathematics` | Mathematics | **keystone** (Colosseum) | 35.9K kp | 731 | `primitive_writing` | +8% knowledge production |
+| `exploration` | Exploration | spine | 26.9K kp | 585 | one of `map_making` or `boatbuilding` | Opens expeditions past the Scout Party |
+| `irrigation` | Irrigation | optional | 44.9K kp | 731 | `agriculture` | +8% food production, +5% housing |
+| `road_building` | Road Building | optional | 44.9K kp | 731 | `masonry`, `the_wheel` | +8% gold production, trade routes take 15% less time |
+| `iron_smelting` | Iron Smelting | spine | 26.9K kp | 585 | `bronze_working` | Opens the Smelter, +8% iron production |
+| `siege_warfare` | Siege Warfare | optional | 44.9K kp | 731 | `military_tactics` | Opens the Legion Fort, +15% military power |
 
 ---
 
@@ -341,22 +363,29 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `philosophy` | Philosophy | **keystone** (Parthenon) | 293K kp | 1,024 | `mathematics` | +8% knowledge production |
-| `civil_engineering` | Civil Engineering | optional | 366K kp | 1,024 | `road_building` | Buildings cost 3% less |
-| `imperial_legions` | Imperial Legions | optional | 366K kp | 1,024 | `siege_warfare`, `iron_smelting` | +15% military power, raids on you take 10% less |
+| `drama` | Drama | optional | 181K kp | 1,024 | `priesthood` | Opens festivals |
+| `philosophy` | Philosophy | **keystone** (Parthenon) | 145K kp | 1,024 | `mathematics` | +8% knowledge production |
+| `envoys` | Envoys | optional | 181K kp | 1,024 | `exploration` | Opens diplomacy |
+| `the_plough` | The Plough | optional | 181K kp | 1,024 | `irrigation` | +8% food production |
+| `civil_engineering` | Civil Engineering | optional | 181K kp | 1,024 | `road_building` | Buildings cost 3% less |
+| `metal_casting` | Metal Casting | optional | 181K kp | 1,024 | `iron_smelting` | Opens the Forge, +8% iron production |
+| `imperial_legions` | Imperial Legions | optional | 181K kp | 1,024 | `siege_warfare`, `iron_smelting` | +15% military power, raids on you take 10% less |
 
 ---
 
-### Medieval Age (~35m to 43m/tech)
+### Medieval Age (~35m to 1h 10m/tech)
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `steel_forging` | Steel Forging | spine | 2.02M kp | 1,053 | `iron_smelting` | +0.25 steel/tick, +8% iron production |
-| `theology` | Theology | **keystone** (Great Library) | 2.7M kp | 1,316 | `philosophy` | +8% faith production |
-| `banking` | Banking | spine | 2.02M kp | 1,053 | `currency`, `mathematics` | +8% gold production, market fee 3 points lower |
-| `feudalism` | Feudalism | optional | 3.37M kp | 1,316 | none | +8% housing |
-| `alchemy` | Alchemy | optional | 3.37M kp | 1,316 | `philosophy` | +8% knowledge production |
-| `chronometry` | Chronometry | optional | 3.37M kp | 1,316 | none | +5% game speed |
+| `theology` | Theology | **keystone** (Great Library) | 1.56M kp | 1,316 | `philosophy` | Opens the Cathedral, +8% faith production |
+| `alchemy` | Alchemy | optional | 1.95M kp | 1,316 | `philosophy` | +8% knowledge production |
+| `scholasticism` | Scholasticism | capstone | 3.11M kp | 2,106 | `alchemy`, `theology` | Research takes 6% less time |
+| `banking` | Banking | spine | 1.17M kp | 1,053 | `currency`, `mathematics` | +8% gold production, market fee 3 points lower |
+| `feudalism` | Feudalism | optional | 1.95M kp | 1,316 | `the_plough` | +8% housing |
+| `chronometry` | Chronometry | optional | 1.95M kp | 1,316 | none | +5% game speed |
+| `guilds` | Guilds | capstone | 3.11M kp | 2,106 | `civil_engineering`, `metal_casting` | Buildings cost 4% less, construction takes 8% less time |
+| `steel_forging` | Steel Forging | spine | 1.17M kp | 1,053 | `iron_smelting` | +0.25 steel/tick, +8% iron production |
+| `fortification` | Fortification | optional | 1.95M kp | 1,316 | `imperial_legions` | Raids on you take 15% less, +10% military power |
 
 ---
 
@@ -364,10 +393,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `printing_press` | Printing Press | optional | 31.8M kp | 1,755 | `theology`, `alchemy` | +6% knowledge production, research takes 3% less time |
-| `navigation` | Navigation | spine | 19.1M kp | 1,404 | `mathematics` | Opens the Naval Expedition, +10% expedition rewards |
-| `gunpowder` | Gunpowder | optional | 31.8M kp | 1,755 | `alchemy`, `siege_warfare` | +12% military power |
-| `patronage` | Patronage | **keystone** (Sistine Chapel) | 25.4M kp | 1,755 | `banking` | +6% culture production |
+| `printing_press` | Printing Press | optional | 37.2M kp | 1,755 | `theology`, `alchemy` | +6% knowledge production, research takes 3% less time |
+| `navigation` | Navigation | spine | 22.3M kp | 1,404 | `exploration`, `mathematics` | Opens the Naval Expedition, +10% expedition rewards |
+| `gunpowder` | Gunpowder | optional | 37.2M kp | 1,755 | `alchemy`, `siege_warfare` | +12% military power |
+| `patronage` | Patronage | **keystone** (Sistine Chapel) | 29.7M kp | 1,755 | `banking` | +6% culture production |
 
 ---
 
@@ -375,9 +404,9 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `cartography` | Cartography | **keystone** (Grand Lighthouse) | 112M kp | 2,048 | `navigation` | +10% expedition rewards, expeditions take 10% less time |
-| `mercantilism` | Mercantilism | optional | 140M kp | 2,048 | `banking`, `navigation` | Opens the black market |
-| `colonialism` | Colonialism | optional | 140M kp | 2,048 | `cartography`, `gunpowder` | +12% military power |
+| `cartography` | Cartography | **keystone** (Grand Lighthouse) | 126M kp | 2,048 | `navigation` | +10% expedition rewards, expeditions take 10% less time |
+| `mercantilism` | Mercantilism | optional | 158M kp | 2,048 | `banking`, `navigation` | Opens the black market |
+| `colonialism` | Colonialism | optional | 158M kp | 2,048 | `cartography`, `gunpowder` | +12% military power |
 
 ---
 
@@ -385,11 +414,11 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `steam_power` | Steam Power | spine | 171M kp | 1,872 | `steel_forging` | +6% steel production, +6% coal production |
-| `industrialization` | Industrialization | **keystone** (Crystal Palace) | 228M kp | 2,340 | `steam_power` | +5% all production |
-| `railroads` | Railroads | optional | 285M kp | 2,340 | `steam_power`, `road_building` | Opens the Rail Freight route, trade routes take 15% less time |
-| `rifling` | Rifling | optional | 285M kp | 2,340 | `gunpowder` | +12% military power |
-| `clockwork_automation` | Clockwork Automation | optional | 285M kp | 2,340 | `chronometry` | +10% game speed |
+| `steam_power` | Steam Power | spine | 214M kp | 1,872 | `steel_forging` | +6% steel production, +6% coal production |
+| `industrialization` | Industrialization | **keystone** (Crystal Palace) | 286M kp | 2,340 | `steam_power` | +5% all production |
+| `railroads` | Railroads | optional | 357M kp | 2,340 | `steam_power`, `road_building` | Opens the Rail Freight route, trade routes take 15% less time |
+| `rifling` | Rifling | optional | 357M kp | 2,340 | `gunpowder` | +12% military power |
+| `clockwork_automation` | Clockwork Automation | optional | 357M kp | 2,340 | `chronometry` | +10% game speed |
 
 ---
 
@@ -397,9 +426,9 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `electrification` | Electrification | spine | 484M kp | 2,106 | `industrialization` | +5% electricity production |
-| `telecommunications` | Telecommunications | optional | 807M kp | 2,633 | `electrification` | Deals refresh 30% sooner, gifts cost 25% less |
-| `mass_production` | Mass Production | **keystone** (Eiffel Tower) | 646M kp | 2,633 | `industrialization` | Construction takes 8% less time |
+| `electrification` | Electrification | spine | 621M kp | 2,106 | `industrialization` | +5% electricity production |
+| `telecommunications` | Telecommunications | optional | 1.04B kp | 2,633 | `electrification` | Deals refresh 30% sooner, gifts cost 25% less |
+| `mass_production` | Mass Production | **keystone** (Eiffel Tower) | 828M kp | 2,633 | `industrialization` | Construction takes 8% less time |
 
 ---
 
@@ -407,9 +436,9 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `power_distribution` | Power Distribution | **keystone** (Hoover Dam) | 1.33B kp | 2,925 | `electrification` | +5% electricity production |
-| `radio` | Radio | optional | 1.66B kp | 2,925 | `telecommunications` | Festivals come back 20% sooner |
-| `chemical_engineering` | Chemical Engineering | spine | 995M kp | 2,340 | `mass_production` | +5% oil production, +5% steel production |
+| `power_distribution` | Power Distribution | **keystone** (Hoover Dam) | 1.64B kp | 2,925 | `electrification` | +5% electricity production |
+| `radio` | Radio | optional | 2.05B kp | 2,925 | `telecommunications` | Festivals come back 20% sooner |
+| `chemical_engineering` | Chemical Engineering | spine | 1.23B kp | 2,340 | `mass_production` | +5% oil production, +5% steel production |
 
 ---
 
@@ -417,10 +446,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `nuclear_fission` | Nuclear Fission | **keystone** (Particle Accelerator) | 1.16B kp | 3,510 | `power_distribution`, `chemical_engineering` | +5% uranium production, +5% electricity production |
-| `rocketry` | Rocketry | spine | 867M kp | 2,808 | none | +10% expedition rewards, +10% military power |
-| `nuclear_deterrence` | Nuclear Deterrence | optional | 1.45B kp | 3,510 | `nuclear_fission`, `rocketry` | +10% military power, raids on you take 10% less |
-| `civilian_reactors` | Civilian Reactors | optional | 1.45B kp | 3,510 | `nuclear_deterrence` | Opens the Nuclear Plant |
+| `nuclear_fission` | Nuclear Fission | **keystone** (Particle Accelerator) | 1.55B kp | 3,510 | `power_distribution`, `chemical_engineering` | +5% uranium production, +5% electricity production |
+| `rocketry` | Rocketry | spine | 1.16B kp | 2,808 | none | +10% expedition rewards, +10% military power |
+| `nuclear_deterrence` | Nuclear Deterrence | optional | 1.94B kp | 3,510 | `nuclear_fission`, `rocketry` | +10% military power, raids on you take 10% less |
+| `civilian_reactors` | Civilian Reactors | optional | 1.94B kp | 3,510 | `nuclear_deterrence` | Opens the Nuclear Plant |
 
 ---
 
@@ -428,10 +457,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `electricity_tech` | Advanced Electrics | spine | 1.21B kp | 2,808 | `nuclear_fission` | +5% electricity production |
-| `computers` | Computers | spine | 1.21B kp | 2,808 | `electricity_tech` | +5% knowledge production, research takes 3% less time |
-| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 1.61B kp | 3,510 | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
-| `nanofabrication` | Nanofabrication | optional | 2.01B kp | 3,510 | `computers` | Buildings cost 3% less |
+| `electricity_tech` | Advanced Electrics | spine | 1.49B kp | 2,808 | `nuclear_fission` | +5% electricity production |
+| `computers` | Computers | spine | 1.49B kp | 2,808 | `electricity_tech` | +5% knowledge production, research takes 3% less time |
+| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 1.98B kp | 3,510 | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
+| `nanofabrication` | Nanofabrication | optional | 2.48B kp | 3,510 | `computers` | Buildings cost 3% less |
 
 ---
 
@@ -443,7 +472,7 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 | `cybersecurity` | Cybersecurity | spine | 1.31B kp | 3,276 | `computers` | +10% military power |
 | `social_media` | Social Media | optional | 2.18B kp | 4,095 | `internet` | +5% culture production, festivals cost 20% less |
 | `medical_nanobots` | Medical Nanobots | optional | 2.18B kp | 4,095 | `nanofabrication` | +5% housing, +5% food production |
-| `internet_of_things` | Internet of Things | optional | 2.18B kp | 4,095 | `social_media`, `cybersecurity`, `medical_nanobots` | Opens the Smart Complex and the Smart Farm |
+| `internet_of_things` | Internet of Things | optional | 2.18B kp | 4,095 | `social_media`, `cybersecurity`, `medical_nanobots` | Opens the Smart Farm, opens the Smart Complex |
 
 ---
 
@@ -535,19 +564,19 @@ Each raises what one resource's buildings and workers make. Bonuses on the same 
 
 | Resource | Techs | Together |
 |---|---|---|
-| Knowledge | Primitive Writing +10%, Mathematics +8%, Philosophy +8%, Alchemy +8%, Printing Press +6%, Computers +5%, Neural Interface +4% | +49% |
-| Food | Tool Making +10%, Fire Mastery +10%, Animal Husbandry +10%, Agriculture +10%, Medical Nanobots +5% | +45% |
+| Knowledge | Language +10%, Primitive Writing +10%, Map Making +10%, Mathematics +8%, Philosophy +8%, Alchemy +8%, Printing Press +6%, Computers +5%, Neural Interface +4% | +69% |
+| Food | Tool Making +10%, Fire Mastery +10%, Animal Husbandry +10%, Agriculture +10%, Boatbuilding +5%, Irrigation +8%, The Plough +8%, Medical Nanobots +5% | +66% |
 | Electricity | Electrification +5%, Power Distribution +5%, Nuclear Fission +5%, Advanced Electrics +5%, Fusion Power +4%, Stellar Engineering +4% | +28% |
-| Iron | Bronze Working +10%, Iron Smelting +8%, Steel Forging +8% | +26% |
+| Iron | Bronze Working +10%, Iron Smelting +8%, Metal Casting +8%, Steel Forging +8% | +34% |
 | Gold | Currency +10%, Road Building +8%, Banking +8% | +26% |
 | Stone | Stoneworking +10%, Bronze Working +10% | +20% |
 | Steel | Steam Power +6%, Chemical Engineering +5%, Space Mining +4% | +15% |
 | Plasma | Fusion Power +4%, Plasma Physics +4%, Stellar Engineering +4% | +12% |
 | Culture | Patronage +6%, Social Media +5% | +11% |
-| Wood | Tool Making +10% | +10% |
+| Wood | Tool Making +10%, Woodworking +10% | +20% |
 | Data | Internet +5%, Machine Learning +5% | +10% |
 | Nanobots | Self-Replication +10% | +10% |
-| Faith | Theology +8% | +8% |
+| Faith | Ritual +10%, Calendar +10%, Theology +8% | +28% |
 | Dark matter | Warp Drive +4%, Galactic Navigation +4% | +8% |
 | Quantum flux | Quantum Mechanics +4%, Reality Manipulation +4% | +8% |
 | Coal | Steam Power +6% | +6% |
@@ -583,25 +612,30 @@ These two techs make a resource before any building of their age does. The amoun
 | Cloud Computing | Digital | +8% storage |
 | Superconductors | Fusion | +8% storage |
 | Fire Mastery | Primitive | +5% housing |
+| Irrigation | Iron | +5% housing |
 | Feudalism | Medieval | +8% housing |
 | Medical Nanobots | Information | +5% housing |
 
-Storage bonuses add up to +36% of every store, and housing bonuses to +18%. Housing is rounded up to a whole person, so even the first +5% on a small village houses one more.
+Storage bonuses add up to +36% of every store, and housing bonuses to +23%. Housing is rounded up to a whole person, so even the first +5% on a small village houses one more.
 
 ### Building costs, construction time and research time
 
 | Tech | Age | Cut |
 |---|---|---|
 | Civil Engineering | Classical | buildings cost 3% less |
+| Guilds | Medieval | buildings cost 4% less |
 | Nanofabrication | Modern | buildings cost 3% less |
+| The Wheel | Bronze | construction takes 5% less time |
+| Guilds | Medieval | construction takes 8% less time |
 | Mass Production | Victorian | construction takes 8% less time |
 | Self-Replication | Digital | construction takes 5% less time |
 | Zero-G Manufacturing | Space | construction takes 6% less time |
+| Scholasticism | Medieval | research takes 6% less time |
 | Printing Press | Renaissance | research takes 3% less time |
 | Computers | Modern | research takes 3% less time |
 | Machine Learning | Digital | research takes 3% less time |
 
-Cuts of the same kind multiply. With every tech, buildings cost 5.91% less (the floor is 10% of the listed price, shared with the build-cost milestone rewards, which multiply in too), construction takes 17.844% less time (the floor is 40% of the time) and research takes 8.7327% less time (the floor is 50%). The costs and times the panels show include them.
+Cuts of the same kind multiply. With every tech, buildings cost 9.67% less (the floor is 10% of the listed price, shared with the build-cost milestone rewards, which multiply in too), construction takes 28.2% less time (the floor is 40% of the time) and research takes 14.2% less time (the floor is 50%). The costs and times the panels show include them.
 
 ### One number in a mechanic
 
@@ -613,10 +647,13 @@ These techs move a single number of a game mechanic.
 | Currency | Bronze | Market fee 3 points lower |
 | Banking | Medieval | Market fee 3 points lower |
 | Blockchain | Cyberpunk | Market fee 2 points lower |
+| Boatbuilding | Bronze | Trade routes bring in 10% more |
 | Road Building | Iron | Trade routes take 15% less time |
 | Railroads | Industrial | Trade routes take 15% less time |
 | Cartography | Colonial | Expeditions take 10% less time |
+| Priesthood | Iron | Morale can rise 5 points higher |
 | Imperial Legions | Classical | Raids on you take 10% less |
+| Fortification | Medieval | Raids on you take 15% less |
 | Nuclear Deterrence | Atomic | Raids on you take 10% less |
 | Telecommunications | Victorian | Deals refresh 30% sooner |
 | Telecommunications | Victorian | Gifts cost 25% less |
@@ -625,7 +662,9 @@ These techs move a single number of a game mechanic.
 
 - **Market fee.** The market keeps 20 points of every trade (see [Trade](trade.md)). Currency, Banking and Blockchain take 8 points off between them, so with all three the market keeps 12 and pays 10% more on every trade. The fee never falls under 5 points. Faction deals keep their edge over the market's rate as it stands.
 - **Trade route time, expedition time, deal refresh, festival cooldown.** A cut shortens the timer when it is next set: a route's next run, the next expedition sent, the next set of offers, the next festival. Cuts multiply (two 15% cuts leave 72% of a route's time) and none takes a timer under 40% of its length. Expedition time is for scouting expeditions; campaigns keep theirs.
-- **Raid losses.** The cut comes off what a raid would take before your garrison meets it, so it stacks with the garrison's own share (see [Military](military.md)).
+- **Raid losses.** The cut comes off what a raid would take before your garrison meets it, so it stacks with the garrison's own share (see [Military](military.md)). Cuts multiply: with Imperial Legions, Fortification and Nuclear Deterrence a raid takes 0.9 × 0.85 × 0.9, about 69% of what it would.
+- **Trade route income.** Each run of every route brings in 10% more of what the route lists. A harbor's and an ally's share are added to that, each as its own share of the listed amount (see [Trade](trade.md)).
+- **Morale ceiling.** Morale can rise 5 points higher than 100% plus what your wonders add (see [Morale](morale.md)).
 - **Hand gathering.** Every `gather` brings 2 more than you asked for, the bare `gather` (3) and the largest (25) alike.
 
 ### Game speed
@@ -651,6 +690,7 @@ Military power lowers mission difficulty and raises your defense rating. See [Mi
 | Military Tactics | Bronze | +15% |
 | Siege Warfare | Iron | +15% |
 | Imperial Legions | Classical | +15% |
+| Fortification | Medieval | +10% |
 | Gunpowder | Renaissance | +12% |
 | Colonialism | Colonial | +12% |
 | Rifling | Industrial | +12% |
@@ -659,7 +699,7 @@ Military power lowers mission difficulty and raises your defense rating. See [Mi
 | Cybersecurity | Information | +10% |
 | Cybernetics | Cyberpunk | +10% |
 
-Together +121%.
+Together +131%.
 
 ### Expedition rewards
 

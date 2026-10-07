@@ -162,10 +162,17 @@ These are first-run times. On known ground (an age a past run completed) every b
 
 ### Buildings a tech opens
 
-Most buildings unlock the moment you enter their age. Five wait for a tech from that same age instead, so the age has something new partway through:
+Most buildings unlock the moment you enter their age. Twelve wait for a tech from that same age instead, so the age has something new partway through:
 
 | Building | Age | Opened by |
 |---|---|---|
+| Standing Stones | Stone | Ritual |
+| Altar | Bronze | Calendar, the age's keystone |
+| Barracks | Bronze | Military Tactics |
+| Smelter | Iron | Iron Smelting |
+| Legion Fort | Iron | Siege Warfare |
+| Forge | Classical | Metal Casting |
+| Cathedral | Medieval | Theology, the age's keystone |
 | Nuclear Plant | Atomic | Civilian Reactors |
 | Smart Farm | Information | Internet of Things |
 | Smart Complex | Information | Internet of Things |
@@ -382,12 +389,12 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap is deli
 | Building | Age | Storage per copy (every resource) | Max |
 |----------|-----|--------|-----|
 | Stash | Primitive | +500 | 50 |
-| Storage Pit | Stone | +2.5K | 25 |
-| Warehouse | Bronze | +20K | 25 |
+| Storage Pit | Stone | +2.75K | 25 |
+| Warehouse | Bronze | +21K | 25 |
 | Granary | Iron | +35K | 25 |
 | Classical Vault | Classical | +170K | 25 |
 | Strongroom | Medieval | +710K | 25 |
-| Renaissance Vault | Renaissance | +3.8M | 25 |
+| Renaissance Vault | Renaissance | +4.6M | 25 |
 | Colonial Warehouse | Colonial | +60M | 25 |
 | Industrial Depot | Industrial | +340M | 25 |
 | Victorian Vault | Victorian | +1.3B | 25 |

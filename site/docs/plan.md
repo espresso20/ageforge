@@ -1,6 +1,6 @@
 # The Build Plan
 
-AgeForge is paced for a player who checks in a few times a day. The build plan is how you put the hours between visits to work: a list of builds, techs, trades, deals with other civilizations and an advance that the game starts for you, in order, as the resources come in. It runs while you play, and it runs while you are away (offline catch-up executes it as the time passes, not in one lump at the end). What your full stores would throw away goes toward the plan's next copies instead of being lost (see [Overflow pays the plan](#overflow-pays-the-plan)), and the plan holds up to **60 items**.
+AgeForge is paced for a player who checks in a few times a day. The build plan is how you put the hours between visits to work: a list of builds, techs, trades, deals with other civilizations and an advance that the game starts for you, in order, as the resources come in. It runs while you play, and it runs while you are away (offline catch-up executes it as the time passes, not in one lump at the end). What your full stores would throw away goes toward the plan's next copies instead of being lost (see [Overflow pays the plan](#overflow-pays-the-plan)), and the plan holds up to **60 items**, not counting research.
 
 Open it with `plan`. Add to it with commands:
 
@@ -16,7 +16,7 @@ plan deal merchant_guild 2     # take the Merchant Guild's deal 2 once its price
 plan build longhouse 15        # a next-age building waits for the advance
 ```
 
-`plan list` prints it; `plan remove <n>`, `plan up <n>`, `plan down <n>` and `plan clear` edit it (the panel does the same with keys). See [Commands](commands.md#build-plan). The plan holds at most 60 items; a full plan refuses a new one until you remove one (adding more of the building at the end of the plan still adds to that item). One build item holds at most 1,000 copies.
+`plan list` prints it; `plan remove <n>`, `plan up <n>`, `plan down <n>` and `plan clear` edit it (the panel does the same with keys). See [Commands](commands.md#build-plan). The plan holds at most 60 items; a full plan refuses a new one until you remove one (adding more of the building at the end of the plan still adds to that item). Research takes no room: the 60 are for builds, trades, deals and the advance, and a research queue is bounded by the tree, each tech once. One build item holds at most 1,000 copies.
 
 ---
 
@@ -49,7 +49,7 @@ Planned research: Imperial Legions, after the 2 techs it needs first (Military T
 
 - **What a tech needs goes in first.** `plan research <tech>` adds every prerequisite that is not researched, being researched or already in the plan, each after its own, and then the tech. What is already on its way is not added twice.
 - **Either-or groups.** Where a tech needs one of two or more techs, the plan takes the one you already hold, are researching or have planned. If none is, it takes the branch that costs the least knowledge to add (the first listed when they cost the same). Plan the other branch yourself first if you want it instead.
-- **All or nothing.** If the chain does not fit in the plan's 60 items, nothing is added and the refusal says how many techs it is and how much room is left.
+- **It always fits.** Research does not count against the plan's 60 items, so a chain goes in whole however full the plan is. The Plan panel counts the two apart (`42 of 60 items, and 9 techs queued`).
 - **Any tech in sight.** The plan takes a tech of any age you may see on the [tech tree](technologies.md#reading-the-tech-tree): every age up to the next one, and on a later run every age your account has reached before. So on ground you know, you can lay out a run's research in one sitting. A tech of an age still hidden is answered like a key the game does not know.
 - **The order is yours.** `plan up` and `plan down` reorder techs like any item. A tech moved above something it needs waits for it; nothing is dropped.
 - **On the map.** Each planned tech carries its place in the plan on the tree (`▸3`), and the second `Enter` on a tech's card plans it the same way, chain included.
