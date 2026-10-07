@@ -43,6 +43,7 @@ type reproHarness struct {
 	catsSeen int
 	// loopExited is set by teardown once app.Run has returned: from then on
 	// nothing of this App reads game.DevModeActive, and it can be put back.
+	// nil for a harness that did not turn dev mode on.
 	loopExited *atomic.Bool
 }
 
@@ -133,7 +134,11 @@ func (h *reproHarness) teardown() {
 	// Run returning means the loop is done.
 	select {
 	case <-h.runErr:
-		h.loopExited.Store(true)
+		// Harnesses built elsewhere (the UI sweep's) leave dev mode alone
+		// and carry no flag.
+		if h.loopExited != nil {
+			h.loopExited.Store(true)
+		}
 	case <-time.After(5 * time.Second):
 		h.t.Errorf("app.Run() did not return after Stop; its event loop could still touch the data dir")
 	}
