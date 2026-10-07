@@ -58,6 +58,10 @@ type BuildingManager struct {
 	// refreshes it each recalc via SetCostMultiplier so the charged cost and the
 	// displayed cost are computed from the SAME factor and can never disagree.
 	costMult float64
+	// upgradeCost is the techs' term on what an upgrade costs
+	// (config.MechanicUpgradeCost). The engine sets it (SetUpgradeCostTerm);
+	// 0 reads as 1.
+	upgradeCost float64
 }
 
 // NewBuildingManager creates a building manager on the core ruleset.
@@ -718,6 +722,18 @@ func (bm *BuildingManager) UpgradeRoom(key string, n int, queue []BuildQueueItem
 	return n
 }
 
+// SetUpgradeCostTerm sets the techs' term on what an upgrade costs.
+func (bm *BuildingManager) SetUpgradeCostTerm(f float64) { bm.upgradeCost = f }
+
+// upgradePrice is delta, what one copy's upgrade asks for in one resource,
+// with the techs' cut: a whole number, and delta itself with no cut.
+func (bm *BuildingManager) upgradePrice(delta float64) float64 {
+	if bm.upgradeCost <= 0 || bm.upgradeCost >= 1 {
+		return delta
+	}
+	return math.Floor(float64(delta * bm.upgradeCost))
+}
+
 // UpgradeCost computes the total cost delta to upgrade upgradeCount copies of oldKey to newKey.
 // Cost per copy = max(0, new_copy_cost[res] - old_copy_sell_value[res]) per resource.
 // Old sell value = floor(old_copy_cost * 0.5). New copy cost is at the current new count + i.
@@ -751,7 +767,7 @@ func (bm *BuildingManager) UpgradeCost(oldKey, newKey string, upgradeCount int) 
 			if delta < 0 {
 				delta = 0
 			}
-			total[res] += delta
+			total[res] += bm.upgradePrice(delta)
 		}
 	}
 	return total, true

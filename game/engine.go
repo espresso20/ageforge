@@ -2134,6 +2134,11 @@ func (ge *GameEngine) recalculateRates() {
 		if techStorage != 1 {
 			r.Storage = float64(r.Storage * techStorage)
 		}
+		// The soldiers' store has a term of its own on top
+		// (config.MechanicSoldierStorage).
+		if def.Key == "soldiers" {
+			r.Storage = ge.soldierRoom(r.Storage)
+		}
 		// Storage can shrink (a storage building sold or destroyed). Add clamps
 		// on the way in, but a resource with no production never passes through
 		// Add again, so without this it sat above its new cap indefinitely.
@@ -2808,6 +2813,13 @@ func (ge *GameEngine) festivalCooldown() int {
 	return ge.mechanicTicks(config.MechanicFestivalCooldownTicks, ge.stretchTicks(festivalCooldownTicks))
 }
 
+// festivalLength is how long a festival's bonus lasts in the current age:
+// the stretched length, and the techs' share on top
+// (config.MechanicFestivalTicks). Caller holds ge.mu.
+func (ge *GameEngine) festivalLength() int {
+	return techGrowTicks(ge.stretchTicks(festivalBuffTicks), ge.Research.Mechanic(config.MechanicFestivalTicks))
+}
+
 // FestivalStatus returns the live festival cost, the player's culture, the buff
 // parameters, and cooldown state for the `festival` command UI. Read-only.
 func (ge *GameEngine) FestivalStatus() FestivalStatus {
@@ -2824,7 +2836,7 @@ func (ge *GameEngine) FestivalStatus() FestivalStatus {
 		Cost:          ge.festivalCost(),
 		Culture:       ge.Resources.Get("culture"),
 		BuffPercent:   festivalBuffPercent,
-		BuffTicks:     ge.stretchTicks(festivalBuffTicks),
+		BuffTicks:     ge.festivalLength(),
 		CooldownTicks: ge.festivalCooldown(),
 		CooldownLeft:  cd,
 		Ready:         cd == 0,
@@ -2851,7 +2863,7 @@ func (ge *GameEngine) DoFestival() error {
 		return fmt.Errorf("Not enough culture for a festival: need %s, have %s.", textfmt.Number(cost), textfmt.Number(have))
 	}
 	ge.Resources.Remove("culture", cost)
-	buff := ge.stretchTicks(festivalBuffTicks)
+	buff := ge.festivalLength()
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       "cultural_festival",
 		Name:      "Cultural Festival",

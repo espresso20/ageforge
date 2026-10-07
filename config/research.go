@@ -448,35 +448,7 @@ func rawTechnologies() []TechDef {
 
 		// === RENAISSANCE AGE ===
 		{
-			Name: "Printing Press", Key: "printing_press",
-			Age: "renaissance_age", Lane: LaneKnowledge,
-			Prerequisites: []string{"theology", "alchemy"},
-			Description:   "Printed books raise knowledge output and culture.",
-			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.06},
-				{Kind: EffectResearchTime, Value: -0.03},
-			},
-		},
-		{
-			Name: "Navigation", Key: "navigation",
-			Age: "renaissance_age", Lane: LaneTrade,
-			Prerequisites: []string{"exploration", "mathematics"},
-			Description:   "Ocean navigation raises gold output and expedition rewards.",
-			Effects: []TechEffect{
-				{Kind: EffectExpeditionReward, Value: 0.10},
-			},
-		},
-		{
-			Name: "Gunpowder", Key: "gunpowder",
-			Age: "renaissance_age", Lane: LaneMilitary,
-			Prerequisites: []string{"alchemy", "siege_warfare"},
-			Description:   "Explosive weapons raise military power.",
-			Effects: []TechEffect{
-				{Kind: EffectMilitaryPower, Value: 0.12},
-			},
-		},
-		{
-			Name: "Patronage", Key: "patronage",
+			Name: "Patronage", Key: "patronage", Code: "PATRN", Emblem: "♛",
 			Age: "renaissance_age", Lane: LaneFaith,
 			Prerequisites: []string{"banking"},
 			Description:   "Wealthy patrons fund arts and science.",
@@ -484,26 +456,139 @@ func rawTechnologies() []TechDef {
 				{Kind: EffectOutput, Target: "culture", Value: 0.06},
 			},
 		},
+		{
+			Name: "Printing Press", Key: "printing_press", Emblem: "¶",
+			Age: "renaissance_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"alchemy", "theology"},
+			Description:   "Printed books carry one idea to a thousand readers at once.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.06},
+				{Kind: EffectResearchTime, Value: -0.03},
+			},
+		},
+		{
+			Name: "Navigation", Key: "navigation", Emblem: "✶",
+			Age: "renaissance_age", Lane: LaneTrade,
+			Prerequisites: []string{"exploration", "mathematics"},
+			Description:   "Star, compass and log line take ships out of sight of land.",
+			Effects: []TechEffect{
+				{Kind: EffectExpeditionReward, Value: 0.10},
+			},
+		},
+		{
+			Name: "Crop Rotation", Key: "crop_rotation", Code: "CROPS", Emblem: "↻",
+			Age: "renaissance_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"feudalism"},
+			Description:   "Fields take turns at wheat, roots and rest, and none wears out.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.06},
+			},
+		},
+		{
+			Name: "Architecture", Key: "architecture", Code: "ARCH", Emblem: "∧",
+			Age: "renaissance_age", Lane: LaneCraft,
+			Prerequisites: []string{"civil_engineering"},
+			Description:   "Drawn plans and worked proportions, before the first stone is laid.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildCost, Value: -0.03},
+				{Kind: EffectMechanic, Target: MechanicWonderBuildTicks, Value: -0.25},
+			},
+		},
+		{
+			Name: "Blast Furnace", Key: "blast_furnace", Emblem: "◭",
+			Age: "renaissance_age", Lane: LaneMaterials,
+			Prerequisites: []string{"steel_forging"},
+			Description:   "A taller stack and a harder blast turn out metal by the ton.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "steel", Value: 0.06},
+			},
+		},
+		{
+			Name: "Gunpowder", Key: "gunpowder", Code: "POWDR", Emblem: "✸",
+			Age: "renaissance_age", Lane: LaneMilitary,
+			Prerequisites: []string{"alchemy", "siege_warfare"},
+			Description:   "Explosive weapons raise military power.",
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.12},
+			},
+		},
 
 		// === COLONIAL AGE ===
 		{
-			Name: "Cartography", Key: "cartography",
+			Name: "Baroque Arts", Key: "baroque_arts", Emblem: "❦",
+			Age: "colonial_age", Lane: LaneFaith,
+			Prerequisites: []string{"patronage"},
+			Description:   "Music and ornament on a scale built to overwhelm.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicFestivalTicks, Value: 0.25},
+			},
+		},
+		{
+			Name: "Scientific Method", Key: "scientific_method", Emblem: "⊢",
+			Age: "colonial_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"printing_press"},
+			Description:   "Guess, test, write it down, and let someone else try to break it.",
+			Effects: []TechEffect{
+				{Kind: EffectResearchTime, Value: -0.04},
+			},
+		},
+		{
+			Name: "Cartography", Key: "cartography", Emblem: "⊞",
 			Age: "colonial_age", Lane: LaneTrade,
 			Prerequisites: []string{"navigation"},
-			Description:   "Detailed maps raise expedition rewards and gold output.",
+			Description:   "Detailed maps bring expeditions home sooner and richer.",
 			Effects: []TechEffect{
 				{Kind: EffectExpeditionReward, Value: 0.10},
 				{Kind: EffectMechanic, Target: MechanicExpeditionTicks, Value: -0.10},
 			},
 		},
 		{
-			Name: "Mercantilism", Key: "mercantilism",
+			Name: "Mercantilism", Key: "mercantilism", Code: "MERC", Emblem: "£",
 			Age: "colonial_age", Lane: LaneTrade,
 			Prerequisites: []string{"banking", "navigation"},
 			Description:   "National trade policies maximize wealth.",
 		},
 		{
-			Name: "Colonialism", Key: "colonialism",
+			Name: "Embassies", Key: "embassies", Emblem: "⚐",
+			Age: "colonial_age", Lane: LaneTrade,
+			Prerequisites: []string{"envoys"},
+			Description:   "A resident envoy in every court, and a house to keep them in.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicGiftOpinion, Value: 0.50},
+			},
+		},
+		{
+			Name: "New World Crops", Key: "new_world_crops", Code: "MAIZE", Emblem: "✿",
+			Age: "colonial_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"crop_rotation"},
+			Description:   "Maize, potatoes and beans cross the ocean and feed twice the mouths.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.06},
+				{Kind: EffectHousing, Value: 0.04},
+			},
+		},
+		{
+			Name: "Surveying", Key: "surveying", Code: "SURVY", Emblem: "∠",
+			Age: "colonial_age", Lane: LaneCraft,
+			Prerequisites: []string{"architecture"},
+			Description:   "Chain, level and theodolite: the ground is measured before it is built on.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildTime, Value: -0.05},
+				{Kind: EffectBuildCost, Value: -0.02},
+			},
+		},
+		{
+			Name: "Coke Smelting", Key: "coke_smelting", Emblem: "●",
+			Age: "colonial_age", Lane: LaneMaterials,
+			Prerequisites: []string{"blast_furnace"},
+			Description:   "Coal baked into coke burns hot enough to smelt without a forest.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "steel", Value: 0.06},
+				{Kind: EffectOutput, Target: "coal", Value: 0.06},
+			},
+		},
+		{
+			Name: "Colonialism", Key: "colonialism", Code: "COLNY", Emblem: "⚔",
 			Age: "colonial_age", Lane: LaneMilitary,
 			Prerequisites: []string{"cartography", "gunpowder"},
 			Description:   "Overseas territorial expansion.",
@@ -514,26 +599,25 @@ func rawTechnologies() []TechDef {
 
 		// === INDUSTRIAL AGE ===
 		{
-			Name: "Steam Power", Key: "steam_power", Emblem: "≈",
-			Age: "industrial_age", Lane: LaneEnergy,
-			Prerequisites: []string{"steel_forging"},
-			Description:   "Steam engines raise all production.",
+			Name: "Romanticism", Key: "romanticism", Emblem: "♥",
+			Age: "industrial_age", Lane: LaneFaith,
+			Prerequisites: []string{"baroque_arts"},
+			Description:   "Feeling over reason, on the stage and on the page.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "steel", Value: 0.06},
-				{Kind: EffectOutput, Target: "coal", Value: 0.06},
+				{Kind: EffectOutput, Target: "culture", Value: 0.06},
 			},
 		},
 		{
-			Name: "Industrialization", Key: "industrialization",
-			Age: "industrial_age", Lane: LaneCraft,
-			Prerequisites: []string{"steam_power"},
-			Description:   "Factory systems raise all production and add steel.",
+			Name: "Encyclopedia", Key: "encyclopedia", Emblem: "Æ",
+			Age: "industrial_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"scientific_method"},
+			Description:   "Everything known, set in order and put in print.",
 			Effects: []TechEffect{
-				{Kind: EffectAllOutput, Value: 0.05},
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.06},
 			},
 		},
 		{
-			Name: "Railroads", Key: "railroads",
+			Name: "Railroads", Key: "railroads", Code: "RAIL", Emblem: "‡",
 			Age: "industrial_age", Lane: LaneTrade,
 			Prerequisites: []string{"steam_power", "road_building"},
 			Description:   "Rail networks connect your civilization.",
@@ -542,7 +626,71 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Rifling", Key: "rifling",
+			Name: "Geographic Societies", Key: "geographic_societies", Code: "GEOG", Emblem: "◎",
+			Age: "industrial_age", Lane: LaneTrade,
+			Prerequisites: []string{"cartography"},
+			Description:   "Learned societies fund the expeditions and publish what they find.",
+		},
+		{
+			// The Steel Era's Trade capstone.
+			Name: "Concert of Nations", Key: "concert_of_nations", Code: "CONCT", Emblem: "⚖",
+			Age: "industrial_age", Lane: LaneTrade, Capstone: true,
+			Prerequisites: []string{"embassies", "geographic_societies"},
+			Description:   "The great powers settle their quarrels at a table and keep the peace by treaty.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicAllianceBonus, Value: 0.25},
+			},
+		},
+		{
+			Name: "Seed Drill", Key: "seed_drill", Code: "DRILL", Emblem: "∷",
+			Age: "industrial_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"new_world_crops"},
+			Description:   "Seed sown in rows at an even depth, and none thrown to the birds.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.06},
+			},
+		},
+		{
+			Name: "Industrialization", Key: "industrialization", Emblem: "⚙",
+			Age: "industrial_age", Lane: LaneCraft,
+			Prerequisites: []string{"steam_power"},
+			Description:   "Factory systems raise all production.",
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 0.05},
+			},
+		},
+		{
+			Name: "Clockwork Automation", Key: "clockwork_automation", Emblem: "✲",
+			Age: "industrial_age", Lane: LaneCraft,
+			Prerequisites: []string{"chronometry"},
+			Description:   "Mechanical automation raises game speed.",
+			Effects: []TechEffect{
+				{Kind: EffectGameSpeed, Value: 0.10},
+			},
+		},
+		{
+			// The Steel Era's Craft capstone.
+			Name: "Interchangeable Parts", Key: "interchangeable_parts", Code: "PARTS", Emblem: "❖",
+			Age: "industrial_age", Lane: LaneCraft, Capstone: true,
+			Prerequisites: []string{"industrialization", "clockwork_automation"},
+			Description:   "Every part made to one gauge fits every machine of its kind.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildCost, Value: -0.04},
+				{Kind: EffectMechanic, Target: MechanicUpgradeCost, Value: -0.15},
+			},
+		},
+		{
+			Name: "Steam Pumps", Key: "steam_pumps", Code: "PUMPS", Emblem: "⇕",
+			Age: "industrial_age", Lane: LaneMaterials,
+			Prerequisites: []string{"coke_smelting"},
+			Description:   "Engines drain the deep workings, and the mines go further down.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "iron_ore", Value: 0.06},
+				{Kind: EffectOutput, Target: "coal", Value: 0.06},
+			},
+		},
+		{
+			Name: "Rifling", Key: "rifling", Code: "RIFLE", Emblem: "✛",
 			Age: "industrial_age", Lane: LaneMilitary,
 			Prerequisites: []string{"gunpowder"},
 			Description:   "Precision firearms improve military effectiveness.",
@@ -551,23 +699,34 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Clockwork Automation", Key: "clockwork_automation",
-			Age: "industrial_age", Lane: LaneCraft,
-			Prerequisites: []string{"chronometry"},
-			Description:   "Mechanical automation raises game speed.",
+			Name: "Steam Power", Key: "steam_power", Emblem: "≈",
+			Age: "industrial_age", Lane: LaneEnergy,
+			Prerequisites: []string{"steel_forging"},
+			Description:   "Steam engines drive the mills and the mines.",
 			Effects: []TechEffect{
-				{Kind: EffectGameSpeed, Value: 0.10},
+				{Kind: EffectOutput, Target: "steel", Value: 0.06},
+				{Kind: EffectOutput, Target: "coal", Value: 0.06},
 			},
 		},
 
 		// === VICTORIAN AGE ===
 		{
-			Name: "Electrification", Key: "electrification", Code: "ELEC", Emblem: "ϟ",
-			Age: "victorian_age", Lane: LaneEnergy,
-			Prerequisites: []string{"industrialization"},
-			Description:   "Electric power reaches homes and factories.",
+			Name: "Museums", Key: "museums", Code: "MUSEM", Emblem: "Π",
+			Age: "victorian_age", Lane: LaneFaith,
+			Prerequisites: []string{"romanticism"},
+			Description:   "The nation's treasures behind glass, open to anyone on a Sunday.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "electricity", Value: 0.05},
+				{Kind: EffectOutput, Target: "culture", Value: 0.05},
+			},
+		},
+		{
+			Name: "Public Education", Key: "public_education", Code: "EDUC", Emblem: "✎",
+			Age: "victorian_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"encyclopedia"},
+			Description:   "Every child in a schoolroom, and every schoolroom teaching the same lessons.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectResearchTime, Value: -0.03},
 			},
 		},
 		{
@@ -581,25 +740,53 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
+			Name: "Sanitation", Key: "sanitation", Emblem: "⊔",
+			Age: "victorian_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"seed_drill"},
+			Description:   "Sewers, clean water and paved streets let a city grow without sickening.",
+			Effects: []TechEffect{
+				{Kind: EffectHousing, Value: 0.06},
+			},
+		},
+		{
 			Name: "Mass Production", Key: "mass_production", Emblem: "▥",
 			Age: "victorian_age", Lane: LaneCraft,
 			Prerequisites: []string{"industrialization"},
-			Description:   "Assembly line manufacturing.",
+			Description:   "Standard goods, made in long runs by the thousand.",
 			Effects: []TechEffect{
 				{Kind: EffectBuildTime, Value: -0.08},
 			},
 		},
-
-		// === ELECTRIC AGE ===
 		{
-			Name: "Power Distribution", Key: "power_distribution", Code: "GRID",
-			Age: "electric_age", Lane: LaneEnergy,
-			Prerequisites: []string{"electrification"},
-			Description:   "AC power grids span entire regions.",
+			Name: "Geology", Key: "geology", Code: "GEOL", Emblem: "▤",
+			Age: "victorian_age", Lane: LaneMaterials,
+			Prerequisites: []string{"steam_pumps"},
+			Description:   "The strata are read like a book, and the seam is found before the shaft is sunk.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "iron_ore", Value: 0.05},
+				{Kind: EffectOutput, Target: "coal", Value: 0.05},
+			},
+		},
+		{
+			Name: "General Staff", Key: "general_staff", Code: "STAFF", Emblem: "★",
+			Age: "victorian_age", Lane: LaneMilitary,
+			Prerequisites: []string{"rifling"},
+			Description:   "Officers whose whole work is to plan the war before it is fought.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicCampaignTicks, Value: -0.15},
+			},
+		},
+		{
+			Name: "Electrification", Key: "electrification", Code: "ELEC", Emblem: "ϟ",
+			Age: "victorian_age", Lane: LaneEnergy,
+			Prerequisites: []string{"industrialization"},
+			Description:   "Electric power reaches homes and factories.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "electricity", Value: 0.05},
 			},
 		},
+
+		// === ELECTRIC AGE ===
 		{
 			Name: "Radio", Key: "radio", Emblem: "♪",
 			Age: "electric_age", Lane: LaneFaith,
@@ -607,6 +794,42 @@ func rawTechnologies() []TechDef {
 			Description:   "Wireless communication reaches the masses.",
 			Effects: []TechEffect{
 				{Kind: EffectMechanic, Target: MechanicFestivalCooldownTicks, Value: -0.20},
+			},
+		},
+		{
+			Name: "Modern Physics", Key: "modern_physics", Code: "PHYS", Emblem: "ħ",
+			Age: "electric_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"public_education"},
+			Description:   "Relativity and the quantum: the old certainties, measured and found short.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+			},
+		},
+		{
+			Name: "Wire Transfers", Key: "wire_transfers", Emblem: "↯",
+			Age: "electric_age", Lane: LaneTrade,
+			Prerequisites: []string{"telecommunications"},
+			Description:   "Money goes down a telegraph wire and arrives before the letter that announces it.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.02},
+			},
+		},
+		{
+			Name: "Fertilizers", Key: "fertilizers", Code: "FERT", Emblem: "❋",
+			Age: "electric_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"sanitation"},
+			Description:   "Nitrogen fixed from the air feeds fields that manure never could.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.05},
+			},
+		},
+		{
+			Name: "Assembly Line", Key: "assembly_line", Emblem: "⇉",
+			Age: "electric_age", Lane: LaneCraft,
+			Prerequisites: []string{"mass_production"},
+			Description:   "The work moves to the worker, one step at a time.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildTime, Value: -0.05},
 			},
 		},
 		{
@@ -619,27 +842,90 @@ func rawTechnologies() []TechDef {
 				{Kind: EffectOutput, Target: "steel", Value: 0.05},
 			},
 		},
-
-		// === ATOMIC AGE ===
 		{
-			Name: "Nuclear Fission", Key: "nuclear_fission", Code: "FISSN", Emblem: "◉",
-			Age: "atomic_age", Lane: LaneEnergy,
-			Prerequisites: []string{"power_distribution", "chemical_engineering"},
-			Description:   "Splitting the atom for energy and weapons.",
+			Name: "Mechanized Warfare", Key: "mechanized_warfare", Code: "MECH", Emblem: "▰",
+			Age: "electric_age", Lane: LaneMilitary,
+			Prerequisites: []string{"general_staff"},
+			Description:   "Engines and armor take the place of the horse and the charge.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "uranium", Value: 0.05},
+				{Kind: EffectMilitaryPower, Value: 0.10},
+			},
+		},
+		{
+			Name: "Power Distribution", Key: "power_distribution", Code: "GRID", Emblem: "#",
+			Age: "electric_age", Lane: LaneEnergy,
+			Prerequisites: []string{"electrification"},
+			Description:   "AC power grids span entire regions.",
+			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "electricity", Value: 0.05},
 			},
 		},
 		{
-			// No longer behind Rifling and Chemical Engineering: flight comes first.
-			// It is a root until the tech it will follow (Aviation) exists.
-			Name: "Rocketry", Key: "rocketry", Code: "ROCKT", Emblem: "▲",
-			Age: "atomic_age", Lane: LaneSpace,
-			Description: "Rockets raise military power and expedition rewards.",
+			Name: "Aviation", Key: "aviation", Emblem: "✈",
+			Age: "electric_age", Lane: LaneSpace,
+			Prerequisites: []string{"mass_production"},
+			Description:   "Powered flight shrinks every journey.",
 			Effects: []TechEffect{
-				{Kind: EffectExpeditionReward, Value: 0.10},
-				{Kind: EffectMilitaryPower, Value: 0.10},
+				{Kind: EffectMechanic, Target: MechanicExpeditionTicks, Value: -0.10},
+			},
+		},
+
+		// === ATOMIC AGE ===
+		{
+			Name: "Cinema", Key: "cinema", Code: "FILM", Emblem: "►",
+			Age: "atomic_age", Lane: LaneFaith,
+			Prerequisites: []string{"radio"},
+			Description:   "A whole town in the dark, watching the same story.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "culture", Value: 0.05},
+			},
+		},
+		{
+			// The Electric Era's Knowledge capstone.
+			Name: "Big Science", Key: "big_science", Code: "BIGSC", Emblem: "⚛",
+			Age: "atomic_age", Lane: LaneKnowledge, Capstone: true,
+			Prerequisites: []string{"modern_physics"},
+			Description:   "Laboratories the size of towns, with budgets to match.",
+			Effects: []TechEffect{
+				{Kind: EffectResearchTime, Value: -0.06},
+			},
+		},
+		{
+			Name: "Corporations", Key: "corporations", Code: "CORP", Emblem: "©",
+			Age: "atomic_age", Lane: LaneTrade,
+			Prerequisites: []string{"mercantilism", "wire_transfers"},
+			Description:   "Firms that outlive their founders and trade on every continent.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "gold", Value: 0.05},
+			},
+		},
+		{
+			Name: "Green Revolution", Key: "green_revolution", Emblem: "❧",
+			Age: "atomic_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"fertilizers"},
+			Description:   "New strains of wheat and rice double the harvest of the same field.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.05},
+				{Kind: EffectHousing, Value: 0.04},
+			},
+		},
+		{
+			Name: "Prefabrication", Key: "prefabrication", Code: "PREFB", Emblem: "◫",
+			Age: "atomic_age", Lane: LaneCraft,
+			Prerequisites: []string{"assembly_line"},
+			Description:   "Buildings made in a factory and bolted together on site.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildCost, Value: -0.02},
+				{Kind: EffectStorage, Value: 0.05},
+			},
+		},
+		{
+			Name: "Plastics", Key: "plastics", Emblem: "⬡",
+			Age: "atomic_age", Lane: LaneMaterials,
+			Prerequisites: []string{"chemical_engineering"},
+			Description:   "Oil turned into anything, in any shape, by the ton.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "oil", Value: 0.05},
 			},
 		},
 		{
@@ -653,13 +939,47 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			// Mid-age unlock (Pacing v2): it stands behind the age's other
-			// three techs, so it comes after them, and opens the Nuclear
+			// The Electric Era's Military capstone.
+			Name: "Military-Industrial Complex", Key: "military_industrial_complex", Code: "MIC", Emblem: "▩",
+			Age: "atomic_age", Lane: LaneMilitary, Capstone: true,
+			Prerequisites: []string{"mechanized_warfare", "nuclear_deterrence"},
+			Description:   "Armies, factories and laboratories on one budget, in peace as in war.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicSoldierStorage, Value: 0.20},
+				{Kind: EffectMechanic, Target: MechanicCampaignReward, Value: 0.20},
+			},
+		},
+		{
+			Name: "Nuclear Fission", Key: "nuclear_fission", Code: "FISSN", Emblem: "◉",
+			Age: "atomic_age", Lane: LaneEnergy,
+			Prerequisites: []string{"power_distribution", "chemical_engineering"},
+			Description:   "Splitting the atom for energy and weapons.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "uranium", Value: 0.05},
+				{Kind: EffectOutput, Target: "electricity", Value: 0.05},
+			},
+		},
+		{
+			// Mid-age unlock (Pacing v2): it stands behind the age's keystone
+			// and Rocketry, so it comes after them, and opens the Nuclear
 			// Plant in what was a quiet stretch.
 			Name: "Civilian Reactors", Key: "civilian_reactors", Code: "REACT", Emblem: "▣",
 			Age: "atomic_age", Lane: LaneEnergy,
 			Prerequisites: []string{"nuclear_deterrence"},
 			Description:   "The reactors built for the arms race find steadier work on the grid. Opens the Nuclear Plant.",
+		},
+		{
+			// Flight comes first: Rocketry stands on Aviation, no longer on
+			// Rifling and Chemical Engineering, which keeps the military
+			// chain optional.
+			Name: "Rocketry", Key: "rocketry", Code: "ROCKT", Emblem: "▲",
+			Age: "atomic_age", Lane: LaneSpace,
+			Prerequisites: []string{"aviation"},
+			Description:   "Rockets raise military power and expedition rewards.",
+			Effects: []TechEffect{
+				{Kind: EffectExpeditionReward, Value: 0.10},
+				{Kind: EffectMilitaryPower, Value: 0.10},
+			},
 		},
 
 		// === MODERN AGE ===

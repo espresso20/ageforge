@@ -32,7 +32,7 @@ Each pair has a **base rate**: how many units of the resource you get per unit y
 base rate (give A, get B) = price level of B ÷ price level of A × 0.8
 ```
 
-**Three techs lower the fee.** Currency and Banking take 3 points off each and Blockchain 2, so with all three the market keeps 12% and pays 10% more than the rates on this page (every market rate is scaled the same way, the listed pairs included). The fee never falls under 5%.
+**Four techs lower the fee.** Currency and Banking take 3 points off each, Wire Transfers and Blockchain 2 each, so with all four the market keeps 10% and pays 12.5% more than the rates on this page (every market rate is scaled the same way, the listed pairs included). The fee never falls under 5%.
 
 That covers every pair of them, including pairs that were never on the list: steel for titanium in the Space Age, data for crypto in the Cyberpunk Age, gold for stone. Price levels change with each age, so these rates do too. Because of the fee a round trip always loses value (0.8 × 0.8 keeps 64%), so trading never beats building. The exchange is how you get the resources no building of your age makes: stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age on, titanium, crypto.
 
@@ -193,7 +193,7 @@ What a route gives is boosted by your harbors and by an ally whose specialty it 
 
 ## Harbor lineage: trade-route income
 
-Markets and banks (the **trade** lineage) make gold directly. **Harbors** add a flat percentage to what **every active route** gives you, and the bonuses add up across tiers and copies. Harbors also produce gold themselves, which usually earns far more than the route bonus, because that bonus is a percentage of small fixed amounts (see [What routes are worth](#what-routes-are-worth)).
+Markets and banks (the **trade** lineage) make gold directly. **Harbors** (the first of them waits for **Mercantilism**, a Colonial Age tech; the Port beside it needs none) add a flat percentage to what **every active route** gives you, and the bonuses add up across tiers and copies. Harbors also produce gold themselves, which usually earns far more than the route bonus, because that bonus is a percentage of small fixed amounts (see [What routes are worth](#what-routes-are-worth)).
 
 The harbor bonus adds to an ally's bonus: a route bringing in an ally's specialty, with a fleet of harbors, pays `base × (1 + harbor bonus + ally bonus)`.
 
