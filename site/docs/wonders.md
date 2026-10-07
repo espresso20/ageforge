@@ -1,6 +1,6 @@
 # Wonders
 
-22 unique wonders can be built exactly once per run, one in each age. Each grants civilization-wide bonuses that last until you prestige or Succumb, and every age advance needs its age's wonder.
+22 unique wonders can be built exactly once per run, one in each age. Each grants civilization-wide bonuses that last until you prestige or Succumb, and every age advance needs its age's wonder. From the Stone Age on, each wonder needs one technology first: its keystone.
 
 <figure class="screen" data-screen="wonders"><figcaption>The Wonders panel in the Bronze Age: the bank of Stonehenge part filled, and the wonders already built below it.</figcaption></figure>
 
@@ -20,9 +20,21 @@ build <wonder_key>                   # start construction once the bank is full
 
 `build` does not take resources for a wonder from your stock: bank the full price with `wonder collect` first, then `build`.
 
+### The keystone tech
+
+From the Stone Age on, a wonder needs one technology of its own age before it can be built: its **keystone** (Stoneworking for the Great Monolith, Mathematics for the Colosseum; each wonder below lists its own). The bank does not wait for it: deposits and overflow go in from the first tick of the age, so you can fill the bank while the keystone is being researched. Only `build <wonder_key>` is refused until the tech is done, and it names the tech:
+
+```
+Great Monolith needs Stoneworking first. Research it to build here.
+```
+
+The Wonders panel and `wonder` show the keystone with the bank: `✗ Keystone: Stoneworking, not researched (research stoneworking)` until it is done, then `✓ Keystone: Stoneworking, researched`. A full bank says to research it first when it is still missing, and the log tells you when the research has opened the wonder. The Sacred Grove needs no tech, and Stonehenge has no keystone yet. See [Keystone Techs](ages.md#keystone-techs) for the whole list and what each keystone stands on.
+
+In a game saved before keystones existed, the age you were in is exempt: its wonder builds without the tech, and the lock starts when you next advance.
+
 `wonder bank` is the same command as `wonder collect` (`wonder bank food all`), `max` means the same as `all`, and leaving the amount off (`wonder bank food`) means `all` too. Each deposit says how much went in. When nothing can go in, the command says why: the wonder is already built, it doesn't need that resource (and lists the ones it does), that part of the bank is full, you have none on hand, or a set amount is more than you have (that is refused rather than banked in part; use `all` to bank what you have).
 
-A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it banks what the wonder still lacks from what you hold as soon as that covers all of it, and starts construction.
+A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it banks what the wonder still lacks from what you hold as soon as that covers all of it, and starts construction. A planned wonder whose keystone is not researched waits for it (`waits for Stoneworking`) and starts once it is.
 
 ### Overflow
 
@@ -54,9 +66,9 @@ This age's wonder shows up only once you start it: bank some of its cost or queu
 
 Completing a wonder is **required** to advance to the next age. Each age unlocks one wonder, and `advance` is refused until that wonder is built.
 
-The wonder requirement appears in the **age progress bar** at the top of the screen alongside your other advancement requirements. If the wonder is still missing, you will see a red notice: `✗ Wonder required: <name>`.
+The wonder requirement appears in the **age progress bar** at the top of the screen alongside your other advancement requirements. If the wonder is still missing, you will see a red notice: `✗ Wonder: <name>`, followed by `✗ Keystone: <tech>` while its keystone tech is still to research.
 
-If you try to advance before completing your age's wonder, the game will tell you which wonder is blocking and remind you to use `wonder collect` then `build <key>`.
+If you try to advance before completing your age's wonder, the game will tell you which wonder is blocking and remind you to research its keystone if that is missing, then to use `wonder collect` and `build <key>`.
 
 Once completed, the wonder appears as a landmark on the Map (`map` command).
 
@@ -83,7 +95,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ## Wonder list
 
 ### 🌿 Sacred Grove
-**Age:** Primitive · **Key:** `sacred_grove` · **Build:** 75 ticks (2m 30s)
+**Age:** Primitive · **Key:** `sacred_grove` · **Build:** 75 ticks (2m 30s) · **Keystone:** none
 
 | Resource | Cost |
 |---|---|
@@ -95,7 +107,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🗿 Great Monolith
-**Age:** Stone · **Key:** `great_monolith` · **Build:** 225 ticks (7m 30s)
+**Age:** Stone · **Key:** `great_monolith` · **Build:** 225 ticks (7m 30s) · **Keystone:** Stoneworking (`stoneworking`)
 
 | Resource | Cost |
 |---|---|
@@ -108,7 +120,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### ⭕ Stonehenge
-**Age:** Bronze · **Key:** `stonehenge` · **Build:** 1,170 ticks (39m)
+**Age:** Bronze · **Key:** `stonehenge` · **Build:** 1,170 ticks (39m) · **Keystone:** none yet
 
 | Resource | Cost |
 |---|---|
@@ -121,7 +133,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🏟 Colosseum
-**Age:** Iron · **Key:** `colosseum` · **Build:** 1,950 ticks (1h 5m)
+**Age:** Iron · **Key:** `colosseum` · **Build:** 1,950 ticks (1h 5m) · **Keystone:** Mathematics (`mathematics`)
 
 | Resource | Cost |
 |---|---|
@@ -134,7 +146,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🏛 Parthenon
-**Age:** Classical · **Key:** `parthenon` · **Build:** 2,500 ticks (1h 23m 20s)
+**Age:** Classical · **Key:** `parthenon` · **Build:** 2,500 ticks (1h 23m 20s) · **Keystone:** Philosophy (`philosophy`)
 
 | Resource | Cost |
 |---|---|
@@ -147,7 +159,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 📚 Great Library
-**Age:** Medieval · **Key:** `great_library` · **Build:** 3,510 ticks (1h 57m)
+**Age:** Medieval · **Key:** `great_library` · **Build:** 3,510 ticks (1h 57m) · **Keystone:** Theology (`theology`)
 
 | Resource | Cost |
 |---|---|
@@ -160,7 +172,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🎨 Sistine Chapel
-**Age:** Renaissance · **Key:** `sistine_chapel` · **Build:** 4,680 ticks (2h 36m)
+**Age:** Renaissance · **Key:** `sistine_chapel` · **Build:** 4,680 ticks (2h 36m) · **Keystone:** Patronage (`patronage`)
 
 | Resource | Cost |
 |---|---|
@@ -174,7 +186,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🏮 Grand Lighthouse
-**Age:** Colonial · **Key:** `grand_lighthouse` · **Build:** 5,460 ticks (3h 2m)
+**Age:** Colonial · **Key:** `grand_lighthouse` · **Build:** 5,460 ticks (3h 2m) · **Keystone:** Cartography (`cartography`)
 
 | Resource | Cost |
 |---|---|
@@ -187,7 +199,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🏗 Crystal Palace
-**Age:** Industrial · **Key:** `crystal_palace` · **Build:** 6,240 ticks (3h 28m)
+**Age:** Industrial · **Key:** `crystal_palace` · **Build:** 6,240 ticks (3h 28m) · **Keystone:** Industrialization (`industrialization`)
 
 | Resource | Cost |
 |---|---|
@@ -201,7 +213,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🗼 Eiffel Tower
-**Age:** Victorian · **Key:** `eiffel_tower` · **Build:** 7,020 ticks (3h 54m)
+**Age:** Victorian · **Key:** `eiffel_tower` · **Build:** 7,020 ticks (3h 54m) · **Keystone:** Mass Production (`mass_production`)
 
 | Resource | Cost |
 |---|---|
@@ -214,7 +226,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🌊 Hoover Dam
-**Age:** Electric · **Key:** `hoover_dam` · **Build:** 7,800 ticks (4h 20m)
+**Age:** Electric · **Key:** `hoover_dam` · **Build:** 7,800 ticks (4h 20m) · **Keystone:** Power Distribution (`power_distribution`)
 
 | Resource | Cost |
 |---|---|
@@ -227,7 +239,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### ⚛️ Particle Accelerator
-**Age:** Atomic · **Key:** `particle_accelerator` · **Build:** 9,360 ticks (5h 12m)
+**Age:** Atomic · **Key:** `particle_accelerator` · **Build:** 9,360 ticks (5h 12m) · **Keystone:** Nuclear Fission (`nuclear_fission`)
 
 | Resource | Cost |
 |---|---|
@@ -240,7 +252,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🚀 Space Program
-**Age:** Modern · **Key:** `space_program` · **Build:** 9,360 ticks (5h 12m)
+**Age:** Modern · **Key:** `space_program` · **Build:** 9,360 ticks (5h 12m) · **Keystone:** Satellite Technology (`satellite_tech`)
 
 | Resource | Cost |
 |---|---|
@@ -254,7 +266,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🌐 Global Network
-**Age:** Information · **Key:** `global_network` · **Build:** 10,920 ticks (6h 4m)
+**Age:** Information · **Key:** `global_network` · **Build:** 10,920 ticks (6h 4m) · **Keystone:** Internet (`internet`)
 
 | Resource | Cost |
 |---|---|
@@ -268,7 +280,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 💻 World Simulation
-**Age:** Digital · **Key:** `world_simulation` · **Build:** 12,480 ticks (6h 56m)
+**Age:** Digital · **Key:** `world_simulation` · **Build:** 12,480 ticks (6h 56m) · **Keystone:** Machine Learning (`machine_learning`)
 
 | Resource | Cost |
 |---|---|
@@ -281,7 +293,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🌆 Neon Citadel
-**Age:** Cyberpunk · **Key:** `neon_citadel` · **Build:** 14,040 ticks (7h 48m)
+**Age:** Cyberpunk · **Key:** `neon_citadel` · **Build:** 14,040 ticks (7h 48m) · **Keystone:** Cybernetics (`cybernetics`)
 
 | Resource | Cost |
 |---|---|
@@ -295,7 +307,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### ☀️ Stellar Cradle
-**Age:** Fusion · **Key:** `stellar_cradle` · **Build:** 15,600 ticks (8h 40m)
+**Age:** Fusion · **Key:** `stellar_cradle` · **Build:** 15,600 ticks (8h 40m) · **Keystone:** Fusion Power (`fusion_power`)
 
 | Resource | Cost |
 |---|---|
@@ -308,7 +320,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🛰 Dyson Scaffold
-**Age:** Space · **Key:** `dyson_scaffold` · **Build:** 17,160 ticks (9h 32m)
+**Age:** Space · **Key:** `dyson_scaffold` · **Build:** 17,160 ticks (9h 32m) · **Keystone:** Orbital Mechanics (`orbital_mechanics`)
 
 | Resource | Cost |
 |---|---|
@@ -321,7 +333,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🌀 Warp Nexus
-**Age:** Interstellar · **Key:** `warp_nexus` · **Build:** 18,720 ticks (10h 24m)
+**Age:** Interstellar · **Key:** `warp_nexus` · **Build:** 18,720 ticks (10h 24m) · **Keystone:** Warp Drive (`warp_drive`)
 
 | Resource | Cost |
 |---|---|
@@ -334,7 +346,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### 🌌 Cosmic Beacon
-**Age:** Galactic · **Key:** `cosmic_beacon` · **Build:** 18,720 ticks (10h 24m)
+**Age:** Galactic · **Key:** `cosmic_beacon` · **Build:** 18,720 ticks (10h 24m) · **Keystone:** Galactic Navigation (`galactic_navigation`)
 
 | Resource | Cost |
 |---|---|
@@ -347,7 +359,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### ⚡ Reality Anchor
-**Age:** Quantum · **Key:** `reality_anchor` · **Build:** 18,720 ticks (10h 24m)
+**Age:** Quantum · **Key:** `reality_anchor` · **Build:** 18,720 ticks (10h 24m) · **Keystone:** Quantum Mechanics (`quantum_mechanics`)
 
 | Resource | Cost |
 |---|---|
@@ -360,7 +372,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### ✨ Singularity Core
-**Age:** Transcendent · **Key:** `singularity_core` · **Build:** 18,720 ticks (10h 24m)
+**Age:** Transcendent · **Key:** `singularity_core` · **Build:** 18,720 ticks (10h 24m) · **Keystone:** Transcendence (`transcendence`)
 
 | Resource | Cost |
 |---|---|

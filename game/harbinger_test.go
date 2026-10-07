@@ -507,8 +507,11 @@ func TestHarbingerCostExamples(t *testing.T) {
 		epoch string
 		brace map[string]float64
 	}{
-		{"stone_era", map[string]float64{"food": 9600, "wood": 4800, "knowledge": 2400}},
-		{"steel_era", map[string]float64{"knowledge": 3600000, "gold": 1800000, "steel": 288000}},
+		// No knowledge in any of them: Brace is priced off what the era's
+		// advances ask for, and no gate asks for knowledge any more (the
+		// Stone, Iron and Steel Eras' prices had a knowledge part).
+		{"stone_era", map[string]float64{"food": 9600, "wood": 4800}},
+		{"steel_era", map[string]float64{"gold": 1800000, "steel": 288000}},
 		// The Cosmic Era's own price, off its advances for resources held from
 		// Interstellar (dark matter 13T, titanium 630B → 12%; antimatter and
 		// quantum flux arrive later). Nothing is charged it any more: both of
@@ -517,7 +520,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 		{"cosmic_era", map[string]float64{"dark_matter": 1560000000000, "titanium": 75600000000}},
 		// The other eras, as the wiki lists them: an ordinary doom's Brace
 		// has not moved.
-		{"iron_era", map[string]float64{"knowledge": 26400, "stone": 26400, "iron": 6360, "gold": 21600}},
+		{"iron_era", map[string]float64{"stone": 26400, "iron": 6360, "gold": 21600}},
 		{"electric_era", map[string]float64{"steel": 56400000, "oil": 924000, "electricity": 3960000}},
 		{"digital_era", map[string]float64{"gold": 156000000, "electricity": 117600000000, "data": 19200000000}},
 		{"neon_era", map[string]float64{"electricity": 288000000000, "data": 46800000000, "crypto": 3000000000}},

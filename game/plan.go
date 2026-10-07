@@ -603,7 +603,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		if def.RequiredAge != "" && def.RequiredAge != ge.age {
 			return planCheck{blocked: "waits for the " + ge.progress.GetAgeName(def.RequiredAge)}
 		}
-		if def.RequiredTech != "" && !ge.Research.IsResearched(def.RequiredTech) {
+		if ge.Buildings.TechLocked(it.Key) {
 			return planCheck{blocked: "waits for " + ge.techName(def.RequiredTech)}
 		}
 		if def.Category == "wonder" {

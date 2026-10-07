@@ -2,6 +2,8 @@
 
 Knowledge pays for all research. It accumulates over time and is spent when you start researching a technology. Your knowledge rate and storage decide how quickly you can move through the tech tree. A few buildings also cost knowledge, most of all the Modern Age wonder, the Space Program.
 
+No age asks for knowledge to advance. What an age needs of it is one tech: the **keystone** its wonder cannot be built without, and the techs that one stands on (see [Keystone Techs](ages.md#keystone-techs)). The rest of your knowledge is yours to spend on the techs you choose.
+
 ---
 
 ## How Knowledge is Produced
@@ -22,7 +24,7 @@ Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monaster
 | Agora | Iron | 1.6 | 3 |
 | Library | Classical | 3.2 | 4 |
 | Monastery Library | Medieval | 30.1 | 4 |
-| University | Renaissance | 79.9 | 5 |
+| University | Renaissance | 61.1 | 5 |
 | Natural Philosophy Hall | Colonial | 297 | 5 |
 | Research Institute | Industrial | 12.8 | 6 |
 | Academy | Victorian | 25.6 | 6 |
@@ -53,6 +55,14 @@ knowledge/tick = base rate × buildings × (0.20 + 0.80 × workers assigned / wo
 ## Knowledge Storage
 
 Knowledge is limited by your storage. Build **Storage lineage** buildings (Stash → Storage Pit → Warehouse → Classical Vault → ...) to raise it. Once knowledge hits its storage limit, further production is wasted. You can only pay for a tech with knowledge you hold, so your storage must be at least the tech's cost. Raise storage before you save up for an expensive one.
+
+Nothing but research makes you hold knowledge, so check your storage when you enter an age. From the Electric Age on, the cheapest tech of an age fits the storage you are sure to arrive with. Before that it can take a storage building or two of the new age first: one Stash in the Primitive Age, one building in the Medieval, Industrial and Victorian Ages, two in the Classical and Colonial Ages, and four Renaissance Vaults in the Renaissance. The age's other requirements have you building that storage anyway.
+
+---
+
+## What Research Costs
+
+An age's techs share one knowledge budget: 90% of what a well-run civilization makes of knowledge in the age's target time (50% in the Primitive Age, 30% in the Transcendent Age). A spine tech takes 0.6 shares of it, a keystone 0.8 and an optional tech 1.0, so what you must research is the cheap part, and research lasts the whole age. The Stone Age's four techs cost about 3.8K knowledge between them, the Medieval Age's six about 13.7M, the Renaissance's four about 80M, the Atomic Age's four about 5.7B. See [How Research is Priced](technologies.md#how-research-is-priced) and the [tech tables](technologies.md#tech-tree-by-age).
 
 ---
 
@@ -114,7 +124,8 @@ There is also a prestige-run path to free research: early in a new run (Primitiv
 
 ## Tips
 
-- Get your first Story Circle and 2 Knowledge workers before your first age advance, because early research unlocks pay off quickly. The Stone Age asks for 150 knowledge and 5 Story Circles, the Bronze Age for 1.5K knowledge and 5 Elders' Halls.
+- Get your first Story Circle and 2 Knowledge workers before your first age advance, because early research unlocks pay off quickly. The Stone Age asks for 5 Story Circles and the Bronze Age for 5 Elders' Halls, and the Stone Age's wonder needs Stoneworking, which stands on Tool Making.
+- In each new age, find the keystone first (★ in the Research panel). The wonder waits for it, and the advance waits for the wonder.
 - Research is paid up front, so start a tech as soon as you can afford it, or queue it with `plan research`. Knowledge that sits at its storage limit is wasted.
 - Plan for the Space Program before the Modern Age: build up gold income and storage, then buy the knowledge.
 - After a Dark Age, move spare workers onto knowledge buildings for a while to rebuild your stock, then restart the research it canceled.

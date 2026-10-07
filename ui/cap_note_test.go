@@ -175,8 +175,11 @@ func TestResearchPanelShowsRealTimes(t *testing.T) {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	out := researchProvider(ge.GetState(), 120)
-	base := config.TechByKey()["tool_making"].ResearchTicks
-	if want := formatTicks(base, ge.GetState()); !strings.Contains(out, "800 knowledge · "+want) {
+	tool := config.TechByKey()["tool_making"]
+	base := tool.ResearchTicks
+	// Its price as the panel prints it: the age sets it, so it is read, not typed.
+	price := FormatNumber(tool.Cost) + " knowledge · "
+	if want := formatTicks(base, ge.GetState()); !strings.Contains(out, price+want) {
 		t.Fatalf("with no bonus Tool Making should list its base time %s:\n%s", want, section(t, out, "Available now", "Tech tree"))
 	}
 	if strings.Contains(out, "Research speed") {
@@ -190,7 +193,7 @@ func TestResearchPanelShowsRealTimes(t *testing.T) {
 	if quick >= base {
 		t.Fatalf("+25%% research speed leaves Tool Making at %d of %d ticks", quick, base)
 	}
-	if want := "800 knowledge · " + formatTicks(quick, st); !strings.Contains(out, want) {
+	if want := price + formatTicks(quick, st); !strings.Contains(out, want) {
 		t.Errorf("with +25%% research speed Tool Making should list %q:\n%s", want, section(t, out, "Available now", "Tech tree"))
 	}
 	if want := "Research speed +25%: techs take 75% of their base time."; !strings.Contains(out, want) {
@@ -208,7 +211,7 @@ func TestResearchPanelShowsRealTimes(t *testing.T) {
 	if known != base*4/5 {
 		t.Fatalf("Ancient Knowledge leaves Tool Making at %d of %d ticks, want four fifths", known, base)
 	}
-	if want := "800 knowledge · " + formatTicks(known, st); !strings.Contains(out, want) {
+	if want := price + formatTicks(known, st); !strings.Contains(out, want) {
 		t.Errorf("with Ancient Knowledge Tool Making should list %q:\n%s", want, section(t, out, "Available now", "Tech tree"))
 	}
 	if want := "Ancient Knowledge: research time ×0.8. The times below include it."; !strings.Contains(out, want) {

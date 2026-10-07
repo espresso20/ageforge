@@ -39,6 +39,44 @@ ticks = base ticks × (1 − research speed) × 0.8 ^ epochs succumbed in ÷ Era
 
 Knowledge is removed from your stockpile when the tech starts, before any ticks pass. If you don't have enough, the command fails, and since you can't hold more knowledge than your storage, your knowledge storage must be at least the tech's cost. If your knowledge income drops to zero during a long research countdown, **research still completes**: the ticks count down whatever your knowledge income is, because the cost was already paid.
 
+### Keystones, the Spine and the Rest
+
+Every tech has a **kind**, and its kind decides how long it takes and what it costs.
+
+- A **keystone** is the tech an age's wonder needs before it can be built. There is one in each age from the Stone Age on (the Bronze Age's arrives with a later update), and since the next age needs the wonder, the keystone is the one tech an age asks of you. See [Keystone Techs](ages.md#keystone-techs) for the list.
+- The **spine** is every tech a keystone stands on, all the way down: Tool Making under Stoneworking, Steam Power under Industrialization. Keystones and the spine are the only techs a run has to research, 43 of the 77 today.
+- Everything else is **optional**: yours to take or leave.
+
+The Research panel marks each keystone with a ★ and the wonder it opens (`★ keystone: Colosseum`), and so does `research list`.
+
+### How Research is Priced
+
+No tech has a price or a time of its own. Both follow from its age and its kind.
+
+**Time.** Each age has a research cap: one eighth of the age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). A tech takes a share of its age's cap:
+
+| Kind | Share of the age's research cap |
+|---|---|
+| Spine | 40% |
+| Keystone | 50% |
+| Optional | 50% |
+
+So no tech takes longer than a sixteenth of its age, and the techs you must research are the quick ones.
+
+**Cost.** An age's techs share one knowledge budget: 90% of the knowledge a well-run civilization makes in the age's target time (50% in the Primitive Age, 30% in the Transcendent Age). The budget is split by weight:
+
+| Kind | Weight |
+|---|---|
+| Spine | 0.6 |
+| Keystone | 0.8 |
+| Optional | 1.0 |
+
+A tech costs the budget times its weight, divided by the weights of all the techs in its age. So the techs you must research are the cheap ones, and a keystone always costs less than an optional tech of its age. Researching everything an age offers takes most of the knowledge the age makes, so research lasts the whole age: there is nearly always a tech coming within reach. When a later update adds techs to an age, each tech there gets a little cheaper and the age's total stays where it is. Today's ages hold two to six techs, and the tree is drawn for about nine, so each tech costs two to three times what it will once the rest arrive.
+
+A keystone costs a seventh to a half of what its age makes of knowledge: a seventh in the Medieval Age, about a fifth in the Stone, Iron, Renaissance and Atomic Ages, and half in the Interstellar and Galactic Ages, which hold two techs each. The techs a keystone stands on in earlier ages are cheaper still, but they add up if you skipped them, so pick up each age's spine as you go.
+
+The costs and ticks in the tables below are base values. They used to be typed by hand, tech by tech: early techs cost more knowledge than their own age made (the Stone Age's four cost 28.5K against about 4K made), and from the Classical Age on the whole list cost next to nothing but for a few techs priced to land mid-age. Now the early techs are within reach in their own ages and the later ones are a real part of each age.
+
 ### One Slot, and the Plan as a Queue
 
 There is one research slot. If you type `research` for a second tech while one is in progress, you get an error naming the active tech and the time it has left.
@@ -135,238 +173,238 @@ Prerequisites are listed by tech key. A tech needs every prerequisite it lists.
 
 **Changed prerequisites.** Eleven techs need different techs than they used to. Fire Mastery, Primitive Writing, Feudalism and Rocketry need nothing now. Mathematics no longer needs Currency, Philosophy no longer lists Primitive Writing (Mathematics already needs it), Civil Engineering no longer lists Masonry (Road Building already needs it), Navigation no longer needs Road Building, and Mass Production no longer needs Railroads. Alchemy needs Philosophy instead of Mathematics, and Quantum Computing needs Quantum Mechanics as well as Clockwork Automation. A save from before the change keeps everything it had: a tech you already researched stays researched and still opens the techs that need it, a research in progress finishes, and a tech in your plan waits for what it now needs.
 
-Research time is capped at **one eighth of the tech's age target** (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)), so the handful of techs each age offers fits inside it. From the Bronze to the Colonial Age most techs sit below that cap, at their own research times; in every other age each tech sits at the cap, so all techs of that age share the same tick count. Ticks and times below are base values (2 seconds a tick), before research speed and game speed bonuses. "+X% all production" effects add into one pool that is clamped at x3.0, so from about the Electric Age most of them no longer raise your output (see [The all-production cap](resources.md#the-all-production-cap) and [All production](#all-production) below).
+Research time is a share of the age's research cap, one eighth of the age's target: 40% for a spine tech, 50% for a keystone or an optional one (see [How Research is Priced](#how-research-is-priced)). Ticks and times below are base values (2 seconds a tick), before research speed and game speed bonuses. "+X% all production" effects add into one pool that is clamped at x3.0, so from about the Electric Age most of them no longer raise your output (see [The all-production cap](resources.md#the-all-production-cap) and [All production](#all-production) below).
 
-**Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). Their knowledge cost is what times them: each is priced so a player affords it about halfway through the age, after its other techs, so a long stretch of saving up has something new in the middle. In the Cyberpunk Age, Cybernetics is priced to finish about 26 hours in, with Holography some 11 hours later. In the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another, each needing the one before and priced to finish about 17, 24 and 32 hours in. A gated building stays hidden from the build list until its tech is done, and `build` and `upgrade` refuse it until then; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built. See [Buildings a tech opens](buildings.md#buildings-a-tech-opens).
+**Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). What times them is where they stand in the tree: each needs most of its age's other techs first, so it comes after them. Civilian Reactors stands behind Nuclear Deterrence, Internet of Things behind three Information Age techs, Holography behind Cybernetics and Blockchain, and in the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another. A gated building stays hidden from the build list until its tech is done, and `build` and `upgrade` refuse it until then; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built. See [Buildings a tech opens](buildings.md#buildings-a-tech-opens). A wonder's keystone works the same way for building, but the wonder is listed and its bank is open from the start of the age.
 
-### Primitive Age (~2 min/tech)
+### Primitive Age (~46s to 56s/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `tool_making` | Tool Making | 800 kp | 56 | none | +15% worker output |
-| `fire_mastery` | Fire Mastery | 1K kp | 56 | none | +0.1 food/tick |
-
----
-
-### Stone Age (~6 min/tech)
-
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `stoneworking` | Stoneworking | 6K kp | 168 | `tool_making` | +20% stone output |
-| `animal_husbandry` | Animal Husbandry | 7.5K kp | 168 | `fire_mastery` | +0.2 food/tick |
-| `pottery` | Pottery | 5K kp | 168 | `fire_mastery` | +25 storage for every resource |
-| `primitive_writing` | Primitive Writing | 10K kp | 168 | none | +10% knowledge output |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `tool_making` | Tool Making | spine | 61 kp | 23 | none | +15% worker output |
+| `fire_mastery` | Fire Mastery | optional | 102 kp | 28 | none | +0.1 food/tick |
 
 ---
 
-### Bronze Age (~23 to 29 min/tech)
+### Stone Age (~2m 16s to 2m 48s/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `bronze_working` | Bronze Working | 1.6K kp | 750 | `stoneworking` | +20% stone output, +10% worker output |
-| `agriculture` | Agriculture | 12K kp | 700 | `animal_husbandry` | +0.5 food/tick |
-| `currency` | Currency | 17.5K kp | 800 | `primitive_writing` | +30% gold output |
-| `masonry` | Masonry | 13K kp | 700 | `stoneworking` | +50 storage for every resource |
-| `military_tactics` | Military Tactics | 20K kp | 877 | `bronze_working` | +20% military power |
-
----
-
-### Iron Age (~32 to 40 min/tech)
-
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `iron_smelting` | Iron Smelting | 30K kp | 1,100 | `bronze_working` | +40% iron output, +0.2 iron/tick |
-| `road_building` | Road Building | 25K kp | 950 | `masonry` | +20% gold output, +10% worker output |
-| `mathematics` | Mathematics | 37.5K kp | 1,200 | `primitive_writing` | +20% knowledge output |
-| `siege_warfare` | Siege Warfare | 35K kp | 1,005 | `military_tactics` | +30% military power |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `stoneworking` | Stoneworking | **keystone** (Great Monolith) | 905 kp | 84 | `tool_making` | +20% stone output |
+| `animal_husbandry` | Animal Husbandry | optional | 1.13K kp | 84 | `fire_mastery` | +0.2 food/tick |
+| `pottery` | Pottery | optional | 1.13K kp | 84 | `fire_mastery` | +25 storage for every resource |
+| `primitive_writing` | Primitive Writing | spine | 679 kp | 68 | none | +10% knowledge output |
 
 ---
 
-### Classical Age (~43 to 53 min/tech)
+### Bronze Age (~11m to 14m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `philosophy` | Philosophy | 20K kp | 1,500 | `mathematics` | +30% knowledge output, +0.2 culture/tick |
-| `civil_engineering` | Civil Engineering | 18K kp | 1,300 | `road_building` | +100 storage for every resource, −5% build cost |
-| `imperial_legions` | Imperial Legions | 22K kp | 1,600 | `siege_warfare`, `iron_smelting` | +40% military power |
-
----
-
-### Medieval Age (~57 min to 1h 13m/tech)
-
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `steel_forging` | Steel Forging | 25K kp | 2,000 | `iron_smelting` | +0.25 steel/tick, +30% iron output |
-| `theology` | Theology | 20K kp | 1,800 | `philosophy` | +0.3 faith/tick |
-| `banking` | Banking | 30K kp | 2,100 | `currency`, `mathematics` | +50% gold output, +100 gold storage |
-| `feudalism` | Feudalism | 22K kp | 1,700 | none | +5 housing |
-| `alchemy` | Alchemy | 28K kp | 2,200 | `philosophy` | +15% knowledge output, +0.1 gold/tick |
-| `chronometry` | Chronometry | 20K kp | 1,900 | none | +5% game speed |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `bronze_working` | Bronze Working | spine | 3.06K kp | 351 | `stoneworking` | +20% stone output, +10% worker output |
+| `agriculture` | Agriculture | optional | 5.1K kp | 439 | `animal_husbandry` | +0.5 food/tick |
+| `currency` | Currency | spine | 3.06K kp | 351 | `primitive_writing` | +30% gold output |
+| `masonry` | Masonry | optional | 5.1K kp | 439 | `stoneworking` | +50 storage for every resource |
+| `military_tactics` | Military Tactics | optional | 5.1K kp | 439 | `bronze_working` | +20% military power |
 
 ---
 
-### Renaissance Age (~1h 23m to 1h 46m/tech)
+### Iron Age (~19m to 24m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `printing_press` | Printing Press | 50K kp | 3,000 | `theology`, `alchemy` | +40% knowledge output, +0.3 culture/tick |
-| `navigation` | Navigation | 45K kp | 2,600 | `mathematics` | +50% gold output, +30% expedition reward |
-| `gunpowder` | Gunpowder | 55K kp | 3,200 | `alchemy`, `siege_warfare` | +50% military power |
-| `patronage` | Patronage | 40K kp | 2,500 | `banking` | +0.5 culture/tick, +0.12 knowledge/tick |
-
----
-
-### Colonial Age (~2h 6m to 2h 16m/tech)
-
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `cartography` | Cartography | 80K kp | 4,000 | `navigation` | +50% expedition reward, +50% gold output |
-| `mercantilism` | Mercantilism | 75K kp | 3,800 | `banking`, `navigation` | +2.0 gold/tick, +30% gold output |
-| `colonialism` | Colonialism | 90K kp | 4,095 | `cartography`, `gunpowder` | +2.0 food/tick, +30% military power |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `iron_smelting` | Iron Smelting | spine | 41.3K kp | 585 | `bronze_working` | +40% iron output, +0.2 iron/tick |
+| `road_building` | Road Building | optional | 68.8K kp | 731 | `masonry` | +20% gold output, +10% worker output |
+| `mathematics` | Mathematics | **keystone** (Colosseum) | 55.1K kp | 731 | `primitive_writing` | +20% knowledge output |
+| `siege_warfare` | Siege Warfare | optional | 68.8K kp | 731 | `military_tactics` | +30% military power |
 
 ---
 
-### Industrial Age (~2h 36m/tech)
+### Classical Age (~34m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `steam_power` | Steam Power | 100K kp | 4,680 | `steel_forging` | +30% all production |
-| `industrialization` | Industrialization | 120K kp | 4,680 | `steam_power` | +50% all production, +0.5 steel/tick |
-| `railroads` | Railroads | 90K kp | 4,680 | `steam_power`, `road_building` | +100% gold output, +200 storage for every resource |
-| `rifling` | Rifling | 80K kp | 4,680 | `gunpowder` | +50% military power |
-| `clockwork_automation` | Clockwork Automation | 50K kp | 4,680 | `chronometry` | +10% game speed |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `philosophy` | Philosophy | **keystone** (Parthenon) | 344K kp | 1,024 | `mathematics` | +30% knowledge output, +0.2 culture/tick |
+| `civil_engineering` | Civil Engineering | optional | 430K kp | 1,024 | `road_building` | +100 storage for every resource, −5% build cost |
+| `imperial_legions` | Imperial Legions | optional | 430K kp | 1,024 | `siege_warfare`, `iron_smelting` | +40% military power |
 
 ---
 
-### Victorian Age (~2h 55m/tech)
+### Medieval Age (~35m to 43m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `electrification` | Electrification | 180K kp | 5,265 | `industrialization` | +1.0 electricity/tick, +20% all production |
-| `telecommunications` | Telecommunications | 150K kp | 5,265 | `electrification` | +40% knowledge output, +50% gold output |
-| `mass_production` | Mass Production | 200K kp | 5,265 | `industrialization` | +40% all production, +1.0 steel/tick |
-
----
-
-### Electric Age (~3h 15m/tech)
-
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `power_distribution` | Power Distribution | 300K kp | 5,850 | `electrification` | +3.0 electricity/tick, +30% all production |
-| `radio` | Radio | 250K kp | 5,850 | `telecommunications` | +2.0 culture/tick, +40% knowledge output |
-| `chemical_engineering` | Chemical Engineering | 280K kp | 5,850 | `mass_production` | +1.0 oil/tick, +20% all production |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `steel_forging` | Steel Forging | spine | 1.64M kp | 1,053 | `iron_smelting` | +0.25 steel/tick, +30% iron output |
+| `theology` | Theology | **keystone** (Great Library) | 2.19M kp | 1,316 | `philosophy` | +0.3 faith/tick |
+| `banking` | Banking | spine | 1.64M kp | 1,053 | `currency`, `mathematics` | +50% gold output, +100 gold storage |
+| `feudalism` | Feudalism | optional | 2.74M kp | 1,316 | none | +5 housing |
+| `alchemy` | Alchemy | optional | 2.74M kp | 1,316 | `philosophy` | +15% knowledge output, +0.1 gold/tick |
+| `chronometry` | Chronometry | optional | 2.74M kp | 1,316 | none | +5% game speed |
 
 ---
 
-### Atomic Age (~3h 54m/tech)
+### Renaissance Age (~46m to 58m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `nuclear_fission` | Nuclear Fission | 500K kp | 7,020 | `power_distribution`, `chemical_engineering` | +5.0 electricity/tick, +0.5 uranium/tick |
-| `rocketry` | Rocketry | 400K kp | 7,020 | none | +100% military power, +50% expedition reward |
-| `nuclear_deterrence` | Nuclear Deterrence | 600K kp | 7,020 | `nuclear_fission`, `rocketry` | +150% military power |
-| `civilian_reactors` | Civilian Reactors | 3.4B kp | 7,020 | `nuclear_deterrence` | +5.0 electricity/tick, +0.5 uranium/tick; opens the Nuclear Plant |
-
----
-
-### Modern Age (~3h 54m/tech)
-
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `electricity_tech` | Advanced Electrics | 800K kp | 7,020 | `nuclear_fission` | +50% all production, +5.0 electricity/tick |
-| `computers` | Computers | 1M kp | 7,020 | `electricity_tech` | +80% knowledge output |
-| `satellite_tech` | Satellite Technology | 1.2M kp | 7,020 | `rocketry`, `electricity_tech` | +1.0 data/tick, +60% knowledge output |
-| `nanofabrication` | Nanofabrication | 1.1M kp | 7,020 | `computers` | −8% build cost |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `printing_press` | Printing Press | optional | 23.5M kp | 1,755 | `theology`, `alchemy` | +40% knowledge output, +0.3 culture/tick |
+| `navigation` | Navigation | spine | 14.1M kp | 1,404 | `mathematics` | +50% gold output, +30% expedition reward |
+| `gunpowder` | Gunpowder | optional | 23.5M kp | 1,755 | `alchemy`, `siege_warfare` | +50% military power |
+| `patronage` | Patronage | **keystone** (Sistine Chapel) | 18.8M kp | 1,755 | `banking` | +0.5 culture/tick, +0.12 knowledge/tick |
 
 ---
 
-### Information Age (~4h 33m/tech)
+### Colonial Age (~1h 8m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `internet` | Internet | 2M kp | 8,190 | `computers`, `satellite_tech` | +3.0 data/tick, +120% knowledge output |
-| `cybersecurity` | Cybersecurity | 1.8M kp | 8,190 | `computers` | +100% military power, +5K data storage |
-| `social_media` | Social Media | 1.5M kp | 8,190 | `internet` | +5.0 culture/tick, +5.0 gold/tick |
-| `medical_nanobots` | Medical Nanobots | 1.7M kp | 8,190 | `nanofabrication` | +10 housing, +8.0 food/tick |
-| `internet_of_things` | Internet of Things | 4.5B kp | 8,190 | `social_media`, `cybersecurity`, `medical_nanobots` | +3.0 data/tick, +8.0 food/tick; opens the Smart Farm and the Smart Complex |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `cartography` | Cartography | **keystone** (Grand Lighthouse) | 65.5M kp | 2,048 | `navigation` | +50% expedition reward, +50% gold output |
+| `mercantilism` | Mercantilism | optional | 81.9M kp | 2,048 | `banking`, `navigation` | +2.0 gold/tick, +30% gold output |
+| `colonialism` | Colonialism | optional | 81.9M kp | 2,048 | `cartography`, `gunpowder` | +2.0 food/tick, +30% military power |
 
 ---
 
-### Digital Age (~5h 12m/tech)
+### Industrial Age (~1h 2m to 1h 18m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `machine_learning` | Machine Learning | 3.5M kp | 9,360 | `internet`, `cybersecurity` | +5.0 data/tick, +50% all production |
-| `cloud_computing` | Cloud Computing | 3M kp | 9,360 | `internet` | +8.0 data/tick, +10K storage for every resource |
-| `self_replication` | Self-Replication | 3.2M kp | 9,360 | `medical_nanobots`, `machine_learning` | +200 nanobots/tick |
-
----
-
-### Cyberpunk Age (~5h 51m/tech)
-
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `neural_interface` | Neural Interface | 6M kp | 10,530 | `machine_learning` | +30% worker output, +200% knowledge output |
-| `blockchain` | Blockchain | 5M kp | 10,530 | `cybersecurity`, `cloud_computing` | +2.0 crypto/tick, +200% gold output |
-| `cybernetics` | Cybernetics | 14B kp | 10,530 | `neural_interface` | +50% all production, +100% military power |
-| `holography` | Holography | 6.3B kp | 10,530 | `cybernetics`, `blockchain` | +5.0 culture/tick, +2.0 crypto/tick; opens the Holographic Theater |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `steam_power` | Steam Power | spine | 166M kp | 1,872 | `steel_forging` | +30% all production |
+| `industrialization` | Industrialization | **keystone** (Crystal Palace) | 221M kp | 2,340 | `steam_power` | +50% all production, +0.5 steel/tick |
+| `railroads` | Railroads | optional | 277M kp | 2,340 | `steam_power`, `road_building` | +100% gold output, +200 storage for every resource |
+| `rifling` | Rifling | optional | 277M kp | 2,340 | `gunpowder` | +50% military power |
+| `clockwork_automation` | Clockwork Automation | optional | 277M kp | 2,340 | `chronometry` | +10% game speed |
 
 ---
 
-### Fusion Age (~6h 30m/tech)
+### Victorian Age (~1h 10m to 1h 27m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `fusion_power` | Fusion Power | 10M kp | 11,700 | `nuclear_fission`, `cybernetics` | +20.0 electricity/tick, +1.0 plasma/tick |
-| `plasma_physics` | Plasma Physics | 9.5B kp | 11,700 | `fusion_power` | +3.0 plasma/tick, +30% all production |
-| `superconductors` | Superconductors | 4.8B kp | 11,700 | `plasma_physics` | +50% all production, +50K storage for every resource |
-| `maglev_transit` | Maglev Transit | 5.4B kp | 11,700 | `superconductors` | +1.0 plasma/tick, +5.0 gold/tick; opens the Energy Exchange |
-
----
-
-### Space Age (~7h 9m/tech)
-
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `orbital_mechanics` | Orbital Mechanics | 20M kp | 12,870 | `rocketry`, `plasma_physics` | +1.0 titanium/tick, +100% expedition reward |
-| `space_mining` | Space Mining | 18M kp | 12,870 | `orbital_mechanics` | +3.0 titanium/tick, +20.0 iron/tick |
-| `zero_g_manufacturing` | Zero-G Manufacturing | 22M kp | 12,870 | `orbital_mechanics`, `superconductors` | +50% all production, +10.0 steel/tick |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `electrification` | Electrification | spine | 495M kp | 2,106 | `industrialization` | +1.0 electricity/tick, +20% all production |
+| `telecommunications` | Telecommunications | optional | 825M kp | 2,633 | `electrification` | +40% knowledge output, +50% gold output |
+| `mass_production` | Mass Production | **keystone** (Eiffel Tower) | 660M kp | 2,633 | `industrialization` | +40% all production, +1.0 steel/tick |
 
 ---
 
-### Interstellar Age (~7h 48m/tech)
+### Electric Age (~1h 18m to 1h 37m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `warp_drive` | Warp Drive | 40M kp | 14,040 | `space_mining`, `zero_g_manufacturing` | +1.0 dark matter/tick, +200% expedition reward |
-| `stellar_engineering` | Stellar Engineering | 45M kp | 14,040 | `warp_drive` | +10.0 plasma/tick, +100.0 electricity/tick |
-
----
-
-### Galactic Age (~7h 48m/tech)
-
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `galactic_navigation` | Galactic Navigation | 80M kp | 14,040 | `warp_drive`, `stellar_engineering` | +50% all production, +5.0 dark matter/tick |
-| `antimatter_synthesis` | Antimatter Synthesis | 90M kp | 14,040 | `galactic_navigation` | +2.0 antimatter/tick, +30% all production |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `power_distribution` | Power Distribution | **keystone** (Hoover Dam) | 1.44B kp | 2,925 | `electrification` | +3.0 electricity/tick, +30% all production |
+| `radio` | Radio | optional | 1.8B kp | 2,925 | `telecommunications` | +2.0 culture/tick, +40% knowledge output |
+| `chemical_engineering` | Chemical Engineering | spine | 1.08B kp | 2,340 | `mass_production` | +1.0 oil/tick, +20% all production |
 
 ---
 
-### Quantum Age (~7h 48m/tech)
+### Atomic Age (~1h 33m to 1h 57m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `quantum_mechanics` | Quantum Mechanics | 150M kp | 14,040 | `antimatter_synthesis` | +2.0 quantum flux/tick, +100% all production |
-| `reality_manipulation` | Reality Manipulation | 200M kp | 14,040 | `quantum_mechanics` | +5.0 quantum flux/tick, +100% all production |
-| `quantum_computing` | Quantum Computing | 150M kp | 14,040 | `clockwork_automation`, `quantum_mechanics` | **+15% game speed** |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `nuclear_fission` | Nuclear Fission | **keystone** (Particle Accelerator) | 1.35B kp | 3,510 | `power_distribution`, `chemical_engineering` | +5.0 electricity/tick, +0.5 uranium/tick |
+| `rocketry` | Rocketry | spine | 1.01B kp | 2,808 | none | +100% military power, +50% expedition reward |
+| `nuclear_deterrence` | Nuclear Deterrence | optional | 1.68B kp | 3,510 | `nuclear_fission`, `rocketry` | +150% military power |
+| `civilian_reactors` | Civilian Reactors | optional | 1.68B kp | 3,510 | `nuclear_deterrence` | +5.0 electricity/tick, +0.5 uranium/tick; opens the Nuclear Plant |
 
 ---
 
-### Transcendent Age (~7h 48m)
+### Modern Age (~1h 33m to 1h 57m/tech)
 
-| Key | Name | Cost | Ticks | Prerequisites | Effect |
-|---|---|---|---|---|---|
-| `transcendence` | Transcendence | 500M kp | 14,040 | `reality_manipulation` | +200% all production, +10.0 quantum flux/tick |
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `electricity_tech` | Advanced Electrics | spine | 1.24B kp | 2,808 | `nuclear_fission` | +50% all production, +5.0 electricity/tick |
+| `computers` | Computers | spine | 1.24B kp | 2,808 | `electricity_tech` | +80% knowledge output |
+| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 1.65B kp | 3,510 | `rocketry`, `electricity_tech` | +1.0 data/tick, +60% knowledge output |
+| `nanofabrication` | Nanofabrication | optional | 2.06B kp | 3,510 | `computers` | −8% build cost |
+
+---
+
+### Information Age (~1h 49m to 2h 16m/tech)
+
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `internet` | Internet | **keystone** (Global Network) | 1.75B kp | 4,095 | `computers`, `satellite_tech` | +3.0 data/tick, +120% knowledge output |
+| `cybersecurity` | Cybersecurity | spine | 1.31B kp | 3,276 | `computers` | +100% military power, +5K data storage |
+| `social_media` | Social Media | optional | 2.18B kp | 4,095 | `internet` | +5.0 culture/tick, +5.0 gold/tick |
+| `medical_nanobots` | Medical Nanobots | optional | 2.18B kp | 4,095 | `nanofabrication` | +10 housing, +8.0 food/tick |
+| `internet_of_things` | Internet of Things | optional | 2.18B kp | 4,095 | `social_media`, `cybersecurity`, `medical_nanobots` | +3.0 data/tick, +8.0 food/tick; opens the Smart Farm and the Smart Complex |
+
+---
+
+### Digital Age (~2h 36m/tech)
+
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `machine_learning` | Machine Learning | **keystone** (World Simulation) | 4.8B kp | 4,680 | `internet`, `cybersecurity` | +5.0 data/tick, +50% all production |
+| `cloud_computing` | Cloud Computing | optional | 6B kp | 4,680 | `internet` | +8.0 data/tick, +10K storage for every resource |
+| `self_replication` | Self-Replication | optional | 6B kp | 4,680 | `medical_nanobots`, `machine_learning` | +200 nanobots/tick |
+
+---
+
+### Cyberpunk Age (~2h 20m to 2h 55m/tech)
+
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `neural_interface` | Neural Interface | spine | 3.34B kp | 4,212 | `machine_learning` | +30% worker output, +200% knowledge output |
+| `blockchain` | Blockchain | optional | 5.56B kp | 5,265 | `cybersecurity`, `cloud_computing` | +2.0 crypto/tick, +200% gold output |
+| `cybernetics` | Cybernetics | **keystone** (Neon Citadel) | 4.45B kp | 5,265 | `neural_interface` | +50% all production, +100% military power |
+| `holography` | Holography | optional | 5.56B kp | 5,265 | `cybernetics`, `blockchain` | +5.0 culture/tick, +2.0 crypto/tick; opens the Holographic Theater |
+
+---
+
+### Fusion Age (~2h 36m to 3h 15m/tech)
+
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `fusion_power` | Fusion Power | **keystone** (Stellar Cradle) | 6.1B kp | 5,850 | `nuclear_fission`, `cybernetics` | +20.0 electricity/tick, +1.0 plasma/tick |
+| `plasma_physics` | Plasma Physics | spine | 4.58B kp | 4,680 | `fusion_power` | +3.0 plasma/tick, +30% all production |
+| `superconductors` | Superconductors | spine | 4.58B kp | 4,680 | `plasma_physics` | +50% all production, +50K storage for every resource |
+| `maglev_transit` | Maglev Transit | optional | 7.63B kp | 5,850 | `superconductors` | +1.0 plasma/tick, +5.0 gold/tick; opens the Energy Exchange |
+
+---
+
+### Space Age (~2h 51m to 3h 34m/tech)
+
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `orbital_mechanics` | Orbital Mechanics | **keystone** (Dyson Scaffold) | 10.1B kp | 6,435 | `rocketry`, `plasma_physics` | +1.0 titanium/tick, +100% expedition reward |
+| `space_mining` | Space Mining | spine | 7.55B kp | 5,148 | `orbital_mechanics` | +3.0 titanium/tick, +20.0 iron/tick |
+| `zero_g_manufacturing` | Zero-G Manufacturing | spine | 7.55B kp | 5,148 | `orbital_mechanics`, `superconductors` | +50% all production, +10.0 steel/tick |
+
+---
+
+### Interstellar Age (~3h 7m to 3h 54m/tech)
+
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `warp_drive` | Warp Drive | **keystone** (Warp Nexus) | 15.7B kp | 7,020 | `space_mining`, `zero_g_manufacturing` | +1.0 dark matter/tick, +200% expedition reward |
+| `stellar_engineering` | Stellar Engineering | spine | 11.8B kp | 5,616 | `warp_drive` | +10.0 plasma/tick, +100.0 electricity/tick |
+
+---
+
+### Galactic Age (~3h 7m to 3h 54m/tech)
+
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `galactic_navigation` | Galactic Navigation | **keystone** (Cosmic Beacon) | 15.7B kp | 7,020 | `warp_drive`, `stellar_engineering` | +50% all production, +5.0 dark matter/tick |
+| `antimatter_synthesis` | Antimatter Synthesis | spine | 11.8B kp | 5,616 | `galactic_navigation` | +2.0 antimatter/tick, +30% all production |
+
+---
+
+### Quantum Age (~3h 7m to 3h 54m/tech)
+
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `quantum_mechanics` | Quantum Mechanics | **keystone** (Reality Anchor) | 9.1B kp | 7,020 | `antimatter_synthesis` | +2.0 quantum flux/tick, +100% all production |
+| `reality_manipulation` | Reality Manipulation | spine | 6.82B kp | 5,616 | `quantum_mechanics` | +5.0 quantum flux/tick, +100% all production |
+| `quantum_computing` | Quantum Computing | optional | 11.4B kp | 7,020 | `clockwork_automation`, `quantum_mechanics` | **+15% game speed** |
+
+---
+
+### Transcendent Age (~3h 54m)
+
+| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|---|
+| `transcendence` | Transcendence | **keystone** (Singularity Core) | 9.1B kp | 7,020 | `reality_manipulation` | +200% all production, +10.0 quantum flux/tick |
 
 ---
 

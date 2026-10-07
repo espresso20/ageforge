@@ -47,6 +47,7 @@ type Set struct {
 	techByKey     map[string]config.TechDef
 	techsByAge    map[string][]config.TechDef
 	techKinds     map[string]config.TechKind // worked out from the wonders
+	keystoneOf    map[string]string          // tech key -> the wonder that requires it
 	lanes         []config.TechLaneDef
 	laneByKey     map[string]config.TechLaneDef
 	resources     []config.ResourceDef
@@ -220,6 +221,16 @@ func (s *Set) indexDefs() {
 		s.techsByAge[t.Age] = append(s.techsByAge[t.Age], t)
 	}
 	s.techKinds = config.TechKinds(s.techs, s.buildings)
+	s.keystoneOf = map[string]string{}
+	for _, b := range s.buildings {
+		if b.Category != "wonder" || b.RequiredTech == "" {
+			continue
+		}
+		// A tech two wonders name is the keystone of the first.
+		if _, taken := s.keystoneOf[b.RequiredTech]; !taken {
+			s.keystoneOf[b.RequiredTech] = b.Key
+		}
+	}
 	s.laneByKey = make(map[string]config.TechLaneDef, len(s.lanes))
 	for _, l := range s.lanes {
 		s.laneByKey[l.Key] = l
@@ -458,6 +469,16 @@ func (s *Set) TechsOf(age string) []config.TechDef { return slices.Clone(s.techs
 // from this set's wonders and prerequisites, never stored. "" for a key the
 // set does not hold.
 func (s *Set) TechKind(key string) config.TechKind { return s.techKinds[key] }
+
+// KeystoneOf returns the key of the wonder that requires tech before it can
+// be built: the wonder tech is the keystone of. "" for any other tech.
+func (s *Set) KeystoneOf(tech string) string { return s.keystoneOf[tech] }
+
+// Keystone returns the keystone tech of age's wonder: the one tech the
+// advance out of age needs. "" for an age whose wonder needs none.
+func (s *Set) Keystone(age string) string {
+	return s.buildingByKey[s.wonders[age]].RequiredTech
+}
 
 // TechLanes returns the tech tree's lanes, in the order the tree draws them.
 func (s *Set) TechLanes() []config.TechLaneDef { return slices.Clone(s.lanes) }

@@ -364,9 +364,15 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", clr, game.ResourceName(res), FormatNumber(banked), FormatNumber(need), pct)
 	}
 
-	if bs.WonderBankFull {
+	if line := wonderKeystoneLine(state, curWonder.key); line != "" {
+		fmt.Fprintf(&sb, "\n  %s\n", line)
+	}
+	switch {
+	case bs.WonderBankFull && bs.NeedsTech != "":
+		fmt.Fprintf(&sb, "\n[yellow]Bank full. Research %s, then type 'build %s' to start construction.[-]", game.TechName(bs.NeedsTech), curWonder.key)
+	case bs.WonderBankFull:
 		fmt.Fprintf(&sb, "\n[green]Bank full. Type 'build %s' to start construction.[-]", curWonder.key)
-	} else {
+	default:
 		fmt.Fprintf(&sb, "\n[gray]Bank resources with 'wonder collect <resource|all> [amount|all|max]'.[-]")
 	}
 	return CommandResult{Message: sb.String(), Type: "info"}
@@ -1630,7 +1636,7 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 		if !ts.Available {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%s)", key, ts.Name, game.Amount(ts.Cost, "knowledge")))
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%s)%s", key, ts.Name, game.Amount(ts.Cost, "knowledge"), keystoneMark(ts)))
 	}
 
 	if state.Research.CurrentTech != "" {

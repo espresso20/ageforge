@@ -261,8 +261,8 @@ Level 1 prices. Level 2 costs double; in the Cosmic Era, on both threads, it cos
 | Era | Brace (level 1) |
 |-----|-----------------|
 | Stone Era | refused: nothing can strike there |
-| Iron Era | 26.4K knowledge, 26.4K stone, 6.36K iron, 21.6K gold |
-| Steel Era | 3.6M knowledge, 1.8M gold, 288K steel |
+| Iron Era | 26.4K stone, 6.36K iron, 21.6K gold |
+| Steel Era | 1.8M gold, 288K steel |
 | Electric Era | 56.4M steel, 924K oil, 3.96M electricity |
 | Digital Era | 156M gold, 117.6B electricity, 19.2B data |
 | Neon Era | 288B electricity, 46.8B data, 3B crypto |

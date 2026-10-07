@@ -38,6 +38,11 @@ type BuildingManager struct {
 	// RequiredTech stays locked until it is, even in its own age. nil (a bare
 	// manager with no engine) gates nothing.
 	researched func(tech string) bool
+	// graceAge is the age whose wonder needs no keystone tech ("" for none):
+	// a game saved before wonders had keystones keeps the rule it was playing
+	// by for the age it was in (GameSave.TreeGraceAge). The engine clears it
+	// at the next advance, and a new run starts without one.
+	graceAge string
 
 	// order is every def key, sorted, fixed at construction (defs never change
 	// after that). eachBuilt walks it so float sums across buildings come out
@@ -112,9 +117,15 @@ func (bm *BuildingManager) UnlockBuilding(key string) {
 }
 
 // IsUnlocked returns whether a building type is available: its age has
-// unlocked it and its tech, if it needs one, is researched.
+// unlocked it and its tech, if it needs one, is researched. A wonder is
+// available from its age alone: its bank takes deposits and overflow while
+// its keystone tech is still to come, and only building it waits for the
+// tech (TechLocked).
 func (bm *BuildingManager) IsUnlocked(key string) bool {
-	return bm.unlocked[key] && !bm.TechLocked(key)
+	if !bm.unlocked[key] {
+		return false
+	}
+	return bm.defs[key].Category == "wonder" || !bm.TechLocked(key)
 }
 
 // AgeUnlocked reports whether an age has unlocked key, whatever its tech.
@@ -123,9 +134,13 @@ func (bm *BuildingManager) AgeUnlocked(key string) bool {
 }
 
 // TechLocked reports whether key needs a tech that is not researched yet.
+// The wonder of the grace age needs none (graceAge).
 func (bm *BuildingManager) TechLocked(key string) bool {
-	t := bm.defs[key].RequiredTech
-	return t != "" && bm.researched != nil && !bm.researched(t)
+	def := bm.defs[key]
+	if def.RequiredTech == "" || bm.researched == nil || bm.researched(def.RequiredTech) {
+		return false
+	}
+	return !(def.Category == "wonder" && bm.graceAge != "" && def.RequiredAge == bm.graceAge)
 }
 
 // SuggestKey returns the closest building key to the input, or "" if none is close
@@ -344,9 +359,10 @@ func applyCostMult(raw, mult float64) float64 {
 	return c
 }
 
-// Build constructs a building. Returns false if can't afford or not unlocked.
+// Build constructs a building. Returns false if can't afford or not
+// unlocked, or if it still waits for a tech.
 func (bm *BuildingManager) Build(key string, resources *ResourceManager) bool {
-	if !bm.IsUnlocked(key) {
+	if !bm.IsUnlocked(key) || bm.TechLocked(key) {
 		return false
 	}
 	def, ok := bm.defs[key]
@@ -1024,7 +1040,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)
-			state.CanBuild = state.Unlocked && count == 0 && state.WonderBankFull
+			state.CanBuild = state.Unlocked && count == 0 && state.WonderBankFull && !bm.TechLocked(key)
 		} else {
 			state.CanBuild = state.Unlocked && !state.AtMaxCount && resources.CanAfford(cost)
 		}

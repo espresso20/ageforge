@@ -468,12 +468,22 @@ func (ge *GameEngine) Rebind(set *rules.Set) {
 }
 
 // techLockErr is why a building can't be built yet when a tech it needs is
-// not researched (nil when nothing holds it back that way).
+// not researched (nil when nothing holds it back that way: no tech, a tech
+// already researched, or the wonder of a save's grace age).
 func (ge *GameEngine) techLockErr(def config.BuildingDef) error {
-	if def.RequiredTech == "" || ge.Research.IsResearched(def.RequiredTech) {
+	if !ge.Buildings.TechLocked(def.Key) {
 		return nil
 	}
 	return fmt.Errorf("%s needs %s first. Research it to build here.", def.Name, ge.techName(def.RequiredTech))
+}
+
+// wonderNextStep is what to do with a wonder whose bank is full: build it,
+// or research its keystone tech first when that is still to come.
+func (ge *GameEngine) wonderNextStep(key string) string {
+	if ge.Buildings.TechLocked(key) {
+		return fmt.Sprintf("Research %s, then type 'build %s' to start construction.", ge.techName(ge.Buildings.defs[key].RequiredTech), key)
+	}
+	return fmt.Sprintf("Type 'build %s' to start construction.", key)
 }
 
 // techName is a tech's display name (its key if it has no def).
@@ -1464,6 +1474,11 @@ func (ge *GameEngine) finishResearch(completed string) {
 	def := ge.Research.defs[completed]
 	ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
 	ge.addLog("success", fmt.Sprintf("Research complete: %s.", def.Name))
+	// The keystone of this age's wonder says what it opened.
+	if w := ge.progress.WonderForAge(ge.age); w != "" && ge.Buildings.defs[w].RequiredTech == completed &&
+		ge.Buildings.GetCount(w) == 0 && ge.Buildings.GetQueueCount(w, ge.buildQueue) == 0 {
+		ge.addLog("info", fmt.Sprintf("With %s researched, %s can be built once its bank is full.", def.Name, ge.Buildings.defs[w].Name))
+	}
 	// A bonus a cap keeps from counting says so.
 	for _, capped := range ge.capLinesLocked(def.GeneralEffects(), true) {
 		ge.addLog("info", capped)
@@ -2033,6 +2048,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	oldAge := ge.age
 	prevK := ge.speedK()
 	ge.age = newAge
+	// An old save's grace from the tech tree's locks covered the age it was
+	// in. It ends here (GameSave.TreeGraceAge).
+	ge.Buildings.graceAge = ""
 	ge.Prestige.NoteAgeEntered(newAge)
 	ge.ageReady = false
 	ge.Workers.SetAge(newAge)
@@ -2162,7 +2180,11 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// Notify player about the wonder available in this age
 	for _, bKey := range unlocks.UnlockBuildings {
 		if def, ok := ge.Buildings.defs[bKey]; ok && def.Category == "wonder" {
-			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s. Bank its cost, then build it.", def.Name))
+			if ge.Buildings.TechLocked(bKey) {
+				ge.addLog("event", fmt.Sprintf("★ Wonder available: %s. Bank its cost and research %s, its keystone, then build it.", def.Name, ge.techName(def.RequiredTech)))
+			} else {
+				ge.addLog("event", fmt.Sprintf("★ Wonder available: %s. Bank its cost, then build it.", def.Name))
+			}
 			break
 		}
 	}
@@ -3011,6 +3033,9 @@ func (ge *GameEngine) AdvanceAge() error {
 			wonderKey := ge.progress.WonderForAge(ge.age)
 			if wonderKey != "" && ge.Buildings.GetCount(wonderKey) < 1 {
 				if def, ok := ge.Buildings.defs[wonderKey]; ok {
+					if ge.Buildings.TechLocked(wonderKey) {
+						return fmt.Errorf("Build the %s wonder before advancing: research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'.", def.Name, ge.techName(def.RequiredTech), wonderKey)
+					}
 					return fmt.Errorf("Build the %s wonder before advancing: bank its cost with 'wonder collect', then type 'build %s'.", def.Name, wonderKey)
 				}
 			}
@@ -3109,7 +3134,7 @@ func (ge *GameEngine) bankWonderLocked(wonderKey, resource string, amount float6
 		Amount(deposited, resource), def.Name, textfmt.Number(banked), textfmt.Number(need)))
 
 	if ge.Buildings.IsWonderBankFull(wonderKey) {
-		ge.addLog("success", fmt.Sprintf("%s is fully banked. Type 'build %s' to start construction.", def.Name, wonderKey))
+		ge.addLog("success", fmt.Sprintf("%s is fully banked. %s", def.Name, ge.wonderNextStep(wonderKey)))
 	}
 	return deposited, nil
 }
