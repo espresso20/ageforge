@@ -984,32 +984,36 @@ func rawTechnologies() []TechDef {
 
 		// === MODERN AGE ===
 		{
-			Name: "Advanced Electrics", Key: "electricity_tech", Code: "ADVEL", Emblem: "ϟ",
-			Age: "modern_age", Lane: LaneEnergy,
-			Prerequisites: []string{"nuclear_fission"},
-			Description:   "Advanced electrical systems raise all production.",
-			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "electricity", Value: 0.05},
-			},
+			Name: "Television", Key: "television", Code: "TELEV", Emblem: "▭",
+			Age: "modern_age", Lane: LaneFaith,
+			Prerequisites: []string{"cinema"},
+			Description:   "One screen in every front room, and the whole country watching it. Opens the Monument of Ages.",
 		},
 		{
-			Name: "Computers", Key: "computers", Code: "COMP",
-			Age: "modern_age", Lane: LaneComputing,
-			Prerequisites: []string{"electricity_tech"},
-			Description:   "Digital computing raises knowledge output.",
+			Name: "Information Theory", Key: "information_theory", Code: "INFOR", Emblem: "∂",
+			Age: "modern_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"modern_physics"},
+			Description:   "Any message is a count of yes and no, and a count can be sent without loss.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
-				{Kind: EffectResearchTime, Value: -0.03},
 			},
 		},
 		{
-			Name: "Satellite Technology", Key: "satellite_tech", Emblem: "✧",
-			Age: "modern_age", Lane: LaneSpace,
-			Prerequisites: []string{"rocketry", "electricity_tech"},
-			Description:   "Orbital satellites for communication and surveillance.",
+			Name: "Containerization", Key: "containerization", Code: "CONTA", Emblem: "▬",
+			Age: "modern_age", Lane: LaneTrade,
+			Prerequisites: []string{"corporations"},
+			Description:   "One steel box fits every ship, train and truck, and the docks empty in hours.",
 			Effects: []TechEffect{
-				{Kind: EffectFlatOutput, Target: "data", Value: 1.0},
-				{Kind: EffectExpeditionReward, Value: 0.10},
+				{Kind: EffectMechanic, Target: MechanicRouteIncome, Value: 0.10},
+			},
+		},
+		{
+			Name: "Suburbs", Key: "suburbs", Code: "SUBUR", Emblem: "▴",
+			Age: "modern_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"green_revolution"},
+			Description:   "A house, a lawn and a car for every family, an hour from where they work.",
+			Effects: []TechEffect{
+				{Kind: EffectHousing, Value: 0.05},
 			},
 		},
 		{
@@ -1021,28 +1025,57 @@ func rawTechnologies() []TechDef {
 				{Kind: EffectBuildCost, Value: -0.03},
 			},
 		},
+		{
+			Name: "Titanium Alloys", Key: "titanium_alloys", Code: "TITAN", Emblem: "▨",
+			Age: "modern_age", Lane: LaneMaterials,
+			Prerequisites: []string{"chemical_engineering"},
+			Description:   "Light, strong metal for anything that has to fly or last.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "steel", Value: 0.05},
+			},
+		},
+		{
+			Name: "Special Forces", Key: "special_forces", Code: "SPECI", Emblem: "⚜",
+			Age: "modern_age", Lane: LaneMilitary,
+			Prerequisites: []string{"nuclear_deterrence"},
+			Description:   "Small teams that are in and out before the war is declared.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicCampaignTicks, Value: -0.15},
+			},
+		},
+		{
+			Name: "Advanced Electrics", Key: "electricity_tech", Code: "ADVEL", Emblem: "↭",
+			Age: "modern_age", Lane: LaneEnergy,
+			Prerequisites: []string{"nuclear_fission"},
+			Description:   "High-voltage grids carry power across a continent.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "electricity", Value: 0.05},
+			},
+		},
+		{
+			Name: "Satellite Technology", Key: "satellite_tech", Code: "SATEL", Emblem: "✧",
+			Age: "modern_age", Lane: LaneSpace,
+			Prerequisites: []string{"rocketry", "electricity_tech"},
+			Description:   "Orbital satellites for communication and surveillance.",
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "data", Value: 1.0},
+				{Kind: EffectExpeditionReward, Value: 0.10},
+			},
+		},
+		{
+			Name: "Computers", Key: "computers", Code: "COMP", Emblem: "⊟",
+			Age: "modern_age", Lane: LaneComputing,
+			Prerequisites: []string{"electricity_tech"},
+			Description:   "Machines that do the arithmetic of a thousand clerks, and never tire.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectResearchTime, Value: -0.03},
+			},
+		},
 
 		// === INFORMATION AGE ===
 		{
-			Name: "Internet", Key: "internet",
-			Age: "information_age", Lane: LaneComputing,
-			Prerequisites: []string{"computers", "satellite_tech"},
-			Description:   "Global network connecting all of humanity.",
-			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "data", Value: 0.05},
-			},
-		},
-		{
-			Name: "Cybersecurity", Key: "cybersecurity", Code: "SECUR",
-			Age: "information_age", Lane: LaneMilitary,
-			Prerequisites: []string{"computers"},
-			Description:   "Defense against digital threats.",
-			Effects: []TechEffect{
-				{Kind: EffectMilitaryPower, Value: 0.10},
-			},
-		},
-		{
-			Name: "Social Media", Key: "social_media",
+			Name: "Social Media", Key: "social_media", Code: "SOCIA", Emblem: "@",
 			Age: "information_age", Lane: LaneFaith,
 			Prerequisites: []string{"internet"},
 			Description:   "Mass digital communication platforms.",
@@ -1052,12 +1085,30 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
+			Name: "Search Engines", Key: "search_engines", Code: "SEARC", Emblem: "?",
+			Age: "information_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"internet"},
+			Description:   "Everything written down, found in half a second.",
+			Effects: []TechEffect{
+				{Kind: EffectResearchTime, Value: -0.03},
+			},
+		},
+		{
+			Name: "E-commerce", Key: "e_commerce", Code: "ECOMM", Emblem: "€",
+			Age: "information_age", Lane: LaneTrade,
+			Prerequisites: []string{"containerization", "internet"},
+			Description:   "The shop is a page, and the till never closes.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.02},
+			},
+		},
+		{
 			// note: the original spec wanted this to cut worker FOOD COST, but the
 			// food drain (wc.FoodCost * count in game/villagers.go) has no bonus hook
 			// and threading one through WorkerManager isn't a "tiny" engine change.
 			// Substituted a supported, clearly-beneficial effect instead: nanobots
 			// keep the population healthier (bigger pop cap) and better fed (+food).
-			Name: "Medical Nanobots", Key: "medical_nanobots",
+			Name: "Medical Nanobots", Key: "medical_nanobots", Code: "MEDIC", Emblem: "✚",
 			Age: "information_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"nanofabrication"},
 			Description:   "Bloodstream nanobots keep workers healthy, adding housing and food.",
@@ -1069,15 +1120,162 @@ func rawTechnologies() []TechDef {
 		{
 			// Mid-age unlock (Pacing v2): it stands behind three of the
 			// age's techs, so it comes after them.
-			Name: "Internet of Things", Key: "internet_of_things", Code: "IOT",
+			Name: "Internet of Things", Key: "internet_of_things", Code: "IOT", Emblem: "⌘",
 			Age: "information_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"social_media", "cybersecurity", "medical_nanobots"},
 			Description:   "The fridges and the tractors go online and start reporting back. Opens the Smart Farm and the Smart Complex.",
 		},
+		{
+			Name: "Embedded Systems", Key: "embedded_systems", Code: "EMBED", Emblem: "▧",
+			Age: "information_age", Lane: LaneCraft,
+			Prerequisites: []string{"nanofabrication"},
+			Description:   "A small computer inside every machine, minding it.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildTime, Value: -0.04},
+			},
+		},
+		{
+			Name: "Precision Mining", Key: "precision_mining", Code: "PRECI", Emblem: "↧",
+			Age: "information_age", Lane: LaneMaterials,
+			Prerequisites: []string{"titanium_alloys"},
+			Description:   "Sensors read the rock ahead of the drill, and nothing is dug twice.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "steel", Value: 0.05},
+			},
+		},
+		{
+			Name: "Cybersecurity", Key: "cybersecurity", Code: "SECUR", Emblem: "⊘",
+			Age: "information_age", Lane: LaneMilitary,
+			Prerequisites: []string{"computers"},
+			Description:   "Defense against digital threats.",
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.10},
+			},
+		},
+		{
+			Name: "Smart Grid", Key: "smart_grid", Code: "SMART", Emblem: "⊹",
+			Age: "information_age", Lane: LaneEnergy,
+			Prerequisites: []string{"electricity_tech"},
+			Description:   "A grid that knows where the power is wanted before the switch is thrown.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "electricity", Value: 0.05},
+			},
+		},
+		{
+			Name: "Space Stations", Key: "space_stations", Code: "STATN", Emblem: "✜",
+			Age: "information_age", Lane: LaneSpace,
+			Prerequisites: []string{"satellite_tech"},
+			Description:   "Crews that live in orbit for months and watch the whole world turn.",
+			Effects: []TechEffect{
+				{Kind: EffectExpeditionReward, Value: 0.08},
+			},
+		},
+		{
+			Name: "Internet", Key: "internet", Code: "INTER", Emblem: "※",
+			Age: "information_age", Lane: LaneComputing,
+			Prerequisites: []string{"computers", "satellite_tech"},
+			Description:   "Global network connecting all of humanity.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "data", Value: 0.05},
+			},
+		},
 
 		// === DIGITAL AGE ===
 		{
-			Name: "Machine Learning", Key: "machine_learning",
+			Name: "Virtual Reality", Key: "virtual_reality", Code: "VR", Emblem: "◈",
+			Age: "digital_age", Lane: LaneFaith,
+			Prerequisites: []string{"social_media"},
+			Description:   "Anywhere you like, from a chair, and nearly as good.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicMoraleCap, Value: 0.05},
+			},
+		},
+		{
+			Name: "Open Science", Key: "open_science", Code: "OPEN", Emblem: "∀",
+			Age: "digital_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"search_engines"},
+			Description:   "Every paper and every dataset, free to read the day it is finished.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+			},
+		},
+		{
+			Name: "Automated Logistics", Key: "automated_logistics", Code: "LOGIS", Emblem: "⇛",
+			Age: "digital_age", Lane: LaneTrade,
+			Prerequisites: []string{"e_commerce"},
+			Description:   "Warehouses that pick, pack and send without a hand on the parcel.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicRouteTicks, Value: -0.15},
+			},
+		},
+		{
+			// The Digital Era's Trade capstone.
+			Name: "Global Village", Key: "global_village", Code: "GLOBE", Emblem: "⊚",
+			Age: "digital_age", Lane: LaneTrade, Capstone: true,
+			Prerequisites: []string{"e_commerce", "social_media"},
+			Description:   "Everyone is a neighbor now, and neighbors do business.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicDealSlots, Value: 1},
+				{Kind: EffectMechanic, Target: MechanicAllianceCost, Value: -0.50},
+			},
+		},
+		{
+			Name: "Gene Editing", Key: "gene_editing", Code: "GENE", Emblem: "∽",
+			Age: "digital_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"medical_nanobots"},
+			Description:   "Crops rewritten a letter at a time, for drought, blight and yield.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.05},
+			},
+		},
+		{
+			Name: "Self-Replication", Key: "self_replication", Code: "SELF", Emblem: "↺",
+			Age: "digital_age", Lane: LaneCraft,
+			Prerequisites: []string{"medical_nanobots", "machine_learning"},
+			Description:   "Nanobots that build copies of themselves.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "nanobots", Value: 0.10},
+				{Kind: EffectBuildTime, Value: -0.05},
+			},
+		},
+		{
+			Name: "Nano Alloys", Key: "nano_alloys", Code: "ALLOY", Emblem: "⬢",
+			Age: "digital_age", Lane: LaneMaterials,
+			Prerequisites: []string{"precision_mining"},
+			Description:   "Metal laid down grain by grain, with no flaw to start a crack.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "steel", Value: 0.05},
+			},
+		},
+		{
+			Name: "Drone Warfare", Key: "drone_warfare", Code: "DRONE", Emblem: "✣",
+			Age: "digital_age", Lane: LaneMilitary,
+			Prerequisites: []string{"cybersecurity"},
+			Description:   "The pilot is a thousand miles away, and home for dinner.",
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.10},
+			},
+		},
+		{
+			Name: "Grid Storage", Key: "grid_storage", Code: "STORE", Emblem: "▮",
+			Age: "digital_age", Lane: LaneEnergy,
+			Prerequisites: []string{"smart_grid"},
+			Description:   "Batteries the size of buildings hold the noon sun for the evening.",
+			Effects: []TechEffect{
+				{Kind: EffectStorage, Value: 0.05},
+			},
+		},
+		{
+			Name: "Reusable Launchers", Key: "reusable_launchers", Code: "REUSE", Emblem: "⇅",
+			Age: "digital_age", Lane: LaneSpace,
+			Prerequisites: []string{"space_stations"},
+			Description:   "The rocket lands where it took off, and flies again next week.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicExpeditionTicks, Value: -0.10},
+			},
+		},
+		{
+			Name: "Machine Learning", Key: "machine_learning", Code: "LEARN", Emblem: "∇",
 			Age: "digital_age", Lane: LaneComputing,
 			Prerequisites: []string{"internet", "cybersecurity"},
 			Description:   "Algorithms that learn and improve autonomously.",
@@ -1087,7 +1285,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Cloud Computing", Key: "cloud_computing",
+			Name: "Cloud Computing", Key: "cloud_computing", Code: "CLOUD", Emblem: "⌒",
 			Age: "digital_age", Lane: LaneComputing,
 			Prerequisites: []string{"internet"},
 			Description:   "Distributed computing at global scale.",
@@ -1096,19 +1294,27 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Self-Replication", Key: "self_replication",
-			Age: "digital_age", Lane: LaneCraft,
-			Prerequisites: []string{"medical_nanobots", "machine_learning"},
-			Description:   "Nanobots that build copies of themselves.",
+			// The Digital Era's Computing capstone.
+			Name: "General AI", Key: "general_ai", Code: "AGI", Emblem: "⊨",
+			Age: "digital_age", Lane: LaneComputing, Capstone: true,
+			Prerequisites: []string{"machine_learning", "cloud_computing"},
+			Description:   "A machine that can be handed any question, and asks better ones back.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "nanobots", Value: 0.10},
-				{Kind: EffectBuildTime, Value: -0.05},
+				{Kind: EffectResearchTime, Value: -0.06},
 			},
 		},
 
 		// === CYBERPUNK AGE ===
 		{
-			Name: "Neural Interface", Key: "neural_interface",
+			// Mid-age unlock (Pacing v2): it stands behind Cybernetics and
+			// Blockchain, so it comes during the saving-up for the wonder.
+			Name: "Holography", Key: "holography", Code: "HOLOG", Emblem: "◬",
+			Age: "cyberpunk_age", Lane: LaneFaith,
+			Prerequisites: []string{"cybernetics", "blockchain"},
+			Description:   "Light learns to lie convincingly, and every wall becomes an ad. Opens the Holographic Theater.",
+		},
+		{
+			Name: "Neural Interface", Key: "neural_interface", Code: "NEURA", Emblem: "ψ",
 			Age: "cyberpunk_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"machine_learning"},
 			Description:   "Direct brain-computer interface technology.",
@@ -1117,20 +1323,29 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Blockchain", Key: "blockchain",
+			// No bonus on crypto: only the Neon Citadel makes any, so there is
+			// nothing for one to raise in this age. Crypto is bought at the
+			// market, which is what the fee cut helps.
+			Name: "Blockchain", Key: "blockchain", Code: "BLOCK", Emblem: "⋈",
 			Age: "cyberpunk_age", Lane: LaneTrade,
 			Prerequisites: []string{"cybersecurity", "cloud_computing"},
 			Description:   "Decentralized trustless systems.",
 			Effects: []TechEffect{
-				// No bonus on crypto yet: only the Neon Citadel makes any,
-				// so there is nothing for one to raise in this age. Crypto
-				// is bought at the market, which is what the fee cut helps.
 				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.02},
 			},
 		},
 		{
+			Name: "Synthetic Food", Key: "synthetic_food", Code: "SYNTH", Emblem: "◒",
+			Age: "cyberpunk_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"gene_editing"},
+			Description:   "Protein grown in a vat, shaped like whatever sells.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.04},
+			},
+		},
+		{
 			// The Neon Citadel's keystone, with Holography behind it.
-			Name: "Cybernetics", Key: "cybernetics",
+			Name: "Cybernetics", Key: "cybernetics", Code: "CYBER", Emblem: "Ø",
 			Age: "cyberpunk_age", Lane: LaneCraft,
 			Prerequisites: []string{"neural_interface"},
 			Description:   "Mechanical augmentation of the human body.",
@@ -1139,17 +1354,118 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			// Mid-age unlock (Pacing v2): it stands behind Cybernetics and
-			// Blockchain, so it comes during the saving-up for the wonder.
-			Name: "Holography", Key: "holography",
-			Age: "cyberpunk_age", Lane: LaneFaith,
-			Prerequisites: []string{"cybernetics", "blockchain"},
-			Description:   "Light learns to lie convincingly, and every wall becomes an ad. Opens the Holographic Theater.",
+			Name: "Dark Crystal Mining", Key: "dark_crystal_mining", Code: "CRYST", Emblem: "♢",
+			Age: "cyberpunk_age", Lane: LaneMaterials,
+			Prerequisites: []string{"nano_alloys"},
+			Description:   "Crystals that bend light the wrong way, cut from the deepest rock.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "dark_matter_crystals", Value: 0.04},
+			},
+		},
+		{
+			Name: "Augmented Soldiers", Key: "augmented_soldiers", Code: "AUGMT", Emblem: "✠",
+			Age: "cyberpunk_age", Lane: LaneMilitary,
+			Prerequisites: []string{"cybernetics", "drone_warfare"},
+			Description:   "Soldiers rebuilt to see in the dark and carry twice the load.",
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.10},
+				{Kind: EffectMechanic, Target: MechanicSoldierStorage, Value: 0.10},
+			},
+		},
+		{
+			Name: "Dark Energy", Key: "dark_energy", Code: "DARKE", Emblem: "◕",
+			Age: "cyberpunk_age", Lane: LaneEnergy,
+			Prerequisites: []string{"grid_storage"},
+			Description:   "Power drawn from the pressure that pushes the universe apart.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "electricity", Value: 0.04},
+			},
+		},
+		{
+			Name: "Lunar Outposts", Key: "lunar_outposts", Code: "LUNAR", Emblem: "☽",
+			Age: "cyberpunk_age", Lane: LaneSpace,
+			Prerequisites: []string{"reusable_launchers"},
+			Description:   "A permanent crew on the Moon, and a harbor for everything going further.",
+			Effects: []TechEffect{
+				{Kind: EffectExpeditionReward, Value: 0.08},
+			},
+		},
+		{
+			Name: "Darknets", Key: "darknets", Code: "DARKN", Emblem: "▼",
+			Age: "cyberpunk_age", Lane: LaneComputing,
+			Prerequisites: []string{"cloud_computing"},
+			Description:   "Networks under the network, where nobody is who they say.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "data", Value: 0.04},
+			},
 		},
 
 		// === FUSION AGE ===
 		{
-			Name: "Fusion Power", Key: "fusion_power",
+			Name: "Neural Art", Key: "neural_art", Code: "ART", Emblem: "❂",
+			Age: "fusion_age", Lane: LaneFaith,
+			Prerequisites: []string{"holography"},
+			Description:   "Art played straight into the mind, with no canvas in between.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "culture", Value: 0.04},
+			},
+		},
+		{
+			Name: "Unified Theory", Key: "unified_theory", Code: "UNIFY", Emblem: "∮",
+			Age: "fusion_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"neural_interface", "plasma_physics"},
+			Description:   "One set of equations for the very large and the very small.",
+			Effects: []TechEffect{
+				{Kind: EffectResearchTime, Value: -0.03},
+			},
+		},
+		{
+			// Mid-age unlock (Pacing v2), paced with Plasma Physics (see
+			// there).
+			Name: "Maglev Transit", Key: "maglev_transit", Code: "MAGLV", Emblem: "⇒",
+			Age: "fusion_age", Lane: LaneTrade,
+			Prerequisites: []string{"superconductors"},
+			Description:   "Superconducting rails float the freight across the city at the speed of a mild panic. Opens the Energy Exchange.",
+		},
+		{
+			Name: "Closed Biospheres", Key: "closed_biospheres", Code: "BIOSP", Emblem: "◠",
+			Age: "fusion_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"synthetic_food"},
+			Description:   "A sealed dome that feeds, waters and airs everyone inside it.",
+			Effects: []TechEffect{
+				{Kind: EffectHousing, Value: 0.05},
+			},
+		},
+		{
+			Name: "Molecular Assembly", Key: "molecular_assembly", Code: "MOLEC", Emblem: "⁂",
+			Age: "fusion_age", Lane: LaneCraft,
+			Prerequisites: []string{"cybernetics", "self_replication"},
+			Description:   "Parts grown to shape, molecule by molecule, with nothing to cut away.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildTime, Value: -0.05},
+			},
+		},
+		{
+			// Paced with Plasma Physics (see there).
+			Name: "Superconductors", Key: "superconductors", Code: "SUPER", Emblem: "℧",
+			Age: "fusion_age", Lane: LaneMaterials,
+			Prerequisites: []string{"plasma_physics"},
+			Description:   "Zero-resistance materials lose nothing between the reactor and the store.",
+			Effects: []TechEffect{
+				{Kind: EffectStorage, Value: 0.08},
+			},
+		},
+		{
+			Name: "Plasma Weapons", Key: "plasma_weapons", Code: "BEAMS", Emblem: "☇",
+			Age: "fusion_age", Lane: LaneMilitary,
+			Prerequisites: []string{"augmented_soldiers", "plasma_physics"},
+			Description:   "A bolt of contained star, aimed.",
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.10},
+			},
+		},
+		{
+			Name: "Fusion Power", Key: "fusion_power", Code: "FUSN", Emblem: "✹",
 			Age: "fusion_age", Lane: LaneEnergy,
 			Prerequisites: []string{"nuclear_fission", "cybernetics"},
 			Description:   "Controlled fusion adds electricity and plasma.",
@@ -1163,7 +1479,7 @@ func rawTechnologies() []TechDef {
 			// run one after another (each needs the one before), so the
 			// age's research is spread along it. The age used to go 26
 			// hours from its last tech to its wonder.
-			Name: "Plasma Physics", Key: "plasma_physics",
+			Name: "Plasma Physics", Key: "plasma_physics", Code: "PLASM", Emblem: "≀",
 			Age: "fusion_age", Lane: LaneEnergy,
 			Prerequisites: []string{"fusion_power"},
 			Description:   "Mastery of superheated matter states.",
@@ -1172,27 +1488,111 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			// Paced with Plasma Physics (see there).
-			Name: "Superconductors", Key: "superconductors",
-			Age: "fusion_age", Lane: LaneMaterials,
-			Prerequisites: []string{"plasma_physics"},
-			Description:   "Zero-resistance materials raise all production and storage.",
+			Name: "Fusion Drives", Key: "fusion_drives", Code: "DRIVE", Emblem: "⇑",
+			Age: "fusion_age", Lane: LaneSpace,
+			Prerequisites: []string{"fusion_power", "lunar_outposts"},
+			Description:   "A torch that burns for weeks: the outer planets in a season.",
 			Effects: []TechEffect{
-				{Kind: EffectStorage, Value: 0.08},
+				{Kind: EffectMechanic, Target: MechanicExpeditionTicks, Value: -0.10},
 			},
 		},
 		{
-			// Mid-age unlock (Pacing v2), paced with Plasma Physics (see
-			// there).
-			Name: "Maglev Transit", Key: "maglev_transit",
-			Age: "fusion_age", Lane: LaneTrade,
-			Prerequisites: []string{"superconductors"},
-			Description:   "Superconducting rails float the freight across the city at the speed of a mild panic. Opens the Energy Exchange.",
+			Name: "Quantum Networking", Key: "quantum_networking", Code: "QNET", Emblem: "⊶",
+			Age: "fusion_age", Lane: LaneComputing,
+			Prerequisites: []string{"darknets"},
+			Description:   "Two machines that share a state, and a line nobody can tap.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "data", Value: 0.04},
+			},
 		},
 
 		// === SPACE AGE ===
 		{
-			Name: "Orbital Mechanics", Key: "orbital_mechanics",
+			Name: "Overview Effect", Key: "overview_effect", Code: "OVIEW", Emblem: "♁",
+			Age: "space_age", Lane: LaneFaith,
+			Prerequisites: []string{"neural_art"},
+			Description:   "Everyone who has seen the whole world from outside comes home changed.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicMoraleCap, Value: 0.05},
+			},
+		},
+		{
+			Name: "Deep Space Astronomy", Key: "deep_space_astronomy", Code: "ASTRO", Emblem: "☄",
+			Age: "space_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"unified_theory"},
+			Description:   "Telescopes beyond the air and the glare, looking back to the first light.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.04},
+			},
+		},
+		{
+			Name: "Asteroid Claims", Key: "asteroid_claims", Code: "CLAIM", Emblem: "◊",
+			Age: "space_age", Lane: LaneTrade,
+			Prerequisites: []string{"maglev_transit"},
+			Description:   "A rock, a registry number and a company that owns what is inside it.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicRouteIncome, Value: 0.10},
+			},
+		},
+		{
+			// The Neon Era's Trade capstone.
+			Name: "Stellar Cartography", Key: "stellar_cartography", Code: "CHART", Emblem: "✦",
+			Age: "space_age", Lane: LaneTrade, Capstone: true,
+			Prerequisites: []string{"asteroid_claims", "deep_space_astronomy"},
+			Description:   "Every star within reach, charted with its worlds and its hazards.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicExpeditionTicks, Value: -0.20},
+				{Kind: EffectExpeditionReward, Value: 0.10},
+			},
+		},
+		{
+			Name: "Hydroponics", Key: "hydroponics", Code: "HYDRO", Emblem: "⋎",
+			Age: "space_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"closed_biospheres"},
+			Description:   "Roots in running water under lamps: a harvest every month, anywhere.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.04},
+			},
+		},
+		{
+			Name: "Zero-G Manufacturing", Key: "zero_g_manufacturing", Code: "ZEROG", Emblem: "∅",
+			Age: "space_age", Lane: LaneCraft,
+			Prerequisites: []string{"orbital_mechanics", "superconductors"},
+			Description:   "Space-based manufacturing for perfect materials.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildTime, Value: -0.06},
+			},
+		},
+		{
+			Name: "Asteroid Refining", Key: "asteroid_refining", Code: "REFIN", Emblem: "◣",
+			Age: "space_age", Lane: LaneMaterials,
+			Prerequisites: []string{"space_mining"},
+			Description:   "Ore smelted where it is mined, with the Sun for a furnace.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "titanium", Value: 0.04},
+			},
+		},
+		{
+			Name: "Orbital Defense", Key: "orbital_defense", Code: "ODEF", Emblem: "▽",
+			Age: "space_age", Lane: LaneMilitary,
+			Prerequisites: []string{"plasma_weapons", "orbital_mechanics"},
+			Description:   "Nothing crosses the sky without being seen, and nothing lands without leave.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicRaidLoss, Value: -0.10},
+			},
+		},
+		{
+			Name: "Orbital Solar", Key: "orbital_solar", Code: "SOLAR", Emblem: "✷",
+			Age: "space_age", Lane: LaneEnergy,
+			Prerequisites: []string{"plasma_physics"},
+			Description:   "Mirrors in permanent daylight, beaming their catch down.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "electricity", Value: 0.04},
+				{Kind: EffectOutput, Target: "plasma", Value: 0.04},
+			},
+		},
+		{
+			Name: "Orbital Mechanics", Key: "orbital_mechanics", Code: "ORBIT", Emblem: "☊",
 			Age: "space_age", Lane: LaneSpace,
 			Prerequisites: []string{"rocketry", "plasma_physics"},
 			Description:   "Advanced spaceflight and orbital dynamics.",
@@ -1201,7 +1601,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Space Mining", Key: "space_mining",
+			Name: "Space Mining", Key: "space_mining", Code: "SPACE", Emblem: "◮",
 			Age: "space_age", Lane: LaneSpace,
 			Prerequisites: []string{"orbital_mechanics"},
 			Description:   "Asteroid and lunar resource extraction.",
@@ -1211,18 +1611,101 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Zero-G Manufacturing", Key: "zero_g_manufacturing",
-			Age: "space_age", Lane: LaneCraft,
-			Prerequisites: []string{"orbital_mechanics", "superconductors"},
-			Description:   "Space-based manufacturing for perfect materials.",
+			// The Neon Era's Space capstone.
+			Name: "Space Elevator", Key: "space_elevator", Code: "ELEV", Emblem: "↥",
+			Age: "space_age", Lane: LaneSpace, Capstone: true,
+			Prerequisites: []string{"zero_g_manufacturing", "space_mining"},
+			Description:   "A cable from the ground to orbit: freight goes up for the price of the electricity.",
 			Effects: []TechEffect{
-				{Kind: EffectBuildTime, Value: -0.06},
+				{Kind: EffectBuildCost, Value: -0.04},
+				{Kind: EffectStorage, Value: 0.08},
+			},
+		},
+		{
+			Name: "Orbital Relays", Key: "orbital_relays", Code: "RELAY", Emblem: "↹",
+			Age: "space_age", Lane: LaneComputing,
+			Prerequisites: []string{"quantum_networking", "orbital_mechanics"},
+			Description:   "A ring of relays, and no corner of the system out of touch.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "data", Value: 0.04},
 			},
 		},
 
 		// === INTERSTELLAR AGE ===
 		{
-			Name: "Warp Drive", Key: "warp_drive",
+			Name: "Void Contemplation", Key: "void_contemplation", Code: "VOID", Emblem: "○",
+			Age: "interstellar_age", Lane: LaneFaith,
+			Prerequisites: []string{"overview_effect"},
+			Description:   "Years between the stars teach a crew to sit with the dark, and to bargain with it.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicAppeaseCost, Value: -0.20},
+			},
+		},
+		{
+			Name: "Xenology", Key: "xenology", Code: "XENO", Emblem: "ξ",
+			Age: "interstellar_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"deep_space_astronomy"},
+			Description:   "The study of life that owes nothing to ours.",
+			Effects: []TechEffect{
+				{Kind: EffectResearchTime, Value: -0.03},
+			},
+		},
+		{
+			Name: "Interstellar Trade", Key: "interstellar_trade", Code: "TRADE", Emblem: "⊛",
+			Age: "interstellar_age", Lane: LaneTrade,
+			Prerequisites: []string{"asteroid_claims", "warp_drive"},
+			Description:   "Cargo that outruns the news of its own departure.",
+		},
+		{
+			Name: "Protein Synthesis", Key: "protein_synthesis", Code: "PROTN", Emblem: "∾",
+			Age: "interstellar_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"hydroponics"},
+			Description:   "Food built from its elements, to any recipe, with no field at all.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.04},
+				{Kind: EffectHousing, Value: 0.04},
+			},
+		},
+		{
+			Name: "Hull Printing", Key: "hull_printing", Code: "HULL", Emblem: "▱",
+			Age: "interstellar_age", Lane: LaneCraft,
+			Prerequisites: []string{"zero_g_manufacturing"},
+			Description:   "A ship's hull laid down in one piece, in the dark, by machines.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildCost, Value: -0.02},
+				{Kind: EffectBuildTime, Value: -0.04},
+			},
+		},
+		{
+			Name: "Stellar Core Mining", Key: "stellar_core_mining", Code: "CORE", Emblem: "☉",
+			Age: "interstellar_age", Lane: LaneMaterials,
+			Prerequisites: []string{"asteroid_refining"},
+			Description:   "Dead stars are mostly metal, if you can stand the heat of getting there.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "titanium", Value: 0.04},
+			},
+		},
+		{
+			Name: "Fleet Doctrine", Key: "fleet_doctrine", Code: "FLEET", Emblem: "➤",
+			Age: "interstellar_age", Lane: LaneMilitary,
+			Prerequisites: []string{"orbital_defense"},
+			Description:   "How to fight a war where the order arrives after the battle.",
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.10},
+			},
+		},
+		{
+			Name: "Stellar Engineering", Key: "stellar_engineering", Code: "STELL", Emblem: "✫",
+			Age: "interstellar_age", Lane: LaneEnergy,
+			Prerequisites: []string{"warp_drive"},
+			Description:   "Harnessing and shaping stars themselves.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "plasma", Value: 0.04},
+				{Kind: EffectOutput, Target: "electricity", Value: 0.04},
+			},
+		},
+		{
+			Name: "Warp Drive", Key: "warp_drive", Code: "WARP", Emblem: "≫",
 			Age: "interstellar_age", Lane: LaneSpace,
 			Prerequisites: []string{"space_mining", "zero_g_manufacturing"},
 			Description:   "Faster-than-light propulsion.",
@@ -1232,19 +1715,92 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Stellar Engineering", Key: "stellar_engineering",
-			Age: "interstellar_age", Lane: LaneEnergy,
-			Prerequisites: []string{"warp_drive"},
-			Description:   "Harnessing and shaping stars themselves.",
+			Name: "Galactic Network", Key: "galactic_network", Code: "GNET", Emblem: "✺",
+			Age: "interstellar_age", Lane: LaneComputing,
+			Prerequisites: []string{"orbital_relays"},
+			Description:   "Every colony on one network, whatever the distance.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "plasma", Value: 0.04},
-				{Kind: EffectOutput, Target: "electricity", Value: 0.04},
+				{Kind: EffectOutput, Target: "data", Value: 0.04},
 			},
 		},
 
 		// === GALACTIC AGE ===
 		{
-			Name: "Galactic Navigation", Key: "galactic_navigation",
+			Name: "Galactic Memory", Key: "galactic_memory", Code: "MEMRY", Emblem: "✪",
+			Age: "galactic_age", Lane: LaneFaith,
+			Prerequisites: []string{"void_contemplation"},
+			Description:   "Every song, story and quarrel of every world, kept where none can be lost.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "culture", Value: 0.04},
+			},
+		},
+		{
+			Name: "Cosmology", Key: "cosmology", Code: "COSMO", Emblem: "∞",
+			Age: "galactic_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"xenology"},
+			Description:   "Where everything came from, and how long it has left.",
+			Effects: []TechEffect{
+				{Kind: EffectResearchTime, Value: -0.03},
+			},
+		},
+		{
+			Name: "Federation Charter", Key: "federation_charter", Code: "FED", Emblem: "⊎",
+			Age: "galactic_age", Lane: LaneTrade,
+			Prerequisites: []string{"interstellar_trade", "xenology"},
+			Description:   "One law of trade and passage for every signatory, whatever they breathe.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicAllianceBonus, Value: 0.25},
+				{Kind: EffectMechanic, Target: MechanicDealSlots, Value: 1},
+			},
+		},
+		{
+			Name: "Matter Conversion", Key: "matter_conversion", Code: "MATTR", Emblem: "⇌",
+			Age: "galactic_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"protein_synthesis"},
+			Description:   "Rock in, bread out. And walls, and air.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.04},
+				{Kind: EffectHousing, Value: 0.04},
+			},
+		},
+		{
+			Name: "Dyson Engineering", Key: "dyson_engineering", Code: "DYSON", Emblem: "◌",
+			Age: "galactic_age", Lane: LaneCraft,
+			Prerequisites: []string{"stellar_engineering", "hull_printing"},
+			Description:   "Building at the scale of a star's whole output.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildCost, Value: -0.02},
+			},
+		},
+		{
+			Name: "Neutron Mining", Key: "neutron_mining", Code: "NEUTN", Emblem: "⊝",
+			Age: "galactic_age", Lane: LaneMaterials,
+			Prerequisites: []string{"stellar_core_mining"},
+			Description:   "A teaspoon of the stuff outweighs a mountain, and it is all ore.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "antimatter", Value: 0.04},
+			},
+		},
+		{
+			Name: "Armada Command", Key: "armada_command", Code: "ARMAD", Emblem: "✯",
+			Age: "galactic_age", Lane: LaneMilitary,
+			Prerequisites: []string{"fleet_doctrine"},
+			Description:   "A thousand ships on one mind's orders.",
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.10},
+			},
+		},
+		{
+			Name: "Antimatter Synthesis", Key: "antimatter_synthesis", Code: "ANTIM", Emblem: "⊖",
+			Age: "galactic_age", Lane: LaneEnergy,
+			Prerequisites: []string{"galactic_navigation"},
+			Description:   "Controlled production of antimatter.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "antimatter", Value: 0.04},
+			},
+		},
+		{
+			Name: "Galactic Navigation", Key: "galactic_navigation", Code: "GNAV", Emblem: "✵",
 			Age: "galactic_age", Lane: LaneSpace,
 			Prerequisites: []string{"warp_drive", "stellar_engineering"},
 			Description:   "Charting paths across the galaxy.",
@@ -1254,18 +1810,36 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Antimatter Synthesis", Key: "antimatter_synthesis",
-			Age: "galactic_age", Lane: LaneEnergy,
-			Prerequisites: []string{"galactic_navigation"},
-			Description:   "Controlled production of antimatter.",
+			Name: "Terraforming", Key: "terraforming", Code: "TERRA", Emblem: "◓",
+			Age: "galactic_age", Lane: LaneSpace,
+			Prerequisites: []string{"warp_drive"},
+			Description:   "A dead world given air and seas, and a few centuries to settle.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "antimatter", Value: 0.04},
+				{Kind: EffectHousing, Value: 0.06},
+			},
+		},
+		{
+			Name: "Mind Uploading", Key: "mind_uploading", Code: "MIND", Emblem: "⇪",
+			Age: "galactic_age", Lane: LaneComputing,
+			Prerequisites: []string{"galactic_network"},
+			Description:   "A person, copied out of the body and still arguing.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "data", Value: 0.04},
 			},
 		},
 
 		// === QUANTUM AGE ===
 		{
-			Name: "Quantum Mechanics", Key: "quantum_mechanics",
+			Name: "Reality Art", Key: "reality_art", Code: "RART", Emblem: "❈",
+			Age: "quantum_age", Lane: LaneFaith,
+			Prerequisites: []string{"galactic_memory"},
+			Description:   "Works made of what might have happened, shown beside what did.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "culture", Value: 0.04},
+			},
+		},
+		{
+			Name: "Quantum Mechanics", Key: "quantum_mechanics", Code: "QUANT", Emblem: "ℚ",
 			Age: "quantum_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"antimatter_synthesis"},
 			Description:   "Mastery of quantum phenomena at all scales.",
@@ -1274,7 +1848,35 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Reality Manipulation", Key: "reality_manipulation",
+			// The Cosmic Era's Knowledge capstone.
+			Name: "Timeless Archive", Key: "timeless_archive", Code: "ARCHV", Emblem: "☰",
+			Age: "quantum_age", Lane: LaneKnowledge, Capstone: true,
+			Prerequisites: []string{"cosmology", "quantum_mechanics"},
+			Description:   "Everything ever known, and every answer already looked up.",
+			Effects: []TechEffect{
+				{Kind: EffectResearchTime, Value: -0.06},
+			},
+		},
+		{
+			Name: "Probability Markets", Key: "probability_markets", Code: "PMKT", Emblem: "‰",
+			Age: "quantum_age", Lane: LaneTrade,
+			Prerequisites: []string{"federation_charter"},
+			Description:   "A price on every outcome, and a buyer for the ones that never happen.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.02},
+			},
+		},
+		{
+			Name: "Quantum Cultivation", Key: "quantum_cultivation", Code: "QCULT", Emblem: "❃",
+			Age: "quantum_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"matter_conversion"},
+			Description:   "Every harvest that could have been, and you pick the best one.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.04},
+			},
+		},
+		{
+			Name: "Reality Manipulation", Key: "reality_manipulation", Code: "REALI", Emblem: "≋",
 			Age: "quantum_age", Lane: LaneCraft,
 			Prerequisites: []string{"quantum_mechanics"},
 			Description:   "Bending the fabric of spacetime.",
@@ -1283,7 +1885,53 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Quantum Computing", Key: "quantum_computing", Code: "QCOMP",
+			// The Cosmic Era's Craft capstone.
+			Name: "Reality Engineering", Key: "reality_engineering", Code: "RENG", Emblem: "⊠",
+			Age: "quantum_age", Lane: LaneCraft, Capstone: true,
+			Prerequisites: []string{"reality_manipulation", "dyson_engineering"},
+			Description:   "The plans are drawn, and the building has always been there.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildCost, Value: -0.04},
+				{Kind: EffectBuildTime, Value: -0.08},
+			},
+		},
+		{
+			Name: "Quantum Metallurgy", Key: "quantum_metallurgy", Code: "QMET", Emblem: "◪",
+			Age: "quantum_age", Lane: LaneMaterials,
+			Prerequisites: []string{"neutron_mining"},
+			Description:   "Metals that are only there when they are needed.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "antimatter", Value: 0.04},
+			},
+		},
+		{
+			Name: "Probability Warfare", Key: "probability_warfare", Code: "PWAR", Emblem: "⚄",
+			Age: "quantum_age", Lane: LaneMilitary,
+			Prerequisites: []string{"armada_command"},
+			Description:   "The battle is fought in every way at once, and you keep the one you won.",
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.10},
+				{Kind: EffectMechanic, Target: MechanicCampaignReward, Value: 0.15},
+			},
+		},
+		{
+			Name: "Zero-Point Energy", Key: "zero_point_energy", Code: "ZPE", Emblem: "∘",
+			Age: "quantum_age", Lane: LaneEnergy,
+			Prerequisites: []string{"antimatter_synthesis"},
+			Description:   "Power from the hum of empty space, which never runs down.",
+		},
+		{
+			Name: "Wormholes", Key: "wormholes", Code: "WORM", Emblem: "⌀",
+			Age: "quantum_age", Lane: LaneSpace,
+			Prerequisites: []string{"galactic_navigation"},
+			Description:   "A door in one sky that opens on another.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicRouteTicks, Value: -0.20},
+				{Kind: EffectMechanic, Target: MechanicExpeditionTicks, Value: -0.15},
+			},
+		},
+		{
+			Name: "Quantum Computing", Key: "quantum_computing", Code: "QCOMP", Emblem: "ℂ",
 			Age: "quantum_age", Lane: LaneComputing,
 			Prerequisites: []string{"clockwork_automation", "quantum_mechanics"},
 			Description:   "Quantum processing raises game speed.",
@@ -1294,13 +1942,31 @@ func rawTechnologies() []TechDef {
 
 		// === TRANSCENDENT AGE ===
 		{
-			Name: "Transcendence", Key: "transcendence",
+			Name: "Transcendence", Key: "transcendence", Code: "TRANS", Emblem: "Ω",
 			Age: "transcendent_age", Lane: LaneFaith,
 			Prerequisites: []string{"reality_manipulation"},
 			Description:   "A civilization beyond physical limits.",
 			Effects: []TechEffect{
 				{Kind: EffectAllOutput, Value: 0.05},
 			},
+		},
+		{
+			Name: "Omniversal Exchange", Key: "omniversal_exchange", Code: "OMNIX", Emblem: "⇔",
+			Age: "transcendent_age", Lane: LaneTrade,
+			Prerequisites: []string{"probability_markets"},
+			Description:   "A market between every world that is and every world that might have been.",
+		},
+		{
+			Name: "Singularity Engineering", Key: "singularity_engineering", Code: "SING", Emblem: "⊡",
+			Age: "transcendent_age", Lane: LaneCraft,
+			Prerequisites: []string{"reality_manipulation"},
+			Description:   "A whole economy folded into a point that does the work.",
+		},
+		{
+			Name: "Omniversal Command", Key: "omniversal_command", Code: "OMNIC", Emblem: "♚",
+			Age: "transcendent_age", Lane: LaneMilitary,
+			Prerequisites: []string{"probability_warfare"},
+			Description:   "One council for every army in every version of events.",
 		},
 	}
 }

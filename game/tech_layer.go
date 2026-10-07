@@ -56,6 +56,7 @@ func (ge *GameEngine) pushMechanics() {
 	ge.Military.SetCampaignTerms(ge.Research.Mechanic(config.MechanicCampaignTicks), ge.Research.Mechanic(config.MechanicCampaignReward))
 	ge.Diplomacy.SetTechTerms(ge.Research.Mechanic(config.MechanicGiftCost), ge.Research.Mechanic(config.MechanicDealRefreshTicks), fee)
 	ge.Diplomacy.SetGiftAndAllyTerms(ge.Research.Mechanic(config.MechanicGiftOpinion), ge.Research.Mechanic(config.MechanicAllianceBonus))
+	ge.Diplomacy.SetAllyCostTerm(ge.Research.Mechanic(config.MechanicAllianceCost))
 	ge.Buildings.SetUpgradeCostTerm(ge.Research.Mechanic(config.MechanicUpgradeCost))
 }
 
@@ -67,6 +68,17 @@ func (ge *GameEngine) soldierRoom(room float64) float64 {
 		return room
 	}
 	return float64(room * term)
+}
+
+// appeaseCut is amount, one resource of an Appease level's price, with the
+// techs' cut (config.MechanicAppeaseCost): amount itself with none. Caller
+// holds the lock.
+func (ge *GameEngine) appeaseCut(amount float64) float64 {
+	term := ge.Research.Mechanic(config.MechanicAppeaseCost)
+	if term <= 0 || term >= 1 {
+		return amount
+	}
+	return float64(amount * term)
 }
 
 // raidLossFactor is what the techs leave of a raid before the garrison meets

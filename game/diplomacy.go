@@ -94,8 +94,9 @@ type DiplomacyManager struct {
 	// giftCost, dealRefresh and feeScale are the techs' terms the manager
 	// reads (SetTechTerms).
 	giftCost, dealRefresh, feeScale float64
-	// giftOpinion and allyBonus are two more (SetGiftAndAllyTerms).
-	giftOpinion, allyBonus float64
+	// giftOpinion and allyBonus are two more (SetGiftAndAllyTerms), and
+	// allyCost a third (SetAllyCostTerm).
+	giftOpinion, allyBonus, allyCost float64
 
 	// lentBatches tracks worker loans in flight so they can be returned on time.
 	lentBatches []LentWorkerBatch
@@ -410,7 +411,7 @@ func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (
 		if fs.Opinion < AllyOpinion {
 			return 0, fmt.Errorf("The %s need opinion %d before they will ally (now %d).", def.Name, AllyOpinion, fs.Opinion)
 		}
-		cost = AllyCost
+		cost = dm.AllyPrice()
 	case "rival":
 		cost = 0
 	case "embargo":
@@ -539,6 +540,18 @@ func (dm *DiplomacyManager) SetTechTerms(giftCost, dealRefresh, feeScale float64
 // 0 reads as 1 for each.
 func (dm *DiplomacyManager) SetGiftAndAllyTerms(giftOpinion, allyBonus float64) {
 	dm.giftOpinion, dm.allyBonus = giftOpinion, allyBonus
+}
+
+// SetAllyCostTerm sets the techs' term on what an alliance costs
+// (config.MechanicAllianceCost). 0 reads as 1.
+func (dm *DiplomacyManager) SetAllyCostTerm(f float64) { dm.allyCost = f }
+
+// AllyPrice is what an alliance costs now: AllyCost with the techs' cut.
+func (dm *DiplomacyManager) AllyPrice() float64 {
+	if dm.allyCost <= 0 || dm.allyCost >= 1 {
+		return AllyCost
+	}
+	return float64(AllyCost * dm.allyCost)
 }
 
 // GiftGain is the opinion a gift earns now: GiftOpinion with the techs'
@@ -906,6 +919,7 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 		Factions:  factions,
 		GiftCost:  dm.GiftPrice(),
 		GiftGain:  dm.GiftGain(),
+		AllyCost:  dm.AllyPrice(),
 		BoonCrews: dm.boonLoansForSave(),
 	}
 }

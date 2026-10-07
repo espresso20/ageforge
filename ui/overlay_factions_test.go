@@ -543,7 +543,7 @@ func TestDiplomacyThreshold(t *testing.T) {
 		{"embargo", -50, "decaying"},
 	}
 	for _, c := range cases {
-		got := diplomacyThreshold(c.status, c.opinion, "riverlands_tribes")
+		got := diplomacyThreshold(c.status, c.opinion, "riverlands_tribes", game.AllyCost)
 		if !strings.Contains(got, c.want) {
 			t.Errorf("diplomacyThreshold(%q, %d) = %q, want it to contain %q",
 				c.status, c.opinion, got, c.want)

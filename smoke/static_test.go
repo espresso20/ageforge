@@ -348,9 +348,9 @@ func TestGateCovenantCatchesBrokenLadder(t *testing.T) {
 }
 
 // TestStaticFeatureLocks pins which feature locks are live and which wait
-// for their tech. A content change that adds one of the missing techs moves
-// its lock from the second list to the first, here and in the report, and
-// needs no other change to switch the lock on.
+// for their tech. The tree holds every tech a lock names now, so all nine
+// are live and none waits; a lock added for a tech still to come would show
+// in the second list, here and in the report.
 func TestStaticFeatureLocks(t *testing.T) {
 	rows := StaticFeatureLocks()
 	var live []string
@@ -359,16 +359,16 @@ func TestStaticFeatureLocks(t *testing.T) {
 			live = append(live, r.Key+" <- "+r.Tech+" ("+r.TechAge+")")
 		}
 	}
-	if got, want := strings.Join(live, "; "), "trade_routes <- the_wheel (bronze_age); campaigns <- military_tactics (bronze_age); expeditions <- exploration (iron_age); diplomacy <- envoys (classical_age); festivals <- drama (classical_age); naval_expedition <- navigation (renaissance_age); black_market <- mercantilism (colonial_age); route_rail_freight <- railroads (industrial_age)"; got != want {
+	if got, want := strings.Join(live, "; "), "trade_routes <- the_wheel (bronze_age); campaigns <- military_tactics (bronze_age); expeditions <- exploration (iron_age); diplomacy <- envoys (classical_age); festivals <- drama (classical_age); naval_expedition <- navigation (renaissance_age); black_market <- mercantilism (colonial_age); route_rail_freight <- railroads (industrial_age); route_warp_commerce <- interstellar_trade (interstellar_age)"; got != want {
 		t.Errorf("live locks:\n got %s\nwant %s", got, want)
 	}
-	if got, want := strings.Join(FeatureLocksWaiting(rows), " "), "route_warp_commerce"; got != want {
-		t.Errorf("locks waiting for their tech: %s; want %s", got, want)
+	if got := strings.Join(FeatureLocksWaiting(rows), " "); got != "" {
+		t.Errorf("locks waiting for their tech: %s; want none", got)
 	}
 	var sb strings.Builder
 	writeFeatureLocks(&sb, rows)
 	if !strings.Contains(sb.String(), "| Campaigns | Military Tactics | Bronze | live |") || !strings.Contains(sb.String(), "| Festivals | Drama | Classical | live |") ||
-		!strings.Contains(sb.String(), "| The Warp Commerce route | `interstellar_trade` | - | waits for its tech (open) |") {
+		!strings.Contains(sb.String(), "| The Warp Commerce route | Interstellar Trade | Interstellar | live |") {
 		t.Errorf("the report's table is off:\n%s", sb.String())
 	}
 }

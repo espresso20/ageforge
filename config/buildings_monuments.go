@@ -70,11 +70,12 @@ func buildingsMonuments() []BuildingDef {
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.05},
 			},
-			RequiredAge: "modern_age",
-			MaxCount:    1,
-			BuildTicks:  15000,
-			Description: "A timeless edifice commemorating the whole span of your civilization.",
-			LineageKey:  "monument",
+			RequiredAge:  "modern_age",
+			RequiredTech: "television",
+			MaxCount:     1,
+			BuildTicks:   15000,
+			Description:  "A timeless edifice commemorating the whole span of your civilization.",
+			LineageKey:   "monument",
 		},
 	}
 }

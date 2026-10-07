@@ -180,6 +180,11 @@ func dealSlots(personality string, tier int) int {
 	return max(n, 1)
 }
 
+// slots is dealSlots with what the techs add to every civilization's set.
+func (env dealEnv) slots(personality string, tier int) int {
+	return dealSlots(personality, tier) + max(env.extraSlots, 0)
+}
+
 // dealKind picks a slot's kind from its first draw.
 func dealKind(personality string, r float64) string {
 	var sell, want float64
@@ -284,10 +289,13 @@ type dealEnv struct {
 	age, next string
 	// fee is the techs' cut of the market's fee, as the multiplier on
 	// market rates (0 reads as 1).
-	fee      float64
-	unlocked map[string]bool
-	amount   map[string]float64
-	storage  map[string]float64
+	fee float64
+	// extraSlots is what the techs add to the deals every civilization
+	// offers in a set (config.MechanicDealSlots).
+	extraSlots int
+	unlocked   map[string]bool
+	amount     map[string]float64
+	storage    map[string]float64
 }
 
 // newDealEnv captures the engine's side of deal generation. Under the lock.
@@ -297,13 +305,14 @@ type dealEnv struct {
 // a loaded game rolls exactly what the saved one would have.
 func (ge *GameEngine) newDealEnv() dealEnv {
 	env := dealEnv{
-		rules:    ge.rules,
-		fee:      ge.Diplomacy.feeScale,
-		age:      ge.age,
-		next:     ge.progress.GetNextAge(ge.age),
-		unlocked: map[string]bool{},
-		amount:   map[string]float64{},
-		storage:  map[string]float64{},
+		rules:      ge.rules,
+		fee:        ge.Diplomacy.feeScale,
+		extraSlots: int(ge.Research.Mechanic(config.MechanicDealSlots)),
+		age:        ge.age,
+		next:       ge.progress.GetNextAge(ge.age),
+		unlocked:   map[string]bool{},
+		amount:     map[string]float64{},
+		storage:    map[string]float64{},
 	}
 	for _, k := range ge.getUnlockedState().Resources {
 		env.unlocked[k] = true
@@ -382,7 +391,7 @@ func rollFactionDeals(def config.FactionDef, fs FactionState, env dealEnv, rng *
 	}
 	tier := dealTier(fs)
 	var out []FactionDeal
-	for slot := 0; slot < dealSlots(def.Personality, tier); slot++ {
+	for slot := 0; slot < env.slots(def.Personality, tier); slot++ {
 		r1, r2, r3 := rng.Float64(), rng.Float64(), rng.Float64()
 		d, ok := makeDeal(def, fs, tier, env, r1, r2, r3)
 		if !ok || hasSameDeal(out, d) {

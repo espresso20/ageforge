@@ -259,7 +259,7 @@ func registry() []*Command {
 		{Name: "diplomacy", Aliases: []string{"dip"}, Section: secTrade, BareOK: true,
 			Help: []Usage{{"diplomacy", "Alias for factions (opens the same panel)"}},
 			Subs: []*Command{
-				sub("ally", "diplomacy ally <civ>", "Ally with a civilization ("+game.Amount(game.AllyCost, "gold")+", needs opinion "+strconv.Itoa(game.AllyOpinion)+")", civArg...),
+				sub("ally", "diplomacy ally <civ>", "Ally with a civilization ("+game.Amount(game.AllyCost, "gold")+" or less, needs opinion "+strconv.Itoa(game.AllyOpinion)+")", civArg...),
 				sub("rival", "diplomacy rival <civ>", "Declare a civilization your rival", civArg...),
 				sub("embargo", "diplomacy embargo <civ>", "Embargo a civilization (a provocation: it can start a war)", civArg...),
 				sub("gift", "diplomacy gift <civ>", "Send a gift of gold for +"+strconv.Itoa(game.GiftOpinion)+" opinion or more (the Factions panel shows today's price and what it earns)", civArg...),

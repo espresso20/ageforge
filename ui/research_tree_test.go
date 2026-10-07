@@ -76,13 +76,15 @@ func cardOf(st game.GameState, key string) string {
 // centred over it, and every connector cell is joined on to the next: a
 // line never stops in mid air or runs under a badge.
 //
-// Twice: from the Classical Age, with a research running and a tech in the
-// plan, and from the Electric Age, where the map holds every age a content
-// batch has filled in, their either-or group, their six capstones and the
-// lanes that hold three techs in one age.
+// Three times: from the Classical Age, with a research running and a tech
+// in the plan, from the Electric Age, and from the Quantum Age, where the
+// map holds the whole tree: all ten lanes, twenty-two ages, the either-or
+// group, the twelve capstones and the lanes that hold three techs in one
+// age.
 func TestResearchTreeDrawsEveryTechWhole(t *testing.T) {
 	treeDrawsEveryTechWhole(t, classicalGame(t).GetState(), "road_building")
 	treeDrawsEveryTechWhole(t, electricGame(t).GetState(), "interchangeable_parts")
+	treeDrawsEveryTechWhole(t, quantumGame(t).GetState(), "stellar_cartography")
 }
 
 func treeDrawsEveryTechWhole(t *testing.T, st game.GameState, sel string) {
@@ -186,11 +188,13 @@ func treeDrawsEveryTechWhole(t *testing.T, st game.GameState, sel string) {
 // the title and the key bar are there, nothing is drawn outside the map's
 // frame, and the plain tier is plain. The card fits inside the map.
 //
-// From the Classical Age and from the Electric Age, where the map is twice
-// as tall and nine lanes wide, on its longest names and its capstones.
+// From the Classical Age, from the Electric Age, where the map is twice as
+// tall and nine lanes wide, and from the Quantum Age, where it is the whole
+// tree, on its corners, its longest names and its capstones.
 func TestResearchTreeAtEverySize(t *testing.T) {
 	treeAtEverySize(t, classicalGame(t).GetState(), "tool_making", "road_building", "philosophy", "siege_warfare")
 	treeAtEverySize(t, electricGame(t).GetState(), "patronage", "concert_of_nations", "aviation", "military_industrial_complex")
+	treeAtEverySize(t, quantumGame(t).GetState(), "language", "quantum_computing", "stellar_cartography", "omniversal_command")
 }
 
 func treeAtEverySize(t *testing.T, st game.GameState, sels ...string) {
@@ -471,7 +475,7 @@ func TestResearchTreeKeepsTheSpoilerRule(t *testing.T) {
 		t.Fatal("no tech is out of sight: the game does not test the rule")
 	}
 	m, _, g := drawTree(st, 144, 43, treeView{far: true})
-	if m.later != len(hidden) || !strings.Contains(g.String(), "87 more techs wait in later ages") {
+	if m.later != len(hidden) || !strings.Contains(g.String(), "161 more techs wait in later ages") {
 		t.Errorf("the map counts %d techs in later ages, want %d and a line that says so", m.later, len(hidden))
 	}
 	if len(m.lanes) != len(lanes) {
@@ -785,9 +789,16 @@ func medievalGame(t *testing.T) *game.GameEngine {
 }
 
 // electricGame is a game in the Electric Age with nothing researched: the
-// twelve ages a content batch has filled in are in sight (the Atomic Age is
-// next).
-func electricGame(t *testing.T) *game.GameEngine {
+// first twelve ages are in sight (the Atomic Age is next).
+func electricGame(t *testing.T) *game.GameEngine { return gameIn(t, "electric_age") }
+
+// quantumGame is a game in the Quantum Age with nothing researched: every
+// age is in sight (the Transcendent Age is next), so the map holds the
+// whole tree.
+func quantumGame(t *testing.T) *game.GameEngine { return gameIn(t, "quantum_age") }
+
+// gameIn is a game taken straight to age, with nothing researched.
+func gameIn(t *testing.T, age string) *game.GameEngine {
 	t.Helper()
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
@@ -795,20 +806,19 @@ func electricGame(t *testing.T) *game.GameEngine {
 		if err := ge.EnterAgeForTest(a); err != nil {
 			t.Fatal(err)
 		}
-		if a == "electric_age" {
+		if a == age {
 			break
 		}
 	}
 	return ge
 }
 
-// TestEmblemsSitOnTheGrid: every tech of an age a content batch has filled
-// in (the Stone, Iron, Steel and Electric Eras) wears the emblem its own
-// entry sets, one glyph on the centre cell of its badge at both badge sizes
+// TestEmblemsSitOnTheGrid: every tech wears the emblem its own entry sets, one glyph on the centre cell of its badge at both badge sizes
 // and of its pill zoomed out, and in the plain glyph tier the first letter
 // of its code sits there instead. Nothing is drawn in a cell beside the
-// emblem's own. Once from the Classical Age, where the first six ages are in
-// sight, and once from the Electric Age, where all twelve are.
+// emblem's own. From the Classical Age, where the first six ages are in
+// sight, from the Electric Age, where twelve are, and from the Quantum Age,
+// where the map holds all 202 techs.
 func TestEmblemsSitOnTheGrid(t *testing.T) {
 	for _, c := range []struct {
 		name string
@@ -818,6 +828,7 @@ func TestEmblemsSitOnTheGrid(t *testing.T) {
 	}{
 		{"the Classical Age", classicalGame(t).GetState(), "medieval_age", 41},
 		{"the Electric Age", electricGame(t).GetState(), "atomic_age", 97},
+		{"the Quantum Age", quantumGame(t).GetState(), "transcendent_age", 202},
 	} {
 		emblemsSitOnTheGrid(t, c.name, c.st, c.last, c.want)
 	}
@@ -852,7 +863,7 @@ func emblemsSitOnTheGrid(t *testing.T, name string, st game.GameState, last stri
 					if n.emblem != want {
 						t.Errorf("%d far=%v plain=%v: %s carries %q, want %q", w, far, ascii, n.key, n.emblem, want)
 					}
-					if !ascii && n.def.Emblem == lanes[n.def.Lane].Emblem && n.key != "tool_making" && n.key != "primitive_writing" && n.key != "military_tactics" {
+					if !ascii && n.def.Emblem == lanes[n.def.Lane].Emblem && n.key != "tool_making" && n.key != "primitive_writing" && n.key != "military_tactics" && n.key != "transcendence" {
 						t.Errorf("%s wears its lane's glyph %q: a tech of a filled-in age has an emblem of its own", n.key, n.def.Emblem)
 					}
 					ex, ey := n.cx, n.top+geom.nameH+geom.badgeH/2

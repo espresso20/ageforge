@@ -197,34 +197,40 @@ func TestTechHeadroom(t *testing.T) {
 		want float64
 	}{
 		{TechEffectKey{Kind: EffectAllOutput}, 0.10},
-		{TechEffectKey{Kind: EffectOutput, Target: "food"}, 0.94},
-		{TechEffectKey{Kind: EffectOutput, Target: "knowledge"}, 0.85},
+		{TechEffectKey{Kind: EffectOutput, Target: "food"}, 1.19},
+		{TechEffectKey{Kind: EffectOutput, Target: "knowledge"}, 0.99},
 		{TechEffectKey{Kind: EffectOutput, Target: "gold"}, 0.31},
 		{TechEffectKey{Kind: EffectOutput, Target: "faith"}, 0.28},
-		{TechEffectKey{Kind: EffectOutput, Target: "culture"}, 0.27},
-		{TechEffectKey{Kind: EffectOutput, Target: "steel"}, 0.27},
+		{TechEffectKey{Kind: EffectOutput, Target: "culture"}, 0.39},
+		{TechEffectKey{Kind: EffectOutput, Target: "steel"}, 0.42},
 		{TechEffectKey{Kind: EffectOutput, Target: "coal"}, 0.23},
-		{TechEffectKey{Kind: EffectStorage}, 0.41},
-		{TechEffectKey{Kind: EffectHousing}, 0.37},
-		{TechEffectKey{Kind: EffectBuildCost}, 0.97 * 0.97 * 0.96 * 0.97 * 0.98 * 0.96 * 0.98},
-		{TechEffectKey{Kind: EffectBuildTime}, 0.92 * 0.95 * 0.94 * 0.95 * 0.92 * 0.95 * 0.95},
-		{TechEffectKey{Kind: EffectResearchTime}, 0.97 * 0.97 * 0.97 * 0.94 * 0.96 * 0.97 * 0.94},
+		{TechEffectKey{Kind: EffectOutput, Target: "data"}, 0.30},
+		{TechEffectKey{Kind: EffectOutput, Target: "electricity"}, 0.41},
+		{TechEffectKey{Kind: EffectStorage}, 0.54},
+		{TechEffectKey{Kind: EffectHousing}, 0.61},
+		{TechEffectKey{Kind: EffectBuildCost}, 0.97 * 0.97 * 0.96 * 0.97 * 0.98 * 0.96 * 0.98 * 0.96 * 0.98 * 0.98 * 0.96},
+		{TechEffectKey{Kind: EffectBuildTime}, 0.92 * 0.95 * 0.94 * 0.95 * 0.92 * 0.95 * 0.95 * 0.96 * 0.95 * 0.96 * 0.92},
+		{TechEffectKey{Kind: EffectResearchTime}, 0.97 * 0.97 * 0.97 * 0.94 * 0.96 * 0.97 * 0.94 * 0.97 * 0.94 * 0.97 * 0.97 * 0.97 * 0.94},
 		{TechEffectKey{Kind: EffectGameSpeed}, 0.30},
-		{TechEffectKey{Kind: EffectMilitaryPower}, 1.41},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicMarketFee}, -0.10},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRouteTicks}, 0.85 * 0.85},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRouteIncome}, 1.10},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRaidLoss}, 0.81 * 0.85},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicMoraleCap}, 0.05},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicExpeditionTicks}, 0.90 * 0.90},
+		{TechEffectKey{Kind: EffectMilitaryPower}, 2.01},
+		{TechEffectKey{Kind: EffectExpeditionReward}, 0.96},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicMarketFee}, -0.14},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRouteTicks}, 0.85 * 0.85 * 0.85 * 0.80},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRouteIncome}, 1.10 * 1.10 * 1.10},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRaidLoss}, 0.81 * 0.85 * 0.90},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicMoraleCap}, 0.15},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicExpeditionTicks}, 0.90 * 0.90 * 0.90 * 0.90 * 0.80 * 0.85},
 		{TechEffectKey{Kind: EffectMechanic, Target: MechanicWonderBuildTicks}, 0.75},
 		{TechEffectKey{Kind: EffectMechanic, Target: MechanicFestivalTicks}, 1.25},
 		{TechEffectKey{Kind: EffectMechanic, Target: MechanicGiftOpinion}, 1.50},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicAllianceBonus}, 1.25},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicAllianceBonus}, 1.25 * 1.25},
 		{TechEffectKey{Kind: EffectMechanic, Target: MechanicUpgradeCost}, 0.85},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicCampaignTicks}, 0.85},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicSoldierStorage}, 1.20},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicCampaignReward}, 1.20},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicCampaignTicks}, 0.85 * 0.85},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicSoldierStorage}, 1.20 * 1.10},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicCampaignReward}, 1.20 * 1.15},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicDealSlots}, 2},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicAllianceCost}, 0.50},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicAppeaseCost}, 0.80},
 	} {
 		if got := terms[tc.key]; !near(got, tc.want) {
 			t.Errorf("%s %s: every tech together comes to %v, want %v", tc.key.Kind, tc.key.Target, got, tc.want)
@@ -275,11 +281,11 @@ func TestFeatureLocks(t *testing.T) {
 		return strings.Join(out, " ")
 	}
 	live, waiting := LiveFeatureLocks(locks, isTech)
-	if got, want := keys(live), "trade_routes campaigns expeditions diplomacy festivals naval_expedition black_market route_rail_freight"; got != want {
+	if got, want := keys(live), "trade_routes campaigns expeditions diplomacy festivals naval_expedition black_market route_rail_freight route_warp_commerce"; got != want {
 		t.Errorf("live locks: %s; want %s", got, want)
 	}
-	if got, want := keys(waiting), "route_warp_commerce"; got != want {
-		t.Errorf("locks waiting for their tech: %s; want %s", got, want)
+	if got := keys(waiting); got != "" {
+		t.Errorf("locks waiting for their tech: %s; want none: the tree holds every tech a lock names", got)
 	}
 	if got, want := FeatureLockByKey()[FeatureCampaigns].Refusal("Military Tactics"), "Campaigns need Military Tactics first. Research it to send one."; got != want {
 		t.Errorf("refusal %q, want %q", got, want)

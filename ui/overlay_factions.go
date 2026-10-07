@@ -347,7 +347,7 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 		statusColor, f.Status, bonus, textfmt.Count(f.TradeCount, "trade", "trades"))
 
 	// Threshold indicator: distance to the next status tier.
-	fmt.Fprintf(sb, "   %s\n", diplomacyThreshold(f.Status, f.Opinion, def.Key))
+	fmt.Fprintf(sb, "   %s\n", diplomacyThreshold(f.Status, f.Opinion, def.Key, state.Diplomacy.AllyCost))
 
 	// Lent-worker status, if this civ has workers on loan with you.
 	if f.LentWorkers > 0 {
@@ -546,8 +546,9 @@ func truncate(s string, max int) string {
 // diplomacyThreshold renders the distance-to-next-tier indicator for a
 // civilization given its current status and opinion. Hostile statuses
 // (rival/embargo) decay toward neutral, so they report "decaying" rather than
-// a climb target. key is the civ key the ally command takes.
-func diplomacyThreshold(status string, opinion int, key string) string {
+// a climb target. key is the civ key the ally command takes, and allyCost
+// what an alliance costs today (the techs can cut it).
+func diplomacyThreshold(status string, opinion int, key string, allyCost float64) string {
 	switch status {
 	case "allied":
 		return "[gray](maxed)[-]"
@@ -561,7 +562,7 @@ func diplomacyThreshold(status string, opinion int, key string) string {
 	case opinion < game.AllyOpinion:
 		return fmt.Sprintf("[gray](+%d opinion to ally-eligible)[-]", game.AllyOpinion-opinion)
 	default:
-		return fmt.Sprintf("[gray](can ally: diplomacy ally %s, %s)[-]", key, game.Amount(game.AllyCost, "gold"))
+		return fmt.Sprintf("[gray](can ally: diplomacy ally %s, %s)[-]", key, game.Amount(allyCost, "gold"))
 	}
 }
 

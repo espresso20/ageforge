@@ -157,13 +157,14 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 10 — modern_age  output=electricity  rate=102.40
 	b = append(b, BuildingDef{
 		Name: "Power Grid Hub", Key: "power_grid_hub", Category: "production",
-		BaseCost:    map[string]float64{"steel": 35e9, "electricity": 14e9, "data": 1.5e9},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 102.40}},
-		BuildTicks:  3600,
-		RequiredAge: "modern_age",
-		Description: "Smart power grid distribution hub.",
-		LineageKey:  "engineering", LineageTier: 10,
+		BaseCost:     map[string]float64{"steel": 35e9, "electricity": 14e9, "data": 1.5e9},
+		CostScale:    1.35,
+		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 102.40}},
+		BuildTicks:   3600,
+		RequiredAge:  "modern_age",
+		RequiredTech: "electricity_tech",
+		Description:  "Smart power grid distribution hub.",
+		LineageKey:   "engineering", LineageTier: 10,
 		WorkerDomain: "engineering", WorkerCapacity: 12,
 		EpochKey: "digital_era", OutputResource: "electricity",
 	})
@@ -280,13 +281,14 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 19 — transcendent_age  output=quantum_flux  rate=52428.80
 	b = append(b, BuildingDef{
 		Name: "Singularity Engine", Key: "singularity_engine", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 2.2e15, "antimatter": 650e15, "dark_matter": 550e15},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 52428.80}},
-		BuildTicks:  3600,
-		RequiredAge: "transcendent_age",
-		Description: "A singularity-powered engine generating quantum flux.",
-		LineageKey:  "engineering", LineageTier: 19,
+		BaseCost:     map[string]float64{"quantum_flux": 2.2e15, "antimatter": 650e15, "dark_matter": 550e15},
+		CostScale:    1.35,
+		Effects:      []Effect{{Type: "production", Target: "quantum_flux", Value: 52428.80}},
+		BuildTicks:   3600,
+		RequiredAge:  "transcendent_age",
+		RequiredTech: "singularity_engineering",
+		Description:  "A singularity-powered engine generating quantum flux.",
+		LineageKey:   "engineering", LineageTier: 19,
 		WorkerDomain: "engineering", WorkerCapacity: 35,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})
