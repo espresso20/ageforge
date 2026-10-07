@@ -504,6 +504,6 @@ How full your culture storage is decides which good epoch events you can get, so
 
 ## Economy Panel
 
-The Economy panel is always visible behind the other panels. Its right side lists your buildings grouped by age, with their workers and any upgrade hint; the left side shows your resource rates and the construction queue. Scroll the building list with PgUp and PgDn.
+The Economy panel is always visible behind the other panels. Its right side lists your buildings grouped by age, with their workers and any upgrade hint; the left side shows your resource rates and the construction queue. Scroll the building list with PgUp and PgDn, and turn the Resources box to its next page with Ctrl+R when it has more resources than it can show.
 
 Use `rates` to print the current production and consumption rates for all resources in the command output, and `status` for a detailed status summary.

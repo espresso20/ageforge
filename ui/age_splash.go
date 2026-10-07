@@ -151,7 +151,13 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 		if len(summary.BuildingsTransformed) > 0 {
 			fmt.Fprintf(&sb, "[yellow]── Upgrades available ──[-]\n")
 			fmt.Fprintf(&sb, "  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to upgrade one.\n")
-			for _, t := range summary.BuildingsTransformed {
+			// Every line of the splash is centered on its own, so the
+			// counts only line up when the rows are all one width: each
+			// label is padded to the longest, each count to the widest.
+			labels := make([]string, len(summary.BuildingsTransformed))
+			counts := make([]string, len(summary.BuildingsTransformed))
+			labelW, countW := 0, 0
+			for i, t := range summary.BuildingsTransformed {
 				oldName := t.OldName
 				if oldName == "" {
 					oldName = strings.ReplaceAll(t.OldKey, "_", " ")
@@ -160,8 +166,13 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 				if newName == "" {
 					newName = strings.ReplaceAll(t.NewKey, "_", " ")
 				}
-				fmt.Fprintf(&sb, "  %-28s x%d\n",
-					fmt.Sprintf("%s → %s", oldName, newName), t.Count)
+				labels[i] = fmt.Sprintf("%s → %s", oldName, newName)
+				counts[i] = fmt.Sprintf("x%d", t.Count)
+				labelW, countW = max(labelW, runeLen(labels[i])), max(countW, runeLen(counts[i]))
+			}
+			for i := range labels {
+				fmt.Fprintf(&sb, "%s%s  %s%s\n", labels[i], strings.Repeat(" ", labelW-runeLen(labels[i])),
+					counts[i], strings.Repeat(" ", countW-runeLen(counts[i])))
 			}
 		}
 		if len(summary.BuildingsLegacy) > 0 {
