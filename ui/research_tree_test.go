@@ -290,29 +290,38 @@ func TestResearchTreeLaneRow(t *testing.T) {
 }
 
 // TestHelpListsResearchKeys: the Help panel lists the Research panel's keys,
-// every key the panel takes, a line each that holds at 80 columns.
+// every key the panel takes, at any width (TestHelpKeepsTwoColumns holds
+// the rows to the panel's two columns).
 func TestHelpListsResearchKeys(t *testing.T) {
-	help := helpProvider(game.GameState{}, 80)
-	at := strings.Index(help, "The Research panel")
-	if at < 0 {
-		t.Fatal("the Help panel has no Research panel section")
-	}
-	section := help[at:]
-	if end := strings.Index(section, "Shortcuts"); end > 0 {
-		section = section[:end]
-	}
-	for _, key := range []string{"Arrows", "Tab", "Shift-Tab", "PgUp/PgDn", "Home", "Enter", "Esc", "research tree far"} {
-		if !strings.Contains(section, key) {
-			t.Errorf("the Help panel's Research section does not list %s", key)
+	for _, screenW := range []int{0, 80, 144} {
+		help := visible(safeTags(helpProvider(game.GameState{}, screenW)))
+		at := strings.Index(help, "The Research panel")
+		if at < 0 {
+			t.Fatal("the Help panel has no Research panel section")
+		}
+		section := help[at:]
+		if end := strings.Index(section, "═══ Shortcuts"); end > 0 {
+			section = section[:end]
+		}
+		for _, k := range researchKeys {
+			if !strings.Contains(section, "  "+k[0]) {
+				t.Errorf("%d columns: the Help panel's Research section does not list %s", screenW, k[0])
+			}
+		}
+		for _, want := range []string{"Shift-Tab", "research tree far"} {
+			if !strings.Contains(section, want) {
+				t.Errorf("%d columns: the Help panel's Research section does not mention %s", screenW, want)
+			}
 		}
 	}
-	for _, line := range strings.Split(researchHelp(), "\n") {
-		plain := line
-		for _, tag := range []string{"[gold]", "[gray]", "[cyan]", "[-]"} {
-			plain = strings.ReplaceAll(plain, tag, "")
-		}
-		if n := len([]rune(plain)); n > 72 {
-			t.Errorf("a Research help line is %d cells: %q", n, plain)
+	// Every key the panel routes is one the Help panel names.
+	listed := ""
+	for _, k := range researchKeys {
+		listed += k[0] + " " + k[1] + " "
+	}
+	for _, name := range []string{"Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "Enter", "Esc"} {
+		if !strings.Contains(listed, name) {
+			t.Errorf("the Research panel's key list leaves out %s", name)
 		}
 	}
 }

@@ -180,9 +180,11 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 		}
 
 		// Only the event name is trimmed to fit. Truncating the composed coloured
-		// string instead would happily cut a "[gray]" tag in half.
+		// string instead would happily cut a "[gray]" tag in half. A boon's own
+		// name already starts with the civilization's ("Ironhold Clans:
+		// Specialty Windfall"), which the line has just said.
 		prefix := fmt.Sprintf("%s %s: ", icon, civ)
-		evName := truncate(ev.Name, descCol-runeLen(prefix))
+		evName := truncate(strings.TrimPrefix(ev.Name, civ+": "), descCol-runeLen(prefix))
 		magPlain, magColored := effectsSummary(ev.Effects)
 		remain := formatTicks(ev.TicksLeft, state)
 

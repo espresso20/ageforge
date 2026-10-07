@@ -2787,7 +2787,7 @@ func cmdMinimap(args []string, engine *game.GameEngine) CommandResult {
 	res := CommandResult{Type: game.LogRoutine, Message: "Mini map off. Type minimap on to bring it back.",
 		MapPref: mapPref{Key: "minimap", Value: val}}
 	if on {
-		res.Message = "Mini map on. It shows above the Buildings list when the terminal has room (about 120x40 and up)."
+		res.Message = fmt.Sprintf("Mini map on. It shows above the Buildings list when the terminal has room (%dx%d and up).", miniMapMinCols, miniMapMinRows)
 	}
 	if acct == nil {
 		res.Type, res.Message = "info", res.Message+mapSessionOnly

@@ -720,3 +720,26 @@ func TestFactionsProvider_ShowsBoonCrews(t *testing.T) {
 		t.Errorf("the panel says nothing is in play while crews are on loan:\n%s", out)
 	}
 }
+
+// TestFactionsProvider_BoonNamesTheCivOnce: the engine names a boon after its
+// civilization ("Ironhold Clans: Specialty Windfall"), and the panel's line
+// already starts with the civilization, so the name is said once.
+func TestFactionsProvider_BoonNamesTheCivOnce(t *testing.T) {
+	state := game.GameState{
+		TickIntervalMs: 2000,
+		Diplomacy: game.DiplomacyState{Factions: map[string]game.FactionInfo{
+			"ironhold_clans": {Name: "Ironhold Clans", Discovered: true, Status: "neutral", Strength: 3},
+		}},
+		ActiveEvents: []game.ActiveEventState{{
+			Name: "Ironhold Clans: Specialty Windfall", Key: "faction_boon_ironhold_clans", TicksLeft: 142,
+			Effects: []game.EventEffectInfo{{Type: "iron_rate", Target: "iron", Value: 0.11}},
+		}},
+	}
+	line := untag(lineContaining(factionsProvider(state, panelWidth), "Specialty Windfall"))
+	if n := strings.Count(line, "Ironhold Clans"); n != 1 {
+		t.Errorf("the boon line names the civilization %d times, want once: %q", n, line)
+	}
+	if !strings.Contains(line, "✦ Ironhold Clans: Specialty Windfall") {
+		t.Errorf("the boon line should read civilization, then boon: %q", line)
+	}
+}

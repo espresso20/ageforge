@@ -62,6 +62,7 @@ army
 
 This opens the **Army** panel: soldier count, defense rating, the running campaign (if any) and how many campaigns you've completed. Under the defense rating it shows what the army does for you:
 
+- **Training:** soldiers per tick. A War Camp or a Barracks can stand before the Iron Age brings soldiers; until then nothing trains in it, and the line reads "not yet. Soldiers arrive in the Iron Age."
 - **Threat:** the raid threat of your current age.
 - "Your garrison would blunt about N% of a raid.": the share it takes off raids and war raids in your current age (an Endure measures it against the age the catastrophe strikes in). After it comes what twice the garrison would blunt, and a reminder that no army blunts more than 45%. With no soldiers it reads "You have no garrison: raids hit you with full force."
 - **Saved this run:** once the garrison has saved something, the buildings, workers and resources (the four largest) it kept, and how many raids it blunted. Like other run stats, it resets with the run.

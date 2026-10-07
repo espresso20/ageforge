@@ -40,7 +40,9 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 
 The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row marks each requirement ✓ or ✗, and names the age's wonder until it stands. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
 
-<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal 144 columns wide: resources, construction and the log on the left, the mini map over the Buildings list, the panel names and the Workers box on the right.</figcaption></figure>
+<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, construction and the log on the left, the mini map over the Buildings list, the panel names and the Workers box on the right.</figcaption></figure>
+
+The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row: its amount over its cap, its rate, a bar, and a marker when the store is nearly full (`◈`) or falling (`▼`). On a narrow terminal a row gives up the bar first, then the cap, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map shows from 105 columns by 34 rows.
 
 ---
 
@@ -50,6 +52,7 @@ The status bar also carries your prestige level and civilization title once you 
 - `help` opens the Help panel: a full command reference plus the list of every panel you can open.
 - **Tab** or **→** takes the completion shown in dim text after the cursor; press **Tab** again for the next one.
 - **PgUp / PgDn** scroll the Buildings list.
+- **Ctrl+R** turns the Resources box to its next page, when it has more resources than it can show.
 - **↑ / ↓** step through your command history.
 - **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the main menu.
 - Common commands have short names: `b` is `build`, `r` is `recruit`, `a` is `assign`, `s` is `status`, `t` is `trade`. See [Command shortcuts](commands.md#command-shortcuts) for the full list.

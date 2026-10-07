@@ -2031,6 +2031,17 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
+	// A resource the age has not unlocked yet makes nothing. Its buildings
+	// can stand first (a War Camp or a Barracks before the Iron Age brings
+	// soldiers) and ApplyRates never adds to a locked store, so the rate they
+	// were given above was a fiction: the Army panel showed training under
+	// way and the stats counted soldiers nobody ever held.
+	for _, def := range ge.Resources.defs {
+		if r := ge.Resources.resources[def.Key]; r != nil && !ge.Resources.unlocked[def.Key] {
+			r.Rate, r.Breakdown = 0, RateBreakdown{}
+		}
+	}
+
 	// The faith measure (faith.go) follows two parts of the faith rate: what
 	// the town's own faith buildings make, and what a moderate set would
 	// make in their place. Each goes through the steps the rate went through

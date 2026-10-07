@@ -10,8 +10,8 @@ import (
 // command shut, saying which tech opens it, in the words the game uses when
 // it refuses the command: "Campaigns need Military Tactics first. Research
 // it to send one." A lock is only mentioned once its tech's age is reached,
-// so a panel never names a tech of an age the player has not seen. "" when
-// every one is open.
+// so a panel never names a tech of an age the player has not seen. The
+// lines end with a blank one; "" when every lock is open.
 func lockNotes(state game.GameState, keys ...string) string {
 	set := state.Ruleset()
 	here, _ := set.Index(state.Age)
@@ -27,6 +27,9 @@ func lockNotes(state game.GameState, keys ...string) string {
 			continue
 		}
 		sb.WriteString(" [yellow]" + def.Refusal(f.TechName) + "[-]\n")
+	}
+	if sb.Len() > 0 {
+		sb.WriteString("\n") // a blank line sets the notes off from the list under them
 	}
 	return sb.String()
 }

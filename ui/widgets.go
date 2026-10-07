@@ -48,12 +48,20 @@ func FormatRateTick(rate float64) string {
 }
 
 func formatRate(rate float64, unit string) string {
+	text, color := rateParts(rate, unit)
+	return "[" + color + "]" + text + "[-]"
+}
+
+// rateParts is a rate as it is printed (sign, suffix notation, unit) and
+// the color it is printed in, apart, for callers that lay the text out in a
+// column before they color it.
+func rateParts(rate float64, unit string) (text, color string) {
 	if rate == 0 {
-		return "[gray]+0.0" + unit + "[-]"
+		return "+0.0" + unit, "gray"
 	}
 	abs := math.Abs(rate)
 	sign := "+"
-	color := "green"
+	color = "green"
 	if rate < 0 {
 		sign = ""
 		color = "red"
@@ -68,9 +76,9 @@ func formatRate(rate float64, unit string) string {
 			}
 			prec++
 		}
-		return fmt.Sprintf("[%s]%s%.*f%s[-]", color, sign, prec, rate, unit)
+		return fmt.Sprintf("%s%.*f%s", sign, prec, rate, unit), color
 	}
-	return fmt.Sprintf("[%s]%s%s%s[-]", color, sign, FormatNumber(rate), unit)
+	return sign + FormatNumber(rate) + unit, color
 }
 
 // FormatCost formats a cost map as "50 food, 30 wood" (display names, sorted

@@ -28,6 +28,31 @@ func TestArmyPanel_NoGarrison(t *testing.T) {
 	}
 }
 
+// Before the age that brings soldiers the panel says nothing trains yet, and
+// names that age only once the player can see it. After it, the rate shows.
+func TestArmyPanel_TrainingBeforeSoldiers(t *testing.T) {
+	engine := game.NewGameEngine()
+	txt := untag(militaryProvider(engine.GetState(), 0))
+	if !strings.Contains(txt, "Training:  not yet. Soldiers arrive in a later age.") || strings.Contains(txt, "/tick\n Defense") {
+		t.Errorf("a new game's Army panel should say soldiers are not here yet, with no rate:\n%s", txt)
+	}
+	if err := engine.EnterAgeForTest("stone_age"); err != nil {
+		t.Fatal(err)
+	}
+	if err := engine.EnterAgeForTest("bronze_age"); err != nil {
+		t.Fatal(err)
+	}
+	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Training:  not yet. Soldiers arrive in the Iron Age.") {
+		t.Errorf("the Bronze Age Army panel should name the Iron Age:\n%s", txt)
+	}
+	if err := engine.EnterAgeForTest("iron_age"); err != nil {
+		t.Fatal(err)
+	}
+	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Training:  +0.0/tick") {
+		t.Errorf("the Iron Age Army panel should show the training rate:\n%s", txt)
+	}
+}
+
 func TestArmyPanel_Garrison(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("classical_age", armyGarrison)
