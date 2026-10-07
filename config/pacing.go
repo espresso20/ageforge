@@ -195,9 +195,13 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // smooth and the ages aren't. The Renaissance is where gold income jumps (its
 // exchanges buy the stone and steel the age can't make), and once the Storage
 // Covenant raised its vault the smoke bot finished it in 0.57x of its target.
-// Its producers repay 1.3x slower (about 1.9 hours instead of 1.5). (The other
-// half of that fix was a knowledge requirement on its gate; the keystone's
-// price stands there now.)
+// Its producers repaid 1.3x slower, and the other half of that fix was a 30M
+// knowledge requirement on its gate. That requirement went when the wonders
+// got their keystones. Patronage's price stands in for it on a first run
+// (0.94x of the target), but not on known ground, where the market is as
+// much faster as everything else and buys the knowledge: there the age ran
+// at 0.50x of its target ÷ k, on the edge of its band. So the payback takes
+// the gate's half too: 1.7x (about 6.5 hours instead of 3.9).
 // Its storage is not a lever: the Renaissance Vault sits on the Storage
 // Covenant's line. Keep this list short; a second entry means the curve
 // itself wants changing.
@@ -207,7 +211,7 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // overshoot is spent waiting, the longest stretches of those ages with
 // nothing new to do. Their producers repay faster (0.8x).
 var PaybackAdjust = map[string]float64{
-	"renaissance_age": 1.3,
+	"renaissance_age": 1.7,
 	"information_age": 0.8,
 	"cyberpunk_age":   0.8,
 }
