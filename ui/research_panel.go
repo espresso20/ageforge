@@ -7,7 +7,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/theme"
 )
 
 // research_panel.go is the Research panel: the tech tree as a map over the
@@ -139,47 +138,11 @@ func (p *researchPanel) Draw(scr tcell.Screen) {
 	paintTree(scr, grid, x, y, p.model.lanes)
 }
 
-// treeStyles maps the tree's cell styles to the active theme. Lane hues go
-// through the contrast rule for art; text roles are the theme's own.
-func treeStyles(lanes int, hue func(i int) string) (styles [tsBorder + 1]tcell.Style, lane []tcell.Style) {
-	bg := theme.Color(theme.RoleBackground)
-	chip := theme.Color(theme.RoleChip)
-	on := func(role theme.Role, back tcell.Color, ratio float64) tcell.Style {
-		return tcell.StyleDefault.Background(back).Foreground(theme.Legible(theme.Color(role), back, ratio))
-	}
-	styles[tsText] = on(theme.RoleText, bg, 4.5)
-	styles[tsDim] = on(theme.RoleDim, bg, 3)
-	styles[tsBright] = on(theme.RoleBright, bg, 4.5).Bold(true)
-	styles[tsHi] = on(theme.RoleHighlight, bg, 4.5).Bold(true)
-	styles[tsLane] = on(theme.RoleAccent, bg, 3)
-	styles[tsGold] = on(theme.RoleHighlight, bg, 3).Bold(true)
-	styles[tsGoldDim] = on(theme.RoleWarning, bg, 3)
-	styles[tsGood] = on(theme.RolePositive, bg, 4.5)
-	sel := theme.Color(theme.RoleSelection)
-	styles[tsSel] = tcell.StyleDefault.Background(sel).Foreground(theme.Legible(theme.Color(theme.RoleSelectionText), sel, 4.5)).Bold(true)
-	styles[tsChip] = on(theme.RoleText, chip, 4.5)
-	styles[tsChipKey] = on(theme.RoleAccent, chip, 3).Bold(true)
-	styles[tsChipDim] = on(theme.RoleDim, chip, 3)
-	styles[tsBorder] = on(theme.RoleBorder, bg, 3)
-	for i := 0; i < lanes; i++ {
-		lane = append(lane, tcell.StyleDefault.Background(bg).Foreground(theme.Hue(hue(i), bg)))
-	}
-	return styles, lane
-}
-
-// paintTree puts a rendered grid on the screen in theme colours.
+// paintTree puts a rendered grid on the screen in theme colours (the
+// shared painter, cell_grid.go). Lane hues go through the contrast rule
+// for art; text roles are the theme's own.
 func paintTree(scr tcell.Screen, g *tGrid, x0, y0 int, lanes []config.TechLaneDef) {
-	styles, lane := treeStyles(len(lanes), func(i int) string { return lanes[i].Hue })
-	for y := 0; y < g.h; y++ {
-		for x := 0; x < g.w; x++ {
-			c := g.c[y*g.w+x]
-			st := styles[c.st]
-			if c.st == tsLane && int(c.lane) >= 0 && int(c.lane) < len(lane) {
-				st = lane[c.lane]
-			}
-			scr.SetContent(x0+x, y0+y, c.r, nil, st)
-		}
-	}
+	paintGrid(scr, g, x0, y0, newGridPalette(len(lanes), func(i int) string { return lanes[i].Hue }))
 }
 
 // InputHandler takes the panel's keys when it has the focus itself and
