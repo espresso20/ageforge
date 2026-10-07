@@ -490,7 +490,8 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 		"military_tactics": {"gives +15% military power.", "It opens campaigns.", "It builds on Bronze Working.", "adds it to your plan. Philosophy is running, so it starts in"},
 		"mathematics":      {"It is this age's keystone: the Colosseum cannot be built without it.", "You already hold this."},
 		"philosophy":       {"It is being researched:", "Type research cancel to stop it"},
-		"imperial_legions": {"It builds on Siege Warfare and Iron Smelting.", "It starts once you hold what it needs."},
+		"imperial_legions": {"It builds on Siege Warfare and Iron Smelting.", "adds it to your plan, after the 2 techs it needs first (Military Tactics, then Siege Warfare). They run in that order, one at a time."},
+		"siege_warfare":    {"adds it to your plan, after Military Tactics, which it needs first. They run in that order, one at a time."},
 		"theology":         {"the Great Library cannot be built without it.", "It starts once you reach the Medieval Age and hold what it needs."},
 		"tool_making":      {"gives +10% food production and +10% wood production. With it, gathering by hand brings 2 more.", "It needs nothing before it."},
 	} {

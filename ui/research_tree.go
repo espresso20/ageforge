@@ -687,6 +687,14 @@ func (m *treeModel) canvas(state game.GameState, sel string) *tGrid {
 			case markNext:
 				l, r = '░', '░'
 			}
+			if n.plan > 0 && n.mark != markDone && n.mark != markRunning {
+				// In the plan: the plan's arrow leads, and what the tech
+				// still waits for keeps its closing mark.
+				l = '▸'
+				if n.mark == markReady {
+					r = ' '
+				}
+			}
 			code := []rune(techCode(n.def))
 			room := geom.badgeW - 3
 			if n.ts.Kind == config.TechKeystone {
@@ -1269,10 +1277,25 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	case actStart:
 		act = sw(swHi, " Enter ") + "  starts the research."
 	case actPlan:
+		// What it still needs goes into the plan before it.
+		var first []string
+		if chain := game.PlanResearchChain(state, n.key); len(chain) > 1 {
+			for _, k := range chain[:len(chain)-1] {
+				def, _ := set.Tech(k)
+				first = append(first, def.Name)
+			}
+		}
 		act = sw(swHi, " Enter ") + "  adds it to your plan."
+		if len(first) > 0 {
+			act = sw(swHi, " Enter ") + "  adds it to your plan, after " + neededFirst(first) + "."
+		}
 		switch {
+		case n.mark == markNext && len(first) > 0:
+			act += " They run in that order, and it starts once you reach the " + m.bandOf(n).name + "."
 		case n.mark == markNext:
 			act += " It starts once you reach the " + m.bandOf(n).name + " and hold what it needs."
+		case len(first) > 0:
+			act += " They run in that order, one at a time."
 		case n.mark == markLocked:
 			act += " It starts once you hold what it needs."
 		case state.Research.CurrentTech != "":
@@ -1295,6 +1318,24 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 		out = append(out, act)
 	}
 	return out
+}
+
+// neededFirst words the techs a plan command adds before the one asked for,
+// in the order they will run: "Fire Mastery, which it needs first", "the 2
+// techs it needs first (Primitive Writing, then Mathematics)", or, for a
+// long chain, "the 7 techs it needs first (Tool Making, Stoneworking,
+// Bronze Working and 4 more)".
+func neededFirst(names []string) string {
+	switch n := len(names); {
+	case n == 0:
+		return ""
+	case n == 1:
+		return names[0] + ", which it needs first"
+	case n <= 4:
+		return fmt.Sprintf("the %d techs it needs first (%s, then %s)", n, strings.Join(names[:n-1], ", "), names[n-1])
+	default:
+		return fmt.Sprintf("the %d techs it needs first (%s and %d more)", n, strings.Join(names[:3], ", "), n-3)
+	}
 }
 
 // numberWord writes a small count as a word.

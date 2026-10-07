@@ -2,6 +2,8 @@ package smoke
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -86,8 +88,55 @@ func prestigeCarryProblems(before, after game.GameState, ending string) []proble
 		out = append(out, problem{"prestige_passive_bonus",
 			fmt.Sprintf("passive bonus is %.4f at level %d; it retired into Era Mastery and must be 0", after.Prestige.PassiveBonus, after.Prestige.Level)})
 	}
+	out = append(out, treeResetProblems(after)...)
 	out = append(out, kitCarryProblems(before, after)...)
 	return append(out, masteryCarryProblems(before, after)...)
+}
+
+// treeResetProblems checks that the tech tree belongs to the run: after a
+// prestige nothing is researched or being researched, and every tech bonus
+// is back to nothing (the pools the techs share, what they add per tick,
+// and the tech layer: output, storage, housing, the cost and time factors
+// and the mechanic terms).
+func treeResetProblems(after game.GameState) []problem {
+	rs := after.Research
+	var out []problem
+	var held []string
+	for _, k := range sortedKeys(rs.Techs) {
+		if rs.Techs[k].Researched {
+			held = append(held, k)
+		}
+	}
+	if len(held) > 0 || rs.TotalResearched != 0 {
+		out = append(out, problem{"prestige_kept_techs",
+			fmt.Sprintf("%d techs are still researched after a prestige (%s; the count reads %d)", len(held), strings.Join(held, ", "), rs.TotalResearched)})
+	}
+	if rs.CurrentTech != "" {
+		out = append(out, problem{"prestige_kept_research", fmt.Sprintf("%s is being researched right after a prestige", rs.CurrentTech)})
+	}
+	var kept []string
+	for name, m := range map[string]map[string]float64{"pool": rs.Bonuses, "flat": rs.Flat, "output": rs.Output, "mechanic": rs.Mechanics} {
+		for _, k := range sortedKeys(m) {
+			if m[k] != 0 {
+				kept = append(kept, fmt.Sprintf("%s %s %+g", name, k, m[k]))
+			}
+		}
+	}
+	for name, v := range map[string]float64{"all output": rs.AllOutput, "storage": rs.Storage, "housing": rs.Housing} {
+		if v != 0 {
+			kept = append(kept, fmt.Sprintf("%s %+g", name, v))
+		}
+	}
+	for name, f := range map[string]float64{"build cost": rs.BuildCost, "build time": rs.BuildTime, "research time": rs.ResearchTime} {
+		if f != 1 {
+			kept = append(kept, fmt.Sprintf("%s x%g", name, f))
+		}
+	}
+	if len(kept) > 0 {
+		sort.Strings(kept)
+		out = append(out, problem{"prestige_kept_tech_bonus", "tech bonuses outlived a prestige: " + strings.Join(kept, ", ")})
+	}
+	return out
 }
 
 // masteryCarryProblems checks Era Mastery across a prestige: every age below
