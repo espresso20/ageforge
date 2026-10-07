@@ -257,7 +257,9 @@ type BuildingState struct {
 	Unlocked    bool
 	AgeKey      string // age this building first becomes available
 	// NeedsTech is the tech key a building of an unlocked age still waits
-	// for (Unlocked is false until it is researched); "" otherwise.
+	// for (Unlocked is false until it is researched); "" otherwise. A wonder
+	// waiting for its keystone stays Unlocked, so its bank fills meanwhile:
+	// only CanBuild waits.
 	NeedsTech string
 	// Cost for next building
 	NextCost   map[string]float64
@@ -383,6 +385,12 @@ type TechState struct {
 	Researched    bool
 	Available     bool // meets age + prereqs and not yet researched
 	PrereqsMet    bool // every prerequisite, and one of AnyOf
+	// Kind is the tech's place in the tree: a keystone, on the spine, a
+	// capstone or optional (rules.Set.TechKind).
+	Kind config.TechKind
+	// KeystoneOf is the key of the wonder that cannot be built without this
+	// tech ("" for every tech but a keystone).
+	KeystoneOf string
 }
 
 // === Military Types ===

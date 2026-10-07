@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
 	"github.com/espresso20/ageforge/rules"
 )
@@ -184,8 +185,17 @@ type GameSave struct {
 	// OverCapGrace is the resources kept above a cap that shrank when Era
 	// Mastery's speed dropped (the grace rule, mastery.go). omitempty.
 	OverCapGrace map[string]bool `json:"over_cap_grace,omitempty"`
-	Signature    string          `json:"_sig,omitempty"`
-	Proof        string          `json:"_proof,omitempty"`
+	// TreeVersion is the tech tree's rules the save was written under
+	// (config.TechTreeVersion; absent on saves from before the tree's first
+	// lock). TreeGraceAge is the age a save from an older version was in
+	// when it met the new locks: in that age they do not apply (its wonder
+	// needs no keystone tech), and they start at the next advance, which
+	// clears it (graceTreeLocked). Both omitempty, so older saves keep their
+	// bytes and signatures.
+	TreeVersion  int    `json:"tree_version,omitempty"`
+	TreeGraceAge string `json:"tree_grace_age,omitempty"`
+	Signature    string `json:"_sig,omitempty"`
+	Proof        string `json:"_proof,omitempty"`
 }
 
 // hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
@@ -689,6 +699,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		PlanLog:                clonePlanTemplate(ge.planLog),
 		PacingWeek:             true,
 		OverCapGrace:           ge.Resources.graceSave(),
+		TreeVersion:            config.TechTreeVersion,
+		TreeGraceAge:           ge.Buildings.graceAge,
 	}
 }
 
@@ -888,6 +900,10 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	if save.WonderBanks != nil {
 		ge.Buildings.LoadWonderBanks(save.WonderBanks)
 	}
+	// The tech tree's locks: a save from before them gets one age of grace,
+	// once (after the signature check above, which covered the bytes as
+	// written), and before the offline catch-up, which may build a wonder.
+	treeGraced := ge.graceTreeLocked(&save)
 
 	// Restore Phase 7: legacy buildings
 	if len(save.LegacyBuildings) > 0 {
@@ -1031,6 +1047,11 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	if !save.PacingWeek {
 		ge.addLog("info", pacingNotice)
 	}
+	// A save from before the tree's locks hears once what changed and what
+	// its grace covers; its next save carries the tree's version.
+	if treeGraced {
+		ge.addLog("info", ge.treeNotice())
+	}
 
 	// Load succeeded: this is now the active slot a bare `save` writes to. We're
 	// still under the write lock (ge.mu.Lock at the top of this function), so set
@@ -1090,6 +1111,38 @@ func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[st
 		}
 	}
 	return out
+}
+
+// graceTreeLocked restores the tech tree's grace age from save and, for a
+// save written under an older version of the tree's rules (or before them),
+// grants it: the age the save is in becomes the grace age, where the locks
+// that version added do not apply (TechTreeVersion 1: a wonder needs its
+// keystone tech). Nothing researched or built is touched. It reports
+// whether it granted one. A grace age that is not the save's age (a
+// hand-edited save) is dropped. Must be called with the write lock held.
+func (ge *GameEngine) graceTreeLocked(save *GameSave) bool {
+	ge.Buildings.graceAge = ""
+	if save.TreeVersion >= config.TechTreeVersion {
+		if save.TreeGraceAge == save.Age {
+			ge.Buildings.graceAge = save.TreeGraceAge
+		}
+		return false
+	}
+	ge.Buildings.graceAge = save.Age
+	return true
+}
+
+// treeNotice is the line a save from before the tech tree's locks gets on its
+// first load: what changed, and that the age it was in is exempt. If the time
+// away already took the game into its next age the grace is over, and the
+// line says only what changed. Must be called with the write lock held.
+func (ge *GameEngine) treeNotice() string {
+	const changed = "Research update: each age's wonder now needs one tech, its keystone, before it can be built, and techs are priced by their age."
+	const kept = " Everything you have researched or built stays."
+	if ge.Buildings.graceAge == "" || ge.Buildings.graceAge != ge.age {
+		return changed + kept
+	}
+	return changed + fmt.Sprintf(" Your game was already in the %s, so its wonder is exempt: the lock starts when you next advance.", ge.progress.GetAgeName(ge.age)) + kept
 }
 
 // pacingNotice is the line a save written before the one-week curve gets

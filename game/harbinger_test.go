@@ -501,8 +501,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		epoch string
 		brace map[string]float64
 	}{
-		{"stone_era", map[string]float64{"food": 9600, "wood": 4800, "knowledge": 2400}},
-		{"steel_era", map[string]float64{"knowledge": 3600000, "gold": 1800000, "steel": 288000}},
+		// No knowledge in either: Brace is priced off what the era's
+		// advances ask for, and no gate asks for knowledge any more.
+		{"stone_era", map[string]float64{"food": 9600, "wood": 4800}},
+		{"steel_era", map[string]float64{"gold": 1800000, "steel": 288000}},
 		// The Cosmic Era's passage is prestige. Brace is priced off the era's
 		// own advances, for resources held from Interstellar (dark matter
 		// 13T, titanium 630B → 12%). Antimatter and quantum flux arrive

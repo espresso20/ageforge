@@ -87,7 +87,7 @@ func (ge *GameEngine) bankOverflow(w, res string, lost float64) float64 {
 	if need-bank[res] <= 0.001 {
 		ge.addLog("info", fmt.Sprintf("Overflow finished banking %s for %s.", ResourceName(res), def.Name))
 		if ge.Buildings.IsWonderBankFull(w) {
-			ge.addLog("success", fmt.Sprintf("The %s bank is full. Type 'build %s' to start construction.", def.Name, w))
+			ge.addLog("success", fmt.Sprintf("The %s bank is full. %s", def.Name, ge.wonderNextStep(w)))
 		}
 	}
 	return dep
