@@ -59,8 +59,14 @@ import (
 //     their knowledge.
 //   - Items that can never start drop out with a log line: a building of an
 //     earlier age after an advance, a building at its MaxCount, a tech
-//     already researched, a tech whose prerequisite is neither researched,
-//     being researched nor planned before it.
+//     already researched.
+//   - A tech is only planned once what it needs is researched, being
+//     researched or planned before it. One already in the plan that loses
+//     that (its prerequisite was removed from above it, the research it
+//     waited on was canceled, or a game update changed what the tech
+//     needs) stays and waits: it could still start, so it is not dropped.
+//     While it waits it holds neither the research slot's turn nor its
+//     knowledge, so a prerequisite planned below it can go first.
 //
 // The plan is saved, and it is cleared by prestige, Succumb and a new game.
 
@@ -263,9 +269,10 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 	return count, nil
 }
 
-// PlanAddResearch appends tech key to the plan. It must be a tech of this age
-// or earlier, not researched, not already planned, and every prerequisite
-// must be researched, in progress or planned before it.
+// PlanAddResearch appends tech key to the plan. It must be a tech of an age
+// up to the next one, not researched, not already planned, and what it needs
+// (every prerequisite, and one of its either-or group) must be researched,
+// in progress or planned before it.
 func (ge *GameEngine) PlanAddResearch(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -281,7 +288,7 @@ func (ge *GameEngine) PlanAddResearch(key string) error {
 	if len(ge.plan) >= MaxPlanItems {
 		return errPlanFull()
 	}
-	if reason := ge.planResearchInvalid(key, len(ge.plan)); reason != "" {
+	if reason := ge.planResearchRefused(key, len(ge.plan)); reason != "" {
 		return fmt.Errorf("Can't plan %s: %s.", def.Name, reason)
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: key, Count: 1})
@@ -418,9 +425,9 @@ func (ge *GameEngine) planBuildInvalid(key string, planned int) string {
 	return ""
 }
 
-// planResearchInvalid is why tech key can never start from plan position idx
-// ("" if it can).
-func (ge *GameEngine) planResearchInvalid(key string, idx int) string {
+// planResearchInvalid is why tech key can never start from the plan ("" if
+// it can): the plan drops an item it is true of.
+func (ge *GameEngine) planResearchInvalid(key string) string {
 	def, ok := ge.rules.Tech(key)
 	if !ok {
 		return "unknown technology"
@@ -435,22 +442,54 @@ func (ge *GameEngine) planResearchInvalid(key string, idx int) string {
 	if order[def.Age] > order[ge.age] && def.Age != ge.progress.GetNextAge(ge.age) {
 		return "it belongs to a later age"
 	}
-	for _, pre := range def.Prerequisites {
+	return ""
+}
+
+// planResearchMissing names what tech key at plan position idx still needs
+// that is not on its way: a prerequisite neither researched, being
+// researched nor planned before idx ("Tool Making"), or its either-or group
+// when no key of it is ("Map Making or Boatbuilding", either true). "" when
+// everything it needs is on its way.
+func (ge *GameEngine) planResearchMissing(key string, idx int) (names string, either bool) {
+	def, ok := ge.rules.Tech(key)
+	if !ok {
+		return "", false
+	}
+	onItsWay := func(pre string) bool {
 		if ge.Research.IsResearched(pre) || ge.Research.currentTech == pre {
-			continue
+			return true
 		}
-		planned := false
 		for i := 0; i < idx && i < len(ge.plan); i++ {
 			if ge.plan[i].Kind == PlanResearch && ge.plan[i].Key == pre {
-				planned = true
-				break
+				return true
 			}
 		}
-		if !planned {
-			return fmt.Sprintf("it needs %s first, which isn't researched or planned before it", techDefName(ge.rules, pre))
-		}
+		return false
 	}
-	return ""
+	if pre := def.MissingPrereq(onItsWay); pre != "" {
+		return techDefName(ge.rules, pre), false
+	}
+	if !def.AnyOfMet(onItsWay) {
+		return techNamesOr(ge.rules, def.AnyOf), true
+	}
+	return "", false
+}
+
+// planResearchRefused is why tech key cannot be added to the plan at
+// position idx ("" if it can): it could never start, or what it needs is
+// not researched, being researched or planned before it.
+func (ge *GameEngine) planResearchRefused(key string, idx int) string {
+	if reason := ge.planResearchInvalid(key); reason != "" {
+		return reason
+	}
+	switch names, either := ge.planResearchMissing(key, idx); {
+	case names == "":
+		return ""
+	case either:
+		return fmt.Sprintf("it needs %s first, and none of them is researched or planned before it", names)
+	default:
+		return fmt.Sprintf("it needs %s first, which isn't researched or planned before it", names)
+	}
 }
 
 // ===== Execution =====
@@ -531,6 +570,16 @@ func (s *planStarts) describe(set *rules.Set) string {
 func techDefName(set *rules.Set, key string) string {
 	def, _ := set.Tech(key)
 	return def.Name
+}
+
+// techNamesOr is the names of techs keys in set as a choice: "Map Making or
+// Boatbuilding".
+func techNamesOr(set *rules.Set, keys []string) string {
+	names := make([]string, len(keys))
+	for i, k := range keys {
+		names[i] = techDefName(set, k)
+	}
+	return orList(names)
 }
 
 // planCheck is the plan walk's verdict on one item's next start.
@@ -618,10 +667,11 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		if !researchFirst {
 			return planCheck{cost: cost, blocked: "after the research above it", reserve: true}
 		}
-		for _, pre := range def.Prerequisites {
-			if !ge.Research.IsResearched(pre) {
-				return planCheck{cost: cost, blocked: "needs " + techDefName(ge.rules, pre) + " first", reserve: true}
-			}
+		if pre := def.MissingPrereq(ge.Research.IsResearched); pre != "" {
+			return planCheck{cost: cost, blocked: "needs " + techDefName(ge.rules, pre) + " first", reserve: true}
+		}
+		if !def.AnyOfMet(ge.Research.IsResearched) {
+			return planCheck{cost: cost, blocked: "needs " + techNamesOr(ge.rules, def.AnyOf) + " first", reserve: true}
 		}
 		return planCheck{cost: cost, reserve: true}
 	}
@@ -743,18 +793,25 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			}
 			continue
 		}
-		var reason string
+		var reason, missing string
 		if it.Kind == PlanBuild {
 			// Copies the surviving items above will take first (their
 			// counts already net of what they started this walk).
 			reason = ge.planBuildInvalid(it.Key, plannedCopies(out, it.Key))
-		} else {
+		} else if reason = ge.planResearchInvalid(it.Key); reason == "" {
 			// Prerequisites planned before this item count only while they
 			// are still in the plan: out holds the survivors so far.
 			saved := ge.plan
 			ge.plan = out
-			reason = ge.planResearchInvalid(it.Key, len(out))
+			missing, _ = ge.planResearchMissing(it.Key, len(out))
 			ge.plan = saved
+		}
+		if missing != "" && it.Count > 0 {
+			// It waits for something that is not on its way. It keeps its
+			// place, but not the research slot's turn or its knowledge: a
+			// prerequisite planned below it can then go first.
+			out = append(out, it)
+			continue
 		}
 		if reason != "" || it.Count <= 0 {
 			if reason == "" {
@@ -957,7 +1014,7 @@ func (ge *GameEngine) planViews() []PlanItemView {
 	reserved := map[string]float64{}
 	researchSeen := false
 	out := make([]PlanItemView, 0, len(ge.plan))
-	for _, it := range ge.plan {
+	for i, it := range ge.plan {
 		if it.Kind == PlanTrade {
 			out = append(out, ge.planTradeView(it, reserved))
 			continue
@@ -976,11 +1033,20 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		} else {
 			v.Name = ge.Buildings.defs[it.Key].Name
 		}
-		first := it.Kind == PlanResearch && !researchSeen
+		// A tech waiting for something that is not on its way holds neither
+		// the research slot's turn nor its knowledge, as in the walk.
+		missing := ""
 		if it.Kind == PlanResearch {
+			missing, _ = ge.planResearchMissing(it.Key, i)
+		}
+		first := it.Kind == PlanResearch && !researchSeen && missing == ""
+		if it.Kind == PlanResearch && missing == "" {
 			researchSeen = true
 		}
 		chk := ge.checkPlanItem(it, first)
+		if missing != "" {
+			chk.blocked, chk.reserve = "needs "+missing+" first", false
+		}
 		// A banked build shows its whole price, what its bank holds of it,
 		// and progress counting the bank.
 		price := chk.cost

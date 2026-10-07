@@ -1192,7 +1192,10 @@ func truthTechPromises() []truthPromise { return truthTechPromisesOf(config.Tech
 func truthTechPromisesOf(defs []config.TechDef) []truthPromise {
 	var out []truthPromise
 	for _, def := range defs {
-		for _, eff := range def.Effects {
+		for _, typed := range def.Effects {
+			// A tech's effect is typed (a kind and a target). The meters
+			// read the general Effect every other source is written in.
+			eff := typed.Effect()
 			key := def.Key
 			out = append(out, truthPromise{
 				Source: "tech", Key: def.Key, Name: def.Name, Age: def.Age, Eff: eff, Count: 1,
@@ -1205,7 +1208,7 @@ func truthTechPromisesOf(defs []config.TechDef) []truthPromise {
 						saved = def
 						rm.order = append(append([]string(nil), order...), key)
 					}
-					set := func(effects []config.Effect) func() {
+					set := func(effects []config.TechEffect) func() {
 						return func() {
 							d := saved
 							d.Effects = effects
@@ -1216,7 +1219,7 @@ func truthTechPromisesOf(defs []config.TechDef) []truthPromise {
 					}
 					return truthSwitch{
 						off: set(nil),
-						on:  set([]config.Effect{eff}),
+						on:  set([]config.TechEffect{typed}),
 						restore: func() {
 							rm.defs[key] = saved
 							if !known {

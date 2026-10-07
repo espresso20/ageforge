@@ -74,7 +74,7 @@ func (ge *GameEngine) recordSavedResource(res string, amount float64) {
 func (ge *GameEngine) militaryPower() float64 {
 	prestige := ge.Prestige.GetBonuses()
 	wonders := ge.getWonderBonuses()
-	return ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestige["military_power"] + wonders["military_power"]
+	return ge.Research.Bonus(config.EffectMilitaryPower, "") + ge.permanentBonuses["military_power"] + prestige["military_power"] + wonders["military_power"]
 }
 
 // expeditionReward is the summed expedition_reward bonus, from the same
@@ -82,7 +82,7 @@ func (ge *GameEngine) militaryPower() float64 {
 func (ge *GameEngine) expeditionReward() float64 {
 	prestige := ge.Prestige.GetBonuses()
 	wonders := ge.getWonderBonuses()
-	return ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestige["expedition_reward"] + wonders["expedition_reward"]
+	return ge.Research.Bonus(config.EffectExpeditionReward, "") + ge.permanentBonuses["expedition_reward"] + prestige["expedition_reward"] + wonders["expedition_reward"]
 }
 
 // defenseRating is the live Defense Rating (MilitaryState.DefenseRating).

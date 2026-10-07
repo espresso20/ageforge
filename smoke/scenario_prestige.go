@@ -293,7 +293,7 @@ func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) 
 	// planned again when the next run starts there, and nothing else is.
 	tech := ""
 	for _, t := range set.Techs() {
-		if t.Age == set.AgeKeys()[0] && len(t.Prerequisites) == 0 {
+		if t.Age == set.AgeKeys()[0] && len(t.Prerequisites) == 0 && len(t.AnyOf) == 0 {
 			tech = t.Key
 			break
 		}

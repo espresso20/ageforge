@@ -58,6 +58,28 @@ func techLabel(name, key string) string {
 	return name + " (" + key + ")"
 }
 
+// techNeeds lists what a tech needs, for a "needs:" line: the name of each
+// prerequisite, then its either-or group as one entry ("Map Making or
+// Boatbuilding").
+func techNeeds(ts game.TechState, techs map[string]config.TechDef) []string {
+	var names []string
+	for _, prereq := range ts.Prerequisites {
+		if p, ok := techs[prereq]; ok {
+			names = append(names, p.Name)
+		}
+	}
+	var either []string
+	for _, prereq := range ts.AnyOf {
+		if p, ok := techs[prereq]; ok {
+			either = append(either, p.Name)
+		}
+	}
+	if len(either) > 0 {
+		names = append(names, strings.Join(either, " or "))
+	}
+	return names
+}
+
 // researchProvider generates the full research overlay text. It renders three
 // sections: (1) currently-in-progress tech with a tick progress bar,
 // (2) active research bonuses, and (3) the full tech tree grouped by age.
@@ -167,7 +189,7 @@ func researchProvider(state game.GameState, _ int) string {
 
 			if len(def.Effects) > 0 {
 				var effStrs []string
-				for _, eff := range def.Effects {
+				for _, eff := range def.GeneralEffects() {
 					// A bonus a cap would hold back says so before the
 					// knowledge is spent.
 					effStrs = append(effStrs, formatTechEffect(eff)+capTag(state, eff, false, "gray"))
@@ -240,7 +262,7 @@ func researchProvider(state game.GameState, _ int) string {
 			if ts.Researched {
 				// Compact: show effects
 				var effStrs []string
-				for _, eff := range def.Effects {
+				for _, eff := range def.GeneralEffects() {
 					effStrs = append(effStrs, formatTechEffect(eff)+capTag(state, eff, true, "gray"))
 				}
 				effStr := ""
@@ -255,16 +277,8 @@ func researchProvider(state game.GameState, _ int) string {
 			} else if ts.Available {
 				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-40s[-]  [gray]%s knowledge · %s[-]", techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(researchTicks(def.ResearchTicks, state), state))
 				// Show prereqs if any
-				if len(ts.Prerequisites) > 0 {
-					var prereqNames []string
-					for _, prereq := range ts.Prerequisites {
-						if p, ok := allTechs[prereq]; ok {
-							prereqNames = append(prereqNames, p.Name)
-						}
-					}
-					if len(prereqNames) > 0 {
-						fmt.Fprintf(&sb, "  [gray]needs: %s[-]", strings.Join(prereqNames, ", "))
-					}
+				if prereqNames := techNeeds(ts, allTechs); len(prereqNames) > 0 {
+					fmt.Fprintf(&sb, "  [gray]needs: %s[-]", strings.Join(prereqNames, ", "))
 				}
 				sb.WriteString("\n")
 
@@ -274,13 +288,7 @@ func researchProvider(state game.GameState, _ int) string {
 
 			} else {
 				// Locked — prereqs not met
-				var prereqNames []string
-				for _, prereq := range ts.Prerequisites {
-					if p, ok := allTechs[prereq]; ok {
-						prereqNames = append(prereqNames, p.Name)
-					}
-				}
-				if len(prereqNames) > 0 {
+				if prereqNames := techNeeds(ts, allTechs); len(prereqNames) > 0 {
 					fmt.Fprintf(&sb, "  [gray]•  %-24s  needs: %s[-]\n", ts.Name, strings.Join(prereqNames, ", "))
 				} else {
 					fmt.Fprintf(&sb, "  [gray]•  %s[-]\n", ts.Name)
