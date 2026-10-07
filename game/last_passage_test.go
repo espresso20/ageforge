@@ -8,6 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // --- helpers ------------------------------------------------------------------
@@ -90,7 +91,7 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatalf("appease: %v", err)
 	}
-	fillBraceStock(ge, 2e12)
+	fillBraceStock(ge, 2e16)
 	if err := ge.HarbingerBrace(); err != nil {
 		t.Fatalf("brace: %v", err)
 	}
@@ -131,29 +132,145 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 	}
 }
 
-// A Last Passage thread's Appease is priced on the age it begins in (the
-// era's first in play; a later one for a thread that began there), its Brace
-// on the era.
+// A Last Passage thread's Appease and Brace are both priced on the age it
+// begins in (the era's first in play; a later one for a thread that began
+// there).
 func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
-	appease := map[string][2]float64{ // faith, culture
-		"interstellar_age": {1400000000, 21000000000},
-		"galactic_age":     {2700000000, 41000000000},
-		"quantum_age":      {5400000000, 81000000000},
-		"transcendent_age": {5400000000, 81000000000},
+	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
+		"interstellar_age": {890000000, 14000000000, 8.9e15, 1.1e16},
+		"galactic_age":     {1800000000, 27000000000, 1.9e17, 1.1e16},
+		"quantum_age":      {3600000000, 54000000000, 1.9e17, 1.1e16},
+		"transcendent_age": {3600000000, 54000000000, 1.9e17, 1.1e16},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
 		v := ge.GetState().Harbinger
-		want, ok := appease[age]
+		want, ok := prices[age]
 		if !ok || v.AppeaseCost["faith"] != want[0] || v.AppeaseCost["culture"] != want[1] || len(v.AppeaseCost) != 2 {
 			t.Errorf("%s: appease = %v, want %v faith and %v culture", age, v.AppeaseCost, want[0], want[1])
 		}
-		if v.BraceCost["dark_matter"] != 1560000000000 || v.BraceCost["titanium"] != 75600000000 || len(v.BraceCost) != 2 {
-			t.Errorf("%s: brace = %v", age, v.BraceCost)
+		if !ok || v.BraceCost["dark_matter"] != want[2] || v.BraceCost["titanium"] != want[3] || len(v.BraceCost) != 2 {
+			t.Errorf("%s: brace = %v, want %v dark matter and %v titanium", age, v.BraceCost, want[2], want[3])
 		}
 		if v.EndurePointsPct != 50 || v.NextEndurePointsPct != 70 {
 			t.Errorf("%s: endure points %d%% next %d%%", age, v.EndurePointsPct, v.NextEndurePointsPct)
 		}
+	}
+}
+
+// --- the choice ---------------------------------------------------------------------
+
+// lastPassageLoss is the share of the run's points a player who would Endure
+// expects to lose to the Last Passage with these levels bought on its thread
+// and faith storage at fill: the engine's chance for the roll, times what an
+// Endure gives up.
+func lastPassageLoss(t *testing.T, fill float64, appease, brace int) float64 {
+	t.Helper()
+	ge := lpEngine(t, "interstellar_age", 7)
+	setFaith(ge, fill*1000, 1000)
+	ge.harbinger.AppeaseLevel, ge.harbinger.BraceLevel = appease, brace
+	return ge.CatastropheOutlook().Probability * (1 - LastPassageKeepFor(ge.lastPassageBraceLevel()))
+}
+
+// incomeHours is how long a moderate economy in age takes to make cost, in
+// hours at 1x: the slowest of its resources at config.TypicalIncome (which is
+// config.FlowIncome for faith and culture).
+func incomeHours(t *testing.T, cost map[string]float64, age string) float64 {
+	t.Helper()
+	if len(cost) == 0 {
+		t.Fatalf("no price to time in %s", age)
+	}
+	slowest := 0.0
+	for res, c := range cost {
+		rate := config.TypicalIncome(res, age)
+		if rate <= 0 {
+			t.Fatalf("nothing makes %s in %s", res, age)
+		}
+		slowest = math.Max(slowest, c/rate)
+	}
+	return slowest * config.TickSeconds / 3600
+}
+
+// lastPassageChoiceMinRatio is the least Appease level 1 may save per hour of
+// a moderate economy's income, as a share of what Brace level 1 saves per
+// hour of it. Under a half, Appease is the answer nobody buys.
+const lastPassageChoiceMinRatio = 0.5
+
+// The Last Passage's two answers are a choice, not a formality. For a player
+// who would Endure, with nothing bought, each level 1 saves the same expected
+// points, so the choice is in the prices: Appease level 1 is the dearer, but
+// saves at least half as many expected points per hour of income as Brace
+// level 1 (about two thirds, at these prices). Change a price or an effect
+// and this is the test to argue with. The prices before it (Brace at 12% of
+// the era's largest requirement, Appease on the whole age) gave a ratio of 1
+// to 13,500.
+func TestLastPassageChoice(t *testing.T) {
+	const low, mid, high = 0.1, 0.5, 0.9
+	// What is left at risk at mid faith, in percent of the run's points, by
+	// [Appease level][Brace level]: the table the wiki prints.
+	want := [3][3]float64{{7.5, 4.5, 2.25}, {4.5, 2.7, 1.35}, {2.7, 1.62, 0.81}}
+	var loss [3][3]float64
+	for a := range want {
+		for b := range want[a] {
+			loss[a][b] = lastPassageLoss(t, mid, a, b)
+			if math.Abs(loss[a][b]*100-want[a][b]) > 1e-9 {
+				t.Errorf("Appease %d, Brace %d at mid faith: %.4f%% of the run's points at risk, want %v%%", a, b, loss[a][b]*100, want[a][b])
+			}
+		}
+	}
+	appeaseSaves, braceSaves := loss[0][0]-loss[1][0], loss[0][0]-loss[0][1]
+	if appeaseSaves <= 0 || braceSaves <= 0 {
+		t.Fatalf("level 1 saves nothing: Appease %v, Brace %v", appeaseSaves, braceSaves)
+	}
+	// Appease level 1's saving per hour of income over Brace level 1's.
+	valueRatio := func(appeaseHours, braceHours float64) float64 {
+		return (appeaseSaves / appeaseHours) / (braceSaves / braceHours)
+	}
+
+	ages := epochAges(t, "cosmic_era")
+	for _, age := range ages {
+		appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", age, 1), age)
+		braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", age, 1), age)
+		ratio := valueRatio(appeaseHours, braceHours)
+		t.Logf("%s: Brace 1 is %.1f h of income, Appease 1 %.1f h; Appease 1 saves %.3fx what Brace 1 does per hour", age, braceHours, appeaseHours, ratio)
+		if appeaseHours <= braceHours {
+			t.Errorf("%s: Appease level 1 takes %.1f h of income, Brace level 1 %.1f h: Appease must stay the dearer", age, appeaseHours, braceHours)
+		}
+		if ratio < lastPassageChoiceMinRatio {
+			t.Errorf("%s: Appease level 1 saves %.2fx what Brace level 1 does per hour of income (%.1f h against %.1f h), want at least %vx", age, ratio, appeaseHours, braceHours, lastPassageChoiceMinRatio)
+		}
+	}
+
+	// The thread a run meets, foretold in the era's first age: the hours the
+	// wiki quotes.
+	first := ages[0]
+	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
+	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
+	if math.Abs(braceHours-20.9) > 0.05 || math.Abs(appeaseHours-32.4) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 20.9 and 32.4", first, braceHours, appeaseHours)
+	}
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.645) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.645", first, ratio)
+	}
+
+	// The faith band moves the odds, not the choice: both savings scale with
+	// the chance of the roll.
+	for _, fill := range []float64{low, high} {
+		none := lastPassageLoss(t, fill, 0, 0)
+		a, b := none-lastPassageLoss(t, fill, 1, 0), none-lastPassageLoss(t, fill, 0, 1)
+		if math.Abs(a/b-appeaseSaves/braceSaves) > 1e-9 {
+			t.Errorf("faith fill %v: Appease level 1 saves %vx what Brace level 1 does, at mid faith %vx", fill, a/b, appeaseSaves/braceSaves)
+		}
+	}
+
+	// The prices this replaced fail it: Brace at the era's price, which the
+	// Reality Tear's thread keeps, and Appease on the whole age.
+	oldBrace := incomeHours(t, harbingerBraceCost("cosmic_era", 1), first)
+	oldAppease := incomeHours(t, warningAppeaseCostIn(rules.Core(), "cosmic_era", first, config.AgeTargetTicks(first), 1), first)
+	oldRatio := valueRatio(oldAppease, oldBrace)
+	t.Logf("the old prices: Brace 1 %.4f h, Appease 1 %.1f h; ratio 1 to %.0f", oldBrace, oldAppease, 1/oldRatio)
+	if oldRatio >= lastPassageChoiceMinRatio/1000 {
+		t.Errorf("the old prices (Brace %.4f h, Appease %.1f h) give a ratio of %v: the test would not have caught them", oldBrace, oldAppease, oldRatio)
 	}
 }
 

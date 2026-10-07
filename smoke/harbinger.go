@@ -429,10 +429,12 @@ type PriceRow struct {
 	// for the whole thread, and storage only grows after it.
 	Age string `json:"age"`
 	// WarningTicks is that shortest warning in ticks at 1x: a fifth of the
-	// age's pacing target for a doom, the whole of it for the Last Passage.
+	// age's pacing target for a doom, two thirds of it for the Last Passage.
 	WarningTicks float64            `json:"appease_warning_ticks"`
 	AppeaseL1    map[string]float64 `json:"appease_l1_cost"`
-	BraceL1      map[string]float64 `json:"brace_l1_cost"`
+	// BraceL1 is priced by the era for a doom, and on the same warning as
+	// Appease for the Last Passage.
+	BraceL1 map[string]float64 `json:"brace_l1_cost"`
 	// MaxStorage is -1 where an uncapped storage building covers the resource.
 	MaxStorage map[string]float64 `json:"max_storage_in_age"`
 }
