@@ -108,7 +108,7 @@ func (m *miniMap) Draw(scr tcell.Screen) {
 	cv.Put(w-1, h-1, '┘', border)
 	cv.Text(1, 0, w-2, " Map · "+styleTitle(m.mv.reg, m.set.Style)+" ", title)
 
-	f := mapstyle.Frame{Model: m.model, Anim: int(m.now().Sub(m.start) / mapAnimStep), Tier: m.set.Tier}
+	f := mapstyle.Frame{Model: m.model, Anim: animFrame(m.set.Motion, m.now().Sub(m.start)), Tier: m.set.Tier}
 	m.styles.get(m.set.Style).DrawCompact(scr, mapstyle.Rect{X: x + 1, Y: y + 1, W: w - 2, H: h - 2}, f)
 
 	if ns, ok := m.styles.get(m.set.Style).(mapstyle.CompactNews); m.model != nil && !(ok && ns.CompactShowsNews()) {

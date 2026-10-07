@@ -108,7 +108,9 @@ func TestDashboardAnnouncesBadges(t *testing.T) {
 		t.Fatal("the log line was written under the engine's lock, before the dashboard drained it")
 	}
 	d.refresh()
-	if got := d.toastMgr.GetCurrent(); !strings.Contains(got, "Badge earned: Rock Solid (bronze)") {
+	// The toast: the badge in three cells, then its name, tier and what it
+	// is for (the tags are colours, checked in TestBadgeToastFitsTheBar).
+	if got := untag(d.toastMgr.GetCurrent()); got != "◖*◗ Badge earned: Rock Solid (bronze). Reach the Stone Age." {
 		t.Errorf("the toast reads %q", got)
 	}
 	if count() != 1 {

@@ -7,6 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // medal.go is the one badge renderer. The Research panel's tech badges and
@@ -165,6 +166,13 @@ var (
 			"    FFRFFFRFF    ",
 		},
 	}
+	// spriteStatic is an integrity badge without a sprite of its own: a
+	// frame of static. (The three there are each have a sprite; this is
+	// what a fourth would wear until it is drawn.)
+	spriteStatic = medalSprite{
+		rows:  []string{"▚▞▚▞▚▞▚▞▚", "▞       ▚", "▚       ▞", "▞       ▚", "▚▞▚▞▚▞▚▞▚"},
+		roles: []string{"FFFFFFFFF", "F       F", "F   E   F", "F       F", "FFFFFFFFF"},
+	}
 	// spriteSlab is a hidden badge at full size: a slab that gives nothing
 	// away, not even a tier.
 	spriteSlab = medalSprite{
@@ -247,121 +255,62 @@ func tierMini(t config.BadgeTier) []string {
 
 // ----- inks -----
 
-// ink is a colour that belongs to badge art, by name. The painter picks
-// its value for a dark or a light theme and holds it to the contrast rule
-// (gridPalette.inkOn).
+// ink is a colour that belongs to badge art, by name: one of the theme
+// package's badge hues, or a hue of the legendary rim's wheel. The painter
+// picks its value for a dark or a light theme and holds it to the contrast
+// rule (gridPalette.inkOn).
 type ink uint16
 
 const (
-	inkNone ink = iota
-	// The metals: dark, base and pale for each tier, in tier order.
-	inkBronzeDark
-	inkBronze
-	inkBronzePale
-	inkSilverDark
-	inkSilver
-	inkSilverPale
-	inkGoldDark
-	inkGold
-	inkGoldPale
-	inkPlatinumDark
-	inkPlatinum
-	inkPlatinumPale
-	// The hand-drawn sprites' own colours.
-	inkCookie
-	inkCookieDark
-	inkLid
-	inkLidDark
-	inkJarLabel
-	inkGlass
-	inkCyan
-	inkMagenta
-	inkStatic
-	inkLedgerRule
-	inkLedgerDigit
-	inkLedgerText
-	inkLedgerHead
-	inkRain0
-	inkRain1
-	inkRain2
-	inkRain3
-	inkRain4
-	inkRain5
-	inkSourceFrame
-	inkSourceLabel
-	inkSourceKey
+	inkNone        = ink(theme.BadgeHueNone)
+	inkBronze      = ink(theme.BadgeBronze)
+	inkSilver      = ink(theme.BadgeSilver)
+	inkGold        = ink(theme.BadgeGold)
+	inkPlatinum    = ink(theme.BadgePlatinum)
+	inkCookie      = ink(theme.BadgeCookie)
+	inkCookieDark  = ink(theme.BadgeCookieDark)
+	inkLid         = ink(theme.BadgeLid)
+	inkLidDark     = ink(theme.BadgeLidDark)
+	inkJarLabel    = ink(theme.BadgeJarLabel)
+	inkGlass       = ink(theme.BadgeGlass)
+	inkCyan        = ink(theme.BadgeCyan)
+	inkMagenta     = ink(theme.BadgeMagenta)
+	inkStatic      = ink(theme.BadgeStatic)
+	inkLedgerRule  = ink(theme.BadgeLedgerRule)
+	inkLedgerDigit = ink(theme.BadgeLedgerDigit)
+	inkLedgerText  = ink(theme.BadgeLedgerText)
+	inkLedgerHead  = ink(theme.BadgeLedgerHead)
+	inkRain0       = ink(theme.BadgeRain0)
+	inkSourceFrame = ink(theme.BadgeSourceFrame)
+	inkSourceLabel = ink(theme.BadgeSourceLabel)
+	inkSourceKey   = ink(theme.BadgeSourceKey)
 	// inkPrism is the first of the legendary rim's inks: prismHues hues,
 	// three stops each (dark, base, pale).
-	inkPrism
+	inkPrism = ink(theme.NumBadgeHues)
 )
 
 // prismHues is how many hues the legendary rim's wheel has.
 const prismHues = 36
 
-// inkColors is each named ink for a dark theme and for a light one.
-//
-// On a dark canvas the metals are the design's: bronze B87333, silver
-// C0C0C0, gold D4AF37, platinum E5E4E2, each with a dark and a pale stop.
-// On a light canvas those pale metals would all be darkened to the same
-// grey, so each tier has a light-theme ramp of its own, and the ramp runs
-// the other way: the stop that stands out is the darkest. Silver is a
-// neutral grey there and platinum a steel blue, so the two stay apart.
-var inkColors = map[ink][2]int32{
-	inkBronzeDark:   {0x7a4a1f, 0xb8804e},
-	inkBronze:       {0xb87333, 0x96531c},
-	inkBronzePale:   {0xe3a869, 0x6e3a0e},
-	inkSilverDark:   {0x7d848c, 0x8a929b},
-	inkSilver:       {0xc0c0c0, 0x5f6b77},
-	inkSilverPale:   {0xf2f4f7, 0x39434d},
-	inkGoldDark:     {0x8c6a14, 0xb8922e},
-	inkGold:         {0xd4af37, 0x8f6a00},
-	inkGoldPale:     {0xf4e29a, 0x6a4d00},
-	inkPlatinumDark: {0x8796a6, 0x8fa0c8},
-	inkPlatinum:     {0xe5e4e2, 0x566aa6},
-	inkPlatinumPale: {0xf2f8ff, 0x33457d},
-
-	inkCookie:      {0xc68642, 0x9a5f22},
-	inkCookieDark:  {0x8b5a2b, 0x6b3f14},
-	inkLid:         {0xe0a95a, 0x8a5a12},
-	inkLidDark:     {0xc98a3a, 0x70470c},
-	inkJarLabel:    {0xf5f5f5, 0x1f2328},
-	inkGlass:       {0x8fd3ff, 0x1f6f9c},
-	inkCyan:        {0x39e6ff, 0x00758a},
-	inkMagenta:     {0xff3ea5, 0xb3166b},
-	inkStatic:      {0x39ff88, 0x0b7a3a},
-	inkLedgerRule:  {0x2f6f93, 0x6f97b0},
-	inkLedgerDigit: {0xffe066, 0x7a5a00},
-	inkLedgerText:  {0x9fe8ff, 0x1d5f77},
-	inkLedgerHead:  {0xe6f7ff, 0x0f3a4a},
-	inkRain0:       {0xeaffea, 0x06290f},
-	inkRain1:       {0x8dffa8, 0x0c4a1d},
-	inkRain2:       {0x3ddc6e, 0x13672b},
-	inkRain3:       {0x2fbf5c, 0x1b7f38},
-	inkRain4:       {0x1c8f43, 0x2a8f47},
-	inkRain5:       {0x126b31, 0x3b9954},
-	inkSourceFrame: {0x1f7a3a, 0x1f7a3a},
-	inkSourceLabel: {0x5dff8a, 0x0c5a24},
-	inkSourceKey:   {0xc9ffd6, 0x06290f},
-}
-
 // The metal inks of a tier: its dark, base and pale stops.
 func tierInks(t config.BadgeTier) (dark, base, pale ink) {
+	b := theme.BadgeBronze
 	switch t {
 	case config.BadgeSilver:
-		return inkSilverDark, inkSilver, inkSilverPale
+		b = theme.BadgeSilver
 	case config.BadgeGold:
-		return inkGoldDark, inkGold, inkGoldPale
+		b = theme.BadgeGold
 	case config.BadgePlatinum:
-		return inkPlatinumDark, inkPlatinum, inkPlatinumPale
+		b = theme.BadgePlatinum
 	}
-	return inkBronzeDark, inkBronze, inkBronzePale
+	return ink(b - 1), ink(b), ink(b + 1)
 }
 
 // The stops of a rim.
 const (
-	stopDark = iota
-	stopBase
-	stopPale
+	stopDark = theme.PrismDark
+	stopBase = theme.PrismBase
+	stopPale = theme.PrismPale
 )
 
 // prismInk is the legendary rim's ink at an angle of hue degrees.
@@ -378,36 +327,9 @@ func prismInk(hue float64, stop int) ink {
 func inkValue(k ink, light bool) tcell.Color {
 	if k >= inkPrism {
 		i := int(k - inkPrism)
-		hue, stop := float64(i/3)*(360/prismHues), i%3
-		// Dark canvas: the lab's stops. Light canvas: the same hues,
-		// deeper, the pale stop the deepest.
-		sl := [3][2]float64{{60, 42}, {70, 62}, {80, 84}}
-		if light {
-			sl = [3][2]float64{{65, 46}, {75, 36}, {85, 25}}
-		}
-		return hslColor(hue, sl[stop][0], sl[stop][1])
+		return theme.PrismColor(float64(i/3)*(360/prismHues), i%3, light)
 	}
-	v, ok := inkColors[k]
-	if !ok {
-		return tcell.ColorDefault
-	}
-	if light {
-		return tcell.NewHexColor(v[1])
-	}
-	return tcell.NewHexColor(v[0])
-}
-
-// hslColor is a colour from a hue in degrees and a saturation and a
-// lightness in percent.
-func hslColor(h, s, l float64) tcell.Color {
-	s, l = s/100, l/100
-	a := s * math.Min(l, 1-l)
-	f := func(n float64) int32 {
-		k := math.Mod(n+h/30, 12)
-		v := l - a*math.Max(-1, math.Min(math.Min(k-3, 9-k), 1))
-		return int32(math.Round(v * 255))
-	}
-	return tcell.NewRGBColor(f(0), f(8), f(4))
+	return theme.BadgeHueColor(theme.BadgeHue(k), light)
 }
 
 // ----- the painter -----
@@ -476,7 +398,7 @@ func medalSize(m medal) (w, h int) {
 	case m.special != "" && m.state == medalEarned:
 		return specialW, specialH
 	case m.tier == config.BadgeNoTier:
-		return spriteSilver.size()
+		return spriteStatic.size()
 	}
 	return tierSprite(m.tier).size()
 }
@@ -497,8 +419,9 @@ func drawMedal(g *tGrid, x, y int, m medal, n int, plain bool) {
 		return
 	}
 	sp := tierSprite(m.tier)
-	if m.tier == config.BadgeNoTier {
-		sp = spriteSilver
+	static := m.tier == config.BadgeNoTier
+	if static {
+		sp = spriteStatic
 	}
 	w, h := sp.size()
 	ex, ey := sp.emblemCell()
@@ -537,6 +460,17 @@ func drawMedal(g *tGrid, x, y int, m medal, n int, plain bool) {
 			rim := strings.IndexByte("FbpdR", role) >= 0
 			if !legend {
 				col := base
+				if static {
+					// Static has no metal: two colours, split down the middle.
+					col = inkCyan
+					if dx > w/2 {
+						col = inkMagenta
+					}
+					if role == 'E' {
+						g.put(px, py, m.emblem, tsBright, -1)
+						continue
+					}
+				}
 				switch role {
 				case 'p':
 					col = pale
@@ -707,9 +641,9 @@ var badgeFold = map[rune]rune{
 	'┌': '+', '┐': '+', '└': '+', '┘': '+', '├': '+', '┤': '+', '┬': '|', '┴': '|',
 	'┄': '.', '┆': ':', '▗': '.', '▖': '.', '▝': '\'', '▘': '\'',
 	'▛': '#', '▜': '#', '▙': '#', '▟': '#', '╔': '.', '╗': '.', '╚': '\'', '╝': '\'',
-	'✶': '*', '◖': '(', '◗': ')', '…': '.', '✓': 'v', '★': '*',
-	// The hand-drawn sprites.
-	'●': 'o', '∞': '8', '▚': '#', '▞': '#', '╴': '-', '¿': '?',
+	'✶': '*', '◖': '(', '◗': ')', '…': '.', '✓': 'v', '★': '*', '☆': 'o', '▲': '^', '▼': 'v',
+	// The hand-drawn sprites, and the marks their noise throws up.
+	'●': 'o', '∞': '8', '▚': '#', '▞': '#', '╴': '-', '¿': '?', '§': 'S',
 }
 
 // foldBadges rewrites a grid of badge art for the plain glyph tier.

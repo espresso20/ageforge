@@ -27,6 +27,15 @@ import (
 // mapAnimStep is the map animation frame length (about 8 frames a second).
 const mapAnimStep = 125 * time.Millisecond
 
+// animFrame is the animation frame after since: the clock's when motion is
+// on, and the first frame, held, when the motion setting is off.
+func animFrame(motion bool, since time.Duration) int {
+	if !motion {
+		return 0
+	}
+	return int(since / mapAnimStep)
+}
+
 // mapIconsHint is the one-time hint the first Map panel open shows.
 const mapIconsHint = "Want real icons on your map? Type icons."
 
@@ -170,7 +179,7 @@ func (p *mapPanel) setFlows(mode string) bool {
 }
 
 func (p *mapPanel) frame() mapstyle.Frame {
-	return mapstyle.Frame{Model: p.model, Anim: int(p.now().Sub(p.start) / mapAnimStep), Tier: p.set.Tier}
+	return mapstyle.Frame{Model: p.model, Anim: animFrame(p.set.Motion, p.now().Sub(p.start)), Tier: p.set.Tier}
 }
 
 // Draw draws the style over all but the last row, and the key bar on it.

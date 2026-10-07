@@ -303,7 +303,7 @@ var (
 	// digits in the plain tier.
 	rainGlyphs      = []rune("ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789")
 	rainGlyphsPlain = []rune("0123456789ABCDEFHJKLMNPRSTUVXYZ")
-	rainInks        = [6]ink{inkRain0, inkRain1, inkRain2, inkRain3, inkRain4, inkRain5}
+	rainInks        = [6]ink{inkRain0, inkRain0 + 1, inkRain0 + 2, inkRain0 + 3, inkRain0 + 4, inkRain0 + 5}
 )
 
 // rainSet is the rain's glyphs for a glyph tier.

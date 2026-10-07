@@ -16,6 +16,10 @@ type Toast struct {
 	Color    string
 	Duration time.Duration
 	Expiry   time.Time
+	// Fit, when set, writes the toast for a bar w cells wide (0: any
+	// width), with its own colour tags. It is asked again whenever the
+	// toast is read, so a toast follows the bar through a resize.
+	Fit func(w int) string
 }
 
 // ToastManager manages toast notifications with a queue
@@ -32,15 +36,20 @@ func NewToastManager() *ToastManager {
 
 // Show queues a toast notification (thread-safe)
 func (tm *ToastManager) Show(message, color string, duration time.Duration) {
+	tm.show(Toast{Message: message, Color: color, Duration: duration})
+}
+
+// ShowFit queues a toast that is written for the width of the toast bar
+// and carries its own colour tags (thread-safe).
+func (tm *ToastManager) ShowFit(fit func(w int) string, duration time.Duration) {
+	tm.show(Toast{Fit: fit, Duration: duration})
+}
+
+func (tm *ToastManager) show(toast Toast) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	toast := Toast{
-		Message:  message,
-		Color:    color,
-		Duration: duration,
-		Expiry:   time.Now().Add(duration),
-	}
+	toast.Expiry = time.Now().Add(toast.Duration)
 	if tm.current == nil || time.Now().After(tm.current.Expiry) {
 		tm.current = &toast
 	} else {
@@ -49,7 +58,10 @@ func (tm *ToastManager) Show(message, color string, duration time.Duration) {
 }
 
 // GetCurrent returns the current toast text or empty string if none active
-func (tm *ToastManager) GetCurrent() string {
+func (tm *ToastManager) GetCurrent() string { return tm.CurrentFor(0) }
+
+// CurrentFor is GetCurrent for a toast bar w cells wide (0: any width).
+func (tm *ToastManager) CurrentFor(w int) string {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -69,6 +81,9 @@ func (tm *ToastManager) GetCurrent() string {
 
 	if tm.current == nil {
 		return ""
+	}
+	if tm.current.Fit != nil {
+		return tm.current.Fit(w)
 	}
 	return fmt.Sprintf("[%s]%s[-]", tm.current.Color, tm.current.Message)
 }

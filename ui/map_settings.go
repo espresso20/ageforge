@@ -6,9 +6,10 @@ import (
 	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
-// map_settings.go holds the map settings: "map style", "map glyphs" and
-// "minimap". They travel with the account (AccountPrefs, like the active
-// theme), so a save/load keeps them and an account switch swaps them. The
+// map_settings.go holds the display settings a command sets: "map style",
+// "map glyphs", "minimap" and "motion". They travel with the account
+// (AccountPrefs, like the active theme; motion in the account's settings
+// file), so a save/load keeps them and an account switch swaps them. The
 // game still runs without an account: the dashboard then keeps them for
 // the session only.
 
@@ -20,11 +21,14 @@ type mapSettings struct {
 	Minimap bool
 	// HintShown: the one-time "Type icons" hint was shown on this account.
 	HintShown bool
+	// Motion: things move (the default). Off holds the maps, the badge
+	// case and a theme's ambient effect still.
+	Motion bool
 }
 
 // defaultMapSettings is the settings with nothing chosen.
 func defaultMapSettings(reg *mapstyle.Registry) mapSettings {
-	return mapSettings{Style: reg.Default(), Tier: mapmodel.TierUnicode, Minimap: true}
+	return mapSettings{Style: reg.Default(), Tier: mapmodel.TierUnicode, Minimap: true, Motion: true}
 }
 
 // resolveMapSettings reads the account's map settings against the style
@@ -45,6 +49,7 @@ func resolveMapSettings(acct *game.Account, reg *mapstyle.Registry) mapSettings 
 	}
 	out.Minimap = acct.MinimapOn()
 	out.HintShown = hint
+	out.Motion = acct.MotionOn()
 	return out
 }
 
@@ -119,13 +124,16 @@ func (d *Dashboard) saveMapSettings(s mapSettings) {
 	if cur.Minimap != s.Minimap && err == nil {
 		err = acct.SetMinimap(s.Minimap)
 	}
+	if cur.Motion != s.Motion && err == nil {
+		err = acct.SetMotion(s.Motion)
+	}
 	if err != nil {
-		d.engine.AddLog("warning", "The map setting could not be saved to your account: "+err.Error())
+		d.engine.AddLog("warning", "The setting could not be saved to your account: "+err.Error())
 	}
 }
 
-// mapPref is one map setting a command changed: "style", "glyphs" or
-// "minimap", and its new value. The zero value changes nothing.
+// mapPref is one setting a command changed: "style", "glyphs", "minimap"
+// or "motion", and its new value. The zero value changes nothing.
 type mapPref struct{ Key, Value string }
 
 // apply writes the change into s.
@@ -139,6 +147,8 @@ func (p mapPref) apply(s *mapSettings) {
 		}
 	case "minimap":
 		s.Minimap = p.Value == "on"
+	case "motion":
+		s.Motion = p.Value == "on"
 	}
 }
 

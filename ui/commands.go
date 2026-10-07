@@ -330,6 +330,8 @@ func registry() []*Command {
 			Help: []Usage{{"style [roguelike|skyline]", "Same as map style"}}},
 		{Name: "minimap", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
 			Help: []Usage{{"minimap [on|off]", "Show or set the mini map above the Buildings list (default on)"}}},
+		{Name: "motion", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
+			Help: []Usage{{"motion [on|off]", "Show or set motion: whether the maps, the badge case and theme effects move (default on)"}}},
 		{Name: "icons", Section: secGame,
 			Help: []Usage{{"icons", "Check whether your font shows Nerd Font icons, and install one if it doesn't"}}},
 		{Name: "save", Section: secGame, Args: []Arg{{Kind: ArgText, Optional: true}},
@@ -363,6 +365,16 @@ func registry() []*Command {
 					Help: []Usage{{"account wipe", "Where to wipe an account (the Accounts panel)"}}},
 			}},
 
+		{Name: "badges", Aliases: []string{"achievements"}, Section: secAccounts, BareOK: true,
+			Panel: "The badge case: every badge your account holds or can earn (alias: achievements)",
+			Args:  []Arg{{Kind: ArgText, Words: []string{"next", "all"}, Optional: true}},
+			Help: []Usage{
+				{"badges", "Open the badge case (alias: achievements); the prompt keeps working while it is open"},
+				{"badges <family>", "Open it on a family's tab: ages, lineages, ladders, specials (all: every family)"},
+				{"badges next", "Open it on the badges you are closest to"},
+				{"badges <name>", "Open a badge's detail by its name, or a part of it"},
+			}},
+
 		// Panels only
 		panel("milestones", "Milestone goals & rewards", "ms"),
 		panel("stats", "Empire statistics"),
@@ -375,7 +387,7 @@ func registry() []*Command {
 
 // panelOrder is the Help panel's Panels list order (the sidebar's, then the rest).
 var panelOrder = []string{
-	"milestones", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders",
+	"milestones", "badges", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders",
 	"workers", "logs", "epoch", "harbinger", "history", "buildings", "map", "theme", "help",
 }
 
