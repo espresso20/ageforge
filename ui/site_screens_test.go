@@ -594,6 +594,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	shots := &siteShots{t: t, out: out, textDir: os.Getenv("SITE_SCREENS_TEXT"), bytes: map[string]int{}}
 
 	s := newSiteStage(t)
+	shots.takeIn(s, "new-game", theme.DefaultKey, siteDashW, siteDashH)
 	s.toBronze()
 	// The first refresh after an advance puts up the new age's splash.
 	shots.take(s, "age-advance")
@@ -636,11 +637,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	s.toIron()
 	s.quiet()
 	s.level(map[string]float64{"food": 0.58, "wood": 0.77, "stone": 0.49, "knowledge": 0.31, "gold": 0.66, "iron": 0.52, "marble": 0.28, "iron_ore": 0.44, "faith": 0.63})
-	s.say("campaign raid_bandits")
 	s.wait(30)
-	s.open("army", "")
-	shots.take(s, "army")
-	s.close()
 
 	// A doom is fated for this era, due now: its harbinger comes on the next
 	// tick, and the doom waits out the shortest warning the game allows.
@@ -680,16 +677,9 @@ func TestWriteSiteScreens(t *testing.T) {
 	s.level(map[string]float64{"food": 0.47, "wood": 0.69, "stone": 0.74, "knowledge": 0.38, "gold": 0.55, "iron": 0.61, "marble": 0.43,
 		"iron_ore": 0.52, "steel": 0.26, "culture": 0.33, "faith": 0.72})
 	s.wait(3)
-	for _, p := range []struct {
-		name, cmd, heading string
-	}{
-		{"factions", "factions", ""},
-		{"epoch", "epoch", ""},
-	} {
-		s.open(p.cmd, p.heading)
-		shots.take(s, p.name)
-		s.close()
-	}
+	s.open("factions", "")
+	shots.take(s, "factions")
+	s.close()
 	// Prestige has no panel of its own: the command answers in the log.
 	s.say("prestige")
 	s.open("logs", "")
@@ -720,7 +710,8 @@ func TestWriteSiteScreens(t *testing.T) {
 // colors it uses, its styles (foreground and background as palette indexes,
 // then 1 bold + 2 italic + 4 underline), and its rows: the text and the style
 // runs (style, length, style, length, ...). Style 0 is plain text on the
-// screen's own background, and a row stops where only that is left. Bg is
+// screen's own background, and a row stops where only blank background is
+// left. Bg is
 // set for a screen drawn in another theme than the default, whose ground the
 // wiki's plate does not already have.
 type siteScreenFile struct {
@@ -774,9 +765,13 @@ func encodeSiteScreen(cells []tcell.SimCell, w, h int, defFg, defBg tcell.Color,
 
 	var plain strings.Builder
 	for y := 0; y < h; y++ {
-		var text []rune
-		var runs []int
-		cur, n := -1, 0
+		type cell struct {
+			r      rune
+			fg, bg tcell.Color
+			attr   int
+		}
+		row := make([]cell, w)
+		end := 0 // one past the last cell that is not a plain blank
 		for x := 0; x < w; x++ {
 			c := cells[y*w+x]
 			r := ' '
@@ -806,12 +801,28 @@ func encodeSiteScreen(cells []tcell.SimCell, w, h int, defFg, defBg tcell.Color,
 			if attrs&tcell.AttrUnderline != 0 {
 				attr |= 4
 			}
-			if r == ' ' {
-				// A space only needs its background (and its underline).
-				fg, attr = defFg, attr&4
+			row[x] = cell{r, fg, bg, attr}
+			if r != ' ' || bg != defBg || attr&4 != 0 {
+				end = x + 1
 			}
-			s := style(fg, bg, attr)
-			text = append(text, r)
+		}
+		var text []rune
+		runs := []int{}
+		cur, n := -1, 0
+		var last cell
+		for x := 0; x < end; x++ {
+			c := row[x]
+			if c.r == ' ' && c.attr&4 == 0 {
+				// A space shows only its background: it rides in the run
+				// before it when that has the same one, and is plain otherwise.
+				if cur >= 0 && last.bg == c.bg && last.attr&4 == 0 {
+					c.fg, c.attr = last.fg, last.attr
+				} else {
+					c.fg, c.attr = defFg, 0
+				}
+			}
+			s := style(c.fg, c.bg, c.attr)
+			text = append(text, c.r)
 			if s != cur {
 				if n > 0 {
 					runs = append(runs, cur, n)
@@ -819,23 +830,12 @@ func encodeSiteScreen(cells []tcell.SimCell, w, h int, defFg, defBg tcell.Color,
 				cur, n = s, 0
 			}
 			n++
+			last = c
 		}
-		runs = append(runs, cur, n)
-		plain.WriteString(strings.TrimRight(string(text), " ") + "\n")
-		// Drop the plain blank tail of the row.
-		if last := len(runs) - 2; runs[last] == 0 {
-			tail := runs[last+1]
-			keep := len(strings.TrimRight(string(text[len(text)-tail:]), " "))
-			text = text[:len(text)-tail+keep]
-			if keep == 0 {
-				runs = runs[:last]
-			} else {
-				runs[last+1] = keep
-			}
+		if n > 0 {
+			runs = append(runs, cur, n)
 		}
-		if runs == nil {
-			runs = []int{}
-		}
+		plain.WriteString(string(text) + "\n")
 		f.Rows = append(f.Rows, siteScreenRow{T: string(text), R: runs})
 	}
 	var buf bytes.Buffer
