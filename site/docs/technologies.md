@@ -785,7 +785,7 @@ Together +70%, added to the wonders' and milestones' expedition rewards.
 
 Knowledge comes from the Knowledge lineage (Story Circle, Elders' Hall and on up to the Reality Academy), staffed by knowledge workers: **Shamans** in the Primitive Age, **Quantum Theorists** by the Quantum Age. Assign them with `assign <building_key> [count|all]`. The rates for every tier are on the [Knowledge](knowledge.md) page.
 
-The seven mid-age techs of the Atomic to Fusion Ages (Civilian Reactors, Internet of Things, Cybernetics, Holography, Plasma Physics, Superconductors, Maglev Transit) cost billions, far more than the lineage makes: a fully staffed Research Campus makes about 102 knowledge a tick, under 6M over the whole Atomic Age. For those the market is the practical source: from the Industrial Age on, gold buys knowledge at a flat 5 knowledge per gold. See [Knowledge at the Market](knowledge.md#knowledge-at-the-market). `plan trade gold knowledge` buys it as gold comes in, and a `plan research` item behind it starts the tech once the knowledge is there.
+The mid-age techs of the Atomic to Fusion Ages (Civilian Reactors at 625M, then Internet of Things, Cybernetics, Holography, Plasma Physics, Superconductors and Maglev Transit at billions each) cost far more than the lineage makes: a fully staffed Research Campus makes about 102 knowledge a tick, under 6M over the whole Atomic Age. For those the market is the practical source: from the Industrial Age on, gold buys knowledge at a flat 5 knowledge per gold. See [Knowledge at the Market](knowledge.md#knowledge-at-the-market). `plan trade gold knowledge` buys it as gold comes in, and a `plan research` item behind it starts the tech once the knowledge is there.
 
 Either way, your knowledge storage must hold a tech's full cost before you can pay for it.
 
@@ -829,7 +829,7 @@ Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige
 
 ### Late-Game Knowledge Scaling
 
-Knowledge costs rise steeply, from 47 kp for Tool Making to billions in the late ages (Cybernetics 4.45B, Transcendence 9.1B). Raise your knowledge storage ahead of them, and plan on buying most of that knowledge with gold (see [Paying for Research](#paying-for-research)).
+Knowledge costs rise steeply, from 38 kp for Tool Making to billions in the late ages (Cybernetics 4.45B, Transcendence 9.1B). Raise your knowledge storage ahead of them, and plan on buying most of that knowledge with gold (see [Paying for Research](#paying-for-research)).
 
 ---
 

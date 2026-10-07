@@ -147,7 +147,7 @@ Starting age. No requirements.
 | Huts | 10 |
 | Story Circles | 5 |
 
-**Unlocks:** Longhouse, Storage Pit, Forager Post, Woodcutter Camp, Stone Camp, Stone Pit, Elders' Hall, Standing Stones, War Camp, Great Monolith · **Resource:** Stone · **New domains:** masonry, military
+**Unlocks:** Longhouse, Storage Pit, Forager Post, Woodcutter Camp, Stone Camp, Stone Pit, Elders' Hall, Standing Stones (after Ritual), War Camp, Great Monolith · **Resource:** Stone · **New domains:** masonry, military
 
 ---
 
@@ -164,7 +164,7 @@ Starting age. No requirements.
 | Stone Pits | 5 |
 | Elders' Halls | 5 |
 
-**Unlocks:** House, Warehouse, Farm, Lumber Mill, Quarry, Scriptorium, Altar, Barracks, Market, Smithy, Stonehenge · **Resources:** Iron, Gold · **New domains:** trade, engineering
+**Unlocks:** House, Warehouse, Farm, Lumber Mill, Quarry, Scriptorium, Altar (after Calendar), Barracks (after Military Tactics), Market, Smithy, Stonehenge · **Resources:** Iron, Gold · **New domains:** trade, engineering
 
 ---
 
@@ -182,7 +182,7 @@ Starting age. No requirements.
 | Quarries | 8 |
 | Scriptoria | 5 |
 
-**Unlocks:** Townhouse, Granary, Field Works, Timber Yard, Marble Quarry, Agora, Temple, Hunting Lodge, Legion Fort, Trading Post, Ironworks, Smelter, Colosseum · **Resources:** Marble, Iron Ore, Soldiers · **New domain:** metallurgy
+**Unlocks:** Townhouse, Granary, Field Works, Timber Yard, Marble Quarry, Agora, Temple, Hunting Lodge, Legion Fort (after Siege Warfare), Trading Post, Ironworks, Smelter (after Iron Smelting), Colosseum · **Resources:** Marble, Iron Ore, Soldiers · **New domain:** metallurgy
 
 ---
 
@@ -199,7 +199,7 @@ Starting age. No requirements.
 | Agoras | 12 |
 | Trading Posts | 10 |
 
-**Unlocks:** Villa, Classical Vault, Terrace Farm, Wood Workshop, Marble Works, Library, Oracle House, Military Academy, Merchant Quarter, Aqueduct, Forge, Amphitheater, Parthenon, Cultural Obelisk · **Resource:** Culture
+**Unlocks:** Villa, Classical Vault, Terrace Farm, Wood Workshop, Marble Works, Library, Oracle House, Military Academy, Merchant Quarter, Aqueduct, Forge (after Metal Casting), Amphitheater, Parthenon, Cultural Obelisk · **Resource:** Culture
 
 ---
 
@@ -218,7 +218,7 @@ Starting age. No requirements.
 
 Prestige becomes available at this age. A prestige from here to the Atomic Age is an early taste: it pays 9 points from the Medieval Age, enough for the Plan Template, while a run to the Modern Age pays 120. Type `prestige` to see what a prestige pays now and from the next age. See [Prestige System](prestige.md).
 
-**Unlocks:** Manor, Strongroom, Demesne, Sawmill, Stonemason's Guild, Monastery Library, Cathedral, Castle Keep, Guildhall, Workshop, Ironmonger, Great Hall, Great Library, Grand Amphitheater · **Resource:** Steel
+**Unlocks:** Manor, Strongroom, Demesne, Sawmill, Stonemason's Guild, Monastery Library, Cathedral (after Theology), Castle Keep, Guildhall, Workshop, Ironmonger, Great Hall, Great Library, Grand Amphitheater · **Resource:** Steel
 
 ---
 
@@ -235,7 +235,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Guildhalls | 10 |
 | Castle Keeps | 5 |
 
-**Unlocks:** Estate, Renaissance Vault, Market Garden, Coal Mine, Iron Mine, University, Basilica, Fortress, Exchange, Mill, Foundry, Art Studio, Sistine Chapel · **Resource:** Coal
+**Unlocks:** Estate, Renaissance Vault, Market Garden, Coal Mine, Iron Mine, University, Basilica, Fortress, Exchange, Mill, Foundry (after Blast Furnace), Art Studio, Sistine Chapel · **Resource:** Coal
 
 ---
 
@@ -248,11 +248,11 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Gold | 710K |
 | Steel | 110K |
 | Culture | 300K |
-| Exchanges | 8 |
-| Universities | 8 |
-| Art Studios | 8 |
+| Exchanges | 12 |
+| Universities | 12 |
+| Art Studios | 12 |
 
-**Unlocks:** Settlement Block, Colonial Warehouse, Plantation, Coal Works, Deep Iron Mine, Natural Philosophy Hall, Mission, Fort, Port, Harbor, Dockyard, Colonial Steelworks, Concert Hall, Embassy, Grand Lighthouse
+**Unlocks:** Settlement Block, Colonial Warehouse, Plantation, Coal Works, Deep Iron Mine, Natural Philosophy Hall, Mission, Fort, Port, Harbor (after Mercantilism), Dockyard, Colonial Steelworks (after Coke Smelting), Concert Hall, Embassy (after Embassies), Grand Lighthouse
 
 ---
 
@@ -267,7 +267,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Plantations | 8 |
 | Ports | 10 |
 
-**Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Colliery, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Harbor Authority, Integrated Steelworks, Steel Mill, Coal Plant, Opera House, Grand Embassy, Geographic Society, Crystal Palace, Eternal Library · **Resource:** Oil · **New domain:** energy
+**Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Colliery, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Harbor Authority, Integrated Steelworks, Steel Mill, Coal Plant (after Steam Power), Opera House, Grand Embassy (after the Concert of Nations), Geographic Society (after Geographic Societies), Crystal Palace, Eternal Library · **Resource:** Oil · **New domain:** energy
 
 ---
 
@@ -283,7 +283,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Integrated Steelworks | 5 |
 | Tenements | 30 |
 
-**Unlocks:** Row House, Victorian Vault, Mechanized Farm, Oil Derrick, Uranium Mine, Academy, Grand Cathedral, Garrison, Bank, Steam Works, Bessemer Plant, Steam Turbine, Grand Museum, Eiffel Tower · **Resource:** Electricity
+**Unlocks:** Row House, Victorian Vault, Mechanized Farm, Oil Derrick, Uranium Mine, Academy, Grand Cathedral, Garrison, Bank, Steam Works (after Electrification), Bessemer Plant, Steam Turbine, Grand Museum, Eiffel Tower · **Resource:** Electricity
 
 ---
 
@@ -296,11 +296,11 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Steel | 11M |
 | Oil | 3.3M |
 | Electricity | 1.1M |
-| Steam Turbines | 10 |
-| Academies | 10 |
-| Bessemer Plants | 10 |
+| Steam Turbines | 12 |
+| Academies | 12 |
+| Bessemer Plants | 12 |
 
-**Unlocks:** Apartment Block, Electric Warehouse, Industrial Farm, Oil Field, Nuclear Extraction Plant, Physics Laboratory, Revival Hall, Command Post, Financial District, Power Station, Electric Arc Furnace, Dynamo Hall, Radio Station, Hoover Dam
+**Unlocks:** Apartment Block, Electric Warehouse, Industrial Farm, Oil Field, Nuclear Extraction Plant, Physics Laboratory, Revival Hall, Command Post, Financial District, Power Station, Electric Arc Furnace, Dynamo Hall (after Power Distribution), Radio Station, Hoover Dam
 
 ---
 
@@ -330,9 +330,9 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Electricity | 33M |
 | Uranium | 6.9M |
 | Steel | 470M |
-| Breeder Reactors | 15 |
-| Bunker Complexes | 15 |
-| Research Campuses | 15 |
+| Breeder Reactors | 18 |
+| Bunker Complexes | 18 |
+| Research Campuses | 18 |
 
 From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset for prestige points to spend on the legacy kit. See [Prestige System](prestige.md).
 

@@ -277,16 +277,16 @@ Output is valued at **price parity**. Each age has a price level for each resour
 |-----|-------------|-------------------------|----------------|-------------------|
 | Primitive | 15m | 56s | 2m 30s | 18s |
 | Stone | 45m | 4m | 7m 30s | 56s |
-| Bronze | 3h 54m | 23m | 39m | 4m 52s |
+| Bronze | 3h 54m | 25m | 39m | 4m 52s |
 | Iron | 6h 30m | 45m | 1h 5m | 8m 6s |
 | Classical | 9h 6m | 1.2h | 1h 31m | 11m 22s |
 | Medieval | 11h 42m | 1.8h | 1h 57m | 14m 36s |
 | Renaissance | 15h 36m | 5.2h | 2h 36m | 19m 30s |
 | Colonial | 18h 12m | 3.4h | 3h 2m | 22m 44s |
 | Industrial | 20h 48m | 4.2h | 3h 28m | 26m |
-| Victorian | 23h 24m | 5.1h | 3h 54m | 29m 14s |
-| Electric | 26h | 6.1h | 4h 20m | 32m 30s |
-| Atomic | 31h 12m | 7.8h | 5h 12m | 39m |
+| Victorian | 23h 24m | 8.7h | 3h 54m | 29m 14s |
+| Electric | 26h | 8.8h | 4h 20m | 32m 30s |
+| Atomic | 31h 12m | 13.7h | 5h 12m | 39m |
 | Modern | 31h 12m | 8.3h | 5h 12m | 39m |
 | Information | 36h 24m | 8.2h | 6h 4m | 45m 30s |
 | Digital | 41h 36m | 12.4h | 6h 56m | 52m |
@@ -299,6 +299,8 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Transcendent | 62h 24m | 25.3h | 10h 24m | 1h 18m |
 
 The Renaissance's payback is 2x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with a fifth more knowledge and cheaper, quicker building, and the age had dropped to three quarters of its target. Its University makes 76.3 knowledge/tick, Exchange 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
+
+The Electric Era's ages repay more slowly too, since the Steel and Electric Eras gained their techs: Victorian 1.7x, Electric 1.45x and Atomic 1.75x what the curve gives. With nine techs an age where there were three, the keystone costs a tenth of what the age makes of knowledge, where it cost a quarter to a half, and research no longer holds those ages up; their buildings and their requirements do. A Bessemer Plant makes 141K steel/tick (was 240K), an Electric Arc Furnace 874K (was 1.27M) and a Breeder Reactor 1.26M electricity (was 2.21M). The Bronze Age's payback is 1.1x (a Lumber Mill makes 7.91 wood/tick, was 8.7; a Quarry 4 stone, was 4.4): the age ran at under two thirds of its target.
 
 The Information and Cyberpunk Ages go the other way, at 0.8x: they ran 1.2 to 1.5x their targets, and the extra time was spent waiting.
 

@@ -212,8 +212,29 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // knowledge, cheaper and quicker building, more food and iron) and the age
 // ran at 0.76x of its target on a first run, where it had run at 0.96x: 2.0x.
 // Its storage is not a lever: the Renaissance Vault sits on the Storage
-// Covenant's line. Keep this list short; a second entry means the curve
-// itself wants changing.
+// Covenant's line.
+//
+// The Steel and Electric Eras' techs took research off the critical path of
+// their ages: an age that held three or four techs made a run pay a quarter
+// to a half of its knowledge for the wonder's keystone, and one that holds
+// nine asks for a tenth. What paces those ages now is what their buildings
+// make and what their gates ask. Measured on a first run with the techs in
+// (the smoke bot, three seeds): the Victorian Age ran at 0.57x of its target
+// with its producers at 1.4x and at 0.67x at 1.7x, and the Electric Age at
+// 0.56x on the curve alone. So the Electric Era's ages repay more slowly:
+// Victorian 1.7x, Electric 1.45x, Atomic 1.75x. The Atomic Age is the one
+// that hardly answers (0.62x to 0.66x of its target whatever its producers
+// repay, between 1x and 1.75x): its figure is kept for what it leaves the
+// Modern Age to start on, not for what it does to its own age. The
+// Renaissance kept its 2.0x and got a larger gate instead (ages.go: 12 of
+// each building where it asked for 8): its buildings are priced in
+// knowledge, so the gate is what slows it, on known ground too. The Bronze
+// Age ran at 0.63x: 1.1x.
+//
+// Six entries is a list that says the curve itself wants reshaping from the
+// Victorian Age on. That is for the change that measures the ages after the
+// Atomic, which nothing run per pull request does: fold these into the
+// exponent then, and drop the entries the new curve covers.
 //
 // The Information and Cyberpunk Ages go the other way: the smoke bot ran
 // them at 1.2 to 1.5x their targets (Information on every curve), and the
@@ -222,8 +243,9 @@ func paybackTicks(age string, pos map[string]int) float64 {
 var PaybackAdjust = map[string]float64{
 	"bronze_age":      1.1,
 	"renaissance_age": 2.0,
-	"victorian_age":   1.4,
+	"victorian_age":   1.7,
 	"electric_age":    1.45,
+	"atomic_age":      1.75,
 	"information_age": 0.8,
 	"cyberpunk_age":   0.8,
 }
@@ -539,6 +561,17 @@ func ResearchBudgetShareOf(age string) float64 {
 // at the market is not in it). It is an input like AgeTargets, typed here
 // and re-measured when the economy moves: research budgets are sized from
 // it.
+//
+// The Renaissance to Atomic Ages were not measured again when their own
+// techs arrived (the tree's second content batch), on purpose. The bot
+// builds knowledge for the techs an age cannot be left without and takes
+// the rest from what is over. With nine techs an age where there were
+// three, the required ones cost a third of what they did, the bot built a
+// third of the knowledge buildings, and the report's figure fell with them
+// (the Colonial Age read 7.6M to 19M where it had read 27M). A number that
+// follows its own prices down has no floor, so these stand as measured
+// while research was the ages' critical path: what a town that wants every
+// tech of its age makes.
 //
 // The Primitive to Atomic Ages were measured with the Stone and Iron Eras'
 // new techs in the tree (the medians of three seeds of two Determinism runs

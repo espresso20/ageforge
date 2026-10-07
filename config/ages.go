@@ -149,7 +149,7 @@ func Ages() []AgeDef {
 			Description:     "Machines take over production.",
 			Quip:            "Smoke everywhere, hours endless, output magnificent. Two out of three.",
 			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000},
-			BuildingReqs:    map[string]int{"plantation": 10, "port": 12},
+			BuildingReqs:    map[string]int{"plantation": 8, "port": 10},
 			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "harbor_authority", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "grand_embassy", "geographic_society", "crystal_palace", "eternal_library_monument"},
 			UnlockResources: []string{"oil"},
 		},
