@@ -13,6 +13,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle/all"
@@ -127,9 +128,12 @@ type Dashboard struct {
 	// map settings when no account is loaded (session only).
 	mapViews *mapViews
 	mapPanel *mapPanel
-	miniMap  *miniMap
-	mapDock  *mapDock
-	mapLocal *mapSettings
+	// researchPanel is the Research panel, the tech tree as a map
+	// (research_panel.go).
+	researchPanel *researchPanel
+	miniMap       *miniMap
+	mapDock       *mapDock
+	mapLocal      *mapSettings
 	// icons is the guided icons check (icons.go).
 	icons *iconsFlow
 	// mapOpen is set while the Map panel is open, so the refresh loop
@@ -147,6 +151,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		engine:             engine,
 		mapViews:           mv,
 		mapPanel:           newMapPanel(mv),
+		researchPanel:      newResearchPanel(),
 		miniMap:            newMiniMap(mv),
 		pages:              pages,
 		stopCh:             make(chan struct{}),
@@ -159,7 +164,18 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.returnFocus()
 	})
 	d.overlayMgr.Register("milestones", "Milestones", milestonesProvider)
-	d.overlayMgr.Register("techs", "Research", researchProvider)
+	// The Research panel: the tech tree as a map. Like the Map it leaves
+	// the keyboard with the command bar.
+	d.researchPanel.engine = d.engine
+	d.researchPanel.tier = func() mapmodel.GlyphTier { return d.mapSettings().Tier }
+	d.researchPanel.prompt = func() string { return d.inputField.GetText() }
+	d.researchPanel.toPrompt = func(ev *tcell.EventKey) {
+		d.overlayMgr.FocusOn(d.inputField)
+		if h := d.inputField.InputHandler(); h != nil {
+			h(ev, func(p tview.Primitive) { d.app.SetFocus(p) })
+		}
+	}
+	d.overlayMgr.RegisterWidget("techs", "Research", d.researchPanel.open, d.researchPanel.update, true)
 	d.overlayMgr.Register("army", "Army", militaryProvider)
 	d.overlayMgr.Register("expedition", "Expeditions", expeditionsProvider)
 	d.overlayMgr.Register("trade", "Trade", tradeProvider)
@@ -465,6 +481,11 @@ func (d *Dashboard) build() {
 		// reach the command bar, which keeps the focus (map_panel.go).
 		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "map" && d.inputField.HasFocus() &&
 			d.mapPanel.routeKey(event, d.inputField.GetText()) {
+			return nil
+		}
+		// So does the open Research panel, and Esc closes its card first.
+		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "techs" && d.inputField.HasFocus() &&
+			(d.researchPanel.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && d.researchPanel.closeCard()) {
 			return nil
 		}
 		switch event.Key() {
@@ -1051,6 +1072,9 @@ func (d *Dashboard) submitInput() {
 		d.mapPanel.world = result.MapWorld
 		d.mapOpen.Store(true)
 	}
+	if result.OverlayName == "techs" {
+		d.researchPanel.request(result.ResearchZoom, result.ResearchCard)
+	}
 	if result.Icons {
 		d.startIcons()
 	}
@@ -1065,10 +1089,14 @@ func (d *Dashboard) submitInput() {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
 		d.updateSidebar(result.OverlayName)
-		if result.OverlayName == "map" {
+		if result.OverlayName == "map" || result.OverlayName == "techs" {
 			// The command bar keeps the keyboard while the map is open.
 			d.overlayMgr.FocusOn(d.inputField)
 		}
+	} else if d.overlayMgr.ActiveName() == "techs" {
+		// A command typed over the tree (research <tech>, plan research):
+		// show what it changed now rather than at the next refresh.
+		d.researchPanel.update(d.engine.GetState())
 	} else if d.overlayMgr.ActiveName() == "map" {
 		// The log is behind the map: say what happened on its key bar, and
 		// show the change now rather than at the next refresh.
