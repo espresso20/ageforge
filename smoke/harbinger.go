@@ -508,7 +508,7 @@ func maxStorageIn(defs map[string]config.BuildingDef, ageKey, res string) float6
 			continue
 		}
 		for _, e := range t.Effects {
-			if e.Type == "storage" && (e.Target == res || e.Target == "all") {
+			if e.Kind == config.EffectFlatStorage && (e.Target == res || e.Target == config.AllResources) {
 				total += e.Value
 			}
 		}

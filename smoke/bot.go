@@ -868,7 +868,7 @@ func (b *Bot) planTechs(p *plan, st game.GameState, budget map[string]float64) {
 	unblocks := func(key string) bool {
 		def, _ := b.rules.Tech(key)
 		for _, e := range def.Effects {
-			if e.Type == "production" && p.target[e.Target] > p.amt[e.Target] && st.Resources[e.Target].Rate <= 0 {
+			if e.Kind == config.EffectFlatOutput && p.target[e.Target] > p.amt[e.Target] && st.Resources[e.Target].Rate <= 0 {
 				return true
 			}
 		}
@@ -1811,7 +1811,7 @@ func (b *Bot) research(p *plan) {
 	unblocks := func(key string) bool {
 		def, _ := b.rules.Tech(key)
 		for _, e := range def.Effects {
-			if e.Type == "production" && p.target[e.Target] > p.amt[e.Target] && p.st.Resources[e.Target].Rate <= 0 {
+			if e.Kind == config.EffectFlatOutput && p.target[e.Target] > p.amt[e.Target] && p.st.Resources[e.Target].Rate <= 0 {
 				return true
 			}
 		}

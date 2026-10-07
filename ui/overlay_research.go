@@ -167,7 +167,7 @@ func researchProvider(state game.GameState, _ int) string {
 
 			if len(def.Effects) > 0 {
 				var effStrs []string
-				for _, eff := range def.Effects {
+				for _, eff := range def.GeneralEffects() {
 					// A bonus a cap would hold back says so before the
 					// knowledge is spent.
 					effStrs = append(effStrs, formatTechEffect(eff)+capTag(state, eff, false, "gray"))
@@ -240,7 +240,7 @@ func researchProvider(state game.GameState, _ int) string {
 			if ts.Researched {
 				// Compact: show effects
 				var effStrs []string
-				for _, eff := range def.Effects {
+				for _, eff := range def.GeneralEffects() {
 					effStrs = append(effStrs, formatTechEffect(eff)+capTag(state, eff, true, "gray"))
 				}
 				effStr := ""

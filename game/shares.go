@@ -628,7 +628,7 @@ func (ge *GameEngine) foodLossOfOne(sv *staffView, factor float64) float64 {
 // popCapLocked is the housing: what the housing buildings hold plus the
 // population bonuses. Caller holds the lock.
 func (ge *GameEngine) popCapLocked() int {
-	return ge.Buildings.GetPopCapacity() + int(ge.Research.CapacityBonus("population")+ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"])
+	return ge.Buildings.GetPopCapacity() + int(ge.Research.Bonus(config.EffectFlatHousing, "")+ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"])
 }
 
 // keepSharesLive is the routine's live run, from doTick: unless it is waiting

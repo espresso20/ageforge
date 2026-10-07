@@ -699,18 +699,21 @@ func TestConfig_EffectTargetsValid(t *testing.T) {
 		}
 	}
 
+	// A tech's effect is typed: a kind from config/tech_effects.go, and a
+	// resource for the kinds that name one.
+	isResource := func(key string) bool { _, ok := resourceKeys[key]; return ok }
 	for _, tech := range Technologies() {
 		for _, eff := range tech.Effects {
-			if _, ok := resourceKeys[eff.Target]; !ok && !isSpecialTarget(eff.Target) {
+			if problem := eff.Check(isResource); problem != "" {
 				t.Errorf("\n"+
-					"  Bad effect target in technology definition\n"+
+					"  Bad effect in technology definition\n"+
 					"  File:     config/research.go\n"+
 					"  Tech:     %q (%s)\n"+
-					"  Field:    Effects[].Target\n"+
-					"  Got:      %q  <-- not a valid resource or bonus key\n"+
-					"  Fix:      Use a resource key from config/resources.go, or a bonus key\n"+
-					"            like production_all, gather_rate, tick_speed, military_power, etc.%s\n",
-					tech.Key, tech.Name, eff.Target, hintFromMap(eff.Target, resourceKeys))
+					"  Field:    Effects[]\n"+
+					"  Problem:  %s\n"+
+					"  Fix:      Use a kind from config/tech_effects.go, with a resource key from\n"+
+					"            config/resources.go where the kind names one%s\n",
+					tech.Key, tech.Name, problem, hintFromMap(eff.Target, resourceKeys))
 			}
 		}
 	}

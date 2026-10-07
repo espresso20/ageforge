@@ -3,8 +3,16 @@ package game
 import (
 	"math/rand"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
 )
+
+// plantResearchBonus sets what the researched techs add to one thing (a
+// kind and its target), as if a tech with that effect had been researched.
+func plantResearchBonus(ge *GameEngine, kind config.TechEffectKind, target string, v float64) {
+	ge.Research.bonuses[config.TechEffectKey{Kind: kind, Target: target}] = v
+	ge.Research.indexPools()
+}
 
 // These helpers read the core ruleset. The engine and its managers read
 // their own set, so nothing outside the tests calls them; they keep the

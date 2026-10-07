@@ -481,14 +481,14 @@ func TestBonusTruthCulturalFestivalWaitsForCulture(t *testing.T) {
 // TestBonusTruthCatchesANewTech: the guard needs no upkeep to cover a tech
 // added later, and it has teeth. Three made-up techs go through the same
 // path as the real ones: one whose bonus works, one whose effect the engine
-// never applies (an event's effect type on a tech), and one whose target is
-// a typo.
+// never applies (an event's effect type where a tech's kind goes), and one
+// whose target is a typo.
 func TestBonusTruthCatchesANewTech(t *testing.T) {
 	lab := newTruthLab()
 	techs := []config.TechDef{
-		{Key: "zz_crop_rotation", Name: "Crop Rotation", Age: "bronze_age", Effects: []config.Effect{{Type: "bonus", Target: "food_rate", Value: 0.25}}},
-		{Key: "zz_dead_letter", Name: "Dead Letter", Age: "bronze_age", Effects: []config.Effect{{Type: "production_all", Value: 0.25}}},
-		{Key: "zz_typo", Name: "Typo", Age: "bronze_age", Effects: []config.Effect{{Type: "bonus", Target: "food_rates", Value: 0.25}}},
+		{Key: "zz_crop_rotation", Name: "Crop Rotation", Age: "bronze_age", Effects: []config.TechEffect{{Kind: config.EffectOutput, Target: "food", Value: 0.25}}},
+		{Key: "zz_dead_letter", Name: "Dead Letter", Age: "bronze_age", Effects: []config.TechEffect{{Kind: "production_all", Value: 0.25}}},
+		{Key: "zz_typo", Name: "Typo", Age: "bronze_age", Effects: []config.TechEffect{{Kind: config.EffectOutput, Target: "foods", Value: 0.25}}},
 	}
 	got := map[string]string{}
 	for _, p := range truthTechPromisesOf(techs) {

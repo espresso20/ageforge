@@ -303,7 +303,7 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 				continue
 			}
 			for _, e := range t.Effects {
-				if e.Type == "production" && e.Value > 0 {
+				if e.Kind == config.EffectFlatOutput && e.Value > 0 {
 					trickle[e.Target] += e.Value
 				}
 			}

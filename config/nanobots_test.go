@@ -119,15 +119,15 @@ func TestNanobots_TechsExistAndGated(t *testing.T) {
 	}
 
 	// Nanofabrication reduces build cost (negative build_cost bonus).
-	if v, ok := bonusEffectValue(byKey["nanofabrication"].Effects, "build_cost"); !ok || v >= 0 {
+	if v, ok := bonusEffectValue(byKey["nanofabrication"].GeneralEffects(), "build_cost"); !ok || v >= 0 {
 		t.Errorf("nanofabrication must reduce build_cost; got %v (present=%v)", v, ok)
 	}
 	// Self-Replication boosts nanobot production.
-	if v, ok := prodEffectValue(byKey["self_replication"].Effects, "nanobots"); !ok || v <= 0 {
+	if v, ok := prodEffectValue(byKey["self_replication"].GeneralEffects(), "nanobots"); !ok || v <= 0 {
 		t.Errorf("self_replication must add nanobot production; got %v (present=%v)", v, ok)
 	}
 	// Medical Nanobots is a clearly-beneficial tech (pop cap and/or food).
-	mn := byKey["medical_nanobots"].Effects
+	mn := byKey["medical_nanobots"].GeneralEffects()
 	_, hasPop := func() (float64, bool) {
 		for _, e := range mn {
 			if e.Type == "capacity" && e.Target == "population" {

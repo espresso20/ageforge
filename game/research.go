@@ -12,8 +12,8 @@ import (
 
 // ResearchManager manages the tech tree and research progress.
 // Only one technology can be in progress at a time. When research completes,
-// its Effect entries are accumulated into bonuses immediately so they are
-// applied on the next recalculateRates call.
+// its effects are accumulated into bonuses immediately so they are applied
+// on the next recalculateRates call.
 //
 // NOTE: bonuses are rebuilt from scratch during LoadState by replaying all
 // researched tech effects — do not persist the bonuses map independently.
@@ -25,19 +25,17 @@ type ResearchManager struct {
 	currentTech string
 	ticksLeft   int
 	totalTicks  int
-	// bonuses accumulates the "bonus" effects of researched techs by target:
-	// the multiplier pools ("production_all", "<res>_rate", "gather_rate",
-	// "tick_speed", "military_power", ...). These feed the resolver.
-	bonuses map[string]float64
-	// storage and capacity accumulate the "storage" effects (by resource key,
-	// or "all") and the "capacity" effects ("population") the same way. They
-	// are kept apart from bonuses: all three were one map keyed by target
-	// alone, so a tech's flat "+0.5 food/tick" also raised food storage by
-	// 0.5, and the Research panel listed storage and housing as percentages.
-	// Flat "production" effects are read off the defs (the engine's
-	// getAllResearchProductionEffects) and are in none of them.
-	storage  map[string]float64
-	capacity map[string]float64
+	// bonuses is what the researched techs add together, by what each
+	// effect changes: its kind and its target (config.TechEffectKey). Output
+	// of gold, storage of gold and gold a tick are three keys, so none can
+	// leak into another. Fractions and flat amounts both live here; the
+	// kind says which a sum is.
+	bonuses map[config.TechEffectKey]float64
+	// pools is the fractions in bonuses by the pool each adds to
+	// ("production_all", "<res>_rate", "gather_rate", "tick_speed",
+	// "military_power", ...): the names the resolver and the panels share
+	// with every other source of bonuses. Rebuilt with bonuses (indexPools).
+	pools map[string]float64
 	// order is every tech key, sorted, fixed at construction. Per-tick walks
 	// over researched techs use it so summed effects never follow map order.
 	order []string
@@ -63,9 +61,8 @@ func NewResearchManagerWith(set *rules.Set) *ResearchManager {
 		defs:       defs,
 		order:      sortedKeys(defs),
 		researched: make(map[string]bool),
-		bonuses:    make(map[string]float64),
-		storage:    make(map[string]float64),
-		capacity:   make(map[string]float64),
+		bonuses:    make(map[config.TechEffectKey]float64),
+		pools:      make(map[string]float64),
 	}
 }
 
@@ -82,7 +79,7 @@ func (rm *ResearchManager) Rebind(set *rules.Set) {
 // StartResearch begins researching a technology using only tech-derived bonuses.
 // Prefer StartResearchWithSpeed to include permanent and prestige bonuses.
 func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder map[string]int, knowledge float64) error {
-	return rm.StartResearchWithSpeed(key, currentAge, ageOrder, knowledge, rm.bonuses["research_speed"])
+	return rm.StartResearchWithSpeed(key, currentAge, ageOrder, knowledge, rm.Bonus(config.EffectResearchTime, ""))
 }
 
 // StartResearchWithSpeed begins researching a technology, applying the given combined
@@ -203,22 +200,26 @@ func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) e
 // point), so a loaded game, which can only replay them in one fixed order,
 // came back with bonuses a few ulps off the live ones.
 func (rm *ResearchManager) rebuildBonuses() {
-	rm.bonuses = make(map[string]float64)
-	rm.storage = make(map[string]float64)
-	rm.capacity = make(map[string]float64)
+	rm.bonuses = make(map[config.TechEffectKey]float64)
 	for _, key := range rm.order {
 		if !rm.researched[key] {
 			continue
 		}
 		for _, eff := range rm.defs[key].Effects {
-			switch eff.Type {
-			case "bonus":
-				rm.bonuses[eff.Target] += eff.Value
-			case "storage":
-				rm.storage[eff.Target] += eff.Value
-			case "capacity":
-				rm.capacity[eff.Target] += eff.Value
-			}
+			rm.bonuses[eff.Key()] += eff.Value
+		}
+	}
+	rm.indexPools()
+}
+
+// indexPools rebuilds pools from bonuses. Each pool has one key (a kind and
+// target name one pool), so a pool's value is its key's sum, copied, never
+// added up again.
+func (rm *ResearchManager) indexPools() {
+	rm.pools = make(map[string]float64)
+	for k, v := range rm.bonuses {
+		if pool, ok := k.Pool(); ok {
+			rm.pools[pool] = v
 		}
 	}
 }
@@ -311,22 +312,13 @@ func (rm *ResearchManager) IsResearched(key string) bool {
 	return rm.researched[key]
 }
 
-// GetBonus returns the accumulated "bonus" effects for a target (a multiplier
-// pool such as "production_all" or "military_power").
-func (rm *ResearchManager) GetBonus(target string) float64 {
-	return rm.bonuses[target]
-}
-
-// StorageBonus returns the storage researched techs add for target: a
-// resource key, or "all" for every resource.
-func (rm *ResearchManager) StorageBonus(target string) float64 {
-	return rm.storage[target]
-}
-
-// CapacityBonus returns the capacity researched techs add for target
-// ("population" is housing).
-func (rm *ResearchManager) CapacityBonus(target string) float64 {
-	return rm.capacity[target]
+// Bonus returns what the researched techs add together to one thing: a kind
+// and its target ("" for the kinds that take none). Military power is
+// Bonus(config.EffectMilitaryPower, ""), gold storage
+// Bonus(config.EffectFlatStorage, "gold"), storage for every resource
+// Bonus(config.EffectFlatStorage, config.AllResources).
+func (rm *ResearchManager) Bonus(kind config.TechEffectKind, target string) float64 {
+	return rm.bonuses[config.TechEffectKey{Kind: kind, Target: target}]
 }
 
 // ResearchedCount returns how many techs have been researched
@@ -340,40 +332,52 @@ func (rm *ResearchManager) GetResearched() []string {
 	return sortedKeys(rm.researched)
 }
 
-// flatOutput is what researched techs add per tick to each resource: their
-// "production" effects, summed in rm.order.
-func (rm *ResearchManager) flatOutput() map[string]float64 {
+// byTarget is the sums of one kind, by target: what researched techs add per
+// tick to each resource (config.EffectFlatOutput), or to each store
+// (config.EffectFlatStorage).
+func (rm *ResearchManager) byTarget(kind config.TechEffectKind) map[string]float64 {
 	out := make(map[string]float64)
+	for k, v := range rm.bonuses {
+		if k.Kind == kind {
+			out[k.Target] = v
+		}
+	}
+	return out
+}
+
+// flatEffects is the flat output effects of the researched techs, one entry
+// per effect, techs in rm.order. The engine adds each to its resource's
+// rate in this order, so the sum never follows map order.
+func (rm *ResearchManager) flatEffects() []config.TechEffect {
+	var out []config.TechEffect
 	for _, key := range rm.order {
 		if !rm.researched[key] {
 			continue
 		}
 		for _, eff := range rm.defs[key].Effects {
-			if eff.Type == "production" {
-				out[eff.Target] += eff.Value
+			if eff.Kind == config.EffectFlatOutput {
+				out = append(out, eff)
 			}
 		}
 	}
 	return out
 }
 
-// GetBonuses returns a copy of all bonuses
+// GetBonuses returns a copy of the bonus pools the researched techs add to,
+// by pool name ("production_all": 0.5 is +50%). The flat amounts (output,
+// storage, housing) are not pools and are not in it.
 func (rm *ResearchManager) GetBonuses() map[string]float64 {
-	out := make(map[string]float64)
-	for k, v := range rm.bonuses {
-		out[k] = v
-	}
-	return out
+	return maps.Clone(rm.pools)
 }
 
-// Modifiers emits one OpAdd Modifier per (target, value) in the research bonus
-// map, attributed to Source "research". The targets are the same strings the
-// engine reads today (e.g. "production_all", "<res>_rate", "gather_rate",
-// "tick_speed") — no renaming. Per-tech attribution is deferred; the summed
-// per-target view is golden-equal to the current scattered math.
+// Modifiers emits one OpAdd Modifier per pool the researched techs add to,
+// attributed to Source "research". The targets are the pool names every
+// other source uses ("production_all", "<res>_rate", "gather_rate",
+// "tick_speed"). Per-tech attribution is deferred; the summed per-target
+// view is golden-equal to the current scattered math.
 func (rm *ResearchManager) Modifiers() []Modifier {
-	out := make([]Modifier, 0, len(rm.bonuses))
-	for t, v := range rm.bonuses {
+	out := make([]Modifier, 0, len(rm.pools))
+	for t, v := range rm.pools {
 		out = append(out, Modifier{Source: "research", Target: t, Op: OpAdd, Value: v})
 	}
 	return out
@@ -424,9 +428,9 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 		TotalTicks:      rm.totalTicks,
 		TotalResearched: len(rm.researched),
 		Bonuses:         rm.GetBonuses(),
-		Flat:            rm.flatOutput(),
-		Storage:         maps.Clone(rm.storage),
-		Housing:         rm.capacity["population"],
+		Flat:            rm.byTarget(config.EffectFlatOutput),
+		Storage:         rm.byTarget(config.EffectFlatStorage),
+		Housing:         rm.Bonus(config.EffectFlatHousing, ""),
 	}
 }
 
