@@ -220,11 +220,12 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // overshoot is spent waiting, the longest stretches of those ages with
 // nothing new to do. Their producers repay faster (0.8x).
 var PaybackAdjust = map[string]float64{
-	"renaissance_age": 2.0,
-	"industrial_age":  1.2,
-	"victorian_age":   1.4,
-	"electric_age":    1.6,
-	"atomic_age":      1.45,
+	"bronze_age":      1.1,
+	"renaissance_age": 2.25,
+	"industrial_age":  1.1,
+	"victorian_age":   1.7,
+	"electric_age":    1.45,
+	"atomic_age":      1.6,
 	"information_age": 0.8,
 	"cyberpunk_age":   0.8,
 }

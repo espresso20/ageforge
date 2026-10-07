@@ -23,23 +23,23 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 	}
 	plain := with()
 
-	// Architecture: a wonder builds in half its time, on top of the cut of
-	// all construction; any other building keeps its time.
+	// Architecture: a wonder builds in three quarters of its time, on top of
+	// the cut of all construction; any other building keeps its time.
 	arch := with("architecture")
 	wonder := config.BuildingDef{BuildTicks: 4680, Category: "wonder"}
 	house := config.BuildingDef{BuildTicks: 4680, Category: "housing"}
-	if a, b := plain.buildTicksLocked(wonder), arch.buildTicksLocked(wonder); a != 4680 || b != 2340 {
-		t.Errorf("a 4680 tick wonder takes %d ticks, %d with Architecture; want 4680 and 2340", a, b)
+	if a, b := plain.buildTicksLocked(wonder), arch.buildTicksLocked(wonder); a != 4680 || b != 3510 {
+		t.Errorf("a 4680 tick wonder takes %d ticks, %d with Architecture; want 4680 and 3510", a, b)
 	}
 	if got := arch.buildTicksLocked(house); got != 4680 {
 		t.Errorf("a 4680 tick house takes %d ticks with Architecture, want 4680", got)
 	}
 	both := with("architecture", "the_wheel") // The Wheel: construction takes 5% less time
-	if got := both.buildTicksLocked(wonder); got != 2223 {
-		t.Errorf("a 4680 tick wonder takes %d ticks with Architecture and a 5%% cut of construction, want 2223 (half, then 95%%)", got)
+	if got := both.buildTicksLocked(wonder); got != 3334 {
+		t.Errorf("a 4680 tick wonder takes %d ticks with Architecture and a 5%% cut of construction, want 3334 (three quarters, then 95%%)", got)
 	}
-	if got := WonderBuildTicks(4680, both.GetState().Research, 1); got != 2223 {
-		t.Errorf("the panels' time for that wonder is %d ticks, want the engine's 2223", got)
+	if got := WonderBuildTicks(4680, both.GetState().Research, 1); got != 3334 {
+		t.Errorf("the panels' time for that wonder is %d ticks, want the engine's 3334", got)
 	}
 	if got := WonderBuildTicks(4680, plain.GetState().Research, 1); got != 4680 {
 		t.Errorf("the panels' time for a wonder with no tech is %d ticks, want 4680", got)

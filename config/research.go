@@ -491,7 +491,7 @@ func rawTechnologies() []TechDef {
 			Description:   "Drawn plans and worked proportions, before the first stone is laid.",
 			Effects: []TechEffect{
 				{Kind: EffectBuildCost, Value: -0.03},
-				{Kind: EffectMechanic, Target: MechanicWonderBuildTicks, Value: -0.50},
+				{Kind: EffectMechanic, Target: MechanicWonderBuildTicks, Value: -0.25},
 			},
 		},
 		{

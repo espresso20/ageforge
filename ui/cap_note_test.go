@@ -105,7 +105,7 @@ func TestResearchPanelBonuses(t *testing.T) {
 		"[green]-19%   [-] Building costs\n",
 		"[green]-27%   [-] Construction time\n",
 		"[green]-23%   [-] Research time\n",
-		"[green]-50%   [-] Wonder construction time\n",
+		"[green]-25%   [-] Wonder construction time\n",
 		"[green]+25%   [-] Festival length\n",
 		"[green]+20%   [-] Soldier storage\n",
 		"[green]+10%   [-] Trade route income\n",

@@ -397,7 +397,7 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 | `printing_press` | Printing Press | optional | 19.7M kp | 1,755 | `alchemy`, `theology` | +6% knowledge production, research takes 3% less time |
 | `navigation` | Navigation | spine | 11.8M kp | 1,404 | `exploration`, `mathematics` | Opens the Naval Expedition, +10% expedition rewards |
 | `crop_rotation` | Crop Rotation | optional | 19.7M kp | 1,755 | `feudalism` | +6% food production |
-| `architecture` | Architecture | optional | 19.7M kp | 1,755 | `civil_engineering` | Buildings cost 3% less, wonders take 50% less time to build |
+| `architecture` | Architecture | optional | 19.7M kp | 1,755 | `civil_engineering` | Buildings cost 3% less, wonders take 25% less time to build |
 | `blast_furnace` | Blast Furnace | optional | 19.7M kp | 1,755 | `steel_forging` | Opens the Foundry, +6% steel production |
 | `gunpowder` | Gunpowder | optional | 19.7M kp | 1,755 | `alchemy`, `siege_warfare` | +12% military power |
 
@@ -709,7 +709,7 @@ These techs move a single number of a game mechanic.
 | Social Media | Information | Festivals cost 20% less |
 | Boatbuilding | Bronze | Trade routes bring in 10% more |
 | Priesthood | Iron | Morale can rise 5 points higher |
-| Architecture | Renaissance | Wonders take 50% less time to build |
+| Architecture | Renaissance | Wonders take 25% less time to build |
 | Baroque Arts | Colonial | Festivals last 25% longer |
 | Embassies | Colonial | Gifts raise opinion 50% more |
 | Concert of Nations | Industrial | Alliances give 25% more |
@@ -721,7 +721,7 @@ These techs move a single number of a game mechanic.
 - **Market fee.** The market keeps 20 points of every trade (see [Trade](trade.md)). Currency, Banking, Wire Transfers and Blockchain take 10 points off between them, so with all four the market keeps 10 and pays 12.5% more on every trade. The fee never falls under 5 points. Faction deals keep their edge over the market's rate as it stands.
 - **Trade route time, expedition time, deal refresh, festival cooldown.** A cut shortens the timer when it is next set: a route's next run, the next expedition sent, the next set of offers, the next festival. Cuts multiply (two 15% cuts leave 72% of a route's time) and none takes a timer under 40% of its length. Expedition time is for scouting expeditions, and the Army panel lists their times with it; campaigns have a number of their own.
 - **Campaign time, campaign loot, soldier storage.** A General Staff cuts the time of every campaign sent after it by 15%. The Military-Industrial Complex makes every campaign bring back 20% more of its listed loot, won or lost, on top of your expedition rewards, and gives every military building room for 20% more soldiers. See [Military](military.md).
-- **Wonder construction.** With Architecture a wonder takes half its listed time to build, and the cuts of all construction then apply to what is left. It is the one cut a wonder has to itself. See [Wonders](wonders.md).
+- **Wonder construction.** With Architecture a wonder takes three quarters of its listed time to build, and the cuts of all construction then apply to what is left. It is the one cut a wonder has to itself. See [Wonders](wonders.md).
 - **Festival length.** With Baroque Arts a festival's bonus lasts 25% longer; its price and the wait for the next are other numbers. See [Festival](commands.md#festival).
 - **Gifts and alliances.** With Embassies a gift earns 22 opinion where it earned 15 (half as much again, rounded down). With the Concert of Nations every ally adds 25% more to its specialty: a +20% bonus becomes +25%, and the Factions panel lists it so. See [Factions](factions.md).
 - **Upgrade cost.** With Interchangeable Parts, `upgrade` asks for 15% less of every resource, after the cut of building costs on the new copy. Building new is not an upgrade.
