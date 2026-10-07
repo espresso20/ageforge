@@ -33,6 +33,8 @@ type Source struct {
 
 	Buildings []config.BuildingDef
 	Techs     []config.TechDef
+	// TechLanes is the tech tree's lanes, in the order the tree draws them.
+	TechLanes []config.TechLaneDef
 	Resources []config.ResourceDef
 
 	Milestones      []config.MilestoneDef
@@ -94,6 +96,7 @@ func FromConfig() Source {
 		Eras:                 config.Epochs(),
 		Buildings:            config.BaseBuildings(),
 		Techs:                config.Technologies(),
+		TechLanes:            config.TechLanes(),
 		Resources:            config.BaseResources(),
 		Milestones:           config.Milestones(),
 		MilestoneChains:      config.MilestoneChains(),

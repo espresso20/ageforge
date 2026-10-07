@@ -46,6 +46,9 @@ type Set struct {
 	techs         []config.TechDef
 	techByKey     map[string]config.TechDef
 	techsByAge    map[string][]config.TechDef
+	techKinds     map[string]config.TechKind // worked out from the wonders
+	lanes         []config.TechLaneDef
+	laneByKey     map[string]config.TechLaneDef
 	resources     []config.ResourceDef
 	resourceByKey map[string]config.ResourceDef
 
@@ -99,6 +102,7 @@ func Compile(src Source) *Set {
 		eras:       slices.Clone(src.Eras),
 		buildings:  slices.Clone(src.Buildings),
 		techs:      slices.Clone(src.Techs),
+		lanes:      slices.Clone(src.TechLanes),
 		resources:  slices.Clone(src.Resources),
 		milestones: slices.Clone(src.Milestones),
 		chains:     slices.Clone(src.MilestoneChains),
@@ -214,6 +218,11 @@ func (s *Set) indexDefs() {
 	for _, t := range s.techs {
 		s.techByKey[t.Key] = t
 		s.techsByAge[t.Age] = append(s.techsByAge[t.Age], t)
+	}
+	s.techKinds = config.TechKinds(s.techs, s.buildings)
+	s.laneByKey = make(map[string]config.TechLaneDef, len(s.lanes))
+	for _, l := range s.lanes {
+		s.laneByKey[l.Key] = l
 	}
 	s.resourceByKey = make(map[string]config.ResourceDef, len(s.resources))
 	for _, r := range s.resources {
@@ -443,6 +452,21 @@ func (s *Set) TechMap() map[string]config.TechDef { return maps.Clone(s.techByKe
 
 // TechsOf returns the techs of an age, in definition order.
 func (s *Set) TechsOf(age string) []config.TechDef { return slices.Clone(s.techsByAge[age]) }
+
+// TechKind returns a tech's kind: a keystone (a wonder requires it), on the
+// spine (a keystone stands on it), a capstone or optional. It is worked out
+// from this set's wonders and prerequisites, never stored. "" for a key the
+// set does not hold.
+func (s *Set) TechKind(key string) config.TechKind { return s.techKinds[key] }
+
+// TechLanes returns the tech tree's lanes, in the order the tree draws them.
+func (s *Set) TechLanes() []config.TechLaneDef { return slices.Clone(s.lanes) }
+
+// TechLane returns a lane's definition.
+func (s *Set) TechLane(key string) (config.TechLaneDef, bool) {
+	l, ok := s.laneByKey[key]
+	return l, ok
+}
 
 // Resources returns every resource, in definition order.
 func (s *Set) Resources() []config.ResourceDef { return slices.Clone(s.resources) }

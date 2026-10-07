@@ -45,6 +45,7 @@ func TestCoreMatchesConfigTables(t *testing.T) {
 	check("BuildingMap", s.BuildingMap(), config.BuildingByKey())
 	check("Techs", s.Techs(), config.Technologies())
 	check("TechMap", s.TechMap(), config.TechByKey())
+	check("TechLanes", s.TechLanes(), config.TechLanes())
 	check("Resources", s.Resources(), config.BaseResources())
 	check("ResourceMap", s.ResourceMap(), config.ResourceByKey())
 	check("Milestones", s.Milestones(), config.Milestones())
@@ -456,7 +457,7 @@ func TestSetHandsOutCopies(t *testing.T) {
 		"Ages": s.Ages(), "AgeKeys": s.AgeKeys(), "Indexes": s.Indexes(), "Eras": s.Eras(),
 		"LegacyBonus": s.LegacyBonus(era),
 		"Buildings":   s.Buildings(), "BuildingMap": s.BuildingMap(), "AgeEntryCosts": s.AgeEntryCosts(age),
-		"Techs": s.Techs(), "TechMap": s.TechMap(), "TechsOf": s.TechsOf(age),
+		"Techs": s.Techs(), "TechMap": s.TechMap(), "TechsOf": s.TechsOf(age), "TechLanes": s.TechLanes(),
 		"Resources": s.Resources(), "ResourceMap": s.ResourceMap(),
 		"Milestones": s.Milestones(), "MilestoneChains": s.MilestoneChains(), "MilestoneTitles": s.MilestoneTitles(),
 		"Events": s.Events(), "EraEvents": s.EraEvents(), "EventMap": s.EventMap(),
@@ -517,6 +518,27 @@ func TestASecondSet(t *testing.T) {
 	}
 	if _, ok := Core().Tech("second_set_tech"); ok {
 		t.Error("the core set learned the second set's tech")
+	}
+	// A tech's kind comes from the set's own wonders: give this set's Stone
+	// Age wonder a keystone, and it and what it stands on are required here
+	// and nowhere else.
+	keyed := FromConfig()
+	var wonder string
+	for i, b := range keyed.Buildings {
+		if b.Category == "wonder" && b.RequiredAge == "stone_age" {
+			keyed.Buildings[i].RequiredTech, wonder = "pottery", b.Key
+		}
+	}
+	k := Compile(keyed)
+	if wonder == "" || k.TechKind("pottery") != config.TechKeystone || k.TechKind("fire_mastery") != config.TechSpine || k.TechKind("chronometry") != config.TechOptional {
+		t.Errorf("with %q needing pottery: pottery is %q, fire_mastery %q, chronometry %q; want keystone, spine, optional",
+			wonder, k.TechKind("pottery"), k.TechKind("fire_mastery"), k.TechKind("chronometry"))
+	}
+	if got := Core().TechKind("pottery"); got != config.TechOptional {
+		t.Errorf("the core set calls pottery %q: none of its own wonders requires it", got)
+	}
+	if got := Core().TechKind("no_such_tech"); got != "" {
+		t.Errorf("an unknown tech has the kind %q, want none", got)
 	}
 	if _, ok := Core().Index(last); !ok {
 		t.Errorf("the core set lost %s", last)
