@@ -358,8 +358,29 @@ func (ge *GameEngine) SetMasteryForTest(mastery map[string]int, record string) {
 // buildTicksLocked is def's construction time in the current age: its
 // BuildTicks × the techs' factor on construction time, ÷ k on known ground.
 // Must be called with the lock held.
+//
+// A wonder's time takes the techs' cut of wonder construction first
+// (wonderTicks).
 func (ge *GameEngine) buildTicksLocked(def config.BuildingDef) int {
-	return BuildTicks(def.BuildTicks, ge.Research.Bonus(config.EffectBuildTime, ""), ge.speedK())
+	base := def.BuildTicks
+	if def.Category == "wonder" {
+		base = ge.wonderTicks(base)
+	}
+	return BuildTicks(base, ge.Research.Bonus(config.EffectBuildTime, ""), ge.speedK())
+}
+
+// wonderTicks is ticks, a wonder's listed construction time, with the techs'
+// cut of wonder construction (config.MechanicWonderBuildTicks): rounded
+// down, one tick at least. Must be called with the lock held.
+func (ge *GameEngine) wonderTicks(ticks int) int {
+	return techTimeTicks(ticks, ge.Research.Mechanic(config.MechanicWonderBuildTicks))
+}
+
+// WonderBuildTicks is BuildTicks for a wonder listed at base ticks, with the
+// techs' terms read off a snapshot (a mechanic no tech has touched is absent
+// there and reads as no cut): the panels list a wonder's time with it.
+func WonderBuildTicks(base int, rs ResearchState, k float64) int {
+	return BuildTicks(techTimeTicks(base, rs.Mechanics[config.MechanicWonderBuildTicks]), rs.BuildTime, k)
 }
 
 // BuildTicks is how long a building listed at base ticks takes to build

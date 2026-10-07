@@ -79,7 +79,7 @@ To queue techs, add them to the [Build Plan](plan.md) with `plan research <tech>
 
 The plan is the only research queue: the game never chooses what you research next. The techs you plan are remembered with the plan, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) they are planned again on later runs, in the age you planned them in.
 
-Research speed shortens how long each tech takes. It comes from milestones (five milestones, three of them in the Scholar chain, add +50% in total). Three techs (Printing Press, Computers, Machine Learning) each take another 3% off the time that leaves. Ancient Knowledge, the Succumb reward, then multiplies the time that is left by 0.8 for each distinct epoch you have succumbed in, kept through prestige (see [Ancient Knowledge](catastrophe.md#ancient-knowledge)). On known ground, [Era Mastery](prestige.md#era-mastery) then divides the time again by the age's speed. See [Technologies](technologies.md) for the full tech tree.
+Research speed shortens how long each tech takes. It comes from milestones (five milestones, three of them in the Scholar chain, add +50% in total). Seven techs take another 3% to 6% each off the time that leaves (Scholasticism, Printing Press, Scientific Method, Public Education, Big Science, Computers and Machine Learning; a quarter with all of them). Ancient Knowledge, the Succumb reward, then multiplies the time that is left by 0.8 for each distinct epoch you have succumbed in, kept through prestige (see [Ancient Knowledge](catastrophe.md#ancient-knowledge)). On known ground, [Era Mastery](prestige.md#era-mastery) then divides the time again by the age's speed. See [Technologies](technologies.md) for the full tech tree.
 
 ---
 

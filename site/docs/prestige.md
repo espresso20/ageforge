@@ -14,7 +14,7 @@ prestige confirm yes
 
 You can prestige from the **Medieval Age (Age 5)** or any later age. A prestige from the Medieval Age to the Atomic Age is an **early taste**: it is optional and pays little (see [Early Tastes and Full Runs](#early-tastes-and-full-runs)). From the **Modern Age (Age 12)** on, a prestige is a full run. There is no upper limit: every age you complete before prestiging adds points, and each era's ages are worth three times the last era's.
 
-A first run is paced to reach the Medieval Age in about 20 hours and the Modern Age in about **a week of real time** (the smoke-test bot gets there in about 4.9 days). The ages before the Modern Age range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. See [How Long Each Age Takes](ages.md#how-long-each-age-takes). The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
+A first run is paced to reach the Medieval Age in about 20 hours and the Modern Age in about **a week of real time** (the smoke-test bot gets there in about 5.6 days). The ages before the Modern Age range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. See [How Long Each Age Takes](ages.md#how-long-each-age-takes). The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
 
 Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first. Before the Cosmic Era, a doom fated for your era that hasn't struck yet ends with the run when you prestige, so a taste in the Medieval Age escapes an Iron Era doom, at the price of the run.
 
@@ -298,11 +298,11 @@ A save at prestige level 0 gains nothing.
 
 ### How much faster a run gets
 
-Measured with the smoke-test bot, a near-perfect player, on the one-week curve (medians: eight seeds for the first two runs, three for the others):
+Measured with the smoke-test bot, a near-perfect player, on the one-week curve (medians: three seeds for the first run, measured again when the Steel and Electric Eras gained their techs; eight seeds for the second and three for the others, from before that):
 
 | Run | To the Modern Age |
 |-----|-------------------|
-| First run | 4.9 days |
+| First run | 5.6 days |
 | Second run | 2.2 days: the first run's ages go by 2.2x faster, and a run played as long as the first ends an age deeper |
 | Third run | 1.9 days |
 | Veteran (mastery 10 through the Space Age, record in the Interstellar Age) | 1.2 days |
@@ -427,7 +427,7 @@ Prestige from before the Cosmic Era never rolls for it.
 
 ### The roll
 
-When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith strength at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). A typical town rolls at 18%. Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most; each costs 1.3B faith and 17B culture: see [What it costs](harbinger.md#what-it-costs-by-epoch)). Invite makes it certain.
+When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith strength at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). A typical town rolls at 18%. Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most; each costs 1.3B faith and 19B culture: see [What it costs](harbinger.md#what-it-costs-by-epoch)). Invite makes it certain.
 
 `prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
 
@@ -462,7 +462,7 @@ Both finish the prestige and raise your prestige level. Both add a line to the c
 
 The result is rounded down, so a small run can keep 0 points. Here Brace changes only the points share: buildings and resources reset anyway, and your soldiers don't change it. The log records a Vindicated verdict, or Fulfilled if you invited it.
 
-Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 21Q dark matter and 25Q titanium, about 22 hours of a moderate economy's income. Appease (1.3B faith and 17B culture a level, about 33 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
+Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 21Q dark matter and 25Q titanium, about 22 hours of a moderate economy's income. Appease (1.3B faith and 19B culture a level, about 33 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
 
 **Succumb** earns no points from this run and grants the [Cosmic Legacy](#cosmic-legacy). If you already carry it, Succumb is closed ("You already carry the Cosmic Legacy. Succumb is closed to you.") and Endure is the only choice.
 

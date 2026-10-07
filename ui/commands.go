@@ -262,7 +262,7 @@ func registry() []*Command {
 				sub("ally", "diplomacy ally <civ>", "Ally with a civilization ("+game.Amount(game.AllyCost, "gold")+", needs opinion "+strconv.Itoa(game.AllyOpinion)+")", civArg...),
 				sub("rival", "diplomacy rival <civ>", "Declare a civilization your rival", civArg...),
 				sub("embargo", "diplomacy embargo <civ>", "Embargo a civilization (a provocation: it can start a war)", civArg...),
-				sub("gift", "diplomacy gift <civ>", "Send a gift of gold for +"+strconv.Itoa(game.GiftOpinion)+" opinion (the Factions panel shows today's price)", civArg...),
+				sub("gift", "diplomacy gift <civ>", "Send a gift of gold for +"+strconv.Itoa(game.GiftOpinion)+" opinion or more (the Factions panel shows today's price and what it earns)", civArg...),
 				sub("neutral", "diplomacy neutral <civ>", "Return to neutral with a civilization", civArg...),
 				sub("tribute", "diplomacy tribute <civ>", "Sue for peace with a civilization at war", civArg...),
 				sub("deals", "diplomacy deals [civ]", "List trade deals (one civilization, or every one you have met)",

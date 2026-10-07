@@ -126,10 +126,14 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 	// building it raised, put back alone on its old storage per copy, must
 	// leave its own age short: the raises were the least that pass, at two
 	// significant figures. Under the old 1.5-hour covenant none of them was.
+	// The Victorian Vault (1.1B) and the Electric Warehouse (3.5B) left the
+	// list when their ages' producers were set to repay more slowly
+	// (config.PaybackAdjust): typical income fell there, and the old sizes
+	// would hold 4.5 hours again. Their storage was left where it is.
 	before := map[string]float64{
 		"warehouse": 11e3, "classical_vault": 110e3, "keep": 410e3,
-		"colonial_warehouse": 33e6, "industrial_depot": 170e6, "victorian_vault": 1.1e9,
-		"electric_warehouse": 3.5e9, "info_vault": 790e9, "cyber_vault": 8e12,
+		"colonial_warehouse": 33e6, "industrial_depot": 170e6,
+		"info_vault": 790e9, "cyber_vault": 8e12,
 	}
 	for _, k := range sortedKeys(before) {
 		reverted := withStorage(func(key string, v float64) float64 {

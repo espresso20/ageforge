@@ -1197,14 +1197,18 @@ func (ge *GameEngine) grantFeaturesLocked(keys []string) {
 // its next age the grace is over, and the line says only what changed and
 // what it keeps. Must be called with the write lock held.
 func (ge *GameEngine) treeNotice(from int) string {
-	changed := "Research update: the tech tree gained new techs. Trade routes, expeditions past the Scout Party, diplomacy and festivals now each wait for one and say which when you try them, one more wonder needs its keystone, and a few buildings wait for a tech."
+	changed := "Research update: the tech tree gained new techs from the Renaissance to the Atomic Age, and a few buildings of those ages now wait for one."
+	kept := " Everything you have researched or built stays."
+	if from < 3 {
+		changed = "Research update: the tech tree gained new techs. Trade routes, expeditions past the Scout Party, diplomacy and festivals now each wait for one and say which when you try them, one more wonder needs its keystone, and a few buildings wait for a tech."
+		kept = " A command you were already using stays open for the rest of this run, and everything you have researched or built stays."
+	}
 	if from < 2 {
 		changed = "Research update: some commands now wait for a tech and say which when you try them, and a tech's bonus is smaller but always counts in full."
 	}
 	if from < 1 {
 		changed = "Research update: each age's wonder now needs one tech, its keystone, before it can be built, some commands wait for a tech and say which when you try them, and techs are priced by their age, with smaller bonuses that always count in full."
 	}
-	const kept = " A command you were already using stays open for the rest of this run, and everything you have researched or built stays."
 	if !ge.inTreeGrace() {
 		return changed + kept
 	}

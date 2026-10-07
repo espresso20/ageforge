@@ -37,7 +37,11 @@ const (
 //	   a tech that the tree now holds (trade routes, expeditions past the
 //	   Scout Party, diplomacy, festivals), and seven buildings of the Stone
 //	   and Iron Eras wait for one.
-const TechTreeVersion = 3
+//	4: nine buildings of the Steel and Electric Eras wait for a tech of
+//	   their age (the Foundry, the Harbor, the Colonial Steelworks, the
+//	   Embassy, the Coal Plant, the Geographic Society, the Grand Embassy,
+//	   the Steam Works and the Dynamo Hall).
+const TechTreeVersion = 4
 
 // TechLaneDef is one lane of the tech tree.
 type TechLaneDef struct {

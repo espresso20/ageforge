@@ -480,13 +480,20 @@ func Milestones() []MilestoneDef {
 				{Type: "instant_resource", Target: "knowledge", Value: 50},
 			},
 		},
-		// tech_pioneer: raised to 15 techs
+		// The tech-count milestones follow the tree. Each is set so that it
+		// is first within reach in the age it always was (Tech Pioneer in the
+		// Iron Age, Deep Thinker in the Renaissance, Philosophes in the
+		// Industrial Age, Renaissance Mind in the Electric Age, Tech Master
+		// in the Information Age): the techs every age before it holds, plus
+		// half of that age's own, rounded up. A content batch that adds techs
+		// to those ages or to any before them sets the five again
+		// (TestTechCountMilestonesKeepTheirAge says which have drifted).
 		{
 			Name: "Tech Pioneer", Key: "tech_pioneer",
-			Description:  "Research 15 techs.",
-			Flavor:       "Fifteen breakthroughs. The wheel was one of them, eventually.",
+			Description:  "Research 22 techs.",
+			Flavor:       "Breakthrough after breakthrough. The wheel was one of them, eventually.",
 			Category:     "scholar",
-			MinTechCount: 15,
+			MinTechCount: 22,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.05},
 			},
@@ -503,38 +510,36 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.10},
 			},
 		},
-		// deep_thinker: raised to 25 techs
 		{
 			Name: "Deep Thinker", Key: "deep_thinker",
-			Description:  "Research 25 techs.",
-			Flavor:       "Twenty-five technologies. Your scholars have begun ending sentences with 'well, actually.'",
+			Description:  "Research 45 techs.",
+			Flavor:       "Technology upon technology. Your scholars have begun ending sentences with 'well, actually.'",
 			Category:     "scholar",
 			MinAge:       "bronze_age",
-			MinTechCount: 25,
+			MinTechCount: 45,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.05},
 			},
 		},
-		// philosophes: raised to 35 techs
 		{
 			Name: "Philosophes", Key: "philosophes",
-			Description:  "Research 35 techs.",
-			Flavor:       "Thirty-five technologies. The philosophers now argue about things on purpose.",
+			Description:  "Research 63 techs.",
+			Flavor:       "Enough technologies to fill a salon. The philosophers now argue about things on purpose.",
 			Category:     "scholar",
 			MinAge:       "classical_age",
-			MinTechCount: 35,
+			MinTechCount: 63,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.05},
 			},
 		},
-		// renaissance_mind: raised to 42 techs; renaissance age gated
+		// renaissance_mind: Renaissance Age gated
 		{
 			Name: "Renaissance Mind", Key: "renaissance_mind",
-			Description: "Research 42 techs.",
-			Flavor:      "Forty-two technologies. The answer to everything, apparently, requires a sequel.",
+			Description: "Research 82 techs.",
+			Flavor:      "So many technologies that the answer to everything, apparently, requires a sequel.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "renaissance_age",
-			MinTechCount: 42,
+			MinTechCount: 82,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.10},
 			},
@@ -551,16 +556,16 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.15},
 			},
 		},
-		// tech_master: 50 techs. The tech tree reaches 50 in the Modern Age;
-		// the milestone is held to the Information Age (MinAge). Capstone broadened: keeps research_speed,
+		// tech_master: more techs than the tree holds before the Information
+		// Age, and held to it besides (MinAge). Capstone broadened: keeps research_speed,
 		// adds a touch of production_all.
 		{
 			Name: "Tech Master", Key: "tech_master",
-			Description: "Research 50 techs.",
-			Flavor:      "Fifty technologies mastered. You now understand the universe well enough to be properly worried.",
+			Description: "Research 104 techs.",
+			Flavor:      "Technology mastered by the shelf. You now understand the universe well enough to be properly worried.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "information_age",
-			MinTechCount: 50,
+			MinTechCount: 104,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.10},
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},

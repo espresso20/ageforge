@@ -249,9 +249,12 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 // (config.Mechanics), each where the game uses it: what the market pays on a
 // pair it trades at parity (as the fee that leaves), a route's time per
 // run and what a run brings in of a listed import, how high morale can
-// rise, a scouting expedition launched off a fixed roll, how long a set of
-// deals lasts, what a gift costs, the share of its price a festival costs,
-// the wait between festivals.
+// rise, a scouting expedition and a campaign launched off a fixed roll and
+// what a campaign brings back of its listed loot, how long a set of deals
+// lasts, what a gift costs and earns, what an ally adds per point of its
+// listed bonus, the share of its price a festival costs, how long it lasts
+// and the wait before the next, a wonder's construction time, how many
+// soldiers can be held, the share of its price an upgrade costs.
 // Hand gathering and raid losses are read as the engine's own term: a real
 // gather and a real raid spend the engine, and TestTechGatherAndRaids runs
 // both. A number that cannot be read in this engine is left out. It leaves
@@ -266,7 +269,14 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 		config.MechanicDealRefreshTicks:      float64(ge.Diplomacy.dealRefreshFor(ge.age)),
 		config.MechanicGiftCost:              ge.Diplomacy.GiftPrice(),
 		config.MechanicFestivalCooldownTicks: float64(ge.festivalCooldown()),
+		config.MechanicFestivalTicks:         float64(ge.festivalLength()),
+		config.MechanicWonderBuildTicks:      float64(ge.wonderTicks(truthRefTicks)),
+		config.MechanicGiftOpinion:           float64(ge.Diplomacy.GiftGain()),
+		config.MechanicAllianceBonus:         ge.Diplomacy.AllyBonus(config.FactionDef{TradeBonus: 1}),
+		config.MechanicCampaignReward:        ge.Military.CampaignPay(truthRefTicks) / truthRefTicks,
+		config.MechanicSoldierStorage:        ge.soldierRoom(truthRefCost) / truthRefCost,
 	}
+	out[config.MechanicUpgradeCost] = ge.Buildings.upgradePrice(truthRefCost) / truthRefCost
 	// A festival's price is a share of the culture store: read it against
 	// what it would be with no tech, so only the techs' cut moves it.
 	if full := math.Max(festivalMinCost, ge.Resources.GetStorage("culture")*festivalCostFraction); full > 0 {
@@ -279,18 +289,33 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 			out[config.MechanicMarketFee] = 1 - (1-config.ExchangeFee)*paid/base
 		}
 	}
-	if defs := ge.Military.GetAvailableExpeditionsByCategory(ExpeditionScouting, ge.age, ageOrders()); len(defs) > 0 {
-		held := ge.Military.activeByCat[ExpeditionScouting]
-		delete(ge.Military.activeByCat, ExpeditionScouting)
-		if err := ge.Military.LaunchExpedition(rand.New(rand.NewSource(1)), defs[0].Key, ge.age, ageOrders()); err == nil {
-			out[config.MechanicExpeditionTicks] = float64(ge.Military.activeByCat[ExpeditionScouting].TicksLeft)
+	// A mission of each kind, launched off a fixed roll.
+	for cat, key := range map[string]string{ExpeditionScouting: config.MechanicExpeditionTicks, ExpeditionMilitary: config.MechanicCampaignTicks} {
+		defs := ge.Military.GetAvailableExpeditionsByCategory(cat, ge.age, ageOrders())
+		if len(defs) == 0 {
+			continue
 		}
-		delete(ge.Military.activeByCat, ExpeditionScouting)
+		held := ge.Military.activeByCat[cat]
+		delete(ge.Military.activeByCat, cat)
+		if err := ge.Military.LaunchExpedition(rand.New(rand.NewSource(1)), defs[0].Key, ge.age, ageOrders()); err == nil {
+			out[key] = float64(ge.Military.activeByCat[cat].TicksLeft)
+		}
+		delete(ge.Military.activeByCat, cat)
 		if held != nil {
-			ge.Military.activeByCat[ExpeditionScouting] = held
+			ge.Military.activeByCat[cat] = held
 		}
 	}
 	return out
+}
+
+// truthStoreScale is what the techs multiply the store of res by: their
+// storage bonus on every store, and the soldiers' own term on theirs.
+func truthStoreScale(ge *GameEngine, res string) float64 {
+	scale := 1 + ge.Research.Bonus(config.EffectStorage, "")
+	if res == "soldiers" {
+		scale = float64(scale * ge.Research.Mechanic(config.MechanicSoldierStorage))
+	}
+	return scale
 }
 
 // truthLayerScale is what one point of the tech layer on res is worth in its
@@ -804,11 +829,10 @@ var truthKinds = map[string]truthKind{
 		Unit: "of every store", Pool: true,
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
 			ge.recalculateRates()
-			held := 1 + ge.Research.Bonus(config.EffectStorage, "")
 			m := truthMeasured{Allowed: meterHasPrefix("storage:", "stock:")}
 			lo, hi := math.Inf(1), math.Inf(-1)
 			for _, key := range ge.Resources.order {
-				base := ge.Resources.resources[key].Storage / held
+				base := ge.Resources.resources[key].Storage / truthStoreScale(ge, key)
 				if base <= 0 {
 					continue
 				}
@@ -857,12 +881,21 @@ var truthKinds = map[string]truthKind{
 			if a <= 0 {
 				return truthMeasured{Skip: def.Name + " reads zero here"}
 			}
-			// A number of ticks is whole: good to a tick either way.
+			// A number of ticks is whole: good to a tick either way. So is
+			// the opinion a gift earns, to a point.
 			noise := 0.0
 			if strings.HasSuffix(p.Eff.Target, "_ticks") && a > 1 {
 				noise = 2 / a
 			}
-			return truthMeasured{Delivered: after[meter]/a - 1, Noise: noise, Allowed: meterIs(meter)}
+			if p.Eff.Target == config.MechanicGiftOpinion {
+				noise = 1 / a
+			}
+			// More room for soldiers is more of their store.
+			allowed := meterIs(meter)
+			if p.Eff.Target == config.MechanicSoldierStorage {
+				allowed = meterIs(meter, "storage:soldiers", "stock:soldiers")
+			}
+			return truthMeasured{Delivered: after[meter]/a - 1, Noise: noise, Allowed: allowed}
 		},
 	},
 	// "+X% all production": X points on every resource buildings make.
@@ -955,14 +988,16 @@ var truthKinds = map[string]truthKind{
 		Unit: "storage per copy",
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
 			// The techs' storage bonus multiplies every store, as k does.
-			scale := p.Count * ge.speedK() * (1 + ge.Research.Bonus(config.EffectStorage, ""))
+			count := p.Count * ge.speedK()
 			if p.Eff.Target != "all" {
+				scale := count * truthStoreScale(ge, p.Eff.Target)
 				d, noise := truthDiff(before, after, "storage:"+p.Eff.Target)
 				return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("storage:" + p.Eff.Target)}
 			}
 			m := truthMeasured{Allowed: meterHasPrefix("storage:")}
 			lo, hi := math.Inf(1), math.Inf(-1)
 			for _, key := range ge.Resources.order {
+				scale := count * truthStoreScale(ge, key)
 				d, noise := truthDiff(before, after, "storage:"+key)
 				lo, hi = math.Min(lo, d/scale), math.Max(hi, d/scale)
 				m.Noise = math.Max(m.Noise, noise/scale)
@@ -1106,6 +1141,10 @@ var truthKinds = map[string]truthKind{
 			if gross <= 0 {
 				return truthMeasured{Skip: "no " + res + " comes in here"}
 			}
+			// The techs' term on alliances multiplies every ally's bonus
+			// (the Factions panel lists the bonus with it): read per point
+			// of the listed one.
+			gross = float64(gross * ge.Diplomacy.AllyBonus(config.FactionDef{TradeBonus: 1}))
 			d, noise := truthDiff(before, after, "rate:"+res)
 			return truthMeasured{Delivered: d / gross, Noise: noise / gross, Allowed: meterIs("rate:" + res)}
 		},

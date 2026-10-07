@@ -382,7 +382,7 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 		fmt.Fprintf(sb, "   [gray]diplomacy rival/embargo/neutral %s[-]\n\n", def.Key)
 	default:
 		fmt.Fprintf(sb, "   [gray]Send a gift: %s for +%d opinion (diplomacy gift %s) · ally/rival/embargo/neutral %s[-]\n\n",
-			game.Amount(state.Diplomacy.GiftCost, "gold"), game.GiftOpinion, def.Key, def.Key)
+			game.Amount(state.Diplomacy.GiftCost, "gold"), state.Diplomacy.GiftGain, def.Key, def.Key)
 	}
 }
 

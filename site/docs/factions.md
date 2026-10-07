@@ -56,7 +56,7 @@ Gifts, alliances, rivalries, embargoes and deals wait for **Envoys**, a Classica
 | `diplomacy ally <civ>` | Ally with a civilization. Needs opinion 50 or more and costs 500 gold |
 | `diplomacy rival <civ>` | Declare a civilization your rival. Free. Opinion drains, and it offers no deals |
 | `diplomacy embargo <civ>` | Embargo a civilization. Free. Opinion drains, no deals, your routes that bring in its specialty stop, and it counts as a provocation |
-| `diplomacy gift <civ>` | Send a gift: 200 gold for +15 opinion (150 gold with Telecommunications) |
+| `diplomacy gift <civ>` | Send a gift: 200 gold for +15 opinion (150 gold with Telecommunications, +22 opinion with Embassies) |
 | `diplomacy neutral <civ>` | Return to neutral. Free; an alliance's 500 gold isn't refunded |
 | `diplomacy tribute <civ>` | End a war at once: 300 gold and 50 culture per point of the civilization's strength |
 | `diplomacy raid <civ>` | Raid its trade route: -20 opinion, and a provocation |
@@ -88,7 +88,7 @@ From the Bronze Age on (which is when the first civilization becomes eligible) e
 |---|---|---|
 | Trade routes | +1 per completed route cycle | With every civilization you have met that isn't at war with you, all at once. The biggest source for most players: see [What routes are worth](trade.md#what-routes-are-worth). |
 | Embassies | a steady trickle | Spread across your non-hostile civilizations (see [Embassy Buildings](#embassy-buildings)). |
-| Gifts | +15 per gift | `diplomacy gift <civ>` costs 200 gold, 25% less with the Telecommunications tech. |
+| Gifts | +15 per gift, +22 with Embassies | `diplomacy gift <civ>` costs 200 gold, 25% less with the Telecommunications tech. The Embassies tech (Colonial Age) makes a gift earn half as much again, rounded down. |
 | Deals | +1 per Buy, Sell or Rare deal; +5 per Goodwill deal | Only up to opinion 50. |
 | Personality | ±1 every 65 ticks | See [Personalities](#personalities). |
 | Natural drift | 1 point toward 0 every 260 ticks | Not while at war. For an ally this is a slow leak. |
@@ -157,6 +157,8 @@ route income    = base income × (1 + harbor bonus + ally bonus)
 ```
 
 The bonus applies to your whole per-tick rate of that resource (buildings, workers and everything else), and to that resource on every trade route that brings it in. It is its own multiplier, outside [the all-production pool](resources.md#the-all-production-cap). Two allies with the same specialty would add their bonuses together. An ally at war with you gives nothing.
+
+The **Concert of Nations**, the Industrial Age's Trade capstone, makes every ally give 25% more: a +20% bonus becomes +25%, a +15% one +18.75%. The Factions panel and the Trade panel list each bonus as it stands.
 
 The bonus shows in the **Active Multipliers** section of the Stats panel as a `Diplomacy` line on the affected resource, and the Trade panel lists the same bonuses under **Allied bonuses**, one line per ally (for example *Merchant Guild: +20% gold*).
 
@@ -238,10 +240,10 @@ Two diplomacy buildings turn workers into a steady source of opinion. Staff an e
 
 | Building | Unlocks | Cost | Workers | Opinion Rate |
 |---|---|---|---|---|
-| **Embassy** | Colonial Age | gold + iron | 5 (trade domain) | +0.05 opinion / worker / tick |
-| **Grand Embassy** | Industrial Age | gold + steel | 8 (trade domain) | +0.10 opinion / worker / tick (2× the Embassy) |
+| **Embassy** | Colonial Age, with the Embassies tech | gold + iron | 5 (trade domain) | +0.05 opinion / worker / tick |
+| **Grand Embassy** | Industrial Age, with the Concert of Nations | gold + steel | 8 (trade domain) | +0.10 opinion / worker / tick (2× the Embassy) |
 
-Embassies use the **trade** worker domain, the same workers who staff markets and harbors. The gain each tick is split across all the non-hostile civilizations you have met, so each embassy does less for each civilization as you meet more of them.
+Each waits for a tech of its own age: the Embassy for **Embassies** (which needs Envoys), the Grand Embassy for the **Concert of Nations**, a capstone that needs Embassies and Geographic Societies. Embassies use the **trade** worker domain, the same workers who staff markets and harbors. The gain each tick is split across all the non-hostile civilizations you have met, so each embassy does less for each civilization as you meet more of them.
 
 ---
 
@@ -288,7 +290,7 @@ The peaceful civilizations (Riverlands Tribes, Artisan League, Plasma Nomads) ar
 
 ### Ally early and widely
 
-Gifts, alliances and tribute have fixed gold prices that never grow with the age. In the Bronze Age 200 gold is real money; from the Iron Age on it is small change. Four gifts (800 gold) take a civilization from 0 to 60 opinion, and the alliance costs 500 gold more. You can only gift civilizations you have met.
+Gifts, alliances and tribute have fixed gold prices that never grow with the age. In the Bronze Age 200 gold is real money; from the Iron Age on it is small change. Four gifts (800 gold) take a civilization from 0 to 60 opinion, three with Embassies (66), and the alliance costs 500 gold more. You can only gift civilizations you have met.
 
 An alliance pays every tick: its bonus covers your whole production of the ally's specialty, and the ally gives the best deals, the biggest boons and the gentlest setbacks. Ally with every civilization whose specialty you produce. The later civilizations carry the biggest bonuses, up to +30%.
 
@@ -311,5 +313,5 @@ An embargo or a raid hurts you more than it hurts them: you lose that civilizati
 - **An alliance costs 500 gold each time.** If you drop to neutral and want to ally again, you pay again. Opinion stays when you go neutral, so the gold is all you need.
 - **Deals stop at opinion 50.** To get past 50 use gifts, routes and embassies.
 - **A full set of boons costs buffs, not goods.** With five timed boons running, an encounter can still bring a lump of resources or a crew.
-- **Gifts add up fast.** Six gifts (1.2K gold) take a civilization from 0 to 90 opinion.
+- **Gifts add up fast.** Six gifts (1.2K gold) take a civilization from 0 to 90 opinion, and with Embassies five take it to the top.
 - **Opinion drifts toward zero.** Every 260 ticks each civilization not at war with you moves 1 point toward 0, so an alliance left without routes, gifts or embassies slowly cools (the status stays).

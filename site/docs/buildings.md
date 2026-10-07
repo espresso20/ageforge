@@ -74,7 +74,7 @@ upgrade forager_post all
 
 ### Upgrade cost
 
-Each copy you upgrade costs the price of a new copy minus the old copy's sell value (half of what it cost). In other words, **you trade in the old building at 50% of its price toward the new one.** The sum is done per resource, and no resource goes below zero. Old copies are traded in from the most expensive down, and new copies are priced up the new building's cost curve as usual. Build-cost reductions apply to the new copy's price but not to the trade-in value.
+Each copy you upgrade costs the price of a new copy minus the old copy's sell value (half of what it cost). In other words, **you trade in the old building at 50% of its price toward the new one.** The sum is done per resource, and no resource goes below zero. Old copies are traded in from the most expensive down, and new copies are priced up the new building's cost curve as usual. Build-cost reductions apply to the new copy's price but not to the trade-in value. **Interchangeable Parts**, the Industrial Age's Craft capstone, then takes 15% off what is left to pay, in every resource.
 
 Because it is done per resource, the trade-in only counts in resources the new building costs. If the old building cost wood and the new one costs none, that part of its value is lost; so is any trade-in beyond the new price in a resource. An upgrade therefore never costs less than selling the old copy and building a new one, and sometimes a little more. What it saves is time: it is instant, with no build time, and the workers stay.
 
@@ -162,7 +162,7 @@ These are first-run times. On known ground (an age a past run completed) every b
 
 ### Buildings a tech opens
 
-Most buildings unlock the moment you enter their age. Twelve wait for a tech from that same age instead, so the age has something new partway through:
+Most buildings unlock the moment you enter their age. Twenty-one wait for a tech from that same age instead, so the age has something new partway through:
 
 | Building | Age | Opened by |
 |---|---|---|
@@ -173,6 +173,15 @@ Most buildings unlock the moment you enter their age. Twelve wait for a tech fro
 | Legion Fort | Iron | Siege Warfare |
 | Forge | Classical | Metal Casting |
 | Cathedral | Medieval | Theology, the age's keystone |
+| Foundry | Renaissance | Blast Furnace |
+| Colonial Steelworks | Colonial | Coke Smelting |
+| Harbor | Colonial | Mercantilism |
+| Embassy | Colonial | Embassies |
+| Coal Plant | Industrial | Steam Power |
+| Geographic Society | Industrial | Geographic Societies |
+| Grand Embassy | Industrial | Concert of Nations, a capstone |
+| Steam Works | Victorian | Electrification |
+| Dynamo Hall | Electric | Power Distribution, the age's keystone |
 | Nuclear Plant | Atomic | Civilian Reactors |
 | Smart Farm | Information | Internet of Things |
 | Smart Complex | Information | Internet of Things |
@@ -180,6 +189,8 @@ Most buildings unlock the moment you enter their age. Twelve wait for a tech fro
 | Energy Exchange | Fusion | Maglev Transit |
 
 Until the tech is done the building is missing from the build list, and `build` and `upgrade` say which tech it needs. Each of these buildings is its lineage's tier for that age, so the upgrade hint for the old tier shows when you advance, but the upgrade itself waits for the tech. The build plan takes it early and waits. Copies you already have keep working. See [Technologies](technologies.md#tech-tree-by-age).
+
+A tech only takes a building when the age keeps another way to make the same thing (the Mill beside the Foundry, the Port beside the Harbor), or when the tech is one a run researches anyway. A building that is its age's only source of what it makes is open from the first tick of its age: every age's knowledge, culture and military building, the Steam Mine, the Uranium Mine, the Financial District, the Corporate HQ and the Petroleum Refinery among them.
 
 Wonders wait for a tech too, in their own way: from the Stone Age on each one needs its age's **keystone** before `build` will start it, but it is listed from the first tick of its age and its bank takes deposits and overflow the whole time. See [The keystone tech](wonders.md#the-keystone-tech).
 
@@ -266,16 +277,16 @@ Output is valued at **price parity**. Each age has a price level for each resour
 |-----|-------------|-------------------------|----------------|-------------------|
 | Primitive | 15m | 56s | 2m 30s | 18s |
 | Stone | 45m | 4m | 7m 30s | 56s |
-| Bronze | 3h 54m | 23m | 39m | 4m 52s |
+| Bronze | 3h 54m | 25m | 39m | 4m 52s |
 | Iron | 6h 30m | 45m | 1h 5m | 8m 6s |
 | Classical | 9h 6m | 1.2h | 1h 31m | 11m 22s |
 | Medieval | 11h 42m | 1.8h | 1h 57m | 14m 36s |
 | Renaissance | 15h 36m | 5.2h | 2h 36m | 19m 30s |
 | Colonial | 18h 12m | 3.4h | 3h 2m | 22m 44s |
 | Industrial | 20h 48m | 4.2h | 3h 28m | 26m |
-| Victorian | 23h 24m | 5.1h | 3h 54m | 29m 14s |
-| Electric | 26h | 6.1h | 4h 20m | 32m 30s |
-| Atomic | 31h 12m | 7.8h | 5h 12m | 39m |
+| Victorian | 23h 24m | 8.7h | 3h 54m | 29m 14s |
+| Electric | 26h | 8.8h | 4h 20m | 32m 30s |
+| Atomic | 31h 12m | 13.7h | 5h 12m | 39m |
 | Modern | 31h 12m | 8.3h | 5h 12m | 39m |
 | Information | 36h 24m | 8.2h | 6h 4m | 45m 30s |
 | Digital | 41h 36m | 12.4h | 6h 56m | 52m |
@@ -288,6 +299,8 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Transcendent | 62h 24m | 25.3h | 10h 24m | 1h 18m |
 
 The Renaissance's payback is 2x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with a fifth more knowledge and cheaper, quicker building, and the age had dropped to three quarters of its target. Its University makes 76.3 knowledge/tick, Exchange 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
+
+The Electric Era's ages repay more slowly too, since the Steel and Electric Eras gained their techs: Victorian 1.7x, Electric 1.45x and Atomic 1.75x what the curve gives. With nine techs an age where there were three, the keystone costs a tenth of what the age makes of knowledge, where it cost a quarter to a half, and research no longer holds those ages up; their buildings and their requirements do. A Bessemer Plant makes 141K steel/tick (was 240K), an Electric Arc Furnace 874K (was 1.27M) and a Breeder Reactor 1.26M electricity (was 2.21M). The Bronze Age's payback is 1.1x (a Lumber Mill makes 7.91 wood/tick, was 8.7; a Quarry 4 stone, was 4.4): the age ran at under two thirds of its target.
 
 The Information and Cyberpunk Ages go the other way, at 0.8x: they ran 1.2 to 1.5x their targets, and the extra time was spent waiting.
 
@@ -437,7 +450,7 @@ Monuments are one way to spend culture; the `festival` command is another. See [
 
 ## The Geographic Society
 
-Unlocked in the **Industrial Age**, the Geographic Society is the one building that plays part of the game for you. It costs gold, steel and coal, holds **8 military workers**, and produces no resource. Instead it **sends out scouting expeditions on its own**, so an empire left to run keeps exploring and keeps meeting the world's civilizations, which is where civilization boons come from.
+Unlocked in the **Industrial Age** by the **Geographic Societies** tech (which needs Cartography), the Geographic Society is the one building that plays part of the game for you. It costs gold, steel and coal, holds **8 military workers**, and produces no resource. Instead it **sends out scouting expeditions on its own**, so an empire left to run keeps exploring and keeps meeting the world's civilizations, which is where civilization boons come from.
 
 You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party about every 2,340 ticks (**1h 18m** at the base tick), and six fully staffed ones bottom out at around one every 260 ticks (about **8m 40s**). Game speed bonuses shorten these in real time; the **Factions** panel shows the countdown to the next dispatch in wall-clock time. It sends **scouting parties only**, never military campaigns. It uses your one scouting slot only when it is free, and it pays the full resource cost of every party: if your stores can't outfit one, it waits and sends it as soon as they can.
 
