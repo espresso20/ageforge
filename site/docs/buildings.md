@@ -172,6 +172,8 @@ Most buildings unlock the moment you enter their age. Five wait for a tech from 
 
 Until the tech is done the building is missing from the build list, and `build` and `upgrade` say which tech it needs. Each of these buildings is its lineage's tier for that age, so the upgrade hint for the old tier shows when you advance, but the upgrade itself waits for the tech. The build plan takes it early and waits. Copies you already have keep working. See [Technologies](technologies.md#tech-tree-by-age).
 
+Wonders wait for a tech too, in their own way: from the Stone Age on each one needs its age's **keystone** before `build` will start it, but it is listed from the first tick of its age and its bank takes deposits and overflow the whole time. See [The keystone tech](wonders.md#the-keystone-tech).
+
 ---
 
 ## Lineage System
