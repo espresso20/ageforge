@@ -245,7 +245,7 @@ An age at mastery 0 is the **frontier**: no run has completed it, and it runs at
 
 On **known ground** (an age running faster than 1x, through mastery or [catch-up](#catch-up)):
 
-- **Production.** Every resource's net rate is multiplied by k. This comes last, after the ×3 production cap and every other bonus, food drain included, so a balanced food supply stays balanced. The `rates` breakdown shows it as its own **Era Mastery** part.
+- **Production.** Every resource's net rate is multiplied by k. This comes last, after the production pools and every other bonus, food drain included, so a balanced food supply stays balanced. The `rates` breakdown shows it as its own **Era Mastery** part.
 - **Storage.** Every cap is multiplied by k too, so a store holds the same hours of income it would at 1x.
 - **Build times** are divided by k, rounded up, never below one tick.
 - **Research times** are divided by k after your research speed is applied, rounded up, never below one tick. The Research and Wonders panels show the shortened times.
@@ -427,7 +427,7 @@ Prestige from before the Cosmic Era never rolls for it.
 
 ### The roll
 
-When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith strength at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). A typical town rolls at 18%. Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most; each costs 1.2B faith and 16B culture: see [What it costs](harbinger.md#what-it-costs-by-epoch)). Invite makes it certain.
+When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith strength at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). A typical town rolls at 18%. Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most; each costs 1.3B faith and 17B culture: see [What it costs](harbinger.md#what-it-costs-by-epoch)). Invite makes it certain.
 
 `prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
 
@@ -462,7 +462,7 @@ Both finish the prestige and raise your prestige level. Both add a line to the c
 
 The result is rounded down, so a small run can keep 0 points. Here Brace changes only the points share: buildings and resources reset anyway, and your soldiers don't change it. The log records a Vindicated verdict, or Fulfilled if you invited it.
 
-Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 20Q dark matter and 24Q titanium, about 22 hours of a moderate economy's income. Appease (1.2B faith and 16B culture a level, about 32 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
+Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 21Q dark matter and 25Q titanium, about 22 hours of a moderate economy's income. Appease (1.3B faith and 17B culture a level, about 33 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
 
 **Succumb** earns no points from this run and grants the [Cosmic Legacy](#cosmic-legacy). If you already carry it, Succumb is closed ("You already carry the Cosmic Legacy. Succumb is closed to you.") and Endure is the only choice.
 
@@ -476,7 +476,7 @@ Inviting the Last Passage's thread is how you take the Cosmic Legacy on purpose.
 
 A one-time, permanent reward for Succumbing to the Last Passage.
 
-- **+10% all production**, active from tick 1 of every run, in every age. It is not part of the all-production pool: everything a resource makes is multiplied by 1.1 after [the x3 cap](resources.md#the-all-production-cap) and every other bonus, so no cap can hold it back. (It used to add into the pool, where it did nothing once the pool was full, from about the Victorian Age on.)
+- **+10% all production**, active from tick 1 of every run, in every age. It is not part of the all-production pool: everything a resource makes is multiplied by 1.1 after [the pool](resources.md#the-all-production-cap) and every other bonus, so it counts in full in every age. (Inside the pool it would count a quarter once the pool passed +200%.)
 - It multiplies what you make, before the food your workers eat is taken off, so it never deepens a food shortage.
 - Shows as **Cosmic Legacy** in the Stats panel, under Active Multipliers (`Cosmic Legacy ×1.10`, beside the pool, like morale) and in the Legacy Bonuses list. `rates` shows what it adds to each resource as its own **Cosmic Legacy** part. `prestige` shows `Cosmic Legacy: +10% production (permanent)`.
 - Survives every prestige and every Succumb. Only wiping the game clears it.

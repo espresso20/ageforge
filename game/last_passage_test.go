@@ -137,10 +137,10 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 // there).
 func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {1200000000, 16000000000, 2e16, 2.4e16},
-		"galactic_age":     {2400000000, 32000000000, 4.3e17, 2.4e16},
-		"quantum_age":      {4700000000, 63000000000, 4.3e17, 2.4e16},
-		"transcendent_age": {4900000000, 66000000000, 4.4e17, 2.5e16},
+		"interstellar_age": {1300000000, 17000000000, 2.1e16, 2.5e16},
+		"galactic_age":     {2600000000, 35000000000, 4.7e17, 2.6e16},
+		"quantum_age":      {5400000000, 72000000000, 4.9e17, 2.7e16},
+		"transcendent_age": {5900000000, 79000000000, 5.3e17, 3e16},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -246,11 +246,11 @@ func TestLastPassageChoice(t *testing.T) {
 	first := ages[0]
 	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
 	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
-	if math.Abs(braceHours-21.7) > 0.05 || math.Abs(appeaseHours-31.9) > 0.05 {
-		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.7 and 31.9", first, braceHours, appeaseHours)
+	if math.Abs(braceHours-21.7) > 0.05 || math.Abs(appeaseHours-32.9) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.7 and 32.9", first, braceHours, appeaseHours)
 	}
-	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.680) > 0.005 {
-		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.680", first, ratio)
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.661) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.661", first, ratio)
 	}
 
 	// The faith band moves the odds, not the choice: both savings scale with
@@ -778,22 +778,21 @@ func TestRunEndingLineAtEveryPrestige(t *testing.T) {
 	}
 }
 
-// The Cosmic Legacy multiplies production after the x3 cap, so it counts in
-// every age. In the all-production pool it added nothing once the pool was
-// full: from the Victorian Age on for a player with the techs, wonders and
-// milestones of a normal run. Each age from there on is read with the pool
-// past its cap, where a pooled +10% is worth nothing.
+// The Cosmic Legacy multiplies production after the pools, so it counts in
+// full in every age. In the all-production pool it would count a quarter
+// once the pool is past +200%. Each age from the Victorian on is read with
+// the pool far past that knee, where a pooled +10% is worth +2.5%.
 func TestCosmicLegacyCountsAfterTheCap(t *testing.T) {
 	keys := ageKeys()
 	from := ageOrders()["victorian_age"]
 	for _, age := range append([]string{keys[0]}, keys[from:]...) {
 		ge := newTruthEngine(age, truthTypical)
 		if ageOrders()[age] >= from {
-			// Milestone rewards on top of the techs and wonders: the pool is full.
-			ge.permanentBonuses["production_all"] += productionCap
+			// Milestone rewards on top of the wonders: the pool is past its knee.
+			ge.permanentBonuses["production_all"] += 3
 			ge.recalculateRates()
-			if p := ge.bonusPoolLocked(ge.buildResolver(), "production_all"); !p.Limited {
-				t.Fatalf("%s: the all-production pool is not at its cap (%+v): the test would prove nothing", age, p)
+			if p := ge.bonusPoolLocked(ge.buildResolver(), "production_all"); !p.Soft {
+				t.Fatalf("%s: the all-production pool is not past its knee (%+v): the test would prove nothing", age, p)
 			}
 		}
 		pool := ge.buildResolver().AddTotal("production_all")
@@ -816,7 +815,7 @@ func TestCosmicLegacyCountsAfterTheCap(t *testing.T) {
 			t.Errorf("%s: the legacy moved the all-production pool from %v to %v", age, pool, got)
 		}
 		if note := ge.capNoteLocked(config.Effect{Type: "production_all", Value: CosmicLegacyProductionBonus}, false); ageOrders()[age] >= from && note == "" {
-			t.Errorf("%s: a pooled +10%% would not be capped here: the test would prove nothing", age)
+			t.Errorf("%s: a pooled +10%% would count in full here: the test would prove nothing", age)
 		}
 		moved := 0
 		for _, key := range ge.Resources.order {

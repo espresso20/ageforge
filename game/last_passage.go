@@ -29,7 +29,7 @@ import (
 //     Endure: prestige completes, keeping LastPassageKeep of the run's points
 //     (0.70 / 0.85 at Brace 1 / 2), floored.
 //     Succumb: prestige completes with no points from the run, and the Cosmic
-//     Legacy flag is set: all production × 1.1 after the ×3 caps, forever
+//     Legacy flag is set: all production × 1.1 after the pools, forever
 //     (it survives prestige and Succumb; only a full wipe clears it). A player
 //     who already carries it can only Endure.
 //
@@ -51,7 +51,7 @@ const (
 	LastPassageKeep = 0.50
 
 	// CosmicLegacyProductionBonus is the Cosmic Legacy's permanent production
-	// bonus: everything a resource makes × (1 + this), after the ×3 caps
+	// bonus: everything a resource makes × (1 + this), after the pools
 	// (cosmicLegacyFactor, recalculateRates).
 	CosmicLegacyProductionBonus = 0.10
 
@@ -315,8 +315,8 @@ func (ge *GameEngine) recordLastPassageOutcome(how prestigeEnding, points, full 
 }
 
 // cosmicLegacyFactor is what the Cosmic Legacy multiplies production by: 1.1
-// with the legacy, 1 without. recalculateRates applies it after the ×3 caps,
-// so it is never in the all-production pool and no cap can swallow it.
+// with the legacy, 1 without. recalculateRates applies it after the pools,
+// so it is never in the all-production pool and counts in full past +200%.
 // Derived from the flag, never stored as a bonus value, so no reset can lose
 // or double it. Read-only.
 func (ge *GameEngine) cosmicLegacyFactor() float64 {

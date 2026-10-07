@@ -136,7 +136,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 |-------|--------|----------|
 | Epoch Blessing | +15% all production for the rest of the run, recorded in history | Rest of run |
 
-> Worker Innovation and Epoch Blessing last until you Succumb or prestige. Like Age of Plenty and Peaceful Century, they add to all production, and every all-production bonus shares one pool that multiplies output by at most x3 (see [The all-production cap](resources.md#the-all-production-cap)). Techs and wonders alone reach the cap from about the Electric Age, so these events lift output most when they land early in a run, or after a setback.
+> Worker Innovation and Epoch Blessing last until you Succumb or prestige. Like Age of Plenty and Peaceful Century, they add to all production, and every all-production bonus but a tech's shares one pool. The pool applies in full up to +200% and a quarter of every point past it (see [The all-production cap](resources.md#the-all-production-cap)). A full set of milestones passes +200% from about the Electric Age, so these events lift output most when they land early in a run, and a quarter as much once the pool is past +200%.
 
 ---
 
@@ -251,7 +251,7 @@ These are the kinds of effect events can apply:
 |--------|-------------|
 | Instant resource | Adds a fixed amount of a resource once (no duration, no active-event entry) |
 | Production | Adds a flat amount per tick to one resource's rate while the event lasts (negative for a penalty) |
-| All production | A percentage bonus or penalty to all production (used by the Endure debuff and by epoch events), added to the capped all-production pool |
+| All production | A percentage bonus or penalty to all production (used by the Endure debuff and by epoch events), added to the all-production pool |
 | Theft | Removes a fixed amount of a resource once |
 | Worker loss | Removes a percentage of your workers |
 
@@ -283,7 +283,7 @@ Best for: players who want steady income and dislike variance. It also suits run
 
 Put culture buildings first and push culture as close to full storage as you can, aiming for the over-75% bracket before each epoch boundary.
 
-The Legendary tier is the goal. Epoch Blessing (+15% all production) and Worker Innovation (+10%) are the two strongest transition events, and both last the rest of the run. They pay off most when they land at the Iron or Steel Era transition: from about the Electric Age, techs and wonders alone fill the x3 all-production cap, and a late Blessing adds little until a setback pulls the pool back down.
+The Legendary tier is the goal. Epoch Blessing (+15% all production) and Worker Innovation (+10%) are the two strongest transition events, and both last the rest of the run. They pay off most when they land at the Iron or Steel Era transition: from about the Electric Age a full set of milestones takes the all-production pool past +200%, where a bonus counts a quarter, and a late Blessing then adds about 4 points.
 
 Culture also opens Major events (over 40% of storage), which are strictly better than Minor events. The Grand Discovery (up to 3 free techs) and The Architect's Gift (10 free buildings) can skip you ahead a long way.
 

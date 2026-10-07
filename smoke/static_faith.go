@@ -223,8 +223,9 @@ func faithIncomes(set *rules.Set) []faithIncome {
 }
 
 // faithModelBonus is what config.Incomes multiplies faith output by in
-// age: the all-production pool the model holds by then, capped as the
-// engine caps it, times the tech layer on faith (config.IncomeFactor).
+// age: the all-production pool the model holds by then, through the soft
+// cap as the engine applies it, times the tech layer on faith
+// (config.IncomeFactor).
 func faithModelBonus(set *rules.Set, age string) float64 {
 	return config.IncomeFactor(set.Techs(), set.Indexes(), age, "faith")
 }

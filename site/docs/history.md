@@ -15,14 +15,14 @@ The game tracks and graphs seven metrics:
 | **Knowledge rate** | Knowledge production per tick |
 | **Faith** | The faith you have stored |
 | **Morale** | Civilization morale as a percentage (see [Morale](morale.md)) |
-| **All production** | Your all-production bonus as the game applies it, as a percentage: every source added together, held to the cap |
+| **All production** | Your all-production bonus as the game applies it, as a percentage: every source added together, in full up to +200% and a quarter of the rest |
 | **Game speed** | Your game speed bonus from techs and events (0.15 means ticks come 15% faster) |
 
 Each metric gets its own braille line graph covering the whole stored history. Beside each graph is the current value, a trend arrow (↑ growing, ↓ shrinking, → stable), and the recorded min/max.
 
 <figure class="screen" data-screen="history"><figcaption>The Civilization History panel in the Bronze Age: population, food rate and knowledge rate over the last three thousand ticks.</figcaption></figure>
 
-**All production** is the bonus that counts: techs, wonders, milestones, monuments, events and boons added together and held to the cap, so it never reads above +200% (see [The all-production cap](resources.md#the-all-production-cap)). The Stats panel's Active Multipliers lists every source. Samples a save recorded before this change show only the milestone and epoch event part.
+**All production** is the bonus that counts: wonders, milestones, monuments, events and boons added together, in full up to +200% and a quarter of every point past it (see [The all-production cap](resources.md#the-all-production-cap)). A pool that has earned +320% reads +230% here, and the line keeps rising as you earn more. The Stats panel's Active Multipliers lists every source. Samples a save recorded before this change show only the milestone and epoch event part.
 
 ---
 

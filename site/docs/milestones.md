@@ -177,7 +177,7 @@ The last three milestones pay out all production, so completing the chain lifts 
 | Quantum Master *(hidden)* | Quantum Age | +20% all production |
 | Transcended *(hidden)* | Transcendent Age | +50% all production |
 
-Most of these rewards, and many of the chain rewards above, are all production. Every all-production bonus in the game shares one pool, which multiplies output by at most x3 (see [The all-production cap](resources.md#the-all-production-cap)). Techs and wonders alone fill it from about the Electric Age, so the later all-production rewards mostly matter after a setback pulls the pool back down; the per-resource, research and expedition rewards are separate.
+Most of these rewards, and many of the chain rewards above, are all production. Every all-production bonus in the game but a tech's shares one pool. The pool applies in full up to +200%, and past that every further point counts a quarter (see [The all-production cap](resources.md#the-all-production-cap)). So every one of these rewards raises your output, whenever you earn it. An example: with +320% earned, the pool applies +230%. A +20% milestone takes it to +340% earned and +235% applied, five points more. The Milestones panel shows that figure beside the reward before you work for it (`+20% all production (counts a quarter past +200%: +5% now)`). A player who earns every milestone as early as it can be earned passes +200% in the Electric Age; most runs pass it a few ages later. The per-resource, research and expedition rewards are separate.
 
 ---
 

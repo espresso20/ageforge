@@ -125,8 +125,8 @@ func statsProvider(state game.GameState, _ int) string {
 		fmt.Fprintf(&sb, "  %-16s research time %s (permanent, %s for each epoch succumbed in)\n", "Ancient Knowledge:", game.ResearchFactorText(f), game.ResearchFactorText(game.SuccumbResearchTimeFactor))
 	}
 	if state.LastPassage.CosmicLegacy {
-		// Applied after the production caps, so it never carries a "capped" note.
-		fmt.Fprintf(&sb, "  %-16s all production %s, counted after the caps (permanent, through every prestige)\n", "Cosmic Legacy:", textfmt.SignedPercent(game.CosmicLegacyProductionBonus))
+		// Applied after the pools and their soft cap, so it never carries a note.
+		fmt.Fprintf(&sb, "  %-16s all production %s, counted in full after every other bonus (permanent, through every prestige)\n", "Cosmic Legacy:", textfmt.SignedPercent(game.CosmicLegacyProductionBonus))
 	}
 
 	// Milestone summary hint
@@ -244,9 +244,10 @@ func renderActiveMultipliers(state game.GameState) string {
 		if breakdown == "" {
 			continue // genuinely empty — every contribution was a no-op
 		}
-		// The headline is what the engine applies. A pool a cap holds shows
-		// the capped total, with a note that says how much was earned: the
-		// sources beside it still list everything, so they can add up to more.
+		// The headline is what the engine applies. A pool a limit holds
+		// (past +200% a production pool counts a quarter) shows the applied
+		// total, with a note that says how much was earned: the sources
+		// beside it still list everything, so they can add up to more.
 		total := r.Total(target)
 		if pool, ok := state.Pools[target]; ok && pool.Limited {
 			total = 1 + pool.Applied

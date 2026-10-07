@@ -404,7 +404,7 @@ You hold 2,108,000 soldiers with no `military_power` bonus: defense 2,108,000 ×
 
 ## Military Milestones
 
-The five military milestones form a chain. Completing all five grants a title, and between them they give **+0.25 military power** and **+25% all production** (which adds into [the all-production cap](resources.md#the-all-production-cap)). Soldier counts in these milestones are soldiers trained over the run, not the number in stock; missions don't count toward any of them.
+The five military milestones form a chain. Completing all five grants a title, and between them they give **+0.25 military power** and **+25% all production** (which adds into [the all-production pool](resources.md#the-all-production-cap)). Soldier counts in these milestones are soldiers trained over the run, not the number in stock; missions don't count toward any of them.
 
 | Key | Name | Requirement | Min Age | Reward |
 |-----|------|-------------|----------|--------|

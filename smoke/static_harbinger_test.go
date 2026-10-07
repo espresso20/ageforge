@@ -156,8 +156,9 @@ func TestWarningBraceTakesEffort(t *testing.T) {
 			continue
 		}
 		tears++
-		// A price rounds to two figures, which moves the hours by up to 5%.
-		if hours < WarningBraceMinHours || hours > 11.2 {
+		// A price rounds up to two figures, which moves the hours by up to
+		// 10% (1.01 becomes 1.1, as the Interstellar Age's dark matter does).
+		if hours < WarningBraceMinHours || hours > 11.6 {
 			t.Errorf("the Reality Tear in %s: Brace level 1 is %.1f hours of income, want about 10.5 (a sixth of the age)", r.Age, hours)
 		}
 	}

@@ -72,9 +72,10 @@ const (
 	//
 	// The reason to stop at 5 is the stacking arithmetic, not the throughput: the
 	// worst realistic same-pool stack (5 allied str-5 Enlightenments at ~0.455
-	// each = ~2.3) still clears productionCap's x3.0 clamp without touching it. Do
-	// not raise this without re-checking that sum — past ~6 the clamp starts doing
-	// the balancing instead of the data. Prefer moving durations or encounter odds.
+	// each = ~2.3) barely passes the soft cap's +200% knee, so nearly all of it
+	// counts in full. Do not raise this without re-checking that sum: the soft
+	// cap slows a stack to a quarter past the knee but no longer stops it, so
+	// this gate is what bounds stacking. Prefer moving durations or encounter odds.
 	MaxConcurrentFactionBoons = 5
 	// MaxConcurrentFactionMaluses bounds live setbacks the same way, so a long
 	// war cannot bury the active-events panel. See applyFactionMalus: at this

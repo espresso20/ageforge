@@ -728,25 +728,24 @@ func MarketPairsAt(age string, listed []ExchangeRateDef, pos map[string]int, lv 
 // Appease prices, the Gate Covenant's flow check) is sized to FlowIncome.
 const FlowCopies = 5.0
 
-// ProductionAllCap is the most the production_all bonus can multiply output
-// by. It must equal the engine's productionCap (a game test checks).
-const ProductionAllCap = 3.0
-
 // ProductionAllHeld is the all-production pool a well-played game holds in
-// each age, before the clamp: the "+X% all production" of its milestones,
-// wonders and monuments added up (0.85 is +85%). It is an input like
-// KnowledgePerHour, typed here. An age it leaves out holds none.
+// each age, as earned, before the soft cap (ProductionSoftCap): the "+X% all
+// production" of its milestones, wonders and monuments added up (0.85 is
+// +85%). It is an input like KnowledgePerHour, typed here. An age it leaves
+// out holds none.
 //
 // Until techs got a layer of their own the model read this pool off the
 // techs: their all-production bonuses filled it from the Industrial Age on
-// and reached the clamp in the Electric Age. Techs no longer join the pool.
+// and reached +200% in the Electric Age. Techs no longer join the pool.
 // Milestones and wonders fill it instead, later: the Industrial to Atomic
 // Ages are what the smoke suite's greedy bot held when it left each age on
 // a first run (the progression report's production_all_earned, the median
 // of its seeds), about two thirds of what a player with every milestone
-// can hold. Nothing run per PR goes past the Atomic Age: the Modern and
-// Information Ages are that share of what can be held there, and from the
-// Digital Age on the share reaches the clamp, +200%, as the techs did.
+// can hold. Nothing run per PR goes past the Atomic Age: every age from the
+// Modern on is that share of what can be held there. From the Digital Age
+// on the share is past the knee, +200%, where the pools once stopped: the
+// model holds what is earned and IncomeFactor passes it through the soft
+// cap, as the engine does, so +220% counts as +205%.
 // The static caps report (smoke.StaticCaps) lists, age by age, the pool of
 // a player with every milestone, wonder and monument, and a smoke test
 // fails if a number here is above it.
@@ -757,14 +756,14 @@ var ProductionAllHeld = map[string]float64{
 	"atomic_age":       1.45,
 	"modern_age":       1.7,
 	"information_age":  1.85,
-	"digital_age":      2.0,
-	"cyberpunk_age":    2.0,
-	"fusion_age":       2.0,
-	"space_age":        2.0,
-	"interstellar_age": 2.0,
-	"galactic_age":     2.0,
-	"quantum_age":      2.0,
-	"transcendent_age": 2.0,
+	"digital_age":      2.2,
+	"cyberpunk_age":    2.2,
+	"fusion_age":       2.35,
+	"space_age":        2.45,
+	"interstellar_age": 2.6,
+	"galactic_age":     3.25,
+	"quantum_age":      3.75,
+	"transcendent_age": 4.4,
 }
 
 // FlowIncome is what a player who invests moderately in the flow resource res
@@ -773,8 +772,9 @@ var ProductionAllHeld = map[string]float64{
 // plus the output of every earlier age's wonder (each advance requires its
 // age's wonder, so they stand), plus the flat output of every tech up to
 // age, multiplied twice over. First by the all-production pool held by then
-// (ProductionAllHeld), capped at ProductionAllCap as the engine caps it
-// (from the Digital Age on the cap is reached, and output triples). Then by
+// (ProductionAllHeld), through the soft cap as the engine applies it (from
+// the Digital Age on the pool is past the knee: output triples, and a
+// quarter of the rest comes on top). Then by
 // the tech layer, which no cap holds: 1 + the bonus every tech up to age
 // gives that resource + the bonus they give all production. Monuments, the
 // per-resource bonuses of milestones and wonders, morale and worker upkeep
@@ -857,10 +857,11 @@ func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bo
 }
 
 // IncomeFactor is what Incomes multiplies res's output by in age: the
-// all-production pool held by then (ProductionAllHeld), capped at
-// ProductionAllCap as the engine caps it, times the tech layer, which no
-// cap holds: 1 + what every tech up to age adds to res + what they add to
-// all production. pos is each age's position (AgePositions).
+// all-production pool held by then (ProductionAllHeld), through the soft
+// cap as the engine applies it (ProductionSoftCap: in full up to +200%, a
+// quarter of every point past it), times the tech layer, which no cap
+// holds: 1 + what every tech up to age adds to res + what they add to all
+// production. pos is each age's position (AgePositions).
 func IncomeFactor(techs []TechDef, pos map[string]int, age, res string) float64 {
 	layer := 1.0
 	for _, t := range techs {
@@ -873,7 +874,7 @@ func IncomeFactor(techs []TechDef, pos map[string]int, age, res string) float64 
 			}
 		}
 	}
-	return float64(math.Min(1+ProductionAllHeld[age], ProductionAllCap) * layer)
+	return float64((1 + ProductionSoftCap().Applied(ProductionAllHeld[age])) * layer)
 }
 
 // Incomes is FlowIncome's formula for every age in order and every resource
