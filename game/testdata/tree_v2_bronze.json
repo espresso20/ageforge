@@ -1,0 +1,238 @@
+{
+  "timestamp": "2026-10-07T12:27:38.232361-05:00",
+  "tick": 30,
+  "age": "bronze_age",
+  "seed": 53,
+  "rng_draws": 6,
+  "resources": {
+    "antimatter": 0,
+    "coal": 0,
+    "crypto": 0,
+    "culture": 0,
+    "dark_matter": 0,
+    "dark_matter_crystals": 0,
+    "data": 0,
+    "electricity": 0,
+    "faith": 0,
+    "food": 25,
+    "gold": 0,
+    "iron": 0,
+    "iron_ore": 0,
+    "knowledge": 0,
+    "marble": 0,
+    "nanobots": 0,
+    "oil": 0,
+    "plasma": 0,
+    "quantum_flux": 0,
+    "soldiers": 0,
+    "steel": 0,
+    "stone": 0,
+    "titanium": 0,
+    "titanium_ore": 0,
+    "uranium": 0,
+    "wood": 50
+  },
+  "storage": {
+    "antimatter": 5522,
+    "coal": 5555,
+    "crypto": 5555,
+    "culture": 5555,
+    "dark_matter": 5522,
+    "dark_matter_crystals": 5511,
+    "data": 5555,
+    "electricity": 5555,
+    "faith": 5555,
+    "food": 5555,
+    "gold": 5555,
+    "iron": 5555,
+    "iron_ore": 5533,
+    "knowledge": 5533,
+    "marble": 5533,
+    "nanobots": 5522,
+    "oil": 5555,
+    "plasma": 5533,
+    "quantum_flux": 5511,
+    "soldiers": 5500,
+    "steel": 5533,
+    "stone": 5555,
+    "titanium": 5533,
+    "titanium_ore": 5522,
+    "uranium": 5533,
+    "wood": 5555
+  },
+  "buildings": {
+    "great_monolith": 1,
+    "sacred_grove": 1
+  },
+  "workers": {
+    "worker": {
+      "count": 0,
+      "food_cost": 0.07526400000000001,
+      "assignment": {}
+    }
+  },
+  "unlocked": {
+    "resources": [
+      "food",
+      "wood",
+      "knowledge",
+      "faith",
+      "stone",
+      "iron",
+      "gold"
+    ],
+    "buildings": [
+      "hut",
+      "stash",
+      "gathering_camp",
+      "wood_camp",
+      "story_circle",
+      "shrine",
+      "sacred_grove",
+      "longhouse",
+      "storage_pit",
+      "forager_post",
+      "woodcutter_camp",
+      "stone_camp",
+      "stone_pit",
+      "elders_hall",
+      "standing_stones",
+      "war_camp",
+      "great_monolith",
+      "house",
+      "warehouse",
+      "farm",
+      "lumber_mill",
+      "quarry",
+      "scriptorium",
+      "altar",
+      "barracks",
+      "market",
+      "smithy",
+      "stonehenge"
+    ],
+    "workers": [
+      "worker"
+    ]
+  },
+  "stats": {
+    "total_built": 0,
+    "total_recruited": 0,
+    "total_gathered": {},
+    "game_started": "2026-10-07T12:27:38.230843-05:00",
+    "ages_reached": [
+      "primitive_age",
+      "stone_age",
+      "bronze_age"
+    ],
+    "soldiers_trained": 0
+  },
+  "research": {
+    "researched": [
+      "fire_mastery",
+      "pottery",
+      "primitive_writing",
+      "stoneworking",
+      "tool_making"
+    ],
+    "current_tech": "",
+    "ticks_left": 0,
+    "total_ticks": 0
+  },
+  "military": {
+    "completed_count": 0,
+    "total_loot": {}
+  },
+  "events": {
+    "last_fired": {},
+    "active": [],
+    "next_event_tick": 221,
+    "good_streak": 0,
+    "bad_streak": 0
+  },
+  "milestones": [],
+  "permanent_bonuses": {},
+  "build_queue": [],
+  "prestige": {
+    "level": 0,
+    "total_earned": 0,
+    "available": 0,
+    "upgrades": {},
+    "furthest": "primitive_age",
+    "run_furthest": "primitive_age",
+    "mastery_seeded": true,
+    "shop_version": 2
+  },
+  "trade": {
+    "active_routes": {},
+    "supply_pressure": {},
+    "total_exchanged": {},
+    "total_imported": {},
+    "total_exported": {}
+  },
+  "diplomacy": {
+    "factions": {}
+  },
+  "speed_multiplier": 1,
+  "wonder_banks": {
+    "stonehenge": {
+      "iron": 1700,
+      "stone": 17000,
+      "wood": 9500
+    }
+  },
+  "pending_upgrades_saved": true,
+  "current_epoch": "stone_era",
+  "succumb_research_derived": true,
+  "fate": {
+    "epoch_key": "stone_era",
+    "entry_tick": 1,
+    "window": 8820
+  },
+  "faith_measure": {
+    "moderate": 0.3000000000000001
+  },
+  "faith_measured": true,
+  "morale": 0.5,
+  "history": {
+    "samples": [
+      {
+        "tick": 10,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 20,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 30,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      }
+    ],
+    "age_markers": null
+  },
+  "pacing_week": true,
+  "tree_version": 2,
+  "_sig": "640bba7e2826ba2bc403d0bad46e90023aebc2ec482e1712601a47813d86fa76"
+}
