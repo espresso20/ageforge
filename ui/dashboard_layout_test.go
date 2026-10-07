@@ -524,6 +524,11 @@ func TestNextAgeRowKeepsGoalsWhole(t *testing.T) {
 // epoch, the badges, the population and morale at any width, and sheds the
 // rest in order.
 func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
+	// The widths below are counted without the DEV badge, and another test
+	// in this package leaves developer mode on.
+	prevDev := game.DevModeActive
+	game.DevModeActive = false
+	t.Cleanup(func() { game.DevModeActive = prevDev })
 	st := game.GameState{AgeName: "Bronze Age", EpochKey: "stone_era", EpochName: "Stone Era", EpochIcon: "◈", EpochColor: "white",
 		Morale: 1.1, MoraleMultiplier: 1.2, Workers: game.WorkerState{TotalPop: 216, MaxPop: 875},
 		Milestones: game.MilestoneState{CurrentTitle: "Aspiring"}, Harbinger: &game.HarbingerView{}}
@@ -553,6 +558,14 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 	if line := untag(statusLine(st, 120)); !strings.Contains(line, "⚑ Harbinger: type harbinger") || !strings.Contains(line, "(production +20%)") {
 		t.Errorf("120 cells: the badge is shortened before morale's effect goes: %q", line)
 	}
+	// Developer mode adds its own badge, and the line still fits.
+	game.DevModeActive = true
+	for w := 60; w <= 200; w++ {
+		if line := untag(statusLine(st, w)); runeLen(line) > w || !strings.Contains(line, "DEV") || !strings.Contains(line, "Morale 110%") {
+			t.Errorf("width %d in developer mode: %d cells, %q", w, runeLen(line), line)
+		}
+	}
+	game.DevModeActive = false
 	// The worst case at the smallest size: both badges and long counts.
 	st.PendingCatastrophe, st.Workers = "iron_era", game.WorkerState{TotalPop: 8311, MaxPop: 51785785}
 	if line := untag(statusLine(st, 80)); runeLen(line) > 80 || !strings.Contains(line, "☄ Catastrophe") || !strings.Contains(line, "⚑ Harbinger") || !strings.Contains(line, "Pop: 8.31K/51.8M") || !strings.Contains(line, "Morale 110%") {
