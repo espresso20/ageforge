@@ -15,8 +15,10 @@ import (
 // research forces a player to hold it.
 //
 //   - Entry: the first tech of an age (its cheapest) fits the knowledge
-//     storage a player enters the age with, or does once
-//     TechEntryStorageCopies copies of the age's own storage building stand.
+//     storage a player enters the age with, or does once one copy of the
+//     age's own storage building stands (TechEntryStorageCopies; the
+//     Renaissance, priced at the tree's full share, gets
+//     TechEntryStorageCopiesFull).
 //     "Enters with" is the least anyone can: what the gate into the age
 //     forces (ladderForced: storage is never lost, and every storage
 //     building raises every cap alike), or the priciest tech an earlier
@@ -41,7 +43,21 @@ const (
 	// the Entry rule allows before the age's first tech must fit. One: the
 	// copy the storage ladder guarantees.
 	TechEntryStorageCopies = 1
+	// TechEntryStorageCopiesFull is the same allowance for an age whose
+	// research is priced at the tree's full share
+	// (config.ResearchBudgetShareDesign) while the tree is a third of its
+	// size: the Renaissance, whose first tech then takes four Renaissance
+	// Vaults. (Its old gate asked for 30M knowledge held at once: ten.)
+	TechEntryStorageCopiesFull = 4
 )
+
+// entryCopiesAllowed is the Entry rule's allowance for age.
+func entryCopiesAllowed(age string) int {
+	if config.ResearchBudgetShareOf(age) >= config.ResearchBudgetShareDesign {
+		return TechEntryStorageCopiesFull
+	}
+	return TechEntryStorageCopies
+}
 
 // ResearchRow is one age against the Research Covenant.
 type ResearchRow struct {
@@ -85,13 +101,13 @@ func (r ResearchRow) TimeShare() float64 {
 // when it keeps it).
 func (r ResearchRow) Problems() []string {
 	var out []string
-	if r.First != "" && (r.StorageCopies < 0 || r.StorageCopies > TechEntryStorageCopies) {
+	if allowed := entryCopiesAllowed(r.Age); r.First != "" && (r.StorageCopies < 0 || r.StorageCopies > allowed) {
 		need := fmt.Sprintf("%d copies of the age's storage building", r.StorageCopies)
 		if r.StorageCopies < 0 {
 			need = "more storage than the age can build"
 		}
 		out = append(out, fmt.Sprintf("%s: its first tech, %s, costs %s knowledge, and a player may enter the age with %s of knowledge storage (%s): it takes %s before the tech fits (at most %d allowed)",
-			r.Age, r.First, num(r.FirstCost), num(r.EntryStorage), r.ForcedBy, need, TechEntryStorageCopies))
+			r.Age, r.First, num(r.FirstCost), num(r.EntryStorage), r.ForcedBy, need, allowed))
 	}
 	if r.Keystone == "" {
 		return out
@@ -250,8 +266,8 @@ func configChain(techs map[string]config.TechDef, key string, have map[string]bo
 
 // writeResearch renders the Research Covenant check.
 func writeResearch(sb *strings.Builder, rows []ResearchRow) {
-	fmt.Fprintf(sb, "Each age's wonder needs its keystone tech (the Research Covenant). The first tech of an age must fit the knowledge storage a player enters the age with, or do so once %d of the age's own storage building stands. Every tech the wonder waits for must fit, with %gx to spare, in the most knowledge storage buildable in the age. And what the wonder waits for must be affordable well inside the age: its knowledge as a share of what the age makes in its target time (%.0f%% of that is the age's whole research budget), plus its research time and the wonder's build time as shares of the target, may not pass 100%%. The chain is counted for a run that researched nothing an earlier wonder did not ask for. `go test ./smoke` fails on any row marked ✗.\n\n",
-		TechEntryStorageCopies, GateResourceMargin, 100*config.ResearchBudgetShare)
+	fmt.Fprintf(sb, "Each age's wonder needs its keystone tech (the Research Covenant). The first tech of an age must fit the knowledge storage a player enters the age with, or do so once %d of the age's own storage building stands (%d in an age priced at the tree's full share: the Renaissance). Every tech the wonder waits for must fit, with %gx to spare, in the most knowledge storage buildable in the age. And what the wonder waits for must be affordable well inside the age: its knowledge as a share of what the age makes in its target time (%.0f%% of that is the age's whole research budget), plus its research time and the wonder's build time as shares of the target, may not pass 100%%. The chain is counted for a run that researched nothing an earlier wonder did not ask for. `go test ./smoke` fails on any row marked ✗.\n\n",
+		TechEntryStorageCopies, TechEntryStorageCopiesFull, GateResourceMargin, 100*config.ResearchBudgetShare)
 	sb.WriteString("| age | first tech | costs | enters with | storage copies first | the wonder waits for | costs | of the age's knowledge | + research | + build | of the age | |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, r := range rows {
 		mark := "✓"

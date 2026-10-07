@@ -61,7 +61,7 @@ No tech has a price or a time of its own. Both follow from its age and its kind.
 
 So no tech takes longer than a sixteenth of its age, and the techs you must research are the quick ones.
 
-**Cost.** An age's techs share one knowledge budget: 30% of the knowledge a well-run civilization makes in the age's target time (50% in the Primitive Age). The budget is split by weight:
+**Cost.** An age's techs share one knowledge budget: 30% of the knowledge a well-run civilization makes in the age's target time (50% in the Primitive Age, 90% in the Renaissance). The budget is split by weight:
 
 | Kind | Weight |
 |---|---|
@@ -70,6 +70,8 @@ So no tech takes longer than a sixteenth of its age, and the techs you must rese
 | Optional | 1.0 |
 
 A tech costs the budget times its weight, divided by the weights of all the techs in its age. So the techs you must research are the cheap ones, a keystone always costs less than an optional tech of its age, and researching everything an age offers takes under a third of what the age makes. When a later update adds techs to an age, each tech there gets a little cheaper and the age's total stays where it is.
+
+The Renaissance is the exception. Knowledge is what paces that age (its exchanges buy nearly everything else), and its old requirement asked for 30M of it. Patronage, the Sistine Chapel's keystone, carries that weight now: the Renaissance's four techs cost 80M knowledge together, 18.8M of it for Patronage, about as much as the Colonial Age's. Plan on four Renaissance Vaults before its cheapest tech fits your knowledge storage.
 
 The costs and ticks in the tables below are base values. They used to be typed by hand, tech by tech: early techs cost more knowledge than their own age made (the Stone Age's four cost 28.5K against about 4K made), and from the Classical Age on the whole list cost next to nothing. Now the early techs are within reach in their own ages and the later ones are a real part of each age.
 
@@ -243,10 +245,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `printing_press` | Printing Press | optional | 7.85M kp | 1,755 | `theology`, `alchemy` | +40% knowledge output, +0.3 culture/tick |
-| `navigation` | Navigation | spine | 4.71M kp | 1,404 | `mathematics` | +50% gold output, +30% expedition reward |
-| `gunpowder` | Gunpowder | optional | 7.85M kp | 1,755 | `alchemy`, `siege_warfare` | +50% military power |
-| `patronage` | Patronage | **keystone** (Sistine Chapel) | 6.28M kp | 1,755 | `banking` | +0.5 culture/tick, +0.12 knowledge/tick |
+| `printing_press` | Printing Press | optional | 23.5M kp | 1,755 | `theology`, `alchemy` | +40% knowledge output, +0.3 culture/tick |
+| `navigation` | Navigation | spine | 14.1M kp | 1,404 | `mathematics` | +50% gold output, +30% expedition reward |
+| `gunpowder` | Gunpowder | optional | 23.5M kp | 1,755 | `alchemy`, `siege_warfare` | +50% military power |
+| `patronage` | Patronage | **keystone** (Sistine Chapel) | 18.8M kp | 1,755 | `banking` | +0.5 culture/tick, +0.12 knowledge/tick |
 
 ---
 

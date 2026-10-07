@@ -303,7 +303,8 @@ func (b *Bot) Play(st game.GameState) {
 	if st.PendingMemoryTech != "" {
 		b.act("accept_memory", st.PendingMemoryTech, b.ge.AcceptAncientMemory())
 	}
-	if w := st.CurrentAgeWonderKey; w != "" && st.Buildings[w].WonderBankFull && b.queuedCount(st, w) == 0 {
+	// The wonder, once its bank is full and its keystone tech is researched.
+	if w := st.CurrentAgeWonderKey; w != "" && st.Buildings[w].WonderBankFull && st.Buildings[w].NeedsTech == "" && b.queuedCount(st, w) == 0 {
 		if b.act("build_wonder", w, b.ge.BuildBuilding(w)) && b.RecordPlan {
 			b.ge.NotePlanForTest(game.PlanBuild, w, 1)
 		}

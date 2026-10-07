@@ -81,6 +81,8 @@ func TestResearchCostsShareTheAgesBudget(t *testing.T) {
 		switch age {
 		case "primitive_age":
 			share = 0.5
+		case "renaissance_age":
+			share = 0.9
 		case "transcendent_age":
 			share = 0.3
 		}

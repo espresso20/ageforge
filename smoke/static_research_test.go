@@ -59,6 +59,21 @@ func TestResearchCovenant(t *testing.T) {
 	if keystones != 20 {
 		t.Errorf("%d ages have a keystone, want 20: every age but the Primitive and the Bronze", keystones)
 	}
+	// One storage building at most before an age's first tech fits, but in
+	// the Renaissance, which is priced at the tree's full share and takes
+	// four vaults.
+	for _, r := range rows {
+		want := TechEntryStorageCopies
+		if r.Age == "renaissance_age" {
+			want = TechEntryStorageCopiesFull
+		}
+		if entryCopiesAllowed(r.Age) != want {
+			t.Errorf("%s is allowed %d storage copies before its first tech, want %d", r.Age, entryCopiesAllowed(r.Age), want)
+		}
+		if r.Age == "renaissance_age" && r.StorageCopies != TechEntryStorageCopiesFull {
+			t.Errorf("the Renaissance's first tech takes %d vaults, want %d: the allowance should be what it needs", r.StorageCopies, TechEntryStorageCopiesFull)
+		}
+	}
 	// The chain is the worst case: a run that researched only what each
 	// wonder asked for arrives in the Interstellar Age owing the Space
 	// Age's spine too.
@@ -74,32 +89,39 @@ func TestResearchCovenant(t *testing.T) {
 // TestResearchCovenantCatchesBrokenNumbers keeps the guard honest. The tree
 // was drawn for a budget share of 0.9 and nine techs an age; with today's 77
 // techs that is every price three times today's, and the covenant must say
-// why it will not do: the first tech of the Classical to Industrial Ages
-// would not fit the knowledge storage a player enters with, even after a
-// storage building (but for the Medieval and Industrial Ages, where one is
+// why it will not do for every age: the Classical Age's first tech would not
+// fit the knowledge storage a player enters with, even after a storage
+// building (in the Medieval, Colonial, Industrial and Victorian Ages one is
 // enough), and a keystones-only run could not afford the Warp Nexus's chain
-// inside the Interstellar Age. A keystone priced over the age's storage and
-// an age left with no storage building are caught too.
+// inside the Interstellar Age, nor the Cosmic Beacon's inside the Galactic. A
+// keystone priced over the age's storage and a storage building too small to
+// help are caught too.
 func TestResearchCovenantCatchesBrokenNumbers(t *testing.T) {
 	defs := config.BuildingByKey()
 	if got := researchProblems(config.Technologies(), defs); len(got) != 0 {
 		t.Fatalf("the real tables break the covenant: %v", got)
 	}
-	// A share of 0.9 is today's prices × 0.9 ÷ ResearchBudgetShare; the two
-	// ages with a share of their own do not scale, and are not looked at.
-	got := researchProblems(scaledTechs(0.9/config.ResearchBudgetShare), defs)
-	for _, age := range []string{"classical_age", "renaissance_age", "colonial_age"} {
-		if !hasProblem(got[age], "its first tech") {
-			t.Errorf("at a share of 0.9 the %s's first tech should not fit the storage a player enters with: %v", age, got[age])
-		}
+	// A share of 0.9 is today's prices × 0.9 ÷ ResearchBudgetShare. (The
+	// ages with a share of their own are scaled too, which says nothing
+	// about them, so they are not looked at.)
+	got := researchProblems(scaledTechs(config.ResearchBudgetShareDesign/config.ResearchBudgetShare), defs)
+	if !hasProblem(got["classical_age"], "its first tech") {
+		t.Errorf("at a share of 0.9 the Classical Age's first tech should not fit the storage a player enters with: %v", got["classical_age"])
 	}
-	for _, age := range []string{"stone_age", "iron_age", "medieval_age", "industrial_age", "victorian_age", "atomic_age"} {
+	for _, age := range []string{"stone_age", "iron_age", "medieval_age", "colonial_age", "industrial_age", "victorian_age", "atomic_age"} {
 		if hasProblem(got[age], "its first tech") {
 			t.Errorf("at a share of 0.9 the %s's first tech still fits: %v", age, got[age])
 		}
 	}
-	if !hasProblem(got["interstellar_age"], "over 100%") {
-		t.Errorf("at a share of 0.9 the Warp Nexus's chain should not fit the Interstellar Age: %v", got["interstellar_age"])
+	for _, age := range []string{"interstellar_age", "galactic_age"} {
+		if !hasProblem(got[age], "over 100%") {
+			t.Errorf("at a share of 0.9 what the %s's wonder waits for should not fit the age: %v", age, got[age])
+		}
+	}
+	for _, age := range []string{"stone_age", "medieval_age", "industrial_age", "modern_age", "space_age"} {
+		if hasProblem(got[age], "over 100%") {
+			t.Errorf("at a share of 0.9 what the %s's wonder waits for still fits the age: %v", age, got[age])
+		}
 	}
 
 	// One keystone priced over anything its age can store.
@@ -113,8 +135,9 @@ func TestResearchCovenantCatchesBrokenNumbers(t *testing.T) {
 		t.Errorf("a keystone over the Iron Age's storage was not flagged: %v", got["iron_age"])
 	}
 
-	// The Renaissance needs its first vault before Navigation fits. With a
-	// vault that holds a tenth as much, one is not enough.
+	// The Renaissance needs four vaults before Navigation fits. With a
+	// vault that holds a tenth as much, no number the age can build is
+	// enough.
 	small := config.BuildingByKey()
 	vault := small["renaissance_vault"]
 	vault.Effects = append([]config.Effect(nil), vault.Effects...)
