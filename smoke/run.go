@@ -205,9 +205,10 @@ type AgeSplit struct {
 	// KnowledgeHour is the knowledge the age made per hour at 1x, averaged
 	// over the age as the bot's decisions sampled it: what
 	// config.KnowledgePerHour is re-measured from. PoolAll is what the
-	// all-production pool had earned when the age ended, before the clamp
-	// (2 is +200%, where the clamp sits): how full a real run's pool is,
-	// beside the static caps report's upper bound.
+	// all-production pool had earned when the age ended, before the soft
+	// cap (2 is +200%, the knee: past it a point counts a quarter): how
+	// full a real run's pool is, beside the static caps report's upper
+	// bound.
 	KnowledgeHour float64 `json:"knowledge_per_hour_1x,omitempty"`
 	PoolAll       float64 `json:"production_all_earned,omitempty"`
 }
