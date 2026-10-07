@@ -384,13 +384,13 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 	ge := classicalGame(t)
 	st := ge.GetState()
 	for key, wants := range map[string][]string{
-		"road_building":    {"Road Building gives +8% gold production and trade routes take 15% less time.", "It builds on Masonry.", "It is item 1 in your plan."},
+		"road_building":    {"Road Building gives +8% gold production. With it, trade routes take 15% less time.", "It builds on Masonry.", "It is item 1 in your plan."},
 		"military_tactics": {"gives +15% military power.", "It opens campaigns.", "It builds on Bronze Working.", "adds it to your plan. Philosophy is running, so it starts in"},
 		"mathematics":      {"It is this age's keystone: the Colosseum cannot be built without it.", "You already hold this."},
 		"philosophy":       {"It is being researched:", "Type research cancel to stop it"},
 		"imperial_legions": {"It builds on Siege Warfare and Iron Smelting.", "It starts once you hold what it needs."},
 		"theology":         {"the Great Library cannot be built without it.", "It starts once you reach the Medieval Age and hold what it needs."},
-		"tool_making":      {"gives +10% food production, +10% wood production and gathering by hand brings 2 more.", "It needs nothing before it."},
+		"tool_making":      {"gives +10% food production and +10% wood production. With it, gathering by hand brings 2 more.", "It needs nothing before it."},
 	} {
 		card := cardOf(st, key)
 		for _, want := range wants {

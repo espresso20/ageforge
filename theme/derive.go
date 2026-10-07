@@ -150,3 +150,15 @@ func HexTagFgBg(fg, bg tcell.Color) string {
 	b := HexTag(bg)
 	return f[:len(f)-1] + ":" + b[1:]
 }
+
+// Hue parses an identity colour written as "#rrggbb" (a tech lane's, in the
+// lane table) and holds it to the contrast rule for art on bg: at least 3.0
+// against the background it is drawn on. A string that is not a colour reads
+// as the Accent role.
+func Hue(hex string, bg tcell.Color) tcell.Color {
+	var r, g, b int32
+	if _, err := fmt.Sscanf(hex, "#%02x%02x%02x", &r, &g, &b); err != nil {
+		return Legible(Color(RoleAccent), bg, 3)
+	}
+	return Legible(tcell.NewRGBColor(r, g, b), bg, 3)
+}

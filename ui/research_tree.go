@@ -1117,13 +1117,22 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	var out []string
 
 	// What it is, and what it does.
-	var does []string
+	// A bonus reads "+8% gold production" and is something the tech gives;
+	// any other effect is a clause of its own ("buildings cost 3% less").
+	var gives, with []string
 	for _, e := range n.def.Effects {
-		does = append(does, e.Text())
+		if text := e.Text(); strings.HasPrefix(text, "+") || strings.HasPrefix(text, "-") {
+			gives = append(gives, text)
+		} else {
+			with = append(with, text)
+		}
 	}
 	blurb := strings.TrimSpace(n.def.Description)
-	if len(does) > 0 {
-		blurb += " " + sw(swBright, n.def.Name+" gives "+joinAnd(does)+".")
+	if len(gives) > 0 {
+		blurb += " " + sw(swBright, n.def.Name+" gives "+joinAnd(gives)+".")
+	}
+	if len(with) > 0 {
+		blurb += " " + sw(swBright, "With it, "+joinAnd(with)+".")
 	}
 	for _, l := range set.FeaturesOpenedBy(n.key) {
 		blurb += " " + sw(swBright, "It "+l.Opens+".")
@@ -1356,7 +1365,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 	if cw < 30 || mh < 8 {
 		return
 	}
-	badge := cw >= 66 && mh >= 13
+	badge := cw >= 66 && mh >= 15
 	tx, tw := 3, cw-6
 	if badge {
 		tx, tw = 24, cw-27
@@ -1375,7 +1384,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 	lines := append(head, body...)
 	ch := len(lines) + 2
 	if badge {
-		ch = max(ch, 14)
+		ch = max(ch, 15)
 	}
 	if ch > mh {
 		ch = mh

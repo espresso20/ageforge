@@ -102,4 +102,3 @@ func TestFullBankSaysWhatIsStillMissing(t *testing.T) {
 		t.Errorf("`wonder` with a full bank and the keystone:\n%s", cmd.Message)
 	}
 }
-

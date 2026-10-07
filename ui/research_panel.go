@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
@@ -130,15 +128,6 @@ func (p *researchPanel) Draw(scr tcell.Screen) {
 	paintTree(scr, grid, x, y, p.model.lanes)
 }
 
-// laneColor is a lane's identity colour.
-func laneColor(hue string) tcell.Color {
-	var r, g, b int32
-	if _, err := fmt.Sscanf(hue, "#%02x%02x%02x", &r, &g, &b); err != nil {
-		return theme.Color(theme.RoleAccent)
-	}
-	return tcell.NewRGBColor(r, g, b)
-}
-
 // treeStyles maps the tree's cell styles to the active theme. Lane hues go
 // through the contrast rule for art; text roles are the theme's own.
 func treeStyles(lanes int, hue func(i int) string) (styles [tsBorder + 1]tcell.Style, lane []tcell.Style) {
@@ -162,7 +151,7 @@ func treeStyles(lanes int, hue func(i int) string) (styles [tsBorder + 1]tcell.S
 	styles[tsChipDim] = on(theme.RoleDim, chip, 3)
 	styles[tsBorder] = on(theme.RoleBorder, bg, 3)
 	for i := 0; i < lanes; i++ {
-		lane = append(lane, tcell.StyleDefault.Background(bg).Foreground(theme.Legible(laneColor(hue(i)), bg, 3)))
+		lane = append(lane, tcell.StyleDefault.Background(bg).Foreground(theme.Hue(hue(i), bg)))
 	}
 	return styles, lane
 }

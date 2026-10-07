@@ -150,4 +150,3 @@ func TestMilestonesAndWondersTagCappedRewards(t *testing.T) {
 		t.Errorf("the Global Network's flat output carries a note, or is gone (want %q)", want)
 	}
 }
-
