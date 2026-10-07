@@ -243,11 +243,15 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range hp {
 		res.fail("harbinger_price", "%s %s costs %s %s, over the %s storage buildable in %s", p.Epoch, p.Answer, num(p.Price), p.Resource, num(p.MaxStorage), p.Age)
 	}
+	ar := StaticAppeaseRules()
+	for _, p := range ar {
+		res.fail("appease_"+p.Rule, "%s", p)
+	}
 	dp := StaticDepth()
 	for _, p := range dp {
 		res.fail("depth_points", "%s", p)
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d depth point problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(dp))
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d depth point problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(dp))
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, rows)
@@ -256,8 +260,8 @@ func runStatic(e *Env, res *Result) {
 	writeMilestones(&mf, mp, mr)
 	res.section("Milestone feasibility", "%s", mf.String())
 	var hf strings.Builder
-	writeHarbingerPrices(&hf, hp)
-	res.section("Harbinger prices against storage", "%s", hf.String())
+	writeHarbingerPrices(&hf, hp, ar)
+	res.section("Harbinger prices against storage and the warning", "%s", hf.String())
 	var df strings.Builder
 	writeDepthStatic(&df, dp)
 	res.section("Depth points", "%s", df.String())

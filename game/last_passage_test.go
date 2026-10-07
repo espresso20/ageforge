@@ -131,12 +131,22 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 	}
 }
 
-func TestCosmicThreadCostsAreFixedAcrossTheEpoch(t *testing.T) {
+// A Last Passage thread's Appease is priced on the age it begins in (the
+// era's first in play; a later one for a thread that began there), its Brace
+// on the era.
+func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
+	appease := map[string][2]float64{ // faith, culture
+		"interstellar_age": {1400000000, 21000000000},
+		"galactic_age":     {2700000000, 41000000000},
+		"quantum_age":      {5400000000, 81000000000},
+		"transcendent_age": {5400000000, 81000000000},
+	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
 		v := ge.GetState().Harbinger
-		if v.AppeaseCost["faith"] != 3100000000 || v.AppeaseCost["culture"] != 48000000000 {
-			t.Errorf("%s: appease = %v", age, v.AppeaseCost)
+		want, ok := appease[age]
+		if !ok || v.AppeaseCost["faith"] != want[0] || v.AppeaseCost["culture"] != want[1] || len(v.AppeaseCost) != 2 {
+			t.Errorf("%s: appease = %v, want %v faith and %v culture", age, v.AppeaseCost, want[0], want[1])
 		}
 		if v.BraceCost["dark_matter"] != 1560000000000 || v.BraceCost["titanium"] != 75600000000 || len(v.BraceCost) != 2 {
 			t.Errorf("%s: brace = %v", age, v.BraceCost)

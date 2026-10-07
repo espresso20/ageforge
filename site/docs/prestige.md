@@ -425,7 +425,7 @@ Prestige from before the Cosmic Era never rolls for it.
 
 ### The roll
 
-When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith fill at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most). Invite makes it certain.
+When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith fill at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most; the first costs 1.4B faith and 21B culture, the second double: see [What it costs](harbinger.md#what-it-costs-by-epoch)). Invite makes it certain.
 
 `prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
 
