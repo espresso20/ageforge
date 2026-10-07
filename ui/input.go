@@ -2365,15 +2365,21 @@ func cmdHarbinger(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Type: "success"}
 }
 
-// faithStandingText says the faith standing the odds are read from, with the
-// faith held and the faith it is measured against: "faith standing 40%
+// faithStrengthText says the faith strength the odds are read from, with the
+// faith held and the faith it is measured against: "faith strength 40%
 // (2.11K of 5.27K)". The same figure the Economy panel's faith row shows.
-func faithStandingText(state game.GameState) string {
+func faithStrengthText(state game.GameState) string {
+	return "faith strength " + faithStrengthFigure(state)
+}
+
+// faithStrengthFigure is the figure in faithStrengthText: "40% (2.11K of
+// 5.27K)", or the percentage alone in an age with no measure of faith.
+func faithStrengthFigure(state game.GameState) string {
 	o := state.CatastropheOutlook
 	if o.FaithFull <= 0 {
-		return fmt.Sprintf("faith standing %.0f%%", o.FaithStanding*100)
+		return fmt.Sprintf("%.0f%%", o.FaithStrength*100)
 	}
-	return fmt.Sprintf("faith standing %.0f%% (%s of %s)", o.FaithStanding*100,
+	return fmt.Sprintf("%.0f%% (%s of %s)", o.FaithStrength*100,
 		FormatNumber(math.Floor(state.Resources["faith"].Amount)), FormatNumber(o.FaithFull))
 }
 
@@ -2389,16 +2395,16 @@ func catastropheOutlookText(state game.GameState) string {
 	if o.Passage == game.PassagePrestige && o.Warned {
 		// The Cosmic Era's fated doom, foretold: it comes before the Last
 		// Passage can.
-		fmt.Fprintf(&sb, "  %s, %s.\n", doomWarningText(state), faithStandingText(state))
+		fmt.Fprintf(&sb, "  %s, %s.\n", doomWarningText(state), faithStrengthText(state))
 	}
 	switch {
 	case o.Passage == game.PassagePrestige && o.Possible:
 		fmt.Fprintf(&sb, "  Next passage (prestige, the Last Passage): %s, %s.",
-			outlookRiskText(state), faithStandingText(state))
+			outlookRiskText(state), faithStrengthText(state))
 	case o.Passage == game.PassagePrestige:
 		sb.WriteString("  This is the final epoch: its passage is prestige, and the Last Passage cannot strike now.")
 	case o.Warned:
-		fmt.Fprintf(&sb, "  %s, %s.", doomWarningText(state), faithStandingText(state))
+		fmt.Fprintf(&sb, "  %s, %s.", doomWarningText(state), faithStrengthText(state))
 	default:
 		sb.WriteString("  " + eraOutlookText(state))
 	}

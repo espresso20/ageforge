@@ -153,43 +153,43 @@ func formatCultureRow(rs game.ResourceState) string {
 	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRateTick(rs.Rate))
 }
 
-// faithBand describes a faith standing with its label and epoch odds text.
+// faithBand describes a faith strength with its label and epoch odds text.
 type faithBand struct {
 	label     string // tview-tagged label
 	epochOdds string // e.g. "40% good"
 }
 
-// faithBandFor labels the faith standing in o. The odds are the engine's for
+// faithBandFor labels the faith strength in o. The odds are the engine's for
 // the band the rolls read (o.FaithBand); the label only splits the bands
 // finer.
 func faithBandFor(o game.CatastropheOutlook) faithBand {
 	odds := fmt.Sprintf("%.0f%% good", game.EpochGoodChanceIn(o.FaithBand)*100)
-	standing := o.FaithStanding
+	strength := o.FaithStrength
 	switch {
-	case o.FaithFull > 0 && standing <= 0:
+	case o.FaithFull > 0 && strength <= 0:
 		return faithBand{"[red]✝ No faith[-]", odds}
 	case o.FaithBand == game.FaithBandLow:
 		return faithBand{"[gray]◈ Dim faith[-]", odds}
-	case o.FaithBand == game.FaithBandHigh && standing >= 1:
+	case o.FaithBand == game.FaithBandHigh && strength >= 1:
 		return faithBand{"[gold]✦ Faith full[-]", odds}
 	case o.FaithBand == game.FaithBandHigh:
 		return faithBand{"[green]◈ Strong faith[-]", odds}
-	case standing <= 0.50:
+	case strength <= 0.50:
 		return faithBand{"[white]◈ Low faith[-]", odds}
 	}
 	return faithBand{"[yellow]◈ Faith[-]", odds}
 }
 
 // formatFaithRow builds the faith resource row string: the bar and the
-// percentage are the faith standing the rolls read (o.FaithStanding, the
+// percentage are the faith strength the rolls read (o.FaithStrength, the
 // faith held against what a moderate faith economy makes in three fifths of
 // the age), not the fill of the store faith is kept in.
 func formatFaithRow(rs game.ResourceState, o game.CatastropheOutlook) string {
 	band := faithBandFor(o)
-	pctStr := fmt.Sprintf("%.0f%%", o.FaithStanding*100)
+	pctStr := fmt.Sprintf("%.0f%%", o.FaithStrength*100)
 
 	// Build the bar using the same cultureProgressBar helper (▓/░, width 10).
-	bar := cultureProgressBar(o.FaithStanding, 1)
+	bar := cultureProgressBar(o.FaithStrength, 1)
 	barStr := "\u005b" + bar + "\u005d"
 
 	midPart := fmt.Sprintf("%s  %s  %s  [gray](epoch: %s)[-]",

@@ -373,7 +373,7 @@ func TestHandoffKeepsTheFalseProphetFlag(t *testing.T) {
 // one, and printed as the claimed figure once a numeric figure takes over.
 func TestFalseThreadClaim(t *testing.T) {
 	ge := fateEngine(t, "renaissance_age", 1)
-	setFaithStanding(ge, 0.5) // mid faith: a real doom would strike 75% of the time
+	setFaithStrength(ge, 0.5) // mid faith: a real doom would strike 75% of the time
 	if err := ge.ForceFalseProphetForTest("steel_era", int(baseEraTicks("steel_era"))-1); err != nil {
 		t.Fatal(err)
 	}
@@ -387,7 +387,7 @@ func TestFalseThreadClaim(t *testing.T) {
 	}
 	ge.advanceAge("industrial_age")
 	setStock(ge, map[string][2]float64{"culture": {1e7, 1e7}})
-	setFaithStanding(ge, 0.5) // the standing is measured in the age you are in
+	setFaithStrength(ge, 0.5) // the strength is measured in the age you are in
 	v := ge.GetState().Harbinger
 	if !v.Numeric || v.Tier != CatastropheTierHigh || math.Abs(v.Probability-0.90) > 1e-9 {
 		t.Errorf("industrial view of a false thread = numeric %v %s %.3f, want the claimed high 90%%", v.Numeric, v.Tier, v.Probability)
@@ -714,14 +714,14 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 	if pf <= 0 || pc <= 0 || !reflect.DeepEqual(price, doomAppeaseCost("steel_era", ge.harbinger.startAge(), 1)) {
 		t.Fatalf("steel era level 1 = %v", price)
 	}
-	// Faith: 4.6 prices. A doom's level 1 is a quarter of full standing (a
+	// Faith: 4.6 prices. A doom's level 1 is a quarter of full strength (a
 	// hair over it, rounded up), so the bands below come out.
-	if full := FaithStandingFullIn(ge.rules, ge.age); pf < FaithMidAt*full || pf > 1.1*FaithMidAt*full {
-		t.Fatalf("level 1 asks %v faith against a full standing of %v: want about a quarter of it", pf, full)
+	if full := FaithFullIn(ge.rules, ge.age); pf < FaithMidAt*full || pf > 1.1*FaithMidAt*full {
+		t.Fatalf("level 1 asks %v faith against a full strength of %v: want about a quarter of it", pf, full)
 	}
 	setStock(ge, map[string][2]float64{"faith": {4.6 * pf, 10 * pf}, "culture": {13 * pc, 13 * pc}})
 
-	// Level 1. 3.6 prices are left: standing 0.9 → high band: a 60% strike, ×0.6.
+	// Level 1. 3.6 prices are left: strength 0.9 → high band: a 60% strike, ×0.6.
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
@@ -735,7 +735,7 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 		t.Error("no Appease log line")
 	}
 
-	// Level 2 costs double. 1.6 prices are left: standing 0.4 → mid band: 75%, ×0.36.
+	// Level 2 costs double. 1.6 prices are left: strength 0.4 → mid band: 75%, ×0.36.
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}

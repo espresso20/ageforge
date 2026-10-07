@@ -392,7 +392,7 @@ func (r *runner) sampleFate(st game.GameState) {
 	if h := st.Harbinger; h != nil && !h.LastPassage {
 		appease = h.AppeaseLevel
 	}
-	chance := game.StrikeChanceAt(st.CatastropheOutlook.FaithStanding, st.CatastropheOutlook.FaithFull > 0, appease)
+	chance := game.StrikeChanceAt(st.CatastropheOutlook.FaithStrength, st.CatastropheOutlook.FaithFull > 0, appease)
 	lo, hi := r.fateTick-f.EntryTick, st.Tick-f.EntryTick
 	if hi > f.Window {
 		hi = f.Window

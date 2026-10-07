@@ -251,7 +251,7 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range br {
 		res.fail("brace_"+p.Rule, "%s", p)
 	}
-	fp, fr := StaticFaithStanding()
+	fp, fr := StaticFaithStrength()
 	for _, p := range fp {
 		res.fail("faith_"+p.Rule, "%s", p)
 	}
@@ -271,8 +271,8 @@ func runStatic(e *Env, res *Result) {
 	writeHarbingerPrices(&hf, hp, ar, br)
 	res.section("Harbinger prices against storage and the warning", "%s", hf.String())
 	var ff strings.Builder
-	writeFaithStanding(&ff, fp, fr)
-	res.section("Faith standing", "%s", ff.String())
+	writeFaithStrength(&ff, fp, fr)
+	res.section("Faith strength", "%s", ff.String())
 	var df strings.Builder
 	writeDepthStatic(&df, dp)
 	res.section("Depth points", "%s", df.String())

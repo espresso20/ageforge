@@ -565,7 +565,7 @@ func TestAppeaseLowersTheStrikeAndSparedIsHandled(t *testing.T) {
 		forceFate(t, ge, 26000)
 		tickTo(ge, arrivalTick(ge))
 		ge.harbinger.AppeaseLevel = appease
-		setFaithStanding(ge, 0.5) // mid band: 75% before Appease
+		setFaithStrength(ge, 0.5) // mid band: 75% before Appease
 		ge.rng = riggedRNG(roll)
 		tickTo(ge, ge.fate.StrikeTick)
 		return ge
@@ -596,7 +596,7 @@ func TestAppeaseLowersTheStrikeAndSparedIsHandled(t *testing.T) {
 	ge := fateEngine(t, "classical_age", 11)
 	forceFate(t, ge, 26000)
 	tickTo(ge, arrivalTick(ge))
-	setFaithStanding(ge, 0.9)
+	setFaithStrength(ge, 0.9)
 	ge.rng = riggedRNG(0.65) // over the high band's 60%, under the mid band's 75%
 	tickTo(ge, ge.fate.StrikeTick)
 	if ge.fate.Resolved != FateSpared {
@@ -613,10 +613,10 @@ func TestStrikeChanceAtMatchesTheEngine(t *testing.T) {
 			forceFate(t, ge, 26000)
 			tickTo(ge, arrivalTick(ge))
 			ge.harbinger.AppeaseLevel = appease
-			setFaithStanding(ge, share)
-			f, ok := ge.faithStanding()
+			setFaithStrength(ge, share)
+			f, ok := ge.faithStrength()
 			if got, want := StrikeChanceAt(f, ok, appease), ge.strikeChance(); math.Abs(got-want) > 1e-12 || !ok {
-				t.Errorf("standing %v appease %d: StrikeChanceAt %v, engine %v (measured %v)", share, appease, got, want, ok)
+				t.Errorf("strength %v appease %d: StrikeChanceAt %v, engine %v (measured %v)", share, appease, got, want, ok)
 			}
 		}
 	}
@@ -1007,7 +1007,7 @@ func cosmicDoom(t *testing.T, age string, offset int) *GameEngine {
 // Last Passage's thread takes up the warning again.
 func TestCosmicDoomParksTheLastPassageThread(t *testing.T) {
 	ge := cosmicDoom(t, "galactic_age", 60000)
-	setFaithStanding(ge, 0.1) // low faith: the Last Passage at 18%, the doom at 90%
+	setFaithStrength(ge, 0.1) // low faith: the Last Passage at 18%, the doom at 90%
 	tickTo(ge, arrivalTick(ge))
 	h, lp := ge.harbinger, ge.parkedHarbinger
 	if h == nil || h.TargetEpoch != "cosmic_era" || lp == nil || lp.TargetEpoch != "" || lp.AppeaseLevel != 1 {
@@ -1188,7 +1188,7 @@ func TestCosmicDoomSparesStorage(t *testing.T) {
 	for _, choice := range []string{"endure", "succumb"} {
 		t.Run(choice, func(t *testing.T) {
 			ge := cosmicDoom(t, "galactic_age", 60000)
-			setFaithStanding(ge, 0.1) // low faith: the doom at 90%
+			setFaithStrength(ge, 0.1) // low faith: the doom at 90%
 			for _, k := range []string{"stash", "storage_pit", "warehouse", "granary"} {
 				ge.Buildings.counts[k] = 10
 			}

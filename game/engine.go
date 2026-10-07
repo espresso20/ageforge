@@ -2215,7 +2215,7 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 // while the engine write lock is held. Each epoch fires its event roll at
 // most once per civilisation cycle (epochEventFired prevents double-fire on
 // load or re-entry). oldAge is the age being left: the epoch roll reads the
-// faith standing there.
+// faith strength there.
 func (ge *GameEngine) detectEpochTransition(oldAge, newAge string) {
 	newEpoch := ge.rules.EraOf(newAge)
 	if newEpoch == ge.currentEpoch {
@@ -2299,8 +2299,8 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 
 // rollEpochEvent performs the epoch transition event roll on entering
 // epochKey from fromAge.
-//   - The faith standing in fromAge, the age being left, sets the good-event
-//     probability (see goodChanceFor): the standing the player was shown
+//   - The faith strength in fromAge, the age being left, sets the good-event
+//     probability (see goodChanceFor): the strength the player was shown
 //     before advancing, not the new age's, which asks for about twice the
 //     faith.
 //   - Otherwise a challenging (non-catastrophe) bad event is applied
@@ -2316,7 +2316,7 @@ func (ge *GameEngine) rollEpochEvent(epochKey, fromAge string) {
 	}
 	ge.epochEventFired[epochKey] = true
 
-	if ge.gameRNG().Float64() < goodChanceFor(ge.faithStandingIn(fromAge)) {
+	if ge.gameRNG().Float64() < goodChanceFor(ge.faithStrengthIn(fromAge)) {
 		ge.rollGoodEpochEvent()
 		return
 	}

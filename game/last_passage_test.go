@@ -167,7 +167,7 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 func lastPassageLoss(t *testing.T, fill float64, appease, brace int) float64 {
 	t.Helper()
 	ge := lpEngine(t, "interstellar_age", 7)
-	setFaithStanding(ge, fill)
+	setFaithStrength(ge, fill)
 	ge.harbinger.AppeaseLevel, ge.harbinger.BraceLevel = appease, brace
 	return ge.CatastropheOutlook().Probability * (1 - LastPassageKeepFor(ge.lastPassageBraceLevel()))
 }

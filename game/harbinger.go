@@ -133,8 +133,8 @@ const (
 	//     the bot; the static check holds it to the warning instead (payable
 	//     by FlowIncome inside it, and above a doom's).
 	//
-	// Faith also drives the roll (the faith standing, catastrophe.go): worst
-	// case, paying drops the standing from the top band to the bottom,
+	// Faith also drives the roll (the faith strength, catastrophe.go): worst
+	// case, paying drops the strength from the top band to the bottom,
 	// raising the base chance from 12% to 18% (×1.5), and ×0.6 still leaves
 	// 0.9× of where it started, so Appease always lowers the odds.
 	//

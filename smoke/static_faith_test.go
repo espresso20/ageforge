@@ -9,13 +9,13 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
-// TestFaithStandingReachable: in every age a moderate faith economy that
+// TestFaithStrengthReachable: in every age a moderate faith economy that
 // saves through a doom's shortest warning reads as the middle faith band and
 // a devoted one as the top, by the rule the rolls use. The check fails on a
 // measure no economy can fill, which is what the bands were read against
 // until now.
-func TestFaithStandingReachable(t *testing.T) {
-	problems, rows := StaticFaithStanding()
+func TestFaithStrengthReachable(t *testing.T) {
+	problems, rows := StaticFaithStrength()
 	for _, p := range problems {
 		t.Errorf("%s", p)
 	}
@@ -28,16 +28,16 @@ func TestFaithStandingReachable(t *testing.T) {
 			t.Errorf("row %d: %+v, want %s with a measure and a faith income", i, r, ages[i])
 		}
 		// A doom's shortest warning is a third of its longest, which is what
-		// full standing is measured on.
-		if r.ModerateStanding < 0.33 || r.ModerateStanding > 0.34 || r.ModerateBand != string(game.FaithBandMid) {
-			t.Errorf("%s: a moderate economy reaches %.3f (%s), want a third of full standing, the middle band", r.Age, r.ModerateStanding, r.ModerateBand)
+		// full strength is measured on.
+		if r.ModerateStrength < 0.33 || r.ModerateStrength > 0.34 || r.ModerateBand != string(game.FaithBandMid) {
+			t.Errorf("%s: a moderate economy reaches %.3f (%s), want a third of full strength, the middle band", r.Age, r.ModerateStrength, r.ModerateBand)
 		}
-		if r.DevotedStanding < 0.99 || r.DevotedBand != string(game.FaithBandHigh) {
-			t.Errorf("%s: a devoted economy reaches %.3f (%s), want full standing, the top band", r.Age, r.DevotedStanding, r.DevotedBand)
+		if r.DevotedStrength < 0.99 || r.DevotedBand != string(game.FaithBandHigh) {
+			t.Errorf("%s: a devoted economy reaches %.3f (%s), want full strength, the top band", r.Age, r.DevotedStrength, r.DevotedBand)
 		}
 	}
 	var sb strings.Builder
-	writeFaithStanding(&sb, problems, rows)
+	writeFaithStrength(&sb, problems, rows)
 	if out := sb.String(); !strings.Contains(out, "No problems.") || strings.Count(out, "\n| ") != len(ages)+1 {
 		t.Errorf("the report section:\n%s", out)
 	}
@@ -45,16 +45,16 @@ func TestFaithStandingReachable(t *testing.T) {
 	// The check fires on broken measures.
 	measures := game.FaithMeasuresIn(rules.Core())
 	income := rules.Core().FlowIncome
-	alter := func(full func(m game.FaithMeasure) float64) []FaithStandingProblem {
+	alter := func(full func(m game.FaithMeasure) float64) []FaithStrengthProblem {
 		broken := make([]game.FaithMeasure, len(measures))
 		for i, m := range measures {
 			m.Full = full(m)
 			broken[i] = m
 		}
-		got, _ := faithStandingProblems(broken, income, FaithDevotedFactor)
+		got, _ := faithStrengthProblems(broken, income, FaithDevotedFactor)
 		return got
 	}
-	want := func(name string, got []FaithStandingProblem, rule string) {
+	want := func(name string, got []FaithStrengthProblem, rule string) {
 		t.Helper()
 		if len(got) != len(ages) {
 			t.Errorf("%s: %d problem(s), want one for each of the %d ages: %v", name, len(got), len(ages), got)
@@ -77,8 +77,8 @@ func TestFaithStandingReachable(t *testing.T) {
 	}), FaithRuleMiddle)
 	want("no measure", alter(func(game.FaithMeasure) float64 { return 0 }), FaithRuleMeasure)
 	// A devoted economy only twice the moderate one reaches two thirds of
-	// full standing, which is still the middle band.
-	twice, _ := faithStandingProblems(measures, income, 2)
+	// full strength, which is still the middle band.
+	twice, _ := faithStrengthProblems(measures, income, 2)
 	want("a devoted economy of twice the moderate", twice, FaithRuleTop)
 }
 

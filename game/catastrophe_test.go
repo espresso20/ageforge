@@ -826,10 +826,10 @@ func TestCatastropheRandomnessIsSeeded(t *testing.T) {
 
 // --- Outlook ------------------------------------------------------------------------
 
-// setFaithStanding gives ge the faith that reads as share of full standing
-// in the age it is in (FaithStandingFullIn), with a store that holds it.
-func setFaithStanding(ge *GameEngine, share float64) {
-	amount := share * FaithStandingFullIn(ge.rules, ge.age)
+// setFaithStrength gives ge the faith that reads as share of full strength
+// in the age it is in (FaithFullIn), with a store that holds it.
+func setFaithStrength(ge *GameEngine, share float64) {
+	amount := share * FaithFullIn(ge.rules, ge.age)
 	ge.Resources.LoadStorage(map[string]float64{"faith": math.Max(amount, ge.Resources.GetStorage("faith"))})
 	ge.Resources.LoadAmounts(map[string]float64{"faith": amount})
 }
@@ -841,7 +841,7 @@ func setFaithStanding(ge *GameEngine, share float64) {
 func TestCatastropheOutlook(t *testing.T) {
 	cases := []struct {
 		name     string
-		standing float64
+		strength float64
 		wantP    float64
 		wantTier CatastropheTier
 		wantBand FaithBand
@@ -862,22 +862,22 @@ func TestCatastropheOutlook(t *testing.T) {
 				t.Fatal(err)
 			}
 			for _, ge := range []*GameEngine{quiet, fated} {
-				setFaithStanding(ge, c.standing)
+				setFaithStrength(ge, c.strength)
 			}
 			oq, of := quiet.CatastropheOutlook(), fated.CatastropheOutlook()
 			if oq != of {
 				t.Fatalf("the outlook tells a fated era from a quiet one:\nquiet %+v\nfated %+v", oq, of)
 			}
 			if !oq.Possible || oq.Warned || oq.Probability != 0 || oq.Tier != CatastropheTierNone || oq.NextEpochKey != "steel_era" ||
-				math.Abs(oq.FaithStanding-c.standing) > 1e-9 || oq.FaithBand != c.wantBand ||
-				oq.FaithFull != FaithStandingFullIn(quiet.rules, "classical_age") {
-				t.Errorf("quiet outlook = %+v, want possible, unwarned, no odds, standing %v (%s)", oq, c.standing, c.wantBand)
+				math.Abs(oq.FaithStrength-c.strength) > 1e-9 || oq.FaithBand != c.wantBand ||
+				oq.FaithFull != FaithFullIn(quiet.rules, "classical_age") {
+				t.Errorf("quiet outlook = %+v, want possible, unwarned, no odds, strength %v (%s)", oq, c.strength, c.wantBand)
 			}
 			// A harbinger comes: the outlook says what its warning says.
 			if err := fated.SummonHarbingerForTest("classical_age"); err != nil {
 				t.Fatal(err)
 			}
-			setFaithStanding(fated, c.standing)
+			setFaithStrength(fated, c.strength)
 			o := fated.CatastropheOutlook()
 			if !o.Possible || !o.Warned || math.Abs(o.Probability-c.wantP) > 1e-9 || o.Tier != c.wantTier {
 				t.Errorf("warned outlook = %+v, want p=%v tier=%s", o, c.wantP, c.wantTier)

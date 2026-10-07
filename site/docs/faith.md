@@ -1,28 +1,62 @@
 # Faith
 
-Faith is a resource that accumulates from Faith lineage buildings and faith-domain workers. It does **not** drain on its own each tick; it goes down only when something spends or removes it (see [How Faith Decreases](#how-faith-decreases)). Your faith level as a percentage of your faith storage sets your [Epoch](epochs.md) event roll odds and the chance a fated [catastrophe](catastrophe.md) strikes.
+Faith is a resource that accumulates from Faith lineage buildings and faith-domain workers. It does **not** drain on its own each tick; it goes down only when something spends or removes it (see [How Faith Decreases](#how-faith-decreases)). Your **faith strength**, the faith you hold measured against what your age makes of it, sets your [Epoch](epochs.md) event roll odds and the chance a fated [catastrophe](catastrophe.md) strikes.
 
 ---
 
 ## Why Faith Matters
 
-1. **Epoch roll odds.** Your faith % sets the chance of a good (rather than bad) event at each epoch transition.
-2. **Catastrophe odds.** When a doom fated for your era reaches its moment, your faith % at that moment sets the chance it strikes. It sets the odds of the Last Passage at a Cosmic Era prestige the same way. The table below is the one place these odds are listed.
+1. **Epoch roll odds.** Your faith strength sets the chance of a good (rather than bad) event at each epoch transition.
+2. **Catastrophe odds.** When a doom fated for your era reaches its moment, your faith strength at that moment sets the chance it strikes. It sets the odds of the Last Passage at a Cosmic Era prestige the same way. The table below is the one place these odds are listed.
 3. **Worker morale.** Producing faith lifts worker [morale](morale.md) a little each tick. The lift scales with your faith **production rate** (faith/tick), not your stored faith, and it is **capped** per tick, so even a huge late-game faith income can't max out morale in one step. A steady faith income is an ongoing morale source on top of the epoch odds.
 
 ---
 
 ## Faith Threshold Bands
 
-| Faith fill | Good epoch event | Fated doom strikes | Last Passage |
-|------------|------------------|--------------------|--------------|
-| under 25% of storage | 40% | 90% | 18% |
-| 25 to 75% of storage (or no faith storage yet) | 50% | 75% | 15% |
-| over 75% of storage | 60% | 60% | 12% |
+Your faith strength is the faith you hold as a share of what a moderate faith economy makes in three fifths of the age you are in, which is the longest warning a doom gives.
 
-- The faith that counts is the faith you hold at the moment of the roll: when you cross into a new epoch, when a fated doom reaches its moment, or when you confirm a Cosmic Era prestige. Faith you held when the harbinger came doesn't count.
-- A harbinger's **Appease** multiplies the doom and Last Passage chances by 0.6 per level (0.36 at two levels, the most), and **Invite** makes the catastrophe certain. See [The Harbinger](harbinger.md).
-- The Economy panel's faith row shows your band and the epoch odds.
+| Faith strength | Good epoch event | Fated doom strikes | Last Passage |
+|----------------|------------------|--------------------|--------------|
+| under 25% | 40% | 90% | 18% |
+| 25% to 75% | 50% | 75% | 15% |
+| over 75% | 60% | 60% | 12% |
+
+- **A moderate faith economy** is the one a harbinger's Appease is priced on: five fully staffed copies of every faith building so far, the faith of every wonder already built and the flat faith of the techs, with the production bonus you hold by then. The measure is the same on known ground: a mastered age makes more per tick for a shorter age.
+- **What it takes.** A doom's harbinger gives you at least a fifth of an age. A moderate faith economy that starts from nothing when the harbinger comes and spends none of it reaches a third of full strength by the shortest warning's end, which is the middle band. An economy three times as devoted (fifteen copies where the moderate one keeps five) reaches full strength in the same time, and a moderate one reaches the top band in a warning longer than 45% of the age. Faith you saved before the warning counts too: faith never drains.
+- **The faith that counts** is the faith you hold at the moment of the roll: when a fated doom reaches its moment, when you confirm a Cosmic Era prestige, or when you cross into a new epoch. The epoch roll reads your faith strength in the age you are leaving, the one the Economy panel was showing you. A new age asks for more faith (about twice as much, from the Iron Age on), so your faith strength drops when you advance.
+- **Nothing is taken.** The measure only reads your faith. Faith beyond full strength stays yours, to spend on Appease or to carry into the next age.
+- A harbinger's **Appease** multiplies the doom and Last Passage chances by 0.6 per level (0.36 at two levels, the most), and **Invite** makes the catastrophe certain. A doom's Appease level 1 costs a quarter of full strength in faith, so faith worth one Appease is the middle band. See [The Harbinger](harbinger.md).
+- The Economy panel's faith row shows your faith strength as a bar and a percentage, with your band and the epoch odds. The `catastrophe` command and the Harbinger panel print the same figure with the faith behind it, for example "faith strength 40% (3.58K of 8.94K)".
+
+Full strength by age, and where the bands begin:
+
+| Age | Full strength | Middle band from | Top band over | A moderate economy makes, per tick |
+|-----|---------------|------------------|---------------|------------------------------------|
+| Primitive Age | 2.7 | 0.675 | 2.02 | 0.01 |
+| Stone Age | 24.3 | 6.08 | 18.2 | 0.03 |
+| Bronze Age | 295 | 73.7 | 221 | 0.07 |
+| Iron Age | 5.26K | 1.32K | 3.95K | 0.75 |
+| Classical Age | 8.94K | 2.24K | 6.71K | 0.91 |
+| Medieval Age | 19.3K | 4.83K | 14.5K | 1.53 |
+| Renaissance Age | 36.6K | 9.14K | 27.4K | 2.17 |
+| Colonial Age | 103K | 25.8K | 77.4K | 5.25 |
+| Industrial Age | 316K | 78.9K | 237K | 14.1 |
+| Victorian Age | 833K | 208K | 625K | 33 |
+| Electric Age | 1.95M | 488K | 1.46M | 69.5 |
+| Atomic Age | 4.41M | 1.1M | 3.31M | 131 |
+| Modern Age | 8.55M | 2.14M | 6.41M | 254 |
+| Information Age | 19.6M | 4.91M | 14.7M | 500 |
+| Digital Age | 44.5M | 11.1M | 33.4M | 991 |
+| Cyberpunk Age | 99.8M | 24.9M | 74.8M | 1.97K |
+| Fusion Age | 221M | 55.3M | 166M | 3.94K |
+| Space Age | 486M | 122M | 365M | 7.87K |
+| Interstellar Age | 1.06B | 265M | 795M | 15.7K |
+| Galactic Age | 2.12B | 530M | 1.59B | 31.5K |
+| Quantum Age | 4.24B | 1.06B | 3.18B | 62.9K |
+| Transcendent Age | 4.24B | 1.06B | 3.18B | 62.9K |
+
+**Why it isn't a share of storage.** It used to be: the bands read your faith as a percentage of your faith storage. But faith has no store of its own. It is kept in the general store, which is sized for building materials and grows about tenfold an age while faith income doubles. Against the least storage the age gates force on anyone, an economy three times as devoted as the moderate one, saving through a doom's longest warning, reached 20% in the Iron Age, 21% in the Classical Age and under 5% from the Medieval Age on; against a typical store it never passed 7%, and by the Cosmic Era a whole age's faith was millionths of the store. So every roll read the bottom band, whatever you did. The odds in the table are the ones the game always listed; what changed is that the middle and top rows can now be reached.
 
 **What high faith is worth.** A doom is fated in 27% of the eras from the Iron Era on (see [When It Triggers](catastrophe.md#when-it-triggers)). A first run to a Modern Age prestige lives through three eras that can hold a doom (the Iron, Steel and Electric Eras; the Digital Era's doom rarely strikes before you prestige there), so it can expect about 0.73 catastrophes at low faith, 0.61 at mid faith and 0.49 at high faith. High faith saves you about a quarter of a catastrophe per run, and brings more good epoch events. A deep run to a Quantum Age prestige lives through all six such eras: about 1.46 catastrophes at low faith, plus the Last Passage roll.
 
@@ -98,7 +132,7 @@ Two things ask for faith directly:
 | Entering the Renaissance Age | 8.1K, alongside 180K gold, 220K knowledge and 880 steel |
 | Sistine Chapel (Renaissance wonder) | 20K, alongside culture, gold and stone |
 
-Bank faith through the Medieval Age so the Renaissance requirement doesn't hold you up. The age requirement only checks your faith, and your faith carries into the new age untouched. The Sistine Chapel, which you must build before leaving the Renaissance Age, does spend it (through `wonder collect`). That lowers your faith % until it refills, so keep an eye on the odds if an epoch boundary is close or a harbinger has come.
+Bank faith through the Medieval Age so the Renaissance requirement doesn't hold you up. The age requirement only checks your faith, and your faith carries into the new age untouched. The Sistine Chapel, which you must build before leaving the Renaissance Age, does spend it (through `wonder collect`). That lowers your faith strength until you make it back (20K is over half of full strength in the Renaissance Age), so keep an eye on the odds if an epoch boundary is close or a harbinger has come.
 
 ---
 
@@ -108,7 +142,7 @@ Bank faith through the Medieval Age so the Renaissance requirement doesn't hold 
 |-------|-------------|
 | Early game | A few Shrines, 2 Faith workers each |
 | Mid game | Multiple Temples / Cathedrals with full Faith worker assignment |
-| Late game | Keep faith above 75% before every epoch boundary and while a harbinger warns you |
+| Late game | Keep your faith strength above 75% before every epoch boundary and while a harbinger warns you |
 
 ---
 
@@ -124,7 +158,7 @@ The same goes for a [harbinger](harbinger.md): it comes only part of an age befo
 
 Before reaching the last age of an epoch (e.g. the Bronze Age before the Iron Era):
 
-- Faith above 75% of storage for the 60% good roll
+- Faith strength above 75% for the 60% good roll
 - Culture above 40% of storage to make Major good events eligible; above 75% also gives a 15% chance at the Legendary one
 - Spare materials to rebuild with, in case The Great Fire destroys up to 8 buildings (never wonders or storage)
 - A gold income that can absorb Economic Crash or Merchant Betrayal, which each take half your gold and then drain more per tick
