@@ -2,7 +2,7 @@
 
 Research is your civilization's strongest long-term lever. 77 technologies span all 22 ages, and each one changes your production, military strength, storage, a command you can use, or the pace of the game, for the rest of the run. A tech's bonus is small and always counts in full: no cap holds it back (see [How Tech Bonuses Stack](#how-tech-bonuses-stack)). Only one technology is researched at a time, but the [build plan](plan.md) can queue the next ones and start each as soon as the slot frees up.
 
-<figure class="screen" data-screen="research"><figcaption>The Research panel: a tech part way through, the bonuses research has earned so far, and what can be started next.</figcaption></figure>
+<figure class="screen" data-screen="research"><figcaption>The Research panel in the Classical Age: the tech tree as a map. Philosophy is part way through, Civil Engineering can start, and the Medieval Age waits below the dotted line.</figcaption></figure>
 
 ---
 
@@ -23,13 +23,13 @@ A research speed of +30% cuts the tick count to 70% of base. It cuts the number 
 
 The tick count is locked in when you start the tech. Gaining more research speed mid-research does not shorten the current countdown.
 
-The Research panel lists every tech at the time it would take if you started it now, with research speed, Ancient Knowledge and Era Mastery counted, and its header says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
+A tech's card on the tech tree gives the time it would take if you started it now, with research speed, Ancient Knowledge and Era Mastery counted, and the Stats panel says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
 
-**Ancient Knowledge.** For each distinct epoch you have [Succumbed](catastrophe.md#ancient-knowledge) in, the adjusted ticks are multiplied by 0.8, rounded down and never below one tick: ×0.8 after one epoch, ×0.64 after two, ×0.26 with all six. It multiplies what research speed leaves, so it never brings a tech to a single tick on its own. The Research panel's header has a line for it (`Ancient Knowledge: research time ×0.64. The times below include it.`).
+**Ancient Knowledge.** For each distinct epoch you have [Succumbed](catastrophe.md#ancient-knowledge) in, the adjusted ticks are multiplied by 0.8, rounded down and never below one tick: ×0.8 after one epoch, ×0.64 after two, ×0.26 with all six. It multiplies what research speed leaves, so it never brings a tech to a single tick on its own. The Stats panel has a line for it (`Ancient Knowledge: research time ×0.64. The times on the tech tree include it.`).
 
-**Era Mastery.** On known ground (an age a past run completed) the ticks are then divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick: 2x after one completion, up to 4.2x after ten. The Research panel shows the shortened times.
+**Era Mastery.** On known ground (an age a past run completed) the ticks are then divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick: 2x after one completion, up to 4.2x after ten. A tech's card shows the shortened time.
 
-**Research techs.** Three techs cut research time by 3% each: Printing Press, Computers and Machine Learning. Their cuts multiply what research speed leaves (×0.97 each, ×0.913 with all three), rounded down and never below one tick. However many techs cut it, research never takes less than 50% of its time on their account. The Research panel's header has a line for it (`Research techs: research time ×0.94. The times below include it.`).
+**Research techs.** Three techs cut research time by 3% each: Printing Press, Computers and Machine Learning. Their cuts multiply what research speed leaves (×0.97 each, ×0.913 with all three), rounded down and never below one tick. However many techs cut it, research never takes less than 50% of its time on their account. The Stats panel has a line for it (`Research techs: research time ×0.94. The times on the tech tree include it.`).
 
 All together:
 
@@ -49,7 +49,7 @@ Every tech has a **kind**, and its kind decides how long it takes and what it co
 - The **spine** is every tech a keystone stands on, all the way down: Tool Making under Stoneworking, Steam Power under Industrialization. Keystones and the spine are the only techs a run has to research, 43 of the 77 today.
 - Everything else is **optional**: yours to take or leave.
 
-The Research panel marks each keystone with a ★ and the wonder it opens (`★ keystone: Colosseum`), and so does `research list`.
+The tech tree draws each keystone with a ★ on a double frame, its card names the wonder that waits for it, and `research list` marks it too (`★ keystone: Colosseum`).
 
 ### How Research is Priced
 
@@ -161,11 +161,85 @@ Cancels the current research. **No refund.** The knowledge cost is lost. Only us
 ```
 research
 ```
-With no arguments, opens the **Research panel** (so does `techs`). It groups techs by age: researched techs show as complete, available ones are highlighted, and locked ones are dimmed. Ages past your next one are not listed: one line counts the techs they hold, so the tree never spoils an age you haven't reached.
+With no arguments, opens the **Research panel**, the tech tree as a map (so do `techs` and `research tree`). See [Reading the Tech Tree](#reading-the-tech-tree).
+
+---
+
+```
+research tree close
+research tree far
+```
+Opens the tree at that zoom: big badges with full names (close, the default), or one-line pills that fit every lane on screen (far). `PgUp` and `PgDn` do the same from inside the panel.
+
+---
+
+```
+research card <tech_key>
+```
+Opens the tree on that tech's card. It works for any tech you can see on the map, and never for one in an age still hidden.
 
 ---
 
 **Shortcut:** `res` is an alias for `research`. All subcommands work identically.
+
+---
+
+## Reading the Tech Tree
+
+`research` opens the tree as a map. It covers the whole screen but the command bar, and it does not have to fit: the view follows the tech you select.
+
+- **Lanes run across, ages run down.** Each lane is a column with its name at the top (Knowledge, Trade, Craft, and so on); a lane appears once one of its techs is in sight. Each age is a band, named in the gutter on the left with how many of its techs you hold.
+- **A tech is a badge with its name over it.** The glyph in the middle is the tech's emblem, or its lane's.
+- **Lines show what a tech needs.** A line leaves the notch under a badge and comes down on the name of the tech that needs it. A solid line is needed outright. Dashed lines marked `or` are an either-or group: one of them will do. Selecting a tech lights the chain that leads to it.
+- **One line under the map** names the selected tech, its state, its price and time, and what it opens. A key bar sits under that.
+
+<figure class="screen" data-screen="research-far"><figcaption>The same tree zoomed out with PgUp: every lane on screen, a tech a line. A tick is researched, round brackets can start, dashed bars wait for something, and a shaded pair is the next age.</figcaption></figure>
+
+### What the frames and marks mean
+
+The shape says it as well as the color, so the tree reads in every theme.
+
+| You see | It means |
+|---|---|
+| A rounded frame `╭─────╮` | An optional tech |
+| A double frame `╔═════╗` | A tech on the spine: a keystone stands on it |
+| A double frame with a `★` | A keystone: its age's wonder cannot be built without it |
+| A `✓` at the top right, the frame in the lane's color | Researched |
+| A `⟳`, and the bottom edge filling as a bar `╚▓▓░░░╝` | Being researched |
+| A solid, bright frame and no mark | You can start it |
+| `▸1` at the top right | It is in your build plan, at that place |
+| A dashed frame `╭┄┄┄┄┄╮` | It waits for a tech it needs |
+| A shaded block `░░░░░░░` | A tech of the next age: you can read its card and plan it |
+| A `◇` at the bottom right | It opens a command or a building |
+
+Zoomed out, a tech is one line: `✓` before the emblem is researched, `⟳` is in progress, `( )` round it can start, `┆ ┆` waits, `░ ░` is the next age, and a `★` after the letterhead is a keystone.
+
+Ages past the next one are not drawn. One line at the foot of the map counts their techs, and nothing names them: not the map, not a card, not `research card`.
+
+### The card
+
+`Enter` on a tech opens its card over the map. It says what the tech does in plain sentences, what it opens, what it costs and how long it takes at your current research speed, what it builds on (techs you hold in green) and how many later techs build on it.
+
+<figure class="screen" data-screen="research-card"><figcaption>Civil Engineering's card. Research is busy, so Enter would add it to the build plan.</figcaption></figure>
+
+The card is also the confirmation. Research spends knowledge for good, so nothing happens on the first `Enter`. The last line of the card says what a second `Enter` does: start the tech if it can start now, or add it to your [build plan](plan.md) if the research slot is busy, the knowledge is not there yet, or the tech still waits for something. `Esc` closes the card.
+
+### Keys
+
+The panel takes only keys that print nothing. Letters always go to the command bar, so every command works with the tree open.
+
+| Key | On the map | With a card open |
+|---|---|---|
+| Arrows | Move to the nearest tech that way; the view follows | Nothing |
+| `Tab`, `Shift-Tab` | The next or previous tech you can start | Nothing |
+| `PgUp`, `PgDn` | Zoom out and in | Nothing |
+| `Home` | Jump back to your current age | Nothing |
+| `Enter` | Open the selected tech's card | Do what the card says |
+| `Esc` | Close the panel | Close the card |
+
+With something typed in the command bar, `Tab` and `Enter` belong to the command, as on the Map.
+
+The glyphs follow your `map glyphs` setting: with `map glyphs ascii` the tree is drawn in plain ASCII, with letters for emblems. What research adds up to (every bonus your techs give together, and what research speed does to the times) is on the Stats panel, under **Research bonuses**.
 
 ---
 
@@ -185,7 +259,7 @@ what a resource makes = buildings and workers × pools (clamped at ×3) × (1 + 
 - **Cuts multiply, and each has a floor.** A tech that cuts a price or a time takes its share of what the cuts before it left: two 3% cuts on building costs leave 0.97 × 0.97. Building costs never fall under 10% of the listed price, construction under 40% of its time, or research under 50% of its time, however many cuts stack. All of today's techs together stay far from every floor.
 - **Storage and housing are percentages** of everything you hold: +10% storage is 10% more of every store, and +5% housing is 5% more housing, rounded up to a whole person.
 - **Game speed, military power and expedition rewards** are added to the pools of those names, shared with milestones and wonders. None of the three has the ×3 clamp.
-- The `rates` command shows what the techs add to a resource on its **Research** line, and the Research panel lists what all your techs come to together.
+- The `rates` command shows what the techs add to a resource on its **Research** line, and the Stats panel lists what all your techs come to together, under Research bonuses.
 
 A tech's bonus is never permanent. Prestige, Succumb and a new game wipe every tech and everything it gave.
 
@@ -657,7 +731,7 @@ Knowledge costs rise steeply, from 47 kp for Tool Making to billions in the late
 
 **Knowledge is deducted upfront.** Don't start a tech if your stockpile barely covers the cost. One bad event (The Dark Age cuts knowledge by 80% and cancels your active research) can set you back a long way.
 
-**Prerequisites stack.** Before typing `research banking`, check that you have both `currency` and `mathematics`. `research list` shows only the techs you can start now; the Research panel (`research`) shows the locked ones dimmed. Or plan the whole chain: `plan research` takes a tech whose prerequisites are planned above it.
+**Prerequisites stack.** Before typing `research banking`, check that you have both `currency` and `mathematics`. `research list` shows only the techs you can start now; on the tech tree a tech that still waits has a dashed frame, and its card names what it builds on, with the techs you lack dimmed.
 
 **The Dark Age epoch event** cancels your active research and drains 80% of your knowledge stockpile. If an epoch transition is close, consider whether to delay an expensive research start until after its event resolves.
 

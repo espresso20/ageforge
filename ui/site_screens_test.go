@@ -72,11 +72,11 @@ type siteStage struct {
 	// onTree takes the tech tree's pictures, part way through the Classical
 	// Age (toMedieval calls it).
 	onTree func()
-	t     *testing.T
-	eng   *game.GameEngine
-	d     *Dashboard
-	app   *tview.Application
-	pages *tview.Pages
+	t      *testing.T
+	eng    *game.GameEngine
+	d      *Dashboard
+	app    *tview.Application
+	pages  *tview.Pages
 }
 
 func newSiteStage(t *testing.T) *siteStage {

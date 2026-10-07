@@ -125,7 +125,7 @@ There is also a prestige-run path to free research: early in a new run (Primitiv
 ## Tips
 
 - Get your first Story Circle and 2 Knowledge workers before your first age advance, because early research unlocks pay off quickly. The Stone Age asks for 5 Story Circles and the Bronze Age for 5 Elders' Halls, and the Stone Age's wonder needs Stoneworking, which stands on Tool Making.
-- In each new age, find the keystone first (★ in the Research panel). The wonder waits for it, and the advance waits for the wonder.
+- In each new age, find the keystone first (the ★ on the tech tree). The wonder waits for it, and the advance waits for the wonder.
 - Research is paid up front, so start a tech as soon as you can afford it, or queue it with `plan research`. Knowledge that sits at its storage limit is wasted.
 - Plan for the Space Program before the Modern Age: build up gold income and storage, then buy the knowledge.
 - After a Dark Age, move spare workers onto knowledge buildings for a while to rebuild your stock, then restart the research it canceled.

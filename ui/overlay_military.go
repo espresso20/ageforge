@@ -66,6 +66,7 @@ func militaryProvider(state game.GameState, _ int) string {
 	// === Campaigns ===
 	// The Army panel lists only military campaigns (they cost soldiers).
 	sb.WriteString("\n [gold]═══ Campaigns ═══[-]\n\n")
+	sb.WriteString(lockNotes(state, config.FeatureCampaigns))
 	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
 		sb.WriteString(" [gray]No campaigns available yet.[-]\n")
 		// Ages are named only once the player can see them (spoilers.go).

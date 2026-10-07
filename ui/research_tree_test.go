@@ -566,3 +566,46 @@ func TestResearchListMarksTheKeystone(t *testing.T) {
 		t.Errorf("the Stone Age map should star one tech and call it a keystone in the status line:\n%s", text)
 	}
 }
+
+// TestPanelsMarkLockedCommands: the Army and Trade panels and `campaign
+// list` say when a command still waits for a tech, in the words of the
+// refusal, once that tech's age is reached and never before.
+func TestPanelsMarkLockedCommands(t *testing.T) {
+	ge := game.NewGameEngine()
+	ge.SeedRNG(1)
+	for _, a := range []string{"stone_age", "bronze_age"} {
+		if err := ge.EnterAgeForTest(a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	const campaigns = "Campaigns need Military Tactics first. Research it to send one."
+	st := ge.GetState()
+	if out := militaryProvider(st, 120); !strings.Contains(out, campaigns) {
+		t.Errorf("the Army panel does not say campaigns are locked:\n%s", out)
+	}
+	if out := cmdCampaignList(ge).Message; !strings.Contains(out, campaigns) {
+		t.Errorf("campaign list does not say campaigns are locked:\n%s", out)
+	}
+	// Railroads and Mercantilism are techs of later ages: not a word yet.
+	if out := tradeProvider(st, 120); strings.Contains(out, "Railroads") || strings.Contains(out, "Mercantilism") {
+		t.Errorf("the Trade panel names a tech of a later age:\n%s", out)
+	}
+	ge.GrantTechsForTest("military_tactics")
+	if out := militaryProvider(ge.GetState(), 120) + cmdCampaignList(ge).Message; strings.Contains(out, "Military Tactics first") {
+		t.Errorf("with Military Tactics researched the lock is still shown:\n%s", out)
+	}
+	for _, a := range []string{"iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"} {
+		if err := ge.EnterAgeForTest(a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out := tradeProvider(ge.GetState(), 120)
+	for _, want := range []string{"The Rail Freight route needs Railroads first. Research it to start it.", "The black market needs Mercantilism first. Research it to deal there."} {
+		if !strings.Contains(out, want) {
+			t.Errorf("the Trade panel is missing %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "Interstellar Trade") || strings.Contains(out, "interstellar_trade") {
+		t.Errorf("the Trade panel mentions a lock whose tech is not in the tree:\n%s", out)
+	}
+}

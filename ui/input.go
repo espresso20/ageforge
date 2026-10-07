@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -1965,6 +1966,9 @@ func cmdCampaignList(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 	lines = append(lines, "[gold]Available Campaigns:[-]")
+	if note := strings.TrimRight(lockNotes(state, config.FeatureCampaigns), "\n"); note != "" {
+		lines = append(lines, note)
+	}
 
 	appendExpeditionGroup(&lines, "Campaigns", state.Military.Expeditions, game.ExpeditionMilitary, state)
 
