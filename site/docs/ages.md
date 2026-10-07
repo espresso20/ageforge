@@ -2,6 +2,8 @@
 
 AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources and worker domains, and adds a new district to your [skyline](map.md#skyline). Advancement requires meeting all resource and building requirements **and** completing the age's wonder.
 
+<figure class="screen" data-screen="age-advance"><figcaption>The splash that greets an advance, here into the Bronze Age: what the new age unlocks, its wonder, and the buildings ready to upgrade.</figcaption></figure>
+
 ## Wonder Requirement
 
 Each age unlocks exactly one wonder building. You must **build that wonder** before you can advance to the next age, on top of the resource and building requirements listed below. The age progress bar shows a red `✗ Wonder required: <name>` notice until it is complete. See [Wonders](wonders.md) for build costs and instructions.

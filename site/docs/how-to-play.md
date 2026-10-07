@@ -40,6 +40,8 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 
 The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row marks each requirement ✓ or ✗, and names the age's wonder until it stands. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
 
+<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal 144 columns wide: resources, construction and the log on the left, the mini map over the Buildings list, the panel names and the Workers box on the right.</figcaption></figure>
+
 ---
 
 ## Navigation

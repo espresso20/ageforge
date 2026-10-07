@@ -118,6 +118,8 @@ Missions are timed and paid from your stockpiles. There are two kinds:
 
 The cost comes out of your stockpiles the moment you launch, and there's no refund. The mission then runs for a number of ticks rolled at launch within its own range, and resolves. A success pays full loot and a failure 30% of it; the cost is gone either way. A failure is also less likely to meet a civilization, and a meeting on a failed run never brings a gift, usually a setback (see [What missions are worth](#what-missions-are-worth)). You can run one scouting expedition and one campaign at the same time, but not two of the same kind.
 
+<figure class="screen" data-screen="expeditions"><figcaption>The Expeditions panel with scouts on the road: the expedition under way, then the ones this age offers, each with its time, risk and cost.</figcaption></figure>
+
 Times on this page are at the base tick of 2 seconds. Tick-speed bonuses (some techs, a Time Dilation boon) make every tick a little shorter.
 
 ### Cost, age range and rewards
