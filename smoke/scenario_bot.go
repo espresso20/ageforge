@@ -251,11 +251,15 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range br {
 		res.fail("brace_"+p.Rule, "%s", p)
 	}
+	fp, fr := StaticFaithStanding()
+	for _, p := range fp {
+		res.fail("faith_"+p.Rule, "%s", p)
+	}
 	dp := StaticDepth()
 	for _, p := range dp {
 		res.fail("depth_points", "%s", p)
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Last Passage Brace price(s) off its rules; %d depth point problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(dp))
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d depth point problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(fp), len(dp))
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, rows)
@@ -266,6 +270,9 @@ func runStatic(e *Env, res *Result) {
 	var hf strings.Builder
 	writeHarbingerPrices(&hf, hp, ar, br)
 	res.section("Harbinger prices against storage and the warning", "%s", hf.String())
+	var ff strings.Builder
+	writeFaithStanding(&ff, fp, fr)
+	res.section("Faith standing", "%s", ff.String())
 	var df strings.Builder
 	writeDepthStatic(&df, dp)
 	res.section("Depth points", "%s", df.String())

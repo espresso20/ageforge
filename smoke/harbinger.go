@@ -430,16 +430,22 @@ type PriceRow struct {
 	Age string `json:"age"`
 	// WarningTicks is that shortest warning in ticks at 1x: a fifth of the
 	// age's pacing target for a doom, two thirds of it for the Last Passage.
-	WarningTicks float64            `json:"appease_warning_ticks"`
-	AppeaseL1    map[string]float64 `json:"appease_l1_cost"`
-	// BraceL1 is priced by the era for a doom, and on the same warning as
-	// Appease for the Last Passage.
-	BraceL1 map[string]float64 `json:"brace_l1_cost"`
+	WarningTicks float64 `json:"appease_warning_ticks"`
+	// AppeaseL1 and AppeaseL2 are each level's own price: level 2 costs
+	// double level 1, or the same again in the final era.
+	AppeaseL1 map[string]float64 `json:"appease_l1_cost"`
+	AppeaseL2 map[string]float64 `json:"appease_l2_cost"`
+	// BraceL1 and BraceL2 likewise. Brace is priced by the era for a doom;
+	// in the final era, on the same warning as Appease (BraceOnWarning), for
+	// its fated doom and for the Last Passage.
+	BraceL1        map[string]float64 `json:"brace_l1_cost"`
+	BraceL2        map[string]float64 `json:"brace_l2_cost"`
+	BraceOnWarning bool               `json:"brace_on_warning,omitempty"`
 	// MaxStorage is -1 where an uncapped storage building covers the resource.
 	MaxStorage map[string]float64 `json:"max_storage_in_age"`
 }
 
-// HarbingerPrices is the level-1 prices of every thread whose doom can be
+// HarbingerPrices is the prices of every thread whose doom can be
 // answered (game.HarbingerPriceTable), for each age its harbinger can arrive
 // in: a fated doom's, and the Last Passage's (a TargetEpoch of ""), next to
 // the most storage reachable in that age. The Stone Era is skipped: only
@@ -449,7 +455,8 @@ func HarbingerPrices() []PriceRow {
 	for _, p := range game.HarbingerPriceTable() {
 		row := PriceRow{
 			Epoch: p.Epoch, TargetEpoch: p.Epoch, Age: p.Age, WarningTicks: p.WarningTicks,
-			AppeaseL1: p.AppeaseL1, BraceL1: p.BraceL1, MaxStorage: map[string]float64{},
+			AppeaseL1: p.AppeaseL1, AppeaseL2: p.AppeaseL2, BraceL1: p.BraceL1, BraceL2: p.BraceL2,
+			BraceOnWarning: p.BraceOnWarning, MaxStorage: map[string]float64{},
 		}
 		if p.LastPassage {
 			row.TargetEpoch = ""

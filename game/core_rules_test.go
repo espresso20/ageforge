@@ -78,6 +78,10 @@ func harbingerBraceCost(epochKey string, level int) map[string]float64 {
 	return harbingerBraceCostIn(rules.Core(), epochKey, level)
 }
 
+func doomBraceCost(epochKey, age string, level int) map[string]float64 {
+	return doomBraceCostIn(rules.Core(), epochKey, age, level)
+}
+
 func lastPassageBraceCost(epochKey, age string, level int) map[string]float64 {
 	return lastPassageBraceCostIn(rules.Core(), epochKey, age, level)
 }

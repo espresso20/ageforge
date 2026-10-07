@@ -243,6 +243,37 @@ func FaithStandingFullIn(set *rules.Set, age string) float64 {
 	return float64(set.FlowIncome("faith", age)*set.TargetTicks(age)) * faithStandingShare
 }
 
+// FaithMeasure is one age's faith standing arithmetic, for the smoke suite's
+// static check and its table.
+type FaithMeasure struct {
+	Epoch string
+	Age   string
+	// Full is the faith that reads as full standing in the age
+	// (FaithStandingFullIn).
+	Full float64
+	// WarningTicks is the shortest warning a doom gives in the age, in ticks
+	// at 1x: what a player who starts saving when the harbinger comes has to
+	// work with. Listed for the Stone Era too, where nothing strikes: the
+	// epoch roll on leaving it reads the standing all the same.
+	WarningTicks float64
+}
+
+// FaithMeasures is FaithMeasuresIn for the core ruleset.
+func FaithMeasures() []FaithMeasure { return FaithMeasuresIn(rules.Core()) }
+
+// FaithMeasuresIn lists the faith standing arithmetic of every age of set,
+// in order. Pure.
+func FaithMeasuresIn(set *rules.Set) []FaithMeasure {
+	var rows []FaithMeasure
+	for _, ep := range set.Eras() {
+		for _, a := range ep.Ages {
+			rows = append(rows, FaithMeasure{Epoch: ep.Key, Age: a,
+				Full: FaithStandingFullIn(set, a), WarningTicks: shortestWarningTicks(set, a, false)})
+		}
+	}
+	return rows
+}
+
 // faithStanding returns the faith held as a share of full standing in the
 // age the player is in, clamped to [0,1], and whether that age has a measure
 // at all. Read-only.
