@@ -215,8 +215,10 @@ func (p *gridPalette) inkOn(k ink, selected bool) tcell.Color {
 	}
 	c := inkValue(k, p.light)
 	if p.duo {
-		// One ink on one paper: keep only how light the colour is.
-		c = theme.Mix(p.bg, p.text, 0.2+0.8*theme.RelativeLuminance(c))
+		// One ink on one paper: keep only how much the colour stands out,
+		// as more or less of the ink. That is read off its value for a
+		// dark canvas, where the stop that stands out is the lightest.
+		c = theme.Mix(p.bg, p.text, 0.2+0.8*theme.RelativeLuminance(inkValue(k, false)))
 	}
 	c = theme.Legible(c, back, 3)
 	cache[k] = c

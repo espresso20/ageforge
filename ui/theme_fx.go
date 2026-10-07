@@ -37,7 +37,7 @@ func (r *fxRoot) Draw(scr tcell.Screen) {
 
 // fxMargin is how many blank cells an effect keeps between itself and
 // anything drawn, on either side.
-const fxMargin = 2
+const fxMargin = 3
 
 // fxEmpty reports whether the cells of row y from x-fxMargin to x+fxMargin
 // are all blank on bg: room for an effect at (x, y).

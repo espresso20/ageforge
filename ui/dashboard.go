@@ -712,6 +712,8 @@ func (d *Dashboard) drawEffect(scr tcell.Screen, x, y, w, h int) {
 	if d.fxStart.IsZero() {
 		d.fxStart = time.Now()
 	}
+	// Not in the command bar: nothing moves where the player types.
+	h -= promptRows
 	drawThemeEffect(scr, x, y, w, h, effect, int(time.Since(d.fxStart)/mapAnimStep), set.Tier == mapmodel.TierASCII)
 }
 

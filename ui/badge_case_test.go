@@ -616,6 +616,17 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 				theme.ContrastRatio(slab, pal.bg), theme.ContrastRatio(bronze, pal.bg))
 		}
 
+		// The stops of a rim keep their order of emphasis: pale stands out
+		// most, dark least. (A theme of one ink may bring two of them to
+		// the least contrast art may have, but never turns them round.)
+		for _, tier := range []config.BadgeTier{config.BadgeBronze, config.BadgeSilver, config.BadgeGold, config.BadgePlatinum} {
+			d, b, p := tierInks(tier)
+			cd, cb, cp := theme.ContrastRatio(pal.inkOn(d, false), pal.bg), theme.ContrastRatio(pal.inkOn(b, false), pal.bg), theme.ContrastRatio(pal.inkOn(p, false), pal.bg)
+			if ordered := cd <= cb && cb <= cp && cd < cp; !ordered || !th.Duotone && !(cd < cb && cb < cp) {
+				t.Errorf("theme %s: the %s rim's stops stand out %.2f, %.2f, %.2f (dark, base, pale): not in order", th.Key, tier.Name(), cd, cb, cp)
+			}
+		}
+
 		// Five tiers, five colours.
 		if th.Duotone {
 			continue
@@ -631,15 +642,6 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 				if d := colourDistance(base[a], base[b]); d < tierColourGap {
 					t.Errorf("theme %s: %s (%06x) and %s (%06x) are %.3f apart, too close to tell apart (want %.2f)", th.Key, a, base[a].Hex(), b, base[b].Hex(), d, tierColourGap)
 				}
-			}
-		}
-		// The stops of a rim keep their order of emphasis: pale stands out
-		// most, dark least.
-		for _, tier := range []config.BadgeTier{config.BadgeBronze, config.BadgeSilver, config.BadgeGold, config.BadgePlatinum} {
-			d, b, p := tierInks(tier)
-			cd, cb, cp := theme.ContrastRatio(pal.inkOn(d, false), pal.bg), theme.ContrastRatio(pal.inkOn(b, false), pal.bg), theme.ContrastRatio(pal.inkOn(p, false), pal.bg)
-			if !(cd < cb && cb < cp) {
-				t.Errorf("theme %s: the %s rim's stops stand out %.2f, %.2f, %.2f (dark, base, pale): not in order", th.Key, tier.Name(), cd, cb, cp)
 			}
 		}
 	}

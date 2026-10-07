@@ -350,7 +350,7 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 	}
 	e := BadgeEarned{}
 	if !silent {
-		e.At, e.Run = time.Now().Unix(), ctx.run
+		e.At, e.Run = badgeClock().Unix(), ctx.run
 	}
 	if ctx.crossed || a.Tampered || a.BadgesTampered {
 		e.Flags |= BadgeFlagCrossed
@@ -409,6 +409,20 @@ func (a *Account) countSilentLocked(book *badgeBook, name string, depth int) {
 			a.grantLocked(book, def, badgeCtx{}, true, depth+1)
 		}
 	}
+}
+
+// badgeClock is the clock a badge is dated by: the wall clock, unless a
+// test has pinned it (SetBadgeClockForTest).
+var badgeClock = time.Now
+
+// SetBadgeClockForTest dates the badges earned from now on by now instead
+// of the wall clock, and returns a function that puts the wall clock back.
+// The wiki's pictures are drawn with it, so the date on a badge in them is
+// the same on every run.
+func SetBadgeClockForTest(now func() time.Time) (restore func()) {
+	prev := badgeClock
+	badgeClock = now
+	return func() { badgeClock = prev }
 }
 
 // drainEarned returns the keys of the badges earned since the last call.
