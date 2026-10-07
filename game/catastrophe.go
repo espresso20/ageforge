@@ -35,39 +35,10 @@ import (
 // read state and are safe under the read lock.
 
 const (
-	// Epoch transition good-event chance by faith strength (FaithBandAt).
+	// Epoch transition good-event chance by faith strength (faith.go).
 	epochGoodChanceLowFaith  = 0.40 // strength < 25%
-	epochGoodChanceBase      = 0.50 // 25%–75%, or the age has no measure of faith
+	epochGoodChanceBase      = 0.50 // 25%–75%
 	epochGoodChanceHighFaith = 0.60 // strength > 75%
-
-	// Faith strength is the faith held as a share of what a moderate faith
-	// economy (rules.Set.FlowIncome) makes in faithStrengthShare of the
-	// pacing target of the age the player is in: three fifths of it, the
-	// longest warning a doom gives. Under FaithMidAt of that is the low band,
-	// over FaithHighAbove the high one.
-	//
-	// It used to be the fill of faith's storage. Faith has no store of its
-	// own: it is held in the general one, which is sized to construction
-	// resources and grows about tenfold an age while faith income doubles.
-	// So the fill never left the low band. Against the least storage the age
-	// gates force on anyone, a devoted economy (three times the moderate one)
-	// saving through a doom's longest warning reached 20% in the Iron Age and
-	// 21% in the Classical Age, under 5% from the Medieval Age on and a few
-	// millionths in the Cosmic Era; every doom rolled at 90% and every Last
-	// Passage at 18%.
-	//
-	// The measure is the one Appease is priced on, so the two read together:
-	// a doom's Appease level 1 costs a quarter of full strength in faith
-	// (FaithMidAt of it) and both of an ordinary doom's levels three quarters
-	// (FaithHighAbove). A moderate economy that saves through a doom's
-	// shortest warning, a third of the longest, reaches a third of full
-	// strength, the middle band; one three times as devoted reaches all of
-	// it. Faith is never clamped to the measure: it is only read. A mastered
-	// age makes k times as much per tick for a target k times shorter, so the
-	// measure does not depend on Era Mastery, and it needs no saved state.
-	faithStrengthShare = harbingerLeadMax
-	FaithMidAt         = 0.25
-	FaithHighAbove     = 0.75
 
 	// catastropheChanceOnBadRoll is the old chance that a bad epoch roll
 	// escalated into a catastrophe. Transitions no longer bring catastrophes,
@@ -178,14 +149,16 @@ type CatastropheOutlook struct {
 	// Tier buckets Probability: none / low / medium / high.
 	Tier CatastropheTier
 	// FaithStrength is the current faith strength in [0,1] that drives the
-	// odds: the faith held as a share of FaithFull. 0 when the age has no
-	// measure of faith.
+	// odds, and FaithBand the band it falls in, the one every roll reads
+	// (faith.go).
 	FaithStrength float64
-	// FaithFull is the faith that reads as full strength in the current age
-	// (FaithFullIn); 0 when the age has no measure of faith.
-	FaithFull float64
-	// FaithBand is the band FaithStrength falls in, the one every roll reads.
-	FaithBand FaithBand
+	FaithBand     FaithBand
+	// FaithDevotion and FaithKept are the two things it comes from, for the
+	// views that explain it: what the town's faith buildings have made this
+	// run against a moderate set (1 is the moderate town), and the share of
+	// the run's faith income still held (at most 1).
+	FaithDevotion float64
+	FaithKept     float64
 }
 
 func catastropheTierFor(p float64) CatastropheTier {
@@ -210,93 +183,8 @@ func (ge *GameEngine) gameRNG() *rand.Rand {
 	return ge.rng
 }
 
-// FaithBand is the band a faith strength falls in: what every roll that
-// reads faith goes by.
-type FaithBand string
-
-const (
-	FaithBandLow  FaithBand = "low"  // strength under FaithMidAt
-	FaithBandMid  FaithBand = "mid"  // from FaithMidAt to FaithHighAbove, or no measure
-	FaithBandHigh FaithBand = "high" // over FaithHighAbove
-)
-
-// FaithBandAt is the band of faith strength strength (ok false: the age has
-// no measure of faith, which reads as the middle band). Pure.
-func FaithBandAt(strength float64, ok bool) FaithBand {
-	switch {
-	case !ok:
-		return FaithBandMid
-	case strength < FaithMidAt:
-		return FaithBandLow
-	case strength > FaithHighAbove:
-		return FaithBandHigh
-	}
-	return FaithBandMid
-}
-
-// FaithFullIn is the faith that reads as full strength in age on
-// set's rules: what a moderate faith economy makes in faithStrengthShare of
-// the age's pacing target. An income over a share of the target, as an
-// Appease price is (warningAppeaseCostIn), so it is the same on known
-// ground. 0 for an age in which nothing makes faith. Pure.
-func FaithFullIn(set *rules.Set, age string) float64 {
-	return float64(set.FlowIncome("faith", age)*set.TargetTicks(age)) * faithStrengthShare
-}
-
-// FaithMeasure is one age's faith strength arithmetic, for the smoke suite's
-// static check and its table.
-type FaithMeasure struct {
-	Epoch string
-	Age   string
-	// Full is the faith that reads as full strength in the age
-	// (FaithFullIn).
-	Full float64
-	// WarningTicks is the shortest warning a doom gives in the age, in ticks
-	// at 1x: what a player who starts saving when the harbinger comes has to
-	// work with. Listed for the Stone Era too, where nothing strikes: the
-	// epoch roll on leaving it reads the strength all the same.
-	WarningTicks float64
-}
-
-// FaithMeasuresIn lists the faith strength arithmetic of every age of set,
-// in order. Pure.
-func FaithMeasuresIn(set *rules.Set) []FaithMeasure {
-	var rows []FaithMeasure
-	for _, ep := range set.Eras() {
-		for _, a := range ep.Ages {
-			rows = append(rows, FaithMeasure{Epoch: ep.Key, Age: a,
-				Full: FaithFullIn(set, a), WarningTicks: shortestWarningTicks(set, a, false)})
-		}
-	}
-	return rows
-}
-
-// faithStrength returns the faith held as a share of full strength in the
-// age the player is in, clamped to [0,1], and whether that age has a measure
-// at all. Read-only.
-func (ge *GameEngine) faithStrength() (float64, bool) {
-	return ge.faithStrengthIn(ge.age)
-}
-
-// faithStrengthIn is faithStrength measured in age: the epoch roll at an
-// advance reads the age being left, the one the faith was gathered in and
-// the one the player was shown. Read-only.
-func (ge *GameEngine) faithStrengthIn(age string) (float64, bool) {
-	full := FaithFullIn(ge.rules, age)
-	if full <= 0 {
-		return 0, false
-	}
-	strength := ge.Resources.Get("faith") / full
-	if strength < 0 {
-		strength = 0
-	} else if strength > 1 {
-		strength = 1
-	}
-	return strength, true
-}
-
 // epochGoodChance returns the chance that an epoch transition rolls a good
-// event, by the faith strength in the age the player is in. Read-only.
+// event, by the town's faith strength. Read-only.
 func (ge *GameEngine) epochGoodChance() float64 {
 	return goodChanceFor(ge.faithStrength())
 }
@@ -313,11 +201,10 @@ func EpochGoodChanceIn(band FaithBand) float64 {
 	return epochGoodChanceBase
 }
 
-// goodChanceFor is the good-event chance at faith strength strength (ok
-// false: the age has no measure of faith): the faith bands every catastrophe
-// chance reads. Pure.
-func goodChanceFor(strength float64, ok bool) float64 {
-	return EpochGoodChanceIn(FaithBandAt(strength, ok))
+// goodChanceFor is the good-event chance at faith strength strength: the
+// faith bands every catastrophe chance reads. Pure.
+func goodChanceFor(strength float64) float64 {
+	return EpochGoodChanceIn(FaithBandAt(strength))
 }
 
 // catastropheBlockErr is the error AdvanceAge and DoPrestige return while a
@@ -423,11 +310,9 @@ func (ge *GameEngine) CatastropheOutlook() CatastropheOutlook {
 // doom is fated (the fate's Fated flag or strike tick): only the harbinger
 // present and what has already resolved in the open.
 func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
-	strength, measured := ge.faithStrength()
-	out := CatastropheOutlook{Passage: PassageEpoch, Tier: CatastropheTierNone, FaithStrength: strength, FaithBand: FaithBandAt(strength, measured)}
-	if measured {
-		out.FaithFull = FaithFullIn(ge.rules, ge.age)
-	}
+	held, strength := ge.Resources.Get("faith"), ge.faithStrength()
+	out := CatastropheOutlook{Passage: PassageEpoch, Tier: CatastropheTierNone, FaithStrength: strength, FaithBand: FaithBandAt(strength),
+		FaithDevotion: FaithDevotionOf(ge.faithMeasure), FaithKept: FaithKeptOf(held, ge.faithMeasure)}
 	if next, ok := ge.rules.NextEra(ge.currentEpoch); ok {
 		out.NextEpochKey = next.Key
 	}

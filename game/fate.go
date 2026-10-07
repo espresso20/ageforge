@@ -387,12 +387,11 @@ func (ge *GameEngine) strikeBase() float64 {
 }
 
 // StrikeChanceAt is the chance a fated doom strikes at faith strength
-// strength (measured false: the age has no measure of faith) with appease
-// levels of Appease bought: the rule the strike rolls by. Pure; for the smoke
-// report, which models the expected catastrophes of a run from the faith it
-// lived at.
-func StrikeChanceAt(strength float64, measured bool, appease int) float64 {
-	good := goodChanceFor(strength, measured)
+// strength with appease levels of Appease bought: the rule the strike rolls
+// by. Pure; for the smoke report, which models the expected catastrophes of a
+// run from the faith it lived at.
+func StrikeChanceAt(strength float64, appease int) float64 {
+	good := goodChanceFor(strength)
 	p := float64((1-good)*catastropheChanceOnBadRoll) * FateStrikeScale
 	if appease > 0 {
 		p *= detmath.Pow(harbingerAppeaseFactor, float64(appease))

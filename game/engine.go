@@ -214,6 +214,11 @@ type GameEngine struct {
 	harbingerArrived  map[string]bool
 	pendingBraceLevel int
 	harbingerHistory  []HarbingerRecord
+	// faithMeasure is the run's faith measure, what faith strength is read
+	// from (faith.go). Persisted. faithRate is the part of the faith rate it
+	// follows, set by recalculateRates with the rate. Not persisted.
+	faithMeasure FaithSave
+	faithRate    faithRates
 	// sessionStart is the state the loaded save left (see SessionMark); nil
 	// for a game that was not loaded. Not persisted.
 	sessionStart *SessionMark
@@ -1328,6 +1333,8 @@ func (ge *GameEngine) doTick() {
 	// Apply resource rates (production - consumption); what a cap cuts off
 	// goes to the wonder bank while overflow is on (overflow.go).
 	ge.applyTickRates()
+	// The faith measure follows the tick's faith (faith.go).
+	ge.accrueFaith(1)
 
 	// Credit the lifetime soldiers-trained counter with the post-clamp delta.
 	// Soldiers discarded at the storage cap don't count; the helper floors at 0
@@ -1990,6 +1997,26 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
+	// The faith measure (faith.go) follows two parts of the faith rate: what
+	// the town's own faith buildings make, and what a moderate set would
+	// make in their place. Each goes through the steps the rate went through
+	// above, so the two differ only in the buildings and their staffing.
+	faithFactor := poolFactor("faith_rate", r.AddTotal("faith_rate"))
+	faithTrade := ge.Diplomacy.GetTradeBonus("faith")
+	faithLegacy := ge.cosmicLegacyFactor()
+	ge.noteFaithRates(production["faith"]-ge.Buildings.wonderProduction("faith"), workerOutput["faith"],
+		func(base, byWorkers float64) float64 {
+			rate := float64(base * mMult)
+			rate = float64(rate * prodAllFactor)
+			rate = float64(rate * faithFactor)
+			rate += float64(float64(byWorkers*mMult) * gatherDelta)
+			if faithTrade > 0 {
+				rate += float64(rate * faithTrade)
+			}
+			rate = float64(rate * faithLegacy)
+			return float64(rate * k)
+		})
+
 	// Recalculate storage from buildings + research + milestones
 	storageBonuses := ge.Buildings.GetStorageBonuses()
 	allBonus := storageBonuses["all"]
@@ -2198,7 +2225,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	})
 
 	// Phase 8: detect epoch transition and roll epoch event
-	ge.detectEpochTransition(oldAge, newAge)
+	ge.detectEpochTransition(newAge)
 
 	// Age Awakening: one-time epoch awakening on first entry to its trigger age.
 	// Fires after the epoch roll so the awakening's deterministic boost lands on top
@@ -2236,9 +2263,8 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 // rolls the new era's hidden fate. Must be called at the end of advanceAge
 // while the engine write lock is held. Each epoch fires its event roll at
 // most once per civilisation cycle (epochEventFired prevents double-fire on
-// load or re-entry). oldAge is the age being left: the epoch roll reads the
-// faith strength there.
-func (ge *GameEngine) detectEpochTransition(oldAge, newAge string) {
+// load or re-entry).
+func (ge *GameEngine) detectEpochTransition(newAge string) {
 	newEpoch := ge.rules.EraOf(newAge)
 	if newEpoch == ge.currentEpoch {
 		return // same epoch, no transition
@@ -2269,7 +2295,7 @@ func (ge *GameEngine) detectEpochTransition(oldAge, newAge string) {
 			"epoch_icon": ep.Icon,
 		},
 	})
-	ge.rollEpochEvent(newEpoch, oldAge)
+	ge.rollEpochEvent(newEpoch)
 	// The new era's hidden fate, rolled on entry (none in the final epoch).
 	ge.rollFate()
 }
@@ -2319,26 +2345,25 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	})
 }
 
-// rollEpochEvent performs the epoch transition event roll on entering
-// epochKey from fromAge.
-//   - The faith strength in fromAge, the age being left, sets the good-event
-//     probability (see goodChanceFor): the strength the player was shown
-//     before advancing, not the new age's, which asks for about twice the
-//     faith.
+// rollEpochEvent performs the epoch transition event roll.
+//   - The faith strength sets the good-event probability (see
+//     epochGoodChance). An advance does not move it: the measure follows the
+//     run, not the age (faith.go), so the roll reads what the player was
+//     shown before advancing.
 //   - Otherwise a challenging (non-catastrophe) bad event is applied
 //     immediately. A transition never brings a catastrophe: an era's doom is
 //     fated on entry and strikes inside it (fate.go).
 //
 // The roll comes from the seeded ge.rng. Must be called under engine write
 // lock.
-func (ge *GameEngine) rollEpochEvent(epochKey, fromAge string) {
+func (ge *GameEngine) rollEpochEvent(epochKey string) {
 	// Prevent double-fire per epoch
 	if ge.epochEventFired[epochKey] {
 		return
 	}
 	ge.epochEventFired[epochKey] = true
 
-	if ge.gameRNG().Float64() < goodChanceFor(ge.faithStrengthIn(fromAge)) {
+	if ge.gameRNG().Float64() < ge.epochGoodChance() {
 		ge.rollGoodEpochEvent()
 		return
 	}
@@ -4553,6 +4578,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 				}
 			})
 		ge.overflowScratch = losses
+		ge.accrueFaith(float64(n) * OfflineEfficiency)
 		// What the wonder didn't take goes toward the plan's queued copies.
 		ge.bankPlanOverflow(losses, planBanked)
 		ge.tick += n

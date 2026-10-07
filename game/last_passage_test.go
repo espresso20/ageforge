@@ -294,7 +294,7 @@ func TestSecondLevelsWorthBuying(t *testing.T) {
 	// strikes; Brace what an Endure takes, in buildings and in stock, with no
 	// garrison (a garrison's share comes off both levels alike until the cap).
 	loss := func(appease, brace int) float64 { return lastPassageLoss(t, mid, appease, brace) }
-	strike := func(appease int) float64 { return StrikeChanceAt(mid, true, appease) }
+	strike := func(appease int) float64 { return StrikeChanceAt(mid, appease) }
 	ge := catEngine(t, "interstellar_age", 1)
 	endure := func(brace int) EndureOutcome { return ge.endurePreview(brace, ge.age) }
 	if g := endure(0).Garrison; g != 0 {

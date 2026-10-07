@@ -614,15 +614,14 @@ func TestStrikeChanceAtMatchesTheEngine(t *testing.T) {
 			tickTo(ge, arrivalTick(ge))
 			ge.harbinger.AppeaseLevel = appease
 			setFaithStrength(ge, share)
-			f, ok := ge.faithStrength()
-			if got, want := StrikeChanceAt(f, ok, appease), ge.strikeChance(); math.Abs(got-want) > 1e-12 || !ok {
-				t.Errorf("strength %v appease %d: StrikeChanceAt %v, engine %v (measured %v)", share, appease, got, want, ok)
+			if got, want := StrikeChanceAt(ge.faithStrength(), appease), ge.strikeChance(); math.Abs(got-want) > 1e-12 {
+				t.Errorf("strength %v appease %d: StrikeChanceAt %v, engine %v", share, appease, got, want)
 			}
 		}
 	}
-	// An age with no measure of faith reads as the middle band.
-	if got := StrikeChanceAt(0, false, 0); math.Abs(got-0.75) > 1e-12 {
-		t.Errorf("no measure of faith: StrikeChanceAt %v, want the middle band's 0.75", got)
+	// A town with nothing to measure yet reads as the low band.
+	if got := StrikeChanceAt(0, 0); math.Abs(got-0.90) > 1e-12 {
+		t.Errorf("no faith strength: StrikeChanceAt %v, want the low band's 0.90", got)
 	}
 }
 

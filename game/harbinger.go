@@ -1300,6 +1300,8 @@ func (ge *GameEngine) clearHarbingerRun() {
 	ge.harbingerCheckedEpoch = ""
 	ge.catastropheInvited = false
 	ge.pendingBraceLevel = 0
+	// The faith the rolls read belongs to the run too (faith.go).
+	ge.clearFaithRun()
 }
 
 // --- View ---------------------------------------------------------------------

@@ -608,7 +608,7 @@ func TestNoCatastropheBeforeIronEpoch(t *testing.T) {
 	ge.rng = badThenEscalate()
 	ge.age = "iron_age"
 	ge.currentEpoch = "iron_era"
-	ge.rollEpochEvent("iron_era", "bronze_age")
+	ge.rollEpochEvent("iron_era")
 	if ge.pendingCatastrophe != "" {
 		t.Fatalf("iron era transition roll: pending = %q", ge.pendingCatastrophe)
 	}
@@ -622,7 +622,7 @@ func TestRollNeverOverwritesPending(t *testing.T) {
 	ge := catEngine(t, "renaissance_age", 1)
 	ge.pendingCatastrophe = "iron_era"
 	ge.rng = badThenEscalate()
-	ge.rollEpochEvent("steel_era", ge.age)
+	ge.rollEpochEvent("steel_era")
 	if ge.pendingCatastrophe != "iron_era" {
 		t.Fatalf("pending overwritten: %q", ge.pendingCatastrophe)
 	}
@@ -772,7 +772,7 @@ func epochRollOutcome(t *testing.T, seed int64) []string {
 	for _, ep := range config.Epochs()[1:] {
 		ge.pendingCatastrophe = "" // resolve instantly so every roll runs
 		ge.currentEpoch = ep.Key
-		ge.rollEpochEvent(ep.Key, ge.age)
+		ge.rollEpochEvent(ep.Key)
 		r := ge.epochEventHistory[len(ge.epochEventHistory)-1]
 		got = append(got, r.EventKey)
 	}
@@ -826,12 +826,17 @@ func TestCatastropheRandomnessIsSeeded(t *testing.T) {
 
 // --- Outlook ------------------------------------------------------------------------
 
-// setFaithStrength gives ge the faith that reads as share of full strength
-// in the age it is in (FaithFullIn), with a store that holds it.
+// testFaithFull is the faith that reads as full strength for a town staged
+// by setFaithStrength: enough to pay for any Appease the tests buy without
+// moving the strength.
+const testFaithFull = 1e12
+
+// setFaithStrength gives ge a faith measure and the faith to read as share
+// of full strength (capped at 1): a town whose own faith buildings made all
+// the faith it holds, share × FaithFullSets times what a moderate set would
+// have, and that has kept every bit of it.
 func setFaithStrength(ge *GameEngine, share float64) {
-	amount := share * FaithFullIn(ge.rules, ge.age)
-	ge.Resources.LoadStorage(map[string]float64{"faith": math.Max(amount, ge.Resources.GetStorage("faith"))})
-	ge.Resources.LoadAmounts(map[string]float64{"faith": amount})
+	ge.setFaithMeasure(share*testFaithFull, FaithSave{Moderate: testFaithFull / FaithFullSets, Own: share * testFaithFull})
 }
 
 // The outlook is what the player can know. In a quiet era it reads the same
@@ -869,8 +874,7 @@ func TestCatastropheOutlook(t *testing.T) {
 				t.Fatalf("the outlook tells a fated era from a quiet one:\nquiet %+v\nfated %+v", oq, of)
 			}
 			if !oq.Possible || oq.Warned || oq.Probability != 0 || oq.Tier != CatastropheTierNone || oq.NextEpochKey != "steel_era" ||
-				math.Abs(oq.FaithStrength-c.strength) > 1e-9 || oq.FaithBand != c.wantBand ||
-				oq.FaithFull != FaithFullIn(quiet.rules, "classical_age") {
+				math.Abs(oq.FaithStrength-c.strength) > 1e-9 || oq.FaithBand != c.wantBand || math.Abs(oq.FaithDevotion-c.strength*FaithFullSets) > 1e-9 {
 				t.Errorf("quiet outlook = %+v, want possible, unwarned, no odds, strength %v (%s)", oq, c.strength, c.wantBand)
 			}
 			// A harbinger comes: the outlook says what its warning says.

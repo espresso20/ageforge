@@ -387,7 +387,7 @@ func TestFalseThreadClaim(t *testing.T) {
 	}
 	ge.advanceAge("industrial_age")
 	setStock(ge, map[string][2]float64{"culture": {1e7, 1e7}})
-	setFaithStrength(ge, 0.5) // the strength is measured in the age you are in
+	setFaithStrength(ge, 0.5)
 	v := ge.GetState().Harbinger
 	if !v.Numeric || v.Tier != CatastropheTierHigh || math.Abs(v.Probability-0.90) > 1e-9 {
 		t.Errorf("industrial view of a false thread = numeric %v %s %.3f, want the claimed high 90%%", v.Numeric, v.Tier, v.Probability)
@@ -717,19 +717,20 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 	if pf <= 0 || pc <= 0 || !reflect.DeepEqual(price, doomAppeaseCost("steel_era", ge.harbinger.startAge(), 1)) {
 		t.Fatalf("steel era level 1 = %v", price)
 	}
-	// Faith: 4.6 prices. A doom's level 1 is a quarter of full strength (a
-	// hair over it, rounded up), so the bands below come out.
-	if full := FaithFullIn(ge.rules, ge.age); pf < FaithMidAt*full || pf > 1.1*FaithMidAt*full {
-		t.Fatalf("level 1 asks %v faith against a full strength of %v: want about a quarter of it", pf, full)
-	}
-	setStock(ge, map[string][2]float64{"faith": {4.6 * pf, 10 * pf}, "culture": {13 * pc, 13 * pc}})
+	// Faith: ten prices, every one of them made by the town's own faith
+	// buildings, which did four and a half times what a moderate set would
+	// have: full faith strength while it keeps it all. What it pays comes off
+	// the share kept, so the bands below come out.
+	setStock(ge, map[string][2]float64{"culture": {13 * pc, 13 * pc}})
+	ge.setFaithMeasure(10*pf, FaithSave{Moderate: 10 * pf / FaithFullSets, Own: 10 * pf})
 
-	// Level 1. 3.6 prices are left: strength 0.9 → high band: a 60% strike, ×0.6.
+	// Level 1. Nine prices of ten are left: strength 0.9 → high band: a 60%
+	// strike, ×0.6.
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
-	if f, c := ge.Resources.Get("faith"), ge.Resources.Get("culture"); math.Abs(f-3.6*pf) > 1e-6*pf || math.Abs(c-12*pc) > 1e-6*pc {
-		t.Errorf("after level 1: faith %v culture %v, want %v and %v", f, c, 3.6*pf, 12*pc)
+	if f, c := ge.Resources.Get("faith"), ge.Resources.Get("culture"); math.Abs(f-9*pf) > 1e-6*pf || math.Abs(c-12*pc) > 1e-6*pc {
+		t.Errorf("after level 1: faith %v culture %v, want %v and %v", f, c, 9*pf, 12*pc)
 	}
 	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.60*0.6) > 1e-9 {
 		t.Errorf("level 1 probability %v, want %v", o.Probability, 0.60*0.6)
@@ -738,11 +739,12 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 		t.Error("no Appease log line")
 	}
 
-	// Level 2 costs double. 1.6 prices are left: strength 0.4 → mid band: 75%, ×0.36.
+	// Level 2 costs double. Seven prices of ten are left: strength 0.7 → mid
+	// band: 75%, ×0.36.
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
-	left := 1.6 * pf
+	left := 7 * pf
 	if f := ge.Resources.Get("faith"); math.Abs(f-left) > 1e-6*pf {
 		t.Errorf("after level 2: faith %v, want %v (level 2 costs double)", f, left)
 	}

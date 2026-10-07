@@ -2372,21 +2372,27 @@ func cmdHarbinger(args []string, engine *game.GameEngine) CommandResult {
 }
 
 // faithStrengthText says the faith strength the odds are read from, with the
-// faith held and the faith it is measured against: "faith strength 40%
-// (2.11K of 5.27K)". The same figure the Economy panel's faith row shows.
+// two things it comes from: "faith strength 22% (devotion 1.0x, 100% of your
+// faith kept)". The same figure the Economy panel's faith row shows.
 func faithStrengthText(state game.GameState) string {
 	return "faith strength " + faithStrengthFigure(state)
 }
 
-// faithStrengthFigure is the figure in faithStrengthText: "40% (2.11K of
-// 5.27K)", or the percentage alone in an age with no measure of faith.
+// faithStrengthFigure is the figure in faithStrengthText. Devotion is what
+// the town's faith buildings have made this run against a moderate set (five
+// staffed copies of each); kept is the share of the run's faith still held.
 func faithStrengthFigure(state game.GameState) string {
 	o := state.CatastropheOutlook
-	if o.FaithFull <= 0 {
-		return fmt.Sprintf("%.0f%%", o.FaithStrength*100)
+	if o.FaithDevotion <= 0 {
+		return fmt.Sprintf("%.0f%% (your faith buildings have made no faith yet)", o.FaithStrength*100)
 	}
-	return fmt.Sprintf("%.0f%% (%s of %s)", o.FaithStrength*100,
-		FormatNumber(math.Floor(state.Resources["faith"].Amount)), FormatNumber(o.FaithFull))
+	devotion := fmt.Sprintf("%.1f", o.FaithDevotion)
+	if o.FaithDevotion >= 10 {
+		devotion = fmt.Sprintf("%.0f", o.FaithDevotion)
+	} else if o.FaithDevotion < 0.1 {
+		devotion = fmt.Sprintf("%.2f", o.FaithDevotion)
+	}
+	return fmt.Sprintf("%.0f%% (devotion %sx, %.0f%% of your faith kept)", o.FaithStrength*100, devotion, o.FaithKept*100)
 }
 
 // catastropheOutlookText renders the no-pending status line for the bare

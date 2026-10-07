@@ -159,14 +159,14 @@ type faithBand struct {
 	epochOdds string // e.g. "40% good"
 }
 
-// faithBandFor labels the faith strength in o. The odds are the engine's for
-// the band the rolls read (o.FaithBand); the label only splits the bands
-// finer.
-func faithBandFor(o game.CatastropheOutlook) faithBand {
+// faithBandFor labels the faith strength in o for a town holding held faith.
+// The odds are the engine's for the band the rolls read (o.FaithBand); the
+// label only splits the bands finer.
+func faithBandFor(held float64, o game.CatastropheOutlook) faithBand {
 	odds := fmt.Sprintf("%.0f%% good", game.EpochGoodChanceIn(o.FaithBand)*100)
 	strength := o.FaithStrength
 	switch {
-	case o.FaithFull > 0 && strength <= 0:
+	case held <= 0:
 		return faithBand{"[red]✝ No faith[-]", odds}
 	case o.FaithBand == game.FaithBandLow:
 		return faithBand{"[gray]◈ Dim faith[-]", odds}
@@ -181,11 +181,11 @@ func faithBandFor(o game.CatastropheOutlook) faithBand {
 }
 
 // formatFaithRow builds the faith resource row string: the bar and the
-// percentage are the faith strength the rolls read (o.FaithStrength, the
-// faith held against what a moderate faith economy makes in three fifths of
-// the age), not the fill of the store faith is kept in.
+// percentage are the faith strength the rolls read (o.FaithStrength: the
+// faith the town's own faith buildings made, against four and a half
+// moderate sets'), not the fill of the store faith is kept in.
 func formatFaithRow(rs game.ResourceState, o game.CatastropheOutlook) string {
-	band := faithBandFor(o)
+	band := faithBandFor(rs.Amount, o)
 	pctStr := fmt.Sprintf("%.0f%%", o.FaithStrength*100)
 
 	// Build the bar using the same cultureProgressBar helper (▓/░, width 10).
