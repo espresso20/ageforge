@@ -279,12 +279,12 @@ Level 1 prices. Level 2 costs double; in the Cosmic Era, on both threads, it cos
 | | Medieval Age | 4.2K faith | 2.3 h to 7.0 h |
 | Steel Era | Renaissance Age | 8.6K faith, 96K culture | 3.1 h to 9.4 h |
 | | Colonial Age | 27K faith, 240K culture | 3.6 h to 10.9 h |
-| | Industrial Age | 86K faith, 960K culture | 4.2 h to 12.5 h |
-| Electric Era | Victorian Age | 230K faith, 2.9M culture | 4.7 h to 14.0 h |
-| | Electric Age | 540K faith, 7.3M culture | 5.2 h to 15.6 h |
-| | Atomic Age | 1.3M faith, 18M culture | 6.2 h to 18.7 h |
-| Digital Era | Modern Age | 2.5M faith, 35M culture | 6.2 h to 18.7 h |
-| | Information Age | 5.6M faith, 85M culture | 7.3 h to 21.8 h |
+| | Industrial Age | 89K faith, 990K culture | 4.2 h to 12.5 h |
+| Electric Era | Victorian Age | 180K faith, 2.2M culture | 4.7 h to 14.0 h |
+| | Electric Age | 420K faith, 5.7M culture | 5.2 h to 15.6 h |
+| | Atomic Age | 1.1M faith, 15M culture | 6.2 h to 18.7 h |
+| Digital Era | Modern Age | 2.2M faith, 31M culture | 6.2 h to 18.7 h |
+| | Information Age | 5.3M faith, 81M culture | 7.3 h to 21.8 h |
 | | Digital Age | 13M faith, 200M culture | 8.3 h to 25.0 h |
 | Neon Era | Cyberpunk Age | 29M faith, 440M culture | 9.4 h to 28.1 h |
 | | Fusion Age | 63M faith, 980M culture | 10.4 h to 31.2 h |

@@ -591,7 +591,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// all production) and no longer the flat faith techs once gave.
 		{"iron_era", "medieval_age", map[string]float64{"faith": 4200}},
 		{"steel_era", "renaissance_age", map[string]float64{"faith": 8600, "culture": 96000}},
-		{"steel_era", "industrial_age", map[string]float64{"faith": 86000, "culture": 960000}},
+		{"steel_era", "industrial_age", map[string]float64{"faith": 89000, "culture": 990000}},
 		{"cosmic_era", "interstellar_age", map[string]float64{"faith": 300000000, "culture": 4700000000}},
 	}
 	for _, c := range dooms {

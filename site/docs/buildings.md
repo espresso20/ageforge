@@ -387,16 +387,16 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap is deli
 | Granary | Iron | +35K | 25 |
 | Classical Vault | Classical | +170K | 25 |
 | Strongroom | Medieval | +710K | 25 |
-| Renaissance Vault | Renaissance | +3.1M | 25 |
+| Renaissance Vault | Renaissance | +3.8M | 25 |
 | Colonial Warehouse | Colonial | +60M | 25 |
 | Industrial Depot | Industrial | +340M | 25 |
-| Victorian Vault | Victorian | +1.9B | 25 |
-| Electric Warehouse | Electric | +6.9B | 25 |
-| Atomic Vault | Atomic | +28B | 25 |
-| Modern Depot | Modern | +120B | 25 |
-| Info Vault | Information | +2.4T | 25 |
-| Digital Archive | Digital | +2.2T | 25 |
-| Cyber Vault | Cyberpunk | +20T | 25 |
+| Victorian Vault | Victorian | +1.3B | 25 |
+| Electric Warehouse | Electric | +5.5B | 25 |
+| Atomic Vault | Atomic | +23B | 25 |
+| Modern Depot | Modern | +110B | 25 |
+| Info Vault | Information | +2.3T | 25 |
+| Digital Archive | Digital | +2.7T | 25 |
+| Cyber Vault | Cyberpunk | +22T | 25 |
 | Fusion Vault | Fusion | +38T | 25 |
 | Orbital Depot | Space | +200T | 25 |
 | Stellar Vault | Interstellar | +2Q | 25 |

@@ -222,8 +222,8 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `tool_making` | Tool Making | spine | 61 kp | 23 | none | +10% food production, +10% wood production, gathering by hand brings 2 more |
-| `fire_mastery` | Fire Mastery | optional | 102 kp | 28 | none | +10% food production, +5% housing |
+| `tool_making` | Tool Making | spine | 47 kp | 23 | none | +10% food production, +10% wood production, gathering by hand brings 2 more |
+| `fire_mastery` | Fire Mastery | optional | 78 kp | 28 | none | +10% food production, +5% housing |
 
 ---
 
@@ -231,10 +231,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `stoneworking` | Stoneworking | **keystone** (Great Monolith) | 905 kp | 84 | `tool_making` | +10% stone production |
-| `animal_husbandry` | Animal Husbandry | optional | 1.13K kp | 84 | `fire_mastery` | +10% food production |
-| `pottery` | Pottery | optional | 1.13K kp | 84 | `fire_mastery` | +10% storage |
-| `primitive_writing` | Primitive Writing | spine | 679 kp | 68 | none | +10% knowledge production |
+| `stoneworking` | Stoneworking | **keystone** (Great Monolith) | 731 kp | 84 | `tool_making` | +10% stone production |
+| `animal_husbandry` | Animal Husbandry | optional | 913 kp | 84 | `fire_mastery` | +10% food production |
+| `pottery` | Pottery | optional | 913 kp | 84 | `fire_mastery` | +10% storage |
+| `primitive_writing` | Primitive Writing | spine | 548 kp | 68 | none | +10% knowledge production |
 
 ---
 
@@ -242,11 +242,11 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `bronze_working` | Bronze Working | spine | 3.06K kp | 351 | `stoneworking` | +10% stone production, +10% iron production |
-| `agriculture` | Agriculture | optional | 5.1K kp | 439 | `animal_husbandry` | +10% food production |
-| `currency` | Currency | spine | 3.06K kp | 351 | `primitive_writing` | +10% gold production, market fee 3 points lower |
-| `masonry` | Masonry | optional | 5.1K kp | 439 | `stoneworking` | +10% storage |
-| `military_tactics` | Military Tactics | optional | 5.1K kp | 439 | `bronze_working` | Opens campaigns, +15% military power |
+| `bronze_working` | Bronze Working | spine | 6.02K kp | 351 | `stoneworking` | +10% stone production, +10% iron production |
+| `agriculture` | Agriculture | optional | 10K kp | 439 | `animal_husbandry` | +10% food production |
+| `currency` | Currency | spine | 6.02K kp | 351 | `primitive_writing` | +10% gold production, market fee 3 points lower |
+| `masonry` | Masonry | optional | 10K kp | 439 | `stoneworking` | +10% storage |
+| `military_tactics` | Military Tactics | optional | 10K kp | 439 | `bronze_working` | Opens campaigns, +15% military power |
 
 ---
 
@@ -254,10 +254,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `iron_smelting` | Iron Smelting | spine | 31K kp | 585 | `bronze_working` | +8% iron production |
-| `road_building` | Road Building | optional | 51.6K kp | 731 | `masonry` | +8% gold production, trade routes take 15% less time |
-| `mathematics` | Mathematics | **keystone** (Colosseum) | 41.3K kp | 731 | `primitive_writing` | +8% knowledge production |
-| `siege_warfare` | Siege Warfare | optional | 51.6K kp | 731 | `military_tactics` | +15% military power |
+| `iron_smelting` | Iron Smelting | spine | 39.2K kp | 585 | `bronze_working` | +8% iron production |
+| `road_building` | Road Building | optional | 65.4K kp | 731 | `masonry` | +8% gold production, trade routes take 15% less time |
+| `mathematics` | Mathematics | **keystone** (Colosseum) | 52.3K kp | 731 | `primitive_writing` | +8% knowledge production |
+| `siege_warfare` | Siege Warfare | optional | 65.4K kp | 731 | `military_tactics` | +15% military power |
 
 ---
 
@@ -265,9 +265,9 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `philosophy` | Philosophy | **keystone** (Parthenon) | 234K kp | 1,024 | `mathematics` | +8% knowledge production |
-| `civil_engineering` | Civil Engineering | optional | 293K kp | 1,024 | `road_building` | Buildings cost 3% less |
-| `imperial_legions` | Imperial Legions | optional | 293K kp | 1,024 | `siege_warfare`, `iron_smelting` | +15% military power, raids on you take 10% less |
+| `philosophy` | Philosophy | **keystone** (Parthenon) | 293K kp | 1,024 | `mathematics` | +8% knowledge production |
+| `civil_engineering` | Civil Engineering | optional | 366K kp | 1,024 | `road_building` | Buildings cost 3% less |
+| `imperial_legions` | Imperial Legions | optional | 366K kp | 1,024 | `siege_warfare`, `iron_smelting` | +15% military power, raids on you take 10% less |
 
 ---
 
@@ -275,12 +275,12 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `steel_forging` | Steel Forging | spine | 1.52M kp | 1,053 | `iron_smelting` | +0.25 steel/tick, +8% iron production |
-| `theology` | Theology | **keystone** (Great Library) | 2.02M kp | 1,316 | `philosophy` | +8% faith production |
-| `banking` | Banking | spine | 1.52M kp | 1,053 | `currency`, `mathematics` | +8% gold production, market fee 3 points lower |
-| `feudalism` | Feudalism | optional | 2.53M kp | 1,316 | none | +8% housing |
-| `alchemy` | Alchemy | optional | 2.53M kp | 1,316 | `philosophy` | +8% knowledge production |
-| `chronometry` | Chronometry | optional | 2.53M kp | 1,316 | none | +5% game speed |
+| `steel_forging` | Steel Forging | spine | 2.02M kp | 1,053 | `iron_smelting` | +0.25 steel/tick, +8% iron production |
+| `theology` | Theology | **keystone** (Great Library) | 2.7M kp | 1,316 | `philosophy` | +8% faith production |
+| `banking` | Banking | spine | 2.02M kp | 1,053 | `currency`, `mathematics` | +8% gold production, market fee 3 points lower |
+| `feudalism` | Feudalism | optional | 3.37M kp | 1,316 | none | +8% housing |
+| `alchemy` | Alchemy | optional | 3.37M kp | 1,316 | `philosophy` | +8% knowledge production |
+| `chronometry` | Chronometry | optional | 3.37M kp | 1,316 | none | +5% game speed |
 
 ---
 
@@ -288,10 +288,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `printing_press` | Printing Press | optional | 23.5M kp | 1,755 | `theology`, `alchemy` | +6% knowledge production, research takes 3% less time |
-| `navigation` | Navigation | spine | 14.1M kp | 1,404 | `mathematics` | Opens the Naval Expedition, +10% expedition rewards |
-| `gunpowder` | Gunpowder | optional | 23.5M kp | 1,755 | `alchemy`, `siege_warfare` | +12% military power |
-| `patronage` | Patronage | **keystone** (Sistine Chapel) | 18.8M kp | 1,755 | `banking` | +6% culture production |
+| `printing_press` | Printing Press | optional | 31.8M kp | 1,755 | `theology`, `alchemy` | +6% knowledge production, research takes 3% less time |
+| `navigation` | Navigation | spine | 19.1M kp | 1,404 | `mathematics` | Opens the Naval Expedition, +10% expedition rewards |
+| `gunpowder` | Gunpowder | optional | 31.8M kp | 1,755 | `alchemy`, `siege_warfare` | +12% military power |
+| `patronage` | Patronage | **keystone** (Sistine Chapel) | 25.4M kp | 1,755 | `banking` | +6% culture production |
 
 ---
 
@@ -299,9 +299,9 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `cartography` | Cartography | **keystone** (Grand Lighthouse) | 65.5M kp | 2,048 | `navigation` | +10% expedition rewards, expeditions take 10% less time |
-| `mercantilism` | Mercantilism | optional | 81.9M kp | 2,048 | `banking`, `navigation` | Opens the black market |
-| `colonialism` | Colonialism | optional | 81.9M kp | 2,048 | `cartography`, `gunpowder` | +12% military power |
+| `cartography` | Cartography | **keystone** (Grand Lighthouse) | 108M kp | 2,048 | `navigation` | +10% expedition rewards, expeditions take 10% less time |
+| `mercantilism` | Mercantilism | optional | 135M kp | 2,048 | `banking`, `navigation` | Opens the black market |
+| `colonialism` | Colonialism | optional | 135M kp | 2,048 | `cartography`, `gunpowder` | +12% military power |
 
 ---
 
@@ -309,11 +309,11 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `steam_power` | Steam Power | spine | 143M kp | 1,872 | `steel_forging` | +6% steel production, +6% coal production |
-| `industrialization` | Industrialization | **keystone** (Crystal Palace) | 191M kp | 2,340 | `steam_power` | +5% all production |
-| `railroads` | Railroads | optional | 238M kp | 2,340 | `steam_power`, `road_building` | Opens the Rail Freight route, trade routes take 15% less time |
-| `rifling` | Rifling | optional | 238M kp | 2,340 | `gunpowder` | +12% military power |
-| `clockwork_automation` | Clockwork Automation | optional | 238M kp | 2,340 | `chronometry` | +10% game speed |
+| `steam_power` | Steam Power | spine | 166M kp | 1,872 | `steel_forging` | +6% steel production, +6% coal production |
+| `industrialization` | Industrialization | **keystone** (Crystal Palace) | 221M kp | 2,340 | `steam_power` | +5% all production |
+| `railroads` | Railroads | optional | 277M kp | 2,340 | `steam_power`, `road_building` | Opens the Rail Freight route, trade routes take 15% less time |
+| `rifling` | Rifling | optional | 277M kp | 2,340 | `gunpowder` | +12% military power |
+| `clockwork_automation` | Clockwork Automation | optional | 277M kp | 2,340 | `chronometry` | +10% game speed |
 
 ---
 
@@ -321,9 +321,9 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `electrification` | Electrification | spine | 347M kp | 2,106 | `industrialization` | +5% electricity production |
-| `telecommunications` | Telecommunications | optional | 579M kp | 2,633 | `electrification` | Deals refresh 30% sooner, gifts cost 25% less |
-| `mass_production` | Mass Production | **keystone** (Eiffel Tower) | 463M kp | 2,633 | `industrialization` | Construction takes 8% less time |
+| `electrification` | Electrification | spine | 521M kp | 2,106 | `industrialization` | +5% electricity production |
+| `telecommunications` | Telecommunications | optional | 869M kp | 2,633 | `electrification` | Deals refresh 30% sooner, gifts cost 25% less |
+| `mass_production` | Mass Production | **keystone** (Eiffel Tower) | 695M kp | 2,633 | `industrialization` | Construction takes 8% less time |
 
 ---
 
@@ -331,9 +331,9 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `power_distribution` | Power Distribution | **keystone** (Hoover Dam) | 1.15B kp | 2,925 | `electrification` | +5% electricity production |
-| `radio` | Radio | optional | 1.44B kp | 2,925 | `telecommunications` | Festivals come back 20% sooner |
-| `chemical_engineering` | Chemical Engineering | spine | 866M kp | 2,340 | `mass_production` | +5% oil production, +5% steel production |
+| `power_distribution` | Power Distribution | **keystone** (Hoover Dam) | 1.09B kp | 2,925 | `electrification` | +5% electricity production |
+| `radio` | Radio | optional | 1.37B kp | 2,925 | `telecommunications` | Festivals come back 20% sooner |
+| `chemical_engineering` | Chemical Engineering | spine | 819M kp | 2,340 | `mass_production` | +5% oil production, +5% steel production |
 
 ---
 
@@ -341,10 +341,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `nuclear_fission` | Nuclear Fission | **keystone** (Particle Accelerator) | 1.2B kp | 3,510 | `power_distribution`, `chemical_engineering` | +5% uranium production, +5% electricity production |
-| `rocketry` | Rocketry | spine | 902M kp | 2,808 | none | +10% expedition rewards, +10% military power |
-| `nuclear_deterrence` | Nuclear Deterrence | optional | 1.5B kp | 3,510 | `nuclear_fission`, `rocketry` | +10% military power, raids on you take 10% less |
-| `civilian_reactors` | Civilian Reactors | optional | 1.5B kp | 3,510 | `nuclear_deterrence` | Opens the Nuclear Plant |
+| `nuclear_fission` | Nuclear Fission | **keystone** (Particle Accelerator) | 740M kp | 3,510 | `power_distribution`, `chemical_engineering` | +5% uranium production, +5% electricity production |
+| `rocketry` | Rocketry | spine | 555M kp | 2,808 | none | +10% expedition rewards, +10% military power |
+| `nuclear_deterrence` | Nuclear Deterrence | optional | 925M kp | 3,510 | `nuclear_fission`, `rocketry` | +10% military power, raids on you take 10% less |
+| `civilian_reactors` | Civilian Reactors | optional | 925M kp | 3,510 | `nuclear_deterrence` | Opens the Nuclear Plant |
 
 ---
 
@@ -352,10 +352,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `electricity_tech` | Advanced Electrics | spine | 1.21B kp | 2,808 | `nuclear_fission` | +5% electricity production |
-| `computers` | Computers | spine | 1.21B kp | 2,808 | `electricity_tech` | +5% knowledge production, research takes 3% less time |
-| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 1.61B kp | 3,510 | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
-| `nanofabrication` | Nanofabrication | optional | 2.01B kp | 3,510 | `computers` | Buildings cost 3% less |
+| `electricity_tech` | Advanced Electrics | spine | 786M kp | 2,808 | `nuclear_fission` | +5% electricity production |
+| `computers` | Computers | spine | 786M kp | 2,808 | `electricity_tech` | +5% knowledge production, research takes 3% less time |
+| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 1.05B kp | 3,510 | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
+| `nanofabrication` | Nanofabrication | optional | 1.31B kp | 3,510 | `computers` | Buildings cost 3% less |
 
 ---
 
@@ -649,7 +649,7 @@ Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige
 
 ### Late-Game Knowledge Scaling
 
-Knowledge costs rise steeply, from 61 kp for Tool Making to billions in the late ages (Cybernetics 4.45B, Transcendence 9.1B). Raise your knowledge storage ahead of them, and plan on buying most of that knowledge with gold (see [Paying for Research](#paying-for-research)).
+Knowledge costs rise steeply, from 47 kp for Tool Making to billions in the late ages (Cybernetics 4.45B, Transcendence 9.1B). Raise your knowledge storage ahead of them, and plan on buying most of that knowledge with gold (see [Paying for Research](#paying-for-research)).
 
 ---
 

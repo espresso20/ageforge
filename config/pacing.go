@@ -527,31 +527,34 @@ func ResearchBudgetShareOf(age string) float64 {
 }
 
 // KnowledgePerHour is the knowledge a well-played game makes in an hour of
-// each age at 1x: the income of the smoke suite's greedy bot averaged over
-// the age, measured on a first run (the progression report's
-// knowledge_per_hour_1x). It is an input like AgeTargets, typed here and
-// re-measured when the economy moves: research budgets are sized from it.
+// each age at 1x: what the knowledge buildings of the smoke suite's greedy
+// bot produce, averaged over the age, on a first run (the progression
+// report's knowledge_per_hour_1x, the median of its seeds; knowledge bought
+// at the market is not in it). It is an input like AgeTargets, typed here
+// and re-measured when the economy moves: research budgets are sized from
+// it.
 //
-// The per-PR runs measure up to the Atomic Age (a first run prestiges on
-// entering the Modern Age). The Information Age and every age after it
-// keep the numbers measured before techs got a layer of their own: nothing
-// run per PR reaches them, and what the layer took off knowledge output
-// there the shorter payback of the Colonial Age's halls, which still make
-// most of the knowledge, about gives back.
+// The Primitive to Atomic Ages were measured with techs in a layer of their
+// own (the Determinism run of the change that made it). A first run
+// prestiges on entering the Modern Age, so nothing run per PR measures
+// that age or any after it. The Modern Age is an estimate between its
+// neighbours. The Information Age and every age after it keep the numbers
+// they had: by then the pools of a well-played game are near their clamp
+// with or without the techs, so knowledge output there moved least.
 var KnowledgePerHour = map[string]float64{
-	"primitive_age":    1.3e3,
-	"stone_age":        5.7e3,
-	"bronze_age":       6.1e3,
-	"iron_age":         30e3,
-	"classical_age":    100e3,
-	"medieval_age":     1.2e6,
-	"renaissance_age":  5.7e6,
-	"colonial_age":     14e6,
-	"industrial_age":   56e6,
-	"victorian_age":    66e6,
-	"electric_age":     148e6,
-	"atomic_age":       182e6,
-	"modern_age":       215e6,
+	"primitive_age":    1.0e3,
+	"stone_age":        4.6e3,
+	"bronze_age":       12e3,
+	"iron_age":         38e3,
+	"classical_age":    125e3,
+	"medieval_age":     1.6e6,
+	"renaissance_age":  7.7e6,
+	"colonial_age":     23e6,
+	"industrial_age":   65e6,
+	"victorian_age":    99e6,
+	"electric_age":     140e6,
+	"atomic_age":       112e6,
+	"modern_age":       140e6,
 	"information_age":  293e6,
 	"digital_age":      449e6,
 	"cyberpunk_age":    449e6,
@@ -721,25 +724,30 @@ const FlowCopies = 5.0
 const ProductionAllCap = 3.0
 
 // ProductionAllHeld is the all-production pool a well-played game holds in
-// each age, before the clamp: the "+X% all production" of its milestones
-// and wonders added up (0.8 is +80%). It is an input like KnowledgePerHour,
-// typed here. An age it leaves out holds none.
+// each age, before the clamp: the "+X% all production" of its milestones,
+// wonders and monuments added up (0.85 is +85%). It is an input like
+// KnowledgePerHour, typed here. An age it leaves out holds none.
 //
 // Until techs got a layer of their own the model read this pool off the
 // techs: their all-production bonuses filled it from the Industrial Age on
 // and reached the clamp in the Electric Age. Techs no longer join the pool.
-// Milestones and wonders fill it instead, at much the same pace, so the
-// table keeps the numbers the model had, held to what a game can hold: the
-// static caps report (smoke.StaticCaps) lists, age by age, the pool of a
-// player with every milestone and wonder available, and a smoke test fails
-// if a number here is above it.
+// Milestones and wonders fill it instead, later: the Industrial to Atomic
+// Ages are what the smoke suite's greedy bot held when it left each age on
+// a first run (the progression report's production_all_earned, the median
+// of its seeds), about two thirds of what a player with every milestone
+// can hold. Nothing run per PR goes past the Atomic Age: the Modern and
+// Information Ages are that share of what can be held there, and from the
+// Digital Age on the share reaches the clamp, +200%, as the techs did.
+// The static caps report (smoke.StaticCaps) lists, age by age, the pool of
+// a player with every milestone, wonder and monument, and a smoke test
+// fails if a number here is above it.
 var ProductionAllHeld = map[string]float64{
-	"industrial_age":   0.8,
-	"victorian_age":    1.55,
-	"electric_age":     1.95,
-	"atomic_age":       2.0,
-	"modern_age":       2.0,
-	"information_age":  2.0,
+	"industrial_age":   0.85,
+	"victorian_age":    0.95,
+	"electric_age":     1.3,
+	"atomic_age":       1.45,
+	"modern_age":       1.7,
+	"information_age":  1.85,
 	"digital_age":      2.0,
 	"cyberpunk_age":    2.0,
 	"fusion_age":       2.0,
@@ -757,7 +765,7 @@ var ProductionAllHeld = map[string]float64{
 // age's wonder, so they stand), plus the flat output of every tech up to
 // age, multiplied twice over. First by the all-production pool held by then
 // (ProductionAllHeld), capped at ProductionAllCap as the engine caps it
-// (from the Atomic Age on the cap is reached, and output triples). Then by
+// (from the Digital Age on the cap is reached, and output triples). Then by
 // the tech layer, which no cap holds: 1 + the bonus every tech up to age
 // gives that resource + the bonus they give all production. Monuments, the
 // per-resource bonuses of milestones and wonders, morale and worker upkeep

@@ -98,7 +98,7 @@ Each trade pushes that pair's rate down a little, by the same step whatever its 
 
 The Modern Age wonder, the **Space Program**, costs **600B knowledge** along with 770B steel, 690B gold and 430B electricity. Your knowledge buildings make thousands per tick at that point, nowhere near enough. The practical way to pay is the market's gold to knowledge pair: at 5 knowledge per gold, 600B knowledge costs about 120B gold, less than a fifth of the gold the wonder asks for anyway.
 
-1. Raise your knowledge storage to hold what you buy: knowledge bought past the cap is lost. Each Modern Depot adds 90B to every store.
+1. Raise your knowledge storage to hold what you buy: knowledge bought past the cap is lost. Each Modern Depot adds 110B to every store.
 2. Trade gold for knowledge in a few large lumps. Amounts can be typed in e-notation: `trade gold knowledge 2e10` sells 20B gold for about 100B knowledge.
 3. Bank each lump into the wonder with `wonder bank knowledge`, and repeat.
 
