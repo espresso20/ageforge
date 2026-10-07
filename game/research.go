@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -100,12 +101,17 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 	if ageOrder[def.Age] > ageOrder[currentAge] {
 		return fmt.Errorf("%s needs %s.", def.Name, laterAgeRef(rm.rules, currentAge, def.Age))
 	}
-	// Check prerequisites
-	for _, prereq := range def.Prerequisites {
-		if !rm.researched[prereq] {
-			prereqDef := rm.defs[prereq]
-			return fmt.Errorf("%s needs %s researched first.", def.Name, prereqDef.Name)
+	// Check prerequisites: every one of them, and one of the either-or
+	// group when the tech has one.
+	if prereq := def.MissingPrereq(rm.IsResearched); prereq != "" {
+		return fmt.Errorf("%s needs %s researched first.", def.Name, rm.defs[prereq].Name)
+	}
+	if !def.AnyOfMet(rm.IsResearched) {
+		names := make([]string, len(def.AnyOf))
+		for i, k := range def.AnyOf {
+			names[i] = rm.defs[k].Name
 		}
+		return fmt.Errorf("%s needs %s researched first.", def.Name, orList(names))
 	}
 	// Check cost
 	if knowledge < def.Cost {
@@ -117,6 +123,14 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 	rm.ticksLeft = ticks
 	rm.totalTicks = ticks
 	return nil
+}
+
+// orList joins names as a choice: "Map Making or Boatbuilding", "A, B or C".
+func orList(names []string) string {
+	if len(names) < 2 {
+		return strings.Join(names, "")
+	}
+	return strings.Join(names[:len(names)-1], ", ") + " or " + names[len(names)-1]
 }
 
 // ResearchTicks is how long a tech listed at base ticks takes to research
@@ -388,26 +402,17 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 	techs := make(map[string]TechState)
 
 	for key, def := range rm.defs {
-		available := true
-		// Check age
-		if ageOrder[def.Age] > ageOrder[currentAge] {
-			available = false
-		}
-		// Check prereqs
-		prereqsMet := true
-		for _, prereq := range def.Prerequisites {
-			if !rm.researched[prereq] {
-				prereqsMet = false
-				available = false
-				break
-			}
-		}
+		// Available: the age is reached and the prerequisites are met (every
+		// one of them, and one of the either-or group).
+		prereqsMet := def.PrereqsMet(rm.IsResearched)
+		available := prereqsMet && ageOrder[def.Age] <= ageOrder[currentAge]
 
 		techs[key] = TechState{
 			Name:          def.Name,
 			Age:           def.Age,
 			Cost:          def.Cost,
 			Prerequisites: slices.Clone(def.Prerequisites), // def is the manager's table
+			AnyOf:         slices.Clone(def.AnyOf),
 			Description:   def.Description,
 			Researched:    rm.researched[key],
 			Available:     available && !rm.researched[key],

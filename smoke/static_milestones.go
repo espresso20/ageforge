@@ -343,7 +343,8 @@ func (m *milestoneModel) hardest(d config.BuildingDef, n, i int) (res string, pr
 }
 
 // techAge is the first age tech k can be researched in: its own age, after
-// its prerequisites, and once the most knowledge storage holds its price.
+// its prerequisites (and the earliest key of its either-or group), and once
+// the most knowledge storage holds its price.
 // len(ages) means never.
 func (m *milestoneModel) techAge(k string, byKey map[string]config.TechDef, depth int) int {
 	if a, ok := m.techAt[k]; ok {
@@ -361,6 +362,18 @@ func (m *milestoneModel) techAge(k string, byKey map[string]config.TechDef, dept
 	for _, p := range t.Prerequisites {
 		if pa := m.techAge(p, byKey, depth+1); pa > a {
 			a = pa
+		}
+	}
+	// An either-or group waits for its earliest key, not for all of them.
+	if len(t.AnyOf) > 0 {
+		first := n
+		for _, p := range t.AnyOf {
+			if pa := m.techAge(p, byKey, depth+1); pa < first {
+				first = pa
+			}
+		}
+		if first > a {
+			a = first
 		}
 	}
 	for a < n && t.Cost > m.maxStorage(a, "knowledge") {

@@ -27,10 +27,10 @@ func TestResearchManager_AgeGating(t *testing.T) {
 
 func TestResearchManager_Prerequisites(t *testing.T) {
 	rm := NewResearchManager()
-	ageOrder := map[string]int{"primitive_age": 0}
+	ageOrder := map[string]int{"primitive_age": 0, "stone_age": 1}
 
-	// fire_mastery requires tool_making — should fail without it
-	err := rm.StartResearch("fire_mastery", "primitive_age", ageOrder, 999999)
+	// pottery requires fire_mastery — should fail without it
+	err := rm.StartResearch("pottery", "stone_age", ageOrder, 999999)
 	if err == nil {
 		t.Error("StartResearch should fail when prerequisites not met")
 	}

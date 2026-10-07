@@ -48,10 +48,10 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// A root, with Tool Making: fire needs no tools.
 			Name: "Fire Mastery", Key: "fire_mastery", Emblem: "△",
 			Age: "primitive_age", Lane: LaneAgriculture, Cost: 1000, ResearchTicks: 200,
-			Prerequisites: []string{"tool_making"},
-			Description:   "Control of fire improves food preservation and warmth.",
+			Description: "Control of fire improves food preservation and warmth.",
 			Effects: []TechEffect{
 				{Kind: EffectFlatOutput, Target: "food", Value: 0.1},
 			},
@@ -86,10 +86,11 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// Writing no longer follows Pottery, which leads to storage and trade.
+			// It is a root until the tech it will follow (Language) exists.
 			Name: "Primitive Writing", Key: "primitive_writing", Code: "WRITE",
 			Age: "stone_age", Lane: LaneKnowledge, Cost: 10000, ResearchTicks: 600,
-			Prerequisites: []string{"pottery"},
-			Description:   "Early symbols enable knowledge transfer.",
+			Description: "Early symbols enable knowledge transfer.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "knowledge", Value: 0.1},
 			},
@@ -155,6 +156,7 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// Roads will need The Wheel too, once that tech exists.
 			Name: "Road Building", Key: "road_building", Code: "ROADS", Emblem: "═",
 			Age: "iron_age", Lane: LaneCraft, Cost: 25000, ResearchTicks: 950,
 			Prerequisites: []string{"masonry"},
@@ -167,7 +169,7 @@ func Technologies() []TechDef {
 		{
 			Name: "Mathematics", Key: "mathematics", Code: "MATH", Emblem: "π",
 			Age: "iron_age", Lane: LaneKnowledge, Cost: 37500, ResearchTicks: 1200,
-			Prerequisites: []string{"primitive_writing", "currency"},
+			Prerequisites: []string{"primitive_writing"},
 			Description:   "Advanced calculation raises knowledge output.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "knowledge", Value: 0.2},
@@ -187,7 +189,7 @@ func Technologies() []TechDef {
 		{
 			Name: "Philosophy", Key: "philosophy", Emblem: "Φ",
 			Age: "classical_age", Lane: LaneKnowledge, Cost: 20000, ResearchTicks: 1500,
-			Prerequisites: []string{"mathematics", "primitive_writing"},
+			Prerequisites: []string{"mathematics"},
 			Description:   "Systematic inquiry into fundamental questions.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "knowledge", Value: 0.3},
@@ -197,7 +199,7 @@ func Technologies() []TechDef {
 		{
 			Name: "Civil Engineering", Key: "civil_engineering", Emblem: "∩",
 			Age: "classical_age", Lane: LaneCraft, Cost: 18000, ResearchTicks: 1300,
-			Prerequisites: []string{"masonry", "road_building"},
+			Prerequisites: []string{"road_building"},
 			Description:   "Large-scale construction and infrastructure.",
 			Effects: []TechEffect{
 				{Kind: EffectFlatStorage, Target: AllResources, Value: 100},
@@ -245,10 +247,11 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// No longer behind Military Tactics: it is a farming tech. It is a root
+			// until the tech it will follow (The Plough) exists.
 			Name: "Feudalism", Key: "feudalism", Emblem: "⌂",
 			Age: "medieval_age", Lane: LaneAgriculture, Cost: 22000, ResearchTicks: 1700,
-			Prerequisites: []string{"military_tactics"},
-			Description:   "Feudal land grants house more workers.",
+			Description: "Feudal land grants house more workers.",
 			Effects: []TechEffect{
 				{Kind: EffectFlatHousing, Value: 5},
 			},
@@ -256,7 +259,7 @@ func Technologies() []TechDef {
 		{
 			Name: "Alchemy", Key: "alchemy", Emblem: "☿",
 			Age: "medieval_age", Lane: LaneKnowledge, Cost: 28000, ResearchTicks: 2200,
-			Prerequisites: []string{"mathematics"},
+			Prerequisites: []string{"philosophy"},
 			Description:   "Proto-chemistry yields material insights.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "knowledge", Value: 0.15},
@@ -284,9 +287,10 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// It will need Exploration too, once that tech exists.
 			Name: "Navigation", Key: "navigation",
 			Age: "renaissance_age", Lane: LaneTrade, Cost: 45000, ResearchTicks: 2600,
-			Prerequisites: []string{"mathematics", "road_building"},
+			Prerequisites: []string{"mathematics"},
 			Description:   "Ocean navigation raises gold output and expedition rewards.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "gold", Value: 0.5},
@@ -418,7 +422,7 @@ func Technologies() []TechDef {
 		{
 			Name: "Mass Production", Key: "mass_production", Emblem: "▥",
 			Age: "victorian_age", Lane: LaneCraft, Cost: 200000, ResearchTicks: 7400,
-			Prerequisites: []string{"industrialization", "railroads"},
+			Prerequisites: []string{"industrialization"},
 			Description:   "Assembly line manufacturing.",
 			Effects: []TechEffect{
 				{Kind: EffectAllOutput, Value: 0.4},
@@ -470,10 +474,11 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// No longer behind Rifling and Chemical Engineering: flight comes first.
+			// It is a root until the tech it will follow (Aviation) exists.
 			Name: "Rocketry", Key: "rocketry", Code: "ROCKT", Emblem: "▲",
 			Age: "atomic_age", Lane: LaneSpace, Cost: 400000, ResearchTicks: 12000,
-			Prerequisites: []string{"rifling", "chemical_engineering"},
-			Description:   "Rockets raise military power and expedition rewards.",
+			Description: "Rockets raise military power and expedition rewards.",
 			Effects: []TechEffect{
 				{Kind: EffectMilitaryPower, Value: 1.0},
 				{Kind: EffectExpeditionReward, Value: 0.5},
@@ -834,7 +839,7 @@ func Technologies() []TechDef {
 		{
 			Name: "Quantum Computing", Key: "quantum_computing", Code: "QCOMP",
 			Age: "quantum_age", Lane: LaneComputing, Cost: 150000000, ResearchTicks: 200000,
-			Prerequisites: []string{"clockwork_automation"},
+			Prerequisites: []string{"clockwork_automation", "quantum_mechanics"},
 			Description:   "Quantum processing raises game speed.",
 			Effects: []TechEffect{
 				{Kind: EffectGameSpeed, Value: 0.15},

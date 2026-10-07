@@ -231,31 +231,41 @@ func carryoverStock(res string, amount float64, age string, defs map[string]conf
 }
 
 // techReachable reports whether tech can be finished by the end of age: it
-// and every prerequisite, all the way down, open in age or earlier. A gate
-// that needs a building behind a tech that isn't would soft-lock the run.
+// and what it needs, all the way down, open in age or earlier. A gate that
+// needs a building behind a tech that isn't would soft-lock the run.
 func techReachable(tech, age string) bool {
-	techs := config.TechByKey()
+	return techReachableIn(config.TechByKey(), config.AgeOrder(), tech, age)
+}
+
+// techReachableIn is techReachable over the given techs and age order. A
+// tech needs every one of its Prerequisites and, when it has an either-or
+// group, one of its keys: one branch that opens in time is enough.
+func techReachableIn(techs map[string]config.TechDef, ages []string, tech, age string) bool {
 	order := map[string]int{}
-	for i, a := range config.AgeOrder() {
+	for i, a := range ages {
 		order[a] = i
 	}
-	seen := map[string]bool{}
+	limit, known := order[age]
+	if !known {
+		return false
+	}
+	verdict := map[string]bool{}
+	walking := map[string]bool{}
 	var ok func(string) bool
 	ok = func(k string) bool {
-		if seen[k] {
-			return true
+		if v, done := verdict[k]; done {
+			return v
 		}
-		seen[k] = true
 		t, found := techs[k]
-		if !found || order[t.Age] > order[age] {
-			return false
+		at, placed := order[t.Age]
+		if !found || !placed || at > limit || walking[k] {
+			return false // unknown, too late, or a loop: it can never be finished
 		}
-		for _, p := range t.Prerequisites {
-			if !ok(p) {
-				return false
-			}
-		}
-		return true
+		walking[k] = true
+		v := t.PrereqsMet(ok)
+		walking[k] = false
+		verdict[k] = v
+		return v
 	}
 	return ok(tech)
 }
