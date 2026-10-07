@@ -496,7 +496,8 @@ func (s *siteStage) toMedieval() {
 	s.wonder("parthenon")
 	s.advance()
 	s.dismiss()
-	s.raiseAll(siteBuild{"keep", 3}, siteBuild{"manor", 5}, siteBuild{"demesne", 3}, siteBuild{"sawmill", 3},
+	// Four keeps: Feudalism's price (the age sets it) has to fit the stores.
+	s.raiseAll(siteBuild{"keep", 4}, siteBuild{"manor", 5}, siteBuild{"demesne", 3}, siteBuild{"sawmill", 3},
 		siteBuild{"stonemasons_guild", 2}, siteBuild{"monastery_library", 3}, siteBuild{"cathedral", 2},
 		siteBuild{"castle_keep", 2}, siteBuild{"guildhall", 3}, siteBuild{"workshop", 2}, siteBuild{"ironmonger", 2})
 	s.learn("feudalism")

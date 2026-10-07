@@ -239,9 +239,10 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 // producer and its only trade building (the market needs one), so a player
 // who skipped the optional Bronze Age market could never get gold in the
 // Iron Age: not for the trading post, nor for the agoras, legion forts and
-// temples, nor for the Classical Age's gold (and its knowledge, which only
-// the gold-priced agora makes). The old rule counted market parity without
-// asking whether a trade building could stand.
+// temples, nor for the Classical Age's gold (and the knowledge Mathematics,
+// the Colosseum's keystone, costs, which only the gold-priced agora makes).
+// The old rule counted market parity without asking whether a trade building
+// could stand.
 //
 // The second case is the carry-over assumption at work: had the Iron Age
 // gate required a market, that market would stand in the Iron Age, the
@@ -257,7 +258,7 @@ func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
 	problems, _ := staticGates(config.Ages(), oldPost())
 	want := map[string]bool{"dead_building/trading_post": false, "dead_building/agora": false,
 		"dead_building/legion_fort": false, "dead_building/temple": false,
-		"unsourced/classical_age requirement/gold": false, "unsourced/classical_age requirement/knowledge": false}
+		"unsourced/classical_age requirement/gold": false, "unsourced/mathematics/knowledge": false}
 	for _, g := range problems {
 		k := g.Kind + "/" + g.Key
 		if g.Kind == "unsourced" {

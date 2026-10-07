@@ -255,7 +255,15 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range dp {
 		res.fail("depth_points", "%s", p)
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Last Passage Brace price(s) off its rules; %d depth point problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(dp))
+	rr := StaticResearch()
+	research := 0
+	for _, r := range rr {
+		for _, p := range r.Problems() {
+			research++
+			res.fail("research_covenant", "%s", p)
+		}
+	}
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Last Passage Brace price(s) off its rules; %d depth point problem(s); %d research problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(dp), research)
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, rows)
@@ -269,4 +277,7 @@ func runStatic(e *Env, res *Result) {
 	var df strings.Builder
 	writeDepthStatic(&df, dp)
 	res.section("Depth points", "%s", df.String())
+	var rf strings.Builder
+	writeResearch(&rf, rr)
+	res.section("Research Covenant", "%s", rf.String())
 }

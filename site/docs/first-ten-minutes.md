@@ -99,13 +99,13 @@ Food and wood start with only 50 storage each, and knowledge with 30. Storage fi
 build stash
 ```
 
-Build two early. The Stone Age asks for 1K food and 1K wood, the Sacred Grove for 1K wood, and Tool Making for 800 knowledge, and you need the room to hold them.
+Build two early. The Stone Age asks for 1K food and 1K wood and the Sacred Grove for 1K wood, and you need the room to hold them. A stash also lifts your knowledge storage past the 61 knowledge Tool Making costs.
 
 ---
 
 ## Step 6: Build story circles and a shrine
 
-Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed (2 workers). The Stone Age needs **5 story circles** and **150 knowledge**, and knowledge is also what you spend on research. A story circle costs 60 wood and takes 75 ticks (2m 30s) to build, so start them early.
+Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed (2 workers). The Stone Age needs **5 story circles**, and knowledge is what you spend on research. A story circle costs 60 wood and takes 75 ticks (2m 30s) to build, so start them early.
 
 ```
 build story_circle
@@ -132,13 +132,13 @@ If food is negative, build another gathering camp; workers come to staff it. If 
 
 ## Step 8: Research your first tech
 
-Once you have 800 knowledge (knowledge storage starts at 30, so you need two stashes to hold that much):
+Once you have 61 knowledge (knowledge storage starts at 30, so you need a stash to hold that much):
 
 ```
 research tool_making
 ```
 
-It costs the 800 knowledge up front, takes 56 ticks (just under 2 minutes) and gives a permanent +15% to what your workers produce. It costs more knowledge than the Stone Age asks for, so if you're short, advance first and research it later, or queue it with `plan research tool_making` and the [build plan](plan.md) starts it once the knowledge is there.
+It costs the 61 knowledge up front, takes 23 ticks (46 seconds) and gives a permanent +15% to what your workers produce. Get it here if you can: Stoneworking, the tech the Stone Age's wonder needs, stands on it. If you're short, advance first and research it later, or queue it with `plan research tool_making` and the [build plan](plan.md) starts it once the knowledge is there. Fire Mastery (102 knowledge, +0.1 food/tick) is the age's other tech.
 
 ---
 

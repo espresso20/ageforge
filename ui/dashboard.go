@@ -857,6 +857,10 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
 	if state.CurrentAgeWonderKey != "" {
 		fmt.Fprintf(&sb, "[red]✗ Wonder: %s[-]  ", state.CurrentAgeWonderName)
+		// Its keystone tech, while that is still to research.
+		if tech := state.Buildings[state.CurrentAgeWonderKey].NeedsTech; tech != "" {
+			fmt.Fprintf(&sb, "[red]✗ Keystone: %s[-]  ", game.TechName(tech))
+		}
 	}
 
 	d.ageTV.SetText(safeTags(sb.String()))

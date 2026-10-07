@@ -89,7 +89,7 @@ Knowledge pays for research. Every technology costs knowledge, and from the Medi
 
 Knowledge storage starts at 30 and grows with your storage buildings, like every other resource. A tech priced above your knowledge storage can't start until you build more storage.
 
-Each Knowledge building has its own fully staffed rate: 0.2 knowledge/tick for a Story Circle, 0.6 for an Elders' Hall, 2.0 for a Scriptorium, 1.6 for an Agora and 3.2 for a Library. While buildings cost knowledge (Medieval to Colonial), it counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): a Monastery Library makes 30.1/tick, a University 79.9. See [Knowledge](knowledge.md) for the full lineage.
+Each Knowledge building has its own fully staffed rate: 0.2 knowledge/tick for a Story Circle, 0.6 for an Elders' Hall, 2.0 for a Scriptorium, 1.6 for an Agora and 3.2 for a Library. While buildings cost knowledge (Medieval to Colonial), it counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): a Monastery Library makes 30.1/tick, a University 61.1. See [Knowledge](knowledge.md) for the full lineage.
 
 **Gold for knowledge.** From the Medieval Age on, the market sells knowledge for gold. From the Medieval to the Colonial Age it trades at parity like any construction resource (1 gold buys 0.2 knowledge in the Medieval Age, 0.07 in the Colonial Age). From the Industrial Age on the rate is a fixed **5 knowledge per gold**, the practical way to pay for something like the Space Program.
 

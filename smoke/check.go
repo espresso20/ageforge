@@ -99,9 +99,11 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 }
 
 // storageProblems flags storage that can never grow again in this age, a
-// next-age resource requirement no reachable storage can hold, and a required
+// next-age resource requirement no reachable storage can hold, a required
 // building that can't be built or whose last copy can't fit under any
-// reachable cap.
+// reachable cap, and a tech the age's wonder waits for (its keystone, or
+// one the keystone stands on) whose price no reachable knowledge storage
+// can hold.
 func storageProblems(st game.GameState, defs map[string]config.BuildingDef) []problem {
 	var out []problem
 	caps, stall := storageLadder(st, defs)
@@ -114,6 +116,13 @@ func storageProblems(st game.GameState, defs map[string]config.BuildingDef) []pr
 			out = append(out, problem{"requirement_over_storage",
 				fmt.Sprintf("advancing to %s needs %s %s but the most storage reachable in %s is %s",
 					st.NextAge, num(need), res, st.Age, num(got))})
+		}
+	}
+	for _, key := range keystoneChain(st) {
+		if t := st.Research.Techs[key]; t.Cost > caps["knowledge"] && key != st.Research.CurrentTech {
+			out = append(out, problem{"keystone_over_storage",
+				fmt.Sprintf("%s needs %s researched, which costs %s knowledge, but the most knowledge storage reachable in %s is %s",
+					st.CurrentAgeWonderKey, key, num(t.Cost), st.Age, num(caps["knowledge"]))})
 		}
 	}
 	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
@@ -356,7 +365,11 @@ func Blockers(st game.GameState) string {
 		}
 	}
 	if w := st.CurrentAgeWonderKey; w != "" {
-		out = append(out, fmt.Sprintf("wonder %s (bank %s)", w, bankStr(st, w)))
+		note := ""
+		for _, key := range keystoneChain(st) {
+			note += fmt.Sprintf("; needs %s (%s knowledge, cap %s)", key, num(st.Research.Techs[key].Cost), num(st.Resources["knowledge"].Storage))
+		}
+		out = append(out, fmt.Sprintf("wonder %s (bank %s%s)", w, bankStr(st, w), note))
 	}
 	if st.PendingCatastrophe != "" {
 		out = append(out, "pending catastrophe "+st.PendingCatastrophe)
@@ -433,6 +446,17 @@ func Dump(st game.GameState, cycle int, sim time.Duration) string {
 }
 
 // botNoise reports log lines that only echo the bot's own routine actions.
+// keystoneChain is the techs this age's unbuilt wonder still waits for: its
+// keystone and what that stands on, what it stands on first. nil when the
+// wonder is built, needs no tech, or has it.
+func keystoneChain(st game.GameState) []string {
+	w := st.CurrentAgeWonderKey
+	if w == "" || st.Buildings[w].NeedsTech == "" {
+		return nil
+	}
+	return techChain(st.Ruleset(), st.Research.Techs, st.Buildings[w].NeedsTech, map[string]bool{}, nil)
+}
+
 func botNoise(msg string) bool {
 	for _, p := range []string{"Gathered ", "Assigned ", "Unassigned ", "Recruited ", "Banked ", "Started building ", "Queued "} {
 		if strings.HasPrefix(msg, p) {

@@ -26,7 +26,11 @@ import (
 //   - Wonder size (normalizeWonderCosts): each age's wonder, which the next
 //     advance requires, costs WonderPriceUnits of its age.
 //   - Time caps (normalizeBuildTicks, normalizeResearchTicks): nothing takes
-//     longer to build or research than a fixed share of its age's target.
+//     longer to build or research than a fixed share of its age's target. A
+//     tech's time is a share of its age's research cap, by its kind.
+//   - Research budgets (normalizeResearchCosts): an age's techs share one
+//     knowledge budget, a share of what the age makes in its target time,
+//     split by kind.
 //
 // A construction resource of an age is one that appears in the first-copy
 // price of at least one of that age's buildings (wonders aside), except the
@@ -191,8 +195,13 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // smooth and the ages aren't. The Renaissance is where gold income jumps (its
 // exchanges buy the stone and steel the age can't make), and once the Storage
 // Covenant raised its vault the smoke bot finished it in 0.57x of its target.
-// Its producers repay 1.3x slower (about 1.9 hours instead of 1.5); the other
-// half of that fix is its gate's knowledge requirement (config/ages.go).
+// Its producers repaid 1.3x slower, and the other half of that fix was a 30M
+// knowledge requirement on its gate. That requirement went when the wonders
+// got their keystones. Patronage's price stands in for it on a first run
+// (0.94x of the target), but not on known ground, where the market is as
+// much faster as everything else and buys the knowledge: there the age ran
+// at 0.50x of its target ÷ k, on the edge of its band. So the payback takes
+// the gate's half too: 1.7x (about 6.5 hours instead of 3.9).
 // Its storage is not a lever: the Renaissance Vault sits on the Storage
 // Covenant's line. Keep this list short; a second entry means the curve
 // itself wants changing.
@@ -202,7 +211,7 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // overshoot is spent waiting, the longest stretches of those ages with
 // nothing new to do. Their producers repay faster (0.8x).
 var PaybackAdjust = map[string]float64{
-	"renaissance_age": 1.3,
+	"renaissance_age": 1.7,
 	"information_age": 0.8,
 	"cyberpunk_age":   0.8,
 }
@@ -394,18 +403,183 @@ func normalizeWonderCosts(defs []BuildingDef) []BuildingDef {
 	return defs
 }
 
-// ResearchTimeDivisor caps a tech's research time at its age's target
-// divided by this, so the handful of techs an age offers fit in it (research
+// ResearchTimeDivisor sets an age's research cap: its target divided by
+// this. No tech takes longer, so the techs an age offers fit in it (research
 // runs one tech at a time).
 const ResearchTimeDivisor = 8.0
 
-// normalizeResearchTicks applies the research-time cap.
-func normalizeResearchTicks(techs []TechDef) []TechDef {
+// Research time by kind (the tech tree's first pacing rule): a tech's
+// research time is this share of its age's research cap. The required techs
+// are the quick ones, so the spine never holds an age up for long, and a
+// capstone is the long one.
+const (
+	ResearchTimeSpine    = 0.4
+	ResearchTimeKeystone = 0.5
+	ResearchTimeOptional = 0.5
+	ResearchTimeCapstone = 0.8
+)
+
+// ResearchTimeShare is the share of its age's research cap a tech of kind
+// takes (an unknown kind reads as optional).
+func ResearchTimeShare(kind TechKind) float64 {
+	switch kind {
+	case TechSpine:
+		return ResearchTimeSpine
+	case TechKeystone:
+		return ResearchTimeKeystone
+	case TechCapstone:
+		return ResearchTimeCapstone
+	}
+	return ResearchTimeOptional
+}
+
+// ResearchCapTicks is age's research cap in ticks at 1x: its target divided
+// by ResearchTimeDivisor (0 for an unknown age).
+func ResearchCapTicks(age string) float64 {
+	return AgeTargetTicks(age) / ResearchTimeDivisor
+}
+
+// normalizeResearchTicks sets every tech's research time from its age and
+// its kind: ResearchTimeShare of the age's research cap, to the nearest
+// tick and one tick at least. The time typed on a tech is not read. A tech
+// of an age with no target keeps what it has.
+func normalizeResearchTicks(techs []TechDef, kinds map[string]TechKind) []TechDef {
 	for i := range techs {
 		t := &techs[i]
-		if limit := int(AgeTargetTicks(t.Age) / ResearchTimeDivisor); limit > 0 && t.ResearchTicks > limit {
-			t.ResearchTicks = limit
+		limit := ResearchCapTicks(t.Age)
+		if limit <= 0 {
+			continue
 		}
+		share := ResearchTimeShare(kinds[t.Key])
+		t.ResearchTicks = max(int(math.Round(float64(limit*share))), 1)
+	}
+	return techs
+}
+
+// Research cost by budget (the tech tree's second pacing rule). An age's
+// techs share one knowledge budget, ResearchBudget, split by these weights:
+// a tech costs budget × its weight ÷ the sum of the weights of its age's
+// techs. So a new tech makes every tech of its age a little cheaper, and the
+// age's total stays where it was. What a run must research is the cheap
+// part: the spine, then the keystone.
+const (
+	ResearchCostSpine    = 0.6
+	ResearchCostKeystone = 0.8
+	ResearchCostOptional = 1.0
+	ResearchCostCapstone = 1.6
+)
+
+// ResearchCostWeight is a tech's share of its age's budget, by kind (an
+// unknown kind reads as optional).
+func ResearchCostWeight(kind TechKind) float64 {
+	switch kind {
+	case TechSpine:
+		return ResearchCostSpine
+	case TechKeystone:
+		return ResearchCostKeystone
+	case TechCapstone:
+		return ResearchCostCapstone
+	}
+	return ResearchCostOptional
+}
+
+// ResearchBudgetShare is the share of the knowledge an age makes in its
+// target time that its techs cost together. It is the tuning knob of
+// research prices: one number for every age but the two below.
+//
+// At 0.9 an age's research is spread along the whole of it: the last tech
+// comes within reach near the end, so the slot has something to do all age
+// and no long stretch goes by with nothing new (the smoke suite's QuietMax).
+// It is also what lets a keystone carry the weight the knowledge gates did.
+//
+// The tree is drawn for about nine techs an age. Until the rest of them
+// arrive an age holds three or four (two, in the Cosmic Era), so each costs
+// two to three times what it will, and what a wonder waits for is a quarter
+// to a half of what its age makes rather than a sixth. A lower share was
+// tried and measured (0.3, the same prices as the finished tree): the
+// Atomic Age then went 13 hours with nothing new, and on known ground the
+// Renaissance ran at 0.43x of its target ÷ k. What the share may ask of an
+// age is the smoke suite's Research Covenant (smoke/static_research.go).
+const ResearchBudgetShare = 0.9
+
+// researchBudgetShares are the ages that keep their own share. The Primitive
+// Age has no keystone and is over in a quarter of an hour: its two techs
+// take half of what it makes. The Transcendent Age is the last: its techs
+// come early in it, at under a third.
+var researchBudgetShares = map[string]float64{
+	"primitive_age":    0.5,
+	"transcendent_age": 0.3,
+}
+
+// ResearchBudgetShareOf is the share of its own knowledge age's techs cost:
+// ResearchBudgetShare, or the age's own share where it has one.
+func ResearchBudgetShareOf(age string) float64 {
+	if v, ok := researchBudgetShares[age]; ok {
+		return v
+	}
+	return ResearchBudgetShare
+}
+
+// KnowledgePerHour is the knowledge a well-played game makes in an hour of
+// each age at 1x: the mid-age income of the smoke suite's greedy bot,
+// measured on a first run. It is an input like AgeTargets, typed here and
+// re-measured when the economy moves: research budgets are sized from it.
+var KnowledgePerHour = map[string]float64{
+	"primitive_age":    1.3e3,
+	"stone_age":        5.7e3,
+	"bronze_age":       6.1e3,
+	"iron_age":         40e3,
+	"classical_age":    147e3,
+	"medieval_age":     1.3e6,
+	"renaissance_age":  5.7e6,
+	"colonial_age":     14e6,
+	"industrial_age":   65e6,
+	"victorian_age":    94e6,
+	"electric_age":     185e6,
+	"atomic_age":       204e6,
+	"modern_age":       220e6,
+	"information_age":  293e6,
+	"digital_age":      449e6,
+	"cyberpunk_age":    449e6,
+	"fusion_age":       489e6,
+	"space_age":        489e6,
+	"interstellar_age": 489e6,
+	"galactic_age":     489e6,
+	"quantum_age":      486e6,
+	"transcendent_age": 486e6,
+}
+
+// AgeKnowledge is the knowledge age makes in its target time:
+// KnowledgePerHour × the target in hours (0 for an unknown age).
+func AgeKnowledge(age string) float64 {
+	return float64(KnowledgePerHour[age] * AgeTargets[age].Hours())
+}
+
+// ResearchBudget is what age's techs cost together, rounding aside: its
+// share (ResearchBudgetShareOf) of AgeKnowledge.
+func ResearchBudget(age string) float64 {
+	return float64(AgeKnowledge(age) * ResearchBudgetShareOf(age))
+}
+
+// normalizeResearchCosts prices every tech from its age's budget: budget ×
+// the tech's weight ÷ the weights of every tech of that age, to three
+// significant figures and a whole number of knowledge, 1 at least. The cost
+// typed on a tech is not read. A tech of an age with no budget keeps what it
+// has.
+func normalizeResearchCosts(techs []TechDef, kinds map[string]TechKind) []TechDef {
+	// Summed in table order, so the float sum is the same on every run.
+	weights := map[string]float64{}
+	for _, t := range techs {
+		weights[t.Age] += ResearchCostWeight(kinds[t.Key])
+	}
+	for i := range techs {
+		t := &techs[i]
+		budget, sum := ResearchBudget(t.Age), weights[t.Age]
+		if budget <= 0 || sum <= 0 {
+			continue
+		}
+		share := ResearchCostWeight(kinds[t.Key]) / sum
+		t.Cost = math.Max(math.Round(roundSignificant(float64(budget*share), 3)), 1)
 	}
 	return techs
 }

@@ -100,6 +100,7 @@ func researchProvider(state game.GameState, _ int) string {
 	// === Header ===
 	fmt.Fprint(&sb, " [label]research <key>  ·  research cancel  ·  research list[-]\n")
 	fmt.Fprintf(&sb, " [gold]Progress: %d / %d techs researched[-]\n", state.Research.TotalResearched, len(state.Research.Techs))
+	fmt.Fprintf(&sb, " %s\n", keystoneLegend)
 	// Research speed has no line of its own in the tree, so it says here
 	// what it does. The times listed below already count it.
 	if p, ok := state.Pools["research_speed"]; ok && p.Earned != 0 {
@@ -180,8 +181,8 @@ func researchProvider(state game.GameState, _ int) string {
 				affordStr = fmt.Sprintf("  [red](need %s more knowledge)[-]", FormatNumber(need))
 			}
 
-			fmt.Fprintf(&sb, "  [cyan]○[-]  %-40s [gray]%s knowledge · %s[-]%s\n",
-				techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(researchTicks(def.ResearchTicks, state), state), affordStr)
+			fmt.Fprintf(&sb, "  [cyan]○[-]  %-40s [gray]%s knowledge · %s[-]%s%s\n",
+				techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(researchTicks(def.ResearchTicks, state), state), affordStr, keystoneMark(ts))
 
 			if ts.Description != "" {
 				fmt.Fprintf(&sb, "     [gray]%s[-]\n", ts.Description)
@@ -269,10 +270,10 @@ func researchProvider(state game.GameState, _ int) string {
 				if len(effStrs) > 0 {
 					effStr = "  [gray]" + strings.Join(effStrs, ", ") + "[-]"
 				}
-				fmt.Fprintf(&sb, "  [green]✓[-]  [green]%-24s[-]%s\n", ts.Name, effStr)
+				fmt.Fprintf(&sb, "  [green]✓[-]  [green]%-24s[-]%s%s\n", ts.Name, effStr, keystoneMark(ts))
 
 			} else if state.Research.CurrentTech == tech.Key {
-				fmt.Fprintf(&sb, "  [yellow]⟳[-]  [yellow]%-24s[-]  [gray](in progress)[-]\n", ts.Name)
+				fmt.Fprintf(&sb, "  [yellow]⟳[-]  [yellow]%-24s[-]  [gray](in progress)[-]%s\n", ts.Name, keystoneMark(ts))
 
 			} else if ts.Available {
 				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-40s[-]  [gray]%s knowledge · %s[-]", techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(researchTicks(def.ResearchTicks, state), state))
@@ -280,18 +281,18 @@ func researchProvider(state game.GameState, _ int) string {
 				if prereqNames := techNeeds(ts, allTechs); len(prereqNames) > 0 {
 					fmt.Fprintf(&sb, "  [gray]needs: %s[-]", strings.Join(prereqNames, ", "))
 				}
-				sb.WriteString("\n")
+				sb.WriteString(keystoneMark(ts) + "\n")
 
 			} else if ts.PrereqsMet {
 				// Age-locked (prereqs met but age not yet reached)
-				fmt.Fprintf(&sb, "  [gray]○  %-24s  (age locked)[-]\n", ts.Name)
+				fmt.Fprintf(&sb, "  [gray]○  %-24s  (age locked)[-]%s\n", ts.Name, keystoneMark(ts))
 
 			} else {
 				// Locked — prereqs not met
 				if prereqNames := techNeeds(ts, allTechs); len(prereqNames) > 0 {
-					fmt.Fprintf(&sb, "  [gray]•  %-24s  needs: %s[-]\n", ts.Name, strings.Join(prereqNames, ", "))
+					fmt.Fprintf(&sb, "  [gray]•  %-24s  needs: %s[-]%s\n", ts.Name, strings.Join(prereqNames, ", "), keystoneMark(ts))
 				} else {
-					fmt.Fprintf(&sb, "  [gray]•  %s[-]\n", ts.Name)
+					fmt.Fprintf(&sb, "  [gray]•  %s[-]%s\n", ts.Name, keystoneMark(ts))
 				}
 			}
 		}

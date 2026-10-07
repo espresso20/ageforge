@@ -417,6 +417,8 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 			Researched:    rm.researched[key],
 			Available:     available && !rm.researched[key],
 			PrereqsMet:    prereqsMet,
+			Kind:          rm.rules.TechKind(key),
+			KeystoneOf:    rm.rules.KeystoneOf(key),
 		}
 	}
 

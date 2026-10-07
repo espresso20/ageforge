@@ -94,16 +94,18 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 
 	// Show new unlocks
 	allBuildings := config.BuildingByKey()
+	techs := config.TechByKey()
 	if len(newDef.UnlockBuildings) > 0 {
 		bNames := make([]string, 0, len(newDef.UnlockBuildings))
 		var later []string // buildings a tech of this age opens later
-		techs := config.TechByKey()
 		for _, bKey := range newDef.UnlockBuildings {
 			def, ok := allBuildings[bKey]
 			switch {
 			case !ok:
 				bNames = append(bNames, bKey)
-			case def.RequiredTech != "":
+			case def.RequiredTech != "" && def.Category != "wonder":
+				// (A wonder is open for banking from the first tick; its
+				// keystone is named with the wonder below.)
 				later = append(later, fmt.Sprintf("%s (%s)", def.Name, techs[def.RequiredTech].Name))
 			default:
 				bNames = append(bNames, def.Name)
@@ -133,7 +135,11 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 	for _, bKey := range newDef.UnlockBuildings {
 		if def, ok := allBuildings[bKey]; ok && def.Category == "wonder" {
 			fmt.Fprintf(&sb, "\n[gold::b]★ Wonder unlocked: %s[-]\n", def.Name)
-			sb.WriteString("[white]Bank its cost, then build it.[-]\n")
+			if tech, ok := techs[def.RequiredTech]; ok {
+				fmt.Fprintf(&sb, "[white]Bank its cost and research %s, its keystone, then build it.[-]\n", tech.Name)
+			} else {
+				sb.WriteString("[white]Bank its cost, then build it.[-]\n")
+			}
 			break
 		}
 	}

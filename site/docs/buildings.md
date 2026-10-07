@@ -174,6 +174,8 @@ Most buildings unlock the moment you enter their age. Five wait for a tech from 
 
 Until the tech is done the building is missing from the build list, and `build` and `upgrade` say which tech it needs. Each of these buildings is its lineage's tier for that age, so the upgrade hint for the old tier shows when you advance, but the upgrade itself waits for the tech. The build plan takes it early and waits. Copies you already have keep working. See [Technologies](technologies.md#tech-tree-by-age).
 
+Wonders wait for a tech too, in their own way: from the Stone Age on each one needs its age's **keystone** before `build` will start it, but it is listed from the first tick of its age and its bank takes deposits and overflow the whole time. See [The keystone tech](wonders.md#the-keystone-tech).
+
 ---
 
 ## Lineage System
@@ -261,7 +263,7 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Iron | 6h 30m | 58m | 1h 5m | 8m 6s |
 | Classical | 9h 6m | 1.6h | 1h 31m | 11m 22s |
 | Medieval | 11h 42m | 2.5h | 1h 57m | 14m 36s |
-| Renaissance | 15h 36m | 5h | 2h 36m | 19m 30s |
+| Renaissance | 15h 36m | 6.5h | 2h 36m | 19m 30s |
 | Colonial | 18h 12m | 5.1h | 3h 2m | 22m 44s |
 | Industrial | 20h 48m | 6.6h | 3h 28m | 26m |
 | Victorian | 23h 24m | 8.3h | 3h 54m | 29m 14s |
@@ -278,7 +280,7 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Quantum | 62h 24m | 49.8h | 10h 24m | 1h 18m |
 | Transcendent | 62h 24m | 52.5h | 10h 24m | 1h 18m |
 
-The Renaissance's payback is 1.3x what the curve gives (about 3.8 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target speed. Its University makes 79.9 knowledge/tick, Exchange 1.45K gold, Mill 200 steel, Foundry 273 steel and Coal Mine 111 coal.
+The Renaissance's payback is 1.7x what the curve gives (about 3.9 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. Its University makes 61.1 knowledge/tick, Exchange 1.11K gold, Mill 153 steel, Foundry 209 steel and Coal Mine 85 coal.
 
 The Information and Cyberpunk Ages go the other way, at 0.8x: they ran 1.2 to 1.5x their targets, and the extra time was spent waiting.
 
