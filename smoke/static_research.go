@@ -47,11 +47,12 @@ import (
 const (
 	// TechEntryStorageCopies is how many copies of an age's storage building
 	// the Entry rule allows before the age's first tech must fit. With the
-	// tree a third of its size each tech costs about three times what it
-	// will, and the Renaissance needs four vaults (the Classical and
-	// Colonial Ages two, four others one). Its old gate asked for 30M
-	// knowledge held at once: ten. Bring it down as techs are added.
-	TechEntryStorageCopies = 4
+	// tree a third of its size each tech cost about three times what it
+	// will, and the Renaissance needed four vaults (its old gate asked for
+	// 30M knowledge held at once: ten). With the Steel and Electric Eras'
+	// techs in the tree no age of theirs needs more than two. Bring it down
+	// as techs are added.
+	TechEntryStorageCopies = 2
 )
 
 // ResearchRow is one age against the Research Covenant.

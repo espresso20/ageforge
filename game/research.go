@@ -171,6 +171,16 @@ func techTimeTicks(ticks int, factor float64) int {
 	return max(1, int(float64(float64(ticks)*factor)))
 }
 
+// techGrowTicks is ticks × factor for a term that lengthens a time (a
+// festival that lasts 25% longer), rounded down. A factor of 1 or less, or
+// one nothing has set (0), leaves ticks as they are.
+func techGrowTicks(ticks int, factor float64) int {
+	if factor <= 1 || ticks <= 0 {
+		return ticks
+	}
+	return int(float64(float64(ticks) * factor))
+}
+
 // ancientKnowledgeTicks multiplies ticks by Ancient Knowledge's factor mult,
 // rounded down, never below one tick. A factor of 1 or more, or one no
 // engine has set (0), leaves ticks as they are.

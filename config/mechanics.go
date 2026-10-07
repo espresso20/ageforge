@@ -45,6 +45,28 @@ const (
 	// MechanicMoraleCap is added to the highest morale can rise (1.0, plus
 	// what the wonders add): 0.05 is 5 points higher.
 	MechanicMoraleCap = "morale_cap"
+	// MechanicWonderBuildTicks multiplies the time a wonder takes to build,
+	// beside the techs' cut of all construction.
+	MechanicWonderBuildTicks = "wonder_build_ticks"
+	// MechanicFestivalTicks multiplies how long a festival's bonus lasts.
+	MechanicFestivalTicks = "festival_ticks"
+	// MechanicGiftOpinion multiplies the opinion a gift earns, rounded down
+	// to a whole point.
+	MechanicGiftOpinion = "gift_opinion"
+	// MechanicAllianceBonus multiplies what an allied civilization adds to
+	// its specialty.
+	MechanicAllianceBonus = "alliance_bonus"
+	// MechanicUpgradeCost multiplies what upgrading a building to the next
+	// of its line costs.
+	MechanicUpgradeCost = "upgrade_cost"
+	// MechanicCampaignTicks multiplies the time a military campaign takes.
+	// Scouting expeditions have MechanicExpeditionTicks.
+	MechanicCampaignTicks = "campaign_ticks"
+	// MechanicSoldierStorage multiplies how many soldiers can be held.
+	MechanicSoldierStorage = "soldier_storage"
+	// MechanicCampaignReward multiplies what a military campaign brings
+	// back, won or lost.
+	MechanicCampaignReward = "campaign_reward"
 )
 
 // MechanicUnit is how the size of a step on a mechanic number is printed.
@@ -103,6 +125,22 @@ func Mechanics() []MechanicDef {
 			Text: "trade routes bring in %s more", Unit: UnitPercent},
 		{Key: MechanicMoraleCap, Name: "morale ceiling", Min: 0, Max: 0.30,
 			Text: "morale can rise %s higher", Unit: UnitPoints},
+		{Key: MechanicWonderBuildTicks, Name: "wonder construction time", Multiplies: true, Min: 0.40, Max: 1,
+			Text: "wonders take %s less time to build", Unit: UnitPercent},
+		{Key: MechanicFestivalTicks, Name: "festival length", Multiplies: true, Min: 1, Max: 2,
+			Text: "festivals last %s longer", Unit: UnitPercent},
+		{Key: MechanicGiftOpinion, Name: "opinion from gifts", Multiplies: true, Min: 1, Max: 3,
+			Text: "gifts raise opinion %s more", Unit: UnitPercent},
+		{Key: MechanicAllianceBonus, Name: "alliance bonuses", Multiplies: true, Min: 1, Max: 2,
+			Text: "alliances give %s more", Unit: UnitPercent},
+		{Key: MechanicUpgradeCost, Name: "upgrade cost", Multiplies: true, Min: 0.40, Max: 1,
+			Text: "upgrades cost %s less", Unit: UnitPercent},
+		{Key: MechanicCampaignTicks, Name: "campaign time", Multiplies: true, Min: 0.40, Max: 1,
+			Text: "campaigns take %s less time", Unit: UnitPercent},
+		{Key: MechanicSoldierStorage, Name: "soldier storage", Multiplies: true, Min: 1, Max: 2,
+			Text: "room for %s more soldiers", Unit: UnitPercent},
+		{Key: MechanicCampaignReward, Name: "campaign loot", Multiplies: true, Min: 1, Max: 2,
+			Text: "campaigns bring back %s more", Unit: UnitPercent},
 	}
 }
 

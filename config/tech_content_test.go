@@ -7,15 +7,19 @@ import (
 	"github.com/rivo/uniseg"
 )
 
+// techRow is one tech as the tech tree's design draws it: its age, lane and
+// kind and what it needs ("a|b" is an either-or group).
+type techRow struct {
+	key, age, lane string
+	kind           TechKind
+	needs          string
+}
+
 // The tree of the Stone and Iron Eras (the Primitive to Medieval Ages), as
 // the tech tree's design draws it: each tech's age, lane, kind and what it
 // needs ("a|b" is an either-or group). The first content batch filled these
 // six ages in.
-var earlyTree = []struct {
-	key, age, lane string
-	kind           TechKind
-	needs          string
-}{
+var earlyTree = []techRow{
 	{"language", "primitive_age", LaneKnowledge, TechSpine, ""},
 	{"fire_mastery", "primitive_age", LaneAgriculture, TechOptional, ""},
 	{"tool_making", "primitive_age", LaneCraft, TechSpine, ""},
@@ -64,24 +68,97 @@ var earlyTree = []struct {
 	{"fortification", "medieval_age", LaneMilitary, TechOptional, "imperial_legions"},
 }
 
-// earlyAges are the six ages earlyTree covers.
-var earlyAges = map[string]bool{
-	"primitive_age": true, "stone_age": true, "bronze_age": true,
-	"iron_age": true, "classical_age": true, "medieval_age": true,
+// midTree is the same for the Steel and Electric Eras (the Renaissance to
+// Atomic Ages), which the second content batch filled in.
+var midTree = []techRow{
+	{"patronage", "renaissance_age", LaneFaith, TechKeystone, "banking"},
+	{"printing_press", "renaissance_age", LaneKnowledge, TechOptional, "alchemy theology"},
+	{"navigation", "renaissance_age", LaneTrade, TechSpine, "exploration mathematics"},
+	{"crop_rotation", "renaissance_age", LaneAgriculture, TechOptional, "feudalism"},
+	{"architecture", "renaissance_age", LaneCraft, TechOptional, "civil_engineering"},
+	{"blast_furnace", "renaissance_age", LaneMaterials, TechOptional, "steel_forging"},
+	{"gunpowder", "renaissance_age", LaneMilitary, TechOptional, "alchemy siege_warfare"},
+
+	{"baroque_arts", "colonial_age", LaneFaith, TechOptional, "patronage"},
+	{"scientific_method", "colonial_age", LaneKnowledge, TechOptional, "printing_press"},
+	{"cartography", "colonial_age", LaneTrade, TechKeystone, "navigation"},
+	{"mercantilism", "colonial_age", LaneTrade, TechOptional, "banking navigation"},
+	{"embassies", "colonial_age", LaneTrade, TechOptional, "envoys"},
+	{"new_world_crops", "colonial_age", LaneAgriculture, TechOptional, "crop_rotation"},
+	{"surveying", "colonial_age", LaneCraft, TechOptional, "architecture"},
+	{"coke_smelting", "colonial_age", LaneMaterials, TechOptional, "blast_furnace"},
+	{"colonialism", "colonial_age", LaneMilitary, TechOptional, "cartography gunpowder"},
+
+	{"romanticism", "industrial_age", LaneFaith, TechOptional, "baroque_arts"},
+	{"encyclopedia", "industrial_age", LaneKnowledge, TechOptional, "scientific_method"},
+	{"railroads", "industrial_age", LaneTrade, TechOptional, "steam_power road_building"},
+	{"geographic_societies", "industrial_age", LaneTrade, TechOptional, "cartography"},
+	{"concert_of_nations", "industrial_age", LaneTrade, TechCapstone, "embassies geographic_societies"},
+	{"seed_drill", "industrial_age", LaneAgriculture, TechOptional, "new_world_crops"},
+	{"industrialization", "industrial_age", LaneCraft, TechKeystone, "steam_power"},
+	{"clockwork_automation", "industrial_age", LaneCraft, TechOptional, "chronometry"},
+	{"interchangeable_parts", "industrial_age", LaneCraft, TechCapstone, "industrialization clockwork_automation"},
+	{"steam_pumps", "industrial_age", LaneMaterials, TechOptional, "coke_smelting"},
+	{"rifling", "industrial_age", LaneMilitary, TechOptional, "gunpowder"},
+	{"steam_power", "industrial_age", LaneEnergy, TechSpine, "steel_forging"},
+
+	{"museums", "victorian_age", LaneFaith, TechOptional, "romanticism"},
+	{"public_education", "victorian_age", LaneKnowledge, TechOptional, "encyclopedia"},
+	{"telecommunications", "victorian_age", LaneTrade, TechOptional, "electrification"},
+	{"sanitation", "victorian_age", LaneAgriculture, TechOptional, "seed_drill"},
+	{"mass_production", "victorian_age", LaneCraft, TechKeystone, "industrialization"},
+	{"geology", "victorian_age", LaneMaterials, TechOptional, "steam_pumps"},
+	{"general_staff", "victorian_age", LaneMilitary, TechOptional, "rifling"},
+	{"electrification", "victorian_age", LaneEnergy, TechSpine, "industrialization"},
+
+	{"radio", "electric_age", LaneFaith, TechOptional, "telecommunications"},
+	{"modern_physics", "electric_age", LaneKnowledge, TechOptional, "public_education"},
+	{"wire_transfers", "electric_age", LaneTrade, TechOptional, "telecommunications"},
+	{"fertilizers", "electric_age", LaneAgriculture, TechOptional, "sanitation"},
+	{"assembly_line", "electric_age", LaneCraft, TechOptional, "mass_production"},
+	{"chemical_engineering", "electric_age", LaneMaterials, TechSpine, "mass_production"},
+	{"mechanized_warfare", "electric_age", LaneMilitary, TechOptional, "general_staff"},
+	{"power_distribution", "electric_age", LaneEnergy, TechKeystone, "electrification"},
+	{"aviation", "electric_age", LaneSpace, TechSpine, "mass_production"},
+
+	{"cinema", "atomic_age", LaneFaith, TechOptional, "radio"},
+	{"big_science", "atomic_age", LaneKnowledge, TechCapstone, "modern_physics"},
+	{"corporations", "atomic_age", LaneTrade, TechOptional, "mercantilism wire_transfers"},
+	{"green_revolution", "atomic_age", LaneAgriculture, TechOptional, "fertilizers"},
+	{"prefabrication", "atomic_age", LaneCraft, TechOptional, "assembly_line"},
+	{"plastics", "atomic_age", LaneMaterials, TechOptional, "chemical_engineering"},
+	{"nuclear_deterrence", "atomic_age", LaneMilitary, TechOptional, "nuclear_fission rocketry"},
+	{"military_industrial_complex", "atomic_age", LaneMilitary, TechCapstone, "mechanized_warfare nuclear_deterrence"},
+	{"nuclear_fission", "atomic_age", LaneEnergy, TechKeystone, "power_distribution chemical_engineering"},
+	{"civilian_reactors", "atomic_age", LaneEnergy, TechOptional, "nuclear_deterrence"},
+	{"rocketry", "atomic_age", LaneSpace, TechSpine, "aviation"},
 }
 
-// TestEarlyTreeIsAsDesigned: the Stone and Iron Eras hold exactly the techs
-// of the design, each in its age and lane, of its kind, needing what the
-// design says. Navigation, one age on, stands on Exploration.
-func TestEarlyTreeIsAsDesigned(t *testing.T) {
+// designedTree is every age a content batch has filled in.
+func designedTree() []techRow {
+	return append(append([]techRow(nil), earlyTree...), midTree...)
+}
+
+// designedTechs is how many techs each filled-in age holds.
+var designedTechs = map[string]int{
+	"primitive_age": 3, "stone_age": 6, "bronze_age": 9, "iron_age": 7, "classical_age": 7, "medieval_age": 9,
+	"renaissance_age": 7, "colonial_age": 9, "industrial_age": 12, "victorian_age": 8, "electric_age": 9, "atomic_age": 11,
+}
+
+// TestTreeIsAsDesigned: the Stone, Iron, Steel and Electric Eras hold
+// exactly the techs of the design, each in its age and lane, of its kind,
+// needing what the design says, and no lane of an age holds more than three.
+func TestTreeIsAsDesigned(t *testing.T) {
 	techs := Technologies()
 	kinds := TechKinds(techs, BaseBuildings())
 	byKey := TechByKey()
 	listed := map[string]bool{}
 	perAge := map[string]int{}
-	for _, row := range earlyTree {
+	perLane := map[string]int{}
+	for _, row := range designedTree() {
 		listed[row.key] = true
 		perAge[row.age]++
+		perLane[row.age+" "+row.lane]++
 		def, ok := byKey[row.key]
 		if !ok {
 			t.Errorf("%s is not a tech", row.key)
@@ -97,35 +174,37 @@ func TestEarlyTreeIsAsDesigned(t *testing.T) {
 		}
 	}
 	for _, def := range techs {
-		if earlyAges[def.Age] && !listed[def.Key] {
+		if _, designed := designedTechs[def.Age]; designed && !listed[def.Key] {
 			t.Errorf("%s is a tech of the %s the design does not list", def.Key, def.Age)
 		}
 	}
-	for age, want := range map[string]int{"primitive_age": 3, "stone_age": 6, "bronze_age": 9, "iron_age": 7, "classical_age": 7, "medieval_age": 9} {
+	for age, want := range designedTechs {
 		if perAge[age] != want {
 			t.Errorf("%s holds %d techs, want %d", age, perAge[age], want)
 		}
 	}
-	if got := strings.Join(byKey["navigation"].Prerequisites, " "); got != "exploration mathematics" {
-		t.Errorf("navigation needs %q, want Exploration and Mathematics", got)
+	for laneOfAge, n := range perLane {
+		if n > 3 {
+			t.Errorf("%s holds %d techs: a lane takes three an age at most", laneOfAge, n)
+		}
 	}
-	if len(techs) != 94 {
-		t.Errorf("the tree holds %d techs, want 94: the 77 it had and the 17 of the first content batch", len(techs))
+	if len(techs) != 128 {
+		t.Errorf("the tree holds %d techs, want 128: the 77 it had, the 17 of the first content batch and the 34 of the second", len(techs))
 	}
 }
 
-// TestEarlyTechsCarryTheirOwnArt: every tech of the Stone and Iron Eras has
-// an emblem and a letter code of its own, written on the tech and not
-// borrowed from its lane or made from its name by default. An emblem is one
-// glyph that takes exactly one cell, and no two techs of a lane share one;
-// the code's first letter is the tech's letter in the plain glyph tier.
-func TestEarlyTechsCarryTheirOwnArt(t *testing.T) {
+// TestDesignedTechsCarryTheirOwnArt: every tech of a filled-in age has an
+// emblem and a letter code of its own, written on the tech and not borrowed
+// from its lane or made from its name by default. An emblem is one glyph
+// that takes exactly one cell, and no two techs of a lane share one; the
+// code's first letter is the tech's letter in the plain glyph tier.
+func TestDesignedTechsCarryTheirOwnArt(t *testing.T) {
 	raw := map[string]TechDef{}
 	for _, def := range rawTechnologies() {
 		raw[def.Key] = def
 	}
 	inLane := map[string]map[string]string{}
-	for _, row := range earlyTree {
+	for _, row := range designedTree() {
 		def := TechByKey()[row.key]
 		if raw[row.key].Emblem == "" {
 			t.Errorf("%s sets no emblem of its own: it would wear its lane's", row.key)

@@ -94,6 +94,8 @@ type DiplomacyManager struct {
 	// giftCost, dealRefresh and feeScale are the techs' terms the manager
 	// reads (SetTechTerms).
 	giftCost, dealRefresh, feeScale float64
+	// giftOpinion and allyBonus are two more (SetGiftAndAllyTerms).
+	giftOpinion, allyBonus float64
 
 	// lentBatches tracks worker loans in flight so they can be returned on time.
 	lentBatches []LentWorkerBatch
@@ -531,6 +533,32 @@ func (dm *DiplomacyManager) SetTechTerms(giftCost, dealRefresh, feeScale float64
 	dm.giftCost, dm.dealRefresh, dm.feeScale = giftCost, dealRefresh, feeScale
 }
 
+// SetGiftAndAllyTerms sets two more of the techs' terms: giftOpinion on the
+// opinion a gift earns (config.MechanicGiftOpinion) and allyBonus on what an
+// allied civilization adds to its specialty (config.MechanicAllianceBonus).
+// 0 reads as 1 for each.
+func (dm *DiplomacyManager) SetGiftAndAllyTerms(giftOpinion, allyBonus float64) {
+	dm.giftOpinion, dm.allyBonus = giftOpinion, allyBonus
+}
+
+// GiftGain is the opinion a gift earns now: GiftOpinion with the techs'
+// share on top, rounded down to a whole point.
+func (dm *DiplomacyManager) GiftGain() int {
+	if dm.giftOpinion <= 1 {
+		return GiftOpinion
+	}
+	return int(float64(GiftOpinion * dm.giftOpinion))
+}
+
+// AllyBonus is what def adds to its specialty while allied: its TradeBonus
+// with the techs' share on top.
+func (dm *DiplomacyManager) AllyBonus(def config.FactionDef) float64 {
+	if dm.allyBonus <= 1 {
+		return def.TradeBonus
+	}
+	return float64(def.TradeBonus * dm.allyBonus)
+}
+
 // dealRefreshFor is how long a set of offers lasts in age with the techs'
 // cut: dealRefreshIn, rounded down, one tick at least.
 func (dm *DiplomacyManager) dealRefreshFor(age string) int {
@@ -563,7 +591,7 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 		return 0, fmt.Errorf("Not enough gold for a gift to the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
 	}
 
-	fs.Opinion += GiftOpinion
+	fs.Opinion += dm.GiftGain()
 	if fs.Opinion > opinionMax {
 		fs.Opinion = opinionMax
 	}
@@ -587,7 +615,7 @@ func (dm *DiplomacyManager) GetTradeBonus(resourceKey string) float64 {
 			continue
 		}
 		if def.Specialty == resourceKey {
-			bonus += def.TradeBonus
+			bonus += dm.AllyBonus(def)
 		}
 	}
 	return bonus
@@ -841,7 +869,7 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 		info := FactionInfo{
 			Name:        def.Name,
 			Specialty:   def.Specialty,
-			TradeBonus:  def.TradeBonus,
+			TradeBonus:  dm.AllyBonus(def),
 			Personality: def.Personality,
 			Backstory:   def.Backstory,
 			Strength:    def.Strength,
@@ -877,6 +905,7 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 	return DiplomacyState{
 		Factions:  factions,
 		GiftCost:  dm.GiftPrice(),
+		GiftGain:  dm.GiftGain(),
 		BoonCrews: dm.boonLoansForSave(),
 	}
 }

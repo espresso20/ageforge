@@ -698,6 +698,9 @@ type DiplomacyState struct {
 	Factions map[string]FactionInfo
 	// GiftCost is what a gift costs now: GiftCost with the techs' cut.
 	GiftCost float64
+	// GiftGain is the opinion a gift earns now: GiftOpinion with the techs'
+	// share on top.
+	GiftGain int
 	// BoonCrews are the workers faction boons have lent (Extra Hands), one
 	// entry per crew, oldest first. They go home when TicksLeft runs out.
 	BoonCrews []BoonWorkerLoan

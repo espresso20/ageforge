@@ -73,10 +73,40 @@ type MilitaryManager struct {
 	// (config.MechanicExpeditionTicks). The engine sets it (SetScoutTime); 0
 	// reads as 1. Campaigns keep their time.
 	scoutTime float64
+	// campaignTime and campaignPay are the techs' terms on the time a
+	// military campaign takes and on what it brings back
+	// (config.MechanicCampaignTicks, config.MechanicCampaignReward). The
+	// engine sets them (SetCampaignTerms); 0 reads as 1.
+	campaignTime, campaignPay float64
 }
 
 // SetScoutTime sets the techs' term on a scouting expedition's time.
 func (mm *MilitaryManager) SetScoutTime(f float64) { mm.scoutTime = f }
+
+// SetCampaignTerms sets the techs' terms on a military campaign's time and
+// on what it brings back.
+func (mm *MilitaryManager) SetCampaignTerms(time, pay float64) {
+	mm.campaignTime, mm.campaignPay = time, pay
+}
+
+// missionTicks is ticks, a mission's time already stretched for its age,
+// with the techs' cut for its category: scouting expeditions have one,
+// campaigns another.
+func (mm *MilitaryManager) missionTicks(category string, ticks int) int {
+	if category == ExpeditionScouting {
+		return techTimeTicks(ticks, mm.scoutTime)
+	}
+	return techTimeTicks(ticks, mm.campaignTime)
+}
+
+// CampaignPay is amount of a campaign's loot with the techs' share on top:
+// amount itself with none.
+func (mm *MilitaryManager) CampaignPay(amount float64) float64 {
+	if mm.campaignPay <= 1 {
+		return amount
+	}
+	return float64(amount * mm.campaignPay)
+}
 
 // NewMilitaryManager creates a military manager on the core ruleset.
 func NewMilitaryManager() *MilitaryManager { return NewMilitaryManagerWith(rules.Core()) }
@@ -296,10 +326,7 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 	if ticks <= 0 {
 		ticks = minExpeditionDurationTicks
 	}
-	ticks = mm.rules.StretchTicks(currentAge, ticks)
-	if def.Category == ExpeditionScouting {
-		ticks = techTimeTicks(ticks, mm.scoutTime)
-	}
+	ticks = mm.missionTicks(def.Category, mm.rules.StretchTicks(currentAge, ticks))
 
 	mm.activeByCat[def.Category] = &ActiveExpedition{
 		Key:       key,
@@ -423,6 +450,9 @@ func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, militar
 		rewardMult := 1.0 + expeditionBonus
 		for res, amount := range def.Rewards {
 			rewards[res] = amount * rewardMult
+			if category == ExpeditionMilitary {
+				rewards[res] = mm.CampaignPay(rewards[res])
+			}
 			mm.totalLoot[res] += rewards[res]
 		}
 		message = fmt.Sprintf("%s succeeded. Loot: %s.", def.Name, amountsText(rewards))
@@ -430,6 +460,9 @@ func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, militar
 		// Partial rewards on failure
 		for res, amount := range def.Rewards {
 			partial := float64(amount * failedLootShare)
+			if category == ExpeditionMilitary {
+				partial = mm.CampaignPay(partial)
+			}
 			rewards[res] = partial
 			mm.totalLoot[res] += partial
 		}
@@ -532,8 +565,8 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 			Key:               def.Key,
 			Category:          def.Category,
 			SoldiersNeeded:    def.SoldiersNeeded,
-			DurationMin:       mm.rules.StretchTicks(currentAge, def.DurationMin),
-			DurationMax:       mm.rules.StretchTicks(currentAge, def.DurationMax),
+			DurationMin:       mm.missionTicks(def.Category, mm.rules.StretchTicks(currentAge, def.DurationMin)),
+			DurationMax:       mm.missionTicks(def.Category, mm.rules.StretchTicks(currentAge, def.DurationMax)),
 			Difficulty:        def.DifficultyBase,
 			Cost:              maps.Clone(def.Cost), // def is the manager's table
 			Description:       def.Description,

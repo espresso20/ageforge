@@ -43,15 +43,30 @@ func marketFeeScale(feeShift float64) float64 {
 }
 
 // pushMechanics hands the managers the mechanic numbers they read on their
-// own: the market's fee, a route's time and what it brings in (trade), a scouting expedition's
-// time (military), a gift's price and a deal set's life (diplomacy). recalculateRates calls it, so
+// own: the market's fee, a route's time and what it brings in (trade), a
+// scouting expedition's time, a campaign's time and what it brings back
+// (military), a gift's price and what it earns, a deal set's life and what
+// an ally adds (diplomacy), what an upgrade costs (buildings). recalculateRates calls it, so
 // they follow every change to what is researched, a load and a new run
 // included. Caller holds the lock.
 func (ge *GameEngine) pushMechanics() {
 	fee := marketFeeScale(ge.Research.Mechanic(config.MechanicMarketFee))
 	ge.Trade.SetTechTerms(fee, ge.Research.Mechanic(config.MechanicRouteTicks), ge.Research.Mechanic(config.MechanicRouteIncome))
 	ge.Military.SetScoutTime(ge.Research.Mechanic(config.MechanicExpeditionTicks))
+	ge.Military.SetCampaignTerms(ge.Research.Mechanic(config.MechanicCampaignTicks), ge.Research.Mechanic(config.MechanicCampaignReward))
 	ge.Diplomacy.SetTechTerms(ge.Research.Mechanic(config.MechanicGiftCost), ge.Research.Mechanic(config.MechanicDealRefreshTicks), fee)
+	ge.Diplomacy.SetGiftAndAllyTerms(ge.Research.Mechanic(config.MechanicGiftOpinion), ge.Research.Mechanic(config.MechanicAllianceBonus))
+	ge.Buildings.SetUpgradeCostTerm(ge.Research.Mechanic(config.MechanicUpgradeCost))
+}
+
+// soldierRoom is room, the soldiers' store, with the techs' term on it:
+// room itself with none. Caller holds the lock.
+func (ge *GameEngine) soldierRoom(room float64) float64 {
+	term := ge.Research.Mechanic(config.MechanicSoldierStorage)
+	if term == 1 {
+		return room
+	}
+	return float64(room * term)
 }
 
 // raidLossFactor is what the techs leave of a raid before the garrison meets

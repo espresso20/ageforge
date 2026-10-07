@@ -17,13 +17,14 @@ func buildingsLineageEnergy() []BuildingDef {
 	// Validator will show HIGH_BOOST on this transition — intentional cross-resource pivot.
 	b = append(b, BuildingDef{
 		Name: "Coal Plant", Key: "coal_plant", Category: "production",
-		BaseCost:    map[string]float64{"steel": 22e6, "coal": 8e6, "gold": 12e6},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "coal", Value: 10}},
-		BuildTicks:  25000,
-		RequiredAge: "industrial_age",
-		Description: "Industrial coal processing plant.",
-		LineageKey:  "energy", LineageTier: 0,
+		BaseCost:     map[string]float64{"steel": 22e6, "coal": 8e6, "gold": 12e6},
+		CostScale:    1.35,
+		Effects:      []Effect{{Type: "production", Target: "coal", Value: 10}},
+		BuildTicks:   25000,
+		RequiredAge:  "industrial_age",
+		RequiredTech: "steam_power",
+		Description:  "Industrial coal processing plant.",
+		LineageKey:   "energy", LineageTier: 0,
 		WorkerDomain: "energy", WorkerCapacity: 6,
 		EpochKey: "steel_era", OutputResource: "coal",
 	})
@@ -46,13 +47,14 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 2 — electric_age  output=electricity  rate=100
 	b = append(b, BuildingDef{
 		Name: "Dynamo Hall", Key: "power_generator", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.1e9, "electricity": 450e6, "coal": 300e6},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 100}},
-		BuildTicks:  75000,
-		RequiredAge: "electric_age",
-		Description: "Electric power generator.",
-		LineageKey:  "energy", LineageTier: 2,
+		BaseCost:     map[string]float64{"steel": 1.1e9, "electricity": 450e6, "coal": 300e6},
+		CostScale:    1.35,
+		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 100}},
+		BuildTicks:   75000,
+		RequiredAge:  "electric_age",
+		RequiredTech: "power_distribution",
+		Description:  "Electric power generator.",
+		LineageKey:   "energy", LineageTier: 2,
 		WorkerDomain: "energy", WorkerCapacity: 8,
 		EpochKey: "electric_era", OutputResource: "electricity",
 	})

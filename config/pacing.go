@@ -221,6 +221,10 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // nothing new to do. Their producers repay faster (0.8x).
 var PaybackAdjust = map[string]float64{
 	"renaissance_age": 2.0,
+	"industrial_age":  1.2,
+	"victorian_age":   1.4,
+	"electric_age":    1.6,
+	"atomic_age":      1.45,
 	"information_age": 0.8,
 	"cyberpunk_age":   0.8,
 }

@@ -450,7 +450,7 @@ func TestResearchTreeKeepsTheSpoilerRule(t *testing.T) {
 		t.Fatal("no tech is out of sight: the game does not test the rule")
 	}
 	m, _, g := drawTree(st, 144, 43, treeView{far: true})
-	if m.later != len(hidden) || !strings.Contains(g.String(), "53 more techs wait in later ages") {
+	if m.later != len(hidden) || !strings.Contains(g.String(), "87 more techs wait in later ages") {
 		t.Errorf("the map counts %d techs in later ages, want %d and a line that says so", m.later, len(hidden))
 	}
 	if len(m.lanes) != len(lanes) {
