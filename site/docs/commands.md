@@ -8,6 +8,8 @@ Command names and the game keys they take (buildings, techs, resources, civiliza
 
 This page lists every command. Each section links to the page that explains the system behind it.
 
+<figure class="screen" data-screen="help"><figcaption>The Help panel carries the same list inside the game.</figcaption></figure>
+
 ## The prompt
 
 As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` and `plan research` the same, then the next age's; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `workers share` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders or storage, and nothing in the Primitive Age); `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.

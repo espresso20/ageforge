@@ -331,6 +331,16 @@ To keep the nightly emails but stop the per-PR ones, add a repository variable `
 - Engine tests access internals via `ge.mu.Lock()` for setup, then public API for assertions
 - Save/load tests defer `os.Remove(...)` for cleanup and verify full round-trip
 
+### Wiki screens
+
+The wiki's pictures of the game (`site/docs/screens/*.json`, drawn as text by `site/docs/screens.js`) are real screens: a generator plays one seeded game and draws each panel with the game's own UI code. Re-run it after a change to a panel's look and commit what it writes. It takes under a minute and is safe to re-run: the same code writes the same bytes.
+
+```bash
+go test -tags mapcapture -run TestWriteSiteScreens ./ui
+```
+
+To add a screen, add a shot to `TestWriteSiteScreens` (`ui/site_screens_test.go`) and a one-line `<figure class="screen" data-screen="name">` with a one-sentence `<figcaption>` to the wiki page that explains it. `TestDocScreens` (`go test ./ui`) fails on a figure with no file and on a file no page shows.
+
 ---
 
 ## Project Structure

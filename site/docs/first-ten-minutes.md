@@ -14,6 +14,8 @@ You're in the **Primitive Age**. The screen shows:
 
 The mini map draws your town from your real buildings, so it grows as you build. On smaller terminals it hides to leave the Buildings list room. Type `map` any time to open the full [Map](map.md) (Esc closes it), and `icons` if you want real icons on it.
 
+<figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on: stores nearly empty, nothing built, and the Getting started guide under the Buildings list.</figcaption></figure>
+
 You have no workers, no housing and 50 wood. Workers come on their own once you have housing and buildings for them to work in. Start by gathering:
 
 ```

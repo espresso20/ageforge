@@ -30,6 +30,8 @@ build                    list all available buildings with costs and count built
 
 `b` is short for `build`. To build copies as the resources come in, rather than now, add them to the [build plan](plan.md) with `plan build <key> [count]`.
 
+<figure class="screen" data-screen="buildings"><figcaption>The Buildings panel in the Bronze Age, scrolled to the current age: each building with the key that build takes, what its next copy costs and how its worker slots are filled.</figcaption></figure>
+
 **`max`** builds as many copies as you can afford along the full cost curve and stops as soon as the next copy would cost more than you have. It does **not** divide your resources by the first copy's price; each copy is priced at its own step of the curve before the game decides to continue.
 
 ## Building Upgrades

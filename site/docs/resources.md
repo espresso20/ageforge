@@ -188,6 +188,8 @@ Bonuses to one resource ("+30% gold") have their own pool for that resource, wit
 - The `festival` command warns you before you pay when the cap would swallow the festival.
 - The log adds a line when a bonus you just earned is capped: a tech, a milestone, a wonder, an awakening, an epoch event, a festival or a boon.
 
+<figure class="screen" data-screen="rates"><figcaption>The foot of the Stats panel in the Bronze Age: the rate of every resource, then the multipliers in play and where each one comes from.</figcaption></figure>
+
 [Worker output](workers-and-domains.md#worker-output-bonuses) bonuses are not in either pool and have no cap.
 
 [Era Mastery](prestige.md#era-mastery) is not part of either pool. On known ground it multiplies every resource's net rate by the age's speed after the cap and after food drain, so a mastered age is not held to x3.

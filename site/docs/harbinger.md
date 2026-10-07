@@ -64,6 +64,8 @@ When a harbinger arrives, or a new figure takes up the warning, you get:
 
 Type `harbinger` (or `harb`) to open the Harbinger panel. It shows the current figure and, after a handoff, who it took up the warning from.
 
+<figure class="screen" data-screen="harbinger"><figcaption>The Harbinger panel in the Iron Age: the warning of the Desert Prophet, its severity, and what the next level of Appease and of Brace would cost.</figcaption></figure>
+
 A harbinger never names an era you haven't reached. It warns of **impending doom** in the era you are in (in the Cosmic Era, also of the Last Passage), and the only era it ever names is your current one.
 
 ---

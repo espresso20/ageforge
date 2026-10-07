@@ -2,6 +2,8 @@
 
 22 unique wonders can be built exactly once per run, one in each age. Each grants civilization-wide bonuses that last until you prestige or Succumb, and every age advance needs its age's wonder. From the Stone Age on, each wonder needs one technology first: its keystone.
 
+<figure class="screen" data-screen="wonders"><figcaption>The Wonders panel in the Bronze Age: the bank of Stonehenge part filled, and the wonders already built below it.</figcaption></figure>
+
 ---
 
 ## How to build a wonder

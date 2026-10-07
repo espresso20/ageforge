@@ -6,6 +6,8 @@ Every milestone and every chain can be completed. See [Can every milestone be do
 
 > When a milestone or chain completes, the log shows the achievement, its reward, and a short cosmetic **flavor quip** on a dim line below ("You built a Wonder. Your neighbors are impressed. One is drafting a strongly worded letter."). The quip is only there for character; the reward text above it is the part that matters.
 
+<figure class="screen" data-screen="milestones"><figcaption>The Milestones panel: each chain with its progress, and every open milestone with what it asks for and what it pays.</figcaption></figure>
+
 ---
 
 ## Civilization titles
