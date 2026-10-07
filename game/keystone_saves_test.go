@@ -331,11 +331,11 @@ func TestKeystoneOldSaveKeepsItsWonders(t *testing.T) {
 			unkeyed++
 		}
 	}
-	// 17 wonders stand, and 14 of them without the tech they now ask for:
-	// all but the Sacred Grove and Stonehenge, which ask for none, and the
-	// Great Monolith, whose Stoneworking the save holds.
-	if wonders != 17 || unkeyed != 14 {
-		t.Errorf("%d wonders up to the Fusion Age, %d of them built without their keystone; want 17 and 14", wonders, unkeyed)
+	// 17 wonders stand, and 15 of them without the tech they now ask for:
+	// all but the Sacred Grove, which asks for none, and the Great
+	// Monolith, whose Stoneworking the save holds.
+	if wonders != 17 || unkeyed != 15 {
+		t.Errorf("%d wonders up to the Fusion Age, %d of them built without their keystone; want 17 and 15", wonders, unkeyed)
 	}
 	if got := ge.Research.ResearchedCount(); got != len(keystoneFixtureTechs) {
 		t.Errorf("%d techs researched, the save held %d", got, len(keystoneFixtureTechs))

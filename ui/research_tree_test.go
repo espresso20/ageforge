@@ -28,7 +28,7 @@ func classicalGame(t *testing.T) *game.GameEngine {
 			t.Fatal(err)
 		}
 	}
-	ge.GrantTechsForTest("tool_making", "fire_mastery", "stoneworking", "primitive_writing", "pottery", "bronze_working", "currency", "masonry", "mathematics", "iron_smelting")
+	ge.GrantTechsForTest("language", "tool_making", "fire_mastery", "stoneworking", "primitive_writing", "pottery", "woodworking", "bronze_working", "currency", "masonry", "the_wheel", "mathematics", "iron_smelting")
 	ge.SetStockForTest("knowledge", 9e5)
 	if err := ge.StartResearch("philosophy"); err != nil {
 		t.Fatal(err)
@@ -486,7 +486,7 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 	ge := classicalGame(t)
 	st := ge.GetState()
 	for key, wants := range map[string][]string{
-		"road_building":    {"Road Building gives +8% gold production. With it, trade routes take 15% less time.", "It builds on Masonry.", "It is item 1 in your plan."},
+		"road_building":    {"Road Building gives +8% gold production. With it, trade routes take 15% less time.", "It builds on Masonry and The Wheel.", "It is item 1 in your plan."},
 		"military_tactics": {"gives +15% military power.", "It opens campaigns.", "It builds on Bronze Working.", "adds it to your plan. Philosophy is running, so it starts in"},
 		"mathematics":      {"It is this age's keystone: the Colosseum cannot be built without it.", "You already hold this."},
 		"philosophy":       {"It is being researched:", "Type research cancel to stop it"},
@@ -690,8 +690,21 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 		t.Errorf("campaign list does not say campaigns are locked:\n%s", out)
 	}
 	// Railroads and Mercantilism are techs of later ages: not a word yet.
-	if out := tradeProvider(st, 120); strings.Contains(out, "Railroads") || strings.Contains(out, "Mercantilism") {
-		t.Errorf("the Trade panel names a tech of a later age:\n%s", out)
+	// The Wheel is this age's, and trade routes wait for it.
+	if out := tradeProvider(st, 120); strings.Contains(out, "Railroads") || strings.Contains(out, "Mercantilism") ||
+		!strings.Contains(out, "Trade routes need The Wheel first. Research it to start one.") {
+		t.Errorf("the Trade panel should name The Wheel and no tech of a later age:\n%s", out)
+	}
+	// Envoys and Drama belong to ages not in sight: the Factions panel and
+	// the festival command say nothing of them yet. The Expeditions panel
+	// already lists Scout Nearby Ruins, so it names Exploration, a tech of
+	// the next age, at once.
+	festival := func() string { return cmdFestival(nil, ge).Message + cmdFestival([]string{"confirm"}, ge).Message }
+	if out := factionsProvider(st, 120) + festival(); strings.Contains(out, "Envoys") || strings.Contains(out, "Drama") {
+		t.Errorf("a panel names a tech of an age not in sight:\n%s", out)
+	}
+	if out := expeditionsProvider(st, 120); !strings.Contains(out, "Expeditions past the Scout Party need Exploration first. Research it to send one.") {
+		t.Errorf("the Expeditions panel lists Scout Nearby Ruins and does not say it waits for Exploration:\n%s", out)
 	}
 	ge.GrantTechsForTest("military_tactics")
 	if out := militaryProvider(ge.GetState(), 120) + cmdCampaignList(ge).Message; strings.Contains(out, "Military Tactics first") {
@@ -708,7 +721,170 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 			t.Errorf("the Trade panel is missing %q:\n%s", want, out)
 		}
 	}
+	// Their ages reached: each panel names the tech its command waits for,
+	// and stops once it is researched.
+	late := ge.GetState()
+	for what, c := range map[string][2]string{
+		"the Expeditions panel": {expeditionsProvider(late, 120), "Expeditions past the Scout Party need Exploration first. Research it to send one."},
+		"the Factions panel":    {factionsProvider(late, 120), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
+		"festival":              {cmdFestival(nil, ge).Message, "Festivals need Drama first. Research it to hold one."},
+		"festival confirm":      {cmdFestival([]string{"confirm"}, ge).Message, "Festivals need Drama first. Research it to hold one."},
+	} {
+		if !strings.Contains(c[0], c[1]) {
+			t.Errorf("%s is missing %q:\n%s", what, c[1], c[0])
+		}
+	}
+	ge.GrantTechsForTest("exploration", "envoys", "drama", "the_wheel")
+	late = ge.GetState()
+	if out := expeditionsProvider(late, 120) + factionsProvider(late, 120) + festival() + tradeProvider(late, 120); strings.Contains(out, "Exploration first") || strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
+		t.Errorf("with the techs researched a lock is still shown:\n%s", out)
+	}
 	if strings.Contains(out, "Interstellar Trade") || strings.Contains(out, "interstellar_trade") {
 		t.Errorf("the Trade panel mentions a lock whose tech is not in the tree:\n%s", out)
+	}
+}
+
+// medievalGame is a game in the Medieval Age with the Iron Era's two
+// capstones in different states: Scholasticism can start (Alchemy and
+// Theology are held) and Guilds waits (it has Civil Engineering and not
+// Metal Casting).
+func medievalGame(t *testing.T) *game.GameEngine {
+	t.Helper()
+	ge := game.NewGameEngine()
+	ge.SeedRNG(1)
+	for _, a := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
+		if err := ge.EnterAgeForTest(a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	ge.GrantTechsForTest("language", "tool_making", "stoneworking", "primitive_writing", "woodworking", "masonry", "the_wheel",
+		"mathematics", "road_building", "philosophy", "civil_engineering", "alchemy", "theology")
+	ge.SetStockForTest("knowledge", 1e9)
+	return ge
+}
+
+// TestEarlyEmblemsSitOnTheGrid: every tech of the Stone and Iron Eras wears
+// the emblem its own entry sets, one glyph on the centre cell of its badge
+// at both badge sizes and of its pill zoomed out, and in the plain glyph
+// tier the first letter of its code sits there instead. Nothing is drawn in
+// a cell beside the emblem's own.
+func TestEarlyEmblemsSitOnTheGrid(t *testing.T) {
+	st := classicalGame(t).GetState() // the six ages are in sight: Medieval is next
+	early := 0
+	for _, def := range config.Technologies() {
+		switch def.Age {
+		case "primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age":
+			early++
+		}
+	}
+	lanes := config.TechLaneByKey()
+	for _, w := range []int{80, 120} {
+		for _, far := range []bool{false, true} {
+			for _, ascii := range []bool{false, true} {
+				geom := treeGeomFor(w, far)
+				m := buildTree(st, geom, ascii, "")
+				g := m.canvas(st, "")
+				if ascii {
+					foldPlain(g)
+				}
+				if len(m.nodes) != early || early != 41 {
+					t.Fatalf("%d far=%v: %d techs on the map, the six early ages hold %d (want 41)", w, far, len(m.nodes), early)
+				}
+				for _, n := range m.nodes {
+					want := []rune(n.def.Emblem)[0]
+					if ascii {
+						want = rune(n.def.Code[0])
+					}
+					if n.emblem != want {
+						t.Errorf("%d far=%v plain=%v: %s carries %q, want %q", w, far, ascii, n.key, n.emblem, want)
+					}
+					if !ascii && n.def.Emblem == lanes[n.def.Lane].Emblem && n.key != "tool_making" && n.key != "primitive_writing" && n.key != "military_tactics" {
+						t.Errorf("%s wears its lane's glyph %q: an early tech has an emblem of its own", n.key, n.def.Emblem)
+					}
+					ex, ey := n.cx, n.top+geom.nameH+geom.badgeH/2
+					if geom.pill {
+						ex, ey = m.left(n)+1, n.top
+					}
+					if got := g.at(ex, ey).r; got != want {
+						t.Errorf("%d far=%v plain=%v: %s has %q on its emblem's cell (%d,%d), want %q", w, far, ascii, n.key, got, ex, ey, want)
+					}
+					if ascii && (want < 'A' || want > 'Z') {
+						t.Errorf("%s has no letter for the plain tier: %q", n.key, want)
+					}
+					// The cells either side belong to the badge, never to a
+					// glyph that spilled over: a close badge keeps them
+					// blank or shaded.
+					if !geom.pill {
+						for _, dx := range []int{-1, 1} {
+							if r := g.at(ex+dx, ey).r; r != ' ' && r != '░' && r != '.' && r != ':' {
+								t.Errorf("%d plain=%v: %s has %q beside its emblem", w, ascii, n.key, r)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// TestCapstonesReadByShape: a capstone's badge is drawn in half blocks, at
+// both badge sizes, and its state shows without colour like any other
+// tech's: whole blocks when it can start, broken ones while it waits, a bar
+// along the bottom while it is researched, a tick once it is done. Its card
+// and the status line call it a capstone.
+func TestCapstonesReadByShape(t *testing.T) {
+	ge := medievalGame(t)
+	st := ge.GetState()
+	if s, g := st.Research.Techs["scholasticism"], st.Research.Techs["guilds"]; s.Kind != config.TechCapstone || g.Kind != config.TechCapstone || !s.PrereqsMet || g.PrereqsMet {
+		t.Fatalf("setup: Scholasticism %+v, Guilds %+v", s, g)
+	}
+	for _, w := range []int{80, 120} {
+		geom := treeGeomFor(w, false)
+		m := buildTree(st, geom, false, "scholasticism")
+		ready, waiting := m.by["scholasticism"], m.by["guilds"]
+		if ready.mark != markReady || waiting.mark != markLocked {
+			t.Fatalf("%d: Scholasticism is %v and Guilds %v, want ready and waiting", w, ready.mark, waiting.mark)
+		}
+		rr, wr := badgeRows(geom, ready, 0), badgeRows(geom, waiting, 0)
+		for _, row := range append(append([]string(nil), rr...), wr...) {
+			for _, r := range row {
+				if strings.ContainsRune("╭╮╰╯╔╗╚╝─═│║┄┆", r) {
+					t.Errorf("%d: a capstone's badge has the line %q in it: %q", w, r, row)
+				}
+			}
+		}
+		if !strings.Contains(rr[0], "▄▄▄▄▄▄▄") || !strings.Contains(wr[0], "▄ ▄ ▄ ▄") || rr[len(rr)-1] == wr[len(wr)-1] {
+			t.Errorf("%d: a capstone that can start and one that waits are drawn alike:\n%s\n%s", w, strings.Join(rr, "\n"), strings.Join(wr, "\n"))
+		}
+		// An optional tech of the same age keeps its rounded frame.
+		if rows := badgeRows(geom, m.by["feudalism"], 0); !strings.ContainsAny(rows[0], "╭┄") {
+			t.Errorf("%d: Feudalism, an optional tech, is drawn %q", w, rows[0])
+		}
+	}
+	if got := buildTree(st, treeGeomFor(120, false), false, "guilds").statusLine(st, treeView{sel: "guilds"}); !strings.Contains(got, "waits for what it needs") {
+		t.Errorf("the status line for Guilds: %q", got)
+	}
+	if card := cardOf(st, "guilds"); !strings.Contains(card, "Guilds gives") && !strings.Contains(card, "With it, buildings cost 4% less and construction takes 8% less time") {
+		t.Errorf("Guilds's card does not say what it does:\n%s", card)
+	}
+
+	// In progress: the bar; then done: the tick.
+	if err := ge.StartResearch("scholasticism"); err != nil {
+		t.Fatal(err)
+	}
+	st = ge.GetState()
+	geom := treeGeomFor(120, false)
+	m := buildTree(st, geom, false, "scholasticism")
+	n := m.by["scholasticism"]
+	if rows := badgeRows(geom, n, 0.4); n.mark != markRunning || !strings.Contains(rows[len(rows)-1], "▓▓░░░") {
+		t.Errorf("a capstone in progress is drawn %q", rows[len(rows)-1])
+	}
+	g := m.canvas(st, "scholasticism")
+	if got := g.at(m.left(n)+geom.badgeW-1, n.top+geom.nameH).r; got != '⟳' {
+		t.Errorf("a capstone in progress carries %q at its top right, want the running mark", got)
+	}
+	// It takes the long share of the age's research cap.
+	if def := config.TechByKey()["scholasticism"]; st.Research.TotalTicks <= config.TechByKey()["alchemy"].ResearchTicks || st.Research.TotalTicks > def.ResearchTicks {
+		t.Errorf("Scholasticism runs %d ticks; its base is %d and an optional tech's %d", st.Research.TotalTicks, def.ResearchTicks, config.TechByKey()["alchemy"].ResearchTicks)
 	}
 }

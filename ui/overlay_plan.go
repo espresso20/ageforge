@@ -10,6 +10,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -259,7 +260,13 @@ func planPanelText(state game.GameState, sel int, note string, noteGood, clearAr
 			}
 			fmt.Fprintf(&sb, " %s%s\n       %s  %s\n", marker, title, planStatusText(v), planItemDetail(v, state))
 		}
-		fmt.Fprintf(&sb, "\n %s\n", theme.Paint(theme.RoleDim, fmt.Sprintf("%d of %d items", len(state.Plan), game.MaxPlanItems)))
+		// Research takes no room: the 60 are for everything else.
+		load := game.PlanLoad(state.Plan)
+		count := fmt.Sprintf("%d of %d items", load, game.MaxPlanItems)
+		if techs := len(state.Plan) - load; techs > 0 {
+			count += fmt.Sprintf(", and %s queued (research takes no room)", textfmt.Count(techs, "tech", "techs"))
+		}
+		fmt.Fprintf(&sb, "\n %s\n", theme.Paint(theme.RoleDim, count))
 	}
 
 	sb.WriteString("\n " + theme.Keycap("↑↓") + " select  " + theme.Keycap("U") + " up  " + theme.Keycap("D") + " down  " +

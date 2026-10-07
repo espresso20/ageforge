@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
@@ -53,6 +54,7 @@ func expeditionsProvider(state game.GameState, _ int) string {
 
 	// === Available expeditions ===
 	sb.WriteString("\n [gold]═══ Available expeditions ═══[-]\n\n")
+	sb.WriteString(lockNotesInSight(state, config.FeatureExpeditions))
 	if !hasCategory(mil.Expeditions, game.ExpeditionScouting) {
 		sb.WriteString(" [gray]No expeditions available yet.[-]\n")
 		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" Reach %s to unlock more scouting.", ageRef(state, "bronze_age"))) + "\n")

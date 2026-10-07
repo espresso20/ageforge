@@ -120,7 +120,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 ---
 
 ### ⭕ Stonehenge
-**Age:** Bronze · **Key:** `stonehenge` · **Build:** 1,170 ticks (39m) · **Keystone:** none yet
+**Age:** Bronze · **Key:** `stonehenge` · **Build:** 1,170 ticks (39m) · **Keystone:** Calendar
 
 | Resource | Cost |
 |---|---|

@@ -1775,6 +1775,9 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 		// Show the confirm prompt with the live cost.
 		st := engine.FestivalStatus()
 		state := engine.GetState()
+		if note := strings.TrimSpace(lockNotes(state, config.FeatureFestivals)); note != "" {
+			return CommandResult{Message: note, Type: "warning"}
+		}
 		if !st.Ready {
 			return CommandResult{
 				Message: fmt.Sprintf("[yellow]Festival on cooldown.[-] The next one can be held in %s.", formatTicks(st.CooldownLeft, state)),
@@ -1819,7 +1822,10 @@ func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 	lines = append(lines, fmt.Sprintf("  Cost: [cyan]%s[-]  (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
 	lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
 	lines = append(lines, festivalCapLines(st)...)
-	if st.Ready {
+	if note := strings.TrimSpace(lockNotes(state, config.FeatureFestivals)); note != "" {
+		// The command waits for a tech: say which before anything else.
+		lines = append(lines, "  Status: "+note)
+	} else if st.Ready {
 		if st.Culture >= st.Cost {
 			lines = append(lines, "  Status: [green]ready[-]. Type [cyan]festival confirm yes[-].")
 		} else {

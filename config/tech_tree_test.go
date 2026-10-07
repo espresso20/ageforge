@@ -189,7 +189,7 @@ func TestTechKindsAreDerived(t *testing.T) {
 var realKeystones = map[string]string{
 	"sacred_grove":         "",
 	"great_monolith":       "stoneworking",
-	"stonehenge":           "",
+	"stonehenge":           "calendar",
 	"colosseum":            "mathematics",
 	"parthenon":            "philosophy",
 	"great_library":        "theology",
@@ -213,8 +213,9 @@ var realKeystones = map[string]string{
 
 // TestRealTechKinds: on the real tables every tech has a kind, there is one
 // keystone per tech a wonder requires, and the spine only depends on the
-// spine. The counts are pinned: 20 keystones (every wonder but the Sacred
-// Grove's and Stonehenge's) and the 23 techs they stand on.
+// spine. The counts are pinned: 21 keystones (every wonder but the Sacred
+// Grove's) and the 26 techs they stand on, and the two capstones of the Iron
+// Era.
 func TestRealTechKinds(t *testing.T) {
 	techs, buildings := Technologies(), BaseBuildings()
 	kinds := TechKinds(techs, buildings)
@@ -255,8 +256,8 @@ func TestRealTechKinds(t *testing.T) {
 			}
 		}
 	}
-	if count[TechKeystone] != 20 || count[TechSpine] != 23 || count[TechCapstone] != 0 || count[TechOptional] != 34 {
-		t.Errorf("kinds: %d keystone, %d spine, %d capstone, %d optional; want 20, 23, 0 and 34",
+	if count[TechKeystone] != 21 || count[TechSpine] != 26 || count[TechCapstone] != 2 || count[TechOptional] != 45 {
+		t.Errorf("kinds: %d keystone, %d spine, %d capstone, %d optional; want 21, 26, 2 and 45",
 			count[TechKeystone], count[TechSpine], count[TechCapstone], count[TechOptional])
 	}
 }

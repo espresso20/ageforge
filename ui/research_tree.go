@@ -556,9 +556,9 @@ var (
 
 // badgeRows is a tech's badge as rows of runes, badgeW wide: the frame says
 // its kind (rounded for optional, double for the spine and keystones, half
-// blocks for a capstone), the edges its state (dashed while it waits, a
-// shaded block in an age not reached, a bar along the bottom while it is
-// researched).
+// blocks for a capstone), the edges its state (dashed while it waits, or
+// broken for a capstone's blocks; a shaded block in an age not reached; a
+// bar along the bottom while it is researched).
 func badgeRows(g treeGeom, n *treeNode, progress float64) []string {
 	big := g.badgeH == 5
 	e := string(n.emblem)
@@ -569,10 +569,21 @@ func badgeRows(g treeGeom, n *treeNode, progress float64) []string {
 		return []string{"░░░░░░░", "░░ " + e + " ░░", "░░░▾░░░"}
 	}
 	if n.def.Capstone {
-		if big {
-			return []string{" ▄▄▄▄▄▄▄ ", "▐▀     ▀▌", "▐   " + e + "   ▌", "▐▄     ▄▌", " ▀▀▀▾▀▀▀ "}
+		// Half blocks. Its edges say its state as the other frames' do:
+		// broken while it waits, a bar along the bottom while it is
+		// researched.
+		top, bot := "▄▄▄▄▄▄▄", "▀▀▀▾▀▀▀"
+		switch n.mark {
+		case markLocked:
+			top, bot = "▄ ▄ ▄ ▄", "▀ ▀▾▀ ▀"
+		case markRunning:
+			done := min(max(int(math.Round(5*progress)), 0), 5)
+			bot = "▀" + strings.Repeat("▓", done) + strings.Repeat("░", 5-done) + "▀"
 		}
-		return []string{"▄▄▄▄▄▄▄", "▐  " + e + "  ▌", "▀▀▀▾▀▀▀"}
+		if big {
+			return []string{" " + top + " ", "▐▀     ▀▌", "▐   " + e + "   ▌", "▐▄     ▄▌", " " + bot + " "}
+		}
+		return []string{top, "▐  " + e + "  ▌", bot}
 	}
 	f := frameRound
 	if n.ts.Kind == config.TechKeystone || n.ts.Kind == config.TechSpine {

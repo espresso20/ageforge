@@ -197,18 +197,21 @@ func TestTechHeadroom(t *testing.T) {
 		want float64
 	}{
 		{TechEffectKey{Kind: EffectAllOutput}, 0.10},
-		{TechEffectKey{Kind: EffectOutput, Target: "food"}, 0.45},
-		{TechEffectKey{Kind: EffectOutput, Target: "knowledge"}, 0.49},
+		{TechEffectKey{Kind: EffectOutput, Target: "food"}, 0.66},
+		{TechEffectKey{Kind: EffectOutput, Target: "knowledge"}, 0.69},
 		{TechEffectKey{Kind: EffectOutput, Target: "gold"}, 0.26},
+		{TechEffectKey{Kind: EffectOutput, Target: "faith"}, 0.28},
 		{TechEffectKey{Kind: EffectStorage}, 0.36},
-		{TechEffectKey{Kind: EffectHousing}, 0.18},
-		{TechEffectKey{Kind: EffectBuildCost}, 0.97 * 0.97},
-		{TechEffectKey{Kind: EffectBuildTime}, 0.92 * 0.95 * 0.94},
-		{TechEffectKey{Kind: EffectResearchTime}, 0.97 * 0.97 * 0.97},
+		{TechEffectKey{Kind: EffectHousing}, 0.23},
+		{TechEffectKey{Kind: EffectBuildCost}, 0.97 * 0.97 * 0.96},
+		{TechEffectKey{Kind: EffectBuildTime}, 0.92 * 0.95 * 0.94 * 0.95 * 0.92},
+		{TechEffectKey{Kind: EffectResearchTime}, 0.97 * 0.97 * 0.97 * 0.94},
 		{TechEffectKey{Kind: EffectGameSpeed}, 0.30},
 		{TechEffectKey{Kind: EffectMechanic, Target: MechanicMarketFee}, -0.08},
 		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRouteTicks}, 0.85 * 0.85},
-		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRaidLoss}, 0.81},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRouteIncome}, 1.10},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRaidLoss}, 0.81 * 0.85},
+		{TechEffectKey{Kind: EffectMechanic, Target: MechanicMoraleCap}, 0.05},
 	} {
 		if got := terms[tc.key]; !near(got, tc.want) {
 			t.Errorf("%s %s: every tech together comes to %v, want %v", tc.key.Kind, tc.key.Target, got, tc.want)
@@ -259,10 +262,10 @@ func TestFeatureLocks(t *testing.T) {
 		return strings.Join(out, " ")
 	}
 	live, waiting := LiveFeatureLocks(locks, isTech)
-	if got, want := keys(live), "campaigns naval_expedition black_market route_rail_freight"; got != want {
+	if got, want := keys(live), "trade_routes campaigns expeditions diplomacy festivals naval_expedition black_market route_rail_freight"; got != want {
 		t.Errorf("live locks: %s; want %s", got, want)
 	}
-	if got, want := keys(waiting), "trade_routes expeditions diplomacy festivals route_warp_commerce"; got != want {
+	if got, want := keys(waiting), "route_warp_commerce"; got != want {
 		t.Errorf("locks waiting for their tech: %s; want %s", got, want)
 	}
 	if got, want := FeatureLockByKey()[FeatureCampaigns].Refusal("Military Tactics"), "Campaigns need Military Tactics first. Research it to send one."; got != want {
@@ -318,7 +321,17 @@ func TestTechChecks(t *testing.T) {
 		"tool_making":       "out:food:10; out:wood:10; p:gather_amount:2 | rate(food) x1.10; rate(wood) x1.10; gather_amount +2",
 		"stoneworking":      "out:stone:10; keystone:great_monolith | rate(stone) x1.10; can_build(great_monolith) 0>1",
 		"currency":          "out:gold:10; p:market_fee:-0.03 | rate(gold) x1.10; market_fee -0.03",
-		"military_tactics":  "mil:15; feature:campaigns | military_power +0.15; allowed(campaigns) 0>1",
+		"military_tactics":  "mil:15; unlock:barracks; feature:campaigns | military_power +0.15; can_build(barracks) 0>1; allowed(campaigns) 0>1",
+		"calendar":          "out:faith:10; unlock:altar; keystone:stonehenge | rate(faith) x1.10; can_build(altar) 0>1; can_build(stonehenge) 0>1",
+		"the_wheel":         "time:5; feature:trade_routes | build_ticks x0.95; allowed(trade_routes) 0>1",
+		"boatbuilding":      "out:food:5; p:route_income:0.1 | rate(food) x1.05; route_income x1.10",
+		"priesthood":        "p:morale_cap:0.05 | morale_cap +0.05",
+		"exploration":       "feature:expeditions | allowed(expeditions) 0>1",
+		"envoys":            "feature:diplomacy | allowed(diplomacy) 0>1",
+		"drama":             "feature:festivals | allowed(festivals) 0>1",
+		"scholasticism":     "research:6 | research_ticks x0.94",
+		"guilds":            "cost:4; time:8 | build_price x0.96; build_ticks x0.92",
+		"fortification":     "p:raid_loss:-0.15; mil:10 | raid_loss x0.85; military_power +0.1",
 		"steel_forging":     "first:steel; out:iron:8 | rate(steel) 0>pos; rate(iron) x1.08",
 		"road_building":     "out:gold:8; p:route_ticks:-0.15 | rate(gold) x1.08; route_ticks x0.85",
 		"railroads":         "p:route_ticks:-0.15; feature:route_rail_freight | route_ticks x0.85; allowed(route_rail_freight) 0>1",

@@ -37,13 +37,14 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 1 — bronze_age  soldiers=20
 	b = append(b, BuildingDef{
 		Name: "Barracks", Key: "barracks", Category: "military",
-		BaseCost:    map[string]float64{"wood": 900, "stone": 600, "iron": 200},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 20}},
-		BuildTicks:  500,
-		RequiredAge: "bronze_age",
-		Description: "Trains and houses soldiers.",
-		LineageKey:  "military", LineageTier: 1,
+		BaseCost:     map[string]float64{"wood": 900, "stone": 600, "iron": 200},
+		CostScale:    1.35,
+		Effects:      []Effect{{Type: "capacity", Target: "military", Value: 20}},
+		BuildTicks:   500,
+		RequiredAge:  "bronze_age",
+		RequiredTech: "military_tactics",
+		Description:  "Trains and houses soldiers.",
+		LineageKey:   "military", LineageTier: 1,
 		WorkerDomain: "military", WorkerCapacity: 4,
 		EpochKey: "stone_era",
 	})
@@ -63,13 +64,14 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 3 — iron_age  soldiers=80
 	b = append(b, BuildingDef{
 		Name: "Legion Fort", Key: "legion_fort", Category: "military",
-		BaseCost:    map[string]float64{"stone": 7000, "iron": 3500, "gold": 2000},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 80}},
-		BuildTicks:  300,
-		RequiredAge: "iron_age",
-		Description: "A fortified Roman-style legion camp.",
-		LineageKey:  "military", LineageTier: 3,
+		BaseCost:     map[string]float64{"stone": 7000, "iron": 3500, "gold": 2000},
+		CostScale:    1.35,
+		Effects:      []Effect{{Type: "capacity", Target: "military", Value: 80}},
+		BuildTicks:   300,
+		RequiredAge:  "iron_age",
+		RequiredTech: "siege_warfare",
+		Description:  "A fortified Roman-style legion camp.",
+		LineageKey:   "military", LineageTier: 3,
 		WorkerDomain: "military", WorkerCapacity: 6,
 		EpochKey: "iron_era",
 	})

@@ -24,8 +24,9 @@ func newCaseTestEngine(t *testing.T, age string) *game.GameEngine {
 
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
-	// The techs that open campaigns and the black market.
-	ge.GrantTechsForTest("military_tactics", "mercantilism")
+	// The techs that open the commands the cases use: campaigns, the black
+	// market, trade routes, diplomacy and festivals.
+	ge.GrantTechsForTest("military_tactics", "mercantilism", "the_wheel", "envoys", "drama")
 	if age != "" {
 		if msg := game.DevExecCommand("/age "+age, ge); msg != "jumped to "+age {
 			t.Fatalf("dev /age %s: %q", age, msg)

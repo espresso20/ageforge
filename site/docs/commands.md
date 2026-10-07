@@ -73,7 +73,7 @@ See [Buildings](buildings.md) and [Ages](ages.md).
 
 ## Build Plan
 
-A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, and what a full store would throw away (after the wonder's share) is banked toward its items' next copies. Full rules on the [Build Plan](plan.md) page. With the prestige legacy kit's [Plan Template](prestige.md#plan-template), later runs add each age's part of the plan you wrote when they enter that age.
+A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, not counting research, and what a full store would throw away (after the wonder's share) is banked toward its items' next copies. Full rules on the [Build Plan](plan.md) page. With the prestige legacy kit's [Plan Template](prestige.md#plan-template), later runs add each age's part of the plan you wrote when they enter that age.
 
 | Command | Description |
 |---|---|
@@ -181,7 +181,7 @@ With something typed, `Tab` and `Enter` act on the prompt instead. `research lis
 |---|---|
 | `expedition` | Open the **Expeditions** panel for scouting missions (shorthand: `exp`) |
 | `expedition list` | List the scouting expeditions available in your current age (shorthand: `exp list`) |
-| `expedition <key>` | Send a scouting expedition. It costs resources, never soldiers (e.g. `expedition scout_ruins`; shorthand: `exp <key>`) |
+| `expedition <key>` | Send a scouting expedition. It costs resources, never soldiers (e.g. `expedition scout_party`; shorthand: `exp <key>`). Past the Scout Party it waits for the Exploration tech |
 | `army` | Open the **Army** panel: soldier overview and military campaigns |
 | `campaign list` | List the military campaigns available in your current age (`campaign` alone does the same) |
 | `campaign <key>` | Wage a military campaign. It spends soldiers, plus any resource cost (e.g. `campaign raid_bandits`). Campaigns wait for the Military Tactics tech |
@@ -212,7 +212,7 @@ Keys with underscores can be typed with spaces: `expedition scout ruins` is the 
 | `trade list` | List the market's exchange rates (build a market first) |
 | `trade <give> <get> <amount to give>` | Sell that amount of `<give>` for `<get>` at the market rate (needs a market or a later trade building). `trade wood stone 100` sells 100 wood for stone |
 | `trade route` (or `trade route list`) | List your active trade routes and the routes you can start |
-| `trade route start <route>` | Start a trade route |
+| `trade route start <route>` | Start a trade route. Routes wait for The Wheel, a Bronze Age tech |
 | `trade route stop <route>` | Stop an active trade route |
 | `blackmarket` (or `bm`) | Show the black market's status: culture cost, payout odds and cooldown. Opens in the Colonial Age |
 | `blackmarket <resource>` | Make a smuggling run: spend culture for a chance at a big haul of the chosen resource. Waits for the Mercantilism tech |
@@ -239,7 +239,7 @@ Each trade pushes that pair's rate down a little, and the rate recovers over tim
 | `diplomacy ally <civ>` | Ally with a civilization. Costs 500 gold and needs opinion 50 |
 | `diplomacy rival <civ>` | Declare a rivalry |
 | `diplomacy embargo <civ>` | Embargo a civilization. This is a provocation that can start a war |
-| `diplomacy gift <civ>` | Send a gift of gold for +15 opinion: 200 gold, or 150 with Telecommunications (the Factions panel shows today's price) |
+| `diplomacy gift <civ>` | Send a gift of gold for +15 opinion: 200 gold, or 150 with Telecommunications (the Factions panel shows today's price). Gifts, alliances, rivalries, embargoes and deals wait for Envoys, a Classical Age tech |
 | `diplomacy neutral <civ>` | Set a civilization back to neutral |
 | `diplomacy tribute <civ>` | Sue for peace with a civilization you are at war with (you pay gold and culture, scaled to its strength) |
 | `diplomacy raid <civ>` | Raid a civilization's trade route (-20 opinion; a provocation that can start a war) |
@@ -353,7 +353,7 @@ A prestige pays for every age the run completed, and each era's ages pay three t
 | Command | Description |
 |---|---|
 | `festival` | Show festival status: culture cost, current culture, and the boost it grants |
-| `festival confirm yes` | Hold a cultural festival now: spend culture for a temporary production boost |
+| `festival confirm yes` | Hold a cultural festival now: spend culture for a temporary production boost. Festivals wait for Drama, a Classical Age tech |
 
 A festival costs the larger of 2K culture or 5% of your culture storage, and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes). Two techs help: Radio brings the next festival back 20% sooner and Social Media makes each one cost 20% less. The boost adds to the same pool as every other all-production bonus. It counts in full while that pool is under +200% and a quarter past it (see [The all-production cap](resources.md#the-all-production-cap)). When less than the full +20% would count, `festival` says so before you pay (`Held now, the festival counts a quarter past +200%: +5% now (see stats).`).
 

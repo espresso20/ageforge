@@ -83,13 +83,39 @@ const (
 
 // MaxPlanItems caps the plan's length: 60 items, room for a day away on the
 // one-week curve (an age's storage, its required buildings, a few producers
-// per resource, its techs, the wonder and the advance, then the next age's
-// opening moves) with some to spare. It was 30 before Pacing v2's
-// away-proofing. maxPlanCount caps one build item's count.
+// per resource, the wonder and the advance, then the next age's opening
+// moves) with some to spare. It was 30 before Pacing v2's away-proofing.
+// Research items do not count against it (planLoad): a research queue is
+// bounded by the tree, each tech once, and one command may queue a long
+// chain. maxPlanCount caps one build item's count.
 const (
 	MaxPlanItems = 60
 	maxPlanCount = 1000
 )
+
+// planLoad is how many of items count against MaxPlanItems: every item but
+// the research ones.
+func planLoad(items []PlanItem) int {
+	n := 0
+	for _, it := range items {
+		if it.Kind != PlanResearch {
+			n++
+		}
+	}
+	return n
+}
+
+// PlanLoad is how many of a plan's items count against MaxPlanItems (every
+// one but research), for the panels.
+func PlanLoad(views []PlanItemView) int {
+	n := 0
+	for _, v := range views {
+		if v.Kind != PlanResearch {
+			n++
+		}
+	}
+	return n
+}
 
 // PlanItem is one entry of the build plan, as saved. Count is how many copies
 // of a build item are still to start; Started counts those already started
@@ -194,7 +220,8 @@ func loadBank(b map[string]float64, known func(string) bool) map[string]float64 
 }
 
 // loadPlanIn is a saved plan as the engine accepts it: known kinds only,
-// counts in range, at most MaxPlanItems, banks on build items only, holding
+// counts in range, at most MaxPlanItems besides research and no more
+// research items than the tree has techs, banks on build items only, holding
 // positive, finite amounts of resources set knows. A plan the game wrote
 // passes unchanged.
 func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
@@ -209,7 +236,10 @@ func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 		} else {
 			it.Banked = nil
 		}
-		if (it.Kind != PlanBuild && it.Kind != PlanResearch && it.Kind != PlanTrade && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 || len(out) >= MaxPlanItems {
+		if (it.Kind != PlanBuild && it.Kind != PlanResearch && it.Kind != PlanTrade && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 {
+			continue
+		}
+		if load := planLoad(out); it.Kind != PlanResearch && load >= MaxPlanItems || it.Kind == PlanResearch && len(out)-load >= set.TechCount() {
 			continue
 		}
 		if it.Kind == PlanDeal && (it.Key == "" || it.Deal <= 0) {
@@ -264,7 +294,7 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 		ge.logPlanAddLocked(ge.plan[n-1], add)
 		return add, nil
 	}
-	if len(ge.plan) >= MaxPlanItems {
+	if planLoad(ge.plan) >= MaxPlanItems {
 		return 0, errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: key, Count: count})
@@ -338,9 +368,10 @@ func (ge *GameEngine) planIndexErr(n int) error {
 	return fmt.Errorf("There is no plan item %d (the plan has %s).", n, textfmt.Count(len(ge.plan), "item", "items"))
 }
 
-// errPlanFull is the refusal when the plan holds MaxPlanItems items.
+// errPlanFull is the refusal when the plan holds MaxPlanItems items besides
+// its research.
 func errPlanFull() error {
-	return fmt.Errorf("The plan is full (%d items). Remove one with plan remove <n> first.", MaxPlanItems)
+	return fmt.Errorf("The plan is full (%d items, not counting research). Remove one with plan remove <n> first.", MaxPlanItems)
 }
 
 // planItemLabel is "3 Huts", "research Pottery", "trade iron ore for food"

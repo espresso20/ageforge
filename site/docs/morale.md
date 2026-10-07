@@ -23,7 +23,7 @@ For how morale fits the rest of the worker system, see [Workers](workers-and-dom
 - Morale is shown as a **percentage**.
 - A new game **starts at 50% (neutral)**. A prestige run starts at **70%**, and a Succumb reset puts it back to 50%.
 - It has a hard **floor of 10%**. It can sink low, but never to zero.
-- Its **ceiling is 100% + 5% per wonder built**. With no wonders the cap is 100%; each wonder raises it.
+- Its **ceiling is 100% + 5% per wonder built**. With no wonders the cap is 100%; each wonder raises it, and the Priesthood tech (Iron Age) adds 5 points more.
 
 So a civilization with 4 wonders built can push morale as high as **120%**, while one with none tops out at **100%**.
 

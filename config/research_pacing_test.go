@@ -108,17 +108,61 @@ func TestResearchCostsShareTheAgesBudget(t *testing.T) {
 		}
 	}
 	// What a run must research is the cheap part of every age: no keystone
-	// or spine tech costs more than an optional tech of its age.
+	// or spine tech costs more than an optional tech of its age. A capstone
+	// is the dear one: ResearchCostCapstone times an optional tech's price.
 	optional := map[string]float64{}
 	for _, tech := range techs {
 		if kinds[tech.Key] == TechOptional {
 			optional[tech.Age] = tech.Cost
 		}
 	}
+	capstones := 0
 	for _, tech := range techs {
-		if o, ok := optional[tech.Age]; ok && kinds[tech.Key] != TechOptional && tech.Cost >= o {
+		o, ok := optional[tech.Age]
+		switch {
+		case !ok || kinds[tech.Key] == TechOptional:
+		case kinds[tech.Key] == TechCapstone:
+			capstones++
+			if want := float64(o * ResearchCostCapstone); math.Abs(tech.Cost-want) > 0.01*want {
+				t.Errorf("%s (capstone) costs %v, want %v: %g times an optional tech of its age (%v)", tech.Key, tech.Cost, want, ResearchCostCapstone, o)
+			}
+		case tech.Cost >= o:
 			t.Errorf("%s (%s) costs %v, no less than an optional tech of its age (%v)", tech.Key, kinds[tech.Key], tech.Cost, o)
 		}
+	}
+	if capstones == 0 {
+		t.Error("no capstone was priced: the tree has two from the Medieval Age on")
+	}
+}
+
+// TestCapstonesAreTheLongOnes: a capstone takes ResearchTimeCapstone of its
+// age's research cap, longer than any other tech of the age, and still
+// inside the cap.
+func TestCapstonesAreTheLongOnes(t *testing.T) {
+	techs := Technologies()
+	kinds := TechKinds(techs, BaseBuildings())
+	longest := map[string]int{}
+	for _, tech := range techs {
+		if kinds[tech.Key] != TechCapstone {
+			longest[tech.Age] = max(longest[tech.Age], tech.ResearchTicks)
+		}
+	}
+	seen := 0
+	for _, tech := range techs {
+		if kinds[tech.Key] != TechCapstone {
+			continue
+		}
+		seen++
+		limit := ResearchCapTicks(tech.Age)
+		if want := int(math.Round(float64(limit * ResearchTimeCapstone))); tech.ResearchTicks != want {
+			t.Errorf("%s takes %d ticks, want %d: %g of the %s research cap (%g ticks)", tech.Key, tech.ResearchTicks, want, ResearchTimeCapstone, tech.Age, limit)
+		}
+		if tech.ResearchTicks <= longest[tech.Age] || float64(tech.ResearchTicks) > limit {
+			t.Errorf("%s takes %d ticks: the longest other tech of its age takes %d and the cap is %g", tech.Key, tech.ResearchTicks, longest[tech.Age], limit)
+		}
+	}
+	if seen != 2 {
+		t.Errorf("%d capstones, want 2: Scholasticism and Guilds", seen)
 	}
 }
 

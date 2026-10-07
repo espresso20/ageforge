@@ -256,17 +256,25 @@ func checkOffline(o offlineRun, fail func(check, format string, args ...interfac
 	anyRate, anyGain := false, false
 	for _, k := range sortedKeys(o.gains) {
 		g, pre, post := o.gains[k], o.pre.Resources[k], o.post.Resources[k]
-		// Construction finishes while the player is away, so the rate can
-		// rise during the closure; it never exceeds the higher of the rates
-		// before and after (buildings only complete, they are not lost).
-		limit := math.Max(math.Max(pre.Rate, post.Rate), 0) * float64(ticks) * game.OfflineEfficiency
+		// Construction and research finish while the player is away, so the
+		// rate can rise during the closure; it never exceeds the higher of
+		// the rates before and after (buildings only complete, they are not
+		// lost). One thing takes from a rate on the way: the people
+		// recruited while away eat, so food's rate after is counted with the
+		// drain it had before (a food tech that finishes early in the
+		// closure pays its bonus before the new mouths arrive).
+		top := math.Max(pre.Rate, post.Rate)
+		if grown := pre.Breakdown.FoodDrain - post.Breakdown.FoodDrain; grown > 0 {
+			top = math.Max(top, post.Rate+grown)
+		}
+		limit := math.Max(top, 0) * float64(ticks) * game.OfflineEfficiency
 		switch {
 		case bad(g):
 			fail("offline_nan", "%s away: %s gain is %v", o.d, k, g)
 		case g < -1e-9:
 			fail("offline_loss", "%s away: %s fell by %s", o.d, k, num(-g))
 		case g > float64(limit*(1+1e-9))+1e-6:
-			fail("offline_overpaid", "%s away: %s gained %s, more than rate %.4g (the higher of before and after) x %d ticks x %.0f%% = %s", o.d, k, num(g), math.Max(pre.Rate, post.Rate), ticks, game.OfflineEfficiency*100, num(limit))
+			fail("offline_overpaid", "%s away: %s gained %s, more than rate %.4g (the higher of before and after) x %d ticks x %.0f%% = %s", o.d, k, num(g), top, ticks, game.OfflineEfficiency*100, num(limit))
 		}
 		if post.Amount > float64(post.Storage*(1+1e-9))+1e-6 {
 			fail("offline_over_storage", "%s away: %s is %s over its %s cap", o.d, k, num(post.Amount), num(post.Storage))

@@ -5,7 +5,6 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -19,7 +18,8 @@ import (
 //     every prerequisite that is neither researched, being researched nor
 //     planned, each after its own, then the tech. For an either-or group
 //     none of whose techs is on its way it takes the branch that costs the
-//     least knowledge to add. The whole chain goes in or nothing does.
+//     least knowledge to add. Research does not count against the plan's
+//     60 items (MaxPlanItems), so a chain always fits.
 //   - A tech of an age not reached yet waits in the plan for the age. While
 //     it waits it holds neither the research slot's turn nor its knowledge,
 //     like a tech whose prerequisite is not on its way (plan.go), so this
@@ -137,7 +137,7 @@ func (ge *GameEngine) errTechOutOfSight(key string, sight AgeSight) error {
 // needs that is not researched, being researched or planned (researchChain).
 // The tech must be one the player may see and not researched, in progress
 // or planned already. It returns the techs it added, in plan order, key
-// last; when the chain does not fit in the plan nothing is added.
+// last. Research takes no room in the plan, so the chain always fits.
 func (ge *GameEngine) PlanAddResearchChain(key string) ([]string, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -154,13 +154,6 @@ func (ge *GameEngine) PlanAddResearchChain(key string) ([]string, error) {
 		return nil, fmt.Errorf("Can't plan %s: %s.", def.Name, reason)
 	}
 	chain := researchChain(ge.rules, key, ge.researchOnWay)
-	if room := MaxPlanItems - len(ge.plan); len(chain) > room {
-		if len(chain) == 1 {
-			return nil, errPlanFull()
-		}
-		return nil, fmt.Errorf("%s and what it needs first are %d techs, and the plan has room for %s (it holds %d). Remove some with plan remove <n> first.",
-			def.Name, len(chain), textfmt.Count(max(room, 0), "more item", "more items"), MaxPlanItems)
-	}
 	for _, k := range chain {
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: k, Count: 1})
 		ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], 1)

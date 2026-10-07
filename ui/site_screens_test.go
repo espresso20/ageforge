@@ -400,13 +400,17 @@ func (s *siteStage) dismiss() {
 func (s *siteStage) toBronze() {
 	s.raiseAll(siteBuild{"stash", 3}, siteBuild{"gathering_camp", 4}, siteBuild{"wood_camp", 4},
 		siteBuild{"hut", 10}, siteBuild{"story_circle", 5}, siteBuild{"shrine", 2})
-	s.learn("tool_making", "fire_mastery")
+	s.learn("tool_making", "fire_mastery", "language")
 	s.wonder("sacred_grove")
 	s.advance()
+	// The Standing Stones wait for Ritual: research comes first, as it
+	// would in play.
 	s.raiseAll(siteBuild{"storage_pit", 4}, siteBuild{"longhouse", 15}, siteBuild{"forager_post", 4},
 		siteBuild{"woodcutter_camp", 4}, siteBuild{"stone_camp", 3}, siteBuild{"stone_pit", 5},
-		siteBuild{"elders_hall", 5}, siteBuild{"standing_stones", 2}, siteBuild{"war_camp", 2})
-	s.learn("stoneworking", "pottery", "primitive_writing")
+		siteBuild{"elders_hall", 5}, siteBuild{"war_camp", 2})
+	s.learn("ritual")
+	s.raiseAll(siteBuild{"standing_stones", 2})
+	s.learn("stoneworking", "pottery", "primitive_writing", "woodworking")
 	s.wonder("great_monolith")
 	s.advance()
 }
@@ -420,8 +424,12 @@ func (s *siteStage) bronzeTown() {
 	// the session turns it back on.
 	s.eng.SetWonderOverflow(false)
 	s.raiseAll(siteBuild{"warehouse", 3}, siteBuild{"house", 8}, siteBuild{"farm", 5}, siteBuild{"lumber_mill", 4},
-		siteBuild{"quarry", 3}, siteBuild{"scriptorium", 3}, siteBuild{"altar", 2}, siteBuild{"barracks", 2},
-		siteBuild{"market", 2}, siteBuild{"smithy", 2})
+		siteBuild{"quarry", 3}, siteBuild{"scriptorium", 3}, siteBuild{"market", 2}, siteBuild{"smithy", 2})
+	// Calendar opens the Altar and The Wheel opens trade routes. The
+	// Barracks wait for Military Tactics, which this town does not hold
+	// yet (toIron builds them).
+	s.learn("calendar", "the_wheel")
+	s.raiseAll(siteBuild{"altar", 2})
 	s.wait(300)
 	s.stock()
 	s.quiet()
@@ -434,7 +442,8 @@ func (s *siteStage) bronzeTown() {
 	s.wait(310)
 	s.level(map[string]float64{"food": 0.71, "wood": 0.34, "stone": 0.83, "knowledge": 0.46, "gold": 0.37, "iron": 0.22, "faith": 0.41})
 	s.eng.SetWonderOverflow(true)
-	s.say("expedition scout_ruins")
+	// The Scout Party needs no tech; scouting past it waits for Exploration.
+	s.say("expedition scout_party")
 	s.say("wonder collect stone")
 	s.say("wonder collect wood 9000")
 	s.say("build farm 2")
@@ -459,7 +468,8 @@ func (s *siteStage) toIron() {
 	})
 	s.raiseTo("scriptorium", 5)
 	s.raiseTo("warehouse", 5)
-	s.learn("animal_husbandry", "agriculture", "military_tactics")
+	s.learn("animal_husbandry", "agriculture", "military_tactics", "map_making")
+	s.raiseAll(siteBuild{"barracks", 2})
 	s.wonder("stonehenge")
 	// The last item of the plan is the advance: it goes by itself.
 	s.until("the planned advance", func(st game.GameState) bool { return st.Age == "iron_age" })
@@ -472,8 +482,11 @@ func (s *siteStage) toIron() {
 	}
 	s.raiseAll(siteBuild{"granary", 3}, siteBuild{"townhouse", 6}, siteBuild{"field_works", 4}, siteBuild{"timber_yard", 4},
 		siteBuild{"marble_quarry", 3}, siteBuild{"agora", 4}, siteBuild{"temple", 2}, siteBuild{"hunting_lodge", 4},
-		siteBuild{"legion_fort", 3}, siteBuild{"trading_post", 3}, siteBuild{"ironworks", 2}, siteBuild{"smelter", 2})
-	s.learn("iron_smelting")
+		siteBuild{"trading_post", 3}, siteBuild{"ironworks", 2})
+	// The Smelter and the Legion Fort wait for their techs, and scouting
+	// past the Scout Party for Exploration.
+	s.learn("iron_smelting", "siege_warfare", "exploration")
+	s.raiseAll(siteBuild{"legion_fort", 3}, siteBuild{"smelter", 2})
 	s.scout(1)
 }
 
@@ -494,7 +507,10 @@ func (s *siteStage) toMedieval() {
 	s.dismiss()
 	s.raiseAll(siteBuild{"classical_vault", 4}, siteBuild{"villa", 6}, siteBuild{"estate_farm", 4}, siteBuild{"wood_workshop", 3},
 		siteBuild{"marble_works", 3}, siteBuild{"library", 15}, siteBuild{"oracle_house", 2}, siteBuild{"military_academy", 15},
-		siteBuild{"merchant_quarter", 5}, siteBuild{"aqueduct", 2}, siteBuild{"forge", 2}, siteBuild{"amphitheater", 2})
+		siteBuild{"merchant_quarter", 5}, siteBuild{"aqueduct", 2}, siteBuild{"amphitheater", 2})
+	// The Forge waits for Metal Casting.
+	s.learn("metal_casting")
+	s.raiseAll(siteBuild{"forge", 2})
 	// The tech tree's pictures are taken here, with Philosophy under way:
 	// the map then has techs researched, in progress, ready to start and
 	// waiting for what they need on screen at once, and the next age dim.
@@ -513,9 +529,12 @@ func (s *siteStage) toMedieval() {
 	s.dismiss()
 	// Four keeps: Feudalism's price (the age sets it) has to fit the stores.
 	s.raiseAll(siteBuild{"keep", 4}, siteBuild{"manor", 5}, siteBuild{"demesne", 3}, siteBuild{"sawmill", 3},
-		siteBuild{"stonemasons_guild", 2}, siteBuild{"monastery_library", 3}, siteBuild{"cathedral", 2},
+		siteBuild{"stonemasons_guild", 2}, siteBuild{"monastery_library", 3},
 		siteBuild{"castle_keep", 2}, siteBuild{"guildhall", 3}, siteBuild{"workshop", 2}, siteBuild{"ironmonger", 2})
-	s.learn("feudalism")
+	// The Cathedral waits for Theology, the age's keystone, and Feudalism
+	// stands on The Plough.
+	s.learn("theology", "irrigation", "the_plough", "feudalism")
+	s.raiseAll(siteBuild{"cathedral", 2})
 	s.scout(2)
 }
 
@@ -693,13 +712,14 @@ func TestWriteSiteScreens(t *testing.T) {
 		for _, p := range [][2]string{{"research", "research tree close"}, {"research-card", "research card civil_engineering"}, {"research-far", "research tree far"}} {
 			var queued []string
 			if p[0] == "research-far" {
-				// The zoomed-out picture shows a queue: Imperial Legions
-				// planned with the tech it still needs. The engine is asked
-				// directly so the log stays as it was, and the chain comes
-				// out again before the game goes on.
-				chain, err := s.eng.PlanAddResearchChain("imperial_legions")
+				// The zoomed-out picture shows a queue: Fortification, a
+				// tech of the next age, planned with the tech it still
+				// needs. The engine is asked directly so the log stays as it
+				// was, and the chain comes out again before the game goes
+				// on.
+				chain, err := s.eng.PlanAddResearchChain("fortification")
 				if err != nil || len(chain) < 2 {
-					t.Fatalf("queuing Imperial Legions for the picture: %v, %v", chain, err)
+					t.Fatalf("queuing Fortification for the picture: %v, %v", chain, err)
 				}
 				queued = chain
 			}

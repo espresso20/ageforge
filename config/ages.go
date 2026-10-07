@@ -124,8 +124,10 @@ func Ages() []AgeDef {
 			Quip:        "Everyone's a painter, a scientist, and a poet now. Productivity is a casualty.",
 			// note: steel and faith are sized to what the Medieval Age makes of
 			// them. No Medieval building produces steel (the steel forging tech
-			// does), and faith comes from the faith lineage's flat rates.
-			ResourceReqs:    map[string]float64{"gold": 100000, "steel": 500, "faith": 4600},
+			// does), and faith comes from the faith lineage's flat rates with
+			// the techs' share on top: +28% by the Medieval Age since Ritual and
+			// Calendar joined Theology (it was +8%, and the gate 4600).
+			ResourceReqs:    map[string]float64{"gold": 100000, "steel": 500, "faith": 5450},
 			BuildingReqs:    map[string]int{"monastery_library": 5, "guildhall": 10, "castle_keep": 3},
 			UnlockBuildings: []string{"estate", "renaissance_vault", "market_garden", "coal_mine", "iron_mine", "university", "basilica", "fortress", "exchange", "mill", "foundry", "art_studio", "sistine_chapel"},
 			UnlockResources: []string{"coal"},

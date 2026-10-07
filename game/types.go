@@ -112,7 +112,7 @@ type GameState struct {
 	History *HistoryCollector
 	// Morale system
 	Morale    float64 // current morale 0.10–cap
-	MoraleCap float64 // current cap (1.0 + 0.05 per wonder)
+	MoraleCap float64 // current cap (1.0 + 0.05 per wonder, plus the techs' term)
 	// MoraleMultiplier is the production multiplier the continuous morale curve
 	// currently yields (moraleMultiplier()). Exactly 1.0 at the 0.50 pivot, up to
 	// 1.0+moraleMaxBonus at the cap, down to moraleMinMult at the 0.10 floor.

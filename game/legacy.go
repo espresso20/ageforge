@@ -65,6 +65,18 @@ func clonePlanTemplate(t []PlanTemplateItem) []PlanTemplateItem {
 	return append([]PlanTemplateItem(nil), t...)
 }
 
+// templateAgeLoad is how many of the items t holds for age count against
+// an age's MaxPlanItems: every one but research, as in the plan itself.
+func templateAgeLoad(t []PlanTemplateItem, age string) int {
+	n := 0
+	for _, it := range t {
+		if it.Age == age && it.Kind != PlanResearch {
+			n++
+		}
+	}
+	return n
+}
+
 // templateAgeCount is how many items t holds for age.
 func templateAgeCount(t []PlanTemplateItem, age string) int {
 	n := 0
@@ -83,7 +95,7 @@ func loadPlanTemplate(set *rules.Set, saved []PlanTemplateItem) []PlanTemplateIt
 	var out []PlanTemplateItem
 	perAge := map[string]int{}
 	for _, it := range saved {
-		if _, ok := set.Index(it.Age); !ok || perAge[it.Age] >= MaxPlanItems {
+		if _, ok := set.Index(it.Age); !ok || it.Kind != PlanResearch && perAge[it.Age] >= MaxPlanItems {
 			continue
 		}
 		switch it.Kind {
@@ -107,7 +119,9 @@ func loadPlanTemplate(set *rules.Set, saved []PlanTemplateItem) []PlanTemplateIt
 		default:
 			continue
 		}
-		perAge[it.Age]++
+		if it.Kind != PlanResearch {
+			perAge[it.Age]++
+		}
 		out = append(out, it)
 	}
 	return out
@@ -180,7 +194,7 @@ func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
 			return
 		}
 	}
-	if templateAgeCount(ge.planLog, ge.age) >= MaxPlanItems {
+	if it.Kind != PlanResearch && templateAgeLoad(ge.planLog, ge.age) >= MaxPlanItems {
 		return
 	}
 	t := PlanTemplateItem{Age: ge.age, Kind: it.Kind, Key: it.Key}
@@ -258,6 +272,9 @@ func (ge *GameEngine) unlogPlanItemLocked(it PlanItem) {
 // whether the plan was full. Caller holds the write lock.
 func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full bool) {
 	n := len(ge.plan)
+	// Research takes no room in the plan: only the other kinds can find it
+	// full.
+	full = planLoad(ge.plan) >= MaxPlanItems
 	switch t.Kind {
 	case PlanBuild:
 		def, ok := ge.Buildings.defs[t.Key]
@@ -280,7 +297,7 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 			ge.plan[n-1].Count = min(ge.plan[n-1].Count+count, maxPlanCount)
 			return true, false
 		}
-		if n >= MaxPlanItems {
+		if full {
 			return false, true
 		}
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: t.Key, Count: count})
@@ -296,9 +313,6 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		if ge.planResearchRefused(t.Key, n) != "" {
 			return false, false
 		}
-		if n >= MaxPlanItems {
-			return false, true
-		}
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: t.Key, Count: 1})
 	case PlanTrade:
 		it := PlanItem{Kind: PlanTrade, Key: t.Key, To: t.To, Count: 1, Amount: t.Amount}
@@ -310,7 +324,7 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 				return false, false
 			}
 		}
-		if n >= MaxPlanItems {
+		if full {
 			return false, true
 		}
 		ge.plan = append(ge.plan, it)
@@ -323,7 +337,7 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		if ge.progress.GetNextAge(ge.age) == "" {
 			return false, false
 		}
-		if n >= MaxPlanItems {
+		if full {
 			return false, true
 		}
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanAdvance, Count: 1})
@@ -367,7 +381,7 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 	pm.templateApplied = ge.age
 	line := fmt.Sprintf("Plan Template: added %s for the %s.", textfmt.Count(added, "item", "items"), ge.rules.Name(rules.KindAge, ge.age))
 	if full > 0 {
-		line += fmt.Sprintf(" The plan is full (%d items), so %s waited out.", MaxPlanItems, textfmt.Count(full, "item", "items"))
+		line += fmt.Sprintf(" The plan is full (%d items, not counting research), so %s waited out.", MaxPlanItems, textfmt.Count(full, "item", "items"))
 	}
 	if skipped > 0 {
 		line += fmt.Sprintf(" %s can't be planned yet.", textfmt.Count(skipped, "item", "items"))
@@ -712,7 +726,7 @@ func (ge *GameEngine) EnterAgeForTest(age string) error {
 func (ge *GameEngine) NoteAdvanceForTest(age string) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	if _, ok := ge.rules.Index(age); !ok || templateAgeCount(ge.planLog, age) >= MaxPlanItems {
+	if _, ok := ge.rules.Index(age); !ok || templateAgeLoad(ge.planLog, age) >= MaxPlanItems {
 		return
 	}
 	for _, e := range ge.planLog {

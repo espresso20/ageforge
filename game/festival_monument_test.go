@@ -87,6 +87,7 @@ func TestMonuments_GrantPermanentProductionBonus(t *testing.T) {
 // spends nothing / injects nothing when the player can't afford it.
 func TestFestival_RefusesWhenCultureInsufficient(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "drama") // the tech that opens festivals
 	ge.Resources.UnlockResource("culture")
 	// Set culture below the minimum cost.
 	ge.Resources.LoadAmounts(map[string]float64{"culture": festivalMinCost - 1})
@@ -108,6 +109,7 @@ func TestFestival_RefusesWhenCultureInsufficient(t *testing.T) {
 // cooldown is armed.
 func TestFestival_DeductsCultureAndInjectsBuff(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "drama") // the tech that opens festivals
 	ge.Resources.UnlockResource("culture")
 	// Give plenty of culture so cost = festivalMinCost (cap is small early).
 	ge.Resources.LoadAmounts(map[string]float64{"culture": 1_000_000})
@@ -160,6 +162,7 @@ func TestFestival_DeductsCultureAndInjectsBuff(t *testing.T) {
 // cooldown is active, and allowed again once enough ticks have passed.
 func TestFestival_RespectsCooldown(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "drama") // the tech that opens festivals
 	ge.Resources.UnlockResource("culture")
 	ge.Resources.LoadAmounts(map[string]float64{"culture": 1_000_000})
 
@@ -190,6 +193,7 @@ func TestFestival_RespectsCooldown(t *testing.T) {
 // renders: cost ≥ minimum, buff params match the constants.
 func TestFestivalStatus_ReportsCostAndBuff(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "drama") // the tech that opens festivals
 	ge.Resources.UnlockResource("culture")
 	st := ge.FestivalStatus()
 	if st.Cost < festivalMinCost {

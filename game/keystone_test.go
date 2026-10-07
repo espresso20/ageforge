@@ -122,12 +122,20 @@ func TestPlannedWonderWaitsForItsKeystone(t *testing.T) {
 	}
 }
 
-// TestWondersWithoutAKeystone: the Sacred Grove (nothing blocks the first
-// age) and Stonehenge (its keystone is a tech still to come) build as they
-// always did.
+// TestWondersWithoutAKeystone: the Sacred Grove builds as it always did:
+// nothing blocks the first age. It is the only wonder with no keystone.
 func TestWondersWithoutAKeystone(t *testing.T) {
 	ge := newSeededEngine(3)
-	for _, c := range []struct{ age, wonder string }{{"primitive_age", "sacred_grove"}, {"bronze_age", "stonehenge"}} {
+	bare := 0
+	for _, def := range ge.rules.Buildings() {
+		if def.Category == "wonder" && def.RequiredTech == "" {
+			bare++
+		}
+	}
+	if bare != 1 {
+		t.Errorf("%d wonders have no keystone, want the Sacred Grove alone", bare)
+	}
+	for _, c := range []struct{ age, wonder string }{{"primitive_age", "sacred_grove"}} {
 		for ge.age != c.age {
 			if err := ge.EnterAgeForTest(ge.progress.GetNextAge(ge.age)); err != nil {
 				t.Fatal(err)
@@ -174,13 +182,16 @@ func TestResearchStateNamesKeystones(t *testing.T) {
 			}
 		}
 	}
-	if keystones != 20 {
-		t.Errorf("%d keystones in the snapshot, want 20", keystones)
+	if keystones != 21 {
+		t.Errorf("%d keystones in the snapshot, want 21", keystones)
 	}
 	if got := ge.rules.Keystone("stone_age"); got != "stoneworking" {
 		t.Errorf("the Stone Age's keystone is %q", got)
 	}
-	if got := ge.rules.Keystone("primitive_age") + ge.rules.Keystone("bronze_age"); got != "" {
-		t.Errorf("the Primitive and Bronze Ages have a keystone: %q", got)
+	if got := ge.rules.Keystone("bronze_age"); got != "calendar" {
+		t.Errorf("the Bronze Age's keystone is %q", got)
+	}
+	if got := ge.rules.Keystone("primitive_age"); got != "" {
+		t.Errorf("the Primitive Age has a keystone: %q", got)
 	}
 }

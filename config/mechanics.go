@@ -40,6 +40,11 @@ const (
 	MechanicFestivalCooldownTicks = "festival_cooldown_ticks"
 	// MechanicFestivalCost multiplies what a festival costs.
 	MechanicFestivalCost = "festival_cost"
+	// MechanicRouteIncome multiplies what a trade route brings in per run.
+	MechanicRouteIncome = "route_income"
+	// MechanicMoraleCap is added to the highest morale can rise (1.0, plus
+	// what the wonders add): 0.05 is 5 points higher.
+	MechanicMoraleCap = "morale_cap"
 )
 
 // MechanicUnit is how the size of a step on a mechanic number is printed.
@@ -94,6 +99,10 @@ func Mechanics() []MechanicDef {
 			Text: "festivals come back %s sooner", Unit: UnitPercent},
 		{Key: MechanicFestivalCost, Name: "festival cost", Multiplies: true, Min: 0.40, Max: 1,
 			Text: "festivals cost %s less", Unit: UnitPercent},
+		{Key: MechanicRouteIncome, Name: "trade route income", Multiplies: true, Min: 1, Max: 2,
+			Text: "trade routes bring in %s more", Unit: UnitPercent},
+		{Key: MechanicMoraleCap, Name: "morale ceiling", Min: 0, Max: 0.30,
+			Text: "morale can rise %s higher", Unit: UnitPoints},
 	}
 }
 
