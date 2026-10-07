@@ -60,13 +60,16 @@ import (
 //   - Items that can never start drop out with a log line: a building of an
 //     earlier age after an advance, a building at its MaxCount, a tech
 //     already researched.
-//   - A tech is only planned once what it needs is researched, being
-//     researched or planned before it. One already in the plan that loses
-//     that (its prerequisite was removed from above it, the research it
-//     waited on was canceled, or a game update changed what the tech
-//     needs) stays and waits: it could still start, so it is not dropped.
-//     While it waits it holds neither the research slot's turn nor its
-//     knowledge, so a prerequisite planned below it can go first.
+//   - Planning a tech plans what it still needs before it
+//     (plan_research.go), so a tech in the plan has what it needs
+//     researched, being researched or planned above it. One that loses
+//     that (its prerequisite was removed from above it or moved below it,
+//     the research it waited on was canceled, or a game update changed
+//     what the tech needs) stays and waits: it could still start, so it is
+//     not dropped. While it waits it holds neither the research slot's
+//     turn nor its knowledge, so a prerequisite planned below it can go
+//     first. A tech of an age not reached yet waits for the age the same
+//     way.
 //
 // The plan is saved, and it is cleared by prestige, Succumb and a new game.
 
@@ -269,31 +272,11 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 	return count, nil
 }
 
-// PlanAddResearch appends tech key to the plan. It must be a tech of an age
-// up to the next one, not researched, not already planned, and what it needs
-// (every prerequisite, and one of its either-or group) must be researched,
-// in progress or planned before it.
+// PlanAddResearch plans tech key, with what it still needs before it
+// (PlanAddResearchChain, plan_research.go, which also says what was added).
 func (ge *GameEngine) PlanAddResearch(key string) error {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	def, ok := ge.rules.Tech(key)
-	if !ok {
-		return unknownKeyError("tech", key, ge.rules.TechMap(), "Type research list to see what you can research.")
-	}
-	for _, it := range ge.plan {
-		if it.Kind == PlanResearch && it.Key == key {
-			return fmt.Errorf("%s is already in the plan.", def.Name)
-		}
-	}
-	if len(ge.plan) >= MaxPlanItems {
-		return errPlanFull()
-	}
-	if reason := ge.planResearchRefused(key, len(ge.plan)); reason != "" {
-		return fmt.Errorf("Can't plan %s: %s.", def.Name, reason)
-	}
-	ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: key, Count: 1})
-	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], 1)
-	return nil
+	_, err := ge.PlanAddResearchChain(key)
+	return err
 }
 
 // PlanRemove removes item n (1-based) and returns a description of it. What
@@ -426,10 +409,10 @@ func (ge *GameEngine) planBuildInvalid(key string, planned int) string {
 }
 
 // planResearchInvalid is why tech key can never start from the plan ("" if
-// it can): the plan drops an item it is true of.
+// it can): the plan drops an item it is true of. A tech of an age not
+// reached yet is not one: it waits for the age (planTechAhead).
 func (ge *GameEngine) planResearchInvalid(key string) string {
-	def, ok := ge.rules.Tech(key)
-	if !ok {
+	if _, ok := ge.rules.Tech(key); !ok {
 		return "unknown technology"
 	}
 	if ge.Research.IsResearched(key) {
@@ -437,10 +420,6 @@ func (ge *GameEngine) planResearchInvalid(key string) string {
 	}
 	if ge.Research.currentTech == key {
 		return "already being researched"
-	}
-	order := ge.progress.GetAgeOrder()
-	if order[def.Age] > order[ge.age] && def.Age != ge.progress.GetNextAge(ge.age) {
-		return "it belongs to a later age"
 	}
 	return ""
 }
@@ -794,6 +773,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			continue
 		}
 		var reason, missing string
+		ahead := false
 		if it.Kind == PlanBuild {
 			// Copies the surviving items above will take first (their
 			// counts already net of what they started this walk).
@@ -805,11 +785,13 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			ge.plan = out
 			missing, _ = ge.planResearchMissing(it.Key, len(out))
 			ge.plan = saved
+			ahead = ge.planTechAhead(it.Key)
 		}
-		if missing != "" && it.Count > 0 {
-			// It waits for something that is not on its way. It keeps its
-			// place, but not the research slot's turn or its knowledge: a
-			// prerequisite planned below it can then go first.
+		if (missing != "" || ahead) && it.Count > 0 {
+			// It waits for something that is not on its way, or for its
+			// age. It keeps its place, but not the research slot's turn or
+			// its knowledge: a prerequisite planned below it, or a tech of
+			// this age, can then go first.
 			out = append(out, it)
 			continue
 		}
@@ -1033,14 +1015,17 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		} else {
 			v.Name = ge.Buildings.defs[it.Key].Name
 		}
-		// A tech waiting for something that is not on its way holds neither
-		// the research slot's turn nor its knowledge, as in the walk.
+		// A tech waiting for something that is not on its way, or for its
+		// age, holds neither the research slot's turn nor its knowledge, as
+		// in the walk.
 		missing := ""
+		waits := false
 		if it.Kind == PlanResearch {
 			missing, _ = ge.planResearchMissing(it.Key, i)
+			waits = missing != "" || ge.planTechAhead(it.Key)
 		}
-		first := it.Kind == PlanResearch && !researchSeen && missing == ""
-		if it.Kind == PlanResearch && missing == "" {
+		first := it.Kind == PlanResearch && !researchSeen && !waits
+		if it.Kind == PlanResearch && !waits {
 			researchSeen = true
 		}
 		chk := ge.checkPlanItem(it, first)

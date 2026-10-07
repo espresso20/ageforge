@@ -186,13 +186,12 @@ func TestPlan_UnfundedItemReservesNothing(t *testing.T) {
 func TestPlan_ResearchQueueStartsInOrder(t *testing.T) {
 	ge := planTestEngine(t)
 	ge.age = "stone_age" // Pottery is a Stone Age tech, and it needs Fire Mastery
-	if err := ge.PlanAddResearch("pottery"); err == nil {
-		t.Fatal("planned pottery before its prerequisite")
+	// Planning Pottery plans Fire Mastery before it.
+	if err := ge.PlanAddResearch("pottery"); err != nil {
+		t.Fatalf("plan pottery: %v", err)
 	}
-	for _, k := range []string{"fire_mastery", "pottery"} {
-		if err := ge.PlanAddResearch(k); err != nil {
-			t.Fatalf("plan %s: %v", k, err)
-		}
+	if len(ge.plan) != 2 || ge.plan[0].Key != "fire_mastery" || ge.plan[1].Key != "pottery" {
+		t.Fatalf("plan = %+v, want Fire Mastery then Pottery", ge.plan)
 	}
 	setAmount(ge, "knowledge", 10000)
 	ge.runPlanTick()

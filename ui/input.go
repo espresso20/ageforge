@@ -2564,11 +2564,31 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 			return CommandResult{Message: usageFor("plan research"), Type: "error"}
 		}
 		key := strings.ToLower(strings.Join(rest, "_"))
-		if err := engine.PlanAddResearch(key); err != nil {
+		chain, err := engine.PlanAddResearchChain(key)
+		if err != nil {
 			return errorResult(err)
 		}
-		planned, _ := engine.Rules().Tech(key)
-		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", planned.Name), Type: game.LogRoutine}
+		// What the tech still needed went in before it: say so, in order.
+		set := engine.Rules()
+		var first []string
+		for _, k := range chain[:len(chain)-1] {
+			def, _ := set.Tech(k)
+			first = append(first, def.Name)
+		}
+		planned, _ := set.Tech(key)
+		msg := fmt.Sprintf("Planned research: %s.", planned.Name)
+		if len(first) > 0 {
+			msg = fmt.Sprintf("Planned research: %s, after %s.", planned.Name, neededFirst(first))
+		}
+		msg += " Techs start one at a time, in plan order."
+		if st := engine.GetState(); planned.Age != st.Age {
+			if at, ok := set.Index(planned.Age); ok {
+				if here, _ := set.Index(st.Age); at > here {
+					msg += fmt.Sprintf(" %s waits for %s.", planned.Name, game.SightOf(&st).AgeRef(planned.Age))
+				}
+			}
+		}
+		return CommandResult{Message: msg, Type: game.LogRoutine}
 	case "list":
 		return CommandResult{Message: planListText(engine.GetState()), Type: "info"}
 	case "remove", "rm":

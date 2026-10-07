@@ -154,6 +154,16 @@ func (m techMark) words() string {
 	return "in the next age"
 }
 
+// standing is a tech's state in the status line's words. A tech of an age
+// further on than the next one (in sight on known ground) names the age it
+// waits for.
+func (m *treeModel) standing(n *treeNode) string {
+	if b := m.bandOf(n); n.mark == markNext && b.ahead > 1 {
+		return "waits for the " + b.name
+	}
+	return n.mark.words()
+}
+
 // treeNode is one tech on the map.
 type treeNode struct {
 	key    string
@@ -182,6 +192,7 @@ type treeBand struct {
 	row0, rows  int // its rows of techs
 	have, total int
 	here, next  bool // the age you are in; an age you have not reached
+	ahead       int  // how many ages past yours it is (0 for one reached)
 }
 
 // treeModel is the laid-out tree.
@@ -274,7 +285,7 @@ func buildTree(state game.GameState, geom treeGeom, ascii bool, sel string) *tre
 		}
 		at, _ := set.Index(age)
 		def, _ := set.Age(age)
-		band := treeBand{age: age, name: def.Name, row0: row, total: len(techs), here: at == here, next: at > here}
+		band := treeBand{age: age, name: def.Name, row0: row, total: len(techs), here: at == here, next: at > here, ahead: max(at-here, 0)}
 		// A tech sits below the techs of its own age that it needs.
 		inAge := map[string]config.TechDef{}
 		for _, t := range techs {
@@ -687,6 +698,14 @@ func (m *treeModel) canvas(state game.GameState, sel string) *tGrid {
 			case markNext:
 				l, r = '░', '░'
 			}
+			if n.plan > 0 && n.mark != markDone && n.mark != markRunning {
+				// In the plan: the plan's arrow leads, and what the tech
+				// still waits for keeps its closing mark.
+				l = '▸'
+				if n.mark == markReady {
+					r = ' '
+				}
+			}
 			code := []rune(techCode(n.def))
 			room := geom.badgeW - 3
 			if n.ts.Kind == config.TechKeystone {
@@ -833,7 +852,12 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	title := fmt.Sprintf(" RESEARCH  %d of %d known", m.known, m.inReach)
 	if w >= 100 {
 		if m.nextAge > 0 {
-			title += fmt.Sprintf(" · %d next age", m.nextAge)
+			// On known ground more than the next age is in sight.
+			if last := m.bands[len(m.bands)-1]; last.ahead > 1 {
+				title += fmt.Sprintf(" · %d ahead", m.nextAge)
+			} else {
+				title += fmt.Sprintf(" · %d next age", m.nextAge)
+			}
 		}
 		if m.later > 0 {
 			title += fmt.Sprintf(" · %d beyond", m.later)
@@ -925,7 +949,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 		switch {
 		case b.here && ox >= 8:
 			tally += " now"
-		case b.next && ox >= 8:
+		case b.ahead == 1 && ox >= 8:
 			tally = "next"
 		}
 		if y+1 < min(bot, mh) && !geom.pill {
@@ -1040,7 +1064,7 @@ func (m *treeModel) statusLine(state game.GameState, v treeView) string {
 	if n == nil {
 		return " No tech in sight yet."
 	}
-	parts := []string{" ▸ " + n.def.Name, n.mark.words()}
+	parts := []string{" ▸ " + n.def.Name, m.standing(n)}
 	if n.ts.Kind == config.TechKeystone {
 		parts = append(parts, "keystone")
 	}
@@ -1269,10 +1293,25 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	case actStart:
 		act = sw(swHi, " Enter ") + "  starts the research."
 	case actPlan:
+		// What it still needs goes into the plan before it.
+		var first []string
+		if chain := game.PlanResearchChain(state, n.key); len(chain) > 1 {
+			for _, k := range chain[:len(chain)-1] {
+				def, _ := set.Tech(k)
+				first = append(first, def.Name)
+			}
+		}
 		act = sw(swHi, " Enter ") + "  adds it to your plan."
+		if len(first) > 0 {
+			act = sw(swHi, " Enter ") + "  adds it to your plan, after " + neededFirst(first) + "."
+		}
 		switch {
+		case n.mark == markNext && len(first) > 0:
+			act += " They run in that order, and it starts once you reach the " + m.bandOf(n).name + "."
 		case n.mark == markNext:
 			act += " It starts once you reach the " + m.bandOf(n).name + " and hold what it needs."
+		case len(first) > 0:
+			act += " They run in that order, one at a time."
 		case n.mark == markLocked:
 			act += " It starts once you hold what it needs."
 		case state.Research.CurrentTech != "":
@@ -1295,6 +1334,24 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 		out = append(out, act)
 	}
 	return out
+}
+
+// neededFirst words the techs a plan command adds before the one asked for,
+// in the order they will run: "Fire Mastery, which it needs first", "the 2
+// techs it needs first (Primitive Writing, then Mathematics)", or, for a
+// long chain, "the 7 techs it needs first (Tool Making, Stoneworking,
+// Bronze Working and 4 more)".
+func neededFirst(names []string) string {
+	switch n := len(names); {
+	case n == 0:
+		return ""
+	case n == 1:
+		return names[0] + ", which it needs first"
+	case n <= 4:
+		return fmt.Sprintf("the %d techs it needs first (%s, then %s)", n, strings.Join(names[:n-1], ", "), names[n-1])
+	default:
+		return fmt.Sprintf("the %d techs it needs first (%s and %d more)", n, strings.Join(names[:3], ", "), n-3)
+	}
 }
 
 // numberWord writes a small count as a word.
@@ -1415,7 +1472,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 	if badge {
 		tx, tw = 24, cw-27
 	}
-	head := []string{string(swBright) + strings.ToUpper(n.def.Name), textfmt.Capitalize(n.mark.words()) + ".", ""}
+	head := []string{string(swBright) + strings.ToUpper(n.def.Name), textfmt.Capitalize(m.standing(n)) + ".", ""}
 	var body []string
 	sent := m.cardSentences(state, n, v.note)
 	for i, s := range sent {
