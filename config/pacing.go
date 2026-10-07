@@ -218,18 +218,28 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // their ages: an age that held three or four techs made a run pay a quarter
 // to a half of its knowledge for the wonder's keystone, and one that holds
 // nine asks for a tenth. What paces those ages now is what their buildings
-// make and what their gates ask. Measured on a first run with the techs in
-// (the smoke bot, three seeds): the Victorian Age ran at 0.57x of its target
-// with its producers at 1.4x and at 0.67x at 1.7x, and the Electric Age at
-// 0.56x on the curve alone. So the Electric Era's ages repay more slowly:
-// Victorian 1.7x, Electric 1.45x, Atomic 1.75x. The Atomic Age is the one
-// that hardly answers (0.62x to 0.66x of its target whatever its producers
-// repay, between 1x and 1.75x): its figure is kept for what it leaves the
-// Modern Age to start on, not for what it does to its own age. The
-// Renaissance kept its 2.0x and got a larger gate instead (ages.go: 12 of
-// each building where it asked for 8): its buildings are priced in
-// knowledge, so the gate is what slows it, on known ground too. The Bronze
-// Age ran at 0.63x: 1.1x.
+// make and what their gates ask, so both were set again, on a first run
+// with the techs in (the smoke bot, three seeds, medians):
+//
+//   - Victorian: 0.57x of its target with its producers at 1.4x, 0.67x at
+//     1.7x, and 0.78x at 1.7x with a gate of 12 of each building (ages.go;
+//     it asked for 10).
+//   - Electric: 0.56x on the curve alone before the techs, 0.67x at 1.45x.
+//   - Atomic: 0.62x to 0.66x at 1.45x to 1.75x with a gate of 15, 0.63x at
+//     1x with a gate of 18, and 0.77x at 1.75x with a gate of 18. It takes
+//     both.
+//   - Renaissance: 0.62x to 0.68x at 2.0x to 2.25x, and on known ground
+//     0.46x of its target ÷ k, under its band. Its buildings are priced in
+//     knowledge, so its gate is what slows it: with 12 of each building
+//     where it asked for 8 it runs at 0.84x, and at 0.62x on known ground.
+//     It keeps its 2.0x.
+//   - Bronze: 0.63x on the curve, 0.66x at 1.1x.
+//
+// A larger gate lengthens its own age and shortens the next, which starts
+// on more buildings: the Colonial Age went from 0.82x to 0.68x when the
+// Renaissance's gate grew, and the Industrial Age from 0.84x to 0.64x when
+// the Colonial Age's did, so that one was put back. A slower payback
+// lengthens both.
 //
 // Six entries is a list that says the curve itself wants reshaping from the
 // Victorian Age on. That is for the change that measures the ages after the
