@@ -22,6 +22,7 @@ func (s *Set) derive() {
 	s.flowLevels = config.FlowDealLevels(s.buildings, s.agePos)
 	s.flowIncome = config.Incomes(s.buildings, s.techs, s.ageKeys, config.IsFlowResource)
 	s.typIncome = config.Incomes(s.buildings, s.techs, s.ageKeys, config.AnyResource)
+	s.flowBuilt = config.BuildingOutputs(s.buildings, s.ageKeys, config.IsFlowResource)
 }
 
 // Target is the time a player should spend in age at 1x (0 for an age with
@@ -59,6 +60,12 @@ func (s *Set) DealPriceLevel(res, age string) float64 {
 // FlowIncome is what a player who invests moderately in the flow resource
 // res makes per tick in age at 1x (config.FlowIncome has the full rule).
 func (s *Set) FlowIncome(res, age string) float64 { return s.flowIncome[age][res] }
+
+// FlowBuildingOutput is the part of FlowIncome the moderate economy's own
+// buildings make, before any bonus: config.FlowCopies fully staffed copies
+// of every non-wonder producer of the flow resource res up to and including
+// age, per tick (config.BuildingOutputs).
+func (s *Set) FlowBuildingOutput(res, age string) float64 { return s.flowBuilt[age][res] }
 
 // TypicalIncome is FlowIncome for any resource, construction ones included.
 func (s *Set) TypicalIncome(res, age string) float64 { return s.typIncome[age][res] }

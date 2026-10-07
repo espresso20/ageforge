@@ -826,9 +826,17 @@ func TestCatastropheRandomnessIsSeeded(t *testing.T) {
 
 // --- Outlook ------------------------------------------------------------------------
 
-func setFaith(ge *GameEngine, amount, storage float64) {
-	ge.Resources.LoadStorage(map[string]float64{"faith": storage})
-	ge.Resources.LoadAmounts(map[string]float64{"faith": amount})
+// testFaithFull is the faith that reads as full strength for a town staged
+// by setFaithStrength: enough to pay for any Appease the tests buy without
+// moving the strength.
+const testFaithFull = 1e12
+
+// setFaithStrength gives ge a faith measure and the faith to read as share
+// of full strength (capped at 1): a town whose own faith buildings made all
+// the faith it holds, share × FaithFullSets times what a moderate set would
+// have, and that has kept every bit of it.
+func setFaithStrength(ge *GameEngine, share float64) {
+	ge.setFaithMeasure(share*testFaithFull, FaithSave{Moderate: testFaithFull / FaithFullSets, Own: share * testFaithFull})
 }
 
 // The outlook is what the player can know. In a quiet era it reads the same
@@ -837,16 +845,16 @@ func setFaith(ge *GameEngine, amount, storage float64) {
 // Last Passage's odds.
 func TestCatastropheOutlook(t *testing.T) {
 	cases := []struct {
-		name          string
-		faith, store  float64
-		wantP         float64
-		wantTier      CatastropheTier
-		wantFaithFill float64
+		name     string
+		strength float64
+		wantP    float64
+		wantTier CatastropheTier
+		wantBand FaithBand
 	}{
-		{"no faith storage", 0, 0, 0.75, CatastropheTierMedium, 0},
-		{"low faith", 10, 100, 0.90, CatastropheTierHigh, 0.10},
-		{"mid faith", 50, 100, 0.75, CatastropheTierMedium, 0.50},
-		{"high faith", 90, 100, 0.60, CatastropheTierLow, 0.90},
+		{"no faith", 0, 0.90, CatastropheTierHigh, FaithBandLow},
+		{"low faith", 0.10, 0.90, CatastropheTierHigh, FaithBandLow},
+		{"mid faith", 0.50, 0.75, CatastropheTierMedium, FaithBandMid},
+		{"high faith", 0.90, 0.60, CatastropheTierLow, FaithBandHigh},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -859,21 +867,21 @@ func TestCatastropheOutlook(t *testing.T) {
 				t.Fatal(err)
 			}
 			for _, ge := range []*GameEngine{quiet, fated} {
-				setFaith(ge, c.faith, c.store)
+				setFaithStrength(ge, c.strength)
 			}
 			oq, of := quiet.CatastropheOutlook(), fated.CatastropheOutlook()
 			if oq != of {
 				t.Fatalf("the outlook tells a fated era from a quiet one:\nquiet %+v\nfated %+v", oq, of)
 			}
 			if !oq.Possible || oq.Warned || oq.Probability != 0 || oq.Tier != CatastropheTierNone || oq.NextEpochKey != "steel_era" ||
-				math.Abs(oq.FaithFill-c.wantFaithFill) > 1e-9 {
-				t.Errorf("quiet outlook = %+v, want possible, unwarned, no odds, fill %v", oq, c.wantFaithFill)
+				math.Abs(oq.FaithStrength-c.strength) > 1e-9 || oq.FaithBand != c.wantBand || math.Abs(oq.FaithDevotion-c.strength*FaithFullSets) > 1e-9 {
+				t.Errorf("quiet outlook = %+v, want possible, unwarned, no odds, strength %v (%s)", oq, c.strength, c.wantBand)
 			}
 			// A harbinger comes: the outlook says what its warning says.
 			if err := fated.SummonHarbingerForTest("classical_age"); err != nil {
 				t.Fatal(err)
 			}
-			setFaith(fated, c.faith, c.store)
+			setFaithStrength(fated, c.strength)
 			o := fated.CatastropheOutlook()
 			if !o.Possible || !o.Warned || math.Abs(o.Probability-c.wantP) > 1e-9 || o.Tier != c.wantTier {
 				t.Errorf("warned outlook = %+v, want p=%v tier=%s", o, c.wantP, c.wantTier)

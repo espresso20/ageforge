@@ -464,6 +464,24 @@ func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(domain, k
 	return rates, workerOutput
 }
 
+// wonderProduction is what the built wonders make of res per tick, before
+// any bonus: the part of productionWithWorkerOutput that no building the
+// player chose to put up makes (the faith measure sets it apart, faith.go).
+func (bm *BuildingManager) wonderProduction(res string) float64 {
+	total := 0.0
+	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
+		if def.Category != "wonder" {
+			return
+		}
+		for _, eff := range def.Effects {
+			if eff.Type == "production" && eff.Target == res {
+				total += float64(eff.Value * float64(count))
+			}
+		}
+	})
+	return total
+}
+
 // GetPopCapacity returns total population capacity from housing buildings
 func (bm *BuildingManager) GetPopCapacity() int {
 	cap := 0

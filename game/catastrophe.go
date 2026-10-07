@@ -35,10 +35,10 @@ import (
 // read state and are safe under the read lock.
 
 const (
-	// Epoch transition good-event chance by faith storage fill.
-	epochGoodChanceLowFaith  = 0.40 // faith fill < 25%
-	epochGoodChanceBase      = 0.50 // 25%–75%, or faith has no storage yet
-	epochGoodChanceHighFaith = 0.60 // faith fill > 75%
+	// Epoch transition good-event chance by faith strength (faith.go).
+	epochGoodChanceLowFaith  = 0.40 // strength < 25%
+	epochGoodChanceBase      = 0.50 // 25%–75%
+	epochGoodChanceHighFaith = 0.60 // strength > 75%
 
 	// catastropheChanceOnBadRoll is the old chance that a bad epoch roll
 	// escalated into a catastrophe. Transitions no longer bring catastrophes,
@@ -148,9 +148,17 @@ type CatastropheOutlook struct {
 	Probability float64
 	// Tier buckets Probability: none / low / medium / high.
 	Tier CatastropheTier
-	// FaithFill is the current faith fill (amount / storage) in [0,1] that
-	// drives the odds; 0 when faith has no storage yet.
-	FaithFill float64
+	// FaithStrength is the current faith strength in [0,1] that drives the
+	// odds, and FaithBand the band it falls in, the one every roll reads
+	// (faith.go).
+	FaithStrength float64
+	FaithBand     FaithBand
+	// FaithDevotion and FaithKept are the two things it comes from, for the
+	// views that explain it: what the town's faith buildings have made this
+	// run against a moderate set (1 is the moderate town), and the share of
+	// the run's faith income still held (at most 1).
+	FaithDevotion float64
+	FaithKept     float64
 }
 
 func catastropheTierFor(p float64) CatastropheTier {
@@ -175,40 +183,28 @@ func (ge *GameEngine) gameRNG() *rand.Rand {
 	return ge.rng
 }
 
-// faithFill returns faith amount / storage clamped to [0,1], and whether faith
-// has any storage at all. Read-only.
-func (ge *GameEngine) faithFill() (float64, bool) {
-	storage := ge.Resources.GetStorage("faith")
-	if storage <= 0 {
-		return 0, false
-	}
-	fill := ge.Resources.Get("faith") / storage
-	if fill < 0 {
-		fill = 0
-	} else if fill > 1 {
-		fill = 1
-	}
-	return fill, true
-}
-
 // epochGoodChance returns the chance that an epoch transition rolls a good
-// event, gated by faith fill. Read-only.
+// event, by the town's faith strength. Read-only.
 func (ge *GameEngine) epochGoodChance() float64 {
-	return goodChanceFor(ge.faithFill())
+	return goodChanceFor(ge.faithStrength())
 }
 
-// goodChanceFor is the good-event chance at faith fill fill (ok false: faith
-// has no storage yet): the faith bands every catastrophe chance reads. Pure.
-func goodChanceFor(fill float64, ok bool) float64 {
-	switch {
-	case !ok:
-		return epochGoodChanceBase
-	case fill < 0.25:
+// EpochGoodChanceIn is the chance an epoch transition rolls a good event in
+// faith band band: what the faith row prints beside the strength. Pure.
+func EpochGoodChanceIn(band FaithBand) float64 {
+	switch band {
+	case FaithBandLow:
 		return epochGoodChanceLowFaith
-	case fill > 0.75:
+	case FaithBandHigh:
 		return epochGoodChanceHighFaith
 	}
 	return epochGoodChanceBase
+}
+
+// goodChanceFor is the good-event chance at faith strength strength: the
+// faith bands every catastrophe chance reads. Pure.
+func goodChanceFor(strength float64) float64 {
+	return EpochGoodChanceIn(FaithBandAt(strength))
 }
 
 // catastropheBlockErr is the error AdvanceAge and DoPrestige return while a
@@ -314,8 +310,9 @@ func (ge *GameEngine) CatastropheOutlook() CatastropheOutlook {
 // doom is fated (the fate's Fated flag or strike tick): only the harbinger
 // present and what has already resolved in the open.
 func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
-	fill, _ := ge.faithFill()
-	out := CatastropheOutlook{Passage: PassageEpoch, Tier: CatastropheTierNone, FaithFill: fill}
+	held, strength := ge.Resources.Get("faith"), ge.faithStrength()
+	out := CatastropheOutlook{Passage: PassageEpoch, Tier: CatastropheTierNone, FaithStrength: strength, FaithBand: FaithBandAt(strength),
+		FaithDevotion: FaithDevotionOf(ge.faithMeasure), FaithKept: FaithKeptOf(held, ge.faithMeasure)}
 	if next, ok := ge.rules.NextEra(ge.currentEpoch); ok {
 		out.NextEpochKey = next.Key
 	}

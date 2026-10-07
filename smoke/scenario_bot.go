@@ -251,6 +251,10 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range br {
 		res.fail("brace_"+p.Rule, "%s", p)
 	}
+	fp, fr := StaticFaithStrength()
+	for _, p := range fp {
+		res.fail("faith_"+p.Rule, "%s", p)
+	}
 	dp := StaticDepth()
 	for _, p := range dp {
 		res.fail("depth_points", "%s", p)
@@ -263,7 +267,7 @@ func runStatic(e *Env, res *Result) {
 			res.fail("research_covenant", "%s", p)
 		}
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Last Passage Brace price(s) off its rules; %d depth point problem(s); %d research problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(dp), research)
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d depth point problem(s); %d research problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(fp), len(dp), research)
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, rows)
@@ -274,15 +278,18 @@ func runStatic(e *Env, res *Result) {
 	var hf strings.Builder
 	writeHarbingerPrices(&hf, hp, ar, br)
 	res.section("Harbinger prices against storage and the warning", "%s", hf.String())
+	var ff strings.Builder
+	writeFaithStrength(&ff, fp, fr)
+	res.section("Faith strength", "%s", ff.String())
 	var df strings.Builder
 	writeDepthStatic(&df, dp)
 	res.section("Depth points", "%s", df.String())
 	var rf strings.Builder
 	writeResearch(&rf, rr)
 	res.section("Research Covenant", "%s", rf.String())
-	var ff strings.Builder
-	writeFeatureLocks(&ff, StaticFeatureLocks())
-	res.section("Feature locks", "%s", ff.String())
+	var lf strings.Builder
+	writeFeatureLocks(&lf, StaticFeatureLocks())
+	res.section("Feature locks", "%s", lf.String())
 	// The model's all-production pool is held to what a game can hold.
 	caps := StaticCaps()
 	for _, r := range caps {

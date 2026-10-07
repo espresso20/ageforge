@@ -809,6 +809,56 @@ func StorageHold(age string) float64 {
 	return StorageHoldHours
 }
 
+// BuildingOutputs is the part of Incomes that the moderate economy's own
+// buildings make, before any bonus: FlowCopies fully staffed copies of every
+// non-wonder producer of each resource include accepts, from the Primitive
+// Age up to and including each age, as age -> resource -> output per tick.
+// Wonders, techs and the production_all bonus are left out: every town has
+// those whatever it builds, so this is the part that measures what a town
+// put into a resource (the engine's faith strength reads it). Pure.
+func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bool) map[string]map[string]float64 {
+	idx := make(map[string]int, len(order))
+	for i, a := range order {
+		idx[a] = i
+	}
+	out := make(map[string]map[string]float64, len(order))
+	for i, age := range order {
+		made := map[string]float64{}
+		for _, d := range defs {
+			if j, ok := idx[d.RequiredAge]; !ok || j > i || d.Category == "wonder" {
+				continue
+			}
+			for _, e := range d.Effects {
+				if e.Type == "production" && e.Value > 0 && include(e.Target) {
+					made[e.Target] += float64(FlowCopies * e.Value)
+				}
+			}
+		}
+		out[age] = made
+	}
+	return out
+}
+
+// IncomeFactor is what Incomes multiplies res's output by in age: the
+// all-production pool held by then (ProductionAllHeld), capped at
+// ProductionAllCap as the engine caps it, times the tech layer, which no
+// cap holds: 1 + what every tech up to age adds to res + what they add to
+// all production. pos is each age's position (AgePositions).
+func IncomeFactor(techs []TechDef, pos map[string]int, age, res string) float64 {
+	layer := 1.0
+	for _, t := range techs {
+		if j, ok := pos[t.Age]; !ok || j > pos[age] {
+			continue
+		}
+		for _, e := range t.Effects {
+			if e.Kind == EffectAllOutput || e.Kind == EffectOutput && e.Target == res {
+				layer += e.Value
+			}
+		}
+	}
+	return float64(math.Min(1+ProductionAllHeld[age], ProductionAllCap) * layer)
+}
+
 // Incomes is FlowIncome's formula for every age in order and every resource
 // include accepts, as age -> resource -> income per tick: IsFlowResource
 // gives FlowIncome's table, AnyResource TypicalIncome's. Pure.
@@ -820,7 +870,6 @@ func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(s
 	out := make(map[string]map[string]float64, len(order))
 	for i, age := range order {
 		inc := map[string]float64{}
-		bonus := ProductionAllHeld[age] // the all-production pool
 		for _, d := range defs {
 			j, ok := idx[d.RequiredAge]
 			if !ok || j > i {
@@ -838,28 +887,18 @@ func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(s
 				}
 			}
 		}
-		// The tech layer: every tech up to age, its bonus on one resource
-		// and on all production added up per resource, no cap.
-		layerAll := 0.0
-		layer := map[string]float64{}
 		for _, t := range techs {
 			if j, ok := idx[t.Age]; !ok || j > i {
 				continue
 			}
 			for _, e := range t.Effects {
-				switch {
-				case e.Kind == EffectFlatOutput && e.Value > 0 && include(e.Target):
+				if e.Kind == EffectFlatOutput && e.Value > 0 && include(e.Target) {
 					inc[e.Target] += e.Value
-				case e.Kind == EffectAllOutput:
-					layerAll += e.Value
-				case e.Kind == EffectOutput:
-					layer[e.Target] += e.Value
 				}
 			}
 		}
-		mult := math.Min(1+bonus, ProductionAllCap)
 		for k := range inc {
-			inc[k] = float64(inc[k] * mult * (1 + layerAll + layer[k]))
+			inc[k] = float64(inc[k] * IncomeFactor(techs, idx, age, k))
 		}
 		out[age] = inc
 	}
