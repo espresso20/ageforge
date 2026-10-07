@@ -39,6 +39,8 @@ On first contact the log introduces the civilization: its name, personality and 
 4. A card for each civilization you have met: name, personality, specialty and a **strength rating** of 1 to 5 stars; a line of backstory; a war banner if you are at war; the opinion bar; the status (color-coded) with any active ally bonus and how many trades you've done; how far it is to the next threshold (*+8 opinion to friendly*, *+12 opinion to ally-eligible*, or the ally command once you qualify); workers it has lent you; how many boons and setbacks it is applying right now; and its current **trade deals**, one numbered line per offer (see [Trade deals](#trade-deals)). A civilization that won't trade says why instead.
 5. **Not yet met**: how many civilizations you haven't discovered, and nothing else (`5 civilizations not yet discovered. Send expeditions to find them.`).
 
+<figure class="screen" data-screen="factions"><figcaption>The Factions panel in the Medieval Age: one boon in play, workers on loan, and the card of the first civilization met, with its opinion bar and three deals.</figcaption></figure>
+
 Every duration on the panel shows as approximate wall-clock time, not ticks.
 
 ---

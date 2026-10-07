@@ -2,6 +2,8 @@
 
 Research is your civilization's strongest long-term lever. 77 technologies span all 22 ages, and each one permanently changes your production, military strength, storage, or the pace of the game. Only one technology is researched at a time, but the [build plan](plan.md) can queue the next ones and start each as soon as the slot frees up.
 
+<figure class="screen" data-screen="research"><figcaption>The Research panel: a tech part way through, the bonuses research has earned so far, and what can be started next.</figcaption></figure>
+
 ---
 
 ## How Research Works

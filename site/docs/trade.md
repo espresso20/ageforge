@@ -127,6 +127,8 @@ Pressure **decays 2% per tick**, multiplicatively, so a pair you leave alone rec
 
 Trade routes run in the background. Every few ticks a route takes a set of resources from you and gives you others in return. Routes don't suffer market pressure; they only need the required buildings and enough of what they take in stock.
 
+<figure class="screen" data-screen="trade"><figcaption>The Trade panel, scrolled to its routes: the last of the market rates, then Local Barter part way through a cycle.</figcaption></figure>
+
 ### Commands
 
 ```
