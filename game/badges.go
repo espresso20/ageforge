@@ -438,6 +438,29 @@ func (ge *GameEngine) noteDayLocked() {
 // accountDayLayout is how a day is written in account.json: "2026-10-07".
 const accountDayLayout = "2006-01-02"
 
+// NoteAccountExported and NoteRecoveryShown report that the account with
+// this ID was exported, or had its recovery code shown. The UI calls them
+// from the `account` command and the Accounts panel; they do nothing for
+// an account other than the one held. Like the developer unlock they are
+// about the account, not the run.
+func (ge *GameEngine) NoteAccountExported(id string) {
+	ge.noteForAccount(id, config.BadgeEvExported)
+}
+
+// NoteRecoveryShown: see NoteAccountExported.
+func (ge *GameEngine) NoteRecoveryShown(id string) {
+	ge.noteForAccount(id, config.BadgeEvRecoveryShown)
+}
+
+func (ge *GameEngine) noteForAccount(id, kind string) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if ge.account == nil || ge.account.AccountID != id {
+		return
+	}
+	ge.judgeBadges(Event{Kind: kind})
+}
+
 // NoteDevUnlocked reports that the developer console was unlocked. The UI
 // calls it when the passphrase is accepted. It is a fact about the account's
 // session, not the run, so it is not tallied in the run's facts.

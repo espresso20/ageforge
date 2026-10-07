@@ -735,6 +735,7 @@ func (ge *GameEngine) updateMoraleTick() {
 	// Low morale warning (fires once, resets when morale recovers above 0.40)
 	if ge.morale < 0.40 && !ge.lowMoraleWarned {
 		ge.lowMoraleWarned = true
+		ge.note(config.BadgeEvLowMorale, "")
 		ge.addLog("warning", fmt.Sprintf("⚠ Morale low (%s): all production %s. Faith output raises morale.",
 			textfmt.Percent(ge.morale), textfmt.SignedPercent(ge.moraleMultiplier()-1)))
 	} else if ge.morale >= 0.40 && ge.lowMoraleWarned {
@@ -4254,6 +4255,7 @@ func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
 	}
 	ge.recalculateRates() // a storage or rate upgrade shows at once, not next tick
 	ge.addLog("success", ge.prestigeUpgradeLine(key))
+	ge.note(config.BadgeEvUpgradeBought, key)
 	ge.legacyOnPurchaseLocked(key)
 	return nil
 }
@@ -4616,7 +4618,8 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	if elapsed < 5*time.Second {
 		return // too short to matter
 	}
-	if elapsed > MaxOfflineTime {
+	capped := elapsed > MaxOfflineTime
+	if capped {
 		elapsed = MaxOfflineTime
 	}
 
@@ -4636,6 +4639,11 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 
 	ge.addLog("event", fmt.Sprintf("Welcome back. You were away for %s.", textfmt.Duration(elapsed)))
+	// The return and the time credited for it, for the records.
+	ge.report(Event{Kind: config.BadgeEvReturned, Attrs: map[string]float64{
+		"ticks": float64(offlineTicks), "capped": boolFact(capped),
+	}})
+	ge.report(Event{Kind: config.BadgeEvAwayTicks, N: float64(offlineTicks)})
 
 	gains := make(map[string]float64)
 	banked := make(map[string]float64)
@@ -4769,6 +4777,10 @@ func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
 		ge.Resources.Remove("gold", cost)
 	}
 	ge.addLog("info", diplomaticStatusLine(ge.rules.Name(rules.KindCiv, factionKey), status, cost))
+	ge.note(config.BadgeEvCivStatus, status)
+	if status == "allied" {
+		ge.note(config.BadgeEvCivAllied, factionKey)
+	}
 	return nil
 }
 

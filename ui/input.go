@@ -988,6 +988,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "")
 		lines = append(lines, "[gold]Progress backups:[-] each account is its own slot, and an import adds or")
 		lines = append(lines, "restores that account next to your others. Switch accounts in the [gold]Accounts[-] panel on the main menu.")
+		engine.NoteRecoveryShown(acct.AccountID)
 		for _, path := range []string{"account list", "account badges", "account switch", "account export", "account backup", "account import"} {
 			u := helpRow(path)
 			lines = append(lines, fmt.Sprintf("  %-33s %s", u.Form, u.Text))
@@ -1106,6 +1107,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		if backupPath, bErr := engine.BackupAccount(acct.AccountID); bErr == nil {
 			lines = append(lines, fmt.Sprintf("Full backup (account.json and saves) written to %s.", backupPath))
 		}
+		engine.NoteAccountExported(acct.AccountID)
 		// Info, not success: the path must reach the log, and the engine logs nothing here.
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 

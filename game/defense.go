@@ -286,6 +286,7 @@ func (ge *GameEngine) applyWarRaids() {
 				}
 				ge.recordSavedResource(raid.Resource, kept)
 				ge.defenseTally().Raids++
+				ge.note(config.BadgeEvRaidBlunted, "")
 			}
 			ge.Resources.Remove(raid.Resource, raid.Amount)
 		}

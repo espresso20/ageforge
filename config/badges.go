@@ -192,9 +192,36 @@ const (
 	// BadgeEvCivMet: a civilization was met for the first time this run.
 	// Subject: the civilization.
 	BadgeEvCivMet = "civ_met"
+	// BadgeEvCivStatus: the player set a standing with a civilization.
+	// Subject: the standing ("allied", "rival", "embargo", "neutral").
+	// BadgeEvCivAllied is the same moment for an alliance, by civilization.
+	BadgeEvCivStatus = "civ_status"
+	BadgeEvCivAllied = "civ_allied"
+	// BadgeEvRaidBlunted: the garrison kept part of a raid's losses.
+	BadgeEvRaidBlunted = "raid_blunted"
+	// BadgeEvLowMorale: morale fell below the point where the game warns.
+	BadgeEvLowMorale = "morale_low"
+	// BadgeEvUpgradeBought: a prestige shop item was bought. Subject: the
+	// item.
+	BadgeEvUpgradeBought = "upgrade_bought"
+	// BadgeEvPlanStarted: the build plan started an item by itself.
+	// Subject: the item's kind ("build", "research", "trade", "deal",
+	// "advance").
+	BadgeEvPlanStarted = "plan_started"
+	// BadgeEvReturned: the game caught up on time away, on a load.
+	// Attributes: "ticks" (the ticks credited), "capped" (1 when the time
+	// away was past the offline allowance).
+	BadgeEvReturned = "returned"
+	// BadgeEvAwayTicks: the ticks credited for time away. Amount: the ticks,
+	// so the run fact is the run's whole time away.
+	BadgeEvAwayTicks = "away_ticks"
 	// BadgeEvDayPlayed: a game was started or loaded on a calendar day the
 	// account had not been played on before.
 	BadgeEvDayPlayed = "day_played"
+	// BadgeEvExported and BadgeEvRecoveryShown: the account was exported;
+	// its recovery code was shown.
+	BadgeEvExported      = "account_exported"
+	BadgeEvRecoveryShown = "recovery_code_shown"
 	// BadgeEvBadge: a badge was earned. Subject: its family. Integrity
 	// badges are not reported.
 	BadgeEvBadge = "badge_earned"
@@ -223,20 +250,24 @@ func BadgeEventKinds() []string {
 		BadgeEvHarbingerMet, BadgeEvHarbingerResolved, BadgeEvAppeased, BadgeEvBraced, BadgeEvInvited,
 		BadgeEvDeal, BadgeEvExpedition, BadgeEvFestival, BadgeEvBlackMarket,
 		BadgeEvMemoryAccepted, BadgeEvMemoryDeclined, BadgeEvEraEvent, BadgeEvAwakening,
-		BadgeEvMarketTrade, BadgeEvCivMet, BadgeEvDayPlayed, BadgeEvBadge,
+		BadgeEvMarketTrade, BadgeEvCivMet, BadgeEvCivStatus, BadgeEvCivAllied,
+		BadgeEvRaidBlunted, BadgeEvLowMorale, BadgeEvUpgradeBought, BadgeEvPlanStarted,
+		BadgeEvReturned, BadgeEvAwayTicks,
+		BadgeEvDayPlayed, BadgeEvExported, BadgeEvRecoveryShown, BadgeEvBadge,
 		BadgeEvDevUnlocked, BadgeEvSaveModified, BadgeEvSaveElite,
 	}
 }
 
 // BadgeSessionEvents are the events that are about the session or the
-// account rather than the run: the tick itself, a new calendar day, a badge
-// earned, the developer console unlocked, what loading a save found. They
+// account rather than the run: the tick itself, a new calendar day, an
+// export, the recovery code shown, a badge earned, the developer console
+// unlocked, what loading a save found. They
 // are judged against the account and are never tallied in a run's facts, so
 // what a run says happened in it is the same on any account and any date. A
 // badge cannot ask for one as a run fact ("run.day_played").
 func BadgeSessionEvents() []string {
 	return []string{
-		BadgeEvTick, BadgeEvDayPlayed, BadgeEvBadge,
+		BadgeEvTick, BadgeEvDayPlayed, BadgeEvExported, BadgeEvRecoveryShown, BadgeEvBadge,
 		BadgeEvDevUnlocked, BadgeEvSaveModified, BadgeEvSaveElite,
 	}
 }

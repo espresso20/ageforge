@@ -315,6 +315,7 @@ func (p *accountsPanel) doExport() {
 		displayNameOr(s), path, backupLine,
 	)
 	p.showMessage("Account exported", msg)
+	p.engine.NoteAccountExported(s.AccountID)
 }
 
 // doBackup takes a FULL snapshot of the SELECTED account's slot (account.json + saves/) into
@@ -458,6 +459,7 @@ func (p *accountsPanel) doRecovery() {
 		displayNameOr(s), code,
 	)
 	p.showMessage("Recovery code", msg)
+	p.engine.NoteRecoveryShown(s.AccountID)
 }
 
 // doWipe runs the two-step gate for permanently deleting the SELECTED account (identity + theme
