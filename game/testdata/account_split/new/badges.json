@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "account_id": "dcdd22226bc947f5071f8796d4769af5",
+  "badges": {
+    "age.iron_age": {
+      "at": 1791396087,
+      "run": "run"
+    },
+    "age.stone_age": {
+      "at": 1791396087,
+      "run": "run"
+    },
+    "ladder.prestiges.1": {
+      "at": 1791396087,
+      "run": "run"
+    },
+    "lineage.housing.1": {
+      "at": 1791396087,
+      "run": "run"
+    }
+  },
+  "counters": {
+    "built.lineage.housing": 20,
+    "prestige": 1
+  },
+  "days": [
+    "2026-10-07"
+  ],
+  "_sig": "ac3a6d0dfab96f33cf52ed26053e6dba78a3151aa4e59c144c2533b0956b8474"
+}

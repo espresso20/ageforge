@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "account_id": "e6f7622f0693340583e1a9b31ecb2ad0",
+  "display_name": "Fixture Flagged",
+  "created": "2026-10-07T10:33:03.353727-05:00",
+  "last_seen": "2026-10-07T10:33:03.353727-05:00",
+  "unlocks": {},
+  "stats": {
+    "highest_age": "iron_age"
+  },
+  "achievements": [
+    "reached_iron"
+  ],
+  "prefs": {},
+  "_sig": "04c1045b1a0a2a24cc890dd07005155baebb2ec78b25c941ccae096b3d2fe9b0",
+  "tampered": true
+}

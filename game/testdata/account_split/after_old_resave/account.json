@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "account_id": "dcdd22226bc947f5071f8796d4769af5",
+  "display_name": "Round Trip",
+  "created": "2026-10-07T13:01:27.624824-05:00",
+  "last_seen": "2026-10-07T13:01:27.624824-05:00",
+  "unlocks": {
+    "themes": [
+      "bronze"
+    ]
+  },
+  "stats": {
+    "total_prestiges": 1,
+    "highest_age": "iron_age",
+    "civilizations_started": 2,
+    "prestiges_by_age": {
+      "modern_age": 1
+    }
+  },
+  "achievements": [
+    "reached_iron",
+    "first_prestige"
+  ],
+  "prefs": {
+    "active_theme": "bronze",
+    "map_glyphs": "ascii"
+  },
+  "_sig": "bb98d5200402ff321024a5572fc6bf53c9b2d54c72a6c63b09e583da53a4eb87"
+}

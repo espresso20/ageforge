@@ -267,7 +267,11 @@ func runStatic(e *Env, res *Result) {
 			res.fail("research_covenant", "%s", p)
 		}
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d depth point problem(s); %d research problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(fp), len(dp), research)
+	bp, breach := StaticBadges()
+	for _, p := range bp {
+		res.fail("badge_"+p.Kind, "%s", p.Why)
+	}
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(fp), len(dp), research, len(bp))
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, rows)
@@ -300,4 +304,7 @@ func runStatic(e *Env, res *Result) {
 	var cf strings.Builder
 	writeCaps(&cf, caps)
 	res.section("Bonus pools against their caps", "%s", cf.String())
+	var bf strings.Builder
+	writeBadges(&bf, bp, breach)
+	res.section("Badge Covenant", "%s", strings.TrimPrefix(bf.String(), "\n### Badges\n\n"))
 }

@@ -538,6 +538,7 @@ func (ge *GameEngine) harbingerLogLines() {
 // publishHarbinger tells the UI a figure has spoken (toast). Bus handlers run
 // under the write lock and must not call back into the engine.
 func (ge *GameEngine) publishHarbinger(def config.HarbingerDef, targetEpoch string, handoff bool) {
+	ge.note(config.BadgeEvHarbingerMet, def.Key)
 	ge.Bus.Publish(EventData{
 		Type: EventHarbingerArrived,
 		Payload: map[string]interface{}{
@@ -1082,6 +1083,7 @@ func (ge *GameEngine) HarbingerAppease() error {
 	}
 	h.AppeaseLevel = level
 	def, _ := ge.rules.Harbinger(h.Age)
+	ge.report(Event{Kind: config.BadgeEvAppeased, Subject: def.Key, Attrs: map[string]float64{"level": float64(level)}})
 	ge.addLog("success", fmt.Sprintf("⚑ %s (Appease %d/%d): paid %s. The chance it strikes is now %.2fx its base.",
 		def.AppeaseLabel, level, HarbingerMaxAppease, harbingerCostText(ge.rules, cost), ge.harbingerAppeaseMultiplier()))
 	ge.harbingerFlavorLog(flavor.HarbingerAppeased, "")
@@ -1109,6 +1111,7 @@ func (ge *GameEngine) HarbingerBrace() error {
 	}
 	h.BraceLevel = level
 	def, _ := ge.rules.Harbinger(h.Age)
+	ge.report(Event{Kind: config.BadgeEvBraced, Subject: def.Key, Attrs: map[string]float64{"level": float64(level)}})
 	if h.TargetEpoch == "" {
 		ge.addLog("success", fmt.Sprintf("⚑ %s (Brace %d/%d): paid %s. If the Last Passage comes and you Endure, you keep %.0f%% of the run's prestige points (not %.0f%%).",
 			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(ge.rules, cost), LastPassageKeepFor(level)*100, LastPassageKeep*100))
@@ -1136,6 +1139,7 @@ func (ge *GameEngine) HarbingerInvite() error {
 	h := ge.harbinger
 	h.Invited = true
 	def, _ := ge.rules.Harbinger(h.Age)
+	ge.note(config.BadgeEvInvited, def.Key)
 	if h.TargetEpoch == "" {
 		ge.inviteCatastrophe()
 		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",
@@ -1264,6 +1268,11 @@ func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string
 		rec.EntryTick, rec.Window, rec.StrikeTick, rec.AtAdvance = f.EntryTick, f.Window, f.StrikeTick, f.AtAdvance
 	}
 	ge.harbingerHistory = append(ge.harbingerHistory, rec)
+	ge.report(Event{Kind: config.BadgeEvHarbingerResolved, Subject: outcome, Attrs: map[string]float64{
+		"appease": float64(h.AppeaseLevel), "brace": float64(h.BraceLevel),
+		"invited": boolFact(h.Invited), "false_prophet": boolFact(h.FalseProphet),
+		"figures": float64(len(h.Chain)),
+	}})
 	if parked {
 		ge.parkedHarbinger = nil
 		return

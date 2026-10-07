@@ -114,6 +114,11 @@ type DiplomacyManager struct {
 	// war); the next Tick returns them first. Transient, not saved.
 	notices []string
 
+	// met is the civilizations met since the engine last asked (takeMet), for
+	// its report of first contact. Transient, not saved: a loaded game's
+	// civilizations were met before the save.
+	met []string
+
 	// factionList / factionDefs are the static civ roster, built once at
 	// construction so the per-tick paths (Tick, GetTradeBonus via the resolver,
 	// DisruptedResources) don't rebuild config tables every call. Read-only.
@@ -276,6 +281,7 @@ func (dm *DiplomacyManager) DiscoverFactions(age string, ageOrder map[string]int
 				Status:     "neutral",
 			}
 			discovered = append(discovered, def.Key)
+			dm.met = append(dm.met, def.Key)
 		}
 	}
 	return discovered
@@ -298,7 +304,16 @@ func (dm *DiplomacyManager) DiscoverFaction(key string) (string, bool) {
 		Opinion:    0,
 		Status:     "neutral",
 	}
+	dm.met = append(dm.met, key)
 	return firstContactMessage(def), true
+}
+
+// takeMet returns the civilizations met since the last call, in the order
+// they were met, and forgets them.
+func (dm *DiplomacyManager) takeMet() []string {
+	met := dm.met
+	dm.met = nil
+	return met
 }
 
 // IsDiscovered reports whether a faction has been discovered. Used by the encounter

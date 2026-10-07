@@ -462,6 +462,9 @@ func (ge *GameEngine) Endure() error {
 		fmt.Sprintf("Tick %d"+catHistEnduredMarker+"%s (%s). %d buildings lost.", ge.tick, catName, epName, destroyCount))
 
 	ge.applyMorale(endureMoraleHit)
+	ge.report(Event{Kind: config.BadgeEvEndured, Subject: epochKey, Attrs: map[string]float64{
+		"brace": float64(brace), "saved": float64(outcome.BuildingsSaved),
+	}})
 	return nil
 }
 
@@ -492,6 +495,8 @@ func (ge *GameEngine) Succumb() error {
 	catName, _ := ge.rules.Catastrophe(epochKey)
 	ep, _ := ge.rules.Era(epochKey)
 	ge.setCatastropheOutcome(epochKey, CatastropheSuccumbed)
+	// Reported while the run that fell is still here to be judged against.
+	ge.note(config.BadgeEvSuccumbed, epochKey)
 
 	newLegacy := !ge.legacyBonuses[epochKey]
 	legacyNote := "Legacy bonus earned."
@@ -523,6 +528,7 @@ func (ge *GameEngine) Succumb() error {
 
 	// Full reset — Bus intentionally kept so dashboard subscriptions survive.
 	ge.tick = 0
+	ge.runFacts = newRunFacts()
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManagerWith(ge.rules)
 	ge.Buildings = ge.newBuildingManager()
@@ -614,6 +620,8 @@ func (ge *GameEngine) Succumb() error {
 	// The legacy kit: shares, the first age's template slice, old friends.
 	ge.startRunLegacyLocked()
 	ge.addLog("info", "Type [cyan]help[-] to rebuild.")
+	// The run that starts here is a new civilization.
+	ge.noteCivilizationStartedLocked()
 
 	// Roll for an Ancient Memory cache (only when this account has prestiged before;
 	// a first-ever Succumb with no prestige history offers nothing — see the gate).

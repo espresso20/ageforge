@@ -29,8 +29,8 @@ const backupRetention = 10
 
 // BackupAccount snapshots the on-disk slot for account id into a fresh directory under
 // <root>/backups/, returning the absolute path of the new backup dir. The snapshot is a COPY
-// (the original slot is left untouched): account.json plus a recursive copy of the slot's
-// saves/ subtree when it exists. It is the full-fidelity counterpart to ExportAccountByID
+// (the original slot is left untouched): account.json, the badge file beside it when there
+// is one, and a recursive copy of the slot's saves/ subtree when it exists. It is the full-fidelity counterpart to ExportAccountByID
 // (which serializes only the account's meta-progression, not the saves).
 //
 // The backup dir is named "<cleanname>-<id8>-<timestamp>": the FS-safe display name (resolved
@@ -95,6 +95,15 @@ func BackupAccount(id string) (string, error) {
 	// Copy account.json.
 	if err := copyFile(srcAccount, filepath.Join(dst, accountFileName)); err != nil {
 		return "", fmt.Errorf("failed to back up account.json: %w", err)
+	}
+	// And the badge file beside it, when the account has one.
+	srcBadges := filepath.Join(slot, badgeFileName)
+	if _, err := os.Stat(srcBadges); err == nil {
+		if err := copyFile(srcBadges, filepath.Join(dst, badgeFileName)); err != nil {
+			return "", fmt.Errorf("failed to back up badges.json: %w", err)
+		}
+	} else if !os.IsNotExist(err) {
+		return "", fmt.Errorf("failed to stat badges.json for backup: %w", err)
 	}
 
 	// Copy the slot's saves/ subtree if present (a slot may legitimately have none yet).

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -153,7 +154,9 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	}
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
-	alice.RecordPrestige() // an achievement and a lifetime prestige, no themes
+	// A badge and a lifetime prestige, no themes: the stat, then the report.
+	alice.RecordPrestige()
+	eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
 
 	res := HandleCommand("account recover "+alice.RecoveryCode(), eng)
 	if res.Type != "info" || !strings.Contains(res.Message, "nothing to restore") {
@@ -162,9 +165,9 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 
 	res = HandleCommand("account recover "+bobCode, eng)
 	if res.Type != "warning" || !strings.Contains(res.Message, "confirm") {
-		t.Fatalf("an account with achievements but no themes was not guarded: %+v", res)
+		t.Fatalf("an account with badges but no themes was not guarded: %+v", res)
 	}
-	for _, want := range []string{"1 achievement", "1 prestige", "account switch Alice"} {
+	for _, want := range []string{"1 badge", "1 prestige", "account switch Alice"} {
 		if !strings.Contains(res.Message, want) {
 			t.Errorf("the guard does not mention %q: %q", want, res.Message)
 		}
@@ -185,7 +188,7 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	for _, s := range eng.ListAccounts() {
 		if s.AccountID == alice.AccountID {
 			listed = true
-			if s.TotalPrestiges != 1 || s.Achievements != 1 {
+			if s.TotalPrestiges != 1 || s.Badges != 1 {
 				t.Errorf("Alice after the recovery: %+v", s)
 			}
 		}
@@ -195,32 +198,41 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	}
 }
 
-// TestDevTouchedRunUnlocksNoThemes is B3's theme leak: with dev mode on, `/age
-// galactic_age` completed the theme milestones on the next tick and the dashboard wrote
-// all five flavor themes to the account for good.
-func TestDevTouchedRunUnlocksNoThemes(t *testing.T) {
+// TestDevTouchedRunUnlocksThemes: a run the developer console has changed unlocks themes
+// like any other. With dev mode on, `/age galactic_age` completes the theme milestones on
+// the next tick, and the dashboard writes their themes to the account.
+func TestDevTouchedRunUnlocksThemes(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	prev := game.DevModeActive
 	game.DevModeActive = true
 	t.Cleanup(func() { game.DevModeActive = prev })
+	if err := eng.StartNewNamedGame("dev"); err != nil {
+		t.Fatal(err)
+	}
+	d.refresh() // the first sync, before anything is completed
 
 	if msg := game.DevExecCommand("/age galactic_age", eng); msg != "jumped to galactic_age" {
 		t.Fatalf("/age: %q", msg)
 	}
 	eng.StepTicks(1)
 	state := eng.GetState()
-	gated := 0
+	if !state.DevTouched || !state.AccountRecords {
+		t.Fatalf("after /age: DevTouched=%v AccountRecords=%v, want marked and still recording", state.DevTouched, state.AccountRecords)
+	}
+	var want []string
 	for _, key := range completedUnlockKeys(state.Milestones) {
-		if _, ok := theme.UnlockedBy(key); ok {
-			gated++
+		if themeKey, ok := theme.UnlockedBy(key); ok {
+			want = append(want, themeKey)
 		}
 	}
-	if gated == 0 {
+	if len(want) == 0 {
 		t.Fatal("precondition: no theme-gating milestone completed, so the test proves nothing")
 	}
 	d.refresh()
-	if got := eng.Account().UnlockedThemes(); len(got) != 0 {
-		t.Errorf("a dev-touched run unlocked themes on the account: %v", got)
+	for _, themeKey := range want {
+		if !eng.Account().HasTheme(themeKey) {
+			t.Errorf("a dev-touched run did not unlock the theme %q: account holds %v", themeKey, eng.Account().UnlockedThemes())
+		}
 	}
 }
 
@@ -237,7 +249,7 @@ func TestThemeUnlocksFollowAccountRecords(t *testing.T) {
 		Milestones: map[string]game.MilestoneInfo{key: {Completed: true}},
 	}}
 
-	d.processThemeUnlocks(state) // AccountRecords false: a dev-touched or foreign run
+	d.processThemeUnlocks(state) // AccountRecords false: another account's run
 	if eng.Account().HasTheme(themeKey) {
 		t.Fatal("a run that does not record to the account unlocked a theme")
 	}

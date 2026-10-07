@@ -783,6 +783,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			}
 			if ge.runPlanDeal(it, reserved) {
 				started = true
+				ge.note(config.BadgeEvPlanStarted, PlanDeal)
 				starts.deals = append(starts.deals, "took a "+ge.planItemLabel(it))
 				continue
 			}
@@ -796,6 +797,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			}
 			if sold, got := ge.runPlanTrade(&it, reserved); got > 0 {
 				started = true
+				ge.note(config.BadgeEvPlanStarted, PlanTrade)
 				starts.addTrade(it.Key, it.To, sold, got)
 			}
 			if it.Count > 0 {
@@ -868,6 +870,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 				started = true
 				it.Count--
 				it.Started++
+				ge.note(config.BadgeEvPlanStarted, it.Kind)
 				if it.Kind == PlanBuild {
 					starts.addBuild(it.Key)
 					// MaxCount may be reached mid-item.
@@ -914,6 +917,9 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 	if advanceAt >= 0 {
 		next := ge.progress.GetNextAge(ge.age)
 		ge.addLog("info", fmt.Sprintf("Plan: advancing to the %s.", ge.progress.GetAgeName(next)))
+		// Reported before the advance, so a badge judged on reaching the age
+		// sees that the plan did it.
+		ge.note(config.BadgeEvPlanStarted, PlanAdvance)
 		ge.advanceAge(next)
 		starts.advanced = ge.progress.GetAgeName(ge.age)
 		started = true

@@ -470,6 +470,7 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef) {
 		ge.addLog("success", line)
 		t := ge.defenseTally()
 		t.Raids++
+		ge.note(config.BadgeEvRaidBlunted, "")
 		t.Workers += keptWorkers
 		for _, res := range sortedKeys(keptRes) {
 			ge.recordSavedResource(res, keptRes[res])

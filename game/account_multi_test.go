@@ -195,7 +195,7 @@ func TestListAccountsEnumerates(t *testing.T) {
 		t.Errorf("first entry = %q (active=%v), want Carol active-first", list[0].DisplayName, list[0].Active)
 	}
 	c := byName["Carol"]
-	if c.AccountID != carol.AccountID || c.TotalPrestiges != 3 || c.HighestAge != "iron_age" || c.Achievements != 2 {
+	if c.AccountID != carol.AccountID || c.TotalPrestiges != 3 || c.HighestAge != "iron_age" || c.Badges != 2 {
 		t.Errorf("Carol summary fields wrong: %+v", c)
 	}
 	if c.LastSeen.IsZero() {

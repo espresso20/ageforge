@@ -1,0 +1,20 @@
+{
+  "_sig": "1212388c6268b4833a64f69ea0f45e2af79f960fe8924b19ea34c4166b00bf1c",
+  "account_id": "1559ef186f067a778d3f371b37005f00",
+  "achievements": [
+    "first_prestige",
+    "prestige_x10"
+  ],
+  "created": "2026-10-07T10:33:03.35294-05:00",
+  "display_name": "Fixture Edited",
+  "last_seen": "2026-10-07T10:33:03.35294-05:00",
+  "prefs": {},
+  "stats": {
+    "total_prestiges": 1,
+    "prestiges_by_age": {
+      "modern_age": 1
+    }
+  },
+  "unlocks": {},
+  "version": 1
+}

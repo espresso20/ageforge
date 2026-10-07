@@ -308,13 +308,14 @@ func (p *accountsPanel) doExport() {
 	// account is untouched.
 	backupLine := ""
 	if backupPath, bErr := p.engine.BackupAccount(s.AccountID); bErr == nil {
-		backupLine = fmt.Sprintf("\n\n[gold]Full backup (account.json + saves):[-]\n%s", backupPath)
+		backupLine = fmt.Sprintf("\n\n[gold]Full backup (account files + saves):[-]\n%s", backupPath)
 	}
 	msg := fmt.Sprintf(
-		"[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nachievements). Restore it with Import (i) on any machine.%s",
+		"[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nbadges). Restore it with Import (i) on any machine.%s",
 		displayNameOr(s), path, backupLine,
 	)
 	p.showMessage("Account exported", msg)
+	p.engine.NoteAccountExported(s.AccountID)
 }
 
 // doBackup takes a FULL snapshot of the SELECTED account's slot (account.json + saves/) into
@@ -331,7 +332,7 @@ func (p *accountsPanel) doBackup() {
 		return
 	}
 	msg := fmt.Sprintf(
-		"[gold]Backed up %s[-]\n\n%s\n\nThis is a full snapshot: account.json plus every save in this\naccount's slot. Restore by copying the folder's contents back\ninto data/accounts/<id>/. Only the 10 most recent are kept.",
+		"[gold]Backed up %s[-]\n\n%s\n\nThis is a full snapshot: the account's files plus every save in this\naccount's slot. Restore by copying the folder's contents back\ninto data/accounts/<id>/. Only the 10 most recent are kept.",
 		displayNameOr(s), backupPath,
 	)
 	p.showMessage("Account backed up", msg)
@@ -454,10 +455,11 @@ func (p *accountsPanel) doRecovery() {
 		return
 	}
 	msg := fmt.Sprintf(
-		"[gold]%s[-]\n\n[white::b]%s[-]\n\nThis code restores your account ID on another machine or after\na reinstall. It does not restore progress (unlocks, stats,\nachievements); back those up with Export (e). It is not a\npassword: it only proves which account you are.\n\nWrite it down. Restore with:  account recover <code>",
+		"[gold]%s[-]\n\n[white::b]%s[-]\n\nThis code restores your account ID on another machine or after\na reinstall. It does not restore progress (unlocks, stats,\nbadges); back those up with Export (e). It is not a\npassword: it only proves which account you are.\n\nWrite it down. Restore with:  account recover <code>",
 		displayNameOr(s), code,
 	)
 	p.showMessage("Recovery code", msg)
+	p.engine.NoteRecoveryShown(s.AccountID)
 }
 
 // doWipe runs the two-step gate for permanently deleting the SELECTED account (identity + theme
@@ -476,7 +478,7 @@ func (p *accountsPanel) doWipe() {
 	// STEP 1 — the are-you-sure gate.
 	step1 := tview.NewModal().
 		SetText(fmt.Sprintf(
-			"⚠  Wipe account?\n\nThis deletes the account \"%s\": its theme unlocks,\nlifetime stats, achievements and every save in its slot.\n\nA backup goes to data/backups/ first; restoring it is manual.",
+			"⚠  Wipe account?\n\nThis deletes the account \"%s\": its theme unlocks,\nlifetime stats, badges and every save in its slot.\n\nA backup goes to data/backups/ first; restoring it is manual.",
 			name,
 		)).
 		AddButtons([]string{"Keep it", "Wipe it"}).
@@ -696,7 +698,7 @@ func accountDetailText(s game.AccountSummary, recovery string) string {
 	lines = append(lines, "")
 	lines = append(lines, fmt.Sprintf("[gray]Highest age[-] [white]%s[-]", ageDisplay(s.HighestAge)))
 	lines = append(lines, fmt.Sprintf("[gray]Total prestiges[-] [white]%d[-]", s.TotalPrestiges))
-	lines = append(lines, fmt.Sprintf("[gray]Achievements[-] [white]%d[-]", s.Achievements))
+	lines = append(lines, fmt.Sprintf("[gray]Badges[-] [white]%d[-]", s.Badges))
 	lines = append(lines, "")
 
 	var status []string
