@@ -43,6 +43,11 @@ func (s *Set) StretchTicks(age string, ticks int) int {
 	return config.StretchTicksBy(ticks, factor)
 }
 
+// SoftCap is the rule every production bonus pool follows (all production,
+// and each resource's own production): a pool applies in full up to the
+// knee, and a share of each point past it (config.SoftCap).
+func (s *Set) SoftCap() config.SoftCap { return s.softCap }
+
 // PriceLevels returns the median first-copy price of each construction
 // resource in age (nil for an age with no buildings).
 func (s *Set) PriceLevels(age string) map[string]float64 { return maps.Clone(s.priceLevels[age]) }

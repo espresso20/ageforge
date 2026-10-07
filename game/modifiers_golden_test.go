@@ -29,7 +29,7 @@ const goldenEps = 1e-9
 //	prodAllAdd = research[production_all] + permanent[production_all]
 //	           + prestige[production_all] + wonders[production_all]
 //	           + Σ active-event production_all effects
-//	factor     = moraleMultiplier() × clamp(1 + prodAllAdd, productionFloor, productionCap)
+//	factor     = moraleMultiplier() × max(productionFloor, 1 + softCap(prodAllAdd))
 //
 // The morale factor is moraleMultiplier(), applied unconditionally to the
 // building rate (recalculateRates hoists it as `mMult := ge.moraleMultiplier()`,
@@ -57,19 +57,29 @@ func expectedProductionAll(ge *GameEngine) float64 {
 		}
 	}
 
-	return ge.moraleMultiplier() * clamp(1.0+add, productionFloor, productionCap)
+	return ge.moraleMultiplier() * expectedPoolFactor(add)
+}
+
+// expectedPoolFactor re-derives what the engine makes of a production pool
+// that has earned add: all of it up to +200%, a quarter of the rest, and
+// never under the floor. Written out here on purpose, not read from config.
+func expectedPoolFactor(add float64) float64 {
+	if add > 2.0 {
+		add = 2.0 + (add-2.0)*0.25
+	}
+	return math.Max(productionFloor, 1.0+add)
 }
 
 // expectedResRate re-derives the per-resource rate multiplier (Fix B: ungated +
-// floored; boon-capacity pass: also capped):
+// floored; above +200% the soft cap):
 //
 //	add    = research[<res>_rate] + permanent[<res>_rate] + prestige[<res>_rate] + wonders[<res>_rate]
-//	factor = clamp(1 + add, productionFloor, productionCap)
+//	factor = max(productionFloor, 1 + softCap(add))
 //
 // (permanentBonuses already absorbs milestone/legacy/epoch; prestige and wonders
 // are merged into the same effective per-resource pool in recalculateRates.) As
-// with production_all the clamp only binds outside [0.10, 3.0]; fixtures here are
-// non-binding, so this equals the resolver's unclamped Total.
+// with production_all the floor and the soft cap only bind outside [0.10, 3.0];
+// fixtures here are non-binding, so this equals the resolver's Total.
 func expectedResRate(ge *GameEngine, res string) float64 {
 	key := res + "_rate"
 	research := ge.Research.GetBonuses()
@@ -77,7 +87,7 @@ func expectedResRate(ge *GameEngine, res string) float64 {
 	wonders := ge.getWonderBonuses()
 
 	add := research[key] + ge.permanentBonuses[key] + prestige[key] + wonders[key]
-	return clamp(1.0+add, productionFloor, productionCap)
+	return expectedPoolFactor(add)
 }
 
 // expectedGatherRate re-derives the gather_rate multiplier the same way (Fix B).

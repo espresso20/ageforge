@@ -19,8 +19,8 @@ import (
 // What bounds the system is no longer expiry alone: rollExpeditionEncounter now
 // gates on MaxConcurrentFactionBoons (and MaxConcurrentFactionMaluses), so an
 // encounter arriving at capacity grants nothing positive. On top of that,
-// recalculateRates clamps the applied multiplier to productionCap, so even a
-// pathological pool cannot exceed x3.0. tick_speed keeps its own clamp — the real
+// recalculateRates applies a production pool through the soft cap, so a point
+// past +200% counts a quarter. tick_speed keeps its own clamp — the real
 // MinTickInterval floor in getTickInterval.
 //
 // These tests drive the REAL path (rollExpeditionEncounter → applyFactionBoon →
@@ -33,7 +33,7 @@ import (
 //   - concurrent active boons stay bounded BY THE CAPACITY GATE, not by luck;
 //   - the summed production_all / <res>_rate additive pools stay under a hard
 //     ceiling, and the multiplier the engine actually applies never exceeds
-//     productionCap;
+//     what the soft cap makes of that ceiling;
 //   - the tick interval never dips below MinTickInterval (code-enforced clamp);
 //   - no NaN/Inf leaks into resource rates or the computed multipliers;
 //   - prestige/Reset clears every active boon (no cross-run leak);
@@ -41,7 +41,8 @@ import (
 //
 // UPDATED (capacity pass): the ceilings below are now backed by REAL production
 // clamps — MaxConcurrentFactionBoons / MaxConcurrentFactionMaluses in the
-// encounter path and productionCap in recalculateRates. The previous run measured
+// encounter path. (recalculateRates had a x3.0 clamp too; it is a soft cap now,
+// which slows a stack past +200% and does not stop it.) The previous run measured
 // 238 concurrent boons and a x20.3 knowledge_rate multiplier against ceilings of
 // 1024 / 50.0 that existed only to catch a runaway. Those ceilings are now set
 // just above the enforced bound, so a regression that removes either clamp fails
@@ -98,9 +99,9 @@ const (
 	// measured tuning pass) concurrent boons at the worst-case allied str-5
 	// magnitude (Enlightenment 0.25 x ~1.82 = 0.455 each) the realistic worst
 	// case is ~2.3 — still under this ceiling, which is the reason the capacity
-	// bump stopped at 5. 3.0 mirrors productionCap: past it the engine's clamp
-	// is doing all the work, which is exactly the state this test exists to
-	// prevent from creeping back.
+	// bump stopped at 5. Past 3.0 the soft cap would be doing the balancing
+	// (and it only slows a stack, it does not stop one), which is exactly the
+	// state this test exists to prevent from creeping back.
 	maxAdditivePool = 3.0
 )
 
@@ -202,7 +203,7 @@ func driveCycle(t *testing.T, ge *GameEngine, ticks int, obs *soakObservations) 
 			// Summed additive pools: production_all + every hot <res>_rate. Both
 			// the raw Σ and the multiplier recalculateRates actually applies are
 			// checked — the pool ceiling catches stacking, the factor assertion
-			// pins the productionCap clamp itself.
+			// pins the floor and the soft cap.
 			checkPool := func(target string) {
 				sum := r.AddTotal(target)
 				if math.IsNaN(sum) || math.IsInf(sum, 0) {
@@ -217,11 +218,12 @@ func driveCycle(t *testing.T, ge *GameEngine, ticks int, obs *soakObservations) 
 						target, sum, maxAdditivePool, tick)
 				}
 				// The applied multiplier, computed exactly as recalculateRates does.
-				factor := clamp(1.0+sum, productionFloor, productionCap)
-				if factor > productionCap+1e-9 || factor < productionFloor-1e-9 {
+				soft := ge.rules.SoftCap()
+				factor := poolFactor(target, sum, soft)
+				if top := 1 + soft.Applied(maxAdditivePool); factor > top+1e-9 || factor < productionFloor-1e-9 {
 					t.Fatalf("applied factor for %q = %.6f outside [%.2f,%.2f] at tick %d "+
-						"(productionCap/Floor clamp is not binding)",
-						target, factor, productionFloor, productionCap, tick)
+						"(the floor or the soft cap is not binding)",
+						target, factor, productionFloor, top, tick)
 				}
 			}
 			checkPool("production_all")

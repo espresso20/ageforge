@@ -15,7 +15,7 @@ import (
 // the techs' own factor, never under config.BuildCostFloor of the price.
 // Caller holds the lock.
 func (ge *GameEngine) buildCostFactor(pool float64) float64 {
-	f := float64(poolFactor("build_cost", pool) * ge.Research.Bonus(config.EffectBuildCost, ""))
+	f := float64(poolFactor("build_cost", pool, ge.rules.SoftCap()) * ge.Research.Bonus(config.EffectBuildCost, ""))
 	return math.Max(f, config.BuildCostFloor)
 }
 

@@ -32,20 +32,19 @@ const (
 	// push production below 10% of its pre-bonus value or flip it negative.
 	productionFloor = 0.10
 
-	// productionCap is the SYMMETRIC ceiling on the same pools. Until it existed
-	// the additive pools were floored but unbounded above: nothing capped how many
-	// stacking timed buffs (faction boons, events, wonders) could pile into
-	// production_all or a "<res>_rate", and a soak measured a x20.3 multiplier on
-	// knowledge_rate. Both pools are now applied as
-	// rate *= clamp(1+Σ, productionFloor, productionCap), so stacked buffs
-	// saturate at x3.0 instead of compounding without limit.
+	// The same pools have no hard ceiling. Above, a production pool
+	// (production_all, <res>_rate) follows the ruleset's soft cap
+	// (config.SoftCap, applied in poolFactor): in full up to +200%, and a
+	// quarter of every point past it, so a bonus past the knee still moves
+	// the rate. The pools used to stop dead at x3.0 instead, a ceiling first
+	// added when stacked timed buffs ran a pool to x20; what bounds that
+	// stacking now is the cap on concurrent boons (encounters.go), and past
+	// the knee a stack grows at a quarter of the speed.
 	//
-	// NOTE: this bounds the applied MULTIPLIER, not the pool sum — the resolver
-	// still reports the raw Σ for the breakdown panel, which is what a player
-	// wants to see ("you are over the cap"). gather_rate keeps its floor-only
-	// treatment: it is an additive re-add on worker output, not a multiplier on a
-	// rate, so the same ceiling does not apply.
-	productionCap = 3.0
+	// NOTE: the soft cap shapes the applied MULTIPLIER, not the pool sum:
+	// the resolver still reports the raw Σ, which is what the panels show
+	// as earned. gather_rate keeps its floor-only treatment: it is an
+	// additive re-add on worker output, not a multiplier on a rate.
 
 	// Festival (culture sink) tuning. The tick counts here and the black
 	// market's cooldown are typed for the base curve and stretched for the
@@ -1919,10 +1918,11 @@ func (ge *GameEngine) recalculateRates() {
 	// Fix B: UNgated with a floor. Previously gated `if prodAllBonus > 0`, which
 	// silently swallowed negative additive bonuses (e.g. the Reconstruction Effort
 	// catastrophe's -0.10 production_all) whenever the player lacked ≥10% positive
-	// bonuses. Now always applied as ×clamp(1+Σ, productionFloor, productionCap),
-	// so the debuff lands but production can neither drop below 10% of its
-	// pre-bonus value nor run away above ×3.0 on stacked buffs.
-	prodAllFactor := poolFactor("production_all", r.AddTotal("production_all"))
+	// bonuses. Now always applied, so the debuff lands but production can
+	// never drop below 10% of its pre-bonus value. Above, the pool follows
+	// the soft cap: in full up to +200%, a quarter of every point past it.
+	soft := ge.rules.SoftCap()
+	prodAllFactor := poolFactor("production_all", r.AddTotal("production_all"), soft)
 	if prodAllFactor != 1.0 {
 		for _, def := range ge.Resources.defs {
 			r := ge.Resources.resources[def.Key]
@@ -1935,11 +1935,10 @@ func (ge *GameEngine) recalculateRates() {
 	// Apply per-resource rate bonuses (e.g., "gold_rate", "iron_rate").
 	// Includes legacy bonuses (stored in permanentBonuses["wood"] etc. after
 	// reapplyLegacyBonuses). Fix B: same ungated+floored treatment as above, and
-	// the same productionCap ceiling — stacked "<res>_rate" boons were the pool
-	// the soak caught running to ×20.
+	// the same soft cap: one rule for every production pool.
 	for _, def := range ge.Resources.defs {
 		bonusKey := def.Key + "_rate"
-		factor := poolFactor(bonusKey, r.AddTotal(bonusKey))
+		factor := poolFactor(bonusKey, r.AddTotal(bonusKey), soft)
 		if factor != 1.0 {
 			r := ge.Resources.resources[def.Key]
 			if r != nil && r.Rate > 0 {
@@ -1953,14 +1952,14 @@ func (ge *GameEngine) recalculateRates() {
 	// (workerOutput above: 80% of its listed rate at a full crew, morale
 	// included), and the bonus adds Σ gather_rate of it, ON TOP of the
 	// multipliers above rather than through them, so it is never under the
-	// production cap and never compounds with it. Fix B: ungated and floored,
+	// soft cap and never compounds with it. Fix B: ungated and floored,
 	// so a negative total takes worker output down to 10% of itself at most.
 	//
 	// This block read WorkerManager.GetProductionRates, which has returned
 	// nothing since worker output was folded into building output: every
 	// worker output bonus in the game was dead. It reads the staffing share
 	// of building output now.
-	gatherDelta := poolFactor("gather_rate", r.AddTotal("gather_rate")) - 1.0
+	gatherDelta := poolFactor("gather_rate", r.AddTotal("gather_rate"), soft) - 1.0
 	ge.workerBonus = gatherDelta
 	if gatherDelta != 0 {
 		for _, def := range ge.Resources.defs {
@@ -1978,7 +1977,7 @@ func (ge *GameEngine) recalculateRates() {
 
 	// The tech layer: what a resource's buildings and their crews make ×
 	// (1 + the techs' bonus on that resource + their bonus on all
-	// production), after the ×3 caps and every pooled bonus, so a tech's
+	// production), after the pools and their soft cap, so a tech's
 	// bonus counts in full whatever the pools hold. Bonuses on the same
 	// thing add up inside the layer; nothing caps it. It comes before the
 	// flat amounts below (a first-source tech, an event), which are
@@ -2031,9 +2030,9 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// The Cosmic Legacy (last_passage.go): everything a resource makes × 1.1,
-	// after the ×3 caps and every other bonus. Inside the all-production
-	// pool it added nothing once the pool was full (the Victorian Age on a
-	// typical run); here it counts in every age. It multiplies what is made,
+	// after the pools and every other bonus. Inside the all-production
+	// pool it would count a quarter once the pool is past its knee; here it
+	// counts in full in every age. It multiplies what is made,
 	// before the food drain, so it never deepens a deficit. Its own
 	// breakdown line says why.
 	if legacy := ge.cosmicLegacyFactor(); legacy != 1 {
@@ -2069,7 +2068,7 @@ func (ge *GameEngine) recalculateRates() {
 
 	// Era Mastery (mastery.go): on known ground the whole economy runs k
 	// times faster, so every net rate is multiplied by k at the very end,
-	// after the ×3 caps, flat tech and event output, trade bonuses and the
+	// after the pools, flat tech and event output, trade bonuses and the
 	// food drain. Its own breakdown line says why.
 	k := ge.speedK()
 	ge.noteGraceLocked(k)
@@ -2098,7 +2097,7 @@ func (ge *GameEngine) recalculateRates() {
 	// the town's own faith buildings make, and what a moderate set would
 	// make in their place. Each goes through the steps the rate went through
 	// above, so the two differ only in the buildings and their staffing.
-	faithFactor := poolFactor("faith_rate", r.AddTotal("faith_rate"))
+	faithFactor := poolFactor("faith_rate", r.AddTotal("faith_rate"), soft)
 	faithLayer := ge.Research.OutputFactor("faith") // the tech layer
 	faithTrade := ge.Diplomacy.GetTradeBonus("faith")
 	faithLegacy := ge.cosmicLegacyFactor()
@@ -2773,11 +2772,14 @@ type FestivalStatus struct {
 	CooldownTicks int     // cooldown imposed after a festival
 	CooldownLeft  int     // ticks remaining on the current cooldown (0 if ready)
 	Ready         bool    // true when not on cooldown
-	// CapNote says what the all-production cap would leave of the buff if a
-	// festival were held now: "" when all of it would count (CapNote in
-	// caps.go). The festival costs culture, so the command shows it before
-	// the player pays.
-	CapNote string
+	// CapNote says what the buff would add if a festival were held now and
+	// less than all of it would count: "counts a quarter past +200%: +5%
+	// now" with all production past its knee, "" when all of it would count
+	// (CapNote in caps.go). CapPhrase is the same as the rest of a sentence
+	// about the festival. The festival costs culture, so the command shows
+	// it before the player pays.
+	CapNote   string
+	CapPhrase string
 }
 
 // stretchTicks re-times a base-curve tick count for the current age
@@ -2814,8 +2816,10 @@ func (ge *GameEngine) FestivalStatus() FestivalStatus {
 	if cd < 0 {
 		cd = 0
 	}
+	pool := ge.bonusPoolLocked(ge.buildResolver(), "production_all")
 	return FestivalStatus{
-		CapNote:       ge.capNoteLocked(config.Effect{Type: "production_all", Value: festivalBuffPercent}, false),
+		CapNote:       CapNote(pool, festivalBuffPercent, false),
+		CapPhrase:     CapPhrase(pool, festivalBuffPercent, false),
 		Cost:          ge.festivalCost(),
 		Culture:       ge.Resources.Get("culture"),
 		BuffPercent:   festivalBuffPercent,

@@ -369,34 +369,51 @@ func TestStaticFeatureLocks(t *testing.T) {
 
 // TestStaticCaps pins the caps report's reading: with techs in a layer of
 // their own, a player who holds every milestone, wonder and monument still
-// reaches the all-production clamp, from the Electric Age at the earliest,
-// and no resource's own pool reaches its clamp in any age. And the pacing
-// model's all-production pool never holds more than such a player can.
+// takes the all-production pool past its knee, from the Electric Age at the
+// earliest, and no resource's own pool passes its knee in any age. Past the
+// knee the pool applies a quarter of each point: the last age's +661%
+// applies +315%, where the old clamp applied +200%. And the pacing model's
+// all-production pool never holds more than such a player can.
 func TestStaticCaps(t *testing.T) {
 	rows := StaticCaps()
 	if len(rows) != len(config.AgeOrder()) {
 		t.Fatalf("%d rows for %d ages", len(rows), len(config.AgeOrder()))
 	}
 	all := func(r CapRow) float64 { return r.All() }
-	if got := CapReachedIn(rows, 0, all); got != "electric_age" {
-		t.Errorf("all production reaches its clamp on what stands alone in %q, want the Electric Age", got)
+	if got := KneePassedIn(rows, 0, all); got != "electric_age" {
+		t.Errorf("all production passes its knee on what stands alone in %q, want the Electric Age", got)
 	}
-	if got := CapReachedIn(rows, FestivalBonus+SurgeBonus, all); got != "industrial_age" {
-		t.Errorf("all production reaches its clamp with a festival and a surge in %q, want the Industrial Age", got)
+	if got := KneePassedIn(rows, FestivalBonus+SurgeBonus, all); got != "industrial_age" {
+		t.Errorf("all production passes its knee with a festival and a surge in %q, want the Industrial Age", got)
 	}
 	last := rows[len(rows)-1]
 	for res := range last.Resources {
-		if age := CapReachedIn(rows, 0, func(r CapRow) float64 { return r.Resources[res] }); age != "" {
-			t.Errorf("%s's own pool reaches its clamp in the %s", res, age)
+		if age := KneePassedIn(rows, 0, func(r CapRow) float64 { return r.Resources[res] }); age != "" {
+			t.Errorf("%s's own pool passes its knee in the %s", res, age)
 		}
 	}
 	near := func(got, want float64) bool { return math.Abs(got-want) < 1e-9 }
 	if !near(last.Milestones, 4.35) || !near(last.Wonders, 2.15) || !near(last.Monuments, 0.11) || !near(last.Resources["knowledge"], 1.45) || !near(last.Resources["gold"], 0.70) {
 		t.Errorf("the last age holds %+v", last)
 	}
+	// Earned against applied, by the rule written out: all of it up to
+	// +200%, a quarter of the rest.
+	if !near(last.All(), 6.61) || !near(last.Applied(), 2+4.61*0.25) {
+		t.Errorf("the last age has earned %+.4f and applies %+.4f, want +6.61 and +3.1525", last.All(), last.Applied())
+	}
 	for i, r := range rows {
 		if i > 0 && r.All() < rows[i-1].All() {
 			t.Errorf("%s holds less all production than the age before it", r.Age)
+		}
+		want := r.All()
+		if want > 2 {
+			want = 2 + (want-2)*0.25
+		}
+		if !near(r.Applied(), want) {
+			t.Errorf("%s: +%.0f%% earned applies +%.2f%%, want +%.2f%%", r.Age, r.All()*100, r.Applied()*100, want*100)
+		}
+		if i > 0 && r.Applied() < rows[i-1].Applied() {
+			t.Errorf("%s applies less all production than the age before it", r.Age)
 		}
 		if held := config.ProductionAllHeld[r.Age]; held > r.All()+1e-9 {
 			t.Errorf("%s: the pacing model holds +%.0f%% all production, more than the +%.0f%% a game can hold by then", r.Age, held*100, r.All()*100)
