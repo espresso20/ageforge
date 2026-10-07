@@ -185,28 +185,29 @@ func TestPlan_UnfundedItemReservesNothing(t *testing.T) {
 
 func TestPlan_ResearchQueueStartsInOrder(t *testing.T) {
 	ge := planTestEngine(t)
-	if err := ge.PlanAddResearch("fire_mastery"); err == nil {
-		t.Fatal("planned fire_mastery before its prerequisite")
+	ge.age = "stone_age" // Pottery is a Stone Age tech, and it needs Fire Mastery
+	if err := ge.PlanAddResearch("pottery"); err == nil {
+		t.Fatal("planned pottery before its prerequisite")
 	}
-	for _, k := range []string{"tool_making", "fire_mastery"} {
+	for _, k := range []string{"fire_mastery", "pottery"} {
 		if err := ge.PlanAddResearch(k); err != nil {
 			t.Fatalf("plan %s: %v", k, err)
 		}
 	}
-	setAmount(ge, "knowledge", 5000)
+	setAmount(ge, "knowledge", 10000)
 	ge.runPlanTick()
-	if ge.Research.currentTech != "tool_making" {
-		t.Fatalf("researching %q, want tool_making", ge.Research.currentTech)
+	if ge.Research.currentTech != "fire_mastery" {
+		t.Fatalf("researching %q, want fire_mastery", ge.Research.currentTech)
 	}
 	if v := ge.planViews(); len(v) != 1 || v[0].Note != "research slot busy" {
-		t.Fatalf("views = %+v, want fire_mastery waiting on the slot", v)
+		t.Fatalf("views = %+v, want pottery waiting on the slot", v)
 	}
 	for i := 0; i < 1000 && ge.Research.currentTech != ""; i++ {
 		ge.processResearch()
 	}
 	ge.runPlanTick()
-	if ge.Research.currentTech != "fire_mastery" || len(ge.plan) != 0 {
-		t.Errorf("after tool_making: researching %q, plan %+v", ge.Research.currentTech, ge.plan)
+	if ge.Research.currentTech != "pottery" || len(ge.plan) != 0 {
+		t.Errorf("after fire_mastery: researching %q, plan %+v", ge.Research.currentTech, ge.plan)
 	}
 }
 
@@ -230,16 +231,25 @@ func TestPlan_InvalidItemsDropOut(t *testing.T) {
 	if !logHas(ge, "Plan: dropped 2 Huts") || !logHas(ge, "Plan: dropped research Tool Making (already researched)") {
 		t.Error("missing drop log lines")
 	}
-	// Removing a prerequisite from the plan drops what needed it.
+	// Removing a prerequisite from the plan does not drop what needed it:
+	// that tech could still start, so it waits and says what it needs.
 	ge2 := planTestEngine(t)
-	_ = ge2.PlanAddResearch("tool_making")
+	ge2.age = "stone_age"
 	_ = ge2.PlanAddResearch("fire_mastery")
+	_ = ge2.PlanAddResearch("pottery")
 	if _, err := ge2.PlanRemove(1); err != nil {
 		t.Fatal(err)
 	}
+	setAmount(ge2, "knowledge", 10000)
 	ge2.runPlanTick()
-	if len(ge2.plan) != 0 {
-		t.Errorf("fire_mastery survived losing its planned prerequisite: %+v", ge2.plan)
+	if len(ge2.plan) != 1 || ge2.plan[0].Key != "pottery" || ge2.Research.currentTech != "" {
+		t.Errorf("pottery should wait in the plan for Fire Mastery: plan %+v, researching %q", ge2.plan, ge2.Research.currentTech)
+	}
+	if v := ge2.planViews(); len(v) != 1 || v[0].Status != PlanStatusBlocked || v[0].Note != "needs Fire Mastery first" {
+		t.Errorf("views = %+v, want pottery blocked on Fire Mastery", v)
+	}
+	if logHas(ge2, "Plan: dropped research Pottery") {
+		t.Error("the plan dropped a tech that only waits for its prerequisite")
 	}
 }
 

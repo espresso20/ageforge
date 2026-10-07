@@ -625,10 +625,10 @@ func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(s
 				continue
 			}
 			for _, e := range t.Effects {
-				if e.Type == "production" && e.Value > 0 && include(e.Target) {
+				if e.Kind == EffectFlatOutput && e.Value > 0 && include(e.Target) {
 					inc[e.Target] += e.Value
 				}
-				if e.Type == "bonus" && e.Target == "production_all" {
+				if e.Kind == EffectAllOutput {
 					bonus += e.Value
 				}
 			}

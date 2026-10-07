@@ -371,14 +371,18 @@ type ResearchState struct {
 
 // TechState represents one technology's state for UI
 type TechState struct {
-	Name          string
-	Age           string
-	Cost          float64
+	Name string
+	Age  string
+	Cost float64
+	// Prerequisites must all be researched. AnyOf is the tech's either-or
+	// group: one of its keys must be researched too (nil for a tech with no
+	// such group).
 	Prerequisites []string
+	AnyOf         []string
 	Description   string
 	Researched    bool
 	Available     bool // meets age + prereqs and not yet researched
-	PrereqsMet    bool
+	PrereqsMet    bool // every prerequisite, and one of AnyOf
 }
 
 // === Military Types ===

@@ -1465,7 +1465,7 @@ func (ge *GameEngine) finishResearch(completed string) {
 	ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
 	ge.addLog("success", fmt.Sprintf("Research complete: %s.", def.Name))
 	// A bonus a cap keeps from counting says so.
-	for _, capped := range ge.capLinesLocked(def.Effects, true) {
+	for _, capped := range ge.capLinesLocked(def.GeneralEffects(), true) {
 		ge.addLog("info", capped)
 	}
 	// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
@@ -1888,14 +1888,13 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Research production effects (direct production from techs)
-	for _, eff := range ge.getAllResearchProductionEffects() {
-		if eff.Type == "production" {
-			r := ge.Resources.resources[eff.Target]
-			if r != nil {
-				r.Rate += eff.Value
-				r.Breakdown.ResearchRate += eff.Value
-			}
+	// Research production effects (direct production from techs), added one
+	// effect at a time in the manager's fixed order.
+	for _, eff := range ge.Research.flatEffects() {
+		r := ge.Resources.resources[eff.Target]
+		if r != nil {
+			r.Rate += eff.Value
+			r.Breakdown.ResearchRate += eff.Value
 		}
 	}
 
@@ -1980,12 +1979,12 @@ func (ge *GameEngine) recalculateRates() {
 	storageBonuses := ge.Buildings.GetStorageBonuses()
 	allBonus := storageBonuses["all"]
 	// Add storage bonuses from research
-	allBonus += ge.Research.StorageBonus("all")
+	allBonus += ge.Research.Bonus(config.EffectFlatStorage, config.AllResources)
 	allBonus += permanentBonuses["all"]
 
 	for _, def := range ge.Resources.defs {
 		specific := storageBonuses[def.Key]
-		specific += ge.Research.StorageBonus(def.Key)
+		specific += ge.Research.Bonus(config.EffectFlatStorage, def.Key)
 		specific += permanentBonuses[def.Key]
 		r := ge.Resources.resources[def.Key]
 		// Storage grows with Era Mastery's k, as production does, so a store
@@ -2004,27 +2003,6 @@ func (ge *GameEngine) recalculateRates() {
 			delete(ge.Resources.grace, def.Key)
 		}
 	}
-}
-
-// getAllResearchProductionEffects returns production effects from researched techs
-func (ge *GameEngine) getAllResearchProductionEffects() []config.Effect {
-	var effects []config.Effect
-	// Held defs in sorted order: recalculateRates runs every tick, and callers
-	// sum these effects, so the order must not follow the researched map.
-	allTechs := ge.Research.defs
-	for _, key := range ge.Research.order {
-		if !ge.Research.researched[key] {
-			continue
-		}
-		if def, ok := allTechs[key]; ok {
-			for _, eff := range def.Effects {
-				if eff.Type == "production" {
-					effects = append(effects, eff)
-				}
-			}
-		}
-	}
-	return effects
 }
 
 // Age-transition resource carryover tuning (EPIC: age-pacing economy rebalance).

@@ -99,7 +99,7 @@ func expectedGatherRate(ge *GameEngine) float64 {
 //	factor = 1 + add
 func expectedTickSpeed(ge *GameEngine) float64 {
 	prestige := ge.Prestige.GetBonuses()
-	add := ge.Research.GetBonus("tick_speed") + ge.permanentBonuses["tick_speed"] + prestige["tick_speed"]
+	add := ge.Research.Bonus(config.EffectGameSpeed, "") + ge.permanentBonuses["tick_speed"] + prestige["tick_speed"]
 	for _, eff := range ge.Events.GetActiveEffects() {
 		if eff.Type == "tick_speed" {
 			add += eff.Value
@@ -161,10 +161,10 @@ func TestResolverGolden_FreshGame(t *testing.T) {
 
 func TestResolverGolden_ResearchBonuses(t *testing.T) {
 	ge := NewGameEngine()
-	ge.Research.bonuses["production_all"] = 0.25
-	ge.Research.bonuses["gold_rate"] = 0.40
-	ge.Research.bonuses["gather_rate"] = 0.15
-	ge.Research.bonuses["tick_speed"] = 0.10
+	plantResearchBonus(ge, config.EffectAllOutput, "", 0.25)
+	plantResearchBonus(ge, config.EffectOutput, "gold", 0.40)
+	plantResearchBonus(ge, config.EffectWorkerOutput, "", 0.15)
+	plantResearchBonus(ge, config.EffectGameSpeed, "", 0.10)
 	assertResolverGolden(t, ge, "gold", true)
 }
 
@@ -269,7 +269,7 @@ func TestResolverGolden_ActiveEventTickSpeed(t *testing.T) {
 
 func TestResolverGolden_MoraleHigh(t *testing.T) {
 	ge := NewGameEngine()
-	ge.Research.bonuses["production_all"] = 0.20
+	plantResearchBonus(ge, config.EffectAllOutput, "", 0.20)
 	// Above the 0.50 pivot → moraleMultiplier ramps the bonus in. At/above cap 1.0
 	// this saturates to ×1.20; production_all Total must include the curve's bonus
 	// factor, not the raw 0.90 morale field.
@@ -279,7 +279,7 @@ func TestResolverGolden_MoraleHigh(t *testing.T) {
 
 func TestResolverGolden_MoraleNeutral(t *testing.T) {
 	ge := NewGameEngine()
-	ge.Research.bonuses["production_all"] = 0.20
+	plantResearchBonus(ge, config.EffectAllOutput, "", 0.20)
 	// Exactly at the 0.50 pivot → moraleMultiplier exactly 1.0.
 	ge.morale = moraleNeutral // 0.50
 	assertResolverGolden(t, ge, "wood", true)
@@ -287,7 +287,7 @@ func TestResolverGolden_MoraleNeutral(t *testing.T) {
 
 func TestResolverGolden_MoraleLow(t *testing.T) {
 	ge := NewGameEngine()
-	ge.Research.bonuses["production_all"] = 0.20
+	plantResearchBonus(ge, config.EffectAllOutput, "", 0.20)
 	// Below the 0.50 pivot → moraleMultiplier penalty. production_all Total must
 	// drop to moraleMultiplier()×(1+adds), well below 1.
 	ge.morale = 0.15
@@ -299,10 +299,10 @@ func TestResolverGolden_MoraleLow(t *testing.T) {
 // multiplicative mistake or a missed source would show up.
 func TestResolverGolden_AllSourcesStacked(t *testing.T) {
 	ge := NewGameEngine()
-	ge.Research.bonuses["production_all"] = 0.10
-	ge.Research.bonuses["iron_rate"] = 0.20
-	ge.Research.bonuses["gather_rate"] = 0.05
-	ge.Research.bonuses["tick_speed"] = 0.08
+	plantResearchBonus(ge, config.EffectAllOutput, "", 0.10)
+	plantResearchBonus(ge, config.EffectOutput, "iron", 0.20)
+	plantResearchBonus(ge, config.EffectWorkerOutput, "", 0.05)
+	plantResearchBonus(ge, config.EffectGameSpeed, "", 0.08)
 	ge.Prestige.level = 3 // +6% production_all, +3% tick_speed
 	addWonder(ge, "test_wonder_stack", "production_all", 0.15, 1)
 	addWonder(ge, "test_wonder_iron", "iron_rate", 0.10, 1)
@@ -330,7 +330,7 @@ func TestResolverGolden_AllSourcesStacked(t *testing.T) {
 // accidentally a no-op (e.g. both sides return 1.0 for everything).
 func TestResolverGolden_IsRealCheck(t *testing.T) {
 	ge := NewGameEngine()
-	ge.Research.bonuses["production_all"] = 0.25
+	plantResearchBonus(ge, config.EffectAllOutput, "", 0.25)
 	ge.morale = 0.90 // high band → moraleMultiplier() saturates to ×1.20 at cap 1.0
 
 	got := ge.buildResolver().Total("production_all")

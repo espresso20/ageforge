@@ -1,15 +1,35 @@
 package config
 
 // TechDef defines a single technology in the tech tree.
-// Technologies are gated by both age (Age field) and prerequisites (all keys in
-// Prerequisites must be researched). Only one tech can be researched at a time.
+// Technologies are gated by both age (Age field) and prerequisites: every key
+// in Prerequisites must be researched, and one key of AnyOf when it has any.
+// Only one tech can be researched at a time.
+//
+// A tech's kind (keystone, spine, capstone, optional) is not a field: it is
+// worked out from the wonders (TechKinds), so it cannot go stale.
 type TechDef struct {
-	Name          string
-	Key           string
-	Age           string   // minimum age key required to start research
-	Cost          float64  // knowledge points consumed on research completion
-	Prerequisites []string // all tech keys that must already be researched
-	Effects       []Effect // applied permanently when research finishes
+	Name string
+	Key  string
+	Age  string // minimum age key required to start research
+	// Lane is the tech's column in the tree: one of the TechLanes keys.
+	Lane string
+	// Code is the tech's letterhead on the tree's small badges: two to
+	// TechCodeMax capital letters, unlike any other tech's. Left empty, it
+	// is made from the name (TechCodeFor).
+	Code string
+	// Emblem is the one glyph inside the tech's badge, one cell wide. Left
+	// empty, it is the lane's glyph.
+	Emblem string
+	Cost   float64 // knowledge points consumed on research completion
+	// Prerequisites are the tech keys that must all be researched first.
+	Prerequisites []string
+	// AnyOf is an either-or group on top of Prerequisites: at least one of
+	// these must be researched too. Empty means no such group. A tech has
+	// one group at most, of two keys or more.
+	AnyOf []string
+	// Capstone marks a tech that ends its lane for an era.
+	Capstone      bool
+	Effects       []TechEffect // applied permanently when research finishes
 	Description   string
 	ResearchTicks int // game ticks to complete (at 1x speed); scales with research_speed bonus
 }
@@ -17,455 +37,460 @@ type TechDef struct {
 // Technologies returns every tech definition, ordered loosely by age.
 // Use TechByKey() for random access or TechsByAge() to group by age.
 func Technologies() []TechDef {
-	return normalizeResearchTicks([]TechDef{
+	return fillTechArt(normalizeResearchTicks([]TechDef{
 		// === PRIMITIVE AGE === (~1 min each)
 		{
-			Name: "Tool Making", Key: "tool_making",
-			Age: "primitive_age", Cost: 800, ResearchTicks: 200,
+			Name: "Tool Making", Key: "tool_making", Code: "TOOLS",
+			Age: "primitive_age", Lane: LaneCraft, Cost: 800, ResearchTicks: 200,
 			Description: "Stone tools make every worker more productive.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "gather_rate", Value: 0.15},
+			Effects: []TechEffect{
+				{Kind: EffectWorkerOutput, Value: 0.15},
 			},
 		},
 		{
-			Name: "Fire Mastery", Key: "fire_mastery",
-			Age: "primitive_age", Cost: 1000, ResearchTicks: 200,
-			Prerequisites: []string{"tool_making"},
-			Description:   "Control of fire improves food preservation and warmth.",
-			Effects: []Effect{
-				{Type: "production", Target: "food", Value: 0.1},
+			// A root, with Tool Making: fire needs no tools.
+			Name: "Fire Mastery", Key: "fire_mastery", Emblem: "△",
+			Age: "primitive_age", Lane: LaneAgriculture, Cost: 1000, ResearchTicks: 200,
+			Description: "Control of fire improves food preservation and warmth.",
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "food", Value: 0.1},
 			},
 		},
 
 		// === STONE AGE === (~2 min each)
 		{
-			Name: "Stoneworking", Key: "stoneworking",
-			Age: "stone_age", Cost: 6000, ResearchTicks: 500,
+			Name: "Stoneworking", Key: "stoneworking", Emblem: "◆",
+			Age: "stone_age", Lane: LaneMaterials, Cost: 6000, ResearchTicks: 500,
 			Prerequisites: []string{"tool_making"},
 			Description:   "Cutting and shaping stone for construction.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "stone_rate", Value: 0.2},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "stone", Value: 0.2},
 			},
 		},
 		{
-			Name: "Animal Husbandry", Key: "animal_husbandry",
-			Age: "stone_age", Cost: 7500, ResearchTicks: 550,
+			Name: "Animal Husbandry", Key: "animal_husbandry", Code: "HERDS", Emblem: "♞",
+			Age: "stone_age", Lane: LaneAgriculture, Cost: 7500, ResearchTicks: 550,
 			Prerequisites: []string{"fire_mastery"},
 			Description:   "Domesticating animals for food and labor.",
-			Effects: []Effect{
-				{Type: "production", Target: "food", Value: 0.2},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "food", Value: 0.2},
 			},
 		},
 		{
-			Name: "Pottery", Key: "pottery",
-			Age: "stone_age", Cost: 5000, ResearchTicks: 450,
+			Name: "Pottery", Key: "pottery", Code: "POTS", Emblem: "∪",
+			Age: "stone_age", Lane: LaneTrade, Cost: 5000, ResearchTicks: 450,
 			Prerequisites: []string{"fire_mastery"},
 			Description:   "Clay vessels for storage and trade.",
-			Effects: []Effect{
-				{Type: "storage", Target: "all", Value: 25},
+			Effects: []TechEffect{
+				{Kind: EffectFlatStorage, Target: AllResources, Value: 25},
 			},
 		},
 		{
-			Name: "Primitive Writing", Key: "primitive_writing",
-			Age: "stone_age", Cost: 10000, ResearchTicks: 600,
-			Prerequisites: []string{"pottery"},
-			Description:   "Early symbols enable knowledge transfer.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "knowledge_rate", Value: 0.1},
+			// Writing no longer follows Pottery, which leads to storage and trade.
+			// It is a root until the tech it will follow (Language) exists.
+			Name: "Primitive Writing", Key: "primitive_writing", Code: "WRITE",
+			Age: "stone_age", Lane: LaneKnowledge, Cost: 10000, ResearchTicks: 600,
+			Description: "Early symbols enable knowledge transfer.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.1},
 			},
 		},
 
 		// === BRONZE AGE === (~3 min each)
 		{
 			Name: "Bronze Working", Key: "bronze_working",
-			Age: "bronze_age", Cost: 1600, ResearchTicks: 750,
+			Age: "bronze_age", Lane: LaneMaterials, Cost: 1600, ResearchTicks: 750,
 			Prerequisites: []string{"stoneworking"},
 			Description:   "Alloying copper and tin creates durable tools.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "stone_rate", Value: 0.2},
-				{Type: "bonus", Target: "gather_rate", Value: 0.1},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "stone", Value: 0.2},
+				{Kind: EffectWorkerOutput, Value: 0.1},
 			},
 		},
 		{
-			Name: "Agriculture", Key: "agriculture",
-			Age: "bronze_age", Cost: 12000, ResearchTicks: 700,
+			Name: "Agriculture", Key: "agriculture", Code: "FARMS",
+			Age: "bronze_age", Lane: LaneAgriculture, Cost: 12000, ResearchTicks: 700,
 			Prerequisites: []string{"animal_husbandry"},
 			Description:   "Systematic farming adds steady food output.",
-			Effects: []Effect{
-				{Type: "production", Target: "food", Value: 0.5},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "food", Value: 0.5},
 			},
 		},
 		{
-			Name: "Currency", Key: "currency",
-			Age: "bronze_age", Cost: 17500, ResearchTicks: 800,
+			Name: "Currency", Key: "currency", Code: "COIN", Emblem: "¤",
+			Age: "bronze_age", Lane: LaneTrade, Cost: 17500, ResearchTicks: 800,
 			Prerequisites: []string{"primitive_writing"},
 			Description:   "Standardized money raises gold output.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "gold_rate", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "gold", Value: 0.3},
 			},
 		},
 		{
-			Name: "Masonry", Key: "masonry",
-			Age: "bronze_age", Cost: 13000, ResearchTicks: 700,
+			Name: "Masonry", Key: "masonry", Emblem: "▦",
+			Age: "bronze_age", Lane: LaneCraft, Cost: 13000, ResearchTicks: 700,
 			Prerequisites: []string{"stoneworking"},
 			Description:   "Advanced stone construction techniques.",
-			Effects: []Effect{
-				{Type: "storage", Target: "all", Value: 50},
+			Effects: []TechEffect{
+				{Kind: EffectFlatStorage, Target: AllResources, Value: 50},
 			},
 		},
 		{
-			Name: "Military Tactics", Key: "military_tactics",
-			Age: "bronze_age", Cost: 20000, ResearchTicks: 900,
+			Name: "Military Tactics", Key: "military_tactics", Code: "TACTI",
+			Age: "bronze_age", Lane: LaneMilitary, Cost: 20000, ResearchTicks: 900,
 			Prerequisites: []string{"bronze_working"},
 			Description:   "Organized warfare and defense strategies.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "military_power", Value: 0.2},
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.2},
 			},
 		},
 
 		// === IRON AGE === (~4 min each)
 		{
-			Name: "Iron Smelting", Key: "iron_smelting",
-			Age: "iron_age", Cost: 30000, ResearchTicks: 1100,
+			Name: "Iron Smelting", Key: "iron_smelting", Emblem: "■",
+			Age: "iron_age", Lane: LaneMaterials, Cost: 30000, ResearchTicks: 1100,
 			Prerequisites: []string{"bronze_working"},
 			Description:   "Hotter furnaces raise iron output.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "iron_rate", Value: 0.4},
-				{Type: "production", Target: "iron", Value: 0.2},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "iron", Value: 0.4},
+				{Kind: EffectFlatOutput, Target: "iron", Value: 0.2},
 			},
 		},
 		{
-			Name: "Road Building", Key: "road_building",
-			Age: "iron_age", Cost: 25000, ResearchTicks: 950,
+			// Roads will need The Wheel too, once that tech exists.
+			Name: "Road Building", Key: "road_building", Code: "ROADS", Emblem: "═",
+			Age: "iron_age", Lane: LaneCraft, Cost: 25000, ResearchTicks: 950,
 			Prerequisites: []string{"masonry"},
 			Description:   "Paved roads improve trade and movement.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "gold_rate", Value: 0.2},
-				{Type: "bonus", Target: "gather_rate", Value: 0.1},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "gold", Value: 0.2},
+				{Kind: EffectWorkerOutput, Value: 0.1},
 			},
 		},
 		{
-			Name: "Mathematics", Key: "mathematics",
-			Age: "iron_age", Cost: 37500, ResearchTicks: 1200,
-			Prerequisites: []string{"primitive_writing", "currency"},
+			Name: "Mathematics", Key: "mathematics", Code: "MATH", Emblem: "π",
+			Age: "iron_age", Lane: LaneKnowledge, Cost: 37500, ResearchTicks: 1200,
+			Prerequisites: []string{"primitive_writing"},
 			Description:   "Advanced calculation raises knowledge output.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "knowledge_rate", Value: 0.2},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.2},
 			},
 		},
 		{
-			Name: "Siege Warfare", Key: "siege_warfare",
-			Age: "iron_age", Cost: 35000, ResearchTicks: 1005,
+			Name: "Siege Warfare", Key: "siege_warfare", Emblem: "✕",
+			Age: "iron_age", Lane: LaneMilitary, Cost: 35000, ResearchTicks: 1005,
 			Prerequisites: []string{"military_tactics"},
 			Description:   "Siege engines and fortification techniques.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "military_power", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.3},
 			},
 		},
 
 		// === CLASSICAL AGE === (~5 min each)
 		{
-			Name: "Philosophy", Key: "philosophy",
-			Age: "classical_age", Cost: 20000, ResearchTicks: 1500,
-			Prerequisites: []string{"mathematics", "primitive_writing"},
+			Name: "Philosophy", Key: "philosophy", Emblem: "Φ",
+			Age: "classical_age", Lane: LaneKnowledge, Cost: 20000, ResearchTicks: 1500,
+			Prerequisites: []string{"mathematics"},
 			Description:   "Systematic inquiry into fundamental questions.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "knowledge_rate", Value: 0.3},
-				{Type: "production", Target: "culture", Value: 0.2},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.3},
+				{Kind: EffectFlatOutput, Target: "culture", Value: 0.2},
 			},
 		},
 		{
-			Name: "Civil Engineering", Key: "civil_engineering",
-			Age: "classical_age", Cost: 18000, ResearchTicks: 1300,
-			Prerequisites: []string{"masonry", "road_building"},
+			Name: "Civil Engineering", Key: "civil_engineering", Emblem: "∩",
+			Age: "classical_age", Lane: LaneCraft, Cost: 18000, ResearchTicks: 1300,
+			Prerequisites: []string{"road_building"},
 			Description:   "Large-scale construction and infrastructure.",
-			Effects: []Effect{
-				{Type: "storage", Target: "all", Value: 100},
-				{Type: "bonus", Target: "build_cost", Value: -0.05},
+			Effects: []TechEffect{
+				{Kind: EffectFlatStorage, Target: AllResources, Value: 100},
+				{Kind: EffectBuildCost, Value: -0.05},
 			},
 		},
 		{
-			Name: "Imperial Legions", Key: "imperial_legions",
-			Age: "classical_age", Cost: 22000, ResearchTicks: 1600,
+			Name: "Imperial Legions", Key: "imperial_legions", Code: "LEGIO", Emblem: "⚑",
+			Age: "classical_age", Lane: LaneMilitary, Cost: 22000, ResearchTicks: 1600,
 			Prerequisites: []string{"siege_warfare", "iron_smelting"},
 			Description:   "Professional standing armies with superior discipline.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "military_power", Value: 0.4},
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.4},
 			},
 		},
 
 		// === MEDIEVAL AGE === (~7 min each)
 		{
-			Name: "Steel Forging", Key: "steel_forging",
-			Age: "medieval_age", Cost: 25000, ResearchTicks: 2000,
+			Name: "Steel Forging", Key: "steel_forging", Emblem: "▣",
+			Age: "medieval_age", Lane: LaneMaterials, Cost: 25000, ResearchTicks: 2000,
 			Prerequisites: []string{"iron_smelting"},
 			Description:   "Refining iron into steel for superior tools and weapons.",
-			Effects: []Effect{
-				{Type: "production", Target: "steel", Value: 0.25},
-				{Type: "bonus", Target: "iron_rate", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "steel", Value: 0.25},
+				{Kind: EffectOutput, Target: "iron", Value: 0.3},
 			},
 		},
 		{
-			Name: "Theology", Key: "theology",
-			Age: "medieval_age", Cost: 20000, ResearchTicks: 1800,
+			Name: "Theology", Key: "theology", Emblem: "Θ",
+			Age: "medieval_age", Lane: LaneFaith, Cost: 20000, ResearchTicks: 1800,
 			Prerequisites: []string{"philosophy"},
 			Description:   "Organized religion provides faith and social cohesion.",
-			Effects: []Effect{
-				{Type: "production", Target: "faith", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "faith", Value: 0.3},
 			},
 		},
 		{
-			Name: "Banking", Key: "banking",
-			Age: "medieval_age", Cost: 30000, ResearchTicks: 2100,
+			Name: "Banking", Key: "banking", Code: "BANK",
+			Age: "medieval_age", Lane: LaneTrade, Cost: 30000, ResearchTicks: 2100,
 			Prerequisites: []string{"currency", "mathematics"},
 			Description:   "Financial institutions raise gold output and gold storage.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "gold_rate", Value: 0.5},
-				{Type: "storage", Target: "gold", Value: 100},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "gold", Value: 0.5},
+				{Kind: EffectFlatStorage, Target: "gold", Value: 100},
 			},
 		},
 		{
-			Name: "Feudalism", Key: "feudalism",
-			Age: "medieval_age", Cost: 22000, ResearchTicks: 1700,
-			Prerequisites: []string{"military_tactics"},
-			Description:   "Feudal land grants house more workers.",
-			Effects: []Effect{
-				{Type: "capacity", Target: "population", Value: 5},
+			// No longer behind Military Tactics: it is a farming tech. It is a root
+			// until the tech it will follow (The Plough) exists.
+			Name: "Feudalism", Key: "feudalism", Emblem: "⌂",
+			Age: "medieval_age", Lane: LaneAgriculture, Cost: 22000, ResearchTicks: 1700,
+			Description: "Feudal land grants house more workers.",
+			Effects: []TechEffect{
+				{Kind: EffectFlatHousing, Value: 5},
 			},
 		},
 		{
-			Name: "Alchemy", Key: "alchemy",
-			Age: "medieval_age", Cost: 28000, ResearchTicks: 2200,
-			Prerequisites: []string{"mathematics"},
+			Name: "Alchemy", Key: "alchemy", Emblem: "☿",
+			Age: "medieval_age", Lane: LaneKnowledge, Cost: 28000, ResearchTicks: 2200,
+			Prerequisites: []string{"philosophy"},
 			Description:   "Proto-chemistry yields material insights.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "knowledge_rate", Value: 0.15},
-				{Type: "production", Target: "gold", Value: 0.1},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.15},
+				{Kind: EffectFlatOutput, Target: "gold", Value: 0.1},
 			},
 		},
 		{
-			Name: "Chronometry", Key: "chronometry",
-			Age: "medieval_age", Cost: 20000, ResearchTicks: 1900,
+			Name: "Chronometry", Key: "chronometry", Emblem: "⊙",
+			Age: "medieval_age", Lane: LaneCraft, Cost: 20000, ResearchTicks: 1900,
 			Description: "Precise timekeeping raises game speed.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "tick_speed", Value: 0.05},
+			Effects: []TechEffect{
+				{Kind: EffectGameSpeed, Value: 0.05},
 			},
 		},
 
 		// === RENAISSANCE AGE === (~10 min each)
 		{
 			Name: "Printing Press", Key: "printing_press",
-			Age: "renaissance_age", Cost: 50000, ResearchTicks: 3000,
+			Age: "renaissance_age", Lane: LaneKnowledge, Cost: 50000, ResearchTicks: 3000,
 			Prerequisites: []string{"theology", "alchemy"},
 			Description:   "Printed books raise knowledge output and culture.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "knowledge_rate", Value: 0.4},
-				{Type: "production", Target: "culture", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.4},
+				{Kind: EffectFlatOutput, Target: "culture", Value: 0.3},
 			},
 		},
 		{
+			// It will need Exploration too, once that tech exists.
 			Name: "Navigation", Key: "navigation",
-			Age: "renaissance_age", Cost: 45000, ResearchTicks: 2600,
-			Prerequisites: []string{"mathematics", "road_building"},
+			Age: "renaissance_age", Lane: LaneTrade, Cost: 45000, ResearchTicks: 2600,
+			Prerequisites: []string{"mathematics"},
 			Description:   "Ocean navigation raises gold output and expedition rewards.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "gold_rate", Value: 0.5},
-				{Type: "bonus", Target: "expedition_reward", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "gold", Value: 0.5},
+				{Kind: EffectExpeditionReward, Value: 0.3},
 			},
 		},
 		{
 			Name: "Gunpowder", Key: "gunpowder",
-			Age: "renaissance_age", Cost: 55000, ResearchTicks: 3200,
+			Age: "renaissance_age", Lane: LaneMilitary, Cost: 55000, ResearchTicks: 3200,
 			Prerequisites: []string{"alchemy", "siege_warfare"},
 			Description:   "Explosive weapons raise military power.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "military_power", Value: 0.5},
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.5},
 			},
 		},
 		{
 			Name: "Patronage", Key: "patronage",
-			Age: "renaissance_age", Cost: 40000, ResearchTicks: 2500,
+			Age: "renaissance_age", Lane: LaneFaith, Cost: 40000, ResearchTicks: 2500,
 			Prerequisites: []string{"banking"},
 			Description:   "Wealthy patrons fund arts and science.",
-			Effects: []Effect{
-				{Type: "production", Target: "culture", Value: 0.5},
-				{Type: "production", Target: "knowledge", Value: 0.12},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "culture", Value: 0.5},
+				{Kind: EffectFlatOutput, Target: "knowledge", Value: 0.12},
 			},
 		},
 
 		// === COLONIAL AGE === (~14 min each)
 		{
 			Name: "Cartography", Key: "cartography",
-			Age: "colonial_age", Cost: 80000, ResearchTicks: 4000,
+			Age: "colonial_age", Lane: LaneTrade, Cost: 80000, ResearchTicks: 4000,
 			Prerequisites: []string{"navigation"},
 			Description:   "Detailed maps raise expedition rewards and gold output.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "expedition_reward", Value: 0.5},
-				{Type: "bonus", Target: "gold_rate", Value: 0.5},
+			Effects: []TechEffect{
+				{Kind: EffectExpeditionReward, Value: 0.5},
+				{Kind: EffectOutput, Target: "gold", Value: 0.5},
 			},
 		},
 		{
 			Name: "Mercantilism", Key: "mercantilism",
-			Age: "colonial_age", Cost: 75000, ResearchTicks: 3800,
+			Age: "colonial_age", Lane: LaneTrade, Cost: 75000, ResearchTicks: 3800,
 			Prerequisites: []string{"banking", "navigation"},
 			Description:   "National trade policies maximize wealth.",
-			Effects: []Effect{
-				{Type: "production", Target: "gold", Value: 2.0},
-				{Type: "bonus", Target: "gold_rate", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "gold", Value: 2.0},
+				{Kind: EffectOutput, Target: "gold", Value: 0.3},
 			},
 		},
 		{
 			Name: "Colonialism", Key: "colonialism",
-			Age: "colonial_age", Cost: 90000, ResearchTicks: 4400,
+			Age: "colonial_age", Lane: LaneMilitary, Cost: 90000, ResearchTicks: 4400,
 			Prerequisites: []string{"cartography", "gunpowder"},
 			Description:   "Overseas territorial expansion.",
-			Effects: []Effect{
-				{Type: "production", Target: "food", Value: 2.0},
-				{Type: "bonus", Target: "military_power", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "food", Value: 2.0},
+				{Kind: EffectMilitaryPower, Value: 0.3},
 			},
 		},
 
 		// === INDUSTRIAL AGE === (~18 min each)
 		{
-			Name: "Steam Power", Key: "steam_power",
-			Age: "industrial_age", Cost: 100000, ResearchTicks: 5200,
+			Name: "Steam Power", Key: "steam_power", Emblem: "≈",
+			Age: "industrial_age", Lane: LaneEnergy, Cost: 100000, ResearchTicks: 5200,
 			Prerequisites: []string{"steel_forging"},
 			Description:   "Steam engines raise all production.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "production_all", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 0.3},
 			},
 		},
 		{
 			Name: "Industrialization", Key: "industrialization",
-			Age: "industrial_age", Cost: 120000, ResearchTicks: 6000,
+			Age: "industrial_age", Lane: LaneCraft, Cost: 120000, ResearchTicks: 6000,
 			Prerequisites: []string{"steam_power"},
 			Description:   "Factory systems raise all production and add steel.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "production_all", Value: 0.5},
-				{Type: "production", Target: "steel", Value: 0.5},
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 0.5},
+				{Kind: EffectFlatOutput, Target: "steel", Value: 0.5},
 			},
 		},
 		{
 			Name: "Railroads", Key: "railroads",
-			Age: "industrial_age", Cost: 90000, ResearchTicks: 5000,
+			Age: "industrial_age", Lane: LaneTrade, Cost: 90000, ResearchTicks: 5000,
 			Prerequisites: []string{"steam_power", "road_building"},
 			Description:   "Rail networks connect your civilization.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "gold_rate", Value: 1.0},
-				{Type: "storage", Target: "all", Value: 200},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "gold", Value: 1.0},
+				{Kind: EffectFlatStorage, Target: AllResources, Value: 200},
 			},
 		},
 		{
 			Name: "Rifling", Key: "rifling",
-			Age: "industrial_age", Cost: 80000, ResearchTicks: 4800,
+			Age: "industrial_age", Lane: LaneMilitary, Cost: 80000, ResearchTicks: 4800,
 			Prerequisites: []string{"gunpowder"},
 			Description:   "Precision firearms improve military effectiveness.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "military_power", Value: 0.5},
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 0.5},
 			},
 		},
 		{
 			Name: "Clockwork Automation", Key: "clockwork_automation",
-			Age: "industrial_age", Cost: 50000, ResearchTicks: 5400,
+			Age: "industrial_age", Lane: LaneCraft, Cost: 50000, ResearchTicks: 5400,
 			Prerequisites: []string{"chronometry"},
 			Description:   "Mechanical automation raises game speed.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "tick_speed", Value: 0.10},
+			Effects: []TechEffect{
+				{Kind: EffectGameSpeed, Value: 0.10},
 			},
 		},
 
 		// === VICTORIAN AGE === (~23 min each)
 		{
-			Name: "Electrification", Key: "electrification",
-			Age: "victorian_age", Cost: 180000, ResearchTicks: 7000,
+			Name: "Electrification", Key: "electrification", Code: "ELEC", Emblem: "ϟ",
+			Age: "victorian_age", Lane: LaneEnergy, Cost: 180000, ResearchTicks: 7000,
 			Prerequisites: []string{"industrialization"},
 			Description:   "Electric power reaches homes and factories.",
-			Effects: []Effect{
-				{Type: "production", Target: "electricity", Value: 1.0},
-				{Type: "bonus", Target: "production_all", Value: 0.2},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "electricity", Value: 1.0},
+				{Kind: EffectAllOutput, Value: 0.2},
 			},
 		},
 		{
-			Name: "Telecommunications", Key: "telecommunications",
-			Age: "victorian_age", Cost: 150000, ResearchTicks: 6600,
+			Name: "Telecommunications", Key: "telecommunications", Code: "TELEG", Emblem: "∿",
+			Age: "victorian_age", Lane: LaneTrade, Cost: 150000, ResearchTicks: 6600,
 			Prerequisites: []string{"electrification"},
 			Description:   "Telegraph and early telephone networks.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "knowledge_rate", Value: 0.4},
-				{Type: "bonus", Target: "gold_rate", Value: 0.5},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.4},
+				{Kind: EffectOutput, Target: "gold", Value: 0.5},
 			},
 		},
 		{
-			Name: "Mass Production", Key: "mass_production",
-			Age: "victorian_age", Cost: 200000, ResearchTicks: 7400,
-			Prerequisites: []string{"industrialization", "railroads"},
+			Name: "Mass Production", Key: "mass_production", Emblem: "▥",
+			Age: "victorian_age", Lane: LaneCraft, Cost: 200000, ResearchTicks: 7400,
+			Prerequisites: []string{"industrialization"},
 			Description:   "Assembly line manufacturing.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "production_all", Value: 0.4},
-				{Type: "production", Target: "steel", Value: 1.0},
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 0.4},
+				{Kind: EffectFlatOutput, Target: "steel", Value: 1.0},
 			},
 		},
 
 		// === ELECTRIC AGE === (~32 min each)
 		{
-			Name: "Power Distribution", Key: "power_distribution",
-			Age: "electric_age", Cost: 300000, ResearchTicks: 9500,
+			Name: "Power Distribution", Key: "power_distribution", Code: "GRID",
+			Age: "electric_age", Lane: LaneEnergy, Cost: 300000, ResearchTicks: 9500,
 			Prerequisites: []string{"electrification"},
 			Description:   "AC power grids span entire regions.",
-			Effects: []Effect{
-				{Type: "production", Target: "electricity", Value: 3.0},
-				{Type: "bonus", Target: "production_all", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "electricity", Value: 3.0},
+				{Kind: EffectAllOutput, Value: 0.3},
 			},
 		},
 		{
-			Name: "Radio", Key: "radio",
-			Age: "electric_age", Cost: 250000, ResearchTicks: 9000,
+			Name: "Radio", Key: "radio", Emblem: "♪",
+			Age: "electric_age", Lane: LaneFaith, Cost: 250000, ResearchTicks: 9000,
 			Prerequisites: []string{"telecommunications"},
 			Description:   "Wireless communication reaches the masses.",
-			Effects: []Effect{
-				{Type: "production", Target: "culture", Value: 2.0},
-				{Type: "bonus", Target: "knowledge_rate", Value: 0.4},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "culture", Value: 2.0},
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.4},
 			},
 		},
 		{
-			Name: "Chemical Engineering", Key: "chemical_engineering",
-			Age: "electric_age", Cost: 280000, ResearchTicks: 9800,
+			Name: "Chemical Engineering", Key: "chemical_engineering", Code: "CHEM", Emblem: "∆",
+			Age: "electric_age", Lane: LaneMaterials, Cost: 280000, ResearchTicks: 9800,
 			Prerequisites: []string{"mass_production"},
 			Description:   "Industrial chemistry and synthetic materials.",
-			Effects: []Effect{
-				{Type: "production", Target: "oil", Value: 1.0},
-				{Type: "bonus", Target: "production_all", Value: 0.2},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "oil", Value: 1.0},
+				{Kind: EffectAllOutput, Value: 0.2},
 			},
 		},
 
 		// === ATOMIC AGE === (~45 min each)
 		{
-			Name: "Nuclear Fission", Key: "nuclear_fission",
-			Age: "atomic_age", Cost: 500000, ResearchTicks: 13050,
+			Name: "Nuclear Fission", Key: "nuclear_fission", Code: "FISSN", Emblem: "◉",
+			Age: "atomic_age", Lane: LaneEnergy, Cost: 500000, ResearchTicks: 13050,
 			Prerequisites: []string{"power_distribution", "chemical_engineering"},
 			Description:   "Splitting the atom for energy and weapons.",
-			Effects: []Effect{
-				{Type: "production", Target: "electricity", Value: 5.0},
-				{Type: "production", Target: "uranium", Value: 0.5},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "electricity", Value: 5.0},
+				{Kind: EffectFlatOutput, Target: "uranium", Value: 0.5},
 			},
 		},
 		{
-			Name: "Rocketry", Key: "rocketry",
-			Age: "atomic_age", Cost: 400000, ResearchTicks: 12000,
-			Prerequisites: []string{"rifling", "chemical_engineering"},
-			Description:   "Rockets raise military power and expedition rewards.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "military_power", Value: 1.0},
-				{Type: "bonus", Target: "expedition_reward", Value: 0.5},
+			// No longer behind Rifling and Chemical Engineering: flight comes first.
+			// It is a root until the tech it will follow (Aviation) exists.
+			Name: "Rocketry", Key: "rocketry", Code: "ROCKT", Emblem: "▲",
+			Age: "atomic_age", Lane: LaneSpace, Cost: 400000, ResearchTicks: 12000,
+			Description: "Rockets raise military power and expedition rewards.",
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 1.0},
+				{Kind: EffectExpeditionReward, Value: 0.5},
 			},
 		},
 		{
-			Name: "Nuclear Deterrence", Key: "nuclear_deterrence",
-			Age: "atomic_age", Cost: 600000, ResearchTicks: 15000,
+			Name: "Nuclear Deterrence", Key: "nuclear_deterrence", Code: "DETER", Emblem: "☠",
+			Age: "atomic_age", Lane: LaneMilitary, Cost: 600000, ResearchTicks: 15000,
 			Prerequisites: []string{"nuclear_fission", "rocketry"},
 			Description:   "Mutually assured destruction maintains peace.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "military_power", Value: 1.5},
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 1.5},
 			},
 		},
 		{
@@ -474,85 +499,85 @@ func Technologies() []TechDef {
 			// cost is what holds it to the middle: knowledge runs about
 			// 200 million an hour here, so the bot affords it some 15 hours
 			// in and finishes it near the middle of the old quiet stretch.
-			Name: "Civilian Reactors", Key: "civilian_reactors",
-			Age: "atomic_age", Cost: 3400000000, ResearchTicks: 15000,
+			Name: "Civilian Reactors", Key: "civilian_reactors", Code: "REACT", Emblem: "▣",
+			Age: "atomic_age", Lane: LaneEnergy, Cost: 3400000000, ResearchTicks: 15000,
 			Prerequisites: []string{"nuclear_deterrence"},
 			Description:   "The reactors built for the arms race find steadier work on the grid. Opens the Nuclear Plant.",
-			Effects: []Effect{
-				{Type: "production", Target: "electricity", Value: 5.0},
-				{Type: "production", Target: "uranium", Value: 0.5},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "electricity", Value: 5.0},
+				{Kind: EffectFlatOutput, Target: "uranium", Value: 0.5},
 			},
 		},
 
 		// === MODERN AGE === (~1.1 hr each)
 		{
-			Name: "Advanced Electrics", Key: "electricity_tech",
-			Age: "modern_age", Cost: 800000, ResearchTicks: 18000,
+			Name: "Advanced Electrics", Key: "electricity_tech", Code: "ADVEL", Emblem: "ϟ",
+			Age: "modern_age", Lane: LaneEnergy, Cost: 800000, ResearchTicks: 18000,
 			Prerequisites: []string{"nuclear_fission"},
 			Description:   "Advanced electrical systems raise all production.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "production_all", Value: 0.5},
-				{Type: "production", Target: "electricity", Value: 5.0},
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 0.5},
+				{Kind: EffectFlatOutput, Target: "electricity", Value: 5.0},
 			},
 		},
 		{
-			Name: "Computers", Key: "computers",
-			Age: "modern_age", Cost: 1000000, ResearchTicks: 20000,
+			Name: "Computers", Key: "computers", Code: "COMP",
+			Age: "modern_age", Lane: LaneComputing, Cost: 1000000, ResearchTicks: 20000,
 			Prerequisites: []string{"electricity_tech"},
 			Description:   "Digital computing raises knowledge output.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "knowledge_rate", Value: 0.8},
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.8},
 			},
 		},
 		{
-			Name: "Satellite Technology", Key: "satellite_tech",
-			Age: "modern_age", Cost: 1200000, ResearchTicks: 19000,
+			Name: "Satellite Technology", Key: "satellite_tech", Emblem: "✧",
+			Age: "modern_age", Lane: LaneSpace, Cost: 1200000, ResearchTicks: 19000,
 			Prerequisites: []string{"rocketry", "electricity_tech"},
 			Description:   "Orbital satellites for communication and surveillance.",
-			Effects: []Effect{
-				{Type: "production", Target: "data", Value: 1.0},
-				{Type: "bonus", Target: "knowledge_rate", Value: 0.6},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "data", Value: 1.0},
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.6},
 			},
 		},
 		{
-			Name: "Nanofabrication", Key: "nanofabrication",
-			Age: "modern_age", Cost: 1100000, ResearchTicks: 19000,
+			Name: "Nanofabrication", Key: "nanofabrication", Code: "NANO", Emblem: "◇",
+			Age: "modern_age", Lane: LaneCraft, Cost: 1100000, ResearchTicks: 19000,
 			Prerequisites: []string{"computers"},
 			Description:   "Nanobot swarms assemble structures atom-by-atom, cutting construction costs.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "build_cost", Value: -0.08},
+			Effects: []TechEffect{
+				{Kind: EffectBuildCost, Value: -0.08},
 			},
 		},
 
 		// === INFORMATION AGE === (~1.5 hr each)
 		{
 			Name: "Internet", Key: "internet",
-			Age: "information_age", Cost: 2000000, ResearchTicks: 26000,
+			Age: "information_age", Lane: LaneComputing, Cost: 2000000, ResearchTicks: 26000,
 			Prerequisites: []string{"computers", "satellite_tech"},
 			Description:   "Global network connecting all of humanity.",
-			Effects: []Effect{
-				{Type: "production", Target: "data", Value: 3.0},
-				{Type: "bonus", Target: "knowledge_rate", Value: 1.2},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "data", Value: 3.0},
+				{Kind: EffectOutput, Target: "knowledge", Value: 1.2},
 			},
 		},
 		{
-			Name: "Cybersecurity", Key: "cybersecurity",
-			Age: "information_age", Cost: 1800000, ResearchTicks: 24000,
+			Name: "Cybersecurity", Key: "cybersecurity", Code: "SECUR",
+			Age: "information_age", Lane: LaneMilitary, Cost: 1800000, ResearchTicks: 24000,
 			Prerequisites: []string{"computers"},
 			Description:   "Defense against digital threats.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "military_power", Value: 1.0},
-				{Type: "storage", Target: "data", Value: 5000},
+			Effects: []TechEffect{
+				{Kind: EffectMilitaryPower, Value: 1.0},
+				{Kind: EffectFlatStorage, Target: "data", Value: 5000},
 			},
 		},
 		{
 			Name: "Social Media", Key: "social_media",
-			Age: "information_age", Cost: 1500000, ResearchTicks: 23000,
+			Age: "information_age", Lane: LaneFaith, Cost: 1500000, ResearchTicks: 23000,
 			Prerequisites: []string{"internet"},
 			Description:   "Mass digital communication platforms.",
-			Effects: []Effect{
-				{Type: "production", Target: "culture", Value: 5.0},
-				{Type: "production", Target: "gold", Value: 5.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "culture", Value: 5.0},
+				{Kind: EffectFlatOutput, Target: "gold", Value: 5.0},
 			},
 		},
 		{
@@ -562,78 +587,78 @@ func Technologies() []TechDef {
 			// Substituted a supported, clearly-beneficial effect instead: nanobots
 			// keep the population healthier (bigger pop cap) and better fed (+food).
 			Name: "Medical Nanobots", Key: "medical_nanobots",
-			Age: "information_age", Cost: 1700000, ResearchTicks: 24000,
+			Age: "information_age", Lane: LaneAgriculture, Cost: 1700000, ResearchTicks: 24000,
 			Prerequisites: []string{"nanofabrication"},
 			Description:   "Bloodstream nanobots keep workers healthy, adding housing and food.",
-			Effects: []Effect{
-				{Type: "capacity", Target: "population", Value: 10},
-				{Type: "production", Target: "food", Value: 8.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatHousing, Value: 10},
+				{Kind: EffectFlatOutput, Target: "food", Value: 8.0},
 			},
 		},
 		{
 			// Mid-age unlock (Pacing v2): knowledge runs about 280 million
 			// an hour here, so it is afforded some 15 hours in and finishes
 			// about 18 hours in, after the age's first techs.
-			Name: "Internet of Things", Key: "internet_of_things",
-			Age: "information_age", Cost: 4500000000, ResearchTicks: 26000,
+			Name: "Internet of Things", Key: "internet_of_things", Code: "IOT",
+			Age: "information_age", Lane: LaneAgriculture, Cost: 4500000000, ResearchTicks: 26000,
 			Prerequisites: []string{"social_media", "cybersecurity", "medical_nanobots"},
 			Description:   "The fridges and the tractors go online and start reporting back. Opens the Smart Farm and the Smart Complex.",
-			Effects: []Effect{
-				{Type: "production", Target: "data", Value: 3.0},
-				{Type: "production", Target: "food", Value: 8.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "data", Value: 3.0},
+				{Kind: EffectFlatOutput, Target: "food", Value: 8.0},
 			},
 		},
 
 		// === DIGITAL AGE === (~1.8 hr each)
 		{
 			Name: "Machine Learning", Key: "machine_learning",
-			Age: "digital_age", Cost: 3500000, ResearchTicks: 34000,
+			Age: "digital_age", Lane: LaneComputing, Cost: 3500000, ResearchTicks: 34000,
 			Prerequisites: []string{"internet", "cybersecurity"},
 			Description:   "Algorithms that learn and improve autonomously.",
-			Effects: []Effect{
-				{Type: "production", Target: "data", Value: 5.0},
-				{Type: "bonus", Target: "production_all", Value: 0.5},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "data", Value: 5.0},
+				{Kind: EffectAllOutput, Value: 0.5},
 			},
 		},
 		{
 			Name: "Cloud Computing", Key: "cloud_computing",
-			Age: "digital_age", Cost: 3000000, ResearchTicks: 32000,
+			Age: "digital_age", Lane: LaneComputing, Cost: 3000000, ResearchTicks: 32000,
 			Prerequisites: []string{"internet"},
 			Description:   "Distributed computing at global scale.",
-			Effects: []Effect{
-				{Type: "production", Target: "data", Value: 8.0},
-				{Type: "storage", Target: "all", Value: 10000},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "data", Value: 8.0},
+				{Kind: EffectFlatStorage, Target: AllResources, Value: 10000},
 			},
 		},
 		{
 			Name: "Self-Replication", Key: "self_replication",
-			Age: "digital_age", Cost: 3200000, ResearchTicks: 33000,
+			Age: "digital_age", Lane: LaneCraft, Cost: 3200000, ResearchTicks: 33000,
 			Prerequisites: []string{"medical_nanobots", "machine_learning"},
 			Description:   "Nanobots that build copies of themselves.",
-			Effects: []Effect{
-				{Type: "production", Target: "nanobots", Value: 200.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "nanobots", Value: 200.0},
 			},
 		},
 
 		// === CYBERPUNK AGE === (~2.8 hr each)
 		{
 			Name: "Neural Interface", Key: "neural_interface",
-			Age: "cyberpunk_age", Cost: 6000000, ResearchTicks: 48000,
+			Age: "cyberpunk_age", Lane: LaneKnowledge, Cost: 6000000, ResearchTicks: 48000,
 			Prerequisites: []string{"machine_learning"},
 			Description:   "Direct brain-computer interface technology.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "gather_rate", Value: 0.3},
-				{Type: "bonus", Target: "knowledge_rate", Value: 2.0},
+			Effects: []TechEffect{
+				{Kind: EffectWorkerOutput, Value: 0.3},
+				{Kind: EffectOutput, Target: "knowledge", Value: 2.0},
 			},
 		},
 		{
 			Name: "Blockchain", Key: "blockchain",
-			Age: "cyberpunk_age", Cost: 5000000, ResearchTicks: 45000,
+			Age: "cyberpunk_age", Lane: LaneTrade, Cost: 5000000, ResearchTicks: 45000,
 			Prerequisites: []string{"cybersecurity", "cloud_computing"},
 			Description:   "Decentralized trustless systems.",
-			Effects: []Effect{
-				{Type: "production", Target: "crypto", Value: 2.0},
-				{Type: "bonus", Target: "gold_rate", Value: 2.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "crypto", Value: 2.0},
+				{Kind: EffectOutput, Target: "gold", Value: 2.0},
 			},
 		},
 		{
@@ -642,12 +667,12 @@ func Technologies() []TechDef {
 			// Holography after it near the end. The Cyberpunk Age's techs
 			// used to be done in its first 11 hours.
 			Name: "Cybernetics", Key: "cybernetics",
-			Age: "cyberpunk_age", Cost: 14000000000, ResearchTicks: 50000,
+			Age: "cyberpunk_age", Lane: LaneCraft, Cost: 14000000000, ResearchTicks: 50000,
 			Prerequisites: []string{"neural_interface"},
 			Description:   "Mechanical augmentation of the human body.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "production_all", Value: 0.5},
-				{Type: "bonus", Target: "military_power", Value: 1.0},
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 0.5},
+				{Kind: EffectMilitaryPower, Value: 1.0},
 			},
 		},
 		{
@@ -655,24 +680,24 @@ func Technologies() []TechDef {
 			// about 14 hours after Cybernetics starts, so it finishes about
 			// 37 hours in, during the age's long saving-up for its wonder.
 			Name: "Holography", Key: "holography",
-			Age: "cyberpunk_age", Cost: 6300000000, ResearchTicks: 50000,
+			Age: "cyberpunk_age", Lane: LaneFaith, Cost: 6300000000, ResearchTicks: 50000,
 			Prerequisites: []string{"cybernetics", "blockchain"},
 			Description:   "Light learns to lie convincingly, and every wall becomes an ad. Opens the Holographic Theater.",
-			Effects: []Effect{
-				{Type: "production", Target: "culture", Value: 5.0},
-				{Type: "production", Target: "crypto", Value: 2.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "culture", Value: 5.0},
+				{Kind: EffectFlatOutput, Target: "crypto", Value: 2.0},
 			},
 		},
 
 		// === FUSION AGE === (~3.7 hr each)
 		{
 			Name: "Fusion Power", Key: "fusion_power",
-			Age: "fusion_age", Cost: 10000000, ResearchTicks: 65000,
+			Age: "fusion_age", Lane: LaneEnergy, Cost: 10000000, ResearchTicks: 65000,
 			Prerequisites: []string{"nuclear_fission", "cybernetics"},
 			Description:   "Controlled fusion adds electricity and plasma.",
-			Effects: []Effect{
-				{Type: "production", Target: "electricity", Value: 20.0},
-				{Type: "production", Target: "plasma", Value: 1.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "electricity", Value: 20.0},
+				{Kind: EffectFlatOutput, Target: "plasma", Value: 1.0},
 			},
 		},
 		{
@@ -682,157 +707,157 @@ func Technologies() []TechDef {
 			// this age, to finish about 17, 24 and 32 hours in. The age used
 			// to go 26 hours from its last tech to its wonder.
 			Name: "Plasma Physics", Key: "plasma_physics",
-			Age: "fusion_age", Cost: 9500000000, ResearchTicks: 62000,
+			Age: "fusion_age", Lane: LaneEnergy, Cost: 9500000000, ResearchTicks: 62000,
 			Prerequisites: []string{"fusion_power"},
 			Description:   "Mastery of superheated matter states.",
-			Effects: []Effect{
-				{Type: "production", Target: "plasma", Value: 3.0},
-				{Type: "bonus", Target: "production_all", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "plasma", Value: 3.0},
+				{Kind: EffectAllOutput, Value: 0.3},
 			},
 		},
 		{
 			// Paced with Plasma Physics (see there).
 			Name: "Superconductors", Key: "superconductors",
-			Age: "fusion_age", Cost: 4800000000, ResearchTicks: 70000,
+			Age: "fusion_age", Lane: LaneMaterials, Cost: 4800000000, ResearchTicks: 70000,
 			Prerequisites: []string{"plasma_physics"},
 			Description:   "Zero-resistance materials raise all production and storage.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "production_all", Value: 0.5},
-				{Type: "storage", Target: "all", Value: 50000},
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 0.5},
+				{Kind: EffectFlatStorage, Target: AllResources, Value: 50000},
 			},
 		},
 		{
 			// Mid-age unlock (Pacing v2), paced with Plasma Physics (see
 			// there).
 			Name: "Maglev Transit", Key: "maglev_transit",
-			Age: "fusion_age", Cost: 5400000000, ResearchTicks: 70000,
+			Age: "fusion_age", Lane: LaneTrade, Cost: 5400000000, ResearchTicks: 70000,
 			Prerequisites: []string{"superconductors"},
 			Description:   "Superconducting rails float the freight across the city at the speed of a mild panic. Opens the Energy Exchange.",
-			Effects: []Effect{
-				{Type: "production", Target: "plasma", Value: 1.0},
-				{Type: "production", Target: "gold", Value: 5.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "plasma", Value: 1.0},
+				{Kind: EffectFlatOutput, Target: "gold", Value: 5.0},
 			},
 		},
 
 		// === SPACE AGE === (~5 hr each)
 		{
 			Name: "Orbital Mechanics", Key: "orbital_mechanics",
-			Age: "space_age", Cost: 20000000, ResearchTicks: 85000,
+			Age: "space_age", Lane: LaneSpace, Cost: 20000000, ResearchTicks: 85000,
 			Prerequisites: []string{"rocketry", "plasma_physics"},
 			Description:   "Advanced spaceflight and orbital dynamics.",
-			Effects: []Effect{
-				{Type: "production", Target: "titanium", Value: 1.0},
-				{Type: "bonus", Target: "expedition_reward", Value: 1.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "titanium", Value: 1.0},
+				{Kind: EffectExpeditionReward, Value: 1.0},
 			},
 		},
 		{
 			Name: "Space Mining", Key: "space_mining",
-			Age: "space_age", Cost: 18000000, ResearchTicks: 82000,
+			Age: "space_age", Lane: LaneSpace, Cost: 18000000, ResearchTicks: 82000,
 			Prerequisites: []string{"orbital_mechanics"},
 			Description:   "Asteroid and lunar resource extraction.",
-			Effects: []Effect{
-				{Type: "production", Target: "titanium", Value: 3.0},
-				{Type: "production", Target: "iron", Value: 20.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "titanium", Value: 3.0},
+				{Kind: EffectFlatOutput, Target: "iron", Value: 20.0},
 			},
 		},
 		{
 			Name: "Zero-G Manufacturing", Key: "zero_g_manufacturing",
-			Age: "space_age", Cost: 22000000, ResearchTicks: 92000,
+			Age: "space_age", Lane: LaneCraft, Cost: 22000000, ResearchTicks: 92000,
 			Prerequisites: []string{"orbital_mechanics", "superconductors"},
 			Description:   "Space-based manufacturing for perfect materials.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "production_all", Value: 0.5},
-				{Type: "production", Target: "steel", Value: 10.0},
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 0.5},
+				{Kind: EffectFlatOutput, Target: "steel", Value: 10.0},
 			},
 		},
 
 		// === INTERSTELLAR AGE === (~7 hr each)
 		{
 			Name: "Warp Drive", Key: "warp_drive",
-			Age: "interstellar_age", Cost: 40000000, ResearchTicks: 120000,
+			Age: "interstellar_age", Lane: LaneSpace, Cost: 40000000, ResearchTicks: 120000,
 			Prerequisites: []string{"space_mining", "zero_g_manufacturing"},
 			Description:   "Faster-than-light propulsion.",
-			Effects: []Effect{
-				{Type: "production", Target: "dark_matter", Value: 1.0},
-				{Type: "bonus", Target: "expedition_reward", Value: 2.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "dark_matter", Value: 1.0},
+				{Kind: EffectExpeditionReward, Value: 2.0},
 			},
 		},
 		{
 			Name: "Stellar Engineering", Key: "stellar_engineering",
-			Age: "interstellar_age", Cost: 45000000, ResearchTicks: 130000,
+			Age: "interstellar_age", Lane: LaneEnergy, Cost: 45000000, ResearchTicks: 130000,
 			Prerequisites: []string{"warp_drive"},
 			Description:   "Harnessing and shaping stars themselves.",
-			Effects: []Effect{
-				{Type: "production", Target: "plasma", Value: 10.0},
-				{Type: "production", Target: "electricity", Value: 100.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "plasma", Value: 10.0},
+				{Kind: EffectFlatOutput, Target: "electricity", Value: 100.0},
 			},
 		},
 
 		// === GALACTIC AGE === (~9 hr each)
 		{
 			Name: "Galactic Navigation", Key: "galactic_navigation",
-			Age: "galactic_age", Cost: 80000000, ResearchTicks: 160000,
+			Age: "galactic_age", Lane: LaneSpace, Cost: 80000000, ResearchTicks: 160000,
 			Prerequisites: []string{"warp_drive", "stellar_engineering"},
 			Description:   "Charting paths across the galaxy.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "production_all", Value: 0.5},
-				{Type: "production", Target: "dark_matter", Value: 5.0},
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 0.5},
+				{Kind: EffectFlatOutput, Target: "dark_matter", Value: 5.0},
 			},
 		},
 		{
 			Name: "Antimatter Synthesis", Key: "antimatter_synthesis",
-			Age: "galactic_age", Cost: 90000000, ResearchTicks: 180000,
+			Age: "galactic_age", Lane: LaneEnergy, Cost: 90000000, ResearchTicks: 180000,
 			Prerequisites: []string{"galactic_navigation"},
 			Description:   "Controlled production of antimatter.",
-			Effects: []Effect{
-				{Type: "production", Target: "antimatter", Value: 2.0},
-				{Type: "bonus", Target: "production_all", Value: 0.3},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "antimatter", Value: 2.0},
+				{Kind: EffectAllOutput, Value: 0.3},
 			},
 		},
 
 		// === QUANTUM AGE === (~12 hr each)
 		{
 			Name: "Quantum Mechanics", Key: "quantum_mechanics",
-			Age: "quantum_age", Cost: 150000000, ResearchTicks: 220000,
+			Age: "quantum_age", Lane: LaneKnowledge, Cost: 150000000, ResearchTicks: 220000,
 			Prerequisites: []string{"antimatter_synthesis"},
 			Description:   "Mastery of quantum phenomena at all scales.",
-			Effects: []Effect{
-				{Type: "production", Target: "quantum_flux", Value: 2.0},
-				{Type: "bonus", Target: "production_all", Value: 1.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "quantum_flux", Value: 2.0},
+				{Kind: EffectAllOutput, Value: 1.0},
 			},
 		},
 		{
 			Name: "Reality Manipulation", Key: "reality_manipulation",
-			Age: "quantum_age", Cost: 200000000, ResearchTicks: 250000,
+			Age: "quantum_age", Lane: LaneCraft, Cost: 200000000, ResearchTicks: 250000,
 			Prerequisites: []string{"quantum_mechanics"},
 			Description:   "Bending the fabric of spacetime.",
-			Effects: []Effect{
-				{Type: "production", Target: "quantum_flux", Value: 5.0},
-				{Type: "bonus", Target: "production_all", Value: 1.0},
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "quantum_flux", Value: 5.0},
+				{Kind: EffectAllOutput, Value: 1.0},
 			},
 		},
 		{
-			Name: "Quantum Computing", Key: "quantum_computing",
-			Age: "quantum_age", Cost: 150000000, ResearchTicks: 200000,
-			Prerequisites: []string{"clockwork_automation"},
+			Name: "Quantum Computing", Key: "quantum_computing", Code: "QCOMP",
+			Age: "quantum_age", Lane: LaneComputing, Cost: 150000000, ResearchTicks: 200000,
+			Prerequisites: []string{"clockwork_automation", "quantum_mechanics"},
 			Description:   "Quantum processing raises game speed.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "tick_speed", Value: 0.15},
+			Effects: []TechEffect{
+				{Kind: EffectGameSpeed, Value: 0.15},
 			},
 		},
 
 		// === TRANSCENDENT AGE === (~18 hr)
 		{
 			Name: "Transcendence", Key: "transcendence",
-			Age: "transcendent_age", Cost: 500000000, ResearchTicks: 320000,
+			Age: "transcendent_age", Lane: LaneFaith, Cost: 500000000, ResearchTicks: 320000,
 			Prerequisites: []string{"reality_manipulation"},
 			Description:   "A civilization beyond physical limits.",
-			Effects: []Effect{
-				{Type: "bonus", Target: "production_all", Value: 2.0},
-				{Type: "production", Target: "quantum_flux", Value: 10.0},
+			Effects: []TechEffect{
+				{Kind: EffectAllOutput, Value: 2.0},
+				{Kind: EffectFlatOutput, Target: "quantum_flux", Value: 10.0},
 			},
 		},
-	})
+	}))
 }
 
 // TechByKey returns a map of key -> TechDef

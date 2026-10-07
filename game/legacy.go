@@ -293,7 +293,7 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 				return false, false
 			}
 		}
-		if ge.planResearchInvalid(t.Key, n) != "" {
+		if ge.planResearchRefused(t.Key, n) != "" {
 			return false, false
 		}
 		if n >= MaxPlanItems {

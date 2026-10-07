@@ -230,8 +230,8 @@ func TestAddTotal_SumsOpAddIgnoresOpMul(t *testing.T) {
 // the Phase-3 swap is a faithful drop-in.
 func TestAddTotal_EqualsOldHandSum(t *testing.T) {
 	ge := NewGameEngine()
-	ge.Research.bonuses["production_all"] = 0.10
-	ge.Research.bonuses["iron_rate"] = 0.20
+	plantResearchBonus(ge, config.EffectAllOutput, "", 0.10)
+	plantResearchBonus(ge, config.EffectOutput, "iron", 0.20)
 	ge.Prestige.level = 3 // passive +6% production_all
 	addWonder(ge, "test_addtotal_prodall", "production_all", 0.15, 1)
 	addWonder(ge, "test_addtotal_iron", "iron_rate", 0.10, 1)

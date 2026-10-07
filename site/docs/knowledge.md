@@ -65,7 +65,7 @@ plan research <tech>
 
 The full knowledge cost is paid **up front**, the moment research starts. Nothing is taken per tick while it runs, so your stored knowledge can rise or fall afterwards without affecting it. Only one technology can be researched at a time, and techs are age-gated: you must be in the right age to research them.
 
-To queue techs, add them to the [Build Plan](plan.md) with `plan research <tech>` (or `plan res`). The plan starts them one at a time, in order, as the knowledge comes in, and keeps doing so while you are away. A tech's prerequisites must be researched, in progress or planned above it. You can also plan the next age's techs; they wait for the advance.
+To queue techs, add them to the [Build Plan](plan.md) with `plan research <tech>` (or `plan res`). The plan starts them one at a time, in order, as the knowledge comes in, and keeps doing so while you are away. A tech's prerequisites must be researched, in progress or planned above it; a planned tech that loses one waits for it. You can also plan the next age's techs; they wait for the advance.
 
 The plan is the only research queue: the game never chooses what you research next. The techs you plan are remembered with the plan, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) they are planned again on later runs, in the age you planned them in.
 
