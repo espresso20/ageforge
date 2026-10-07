@@ -118,27 +118,24 @@ func TestNanobots_TechsExistAndGated(t *testing.T) {
 		}
 	}
 
-	// Nanofabrication reduces build cost (negative build_cost bonus).
-	if v, ok := bonusEffectValue(byKey["nanofabrication"].GeneralEffects(), "build_cost"); !ok || v >= 0 {
-		t.Errorf("nanofabrication must reduce build_cost; got %v (present=%v)", v, ok)
+	// What each one does, by kind and target.
+	term := func(tech string, kind TechEffectKind, target string) (float64, bool) {
+		v, ok := TechTerms([]TechDef{byKey[tech]})[TechEffectKey{Kind: kind, Target: target}]
+		return v, ok
+	}
+	// Nanofabrication makes buildings cheaper.
+	if v, ok := term("nanofabrication", EffectBuildCost, ""); !ok || v >= 1 {
+		t.Errorf("nanofabrication must cut build cost; factor %v (present=%v)", v, ok)
 	}
 	// Self-Replication boosts nanobot production.
-	if v, ok := prodEffectValue(byKey["self_replication"].GeneralEffects(), "nanobots"); !ok || v <= 0 {
+	if v, ok := term("self_replication", EffectOutput, "nanobots"); !ok || v <= 0 {
 		t.Errorf("self_replication must add nanobot production; got %v (present=%v)", v, ok)
 	}
-	// Medical Nanobots is a clearly-beneficial tech (pop cap and/or food).
-	mn := byKey["medical_nanobots"].GeneralEffects()
-	_, hasPop := func() (float64, bool) {
-		for _, e := range mn {
-			if e.Type == "capacity" && e.Target == "population" {
-				return e.Value, true
-			}
-		}
-		return 0, false
-	}()
-	_, hasFood := prodEffectValue(mn, "food")
-	if !hasPop && !hasFood {
-		t.Error("medical_nanobots must grant a beneficial effect (population cap and/or food)")
+	// Medical Nanobots is a clearly-beneficial tech (housing and/or food).
+	house, hasPop := term("medical_nanobots", EffectHousing, "")
+	food, hasFood := term("medical_nanobots", EffectOutput, "food")
+	if !(hasPop && house > 0) && !(hasFood && food > 0) {
+		t.Error("medical_nanobots must grant a beneficial effect (housing and/or food)")
 	}
 }
 

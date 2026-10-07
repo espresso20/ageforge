@@ -32,7 +32,8 @@ const (
 // of grace from the new locks (the game's GameSave.TreeVersion).
 //
 //	1: each age's wonder needs its keystone tech (BuildingDef.RequiredTech).
-const TechTreeVersion = 1
+//	2: commands wait for a tech (FeatureLocks).
+const TechTreeVersion = 2
 
 // TechLaneDef is one lane of the tech tree.
 type TechLaneDef struct {

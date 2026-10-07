@@ -138,7 +138,7 @@ Once you have 61 knowledge (knowledge storage starts at 30, so you need a stash 
 research tool_making
 ```
 
-It costs the 61 knowledge up front, takes 23 ticks (46 seconds) and gives a permanent +15% to what your workers produce. Get it here if you can: Stoneworking, the tech the Stone Age's wonder needs, stands on it. If you're short, advance first and research it later, or queue it with `plan research tool_making` and the [build plan](plan.md) starts it once the knowledge is there. Fire Mastery (102 knowledge, +0.1 food/tick) is the age's other tech.
+It costs the 61 knowledge up front, takes 23 ticks (46 seconds) and gives +10% food and +10% wood for the rest of the run, and every `gather` brings 2 more. Get it here if you can: Stoneworking, the tech the Stone Age's wonder needs, stands on it. If you're short, advance first and research it later, or queue it with `plan research tool_making` and the [build plan](plan.md) starts it once the knowledge is there. Fire Mastery (102 knowledge, +10% food and +5% housing) is the age's other tech.
 
 ---
 

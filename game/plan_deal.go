@@ -1,6 +1,10 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // Deal items: `plan deal <civ> <n>` takes a civilization's trade deal (see
 // deals.go) as soon as its price is there, like `diplomacy accept` queued.
@@ -35,8 +39,11 @@ func (ge *GameEngine) PlanAddDeal(key string, n int) error {
 	if !ok || !fs.Discovered {
 		return ge.Diplomacy.errUnknownCiv(key)
 	}
+	if err := ge.featureErr(config.FeatureDiplomacy); err != nil {
+		return err
+	}
 	if fs.DealsFor != ge.age || n < 1 || n > len(fs.Deals) {
-		return fmt.Errorf("There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(dealInfos(ge.rules, fs, ge.age)))
+		return fmt.Errorf("There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(dealInfos(ge.rules, fs, ge.age, ge.Diplomacy.feeScale)))
 	}
 	d := fs.Deals[n-1]
 	if d.Taken {
@@ -76,6 +83,10 @@ func (ge *GameEngine) planDealGone(it PlanItem) string {
 func (ge *GameEngine) planDealCheck(it PlanItem) (d FactionDeal, blocked string) {
 	fs, i := ge.findDeal(it.Key, it.Deal)
 	d = fs.Deals[i]
+	if lock, shut := ge.featureLock(config.FeatureDiplomacy); shut {
+		tech, _ := ge.rules.Tech(lock.Tech)
+		return d, "needs " + tech.Name + " researched"
+	}
 	blocked, _ = ge.dealProblem(fs, d)
 	return d, blocked
 }

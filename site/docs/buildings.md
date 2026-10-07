@@ -146,7 +146,7 @@ Most buildings (production, military, research, trade, diplomacy and monuments) 
 
 ### Build-cost reductions
 
-A handful of **milestone rewards** (Master Builder, Grand Architect and others) and two **techs** (Civil Engineering −5%, Nanofabrication −8%) each cut build costs by 3 to 8%. The reductions add up and multiply the scaled cost above, and the cost never drops below 10% of what it would be without them. Stacked, the available reductions reach **−32%**. The cost `build` lists is the cost you are charged. You don't need to opt in; earning the milestone or completing the tech is enough.
+A handful of **milestone rewards** (Master Builder, Grand Architect and others) each cut build costs by 3 to 5%, and two **techs** (Civil Engineering and Nanofabrication) by 3% each. The milestones' reductions add up (−19% with all of them) and multiply the scaled cost above; each tech's cut then multiplies what is left (×0.97 each). The cost never drops below 10% of what it would be without them. Stacked, the available reductions reach **−24%**. The cost `build` lists is the cost you are charged. You don't need to opt in; earning the milestone or completing the tech is enough.
 
 **Example:** a Gathering Camp's first copy costs 16 wood and each copy costs 15% more. With none built or queued:
 - 1st: 16 wood
@@ -245,13 +245,13 @@ Buildings without a worker domain (Housing, Culture/Arts) produce exactly `base_
 
 `base_rate` is the **fully staffed** rate, and it is the number each building's description shows.
 
-For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/7 in the Iron Age, a quarter in the Renaissance (stretched to about a third there, and shortened in the Information and Cyberpunk Ages; see below), about a third in the Victorian Age and about two thirds in the Space Age. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
+For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/9 in the Iron Age, a sixth in the Renaissance (stretched to more than a quarter there, and shortened in the Information and Cyberpunk Ages; see below), about 2/9 in the Victorian Age and about a third in the Space Age. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
 
 Output is valued at **price parity**. Each age has a price level for each resource (the typical first-copy price in that resource among the age's buildings), and resources are worth each other in the ratio of those levels. A building with two outputs splits its value between them. Because rates follow prices, they grow roughly 5 to 8x per age.
 
 **Examples:**
 - Wood Camp (Primitive): costs 16 wood and makes 0.569 wood/tick fully staffed, so it repays itself in 28 ticks (56 seconds).
-- Stone Pit (Stone): costs 180 stone and 300 wood. At Stone Age parity (240 stone = 360 wood) that is worth 380 stone, and at 3.14 stone/tick it repays in about 4 minutes.
+- Stone Pit (Stone): costs 180 stone and 300 wood. At Stone Age parity (240 stone = 360 wood) that is worth 380 stone, and at 3.48 stone/tick it repays in about 3 minutes 40 seconds.
 
 **Flow resources keep hand-set rates:** food, faith, culture and soldiers. They feed workers, set morale and epoch odds, fill culture storage or make up your army, and the requirements that ask for them are sized to those rates. Resources nothing in the age costs (marble and iron ore, for example, or knowledge outside the Medieval to Colonial Ages) also keep fixed rates.
 
@@ -259,28 +259,28 @@ Output is valued at **price parity**. Each age has a price level for each resour
 |-----|-------------|-------------------------|----------------|-------------------|
 | Primitive | 15m | 56s | 2m 30s | 18s |
 | Stone | 45m | 4m | 7m 30s | 56s |
-| Bronze | 3h 54m | 28m | 39m | 4m 52s |
-| Iron | 6h 30m | 58m | 1h 5m | 8m 6s |
-| Classical | 9h 6m | 1.6h | 1h 31m | 11m 22s |
-| Medieval | 11h 42m | 2.5h | 1h 57m | 14m 36s |
-| Renaissance | 15h 36m | 6.5h | 2h 36m | 19m 30s |
-| Colonial | 18h 12m | 5.1h | 3h 2m | 22m 44s |
-| Industrial | 20h 48m | 6.6h | 3h 28m | 26m |
-| Victorian | 23h 24m | 8.3h | 3h 54m | 29m 14s |
-| Electric | 26h | 10.2h | 4h 20m | 32m 30s |
-| Atomic | 31h 12m | 13.4h | 5h 12m | 39m |
-| Modern | 31h 12m | 14.6h | 5h 12m | 39m |
-| Information | 36h 24m | 14.8h | 6h 4m | 45m 30s |
-| Digital | 41h 36m | 22.7h | 6h 56m | 52m |
-| Cyberpunk | 46h 48m | 22h | 7h 48m | 58m 30s |
-| Fusion | 52h | 32.7h | 8h 40m | 1h 5m |
-| Space | 57h 12m | 38.3h | 9h 32m | 1h 11m 30s |
-| Interstellar | 62h 24m | 44.4h | 10h 24m | 1h 18m |
-| Galactic | 62h 24m | 47.1h | 10h 24m | 1h 18m |
-| Quantum | 62h 24m | 49.8h | 10h 24m | 1h 18m |
-| Transcendent | 62h 24m | 52.5h | 10h 24m | 1h 18m |
+| Bronze | 3h 54m | 23m | 39m | 4m 52s |
+| Iron | 6h 30m | 45m | 1h 5m | 8m 6s |
+| Classical | 9h 6m | 1.2h | 1h 31m | 11m 22s |
+| Medieval | 11h 42m | 1.8h | 1h 57m | 14m 36s |
+| Renaissance | 15h 36m | 4.5h | 2h 36m | 19m 30s |
+| Colonial | 18h 12m | 3.4h | 3h 2m | 22m 44s |
+| Industrial | 20h 48m | 4.2h | 3h 28m | 26m |
+| Victorian | 23h 24m | 5.1h | 3h 54m | 29m 14s |
+| Electric | 26h | 6.1h | 4h 20m | 32m 30s |
+| Atomic | 31h 12m | 7.8h | 5h 12m | 39m |
+| Modern | 31h 12m | 8.3h | 5h 12m | 39m |
+| Information | 36h 24m | 8.2h | 6h 4m | 45m 30s |
+| Digital | 41h 36m | 12.4h | 6h 56m | 52m |
+| Cyberpunk | 46h 48m | 11.7h | 7h 48m | 58m 30s |
+| Fusion | 52h | 17.1h | 8h 40m | 1h 5m |
+| Space | 57h 12m | 19.7h | 9h 32m | 1h 11m 30s |
+| Interstellar | 62h 24m | 22.5h | 10h 24m | 1h 18m |
+| Galactic | 62h 24m | 23.4h | 10h 24m | 1h 18m |
+| Quantum | 62h 24m | 24.4h | 10h 24m | 1h 18m |
+| Transcendent | 62h 24m | 25.3h | 10h 24m | 1h 18m |
 
-The Renaissance's payback is 1.7x what the curve gives (about 3.9 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. Its University makes 61.1 knowledge/tick, Exchange 1.11K gold, Mill 153 steel, Foundry 209 steel and Coal Mine 85 coal.
+The Renaissance's payback is 1.7x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. Its University makes 89.8 knowledge/tick, Exchange 1.62K gold, Mill 225 steel, Foundry 307 steel and Coal Mine 125 coal.
 
 The Information and Cyberpunk Ages go the other way, at 0.8x: they ran 1.2 to 1.5x their targets, and the extra time was spent waiting.
 
@@ -382,28 +382,28 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap is deli
 | Building | Age | Storage per copy (every resource) | Max |
 |----------|-----|--------|-----|
 | Stash | Primitive | +500 | 50 |
-| Storage Pit | Stone | +2.2K | 25 |
-| Warehouse | Bronze | +18K | 25 |
-| Granary | Iron | +26K | 25 |
-| Classical Vault | Classical | +130K | 25 |
-| Strongroom | Medieval | +470K | 25 |
-| Renaissance Vault | Renaissance | +2.7M | 25 |
-| Colonial Warehouse | Colonial | +38M | 25 |
-| Industrial Depot | Industrial | +190M | 25 |
-| Victorian Vault | Victorian | +1.3B | 25 |
-| Electric Warehouse | Electric | +3.9B | 25 |
-| Atomic Vault | Atomic | +20B | 25 |
-| Modern Depot | Modern | +90B | 25 |
-| Info Vault | Information | +1.2T | 25 |
-| Digital Archive | Digital | +1.5T | 25 |
-| Cyber Vault | Cyberpunk | +10.8T | 25 |
-| Fusion Vault | Fusion | +30T | 25 |
+| Storage Pit | Stone | +2.5K | 25 |
+| Warehouse | Bronze | +20K | 25 |
+| Granary | Iron | +35K | 25 |
+| Classical Vault | Classical | +170K | 25 |
+| Strongroom | Medieval | +710K | 25 |
+| Renaissance Vault | Renaissance | +3.1M | 25 |
+| Colonial Warehouse | Colonial | +60M | 25 |
+| Industrial Depot | Industrial | +340M | 25 |
+| Victorian Vault | Victorian | +1.9B | 25 |
+| Electric Warehouse | Electric | +6.9B | 25 |
+| Atomic Vault | Atomic | +28B | 25 |
+| Modern Depot | Modern | +120B | 25 |
+| Info Vault | Information | +2.4T | 25 |
+| Digital Archive | Digital | +2.2T | 25 |
+| Cyber Vault | Cyberpunk | +20T | 25 |
+| Fusion Vault | Fusion | +38T | 25 |
 | Orbital Depot | Space | +200T | 25 |
 | Stellar Vault | Interstellar | +2Q | 25 |
-| Galactic Vault | Galactic | +20Q | 25 |
+| Galactic Vault | Galactic | +34Q | 25 |
 | Quantum Vault | Quantum | +200Q | 25 |
 
-A full stack of an age's storage (with every earlier age's) holds at least **4.5 hours** of that age's typical production of each resource it builds with from the Bronze Age on, and an hour and a half in the Primitive and Stone Ages, which fill fast and are meant to. A player who checks in every few hours loses little to full storage. For longer absences the [build plan](plan.md) spends income as it arrives, and what full storage would still waste goes to the [wonder](wonders.md#overflow) and then [toward the plan's next copies](plan.md#overflow-pays-the-plan).
+A full stack of an age's storage (with every earlier age's) holds at least **4.5 hours** of that age's typical production of each resource it builds with from the Bronze Age on, and an hour and a half in the Primitive and Stone Ages, which fill fast and are meant to. (That is with the storage techs researched: Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.) A player who checks in every few hours loses little to full storage. For longer absences the [build plan](plan.md) spends income as it arrives, and what full storage would still waste goes to the [wonder](wonders.md#overflow) and then [toward the plan's next copies](plan.md#overflow-pays-the-plan).
 
 > **Tip:** Stash is capped at 50. Build them out before you leave the Primitive Age, then start on Storage Pits as soon as you enter the Stone Age. A full store stops that resource piling up: what it would waste goes into the current wonder's bank while the wonder still needs it (unless you typed `wonder overflow off`), then toward your plan's next copies, and anything neither needs is lost. So build storage first whenever you enter a new age.
 

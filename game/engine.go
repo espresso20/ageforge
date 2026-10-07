@@ -287,6 +287,11 @@ type GameEngine struct {
 	morale          float64 // 0.10–moraleCap(); starts at moraleNeutral (0.50)
 	lowMoraleWarned bool    // true after morale warning fired; reset when morale rises above 0.40
 
+	// grantedFeatures is the commands this run keeps without the tech that
+	// opens them (features.go): each was used while its lock was inert, in
+	// the tree grace age, or before the lock existed. Saved
+	// (GameSave.GrantedFeatures), cleared with the run.
+	grantedFeatures map[string]bool
 	// festivalReadyTick is the earliest game tick a new festival may be held
 	// (cooldown anti-spam for the `festival` culture sink). 0 = ready now.
 	festivalReadyTick int
@@ -1479,6 +1484,10 @@ func (ge *GameEngine) finishResearch(completed string) {
 		ge.Buildings.GetCount(w) == 0 && ge.Buildings.GetQueueCount(w, ge.buildQueue) == 0 {
 		ge.addLog("info", fmt.Sprintf("With %s researched, %s can be built once its bank is full.", def.Name, ge.Buildings.defs[w].Name))
 	}
+	// A tech that opens a command says so.
+	for _, lock := range ge.rules.FeaturesOpenedBy(completed) {
+		ge.addLog("info", fmt.Sprintf("%s %s.", def.Name, lock.Opens))
+	}
 	// A bonus a cap keeps from counting says so.
 	for _, capped := range ge.capLinesLocked(def.GeneralEffects(), true) {
 		ge.addLog("info", capped)
@@ -1835,11 +1844,16 @@ func (ge *GameEngine) recalculateRates() {
 	r := ge.buildResolver()
 
 	// Build-cost factor (Fix A): fold the resolver's build_cost additive pool
-	// (negative reductions from milestones + a research tech) into a single
-	// multiplier and hand it to the BuildingManager. costMult = clamp(1 + Σ
-	// build_cost, 0.10, 1.0). GetCost/BuildBatchCost/UpgradeCost all read it, so
-	// the charged cost and the displayed cost are computed from the SAME factor.
-	ge.Buildings.SetCostMultiplier(poolFactor("build_cost", r.AddTotal("build_cost")))
+	// (negative reductions from milestones) into a single multiplier,
+	// clamp(1 + Σ build_cost, 0.10, 1.0), multiply it by the techs' own
+	// factor (each tech's cut multiplies what the others left), and hand the
+	// product to the BuildingManager, never under config.BuildCostFloor of
+	// the price. GetCost/BuildBatchCost/UpgradeCost all read it, so the
+	// charged cost and the displayed cost are computed from the SAME factor.
+	ge.Buildings.SetCostMultiplier(ge.buildCostFactor(r.AddTotal("build_cost")))
+	// The mechanic numbers the managers read (the market's fee, a route's
+	// time, a gift's price) follow the techs researched.
+	ge.pushMechanics()
 
 	// Apply production_all bonus (multiplier on all positive rates).
 	// Pool: research + permanent + prestige + wonders + active-event production_all.
@@ -1903,8 +1917,28 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Research production effects (direct production from techs), added one
-	// effect at a time in the manager's fixed order.
+	// The tech layer: what a resource's buildings and their crews make ×
+	// (1 + the techs' bonus on that resource + their bonus on all
+	// production), after the ×3 caps and every pooled bonus, so a tech's
+	// bonus counts in full whatever the pools hold. Bonuses on the same
+	// thing add up inside the layer; nothing caps it. It comes before the
+	// flat amounts below (a first-source tech, an event), which are
+	// promised as amounts and stay exactly that. The breakdown's research
+	// line carries it.
+	for _, def := range ge.Resources.defs {
+		r := ge.Resources.resources[def.Key]
+		if r == nil || r.Rate <= 0 {
+			continue
+		}
+		if layer := ge.Research.OutputFactor(def.Key); layer != 1 {
+			scaled := float64(r.Rate * layer)
+			r.Breakdown.ResearchRate += scaled - r.Rate
+			r.Rate = scaled
+		}
+	}
+
+	// Research production effects (a tech that is the first source of a
+	// resource), added one effect at a time in the manager's fixed order.
 	for _, eff := range ge.Research.flatEffects() {
 		r := ge.Resources.resources[eff.Target]
 		if r != nil {
@@ -1990,21 +2024,24 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Recalculate storage from buildings + research + milestones
+	// Recalculate storage from buildings + milestones, then the techs'
+	// percentage on every store.
 	storageBonuses := ge.Buildings.GetStorageBonuses()
 	allBonus := storageBonuses["all"]
-	// Add storage bonuses from research
-	allBonus += ge.Research.Bonus(config.EffectFlatStorage, config.AllResources)
 	allBonus += permanentBonuses["all"]
+	techStorage := 1 + ge.Research.Bonus(config.EffectStorage, "")
 
 	for _, def := range ge.Resources.defs {
 		specific := storageBonuses[def.Key]
-		specific += ge.Research.Bonus(config.EffectFlatStorage, def.Key)
 		specific += permanentBonuses[def.Key]
 		r := ge.Resources.resources[def.Key]
 		// Storage grows with Era Mastery's k, as production does, so a store
-		// holds the same hours of income at any speed.
+		// holds the same hours of income at any speed. The techs' storage
+		// bonus multiplies beside it: +10% of everything the store holds.
 		r.Storage = float64((def.BaseStorage + allBonus + specific) * k)
+		if techStorage != 1 {
+			r.Storage = float64(r.Storage * techStorage)
+		}
 		// Storage can shrink (a storage building sold or destroyed). Add clamps
 		// on the way in, but a resource with no production never passes through
 		// Add again, so without this it sat above its new cap indefinitely.
@@ -2658,7 +2695,14 @@ func (ge *GameEngine) festivalCost() float64 {
 	if cost < festivalMinCost {
 		cost = festivalMinCost
 	}
-	return cost
+	// The techs' cut comes last, so it is a cut of the price actually paid.
+	return ge.mechanic(config.MechanicFestivalCost, cost)
+}
+
+// festivalCooldown is the wait between festivals in the current age: the
+// stretched cooldown with the techs' cut. Caller holds ge.mu.
+func (ge *GameEngine) festivalCooldown() int {
+	return ge.mechanicTicks(config.MechanicFestivalCooldownTicks, ge.stretchTicks(festivalCooldownTicks))
 }
 
 // FestivalStatus returns the live festival cost, the player's culture, the buff
@@ -2676,7 +2720,7 @@ func (ge *GameEngine) FestivalStatus() FestivalStatus {
 		Culture:       ge.Resources.Get("culture"),
 		BuffPercent:   festivalBuffPercent,
 		BuffTicks:     ge.stretchTicks(festivalBuffTicks),
-		CooldownTicks: ge.stretchTicks(festivalCooldownTicks),
+		CooldownTicks: ge.festivalCooldown(),
 		CooldownLeft:  cd,
 		Ready:         cd == 0,
 	}
@@ -2690,6 +2734,9 @@ func (ge *GameEngine) DoFestival() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	if err := ge.featureErr(config.FeatureFestivals); err != nil {
+		return err
+	}
 	if ge.tick < ge.festivalReadyTick {
 		return fmt.Errorf("The next festival is ready in %s.", ge.durationLocked(ge.festivalReadyTick-ge.tick))
 	}
@@ -2706,7 +2753,8 @@ func (ge *GameEngine) DoFestival() error {
 		TicksLeft: buff,
 		Effects:   []config.Effect{{Type: "production_all", Value: festivalBuffPercent}},
 	})
-	ge.festivalReadyTick = ge.tick + ge.stretchTicks(festivalCooldownTicks)
+	ge.festivalReadyTick = ge.tick + ge.festivalCooldown()
+	ge.useFeature(config.FeatureFestivals)
 	ge.addLog("success", fmt.Sprintf("Held a cultural festival for %s: all production %s for %s.",
 		Amount(cost, "culture"), textfmt.SignedPercent(festivalBuffPercent), ge.durationLocked(buff)))
 	ge.logCapped(config.Effect{Type: "production_all", Value: festivalBuffPercent})
@@ -2798,6 +2846,9 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 	if ageOrder[blackMarketMinAge] > ageOrder[ge.age] {
 		return false, 0, fmt.Errorf("The black market opens in %s.", ge.ageSightLocked().AgeRef(blackMarketMinAge))
 	}
+	if err := ge.featureErr(config.FeatureBlackMarket); err != nil {
+		return false, 0, err
+	}
 	if ge.tick < ge.blackMarketReadyTick {
 		return false, 0, fmt.Errorf("The smugglers are lying low. Try again in %s.", ge.durationLocked(ge.blackMarketReadyTick-ge.tick))
 	}
@@ -2818,6 +2869,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 	// Culture is spent up front regardless of outcome — that's the risk.
 	ge.Resources.Remove("culture", cost)
 	ge.blackMarketReadyTick = ge.tick + ge.stretchTicks(blackMarketCooldownTicks)
+	ge.useFeature(config.FeatureBlackMarket)
 
 	if ge.bmRandFloat() < blackMarketWinChance {
 		got := ge.gainResource(resource, reward)
@@ -3079,6 +3131,8 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	if err := checkAmount(amount); err != nil {
 		return 0, err
 	}
+	// The techs add to every gather (Tool Making: 2 more).
+	amount += ge.gatherBonus()
 	before := ge.Resources.Get(resource)
 	actual := ge.Resources.Add(resource, amount)
 	ge.Stats.RecordGather(resource, amount)
@@ -3934,10 +3988,19 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 		}
 	}
 
+	// The tech that opens this kind of expedition, once its age is reached
+	// (an expedition of a later age says so first).
+	if ageOrder[def.MinAge] <= ageOrder[ge.age] {
+		if err := ge.featureErr(expeditionFeatures(def)...); err != nil {
+			return err
+		}
+	}
+
 	// Age range + active-expedition validation (does NOT touch resources).
 	if err := ge.Military.LaunchExpedition(ge.gameRNG(), key, ge.age, ageOrder); err != nil {
 		return err
 	}
+	ge.useFeature(expeditionFeatures(def)...)
 
 	// --- All checks passed: deduct soldiers + Cost. ---
 	if def.SoldiersNeeded > 0 {
@@ -4057,6 +4120,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.pendingMemoryTech = ""
 	// The cooldowns are tick numbers and the tick counter just went back to 0.
 	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
+	// A new run keeps no command the last one was granted (features.go).
+	ge.grantedFeatures = nil
 	// The run's timers start over, as in a new game. A stale ageReady let
 	// `advance` skip the Stone Age's requirements before the first tick.
 	ge.ageReady = false
@@ -4203,6 +4268,7 @@ func (ge *GameEngine) Reset() {
 	ge.ancientMemoryUsed = false
 	ge.pendingMemoryTech = ""
 	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
+	ge.grantedFeatures = nil
 	ge.ageReady = false
 	ge.starvationTicks = 0
 	ge.autoExpeditionTicksLeft = 0
@@ -4416,6 +4482,7 @@ func (ge *GameEngine) GetState() GameState {
 		// state escapes.
 		Modifiers: resolver.All(),
 		Pools:     ge.bonusPoolsLocked(resolver),
+		Features:  ge.featureStates(),
 		// Account lifetime stats (Phase 6). We hold ge.mu.RLock here; LifetimeStats
 		// takes the account's OWN mutex (a.mu) — consistent lock order ge.mu → a.mu,
 		// and the Record* writers never hold a.mu while touching ge.mu, so no deadlock.
@@ -4617,9 +4684,17 @@ func (ge *GameEngine) StartTradeRoute(key string) error {
 	defer ge.mu.Unlock()
 
 	ageOrder := ge.progress.GetAgeOrder()
+	// The tech that opens the route, once its age is reached (a route of a
+	// later age, or one that does not exist, says so first).
+	if def, ok := ge.Trade.routeDefs[key]; ok && ageOrder[def.MinAge] <= ageOrder[ge.age] {
+		if err := ge.featureErr(routeFeatures(key)...); err != nil {
+			return err
+		}
+	}
 	if err := ge.Trade.StartRoute(key, ge.Buildings, ge.age, ageOrder); err != nil {
 		return err
 	}
+	ge.useFeature(routeFeatures(key)...)
 	ge.addLog(LogRoutine, fmt.Sprintf("Trade route started: %s.", ge.rules.Name(rules.KindRoute, key)))
 	return nil
 }
@@ -4641,10 +4716,20 @@ func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	// Standing down to neutral is always open; taking a side waits for
+	// the tech that opens diplomacy.
+	if status != "neutral" {
+		if err := ge.featureErr(config.FeatureDiplomacy); err != nil {
+			return err
+		}
+	}
 	gold := ge.Resources.Get("gold")
 	cost, err := ge.Diplomacy.SetStatus(factionKey, status, gold)
 	if err != nil {
 		return err
+	}
+	if status != "neutral" {
+		ge.useFeature(config.FeatureDiplomacy)
 	}
 	if cost > 0 {
 		ge.Resources.Remove("gold", cost)
@@ -4658,12 +4743,16 @@ func (ge *GameEngine) SendGift(factionKey string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	if err := ge.featureErr(config.FeatureDiplomacy); err != nil {
+		return err
+	}
 	gold := ge.Resources.Get("gold")
 	before := ge.civOpinion(factionKey)
 	cost, err := ge.Diplomacy.SendGift(factionKey, gold)
 	if err != nil {
 		return err
 	}
+	ge.useFeature(config.FeatureDiplomacy)
 	ge.Resources.Remove("gold", cost)
 	ge.addLog(LogRoutine, fmt.Sprintf("Sent the %s a gift: %s, opinion %s.",
 		ge.rules.Name(rules.KindCiv, factionKey), Amount(cost, "gold"), textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))

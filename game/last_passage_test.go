@@ -91,7 +91,7 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatalf("appease: %v", err)
 	}
-	fillBraceStock(ge, 2e16)
+	fillBraceStock(ge, 5e16)
 	if err := ge.HarbingerBrace(); err != nil {
 		t.Fatalf("brace: %v", err)
 	}
@@ -137,10 +137,10 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 // there).
 func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {890000000, 14000000000, 8.9e15, 1.1e16},
-		"galactic_age":     {1800000000, 27000000000, 1.9e17, 1.1e16},
-		"quantum_age":      {3600000000, 54000000000, 1.9e17, 1.1e16},
-		"transcendent_age": {3600000000, 54000000000, 1.9e17, 1.1e16},
+		"interstellar_age": {1000000000, 16000000000, 2e16, 2.4e16},
+		"galactic_age":     {2000000000, 32000000000, 4.3e17, 2.4e16},
+		"quantum_age":      {4000000000, 63000000000, 4.3e17, 2.4e16},
+		"transcendent_age": {4200000000, 66000000000, 4.4e17, 2.5e16},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -246,11 +246,11 @@ func TestLastPassageChoice(t *testing.T) {
 	first := ages[0]
 	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
 	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
-	if math.Abs(braceHours-20.9) > 0.05 || math.Abs(appeaseHours-32.4) > 0.05 {
-		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 20.9 and 32.4", first, braceHours, appeaseHours)
+	if math.Abs(braceHours-21.7) > 0.05 || math.Abs(appeaseHours-31.9) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.7 and 31.9", first, braceHours, appeaseHours)
 	}
-	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.645) > 0.005 {
-		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.645", first, ratio)
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.680) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.680", first, ratio)
 	}
 
 	// The faith band moves the odds, not the choice: both savings scale with

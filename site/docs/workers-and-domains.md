@@ -239,7 +239,7 @@ worker output       = base_rate × building_count × 0.80 × assigned / total_ca
 worker output bonus = worker output × (sum of your worker output bonuses)
 ```
 
-So with +15% worker output a fully staffed building makes 12% more than its listed rate (15% of the 80% its crew adds), and an empty building gains nothing. The bonuses add together: Tool Making (+15%), Bronze Working (+10%), Road Building (+10%), Neural Interface (+30%) and the Jacked In milestone (+15%) make +80%.
+So with +15% worker output a fully staffed building makes 12% more than its listed rate (15% of the 80% its crew adds), and an empty building gains nothing. One thing gives it today: the Jacked In milestone (+15%, from the Cyberpunk Age). No tech does any more: Tool Making, Bronze Working, Road Building and Neural Interface raise the output of a resource instead (see [Technologies](technologies.md#output-of-one-resource)).
 
 The bonus is added on top of your other production bonuses, not multiplied by them. It is outside [the all-production cap](resources.md#the-all-production-cap) and has no cap of its own, so it keeps counting when all production is capped. `rates` shows it as its own **Worker bonus** part, and the Stats panel lists the total as **Worker output** under Active Multipliers.
 

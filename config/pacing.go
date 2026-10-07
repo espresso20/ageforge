@@ -136,7 +136,7 @@ const (
 	// the age's target: target × epochProgress^exponent / divisor. See
 	// PaybackTicks.
 	PaybackDivisor       = 16.0
-	PaybackEpochExponent = 1.25
+	PaybackEpochExponent = 0.9
 	// BuildTimeDivisor caps construction at target / BuildTimeDivisor, for
 	// wonders too: an age's wonder must stand before the next advance.
 	BuildTimeDivisor = 6.0
@@ -171,12 +171,18 @@ func AgeTargetTicks(age string) float64 {
 // its first copy's price.
 //
 // The share of the target grows through the game: 1/16 in the Primitive Age,
-// 1/7 in the Iron Age, 1/4 in the Renaissance, 1/3 in the Victorian, 2/3 in
+// 1/9 in the Iron Age, 1/6 in the Renaissance, 2/9 in the Victorian, 1/3 in
 // the Space Age. A Primitive player has nothing but what they build that
 // age, so producers must pay back fast. Later, every age also runs on the
 // previous ages' buildings, which keep producing forever, and those pile
 // up; each new producer can add less or the age flies by. PaybackAdjust
 // stretches it for the odd age the curve leaves too fast.
+//
+// The exponent was 1.25 while techs added into the bonus pools. With their
+// bonuses in a small layer of their own, a building has to carry more of
+// an age itself, and the more so the later the age: 0.9 gives a producer
+// of the Bronze Age 1.2 times the output it had, one of the Victorian Age
+// 1.6 times and one of the Space Age 1.9 times.
 func PaybackTicks(age string) float64 {
 	return paybackTicks(age, AgePositions(AgeOrder()))
 }
@@ -521,23 +527,31 @@ func ResearchBudgetShareOf(age string) float64 {
 }
 
 // KnowledgePerHour is the knowledge a well-played game makes in an hour of
-// each age at 1x: the mid-age income of the smoke suite's greedy bot,
-// measured on a first run. It is an input like AgeTargets, typed here and
+// each age at 1x: the income of the smoke suite's greedy bot averaged over
+// the age, measured on a first run (the progression report's
+// knowledge_per_hour_1x). It is an input like AgeTargets, typed here and
 // re-measured when the economy moves: research budgets are sized from it.
+//
+// The per-PR runs measure up to the Atomic Age (a first run prestiges on
+// entering the Modern Age). The Information Age and every age after it
+// keep the numbers measured before techs got a layer of their own: nothing
+// run per PR reaches them, and what the layer took off knowledge output
+// there the shorter payback of the Colonial Age's halls, which still make
+// most of the knowledge, about gives back.
 var KnowledgePerHour = map[string]float64{
 	"primitive_age":    1.3e3,
 	"stone_age":        5.7e3,
 	"bronze_age":       6.1e3,
-	"iron_age":         40e3,
-	"classical_age":    147e3,
-	"medieval_age":     1.3e6,
+	"iron_age":         30e3,
+	"classical_age":    100e3,
+	"medieval_age":     1.2e6,
 	"renaissance_age":  5.7e6,
 	"colonial_age":     14e6,
-	"industrial_age":   65e6,
-	"victorian_age":    94e6,
-	"electric_age":     185e6,
-	"atomic_age":       204e6,
-	"modern_age":       220e6,
+	"industrial_age":   56e6,
+	"victorian_age":    66e6,
+	"electric_age":     148e6,
+	"atomic_age":       182e6,
+	"modern_age":       215e6,
 	"information_age":  293e6,
 	"digital_age":      449e6,
 	"cyberpunk_age":    449e6,
@@ -706,16 +720,49 @@ const FlowCopies = 5.0
 // by. It must equal the engine's productionCap (a game test checks).
 const ProductionAllCap = 3.0
 
+// ProductionAllHeld is the all-production pool a well-played game holds in
+// each age, before the clamp: the "+X% all production" of its milestones
+// and wonders added up (0.8 is +80%). It is an input like KnowledgePerHour,
+// typed here. An age it leaves out holds none.
+//
+// Until techs got a layer of their own the model read this pool off the
+// techs: their all-production bonuses filled it from the Industrial Age on
+// and reached the clamp in the Electric Age. Techs no longer join the pool.
+// Milestones and wonders fill it instead, at much the same pace, so the
+// table keeps the numbers the model had, held to what a game can hold: the
+// static caps report (smoke.StaticCaps) lists, age by age, the pool of a
+// player with every milestone and wonder available, and a smoke test fails
+// if a number here is above it.
+var ProductionAllHeld = map[string]float64{
+	"industrial_age":   0.8,
+	"victorian_age":    1.55,
+	"electric_age":     1.95,
+	"atomic_age":       2.0,
+	"modern_age":       2.0,
+	"information_age":  2.0,
+	"digital_age":      2.0,
+	"cyberpunk_age":    2.0,
+	"fusion_age":       2.0,
+	"space_age":        2.0,
+	"interstellar_age": 2.0,
+	"galactic_age":     2.0,
+	"quantum_age":      2.0,
+	"transcendent_age": 2.0,
+}
+
 // FlowIncome is what a player who invests moderately in the flow resource res
 // makes per tick in age at 1x: FlowCopies fully staffed copies of every
 // non-wonder producer of res from the Primitive Age up to and including age,
 // plus the output of every earlier age's wonder (each advance requires its
 // age's wonder, so they stand), plus the flat output of every tech up to
-// age, all multiplied by the production_all bonus held by then: every tech up
-// to age and every earlier age's wonder, capped at ProductionAllCap as the
-// engine caps it (from the Electric Age on the cap is reached, and output
-// triples). Monuments, milestones, morale and worker upkeep are left out. 0
-// for an unknown age or a resource nothing produces by then.
+// age, multiplied twice over. First by the all-production pool held by then
+// (ProductionAllHeld), capped at ProductionAllCap as the engine caps it
+// (from the Atomic Age on the cap is reached, and output triples). Then by
+// the tech layer, which no cap holds: 1 + the bonus every tech up to age
+// gives that resource + the bonus they give all production. Monuments, the
+// per-resource bonuses of milestones and wonders, morale and worker upkeep
+// are left out. 0 for an unknown age or a resource nothing produces by
+// then.
 func FlowIncome(res, age string) float64 {
 	return Incomes(BaseBuildings(), Technologies(), AgeOrder(), IsFlowResource)[age][res]
 }
@@ -723,8 +770,8 @@ func FlowIncome(res, age string) float64 {
 // TypicalIncome is FlowIncome's "what the age produces" for any resource,
 // construction resources included: FlowCopies fully staffed copies of every
 // producer of res up to age, every earlier wonder and every tech up to age,
-// times the production_all bonus held by then. It is what the Storage
-// Covenant (StorageHold) sizes storage against.
+// times the all-production pool held by then, times the tech layer. It is
+// what the Storage Covenant (StorageHold) sizes storage against.
 func TypicalIncome(res, age string) float64 {
 	return Incomes(BaseBuildings(), Technologies(), AgeOrder(), AnyResource)[age][res]
 }
@@ -773,16 +820,13 @@ func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(s
 	out := make(map[string]map[string]float64, len(order))
 	for i, age := range order {
 		inc := map[string]float64{}
-		bonus := 0.0 // production_all
+		bonus := ProductionAllHeld[age] // the all-production pool
 		for _, d := range defs {
 			j, ok := idx[d.RequiredAge]
 			if !ok || j > i {
 				continue
 			}
 			for _, e := range d.Effects {
-				if d.Category == "wonder" && j < i && e.Type == "bonus" && e.Target == "production_all" {
-					bonus += e.Value
-				}
 				if e.Type != "production" || e.Value <= 0 || !include(e.Target) {
 					continue
 				}
@@ -794,22 +838,28 @@ func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(s
 				}
 			}
 		}
+		// The tech layer: every tech up to age, its bonus on one resource
+		// and on all production added up per resource, no cap.
+		layerAll := 0.0
+		layer := map[string]float64{}
 		for _, t := range techs {
 			if j, ok := idx[t.Age]; !ok || j > i {
 				continue
 			}
 			for _, e := range t.Effects {
-				if e.Kind == EffectFlatOutput && e.Value > 0 && include(e.Target) {
+				switch {
+				case e.Kind == EffectFlatOutput && e.Value > 0 && include(e.Target):
 					inc[e.Target] += e.Value
-				}
-				if e.Kind == EffectAllOutput {
-					bonus += e.Value
+				case e.Kind == EffectAllOutput:
+					layerAll += e.Value
+				case e.Kind == EffectOutput:
+					layer[e.Target] += e.Value
 				}
 			}
 		}
 		mult := math.Min(1+bonus, ProductionAllCap)
 		for k := range inc {
-			inc[k] *= mult
+			inc[k] = float64(inc[k] * mult * (1 + layerAll + layer[k]))
 		}
 		out[age] = inc
 	}

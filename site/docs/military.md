@@ -19,8 +19,8 @@ There are two kinds of mission:
 
 | Kind | Command | Costs | Available |
 |---|---|---|---|
-| Scouting expedition | `expedition <key>` | resources only, 0 soldiers | from the start; there are three: `scout_party`, `scout_ruins`, `naval_expedition` |
-| Military campaign | `campaign <key>` | soldiers | the first opens in the Bronze Age, but you have no soldiers until the Iron Age |
+| Scouting expedition | `expedition <key>` | resources only, 0 soldiers | from the start; there are three: `scout_party`, `scout_ruins`, `naval_expedition`. The Naval Expedition waits for the Navigation tech |
+| Military campaign | `campaign <key>` | soldiers | the first opens in the Bronze Age, once Military Tactics is researched, but you have no soldiers until the Iron Age |
 
 ---
 
@@ -147,6 +147,8 @@ campaign <key>          # wage a campaign (e.g. campaign raid_bandits); spends s
 `expedition` with no arguments opens the **Expeditions** panel, `campaign` (or `campaign list`) lists the campaigns you can wage, and `army` opens the **Army** panel. You can type spaces for the underscores in a key: `expedition scout ruins` is the same as `expedition scout_ruins`.
 
 If you mix the two up, the game points you to the right one. `expedition raid_bandits` is refused with a note to use `campaign <key>`, and a scouting key given to `campaign` sends you to `expedition <key>`.
+
+**Two techs open missions.** Campaigns wait for **Military Tactics** (Bronze Age) and the Naval Expedition for **Navigation** (Renaissance Age). Until the tech is researched the command is refused and names it: `Campaigns need Military Tactics first. Research it to send one.` The Scout Party and Scout Nearby Ruins need no tech. A game saved before this rule keeps what it was already sending for the rest of that run (see [Commands a Tech Opens](technologies.md#commands-a-tech-opens)).
 
 ### Automatic dispatch: the Geographic Society
 
@@ -290,10 +292,10 @@ Sources add together:
 
 | Source | How to get it | Bonus |
 |--------|-------------|---------------|
-| Techs | Several military techs grant military power | +0.2 to +1.5 per tech |
+| Techs | Ten military techs grant military power | +0.10 to +0.15 per tech, +1.21 with all ten |
 | Milestones | Complete military milestones | +0.05 to +0.10 each |
 
-There's no cap on military power, but difficulty never drops below **0.05** (a 5% minimum failure chance). At about +2.7 even the hardest mission (0.85) reaches that floor, so past it more military power no longer helps missions; it still raises your defense rating.
+There's no cap on military power, but difficulty never drops below **0.05** (a 5% minimum failure chance). At about +2.7 even the hardest mission (0.85) would reach that floor. Techs and milestones together come to +1.51, so the hardest missions stay a gamble: more military power always helps, and it raises your defense rating too.
 
 The expedition reward bonus (from techs, milestones and some wonders) is separate. It multiplies the loot on a success: `rewards × (1 + expedition reward bonus)`.
 
@@ -362,6 +364,8 @@ A deliberate army is what pushes toward the 45% ceiling: more military buildings
 1. **Raid events.** Random events that are attacks by outsiders: Bandit Raid, Pirate Attack, Data Breach, The Great Breach, Corporate Espionage, and the Stone Era's Tribal Raid and Beast Stampede. The garrison cuts the resources they steal and the workers they drive off by its share (at least one worker still flees if the event takes workers). A raid's production penalty is not blunted. See [Raids and your garrison](events.md#raids-and-your-garrison). The log adds a line under the event: "Your garrison blunted about N% of the raid: you kept ...".
 2. **War raids.** While a civilization is at war with you, each raid it makes takes a resource. The garrison keeps its share of that resource. A raid bigger than your stock still takes nothing, as before; the army never makes a raid that missed land. The raid's log line adds "Your garrison kept X gold from them (about N% of the raid)." (with the raid's resource in place of gold). See [War & Peace](factions.md#war-amp-peace).
 3. **Endure.** When you Endure a catastrophe, the garrison blunts its share of the buildings destroyed and the stock lost, after the Harbinger's Brace, measured against the threat of the age the catastrophe strikes in (see below).
+
+**Two techs make raids smaller before the garrison meets them.** Imperial Legions and Nuclear Deterrence each take 10% off what a raid event or a war raid would steal (19% with both: the cuts multiply). The garrison then blunts its share of what is left. They do nothing for an Endure.
 
 Nothing else. Disasters and unrest (earthquakes, plague, mine collapses, industrial accidents, uprisings) are not raids, and soldiers do nothing against them. Endure's 25% worker loss, its production debuff and its morale hit are unchanged.
 

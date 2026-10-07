@@ -246,8 +246,15 @@ func dealLot(def config.FactionDef, tier int, kind string, r float64) float64 {
 // the market's rate scaled by mult / (1 - ExchangeFee) where the market
 // trades the pair, the ratio of the deal price levels times mult where it
 // doesn't. ok is false when neither applies.
-func dealRate(set *rules.Set, from, to, age string, mult float64) (float64, bool) {
+//
+// fee is the techs' cut of the market's fee as the multiplier the market's
+// own rates carry (marketFeeScale; 0 reads as 1): a deal on a pair the
+// market trades keeps its edge over what the market pays now.
+func dealRate(set *rules.Set, from, to, age string, mult, fee float64) (float64, bool) {
 	if m, ok := set.MarketOffers(from, to, age); ok && m > 0 {
+		if fee > 0 && fee != 1 {
+			m = float64(m * fee)
+		}
 		return m * mult / (1 - config.ExchangeFee), true
 	}
 	lf, lt := set.DealPriceLevel(from, age), set.DealPriceLevel(to, age)
@@ -275,9 +282,12 @@ type dealEnv struct {
 	// rules prices the deals: the engine's ruleset (nil reads the core set).
 	rules     *rules.Set
 	age, next string
-	unlocked  map[string]bool
-	amount    map[string]float64
-	storage   map[string]float64
+	// fee is the techs' cut of the market's fee, as the multiplier on
+	// market rates (0 reads as 1).
+	fee      float64
+	unlocked map[string]bool
+	amount   map[string]float64
+	storage  map[string]float64
 }
 
 // newDealEnv captures the engine's side of deal generation. Under the lock.
@@ -288,6 +298,7 @@ type dealEnv struct {
 func (ge *GameEngine) newDealEnv() dealEnv {
 	env := dealEnv{
 		rules:    ge.rules,
+		fee:      ge.Diplomacy.feeScale,
 		age:      ge.age,
 		next:     ge.progress.GetNextAge(ge.age),
 		unlocked: map[string]bool{},
@@ -436,7 +447,7 @@ func goodsDeal(def config.FactionDef, tier int, env dealEnv, kind string, lot, r
 		if res == get || !env.unlocked[res] {
 			continue
 		}
-		if _, ok := dealRate(set, res, get, env.age, mult); ok {
+		if _, ok := dealRate(set, res, get, env.age, mult, env.fee); ok {
 			cands = append(cands, res)
 		}
 	}
@@ -447,7 +458,7 @@ func goodsDeal(def config.FactionDef, tier int, env dealEnv, kind string, lot, r
 		return FactionDeal{}, false
 	}
 	give := dealPick(cands, r)
-	rate, _ := dealRate(set, give, get, env.age, mult)
+	rate, _ := dealRate(set, give, get, env.age, mult, env.fee)
 	d := FactionDeal{Kind: kind, Give: give, Get: get}
 	if kind == DealSell {
 		// A sell is sized by the goods, a want by what it asks for.
@@ -553,7 +564,7 @@ func dealRefreshIn(set *rules.Set, age string) int {
 // offline catch-up never calls it (see the rules above).
 func (ge *GameEngine) tickFactionDeals() {
 	var env *dealEnv
-	refresh := dealRefreshIn(ge.rules, ge.age)
+	refresh := ge.Diplomacy.dealRefreshFor(ge.age)
 	for _, def := range ge.Diplomacy.factionList {
 		fs, ok := ge.Diplomacy.factions[def.Key]
 		if !ok || !fs.Discovered {
@@ -621,6 +632,7 @@ func (ge *GameEngine) findDeal(key string, id int) (*FactionState, int) {
 // dealProblem. Under the write lock.
 func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) FactionDeal {
 	d := &fs.Deals[i]
+	ge.useFeature(config.FeatureDiplomacy)
 	ge.Resources.Remove(d.Give, d.GiveAmt)
 	gain := d.Standing
 	if d.Get != "" {
@@ -694,6 +706,9 @@ func (ge *GameEngine) AcceptFactionDeal(key string, n int) (FactionDeal, error) 
 	if !ok || !fs.Discovered {
 		return FactionDeal{}, ge.Diplomacy.errUnknownCiv(key)
 	}
+	if err := ge.featureErr(config.FeatureDiplomacy); err != nil {
+		return FactionDeal{}, err
+	}
 	if why := dealBlocked(*fs); why != "" {
 		return FactionDeal{}, fmt.Errorf("The %s won't trade: they are %s.", def.Name, why)
 	}
@@ -717,7 +732,7 @@ func (ge *GameEngine) AcceptFactionDeal(key string, n int) (FactionDeal, error) 
 // dealInfos is a civ's current offers for the UI, numbered from 1, with each
 // one's edge over set's market. Offers rolled for an earlier age are not
 // shown (they re-roll on the next tick).
-func dealInfos(set *rules.Set, fs *FactionState, age string) []DealInfo {
+func dealInfos(set *rules.Set, fs *FactionState, age string, fee float64) []DealInfo {
 	if fs.DealsFor != age || dealBlocked(*fs) != "" {
 		return nil
 	}
@@ -727,6 +742,9 @@ func dealInfos(set *rules.Set, fs *FactionState, age string) []DealInfo {
 			Get: d.Get, GetAmt: d.GetAmt, Standing: d.Standing, Taken: d.Taken}
 		if d.Get != "" && d.GiveAmt > 0 {
 			if m, ok := set.MarketOffers(d.Give, d.Get, age); ok && m > 0 {
+				if fee > 0 && fee != 1 {
+					m = float64(m * fee)
+				}
 				info.Edge = d.GetAmt/d.GiveAmt/m - 1
 			}
 		}

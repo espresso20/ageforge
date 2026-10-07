@@ -68,6 +68,10 @@ type Set struct {
 	factions     []config.FactionDef
 	factionByKey map[string]config.FactionDef
 	routes       []config.TradeRouteDef
+	locks        []config.FeatureLockDef
+	lockByKey    map[string]config.FeatureLockDef
+	mechanics    []config.MechanicDef
+	mechanicBy   map[string]config.MechanicDef
 	exchange     []config.ExchangeRateDef
 	exchangeBy   map[string]config.ExchangeRateDef // "from:to"
 
@@ -115,6 +119,10 @@ func Compile(src Source) *Set {
 		awakenings: slices.Clone(src.Awakenings),
 		factions:   slices.Clone(src.Factions),
 		routes:     slices.Clone(src.TradeRoutes),
+		locks:      slices.Clone(src.FeatureLocks),
+		lockByKey:  make(map[string]config.FeatureLockDef, len(src.FeatureLocks)),
+		mechanics:  slices.Clone(src.Mechanics),
+		mechanicBy: make(map[string]config.MechanicDef, len(src.Mechanics)),
 		exchange:   slices.Clone(src.ExchangeRates),
 		classes:    slices.Clone(src.WorkerClasses),
 		domains:    slices.Clone(src.WorkerDomains),
@@ -264,6 +272,12 @@ func (s *Set) indexDefs() {
 	s.exchangeBy = make(map[string]config.ExchangeRateDef, len(s.exchange))
 	for _, x := range s.exchange {
 		s.exchangeBy[x.From+":"+x.To] = x
+	}
+	for _, d := range s.locks {
+		s.lockByKey[d.Key] = d
+	}
+	for _, d := range s.mechanics {
+		s.mechanicBy[d.Key] = d
 	}
 	s.classByDomain = map[string][]config.WorkerClassDef{}
 	for _, c := range s.classes {
@@ -561,6 +575,40 @@ func (s *Set) Faction(key string) (config.FactionDef, bool) {
 
 // TradeRoutes returns every trade route, in definition order.
 func (s *Set) TradeRoutes() []config.TradeRouteDef { return slices.Clone(s.routes) }
+
+// FeatureLocks returns every feature lock (a command that waits for a
+// tech), in the order the tree opens them.
+func (s *Set) FeatureLocks() []config.FeatureLockDef { return slices.Clone(s.locks) }
+
+// FeatureLock returns the feature lock key.
+func (s *Set) FeatureLock(key string) (config.FeatureLockDef, bool) {
+	d, ok := s.lockByKey[key]
+	return d, ok
+}
+
+// FeatureLockLive reports whether lock d's tech is in the set: a lock whose
+// tech is missing is inert, and its command open.
+func (s *Set) FeatureLockLive(d config.FeatureLockDef) bool {
+	_, ok := s.techByKey[d.Tech]
+	return ok
+}
+
+// FeaturesOpenedBy returns the feature locks tech opens, in order.
+func (s *Set) FeaturesOpenedBy(tech string) []config.FeatureLockDef {
+	var out []config.FeatureLockDef
+	for _, d := range s.locks {
+		if d.Tech == tech {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// Mechanic returns the mechanic number key (a constant a tech can move).
+func (s *Set) Mechanic(key string) (config.MechanicDef, bool) {
+	d, ok := s.mechanicBy[key]
+	return d, ok
+}
 
 // ExchangeRates returns the listed market pairs, in definition order.
 func (s *Set) ExchangeRates() []config.ExchangeRateDef { return slices.Clone(s.exchange) }

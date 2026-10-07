@@ -1430,6 +1430,9 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 			parts = append(parts, fmt.Sprintf("Worker bonus: %s", textfmt.RateValue(b.WorkerRate)))
 		}
 		if b.ResearchRate != 0 {
+			// What the techs add: their bonus on what the resource's
+			// buildings make, counted after the caps, and the flat output
+			// of a tech that is its first source.
 			parts = append(parts, fmt.Sprintf("Research: %s", textfmt.RateValue(b.ResearchRate)))
 		}
 		if b.EventRate != 0 {

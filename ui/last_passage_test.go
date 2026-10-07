@@ -189,8 +189,8 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 		"The Distress Beacon", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
 		"Published odds:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
 		"Next level: 70% kept.", "Guarantees the Last Passage at your next prestige",
-		"Next level costs: 890M faith (have 0), 14B culture (have 0)",
-		"Next level costs: 11Q titanium (have 0), 8.9Q dark matter (have 0)",
+		"Next level costs: 1B faith (have 0), 16B culture (have 0)",
+		"Next level costs: 24Q titanium (have 0), 20Q dark matter (have 0)",
 	} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("panel missing %q:\n%s", want, txt)
@@ -301,11 +301,12 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 	}
 	// It is applied after the caps: a multiplier of its own beside the
 	// all-production pool, and never tagged as capped, however full the
-	// pool is (in the Quantum Age it is far past the cap).
+	// pool is (here milestone rewards put it far past the cap).
 	engine.GrantTechsForTest()
+	engine.GrantBonusForTest("production_all", 4)
 	st := engine.GetState()
 	if p := st.Pools["production_all"]; !p.Limited {
-		t.Fatalf("the all-production pool is not capped in the Quantum Age with every tech: %+v", p)
+		t.Fatalf("the all-production pool is not capped in the Quantum Age with +400%% of milestone rewards: %+v", p)
 	}
 	out = untag(statsProvider(st, 140))
 	for _, want := range []string{

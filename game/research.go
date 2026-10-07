@@ -26,16 +26,20 @@ type ResearchManager struct {
 	currentTech string
 	ticksLeft   int
 	totalTicks  int
-	// bonuses is what the researched techs add together, by what each
+	// bonuses is what the researched techs come to together, by what each
 	// effect changes: its kind and its target (config.TechEffectKey). Output
-	// of gold, storage of gold and gold a tick are three keys, so none can
-	// leak into another. Fractions and flat amounts both live here; the
-	// kind says which a sum is.
+	// of gold and gold a tick are two keys, so neither can leak into the
+	// other. A key that adds holds a sum, one that multiplies a product
+	// (TechEffectKey.Fold), each held inside the key's limits. A key no
+	// researched tech touches is absent: Term reads it as the key's start.
 	bonuses map[config.TechEffectKey]float64
-	// pools is the fractions in bonuses by the pool each adds to
-	// ("production_all", "<res>_rate", "gather_rate", "tick_speed",
-	// "military_power", ...): the names the resolver and the panels share
-	// with every other source of bonuses. Rebuilt with bonuses (indexPools).
+	// raw is bonuses before the limits, for the headroom test: a term that
+	// differs from its raw value has run into a floor or a cap.
+	raw map[config.TechEffectKey]float64
+	// pools is the fractions in bonuses that join a pool the rest of the
+	// game's bonuses share ("tick_speed", "military_power",
+	// "expedition_reward"), by pool name. Rebuilt with bonuses (indexPools).
+	// The layer's kinds join no pool.
 	pools map[string]float64
 	// order is every tech key, sorted, fixed at construction. Per-tick walks
 	// over researched techs use it so summed effects never follow map order.
@@ -80,11 +84,13 @@ func (rm *ResearchManager) Rebind(set *rules.Set) {
 // StartResearch begins researching a technology using only tech-derived bonuses.
 // Prefer StartResearchWithSpeed to include permanent and prestige bonuses.
 func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder map[string]int, knowledge float64) error {
-	return rm.StartResearchWithSpeed(key, currentAge, ageOrder, knowledge, rm.Bonus(config.EffectResearchTime, ""))
+	return rm.StartResearchWithSpeed(key, currentAge, ageOrder, knowledge, 0)
 }
 
-// StartResearchWithSpeed begins researching a technology, applying the given combined
-// research speed bonus (from techs + permanent bonuses + prestige) to reduce tick count.
+// StartResearchWithSpeed begins researching a technology, applying the given
+// research speed bonus (the pool: milestones, wonders, prestige) to reduce the
+// tick count. The techs' own cut of research time is not in it: it multiplies
+// what the pool leaves (ResearchTicks).
 func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string, ageOrder map[string]int, knowledge float64, speedBonus float64) error {
 	def, ok := rm.defs[key]
 	if !ok {
@@ -119,7 +125,7 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 	}
 
 	rm.currentTech = key
-	ticks := ResearchTicks(def.ResearchTicks, speedBonus, rm.timeMult, rm.timeK)
+	ticks := ResearchTicks(def.ResearchTicks, speedBonus, rm.TimeFactor(), rm.timeMult, rm.timeK)
 	rm.ticksLeft = ticks
 	rm.totalTicks = ticks
 	return nil
@@ -134,14 +140,17 @@ func orList(names []string) string {
 }
 
 // ResearchTicks is how long a tech listed at base ticks takes to research
-// with a research speed bonus of speed and Ancient Knowledge's factor mult,
-// on ground of speed k: research speed takes its share off the listed time
-// (+30% leaves 70% of it, rounded down, one tick at least), Ancient
-// Knowledge multiplies what is left (x0.8 per epoch succumbed in, rounded
-// down, one tick at least), then Era Mastery divides that by k
-// (MasteryTicks). The engine starts research with it and the Research panel
-// lists times with it, so the time a tech shows is the time it takes.
-func ResearchTicks(base int, speed, mult, k float64) int {
+// with a research speed bonus of speed, the techs' research time factor
+// tech and Ancient Knowledge's factor mult, on ground of speed k: research
+// speed takes its share off the listed time (+30% leaves 70% of it, rounded
+// down, one tick at least), the techs' factor multiplies what is left (two
+// 3% cuts leave 0.97 x 0.97 of it, never under
+// config.ResearchTimeFloor; rounded down, one tick at least), Ancient
+// Knowledge multiplies that (x0.8 per epoch succumbed in, rounded down, one
+// tick at least), then Era Mastery divides it by k (MasteryTicks). The
+// engine starts research with it and the Research panel lists times with
+// it, so the time a tech shows is the time it takes.
+func ResearchTicks(base int, speed, tech, mult, k float64) int {
 	ticks := base
 	if speed > 0 {
 		ticks = int(float64(ticks) * (1.0 - speed))
@@ -149,7 +158,17 @@ func ResearchTicks(base int, speed, mult, k float64) int {
 			ticks = 1
 		}
 	}
-	return MasteryTicks(ancientKnowledgeTicks(ticks, mult), k)
+	return MasteryTicks(ancientKnowledgeTicks(techTimeTicks(ticks, tech), mult), k)
+}
+
+// techTimeTicks multiplies ticks by the techs' factor on a time, rounded
+// down, never below one tick. A factor of 1 or more, or one nothing has set
+// (0), leaves ticks as they are.
+func techTimeTicks(ticks int, factor float64) int {
+	if factor <= 0 || factor >= 1 || ticks <= 0 {
+		return ticks
+	}
+	return max(1, int(float64(float64(ticks)*factor)))
 }
 
 // ancientKnowledgeTicks multiplies ticks by Ancient Knowledge's factor mult,
@@ -193,10 +212,12 @@ func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) e
 
 	rm.currentTech = key
 	ticks := def.ResearchTicks
-	// Apply the same combined research speed bonus a normal research gets...
+	// Apply the same research speed bonus a normal research gets, and the
+	// techs' own cut of research time...
 	if speedBonus > 0 {
 		ticks = int(float64(ticks) * (1.0 - speedBonus))
 	}
+	ticks = techTimeTicks(ticks, rm.TimeFactor())
 	// ...then halve the rate (double the ticks) for the memory penalty.
 	ticks = int(float64(ticks) * memoryResearchSlowdown)
 	if ticks < 1 {
@@ -208,20 +229,22 @@ func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) e
 	return nil
 }
 
-// rebuildBonuses recomputes bonuses from every researched tech, summed in
-// rm.order. Summing in completion order instead made the totals depend on the
-// order techs were finished (0.1+0.3+0.4 is not 0.4+0.1+0.3 in floating
+// rebuildBonuses recomputes bonuses from every researched tech, folded in
+// rm.order. Folding in completion order instead made the totals depend on
+// the order techs were finished (0.1+0.3+0.4 is not 0.4+0.1+0.3 in floating
 // point), so a loaded game, which can only replay them in one fixed order,
 // came back with bonuses a few ulps off the live ones.
 func (rm *ResearchManager) rebuildBonuses() {
-	rm.bonuses = make(map[config.TechEffectKey]float64)
+	var held []config.TechDef
 	for _, key := range rm.order {
-		if !rm.researched[key] {
-			continue
+		if rm.researched[key] {
+			held = append(held, rm.defs[key])
 		}
-		for _, eff := range rm.defs[key].Effects {
-			rm.bonuses[eff.Key()] += eff.Value
-		}
+	}
+	rm.raw = config.TechTerms(held)
+	rm.bonuses = make(map[config.TechEffectKey]float64, len(rm.raw))
+	for k, v := range rm.raw {
+		rm.bonuses[k] = k.Clamp(v)
 	}
 	rm.indexPools()
 }
@@ -326,13 +349,49 @@ func (rm *ResearchManager) IsResearched(key string) bool {
 	return rm.researched[key]
 }
 
-// Bonus returns what the researched techs add together to one thing: a kind
-// and its target ("" for the kinds that take none). Military power is
-// Bonus(config.EffectMilitaryPower, ""), gold storage
-// Bonus(config.EffectFlatStorage, "gold"), storage for every resource
-// Bonus(config.EffectFlatStorage, config.AllResources).
+// Bonus returns what the researched techs come to together on one thing: a
+// kind and its target ("" for the kinds that take none). For a kind that
+// adds it is the sum, 0 with no tech: military power is
+// Bonus(config.EffectMilitaryPower, ""), the layer's share of gold output
+// Bonus(config.EffectOutput, "gold"). For a kind that multiplies it is the
+// factor, 1 with no tech: Bonus(config.EffectBuildTime, "") is 0.92 after
+// one 8% cut. Either way it is inside the kind's limits.
 func (rm *ResearchManager) Bonus(kind config.TechEffectKind, target string) float64 {
-	return rm.bonuses[config.TechEffectKey{Kind: kind, Target: target}]
+	k := config.TechEffectKey{Kind: kind, Target: target}
+	if v, ok := rm.bonuses[k]; ok {
+		return v
+	}
+	return k.Start()
+}
+
+// Mechanic is the tech term of the mechanic number key (config.Mechanics):
+// the factor of a number that multiplies, the sum of one that adds.
+func (rm *ResearchManager) Mechanic(key string) float64 {
+	return rm.Bonus(config.EffectMechanic, key)
+}
+
+// MechanicValue is the mechanic number key with the tech term applied to
+// base, its constant: base x the factor, or base + the sum. An unknown key
+// leaves base alone.
+func (rm *ResearchManager) MechanicValue(key string, base float64) float64 {
+	def, ok := rm.rules.Mechanic(key)
+	if !ok {
+		return base
+	}
+	return def.Apply(base, rm.Mechanic(key))
+}
+
+// OutputFactor is the tech layer's multiplier on what resource res makes:
+// 1 + the techs' bonus on res + their bonus on all production. Bonuses on
+// the same thing add up, and nothing caps the sum.
+func (rm *ResearchManager) OutputFactor(res string) float64 {
+	return 1 + rm.Bonus(config.EffectOutput, res) + rm.Bonus(config.EffectAllOutput, "")
+}
+
+// TimeFactor is the techs' factor on research time (1 with none): what
+// ResearchTicks multiplies the time by after the research speed pool.
+func (rm *ResearchManager) TimeFactor() float64 {
+	return rm.Bonus(config.EffectResearchTime, "")
 }
 
 // ResearchedCount returns how many techs have been researched
@@ -346,9 +405,10 @@ func (rm *ResearchManager) GetResearched() []string {
 	return sortedKeys(rm.researched)
 }
 
-// byTarget is the sums of one kind, by target: what researched techs add per
-// tick to each resource (config.EffectFlatOutput), or to each store
-// (config.EffectFlatStorage).
+// byTarget is the terms of one kind, by target: what researched techs add
+// per tick to each resource (config.EffectFlatOutput), the layer's share of
+// each resource's output (config.EffectOutput), each mechanic number's term
+// (config.EffectMechanic).
 func (rm *ResearchManager) byTarget(kind config.TechEffectKind) map[string]float64 {
 	out := make(map[string]float64)
 	for k, v := range rm.bonuses {
@@ -378,17 +438,17 @@ func (rm *ResearchManager) flatEffects() []config.TechEffect {
 }
 
 // GetBonuses returns a copy of the bonus pools the researched techs add to,
-// by pool name ("production_all": 0.5 is +50%). The flat amounts (output,
-// storage, housing) are not pools and are not in it.
+// by pool name ("military_power": 0.5 is +50%). Only game speed, military
+// power and expedition rewards are pools; everything else a tech gives is
+// in the layer (Bonus).
 func (rm *ResearchManager) GetBonuses() map[string]float64 {
 	return maps.Clone(rm.pools)
 }
 
 // Modifiers emits one OpAdd Modifier per pool the researched techs add to,
 // attributed to Source "research". The targets are the pool names every
-// other source uses ("production_all", "<res>_rate", "gather_rate",
-// "tick_speed"). Per-tech attribution is deferred; the summed per-target
-// view is golden-equal to the current scattered math.
+// other source uses ("tick_speed", "military_power", "expedition_reward").
+// The layer's bonuses are no part of any pool, so none is emitted for them.
 func (rm *ResearchManager) Modifiers() []Modifier {
 	out := make([]Modifier, 0, len(rm.pools))
 	for t, v := range rm.pools {
@@ -436,8 +496,14 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 		TotalResearched: len(rm.researched),
 		Bonuses:         rm.GetBonuses(),
 		Flat:            rm.byTarget(config.EffectFlatOutput),
-		Storage:         rm.byTarget(config.EffectFlatStorage),
-		Housing:         rm.Bonus(config.EffectFlatHousing, ""),
+		Output:          rm.byTarget(config.EffectOutput),
+		AllOutput:       rm.Bonus(config.EffectAllOutput, ""),
+		Storage:         rm.Bonus(config.EffectStorage, ""),
+		Housing:         rm.Bonus(config.EffectHousing, ""),
+		BuildCost:       rm.Bonus(config.EffectBuildCost, ""),
+		BuildTime:       rm.Bonus(config.EffectBuildTime, ""),
+		ResearchTime:    rm.TimeFactor(),
+		Mechanics:       rm.byTarget(config.EffectMechanic),
 	}
 }
 

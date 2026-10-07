@@ -46,7 +46,7 @@ These four come from Geological Extraction mines. Nothing in the game spends the
 |----------|-----|---------|--------------|-------|
 | Data | `data` | Modern Age | 50 | Made by Hacker buildings from the Information Age; in the Modern Age the market sells it |
 | Nanobots | `nanobots` | Modern Age | 20 | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them |
-| Crypto | `crypto` | Cyberpunk Age | 50 | No building makes it: it comes from the Neon Citadel wonder, the Blockchain tech and the market |
+| Crypto | `crypto` | Cyberpunk Age | 50 | No building makes it: it comes from the Neon Citadel wonder and the market (Blockchain lowers the market's fee) |
 | Plasma | `plasma` | Fusion Age | 30 | Superheated gas for energy |
 | Titanium | `titanium` | Space Age | 30 | Light metal for space construction |
 | Dark Matter | `dark_matter` | Interstellar Age | 20 | Exotic matter for warp technology |
@@ -72,7 +72,7 @@ If food runs out, one worker starves every 5 ticks (10 seconds) until there is f
 **How to increase food:**
 - Build more Food lineage buildings (`gathering_camp`, `forager_post`, `farm`, ...). Workers come to staff them on their own.
 - Give food a bigger [worker share](workers-and-domains.md#worker-shares), or `assign gathering_camp 3` by hand
-- Research Fire Mastery, Animal Husbandry, Agriculture and the other food techs
+- Research Tool Making, Fire Mastery, Animal Husbandry and Agriculture: +10% food each, and they add up
 
 **Watch the food rate** in the Economy panel. Auto-recruit keeps a food margin for you; `recruit max` does not.
 
@@ -127,7 +127,7 @@ Culture has two jobs. Its **fill % of storage** decides which tier of good epoch
 | Eternal Library | Industrial | 140K | +3% all production |
 | Monument of Ages | Modern | 7.1M | +5% all production |
 
-**The `festival` command** spends a lump of culture (2K, or 5% of your culture storage if that is more) for **+20% all production for 13 minutes** (390 ticks), then waits **26 minutes** (780 ticks) before the next one. See [Commands](commands.md).
+**The `festival` command** spends a lump of culture (2K, or 5% of your culture storage if that is more) for **+20% all production for 13 minutes** (390 ticks), then waits **26 minutes** (780 ticks) before the next one (Radio shortens the wait by 20%, and Social Media the price by 20%). See [Commands](commands.md).
 
 Culture also pays for:
 
@@ -155,7 +155,7 @@ What Geological Extraction is good for is stone (up to the Bronze Age), uranium 
 
 Every resource has a small base storage (10 to 50). **Storage buildings** raise the cap of every resource at once: one per age from the Stash to the Quantum Vault, up to 25 copies each (50 Stashes). A few technologies raise every cap too, culture buildings add culture storage, and military buildings add soldier storage. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table.
 
-**How much it holds.** A full stack of an age's storage, with every earlier age's, holds at least **4.5 hours** of that age's typical production of each resource its buildings cost, from the Bronze Age on. The Primitive and Stone Ages hold an hour and a half: they fill fast and are meant to. A player who checks in every few hours loses little to a full store. On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production, so a store still holds the same hours of income.
+**How much it holds.** A full stack of an age's storage, with every earlier age's, holds at least **4.5 hours** of that age's typical production of each resource its buildings cost, from the Bronze Age on. The Primitive and Stone Ages hold an hour and a half: they fill fast and are meant to. Four techs raise every store by a percentage (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each), and the 4.5 hours count them. A player who checks in every few hours loses little to a full store. On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production, so a store still holds the same hours of income.
 
 **Storage is permanent.**
 
@@ -172,21 +172,24 @@ Every resource has a small base storage (10 to 50). **Storage buildings** raise 
 
 ## The all-production cap
 
-Every "+X% all production" bonus in the game adds into one pool: wonders, technologies, milestones, cultural monuments, events (festivals included) and faction boons. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + that pool**, clamped between **x0.1 and x3.0**.
+Every "+X% all production" bonus in the game adds into one pool, except a technology's: wonders, milestones, cultural monuments, events (festivals included) and faction boons. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + that pool**, clamped between **x0.1 and x3.0**.
 
-Techs and wonders alone reach the x3.0 cap from about the Electric Age. After that, a late "+X% all production" bonus adds nothing you can see while you are over the cap. It isn't wasted: a penalty comes out of the raw pool first, so the surplus absorbs it, and the bonus matters again whenever a setback pulls the pool back under the cap.
+Milestone rewards fill most of it. A player who earns every milestone as early as it can be earned reaches the x3.0 cap in the Electric Age; most runs reach it a few ages later, and a run that skips milestones may never reach it. Past the cap, a late "+X% all production" reward adds nothing you can see. It isn't wasted: a penalty comes out of the raw pool first, so the surplus absorbs it, and the bonus matters again whenever a setback pulls the pool back under the cap.
 
-One bonus sits outside the pool: the [Cosmic Legacy](prestige.md#cosmic-legacy). Its +10% is applied after the cap, to everything a resource makes, so it counts in every age however full the pool is.
+Two things sit outside the pool and are applied after the cap, so they count in every age however full the pool is:
 
-Bonuses to one resource ("+30% gold") have their own pool for that resource, with the same x0.1 to x3.0 clamp. Gold's pool fills in the Colonial Age and knowledge's in the Electric Age, from techs alone.
+- **Technologies.** A tech's "+X% production" multiplies what is left after the cap, and tech bonuses add up among themselves with no cap of their own. See [How Tech Bonuses Stack](technologies.md#how-tech-bonuses-stack).
+- The [Cosmic Legacy](prestige.md#cosmic-legacy), +10% on everything a resource makes.
+
+Bonuses to one resource ("+10% gold production" from a milestone or a wonder) have their own pool for that resource, with the same x0.1 to x3.0 clamp. No resource's pool reaches it in any age: the fullest, knowledge, holds +145% with every scholar milestone and both knowledge wonders.
 
 **The game tells you when a cap is holding a bonus back.** Nothing is hidden above the cap:
 
 - The Stats panel's Active Multipliers shows what counts, with a note when a pool is past its cap: `All production +200% capped at +200%: +405% earned`. The sources beside it still list everything you earned.
-- The Research panel's **Research bonuses** list carries the same note, and so does every researched tech in a capped pool. A tech you can still research says what the cap would leave of it, before you spend the knowledge: `(capped: no effect now)` or `(capped: +5% of it counts now)`.
-- The Milestones and Wonders panels put the same notes beside rewards and wonder effects.
+- The Milestones and Wonders panels put a note beside every reward and wonder effect in a capped pool, and one still to earn says what the cap would leave of it before you work for it: `(capped: no effect now)` or `(capped: +5% of it counts now)`.
+- The Research panel never shows one: no cap holds a tech's bonus.
 - The `festival` command warns you before you pay when the cap would swallow the festival.
-- The log adds a line when a bonus you just earned is capped: a tech, a milestone, a wonder, an awakening, an epoch event, a festival or a boon.
+- The log adds a line when a bonus you just earned is capped: a milestone, a wonder, an awakening, an epoch event, a festival or a boon.
 
 <figure class="screen" data-screen="rates"><figcaption>The foot of the Stats panel in the Bronze Age: the rate of every resource, then the multipliers in play and where each one comes from.</figcaption></figure>
 
@@ -212,7 +215,7 @@ Some construction resources have **no producing building in certain ages**, and 
 - **Iron** from the Renaissance Age on
 - **Steel** from the Modern Age on
 - **Titanium** from the Interstellar Age on (in the Space Age the Orbital Refinery makes it; earlier titanium smelters make only a trickle)
-- **Crypto** in the Cyberpunk Age (apart from the Neon Citadel wonder and the Blockchain tech)
+- **Crypto** in the Cyberpunk Age (apart from the Neon Citadel wonder)
 
 The same goes for wood in the Colonial Age, coal in the Electric Age, data in the Modern Age, plasma in the Galactic Age, dark matter from the Quantum Age on and antimatter in the Transcendent Age. Faith can't be bought at the market at all. A [build plan](plan.md) trade item (`plan trade <give> <get>`) buys these as the resources come in, while you are away too.
 
@@ -224,7 +227,7 @@ Gold pays for the market, diplomacy gifts and many mid-to-late game buildings.
 
 **How to increase gold:**
 - Build Trade lineage buildings (Market, Trading Post, Merchant Quarter, ...) and staff them
-- Research Currency, Mercantilism and the other gold techs
+- Research Currency, Road Building and Banking: +10%, +8% and +8% gold, and they add up
 - Trade routes pay small fixed amounts on top (see [Trade](trade.md))
 
 ---

@@ -445,18 +445,18 @@ func TestAncientKnowledgeNeverFloorsResearch(t *testing.T) {
 	// Each further epoch takes the same share off what is left.
 	prev := 1_000_000
 	for n := 1; n <= 6; n++ {
-		ticks := ResearchTicks(1_000_000, 0, AncientKnowledgeFactor(n), 1)
+		ticks := ResearchTicks(1_000_000, 0, 1, AncientKnowledgeFactor(n), 1)
 		if ratio := float64(ticks) / float64(prev); math.Abs(ratio-SuccumbResearchTimeFactor) > 1e-5 {
 			t.Errorf("epoch %d: research time x%v of the epoch before, want x%v", n, ratio, SuccumbResearchTimeFactor)
 		}
 		prev = ticks
 	}
 	// On top of the research speed pool and Era Mastery it still multiplies.
-	if got, want := ResearchTicks(1000, 0.5, AncientKnowledgeFactor(2), 2), 160; got != want {
+	if got, want := ResearchTicks(1000, 0.5, 1, AncientKnowledgeFactor(2), 2), 160; got != want {
 		t.Errorf("1000 ticks at +50%% speed, two epochs, k 2: %d, want %d", got, want)
 	}
 	// A manager no engine has set leaves times alone.
-	if got := ResearchTicks(1000, 0, 0, 0); got != 1000 {
+	if got := ResearchTicks(1000, 0, 0, 0, 0); got != 1000 {
 		t.Errorf("unset factor changed 1000 ticks to %d", got)
 	}
 }

@@ -79,6 +79,7 @@ func TestSoldiersTrained_AccruesAcrossTicks(t *testing.T) {
 // an expedition does NOT reduce the cumulative lifetime trained counter.
 func TestSoldiersTrained_NotDecreasedBySpending(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "military_tactics") // the tech that opens campaigns
 	stageSoldierProduction(t, ge, 2)
 
 	// Accrue some trained soldiers, then jump the resource amount high enough to
@@ -330,6 +331,7 @@ func TestMilitaryExpeditions_RequireSoldiers(t *testing.T) {
 // a military expedition can be active simultaneously (one per category).
 func TestConcurrentExpeditions_ScoutAndMilitary(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "military_tactics") // the tech that opens campaigns
 	setAge(ge, "bronze_age")
 	setResource(ge, "food", 200)
 	setResource(ge, "wood", 200)
@@ -365,6 +367,7 @@ func TestConcurrentExpeditions_ScoutAndMilitary(t *testing.T) {
 // is rejected while one is running, but the OTHER category is still launchable.
 func TestPerCategorySingleActive(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "military_tactics") // the tech that opens campaigns
 	setAge(ge, "bronze_age")
 	setResource(ge, "food", 500)
 	setResource(ge, "wood", 500)
@@ -391,6 +394,7 @@ func TestPerCategorySingleActive(t *testing.T) {
 // complete on their own schedules.
 func TestExpeditionsTickIndependently(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "military_tactics") // the tech that opens campaigns
 	setAge(ge, "bronze_age")
 	setResource(ge, "food", 200)
 	setResource(ge, "wood", 200)
@@ -443,6 +447,7 @@ func TestExpeditionsTickIndependently(t *testing.T) {
 // survive GetActiveForSave + LoadState.
 func TestConcurrentExpeditions_SaveRoundTrip(t *testing.T) {
 	ge := NewGameEngine()
+	learn(ge, "military_tactics") // the tech that opens campaigns
 	setAge(ge, "bronze_age")
 	setResource(ge, "food", 200)
 	setResource(ge, "wood", 200)
