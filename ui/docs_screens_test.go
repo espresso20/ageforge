@@ -91,11 +91,13 @@ func TestDocScreens(t *testing.T) {
 		t.Errorf("site/docs/screens weighs %d bytes, over its %d budget", total, docScreensBudget)
 	}
 
-	// The plugin registers itself as it loads, so it has to load before Docsify starts.
+	// The plugin adds itself to window.$docsify.plugins as it loads: after
+	// the page has set window.$docsify (or the setting would wipe it) and
+	// before Docsify reads it.
 	index := readDoc(t, "../site/docs/index.html")
-	plugin, docsify := strings.Index(index, `<script src="screens.js">`), strings.Index(index, "docsify.min.js")
-	if plugin < 0 || docsify < 0 || plugin > docsify {
-		t.Error("site/docs/index.html must load screens.js before docsify.min.js")
+	config, plugin, docsify := strings.Index(index, "window.$docsify = {"), strings.Index(index, `<script src="screens.js">`), strings.Index(index, "docsify.min.js")
+	if config < 0 || plugin < config || docsify < plugin {
+		t.Error("site/docs/index.html must load screens.js after it sets window.$docsify and before docsify.min.js")
 	}
 	if _, err := os.Stat("../site/docs/screens.js"); err != nil {
 		t.Errorf("site/docs/screens.js: %v", err)

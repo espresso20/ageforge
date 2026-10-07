@@ -223,7 +223,8 @@ p code, li code { word-break: break-word; }
   overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
   padding: 10px 12px; scrollbar-width: thin; scrollbar-color: #5d6880 transparent;
 }
-.screen-scroll:focus-visible { outline: 2px solid var(--rubric); outline-offset: -2px; }
+.markdown-section figure.screen:focus { outline: none; }
+.markdown-section figure.screen:focus-visible .screen-plate { outline: 2px solid var(--rubric); }
 .markdown-section pre.screen-term {
   position: relative; display: block; box-sizing: content-box;
   width: calc(var(--cols, 100) * 1ch); margin: 0 auto; padding: 0;
@@ -239,9 +240,9 @@ p code, li code { word-break: break-word; }
 }
 .screen-term .screen-probe { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
 .markdown-section figure.screen figcaption {
-  font-family: var(--caps); font-size: 0.95rem; line-height: 1.35; letter-spacing: 0.08em;
+  font-family: var(--caps); font-size: 0.84rem; line-height: 1.4; letter-spacing: 0.07em;
   color: var(--ink-2); text-align: center; text-wrap: balance;
-  max-width: 44em; margin: 0 auto; padding: 0 12px;
+  max-width: 46em; margin: 0 auto; padding: 0 12px;
 }
 .markdown-section figure.screen-drawn figcaption { margin-top: 14px; }
 .screen-scrolls figcaption::after { content: " Scroll sideways to see the rest."; color: var(--ink-3); }

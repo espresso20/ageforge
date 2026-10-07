@@ -10,8 +10,8 @@
 // color run, and every character outside ASCII in a box one cell wide, so a
 // fallback font cannot break the grid. The font is sized so the screen fits
 // its column; below a readable size it stops shrinking and the plate scrolls
-// sideways instead. If the file cannot be had, the caption stays as it is.
-// No libraries.
+// sideways instead (the arrow keys scroll it too). If the file cannot be
+// had, the caption stays as it is. No libraries.
 (function () {
   "use strict";
 
@@ -97,9 +97,22 @@
     var px = Math.floor(room / (d.cols * cell) * 100) / 100;
     px = Math.max(min, Math.min(MAX_PX, px));
     d.pre.style.fontSize = px + "px";
+    // A plate that scrolls takes the keyboard, so the arrow keys can reach the rest of it.
     var wide = d.scroll.scrollWidth > d.scroll.clientWidth + 1;
     fig.classList.toggle("screen-scrolls", wide);
-    if (wide) d.scroll.setAttribute("tabindex", "0"); else d.scroll.removeAttribute("tabindex");
+    if (wide) fig.setAttribute("tabindex", "0"); else fig.removeAttribute("tabindex");
+  }
+
+  function keys(e) {
+    var d = e.currentTarget.__screen;
+    if (!d || !e.currentTarget.classList.contains("screen-scrolls")) return;
+    var step = Math.max(40, d.scroll.clientWidth * 0.4);
+    if (e.key === "ArrowRight") d.scroll.scrollLeft += step;
+    else if (e.key === "ArrowLeft") d.scroll.scrollLeft -= step;
+    else if (e.key === "Home") d.scroll.scrollLeft = 0;
+    else if (e.key === "End") d.scroll.scrollLeft = d.scroll.scrollWidth;
+    else return;
+    e.preventDefault();
   }
 
   function draw(fig, s) {
@@ -123,6 +136,7 @@
     fig.setAttribute("aria-label", label || "A screen from the game.");
     fig.classList.add("screen-drawn");
     fig.__screen = { scroll: scroll, pre: pre, probe: probe, cols: s.w };
+    fig.addEventListener("keydown", keys);
     drawn.push(fig);
     fit(fig);
     if (sized) sized.observe(scroll);

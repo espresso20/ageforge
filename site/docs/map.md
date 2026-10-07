@@ -47,7 +47,7 @@ A **news line** on the Map lists what happened since the save was loaded: buildi
 
 The roguelike style draws your settlement as a small glyph world. Your town grows out of your **real buildings**, quarter by quarter, with streets, walls, wonders and people walking the streets. The same save always grows the same town, and new buildings join the existing streets instead of reshuffling them.
 
-<figure class="screen" data-screen="map-roguelike"><figcaption>The roguelike map of a Bronze Age town: the palisade, the quarters inside it, the wonders named on their plots and the legend on the right.</figcaption></figure>
+<figure class="screen" data-screen="map-roguelike"><figcaption>The roguelike map of a Bronze Age town: the palisade, the quarters inside it and the wonders named on their plots, with what the cursor is on spelled out beneath.</figcaption></figure>
 
 The land comes from your save's seed: hills and forests, lakes and coasts ringed with shallows (`~`) round deeper water (`≈`), and rivers that wind from the high ground down to the sea or a lake. Your town always sits near a river.
 
