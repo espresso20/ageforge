@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "account_id": "de87b969f2dee401ce9cbea46ddbf905",
+  "display_name": "Fixture Partial",
+  "created": "2026-10-07T10:33:03.352203-05:00",
+  "last_seen": "2026-10-07T10:33:03.352203-05:00",
+  "unlocks": {},
+  "stats": {
+    "total_prestiges": 1,
+    "highest_age": "medieval_age",
+    "prestiges_by_age": {
+      "medieval_age": 1
+    }
+  },
+  "achievements": [
+    "reached_iron",
+    "first_prestige"
+  ],
+  "prefs": {},
+  "_sig": "84f4fa52e8aadc9fad06f4bdf26dfd232134b5642cefc79a18a046204f14dfad"
+}
