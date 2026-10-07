@@ -116,6 +116,7 @@ func (a *Account) loadBadgeFile(dir string) {
 		return
 	}
 	a.Badges, a.Counters, a.Days = b.Badges, b.Counters, b.Days
+	a.badgeRev++
 	a.BadgesTampered = b.Tampered || b.AccountID != a.AccountID || !verifyBadgeFile(&b)
 	if a.BadgesTampered {
 		for key, e := range a.Badges {
@@ -188,6 +189,7 @@ func (a *Account) adoptBadgeFile() {
 	a.Counters = mergeCounters(a.Counters, counters)
 	a.Days = mergeDays(a.Days, days)
 	a.BadgesTampered = a.BadgesTampered || flagged
+	a.badgeRev++
 }
 
 // takeBadgeStoreLocked folds the badge store an export carries into the
@@ -202,6 +204,7 @@ func (a *Account) takeBadgeStoreLocked(b *badgeFile, merge bool) {
 		return
 	}
 	a.BadgesTampered = a.BadgesTampered || b.Tampered
+	a.badgeRev++
 	if !merge {
 		a.Badges = mergeBadges(b.Badges, nil)
 		a.Counters = mergeCounters(b.Counters, nil)
@@ -277,6 +280,7 @@ func (a *Account) countLocked(book *badgeBook, name string, n float64, ctx badge
 	}
 	a.Counters[name] += n
 	a.dirty = true
+	a.badgeRev++
 	for _, i := range book.byCounter[name] {
 		def := &book.defs[i]
 		if a.Counters[name] < def.Threshold {
@@ -353,6 +357,7 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 	}
 	a.Badges[def.Key] = e
 	a.dirty = true
+	a.badgeRev++
 	// A badge that was an account achievement before badges keeps its place in
 	// that list too, so a build from before badges shows what this one earned.
 	// Not a crossed one: account.json has no way to mark it, and the list is
@@ -394,6 +399,7 @@ func (a *Account) countSilentLocked(book *badgeBook, name string, depth int) {
 		a.Counters = map[string]float64{}
 	}
 	a.Counters[name]++
+	a.badgeRev++
 	for _, i := range book.byCounter[name] {
 		def := &book.defs[i]
 		if a.Counters[name] < def.Threshold {
@@ -456,6 +462,7 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 				a.Counters = map[string]float64{}
 			}
 			a.Counters[name] = n
+			a.badgeRev++
 			changed = true
 		}
 	}
@@ -476,6 +483,16 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 			def.Subject != "" && def.InAge == "" && len(def.When) == 0 && def.Pred == "":
 			if pos, ok := book.set.Index(def.Subject); ok && reached && pos <= highest {
 				grant(def)
+			}
+		}
+	}
+	// A theme an earned badge gives is unlocked: this is what gives the theme
+	// to an account that earned the badge before it gave one.
+	for _, key := range sortedKeys(a.Badges) {
+		if def := book.def(key); def != nil {
+			if t := def.Reward.Theme; t != "" && !a.hasThemeLocked(t) {
+				a.Unlocks.Themes = append(a.Unlocks.Themes, t)
+				changed = true
 			}
 		}
 	}
@@ -582,6 +599,22 @@ type BadgeView struct {
 	// lifetime badge that shows and is not earned. Target 0: no count.
 	Progress float64
 	Target   float64
+	// Level is the tier as a number, for the frame the badge case draws;
+	// config.BadgeNoTier for an integrity badge.
+	Level config.BadgeTier
+	// Emblem names the symbol the badge case draws (config.BadgeDef.Emblem).
+	// A silhouette has none: a symbol would say what the badge is about.
+	Emblem string
+	// Ladder is the name of the ladder the badge is a rung of, Rung its
+	// place on it from 1 and Rungs how many the ladder has. "" and 0 for
+	// a badge on no ladder, and for a silhouette.
+	Ladder string
+	Rung   int
+	Rungs  int
+	// RewardTheme and RewardTitle are what the badge gives: a theme's key
+	// and a title. Both "" for a silhouette.
+	RewardTheme string
+	RewardTitle string
 }
 
 // BadgeSummary is the totals of a badge list. Integrity badges are in none
@@ -597,6 +630,16 @@ type BadgeSummary struct {
 	HiddenCounted bool
 	// Points is the score: every earned, uncrossed badge's points.
 	Points int
+	// Title is the title the score holds, NextTitle the one after it and
+	// NextTitleAt the score that asks for ("" and 0 at the top). An
+	// account that holds every badge that counts, none of them crossed,
+	// holds a title of its own.
+	Title       string
+	NextTitle   string
+	NextTitleAt int
+	// TitleRank is the title's place among the titles: 0 for the one
+	// every account starts with.
+	TitleRank int
 }
 
 // BadgeHiddenName is the name a silhouette lists under.
@@ -611,15 +654,16 @@ func (a *Account) badgeView(book *badgeBook, key string) (BadgeView, bool) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.viewLocked(def, true), true
+	return a.viewLocked(book, def, true), true
 }
 
 // viewLocked builds a badge's view. shown says whether its text may show.
-func (a *Account) viewLocked(def *config.BadgeDef, shown bool) BadgeView {
+func (a *Account) viewLocked(book *badgeBook, def *config.BadgeDef, shown bool) BadgeView {
 	v := BadgeView{
 		Key:       def.Key,
 		Family:    def.Family,
 		Name:      BadgeHiddenName,
+		Level:     def.Tier,
 		Tier:      def.Tier.Name(),
 		Rarity:    def.RarityName(),
 		Points:    def.Points(),
@@ -644,8 +688,22 @@ func (a *Account) viewLocked(def *config.BadgeDef, shown bool) BadgeView {
 		return v
 	}
 	v.Name, v.Desc = def.Name, def.Desc
+	v.Emblem = def.Emblem
+	v.RewardTheme, v.RewardTitle = def.Reward.Theme, def.Reward.Title
 	if !v.Earned && def.Scope == config.BadgeLifetime && def.Counter != "" && def.Threshold > 0 {
 		v.Progress, v.Target = a.Counters[def.Counter], def.Threshold
+	}
+	if def.Ladder != "" {
+		v.Ladder = def.Ladder
+		for _, i := range book.byCounter[def.Counter] {
+			if book.defs[i].Ladder != def.Ladder {
+				continue
+			}
+			v.Rungs++
+			if book.defs[i].Key == def.Key {
+				v.Rung = v.Rungs
+			}
+		}
 	}
 	return v
 }
@@ -665,25 +723,53 @@ func (a *Account) revealedLocked(def *config.BadgeDef, sight AgeSight) bool {
 	return false // secret, or a rule this version does not know
 }
 
+// badgeListCache is the last badge list badgeViews built and what it was
+// built from: the account's badge revision, the ruleset's badges and the
+// player's sight of the ages.
+type badgeListCache struct {
+	ok    bool
+	rev   uint64
+	book  *badgeBook
+	sight AgeSight
+	views []BadgeView
+	sum   BadgeSummary
+}
+
 // badgeViews lists every badge of the ruleset as the player may see it, in
 // catalog order, with the totals. An integrity badge is listed only once
 // earned.
+//
+// The list is kept until the account's badges or counters change or the
+// player sees further, so a snapshot that changed none of them costs
+// nothing. The slice is shared between the callers that got it: read it,
+// never write to it.
 func (a *Account) badgeViews(book *badgeBook, sight AgeSight) ([]BadgeView, BadgeSummary) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if c := &a.badgeList; c.ok && c.rev == a.badgeRev && c.book == book && c.sight == sight {
+		return c.views, c.sum
+	}
+	views, sum := a.buildBadgeViewsLocked(book, sight)
+	a.badgeList = badgeListCache{ok: true, rev: a.badgeRev, book: book, sight: sight, views: views, sum: sum}
+	return views, sum
+}
+
+// buildBadgeViewsLocked builds the list badgeViews keeps.
+func (a *Account) buildBadgeViewsLocked(book *badgeBook, sight AgeSight) ([]BadgeView, BadgeSummary) {
 	var sum BadgeSummary
 	sum.HiddenCounted = sight.ReachedLast()
 	out := make([]BadgeView, 0, len(book.defs))
+	clean := 0
 	for i := range book.defs {
 		def := &book.defs[i]
 		earned := a.earnedLocked(def.Key)
 		if def.Integrity() {
 			if earned {
-				out = append(out, a.viewLocked(def, true))
+				out = append(out, a.viewLocked(book, def, true))
 			}
 			continue
 		}
-		v := a.viewLocked(def, earned || a.revealedLocked(def, sight))
+		v := a.viewLocked(book, def, earned || a.revealedLocked(def, sight))
 		out = append(out, v)
 		switch {
 		case v.Earned:
@@ -691,6 +777,7 @@ func (a *Account) badgeViews(book *badgeBook, sight AgeSight) ([]BadgeView, Badg
 			sum.Shown++
 			if !v.Crossed {
 				sum.Points += v.Points
+				clean++
 			}
 		case v.Hidden:
 			sum.Hidden++
@@ -698,6 +785,8 @@ func (a *Account) badgeViews(book *badgeBook, sight AgeSight) ([]BadgeView, Badg
 			sum.Shown++
 		}
 	}
+	countable := sum.Shown + sum.Hidden
+	sum.Title, sum.TitleRank, sum.NextTitle, sum.NextTitleAt = book.set.BadgeTitle(sum.Points, countable > 0 && clean == countable)
 	return out, sum
 }
 

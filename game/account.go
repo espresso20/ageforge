@@ -333,6 +333,15 @@ type Account struct {
 	// saved: a badge earned just before the game closes is simply in the list.
 	pendingEarned []string
 
+	// badgeRev counts the changes to Badges and Counters, and badgeViews keeps
+	// the last badge list it built for a revision (account_badges.go): the
+	// list is asked for on every snapshot and changes on few of them.
+	badgeRev  uint64
+	badgeList badgeListCache
+
+	// settings is settings.json, read on first use (account_settings.go).
+	settings *accountSettings
+
 	// badgeDisk is the badge file's bytes as last read or written (nil: no file), so
 	// Save rewrites it only when the badges changed. badgeUnreadable marks a file
 	// that would not parse: it is set aside, not overwritten, at the next write.

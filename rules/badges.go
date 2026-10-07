@@ -79,6 +79,7 @@ func (s *Set) familyBadge(f config.BadgeFamilyDef, sub badgeSubject, rung config
 		"{rung}", rung.Name,
 		"{n}", strconv.Itoa(n),
 		"{count}", badgeCount(threshold),
+		"{era}", strconv.Itoa(s.eraOrderOfAge(sub.age)),
 	).Replace
 	b := config.BadgeDef{
 		Key:       fill(f.Key),
@@ -95,6 +96,10 @@ func (s *Set) familyBadge(f config.BadgeFamilyDef, sub badgeSubject, rung config
 		InAge:     fill(f.InAge),
 		Reveal:    f.Reveal,
 		Proof:     f.Proof,
+		Emblem:    fill(f.Emblem),
+	}
+	if n > 0 {
+		b.Ladder = strings.TrimSpace(fill(f.Ladder))
 	}
 	if f.TierByEra {
 		if era, ok := s.eraByKey[s.eraOfAge[sub.age]]; ok && era.Order < len(config.BadgeEraTiers) {
@@ -119,6 +124,34 @@ func (s *Set) familyBadge(f config.BadgeFamilyDef, sub badgeSubject, rung config
 	b.Aliases = slices.Clone(f.Aliases[b.Key])
 	b.Reward = f.Rewards[b.Key]
 	return b
+}
+
+// eraOrderOfAge is the order of the era an age belongs to, 0 for an age
+// the ruleset does not have.
+func (s *Set) eraOrderOfAge(age string) int {
+	if era, ok := s.eraByKey[s.eraOfAge[age]]; ok {
+		return era.Order
+	}
+	return 0
+}
+
+// BadgeTitle is the title a badge score holds and its rank (0 for the one
+// every account starts with), and the next title with the score it asks
+// for ("" and 0 at the top). complete is whether the account holds every
+// badge that counts: that is a title of its own, above the rest.
+func (s *Set) BadgeTitle(points int, complete bool) (title string, rank int, next string, nextAt int) {
+	for i, t := range s.badgeTitles {
+		if points >= t.Points {
+			title, rank = t.Title, i
+			continue
+		}
+		next, nextAt = t.Title, t.Points
+		break
+	}
+	if complete {
+		return config.BadgeCompleteTitle, len(s.badgeTitles), "", 0
+	}
+	return title, rank, next, nextAt
 }
 
 // badgeCount writes a threshold the way a description shows it: "14",

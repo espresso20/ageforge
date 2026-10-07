@@ -161,10 +161,66 @@ var Cosmic = define(Theme{
 	UnlockHint:      "Reach the Galactic Age",
 })
 
+// Source is a phosphor terminal: green on green-black, with code falling down
+// the empty columns. It is the reward of the Touched by the Source badge, so
+// its hint does not say how it is earned.
+var Source = define(Theme{
+	Key:        "source",
+	Name:       "Source",
+	Blurb:      "Phosphor green on black, with code rain in the empty columns.",
+	Accessible: false,
+	Colors: [numRoles]tcell.Color{
+		RoleBackground: tcell.NewRGBColor(0x00, 0x0a, 0x03), // green-black
+		RoleText:       tcell.NewRGBColor(0x6c, 0xff, 0x9a), // phosphor green
+		RoleDim:        tcell.NewRGBColor(0x2f, 0x8a, 0x4f), // dim phosphor
+		RoleLabel:      tcell.NewRGBColor(0x39, 0xd2, 0x6a), // mid green
+		RoleAccent:     tcell.NewRGBColor(0xb6, 0xff, 0xca), // pale green
+		RoleHighlight:  tcell.NewRGBColor(0xe9, 0xff, 0x7a), // yellow-green
+		RolePositive:   tcell.NewRGBColor(0x5d, 0xff, 0xd0), // aqua gain
+		RoleNegative:   tcell.NewRGBColor(0xff, 0x4d, 0x4d), // red loss
+		RoleSelection:  tcell.NewRGBColor(0x0d, 0x2b, 0x17),
+		RoleBright:     tcell.NewRGBColor(0xd9, 0xff, 0xe3), // near-white green
+	},
+	GainGlyph:   flavorGainGlyph,
+	LossGlyph:   flavorLossGlyph,
+	UnlockBadge: "special.touched_by_the_source",
+	UnlockHint:  "Given by a secret badge",
+	Effect:      EffectRain,
+})
+
+// Glitch is a broken signal: cyan and magenta on violet black, and now and
+// then a tear of static across the empty cells. It is the reward of the
+// Creative Accounting badge, so its hint does not say how it is earned.
+var Glitch = define(Theme{
+	Key:        "glitch",
+	Name:       "Glitch",
+	Blurb:      "Cyan and magenta on violet black, with a tear of static now and then.",
+	Accessible: false,
+	Colors: [numRoles]tcell.Color{
+		RoleBackground: tcell.NewRGBColor(0x07, 0x06, 0x0d), // violet black
+		RoleText:       tcell.NewRGBColor(0xe6, 0xe6, 0xff), // cool white
+		RoleDim:        tcell.NewRGBColor(0x8a, 0x86, 0xa8), // violet-grey
+		RoleLabel:      tcell.NewRGBColor(0x39, 0xe6, 0xff), // cyan
+		RoleAccent:     tcell.NewRGBColor(0xff, 0x2e, 0x9a), // magenta
+		RoleHighlight:  tcell.NewRGBColor(0xf8, 0xff, 0x5a), // acid yellow
+		RolePositive:   tcell.NewRGBColor(0x39, 0xff, 0x88), // static green gain
+		RoleNegative:   tcell.NewRGBColor(0xff, 0x3b, 0x3b), // red loss
+		RoleSelection:  tcell.NewRGBColor(0x2a, 0x16, 0x40),
+		RoleBright:     tcell.NewRGBColor(0xff, 0xff, 0xff),
+	},
+	GainGlyph:   flavorGainGlyph,
+	LossGlyph:   flavorLossGlyph,
+	UnlockBadge: "special.creative_accounting",
+	UnlockHint:  "Given by a secret badge",
+	Effect:      EffectGlitch,
+})
+
 var _ = register(
 	Parchment,
 	Bronze,
 	Cyberpunk,
 	Monochrome,
 	Cosmic,
+	Source,
+	Glitch,
 )

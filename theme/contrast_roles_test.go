@@ -138,6 +138,7 @@ func TestGroups(t *testing.T) {
 		"high_contrast": GroupAccessibility, "high_contrast_light": GroupAccessibility,
 		"parchment": GroupUnlockable, "bronze": GroupUnlockable, "cyberpunk": GroupUnlockable,
 		"monochrome": GroupUnlockable, "cosmic": GroupUnlockable,
+		"source": GroupUnlockable, "glitch": GroupUnlockable,
 	}
 	for _, th := range All() {
 		g, ok := want[th.Key]

@@ -53,6 +53,7 @@ import (
 // check takes an edit to this list too.
 var IntegrityBadges = []string{
 	"special.hand_in_the_cookie_jar",
+	"special.touched_by_the_source",
 	"special.creative_accounting",
 }
 
