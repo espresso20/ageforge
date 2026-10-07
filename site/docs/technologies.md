@@ -87,12 +87,14 @@ To line techs up, add them to the [build plan](plan.md) with `plan research <tec
 
 - Only the first research item in the plan can take the slot when it frees up. A tech further down waits its turn even if it is cheaper.
 - A planned tech holds back its knowledge cost while it waits, so plan items below it can't spend that knowledge.
-- A tech's prerequisites must be researched, in progress, or planned above it, and the plan refuses a tech that fails this. A tech already in the plan that loses a prerequisite (you removed it from above, canceled it mid-research, or a game update changed what the tech needs) is not dropped: it waits, and the plan shows what it needs (`needs Philosophy first`). While it waits it holds neither the slot's turn nor its knowledge, so you can plan the missing tech below it and that one starts first.
-- You can plan the next age's techs; they wait for the advance.
+- **A tech brings what it needs.** `plan research imperial_legions` adds every prerequisite that is not researched, in progress or planned yet, each after its own, and then Imperial Legions. One command queues a whole chain toward a goal, and the answer lists what went in, in order. For an either-or group the plan takes the branch you already hold or have planned, else the one that costs the least knowledge to add.
+- **Any tech you can see.** The plan takes a tech of any age on your [tech tree](#reading-the-tech-tree): up to the next age on a first run, and every age your account has reached on a later one. A tech of a later age waits for its age (`waits for the Iron Age`) without holding up this age's techs below it.
+- A tech already in the plan that loses a prerequisite (you removed it, moved it below, canceled it mid-research, or a game update changed what the tech needs) is not dropped: it waits, and the plan shows what it needs (`needs Philosophy first`). While it waits it holds neither the slot's turn nor its knowledge, so you can plan the missing tech below it and that one starts first.
+- On the tree, a planned tech shows its place in the plan (`▸3`), and the second `Enter` on a locked tech's card plans it with its chain.
 
 The plan is the only research queue, and the game never chooses what you research next. The techs you plan are remembered with the rest of your plan: with the prestige legacy kit's [Plan Template](prestige.md#plan-template) owned, they are planned again on later runs, in the age you planned them in. Techs you start by hand with `research` are not remembered.
 
-See [How it runs](plan.md#how-it-runs) for the rest of the plan's rules.
+See [The research queue](plan.md#the-research-queue) and [How it runs](plan.md#how-it-runs) for the rest of the plan's rules.
 
 ### When Research Completes
 
@@ -140,7 +142,7 @@ is equivalent to `research bronze_working`.
 ```
 plan research <tech_key>
 ```
-Adds a tech to the build plan, which starts it when the research slot is free and you hold its knowledge (see [One Slot, and the Plan as a Queue](#one-slot-and-the-plan-as-a-queue)). `plan res` is the short form.
+Adds a tech to the build plan, with the techs it still needs before it. The plan starts each when the research slot is free and you hold its knowledge (see [One Slot, and the Plan as a Queue](#one-slot-and-the-plan-as-a-queue)). It takes any tech on your tree, the next age's included. `plan res` is the short form.
 
 ---
 
@@ -193,7 +195,7 @@ Opens the tree on that tech's card. It works for any tech you can see on the map
 - **Lines show what a tech needs.** A line leaves the notch under a badge and comes down on the name of the tech that needs it. A solid line is needed outright. Dashed lines marked `or` are an either-or group: one of them will do. Selecting a tech lights the chain that leads to it.
 - **One line under the map** names the selected tech, its state, its price and time, and what it opens. A key bar sits under that.
 
-<figure class="screen" data-screen="research-far"><figcaption>The same tree zoomed out with PgUp: every lane on screen, a tech a line. A tick is researched, round brackets can start, dashed bars wait for something, and a shaded pair is the next age.</figcaption></figure>
+<figure class="screen" data-screen="research-far"><figcaption>The same tree zoomed out with PgUp: every lane on screen, a tech a line. A tick is researched, round brackets can start, dashed bars wait for something, and a shaded pair is the next age. The two techs led by ▸ are in the build plan: one plan research for Imperial Legions queued Siege Warfare before it.</figcaption></figure>
 
 ### What the frames and marks mean
 
@@ -212,7 +214,7 @@ The shape says it as well as the color, so the tree reads in every theme.
 | A shaded block `░░░░░░░` | A tech of the next age: you can read its card and plan it |
 | A `◇` at the bottom right | It opens a command or a building |
 
-Zoomed out, a tech is one line: `✓` before the emblem is researched, `⟳` is in progress, `( )` round it can start, `┆ ┆` waits, `░ ░` is the next age, and a `★` after the letterhead is a keystone.
+Zoomed out, a tech is one line: `✓` before the emblem is researched, `⟳` is in progress, `( )` round it can start, `┆ ┆` waits, `░ ░` is the next age, `▸` before it is in your plan, and a `★` after the letterhead is a keystone.
 
 Ages past the next one are not drawn. One line at the foot of the map counts their techs, and nothing names them: not the map, not a card, not `research card`.
 
@@ -222,7 +224,7 @@ Ages past the next one are not drawn. One line at the foot of the map counts the
 
 <figure class="screen" data-screen="research-card"><figcaption>Civil Engineering's card. Research is busy, so Enter would add it to the build plan.</figcaption></figure>
 
-The card is also the confirmation. Research spends knowledge for good, so nothing happens on the first `Enter`. The last line of the card says what a second `Enter` does: start the tech if it can start now, or add it to your [build plan](plan.md) if the research slot is busy, the knowledge is not there yet, or the tech still waits for something. `Esc` closes the card.
+The card is also the confirmation. Research spends knowledge for good, so nothing happens on the first `Enter`. The last line of the card says what a second `Enter` does: start the tech if it can start now, or add it to your [build plan](plan.md) if the research slot is busy, the knowledge is not there yet, or the tech still waits for something. A tech that needs others goes in with them, in order, and the line names them first (`adds it to your plan, after Military Tactics, which it needs first`). `Esc` closes the card.
 
 ### Keys
 

@@ -139,6 +139,64 @@ func TestCardPlansALockedTechWithItsChain(t *testing.T) {
 	}
 }
 
+// TestPlanningAcrossKnownAges: on known ground the ages reached before are
+// in sight, so one command queues a chain across them. Each tech says which
+// age it waits for, this age's tech planned below them is not held up, and
+// the tree words an age further on than the next one as what it is.
+func TestPlanningAcrossKnownAges(t *testing.T) {
+	ge := game.NewGameEngine()
+	ge.SeedRNG(1)
+	ge.Stats.AgesReached = append(ge.Stats.AgesReached, "stone_age", "bronze_age", "iron_age", "classical_age")
+	ge.SetStockForTest("knowledge", 500)
+	res := HandleCommand("plan research philosophy", ge)
+	if want := "Planned research: Philosophy, after the 2 techs it needs first (Primitive Writing, then Mathematics). Techs start one at a time, in plan order. Philosophy waits for the Classical Age."; res.Message != want {
+		t.Errorf("plan research philosophy:\n got %q\nwant %q", res.Message, want)
+	}
+	if res := HandleCommand("plan research theology", ge); res.Type != "error" || strings.Contains(res.Message, "Theology") {
+		t.Errorf("a tech past the known ages: %+v", res)
+	}
+	if res := HandleCommand("plan research imperial legions", ge); !strings.Contains(res.Message, "after the 6 techs it needs first (Tool Making, Stoneworking, Bronze Working and 3 more)") {
+		t.Errorf("a long chain: %q", res.Message)
+	}
+	if res := HandleCommand("plan research fire_mastery", ge); res.Type == "error" {
+		t.Fatal(res.Message)
+	}
+	st := ge.GetState()
+	list := plainText(planListText(st))
+	for _, want := range []string{"research Mathematics  blocked: waits for the Iron Age", "research Philosophy  blocked: waits for the Classical Age", "research Tool Making  ready"} {
+		if !strings.Contains(list, want) {
+			t.Errorf("plan list lacks %q:\n%s", want, list)
+		}
+	}
+	// Fire Mastery, this age's, planned last: it waits only for the slot's
+	// turn behind Tool Making, not for the later ages above it.
+	last := st.Plan[len(st.Plan)-1]
+	if last.Key != "fire_mastery" || last.Note != "after the research above it" {
+		t.Errorf("the last item is %s (%q), want Fire Mastery behind Tool Making", last.Key, last.Note)
+	}
+
+	m, _, g := drawTree(st, 120, 37, treeView{sel: "philosophy"})
+	lines := strings.Split(g.String(), "\n")
+	if !strings.Contains(lines[0], "ahead") || strings.Contains(lines[0], "next age") {
+		t.Errorf("the title counts the known ages ahead as the next age: %q", lines[0])
+	}
+	if got := m.statusLine(st, treeView{sel: "philosophy"}); !strings.Contains(got, "waits for the Classical Age") || !strings.Contains(got, "item 3 in your plan") {
+		t.Errorf("the status line for Philosophy: %q", got)
+	}
+	if got := m.statusLine(st, treeView{sel: "pottery"}); !strings.Contains(got, "in the next age") {
+		t.Errorf("the status line for a tech of the next age: %q", got)
+	}
+	nexts := 0
+	for _, b := range m.bands {
+		if b.ahead == 1 {
+			nexts++
+		}
+	}
+	if nexts != 1 || strings.Count(g.String(), "▌IRON") == 0 {
+		t.Errorf("%d bands read as the next age, want one; the Iron Age should be on the map", nexts)
+	}
+}
+
 // renderLines is the panel as drawn, a string a row.
 func renderLines(p *researchPanel) []string {
 	g := renderTree(p.state, p.model, p.view, p.w, p.h)
