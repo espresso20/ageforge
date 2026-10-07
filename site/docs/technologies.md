@@ -247,12 +247,12 @@ The glyphs follow your `map glyphs` setting: with `map glyphs ascii` the tree is
 
 ## How Tech Bonuses Stack
 
-A tech's bonus is applied in a layer of its own, after every other bonus and after the caps.
+A tech's bonus is applied in a layer of its own, after every other bonus and after the pools' soft cap.
 
-The game's other bonuses (milestone rewards, wonders, monuments, festivals, events, boons) add up in pools, and a pool is clamped: all production and each resource's own output stop at +200%, a factor of 3 (see [The all-production cap](resources.md#the-all-production-cap)). Techs used to add into those pools, and from about the Electric Age most of what they promised was swallowed by the clamp. They no longer do. A tech's output bonus multiplies what is left after the clamp, where [Era Mastery](prestige.md#era-mastery) does, so it counts in full whatever else you hold.
+The game's other bonuses (milestone rewards, wonders, monuments, festivals, events, boons) add up in pools, and a pool has a soft cap: all production and each resource's own output apply in full up to +200%, and a quarter of every point past it (see [The all-production cap](resources.md#the-all-production-cap)). So a pool that has earned +320% applies +230%. Techs join no pool. A tech's output bonus multiplies what the pools make, where [Era Mastery](prestige.md#era-mastery) does, so it counts in full whatever else you hold.
 
 ```
-what a resource makes = buildings and workers × pools (clamped at ×3) × (1 + tech bonuses)
+what a resource makes = buildings and workers × pools (in full to +200%, a quarter past it) × (1 + tech bonuses)
 ```
 
 - **Bonuses on the same thing add up.** Two +5% techs on the same resource give +10%, not ×1.1025. A tech's bonus on all production adds to its bonuses on one resource: with +20% stone and +5% all production, stone runs at ×1.25.
@@ -260,7 +260,7 @@ what a resource makes = buildings and workers × pools (clamped at ×3) × (1 + 
 - **Flat amounts stay amounts.** Steel Forging's +0.25 steel a tick and Satellite Technology's +1 data are the first source of a resource, not a bonus, and the layer does not multiply them.
 - **Cuts multiply, and each has a floor.** A tech that cuts a price or a time takes its share of what the cuts before it left: two 3% cuts on building costs leave 0.97 × 0.97. Building costs never fall under 10% of the listed price, construction under 40% of its time, or research under 50% of its time, however many cuts stack. All of today's techs together stay far from every floor.
 - **Storage and housing are percentages** of everything you hold: +10% storage is 10% more of every store, and +5% housing is 5% more housing, rounded up to a whole person.
-- **Game speed, military power and expedition rewards** are added to the pools of those names, shared with milestones and wonders. None of the three has the ×3 clamp.
+- **Game speed, military power and expedition rewards** are added to the pools of those names, shared with milestones and wonders. None of the three has the soft cap.
 - The `rates` command shows what the techs add to a resource on its **Research** line, and the Stats panel lists what all your techs come to together, under Research bonuses.
 
 A tech's bonus is never permanent. Prestige, Succumb and a new game wipe every tech and everything it gave.
@@ -563,7 +563,7 @@ Each raises what one resource's buildings and workers make. Bonuses on the same 
 | Industrialization | Industrial | +5% |
 | Transcendence | Transcendent | +5% |
 
-Together +10%, on top of each resource's own bonus. Nothing here joins the all-production pool that milestones and wonders fill, so the x3 clamp on that pool never touches it.
+Together +10%, on top of each resource's own bonus. Nothing here joins the all-production pool that milestones and wonders fill, so that pool's soft cap never touches it.
 
 ### First sources
 
@@ -630,7 +630,7 @@ These techs move a single number of a game mechanic.
 
 ### Game speed
 
-Three techs raise game speed: ticks come more often, so production, construction, research and every timer run faster in real time. Game speed is a pool of its own, shared with milestone chain boosts and boons; the x3 clamp is not on it. The bonuses add together:
+Three techs raise game speed: ticks come more often, so production, construction, research and every timer run faster in real time. Game speed is a pool of its own, shared with milestone chain boosts and boons; the soft cap is not on it. The bonuses add together:
 
 | Source | Bonus | Lasts |
 |---|---|---|

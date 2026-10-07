@@ -118,7 +118,7 @@ Culture has two jobs. Its **fill % of storage** decides which tier of good epoch
 
 ### Culture sinks
 
-**Cultural Monuments** are four one-off buildings (one of each) built with the normal `build <key>` command. Each costs a large lump of culture plus other materials and gives a small **permanent** all-production bonus once built (it counts toward [the all-production cap](#the-all-production-cap)).
+**Cultural Monuments** are four one-off buildings (one of each) built with the normal `build <key>` command. Each costs a large lump of culture plus other materials and gives a small **permanent** all-production bonus once built (it adds into [the all-production pool](#the-all-production-cap)).
 
 | Monument | Age | Culture Cost | Permanent Bonus |
 |----------|-----|--------------|-----------------|
@@ -172,30 +172,46 @@ Every resource has a small base storage (10 to 50). **Storage buildings** raise 
 
 ## The all-production cap
 
-Every "+X% all production" bonus in the game adds into one pool, except a technology's: wonders, milestones, cultural monuments, events (festivals included) and faction boons. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + that pool**, clamped between **x0.1 and x3.0**.
+Every "+X% all production" bonus in the game adds into one pool, except a technology's: wonders, milestones, cultural monuments, events (festivals included) and faction boons. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + what the pool applies**, and never by less than **x0.1**.
 
-Milestone rewards fill most of it. A player who earns every milestone as early as it can be earned reaches the x3.0 cap in the Electric Age; most runs reach it a few ages later, and a run that skips milestones may never reach it. Past the cap, a late "+X% all production" reward adds nothing you can see. It isn't wasted: a penalty comes out of the raw pool first, so the surplus absorbs it, and the bonus matters again whenever a setback pulls the pool back under the cap.
+**The cap is soft.** Up to **+200%** the pool applies in full. Past +200%, every further point still counts, at **a quarter** of its value. Nothing you earn is thrown away.
 
-Two things sit outside the pool and are applied after the cap, so they count in every age however full the pool is:
+> **A worked example.** Your milestones, wonders and monuments have earned +320% all production. The first +200% counts in full. The other +120% counts a quarter, which is +30%. The pool applies +230%, so your output is multiplied by 3.3. Then you finish a milestone worth +10%. The pool has now earned +330% and applies +232.5%: the milestone added 2.5 points.
 
-- **Technologies.** A tech's "+X% production" multiplies what is left after the cap, and tech bonuses add up among themselves with no cap of their own. See [How Tech Bonuses Stack](technologies.md#how-tech-bonuses-stack).
+Milestone rewards fill most of the pool. A player who earns every milestone as early as it can be earned passes +200% in the Electric Age; most runs pass it a few ages later, and a run that skips milestones may never get there. By the last age a full set of milestones, wonders and monuments has earned +661% and applies +315%. The pool used to stop at +200%, and the other +461% did nothing.
+
+| The pool has earned | It applies | Output is multiplied by |
+|---|---|---|
+| +100% | +100% | 2 |
+| +200% | +200% | 3 |
+| +240% | +210% | 3.1 |
+| +320% | +230% | 3.3 |
+| +400% | +250% | 3.5 |
+| +661% | +315% | 4.15 |
+
+Timed bonuses follow the same rule. A festival's +20% or a power surge's +100% counts in full while the pool is under +200% and a quarter past it. Penalties do too: while the pool stays past +200%, a -10% setback costs 2.5 points.
+
+Two things sit outside the pool and are applied after it, so they count in full in every age however much the pool holds:
+
+- **Technologies.** A tech's "+X% production" multiplies your output after the pool has been applied, and tech bonuses add up among themselves with no cap of their own. See [How Tech Bonuses Stack](technologies.md#how-tech-bonuses-stack).
 - The [Cosmic Legacy](prestige.md#cosmic-legacy), +10% on everything a resource makes.
 
-Bonuses to one resource ("+10% gold production" from a milestone or a wonder) have their own pool for that resource, with the same x0.1 to x3.0 clamp. No resource's pool reaches it in any age: the fullest, knowledge, holds +145% with every scholar milestone and both knowledge wonders.
+Bonuses to one resource ("+10% gold production" from a milestone or a wonder) have their own pool for that resource, with the same rule: in full up to +200%, a quarter past it, never under x0.1. No resource's pool reaches +200% in any age: the fullest, knowledge, holds +145% with every scholar milestone and both knowledge wonders.
 
-**The game tells you when a cap is holding a bonus back.** Nothing is hidden above the cap:
+**The game tells you what counts.** Nothing is hidden past +200%:
 
-- The Stats panel's Active Multipliers shows what counts, with a note when a pool is past its cap: `All production +200% capped at +200%: +405% earned`. The sources beside it still list everything you earned.
-- The Milestones and Wonders panels put a note beside every reward and wonder effect in a capped pool, and one still to earn says what the cap would leave of it before you work for it: `(capped: no effect now)` or `(capped: +5% of it counts now)`.
+- The Stats panel's Active Multipliers shows what the pool applies, with a note when it is past +200%: `All production +251% counts a quarter past +200%: +405% earned`. The sources beside it still list everything you earned.
+- The `rates` command adds a line when a pool applies less than it has earned: `All production: +405% earned, +251% counts. Past +200% a bonus counts a quarter.`
+- The Milestones and Wonders panels put a note beside every reward and wonder effect in a pool past +200%, and one still to earn says what it would add before you work for it: `+10% all production (counts a quarter past +200%: +2.5% now)`.
 - The tech tree never shows one: no cap holds a tech's bonus.
-- The `festival` command warns you before you pay when the cap would swallow the festival.
-- The log adds a line when a bonus you just earned is capped: a milestone, a wonder, an awakening, an epoch event, a festival or a boon.
+- The `festival` command tells you before you pay what a festival held now would add.
+- The log adds a line when a bonus you just earned counts a quarter: a milestone, a wonder, an awakening, an epoch event, a festival or a boon.
 
 <figure class="screen" data-screen="rates"><figcaption>The foot of the Stats panel in the Bronze Age: the rate of every resource, then the multipliers in play and where each one comes from.</figcaption></figure>
 
 [Worker output](workers-and-domains.md#worker-output-bonuses) bonuses are not in either pool and have no cap.
 
-[Era Mastery](prestige.md#era-mastery) is not part of either pool. On known ground it multiplies every resource's net rate by the age's speed after the cap and after food drain, so a mastered age is not held to x3.
+[Era Mastery](prestige.md#era-mastery) is not part of either pool. On known ground it multiplies every resource's net rate by the age's speed after the pools and after food drain, in full.
 
 ---
 

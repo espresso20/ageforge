@@ -183,7 +183,7 @@ Awakenings are one-time boosts, one per epoch, that fire the first time you ente
 | Neon Era ◉ | Cyberpunk Age | Cybernetic Awakening | +20% to all production | 650 ticks (~21m 40s) |
 | Cosmic Era ✦ | Interstellar Age | First Contact Signal | +1.5 dark matter/tick, +10% all production | 1,040 ticks (~34m 40s) |
 
-Every awakening after the Stone Age's fires from the Bronze Age on, so its duration is already 2.6 times the base length, and its log line quotes the real length. The "+% all production" awakenings add to the capped all-production pool (see [The all-production cap](resources.md#the-all-production-cap)). Awakenings appear in the active events list like any timed event and count down over their duration.
+Every awakening after the Stone Age's fires from the Bronze Age on, so its duration is already 2.6 times the base length, and its log line quotes the real length. The "+% all production" awakenings add to the all-production pool, which applies in full up to +200% and a quarter of every point past it (see [The all-production cap](resources.md#the-all-production-cap)). Awakenings appear in the active events list like any timed event and count down over their duration.
 
 ---
 
