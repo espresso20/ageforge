@@ -13,7 +13,7 @@ AgeForge has **26 resources** that unlock as you advance through the 22 ages. Th
 | Food | `food` | Primitive Age | 50 | Every worker eats it every tick, so the rate must stay positive |
 | Wood | `wood` | Primitive Age | 50 | The first building material |
 | Knowledge | `knowledge` | Primitive Age | 30 | Pays for research; buildings also cost it from the Medieval to the Colonial Age |
-| Faith | `faith` | Primitive Age | 50 | Never drains on its own; your faith strength (the faith you hold against what your age makes) sets the epoch and catastrophe odds, and faith income lifts morale |
+| Faith | `faith` | Primitive Age | 50 | Never drains on its own; your faith strength (your faith buildings against a moderate set, times the share of your faith you have kept) sets the epoch and catastrophe odds, and faith income lifts morale |
 | Stone | `stone` | Stone Age | 50 | Durable construction material |
 | Iron | `iron` | Bronze Age | 50 | Metal for tools, weapons and early engineering |
 | Gold | `gold` | Bronze Age | 50 | Currency for the market, diplomacy and many buildings |
@@ -101,7 +101,7 @@ Faith comes from Faith lineage buildings (Shrine, Standing Stones, Altar, ...), 
 
 Faith does two jobs:
 
-- **Odds.** Your faith strength, the faith you hold against what a moderate faith economy makes in three fifths of your age, sets the odds of a good epoch event and of a fated catastrophe striking. It is not a share of storage: faith is kept in the general store, which it could never fill. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
+- **Odds.** Your faith strength sets the odds of a good epoch event and of a fated catastrophe striking. It measures what your faith buildings have made against a moderate set (five staffed copies of each), times the share of your faith you have kept. A typical town sits in the bottom band; more faith buildings and fuller crews move it up. It is not a share of storage: faith is kept in the general store, which it could never fill. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
 - **Morale.** Your faith income (faith per tick, not the stockpile) lifts morale a little every tick, up to a limit, and worship buildings lift it too. See [Morale](morale.md).
 
 Faith can't be bought at the market.

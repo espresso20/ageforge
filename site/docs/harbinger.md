@@ -169,7 +169,7 @@ Without any Appease that works out to **low** at high faith (60%), **medium** at
 
 The Last Passage keeps its own scale: low under 14%, medium from 14% to under 17%, high at 17% or more.
 
-The `catastrophe` command and the Epoch panel repeat the warning in the same words, for example "The Oracle warns of doom before this age is out: medium risk of catastrophe (no figures this early), faith strength 40% (3.58K of 8.94K)." In the Cosmic Era they show the doom's warning while its harbinger speaks and, on a line of its own, the Last Passage at its own odds.
+The `catastrophe` command and the Epoch panel repeat the warning in the same words, for example "The Oracle warns of doom before this age is out: medium risk of catastrophe (no figures this early), faith strength 44% (devotion 2.0x, 100% of your faith kept)." In the Cosmic Era they show the doom's warning while its harbinger speaks and, on a line of its own, the Last Passage at its own odds.
 
 ### False prophets
 
@@ -224,7 +224,7 @@ A thread's price is set when its harbinger arrives and stays the same for as lon
 
 Example: at mid faith a fated doom strikes 75% of the time. One level of Appease takes it to 45%, two levels to 27%.
 
-Spending faith lowers your [faith strength](faith.md#faith-threshold-bands), and that can drop you into a worse faith band for the strike. A doom's level 1 costs a quarter of full strength in faith, and both of an ordinary doom's levels three quarters. Appease still comes out ahead. In the worst case one level leaves the odds at 0.9× of where they started (from the 60% band to the 90% band, then ×0.6 is 54%), so every level lowers the real chance. For example, a moderate faith economy that starts from nothing when the harbinger comes holds a third of full strength by the shortest warning's end, the middle band (75%); paying level 1 from it drops it to the bottom band and still leaves 54%.
+Spending faith lowers the share of your faith you have kept, and your [faith strength](faith.md#faith-threshold-bands) with it, and that can drop you into a worse faith band for the strike. Appease still comes out ahead. In the worst case one level leaves the odds at 0.9× of where they started (from the 60% band to the 90% band, then ×0.6 is 54%), so every level lowers the real chance. A typical town is in the bottom band before and after it pays, so for it Appease is the whole 40% off.
 
 ### Brace: soften an Endure
 
@@ -315,7 +315,7 @@ For a player who would Endure, the two answers work on the same loss from opposi
 | Appease 1 (9%) | 4.5% | 2.7% | 1.35% |
 | Appease 2 (5.4%) | 2.7% | 1.62% | 0.81% |
 
-At low faith every figure is a fifth higher, at high faith a fifth lower. A run that prestiges in the Interstellar Age is worth 1,092 points, so 3% of it is 33 points; from the Galactic Age it is 1,821 and 55.
+In the bottom band, where a typical town sits, the chance is 18% and every figure is a fifth higher; in the top band, a fifth lower. A run that prestiges in the Interstellar Age is worth 1,092 points, so 3% of it is 33 points; from the Galactic Age it is 1,821 and 55.
 
 What each step costs, for the thread a run meets (foretold in the Interstellar Age), in hours of a moderate economy's income:
 
@@ -330,14 +330,14 @@ What each step costs, for the thread a run meets (foretold in the Interstellar A
 - The two are paid in different resources, so you gather both at once. Holding both first levels leaves 2.7% at risk, for 21 hours of dark matter and titanium and 32 of faith and culture.
 - Once you hold Brace level 1, Brace level 2 is the next best step for an hour of income: it saves 2.25% for another 21 hours, where Appease level 1 saves 1.8% for 32. They are still paid in different resources.
 - A second level costs what the first did and saves a little less: Brace level 2 saves three quarters of what level 1 did, Appease level 2 three fifths.
-- Appease is paid in faith, and faith is also your [faith strength](faith.md#faith-threshold-bands): 890M is 84% of full strength in the Interstellar Age (1.06B). The tables above take your faith band to be the same before and after you pay. If paying drops you a band, the roll's chance goes up a step (12%, 15%, 18%), which takes back part of what Appease bought, never all of it. A moderate faith economy that plays the Interstellar Age out makes enough for one level and the top band both.
+- Appease is paid in faith, and the share of your faith you have kept is half of your [faith strength](faith.md#faith-threshold-bands). A typical town is in the bottom band before and after it pays, so the tables above hold for it as they stand (at the bottom band's 18%: every figure a fifth higher). A town that has worked its way into the top band can pay itself out of it: one with three and a half times the moderate set of faith buildings holds about 11B faith by the end of the Interstellar Age, and paying 890M takes its faith strength from 78% to about 72%, the middle band. The roll's chance then goes up a step (12% to 15%), which takes back part of what Appease bought, never all of it.
 - All of it is spent whether or not the Last Passage comes, and none of it helps if you mean to Succumb for the [Cosmic Legacy](prestige.md#cosmic-legacy): Invite instead.
 
 #### Can you afford it?
 
 Against a doom: Brace, nearly always. Appease level 1, in about three warnings out of four. Level 2, in about half. The Cosmic Era's two threads are priced differently now and have not been measured since (see the notes under the table).
 
-A doom's Brace is priced in the construction resources the era's advances already ask for, so you usually hold enough the moment the harbinger arrives. Appease is priced in faith (plus culture from the Steel Era on), and faith can't be bought at the market (culture can, gold → culture). Level 1 costs less than the shortest warning makes at a moderate faith economy, so a player who keeps faith buildings staffed can pay it from what they hold or gather it before the doom's moment. Level 2 takes a long warning, or faith and culture kept in storage. That faith also lowers the strike chance on its own.
+A doom's Brace is priced in the construction resources the era's advances already ask for, so you usually hold enough the moment the harbinger arrives. Appease is priced in faith (plus culture from the Steel Era on), and faith can't be bought at the market (culture can, gold → culture). Level 1 costs less than the shortest warning makes at a moderate faith economy, so a player who keeps faith buildings staffed can pay it from what they hold or gather it before the doom's moment. Level 2 takes a long warning, or faith and culture kept in storage.
 
 In the smoke-test bot's runs (24 seeds from a new game to a Quantum Age prestige: a first run on the one-week curve, so every age at 1x), the bot saved toward both answers and bought each level as soon as it could, keeping what its next advance needed. Each real doom's thread, from the harbinger's arrival until the doom struck or passed, went like this (false prophets left out):
 
@@ -360,7 +360,7 @@ The Last Passage's row was measured at its old prices. Appease cost 3.1B faith a
 
 The Reality Tear's row is from the same runs, when its Brace was the era's price and its second Appease level cost double. Its Brace level 1 is now 4.5Q dark matter and 5.5Q titanium, about ten and a half hours of a moderate economy's income, and has no count yet either.
 
-All of these runs were played while the faith bands read storage, so every doom in them rolled at the bottom band's 90% (see [Why it isn't a share of storage](faith.md#faith-threshold-bands)). The counts say what could be paid, not how often a doom now strikes.
+All of these runs were played while the faith bands read storage, so every doom in them rolled at the bottom band's 90% (see [Why it isn't a share of storage](faith.md#faith-threshold-bands)). That is still what a typical town rolls at, and the bot is one.
 
 Faith you spend on Appease is faith the next age requirement can't count: keep what the next age asks for, and what the Sistine Chapel still needs, before you appease.
 
@@ -424,7 +424,7 @@ The Epoch panel (`epoch`) shows the current thread's status and, for past thread
 
 The Cosmic Era runs two threads. Its fated doom, the Reality Tear, gets a harbinger like any era's. The Last Passage's thread starts when you enter the era and is settled when you confirm prestige, not at an age advance. The panel and the log both say its figure warns of the Last Passage: the end of this civilization at your next prestige.
 
-While the Reality Tear's harbinger speaks, the Last Passage's thread waits behind it with its answers intact. Appease, Brace and Invite go to the thread that is speaking, and the panel says "The Last Passage still waits at your next prestige. Your answers to it stand." When the doom resolves (struck or spared), the Last Passage's thread takes up the warning again in the current age's voice, with a log line if the age moved on while it waited. The `catastrophe` command and the Epoch panel show both: the doom's warning, for example "Your future self warns of doom before this age is out: 90% catastrophe chance (high), faith strength 12% (509M of 4.24B).", and the Last Passage at its own odds.
+While the Reality Tear's harbinger speaks, the Last Passage's thread waits behind it with its answers intact. Appease, Brace and Invite go to the thread that is speaking, and the panel says "The Last Passage still waits at your next prestige. Your answers to it stand." When the doom resolves (struck or spared), the Last Passage's thread takes up the warning again in the current age's voice, with a log line if the age moved on while it waited. The `catastrophe` command and the Epoch panel show both: the doom's warning, for example "Your future self warns of doom before this age is out: 90% catastrophe chance (high), faith strength 18% (devotion 0.8x, 100% of your faith kept).", and the Last Passage at its own odds.
 
 Confirming prestige settles an open doom first (see [No Outrunning a Doom](#no-outrunning-a-doom)). Then the Last Passage rolls once, with the odds for your faith band (18%, 15% or 12%), times 0.6 per level of Appease on its own thread, or certain if you invited it. If nothing comes, the verdict is Spared and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
 
@@ -465,7 +465,7 @@ With no harbinger present, the panel says so, explains that a harbinger comes on
 
 ## Strategy
 
-- **Keep some faith in hand.** A harbinger gives you 20% to 60% of an age's time before its doom strikes, and sometimes less. Faith you already hold raises your [faith strength](faith.md#faith-threshold-bands), which lowers the strike chance by itself (90%, 75% or 60%). It also pays for Appease level 1 the moment the harbinger comes, and is what puts level 2 within reach.
+- **Keep some faith in hand.** A harbinger gives you 20% to 60% of an age's time before its doom strikes, and sometimes less. Faith you already hold pays for Appease level 1 the moment the harbinger comes, and is what puts level 2 within reach. It does not buy better odds by itself: the strike chance (90%, 75% or 60%) follows your [faith strength](faith.md#faith-threshold-bands), which is about how much your town has put into faith buildings, and a typical town rolls at 90%.
 - **Answer before the moment.** The price doesn't change once the harbinger has come, but the thread lasts only until the doom's moment, and advancing out of the era, or out of the age a figure named, brings the strike to that advance (in the Cosmic Era, so does prestige).
 - **Want to keep your run?** Appease is the direct answer. One level cuts the chance it strikes by 40%, and it can't hurt the odds.
 - **Worried but short on faith?** Brace instead. It doesn't lower the odds, but it makes Endure much cheaper if the catastrophe comes.
