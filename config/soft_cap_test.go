@@ -77,8 +77,8 @@ func TestSoftCapCounts(t *testing.T) {
 		{2.00, 0.10, 0.025},   // past: a quarter
 		{6.51, 0.10, 0.025},   // far past: still a quarter
 		{2.40, 0.20, 0.05},    // a festival past the knee
-		{2.40, 1.00, 0.25},    // a power surge past the knee
-		{1.45, 1.20, 0.7125},  // a festival and a surge on what a first run holds at the Atomic Age
+		{2.40, 1.00, 0.25},    // an Age of Plenty past the knee
+		{1.45, 1.20, 0.7125},  // a festival and an Age of Plenty on what a first run holds at the Atomic Age
 		{2.40, -0.10, -0.025}, // a penalty past the knee costs a quarter too
 	} {
 		got := c.Counts(row.pool, row.bonus)

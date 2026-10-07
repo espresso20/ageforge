@@ -189,7 +189,7 @@ Milestone rewards fill most of the pool. A player who earns every milestone as e
 | +400% | +250% | 3.5 |
 | +661% | +315% | 4.15 |
 
-Timed bonuses follow the same rule. A festival's +20% or a power surge's +100% counts in full while the pool is under +200% and a quarter past it. Penalties do too: while the pool stays past +200%, a -10% setback costs 2.5 points.
+Timed bonuses follow the same rule. A festival's +20% or an Age of Plenty's +100% counts in full while the pool is under +200% and a quarter past it. Penalties do too: while the pool stays past +200%, a -10% setback costs 2.5 points.
 
 Two things sit outside the pool and are applied after it, so they count in full in every age however much the pool holds:
 

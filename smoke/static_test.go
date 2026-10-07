@@ -383,8 +383,8 @@ func TestStaticCaps(t *testing.T) {
 	if got := KneePassedIn(rows, 0, all); got != "electric_age" {
 		t.Errorf("all production passes its knee on what stands alone in %q, want the Electric Age", got)
 	}
-	if got := KneePassedIn(rows, FestivalBonus+SurgeBonus, all); got != "industrial_age" {
-		t.Errorf("all production passes its knee with a festival and a surge in %q, want the Industrial Age", got)
+	if got := KneePassedIn(rows, FestivalBonus+PlentyBonus, all); got != "industrial_age" {
+		t.Errorf("all production passes its knee with a festival and an Age of Plenty in %q, want the Industrial Age", got)
 	}
 	last := rows[len(rows)-1]
 	for res := range last.Resources {

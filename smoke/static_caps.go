@@ -38,10 +38,11 @@ const (
 	// config.ProductionPastKnee, a quarter.
 	PoolKnee = config.ProductionKnee
 	// FestivalBonus is what a festival adds to all production while it
-	// lasts, and SurgeBonus the largest timed boost an era event gives (the
-	// power surge doubles production for its length).
+	// lasts, and PlentyBonus the largest timed boost an era event gives: an
+	// Age of Plenty doubles production for its length. (The event named
+	// Power Surge is no part of this: it adds electricity, not a bonus.)
 	FestivalBonus = 0.20
-	SurgeBonus    = 1.00
+	PlentyBonus   = 1.00
 )
 
 // PoolApplied is what a production pool that has earned bonuses in all
@@ -158,9 +159,9 @@ func KneePassedIn(rows []CapRow, extra float64, of func(CapRow) float64) string 
 
 // writeCaps renders the caps report.
 func writeCaps(sb *strings.Builder, rows []CapRow) {
-	fmt.Fprintf(sb, "What each bonus pool has earned and what it applies, age by age, for a player who holds everything a run can hold by then: every milestone from the first age it can be completed in, every earlier age's wonder, every monument. A production pool applies in full up to +%.0f%% and %.0f%% of every point past it (config.ProductionSoftCap), so nothing earned is lost; before that rule it applied +%.0f%% at most. Techs are not in these pools: a tech's bonus is applied after them and always counts in full. Timed boosts come on top while they last: a festival +%.0f%%, an awakening up to +25%%, a power surge +%.0f%%; a good era can add +10%% or +15%% for the run. A cell with an arrow reads earned → applied.\n\n",
-		PoolKnee*100, config.ProductionPastKnee*100, PoolKnee*100, FestivalBonus*100, SurgeBonus*100)
-	sb.WriteString("| age | all production: milestones | wonders | monuments | earned | applied | share that counts | with a festival | with a festival and a surge | knowledge | gold | tightest other pool | the pacing model holds |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+	fmt.Fprintf(sb, "What each bonus pool has earned and what it applies, age by age, for a player who holds everything a run can hold by then: every milestone from the first age it can be completed in, every earlier age's wonder, every monument. A production pool applies in full up to +%.0f%% and %.0f%% of every point past it (config.ProductionSoftCap), so nothing earned is lost; before that rule it applied +%.0f%% at most. Techs are not in these pools: a tech's bonus is applied after them and always counts in full. Timed boosts come on top while they last: a festival +%.0f%%, an awakening up to +25%%, an Age of Plenty +%.0f%%; a good era can add +10%% or +15%% for the run. A cell with an arrow reads earned → applied.\n\n",
+		PoolKnee*100, config.ProductionPastKnee*100, PoolKnee*100, FestivalBonus*100, PlentyBonus*100)
+	sb.WriteString("| age | all production: milestones | wonders | monuments | earned | applied | share that counts | with a festival | with a festival and an Age of Plenty | knowledge | gold | tightest other pool | the pacing model holds |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
 	pct := func(v float64) string { return fmt.Sprintf("+%.0f%%", v*100) }
 	// both is a pool as earned, and what it applies when that is less.
 	both := func(earned float64) string {
@@ -182,7 +183,7 @@ func writeCaps(sb *strings.Builder, rows []CapRow) {
 		}
 		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %.0f%% | %s | %s | %s | %s | %s | %s |\n", ageName(r.Age),
 			pct(r.Milestones), pct(r.Wonders), pct(r.Monuments), pct(r.All()), pct(r.Applied()), share,
-			both(r.All()+FestivalBonus), both(r.All()+FestivalBonus+SurgeBonus),
+			both(r.All()+FestivalBonus), both(r.All()+FestivalBonus+PlentyBonus),
 			both(r.Resources["knowledge"]), both(r.Resources["gold"]), other, both(config.ProductionAllHeld[r.Age]))
 	}
 	all := func(r CapRow) float64 { return r.All() }
@@ -192,8 +193,8 @@ func writeCaps(sb *strings.Builder, rows []CapRow) {
 		}
 		return "from the " + ageName(age) + " Age"
 	}
-	fmt.Fprintf(sb, "\nAll production is past its knee %s on what stands alone, %s with a festival running, and %s with a festival and a power surge. ",
-		when(KneePassedIn(rows, 0, all)), when(KneePassedIn(rows, FestivalBonus, all)), when(KneePassedIn(rows, FestivalBonus+SurgeBonus, all)))
+	fmt.Fprintf(sb, "\nAll production is past its knee %s on what stands alone, %s with a festival running, and %s with a festival and an Age of Plenty. ",
+		when(KneePassedIn(rows, 0, all)), when(KneePassedIn(rows, FestivalBonus, all)), when(KneePassedIn(rows, FestivalBonus+PlentyBonus, all)))
 	var reached []string
 	last := rows[len(rows)-1]
 	for _, res := range sortedKeys(last.Resources) {

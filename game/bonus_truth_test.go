@@ -2384,7 +2384,7 @@ func TestBonusTruth(t *testing.T) {
 	}
 	// The soft cap's check must have had something to check: milestone
 	// rewards, wonders, monuments and the timed bonuses (a festival, an era
-	// event such as the power surge, a civilization's boon) each read with
+	// event such as the Age of Plenty, a civilization's boon) each read with
 	// the all-production pool past +200%, each worth a quarter there.
 	t.Logf("readings with the pool past +200%%, by source: %v", quarters)
 	for _, source := range []string{"milestone", "wonder", "monument", "festival", "epoch event", "boon"} {

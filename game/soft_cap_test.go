@@ -178,12 +178,13 @@ func TestSoftCapIsContinuousAndNeverFalls(t *testing.T) {
 	}
 }
 
-// TestTimedBonusesFollowTheSoftCap: a festival and a power surge join the
-// all-production pool like any bonus. Under the knee they count in full;
+// TestTimedBonusesFollowTheSoftCap: a festival and an Age of Plenty (the
+// era event that doubles production) join the all-production pool like any
+// bonus. Under the knee they count in full;
 // past it they add a quarter, and they add nothing less.
 func TestTimedBonusesFollowTheSoftCap(t *testing.T) {
 	festival := config.Effect{Type: "production_all", Target: "production_all", Value: festivalBuffPercent}
-	surge := config.Effect{Type: "production_all", Target: "production_all", Value: 1.0}
+	plenty := config.Effect{Type: "production_all", Target: "production_all", Value: 1.0}
 	for _, c := range []struct {
 		name    string
 		held    float64
@@ -193,8 +194,8 @@ func TestTimedBonusesFollowTheSoftCap(t *testing.T) {
 		{"a festival under the knee", 1.00, []config.Effect{festival}, 2.20},
 		{"a festival across the knee", 1.90, []config.Effect{festival}, 3.025},
 		{"a festival past the knee", 2.40, []config.Effect{festival}, 3.15},
-		{"a festival and a surge across the knee", 1.45, []config.Effect{festival, surge}, 3.1625},
-		{"a festival and a surge past the knee", 2.40, []config.Effect{festival, surge}, 3.40},
+		{"a festival and an Age of Plenty across the knee", 1.45, []config.Effect{festival, plenty}, 3.1625},
+		{"a festival and an Age of Plenty past the knee", 2.40, []config.Effect{festival, plenty}, 3.40},
 	} {
 		ge := NewGameEngine()
 		ge.morale = moraleNeutral
