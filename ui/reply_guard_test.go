@@ -237,6 +237,7 @@ func TestSaveNamesAreOneWord(t *testing.T) {
 func TestDiplomacyPricesMatchEngine(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	ge := game.NewGameEngine()
+	ge.GrantTechsForTest("envoys") // the tech that opens gifts and alliances
 	const civ = "riverlands_tribes"
 	if err := ge.MeetFactionForTest(civ, game.AllyOpinion-game.GiftOpinion); err != nil {
 		t.Fatal(err)

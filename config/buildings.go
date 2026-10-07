@@ -107,7 +107,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"wood": 300, "stone": 200},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2500}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2750}},
 			BuildTicks:  60,
 			RequiredAge: "stone_age",
 			Description: "A hole in the ground to stash things.",
@@ -119,7 +119,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"wood": 2000, "stone": 1500, "iron": 300},
 			CostScale:   1.2,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 20000}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 21000}},
 			BuildTicks:  80,
 			RequiredAge: "bronze_age",
 			Description: "Proper storage building.",
@@ -399,8 +399,6 @@ func baseBuildingsRaw() []BuildingDef {
 			Description:  "A towering stone pillar visible for miles.",
 		},
 		// Bronze Age — normal costs: 1500-2500
-		// No keystone yet: the tech it is to stand on (Calendar) arrives with
-		// the Stone Era's new techs, and RequiredTech is set then.
 		{
 			Name: "Stonehenge", Key: "stonehenge", Category: "wonder",
 			BaseCost:  map[string]float64{"stone": 80000, "wood": 45000, "iron": 8000},
@@ -409,10 +407,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "knowledge", Value: 0.8},
 				{Type: "production", Target: "faith", Value: 0.6},
 			},
-			RequiredAge: "bronze_age",
-			MaxCount:    1,
-			BuildTicks:  1200,
-			Description: "Massive stone circle aligned to the cosmos.",
+			RequiredAge:  "bronze_age",
+			RequiredTech: "calendar",
+			MaxCount:     1,
+			BuildTicks:   1200,
+			Description:  "Massive stone circle aligned to the cosmos.",
 		},
 		// Iron Age — normal costs: 8k-12k
 		{

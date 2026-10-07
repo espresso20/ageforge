@@ -240,7 +240,8 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 // truthMechanics reads every mechanic number a tech can move
 // (config.Mechanics), each where the game uses it: what the market pays on a
 // pair it trades at parity (as the fee that leaves), a route's time per
-// run, a scouting expedition launched off a fixed roll, how long a set of
+// run and what a run brings in of a listed import, how high morale can
+// rise, a scouting expedition launched off a fixed roll, how long a set of
 // deals lasts, what a gift costs, the share of its price a festival costs,
 // the wait between festivals.
 // Hand gathering and raid losses are read as the engine's own term: a real
@@ -252,6 +253,8 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 		config.MechanicGatherAmount:          ge.gatherBonus(),
 		config.MechanicRaidLoss:              ge.raidLossFactor(),
 		config.MechanicRouteTicks:            float64(ge.Trade.RunTicks(truthRefTicks)) / truthRefTicks,
+		config.MechanicRouteIncome:           ge.Trade.RoutePay(truthRefTicks) / truthRefTicks,
+		config.MechanicMoraleCap:             ge.moraleCap(),
 		config.MechanicDealRefreshTicks:      float64(ge.Diplomacy.dealRefreshFor(ge.age)),
 		config.MechanicGiftCost:              ge.Diplomacy.GiftPrice(),
 		config.MechanicFestivalCooldownTicks: float64(ge.festivalCooldown()),
@@ -2014,17 +2017,26 @@ func truthOtherPromises() []truthPromise {
 			Text: truthEffectText(festival) + " for a while", Kind: "festival",
 			wire: func(ge *GameEngine) truthSwitch {
 				ready := ge.festivalReadyTick
+				granted := ge.grantedFeatures[config.FeatureFestivals]
 				return truthSwitch{
 					off: func() {},
 					on: func() {
 						c := ge.Resources.resources["culture"]
 						c.Amount = math.Max(c.Amount, ge.festivalCost())
 						ge.festivalReadyTick = 0
+						// The festival's buff is what is measured, not the
+						// tech that opens the command (Drama): hold it open.
+						ge.grantFeaturesLocked([]string{config.FeatureFestivals})
 						if err := ge.DoFestival(); err != nil {
 							panic(err)
 						}
 					},
-					restore: func() { ge.festivalReadyTick = ready },
+					restore: func() {
+						ge.festivalReadyTick = ready
+						if !granted {
+							delete(ge.grantedFeatures, config.FeatureFestivals)
+						}
+					},
 				}
 			},
 		},

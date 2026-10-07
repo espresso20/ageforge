@@ -57,7 +57,7 @@ func (ge *GameEngine) PlanAddDeal(key string, n int) error {
 			return fmt.Errorf("The plan already takes that deal.")
 		}
 	}
-	if len(ge.plan) >= MaxPlanItems {
+	if planLoad(ge.plan) >= MaxPlanItems {
 		return errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanDeal, Key: key, Count: 1, Deal: d.ID})

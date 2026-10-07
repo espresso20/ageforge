@@ -24,7 +24,7 @@ func (ge *GameEngine) PlanAddAdvance() error {
 	if ge.progress.GetNextAge(ge.age) == "" {
 		return fmt.Errorf("This is the final age. There is nothing to advance to.")
 	}
-	if len(ge.plan) >= MaxPlanItems {
+	if planLoad(ge.plan) >= MaxPlanItems {
 		return errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanAdvance, Count: 1})

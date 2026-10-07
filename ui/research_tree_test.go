@@ -28,7 +28,7 @@ func classicalGame(t *testing.T) *game.GameEngine {
 			t.Fatal(err)
 		}
 	}
-	ge.GrantTechsForTest("tool_making", "fire_mastery", "stoneworking", "primitive_writing", "pottery", "bronze_working", "currency", "masonry", "mathematics", "iron_smelting")
+	ge.GrantTechsForTest("language", "tool_making", "fire_mastery", "stoneworking", "primitive_writing", "pottery", "woodworking", "bronze_working", "currency", "masonry", "the_wheel", "mathematics", "iron_smelting")
 	ge.SetStockForTest("knowledge", 9e5)
 	if err := ge.StartResearch("philosophy"); err != nil {
 		t.Fatal(err)
@@ -486,7 +486,7 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 	ge := classicalGame(t)
 	st := ge.GetState()
 	for key, wants := range map[string][]string{
-		"road_building":    {"Road Building gives +8% gold production. With it, trade routes take 15% less time.", "It builds on Masonry.", "It is item 1 in your plan."},
+		"road_building":    {"Road Building gives +8% gold production. With it, trade routes take 15% less time.", "It builds on Masonry and The Wheel.", "It is item 1 in your plan."},
 		"military_tactics": {"gives +15% military power.", "It opens campaigns.", "It builds on Bronze Working.", "adds it to your plan. Philosophy is running, so it starts in"},
 		"mathematics":      {"It is this age's keystone: the Colosseum cannot be built without it.", "You already hold this."},
 		"philosophy":       {"It is being researched:", "Type research cancel to stop it"},

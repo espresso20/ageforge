@@ -117,8 +117,8 @@ func TestBotResearchesTheKeystoneFirst(t *testing.T) {
 		t.Fatalf("with the keystone researched: must %v, holding %v", p.must, p.hold["knowledge"])
 	}
 	b.research(p)
-	if got := ge.GetState().Research.CurrentTech; got != "fire_mastery" {
-		t.Errorf("after the keystone the bot is researching %q, want the cheapest (fire_mastery)", got)
+	if got := ge.GetState().Research.CurrentTech; got != "language" {
+		t.Errorf("after the keystone the bot is researching %q, want the cheapest (language, a spine tech of the first age)", got)
 	}
 }
 
@@ -132,7 +132,7 @@ func TestBotCountsATechOnlySourceAsRequired(t *testing.T) {
 	if p.st.NextAgeResReqs["steel"] <= 0 || b.madeHere(p, "steel") {
 		t.Fatalf("setup: the Renaissance asks for %v steel, a Medieval building makes it: %v", p.st.NextAgeResReqs["steel"], b.madeHere(p, "steel"))
 	}
-	want := []string{"primitive_writing", "mathematics", "philosophy", "theology",
+	want := []string{"language", "primitive_writing", "mathematics", "philosophy", "theology",
 		"tool_making", "stoneworking", "bronze_working", "iron_smelting", "steel_forging"}
 	if !reflect.DeepEqual(p.must, want) {
 		t.Errorf("what the Medieval Age cannot be left without: %v, want %v", p.must, want)

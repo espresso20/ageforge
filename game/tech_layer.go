@@ -43,13 +43,13 @@ func marketFeeScale(feeShift float64) float64 {
 }
 
 // pushMechanics hands the managers the mechanic numbers they read on their
-// own: the market's fee and a route's time (trade), a scouting expedition's
+// own: the market's fee, a route's time and what it brings in (trade), a scouting expedition's
 // time (military), a gift's price and a deal set's life (diplomacy). recalculateRates calls it, so
 // they follow every change to what is researched, a load and a new run
 // included. Caller holds the lock.
 func (ge *GameEngine) pushMechanics() {
 	fee := marketFeeScale(ge.Research.Mechanic(config.MechanicMarketFee))
-	ge.Trade.SetTechTerms(fee, ge.Research.Mechanic(config.MechanicRouteTicks))
+	ge.Trade.SetTechTerms(fee, ge.Research.Mechanic(config.MechanicRouteTicks), ge.Research.Mechanic(config.MechanicRouteIncome))
 	ge.Military.SetScoutTime(ge.Research.Mechanic(config.MechanicExpeditionTicks))
 	ge.Diplomacy.SetTechTerms(ge.Research.Mechanic(config.MechanicGiftCost), ge.Research.Mechanic(config.MechanicDealRefreshTicks), fee)
 }

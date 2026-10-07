@@ -25,6 +25,9 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 	ge.age = age
 	ge.currentEpoch = config.EpochForAge(age)
 	ge.Events.nextEventTick = 1 << 40
+	// Expeditions past the Scout Party wait for Exploration, which a game
+	// this far along holds: the spine runs through it.
+	learn(ge, "exploration")
 
 	for _, def := range config.BaseResources() {
 		ge.Resources.UnlockResource(def.Key)

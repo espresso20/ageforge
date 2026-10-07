@@ -51,7 +51,7 @@ func (ge *GameEngine) PlanAddTrade(give, get string, amount float64) error {
 			return fmt.Errorf("The plan already trades %s for %s. Remove that item first.", ResourceName(from), ResourceName(to))
 		}
 	}
-	if len(ge.plan) >= MaxPlanItems {
+	if planLoad(ge.plan) >= MaxPlanItems {
 		return errPlanFull()
 	}
 	ge.plan = append(ge.plan, it)

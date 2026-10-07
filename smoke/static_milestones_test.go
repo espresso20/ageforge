@@ -69,8 +69,6 @@ func preCovenantMilestones(t *testing.T) []config.MilestoneDef {
 			d.MinTotalBuilt = 5000
 		case "grand_architect":
 			d.MinTotalBuilt = 20000
-		case "tech_master":
-			d.MinAge = "industrial_age"
 		case "wonder_empire":
 			d.MinAge = "modern_age"
 		case "tech_ascendant":
@@ -80,8 +78,8 @@ func preCovenantMilestones(t *testing.T) []config.MilestoneDef {
 		}
 		patched[d.Key] = true
 	}
-	if len(patched) != 18 {
-		t.Fatalf("patched %d milestones, want 18: a key was renamed?", len(patched))
+	if len(patched) != 17 {
+		t.Fatalf("patched %d milestones, want 17: a key was renamed?", len(patched))
 	}
 	return ms
 }
@@ -93,8 +91,10 @@ func preCovenantMilestones(t *testing.T) []config.MilestoneDef {
 // Plant cost more than their age can store; a billion and ten billion
 // people need more housing than the game has; 20,000 structures is more
 // than a run holds), three were out of reach in a run (10M and 100M people,
-// 5,000 structures), and three named an age too early for their count (50
-// techs, 15 wonders, every tech).
+// 5,000 structures), and two named an age too early for their count (15
+// wonders, every tech). A third did when it shipped, 50 techs by the
+// Industrial Age: the tree has since grown past it (53 by then), so that
+// number is no longer broken and is not patched in.
 func TestMilestoneFeasibilityCatchesBrokenMilestones(t *testing.T) {
 	// Judged under the rules those numbers shipped with: prestige opened in
 	// the Modern Age. The prestige test covers moving it.
@@ -108,8 +108,8 @@ func TestMilestoneFeasibilityCatchesBrokenMilestones(t *testing.T) {
 		"stone_mason": "building", "temple_city": "building", "trade_empire": "building", "power_grid": "building",
 		"metropolis": "population", "urban_sprawl": "population", "megalopolis": "population", "global_city": "population",
 		"master_builder": "builds", "grand_architect": "builds",
-		"tech_master": "techs", "tech_ascendant": "techs", "wonder_empire": "wonders",
-		"settlement_chain": "chain", "builder_chain": "chain", "trade_chain": "chain", "scholar_chain": "chain",
+		"tech_ascendant": "techs", "wonder_empire": "wonders",
+		"settlement_chain": "chain", "builder_chain": "chain", "trade_chain": "chain",
 	}
 	for k, kind := range want {
 		if got[k] != kind {

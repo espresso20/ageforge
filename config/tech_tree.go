@@ -33,7 +33,11 @@ const (
 //
 //	1: each age's wonder needs its keystone tech (BuildingDef.RequiredTech).
 //	2: commands wait for a tech (FeatureLocks).
-const TechTreeVersion = 2
+//	3: Stonehenge needs its keystone (Calendar), four more commands wait for
+//	   a tech that the tree now holds (trade routes, expeditions past the
+//	   Scout Party, diplomacy, festivals), and seven buildings of the Stone
+//	   and Iron Eras wait for one.
+const TechTreeVersion = 3
 
 // TechLaneDef is one lane of the tech tree.
 type TechLaneDef struct {

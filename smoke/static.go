@@ -174,6 +174,14 @@ func StaticGates() ([]GateProblem, []GateSlack) {
 //     building and the market) still stands. Prices of required buildings
 //     don't imply a supply: a few scriptoriums' gold can come from events.
 //
+// A building that waits for a tech (BuildingDef.RequiredTech) is one of A's
+// producers only when the tech is one no run leaves A without: the keystone
+// of A's wonder or of an earlier one, or a tech one of those stands on. A
+// building behind any other tech may never be built, so nothing a gate asks
+// for may hang on it. This is the content rule for moving a building onto a
+// tech: the age must keep another way to make what it makes, or its tech
+// must be on the spine in time.
+//
 // Carried producers are sized to older prices, so, as in the old rule, they
 // only bootstrap A's buildings (pay for a first copy) and seed market parity;
 // a gate's total must come from A itself: A's own producers (bought with
@@ -191,6 +199,7 @@ type coldStart struct {
 	reach    map[string]bool    // resources the age itself supplies in bulk
 	market   bool               // a trade building stands or can be built
 	carried  map[string]bool    // buildings carried over
+	held     map[string]bool    // techs no run leaves the age without
 }
 
 // handGatherable mirrors the gather command: food, wood and stone, by hand,
@@ -285,7 +294,28 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 	supply := map[string]bool{}
 	trickle := map[string]float64{}
 	techs := config.Technologies()
+	byKey := make(map[string]config.TechDef, len(techs))
+	for _, t := range techs {
+		byKey[t.Key] = t
+	}
+	// held grows age by age: each wonder's keystone and what it stands on.
+	// An either-or group puts neither branch in it.
+	held := map[string]bool{}
+	var hold func(key string)
+	hold = func(key string) {
+		t, ok := byKey[key]
+		if !ok || held[key] {
+			return
+		}
+		held[key] = true
+		for _, p := range t.Prerequisites {
+			hold(p)
+		}
+	}
 	for i, a := range ages {
+		if w := ageWonder(a, defs); w != "" {
+			hold(defs[w].RequiredTech)
+		}
 		for _, r := range a.UnlockResources {
 			unlocked[r] = true
 		}
@@ -321,7 +351,7 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 		}
 		cs := &coldStart{idx: i, age: a.Key, unlocked: cloneSet(unlocked), levels: rules.Core().PriceLevels(a.Key),
 			trickle: cloneMap(trickle), stock: stock, boot: map[string]bool{}, reach: map[string]bool{},
-			carried: cloneSet(carried)}
+			carried: cloneSet(carried), held: cloneSet(held)}
 		for r, ok := range supply {
 			if ok && unlocked[r] {
 				cs.boot[r] = true
@@ -406,6 +436,9 @@ func (cs *coldStart) solve(defs map[string]config.BuildingDef) {
 			d := defs[k]
 			if d.RequiredAge != cs.age || d.Category == "wonder" {
 				continue
+			}
+			if d.RequiredTech != "" && !cs.held[d.RequiredTech] {
+				continue // it waits for a tech a run may never research
 			}
 			ok := true
 			for res, c := range d.BaseCost {

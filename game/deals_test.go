@@ -263,6 +263,7 @@ func dealEngine(t *testing.T, age string) *GameEngine {
 	}
 	ge.advanceAge(age)
 	ge.pendingCatastrophe = ""
+	learn(ge, "envoys") // the tech that opens deals, gifts and alliances
 	// The deals below are rolled from a fresh stream, so they do not move
 	// when the transition's own draws (its epoch event, the era's fate) do.
 	ge.SeedRNG(11)

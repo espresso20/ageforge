@@ -92,6 +92,10 @@ func determinismSetup(t *testing.T, seed int64) (*GameEngine, determinismScript)
 		}
 	}
 
+	// The script sends expeditions, takes deals and starts routes: hold the
+	// techs those commands wait for.
+	learn(ge, "the_wheel", "exploration", "envoys", "drama", "military_tactics", "navigation")
+
 	var scouting, military []string
 	for _, def := range ge.Military.GetAvailableExpeditions(ge.age, ge.progress.GetAgeOrder()) {
 		if def.Category == ExpeditionScouting {

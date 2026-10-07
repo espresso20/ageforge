@@ -49,20 +49,29 @@ type TechDef struct {
 // and its kind follows from the wonders (TechKinds), so moving a keystone or
 // adding a tech re-prices its age with nothing to retype.
 func Technologies() []TechDef {
-	techs := []TechDef{
+	techs := rawTechnologies()
+	// The wonders alone decide the kinds, and they are all in the raw table:
+	// reading it instead of BaseBuildings keeps this off the building
+	// normalizers (TestTechKindsNeedOnlyTheRawWonders).
+	kinds := TechKinds(techs, baseBuildingsRaw())
+	return fillTechArt(normalizeResearchCosts(normalizeResearchTicks(techs, kinds), kinds))
+}
+
+// rawTechnologies is the tech table as it is written: no cost, no research
+// time, and art only where a tech sets its own.
+func rawTechnologies() []TechDef {
+	return []TechDef{
 		// === PRIMITIVE AGE ===
+		// Three roots: speech, fire and tools. No tech is needed to leave it.
 		{
-			Name: "Tool Making", Key: "tool_making", Code: "TOOLS",
-			Age: "primitive_age", Lane: LaneCraft,
-			Description: "Stone tools make every worker more productive.",
+			Name: "Language", Key: "language", Code: "LANG", Emblem: "♪",
+			Age: "primitive_age", Lane: LaneKnowledge,
+			Description: "Shared words carry what one person learns to the next.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "food", Value: 0.10},
-				{Kind: EffectOutput, Target: "wood", Value: 0.10},
-				{Kind: EffectMechanic, Target: MechanicGatherAmount, Value: 2},
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
 			},
 		},
 		{
-			// A root, with Tool Making: fire needs no tools.
 			Name: "Fire Mastery", Key: "fire_mastery", Emblem: "△",
 			Age: "primitive_age", Lane: LaneAgriculture,
 			Description: "Control of fire improves food preservation and warmth.",
@@ -71,24 +80,34 @@ func Technologies() []TechDef {
 				{Kind: EffectHousing, Value: 0.05},
 			},
 		},
+		{
+			Name: "Tool Making", Key: "tool_making", Code: "TOOLS", Emblem: "⚒",
+			Age: "primitive_age", Lane: LaneCraft,
+			Description: "Stone tools make every worker more productive.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.10},
+				{Kind: EffectOutput, Target: "wood", Value: 0.10},
+				{Kind: EffectMechanic, Target: MechanicGatherAmount, Value: 2},
+			},
+		},
 
 		// === STONE AGE ===
 		{
-			Name: "Stoneworking", Key: "stoneworking", Emblem: "◆",
-			Age: "stone_age", Lane: LaneMaterials,
-			Prerequisites: []string{"tool_making"},
-			Description:   "Cutting and shaping stone for construction.",
+			Name: "Ritual", Key: "ritual", Code: "RITE", Emblem: "∴",
+			Age: "stone_age", Lane: LaneFaith,
+			Prerequisites: []string{"language"},
+			Description:   "Shared rites give the tribe its first holy places.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "stone", Value: 0.10},
+				{Kind: EffectOutput, Target: "faith", Value: 0.10},
 			},
 		},
 		{
-			Name: "Animal Husbandry", Key: "animal_husbandry", Code: "HERDS", Emblem: "♞",
-			Age: "stone_age", Lane: LaneAgriculture,
-			Prerequisites: []string{"fire_mastery"},
-			Description:   "Domesticating animals for food and labor.",
+			Name: "Primitive Writing", Key: "primitive_writing", Code: "WRITE", Emblem: "§",
+			Age: "stone_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"language"},
+			Description:   "Early symbols enable knowledge transfer.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "food", Value: 0.10},
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
 			},
 		},
 		{
@@ -101,34 +120,50 @@ func Technologies() []TechDef {
 			},
 		},
 		{
-			// Writing no longer follows Pottery, which leads to storage and trade.
-			// It is a root until the tech it will follow (Language) exists.
-			Name: "Primitive Writing", Key: "primitive_writing", Code: "WRITE",
-			Age: "stone_age", Lane: LaneKnowledge,
-			Description: "Early symbols enable knowledge transfer.",
+			Name: "Animal Husbandry", Key: "animal_husbandry", Code: "HERDS", Emblem: "♞",
+			Age: "stone_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"fire_mastery"},
+			Description:   "Domesticating animals for food and labor.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
+				{Kind: EffectOutput, Target: "food", Value: 0.10},
+			},
+		},
+		{
+			Name: "Woodworking", Key: "woodworking", Code: "WOOD", Emblem: "⊤",
+			Age: "stone_age", Lane: LaneCraft,
+			Prerequisites: []string{"tool_making"},
+			Description:   "Joints, pegs and planks turn timber into more than firewood.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "wood", Value: 0.10},
+			},
+		},
+		{
+			Name: "Stoneworking", Key: "stoneworking", Emblem: "◆",
+			Age: "stone_age", Lane: LaneMaterials,
+			Prerequisites: []string{"tool_making"},
+			Description:   "Cutting and shaping stone for construction.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "stone", Value: 0.10},
 			},
 		},
 
 		// === BRONZE AGE ===
 		{
-			Name: "Bronze Working", Key: "bronze_working",
-			Age: "bronze_age", Lane: LaneMaterials,
-			Prerequisites: []string{"stoneworking"},
-			Description:   "Alloying copper and tin creates durable tools.",
+			Name: "Calendar", Key: "calendar", Code: "CALEN", Emblem: "◔",
+			Age: "bronze_age", Lane: LaneFaith,
+			Prerequisites: []string{"ritual"},
+			Description:   "Counting the days fixes the feasts and the seasons.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "stone", Value: 0.10},
-				{Kind: EffectOutput, Target: "iron", Value: 0.10},
+				{Kind: EffectOutput, Target: "faith", Value: 0.10},
 			},
 		},
 		{
-			Name: "Agriculture", Key: "agriculture", Code: "FARMS",
-			Age: "bronze_age", Lane: LaneAgriculture,
-			Prerequisites: []string{"animal_husbandry"},
-			Description:   "Systematic farming adds steady food output.",
+			Name: "Map Making", Key: "map_making", Code: "MAPS", Emblem: "⊕",
+			Age: "bronze_age", Lane: LaneKnowledge,
+			Prerequisites: []string{"primitive_writing"},
+			Description:   "Drawn maps record where things are and how to reach them.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "food", Value: 0.10},
+				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
 			},
 		},
 		{
@@ -142,6 +177,34 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			Name: "Boatbuilding", Key: "boatbuilding", Code: "BOATS", Emblem: "◡",
+			Age: "bronze_age", Lane: LaneTrade,
+			Prerequisites: []string{"woodworking"},
+			Description:   "Hulls and oars bring in the catch and carry goods along the coast.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.05},
+				{Kind: EffectMechanic, Target: MechanicRouteIncome, Value: 0.10},
+			},
+		},
+		{
+			Name: "Agriculture", Key: "agriculture", Code: "FARMS", Emblem: "♠",
+			Age: "bronze_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"animal_husbandry"},
+			Description:   "Systematic farming adds steady food output.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.10},
+			},
+		},
+		{
+			Name: "The Wheel", Key: "the_wheel", Emblem: "⊗",
+			Age: "bronze_age", Lane: LaneCraft,
+			Prerequisites: []string{"woodworking"},
+			Description:   "Carts move what backs could not, to the building site and to market.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildTime, Value: -0.05},
+			},
+		},
+		{
 			Name: "Masonry", Key: "masonry", Emblem: "▦",
 			Age: "bronze_age", Lane: LaneCraft,
 			Prerequisites: []string{"stoneworking"},
@@ -151,7 +214,17 @@ func Technologies() []TechDef {
 			},
 		},
 		{
-			Name: "Military Tactics", Key: "military_tactics", Code: "TACTI",
+			Name: "Bronze Working", Key: "bronze_working", Emblem: "◐",
+			Age: "bronze_age", Lane: LaneMaterials,
+			Prerequisites: []string{"stoneworking"},
+			Description:   "Alloying copper and tin creates durable tools.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "stone", Value: 0.10},
+				{Kind: EffectOutput, Target: "iron", Value: 0.10},
+			},
+		},
+		{
+			Name: "Military Tactics", Key: "military_tactics", Code: "TACTI", Emblem: "†",
 			Age: "bronze_age", Lane: LaneMilitary,
 			Prerequisites: []string{"bronze_working"},
 			Description:   "Organized warfare and defense strategies.",
@@ -162,23 +235,12 @@ func Technologies() []TechDef {
 
 		// === IRON AGE ===
 		{
-			Name: "Iron Smelting", Key: "iron_smelting", Emblem: "■",
-			Age: "iron_age", Lane: LaneMaterials,
-			Prerequisites: []string{"bronze_working"},
-			Description:   "Hotter furnaces raise iron output.",
+			Name: "Priesthood", Key: "priesthood", Emblem: "Ψ",
+			Age: "iron_age", Lane: LaneFaith,
+			Prerequisites: []string{"calendar"},
+			Description:   "A standing priesthood keeps the rites and the people's spirits.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "iron", Value: 0.08},
-			},
-		},
-		{
-			// Roads will need The Wheel too, once that tech exists.
-			Name: "Road Building", Key: "road_building", Code: "ROADS", Emblem: "═",
-			Age: "iron_age", Lane: LaneCraft,
-			Prerequisites: []string{"masonry"},
-			Description:   "Paved roads improve trade and movement.",
-			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "gold", Value: 0.08},
-				{Kind: EffectMechanic, Target: MechanicRouteTicks, Value: -0.15},
+				{Kind: EffectMechanic, Target: MechanicMoraleCap, Value: 0.05},
 			},
 		},
 		{
@@ -188,6 +250,42 @@ func Technologies() []TechDef {
 			Description:   "Advanced calculation raises knowledge output.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "knowledge", Value: 0.08},
+			},
+		},
+		{
+			// The tree's one either-or group: by map or by boat.
+			Name: "Exploration", Key: "exploration", Emblem: "↗",
+			Age: "iron_age", Lane: LaneTrade,
+			AnyOf:       []string{"map_making", "boatbuilding"},
+			Description: "Maps or boats, and the will to see what lies past the next ridge.",
+		},
+		{
+			Name: "Irrigation", Key: "irrigation", Emblem: "≈",
+			Age: "iron_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"agriculture"},
+			Description:   "Channels bring the river to the fields.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.08},
+				{Kind: EffectHousing, Value: 0.05},
+			},
+		},
+		{
+			Name: "Road Building", Key: "road_building", Code: "ROADS", Emblem: "═",
+			Age: "iron_age", Lane: LaneCraft,
+			Prerequisites: []string{"masonry", "the_wheel"},
+			Description:   "Paved roads improve trade and movement.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "gold", Value: 0.08},
+				{Kind: EffectMechanic, Target: MechanicRouteTicks, Value: -0.15},
+			},
+		},
+		{
+			Name: "Iron Smelting", Key: "iron_smelting", Emblem: "■",
+			Age: "iron_age", Lane: LaneMaterials,
+			Prerequisites: []string{"bronze_working"},
+			Description:   "Hotter furnaces raise iron output.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "iron", Value: 0.08},
 			},
 		},
 		{
@@ -202,6 +300,12 @@ func Technologies() []TechDef {
 
 		// === CLASSICAL AGE ===
 		{
+			Name: "Drama", Key: "drama", Emblem: "♫",
+			Age: "classical_age", Lane: LaneFaith,
+			Prerequisites: []string{"priesthood"},
+			Description:   "Plays and choruses give a city its festival days.",
+		},
+		{
 			Name: "Philosophy", Key: "philosophy", Emblem: "Φ",
 			Age: "classical_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"mathematics"},
@@ -211,12 +315,36 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			Name: "Envoys", Key: "envoys", Code: "ENVOY", Emblem: "⇄",
+			Age: "classical_age", Lane: LaneTrade,
+			Prerequisites: []string{"exploration"},
+			Description:   "Trusted messengers speak for you in other courts.",
+		},
+		{
+			Name: "The Plough", Key: "the_plough", Code: "PLOW", Emblem: "≡",
+			Age: "classical_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"irrigation"},
+			Description:   "An iron share turns heavier soil than a digging stick.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "food", Value: 0.08},
+			},
+		},
+		{
 			Name: "Civil Engineering", Key: "civil_engineering", Emblem: "∩",
 			Age: "classical_age", Lane: LaneCraft,
 			Prerequisites: []string{"road_building"},
 			Description:   "Large-scale construction and infrastructure.",
 			Effects: []TechEffect{
 				{Kind: EffectBuildCost, Value: -0.03},
+			},
+		},
+		{
+			Name: "Metal Casting", Key: "metal_casting", Code: "CAST", Emblem: "◘",
+			Age: "classical_age", Lane: LaneMaterials,
+			Prerequisites: []string{"iron_smelting"},
+			Description:   "Molten metal poured into moulds makes the same part a hundred times.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "iron", Value: 0.08},
 			},
 		},
 		{
@@ -232,42 +360,12 @@ func Technologies() []TechDef {
 
 		// === MEDIEVAL AGE ===
 		{
-			Name: "Steel Forging", Key: "steel_forging", Emblem: "▣",
-			Age: "medieval_age", Lane: LaneMaterials,
-			Prerequisites: []string{"iron_smelting"},
-			Description:   "Refining iron into steel for superior tools and weapons.",
-			Effects: []TechEffect{
-				{Kind: EffectFlatOutput, Target: "steel", Value: 0.25},
-				{Kind: EffectOutput, Target: "iron", Value: 0.08},
-			},
-		},
-		{
 			Name: "Theology", Key: "theology", Emblem: "Θ",
 			Age: "medieval_age", Lane: LaneFaith,
 			Prerequisites: []string{"philosophy"},
 			Description:   "Organized religion provides faith and social cohesion.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "faith", Value: 0.08},
-			},
-		},
-		{
-			Name: "Banking", Key: "banking", Code: "BANK",
-			Age: "medieval_age", Lane: LaneTrade,
-			Prerequisites: []string{"currency", "mathematics"},
-			Description:   "Financial institutions raise gold output and gold storage.",
-			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "gold", Value: 0.08},
-				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.03},
-			},
-		},
-		{
-			// No longer behind Military Tactics: it is a farming tech. It is a root
-			// until the tech it will follow (The Plough) exists.
-			Name: "Feudalism", Key: "feudalism", Emblem: "⌂",
-			Age: "medieval_age", Lane: LaneAgriculture,
-			Description: "Feudal land grants house more workers.",
-			Effects: []TechEffect{
-				{Kind: EffectHousing, Value: 0.08},
 			},
 		},
 		{
@@ -280,11 +378,71 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// The Iron Era's Knowledge capstone.
+			Name: "Scholasticism", Key: "scholasticism", Code: "SCHOL", Emblem: "Σ",
+			Age: "medieval_age", Lane: LaneKnowledge, Capstone: true,
+			Prerequisites: []string{"alchemy", "theology"},
+			Description:   "The schools set every question out, argue it and write the answer down.",
+			Effects: []TechEffect{
+				{Kind: EffectResearchTime, Value: -0.06},
+			},
+		},
+		{
+			Name: "Banking", Key: "banking", Code: "BANK", Emblem: "%",
+			Age: "medieval_age", Lane: LaneTrade,
+			Prerequisites: []string{"currency", "mathematics"},
+			Description:   "Financial institutions raise gold output and gold storage.",
+			Effects: []TechEffect{
+				{Kind: EffectOutput, Target: "gold", Value: 0.08},
+				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.03},
+			},
+		},
+		{
+			Name: "Feudalism", Key: "feudalism", Emblem: "⌂",
+			Age: "medieval_age", Lane: LaneAgriculture,
+			Prerequisites: []string{"the_plough"},
+			Description:   "Feudal land grants house more workers.",
+			Effects: []TechEffect{
+				{Kind: EffectHousing, Value: 0.08},
+			},
+		},
+		{
 			Name: "Chronometry", Key: "chronometry", Emblem: "⊙",
 			Age: "medieval_age", Lane: LaneCraft,
 			Description: "Precise timekeeping raises game speed.",
 			Effects: []TechEffect{
 				{Kind: EffectGameSpeed, Value: 0.05},
+			},
+		},
+		{
+			// The Iron Era's Craft capstone.
+			Name: "Guilds", Key: "guilds", Code: "GUILD", Emblem: "♜",
+			Age: "medieval_age", Lane: LaneCraft, Capstone: true,
+			Prerequisites: []string{"civil_engineering", "metal_casting"},
+			Description:   "Masters, journeymen and set prices: every trade builds to one standard.",
+			Effects: []TechEffect{
+				{Kind: EffectBuildCost, Value: -0.04},
+				{Kind: EffectBuildTime, Value: -0.08},
+			},
+		},
+		{
+			Name: "Steel Forging", Key: "steel_forging", Emblem: "▣",
+			Age: "medieval_age", Lane: LaneMaterials,
+			Prerequisites: []string{"iron_smelting"},
+			Description:   "Refining iron into steel for superior tools and weapons.",
+			Effects: []TechEffect{
+				{Kind: EffectFlatOutput, Target: "steel", Value: 0.25},
+				{Kind: EffectOutput, Target: "iron", Value: 0.08},
+			},
+		},
+		{
+			Name: "Fortification", Key: "fortification", Code: "FORTS", Emblem: "╬",
+			Age: "medieval_age", Lane: LaneMilitary,
+			Prerequisites: []string{"imperial_legions"},
+			Description:   "Curtain walls and gatehouses make a raid cost more than it takes.",
+			Effects: []TechEffect{
+				{Kind: EffectMechanic, Target: MechanicRaidLoss, Value: -0.15},
+				{Kind: EffectMilitaryPower, Value: 0.10},
 			},
 		},
 
@@ -300,10 +458,9 @@ func Technologies() []TechDef {
 			},
 		},
 		{
-			// It will need Exploration too, once that tech exists.
 			Name: "Navigation", Key: "navigation",
 			Age: "renaissance_age", Lane: LaneTrade,
-			Prerequisites: []string{"mathematics"},
+			Prerequisites: []string{"exploration", "mathematics"},
 			Description:   "Ocean navigation raises gold output and expedition rewards.",
 			Effects: []TechEffect{
 				{Kind: EffectExpeditionReward, Value: 0.10},
@@ -826,11 +983,6 @@ func Technologies() []TechDef {
 			},
 		},
 	}
-	// The wonders alone decide the kinds, and they are all in the raw table:
-	// reading it instead of BaseBuildings keeps this off the building
-	// normalizers (TestTechKindsNeedOnlyTheRawWonders).
-	kinds := TechKinds(techs, baseBuildingsRaw())
-	return fillTechArt(normalizeResearchCosts(normalizeResearchTicks(techs, kinds), kinds))
 }
 
 // TechByKey returns a map of key -> TechDef
