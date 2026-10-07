@@ -62,6 +62,17 @@ func (tm *ToastManager) GetCurrent() string { return tm.CurrentFor(0) }
 
 // CurrentFor is GetCurrent for a toast bar w cells wide (0: any width).
 func (tm *ToastManager) CurrentFor(w int) string {
+	text, fit := tm.onShow()
+	if fit != nil {
+		// Written outside the manager's lock: a toast that fits itself to
+		// the bar reads the theme and the account's settings.
+		return fit(w)
+	}
+	return text
+}
+
+// onShow is the toast on show: its text, or the function that writes it.
+func (tm *ToastManager) onShow() (text string, fit func(w int) string) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -80,12 +91,12 @@ func (tm *ToastManager) CurrentFor(w int) string {
 	}
 
 	if tm.current == nil {
-		return ""
+		return "", nil
 	}
 	if tm.current.Fit != nil {
-		return tm.current.Fit(w)
+		return "", tm.current.Fit
 	}
-	return fmt.Sprintf("[%s]%s[-]", tm.current.Color, tm.current.Message)
+	return fmt.Sprintf("[%s]%s[-]", tm.current.Color, tm.current.Message), nil
 }
 
 // chainToast is the milestone-chain toast: "Chain complete: Settlement Chain.
