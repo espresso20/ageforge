@@ -163,3 +163,35 @@ func TestBadgeLines(t *testing.T) {
 		t.Errorf("summary with nothing hidden %q", got)
 	}
 }
+
+// TestStatsPanelShowsCivilizationsStarted is B12 on screen: the Lifetime
+// section shows Civilizations Started, which is now counted, and nothing
+// about saves completed, which never was and is retired.
+func TestStatsPanelShowsCivilizationsStarted(t *testing.T) {
+	_, eng := mapTestDashboard(t, true)
+	if err := eng.StartNewNamedGame("run"); err != nil {
+		t.Fatal(err)
+	}
+	text := statsProvider(eng.GetState(), 0)
+	if !strings.Contains(text, "Civilizations started:[-]  1") {
+		t.Errorf("the Stats panel does not show one civilization started:\n%s", text)
+	}
+	if strings.Contains(strings.ToLower(text), "saves completed") {
+		t.Error("the Stats panel shows saves completed")
+	}
+
+	// The recover guard lists what an account holds: a civilization
+	// started counts, a stored saves_completed does not.
+	acct := eng.Account()
+	if got := accountHoldings(acct); !strings.Contains(got, "1 civilization started") {
+		t.Errorf("holdings %q do not mention the civilization started", got)
+	}
+	other, err := game.CreateAccount("Other Player")
+	if err != nil {
+		t.Fatal(err)
+	}
+	other.Stats.SavesCompleted = 3
+	if got := accountHoldings(other); got != "" {
+		t.Errorf("an account holding only a retired stat reads as holding %q", got)
+	}
+}

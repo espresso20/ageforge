@@ -18,10 +18,11 @@ data/
 └── accounts/
     └── <account_id>/
         ├── account.json         # that account's identity and account-wide progress
+        ├── badges.json          # that account's badges (once it has any)
         └── saves/               # that account's game saves
 ```
 
-The `data/active-account` pointer records which account is current. Each `data/accounts/<account_id>/` slot holds that account's `account.json` and its own `saves/` folder, so saves are **per-account** and never mix between accounts. (See [Saving & Loading](saving-and-loading.md) for the save layout.)
+The `data/active-account` pointer records which account is current. Each `data/accounts/<account_id>/` slot holds that account's `account.json`, its `badges.json` (see [Where badges are stored](#where-badges-are-stored)) and its own `saves/` folder, so saves are **per-account** and never mix between accounts. (See [Saving & Loading](saving-and-loading.md) for the save layout.)
 
 **Each account only ever writes to its own slot.** Switching, importing or recovering never writes one account's data into another account's files, whichever account is active at the time.
 
@@ -35,7 +36,7 @@ You can switch accounts during a game with `account switch <name>`. The game is 
 
 Older builds kept a single account at the top level (a flat `data/account.json` with saves in `data/saves/`). If the game finds that layout on first launch, it moves your account and its saves into their own `data/accounts/<id>/` slot and makes that account active. **Nothing is deleted**, and you don't have to do anything; your civilizations and unlocks come across intact. Just before the move, the game also copies your old flat data into `data/backups/pre-migration-<timestamp>/`, so your original files stay recoverable.
 
-An account from before [badges](#badges) is brought up the first time the game opens it. Nothing is lost: its lifetime stats, theme unlocks and prefs stay as they were, the four old achievements become their badges, and the badges its record already proves (an age it has reached, prestiges it has made) are added. None of that is announced, and it happens once. The file is written as version 2 (`"version": 2` in `account.json`). An older build of the game does not know about badges and reads a file that holds any as modified, so do not go back to one with an account you care about. Saves from before this version load as they are.
+An account from before [badges](#badges) gets its badges the first time this version opens it. Nothing is lost and `account.json` is left as it was: the four old achievements become their badges, and the badges its record already proves (an age it has reached, prestiges it has made) are added. None of that is announced, and it happens once. Saves from before this version load as they are.
 
 ---
 
@@ -76,7 +77,7 @@ From the panel:
 | `Enter` | **Switch** to the highlighted account (it becomes active; its saves show in the Load Game browser) |
 | `n` | **New account**: name and create a fresh account alongside your existing ones |
 | `e` | **Export** the highlighted account to a signed backup file |
-| `b` | **Backup** the highlighted account: a full copy of its slot (`account.json` + `saves/`) to `data/backups/` (see [Backups](#backups)) |
+| `b` | **Backup** the highlighted account: a full copy of its slot (`account.json`, `badges.json` and `saves/`) to `data/backups/` (see [Backups](#backups)) |
 | `i` | **Import** an account from a backup file |
 | `r` | Show a **recovery code** for restoring an identity (see [The recovery code](#the-recovery-code)) |
 | `w` | **Wipe** the highlighted account (permanent, behind a type-the-name confirm) |
@@ -142,6 +143,8 @@ To overwrite that account's progress entirely with the backup instead, add `repl
 account import /path/to/my-ageforge-backup.json replace
 ```
 
+An export made by a version from before badges has no badges in it. Importing one never removes badges, with or without `replace`: it says nothing about them, so the account's badges stay as they are.
+
 If the file is missing or has been tampered with, the import is refused with an error and your accounts are left unchanged. A backup of an account flagged **modified** keeps the flag, and passes it to the account it lands in.
 
 > **No server, no copy elsewhere.** You can only recover progress you exported. If a machine's `data/` folder is gone and you never exported, that account's earned progress is gone too; there is no cloud copy to pull back.
@@ -150,7 +153,7 @@ If the file is missing or has been tampered with, the import is refused with an 
 
 ## Backups
 
-A **backup** is a full copy of an account's slot on disk: its `account.json` **plus a recursive copy of that slot's `saves/` folder**. It holds more than an [export](#exporting-amp-importing-accounts). An export writes only the account-wide progress (unlocks, lifetime stats, achievements, prefs) into a single file and carries **no saves**, while a backup copies the whole slot, your games included.
+A **backup** is a full copy of an account's slot on disk: its `account.json` and `badges.json` **plus a recursive copy of that slot's `saves/` folder**. It holds more than an [export](#exporting-amp-importing-accounts). An export writes only the account-wide progress (unlocks, lifetime stats, badges, prefs) into a single file and carries **no saves**, while a backup copies the whole slot, your games included.
 
 The game makes a backup at three points:
 
@@ -165,6 +168,7 @@ data/
 └── backups/
     └── <name>-<id8>-<timestamp>/
         ├── account.json
+        ├── badges.json
         └── saves/
 ```
 
@@ -174,7 +178,7 @@ data/
 
 ### Restoring from a backup
 
-There's no restore command. A backup is just files, so you put them back by hand: copy the backup folder's `account.json` and `saves/` back into that account's slot at `data/accounts/<id>/`. The `<id8>` in the backup folder name is the start of the full `<id>`; the full ID is the slot's directory name under `data/accounts/`.
+There's no restore command. A backup is just files, so you put them back by hand: copy the backup folder's `account.json`, `badges.json` and `saves/` back into that account's slot at `data/accounts/<id>/`. The `<id8>` in the backup folder name is the start of the full `<id>`; the full ID is the slot's directory name under `data/accounts/`.
 
 ---
 
@@ -219,9 +223,10 @@ Some progress is **account-wide**: it builds up across *every* game you play on 
 | Lifetime stat | What it tracks |
 |---|---|
 | **Total Prestiges** | Every prestige you've completed on this account, across all its games |
+| **Civilizations Started** | Every civilization you've begun on this account: each new game, and the one that follows each prestige and each Succumb. Loading a game starts nothing |
 | **Highest Age Ever** | The furthest age any of this account's civilizations has reached. It only goes *up* |
 
-(These two also show for each account in the [Accounts panel](#the-accounts-panel), so you can compare your civilizations at a glance.)
+The **Stats** panel shows all three under **Lifetime (account)**. (Total Prestiges and Highest Age Ever also show for each account in the [Accounts panel](#the-accounts-panel), so you can compare your civilizations at a glance.)
 
 The account also records each prestige under the age it was made from (`prestiges_by_age` in the stats of `account.json`), so an early taste (a prestige from the Medieval Age to the Atomic Age) can be told from a full run (the Modern Age or deeper); see [Early Tastes and Full Runs](prestige.md#early-tastes-and-full-runs). No panel shows it, and Total Prestiges still counts every prestige, tastes included. Prestiges made before the account kept this record count only in the total. An export carries it, and an import keeps the higher count for each age.
 
@@ -265,8 +270,20 @@ A few things about how badges are counted:
 
 - **Building counts ignore selling and rebuilding.** A badge that counts buildings across your runs counts a copy only when it takes that building past the most you have built of it in the run, so selling a building and building it again adds nothing.
 - **The four old achievements are badges now.** First Prestige, Serial Reincarnator, Age of Iron and Into the Modern Age carry over, and an account that had them keeps them.
-- **A game changed with the developer console earns nothing.** The developer console is a testing tool. Once it changes a game, that game records nothing to the account: no badges, lifetime stats or theme unlocks. The game logs one line when that starts, and keeps the mark through saves, loads and prestiges until you start a new game.
-- **A modified game marks what it earns.** A badge earned in a save that was edited outside the game, or on an account whose file was, is listed as earned in a modified game and adds no points.
+- **The developer console does not block badges.** The developer console is a testing tool. A game it has changed is marked in its save, and the log says so once, but it still records to the account like any other game: if a badge's condition is met, the badge is earned. Unlocking the console earns a badge of its own.
+- **A modified game marks what it earns.** A badge earned in a save that was edited outside the game is listed as earned in a modified game and adds no points. The same goes for a badge earned on an account whose `account.json` was edited, and for every badge in a `badges.json` that was edited.
+
+### Where badges are stored
+
+Badges are kept in their own file, `badges.json`, beside `account.json` in the account's slot (`data/accounts/<id>/`). It holds the badges you have earned, the counts behind the ones that count across runs, and the days you have played. The game writes it the first time the account has a badge to keep.
+
+`account.json` did not change for badges, on purpose. If you also run a version of the game from before badges, it reads and writes `account.json` as it always did and leaves `badges.json` alone, so going back and forth between versions cannot mark an account as modified or cost it a badge. When this version next opens the account, it adds whatever the other version's play has proved since (an age reached, prestiges made) to your badges.
+
+The file is signed, and the signature covers the account ID:
+
+- A `badges.json` that was edited by hand, or copied in from another account, is flagged, and its badges are listed as earned in a modified game. That flag belongs to `badges.json` only; it never marks `account.json` as modified.
+- If `badges.json` is deleted or cannot be read, the game rebuilds what `account.json` proves (ages reached, prestiges made). Dates, counts and badges with no record there are gone, so keep an [export](#exporting-amp-importing-accounts) or a [backup](#backups).
+- An export carries the badge file inside it, and a backup copies it, so both bring your badges back.
 
 ---
 

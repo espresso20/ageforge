@@ -116,9 +116,8 @@ const (
 // counts: the kind alone ("prestige") or the kind and a subject
 // ("built.lineage.housing"). Only counters a badge names are kept.
 //
-// A run the developer console has changed earns nothing from these and
-// moves no counter (only the integrity badges are judged then). A forced
-// catastrophe is one the console forced, so it never counts either.
+// Nothing about the developer console changes any of this: a run a dev
+// command has changed reports, counts and earns like any other.
 //
 // BadgeEvBuilt and BadgeEvBuiltLineage are reported only for the buildings
 // a badge counts, so the run keeps build marks for those alone.
@@ -230,9 +229,8 @@ const (
 	// badges are not reported.
 	BadgeEvBadge = "badge_earned"
 
-	// The integrity events. They are reported whatever state the run is in,
-	// and like the day played they are about the session, not the run
-	// (BadgeSessionEvents).
+	// The integrity events. Like the day played they are about the session,
+	// not the run (BadgeSessionEvents).
 	//
 	// BadgeEvDevUnlocked: the developer console was unlocked.
 	BadgeEvDevUnlocked = "dev_unlocked"
@@ -697,7 +695,7 @@ func Badges() []BadgeDef {
 		{
 			Key: "special.hand_in_the_cookie_jar", Family: "special",
 			Name:  "Hand in the Cookie Jar",
-			Desc:  "Unlock the developer console. A run it changes earns nothing.",
+			Desc:  "Unlock the developer console.",
 			Scope: BadgeMoment, Event: BadgeEvDevUnlocked,
 			Reveal: BadgeReveal{Kind: BadgeSecret},
 			Proof:  BadgeProof{Kind: BadgeProofIntegrity},

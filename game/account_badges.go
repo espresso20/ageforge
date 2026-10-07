@@ -1,6 +1,12 @@
 package game
 
 import (
+	"bytes"
+	"crypto/hmac"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"sort"
 	"time"
@@ -8,14 +14,206 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// account_badges.go is the account's side of the badges: what it stores
-// (account.json version 2), how an older file becomes one, and how an event
-// is judged against it. Like the lifetime-stat hooks, judging is in memory
+// account_badges.go is the account's side of the badges: where they are
+// stored, how an account from before them gets its own, and how an event is
+// judged against it. Like the lifetime-stat hooks, judging is in memory
 // only: it takes the account's own lock, touches no file and calls nothing
 // on the engine, so the engine may call it under its write lock. The write
 // happens later, in FlushIfDirty.
+//
+// Storage. The badges, the counters behind them and the days played are in
+// a file of their own, badges.json, beside account.json in the account's
+// slot. account.json is not changed by any of this: it holds and signs
+// exactly what it did before badges, so a build of the game from before
+// them reads it, verifies it and writes it back as it always did, never
+// sees badges.json, and cannot mark a healthy account as modified. When
+// this build next loads the account it reconciles the two (ensureBadges):
+// whatever the account's record proves, an achievement the older build
+// earned included, is topped up in the badge file.
+//
+// The badge file is signed on its own, and the signature covers the account
+// ID, so it cannot be carried to another account. An edited badge file is
+// flagged (BadgesTampered) and its badges crossed; an edited account.json
+// flags the account as it always did. Neither flags the other.
 
-// BadgeEarned is one earned badge as account.json stores it.
+// badgeFileName is the badge file's name in an account's slot:
+// <root>/accounts/<account_id>/badges.json.
+const badgeFileName = "badges.json"
+
+// badgeFileVersion is the badge file's own schema version.
+const badgeFileVersion = 1
+
+// badgeFile is badges.json. An export carries one whole, as its BadgeStore.
+type badgeFile struct {
+	Version int `json:"version"`
+	// AccountID is the account the file belongs to. It is under the
+	// signature: a badge file found in another account's slot is treated
+	// as edited.
+	AccountID string                 `json:"account_id"`
+	Badges    map[string]BadgeEarned `json:"badges,omitempty"`
+	Counters  map[string]float64     `json:"counters,omitempty"`
+	Days      []string               `json:"days,omitempty"`
+	// Tampered is the file's sticky tamper mark (Account.BadgesTampered).
+	Tampered  bool   `json:"tampered,omitempty"`
+	Signature string `json:"_sig,omitempty"`
+}
+
+// signBadgeFile is the HMAC of the badge file with its signature zeroed:
+// the same construction as account.json's and a save's.
+func signBadgeFile(b *badgeFile) string {
+	payload := *b
+	payload.Signature = ""
+	data, _ := json.Marshal(&payload)
+	return hmacSign(data, saveHMACKey)
+}
+
+// verifyBadgeFile reports whether a badge file is as the game signed it. A
+// file with no signature is not: the game never wrote one unsigned.
+func verifyBadgeFile(b *badgeFile) bool {
+	return b.Signature != "" && hmac.Equal([]byte(b.Signature), []byte(signBadgeFile(b)))
+}
+
+// badgeFileLocked is the account's badges as a badge file, unsigned; nil
+// when there is nothing to store. It shares the account's maps: marshal it
+// before the lock is released. Callers hold a.mu (or own a).
+func (a *Account) badgeFileLocked() *badgeFile {
+	if len(a.Badges) == 0 && len(a.Counters) == 0 && len(a.Days) == 0 && !a.BadgesTampered {
+		return nil
+	}
+	b := &badgeFile{
+		Version:   badgeFileVersion,
+		AccountID: a.AccountID,
+		Badges:    a.Badges,
+		Counters:  a.Counters,
+		Days:      a.Days,
+		Tampered:  a.BadgesTampered,
+	}
+	b.Signature = signBadgeFile(b)
+	return b
+}
+
+// loadBadgeFile reads the badge file in dir into the account, after
+// account.json has given it its ID. It never writes.
+//
+//   - No file: the account has no badge store yet (it is from before
+//     badges, or has earned nothing). ensureBadges fills it from the record.
+//   - A file as the game signed it, for this account: taken as it is.
+//   - A file whose signature does not match, or signed for another account:
+//     taken, flagged (BadgesTampered), and every badge in it crossed. The
+//     next save writes the flag and the crosses, so they stick.
+//   - A file that does not parse: left where it is and ignored. The next
+//     save that has badges to write sets it aside as badges.json.corrupt.
+func (a *Account) loadBadgeFile(dir string) {
+	data, err := os.ReadFile(filepath.Join(dir, badgeFileName))
+	if err != nil {
+		a.badgeUnreadable = !os.IsNotExist(err)
+		return
+	}
+	a.badgeDisk = data
+	var b badgeFile
+	if err := json.Unmarshal(data, &b); err != nil {
+		a.badgeUnreadable = true
+		return
+	}
+	a.Badges, a.Counters, a.Days = b.Badges, b.Counters, b.Days
+	a.BadgesTampered = b.Tampered || b.AccountID != a.AccountID || !verifyBadgeFile(&b)
+	if a.BadgesTampered {
+		for key, e := range a.Badges {
+			e.Flags |= BadgeFlagCrossed
+			a.Badges[key] = e
+		}
+	}
+}
+
+// saveBadgeFile writes the badge file into dir, atomically, when the badges
+// differ from what the file holds. An account with no badges and no file
+// gets none. Callers hold a.mu (or own a); Save calls it.
+func (a *Account) saveBadgeFile(dir string) error {
+	b := a.badgeFileLocked()
+	if b == nil {
+		if a.badgeDisk == nil || a.badgeUnreadable {
+			return nil // nothing to store, and nothing of ours on disk to clear
+		}
+		// The store was emptied (an import that replaced it): write it empty.
+		b = &badgeFile{Version: badgeFileVersion, AccountID: a.AccountID}
+		b.Signature = signBadgeFile(b)
+	}
+	data, err := json.MarshalIndent(b, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal badges: %w", err)
+	}
+	if !a.badgeUnreadable && bytes.Equal(data, a.badgeDisk) {
+		return nil
+	}
+	path := filepath.Join(dir, badgeFileName)
+	if a.badgeUnreadable {
+		// Never overwrite a file we could not read: set it aside first.
+		if err := os.Rename(path, path+".corrupt"); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("the badge file is damaged and could not be set aside: %w", err)
+		}
+	}
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0644); err != nil {
+		return fmt.Errorf("failed to write badges: %w", err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		return fmt.Errorf("failed to finalize badges: %w", err)
+	}
+	a.badgeDisk, a.badgeUnreadable = data, false
+	return nil
+}
+
+// exportBadgeFileLocked is the badge file an export carries: always one,
+// signed, even when the account has no badges, so that an export with no
+// badge store can only be one from before badges. Callers hold a.mu.
+func (a *Account) exportBadgeFileLocked() *badgeFile {
+	if b := a.badgeFileLocked(); b != nil {
+		return b
+	}
+	b := &badgeFile{Version: badgeFileVersion, AccountID: a.AccountID}
+	b.Signature = signBadgeFile(b)
+	return b
+}
+
+// adoptBadgeFile is for an account that is being created in memory for a
+// slot that may already hold a badge file (its account.json was lost or
+// set aside, and the account is made again under the same name): the file
+// is read and folded into whatever the new account carries, so the next
+// save cannot write over badges it never loaded. Callers own a.
+func (a *Account) adoptBadgeFile() {
+	badges, counters, days, flagged := a.Badges, a.Counters, a.Days, a.BadgesTampered
+	a.Badges, a.Counters, a.Days, a.BadgesTampered = nil, nil, nil, false
+	a.loadBadgeFile(accountDir(a.AccountID))
+	a.Badges = mergeBadges(a.Badges, badges)
+	a.Counters = mergeCounters(a.Counters, counters)
+	a.Days = mergeDays(a.Days, days)
+	a.BadgesTampered = a.BadgesTampered || flagged
+}
+
+// takeBadgeStoreLocked folds the badge store an export carries into the
+// account. A merge keeps every badge either copy holds (the earlier of
+// two) and the larger of each counter; otherwise the account's store
+// becomes the export's. An export from before badges carries none (b is
+// nil): it says nothing about badges, so the account's are left as they
+// are, replace or not. A flagged store flags the account's, and a flagged
+// account's stays flagged. Callers hold a.mu (or own a).
+func (a *Account) takeBadgeStoreLocked(b *badgeFile, merge bool) {
+	if b == nil {
+		return
+	}
+	a.BadgesTampered = a.BadgesTampered || b.Tampered
+	if !merge {
+		a.Badges = mergeBadges(b.Badges, nil)
+		a.Counters = mergeCounters(b.Counters, nil)
+		a.Days = mergeDays(b.Days, nil)
+		return
+	}
+	a.Badges = mergeBadges(a.Badges, b.Badges)
+	a.Counters = mergeCounters(a.Counters, b.Counters)
+	a.Days = mergeDays(a.Days, b.Days)
+}
+
+// BadgeEarned is one earned badge as the badge file stores it.
 type BadgeEarned struct {
 	// At is when it was earned, in Unix seconds. 0 means before badges were
 	// dated: it came over from an account achievement, or the account's
@@ -28,8 +226,8 @@ type BadgeEarned struct {
 }
 
 // BadgeFlagCrossed marks a badge earned in a save edited outside the game,
-// or on an account whose file was. It shows struck through and adds no
-// points.
+// on an account whose file was, or held in a badge file that was. It shows
+// struck through and adds no points.
 const BadgeFlagCrossed = 1
 
 // maxAccountDays is how many check-in days the account keeps: enough for
@@ -55,17 +253,12 @@ func (a *Account) judge(book *badgeBook, ev Event, ctx badgeCtx) {
 const maxBadgeChain = 8
 
 func (a *Account) judgeLocked(book *badgeBook, ev Event, ctx badgeCtx, depth int) {
-	if ctx.clean {
-		a.countLocked(book, ev.Kind, ev.amount(), ctx, depth)
-		if ev.Subject != "" {
-			a.countLocked(book, ev.Kind+"."+ev.Subject, ev.amount(), ctx, depth)
-		}
+	a.countLocked(book, ev.Kind, ev.amount(), ctx, depth)
+	if ev.Subject != "" {
+		a.countLocked(book, ev.Kind+"."+ev.Subject, ev.amount(), ctx, depth)
 	}
 	for _, i := range book.byEvent[ev.Kind] {
 		def := &book.defs[i]
-		if !ctx.clean && !def.Integrity() {
-			continue
-		}
 		if a.earnedLocked(def.Key) || !a.meetsLocked(def, ev, ctx) {
 			continue
 		}
@@ -155,11 +348,23 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 	if !silent {
 		e.At, e.Run = time.Now().Unix(), ctx.run
 	}
-	if ctx.crossed || a.Tampered {
+	if ctx.crossed || a.Tampered || a.BadgesTampered {
 		e.Flags |= BadgeFlagCrossed
 	}
 	a.Badges[def.Key] = e
 	a.dirty = true
+	// A badge that was an account achievement before badges keeps its place in
+	// that list too, so a build from before badges shows what this one earned.
+	// Not a crossed one: account.json has no way to mark it, and the list is
+	// what the badges are rebuilt from if the badge file is lost, so a crossed
+	// badge written there would come back clean.
+	if e.Flags&BadgeFlagCrossed == 0 {
+		for _, old := range def.Aliases {
+			if !slices.Contains(a.Achievements, old) {
+				a.Achievements = append(a.Achievements, old)
+			}
+		}
+	}
 	// A theme the badge gives joins the account's unlocked themes.
 	if t := def.Reward.Theme; t != "" && !a.hasThemeLocked(t) {
 		a.Unlocks.Themes = append(a.Unlocks.Themes, t)
@@ -170,15 +375,13 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 	if def.Integrity() || depth >= maxBadgeChain {
 		return
 	}
-	next := ctx
-	next.clean = true
 	if silent {
 		// A badge the record proved leads only to others it proves.
 		a.countSilentLocked(book, config.BadgeEvBadge, depth)
 		a.countSilentLocked(book, config.BadgeEvBadge+"."+def.Family, depth)
 		return
 	}
-	a.judgeLocked(book, Event{Kind: config.BadgeEvBadge, Subject: def.Family}, next, depth+1)
+	a.judgeLocked(book, Event{Kind: config.BadgeEvBadge, Subject: def.Family}, ctx, depth+1)
 }
 
 // countSilentLocked is countLocked for a silent grant: what it reaches is
@@ -211,20 +414,22 @@ func (a *Account) drainEarned() []string {
 	return out
 }
 
-// ensureBadges brings the account up to the ruleset's badges and reports
-// whether it changed anything. It is what turns a version 1 file into a
-// version 2 one, and it is safe to run on every load: a second run changes
-// nothing.
+// ensureBadges reconciles the account's badges with its record, under the
+// ruleset's badges, and reports whether it changed anything. It is what
+// gives an account from before badges its badge file, and what picks up
+// whatever a build from before badges did to account.json since. It is
+// safe to run on every load: a second run changes nothing.
 //
-//   - The four account achievements become their badges (each badge lists
-//     the key it had as an alias). The old list stays in the file.
+//   - The four account achievements are their badges (each badge lists the
+//     key it had as an alias). The list stays in account.json.
 //   - The lifetime stats the account already kept seed the counters that
 //     continue them (prestiges).
 //   - What the record already proves is granted: the badge of every age up
 //     to the highest reached, and every ladder rung a counter has passed.
 //
 // Everything it grants is silent: undated, and no toast. A badge granted on
-// an account flagged as edited is crossed, like any other earned there.
+// an account flagged as edited, or into a badge file flagged as edited, is
+// crossed, like any other earned there; on a healthy account nothing is.
 // In memory only; the caller flushes.
 func (a *Account) ensureBadges(book *badgeBook) bool {
 	a.mu.Lock()
@@ -234,10 +439,6 @@ func (a *Account) ensureBadges(book *badgeBook) bool {
 
 func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 	changed := false
-	if a.Version < accountSchemaVersion {
-		a.Version = accountSchemaVersion
-		changed = true
-	}
 	grant := func(def *config.BadgeDef) {
 		if def != nil && !a.earnedLocked(def.Key) {
 			a.grantLocked(book, def, badgeCtx{}, true, 0)

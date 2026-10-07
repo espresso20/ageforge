@@ -329,16 +329,19 @@ func TestFashionablyLate(t *testing.T) {
 	}
 }
 
-// TestDevTouchedRunEarnsNoBadges: a run the developer console changed earns
-// nothing and moves no counter, and says nothing in the run's facts that a
-// clean run would not.
-func TestDevTouchedRunEarnsNoBadges(t *testing.T) {
+// TestDevTouchedRunEarnsBadges: a run the developer console changed earns
+// like any other. The game watches what happens; if a badge's condition is
+// met, the badge is earned, counted and announced, uncrossed.
+func TestDevTouchedRunEarnsBadges(t *testing.T) {
 	isolateAccountDir(t)
 	withDevMode(t)
 	ge, acct := devEngine(t, "Dev Tester")
 
 	if out := DevExecCommand("/give food 5", ge); !strings.Contains(out, "gave") {
 		t.Fatalf("/give: %q", out)
+	}
+	if !ge.GetState().DevTouched {
+		t.Fatal("precondition: the dev command did not mark the run")
 	}
 	advanceTo(ge, "stone_age")
 	for i := 0; i < 20; i++ {
@@ -348,18 +351,32 @@ func TestDevTouchedRunEarnsNoBadges(t *testing.T) {
 	ge.noteSold("hut", 150)
 	ge.mu.Unlock()
 	prestigeNow(t, ge)
-	if earned := acct.EarnedBadges(); len(earned) != 0 {
-		t.Errorf("a dev-touched run earned badges: %v", earned)
+
+	want := []string{badgeStone, badgePrestige1, badgeHousing1, badgeSale}
+	slices.Sort(want)
+	if earned := acct.EarnedBadges(); !slices.Equal(earned, want) {
+		t.Errorf("a dev-touched run earned %v, want %v", earned, want)
 	}
-	assertNoRecords(t, acct)
-	if pending := ge.DrainEarnedBadges(); len(pending) != 0 {
-		t.Errorf("a dev-touched run queued a toast: %+v", pending)
+	for _, key := range acct.EarnedBadges() {
+		if e := acct.Badges[key]; e.At == 0 || e.Flags != 0 {
+			t.Errorf("%s earned in a dev-touched run is %+v, want dated and uncrossed", key, e)
+		}
+	}
+	if got := counter(acct, config.BadgeEvBuiltLineage+".housing"); got != 20 {
+		t.Errorf("the housing counter is %v, want 20", got)
+	}
+	stats, _ := acct.LifetimeStats()
+	if stats.TotalPrestiges != 1 || stats.HighestAge != "stone_age" {
+		t.Errorf("lifetime stats from a dev-touched run: %+v", stats)
+	}
+	if pending := ge.DrainEarnedBadges(); len(pending) != len(want) {
+		t.Errorf("%d toasts queued, want %d", len(pending), len(want))
 	}
 }
 
-// TestCookieJar: unlocking the developer console is the one thing the
-// console earns. The badge is worth nothing, counts toward nothing, and is
-// listed only once earned.
+// TestCookieJar: unlocking the developer console earns its own badge. The
+// badge is worth nothing, counts toward nothing, and is listed only once
+// earned.
 func TestCookieJar(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada")
@@ -382,14 +399,16 @@ func TestCookieJar(t *testing.T) {
 	if after != before {
 		t.Errorf("an integrity badge moved the totals: before %+v, after %+v", before, after)
 	}
-	// It is earned even in a run the console has already changed.
+	// It is earned the same in a run the console has already changed, and
+	// unlocking it twice earns it once.
 	isolateAccountDir(t)
 	withDevMode(t)
 	ge2, acct2 := devEngine(t, "Bea")
 	DevExecCommand("/fill", ge2)
 	ge2.NoteDevUnlocked()
+	ge2.NoteDevUnlocked()
 	if got := acct2.EarnedBadges(); !slices.Equal(got, []string{badgeCookieJar}) {
-		t.Errorf("a dev-touched run's account holds %v, want only the cookie jar", got)
+		t.Errorf("after unlocking the console the account holds %v, want only the cookie jar", got)
 	}
 }
 
@@ -812,8 +831,7 @@ func TestEveryDeclaredEventIsReported(t *testing.T) {
 }
 
 // TestDayPlayedIsNotedOncePerDay: starting or loading a game notes the
-// calendar day on the account, once, and a run the developer console has
-// changed leaves no day.
+// calendar day on the account, once.
 func TestDayPlayedIsNotedOncePerDay(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada") // starts a game
@@ -840,23 +858,6 @@ func TestDayPlayedIsNotedOncePerDay(t *testing.T) {
 	ge.mu.RUnlock()
 	if tallied {
 		t.Error("the day was tallied in the run's facts")
-	}
-
-	// God mode left on marks a new game dev-touched from its first tick.
-	isolateAccountDir(t)
-	withDevMode(t)
-	other, err := CreateAccount("Bea")
-	if err != nil {
-		t.Fatal(err)
-	}
-	DevGodMode = true
-	ge2 := NewGameEngine()
-	ge2.SetAccount(other)
-	if err := ge2.StartNewNamedGame("godly"); err != nil {
-		t.Fatal(err)
-	}
-	if len(other.Days) != 0 {
-		t.Errorf("a dev-touched run noted a day on the account: %v", other.Days)
 	}
 }
 

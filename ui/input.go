@@ -1111,7 +1111,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		// Also take a full slot snapshot (account.json + saves/). A backup failure must not fail
 		// the export, so it only adds a line when it works.
 		if backupPath, bErr := engine.BackupAccount(acct.AccountID); bErr == nil {
-			lines = append(lines, fmt.Sprintf("Full backup (account.json and saves) written to %s.", backupPath))
+			lines = append(lines, fmt.Sprintf("Full backup (account files and saves) written to %s.", backupPath))
 		}
 		engine.NoteAccountExported(acct.AccountID)
 		// Info, not success: the path must reach the log, and the engine logs nothing here.
@@ -1129,7 +1129,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		var lines []string
 		lines = append(lines, fmt.Sprintf("Full backup saved to %s.", backupPath))
-		lines = append(lines, "It holds this account's account.json and every save in its slot. To restore,")
+		lines = append(lines, "It holds this account's files (account.json, badges.json) and every save in its slot. To restore,")
 		lines = append(lines, "copy the folder's contents back into data/accounts/<id>/. The 10 most recent backups per account are kept.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 
@@ -1329,9 +1329,6 @@ func accountHoldings(acct *game.Account) string {
 	}
 	if n := stats.CivilizationsStarted; n > 0 {
 		parts = append(parts, textfmt.Count(n, "civilization started", "civilizations started"))
-	}
-	if n := stats.SavesCompleted; n > 0 {
-		parts = append(parts, textfmt.Count(n, "save completed", "saves completed"))
 	}
 	return strings.Join(parts, ", ")
 }

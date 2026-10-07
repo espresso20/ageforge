@@ -354,7 +354,7 @@ func registry() []*Command {
 				{Name: "switch", Dangerous: true, Args: []Arg{{Kind: ArgAccount}},
 					Help: []Usage{{"account switch <name>", "Switch to an existing local account"}}},
 				sub("export", "account export [path]", "Back up this account's progress to a file", Arg{Kind: ArgText, Optional: true}),
-				sub("backup", "account backup", "Full snapshot (account.json + saves) to data/backups/"),
+				sub("backup", "account backup", "Full snapshot (account files + saves) to data/backups/"),
 				{Name: "import", Dangerous: true, Args: []Arg{{Kind: ArgText}, {Kind: ArgWord, Words: []string{"replace"}, Optional: true}},
 					Help: []Usage{{"account import <path> [replace]", "Restore an account from a backup file"}}},
 				{Name: "recover", Dangerous: true, Args: []Arg{{Kind: ArgText}, {Kind: ArgWord, Words: []string{"confirm"}, Optional: true}},

@@ -53,7 +53,8 @@ func statsProvider(state game.GameState, _ int) string {
 		if as.DisplayName != "" {
 			fmt.Fprintf(&sb, " [gray]Account:[-] [white]%s[-]\n", as.DisplayName)
 		}
-		fmt.Fprintf(&sb, " [gold]Total prestiges:[-]   %d\n", as.TotalPrestiges)
+		fmt.Fprintf(&sb, " [gold]Total prestiges:[-]        %d\n", as.TotalPrestiges)
+		fmt.Fprintf(&sb, " [gold]Civilizations started:[-]  %d\n", as.CivilizationsStarted)
 
 		highestAge := "none"
 		if as.HighestAge != "" {
@@ -62,7 +63,7 @@ func statsProvider(state game.GameState, _ int) string {
 				highestAge = def.Name
 			}
 		}
-		fmt.Fprintf(&sb, " [gold]Highest age ever:[-]  %s\n", highestAge)
+		fmt.Fprintf(&sb, " [gold]Highest age ever:[-]       %s\n", highestAge)
 
 		// Badges, earned and locked. The list comes with the spoiler rules
 		// applied, so it is written as it is.

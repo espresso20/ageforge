@@ -284,7 +284,8 @@ type GameEngine struct {
 
 	// devTouched marks a run the developer console has changed (markDevTouchedLocked).
 	// Saved with the run (GameSave.DevTouched), kept through prestige and Succumb, cleared
-	// only by a new game. A dev-touched run records nothing to the account.
+	// only by a new game. It is a record of what happened to the run and nothing more: it
+	// does not stop the run from earning anything on the account.
 	devTouched bool
 
 	// badges is the ruleset's badges indexed for judging, and runFacts what the run
@@ -978,10 +979,11 @@ func (ge *GameEngine) SetActiveParentName(name string) {
 // one's. The flush runs outside ge.mu (it does file I/O). Never call it from a Bus
 // handler or with ge.mu held.
 //
-// The account it installs is brought up to this ruleset's badges first (ensureBadges): a
-// version 1 file becomes version 2, its achievements become badges, and what its record
-// already proves is granted, all without a toast. If that changed anything the account is
-// saved at once, so the next load finds nothing to do.
+// The account it installs is reconciled with this ruleset's badges first (ensureBadges):
+// its old achievements are badges, and what its record already proves is granted (an
+// account from before badges, or one a build from before badges has played since), all
+// without a toast. If that changed anything the account is saved at once (its badge file;
+// account.json only if something in it changed), so the next load finds nothing to do.
 func (ge *GameEngine) SetAccount(a *Account) {
 	ge.mu.Lock()
 	prev := ge.account
@@ -1246,17 +1248,20 @@ func (ge *GameEngine) StartNewNamedGame(name string) error {
 	ge.runAccountID = ge.accountIDLocked()
 	ge.runOrphaned = false
 	ge.noteDayLocked()
+	ge.noteCivilizationStartedLocked()
 	ge.mu.Unlock()
 	return ge.SaveGame(name)
 }
 
-// accountForRecordsLocked returns the account this run's achievements and lifetime stats go
-// to, or nil when the run records nothing: accountless play, a run the developer console has
-// touched (devTouched), or a run that belongs to another account (the game still in memory
-// after an account switch). The dashboard's theme unlocks follow the same rule through
-// GameState.AccountRecords. Callers hold ge.mu.
+// accountForRecordsLocked returns the account this run's badges and lifetime stats go to,
+// or nil when the run records nothing: accountless play, or a run that belongs to another
+// account (the game still in memory after an account switch). The dashboard's theme unlocks
+// follow the same rule through GameState.AccountRecords. Callers hold ge.mu.
+//
+// Nothing about the developer console is here. Dev mode, and a run a dev command has
+// changed, record like any other: if a badge's condition is met, the badge is earned.
 func (ge *GameEngine) accountForRecordsLocked() *Account {
-	if ge.account == nil || ge.devTouched {
+	if ge.account == nil {
 		return nil
 	}
 	if ge.runAccountID != "" && ge.runAccountID != ge.account.AccountID {
@@ -1266,14 +1271,16 @@ func (ge *GameEngine) accountForRecordsLocked() *Account {
 }
 
 // devTouchedLogLine is logged the first time the developer console changes a run.
-const devTouchedLogLine = "Developer commands used: this run won't count toward account records."
+const devTouchedLogLine = "Developer commands used: this run is marked as changed by the developer console."
 
-// markDevTouchedLocked records that the developer console changed this run. From then on the
-// run records nothing to the account: no achievements, no lifetime stats and no theme
-// unlocks. The flag is saved with the run, kept through prestige and Succumb (a later run
-// inherits the prestige, upgrades and legacies a dev-touched run earned), and cleared only
-// by a new game. Dev mode alone does not set it: with the console unlocked but unused, a run
-// records as usual. The first mark logs one line. Callers hold ge.mu.
+// markDevTouchedLocked records that the developer console changed this run. The flag is
+// saved with the run, kept through prestige and Succumb (a later run inherits the prestige,
+// upgrades and legacies a dev-touched run earned), and cleared only by a new game. Dev mode
+// alone does not set it. The first mark logs one line. Callers hold ge.mu.
+//
+// The mark is a record, not a gate: a marked run earns badges, lifetime stats and theme
+// unlocks like any other. It is read back by GetState (GameState.DevTouched) and by the
+// save (signed like every field, so taking it out by hand marks the save modified).
 func (ge *GameEngine) markDevTouchedLocked() {
 	if ge.devTouched {
 		return
@@ -2248,7 +2255,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// engine; the persisting flush runs later in the autosave block (outside ge.mu).
 	// Order comes from the engine's ruleset (no locks) — the account stays
 	// config-free and ranks ages by this int rather than re-deriving order itself.
-	// A dev-touched run, or one that belongs to another account, records nothing.
+	// A run that belongs to another account records nothing.
 	if acct := ge.accountForRecordsLocked(); acct != nil {
 		reached, _ := ge.rules.Age(newAge)
 		acct.RecordAgeReached(newAge, reached.Order)
@@ -4301,11 +4308,13 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 
 	// Account lifetime stat (Phase 6): record the prestige IN-MEMORY only — we hold
 	// ge.mu here, so RecordPrestige must not do I/O or re-enter the engine. The write
-	// is deferred to FlushIfDirty in the autosave block (outside ge.mu). A dev-touched
-	// run, or one that belongs to another account, records nothing.
+	// is deferred to FlushIfDirty in the autosave block (outside ge.mu). A run that
+	// belongs to another account records nothing.
 	if acct := ge.accountForRecordsLocked(); acct != nil {
 		acct.RecordPrestigeFrom(prestigedFrom)
 	}
+	// The run that starts here is a new civilization.
+	ge.noteCivilizationStartedLocked()
 
 	// Roll for an Ancient Memory cache — prestige level is now >= 1, the age is
 	// primitive, and the flag was just cleared above, so this fresh run is eligible.
@@ -4617,7 +4626,6 @@ func (ge *GameEngine) GetState() GameState {
 				TotalPrestiges:       s.TotalPrestiges,
 				HighestAge:           s.HighestAge,
 				CivilizationsStarted: s.CivilizationsStarted,
-				SavesCompleted:       s.SavesCompleted,
 				Badges:               badges,
 				BadgeSummary:         summary,
 			}

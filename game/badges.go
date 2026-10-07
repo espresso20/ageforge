@@ -331,10 +331,9 @@ func (ge *GameEngine) noteSold(key string, n int) {
 }
 
 // judgeBadges judges the held account's badges on an event. A run that
-// does not record to the account (the developer console changed it) earns
-// nothing and moves no counter; only the integrity badges are judged then.
-// A run that belongs to another account is not this account's at all.
-// Callers hold ge.mu.
+// belongs to another account is not this account's at all; any other run
+// earns, one the developer console has changed included. Callers hold
+// ge.mu.
 func (ge *GameEngine) judgeBadges(ev Event) {
 	acct := ge.account
 	if acct == nil || ge.badges == nil {
@@ -351,8 +350,6 @@ func (ge *GameEngine) judgeBadges(ev Event) {
 
 // badgeCtx is what a badge is judged against besides the account itself.
 type badgeCtx struct {
-	// clean is false for a run the developer console has changed.
-	clean bool
 	// crossed marks what is earned in a save edited outside the game.
 	crossed bool
 	// run is the save the badge is earned in.
@@ -368,7 +365,6 @@ type badgeCtx struct {
 // badgeCtxLocked is the engine's side of a judgment. Callers hold ge.mu.
 func (ge *GameEngine) badgeCtxLocked(ev Event) badgeCtx {
 	return badgeCtx{
-		clean:   ge.accountForRecordsLocked() != nil,
 		crossed: ge.cheaterBadge,
 		run:     ge.activeSaveName,
 		age:     ge.age,
@@ -421,8 +417,7 @@ func (ge *GameEngine) ReportForTest(kind, subject string) {
 
 // noteDayLocked records today as a day the account was played on, when a
 // game is started or loaded, and reports the day when it is a new one. The
-// date is the player's own calendar day. A run that does not record to the
-// account leaves no day.
+// date is the player's own calendar day.
 //
 // The day belongs to the account, not to the run: it goes to the account's
 // badges only and is not tallied in the run's facts, which must be the same
@@ -437,7 +432,17 @@ func (ge *GameEngine) noteDayLocked() {
 	}
 }
 
-// accountDayLayout is how a day is written in account.json: "2026-10-07".
+// noteCivilizationStartedLocked counts a civilization started on the
+// account: a run began, as a new game or as the run after a prestige or a
+// Succumb. A run that does not record to the account is not counted.
+// Callers hold ge.mu for writing.
+func (ge *GameEngine) noteCivilizationStartedLocked() {
+	if acct := ge.accountForRecordsLocked(); acct != nil {
+		acct.RecordCivilizationStarted()
+	}
+}
+
+// accountDayLayout is how a day is written in the badge file: "2026-10-07".
 const accountDayLayout = "2006-01-02"
 
 // NoteAccountExported and NoteRecoveryShown report that the account with

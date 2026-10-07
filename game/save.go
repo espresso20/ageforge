@@ -148,10 +148,10 @@ type GameSave struct {
 	// Integrity fields
 	CheaterBadge bool `json:"cheater_badge,omitempty"`
 	EliteBadge   bool `json:"elite_badge,omitempty"`
-	// DevTouched marks a run the developer console changed: it records nothing to the
-	// account. Kept through prestige and Succumb, cleared by a new game. omitempty, so
-	// clean saves keep their bytes and signatures; signed like every field, so removing
-	// it by hand marks the save modified.
+	// DevTouched marks a run the developer console changed. It is a record only: such a
+	// run earns on the account like any other. Kept through prestige and Succumb, cleared
+	// by a new game. omitempty, so clean saves keep their bytes and signatures; signed
+	// like every field, so removing it by hand marks the save modified.
 	DevTouched bool `json:"dev_touched,omitempty"`
 	// RunFacts is what the run remembers about itself for the account's badges
 	// (badges.go): how often each event happened, and the build marks that keep a
@@ -950,11 +950,9 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.cheaterBadge = save.CheaterBadge
 	ge.eliteBadge = save.EliteBadge
 
-	// The dev console flag belongs to the run, like the badges. It is restored before
-	// the offline catch-up below, which can advance an age, so a dev-touched run stays
-	// out of the account's records then too. God mode still on from earlier play makes
-	// this run free to build, so it marks the run as well. The loaded run belongs to the
-	// held account from here on (its saves go to that account's slot).
+	// The dev console flag belongs to the run, like the badges. God mode still on from
+	// earlier play makes this run free to build, so it marks the run as well. The loaded
+	// run belongs to the held account from here on (its saves go to that account's slot).
 	ge.devTouched = save.DevTouched
 	if DevGodMode {
 		ge.markDevTouchedLocked()

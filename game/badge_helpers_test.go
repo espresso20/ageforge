@@ -42,7 +42,7 @@ func hasBadge(a *Account, key string) bool {
 // lifetime stat, then the report the badges are judged on.
 func recordPrestige(a *Account, from string) {
 	a.RecordPrestigeFrom(from)
-	a.judge(coreBook(), Event{Kind: config.BadgeEvPrestige, Subject: from}, badgeCtx{clean: true, age: from})
+	a.judge(coreBook(), Event{Kind: config.BadgeEvPrestige, Subject: from}, badgeCtx{age: from})
 }
 
 // recordAge is an age reached as the engine records it.
@@ -53,7 +53,7 @@ func recordAge(t *testing.T, a *Account, age string) {
 		t.Fatalf("unknown age %q", age)
 	}
 	a.RecordAgeReached(age, def.Order)
-	a.judge(coreBook(), Event{Kind: config.BadgeEvAgeReached, Subject: age}, badgeCtx{clean: true, age: age})
+	a.judge(coreBook(), Event{Kind: config.BadgeEvAgeReached, Subject: age}, badgeCtx{age: age})
 }
 
 // badgeKeys returns the keys of the badges in views that are earned.

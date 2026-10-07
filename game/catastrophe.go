@@ -620,6 +620,8 @@ func (ge *GameEngine) Succumb() error {
 	// The legacy kit: shares, the first age's template slice, old friends.
 	ge.startRunLegacyLocked()
 	ge.addLog("info", "Type [cyan]help[-] to rebuild.")
+	// The run that starts here is a new civilization.
+	ge.noteCivilizationStartedLocked()
 
 	// Roll for an Ancient Memory cache (only when this account has prestiged before;
 	// a first-ever Succumb with no prestige history offers nothing — see the gate).

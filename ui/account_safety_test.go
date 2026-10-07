@@ -198,32 +198,41 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	}
 }
 
-// TestDevTouchedRunUnlocksNoThemes is B3's theme leak: with dev mode on, `/age
-// galactic_age` completed the theme milestones on the next tick and the dashboard wrote
-// all five flavor themes to the account for good.
-func TestDevTouchedRunUnlocksNoThemes(t *testing.T) {
+// TestDevTouchedRunUnlocksThemes: a run the developer console has changed unlocks themes
+// like any other. With dev mode on, `/age galactic_age` completes the theme milestones on
+// the next tick, and the dashboard writes their themes to the account.
+func TestDevTouchedRunUnlocksThemes(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	prev := game.DevModeActive
 	game.DevModeActive = true
 	t.Cleanup(func() { game.DevModeActive = prev })
+	if err := eng.StartNewNamedGame("dev"); err != nil {
+		t.Fatal(err)
+	}
+	d.refresh() // the first sync, before anything is completed
 
 	if msg := game.DevExecCommand("/age galactic_age", eng); msg != "jumped to galactic_age" {
 		t.Fatalf("/age: %q", msg)
 	}
 	eng.StepTicks(1)
 	state := eng.GetState()
-	gated := 0
+	if !state.DevTouched || !state.AccountRecords {
+		t.Fatalf("after /age: DevTouched=%v AccountRecords=%v, want marked and still recording", state.DevTouched, state.AccountRecords)
+	}
+	var want []string
 	for _, key := range completedUnlockKeys(state.Milestones) {
-		if _, ok := theme.UnlockedBy(key); ok {
-			gated++
+		if themeKey, ok := theme.UnlockedBy(key); ok {
+			want = append(want, themeKey)
 		}
 	}
-	if gated == 0 {
+	if len(want) == 0 {
 		t.Fatal("precondition: no theme-gating milestone completed, so the test proves nothing")
 	}
 	d.refresh()
-	if got := eng.Account().UnlockedThemes(); len(got) != 0 {
-		t.Errorf("a dev-touched run unlocked themes on the account: %v", got)
+	for _, themeKey := range want {
+		if !eng.Account().HasTheme(themeKey) {
+			t.Errorf("a dev-touched run did not unlock the theme %q: account holds %v", themeKey, eng.Account().UnlockedThemes())
+		}
 	}
 }
 
@@ -240,7 +249,7 @@ func TestThemeUnlocksFollowAccountRecords(t *testing.T) {
 		Milestones: map[string]game.MilestoneInfo{key: {Completed: true}},
 	}}
 
-	d.processThemeUnlocks(state) // AccountRecords false: a dev-touched or foreign run
+	d.processThemeUnlocks(state) // AccountRecords false: another account's run
 	if eng.Account().HasTheme(themeKey) {
 		t.Fatal("a run that does not record to the account unlocked a theme")
 	}

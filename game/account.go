@@ -21,11 +21,11 @@ import (
 // accountSchemaVersion is the on-disk schema version of account.json. Bumped only
 // for migrations; readers default unknown/older fields to zero (the accounts design §3.3).
 //
-// Version 2 adds badges: the earned set, the lifetime counters behind them and the
-// check-in days (account_badges.go). Every new field is omitempty and signed, no old
-// key is renamed or removed, and a version 1 file is brought up by ensureBadges the
-// first time an engine holds it.
-const accountSchemaVersion = 2
+// account.json is exactly what every build since accounts shipped signs and verifies.
+// Badges do not live in it: they have a file of their own beside it (badgeFileName,
+// account_badges.go), so a build from before badges reads and writes account.json as it
+// always did and can never read it as modified.
+const accountSchemaVersion = 1
 
 // accountFileName is the fixed base name of the account file under the data dir.
 // v1 resolves a single account.json — no multi-profile layout yet (the accounts design §3.1).
@@ -225,10 +225,17 @@ type AccountUnlocks struct {
 // AccountStats holds lifetime, cross-save aggregates (DATA, the accounts design §3.3).
 // Phase 1 only round-trips these; the engine hooks land in Phase 6.
 type AccountStats struct {
-	TotalPrestiges       int    `json:"total_prestiges,omitempty"`
-	HighestAge           string `json:"highest_age,omitempty"`
-	CivilizationsStarted int    `json:"civilizations_started,omitempty"`
-	SavesCompleted       int    `json:"saves_completed,omitempty"`
+	TotalPrestiges int    `json:"total_prestiges,omitempty"`
+	HighestAge     string `json:"highest_age,omitempty"`
+	// CivilizationsStarted counts the runs begun on the account: every new game, and
+	// the run that follows each prestige and each Succumb (RecordCivilizationStarted).
+	CivilizationsStarted int `json:"civilizations_started,omitempty"`
+	// SavesCompleted is retired. Nothing ever counted it, and it has no meaning the
+	// game can stand behind: a save is never completed (there is no ending, and the
+	// closest thing, a prestige, is Total Prestiges). It is not shown anywhere. The
+	// field stays so that a file or an export that carries the key still verifies and
+	// keeps it.
+	SavesCompleted int `json:"saves_completed,omitempty"`
 	// PrestigesByAge counts prestiges by the age they were made from (Pacing
 	// v2), so badges can tell an early taste (the Medieval to the Atomic
 	// Age) from a full run (the Modern Age or deeper, PrestigeRunAge).
@@ -273,16 +280,24 @@ type Account struct {
 	// --- meta-progression (DATA) ---
 	Unlocks AccountUnlocks `json:"unlocks,omitempty"`
 	Stats   AccountStats   `json:"stats,omitempty"`
-	// Achievements is the version 1 list of account achievements. Nothing is added to
-	// it any more: the four became badges (each badge lists the key as an alias) and
-	// ensureBadges grants them from this list. It stays in the file as it was.
+	// Achievements is the list of account achievements a build from before badges
+	// keeps. The four became badges (each badge lists the key as an alias):
+	// ensureBadges grants a badge for a key found here, and earning such a badge
+	// adds its key here, so both kinds of build show the same thing.
 	Achievements []string `json:"achievements,omitempty"`
 	// Badges is the earned badges by key; Counters the lifetime counts badges are
 	// judged on (only the ones a badge names); Days the calendar days the account
-	// was played on. All version 2, all omitempty.
-	Badges   map[string]BadgeEarned `json:"badges,omitempty"`
-	Counters map[string]float64     `json:"counters,omitempty"`
-	Days     []string               `json:"days,omitempty"`
+	// was played on. They are NOT part of account.json (json:"-") or its signature:
+	// they are read from and written to the badge file beside it (account_badges.go).
+	Badges   map[string]BadgeEarned `json:"-"`
+	Counters map[string]float64     `json:"-"`
+	Days     []string               `json:"-"`
+	// BadgesTampered is the badge file's own tamper mark: its signature did not match,
+	// or it was signed for another account. Every badge in the file is then crossed,
+	// and so is every badge earned while it is set. It is saved in the badge file and
+	// sticks, as Tampered does for account.json. An edited badge file never flags
+	// account.json, and the other way round.
+	BadgesTampered bool `json:"-"`
 
 	// --- preferences (travel with the account) ---
 	Prefs AccountPrefs `json:"prefs,omitempty"`
@@ -317,6 +332,12 @@ type Account struct {
 	// it (GameEngine.DrainEarnedBadges) and writes the toast and the log line. Not
 	// saved: a badge earned just before the game closes is simply in the list.
 	pendingEarned []string
+
+	// badgeDisk is the badge file's bytes as last read or written (nil: no file), so
+	// Save rewrites it only when the badges changed. badgeUnreadable marks a file
+	// that would not parse: it is set aside, not overwritten, at the next write.
+	badgeDisk       []byte
+	badgeUnreadable bool
 
 	// mu guards the unlock/prefs reads and writes (and the Save inside the mutating
 	// methods): the account is read from the UI goroutine (HasTheme/ActiveTheme/
@@ -442,6 +463,7 @@ func LoadAccount() (*Account, bool, error) {
 		// Signature present but mismatched → tampered. Flag it, still load it.
 		acct.Tampered = true
 	}
+	acct.loadBadgeFile(filepath.Dir(path))
 	// Confirm the loaded account as active (the loaded id is authoritative over the pointer).
 	setActiveAccountID(acct.AccountID)
 	return &acct, true, nil
@@ -483,13 +505,18 @@ func CreateNamedAccount(name string) (*Account, error) {
 		acct.Unlocks = prior.Unlocks
 		acct.Stats = prior.Stats
 		acct.Achievements = append([]string(nil), prior.Achievements...)
+		// The badges come along too. They are signed again for the new ID when the
+		// account is saved: this is the one way a badge file changes owner.
 		acct.Badges = mergeBadges(prior.Badges, nil)
 		acct.Counters = mergeCounters(prior.Counters, nil)
 		acct.Days = mergeDays(prior.Days, nil)
+		acct.BadgesTampered = prior.BadgesTampered
 		acct.Prefs = prior.Prefs
 		// Carried data keeps its tamper flag: re-keying must not launder an edited file.
 		acct.Tampered = prior.Tampered
 	}
+	// And a badge file already in the slot the name leads to, if there is one.
+	acct.adoptBadgeFile()
 
 	// Switch the active account to the new name-derived id; Save writes into that
 	// account's own slot, <root>/accounts/<id>/account.json.
@@ -588,6 +615,7 @@ func loadAccountFromSlot(id string) (*Account, bool, error) {
 	if !verifyAccount(&acct) {
 		acct.Tampered = true
 	}
+	acct.loadBadgeFile(filepath.Dir(path))
 	return &acct, true, nil
 }
 
@@ -730,6 +758,8 @@ func CreateAccount(name string) (*Account, error) {
 		LastSeen:       now,
 		FreshlyCreated: true,
 	}
+	// A badge file left in the slot (its account.json was lost) is this account's.
+	acct.adoptBadgeFile()
 	// Make it active; Save writes into its own slot, <root>/accounts/<id>/account.json.
 	setActiveAccountID(id)
 	if err := os.MkdirAll(accountDir(id), 0755); err != nil {
@@ -894,12 +924,10 @@ func signAccount(a *Account) string {
 		Unlocks:      a.Unlocks,
 		Stats:        a.Stats,
 		Achievements: a.Achievements,
-		Badges:       a.Badges,
-		Counters:     a.Counters,
-		Days:         a.Days,
 		Prefs:        a.Prefs,
 		Tampered:     a.Tampered,
 		// Signature deliberately zero; FreshlyCreated/mu are json:"-"/unexported.
+		// The badges are not here: they are signed in their own file.
 	}
 	data, _ := json.Marshal(&payload)
 	return hmacSign(data, saveHMACKey)
@@ -936,6 +964,9 @@ func validAccountID(id string) bool {
 // Save signs the account with the shared HMAC helper and writes it atomically
 // (temp file + os.Rename) into the account's OWN slot, <root>/accounts/<AccountID>/,
 // creating it if missing. Mirrors SaveGame's write discipline (the accounts design §3.4).
+// It writes account.json, then the badge file beside it if the badges changed
+// (saveBadgeFile). The two are signed apart; if the second write fails or the game
+// stops between them, the next load tops the badges up from the account's record.
 //
 // It deliberately does not resolve through the active account: whichever account is
 // active, an account's data only ever lands in its own file. So an old account object
@@ -964,7 +995,8 @@ func (a *Account) Save() error {
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("failed to finalize account: %w", err)
 	}
-	return nil
+	// The badges go to their own file in the same slot, when they changed.
+	return a.saveBadgeFile(dir)
 }
 
 // LoadOrCreate resolves the active account (migrating a legacy flat layout, then reading
@@ -1030,6 +1062,7 @@ func LoadOrCreate() (*Account, error) {
 		// Signature present but mismatched → tampered. Flag it, still load it.
 		acct.Tampered = true
 	}
+	acct.loadBadgeFile(filepath.Dir(path))
 	// Established account loaded from its slot — confirm it as the active account.
 	setActiveAccountID(acct.AccountID)
 	return &acct, nil
@@ -1396,6 +1429,8 @@ func ImportRecoveryCode(code string) (*Account, error) {
 		// EMPTY data: identity only. Unlocks/Stats/Achievements/Prefs stay zero —
 		// progress is carried by export/import (Phase 5), not the recovery code.
 	}
+	// A badge file left in the slot (its account.json was lost) is this account's.
+	acct.adoptBadgeFile()
 	if err := acct.Save(); err != nil {
 		return nil, err
 	}
@@ -1435,14 +1470,14 @@ type progressExport struct {
 	Unlocks      AccountUnlocks `json:"unlocks,omitempty"`
 	Stats        AccountStats   `json:"stats,omitempty"`
 	Achievements []string       `json:"achievements,omitempty"`
-	// Badges, Counters and Days are the version 2 data (omitempty, signed), so an
-	// export from before them still verifies.
-	Badges    map[string]BadgeEarned `json:"badges,omitempty"`
-	Counters  map[string]float64     `json:"counters,omitempty"`
-	Days      []string               `json:"days,omitempty"`
-	Prefs     AccountPrefs           `json:"prefs,omitempty"`
-	Tampered  bool                   `json:"tampered,omitempty"`
-	Signature string                 `json:"_sig,omitempty"`
+	Prefs        AccountPrefs   `json:"prefs,omitempty"`
+	Tampered     bool           `json:"tampered,omitempty"`
+	Signature    string         `json:"_sig,omitempty"`
+	// BadgeStore is the account's badge file, carried whole with its own signature
+	// (which binds it to the account ID). It is NOT under Signature above: that one
+	// covers exactly what a build from before badges signs, so such a build still
+	// verifies and imports the export, and simply does not see this key.
+	BadgeStore *badgeFile `json:"badge_store,omitempty"`
 }
 
 // signProgressExport returns the HMAC-SHA256 hex of the export payload with Signature
@@ -1458,12 +1493,9 @@ func signProgressExport(p *progressExport) string {
 		Unlocks:      p.Unlocks,
 		Stats:        p.Stats,
 		Achievements: p.Achievements,
-		Badges:       p.Badges,
-		Counters:     p.Counters,
-		Days:         p.Days,
 		Prefs:        p.Prefs,
 		Tampered:     p.Tampered,
-		// Signature deliberately zero.
+		// Signature deliberately zero. BadgeStore is signed on its own.
 	}
 	data, _ := json.Marshal(&payload)
 	return hmacSign(data, saveHMACKey)
@@ -1486,11 +1518,9 @@ func (a *Account) ExportProgress() ([]byte, error) {
 		Unlocks:      a.Unlocks,
 		Stats:        a.Stats,
 		Achievements: a.Achievements,
-		Badges:       a.Badges,
-		Counters:     a.Counters,
-		Days:         a.Days,
 		Prefs:        a.Prefs,
 		Tampered:     a.Tampered,
+		BadgeStore:   a.exportBadgeFileLocked(),
 	}
 	exp.Signature = signProgressExport(&exp)
 
@@ -1558,6 +1588,11 @@ func decodeAccountExport(blob []byte) (*progressExport, error) {
 	if !validAccountID(exp.AccountID) {
 		return nil, fmt.Errorf("That progress export has an account ID the game cannot use, so it cannot be imported.")
 	}
+	// The badges it carries must be this account's and as the game signed them. An
+	// export is refused whole rather than imported in part.
+	if b := exp.BadgeStore; b != nil && (b.AccountID != exp.AccountID || !verifyBadgeFile(b)) {
+		return nil, fmt.Errorf("That progress export has been changed or damaged since it was made, so it cannot be imported.")
+	}
 	return &exp, nil
 }
 
@@ -1585,12 +1620,12 @@ func importExportToSlot(exp *progressExport, merge bool, book *badgeBook) (*Acco
 			Unlocks:      exp.Unlocks,
 			Stats:        exp.Stats,
 			Achievements: append([]string(nil), exp.Achievements...),
-			Badges:       mergeBadges(exp.Badges, nil),
-			Counters:     mergeCounters(exp.Counters, nil),
-			Days:         mergeDays(exp.Days, nil),
 			Prefs:        exp.Prefs,
 			Tampered:     exp.Tampered,
 		}
+		// With a badge file left in the slot, if any: the two are merged.
+		target.adoptBadgeFile()
+		target.takeBadgeStoreLocked(exp.BadgeStore, true)
 	} else {
 		target.applyExportLocked(exp, merge) // target is private to this call; no lock needed
 	}
@@ -1616,9 +1651,7 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 		a.Unlocks = exp.Unlocks
 		a.Stats = exp.Stats
 		a.Achievements = append([]string(nil), exp.Achievements...)
-		a.Badges = mergeBadges(exp.Badges, nil)
-		a.Counters = mergeCounters(exp.Counters, nil)
-		a.Days = mergeDays(exp.Days, nil)
+		a.takeBadgeStoreLocked(exp.BadgeStore, false)
 		a.Prefs = exp.Prefs
 		return
 	}
@@ -1627,9 +1660,7 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	a.Achievements = unionStrings(a.Achievements, exp.Achievements)
 	// Badges: every badge either copy holds, the earlier of two. Counters: the larger
 	// of each, never the sum, so importing your own backup doubles nothing.
-	a.Badges = mergeBadges(a.Badges, exp.Badges)
-	a.Counters = mergeCounters(a.Counters, exp.Counters)
-	a.Days = mergeDays(a.Days, exp.Days)
+	a.takeBadgeStoreLocked(exp.BadgeStore, true)
 	// Max each numeric lifetime stat — bests don't regress.
 	a.Stats.TotalPrestiges = maxInt(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
 	for _, age := range sortedKeys(exp.Stats.PrestigesByAge) {
@@ -1748,6 +1779,16 @@ func (a *Account) RecordPrestigeFrom(age string) {
 		}
 		a.Stats.PrestigesByAge[age]++
 	}
+	a.dirty = true
+}
+
+// RecordCivilizationStarted counts one more civilization started on the account: a run
+// began. IN-MEMORY ONLY (same discipline as RecordPrestige): the engine calls it under its
+// write lock when a new game starts and when a prestige or a Succumb starts the next run.
+func (a *Account) RecordCivilizationStarted() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Stats.CivilizationsStarted++
 	a.dirty = true
 }
 

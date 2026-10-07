@@ -783,9 +783,9 @@ func (d *Dashboard) refresh() {
 // process (idempotent regardless, since UnlockTheme is a no-op once owned).
 //
 // Only a run that records to the account grants themes (state.AccountRecords): not one
-// the developer console has touched, and not one that belongs to another account (the
-// game still in memory after an account switch, whose milestones are not this account's).
-// Such a run's keys are left unprocessed, so a clean run loaded later is still evaluated.
+// that belongs to another account (the game still in memory after an account switch,
+// whose milestones are not this account's). Such a run's keys are left unprocessed, so
+// the account's own run loaded later is still evaluated.
 func (d *Dashboard) processThemeUnlocks(state game.GameState) {
 	if !state.AccountRecords {
 		return

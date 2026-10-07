@@ -308,7 +308,7 @@ func (p *accountsPanel) doExport() {
 	// account is untouched.
 	backupLine := ""
 	if backupPath, bErr := p.engine.BackupAccount(s.AccountID); bErr == nil {
-		backupLine = fmt.Sprintf("\n\n[gold]Full backup (account.json + saves):[-]\n%s", backupPath)
+		backupLine = fmt.Sprintf("\n\n[gold]Full backup (account files + saves):[-]\n%s", backupPath)
 	}
 	msg := fmt.Sprintf(
 		"[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nbadges). Restore it with Import (i) on any machine.%s",
@@ -332,7 +332,7 @@ func (p *accountsPanel) doBackup() {
 		return
 	}
 	msg := fmt.Sprintf(
-		"[gold]Backed up %s[-]\n\n%s\n\nThis is a full snapshot: account.json plus every save in this\naccount's slot. Restore by copying the folder's contents back\ninto data/accounts/<id>/. Only the 10 most recent are kept.",
+		"[gold]Backed up %s[-]\n\n%s\n\nThis is a full snapshot: the account's files plus every save in this\naccount's slot. Restore by copying the folder's contents back\ninto data/accounts/<id>/. Only the 10 most recent are kept.",
 		displayNameOr(s), backupPath,
 	)
 	p.showMessage("Account backed up", msg)
