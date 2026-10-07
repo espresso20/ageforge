@@ -4,7 +4,44 @@ AgeForge spans 22 ages from primitive survival to transcendence. Each age unlock
 
 ## Wonder Requirement
 
-Each age unlocks exactly one wonder building. You must **build that wonder** before you can advance to the next age, on top of the resource and building requirements listed below. The age progress bar shows a red `✗ Wonder required: <name>` notice until it is complete. See [Wonders](wonders.md) for build costs and instructions.
+Each age unlocks exactly one wonder building. You must **build that wonder** before you can advance to the next age, on top of the resource and building requirements listed below. The age progress bar shows a red `✗ Wonder: <name>` notice until it is complete. See [Wonders](wonders.md) for build costs and instructions.
+
+## Keystone Techs
+
+From the Stone Age on, each age's wonder needs one technology of that age before it can be built: its **keystone**. The wonder's bank is open from the first tick of the age and fills while you research, by deposit and by overflow. Only `build <wonder>` waits for the tech. Since the next age needs the wonder, the keystone is the one tech an age asks of you, together with the techs it stands on. Everything else in the tree is your choice.
+
+| Age | Wonder | Keystone tech | It stands on |
+|---|---|---|---|
+| Primitive | Sacred Grove | none | |
+| Stone | Great Monolith | Stoneworking | Tool Making |
+| Bronze | Stonehenge | none yet | |
+| Iron | Colosseum | Mathematics | Primitive Writing |
+| Classical | Parthenon | Philosophy | Mathematics |
+| Medieval | Great Library | Theology | Philosophy |
+| Renaissance | Sistine Chapel | Patronage | Banking (Currency, Mathematics) |
+| Colonial | Grand Lighthouse | Cartography | Navigation |
+| Industrial | Crystal Palace | Industrialization | Steam Power (Steel Forging) |
+| Victorian | Eiffel Tower | Mass Production | Industrialization |
+| Electric | Hoover Dam | Power Distribution | Electrification |
+| Atomic | Particle Accelerator | Nuclear Fission | Power Distribution, Chemical Engineering |
+| Modern | Space Program | Satellite Technology | Rocketry, Advanced Electrics |
+| Information | Global Network | Internet | Computers, Satellite Technology |
+| Digital | World Simulation | Machine Learning | Internet, Cybersecurity |
+| Cyberpunk | Neon Citadel | Cybernetics | Neural Interface |
+| Fusion | Stellar Cradle | Fusion Power | Nuclear Fission, Cybernetics |
+| Space | Dyson Scaffold | Orbital Mechanics | Rocketry, Plasma Physics |
+| Interstellar | Warp Nexus | Warp Drive | Space Mining, Zero-G Manufacturing |
+| Galactic | Cosmic Beacon | Galactic Navigation | Warp Drive, Stellar Engineering |
+| Quantum | Reality Anchor | Quantum Mechanics | Antimatter Synthesis |
+| Transcendent | Singularity Core | Transcendence | Reality Manipulation |
+
+The Sacred Grove needs no tech, so nothing stands between a new game and the Stone Age. Stonehenge has no keystone yet: the tech it will stand on arrives with a later update.
+
+The age progress bar shows `✗ Keystone: <tech>` beside the wonder until the tech is researched, the Wonders panel and `wonder` show the keystone and whether it is done, and the Research panel marks every keystone with a ★. A wonder in your [build plan](plan.md) waits for its keystone and starts once it is researched.
+
+**No age asks for knowledge.** The requirements from the Stone Age to the Industrial Age used to include a knowledge amount, which had you saving the knowledge your research wanted. They are gone: an age's knowledge goes to research, and the keystone is what the advance needs of it. See [how research is priced](technologies.md#how-research-is-priced).
+
+**A game saved before keystones** keeps the age it was in exempt: there the wonder builds without its keystone, and the lock starts when you next advance. The log says so once, on the first load. Every tech you researched stays researched and every wonder you built stays built.
 
 ## Advancement Requirements
 
@@ -13,6 +50,9 @@ Every age can be finished, and an automated test checks this in every release. T
 - Every building requirement names a building you can build in the age you are advancing **from**, never an older one you can no longer build.
 - The last required copy of each building costs at most **half** the storage you can build by then (every storage building up to your current age at its build cap), so a full set of storage always leaves room to afford it.
 - Each part of the age's wonder fits in that storage too.
+- The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age, and each one's knowledge cost fits the knowledge storage you can build in that age with room to spare.
+- The keystone is affordable well inside the age: the knowledge it and the techs under it cost, the time to research them and the time to build the wonder fit inside the age's target length together, even for a run that researched nothing an earlier wonder did not need.
+- The cheapest tech of an age fits the knowledge storage you are sure to enter the age with, or does once you build one of the age's storage buildings.
 - Every resource a requirement asks for has a source in the age itself, even for a player who skipped every building no earlier requirement asked for.
 - A requirement in faith, food or culture is something a moderate economy makes within the age's target length, or can buy for a small share of it.
 
@@ -102,7 +142,6 @@ Starting age. No requirements.
 |---|---|
 | Food | 1K |
 | Wood | 1K |
-| Knowledge | 150 |
 | Huts | 10 |
 | Story Circles | 5 |
 
@@ -119,7 +158,6 @@ Starting age. No requirements.
 | Food | 4K |
 | Wood | 8K |
 | Stone | 4K |
-| Knowledge | 1.5K |
 | Longhouses | 15 |
 | Stone Pits | 5 |
 | Elders' Halls | 5 |
@@ -138,7 +176,6 @@ Starting age. No requirements.
 | Wood | 40K |
 | Stone | 16K |
 | Iron | 8K |
-| Knowledge | 20K |
 | Lumber Mills | 8 |
 | Quarries | 8 |
 | Scriptoria | 5 |
@@ -156,7 +193,6 @@ Starting age. No requirements.
 | Stone | 130K |
 | Iron | 26K |
 | Gold | 14K |
-| Knowledge | 35K |
 | Hunting Lodges | 15 |
 | Agoras | 12 |
 | Trading Posts | 10 |
@@ -174,7 +210,6 @@ Starting age. No requirements.
 | Stone | 220K |
 | Iron | 53K |
 | Gold | 35K |
-| Knowledge | 88K |
 | Merchant Quarters | 5 |
 | Libraries | 15 |
 | Military Academies | 15 |
@@ -192,7 +227,6 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Requirement | Amount |
 |---|---|
 | Gold | 180K |
-| Knowledge | 220K |
 | Steel | 880 |
 | Faith | 8.1K |
 | Monastery Libraries | 5 |
@@ -210,7 +244,6 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Requirement | Amount |
 |---|---|
 | Gold | 710K |
-| Knowledge | 30M |
 | Steel | 110K |
 | Culture | 300K |
 | Exchanges | 8 |
@@ -229,7 +262,6 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 |---|---|
 | Steel | 470K |
 | Gold | 3.8M |
-| Knowledge | 3M |
 | Plantations | 8 |
 | Ports | 10 |
 

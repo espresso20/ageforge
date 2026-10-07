@@ -537,6 +537,19 @@ func TestASecondSet(t *testing.T) {
 	if got := Core().TechKind("pottery"); got != config.TechOptional {
 		t.Errorf("the core set calls pottery %q: none of its own wonders requires it", got)
 	}
+	// The same goes for which wonder a tech is the keystone of, and which
+	// tech an age's wonder waits for.
+	if k.KeystoneOf("pottery") != wonder || k.Keystone("stone_age") != "pottery" || k.KeystoneOf("fire_mastery") != "" {
+		t.Errorf("with %q needing pottery: pottery is the keystone of %q, the Stone Age's keystone is %q, fire_mastery is the keystone of %q",
+			wonder, k.KeystoneOf("pottery"), k.Keystone("stone_age"), k.KeystoneOf("fire_mastery"))
+	}
+	if got := Core().KeystoneOf("pottery"); got != "" {
+		t.Errorf("the core set calls pottery the keystone of %q", got)
+	}
+	if Core().Keystone("stone_age") != "stoneworking" || Core().KeystoneOf("stoneworking") != wonder || Core().Keystone("primitive_age") != "" || Core().Keystone("no_such_age") != "" {
+		t.Errorf("the core set: the Stone Age's keystone is %q, Stoneworking is the keystone of %q, the Primitive Age's is %q",
+			Core().Keystone("stone_age"), Core().KeystoneOf("stoneworking"), Core().Keystone("primitive_age"))
+	}
 	if got := Core().TechKind("no_such_tech"); got != "" {
 		t.Errorf("an unknown tech has the kind %q, want none", got)
 	}

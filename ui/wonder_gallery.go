@@ -101,6 +101,8 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			if bs.WonderBankFull {
 				h ^= 997
 			}
+			// The keystone line: which tech, and whether it still locks.
+			h ^= hashKey(wonderKeystoneLine(state, current.key)) * 17
 			for res, amt := range bs.WonderBank {
 				h ^= hashKey(res) * uint64(amt+1)
 			}
@@ -193,11 +195,14 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 				fmt.Fprintf(&sb, "  [%s]%s %s %s / %s[-]\n", clr, game.ResourceName(k), bar, FormatNumber(banked), FormatNumber(need))
 			}
 			if bs.WonderBankFull {
-				fmt.Fprintf(&sb, "  [green]✓ The bank is full. Build it with: build %s[-]\n", current.key)
+				fmt.Fprintf(&sb, "  %s\n", wonderBuildLine(state, current.key))
 			} else {
 				fmt.Fprintf(&sb, "  [gray]%s[-]\n", wonderCollectHint())
 			}
 			fmt.Fprintf(&sb, "  %s\n", wonderOverflowLine(state.WonderOverflow))
+		}
+		if line := wonderKeystoneLine(state, current.key); line != "" {
+			fmt.Fprintf(&sb, "  %s\n", line)
 		}
 		// Era Mastery: a wonder builds in its own age, at that age's speed.
 		ticks := current.def.BuildTicks

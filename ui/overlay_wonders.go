@@ -42,6 +42,11 @@ func renderCurrentWonderSummary(state game.GameState) string {
 		fmt.Fprintf(&sb, "   %s%s\n", formatEffect(eff), capTag(state, eff, built, "-"))
 	}
 
+	// Its keystone tech, and whether it is researched
+	if line := wonderKeystoneLine(state, current.key); line != "" && !built {
+		fmt.Fprintf(&sb, "\n   %s\n", line)
+	}
+
 	// Bank progress if not built
 	if !built && hasBs {
 		fmt.Fprintf(&sb, "\n [cyan]Wonder bank:[-]\n")
@@ -70,7 +75,7 @@ func renderCurrentWonderSummary(state game.GameState) string {
 			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", clr, game.ResourceName(k), bar, FormatNumber(banked), FormatNumber(need))
 		}
 		if bs.WonderBankFull {
-			fmt.Fprintf(&sb, "   [green]✓ The bank is full. Build it with: build %s[-]\n", current.key)
+			fmt.Fprintf(&sb, "   %s\n", wonderBuildLine(state, current.key))
 		} else {
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", wonderCollectHint())
 		}
@@ -138,8 +143,11 @@ func wondersProvider(state game.GameState, _ int) string {
 			}
 		} else if unlocked {
 			if bs.WonderBankFull {
-				fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   [green](bank full, ready to build)[-]\n",
-					w.name, w.ageName)
+				ready := "[green](bank full, ready to build)[-]"
+				if bs.NeedsTech != "" {
+					ready = "[yellow](bank full, waiting for its keystone)[-]"
+				}
+				fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   %s\n", w.name, w.ageName, ready)
 			} else {
 				// Compute fill percentage
 				totalNeed, totalBanked := 0.0, 0.0
@@ -189,6 +197,9 @@ func wondersProvider(state game.GameState, _ int) string {
 					}
 				}
 				sb.WriteString("   [gray]Bank resources to build it: " + wonderCollectHint() + "[-]\n")
+			}
+			if line := wonderKeystoneLine(state, w.key); line != "" {
+				fmt.Fprintf(&sb, "   %s\n", line)
 			}
 			if w.def.Description != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)

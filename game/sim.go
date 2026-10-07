@@ -73,6 +73,23 @@ func (ge *GameEngine) SetGarrisonForTest(age string, n float64) {
 	ge.Resources.Add("soldiers", n-ge.Resources.Get("soldiers"))
 }
 
+// SetStockForTest sets what the engine holds of res to v (res unlocked, its
+// storage raised to fit). A test hook for other packages (the smoke bot's
+// research order tests, which read one decision from one snapshot); not
+// reachable from play.
+func (ge *GameEngine) SetStockForTest(res string, v float64) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if _, ok := ge.rules.Resource(res); !ok || v < 0 {
+		return
+	}
+	ge.Resources.UnlockResource(res)
+	if short := v - ge.Resources.GetStorage(res); short > 0 {
+		ge.Resources.AddStorage(res, short)
+	}
+	ge.Resources.Add(res, v-ge.Resources.Get(res))
+}
+
 // GrantTechsForTest marks techs as researched, as finishing each would, and
 // recalculates the rates: with no keys, every tech up to the current age.
 // A test hook for other packages (the panels that list capped bonuses); not
