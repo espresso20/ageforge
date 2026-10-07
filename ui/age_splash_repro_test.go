@@ -15,6 +15,7 @@ import (
 	"math"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -40,15 +41,29 @@ type reproHarness struct {
 	built map[string]int
 	// catsSeen counts catastrophe modals the sequence helper resolved.
 	catsSeen int
+	// loopExited is set by teardown once app.Run has returned: from then on
+	// nothing of this App reads game.DevModeActive, and it can be put back.
+	loopExited *atomic.Bool
 }
 
 func newReproHarness(t *testing.T) *reproHarness {
 	t.Helper()
-	// Written only once, before the first App exists, and never reset: a
-	// stopped App's event loop can still be draining a queued refresh (which
-	// reads DevModeActive) after app.Stop() returns.
-	if !game.DevModeActive {
+	// Dev mode is on for the harness and put back afterwards, so it does not
+	// leak into the tests that run after this one (it used to stay on for
+	// the rest of the package). The write back must wait for the App's event
+	// loop: a stopped App can still be draining a queued refresh, which
+	// reads DevModeActive, after app.Stop() returns. This cleanup is
+	// registered first, so it runs last, after teardown, and it only writes
+	// once teardown has seen app.Run return.
+	prevDev := game.DevModeActive
+	loopExited := &atomic.Bool{}
+	if !prevDev {
 		game.DevModeActive = true
+		t.Cleanup(func() {
+			if loopExited.Load() {
+				game.DevModeActive = prevDev
+			}
+		})
 	}
 
 	// Isolate the data root (account + saves) so the harness never touches a
@@ -67,7 +82,7 @@ func newReproHarness(t *testing.T) *reproHarness {
 	a.SetScreen(sim) // theme-wrapped; calls sim.Init()
 	sim.SetSize(200, 60)
 
-	h := &reproHarness{t: t, eng: eng, a: a, sim: sim, runErr: make(chan error, 1)}
+	h := &reproHarness{t: t, eng: eng, a: a, sim: sim, runErr: make(chan error, 1), loopExited: loopExited}
 	go func() { h.runErr <- a.Run() }()
 	// Registered after SetDataDirForTest, so (cleanups run last in, first
 	// out) it runs before the data dir is restored.
@@ -118,6 +133,7 @@ func (h *reproHarness) teardown() {
 	// Run returning means the loop is done.
 	select {
 	case <-h.runErr:
+		h.loopExited.Store(true)
 	case <-time.After(5 * time.Second):
 		h.t.Errorf("app.Run() did not return after Stop; its event loop could still touch the data dir")
 	}
@@ -612,5 +628,24 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	time.Sleep(600 * time.Millisecond) // one refresh so the status bar updates
 	if scr := h.screenText(); strings.Contains(scr, "Catastrophe pending") {
 		t.Errorf("pending badge still shown after Endure:\n%s", scr)
+	}
+}
+
+// TestReproHarnessPutsDevModeBack: the harness turns dev mode on and used to
+// leave it on for every test that ran after it in the package. It is put
+// back once the harness's App has stopped.
+func TestReproHarnessPutsDevModeBack(t *testing.T) {
+	prev := game.DevModeActive
+	game.DevModeActive = false
+	t.Cleanup(func() { game.DevModeActive = prev })
+
+	t.Run("harness", func(t *testing.T) {
+		newReproHarness(t)
+		if !game.DevModeActive {
+			t.Error("the harness runs with dev mode on")
+		}
+	})
+	if game.DevModeActive {
+		t.Error("dev mode is still on after the harness's test ended")
 	}
 }

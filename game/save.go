@@ -1235,6 +1235,25 @@ func ListSaves() ([]string, error) {
 	return saves, nil
 }
 
+// SavesOnSplash is what the main menu needs to know about the active account's saves
+// before any is loaded: whether there is one at all, and whether one carries a valid
+// forge master's proof. It looks at every save in the slot. (The menu used to look only
+// at the file named autosave, but a game is saved under the name it was started with, so
+// for a named game it found nothing: no elite line, and New game preselected over Load.)
+func SavesOnSplash() (exists, elite bool) {
+	names, err := ListSaves()
+	if err != nil {
+		return false, false
+	}
+	for _, name := range names {
+		exists = true
+		if _, e := PeekSaveBadges(name); e {
+			return true, true
+		}
+	}
+	return exists, false
+}
+
 // SaveInfo holds metadata about a save file, parsed from the save's JSON
 // header without loading the full engine state. Fields beyond Name/Timestamp/Age
 // drive the Load Game browser's detail pane.

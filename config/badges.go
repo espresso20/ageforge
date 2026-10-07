@@ -206,6 +206,23 @@ const (
 	BadgeEvSaveElite = "save_elite"
 )
 
+// BadgeEventKinds lists every event the game reports. A badge may be judged
+// on, and a counter may count, only these.
+func BadgeEventKinds() []string {
+	return []string{
+		BadgeEvTick, BadgeEvAgeReached, BadgeEvPrestige,
+		BadgeEvBuildingBuilt, BadgeEvBuilt, BadgeEvBuiltLineage, BadgeEvWonderRaised,
+		BadgeEvResearchDone, BadgeEvMilestone, BadgeEvChain,
+		BadgeEvBuildingSold, BadgeEvBuildingUpgraded, BadgeEvGathered, BadgeEvStarved,
+		BadgeEvEndured, BadgeEvSuccumbed, BadgeEvLastPassage,
+		BadgeEvHarbingerMet, BadgeEvHarbingerResolved, BadgeEvAppeased, BadgeEvBraced, BadgeEvInvited,
+		BadgeEvDeal, BadgeEvExpedition, BadgeEvFestival, BadgeEvBlackMarket,
+		BadgeEvMemoryAccepted, BadgeEvMemoryDeclined, BadgeEvEraEvent, BadgeEvAwakening,
+		BadgeEvMarketTrade, BadgeEvCivMet, BadgeEvBadge,
+		BadgeEvDevUnlocked, BadgeEvSaveModified, BadgeEvSaveElite,
+	}
+}
+
 // BadgeRevealKind says when a locked badge's name and description may be
 // shown. Until then it is a silhouette: the game (not the screen drawing
 // it) withholds the text.
@@ -216,8 +233,8 @@ const (
 	BadgeVisible BadgeRevealKind = iota
 	// BadgeRevealAtAge shows once the account has reached the age Key.
 	BadgeRevealAtAge
-	// BadgeRevealNextAge shows once the age Key is the next one, or
-	// reached: the Next Age goal names it already.
+	// BadgeRevealNextAge shows once the age Key has been the account's next
+	// age, or reached: the Next Age goal named it then.
 	BadgeRevealNextAge
 	// BadgeRevealOnCounter shows once the lifetime counter Key is above 0:
 	// a civilization met, a harbinger heard, an awakening seen.
@@ -593,7 +610,9 @@ func Badges() []BadgeDef {
 		{
 			Key: "special.hut_hoarder", Family: "special", Subject: "hut",
 			Name: "Hut Hoarder",
-			Desc: "Have 60 huts standing before you leave the Primitive Age. Each one costs more than the last.",
+			// The prices quoted are checked against the cost curve
+			// (TestHutHoarderQuotesRealPrices).
+			Desc: "Have 60 huts standing before you leave the Primitive Age. The 60th costs 18,956 wood, 1,354 times the first.",
 			Tier: BadgeGold, Rarity: BadgeEpic,
 			Scope: BadgeRun, Event: BadgeEvBuildingBuilt, InAge: "primitive_age",
 			Counter: "standing.hut", Threshold: 60,

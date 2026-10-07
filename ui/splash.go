@@ -22,8 +22,8 @@ var eliteMessages = []string{
 
 // CreateSplashPage creates the main menu splash screen.
 func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) tview.Primitive {
-	saveExists := game.SaveExists(game.AutosaveName)
-	_, eliteBadge := game.PeekSaveBadges(game.AutosaveName)
+	// Every save of the account, whatever its name (game.SavesOnSplash).
+	saveExists, eliteBadge := game.SavesOnSplash()
 	prestigeLevel := engine.Prestige.GetLevel()
 
 	// Animated starfield + title canvas (takes the upper portion of the screen)

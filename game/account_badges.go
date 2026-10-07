@@ -453,7 +453,7 @@ func (a *Account) revealedLocked(def *config.BadgeDef, sight AgeSight) bool {
 	case config.BadgeRevealAtAge:
 		return sight.Reached(def.Reveal.Key)
 	case config.BadgeRevealNextAge:
-		return sight.Age(def.Reveal.Key)
+		return sight.SeenNext(def.Reveal.Key)
 	case config.BadgeRevealOnCounter:
 		return a.Counters[def.Reveal.Key] > 0
 	}
