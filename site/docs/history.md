@@ -20,6 +20,8 @@ The game tracks and graphs seven metrics:
 
 Each metric gets its own braille line graph covering the whole stored history. Beside each graph is the current value, a trend arrow (↑ growing, ↓ shrinking, → stable), and the recorded min/max.
 
+<figure class="screen" data-screen="history"><figcaption>The Civilization History panel in the Bronze Age: population, food rate and knowledge rate over the last three thousand ticks.</figcaption></figure>
+
 **All production** is the bonus that counts: techs, wonders, milestones, monuments, events and boons added together and held to the cap, so it never reads above +200% (see [The all-production cap](resources.md#the-all-production-cap)). The Stats panel's Active Multipliers lists every source. Samples a save recorded before this change show only the milestone and epoch event part.
 
 ---

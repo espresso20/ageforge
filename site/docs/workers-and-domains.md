@@ -177,6 +177,8 @@ Use it in a food deficit (idle workers still eat, so `unassign` doesn't help) or
 - **Building slots**: filled slots over total slots across every worker building, with a bar and a percent, and the four buildings with the most open slots (or "All slots filled").
 - **By domain**: each domain with workers, its current class name and head count, and a bar per building showing workers over slots.
 
+<figure class="screen" data-screen="workers"><figcaption>The Workers panel in the Bronze Age: morale, food and housing, then the share of each domain with its workers over its slots.</figcaption></figure>
+
 On the accessible [themes](themes.md) the panel's greens and reds are blue and orange. The Workers box in the sidebar is always visible: population over housing, idle workers, housing left, food use and net food.
 
 ### Completion

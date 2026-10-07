@@ -8,6 +8,8 @@ When a catastrophe hits, nothing is destroyed yet. The game keeps running and th
 
 A window opens with the two choices, Endure and Succumb. Press E or S, or move between them with Tab or the arrow keys and press Enter. Endure is highlighted when the window opens, so a stray Enter chooses Endure. Esc closes the window without choosing, so you can look around first; the catastrophe stays pending.
 
+<figure class="screen" data-screen="catastrophe"><figcaption>The choice a catastrophe brings, here the Great Plague in the Iron Era: what Endure would cost with this garrison, and what Succumb would keep.</figcaption></figure>
+
 While a catastrophe is pending, the status bar shows a **☄ CATASTROPHE PENDING** badge, and the game refuses to advance to the next age or prestige. Type `catastrophe` to reopen the choice. The pending catastrophe is saved with your game, so if you close the game or come back after a long idle, the window opens again when the save loads.
 
 If a catastrophe strikes while the age-advance splash is on screen, the splash comes first. The catastrophe window opens once you dismiss the splash with any key, or when the splash times out after 20 seconds.

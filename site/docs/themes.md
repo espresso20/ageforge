@@ -26,6 +26,11 @@ Themes come in three groups: **Standard** (the default dark **Forge** and the li
 
 A theme paints the **whole surface**, text included: the page background, panels, borders, selection, text tiers, and the good / warn / bad colors. A light theme looks right on a dark terminal and a dark theme looks right on a light one, so you don't need to match your terminal's colors to the theme.
 
+<div class="screen-pair">
+<figure class="screen" data-screen="theme-forge"><figcaption>The Workers panel in Forge, the default theme.</figcaption></figure>
+<figure class="screen" data-screen="theme-daylight"><figcaption>The same panel in Daylight.</figcaption></figure>
+</div>
+
 A **truecolor** terminal is recommended for exact colors.
 
 ---

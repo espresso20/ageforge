@@ -47,6 +47,8 @@ A **news line** on the Map lists what happened since the save was loaded: buildi
 
 The roguelike style draws your settlement as a small glyph world. Your town grows out of your **real buildings**, quarter by quarter, with streets, walls, wonders and people walking the streets. The same save always grows the same town, and new buildings join the existing streets instead of reshuffling them.
 
+<figure class="screen" data-screen="map-roguelike"><figcaption>The roguelike map of a Bronze Age town: the palisade, the quarters inside it, the wonders named on their plots and the legend on the right.</figcaption></figure>
+
 The land comes from your save's seed: hills and forests, lakes and coasts ringed with shallows (`~`) round deeper water (`≈`), and rivers that wind from the high ground down to the sea or a lake. Your town always sits near a river.
 
 This age's **wonder** appears on its plot, under scaffolding, once you start it: bank some of its cost or queue its construction. Until then its plot stays empty.
@@ -117,6 +119,8 @@ The legend (what each glyph means) shows beside the map when there is room.
 ## Skyline
 
 The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has one **district for every age** you have lived through: the oldest in the west, the present in the east, and your build queue going up on the frontier the way your era builds: poles and stick frames in the first ages, timber scaffolding and wooden jib cranes from the Iron Age, tower cranes from the Industrial Age.
+
+<figure class="screen" data-screen="map-skyline"><figcaption>The same town in the skyline style: a district for each age so far, under the sky of that hour.</figcaption></figure>
 
 - **Windows light and chimneys smoke only where workers are staffed.** An unstaffed building stays dark.
 - **The sky** follows the game clock and the weather.

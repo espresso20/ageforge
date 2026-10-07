@@ -28,6 +28,8 @@ prestige
 
 This shows your current level, available points, how many legacy kit items you own, the points you would earn right now and what prestiging from the next age would pay instead (and how many more), and your [Era Mastery](#era-mastery): how fast the age you are in runs and which ages your next prestige would raise. Before the Modern Age it adds a note that a prestige now is an early taste. Before the Medieval Age it says where prestige opens and what a prestige there pays. To view the shop without committing:
 
+<figure class="screen" data-screen="prestige"><figcaption>Prestige has no panel of its own: the command answers in the log, read here in the Logs panel in the Medieval Age, where an early taste would pay 9 points.</figcaption></figure>
+
 ```
 prestige shop
 ```
