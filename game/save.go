@@ -1075,12 +1075,16 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Adopt the loaded save's lineage parent (empty for legacy/root saves).
 	ge.activeParentName = save.ParentName
 
-	// What the load itself says about the save, for the integrity badges.
+	// A day the account was played on, and what the load itself says about the
+	// save, for the integrity badges. These are facts about the session, not the
+	// run, so they go to the account only: loading a save must not change what
+	// the save says happened in it.
+	ge.noteDayLocked()
 	if ge.cheaterBadge {
-		ge.note(config.BadgeEvSaveModified, "")
+		ge.judgeBadges(Event{Kind: config.BadgeEvSaveModified})
 	}
 	if ge.eliteBadge {
-		ge.note(config.BadgeEvSaveElite, "")
+		ge.judgeBadges(Event{Kind: config.BadgeEvSaveElite})
 	}
 
 	// Apply offline progress for time since save

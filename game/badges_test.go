@@ -2,11 +2,15 @@ package game
 
 import (
 	"encoding/json"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
@@ -735,5 +739,182 @@ func TestEveryBadgePredicateIsKnown(t *testing.T) {
 		if def.Pred != "" && !slices.Contains(known, def.Pred) {
 			t.Errorf("%s asks for the predicate %q, which the engine does not have (%v)", def.Key, def.Pred, known)
 		}
+	}
+}
+
+// TestEveryDeclaredEventIsReported: config lists the events a badge may be
+// judged on. Each must be reported somewhere in the engine, or a badge on
+// it could never be earned; and the engine must report nothing config does
+// not list, or the guard would call a working badge unreachable.
+func TestEveryDeclaredEventIsReported(t *testing.T) {
+	fset := token.NewFileSet()
+	cfg, err := parser.ParseFile(fset, filepath.Join("..", "config", "badges.go"), nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The BadgeEv constants, by name and by value.
+	names := map[string]string{}
+	for _, decl := range cfg.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.CONST {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			vs := spec.(*ast.ValueSpec)
+			for i, name := range vs.Names {
+				if !strings.HasPrefix(name.Name, "BadgeEv") || i >= len(vs.Values) {
+					continue
+				}
+				if lit, ok := vs.Values[i].(*ast.BasicLit); ok {
+					names[name.Name] = strings.Trim(lit.Value, `"`)
+				}
+			}
+		}
+	}
+	if len(names) < 30 {
+		t.Fatalf("found only %d BadgeEv constants in config/badges.go", len(names))
+	}
+	listed := config.BadgeEventKinds()
+	for name, kind := range names {
+		if !slices.Contains(listed, kind) {
+			t.Errorf("config.%s (%q) is not in BadgeEventKinds", name, kind)
+		}
+	}
+	if len(listed) != len(names) {
+		t.Errorf("BadgeEventKinds lists %d events, config declares %d", len(listed), len(names))
+	}
+
+	// Every one is used in the engine's own code (test files left out).
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	used := map[string]bool{}
+	for _, f := range files {
+		if strings.HasSuffix(f, "_test.go") {
+			continue
+		}
+		src, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for name := range names {
+			if strings.Contains(string(src), "config."+name) {
+				used[name] = true
+			}
+		}
+	}
+	for _, name := range sortedKeys(names) {
+		if !used[name] {
+			t.Errorf("config.%s is declared but the engine never reports it", name)
+		}
+	}
+}
+
+// TestDayPlayedIsNotedOncePerDay: starting or loading a game notes the
+// calendar day on the account, once, and a run the developer console has
+// changed leaves no day.
+func TestDayPlayedIsNotedOncePerDay(t *testing.T) {
+	isolateAccountDir(t)
+	ge, acct := devEngine(t, "Ada") // starts a game
+	today := time.Now().Format(accountDayLayout)
+	if !slices.Equal(acct.Days, []string{today}) {
+		t.Fatalf("days after starting a game: %v, want [%s]", acct.Days, today)
+	}
+	if err := ge.SaveGame("run"); err != nil {
+		t.Fatal(err)
+	}
+	if err := ge.LoadGame("run"); err != nil {
+		t.Fatal(err)
+	}
+	if err := ge.StartNewNamedGame("again"); err != nil {
+		t.Fatal(err)
+	}
+	if len(acct.Days) != 1 {
+		t.Errorf("the same day was noted again: %v", acct.Days)
+	}
+	// The day is the account's, never the run's: the run's facts must read
+	// the same on any account and any date.
+	ge.mu.RLock()
+	_, tallied := ge.runFacts.Counts[config.BadgeEvDayPlayed]
+	ge.mu.RUnlock()
+	if tallied {
+		t.Error("the day was tallied in the run's facts")
+	}
+
+	// God mode left on marks a new game dev-touched from its first tick.
+	isolateAccountDir(t)
+	withDevMode(t)
+	other, err := CreateAccount("Bea")
+	if err != nil {
+		t.Fatal(err)
+	}
+	DevGodMode = true
+	ge2 := NewGameEngine()
+	ge2.SetAccount(other)
+	if err := ge2.StartNewNamedGame("godly"); err != nil {
+		t.Fatal(err)
+	}
+	if len(other.Days) != 0 {
+		t.Errorf("a dev-touched run noted a day on the account: %v", other.Days)
+	}
+}
+
+// TestBadgeThemeReward: a badge that gives a theme unlocks it on the
+// account when it is earned. On a ruleset with one more row.
+func TestBadgeThemeReward(t *testing.T) {
+	isolateAccountDir(t)
+	src := rules.FromConfig()
+	src.Badges = append(src.Badges, config.BadgeDef{
+		Key: "special.bronze_look", Family: "special", Name: "Bronze Look", Desc: "Reach the Stone Age.",
+		Tier: config.BadgeBronze, Scope: config.BadgeMoment, Event: config.BadgeEvAgeReached, Subject: "stone_age",
+		Reward: config.BadgeReward{Theme: "bronze"},
+		Proof:  config.StaticProof(config.BadgeRuleGate),
+	})
+	acct, err := CreateAccount("Ada")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ge := NewGameEngineWith(rules.Compile(src))
+	ge.SetAccount(acct)
+	if err := ge.StartNewNamedGame("run"); err != nil {
+		t.Fatal(err)
+	}
+	if acct.HasTheme("bronze") {
+		t.Fatal("precondition: the account already has the theme")
+	}
+	advanceTo(ge, "stone_age")
+	if !acct.HasTheme("bronze") {
+		t.Error("earning the badge did not unlock its theme")
+	}
+	advanceTo(ge, "stone_age")
+	if got := acct.UnlockedThemes(); len(got) != 1 {
+		t.Errorf("the theme is unlocked %d times: %v", len(got), got)
+	}
+}
+
+// TestSessionEventsStayOutOfTheRun: the events that are about the session
+// or the account are judged, and never tallied in the run's facts.
+func TestSessionEventsStayOutOfTheRun(t *testing.T) {
+	isolateAccountDir(t)
+	ge, acct := devEngine(t, "Ada")
+	ge.NoteDevUnlocked()
+	advanceTo(ge, "stone_age") // earns a badge
+	ge.StepTicks(3)
+	if !hasBadge(acct, badgeCookieJar) || !hasBadge(acct, badgeStone) {
+		t.Fatalf("precondition: %v", acct.EarnedBadges())
+	}
+	ge.mu.RLock()
+	facts := ge.runFacts.clone()
+	ge.mu.RUnlock()
+	for _, ev := range config.BadgeSessionEvents() {
+		for name := range facts.Counts {
+			if name == ev || strings.HasPrefix(name, ev+".") {
+				t.Errorf("the run's facts tally the session event %s: %v", ev, facts.Counts)
+			}
+		}
+	}
+	if facts.Counts[config.BadgeEvAgeReached] != 1 {
+		t.Errorf("the run's own events are tallied: %v", facts.Counts)
 	}
 }

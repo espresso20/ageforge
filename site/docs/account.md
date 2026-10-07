@@ -35,6 +35,8 @@ You can switch accounts during a game with `account switch <name>`. The game is 
 
 Older builds kept a single account at the top level (a flat `data/account.json` with saves in `data/saves/`). If the game finds that layout on first launch, it moves your account and its saves into their own `data/accounts/<id>/` slot and makes that account active. **Nothing is deleted**, and you don't have to do anything; your civilizations and unlocks come across intact. Just before the move, the game also copies your old flat data into `data/backups/pre-migration-<timestamp>/`, so your original files stay recoverable.
 
+An account from before [badges](#badges) is brought up the first time the game opens it. Nothing is lost: its lifetime stats, theme unlocks and prefs stay as they were, the four old achievements become their badges, and the badges its record already proves (an age it has reached, prestiges it has made) are added. None of that is announced, and it happens once. The file is written as version 2 (`"version": 2` in `account.json`). An older build of the game does not know about badges and reads a file that holds any as modified, so do not go back to one with an account you care about. Saves from before this version load as they are.
+
 ---
 
 ## Your account
@@ -48,7 +50,7 @@ The account holds two distinct things:
 | Part | What it is |
 |---|---|
 | **Identity** | Your chosen name and the account ID derived from it |
-| **Data** | Your earned account-wide progress (theme unlocks, lifetime stats, achievements) and your prefs: your theme, map style, map glyphs and mini map setting |
+| **Data** | Your earned account-wide progress (theme unlocks, lifetime stats, badges) and your prefs: your theme, map style, map glyphs and mini map setting |
 
 The split matters because the two halves are recovered very differently (see below). Your **identity** is carried by either your account name *or* the recovery code (both point at the same ID). The **data** is backed up separately with an account **export** (see [Exporting & importing accounts](#exporting-amp-importing-accounts)).
 
@@ -63,7 +65,7 @@ The main menu has an **Accounts** entry that opens a full-window panel listing *
 - the **display name**,
 - a **short ID** (the first part of the account ID),
 - the **highest age** that account has ever reached,
-- its **total prestiges**,
+- its **total prestiges** and how many **badges** it holds,
 - a **current** marker on the account that's active right now, and
 - a **modified** flag if that account's file was edited outside the game. The flag stays once it is set: saving the account again, deleting the flag from the file by hand, or exporting and importing the account does not clear it.
 
@@ -90,7 +92,7 @@ Each account has a backup of its **data** that is separate from its recovery cod
 
 | Backup | What it carries | How to keep it |
 |---|---|---|
-| **Account export** | The account's ID, name, theme unlocks, lifetime stats, achievements and prefs | Save the export file somewhere safe |
+| **Account export** | The account's ID, name, theme unlocks, lifetime stats, badges and prefs | Save the export file somewhere safe |
 | **Recovery code** | Identity only (the account ID) | Write down the short `AGEF-…` string |
 
 ### Exporting
@@ -101,7 +103,7 @@ From the Accounts panel press `e`, or run:
 account export
 ```
 
-This writes a **signed backup of the active account**. The file is **bound to its account ID**: it carries the account's ID, name, theme unlocks, lifetime stats, achievements and prefs, and **the signature covers the ID**, so a backup can't be passed off as a different account's. By default it's written as `account-<id8>-export.json` inside that account's own slot (`data/accounts/<id>/`). To choose your own location, pass a path:
+This writes a **signed backup of the active account**. The file is **bound to its account ID**: it carries the account's ID, name, theme unlocks, lifetime stats, badges (with the counts behind them) and prefs, and **the signature covers the ID**, so a backup can't be passed off as a different account's. By default it's written as `account-<id8>-export.json` inside that account's own slot (`data/accounts/<id>/`). To choose your own location, pass a path:
 
 ```
 account export /path/to/my-ageforge-backup.json
@@ -129,8 +131,9 @@ Import goes by the **account ID inside the backup**, and it always lands in **th
 By default the merge keeps the best of both:
 
 - **Theme unlocks** are combined, so importing an old backup never *removes* a theme you've unlocked since.
-- **Achievements** are combined.
-- **Lifetime stats** take the higher of the two values, so your bests never go down.
+- **Badges** are combined: you keep every badge either copy holds. For a badge both hold, the earlier date is kept.
+- **Lifetime stats** and the counts behind your badges take the higher of the two values, so your bests never go down. Counts are never added together, so importing your own backup twice changes nothing.
+- **Highest Age Ever** takes the later age of the two.
 - **Active theme** keeps your current choice if you have one, otherwise it takes the backup's.
 
 To overwrite that account's progress entirely with the backup instead, add `replace`:
@@ -201,7 +204,7 @@ The code holds **only your account ID plus a checksum**.
 | | Restored by the recovery code? |
 |---|---|
 | Your **identity** (account ID) | **Yes** |
-| Your earned **progress** (theme unlocks, lifetime stats, achievements) | **No** |
+| Your earned **progress** (theme unlocks, lifetime stats, badges) | **No** |
 
 The recovery code restores your **identity** across machines and reinstalls. It is **separate from a progress export and carries no progress**; the code is short because it holds only the identity.
 
@@ -209,7 +212,7 @@ To carry your earned progress between machines, use an account **export** (see [
 
 ---
 
-## Lifetime stats & achievements
+## Lifetime stats & badges
 
 Some progress is **account-wide**: it builds up across *every* game you play on that account and *every* prestige, not just your current run. It lives on the account, separate from the per-save Statistics that reset when you start over or prestige.
 
@@ -222,20 +225,48 @@ Some progress is **account-wide**: it builds up across *every* game you play on 
 
 The account also records each prestige under the age it was made from (`prestiges_by_age` in the stats of `account.json`), so an early taste (a prestige from the Medieval Age to the Atomic Age) can be told from a full run (the Modern Age or deeper); see [Early Tastes and Full Runs](prestige.md#early-tastes-and-full-runs). No panel shows it, and Total Prestiges still counts every prestige, tastes included. Prestiges made before the account kept this record count only in the total. An export carries it, and an import keeps the higher count for each age.
 
-**Achievements** are one-time, account-wide badges. Once unlocked, they stay unlocked; they stay with your account and travel in an export. The current set:
-
-| Achievement | Unlocks when |
-|---|---|
-| **First Prestige** | You complete your first prestige |
-| **Serial Reincarnator** | You reach 10 lifetime prestiges (early tastes count) |
-| **Age of Iron** | Any civilization reaches the Iron Age |
-| **Into the Modern Age** | Any civilization reaches the Modern Age |
-
-**Where to see them:** open the **Stats** panel (`stats`). Below the per-run Statistics there's a **Lifetime (Account)** section with your total prestiges, highest age ever reached, and the achievements you've unlocked. The game doesn't announce an achievement with a pop-up, so check the Stats panel to see what's unlocked.
-
 These stats update the moment you prestige or advance into a new age, and are saved to your account with the next autosave (and on a clean exit, or when you switch accounts), so a fresh prestige is never lost. They count for the account the game belongs to: a game started or loaded under one account never adds to another's.
 
-A game changed with the developer console (a testing tool) records nothing to the account: no achievements, lifetime stats or theme unlocks. The game logs one line when that starts, and the game keeps the mark through saves, loads and prestiges until you start a new game.
+### Badges
+
+A **badge** is a permanent mark on your account for something you did in a game: reaching an age, building enough of something across all your runs, or pulling off something specific in one run. A badge is earned once and kept for good. It stays with your account through every prestige and new game, and it travels in an export.
+
+Badges are separate from [milestones](milestones.md). A milestone belongs to one run: it pays a reward inside that run and starts over with the next. A badge belongs to the account and gives nothing inside a run, so the same game plays the same way whatever the account has earned.
+
+**When you earn one**, the game shows a toast and writes one line to the log.
+
+**To see them**, open the **Stats** panel (`stats`) and look under **Lifetime (account)**, or type:
+
+```
+account badges
+```
+
+Both list every badge you may see, by group:
+
+| Mark | Meaning |
+|---|---|
+| ★ | Earned |
+| ☆ | Not earned yet. The line says what it asks for, and a badge that counts across runs shows how far along you are |
+| ? | A secret badge. It shows a one-line hint and nothing else until you earn it |
+
+The first line counts them: for example `3 of 9 earned, 15 points, ??? hidden`. A badge about something you have not come across yet (an age you have not seen named, for one) stays out of the list and out of the "of" number until you get there. The game does not say how many are hidden until an account has reached the last age.
+
+Each badge has a tier, and a tier is worth points:
+
+| Tier | Points |
+|---|---|
+| Bronze | 5 |
+| Silver | 10 |
+| Gold | 25 |
+| Platinum | 50 |
+| Legendary | 100 |
+
+A few things about how badges are counted:
+
+- **Building counts ignore selling and rebuilding.** A badge that counts buildings across your runs counts a copy only when it takes that building past the most you have built of it in the run, so selling a building and building it again adds nothing.
+- **The four old achievements are badges now.** First Prestige, Serial Reincarnator, Age of Iron and Into the Modern Age carry over, and an account that had them keeps them.
+- **A game changed with the developer console earns nothing.** The developer console is a testing tool. Once it changes a game, that game records nothing to the account: no badges, lifetime stats or theme unlocks. The game logs one line when that starts, and keeps the mark through saves, loads and prestiges until you start a new game.
+- **A modified game marks what it earns.** A badge earned in a save that was edited outside the game, or on an account whose file was, is listed as earned in a modified game and adds no points.
 
 ---
 
@@ -260,7 +291,7 @@ This restores the identity in the code and switches to it. The account lands in 
 - If that account is **already on this machine**, the game opens it as it is, progress included.
 - If not, the game creates it with the ID only (no unlocks or stats; bring those back with an [import](#exporting-amp-importing-accounts)).
 
-**Recovering never overwrites an account**, including the one you are using: that account keeps everything in its own slot, and you can switch back to it with `account switch <name>` or from the Accounts panel. If the account you are using holds any progress (theme unlocks, achievements or lifetime stats), the command first says what it holds and asks you to run `account recover <code> confirm`. During a game, the game is saved to its account first and you go back to the main menu. Recovering the code of the account you are using does nothing.
+**Recovering never overwrites an account**, including the one you are using: that account keeps everything in its own slot, and you can switch back to it with `account switch <name>` or from the Accounts panel. If the account you are using holds any progress (theme unlocks, badges or lifetime stats), the command first says what it holds and asks you to run `account recover <code> confirm`. During a game, the game is saved to its account first and you go back to the main menu. Recovering the code of the account you are using does nothing.
 
 **Recovery forgives copying mistakes:**
 
@@ -274,7 +305,7 @@ So if you wrote it down by hand and your `0` looks like an `O`, it still works.
 
 ## Wiping an account
 
-If you want a clean slate for an account, with none of its old unlocks, stats or achievements, you can **wipe** it.
+If you want a clean slate for an account, with none of its old unlocks, stats or badges, you can **wipe** it.
 
 **Wipe Account** is in the **Accounts panel** (press `w` on the highlighted account). It is not a typed command: deleting an account is permanent, so it sits behind a confirm.
 
@@ -286,7 +317,7 @@ On confirmation, the wipe **permanently deletes** that account's:
 - **identity** (the account name and derived ID),
 - **theme unlocks**,
 - **lifetime stats**,
-- **achievements**, and
+- **badges**, and
 - **every save** in its slot.
 
 **This cannot be undone in the game**, and no server keeps a copy. The game [backs up](#backups) the slot, saves included, to `data/backups/` first; restoring that copy is manual. Otherwise the old identity comes back only if you wrote down its [recovery code](#the-recovery-code) beforehand, and its earned progress only if you [exported it](#exporting-amp-importing-accounts) first.

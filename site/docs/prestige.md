@@ -116,7 +116,7 @@ Prestige opens at the Medieval Age, but the points reward depth. A prestige from
   ```
 
   Once you have seen the Modern Age, in this run or an earlier one, the line names it: "and a run to the Modern Age pays 120 prestige points."
-- **Your account tells them apart.** Each prestige is recorded under the age it was made from (see [Lifetime stats & achievements](account.md#lifetime-stats-amp-achievements)). Total Prestiges still counts every prestige, tastes included.
+- **Your account tells them apart.** Each prestige is recorded under the age it was made from (see [Lifetime stats & badges](account.md#lifetime-stats-amp-badges)). Total Prestiges still counts every prestige, tastes included.
 
 ---
 

@@ -123,7 +123,7 @@ To delete one save, highlight it in the Load Game browser and press `d`; the gam
 
 To delete them all, choose **Delete all saves** (`x`) on the main menu. After you confirm, it deletes **every save of your active account**: the autosave, your named saves and every branch. The runs in them, and the prestige they carried, are gone. **No backup is made, and it cannot be undone.**
 
-Your account itself is kept: its name, theme unlocks, lifetime stats and achievements stay, and so do any backups already in `data/backups/`. Other accounts' saves are not touched. To keep a copy, back the account up first with `account backup` (or `b` in the Accounts panel).
+Your account itself is kept: its name, theme unlocks, lifetime stats and badges stay, and so do any backups already in `data/backups/`. Other accounts' saves are not touched. To keep a copy, back the account up first with `account backup` (or `b` in the Accounts panel).
 
 Compare **wiping an account** (`w` in the Accounts panel). A wipe deletes the account itself, identity and unlocks included, along with every save in its slot, but it backs the whole slot up to `data/backups/` first. See [Wiping an account](account.md#wiping-an-account).
 
@@ -131,7 +131,7 @@ Compare **wiping an account** (`w` in the Accounts panel). A wipe deletes the ac
 |---|---|---|
 | Where | Main menu (`x`) | Accounts panel (`w`), behind a type-the-name confirm |
 | Saves | Every save of the active account | Every save of that account |
-| Account name, unlocks, lifetime stats, achievements | Kept | Deleted |
+| Account name, unlocks, lifetime stats, badges | Kept | Deleted |
 | Backup first | No | Yes, to `data/backups/` |
 
 ---

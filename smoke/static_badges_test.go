@@ -151,6 +151,12 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 		{"a secret badge with no hint", sale, "existence", func(src *rules.Source) {
 			special(t, src, sale).Hint = ""
 		}},
+		{"a run fact about the session", sale, "existence", func(src *rules.Source) {
+			special(t, src, sale).When = []config.BadgeCond{{Fact: "run." + config.BadgeEvDayPlayed, Op: config.BadgeAtLeast, Value: 1}}
+		}},
+		{"a theme that does not exist", late, "existence", func(src *rules.Source) {
+			special(t, src, late).Reward = config.BadgeReward{Theme: "plaid"}
+		}},
 		{"an integrity badge with a tier", jar, "integrity", func(src *rules.Source) {
 			special(t, src, jar).Tier = config.BadgeGold
 		}},

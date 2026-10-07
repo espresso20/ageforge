@@ -160,6 +160,10 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 	}
 	a.Badges[def.Key] = e
 	a.dirty = true
+	// A theme the badge gives joins the account's unlocked themes.
+	if t := def.Reward.Theme; t != "" && !a.hasThemeLocked(t) {
+		a.Unlocks.Themes = append(a.Unlocks.Themes, t)
+	}
 	if !silent {
 		a.pendingEarned = append(a.pendingEarned, def.Key)
 	}

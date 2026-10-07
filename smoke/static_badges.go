@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // The Badge Covenant: every badge can be earned. Each badge states how
@@ -352,8 +353,14 @@ func (c *badgeCheck) exists(def config.BadgeDef, label string) {
 	fact := func(name string) {
 		switch {
 		case strings.HasPrefix(name, "run."):
-			if !kind(strings.TrimPrefix(name, "run.")) {
+			tally := strings.TrimPrefix(name, "run.")
+			if !kind(tally) {
 				miss(fmt.Sprintf("reads the run fact %q, which counts no event the game reports", name))
+			}
+			for _, ev := range config.BadgeSessionEvents() {
+				if tally == ev || strings.HasPrefix(tally, ev+".") {
+					miss(fmt.Sprintf("reads the run fact %q, but %s is about the session, not the run, and is never tallied in one", name, ev))
+				}
 			}
 		case strings.HasPrefix(name, "life."):
 			if !kind(strings.TrimPrefix(name, "life.")) {
@@ -400,6 +407,11 @@ func (c *badgeCheck) exists(def config.BadgeDef, label string) {
 	}
 	if def.Pred != "" && !slices.Contains(c.preds, def.Pred) {
 		miss(fmt.Sprintf("asks for the predicate %q, which the engine does not have", def.Pred))
+	}
+	if t := def.Reward.Theme; t != "" {
+		if _, ok := theme.ByKey(t); !ok {
+			c.fail(def.Key, "existence", fmt.Sprintf("%s gives the theme %q, which does not exist.", label, t))
+		}
 	}
 	switch def.Reveal.Kind {
 	case config.BadgeRevealAtAge, config.BadgeRevealNextAge:

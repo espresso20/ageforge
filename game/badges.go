@@ -3,6 +3,7 @@ package game
 import (
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
@@ -416,12 +417,34 @@ func (ge *GameEngine) ReportForTest(kind, subject string) {
 	ge.note(kind, subject)
 }
 
+// noteDayLocked records today as a day the account was played on, when a
+// game is started or loaded, and reports the day when it is a new one. The
+// date is the player's own calendar day. A run that does not record to the
+// account leaves no day.
+//
+// The day belongs to the account, not to the run: it goes to the account's
+// badges only and is not tallied in the run's facts, which must be the same
+// on any account and on any date. Callers hold ge.mu for writing.
+func (ge *GameEngine) noteDayLocked() {
+	acct := ge.accountForRecordsLocked()
+	if acct == nil {
+		return
+	}
+	if acct.noteDay(time.Now().Format(accountDayLayout)) {
+		ge.judgeBadges(Event{Kind: config.BadgeEvDayPlayed})
+	}
+}
+
+// accountDayLayout is how a day is written in account.json: "2026-10-07".
+const accountDayLayout = "2006-01-02"
+
 // NoteDevUnlocked reports that the developer console was unlocked. The UI
-// calls it when the passphrase is accepted.
+// calls it when the passphrase is accepted. It is a fact about the account's
+// session, not the run, so it is not tallied in the run's facts.
 func (ge *GameEngine) NoteDevUnlocked() {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	ge.note(config.BadgeEvDevUnlocked, "")
+	ge.judgeBadges(Event{Kind: config.BadgeEvDevUnlocked})
 }
 
 // DrainEarnedBadges returns the badges earned since the last call, as they

@@ -246,8 +246,13 @@ func TestExportCarriesBadges(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		finishOne(ge, "hut")
 	}
-	acct.noteDay("2026-10-06")
-	acct.noteDay("2026-10-07")
+	// Two days from the past, beside today's (starting the game noted it).
+	acct.noteDay("2001-01-01")
+	acct.noteDay("2001-01-02")
+	days := slices.Clone(acct.Days)
+	if len(days) != 3 || !slices.IsSorted(days) {
+		t.Fatalf("days on the account: %v, want two past days and today, in order", days)
+	}
 	blob, err := acct.ExportProgress()
 	if err != nil {
 		t.Fatal(err)
@@ -264,8 +269,8 @@ func TestExportCarriesBadges(t *testing.T) {
 	if got := back.Counters[config.BadgeEvBuiltLineage+".housing"]; got != 3 {
 		t.Errorf("the housing counter came back as %v, want 3", got)
 	}
-	if !slices.Equal(back.Days, []string{"2026-10-06", "2026-10-07"}) {
-		t.Errorf("days came back as %v", back.Days)
+	if !slices.Equal(back.Days, days) {
+		t.Errorf("days came back as %v, want %v", back.Days, days)
 	}
 
 	// A changed badge breaks the signature.

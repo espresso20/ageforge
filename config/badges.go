@@ -192,11 +192,16 @@ const (
 	// BadgeEvCivMet: a civilization was met for the first time this run.
 	// Subject: the civilization.
 	BadgeEvCivMet = "civ_met"
+	// BadgeEvDayPlayed: a game was started or loaded on a calendar day the
+	// account had not been played on before.
+	BadgeEvDayPlayed = "day_played"
 	// BadgeEvBadge: a badge was earned. Subject: its family. Integrity
 	// badges are not reported.
 	BadgeEvBadge = "badge_earned"
 
-	// The integrity events. They are reported whatever state the run is in.
+	// The integrity events. They are reported whatever state the run is in,
+	// and like the day played they are about the session, not the run
+	// (BadgeSessionEvents).
 	//
 	// BadgeEvDevUnlocked: the developer console was unlocked.
 	BadgeEvDevUnlocked = "dev_unlocked"
@@ -218,7 +223,20 @@ func BadgeEventKinds() []string {
 		BadgeEvHarbingerMet, BadgeEvHarbingerResolved, BadgeEvAppeased, BadgeEvBraced, BadgeEvInvited,
 		BadgeEvDeal, BadgeEvExpedition, BadgeEvFestival, BadgeEvBlackMarket,
 		BadgeEvMemoryAccepted, BadgeEvMemoryDeclined, BadgeEvEraEvent, BadgeEvAwakening,
-		BadgeEvMarketTrade, BadgeEvCivMet, BadgeEvBadge,
+		BadgeEvMarketTrade, BadgeEvCivMet, BadgeEvDayPlayed, BadgeEvBadge,
+		BadgeEvDevUnlocked, BadgeEvSaveModified, BadgeEvSaveElite,
+	}
+}
+
+// BadgeSessionEvents are the events that are about the session or the
+// account rather than the run: the tick itself, a new calendar day, a badge
+// earned, the developer console unlocked, what loading a save found. They
+// are judged against the account and are never tallied in a run's facts, so
+// what a run says happened in it is the same on any account and any date. A
+// badge cannot ask for one as a run fact ("run.day_played").
+func BadgeSessionEvents() []string {
+	return []string{
+		BadgeEvTick, BadgeEvDayPlayed, BadgeEvBadge,
 		BadgeEvDevUnlocked, BadgeEvSaveModified, BadgeEvSaveElite,
 	}
 }
@@ -275,7 +293,10 @@ func RevealUntilSeen(counter string) BadgeReveal {
 
 // BadgeReward is what a badge gives. Cosmetic only: a theme or a title.
 type BadgeReward struct {
+	// Theme is a theme key. Earning the badge unlocks the theme on the
+	// account.
 	Theme string
+	// Title is a title the badge case may show.
 	Title string
 }
 

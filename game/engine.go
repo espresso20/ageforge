@@ -1239,6 +1239,7 @@ func (ge *GameEngine) StartNewNamedGame(name string) error {
 	ge.mu.Lock()
 	ge.runAccountID = ge.accountIDLocked()
 	ge.runOrphaned = false
+	ge.noteDayLocked()
 	ge.mu.Unlock()
 	return ge.SaveGame(name)
 }
