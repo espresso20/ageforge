@@ -153,6 +153,12 @@ type plan struct {
 	slots    int // worker slots across all buildings
 	// freeFoodSlots is the unstaffed capacity of food producers.
 	freeFoodSlots int
+	// must is the techs the age cannot be left without that are still to
+	// research, in the order to research them (mustTechs); hold is what the
+	// ones not started yet cost, by resource: the bot saves it, and the
+	// wonder bank does not take it.
+	must []string
+	hold map[string]float64
 	// blocker is the resource keeping the most wanted purchase out of reach;
 	// hand-gathering goes there first.
 	blocker string
@@ -182,6 +188,7 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 		queued:  make(map[string]int),
 		extra:   make(map[string]int),
 		capNeed: make(map[string]float64),
+		hold:    make(map[string]float64),
 	}
 	p.storeK = max(st.Mastery.K, 1)
 	for k, r := range st.Resources {
@@ -225,6 +232,19 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 				p.target[res] += left
 			}
 		}
+	}
+	// The techs the age cannot be left without: their knowledge is a target
+	// like any requirement, and each must fit under the knowledge cap. The
+	// one in progress is paid for.
+	p.must = b.mustTechs(p)
+	for _, key := range p.must {
+		if key == st.Research.CurrentTech {
+			continue
+		}
+		c := st.Research.Techs[key].Cost
+		p.target["knowledge"] += c
+		p.hold["knowledge"] += c
+		p.capNeed["knowledge"] = math.Max(p.capNeed["knowledge"], c)
 	}
 	b.harbingerTargets(p)
 	if b.CheckInTicks > 0 {
@@ -856,33 +876,33 @@ func (b *Bot) planHasTrade(from, to string) bool {
 	return false
 }
 
-// planTechs adds the techs the knowledge budget covers, a missing
-// producer's tech first, if the research slot will be free before the next
-// visit.
+// planTechs adds research to the plan if the slot will be free before the
+// next visit: first the techs the age cannot be left without, in order (the
+// keystone's chain, then what unlocks something the bot wants to build),
+// whether or not the knowledge budget covers them yet, since a planned tech
+// waits for its knowledge and for the tech planned before it; then, once
+// none of those is left, the cheapest techs the budget covers. Three at most.
 func (b *Bot) planTechs(p *plan, st game.GameState, budget map[string]float64) {
 	rs := st.Research
 	if rs.CurrentTech != "" && float64(rs.TicksLeft) > b.CheckInTicks {
 		return
 	}
-	keys := sortedKeys(rs.Techs)
-	unblocks := func(key string) bool {
-		def, _ := b.rules.Tech(key)
-		for _, e := range def.Effects {
-			if e.Kind == config.EffectFlatOutput && p.target[e.Target] > p.amt[e.Target] && st.Resources[e.Target].Rate <= 0 {
-				return true
-			}
-		}
-		return false
-	}
-	sort.SliceStable(keys, func(i, j int) bool {
-		ui, uj := unblocks(keys[i]), unblocks(keys[j])
-		if ui != uj {
-			return ui
-		}
-		return rs.Techs[keys[i]].Cost < rs.Techs[keys[j]].Cost
-	})
 	planned := 0
-	for _, key := range keys {
+	for _, key := range p.must {
+		t := rs.Techs[key]
+		if planned >= 3 || key == rs.CurrentTech || t.Cost > p.storage["knowledge"] {
+			break
+		}
+		if !b.act("plan_research", key, b.ge.PlanAddResearch(key)) {
+			break
+		}
+		budget["knowledge"] -= t.Cost
+		planned++
+	}
+	if len(p.must) > 0 {
+		return
+	}
+	for _, key := range b.restOrder(p) {
 		t := rs.Techs[key]
 		if planned >= 3 || !t.Available || t.Researched || key == rs.CurrentTech {
 			continue
@@ -1759,7 +1779,7 @@ func (b *Bot) bankWonder(p *plan) {
 		if left <= 0 {
 			continue
 		}
-		keep := p.st.NextAgeResReqs[res]
+		keep := p.st.NextAgeResReqs[res] + p.hold[res]
 		onlyWonder := p.target[res]-left <= keep
 		switch {
 		case p.invest && !onlyWonder && b.CheckInTicks > 0:
@@ -1794,37 +1814,28 @@ func (b *Bot) bankWonder(p *plan) {
 	}
 }
 
-// research starts the cheapest available tech the knowledge surplus pays
-// for, except that a tech producing a target resource nothing else is
-// producing goes first (steel forging when the Renaissance asks for steel
-// and no Medieval building makes it).
+// research starts the next tech: the next of the techs the age cannot be
+// left without (the keystone's chain, then what unlocks something the bot
+// wants to build; see bot_research.go), saving for it while it is out of
+// reach, and once none is left the cheapest available tech the knowledge
+// surplus pays for.
 func (b *Bot) research(p *plan) {
 	rs := p.st.Research
 	if rs.CurrentTech != "" {
 		return
 	}
 	k := p.amt["knowledge"]
+	if key := p.nextMust(); key != "" {
+		t := rs.Techs[key]
+		if t.Cost <= k && b.startResearch(p, key) {
+			p.hold["knowledge"] -= t.Cost
+		}
+		return
+	}
 	req := p.st.NextAgeResReqs["knowledge"]
 	capK := p.storage["knowledge"]
 	rate := p.st.Resources["knowledge"].Rate
-	keys := sortedKeys(rs.Techs)
-	unblocks := func(key string) bool {
-		def, _ := b.rules.Tech(key)
-		for _, e := range def.Effects {
-			if e.Kind == config.EffectFlatOutput && p.target[e.Target] > p.amt[e.Target] && p.st.Resources[e.Target].Rate <= 0 {
-				return true
-			}
-		}
-		return false
-	}
-	sort.SliceStable(keys, func(i, j int) bool {
-		ui, uj := unblocks(keys[i]), unblocks(keys[j])
-		if ui != uj {
-			return ui
-		}
-		return rs.Techs[keys[i]].Cost < rs.Techs[keys[j]].Cost
-	})
-	for _, key := range keys {
+	for _, key := range b.restOrder(p) {
 		t := rs.Techs[key]
 		if !t.Available || t.Researched || t.Cost > k {
 			continue
@@ -1841,16 +1852,26 @@ func (b *Bot) research(p *plan) {
 			}
 			ok = t.Cost/rate < other
 		}
-		if ok && b.act("research", key, b.ge.StartResearch(key)) {
-			p.amt["knowledge"] -= t.Cost
-			if b.RecordPlan {
-				// The tech the bot chose, written as a planned research
-				// item: its own research path, which the template keeps.
-				b.ge.NotePlanForTest(game.PlanResearch, key, 1)
-			}
+		if ok {
+			b.startResearch(p, key)
 		}
 		return
 	}
+}
+
+// startResearch starts tech key and takes its price off the plan's
+// knowledge. Reports whether it started.
+func (b *Bot) startResearch(p *plan, key string) bool {
+	if !b.act("research", key, b.ge.StartResearch(key)) {
+		return false
+	}
+	p.amt["knowledge"] -= p.st.Research.Techs[key].Cost
+	if b.RecordPlan {
+		// The tech the bot chose, written as a planned research item: its
+		// own research path, which the template keeps.
+		b.ge.NotePlanForTest(game.PlanResearch, key, 1)
+	}
+	return true
 }
 
 // festival spends culture on a production buff when this age does not ask

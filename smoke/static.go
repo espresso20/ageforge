@@ -24,7 +24,8 @@ import (
 //     1/GateWonderMargin of the storage in each resource (wonders are banked
 //     a deposit at a time, so no margin: each part must fit one full store);
 //   - every resource the gate asks for, directly, in a required building's
-//     price or in the wonder's, can be had in that age from a cold start (see
+//     price, in the wonder's or in the price of the wonder's keystone tech
+//     (knowledge), can be had in that age from a cold start (see
 //     coldStart): by a player who skipped every building no gate required,
 //     through that age's own buildings (bought with what is reachable), hand
 //     gathering, the market (only once a trade building can stand), techs
@@ -485,6 +486,7 @@ func flowMarketUnits(res string, short float64, cs *coldStart) float64 {
 func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]GateProblem, []GateSlack) {
 	var out []GateProblem
 	cold := coldStarts(ages, defs)
+	techs := config.TechByKey()
 	var slack []GateSlack
 	for i := 0; i+1 < len(ages); i++ {
 		from, to := ages[i], ages[i+1]
@@ -513,6 +515,14 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 					needs[res] = wonder
 				}
 				amount[res] += c
+			}
+			// The wonder's keystone tech is paid in knowledge, which no gate
+			// asks for itself: the age must make it.
+			if t, ok := techs[defs[wonder].RequiredTech]; ok && t.Cost > 0 {
+				if _, ok := needs["knowledge"]; !ok {
+					needs["knowledge"] = t.Key
+				}
+				amount["knowledge"] += t.Cost
 			}
 		}
 		gated := sortedKeys(to.BuildingReqs)
