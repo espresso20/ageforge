@@ -462,13 +462,45 @@ See [Saving & Loading](saving-and-loading.md) for branching, the save tree, row 
 
 ---
 
+## Badges
+
+| Command | Description |
+|---|---|
+| `badges` | Open the **badge case**: every badge your account holds or can earn. It covers everything but the command bar, which keeps working while it is open |
+| `badges <family>` | Open the case on one family's tab, by its name: `ages`, `lineages`, `ladders` or `specials` |
+| `badges all` | Open the case on the All tab, which shows every family |
+| `badges next` | Open the case on the badges you are closest to earning, nearest first |
+| `badges <name>` | Open one badge's detail by its name, or a part of it (`badges hut hoarder`, `badges rock`). Only badges you can already see are found |
+
+```
+badges
+badges lineages
+badges next
+badges rock solid
+```
+
+The badge case leaves the command bar working and takes only the keys that print nothing:
+
+| Key | Action |
+|---|---|
+| Arrows | Move from badge to badge; the grid follows |
+| `Tab` / `Shift-Tab` | The next or the previous family's tab |
+| `PgUp` / `PgDn` | A page up and down |
+| `Home` / `End` | The first badge and the last |
+| `Enter` | Open the selected badge's detail, and close it |
+| `Esc` | Close the detail, then the case |
+
+With something typed, `Tab` and `Enter` act on the prompt instead. The case draws in your theme and in the glyph set you chose with `map glyphs`. A few badges move; `motion off` holds them still. See [Badges](account.md#badges) for what the case shows.
+
+---
+
 ## Accounts
 
 | Command | Description |
 |---|---|
 | `account` | Show the active account's short ID and **recovery code** (restores identity, not progress) |
 | `account list` | List the local accounts on this machine, marking the active one |
-| `account badges` | List the active account's badges, earned and locked, with its points. The **Stats** panel shows the same list. See [Badges](account.md#badges) |
+| `account badges` | List the active account's badges as text, earned and locked, with its points and its title. The **Stats** panel shows the same list, and `badges` opens the badge case. See [Badges](account.md#badges) |
 | `account switch <name>` | Switch to a local account by its name (changes which account's saves you see). During a game, saves the game to its own account and returns to the main menu |
 | `account recover <code> [confirm]` | Restore your identity from a recovery code on a new machine or after a reinstall, and switch to it. It lands in its own slot and never overwrites an account. Add `confirm` when the game asks for it (when the account in use holds any progress) |
 | `account export [path]` | Write a signed account backup **bound to its account ID** (unlocks, stats, badges, prefs). Default `account-<id8>-export.json` inside that account's slot, or a path you give |
@@ -487,14 +519,16 @@ The game keeps several local accounts, one active at a time, each with its own s
 | `theme` | Open the **Themes** picker to browse palettes with live preview (`↑`/`↓` previews, `Enter` keeps, `Esc`/`q` reverts). Also on the main menu |
 | `theme list` | List every theme by name and key, marking the active one, with each theme's light or dark variant, which are accessible, and how to unlock the ones you haven't |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
+| `motion [on\|off]` | Bare, show whether motion is on. `off` holds still everything that moves on its own: the maps, the badges that move in the badge case, and a theme's ambient effect. `on` brings it back (default on). Saved per account |
 
 ```
 theme
 theme list
 theme high_contrast
+motion off
 ```
 
-Your theme is saved per account, not in any game save, so it carries across every save and new game. See [Themes & Accessibility](themes.md) for the themes and how to unlock them.
+Your theme is saved per account, not in any game save, so it carries across every save and new game. See [Themes & Accessibility](themes.md) for the themes and how to unlock them. `motion` is saved per account too; with no account loaded it lasts for the session.
 
 ---
 
@@ -518,6 +552,7 @@ These commands have a shorter name. The short name takes everything the full one
 | `harb` | `harbinger` |
 | `s` | `status` |
 | `exportlogs` | `dump` |
+| `achievements` | `badges` |
 | `h`, `?` | `help` |
 | `acct` | `account` |
 | `ms` | `milestones` |

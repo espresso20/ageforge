@@ -1,8 +1,8 @@
 # 🎨 Themes & Accessibility
 
-AgeForge's interface colors come from swappable **themes**: 11 themes in all, **dark** and **light**. You can switch at any time and the change applies at once. Your choice is saved with your **account**, not with a game save, so it carries across every save and every new game. Loading an old save never changes your theme.
+AgeForge's interface colors come from swappable **themes**: 13 themes in all, **dark** and **light**. You can switch at any time and the change applies at once. Your choice is saved with your **account**, not with a game save, so it carries across every save and every new game. Loading an old save never changes your theme.
 
-Themes come in three groups: **Standard** (the default dark **Forge** and the light **Daylight**), **Accessibility** (colorblind-safe and high-contrast, in dark and light), and **Unlockable** flavor themes you earn by reaching later ages. Standard and Accessibility themes are always unlocked.
+Themes come in three groups: **Standard** (the default dark **Forge** and the light **Daylight**), **Accessibility** (colorblind-safe and high-contrast, in dark and light), and **Unlockable** flavor themes you earn by reaching later ages, or with a secret badge. Standard and Accessibility themes are always unlocked.
 
 ---
 
@@ -21,6 +21,8 @@ Themes come in three groups: **Standard** (the default dark **Forge** and the li
 | **Cyberpunk** | `cyberpunk` | Unlockable | Dark | Reach the Cyberpunk Age |
 | **Monochrome** | `monochrome` | Unlockable | Dark | Reach the Information Age |
 | **Cosmic** | `cosmic` | Unlockable | Dark | Reach the Galactic Age |
+| **Source** | `source` | Unlockable | Dark | Given by a secret badge. Phosphor green on black, with code rain |
+| **Glitch** | `glitch` | Unlockable | Dark | Given by a secret badge. Cyan and magenta on violet black, with tears of static |
 
 ### Every theme paints its own background
 
@@ -32,6 +34,18 @@ A theme paints the **whole surface**, text included: the page background, panels
 </div>
 
 A **truecolor** terminal is recommended for exact colors.
+
+### Motion
+
+A few things in the game move on their own: the [Map](map.md) and the mini map, some badges in the [badge case](account.md#the-badge-case), and the ambient effect of the two themes that have one. One setting turns all of it off:
+
+| Command | What it does |
+|---|---|
+| `motion` | Show whether motion is on |
+| `motion off` | Hold everything still: each of those is drawn as its first frame, and nothing is animated |
+| `motion on` | Bring it back (the default) |
+
+Nothing is hidden with motion off, and nothing in a game changes: the same badges, the same map, drawn still. The setting is saved per account; with no account loaded it lasts for the session.
 
 ---
 
@@ -102,7 +116,7 @@ The [Map](map.md) follows your theme too, including light ones. Both styles, rog
 
 ## 🔓 Unlocking flavor themes
 
-Beyond the Standard and Accessibility groups, AgeForge has **flavor themes**: cosmetic looks you unlock by reaching an age.
+Beyond the Standard and Accessibility groups, AgeForge has **flavor themes**: cosmetic looks you unlock by reaching an age, and two that come with a badge.
 
 | Theme | Variant | Unlocks when you… |
 |---|---|---|
@@ -111,10 +125,16 @@ Beyond the Standard and Accessibility groups, AgeForge has **flavor themes**: co
 | **Monochrome** | Dark | Reach the Information Age |
 | **Cyberpunk** | Dark | Reach the Cyberpunk Age |
 | **Cosmic** | Dark | Reach the Galactic Age |
+| **Source** | Dark | Earn a secret [badge](account.md#badges) |
+| **Glitch** | Dark | Earn another secret badge |
 
 Unlocks are **account-wide and permanent**: earn a theme on one empire and it's yours on **every save and every future new game**, just like the accessibility themes.
 
-Until you've earned it, a flavor theme shows in the picker (and in `theme list`) with a `🔒` and its unlock condition. You can still preview a locked theme, but you can't make it your active theme until you reach the age that unlocks it.
+Until you've earned it, a flavor theme shows in the picker (and in `theme list`) with a `🔒` and its unlock condition. You can still preview a locked theme, but you can't make it your active theme until you reach the age, or earn the badge, that unlocks it. The two badge themes say only that a secret badge gives them: the badges are secret, so the game does not say how they are earned.
+
+### Ambient effects
+
+**Source** and **Glitch** each carry an ambient effect on the dashboard. In Source, code falls down the empty columns. In Glitch, a tear of static crosses the screen now and then. An effect is only ever drawn in cells that are otherwise empty, with clear space between it and any text, and never in the command bar, so nothing you read or type is covered. `motion off` turns the effects off (see [Motion](#motion)); the colors stay.
 
 ---
 
