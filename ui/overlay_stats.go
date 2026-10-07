@@ -64,18 +64,10 @@ func statsProvider(state game.GameState, _ int) string {
 		}
 		fmt.Fprintf(&sb, " [gold]Highest age ever:[-]  %s\n", highestAge)
 
-		sb.WriteString(" [gold]Achievements:[-]\n")
-		if len(as.Achievements) == 0 {
-			sb.WriteString("   [gray]None unlocked yet.[-]\n")
-		} else {
-			names := make([]string, 0, len(as.Achievements))
-			for _, key := range as.Achievements {
-				names = append(names, game.AchievementName(key))
-			}
-			sort.Strings(names)
-			for _, name := range names {
-				fmt.Fprintf(&sb, "   [green]★[-] %s\n", name)
-			}
+		// Badges, earned and locked. The list comes with the spoiler rules
+		// applied, so it is written as it is.
+		for _, line := range badgeListLines(as.Badges, as.BadgeSummary) {
+			sb.WriteString(" " + line + "\n")
 		}
 	}
 

@@ -42,18 +42,24 @@ func devLineCount(ge *GameEngine) int {
 	return n
 }
 
-// assertNoRecords fails if acct holds any lifetime stat or achievement, in memory or on disk.
+// assertNoRecords fails if acct holds any lifetime stat, badge or counter, in memory or on disk.
 func assertNoRecords(t *testing.T, acct *Account) {
 	t.Helper()
 	stats, ach := acct.LifetimeStats()
 	if stats.TotalPrestiges != 0 || stats.HighestAge != "" || len(ach) != 0 {
-		t.Errorf("a dev-touched run recorded to the account: stats=%+v achievements=%v", stats, ach)
+		t.Errorf("a dev-touched run recorded to the account: stats=%+v badges=%v", stats, ach)
+	}
+	acct.mu.Lock()
+	counters := len(acct.Counters)
+	acct.mu.Unlock()
+	if counters != 0 {
+		t.Errorf("a dev-touched run moved the account's counters: %v", acct.Counters)
 	}
 	if err := acct.FlushIfDirty(); err != nil {
 		t.Fatal(err)
 	}
-	if disk := slotAccount(t, acct.AccountID); disk.Stats.TotalPrestiges != 0 || len(disk.Achievements) != 0 {
-		t.Errorf("a dev-touched run's records reached the account file: %+v %v", disk.Stats, disk.Achievements)
+	if disk := slotAccount(t, acct.AccountID); disk.Stats.TotalPrestiges != 0 || len(disk.Badges) != 0 || len(disk.Counters) != 0 {
+		t.Errorf("a dev-touched run's records reached the account file: %+v %v %v", disk.Stats, disk.Badges, disk.Counters)
 	}
 }
 
@@ -156,8 +162,8 @@ func TestDevModeWithoutCommandsStillRecords(t *testing.T) {
 
 	prestigeNow(t, ge)
 	stats, ach := acct.LifetimeStats()
-	if stats.TotalPrestiges != 1 || len(ach) != 1 || ach[0] != "first_prestige" {
-		t.Errorf("a clean run with dev mode on did not record: stats=%+v achievements=%v", stats, ach)
+	if stats.TotalPrestiges != 1 || len(ach) != 1 || ach[0] != badgePrestige1 {
+		t.Errorf("a clean run with dev mode on did not record: stats=%+v badges=%v", stats, ach)
 	}
 }
 

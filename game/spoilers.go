@@ -65,6 +65,19 @@ func (s AgeSight) Age(age string) bool {
 	return ok && o <= s.next
 }
 
+// Reached reports whether the player has reached age: in this run, or on
+// their account in any run. Unknown keys: no.
+func (s AgeSight) Reached(age string) bool {
+	o, ok := orCore(s.set).Index(age)
+	return ok && o <= s.reached
+}
+
+// ReachedLast reports whether the player has reached the last age, so
+// nothing about the ages is left to spoil.
+func (s AgeSight) ReachedLast() bool {
+	return s.reached >= orCore(s.set).NumAges()-1
+}
+
 // Era reports whether the player may see the era named: they have reached
 // one of its ages.
 func (s AgeSight) Era(epoch string) bool {

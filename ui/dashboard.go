@@ -673,6 +673,9 @@ func (d *Dashboard) refresh() {
 	// because account.UnlockTheme persists (file I/O) and must not run under the
 	// engine lock / in a Bus handler. GetState() above already released the lock.
 	d.processThemeUnlocks(state)
+	// Badges earned since the last refresh: a toast and a log line each. Here for
+	// the same reason as the themes: outside the engine lock, never in a Bus handler.
+	d.announceBadges()
 
 	// Phase 9: catastrophe modal — show once per new pending catastrophe; Esc hides it
 	// until the player types `catastrophe` (or loads a save, which shows it again).
@@ -792,6 +795,20 @@ func (d *Dashboard) processThemeUnlocks(state game.GameState) {
 
 	// Mark first-sync complete after the first pass so live-play unlocks toast.
 	d.themeSyncDone = true
+}
+
+// announceBadges drains the badges the account earned since the last refresh
+// (the engine judged them under its lock and only queued them) and gives each a
+// toast and one log line. The line is fixed per badge, so earning one draws
+// nothing from the run's random streams.
+func (d *Dashboard) announceBadges() {
+	if d.engine == nil {
+		return
+	}
+	for _, v := range d.engine.DrainEarnedBadges() {
+		d.toastMgr.Show(badgeToast(v), "gold", 5*time.Second)
+		d.engine.AddLog("success", game.BadgeLogLine(v))
+	}
 }
 
 func (d *Dashboard) refreshWorkerMini(game.GameState) {
@@ -1138,6 +1155,7 @@ func (d *Dashboard) showDevUnlockModal() {
 			input := field.GetText()
 			d.pages.RemovePage(devUnlockPage)
 			if game.CheckDevKey(input) {
+				d.engine.NoteDevUnlocked()
 				d.engine.AddLog("info", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999).")
 				d.app.SetFocus(d.inputField)
 			} else {

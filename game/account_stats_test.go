@@ -6,17 +6,9 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// hasAchievement reports whether key is present in the account's achievement set.
-// A small test helper so each assertion reads as intent rather than a loop.
-func hasAchievement(a *Account, key string) bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.hasAchievementLocked(key)
-}
-
-// TestRecordPrestigeIncrementsAndUnlocks covers the prestige hook: the lifetime count
-// climbs with each call, "first_prestige" unlocks at 1, and the higher "prestige_x10"
-// tier unlocks only once the threshold is crossed — never before.
+// TestRecordPrestigeIncrementsAndUnlocks covers the prestige record: the lifetime count
+// climbs with each prestige, the first rung of the prestige ladder is earned at 1, and
+// the rung at 10 (the old prestige_x10) only once the threshold is crossed, never before.
 func TestRecordPrestigeIncrementsAndUnlocks(t *testing.T) {
 	isolateAccountDir(t)
 
@@ -25,39 +17,48 @@ func TestRecordPrestigeIncrementsAndUnlocks(t *testing.T) {
 		t.Fatalf("LoadOrCreate: %v", err)
 	}
 
-	acct.RecordPrestige()
+	recordPrestige(acct, "modern_age")
 	if acct.Stats.TotalPrestiges != 1 {
 		t.Fatalf("TotalPrestiges = %d, want 1", acct.Stats.TotalPrestiges)
 	}
-	if !hasAchievement(acct, "first_prestige") {
-		t.Fatalf("expected first_prestige unlocked at 1 prestige")
+	if !hasBadge(acct, badgePrestige1) {
+		t.Fatalf("expected %s earned at 1 prestige", badgePrestige1)
 	}
-	if hasAchievement(acct, "prestige_x10") {
-		t.Fatalf("prestige_x10 unlocked too early (1 prestige)")
+	if hasBadge(acct, badgePrestige10) {
+		t.Fatalf("%s earned too early (1 prestige)", badgePrestige10)
 	}
 	if !acct.dirty {
-		t.Fatalf("expected dirty=true after RecordPrestige")
+		t.Fatalf("expected dirty=true after a prestige")
 	}
 
-	// Climb to 10; prestige_x10 fires exactly at the threshold, not before.
+	// Climb to 10; the rung is earned exactly at the threshold, not before.
 	for acct.Stats.TotalPrestiges < 9 {
-		acct.RecordPrestige()
-		if hasAchievement(acct, "prestige_x10") {
-			t.Fatalf("prestige_x10 unlocked early at %d prestiges", acct.Stats.TotalPrestiges)
+		recordPrestige(acct, "modern_age")
+		if hasBadge(acct, badgePrestige10) {
+			t.Fatalf("%s earned early at %d prestiges", badgePrestige10, acct.Stats.TotalPrestiges)
 		}
 	}
-	acct.RecordPrestige() // -> 10
+	if !hasBadge(acct, badgePrestige3) {
+		t.Errorf("%s not earned by 9 prestiges", badgePrestige3)
+	}
+	recordPrestige(acct, "modern_age") // -> 10
 	if acct.Stats.TotalPrestiges != 10 {
 		t.Fatalf("TotalPrestiges = %d, want 10", acct.Stats.TotalPrestiges)
 	}
-	if !hasAchievement(acct, "prestige_x10") {
-		t.Fatalf("expected prestige_x10 unlocked at 10 prestiges")
+	if !hasBadge(acct, badgePrestige10) {
+		t.Fatalf("expected %s earned at 10 prestiges", badgePrestige10)
+	}
+	if got := acct.Counters[config.BadgeEvPrestige]; got != 10 {
+		t.Errorf("the prestige counter is %v, want 10", got)
+	}
+	if len(acct.Achievements) != 0 {
+		t.Errorf("the version 1 achievements list was written to: %v", acct.Achievements)
 	}
 }
 
-// TestRecordAgeReachedRanksByOrder covers the age hook: HighestAge advances only when
-// a strictly higher order is reached, a lower order does NOT regress it, and the age
-// achievements fire at their threshold orders.
+// TestRecordAgeReachedRanksByOrder covers the age record: HighestAge advances only when
+// a strictly higher order is reached, a lower order does NOT regress it, and each age's
+// badge is earned on reaching that age.
 func TestRecordAgeReachedRanksByOrder(t *testing.T) {
 	isolateAccountDir(t)
 
@@ -66,35 +67,30 @@ func TestRecordAgeReachedRanksByOrder(t *testing.T) {
 		t.Fatalf("LoadOrCreate: %v", err)
 	}
 
-	ages := config.AgeByKey()
-	iron := ages["iron_age"]     // Order 3
-	bronze := ages["bronze_age"] // Order 2
-	modern := ages["modern_age"] // Order 12
-
-	acct.RecordAgeReached(iron.Key, iron.Order)
+	recordAge(t, acct, "iron_age")
 	if acct.Stats.HighestAge != "iron_age" {
 		t.Fatalf("HighestAge = %q, want iron_age", acct.Stats.HighestAge)
 	}
-	if !hasAchievement(acct, "reached_iron") {
-		t.Fatalf("expected reached_iron unlocked at iron_age")
+	if !hasBadge(acct, badgeIron) {
+		t.Fatalf("expected %s earned at the Iron Age", badgeIron)
 	}
-	if hasAchievement(acct, "reached_modern") {
-		t.Fatalf("reached_modern unlocked too early (iron_age)")
+	if hasBadge(acct, badgeModern) {
+		t.Fatalf("%s earned too early (the Iron Age)", badgeModern)
 	}
 
 	// A LOWER age must not regress the lifetime best.
-	acct.RecordAgeReached(bronze.Key, bronze.Order)
+	recordAge(t, acct, "bronze_age")
 	if acct.Stats.HighestAge != "iron_age" {
 		t.Fatalf("HighestAge regressed to %q after lower age; want iron_age", acct.Stats.HighestAge)
 	}
 
-	// A higher age advances it and unlocks the modern achievement.
-	acct.RecordAgeReached(modern.Key, modern.Order)
+	// A higher age advances it and earns the Modern Age badge.
+	recordAge(t, acct, "modern_age")
 	if acct.Stats.HighestAge != "modern_age" {
 		t.Fatalf("HighestAge = %q, want modern_age", acct.Stats.HighestAge)
 	}
-	if !hasAchievement(acct, "reached_modern") {
-		t.Fatalf("expected reached_modern unlocked at modern_age")
+	if !hasBadge(acct, badgeModern) {
+		t.Fatalf("expected %s earned at the Modern Age", badgeModern)
 	}
 }
 
@@ -109,10 +105,10 @@ func TestFlushIfDirtyPersistsAndClears(t *testing.T) {
 		t.Fatalf("LoadOrCreate: %v", err)
 	}
 
-	acct.RecordPrestige()
-	acct.RecordAgeReached("iron_age", config.AgeByKey()["iron_age"].Order)
+	recordPrestige(acct, "modern_age")
+	recordAge(t, acct, "iron_age")
 	if !acct.dirty {
-		t.Fatalf("expected dirty after Record* calls")
+		t.Fatalf("expected dirty after the records")
 	}
 
 	// This call must NOT hang — FlushIfDirty holds a.mu across Save(), which does not
@@ -141,8 +137,11 @@ func TestFlushIfDirtyPersistsAndClears(t *testing.T) {
 	if reloaded.Stats.HighestAge != "iron_age" {
 		t.Fatalf("reloaded HighestAge = %q, want iron_age", reloaded.Stats.HighestAge)
 	}
-	if !hasAchievement(reloaded, "first_prestige") || !hasAchievement(reloaded, "reached_iron") {
-		t.Fatalf("reloaded account missing expected achievements: %v", reloaded.Achievements)
+	if !hasBadge(reloaded, badgePrestige1) || !hasBadge(reloaded, badgeIron) {
+		t.Fatalf("reloaded account missing expected badges: %v", reloaded.Badges)
+	}
+	if e := reloaded.Badges[badgePrestige1]; e.At == 0 || e.Flags != 0 {
+		t.Errorf("a badge earned in play came back undated or flagged: %+v", e)
 	}
 	if reloaded.Tampered {
 		t.Fatalf("reloaded account flagged tampered — sign/round-trip broke")
@@ -150,8 +149,8 @@ func TestFlushIfDirtyPersistsAndClears(t *testing.T) {
 }
 
 // TestLifetimeStatsReturnsCopy covers the snapshot accessor: it returns the current
-// stats plus a COPY of the achievements slice that the caller cannot use to mutate the
-// account's backing state.
+// stats plus the earned badge keys in a slice of its own, which the caller cannot use to
+// mutate the account's backing state.
 func TestLifetimeStatsReturnsCopy(t *testing.T) {
 	isolateAccountDir(t)
 
@@ -159,18 +158,18 @@ func TestLifetimeStatsReturnsCopy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadOrCreate: %v", err)
 	}
-	acct.RecordPrestige()
+	recordPrestige(acct, "modern_age")
 
-	stats, ach := acct.LifetimeStats()
+	stats, earned := acct.LifetimeStats()
 	if stats.TotalPrestiges != 1 {
 		t.Fatalf("LifetimeStats TotalPrestiges = %d, want 1", stats.TotalPrestiges)
 	}
-	if len(ach) == 0 {
-		t.Fatalf("expected at least first_prestige in returned achievements")
+	if len(earned) != 1 || earned[0] != badgePrestige1 {
+		t.Fatalf("LifetimeStats badges = %v, want [%s]", earned, badgePrestige1)
 	}
 	// Mutating the returned slice must not affect the account.
-	ach[0] = "tampered_key"
-	if hasAchievement(acct, "tampered_key") {
-		t.Fatalf("LifetimeStats leaked its backing slice — caller mutation reached the account")
+	earned[0] = "tampered_key"
+	if hasBadge(acct, "tampered_key") || !hasBadge(acct, badgePrestige1) {
+		t.Fatalf("LifetimeStats leaked its backing data: caller mutation reached the account")
 	}
 }

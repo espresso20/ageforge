@@ -635,6 +635,7 @@ func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) F
 		fs.Status = "friendly"
 	}
 	d.Taken = true
+	ge.note(config.BadgeEvDeal, def.Key)
 	ge.addLog("success", fmt.Sprintf("Deal with the %s. %s.", def.Name, dealLogTerms(*d)))
 	return *d
 }

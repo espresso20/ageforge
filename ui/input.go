@@ -988,7 +988,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "")
 		lines = append(lines, "[gold]Progress backups:[-] each account is its own slot, and an import adds or")
 		lines = append(lines, "restores that account next to your others. Switch accounts in the [gold]Accounts[-] panel on the main menu.")
-		for _, path := range []string{"account list", "account switch", "account export", "account backup", "account import"} {
+		for _, path := range []string{"account list", "account badges", "account switch", "account export", "account backup", "account import"} {
 			u := helpRow(path)
 			lines = append(lines, fmt.Sprintf("  %-33s %s", u.Form, u.Text))
 		}
@@ -1099,7 +1099,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		var lines []string
 		lines = append(lines, fmt.Sprintf("Progress exported to %s. Restore it with: account import %s", path, path))
-		lines = append(lines, "This file backs up your progress (unlocks, stats, achievements). Your recovery")
+		lines = append(lines, "This file backs up your progress (unlocks, stats, badges). Your recovery")
 		lines = append(lines, "code is separate and restores only your account ID.")
 		// Also take a full slot snapshot (account.json + saves/). A backup failure must not fail
 		// the export, so it only adds a line when it works.
@@ -1195,7 +1195,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		// Confirm guard: recovering switches this machine to another account. The account
 		// in use keeps everything in its own slot, but ask first whenever it holds any
-		// progress at all (theme unlocks, achievements or lifetime stats), and say what.
+		// progress at all (theme unlocks, badges or lifetime stats), and say what.
 		if acct != nil && !confirmed {
 			if held := accountHoldings(acct); held != "" {
 				var lines []string
@@ -1231,11 +1231,22 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		return CommandResult{Message: msg, Type: "info", ToMenu: endedRun}
 
+	case "badges":
+		if acct == nil {
+			return CommandResult{
+				Message: "Accounts are unavailable (no account is loaded).",
+				Type:    "warning",
+			}
+		}
+		// Info, not success: the list must reach the log, and the engine logs nothing here.
+		views, summary := engine.Badges()
+		return CommandResult{Message: strings.Join(badgeListLines(views, summary), "\n"), Type: "info"}
+
 	case "wipe":
 		// The destructive wipe lives behind the Accounts panel's type-your-name gate; we
 		// deliberately do not wipe from a bare command. Direct the player there.
 		return CommandResult{
-			Message: "Wiping an account is permanent, so it lives in the Accounts panel on the main menu (press Esc, choose Accounts, then press w on the account). It deletes that account's ID, theme unlocks, lifetime stats, achievements and every save in its slot. A backup goes to data/backups/ first; restoring it is manual.",
+			Message: "Wiping an account is permanent, so it lives in the Accounts panel on the main menu (press Esc, choose Accounts, then press w on the account). It deletes that account's ID, theme unlocks, lifetime stats, badges and every save in its slot. A backup goes to data/backups/ first; restoring it is manual.",
 			Type:    "warning",
 		}
 
@@ -1247,7 +1258,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 // recoveryCodeNote says what a recovery code does and does not restore.
 var recoveryCodeNote = []string{
 	"This code restores your account ID on another machine. It does not restore",
-	"progress (unlocks, stats, achievements). Back those up with account export.",
+	"progress (unlocks, stats, badges). Back those up with account export.",
 }
 
 // menuNextStep ends the reply to an account change that ended a game in progress.
@@ -1292,15 +1303,15 @@ func switchHint(acct *game.Account) string {
 }
 
 // accountHoldings lists the progress an account holds, for the recover guard: theme
-// unlocks, achievements and every lifetime stat. "" when it holds none.
+// unlocks, badges and every lifetime stat. "" when it holds none.
 func accountHoldings(acct *game.Account) string {
-	stats, achievements := acct.LifetimeStats()
+	stats, badges := acct.LifetimeStats()
 	var parts []string
 	if n := len(acct.UnlockedThemes()); n > 0 {
 		parts = append(parts, textfmt.Count(n, "theme unlock", "theme unlocks"))
 	}
-	if n := len(achievements); n > 0 {
-		parts = append(parts, textfmt.Count(n, "achievement", "achievements"))
+	if n := len(badges); n > 0 {
+		parts = append(parts, textfmt.Count(n, "badge", "badges"))
 	}
 	if n := stats.TotalPrestiges; n > 0 {
 		parts = append(parts, textfmt.Count(n, "prestige", "prestiges"))

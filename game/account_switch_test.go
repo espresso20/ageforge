@@ -60,7 +60,7 @@ func TestEngineSwitchFlushesOldAccount(t *testing.T) {
 	}
 	ge := NewGameEngine()
 	ge.SetAccount(carol)
-	carol.RecordPrestige() // not flushed yet
+	recordPrestige(carol, "modern_age") // not flushed yet
 
 	ended, err := ge.SwitchAccount(dave.AccountID)
 	if err != nil {
@@ -81,8 +81,8 @@ func TestEngineSwitchFlushesOldAccount(t *testing.T) {
 	if ptr, _ := readActivePointer(); ptr != dave.AccountID {
 		t.Errorf("active pointer %s, want Dave", ptr)
 	}
-	if d := slotAccount(t, dave.AccountID); d.Stats.TotalPrestiges != 0 || len(d.Achievements) != 0 {
-		t.Errorf("Carol's records reached Dave: %+v %v", d.Stats, d.Achievements)
+	if d := slotAccount(t, dave.AccountID); d.Stats.TotalPrestiges != 0 || len(d.Badges) != 0 {
+		t.Errorf("Carol's records reached Dave: %+v %v", d.Stats, d.Badges)
 	}
 }
 
@@ -97,7 +97,7 @@ func TestEngineSwitchToCurrentKeepsLiveObject(t *testing.T) {
 	}
 	ge := NewGameEngine()
 	ge.SetAccount(carol)
-	carol.RecordPrestige()
+	recordPrestige(carol, "modern_age")
 
 	if _, err := ge.SwitchAccount(carol.AccountID); err != nil {
 		t.Fatalf("SwitchAccount to self: %v", err)
@@ -164,7 +164,7 @@ func TestSwitchMidGameNeverCrossWrites(t *testing.T) {
 	}
 	done := startedLoop(t, ge)
 	t.Cleanup(ge.Stop)
-	alice.RecordPrestige() // earned in the run since the last autosave
+	recordPrestige(alice, "modern_age") // earned in the run since the last autosave
 	bobBefore := slotFile(t, bob.AccountID)
 
 	ended, err := ge.SwitchAccount(bob.AccountID)
@@ -210,8 +210,8 @@ func TestSwitchMidGameNeverCrossWrites(t *testing.T) {
 	if err := bob.FlushIfDirty(); err != nil {
 		t.Fatal(err)
 	}
-	if b := ge.Account(); b.Stats.TotalPrestiges != 0 || len(b.Achievements) != 0 {
-		t.Errorf("Alice's run credited Bob: %+v %v", b.Stats, b.Achievements)
+	if b := ge.Account(); b.Stats.TotalPrestiges != 0 || len(b.Badges) != 0 {
+		t.Errorf("Alice's run credited Bob: %+v %v", b.Stats, b.Badges)
 	}
 	if after := slotFile(t, bob.AccountID); string(after) != string(bobBefore) {
 		t.Errorf("Bob's account file changed:\n%s", after)
@@ -295,7 +295,7 @@ func TestImportOwnBackupKeepsLiveRecords(t *testing.T) {
 	}
 	ge := NewGameEngine()
 	ge.SetAccount(alice)
-	alice.RecordPrestige() // live, not flushed
+	recordPrestige(alice, "modern_age") // live, not flushed
 
 	// A backup of Alice holding a theme she does not have in memory.
 	exp := progressExport{
@@ -351,7 +351,7 @@ func TestRecoverAccountSwitchesAndKeepsOriginal(t *testing.T) {
 	}
 	startedLoop(t, ge)
 	t.Cleanup(ge.Stop)
-	alice.RecordPrestige()
+	recordPrestige(alice, "modern_age")
 
 	restored, ended, err := ge.RecoverAccount(bobCode)
 	if err != nil {
@@ -399,7 +399,7 @@ func TestWipeOfRunOwnerOrphansRun(t *testing.T) {
 	if err := ge.StartNewNamedGame("Rome"); err != nil {
 		t.Fatal(err)
 	}
-	alice.RecordPrestige() // dirty: detaching must not flush it back into the wiped slot
+	recordPrestige(alice, "modern_age") // dirty: detaching must not flush it back into the wiped slot
 
 	if _, err := ge.WipeAccountByID(alice.AccountID); err != nil {
 		t.Fatalf("wipe: %v", err)

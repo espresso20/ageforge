@@ -311,7 +311,7 @@ func (p *accountsPanel) doExport() {
 		backupLine = fmt.Sprintf("\n\n[gold]Full backup (account.json + saves):[-]\n%s", backupPath)
 	}
 	msg := fmt.Sprintf(
-		"[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nachievements). Restore it with Import (i) on any machine.%s",
+		"[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nbadges). Restore it with Import (i) on any machine.%s",
 		displayNameOr(s), path, backupLine,
 	)
 	p.showMessage("Account exported", msg)
@@ -454,7 +454,7 @@ func (p *accountsPanel) doRecovery() {
 		return
 	}
 	msg := fmt.Sprintf(
-		"[gold]%s[-]\n\n[white::b]%s[-]\n\nThis code restores your account ID on another machine or after\na reinstall. It does not restore progress (unlocks, stats,\nachievements); back those up with Export (e). It is not a\npassword: it only proves which account you are.\n\nWrite it down. Restore with:  account recover <code>",
+		"[gold]%s[-]\n\n[white::b]%s[-]\n\nThis code restores your account ID on another machine or after\na reinstall. It does not restore progress (unlocks, stats,\nbadges); back those up with Export (e). It is not a\npassword: it only proves which account you are.\n\nWrite it down. Restore with:  account recover <code>",
 		displayNameOr(s), code,
 	)
 	p.showMessage("Recovery code", msg)
@@ -476,7 +476,7 @@ func (p *accountsPanel) doWipe() {
 	// STEP 1 — the are-you-sure gate.
 	step1 := tview.NewModal().
 		SetText(fmt.Sprintf(
-			"⚠  Wipe account?\n\nThis deletes the account \"%s\": its theme unlocks,\nlifetime stats, achievements and every save in its slot.\n\nA backup goes to data/backups/ first; restoring it is manual.",
+			"⚠  Wipe account?\n\nThis deletes the account \"%s\": its theme unlocks,\nlifetime stats, badges and every save in its slot.\n\nA backup goes to data/backups/ first; restoring it is manual.",
 			name,
 		)).
 		AddButtons([]string{"Keep it", "Wipe it"}).
@@ -696,7 +696,7 @@ func accountDetailText(s game.AccountSummary, recovery string) string {
 	lines = append(lines, "")
 	lines = append(lines, fmt.Sprintf("[gray]Highest age[-] [white]%s[-]", ageDisplay(s.HighestAge)))
 	lines = append(lines, fmt.Sprintf("[gray]Total prestiges[-] [white]%d[-]", s.TotalPrestiges))
-	lines = append(lines, fmt.Sprintf("[gray]Achievements[-] [white]%d[-]", s.Achievements))
+	lines = append(lines, fmt.Sprintf("[gray]Badges[-] [white]%d[-]", s.Badges))
 	lines = append(lines, "")
 
 	var status []string

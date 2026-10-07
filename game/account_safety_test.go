@@ -54,7 +54,7 @@ func TestRecoverKeepsActiveAccountIntact(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateAccount Alice: %v", err)
 	}
-	alice.RecordPrestige() // first_prestige and one lifetime prestige, no themes
+	recordPrestige(alice, "modern_age") // a badge and one lifetime prestige, no themes
 	if err := alice.FlushIfDirty(); err != nil {
 		t.Fatalf("flush Alice: %v", err)
 	}
@@ -73,15 +73,15 @@ func TestRecoverKeepsActiveAccountIntact(t *testing.T) {
 	}
 	got := slotAccount(t, alice.AccountID)
 	if got.AccountID != alice.AccountID || got.DisplayName != "Alice" ||
-		got.Stats.TotalPrestiges != 1 || len(got.Achievements) != 1 || got.Achievements[0] != "first_prestige" {
-		t.Errorf("Alice's slot after the recovery: id=%s name=%q stats=%+v achievements=%v",
-			got.AccountID, got.DisplayName, got.Stats, got.Achievements)
+		got.Stats.TotalPrestiges != 1 || len(got.Badges) != 1 || !hasBadge(got, badgePrestige1) {
+		t.Errorf("Alice's slot after the recovery: id=%s name=%q stats=%+v badges=%v",
+			got.AccountID, got.DisplayName, got.Stats, got.Badges)
 	}
 	bobNow := slotAccount(t, bob.AccountID)
 	if bobNow.AccountID != bob.AccountID || !verifyAccount(bobNow) || bobNow.Tampered {
 		t.Errorf("Bob's restored slot: id=%s verified=%v tampered=%v", bobNow.AccountID, verifyAccount(bobNow), bobNow.Tampered)
 	}
-	if len(bobNow.Achievements) != 0 || bobNow.Stats.TotalPrestiges != 0 || len(bobNow.Unlocks.Themes) != 0 {
+	if len(bobNow.Achievements) != 0 || len(bobNow.Badges) != 0 || bobNow.Stats.TotalPrestiges != 0 || len(bobNow.Unlocks.Themes) != 0 {
 		t.Errorf("a recovery code restores identity only, but Bob's slot holds data: %+v", bobNow)
 	}
 }
@@ -99,7 +99,7 @@ func TestRecoverOwnCodeKeepsProgress(t *testing.T) {
 	if _, err := alice.UnlockTheme("amber_crt"); err != nil {
 		t.Fatalf("UnlockTheme: %v", err)
 	}
-	alice.RecordPrestige()
+	recordPrestige(alice, "modern_age")
 	if err := alice.FlushIfDirty(); err != nil {
 		t.Fatalf("flush: %v", err)
 	}
@@ -158,7 +158,7 @@ func TestStaleAccountSaveStaysInItsOwnSlot(t *testing.T) {
 	}
 	daveBefore := slotFile(t, dave.AccountID)
 
-	carol.RecordPrestige()
+	recordPrestige(carol, "modern_age")
 	if err := carol.FlushIfDirty(); err != nil {
 		t.Fatalf("flush Carol: %v", err)
 	}
