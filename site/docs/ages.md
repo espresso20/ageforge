@@ -54,7 +54,7 @@ Every age can be finished, and an automated test checks this in every release. T
 - Each part of the age's wonder fits in that storage too.
 - The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age, and each one's knowledge cost fits the knowledge storage you can build in that age with room to spare.
 - The keystone is affordable well inside the age: the knowledge it costs (with the techs of its own age it stands on), the time to research them and the time to build the wonder fit inside the age's target length together, with at least a fifth of the age to spare.
-- The cheapest tech of an age fits the knowledge storage you are sure to enter the age with, or does within four of the age's storage buildings (four in the Renaissance, two at most elsewhere).
+- The cheapest tech of an age fits the knowledge storage you are sure to enter the age with, or does within two of the age's storage buildings.
 - Every resource a requirement asks for has a source in the age itself, even for a player who skipped every building no earlier requirement asked for.
 - A requirement in faith, food or culture is something a moderate economy makes within the age's target length, or can buy for a small share of it.
 

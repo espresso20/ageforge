@@ -239,7 +239,7 @@ Each trade pushes that pair's rate down a little, and the rate recovers over tim
 | `diplomacy ally <civ>` | Ally with a civilization. Costs 500 gold and needs opinion 50 |
 | `diplomacy rival <civ>` | Declare a rivalry |
 | `diplomacy embargo <civ>` | Embargo a civilization. This is a provocation that can start a war |
-| `diplomacy gift <civ>` | Send a gift of gold for +15 opinion: 200 gold, or 150 with Telecommunications (the Factions panel shows today's price). Gifts, alliances, rivalries, embargoes and deals wait for Envoys, a Classical Age tech |
+| `diplomacy gift <civ>` | Send a gift of gold for +15 opinion, or +22 with Embassies: 200 gold, or 150 with Telecommunications (the Factions panel shows today's price and what it earns). Gifts, alliances, rivalries, embargoes and deals wait for Envoys, a Classical Age tech |
 | `diplomacy neutral <civ>` | Set a civilization back to neutral |
 | `diplomacy tribute <civ>` | Sue for peace with a civilization you are at war with (you pay gold and culture, scaled to its strength) |
 | `diplomacy raid <civ>` | Raid a civilization's trade route (-20 opinion; a provocation that can start a war) |
@@ -355,7 +355,7 @@ A prestige pays for every age the run completed, and each era's ages pay three t
 | `festival` | Show festival status: culture cost, current culture, and the boost it grants |
 | `festival confirm yes` | Hold a cultural festival now: spend culture for a temporary production boost. Festivals wait for Drama, a Classical Age tech |
 
-A festival costs the larger of 2K culture or 5% of your culture storage, and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes). Two techs help: Radio brings the next festival back 20% sooner and Social Media makes each one cost 20% less. The boost adds to the same pool as every other all-production bonus, so it adds little or nothing once that pool is at its cap (see [The all-production cap](resources.md#the-all-production-cap)). When that is the case `festival` says so before you pay (`Right now it is capped: no effect now.`).
+A festival costs the larger of 2K culture or 5% of your culture storage, and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes). Three techs help: Baroque Arts makes the boost last 25% longer (487 ticks, about 16 minutes), Radio brings the next festival back 20% sooner and Social Media makes each one cost 20% less. The boost adds to the same pool as every other all-production bonus, so it adds little or nothing once that pool is at its cap (see [The all-production cap](resources.md#the-all-production-cap)). When that is the case `festival` says so before you pay (`Right now it is capped: no effect now.`).
 
 ---
 

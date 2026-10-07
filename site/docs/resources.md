@@ -127,7 +127,7 @@ Culture has two jobs. Its **fill % of storage** decides which tier of good epoch
 | Eternal Library | Industrial | 140K | +3% all production |
 | Monument of Ages | Modern | 7.1M | +5% all production |
 
-**The `festival` command** spends a lump of culture (2K, or 5% of your culture storage if that is more) for **+20% all production for 13 minutes** (390 ticks), then waits **26 minutes** (780 ticks) before the next one (Radio shortens the wait by 20%, and Social Media the price by 20%). See [Commands](commands.md).
+**The `festival` command** spends a lump of culture (2K, or 5% of your culture storage if that is more) for **+20% all production for 13 minutes** (390 ticks), then waits **26 minutes** (780 ticks) before the next one (Baroque Arts makes the boost last 25% longer, Radio shortens the wait by 20%, and Social Media the price by 20%). See [Commands](commands.md).
 
 Culture also pays for:
 

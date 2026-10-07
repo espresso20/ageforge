@@ -75,13 +75,26 @@ func cardOf(st game.GameState, key string) string {
 // it), its emblem sits exactly on its centre cell, its name plate is
 // centred over it, and every connector cell is joined on to the next: a
 // line never stops in mid air or runs under a badge.
+//
+// Twice: from the Classical Age, with a research running and a tech in the
+// plan, and from the Electric Age, where the map holds every age a content
+// batch has filled in, their either-or group, their six capstones and the
+// lanes that hold three techs in one age.
 func TestResearchTreeDrawsEveryTechWhole(t *testing.T) {
-	st := classicalGame(t).GetState()
+	treeDrawsEveryTechWhole(t, classicalGame(t).GetState(), "road_building")
+	treeDrawsEveryTechWhole(t, electricGame(t).GetState(), "interchangeable_parts")
+}
+
+func treeDrawsEveryTechWhole(t *testing.T, st game.GameState, sel string) {
+	t.Helper()
 	for _, w := range []int{80, 120} {
 		for _, far := range []bool{false, true} {
 			geom := treeGeomFor(w, far)
-			m := buildTree(st, geom, false, "road_building")
-			g := m.canvas(st, "road_building")
+			m := buildTree(st, geom, false, sel)
+			if m.by[sel] == nil {
+				t.Fatalf("%s is not on the map", sel)
+			}
+			g := m.canvas(st, sel)
 			owned := map[[2]int]string{}
 			claim := func(x, y int, key string) {
 				if other, ok := owned[[2]int{x, y}]; ok && other != key {
@@ -172,13 +185,21 @@ func TestResearchTreeDrawsEveryTechWhole(t *testing.T) {
 // fills its rectangle, the selected tech is whole on screen with its name,
 // the title and the key bar are there, nothing is drawn outside the map's
 // frame, and the plain tier is plain. The card fits inside the map.
+//
+// From the Classical Age and from the Electric Age, where the map is twice
+// as tall and nine lanes wide, on its longest names and its capstones.
 func TestResearchTreeAtEverySize(t *testing.T) {
-	st := classicalGame(t).GetState()
+	treeAtEverySize(t, classicalGame(t).GetState(), "tool_making", "road_building", "philosophy", "siege_warfare")
+	treeAtEverySize(t, electricGame(t).GetState(), "patronage", "concert_of_nations", "aviation", "military_industrial_complex")
+}
+
+func treeAtEverySize(t *testing.T, st game.GameState, sels ...string) {
+	t.Helper()
 	for _, size := range treeSizes {
 		w, h := size[0], size[1]-promptRows
 		for _, far := range []bool{false, true} {
 			for _, ascii := range []bool{false, true} {
-				for _, sel := range []string{"tool_making", "road_building", "philosophy", "siege_warfare"} {
+				for _, sel := range sels {
 					m, v, g := drawTree(st, w, h, treeView{sel: sel, far: far, ascii: ascii})
 					if g.w != w || g.h != h {
 						t.Fatalf("%dx%d: rendered %dx%d", w, h, g.w, g.h)
@@ -763,17 +784,50 @@ func medievalGame(t *testing.T) *game.GameEngine {
 	return ge
 }
 
-// TestEarlyEmblemsSitOnTheGrid: every tech of the Stone and Iron Eras wears
-// the emblem its own entry sets, one glyph on the centre cell of its badge
-// at both badge sizes and of its pill zoomed out, and in the plain glyph
-// tier the first letter of its code sits there instead. Nothing is drawn in
-// a cell beside the emblem's own.
-func TestEarlyEmblemsSitOnTheGrid(t *testing.T) {
-	st := classicalGame(t).GetState() // the six ages are in sight: Medieval is next
+// electricGame is a game in the Electric Age with nothing researched: the
+// twelve ages a content batch has filled in are in sight (the Atomic Age is
+// next).
+func electricGame(t *testing.T) *game.GameEngine {
+	t.Helper()
+	ge := game.NewGameEngine()
+	ge.SeedRNG(1)
+	for _, a := range config.AgeOrder()[1:] {
+		if err := ge.EnterAgeForTest(a); err != nil {
+			t.Fatal(err)
+		}
+		if a == "electric_age" {
+			break
+		}
+	}
+	return ge
+}
+
+// TestEmblemsSitOnTheGrid: every tech of an age a content batch has filled
+// in (the Stone, Iron, Steel and Electric Eras) wears the emblem its own
+// entry sets, one glyph on the centre cell of its badge at both badge sizes
+// and of its pill zoomed out, and in the plain glyph tier the first letter
+// of its code sits there instead. Nothing is drawn in a cell beside the
+// emblem's own. Once from the Classical Age, where the first six ages are in
+// sight, and once from the Electric Age, where all twelve are.
+func TestEmblemsSitOnTheGrid(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		st   game.GameState
+		last string
+		want int
+	}{
+		{"the Classical Age", classicalGame(t).GetState(), "medieval_age", 41},
+		{"the Electric Age", electricGame(t).GetState(), "atomic_age", 97},
+	} {
+		emblemsSitOnTheGrid(t, c.name, c.st, c.last, c.want)
+	}
+}
+
+func emblemsSitOnTheGrid(t *testing.T, name string, st game.GameState, last string, wantNodes int) {
+	t.Helper()
 	early := 0
 	for _, def := range config.Technologies() {
-		switch def.Age {
-		case "primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age":
+		if config.AgePositions(config.AgeOrder())[def.Age] <= config.AgePositions(config.AgeOrder())[last] {
 			early++
 		}
 	}
@@ -787,8 +841,8 @@ func TestEarlyEmblemsSitOnTheGrid(t *testing.T) {
 				if ascii {
 					foldPlain(g)
 				}
-				if len(m.nodes) != early || early != 41 {
-					t.Fatalf("%d far=%v: %d techs on the map, the six early ages hold %d (want 41)", w, far, len(m.nodes), early)
+				if len(m.nodes) != early || early != wantNodes {
+					t.Fatalf("from %s, %d far=%v: %d techs on the map, the ages in sight hold %d (want %d)", name, w, far, len(m.nodes), early, wantNodes)
 				}
 				for _, n := range m.nodes {
 					want := []rune(n.def.Emblem)[0]
@@ -799,7 +853,7 @@ func TestEarlyEmblemsSitOnTheGrid(t *testing.T) {
 						t.Errorf("%d far=%v plain=%v: %s carries %q, want %q", w, far, ascii, n.key, n.emblem, want)
 					}
 					if !ascii && n.def.Emblem == lanes[n.def.Lane].Emblem && n.key != "tool_making" && n.key != "primitive_writing" && n.key != "military_tactics" {
-						t.Errorf("%s wears its lane's glyph %q: an early tech has an emblem of its own", n.key, n.def.Emblem)
+						t.Errorf("%s wears its lane's glyph %q: a tech of a filled-in age has an emblem of its own", n.key, n.def.Emblem)
 					}
 					ex, ey := n.cx, n.top+geom.nameH+geom.badgeH/2
 					if geom.pill {
