@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // ActiveEvent represents a currently active timed event
@@ -30,13 +31,14 @@ type ActiveEvent struct {
 // A global cooldown (nextEventTick) ensures at most one event fires per 5-20
 // minutes of real time in the Primitive and Stone Ages, preventing event spam.
 // From the Bronze Age on the ages run config.PacingStretch times longer, and
-// so do the delay, each event's duration and its cooldown (config.StretchTicks
-// on the current age), so an age holds as many events as before.
+// so do the delay, each event's duration and its cooldown (the ruleset's
+// StretchTicks on the current age), so an age holds as many events as before.
 //
 // NOTE: InjectEvent bypasses all eligibility checks and fires immediately.
 // It is used for milestone chain boosts and epoch event effects; calling it
 // inside a Bus handler is safe because the EventManager is not locked separately.
 type EventManager struct {
+	rules         *rules.Set
 	defs          []config.EventDef
 	defMap        map[string]config.EventDef
 	lastFired     map[string]int // event key -> last tick fired (for per-event cooldowns)
@@ -53,11 +55,11 @@ const (
 	eventMaxDelay = 600 // 20 minutes (600 ticks * 2s)
 )
 
-// eventDelay draws the wait until the next random event in age: 150-600
-// ticks, times the age's stretch. One draw from rng whatever the age, so the
-// stream keeps its shape.
-func eventDelay(rng *rand.Rand, age string) int {
-	return config.StretchTicks(age, eventMinDelay+rng.Intn(eventMaxDelay-eventMinDelay+1))
+// eventDelayIn draws the wait until the next random event in age on set's
+// clocks: 150-600 ticks, times the age's stretch. One draw from rng
+// whatever the age, so the stream keeps its shape.
+func eventDelayIn(set *rules.Set, rng *rand.Rand, age string) int {
+	return set.StretchTicks(age, eventMinDelay+rng.Intn(eventMaxDelay-eventMinDelay+1))
 }
 
 // eventUnscheduled marks an EventManager whose first random event has not been
@@ -67,15 +69,26 @@ func eventDelay(rng *rand.Rand, age string) int {
 // stream.
 const eventUnscheduled = -1
 
-// NewEventManager creates a new event manager. It makes no random draws; the
-// first event is scheduled on the first Tick.
-func NewEventManager() *EventManager {
-	return &EventManager{
-		defs:          config.RandomEvents(),
-		defMap:        config.EventByKey(),
+// NewEventManager creates a new event manager on the core ruleset.
+func NewEventManager() *EventManager { return NewEventManagerWith(rules.Core()) }
+
+// NewEventManagerWith creates a new event manager with set's events. It makes
+// no random draws; the first event is scheduled on the first Tick.
+func NewEventManagerWith(set *rules.Set) *EventManager {
+	em := &EventManager{
 		lastFired:     make(map[string]int),
 		nextEventTick: eventUnscheduled,
 	}
+	em.Rebind(set)
+	return em
+}
+
+// Rebind moves the manager onto set: it takes set's events. Active events,
+// cooldowns and the next event's tick stay.
+func (em *EventManager) Rebind(set *rules.Set) {
+	em.rules = set
+	em.defs = set.Events()
+	em.defMap = set.EventMap()
 }
 
 // Tick processes one tick: checks for new events, processes active event durations.
@@ -85,7 +98,7 @@ func NewEventManager() *EventManager {
 func (em *EventManager) Tick(rng *rand.Rand, tick int, currentAge string, ageOrder map[string]int, currentEpoch string) (triggered []config.EventDef, expired []ActiveEvent) {
 	if em.nextEventTick == eventUnscheduled {
 		// First event 150-600 ticks from the start of the run.
-		em.nextEventTick = eventDelay(rng, currentAge)
+		em.nextEventTick = eventDelayIn(em.rules, rng, currentAge)
 	}
 
 	// Process active events first - decrement durations
@@ -139,14 +152,14 @@ func (em *EventManager) Tick(rng *rand.Rand, tick int, currentAge string, ageOrd
 				em.active = append(em.active, ActiveEvent{
 					Key:       def.Key,
 					Name:      def.Name,
-					TicksLeft: config.StretchTicks(currentAge, def.Duration),
+					TicksLeft: em.rules.StretchTicks(currentAge, def.Duration),
 					Effects:   def.Effects,
 				})
 			}
 
 			// Schedule the next event (5-20 minutes from now, times the
 			// age's stretch)
-			em.nextEventTick = tick + eventDelay(rng, currentAge)
+			em.nextEventTick = tick + eventDelayIn(em.rules, rng, currentAge)
 			break
 		}
 	}
@@ -193,7 +206,7 @@ func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[st
 	// Build candidate pool: universal events + epoch-exclusive events for the current epoch
 	pool := make([]config.EventDef, len(em.defs))
 	copy(pool, em.defs)
-	for _, ev := range config.EpochExclusiveEvents() {
+	for _, ev := range em.rules.EraEvents() {
 		if ev.EpochKey == currentEpoch {
 			pool = append(pool, ev)
 		}
@@ -218,7 +231,7 @@ func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[st
 		}
 		// Check cooldown (stretched like the age)
 		if lastTick, ok := em.lastFired[def.Key]; ok {
-			if tick-lastTick < config.StretchTicks(currentAge, def.Cooldown) {
+			if tick-lastTick < em.rules.StretchTicks(currentAge, def.Cooldown) {
 				continue
 			}
 		}

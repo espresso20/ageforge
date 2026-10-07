@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Fated dooms: when a catastrophe strikes is decided at random, in secret.
@@ -140,35 +141,22 @@ type FateSave struct {
 // expectedAgeTicks is how long a player is expected to spend in age, in
 // ticks: the one measure of expected duration for the fate and the
 // harbinger (the era's window, the lead, the timing forecast, the shortest
-// warning). It is the pacing target (config.AgeTargetTicks) divided by the
+// warning). It is the pacing target (rules.Set.TargetTicks) divided by the
 // age's Era Mastery speed (mastery.go), here and nowhere else: a mastered
 // era is shorter, so its doom and its harbinger fall inside it. Mastery is
 // fixed for a run, so this never changes under a fate already rolled.
 // Read-only.
 func (ge *GameEngine) expectedAgeTicks(age string) float64 {
-	return float64(baseAgeTicks(age) / ge.Prestige.AgeSpeed(age))
+	return float64(ge.rules.TargetTicks(age) / ge.Prestige.AgeSpeed(age))
 }
 
 // expectedEraTicks is epochKey's expected length: its ages' expectedAgeTicks
 // summed. 0 for an unknown epoch. Read-only.
 func (ge *GameEngine) expectedEraTicks(epochKey string) float64 {
 	total := 0.0
-	for _, a := range config.EpochByKey()[epochKey].Ages {
+	era, _ := ge.rules.Era(epochKey)
+	for _, a := range era.Ages {
 		total += float64(ge.expectedAgeTicks(a)) // rounded: the target is a product once inlined
-	}
-	return total
-}
-
-// baseAgeTicks is age's pacing target in ticks, before any Era Mastery
-// speed-up: expectedAgeTicks at k = 1.
-func baseAgeTicks(age string) float64 { return config.AgeTargetTicks(age) }
-
-// baseEraTicks is epochKey's expected length at k = 1: expectedEraTicks
-// with no mastery.
-func baseEraTicks(epochKey string) float64 {
-	total := 0.0
-	for _, a := range config.EpochByKey()[epochKey].Ages {
-		total += float64(baseAgeTicks(a))
 	}
 	return total
 }
@@ -200,9 +188,9 @@ func (ge *GameEngine) rollFate() {
 	f := &FateSave{EpochKey: ep, EntryTick: ge.tick, Window: window}
 	rng := ge.gameRNG()
 	fatedRoll, falseRoll, offsetRoll, leadRoll, claimRoll := rng.Float64(), rng.Float64(), rng.Float64(), rng.Float64(), rng.Float64()
-	f.Fated = config.FateAllowed(ep) && fatedRoll < FateChance
+	f.Fated = ge.rules.FateAllowed(ep) && fatedRoll < FateChance
 	if !f.Fated {
-		def, _ := config.HarbingerFor(ge.age)
+		def, _ := ge.rules.Harbinger(ge.age)
 		f.FalseProphet = falseRoll < def.FalseProphetChance
 	}
 	if f.Fated || f.FalseProphet {
@@ -308,7 +296,7 @@ func (ge *GameEngine) fateNextEventIn() int {
 // one arrived.
 func (ge *GameEngine) fateArrive() bool {
 	f := ge.fate
-	def, ok := config.HarbingerFor(ge.age)
+	def, ok := ge.rules.Harbinger(ge.age)
 	if !ok {
 		return false
 	}
@@ -363,7 +351,8 @@ func (ge *GameEngine) fateWhen(def config.HarbingerDef) string {
 	if f == nil || def.ForecastTiming == config.TimingNone {
 		return WhenUntold
 	}
-	ages := config.EpochByKey()[f.EpochKey].Ages
+	era, _ := ge.rules.Era(f.EpochKey)
+	ages := era.Ages
 	end := float64(f.EntryTick)
 	for i, a := range ages {
 		end += float64(ge.expectedAgeTicks(a))
@@ -386,7 +375,7 @@ func (ge *GameEngine) fateWarningText(h *HarbingerSave) string {
 	case WhenThisAge:
 		return "impending doom before this age is out"
 	case WhenThisEra:
-		return fmt.Sprintf("impending doom before the %s ends", config.EpochByKey()[h.EpochKey].Name)
+		return fmt.Sprintf("impending doom before the %s ends", eraName(ge.rules, h.EpochKey))
 	}
 	return "impending doom"
 }
@@ -480,10 +469,10 @@ func (ge *GameEngine) revealFalseProphet(eraEnds bool) {
 	f.Resolved, f.ResolvedTick, f.AtAdvance = FateRevealed, ge.tick, true
 	arrived := ge.harbingerArrivedTick()
 	if h := ge.fateThread(); h != nil {
-		def, _ := config.HarbingerFor(h.Age)
+		def, _ := ge.rules.Harbinger(h.Age)
 		window := "This age ends"
 		if eraEnds {
-			window = fmt.Sprintf("The %s ends", config.EpochByKey()[f.EpochKey].Name)
+			window = fmt.Sprintf("The %s ends", eraName(ge.rules, f.EpochKey))
 		}
 		ge.settleHarbinger(f.EpochKey, false,
 			fmt.Sprintf("⚑ %s without the doom %s foretold. The warning had been invented from the start.", window, def.Name))
@@ -494,8 +483,8 @@ func (ge *GameEngine) revealFalseProphet(eraEnds bool) {
 // errHarbingerAtGate is the refusal of an advance (or, in the final epoch, a
 // prestige) that brought a doom's harbinger: the doom cannot be outrun, so it
 // is foretold first. again says what to do to meet it.
-func errHarbingerAtGate(h *HarbingerSave, warning, again string) error {
-	def, _ := config.HarbingerFor(h.Age)
+func errHarbingerAtGate(set *rules.Set, h *HarbingerSave, warning, again string) error {
+	def, _ := set.Harbinger(h.Age)
 	return fmt.Errorf("%s stands in your way, warning of %s. Type 'harbinger' to answer, or %s again to meet it.", capFirst(def.Name), warning, again)
 }
 
@@ -512,7 +501,7 @@ func (ge *GameEngine) fateBeforeAdvance(next string) error {
 	if !f.open() || f.EpochKey != ge.currentEpoch {
 		return nil
 	}
-	leaving := config.EpochForAge(next) != ge.currentEpoch
+	leaving := ge.rules.EraOf(next) != ge.currentEpoch
 	h := ge.fateThread()
 	promised := h != nil && h.When == WhenThisAge
 	if !leaving && !promised {
@@ -527,7 +516,7 @@ func (ge *GameEngine) fateBeforeAdvance(next string) error {
 // prestige from an earlier era leaves its open doom behind with the run.)
 func (ge *GameEngine) fateBeforePrestige() error {
 	f := ge.fate
-	if !f.open() || f.EpochKey != ge.currentEpoch || !config.IsFinalEpoch(f.EpochKey) {
+	if !f.open() || f.EpochKey != ge.currentEpoch || !ge.rules.IsFinalEra(f.EpochKey) {
 		return nil
 	}
 	return ge.fateAtPassage(true, "confirm prestige", "prestiging")
@@ -541,8 +530,8 @@ func (ge *GameEngine) fateAtPassage(leaving bool, again, gerund string) error {
 	// era where nothing can strike (the Stone Era) a false prophet who has
 	// not come by its end never comes: holding the advance up for a warning
 	// the rules already rule out would only confuse.
-	if ge.fateThread() == nil && !f.Arrived && config.FateAllowed(f.EpochKey) && ge.fateArrive() {
-		return errHarbingerAtGate(ge.harbinger, ge.fateWarningText(ge.harbinger), again)
+	if ge.fateThread() == nil && !f.Arrived && ge.rules.FateAllowed(f.EpochKey) && ge.fateArrive() {
+		return errHarbingerAtGate(ge.rules, ge.harbinger, ge.fateWarningText(ge.harbinger), again)
 	}
 	if f.lying() {
 		ge.revealFalseProphet(leaving)
@@ -609,7 +598,7 @@ func (ge *GameEngine) restoreFateState(save *GameSave) {
 		return
 	}
 	h := save.Harbinger
-	if h == nil || h.TargetEpoch == "" || h.EpochKey != ge.currentEpoch || !config.FateAllowed(h.EpochKey) {
+	if h == nil || h.TargetEpoch == "" || h.EpochKey != ge.currentEpoch || !ge.rules.FateAllowed(h.EpochKey) {
 		return
 	}
 	// (A Last Passage thread, TargetEpoch "", keeps its rules: the Cosmic
@@ -661,7 +650,7 @@ func (ge *GameEngine) forceFate(epochKey string, fated, falseProphet bool, strik
 	if epochKey != ge.currentEpoch {
 		return fmt.Errorf("the current era is %s, not %s", ge.currentEpoch, epochKey)
 	}
-	if fated && !config.FateAllowed(epochKey) {
+	if fated && !ge.rules.FateAllowed(epochKey) {
 		return fmt.Errorf("nothing can be fated in %s", epochKey)
 	}
 	f := ge.fate

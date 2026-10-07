@@ -5,9 +5,9 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Era Mastery (Pacing v2, PR 5). Each age remembers how many runs completed
@@ -35,10 +35,6 @@ import (
 // the resource is under its cap (ResourceManager.grace, saved as
 // GameSave.OverCapGrace).
 
-// ageKeys is every age key in order, built once (config rebuilds its tables
-// on every call).
-var ageKeys = sync.OnceValue(config.AgeOrder)
-
 // MasteryTicks divides ticks by k, rounded up, never below one tick. k ≤ 1
 // (the frontier, or a manager no engine has set) leaves ticks as they are.
 func MasteryTicks(ticks int, k float64) int {
@@ -53,9 +49,9 @@ func SpeedText(k float64) string {
 	return strconv.FormatFloat(math.Round(k*10)/10, 'f', -1, 64) + "x"
 }
 
-// shortAgeName is an age's name without " Age" ("Atomic"), for ranges.
-func shortAgeName(key string) string {
-	return strings.TrimSuffix(AgeName(key), " Age")
+// shortAgeName is an age's name in set without " Age" ("Atomic"), for ranges.
+func shortAgeName(set *rules.Set, key string) string {
+	return strings.TrimSuffix(set.Name(rules.KindAge, key), " Age")
 }
 
 // ===== PrestigeManager: the mastery map =====
@@ -64,9 +60,9 @@ func shortAgeName(key string) string {
 // record. Called whenever either changes, so AgeSpeed (hit every tick and
 // every snapshot) is one map lookup.
 func (pm *PrestigeManager) rebuildSpeeds() {
-	order := ageKeys()
+	order := pm.rules.AgeKeys()
 	rec := -1
-	if o, ok := ageOrders()[pm.record]; ok {
+	if o, ok := pm.rules.Index(pm.record); ok {
 		rec = o
 	}
 	if pm.speeds == nil {
@@ -101,14 +97,14 @@ func (pm *PrestigeManager) RunFurthest() string { return pm.runFurthest }
 // NoteAgeEntered records that age was entered this run: it may become the
 // run's furthest age and the record. Reports whether the record moved.
 func (pm *PrestigeManager) NoteAgeEntered(age string) bool {
-	o, ok := ageOrders()[age]
+	o, ok := pm.rules.Index(age)
 	if !ok {
 		return false
 	}
-	if cur, ok := ageOrders()[pm.runFurthest]; !ok || o > cur {
+	if cur, ok := pm.rules.Index(pm.runFurthest); !ok || o > cur {
 		pm.runFurthest = age
 	}
-	if cur, ok := ageOrders()[pm.record]; !ok || o > cur {
+	if cur, ok := pm.rules.Index(pm.record); !ok || o > cur {
 		pm.record = age
 		pm.rebuildSpeeds()
 		return true
@@ -119,12 +115,12 @@ func (pm *PrestigeManager) NoteAgeEntered(age string) bool {
 // masteryGains is the ages a prestige now would raise: every age below the
 // run's furthest that is not yet at the cap, in order.
 func (pm *PrestigeManager) masteryGains() []string {
-	far, ok := ageOrders()[pm.runFurthest]
+	far, ok := pm.rules.Index(pm.runFurthest)
 	if !ok {
 		return nil
 	}
 	var out []string
-	for i, a := range ageKeys() {
+	for i, a := range pm.rules.AgeKeys() {
 		if i >= far {
 			break
 		}
@@ -143,7 +139,7 @@ func (pm *PrestigeManager) CommitRun() []string {
 	for _, a := range gained {
 		pm.mastery[a] = config.ClampMastery(pm.mastery[a] + 1)
 	}
-	pm.runFurthest = ageKeys()[0]
+	pm.runFurthest = pm.rules.AgeKeys()[0]
 	pm.rebuildSpeeds()
 	return gained
 }
@@ -171,15 +167,15 @@ func (pm *PrestigeManager) SetRecord(age string) {
 func (pm *PrestigeManager) LoadMastery(mastery map[string]int, record, runFurthest string, seeded bool) {
 	pm.mastery = make(map[string]int, len(mastery))
 	for a, m := range mastery {
-		if _, ok := ageOrders()[a]; ok && config.ClampMastery(m) > 0 {
+		if _, ok := pm.rules.Index(a); ok && config.ClampMastery(m) > 0 {
 			pm.mastery[a] = config.ClampMastery(m)
 		}
 	}
 	pm.record, pm.runFurthest = "", ""
-	if _, ok := ageOrders()[record]; ok {
+	if _, ok := pm.rules.Index(record); ok {
 		pm.record = record
 	}
-	if _, ok := ageOrders()[runFurthest]; ok {
+	if _, ok := pm.rules.Index(runFurthest); ok {
 		pm.runFurthest = runFurthest
 	}
 	pm.masterySeeded = seeded
@@ -261,7 +257,7 @@ func (ge *GameEngine) noteGraceLocked(k float64) {
 // age before it ran faster. "" when there is nothing to say.
 func (ge *GameEngine) masteryEntryLine(age string, prevK float64) string {
 	k := ge.Prestige.AgeSpeed(age)
-	name := AgeName(age)
+	name := ge.rules.Name(rules.KindAge, age)
 	switch {
 	case k > config.MasteryK(ge.Prestige.Mastery(age)):
 		return fmt.Sprintf("Known ground: the %s runs %s faster while you catch up to your record.", name, SpeedText(k))
@@ -274,16 +270,16 @@ func (ge *GameEngine) masteryEntryLine(age string, prevK float64) string {
 }
 
 // masteryCommitLine is the prestige's log line for the ages that gained a
-// mastery level ("" when none did).
-func masteryCommitLine(gained []string) string {
+// mastery level ("" when none did), named by set.
+func masteryCommitLine(set *rules.Set, gained []string) string {
 	switch len(gained) {
 	case 0:
 		return ""
 	case 1:
-		return fmt.Sprintf("Era Mastery: the %s gained a mastery level and will run faster.", AgeName(gained[0]))
+		return fmt.Sprintf("Era Mastery: the %s gained a mastery level and will run faster.", set.Name(rules.KindAge, gained[0]))
 	}
 	return fmt.Sprintf("Era Mastery: the %s to the %s gained a mastery level each and will run faster.",
-		AgeName(gained[0]), AgeName(gained[len(gained)-1]))
+		set.Name(rules.KindAge, gained[0]), set.Name(rules.KindAge, gained[len(gained)-1]))
 }
 
 // seedMasteryLocked is the one-time step that gives a save from before Era
@@ -306,7 +302,7 @@ func (ge *GameEngine) seedMasteryLocked() {
 	}
 	m := config.ClampMastery(pm.level)
 	last := ""
-	for _, a := range ageKeys() {
+	for _, a := range ge.rules.AgeKeys() {
 		if a == PrestigeRunAge {
 			break
 		}
@@ -322,15 +318,15 @@ func (ge *GameEngine) seedMasteryLocked() {
 		pm.runFurthest = ""
 	}
 	for _, ep := range sortedKeys(ge.legacyBonuses) {
-		if ages := config.EpochByKey()[ep].Ages; ge.legacyBonuses[ep] && len(ages) > 0 {
-			pm.NoteAgeEntered(ages[0])
+		if era, _ := ge.rules.Era(ep); ge.legacyBonuses[ep] && len(era.Ages) > 0 {
+			pm.NoteAgeEntered(era.Ages[0])
 			pm.runFurthest = ""
 		}
 	}
 	pm.rebuildSpeeds()
 	ge.noteRunAgesLocked()
 	ge.addLog("info", fmt.Sprintf("Era Mastery: ages you have completed now run faster. %s to %s: mastery %d (%s).",
-		shortAgeName(ageKeys()[0]), shortAgeName(last), m, SpeedText(config.MasteryK(m))))
+		shortAgeName(ge.rules, ge.rules.AgeKeys()[0]), shortAgeName(ge.rules, last), m, SpeedText(config.MasteryK(m))))
 }
 
 // noteRunAgesLocked makes sure the run's furthest age and the record cover

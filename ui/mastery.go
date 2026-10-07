@@ -74,7 +74,7 @@ func writeMasterySection(sb *strings.Builder, state game.GameState) {
 		return
 	}
 	sb.WriteString("\n")
-	for _, a := range config.AgeOrder() {
+	for _, a := range state.Ruleset().AgeKeys() {
 		k := m.Speeds[a]
 		level := m.Ages[a]
 		mark := "  "

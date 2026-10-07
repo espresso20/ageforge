@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Civilizational catastrophes (Phase 9).
@@ -76,12 +77,12 @@ const (
 	EndureMoraleHit        = endureMoraleHit
 )
 
-// EndureDebuffTicksIn is how long Endure's Reconstruction Effort lasts in age:
-// endureDebuffTicks stretched like the age (config.StretchTicks), so the
+// EndureDebuffTicksIn is how long Endure's Reconstruction Effort lasts in age
+// on the core ruleset: endureDebuffTicks stretched like the age, so the
 // debuff covers the same share of a longer age. Dooms strike from the Iron Era
 // on, so in play it is always the stretched length.
 func EndureDebuffTicksIn(age string) int {
-	return config.StretchTicks(age, endureDebuffTicks)
+	return rules.Core().StretchTicks(age, endureDebuffTicks)
 }
 
 // Catastrophe record outcomes (EpochEventRecord.Outcome).
@@ -213,7 +214,7 @@ func goodChanceFor(fill float64, ok bool) float64 {
 // catastropheBlockErr is the error AdvanceAge and DoPrestige return while a
 // catastrophe is pending. action is a gerund ("advancing", "prestiging").
 func (ge *GameEngine) catastropheBlockErr(action string) error {
-	name, _ := config.CatastropheInfo(ge.pendingCatastrophe)
+	name, _ := ge.rules.Catastrophe(ge.pendingCatastrophe)
 	return fmt.Errorf("%s is upon you. Type 'catastrophe' to choose Endure or Succumb before %s", name, action)
 }
 
@@ -230,8 +231,8 @@ const (
 // Iron gate. Must be called under the write lock; the bus
 // handlers it reaches must not take the engine lock (see CLAUDE.md).
 func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
-	ep := config.EpochByKey()[epochKey]
-	catName, _ := config.CatastropheInfo(epochKey)
+	ep, _ := ge.rules.Era(epochKey)
+	catName, _ := ge.rules.Catastrophe(epochKey)
 	ge.pendingCatastrophe = epochKey
 
 	eventName := catName
@@ -281,9 +282,8 @@ func (ge *GameEngine) forceCatastrophe() error {
 	if ge.pendingCatastrophe != "" || ge.pendingLastPassage {
 		return fmt.Errorf("a catastrophe is already pending")
 	}
-	if !config.CatastropheAllowed(ge.currentEpoch) {
-		gate := config.EpochByKey()[config.CatastropheGateEpoch]
-		return fmt.Errorf("catastrophes cannot strike before the %s", gate.Name)
+	if !ge.rules.CatastropheAllowed(ge.currentEpoch) {
+		return fmt.Errorf("catastrophes cannot strike before the %s", eraName(ge.rules, config.CatastropheGateEpoch))
 	}
 	ge.triggerCatastrophe(ge.currentEpoch, catastropheForced)
 	return nil
@@ -316,10 +316,10 @@ func (ge *GameEngine) CatastropheOutlook() CatastropheOutlook {
 func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 	fill, _ := ge.faithFill()
 	out := CatastropheOutlook{Passage: PassageEpoch, Tier: CatastropheTierNone, FaithFill: fill}
-	if next, ok := config.NextEpoch(ge.currentEpoch); ok {
+	if next, ok := ge.rules.NextEra(ge.currentEpoch); ok {
 		out.NextEpochKey = next.Key
 	}
-	if config.IsFinalEpoch(ge.currentEpoch) {
+	if ge.rules.IsFinalEra(ge.currentEpoch) {
 		// The final epoch's passage is prestige: the Last Passage, at its
 		// own thread's Appease. Its fated doom shows only once foretold.
 		out.Passage = PassagePrestige
@@ -340,7 +340,7 @@ func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 		out.Tier, out.Probability = ge.harbingerDisplay()
 		return out
 	}
-	out.Possible = config.FateAllowed(ge.currentEpoch) && ge.pendingCatastrophe == "" && !ge.fateSettled()
+	out.Possible = ge.rules.FateAllowed(ge.currentEpoch) && ge.pendingCatastrophe == "" && !ge.fateSettled()
 	return out
 }
 
@@ -404,8 +404,8 @@ func (ge *GameEngine) Endure() error {
 	ge.survivedEpochs[epochKey] = true
 	ge.setCatastropheOutcome(epochKey, CatastropheEndured)
 
-	catName, catFlavor := config.CatastropheInfo(epochKey)
-	epName := config.EpochByKey()[epochKey].Name
+	catName, catFlavor := ge.rules.Catastrophe(epochKey)
+	epName := eraName(ge.rules, epochKey)
 
 	destroyCount := outcome.DestroyCount
 	destroyed, names := ge.Buildings.DestroyRandom(ge.gameRNG(), destroyCount)
@@ -492,8 +492,8 @@ func (ge *GameEngine) Succumb() error {
 		return fmt.Errorf("no pending catastrophe to succumb to")
 	}
 	epochKey := ge.pendingCatastrophe
-	catName, _ := config.CatastropheInfo(epochKey)
-	ep := config.EpochByKey()[epochKey]
+	catName, _ := ge.rules.Catastrophe(epochKey)
+	ep, _ := ge.rules.Era(epochKey)
 	ge.setCatastropheOutcome(epochKey, CatastropheSuccumbed)
 
 	newLegacy := !ge.legacyBonuses[epochKey]
@@ -515,7 +515,7 @@ func (ge *GameEngine) Succumb() error {
 	// so a later prestige counts only what the rebuilt run completes: no age
 	// is counted twice for one run.
 	ge.Prestige.NoteAgeEntered(ge.age)
-	masteryLine := masteryCommitLine(ge.Prestige.CommitRun())
+	masteryLine := masteryCommitLine(ge.rules, ge.Prestige.CommitRun())
 	// The legacy kit remembers the fallen civilization's plan, research
 	// order, civilizations met and shares before the reset.
 	ge.captureLegacyLocked()
@@ -527,15 +527,15 @@ func (ge *GameEngine) Succumb() error {
 	// Full reset — Bus intentionally kept so dashboard subscriptions survive.
 	ge.tick = 0
 	ge.age = "primitive_age"
-	ge.Resources = NewResourceManager()
+	ge.Resources = NewResourceManagerWith(ge.rules)
 	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManager()
-	ge.Research = NewResearchManager()
-	ge.Military = NewMilitaryManager()
-	ge.Events = NewEventManager()
-	ge.Milestones = NewMilestoneManager()
-	ge.Trade = NewTradeManager()
-	ge.Diplomacy = NewDiplomacyManager()
+	ge.Workers = NewWorkerManagerWith(ge.rules)
+	ge.Research = NewResearchManagerWith(ge.rules)
+	ge.Military = NewMilitaryManagerWith(ge.rules)
+	ge.Events = NewEventManagerWith(ge.rules)
+	ge.Milestones = NewMilestoneManagerWith(ge.rules)
+	ge.Trade = NewTradeManagerWith(ge.rules)
+	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
 	ge.permanentBonuses = make(map[string]float64)
 	ge.buildQueue = nil
@@ -552,7 +552,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
 	ge.autoExpeditionTicksLeft = 0
 	ge.autoExpeditionStarved = false
-	ge.currentEpoch = config.EpochForAge("primitive_age")
+	ge.currentEpoch = ge.rules.EraOf("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
 	ge.awakeningsFired = make(map[string]bool)
@@ -596,7 +596,7 @@ func (ge *GameEngine) Succumb() error {
 
 	ge.addLog("event", fmt.Sprintf("☄ %s: civilization has fallen. A new dawn.", catName))
 	if newLegacy {
-		ge.addLog("success", fmt.Sprintf("%s legacy bonus (permanent): %s.", ep.Name, legacyBonusText(epochKey)))
+		ge.addLog("success", fmt.Sprintf("%s legacy bonus (permanent): %s.", ep.Name, legacyBonusText(ge.rules, epochKey)))
 	} else {
 		ge.addLog("info", fmt.Sprintf("The %s legacy was already yours; no new legacy bonus.", ep.Name))
 	}
@@ -628,7 +628,7 @@ func (ge *GameEngine) Succumb() error {
 // all-production penalty, and returns how many ticks it lasts in the current
 // age. Under the write lock.
 func (ge *GameEngine) startReconstruction() int {
-	debuff := EndureDebuffTicksIn(ge.age)
+	debuff := ge.rules.StretchTicks(ge.age, endureDebuffTicks)
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       "endure_reconstruction",
 		Name:      "Reconstruction Effort",
@@ -649,7 +649,7 @@ func (ge *GameEngine) reapplyLegacyBonuses() {
 		if !ge.legacyBonuses[epochKey] {
 			continue
 		}
-		for res, mult := range config.LegacyBonusForEpoch(epochKey) {
+		for res, mult := range ge.rules.LegacyBonus(epochKey) {
 			ge.permanentBonuses[res+"_rate"] += mult
 		}
 	}
@@ -753,7 +753,7 @@ func (ge *GameEngine) restoreCatastropheState(save *GameSave) {
 	// milestones, its only other writer.
 	if !save.SuccumbResearchDerived {
 		total := 0.0
-		for _, ms := range config.Milestones() {
+		for _, ms := range ge.rules.Milestones() {
 			if !ge.Milestones.IsCompleted(ms.Key) {
 				continue
 			}
@@ -771,10 +771,10 @@ func (ge *GameEngine) restoreCatastropheState(save *GameSave) {
 	}
 }
 
-// legacyBonusText lists an epoch's legacy bonus for a log line: "iron +10%
-// production, faith +5% production", in resource-key order.
-func legacyBonusText(epochKey string) string {
-	bonuses := config.LegacyBonusForEpoch(epochKey)
+// legacyBonusText lists an epoch's legacy bonus in set for a log line: "iron
+// +10% production, faith +5% production", in resource-key order.
+func legacyBonusText(set *rules.Set, epochKey string) string {
+	bonuses := set.LegacyBonus(epochKey)
 	var parts []string
 	for _, res := range sortedKeys(bonuses) {
 		parts = append(parts, fmt.Sprintf("%s +%.0f%% production", resourceLabel(res), bonuses[res]*100))

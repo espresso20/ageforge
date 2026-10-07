@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Lineage keys the model groups buildings by. They are the config lineages,
@@ -67,9 +68,11 @@ type Def struct {
 	Slot int
 }
 
-// Catalog is the static data the model reads, built once from config. It
-// is immutable after NewCatalog and safe to share.
+// Catalog is the static data the model reads, built once from a ruleset. It
+// is immutable after NewCatalogFor and safe to share.
 type Catalog struct {
+	// Rules is the ruleset the catalogue was built from.
+	Rules     *rules.Set
 	Ages      []string
 	AgeNames  []string
 	AgeIdx    map[string]int
@@ -93,28 +96,30 @@ type Catalog struct {
 	RouteModes map[string]RouteMode
 }
 
-// NewCatalog reads config. It is not cheap (config rebuilds its tables on
-// every call), so build it once and keep it.
-func NewCatalog() *Catalog {
-	c := &Catalog{AgeIdx: map[string]int{}, EpochIdx: map[string]int{}, Defs: map[string]*Def{},
+// NewCatalog is the catalogue of the core ruleset.
+func NewCatalog() *Catalog { return NewCatalogFor(rules.Core()) }
+
+// NewCatalogFor builds the catalogue of set. It sorts and ranks every
+// building, so build it once and keep it.
+func NewCatalogFor(set *rules.Set) *Catalog {
+	c := &Catalog{Rules: set, AgeIdx: map[string]int{}, EpochIdx: map[string]int{}, Defs: map[string]*Def{},
 		ByLineage: map[string][]*Def{}, Catastrophes: map[string]string{}}
-	ages := config.AgeByKey()
-	for i, k := range config.AgeOrder() {
-		c.Ages = append(c.Ages, k)
-		c.AgeNames = append(c.AgeNames, ages[k].Name)
-		c.AgeIdx[k] = i
+	for i, a := range set.Ages() {
+		c.Ages = append(c.Ages, a.Key)
+		c.AgeNames = append(c.AgeNames, a.Name)
+		c.AgeIdx[a.Key] = i
 	}
-	for i, e := range config.Epochs() {
+	for i, e := range set.Eras() {
 		c.Epochs = append(c.Epochs, e.Key)
 		c.EpochName = append(c.EpochName, e.Name)
 		c.EpochIdx[e.Key] = i
-		name, _ := config.CatastropheInfo(e.Key)
+		name, _ := set.Catastrophe(e.Key)
 		c.Catastrophes[e.Key] = name
 	}
 	for _, k := range c.Ages {
-		c.AgeEpoch = append(c.AgeEpoch, c.EpochIdx[config.EpochForAge(k)])
+		c.AgeEpoch = append(c.AgeEpoch, c.EpochIdx[set.EraOf(k)])
 	}
-	defs := config.BuildingByKey()
+	defs := set.BuildingMap()
 	keys := make([]string, 0, len(defs))
 	for k := range defs {
 		keys = append(keys, k)
@@ -169,11 +174,11 @@ func NewCatalog() *Catalog {
 		}
 		c.ByAge[a] = ds
 	}
-	for _, f := range config.BaseFactions() {
+	for _, f := range set.Factions() {
 		c.Factions = append(c.Factions, f.Key)
 	}
 	c.RouteModes = map[string]RouteMode{}
-	for _, r := range config.BaseTradeRoutes() {
+	for _, r := range set.TradeRoutes() {
 		c.RouteModes[r.Key] = routeModeOf(r, c.Defs[r.RequiredBld])
 	}
 	return c

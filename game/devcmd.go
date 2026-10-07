@@ -78,10 +78,10 @@ func (ge *GameEngine) devSetMastery(age string, m int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	if age == "all" {
-		for _, a := range ageKeys() {
+		for _, a := range ge.rules.AgeKeys() {
 			ge.Prestige.SetMastery(a, m)
 		}
-	} else if _, ok := ageOrders()[age]; ok {
+	} else if _, ok := ge.rules.Index(age); ok {
 		ge.Prestige.SetMastery(age, m)
 	} else {
 		return fmt.Errorf("unknown age %q", age)
@@ -94,7 +94,7 @@ func (ge *GameEngine) devSetMastery(age string, m int) error {
 func (ge *GameEngine) devSetRecord(age string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	if _, ok := ageOrders()[age]; !ok {
+	if _, ok := ge.rules.Index(age); !ok {
 		return fmt.Errorf("unknown age %q", age)
 	}
 	ge.Prestige.SetRecord(age)

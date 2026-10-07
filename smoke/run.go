@@ -20,6 +20,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Config controls one smoke session. Durations are simulated time at 1x.
@@ -323,8 +324,12 @@ type runner struct {
 	cfg  Config
 	seed int64
 	ge   *game.GameEngine
-	bot  *Bot
-	res  *RunResult
+	// rules is the engine's ruleset, read once at the start. The bus
+	// handlers read it: they run under the engine's write lock and must not
+	// ask the engine for it.
+	rules *rules.Set
+	bot   *Bot
+	res   *RunResult
 
 	ageIdx  map[string]int
 	ticks   int // total ticks across cycles
@@ -403,6 +408,7 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 		cfg:     cfg,
 		seed:    seed,
 		ge:      ge,
+		rules:   ge.Rules(),
 		res:     &RunResult{Seed: seed, Style: cfg.Style},
 		ageIdx:  make(map[string]int),
 		byCheck: make(map[string]*Anomaly),
@@ -417,7 +423,7 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	r.res.Stats.HarbingerThreads = make(map[string]int)
 	r.res.Stats.HarbingerHandoffs = make(map[string]int)
 	r.res.Stats.HarbingerVerdicts = make(map[string]int)
-	for i, k := range config.AgeOrder() {
+	for i, k := range r.rules.AgeKeys() {
 		r.ageIdx[k] = i
 	}
 	r.bot = NewBot(ge)
@@ -832,7 +838,7 @@ func (r *runner) control(st *game.GameState) bool {
 				r.anomaly(KindInvariant, "advance_with_pending_catastrophe",
 					fmt.Sprintf("AdvanceAge succeeded from %s while catastrophe %q was pending", from, pendingBefore), after, true)
 			}
-			if p := after.PendingCatastrophe; p != "" && p != config.EpochForAge(after.Age) {
+			if p := after.PendingCatastrophe; p != "" && p != after.Ruleset().EraOf(after.Age) {
 				r.anomaly(KindInvariant, "stale_pending_catastrophe",
 					fmt.Sprintf("after advancing to %s the pending catastrophe is %q, not the new epoch", after.Age, p), after, true)
 			}

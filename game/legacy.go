@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The legacy kit (Pacing v2, PR 6): three prestige shop items that carry a
@@ -75,13 +76,14 @@ func templateAgeCount(t []PlanTemplateItem, age string) int {
 	return n
 }
 
-// loadPlanTemplate is a saved template as the engine accepts it: known ages
-// and kinds (deals never), counts in range, at most MaxPlanItems per age.
-func loadPlanTemplate(saved []PlanTemplateItem) []PlanTemplateItem {
+// loadPlanTemplate is a saved template as the engine accepts it: ages set
+// knows and known kinds (deals never), counts in range, at most MaxPlanItems
+// per age.
+func loadPlanTemplate(set *rules.Set, saved []PlanTemplateItem) []PlanTemplateItem {
 	var out []PlanTemplateItem
 	perAge := map[string]int{}
 	for _, it := range saved {
-		if _, ok := ageOrders()[it.Age]; !ok || perAge[it.Age] >= MaxPlanItems {
+		if _, ok := set.Index(it.Age); !ok || perAge[it.Age] >= MaxPlanItems {
 			continue
 		}
 		switch it.Kind {
@@ -113,10 +115,10 @@ func loadPlanTemplate(saved []PlanTemplateItem) []PlanTemplateItem {
 
 // mergePlanTemplate is the template after a run: for every age in touched,
 // the run's slice (empty if it wrote nothing there); for every other age,
-// the old template's slice. Ages come out in age order.
-func mergePlanTemplate(old, run []PlanTemplateItem, touched map[string]bool) []PlanTemplateItem {
+// the old template's slice. Ages come out in set's age order.
+func mergePlanTemplate(set *rules.Set, old, run []PlanTemplateItem, touched map[string]bool) []PlanTemplateItem {
 	var out []PlanTemplateItem
-	for _, a := range ageKeys() {
+	for _, a := range set.AgeKeys() {
 		src := old
 		if touched[a] {
 			src = run
@@ -215,10 +217,11 @@ func (ge *GameEngine) unlogPlanItemLocked(it PlanItem) {
 		return e.Key == it.Key
 	}
 	idx := -1
-	cur := ageOrders()[ge.age]
+	order := ge.rules.Indexes()
+	cur := order[ge.age]
 	for i := len(ge.planLog) - 1; i >= 0; i-- {
 		e := ge.planLog[i]
-		if !match(e) || ageOrders()[e.Age] > cur {
+		if !match(e) || order[e.Age] > cur {
 			continue
 		}
 		if e.Age == ge.age {
@@ -282,7 +285,7 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		}
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: t.Key, Count: count})
 	case PlanResearch:
-		if _, ok := config.TechByKey()[t.Key]; !ok {
+		if _, ok := ge.rules.Tech(t.Key); !ok {
 			return false, false
 		}
 		for _, it := range ge.plan {
@@ -362,7 +365,7 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 		return
 	}
 	pm.templateApplied = ge.age
-	line := fmt.Sprintf("Plan Template: added %s for the %s.", textfmt.Count(added, "item", "items"), AgeName(ge.age))
+	line := fmt.Sprintf("Plan Template: added %s for the %s.", textfmt.Count(added, "item", "items"), ge.rules.Name(rules.KindAge, ge.age))
 	if full > 0 {
 		line += fmt.Sprintf(" The plan is full (%d items), so %s waited out.", MaxPlanItems, textfmt.Count(full, "item", "items"))
 	}
@@ -381,7 +384,7 @@ func (ge *GameEngine) meetOldFriendsLocked() {
 	if len(ge.Prestige.legacyFactions) == 0 || !ge.Prestige.Owns(config.LegacyFactions) {
 		return
 	}
-	order := ageOrders()
+	order := ge.rules.Indexes()
 	cur := order[ge.age]
 	for _, key := range ge.Prestige.legacyFactions {
 		def, ok := ge.Diplomacy.factionDefs[key]
@@ -429,7 +432,7 @@ func (ge *GameEngine) captureLegacyLocked() {
 			touched[a] = true
 		}
 	}
-	pm.legacyPlan = mergePlanTemplate(pm.legacyPlan, ge.planLog, touched)
+	pm.legacyPlan = mergePlanTemplate(ge.rules, pm.legacyPlan, ge.planLog, touched)
 	if len(pm.legacyPlan) == 0 {
 		pm.legacyPlan = nil
 	}
@@ -460,7 +463,7 @@ func (ge *GameEngine) captureLegacyLocked() {
 // holds the write lock.
 func (ge *GameEngine) startRunLegacyLocked() {
 	if ge.applyLegacySharesLocked() {
-		ge.addLog("info", "Worker Shares: your shares carry over. "+sharesLine(ge.workerShares)+".")
+		ge.addLog("info", "Worker Shares: your shares carry over. "+sharesLine(ge.rules, ge.workerShares)+".")
 	}
 	ge.applyPlanTemplateLocked()
 	ge.meetOldFriendsLocked()
@@ -503,7 +506,7 @@ func (ge *GameEngine) legacyOnPurchaseLocked(key string) {
 // enteredAgesLocked is every age this run has entered: the first age, the
 // ages it reached and the current one. Caller holds the lock.
 func (ge *GameEngine) enteredAgesLocked() map[string]bool {
-	out := map[string]bool{ageKeys()[0]: true, ge.age: true}
+	out := map[string]bool{ge.rules.AgeKeys()[0]: true, ge.age: true}
 	for _, a := range ge.Stats.AgesReached {
 		out[a] = true
 	}
@@ -592,9 +595,9 @@ func (pm *PrestigeManager) kitState() LegacyKitState {
 // cleaning what a hand edit could have broken.
 func (pm *PrestigeManager) LoadLegacy(shopVersion int, plan []PlanTemplateItem, factions []string, shares map[string]float64) {
 	pm.shopVersion = shopVersion
-	pm.legacyPlan = loadPlanTemplate(plan)
+	pm.legacyPlan = loadPlanTemplate(pm.rules, plan)
 	known := map[string]bool{}
-	for _, f := range config.BaseFactions() {
+	for _, f := range pm.rules.Factions() {
 		known[f.Key] = true
 	}
 	pm.legacyFactions = nil
@@ -603,7 +606,7 @@ func (pm *PrestigeManager) LoadLegacy(shopVersion int, plan []PlanTemplateItem, 
 			pm.legacyFactions = append(pm.legacyFactions, k)
 		}
 	}
-	pm.legacyShares = cleanShares(shares)
+	pm.legacyShares = cleanSharesIn(pm.rules, shares)
 }
 
 // ===== Test hooks =====
@@ -642,7 +645,7 @@ func (ge *GameEngine) SetLegacyForTest(kit LegacyKit, own bool) {
 	if !own {
 		return
 	}
-	for _, key := range config.LegacyKit() {
+	for _, key := range ge.rules.LegacyKit() {
 		ge.Prestige.upgrades[key] = 1
 		ge.legacyOnPurchaseLocked(key)
 	}
@@ -695,7 +698,7 @@ func stripShopV2(gs *GameSave) {
 func (ge *GameEngine) EnterAgeForTest(age string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	if _, ok := ageOrders()[age]; !ok {
+	if _, ok := ge.rules.Index(age); !ok {
 		return fmt.Errorf("Unknown age '%s'.", age)
 	}
 	ge.advanceAge(age)
@@ -709,7 +712,7 @@ func (ge *GameEngine) EnterAgeForTest(age string) error {
 func (ge *GameEngine) NoteAdvanceForTest(age string) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	if _, ok := ageOrders()[age]; !ok || templateAgeCount(ge.planLog, age) >= MaxPlanItems {
+	if _, ok := ge.rules.Index(age); !ok || templateAgeCount(ge.planLog, age) >= MaxPlanItems {
 		return
 	}
 	for _, e := range ge.planLog {

@@ -16,8 +16,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // saveHMACKey is the HMAC signing key for save integrity. Its presence in the
@@ -928,7 +928,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	if save.CurrentEpoch != "" {
 		ge.currentEpoch = save.CurrentEpoch
 	} else {
-		ge.currentEpoch = config.EpochForAge(save.Age)
+		ge.currentEpoch = ge.rules.EraOf(save.Age)
 	}
 	if save.EpochEventFired != nil {
 		ge.epochEventFired = save.EpochEventFired
@@ -955,7 +955,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.epochEventHistory = save.EpochEventHistory
 	// A pending Last Passage only exists in the final epoch; restored before
 	// the harbinger, whose outlook check reads it.
-	ge.pendingLastPassage = save.PendingLastPassage && ge.pendingCatastrophe == "" && config.IsFinalEpoch(ge.currentEpoch)
+	ge.pendingLastPassage = save.PendingLastPassage && ge.pendingCatastrophe == "" && ge.rules.IsFinalEra(ge.currentEpoch)
 	ge.cosmicLegacy = save.CosmicLegacy
 
 	// Restore Phase 9: catastrophe system
@@ -1001,12 +1001,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// The build plan and the overflow switch. A hand-edited plan is trimmed
 	// to what the plan accepts; items that can no longer start drop out, with
 	// a log line, on the next tick.
-	ge.plan = loadPlan(save.Plan)
-	ge.planLog = loadPlanTemplate(save.PlanLog)
+	ge.plan = loadPlanIn(ge.rules, save.Plan)
+	ge.planLog = loadPlanTemplate(ge.rules, save.PlanLog)
 	ge.wonderOverflowOff = save.WonderOverflowOff
 	// The worker shares: a hand-edited map keeps its known domains, each
 	// percent from 0 to 100, and the wait can't outlast one worker command.
-	ge.workerShares = cleanShares(save.WorkerShares)
+	ge.workerShares = cleanSharesIn(ge.rules, save.WorkerShares)
 	ge.autoRecruitOff = save.AutoRecruitOff
 	ge.staffHoldUntil = min(max(save.StaffHoldUntil, 0), ge.tick+staffHoldTicks)
 
@@ -1063,7 +1063,7 @@ func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[st
 	if !ok {
 		return out
 	}
-	all := config.BaseBuildings()
+	all := ge.rules.Buildings()
 	for _, key := range legacy {
 		if ge.Buildings.GetCount(key) <= 0 {
 			continue
@@ -1080,7 +1080,7 @@ func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[st
 				continue
 			}
 			// A later age's offer overwrites an earlier one; within one age the
-			// first match wins, as in config.BuildingNextTierForAge.
+			// first match wins, as in rules.Set.NextTier.
 			if order, ok := ge.progress.ageIndex[b.RequiredAge]; ok && order <= cur && order > bestOrder {
 				best, bestOrder = b.Key, order
 			}
@@ -1196,6 +1196,9 @@ func ListSaveDetails() ([]SaveInfo, error) {
 		}
 		return nil, err
 	}
+	// The saves on disk are the core game's: no engine is held here, so the
+	// names and totals come from the core ruleset.
+	core := rules.Core()
 	var saves []SaveInfo
 	for _, e := range entries {
 		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
@@ -1248,13 +1251,12 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			population += w.Count
 		}
 		buildings, wonders := 0, 0
-		buildingDefs := config.BuildingByKey()
 		for key, count := range header.Buildings {
 			if count <= 0 {
 				continue
 			}
 			buildings += count
-			if def, ok := buildingDefs[key]; ok && def.Category == "wonder" {
+			if def, ok := core.Building(key); ok && def.Category == "wonder" {
 				wonders += count
 			}
 		}
@@ -1269,16 +1271,16 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			Modified:           header.CheaterBadge,
 			Elite:              header.EliteBadge,
 			Title:              header.CurrentTitle,
-			Epoch:              epochDisplayName(header.CurrentEpoch),
+			Epoch:              epochDisplayName(core, header.CurrentEpoch),
 			Population:         population,
 			Buildings:          buildings,
 			Wonders:            wonders,
 			Techs:              len(header.Research.Researched),
 			Soldiers:           int(header.Resources["soldiers"]),
 			PrestigeTotal:      header.Prestige.TotalEarned,
-			PendingCatastrophe: pendingChoiceDisplayName(header.PendingCatastrophe, header.PendingLastPassage),
+			PendingCatastrophe: pendingChoiceDisplayName(core, header.PendingCatastrophe, header.PendingLastPassage),
 			MilestonesDone:     len(header.Milestones),
-			MilestonesTotal:    len(config.Milestones()),
+			MilestonesTotal:    len(core.Milestones()),
 			ParentName:         header.ParentName,
 			AccountID:          header.AccountID,
 		})
@@ -1286,13 +1288,13 @@ func ListSaveDetails() ([]SaveInfo, error) {
 	return saves, nil
 }
 
-// epochDisplayName maps an epoch key to its display name via config, falling
+// epochDisplayName maps an epoch key to its display name in set, falling
 // back to the raw key. An empty key stays empty.
-func epochDisplayName(key string) string {
+func epochDisplayName(set *rules.Set, key string) string {
 	if key == "" {
 		return ""
 	}
-	if def, ok := config.EpochByKey()[key]; ok && def.Name != "" {
+	if def, ok := set.Era(key); ok && def.Name != "" {
 		return def.Name
 	}
 	return key
@@ -1301,22 +1303,22 @@ func epochDisplayName(key string) string {
 // catastropheDisplayName maps a pending-catastrophe key (an epoch key — see
 // GameState.PendingCatastrophe) to the catastrophe's display name. An empty key
 // stays empty so the UI can omit the warning line.
-func catastropheDisplayName(epochKey string) string {
+func catastropheDisplayName(set *rules.Set, epochKey string) string {
 	if epochKey == "" {
 		return ""
 	}
-	name, _ := config.CatastropheInfo(epochKey)
+	name, _ := set.Catastrophe(epochKey)
 	return name
 }
 
 // pendingChoiceDisplayName names the choice a save is waiting on: its pending
 // catastrophe, else the Last Passage, else "".
-func pendingChoiceDisplayName(epochKey string, lastPassage bool) string {
+func pendingChoiceDisplayName(set *rules.Set, epochKey string, lastPassage bool) string {
 	if epochKey == "" && lastPassage {
-		name, _ := config.LastPassageInfo()
+		name, _ := set.LastPassage()
 		return name
 	}
-	return catastropheDisplayName(epochKey)
+	return catastropheDisplayName(set, epochKey)
 }
 
 // corruptInfo builds a SaveInfo for an unreadable/unparseable save, falling back

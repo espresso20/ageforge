@@ -1015,7 +1015,7 @@ func BaseBuildings() []BuildingDef {
 	// age targets (pacing.go). The mechanical half of every Description is
 	// written last, from those final values (effect_text.go).
 	result = normalizeCostCurves(result)
-	result = normalizeProductionRates(result)
+	result = normalizeProductionRates(result, AgePositions(AgeOrder()))
 	result = normalizeWonderCosts(result)
 	result = normalizeBuildTicks(result)
 	return appendEffectText(result)

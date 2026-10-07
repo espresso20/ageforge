@@ -169,7 +169,7 @@ func (r *runner) trackHarbinger(st game.GameState) {
 	}
 	if th == nil {
 		th = &HarbingerThread{
-			Cycle: r.cycle, Epoch: config.EpochForAge(v.Age), TargetEpoch: v.TargetEpochKey,
+			Cycle: r.cycle, Epoch: r.rules.EraOf(v.Age), TargetEpoch: v.TargetEpochKey,
 			StartTick: r.ticks, Outcome: "unresolved", startSim: r.sim,
 			AppeaseAfterSecs: -1, BraceAfterSecs: -1, AppeaseL2AfterSecs: -1,
 		}
@@ -323,9 +323,10 @@ func (r *runner) onFateRolled(e game.EventData) {
 	// era (its passage); the prestige has already moved the cycle on.
 	next := FateCleared
 	if prev := r.fate; prev != nil {
-		byKey := config.EpochByKey()
-		advanced := byKey[epoch].Order == byKey[prev.Epoch].Order+1
-		prestiged := config.IsFinalEpoch(prev.Epoch) && r.cycle > prev.Cycle
+		era, _ := r.rules.Era(epoch)
+		prevEra, _ := r.rules.Era(prev.Epoch)
+		advanced := era.Order == prevEra.Order+1
+		prestiged := r.rules.IsFinalEra(prev.Epoch) && r.cycle > prev.Cycle
 		if advanced || prestiged {
 			// A strike still to come would have landed at that passage: the
 			// new era's entry, or the last look before the prestige (the
@@ -373,7 +374,7 @@ func (r *runner) onFateResolved(e game.EventData) {
 	tick, _ := e.Payload["tick"].(int)
 	if arrived, ok := e.Payload["arrived_tick"].(int); ok && tick >= arrived {
 		f.WarningTicks = tick - arrived
-		if t := config.AgeTargetTicks(f.ResolvedAge); t > 0 {
+		if t := r.rules.TargetTicks(f.ResolvedAge); t > 0 {
 			f.WarningAgeFrac = float64(f.WarningTicks) / t
 		}
 	}
@@ -413,7 +414,7 @@ func (r *runner) closeFate(ifOpen string) {
 	if f.Outcome == "" {
 		f.Outcome = ifOpen
 	}
-	if f.Window > 0 && config.FateAllowed(f.Epoch) {
+	if f.Window > 0 && r.rules.FateAllowed(f.Epoch) {
 		f.Expected = float64(game.FateChance*f.sumChance) / float64(f.Window)
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // BuildingManager manages all buildings, including production buildings, wonders,
@@ -24,6 +25,7 @@ import (
 //   - wonderBanks hold incremental resource deposits; a wonder is only completed
 //     when the bank meets the full BaseCost (via BankResource + IsWonderBankFull).
 type BuildingManager struct {
+	rules           *rules.Set
 	counts          map[string]int
 	defs            map[string]config.BuildingDef
 	unlocked        map[string]bool
@@ -52,10 +54,14 @@ type BuildingManager struct {
 	costMult float64
 }
 
-// NewBuildingManager creates a building manager
-func NewBuildingManager() *BuildingManager {
-	defs := config.BuildingByKey()
+// NewBuildingManager creates a building manager on the core ruleset.
+func NewBuildingManager() *BuildingManager { return NewBuildingManagerWith(rules.Core()) }
+
+// NewBuildingManagerWith creates a building manager with set's buildings.
+func NewBuildingManagerWith(set *rules.Set) *BuildingManager {
+	defs := set.BuildingMap()
 	return &BuildingManager{
+		rules:           set,
 		counts:          make(map[string]int),
 		defs:            defs,
 		order:           sortedKeys(defs),
@@ -66,6 +72,15 @@ func NewBuildingManager() *BuildingManager {
 		pendingUpgrades: make(map[string]string),
 		costMult:        1.0,
 	}
+}
+
+// Rebind moves the manager onto set: it takes set's building definitions.
+// Counts, banks and unlocks stay; a count whose building set no longer
+// defines is kept and carries no effects.
+func (bm *BuildingManager) Rebind(set *rules.Set) {
+	bm.rules = set
+	bm.defs = set.BuildingMap()
+	bm.order = sortedKeys(bm.defs)
 }
 
 // eachBuilt calls f for every building type with a positive count, in sorted
@@ -868,10 +883,7 @@ func (bm *BuildingManager) EnforceRuinCap() int {
 	if total <= MaxRuins {
 		return 0
 	}
-	ageIdx := make(map[string]int)
-	for i, a := range config.AgeOrder() {
-		ageIdx[a] = i
-	}
+	ageIdx := bm.rules.Indexes()
 	sort.Slice(keys, func(i, j int) bool {
 		ai, oi := bm.ruinValue(keys[i], ageIdx)
 		aj, oj := bm.ruinValue(keys[j], ageIdx)

@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/flavor"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The Harbinger (Phase 9 follow-up).
@@ -16,7 +17,7 @@ import (
 // A harbinger comes only when doom is on its way. On entering an era from the
 // Iron Era on, a hidden roll decides whether a doom is fated there (fate.go);
 // if it is, a harbinger thread starts some while before the strike, with the
-// current age's roster figure (config.HarbingerFor), and lasts until the doom
+// current age's roster figure (rules.Set.Harbinger), and lasts until the doom
 // strikes or is lifted. The speaker changes with each age the thread lives
 // through, so a doom foretold late in the Classical Age passes from the Oracle
 // to the Town Crier. The thread never blocks anything and never expires. What
@@ -90,7 +91,7 @@ const (
 	//     for it in most threads. Level 2 costs double, so both levels
 	//     together are 45% of the age: more than the average warning makes,
 	//     and a stretch that takes a long warning or faith kept beforehand
-	//     (doomAppeaseCost). It used to be a quarter of what the whole era
+	//     (doomAppeaseCostIn). It used to be a quarter of what the whole era
 	//     makes, which no warning could earn: the bot afforded level 1 in
 	//     15 of 46 threads, level 2 in 6 and Brace in 41, and Appease only
 	//     from faith it already held.
@@ -102,8 +103,8 @@ const (
 	//     is no stretch.
 	//   - The Last Passage's thread lasts from the Cosmic Era's first age to
 	//     the prestige, days rather than hours, so it keeps the era's price:
-	//     harbingerAppeaseIncomeShare of FlowIncome × config.AgeTargetTicks
-	//     summed over harbingerAppeaseAges (eraAppeaseCost).
+	//     harbingerAppeaseIncomeShare of FlowIncome × the age's target ticks
+	//     summed over harbingerAppeaseAgesIn (eraAppeaseCostIn).
 	//
 	// Faith also drives the roll (faith fill bands): worst case, paying drops
 	// the fill from the top band to the bottom, raising the base chance from
@@ -289,7 +290,7 @@ func (ge *GameEngine) harbingerOnAgeAdvance() {
 	if h := ge.harbinger; h != nil && h.EpochKey == ge.currentEpoch && h.Age != ge.age {
 		ge.harbingerHandoff()
 	}
-	if config.IsFinalEpoch(ge.currentEpoch) {
+	if ge.rules.IsFinalEra(ge.currentEpoch) {
 		ge.maybeLastPassageArrive()
 	}
 	if ge.fateHarbingerDue() {
@@ -306,7 +307,7 @@ func (ge *GameEngine) harbingerOnAgeAdvance() {
 func (ge *GameEngine) harbingerTickCheck() {
 	if ge.harbingerCheckedEpoch != ge.currentEpoch {
 		ge.harbingerCheckedEpoch = ge.currentEpoch
-		if config.IsFinalEpoch(ge.currentEpoch) {
+		if ge.rules.IsFinalEra(ge.currentEpoch) {
 			ge.maybeLastPassageArrive()
 		}
 	}
@@ -354,7 +355,7 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 	if out.Passage != PassagePrestige || !out.Possible {
 		return false
 	}
-	def, ok := config.HarbingerFor(ge.age)
+	def, ok := ge.rules.Harbinger(ge.age)
 	if !ok {
 		return false
 	}
@@ -396,7 +397,7 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 	}
 
 	ge.addLog("event", fmt.Sprintf("⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), harbingerWarningText("")))
+		capFirst(def.Name), harbingerWarningText(ge.rules, "")))
 	for _, l := range lp.Lines {
 		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", l))
 	}
@@ -409,13 +410,13 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 // The claim, the levels and the invite stay with the thread.
 func (ge *GameEngine) harbingerHandoff() {
 	h := ge.harbinger
-	def, ok := config.HarbingerFor(ge.age)
+	def, ok := ge.rules.Harbinger(ge.age)
 	if !ok {
 		return
 	}
 	h.Age = def.Age
 	h.Chain = append(h.Chain, def.Age)
-	warning := harbingerWarningText("")
+	warning := harbingerWarningText(ge.rules, "")
 	if h.TargetEpoch != "" {
 		h.When = ge.fateWhen(def)
 		warning = ge.fateWarningText(h)
@@ -435,9 +436,9 @@ func (ge *GameEngine) harbingerHandoff() {
 // doom, or "the Last Passage" when targetEpoch is "" (the final epoch, whose
 // passage is prestige). It never names an era: a wild man at the last fire
 // could not know what anything to come will be called.
-func harbingerWarningText(targetEpoch string) string {
+func harbingerWarningText(set *rules.Set, targetEpoch string) string {
 	if targetEpoch == "" {
-		name, _ := config.LastPassageInfo()
+		name, _ := set.LastPassage()
 		return "the" + strings.TrimPrefix(name, "The")
 	}
 	return "impending doom"
@@ -489,10 +490,10 @@ func (ge *GameEngine) summonHarbinger() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	// /age jumps the age without the epoch; line them up first.
-	if ep := config.EpochForAge(ge.age); ep != ge.currentEpoch {
+	if ep := ge.rules.EraOf(ge.age); ep != ge.currentEpoch {
 		ge.currentEpoch = ep
 	}
-	if config.IsFinalEpoch(ge.currentEpoch) && ge.lastPassageThread() == nil {
+	if ge.rules.IsFinalEra(ge.currentEpoch) && ge.lastPassageThread() == nil {
 		if !ge.harbingerArriveLastPassage() {
 			return fmt.Errorf("The next passage cannot bring a catastrophe.")
 		}
@@ -506,7 +507,7 @@ func (ge *GameEngine) summonHarbinger() error {
 	if f.LeadFrac <= 0 {
 		f.LeadFrac = (harbingerLeadMin + harbingerLeadMax) / 2
 	}
-	f.Fated = config.FateAllowed(f.EpochKey)
+	f.Fated = ge.rules.FateAllowed(f.EpochKey)
 	f.FalseProphet = !f.Fated
 	if f.FalseProphet && f.Claim == "" {
 		f.Claim = CatastropheTierMedium
@@ -528,18 +529,18 @@ func (ge *GameEngine) summonHarbinger() error {
 // write lock.
 func (ge *GameEngine) SummonHarbingerForTest(age string) error {
 	ge.mu.Lock()
-	if _, ok := config.AgeByKey()[age]; !ok {
+	if _, ok := ge.rules.Age(age); !ok {
 		ge.mu.Unlock()
 		return fmt.Errorf("Unknown age '%s'.", age)
 	}
 	ge.age = age
-	ge.currentEpoch = config.EpochForAge(age)
+	ge.currentEpoch = ge.rules.EraOf(age)
 	ge.harbinger, ge.parkedHarbinger = nil, nil
-	if config.IsFinalEpoch(ge.currentEpoch) && (ge.fate == nil || ge.fate.EpochKey != ge.currentEpoch) {
+	if ge.rules.IsFinalEra(ge.currentEpoch) && (ge.fate == nil || ge.fate.EpochKey != ge.currentEpoch) {
 		// A quiet fate, so the Last Passage thread it brings is the one shown.
 		ge.fate = &FateSave{EpochKey: ge.currentEpoch, EntryTick: ge.tick, Window: int(math.Round(ge.expectedEraTicks(ge.currentEpoch)))}
 	}
-	for _, a := range config.AgeOrder() {
+	for _, a := range ge.rules.AgeKeys() {
 		ge.applyAgeUnlocks(a)
 		if a == age {
 			break
@@ -603,30 +604,30 @@ func (ge *GameEngine) harbingerDisplay() (CatastropheTier, float64) {
 // harbingerAdvanceAges are the ages still to be entered from epochKey's first
 // age through the passage: its later ages and the next epoch's first age. In
 // the final epoch, whose passage is prestige, that is its own later ages.
-func harbingerAdvanceAges(epochKey string) []string {
-	ep, ok := config.EpochByKey()[epochKey]
+func harbingerAdvanceAges(set *rules.Set, epochKey string) []string {
+	ep, ok := set.Era(epochKey)
 	if !ok || len(ep.Ages) == 0 {
 		return nil
 	}
 	out := append([]string(nil), ep.Ages[1:]...)
-	if next, ok := config.NextEpoch(epochKey); ok && len(next.Ages) > 0 {
+	if next, ok := set.NextEra(epochKey); ok && len(next.Ages) > 0 {
 		out = append(out, next.Ages[0])
 	}
 	return out
 }
 
-// harbingerAppeaseAges are the ages whose income prices the Last Passage's
-// Appease in epochKey (eraAppeaseCost): every age of the epoch except the
+// harbingerAppeaseAgesIn are the ages whose income prices the Last Passage's
+// Appease in epochKey (eraAppeaseCostIn): every age of the epoch except the
 // game's last, which has no advance to pace.
 // In the final epoch, whose passage is prestige, a player who prestiges from
 // its first age leaves before Appease is in reach; one who stays for the
 // epoch gets the same timing as every other thread.
-func harbingerAppeaseAges(epochKey string) []string {
-	ep, ok := config.EpochByKey()[epochKey]
+func harbingerAppeaseAgesIn(set *rules.Set, epochKey string) []string {
+	ep, ok := set.Era(epochKey)
 	if !ok {
 		return nil
 	}
-	order := config.AgeOrder()
+	order := set.AgeKeys()
 	last := order[len(order)-1]
 	var out []string
 	for _, a := range ep.Ages {
@@ -640,13 +641,13 @@ func harbingerAppeaseAges(epochKey string) []string {
 // harbingerHeldSinceStart reports the resources unlocked by the time the
 // player enters epochKey's first age (the ages' UnlockResources, cumulative),
 // so a price built from them is payable in every age of the epoch.
-func harbingerHeldSinceStart(epochKey string) map[string]bool {
-	ep, ok := config.EpochByKey()[epochKey]
+func harbingerHeldSinceStart(set *rules.Set, epochKey string) map[string]bool {
+	ep, ok := set.Era(epochKey)
 	held := map[string]bool{}
 	if !ok || len(ep.Ages) == 0 {
 		return held
 	}
-	for _, a := range config.Ages() {
+	for _, a := range set.Ages() {
 		for _, r := range a.UnlockResources {
 			held[r] = true
 		}
@@ -667,36 +668,37 @@ func (h *HarbingerSave) startAge() string {
 	return h.Age
 }
 
-// threadAppeaseCost is the price of Appease level (1 or 2) in thread h: a
-// fated doom's (or a false prophet's) is priced on the warning, from the age
-// its harbinger arrived in (doomAppeaseCost); the Last Passage's on its era
-// (eraAppeaseCost). The same in every age the thread lives through. Pure.
-func threadAppeaseCost(h *HarbingerSave, level int) map[string]float64 {
+// threadAppeaseCostIn is the price of Appease level (1 or 2) in thread h on
+// set's prices: a fated doom's (or a false prophet's) is priced on the
+// warning, from the age its harbinger arrived in (doomAppeaseCostIn); the
+// Last Passage's on its era (eraAppeaseCostIn). The same in every age the
+// thread lives through. Pure.
+func threadAppeaseCostIn(set *rules.Set, h *HarbingerSave, level int) map[string]float64 {
 	if h.TargetEpoch == "" {
-		return eraAppeaseCost(h.EpochKey, level)
+		return eraAppeaseCostIn(set, h.EpochKey, level)
 	}
-	return doomAppeaseCost(h.EpochKey, h.startAge(), level)
+	return doomAppeaseCostIn(set, h.EpochKey, h.startAge(), level)
 }
 
-// doomAppeaseCost is the price of Appease level (1 or 2) for a doom of
+// doomAppeaseCostIn is the price of Appease level (1 or 2) for a doom of
 // epochKey whose harbinger arrived in age, in faith and in culture (culture
 // only if held since the epoch began): level × harbingerAppeaseWindowShare
-// of what the resource's config.FlowIncome makes in the shortest warning,
+// of what the resource's FlowIncome in set makes in the shortest warning,
 // harbingerLeadMin of the age's pacing target (so level 1 is 15% of what the
 // age makes), the level-1 figure rounded up to two significant figures. It does not depend on the thread's own lead,
 // which stays hidden, nor on Era Mastery: a mastered age makes k times as
 // much per tick for a warning k times shorter. Pure.
-func doomAppeaseCost(epochKey, age string, level int) map[string]float64 {
-	held := harbingerHeldSinceStart(epochKey)
+func doomAppeaseCostIn(set *rules.Set, epochKey, age string, level int) map[string]float64 {
+	held := harbingerHeldSinceStart(set, epochKey)
 	cost := map[string]float64{}
 	for _, k := range []string{"faith", "culture"} {
 		if !held[k] {
 			continue
 		}
-		// An income, not a timing window (see eraAppeaseCost): the raw
+		// An income, not a timing window (see eraAppeaseCostIn): the raw
 		// target on purpose.
-		window := float64(harbingerLeadMin * config.AgeTargetTicks(age))
-		income := float64(config.FlowIncome(k, age) * window)
+		window := float64(harbingerLeadMin * set.TargetTicks(age))
+		income := float64(set.FlowIncome(k, age) * window)
 		if l1 := ceilSignificant(float64(income*harbingerAppeaseWindowShare), 2); l1 > 0 {
 			cost[k] = l1 * float64(level)
 		}
@@ -704,26 +706,26 @@ func doomAppeaseCost(epochKey, age string, level int) map[string]float64 {
 	return cost
 }
 
-// eraAppeaseCost is the price of Appease level (1 or 2) in the Last
+// eraAppeaseCostIn is the price of Appease level (1 or 2) in the Last
 // Passage's thread of epochKey, in faith and in culture (culture only if
 // held since the epoch began): level × harbingerAppeaseIncomeShare of the
-// resource's config.FlowIncome over harbingerAppeaseAges at their pacing
+// resource's FlowIncome in set over harbingerAppeaseAgesIn at their pacing
 // targets, the level-1 figure rounded up to two significant figures. Pure.
-func eraAppeaseCost(epochKey string, level int) map[string]float64 {
-	held := harbingerHeldSinceStart(epochKey)
+func eraAppeaseCostIn(set *rules.Set, epochKey string, level int) map[string]float64 {
+	held := harbingerHeldSinceStart(set, epochKey)
 	cost := map[string]float64{}
 	for _, k := range []string{"faith", "culture"} {
 		if !held[k] {
 			continue
 		}
 		income := 0.0
-		for _, a := range harbingerAppeaseAges(epochKey) {
+		for _, a := range harbingerAppeaseAgesIn(set, epochKey) {
 			// An income, not a timing window: FlowIncome is the per-tick
 			// rate at the age's pacing target, so rate × target is what the
 			// age makes whatever its pace (a faster age makes more per tick
 			// for fewer ticks). It stays on the raw target on purpose;
 			// expectedAgeTicks is for durations.
-			income += float64(config.FlowIncome(k, a) * config.AgeTargetTicks(a))
+			income += float64(set.FlowIncome(k, a) * set.TargetTicks(a))
 		}
 		if l1 := ceilSignificant(income*harbingerAppeaseIncomeShare, 2); l1 > 0 {
 			cost[k] = l1 * float64(level)
@@ -747,15 +749,15 @@ func ceilSignificant(v float64, sig int) float64 {
 	return math.Ceil(float64(v*mag)-1e-9) / mag
 }
 
-// harbingerBraceBasis is, per core resource, the most any remaining advance of
-// epochKey asks for it, for resources held since the epoch began, minus faith
-// and culture (they belong to Appease). Pure.
-func harbingerBraceBasis(epochKey string) map[string]float64 {
-	held := harbingerHeldSinceStart(epochKey)
-	byAge := config.AgeByKey()
+// harbingerBraceBasisIn is, per core resource, the most any remaining advance
+// of epochKey asks for it in set, for resources held since the epoch began,
+// minus faith and culture (they belong to Appease). Pure.
+func harbingerBraceBasisIn(set *rules.Set, epochKey string) map[string]float64 {
+	held := harbingerHeldSinceStart(set, epochKey)
 	basis := map[string]float64{}
-	for _, a := range harbingerAdvanceAges(epochKey) {
-		for k, v := range byAge[a].ResourceReqs {
+	for _, a := range harbingerAdvanceAges(set, epochKey) {
+		def, _ := set.Age(a)
+		for k, v := range def.ResourceReqs {
 			if k == "faith" || k == "culture" || !held[k] {
 				continue
 			}
@@ -767,11 +769,11 @@ func harbingerBraceBasis(epochKey string) map[string]float64 {
 	return basis
 }
 
-// harbingerBraceCost is the price of Brace level (1 or 2) in epochKey's
+// harbingerBraceCostIn is the price of Brace level (1 or 2) in epochKey's
 // thread: harbingerBraceCostFrac × level of each basis amount. Pure.
-func harbingerBraceCost(epochKey string, level int) map[string]float64 {
+func harbingerBraceCostIn(set *rules.Set, epochKey string, level int) map[string]float64 {
 	cost := map[string]float64{}
-	for k, v := range harbingerBraceBasis(epochKey) {
+	for k, v := range harbingerBraceBasisIn(set, epochKey) {
 		cost[k] = math.Ceil(v * harbingerBraceCostFrac * float64(level))
 	}
 	return cost
@@ -790,23 +792,26 @@ type HarbingerPrice struct {
 	BraceL1     map[string]float64
 }
 
-// HarbingerPriceTable lists the level-1 prices of every thread whose doom can
-// be answered: a fated doom's for each age its harbinger can arrive in, from
-// the Iron Era on, and the Last Passage's. The Stone Era is left out: only
-// false prophets come there, and nothing can strike. Pure.
-func HarbingerPriceTable() []HarbingerPrice {
+// HarbingerPriceTable is HarbingerPriceTableIn for the core ruleset.
+func HarbingerPriceTable() []HarbingerPrice { return HarbingerPriceTableIn(rules.Core()) }
+
+// HarbingerPriceTableIn lists the level-1 prices, in set, of every thread
+// whose doom can be answered: a fated doom's for each age its harbinger can
+// arrive in, from the Iron Era on, and the Last Passage's. The Stone Era is
+// left out: only false prophets come there, and nothing can strike. Pure.
+func HarbingerPriceTableIn(set *rules.Set) []HarbingerPrice {
 	var rows []HarbingerPrice
-	for _, ep := range config.Epochs() {
-		if len(ep.Ages) == 0 || !config.CatastropheAllowed(ep.Key) {
+	for _, ep := range set.Eras() {
+		if len(ep.Ages) == 0 || !set.CatastropheAllowed(ep.Key) {
 			continue
 		}
 		for _, a := range ep.Ages {
 			rows = append(rows, HarbingerPrice{Epoch: ep.Key, Age: a,
-				AppeaseL1: doomAppeaseCost(ep.Key, a, 1), BraceL1: harbingerBraceCost(ep.Key, 1)})
+				AppeaseL1: doomAppeaseCostIn(set, ep.Key, a, 1), BraceL1: harbingerBraceCostIn(set, ep.Key, 1)})
 		}
-		if config.IsFinalEpoch(ep.Key) {
+		if set.IsFinalEra(ep.Key) {
 			rows = append(rows, HarbingerPrice{Epoch: ep.Key, Age: ep.Ages[0], LastPassage: true,
-				AppeaseL1: eraAppeaseCost(ep.Key, 1), BraceL1: harbingerBraceCost(ep.Key, 1)})
+				AppeaseL1: eraAppeaseCostIn(set, ep.Key, 1), BraceL1: harbingerBraceCostIn(set, ep.Key, 1)})
 		}
 	}
 	return rows
@@ -834,10 +839,10 @@ const lastPassageCame = "the Last Passage has already come"
 // catastrophe can strike there, so there is nothing to answer.
 func (ge *GameEngine) harbingerPowerless() string {
 	h := ge.harbinger
-	if h == nil || h.TargetEpoch == "" || config.FateAllowed(h.EpochKey) {
+	if h == nil || h.TargetEpoch == "" || ge.rules.FateAllowed(h.EpochKey) {
 		return ""
 	}
-	return "no catastrophe can strike in the " + config.EpochByKey()[h.EpochKey].Name
+	return "no catastrophe can strike in the " + eraName(ge.rules, h.EpochKey)
 }
 
 // appeaseBlocked explains why Appease cannot be bought now, or "".
@@ -894,7 +899,7 @@ func (ge *GameEngine) inviteBlocked() string {
 // says so when a price is larger than the resource's storage can hold.
 func (ge *GameEngine) shortfall(cost map[string]float64) string {
 	var parts []string
-	for _, def := range config.BaseResources() {
+	for _, def := range ge.rules.Resources() {
 		need, ok := cost[def.Key]
 		if !ok {
 			continue
@@ -924,7 +929,7 @@ func (ge *GameEngine) HarbingerAppease() error {
 	}
 	h := ge.harbinger
 	level := h.AppeaseLevel + 1
-	cost := threadAppeaseCost(h, level)
+	cost := threadAppeaseCostIn(ge.rules, h, level)
 	if len(cost) == 0 {
 		return fmt.Errorf("Cannot appease: there is nothing to offer.")
 	}
@@ -932,9 +937,9 @@ func (ge *GameEngine) HarbingerAppease() error {
 		return fmt.Errorf("Cannot afford to appease: you need %s.", ge.shortfall(cost))
 	}
 	h.AppeaseLevel = level
-	def, _ := config.HarbingerFor(h.Age)
+	def, _ := ge.rules.Harbinger(h.Age)
 	ge.addLog("success", fmt.Sprintf("⚑ %s (Appease %d/%d): paid %s. The chance it strikes is now %.2fx its base.",
-		def.AppeaseLabel, level, HarbingerMaxAppease, harbingerCostText(cost), ge.harbingerAppeaseMultiplier()))
+		def.AppeaseLabel, level, HarbingerMaxAppease, harbingerCostText(ge.rules, cost), ge.harbingerAppeaseMultiplier()))
 	ge.harbingerFlavorLog(flavor.HarbingerAppeased, "")
 	return nil
 }
@@ -951,7 +956,7 @@ func (ge *GameEngine) HarbingerBrace() error {
 	}
 	h := ge.harbinger
 	level := h.BraceLevel + 1
-	cost := harbingerBraceCost(h.EpochKey, level)
+	cost := harbingerBraceCostIn(ge.rules, h.EpochKey, level)
 	if len(cost) == 0 {
 		return fmt.Errorf("Cannot brace: this era asks nothing you can stockpile.")
 	}
@@ -959,13 +964,13 @@ func (ge *GameEngine) HarbingerBrace() error {
 		return fmt.Errorf("Cannot afford to brace: you need %s.", ge.shortfall(cost))
 	}
 	h.BraceLevel = level
-	def, _ := config.HarbingerFor(h.Age)
+	def, _ := ge.rules.Harbinger(h.Age)
 	if h.TargetEpoch == "" {
 		ge.addLog("success", fmt.Sprintf("⚑ %s (Brace %d/%d): paid %s. If the Last Passage comes and you Endure, you keep %.0f%% of the run's prestige points (not %.0f%%).",
-			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(cost), LastPassageKeepFor(level)*100, LastPassageKeep*100))
+			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(ge.rules, cost), LastPassageKeepFor(level)*100, LastPassageKeep*100))
 	} else {
 		ge.addLog("success", fmt.Sprintf("⚑ %s (Brace %d/%d): paid %s. If the catastrophe comes and you Endure, %d%% of buildings fall (not %d%%) and %.0f%% of stock is kept (not %.0f%%).",
-			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(cost), braceDestroyPct[level], braceDestroyPct[0], braceKeepFrac[level]*100, braceKeepFrac[0]*100))
+			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(ge.rules, cost), braceDestroyPct[level], braceDestroyPct[0], braceKeepFrac[level]*100, braceKeepFrac[0]*100))
 	}
 	ge.harbingerFlavorLog(flavor.HarbingerBraced, "")
 	return nil
@@ -986,7 +991,7 @@ func (ge *GameEngine) HarbingerInvite() error {
 	}
 	h := ge.harbinger
 	h.Invited = true
-	def, _ := config.HarbingerFor(h.Age)
+	def, _ := ge.rules.Harbinger(h.Age)
 	if h.TargetEpoch == "" {
 		ge.inviteCatastrophe()
 		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",
@@ -997,7 +1002,7 @@ func (ge *GameEngine) HarbingerInvite() error {
 			f.Fated = true // a false prophet's doom is real now; the record still says it lied
 		}
 		// The thread's own era, never one to come.
-		when := fmt.Sprintf("before the %s ends", config.EpochByKey()[h.EpochKey].Name)
+		when := fmt.Sprintf("before the %s ends", eraName(ge.rules, h.EpochKey))
 		if h.When == WhenThisAge {
 			when = "before this age is out"
 		}
@@ -1019,7 +1024,7 @@ func (ge *GameEngine) threadFlavorLog(h *HarbingerSave, moment flavor.Moment, ki
 	if h == nil {
 		return
 	}
-	def, _ := config.HarbingerFor(h.Age)
+	def, _ := ge.rules.Harbinger(h.Age)
 	if l := ge.flavorStream().Line(flavor.Request{Moment: moment, Age: h.Age, Subject: def.Name, Kind: kind}, ge.gameRNG()); l != "" {
 		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", l))
 	}
@@ -1057,13 +1062,13 @@ func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string
 	if h == nil {
 		return
 	}
-	def, _ := config.HarbingerFor(h.Age)
+	def, _ := ge.rules.Harbinger(h.Age)
 	name := capFirst(def.Name)
-	targetName := config.EpochByKey()[epochKey].Name
+	targetName := eraName(ge.rules, epochKey)
 	spared := fmt.Sprintf("⚑ The doom %s foretold passed you by. The warning was real, and you were spared.", def.Name)
 	discredited := fmt.Sprintf("⚑ The doom %s foretold never came. The warning had been invented from the start.", def.Name)
 	if epochKey == "" {
-		targetName, _ = config.LastPassageInfo()
+		targetName, _ = ge.rules.LastPassage()
 		spared = fmt.Sprintf("⚑ The Last Passage opens, and nothing comes through it. %s's warning was real, and you were spared.", name)
 		discredited = fmt.Sprintf("⚑ The Last Passage opens, and nothing comes through it. The warning had been invented from the start, and %s was the last to repeat it.", def.Name)
 	}
@@ -1162,19 +1167,20 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 	if h == nil {
 		return nil
 	}
-	def, _ := config.HarbingerFor(h.Age)
+	def, _ := ge.rules.Harbinger(h.Age)
+	ageDef, _ := ge.rules.Age(h.Age)
 	tier, prob := ge.harbingerDisplay()
 	v := &HarbingerView{
 		Key: def.Key, Name: def.Name, Description: def.Description,
-		Age: h.Age, AgeName: config.AgeByKey()[h.Age].Name,
+		Age: h.Age, AgeName: ageDef.Name,
 		AppeaseLabel: def.AppeaseLabel, BraceLabel: def.BraceLabel, InviteLabel: def.InviteLabel,
 		Numeric:            def.ForecastPrecision == config.ForecastNumeric,
 		LastPassage:        h.TargetEpoch == "",
 		PassageCame:        h.TargetEpoch == "" && ge.pendingLastPassage,
 		TargetEpochKey:     h.TargetEpoch,
-		TargetEpochName:    harbingerWarningText(h.TargetEpoch),
+		TargetEpochName:    harbingerWarningText(ge.rules, h.TargetEpoch),
 		When:               h.When,
-		WhenText:           harbingerWhenText(h),
+		WhenText:           harbingerWhenText(ge.rules, h),
 		LastPassageWaiting: ge.parkedHarbinger != nil && h.TargetEpoch != "",
 		Lines:              append([]string(nil), h.Lines...),
 		Tier:               tier,
@@ -1190,16 +1196,16 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		if a == h.Age {
 			break
 		}
-		if d, ok := config.HarbingerFor(a); ok {
+		if d, ok := ge.rules.Harbinger(a); ok {
 			v.Earlier = append(v.Earlier, d.Name)
 		}
 	}
 	if v.AppeaseBlocked == "" {
-		v.AppeaseCost = threadAppeaseCost(h, h.AppeaseLevel+1)
+		v.AppeaseCost = threadAppeaseCostIn(ge.rules, h, h.AppeaseLevel+1)
 		v.AppeaseAffordable = len(v.AppeaseCost) > 0 && ge.Resources.CanAfford(v.AppeaseCost)
 	}
 	if v.BraceBlocked == "" {
-		v.BraceCost = harbingerBraceCost(h.EpochKey, h.BraceLevel+1)
+		v.BraceCost = harbingerBraceCostIn(ge.rules, h.EpochKey, h.BraceLevel+1)
 		v.BraceAffordable = len(v.BraceCost) > 0 && ge.Resources.CanAfford(v.BraceCost)
 	}
 	next := h.BraceLevel
@@ -1223,12 +1229,12 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 
 // harbingerWhenText says a thread's When in words: "before this age is out",
 // "before the Iron Era ends" (the thread's own era), or "" for no word.
-func harbingerWhenText(h *HarbingerSave) string {
+func harbingerWhenText(set *rules.Set, h *HarbingerSave) string {
 	switch h.When {
 	case WhenThisAge:
 		return "before this age is out"
 	case WhenThisEra:
-		return fmt.Sprintf("before the %s ends", config.EpochByKey()[h.EpochKey].Name)
+		return fmt.Sprintf("before the %s ends", eraName(set, h.EpochKey))
 	}
 	return ""
 }
@@ -1282,14 +1288,14 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 			// Written before fates existed.
 			if ge.fate != nil && ge.fate.EpochKey == h.EpochKey {
 				h.TargetEpoch = h.EpochKey
-				if def, ok := config.HarbingerFor(h.Age); ok {
+				if def, ok := ge.rules.Harbinger(h.Age); ok {
 					h.When = ge.fateWhen(def)
 				}
 			} else {
 				keep = false
 			}
 		}
-		if _, ok := config.HarbingerFor(h.Age); ok && keep {
+		if _, ok := ge.rules.Harbinger(h.Age); ok && keep {
 			ge.harbinger = &h
 		}
 	}
@@ -1299,7 +1305,7 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 	}
 	// The invite flag only arms the Last Passage now; an era's invite lives on
 	// its fate.
-	ge.catastropheInvited = save.CatastropheInvited && config.IsFinalEpoch(ge.currentEpoch)
+	ge.catastropheInvited = save.CatastropheInvited && ge.rules.IsFinalEra(ge.currentEpoch)
 	ge.pendingBraceLevel = save.PendingBraceLevel
 	if ge.pendingBraceLevel < 0 || ge.pendingBraceLevel > HarbingerMaxBrace || ge.pendingCatastrophe == "" {
 		ge.pendingBraceLevel = 0
@@ -1308,8 +1314,8 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 	// The Last Passage's thread parked behind the Cosmic Era's doom: only
 	// while that doom's thread is live, else it is the live thread again.
 	ge.parkedHarbinger = nil
-	if p := save.ParkedHarbinger; p != nil && p.TargetEpoch == "" && config.IsFinalEpoch(ge.currentEpoch) {
-		if _, ok := config.HarbingerFor(p.Age); ok {
+	if p := save.ParkedHarbinger; p != nil && p.TargetEpoch == "" && ge.rules.IsFinalEra(ge.currentEpoch) {
+		if _, ok := ge.rules.Harbinger(p.Age); ok {
 			if ge.harbinger != nil && ge.harbinger.TargetEpoch != "" {
 				ge.parkedHarbinger = copyHarbingerSave(p)
 			} else if ge.harbinger == nil {
@@ -1319,15 +1325,22 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 	}
 }
 
-// harbingerCostText renders a cost map in config order: "375 faith, 120 culture".
-func harbingerCostText(cost map[string]float64) string {
+// harbingerCostText renders a cost map in set's resource order: "375 faith,
+// 120 culture".
+func harbingerCostText(set *rules.Set, cost map[string]float64) string {
 	var parts []string
-	for _, def := range config.BaseResources() {
+	for _, def := range set.Resources() {
 		if v, ok := cost[def.Key]; ok {
 			parts = append(parts, Amount(v, def.Key))
 		}
 	}
 	return strings.Join(parts, ", ")
+}
+
+// eraName is an era's display name in set ("" for a key set does not know).
+func eraName(set *rules.Set, key string) string {
+	era, _ := set.Era(key)
+	return era.Name
 }
 
 // capFirst upper-cases the first letter: "the Oracle" → "The Oracle".

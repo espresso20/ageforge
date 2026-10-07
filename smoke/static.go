@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The Gate Covenant (the economy design's Law 1 applied to age gates). Every
@@ -307,7 +308,7 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 				}
 			}
 		}
-		cs := &coldStart{idx: i, age: a.Key, unlocked: cloneSet(unlocked), levels: config.PriceLevels(a.Key),
+		cs := &coldStart{idx: i, age: a.Key, unlocked: cloneSet(unlocked), levels: rules.Core().PriceLevels(a.Key),
 			trickle: cloneMap(trickle), stock: stock, boot: map[string]bool{}, reach: map[string]bool{},
 			carried: cloneSet(carried)}
 		for r, ok := range supply {
@@ -429,7 +430,7 @@ func (cs *coldStart) solve(defs map[string]config.BuildingDef) {
 				add(r)
 			}
 		}
-		for _, x := range config.BaseExchangeRates() {
+		for _, x := range rules.Core().ExchangeRates() {
 			if (cs.reach[x.From] || cs.boot[x.From]) && minAgeReached(x.MinAge, cs.idx) {
 				add(x.To)
 			}
@@ -456,11 +457,11 @@ func flowMarketUnits(res string, short float64, cs *coldStart) float64 {
 		return -1
 	}
 	best := -1.0
-	for _, x := range config.BaseExchangeRates() {
+	for _, x := range rules.Core().ExchangeRates() {
 		if x.To != res || !minAgeReached(x.MinAge, cs.idx) || cs.levels[x.From] <= 0 {
 			continue
 		}
-		rate := config.ExchangeRate(x, cs.age)
+		rate := rules.Core().ExchangeRate(x, cs.age)
 		if rate <= 0 {
 			continue
 		}
@@ -521,7 +522,7 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 			if !config.IsFlowResource(res) || amount[res] <= 0 {
 				continue
 			}
-			made := float64(config.FlowIncome(res, from.Key) * config.AgeTargetTicks(from.Key))
+			made := float64(rules.Core().FlowIncome(res, from.Key) * config.AgeTargetTicks(from.Key))
 			if short := amount[res] - made; short > 0 {
 				if u := flowMarketUnits(res, short, cold[i]); u < 0 || u > GateFlowMarketUnits {
 					out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "flow", Key: needs[res], Resource: res,

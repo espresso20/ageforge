@@ -465,7 +465,7 @@ func shareDomainKeys(st game.GameState) []string {
 		first = append(first, r.Domain)
 		seen[r.Domain] = true
 	}
-	for _, d := range config.WorkerDomains() {
+	for _, d := range st.Ruleset().WorkerDomains() {
 		if !seen[d] {
 			rest = append(rest, d)
 		}
@@ -507,7 +507,7 @@ func buildableBuildingKeys(state game.GameState) []string {
 // unlocked buildings (its wonder included) short of their MaxCount, the
 // affordable ones first, then the next age's, which wait for the advance.
 func plannableBuildingKeys(state game.GameState) []string {
-	defs := config.BuildingByKey()
+	defs := state.Ruleset().BuildingMap()
 	rank := map[string]int{}
 	var keys []string
 	for key, bs := range state.Buildings {
@@ -556,10 +556,7 @@ func availableTechKeys(state game.GameState) []string {
 // first. Suggested in the order research would take them: available and
 // affordable, available, then the rest.
 func plannableTechKeys(state game.GameState) []string {
-	order := map[string]int{}
-	for i, a := range config.AgeOrder() {
-		order[a] = i
-	}
+	order := state.Ruleset().Indexes()
 	planned := map[string]bool{state.Research.CurrentTech: true}
 	for _, v := range state.Plan {
 		if v.Kind == game.PlanResearch {
@@ -605,7 +602,8 @@ func wonderNeedKeys(state game.GameState) []string {
 	}
 	bank := state.Buildings[w].WonderBank
 	var keys []string
-	for res, need := range config.BuildingByKey()[w].BaseCost {
+	wonder, _ := state.Ruleset().Building(w)
+	for res, need := range wonder.BaseCost {
 		if need-bank[res] > 0.001 {
 			keys = append(keys, res)
 		}

@@ -96,10 +96,33 @@ func RateText(res string, v float64) string {
 	return ResourceLabel(res) + " " + signed(v, FormatAmount(v)) + "/tick"
 }
 
+// unlockOrder is what a pass over the buildings needs to tell which outputs
+// a building cannot deliver yet: each age's position and each resource's
+// def. BaseBuildings builds it once per call.
+type unlockOrder struct {
+	ages      map[string]int
+	resources map[string]ResourceDef
+}
+
+func newUnlockOrder() unlockOrder {
+	return unlockOrder{ages: AgePositions(AgeOrder()), resources: ResourceByKey()}
+}
+
+// makesBeforeUnlock is MakesBeforeUnlock from the tables already in hand.
+func (u unlockOrder) makesBeforeUnlock(d BuildingDef, res string) bool {
+	r, ok := u.resources[res]
+	if !ok {
+		return false
+	}
+	built, okB := u.ages[d.RequiredAge]
+	unlocks, okR := u.ages[r.Age]
+	return okB && okR && unlocks > built
+}
+
 // buildingEffectParts lists the player-visible effects of a building, one
 // phrase each, in Effects order. Per-tick morale nudges are left out (the
 // Morale wiki page lists them).
-func buildingEffectParts(d BuildingDef) []string {
+func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 	var parts []string
 	for _, e := range d.Effects {
 		switch e.Type {
@@ -109,7 +132,7 @@ func buildingEffectParts(d BuildingDef) []string {
 				// A resource that unlocks in a later age than the building
 				// gathers nothing until then (the engine applies no rate to a
 				// locked resource), and the text owes the player that.
-				if MakesBeforeUnlock(d, e.Target) {
+				if u.makesBeforeUnlock(d, e.Target) {
 					part += " " + OnceUnlocked
 				}
 				parts = append(parts, part)
@@ -147,13 +170,7 @@ const OnceUnlocked = "once unlocked"
 // MakesBeforeUnlock reports whether res unlocks in a later age than building
 // d does: d's output of it is nothing until then.
 func MakesBeforeUnlock(d BuildingDef, res string) bool {
-	r, ok := ResourceByKey()[res]
-	if !ok {
-		return false
-	}
-	built, okB := ageIndex()[d.RequiredAge]
-	unlocks, okR := ageIndex()[r.Age]
-	return okB && okR && unlocks > built
+	return newUnlockOrder().makesBeforeUnlock(d, res)
 }
 
 // buildingEffectText is the mechanical sentence appended to a building's
@@ -161,7 +178,11 @@ func MakesBeforeUnlock(d BuildingDef, res string) bool {
 // nothing to report (the Geographic Society, whose work is done by the
 // engine, not by an Effect).
 func buildingEffectText(d BuildingDef) string {
-	parts := buildingEffectParts(d)
+	return buildingEffectTextIn(d, newUnlockOrder())
+}
+
+func buildingEffectTextIn(d BuildingDef, u unlockOrder) string {
+	parts := buildingEffectParts(d, u)
 	var sb strings.Builder
 	if len(parts) > 0 {
 		sb.WriteString(strings.Join(parts, ", "))
@@ -179,9 +200,10 @@ func buildingEffectText(d BuildingDef) string {
 // set the rates, so the numbers a player reads are the numbers the engine
 // uses.
 func appendEffectText(defs []BuildingDef) []BuildingDef {
+	u := newUnlockOrder()
 	for i := range defs {
 		d := &defs[i]
-		txt := buildingEffectText(*d)
+		txt := buildingEffectTextIn(*d, u)
 		switch {
 		case txt == "":
 		case d.Description == "":

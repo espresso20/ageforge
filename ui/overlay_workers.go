@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
@@ -210,7 +209,7 @@ func workersProvider(state game.GameState, _ int) string {
 			// but the game charges every worker the food class's cost (see the
 			// summary above), so showing the domain's would be a number nobody pays.
 			classInfo := ""
-			if cls, found := config.WorkerClassByDomainAndAge(domain, state.Age); found && cls.ClassName != "" {
+			if cls, found := state.Ruleset().WorkerClass(domain, state.Age); found && cls.ClassName != "" {
 				classInfo = fmt.Sprintf(" %s × %d", cls.ClassName, grp.Total)
 			}
 			fmt.Fprintf(&sb, "  [cyan]%s[-][white]%s[-]\n", label, classInfo)

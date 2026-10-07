@@ -238,12 +238,12 @@ func encounterChance(category string, success bool) float64 {
 
 // eligibleFactions returns the roster factions whose MinAge floor is met at the
 // current age, filtered to either the discovered or the undiscovered set. Iterates
-// config.BaseFactions() (a stable slice) so weighted picks over the result are
+// the ruleset's factions (a stable order) so weighted picks over the result are
 // deterministic given ge.rng's state.
 func (ge *GameEngine) eligibleFactions(ageOrder map[string]int, discovered bool) []config.FactionDef {
 	cur := ageOrder[ge.age]
 	var out []config.FactionDef
-	for _, def := range config.BaseFactions() {
+	for _, def := range ge.rules.Factions() {
 		if cur < ageOrder[def.MinAge] {
 			continue // age floor not reached
 		}

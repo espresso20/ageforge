@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 const (
@@ -48,7 +49,7 @@ const (
 
 	// Festival (culture sink) tuning. The tick counts here and the black
 	// market's cooldown are typed for the base curve and stretched for the
-	// current age (config.StretchTicks): from the Bronze Age on a festival
+	// current age (rules.Set.StretchTicks): from the Bronze Age on a festival
 	// lasts, and waits, PacingStretch times as long, so an age holds as many.
 	festivalBuffPercent   = 0.20 // +20% production_all while active
 	festivalBuffTicks     = 150  // ~5 minutes at 2s/tick
@@ -104,6 +105,11 @@ func clamp(v, lo, hi float64) float64 {
 // to re-acquire the lock.
 type GameEngine struct {
 	mu sync.RWMutex
+
+	// rules is the ruleset this engine plays by: its ages, buildings, techs,
+	// eras and prices. Set at construction; every manager holds the same
+	// one. Rebind swaps it under the write lock.
+	rules *rules.Set
 
 	tick int
 	age  string
@@ -368,28 +374,35 @@ type BuildQueueItem struct {
 	FromPlan bool `json:",omitempty"`
 }
 
-// NewGameEngine creates a new game engine initialised to the Primitive Age.
-// Callers must call Start() to begin the tick loop.
-func NewGameEngine() *GameEngine {
+// NewGameEngine creates a new game engine on the core ruleset (rules.Core),
+// initialised to the Primitive Age. Callers must call Start() to begin the
+// tick loop.
+func NewGameEngine() *GameEngine { return NewGameEngineWith(rules.Core()) }
+
+// NewGameEngineWith creates a new game engine that plays by set. The engine
+// and every manager read their definitions from it and from nowhere else,
+// so engines on different sets can run side by side.
+func NewGameEngineWith(set *rules.Set) *GameEngine {
 	ge := &GameEngine{
+		rules:            set,
 		age:              "primitive_age",
-		Resources:        NewResourceManager(),
-		Workers:          NewWorkerManager(),
-		Research:         NewResearchManager(),
-		Military:         NewMilitaryManager(),
-		Events:           NewEventManager(),
-		Milestones:       NewMilestoneManager(),
-		Prestige:         NewPrestigeManager(),
-		Trade:            NewTradeManager(),
-		Diplomacy:        NewDiplomacyManager(),
+		Resources:        NewResourceManagerWith(set),
+		Workers:          NewWorkerManagerWith(set),
+		Research:         NewResearchManagerWith(set),
+		Military:         NewMilitaryManagerWith(set),
+		Events:           NewEventManagerWith(set),
+		Milestones:       NewMilestoneManagerWith(set),
+		Prestige:         NewPrestigeManagerWith(set),
+		Trade:            NewTradeManagerWith(set),
+		Diplomacy:        NewDiplomacyManagerWith(set),
 		Stats:            NewGameStats(),
 		Bus:              NewEventBus(),
-		progress:         NewProgressManager(),
+		progress:         NewProgressManagerWith(set),
 		permanentBonuses: make(map[string]float64),
 		speedMultiplier:  1.0,
 		morale:           moraleNeutral,
 		stopCh:           make(chan struct{}),
-		currentEpoch:     config.EpochForAge("primitive_age"),
+		currentEpoch:     set.EraOf("primitive_age"),
 		epochEventFired:  make(map[string]bool),
 		harbingerArrived: make(map[string]bool),
 		awakeningsFired:  make(map[string]bool),
@@ -420,9 +433,38 @@ func NewGameEngine() *GameEngine {
 // newBuildingManager is a BuildingManager whose tech-gated buildings read
 // this engine's research (whichever ResearchManager it holds at the time).
 func (ge *GameEngine) newBuildingManager() *BuildingManager {
-	bm := NewBuildingManager()
+	bm := NewBuildingManagerWith(ge.rules)
 	bm.researched = func(tech string) bool { return ge.Research != nil && ge.Research.IsResearched(tech) }
 	return bm
+}
+
+// Rules returns the ruleset the engine plays by. A Set never changes, so the
+// caller may keep it and read it without the engine's lock.
+func (ge *GameEngine) Rules() *rules.Set {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.rules
+}
+
+// Rebind moves the engine and every manager onto set, keeping the run's
+// state: the swap a game whose rules change while it runs will make.
+// Nothing in play calls it yet. Rates and storage follow on the next tick,
+// and snapshots taken before it keep the set they were made from.
+func (ge *GameEngine) Rebind(set *rules.Set) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.rules = set
+	ge.Resources.Rebind(set)
+	ge.Buildings.Rebind(set)
+	ge.Workers.Rebind(set)
+	ge.Research.Rebind(set)
+	ge.Military.Rebind(set)
+	ge.Events.Rebind(set)
+	ge.Milestones.Rebind(set)
+	ge.Prestige.Rebind(set)
+	ge.Trade.Rebind(set)
+	ge.Diplomacy.Rebind(set)
+	ge.progress.Rebind(set)
 }
 
 // techLockErr is why a building can't be built yet when a tech it needs is
@@ -1447,7 +1489,7 @@ func (ge *GameEngine) processEvents() {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
 		// The log line says how long a timed event really lasts: its
 		// duration is stretched with the age (EventManager.Tick).
-		line := def.LogText(ge.durationLocked(config.StretchTicks(ge.age, def.Duration)))
+		line := def.LogText(ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
 		// Setbacks log as warnings so they don't read like windfalls.
 		if def.Sentiment == "bad" {
 			ge.addLog("warning", line)
@@ -2036,8 +2078,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
 			continue
 		}
-		next := config.BuildingNextTierForAge(def.LineageKey, def.LineageTier, newAge)
-		if next == nil {
+		next, ok := ge.rules.NextTier(def.LineageKey, def.LineageTier, newAge)
+		if !ok {
 			continue
 		}
 		transforms = append(transforms, pendingTransform{
@@ -2056,7 +2098,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			Count: t.count,
 		})
 		ge.addLog("info", fmt.Sprintf("↑ %s can upgrade to %s. Type 'upgrade %s'.",
-			BuildingCount(t.count, t.oldKey), t.newName, t.oldKey))
+			buildingCountIn(ge.rules, t.count, t.oldKey), t.newName, t.oldKey))
 	}
 	// Mark buildings as legacy if their lineage now has a higher-tier unlocked equivalent.
 	for _, key := range sortedKeys(ge.Buildings.counts) {
@@ -2086,11 +2128,12 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// Account lifetime stat (Phase 6): record the highest age reached IN-MEMORY only.
 	// advanceAge holds ge.mu, so RecordAgeReached must not do I/O or re-enter the
 	// engine; the persisting flush runs later in the autosave block (outside ge.mu).
-	// Order comes from the pure config age table (no locks) — the account stays
+	// Order comes from the engine's ruleset (no locks) — the account stays
 	// config-free and ranks ages by this int rather than re-deriving order itself.
 	// A dev-touched run, or one that belongs to another account, records nothing.
 	if acct := ge.accountForRecordsLocked(); acct != nil {
-		acct.RecordAgeReached(newAge, config.AgeByKey()[newAge].Order)
+		reached, _ := ge.rules.Age(newAge)
+		acct.RecordAgeReached(newAge, reached.Order)
 	}
 
 	// note: Age-transition carryover model (EPIC: age-pacing economy rebalance).
@@ -2105,7 +2148,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// treats them like anything else held: a bank never carries more into the
 	// new age than the stores could (overflow.go).
 	ge.returnPlanBanks("for the advance")
-	entryCosts := config.AgeEntryCosts(newAge)
+	entryCosts := ge.rules.AgeEntryCosts(newAge)
 	for key, r := range ge.Resources.resources {
 		if key == "faith" {
 			continue
@@ -2195,7 +2238,7 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 // most once per civilisation cycle (epochEventFired prevents double-fire on
 // load or re-entry).
 func (ge *GameEngine) detectEpochTransition(newAge string) {
-	newEpoch := config.EpochForAge(newAge)
+	newEpoch := ge.rules.EraOf(newAge)
 	if newEpoch == ge.currentEpoch {
 		return // same epoch, no transition
 	}
@@ -2215,7 +2258,7 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 		ge.harbinger = nil // an era's thread cannot outlive its era
 	}
 	ge.currentEpoch = newEpoch
-	ep := config.EpochByKey()[newEpoch]
+	ep, _ := ge.rules.Era(newEpoch)
 	ge.addLog("event", fmt.Sprintf("[%s]✦ The %s begins. %s[-]", ep.Color, ep.Name, ep.Description))
 	ge.Bus.Publish(EventData{
 		Type: EventEpochAdvanced,
@@ -2240,7 +2283,7 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 // other timed event. Must be called under the engine write lock (advanceAge holds it);
 // it touches no lock-acquiring methods and is safe in that path.
 func (ge *GameEngine) fireAwakening(newAge string) {
-	def, ok := config.AwakeningForAge(newAge)
+	def, ok := ge.rules.Awakening(newAge)
 	if !ok {
 		return // no awakening triggers on this age
 	}
@@ -2256,7 +2299,7 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 		Effects:   def.Effects,
 	})
 
-	ep := config.EpochByKey()[def.EpochKey]
+	ep, _ := ge.rules.Era(def.EpochKey)
 	// One log line per awakening — the pivotal "new era" beat. Coloured by the epoch
 	// so the awakening visually belongs to the era it ushers in.
 	// The flavor text states the boost and its duration, so no separate effect line.
@@ -2314,7 +2357,7 @@ func (ge *GameEngine) rollGoodEpochEvent() {
 		}
 	}
 
-	pool := config.GoodEpochEvents()
+	pool := ge.rules.GoodEraEvents()
 	var eligible []config.EpochEventDef
 	for _, ev := range pool {
 		// The Cultural Festival pays in culture, which is locked until the
@@ -2342,7 +2385,7 @@ func (ge *GameEngine) rollGoodEpochEvent() {
 	ev := eligible[ge.gameRNG().Intn(len(eligible))]
 	ge.applyGoodEpochEvent(ev)
 
-	ep := config.EpochByKey()[ge.currentEpoch]
+	ep, _ := ge.rules.Era(ge.currentEpoch)
 	record := EpochEventRecord{
 		EpochKey: ge.currentEpoch, EpochName: ep.Name,
 		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
@@ -2357,14 +2400,14 @@ func (ge *GameEngine) rollGoodEpochEvent() {
 
 // rollChallengingEpochEvent picks a bad (non-catastrophe) epoch event.
 func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
-	pool := config.ChallengingEpochEvents()
+	pool := ge.rules.ChallengingEraEvents()
 	if len(pool) == 0 {
 		return
 	}
 	ev := pool[ge.gameRNG().Intn(len(pool))]
 	ge.applyChallengingEpochEvent(ev, epochKey)
 
-	ep := config.EpochByKey()[epochKey]
+	ep, _ := ge.rules.Era(epochKey)
 	record := EpochEventRecord{
 		EpochKey: epochKey, EpochName: ep.Name,
 		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
@@ -2425,7 +2468,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		// Complete 3 free techs from current age
 		completed := ge.Research.ForceCompleteN(3, ge.age, ageOrder)
 		for _, key := range completed {
-			ge.addLog("success", fmt.Sprintf("  → Free tech: %s.", TechName(key)))
+			ge.addLog("success", fmt.Sprintf("  → Free tech: %s.", ge.rules.Name(rules.KindTech, key)))
 		}
 		if len(completed) == 0 {
 			ge.addLog("success", "  → No techs were left to research this age.")
@@ -2448,7 +2491,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		}
 		if bestKey != "" {
 			ge.Buildings.counts[bestKey] += giftCount
-			ge.addLog("success", fmt.Sprintf("  → %s, free.", BuildingCount(giftCount, bestKey)))
+			ge.addLog("success", fmt.Sprintf("  → %s, free.", buildingCountIn(ge.rules, giftCount, bestKey)))
 		}
 	case "peaceful_century":
 		// +20% all production for Duration ticks
@@ -2480,7 +2523,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		ge.releaseWorkersFrom(destroyed)
 		var lost []string
 		for _, key := range sortedKeys(destroyed) {
-			lost = append(lost, BuildingCount(destroyed[key], key))
+			lost = append(lost, buildingCountIn(ge.rules, destroyed[key], key))
 		}
 		if len(lost) > 0 {
 			ge.addLog("warning", fmt.Sprintf("  → Destroyed: %s.", textfmt.List(lost)))
@@ -2498,7 +2541,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 	case "resource_drought":
 		// Debuff epoch's primary resource
 		primaryRes := "wood" // fallback
-		if ep, ok := config.EpochByKey()[epochKey]; ok {
+		if ep, ok := ge.rules.Era(epochKey); ok {
 			primaryRes = ep.PrimaryResource
 		}
 		drought := []config.Effect{{Type: "production", Target: primaryRes, Value: -3.0}}
@@ -2516,7 +2559,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 			[]config.Effect{{Type: "production", Target: "gold", Value: -3.0}})
 	case "the_dark_age":
 		if tech, ok := ge.Research.CancelResearch(); ok {
-			ge.addLog("warning", fmt.Sprintf("  → Research on %s canceled (no refund).", TechName(tech)))
+			ge.addLog("warning", fmt.Sprintf("  → Research on %s canceled (no refund).", ge.rules.Name(rules.KindTech, tech)))
 		}
 		ge.loseShare("knowledge", 0.80)
 		ge.injectEpochEffects("epoch_dark_age", ev,
@@ -2601,9 +2644,9 @@ type FestivalStatus struct {
 }
 
 // stretchTicks re-times a base-curve tick count for the current age
-// (config.StretchTicks). Caller holds ge.mu.
+// (rules.Set.StretchTicks). Caller holds ge.mu.
 func (ge *GameEngine) stretchTicks(ticks int) int {
-	return config.StretchTicks(ge.age, ticks)
+	return ge.rules.StretchTicks(ge.age, ticks)
 }
 
 // festivalCost returns the culture cost of a festival at the current progression:
@@ -2700,8 +2743,7 @@ func (ge *GameEngine) blackMarketReward(resource string, stake float64) float64 
 	if resource == "gold" {
 		return goldValue
 	}
-	rates := config.ExchangeRateByKey()
-	def, ok := rates[resource+":gold"]
+	def, ok := ge.rules.ListedRate(resource, "gold")
 	if !ok || def.BaseRate <= 0 {
 		return 0
 	}
@@ -2760,7 +2802,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 		return false, 0, fmt.Errorf("The smugglers are lying low. Try again in %s.", ge.durationLocked(ge.blackMarketReadyTick-ge.tick))
 	}
 	// Validate the requested payout resource is something we can value in gold.
-	if _, ok := config.ResourceByKey()[resource]; !ok {
+	if _, ok := ge.rules.Resource(resource); !ok {
 		return false, 0, fmt.Errorf("Unknown resource '%s'.", resource)
 	}
 	cost := ge.blackMarketCost()
@@ -3006,25 +3048,14 @@ func (ge *GameEngine) AdvanceAge() error {
 }
 
 // pastMedievalForGather reports whether the given age is strictly later than the
-// Medieval Age in the canonical age order. Used to gate hand-gathering. It is
-// pure (relies only on config.AgeOrder) and acquires no locks, so it is safe to
-// call while the engine write lock is held. Fails safe: if either age key is
+// Medieval Age in set's age order. Used to gate hand-gathering. It is pure
+// (relies only on the ruleset) and acquires no locks, so it is safe to call
+// while the engine write lock is held. Fails safe: if either age key is
 // absent from the order, it returns false (gathering allowed) rather than panic.
-func pastMedievalForGather(age string) bool {
-	order := config.AgeOrder()
-	curIdx, medievalIdx := -1, -1
-	for i, key := range order {
-		switch key {
-		case age:
-			curIdx = i
-		case "medieval_age":
-			medievalIdx = i
-		}
-	}
-	if curIdx == -1 || medievalIdx == -1 {
-		return false
-	}
-	return curIdx > medievalIdx
+func pastMedievalForGather(set *rules.Set, age string) bool {
+	cur, okCur := set.Index(age)
+	medieval, okMedieval := set.Index("medieval_age")
+	return okCur && okMedieval && cur > medieval
 }
 
 // GatherResource manually gathers a resource
@@ -3034,8 +3065,8 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 
 	// Hand-gathering is only practical through the Medieval Age. Past it, the
 	// economy is expected to run on buildings and workers. Lock is held here, so
-	// we use the ge.age field and pure config.AgeOrder() — no GetState().
-	if pastMedievalForGather(ge.age) {
+	// we use the ge.age field and the engine's ruleset — no GetState().
+	if pastMedievalForGather(ge.rules, ge.age) {
 		return 0, fmt.Errorf("Gathering by hand ends after the Medieval Age. Build producers and assign workers instead.")
 	}
 
@@ -3300,10 +3331,10 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	}
 
 	if def.BuildTicks > 0 {
-		ge.addLog(LogRoutine, fmt.Sprintf("Queued %s.", BuildingCount(built, key)))
+		ge.addLog(LogRoutine, fmt.Sprintf("Queued %s.", buildingCountIn(ge.rules, built, key)))
 	} else {
 		ge.recalculateRates()
-		ge.addLog(buildDoneLog(def), fmt.Sprintf("Built %s (you have %d).", BuildingCount(built, key), ge.Buildings.GetCount(key)))
+		ge.addLog(buildDoneLog(def), fmt.Sprintf("Built %s (you have %d).", buildingCountIn(ge.rules, built, key), ge.Buildings.GetCount(key)))
 	}
 	return built, nil
 }
@@ -3579,11 +3610,10 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	defer ge.mu.Unlock()
 
 	if ge.age == "primitive_age" {
-		return fmt.Errorf("You cannot sell buildings in the %s.", AgeName("primitive_age"))
+		return fmt.Errorf("You cannot sell buildings in the %s.", ge.rules.Name(rules.KindAge, "primitive_age"))
 	}
 
-	byKey := config.BuildingByKey()
-	def, ok := byKey[key]
+	def, ok := ge.rules.Building(key)
 	if !ok {
 		return ge.unknownBuildingErr(key)
 	}
@@ -3646,7 +3676,7 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 
 	ge.holdStaffing()
 	ge.recalculateRates()
-	line := fmt.Sprintf("Sold %s. Refund: %s.", BuildingCount(n, key), Amounts(got))
+	line := fmt.Sprintf("Sold %s. Refund: %s.", buildingCountIn(ge.rules, n, key), Amounts(got))
 	if clipped {
 		line += " Storage was full, so part of the refund was lost."
 	}
@@ -3678,7 +3708,7 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	}
 
 	// Pay knowledge cost (waived in godmode)
-	def := config.TechByKey()[techKey]
+	def, _ := ge.rules.Tech(techKey)
 	if !DevGodMode {
 		ge.Resources.Remove("knowledge", def.Cost)
 	}
@@ -3702,7 +3732,7 @@ func (ge *GameEngine) CancelResearch() error {
 	if !ok {
 		return fmt.Errorf("No research in progress.")
 	}
-	ge.addLog("warning", fmt.Sprintf("Research on %s canceled (no refund).", TechName(tech)))
+	ge.addLog("warning", fmt.Sprintf("Research on %s canceled (no refund).", ge.rules.Name(rules.KindTech, tech)))
 	return nil
 }
 
@@ -3779,7 +3809,7 @@ func (ge *GameEngine) maybeOfferAncientMemory() {
 	// Consume the run's chance on offer (no save-scum re-rolls), then present it.
 	ge.ancientMemoryUsed = true
 	ge.pendingMemoryTech = techKey
-	def := config.TechByKey()[techKey]
+	def, _ := ge.rules.Tech(techKey)
 	ge.addLog("event", fmt.Sprintf("✦ %s A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor, def.Name))
 }
 
@@ -3798,7 +3828,7 @@ func (ge *GameEngine) selectMemoryTech(currentAge string, ageOrder map[string]in
 	maxOrder := currentOrder + prestigeLevel/2
 
 	var candidates []string
-	for _, t := range config.Technologies() {
+	for _, t := range ge.rules.Techs() {
 		o, ok := ageOrder[t.Age]
 		if !ok {
 			continue
@@ -3841,7 +3871,7 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	if err := ge.Research.StartMemoryResearch(techKey, combinedResearchSpeed); err != nil {
 		return err
 	}
-	def := config.TechByKey()[techKey]
+	def, _ := ge.rules.Tech(techKey)
 	ge.addLog("success", fmt.Sprintf("Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ge.Research.totalTicks)))
 	return nil
 }
@@ -3932,7 +3962,7 @@ func (ge *GameEngine) DoPrestige() error {
 		return ge.catastropheBlockErr("prestiging")
 	}
 	if ge.pendingLastPassage {
-		return lastPassageBlockErr()
+		return lastPassageBlockErr(ge.rules)
 	}
 
 	ageOrder := ge.progress.GetAgeOrder()
@@ -3979,7 +4009,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// prestiged from counts as entered even if a test hook or the dev
 	// console moved the run there without an advance.
 	ge.Prestige.NoteAgeEntered(ge.age)
-	masteryLine := masteryCommitLine(ge.Prestige.CommitRun())
+	masteryLine := masteryCommitLine(ge.rules, ge.Prestige.CommitRun())
 	// The legacy kit remembers the run (plan, civilizations, shares) before
 	// the managers holding it are reset.
 	ge.captureLegacyLocked()
@@ -3991,15 +4021,15 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// Reset all game systems
 	ge.tick = 0
 	ge.age = "primitive_age"
-	ge.Resources = NewResourceManager()
+	ge.Resources = NewResourceManagerWith(ge.rules)
 	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManager()
-	ge.Research = NewResearchManager()
-	ge.Military = NewMilitaryManager()
-	ge.Events = NewEventManager()
-	ge.Milestones = NewMilestoneManager()
-	ge.Trade = NewTradeManager()
-	ge.Diplomacy = NewDiplomacyManager()
+	ge.Workers = NewWorkerManagerWith(ge.rules)
+	ge.Research = NewResearchManagerWith(ge.rules)
+	ge.Military = NewMilitaryManagerWith(ge.rules)
+	ge.Events = NewEventManagerWith(ge.rules)
+	ge.Milestones = NewMilestoneManagerWith(ge.rules)
+	ge.Trade = NewTradeManagerWith(ge.rules)
+	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
@@ -4009,7 +4039,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.buildQueue = nil
 	ge.plan = nil
 	ge.log = nil
-	ge.currentEpoch = config.EpochForAge("primitive_age")
+	ge.currentEpoch = ge.rules.EraOf("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
 	ge.harbingerHistory = nil
@@ -4119,16 +4149,16 @@ func (ge *GameEngine) Reset() {
 	ge.tick = 0
 	ge.sessionStart = nil
 	ge.age = "primitive_age"
-	ge.Resources = NewResourceManager()
+	ge.Resources = NewResourceManagerWith(ge.rules)
 	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManager()
-	ge.Research = NewResearchManager()
-	ge.Military = NewMilitaryManager()
-	ge.Events = NewEventManager()
-	ge.Milestones = NewMilestoneManager()
-	ge.Prestige = NewPrestigeManager()
-	ge.Trade = NewTradeManager()
-	ge.Diplomacy = NewDiplomacyManager()
+	ge.Workers = NewWorkerManagerWith(ge.rules)
+	ge.Research = NewResearchManagerWith(ge.rules)
+	ge.Military = NewMilitaryManagerWith(ge.rules)
+	ge.Events = NewEventManagerWith(ge.rules)
+	ge.Milestones = NewMilestoneManagerWith(ge.rules)
+	ge.Prestige = NewPrestigeManagerWith(ge.rules)
+	ge.Trade = NewTradeManagerWith(ge.rules)
+	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
@@ -4152,7 +4182,7 @@ func (ge *GameEngine) Reset() {
 	ge.runAccountID = ""
 	ge.runOrphaned = false
 	ge.wonderOverflowOff = false
-	ge.currentEpoch = config.EpochForAge("primitive_age")
+	ge.currentEpoch = ge.rules.EraOf("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
 	ge.harbingerHistory = nil
@@ -4199,7 +4229,7 @@ func (ge *GameEngine) GetState() GameState {
 	sight := ge.ageSightLocked()
 
 	// One epoch lookup per snapshot (was three full table rebuilds).
-	epochDef, epochOK := config.EpochByKey()[ge.currentEpoch]
+	epochDef, epochOK := ge.rules.Era(ge.currentEpoch)
 	epochColor := "white"
 	if epochOK {
 		epochColor = epochDef.Color
@@ -4284,6 +4314,7 @@ func (ge *GameEngine) GetState() GameState {
 	workers.HoldTicks = max(0, ge.staffHoldUntil-ge.tick)
 
 	return GameState{
+		Rules:                ge.rules,
 		Tick:                 ge.tick,
 		Age:                  ge.age,
 		AgeName:              ge.progress.GetAgeName(ge.age),
@@ -4553,7 +4584,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.addLog("info", fmt.Sprintf("Overflow banked toward your plan: %s.", Amounts(planBanked)))
 	}
 	if !starts.empty() {
-		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.Buildings.defs)+".")
+		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.rules)+".")
 	}
 	if staffed.any() {
 		ge.addLog("info", "While you were away, your worker shares "+staffed.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
@@ -4586,7 +4617,7 @@ func (ge *GameEngine) StartTradeRoute(key string) error {
 	if err := ge.Trade.StartRoute(key, ge.Buildings, ge.age, ageOrder); err != nil {
 		return err
 	}
-	ge.addLog(LogRoutine, fmt.Sprintf("Trade route started: %s.", RouteName(key)))
+	ge.addLog(LogRoutine, fmt.Sprintf("Trade route started: %s.", ge.rules.Name(rules.KindRoute, key)))
 	return nil
 }
 
@@ -4598,7 +4629,7 @@ func (ge *GameEngine) StopTradeRoute(key string) error {
 	if err := ge.Trade.StopRoute(key); err != nil {
 		return err
 	}
-	ge.addLog(LogRoutine, fmt.Sprintf("Trade route stopped: %s.", RouteName(key)))
+	ge.addLog(LogRoutine, fmt.Sprintf("Trade route stopped: %s.", ge.rules.Name(rules.KindRoute, key)))
 	return nil
 }
 
@@ -4615,7 +4646,7 @@ func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
 	if cost > 0 {
 		ge.Resources.Remove("gold", cost)
 	}
-	ge.addLog("info", diplomaticStatusLine(CivName(factionKey), status, cost))
+	ge.addLog("info", diplomaticStatusLine(ge.rules.Name(rules.KindCiv, factionKey), status, cost))
 	return nil
 }
 
@@ -4632,7 +4663,7 @@ func (ge *GameEngine) SendGift(factionKey string) error {
 	}
 	ge.Resources.Remove("gold", cost)
 	ge.addLog(LogRoutine, fmt.Sprintf("Sent the %s a gift: %s, opinion %s.",
-		CivName(factionKey), Amount(cost, "gold"), textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
+		ge.rules.Name(rules.KindCiv, factionKey), Amount(cost, "gold"), textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
 	return nil
 }
 
@@ -4651,7 +4682,7 @@ func (ge *GameEngine) SendTribute(factionKey string) error {
 	ge.Resources.Remove("gold", goldCost)
 	ge.Resources.Remove("culture", cultureCost)
 	ge.addLog("success", fmt.Sprintf("Paid the %s a tribute of %s. The war is over.",
-		CivName(factionKey), Amounts(map[string]float64{"gold": goldCost, "culture": cultureCost})))
+		ge.rules.Name(rules.KindCiv, factionKey), Amounts(map[string]float64{"gold": goldCost, "culture": cultureCost})))
 	return nil
 }
 
@@ -4666,7 +4697,7 @@ func (ge *GameEngine) RaidCivRoute(factionKey string) error {
 	if err != nil {
 		return err
 	}
-	name := CivName(factionKey)
+	name := ge.rules.Name(rules.KindCiv, factionKey)
 	if started {
 		ge.addLog("warning", fmt.Sprintf("You raided a %s trade route. They declared war.", name))
 	} else {
@@ -4683,13 +4714,12 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	byKey := config.BuildingByKey()
-	oldDef, hasOld := byKey[key]
+	oldDef, hasOld := ge.rules.Building(key)
 	if !hasOld {
 		return ge.unknownBuildingErr(key)
 	}
 	newKey, hasPending := ge.Buildings.GetPendingUpgrade(key)
-	newDef, hasNew := byKey[newKey]
+	newDef, hasNew := ge.rules.Building(newKey)
 	if !hasPending || !hasNew {
 		return fmt.Errorf("%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
 	}
@@ -4720,7 +4750,7 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	}
 
 	if !ge.Resources.CanAfford(cost) {
-		return fmt.Errorf("Cannot afford to upgrade %s: need %s.", BuildingCount(count, key), ge.shortfallText(cost))
+		return fmt.Errorf("Cannot afford to upgrade %s: need %s.", buildingCountIn(ge.rules, count, key), ge.shortfallText(cost))
 	}
 
 	// Deduct resources
@@ -4740,7 +4770,7 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 		costStr = "free"
 	}
 	ge.addLog(LogRoutine, fmt.Sprintf("Upgraded %s to %s. Cost: %s.",
-		BuildingCount(moved, key), pluralName(moved, newDef.Name), costStr))
+		buildingCountIn(ge.rules, moved, key), pluralName(moved, newDef.Name), costStr))
 	return nil
 }
 
@@ -4769,7 +4799,6 @@ func (ge *GameEngine) GetAvailableUpgrades() []UpgradeInfo {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
 
-	byKey := config.BuildingByKey()
 	var result []UpgradeInfo
 
 	for oldKey, newKey := range ge.Buildings.pendingUpgrades {
@@ -4777,8 +4806,8 @@ func (ge *GameEngine) GetAvailableUpgrades() []UpgradeInfo {
 		if count <= 0 {
 			continue
 		}
-		oldDef, ok1 := byKey[oldKey]
-		newDef, ok2 := byKey[newKey]
+		oldDef, ok1 := ge.rules.Building(oldKey)
+		newDef, ok2 := ge.rules.Building(newKey)
 		if !ok1 || !ok2 {
 			continue
 		}
@@ -4898,9 +4927,9 @@ func (ge *GameEngine) civOpinion(key string) int {
 // prestigeUpgradeLine announces a prestige purchase with its total effect at
 // the new tier: "Bought Gather Boost (tier 2): worker output +10%."
 func (ge *GameEngine) prestigeUpgradeLine(key string) string {
-	def, ok := config.PrestigeUpgradeByKey()[key]
+	def, ok := ge.rules.PrestigeUpgrade(key)
 	if !ok {
-		return fmt.Sprintf("Bought %s.", PrestigeUpgradeName(key))
+		return fmt.Sprintf("Bought %s.", ge.rules.Name(rules.KindPrestigeUpgrade, key))
 	}
 	if def.EffectType == "legacy" {
 		// A one-tier kit item: say what it does from now on.

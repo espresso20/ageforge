@@ -323,7 +323,7 @@ func lastCopyOverStorage(st game.GameState, bld string, defs map[string]config.B
 // unmet requirement.
 func Blockers(st game.GameState) string {
 	var out []string
-	defs := config.BuildingByKey()
+	defs := st.Ruleset().BuildingMap()
 	caps, stall := storageLadder(st, defs)
 	if stall != nil {
 		// The root cause when it is there: nothing below can be fixed.
@@ -443,7 +443,7 @@ func botNoise(msg string) bool {
 }
 
 func bankStr(st game.GameState, w string) string {
-	def := config.BuildingByKey()[w]
+	def, _ := st.Ruleset().Building(w)
 	bank := st.Buildings[w].WonderBank
 	var parts []string
 	for _, res := range sortedKeys(def.BaseCost) {

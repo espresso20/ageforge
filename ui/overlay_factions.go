@@ -43,7 +43,7 @@ func factionsProvider(state game.GameState, w int) string {
 	var sb strings.Builder
 
 	factions := state.Diplomacy.Factions // may be nil; indexing nil maps is safe
-	defs := config.BaseFactions()
+	defs := state.Ruleset().Factions()
 	usable := panelUsableWidth(w)
 	tally := tallyFactionEffects(state)
 

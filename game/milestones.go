@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // MilestoneManager tracks milestone completion, chain progress, and the
@@ -20,6 +21,7 @@ import (
 // Title priority: chain titles override the count-based fallback title.
 // The most recently completed chain's title wins (last writer in the loop).
 type MilestoneManager struct {
+	rules           *rules.Set
 	defs            []config.MilestoneDef
 	completed       map[string]bool
 	chains          []config.MilestoneChainDef
@@ -33,22 +35,32 @@ type MilestoneManager struct {
 	titles []config.TitleDef
 }
 
-// NewMilestoneManager creates a new milestone manager
-func NewMilestoneManager() *MilestoneManager {
-	chains := config.MilestoneChains()
-	m2c := make(map[string]string)
-	for _, c := range chains {
-		for _, mk := range c.MilestoneKeys {
-			m2c[mk] = c.Key
-		}
+// NewMilestoneManager creates a new milestone manager on the core ruleset.
+func NewMilestoneManager() *MilestoneManager { return NewMilestoneManagerWith(rules.Core()) }
+
+// NewMilestoneManagerWith creates a new milestone manager with set's
+// milestones, chains and titles.
+func NewMilestoneManagerWith(set *rules.Set) *MilestoneManager {
+	mm := &MilestoneManager{
+		completed:       make(map[string]bool),
+		chainsCompleted: make(map[string]bool),
 	}
-	return &MilestoneManager{
-		defs:             config.Milestones(),
-		completed:        make(map[string]bool),
-		chains:           chains,
-		chainsCompleted:  make(map[string]bool),
-		milestoneToChain: m2c,
-		titles:           config.MilestoneTitles(),
+	mm.Rebind(set)
+	return mm
+}
+
+// Rebind moves the manager onto set: it takes set's milestones, chains and
+// titles. What is completed stays.
+func (mm *MilestoneManager) Rebind(set *rules.Set) {
+	mm.rules = set
+	mm.defs = set.Milestones()
+	mm.chains = set.MilestoneChains()
+	mm.titles = set.MilestoneTitles()
+	mm.milestoneToChain = make(map[string]string)
+	for _, c := range mm.chains {
+		for _, mk := range c.MilestoneKeys {
+			mm.milestoneToChain[mk] = c.Key
+		}
 	}
 }
 
@@ -251,7 +263,7 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		targetOrder := params.AgeOrder[def.MinAge]
 		met := currentOrder >= targetOrder
 		progress = append(progress, MilestoneProgress{
-			Label:   "Age: " + AgeName(def.MinAge),
+			Label:   "Age: " + mm.rules.Name(rules.KindAge, def.MinAge),
 			Current: float64(currentOrder),
 			Target:  float64(targetOrder),
 			Met:     met,
@@ -286,7 +298,7 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		required := def.MinBuildings[bld]
 		current := float64(params.Buildings[bld])
 		progress = append(progress, MilestoneProgress{
-			Label:   BuildingName(bld),
+			Label:   mm.rules.Name(rules.KindBuilding, bld),
 			Current: current,
 			Target:  float64(required),
 			Met:     int(current) >= required,
@@ -298,7 +310,7 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		names := make([]string, 0, len(sum.Keys))
 		for _, bld := range sum.Keys {
 			have += params.Buildings[bld]
-			names = append(names, pluralName(2, BuildingName(bld)))
+			names = append(names, pluralName(2, mm.rules.Name(rules.KindBuilding, bld)))
 		}
 		progress = append(progress, MilestoneProgress{
 			Label:   textfmt.List(names),

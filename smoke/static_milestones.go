@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The Milestone Covenant: every milestone, every chain and the title ladder
@@ -264,7 +265,7 @@ func newMilestoneModel(defs map[string]config.BuildingDef, prestigeAge string) *
 	made := 0.0
 	for i, a := range ages {
 		if i >= m.resAge["soldiers"] {
-			made += float64(config.FlowIncome("soldiers", a.Key) * config.AgeTargetTicks(a.Key))
+			made += float64(rules.Core().FlowIncome("soldiers", a.Key) * config.AgeTargetTicks(a.Key))
 		}
 		m.soldiers[i] = made
 	}

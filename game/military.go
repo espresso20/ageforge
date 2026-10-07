@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"sort"
 
-	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Expedition categories. Scouting expeditions cost only resources (no soldiers)
@@ -63,6 +63,7 @@ type ActiveExpedition struct {
 // LaunchExpedition is called. Soldiers are spent at launch (win or lose);
 // success vs failure differs only in reward, not soldier loss.
 type MilitaryManager struct {
+	rules          *rules.Set
 	expeditions    []ExpeditionDef
 	activeByCat    map[string]*ActiveExpedition
 	completedCount int
@@ -70,9 +71,17 @@ type MilitaryManager struct {
 	defenseRating  float64
 }
 
-// NewMilitaryManager creates a military manager
-func NewMilitaryManager() *MilitaryManager {
+// NewMilitaryManager creates a military manager on the core ruleset.
+func NewMilitaryManager() *MilitaryManager { return NewMilitaryManagerWith(rules.Core()) }
+
+// Rebind moves the manager onto set, whose clocks time its expeditions. The
+// expeditions themselves are defined here, not in a ruleset.
+func (mm *MilitaryManager) Rebind(set *rules.Set) { mm.rules = set }
+
+// NewMilitaryManagerWith creates a military manager on set.
+func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 	return &MilitaryManager{
+		rules:       set,
 		totalLoot:   make(map[string]float64),
 		activeByCat: make(map[string]*ActiveExpedition),
 		expeditions: []ExpeditionDef{
@@ -257,14 +266,19 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 	}
 
 	if ageOrder[def.MinAge] > ageOrder[currentAge] {
-		return fmt.Errorf("%s needs %s. Advance to send it", def.Name, laterAgeRef(currentAge, def.MinAge))
+		return fmt.Errorf("%s needs %s. Advance to send it", def.Name, laterAgeRef(mm.rules, currentAge, def.MinAge))
 	}
 	if def.MaxAge != "" && ageOrder[currentAge] > ageOrder[def.MaxAge] {
-		return fmt.Errorf("%s ended with the %s. Type %s to see what you can send now", def.Name, ageLabel(def.MaxAge), categoryCommand(def.Category))
+		return fmt.Errorf("%s ended with the %s. Type %s to see what you can send now", def.Name, mm.rules.Name(rules.KindAge, def.MaxAge), categoryCommand(def.Category))
 	}
 
 	// Roll a randomized active duration in [DurationMin, DurationMax] (inclusive),
-	// stretched for the age (expeditionTicks). Every shipped def carries a valid
+	// stretched for the age (the ruleset's StretchTicks: the defs' ranges are
+	// typed for the base curve, and from the Bronze Age on the ages run
+	// config.PacingStretch times longer and so do expeditions, so an age holds
+	// as many of them, and their encounters, as it did; the roll is drawn in
+	// the typed range first, so launching takes the same draws in every
+	// age). Every shipped def carries a valid
 	// range; the guards below only keep a malformed def from handing rng.Intn an
 	// arg <= 0 or pinning an expedition at 0 ticks (which would resolve it
 	// instantly, forever).
@@ -275,7 +289,7 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 	if ticks <= 0 {
 		ticks = minExpeditionDurationTicks
 	}
-	ticks = expeditionTicks(currentAge, ticks)
+	ticks = mm.rules.StretchTicks(currentAge, ticks)
 
 	mm.activeByCat[def.Category] = &ActiveExpedition{
 		Key:       key,
@@ -284,15 +298,6 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 		TicksLeft: ticks,
 	}
 	return nil
-}
-
-// expeditionTicks re-times an expedition duration for age. The defs' ranges
-// are typed for the base curve; from the Bronze Age on the ages run
-// config.PacingStretch times longer and so do expeditions, so an age holds as
-// many of them (and their encounters) as it did. The roll is drawn in the
-// typed range first, so launching takes the same draws in every age.
-func expeditionTicks(age string, ticks int) int {
-	return config.StretchTicks(age, ticks)
 }
 
 // categoryNoun is the player-facing noun phrase for one mission of a
@@ -517,8 +522,8 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 			Key:               def.Key,
 			Category:          def.Category,
 			SoldiersNeeded:    def.SoldiersNeeded,
-			DurationMin:       expeditionTicks(currentAge, def.DurationMin),
-			DurationMax:       expeditionTicks(currentAge, def.DurationMax),
+			DurationMin:       mm.rules.StretchTicks(currentAge, def.DurationMin),
+			DurationMax:       mm.rules.StretchTicks(currentAge, def.DurationMax),
 			Difficulty:        def.DifficultyBase,
 			Cost:              maps.Clone(def.Cost), // def is the manager's table
 			Description:       def.Description,

@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // TradeManager handles both instant resource exchange and repeating trade routes.
@@ -23,6 +24,7 @@ import (
 // faction bonuses are applied to imported amounts via DiplomacyManager.
 // A route is suspended mid-cycle if its required building is demolished.
 type TradeManager struct {
+	rules *rules.Set
 	// supplyPressure key is "from:to" (e.g. "wood:gold"); range -1..1.
 	// Positive values mean the "from" resource has been oversold, reducing rate.
 	supplyPressure map[string]float64
@@ -47,7 +49,7 @@ type TradeManager struct {
 	routeDefs map[string]config.TradeRouteDef
 
 	// age prices the exchange: two construction resources trade at the
-	// current age's parity (config.MarketRate). The engine sets it before
+	// current age's parity (rules.Set.MarketRate). The engine sets it before
 	// every exchange; "" falls back to the listed pairs at their base rates.
 	age string
 }
@@ -90,14 +92,13 @@ func (tm *TradeManager) routeDisruptedBy(def config.TradeRouteDef, disrupted map
 	return ""
 }
 
-// NewTradeManager creates a new trade manager
-func NewTradeManager() *TradeManager {
-	routes := config.BaseTradeRoutes()
-	routeDefs := make(map[string]config.TradeRouteDef, len(routes))
-	for _, def := range routes {
-		routeDefs[def.Key] = def
-	}
-	return &TradeManager{
+// NewTradeManager creates a new trade manager on the core ruleset.
+func NewTradeManager() *TradeManager { return NewTradeManagerWith(rules.Core()) }
+
+// NewTradeManagerWith creates a new trade manager with set's routes and
+// market.
+func NewTradeManagerWith(set *rules.Set) *TradeManager {
+	tm := &TradeManager{
 		supplyPressure: make(map[string]float64),
 		lastExchange:   make(map[string]int),
 		activeRoutes:   make(map[string]*ActiveRoute),
@@ -106,8 +107,19 @@ func NewTradeManager() *TradeManager {
 		totalBought:    make(map[string]float64),
 		totalImported:  make(map[string]float64),
 		totalExported:  make(map[string]float64),
-		routeList:      routes,
-		routeDefs:      routeDefs,
+	}
+	tm.Rebind(set)
+	return tm
+}
+
+// Rebind moves the manager onto set: it takes set's trade routes and prices
+// the exchange from set. Running routes, pressure and totals stay.
+func (tm *TradeManager) Rebind(set *rules.Set) {
+	tm.rules = set
+	tm.routeList = set.TradeRoutes()
+	tm.routeDefs = make(map[string]config.TradeRouteDef, len(tm.routeList))
+	for _, def := range tm.routeList {
+		tm.routeDefs[def.Key] = def
 	}
 }
 
@@ -126,7 +138,7 @@ func copyAmounts(m map[string]float64) map[string]float64 {
 
 // GetExchangeRate returns the current rate for a resource pair, accounting for supply pressure
 func (tm *TradeManager) GetExchangeRate(from, to string) float64 {
-	base, ok := config.MarketRate(from, to, tm.age)
+	base, ok := tm.rules.MarketRate(from, to, tm.age)
 	if !ok {
 		return 0
 	}
@@ -137,7 +149,7 @@ func (tm *TradeManager) GetExchangeRate(from, to string) float64 {
 // RateIn is what Exchange would pay now for one from in age: the market rate
 // less supply pressure, floored at half the market rate. Read-only.
 func (tm *TradeManager) RateIn(from, to, age string) float64 {
-	base, ok := config.MarketRate(from, to, age)
+	base, ok := tm.rules.MarketRate(from, to, age)
 	if !ok {
 		return 0
 	}
@@ -156,7 +168,7 @@ func (tm *TradeManager) Pressure(from, to string) float64 {
 func (tm *TradeManager) Exchange(give, get string, amount float64, resources *ResourceManager, buildings *BuildingManager, tick int) (float64, error) {
 	from, to := give, get
 	key := from + ":" + to
-	base, ok := config.MarketRate(from, to, tm.age)
+	base, ok := tm.rules.MarketRate(from, to, tm.age)
 	if !ok {
 		return 0, fmt.Errorf("The market does not trade %s for %s in this age. Type trade list to see the rates.", ResourceName(from), ResourceName(to))
 	}
@@ -214,12 +226,12 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 
 	// Check age requirement
 	if ageOrder[def.MinAge] > ageOrder[age] {
-		return fmt.Errorf("%s needs %s.", def.Name, laterAgeRef(age, def.MinAge))
+		return fmt.Errorf("%s needs %s.", def.Name, laterAgeRef(tm.rules, age, def.MinAge))
 	}
 
 	// Check building requirement
 	if buildings.GetCount(def.RequiredBld) < def.MinCount {
-		return fmt.Errorf("%s needs %s (you have %s).", def.Name, BuildingCount(def.MinCount, def.RequiredBld), textfmt.Int(buildings.GetCount(def.RequiredBld)))
+		return fmt.Errorf("%s needs %s (you have %s).", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld), textfmt.Int(buildings.GetCount(def.RequiredBld)))
 	}
 
 	// Check not already active
@@ -237,7 +249,7 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 // StopRoute deactivates a trade route
 func (tm *TradeManager) StopRoute(key string) error {
 	if _, active := tm.activeRoutes[key]; !active {
-		return fmt.Errorf("%s is not running. Type trade route list to see your routes.", RouteName(key))
+		return fmt.Errorf("%s is not running. Type trade route list to see your routes.", tm.rules.Name(rules.KindRoute, key))
 	}
 	delete(tm.activeRoutes, key)
 	return nil
@@ -280,7 +292,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 
 		// Check building still meets requirements
 		if buildings.GetCount(def.RequiredBld) < def.MinCount {
-			messages = append(messages, fmt.Sprintf("Trade route %s stopped: it needs %s.", def.Name, BuildingCount(def.MinCount, def.RequiredBld)))
+			messages = append(messages, fmt.Sprintf("Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)))
 			delete(tm.activeRoutes, key)
 			continue
 		}
@@ -380,7 +392,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 	// Exchange rates: what the market offers in this age (listed pairs plus
 	// every pair of the age's construction resources, at parity).
 	exchangeRates := make(map[string]ExchangeRateInfo)
-	for _, def := range config.MarketPairs(age) {
+	for _, def := range tm.rules.MarketPairs(age) {
 		key := def.From + ":" + def.To
 		pressure := tm.supplyPressure[key]
 		base := def.BaseRate

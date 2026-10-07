@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // ResearchManager manages the tech tree and research progress.
@@ -17,6 +18,7 @@ import (
 // NOTE: bonuses are rebuilt from scratch during LoadState by replaying all
 // researched tech effects — do not persist the bonuses map independently.
 type ResearchManager struct {
+	rules      *rules.Set
 	defs       map[string]config.TechDef
 	researched map[string]bool
 	// Currently in-progress tech key, or "" if idle.
@@ -50,10 +52,14 @@ type ResearchManager struct {
 	timeMult float64
 }
 
-// NewResearchManager creates a new research manager
-func NewResearchManager() *ResearchManager {
-	defs := config.TechByKey()
+// NewResearchManager creates a new research manager on the core ruleset.
+func NewResearchManager() *ResearchManager { return NewResearchManagerWith(rules.Core()) }
+
+// NewResearchManagerWith creates a new research manager with set's techs.
+func NewResearchManagerWith(set *rules.Set) *ResearchManager {
+	defs := set.TechMap()
 	return &ResearchManager{
+		rules:      set,
 		defs:       defs,
 		order:      sortedKeys(defs),
 		researched: make(map[string]bool),
@@ -61,6 +67,16 @@ func NewResearchManager() *ResearchManager {
 		storage:    make(map[string]float64),
 		capacity:   make(map[string]float64),
 	}
+}
+
+// Rebind moves the manager onto set: it takes set's tech definitions and
+// works the bonuses of the researched techs out again from them. What is
+// researched and what is in progress stay.
+func (rm *ResearchManager) Rebind(set *rules.Set) {
+	rm.rules = set
+	rm.defs = set.TechMap()
+	rm.order = sortedKeys(rm.defs)
+	rm.rebuildBonuses()
 }
 
 // StartResearch begins researching a technology using only tech-derived bonuses.
@@ -85,7 +101,7 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 	}
 	// Check age requirement
 	if ageOrder[def.Age] > ageOrder[currentAge] {
-		return fmt.Errorf("%s needs %s.", def.Name, laterAgeRef(currentAge, def.Age))
+		return fmt.Errorf("%s needs %s.", def.Name, laterAgeRef(rm.rules, currentAge, def.Age))
 	}
 	// Check prerequisites
 	for _, prereq := range def.Prerequisites {

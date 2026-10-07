@@ -3,11 +3,11 @@ package game
 import (
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // names.go turns config keys into the names a player reads. Every log line,
@@ -15,78 +15,31 @@ import (
 // civilization, trade route or effect target goes through these helpers, so
 // "iron_ore" never reaches the screen where "iron ore" should.
 //
-// The tables are built once from config (static data, never mutated).
-
-type nameTables struct {
-	resources map[string]string
-	buildings map[string]string
-	ages      map[string]string
-	techs     map[string]string
-	civs      map[string]string
-	routes    map[string]string
-	prestige  map[string]string
-}
-
-var names = sync.OnceValue(func() nameTables {
-	t := nameTables{
-		resources: map[string]string{},
-		buildings: map[string]string{},
-		ages:      map[string]string{},
-		techs:     map[string]string{},
-		civs:      map[string]string{},
-		routes:    map[string]string{},
-		prestige:  map[string]string{},
-	}
-	for k, d := range config.ResourceByKey() {
-		t.resources[k] = d.Name
-	}
-	for _, d := range config.BaseBuildings() {
-		t.buildings[d.Key] = d.Name
-	}
-	for k, d := range config.AgeByKey() {
-		t.ages[k] = d.Name
-	}
-	for k, d := range config.TechByKey() {
-		t.techs[k] = d.Name
-	}
-	for k, d := range config.FactionByKey() {
-		t.civs[k] = d.Name
-	}
-	for k, d := range config.TradeRouteByKey() {
-		t.routes[k] = d.Name
-	}
-	for k, d := range config.PrestigeUpgradeByKey() {
-		t.prestige[k] = d.Name
-	}
-	return t
-})
-
-// humanKey is the fallback for a key with no config name: "iron_ore" →
-// "iron ore".
-func humanKey(key string) string {
-	return strings.ReplaceAll(key, "_", " ")
-}
+// The names are a ruleset's (rules.Set.Name). The functions below read the
+// core set, for callers with no engine or snapshot to hand; the engine and
+// its managers name things from their own set.
 
 // ResourceName returns the lowercase display name of a resource for use
-// mid-sentence ("iron ore", "dark matter"). It is config.ResourceLabel, the
-// one source of resource wording.
+// mid-sentence ("iron ore", "dark matter"): the wording config.ResourceLabel
+// gives, read from the core ruleset.
 func ResourceName(key string) string {
-	return config.ResourceLabel(key)
+	return rules.Core().ResourceLabel(key)
 }
 
 // BuildingName returns a building's display name ("Lumber Mill").
 func BuildingName(key string) string {
-	if n, ok := names().buildings[key]; ok && n != "" {
-		return n
-	}
-	return textfmt.Capitalize(humanKey(key))
+	return rules.Core().Name(rules.KindBuilding, key)
 }
 
 // BuildingNames returns the plural-aware display name for n copies of a
 // building: "1 Farm", "3 Farms".
 func BuildingCount(n int, key string) string {
-	name := BuildingName(key)
-	return textfmt.Int(n) + " " + pluralName(n, name)
+	return buildingCountIn(rules.Core(), n, key)
+}
+
+// buildingCountIn is BuildingCount with the building named by set.
+func buildingCountIn(set *rules.Set, n int, key string) string {
+	return textfmt.Int(n) + " " + pluralName(n, set.Name(rules.KindBuilding, key))
 }
 
 // pluralName pluralizes a display name for a count. "X of Y" pluralizes its
@@ -115,42 +68,27 @@ func pluralName(n int, name string) string {
 
 // AgeName returns an age's display name ("Industrial Age").
 func AgeName(key string) string {
-	if n, ok := names().ages[key]; ok && n != "" {
-		return n
-	}
-	return textfmt.Capitalize(humanKey(key))
+	return rules.Core().Name(rules.KindAge, key)
 }
 
 // TechName returns a tech's display name ("Steam Power").
 func TechName(key string) string {
-	if n, ok := names().techs[key]; ok && n != "" {
-		return n
-	}
-	return textfmt.Capitalize(humanKey(key))
+	return rules.Core().Name(rules.KindTech, key)
 }
 
 // CivName returns a civilization's display name ("Merchant Guild").
 func CivName(key string) string {
-	if n, ok := names().civs[key]; ok && n != "" {
-		return n
-	}
-	return textfmt.Capitalize(humanKey(key))
+	return rules.Core().Name(rules.KindCiv, key)
 }
 
 // RouteName returns a trade route's display name ("Silk Road").
 func RouteName(key string) string {
-	if n, ok := names().routes[key]; ok && n != "" {
-		return n
-	}
-	return textfmt.Capitalize(humanKey(key))
+	return rules.Core().Name(rules.KindRoute, key)
 }
 
 // PrestigeUpgradeName returns a prestige upgrade's display name.
 func PrestigeUpgradeName(key string) string {
-	if n, ok := names().prestige[key]; ok && n != "" {
-		return n
-	}
-	return textfmt.Capitalize(humanKey(key))
+	return rules.Core().Name(rules.KindPrestigeUpgrade, key)
 }
 
 // EffectTargetName names a bonus target the way the glossary does:
@@ -162,7 +100,7 @@ func EffectTargetName(target string) string {
 	if res, ok := strings.CutSuffix(target, "_storage"); ok {
 		return ResourceName(res) + " storage"
 	}
-	if _, ok := names().resources[target]; ok {
+	if _, ok := rules.Core().Resource(target); ok {
 		return ResourceName(target) + " production"
 	}
 	return config.EffectTargetLabel(target)

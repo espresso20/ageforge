@@ -165,7 +165,7 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 	// The first shop's perks are retired: none can be bought, and the legacy
 	// kit sells instead (prestigeKitHooked).
 	var sold []string
-	for _, def := range config.PrestigeUpgrades() {
+	for _, def := range up.Rules().PrestigeUpgrades() {
 		if def.Retired && up.BuyPrestigeUpgrade(def.Key) == nil {
 			sold = append(sold, def.Key)
 		}
@@ -230,9 +230,10 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) bool) {
 	ge := hookedEngine(e, e.SeedBase)
 	st := ge.GetState()
+	set := st.Ruleset()
 	planned := ""
-	for _, k := range sortedKeys(config.BuildingByKey()) {
-		d := config.BuildingByKey()[k]
+	for _, k := range sortedKeys(set.BuildingMap()) {
+		d, _ := set.Building(k)
 		if d.RequiredAge == st.Age && d.Category == "production" && d.MaxCount == 0 && st.Buildings[k].Unlocked {
 			planned = k
 			break
@@ -258,14 +259,15 @@ func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) 
 		return
 	}
 	pts := ge.GetState().Prestige.Available
-	for _, key := range config.LegacyKit() {
+	for _, key := range set.LegacyKit() {
 		err := ge.BuyPrestigeUpgrade(key)
 		check("kit: buy "+key, err == nil, "%v (with %d points)", err, pts)
 	}
 	after := ge.GetState()
 	total := 0
-	for _, key := range config.LegacyKit() {
-		total += config.PrestigeUpgradeByKey()[key].Costs[0]
+	for _, key := range set.LegacyKit() {
+		item, _ := set.PrestigeUpgrade(key)
+		total += item.Costs[0]
 	}
 	check("kit: the whole kit costs 99 points", total == 99 && after.Prestige.Available == pts-total, "the kit cost %d; %d points left of %d", total, after.Prestige.Available, pts)
 	check("kit: worker shares carry over", after.Workers.Shares["food"] == 40, "shares after buying Worker Shares: %v", after.Workers.Shares)
@@ -290,8 +292,8 @@ func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) 
 	// The player's own research path: a tech planned in the first age is
 	// planned again when the next run starts there, and nothing else is.
 	tech := ""
-	for _, t := range config.Technologies() {
-		if t.Age == config.AgeOrder()[0] && len(t.Prerequisites) == 0 {
+	for _, t := range set.Techs() {
+		if t.Age == set.AgeKeys()[0] && len(t.Prerequisites) == 0 {
 			tech = t.Key
 			break
 		}

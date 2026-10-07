@@ -2,15 +2,15 @@ package game
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // PrestigeManager manages the prestige meta-progression layer.
 // Players prestige from the Medieval Age on (PrestigeMinAge), earning depth
-// points: every age the run completed pays 3^epoch (config.DepthPoints).
+// points: every age the run completed pays 3^epoch (rules.Set.DepthPoints).
 // Points buy the legacy kit (legacy.go), which carries a run's automation
 // across the reset; the first shop's nine perks are retired and refunded
 // (refundShopLocked).
@@ -21,6 +21,7 @@ import (
 // lasts as long as the account's game does. The old passive (+2% production
 // and +1% tick speed per level) retired into mastery.
 type PrestigeManager struct {
+	rules       *rules.Set
 	level       int
 	totalEarned int
 	available   int
@@ -55,55 +56,54 @@ type PrestigeManager struct {
 	// Not saved.
 	templateApplied string
 
-	// upgradeList / upgradeDefs are the static shop table, built once so
+	// upgradeList / upgradeDefs are the ruleset's shop table, held here so
 	// GetBonuses (hit every tick via the resolver) and Snapshot (every UI
-	// refresh) don't rebuild config per call. Read-only.
+	// refresh) read it straight. Read-only.
 	upgradeList []config.PrestigeUpgradeDef
 	upgradeDefs map[string]config.PrestigeUpgradeDef
 }
 
-// NewPrestigeManager creates a new prestige manager
-func NewPrestigeManager() *PrestigeManager {
-	list := config.PrestigeUpgrades()
-	defs := make(map[string]config.PrestigeUpgradeDef, len(list))
-	for _, def := range list {
-		defs[def.Key] = def
-	}
+// NewPrestigeManager creates a new prestige manager on the core ruleset.
+func NewPrestigeManager() *PrestigeManager { return NewPrestigeManagerWith(rules.Core()) }
+
+// NewPrestigeManagerWith creates a new prestige manager on set: its shop,
+// its ages and its depth points.
+func NewPrestigeManagerWith(set *rules.Set) *PrestigeManager {
 	pm := &PrestigeManager{
-		upgrades:    make(map[string]int),
-		upgradeList: list,
-		upgradeDefs: defs,
-		mastery:     make(map[string]int),
+		upgrades: make(map[string]int),
+		mastery:  make(map[string]int),
 		// A new game has no past prestiges to seed mastery from, and it
 		// starts in the first age: its record and its run's furthest age.
 		masterySeeded: true,
-		record:        ageKeys()[0],
-		runFurthest:   ageKeys()[0],
+		record:        set.AgeKeys()[0],
+		runFurthest:   set.AgeKeys()[0],
 		// A new game starts on the current shop: nothing to refund.
 		shopVersion: config.PrestigeShopVersion,
 	}
-	pm.rebuildSpeeds()
+	pm.Rebind(set)
 	return pm
 }
 
+// Rebind moves the manager onto set: it takes set's shop table and works
+// every age's speed out again on set's ages. Levels, points, mastery and
+// the legacy kit's memory stay.
+func (pm *PrestigeManager) Rebind(set *rules.Set) {
+	pm.rules = set
+	pm.upgradeList = set.PrestigeUpgrades()
+	pm.upgradeDefs = make(map[string]config.PrestigeUpgradeDef, len(pm.upgradeList))
+	for _, def := range pm.upgradeList {
+		pm.upgradeDefs[def.Key] = def
+	}
+	pm.rebuildSpeeds()
+}
+
 // CalculatePoints is what a prestige from age pays: its depth points
-// (config.DepthPoints), the sum of 3^epoch over every age the run
+// (rules.Set.DepthPoints), the sum of 3^epoch over every age the run
 // completed. No divisor and no milestone, tech or building terms: a deeper
 // run pays more, and a level costs nothing.
 func (pm *PrestigeManager) CalculatePoints(age string) int {
-	return depthPoints()[age]
+	return pm.rules.DepthPoints(age)
 }
-
-// depthPoints is config.DepthPoints for every age, built once: GetState
-// asks for two ages on every snapshot, and config rebuilds its tables on
-// every call.
-var depthPoints = sync.OnceValue(func() map[string]int {
-	out := make(map[string]int, len(ageKeys()))
-	for _, a := range ageKeys() {
-		out[a] = config.DepthPoints(a)
-	}
-	return out
-})
 
 // PrestigeMinAge is the age that opens prestige; every later age counts too.
 // A prestige from here to the Atomic Age is an early taste: it pays little
@@ -123,14 +123,14 @@ const PrestigeRunAge = "modern_age"
 // from PrestigeRunAge or later. sight keeps it from naming an age the player
 // has not seen (the no-spoiler rule): it then counts the ages to go instead.
 func EarlyPrestigeLine(sight AgeSight, from string, points int, done bool) string {
-	order := ageOrders()
-	at, ok := order[from]
-	run := order[PrestigeRunAge]
+	set := orCore(sight.set)
+	at, ok := set.Index(from)
+	run, _ := set.Index(PrestigeRunAge)
 	if !ok || at >= run {
 		return ""
 	}
-	full := textfmt.Count(depthPoints()[PrestigeRunAge], "prestige point", "prestige points")
-	deeper := "a run to the " + AgeName(PrestigeRunAge) + " pays " + full
+	full := textfmt.Count(set.DepthPoints(PrestigeRunAge), "prestige point", "prestige points")
+	deeper := "a run to the " + set.Name(rules.KindAge, PrestigeRunAge) + " pays " + full
 	if !sight.Age(PrestigeRunAge) {
 		deeper = "a full run, " + textfmt.Count(run-at, "age", "ages") + " further on, pays " + full
 	}
@@ -139,7 +139,7 @@ func EarlyPrestigeLine(sight AgeSight, from string, points int, done bool) strin
 		lead = "That was an early taste: a prestige from the %s paid %s, for the %s the run completed."
 	}
 	return fmt.Sprintf(lead+" Going deeper pays far more: each era's ages are worth 3 times the era before, and %s.",
-		AgeName(from), textfmt.Count(points, "prestige point", "prestige points"), textfmt.Count(at, "age", "ages"), deeper)
+		set.Name(rules.KindAge, from), textfmt.Count(points, "prestige point", "prestige points"), textfmt.Count(at, "age", "ages"), deeper)
 }
 
 // CanPrestige returns true if the player has reached PrestigeMinAge or later,

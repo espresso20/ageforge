@@ -11,6 +11,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui"
 )
@@ -30,67 +31,39 @@ import (
 //     every alias is listed, next to the command it stands for, and nothing
 //     else is.
 
-// Quantity keys.
+// Quantity keys. The ones a ruleset counts are its own (rules.Set.Counts);
+// themes and expeditions are defined outside the ruleset and counted here.
 const (
-	qAges        = "ages"
-	qBuildings   = "buildings"
-	qTechs       = "technologies"
-	qMilestones  = "milestones"
-	qChains      = "milestone chains"
-	qResources   = "resources"
-	qEpochs      = "epochs"
+	qAges        = rules.CountAges
+	qBuildings   = rules.CountBuildings
+	qTechs       = rules.CountTechs
+	qMilestones  = rules.CountMilestones
+	qChains      = rules.CountChains
+	qResources   = rules.CountResources
+	qEpochs      = rules.CountEras
 	qThemes      = "themes"
-	qDomains     = "worker domains"
-	qUpgrades    = "prestige shop items"
-	qLineages    = "lineages"
-	qWonders     = "wonders"
-	qFactions    = "civilizations"
-	qRoutes      = "trade routes"
+	qDomains     = rules.CountDomains
+	qUpgrades    = rules.CountShopItems
+	qLineages    = rules.CountLineages
+	qWonders     = rules.CountWonders
+	qFactions    = rules.CountCivs
+	qRoutes      = rules.CountRoutes
 	qExpeditions = "expeditions"
-	qLineageBld  = "lineage buildings"
-	qStorage     = "storage buildings"
-	qMonuments   = "cultural monuments"
-	qStandalone  = "standalone buildings"
+	qLineageBld  = rules.CountLineageBld
+	qStorage     = rules.CountStorage
+	qMonuments   = rules.CountMonuments
+	qStandalone  = rules.CountStandalone
 )
 
-// nonProductionLineages are lineage keys that are not counted as lineages
-// in the docs: storage, wonders and monuments are building groups, not
-// production lines.
-var nonProductionLineages = map[string]bool{"storage": true, "wonder": true, "monument": true}
-
-// GameCounts is every number the docs quote, from config.
+// GameCounts is every number the docs quote, from the core ruleset.
 func GameCounts() map[string]int {
-	c := map[string]int{
-		qAges: len(config.Ages()), qBuildings: len(config.BaseBuildings()), qTechs: len(config.Technologies()),
-		qMilestones: len(config.Milestones()), qChains: len(config.MilestoneChains()), qResources: len(config.BaseResources()),
-		qEpochs: len(config.Epochs()), qThemes: len(theme.All()), qDomains: len(config.WorkerDomains()),
-		qUpgrades: len(config.ActivePrestigeUpgrades()), qFactions: len(config.BaseFactions()), qRoutes: len(config.BaseTradeRoutes()),
-	}
-	lineages := map[string]bool{}
-	for _, d := range config.BaseBuildings() {
-		switch {
-		case d.Category == "wonder":
-			c[qWonders]++
-		case d.Category == "storage":
-			c[qStorage]++
-		case d.Category == "monument":
-			c[qMonuments]++
-		case d.LineageKey != "" && !nonProductionLineages[d.LineageKey]:
-			c[qLineageBld]++
-			lineages[d.LineageKey] = true
-		default:
-			c[qStandalone]++
-		}
-	}
-	c[qLineages] = len(lineages)
-	order := map[string]int{}
-	for i, a := range config.AgeOrder() {
-		order[a] = i
-	}
+	set := rules.Core()
+	c := set.Counts()
+	c[qThemes] = len(theme.All())
 	exps := map[string]bool{}
-	mm := game.NewMilitaryManager()
-	for _, a := range config.AgeOrder() {
-		for _, x := range mm.GetAvailableExpeditions(a, order) {
+	mm := game.NewMilitaryManagerWith(set)
+	for _, a := range set.AgeKeys() {
+		for _, x := range mm.GetAvailableExpeditions(a, set.Indexes()) {
 			exps[x.Key] = true
 		}
 	}

@@ -67,10 +67,13 @@ func techLabel(name, key string) string {
 func researchProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
-	allTechs := config.TechByKey()
-	techsByAge := config.TechsByAge()
-	ageOrder := config.AgeOrder()
-	ages := config.AgeByKey()
+	set := state.Ruleset()
+	allTechs := set.TechMap()
+	ageOrder := set.AgeKeys()
+	ageName := func(key string) string {
+		def, _ := set.Age(key)
+		return def.Name
+	}
 
 	// === Header ===
 	fmt.Fprint(&sb, " [label]research <key>  ·  research cancel  ·  research list[-]\n")
@@ -118,8 +121,8 @@ func researchProvider(state game.GameState, _ int) string {
 	}
 
 	for _, ageKey := range ageOrder {
-		ageTechs, ok := techsByAge[ageKey]
-		if !ok {
+		ageTechs := set.TechsOf(ageKey)
+		if len(ageTechs) == 0 {
 			continue
 		}
 
@@ -142,7 +145,7 @@ func researchProvider(state game.GameState, _ int) string {
 			return availNow[i].Name < availNow[j].Name
 		})
 
-		ageName := ages[ageKey].Name
+		ageName := ageName(ageKey)
 		fmt.Fprintf(&sb, "\n  [gold]── %s ──[-]\n", ageName)
 
 		for _, tech := range availNow {
@@ -182,8 +185,8 @@ func researchProvider(state game.GameState, _ int) string {
 	sight := game.SightOf(&state)
 	laterTechs := 0
 	for _, ageKey := range ageOrder {
-		ageTechs, ok := techsByAge[ageKey]
-		if !ok {
+		ageTechs := set.TechsOf(ageKey)
+		if len(ageTechs) == 0 {
 			continue
 		}
 		if !sight.Age(ageKey) {
@@ -191,7 +194,7 @@ func researchProvider(state game.GameState, _ int) string {
 			continue
 		}
 
-		ageName := ages[ageKey].Name
+		ageName := ageName(ageKey)
 
 		// Check if any tech in this age is visible
 		hasVisible := false

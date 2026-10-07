@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -520,8 +519,8 @@ func cmdWorkersShare(args []string, engine *game.GameEngine) CommandResult {
 	switch {
 	case domain == "auto" && len(args) == 1:
 		reply, err = engine.ClearWorkerShare("")
-	case !game.IsWorkerDomain(domain):
-		return CommandResult{Message: game.UnknownDomainError(args[0]).Error(), Type: "error"}
+	case !game.IsWorkerDomain(engine.Rules(), domain):
+		return CommandResult{Message: game.UnknownDomainError(engine.Rules(), args[0]).Error(), Type: "error"}
 	case len(args) == 1:
 		return CommandResult{Message: sharesText(engine.GetState(), domain), Type: "info"}
 	case strings.ToLower(args[1]) == "auto":
@@ -2198,7 +2197,7 @@ func notMetReply(civ string) CommandResult {
 func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
-	for _, def := range config.BaseFactions() {
+	for _, def := range state.Ruleset().Factions() {
 		f, ok := state.Diplomacy.Factions[def.Key]
 		if civ != "" && def.Key != civ {
 			continue
@@ -2302,7 +2301,7 @@ func lastPassageStatusLines(state game.GameState) []string {
 // is the one shown, as everywhere else.
 func lastPassageRiskText(state game.GameState) string {
 	o := state.CatastropheOutlook
-	tier, numeric, prob := o.Tier, harbingerNumericAge(state.Age), o.Probability
+	tier, numeric, prob := o.Tier, harbingerNumericAge(state), o.Probability
 	// Only the Last Passage's own thread: the Cosmic Era's fated doom, when
 	// it speaks instead, warns of something else.
 	if h := state.Harbinger; h != nil && h.LastPassage {
@@ -2401,7 +2400,7 @@ func catastropheOutlookText(state game.GameState) string {
 func eraOutlookText(state game.GameState) string {
 	era := currentEraName(state)
 	switch {
-	case !config.CatastropheAllowed(state.EpochKey):
+	case !state.Ruleset().CatastropheAllowed(state.EpochKey):
 		return fmt.Sprintf("No catastrophe can strike in the %s.", era)
 	case state.CatastropheOutlook.Possible:
 		return fmt.Sprintf("No harbinger has come: the %s is quiet, for now. A doom is always foretold before it strikes.", era)
@@ -2442,7 +2441,7 @@ func outlookRiskText(state game.GameState) string {
 		return fmt.Sprintf("%s warns of %s", capFirstUI(h.Name), riskText(state))
 	}
 	o := state.CatastropheOutlook
-	return riskFrom(state, o.Tier, harbingerNumericAge(state.Age), o.Probability)
+	return riskFrom(state, o.Tier, harbingerNumericAge(state), o.Probability)
 }
 
 // riskText is the risk the way the current age can know it. From the
@@ -2452,7 +2451,7 @@ func outlookRiskText(state game.GameState) string {
 // screen can contradict (and so expose) a false prophet.
 func riskText(state game.GameState) string {
 	o := state.CatastropheOutlook
-	tier, numeric, prob := o.Tier, harbingerNumericAge(state.Age), o.Probability
+	tier, numeric, prob := o.Tier, harbingerNumericAge(state), o.Probability
 	if h := state.Harbinger; h != nil {
 		tier, numeric, prob = h.Tier, h.Numeric, h.Probability
 	}
@@ -2510,7 +2509,8 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.PlanAddResearch(key); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", config.TechByKey()[key].Name), Type: game.LogRoutine}
+		planned, _ := engine.Rules().Tech(key)
+		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", planned.Name), Type: game.LogRoutine}
 	case "list":
 		return CommandResult{Message: planListText(engine.GetState()), Type: "info"}
 	case "remove", "rm":

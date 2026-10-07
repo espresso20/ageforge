@@ -3,8 +3,6 @@ package game
 import (
 	"fmt"
 	"math"
-
-	"github.com/espresso20/ageforge/config"
 )
 
 // Trade items: `plan trade <give> <get> [amount]` sells give for get at the
@@ -76,9 +74,8 @@ func PlanTradeText(give, get string, amount float64) string {
 // planTradeInvalid is why trade item it can never run in this age ("" if it
 // can). A missing trade building only blocks it (planTradeView says so).
 func (ge *GameEngine) planTradeInvalid(it PlanItem) string {
-	defs := config.ResourceByKey()
 	for _, r := range []string{it.Key, it.To} {
-		if _, ok := defs[r]; !ok {
+		if _, ok := ge.rules.Resource(r); !ok {
 			return "there is no resource called '" + r + "'"
 		}
 		if !ge.Resources.IsUnlocked(r) {
@@ -88,7 +85,7 @@ func (ge *GameEngine) planTradeInvalid(it PlanItem) string {
 	if it.Key == it.To {
 		return "it is the same resource"
 	}
-	if _, ok := config.MarketRate(it.Key, it.To, ge.age); !ok {
+	if _, ok := ge.rules.MarketRate(it.Key, it.To, ge.age); !ok {
 		return "the market doesn't trade that pair in this age"
 	}
 	return ""

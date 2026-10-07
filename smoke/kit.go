@@ -182,7 +182,7 @@ func kitOwned(st game.GameState, key string) bool { return st.Prestige.Upgrades[
 // slice.
 func kitCarryProblems(before, after game.GameState) []problem {
 	var out []problem
-	for _, key := range config.LegacyKit() {
+	for _, key := range after.Ruleset().LegacyKit() {
 		if kitOwned(before, key) && !kitOwned(after, key) {
 			out = append(out, problem{"prestige_lost_kit", fmt.Sprintf("the legacy kit's %s did not survive prestige", key)})
 		}
@@ -230,11 +230,13 @@ func (r *runner) checkKitOnAdvance(st game.GameState) {
 	if !kitOwned(st, config.LegacyFactions) {
 		return
 	}
-	ages := config.AgeByKey()
+	set := st.Ruleset()
+	here, _ := set.Age(st.Age)
 	var missing []string
 	for _, key := range k.FactionKeys {
-		def, ok := config.FactionByKey()[key]
-		if !ok || ages[def.MinAge].Order > ages[st.Age].Order {
+		def, ok := set.Faction(key)
+		from, _ := set.Age(def.MinAge)
+		if !ok || from.Order > here.Order {
 			continue
 		}
 		if f := st.Diplomacy.Factions[key]; !f.Discovered {

@@ -6,12 +6,13 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Diplomacy tuning constants. Kept here (not in config) because they govern
 // engine-side cadence rather than per-civ data. Every tick count below is
 // typed for the base curve; Tick stretches it for the current age
-// (config.StretchTicks), so an age sees as much drift, lending and raiding as
+// (rules.Set.StretchTicks), so an age sees as much drift, lending and raiding as
 // it did before the one-week curve.
 const (
 	// Opinion bounds.
@@ -87,6 +88,7 @@ func (dm *DiplomacyManager) errUnknownCiv(key string) error {
 // All mutation happens under the engine write lock (DiplomacyManager has no lock
 // of its own); callers must hold ge.mu when invoking mutating methods.
 type DiplomacyManager struct {
+	rules    *rules.Set
 	factions map[string]*FactionState
 
 	// lentBatches tracks worker loans in flight so they can be returned on time.
@@ -171,17 +173,25 @@ type RaidRequest struct {
 	Message    string
 }
 
-// NewDiplomacyManager creates a new diplomacy manager
-func NewDiplomacyManager() *DiplomacyManager {
-	list := config.BaseFactions()
-	defs := make(map[string]config.FactionDef, len(list))
-	for _, def := range list {
-		defs[def.Key] = def
-	}
-	return &DiplomacyManager{
-		factions:    make(map[string]*FactionState),
-		factionList: list,
-		factionDefs: defs,
+// NewDiplomacyManager creates a new diplomacy manager on the core ruleset.
+func NewDiplomacyManager() *DiplomacyManager { return NewDiplomacyManagerWith(rules.Core()) }
+
+// NewDiplomacyManagerWith creates a new diplomacy manager with set's
+// civilizations.
+func NewDiplomacyManagerWith(set *rules.Set) *DiplomacyManager {
+	dm := &DiplomacyManager{factions: make(map[string]*FactionState)}
+	dm.Rebind(set)
+	return dm
+}
+
+// Rebind moves the manager onto set: it takes set's civilizations. Each
+// one's standing stays.
+func (dm *DiplomacyManager) Rebind(set *rules.Set) {
+	dm.rules = set
+	dm.factionList = set.Factions()
+	dm.factionDefs = make(map[string]config.FactionDef, len(dm.factionList))
+	for _, def := range dm.factionList {
+		dm.factionDefs[def.Key] = def
 	}
 }
 
@@ -593,12 +603,12 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 	}
 
 	// Personality drift on the slow cadence.
-	if tick%config.StretchTicks(age, driftInterval) == 0 {
+	if tick%dm.rules.StretchTicks(age, driftInterval) == 0 {
 		dm.applyPersonalityDrift(tradedRecently)
 	}
 
 	// Status-driven decay + natural drift toward 0.
-	rivalDecay, opinionDecay := config.StretchTicks(age, rivalDecayInterval), config.StretchTicks(age, opinionDecayInterval)
+	rivalDecay, opinionDecay := dm.rules.StretchTicks(age, rivalDecayInterval), dm.rules.StretchTicks(age, opinionDecayInterval)
 	for _, fs := range dm.factions {
 		if !fs.Discovered {
 			continue
@@ -654,10 +664,10 @@ func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int, age string)
 
 	// Roll a new lend: only on a slow cadence, and only for peaceful, friendly+
 	// civs with healthy opinion that aren't at war.
-	if tick%config.StretchTicks(age, driftInterval) != 0 {
+	if tick%dm.rules.StretchTicks(age, driftInterval) != 0 {
 		return messages
 	}
-	lendTicks := config.StretchTicks(age, lendDurationTicks)
+	lendTicks := dm.rules.StretchTicks(age, lendDurationTicks)
 	for _, def := range dm.factionList {
 		key := def.Key
 		fs, ok := dm.factions[key]
@@ -707,7 +717,7 @@ func (dm *DiplomacyManager) hasLentBatch(factionKey string) bool {
 // are queued for the engine.
 func (dm *DiplomacyManager) processWar(tick int, age string) []string {
 	var messages []string
-	cooldown, raidEvery := config.StretchTicks(age, warCooldownTicks), config.StretchTicks(age, warRaidInterval)
+	cooldown, raidEvery := dm.rules.StretchTicks(age, warCooldownTicks), dm.rules.StretchTicks(age, warRaidInterval)
 	for _, def := range dm.factionList {
 		key := def.Key
 		fs, ok := dm.factions[key]
@@ -800,9 +810,9 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			info.Status = fs.Status
 			info.TradeCount = fs.TradeCount
 			info.AtWar = fs.AtWar
-			info.Deals = dealInfos(fs, age)
+			info.Deals = dealInfos(dm.rules, fs, age)
 			info.DealsBlocked = dealBlocked(*fs)
-			info.DealRefreshIn = max(dealRefreshFor(age)-fs.DealTicks, 0)
+			info.DealRefreshIn = max(dealRefreshIn(dm.rules, age)-fs.DealTicks, 0)
 		} else if ageOrder[age] >= ageOrder[def.MinAge] {
 			// Eligible (age floor met) but not yet met: discovery is triggered by
 			// running expeditions, with a late age fallback (see DiscoverFactions).

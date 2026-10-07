@@ -4,7 +4,6 @@ import (
 	"math"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/espresso20/ageforge/detmath"
@@ -72,7 +71,12 @@ func AgeStretch(age string) float64 {
 // delay, a duration, a cooldown, a cadence) goes through it, so the same
 // number of ticks covers the same share of a longer age.
 func StretchTicks(age string, ticks int) int {
-	s := AgeStretch(age)
+	return StretchTicksBy(ticks, AgeStretch(age))
+}
+
+// StretchTicksBy is StretchTicks with the age's factor given: ticks × s,
+// rounded to the nearest tick, and ticks itself at a factor of 1.
+func StretchTicksBy(ticks int, s float64) int {
 	if s == 1 {
 		return ticks
 	}
@@ -170,11 +174,17 @@ func AgeTargetTicks(age string) float64 {
 // up; each new producer can add less or the age flies by. PaybackAdjust
 // stretches it for the odd age the curve leaves too fast.
 func PaybackTicks(age string) float64 {
+	return paybackTicks(age, AgePositions(AgeOrder()))
+}
+
+// paybackTicks is PaybackTicks with each age's position given, so a pass
+// over every building reads the age order once.
+func paybackTicks(age string, pos map[string]int) float64 {
 	adj := 1.0
 	if v, ok := PaybackAdjust[age]; ok {
 		adj = v
 	}
-	return adj * AgeTargetTicks(age) * detmath.Pow(epochProgress(age), PaybackEpochExponent) / PaybackDivisor
+	return adj * AgeTargetTicks(age) * detmath.Pow(epochProgress(age, pos), PaybackEpochExponent) / PaybackDivisor
 }
 
 // PaybackAdjust multiplies the payback of the ages it lists: the curve is
@@ -200,34 +210,33 @@ var PaybackAdjust = map[string]float64{
 // epochProgress counts epochs of three ages each, continuously: 1 in the
 // Primitive Age, 2 in the Iron Age, 3 in the Renaissance, 1/3 more per age.
 // Continuous rather than by epoch so the first age of an epoch doesn't
-// inherit buildings that paid back much faster than its own.
-func epochProgress(age string) float64 {
-	if i, ok := ageIndex()[age]; ok {
+// inherit buildings that paid back much faster than its own. pos is each
+// age's position (AgePositions).
+func epochProgress(age string, pos map[string]int) float64 {
+	if i, ok := pos[age]; ok {
 		return 1 + float64(i)/3
 	}
 	return 1
 }
 
-var (
-	ageIndexOnce sync.Once
-	ageIndexMap  map[string]int
-)
-
-// ageIndex caches each age's position. BaseBuildings derives every payback
-// from it and the engine calls BuildingByKey on hot paths, so rebuilding
-// Ages() per building would be expensive. Read-only.
-func ageIndex() map[string]int {
-	ageIndexOnce.Do(func() {
-		ageIndexMap = map[string]int{}
-		for i, k := range AgeOrder() {
-			ageIndexMap[k] = i
-		}
-	})
-	return ageIndexMap
+// AgePositions maps each age key in order to its position. Nothing here
+// keeps it: BaseBuildings builds it once per call and hands it to the rules
+// that need it, and an engine reads positions from its rules.Set.
+func AgePositions(order []string) map[string]int {
+	pos := make(map[string]int, len(order))
+	for i, k := range order {
+		pos[k] = i
+	}
+	return pos
 }
 
-// priceLevels returns, per age, the median first-copy price of each
-// construction resource across that age's buildings (wonders aside).
+// PriceLevelsByAge returns, per age, the median first-copy price of each
+// construction resource across that age's buildings (wonders aside). Pure:
+// rules.Compile builds a ruleset's price levels with it.
+func PriceLevelsByAge(defs []BuildingDef) map[string]map[string]float64 {
+	return priceLevels(defs)
+}
+
 func priceLevels(defs []BuildingDef) map[string]map[string]float64 {
 	prices := map[string]map[string][]float64{}
 	for _, d := range defs {
@@ -297,7 +306,7 @@ func priceUnits(cost map[string]float64, levels map[string]float64) float64 {
 // splits its value between them. Effects on flow resources and on resources
 // no building of the age costs keep their literal values. Wonders are left
 // alone: they are a one-off, not an investment.
-func normalizeProductionRates(defs []BuildingDef) []BuildingDef {
+func normalizeProductionRates(defs []BuildingDef, pos map[string]int) []BuildingDef {
 	levels := priceLevels(defs)
 	for i := range defs {
 		d := &defs[i]
@@ -305,7 +314,7 @@ func normalizeProductionRates(defs []BuildingDef) []BuildingDef {
 			continue
 		}
 		lv := levels[d.RequiredAge]
-		pb := PaybackTicks(d.RequiredAge)
+		pb := paybackTicks(d.RequiredAge, pos)
 		if pb <= 0 || len(lv) == 0 {
 			continue
 		}
@@ -408,20 +417,35 @@ func FormatRateValue(v float64) string {
 	return textfmt.Number(v)
 }
 
+// The lookups below (PriceLevels, ExchangeRate, MarketRate, MarketPairs,
+// FlowIncome, TypicalIncome, and DealPriceLevel, PricedResources and
+// MarketOffers in deals.go) describe the tables this package defines and
+// keep nothing between calls: each one rebuilds the building table, about a
+// millisecond. They are for tests and tools. An engine reads the same
+// numbers from its rules.Set, which works them out once with the pure
+// functions beside them (PriceLevelsByAge, ExchangeRateAt, MarketRateAt,
+// MarketPairsAt, Incomes, FlowDealLevels, MarketOffersAt).
+
 // PriceLevels returns the median first-copy price of each construction
 // resource in age (nil for an age with no buildings).
 func PriceLevels(age string) map[string]float64 {
 	return priceLevels(BaseBuildings())[age]
 }
 
+// exchangeLevels is every age's price levels, rebuilt on every call.
+func exchangeLevels() map[string]map[string]float64 {
+	return priceLevels(BaseBuildings())
+}
+
 // ExchangeRate is the market rate from def.From to def.To in age: parity
 // minus ExchangeFee when both are construction resources of age, the
 // literal BaseRate otherwise.
 func ExchangeRate(def ExchangeRateDef, age string) float64 {
-	return exchangeRate(def, exchangeLevels()[age])
+	return ExchangeRateAt(def, PriceLevels(age))
 }
 
-func exchangeRate(def ExchangeRateDef, lv map[string]float64) float64 {
+// ExchangeRateAt is ExchangeRate against an age's price levels.
+func ExchangeRateAt(def ExchangeRateDef, lv map[string]float64) float64 {
 	from, to := lv[def.From], lv[def.To]
 	if from <= 0 || to <= 0 {
 		return def.BaseRate
@@ -435,15 +459,20 @@ func exchangeRate(def ExchangeRateDef, lv map[string]float64) float64 {
 // ExchangeRate. The listed pairs keep their historical behavior of not
 // checking MinAge here; MarketPairs is what the UI and the bot offer.
 func MarketRate(from, to, age string) (float64, bool) {
+	return MarketRateAt(from, to, ExchangeRateByKey(), PriceLevels(age))
+}
+
+// MarketRateAt is MarketRate against the listed pairs (keyed "from:to") and
+// an age's price levels.
+func MarketRateAt(from, to string, listed map[string]ExchangeRateDef, lv map[string]float64) (float64, bool) {
 	if from == to {
 		return 0, false
 	}
-	if def, ok := exchangeByKey()[from+":"+to]; ok {
-		return ExchangeRate(def, age), true
+	if def, ok := listed[from+":"+to]; ok {
+		return ExchangeRateAt(def, lv), true
 	}
-	lv := exchangeLevels()[age]
 	if lv[from] > 0 && lv[to] > 0 {
-		return exchangeRate(ExchangeRateDef{From: from, To: to}, lv), true
+		return ExchangeRateAt(ExchangeRateDef{From: from, To: to}, lv), true
 	}
 	return 0, false
 }
@@ -452,18 +481,22 @@ func MarketRate(from, to, age string) (float64, bool) {
 // MinAge has been reached, plus every ordered pair of the age's construction
 // resources, each with its rate for age as BaseRate. Sorted by from, then to.
 func MarketPairs(age string) []ExchangeRateDef {
-	order := ageIndex()
+	return MarketPairsAt(age, BaseExchangeRates(), AgePositions(AgeOrder()), PriceLevels(age))
+}
+
+// MarketPairsAt is MarketPairs against the listed pairs, each age's
+// position and age's price levels. It leaves listed as it found it.
+func MarketPairsAt(age string, listed []ExchangeRateDef, pos map[string]int, lv map[string]float64) []ExchangeRateDef {
 	seen := map[string]bool{}
 	var out []ExchangeRateDef
-	for _, def := range BaseExchangeRates() {
-		if order[def.MinAge] > order[age] {
+	for _, def := range listed {
+		if pos[def.MinAge] > pos[age] {
 			continue
 		}
-		def.BaseRate = ExchangeRate(def, age)
+		def.BaseRate = ExchangeRateAt(def, lv)
 		seen[def.From+":"+def.To] = true
 		out = append(out, def)
 	}
-	lv := exchangeLevels()[age]
 	res := make([]string, 0, len(lv))
 	for r := range lv {
 		res = append(res, r)
@@ -475,7 +508,7 @@ func MarketPairs(age string) []ExchangeRateDef {
 				continue
 			}
 			def := ExchangeRateDef{From: from, To: to, MinAge: age}
-			def.BaseRate = exchangeRate(def, lv)
+			def.BaseRate = ExchangeRateAt(def, lv)
 			out = append(out, def)
 		}
 	}
@@ -486,29 +519,6 @@ func MarketPairs(age string) []ExchangeRateDef {
 		return out[i].To < out[j].To
 	})
 	return out
-}
-
-var (
-	exchangeByKeyOnce sync.Once
-	exchangeByKeyMap  map[string]ExchangeRateDef
-)
-
-func exchangeByKey() map[string]ExchangeRateDef {
-	exchangeByKeyOnce.Do(func() { exchangeByKeyMap = ExchangeRateByKey() })
-	return exchangeByKeyMap
-}
-
-var (
-	exchangeLevelsOnce sync.Once
-	exchangeLevelsMap  map[string]map[string]float64
-)
-
-// exchangeLevels caches the price levels for the market, which reads them on
-// every state snapshot. Config is static, so computing them once is safe;
-// the map is shared and must be treated as read-only.
-func exchangeLevels() map[string]map[string]float64 {
-	exchangeLevelsOnce.Do(func() { exchangeLevelsMap = priceLevels(BaseBuildings()) })
-	return exchangeLevelsMap
 }
 
 // FlowCopies is the "reasonable production level" of a flow resource: how
@@ -533,21 +543,7 @@ const ProductionAllCap = 3.0
 // triples). Monuments, milestones, morale and worker upkeep are left out. 0
 // for an unknown age or a resource nothing produces by then.
 func FlowIncome(res, age string) float64 {
-	return flowIncomes()[age][res]
-}
-
-var (
-	flowIncomeOnce sync.Once
-	flowIncomeMap  map[string]map[string]float64
-)
-
-// flowIncomes caches FlowIncome for every age and flow resource. The harbinger
-// prices read it on every state snapshot. Read-only.
-func flowIncomes() map[string]map[string]float64 {
-	flowIncomeOnce.Do(func() {
-		flowIncomeMap = computeFlowIncomes(BaseBuildings(), Technologies(), AgeOrder())
-	})
-	return flowIncomeMap
+	return Incomes(BaseBuildings(), Technologies(), AgeOrder(), IsFlowResource)[age][res]
 }
 
 // TypicalIncome is FlowIncome's "what the age produces" for any resource,
@@ -556,20 +552,11 @@ func flowIncomes() map[string]map[string]float64 {
 // times the production_all bonus held by then. It is what the Storage
 // Covenant (StorageHold) sizes storage against.
 func TypicalIncome(res, age string) float64 {
-	return typicalIncomes()[age][res]
+	return Incomes(BaseBuildings(), Technologies(), AgeOrder(), AnyResource)[age][res]
 }
 
-var (
-	typicalIncomeOnce sync.Once
-	typicalIncomeMap  map[string]map[string]float64
-)
-
-func typicalIncomes() map[string]map[string]float64 {
-	typicalIncomeOnce.Do(func() {
-		typicalIncomeMap = computeIncomes(BaseBuildings(), Technologies(), AgeOrder(), func(string) bool { return true })
-	})
-	return typicalIncomeMap
-}
+// AnyResource accepts every resource: Incomes' filter for TypicalIncome.
+func AnyResource(string) bool { return true }
 
 // The Storage Covenant (the economy design's Law 1): the most storage buildable in an
 // age must hold at least StorageHold(age) hours of the age's TypicalIncome at
@@ -601,12 +588,10 @@ func StorageHold(age string) float64 {
 	return StorageHoldHours
 }
 
-func computeFlowIncomes(defs []BuildingDef, techs []TechDef, order []string) map[string]map[string]float64 {
-	return computeIncomes(defs, techs, order, IsFlowResource)
-}
-
-// computeIncomes is FlowIncome's formula for every resource include accepts.
-func computeIncomes(defs []BuildingDef, techs []TechDef, order []string, include func(string) bool) map[string]map[string]float64 {
+// Incomes is FlowIncome's formula for every age in order and every resource
+// include accepts, as age -> resource -> income per tick: IsFlowResource
+// gives FlowIncome's table, AnyResource TypicalIncome's. Pure.
+func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(string) bool) map[string]map[string]float64 {
 	idx := make(map[string]int, len(order))
 	for i, a := range order {
 		idx[a] = i
