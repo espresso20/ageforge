@@ -70,6 +70,14 @@ func harbingerBraceCost(epochKey string, level int) map[string]float64 {
 	return harbingerBraceCostIn(rules.Core(), epochKey, level)
 }
 
+func lastPassageBraceCost(epochKey, age string, level int) map[string]float64 {
+	return lastPassageBraceCostIn(rules.Core(), epochKey, age, level)
+}
+
+func threadBraceCost(h *HarbingerSave, level int) map[string]float64 {
+	return threadBraceCostIn(rules.Core(), h, level)
+}
+
 func loadPlan(saved []PlanItem) []PlanItem { return loadPlanIn(rules.Core(), saved) }
 
 func cleanShares(in map[string]float64) map[string]float64 {
