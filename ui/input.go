@@ -1429,7 +1429,14 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 	lines = append(lines, "[gold]Resource Rate Breakdown:[-]")
+	// A pool that applies less than it has earned says both numbers: all
+	// production here, since it is in every rate, and a resource's own pool
+	// under that resource.
+	if line := game.PoolLine(game.PoolOf(state, "production_all")); line != "" {
+		lines = append(lines, "  [yellow]"+line+"[-]")
+	}
 
+	shown := 0
 	for _, key := range sortedKeysOf(state.Resources) {
 		rs := state.Resources[key]
 		if !rs.Unlocked || (rs.Rate == 0 && rs.Breakdown == (game.RateBreakdown{})) {
@@ -1447,7 +1454,7 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		}
 		if b.ResearchRate != 0 {
 			// What the techs add: their bonus on what the resource's
-			// buildings make, counted after the caps, and the flat output
+			// buildings make, counted after the pools, and the flat output
 			// of a tech that is its first source.
 			parts = append(parts, fmt.Sprintf("Research: %s", textfmt.RateValue(b.ResearchRate)))
 		}
@@ -1472,9 +1479,13 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		if len(parts) > 0 {
 			lines = append(lines, fmt.Sprintf("    %s", strings.Join(parts, "  ")))
 		}
+		if line := game.PoolLine(game.PoolOf(state, key+"_rate")); line != "" {
+			lines = append(lines, "    [yellow]"+line+"[-]")
+		}
+		shown++
 	}
 
-	if len(lines) == 1 {
+	if shown == 0 {
 		lines = append(lines, "  [gray]No active resource rates[-]")
 	}
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
@@ -1788,14 +1799,14 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 	}
 }
 
-// festivalCapLines warns, before the culture is spent, that the
-// all-production cap would hold back a festival held now: nothing when the
-// whole buff would count.
+// festivalCapLines says, before the culture is spent, what a festival held
+// now would add when less than the whole buff would count: all production
+// is past +200%, where a bonus counts a quarter. Nothing when it all counts.
 func festivalCapLines(st game.FestivalStatus) []string {
-	if st.CapNote == "" {
+	if st.CapPhrase == "" {
 		return nil
 	}
-	return []string{"  [yellow]Right now it is " + st.CapNote + ". All production counts up to +200% (see stats).[-]"}
+	return []string{"  [yellow]Held now, the festival " + st.CapPhrase + " (see stats).[-]"}
 }
 
 // cmdFestivalStatus renders the bare `festival` status panel.
