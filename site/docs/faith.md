@@ -40,7 +40,7 @@ Your faith strength is your **devotion** times **the share of your faith you hav
 
 - **Devotion is counted over the whole run**, so it moves slowly. Each age's faith buildings make about twice the last age's, so what you build now soon outweighs what you built before, but faith buildings put up just before a roll change little.
 - **Staffing counts.** An empty faith building makes a fifth of what a full one does. Five full copies are worth twenty-five empty ones.
-- **Faith from wonders, techs and events does not count.** Stonehenge, Theology and the Sistine Chapel make more faith in their ages than a moderate set of faith buildings does, and every town gets them. That faith is yours to spend, but no building the game requires of you can raise your band.
+- **Faith from wonders, techs and events does not count.** Stonehenge and the Sistine Chapel each make more faith when they go up than a moderate set of faith buildings does, the Theology tech adds more, and every town gets them. That faith is yours to spend, but no building the game requires of you can raise your band.
 - **Nothing changes when you advance.** The measure follows your run, not your age, so the epoch roll at an advance reads the faith strength you were shown before it.
 - **Your town's bonuses cancel out.** The moderate set is measured in your town: with your morale, your production bonuses, your Era Mastery speed and your time away. Only the faith buildings and their crews make the difference.
 - **Spending lowers it by the share spent.** Spend half the faith your income has made and your faith strength halves; it climbs back as you make more. A windfall, such as an event's gift of faith, can make up for faith you spent but counts for nothing beyond that.
