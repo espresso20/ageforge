@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"math/rand"
-	"sort"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -46,13 +45,14 @@ type Dashboard struct {
 	economyTab *EconomyTab
 
 	// Sidebar
-	sidebar      *tview.TextView
-	workerMiniTV *tview.TextView
+	sidebar       *fitView
+	sidebarActive string // the open panel, highlighted in the list
+	workerMiniTV  *fitView
 
 	// Shared UI
 	logTV               *tview.TextView
-	statusTV            *tview.TextView
-	ageTV               *tview.TextView
+	statusTV            *fitView
+	ageTV               *fitView
 	inputField          *commandInput
 	lastAge             string
 	pendingAgeSplash    string // set by bus handler, consumed by refresh()
@@ -233,10 +233,9 @@ func (d *Dashboard) build() {
 	// Create permanent economy tab
 	d.economyTab = NewEconomyTab()
 
-	// Sidebar — command panel hints
-	d.sidebar = tview.NewTextView().
-		SetDynamicColors(true).
-		SetText(buildSidebarText(""))
+	// Sidebar — command panel hints, laid out for the room it has: one
+	// column when the names fit that way, two when the screen is short.
+	d.sidebar = newFitView(func(w, h int) string { return sidebarText(d.sidebarActive, w, h) })
 	d.sidebar.SetBorder(true).SetTitle(" Panels ")
 	theme.Track(func() { d.sidebar.SetTitleColor(theme.Color(theme.RoleAccent)) })
 
@@ -253,14 +252,23 @@ func (d *Dashboard) build() {
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
-	// Status bar
-	d.statusTV = tview.NewTextView().
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+	// Status bar: written for the bar's width (statusLine).
+	d.statusTV = newFitView(func(w, _ int) string {
+		if d.lastState == nil {
+			return ""
+		}
+		return statusLine(*d.lastState, w)
+	})
+	d.statusTV.SetTextAlign(tview.AlignCenter)
 
-	// Age progress tracker
-	d.ageTV = tview.NewTextView().
-		SetDynamicColors(true)
+	// Age progress tracker: the next age's requirements, each kept whole on
+	// its line.
+	d.ageTV = newFitView(func(w, h int) string {
+		if d.lastState == nil {
+			return ""
+		}
+		return strings.Join(ageProgressLines(*d.lastState, w, h), "\n")
+	})
 
 	// Toast notification
 	d.toastMgr = NewToastManager()
@@ -417,9 +425,9 @@ func (d *Dashboard) build() {
 		}
 	})
 
-	// Inject log panel into the economy tab's left column (below Under Construction).
-	// Weight 2 (vs resources 3 / construction 1) gives the log more headspace.
-	d.economyTab.AddToLeftColumn(d.logTV, 0, 2)
+	// The log goes at the foot of the economy tab's left column, under
+	// Under construction (econColumn shares the height out).
+	d.economyTab.AddToLeftColumn(d.logTV)
 
 	// The mini map docks above the Buildings list and hides itself when the
 	// terminal is too small for it (mapDock).
@@ -429,13 +437,20 @@ func (d *Dashboard) build() {
 	})
 
 	// Mini worker summary box — sits below the sidebar in the right column
-	d.workerMiniTV = tview.NewTextView().SetDynamicColors(true)
+	d.workerMiniTV = newFitView(func(w, _ int) string {
+		if d.lastState == nil {
+			return ""
+		}
+		return workerMiniText(*d.lastState, w)
+	})
 	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ")
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Color(theme.RoleAccent)) })
 
+	// The Workers box is its four lines and its border: every other row of
+	// the column is the Panels list's.
 	rightCol := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(d.sidebar, 0, 1, false).
-		AddItem(d.workerMiniTV, 8, 0, false)
+		AddItem(d.workerMiniTV, 6, 0, false)
 
 	// Main horizontal: economy (permanent, full height) + right column (sidebar + worker mini)
 	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -468,6 +483,13 @@ func (d *Dashboard) build() {
 			return nil
 		}
 		switch event.Key() {
+		case resourcePageKey:
+			// The Resources box's next page, when it has more rows than it
+			// can show. With a panel open the box is behind it.
+			if d.overlayMgr == nil || !d.overlayMgr.HasActive() {
+				d.economyTab.NextResourcePage()
+				return nil
+			}
 		case tcell.KeyEsc:
 			if d.overlayMgr != nil && d.overlayMgr.HasActive() {
 				d.overlayMgr.Hide()
@@ -499,21 +521,66 @@ func (d *Dashboard) build() {
 }
 
 func (d *Dashboard) updateSidebar(activeOverlay string) {
-	if d.sidebar != nil {
-		d.sidebar.SetText(buildSidebarText(activeOverlay))
+	if d.sidebar != nil && d.sidebarActive != activeOverlay {
+		d.sidebarActive = activeOverlay
+		d.sidebar.changed()
 	}
 }
 
+// sidebarPanels is the Panels list, in order.
+var sidebarPanels = []string{"milestones", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "map", "help"}
+
+// buildSidebarText is the Panels list in one column, the open panel
+// highlighted: the list as it shows when the screen is tall enough for it.
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "map", "help"}
 	var sb strings.Builder
 	sb.WriteString("\n")
-	for _, cmd := range commands {
+	for _, cmd := range sidebarPanels {
 		if cmd == active {
 			sb.WriteString(" " + theme.Selected(fmt.Sprintf(" %-10s ", cmd)) + "\n")
 		} else {
 			sb.WriteString(fmt.Sprintf(" [white]%-10s[-]\n", cmd))
 		}
+	}
+	return sb.String()
+}
+
+// sidebarText is the Panels list for a box w cells wide and h rows tall
+// inside: one column when every name gets a row (under a blank line when
+// there is a row to spare), else two columns read down then across, so a
+// short screen still lists every panel.
+func sidebarText(active string, w, h int) string {
+	n := len(sidebarPanels)
+	if h > n {
+		return buildSidebarText(active)
+	}
+	if h == n {
+		return strings.TrimPrefix(buildSidebarText(active), "\n")
+	}
+	rows := (n + 1) / 2
+	leftW, rightW := 0, 0
+	for i, cmd := range sidebarPanels {
+		if i < rows {
+			leftW = max(leftW, len(cmd))
+		} else {
+			rightW = max(rightW, len(cmd))
+		}
+	}
+	gap := max(1, min(2, w-leftW-rightW))
+	cell := func(cmd string, width int) string {
+		padded := cmd + strings.Repeat(" ", width-len(cmd))
+		if cmd == active {
+			return theme.Selected(padded)
+		}
+		return "[white]" + padded + "[-]"
+	}
+	var sb strings.Builder
+	for i := 0; i < rows; i++ {
+		sb.WriteString(cell(sidebarPanels[i], leftW))
+		if j := i + rows; j < n {
+			sb.WriteString(strings.Repeat(" ", gap) + cell(sidebarPanels[j], rightW))
+		}
+		sb.WriteString("\n")
 	}
 	return sb.String()
 }
@@ -719,151 +786,280 @@ func (d *Dashboard) processThemeUnlocks(state game.GameState) {
 	d.themeSyncDone = true
 }
 
-func (d *Dashboard) refreshWorkerMini(state game.GameState) {
-	w := state.Workers
-	food, hasFoodRS := state.Resources["food"]
+func (d *Dashboard) refreshWorkerMini(game.GameState) {
+	// Written from d.lastState for the box's width at its next draw
+	// (workerMiniText).
+	d.workerMiniTV.changed()
+}
+
+// workerMiniText writes the Workers box for a box w cells wide (0: any
+// width): population over housing and the idle, housing left, what the
+// workers eat and what food nets. A count too long for its line is written
+// short (51.8M for 51785785), and a rate too long drops to "/t".
+func workerMiniText(state game.GameState, w int) string {
+	ws := state.Workers
+	fits := func(plain string) bool { return w <= 0 || runeLen(plain) <= w }
+	num := func(n int) string { return fmt.Sprintf("%d", n) }
+	short := func(n int) string { return FormatNumber(float64(n)) }
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "[yellow]%d[white]/[green]%d[-]  [gray]Idle:[white] %d[-]\n", w.TotalPop, w.MaxPop, w.TotalIdle)
-	fmt.Fprintf(&sb, "[gray]Housing left:[white] %d[-]\n", w.MaxPop-w.TotalPop)
+
+	pop, housing, idle := num(ws.TotalPop), num(ws.MaxPop), num(ws.TotalIdle)
+	if !fits(pop + "/" + housing + "  Idle: " + idle) {
+		pop, housing, idle = short(ws.TotalPop), short(ws.MaxPop), short(ws.TotalIdle)
+	}
+	fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]  [gray]Idle:[white] %s[-]\n", pop, housing, idle)
+
+	left := num(ws.MaxPop - ws.TotalPop)
+	if !fits("Housing left: " + left) {
+		left = short(ws.MaxPop - ws.TotalPop)
+	}
+	fmt.Fprintf(&sb, "[gray]Housing left:[white] %s[-]\n", left)
+
 	// note: textfmt.Rate carries its own sign, so no manual "+"/"-" prefixes here.
-	fmt.Fprintf(&sb, "[gray]Food use:[red] %s[-]\n", textfmt.Rate(-w.FoodDrain))
-	if hasFoodRS {
+	rate := func(label string, v float64) string {
+		text := textfmt.Rate(v)
+		if !fits(label + " " + text) {
+			text = strings.TrimSuffix(text, "ick")
+		}
+		return text
+	}
+	fmt.Fprintf(&sb, "[gray]Food use:[red] %s[-]\n", rate("Food use:", -ws.FoodDrain))
+	if food, ok := state.Resources["food"]; ok {
 		netColor := "green"
 		if food.Rate < 0 {
 			netColor = "red"
 		}
-		fmt.Fprintf(&sb, "[gray]Food net:[%s] %s[-]\n", netColor, textfmt.Rate(food.Rate))
+		fmt.Fprintf(&sb, "[gray]Food net:[%s] %s[-]\n", netColor, rate("Food net:", food.Rate))
 	}
-	d.workerMiniTV.SetText(safeTags(sb.String()))
+	return sb.String()
 }
 
-func (d *Dashboard) refreshStatus(state game.GameState) {
+func (d *Dashboard) refreshStatus(game.GameState) {
+	// The line is written from d.lastState for the bar's width at its next
+	// draw (statusLine), and in full until the bar has been drawn.
+	d.statusTV.changed()
+}
+
+// statusLine writes the status bar for a bar w cells wide (0: as wide as
+// it likes). When the whole line does not fit it gives up, in order: the
+// hint, the wording of the catastrophe and harbinger badges (and long
+// counts are written short), what morale does to production, the
+// civilization's title, the account's name, the rest of the badges' words,
+// the epoch's name and the wide spacing. The age, the epoch's mark, the
+// badges, the population and morale always show.
+func statusLine(state game.GameState, w int) string {
 	// note: the next age lives on the Next Age bar below, so the status bar
 	// no longer repeats it (it used to print the raw key).
 	prestigeStr := ""
 	if state.Prestige.Level > 0 {
 		prestigeStr = fmt.Sprintf("  [cyan]Prestige %d[-]", state.Prestige.Level)
 	}
-	titleStr := ""
-	if state.Milestones.CurrentTitle != "" {
-		titleStr = fmt.Sprintf("  [yellow]\"%s\"[-]", state.Milestones.CurrentTitle)
-	}
 	devStr := ""
 	if game.DevModeActive {
 		devStr = "  [red]DEV[-]"
-	}
-	// Epoch badge
-	epochStr := ""
-	if state.EpochKey != "" {
-		survivedMark := ""
-		if state.EpochSurvived {
-			survivedMark = " · endured"
-		}
-		epochStr = fmt.Sprintf("  %s%s %s%s[-]", theme.NameTag(state.EpochColor), state.EpochIcon, state.EpochName, survivedMark)
-	}
-	// Pending catastrophe badge: persistent until the player chooses, so a player
-	// who closed the modal (or came back after a long idle) sees why advancing
-	// is blocked and how to reopen the choice.
-	catStr := ""
-	if state.PendingCatastrophe != "" {
-		catStr = fmt.Sprintf("  %s ☄ Catastrophe pending. Type catastrophe to choose. %s",
-			theme.TagFgBg(theme.RoleOnNegative, theme.RoleNegative), theme.Reset)
-	} else if state.LastPassage.Pending {
-		catStr = fmt.Sprintf("  %s ☄ Last Passage. Type catastrophe to choose. %s",
-			theme.TagFgBg(theme.RoleOnNegative, theme.RoleNegative), theme.Reset)
-	}
-	// Harbinger badge: present until the doom it warns of resolves. Nothing
-	// expires, so the badge is the idle player's reminder that there is a
-	// choice waiting (it never blocks anything).
-	if state.Harbinger != nil {
-		catStr += fmt.Sprintf("  %s ⚑ Harbinger. Type harbinger to read it. %s",
-			theme.TagFgBg(theme.RoleOnAccent, theme.RoleAccent), theme.Reset)
 	}
 	// Colour morale by the continuous production multiplier, not the raw percent:
 	// green = bonus (mult>1.0), white = neutral (==1.0), red = penalty (<1.0).
 	// computeMoraleBand is the shared source of truth (same as the workers panel).
 	mBand := computeMoraleBand(state.Morale, state.MoraleMultiplier)
-	moraleDelta := ""
-	if mBand.DeltaLabel != "" {
-		moraleDelta = fmt.Sprintf(" (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)
-	}
-	moraleStr := fmt.Sprintf("  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta)
-	// Leading account-name segment, when an account is wired. Truncate a long name so
-	// the status line stays readable on narrow terminals.
-	acctStr := ""
-	if state.AccountStats != nil && state.AccountStats.DisplayName != "" {
-		name := state.AccountStats.DisplayName
-		if len(name) > 20 {
-			name = name[:19] + "…"
+
+	// build writes the line at a level of brevity: each level gives up one
+	// more thing.
+	build := func(level int) string {
+		titleStr := ""
+		if state.Milestones.CurrentTitle != "" && level < 4 {
+			titleStr = fmt.Sprintf("  [yellow]\"%s\"[-]", state.Milestones.CurrentTitle)
 		}
-		acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
+		// Pending catastrophe badge: persistent until the player chooses, so a player
+		// who closed the modal (or came back after a long idle) sees why advancing
+		// is blocked and how to reopen the choice.
+		catStr := ""
+		badge := func(fg, bg theme.Role, full, brief, least string) {
+			text := full
+			if level >= 6 {
+				text = least
+			} else if level >= 2 {
+				text = brief
+			}
+			catStr += fmt.Sprintf("  %s %s %s", theme.TagFgBg(fg, bg), text, theme.Reset)
+		}
+		if state.PendingCatastrophe != "" {
+			badge(theme.RoleOnNegative, theme.RoleNegative, "☄ Catastrophe pending. Type catastrophe to choose.", "☄ Catastrophe: type catastrophe", "☄ Catastrophe")
+		} else if state.LastPassage.Pending {
+			badge(theme.RoleOnNegative, theme.RoleNegative, "☄ Last Passage. Type catastrophe to choose.", "☄ Last Passage: type catastrophe", "☄ Last Passage")
+		}
+		// Harbinger badge: present until the doom it warns of resolves. Nothing
+		// expires, so the badge is the idle player's reminder that there is a
+		// choice waiting (it never blocks anything).
+		if state.Harbinger != nil {
+			badge(theme.RoleOnAccent, theme.RoleAccent, "⚑ Harbinger. Type harbinger to read it.", "⚑ Harbinger: type harbinger", "⚑ Harbinger")
+		}
+		// Epoch badge
+		epochStr := ""
+		if state.EpochKey != "" {
+			name := " " + state.EpochName
+			if state.EpochSurvived {
+				name += " · endured"
+			}
+			if level >= 7 {
+				name = ""
+			}
+			epochStr = fmt.Sprintf("  %s%s%s[-]", theme.NameTag(state.EpochColor), state.EpochIcon, name)
+		}
+		moraleDelta := ""
+		if mBand.DeltaLabel != "" && level < 3 {
+			moraleDelta = fmt.Sprintf(" (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)
+		}
+		moraleStr := fmt.Sprintf("  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta)
+		// Leading account-name segment, when an account is wired. Truncate a long name so
+		// the status line stays readable on narrow terminals.
+		acctStr := ""
+		if state.AccountStats != nil && state.AccountStats.DisplayName != "" && level < 5 {
+			name := state.AccountStats.DisplayName
+			if len(name) > 20 {
+				name = name[:19] + "…"
+			}
+			acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
+		}
+		hint := ""
+		if level < 1 {
+			hint = "  |  [gray]type a panel name to open it · Esc: close or menu[-]"
+		}
+		pop := fmt.Sprintf("%d/%d", state.Workers.TotalPop, state.Workers.MaxPop)
+		if level >= 2 {
+			pop = FormatNumber(float64(state.Workers.TotalPop)) + "/" + FormatNumber(float64(state.Workers.MaxPop))
+		}
+		line := fmt.Sprintf("%s[gold]%s[-]%s%s%s%s%s  |  Pop: %s%s%s",
+			acctStr, state.AgeName, prestigeStr, titleStr, epochStr, catStr, devStr, pop, moraleStr, hint)
+		if level >= 8 {
+			line = strings.ReplaceAll(line, "  ", " ")
+		}
+		return line
 	}
-	d.statusTV.SetText(fmt.Sprintf(
-		"%s[gold]%s[-]%s%s%s%s%s  |  Pop: %d/%d%s  |  [gray]type a panel name to open it · Esc: close or menu[-]",
-		acctStr, state.AgeName, prestigeStr, titleStr, epochStr, catStr, devStr,
-		state.Workers.TotalPop, state.Workers.MaxPop, moraleStr,
-	))
+	line := build(0)
+	for level := 1; level <= 8 && w > 0 && visibleLen(line) > w; level++ {
+		line = build(level)
+	}
+	return line
 }
 
-func (d *Dashboard) refreshAgeProgress(state game.GameState) {
-	if state.NextAge == "" {
-		d.ageTV.SetText(" [gold]You have reached the final age.[-]")
-		return
-	}
+func (d *Dashboard) refreshAgeProgress(game.GameState) {
+	// The row is written from d.lastState at its next draw (ageProgressLines).
+	d.ageTV.changed()
+}
 
-	var sb strings.Builder
-	fmt.Fprintf(&sb, " [gold]Next Age: %s[-]  ", state.NextAgeName)
+// ageGoal is one thing the next age asks for: its text ("Food 49.6K/80K")
+// and whether it is met.
+type ageGoal struct {
+	text string
+	met  bool
+}
 
-	// Resource requirements
-	resKeys := make([]string, 0, len(state.NextAgeResReqs))
-	for k := range state.NextAgeResReqs {
-		resKeys = append(resKeys, k)
-	}
-	sort.Strings(resKeys)
-	for _, key := range resKeys {
+// ageGoals lists what the next age asks for: resources, buildings, then the
+// age's wonder and its keystone tech while they are still to do.
+func ageGoals(state game.GameState) []ageGoal {
+	var goals []ageGoal
+	for _, key := range sortedKeysOf(state.NextAgeResReqs) {
 		req := state.NextAgeResReqs[key]
 		current := 0.0
 		if rs, ok := state.Resources[key]; ok {
 			current = rs.Amount
 		}
-		// ✓ when met / ✗ when not — readable at a glance, no micro-bar noise.
-		mark, color := "✗", "red"
-		if current >= req {
-			mark, color = "✓", "green"
-		}
-		fmt.Fprintf(&sb, "[%s]%s[-] %s %s/%s  ", color, mark, textfmt.Capitalize(game.ResourceName(key)), FormatNumber(current), FormatNumber(req))
+		goals = append(goals, ageGoal{fmt.Sprintf("%s %s/%s", textfmt.Capitalize(game.ResourceName(key)), FormatNumber(current), FormatNumber(req)), current >= req})
 	}
-
-	// Building requirements
-	bldKeys := make([]string, 0, len(state.NextAgeBldReqs))
-	for k := range state.NextAgeBldReqs {
-		bldKeys = append(bldKeys, k)
-	}
-	sort.Strings(bldKeys)
-	for _, key := range bldKeys {
+	for _, key := range sortedKeysOf(state.NextAgeBldReqs) {
 		req := state.NextAgeBldReqs[key]
 		current := 0
 		if bs, ok := state.Buildings[key]; ok {
 			current = bs.Count
 		}
-		mark, color := "✗", "red"
-		if current >= req {
-			mark, color = "✓", "green"
-		}
-		fmt.Fprintf(&sb, "[%s]%s[-] %s %d/%d  ", color, mark, game.BuildingName(key), current, req)
+		goals = append(goals, ageGoal{fmt.Sprintf("%s %d/%d", game.BuildingName(key), current, req), current >= req})
 	}
-
-	// Wonder gate: show if current age wonder must still be completed.
 	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
 	if state.CurrentAgeWonderKey != "" {
-		fmt.Fprintf(&sb, "[red]✗ Wonder: %s[-]  ", state.CurrentAgeWonderName)
+		goals = append(goals, ageGoal{"Wonder: " + state.CurrentAgeWonderName, false})
 		// Its keystone tech, while that is still to research.
 		if tech := state.Buildings[state.CurrentAgeWonderKey].NeedsTech; tech != "" {
-			fmt.Fprintf(&sb, "[red]✗ Keystone: %s[-]  ", game.TechName(tech))
+			goals = append(goals, ageGoal{"Keystone: " + game.TechName(tech), false})
 		}
 	}
+	return goals
+}
 
-	d.ageTV.SetText(safeTags(sb.String()))
+// ageProgressLines writes the Next Age row for a strip w cells wide and h
+// rows tall: the age's name, then what it asks for, each marked ✓ or ✗ and
+// kept whole on its line. When the strip is too small for all of it, what is
+// already met is counted instead of listed, and after that the list ends
+// with how many more there are.
+func ageProgressLines(state game.GameState, w, h int) []string {
+	if w < 1 || h < 1 {
+		return nil
+	}
+	if state.NextAge == "" {
+		return []string{" [gold]" + truncate("You have reached the final age.", w-1) + "[-]"}
+	}
+	type cell struct {
+		tagged string
+		width  int
+	}
+	title := truncate("Next Age: "+state.NextAgeName, w-1)
+	goalCell := func(g ageGoal) cell {
+		// The wonder and its keystone are red all through, as they were.
+		if strings.HasPrefix(g.text, "Wonder: ") || strings.HasPrefix(g.text, "Keystone: ") {
+			return cell{"[red]✗ " + g.text + "[-]", 2 + runeLen(g.text)}
+		}
+		if g.met {
+			return cell{"[green]✓[-] " + g.text, 2 + runeLen(g.text)}
+		}
+		return cell{"[red]✗[-] " + g.text, 2 + runeLen(g.text)}
+	}
+	note := func(s string) cell { return cell{"[gray]" + s + "[-]", runeLen(s)} }
+	// pack flows cells onto lines of at most w cells, two spaces apart,
+	// after the title.
+	pack := func(cells []cell) []string {
+		lines := []string{" [gold]" + title + "[-]"}
+		used := 1 + runeLen(title)
+		for _, c := range cells {
+			if used+2+c.width > w && used > 1 {
+				lines = append(lines, " "+c.tagged)
+				used = 1 + c.width
+				continue
+			}
+			lines[len(lines)-1] += "  " + c.tagged
+			used += 2 + c.width
+		}
+		return lines
+	}
+	goals := ageGoals(state)
+	var all, open []cell
+	met := 0
+	for _, g := range goals {
+		all = append(all, goalCell(g))
+		if g.met {
+			met++
+		} else {
+			open = append(open, goalCell(g))
+		}
+	}
+	if lines := pack(all); len(lines) <= h {
+		return lines
+	}
+	// What is met is counted, not listed.
+	if met > 0 {
+		open = append(open, note(fmt.Sprintf("✓ %d met", met)))
+		if lines := pack(open); len(lines) <= h {
+			return lines
+		}
+		open = open[:len(open)-1]
+	}
+	// As many of the open ones as fit, then how many more there are.
+	for keep := len(open) - 1; keep >= 0; keep-- {
+		rest := len(open) - keep + met
+		if lines := pack(append(append([]cell(nil), open[:keep]...), note(fmt.Sprintf("+%d more", rest)))); len(lines) <= h {
+			return lines
+		}
+	}
+	return pack(nil)[:1]
 }
 
 func (d *Dashboard) refreshLog(state game.GameState) {

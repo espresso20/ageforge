@@ -50,7 +50,7 @@ func finishConstruction(t *testing.T, ge *game.GameEngine) {
 // TestOnboardingRendersEveryCommand checks the panel text shows each command
 // the test above runs, so the data and the rendering cannot drift apart.
 func TestOnboardingRendersEveryCommand(t *testing.T) {
-	out := renderOnboarding()
+	out := renderOnboarding(200)
 	for _, c := range onboardingCommands() {
 		if !strings.Contains(out, "[cyan]"+c+"[-]") {
 			t.Errorf("onboarding panel does not show %q:\n%s", c, out)

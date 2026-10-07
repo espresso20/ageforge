@@ -7,9 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -60,27 +62,29 @@ func onboardingCommands() []string {
 	return out
 }
 
-// renderOnboarding draws the first-steps guide: gold header, cyan commands,
-// white prose.
-func renderOnboarding() string {
+// renderOnboarding draws the first-steps guide for a list w cells wide:
+// gold header, cyan commands, white prose, each step wrapped under itself.
+func renderOnboarding(w int) string {
 	var sb strings.Builder
 	sb.WriteString("\n [gold]─── Getting started ───[-]\n")
 	sb.WriteString(" [white]First steps:[-]\n")
 	for i, st := range onboardingSteps {
-		fmt.Fprintf(&sb, " [white]%d.[-] ", i+1)
+		var text strings.Builder
 		for j, c := range st.Commands {
 			if j > 0 {
-				fmt.Fprintf(&sb, " [white]%s[-] ", st.Join)
+				fmt.Fprintf(&text, " [white]%s[-] ", st.Join)
 			}
-			fmt.Fprintf(&sb, "[cyan]%s[-]", c)
+			// A command stays whole on its line: its spaces do not break.
+			fmt.Fprintf(&text, "[cyan]%s[-]", strings.ReplaceAll(c, " ", glue))
 		}
 		sep := ": "
 		if strings.HasPrefix(st.Note, "then ") {
 			sep = ", "
 		}
-		fmt.Fprintf(&sb, "%s%s\n", sep, st.Note)
+		text.WriteString(sep + st.Note)
+		sb.WriteString(hangingRow(fmt.Sprintf(" [white]%d.[-] ", i+1), text.String(), w))
 	}
-	sb.WriteString(" [white]Type[-] [cyan]help[-] [white]for all commands.[-]\n")
+	sb.WriteString(hangingRow(" ", "[white]Type[-] [cyan]help[-] [white]for all commands.[-]", w))
 	return sb.String()
 }
 
@@ -105,127 +109,48 @@ var cultureThresholdLabels = []string{
 	"+research speed",
 }
 
-// cultureProgressBar returns a 10-char wide bar using ▓/░ characters.
-// Filled portion uses BarFillColor (Accent role), empty uses BarEmptyColor (Dim role).
-func cultureProgressBar(current, max float64) string {
-	const width = 10
-	if max <= 0 {
-		return BarEmptyColor() + strings.Repeat("░", width) + "[-]"
-	}
-	ratio := current / max
-	if ratio > 1 {
-		ratio = 1
-	}
-	if ratio < 0 {
-		ratio = 0
-	}
-	filled := int(ratio * float64(width))
-	empty := width - filled
-	return BarFillColor() + strings.Repeat("▓", filled) + BarEmptyColor() + strings.Repeat("░", empty) + "[-]"
-}
-
-// formatCultureRow builds the culture resource row string.
-func formatCultureRow(rs game.ResourceState) string {
-	amount := rs.Amount
-
-	// Find the next threshold not yet reached.
-	nextIdx := -1
-	for i, t := range cultureThresholds {
-		if amount < t {
-			nextIdx = i
-			break
-		}
-	}
-
-	var midPart string
-	if nextIdx < 0 {
-		// Above all thresholds — Culture Mastered.
-		midPart = fmt.Sprintf("[gold]✦ Culture mastered[-]  %-8s", FormatNumber(amount))
-	} else {
-		threshold := cultureThresholds[nextIdx]
-		bar := cultureProgressBar(amount, threshold)
-		label := cultureThresholdLabels[nextIdx]
-		// Wrap bar in literal [ ] so tview does not interpret the block chars as a color tag.
-		midPart = "\u005b" + bar + "\u005d" + fmt.Sprintf("  %s / %s  [gray]%s[-]",
-			FormatNumber(amount), FormatNumber(threshold), label)
-	}
-
-	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRateTick(rs.Rate))
-}
-
-// faithBand describes a faith strength with its label and epoch odds text.
-type faithBand struct {
-	label     string // tview-tagged label
-	epochOdds string // e.g. "40% good"
-}
-
-// faithBandFor labels the faith strength in o for a town holding held faith.
-// The odds are the engine's for the band the rolls read (o.FaithBand); the
-// label only splits the bands finer.
-func faithBandFor(held float64, o game.CatastropheOutlook) faithBand {
-	odds := fmt.Sprintf("%.0f%% good", game.EpochGoodChanceIn(o.FaithBand)*100)
-	strength := o.FaithStrength
-	switch {
-	case held <= 0:
-		return faithBand{"[red]✝ No faith[-]", odds}
-	case o.FaithBand == game.FaithBandLow:
-		return faithBand{"[gray]◈ Dim faith[-]", odds}
-	case o.FaithBand == game.FaithBandHigh && strength >= 1:
-		return faithBand{"[gold]✦ Faith full[-]", odds}
-	case o.FaithBand == game.FaithBandHigh:
-		return faithBand{"[green]◈ Strong faith[-]", odds}
-	case strength <= 0.50:
-		return faithBand{"[white]◈ Low faith[-]", odds}
-	}
-	return faithBand{"[yellow]◈ Faith[-]", odds}
-}
-
-// formatFaithRow builds the faith resource row string: the bar and the
-// percentage are the faith strength the rolls read (o.FaithStrength: the
-// faith the town's own faith buildings made, against four and a half
-// moderate sets'), not the fill of the store faith is kept in.
-func formatFaithRow(rs game.ResourceState, o game.CatastropheOutlook) string {
-	band := faithBandFor(rs.Amount, o)
-	pctStr := fmt.Sprintf("%.0f%%", o.FaithStrength*100)
-
-	// Build the bar using the same cultureProgressBar helper (▓/░, width 10).
-	bar := cultureProgressBar(o.FaithStrength, 1)
-	barStr := "\u005b" + bar + "\u005d"
-
-	midPart := fmt.Sprintf("%s  %s  %s  [gray](epoch: %s)[-]",
-		barStr, band.label, pctStr, band.epochOdds)
-
-	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRateTick(rs.Rate))
-}
-
 // EconomyTab is the permanent background panel visible at all times on the Dashboard.
 // It is split into three panes: resource summary (left-top), under construction
 // queue (left-bottom), and the full building list (right). The building panel is
 // scrollable via PgUp/PgDn because it can grow very long in late ages.
+//
+// Each pane writes its text for the size it is drawn at (fitView), so no row
+// is ever left for the terminal to wrap: see resources_box.go for the
+// Resources box, and layoutConstruction and buildingLines below.
 type EconomyTab struct {
 	root           *tview.Flex
-	leftCol        *tview.Flex
-	resourceTV     *tview.TextView
-	buildingTV     *tview.TextView
-	constructionTV *tview.TextView
+	leftCol        *econColumn
+	resourceTV     *fitView
+	buildingTV     *fitView
+	constructionTV *fitView
+
+	state game.GameState
+	// resPage is the page of the Resources box on show (Ctrl+R turns it),
+	// and resPages how many its rows took at the last draw.
+	resPage, resPages int
 }
 
-// NewEconomyTab constructs the economy tab widget tree. The left column stacks
-// resources / construction at a 3:1 height ratio (the Dashboard injects the log
-// below at weight 2 → 3:1:2). The building panel takes a 1:1 column ratio against
-// the left column (50:50) — narrowed from the old 4:5 so the building panel is
-// tighter (descriptions word-wrap cleanly) and the left column (resources /
-// construction / log) gets more room, improving log readability.
+// NewEconomyTab constructs the economy tab widget tree: the left column
+// (econColumn: resources, construction and, once the Dashboard adds it, the
+// log) and the building list, side by side at 1:1.
 func NewEconomyTab() *EconomyTab {
-	t := &EconomyTab{}
+	t := &EconomyTab{resPages: 1}
 
-	t.resourceTV = tview.NewTextView().SetDynamicColors(true)
+	t.resourceTV = newFitView(func(w, h int) string {
+		lines, pages := layoutResourceBox(resourceRows(t.state), w, h, t.resPage)
+		t.resPages = pages
+		t.resPage = ((t.resPage % pages) + pages) % pages
+		return strings.Join(lines, "\n")
+	})
 	t.resourceTV.SetBorder(true).SetTitle(" Resources ")
 
-	t.buildingTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true).SetWordWrap(true)
+	t.buildingTV = newFitView(func(w, _ int) string { return buildingLines(t.state, w) })
+	t.buildingTV.SetScrollable(true)
 	t.buildingTV.SetBorder(true).SetTitle(" Buildings ")
 
-	t.constructionTV = tview.NewTextView().SetDynamicColors(true)
+	t.constructionTV = newFitView(func(w, h int) string {
+		return strings.Join(layoutConstruction(t.state, w, h), "\n")
+	})
 	t.constructionTV.SetBorder(true).SetTitle(" Under construction ")
 
 	// Persistent tab chrome: enroll titles so a live theme switch restyles them.
@@ -235,12 +160,8 @@ func NewEconomyTab() *EconomyTab {
 		t.constructionTV.SetTitleColor(theme.Color(theme.RoleHighlight))
 	})
 
-	// Left: resources + under construction (compact); the log is injected below
-	// (Dashboard.AddToLeftColumn). Column weights resolve to 3:1:2
-	// resources:construction:log — trimmed resources to give the log more headspace.
-	t.leftCol = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(t.resourceTV, 0, 3, false).
-		AddItem(t.constructionTV, 0, 1, false)
+	t.leftCol = &econColumn{Box: tview.NewBox(), resources: t.resourceTV, construction: t.constructionTV,
+		resourceRows: func() int { return resourceBoxNeeds(len(resourceRows(t.state))) }}
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(t.leftCol, 0, 1, false).
@@ -249,10 +170,9 @@ func NewEconomyTab() *EconomyTab {
 	return t
 }
 
-// AddToLeftColumn injects an additional item into the left column flex container.
-// This allows the Dashboard to append the log panel below the construction queue.
-func (t *EconomyTab) AddToLeftColumn(item tview.Primitive, fixedSize, proportion int) {
-	t.leftCol.AddItem(item, fixedSize, proportion, false)
+// AddToLeftColumn puts the Dashboard's log panel at the foot of the left column.
+func (t *EconomyTab) AddToLeftColumn(item tview.Primitive) {
+	t.leftCol.log = item
 }
 
 // WrapBuildings replaces the Buildings list in the layout with wrap(list),
@@ -267,157 +187,263 @@ func (t *EconomyTab) Root() tview.Primitive {
 	return t.root
 }
 
-// Refresh updates the economy tab with current game state
+// Refresh takes a new snapshot: the three panes write themselves from it at
+// their next draw.
 func (t *EconomyTab) Refresh(state game.GameState) {
-	t.refreshResources(state)
-	t.refreshBuildings(state)
-	t.refreshUnderConstruction(state)
+	t.state = state
+	t.resourceTV.changed()
+	t.buildingTV.changed()
+	t.constructionTV.changed()
 }
 
-// resourceLegend explains the glyphs and amount colors in the resource rows,
-// so neither carries meaning by color alone.
-const resourceLegend = " [gray]Amount:[-] [green]rising[-] [gray]·[-] [red]falling[-] [gray]·[-] [yellow]90%+ full[-] [gray]·[-] [gold]◈[-] [gray]95%+ full ·[-] [red]▼[-] [gray]falling[-]\n"
+// NextResourcePage turns the Resources box to its next page (round to the
+// first after the last) and reports whether it has more than one.
+func (t *EconomyTab) NextResourcePage() bool {
+	if t.resPages < 2 {
+		return false
+	}
+	t.resPage = (t.resPage + 1) % t.resPages
+	t.resourceTV.changed()
+	return true
+}
 
-func (t *EconomyTab) refreshResources(state game.GameState) {
-	var sb strings.Builder
+// econColumn is the dashboard's left column: the Resources box, Under
+// construction and the log, stacked. It shares its height out 3:1:2, as the
+// Flex it replaces did, and gives the Resources box more when its rows do
+// not fit that share, as far as a floor for the two boxes under it: late
+// ages hold many more resources than the first ones.
+type econColumn struct {
+	*tview.Box
+	resources, construction tview.Primitive
+	log                     tview.Primitive
+	// resourceRows is how many rows the Resources box needs inside to show
+	// everything.
+	resourceRows func() int
+}
 
+// econHeights shares h rows out between the Resources box, Under
+// construction and the log. want is the height the Resources box needs
+// (border included) to show every row and its legend.
+func econHeights(h, want int) (resources, construction, log int) {
+	// The least the two under it keep: a line of construction and three of
+	// log on a small screen, two and four on a taller one.
+	minConstruction, minLog := 3, 5
+	if h >= 20 {
+		minConstruction, minLog = 4, 6
+	}
+	// Half the column is the Resources box's, as it always was; more when
+	// its rows do not fit that.
+	resources = h * 3 / 6
+	if most := h - minConstruction - minLog; want > resources && most > resources {
+		resources = min(want, most)
+	}
+	rest := h - resources
+	construction = min(rest, max(minConstruction, rest/3))
+	return resources, construction, rest - construction
+}
+
+func (c *econColumn) Draw(screen tcell.Screen) {
+	x, y, w, h := c.GetRect()
+	rh, ch, lh := econHeights(h, c.resourceRows()+2)
+	if c.log == nil {
+		ch, lh = h-rh, 0
+	}
+	c.resources.SetRect(x, y, w, rh)
+	c.resources.Draw(screen)
+	c.construction.SetRect(x, y+rh, w, ch)
+	c.construction.Draw(screen)
+	if c.log != nil {
+		c.log.SetRect(x, y+rh+ch, w, lh)
+		c.log.Draw(screen)
+	}
+}
+
+// layoutConstruction lays the Under construction box out for an inner area
+// w cells wide and h rows tall: one line per building under way (copies of
+// one building share a line), its bar and the time left. A narrow box
+// shortens the bar, then drops it, then drops the word "left", then cuts
+// the name; a short one ends with how many more are under way.
+func layoutConstruction(state game.GameState, w, h int) []string {
+	if w < 1 || h < 1 {
+		return nil
+	}
+	if len(state.BuildQueue) == 0 {
+		for _, s := range []string{" (nothing under construction)", " (nothing building)", " (none)"} {
+			if runeLen(s) <= w {
+				return []string{theme.Paint(theme.RoleDim, s)}
+			}
+		}
+		return []string{""}
+	}
+	// Group queue items by name
+	type queueGroup struct {
+		label      string
+		minTicks   int // fewest ticks left among the group (furthest along)
+		totalTicks int
+		count      int
+	}
+	groups := make(map[string]*queueGroup)
+	var order []*queueGroup
+	for _, item := range state.BuildQueue {
+		if g, ok := groups[item.Name]; ok {
+			g.count++
+			if item.TicksLeft < g.minTicks {
+				g.minTicks, g.totalTicks = item.TicksLeft, item.TotalTicks
+			}
+		} else {
+			g = &queueGroup{label: item.Name, count: 1, minTicks: item.TicksLeft, totalTicks: item.TotalTicks}
+			groups[item.Name] = g
+			order = append(order, g)
+		}
+	}
+	labelW, timeW := 0, 0
+	times := make([]string, len(order))
+	for i, g := range order {
+		if g.count > 1 {
+			g.label = fmt.Sprintf("%s x%d", g.label, g.count)
+		}
+		times[i] = formatTicks(g.minTicks, state)
+		labelW, timeW = max(labelW, runeLen(g.label)), max(timeW, runeLen(times[i]))
+	}
+	const barMax, barMin = 20, 6
+	left := " left"
+	bar := min(barMax, w-(1+labelW+1+1+timeW+runeLen(left)))
+	if bar < barMin {
+		left = ""
+		if bar = min(barMax, w-(1+labelW+1+1+timeW)); bar < barMin {
+			bar = 0
+			if 1+labelW+2+timeW+len(" left") <= w {
+				left = " left"
+			}
+			if over := 1 + labelW + 2 + timeW - w; over > 0 {
+				labelW = max(3, labelW-over)
+			}
+		}
+	}
+	lines := make([]string, 0, len(order))
+	for i, g := range order {
+		label := truncate(g.label, labelW)
+		line := " [yellow]" + label + "[-]" + strings.Repeat(" ", labelW-runeLen(label))
+		if bar > 0 {
+			filled := 0
+			if g.totalTicks > 0 {
+				ratio := float64(g.totalTicks-g.minTicks) / float64(g.totalTicks)
+				filled = min(bar, max(0, int(math.Round(float64(bar)*ratio))))
+			}
+			line += " " + BarFillColor() + strings.Repeat("█", filled) + BarEmptyColor() + strings.Repeat("░", bar-filled) + "[-] "
+		} else {
+			line += "  "
+		}
+		line += "[gray]" + strings.Repeat(" ", timeW-runeLen(times[i])) + times[i] + left + "[-]"
+		lines = append(lines, line)
+	}
+	switch {
+	case len(lines) <= h:
+	case h == 1:
+		// One line for several buildings: how many, and when the first is done.
+		soonest := 0
+		for i, g := range order {
+			if g.minTicks < order[soonest].minTicks {
+				soonest = i
+			}
+		}
+		for _, s := range []string{
+			fmt.Sprintf(" %d under way, the first in %s", len(state.BuildQueue), times[soonest]),
+			fmt.Sprintf(" %d under way, %s", len(state.BuildQueue), times[soonest]),
+			fmt.Sprintf(" %d under way", len(state.BuildQueue)),
+		} {
+			if lines = []string{theme.Paint(theme.RoleHighlight, s)}; runeLen(s) <= w {
+				break
+			}
+		}
+	default:
+		more := len(lines) - (h - 1)
+		lines = append(lines[:h-1], theme.Paint(theme.RoleDim, truncate(fmt.Sprintf(" +%d more under way", more), w)))
+	}
+	return lines
+}
+
+// buildingLines writes the Buildings list for a list w cells wide: this
+// age's buildings, each with its cost, what it does, its flavor line and its
+// worker slots, every line broken on purpose and indented under its own
+// start (a cost breaks between its parts, never inside one).
+func buildingLines(state game.GameState, w int) string {
+	if w < 8 {
+		return ""
+	}
+	set := state.Ruleset()
+
+	// Only the current age's buildings.
 	keys := make([]string, 0)
-	for k, rs := range state.Resources {
-		if rs.Unlocked {
-			keys = append(keys, k)
+	for key, bs := range state.Buildings {
+		if bs.Unlocked && bs.AgeKey == state.Age {
+			keys = append(keys, key)
 		}
 	}
 	sort.Strings(keys)
 
-	for _, key := range keys {
-		rs := state.Resources[key]
-		switch key {
-		case "culture":
-			sb.WriteString(formatCultureRow(rs))
-		case "faith":
-			sb.WriteString(formatFaithRow(rs, state.CatastropheOutlook))
-		default:
-			amtColor := "white"
-			if rs.Storage > 0 && rs.Amount >= rs.Storage*0.9 {
-				amtColor = "yellow"
-			} else if rs.Rate > 0 {
-				amtColor = "green"
-			} else if rs.Rate < 0 {
-				amtColor = "red"
-			}
-			rateColor := "green"
-			if rs.Rate < 0 {
-				rateColor = "red"
-			} else if rs.Rate == 0 {
-				rateColor = "gray"
-			}
-			bar := resourceBar(rs.Amount, rs.Storage, 12)
-			glyph := ""
-			if rs.Storage > 0 && rs.Amount/rs.Storage >= 0.95 {
-				glyph = " [gold]◈[-]"
-			} else if rs.Rate < 0 {
-				glyph = " [red]▼[-]"
-			}
-			fmt.Fprintf(&sb, " %-14s [%s]%6s[-] [gray]/[-] [gray]%-6s[-]  [%s]%-8s[-]  %s%s\n\n",
-				rs.Name, amtColor, FormatNumber(rs.Amount), FormatNumber(rs.Storage),
-				rateColor, FormatRateTick(rs.Rate), bar, glyph)
-		}
-	}
-	sb.WriteString(resourceLegend)
-	t.resourceTV.SetText(safeTags(sb.String()))
-}
-
-func (t *EconomyTab) refreshBuildings(state game.GameState) {
-	// Age ordering from the snapshot's ruleset, used to sort building groups
-	// chronologically.
-	set := state.Ruleset()
-	ageIndex := set.Indexes()
-
-	// Group unlocked buildings by their age key — only show current age
-	byAge := make(map[string][]string)
-	for key, bs := range state.Buildings {
-		if bs.Unlocked && bs.AgeKey == state.Age {
-			byAge[bs.AgeKey] = append(byAge[bs.AgeKey], key)
-		}
-	}
-
-	// Sort groups: current age first (most relevant), then descending age order
-	// so the player sees their newest buildings before ancient ones.
-	groupKeys := make([]string, 0, len(byAge))
-	for k := range byAge {
-		groupKeys = append(groupKeys, k)
-	}
-	sort.Slice(groupKeys, func(i, j int) bool {
-		if groupKeys[i] == state.Age {
-			return true
-		}
-		if groupKeys[j] == state.Age {
-			return false
-		}
-		return ageIndex[groupKeys[i]] > ageIndex[groupKeys[j]]
-	})
-
 	var sb strings.Builder
-	for _, ageKey := range groupKeys {
-		keys := byAge[ageKey]
-		sort.Strings(keys)
-
-		ageName := ageKey
-		if def, ok := set.Age(ageKey); ok {
+	if len(keys) > 0 {
+		ageName := state.Age
+		if def, ok := set.Age(state.Age); ok {
 			ageName = def.Name
 		}
-		headerColor := "gray"
-		if ageKey == state.Age {
-			headerColor = "gold"
-		}
-		fmt.Fprintf(&sb, " [%s]── %s ──[-]\n", headerColor, ageName)
-
+		fmt.Fprintf(&sb, " [gold]── %s ──[-]\n", truncate(ageName, w-7))
 		for _, key := range keys {
 			bs := state.Buildings[key]
-			var icon string
+			icon, iconW := "[red]✗[-]", 1
 			switch {
 			case bs.AtMaxCount:
-				icon = "[yellow]MAX[-]"
+				icon, iconW = "[yellow]MAX[-]", 3
 			case bs.CanBuild:
 				icon = "[green]✓[-]"
-			default:
-				icon = "[red]✗[-]"
 			}
 			countColor := "gray"
 			if bs.Count > 0 {
 				countColor = "gold"
 			}
-			fmt.Fprintf(&sb, " %s [gold::b]%s[-] [%s]x%d[-]\n", icon, bs.Name, countColor, bs.Count)
+			count := fmt.Sprintf("x%d", bs.Count)
+			name := truncate(bs.Name, max(4, w-(1+iconW+1+1+runeLen(count))))
+			fmt.Fprintf(&sb, " %s [gold::b]%s[-:-:-] [%s]%s[-]\n", icon, name, countColor, count)
 			if bs.AtMaxCount {
-				fmt.Fprintf(&sb, "   [yellow]Building limit reached.[-]\n")
+				sb.WriteString(hangingRow("   ", "[yellow]Building limit reached.[-]", w))
 			} else {
-				fmt.Fprintf(&sb, "   Cost: %s\n", FormatCost(bs.NextCost))
+				sb.WriteString(costRow("   Cost: ", bs.NextCost, w))
 			}
-			fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)
+			sb.WriteString(hangingRow("   ", "[gray]"+glueRates(bs.Description)+"[-]", w))
 			if bs.Flavor != "" {
-				fmt.Fprintf(&sb, "   [gray::i]%s[-:-:-]\n", bs.Flavor)
+				sb.WriteString(hangingRow("   ", "[gray::i]"+bs.Flavor+"[-:-:-]", w))
 			}
 			if bs.WorkerCapacity > 0 {
 				totalCap := bs.Count * bs.WorkerCapacity
-				bar := workerAssignBar(bs.WorkersAssigned, totalCap)
-				// NOTE: Wrapping the bar in literal U+005B/U+005D (square brackets) prevents
-				// tview from interpreting the block-fill characters inside as a color tag.
-				barStr := "\u005b" + bar + "\u005d"
 				domainLabel := domainToLabel[bs.WorkerDomain]
 				if domainLabel == "" {
-					domainLabel = bs.WorkerDomain
+					domainLabel = textfmt.Capitalize(bs.WorkerDomain)
 				}
-				fmt.Fprintf(&sb, "   [green]Workers:[-] %d / %d %s  %s\n",
-					bs.WorkersAssigned, totalCap, domainLabel, barStr)
+				// Slots filled over slots, the domain, and a bar in brackets
+				// when there is room for one worth drawing. A narrow list
+				// closes the count up, then leaves the domain out.
+				const lead = 12 // "   Workers: "
+				text := fmt.Sprintf("%d / %d %s", bs.WorkersAssigned, totalCap, domainLabel)
+				if lead+runeLen(text) > w {
+					text = fmt.Sprintf("%d/%d %s", bs.WorkersAssigned, totalCap, domainLabel)
+				}
+				if lead+runeLen(text) > w {
+					text = truncate(fmt.Sprintf("%d/%d", bs.WorkersAssigned, totalCap), max(1, w-lead))
+				}
+				line := "   [green]Workers:[-] " + text
+				if cells := min(10, w-lead-runeLen(text)-4); cells >= 4 {
+					line += "  [" + workerAssignBar(bs.WorkersAssigned, totalCap, cells) + "]"
+				}
+				sb.WriteString(line + "\n")
 			}
 			// Pending player-driven upgrade indicator
 			if bs.PendingUpgrade != "" {
-				newBS := state.Buildings[bs.PendingUpgrade]
-				newName := newBS.Name
+				newName := state.Buildings[bs.PendingUpgrade].Name
 				if newName == "" {
 					newName = bs.PendingUpgrade
 				}
-				fmt.Fprintf(&sb, "   [gold]↑ Upgrade available: %s. Type: upgrade %s[-]\n", newName, key)
+				sb.WriteString(hangingRow("   ", fmt.Sprintf("[gold]↑ Upgrade available: %s. Type: upgrade %s[-]", newName, key), w))
 			}
 		}
 		sb.WriteString("\n")
@@ -435,10 +461,35 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 	// logged 30+ minutes of play. PlayTime is wall-clock (time.Since(GameStarted)),
 	// so it's robust against tick-speed bonuses that a raw tick count would inflate.
 	if isEarlyGame(state.Age) && state.Stats.PlayTime < 30*time.Minute {
-		sb.WriteString(renderOnboarding())
+		sb.WriteString(renderOnboarding(w))
 	}
+	return sb.String()
+}
 
-	t.buildingTV.SetText(safeTags(sb.String()))
+// costRow writes a cost under lead ("   Cost: "), wrapped to w cells with
+// each further line starting under the first part. A part ("1.12K iron")
+// is never broken.
+func costRow(lead string, cost map[string]float64, w int) string {
+	parts := strings.Split(FormatCost(cost), ", ")
+	indent := runeLen(lead)
+	var lines []string
+	cur := ""
+	for i, p := range parts {
+		if i < len(parts)-1 {
+			p += ","
+		}
+		switch {
+		case cur == "":
+			cur = p
+		case indent+runeLen(cur)+1+runeLen(p) <= w:
+			cur += " " + p
+		default:
+			lines = append(lines, cur)
+			cur = p
+		}
+	}
+	lines = append(lines, cur)
+	return lead + strings.Join(lines, "\n"+strings.Repeat(" ", indent)) + "\n"
 }
 
 // ScrollUp scrolls the buildings panel up
@@ -465,23 +516,13 @@ var domainToLabel = map[string]string{
 	"astronaut":   "Astronaut",
 }
 
-// workerAssignBar returns a 10-char ▓/░ bar for assigned/capacity.
+// workerAssignBar returns a ▓/░ bar width cells wide for assigned/capacity.
 // Filled portion uses BarFillColor (Accent role), empty uses BarEmptyColor (Dim role).
-func workerAssignBar(assigned, capacity int) string {
-	const width = 10
+func workerAssignBar(assigned, capacity, width int) string {
 	if capacity <= 0 {
 		return BarEmptyColor() + strings.Repeat("░", width) + "[-]"
 	}
-	ratio := float64(assigned) / float64(capacity)
-	if ratio > 1 {
-		ratio = 1
-	}
-	if ratio < 0 {
-		ratio = 0
-	}
-	filled := int(ratio * float64(width))
-	empty := width - filled
-	return BarFillColor() + strings.Repeat("▓", filled) + BarEmptyColor() + strings.Repeat("░", empty) + "[-]"
+	return progressCells(float64(assigned)/float64(capacity), width)
 }
 
 // resourceBar returns a width-char bar using █/░ characters with color based on fill level.
@@ -493,6 +534,9 @@ func resourceBar(amount, storage float64, width int) string {
 	ratio := amount / storage
 	if ratio > 1 {
 		ratio = 1
+	}
+	if ratio < 0 {
+		ratio = 0
 	}
 	filled := int(ratio * float64(width))
 	empty := width - filled
@@ -517,62 +561,4 @@ func resourceBar(amount, storage float64, width int) string {
 		bar += fmt.Sprintf("[gray]%s[-]", strings.Repeat("░", empty))
 	}
 	return bar
-}
-
-func (t *EconomyTab) refreshUnderConstruction(state game.GameState) {
-	var sb strings.Builder
-
-	if len(state.BuildQueue) == 0 {
-		sb.WriteString(" [gray](nothing under construction)[-]\n")
-	} else {
-		// Group queue items by name
-		type queueGroup struct {
-			name       string
-			count      int
-			minTicks   int // fewest ticks left among the group (furthest along)
-			totalTicks int
-		}
-		groupMap := make(map[string]*queueGroup)
-		groupOrder := make([]string, 0)
-		for _, item := range state.BuildQueue {
-			if g, ok := groupMap[item.Name]; ok {
-				g.count++
-				if item.TicksLeft < g.minTicks {
-					g.minTicks = item.TicksLeft
-					g.totalTicks = item.TotalTicks
-				}
-			} else {
-				groupMap[item.Name] = &queueGroup{
-					name:       item.Name,
-					count:      1,
-					minTicks:   item.TicksLeft,
-					totalTicks: item.TotalTicks,
-				}
-				groupOrder = append(groupOrder, item.Name)
-			}
-		}
-		const barWidth = 20
-		for _, name := range groupOrder {
-			g := groupMap[name]
-			label := g.name
-			if g.count > 1 {
-				label = fmt.Sprintf("%s x%d", g.name, g.count)
-			}
-			filled := 0
-			if g.totalTicks > 0 {
-				ratio := float64(g.totalTicks-g.minTicks) / float64(g.totalTicks)
-				filled = int(math.Round(float64(barWidth) * ratio))
-				if filled < 0 {
-					filled = 0
-				}
-				if filled > barWidth {
-					filled = barWidth
-				}
-			}
-			bar := BarFillColor() + strings.Repeat("█", filled) + BarEmptyColor() + strings.Repeat("░", barWidth-filled) + "[-]"
-			fmt.Fprintf(&sb, " [yellow]%-22s[-] %s [gray]%s left[-]\n", label, bar, formatTicks(g.minTicks, state))
-		}
-	}
-
-	t.constructionTV.SetText(safeTags(sb.String()))
 }

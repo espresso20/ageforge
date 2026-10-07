@@ -13,9 +13,16 @@ import (
 // the prompt's keys and the shortcuts. It is intentionally static (it does
 // not read game state) so the same reference is available at any point in
 // play.
-func helpProvider(_ game.GameState, _ int) string {
+func helpProvider(_ game.GameState, screenW int) string {
 	var sb strings.Builder
 	reg := registry()
+	// Every row is a key or a command, then what it does: the description
+	// wraps under itself, so the two columns hold at any width.
+	width := overlayTextWidth(screenW)
+	if screenW <= 0 {
+		width = 1 << 20 // no screen to fit: nothing wraps
+	}
+	row := func(lead, text string) { sb.WriteString(hangingRow(lead, text, width)) }
 
 	for i, sec := range helpSections {
 		if i > 0 {
@@ -31,14 +38,14 @@ func helpProvider(_ game.GameState, _ int) string {
 				rows = appendHelpRows(rows, c)
 			}
 		}
-		width := 0
+		formW := 0
 		for _, r := range rows {
-			if n := len([]rune(r.Form)); n > width {
-				width = n
+			if n := len([]rune(r.Form)); n > formW {
+				formW = n
 			}
 		}
 		for _, r := range rows {
-			sb.WriteString("  " + helpForm(r.Form) + strings.Repeat(" ", width-len([]rune(r.Form))) + " - " + r.Text + "\n")
+			row("  "+helpForm(r.Form)+strings.Repeat(" ", formW-len([]rune(r.Form)))+" - ", r.Text)
 		}
 	}
 
@@ -46,28 +53,44 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("[gray]Type the command to open the panel.[-]\n")
 	for _, name := range panelOrder {
 		if c := lookup(reg, name); c != nil && c.Panel != "" {
-			sb.WriteString("  [cyan]" + padRight(c.Name, 12) + "[-] - " + c.Panel + "\n")
+			row("  [cyan]"+padRight(c.Name, 12)+"[-] - ", c.Panel)
 		}
 	}
-	sb.WriteString("  [cyan]" + padRight("Accounts", 12) + "[-] - Switch, create or back up accounts [gray](main-menu panel, not a command)[-]\n")
+	row("  [cyan]"+padRight("Accounts", 12)+"[-] - ", "Switch, create or back up accounts [gray](main-menu panel, not a command)[-]")
+
+	// keys writes a section of keys: each key padded to the longest, then
+	// what it does.
+	keys := func(rows ...[2]string) {
+		keyW := 0
+		for _, r := range rows {
+			keyW = max(keyW, runeLen(r[0]))
+		}
+		for _, r := range rows {
+			row("  [cyan]"+r[0]+"[-]"+strings.Repeat(" ", keyW-runeLen(r[0]))+" - ", r[1])
+		}
+	}
+
+	sb.WriteString("\n[gold]═══ The dashboard ═══[-]\n")
+	sb.WriteString("[gray]With no panel open.[-]\n")
+	keys([2]string{"PgUp/PgDn", "Scroll the Buildings list"},
+		[2]string{resourcePageKeyName, "The next page of the Resources box, when it has more than it can show"},
+		[2]string{"Esc", "Save and go to the main menu (with a panel open: close it)"})
 
 	sb.WriteString("\n[gold]═══ The prompt ═══[-]\n")
 	sb.WriteString("[gray]As you type, the best completion shows in dim text after the cursor.[-]\n")
-	sb.WriteString("  [cyan]Tab[-]    - Take the completion; press again for the next one\n")
-	sb.WriteString("  [cyan]→[-]      - Take the completion (cursor at the end of the line)\n")
-	sb.WriteString("  [cyan]Enter[-]  - Run the line; an unfinished line runs its completion\n")
-	sb.WriteString("           (irreversible ones, like sell, are only filled in: Enter again runs them)\n")
-	sb.WriteString("  [cyan]↑/↓[-]    - Command history\n")
+	keys([2]string{"Tab", "Take the completion; press again for the next one"},
+		[2]string{"→", "Take the completion (cursor at the end of the line)"},
+		[2]string{"Enter", "Run the line; an unfinished line runs its completion (irreversible ones, like sell, are only filled in: Enter again runs them)"},
+		[2]string{"↑/↓", "Command history"})
 
 	sb.WriteString("\n[gold]═══ The Map panel ═══[-]\n")
 	sb.WriteString("[gray]The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing.[-]\n")
-	sb.WriteString("  [cyan]Arrows[-]     - Move the cursor (roguelike) or scroll (skyline); Shift moves further\n")
-	sb.WriteString("  [cyan]Tab[-]        - Next building, wonder or civilization (Shift-Tab: the one before)\n")
-	sb.WriteString("  [cyan]PgUp/PgDn[-]  - Zoom out and in (roguelike) or scroll half a screen (skyline)\n")
-	sb.WriteString("  [cyan]Home/End[-]   - The town square (roguelike); the oldest district and the present (skyline)\n")
-	sb.WriteString("  [cyan]Enter[-]      - Put the command for what the cursor is on in the prompt\n")
-	sb.WriteString("               (with something typed, Tab and Enter act on the prompt instead)\n")
-	sb.WriteString("  [cyan]Esc[-]        - Close the panel\n")
+	keys([2]string{"Arrows", "Move the cursor (roguelike) or scroll (skyline); Shift moves further"},
+		[2]string{"Tab", "Next building, wonder or civilization (Shift-Tab: the one before)"},
+		[2]string{"PgUp/PgDn", "Zoom out and in (roguelike) or scroll half a screen (skyline)"},
+		[2]string{"Home/End", "The town square (roguelike); the oldest district and the present (skyline)"},
+		[2]string{"Enter", "Put the command for what the cursor is on in the prompt (with something typed, Tab and Enter act on the prompt instead)"},
+		[2]string{"Esc", "Close the panel"})
 	sb.WriteString("[gray]Settings are commands: map style, map glyphs, map flows, minimap.[-]\n")
 
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
@@ -85,7 +108,7 @@ func helpProvider(_ game.GameState, _ int) string {
 		sb.WriteString("\n[gold]═══ Developer console ═══[-]\n")
 		sb.WriteString("[gray]Dev mode is on. Type these in the [-][cyan]>[-][gray] prompt:[-]\n")
 		for _, d := range devCommands {
-			sb.WriteString("  [cyan]" + padRight(d.form, 28) + "[-] - " + d.text + "\n")
+			row("  [cyan]"+padRight(d.form, 28)+"[-] - ", d.text)
 		}
 	}
 
