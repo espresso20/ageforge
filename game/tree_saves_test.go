@@ -124,11 +124,11 @@ func saveAndLoad(t *testing.T, ge *GameEngine, name string) *GameEngine {
 }
 
 // treeFixtureKnowledge is the knowledge output the fixtures' techs add once
-// Alchemy is among them: its 15%, Mathematics' 20% and Primitive Writing's
+// Alchemy is among them: its 8%, Mathematics' 8% and Primitive Writing's
 // 10%, added in the manager's order (by key) as floats, not as a constant.
 func treeFixtureKnowledge() float64 {
 	sum := 0.0
-	for _, v := range []float64{0.15, 0.2, 0.1} {
+	for _, v := range []float64{0.08, 0.08, 0.1} {
 		sum += v
 	}
 	return sum
@@ -164,13 +164,11 @@ func TestTreeOldSaveKeepsWhatItResearched(t *testing.T) {
 		if ge.Research.IsResearched("philosophy") {
 			t.Fatalf("%s: Philosophy is researched: the save is not out of order any more", when)
 		}
-		// Alchemy still does what it does: +15% knowledge on top of
-		// Primitive Writing's 10% and Mathematics' 20%, and 0.1 gold a tick.
+		// Alchemy does what it does today: +8% knowledge on top of
+		// Primitive Writing's 10% and Mathematics' 8%. The bonuses are
+		// rebuilt from the save's tech list, never read from the save.
 		if got, want := ge.Research.Bonus(config.EffectOutput, "knowledge"), treeFixtureKnowledge(); got != want {
 			t.Errorf("%s: knowledge output bonus %v, want %v", when, got, want)
-		}
-		if got := ge.Research.Bonus(config.EffectFlatOutput, "gold"); got != 0.1 {
-			t.Errorf("%s: gold a tick from techs %v, want Alchemy's 0.1", when, got)
 		}
 		// And it counts as a prerequisite: Gunpowder needs Alchemy and Siege
 		// Warfare, and has both.

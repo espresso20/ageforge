@@ -251,15 +251,20 @@ func newMilestoneModel(defs map[string]config.BuildingDef, prestigeAge string) *
 	for _, t := range techs {
 		byKey[t.Key] = t
 	}
+	// The techs' housing bonus is a percentage of all housing.
+	housePct := make([]float64, n)
 	for _, t := range techs {
 		for i := m.techAge(t.Key, byKey, 0); i < n; i++ {
 			m.techs[i]++
 			for _, e := range t.Effects {
-				if e.Kind == config.EffectFlatHousing {
-					m.housing[i] += e.Value
+				if e.Kind == config.EffectHousing {
+					housePct[i] += e.Value
 				}
 			}
 		}
+	}
+	for i := range housePct {
+		m.housing[i] = float64(m.housing[i] * (1 + housePct[i]))
 	}
 
 	made := 0.0

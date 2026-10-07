@@ -51,7 +51,7 @@ Balance values are *defined* in ticks (a tech costs so many ticks of research, a
 | `upgrade` | List the buildings you can upgrade now, with the cost of upgrading every copy |
 | `upgrade <building> [count\|all]` | Turn copies of a building into the next age's tier of the same line. With no count it upgrades all copies. Each copy costs the new building's price minus what the old copy would sell for (half of what it cost), resource by resource and never below zero. It stops at the new building's max count. Storage buildings are never upgraded; older storage keeps counting. |
 | `advance` | Advance to the next age once its requirements are met. The age never advances by itself (see `plan advance` to queue it) |
-| `gather <food\|wood\|stone> [amount]` | Gather food, wood or stone by hand: 3 by default, at most 25 per use. Not available after the Medieval Age. |
+| `gather <food\|wood\|stone> [amount]` | Gather food, wood or stone by hand: 3 by default, at most 25 per use. With Tool Making researched every gather brings 2 more. Not available after the Medieval Age. |
 | `buildings` | Open the **Buildings** panel |
 
 **Example:**
@@ -171,7 +171,7 @@ Tech keys are shown in the **Research** panel (`research`): dim gray when locked
 | `expedition <key>` | Send a scouting expedition. It costs resources, never soldiers (e.g. `expedition scout_ruins`; shorthand: `exp <key>`) |
 | `army` | Open the **Army** panel: soldier overview and military campaigns |
 | `campaign list` | List the military campaigns available in your current age (`campaign` alone does the same) |
-| `campaign <key>` | Wage a military campaign. It spends soldiers, plus any resource cost (e.g. `campaign raid_bandits`) |
+| `campaign <key>` | Wage a military campaign. It spends soldiers, plus any resource cost (e.g. `campaign raid_bandits`). Campaigns wait for the Military Tactics tech |
 
 ```
 expedition
@@ -184,6 +184,8 @@ campaign raid_bandits
 ```
 
 **Scouting** expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) cost only resources and are available before soldiers appear in the Iron Age; they are how you meet other civilizations. **Military campaigns** (everything else) spend soldiers at launch, plus any resource cost. Either way you pay whether the mission succeeds or fails; only the reward differs. One scouting expedition and one military campaign can run at the same time, but not two of the same kind.
+
+**Commands a tech opens.** Four commands wait for a tech: campaigns (Military Tactics), the Naval Expedition (Navigation), the black market (Mercantilism) and the Rail Freight route (Railroads). Used before the tech, the command is refused and names it: `Campaigns need Military Tactics first. Research it to send one.` See [Commands a Tech Opens](technologies.md#commands-a-tech-opens).
 
 Keys with underscores can be typed with spaces: `expedition scout ruins` is the same as `expedition scout_ruins`. A campaign key given to `expedition` is refused with a pointer to `campaign <key>`, and the other way round. From the Industrial Age a **Geographic Society** sends scouting parties out by itself; a party you send by hand always goes first. See [Military](military.md).
 
@@ -200,7 +202,7 @@ Keys with underscores can be typed with spaces: `expedition scout ruins` is the 
 | `trade route start <route>` | Start a trade route |
 | `trade route stop <route>` | Stop an active trade route |
 | `blackmarket` (or `bm`) | Show the black market's status: culture cost, payout odds and cooldown. Opens in the Colonial Age |
-| `blackmarket <resource>` | Make a smuggling run: spend culture for a chance at a big haul of the chosen resource |
+| `blackmarket <resource>` | Make a smuggling run: spend culture for a chance at a big haul of the chosen resource. Waits for the Mercantilism tech |
 | `trade black [resource]` | Same as `blackmarket` |
 
 ```
@@ -340,7 +342,7 @@ A prestige pays for every age the run completed, and each era's ages pay three t
 | `festival` | Show festival status: culture cost, current culture, and the boost it grants |
 | `festival confirm yes` | Hold a cultural festival now: spend culture for a temporary production boost |
 
-A festival costs the larger of 2K culture or 5% of your culture storage, and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes). The boost adds to the same pool as every other all-production bonus, so it adds little or nothing once that pool is at its cap (see [The all-production cap](resources.md#the-all-production-cap)). When that is the case `festival` says so before you pay (`Right now it is capped: no effect now.`).
+A festival costs the larger of 2K culture or 5% of your culture storage, and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes). Two techs help: Radio brings the next festival back 20% sooner and Social Media makes each one cost 20% less. The boost adds to the same pool as every other all-production bonus, so it adds little or nothing once that pool is at its cap (see [The all-production cap](resources.md#the-all-production-cap)). When that is the case `festival` says so before you pay (`Right now it is capped: no effect now.`).
 
 ---
 

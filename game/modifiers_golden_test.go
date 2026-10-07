@@ -159,13 +159,26 @@ func TestResolverGolden_FreshGame(t *testing.T) {
 	assertResolverGolden(t, ge, "wood", true)
 }
 
+// TestResolverGolden_ResearchBonuses: of what techs give, only game speed
+// (and military power and expedition rewards) joins a pool. A tech's output
+// bonus is in the tech layer, after the clamp, so the resolver's production
+// pools read 1 with it planted.
 func TestResolverGolden_ResearchBonuses(t *testing.T) {
 	ge := NewGameEngine()
+	ge.morale = moraleNeutral
 	plantResearchBonus(ge, config.EffectAllOutput, "", 0.25)
 	plantResearchBonus(ge, config.EffectOutput, "gold", 0.40)
-	plantResearchBonus(ge, config.EffectWorkerOutput, "", 0.15)
 	plantResearchBonus(ge, config.EffectGameSpeed, "", 0.10)
 	assertResolverGolden(t, ge, "gold", true)
+	r := ge.buildResolver()
+	for _, pool := range []string{"production_all", "gold_rate", "gather_rate"} {
+		if got := r.Total(pool); math.Abs(got-1) > goldenEps {
+			t.Errorf("%s reads %v with only tech bonuses planted: a tech's output bonus joined a pool", pool, got)
+		}
+	}
+	if got := r.Total("tick_speed"); math.Abs(got-1.10) > goldenEps {
+		t.Errorf("tick_speed reads %v, want 1.10: game speed is a pool techs share", got)
+	}
 }
 
 func TestResolverGolden_PrestigeLevel(t *testing.T) {
@@ -301,7 +314,6 @@ func TestResolverGolden_AllSourcesStacked(t *testing.T) {
 	ge := NewGameEngine()
 	plantResearchBonus(ge, config.EffectAllOutput, "", 0.10)
 	plantResearchBonus(ge, config.EffectOutput, "iron", 0.20)
-	plantResearchBonus(ge, config.EffectWorkerOutput, "", 0.05)
 	plantResearchBonus(ge, config.EffectGameSpeed, "", 0.08)
 	ge.Prestige.level = 3 // +6% production_all, +3% tick_speed
 	addWonder(ge, "test_wonder_stack", "production_all", 0.15, 1)
@@ -330,7 +342,7 @@ func TestResolverGolden_AllSourcesStacked(t *testing.T) {
 // accidentally a no-op (e.g. both sides return 1.0 for everything).
 func TestResolverGolden_IsRealCheck(t *testing.T) {
 	ge := NewGameEngine()
-	plantResearchBonus(ge, config.EffectAllOutput, "", 0.25)
+	ge.permanentBonuses["production_all"] = 0.25
 	ge.morale = 0.90 // high band → moraleMultiplier() saturates to ×1.20 at cap 1.0
 
 	got := ge.buildResolver().Total("production_all")

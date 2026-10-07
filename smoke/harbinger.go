@@ -484,6 +484,25 @@ func MaxStorage(ageKey, res string) float64 {
 	return maxStorageIn(config.BuildingByKey(), ageKey, res)
 }
 
+// TechStorage is what every tech up to ageKey adds to every store, as a
+// fraction (0.2 is +20%): the storage the Storage Covenant counts on top of
+// MaxStorage, since the income it compares against assumes every tech too.
+func TechStorage(ageKey string) float64 {
+	order := config.AgePositions(config.AgeOrder())
+	pct := 0.0
+	for _, t := range config.Technologies() {
+		if order[t.Age] > order[ageKey] {
+			continue
+		}
+		for _, e := range t.Effects {
+			if e.Kind == config.EffectStorage {
+				pct += e.Value
+			}
+		}
+	}
+	return pct
+}
+
 // maxStorageIn is MaxStorage over defs (the static checks' broken-number
 // tests feed in altered storage buildings).
 func maxStorageIn(defs map[string]config.BuildingDef, ageKey, res string) float64 {
@@ -515,15 +534,9 @@ func maxStorageIn(defs map[string]config.BuildingDef, ageKey, res string) float6
 			total += float64(e.Value * float64(d.MaxCount))
 		}
 	}
-	for _, t := range config.Technologies() {
-		if order[t.Age] > limit {
-			continue
-		}
-		for _, e := range t.Effects {
-			if e.Kind == config.EffectFlatStorage && (e.Target == res || e.Target == config.AllResources) {
-				total += e.Value
-			}
-		}
-	}
+	// The techs' storage bonus (a percentage of every store) is left out:
+	// most of the techs that give it are optional, and what a gate or a
+	// price is proven to fit must fit without them. TechStorage has it for
+	// the checks that assume every tech.
 	return total
 }

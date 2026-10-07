@@ -287,4 +287,17 @@ func runStatic(e *Env, res *Result) {
 	var rf strings.Builder
 	writeResearch(&rf, rr)
 	res.section("Research Covenant", "%s", rf.String())
+	var lf strings.Builder
+	writeFeatureLocks(&lf, StaticFeatureLocks())
+	res.section("Feature locks", "%s", lf.String())
+	// The model's all-production pool is held to what a game can hold.
+	caps := StaticCaps()
+	for _, r := range caps {
+		if held := config.ProductionAllHeld[r.Age]; held > r.All()+1e-9 {
+			res.fail("pool_model", "%s: the pacing model holds +%.0f%% all production, more than the +%.0f%% a player with every milestone, wonder and monument can", r.Age, held*100, r.All()*100)
+		}
+	}
+	var cf strings.Builder
+	writeCaps(&cf, caps)
+	res.section("Bonus pools against their caps", "%s", cf.String())
 }

@@ -38,7 +38,7 @@ func TestBonusTruthEraMastery(t *testing.T) {
 				switch {
 				case strings.HasPrefix(meter, "rate:"), strings.HasPrefix(meter, "storage:"):
 					want *= k
-				case meter == "research":
+				case meter == "research", meter == "buildtime":
 					want = math.Ceil(before[meter]*truthRefTicks/k) / truthRefTicks
 				case meter == "morale":
 					// Faith income lifts morale, up to a cap a tick: k times
@@ -51,7 +51,10 @@ func TestBonusTruthEraMastery(t *testing.T) {
 			}
 			for _, key := range []string{"hut", "stash"} {
 				def := ge.Buildings.defs[key]
-				if got, want := ge.buildTicksLocked(def), max(1, int(math.Ceil(float64(def.BuildTicks)/k))); got != want {
+				// The techs' cut of construction time comes first (the
+				// Modern Age engine holds Mass Production), then k.
+				listed := techTimeTicks(def.BuildTicks, ge.Research.Bonus(config.EffectBuildTime, ""))
+				if got, want := ge.buildTicksLocked(def), max(1, int(math.Ceil(float64(listed)/k))); got != want {
 					t.Errorf("%s at mastery %d: %s builds in %d ticks, want %d", age, m, key, got, want)
 				}
 			}
@@ -480,9 +483,10 @@ func TestBonusTruthCulturalFestivalWaitsForCulture(t *testing.T) {
 
 // TestBonusTruthCatchesANewTech: the guard needs no upkeep to cover a tech
 // added later, and it has teeth. Three made-up techs go through the same
-// path as the real ones: one whose bonus works, one whose effect the engine
+// path as the real ones: one whose bonus works, one whose kind the engine
 // never applies (an event's effect type where a tech's kind goes), and one
-// whose target is a typo.
+// whose target is a typo. The last two have no meter, which fails the
+// guard: nothing a tech promises goes unmeasured.
 func TestBonusTruthCatchesANewTech(t *testing.T) {
 	lab := newTruthLab()
 	techs := []config.TechDef{
@@ -498,7 +502,7 @@ func TestBonusTruthCatchesANewTech(t *testing.T) {
 		}
 		got[p.Key] = lab.judge(t, p).Class
 	}
-	want := map[string]string{"zz_crop_rotation": truthOK, "zz_dead_letter": truthDead, "zz_typo": "no meter"}
+	want := map[string]string{"zz_crop_rotation": truthOK, "zz_dead_letter": "no meter", "zz_typo": "no meter"}
 	for key, w := range want {
 		if got[key] != w {
 			t.Errorf("made-up tech %s is judged %q, want %q", key, got[key], w)

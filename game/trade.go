@@ -32,6 +32,14 @@ type TradeManager struct {
 
 	activeRoutes map[string]*ActiveRoute // route key -> runtime state
 
+	// feeScale and routeTime are the techs' terms on the market's fee and
+	// on a route's time per run (config.MechanicMarketFee as a multiplier
+	// on every market rate, config.MechanicRouteTicks). The engine sets
+	// them (SetTechTerms); 0 reads as 1, so a manager no engine drives
+	// trades at the listed numbers.
+	feeScale  float64
+	routeTime float64
+
 	// Cumulative stats for display in the Trade panel. totalExchanged sums
 	// both sides of every market trade (kept for old saves); totalSold and
 	// totalBought split them.
@@ -136,9 +144,31 @@ func copyAmounts(m map[string]float64) map[string]float64 {
 	return out
 }
 
+// SetTechTerms sets the techs' terms: feeScale multiplies every market rate
+// (a lower fee pays more), routeTime multiplies a route's time per run.
+func (tm *TradeManager) SetTechTerms(feeScale, routeTime float64) {
+	tm.feeScale, tm.routeTime = feeScale, routeTime
+}
+
+// marketRate is the ruleset's market rate for one from in age with the
+// techs' cut of the fee: what the market pays before supply pressure.
+func (tm *TradeManager) marketRate(from, to, age string) (float64, bool) {
+	base, ok := tm.rules.MarketRate(from, to, age)
+	if ok && tm.feeScale > 0 && tm.feeScale != 1 {
+		base = float64(base * tm.feeScale)
+	}
+	return base, ok
+}
+
+// RunTicks is how long one run of a route listed at ticks takes with the
+// techs' cut of route time: rounded down, one tick at least.
+func (tm *TradeManager) RunTicks(ticks int) int {
+	return techTimeTicks(ticks, tm.routeTime)
+}
+
 // GetExchangeRate returns the current rate for a resource pair, accounting for supply pressure
 func (tm *TradeManager) GetExchangeRate(from, to string) float64 {
-	base, ok := tm.rules.MarketRate(from, to, tm.age)
+	base, ok := tm.marketRate(from, to, tm.age)
 	if !ok {
 		return 0
 	}
@@ -149,7 +179,7 @@ func (tm *TradeManager) GetExchangeRate(from, to string) float64 {
 // RateIn is what Exchange would pay now for one from in age: the market rate
 // less supply pressure, floored at half the market rate. Read-only.
 func (tm *TradeManager) RateIn(from, to, age string) float64 {
-	base, ok := tm.rules.MarketRate(from, to, age)
+	base, ok := tm.marketRate(from, to, age)
 	if !ok {
 		return 0
 	}
@@ -168,7 +198,7 @@ func (tm *TradeManager) Pressure(from, to string) float64 {
 func (tm *TradeManager) Exchange(give, get string, amount float64, resources *ResourceManager, buildings *BuildingManager, tick int) (float64, error) {
 	from, to := give, get
 	key := from + ":" + to
-	base, ok := tm.rules.MarketRate(from, to, tm.age)
+	base, ok := tm.marketRate(from, to, tm.age)
 	if !ok {
 		return 0, fmt.Errorf("The market does not trade %s for %s in this age. Type trade list to see the rates.", ResourceName(from), ResourceName(to))
 	}
@@ -241,7 +271,7 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 
 	tm.activeRoutes[key] = &ActiveRoute{
 		Key:       key,
-		TicksLeft: def.TicksPerRun,
+		TicksLeft: tm.RunTicks(def.TicksPerRun),
 	}
 	return nil
 }
@@ -306,7 +336,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 			route.TicksLeft--
 			if route.TicksLeft <= 0 {
 				messages = append(messages, fmt.Sprintf("Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)))
-				route.TicksLeft = def.TicksPerRun
+				route.TicksLeft = tm.RunTicks(def.TicksPerRun)
 			}
 			continue
 		}
@@ -357,7 +387,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 			}
 
 			// Reset cycle
-			route.TicksLeft = def.TicksPerRun
+			route.TicksLeft = tm.RunTicks(def.TicksPerRun)
 		}
 	}
 

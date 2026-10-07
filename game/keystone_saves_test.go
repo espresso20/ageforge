@@ -183,7 +183,7 @@ func TestKeystoneOldSaveKeepsItsAge(t *testing.T) {
 	}
 	// One line, and it names the age.
 	n, line := treeNotices(ge)
-	if n != 1 || !strings.Contains(line, "Iron Age") || !strings.Contains(line, "the lock starts when you next advance") {
+	if n != 1 || !strings.Contains(line, "Iron Age") || !strings.Contains(line, "the locks start when you next advance") {
 		t.Errorf("%d research update lines, the last %q; want one that names the Iron Age and says when the lock starts", n, line)
 	}
 	// Half the bank was in the save, and it is still there.

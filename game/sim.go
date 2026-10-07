@@ -116,6 +116,19 @@ func (ge *GameEngine) GrantTechsForTest(keys ...string) {
 	ge.recalculateTickSpeed()
 }
 
+// GrantBonusForTest adds value to bonus pool pool ("production_all",
+// "gold_rate"), as a milestone's permanent reward would, and recalculates
+// the rates. A test hook for other packages (the panels that list capped
+// bonuses: with techs in a layer of their own, a pool is filled by
+// milestones and wonders); not reachable from play.
+func (ge *GameEngine) GrantBonusForTest(pool string, value float64) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.permanentBonuses[pool] += value
+	ge.recalculateRates()
+	ge.recalculateTickSpeed()
+}
+
 // SetLegacyBonusForTest marks epochs as succumbed in, as a Succumb in each
 // would: their legacy bonuses and Ancient Knowledge apply at once. A test
 // hook for other packages (the panels that show research speed and legacy

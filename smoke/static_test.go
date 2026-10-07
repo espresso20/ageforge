@@ -1,6 +1,7 @@
 package smoke
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -206,7 +207,7 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 	smithy.BaseCost = map[string]float64{"wood": 900, "coal": 100}
 	defs["smithy"] = smithy
 	sistine := defs["sistine_chapel"]
-	sistine.BaseCost = map[string]float64{"stone": 100e6, "gold": 10e6, "faith": 6e6, "culture": 8e6}
+	sistine.BaseCost = map[string]float64{"stone": 200e6, "gold": 10e6, "faith": 6e6, "culture": 8e6}
 	defs["sistine_chapel"] = sistine
 	cradle := defs["stellar_cradle"]
 	cradle.BaseCost = map[string]float64{"uranium": 940e12}
@@ -338,5 +339,72 @@ func TestGateCovenantCatchesBrokenLadder(t *testing.T) {
 	problems, _ = staticGates(config.Ages(), defs)
 	if rows := ladderRows(problems); len(rows) != 1 || !strings.Contains(rows[0].ForcedBy, "tenement #30") {
 		t.Errorf("a doubled vault: want one ladder row against the 30th tenement, got %+v", rows)
+	}
+}
+
+// TestStaticFeatureLocks pins which feature locks are live and which wait
+// for their tech. A content change that adds one of the missing techs moves
+// its lock from the second list to the first, here and in the report, and
+// needs no other change to switch the lock on.
+func TestStaticFeatureLocks(t *testing.T) {
+	rows := StaticFeatureLocks()
+	var live []string
+	for _, r := range rows {
+		if r.Live {
+			live = append(live, r.Key+" <- "+r.Tech+" ("+r.TechAge+")")
+		}
+	}
+	if got, want := strings.Join(live, "; "), "campaigns <- military_tactics (bronze_age); naval_expedition <- navigation (renaissance_age); black_market <- mercantilism (colonial_age); route_rail_freight <- railroads (industrial_age)"; got != want {
+		t.Errorf("live locks:\n got %s\nwant %s", got, want)
+	}
+	if got, want := strings.Join(FeatureLocksWaiting(rows), " "), "trade_routes expeditions diplomacy festivals route_warp_commerce"; got != want {
+		t.Errorf("locks waiting for their tech: %s; want %s", got, want)
+	}
+	var sb strings.Builder
+	writeFeatureLocks(&sb, rows)
+	if !strings.Contains(sb.String(), "| Campaigns | Military Tactics | Bronze | live |") || !strings.Contains(sb.String(), "| Festivals | `drama` | - | waits for its tech (open) |") {
+		t.Errorf("the report's table is off:\n%s", sb.String())
+	}
+}
+
+// TestStaticCaps pins the caps report's reading: with techs in a layer of
+// their own, a player who holds every milestone, wonder and monument still
+// reaches the all-production clamp, from the Electric Age at the earliest,
+// and no resource's own pool reaches its clamp in any age. And the pacing
+// model's all-production pool never holds more than such a player can.
+func TestStaticCaps(t *testing.T) {
+	rows := StaticCaps()
+	if len(rows) != len(config.AgeOrder()) {
+		t.Fatalf("%d rows for %d ages", len(rows), len(config.AgeOrder()))
+	}
+	all := func(r CapRow) float64 { return r.All() }
+	if got := CapReachedIn(rows, 0, all); got != "electric_age" {
+		t.Errorf("all production reaches its clamp on what stands alone in %q, want the Electric Age", got)
+	}
+	if got := CapReachedIn(rows, FestivalBonus+SurgeBonus, all); got != "industrial_age" {
+		t.Errorf("all production reaches its clamp with a festival and a surge in %q, want the Industrial Age", got)
+	}
+	last := rows[len(rows)-1]
+	for res := range last.Resources {
+		if age := CapReachedIn(rows, 0, func(r CapRow) float64 { return r.Resources[res] }); age != "" {
+			t.Errorf("%s's own pool reaches its clamp in the %s", res, age)
+		}
+	}
+	near := func(got, want float64) bool { return math.Abs(got-want) < 1e-9 }
+	if !near(last.Milestones, 4.35) || !near(last.Wonders, 2.15) || !near(last.Monuments, 0.11) || !near(last.Resources["knowledge"], 1.45) || !near(last.Resources["gold"], 0.70) {
+		t.Errorf("the last age holds %+v", last)
+	}
+	for i, r := range rows {
+		if i > 0 && r.All() < rows[i-1].All() {
+			t.Errorf("%s holds less all production than the age before it", r.Age)
+		}
+		if held := config.ProductionAllHeld[r.Age]; held > r.All()+1e-9 {
+			t.Errorf("%s: the pacing model holds +%.0f%% all production, more than the +%.0f%% a game can hold by then", r.Age, held*100, r.All()*100)
+		}
+	}
+	for age := range config.ProductionAllHeld {
+		if _, ok := config.AgeByKey()[age]; !ok {
+			t.Errorf("config.ProductionAllHeld lists %s, which is not an age", age)
+		}
 	}
 }

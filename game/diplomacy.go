@@ -91,6 +91,10 @@ type DiplomacyManager struct {
 	rules    *rules.Set
 	factions map[string]*FactionState
 
+	// giftCost, dealRefresh and feeScale are the techs' terms the manager
+	// reads (SetTechTerms).
+	giftCost, dealRefresh, feeScale float64
+
 	// lentBatches tracks worker loans in flight so they can be returned on time.
 	lentBatches []LentWorkerBatch
 
@@ -503,6 +507,29 @@ func (dm *DiplomacyManager) endWar(fs *FactionState) {
 	}
 }
 
+// SetTechTerms sets the techs' terms the manager reads: giftCost on what a
+// gift costs (config.MechanicGiftCost), dealRefresh on how long a set of
+// offers lasts (config.MechanicDealRefreshTicks), and feeScale, the cut of
+// the market's fee as the multiplier market rates carry, which deals are
+// priced and compared against. 0 reads as 1 for each.
+func (dm *DiplomacyManager) SetTechTerms(giftCost, dealRefresh, feeScale float64) {
+	dm.giftCost, dm.dealRefresh, dm.feeScale = giftCost, dealRefresh, feeScale
+}
+
+// dealRefreshFor is how long a set of offers lasts in age with the techs'
+// cut: dealRefreshIn, rounded down, one tick at least.
+func (dm *DiplomacyManager) dealRefreshFor(age string) int {
+	return techTimeTicks(dealRefreshIn(dm.rules, age), dm.dealRefresh)
+}
+
+// GiftPrice is what a gift costs now: GiftCost with the techs' cut.
+func (dm *DiplomacyManager) GiftPrice() float64 {
+	if dm.giftCost <= 0 || dm.giftCost >= 1 {
+		return GiftCost
+	}
+	return float64(GiftCost * dm.giftCost)
+}
+
 // SendGift sends a gift to a faction, increasing opinion
 func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, error) {
 	defs := dm.factionDefs
@@ -516,7 +543,7 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 		return 0, dm.errUnknownCiv(factionKey)
 	}
 
-	cost := GiftCost
+	cost := dm.GiftPrice()
 	if gold < cost {
 		return 0, fmt.Errorf("Not enough gold for a gift to the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
 	}
@@ -810,9 +837,9 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			info.Status = fs.Status
 			info.TradeCount = fs.TradeCount
 			info.AtWar = fs.AtWar
-			info.Deals = dealInfos(dm.rules, fs, age)
+			info.Deals = dealInfos(dm.rules, fs, age, dm.feeScale)
 			info.DealsBlocked = dealBlocked(*fs)
-			info.DealRefreshIn = max(dealRefreshIn(dm.rules, age)-fs.DealTicks, 0)
+			info.DealRefreshIn = max(dm.dealRefreshFor(age)-fs.DealTicks, 0)
 		} else if ageOrder[age] >= ageOrder[def.MinAge] {
 			// Eligible (age floor met) but not yet met: discovery is triggered by
 			// running expeditions, with a late age fallback (see DiscoverFactions).
@@ -834,6 +861,7 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 
 	return DiplomacyState{
 		Factions:  factions,
+		GiftCost:  dm.GiftPrice(),
 		BoonCrews: dm.boonLoansForSave(),
 	}
 }

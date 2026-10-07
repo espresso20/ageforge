@@ -204,11 +204,9 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 		if line := wonderKeystoneLine(state, current.key); line != "" {
 			fmt.Fprintf(&sb, "  %s\n", line)
 		}
-		// Era Mastery: a wonder builds in its own age, at that age's speed.
-		ticks := current.def.BuildTicks
-		if k := state.Mastery.Speeds[current.def.RequiredAge]; k > 1 {
-			ticks = game.MasteryTicks(ticks, k)
-		}
+		// The techs' cut of construction time, then Era Mastery: a wonder
+		// builds in its own age, at that age's speed.
+		ticks := game.BuildTicks(current.def.BuildTicks, state.Research.BuildTime, state.Mastery.Speeds[current.def.RequiredAge])
 		fmt.Fprintf(&sb, "\n[gray]Build time: %s[-]\n", formatTicks(ticks, state))
 	}
 

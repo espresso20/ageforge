@@ -547,6 +547,7 @@ func (ge *GameEngine) Succumb() error {
 	// ticks to run at tick 5,001 had 5,781 to run in the new run. The
 	// automatic expedition's countdown starts over too, as at a prestige.
 	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
+	ge.grantedFeatures = nil
 	ge.autoExpeditionTicksLeft = 0
 	ge.autoExpeditionStarved = false
 	ge.currentEpoch = ge.rules.EraOf("primitive_age")

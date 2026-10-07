@@ -362,13 +362,14 @@ func FoodBeforeMastery(rate float64, b RateBreakdown) float64 { return foodBefor
 // foodWorkerFactor is what multiplies the food a worker adds to a food
 // building: morale, times the all-production and food bonuses plus the
 // worker output bonus (which is added to them, not multiplied), read off the
-// last rates, times the Cosmic Legacy's factor.
+// last rates, times the tech layer's factor on food, times the Cosmic
+// Legacy's.
 func (ge *GameEngine) foodWorkerFactor() float64 {
 	bonuses := 1.0
 	if r := ge.Resources.resources["food"]; r != nil && r.Breakdown.BuildingRate > 0 {
 		bonuses = math.Max(0, 1+r.Breakdown.BonusRate/r.Breakdown.BuildingRate)
 	}
-	return float64(float64(ge.moraleMultiplier()*math.Max(0, bonuses+ge.workerBonus)) * ge.cosmicLegacyFactor())
+	return float64(float64(float64(ge.moraleMultiplier()*math.Max(0, bonuses+ge.workerBonus))*ge.Research.OutputFactor("food")) * ge.cosmicLegacyFactor())
 }
 
 // foodPerWorker is the food one more worker in building key grows a tick: a
@@ -626,9 +627,23 @@ func (ge *GameEngine) foodLossOfOne(sv *staffView, factor float64) float64 {
 }
 
 // popCapLocked is the housing: what the housing buildings hold plus the
-// population bonuses. Caller holds the lock.
+// population bonuses, raised by the techs' housing bonus. Caller holds the
+// lock.
 func (ge *GameEngine) popCapLocked() int {
-	return ge.Buildings.GetPopCapacity() + int(ge.Research.Bonus(config.EffectFlatHousing, "")+ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"])
+	base := ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"])
+	return TechHousing(base, ge.Research.Bonus(config.EffectHousing, ""))
+}
+
+// TechHousing is housing of base with the techs' housing bonus (a fraction:
+// 0.05 is +5%): base × (1 + bonus), rounded up to a whole person, so the
+// first small bonus on a small village still houses one more.
+func TechHousing(base int, bonus float64) int {
+	if bonus <= 0 || base <= 0 {
+		return base
+	}
+	// The epsilon keeps a product that is whole on paper (20 × 1.05 = 21)
+	// from rounding up a second time on floating point's last digit.
+	return int(math.Ceil(float64(float64(base)*(1+bonus)) - 1e-9))
 }
 
 // keepSharesLive is the routine's live run, from doTick: unless it is waiting

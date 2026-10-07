@@ -21,6 +21,7 @@ func newExpeditionTestEngine(t *testing.T) *game.GameEngine {
 	t.Cleanup(func() { game.DevModeActive = prevDev })
 
 	engine := game.NewGameEngine()
+	engine.GrantTechsForTest("military_tactics") // the tech that opens campaigns
 	if msg := game.DevExecCommand("/age bronze_age", engine); msg != "jumped to bronze_age" {
 		t.Fatalf("dev /age bronze_age failed: %q", msg)
 	}

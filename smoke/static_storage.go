@@ -49,7 +49,9 @@ func staticStorage(defs map[string]config.BuildingDef, income func(res, age stri
 			if inc <= 0 {
 				continue
 			}
-			m := maxStorageIn(defs, age, res)
+			// Typical income assumes every tech up to the age, so the
+			// storage beside it does too.
+			m := float64(maxStorageIn(defs, age, res) * (1 + TechStorage(age)))
 			if h := m / (inc * 3600 / config.TickSeconds); h < row.Hours {
 				row.Resource, row.MaxStorage, row.Income, row.Hours = res, m, inc, h
 			}

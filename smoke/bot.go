@@ -103,6 +103,7 @@ type Bot struct {
 }
 
 // gatherYield matches the command line's per-command cap (ui gatherMaxYield).
+// A tech that adds to hand gathering adds to each of these on top.
 const gatherYield = 25.0
 
 // NewBot returns a bot that plays ge.
@@ -371,6 +372,9 @@ func (b *Bot) keepGarrison(p *plan) {
 // research spends, unless it sits at its cap. Favor and rare deals only when
 // their price would otherwise be lost at the cap. One deal per decision.
 func (b *Bot) takeDeals(p *plan) {
+	if !p.open(config.FeatureDiplomacy) {
+		return // deals wait for a tech the bot has not researched yet
+	}
 	for _, key := range sortedKeys(p.st.Diplomacy.Factions) {
 		for _, d := range p.st.Diplomacy.Factions[key].Deals {
 			if d.Taken || p.amt[d.Give] < d.GiveAmt {
@@ -1882,6 +1886,9 @@ func (b *Bot) festival(p *plan) {
 	if !ok || !c.Unlocked || p.st.NextAgeResReqs["culture"] > 0 || c.Amount < 0.8*c.Storage {
 		return
 	}
+	if !p.open(config.FeatureFestivals) {
+		return // festivals wait for a tech the bot has not researched yet
+	}
 	fs := b.ge.FestivalStatus()
 	if fs.Ready && fs.Culture >= fs.Cost {
 		b.act("festival", "", b.ge.DoFestival())
@@ -1916,6 +1923,6 @@ func (b *Bot) gather(p *plan) {
 		return
 	}
 	if _, err := b.ge.GatherResource(pick, gatherYield); b.act("gather", pick, err) {
-		p.amt[pick] += gatherYield
+		p.amt[pick] += gatherYield + p.st.Research.Mechanics[config.MechanicGatherAmount]
 	}
 }

@@ -107,6 +107,11 @@ func researchProvider(state game.GameState, _ int) string {
 		fmt.Fprintf(&sb, " [gray]Research speed %s: techs take %s of their base time. The times below include it.[-]%s\n",
 			textfmt.SignedPercent(p.Earned), textfmt.Percent(math.Max(0, 1-p.Applied)), poolTag(state, "research_speed"))
 	}
+	// The techs' own cut of research time multiplies what research speed
+	// leaves, and has a line of its own.
+	if f := state.Research.ResearchTime; f > 0 && f < 1 {
+		fmt.Fprintf(&sb, " [gray]Research techs: research time %s. The times below include it.[-]\n", game.ResearchFactorText(f))
+	}
 	// Ancient Knowledge multiplies what is left, so it has a line of its own.
 	if f := state.SuccumbResearchFactor; f > 0 && f < 1 {
 		fmt.Fprintf(&sb, " [gray]Ancient Knowledge: research time %s. The times below include it.[-]\n", game.ResearchFactorText(f))
@@ -188,13 +193,9 @@ func researchProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "     [gray]%s[-]\n", ts.Description)
 			}
 
-			if len(def.Effects) > 0 {
-				var effStrs []string
-				for _, eff := range def.GeneralEffects() {
-					// A bonus a cap would hold back says so before the
-					// knowledge is spent.
-					effStrs = append(effStrs, formatTechEffect(eff)+capTag(state, eff, false, "gray"))
-				}
+			// A bonus a limit would hold back says so before the knowledge
+			// is spent.
+			if effStrs := techEffectTexts(def, state, false); len(effStrs) > 0 {
 				fmt.Fprintf(&sb, "     [gray]Effects: %s[-]\n", strings.Join(effStrs, ", "))
 			}
 		}
@@ -262,10 +263,7 @@ func researchProvider(state game.GameState, _ int) string {
 
 			if ts.Researched {
 				// Compact: show effects
-				var effStrs []string
-				for _, eff := range def.GeneralEffects() {
-					effStrs = append(effStrs, formatTechEffect(eff)+capTag(state, eff, true, "gray"))
-				}
+				effStrs := techEffectTexts(def, state, true)
 				effStr := ""
 				if len(effStrs) > 0 {
 					effStr = "  [gray]" + strings.Join(effStrs, ", ") + "[-]"
@@ -307,26 +305,59 @@ func researchProvider(state game.GameState, _ int) string {
 	return sb.String()
 }
 
-// researchBonusLines lists what the researched techs add together: each
-// bonus pool as a percentage (with a note when a cap holds the pool, every
-// source counted), then the flat amounts as amounts: output per tick,
-// storage and housing.
+// researchBonusLines lists what the researched techs come to together: the
+// tech layer first (output, storage, housing, the cuts of a price or a
+// time, the mechanic numbers), which no cap holds, then the pools techs
+// share with the rest of the game (with a note when a limit holds one),
+// then the flat output of a first source.
 func researchBonusLines(state game.GameState) string {
 	rs := state.Research
-	if len(rs.Bonuses) == 0 && len(rs.Flat) == 0 && len(rs.Storage) == 0 && rs.Housing == 0 {
-		return "  [gray]No research bonuses yet.[-]\n"
-	}
 	var sb strings.Builder
-	for _, key := range sortedKeysOf(rs.Bonuses) {
-		value := rs.Bonuses[key]
-		if value == 0 {
+	line := func(value, what string) {
+		fmt.Fprintf(&sb, "  [green]%-7s[-] %s\n", value, what)
+	}
+	if rs.AllOutput != 0 {
+		line(textfmt.SignedPercent(rs.AllOutput), "All production")
+	}
+	for _, res := range sortedKeysOf(rs.Output) {
+		if v := rs.Output[res]; v != 0 {
+			line(textfmt.SignedPercent(v), textfmt.Capitalize(game.ResourceName(res))+" production")
+		}
+	}
+	if rs.Storage != 0 {
+		line(textfmt.SignedPercent(rs.Storage), "Storage")
+	}
+	if rs.Housing != 0 {
+		line(textfmt.SignedPercent(rs.Housing), "Housing")
+	}
+	for _, cut := range []struct {
+		factor float64
+		what   string
+	}{{rs.BuildCost, "Building costs"}, {rs.BuildTime, "Construction time"}, {rs.ResearchTime, "Research time"}} {
+		if cut.factor > 0 && cut.factor != 1 {
+			line(textfmt.SignedPercent(cut.factor-1), cut.what)
+		}
+	}
+	set := state.Ruleset()
+	for _, key := range sortedKeysOf(rs.Mechanics) {
+		def, ok := set.Mechanic(key)
+		if !ok {
 			continue
 		}
-		color := "green"
-		if value < 0 && key != "build_cost" || value > 0 && key == "build_cost" {
-			color = "red"
+		term := rs.Mechanics[key]
+		switch {
+		case def.Multiplies && term != 1:
+			line(textfmt.SignedPercent(term-1), textfmt.Capitalize(def.Name))
+		case !def.Multiplies && term != 0 && def.Unit == config.UnitPoints:
+			line(textfmt.Signed(term*100), textfmt.Capitalize(def.Name)+", in points")
+		case !def.Multiplies && term != 0:
+			line(textfmt.Signed(term), textfmt.Capitalize(def.Name))
 		}
-		fmt.Fprintf(&sb, "  [%s]%-7s[-] %s%s\n", color, textfmt.SignedPercent(value), formatBonusName(key), poolTag(state, key))
+	}
+	for _, key := range sortedKeysOf(rs.Bonuses) {
+		if value := rs.Bonuses[key]; value != 0 {
+			fmt.Fprintf(&sb, "  [green]%-7s[-] %s%s\n", textfmt.SignedPercent(value), formatBonusName(key), poolTag(state, key))
+		}
 	}
 	var flat []string
 	for _, res := range sortedKeysOf(rs.Flat) {
@@ -337,22 +368,25 @@ func researchBonusLines(state game.GameState) string {
 	if len(flat) > 0 {
 		fmt.Fprintf(&sb, "  [gray]Output:[-]  %s\n", strings.Join(flat, ", "))
 	}
-	var storage []string
-	if v := rs.Storage["all"]; v != 0 {
-		storage = append(storage, textfmt.Signed(v)+" for every resource")
-	}
-	for _, res := range sortedKeysOf(rs.Storage) {
-		if v := rs.Storage[res]; v != 0 && res != "all" {
-			storage = append(storage, textfmt.Signed(v)+" "+game.ResourceName(res))
-		}
-	}
-	if len(storage) > 0 {
-		fmt.Fprintf(&sb, "  [gray]Storage:[-] %s\n", strings.Join(storage, ", "))
-	}
-	if rs.Housing != 0 {
-		fmt.Fprintf(&sb, "  [gray]Housing:[-] %s\n", textfmt.Signed(rs.Housing))
+	if sb.Len() == 0 {
+		return "  [gray]No research bonuses yet.[-]\n"
 	}
 	return sb.String()
+}
+
+// techEffectTexts lists what tech def does in player words, one phrase per
+// effect: the commands it opens first, then its effects, each with a note
+// when a limit holds its pool (researched says whether the tech's own share
+// is already in the pool).
+func techEffectTexts(def config.TechDef, state game.GameState, researched bool) []string {
+	var out []string
+	for _, lock := range state.Ruleset().FeaturesOpenedBy(def.Key) {
+		out = append(out, lock.Opens)
+	}
+	for _, eff := range def.Effects {
+		out = append(out, eff.Text()+capTag(state, eff.Effect(), researched, "gray"))
+	}
+	return out
 }
 
 // formatBonusName names a research/milestone bonus key in glossary words, as

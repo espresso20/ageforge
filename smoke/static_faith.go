@@ -222,36 +222,11 @@ func faithIncomes(set *rules.Set) []faithIncome {
 	return out
 }
 
-// faithModelBonus is the production bonus config.Incomes applies in age:
-// every tech's all-production up to the age and every earlier age's
-// wonder's, capped as the engine caps it.
+// faithModelBonus is what config.Incomes multiplies faith output by in
+// age: the all-production pool the model holds by then, capped as the
+// engine caps it, times the tech layer on faith (config.IncomeFactor).
 func faithModelBonus(set *rules.Set, age string) float64 {
-	idx := set.Indexes()
-	bonus := 0.0
-	for _, d := range set.Buildings() {
-		if j, ok := idx[d.RequiredAge]; !ok || j >= idx[age] || d.Category != "wonder" {
-			continue
-		}
-		for _, e := range d.Effects {
-			if e.Type == "bonus" && e.Target == "production_all" {
-				bonus += e.Value
-			}
-		}
-	}
-	for _, t := range set.Techs() {
-		if j, ok := idx[t.Age]; !ok || j > idx[age] {
-			continue
-		}
-		for _, e := range t.Effects {
-			if e.Kind == config.EffectAllOutput {
-				bonus += e.Value
-			}
-		}
-	}
-	if m := 1 + bonus; m < config.ProductionAllCap {
-		return m
-	}
-	return config.ProductionAllCap
+	return config.IncomeFactor(set.Techs(), set.Indexes(), age, "faith")
 }
 
 // faithStrengthProblems is StaticFaithStrength over a model and a rule (the

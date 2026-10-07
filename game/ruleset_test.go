@@ -230,7 +230,9 @@ func TestPlayLeavesTheRulesetUnchanged(t *testing.T) {
 	if err := ge.EnterAgeForTest("iron_age"); err != nil {
 		t.Fatal(err)
 	}
-	if err := ge.ForceCatastropheForTest(); err != nil {
+	// The day away may have brought the era's own doom: one pending is as
+	// good as one forced.
+	if err := ge.ForceCatastropheForTest(); err != nil && ge.GetState().PendingCatastrophe == "" {
 		t.Fatalf("forcing a catastrophe: %v", err)
 	}
 	if err := ge.Succumb(); err != nil {

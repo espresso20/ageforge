@@ -278,6 +278,16 @@ func (ge *GameEngine) applyWarRaids() {
 				raid.Message = raidMissedMessage(def, raid.Resource)
 			}
 		} else {
+			// The techs' cut of raid losses comes first: the raid that
+			// lands is that much smaller, and the garrison meets what is
+			// left. (A raid that missed stays missed: the cut never turns
+			// one too big to land into one that does.)
+			if f := ge.raidLossFactor(); f != 1 {
+				raid.Amount = float64(raid.Amount * f)
+				if known {
+					raid.Message = raidMessage(def, raid.Amount, raid.Resource)
+				}
+			}
 			if guard > 0 {
 				kept := float64(raid.Amount * guard)
 				raid.Amount -= kept

@@ -356,7 +356,18 @@ func (ge *GameEngine) SetMasteryForTest(mastery map[string]int, record string) {
 }
 
 // buildTicksLocked is def's construction time in the current age: its
-// BuildTicks ÷ k on known ground. Must be called with the lock held.
+// BuildTicks × the techs' factor on construction time, ÷ k on known ground.
+// Must be called with the lock held.
 func (ge *GameEngine) buildTicksLocked(def config.BuildingDef) int {
-	return MasteryTicks(def.BuildTicks, ge.speedK())
+	return BuildTicks(def.BuildTicks, ge.Research.Bonus(config.EffectBuildTime, ""), ge.speedK())
+}
+
+// BuildTicks is how long a building listed at base ticks takes to build
+// with the techs' factor tech on construction time (1 with none, never
+// under config.BuildTimeFloor), on ground of speed k: the factor multiplies
+// the listed time (rounded down, one tick at least), then Era Mastery
+// divides it by k (MasteryTicks). The engine queues construction with it
+// and the panels list times with it.
+func BuildTicks(base int, tech, k float64) int {
+	return MasteryTicks(techTimeTicks(base, tech), k)
 }
