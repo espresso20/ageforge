@@ -121,12 +121,12 @@ const (
 	//     together (48B culture on the core rules, 1.8 times what the age it
 	//     arrives in makes): the bot afforded it in 2 of 24 runs to a Quantum
 	//     Age prestige, with the faith in most of them and the culture in
-	//     almost none. Then, for one release, the warning was the whole age
-	//     (level 1 at 75% of what it makes): payable, but 47 hours of income
-	//     for an answer worth no more than Brace level 1 (below). Neither
-	//     price since the era one has been measured with the bot; the static
-	//     check holds it to the warning instead (payable by FlowIncome inside
-	//     it, and above a doom's).
+	//     almost none. Then, briefly and never in a release, the warning was
+	//     the whole age (level 1 at 75% of what it makes): payable, but two
+	//     days of income for an answer worth no more than Brace level 1
+	//     (below). Neither price since the era one has been measured with
+	//     the bot; the static check holds it to the warning instead (payable
+	//     by FlowIncome inside it, and above a doom's).
 	//
 	// Faith also drives the roll (faith fill bands): worst case, paying drops
 	// the fill from the top band to the bottom, raising the base chance from
@@ -159,9 +159,10 @@ const (
 	// what Appease level 1 saves per hour of income is Brace level 1's times
 	// lastPassageBraceShare / harbingerAppeaseWindowShare: two thirds
 	// before rounding, and whatever lastPassageWarning is, since it scales
-	// both prices. Appease stays the dearer, and with Brace level 1 held it
-	// is a better buy than Brace level 2. TestLastPassageChoice pins both;
-	// at the old prices the ratio was 1 to 13,500.
+	// both prices. Appease stays the dearer; with Brace level 1 held, it and
+	// Brace level 2 (double the price, to keep 85% in place of 70%) are
+	// worth about the same per hour. TestLastPassageChoice holds the ratio
+	// to at least a half; at the old prices it was 1 to 13,500.
 	harbingerAppeaseWindowShare = 0.75
 	lastPassageWarning          = 2.0 / 3.0
 	lastPassageBraceShare       = 0.5

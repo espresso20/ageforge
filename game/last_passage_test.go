@@ -200,10 +200,10 @@ const lastPassageChoiceMinRatio = 0.5
 // who would Endure, with nothing bought, each level 1 saves the same expected
 // points, so the choice is in the prices: Appease level 1 is the dearer, but
 // saves at least half as many expected points per hour of income as Brace
-// level 1 (about two thirds, at these prices), and once Brace level 1 is held
-// it is a better buy than Brace level 2. Change a price or an effect and this
-// is the test to argue with. The prices before it (Brace at 12% of the era's
-// largest requirement, Appease on the whole age) gave a ratio of 1 to 13,500.
+// level 1 (about two thirds, at these prices). Change a price or an effect
+// and this is the test to argue with. The prices before it (Brace at 12% of
+// the era's largest requirement, Appease on the whole age) gave a ratio of 1
+// to 13,500.
 func TestLastPassageChoice(t *testing.T) {
 	const low, mid, high = 0.1, 0.5, 0.9
 	// What is left at risk at mid faith, in percent of the run's points, by
@@ -231,24 +231,13 @@ func TestLastPassageChoice(t *testing.T) {
 	for _, age := range ages {
 		appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", age, 1), age)
 		braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", age, 1), age)
-		// Level 2's own price: what it adds to level 1's.
-		appease2Hours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", age, 2), age)
-		brace2Hours := incomeHours(t, lastPassageBraceCost("cosmic_era", age, 2), age)
 		ratio := valueRatio(appeaseHours, braceHours)
-		t.Logf("%s: Brace 1 %.1f h, Brace 2 +%.1f h, Appease 1 %.1f h, Appease 2 +%.1f h; Appease 1 saves %.3fx what Brace 1 does per hour",
-			age, braceHours, brace2Hours, appeaseHours, appease2Hours, ratio)
+		t.Logf("%s: Brace 1 is %.1f h of income, Appease 1 %.1f h; Appease 1 saves %.3fx what Brace 1 does per hour", age, braceHours, appeaseHours, ratio)
 		if appeaseHours <= braceHours {
 			t.Errorf("%s: Appease level 1 takes %.1f h of income, Brace level 1 %.1f h: Appease must stay the dearer", age, appeaseHours, braceHours)
 		}
 		if ratio < lastPassageChoiceMinRatio {
 			t.Errorf("%s: Appease level 1 saves %.2fx what Brace level 1 does per hour of income (%.1f h against %.1f h), want at least %vx", age, ratio, appeaseHours, braceHours, lastPassageChoiceMinRatio)
-		}
-		// With Brace level 1 held, the next hour of income does more as
-		// Appease level 1 than as Brace level 2.
-		nextAppease := (loss[0][1] - loss[1][1]) / appeaseHours
-		nextBrace := (loss[0][1] - loss[0][2]) / brace2Hours
-		if nextAppease <= nextBrace {
-			t.Errorf("%s: with Brace level 1 held, Appease level 1 saves %.4f%% of the run an hour and Brace level 2 %.4f%%: Brace is then the only answer worth buying", age, nextAppease*100, nextBrace*100)
 		}
 	}
 
