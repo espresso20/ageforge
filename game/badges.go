@@ -150,15 +150,17 @@ func (b *badgeBook) listens(kind, subject string) bool {
 }
 
 // tracksBuilt reports whether a badge counts first-time builds of def (by
-// building or by lineage), so the run must keep its build marks.
+// building or by lineage, across runs or within one), so the run must keep
+// its build marks.
 func (b *badgeBook) tracksBuilt(def config.BuildingDef) bool {
-	if b.counters[config.BadgeEvBuilt] || b.counters[config.BadgeEvBuilt+"."+def.Key] {
+	named := func(name string) bool { return b.counters[name] || b.runTallies[name] }
+	if named(config.BadgeEvBuilt) || named(config.BadgeEvBuilt+"."+def.Key) {
 		return true
 	}
 	if def.LineageKey == "" {
 		return false
 	}
-	return b.counters[config.BadgeEvBuiltLineage] || b.counters[config.BadgeEvBuiltLineage+"."+def.LineageKey]
+	return named(config.BadgeEvBuiltLineage) || named(config.BadgeEvBuiltLineage+"."+def.LineageKey)
 }
 
 // RunFacts is what a run remembers about itself for the records: how often

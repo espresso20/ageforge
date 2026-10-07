@@ -116,8 +116,12 @@ const (
 // counts: the kind alone ("prestige") or the kind and a subject
 // ("built.lineage.housing"). Only counters a badge names are kept.
 //
-// Nothing is reported for a run the developer console has changed, and a
-// forced catastrophe never counts.
+// A run the developer console has changed earns nothing from these and
+// moves no counter (only the integrity badges are judged then). A forced
+// catastrophe is one the console forced, so it never counts either.
+//
+// BadgeEvBuilt and BadgeEvBuiltLineage are reported only for the buildings
+// a badge counts, so the run keeps build marks for those alone.
 const (
 	// BadgeEvTick is one game tick. Milestones are judged on it.
 	BadgeEvTick = "tick"
