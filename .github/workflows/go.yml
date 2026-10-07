@@ -59,11 +59,13 @@ jobs:
             GOOS=${target%/*} GOARCH=${target#*/} go build -o /dev/null .
           done
 
-      # Each package gets 20 minutes, not go test's default 10: under -race
-      # the flavor package took 599s on master on 2026-10-07 and timed out
-      # on the next pull request. The job's own limit above still applies.
+      # Each package gets 15 minutes, not go test's default 10. Under the
+      # race detector on these runners the flavor package alone takes 9 to
+      # 10 while the ui and map packages share the cores, and on 2026-10-07
+      # it timed out three times with nothing failing. 15 still reports a
+      # real hang before the job's own limit above.
       - name: go test -race
-        run: go test -race -timeout 20m ./...
+        run: go test -race -timeout 15m ./...
 
   # The smoke suite's fast tier on every pull request (see CONTRIBUTING.md,
   # "Smoke testing"): static gates, docsync, a few seeds of play, save/load,

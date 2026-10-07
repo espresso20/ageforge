@@ -186,6 +186,11 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	// ─── Resource Rates ───
+	// What research adds up to: the tech tree is a map, so the totals
+	// live here.
+	sb.WriteString("\n[gold]═══ Research bonuses ═══[-]\n\n")
+	sb.WriteString(researchSummaryLines(state))
+
 	sb.WriteString("\n[gold]═══ Resource rates ═══[-]\n\n")
 	rateKeys := make([]string, 0, len(state.Resources))
 	for k, rs := range state.Resources {

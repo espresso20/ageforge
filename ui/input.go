@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -33,6 +34,11 @@ type CommandResult struct {
 	OpenCatastrophe bool
 	// MapWorld opens the Map panel (OverlayName "map") on the known world.
 	MapWorld bool
+	// ResearchZoom ("close" or "far") and ResearchCard (a tech key) say how
+	// the Research panel (OverlayName "techs") opens: at that zoom, on that
+	// tech's card. Empty leaves the panel as it was.
+	ResearchZoom string
+	ResearchCard string
 	// Icons asks the dashboard to start the guided icons check.
 	Icons bool
 	// MapPref is a map setting change (map style, map glyphs, minimap) for
@@ -1626,6 +1632,22 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 	if subcmd == "list" {
 		return cmdResearchList(engine)
 	}
+	if subcmd == "tree" {
+		switch zoom := strings.ToLower(strings.Join(args[1:], " ")); zoom {
+		case "", "close", "far":
+			return CommandResult{OverlayName: "techs", ResearchZoom: zoom}
+		}
+		return CommandResult{Message: usageFor("research tree"), Type: "error"}
+	}
+	if subcmd == "card" {
+		// The card names a tech, so it opens only on one the player may see.
+		state := engine.GetState()
+		key := strings.ToLower(strings.Join(args[1:], "_"))
+		if def, ok := state.Ruleset().Tech(key); !ok || !game.SightOf(&state).Age(def.Age) {
+			return CommandResult{Message: "No tech '" + strings.Join(args[1:], " ") + "' in sight. Type research to see the tree.", Type: "error"}
+		}
+		return CommandResult{OverlayName: "techs", ResearchCard: key}
+	}
 	if subcmd == "cancel" {
 		if err := engine.CancelResearch(); err != nil {
 			return errorResult(err)
@@ -1957,6 +1979,9 @@ func cmdCampaignList(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 	lines = append(lines, "[gold]Available Campaigns:[-]")
+	if note := strings.TrimRight(lockNotes(state, config.FeatureCampaigns), "\n"); note != "" {
+		lines = append(lines, note)
+	}
 
 	appendExpeditionGroup(&lines, "Campaigns", state.Military.Expeditions, game.ExpeditionMilitary, state)
 

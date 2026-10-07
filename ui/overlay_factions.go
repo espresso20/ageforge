@@ -60,6 +60,7 @@ func factionsProvider(state game.GameState, w int) string {
 	writeHeadedLine(&sb, usable, "gold", "═══ Factions ═══",
 		fmt.Sprintf("%d met · %d undiscovered", met, pending))
 	sb.WriteString("\n")
+	sb.WriteString(lockNotes(state, config.FeatureDiplomacy))
 
 	writeLiveFactionEffects(&sb, state, defs, usable, tally)
 	writeGeographicSociety(&sb, state)

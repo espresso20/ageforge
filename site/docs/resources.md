@@ -187,7 +187,7 @@ Bonuses to one resource ("+10% gold production" from a milestone or a wonder) ha
 
 - The Stats panel's Active Multipliers shows what counts, with a note when a pool is past its cap: `All production +200% capped at +200%: +405% earned`. The sources beside it still list everything you earned.
 - The Milestones and Wonders panels put a note beside every reward and wonder effect in a capped pool, and one still to earn says what the cap would leave of it before you work for it: `(capped: no effect now)` or `(capped: +5% of it counts now)`.
-- The Research panel never shows one: no cap holds a tech's bonus.
+- The tech tree never shows one: no cap holds a tech's bonus.
 - The `festival` command warns you before you pay when the cap would swallow the festival.
 - The log adds a line when a bonus you just earned is capped: a milestone, a wonder, an awakening, an epoch event, a festival or a boon.
 

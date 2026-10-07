@@ -244,6 +244,9 @@ type Stats struct {
 	StarvationDeaths      int            `json:"starvation_deaths"`
 	Actions               map[string]int `json:"bot_actions"`
 	ActionErrors          map[string]int `json:"bot_action_errors"`
+	// FateAtAdvance counts the advances that waited because a fated doom
+	// had to settle first: its harbinger came to the gate, or it struck.
+	FateAtAdvance int `json:"fate_at_advance,omitempty"`
 
 	// CatastrophesByCycle counts CatastrophesRolled per prestige cycle (the
 	// Last Passage included), for the catastrophes-per-run comparison;
@@ -878,6 +881,12 @@ func (r *runner) control(st *game.GameState) bool {
 			}
 			r.checkStorageFeasible(after)
 			*st = after
+		} else if after := r.ge.GetState(); after.PendingCatastrophe != pendingBefore || after.Harbinger != nil {
+			// The era's fated doom would have been outrun: its harbinger
+			// steps into the way, or the doom strikes, and the advance
+			// waits (game/fate.go). The game's rule, not a mistake of the
+			// bot's, so it is counted on its own.
+			r.res.Stats.FateAtAdvance++
 		} else {
 			r.bot.Errors["advance"]++
 		}
