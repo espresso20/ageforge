@@ -424,26 +424,29 @@ func (r *runner) closeFate(ifOpen string) {
 type PriceRow struct {
 	Epoch       string `json:"epoch"`
 	TargetEpoch string `json:"target_epoch"`
-	// Age is the age the harbinger arrives in. A doom's Appease is priced on
-	// it (what that age makes in the shortest warning); the price then holds
+	// Age is the age the harbinger arrives in. Appease is priced on it (what
+	// that age makes in the thread's shortest warning); the price then holds
 	// for the whole thread, and storage only grows after it.
-	Age       string             `json:"age"`
-	AppeaseL1 map[string]float64 `json:"appease_l1_cost"`
-	BraceL1   map[string]float64 `json:"brace_l1_cost"`
+	Age string `json:"age"`
+	// WarningTicks is that shortest warning in ticks at 1x: a fifth of the
+	// age's pacing target for a doom, the whole of it for the Last Passage.
+	WarningTicks float64            `json:"appease_warning_ticks"`
+	AppeaseL1    map[string]float64 `json:"appease_l1_cost"`
+	BraceL1      map[string]float64 `json:"brace_l1_cost"`
 	// MaxStorage is -1 where an uncapped storage building covers the resource.
 	MaxStorage map[string]float64 `json:"max_storage_in_age"`
 }
 
 // HarbingerPrices is the level-1 prices of every thread whose doom can be
-// answered (game.HarbingerPriceTable): a fated doom's for each age its
-// harbinger can arrive in, and the Last Passage's, next to the most storage
-// reachable in that age. The Stone Era is skipped: only false prophets come
-// there, and nothing can strike.
+// answered (game.HarbingerPriceTable), for each age its harbinger can arrive
+// in: a fated doom's, and the Last Passage's (a TargetEpoch of ""), next to
+// the most storage reachable in that age. The Stone Era is skipped: only
+// false prophets come there, and nothing can strike.
 func HarbingerPrices() []PriceRow {
 	var rows []PriceRow
 	for _, p := range game.HarbingerPriceTable() {
 		row := PriceRow{
-			Epoch: p.Epoch, TargetEpoch: p.Epoch, Age: p.Age,
+			Epoch: p.Epoch, TargetEpoch: p.Epoch, Age: p.Age, WarningTicks: p.WarningTicks,
 			AppeaseL1: p.AppeaseL1, BraceL1: p.BraceL1, MaxStorage: map[string]float64{},
 		}
 		if p.LastPassage {
