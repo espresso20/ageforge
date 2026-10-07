@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "account_id": "7d4b1dc4a358680b5dd122645c517cc0",
+  "display_name": "Fixture Full",
+  "created": "2026-10-07T10:33:03.350753-05:00",
+  "last_seen": "2026-10-07T10:33:03.350753-05:00",
+  "unlocks": {
+    "themes": [
+      "bronze",
+      "parchment"
+    ]
+  },
+  "stats": {
+    "total_prestiges": 11,
+    "highest_age": "information_age",
+    "prestiges_by_age": {
+      "information_age": 1,
+      "medieval_age": 1,
+      "modern_age": 9
+    }
+  },
+  "achievements": [
+    "first_prestige",
+    "prestige_x10",
+    "reached_iron",
+    "reached_modern"
+  ],
+  "prefs": {
+    "active_theme": "parchment",
+    "map_glyphs": "ascii"
+  },
+  "_sig": "26d859d44f0de251241c09fc5164d20e2aa0c41aacb8086439470b32feb25ee2"
+}

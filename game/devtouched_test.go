@@ -3,10 +3,13 @@ package game
 import (
 	"strings"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
-// The dev console must not earn account records (achievements audit B3). Every test runs
-// in a temp data root (isolateAccountDir), never data/.
+// The developer console and the account. A run a dev command has changed is marked (the
+// mark is saved with the run), and that is all: it records and earns like any other run.
+// Every test runs in a temp data root (isolateAccountDir), never data/.
 
 // withDevMode turns the dev console on for the test and restores it (and god mode) after.
 func withDevMode(t *testing.T) {
@@ -42,25 +45,11 @@ func devLineCount(ge *GameEngine) int {
 	return n
 }
 
-// assertNoRecords fails if acct holds any lifetime stat or achievement, in memory or on disk.
-func assertNoRecords(t *testing.T, acct *Account) {
-	t.Helper()
-	stats, ach := acct.LifetimeStats()
-	if stats.TotalPrestiges != 0 || stats.HighestAge != "" || len(ach) != 0 {
-		t.Errorf("a dev-touched run recorded to the account: stats=%+v achievements=%v", stats, ach)
-	}
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
-	if disk := slotAccount(t, acct.AccountID); disk.Stats.TotalPrestiges != 0 || len(disk.Achievements) != 0 {
-		t.Errorf("a dev-touched run's records reached the account file: %+v %v", disk.Stats, disk.Achievements)
-	}
-}
-
-// TestDevTouchedRunGrantsNothing is B3: with dev mode on, `/age modern_age` then prestige
-// granted first_prestige (and a lifetime prestige with no highest age). A run the dev
-// console has changed records nothing, and says so once in the log.
-func TestDevTouchedRunGrantsNothing(t *testing.T) {
+// TestDevTouchedRunStillRecords: the developer console does not stand between a run and
+// the account. With dev mode on, `/age modern_age` then a prestige records the prestige and
+// earns its badge like any other run; if the condition is met, the badge is earned. The run
+// is still marked as changed by the console, and the log says so once.
+func TestDevTouchedRunStillRecords(t *testing.T) {
 	isolateAccountDir(t)
 	withDevMode(t)
 	ge, acct := devEngine(t, "Dev Tester")
@@ -69,8 +58,8 @@ func TestDevTouchedRunGrantsNothing(t *testing.T) {
 		t.Fatalf("/age: %q", msg)
 	}
 	st := ge.GetState()
-	if !st.DevTouched || st.AccountRecords {
-		t.Errorf("after /age: DevTouched=%v AccountRecords=%v", st.DevTouched, st.AccountRecords)
+	if !st.DevTouched || !st.AccountRecords {
+		t.Errorf("after /age: DevTouched=%v AccountRecords=%v, want marked and still recording", st.DevTouched, st.AccountRecords)
 	}
 	if n := devLineCount(ge); n != 1 {
 		t.Errorf("the dev-touched notice was logged %d times, want once", n)
@@ -85,7 +74,23 @@ func TestDevTouchedRunGrantsNothing(t *testing.T) {
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatalf("DoPrestige: %v", err)
 	}
-	assertNoRecords(t, acct)
+	stats, earned := acct.LifetimeStats()
+	if stats.TotalPrestiges != 1 || stats.PrestigesByAge["modern_age"] != 1 || len(earned) != 1 || earned[0] != badgePrestige1 {
+		t.Errorf("a dev-touched run's prestige did not record: stats=%+v badges=%v", stats, earned)
+	}
+	if got := counter(acct, config.BadgeEvPrestige); got != 1 {
+		t.Errorf("the prestige counter is %v, want 1", got)
+	}
+	if err := acct.FlushIfDirty(); err != nil {
+		t.Fatal(err)
+	}
+	if disk := slotAccount(t, acct.AccountID); disk.Stats.TotalPrestiges != 1 || !hasBadge(disk, badgePrestige1) || disk.Tampered || disk.BadgesTampered {
+		t.Errorf("on disk: %+v, badges %v, flags %v %v", disk.Stats, disk.EarnedBadges(), disk.Tampered, disk.BadgesTampered)
+	}
+	// Nothing about the console crosses a badge: that is for edited files.
+	if e := acct.Badges[badgePrestige1]; e.Flags != 0 {
+		t.Errorf("a badge earned in a dev-touched run is flagged: %+v", e)
+	}
 }
 
 // TestDevTouchedSurvivesSaveLoadAndPrestige: the flag is saved with the run, so reloading
@@ -116,7 +121,10 @@ func TestDevTouchedSurvivesSaveLoadAndPrestige(t *testing.T) {
 	if !ge2.GetState().DevTouched {
 		t.Error("prestige cleared the dev-touched flag")
 	}
-	assertNoRecords(t, acct)
+	// The mark is a record of the run, not a gate: the prestige counted.
+	if stats, _ := acct.LifetimeStats(); stats.TotalPrestiges != 1 {
+		t.Errorf("a marked run's prestige did not record: %+v", stats)
+	}
 
 	// Still set after another save and load.
 	if err := ge2.SaveGame("dev"); err != nil {
@@ -156,8 +164,8 @@ func TestDevModeWithoutCommandsStillRecords(t *testing.T) {
 
 	prestigeNow(t, ge)
 	stats, ach := acct.LifetimeStats()
-	if stats.TotalPrestiges != 1 || len(ach) != 1 || ach[0] != "first_prestige" {
-		t.Errorf("a clean run with dev mode on did not record: stats=%+v achievements=%v", stats, ach)
+	if stats.TotalPrestiges != 1 || len(ach) != 1 || ach[0] != badgePrestige1 {
+		t.Errorf("a clean run with dev mode on did not record: stats=%+v badges=%v", stats, ach)
 	}
 }
 

@@ -52,10 +52,11 @@ type GameState struct {
 	// DevTouched is true once the developer console has changed this run (saved with
 	// the run; see GameEngine.markDevTouchedLocked).
 	DevTouched bool
-	// AccountRecords is true when this run records to the held account: achievements,
-	// lifetime stats and theme unlocks. It is false for accountless play, a dev-touched
-	// run, or a run that belongs to another account (the game in memory after a switch).
-	// The dashboard grants milestone themes only while it is true.
+	// AccountRecords is true when this run records to the held account: badges,
+	// lifetime stats and theme unlocks. It is false for accountless play and for a run
+	// that belongs to another account (the game in memory after a switch). A run the
+	// developer console has changed records like any other. The dashboard grants
+	// milestone themes only while it is true.
 	AccountRecords bool
 	// Seed is this run's master RNG seed (see GameEngine.seed) — surfaced for
 	// reproducibility/debugging. Persisted via GameSave.Seed, not through this
@@ -154,16 +155,17 @@ type GameState struct {
 }
 
 // AccountStatsView is the read-only UI projection of the account's lifetime stats
-// and achievements (the accounts design §3.3 / Phase 6). It is a copy — the account never
-// hands the UI its mutable backing slices. Achievements holds unlocked keys; the UI
-// resolves human names via game.AchievementName.
+// and badges (the accounts design §3.3 / Phase 6). It is a copy — the account never
+// hands the UI its mutable backing slices. Badges is every badge as the player may see
+// it: a locked badge the spoiler rules withhold is a silhouette with no text in it
+// (BadgeView.Hidden), so no screen has to decide what to hide.
 type AccountStatsView struct {
 	DisplayName          string
 	TotalPrestiges       int
 	HighestAge           string
 	CivilizationsStarted int
-	SavesCompleted       int
-	Achievements         []string
+	Badges               []BadgeView
+	BadgeSummary         BadgeSummary
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.

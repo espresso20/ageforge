@@ -58,6 +58,10 @@ type Set struct {
 	chains         []config.MilestoneChainDef
 	titles         []config.TitleDef
 
+	badges     []config.BadgeDef // hand-written, then each family's
+	badgeByKey map[string]config.BadgeDef
+	badgeAlias map[string]string // an older account file's key -> badge key
+
 	events        []config.EventDef
 	eraEvents     []config.EventDef
 	eventByKey    map[string]config.EventDef
@@ -145,6 +149,7 @@ func Compile(src Source) *Set {
 	s.derive()
 	s.buildNames()
 	s.buildCounts()
+	s.buildBadges(src.Badges, src.BadgeFamilies)
 	return s
 }
 
@@ -297,6 +302,9 @@ func (s *Set) indexDefs() {
 
 // Ages returns the ages in order.
 func (s *Set) Ages() []config.AgeDef { return slices.Clone(s.ages) }
+
+// NumAges is how many ages the set has.
+func (s *Set) NumAges() int { return len(s.ageKeys) }
 
 // AgeKeys returns the age keys in order.
 func (s *Set) AgeKeys() []string { return slices.Clone(s.ageKeys) }

@@ -148,11 +148,18 @@ type GameSave struct {
 	// Integrity fields
 	CheaterBadge bool `json:"cheater_badge,omitempty"`
 	EliteBadge   bool `json:"elite_badge,omitempty"`
-	// DevTouched marks a run the developer console changed: it records nothing to the
-	// account. Kept through prestige and Succumb, cleared by a new game. omitempty, so
-	// clean saves keep their bytes and signatures; signed like every field, so removing
-	// it by hand marks the save modified.
+	// DevTouched marks a run the developer console changed. It is a record only: such a
+	// run earns on the account like any other. Kept through prestige and Succumb, cleared
+	// by a new game. omitempty, so clean saves keep their bytes and signatures; signed
+	// like every field, so removing it by hand marks the save modified.
 	DevTouched bool `json:"dev_touched,omitempty"`
+	// RunFacts is what the run remembers about itself for the account's badges
+	// (badges.go): how often each event happened, and the build marks that keep a
+	// sold and rebuilt building from counting twice. It starts over with the run.
+	// omitempty, and absent on a save from before it: that save loads with the
+	// facts unknown (RunFacts.Whole false), keeps its bytes' signature, and tracks
+	// from there.
+	RunFacts *RunFacts `json:"run_facts,omitempty"`
 	// ParentName records the save this one branched from, for the save-lineage
 	// tree (Phase 1: plumbed through but always "" — branching lands in Phase 2).
 	// Legacy saves lack the field → "" → a root. omitempty keeps current saves
@@ -678,6 +685,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CheaterBadge:           ge.cheaterBadge,
 		EliteBadge:             ge.eliteBadge,
 		DevTouched:             ge.devTouched,
+		RunFacts:               ge.runFactsSaveCopy(),
 		ParentName:             ge.activeParentName,
 		CurrentEpoch:           ge.currentEpoch,
 		EpochEventFired:        copyBoolMap(ge.epochEventFired),
@@ -942,17 +950,24 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.cheaterBadge = save.CheaterBadge
 	ge.eliteBadge = save.EliteBadge
 
-	// The dev console flag belongs to the run, like the badges. It is restored before
-	// the offline catch-up below, which can advance an age, so a dev-touched run stays
-	// out of the account's records then too. God mode still on from earlier play makes
-	// this run free to build, so it marks the run as well. The loaded run belongs to the
-	// held account from here on (its saves go to that account's slot).
+	// The dev console flag belongs to the run, like the badges. God mode still on from
+	// earlier play makes this run free to build, so it marks the run as well. The loaded
+	// run belongs to the held account from here on (its saves go to that account's slot).
 	ge.devTouched = save.DevTouched
 	if DevGodMode {
 		ge.markDevTouchedLocked()
 	}
 	ge.runAccountID = ge.accountIDLocked()
 	ge.runOrphaned = false
+	// The run's facts for the badges. A save from before them has none: the run's
+	// past is unknown (Whole stays false), except that a run still in its first age
+	// entered it at tick 0.
+	ge.runFacts = RunFacts{}
+	if save.RunFacts != nil {
+		ge.runFacts = save.RunFacts.clone()
+	} else if pos, ok := ge.rules.Index(save.Age); ok && pos == 0 {
+		ge.runFacts.AgeKnown = true
+	}
 
 	// Restore Phase 8: epoch system
 	if save.CurrentEpoch != "" {
@@ -1054,6 +1069,27 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// before offline catch-up moves it on.
 	ge.sessionStart = ge.sessionMarkLocked(save.Timestamp)
 
+	// Load succeeded: this is now the active slot a bare `save` writes to. We're
+	// still under the write lock (ge.mu.Lock at the top of this function), so set
+	// the field DIRECTLY — calling SetActiveSaveName would re-acquire the lock and
+	// deadlock. Set before the catch-up below, so a badge earned while away names
+	// this save as its run.
+	ge.activeSaveName = filename
+	// Adopt the loaded save's lineage parent (empty for legacy/root saves).
+	ge.activeParentName = save.ParentName
+
+	// A day the account was played on, and what the load itself says about the
+	// save, for the integrity badges. These are facts about the session, not the
+	// run, so they go to the account only: loading a save must not change what
+	// the save says happened in it.
+	ge.noteDayLocked()
+	if ge.cheaterBadge {
+		ge.judgeBadges(Event{Kind: config.BadgeEvSaveModified})
+	}
+	if ge.eliteBadge {
+		ge.judgeBadges(Event{Kind: config.BadgeEvSaveElite})
+	}
+
 	// Apply offline progress for time since save
 	ge.applyOfflineProgress(time.Since(save.Timestamp))
 
@@ -1067,14 +1103,6 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	if treeGraced {
 		ge.addLog("info", ge.treeNotice(save.TreeVersion))
 	}
-
-	// Load succeeded: this is now the active slot a bare `save` writes to. We're
-	// still under the write lock (ge.mu.Lock at the top of this function), so set
-	// the field DIRECTLY — calling SetActiveSaveName would re-acquire the lock and
-	// deadlock.
-	ge.activeSaveName = filename
-	// Adopt the loaded save's lineage parent (empty for legacy/root saves).
-	ge.activeParentName = save.ParentName
 
 	// Tell the UI a different game state is live (e.g. so a pending catastrophe
 	// modal the player closed in the old session is shown again). Handlers run
@@ -1231,6 +1259,25 @@ func ListSaves() ([]string, error) {
 		}
 	}
 	return saves, nil
+}
+
+// SavesOnSplash is what the main menu needs to know about the active account's saves
+// before any is loaded: whether there is one at all, and whether one carries a valid
+// forge master's proof. It looks at every save in the slot. (The menu used to look only
+// at the file named autosave, but a game is saved under the name it was started with, so
+// for a named game it found nothing: no elite line, and New game preselected over Load.)
+func SavesOnSplash() (exists, elite bool) {
+	names, err := ListSaves()
+	if err != nil {
+		return false, false
+	}
+	for _, name := range names {
+		exists = true
+		if _, e := PeekSaveBadges(name); e {
+			return true, true
+		}
+	}
+	return exists, false
 }
 
 // SaveInfo holds metadata about a save file, parsed from the save's JSON

@@ -41,6 +41,11 @@ type Source struct {
 	MilestoneChains []config.MilestoneChainDef
 	MilestoneTitles []config.TitleDef
 
+	// Badges is the hand-written badges; BadgeFamilies the families Compile
+	// expands into one badge per row of a table above.
+	Badges        []config.BadgeDef
+	BadgeFamilies []config.BadgeFamilyDef
+
 	// Events is the random pool; EraEvents the ones only one era rolls.
 	// GoodEraEvents and ChallengingEraEvents are the pools an era's entry
 	// rolls from. Awakenings fire once, on entering their age.
@@ -105,6 +110,8 @@ func FromConfig() Source {
 		Milestones:           config.Milestones(),
 		MilestoneChains:      config.MilestoneChains(),
 		MilestoneTitles:      config.MilestoneTitles(),
+		Badges:               config.Badges(),
+		BadgeFamilies:        config.BadgeFamilies(),
 		Events:               config.RandomEvents(),
 		EraEvents:            config.EpochExclusiveEvents(),
 		GoodEraEvents:        config.GoodEpochEvents(),

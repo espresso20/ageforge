@@ -20,6 +20,11 @@ import (
 
 // accountSchemaVersion is the on-disk schema version of account.json. Bumped only
 // for migrations; readers default unknown/older fields to zero (the accounts design §3.3).
+//
+// account.json is exactly what every build since accounts shipped signs and verifies.
+// Badges do not live in it: they have a file of their own beside it (badgeFileName,
+// account_badges.go), so a build from before badges reads and writes account.json as it
+// always did and can never read it as modified.
 const accountSchemaVersion = 1
 
 // accountFileName is the fixed base name of the account file under the data dir.
@@ -220,10 +225,17 @@ type AccountUnlocks struct {
 // AccountStats holds lifetime, cross-save aggregates (DATA, the accounts design §3.3).
 // Phase 1 only round-trips these; the engine hooks land in Phase 6.
 type AccountStats struct {
-	TotalPrestiges       int    `json:"total_prestiges,omitempty"`
-	HighestAge           string `json:"highest_age,omitempty"`
-	CivilizationsStarted int    `json:"civilizations_started,omitempty"`
-	SavesCompleted       int    `json:"saves_completed,omitempty"`
+	TotalPrestiges int    `json:"total_prestiges,omitempty"`
+	HighestAge     string `json:"highest_age,omitempty"`
+	// CivilizationsStarted counts the runs begun on the account: every new game, and
+	// the run that follows each prestige and each Succumb (RecordCivilizationStarted).
+	CivilizationsStarted int `json:"civilizations_started,omitempty"`
+	// SavesCompleted is retired. Nothing ever counted it, and it has no meaning the
+	// game can stand behind: a save is never completed (there is no ending, and the
+	// closest thing, a prestige, is Total Prestiges). It is not shown anywhere. The
+	// field stays so that a file or an export that carries the key still verifies and
+	// keeps it.
+	SavesCompleted int `json:"saves_completed,omitempty"`
 	// PrestigesByAge counts prestiges by the age they were made from (Pacing
 	// v2), so badges can tell an early taste (the Medieval to the Atomic
 	// Age) from a full run (the Modern Age or deeper, PrestigeRunAge).
@@ -266,9 +278,26 @@ type Account struct {
 	LastSeen    time.Time `json:"last_seen,omitempty"`
 
 	// --- meta-progression (DATA) ---
-	Unlocks      AccountUnlocks `json:"unlocks,omitempty"`
-	Stats        AccountStats   `json:"stats,omitempty"`
-	Achievements []string       `json:"achievements,omitempty"`
+	Unlocks AccountUnlocks `json:"unlocks,omitempty"`
+	Stats   AccountStats   `json:"stats,omitempty"`
+	// Achievements is the list of account achievements a build from before badges
+	// keeps. The four became badges (each badge lists the key as an alias):
+	// ensureBadges grants a badge for a key found here, and earning such a badge
+	// adds its key here, so both kinds of build show the same thing.
+	Achievements []string `json:"achievements,omitempty"`
+	// Badges is the earned badges by key; Counters the lifetime counts badges are
+	// judged on (only the ones a badge names); Days the calendar days the account
+	// was played on. They are NOT part of account.json (json:"-") or its signature:
+	// they are read from and written to the badge file beside it (account_badges.go).
+	Badges   map[string]BadgeEarned `json:"-"`
+	Counters map[string]float64     `json:"-"`
+	Days     []string               `json:"-"`
+	// BadgesTampered is the badge file's own tamper mark: its signature did not match,
+	// or it was signed for another account. Every badge in the file is then crossed,
+	// and so is every badge earned while it is set. It is saved in the badge file and
+	// sticks, as Tampered does for account.json. An edited badge file never flags
+	// account.json, and the other way round.
+	BadgesTampered bool `json:"-"`
 
 	// --- preferences (travel with the account) ---
 	Prefs AccountPrefs `json:"prefs,omitempty"`
@@ -298,6 +327,17 @@ type Account struct {
 	// engine's periodic autosave block (outside ge.mu) calls FlushIfDirty, which Saves
 	// once if dirty and clears the flag. json:"-" keeps it off disk and out of the sig.
 	dirty bool `json:"-"`
+
+	// pendingEarned is the badges earned and not yet announced: the dashboard drains
+	// it (GameEngine.DrainEarnedBadges) and writes the toast and the log line. Not
+	// saved: a badge earned just before the game closes is simply in the list.
+	pendingEarned []string
+
+	// badgeDisk is the badge file's bytes as last read or written (nil: no file), so
+	// Save rewrites it only when the badges changed. badgeUnreadable marks a file
+	// that would not parse: it is set aside, not overwritten, at the next write.
+	badgeDisk       []byte
+	badgeUnreadable bool
 
 	// mu guards the unlock/prefs reads and writes (and the Save inside the mutating
 	// methods): the account is read from the UI goroutine (HasTheme/ActiveTheme/
@@ -423,6 +463,7 @@ func LoadAccount() (*Account, bool, error) {
 		// Signature present but mismatched → tampered. Flag it, still load it.
 		acct.Tampered = true
 	}
+	acct.loadBadgeFile(filepath.Dir(path))
 	// Confirm the loaded account as active (the loaded id is authoritative over the pointer).
 	setActiveAccountID(acct.AccountID)
 	return &acct, true, nil
@@ -464,10 +505,18 @@ func CreateNamedAccount(name string) (*Account, error) {
 		acct.Unlocks = prior.Unlocks
 		acct.Stats = prior.Stats
 		acct.Achievements = append([]string(nil), prior.Achievements...)
+		// The badges come along too. They are signed again for the new ID when the
+		// account is saved: this is the one way a badge file changes owner.
+		acct.Badges = mergeBadges(prior.Badges, nil)
+		acct.Counters = mergeCounters(prior.Counters, nil)
+		acct.Days = mergeDays(prior.Days, nil)
+		acct.BadgesTampered = prior.BadgesTampered
 		acct.Prefs = prior.Prefs
 		// Carried data keeps its tamper flag: re-keying must not launder an edited file.
 		acct.Tampered = prior.Tampered
 	}
+	// And a badge file already in the slot the name leads to, if there is one.
+	acct.adoptBadgeFile()
 
 	// Switch the active account to the new name-derived id; Save writes into that
 	// account's own slot, <root>/accounts/<id>/account.json.
@@ -520,14 +569,16 @@ func accountPath() string {
 // from a slot's loaded account.json and never holds the live *Account, so a consumer can
 // neither mutate account state nor race a writer.
 type AccountSummary struct {
-	AccountID      string    `json:"account_id"`
-	DisplayName    string    `json:"display_name"`
-	HighestAge     string    `json:"highest_age"`
-	TotalPrestiges int       `json:"total_prestiges"`
-	Achievements   int       `json:"achievements"`
-	LastSeen       time.Time `json:"last_seen"`
-	Active         bool      `json:"active"`
-	Tampered       bool      `json:"tampered"`
+	AccountID      string `json:"account_id"`
+	DisplayName    string `json:"display_name"`
+	HighestAge     string `json:"highest_age"`
+	TotalPrestiges int    `json:"total_prestiges"`
+	// Badges is how many badges the account holds (integrity badges left out when the
+	// count is made with a ruleset to tell them by).
+	Badges   int       `json:"badges"`
+	LastSeen time.Time `json:"last_seen"`
+	Active   bool      `json:"active"`
+	Tampered bool      `json:"tampered"`
 }
 
 // loadAccountFromSlot reads + verifies the account.json in a SPECIFIC slot by id, WITHOUT
@@ -564,6 +615,7 @@ func loadAccountFromSlot(id string) (*Account, bool, error) {
 	if !verifyAccount(&acct) {
 		acct.Tampered = true
 	}
+	acct.loadBadgeFile(filepath.Dir(path))
 	return &acct, true, nil
 }
 
@@ -583,7 +635,13 @@ func loadAccountFromSlot(id string) (*Account, bool, error) {
 // A tampered-but-parseable slot appears with Tampered=true (integrity is surfaced, not
 // hidden). Results are sorted Active-first, then DisplayName ascending, then AccountID — a
 // stable order for the chooser.
-func ListAccounts() []AccountSummary {
+func ListAccounts() []AccountSummary { return listAccounts(nil) }
+
+// listAccounts is ListAccounts with a badge book to count each account's badges by: the
+// badges it holds that the ruleset knows and that count toward completion, after bringing
+// a file from an older version up in memory (nothing is written). With no book the count
+// is what the file holds.
+func listAccounts(book *badgeBook) []AccountSummary {
 	active := getActiveAccountID()
 
 	accountsRoot := filepath.Join(rootDataDir(), accountsDirName)
@@ -603,12 +661,15 @@ func ListAccounts() []AccountSummary {
 		if loadErr != nil || !found || acct == nil {
 			continue // no valid account.json in this slot → skip it
 		}
+		if book != nil {
+			acct.ensureBadgesLocked(book) // a private copy: no lock, and never saved
+		}
 		summaries = append(summaries, AccountSummary{
 			AccountID:      acct.AccountID,
 			DisplayName:    acct.DisplayName,
 			HighestAge:     acct.Stats.HighestAge,
 			TotalPrestiges: acct.Stats.TotalPrestiges,
-			Achievements:   len(acct.Achievements),
+			Badges:         acct.countableBadges(book),
 			LastSeen:       acct.LastSeen,
 			Active:         acct.AccountID == active,
 			Tampered:       acct.Tampered,
@@ -697,6 +758,8 @@ func CreateAccount(name string) (*Account, error) {
 		LastSeen:       now,
 		FreshlyCreated: true,
 	}
+	// A badge file left in the slot (its account.json was lost) is this account's.
+	acct.adoptBadgeFile()
 	// Make it active; Save writes into its own slot, <root>/accounts/<id>/account.json.
 	setActiveAccountID(id)
 	if err := os.MkdirAll(accountDir(id), 0755); err != nil {
@@ -864,6 +927,7 @@ func signAccount(a *Account) string {
 		Prefs:        a.Prefs,
 		Tampered:     a.Tampered,
 		// Signature deliberately zero; FreshlyCreated/mu are json:"-"/unexported.
+		// The badges are not here: they are signed in their own file.
 	}
 	data, _ := json.Marshal(&payload)
 	return hmacSign(data, saveHMACKey)
@@ -900,6 +964,9 @@ func validAccountID(id string) bool {
 // Save signs the account with the shared HMAC helper and writes it atomically
 // (temp file + os.Rename) into the account's OWN slot, <root>/accounts/<AccountID>/,
 // creating it if missing. Mirrors SaveGame's write discipline (the accounts design §3.4).
+// It writes account.json, then the badge file beside it if the badges changed
+// (saveBadgeFile). The two are signed apart; if the second write fails or the game
+// stops between them, the next load tops the badges up from the account's record.
 //
 // It deliberately does not resolve through the active account: whichever account is
 // active, an account's data only ever lands in its own file. So an old account object
@@ -928,7 +995,8 @@ func (a *Account) Save() error {
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("failed to finalize account: %w", err)
 	}
-	return nil
+	// The badges go to their own file in the same slot, when they changed.
+	return a.saveBadgeFile(dir)
 }
 
 // LoadOrCreate resolves the active account (migrating a legacy flat layout, then reading
@@ -994,6 +1062,7 @@ func LoadOrCreate() (*Account, error) {
 		// Signature present but mismatched → tampered. Flag it, still load it.
 		acct.Tampered = true
 	}
+	acct.loadBadgeFile(filepath.Dir(path))
 	// Established account loaded from its slot — confirm it as the active account.
 	setActiveAccountID(acct.AccountID)
 	return &acct, nil
@@ -1360,6 +1429,8 @@ func ImportRecoveryCode(code string) (*Account, error) {
 		// EMPTY data: identity only. Unlocks/Stats/Achievements/Prefs stay zero —
 		// progress is carried by export/import (Phase 5), not the recovery code.
 	}
+	// A badge file left in the slot (its account.json was lost) is this account's.
+	acct.adoptBadgeFile()
 	if err := acct.Save(); err != nil {
 		return nil, err
 	}
@@ -1402,6 +1473,11 @@ type progressExport struct {
 	Prefs        AccountPrefs   `json:"prefs,omitempty"`
 	Tampered     bool           `json:"tampered,omitempty"`
 	Signature    string         `json:"_sig,omitempty"`
+	// BadgeStore is the account's badge file, carried whole with its own signature
+	// (which binds it to the account ID). It is NOT under Signature above: that one
+	// covers exactly what a build from before badges signs, so such a build still
+	// verifies and imports the export, and simply does not see this key.
+	BadgeStore *badgeFile `json:"badge_store,omitempty"`
 }
 
 // signProgressExport returns the HMAC-SHA256 hex of the export payload with Signature
@@ -1419,7 +1495,7 @@ func signProgressExport(p *progressExport) string {
 		Achievements: p.Achievements,
 		Prefs:        p.Prefs,
 		Tampered:     p.Tampered,
-		// Signature deliberately zero.
+		// Signature deliberately zero. BadgeStore is signed on its own.
 	}
 	data, _ := json.Marshal(&payload)
 	return hmacSign(data, saveHMACKey)
@@ -1444,6 +1520,7 @@ func (a *Account) ExportProgress() ([]byte, error) {
 		Achievements: a.Achievements,
 		Prefs:        a.Prefs,
 		Tampered:     a.Tampered,
+		BadgeStore:   a.exportBadgeFileLocked(),
 	}
 	exp.Signature = signProgressExport(&exp)
 
@@ -1489,7 +1566,7 @@ func ImportAccountExport(blob []byte, merge bool) (*Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	return importExportToSlot(exp, merge)
+	return importExportToSlot(exp, merge, nil)
 }
 
 // decodeAccountExport unmarshals and verifies an export blob: the integrity half of
@@ -1511,13 +1588,22 @@ func decodeAccountExport(blob []byte) (*progressExport, error) {
 	if !validAccountID(exp.AccountID) {
 		return nil, fmt.Errorf("That progress export has an account ID the game cannot use, so it cannot be imported.")
 	}
+	// The badges it carries must be this account's and as the game signed them. An
+	// export is refused whole rather than imported in part.
+	if b := exp.BadgeStore; b != nil && (b.AccountID != exp.AccountID || !verifyBadgeFile(b)) {
+		return nil, fmt.Errorf("That progress export has been changed or damaged since it was made, so it cannot be imported.")
+	}
 	return &exp, nil
 }
 
 // importExportToSlot lands a verified export in its account's own slot, read from disk:
 // merged into (or replacing) the account already there, or as a new account. See
 // ImportAccountExport.
-func importExportToSlot(exp *progressExport, merge bool) (*Account, error) {
+//
+// With a badge book (the engine's import), the account it lands in is brought up to the
+// ruleset's badges before it is saved, so achievements from an older export are badges at
+// once. Without one that happens the first time an engine holds the account.
+func importExportToSlot(exp *progressExport, merge bool, book *badgeBook) (*Account, error) {
 	target, found, err := loadAccountFromSlot(exp.AccountID)
 	if err != nil {
 		return nil, err
@@ -1537,8 +1623,14 @@ func importExportToSlot(exp *progressExport, merge bool) (*Account, error) {
 			Prefs:        exp.Prefs,
 			Tampered:     exp.Tampered,
 		}
+		// With a badge file left in the slot, if any: the two are merged.
+		target.adoptBadgeFile()
+		target.takeBadgeStoreLocked(exp.BadgeStore, true)
 	} else {
 		target.applyExportLocked(exp, merge) // target is private to this call; no lock needed
+	}
+	if book != nil {
+		target.ensureBadgesLocked(book)
 	}
 	if err := target.Save(); err != nil {
 		return nil, err
@@ -1547,9 +1639,10 @@ func importExportToSlot(exp *progressExport, merge bool) (*Account, error) {
 }
 
 // applyExportLocked folds a verified export's DATA into a; identity (AccountID, DisplayName,
-// Created) stays a's. merge == true (the safe default) UNIONs themes and achievements, takes
-// the MAX of each numeric lifetime stat (bests never regress) and keeps a's HighestAge,
-// active theme and map settings unless empty (then adopts the blob's). merge == false
+// Created) stays a's. merge == true (the safe default) UNIONs themes, achievements and
+// badges (the earlier copy of a badge both hold), takes the MAX of each numeric lifetime
+// stat and each counter (bests never regress, and nothing is ever summed), takes the later
+// HighestAge, and keeps a's active theme and map settings unless empty. merge == false
 // REPLACEs the DATA fields wholesale. A flagged export flags a; a flagged a stays flagged.
 // Callers hold a.mu when a is shared (the live account).
 func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
@@ -1558,12 +1651,16 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 		a.Unlocks = exp.Unlocks
 		a.Stats = exp.Stats
 		a.Achievements = append([]string(nil), exp.Achievements...)
+		a.takeBadgeStoreLocked(exp.BadgeStore, false)
 		a.Prefs = exp.Prefs
 		return
 	}
 	// Union themes (preserve local, add blob's) and achievements.
 	a.Unlocks.Themes = unionStrings(a.Unlocks.Themes, exp.Unlocks.Themes)
 	a.Achievements = unionStrings(a.Achievements, exp.Achievements)
+	// Badges: every badge either copy holds, the earlier of two. Counters: the larger
+	// of each, never the sum, so importing your own backup doubles nothing.
+	a.takeBadgeStoreLocked(exp.BadgeStore, true)
 	// Max each numeric lifetime stat — bests don't regress.
 	a.Stats.TotalPrestiges = maxInt(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
 	for _, age := range sortedKeys(exp.Stats.PrestigesByAge) {
@@ -1574,8 +1671,8 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	}
 	a.Stats.CivilizationsStarted = maxInt(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
 	a.Stats.SavesCompleted = maxInt(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
-	// HighestAge is a key, not a number: keep local unless empty, then adopt blob's.
-	if a.Stats.HighestAge == "" {
+	// HighestAge is a key, not a number: the later age of the two wins.
+	if ageOrderOf(exp.Stats.HighestAge) > ageOrderOf(a.Stats.HighestAge) {
 		a.Stats.HighestAge = exp.Stats.HighestAge
 	}
 	// Active theme: keep local if set, else adopt the blob's.
@@ -1599,10 +1696,15 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 // path for a backup of the account in use. Working on the live object keeps records it has
 // not flushed yet, and leaves no second copy on disk for the live one to overwrite at its
 // next save. On a Save error the account stays dirty so the next flush retries.
-func (a *Account) importExport(exp *progressExport, merge bool) error {
+func (a *Account) importExport(exp *progressExport, merge bool, book *badgeBook) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.applyExportLocked(exp, merge)
+	if book != nil {
+		// What the backup brought (achievements, a higher age, more prestiges) may
+		// prove badges the account did not hold: granted without a toast.
+		a.ensureBadgesLocked(book)
+	}
 	if err := a.Save(); err != nil {
 		a.dirty = true
 		return err
@@ -1643,8 +1745,8 @@ func maxInt(a, b int) int {
 // --- Lifetime stats + achievements (the accounts design §3.3 / §8 / §9 Phase 6) ---
 //
 // Lifetime stats are CROSS-SAVE aggregates living on the ACCOUNT — distinct from the
-// per-save ge.Stats system, which resets on every new game/prestige. Achievements are
-// one-time, account-wide unlock keys appended on first satisfaction and never removed.
+// per-save ge.Stats system, which resets on every new game/prestige. The account's badges
+// (account_badges.go) are judged from the engine's reports, not by these hooks.
 //
 // LOCKING DISCIPLINE (the load-bearing constraint, the accounts design §8 + project rule):
 // the engine calls RecordPrestige/RecordAgeReached from UNDER the engine write lock
@@ -1654,90 +1756,12 @@ func maxInt(a, b int) int {
 // ge.mu would deadlock. The actual Save happens later via FlushIfDirty, called from the
 // engine's periodic-autosave block which runs OUTSIDE ge.mu (the accounts design §8 write cadence).
 
-// accountAchievement is one entry in the in-file achievement table: a stable unlock key
-// plus a human-readable name and a predicate over the lifetime stats. The predicate is
-// pure (no locks, no I/O) and is evaluated by recordEvaluateLocked while a.mu is held.
-type accountAchievement struct {
-	Key  string
-	Name string
-	// met reports whether the given stats satisfy this achievement. ageOrder is the
-	// order of the age that triggered the current evaluation (-1 when the trigger was
-	// a prestige, not an age-up), so age achievements can key off the just-reached age.
-	met func(s AccountStats, ageOrder int) bool
-}
-
-// achievementAge* are the age Order thresholds the age achievements fire at, named so
-// the table reads as intent rather than magic numbers (config/ages.go: Order is 0-indexed;
-// iron_age = 3, modern_age = 12). Kept here, not imported from config, to keep the table
-// dependency-free and the predicate pure.
-const (
-	achievementOrderIron   = 3  // iron_age
-	achievementOrderModern = 12 // modern_age
-)
-
-// accountAchievements is the small, sensible achievement set for Phase 6. Two prestige
-// tiers and two age milestones — enough to prove the wiring without a sprawling table.
-// New entries are purely additive (the key is the only persisted artifact).
-var accountAchievements = []accountAchievement{
-	{Key: "first_prestige", Name: "First Prestige", met: func(s AccountStats, _ int) bool {
-		return s.TotalPrestiges >= 1
-	}},
-	{Key: "prestige_x10", Name: "Serial Reincarnator", met: func(s AccountStats, _ int) bool {
-		return s.TotalPrestiges >= 10
-	}},
-	// Age achievements: the trigger's ageOrder must be at/above the threshold. We gate on
-	// the live trigger order (not HighestAge) so a single RecordAgeReached call evaluates
-	// only the age just reached; HighestAge has already been updated to that age by then,
-	// so a later re-eval would still hold, but the trigger gate keeps each unlock crisp.
-	{Key: "reached_iron", Name: "Age of Iron", met: func(_ AccountStats, ageOrder int) bool {
-		return ageOrder >= achievementOrderIron
-	}},
-	{Key: "reached_modern", Name: "Into the Modern Age", met: func(_ AccountStats, ageOrder int) bool {
-		return ageOrder >= achievementOrderModern
-	}},
-}
-
-// AchievementName returns the human-readable name for an achievement key, or the key
-// itself if it is unknown (so the UI degrades gracefully on a future/renamed key).
-func AchievementName(key string) string {
-	for _, a := range accountAchievements {
-		if a.Key == key {
-			return a.Name
-		}
-	}
-	return key
-}
-
-// recordEvaluateLocked evaluates the achievement table against the current stats and
-// appends any newly-satisfied keys to a.Achievements (deduped). Callers MUST hold a.mu.
-// ageOrder is the order of the age that triggered this evaluation, or -1 for a prestige
-// trigger. It performs NO Save — the caller sets a.dirty and the flush persists later.
-func (a *Account) recordEvaluateLocked(ageOrder int) {
-	for _, def := range accountAchievements {
-		if a.hasAchievementLocked(def.Key) {
-			continue
-		}
-		if def.met(a.Stats, ageOrder) {
-			a.Achievements = append(a.Achievements, def.Key)
-		}
-	}
-}
-
-// hasAchievementLocked reports whether key is already unlocked. Callers must hold a.mu.
-func (a *Account) hasAchievementLocked(key string) bool {
-	for _, k := range a.Achievements {
-		if k == key {
-			return true
-		}
-	}
-	return false
-}
-
-// RecordPrestige increments the lifetime prestige count, evaluates prestige achievements,
-// and marks the account dirty for the next flush (the accounts design §8). It is IN-MEMORY ONLY:
-// it takes a.mu, performs no file I/O, and never calls back into the engine — so it is
-// safe to call from DoPrestige while the engine write lock is held. The write is deferred
-// to FlushIfDirty (engine autosave block, outside ge.mu).
+// RecordPrestige increments the lifetime prestige count and marks the account dirty for
+// the next flush (the accounts design §8). It is IN-MEMORY ONLY: it takes a.mu, performs no
+// file I/O, and never calls back into the engine — so it is safe to call from DoPrestige
+// while the engine write lock is held. The write is deferred to FlushIfDirty (engine
+// autosave block, outside ge.mu). The prestige badges are judged from the engine's own
+// report of the prestige (badges.go), not here.
 func (a *Account) RecordPrestige() {
 	a.RecordPrestigeFrom("")
 }
@@ -1755,14 +1779,24 @@ func (a *Account) RecordPrestigeFrom(age string) {
 		}
 		a.Stats.PrestigesByAge[age]++
 	}
-	a.recordEvaluateLocked(-1) // -1: prestige trigger, not an age-up
+	a.dirty = true
+}
+
+// RecordCivilizationStarted counts one more civilization started on the account: a run
+// began. IN-MEMORY ONLY (same discipline as RecordPrestige): the engine calls it under its
+// write lock when a new game starts and when a prestige or a Succumb starts the next run.
+func (a *Account) RecordCivilizationStarted() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Stats.CivilizationsStarted++
 	a.dirty = true
 }
 
 // RecordAgeReached records that the account's player has reached the given age, lifting
 // HighestAge only when ageOrder exceeds the order of the currently-stored highest age (so
-// a lower age never regresses the lifetime best), then evaluates age achievements and marks
-// the account dirty (the accounts design §8). IN-MEMORY ONLY (same discipline as RecordPrestige).
+// a lower age never regresses the lifetime best), and marks the account dirty (the accounts
+// design §8). IN-MEMORY ONLY (same discipline as RecordPrestige). The age badges are judged
+// from the engine's report of the advance (badges.go).
 //
 // DEVIATION from the accounts design §8: the doc sketches RecordAgeReached(ageKey) with no order.
 // The account stores only the highest age KEY (AccountStats.HighestAge, the accounts design §3.3),
@@ -1776,19 +1810,22 @@ func (a *Account) RecordAgeReached(ageKey string, ageOrder int) {
 	defer a.mu.Unlock()
 	if ageOrder > a.highestOrderLocked() {
 		a.Stats.HighestAge = ageKey
+		a.dirty = true
 	}
-	a.recordEvaluateLocked(ageOrder)
-	a.dirty = true
 }
 
 // highestOrderLocked returns the Order of the currently-stored HighestAge, or -1 if none
 // is set (or the stored key is unknown — treated as "below everything" so any real age
 // wins). Callers must hold a.mu. It consults the pure config age table (no locks).
-func (a *Account) highestOrderLocked() int {
-	if a.Stats.HighestAge == "" {
+func (a *Account) highestOrderLocked() int { return ageOrderOf(a.Stats.HighestAge) }
+
+// ageOrderOf is the Order of an age key in the config age table, or -1 for "" or a key
+// it does not have (below every real age). Pure config: no locks.
+func ageOrderOf(age string) int {
+	if age == "" {
 		return -1
 	}
-	if def, ok := config.AgeByKey()[a.Stats.HighestAge]; ok {
+	if def, ok := config.AgeByKey()[age]; ok {
 		return def.Order
 	}
 	return -1
@@ -1827,16 +1864,14 @@ func (a *Account) Name() string {
 	return a.DisplayName
 }
 
-// LifetimeStats returns a lock-guarded COPY of the account's lifetime stats and unlocked
-// achievement keys, for the UI snapshot (GetState). It never exposes the account's backing
-// slice — the returned achievements slice is freshly allocated — so a snapshot consumer can
-// neither mutate account state nor race the Record* writers.
+// LifetimeStats returns a lock-guarded COPY of the account's lifetime stats and the keys
+// of the badges it holds (sorted), for the UI snapshot (GetState). Nothing it returns is
+// the account's own, so a snapshot consumer can neither mutate account state nor race the
+// Record* writers.
 func (a *Account) LifetimeStats() (AccountStats, []string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	ach := make([]string, len(a.Achievements))
-	copy(ach, a.Achievements)
 	st := a.Stats
 	st.PrestigesByAge = maps.Clone(a.Stats.PrestigesByAge) // no alias of the live map
-	return st, ach
+	return st, sortedKeys(a.Badges)
 }

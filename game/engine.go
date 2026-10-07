@@ -284,8 +284,15 @@ type GameEngine struct {
 
 	// devTouched marks a run the developer console has changed (markDevTouchedLocked).
 	// Saved with the run (GameSave.DevTouched), kept through prestige and Succumb, cleared
-	// only by a new game. A dev-touched run records nothing to the account.
+	// only by a new game. It is a record of what happened to the run and nothing more: it
+	// does not stop the run from earning anything on the account.
 	devTouched bool
+
+	// badges is the ruleset's badges indexed for judging, and runFacts what the run
+	// remembers about itself for them (badges.go). The book follows the ruleset; the
+	// facts are saved with the run and start over with it.
+	badges   *badgeBook
+	runFacts RunFacts
 
 	// Morale system — a managed two-way dial. Range [0.10, moraleCap()];
 	// starts at moraleNeutral (0.50). Drives production via moraleMultiplier().
@@ -419,6 +426,8 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 		survivedEpochs:   make(map[string]bool),
 		legacyBonuses:    make(map[string]bool),
 		History:          NewHistoryCollector(),
+		badges:           newBadgeBook(set),
+		runFacts:         newRunFacts(),
 	}
 	ge.Buildings = ge.newBuildingManager()
 	ge.applyAgeUnlocks("primitive_age")
@@ -475,6 +484,7 @@ func (ge *GameEngine) Rebind(set *rules.Set) {
 	ge.Trade.Rebind(set)
 	ge.Diplomacy.Rebind(set)
 	ge.progress.Rebind(set)
+	ge.badges = newBadgeBook(set)
 }
 
 // techLockErr is why a building can't be built yet when a tech it needs is
@@ -731,6 +741,7 @@ func (ge *GameEngine) updateMoraleTick() {
 	// Low morale warning (fires once, resets when morale recovers above 0.40)
 	if ge.morale < 0.40 && !ge.lowMoraleWarned {
 		ge.lowMoraleWarned = true
+		ge.note(config.BadgeEvLowMorale, "")
 		ge.addLog("warning", fmt.Sprintf("⚠ Morale low (%s): all production %s. Faith output raises morale.",
 			textfmt.Percent(ge.morale), textfmt.SignedPercent(ge.moraleMultiplier()-1)))
 	} else if ge.morale >= 0.40 && ge.lowMoraleWarned {
@@ -967,13 +978,29 @@ func (ge *GameEngine) SetActiveParentName(name string) {
 // last autosave are kept; Save writes them into that account's own file, never the new
 // one's. The flush runs outside ge.mu (it does file I/O). Never call it from a Bus
 // handler or with ge.mu held.
+//
+// The account it installs is reconciled with this ruleset's badges first (ensureBadges):
+// its old achievements are badges, and what its record already proves is granted (an
+// account from before badges, or one a build from before badges has played since), all
+// without a toast. If that changed anything the account is saved at once (its badge file;
+// account.json only if something in it changed), so the next load finds nothing to do.
 func (ge *GameEngine) SetAccount(a *Account) {
 	ge.mu.Lock()
 	prev := ge.account
+	book := ge.badges
+	ge.mu.Unlock()
+	if a != nil && book != nil {
+		// Before the engine holds it, so no report can reach a half-migrated account.
+		a.ensureBadges(book)
+	}
+	ge.mu.Lock()
 	ge.account = a
 	ge.mu.Unlock()
 	if prev != nil && prev != a {
 		_ = prev.FlushIfDirty()
+	}
+	if a != nil {
+		_ = a.FlushIfDirty()
 	}
 }
 
@@ -1003,7 +1030,10 @@ func (ge *GameEngine) AccountID() string {
 // (It is start-screen plumbing, never called from a Bus handler / under ge.mu, so the
 // Bus file-I/O rule isn't in play.)
 func (ge *GameEngine) ListAccounts() []AccountSummary {
-	return ListAccounts()
+	ge.mu.RLock()
+	book := ge.badges
+	ge.mu.RUnlock()
+	return listAccounts(book)
 }
 
 // SwitchAccount makes the account in slot id the live account: the Accounts panel's switch
@@ -1119,13 +1149,16 @@ func (ge *GameEngine) ImportAccountExport(blob []byte, merge bool) (*Account, er
 	if err != nil {
 		return nil, err
 	}
+	ge.mu.RLock()
+	book := ge.badges
+	ge.mu.RUnlock()
 	if live := ge.Account(); live != nil && live.AccountID == exp.AccountID {
-		if err := live.importExport(exp, merge); err != nil {
+		if err := live.importExport(exp, merge, book); err != nil {
 			return nil, err
 		}
 		return live, nil
 	}
-	return importExportToSlot(exp, merge)
+	return importExportToSlot(exp, merge, book)
 }
 
 // CreateAccount creates (or, for an existing same-name slot, opens) a name-derived account
@@ -1214,17 +1247,21 @@ func (ge *GameEngine) StartNewNamedGame(name string) error {
 	ge.mu.Lock()
 	ge.runAccountID = ge.accountIDLocked()
 	ge.runOrphaned = false
+	ge.noteDayLocked()
+	ge.noteCivilizationStartedLocked()
 	ge.mu.Unlock()
 	return ge.SaveGame(name)
 }
 
-// accountForRecordsLocked returns the account this run's achievements and lifetime stats go
-// to, or nil when the run records nothing: accountless play, a run the developer console has
-// touched (devTouched), or a run that belongs to another account (the game still in memory
-// after an account switch). The dashboard's theme unlocks follow the same rule through
-// GameState.AccountRecords. Callers hold ge.mu.
+// accountForRecordsLocked returns the account this run's badges and lifetime stats go to,
+// or nil when the run records nothing: accountless play, or a run that belongs to another
+// account (the game still in memory after an account switch). The dashboard's theme unlocks
+// follow the same rule through GameState.AccountRecords. Callers hold ge.mu.
+//
+// Nothing about the developer console is here. Dev mode, and a run a dev command has
+// changed, record like any other: if a badge's condition is met, the badge is earned.
 func (ge *GameEngine) accountForRecordsLocked() *Account {
-	if ge.account == nil || ge.devTouched {
+	if ge.account == nil {
 		return nil
 	}
 	if ge.runAccountID != "" && ge.runAccountID != ge.account.AccountID {
@@ -1234,14 +1271,16 @@ func (ge *GameEngine) accountForRecordsLocked() *Account {
 }
 
 // devTouchedLogLine is logged the first time the developer console changes a run.
-const devTouchedLogLine = "Developer commands used: this run won't count toward account records."
+const devTouchedLogLine = "Developer commands used: this run is marked as changed by the developer console."
 
-// markDevTouchedLocked records that the developer console changed this run. From then on the
-// run records nothing to the account: no achievements, no lifetime stats and no theme
-// unlocks. The flag is saved with the run, kept through prestige and Succumb (a later run
-// inherits the prestige, upgrades and legacies a dev-touched run earned), and cleared only
-// by a new game. Dev mode alone does not set it: with the console unlocked but unused, a run
-// records as usual. The first mark logs one line. Callers hold ge.mu.
+// markDevTouchedLocked records that the developer console changed this run. The flag is
+// saved with the run, kept through prestige and Succumb (a later run inherits the prestige,
+// upgrades and legacies a dev-touched run earned), and cleared only by a new game. Dev mode
+// alone does not set it. The first mark logs one line. Callers hold ge.mu.
+//
+// The mark is a record, not a gate: a marked run earns badges, lifetime stats and theme
+// unlocks like any other. It is read back by GetState (GameState.DevTouched) and by the
+// save (signed like every field, so taking it out by hand marks the save modified).
 func (ge *GameEngine) markDevTouchedLocked() {
 	if ge.devTouched {
 		return
@@ -1390,6 +1429,7 @@ func (ge *GameEngine) doTick() {
 		if ge.starvationTicks%starvationDeathInterval == 0 && ge.Workers.TotalPop() > 0 {
 			killed := ge.Workers.KillWorker(1)
 			if killed > 0 {
+				ge.report(Event{Kind: config.BadgeEvStarved, N: float64(killed)})
 				ge.addLog("error", fmt.Sprintf("☠ A worker starved to death. Population: %d.", ge.Workers.TotalPop()))
 			}
 		}
@@ -1413,8 +1453,9 @@ func (ge *GameEngine) doTick() {
 			ge.tick, foodAmt, foodRate, ge.Workers.TotalPop(), len(ge.buildQueue)))
 	}
 
-	// Check milestones
-	ge.checkMilestones()
+	// The tick's report: the run's milestones are judged on it (checkMilestones,
+	// from the run's state, here as always), then the account's badges.
+	ge.report(Event{Kind: config.BadgeEvTick})
 
 	// Check age advancement — notify once when ready, but require player to
 	// type 'advance' to confirm. ageReady resets if requirements drop (e.g.
@@ -1509,6 +1550,7 @@ func (ge *GameEngine) finishResearch(completed string) {
 		Type:    EventResearchDone,
 		Payload: map[string]interface{}{"tech": completed},
 	})
+	ge.note(config.BadgeEvResearchDone, completed)
 }
 
 // processEvents handles random events
@@ -1569,6 +1611,9 @@ func (ge *GameEngine) processExpeditions() {
 		for resource, amount := range res.Rewards {
 			ge.Resources.Add(resource, amount)
 		}
+		if res.Success {
+			ge.note(config.BadgeEvExpedition, res.Key)
+		}
 		// A resolved expedition may turn up a civilization: roll a faction encounter
 		// (discovery and/or a specialty-production boon) on the seeded RNG.
 		for _, msg := range ge.rollExpeditionEncounter(res.Category, res.Success) {
@@ -1620,6 +1665,11 @@ func (ge *GameEngine) processDiplomacy() {
 	messages := ge.Diplomacy.Tick(ge.gameRNG(), ge.age, ageOrder, ge.tick, tradedRecently)
 	for _, msg := range messages {
 		ge.addLog("event", msg)
+	}
+	// First contact, however it came about this tick: an expedition's
+	// encounter, an old friend, or the age reaching the civilization.
+	for _, key := range ge.Diplomacy.takeMet() {
+		ge.note(config.BadgeEvCivMet, key)
 	}
 
 	// Apply queued worker-lending side effects to the worker pool.
@@ -1734,6 +1784,7 @@ func (ge *GameEngine) checkMilestones() {
 				"flavor":      ms.Flavor,
 			},
 		})
+		ge.note(config.BadgeEvMilestone, ms.Key)
 	}
 
 	// Check chains
@@ -1761,6 +1812,7 @@ func (ge *GameEngine) checkMilestones() {
 				"boost_ticks": boost,
 			},
 		})
+		ge.note(config.BadgeEvChain, chain.Key)
 	}
 
 	// Recalculate title
@@ -2203,11 +2255,13 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// engine; the persisting flush runs later in the autosave block (outside ge.mu).
 	// Order comes from the engine's ruleset (no locks) — the account stays
 	// config-free and ranks ages by this int rather than re-deriving order itself.
-	// A dev-touched run, or one that belongs to another account, records nothing.
+	// A run that belongs to another account records nothing.
 	if acct := ge.accountForRecordsLocked(); acct != nil {
 		reached, _ := ge.rules.Age(newAge)
 		acct.RecordAgeReached(newAge, reached.Order)
 	}
+	// The report the age badges are judged on (badges.go).
+	ge.note(config.BadgeEvAgeReached, newAge)
 
 	// note: Age-transition carryover model (EPIC: age-pacing economy rebalance).
 	// The old flat-10% reduction still left a huge stockpile (10% of a hoard is
@@ -2368,6 +2422,7 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 		return // already fired this run
 	}
 	ge.awakeningsFired[def.Key] = true
+	ge.note(config.BadgeEvAwakening, def.Key)
 
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       def.Key,
@@ -2504,6 +2559,7 @@ func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
 // headline's flavor text states each effect; "→" lines under it report only
 // what the text cannot know (actual counts, amounts, names).
 func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
+	ge.note(config.BadgeEvEraEvent, ev.Type)
 	ge.addLog("success", fmt.Sprintf("✦ %s. %s", ev.Name, ev.FlavorText))
 	ageOrder := ge.progress.GetAgeOrder()
 	switch ev.Key {
@@ -2589,6 +2645,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 // event. As with good events, "→" lines report only what the flavor text
 // cannot state (what burned, who died, how much was lost).
 func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochKey string) {
+	ge.note(config.BadgeEvEraEvent, ev.Type)
 	ge.addLog("warning", fmt.Sprintf("⚠ %s. %s", ev.Name, ev.FlavorText))
 	switch ev.Key {
 	case "the_famine":
@@ -2798,6 +2855,7 @@ func (ge *GameEngine) DoFestival() error {
 	})
 	ge.festivalReadyTick = ge.tick + ge.festivalCooldown()
 	ge.useFeature(config.FeatureFestivals)
+	ge.note(config.BadgeEvFestival, "")
 	ge.addLog("success", fmt.Sprintf("Held a cultural festival for %s: all production %s for %s.",
 		Amount(cost, "culture"), textfmt.SignedPercent(festivalBuffPercent), ge.durationLocked(buff)))
 	ge.logCapped(config.Effect{Type: "production_all", Value: festivalBuffPercent})
@@ -2913,6 +2971,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 	ge.Resources.Remove("culture", cost)
 	ge.blackMarketReadyTick = ge.tick + ge.stretchTicks(blackMarketCooldownTicks)
 	ge.useFeature(config.FeatureBlackMarket)
+	ge.note(config.BadgeEvBlackMarket, resource)
 
 	if ge.bmRandFloat() < blackMarketWinChance {
 		got := ge.gainResource(resource, reward)
@@ -3103,6 +3162,7 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 		Type:    EventBuildingBuilt,
 		Payload: map[string]interface{}{"building": key},
 	})
+	ge.noteBuilt(key, 1)
 }
 
 // --- Public API for commands ---
@@ -3179,6 +3239,9 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	before := ge.Resources.Get(resource)
 	actual := ge.Resources.Add(resource, amount)
 	ge.Stats.RecordGather(resource, amount)
+	if actual > before {
+		ge.note(config.BadgeEvGathered, resource)
+	}
 	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
 	// Log what storage actually took, not what was asked for.
 	switch gained := actual - before; {
@@ -3346,6 +3409,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 			Type:    EventBuildingBuilt,
 			Payload: map[string]interface{}{"building": key},
 		})
+		ge.noteBuilt(key, 1)
 	}
 	return nil
 }
@@ -3415,6 +3479,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 				Type:    EventBuildingBuilt,
 				Payload: map[string]interface{}{"building": key},
 			})
+			ge.noteBuilt(key, 1)
 		}
 		built++
 	}
@@ -3751,6 +3816,7 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 
 	// Remove the buildings
 	ge.Buildings.RemoveBuilding(key, n)
+	ge.noteSold(key, n)
 
 	// Unassign excess workers
 	if def.WorkerCapacity > 0 {
@@ -3973,6 +4039,7 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	}
 	def, _ := ge.rules.Tech(techKey)
 	ge.addLog("success", fmt.Sprintf("Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ge.Research.totalTicks)))
+	ge.note(config.BadgeEvMemoryAccepted, techKey)
 	return nil
 }
 
@@ -3986,6 +4053,7 @@ func (ge *GameEngine) DeclineAncientMemory() {
 	if ge.pendingMemoryTech == "" {
 		return
 	}
+	ge.note(config.BadgeEvMemoryDeclined, ge.pendingMemoryTech)
 	ge.pendingMemoryTech = ""
 	ge.addLog("info", "You leave the ancient cache sealed. Its memories crumble to dust.")
 }
@@ -4124,11 +4192,24 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.captureLegacyLocked()
 	prestigedFrom := ge.age
 
+	// The reports of the run's ending, while the run they are judged against (its
+	// facts, its buildings) is still here. The Last Passage's outcome comes first.
+	switch how {
+	case lastPassageSpared:
+		ge.note(config.BadgeEvLastPassage, "spared")
+	case lastPassageEndured:
+		ge.note(config.BadgeEvLastPassage, "endured")
+	case lastPassageSuccumbed:
+		ge.note(config.BadgeEvLastPassage, "succumbed")
+	}
+	ge.note(config.BadgeEvPrestige, prestigedFrom)
+
 	// Preserve cross-run state before resetting managers
 	savedRuins := ge.Buildings.GetAllRuins()
 
 	// Reset all game systems
 	ge.tick = 0
+	ge.runFacts = newRunFacts()
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManagerWith(ge.rules)
 	ge.Buildings = ge.newBuildingManager()
@@ -4227,11 +4308,13 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 
 	// Account lifetime stat (Phase 6): record the prestige IN-MEMORY only — we hold
 	// ge.mu here, so RecordPrestige must not do I/O or re-enter the engine. The write
-	// is deferred to FlushIfDirty in the autosave block (outside ge.mu). A dev-touched
-	// run, or one that belongs to another account, records nothing.
+	// is deferred to FlushIfDirty in the autosave block (outside ge.mu). A run that
+	// belongs to another account records nothing.
 	if acct := ge.accountForRecordsLocked(); acct != nil {
 		acct.RecordPrestigeFrom(prestigedFrom)
 	}
+	// The run that starts here is a new civilization.
+	ge.noteCivilizationStartedLocked()
 
 	// Roll for an Ancient Memory cache — prestige level is now >= 1, the age is
 	// primitive, and the flag was just cleared above, so this fresh run is eligible.
@@ -4248,6 +4331,7 @@ func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
 	}
 	ge.recalculateRates() // a storage or rate upgrade shows at once, not next tick
 	ge.addLog("success", ge.prestigeUpgradeLine(key))
+	ge.note(config.BadgeEvUpgradeBought, key)
 	ge.legacyOnPurchaseLocked(key)
 	return nil
 }
@@ -4289,6 +4373,7 @@ func (ge *GameEngine) Reset() {
 	ge.eliteBadge = false
 	// A new game is a new run: no dev console history, and no owner until
 	// StartNewNamedGame (or LoadGame) names one.
+	ge.runFacts = newRunFacts()
 	ge.devTouched = false
 	ge.runAccountID = ""
 	ge.runOrphaned = false
@@ -4534,14 +4619,15 @@ func (ge *GameEngine) GetState() GameState {
 			if ge.account == nil {
 				return nil
 			}
-			s, ach := ge.account.LifetimeStats()
+			s, _ := ge.account.LifetimeStats()
+			badges, summary := ge.badgesLocked()
 			return &AccountStatsView{
 				DisplayName:          ge.account.Name(),
 				TotalPrestiges:       s.TotalPrestiges,
 				HighestAge:           s.HighestAge,
 				CivilizationsStarted: s.CivilizationsStarted,
-				SavesCompleted:       s.SavesCompleted,
-				Achievements:         ach,
+				Badges:               badges,
+				BadgeSummary:         summary,
 			}
 		}(),
 	}
@@ -4609,7 +4695,8 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	if elapsed < 5*time.Second {
 		return // too short to matter
 	}
-	if elapsed > MaxOfflineTime {
+	capped := elapsed > MaxOfflineTime
+	if capped {
 		elapsed = MaxOfflineTime
 	}
 
@@ -4629,6 +4716,11 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 
 	ge.addLog("event", fmt.Sprintf("Welcome back. You were away for %s.", textfmt.Duration(elapsed)))
+	// The return and the time credited for it, for the records.
+	ge.report(Event{Kind: config.BadgeEvReturned, Attrs: map[string]float64{
+		"ticks": float64(offlineTicks), "capped": boolFact(capped),
+	}})
+	ge.report(Event{Kind: config.BadgeEvAwayTicks, N: float64(offlineTicks)})
 
 	gains := make(map[string]float64)
 	banked := make(map[string]float64)
@@ -4719,6 +4811,7 @@ func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float6
 		return 0, err
 	}
 	ge.addLog(LogRoutine, fmt.Sprintf("Traded %s for %s.", Amount(amount, from), Amount(got, to)))
+	ge.note(config.BadgeEvMarketTrade, from)
 	return got, nil
 }
 
@@ -4779,6 +4872,10 @@ func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
 		ge.Resources.Remove("gold", cost)
 	}
 	ge.addLog("info", diplomaticStatusLine(ge.rules.Name(rules.KindCiv, factionKey), status, cost))
+	ge.note(config.BadgeEvCivStatus, status)
+	if status == "allied" {
+		ge.note(config.BadgeEvCivAllied, factionKey)
+	}
 	return nil
 }
 
@@ -4898,6 +4995,9 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	moved := ge.Buildings.PartialTransform(key, newKey, count, ge.Workers.RenameAssignment)
 	ge.rehomeUpgradedWorkers(key, newKey, oldDef, newDef)
 	ge.holdStaffing()
+	if moved > 0 {
+		ge.report(Event{Kind: config.BadgeEvBuildingUpgraded, Subject: key, N: float64(moved)})
+	}
 
 	ge.recalculateRates()
 

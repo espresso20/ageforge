@@ -322,6 +322,27 @@ func playerText() map[string]string {
 		add("chain "+x.Key+" name", x.Name)
 		add("chain "+x.Key+" flavor", x.Flavor)
 	}
+	// Badges: the hand-written ones, and each family's templates and
+	// overrides (the badges a family makes are checked once expanded, by
+	// the Badge Covenant in package smoke).
+	for _, x := range Badges() {
+		add("badge "+x.Key+" name", x.Name)
+		add("badge "+x.Key+" description", x.Desc)
+		add("badge "+x.Key+" hint", x.Hint)
+	}
+	for _, f := range BadgeFamilies() {
+		add("badge family "+f.Family+" name", badgeTemplateText(f.Name))
+		add("badge family "+f.Family+" description", badgeTemplateText(f.Desc))
+		for i, r := range f.Rungs {
+			add("badge family "+f.Family+" rung "+strconv.Itoa(i+1), r.Name)
+		}
+		for k, v := range f.Names {
+			add("badge "+k+" name", v)
+		}
+		for k, v := range f.Descs {
+			add("badge "+k+" description", v)
+		}
+	}
 	for _, x := range PrestigeUpgrades() {
 		add("prestige "+x.Key+" name", x.Name)
 		add("prestige "+x.Key+" description", x.Description)
@@ -347,6 +368,13 @@ func playerText() map[string]string {
 		}
 	}
 	return out
+}
+
+// badgeTemplateText is a badge family's template with its fields ({key},
+// {name}, ...) taken out, so what is left is the text every badge of the
+// family shares.
+func badgeTemplateText(s string) string {
+	return regexp.MustCompile(`\{[a-z]+\}`).ReplaceAllString(s, "")
 }
 
 var (
