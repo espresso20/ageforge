@@ -222,9 +222,8 @@ func paybackTicks(age string, pos map[string]int) float64 {
 var PaybackAdjust = map[string]float64{
 	"bronze_age":      1.1,
 	"renaissance_age": 2.0,
-	"victorian_age":   1.7,
+	"victorian_age":   1.4,
 	"electric_age":    1.45,
-	"atomic_age":      1.75,
 	"information_age": 0.8,
 	"cyberpunk_age":   0.8,
 }
