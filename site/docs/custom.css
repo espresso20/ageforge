@@ -207,6 +207,54 @@ p code, li code { word-break: break-word; }
 
 .docsify-copy-code-button { font-family: var(--caps); letter-spacing: 0.1em; border-radius: 0 2px 0 2px; }
 
+/* Plates: real views of the game's screens, drawn as text by screens.js.
+   The terminal in the game's own colors on the dark ground, a thin rule
+   around it, the caption beneath in small capitals. A plate is set wider
+   than the text, into the column's own margins, as plates are. */
+.markdown-section figure.screen,
+.markdown-section .screen-pair { margin: 1.8em -45px; }
+.markdown-section .screen-pair figure.screen { margin: 0; min-width: 0; }
+.screen-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 6px; align-items: start; }
+.screen-plate {
+  margin: 5px; background: var(--term);
+  outline: 1px solid var(--ink); outline-offset: 4px;
+}
+.screen-scroll {
+  overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
+  padding: 10px 12px; scrollbar-width: thin; scrollbar-color: #5d6880 transparent;
+}
+.screen-scroll:focus-visible { outline: 2px solid var(--rubric); outline-offset: -2px; }
+.markdown-section pre.screen-term {
+  position: relative; display: block; box-sizing: content-box;
+  width: calc(var(--cols, 100) * 1ch); margin: 0 auto; padding: 0;
+  border: 0; border-radius: 0; background: none !important; overflow: visible !important;
+  color: #e6edf3; font-size: 11px; line-height: 1.15; font-weight: 400; letter-spacing: 0;
+  font-variant-ligatures: none; font-variant-numeric: normal; white-space: pre;
+  -webkit-text-size-adjust: none; text-size-adjust: none;
+}
+.screen-term .screen-row { display: block; height: 1.15em; }
+.screen-term i {
+  font-style: normal; display: inline-block; width: 1ch; height: 1.15em;
+  overflow: hidden; text-align: center; vertical-align: top;
+}
+.screen-term .screen-probe { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
+.markdown-section figure.screen figcaption {
+  font-family: var(--caps); font-size: 0.95rem; line-height: 1.35; letter-spacing: 0.08em;
+  color: var(--ink-2); text-align: center; text-wrap: balance;
+  max-width: 44em; margin: 0 auto; padding: 0 12px;
+}
+.markdown-section figure.screen-drawn figcaption { margin-top: 14px; }
+.screen-scrolls figcaption::after { content: " Scroll sideways to see the rest."; color: var(--ink-3); }
+/* Between the phone layout and a window wide enough to leave the column free
+   on both sides, a plate keeps a gutter of its own. */
+@media (min-width: 769px) and (max-width: 1180px) {
+  .markdown-section figure.screen,
+  .markdown-section .screen-pair { margin-left: -29px; margin-right: -29px; }
+}
+@media (max-width: 900px) {
+  .screen-pair { grid-template-columns: minmax(0, 1fr); }
+}
+
 @media (max-width: 768px) {
   body { --base-font-size: 18px; }
   .markdown-section h1 { font-size: 2.2rem; }
@@ -215,5 +263,6 @@ p code, li code { word-break: break-word; }
   .content { padding: 16px !important; }
   .markdown-section blockquote { padding: 10px 14px; }
   .markdown-section th, .markdown-section td { padding: 7px 10px 7px 0; }
+  .screen-scroll { padding: 8px; }
 }
 .search input::placeholder { color: var(--ink-3); opacity: 1; }
