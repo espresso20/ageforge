@@ -535,9 +535,12 @@ func ResearchBudgetShareOf(age string) float64 {
 // it.
 //
 // The Primitive to Atomic Ages were measured with techs in a layer of their
-// own (the Determinism run of the change that made it). A first run
-// prestiges on entering the Modern Age, so nothing run per PR measures
-// that age or any after it. The Modern Age is an estimate between its
+// own (two Determinism runs of the change that made it, averaged: the
+// Electric and Atomic Ages read 140M and 112M in one and 194M and 240M in
+// the other, the bot staffing its knowledge buildings differently as tech
+// prices moved, so those two are good to a third). A first run prestiges
+// on entering the Modern Age, so nothing run per PR measures that age or
+// any after it. The Modern Age is an estimate between its
 // neighbours. The Information Age and every age after it keep the numbers
 // they had: by then the pools of a well-played game are near their clamp
 // with or without the techs, so knowledge output there moved least.
@@ -549,12 +552,12 @@ var KnowledgePerHour = map[string]float64{
 	"classical_age":    125e3,
 	"medieval_age":     1.6e6,
 	"renaissance_age":  7.7e6,
-	"colonial_age":     23e6,
-	"industrial_age":   65e6,
-	"victorian_age":    99e6,
-	"electric_age":     140e6,
-	"atomic_age":       112e6,
-	"modern_age":       140e6,
+	"colonial_age":     24e6,
+	"industrial_age":   67e6,
+	"victorian_age":    92e6,
+	"electric_age":     170e6,
+	"atomic_age":       175e6,
+	"modern_age":       215e6,
 	"information_age":  293e6,
 	"digital_age":      449e6,
 	"cyberpunk_age":    449e6,
