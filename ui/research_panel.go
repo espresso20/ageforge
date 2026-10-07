@@ -19,6 +19,20 @@ import (
 // selected tech's card and, on the card, does what the card says. Esc
 // closes the card, then the panel.
 
+// researchHelp is the Help panel's section for the Research panel: its keys,
+// a line each, short enough to hold at 80 columns.
+func researchHelp() string {
+	return "\n[gold]═══ The Research panel ═══[-]\n" +
+		"[gray]The tech tree. The prompt keeps working; the tree takes these keys.[-]\n" +
+		"  [cyan]Arrows[-]     - Move to the nearest tech that way; the view follows\n" +
+		"  [cyan]Tab[-]        - Next tech you can start (Shift-Tab: the one before)\n" +
+		"  [cyan]PgUp/PgDn[-]  - Zoom out to a tech a line, and back in\n" +
+		"  [cyan]Home[-]       - Back to your current age\n" +
+		"  [cyan]Enter[-]      - Open the tech's card; on the card, do what it says\n" +
+		"  [cyan]Esc[-]        - Close the card, then the panel\n" +
+		"[gray]Zoom is a command too: research tree close, research tree far.[-]\n"
+}
+
 // researchPanel is the Research overlay primitive.
 type researchPanel struct {
 	*tview.Box

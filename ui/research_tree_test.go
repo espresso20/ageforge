@@ -289,6 +289,34 @@ func TestResearchTreeLaneRow(t *testing.T) {
 	}
 }
 
+// TestHelpListsResearchKeys: the Help panel lists the Research panel's keys,
+// every key the panel takes, a line each that holds at 80 columns.
+func TestHelpListsResearchKeys(t *testing.T) {
+	help := helpProvider(game.GameState{}, 80)
+	at := strings.Index(help, "The Research panel")
+	if at < 0 {
+		t.Fatal("the Help panel has no Research panel section")
+	}
+	section := help[at:]
+	if end := strings.Index(section, "Shortcuts"); end > 0 {
+		section = section[:end]
+	}
+	for _, key := range []string{"Arrows", "Tab", "Shift-Tab", "PgUp/PgDn", "Home", "Enter", "Esc", "research tree far"} {
+		if !strings.Contains(section, key) {
+			t.Errorf("the Help panel's Research section does not list %s", key)
+		}
+	}
+	for _, line := range strings.Split(researchHelp(), "\n") {
+		plain := line
+		for _, tag := range []string{"[gold]", "[gray]", "[cyan]", "[-]"} {
+			plain = strings.ReplaceAll(plain, tag, "")
+		}
+		if n := len([]rune(plain)); n > 72 {
+			t.Errorf("a Research help line is %d cells: %q", n, plain)
+		}
+	}
+}
+
 // TestResearchTreePaintsInEveryTheme: in every theme, at every size, every
 // cell the panel draws can be told from its background.
 func TestResearchTreePaintsInEveryTheme(t *testing.T) {

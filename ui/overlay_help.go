@@ -70,6 +70,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]Esc[-]        - Close the panel\n")
 	sb.WriteString("[gray]Settings are commands: map style, map glyphs, map flows, minimap.[-]\n")
 
+	sb.WriteString(researchHelp())
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	var short []string
 	for _, c := range reg {

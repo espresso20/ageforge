@@ -158,7 +158,18 @@ research agriculture
 research iron_smelting
 ```
 
-The **Research** panel (`research`) is a map of the tech tree: select a tech with the arrows and press `Enter` for its card. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Knowledge](knowledge.md).
+The **Research** panel (`research`) is a map of the tech tree. Like the Map it leaves the command bar working and takes only the keys that print nothing:
+
+| Key | Action |
+|---|---|
+| Arrows | Move to the nearest tech that way; the view follows |
+| `Tab` / `Shift-Tab` | Next or previous tech you can start |
+| `PgUp` / `PgDn` | Zoom out to a tech a line, and back in |
+| `Home` | Back to your current age |
+| `Enter` | Open the selected tech's card; on the card, do what its last line says (start the tech, or add it to the build plan) |
+| `Esc` | Close the card, then the panel |
+
+With something typed, `Tab` and `Enter` act on the prompt instead. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Knowledge](knowledge.md).
 
 ---
 
