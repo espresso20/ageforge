@@ -230,7 +230,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 |---|---|
 | Gold | 180K |
 | Steel | 880 |
-| Faith | 8.1K |
+| Faith | 9.5K |
 | Monastery Libraries | 5 |
 | Guildhalls | 10 |
 | Castle Keeps | 5 |

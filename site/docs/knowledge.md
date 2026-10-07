@@ -24,7 +24,7 @@ Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monaster
 | Agora | Iron | 1.6 | 3 |
 | Library | Classical | 3.2 | 4 |
 | Monastery Library | Medieval | 42.4 | 4 |
-| University | Renaissance | 89.8 | 5 |
+| University | Renaissance | 76.3 | 5 |
 | Natural Philosophy Hall | Colonial | 452 | 5 |
 | Research Institute | Industrial | 12.8 | 6 |
 | Academy | Victorian | 25.6 | 6 |

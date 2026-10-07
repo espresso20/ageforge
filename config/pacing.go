@@ -207,7 +207,10 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // (0.94x of the target), but not on known ground, where the market is as
 // much faster as everything else and buys the knowledge: there the age ran
 // at 0.50x of its target ÷ k, on the edge of its band. So the payback takes
-// the gate's half too: 1.7x (about 6.5 hours instead of 3.9).
+// the gate's half too: 1.7x (about 6.5 hours instead of 3.9). With the
+// Stone and Iron Eras' new techs a run arrives stronger (a fifth more
+// knowledge, cheaper and quicker building, more food and iron) and the age
+// ran at 0.76x of its target on a first run, where it had run at 0.96x: 2.0x.
 // Its storage is not a lever: the Renaissance Vault sits on the Storage
 // Covenant's line. Keep this list short; a second entry means the curve
 // itself wants changing.
@@ -217,7 +220,7 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // overshoot is spent waiting, the longest stretches of those ages with
 // nothing new to do. Their producers repay faster (0.8x).
 var PaybackAdjust = map[string]float64{
-	"renaissance_age": 1.7,
+	"renaissance_age": 2.0,
 	"information_age": 0.8,
 	"cyberpunk_age":   0.8,
 }
@@ -535,8 +538,9 @@ func ResearchBudgetShareOf(age string) float64 {
 // it.
 //
 // The Primitive to Atomic Ages were measured with the Stone and Iron Eras'
-// new techs in the tree (the median of three seeds of the Determinism run
-// of the change that added them). Language and Map Making raise knowledge
+// new techs in the tree (the medians of three seeds of two Determinism runs
+// of the change that added them, averaged: prices follow the number, and
+// the bot's staffing follows the prices). Language and Map Making raise knowledge
 // by 10% each in every age after theirs, so every age a first run plays
 // read higher than before, by a tenth to a third, and all twelve were
 // re-measured, not only the six ages that gained techs. The Electric and
@@ -548,18 +552,18 @@ func ResearchBudgetShareOf(age string) float64 {
 // Information Age and every age after it keep the numbers they had.
 var KnowledgePerHour = map[string]float64{
 	"primitive_age":    1.1e3,
-	"stone_age":        5.1e3,
+	"stone_age":        5.05e3,
 	"bronze_age":       13.6e3,
-	"iron_age":         46e3,
+	"iron_age":         45e3,
 	"classical_age":    150e3,
-	"medieval_age":     1.7e6,
+	"medieval_age":     1.77e6,
 	"renaissance_age":  9.0e6,
-	"colonial_age":     27e6,
-	"industrial_age":   84e6,
-	"victorian_age":    118e6,
-	"electric_age":     210e6,
-	"atomic_age":       235e6,
-	"modern_age":       265e6,
+	"colonial_age":     28e6,
+	"industrial_age":   85e6,
+	"victorian_age":    115e6,
+	"electric_age":     220e6,
+	"atomic_age":       258e6,
+	"modern_age":       275e6,
 	"information_age":  293e6,
 	"digital_age":      449e6,
 	"cyberpunk_age":    449e6,
