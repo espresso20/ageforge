@@ -56,13 +56,13 @@ knowledge/tick = base rate × buildings × (0.20 + 0.80 × workers assigned / wo
 
 Knowledge is limited by your storage. Build **Storage lineage** buildings (Stash → Storage Pit → Warehouse → Classical Vault → ...) to raise it. Once knowledge hits its storage limit, further production is wasted. You can only pay for a tech with knowledge you hold, so your storage must be at least the tech's cost. Raise storage before you save up for an expensive one.
 
-Nothing but research makes you hold knowledge, so check your storage when you enter an age. The cheapest tech of every age fits the storage you are sure to arrive with, except in three: the Primitive and Colonial Ages, where it fits once you build one of the age's storage buildings (a Stash, a Colonial Warehouse), and the Renaissance, where it takes four Renaissance Vaults.
+Nothing but research makes you hold knowledge, so check your storage when you enter an age. From the Electric Age on, the cheapest tech of an age fits the storage you are sure to arrive with. Before that it can take a storage building or two of the new age first: one Stash in the Primitive Age, one building in the Medieval, Industrial and Victorian Ages, two in the Classical and Colonial Ages, and four Renaissance Vaults in the Renaissance. The age's other requirements have you building that storage anyway.
 
 ---
 
 ## What Research Costs
 
-An age's techs share one knowledge budget: 30% of what a well-run civilization makes of knowledge in the age's target time (50% in the Primitive Age, 90% in the Renaissance, where knowledge sets the pace). A spine tech takes 0.6 shares of it, a keystone 0.8 and an optional tech 1.0, so what you must research is the cheap part. The Stone Age's four techs cost about 1.3K knowledge between them, the Medieval Age's six about 4.6M, the Renaissance's four about 80M, the Atomic Age's four about 1.9B. See [How Research is Priced](technologies.md#how-research-is-priced) and the [tech tables](technologies.md#tech-tree-by-age).
+An age's techs share one knowledge budget: 90% of what a well-run civilization makes of knowledge in the age's target time (50% in the Primitive Age, 30% in the Transcendent Age). A spine tech takes 0.6 shares of it, a keystone 0.8 and an optional tech 1.0, so what you must research is the cheap part, and research lasts the whole age. The Stone Age's four techs cost about 3.8K knowledge between them, the Medieval Age's six about 13.7M, the Renaissance's four about 80M, the Atomic Age's four about 5.7B. See [How Research is Priced](technologies.md#how-research-is-priced) and the [tech tables](technologies.md#tech-tree-by-age).
 
 ---
 

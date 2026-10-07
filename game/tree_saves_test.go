@@ -249,9 +249,10 @@ func TestResearchInProgressOutOfOrderFinishes(t *testing.T) {
 // once what it needs is researched.
 func TestTreeOldSavePlanWaits(t *testing.T) {
 	ge := loadTreeFixture(t, treeFixturePlanned, "pre_tree_galactic")
+	// Enough for both, whatever their ages price them at.
 	fund := func(ge *GameEngine) {
 		ge.Resources.resources["knowledge"].Storage = 1e12
-		setAmount(ge, "knowledge", 1e10)
+		setAmount(ge, "knowledge", 1e11)
 	}
 	waiting := func(ge *GameEngine, when string) {
 		t.Helper()

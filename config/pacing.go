@@ -481,39 +481,29 @@ func ResearchCostWeight(kind TechKind) float64 {
 
 // ResearchBudgetShare is the share of the knowledge an age makes in its
 // target time that its techs cost together. It is the tuning knob of
-// research prices: one number for every age but the three below.
+// research prices: one number for every age but the two below.
 //
-// The tree is drawn for ResearchBudgetShareDesign and about nine techs an
-// age. Until the rest of them arrive an age holds three or four (two, in the
-// Cosmic Era), nearly all of them on the spine, so at the design's share
-// each would cost about three times what it is meant to, and what a wonder
-// waits for would take most of what its age makes. A third of it puts each
-// tech at about the finished tree's price, and keeps the Research Covenant
-// (smoke/static_research.go): the first tech of an age fits the knowledge
-// storage a player enters with, or does after one storage building, and
-// every keystone is affordable well inside its age. Raise it back toward
-// the design's share as techs are added; the covenant's test says how far it
-// can go.
-const ResearchBudgetShare = 0.3
-
-// ResearchBudgetShareDesign is the share the finished tree is drawn for.
-const ResearchBudgetShareDesign = 0.9
-
-// researchBudgetShares are the ages that keep their own share.
+// At 0.9 an age's research is spread along the whole of it: the last tech
+// comes within reach near the end, so the slot has something to do all age
+// and no long stretch goes by with nothing new (the smoke suite's QuietMax).
+// It is also what lets a keystone carry the weight the knowledge gates did.
 //
-//   - The Primitive Age has no keystone and is over in a quarter of an hour:
-//     its two techs take half of what it makes.
-//   - The Renaissance keeps the design's share. Knowledge is what paces that
-//     age (its exchanges buy everything else), and until the wonders had
-//     keystones its gate asked for 30M of it. At the share the other ages
-//     use, Patronage carried a fifth of that weight and the age ran a third
-//     short of its length on known ground (0.43x of its target ÷ k). At the
-//     design's share the keystone carries the weight the gate did.
-//   - The Transcendent Age is the last, and its techs are to come early in
-//     it, at under a third, whatever the rest pay.
+// The tree is drawn for about nine techs an age. Until the rest of them
+// arrive an age holds three or four (two, in the Cosmic Era), so each costs
+// two to three times what it will, and what a wonder waits for is a quarter
+// to a half of what its age makes rather than a sixth. A lower share was
+// tried and measured (0.3, the same prices as the finished tree): the
+// Atomic Age then went 13 hours with nothing new, and on known ground the
+// Renaissance ran at 0.43x of its target ÷ k. What the share may ask of an
+// age is the smoke suite's Research Covenant (smoke/static_research.go).
+const ResearchBudgetShare = 0.9
+
+// researchBudgetShares are the ages that keep their own share. The Primitive
+// Age has no keystone and is over in a quarter of an hour: its two techs
+// take half of what it makes. The Transcendent Age is the last: its techs
+// come early in it, at under a third.
 var researchBudgetShares = map[string]float64{
 	"primitive_age":    0.5,
-	"renaissance_age":  ResearchBudgetShareDesign,
 	"transcendent_age": 0.3,
 }
 
