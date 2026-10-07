@@ -204,7 +204,7 @@ The dashboard shows a compact view of the Map above the **Buildings** list, in a
 
 It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it and gives the list the whole column; `minimap on` brings it back.
 
-The mini map needs room: it appears on terminals of about 120x40 and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
+The mini map needs room: it appears on terminals of 105 columns by 34 rows and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
 
 ---
 

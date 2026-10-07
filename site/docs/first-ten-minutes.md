@@ -10,11 +10,11 @@ You're in the **Primitive Age**. The screen shows:
 - The status bar: your account name, `Primitive Age`, the epoch (`◈ Stone Era`), `Pop: 0/0` and `Morale 50%`
 - The Next Age row: what the Stone Age asks for, each item marked ✓ or ✗
 - The Economy panel, which is always on screen: Resources, Under construction and the Log on the left, the Buildings list on the right, with the Getting started guide under it
-- On a large terminal (about 120x40 or bigger), a **mini map** above the Buildings list
+- On a terminal of 105 columns by 34 rows or larger, a **mini map** above the Buildings list
 
 The mini map draws your town from your real buildings, so it grows as you build. On smaller terminals it hides to leave the Buildings list room. Type `map` any time to open the full [Map](map.md) (Esc closes it), and `icons` if you want real icons on it.
 
-<figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on: stores nearly empty, nothing built, and the Getting started guide under the Buildings list.</figcaption></figure>
+<figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: stores nearly empty, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
 
 You have no workers, no housing and 50 wood. Workers come on their own once you have housing and buildings for them to work in. Start by gathering:
 

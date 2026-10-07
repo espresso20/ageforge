@@ -46,7 +46,7 @@ Your faith strength is your **devotion** times **the share of your faith you hav
 - **Spending lowers it by the share spent.** Spend half the faith your income has made and your faith strength halves; it climbs back as you make more. A windfall, such as an event's gift of faith, can make up for faith you spent but counts for nothing beyond that.
 - **Nothing is taken.** The measure only reads your faith.
 - A harbinger's **Appease** multiplies the doom and Last Passage chances by 0.6 per level (0.36 at two levels, the most), and **Invite** makes the catastrophe certain. Appease costs faith, so it lowers the share you have kept. See [The Harbinger](harbinger.md).
-- The Economy panel's faith row shows your faith strength as a bar and a percentage, with your band and the epoch odds. The `catastrophe` command and the Harbinger panel print it with its two parts, for example "faith strength 22% (devotion 1.0x, 100% of your faith kept)".
+- The Economy panel's faith row shows your faith strength as a percentage and a bar, with your band beside it. On a terminal with room, a line under the row gives the band in full and the epoch odds. The `catastrophe` command and the Harbinger panel print it with its two parts, for example "faith strength 22% (devotion 1.0x, 100% of your faith kept)".
 
 A moderate set by age. The last two columns are what your faith buildings must average over the run, before bonuses, to reach each band with all your faith kept:
 
