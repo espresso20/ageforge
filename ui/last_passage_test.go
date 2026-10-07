@@ -189,8 +189,8 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 		"The Distress Beacon", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
 		"Published odds:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
 		"Next level: 70% kept.", "Guarantees the Last Passage at your next prestige",
-		"Next level costs: 1.2B faith (have 0), 18B culture (have 0)",
-		"Next level costs: 24Q titanium (have 0), 20Q dark matter (have 0)",
+		"Next level costs: 1.3B faith (have 0), 19B culture (have 0)",
+		"Next level costs: 25Q titanium (have 0), 21Q dark matter (have 0)",
 	} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("panel missing %q:\n%s", want, txt)
@@ -299,18 +299,18 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 	if !strings.Contains(out, "Cosmic Legacy:") || !strings.Contains(out, "Cosmic Legacy") {
 		t.Errorf("stats overlay without the Cosmic Legacy:\n%s", out)
 	}
-	// It is applied after the caps: a multiplier of its own beside the
-	// all-production pool, and never tagged as capped, however full the
-	// pool is (here milestone rewards put it far past the cap).
+	// It is applied after the pools: a multiplier of its own beside the
+	// all-production pool, and never tagged as counting a quarter, however
+	// full the pool is (here milestone rewards put it far past +200%).
 	engine.GrantTechsForTest()
 	engine.GrantBonusForTest("production_all", 4)
 	st := engine.GetState()
-	if p := st.Pools["production_all"]; !p.Limited {
-		t.Fatalf("the all-production pool is not capped in the Quantum Age with +400%% of milestone rewards: %+v", p)
+	if p := st.Pools["production_all"]; !p.Soft {
+		t.Fatalf("the all-production pool is not past its knee in the Quantum Age with +400%% of milestone rewards: %+v", p)
 	}
 	out = untag(statsProvider(st, 140))
 	for _, want := range []string{
-		"Cosmic Legacy:   all production +10%, counted after the caps (permanent, through every prestige)\n",
+		"Cosmic Legacy:   all production +10%, counted in full after every other bonus (permanent, through every prestige)\n",
 		"Cosmic Legacy ×1.10",
 	} {
 		if !strings.Contains(out, want) {

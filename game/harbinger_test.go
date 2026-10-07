@@ -558,10 +558,13 @@ func TestHarbingerCostExamples(t *testing.T) {
 	}{
 		// What the ages make with the tech layer and the payback curve that
 		// came with it counted: about twice the dark matter and titanium.
-		{"interstellar_age", map[string]float64{"dark_matter": 9.6e15, "titanium": 1.2e16}},
-		{"galactic_age", map[string]float64{"dark_matter": 2.2e17, "titanium": 1.2e16}},
-		{"quantum_age", map[string]float64{"dark_matter": 2.2e17, "titanium": 1.2e16}},
-		{"transcendent_age", map[string]float64{"dark_matter": 2.2e17, "titanium": 1.3e16}},
+		// Then the soft cap: the all-production pool the model holds is past
+		// +200% in these ages and a quarter of the rest counts, 5% more
+		// income in the Interstellar Age, 10%, 15% and 20% in the three after.
+		{"interstellar_age", map[string]float64{"dark_matter": 1.1e16, "titanium": 1.3e16}},
+		{"galactic_age", map[string]float64{"dark_matter": 2.4e17, "titanium": 1.3e16}},
+		{"quantum_age", map[string]float64{"dark_matter": 2.5e17, "titanium": 1.4e16}},
+		{"transcendent_age", map[string]float64{"dark_matter": 2.7e17, "titanium": 1.5e16}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(tears) {
 		t.Fatalf("the Cosmic Era has ages %v; the Reality Tear's brace is listed for %d", ages, len(tears))
@@ -594,7 +597,9 @@ func TestHarbingerCostExamples(t *testing.T) {
 		{"iron_era", "medieval_age", map[string]float64{"faith": 5000}},
 		{"steel_era", "renaissance_age", map[string]float64{"faith": 11000, "culture": 96000}},
 		{"steel_era", "industrial_age", map[string]float64{"faith": 110000, "culture": 1100000}},
-		{"cosmic_era", "interstellar_age", map[string]float64{"faith": 360000000, "culture": 5400000000}},
+		// The Cosmic Era's row also carries the soft cap: the model's pool is
+		// past +200% there and a quarter of the rest counts, 5% more income.
+		{"cosmic_era", "interstellar_age", map[string]float64{"faith": 380000000, "culture": 5700000000}},
 	}
 	for _, c := range dooms {
 		if got := doomAppeaseCost(c.epoch, c.age, 1); !reflect.DeepEqual(got, c.appease) {
@@ -623,11 +628,12 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// matter +9% and titanium +9% by the Interstellar Age; Transcendence
 		// adds 5% to all of them): the rows above, that much dearer. Brace is
 		// dearer again by what the payback curve added to what the age makes
-		// of dark matter and titanium (about twice as much there).
-		{"interstellar_age", map[string]float64{"faith": 1200000000, "culture": 18000000000}, map[string]float64{"dark_matter": 2e16, "titanium": 2.4e16}},
-		{"galactic_age", map[string]float64{"faith": 2400000000, "culture": 36000000000}, map[string]float64{"dark_matter": 4.3e17, "titanium": 2.4e16}},
-		{"quantum_age", map[string]float64{"faith": 4700000000, "culture": 72000000000}, map[string]float64{"dark_matter": 4.3e17, "titanium": 2.4e16}},
-		{"transcendent_age", map[string]float64{"faith": 4900000000, "culture": 74000000000}, map[string]float64{"dark_matter": 4.4e17, "titanium": 2.5e16}},
+		// of dark matter and titanium (about twice as much there). And by
+		// the soft cap, as the Reality Tear's rows above: 5% to 20%.
+		{"interstellar_age", map[string]float64{"faith": 1300000000, "culture": 19000000000}, map[string]float64{"dark_matter": 2.1e16, "titanium": 2.5e16}},
+		{"galactic_age", map[string]float64{"faith": 2600000000, "culture": 40000000000}, map[string]float64{"dark_matter": 4.7e17, "titanium": 2.6e16}},
+		{"quantum_age", map[string]float64{"faith": 5400000000, "culture": 82000000000}, map[string]float64{"dark_matter": 4.9e17, "titanium": 2.7e16}},
+		{"transcendent_age", map[string]float64{"faith": 5900000000, "culture": 89000000000}, map[string]float64{"dark_matter": 5.3e17, "titanium": 3e16}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(passages) {
 		t.Fatalf("the Cosmic Era has ages %v; the Last Passage's price is listed for %d", ages, len(passages))

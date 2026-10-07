@@ -12,7 +12,7 @@ Morale multiplies **all worker-driven building output** every tick: food, knowle
 output = base rate × buildings × (0.20 + 0.80 × workers assigned / worker slots) × morale multiplier
 ```
 
-Morale is **not** part of the all-production pool. That pool (techs, wonders, milestones, events and the rest) is capped at x3.0 and usually reaches the cap from about the Electric Age (see [The all-production cap](resources.md#the-all-production-cap)). Morale multiplies building output separately, so its bonus keeps counting after the pool has hit the cap.
+Morale is **not** part of the all-production pool. That pool (wonders, milestones, events and the rest) applies in full up to +200% and a quarter of every point past it (see [The all-production cap](resources.md#the-all-production-cap)). Morale multiplies building output separately, so its bonus counts in full however much the pool holds.
 
 For how morale fits the rest of the worker system, see [Workers](workers-and-domains.md).
 

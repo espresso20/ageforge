@@ -19,31 +19,32 @@ func rateOf(ge *GameEngine, res string) float64 {
 	return ge.Resources.resources[res].Rate
 }
 
-// TestTechLayerCountsAfterTheCap: a tech's output bonus multiplies what is
-// left after the x3 clamp, so it counts in full on a pool that is far past
-// its cap. Bonuses on the same thing add up inside the layer, a bonus on
+// TestTechLayerCountsAfterTheCap: a tech's output bonus multiplies what the
+// pools make after their soft cap, so it counts in full on a pool that is
+// far past its knee. Bonuses on the same thing add up inside the layer, a bonus on
 // all production adds to the one on the resource, and the breakdown's
 // research line is exactly what the layer added.
 func TestTechLayerCountsAfterTheCap(t *testing.T) {
 	ge := newTruthEngine("industrial_age", truthClean)
 	// Milestone rewards worth +500% on all production and on stone: both
-	// pools are at their caps, x3 each.
+	// pools are far past their knee and apply +275% (+200% and a quarter of
+	// the other +300%), x3.75 each.
 	ge.permanentBonuses["production_all"] = 5
 	ge.permanentBonuses["stone_rate"] = 5
 	base := rateOf(ge, "stone")
 	b := ge.Resources.resources["stone"].Breakdown
-	if got := (b.BuildingRate + b.BonusRate) / b.BuildingRate; math.Abs(got-9) > 1e-9 {
-		t.Fatalf("setup: stone runs at x%v of what its buildings make, want both pools at their cap (x9)", got)
+	if got := (b.BuildingRate + b.BonusRate) / b.BuildingRate; math.Abs(got-3.75*3.75) > 1e-9 {
+		t.Fatalf("setup: stone runs at x%v of what its buildings make, want both pools past their knee (x3.75 each, x14.0625)", got)
 	}
 	if b.ResearchRate != 0 {
 		t.Fatalf("setup: research adds %v to stone with no tech researched", b.ResearchRate)
 	}
 	near := func(got, want float64) bool { return math.Abs(got-want) <= 1e-9*math.Abs(want) }
 
-	// Stoneworking: +10% stone, on top of the capped pools.
+	// Stoneworking: +10% stone, on top of the pools.
 	learn(ge, "stoneworking")
 	if got := rateOf(ge, "stone"); !near(got, base*1.10) {
-		t.Errorf("with +10%% stone the rate is %v, want %v (x1.10 of the capped rate)", got, base*1.10)
+		t.Errorf("with +10%% stone the rate is %v, want %v (x1.10 of the pooled rate)", got, base*1.10)
 	}
 	// Bronze Working: another +10%. They add up: +20%, not x1.21.
 	learn(ge, "bronze_working")
