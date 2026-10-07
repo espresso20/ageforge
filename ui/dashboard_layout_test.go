@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -542,8 +544,11 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 			}
 		}
 	}
-	if line := untag(statusLine(st, 140)); strings.Contains(line, "type a panel") || !strings.Contains(line, "Type harbinger to read it.") {
-		t.Errorf("140 cells: the hint goes before the badge is shortened: %q", line)
+	if line := untag(statusLine(st, 150)); strings.Contains(line, "type a panel") || !strings.Contains(line, "Esc: close or menu") || !strings.Contains(line, "Type harbinger to read it.") {
+		t.Errorf("150 cells: half the hint goes first: %q", line)
+	}
+	if line := untag(statusLine(st, 130)); strings.Contains(line, "Esc:") || !strings.Contains(line, "Type harbinger to read it.") {
+		t.Errorf("130 cells: the whole hint goes before the badge is shortened: %q", line)
 	}
 	if line := untag(statusLine(st, 120)); !strings.Contains(line, "⚑ Harbinger: type harbinger") || !strings.Contains(line, "(production +20%)") {
 		t.Errorf("120 cells: the badge is shortened before morale's effect goes: %q", line)
@@ -577,6 +582,28 @@ func TestDashboardLayoutInEveryTheme(t *testing.T) {
 						t.Errorf("%s at %dx%d: cell (%d,%d) %q is not legible (fg %v on bg %v)", th.Key, w, h, i%w, i/w, string(c.Runes), fg, bg)
 					}
 				}
+			}
+		}
+	}
+}
+
+// TestDashboardLayoutDump writes the staged dashboards as plain text, to
+// read in a terminal. Opt-in:
+//
+//	DASHBOARD_LAYOUT_DUMP=/tmp/dash go test ./ui -run TestDashboardLayoutDump
+func TestDashboardLayoutDump(t *testing.T) {
+	dir := os.Getenv("DASHBOARD_LAYOUT_DUMP")
+	if dir == "" {
+		t.Skip("set DASHBOARD_LAYOUT_DUMP=<dir> to write the staged dashboards as text")
+	}
+	restoreForge(t)
+	for _, age := range layoutAges {
+		d, pages, _ := stagedDashboard(t, age)
+		for _, sz := range layoutSizes {
+			cells := drawnDashboard(t, d, pages, sz[0], sz[1])
+			text := strings.Join(rectText(cells, sz[0], 0, 0, sz[0], sz[1]), "\n") + "\n"
+			if err := os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s_%dx%d.txt", age, sz[0], sz[1])), []byte(text), 0o644); err != nil {
+				t.Fatal(err)
 			}
 		}
 	}

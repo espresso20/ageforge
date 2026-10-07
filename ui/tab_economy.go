@@ -225,12 +225,9 @@ type econColumn struct {
 // construction and the log. want is the height the Resources box needs
 // (border included) to show every row and its legend.
 func econHeights(h, want int) (resources, construction, log int) {
-	// The least the two under it keep: a line of construction and three of
-	// log on a small screen, two and four on a taller one.
-	minConstruction, minLog := 3, 5
-	if h >= 20 {
-		minConstruction, minLog = 4, 6
-	}
+	// The least the two under it keep when the Resources box needs the
+	// room: a line of construction and three of log.
+	const minConstruction, minLog = 3, 5
 	// Half the column is the Resources box's, as it always was; more when
 	// its rows do not fit that.
 	resources = h * 3 / 6

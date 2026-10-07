@@ -40,10 +40,14 @@ const glue = "\x1f"
 // what it is a rate of ("+0.008 faith/tick", "+13.1K gold/tick").
 var rateInText = regexp.MustCompile(`([+-][0-9][0-9.,]*\pL{0,2}) (\S+/tick)`)
 
+// crewInText finds the crew a building's rate is quoted for: "(3 workers)".
+var crewInText = regexp.MustCompile(`\((\d+) (workers?\))`)
+
 // glueRates keeps every rate in s whole when it is wrapped: the number
-// stays with its unit.
+// stays with its unit, and a crew's count with its word.
 func glueRates(s string) string {
-	return rateInText.ReplaceAllString(s, "${1}"+glue+"${2}")
+	s = rateInText.ReplaceAllString(s, "${1}"+glue+"${2}")
+	return crewInText.ReplaceAllString(s, "(${1}"+glue+"${2}")
 }
 
 // wrapWords breaks s at its spaces into lines at most width cells wide. A

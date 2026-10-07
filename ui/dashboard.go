@@ -841,12 +841,12 @@ func (d *Dashboard) refreshStatus(game.GameState) {
 }
 
 // statusLine writes the status bar for a bar w cells wide (0: as wide as
-// it likes). When the whole line does not fit it gives up, in order: the
-// hint, the wording of the catastrophe and harbinger badges (and long
-// counts are written short), what morale does to production, the
-// civilization's title, the account's name, the rest of the badges' words,
-// the epoch's name and the wide spacing. The age, the epoch's mark, the
-// badges, the population and morale always show.
+// it likes). When the whole line does not fit it gives up, in order: half
+// the hint, then all of it, the wording of the catastrophe and harbinger
+// badges (and long counts are written short), what morale does to
+// production, the civilization's title, the account's name, the rest of the
+// badges' words, the epoch's name and the wide spacing. The age, the
+// epoch's mark, the badges, the population and morale always show.
 func statusLine(state game.GameState, w int) string {
 	// note: the next age lives on the Next Age bar below, so the status bar
 	// no longer repeats it (it used to print the raw key).
@@ -867,7 +867,7 @@ func statusLine(state game.GameState, w int) string {
 	// more thing.
 	build := func(level int) string {
 		titleStr := ""
-		if state.Milestones.CurrentTitle != "" && level < 4 {
+		if state.Milestones.CurrentTitle != "" && level < 5 {
 			titleStr = fmt.Sprintf("  [yellow]\"%s\"[-]", state.Milestones.CurrentTitle)
 		}
 		// Pending catastrophe badge: persistent until the player chooses, so a player
@@ -876,9 +876,9 @@ func statusLine(state game.GameState, w int) string {
 		catStr := ""
 		badge := func(fg, bg theme.Role, full, brief, least string) {
 			text := full
-			if level >= 6 {
+			if level >= 7 {
 				text = least
-			} else if level >= 2 {
+			} else if level >= 3 {
 				text = brief
 			}
 			catStr += fmt.Sprintf("  %s %s %s", theme.TagFgBg(fg, bg), text, theme.Reset)
@@ -901,20 +901,20 @@ func statusLine(state game.GameState, w int) string {
 			if state.EpochSurvived {
 				name += " · endured"
 			}
-			if level >= 7 {
+			if level >= 8 {
 				name = ""
 			}
 			epochStr = fmt.Sprintf("  %s%s%s[-]", theme.NameTag(state.EpochColor), state.EpochIcon, name)
 		}
 		moraleDelta := ""
-		if mBand.DeltaLabel != "" && level < 3 {
+		if mBand.DeltaLabel != "" && level < 4 {
 			moraleDelta = fmt.Sprintf(" (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)
 		}
 		moraleStr := fmt.Sprintf("  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta)
 		// Leading account-name segment, when an account is wired. Truncate a long name so
 		// the status line stays readable on narrow terminals.
 		acctStr := ""
-		if state.AccountStats != nil && state.AccountStats.DisplayName != "" && level < 5 {
+		if state.AccountStats != nil && state.AccountStats.DisplayName != "" && level < 6 {
 			name := state.AccountStats.DisplayName
 			if len(name) > 20 {
 				name = name[:19] + "…"
@@ -922,22 +922,25 @@ func statusLine(state game.GameState, w int) string {
 			acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
 		}
 		hint := ""
-		if level < 1 {
+		switch level {
+		case 0:
 			hint = "  |  [gray]type a panel name to open it · Esc: close or menu[-]"
+		case 1:
+			hint = "  |  [gray]Esc: close or menu[-]"
 		}
 		pop := fmt.Sprintf("%d/%d", state.Workers.TotalPop, state.Workers.MaxPop)
-		if level >= 2 {
+		if level >= 3 {
 			pop = FormatNumber(float64(state.Workers.TotalPop)) + "/" + FormatNumber(float64(state.Workers.MaxPop))
 		}
 		line := fmt.Sprintf("%s[gold]%s[-]%s%s%s%s%s  |  Pop: %s%s%s",
 			acctStr, state.AgeName, prestigeStr, titleStr, epochStr, catStr, devStr, pop, moraleStr, hint)
-		if level >= 8 {
+		if level >= 9 {
 			line = strings.ReplaceAll(line, "  ", " ")
 		}
 		return line
 	}
 	line := build(0)
-	for level := 1; level <= 8 && w > 0 && visibleLen(line) > w; level++ {
+	for level := 1; level <= 9 && w > 0 && visibleLen(line) > w; level++ {
 		line = build(level)
 	}
 	return line
