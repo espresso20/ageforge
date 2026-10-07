@@ -258,9 +258,6 @@ type FaithMeasure struct {
 	WarningTicks float64
 }
 
-// FaithMeasures is FaithMeasuresIn for the core ruleset.
-func FaithMeasures() []FaithMeasure { return FaithMeasuresIn(rules.Core()) }
-
 // FaithMeasuresIn lists the faith standing arithmetic of every age of set,
 // in order. Pure.
 func FaithMeasuresIn(set *rules.Set) []FaithMeasure {

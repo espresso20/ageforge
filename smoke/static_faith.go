@@ -91,7 +91,7 @@ func sharePct(share float64) string {
 // StaticFaithStanding checks every age's faith bands on the core ruleset and
 // returns the problems with the table they come from.
 func StaticFaithStanding() ([]FaithStandingProblem, []FaithStandingRow) {
-	return faithStandingProblems(game.FaithMeasures(), rules.Core().FlowIncome, FaithDevotedFactor)
+	return faithStandingProblems(game.FaithMeasuresIn(rules.Core()), rules.Core().FlowIncome, FaithDevotedFactor)
 }
 
 // faithStandingProblems is StaticFaithStanding over measures, income (the

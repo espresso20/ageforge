@@ -99,7 +99,7 @@ func TestFaithStandingReadsTheAgeNotTheStore(t *testing.T) {
 // whatever storage the player has built, and Era Mastery does not move the
 // measure.
 func TestFaithStandingReachableInEveryAge(t *testing.T) {
-	for _, m := range FaithMeasures() {
+	for _, m := range FaithMeasuresIn(rules.Core()) {
 		if m.Full <= 0 || m.WarningTicks != harbingerLeadMin*config.AgeTargetTicks(m.Age) || m.Epoch != config.EpochForAge(m.Age) {
 			t.Fatalf("%s: measure %+v", m.Age, m)
 		}
@@ -120,7 +120,7 @@ func TestFaithStandingReachableInEveryAge(t *testing.T) {
 			}
 		}
 	}
-	if n := len(FaithMeasures()); n != len(config.AgeOrder()) {
+	if n := len(FaithMeasuresIn(rules.Core())); n != len(config.AgeOrder()) {
 		t.Errorf("%d faith measures for %d ages", n, len(config.AgeOrder()))
 	}
 }

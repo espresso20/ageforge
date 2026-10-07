@@ -43,7 +43,7 @@ func TestFaithStandingReachable(t *testing.T) {
 	}
 
 	// The check fires on broken measures.
-	measures := game.FaithMeasures()
+	measures := game.FaithMeasuresIn(rules.Core())
 	income := rules.Core().FlowIncome
 	alter := func(full func(m game.FaithMeasure) float64) []FaithStandingProblem {
 		broken := make([]game.FaithMeasure, len(measures))
@@ -159,7 +159,7 @@ func TestFaithNeverFilledTheGeneralStore(t *testing.T) {
 	income := rules.Core().FlowIncome
 	hoard := 0.0 // a moderate economy's faith since the game began, never spent
 	t.Log("| era | age | least store | typical store | most store | moderate, shortest warning | of least | of typical | devoted, longest warning | of least | of typical | moderate hoard | of least | of typical |")
-	for _, m := range game.FaithMeasures() {
+	for _, m := range game.FaithMeasuresIn(rules.Core()) {
 		ageMakes := income("faith", m.Age) * config.AgeTargetTicks(m.Age)
 		hoard += ageMakes
 		moderate := income("faith", m.Age) * m.WarningTicks
