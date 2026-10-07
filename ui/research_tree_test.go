@@ -224,6 +224,71 @@ func TestResearchTreeAtEverySize(t *testing.T) {
 	}
 }
 
+// TestResearchTreeLaneRow: every lane in sight is either named over its
+// column (in full, or shortened with a full stop) or counted by the arrow
+// at the edge it is off, a name never runs into the arrow, and a lane off
+// to the left is named in the gutter when the gutter has room.
+func TestResearchTreeLaneRow(t *testing.T) {
+	st := classicalGame(t).GetState()
+	for _, size := range treeSizes {
+		w, h := size[0], size[1]-promptRows
+		for _, far := range []bool{false, true} {
+			for _, sel := range []string{"primitive_writing", "philosophy", "siege_warfare"} {
+				m, v, g := drawTree(st, w, h, treeView{sel: sel, far: far})
+				row := []rune(strings.Split(g.String(), "\n")[1])
+				ox, _, mw, _ := mapRect(m.geom, w, h)
+				named, left, right := 0, 0, 0
+				for i, l := range m.lanes {
+					lx := ox + i*m.geom.laneW - v.vx + 1
+					switch {
+					case lx < ox:
+						left++
+					case lx+1 < ox+mw && row[lx] == []rune(l.Emblem)[0] && row[lx+1] == ' ':
+						named++
+						word := strings.Fields(string(row[lx+2:]))[0]
+						full := laneLabel(l.Name, 99)
+						if word != full && !(strings.HasSuffix(word, ".") && strings.HasPrefix(full, strings.TrimSuffix(word, "."))) {
+							t.Errorf("%dx%d far=%v: lane %s reads %q", w, h, far, l.Key, word)
+						}
+					default:
+						right++
+					}
+				}
+				if named+left+right != len(m.lanes) || named == 0 {
+					t.Fatalf("%dx%d far=%v: %d lanes, %d named", w, h, far, len(m.lanes), named)
+				}
+				text := string(row)
+				if got := strings.Contains(text, "◂"); got != (left > 0) {
+					t.Errorf("%dx%d far=%v sel=%s: %d lanes off to the left, lane row %q", w, h, far, sel, left, text)
+				}
+				wantRight := ""
+				if right > 0 {
+					wantRight = string(rune('0'+right)) + "▸"
+				}
+				if got := strings.Contains(text, "▸"); got != (right > 0) || !strings.Contains(text, wantRight) {
+					t.Errorf("%dx%d far=%v sel=%s: %d lanes off to the right, lane row %q", w, h, far, sel, right, text)
+				}
+				if left == 1 && ox >= 10 && !strings.HasPrefix(text, "◂ "+laneLabel(m.lanes[0].Name, 99)) {
+					t.Errorf("%dx%d far=%v: the lane off to the left is not named: %q", w, h, far, text)
+				}
+			}
+		}
+	}
+	for _, c := range []struct {
+		name string
+		room int
+		want string
+	}{
+		{"Knowledge", 9, "KNOWLEDGE"}, {"Knowledge", 7, "KNOWL."}, {"Materials", 7, "MATER."},
+		{"Military", 7, "MILIT."}, {"Computing", 7, "COMPUT."}, {"Faith & Culture", 5, "FAITH"},
+		{"Agriculture", 4, ""}, {"Agriculture", 0, ""},
+	} {
+		if got := laneLabel(c.name, c.room); got != c.want {
+			t.Errorf("laneLabel(%q, %d) = %q, want %q", c.name, c.room, got, c.want)
+		}
+	}
+}
+
 // TestResearchTreePaintsInEveryTheme: in every theme, at every size, every
 // cell the panel draws can be told from its background.
 func TestResearchTreePaintsInEveryTheme(t *testing.T) {

@@ -188,7 +188,7 @@ Opens the tree on that tech's card. It works for any tech you can see on the map
 
 `research` opens the tree as a map. It covers the whole screen but the command bar, and it does not have to fit: the view follows the tech you select.
 
-- **Lanes run across, ages run down.** Each lane is a column with its name at the top (Knowledge, Trade, Craft, and so on); a lane appears once one of its techs is in sight. Each age is a band, named in the gutter on the left with how many of its techs you hold.
+- **Lanes run across, ages run down.** Each lane is a column with its name at the top (Knowledge, Trade, Craft, and so on); a lane appears once one of its techs is in sight. When lanes are off screen, an arrow at that end of the lane row counts them (`2▸`), and a wide terminal names the nearest on the left (`◂ FAITH`). Each age is a band, named in the gutter on the left with how many of its techs you hold.
 - **A tech is a badge with its name over it.** The glyph in the middle is the tech's emblem, or its lane's.
 - **Lines show what a tech needs.** A line leaves the notch under a badge and comes down on the name of the tech that needs it. A solid line is needed outright. Dashed lines marked `or` are an either-or group: one of them will do. Selecting a tech lights the chain that leads to it.
 - **One line under the map** names the selected tech, its state, its price and time, and what it opens. A key bar sits under that.

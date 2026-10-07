@@ -856,26 +856,49 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	}
 
 	// The lane row: each lane in view over its column, and an arrow at
-	// either end when lanes wait off screen.
+	// either end for the lanes off screen that way. A lane cut by the
+	// right edge keeps a shortened name while there is room for one.
+	offLeft, offRight, nearLeft := 0, 0, -1
+	edge := ox + mw // one past the map's last column
 	for i, l := range m.lanes {
-		lx := ox + i*geom.laneW - v.vx
-		name := strings.ToUpper(l.Name)
-		if j := strings.IndexAny(name, " &"); j > 0 {
-			name = name[:j]
+		lx := ox + i*geom.laneW - v.vx + 1
+		if lx < ox {
+			offLeft, nearLeft = offLeft+1, i
+			continue
 		}
-		label := clipRunes(l.Emblem+" "+name, geom.laneW-1)
+		room := min(geom.laneW-1, edge-lx)
+		if i < len(m.lanes)-1 {
+			// Keep clear of the corner the right arrow is drawn in.
+			room = min(room, edge-4-lx)
+		}
+		label := ""
 		if v.ascii {
-			label = clipRunes(name, geom.laneW-1)
+			label = laneLabel(l.Name, room)
+		} else if short := laneLabel(l.Name, room-2); short != "" {
+			label = l.Emblem + " " + short
 		}
-		if lx+1 >= ox && lx+1+len([]rune(label)) <= ox+mw {
-			out.text(lx+1, 1, label, tsLane, i)
+		if label == "" {
+			offRight++
+			continue
 		}
+		out.text(lx, 1, label, tsLane, i)
 	}
-	if v.vx > 0 {
-		out.text(0, 1, clipRunes(fmt.Sprintf("◂%d", (v.vx+geom.laneW-1)/geom.laneW), ox), tsHi, -1)
+	if offLeft > 0 {
+		// The nearest lane off to the left is named when the gutter has
+		// room for it; a narrow gutter carries the count alone.
+		s := "◂"
+		if offLeft > 1 {
+			s = fmt.Sprintf("◂%d", offLeft)
+		}
+		if name := laneLabel(m.lanes[nearLeft].Name, ox-2-len([]rune(s))); name != "" {
+			s += " " + name
+		} else {
+			s = fmt.Sprintf("◂%d", offLeft)
+		}
+		out.text(0, 1, clipRunes(s, ox), tsHi, -1)
 	}
-	if hidden := (m.w - v.vx - mw + geom.laneW - 1) / geom.laneW; m.w-v.vx > mw && hidden > 0 {
-		s := fmt.Sprintf("%d▸", hidden)
+	if offRight > 0 {
+		s := fmt.Sprintf("%d▸", offRight)
 		out.text(w-1-len([]rune(s)), 1, s, tsHi, -1)
 	}
 
@@ -963,6 +986,28 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 }
 
 // clipRunes cuts s to at most n cells.
+// laneLabel is a lane's name for the lane row: its first word in capitals,
+// shortened with a full stop when the room is narrower than the word
+// ("KNOWL.", "MATER."), and "" when not even four letters of it fit.
+func laneLabel(name string, room int) string {
+	name = strings.ToUpper(name)
+	if j := strings.IndexAny(name, " &"); j > 0 {
+		name = name[:j]
+	}
+	rs := []rune(name)
+	if len(rs) <= room {
+		return name
+	}
+	if room < 5 {
+		return ""
+	}
+	rs = rs[:room-1]
+	for len(rs) > 4 && strings.ContainsRune("AEIOU", rs[len(rs)-1]) {
+		rs = rs[:len(rs)-1]
+	}
+	return string(rs) + "."
+}
+
 func clipRunes(s string, n int) string {
 	rs := []rune(s)
 	if n < 0 {
