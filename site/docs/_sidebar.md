@@ -45,4 +45,4 @@
   - [Accounts & Recovery](account.md)
   - [Themes & Accessibility](themes.md)
 
-- [← Back to the site](/ ':ignore :target=_self')
+- <a href="/" target="_self" data-nosearch>← Back to the site</a>

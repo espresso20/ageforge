@@ -35,6 +35,14 @@ var shameMessages = []string{
 // Map panel leaves these rows free, so the prompt works while it is open.
 const promptRows = 3
 
+// The dashboard's other fixed sizes: the rows over the boxes (the badge
+// line, the status bar, the toast line and the two of the Next Age strip)
+// and the width of the right column (the Panels list and the Workers box).
+const (
+	dashHeaderRows = 1 + 1 + 1 + 2
+	sidebarW       = 22
+)
+
 type Dashboard struct {
 	app    *tview.Application
 	engine *game.GameEngine
@@ -455,7 +463,7 @@ func (d *Dashboard) build() {
 	// Main horizontal: economy (permanent, full height) + right column (sidebar + worker mini)
 	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.economyTab.Root(), 0, 1, false).
-		AddItem(rightCol, 22, 0, false)
+		AddItem(rightCol, sidebarW, 0, false)
 
 	// Content area is just mainHoriz — no bottom strip
 	d.contentArea = mainHoriz

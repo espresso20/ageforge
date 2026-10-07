@@ -262,6 +262,12 @@ p code, li code { word-break: break-word; }
   .markdown-section h2 { font-size: 1.55rem; }
   .sidebar-toggle { width: 42px !important; height: 42px !important; }
   .content { padding: 16px !important; }
+  /* The theme pads the column 45px a side at every width; with the 16px
+     above that left the text 253px of a 375px phone. On a phone the 16px
+     gutter is the whole margin, and a plate is as wide as the text. */
+  .markdown-section { padding-left: 0; padding-right: 0; }
+  .markdown-section figure.screen,
+  .markdown-section .screen-pair { margin-left: 0; margin-right: 0; }
   .markdown-section blockquote { padding: 10px 14px; }
   .markdown-section th, .markdown-section td { padding: 7px 10px 7px 0; }
   .screen-scroll { padding: 8px; }
