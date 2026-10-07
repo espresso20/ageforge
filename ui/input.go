@@ -2371,6 +2371,30 @@ func cmdHarbinger(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Type: "success"}
 }
 
+// faithStrengthText says the faith strength the odds are read from, with the
+// two things it comes from: "faith strength 22% (devotion 1.0x, 100% of your
+// faith kept)". The same figure the Economy panel's faith row shows.
+func faithStrengthText(state game.GameState) string {
+	return "faith strength " + faithStrengthFigure(state)
+}
+
+// faithStrengthFigure is the figure in faithStrengthText. Devotion is what
+// the town's faith buildings have made this run against a moderate set (five
+// staffed copies of each); kept is the share of the run's faith still held.
+func faithStrengthFigure(state game.GameState) string {
+	o := state.CatastropheOutlook
+	if o.FaithDevotion <= 0 {
+		return fmt.Sprintf("%.0f%% (your faith buildings have made no faith yet)", o.FaithStrength*100)
+	}
+	devotion := fmt.Sprintf("%.1f", o.FaithDevotion)
+	if o.FaithDevotion >= 10 {
+		devotion = fmt.Sprintf("%.0f", o.FaithDevotion)
+	} else if o.FaithDevotion < 0.1 {
+		devotion = fmt.Sprintf("%.2f", o.FaithDevotion)
+	}
+	return fmt.Sprintf("%.0f%% (devotion %sx, %.0f%% of your faith kept)", o.FaithStrength*100, devotion, o.FaithKept*100)
+}
+
 // catastropheOutlookText renders the no-pending status line for the bare
 // `catastrophe` command: what the player can know. In an era that can be
 // fated, a doom is only ever known through its harbinger, so with none here
@@ -2383,16 +2407,16 @@ func catastropheOutlookText(state game.GameState) string {
 	if o.Passage == game.PassagePrestige && o.Warned {
 		// The Cosmic Era's fated doom, foretold: it comes before the Last
 		// Passage can.
-		fmt.Fprintf(&sb, "  %s, faith %.0f%% full.\n", doomWarningText(state), o.FaithFill*100)
+		fmt.Fprintf(&sb, "  %s, %s.\n", doomWarningText(state), faithStrengthText(state))
 	}
 	switch {
 	case o.Passage == game.PassagePrestige && o.Possible:
-		fmt.Fprintf(&sb, "  Next passage (prestige, the Last Passage): %s, faith %.0f%% full.",
-			outlookRiskText(state), o.FaithFill*100)
+		fmt.Fprintf(&sb, "  Next passage (prestige, the Last Passage): %s, %s.",
+			outlookRiskText(state), faithStrengthText(state))
 	case o.Passage == game.PassagePrestige:
 		sb.WriteString("  This is the final epoch: its passage is prestige, and the Last Passage cannot strike now.")
 	case o.Warned:
-		fmt.Fprintf(&sb, "  %s, faith %.0f%% full.", doomWarningText(state), o.FaithFill*100)
+		fmt.Fprintf(&sb, "  %s, %s.", doomWarningText(state), faithStrengthText(state))
 	default:
 		sb.WriteString("  " + eraOutlookText(state))
 	}

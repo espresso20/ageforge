@@ -158,7 +158,7 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 		if harbingerNumericAge(state) {
 			fmt.Fprintf(sb, " Published odds: %s\n", theme.Paint(theme.RoleHighlight, harbingerPercent(o.Probability)))
 		}
-		sb.WriteString(theme.Paint(theme.RoleDim, " More faith in storage makes it less likely.") + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, " Faith strength: "+faithStrengthFigure(state)+". Stronger faith makes it less likely.") + "\n")
 	case o.Passage == game.PassagePrestige && state.LastPassage.Pending:
 		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "The Last Passage has come. Type 'catastrophe' to choose.") + "\n")
 	case o.Passage == game.PassagePrestige:
@@ -166,7 +166,7 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 	default:
 		sb.WriteString(" " + eraOutlookText(state) + "\n")
 		if o.Possible {
-			sb.WriteString(theme.Paint(theme.RoleDim, " Faith in storage makes a doom less likely to strike, and faith and culture\n pay for Appease if a harbinger comes.") + "\n")
+			sb.WriteString(theme.Paint(theme.RoleDim, " Faith strength: "+faithStrengthFigure(state)+".\n Stronger faith makes a doom less likely to strike, and faith and culture pay\n for Appease if a harbinger comes.") + "\n")
 		}
 		if r := eraDoomRecord(state); r != nil && r.Outcome == game.HarbingerOutcomeDiscredited {
 			sb.WriteString(theme.Paint(theme.RoleDim, " "+capFirstUI(r.Name)+"'s warning in this era was invented.") + "\n")
@@ -215,6 +215,10 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	default:
 		fmt.Fprintf(sb, " Severity: %s\n", harbingerSeverityText(h.Tier))
 		sb.WriteString(theme.Paint(theme.RoleDim, " The omens give no figure. Their words are all you have to go on.") + "\n")
+	}
+	if !h.PassageCame {
+		// The strength the odds are read from, as the faith row shows it.
+		sb.WriteString(theme.Paint(theme.RoleDim, " Faith strength: "+faithStrengthFigure(state)+". Stronger faith lowers the odds.") + "\n")
 	}
 	switch {
 	case h.Invited && h.LastPassage && !h.PassageCame:

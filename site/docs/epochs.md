@@ -24,7 +24,7 @@ Each age has a target length in real time, from 15 minutes for the Primitive Age
 
 ### What each epoch is like
 
-**◈ Stone Era.** Your settlement scratches out survival. Food is the bottleneck and wood is the building block. Events are small and local: river floods, wandering sages, tribal raids. Your faith storage is tiny. No catastrophe can strike here.
+**◈ Stone Era.** Your settlement scratches out survival. Food is the bottleneck and wood is the building block. Events are small and local: river floods, wandering sages, tribal raids. Shrines are all the faith you have. No catastrophe can strike here.
 
 **⚔ Iron Era.** Iron matters most. Your armies grow, trade routes lengthen and faith starts to carry weight. The Great Plague is the first catastrophe that can strike, and the cheapest one to Succumb to, since the run you give up is still short.
 
@@ -66,7 +66,7 @@ Every time you cross into a **new epoch** (the first age advance that crosses an
 
 The outcome is decided in steps.
 
-**Step 1: good or bad?** Your faith, as a share of faith storage, sets the odds of a good event: 40% below 25% faith, 50% from 25% to 75% (or with no faith storage yet), 60% above 75%. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
+**Step 1: good or bad?** Your faith strength sets the odds of a good event: 40% below a strength of 25%, 50% from 25% to 75%, 60% above 75%. A typical town reads about 22% and rolls at 40%; it takes more faith buildings than a moderate set, kept staffed, to do better. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
 
 **Step 2: if the roll is bad,** you get a Challenging event, applied at once with no choice. A transition never brings a catastrophe. Entering an era from the Iron Era on also rolls, in secret, whether a doom is fated somewhere inside it; a [harbinger](harbinger.md) always warns before it strikes. See [When It Triggers](catastrophe.md#when-it-triggers).
 
@@ -263,17 +263,17 @@ A duration of 0 means the effect happens once. A duration above 0 means the even
 
 ### The Balanced Approach
 
-Keep faith at 50-70% of storage. Invest in culture buildings at a moderate pace. Take transition events as they come without over-optimizing.
+Keep about twice a moderate set of faith buildings, fully staffed, for a faith strength in the middle band (about 44%). Invest in culture buildings at a moderate pace. Take transition events as they come without over-optimizing.
 
-At 50% faith the odds are already a coin flip. With decent culture (over 40% of storage) you're eligible for Major events. You won't hit Legendary, but The Grand Discovery and Worker Innovation are both strong. A first run to the Modern Age crosses 4 epoch transitions (into the Iron, Steel, Electric and Digital Eras), so at a steady 50% good rate you can expect about 2 good events and 2 challenging ones. Catastrophes come separately: at mid faith a first run can expect about 0.6 of them.
+In the middle band the odds are a coin flip. With decent culture (over 40% of storage) you're eligible for Major events. You won't hit Legendary, but The Grand Discovery and Worker Innovation are both strong. A first run to the Modern Age crosses 4 epoch transitions (into the Iron, Steel, Electric and Digital Eras), so at a steady 50% good rate you can expect about 2 good events and 2 challenging ones. Catastrophes come separately: at mid faith a first run can expect about 0.6 of them.
 
 Best for: a first or second run, players who don't want to commit hard to one strategy, relaxed sessions.
 
 ### Faith Maximizer
 
-Build faith production aggressively. Keep faith above 75% of storage going into every epoch transition, and through each era, since a fated doom rolls on the faith you hold when it strikes.
+Build faith production aggressively: about three and a half times a moderate set of faith buildings, fully staffed, and spend as little faith as you can. That holds your faith strength above 75% going into every epoch transition, and through each era, since a fated doom rolls on your faith strength when it strikes.
 
-Going from 50% to over 75% faith moves your odds from 50/50 to 60/40. Over the 4 transitions of a first run that's about 0.4 extra good events compared to a neutral run. It also cuts your catastrophe exposure: a fated doom strikes 60% of the time instead of 75% (see [Faith](faith.md#faith-threshold-bands)).
+Going from the middle band to the top band moves your odds from 50/50 to 60/40. Over the 4 transitions of a first run that's about 0.4 extra good events compared to a neutral run. It also cuts your catastrophe exposure: a fated doom strikes 60% of the time instead of 75% (see [Faith](faith.md#faith-threshold-bands)).
 
 Trade-offs: every worker on a faith building is one not growing food, so you compete with your gathering and farming capacity. Don't let food go critical in the early Stone Era chasing faith.
 
@@ -321,7 +321,7 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 
 ## Tips and Common Mistakes
 
-**Don't let faith sit near zero.** Below 25% of faith storage, your good-event odds are 40% and a fated doom strikes 90% of the time. Every point of faith storage and production matters, and even basic faith buildings buy insurance. Check your faith storage: it's easy to underinvest in it while faith production looks fine.
+**Know which faith band you are in.** Below a faith strength of 25%, your good-event odds are 40% and a fated doom strikes 90% of the time. That is where a typical town sits, and the game is balanced for it. Storage has nothing to do with it: faith strength measures your faith buildings against a moderate set, and how much of your faith you have kept. If you want better odds, build past the moderate set early and keep the buildings staffed. Check the faith row before you advance into a new epoch: the roll reads the strength it shows.
 
 **Culture storage matters as much as culture production.** The tier check uses the share of storage, not the raw amount. A small culture storage at 90% beats a large one at 10%. Don't build more culture storage than you can fill before the transition.
 

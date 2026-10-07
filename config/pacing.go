@@ -762,6 +762,36 @@ func StorageHold(age string) float64 {
 	return StorageHoldHours
 }
 
+// BuildingOutputs is the part of Incomes that the moderate economy's own
+// buildings make, before any bonus: FlowCopies fully staffed copies of every
+// non-wonder producer of each resource include accepts, from the Primitive
+// Age up to and including each age, as age -> resource -> output per tick.
+// Wonders, techs and the production_all bonus are left out: every town has
+// those whatever it builds, so this is the part that measures what a town
+// put into a resource (the engine's faith strength reads it). Pure.
+func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bool) map[string]map[string]float64 {
+	idx := make(map[string]int, len(order))
+	for i, a := range order {
+		idx[a] = i
+	}
+	out := make(map[string]map[string]float64, len(order))
+	for i, age := range order {
+		made := map[string]float64{}
+		for _, d := range defs {
+			if j, ok := idx[d.RequiredAge]; !ok || j > i || d.Category == "wonder" {
+				continue
+			}
+			for _, e := range d.Effects {
+				if e.Type == "production" && e.Value > 0 && include(e.Target) {
+					made[e.Target] += float64(FlowCopies * e.Value)
+				}
+			}
+		}
+		out[age] = made
+	}
+	return out
+}
+
 // Incomes is FlowIncome's formula for every age in order and every resource
 // include accepts, as age -> resource -> income per tick: IsFlowResource
 // gives FlowIncome's table, AnyResource TypicalIncome's. Pure.

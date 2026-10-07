@@ -528,7 +528,7 @@ Focusing on one domain can finish milestone chains faster; spreading protects yo
 
 - **Let the shares do the busywork.** Set a share when you want more workers in one domain or none in it, and `workers share auto` to go back.
 - **Food first.** Auto-recruit recruits only while food allows, so early on your food buildings set the pace of growth.
-- **Faith workers before epoch transitions.** Your faith as a share of faith storage sets the epoch and catastrophe odds (see [Faith](faith.md#faith-threshold-bands)).
+- **Faith workers before epoch transitions.** Your faith strength sets the epoch and catastrophe odds, and fully staffed faith buildings are what raise it (see [Faith](faith.md#faith-threshold-bands)).
 - **Watch the idle count.** `status` (or `s`) shows it. The game puts idle workers to work every 5 ticks, so workers who stay idle have no free slot to go to: build more worker buildings.
 - **`dismiss` cuts drain, `unassign` doesn't.** Idle workers still eat.
 

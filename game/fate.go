@@ -386,12 +386,12 @@ func (ge *GameEngine) strikeBase() float64 {
 	return float64((1-ge.epochGoodChance())*catastropheChanceOnBadRoll) * FateStrikeScale
 }
 
-// StrikeChanceAt is the chance a fated doom strikes at faith fill fill
-// (hasStorage false: faith has no storage yet) with appease levels of Appease
-// bought: the rule the strike rolls by. Pure; for the smoke report, which
-// models the expected catastrophes of a run from the faith it lived at.
-func StrikeChanceAt(fill float64, hasStorage bool, appease int) float64 {
-	good := goodChanceFor(fill, hasStorage)
+// StrikeChanceAt is the chance a fated doom strikes at faith strength
+// strength with appease levels of Appease bought: the rule the strike rolls
+// by. Pure; for the smoke report, which models the expected catastrophes of a
+// run from the faith it lived at.
+func StrikeChanceAt(strength float64, appease int) float64 {
+	good := goodChanceFor(strength)
 	p := float64((1-good)*catastropheChanceOnBadRoll) * FateStrikeScale
 	if appease > 0 {
 		p *= detmath.Pow(harbingerAppeaseFactor, float64(appease))

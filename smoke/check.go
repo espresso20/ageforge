@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 func bad(v float64) bool { return math.IsNaN(v) || math.IsInf(v, 0) }
@@ -484,20 +485,16 @@ func costStr(c map[string]float64) string {
 	return strings.Join(parts, ", ")
 }
 
-// num formats a number compactly (1.2K, 3.4M, ...).
+// num formats a number compactly: whole below ten thousand, and from there
+// the game's own format (textfmt.Number: 12.5K, 3.4M, 1.56T, 8.9Q), so the
+// report reads as the game does. It used to stop at T and printed the Cosmic
+// Era's quadrillions as 8.9e+03T.
 func num(v float64) string {
-	a := math.Abs(v)
 	switch {
 	case bad(v):
 		return fmt.Sprint(v)
-	case a >= 1e12:
-		return fmt.Sprintf("%.3gT", v/1e12)
-	case a >= 1e9:
-		return fmt.Sprintf("%.3gB", v/1e9)
-	case a >= 1e6:
-		return fmt.Sprintf("%.3gM", v/1e6)
-	case a >= 1e4:
-		return fmt.Sprintf("%.3gK", v/1e3)
+	case math.Abs(v) >= 1e4:
+		return textfmt.Number(v)
 	default:
 		return fmt.Sprintf("%.0f", v)
 	}

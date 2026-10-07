@@ -128,6 +128,13 @@ type GameSave struct {
 	// ParkedHarbinger is the Last Passage's thread while the Cosmic Era's
 	// fated doom speaks (fate.go). omitempty.
 	ParkedHarbinger *HarbingerSave `json:"parked_harbinger,omitempty"`
+	// FaithMeasure is the run's faith measure, what faith strength is read
+	// from (faith.go), and FaithMeasured the marker every save written since
+	// carries. Both omitempty, so older saves keep their bytes and
+	// signatures; a save without the marker is given a moderate town's
+	// measure once, on load (restoreFaithState).
+	FaithMeasure  *FaithSave `json:"faith_measure,omitempty"`
+	FaithMeasured bool       `json:"faith_measured,omitempty"`
 	// The Last Passage (see last_passage.go). omitempty, so saves without it
 	// keep their bytes and signatures. PendingLastPassage is a prestige from
 	// the final epoch waiting for Endure or Succumb; CosmicLegacy is the
@@ -686,6 +693,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		HarbingerHistory:       append([]HarbingerRecord(nil), ge.harbingerHistory...),
 		Fate:                   ge.fateSaveCopy(),
 		ParkedHarbinger:        copyHarbingerSave(ge.parkedHarbinger),
+		FaithMeasure:           ge.faithSaveCopy(),
+		FaithMeasured:          true,
 		PendingLastPassage:     ge.pendingLastPassage,
 		CosmicLegacy:           ge.cosmicLegacy,
 		Morale:                 ge.morale,
@@ -998,6 +1007,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.restoreCatastropheState(&save)
 	ge.restoreFateState(&save)
 	ge.restoreHarbingerState(&save)
+	ge.restoreFaithState(&save)
 
 	// Restore history collector
 	if save.History != nil {

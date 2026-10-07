@@ -153,49 +153,43 @@ func formatCultureRow(rs game.ResourceState) string {
 	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRateTick(rs.Rate))
 }
 
-// faithBand describes a faith band with its label and epoch odds text.
+// faithBand describes a faith strength with its label and epoch odds text.
 type faithBand struct {
 	label     string // tview-tagged label
 	epochOdds string // e.g. "40% good"
 }
 
-// faithBandFor returns the appropriate faithBand based on pct (0.0–1.0).
-func faithBandFor(amount, storage float64) faithBand {
-	if storage <= 0 || amount == 0 {
-		return faithBand{"[red]✝ No faith[-]", "40% good"}
-	}
-	pct := amount / storage
+// faithBandFor labels the faith strength in o for a town holding held faith.
+// The odds are the engine's for the band the rolls read (o.FaithBand); the
+// label only splits the bands finer.
+func faithBandFor(held float64, o game.CatastropheOutlook) faithBand {
+	odds := fmt.Sprintf("%.0f%% good", game.EpochGoodChanceIn(o.FaithBand)*100)
+	strength := o.FaithStrength
 	switch {
-	case pct <= 0.25:
-		return faithBand{"[gray]◈ Dim faith[-]", "40% good"}
-	case pct <= 0.50:
-		return faithBand{"[white]◈ Low faith[-]", "50% good"}
-	case pct <= 0.75:
-		return faithBand{"[yellow]◈ Faith[-]", "50% good"}
-	case pct < 1.0:
-		return faithBand{"[green]◈ Strong faith[-]", "60% good"}
-	default:
-		return faithBand{"[gold]✦ Faith full[-]", "60% good + prestige bonus"}
+	case held <= 0:
+		return faithBand{"[red]✝ No faith[-]", odds}
+	case o.FaithBand == game.FaithBandLow:
+		return faithBand{"[gray]◈ Dim faith[-]", odds}
+	case o.FaithBand == game.FaithBandHigh && strength >= 1:
+		return faithBand{"[gold]✦ Faith full[-]", odds}
+	case o.FaithBand == game.FaithBandHigh:
+		return faithBand{"[green]◈ Strong faith[-]", odds}
+	case strength <= 0.50:
+		return faithBand{"[white]◈ Low faith[-]", odds}
 	}
+	return faithBand{"[yellow]◈ Faith[-]", odds}
 }
 
-// formatFaithRow builds the faith resource row string.
-func formatFaithRow(rs game.ResourceState) string {
-	amount := rs.Amount
-	storage := rs.Storage
-
-	band := faithBandFor(amount, storage)
-
-	var pctStr string
-	if storage > 0 {
-		pct := amount / storage * 100
-		pctStr = fmt.Sprintf("%.0f%%", pct)
-	} else {
-		pctStr = "0%"
-	}
+// formatFaithRow builds the faith resource row string: the bar and the
+// percentage are the faith strength the rolls read (o.FaithStrength: the
+// faith the town's own faith buildings made, against four and a half
+// moderate sets'), not the fill of the store faith is kept in.
+func formatFaithRow(rs game.ResourceState, o game.CatastropheOutlook) string {
+	band := faithBandFor(rs.Amount, o)
+	pctStr := fmt.Sprintf("%.0f%%", o.FaithStrength*100)
 
 	// Build the bar using the same cultureProgressBar helper (▓/░, width 10).
-	bar := cultureProgressBar(amount, storage)
+	bar := cultureProgressBar(o.FaithStrength, 1)
 	barStr := "\u005b" + bar + "\u005d"
 
 	midPart := fmt.Sprintf("%s  %s  %s  [gray](epoch: %s)[-]",
@@ -301,7 +295,7 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 		case "culture":
 			sb.WriteString(formatCultureRow(rs))
 		case "faith":
-			sb.WriteString(formatFaithRow(rs))
+			sb.WriteString(formatFaithRow(rs, state.CatastropheOutlook))
 		default:
 			amtColor := "white"
 			if rs.Storage > 0 && rs.Amount >= rs.Storage*0.9 {
