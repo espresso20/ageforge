@@ -44,6 +44,11 @@ type AgeDef struct {
 // at most half the most storage buildable by then, with no discounts assumed.
 // Resource requirements stay within 80% of that storage. smoke.StaticGates
 // checks this and smoke/static_test.go fails the build if a gate breaks it.
+//
+// No gate asks for knowledge. An age's knowledge goes to its techs, and the
+// one of them the advance needs is its wonder's keystone (the wonder's
+// RequiredTech), so research never competes with a requirement for the same
+// knowledge (TestNoGateAsksForKnowledge).
 func Ages() []AgeDef {
 	return normalizeAgeRequirements([]AgeDef{
 		// === 0: PRIMITIVE AGE (Stone Era) ===
@@ -62,7 +67,7 @@ func Ages() []AgeDef {
 			EpochKey:        "stone_era",
 			Description:     "Stone tools and the first permanent camps.",
 			Quip:            "Turns out you can hit almost anything with a rock. Revolutionary.",
-			ResourceReqs:    map[string]float64{"food": 500, "wood": 500, "knowledge": 75},
+			ResourceReqs:    map[string]float64{"food": 500, "wood": 500},
 			BuildingReqs:    map[string]int{"hut": 10, "story_circle": 5},
 			UnlockBuildings: []string{"longhouse", "storage_pit", "forager_post", "woodcutter_camp", "stone_camp", "stone_pit", "elders_hall", "standing_stones", "war_camp", "great_monolith"},
 			UnlockResources: []string{"stone"},
@@ -73,7 +78,7 @@ func Ages() []AgeDef {
 			EpochKey:        "stone_era",
 			Description:     "Metalworking arrives, and with it trade.",
 			Quip:            "Things are about to get significantly less wooden.",
-			ResourceReqs:    map[string]float64{"food": 2000, "wood": 4000, "stone": 2000, "knowledge": 750},
+			ResourceReqs:    map[string]float64{"food": 2000, "wood": 4000, "stone": 2000},
 			BuildingReqs:    map[string]int{"longhouse": 15, "stone_pit": 5, "elders_hall": 5},
 			UnlockBuildings: []string{"house", "warehouse", "farm", "lumber_mill", "quarry", "scriptorium", "altar", "barracks", "market", "smithy", "stonehenge"},
 			UnlockResources: []string{"iron", "gold"},
@@ -84,7 +89,7 @@ func Ages() []AgeDef {
 			EpochKey:        "iron_era",
 			Description:     "Iron tools and weapons spread.",
 			Quip:            "Harder, sharper, and far more likely to end an argument permanently.",
-			ResourceReqs:    map[string]float64{"food": 40000, "wood": 20000, "stone": 8000, "iron": 4000, "knowledge": 10000},
+			ResourceReqs:    map[string]float64{"food": 40000, "wood": 20000, "stone": 8000, "iron": 4000},
 			BuildingReqs:    map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 3},
 			UnlockBuildings: []string{"townhouse", "granary", "field_works", "timber_yard", "marble_quarry", "agora", "temple", "hunting_lodge", "legion_fort", "trading_post", "ironworks", "smelter", "colosseum"},
 			UnlockResources: []string{"marble", "iron_ore", "soldiers"},
@@ -95,7 +100,7 @@ func Ages() []AgeDef {
 			EpochKey:        "iron_era",
 			Description:     "Great empires are built and philosophy flourishes.",
 			Quip:            "Everyone is suddenly very interested in columns and the meaning of life.",
-			ResourceReqs:    map[string]float64{"stone": 75000, "iron": 15000, "gold": 8000, "knowledge": 20000},
+			ResourceReqs:    map[string]float64{"stone": 75000, "iron": 15000, "gold": 8000},
 			BuildingReqs:    map[string]int{"hunting_lodge": 15, "agora": 12, "trading_post": 10},
 			UnlockBuildings: []string{"villa", "classical_vault", "estate_farm", "wood_workshop", "marble_works", "library", "oracle_house", "military_academy", "merchant_quarter", "aqueduct", "forge", "amphitheater", "parthenon", "cultural_obelisk"},
 			UnlockResources: []string{"culture"},
@@ -106,7 +111,7 @@ func Ages() []AgeDef {
 			EpochKey:        "iron_era",
 			Description:     "Kingdoms rise and feudalism takes hold.",
 			Quip:            "A golden age, assuming you were lucky enough to be born golden.",
-			ResourceReqs:    map[string]float64{"stone": 125000, "iron": 30000, "gold": 20000, "knowledge": 50000},
+			ResourceReqs:    map[string]float64{"stone": 125000, "iron": 30000, "gold": 20000},
 			BuildingReqs:    map[string]int{"merchant_quarter": 3, "library": 15, "military_academy": 15},
 			UnlockBuildings: []string{"manor", "keep", "demesne", "sawmill", "stonemasons_guild", "monastery_library", "cathedral", "castle_keep", "guildhall", "workshop", "ironmonger", "great_hall", "great_library", "grand_amphitheatre_monument"},
 			UnlockResources: []string{"steel"},
@@ -120,7 +125,7 @@ func Ages() []AgeDef {
 			// note: steel and faith are sized to what the Medieval Age makes of
 			// them. No Medieval building produces steel (the steel forging tech
 			// does), and faith comes from the faith lineage's flat rates.
-			ResourceReqs:    map[string]float64{"gold": 100000, "knowledge": 125000, "steel": 500, "faith": 4600},
+			ResourceReqs:    map[string]float64{"gold": 100000, "steel": 500, "faith": 4600},
 			BuildingReqs:    map[string]int{"monastery_library": 5, "guildhall": 10, "castle_keep": 3},
 			UnlockBuildings: []string{"estate", "renaissance_vault", "market_garden", "coal_mine", "iron_mine", "university", "basilica", "fortress", "exchange", "mill", "foundry", "art_studio", "sistine_chapel"},
 			UnlockResources: []string{"coal"},
@@ -128,14 +133,10 @@ func Ages() []AgeDef {
 		// === 7: COLONIAL AGE (Steel Era) ===
 		{
 			Name: "Colonial Age", Key: "colonial_age", Order: 7,
-			EpochKey:    "steel_era",
-			Description: "Exploration and trade span the globe.",
-			Quip:        "You discover lands that were, somewhat awkwardly, already discovered.",
-			// note: knowledge is the Renaissance's slow resource (universities
-			// make it; the market sells it at parity), so it is what paces the
-			// age: 30M after the 1.5x below, with config.PaybackAdjust. More
-			// buildings or a bigger wonder only moved time into the Colonial Age.
-			ResourceReqs:    map[string]float64{"gold": 470000, "knowledge": 20000000, "steel": 76500, "culture": 200000},
+			EpochKey:        "steel_era",
+			Description:     "Exploration and trade span the globe.",
+			Quip:            "You discover lands that were, somewhat awkwardly, already discovered.",
+			ResourceReqs:    map[string]float64{"gold": 470000, "steel": 76500, "culture": 200000},
 			BuildingReqs:    map[string]int{"exchange": 8, "university": 8, "art_studio": 8},
 			UnlockBuildings: []string{"settlement_block", "colonial_warehouse", "plantation", "coal_works", "deep_iron_mine", "natural_philosophy_hall", "mission", "fort", "port", "harbor", "dockyard", "iron_works", "concert_hall", "embassy", "grand_lighthouse"},
 		},
@@ -145,7 +146,7 @@ func Ages() []AgeDef {
 			EpochKey:        "steel_era",
 			Description:     "Machines take over production.",
 			Quip:            "Smoke everywhere, hours endless, output magnificent. Two out of three.",
-			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000, "knowledge": 2000000},
+			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000},
 			BuildingReqs:    map[string]int{"plantation": 8, "port": 10},
 			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "harbor_authority", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "grand_embassy", "geographic_society", "crystal_palace", "eternal_library_monument"},
 			UnlockResources: []string{"oil"},

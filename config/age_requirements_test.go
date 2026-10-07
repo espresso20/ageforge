@@ -15,8 +15,9 @@ func ageByKeyT(t *testing.T, key string) AgeDef {
 	return a
 }
 
-// stone_age sits in the 2.0x band. Raw food 500 -> 1000, knowledge 75 -> 150
-// (cut for the 15-minute Primitive Age, the economy design's pacing rebalance).
+// stone_age sits in the 2.0x band. Raw food 500 -> 1000, wood 500 -> 1000.
+// (It asked for knowledge too until the wonders got their keystone techs:
+// TestNoGateAsksForKnowledge.)
 func TestNormalizeAgeRequirements_StoneAgeResourceScaling(t *testing.T) {
 	stone := ageByKeyT(t, "stone_age")
 
@@ -24,9 +25,9 @@ func TestNormalizeAgeRequirements_StoneAgeResourceScaling(t *testing.T) {
 	if got := stone.ResourceReqs["food"]; got != wantFood {
 		t.Errorf("stone_age food req = %v, want %v", got, wantFood)
 	}
-	wantKnowledge := roundSignificant(75*2.0, 2)
-	if got := stone.ResourceReqs["knowledge"]; got != wantKnowledge {
-		t.Errorf("stone_age knowledge req = %v, want %v", got, wantKnowledge)
+	wantWood := roundSignificant(500*2.0, 2)
+	if got := stone.ResourceReqs["wood"]; got != wantWood {
+		t.Errorf("stone_age wood req = %v, want %v", got, wantWood)
 	}
 }
 

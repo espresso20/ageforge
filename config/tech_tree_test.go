@@ -183,17 +183,58 @@ func TestTechKindsAreDerived(t *testing.T) {
 	}
 }
 
+// realKeystones is each wonder's keystone tech, as the tree's design names
+// them. The Sacred Grove has none by design: nothing blocks the first age.
+// Stonehenge has none yet: its keystone (Calendar) is a tech still to come.
+var realKeystones = map[string]string{
+	"sacred_grove":         "",
+	"great_monolith":       "stoneworking",
+	"stonehenge":           "",
+	"colosseum":            "mathematics",
+	"parthenon":            "philosophy",
+	"great_library":        "theology",
+	"sistine_chapel":       "patronage",
+	"grand_lighthouse":     "cartography",
+	"crystal_palace":       "industrialization",
+	"eiffel_tower":         "mass_production",
+	"hoover_dam":           "power_distribution",
+	"particle_accelerator": "nuclear_fission",
+	"space_program":        "satellite_tech",
+	"global_network":       "internet",
+	"world_simulation":     "machine_learning",
+	"neon_citadel":         "cybernetics",
+	"stellar_cradle":       "fusion_power",
+	"dyson_scaffold":       "orbital_mechanics",
+	"warp_nexus":           "warp_drive",
+	"cosmic_beacon":        "galactic_navigation",
+	"reality_anchor":       "quantum_mechanics",
+	"singularity_core":     "transcendence",
+}
+
 // TestRealTechKinds: on the real tables every tech has a kind, there is one
 // keystone per tech a wonder requires, and the spine only depends on the
-// spine. (No wonder requires a tech yet, so today every tech is optional.)
+// spine. The counts are pinned: 20 keystones (every wonder but the Sacred
+// Grove's and Stonehenge's) and the 23 techs they stand on.
 func TestRealTechKinds(t *testing.T) {
 	techs, buildings := Technologies(), BaseBuildings()
 	kinds := TechKinds(techs, buildings)
 	keystones := map[string]bool{}
+	wonders := 0
 	for _, b := range buildings {
-		if b.Category == "wonder" && b.RequiredTech != "" {
+		if b.Category != "wonder" {
+			continue
+		}
+		wonders++
+		want, listed := realKeystones[b.Key]
+		if !listed || b.RequiredTech != want {
+			t.Errorf("%s requires %q, want %q (listed %v)", b.Key, b.RequiredTech, want, listed)
+		}
+		if b.RequiredTech != "" {
 			keystones[b.RequiredTech] = true
 		}
+	}
+	if wonders != len(realKeystones) {
+		t.Errorf("%d wonders, the keystone table lists %d", wonders, len(realKeystones))
 	}
 	count := map[TechKind]int{}
 	for _, tech := range techs {
@@ -214,7 +255,22 @@ func TestRealTechKinds(t *testing.T) {
 			}
 		}
 	}
-	t.Logf("kinds: %d keystone, %d spine, %d capstone, %d optional", count[TechKeystone], count[TechSpine], count[TechCapstone], count[TechOptional])
+	if count[TechKeystone] != 20 || count[TechSpine] != 23 || count[TechCapstone] != 0 || count[TechOptional] != 34 {
+		t.Errorf("kinds: %d keystone, %d spine, %d capstone, %d optional; want 20, 23, 0 and 34",
+			count[TechKeystone], count[TechSpine], count[TechCapstone], count[TechOptional])
+	}
+}
+
+// TestTechKindsNeedOnlyTheRawWonders: Technologies works the kinds out from
+// the raw storage-and-wonder table, to stay off the building normalizers.
+// That is only right while every wonder is defined there: the kinds it gives
+// must be the kinds the whole building table gives.
+func TestTechKindsNeedOnlyTheRawWonders(t *testing.T) {
+	techs := Technologies()
+	raw, full := TechKinds(techs, baseBuildingsRaw()), TechKinds(techs, BaseBuildings())
+	if !reflect.DeepEqual(raw, full) {
+		t.Errorf("kinds from the raw table differ from kinds from BaseBuildings:\n raw  %v\n full %v", raw, full)
+	}
 }
 
 // TestTechTreeProblemsCatchEachRule breaks the fixture one rule at a time

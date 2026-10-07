@@ -362,6 +362,12 @@ func baseBuildingsRaw() []BuildingDef {
 		// Wonder costs use WonderBank: resources must be "banked" via 'wonder collect'
 		// before 'build <key>' queues construction. CostScale is always 1.0.
 		// Build ticks are extremely long to make each wonder a meaningful milestone.
+		//
+		// RequiredTech is the wonder's keystone: a tech of its own age that must
+		// be researched before 'build <key>' (the bank fills without it). The
+		// next age needs the wonder, so the keystone is the one tech an age
+		// asks for. The Sacred Grove has none (nothing blocks the first age),
+		// and Stonehenge has none yet (see there).
 
 		// Primitive Age — normal costs: 30-300
 		{
@@ -386,12 +392,15 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "knowledge", Value: 0.05},
 				{Type: "storage", Target: "all", Value: 5000},
 			},
-			RequiredAge: "stone_age",
-			MaxCount:    1,
-			BuildTicks:  800,
-			Description: "A towering stone pillar visible for miles.",
+			RequiredAge:  "stone_age",
+			RequiredTech: "stoneworking",
+			MaxCount:     1,
+			BuildTicks:   800,
+			Description:  "A towering stone pillar visible for miles.",
 		},
 		// Bronze Age — normal costs: 1500-2500
+		// No keystone yet: the tech it is to stand on (Calendar) arrives with
+		// the Stone Era's new techs, and RequiredTech is set then.
 		{
 			Name: "Stonehenge", Key: "stonehenge", Category: "wonder",
 			BaseCost:  map[string]float64{"stone": 80000, "wood": 45000, "iron": 8000},
@@ -414,10 +423,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "capacity", Target: "population", Value: 100},
 				{Type: "production", Target: "culture", Value: 2.0},
 			},
-			RequiredAge: "iron_age",
-			MaxCount:    1,
-			BuildTicks:  2000,
-			Description: "Grand arena of blood and glory.",
+			RequiredAge:  "iron_age",
+			RequiredTech: "mathematics",
+			MaxCount:     1,
+			BuildTicks:   2000,
+			Description:  "Grand arena of blood and glory.",
 		},
 		// Classical Age — normal costs: 40k-80k
 		{
@@ -428,10 +438,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "culture", Value: 2.0},
 				{Type: "production", Target: "knowledge", Value: 1.2},
 			},
-			RequiredAge: "classical_age",
-			MaxCount:    1,
-			BuildTicks:  2500,
-			Description: "Perfect temple of marble and wisdom.",
+			RequiredAge:  "classical_age",
+			RequiredTech: "philosophy",
+			MaxCount:     1,
+			BuildTicks:   2500,
+			Description:  "Perfect temple of marble and wisdom.",
 		},
 		// Medieval Age — normal costs: 180k-360k
 		{
@@ -442,10 +453,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "knowledge", Value: 2.0},
 				{Type: "bonus", Target: "knowledge_rate", Value: 0.3},
 			},
-			RequiredAge: "medieval_age",
-			MaxCount:    1,
-			BuildTicks:  3600,
-			Description: "Repository of all knowledge.",
+			RequiredAge:  "medieval_age",
+			RequiredTech: "theology",
+			MaxCount:     1,
+			BuildTicks:   3600,
+			Description:  "Repository of all knowledge.",
 		},
 		// Renaissance Age — normal costs: 400k-600k
 		{
@@ -456,10 +468,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "culture", Value: 3.5},
 				{Type: "production", Target: "faith", Value: 1.8},
 			},
-			RequiredAge: "renaissance_age",
-			MaxCount:    1,
-			BuildTicks:  5200,
-			Description: "Ceiling painted by divine hands.",
+			RequiredAge:  "renaissance_age",
+			RequiredTech: "patronage",
+			MaxCount:     1,
+			BuildTicks:   5200,
+			Description:  "Ceiling painted by divine hands.",
 		},
 		// Colonial Age — normal costs: 1.2M-2M
 		{
@@ -470,10 +483,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "gold", Value: 5.0},
 				{Type: "bonus", Target: "expedition_reward", Value: 0.8},
 			},
-			RequiredAge: "colonial_age",
-			MaxCount:    1,
-			BuildTicks:  6200,
-			Description: "Beacon visible across oceans.",
+			RequiredAge:  "colonial_age",
+			RequiredTech: "cartography",
+			MaxCount:     1,
+			BuildTicks:   6200,
+			Description:  "Beacon visible across oceans.",
 		},
 		// Industrial Age — normal costs: 12M-25M
 		{
@@ -484,10 +498,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "bonus", Target: "production_all", Value: 0.15},
 				{Type: "production", Target: "gold", Value: 8.0},
 			},
-			RequiredAge: "industrial_age",
-			MaxCount:    1,
-			BuildTicks:  9000,
-			Description: "Glass cathedral of industry.",
+			RequiredAge:  "industrial_age",
+			RequiredTech: "industrialization",
+			MaxCount:     1,
+			BuildTicks:   9000,
+			Description:  "Glass cathedral of industry.",
 		},
 		// Victorian Age — normal costs: 90M-150M
 		{
@@ -498,10 +513,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "culture", Value: 5.0},
 				{Type: "production", Target: "knowledge", Value: 2.0},
 			},
-			RequiredAge: "victorian_age",
-			MaxCount:    1,
-			BuildTicks:  14000,
-			Description: "Iron monument piercing the sky.",
+			RequiredAge:  "victorian_age",
+			RequiredTech: "mass_production",
+			MaxCount:     1,
+			BuildTicks:   14000,
+			Description:  "Iron monument piercing the sky.",
 		},
 		// Electric Age — normal costs: 500M-1B
 		{
@@ -512,10 +528,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "electricity", Value: 10.0},
 				{Type: "bonus", Target: "production_all", Value: 0.2},
 			},
-			RequiredAge: "electric_age",
-			MaxCount:    1,
-			BuildTicks:  24000,
-			Description: "Taming a river to power a nation.",
+			RequiredAge:  "electric_age",
+			RequiredTech: "power_distribution",
+			MaxCount:     1,
+			BuildTicks:   24000,
+			Description:  "Taming a river to power a nation.",
 		},
 		// Atomic Age — normal costs: 3B-10B
 		{
@@ -526,10 +543,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "knowledge", Value: 10.0},
 				{Type: "production", Target: "uranium", Value: 1.5},
 			},
-			RequiredAge: "atomic_age",
-			MaxCount:    1,
-			BuildTicks:  32000,
-			Description: "Smashes atoms for science.",
+			RequiredAge:  "atomic_age",
+			RequiredTech: "nuclear_fission",
+			MaxCount:     1,
+			BuildTicks:   32000,
+			Description:  "Smashes atoms for science.",
 		},
 		// Modern Age — normal costs: 15B-40B
 		{
@@ -540,10 +558,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "knowledge", Value: 6.0},
 				{Type: "production", Target: "culture", Value: 8.0},
 			},
-			RequiredAge: "modern_age",
-			MaxCount:    1,
-			BuildTicks:  46000,
-			Description: "Reaching for the stars.",
+			RequiredAge:  "modern_age",
+			RequiredTech: "satellite_tech",
+			MaxCount:     1,
+			BuildTicks:   46000,
+			Description:  "Reaching for the stars.",
 		},
 		// Information Age — normal costs: 75B-125B
 		{
@@ -554,10 +573,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "data", Value: 30.0},
 				{Type: "bonus", Target: "knowledge_rate", Value: 0.3},
 			},
-			RequiredAge: "information_age",
-			MaxCount:    1,
-			BuildTicks:  63000,
-			Description: "Every mind connected.",
+			RequiredAge:  "information_age",
+			RequiredTech: "internet",
+			MaxCount:     1,
+			BuildTicks:   63000,
+			Description:  "Every mind connected.",
 		},
 		// Digital Age — normal costs: 400B-750B
 		{
@@ -568,10 +588,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "data", Value: 60.0},
 				{Type: "production", Target: "knowledge", Value: 15.0},
 			},
-			RequiredAge: "digital_age",
-			MaxCount:    1,
-			BuildTicks:  120000,
-			Description: "A digital twin of reality itself.",
+			RequiredAge:  "digital_age",
+			RequiredTech: "machine_learning",
+			MaxCount:     1,
+			BuildTicks:   120000,
+			Description:  "A digital twin of reality itself.",
 		},
 		// Cyberpunk Age — normal costs: 2T-4T
 		{
@@ -582,10 +603,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "crypto", Value: 10.0},
 				{Type: "capacity", Target: "population", Value: 500},
 			},
-			RequiredAge: "cyberpunk_age",
-			MaxCount:    1,
-			BuildTicks:  360000,
-			Description: "A city within a city, lit by eternal neon.",
+			RequiredAge:  "cyberpunk_age",
+			RequiredTech: "cybernetics",
+			MaxCount:     1,
+			BuildTicks:   360000,
+			Description:  "A city within a city, lit by eternal neon.",
 		},
 		// Fusion Age — normal costs: 10T-15T
 		{
@@ -596,10 +618,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "plasma", Value: 15.0},
 				{Type: "production", Target: "electricity", Value: 200.0},
 			},
-			RequiredAge: "fusion_age",
-			MaxCount:    1,
-			BuildTicks:  450000,
-			Description: "A miniature star harnessed for power.",
+			RequiredAge:  "fusion_age",
+			RequiredTech: "fusion_power",
+			MaxCount:     1,
+			BuildTicks:   450000,
+			Description:  "A miniature star harnessed for power.",
 		},
 		// Space Age — normal costs: 50T-80T
 		{
@@ -610,10 +633,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "electricity", Value: 200.0},
 				{Type: "production", Target: "plasma", Value: 30.0},
 			},
-			RequiredAge: "space_age",
-			MaxCount:    1,
-			BuildTicks:  640000,
-			Description: "Framework for a Dyson sphere.",
+			RequiredAge:  "space_age",
+			RequiredTech: "orbital_mechanics",
+			MaxCount:     1,
+			BuildTicks:   640000,
+			Description:  "Framework for a Dyson sphere.",
 		},
 		// Interstellar Age — normal costs: 250T-500T
 		{
@@ -624,10 +648,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "dark_matter", Value: 8.0},
 				{Type: "bonus", Target: "production_all", Value: 0.8},
 			},
-			RequiredAge: "interstellar_age",
-			MaxCount:    1,
-			BuildTicks:  860000,
-			Description: "Hub of faster-than-light corridors.",
+			RequiredAge:  "interstellar_age",
+			RequiredTech: "warp_drive",
+			MaxCount:     1,
+			BuildTicks:   860000,
+			Description:  "Hub of faster-than-light corridors.",
 		},
 		// Galactic Age — normal costs: 1Q-1.5Q
 		{
@@ -638,10 +663,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "antimatter", Value: 10.0},
 				{Type: "bonus", Target: "production_all", Value: 0.5},
 			},
-			RequiredAge: "galactic_age",
-			MaxCount:    1,
-			BuildTicks:  1860000,
-			Description: "A signal fire across the galaxy.",
+			RequiredAge:  "galactic_age",
+			RequiredTech: "galactic_navigation",
+			MaxCount:     1,
+			BuildTicks:   1860000,
+			Description:  "A signal fire across the galaxy.",
 		},
 		// Quantum Age — normal costs: 2.5Q-5Q
 		{
@@ -652,10 +678,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "production", Target: "quantum_flux", Value: 15.0},
 				{Type: "bonus", Target: "production_all", Value: 0.5},
 			},
-			RequiredAge: "quantum_age",
-			MaxCount:    1,
-			BuildTicks:  2500000,
-			Description: "Stabilizes reality across dimensions.",
+			RequiredAge:  "quantum_age",
+			RequiredTech: "quantum_mechanics",
+			MaxCount:     1,
+			BuildTicks:   2500000,
+			Description:  "Stabilizes reality across dimensions.",
 		},
 		// Transcendent Age
 		{
@@ -666,10 +693,11 @@ func baseBuildingsRaw() []BuildingDef {
 				{Type: "bonus", Target: "production_all", Value: 2.0},
 				{Type: "production", Target: "quantum_flux", Value: 20.0},
 			},
-			RequiredAge: "transcendent_age",
-			MaxCount:    1,
-			BuildTicks:  8675309,
-			Description: "The final wonder.",
+			RequiredAge:  "transcendent_age",
+			RequiredTech: "transcendence",
+			MaxCount:     1,
+			BuildTicks:   8675309,
+			Description:  "The final wonder.",
 		},
 		// Diplomacy / foreign affairs — these act on the world rather than on a
 		// resource, so they live here in the admin/storage slice rather than a

@@ -26,6 +26,14 @@ const (
 	LaneComputing   = "computing"   // data, crypto
 )
 
+// TechTreeVersion is the tech tree's rules as a save knows them. It goes up
+// when the tree starts locking something it did not lock before, and a save
+// written under an older version (or before the tree: 0) then gets one age
+// of grace from the new locks (the game's GameSave.TreeVersion).
+//
+//	1: each age's wonder needs its keystone tech (BuildingDef.RequiredTech).
+const TechTreeVersion = 1
+
 // TechLaneDef is one lane of the tech tree.
 type TechLaneDef struct {
 	Key  string
