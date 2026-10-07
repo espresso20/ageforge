@@ -331,7 +331,7 @@ A few things about how badges are counted:
 - **The four old achievements are badges now.** First Prestige, Serial Reincarnator, Age of Iron and Into the Modern Age carry over, and an account that had them keeps them.
 - **The developer console does not block badges.** The developer console is a testing tool. A game it has changed is marked in its save, and the log says so once, but it still records to the account like any other game: if a badge's condition is met, the badge is earned. Unlocking the console earns a badge of its own.
 - **A modified game marks what it earns.** A badge earned in a save that was edited outside the game is listed as earned in a modified game and adds no points. The same goes for a badge earned on an account whose `account.json` was edited, and for every badge in a `badges.json` that was edited.
-- **A badge can give a theme.** Two [themes](themes.md#unlocking-flavor-themes) come from secret badges. Earning the badge unlocks the theme on the account, for good.
+- **A badge can give a theme.** Two [themes](themes.md#ambient-effects), Source and Glitch, come from secret badges. Earning the badge unlocks the theme on the account, for good.
 
 ### Where badges are stored
 
