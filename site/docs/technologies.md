@@ -111,10 +111,10 @@ Research speed reduces the tick count when research starts. Its sources add toge
 
 | Source | Research speed | Notes |
 |---|---|---|
-| **Tech Pioneer** milestone (research 15 techs) | +5% | Scholar Chain |
-| **Philosophes** milestone (35 techs, from the Classical Age) | +5% | |
-| **Renaissance Mind** milestone (42 techs, from the Renaissance Age) | +10% | Scholar Chain, hidden until you get close |
-| **Tech Master** milestone (50 techs, from the Information Age) | +10% | Scholar Chain, hidden; also +5% all production |
+| **Tech Pioneer** milestone (research 22 techs) | +5% | Scholar Chain |
+| **Philosophes** milestone (51 techs, from the Classical Age) | +5% | |
+| **Renaissance Mind** milestone (58 techs, from the Renaissance Age) | +10% | Scholar Chain, hidden until you get close |
+| **Tech Master** milestone (70 techs, from the Information Age) | +10% | Scholar Chain, hidden; also +5% all production |
 | **Tech Ascendant** milestone (all 94 techs, Transcendent Age) | +20% | Hidden. It arrives with your last tech, so it never shortens one |
 | **Ancient Knowledge** (Succumb) | not research speed: research time ×0.8 per epoch | For each distinct epoch you Succumb in (Iron to Cosmic, ×0.26 with all six). It multiplies the time research speed leaves, so it is not in this pool and no cap holds it. Kept through Succumb, prestige and save/load. See [Ancient Knowledge](catastrophe.md#ancient-knowledge) |
 | **Printing Press**, **Computers**, **Machine Learning** | not research speed: research time ×0.97 each | They multiply the time research speed leaves, ×0.913 with all three, and never take it under 50% between them. They are not in this pool |
