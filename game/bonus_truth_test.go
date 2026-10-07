@@ -39,17 +39,25 @@ import (
 //     the bonus is earned and the ages after it. A bonus that works clean
 //     and falls short here is CAPPED: a cap swallowed it.
 //
+// The soft cap. A bonus in a production pool (all production, a resource's
+// own production) may fall short for one reason only: its pool is past
+// +200%, where a point counts a quarter. That is the rule the game states,
+// so it is checked, not excused: what the bonus delivers there must be
+// exactly what the rule leaves of it (truthSoftCap, written out here), a
+// quarter of its value once the pool is past the knee without it, and the
+// note beside it must say that number. Anything else is CAPPED.
+//
 // BONUS_TRUTH_REPORT=<file> go test ./game -run 'TestBonusTruth$' writes the
-// full table, with the age each capped bonus starts to fall short in.
+// full table, with the age each bonus starts to count a quarter in.
 //
 // What a percentage promises. Bonuses of one kind add together: +30% and
 // +20% make +50%, not +56%. So "+30% gold production" promises 30 points of
 // the base rate, and that is what is measured: the change in the rate
 // divided by what the buildings make before any bonus.
 //
-// Two more things fail the guard. A cap the game does not own up to: a
+// Two more things fail the guard. A limit the game does not own up to: a
 // bonus the typical player does not get in full must carry the game's own
-// "capped" note (game/caps.go), and a bonus that is delivered must not. And
+// note (game/caps.go), and a bonus that is delivered must not. And
 // a promise about a resource that is still locked in the age it is earned
 // in, unless its text says it is for later ("once unlocked").
 //
@@ -559,10 +567,18 @@ type truthOutcome struct {
 	Delivered float64
 	// Noise is how far float rounding alone can move Delivered.
 	Noise float64
-	// Said is the "capped" note the game shows beside the bonus while it is
-	// on ("" when it shows none): what the panels and the log tell the
-	// player about it (CapNote).
+	// Said is the note the game shows beside the bonus while it is on (""
+	// when it shows none): what the panels and the log tell the player
+	// about it (CapNote).
 	Said string
+	// Rule is what the soft cap leaves of the promise where it was read,
+	// for a promise that moves a production pool: all of it while the pool
+	// stays under +200%, a quarter of each point past it. Promised for any
+	// other promise. Knee says the pool was past +200% with the bonus on,
+	// and Past that it already was with the bonus off, so that every point
+	// of the bonus counts a quarter.
+	Rule       float64
+	Knee, Past bool
 	// Leaks are the meters that moved and were not part of the promise.
 	Leaks []string
 	// Skip is why nothing could be measured here ("" when measured).
@@ -575,6 +591,43 @@ func (o truthOutcome) full() bool { return o.Skip == "" && o.is(o.Promised) }
 // is reports whether Delivered is want, within the reading's noise.
 func (o truthOutcome) is(want float64) bool {
 	return math.Abs(o.Delivered-want) <= 3e-6*math.Max(1, math.Abs(want))+o.Noise
+}
+
+// truthSoftCap is what a production pool that has earned bonuses in all
+// applies: all of it up to +200%, a quarter of every point past it. The
+// rule is written out here on purpose, numbers and all, and not read from
+// config or the engine: this is the promise the game makes the player.
+func truthSoftCap(earned float64) float64 {
+	if earned > 2.0 {
+		return 2.0 + (earned-2.0)*0.25
+	}
+	return earned
+}
+
+// truthKneePool is the production pool a promise adds to ("" for a promise
+// in no pool with a knee).
+func truthKneePool(p truthPromise) string {
+	target, ok := effectPool(p.Eff)
+	if !ok || target == "gather_rate" {
+		return ""
+	}
+	if target == "production_all" || strings.HasSuffix(target, "_rate") {
+		return target
+	}
+	return ""
+}
+
+// rule fills in what the soft cap leaves of the promise, from what its pool
+// had earned with the bonus off and on. A promise that moves no pool (a
+// tech, an ally's bonus, the Cosmic Legacy) is owed in full.
+func (o *truthOutcome) rule(off, on float64) {
+	o.Rule = o.Promised
+	if off == on {
+		return
+	}
+	o.Rule = truthSoftCap(on) - truthSoftCap(off)
+	o.Knee = math.Max(off, on) > 2.0+1e-9
+	o.Past = math.Min(off, on) >= 2.0-1e-9
 }
 
 // truthClose reports whether got is want within a few parts in a million
@@ -1291,7 +1344,7 @@ func (s truthSnapshot) put(ge *GameEngine) {
 // probe measures p in age and mode.
 func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMode) truthOutcome {
 	t.Helper()
-	out := truthOutcome{Age: age, Mode: mode, Promised: p.Eff.Value}
+	out := truthOutcome{Age: age, Mode: mode, Promised: p.Eff.Value, Rule: p.Eff.Value}
 	kind, ok := truthKinds[p.Kind]
 	if !ok {
 		out.Skip = "no meter for " + p.Kind
@@ -1337,11 +1390,17 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 	}
 	snap := takeTruthSnapshot(ge)
 	sw := p.wire(ge)
+	pool := truthKneePool(p)
 	sw.off()
 	before := readTruth(t, ge)
+	earnedOff := ge.buildResolver().AddTotal(pool)
 	sw.on()
 	after := readTruth(t, ge)
+	earnedOn := ge.buildResolver().AddTotal(pool)
 	out.Said = ge.capNoteLocked(p.Eff, true)
+	if pool != "" {
+		out.rule(earnedOff, earnedOn)
+	}
 	sw.restore()
 	snap.put(ge)
 	m := kind.measure(p, ge, before, after)
@@ -2081,6 +2140,12 @@ type truthVerdict struct {
 	// ShortFrom is the first age the typical player gets less than promised
 	// ("" when never), and GoneFrom the first it gets nothing at all.
 	ShortFrom, GoneFrom string
+	// QuarterFrom is the first age the bonus counts less than promised
+	// because its pool is past +200%, by exactly what the soft cap says (""
+	// when never). Quarters counts the readings taken with the pool past
+	// +200% before the bonus, where it must deliver a quarter of its value.
+	QuarterFrom string
+	Quarters    int
 	// Unsaid is where what the game says about a cap and what the bonus
 	// delivers part ways ("" when they never do).
 	Unsaid string
@@ -2202,7 +2267,22 @@ func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
 		if (o.Said != "") == o.full() && v.Unsaid == "" {
 			v.Unsaid = fmt.Sprintf("in %s it delivers %s of %s and the game says %q", AgeName(age), fmtG(o.Delivered), fmtG(o.Promised), o.Said)
 		}
-		if !o.full() {
+		switch {
+		case o.full():
+		case o.Knee && o.is(o.Rule) && !o.is(0) && (!o.Past || o.is(0.25*o.Promised)):
+			// Past +200%, and worth exactly what the soft cap says: a
+			// quarter of its value when the pool was past the knee without
+			// it. The note beside it must say that number.
+			if v.QuarterFrom == "" {
+				v.QuarterFrom = age
+			}
+			if o.Past {
+				v.Quarters++
+			}
+			if want := "counts a quarter past +200%: " + pointsText(o.Rule) + " now"; o.Said != want && v.Unsaid == "" {
+				v.Unsaid = fmt.Sprintf("in %s it delivers %s of %s, as the soft cap says, and the game says %q, not %q", AgeName(age), fmtG(o.Delivered), fmtG(o.Promised), o.Said, want)
+			}
+		default:
 			v.Class = truthCapped
 			if v.ShortFrom == "" {
 				v.ShortFrom = age
@@ -2239,21 +2319,25 @@ func truthPool(p truthPromise) string {
 // still be needed: the test fails on one nothing uses, so a fixed promise
 // takes its excuse with it.
 var truthAccepted = map[string]string{
-	"CAPPED/all_production": "cap, pending design: every \"all production\" bonus outside the tech layer shares one pool, and the engine applies at most +200% of it (x3). " +
-		"Techs no longer join it. The wonders alone fill it in the Transcendent Age (+215% with the Reality Anchor built), so the last ones add less than they say; " +
-		"with milestones a player reaches it sooner (the static caps report lists the ages). The panels say \"capped\" beside each.",
 	"LOCKED RESOURCE/ally stellar_federation": "the Stellar Federation is met in the Space Age and its specialty, dark matter, unlocks in the Interstellar Age: " +
 		"an alliance made early pays nothing for one age. Moving the civilization or the resource is a design call.",
 }
 
 // TestBonusTruth is the guard: every promise measured, every miss a failure
 // unless truthAccepted carries it.
+//
+// The all-production pool used to be on that list: the engine applied +200%
+// of it at most, and the typical player's wonders alone pass that in the
+// last age. The soft cap took the excuse away and left a check in its
+// place: every bonus read with its pool past +200% must move the rate by a
+// quarter of its value, and the guard fails if it took no such reading.
 func TestBonusTruth(t *testing.T) {
 	lab := newTruthLab()
 	lab.everyAge = os.Getenv("BONUS_TRUTH_REPORT") != ""
 	promises := truthPromises(t, lab)
 	used := map[string]bool{}
 	var verdicts []truthVerdict
+	quarters := map[string]int{} // readings past the knee, by source
 	for _, p := range promises {
 		if p.Kind == "" {
 			key := truthUnmeasured + "/" + p.Eff.Type + ":" + p.Eff.Target
@@ -2267,8 +2351,9 @@ func TestBonusTruth(t *testing.T) {
 		}
 		v := lab.judge(t, p)
 		verdicts = append(verdicts, v)
+		quarters[p.Source] += v.Quarters
 		if v.Unsaid != "" {
-			t.Errorf("%s: %s: %s. Every list of bonuses must say \"capped\" beside one a limit holds back, and only beside those (game/caps.go).", p.ID(), truthUnsaid, v.Unsaid)
+			t.Errorf("%s: %s: %s. Every list of bonuses must say so beside one a limit holds back (\"capped\", or what it counts past +200%%), and only beside those (game/caps.go).", p.ID(), truthUnsaid, v.Unsaid)
 		}
 		if v.Class == truthOK {
 			continue
@@ -2285,8 +2370,8 @@ func TestBonusTruth(t *testing.T) {
 		}
 		switch v.Class {
 		case truthCapped:
-			t.Errorf("%s: CAPPED. Earned in %s it delivers %s to the typical player from %s on (promised %s %s). A cap swallows it; if that is accepted, add %q to truthAccepted with the reason.",
-				p.ID(), AgeName(p.Age), truthShort(v), AgeName(v.ShortFrom), fmtG(p.Eff.Value), truthKinds[p.Kind].Unit, key)
+			t.Errorf("%s: CAPPED. Earned in %s it delivers %s to the typical player from %s on (promised %s %s; the soft cap leaves %s of it there). A cap swallows it; if that is accepted, add %q to truthAccepted with the reason.",
+				p.ID(), AgeName(p.Age), truthShort(v), AgeName(v.ShortFrom), fmtG(p.Eff.Value), truthKinds[p.Kind].Unit, truthRule(v), key)
 		default:
 			t.Errorf("%s: %s in %s. Promised %s %s, delivered %s. %s",
 				p.ID(), v.Class, AgeName(v.MeasuredAge), fmtG(v.Clean.Promised), truthKinds[p.Kind].Unit, fmtG(v.Clean.Delivered), v.Note)
@@ -2295,6 +2380,16 @@ func TestBonusTruth(t *testing.T) {
 	for key := range truthAccepted {
 		if !used[key] {
 			t.Errorf("truthAccepted[%q] excuses nothing any more: remove it", key)
+		}
+	}
+	// The soft cap's check must have had something to check: milestone
+	// rewards, wonders, monuments and the timed bonuses (a festival, an era
+	// event such as the power surge, a civilization's boon) each read with
+	// the all-production pool past +200%, each worth a quarter there.
+	t.Logf("readings with the pool past +200%%, by source: %v", quarters)
+	for _, source := range []string{"milestone", "wonder", "monument", "festival", "epoch event", "boon"} {
+		if quarters[source] == 0 {
+			t.Errorf("no %s bonus was read with its pool past +200%%: the check that a bonus past the knee moves the rate by a quarter of its value proved nothing for them", source)
 		}
 	}
 	if path := os.Getenv("BONUS_TRUTH_REPORT"); path != "" {
@@ -2315,6 +2410,17 @@ func truthShort(v truthVerdict) string {
 		}
 	}
 	return "less"
+}
+
+// truthRule says what the soft cap leaves of a short promise in the first
+// age it falls short.
+func truthRule(v truthVerdict) string {
+	for _, o := range v.Typical {
+		if o.Age == v.ShortFrom {
+			return fmtG(o.Rule)
+		}
+	}
+	return "all"
 }
 
 // truthReport is the full table, one line per promise, grouped by class.
@@ -2343,7 +2449,11 @@ func truthReport(verdicts []truthVerdict) string {
 				}
 				row += fmt.Sprintf(" %s | %s |", AgeName(v.ShortFrom), gone)
 			case truthOK:
-				row += " " + v.Note + " |"
+				note := v.Note
+				if v.QuarterFrom != "" {
+					note = strings.TrimSpace(note + " counts a quarter past +200%, from " + AgeName(v.QuarterFrom) + " on for the typical player")
+				}
+				row += " " + note + " |"
 			default:
 				row += fmt.Sprintf(" promised %s, delivered %s. %s |", fmtG(v.Clean.Promised), fmtG(v.Clean.Delivered), v.Note)
 			}
