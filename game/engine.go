@@ -2176,7 +2176,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	})
 
 	// Phase 8: detect epoch transition and roll epoch event
-	ge.detectEpochTransition(newAge)
+	ge.detectEpochTransition(oldAge, newAge)
 
 	// Age Awakening: one-time epoch awakening on first entry to its trigger age.
 	// Fires after the epoch roll so the awakening's deterministic boost lands on top
@@ -2214,8 +2214,9 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 // rolls the new era's hidden fate. Must be called at the end of advanceAge
 // while the engine write lock is held. Each epoch fires its event roll at
 // most once per civilisation cycle (epochEventFired prevents double-fire on
-// load or re-entry).
-func (ge *GameEngine) detectEpochTransition(newAge string) {
+// load or re-entry). oldAge is the age being left: the epoch roll reads the
+// faith standing there.
+func (ge *GameEngine) detectEpochTransition(oldAge, newAge string) {
 	newEpoch := ge.rules.EraOf(newAge)
 	if newEpoch == ge.currentEpoch {
 		return // same epoch, no transition
@@ -2246,7 +2247,7 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 			"epoch_icon": ep.Icon,
 		},
 	})
-	ge.rollEpochEvent(newEpoch)
+	ge.rollEpochEvent(newEpoch, oldAge)
 	// The new era's hidden fate, rolled on entry (none in the final epoch).
 	ge.rollFate()
 }
@@ -2296,22 +2297,26 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	})
 }
 
-// rollEpochEvent performs the epoch transition event roll.
-//   - Faith fill % gates good-event probability (see epochGoodChance).
+// rollEpochEvent performs the epoch transition event roll on entering
+// epochKey from fromAge.
+//   - The faith standing in fromAge, the age being left, sets the good-event
+//     probability (see goodChanceFor): the standing the player was shown
+//     before advancing, not the new age's, which asks for about twice the
+//     faith.
 //   - Otherwise a challenging (non-catastrophe) bad event is applied
 //     immediately. A transition never brings a catastrophe: an era's doom is
 //     fated on entry and strikes inside it (fate.go).
 //
 // The roll comes from the seeded ge.rng. Must be called under engine write
 // lock.
-func (ge *GameEngine) rollEpochEvent(epochKey string) {
+func (ge *GameEngine) rollEpochEvent(epochKey, fromAge string) {
 	// Prevent double-fire per epoch
 	if ge.epochEventFired[epochKey] {
 		return
 	}
 	ge.epochEventFired[epochKey] = true
 
-	if ge.gameRNG().Float64() < ge.epochGoodChance() {
+	if ge.gameRNG().Float64() < goodChanceFor(ge.faithStandingIn(fromAge)) {
 		ge.rollGoodEpochEvent()
 		return
 	}

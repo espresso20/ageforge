@@ -2365,6 +2365,18 @@ func cmdHarbinger(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Type: "success"}
 }
 
+// faithStandingText says the faith standing the odds are read from, with the
+// faith held and the faith it is measured against: "faith standing 40%
+// (2.11K of 5.27K)". The same figure the Economy panel's faith row shows.
+func faithStandingText(state game.GameState) string {
+	o := state.CatastropheOutlook
+	if o.FaithFull <= 0 {
+		return fmt.Sprintf("faith standing %.0f%%", o.FaithStanding*100)
+	}
+	return fmt.Sprintf("faith standing %.0f%% (%s of %s)", o.FaithStanding*100,
+		FormatNumber(math.Floor(state.Resources["faith"].Amount)), FormatNumber(o.FaithFull))
+}
+
 // catastropheOutlookText renders the no-pending status line for the bare
 // `catastrophe` command: what the player can know. In an era that can be
 // fated, a doom is only ever known through its harbinger, so with none here
@@ -2377,16 +2389,16 @@ func catastropheOutlookText(state game.GameState) string {
 	if o.Passage == game.PassagePrestige && o.Warned {
 		// The Cosmic Era's fated doom, foretold: it comes before the Last
 		// Passage can.
-		fmt.Fprintf(&sb, "  %s, faith %.0f%% full.\n", doomWarningText(state), o.FaithFill*100)
+		fmt.Fprintf(&sb, "  %s, %s.\n", doomWarningText(state), faithStandingText(state))
 	}
 	switch {
 	case o.Passage == game.PassagePrestige && o.Possible:
-		fmt.Fprintf(&sb, "  Next passage (prestige, the Last Passage): %s, faith %.0f%% full.",
-			outlookRiskText(state), o.FaithFill*100)
+		fmt.Fprintf(&sb, "  Next passage (prestige, the Last Passage): %s, %s.",
+			outlookRiskText(state), faithStandingText(state))
 	case o.Passage == game.PassagePrestige:
 		sb.WriteString("  This is the final epoch: its passage is prestige, and the Last Passage cannot strike now.")
 	case o.Warned:
-		fmt.Fprintf(&sb, "  %s, faith %.0f%% full.", doomWarningText(state), o.FaithFill*100)
+		fmt.Fprintf(&sb, "  %s, %s.", doomWarningText(state), faithStandingText(state))
 	default:
 		sb.WriteString("  " + eraOutlookText(state))
 	}

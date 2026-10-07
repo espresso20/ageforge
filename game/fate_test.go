@@ -565,7 +565,7 @@ func TestAppeaseLowersTheStrikeAndSparedIsHandled(t *testing.T) {
 		forceFate(t, ge, 26000)
 		tickTo(ge, arrivalTick(ge))
 		ge.harbinger.AppeaseLevel = appease
-		setFaith(ge, 50, 100) // mid band: 75% before Appease
+		setFaithStanding(ge, 0.5) // mid band: 75% before Appease
 		ge.rng = riggedRNG(roll)
 		tickTo(ge, ge.fate.StrikeTick)
 		return ge
@@ -596,7 +596,7 @@ func TestAppeaseLowersTheStrikeAndSparedIsHandled(t *testing.T) {
 	ge := fateEngine(t, "classical_age", 11)
 	forceFate(t, ge, 26000)
 	tickTo(ge, arrivalTick(ge))
-	setFaith(ge, 90, 100)
+	setFaithStanding(ge, 0.9)
 	ge.rng = riggedRNG(0.65) // over the high band's 60%, under the mid band's 75%
 	tickTo(ge, ge.fate.StrikeTick)
 	if ge.fate.Resolved != FateSpared {
@@ -607,20 +607,22 @@ func TestAppeaseLowersTheStrikeAndSparedIsHandled(t *testing.T) {
 // StrikeChanceAt, the pure rule the smoke report models with, gives what the
 // engine's strike rolls against.
 func TestStrikeChanceAtMatchesTheEngine(t *testing.T) {
-	for _, fill := range []struct {
-		amount, storage float64
-	}{{0, 0}, {10, 100}, {50, 100}, {90, 100}} {
+	for _, share := range []float64{0, 0.1, 0.5, 0.9, 3} {
 		for appease := 0; appease <= HarbingerMaxAppease; appease++ {
 			ge := fateEngine(t, "classical_age", 1)
 			forceFate(t, ge, 26000)
 			tickTo(ge, arrivalTick(ge))
 			ge.harbinger.AppeaseLevel = appease
-			setFaith(ge, fill.amount, fill.storage)
-			f, ok := ge.faithFill()
-			if got, want := StrikeChanceAt(f, ok, appease), ge.strikeChance(); math.Abs(got-want) > 1e-12 {
-				t.Errorf("faith %v/%v appease %d: StrikeChanceAt %v, engine %v", fill.amount, fill.storage, appease, got, want)
+			setFaithStanding(ge, share)
+			f, ok := ge.faithStanding()
+			if got, want := StrikeChanceAt(f, ok, appease), ge.strikeChance(); math.Abs(got-want) > 1e-12 || !ok {
+				t.Errorf("standing %v appease %d: StrikeChanceAt %v, engine %v (measured %v)", share, appease, got, want, ok)
 			}
 		}
+	}
+	// An age with no measure of faith reads as the middle band.
+	if got := StrikeChanceAt(0, false, 0); math.Abs(got-0.75) > 1e-12 {
+		t.Errorf("no measure of faith: StrikeChanceAt %v, want the middle band's 0.75", got)
 	}
 }
 
@@ -1005,7 +1007,7 @@ func cosmicDoom(t *testing.T, age string, offset int) *GameEngine {
 // Last Passage's thread takes up the warning again.
 func TestCosmicDoomParksTheLastPassageThread(t *testing.T) {
 	ge := cosmicDoom(t, "galactic_age", 60000)
-	setFaith(ge, 10, 100) // low faith: the Last Passage at 18%, the doom at 90%
+	setFaithStanding(ge, 0.1) // low faith: the Last Passage at 18%, the doom at 90%
 	tickTo(ge, arrivalTick(ge))
 	h, lp := ge.harbinger, ge.parkedHarbinger
 	if h == nil || h.TargetEpoch != "cosmic_era" || lp == nil || lp.TargetEpoch != "" || lp.AppeaseLevel != 1 {
@@ -1186,7 +1188,7 @@ func TestCosmicDoomSparesStorage(t *testing.T) {
 	for _, choice := range []string{"endure", "succumb"} {
 		t.Run(choice, func(t *testing.T) {
 			ge := cosmicDoom(t, "galactic_age", 60000)
-			setFaith(ge, 10, 100) // low faith: the doom at 90%
+			setFaithStanding(ge, 0.1) // low faith: the doom at 90%
 			for _, k := range []string{"stash", "storage_pit", "warehouse", "granary"} {
 				ge.Buildings.counts[k] = 10
 			}
