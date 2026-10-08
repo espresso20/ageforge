@@ -511,6 +511,13 @@ func (ge *GameEngine) SaveGame(filename string) error {
 		return fmt.Errorf("the account this game belongs to was wiped, so the game was not saved")
 	}
 	dir := ge.saveDirLocked()
+	// A save of the game in play is the game last played (current_game.go).
+	// A save under any other name (the exit handler's "autosave") is a copy
+	// and names nothing.
+	var played *Account
+	if ge.activeSaveName != "" && ge.activeSaveName == filename {
+		played = ge.accountForRecordsLocked()
+	}
 	save := ge.buildSaveSnapshot()
 	// Sign the payload (sig/proof are empty in snapshot)
 	sig := signSave(save, saveHMACKey)
@@ -538,6 +545,11 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	}
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("could not write the save file: %w", err)
+	}
+	if played != nil {
+		// The record is a convenience: a save that was written is a save,
+		// whether or not the settings file could be.
+		_ = played.NoteGamePlayed(filename)
 	}
 	return nil
 }
@@ -791,7 +803,25 @@ func (ge *GameEngine) BranchSave(newName string) error {
 // blocking doTick for the duration of a slow disk read.
 // Integrity check: if the signature is present and invalid, cheaterBadge is
 // set. If a valid elite proof is found, eliteBadge is set and cheaterBadge cleared.
-func (ge *GameEngine) LoadGame(filename string) error {
+func (ge *GameEngine) LoadGame(filename string) error { return ge.loadSave(filename, false) }
+
+// ViewSave returns a save's state as it was written, for looking at: the
+// main menu draws the player's town from it. It reads the one file and
+// restores it into an engine of its own that is thrown away, so the engine
+// in play is not touched, and it stops short of everything a load does
+// beyond restoring: no time away is applied, no day is counted, no badge
+// is judged, nothing is logged or announced, and nothing is written.
+func ViewSave(filename string) (GameState, error) {
+	ge := NewGameEngine()
+	if err := ge.loadSave(filename, true); err != nil {
+		return GameState{}, err
+	}
+	return ge.GetState(), nil
+}
+
+// loadSave is LoadGame. With view set it only restores the save's state
+// (ViewSave): the steps that belong to playing it are left out.
+func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// File I/O outside the lock — avoids holding the write lock during disk access
 	path := savePath(filename)
 	data, err := os.ReadFile(path)
@@ -830,7 +860,13 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// NewGameEngine already generated rather than pinning the run to 0. Saves
 	// without positions (older ones) restart the streams from the seed, as
 	// every load used to.
-	if save.Seed != 0 && !ge.restoreRNG(save.Seed, save.RNGDraws, save.QuipDraws) {
+	if view {
+		// A look at the save needs its seed (the maps are drawn from it), not
+		// the streams' positions.
+		if save.Seed != 0 {
+			ge.SeedRNG(save.Seed)
+		}
+	} else if save.Seed != 0 && !ge.restoreRNG(save.Seed, save.RNGDraws, save.QuipDraws) {
 		ge.addLog("debug", fmt.Sprintf("Load: RNG position (%d, %d) is past the replay cap; streams restart from the seed", save.RNGDraws, save.QuipDraws))
 	}
 	ge.prose = flavor.StreamFromState(save.Prose)
@@ -1087,11 +1123,21 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Adopt the loaded save's lineage parent (empty for legacy/root saves).
 	ge.activeParentName = save.ParentName
 
+	if view {
+		// Looking at a save is not playing it: the state is restored, and
+		// that is all.
+		return nil
+	}
+
 	// A day the account was played on, and what the load itself says about the
 	// save, for the integrity badges. These are facts about the session, not the
 	// run, so they go to the account only: loading a save must not change what
 	// the save says happened in it.
 	ge.noteDayLocked()
+	// The game last played, for the main menu's Continue (current_game.go).
+	if acct := ge.accountForRecordsLocked(); acct != nil {
+		_ = acct.NoteGamePlayed(filename)
+	}
 	if ge.cheaterBadge {
 		ge.judgeBadges(Event{Kind: config.BadgeEvSaveModified})
 	}
@@ -1330,6 +1376,10 @@ type SaveInfo struct {
 	// AccountID attributes the save to a player account ("" = pre-account /
 	// legacy save). Display-only — drives the detail pane's account line.
 	AccountID string
+	// ModTime is when the file was last written, by the file system's
+	// account. It only breaks a tie between two saves that carry the same
+	// Timestamp (a save and its duplicate) when the newest is asked for.
+	ModTime time.Time
 	// Corrupt is set when the file could not be read or JSON-parsed. The entry
 	// is still returned (Name + mtime Timestamp) so the UI can show it as
 	// greyed/unloadable rather than silently dropping it.
@@ -1436,6 +1486,7 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			MilestonesTotal:    len(core.Milestones()),
 			ParentName:         header.ParentName,
 			AccountID:          header.AccountID,
+			ModTime:            modTime(e),
 		})
 	}
 	return saves, nil
@@ -1477,11 +1528,18 @@ func pendingChoiceDisplayName(set *rules.Set, epochKey string, lastPassage bool)
 // corruptInfo builds a SaveInfo for an unreadable/unparseable save, falling back
 // to the file's mtime for the Timestamp so the UI still has something to sort on.
 func corruptInfo(name string, e os.DirEntry) SaveInfo {
-	info := SaveInfo{Name: name, Corrupt: true}
-	if fi, err := e.Info(); err == nil {
-		info.Timestamp = fi.ModTime()
-	}
+	info := SaveInfo{Name: name, Corrupt: true, ModTime: modTime(e)}
+	info.Timestamp = info.ModTime
 	return info
+}
+
+// modTime is a directory entry's modification time, zero when it cannot be
+// read.
+func modTime(e os.DirEntry) time.Time {
+	if fi, err := e.Info(); err == nil {
+		return fi.ModTime()
+	}
+	return time.Time{}
 }
 
 // WipeAllSaves deletes all save files
