@@ -80,7 +80,8 @@ var (
 	// Calls that take a noun and put it in a sentence ("Unknown %s '%s'.").
 	nounArgs = map[string]bool{"unknownKeyError#0": true}
 	// Calls that put a single lower-case word in front of the player.
-	wordCalls = map[string]bool{"Count": true, "Plural": true, "plural": true, "pluralize": true}
+	// The word is the argument after the number, or the first for pluralize.
+	wordCalls = map[string]int{"Count": 1, "Plural": 1, "plural": 1, "pluralize": 0}
 	// Calls that write a line to the game log; the text is their last
 	// argument or the format after the category.
 	logCalls = map[string]bool{"addLog": true, "AddLog": true, "log": true, "logf": true, "addLogRoutine": true, "logRoutine": true}
@@ -205,7 +206,7 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 				return nil, whyKey // the log line's category
 			}
 			isLog = true
-		case i == 0 && wordCalls[cs.fn] && cs.arg >= 1:
+		case i == 0 && u.near == "call" && isWordCall(cs):
 			single = true
 		case i == 0 && u.near == "call" && nounArgs[fmt.Sprintf("%s#%d", cs.fn, cs.arg)]:
 			noun = true
@@ -310,6 +311,12 @@ func (cr *codeReader) defaults(u *unit, r *row) {
 	case "config":
 		r.rules |= rulesConfig | rulesDocs
 	}
+}
+
+// isWordCall reports whether a call puts its argument after a count.
+func isWordCall(cs callSite) bool {
+	from, ok := wordCalls[cs.fn]
+	return ok && cs.arg >= from && (cs.fn != "pluralize" || cs.arg == 0)
 }
 
 // endsLikeSentence reports whether text ends the way a sentence does.
