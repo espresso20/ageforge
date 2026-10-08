@@ -30,7 +30,7 @@ There are two kinds of mission:
 
 Soldiers are a stockpiled resource (`soldiers`) that unlocks in the **Iron Age**. You bank them the way you bank food or wood, then spend them on campaigns.
 
-Staffed military buildings produce soldiers every tick. A fully staffed building makes about its soldier cap ÷ 50 per tick (at least 0.1/tick), so more workers and more buildings mean faster soldiers. Your soldier storage is the sum of every military building's soldier cap, plus every storage effect that raises all resources (the general storage buildings and the "all storage" techs). That second part is most of it: by the Iron Age a typical civilization can hold a couple of hundred thousand soldiers, far more than the military buildings' own caps. The **Military-Industrial Complex**, the Atomic Age's Military capstone, adds 20% to the whole of it. Campaigns spend soldiers from the stockpile at launch (see [Missions](#missions)).
+Staffed military buildings produce soldiers every tick. A fully staffed building makes about its soldier cap ÷ 50 per tick (at least 0.1/tick), so more workers and more buildings mean faster soldiers. Your soldier storage is the sum of every military building's soldier cap, plus every storage effect that raises all resources (the general storage buildings and the "all storage" techs). That second part is most of it: by the Iron Age a typical civilization can hold a couple of hundred thousand soldiers, far more than the military buildings' own caps. The **Military-Industrial Complex**, the Atomic Age's Military capstone, adds 20% to the whole of it, and **Augmented Soldiers** (Cyberpunk Age) 10% more. Campaigns spend soldiers from the stockpile at launch (see [Missions](#missions)).
 
 ### Producing soldiers
 
@@ -105,6 +105,8 @@ A fully staffed military building produces about **its soldier cap ÷ 50 per tic
 | 21 | `omniversal_war_council` | Omniversal War Council | Transcendent Age | +21.0M | 35 |
 
 The soldier cap counts per building: two Barracks give 40 soldier storage and, when both are staffed, twice the soldier output.
+
+Five of them wait for a tech of their own age: the Barracks (Military Tactics), the Legion Fort (Siege Warfare), the Cyber Command (Cybersecurity), the Combat Aug Center (Cybernetics) and the Omniversal War Council (Omniversal Command). The others open with their age.
 
 ---
 
@@ -190,7 +192,7 @@ The soldier and resource cost is already spent at launch, so the outcome only ch
 | Success | full rewards × (1 + expedition reward bonus) |
 | Failure | 30% of the base rewards |
 
-A failure costs no extra soldiers. The launch cost is the whole cost, win or lose. With the **Military-Industrial Complex** researched a campaign brings back 20% more of either row; scouting expeditions are not campaigns and keep theirs.
+A failure costs no extra soldiers. The launch cost is the whole cost, win or lose. With the **Military-Industrial Complex** researched a campaign brings back 20% more of either row, and with **Probability Warfare** 15% more again; scouting expeditions are not campaigns and keep theirs.
 
 Every resolution logs a plain line: which mission, whether it succeeded, and that loot came in. About one resolution in three also gets a short gray account of how it went underneath. It's kept rare on purpose so those lines stay worth reading. The account depends on the kind of mission, whether it succeeded and your age (a Bronze Age party and a Quantum Age crew come home to different places). It won't repeat a sentence you saw in roughly the last screenful of log, and it's cosmetic only: it never contains a number that isn't on the line above it.
 
@@ -219,7 +221,7 @@ This table covers all 16 missions. The three scouting expeditions (`scout_party`
 
 That is 3 scouting expeditions and 13 campaigns.
 
-The Duration column is each mission's range in ticks, as the panel shows it. From the Bronze Age on, where ages and their timers run 2.6 times as long, every range is 2.6 times its base length, so the column already includes that. The actual time is rolled evenly within that range at launch, so nothing resolves in under 100 ticks (156 from the Bronze Age on), and `scout_party` runs 100-160 ticks (about 130 on average; 260-416 in the Bronze Age). The time-left readout counts down the rolled value. Techs shorten the range, and the panels list it as it stands: Cartography and Aviation take 10% each off scouting expeditions, and a **General Staff** (Victorian Age) takes 15% off campaigns.
+The Duration column is each mission's range in ticks, as the panel shows it. From the Bronze Age on, where ages and their timers run 2.6 times as long, every range is 2.6 times its base length, so the column already includes that. The actual time is rolled evenly within that range at launch, so nothing resolves in under 100 ticks (156 from the Bronze Age on), and `scout_party` runs 100-160 ticks (about 130 on average; 260-416 in the Bronze Age). The time-left readout counts down the rolled value. Techs shorten the range, and the panels list it as it stands: Cartography, Aviation, Reusable Launchers and Fusion Drives take 10% each off scouting expeditions, Wormholes 15% and Stellar Cartography 20% (45% of the listed time with all six), and a **General Staff** (Victorian Age) and **Special Forces** (Modern Age) take 15% each off campaigns.
 
 There are no soldiers before the Iron Age, so scouting fills the gap. `scout_party` costs 30 food and 30 wood, runs 100-160 ticks (260-416 in the Bronze Age) and pays about 60 food, 60 wood and 20 stone, a net gain worth repeating through the Primitive, Stone and Bronze ages. It disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 40 food and 30 wood) carries scouting on from there, and `naval_expedition` (Renaissance Age, 150 food and 100 wood) is the late scouting option, harder (0.50) than `scout_ruins` (0.20).
 
@@ -366,7 +368,7 @@ A deliberate army is what pushes toward the 45% ceiling: more military buildings
 2. **War raids.** While a civilization is at war with you, each raid it makes takes a resource. The garrison keeps its share of that resource. A raid bigger than your stock still takes nothing, as before; the army never makes a raid that missed land. The raid's log line adds "Your garrison kept X gold from them (about N% of the raid)." (with the raid's resource in place of gold). See [War & Peace](factions.md#war-amp-peace).
 3. **Endure.** When you Endure a catastrophe, the garrison blunts its share of the buildings destroyed and the stock lost, after the Harbinger's Brace, measured against the threat of the age the catastrophe strikes in (see below).
 
-**Two techs make raids smaller before the garrison meets them.** Imperial Legions and Nuclear Deterrence each take 10% off what a raid event or a war raid would steal (19% with both: the cuts multiply). The garrison then blunts its share of what is left. They do nothing for an Endure.
+**Four techs make raids smaller before the garrison meets them.** Imperial Legions, Nuclear Deterrence and Orbital Defense each take 10% off what a raid event or a war raid would steal, and Fortification 15% (38% with all four: the cuts multiply). The garrison then blunts its share of what is left. They do nothing for an Endure.
 
 Nothing else. Disasters and unrest (earthquakes, plague, mine collapses, industrial accidents, uprisings) are not raids, and soldiers do nothing against them. Endure's 25% worker loss, its production debuff and its morale hit are unchanged.
 

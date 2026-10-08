@@ -236,7 +236,7 @@ Each trade pushes that pair's rate down a little, and the rate recovers over tim
 |---|---|
 | `factions` | Open the **Factions** panel: active boons and setbacks, Geographic Society status, and the roster of civilizations (personality, backstory, strength, opinion, status, bonuses, wars and lent workers) |
 | `diplomacy` (or `dip`) | Opens the same **Factions** panel |
-| `diplomacy ally <civ>` | Ally with a civilization. Costs 500 gold and needs opinion 50 |
+| `diplomacy ally <civ>` | Ally with a civilization. Costs 500 gold (250 with the Global Village) and needs opinion 50 |
 | `diplomacy rival <civ>` | Declare a rivalry |
 | `diplomacy embargo <civ>` | Embargo a civilization. This is a provocation that can start a war |
 | `diplomacy gift <civ>` | Send a gift of gold for +15 opinion, or +22 with Embassies: 200 gold, or 150 with Telecommunications (the Factions panel shows today's price and what it earns). Gifts, alliances, rivalries, embargoes and deals wait for Envoys, a Classical Age tech |
