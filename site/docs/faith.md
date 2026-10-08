@@ -180,7 +180,7 @@ The same goes for a [harbinger](harbinger.md): it comes only part of an age befo
 Before reaching the last age of an epoch (e.g. the Bronze Age before the Iron Era):
 
 - If you are leaning into faith: a faith strength of 25% or more for the 50% good roll, over 75% for the 60% one. A typical town rolls at 40%
-- Culture above 40% of storage to make Major good events eligible; above 75% also gives a 15% chance at the Legendary one
+- A [culture strength](epochs.md#culture-strength) above 40% (about twice a moderate set of culture buildings) to make Major good events eligible; above 75% also gives a 15% chance at the Legendary one
 - Spare materials to rebuild with, in case The Great Fire destroys up to 8 buildings (never wonders or storage)
 - A gold income that can absorb Economic Crash or Merchant Betrayal, which each take half your gold and then drain more per tick
 

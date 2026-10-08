@@ -114,7 +114,7 @@ Faith can't be bought at the market.
 
 Culture comes from the Culture/Arts lineage (Amphitheater onward). These buildings take no workers and produce culture on their own, so you can build them while your workers stay elsewhere. Each one also raises culture storage and lifts morale.
 
-Culture has two jobs. Its **fill % of storage** decides which tier of good epoch event you can get at an epoch transition: over 40% makes Major events eligible, and over 75% adds a 15% chance at the Legendary one (see [Epochs](epochs.md)). And culture is **spent**, on the things below. Prestige resets culture along with every other resource.
+Culture has two jobs. Your **culture strength** decides which tier of good epoch event you can get at an epoch transition: over 40% makes Major events eligible, and over 75% adds a 15% chance at the Legendary one. It is what your own culture buildings have made against a moderate set, times the share of your culture you have kept, so it takes about twice a moderate set to open Major events, and culture you spend or buy does not help (see [Culture strength](epochs.md#culture-strength)). And culture is **spent**, on the things below. Prestige resets culture along with every other resource.
 
 ### Culture sinks
 

@@ -944,7 +944,7 @@ Canceling costs you the full knowledge payment and the progress, with no refund.
 
 ### The Grand Discovery Epoch Event
 
-**The Grand Discovery**, a major good epoch event, instantly completes up to 3 unresearched techs of your current age or earlier, for free. It can come at an epoch transition when your culture is over 40% of its storage (see [Good Epoch Events](epochs.md#good-epoch-events)).
+**The Grand Discovery**, a major good epoch event, instantly completes up to 3 unresearched techs of your current age or earlier, for free. It can come at an epoch transition when your culture strength is over 40% (see [Good Epoch Events](epochs.md#good-epoch-events)).
 
 It doesn't weigh which techs are worth most: it takes the first three unresearched techs in alphabetical order of their keys, prerequisites or not. You can shape what it takes by researching the alphabetically early techs of your age first, which leaves the slots for the rest.
 

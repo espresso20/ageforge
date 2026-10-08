@@ -178,12 +178,27 @@ The **Expeditions** panel (`expedition`) lists only the scouting expeditions ope
 ### Success chance
 
 ```
-difficulty = base difficulty - (military power × 0.3)
-difficulty = max(difficulty, 0.05)
+mission power = military power × the age's mission scale
+difficulty    = base difficulty - (mission power × 0.3)
+difficulty    = max(difficulty, 0.05)
 success if a random roll (0 to 1) beats difficulty
 ```
 
-Military power lowers the effective difficulty. With no military power, a 0.8-difficulty mission succeeds about 20% of the time. With +2.0 military power its difficulty drops to 0.2 (about 80% success), and at +2.5 it reaches the 0.05 floor, about 95%.
+Military power lowers the effective difficulty. With no military power, a 0.8-difficulty mission succeeds about 20% of the time. The Army panel prints the chance of failure for every campaign, and the chance with your army beside it whenever the army lowers it.
+
+**The mission scale** is the age's [military yardstick](#the-military-yardstick). The missions were sized when techs gave far more military power than the finished tree does (+670% by the Cyberpunk Age, where the tree now gives +176%). The scale puts the difference back: a player who holds every military tech up to their age and the two milestones any garrison earns has the odds the missions were built for, which from the Industrial Age on is the 5% floor on every campaign. With fewer military techs you are proportionally short of it.
+
+| Age | Typical military power | Mission scale | Hardest campaign open | It fails, for the typical player |
+|-----|------------------------|---------------|-----------------------|-------------------------------|
+| Bronze Age | +15% | 1.33 | `raid_bandits` (0.40) | 34% |
+| Iron Age | +45% | 1.44 | `conquer_territory` (0.60) | 40% |
+| Classical Age | +60% | 1.75 | `conquer_territory` (0.60) | 28% |
+| Medieval Age | +70% | 1.50 | `siege_castle` (0.70) | 38% |
+| Renaissance Age | +82% | 1.89 | `siege_castle` (0.70) | 24% |
+| Colonial Age | +94% | 1.97 | `siege_castle` (0.70) | 15% |
+| Industrial to Electric Age | +106% to +116% | 2.22 to 2.03 | `siege_castle` (0.70) | 5% |
+| Atomic and Modern Age | +136% | 3.57 | `world_domination` (0.80, Modern) | 5% |
+| Information to Transcendent Age | +146% to +216% | 4.01 to 3.17 | `quantum_incursion` (0.85, Quantum) | 5% |
 
 The soldier and resource cost is already spent at launch, so the outcome only changes the reward and the encounter:
 
@@ -295,10 +310,19 @@ Sources add together:
 
 | Source | How to get it | Bonus |
 |--------|-------------|---------------|
-| Techs | Ten military techs grant military power | +0.10 to +0.15 per tech, +1.21 with all ten |
+| Techs | Military techs grant military power | +0.10 to +0.20 per tech, +2.01 with all of them |
 | Milestones | Complete military milestones | +0.05 to +0.10 each |
 
-There's no cap on military power, but difficulty never drops below **0.05** (a 5% minimum failure chance). At about +2.7 even the hardest mission (0.85) would reach that floor. Techs and milestones together come to +1.51, so the hardest missions stay a gamble: more military power always helps, and it raises your defense rating too.
+There's no cap on military power, but difficulty never drops below **0.05** (a 5% minimum failure chance). A mission reads military power through the age's mission scale (see [Success chance](#success-chance)), so a player who keeps up with the military techs reaches that floor on every campaign from the Industrial Age on, and a player who skips them does not.
+
+### The military yardstick
+
+Two things are measured against military power: the raid threat (through the defense rating) and a mission's difficulty. Both were sized against a tree that gave much more of it than the finished one. Each age has a yardstick that puts the difference back, so the **typical player** stands where the game was measured: one who holds the military techs of every age up to their own, plus First Soldiers and War Machine (+15% together, which the buildings the age gates ask for earn unstaffed).
+
+- The **threat scale** multiplies the age's raid threat: (1 + typical power now) ÷ (1 + typical power then). The typical player's garrison blunts what it blunted when the threat was measured.
+- The **mission scale** multiplies military power where a mission reads it: typical power then ÷ typical power now. The typical player's missions fail as often as they did.
+
+More military power than the typical player's still helps, and less still costs, in the same proportion as before. The yardstick is read off the tech tree, so it moves with it.
 
 The expedition reward bonus (from techs, milestones and some wonders) is separate. It multiplies the loot on a success: `rewards × (1 + expedition reward bonus)`.
 
@@ -314,7 +338,7 @@ Your defense rating is measured against the **raid threat** of the age you are i
 
 ```
 defense  = soldiers × 2.0 × (1 + military power)
-threat   = 160,000 × 2^(age order)      # Primitive Age = order 0
+threat   = 160,000 × 2^(age order) × the age's threat scale      # Primitive Age = order 0
 blunted  = 45% × defense ÷ (defense + threat)
 ```
 
@@ -330,31 +354,31 @@ The blunted share is the part of a raid's losses the garrison takes off. It is 0
 | four times the threat | 36% |
 | nine times the threat | about 40% |
 
-The threat **doubles every age**, the same rate at which each new military building's soldier cap doubles. An army that is strong for one age is ordinary for the next and a rounding error a few ages later, so a garrison has to grow with you.
+The threat **about doubles every age**, the same rate at which each new military building's soldier cap doubles (the Atomic Age is the exception: its threat is a quarter above the Electric Age's). An army that is strong for one age is ordinary for the next and a rounding error a few ages later, so a garrison has to grow with you. The threat scale is the age's [military yardstick](#the-military-yardstick).
 
-| Age | Threat | Soldiers for 22.5% (no military bonus) |
-|-----|--------|----------------------------------------|
-| Iron Age | 1.28M | 640K |
-| Classical Age | 2.56M | 1.28M |
-| Medieval Age | 5.12M | 2.56M |
-| Renaissance Age | 10.24M | 5.12M |
-| Colonial Age | 20.48M | 10.24M |
-| Industrial Age | 40.96M | 20.48M |
-| Victorian Age | 81.92M | 40.96M |
-| Electric Age | 163.84M | 81.92M |
-| Atomic Age | 327.68M | 163.84M |
-| Modern Age | 655.36M | 327.68M |
-| Information Age | 1.31B | 655.36M |
-| Digital Age | 2.62B | 1.31B |
-| Cyberpunk Age | 5.24B | 2.62B |
-| Fusion Age | 10.49B | 5.24B |
-| Space Age | 20.97B | 10.49B |
-| Interstellar Age | 41.94B | 20.97B |
-| Galactic Age | 83.89B | 41.94B |
-| Quantum Age | 167.77B | 83.89B |
-| Transcendent Age | 335.54B | 167.77B |
+| Age | Threat scale | Threat | Soldiers for 22.5% (no military bonus) |
+|-----|--------------|--------|----------------------------------------|
+| Iron Age | 0.88 | 1.12M | 562K |
+| Classical Age | 0.78 | 2M | 999K |
+| Medieval Age | 0.83 | 4.25M | 2.12M |
+| Renaissance Age | 0.71 | 7.31M | 3.65M |
+| Colonial Age | 0.68 | 13.9M | 6.97M |
+| Industrial Age | 0.61 | 25.2M | 12.6M |
+| Victorian Age | 0.61 | 50.4M | 25.2M |
+| Electric Age | 0.64 | 106M | 52.8M |
+| Atomic Age | 0.40 | 132M | 66.1M |
+| Modern Age | 0.40 | 264M | 132M |
+| Information Age | 0.36 | 471M | 235M |
+| Digital Age | 0.37 | 980M | 490M |
+| Cyberpunk Age | 0.35 | 1.84B | 922M |
+| Fusion Age | 0.36 | 3.82B | 1.91B |
+| Space Age | 0.36 | 7.64B | 3.82B |
+| Interstellar Age | 0.38 | 15.8B | 7.91B |
+| Galactic Age | 0.39 | 32.7B | 16.3B |
+| Quantum Age | 0.40 | 67.5B | 33.8B |
+| Transcendent Age | 0.40 | 135B | 67.5B |
 
-The Primitive, Stone and Bronze Ages have threats of 160K, 320K and 640K, but soldiers don't exist until the Iron Age. A `military_power` bonus cuts the soldiers needed: at +1.0, half as many.
+The Primitive, Stone and Bronze Ages have threats of 160K, 320K and 613K, but soldiers don't exist until the Iron Age. A `military_power` bonus cuts the soldiers needed: at +1.0, half as many.
 
 ### The garrison you already have
 
@@ -398,9 +422,9 @@ The Last Passage in the Cosmic Era costs prestige points, not buildings or stock
 
 You hold 2,108,000 soldiers with no `military_power` bonus: defense 2,108,000 × 2 = 4,216,000.
 
-- **In the Classical Age** (threat 2.56M): 45% × 4.216M / (4.216M + 2.56M) = about **28%**. A war raid that would take 1,000 gold takes about 720; the Army panel says twice the garrison would blunt about 35%.
-- **In the Industrial Age** (threat 40.96M): 45% × 4.216M / (4.216M + 40.96M) = about **4%**. The same army barely matters four ages later.
-- **Endure at the Renaissance** (threat 10.24M) with Brace 1, 150 buildings that can fall (everything but wonders and storage) and 2,560,000 soldiers (defense 5.12M, half the threat): the garrison share is 15%. Brace 1 alone would destroy 22 buildings and keep 30% of stock; with the garrison, 19 fall (22 × 15% = 3.3, rounded down to 3 saved) and about 40% of stock is kept.
+- **In the Classical Age** (threat 2M): 45% × 4.216M / (4.216M + 2M) = about **31%**. A war raid that would take 1,000 gold takes about 690; the Army panel says twice the garrison would blunt about 36%.
+- **In the Industrial Age** (threat 25.2M): 45% × 4.216M / (4.216M + 25.2M) = about **6%**. The same army barely matters four ages later.
+- **Endure at the Renaissance** (threat 7.31M) with Brace 1, 150 buildings that can fall (everything but wonders and storage) and 1,827,500 soldiers (defense 3.655M, half the threat): the garrison share is 15%. Brace 1 alone would destroy 22 buildings and keep 30% of stock; with the garrison, 19 fall (22 × 15% = 3.3, rounded down to 3 saved) and about 40% of stock is kept.
 
 ---
 
@@ -438,20 +462,20 @@ The five military milestones form a chain. Completing all five grants a title, a
 - Pick the easiest campaign you can afford rather than the one with the best loot. With no military power, `conquer_territory` (0.60) fails more often than it wins, and each failure that meets someone brings a setback.
 - For scouting, `scout_ruins` (0.20) is cheaper and easier than `naval_expedition` (0.50), so it meets more civilizations per run. The Geographic Society sends the cheapest one on its own.
 - The age gates ask for military buildings (15 Hunting Lodges, 15 Military Academies, 3 Castle Keeps), and staffed they build your garrison too.
-- Research military techs as they appear. Even +0.2 military power makes a visible difference against 0.6-difficulty missions.
+- Research military techs as they appear. Each one counts for more than its figure: a mission reads military power through the age's mission scale, so +0.15 in the Iron Age takes about 6 points off a campaign's chance to fail.
 
 ### Late game (Modern Age onward)
 
 - Campaign soldier costs (at most 100) are tiny next to what your buildings train by now, so wage whatever campaign is open. The loot doesn't matter; the encounter roll does.
-- Late-game military techs push most missions down to the 0.05 difficulty floor, so nearly every run succeeds and its encounters can bring boons.
+- With the military techs of each age researched, every campaign sits at the 0.05 difficulty floor from the Industrial Age on, so nearly every run succeeds and its encounters can bring boons. Skip them and the late campaigns are a gamble again.
 - The `military_superpower` milestone (train 2,000 soldiers) adds +15% all production.
 
 ### Defense rating
 
 The Army panel shows your **defense rating** (soldiers × 2.0 × (1 + military power)). It is measured against the raid threat of your age, and the resulting share (at most 45%) comes off raid events, war raids from civilizations at war with you, and the buildings and stock an Endure takes. It never stops a raid or a catastrophe from happening, and it does nothing against disasters such as plague or earthquakes. A civilization at war with you raids every 104 ticks and takes 50 × its strength (1-5) of its specialty resource; your garrison keeps its share of that, but only staying out of wars, or ending them with tribute, stops the raids: see [War & Peace](factions.md#war-amp-peace). See [Defense](#defense-what-your-army-blunts) for the numbers.
 
-- **Keep up with the age.** The threat doubles every age, so a garrison you stop growing fades fast. Adding the current age's military buildings keeps pace, since each tier's soldier cap doubles too.
-- **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat doubles and your garrison blunts less than the preview showed.
+- **Keep up with the age.** The threat about doubles every age, so a garrison you stop growing fades fast. Adding the current age's military buildings keeps pace, since each tier's soldier cap doubles too.
+- **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat about doubles and your garrison blunts less than the preview showed.
 - **Brace and garrison stack, up to a point.** Together they cut an Endure's losses by at most 60%. With Brace 2, a garrison that blunts 20% already reaches the building cap (8% fall), so extra soldiers mostly buy stock kept, up to 66%.
 - **Soldiers cost nothing to hold.** The stock has no upkeep; only the military workers producing it eat food and count toward the morale ratio below. You can staff up to bank a garrison, then move the workers back.
 - **Research military power.** It multiplies the defense rating of the soldiers you already have.
