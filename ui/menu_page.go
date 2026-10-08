@@ -146,11 +146,12 @@ func townLayout(w, h, n int) menuLayout {
 	return L
 }
 
-// forgeLayout is the forge page at w by h: the mock-up's two layouts, the
-// large from 110 by 38 and the small under it, each centred in whatever
-// room the terminal has beyond its own size.
+// forgeLayout is the forge page at w by h. It has two layouts, the large
+// from 120 by 38 (the doubled wordmark inside two frames takes 120
+// columns) and the small under it, each centred in whatever room the
+// terminal has beyond its own size.
 func forgeLayout(w, h int) menuLayout {
-	if w >= 110 && h >= 38 {
+	if w >= 120 && h >= 38 {
 		ox, oy := (w-120)/2, (h-40)/2
 		return menuLayout{w: w, h: h, forge: true, sx: 2, wx: (w - menuWordW*2) / 2, wy: 5 + oy,
 			line1: 3 + oy, tag: 13 + oy, rule: 15 + oy, foot: 36 + oy, inner: true,

@@ -60,6 +60,11 @@ type accountsPanel struct {
 // TCGiSWYX) NO handler here calls QueueUpdateDraw — tview redraws automatically after each
 // input event, so SetText / re-filling the list / applyAccountTheme all paint on the next frame.
 func CreateAccountsPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string, returnPage string) tview.Primitive {
+	return newAccountsPanel(app, pages, engine, currentVersion, returnPage).root
+}
+
+// newAccountsPanel builds the panel; its root is the page.
+func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string, returnPage string) *accountsPanel {
 	p := &accountsPanel{
 		app:            app,
 		pages:          pages,
@@ -135,7 +140,7 @@ func CreateAccountsPage(app *tview.Application, pages *tview.Pages, engine *game
 	p.list.SetInputCapture(p.handleKey)
 
 	p.refresh(0)
-	return p.root
+	return p
 }
 
 // refresh re-reads the account listing, rebuilds the list rows, and restores a clamped

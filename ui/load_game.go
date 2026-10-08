@@ -58,6 +58,11 @@ type loadGameBrowser struct {
 // a successful load should start the engine (true from the splash for the first
 // start, false mid-game where the engine is already running).
 func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, backPage string, startOnLoad bool) tview.Primitive {
+	return newLoadGameBrowser(app, pages, engine, backPage, startOnLoad).root
+}
+
+// newLoadGameBrowser builds the browser; its root is the page.
+func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, backPage string, startOnLoad bool) *loadGameBrowser {
 	b := &loadGameBrowser{
 		app:         app,
 		pages:       pages,
@@ -132,7 +137,7 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 	b.list.SetInputCapture(b.handleKey)
 
 	b.refresh(0)
-	return b.root
+	return b
 }
 
 // refresh re-reads the save listing, re-sorts most-recent first, rebuilds the

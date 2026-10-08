@@ -304,6 +304,11 @@ func newMenuPalette(th theme.Theme) *menuPalette {
 	// The boxed menu stands a shade off the page: deeper on a dark theme,
 	// paler on a light one.
 	p.ground = theme.Mix(bg, theme.BestOn(text), 0.25)
+	if p.ground == bg {
+		// A page already as dark or as pale as a colour gets (the two
+		// high contrast themes): the box takes a step toward the ink.
+		p.ground = theme.Mix(bg, text, 0.08)
+	}
 	p.groundInk = theme.Legible(text, p.ground, 7)
 	p.groundDim = theme.Legible(th.Color(theme.RoleDim), p.ground, 3)
 	p.label = theme.Legible(th.Color(theme.RoleLabel), bg, 3)

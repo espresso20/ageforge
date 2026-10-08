@@ -160,6 +160,9 @@ func (m *mainMenu) refresh(force bool) {
 	m.set = resolveMapSettings(m.acct, m.reg)
 	if fp := m.fingerprint(); force || fp != m.read {
 		m.read = fp
+		// What the account has changed (a game was played, a save made or
+		// deleted): the selection goes back to the first entry.
+		m.view.sel, m.view.items = 0, nil
 		m.town.close()
 		m.town, m.hasCur = nil, false
 		m.contDetails, m.contExtras, m.view.captions = nil, nil, nil
