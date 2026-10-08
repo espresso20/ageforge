@@ -399,7 +399,7 @@ type ExpeditionResult struct {
 //
 // Success probability per expedition: successRoll > config.MissionDifficulty
 // (DifficultyBase less 0.3 × missionPower, 5% at least). missionPower is the
-// player's military power on the current age's yardstick (config.MissionPower);
+// player's military power on the current age's yardstick (rules.Set.MissionPower);
 // expeditionBonus scales reward amounts.
 // Soldiers are spent at launch (win or lose); success vs failure differs only in
 // reward (full vs 30%), not in any extra soldier loss. The success roll comes

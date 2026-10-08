@@ -427,7 +427,7 @@ type MilitaryState struct {
 	SoldierCap    int
 	SoldierRate   float64
 	DefenseRating float64
-	// Threat is the current age's raid threat (config.AgeThreat) and
+	// Threat is the current age's raid threat (rules.Set.AgeThreat) and
 	// Mitigation the share of a raid the garrison would blunt against it
 	// (config.DefenseMitigation, 0..config.DefenseMitigationCap).
 	Threat     float64

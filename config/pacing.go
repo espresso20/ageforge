@@ -902,6 +902,22 @@ func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bo
 	return out
 }
 
+// StaffedOutputs is the part of BuildingOutputs that comes from buildings
+// with worker slots: the same sum over the producers that take a crew, as
+// age -> resource -> output per tick. Workers add staffing's share of it,
+// and a worker output bonus counts on that share alone, so a measure that
+// runs a moderate set through the engine's steps needs to know how much of
+// the set is staffed (all of faith's buildings, none of culture's). Pure.
+func StaffedOutputs(defs []BuildingDef, order []string, include func(string) bool) map[string]map[string]float64 {
+	staffed := make([]BuildingDef, 0, len(defs))
+	for _, d := range defs {
+		if d.WorkerCapacity > 0 {
+			staffed = append(staffed, d)
+		}
+	}
+	return BuildingOutputs(staffed, order, include)
+}
+
 // IncomeFactor is what Incomes multiplies res's output by in age: the
 // all-production pool held by then (ProductionAllHeld), through the soft
 // cap as the engine applies it (ProductionSoftCap: in full up to +200%, a

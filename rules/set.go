@@ -103,6 +103,8 @@ type Set struct {
 	typIncome   map[string]map[string]float64
 	flowBuilt   map[string]map[string]float64
 	built       map[string]map[string]float64
+	flowStaffed map[string]map[string]float64
+	military    []config.MilitaryScaleDef // by age order
 
 	names  [numKinds]map[string]string
 	counts map[string]int

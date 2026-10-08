@@ -218,6 +218,11 @@ type AgeSplit struct {
 	// research was bought.
 	KnowledgeBought float64 `json:"knowledge_bought,omitempty"`
 	KnowledgeMade   float64 `json:"knowledge_made,omitempty"`
+	// FaithStrength and CultureStrength are what the rolls that read faith
+	// and culture would have read as the age ended (game/faith.go,
+	// game/culture.go): where a real run's town stands against the bands.
+	FaithStrength   float64 `json:"faith_strength,omitempty"`
+	CultureStrength float64 `json:"culture_strength,omitempty"`
 	// Made, Bought and Sold are the age's whole market picture, per
 	// resource: what its own income added up to over the sampled ticks
 	// (positive rates only), and what the market sold the player and took
@@ -435,6 +440,8 @@ type runner struct {
 	made            map[string]float64
 	bought0, bought map[string]float64
 	sold0, sold     map[string]float64
+	// faithS and cultureS are the faith and culture strength as last seen.
+	faithS, cultureS float64
 	// advancing is set while control calls AdvanceAge, so the age-advance
 	// bus handler leaves that advance to control.
 	advancing bool
@@ -687,6 +694,7 @@ func (r *runner) split(unfinished bool) AgeSplit {
 		a.KnowledgeMade = r.knowSum
 		a.KnowledgeBought = math.Max(r.boughtK-r.boughtK0, 0)
 		a.Made = maps.Clone(r.made)
+		a.FaithStrength, a.CultureStrength = r.faithS, r.cultureS
 		a.Bought, a.Sold = since(r.bought, r.bought0), since(r.sold, r.sold0)
 	}
 	return a
@@ -747,6 +755,7 @@ func (r *runner) trackGates(st game.GameState) {
 	}
 	r.boughtK = bought
 	r.bought, r.sold = st.Trade.TotalBought, st.Trade.TotalSold
+	r.faithS, r.cultureS = st.CatastropheOutlook.FaithStrength, st.CatastropheOutlook.CultureStrength
 	if r.made == nil {
 		r.made = map[string]float64{}
 	}

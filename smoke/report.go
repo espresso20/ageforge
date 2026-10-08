@@ -578,6 +578,7 @@ func (s *Summary) writePacingTable(sb *strings.Builder) {
 func (s *Summary) writeAgeGates(sb *strings.Builder) {
 	type row struct {
 		tech, funded, built, blds, res, bought []float64
+		faith, culture                         []float64
 		last                                   map[string]int
 	}
 	rows := map[string]*row{}
@@ -607,6 +608,7 @@ func (s *Summary) writeAgeGates(sb *strings.Builder) {
 			if total := a.KnowledgeBought + a.KnowledgeMade; total > 0 {
 				w.bought = append(w.bought, a.KnowledgeBought/total)
 			}
+			w.faith, w.culture = append(w.faith, a.FaithStrength), append(w.culture, a.CultureStrength)
 			// What came last. A wonder is named with what held its start
 			// back: its keystone tech or its price.
 			last := "the wonder, once paid for"
@@ -625,8 +627,8 @@ func (s *Summary) writeAgeGates(sb *strings.Builder) {
 	if !any {
 		return
 	}
-	sb.WriteString("\nWhat each age of the first cycle waited for: when each thing the advance asks for was first in place, as a share of the time the age took (median across seeds; - is never, or an age without one). The wonder's build runs from the later of its keystone tech and its price to the wonder standing. The last column is the share of the age's knowledge the market sold.\n\n")
-	sb.WriteString("| age | keystone tech | wonder paid for | wonder built | buildings | resources | waited longest for | knowledge bought |\n|---|---|---|---|---|---|---|---|\n")
+	sb.WriteString("\nWhat each age of the first cycle waited for: when each thing the advance asks for was first in place, as a share of the time the age took (median across seeds; - is never, or an age without one). The wonder's build runs from the later of its keystone tech and its price to the wonder standing. Knowledge bought is the share of the age's knowledge the market sold. Faith and culture strength are what the rolls would have read as the age ended (faith: under a quarter is the bottom band; culture: over two fifths opens Major good epoch events).\n\n")
+	sb.WriteString("| age | keystone tech | wonder paid for | wonder built | buildings | resources | waited longest for | knowledge bought | faith strength | culture strength |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	pct := func(v []float64) string {
 		if len(v) == 0 {
 			return "-"
@@ -643,7 +645,7 @@ func (s *Summary) writeAgeGates(sb *strings.Builder) {
 		for _, k := range sortedKeys(w.last) {
 			last = append(last, fmt.Sprintf("%s (%d)", k, w.last[k]))
 		}
-		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %s | %s |\n", age, pct(w.tech), pct(w.funded), pct(w.built), pct(w.blds), pct(w.res), strings.Join(last, ", "), pct(w.bought))
+		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", age, pct(w.tech), pct(w.funded), pct(w.built), pct(w.blds), pct(w.res), strings.Join(last, ", "), pct(w.bought), pct(w.faith), pct(w.culture))
 	}
 }
 

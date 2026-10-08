@@ -63,17 +63,26 @@ const (
 	EndureReductionCap = 0.60
 )
 
-// AgeThreat is the raid threat for the age with the given order (0 =
-// Primitive Age): DefenseThreatBase × DefenseThreatGrowth^order, times the
-// age's MilitaryScale.Threat. The power is built by repeated exact
-// multiplication (no math.Pow) so every machine gets the same bits. Negative
-// orders count as 0.
-func AgeThreat(order int) float64 {
+// AgeThreatAt is the raid threat for the age with the given order (0 =
+// Primitive Age) on a military yardstick whose threat scale there is scale
+// (MilitaryScaleDef.Threat): DefenseThreatBase × DefenseThreatGrowth^order ×
+// scale. The power is built by repeated exact multiplication (no math.Pow)
+// so every machine gets the same bits. Negative orders count as 0. Pure: an
+// engine reads its ruleset's threat (rules.Set.AgeThreat), which calls this
+// with its own tree's scale.
+func AgeThreatAt(order int, scale float64) float64 {
 	t := DefenseThreatBase
 	for i := 0; i < order; i++ {
 		t *= DefenseThreatGrowth
 	}
-	return float64(t * MilitaryScaleAt(order).Threat)
+	return float64(t * scale)
+}
+
+// AgeThreat is AgeThreatAt on the yardstick of the tree this package
+// defines (MilitaryScaleAt). For tests and tools, like the other lookups
+// that describe this package's own tables.
+func AgeThreat(order int) float64 {
+	return AgeThreatAt(order, MilitaryScaleAt(order).Threat)
 }
 
 // The military yardstick.
@@ -142,12 +151,13 @@ type MilitaryScaleDef struct {
 	Mission float64
 }
 
-// militaryScales is MilitaryScaleDef by age order, built once from the tree.
-var militaryScales = sync.OnceValue(func() []MilitaryScaleDef {
-	order := AgeOrder()
+// MilitaryScales is the military yardstick of every age in order, read off
+// techs: Now adds up their military power age by age. Pure: a ruleset works
+// its own out with it (rules.Set.MilitaryScale).
+func MilitaryScales(techs []TechDef, order []string) []MilitaryScaleDef {
 	pos := AgePositions(order)
 	now := make([]float64, len(order))
-	for _, t := range Technologies() {
+	for _, t := range techs {
 		i, ok := pos[t.Age]
 		if !ok {
 			continue
@@ -174,18 +184,34 @@ var militaryScales = sync.OnceValue(func() []MilitaryScaleDef {
 		out[i] = d
 	}
 	return out
+}
+
+// MilitaryScaleIn is the yardstick of the age with the given order in
+// scales (MilitaryScales). An order before the first age reads as the
+// first, one past the last as the last; no scales at all read as none.
+func MilitaryScaleIn(scales []MilitaryScaleDef, order int) MilitaryScaleDef {
+	if len(scales) == 0 {
+		return MilitaryScaleDef{Threat: 1, Mission: 1}
+	}
+	return scales[min(max(order, 0), len(scales)-1)]
+}
+
+// militaryScales is MilitaryScales for the tree this package defines, built
+// once.
+var militaryScales = sync.OnceValue(func() []MilitaryScaleDef {
+	return MilitaryScales(Technologies(), AgeOrder())
 })
 
-// MilitaryScaleAt is the military yardstick of the age with the given order.
-// An order before the first age reads as the first, one past the last as the
-// last.
+// MilitaryScaleAt is the military yardstick of the age with the given order
+// on this package's own tree. For tests and tools; an engine reads its
+// ruleset's (rules.Set.MilitaryScale).
 func MilitaryScaleAt(order int) MilitaryScaleDef {
-	s := militaryScales()
-	return s[min(max(order, 0), len(s)-1)]
+	return MilitaryScaleIn(militaryScales(), order)
 }
 
 // MissionPower is military power as a mission's difficulty reads it in the
-// age with the given order: power × the age's MilitaryScale.Mission.
+// age with the given order on this package's own tree: power × the age's
+// MilitaryScale.Mission. For tests and tools (rules.Set.MissionPower).
 func MissionPower(power float64, order int) float64 {
 	return float64(power * MilitaryScaleAt(order).Mission)
 }
