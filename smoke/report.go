@@ -438,6 +438,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	fmt.Fprintf(&sb, "Time spent in each age, from entering it to entering the next, across seeds, against the target in smoke/targets.go (pass: %gx to %gx the target, %s; the verdict grades the median). The longest quiet stretch is the median of each seed's longest stretch in the age with no new building type built and no tech finished; under enforce a first-cycle age over %s fails, up to the %s (later ages are reported only).\n\n", PacingLow, PacingHigh, highForText(), dur(QuietMax.Seconds()), QuietLastAge)
 	s.writePacingTable(&sb)
 	s.writeAgeGates(&sb)
+	s.writeMarket(&sb)
 	s.writeFirstRun(&sb)
 	s.writeEarly(&sb)
 	s.writeLaterRun(&sb)
@@ -577,6 +578,7 @@ func (s *Summary) writePacingTable(sb *strings.Builder) {
 func (s *Summary) writeAgeGates(sb *strings.Builder) {
 	type row struct {
 		tech, funded, built, blds, res, bought []float64
+		faith, culture                         []float64
 		last                                   map[string]int
 	}
 	rows := map[string]*row{}
@@ -606,6 +608,7 @@ func (s *Summary) writeAgeGates(sb *strings.Builder) {
 			if total := a.KnowledgeBought + a.KnowledgeMade; total > 0 {
 				w.bought = append(w.bought, a.KnowledgeBought/total)
 			}
+			w.faith, w.culture = append(w.faith, a.FaithStrength), append(w.culture, a.CultureStrength)
 			// What came last. A wonder is named with what held its start
 			// back: its keystone tech or its price.
 			last := "the wonder, once paid for"
@@ -624,8 +627,8 @@ func (s *Summary) writeAgeGates(sb *strings.Builder) {
 	if !any {
 		return
 	}
-	sb.WriteString("\nWhat each age of the first cycle waited for: when each thing the advance asks for was first in place, as a share of the time the age took (median across seeds; - is never, or an age without one). The wonder's build runs from the later of its keystone tech and its price to the wonder standing. The last column is the share of the age's knowledge the market sold.\n\n")
-	sb.WriteString("| age | keystone tech | wonder paid for | wonder built | buildings | resources | waited longest for | knowledge bought |\n|---|---|---|---|---|---|---|---|\n")
+	sb.WriteString("\nWhat each age of the first cycle waited for: when each thing the advance asks for was first in place, as a share of the time the age took (median across seeds; - is never, or an age without one). The wonder's build runs from the later of its keystone tech and its price to the wonder standing. Knowledge bought is the share of the age's knowledge the market sold. Faith and culture strength are what the rolls would have read as the age ended (faith: under a quarter is the bottom band; culture: over two fifths opens Major good epoch events).\n\n")
+	sb.WriteString("| age | keystone tech | wonder paid for | wonder built | buildings | resources | waited longest for | knowledge bought | faith strength | culture strength |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	pct := func(v []float64) string {
 		if len(v) == 0 {
 			return "-"
@@ -642,7 +645,74 @@ func (s *Summary) writeAgeGates(sb *strings.Builder) {
 		for _, k := range sortedKeys(w.last) {
 			last = append(last, fmt.Sprintf("%s (%d)", k, w.last[k]))
 		}
-		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %s | %s |\n", age, pct(w.tech), pct(w.funded), pct(w.built), pct(w.blds), pct(w.res), strings.Join(last, ", "), pct(w.bought))
+		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", age, pct(w.tech), pct(w.funded), pct(w.built), pct(w.blds), pct(w.res), strings.Join(last, ", "), pct(w.bought), pct(w.faith), pct(w.culture))
+	}
+}
+
+// writeMarket is the market's part in each first-cycle age: the resources
+// an age got mostly at the market (bought, as a share of what it had of
+// them: made plus bought) and what paid for them (sold, as a share of what
+// it made of them), as medians across seeds. Only shares of a tenth or more
+// are listed, largest first. Written only when some run recorded them.
+func (s *Summary) writeMarket(sb *strings.Builder) {
+	bought, sold := map[string]map[string][]float64{}, map[string]map[string][]float64{}
+	seeds := map[string]int{}
+	for _, r := range s.Runs {
+		for _, a := range r.Ages {
+			if a.Cycle != 1 || a.Made == nil || a.Unfinished || a.Prestiged {
+				continue
+			}
+			seeds[a.Age]++
+			if bought[a.Age] == nil {
+				bought[a.Age], sold[a.Age] = map[string][]float64{}, map[string][]float64{}
+			}
+			for res, v := range a.Bought {
+				bought[a.Age][res] = append(bought[a.Age][res], v/(v+a.Made[res]))
+			}
+			for res, v := range a.Sold {
+				if made := a.Made[res]; made > 0 {
+					sold[a.Age][res] = append(sold[a.Age][res], v/made)
+				}
+			}
+		}
+	}
+	if len(seeds) == 0 {
+		return
+	}
+	list := func(shares map[string][]float64, n int) string {
+		type item struct {
+			res string
+			v   float64
+		}
+		var items []item
+		for res, v := range shares {
+			// A resource fewer than half the seeds traded has no median.
+			if 2*len(v) < n {
+				continue
+			}
+			if _, med, _ := spread(v); med >= 0.1 {
+				items = append(items, item{res, med})
+			}
+		}
+		sort.Slice(items, func(i, j int) bool {
+			if items[i].v != items[j].v {
+				return items[i].v > items[j].v
+			}
+			return items[i].res < items[j].res
+		})
+		var parts []string
+		for _, it := range items {
+			parts = append(parts, fmt.Sprintf("%s %.0f%%", it.res, it.v*100))
+		}
+		return orDefault(strings.Join(parts, ", "), "-")
+	}
+	sb.WriteString("\nThe market in each age of the first cycle (median across seeds; shares of a tenth or more). Bought: the share of what the age had of a resource (made plus bought) that the market sold it. Sold: what the age gave the market, as a share of what it made of that resource (over 100% is stock from before).\n\n")
+	sb.WriteString("| age | bought | sold |\n|---|---|---|\n")
+	for _, age := range config.AgeOrder() {
+		if seeds[age] == 0 {
+			continue
+		}
+		fmt.Fprintf(sb, "| %s | %s | %s |\n", age, list(bought[age], seeds[age]), list(sold[age], seeds[age]))
 	}
 }
 
