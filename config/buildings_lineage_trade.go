@@ -267,13 +267,14 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 19 — transcendent_age  rate=26214.40
 	b = append(b, BuildingDef{
 		Name: "Omniversal Bazaar", Key: "omniversal_bazaar", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 1.95e15, "antimatter": 590e15, "dark_matter": 480e15},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 26214.40}},
-		BuildTicks:  3600,
-		RequiredAge: "transcendent_age",
-		Description: "Omniversal trading bazaar beyond spacetime.",
-		LineageKey:  "trade", LineageTier: 19,
+		BaseCost:     map[string]float64{"quantum_flux": 1.95e15, "antimatter": 590e15, "dark_matter": 480e15},
+		CostScale:    1.40,
+		Effects:      []Effect{{Type: "production", Target: "gold", Value: 26214.40}},
+		BuildTicks:   3600,
+		RequiredAge:  "transcendent_age",
+		RequiredTech: "omniversal_exchange",
+		Description:  "Omniversal trading bazaar beyond spacetime.",
+		LineageKey:   "trade", LineageTier: 19,
 		WorkerDomain: "trade", WorkerCapacity: 20,
 		EpochKey: "cosmic_era", OutputResource: "gold",
 	})

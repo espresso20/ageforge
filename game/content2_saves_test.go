@@ -98,9 +98,10 @@ func TestContent2OldSave(t *testing.T) {
 		}
 	}
 	n, line := treeNotices(ge)
-	if n != 1 || !strings.Contains(line, "new techs from the Renaissance to the Atomic Age") || !strings.Contains(line, "Industrial Age") ||
-		!strings.Contains(line, "the locks start when you next advance") || !strings.Contains(line, "Everything you have researched or built stays") ||
-		strings.Contains(line, "command") {
+	// (The tree has grown again since the save was written: the line
+	// covers every age that gained techs since, to the Transcendent.)
+	if n != 1 || !strings.Contains(line, "new techs from the Renaissance to the Transcendent Age") || !strings.Contains(line, "Industrial Age") ||
+		!strings.Contains(line, "the locks start when you next advance") || !strings.Contains(line, "everything you have researched or built stays") {
 		t.Errorf("%d research update lines, the last %q; want one about the new techs and the buildings that wait for one, naming the Industrial Age", n, line)
 	}
 	if got := grantedList(ge); got != "" {

@@ -459,37 +459,45 @@ func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 		t.Errorf("Rail Freight with Railroads: %v", err)
 	}
 
-	// Warp Commerce's own lock waits for a tech that is not in the tree
-	// yet: it is open, and using it is remembered for the day the tech
-	// arrives.
+	// Warp Commerce, from the Interstellar Age: trade routes' lock, then
+	// the route's own, the last to find its tech.
 	ge = at("interstellar_age")
 	learn(ge, "the_wheel")
 	route(ge, "warp_commerce")
+	refused("Warp Commerce without Interstellar Trade", ge.StartTradeRoute("warp_commerce"), "The Warp Commerce route needs Interstellar Trade first. Research it to start it.")
+	if f := ge.GetState().Features[config.FeatureRouteWarpCommerce]; !f.Live || f.Open || f.TechName != "Interstellar Trade" {
+		t.Errorf("Warp Commerce reads %+v, want a live lock, shut, that names Interstellar Trade", f)
+	}
+	learn(ge, "interstellar_trade")
 	if err := ge.StartTradeRoute("warp_commerce"); err != nil {
-		t.Errorf("Warp Commerce, whose lock waits for Interstellar Trade: %v", err)
+		t.Errorf("Warp Commerce with Interstellar Trade: %v", err)
 	}
-	if got := grantedList(ge); got != "route_warp_commerce" {
-		t.Errorf("a route started under an inert lock granted %q, want route_warp_commerce", got)
-	}
-	if f := ge.GetState().Features[config.FeatureRouteWarpCommerce]; f.Live || !f.Open || !f.Granted {
-		t.Errorf("Warp Commerce reads %+v, want an inert lock, open, granted", f)
-	}
-	saveAndLoad(t, ge, "feature_lock_warp")
-	if got := strings.Join(savedFeatures(t, "feature_lock_warp"), " "); got != "route_warp_commerce" {
-		t.Errorf("the save carries granted features %q, want route_warp_commerce", got)
+	if f := ge.GetState().Features[config.FeatureRouteWarpCommerce]; !f.Live || !f.Open {
+		t.Errorf("Warp Commerce reads %+v with its tech researched, want a live lock, open", f)
 	}
 }
 
-// TestFeatureLockSwitchesOnWithItsTech: a lock that waits for its tech
-// switches on when a ruleset adds a tech with that key, with no other
-// change. Warp Commerce's is the last one waiting. A new game on that
-// ruleset meets the lock. A game that was already using the command, saved
-// before the tech existed, keeps it for the rest of its run.
+// TestFeatureLockSwitchesOnWithItsTech: a lock whose tech the tree does not
+// hold is inert, its command open, and it switches on when a ruleset adds a
+// tech with that key, with no other change. Every lock of the game has its
+// tech now, so the test makes the case: a ruleset where Warp Commerce's lock
+// names a tech that does not exist, and one that adds it. A game on the
+// first starts the route, and the save remembers it. A new game on the
+// second meets the lock. The game that was already using the command,
+// saved before the tech existed, keeps it for the rest of its run.
 func TestFeatureLockSwitchesOnWithItsTech(t *testing.T) {
 	isolateAccountDir(t)
 	src := rules.FromConfig()
-	src.Techs = append(src.Techs, config.TechDef{
-		Key: "interstellar_trade", Name: "Interstellar Trade", Age: "interstellar_age", Lane: config.LaneTrade, Cost: 10, ResearchTicks: 4,
+	locks := append([]config.FeatureLockDef(nil), src.FeatureLocks...)
+	for i := range locks {
+		if locks[i].Key == config.FeatureRouteWarpCommerce {
+			locks[i].Tech = "wormhole_charters"
+		}
+	}
+	src.FeatureLocks = locks
+	inert := rules.Compile(src)
+	src.Techs = append(append([]config.TechDef(nil), src.Techs...), config.TechDef{
+		Key: "wormhole_charters", Name: "Wormhole Charters", Age: "interstellar_age", Lane: config.LaneTrade, Cost: 10, ResearchTicks: 4,
 	})
 	withTech := rules.Compile(src)
 	const warp = "warp_commerce"
@@ -503,35 +511,49 @@ func TestFeatureLockSwitchesOnWithItsTech(t *testing.T) {
 		stock(ge, 0)
 	}
 
-	// Today's tree: the route starts, and the save remembers it.
-	old := newSeededEngine(6)
+	// The tree without the tech: the lock is inert, the route starts, and
+	// the save remembers it.
+	old := NewGameEngineWith(inert)
+	old.SeedRNG(6)
 	port(old)
-	if err := old.StartTradeRoute(warp); err != nil {
-		t.Fatalf("Warp Commerce on today's tree: %v", err)
+	if f := old.GetState().Features[config.FeatureRouteWarpCommerce]; f.Live || !f.Open {
+		t.Fatalf("on a tree without its tech Warp Commerce reads %+v, want an inert lock, open", f)
 	}
-	if err := old.SaveGame("before_interstellar_trade"); err != nil {
+	if err := old.StartTradeRoute(warp); err != nil {
+		t.Fatalf("Warp Commerce on a tree without its tech: %v", err)
+	}
+	if got := grantedList(old); got != "route_warp_commerce" {
+		t.Errorf("a route started under an inert lock granted %q, want route_warp_commerce", got)
+	}
+	if f := old.GetState().Features[config.FeatureRouteWarpCommerce]; f.Live || !f.Open || !f.Granted {
+		t.Errorf("Warp Commerce reads %+v, want an inert lock, open, granted", f)
+	}
+	if err := old.SaveGame("before_wormhole_charters"); err != nil {
 		t.Fatal(err)
+	}
+	if got := strings.Join(savedFeatures(t, "before_wormhole_charters"), " "); got != "route_warp_commerce" {
+		t.Errorf("the save carries granted features %q, want route_warp_commerce", got)
 	}
 
 	// The tree with the tech: a new game is refused until it researches it.
 	fresh := NewGameEngineWith(withTech)
 	port(fresh)
-	if err := fresh.StartTradeRoute(warp); err == nil || err.Error() != "The Warp Commerce route needs Interstellar Trade first. Research it to start it." {
-		t.Errorf("Warp Commerce on a tree with Interstellar Trade, not researched: %v", err)
+	if err := fresh.StartTradeRoute(warp); err == nil || err.Error() != "The Warp Commerce route needs Wormhole Charters first. Research it to start it." {
+		t.Errorf("Warp Commerce on a tree with its tech, not researched: %v", err)
 	}
-	learn(fresh, "interstellar_trade")
+	learn(fresh, "wormhole_charters")
 	if err := fresh.StartTradeRoute(warp); err != nil {
-		t.Errorf("Warp Commerce with Interstellar Trade researched: %v", err)
+		t.Errorf("Warp Commerce with its tech researched: %v", err)
 	}
 
 	// The game saved before the tech existed, loaded on the new tree: its
 	// route is running, and it can stop it and start it again.
 	loaded := NewGameEngineWith(withTech)
-	if err := loaded.LoadGame("before_interstellar_trade"); err != nil {
+	if err := loaded.LoadGame("before_wormhole_charters"); err != nil {
 		t.Fatal(err)
 	}
-	if loaded.Research.IsResearched("interstellar_trade") {
-		t.Fatal("Interstellar Trade is researched: the save does not test the grant")
+	if loaded.Research.IsResearched("wormhole_charters") {
+		t.Fatal("the lock's tech is researched: the save does not test the grant")
 	}
 	if err := loaded.StopTradeRoute(warp); err != nil {
 		t.Fatalf("stopping Warp Commerce after the load: %v", err)

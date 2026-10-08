@@ -701,6 +701,8 @@ type DiplomacyState struct {
 	// GiftGain is the opinion a gift earns now: GiftOpinion with the techs'
 	// share on top.
 	GiftGain int
+	// AllyCost is what an alliance costs now: AllyCost with the techs' cut.
+	AllyCost float64
 	// BoonCrews are the workers faction boons have lent (Extra Hands), one
 	// entry per crew, oldest first. They go home when TicksLeft runs out.
 	BoonCrews []BoonWorkerLoan

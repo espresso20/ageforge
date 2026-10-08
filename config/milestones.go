@@ -561,11 +561,11 @@ func Milestones() []MilestoneDef {
 		// adds a touch of production_all.
 		{
 			Name: "Tech Master", Key: "tech_master",
-			Description: "Research 104 techs.",
+			Description: "Research 113 techs.",
 			Flavor:      "Technology mastered by the shelf. You now understand the universe well enough to be properly worried.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "information_age",
-			MinTechCount: 104,
+			MinTechCount: 113,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.10},
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},

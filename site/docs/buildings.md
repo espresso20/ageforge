@@ -162,15 +162,15 @@ These are first-run times. On known ground (an age a past run completed) every b
 
 ### Buildings a tech opens
 
-Most buildings unlock the moment you enter their age. Twenty-one wait for a tech from that same age instead, so the age has something new partway through:
+Most buildings unlock the moment you enter their age. Forty wait for a tech from that same age instead, so the age has something new partway through:
 
 | Building | Age | Opened by |
 |---|---|---|
 | Standing Stones | Stone | Ritual |
 | Altar | Bronze | Calendar, the age's keystone |
 | Barracks | Bronze | Military Tactics |
-| Smelter | Iron | Iron Smelting |
 | Legion Fort | Iron | Siege Warfare |
+| Smelter | Iron | Iron Smelting |
 | Forge | Classical | Metal Casting |
 | Cathedral | Medieval | Theology, the age's keystone |
 | Foundry | Renaissance | Blast Furnace |
@@ -178,19 +178,38 @@ Most buildings unlock the moment you enter their age. Twenty-one wait for a tech
 | Harbor | Colonial | Mercantilism |
 | Embassy | Colonial | Embassies |
 | Coal Plant | Industrial | Steam Power |
-| Geographic Society | Industrial | Geographic Societies |
 | Grand Embassy | Industrial | Concert of Nations, a capstone |
+| Geographic Society | Industrial | Geographic Societies |
 | Steam Works | Victorian | Electrification |
 | Dynamo Hall | Electric | Power Distribution, the age's keystone |
 | Nuclear Plant | Atomic | Civilian Reactors |
+| Power Grid Hub | Modern | Advanced Electrics |
+| Seaport | Modern | Containerization |
+| Monument of Ages | Modern | Television |
 | Smart Farm | Information | Internet of Things |
 | Smart Complex | Information | Internet of Things |
+| Cyber Command | Information | Cybersecurity |
+| Microgrid Array | Information | Smart Grid |
+| Container Terminal | Information | E-commerce |
+| Quantum Battery Array | Digital | Grid Storage |
+| Logistics Hub | Digital | Automated Logistics |
+| Combat Aug Center | Cyberpunk | Cybernetics, the age's keystone |
 | Holographic Theater | Cyberpunk | Holography |
+| Dark Energy Tap | Cyberpunk | Dark Energy |
 | Energy Exchange | Fusion | Maglev Transit |
+| Stellar Core Drill | Interstellar | Stellar Core Mining |
+| Pulsar Tap | Interstellar | Stellar Engineering |
+| Neutron Star Mine | Galactic | Neutron Mining |
+| Quasar Tap | Galactic | Antimatter Synthesis |
+| Quantum Metal Works | Quantum | Quantum Metallurgy |
+| Zero Point Generator | Quantum | Zero-Point Energy |
+| Singularity Engine | Transcendent | Singularity Engineering |
+| Omniversal War Council | Transcendent | Omniversal Command |
+| Omniversal Bazaar | Transcendent | Omniversal Exchange |
 
 Until the tech is done the building is missing from the build list, and `build` and `upgrade` say which tech it needs. Each of these buildings is its lineage's tier for that age, so the upgrade hint for the old tier shows when you advance, but the upgrade itself waits for the tech. The build plan takes it early and waits. Copies you already have keep working. See [Technologies](technologies.md#tech-tree-by-age).
 
-A tech only takes a building when the age keeps another way to make the same thing (the Mill beside the Foundry, the Port beside the Harbor), or when the tech is one a run researches anyway. A building that is its age's only source of what it makes is open from the first tick of its age: every age's knowledge, culture and military building, the Steam Mine, the Uranium Mine, the Financial District, the Corporate HQ and the Petroleum Refinery among them.
+A tech only takes a building when the age keeps another way to make the same thing (the Mill beside the Foundry, the Port beside the Harbor), or when the tech is one a run researches anyway. A building that is its age's only source of what it makes is open from the first tick of its age: every age's knowledge and culture building and most of its military ones, the Steam Mine, the Uranium Mine, the Financial District, the Corporate HQ, the Petroleum Refinery, the Nano Foundry, the titanium smelters and mines and the data buildings from the Cyber Hub on among them. The Transcendent Age is the exception: nothing comes after it, so nothing can be stuck behind a tech, and its Singularity Engine, Omniversal Bazaar and Omniversal War Council each wait for one of its three last techs.
 
 Wonders wait for a tech too, in their own way: from the Stone Age on each one needs its age's **keystone** before `build` will start it, but it is listed from the first tick of its age and its bank takes deposits and overflow the whole time. See [The keystone tech](wonders.md#the-keystone-tech).
 

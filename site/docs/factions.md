@@ -53,7 +53,7 @@ Gifts, alliances, rivalries, embargoes and deals wait for **Envoys**, a Classica
 |---|---|
 | `factions` | Open the Factions panel |
 | `diplomacy` (or `dip`) | Open the same panel |
-| `diplomacy ally <civ>` | Ally with a civilization. Needs opinion 50 or more and costs 500 gold |
+| `diplomacy ally <civ>` | Ally with a civilization. Needs opinion 50 or more and costs 500 gold (250 with the Global Village) |
 | `diplomacy rival <civ>` | Declare a civilization your rival. Free. Opinion drains, and it offers no deals |
 | `diplomacy embargo <civ>` | Embargo a civilization. Free. Opinion drains, no deals, your routes that bring in its specialty stop, and it counts as a provocation |
 | `diplomacy gift <civ>` | Send a gift: 200 gold for +15 opinion (150 gold with Telecommunications, +22 opinion with Embassies) |
@@ -76,7 +76,7 @@ Each civilization you have met holds an **opinion** of you from -100 to +100, st
 |---|---|
 | `neutral` | The default. No bonuses, no penalties. |
 | `friendly` | Set when a gift or deal brings a neutral civilization's opinion to 25 or more. Friendly civilizations offer more deals at better rates, give bigger boons and gentler setbacks. |
-| `allied` | Needs opinion 50+ and costs 500 gold. Adds the civilization's bonus to your whole production of its specialty and to route income of it (see [Allied Bonuses](#allied-bonuses)), and gives the best deals and boons. |
+| `allied` | Needs opinion 50+ and costs 500 gold (250 with the Global Village, a Digital Age capstone). Adds the civilization's bonus to your whole production of its specialty and to route income of it (see [Allied Bonuses](#allied-bonuses)), and gives the best deals and boons. |
 | `rival` | Free to declare. Opinion drops an extra 5 every 130 ticks. No deals, no ally bonus, smaller boons, harsher setbacks. |
 | `embargo` | Free to declare. The same as rival, and it counts as a provocation. Your routes that bring in its specialty are disrupted. |
 
@@ -139,6 +139,8 @@ A civilization's personality sets how many deals it offers and which kinds:
 | **aggressive** | one fewer than peaceful (at least one), 4 points worse rates, and more Goodwill deals |
 | **isolationist** | one deal (two when allied): a **Rare** deal when the next age has goods for it to sell, its specialty otherwise |
 
+Two techs add to every set: the **Global Village** (Digital Age) and the **Federation Charter** (Galactic Age) each make every civilization offer one more deal, the isolationist ones included.
+
 Opinion matters too. Friendly civilizations (friendly status, or opinion 25+) and allies offer more deals, at better rates (0.88 of parity when neutral, 0.92 friendly, 0.96 allied, plus 0.03 on a Sell) and in bigger lots. A civilization **at war** with you, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and won't honor the offers it already made until that changes. Taking a Buy, Sell or Rare deal adds +1 opinion and counts as a trade; a Goodwill deal adds +5. Deals can raise opinion only up to **50**: they can bring a civilization to the edge of an alliance but not past it.
 
 A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25). It's capped so the goods fit in half your storage and the price in 80% of it. Amounts are rounded to three figures, never in your favor. A deal can't be taken while its goods wouldn't fit in the room left in their store.
@@ -158,13 +160,13 @@ route income    = base income × (1 + harbor bonus + ally bonus)
 
 The bonus applies to your whole per-tick rate of that resource (buildings, workers and everything else), and to that resource on every trade route that brings it in. It is its own multiplier, outside [the all-production pool](resources.md#the-all-production-cap). Two allies with the same specialty would add their bonuses together. An ally at war with you gives nothing.
 
-The **Concert of Nations**, the Industrial Age's Trade capstone, makes every ally give 25% more: a +20% bonus becomes +25%, a +15% one +18.75%. The Factions panel and the Trade panel list each bonus as it stands.
+The **Concert of Nations**, the Industrial Age's Trade capstone, makes every ally give 25% more: a +20% bonus becomes +25%, a +15% one +18.75%. The **Federation Charter**, a Galactic Age tech, adds 25% more again (+31.25% and +23.4%). The Factions panel and the Trade panel list each bonus as it stands.
 
 The bonus shows in the **Active Multipliers** section of the Stats panel as a `Diplomacy` line on the affected resource, and the Trade panel lists the same bonuses under **Allied bonuses**, one line per ally (for example *Merchant Guild: +20% gold*).
 
 Each civilization's bonus, from +15% to +30%, is in the [Civilization Reference](#civilization-reference).
 
-An alliance lasts until you change the status. Going back to neutral is free, but allying again costs another 500 gold.
+An alliance lasts until you change the status. Going back to neutral is free, but allying again costs another 500 gold (250 with the Global Village; the Factions panel shows today's price).
 
 ---
 

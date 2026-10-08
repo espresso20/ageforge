@@ -67,6 +67,14 @@ const (
 	// MechanicCampaignReward multiplies what a military campaign brings
 	// back, won or lost.
 	MechanicCampaignReward = "campaign_reward"
+	// MechanicDealSlots is added to how many deals every civilization
+	// offers in a set.
+	MechanicDealSlots = "deal_slots"
+	// MechanicAllianceCost multiplies what an alliance costs.
+	MechanicAllianceCost = "alliance_cost"
+	// MechanicAppeaseCost multiplies what an Appease level costs, in every
+	// harbinger's thread.
+	MechanicAppeaseCost = "appease_cost"
 )
 
 // MechanicUnit is how the size of a step on a mechanic number is printed.
@@ -141,6 +149,12 @@ func Mechanics() []MechanicDef {
 			Text: "room for %s more soldiers", Unit: UnitPercent},
 		{Key: MechanicCampaignReward, Name: "campaign loot", Multiplies: true, Min: 1, Max: 2,
 			Text: "campaigns bring back %s more", Unit: UnitPercent},
+		{Key: MechanicDealSlots, Name: "deals a civilization offers", Min: 0, Max: 3,
+			Text: "every civilization offers %s more deal", Unit: UnitAmount},
+		{Key: MechanicAllianceCost, Name: "alliance cost", Multiplies: true, Min: 0.40, Max: 1,
+			Text: "alliances cost %s less", Unit: UnitPercent},
+		{Key: MechanicAppeaseCost, Name: "Appease cost", Multiplies: true, Min: 0.40, Max: 1,
+			Text: "appeasing a harbinger costs %s less", Unit: UnitPercent},
 	}
 }
 

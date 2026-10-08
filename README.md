@@ -51,7 +51,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **Resource Management**: 26 resources across 22 ages with storage limits and production chains
 - **Building System**: 301 buildings (250 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 4 standalone: the Nano Foundry and 3 diplomatic buildings) with scaling costs and construction queues
 - **Worker System**: 12 domains (food, faith, knowledge, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy); workers arrive on their own and follow your worker shares (`workers share knowledge 40`), with auto-recruit as housing and food allow
-- **Tech Tree**: 128 technologies with prerequisites and permanent bonuses
+- **Tech Tree**: 202 technologies with prerequisites and permanent bonuses
 - **Military**: 13 campaigns that cost soldiers and 3 scouting expeditions that cost resources; your garrison's Defense Rating blunts raids, war raids and catastrophe losses
 - **Epochs and Catastrophes**: 7 epochs; from the Iron Era on a doom may be fated to strike at any moment of an era, and a harbinger comes first (Appease, Brace or Invite). When it strikes you Endure or Succumb, and Succumb's legacy bonuses carry across runs. In the Cosmic Era prestige itself is the Last Passage
 - **Build Plan**: queue builds, techs, trades and an advance (up to 60 items); the game starts each one as the resources come in, and production a full store would waste goes to the current wonder, then to the plan

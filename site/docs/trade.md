@@ -32,7 +32,7 @@ Each pair has a **base rate**: how many units of the resource you get per unit y
 base rate (give A, get B) = price level of B ÷ price level of A × 0.8
 ```
 
-**Four techs lower the fee.** Currency and Banking take 3 points off each, Wire Transfers and Blockchain 2 each, so with all four the market keeps 10% and pays 12.5% more than the rates on this page (every market rate is scaled the same way, the listed pairs included). The fee never falls under 5%.
+**Six techs lower the fee.** Currency and Banking take 3 points off each, and Wire Transfers, E-commerce, Blockchain and Probability Markets 2 each, so with all six the market keeps 6% and pays 17.5% more than the rates on this page (every market rate is scaled the same way, the listed pairs included). The fee never falls under 5%.
 
 That covers every pair of them, including pairs that were never on the list: steel for titanium in the Space Age, data for crypto in the Cyberpunk Age, gold for stone. Price levels change with each age, so these rates do too. Because of the fee a round trip always loses value (0.8 × 0.8 keeps 64%), so trading never beats building. The exchange is how you get the resources no building of your age makes: stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age on, titanium, crypto.
 
@@ -187,13 +187,13 @@ Every route opens in the Bronze Age or later. From the Bronze Age on, ages and t
 
 What a route gives is boosted by your harbors and by an ally whose specialty it brings in: `amount × (1 + harbor bonus + ally bonus)`.
 
-**Techs and routes.** Trade routes wait for **The Wheel**, a Bronze Age tech (it needs Woodworking): until it is researched `trade route start` is refused and names it, and the Trade panel says so. The market itself needs no tech. Boatbuilding makes every run bring in 10% more of what the route lists; a harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building and Railroads each make every route run 15% faster (28% with both: a route's next run takes 0.85 × 0.85 of the ticks listed). And **Rail Freight waits for Railroads**: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. A game that was already running the route when this rule arrived keeps it for the rest of that run.
+**Techs and routes.** Trade routes wait for **The Wheel**, a Bronze Age tech (it needs Woodworking): until it is researched `trade route start` is refused and names it, and the Trade panel says so. The market itself needs no tech. Boatbuilding, Containerization and Asteroid Claims each make every run bring in 10% more of what the route lists (33% with all three); a harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building, Railroads and Automated Logistics each make every route run 15% faster, and Wormholes 20% (with all four a route's next run takes 49% of the ticks listed). And **Rail Freight waits for Railroads**: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. **Warp Commerce waits for Interstellar Trade** in the same way, an Interstellar Age tech that needs Asteroid Claims and Warp Drive. A game that was already running either route when its rule arrived keeps it for the rest of that run.
 
 ---
 
 ## Harbor lineage: trade-route income
 
-Markets and banks (the **trade** lineage) make gold directly. **Harbors** (the first of them waits for **Mercantilism**, a Colonial Age tech; the Port beside it needs none) add a flat percentage to what **every active route** gives you, and the bonuses add up across tiers and copies. Harbors also produce gold themselves, which usually earns far more than the route bonus, because that bonus is a percentage of small fixed amounts (see [What routes are worth](#what-routes-are-worth)).
+Markets and banks (the **trade** lineage) make gold directly. **Harbors** (four of them wait for a tech of their age: the Harbor for Mercantilism, the Seaport for Containerization, the Container Terminal for E-commerce and the Logistics Hub for Automated Logistics) add a flat percentage to what **every active route** gives you, and the bonuses add up across tiers and copies. Harbors also produce gold themselves, which usually earns far more than the route bonus, because that bonus is a percentage of small fixed amounts (see [What routes are worth](#what-routes-are-worth)).
 
 The harbor bonus adds to an ally's bonus: a route bringing in an ally's specialty, with a fleet of harbors, pays `base × (1 + harbor bonus + ally bonus)`.
 

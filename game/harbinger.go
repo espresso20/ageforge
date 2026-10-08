@@ -1062,6 +1062,17 @@ func (ge *GameEngine) shortfall(cost map[string]float64) string {
 	return strings.Join(parts, ", ")
 }
 
+// appeasePrice is what Appease level costs in thread h for this run: the
+// thread's price (threadAppeaseCostIn) with the techs' cut of it
+// (appeaseCut). Caller holds the lock.
+func (ge *GameEngine) appeasePrice(h *HarbingerSave, level int) map[string]float64 {
+	cost := threadAppeaseCostIn(ge.rules, h, level)
+	for res, v := range cost {
+		cost[res] = ge.appeaseCut(v)
+	}
+	return cost
+}
+
 // HarbingerAppease buys the next Appease level. Takes the write lock.
 func (ge *GameEngine) HarbingerAppease() error {
 	ge.mu.Lock()
@@ -1074,7 +1085,7 @@ func (ge *GameEngine) HarbingerAppease() error {
 	}
 	h := ge.harbinger
 	level := h.AppeaseLevel + 1
-	cost := threadAppeaseCostIn(ge.rules, h, level)
+	cost := ge.appeasePrice(h, level)
 	if len(cost) == 0 {
 		return fmt.Errorf("Cannot appease: there is nothing to offer.")
 	}
@@ -1356,7 +1367,7 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		}
 	}
 	if v.AppeaseBlocked == "" {
-		v.AppeaseCost = threadAppeaseCostIn(ge.rules, h, h.AppeaseLevel+1)
+		v.AppeaseCost = ge.appeasePrice(h, h.AppeaseLevel+1)
 		v.AppeaseAffordable = len(v.AppeaseCost) > 0 && ge.Resources.CanAfford(v.AppeaseCost)
 	}
 	if v.BraceBlocked == "" {
