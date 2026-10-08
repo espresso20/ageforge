@@ -58,29 +58,6 @@ Every age can be finished, and an automated test checks this in every release. T
 - Every resource a requirement asks for has a source in the age itself, even for a player who skipped every building no earlier requirement asked for.
 - A requirement in faith, food or culture is something a moderate economy makes within the age's target length, or can buy for a small share of it.
 
-## How Long Each Age Takes
-
-Each age is tuned to a target length in real time. Building output, prices, wonder costs and requirements are all sized to it: a staffed production building earns back the price of its first copy in a fraction of the age's target, and nothing takes longer to build than a sixth of it.
-
-| Age | Target | Age | Target |
-|---|---|---|---|
-| Primitive | 15m | Modern | 31h 12m |
-| Stone | 45m | Information | 36h 24m |
-| Bronze | 3h 54m | Digital | 41h 36m |
-| Iron | 6h 30m | Cyberpunk | 46h 48m |
-| Classical | 9h 6m | Fusion | 52h |
-| Medieval | 11h 42m | Space | 57h 12m |
-| Renaissance | 15h 36m | Interstellar | 62h 24m |
-| Colonial | 18h 12m | Galactic | 62h 24m |
-| Industrial | 20h 48m | Quantum | 62h 24m |
-| Victorian | 23h 24m | | |
-| Electric | 26h | | |
-| Atomic | 31h 12m | | |
-
-That is about a week (167 hours) from a fresh start to the Modern Age, where a full run's prestige comes. Prestige opens earlier, at the Medieval Age (about 20 hours in), as an early taste that pays little. From the Bronze Age on, every age runs 2.6 times as long as it did on the earlier three-day curve, and the game's timers (events, raids, trade routes, expeditions, cooldowns) stretch with it, so each age holds as many of them as before. You don't have to sit through it: the game keeps playing while you are away, for up to 24 hours at 50% of your normal production.
-
-These are first-run lengths. On later runs an age a past run completed is **known ground** and runs faster: 2x after one completion, up to 4.2x after ten, with production and storage multiplied and build and research times divided by the same factor. Ages 6 or more behind the deepest age you have ever entered run at least 4x. See [Era Mastery](prestige.md#era-mastery).
-
 ## What Happens on Age Advance
 
 When your civilization crosses into a new age:
