@@ -162,6 +162,7 @@ func readme(c *catalog) string {
 	p("5. A row with a `same_as` and a blank `yours` takes the rewrite of the row it points to, so one rewrite of `Cancel` changes every `Cancel`. Fill its own `yours` to make it differ, or run the import with `--no-same` to switch this off.")
 	p("6. The game's own wording rules apply to your version, and the import refuses a row that breaks one: no em dashes and no routine exclamation marks, US spelling, the glossary (worker, not villager; opinion, not standing), and for the story sentences the catalog's banned sentence shapes, its words that belong to one era only, and a length of 3 to 45 words.")
 	p("7. Save each file as CSV in UTF-8, under its own name. The import reads every `.csv` in the folder.")
+	p("8. A few lines start with `+`, `-` or `=`, which a spreadsheet may take for a formula. If it changes what is in `current`, the import refuses that row and says so, and nothing is lost: fix the cell or export again.")
 	p("")
 	p("## Renaming something")
 	p("")

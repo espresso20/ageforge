@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // code_special.go holds what the code reader has to be told: what each
@@ -398,6 +400,10 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 			}
 			r.area, r.seen, r.age = areaEvents, seenRare, w.keyAge["catastrophe:"+era]
 			r.rules = rulesConfig | rulesDocs
+			if u.ret == 1 && !config.CatastropheAllowed(era) {
+				r.unsure = true
+				r.where += " No catastrophe can strike in the " + w.eraName[era] + ", so as things stand this story is never shown."
+			}
 			return r, "", true
 		case u.decl == "LastPassageInfo" && u.near == "return":
 			r := newRow("last_passage.name", kindName, "The name of the Last Passage, the end of the Cosmic Era: in the Harbinger panel, its window, the log and the badges.")
