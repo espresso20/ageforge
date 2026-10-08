@@ -64,7 +64,7 @@ func saucerInView(m *mapmodel.Model, anim, w int) bool {
 // depth: in front of the clouds, behind the ridge, its towns and every
 // building. Its glow is made legible on whatever sky it crosses.
 func (s *scene) visitor() {
-	x, y, ok := saucerAt(s.m, s.anim, s.W)
+	x, y, ok := saucerAt(s.m, s.visit, s.W)
 	if !ok || y < 0 || y >= s.groundY {
 		return
 	}

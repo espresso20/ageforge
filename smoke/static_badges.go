@@ -63,7 +63,11 @@ var IntegrityBadges = []string{
 var LegacyAchievements = []string{"first_prestige", "prestige_x10", "reached_iron", "reached_modern"}
 
 // BadgeBotStyles are the play styles a bot-proof may name.
-var BadgeBotStyles = []string{"greedy", "idle", "harbinger", "succumber", "cosmic", "army", "taste"}
+var BadgeBotStyles = []string{"greedy", "idle", "harbinger", "succumber", "cosmic", "army", "taste",
+	// The veteran scenario's preset: an account with Era Mastery, which the
+	// fast tier plays on every pull request and holds to each age's
+	// pacing target divided by its mastery factor.
+	"veteran"}
 
 // BadgeProblem is a badge the static check proves out of reach, or a fault
 // in the badge tables, with the reason in plain words.
@@ -164,7 +168,8 @@ func (c *badgeCheck) check(def config.BadgeDef) {
 		}
 	case config.BadgeProofDerived:
 		r.Proof = "derived"
-		if def.Scope != config.BadgeLifetime || !strings.HasPrefix(def.Counter, config.BadgeEvBadge) {
+		counts := def.Scope == config.BadgeLifetime && strings.HasPrefix(def.Counter, config.BadgeEvBadge)
+		if on := def.Scope == config.BadgeMoment && def.Event == config.BadgeEvBadge; !counts && !on {
 			c.fail(def.Key, "proof", fmt.Sprintf("%s claims to follow from other badges, but does not count earned badges.", label))
 		}
 	case config.BadgeProofBot:
@@ -272,7 +277,9 @@ func (c *badgeCheck) static(def config.BadgeDef, label string, r *BadgeReach) {
 		}
 
 	default:
-		c.fail(def.Key, "proof", fmt.Sprintf("%s claims the static proof %q, which this check does not have.", label, def.Proof.Rule))
+		if !c.moreRules(def, label, r) {
+			c.fail(def.Key, "proof", fmt.Sprintf("%s claims the static proof %q, which this check does not have.", label, def.Proof.Rule))
+		}
 	}
 }
 
@@ -283,6 +290,12 @@ func (c *badgeCheck) perRun(counter string) (perRun float64, basis string, ok bo
 	switch {
 	case counter == config.BadgeEvPrestige:
 		return 1, "one prestige", true
+	default:
+		if perRun, basis, ok := c.morePerRun(counter); ok {
+			return perRun, basis, true
+		}
+	}
+	switch {
 	case strings.HasPrefix(counter, config.BadgeEvBuiltLineage+"."):
 		lineage := strings.TrimPrefix(counter, config.BadgeEvBuiltLineage+".")
 		total, deep := 0, 0
@@ -335,7 +348,7 @@ func (c *badgeCheck) runLimit(fact string) (limit float64, basis string, ok bool
 		}
 		return math.Floor(float64(MilestoneBuildShare * float64(sellable))), fmt.Sprintf("%d%% of the %s buildings a run can build and sell", int(MilestoneBuildShare*100), grouped(sellable)), true
 	}
-	return 0, "", false
+	return c.moreRunLimits(fact)
 }
 
 // exists checks that everything a badge names is something the game has.
@@ -372,6 +385,11 @@ func (c *badgeCheck) exists(def config.BadgeDef, label string) {
 				miss(fmt.Sprintf("counts the building %q, which does not exist", strings.TrimPrefix(name, "standing.")))
 			}
 		case strings.HasPrefix(name, "ev."):
+		case strings.HasPrefix(name, "standing_age."), strings.HasPrefix(name, "researched_age."):
+			if _, ok := c.m.idx[name[strings.Index(name, ".")+1:]]; !ok {
+				miss(fmt.Sprintf("reads the fact %q, which names no age", name))
+			}
+		case name == "acct.days_within.10":
 		default:
 			miss(fmt.Sprintf("reads the fact %q, which is none the game keeps (run., standing., ev. or life.)", name))
 		}
@@ -390,6 +408,8 @@ func (c *badgeCheck) exists(def config.BadgeDef, label string) {
 	default:
 		if !slices.Contains(c.events, def.Event) {
 			miss(fmt.Sprintf("is judged on the event %q, which the game does not report", def.Event))
+		} else if why := c.subjectMissing(def); why != "" {
+			miss(why)
 		}
 		if def.Counter != "" {
 			if def.Scope == config.BadgeMoment {
@@ -426,6 +446,10 @@ func (c *badgeCheck) exists(def config.BadgeDef, label string) {
 	case config.BadgeSecret:
 		if def.Hint == "" && !def.Integrity() {
 			miss("is secret and has no hint to list under")
+		}
+	case config.BadgeRevealOnBadge:
+		if _, ok := c.set.Badge(def.Reveal.Key); !ok {
+			miss(fmt.Sprintf("is revealed by the badge %q, which does not exist, so it would stay hidden", def.Reveal.Key))
 		}
 	}
 }

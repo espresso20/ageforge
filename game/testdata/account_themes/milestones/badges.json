@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "account_id": "4932805df304e37fac605d2a1a01ce82",
+  "badges": {
+    "age.iron_age": {
+      "at": 1791423313,
+      "run": "run"
+    },
+    "age.modern_age": {
+      "at": 1791423313,
+      "run": "run"
+    },
+    "age.stone_age": {
+      "at": 1791423313,
+      "run": "run"
+    }
+  },
+  "days": [
+    "2026-10-07"
+  ],
+  "_sig": "95c2b65616ba40e7b4f6bf19f808469b72c9e4dee5963524f14ab25d9437e542"
+}

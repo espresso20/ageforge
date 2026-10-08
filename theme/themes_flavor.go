@@ -2,9 +2,10 @@ package theme
 
 import "github.com/gdamore/tcell/v2"
 
-// Flavor themes (the theming design §4) are cosmetic, curated palettes that unlock via
-// milestones. They are all Accessible: false — the gating itself lands in Phase 3b;
-// this file only DEFINES and REGISTERS them. Because they're not accessible, the
+// Flavor themes (the theming design §4) are cosmetic, curated palettes that an
+// account badge gives (UnlockBadge): the badge of an age for the five age
+// themes, and a badge of its own for each of the rest. They are all
+// Accessible: false. Because they're not accessible, the
 // colorblind-distinguishability guard does not apply to them, but every WCAG AA
 // luminance floor in contrast_test.go DOES, and each theme below is tuned to clear
 // those with margin (Text/Label/Positive/Negative/Highlight vs Background >= 4.5,
@@ -41,11 +42,10 @@ var Parchment = define(Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
-	// Unlock: the Renaissance-age milestone ("Enlightened" — advance to the
-	// Renaissance Age). Parchment is the manuscript/illuminated-page look, so the
-	// age of letters and printing is its thematic home (config/milestones.go).
-	UnlockMilestone: "enlightened",
-	UnlockHint:      "Reach the Renaissance Age",
+	// The Renaissance Age's badge gives it: the manuscript page for the age of
+	// letters and printing.
+	UnlockBadge: "age.renaissance_age",
+	UnlockHint:  "Reach the Renaissance Age",
 })
 
 // Bronze is a warm metallic look: copper/bronze accent, amber highlight, olive
@@ -68,10 +68,10 @@ var Bronze = define(Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
-	// Unlock: the Bronze-age milestone ("Bronze Age Pioneer"). The earliest gated
-	// theme — burnished metal for the age that first worked it (config/milestones.go).
-	UnlockMilestone: "bronze_pioneer",
-	UnlockHint:      "Reach the Bronze Age",
+	// The Bronze Age's badge gives it: burnished metal for the age that first
+	// worked it. The earliest of the gated themes.
+	UnlockBadge: "age.bronze_age",
+	UnlockHint:  "Reach the Bronze Age",
 })
 
 // Cyberpunk is neon on near-black: hot magenta accent, neon-cyan highlight, neon
@@ -95,11 +95,9 @@ var Cyberpunk = define(Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
-	// Unlock: the Cyberpunk-age milestone ("cyberpunk_milestone" — advance to the
-	// Cyberpunk Age). The on-the-nose mapping the spec calls out; the theme riffs on
-	// the cyberpunk_age palette (config/milestones.go).
-	UnlockMilestone: "cyberpunk_milestone",
-	UnlockHint:      "Reach the Cyberpunk Age",
+	// The Cyberpunk Age's badge gives it; the theme riffs on that age's palette.
+	UnlockBadge: "age.cyberpunk_age",
+	UnlockHint:  "Reach the Cyberpunk Age",
 })
 
 // Monochrome is a stylistic greyscale terminal: a single hue's shades. Accent and
@@ -126,11 +124,10 @@ var Monochrome = define(Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
-	// Unlock: the Information-age milestone ("Information Pioneer"). The spec's worked
-	// example ("monochrome 🔒 Reach the Information Age") — the retro terminal look
-	// for the age that made the terminal ubiquitous (config/milestones.go).
-	UnlockMilestone: "information_pioneer",
-	UnlockHint:      "Reach the Information Age",
+	// The Information Age's badge gives it: the retro terminal look for the age
+	// that put a terminal on every desk.
+	UnlockBadge: "age.information_age",
+	UnlockHint:  "Reach the Information Age",
 })
 
 // Cosmic is deep-space: a dark indigo/violet background, starlight text, and
@@ -154,11 +151,9 @@ var Cosmic = define(Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
-	// Unlock: the Galactic-age milestone ("Galactic Emperor"). Deep-space indigo for
-	// the age of galactic empire; riffs on the galactic_age palette
-	// (config/milestones.go).
-	UnlockMilestone: "galactic_emperor",
-	UnlockHint:      "Reach the Galactic Age",
+	// The Galactic Age's badge gives it; the theme riffs on that age's palette.
+	UnlockBadge: "age.galactic_age",
+	UnlockHint:  "Reach the Galactic Age",
 })
 
 // Source is a phosphor terminal: green on green-black, with code falling down
@@ -215,6 +210,88 @@ var Glitch = define(Theme{
 	Effect:      EffectGlitch,
 })
 
+// Ashfall is the morning after: ash grey and ember orange on soot, with
+// sparks drifting up the empty columns. It is the reward of a badge that
+// stays out of sight until the player has met an ending, so its hint does
+// not name it.
+var Ashfall = define(Theme{
+	Key:        "ashfall",
+	Name:       "Ashfall",
+	Blurb:      "Ember orange on soot, with sparks rising in the empty columns.",
+	Accessible: false,
+	Colors: [numRoles]tcell.Color{
+		RoleBackground: tcell.NewRGBColor(0x15, 0x11, 0x0f), // soot
+		RoleText:       tcell.NewRGBColor(0xd8, 0xcf, 0xc7), // ash
+		RoleDim:        tcell.NewRGBColor(0x8a, 0x7f, 0x77), // cold ash
+		RoleLabel:      tcell.NewRGBColor(0xe0, 0x89, 0x4a), // ember
+		RoleAccent:     tcell.NewRGBColor(0xff, 0x6a, 0x2b), // live coal
+		RoleHighlight:  tcell.NewRGBColor(0xff, 0xb3, 0x47), // flame
+		RolePositive:   tcell.NewRGBColor(0xa9, 0xc4, 0x6c), // new growth
+		RoleNegative:   tcell.NewRGBColor(0xff, 0x5a, 0x4d), // burn
+		RoleSelection:  tcell.NewRGBColor(0x2b, 0x21, 0x1c),
+		RoleBright:     tcell.NewRGBColor(0xf3, 0xec, 0xe6),
+	},
+	GainGlyph:   flavorGainGlyph,
+	LossGlyph:   flavorLossGlyph,
+	UnlockBadge: "special.connoisseur_of_endings",
+	UnlockHint:  "Given by a legendary badge",
+	Effect:      EffectEmbers,
+})
+
+// Ledger is the accountant's page: ink and bookkeeper's green on pale
+// green-bar paper, every other row of the empty space tinted. Light. It is the reward of the
+// top rung of the deals ladder.
+var Ledger = define(Theme{
+	Key:        "ledger",
+	Name:       "Ledger",
+	Blurb:      "Ink and bookkeeper's green on green-bar paper.",
+	Accessible: false,
+	Colors: [numRoles]tcell.Color{
+		RoleBackground: tcell.NewRGBColor(0xf4, 0xf6, 0xee), // ledger paper
+		RoleText:       tcell.NewRGBColor(0x1d, 0x2a, 0x22), // ink
+		RoleDim:        tcell.NewRGBColor(0x5d, 0x6b, 0x61), // pencil
+		RoleLabel:      tcell.NewRGBColor(0x1f, 0x6b, 0x45), // bookkeeper's green
+		RoleAccent:     tcell.NewRGBColor(0x1f, 0x6b, 0x45),
+		RoleHighlight:  tcell.NewRGBColor(0x8a, 0x5a, 0x00), // brass
+		RolePositive:   tcell.NewRGBColor(0x14, 0x66, 0x3a), // in the black
+		RoleNegative:   tcell.NewRGBColor(0xb3, 0x26, 0x1e), // in the red
+		RoleSelection:  tcell.NewRGBColor(0xdf, 0xe9, 0xd6),
+		RoleBright:     tcell.NewRGBColor(0x0b, 0x13, 0x0e),
+	},
+	GainGlyph:   flavorGainGlyph,
+	LossGlyph:   flavorLossGlyph,
+	UnlockBadge: "ladder.deals.3",
+	UnlockHint:  "Given by the top rung of a badge ladder",
+	Effect:      EffectGreenbar,
+})
+
+// Prismatic is white light split: near-white text on blue-black, with glints
+// in the empty space that turn slowly through the spectrum. It is the reward
+// of Museum Piece, the badge for earning most of the others.
+var Prismatic = define(Theme{
+	Key:        "prismatic",
+	Name:       "Prismatic",
+	Blurb:      "Starlight on blue-black, with glints that turn through the spectrum.",
+	Accessible: false,
+	Colors: [numRoles]tcell.Color{
+		RoleBackground: tcell.NewRGBColor(0x0b, 0x0b, 0x10), // blue-black
+		RoleText:       tcell.NewRGBColor(0xec, 0xec, 0xf4), // starlight
+		RoleDim:        tcell.NewRGBColor(0x8b, 0x8b, 0xa3), // haze
+		RoleLabel:      tcell.NewRGBColor(0x8f, 0xd3, 0xff), // sky
+		RoleAccent:     tcell.NewRGBColor(0xff, 0x7a, 0xd9), // rose
+		RoleHighlight:  tcell.NewRGBColor(0xff, 0xe0, 0x66), // sunbeam
+		RolePositive:   tcell.NewRGBColor(0x7d, 0xff, 0xb0), // spring green
+		RoleNegative:   tcell.NewRGBColor(0xff, 0x5c, 0x5c), // red
+		RoleSelection:  tcell.NewRGBColor(0x1d, 0x1b, 0x2c),
+		RoleBright:     tcell.NewRGBColor(0xff, 0xff, 0xff),
+	},
+	GainGlyph:   flavorGainGlyph,
+	LossGlyph:   flavorLossGlyph,
+	UnlockBadge: "special.museum_piece",
+	UnlockHint:  "Earn 400 badges",
+	Effect:      EffectPrism,
+})
+
 var _ = register(
 	Parchment,
 	Bronze,
@@ -223,4 +300,7 @@ var _ = register(
 	Cosmic,
 	Source,
 	Glitch,
+	Ashfall,
+	Ledger,
+	Prismatic,
 )

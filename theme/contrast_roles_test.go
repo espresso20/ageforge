@@ -115,7 +115,7 @@ func TestDerivedRoles_PreserveDarkThemes(t *testing.T) {
 
 // TestIsLight classifies the shipped themes.
 func TestIsLight(t *testing.T) {
-	light := map[string]bool{"daylight": true, "high_contrast_light": true, "parchment": true}
+	light := map[string]bool{"daylight": true, "high_contrast_light": true, "parchment": true, "ledger": true}
 	for _, th := range All() {
 		if th.IsLight() != light[th.Key] {
 			t.Errorf("%s: IsLight() = %v, want %v", th.Key, th.IsLight(), light[th.Key])
@@ -139,6 +139,7 @@ func TestGroups(t *testing.T) {
 		"parchment": GroupUnlockable, "bronze": GroupUnlockable, "cyberpunk": GroupUnlockable,
 		"monochrome": GroupUnlockable, "cosmic": GroupUnlockable,
 		"source": GroupUnlockable, "glitch": GroupUnlockable,
+		"ashfall": GroupUnlockable, "ledger": GroupUnlockable, "prismatic": GroupUnlockable,
 	}
 	for _, th := range All() {
 		g, ok := want[th.Key]

@@ -292,6 +292,17 @@ type GameEngine struct {
 	// facts are saved with the run and start over with it.
 	badges   *badgeBook
 	runFacts RunFacts
+	// produced is what the rates have produced since the last production
+	// report, by resource, and producedTick the tick of that report; away
+	// is set while time away is being caught up (badge_hooks.go). None of
+	// them is saved or read by the game itself.
+	produced     map[string]float64
+	producedTick int
+	away         bool
+	// ageTold is the age the account was last told the run is in ("" when it
+	// has not been told yet: a run just loaded or begun). An age the run is in
+	// without an advance having reported it is told from here (noteAgeJump).
+	ageTold string
 
 	// Morale system — a managed two-way dial. Range [0.10, moraleCap()];
 	// starts at moraleNeutral (0.50). Drives production via moraleMultiplier().
@@ -1376,6 +1387,7 @@ func (ge *GameEngine) doTick() {
 
 	// Apply resource rates (production - consumption); what a cap cuts off
 	// goes to the wonder bank while overflow is on (overflow.go).
+	ge.noteProduced(1)
 	ge.applyTickRates()
 	// The faith measure follows the tick's faith (faith.go).
 	ge.accrueFaith(1)
@@ -1456,6 +1468,8 @@ func (ge *GameEngine) doTick() {
 	// The tick's report: the run's milestones are judged on it (checkMilestones,
 	// from the run's state, here as always), then the account's badges.
 	ge.report(Event{Kind: config.BadgeEvTick})
+	ge.noteCensus()
+	ge.noteAgeJump()
 
 	// Check age advancement — notify once when ready, but require player to
 	// type 'advance' to confirm. ageReady resets if requirements drop (e.g.
@@ -1671,10 +1685,13 @@ func (ge *GameEngine) processDiplomacy() {
 	for _, key := range ge.Diplomacy.takeMet() {
 		ge.note(config.BadgeEvCivMet, key)
 	}
+	// Wars that began or burned out this tick.
+	ge.noteWars(false)
 
 	// Apply queued worker-lending side effects to the worker pool.
 	for _, req := range ge.Diplomacy.TakePendingLends() {
 		ge.Workers.AddLentWorkers(req.Count)
+		ge.note(config.BadgeEvWorkersLent, req.FactionKey)
 		// Surface as a timed event so it shows in the active-events panel too.
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       "worker_lending",
@@ -2265,8 +2282,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 		reached, _ := ge.rules.Age(newAge)
 		acct.RecordAgeReached(newAge, reached.Order)
 	}
-	// The report the age badges are judged on (badges.go).
-	ge.note(config.BadgeEvAgeReached, newAge)
+	// The reports the age badges are judged on (badge_hooks.go).
+	ge.reportAgeReached(oldAge, newAge)
 
 	// note: Age-transition carryover model (EPIC: age-pacing economy rebalance).
 	// The old flat-10% reduction still left a huge stockpile (10% of a hoard is
@@ -4215,9 +4232,17 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	case lastPassageSpared:
 		ge.note(config.BadgeEvLastPassage, "spared")
 	case lastPassageEndured:
-		ge.note(config.BadgeEvLastPassage, "endured")
+		ge.report(Event{Kind: config.BadgeEvLastPassage, Subject: "endured",
+			Attrs: map[string]float64{"brace": float64(ge.lastPassageBraceLevel())}})
 	case lastPassageSuccumbed:
 		ge.note(config.BadgeEvLastPassage, "succumbed")
+	}
+	// A prestige from the last age leaves the last era.
+	if era := ge.rules.EraOf(prestigedFrom); ge.rules.IsFinalEra(era) && ge.rules.Next(prestigedFrom) == "" {
+		ge.reportEraLeft(era)
+	}
+	if ge.cosmicLegacy && !newLegacy {
+		ge.note(config.BadgeEvLegacyPrestige, prestigedFrom)
 	}
 	ge.note(config.BadgeEvPrestige, prestigedFrom)
 
@@ -4318,6 +4343,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	if len(savedRuins) > 0 {
 		ge.addLog("info", fmt.Sprintf("Ruins carried forward from past civilizations: %s.",
 			textfmt.Count(len(savedRuins), "type", "types")))
+		ge.note(config.BadgeEvRuinsCarried, "")
 	}
 	// The legacy kit: shares, the first age's template slice, old friends.
 	ge.startRunLegacyLocked()
@@ -4349,6 +4375,15 @@ func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
 	ge.recalculateRates() // a storage or rate upgrade shows at once, not next tick
 	ge.addLog("success", ge.prestigeUpgradeLine(key))
 	ge.note(config.BadgeEvUpgradeBought, key)
+	if kit := ge.rules.LegacyKit(); slices.Contains(kit, key) {
+		left := 0
+		for _, k := range kit {
+			if !ge.Prestige.Owns(k) {
+				left++
+			}
+		}
+		ge.report(Event{Kind: config.BadgeEvKit, Subject: key, Attrs: map[string]float64{"left": float64(left)}})
+	}
 	ge.legacyOnPurchaseLocked(key)
 	return nil
 }
@@ -4733,11 +4768,11 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 
 	ge.addLog("event", fmt.Sprintf("Welcome back. You were away for %s.", textfmt.Duration(elapsed)))
-	// The return and the time credited for it, for the records.
-	ge.report(Event{Kind: config.BadgeEvReturned, Attrs: map[string]float64{
-		"ticks": float64(offlineTicks), "capped": boolFact(capped),
-	}})
+	// The time credited, for the records; the return itself is reported
+	// once the time away has been played through, with what it did.
 	ge.report(Event{Kind: config.BadgeEvAwayTicks, N: float64(offlineTicks)})
+	planStartsBefore := ge.runFacts.Counts[config.BadgeEvPlanStarted]
+	ge.away = true
 
 	gains := make(map[string]float64)
 	banked := make(map[string]float64)
@@ -4754,6 +4789,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		}
 		w := ge.overflowWonder()
 		losses := ge.overflowScratch[:0]
+		ge.noteProduced(float64(n) * OfflineEfficiency)
 		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
 			func(res string, g float64) { gains[res] += g },
 			func(res string, lost float64) {
@@ -4793,6 +4829,17 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		// strikes at its tick, and a struck doom waits, pending, for the player.
 		ge.harbingerTickCheck()
 	}
+	ge.away = false
+	// What the time away produced is counted as it is on a live tick
+	// (noteProduced, above); the last batch goes now. Then the return: how
+	// long, whether the allowance cut it short, what the build plan started
+	// and what it has left.
+	ge.flushProduced()
+	ge.report(Event{Kind: config.BadgeEvReturned, Attrs: map[string]float64{
+		"ticks": float64(offlineTicks), "capped": boolFact(capped),
+		"plan_started": ge.runFacts.Counts[config.BadgeEvPlanStarted] - planStartsBefore,
+		"plan_left":    float64(len(ge.plan)),
+	}})
 
 	if len(gains) > 0 {
 		ge.addLog("info", fmt.Sprintf("Offline progress (at %s efficiency):", textfmt.Percent(OfflineEfficiency)))
@@ -4891,8 +4938,20 @@ func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
 	ge.addLog("info", diplomaticStatusLine(ge.rules.Name(rules.KindCiv, factionKey), status, cost))
 	ge.note(config.BadgeEvCivStatus, status)
 	if status == "allied" {
-		ge.note(config.BadgeEvCivAllied, factionKey)
+		met, allied := 0, 0
+		for _, fs := range ge.Diplomacy.factions {
+			if fs.Discovered {
+				met++
+				if fs.Status == "allied" {
+					allied++
+				}
+			}
+		}
+		ge.report(Event{Kind: config.BadgeEvCivAllied, Subject: factionKey,
+			Attrs: map[string]float64{"met": float64(met), "unallied": float64(met - allied)}})
 	}
+	// An embargo is a provocation, and may have started a war.
+	ge.noteWars(false)
 	return nil
 }
 
@@ -4914,6 +4973,7 @@ func (ge *GameEngine) SendGift(factionKey string) error {
 	ge.Resources.Remove("gold", cost)
 	ge.addLog(LogRoutine, fmt.Sprintf("Sent the %s a gift: %s, opinion %s.",
 		ge.rules.Name(rules.KindCiv, factionKey), Amount(cost, "gold"), textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
+	ge.note(config.BadgeEvGiftSent, factionKey)
 	return nil
 }
 
@@ -4933,6 +4993,7 @@ func (ge *GameEngine) SendTribute(factionKey string) error {
 	ge.Resources.Remove("culture", cultureCost)
 	ge.addLog("success", fmt.Sprintf("Paid the %s a tribute of %s. The war is over.",
 		ge.rules.Name(rules.KindCiv, factionKey), Amounts(map[string]float64{"gold": goldCost, "culture": cultureCost})))
+	ge.noteWars(true)
 	return nil
 }
 
@@ -4948,6 +5009,7 @@ func (ge *GameEngine) RaidCivRoute(factionKey string) error {
 		return err
 	}
 	name := ge.rules.Name(rules.KindCiv, factionKey)
+	ge.noteWars(false)
 	if started {
 		ge.addLog("warning", fmt.Sprintf("You raided a %s trade route. They declared war.", name))
 	} else {

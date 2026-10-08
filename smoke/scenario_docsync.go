@@ -32,7 +32,9 @@ import (
 //     else is.
 
 // Quantity keys. The ones a ruleset counts are its own (rules.Set.Counts);
-// themes and expeditions are defined outside the ruleset and counted here.
+// themes and expeditions are defined outside the ruleset and counted here,
+// and so are the badges: the ones that count (an integrity badge is worth
+// nothing, counts toward nothing and is not in the number the docs quote).
 const (
 	qAges        = rules.CountAges
 	qBuildings   = rules.CountBuildings
@@ -42,6 +44,7 @@ const (
 	qResources   = rules.CountResources
 	qEpochs      = rules.CountEras
 	qThemes      = "themes"
+	qBadges      = "badges"
 	qDomains     = rules.CountDomains
 	qUpgrades    = rules.CountShopItems
 	qLineages    = rules.CountLineages
@@ -60,6 +63,11 @@ func GameCounts() map[string]int {
 	set := rules.Core()
 	c := set.Counts()
 	c[qThemes] = len(theme.All())
+	for _, b := range set.Badges() {
+		if !b.Integrity() {
+			c[qBadges]++
+		}
+	}
 	exps := map[string]bool{}
 	mm := game.NewMilitaryManagerWith(set)
 	for _, a := range set.AgeKeys() {
@@ -89,6 +97,7 @@ var claimWords = []struct {
 	{regexp.MustCompile(`(?i)\b(\d+) ages\b`), qAges, 10},
 	{regexp.MustCompile(`(?i)\b(\d+) epochs\b`), qEpochs, 5},
 	{regexp.MustCompile(`(?i)\b(\d+) themes\b`), qThemes, 5},
+	{regexp.MustCompile(`(?i)\b(\d+) badges\b`), qBadges, 100},
 	{regexp.MustCompile(`(?i)\b(\d+) (?:worker )?domains\b`), qDomains, 5},
 	{regexp.MustCompile(`(?i)\b(\d+) (?:prestige )?upgrades\b`), qUpgrades, 5},
 	{regexp.MustCompile(`(?i)\b(\d+) (?:legacy )?kit items\b`), qUpgrades, 3},
@@ -106,7 +115,7 @@ var claimWords = []struct {
 var heroStat = regexp.MustCompile(`(?s)<span class="hstat-n">([^<]+)</span\s*>\s*<span class="hstat-l">([^<]+)</span>`)
 
 var heroLabels = map[string]string{"ages": qAges, "buildings": qBuildings, "techs": qTechs, "technologies": qTechs,
-	"milestones": qMilestones, "resources": qResources, "themes": qThemes, "epochs": qEpochs}
+	"milestones": qMilestones, "resources": qResources, "themes": qThemes, "epochs": qEpochs, "badges": qBadges}
 
 // docClaim is one number the docs state.
 type docClaim struct {

@@ -122,9 +122,9 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		}
 		if !v.inspect {
 			v.inspect = true
-			v.step(m, f.Anim, 0, 0, 0)
+			v.step(m, f.VisitFrame(), 0, 0, 0)
 		} else {
-			v.step(m, f.Anim, 0, 0, d)
+			v.step(m, f.VisitFrame(), 0, 0, d)
 		}
 	case key == tcell.KeyEscape:
 		if !v.inspect {
@@ -142,7 +142,7 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	case key == tcell.KeyLeft || key == tcell.KeyRight:
 		dx := map[bool]int{true: -1, false: 1}[key == tcell.KeyLeft]
 		if v.inspect && m != nil {
-			v.step(m, f.Anim, dx, 0, 0)
+			v.step(m, f.VisitFrame(), dx, 0, 0)
 		} else {
 			scroll(4 * dx)
 		}
@@ -150,7 +150,7 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		if !v.inspect || m == nil {
 			return false
 		}
-		v.step(m, f.Anim, 0, map[bool]int{true: 1, false: -1}[key == tcell.KeyUp], 0)
+		v.step(m, f.VisitFrame(), 0, map[bool]int{true: 1, false: -1}[key == tcell.KeyUp], 0)
 	default:
 		return false
 	}
@@ -161,7 +161,7 @@ func (v *view) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
 	if !v.inspect || f.Model == nil {
 		return mapstyle.Inspection{}, false
 	}
-	in, ok := v.inspection(f.Model, f.Anim)
+	in, ok := v.inspection(f.Model, f.VisitFrame())
 	if !ok {
 		return mapstyle.Inspection{}, false
 	}
@@ -218,7 +218,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	}
 	m := f.Model
 	v.lastW = W
-	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H, S: H - 3, top: 1, sel: -1}
+	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H, S: H - 3, top: 1, sel: -1}
 	s.groundY = s.S - 3
 	s.band = bandOf(m.AgeIdx)
 	s.p, s.mp = v.palettes(m)
@@ -231,7 +231,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	}
 	if v.inspect {
 		ts := v.targetsFor(m, W, v.cam)
-		if i := v.resolve(m, ts, f.Anim); i >= 0 && v.reveal {
+		if i := v.resolve(m, ts, f.VisitFrame()); i >= 0 && v.reveal {
 			v.revealTarget(m, ts[i], W)
 		}
 	}

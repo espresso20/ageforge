@@ -108,11 +108,28 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 			family(t, src, "ladder").Counter = "high_fives"
 		}},
 		{"a counter the check has no run for", "ladder.prestiges.1", "lifetime", func(src *rules.Source) {
-			family(t, src, "ladder").Counter = config.BadgeEvFestival
+			family(t, src, "ladder").Counter = config.BadgeEvGiftSent
 		}},
 		{"an age no advance reaches", "age.primitive_age", "gate", func(src *rules.Source) {
 			f := family(t, src, "age")
-			f.Only = []string{"primitive_age"}
+			f.Except, f.Only = nil, []string{"primitive_age"}
+		}},
+		{"a subject the event never carries", "domain.food.1", "existence", func(src *rules.Source) {
+			// The census has no subject: a row held to one waits for ever.
+			family(t, src, "domain").AnySubject = false
+		}},
+		{"an age where the event names a building", "maximalist.stone_age", "existence", func(src *rules.Source) {
+			family(t, src, "maximalist").AnySubject = false
+		}},
+		{"an age where the event names a tech", "techs.iron_age", "existence", func(src *rules.Source) {
+			family(t, src, "techs").AnySubject = false
+		}},
+		{"a civilization that does not exist", "special.sale_probe", "existence", func(src *rules.Source) {
+			src.Badges = append(src.Badges, config.BadgeDef{
+				Key: "special.sale_probe", Family: "special", Name: "Probe", Desc: "Meet Atlantis.",
+				Tier: config.BadgeBronze, Scope: config.BadgeMoment, Event: config.BadgeEvCivMet, Subject: "atlantis",
+				Proof: config.Occurs("It does not."),
+			})
 		}},
 		{"an event the game does not report", sale, "existence", func(src *rules.Source) {
 			special(t, src, sale).Event = "building_juggled"
@@ -128,7 +145,7 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 			special(t, src, sale).Threshold = 1e7
 		}},
 		{"a run count the check cannot bound", sale, "run_count", func(src *rules.Source) {
-			special(t, src, sale).Counter = "run." + config.BadgeEvFestival
+			special(t, src, sale).Counter = "run." + config.BadgeEvGiftSent
 		}},
 		{"no proof", sale, "proof", func(src *rules.Source) {
 			special(t, src, sale).Proof = config.BadgeProof{}

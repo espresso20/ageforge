@@ -43,6 +43,7 @@
 - **Your Game**
   - [Saving & Loading](saving-and-loading.md)
   - [Accounts & Recovery](account.md)
+  - [Badges](badges.md)
   - [Themes & Accessibility](themes.md)
 
 - <a href="/" target="_self" data-nosearch>← Back to the site</a>

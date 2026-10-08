@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
@@ -294,19 +296,19 @@ func (a *Account) countLocked(book *badgeBook, name string, n float64, ctx badge
 
 // meetsLocked reports whether a Run or Moment badge's row holds for an event.
 func (a *Account) meetsLocked(def *config.BadgeDef, ev Event, ctx badgeCtx) bool {
-	if def.Subject != "" && def.Subject != ev.Subject {
+	if def.Subject != "" && !def.AnySubject && def.Subject != ev.Subject {
 		return false
 	}
 	if def.InAge != "" && def.InAge != ctx.age {
 		return false
 	}
 	if def.Scope == config.BadgeRun && def.Counter != "" {
-		if v, _ := a.factLocked(def.Counter, ctx); v < def.Threshold {
+		if v, _ := a.factLocked(def.Counter, ev, ctx); v < def.Threshold {
 			return false
 		}
 	}
 	for _, c := range def.When {
-		v, known := a.factLocked(c.Fact, ctx)
+		v, known := a.factLocked(c.Fact, ev, ctx)
 		switch c.Op {
 		case config.BadgeAtLeast:
 			if v < c.Value {
@@ -328,16 +330,52 @@ func (a *Account) meetsLocked(def *config.BadgeDef, ev Event, ctx badgeCtx) bool
 	return true
 }
 
-// factLocked reads a fact by name: a lifetime counter from the account,
+// factLocked reads a fact by name: an attribute of the event being judged,
+// a lifetime counter or a fact of the account's own from the account, and
 // anything else from the run.
-func (a *Account) factLocked(name string, ctx badgeCtx) (float64, bool) {
-	if len(name) > len(factLife) && name[:len(factLife)] == factLife {
-		return a.Counters[name[len(factLife):]], true
+func (a *Account) factLocked(name string, ev Event, ctx badgeCtx) (float64, bool) {
+	switch {
+	case strings.HasPrefix(name, factEvent):
+		v, ok := ev.Attrs[strings.TrimPrefix(name, factEvent)]
+		return v, ok
+	case strings.HasPrefix(name, factLife):
+		return a.Counters[strings.TrimPrefix(name, factLife)], true
+	case strings.HasPrefix(name, factAccount):
+		return a.accountFactLocked(strings.TrimPrefix(name, factAccount))
+	case strings.HasPrefix(name, factRun) && strings.HasSuffix(name, factAnySubject):
+		// The run's tally for whatever this event happened to.
+		name = strings.TrimSuffix(name, factAnySubject) + "." + ev.Subject
 	}
 	if ctx.fact == nil {
 		return 0, false
 	}
 	return ctx.fact(name)
+}
+
+// accountFactLocked reads a fact the account itself knows:
+//
+//	days_within.<n>   the different days played among the n calendar days
+//	                  that end on the last day played
+func (a *Account) accountFactLocked(name string) (float64, bool) {
+	if span, ok := strings.CutPrefix(name, "days_within."); ok {
+		n, err := strconv.Atoi(span)
+		if err != nil || n <= 0 || len(a.Days) == 0 {
+			return 0, err == nil
+		}
+		last, err := time.Parse(accountDayLayout, a.Days[len(a.Days)-1])
+		if err != nil {
+			return 0, false
+		}
+		from := last.AddDate(0, 0, -(n - 1)).Format(accountDayLayout)
+		count := 0
+		for _, d := range a.Days {
+			if d >= from {
+				count++
+			}
+		}
+		return float64(count), true
+	}
+	return 0, false
 }
 
 // grantLocked gives the account a badge. A silent grant is one the record
@@ -380,13 +418,27 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 	if def.Integrity() || depth >= maxBadgeChain {
 		return
 	}
+	set := ""
+	if def.Set != "" {
+		set = config.BadgeEvBadge + ".set." + def.Set
+	}
 	if silent {
 		// A badge the record proved leads only to others it proves.
 		a.countSilentLocked(book, config.BadgeEvBadge, depth)
 		a.countSilentLocked(book, config.BadgeEvBadge+"."+def.Family, depth)
+		if set != "" {
+			a.countSilentLocked(book, set, depth)
+		}
 		return
 	}
-	a.judgeLocked(book, Event{Kind: config.BadgeEvBadge, Subject: def.Family}, ctx, depth+1)
+	if set != "" {
+		a.countLocked(book, set, 1, ctx, depth+1)
+	}
+	top := 0.0
+	if pos := book.rung[def.Key]; pos[1] > 0 && pos[0] == pos[1] {
+		top = 1
+	}
+	a.judgeLocked(book, Event{Kind: config.BadgeEvBadge, Subject: def.Family, Attrs: map[string]float64{"top": top}}, ctx, depth+1)
 }
 
 // countSilentLocked is countLocked for a silent grant: what it reaches is
@@ -498,6 +550,43 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 			if pos, ok := book.set.Index(def.Subject); ok && reached && pos <= highest {
 				grant(def)
 			}
+		}
+	}
+	// The badges already held count toward the badges for earning badges: an
+	// account from before those existed kept none of their counters. A badge
+	// this grants is held too, so it goes round until nothing is added.
+	for range maxBadgeChain {
+		held := map[string]float64{}
+		for key := range a.Badges {
+			def := book.def(key)
+			if def == nil || def.Integrity() {
+				continue
+			}
+			held[config.BadgeEvBadge]++
+			held[config.BadgeEvBadge+"."+def.Family]++
+			if def.Set != "" {
+				held[config.BadgeEvBadge+".set."+def.Set]++
+			}
+		}
+		grew := false
+		for _, name := range sortedKeys(held) {
+			if !book.counters[name] || a.Counters[name] >= held[name] {
+				continue
+			}
+			if a.Counters == nil {
+				a.Counters = map[string]float64{}
+			}
+			a.Counters[name] = held[name]
+			a.badgeRev++
+			grew, changed = true, true
+			for _, i := range book.byCounter[name] {
+				if def := &book.defs[i]; a.Counters[name] >= def.Threshold {
+					grant(def)
+				}
+			}
+		}
+		if !grew {
+			break
 		}
 	}
 	// A theme an earned badge gives is unlocked: this is what gives the theme
@@ -654,6 +743,11 @@ type BadgeSummary struct {
 	// TitleRank is the title's place among the titles: 0 for the one
 	// every account starts with.
 	TitleRank int
+	// Titles is every title the account holds: the score's, then the ones
+	// its badges give, in the catalog's order. Worn is the one it wears:
+	// the one it chose, while it still holds it, else the score's.
+	Titles []string
+	Worn   string
 }
 
 // BadgeHiddenName is the name a silhouette lists under.
@@ -709,15 +803,8 @@ func (a *Account) viewLocked(book *badgeBook, def *config.BadgeDef, shown bool) 
 	}
 	if def.Ladder != "" {
 		v.Ladder = def.Ladder
-		for _, i := range book.byCounter[def.Counter] {
-			if book.defs[i].Ladder != def.Ladder {
-				continue
-			}
-			v.Rungs++
-			if book.defs[i].Key == def.Key {
-				v.Rung = v.Rungs
-			}
-		}
+		pos := book.rung[def.Key]
+		v.Rung, v.Rungs = pos[0], pos[1]
 	}
 	return v
 }
@@ -733,6 +820,8 @@ func (a *Account) revealedLocked(def *config.BadgeDef, sight AgeSight) bool {
 		return sight.SeenNext(def.Reveal.Key)
 	case config.BadgeRevealOnCounter:
 		return a.Counters[def.Reveal.Key] > 0
+	case config.BadgeRevealOnBadge:
+		return a.earnedLocked(def.Reveal.Key)
 	}
 	return false // secret, or a rule this version does not know
 }
@@ -801,7 +890,37 @@ func (a *Account) buildBadgeViewsLocked(book *badgeBook, sight AgeSight) ([]Badg
 	}
 	countable := sum.Shown + sum.Hidden
 	sum.Title, sum.TitleRank, sum.NextTitle, sum.NextTitleAt = book.set.BadgeTitle(sum.Points, countable > 0 && clean == countable)
+	sum.Titles = append([]string{sum.Title}, a.badgeTitlesLocked(book)...)
+	sum.Worn = sum.Title
+	if want := a.settingsLocked().Title; want != "" && slices.Contains(sum.Titles, want) {
+		sum.Worn = want
+	}
 	return out, sum
+}
+
+// badgeTitlesLocked is the titles the account's badges give it: a title is
+// held with its badge, or with every badge of its set, and a crossed badge
+// gives none.
+func (a *Account) badgeTitlesLocked(book *badgeBook) []string {
+	clean := func(key string) bool {
+		e, ok := a.Badges[key]
+		return ok && e.Flags&BadgeFlagCrossed == 0
+	}
+	var out []string
+	for _, t := range book.set.BadgeWornTitles() {
+		held := t.Badge != "" && clean(t.Badge)
+		if t.Set != "" {
+			keys := book.setOf[t.Set]
+			held = len(keys) > 0
+			for _, k := range keys {
+				held = held && clean(k)
+			}
+		}
+		if held {
+			out = append(out, t.Title)
+		}
+	}
+	return out
 }
 
 // countableBadges is how many of the account's badges count toward

@@ -17,13 +17,13 @@ func (v *skyView) skyVisit() (mapmodel.Pt, mapmodel.Sighting, bool) {
 	if s == nil || v.compact {
 		return mapmodel.Pt{}, mapmodel.Sighting{}, false
 	}
-	sg, ok := s.m.SightingAt(v.anim)
+	sg, ok := s.m.SightingAt(v.visit)
 	if !ok {
 		return mapmodel.Pt{}, sg, false
 	}
 	g := v.sg
 	tw := max(1, g.w/g.cellW)
-	ph := sg.Phase(v.anim)
+	ph := sg.Phase(v.visit)
 	if sg.Kind == mapmodel.SightFlyby {
 		x := g.vx - 2 + int(float64(tw+3)*ph)
 		if sg.Roll%2 == 1 {
@@ -40,7 +40,7 @@ func (v *skyView) skyVisit() (mapmodel.Pt, mapmodel.Sighting, bool) {
 	case ph < 0.15:
 		return pt(tx, top+int(float64(ty-top)*ph/0.15)), sg, true
 	case ph < 0.85:
-		return pt(tx+[4]int{0, 1, 0, -1}[(v.anim/10)%4], ty), sg, true
+		return pt(tx+[4]int{0, 1, 0, -1}[(v.visit/10)%4], ty), sg, true
 	}
 	return pt(tx, ty-int(float64(ty-top)*(ph-0.85)/0.15)), sg, true
 }

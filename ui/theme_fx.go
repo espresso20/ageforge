@@ -10,7 +10,8 @@ import (
 // theme_fx.go draws a theme's ambient effect: a little motion in the cells
 // of the dashboard that are otherwise empty (theme.Theme.Effect). Source
 // has code falling down its empty columns; Glitch has a tear of static now
-// and then.
+// and then; Ashfall has sparks rising; Ledger has the bars of green-bar
+// paper; Prismatic has glints that turn through the spectrum.
 //
 // An effect is drawn after the dashboard, over it, and only into cells
 // that hold nothing: a blank on the theme's own background, with blanks on
@@ -114,6 +115,72 @@ func drawThemeEffect(scr tcell.Screen, x, y, w, h int, effect string, n int, pla
 					col = theme.Color(theme.RoleLabel)
 				}
 				scr.SetContent(x+c, y+r, pickRune(noise, artHash(n, c, r)), nil, style(col, false))
+			}
+		}
+	case theme.EffectEmbers:
+		// Sparks rise up some of the columns, a row every three frames,
+		// bright and low at first, then small and dim.
+		low, high := '·', '˙'
+		if plain {
+			low, high = '.', '\''
+		}
+		period := h + 6
+		for c := 0; c < w; c++ {
+			seed := artHash(c, 77, 3)
+			if seed >= 0.3 {
+				continue // most columns have none
+			}
+			for k := 0; k < 2; k++ {
+				up := (n/3 + int(seed*400) + k*period/2) % period
+				r := h - 1 - up
+				if r < 0 || !free[r*w+c] {
+					continue
+				}
+				glyph, col := low, theme.Color(theme.RoleHighlight)
+				switch {
+				case up > h*2/3:
+					glyph, col = high, theme.Color(theme.RoleDim)
+				case up > h/3:
+					glyph, col = high, theme.Color(theme.RoleLabel)
+				}
+				scr.SetContent(x+c, y+r, glyph, nil, style(col, up <= h/3))
+			}
+		}
+	case theme.EffectGreenbar:
+		// Green-bar paper: every other row of the empty space is tinted. The
+		// tint is drawn as ink, so it lies under nothing.
+		bar := '█'
+		if plain {
+			bar = '.'
+		}
+		tint := tcell.StyleDefault.Background(bg).Foreground(theme.Color(theme.RoleSelection))
+		for r := 1; r < h; r += 2 {
+			for c := 0; c < w; c++ {
+				if free[r*w+c] {
+					scr.SetContent(x+c, y+r, bar, nil, tint)
+				}
+			}
+		}
+	case theme.EffectPrism:
+		// Glints here and there in the empty space, each turning through
+		// the spectrum at its own place on the wheel.
+		for r := 0; r < h; r++ {
+			for c := 0; c < w; c++ {
+				seed := artHash(c, r, 29)
+				if seed >= 0.035 || !free[r*w+c] {
+					continue
+				}
+				at := n/3 + int(seed*4000)
+				glyph := glintRunes[at%4]
+				if plain {
+					glyph = badgeFold[glyph]
+				}
+				hue := float64((n*6 + int(seed*36000)) % 360)
+				stop := stopPale
+				if glyph == '·' || glyph == '.' {
+					stop = stopBase
+				}
+				scr.SetContent(x+c, y+r, glyph, nil, style(inkValue(prismInk(hue, stop), light), false))
 			}
 		}
 	}

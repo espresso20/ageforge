@@ -63,7 +63,8 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, rotating faction trade deals, boons and setbacks
 - **Prestige**: Reset-and-grow system from the Medieval Age on. Points pay by depth (every completed age pays, 3 times as much for each era: 9 from the Medieval Age, 120 from the Modern Age) and buy the legacy kit, 3 kit items that carry your build plan, worker shares and the civilizations you met into later runs. Era Mastery: every age a run completes runs faster on later runs, up to 4.2x
 - **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name, and `help` lists every command
-- **Themes and accounts**: 13 themes, dark and light, including colorblind-safe and high-contrast palettes; local accounts with backups and a recovery code, and account badges in a badge case (`badges`)
+- **Themes and accounts**: 16 themes, dark and light, including colorblind-safe and high-contrast palettes; local accounts with backups and a recovery code
+- **Badges**: 563 badges to earn on your account, kept in a badge case (`badges`): one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and one-off feats. Badges give points, titles and ten of the themes, and never change a run
 - **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
 - **Save/Load**: JSON save system with auto-save every 60s and offline progress; saves live in `data/` next to the binary
 

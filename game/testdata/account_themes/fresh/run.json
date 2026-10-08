@@ -1,0 +1,158 @@
+{
+  "timestamp": "2026-10-07T20:35:13.303088-05:00",
+  "tick": 0,
+  "age": "primitive_age",
+  "seed": 1791423313302648000,
+  "resources": {
+    "antimatter": 0,
+    "coal": 0,
+    "crypto": 0,
+    "culture": 0,
+    "dark_matter": 0,
+    "dark_matter_crystals": 0,
+    "data": 0,
+    "electricity": 0,
+    "faith": 0,
+    "food": 25,
+    "gold": 0,
+    "iron": 0,
+    "iron_ore": 0,
+    "knowledge": 0,
+    "marble": 0,
+    "nanobots": 0,
+    "oil": 0,
+    "plasma": 0,
+    "quantum_flux": 0,
+    "soldiers": 0,
+    "steel": 0,
+    "stone": 0,
+    "titanium": 0,
+    "titanium_ore": 0,
+    "uranium": 0,
+    "wood": 50
+  },
+  "storage": {
+    "antimatter": 20,
+    "coal": 50,
+    "crypto": 50,
+    "culture": 50,
+    "dark_matter": 20,
+    "dark_matter_crystals": 10,
+    "data": 50,
+    "electricity": 50,
+    "faith": 50,
+    "food": 50,
+    "gold": 50,
+    "iron": 50,
+    "iron_ore": 30,
+    "knowledge": 30,
+    "marble": 30,
+    "nanobots": 20,
+    "oil": 50,
+    "plasma": 30,
+    "quantum_flux": 10,
+    "soldiers": 0,
+    "steel": 30,
+    "stone": 50,
+    "titanium": 30,
+    "titanium_ore": 20,
+    "uranium": 30,
+    "wood": 50
+  },
+  "buildings": {},
+  "workers": {
+    "worker": {
+      "count": 0,
+      "food_cost": 0.06,
+      "assignment": {}
+    }
+  },
+  "unlocked": {
+    "resources": [
+      "food",
+      "wood",
+      "knowledge",
+      "faith"
+    ],
+    "buildings": [
+      "hut",
+      "stash",
+      "gathering_camp",
+      "wood_camp",
+      "story_circle",
+      "shrine",
+      "sacred_grove"
+    ],
+    "workers": [
+      "worker"
+    ]
+  },
+  "stats": {
+    "total_built": 0,
+    "total_recruited": 0,
+    "total_gathered": {},
+    "game_started": "2026-10-07T20:35:13.302647-05:00",
+    "ages_reached": [
+      "primitive_age"
+    ],
+    "soldiers_trained": 0
+  },
+  "research": {
+    "researched": [],
+    "current_tech": "",
+    "ticks_left": 0,
+    "total_ticks": 0
+  },
+  "military": {
+    "completed_count": 0,
+    "total_loot": {}
+  },
+  "events": {
+    "last_fired": {},
+    "active": [],
+    "next_event_tick": -1,
+    "good_streak": 0,
+    "bad_streak": 0
+  },
+  "milestones": [],
+  "permanent_bonuses": {},
+  "build_queue": [],
+  "prestige": {
+    "level": 0,
+    "total_earned": 0,
+    "available": 0,
+    "upgrades": {},
+    "furthest": "primitive_age",
+    "run_furthest": "primitive_age",
+    "mastery_seeded": true,
+    "shop_version": 2
+  },
+  "trade": {
+    "active_routes": {},
+    "supply_pressure": {},
+    "total_exchanged": {},
+    "total_imported": {},
+    "total_exported": {}
+  },
+  "diplomacy": {
+    "factions": {}
+  },
+  "speed_multiplier": 1,
+  "pending_upgrades_saved": true,
+  "current_epoch": "stone_era",
+  "succumb_research_derived": true,
+  "faith_measured": true,
+  "morale": 0.5,
+  "history": {
+    "samples": null,
+    "age_markers": null
+  },
+  "run_facts": {
+    "whole": true,
+    "age_known": true
+  },
+  "account_id": "a3c6c02713d6fd1463da33d9012a71c4",
+  "pacing_week": true,
+  "tree_version": 5,
+  "_sig": "e34b1fb29ae05349ae569a5aed6a35ba9c616d6a33f71f52560f10243b07bbbb"
+}

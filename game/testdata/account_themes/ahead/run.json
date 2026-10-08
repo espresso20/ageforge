@@ -1,0 +1,221 @@
+{
+  "timestamp": "2026-10-07T20:35:13.294284-05:00",
+  "tick": 0,
+  "age": "bronze_age",
+  "seed": 1791423313293366000,
+  "quip_draws": 2,
+  "resources": {
+    "antimatter": 0,
+    "coal": 0,
+    "crypto": 0,
+    "culture": 0,
+    "dark_matter": 0,
+    "dark_matter_crystals": 0,
+    "data": 0,
+    "electricity": 0,
+    "faith": 0,
+    "food": 0.25,
+    "gold": 0,
+    "iron": 0,
+    "iron_ore": 0,
+    "knowledge": 0,
+    "marble": 0,
+    "nanobots": 0,
+    "oil": 0,
+    "plasma": 0,
+    "quantum_flux": 0,
+    "soldiers": 0,
+    "steel": 0,
+    "stone": 0,
+    "titanium": 0,
+    "titanium_ore": 0,
+    "uranium": 0,
+    "wood": 50
+  },
+  "storage": {
+    "antimatter": 20,
+    "coal": 50,
+    "crypto": 50,
+    "culture": 50,
+    "dark_matter": 20,
+    "dark_matter_crystals": 10,
+    "data": 50,
+    "electricity": 50,
+    "faith": 50,
+    "food": 50,
+    "gold": 50,
+    "iron": 50,
+    "iron_ore": 30,
+    "knowledge": 30,
+    "marble": 30,
+    "nanobots": 20,
+    "oil": 50,
+    "plasma": 30,
+    "quantum_flux": 10,
+    "soldiers": 0,
+    "steel": 30,
+    "stone": 50,
+    "titanium": 30,
+    "titanium_ore": 20,
+    "uranium": 30,
+    "wood": 50
+  },
+  "buildings": {},
+  "workers": {
+    "worker": {
+      "count": 0,
+      "food_cost": 0.07526400000000001,
+      "assignment": {}
+    }
+  },
+  "unlocked": {
+    "resources": [
+      "food",
+      "wood",
+      "knowledge",
+      "faith",
+      "stone",
+      "iron",
+      "gold"
+    ],
+    "buildings": [
+      "hut",
+      "stash",
+      "gathering_camp",
+      "wood_camp",
+      "story_circle",
+      "shrine",
+      "sacred_grove",
+      "longhouse",
+      "storage_pit",
+      "forager_post",
+      "woodcutter_camp",
+      "stone_camp",
+      "stone_pit",
+      "elders_hall",
+      "standing_stones",
+      "war_camp",
+      "great_monolith",
+      "house",
+      "warehouse",
+      "farm",
+      "lumber_mill",
+      "quarry",
+      "scriptorium",
+      "altar",
+      "barracks",
+      "market",
+      "smithy",
+      "stonehenge"
+    ],
+    "workers": [
+      "worker"
+    ]
+  },
+  "stats": {
+    "total_built": 0,
+    "total_recruited": 0,
+    "total_gathered": {},
+    "game_started": "2026-10-07T20:35:13.293365-05:00",
+    "ages_reached": [
+      "primitive_age",
+      "stone_age",
+      "bronze_age"
+    ],
+    "soldiers_trained": 0
+  },
+  "research": {
+    "researched": [],
+    "current_tech": "",
+    "ticks_left": 0,
+    "total_ticks": 0
+  },
+  "military": {
+    "completed_count": 0,
+    "total_loot": {}
+  },
+  "events": {
+    "last_fired": {},
+    "active": [
+      {
+        "Key": "awakening_pottery_mastery",
+        "Name": "Pottery Mastery",
+        "TicksLeft": 250,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "food",
+            "Value": 1
+          },
+          {
+            "Type": "production",
+            "Target": "stone",
+            "Value": 0.5
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      }
+    ],
+    "next_event_tick": -1,
+    "good_streak": 0,
+    "bad_streak": 0
+  },
+  "milestones": [],
+  "permanent_bonuses": {},
+  "build_queue": [],
+  "prestige": {
+    "level": 0,
+    "total_earned": 0,
+    "available": 0,
+    "upgrades": {},
+    "furthest": "bronze_age",
+    "run_furthest": "bronze_age",
+    "mastery_seeded": true,
+    "shop_version": 2
+  },
+  "trade": {
+    "active_routes": {},
+    "supply_pressure": {},
+    "total_exchanged": {},
+    "total_imported": {},
+    "total_exported": {}
+  },
+  "diplomacy": {
+    "factions": {}
+  },
+  "speed_multiplier": 1,
+  "pending_upgrades_saved": true,
+  "current_epoch": "stone_era",
+  "awakenings_fired": {
+    "awakening_pottery_mastery": true
+  },
+  "succumb_research_derived": true,
+  "faith_measured": true,
+  "morale": 0.6599999999999999,
+  "history": {
+    "samples": null,
+    "age_markers": [
+      {
+        "tick": 0,
+        "age_name": "stone_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "bronze_age"
+      }
+    ]
+  },
+  "run_facts": {
+    "whole": true,
+    "counts": {
+      "age_reached": 2,
+      "awakening": 1
+    },
+    "age_known": true
+  },
+  "account_id": "0d829ddbc09d5bfab4986a5e56db5c6e",
+  "pacing_week": true,
+  "tree_version": 5,
+  "_sig": "f816a6026de431ec2b30bf83a2aa4327555d565c2251235070452294e2935650"
+}

@@ -99,6 +99,8 @@ type skyView struct {
 	// per-frame scratch
 	sg      skyGeom
 	anim    int
+	visit   int // the frame the rare visitor is drawn at (Frame.VisitFrame)
+	clock   int // the world's clock it came from (Frame.Clock)
 	tier    mapmodel.GlyphTier
 	occ     []bool
 	seen    []skyLgEntry

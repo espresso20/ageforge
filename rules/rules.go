@@ -47,6 +47,11 @@ type Source struct {
 	BadgeFamilies []config.BadgeFamilyDef
 	// BadgeTitles is the titles a badge score earns, lowest first.
 	BadgeTitles []config.BadgeScoreTitle
+	// BadgeWornTitles is the titles badges give. BadgeExpeditions and
+	// BadgeThemes are the tables outside config a family is made from.
+	BadgeWornTitles  []config.BadgeTitleDef
+	BadgeExpeditions []config.BadgeExpeditionDef
+	BadgeThemes      []config.BadgeThemeDef
 
 	// Events is the random pool; EraEvents the ones only one era rolls.
 	// GoodEraEvents and ChallengingEraEvents are the pools an era's entry
@@ -120,6 +125,9 @@ func FromConfig() Source {
 		Badges:               config.Badges(),
 		BadgeFamilies:        config.BadgeFamilies(),
 		BadgeTitles:          config.BadgeScoreTitles(),
+		BadgeWornTitles:      config.BadgeTitles(),
+		BadgeExpeditions:     config.BadgeExpeditions(),
+		BadgeThemes:          config.BadgeThemes(),
 		Events:               config.RandomEvents(),
 		EraEvents:            config.EpochExclusiveEvents(),
 		GoodEraEvents:        config.GoodEpochEvents(),

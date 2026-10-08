@@ -120,24 +120,12 @@ type Theme struct {
 	// onto the ramp from Background to Text instead of drawing full color.
 	Duotone bool
 
-	// Milestone-gated unlock condition (the theming design §5). A gated (flavor) theme
-	// declares EXACTLY ONE of these — the milestone key or chain key whose
-	// completion unlocks it account-wide. The mapping lives here, in the registry,
-	// not scattered through engine/milestone code: theme stays a leaf package, so
-	// these are plain strings (no game import), and the UI reverse-maps a completed
-	// key back to a theme via UnlockedBy.
-	//
-	// Always-available themes (Accessible, or the Standard Forge/Daylight) leave
-	// BOTH empty — they're never gated, so there is nothing to unlock. The
-	// registry-consistency test (unlock_test.go) enforces the XOR for gated themes
-	// and the empty-pair for the always-available set.
-	UnlockMilestone string // milestone key (config/milestones.go) — XOR with UnlockChain
-	UnlockChain     string // milestone-chain key — XOR with UnlockMilestone
 	// UnlockBadge is the key of the account badge whose reward the theme is
-	// (config/badges.go). The engine unlocks the theme when the badge is earned,
-	// so a badge theme is in no unlock index here: the field is the theme's side
-	// of the pairing, for the picker and the registry tests. A gated theme sets
-	// exactly one of UnlockMilestone, UnlockChain and UnlockBadge.
+	// (config/badges.go). The engine unlocks the theme when the badge is
+	// earned; the field is the theme's side of the pairing, for the picker and
+	// the registry tests. Every gated (flavor) theme sets it. An
+	// always-available theme (Accessible, or the Standard Forge and Daylight)
+	// leaves it empty: there is nothing to unlock.
 	UnlockBadge string
 
 	// UnlockHint is the human-readable unlock condition shown for a LOCKED theme in
@@ -145,9 +133,9 @@ type Theme struct {
 	// Required for gated themes; empty for always-available ones.
 	UnlockHint string
 
-	// Effect names an ambient effect the theme carries: a little motion drawn
-	// in cells that are otherwise empty (EffectRain, EffectGlitch). "" for none.
-	// The UI draws it, and only while the game's motion setting is on.
+	// Effect names an ambient effect the theme carries (the Effect constants):
+	// something drawn in cells that are otherwise empty. "" for none. The UI
+	// draws it, and only while the game's motion setting is on.
 	Effect string
 }
 
@@ -157,23 +145,17 @@ const (
 	EffectRain = "rain"
 	// EffectGlitch: now and then a row of static tears across the empty cells.
 	EffectGlitch = "glitch"
+	// EffectEmbers: sparks drifting up the empty columns.
+	EffectEmbers = "embers"
+	// EffectGreenbar: every other row of the empty space tinted, like
+	// green-bar paper.
+	EffectGreenbar = "greenbar"
+	// EffectPrism: glints in the empty space that turn through the spectrum.
+	EffectPrism = "prism"
 )
 
-// Gated reports whether the theme is milestone-gated (declares an unlock
-// condition). Always-available themes (Accessible / Standard) are not gated.
-func (t Theme) Gated() bool {
-	return t.UnlockMilestone != "" || t.UnlockChain != "" || t.UnlockBadge != ""
-}
-
-// UnlockKey returns the single milestone-or-chain key that unlocks a gated theme
-// (whichever of UnlockMilestone/UnlockChain is set), and "" for an un-gated theme
-// and for one a badge gives (UnlockBadge: the engine unlocks those).
-func (t Theme) UnlockKey() string {
-	if t.UnlockMilestone != "" {
-		return t.UnlockMilestone
-	}
-	return t.UnlockChain
-}
+// Gated reports whether the theme is locked until a badge gives it.
+func (t Theme) Gated() bool { return t.UnlockBadge != "" }
 
 // Color returns the theme's color for a role. Out-of-range roles return
 // tcell.ColorDefault rather than panicking.

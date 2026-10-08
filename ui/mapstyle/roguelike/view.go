@@ -51,8 +51,11 @@ type view struct {
 	occ  []bool
 	seen [numLg]lgEntry
 	anim int
-	tier mapmodel.GlyphTier
-	rbuf regionBuf
+	// visit is the frame the rare visitor is drawn at (Frame.VisitFrame),
+	// and clock the world's clock it came from (Frame.Clock).
+	visit, clock int
+	tier         mapmodel.GlyphTier
+	rbuf         regionBuf
 	// names is how many building names the last district-zoom frame drew.
 	names int
 	// present caches which movers' lanes cross the view (traffic.go).

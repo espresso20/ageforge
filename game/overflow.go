@@ -1,6 +1,10 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // Wonder overflow: production a storage cap would cut off goes into the
 // current age's wonder bank instead, when the wonder still needs that
@@ -84,10 +88,15 @@ func (ge *GameEngine) bankOverflow(w, res string, lost float64) float64 {
 		ge.Buildings.wonderBanks[w] = bank
 	}
 	bank[res] += dep
+	if ge.runFacts.Counts[config.BadgeEvWonderOverflow] == 0 {
+		// Once a run: overflow has fed a wonder.
+		ge.note(config.BadgeEvWonderOverflow, "")
+	}
 	if need-bank[res] <= 0.001 {
 		ge.addLog("info", fmt.Sprintf("Overflow finished banking %s for %s.", ResourceName(res), def.Name))
 		if ge.Buildings.IsWonderBankFull(w) {
 			ge.addLog("success", fmt.Sprintf("The %s bank is full. %s", def.Name, ge.wonderNextStep(w)))
+			ge.report(Event{Kind: config.BadgeEvWonderBanked, Subject: w, Attrs: map[string]float64{"away": boolFact(ge.away)}})
 		}
 	}
 	return dep

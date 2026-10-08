@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The badge file (badges.json, beside account.json in the account's slot)
@@ -98,11 +99,71 @@ func assertOldShape(t *testing.T, raw []byte) {
 	}
 }
 
+// ageBadges is the badge of every age after the first, up to and including
+// age: what an account that has reached age is granted from its record.
+func ageBadges(age string) []string {
+	var out []string
+	for _, k := range rules.Core().AgeKeys()[1:] {
+		out = append(out, "age."+k)
+		if k == age {
+			return out
+		}
+	}
+	panic("no age " + age)
+}
+
+// themesGiven is the themes the badges in keys unlock, sorted.
+func themesGiven(keys []string) []string {
+	var out []string
+	for _, k := range keys {
+		if def, ok := rules.Core().Badge(k); ok && def.Reward.Theme != "" {
+			out = append(out, def.Reward.Theme)
+		}
+	}
+	slices.Sort(out)
+	return out
+}
+
+// sortedUnion is every string in a or b, once, sorted.
+func sortedUnion(a, b []string) []string {
+	out := slices.Clone(a)
+	for _, k := range b {
+		if !slices.Contains(out, k) {
+			out = append(out, k)
+		}
+	}
+	slices.Sort(out)
+	return out
+}
+
+// assertOnlyUnlocksDiffer fails if two account.json files differ in
+// anything but their unlocks (and so their signature): what a theme gained
+// from a badge may change, and nothing else.
+func assertOnlyUnlocksDiffer(t *testing.T, was, now []byte) {
+	t.Helper()
+	var a, b map[string]json.RawMessage
+	if err := json.Unmarshal(was, &a); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(now, &b); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range accountFileKeys {
+		if key == "unlocks" || key == "_sig" {
+			continue
+		}
+		if string(a[key]) != string(b[key]) {
+			t.Errorf("gaining a theme changed %q in account.json: was %s, now %s", key, a[key], b[key])
+		}
+	}
+}
+
 // TestOldAccountGetsItsBadgeFile is the migration: an account from before
-// badges loads with nothing lost and account.json left as it was, its
-// achievements are badges in a badge file beside it, what its record
-// already proves is granted, nothing is announced, and a second load
-// changes nothing.
+// badges loads with nothing lost, its achievements are badges in a badge
+// file beside it, what its record already proves is granted, nothing is
+// announced, and a second load changes nothing. account.json is left as it
+// was, but for the themes the granted badges unlock: an age's theme comes
+// with the badge of that age, so an account that reached the age has it.
 func TestOldAccountGetsItsBadgeFile(t *testing.T) {
 	cases := []struct {
 		file     string
@@ -113,13 +174,13 @@ func TestOldAccountGetsItsBadgeFile(t *testing.T) {
 		{
 			// All four achievements, 11 prestiges, the Information Age reached.
 			file:     "account_v1_full.json",
-			badges:   []string{badgeIron, badgeModern, badgeStone, badgePrestige1, badgePrestige3, badgePrestige10},
+			badges:   append(ageBadges("information_age"), badgePrestige1, badgePrestige3, badgePrestige10),
 			prestige: 11,
 		},
 		{
 			// reached_iron and first_prestige; the Medieval Age reached.
 			file:     "account_v1_partial.json",
-			badges:   []string{badgeIron, badgeStone, badgePrestige1},
+			badges:   append(ageBadges("medieval_age"), badgePrestige1),
 			prestige: 1,
 		},
 		{file: "account_v1_empty.json"},
@@ -134,7 +195,7 @@ func TestOldAccountGetsItsBadgeFile(t *testing.T) {
 			// Already flagged and re-signed before badges.
 			file:     "account_v1_flagged.json",
 			tampered: true,
-			badges:   []string{badgeIron, badgeStone},
+			badges:   ageBadges("iron_age"),
 		},
 	}
 	for _, tc := range cases {
@@ -162,9 +223,22 @@ func TestOldAccountGetsItsBadgeFile(t *testing.T) {
 			if !reflect.DeepEqual(acct.Stats, old.Stats) {
 				t.Errorf("lifetime stats changed:\n got %+v\nwant %+v", acct.Stats, old.Stats)
 			}
-			if !reflect.DeepEqual(acct.Unlocks, old.Unlocks) || !reflect.DeepEqual(acct.Prefs, old.Prefs) {
-				t.Errorf("unlocks or prefs changed: %+v %+v", acct.Unlocks, acct.Prefs)
+			if !reflect.DeepEqual(acct.Prefs, old.Prefs) {
+				t.Errorf("prefs changed: %+v", acct.Prefs)
 			}
+			// No theme is lost, and the only ones gained are the granted
+			// badges' own.
+			for _, th := range old.Unlocks.Themes {
+				if !acct.HasTheme(th) {
+					t.Errorf("the account lost the theme %s", th)
+				}
+			}
+			gained := themesGiven(tc.badges)
+			wantThemes := sortedUnion(old.Unlocks.Themes, gained)
+			if got := sortedUnion(acct.Unlocks.Themes, nil); !slices.Equal(got, wantThemes) || len(acct.Unlocks.Themes) != len(wantThemes) {
+				t.Errorf("unlocked themes %v, want %v (it had %v, and its badges give %v)", acct.Unlocks.Themes, wantThemes, old.Unlocks.Themes, gained)
+			}
+			themesGrew := len(wantThemes) > len(old.Unlocks.Themes)
 			if !slices.Equal(acct.Achievements, old.Achievements) {
 				t.Errorf("the achievements list changed: %v, was %v", acct.Achievements, old.Achievements)
 			}
@@ -191,12 +265,16 @@ func TestOldAccountGetsItsBadgeFile(t *testing.T) {
 				t.Errorf("the migration announced badges: %+v", earned)
 			}
 
-			// account.json keeps its shape, and a healthy one keeps its bytes:
-			// the badges went to their own file.
+			// account.json keeps its shape, and a healthy one that gained no
+			// theme keeps its bytes: the badges went to their own file. One
+			// that gained a theme differs in its unlocks and nothing else.
 			first := slotFile(t, id)
 			assertOldShape(t, first)
-			if !tc.tampered && string(first) != string(raw) {
+			if !tc.tampered && !themesGrew && string(first) != string(raw) {
 				t.Errorf("a healthy account.json was rewritten:\nwas %s\nnow %s", raw, first)
+			}
+			if !tc.tampered && themesGrew {
+				assertOnlyUnlocksDiffer(t, raw, first)
 			}
 			disk := slotAccount(t, id)
 			if !verifyAccount(disk) || disk.Tampered != tc.tampered || disk.BadgesTampered {
@@ -248,7 +326,7 @@ func TestMigratedAccountKeepsEarning(t *testing.T) {
 	advanceTo(ge, "stone_age") // held since the migration
 	prestigeNow(t, ge)
 	prestigeNow(t, ge) // the third prestige of the account's life
-	earned := ge.DrainEarnedBadges()
+	earned := mainViews(ge.DrainEarnedBadges())
 	if len(earned) != 1 || earned[0].Key != badgePrestige3 {
 		t.Fatalf("announced %+v, want only the rung at 3 prestiges", earned)
 	}
@@ -267,7 +345,7 @@ func TestV1ExportImports(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{badgeIron, badgeModern, badgeStone, badgePrestige1, badgePrestige3, badgePrestige10}
+	want := append(ageBadges("information_age"), badgePrestige1, badgePrestige3, badgePrestige10)
 	slices.Sort(want)
 
 	// Through the engine: brought up before it is saved.

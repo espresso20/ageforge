@@ -61,6 +61,7 @@ func (ge *GameEngine) PlanAddDeal(key string, n int) error {
 		return errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanDeal, Key: key, Count: 1, Deal: d.ID})
+	ge.notePlanSize()
 	return nil
 }
 

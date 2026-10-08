@@ -137,7 +137,7 @@ func (v *skyView) bottom(cv *mapstyle.Canvas, W, H int) {
 	if W < 100 {
 		hints = "arrows move  PgUp PgDn zoom  Tab next"
 	}
-	switch in, ok := v.Inspect(mapstyle.Frame{Model: v.sc.m, Anim: v.anim, Tier: v.tier}); {
+	switch in, ok := v.Inspect(mapstyle.Frame{Model: v.sc.m, Anim: v.anim, Clock: v.clock, Tier: v.tier}); {
 	case !ok:
 		cv.Text(1, H-3, W-2, "cursor hidden; move it with the arrow keys", g.bgStyle())
 		cv.Text(3, H-2, W-4, hints, dim)

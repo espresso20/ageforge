@@ -39,7 +39,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 | The World | [Trade](trade.md) · [Factions & Diplomacy](factions.md) · [Army & Missions](military.md) · [Events](events.md) |
 | Systems | [Morale](morale.md) · [Knowledge](knowledge.md) |
 | Reference | [All Commands](commands.md) · [Civilization History](history.md) |
-| Your Game | [Saving & Loading](saving-and-loading.md) · [Accounts](account.md) · [Themes](themes.md) |
+| Your Game | [Saving & Loading](saving-and-loading.md) · [Accounts](account.md) · [Badges](badges.md) · [Themes](themes.md) |
 
 New to the game? Install it, then follow [Your First Age](first-ten-minutes.md).
 

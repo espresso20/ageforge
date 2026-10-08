@@ -37,7 +37,9 @@ You can switch accounts during a game with `account switch <name>`. The game is 
 
 Older builds kept a single account at the top level (a flat `data/account.json` with saves in `data/saves/`). If the game finds that layout on first launch, it moves your account and its saves into their own `data/accounts/<id>/` slot and makes that account active. **Nothing is deleted**, and you don't have to do anything; your civilizations and unlocks come across intact. Just before the move, the game also copies your old flat data into `data/backups/pre-migration-<timestamp>/`, so your original files stay recoverable.
 
-An account from before [badges](#badges) gets its badges the first time this version opens it. Nothing is lost and `account.json` is left as it was: the four old achievements become their badges, and the badges its record already proves (an age it has reached, prestiges it has made) are added. None of that is announced, and it happens once. Saves from before this version load as they are.
+An account from before [badges](#badges) gets its badges the first time this version opens it. Nothing is lost: the four old achievements become their badges, and the badges its record already proves (an age it has reached, prestiges it has made) are added. None of that is announced, and it happens once. Saves from before this version load as they are.
+
+The five age themes now come with the badge for reaching their age, where a milestone used to unlock them. Every theme the account already holds stays unlocked, and an account that reached one of those ages without its theme gets the theme with the badge. That is the one thing this adds to `account.json`: a theme in the list of unlocked themes it has always kept.
 
 ---
 
@@ -236,7 +238,7 @@ These stats update the moment you prestige or advance into a new age, and are sa
 
 ### Badges
 
-A **badge** is a permanent mark on your account for something you did in a game: reaching an age, building enough of something across all your runs, or pulling off something specific in one run. A badge is earned once and kept for good. It stays with your account through every prestige and new game, and it travels in an export.
+A **badge** is a permanent mark on your account for something you did in a game: reaching an age, building enough of something across all your runs, or pulling off something specific in one run. A badge is earned once and kept for good. It stays with your account through every prestige and new game, and it travels in an export. The [Badges](badges.md) page lists the families, the ladders and their rungs, the titles and the themes badges give; this section is about the badge case and how badges are kept.
 
 Badges are separate from [milestones](milestones.md). A milestone belongs to one run: it pays a reward inside that run and starts over with the next. A badge belongs to the account and gives nothing inside a run, so the same game plays the same way whatever the account has earned.
 
@@ -254,7 +256,7 @@ badges
 
 The case is a panel over the whole screen but the command bar. It shows every badge the account holds or can earn as a small badge in a grid, by family, with the selected badge at full size beside it.
 
-<figure class="screen" data-screen="badge-case"><figcaption>The badge case. The top bar counts what is earned and gives the score and the title it holds; the line at the foot says how far the next rung is.</figcaption></figure>
+<figure class="screen" data-screen="badge-case"><figcaption>The badge case, on its Ladders tab. The top bar counts what is earned and gives the score and the title you wear; each ladder says how far its next rung is.</figcaption></figure>
 
 A badge looks like what it is:
 
@@ -271,13 +273,13 @@ A badge looks like what it is:
 
 The frame is the tier, so tiers are told apart by shape as well as by color: in every theme, in the themes that draw in one ink, and in the plain glyph set (`map glyphs ascii`), where the same shapes are drawn with ordinary characters. At full size a tier grows with its worth, from a three-row bronze box to a nine-row legendary ring. The glyph in the middle is the badge's emblem, and every emblem is a symbol the [Map](map.md) already draws: a lineage wears its map symbol, an age the town center of its era.
 
-- **Tabs** run along the top: All, one for each family, and **Next**, which lists the badges you are closest to, nearest first. `Tab` steps through them.
-- **Ladders** sit on a line of their own, lowest rung first, with the ladder's name and how far its next rung is beside them.
+- **Tabs** run along the top: All, one for each family you have something in sight of, and **Next**, which lists the badges you are closest to, nearest first. `Tab` steps through them, and the row scrolls when the window is too narrow for all of them.
+- **Ladders** sit on a line of their own, lowest rung first, with the ladder's name and how far its next rung is beside them. A ladder with no running count (a payroll) names its next rung instead.
 - **`Enter`** opens the selected badge's detail: the badge at full size with everything the case knows about it. `badges <name>` opens a detail directly.
 
 <figure class="screen" data-screen="badge-detail"><figcaption>One badge's detail: its tier, rarity and points, what it asked for, when it was earned and in which game, and its place on its ladder.</figcaption></figure>
 
-Platinum badges glint, legendary badges turn through their colors with a band of light crossing the rim, and a few special badges have a drawing of their own that moves. Nothing else in the case moves, and `motion off` holds all of it still (see [Motion](themes.md#motion)).
+Platinum badges glint, legendary badges turn through their colors with a band of light crossing the rim, and a few badges have a drawing of their own that moves: eight of the legendary ones, and three that sit outside the families. Nothing else in the case moves, and `motion off` holds all of it still (see [Motion](themes.md#motion)).
 
 The keys are listed under [Badges](commands.md#badges) on the commands page and in the Help panel.
 
@@ -295,25 +297,25 @@ Your badge points add up to a **score**, and the score holds a **title**. The ba
 | Eternal | 10,000 |
 | Completionist | Every badge that counts, none of them earned in a modified game |
 
-Past Settler, the status bar shows the title beside your account's name when the window has room for it. A title changes nothing in a game.
+Some badges give a title of their own, and you choose which title to wear with the `title` command: `title` lists the ones you hold, `title <name>` wears one, and `title default` goes back to the score's. [Titles](badges.md#titles) lists them. Once you wear anything but Settler, the status bar shows the title beside your account's name when the window has room for it. A title changes nothing in a game.
 
 #### The plain list
 
-The **Stats** panel (`stats`) lists the same badges as text under **Lifetime (account)**, and so does:
+The **Stats** panel (`stats`) has the badges in a few lines under **Lifetime (account)**: the count, the title you wear, each family's count and the badges you earned last. For more, there is:
 
 ```
 account badges
 ```
 
-Both list every badge you may see, by group:
+It lists each family you have something in sight of, with its earned badges, the first few it has still to earn and how many secrets it keeps. The badge case shows them all. The marks are:
 
 | Mark | Meaning |
 |---|---|
 | ★ | Earned |
 | ☆ | Not earned yet. The line says what it asks for, and a badge that counts across runs shows how far along you are |
-| ? | A secret badge. It shows a one-line hint and nothing else until you earn it |
+| ? | Secret badges. The list counts them; the badge case shows each one's hint, and nothing else until you earn it |
 
-The first line counts them: for example `3 of 9 earned, 15 points, ??? hidden`. A badge about something you have not come across yet (an age you have not seen named, for one) stays out of the list and out of the "of" number until you get there. The game does not say how many are hidden until an account has reached the last age.
+The first line counts them: for example `3 of 127 earned, 15 points, ??? hidden`. A badge about something you have not come across yet (an age you have not seen named, for one) stays out of the list and out of the "of" number until you get there. The game does not say how many are hidden until an account has reached the last age.
 
 Each badge has a tier, and a tier is worth points:
 
@@ -331,13 +333,13 @@ A few things about how badges are counted:
 - **The four old achievements are badges now.** First Prestige, Serial Reincarnator, Age of Iron and Into the Modern Age carry over, and an account that had them keeps them.
 - **The developer console does not block badges.** The developer console is a testing tool. A game it has changed is marked in its save, and the log says so once, but it still records to the account like any other game: if a badge's condition is met, the badge is earned. Unlocking the console earns a badge of its own.
 - **A modified game marks what it earns.** A badge earned in a save that was edited outside the game is listed as earned in a modified game and adds no points. The same goes for a badge earned on an account whose `account.json` was edited, and for every badge in a `badges.json` that was edited.
-- **A badge can give a theme.** Two [themes](themes.md#ambient-effects), Source and Glitch, come from secret badges. Earning the badge unlocks the theme on the account, for good.
+- **A badge can give a theme or a title.** Ten [themes](badges.md#themes-from-badges) and six [titles](badges.md#titles) come with badges. Earning the badge unlocks the theme on the account, for good, and the log says so.
 
 ### Where badges are stored
 
 Badges are kept in their own file, `badges.json`, beside `account.json` in the account's slot (`data/accounts/<id>/`). It holds the badges you have earned, the counts behind the ones that count across runs, and the days you have played. The game writes it the first time the account has a badge to keep.
 
-`account.json` did not change for badges, on purpose. If you also run a version of the game from before badges, it reads and writes `account.json` as it always did and leaves `badges.json` alone, so going back and forth between versions cannot mark an account as modified or cost it a badge. When this version next opens the account, it adds whatever the other version's play has proved since (an age reached, prestiges made) to your badges.
+`account.json` keeps the shape it had before badges, on purpose. If you also run a version of the game from before badges, it reads and writes `account.json` as it always did and leaves `badges.json` alone, so going back and forth between versions cannot mark an account as modified or cost it a badge. When this version next opens the account, it adds whatever the other version's play has proved since (an age reached, prestiges made) to your badges.
 
 The file is signed, and the signature covers the account ID:
 
@@ -347,7 +349,7 @@ The file is signed, and the signature covers the account ID:
 
 ### The settings file
 
-The motion setting (`motion on` and `motion off`) is kept in a third file in the slot, `settings.json`. It is there for the same reason `badges.json` is: `account.json` keeps the shape older versions of the game know, so a newer setting goes beside it. The file holds a display preference and nothing you earn, so it is plain text and unsigned, and the game writes it only once you change the setting. If it is missing or cannot be read, motion is on. A [backup](#backups) copies it; an export does not carry it.
+The motion setting (`motion on` and `motion off`) and the title you chose to wear (`title`) are kept in a third file in the slot, `settings.json`. It is there for the same reason `badges.json` is: `account.json` keeps the shape older versions of the game know, so a newer setting goes beside it. The file holds display preferences and nothing you earn, so it is plain text and unsigned, and the game writes it only once you change one of them. If it is missing or cannot be read, motion is on and you wear the title your score holds. A title is only worn while the account holds it, so writing one into the file by hand gives nothing. A [backup](#backups) copies it; an export does not carry it.
 
 ---
 
