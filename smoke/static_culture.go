@@ -283,7 +283,7 @@ func typicalGeneralStore() map[string]float64 {
 			}
 			for _, e := range d.Effects {
 				if e.Type == "storage" && (e.Target == "all" || e.Target == "faith") {
-					total += e.Value * config.FlowCopies
+					total += float64(e.Value * config.FlowCopies)
 				}
 			}
 		}
