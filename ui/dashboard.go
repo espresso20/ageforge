@@ -230,6 +230,11 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.inputField.SetText(cmd)
 	}
 	d.mapPanel.prompt = func() string { return d.inputField.GetText() }
+	d.mapPanel.spotted = func(kind string) {
+		// tview goroutine (a refresh or a key handler), outside the engine
+		// lock: the account hears that its player looked at a visitor.
+		d.engine.NoteVisitorInspected(kind)
+	}
 	d.mapPanel.toPrompt = func(ev *tcell.EventKey) {
 		// The map itself had the keyboard: give it back to the prompt,
 		// starting with this key.
@@ -1000,10 +1005,10 @@ func statusLine(state game.GameState, w int) string {
 				name = name[:19] + "…"
 			}
 			acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
-			// The title the account's badge score holds, once it is past the
-			// one every account starts with, and only on a bar with room.
-			if sum := state.AccountStats.BadgeSummary; sum.TitleRank > 0 && level == 0 {
-				acctStr = fmt.Sprintf("[gold]%s[-] [gray]%s[-] · ", name, sum.Title)
+			// The title the account wears, once it is not the one every
+			// account starts with, and only on a bar with room.
+			if sum := state.AccountStats.BadgeSummary; level == 0 && (sum.TitleRank > 0 || wornTitle(sum) != sum.Title) {
+				acctStr = fmt.Sprintf("[gold]%s[-] [gray]%s[-] · ", name, wornTitle(sum))
 			}
 		}
 		hint := ""

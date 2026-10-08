@@ -119,7 +119,7 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 	}
 	m := f.Model
 	v.lastW = W
-	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H, S: H - 3, top: 1, sel: -1}
+	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H, S: H - 3, top: 1, sel: -1}
 	s.groundY = skyGround(s.S)
 	s.band = bandOf(m.AgeIdx)
 	s.p, s.mp = v.palettes(m)
@@ -134,7 +134,7 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 	}
 	if v.inspect {
 		ts := v.targetsFor(m, W, v.cam)
-		if i := v.resolve(m, ts, f.Anim); i >= 0 && v.reveal {
+		if i := v.resolve(m, ts, f.VisitFrame()); i >= 0 && v.reveal {
 			v.revealTarget(m, ts[i], W)
 		}
 	}
@@ -712,7 +712,7 @@ func (o *orb) status(bg tcell.Color) {
 	y := o.H - 1
 	m := o.m
 	if o.v.inspect {
-		if in, ok := o.v.inspection(m, o.anim); ok {
+		if in, ok := o.v.inspection(m, o.visit); ok {
 			lines := in.lines
 			if o.v.cur.kind == tLot {
 				lines = o.skyLines(in.lines)

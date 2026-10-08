@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -13,39 +14,51 @@ import (
 // announcement of a badge just earned. Every test runs in a temp data root
 // (mapTestDashboard), never data/.
 
-// TestAccountBadgesCommand: `account badges` lists the account's badges,
-// earned and locked, and shows nothing the spoiler rules hide.
+// TestAccountBadgesCommand: `account badges` lists the account's badges
+// family by family, earned and the first few still to earn, and shows
+// nothing the spoiler rules hide: not a later age, not a secret's name, and
+// not the heading of a family the player has not come to yet.
 func TestAccountBadgesCommand(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
 	if err := eng.StartNewNamedGame("run"); err != nil {
 		t.Fatal(err)
 	}
+	_, sum := eng.Badges()
 
 	res := HandleCommand("account badges", eng)
 	if res.Type != "info" {
 		t.Fatalf("account badges: %+v", res)
 	}
 	for _, want := range []string{
-		"0 of 9 earned", "0 points", "??? hidden",
+		fmt.Sprintf("0 of %d earned", sum.Shown), "0 points", "??? hidden",
 		"Rock Solid", "Reach the Stone Age.",
-		"Housing Hobbyist", "(0 of 14)",
-		"First Prestige", "Hut Hoarder", "Fashionably Late",
-		"Something about a clearance.",
-		"Ages", "Lineages", "Ladders", "Specials",
+		"Faith Hobbyist", "(0 of 10)", "more to earn.",
+		"First Prestige", "Hut Hoarder",
+		"secret badges, each with a hint in the badge case.",
+		"Ages", "Lineages", "Ladders", "Specials", "Payrolls", "Resources",
+		"Type badges to open the badge case",
 	} {
 		if !strings.Contains(res.Message, want) {
 			t.Errorf("the list does not have %q:\n%s", want, res.Message)
 		}
 	}
-	for _, hidden := range []string{"Iron", "Modern", "Liquidation", "Cookie", "Creative Accounting"} {
+	for _, hidden := range []string{
+		"Iron", "Modern", "Liquidation", "Cookie", "Creative Accounting",
+		// Families with nothing in sight yet are not named.
+		"Civilizations", "Harbingers", "Catastrophes", "Awakenings",
+	} {
 		if strings.Contains(res.Message, hidden) {
 			t.Errorf("the list shows %q, which a new account may not see:\n%s", hidden, res.Message)
 		}
 	}
+	// A digest, not the catalog: a new account's list fits a screen or two.
+	if n := strings.Count(res.Message, "\n"); n > 90 {
+		t.Errorf("the list for a new account runs to %d lines", n)
+	}
 
 	eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
 	res = HandleCommand("account badges", eng)
-	for _, want := range []string{"1 of 9 earned", "5 points", "★[-] Rock Solid"} {
+	for _, want := range []string{fmt.Sprintf("1 of %d earned", sum.Shown), "5 points", "★[-] Rock Solid"} {
 		if !strings.Contains(res.Message, want) {
 			t.Errorf("after earning a badge the list does not have %q:\n%s", want, res.Message)
 		}
@@ -65,23 +78,37 @@ func TestAccountBadgesWithoutAnAccount(t *testing.T) {
 	}
 }
 
-// TestStatsPanelListsBadges: the Stats panel's Lifetime section lists the
-// badges, where it used to list four achievement names.
+// TestStatsPanelListsBadges: the Stats panel's Lifetime section has the
+// badges in a few lines (the count, the title, each family's count and the
+// one earned last), where it used to list four achievement names.
 func TestStatsPanelListsBadges(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
 	if err := eng.StartNewNamedGame("run"); err != nil {
 		t.Fatal(err)
 	}
 	eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
+	_, sum := eng.Badges()
 
 	text := statsProvider(eng.GetState(), 0)
-	for _, want := range []string{"Lifetime (account)", "Badges:", "1 of 9 earned", "★[-] First Prestige", "☆[-] Rock Solid"} {
+	for _, want := range []string{
+		"Lifetime (account)", "Badges:", fmt.Sprintf("1 of %d earned", sum.Shown),
+		"Title:[-] Settler", "Ladders", "1 of ", "Latest:[-] [green]★[-] First Prestige",
+		"Type badges to open the badge case",
+	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("the Stats panel does not have %q", want)
 		}
 	}
 	if strings.Contains(text, "Achievements") {
 		t.Error("the Stats panel still has an Achievements heading")
+	}
+	// A digest: the locked badges are in the case, not here.
+	if strings.Contains(text, "☆") || strings.Contains(text, "Rock Solid") {
+		t.Error("the Stats panel lists locked badges")
+	}
+	digest := badgeDigestLines(eng.GetState().AccountStats.Badges, sum)
+	if len(digest) > 26 {
+		t.Errorf("the digest runs to %d lines", len(digest))
 	}
 }
 

@@ -21,7 +21,7 @@ const sideW = 26
 // begin readies the per-frame state and returns the scene (nil without a
 // model).
 func (v *view) begin(f mapstyle.Frame) *scene {
-	v.anim, v.tier, v.seen = f.Anim, f.Tier, [numLg]lgEntry{}
+	v.anim, v.visit, v.clock, v.tier, v.seen = f.Anim, f.VisitFrame(), f.Clock, f.Tier, [numLg]lgEntry{}
 	s := v.sceneFor(f.Model)
 	ep, age := 0, -1
 	if s != nil {
@@ -153,7 +153,7 @@ func (v *view) bottom(cv *mapstyle.Canvas, W, H int) {
 	if W < 100 {
 		hints = "arrows move  PgUp PgDn zoom  Tab next"
 	}
-	switch in, ok := v.Inspect(mapstyle.Frame{Model: v.sc.m, Anim: v.anim, Tier: v.tier}); {
+	switch in, ok := v.Inspect(mapstyle.Frame{Model: v.sc.m, Anim: v.anim, Clock: v.clock, Tier: v.tier}); {
 	case !ok:
 		cv.Text(1, H-3, W-2, "cursor hidden; move it with the arrow keys", v.bgStyle())
 		cv.Text(3, H-2, W-4, hints, dim)

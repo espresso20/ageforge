@@ -33,7 +33,7 @@ func (v *view) visitNow() (visit, bool) {
 	if s == nil || v.g.zoom == zRegion {
 		return visit{}, false
 	}
-	sg, ok := s.m.SightingAt(v.anim)
+	sg, ok := s.m.SightingAt(v.visit)
 	if !ok {
 		return visit{}, false
 	}
@@ -58,7 +58,7 @@ func saucerAt(sg mapmodel.Sighting, x, y int) visit {
 func (v *view) flybyVisit(sg mapmodel.Sighting) visit {
 	g := v.g
 	tw := max(1, g.w/g.cellW)
-	ph := sg.Phase(v.anim)
+	ph := sg.Phase(v.visit)
 	x := g.vx - 2 + int(float64(float64(tw+3)*ph))
 	if sg.Roll%2 == 1 {
 		x = g.vx + tw + 1 - int(float64(float64(tw+3)*ph))
@@ -96,13 +96,13 @@ func (v *view) hoverVisit(sg mapmodel.Sighting) (visit, bool) {
 	if !found {
 		return visit{}, false
 	}
-	ph := sg.Phase(v.anim)
+	ph := sg.Phase(v.visit)
 	top := min(ty, g.vy) - 2
 	switch {
 	case ph < 0.15:
 		return saucerAt(sg, tx, top+int(float64(float64(ty-top)*ph/0.15))), true
 	case ph < 0.85:
-		return saucerAt(sg, tx+[4]int{0, 1, 0, -1}[(v.anim/10)%4], ty), true
+		return saucerAt(sg, tx+[4]int{0, 1, 0, -1}[(v.visit/10)%4], ty), true
 	}
 	return saucerAt(sg, tx, ty-int(float64(float64(ty-top)*(ph-0.85)/0.15))), true
 }
@@ -118,7 +118,7 @@ func (v *view) walkerVisit(sg mapmodel.Sighting) (visit, bool) {
 	if len(lane) < 4 {
 		return visit{}, false
 	}
-	t := v.anim - sg.Start
+	t := v.visit - sg.Start
 	stop, pause := sg.Frames*9/20, sg.Frames*3/20 // stand and wave for a while, halfway along
 	waving := t >= stop && t < stop+pause
 	if t >= stop+pause {

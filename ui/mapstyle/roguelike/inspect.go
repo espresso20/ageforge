@@ -20,7 +20,7 @@ func (v *view) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
 		return insp{}, false
 	}
 	v.palette(s.epoch, s.m.AgeIdx)
-	v.tier, v.anim = f.Tier, f.Anim
+	v.tier, v.anim, v.visit, v.clock = f.Tier, f.Anim, f.VisitFrame(), f.Clock
 	p, region := v.cur, v.zoom == zRegion && v.g.zoom == zRegion
 	if region && v.g.scale > 1 { // the most salient tile in the cell
 		g, best := &v.g, -3

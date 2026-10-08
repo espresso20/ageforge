@@ -143,6 +143,8 @@ func BadgeFamilies() []BadgeFamilyDef {
 			RevealBySubject: true,
 			Proof:           StaticProof(BadgeRuleGate),
 			Emblem:          "centre.{era}",
+			// The last age has a drawing of its own.
+			Emblems: map[string]string{"transcendent_age": "sprite.transcend"},
 			Aliases: map[string][]string{
 				"age.iron_age":   {"reached_iron"},
 				"age.modern_age": {"reached_modern"},
@@ -264,6 +266,15 @@ func BadgeFamilies() []BadgeFamilyDef {
 			RevealBySubject: true,
 			Proof:           StaticProof(BadgeRuleLifetime),
 			Emblem:          "store", Ladder: "{name}",
+			// A resource wears the map symbol of what makes it; the rest
+			// wear the store.
+			Emblems: map[string]string{
+				"food": "food", "wood": "wood", "knowledge": "knowledge", "faith": "faith",
+				"stone": "mine", "iron": "metal", "gold": "gold", "coal": "mine",
+				"soldiers": "military", "marble": "monument", "iron_ore": "mine", "steel": "metal",
+				"culture": "culture", "oil": "energy", "electricity": "energy", "uranium": "hazard",
+				"data": "data", "titanium_ore": "mine", "titanium": "metal", "plasma": "energy",
+			},
 		},
 		// F9. Each civilization: met, allied, a regular, and at peace again.
 		{

@@ -73,7 +73,7 @@ func TestBadgeCaseAtEverySize(t *testing.T) {
 	for _, size := range treeSizes {
 		w, h := size[0], size[1]-promptRows
 		for _, tier := range caseTiers {
-			tabs := caseTabs(views)
+			tabs := caseTabs(views, false)
 			for _, tab := range tabs {
 				m0 := buildCase(views, sum, true, tab.key, caseLayoutFor(w, h, tab.key))
 				if len(m0.items) == 0 {
@@ -704,6 +704,7 @@ func TestBadgeEmblemsAreMapGlyphs(t *testing.T) {
 		check(name, e)
 	}
 	specials := map[string]bool{}
+	integrity, drawn := 0, 0
 	for _, def := range rules.Core().Badges() {
 		e, ok := emblemOf(def.Emblem)
 		if !ok {
@@ -711,20 +712,36 @@ func TestBadgeEmblemsAreMapGlyphs(t *testing.T) {
 			continue
 		}
 		check(def.Key, e)
-		if def.Integrity() {
-			if e.special == "" {
-				t.Errorf("%s is an integrity badge without a sprite", def.Key)
-			}
+		if e.special != "" {
 			if specials[e.special] {
 				t.Errorf("%s shares its sprite %q with another badge", def.Key, e.special)
 			}
 			specials[e.special] = true
-		} else if e.special != "" {
-			t.Errorf("%s wears the sprite %q: the hand-drawn sprites are the integrity badges'", def.Key, e.special)
+		}
+		switch {
+		case def.Integrity():
+			integrity++
+			if e.special == "" {
+				t.Errorf("%s is an integrity badge without a sprite", def.Key)
+			}
+		case e.special != "":
+			// A hand-drawn sprite is for the rarest few: a legendary badge.
+			drawn++
+			if def.Tier != config.BadgeLegendary {
+				t.Errorf("%s (%s) wears the sprite %q: the hand-drawn sprites are the legendary badges'", def.Key, def.Tier.Name(), e.special)
+			}
+			if _, ok := legendSprites[e.special]; !ok {
+				t.Errorf("%s names the sprite %q, which is not drawn", def.Key, e.special)
+			}
+		case def.Tier == config.BadgeLegendary && def.Family == "special":
+			t.Errorf("%s is a legendary special without a sprite of its own", def.Key)
 		}
 	}
-	if len(specials) != 3 {
-		t.Errorf("the catalog has %d integrity badges with sprites, want 3", len(specials))
+	if integrity != 3 {
+		t.Errorf("the catalog has %d integrity badges with sprites, want 3", integrity)
+	}
+	if drawn != len(legendSprites) {
+		t.Errorf("%d badges wear a legendary sprite and %d are drawn: one each", drawn, len(legendSprites))
 	}
 	for _, lin := range mapmodel.LineageOrder {
 		if _, ok := emblemOf(emblemLineage + lin); !ok {
@@ -884,7 +901,7 @@ func TestBadgePanelKeysAndMotion(t *testing.T) {
 	}
 	press(tcell.KeyHome)
 	var tabs []string
-	for range caseTabs(views) {
+	for range caseTabs(views, false) {
 		press(tcell.KeyTab)
 		tabs = append(tabs, p.view.tab)
 	}

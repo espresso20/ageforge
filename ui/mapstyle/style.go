@@ -23,7 +23,30 @@ type Frame struct {
 	// Anim counts animation frames (the maps animate at about 8 per
 	// second, independent of the game tick). Ticking life keys off it.
 	Anim int
-	Tier mapmodel.GlyphTier
+	// Clock counts the same frames, and keeps counting while the motion
+	// setting holds Anim still: what happens in the world (the rare visitor
+	// arriving and leaving) keys off it, so it happens with motion off too.
+	// 0 means "the same as Anim", for a frame built without one.
+	Clock int
+	Tier  mapmodel.GlyphTier
+}
+
+// VisitFrame is the frame the rare visitor (mapmodel.SightingAt) is drawn
+// and inspected at, or -1 when none is out. While the map moves it is the
+// clock's frame. With the motion setting off the visitor still comes and
+// goes on the clock, and stands still at the middle of its visit while it
+// is here: the world goes on, the picture holds.
+func (f Frame) VisitFrame() int {
+	if f.Clock == 0 || f.Clock == f.Anim {
+		return f.Anim
+	}
+	if f.Model == nil {
+		return -1
+	}
+	if sg, ok := f.Model.SightingAt(f.Clock); ok {
+		return sg.Start + sg.Frames/2
+	}
+	return -1
 }
 
 // Inspection is what a style's cursor is on.

@@ -239,7 +239,7 @@ var Ashfall = define(Theme{
 })
 
 // Ledger is the accountant's page: ink and bookkeeper's green on pale
-// green-bar paper, every other row tinted. Light. It is the reward of the
+// green-bar paper, every other row of the empty space tinted. Light. It is the reward of the
 // top rung of the deals ladder.
 var Ledger = define(Theme{
 	Key:        "ledger",
@@ -265,13 +265,13 @@ var Ledger = define(Theme{
 	Effect:      EffectGreenbar,
 })
 
-// Prismatic is white light split: near-white text on blue-black, with an
-// accent and a label that turn slowly through the spectrum. It is the reward
+// Prismatic is white light split: near-white text on blue-black, with glints
+// in the empty space that turn slowly through the spectrum. It is the reward
 // of Museum Piece, the badge for earning most of the others.
 var Prismatic = define(Theme{
 	Key:        "prismatic",
 	Name:       "Prismatic",
-	Blurb:      "Starlight on blue-black, with an accent that turns through the spectrum.",
+	Blurb:      "Starlight on blue-black, with glints that turn through the spectrum.",
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x0b, 0x0b, 0x10), // blue-black

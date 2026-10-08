@@ -606,7 +606,7 @@ func Badges() []BadgeDef {
 			Hint: "Something about the sky.",
 			Tier: BadgeSilver, Scope: BadgeMoment, Event: BadgeEvVisitor,
 			Reveal: secret, Emblem: "alien",
-			Proof: Occurs("Visitors cross the roguelike map from time to time, with motion on or off, and the cursor can inspect whatever is under it."),
+			Proof: Occurs("From the Space Age a visitor crosses the open map about once every ninety minutes, and now and then before it, with motion on or off. The cursor can stand on it."),
 		},
 
 		// ----- integrity: worth nothing, counted in nothing -----

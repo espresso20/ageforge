@@ -51,9 +51,6 @@ func TestGatedThemeRegistryConsistency(t *testing.T) {
 		default:
 			t.Errorf("theme %q carries the effect %q, which the UI does not draw", th.Key, th.Effect)
 		}
-		if th.Effect == EffectGreenbar && EffectMoves(th.Effect) {
-			t.Error("green-bar paper holds still: the motion setting must leave it on")
-		}
 	}
 }
 

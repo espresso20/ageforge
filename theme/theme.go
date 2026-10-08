@@ -133,9 +133,9 @@ type Theme struct {
 	// Required for gated themes; empty for always-available ones.
 	UnlockHint string
 
-	// Effect names an ambient effect the theme carries (the Effect constants).
-	// "" for none. The UI draws it; the ones that move are drawn only while
-	// the game's motion setting is on.
+	// Effect names an ambient effect the theme carries (the Effect constants):
+	// something drawn in cells that are otherwise empty. "" for none. The UI
+	// draws it, and only while the game's motion setting is on.
 	Effect string
 }
 
@@ -147,18 +147,12 @@ const (
 	EffectGlitch = "glitch"
 	// EffectEmbers: sparks drifting up the empty columns.
 	EffectEmbers = "embers"
-	// EffectGreenbar: every other row tinted, like green-bar paper. It
-	// holds still, so the motion setting leaves it on.
+	// EffectGreenbar: every other row of the empty space tinted, like
+	// green-bar paper.
 	EffectGreenbar = "greenbar"
-	// EffectPrism: the accent and the label turn slowly through the spectrum.
+	// EffectPrism: glints in the empty space that turn through the spectrum.
 	EffectPrism = "prism"
 )
-
-// EffectMoves reports whether an effect is motion: something the motion
-// setting turns off. Green-bar paper is a pattern, not motion.
-func EffectMoves(effect string) bool {
-	return effect != "" && effect != EffectGreenbar
-}
 
 // Gated reports whether the theme is locked until a badge gives it.
 func (t Theme) Gated() bool { return t.UnlockBadge != "" }

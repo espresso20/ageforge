@@ -370,9 +370,15 @@ func registry() []*Command {
 			Args:  []Arg{{Kind: ArgText, Words: []string{"next", "all"}, Optional: true}},
 			Help: []Usage{
 				{"badges", "Open the badge case (alias: achievements); the prompt keeps working while it is open"},
-				{"badges <family>", "Open it on a family's tab: ages, lineages, ladders, specials (all: every family)"},
+				{"badges <family>", "Open it on a family's tab: ages, lineages, ladders, specials and the rest (all: every family)"},
 				{"badges next", "Open it on the badges you are closest to"},
 				{"badges <name>", "Open a badge's detail by its name, or a part of it"},
+			}},
+		{Name: "title", Section: secAccounts, BareOK: true,
+			Args: []Arg{{Kind: ArgText, Words: []string{"default"}, Optional: true}},
+			Help: []Usage{
+				{"title", "List the titles your account holds, and the one it wears"},
+				{"title <name>", "Wear a title you hold (default: the one your badge score gives)"},
 			}},
 
 		// Panels only

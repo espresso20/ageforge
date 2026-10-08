@@ -162,7 +162,15 @@ func twoFigures(v float64) float64 {
 	if v <= 0 {
 		return 0
 	}
-	mag := math.Pow(10, math.Floor(math.Log10(v))-1)
+	// The power of ten that leaves two figures before the point, found by
+	// stepping: no logarithm, so the rung is the same on every machine.
+	mag := 1.0
+	for v/mag >= 100 {
+		mag *= 10
+	}
+	for v/mag < 10 {
+		mag /= 10
+	}
 	return math.Floor(v/mag) * mag
 }
 

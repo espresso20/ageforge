@@ -191,7 +191,7 @@ func (v *skyView) fit(x, y, w, h, zoom int) skyGeom {
 
 // begin readies the per-frame state and returns the scene.
 func (v *skyView) begin(f mapstyle.Frame) *skyScene {
-	v.anim, v.tier = f.Anim, f.Tier
+	v.anim, v.visit, v.clock, v.tier = f.Anim, f.VisitFrame(), f.Clock, f.Tier
 	if len(v.seen) != int(numSkyLg) {
 		v.seen = make([]skyLgEntry, numSkyLg)
 	} else {

@@ -644,6 +644,7 @@ var badgeFold = map[rune]rune{
 	'✶': '*', '◖': '(', '◗': ')', '…': '.', '✓': 'v', '★': '*', '☆': 'o', '▲': '^', '▼': 'v',
 	// The hand-drawn sprites, and the marks their noise throws up.
 	'●': 'o', '∞': '8', '▚': '#', '▞': '#', '╴': '-', '¿': '?', '§': 'S',
+	'▣': 'x', '╲': '\\',
 }
 
 // foldBadges rewrites a grid of badge art for the plain glyph tier.

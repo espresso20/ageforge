@@ -65,9 +65,9 @@ func statsProvider(state game.GameState, _ int) string {
 		}
 		fmt.Fprintf(&sb, " [gold]Highest age ever:[-]       %s\n", highestAge)
 
-		// Badges, earned and locked. The list comes with the spoiler rules
-		// applied, so it is written as it is.
-		for _, line := range badgeListLines(as.Badges, as.BadgeSummary) {
+		// The badges in a few lines; the badge case has them all. The views
+		// come with the spoiler rules applied.
+		for _, line := range badgeDigestLines(as.Badges, as.BadgeSummary) {
 			sb.WriteString(" " + line + "\n")
 		}
 	}

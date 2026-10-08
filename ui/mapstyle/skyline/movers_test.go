@@ -488,3 +488,58 @@ func TestVisitorInspect(t *testing.T) {
 		t.Error("↑ reached a saucer with no visit showing")
 	}
 }
+
+// TestVisitorComesWithMotionOff: the motion setting holds the picture
+// still, not the world. With motion off the animation frame stays at 0 and
+// the clock runs on: the saucer still arrives when its visit starts, stands
+// where the middle of the visit puts it for as long as it is here, can be
+// inspected, and is gone when the visit ends.
+func TestVisitorComesWithMotionOff(t *testing.T) {
+	m := build(fixture.Options{Age: "space_age", Seed: 4, Tick: tickAt(0.5)}, 0)
+	sg := mapmodel.NextSighting(m.Seed, true, 0)
+	for sg.Kind == mapmodel.SightFlyby {
+		sg = mapmodel.NextSighting(m.Seed, true, sg.Start+sg.Frames)
+	}
+	still := func(clock int) mapstyle.Frame {
+		return mapstyle.Frame{Model: m, Clock: clock, Tier: mapmodel.TierUnicode}
+	}
+	shot := func(f mapstyle.Frame) string {
+		v := newView()
+		scr := capture.NewScreen(160, 45)
+		v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
+		scr.Show()
+		var b strings.Builder
+		for y := 0; y < 45; y++ {
+			b.WriteString(rowText(scr, y))
+			b.WriteByte('\n')
+		}
+		return b.String()
+	}
+	ufo := string(mapmodel.R(mapmodel.SymUFO, mapmodel.TierUnicode))
+	early, late := shot(still(sg.Start+2)), shot(still(sg.Start+sg.Frames-2))
+	// (A wing may be behind the tether: the dome and the west wing show.)
+	if !strings.Contains(early, "◄"+ufo) {
+		t.Fatal("with motion off the saucer does not show during its visit")
+	}
+	if early != late {
+		t.Error("with motion off the picture changed during the visit: the saucer should stand still")
+	}
+	for _, clock := range []int{sg.Start - 1, sg.Start + sg.Frames} {
+		if strings.Contains(shot(still(clock)), "◄"+ufo) {
+			t.Errorf("with motion off the saucer shows at clock %d, outside its visit", clock)
+		}
+	}
+	// It can be inspected: the secret badge for looking at one can be
+	// earned with motion off.
+	f := still(sg.Start + 2)
+	v := newView()
+	v.SetOption(mapstyle.OptInspect, true)
+	scr := capture.NewScreen(160, 45)
+	v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
+	for i := 0; i < 8; i++ {
+		v.HandleKey(tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone), f)
+	}
+	if in, ok := v.Inspect(f); !ok || in.Kind != mapstyle.KindAlien {
+		t.Errorf("with motion off the cursor cannot reach the saucer: %+v", in)
+	}
+}
