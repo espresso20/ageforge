@@ -6,6 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
@@ -406,7 +407,17 @@ func (sc *menuScene) drawElite(g *mGrid, pal *menuPalette, v *menuView, x, y, w 
 	if v.elite[1] == "" {
 		return
 	}
-	n := runeLen(v.elite[0]) + runeLen(v.elite[1]) + runeLen(v.elite[2]) + 4
+	// The plain glyph set has no hammers or cogs: a star stands in.
+	left, right := v.elite[0], v.elite[2]
+	if v.plain {
+		if mapmodel.Fold([]rune(left)[0], mapmodel.TierASCII) == '?' {
+			left = "*"
+		}
+		if mapmodel.Fold([]rune(right)[0], mapmodel.TierASCII) == '?' {
+			right = "*"
+		}
+	}
+	n := runeLen(left) + runeLen(v.elite[1]) + runeLen(right) + 4
 	if n > w {
 		return
 	}
@@ -415,9 +426,9 @@ func (sc *menuScene) drawElite(g *mGrid, pal *menuPalette, v *menuView, x, y, w 
 	if boxed {
 		at, ground = x+centred(w, n), pal.ground
 	}
-	at += g.textOn(at, y, " "+v.elite[0]+" ", pal.accent, ground, true)
+	at += g.textOn(at, y, " "+left+" ", pal.accent, ground, true)
 	at += g.textOn(at, y, v.elite[1], pal.label, ground, true)
-	g.textOn(at, y, " "+v.elite[2]+" ", pal.accent, ground, true)
+	g.textOn(at, y, " "+right+" ", pal.accent, ground, true)
 }
 
 // drawMenu draws the entries from (L.mx, L.my). With leaders set it is a

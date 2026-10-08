@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -22,6 +23,14 @@ import (
 // supports, the common ones, the largest the brief names and one beyond.
 var menuSizes = [][2]int{{80, 24}, {100, 30}, {110, 36}, {114, 38}, {120, 40}, {132, 43}, {144, 46}, {200, 60}}
 
+// stagedTown is a fixture game and the picture of its town.
+type stagedTown struct {
+	st   game.GameState
+	town *menuTown
+}
+
+var stagedTowns = map[string]stagedTown{}
+
 // stagedMenuView is a menu's view as refresh would build it for a game in
 // age, or for a first visit (age "").
 func stagedMenuView(age string, forge bool, tier mapmodel.GlyphTier) (*menuView, *menuTown) {
@@ -30,13 +39,20 @@ func stagedMenuView(age string, forge bool, tier mapmodel.GlyphTier) (*menuView,
 	m.set.Tier = tier
 	var town *menuTown
 	if age != "" {
-		st := fixture.State(fixture.Options{Age: age, Seed: 7})
-		st.Workers.TotalPop = 216
+		// One town per age for the whole run: laying a town out is the
+		// costly part, and a town draws at any size and in any glyph set.
+		staged, ok := stagedTowns[age]
+		if !ok {
+			st := fixture.State(fixture.Options{Age: age, Seed: 7})
+			st.Workers.TotalPop = 216
+			staged = stagedTown{st: st, town: newMenuTown(&st, m.reg, m.set.Style)}
+			stagedTowns[age] = staged
+		}
+		town = staged.town
 		m.cur, m.hasCur = game.CurrentGame{Save: game.SaveInfo{Name: "ashford"}, Why: game.CurrentLast}, true
-		town = newMenuTown(&st, m.reg, m.set.Style)
 		m.town = town
-		m.view.captions = menuCaptions(town, &st)
-		m.continueDetails(&st)
+		m.view.captions = menuCaptions(town, &staged.st)
+		m.continueDetails(&staged.st)
 	}
 	m.buildViewWith([]string{"38 of 120 · Survivor", "38 of 120", "38"})
 	if forge {
@@ -602,6 +618,50 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 						}
 					}
 					sim.Fini()
+				}
+			}
+		}
+	}
+}
+
+// TestMenuGlyphsAreOneColumnWide: every glyph the menu itself puts on the
+// page takes one column on a terminal (a wide one would push the rest of
+// its row along), and in the plain glyph set the forge master's marks are
+// glyphs it has, never a question mark.
+func TestMenuGlyphsAreOneColumnWide(t *testing.T) {
+	check := func(where string, g *mGrid) {
+		for i, c := range g.c {
+			if c.r > 0x7e && uniseg.StringWidth(string(c.r)) != 1 {
+				t.Fatalf("%s: cell (%d,%d) holds %q, which is not one column wide", where, i%g.w, i/g.w, c.r)
+			}
+		}
+	}
+	pal := newMenuPalette(theme.Active())
+	for i, line := range eliteLines {
+		for _, st := range []menuStage{{"the first visit", "", true}, {"the town", "bronze_age", false}} {
+			for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
+				v, town := stagedMenuView(st.age, st.forge, tier)
+				v.elite = line
+				sc := newMenuScene(menuLayoutFor(120, 40, v))
+				sc.hit()
+				sc.step()
+				g := sc.render(pal, v, town, mapstyle.Frame{Tier: tier})
+				where := fmt.Sprintf("%s with the forge master's line %d, %s glyphs", st.name, i, tier)
+				check(where, g)
+				row := sc.L.py
+				if st.forge {
+					row = sc.L.rule
+				}
+				text := g.row(row)
+				if !strings.Contains(text, line[1]) {
+					t.Errorf("%s: the line is not on row %d: %q", where, row, strings.TrimSpace(text))
+				}
+				if tier == mapmodel.TierASCII {
+					for _, r := range text {
+						if mapmodel.Fold(r, mapmodel.TierASCII) == '?' {
+							t.Errorf("%s: row %d holds %q, which the plain glyph set cannot show", where, row, r)
+						}
+					}
 				}
 			}
 		}

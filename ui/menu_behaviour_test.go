@@ -15,6 +15,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -663,23 +664,25 @@ func TestMenuFallsBackWithoutAnError(t *testing.T) {
 		t.Errorf("a damaged save beside a good one: current %q, forge page %v", r.m.cur.Save.Name, r.m.view.forge)
 	}
 
-	// The map fails while it draws: this frame has the sky and no town,
-	// and from the next read the first page, with Continue still offered
-	// (the save itself is fine).
+	// The map fails while it draws: the first page takes over in that very
+	// frame, with Continue still offered (the save itself is fine).
 	r.m.town.style = panicStyle{r.m.town.style}
 	scr := r.draw(120, 40)
 	if !r.m.town.failed {
 		t.Fatal("a map that panics was not marked as failed")
 	}
 	noErrorOnPage(t, "a map that cannot be drawn", scr)
-	r.m.buildView()
 	if !r.m.view.forge || r.m.view.items[0].id != miContinue {
 		t.Errorf("after the map failed: forge page %v, first entry %q", r.m.view.forge, r.m.view.items[0].id)
 	}
-	scr = r.draw(120, 40)
-	noErrorOnPage(t, "the first page after the map failed", scr)
 	if !scr.has("CONTENTS") || !scr.has("▸ Continue") {
 		t.Error("after the map failed the page is not the first page with Continue on it")
+	}
+	// And it stays the first page, without trying the map again.
+	scr = r.draw(80, 24)
+	noErrorOnPage(t, "the first page after the map failed", scr)
+	if !scr.has("CONTENTS") {
+		t.Error("the page went back to a map that cannot be drawn")
 	}
 
 	// The save vanishes after the menu read it: Continue says so in a
@@ -781,5 +784,57 @@ func TestMenuTownFollowsTheSettings(t *testing.T) {
 		if !scr.has("> Continue") || !scr.has("#") {
 			t.Errorf("at %dx%d the plain page is missing its menu or its wordmark", size[0], size[1])
 		}
+	}
+}
+
+// TestMenuCaptionAndTheLinesThatComeAndGo: the caption names the town and
+// its age, and the prestige level once the game has one; a newer release
+// is announced beside the version; and the forge master's line shows only
+// for an account that holds a save with the proof.
+func TestMenuCaptionAndTheLinesThatComeAndGo(t *testing.T) {
+	r := newMenuRig(t, "ashford")
+	m := r.m
+	want := m.town.name + " · Primitive Age"
+	if len(m.view.captions) == 0 || m.view.captions[0] != want {
+		t.Errorf("the caption is %q, want %q first", m.view.captions, want)
+	}
+	if scr := r.draw(120, 40); scr.has("Prestige") || scr.has("update available") || scr.has(m.eliteMsg[1]) {
+		t.Error("a first game shows a prestige level, an update or the forge master's line")
+	}
+
+	// A game with prestige behind it.
+	st := game.GameState{Age: "bronze_age", AgeName: "Bronze Age"}
+	st.Prestige.Level = 3
+	caps := menuCaptions(m.town, &st)
+	if caps[0] != m.town.name+" · Bronze Age · ★ Prestige level 3" || caps[len(caps)-1] != "Bronze Age" {
+		t.Errorf("with prestige the captions are %q", caps)
+	}
+	m.view.captions = caps
+	if scr := r.draw(120, 40); !scr.has("★ Prestige level 3") {
+		t.Error("the prestige level is not on the page at 120x40")
+	}
+	if scr := r.draw(80, 24); !scr.has(m.town.name + " · Bronze Age") {
+		t.Error("at 80x24 the caption lost the town and its age")
+	}
+
+	// A newer release: beside the version, with its key.
+	m.update = true
+	m.buildView()
+	for _, size := range [][2]int{{120, 40}, {80, 24}} {
+		if scr := r.draw(size[0], size[1]); !scr.has("dev · update available (u)") {
+			t.Errorf("at %dx%d the update notice is not beside the version", size[0], size[1])
+		}
+	}
+	if got := menuEdition("v4.2.1"); got != "fourth" {
+		t.Errorf("v4.2.1 is the %q edition", got)
+	}
+	if got := menuEdition("dev"); got != "" {
+		t.Errorf("a dev build is the %q edition", got)
+	}
+	if numberWords(len(config.Ages())) != "twenty-two" {
+		t.Logf("the game has %d ages; the title's line says %q", len(config.Ages()), numberWords(len(config.Ages())))
+	}
+	if !r.draw(120, 40).has(numberWords(len(config.Ages())) + " ages, one terminal") {
+		t.Error("the line under the wordmark does not count the game's ages")
 	}
 }

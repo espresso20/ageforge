@@ -31,10 +31,10 @@ import (
 func TestNoRawColorsOutsideTheme(t *testing.T) {
 	owned := theme.TagNames()
 
-	// Files allowed to construct literal tcell colors, and why.
-	rgbAllowed := map[string]string{
-		"ui/splash_canvas.go": "dark-theme starfield/title art formulas (light themes use roles)",
-	}
+	// Files allowed to construct literal tcell colors, and why. There are
+	// none: the last one was the old main menu's starfield, and the menu
+	// that replaced it mixes every colour from theme roles (menu_scene.go).
+	rgbAllowed := map[string]string{}
 
 	// A tag is [fg], [fg:bg] or [fg:bg:attrs]; fg/bg may be empty or "-".
 	tagRe := regexp.MustCompile(`\[([a-zA-Z#][a-zA-Z0-9#]*|-)?(?::([a-zA-Z#][a-zA-Z0-9#]*|-)?)?(?::[a-zA-Z-]*)?\]`)

@@ -41,7 +41,7 @@ import (
 // eliteLines are shown on the menu to an account that holds a save with a
 // forge master's proof: a mark, the words, a mark.
 var eliteLines = [][3]string{
-	{"⚡", "MASTER FORGER", "⚡"},
+	{"⚒", "MASTER FORGER", "⚒"},
 	{"{", "TOUCHED BY THE SOURCE", "}"},
 	{"✦", "ARCHITECT OF THE FORGE", "✦"},
 	{"<", "REALITY.EXE PATCHED", ">"},
@@ -199,10 +199,8 @@ func (m *mainMenu) continueDetails(st *game.GameState) {
 	if age == "" {
 		age = ageDisplay(st.Age)
 	}
+	// Count writes a large population short ("8.31K people").
 	people := textfmt.Count(st.Workers.TotalPop, "person", "people")
-	if st.Workers.TotalPop >= 100000 {
-		people = FormatNumber(float64(st.Workers.TotalPop)) + " people"
-	}
 	var details []string
 	if m.town != nil && m.town.name != "" {
 		details = append(details, m.town.name+" · "+age+" · "+people)
@@ -424,7 +422,14 @@ func (m *mainMenu) frameGrid(w, h int) (*mGrid, *menuPalette) {
 			m.scene.frame = target
 		}
 	}
-	return m.scene.render(m.pal, &m.view, m.town, mapFrame(nil, m.set, since)), m.pal
+	grid := m.scene.render(m.pal, &m.view, m.town, mapFrame(nil, m.set, since))
+	if !m.view.forge && m.town != nil && m.town.failed {
+		// The map could not draw the town: the first page takes over, now
+		// and from here on, and nothing is said about it.
+		m.buildView()
+		return m.frameGrid(w, h)
+	}
+	return grid, m.pal
 }
 
 // ---- keys ----
