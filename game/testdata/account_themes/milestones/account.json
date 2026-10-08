@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "account_id": "4932805df304e37fac605d2a1a01ce82",
+  "display_name": "Theme milestones",
+  "created": "2026-10-07T20:35:13.282442-05:00",
+  "last_seen": "2026-10-07T20:35:13.282442-05:00",
+  "unlocks": {
+    "themes": [
+      "bronze",
+      "parchment",
+      "monochrome"
+    ]
+  },
+  "stats": {
+    "highest_age": "information_age",
+    "civilizations_started": 1
+  },
+  "achievements": [
+    "reached_iron",
+    "reached_modern"
+  ],
+  "prefs": {
+    "active_theme": "monochrome"
+  },
+  "_sig": "55eae2e0e17db084923bcfd91f7a860c0159667667ded17d8c31a6b8b4b8b80a"
+}

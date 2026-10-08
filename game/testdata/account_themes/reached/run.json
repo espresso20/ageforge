@@ -1,0 +1,885 @@
+{
+  "timestamp": "2026-10-07T20:35:13.301582-05:00",
+  "tick": 0,
+  "age": "galactic_age",
+  "seed": 1791423313295636000,
+  "rng_draws": 47,
+  "quip_draws": 19,
+  "prose": {
+    "recent": [
+      "harb_arrival_late_0",
+      "harb_warn_anytier_26",
+      "harb_arrival_any_5",
+      "harb_warn_cosmic_38",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "at": 4,
+    "topics": [
+      "machine",
+      "town",
+      "rumour",
+      "omen"
+    ],
+    "slots": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  "resources": {
+    "antimatter": 0,
+    "coal": 0,
+    "crypto": 0,
+    "culture": 0,
+    "dark_matter": 0,
+    "dark_matter_crystals": 0,
+    "data": 0,
+    "electricity": 0,
+    "faith": 0,
+    "food": 2.5000000000000025e-18,
+    "gold": 0,
+    "iron": 0,
+    "iron_ore": 0,
+    "knowledge": 0,
+    "marble": 0,
+    "nanobots": 0,
+    "oil": 0,
+    "plasma": 0,
+    "quantum_flux": 0,
+    "soldiers": 0,
+    "steel": 0,
+    "stone": 0,
+    "titanium": 0,
+    "titanium_ore": 0,
+    "uranium": 0,
+    "wood": 5.000000000000003e-13
+  },
+  "storage": {
+    "antimatter": 20,
+    "coal": 50,
+    "crypto": 50,
+    "culture": 50,
+    "dark_matter": 20,
+    "dark_matter_crystals": 10,
+    "data": 50,
+    "electricity": 50,
+    "faith": 50,
+    "food": 50,
+    "gold": 50,
+    "iron": 50,
+    "iron_ore": 30,
+    "knowledge": 30,
+    "marble": 30,
+    "nanobots": 20,
+    "oil": 50,
+    "plasma": 30,
+    "quantum_flux": 10,
+    "soldiers": 0,
+    "steel": 30,
+    "stone": 50,
+    "titanium": 30,
+    "titanium_ore": 20,
+    "uranium": 30,
+    "wood": 50
+  },
+  "buildings": {},
+  "workers": {
+    "worker": {
+      "count": 0,
+      "food_cost": 0.5167657014254439,
+      "assignment": {}
+    }
+  },
+  "unlocked": {
+    "resources": [
+      "food",
+      "wood",
+      "knowledge",
+      "faith",
+      "stone",
+      "iron",
+      "gold",
+      "marble",
+      "iron_ore",
+      "soldiers",
+      "culture",
+      "steel",
+      "coal",
+      "oil",
+      "electricity",
+      "uranium",
+      "data",
+      "nanobots",
+      "crypto",
+      "dark_matter_crystals",
+      "plasma",
+      "titanium",
+      "titanium_ore",
+      "dark_matter",
+      "antimatter"
+    ],
+    "buildings": [
+      "hut",
+      "stash",
+      "gathering_camp",
+      "wood_camp",
+      "story_circle",
+      "shrine",
+      "sacred_grove",
+      "longhouse",
+      "storage_pit",
+      "forager_post",
+      "woodcutter_camp",
+      "stone_camp",
+      "stone_pit",
+      "elders_hall",
+      "standing_stones",
+      "war_camp",
+      "great_monolith",
+      "house",
+      "warehouse",
+      "farm",
+      "lumber_mill",
+      "quarry",
+      "scriptorium",
+      "altar",
+      "barracks",
+      "market",
+      "smithy",
+      "stonehenge",
+      "townhouse",
+      "granary",
+      "field_works",
+      "timber_yard",
+      "marble_quarry",
+      "agora",
+      "temple",
+      "hunting_lodge",
+      "legion_fort",
+      "trading_post",
+      "ironworks",
+      "smelter",
+      "colosseum",
+      "villa",
+      "classical_vault",
+      "estate_farm",
+      "wood_workshop",
+      "marble_works",
+      "library",
+      "oracle_house",
+      "military_academy",
+      "merchant_quarter",
+      "aqueduct",
+      "forge",
+      "amphitheater",
+      "parthenon",
+      "cultural_obelisk",
+      "manor",
+      "keep",
+      "demesne",
+      "sawmill",
+      "stonemasons_guild",
+      "monastery_library",
+      "cathedral",
+      "castle_keep",
+      "guildhall",
+      "workshop",
+      "ironmonger",
+      "great_hall",
+      "great_library",
+      "grand_amphitheatre_monument",
+      "estate",
+      "renaissance_vault",
+      "market_garden",
+      "coal_mine",
+      "iron_mine",
+      "university",
+      "basilica",
+      "fortress",
+      "exchange",
+      "mill",
+      "foundry",
+      "art_studio",
+      "sistine_chapel",
+      "settlement_block",
+      "colonial_warehouse",
+      "plantation",
+      "coal_works",
+      "deep_iron_mine",
+      "natural_philosophy_hall",
+      "mission",
+      "fort",
+      "port",
+      "harbor",
+      "dockyard",
+      "iron_works",
+      "concert_hall",
+      "embassy",
+      "grand_lighthouse",
+      "tenement",
+      "industrial_depot",
+      "agricultural_works",
+      "steam_coal_plant",
+      "steam_mine",
+      "research_institute",
+      "church",
+      "military_base",
+      "stock_exchange",
+      "harbor_authority",
+      "iron_works_complex",
+      "steel_mill",
+      "coal_plant",
+      "opera_house",
+      "grand_embassy",
+      "geographic_society",
+      "crystal_palace",
+      "eternal_library_monument",
+      "row_house",
+      "victorian_vault",
+      "mechanized_farm",
+      "oil_derrick",
+      "uranium_mine",
+      "academy",
+      "grand_cathedral",
+      "garrison",
+      "bank",
+      "steam_works",
+      "bessemer_plant",
+      "steam_turbine",
+      "grand_museum",
+      "eiffel_tower",
+      "apartment_block",
+      "electric_warehouse",
+      "industrial_farm",
+      "oil_field",
+      "nuclear_extraction_plant",
+      "physics_laboratory",
+      "revival_hall",
+      "command_post",
+      "financial_district",
+      "power_station",
+      "electric_arc_furnace",
+      "power_generator",
+      "radio_station",
+      "hoover_dam",
+      "housing_project",
+      "atomic_vault",
+      "agricultural_complex",
+      "petroleum_refinery",
+      "uranium_processing_works",
+      "research_campus",
+      "spiritual_center",
+      "bunker_complex",
+      "corporate_hq",
+      "nuclear_plant",
+      "advanced_alloy_plant",
+      "nuclear_reactor",
+      "cinema",
+      "particle_accelerator",
+      "monument_of_ages",
+      "tower_block",
+      "modern_depot",
+      "agri_complex",
+      "oil_platform",
+      "titanium_mine",
+      "think_tank",
+      "meditation_center",
+      "special_ops_hq",
+      "investment_firm",
+      "seaport",
+      "power_grid_hub",
+      "titanium_smelter",
+      "oil_refinery",
+      "tv_studio",
+      "space_program",
+      "nano_foundry",
+      "smart_complex",
+      "info_vault",
+      "smart_farm",
+      "smart_refinery",
+      "precision_mine",
+      "innovation_hub",
+      "digital_temple",
+      "cyber_command",
+      "venture_hub",
+      "container_terminal",
+      "smart_grid_node",
+      "aerospace_foundry",
+      "smart_energy_grid",
+      "server_farm",
+      "media_center",
+      "global_network",
+      "megaplex",
+      "digital_archive",
+      "nano_farm",
+      "bio_fabrication_lab",
+      "nano_drill_complex",
+      "ai_research_lab",
+      "cyber_shrine",
+      "drone_warfare_center",
+      "crypto_exchange",
+      "logistics_hub",
+      "neural_grid",
+      "nano_alloy_plant",
+      "quantum_battery_array",
+      "data_center",
+      "vr_studio",
+      "world_simulation",
+      "arcology_pod",
+      "cyber_vault",
+      "vat_farm",
+      "nanobot_vat",
+      "dark_crystal_mine",
+      "neuro_research_center",
+      "neon_sanctuary",
+      "combat_aug_center",
+      "black_market",
+      "augmentation_foundry",
+      "dark_matter_refinery",
+      "dark_energy_tap",
+      "cyber_hub",
+      "holographic_theater",
+      "neon_citadel",
+      "habitat_ring",
+      "fusion_vault",
+      "bio_reactor_farm",
+      "molecular_synthesizer",
+      "exotic_mineral_extractor",
+      "theoretical_institute",
+      "quantum_chapel",
+      "plasma_command",
+      "energy_exchange",
+      "fusion_reactor",
+      "exotic_matter_forge",
+      "fusion_reactor_array",
+      "quantum_server_farm",
+      "neural_art_complex",
+      "stellar_cradle",
+      "orbital_habitat",
+      "orbital_depot",
+      "hydroponic_bay",
+      "quantum_organic_extractor",
+      "asteroid_crystal_mine",
+      "deep_space_observatory",
+      "orbital_sanctuary",
+      "space_force_base",
+      "asteroid_market",
+      "launch_complex",
+      "orbital_refinery",
+      "solar_collector_array",
+      "orbital_data_relay",
+      "zero_g_gallery",
+      "dyson_scaffold",
+      "generation_ship",
+      "stellar_vault",
+      "protein_synthesizer",
+      "reality_matter_weaver",
+      "stellar_core_drill",
+      "xenology_institute",
+      "void_monastery",
+      "fleet_command",
+      "galactic_trade_hub",
+      "warp_drive_plant",
+      "antimatter_forge",
+      "pulsar_tap",
+      "galactic_network_node",
+      "cultural_beacon",
+      "warp_nexus",
+      "dyson_sphere_habitat",
+      "galactic_vault",
+      "matter_converter",
+      "cosmic_organic_works",
+      "neutron_star_mine",
+      "cosmic_research_station",
+      "stellar_shrine",
+      "stellar_armada_hq",
+      "stellar_exchange",
+      "dyson_assembly",
+      "stellar_metallurgy",
+      "quasar_tap",
+      "consciousness_upload_hub",
+      "civilization_archive",
+      "cosmic_beacon"
+    ],
+    "workers": [
+      "worker"
+    ]
+  },
+  "stats": {
+    "total_built": 0,
+    "total_recruited": 0,
+    "total_gathered": {},
+    "game_started": "2026-10-07T20:35:13.295635-05:00",
+    "ages_reached": [
+      "primitive_age",
+      "stone_age",
+      "bronze_age",
+      "iron_age",
+      "classical_age",
+      "medieval_age",
+      "renaissance_age",
+      "colonial_age",
+      "industrial_age",
+      "victorian_age",
+      "electric_age",
+      "atomic_age",
+      "modern_age",
+      "information_age",
+      "digital_age",
+      "cyberpunk_age",
+      "fusion_age",
+      "space_age",
+      "interstellar_age",
+      "galactic_age"
+    ],
+    "soldiers_trained": 0
+  },
+  "research": {
+    "researched": [],
+    "current_tech": "",
+    "ticks_left": 0,
+    "total_ticks": 0
+  },
+  "military": {
+    "completed_count": 0,
+    "total_loot": {}
+  },
+  "events": {
+    "last_fired": {},
+    "active": [
+      {
+        "Key": "awakening_pottery_mastery",
+        "Name": "Pottery Mastery",
+        "TicksLeft": 250,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "food",
+            "Value": 1
+          },
+          {
+            "Type": "production",
+            "Target": "stone",
+            "Value": 0.5
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "awakening_metallurgy",
+        "Name": "Discovery of Metallurgy",
+        "TicksLeft": 1300,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "iron",
+            "Value": 2
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "epoch_age_of_plenty",
+        "Name": "Age of Plenty",
+        "TicksLeft": 562,
+        "Effects": [
+          {
+            "Type": "production_all",
+            "Target": "",
+            "Value": 1
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "awakening_steam_breakthrough",
+        "Name": "Steam Breakthrough",
+        "TicksLeft": 520,
+        "Effects": [
+          {
+            "Type": "production_all",
+            "Target": "",
+            "Value": 0.25
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "epoch_dark_age",
+        "Name": "The Dark Age",
+        "TicksLeft": 374,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "knowledge",
+            "Value": -3
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "awakening_electrification",
+        "Name": "The Grid Wakes",
+        "TicksLeft": 780,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "electricity",
+            "Value": 2
+          },
+          {
+            "Type": "production_all",
+            "Target": "",
+            "Value": 0.1
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "epoch_famine",
+        "Name": "The Famine",
+        "TicksLeft": 312,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "food",
+            "Value": -3
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "awakening_information_age",
+        "Name": "Networks Wake",
+        "TicksLeft": 780,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "data",
+            "Value": 2
+          },
+          {
+            "Type": "production",
+            "Target": "knowledge",
+            "Value": 1
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "epoch_dark_age",
+        "Name": "The Dark Age",
+        "TicksLeft": 374,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "knowledge",
+            "Value": -3
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "awakening_cybernetic",
+        "Name": "Cybernetic Awakening",
+        "TicksLeft": 650,
+        "Effects": [
+          {
+            "Type": "production_all",
+            "Target": "",
+            "Value": 0.2
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "epoch_epidemic",
+        "Name": "Epidemic",
+        "TicksLeft": 468,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "food",
+            "Value": -1.5
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      },
+      {
+        "Key": "awakening_first_contact",
+        "Name": "First Contact Signal",
+        "TicksLeft": 1040,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "dark_matter",
+            "Value": 1.5
+          },
+          {
+            "Type": "production_all",
+            "Target": "",
+            "Value": 0.1
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      }
+    ],
+    "next_event_tick": -1,
+    "good_streak": 0,
+    "bad_streak": 0
+  },
+  "milestones": [],
+  "permanent_bonuses": {},
+  "build_queue": [],
+  "prestige": {
+    "level": 0,
+    "total_earned": 0,
+    "available": 0,
+    "upgrades": {},
+    "furthest": "galactic_age",
+    "run_furthest": "galactic_age",
+    "mastery_seeded": true,
+    "shop_version": 2
+  },
+  "trade": {
+    "active_routes": {},
+    "supply_pressure": {},
+    "total_exchanged": {},
+    "total_imported": {},
+    "total_exported": {}
+  },
+  "diplomacy": {
+    "factions": {}
+  },
+  "speed_multiplier": 1,
+  "pending_upgrades_saved": true,
+  "current_epoch": "cosmic_era",
+  "epoch_event_fired": {
+    "cosmic_era": true,
+    "digital_era": true,
+    "electric_era": true,
+    "iron_era": true,
+    "neon_era": true,
+    "steel_era": true
+  },
+  "awakenings_fired": {
+    "awakening_cybernetic": true,
+    "awakening_electrification": true,
+    "awakening_first_contact": true,
+    "awakening_information_age": true,
+    "awakening_metallurgy": true,
+    "awakening_pottery_mastery": true,
+    "awakening_steam_breakthrough": true
+  },
+  "epoch_event_history": [
+    {
+      "EpochKey": "iron_era",
+      "EpochName": "Iron Era",
+      "EventKey": "population_surge",
+      "EventName": "Population Surge",
+      "EventType": "good_minor",
+      "Tick": 0
+    },
+    {
+      "EpochKey": "steel_era",
+      "EpochName": "Steel Era",
+      "EventKey": "age_of_plenty",
+      "EventName": "Age of Plenty",
+      "EventType": "good_minor",
+      "Tick": 0
+    },
+    {
+      "EpochKey": "electric_era",
+      "EpochName": "Electric Era",
+      "EventKey": "the_dark_age",
+      "EventName": "The Dark Age",
+      "EventType": "bad_challenging",
+      "Tick": 0
+    },
+    {
+      "EpochKey": "digital_era",
+      "EpochName": "Digital Era",
+      "EventKey": "the_famine",
+      "EventName": "The Famine",
+      "EventType": "bad_challenging",
+      "Tick": 0
+    },
+    {
+      "EpochKey": "neon_era",
+      "EpochName": "Neon Era",
+      "EventKey": "the_dark_age",
+      "EventName": "The Dark Age",
+      "EventType": "bad_challenging",
+      "Tick": 0
+    },
+    {
+      "EpochKey": "cosmic_era",
+      "EpochName": "Cosmic Era",
+      "EventKey": "epidemic",
+      "EventName": "Epidemic",
+      "EventType": "bad_challenging",
+      "Tick": 0
+    }
+  ],
+  "succumb_research_derived": true,
+  "harbinger": {
+    "age": "galactic_age",
+    "chain": [
+      "interstellar_age",
+      "galactic_age"
+    ],
+    "epoch_key": "cosmic_era",
+    "target_epoch": "",
+    "announced_tier": "high",
+    "lines": [
+      "Everybody knows what it means when one of these turns up.",
+      "In the great dark past the last charted star, something that had been patient for longer than there have been stars had finally turned its attention toward the colony, and the estimate on every screen was simply the colony's way of saying so."
+    ]
+  },
+  "harbinger_arrived": {
+    "cosmic_era": true
+  },
+  "fate": {
+    "epoch_key": "cosmic_era",
+    "window": 449280
+  },
+  "faith_measured": true,
+  "morale": 1,
+  "history": {
+    "samples": null,
+    "age_markers": [
+      {
+        "tick": 0,
+        "age_name": "stone_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "bronze_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "iron_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "classical_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "medieval_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "renaissance_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "colonial_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "industrial_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "victorian_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "electric_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "atomic_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "modern_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "information_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "digital_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "cyberpunk_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "fusion_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "space_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "interstellar_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "galactic_age"
+      }
+    ]
+  },
+  "run_facts": {
+    "whole": true,
+    "counts": {
+      "age_reached": 19,
+      "awakening": 7,
+      "era_event": 6,
+      "harbinger_met": 2
+    },
+    "age_known": true
+  },
+  "account_id": "aafe923ab83a6f69c8cb5ee6e3c418fd",
+  "pacing_week": true,
+  "tree_version": 5,
+  "_sig": "8ca015f9a7f5d89e1af6f366d0e04745ec35dfa86dd9ed22a56b77003e37464c"
+}
