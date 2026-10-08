@@ -467,16 +467,21 @@ See [Saving & Loading](saving-and-loading.md) for branching, the save tree, row 
 | Command | Description |
 |---|---|
 | `badges` | Open the **badge case**: every badge your account holds or can earn. It covers everything but the command bar, which keeps working while it is open |
-| `badges <family>` | Open the case on one family's tab, by its name: `ages`, `lineages`, `ladders` or `specials` |
+| `badges <family>` | Open the case on one family's tab, by its name: `ages`, `wonders`, `lineages`, `ladders`, `specials` and the rest. A family you have nothing in sight of yet has no tab to open |
 | `badges all` | Open the case on the All tab, which shows every family |
 | `badges next` | Open the case on the badges you are closest to earning, nearest first |
 | `badges <name>` | Open one badge's detail by its name, or a part of it (`badges hut hoarder`, `badges rock`). Only badges you can already see are found |
+| `title` | List the titles your account holds, and mark the one it wears |
+| `title <name>` | Wear a title you hold; the start of its name is enough |
+| `title default` | Go back to the title your badge score holds |
 
 ```
 badges
 badges lineages
 badges next
 badges rock solid
+title
+title survivor
 ```
 
 The badge case leaves the command bar working and takes only the keys that print nothing:
@@ -490,7 +495,7 @@ The badge case leaves the command bar working and takes only the keys that print
 | `Enter` | Open the selected badge's detail, and close it |
 | `Esc` | Close the detail, then the case |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. The case draws in your theme and in the glyph set you chose with `map glyphs`. A few badges move; `motion off` holds them still. See [Badges](account.md#badges) for what the case shows.
+With something typed, `Tab` and `Enter` act on the prompt instead. The case draws in your theme and in the glyph set you chose with `map glyphs`. A few badges move; `motion off` holds them still. See [Badges](badges.md) for the badges themselves, their ladders, titles and the themes they give, and [the badge case](account.md#the-badge-case) for what the case shows. The title you wear is saved per account.
 
 ---
 
@@ -500,7 +505,7 @@ With something typed, `Tab` and `Enter` act on the prompt instead. The case draw
 |---|---|
 | `account` | Show the active account's short ID and **recovery code** (restores identity, not progress) |
 | `account list` | List the local accounts on this machine, marking the active one |
-| `account badges` | List the active account's badges as text, earned and locked, with its points and its title. The **Stats** panel shows the same list, and `badges` opens the badge case. See [Badges](account.md#badges) |
+| `account badges` | List the active account's badges as text, family by family: its points and title, each family's earned badges and the first few still to earn. The **Stats** panel has a shorter digest, and `badges` opens the badge case, which shows them all. See [Badges](badges.md) |
 | `account switch <name>` | Switch to a local account by its name (changes which account's saves you see). During a game, saves the game to its own account and returns to the main menu |
 | `account recover <code> [confirm]` | Restore your identity from a recovery code on a new machine or after a reinstall, and switch to it. It lands in its own slot and never overwrites an account. Add `confirm` when the game asks for it (when the account in use holds any progress) |
 | `account export [path]` | Write a signed account backup **bound to its account ID** (unlocks, stats, badges, prefs). Default `account-<id8>-export.json` inside that account's slot, or a path you give |
@@ -528,7 +533,7 @@ theme high_contrast
 motion off
 ```
 
-Your theme is saved per account, not in any game save, so it carries across every save and new game. See [Themes & Accessibility](themes.md) for the themes and how to unlock them. `motion` is saved per account too; with no account loaded it lasts for the session.
+Your theme is saved per account, not in any game save, so it carries across every save and new game. See [Themes & Accessibility](themes.md) for the themes and the [badges](badges.md#themes-from-badges) that unlock them. `motion` is saved per account too; with no account loaded it lasts for the session.
 
 ---
 

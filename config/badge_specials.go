@@ -587,7 +587,7 @@ func Badges() []BadgeDef {
 		},
 		{
 			Key: "special.everything_full", Family: "special",
-			Name: "Everything Full", Desc: "Have every capped resource at its storage limit at once, in the Industrial Age or later.",
+			Name: "Everything Full", Desc: "Have every resource you can store at its storage limit at once, in the Industrial Age or later. A resource that is spent as it is made does not count.",
 			Tier: BadgeGold, Scope: BadgeMoment, Event: BadgeEvCensus,
 			When:   []BadgeCond{atLeast("ev.full", 1), atLeast("ev.age", 8)},
 			Reveal: RevealUntilNextAge("industrial_age"), Emblem: "store",

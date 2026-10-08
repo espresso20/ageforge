@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 )
 
 func TestTargetsCoverEveryAge(t *testing.T) {
@@ -219,6 +220,49 @@ func TestDocsyncParsers(t *testing.T) {
 	want := map[string]string{"b": "build", "h": "help", "?": "help"}
 	if got := documentedShortcuts(md); !maps.Equal(got, want) {
 		t.Errorf("shortcuts table read as %v, want %v", got, want)
+	}
+}
+
+// TestDocsMatchTheGame runs the docsync scenario's checks on this tree as a
+// unit test: the numbers the docs quote (the badges and themes on the
+// landing page among them) and the commands tables against the game. The
+// scenario runs in the smoke suite too; here a stale count fails `go test`
+// before a pull request's checks do.
+func TestDocsMatchTheGame(t *testing.T) {
+	res := &Result{Name: "docsync"}
+	runDocsync(&Env{RepoRoot: ".."}, res)
+	for _, f := range res.Failures {
+		t.Errorf("[%s] %s", f.Check, f.Message)
+	}
+	// The badges are among the numbers held: the landing page's line and the
+	// wiki page's opening both quote the catalog.
+	counts := GameCounts()
+	claims, err := docClaims("..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	where := map[string]bool{}
+	for _, c := range claims {
+		if c.q == qBadges {
+			where[c.file] = true
+			if c.got != counts[qBadges] {
+				t.Errorf("%s:%d says %d badges, the catalog has %d that count", c.file, c.line, c.got, counts[qBadges])
+			}
+		}
+	}
+	for _, file := range []string{"site/index.html", "README.md", "site/docs/badges.md"} {
+		if !where[file] {
+			t.Errorf("%s does not quote the number of badges (or docsync does not read it there)", file)
+		}
+	}
+	integrity := 0
+	for _, b := range rules.Core().Badges() {
+		if b.Integrity() {
+			integrity++
+		}
+	}
+	if counts[qBadges] != len(rules.Core().Badges())-integrity || counts[qBadges] < 500 {
+		t.Errorf("docsync counts %d badges; the catalog has %d and %d of them are integrity badges", counts[qBadges], len(rules.Core().Badges()), integrity)
 	}
 }
 

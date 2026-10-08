@@ -2,6 +2,9 @@ package ui
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -480,4 +483,131 @@ func TestBadgeLooksMatchTheGame(t *testing.T) {
 	if len(tiers) != len(config.BadgeMapGlyphs) {
 		t.Errorf("the game has the glyph sets %v; the catalog has badges for %v", tiers, config.BadgeMapGlyphs)
 	}
+}
+
+// TestBadgeWikiMatchesTheCatalog holds the wiki's badges page to the
+// catalog: every family's count, the total and its points, every ladder's
+// rungs, the titles and the themes badges give. And the spoiler rule: no
+// wiki page names a secret badge.
+func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "site", "docs", "badges.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := string(raw)
+	has := func(what, want string) {
+		t.Helper()
+		if !strings.Contains(page, want) {
+			t.Errorf("badges.md does not have %s: %q", what, want)
+		}
+	}
+	set := rules.Core()
+	rungs := func(list []float64) string {
+		var parts []string
+		for _, n := range list {
+			parts = append(parts, wholeNumber(int(n)))
+		}
+		return strings.Join(parts, " · ")
+	}
+
+	byFamily := map[string]int{}
+	type ladder struct {
+		family, name string
+		rungs        []float64
+		secret       bool
+	}
+	var ladders []*ladder
+	counted, points, secret := 0, 0, 0
+	for _, def := range set.Badges() {
+		if def.Integrity() {
+			continue
+		}
+		counted++
+		points += def.Points()
+		byFamily[def.Family]++
+		if def.Hint != "" {
+			secret++
+		}
+		if def.Ladder != "" && def.Family != "special" {
+			if n := len(ladders); n == 0 || ladders[n-1].name != def.Ladder || ladders[n-1].family != def.Family {
+				ladders = append(ladders, &ladder{family: def.Family, name: def.Ladder, secret: def.Hint != ""})
+			}
+			l := ladders[len(ladders)-1]
+			l.rungs = append(l.rungs, def.Threshold)
+		}
+	}
+	has("the total", fmt.Sprintf("There are %d badges to earn, in %d families", counted, len(byFamily)))
+	has("the points", fmt.Sprintf("worth %s points", wholeNumber(points)))
+	has("the count of secrets", fmt.Sprintf("**%d badges are secret.**", secret))
+	for _, f := range badgeFamilyTitles {
+		has("the family "+f.title, fmt.Sprintf("| **%s** | %d |", f.title, byFamily[f.key]))
+	}
+	lifetime := 0
+	for _, l := range ladders {
+		switch l.family {
+		case "ladder":
+			lifetime++
+			if l.secret {
+				if strings.Contains(page, "| "+l.name+" |") {
+					t.Errorf("badges.md lists the secret ladder %q", l.name)
+				}
+				continue
+			}
+			has("the ladder "+l.name, fmt.Sprintf("| %s | %s |", l.name, rungs(l.rungs)))
+		case "lineage", "domain":
+			has("the "+l.family+" ladder "+l.name, fmt.Sprintf("| %s | %s |", l.name, rungs(l.rungs)))
+		}
+	}
+	has("the number of ladders", fmt.Sprintf("in %d ladders", lifetime))
+	for _, st := range config.BadgeScoreTitles() {
+		has("the score title "+st.Title, fmt.Sprintf("| %s | %s |", st.Title, wholeNumber(st.Points)))
+	}
+	has("the last title", "| "+config.BadgeCompleteTitle+" |")
+	worn := set.BadgeWornTitles()
+	has("the number of badge titles", fmt.Sprintf("%s more titles come with badges", strings.ToUpper(wikiNumber(len(worn))[:1])+wikiNumber(len(worn))[1:]))
+	for _, tt := range worn {
+		has("the title "+tt.Title, "| "+tt.Title+" |")
+	}
+	given := 0
+	for _, th := range theme.All() {
+		if th.UnlockBadge != "" {
+			given++
+			has("the theme "+th.Name, "| "+th.Name+" |")
+		}
+	}
+	has("the number of themes badges give", fmt.Sprintf("%s [themes](themes.md) are the reward of a badge", strings.ToUpper(wikiNumber(given)[:1])+wikiNumber(given)[1:]))
+	has("the census period", fmt.Sprintf("every %d ticks", config.BadgeCensusTicks))
+	has("the number of drawn badges", fmt.Sprintf("%s badges have a drawing of their own", strings.ToUpper(wikiNumber(len(legendSprites))[:1])+wikiNumber(len(legendSprites))[1:]))
+
+	// No wiki page names a secret badge, or one of the three that are not
+	// listed until earned.
+	pages, err := filepath.Glob(filepath.Join("..", "site", "docs", "*.md"))
+	if err != nil || len(pages) < 10 {
+		t.Fatalf("the wiki pages: %v (%d found)", err, len(pages))
+	}
+	for _, def := range set.Badges() {
+		if def.Hint == "" && !def.Integrity() {
+			continue
+		}
+		name := regexp.MustCompile(`\b` + regexp.QuoteMeta(def.Name) + `\b`)
+		for _, p := range pages {
+			text, err := os.ReadFile(p)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if loc := name.FindIndex(text); loc != nil {
+				line := 1 + strings.Count(string(text[:loc[0]]), "\n")
+				t.Errorf("%s:%d names the secret badge %q (%s)", filepath.Base(p), line, def.Name, def.Key)
+			}
+		}
+	}
+}
+
+// wikiNumber is a small count in words, as the wiki writes one.
+func wikiNumber(n int) string {
+	words := []string{"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"}
+	if n >= 0 && n < len(words) {
+		return words[n]
+	}
+	return fmt.Sprint(n)
 }
