@@ -282,7 +282,7 @@ Buildings without a worker domain (Housing, Culture/Arts) produce exactly `base_
 
 `base_rate` is the **fully staffed** rate, and it is the number each building's description shows.
 
-For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/9 in the Iron Age, a sixth in the Renaissance (stretched to more than a quarter there, and shortened in the Information and Cyberpunk Ages; see below), about 2/9 in the Victorian Age and about a third in the Space Age. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
+For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/9 in the Iron Age, a sixth in the Renaissance (stretched to a third there; see below) and a fifth in the Industrial Age. From the Victorian Age on it grows faster: over a third of the age there, nearly a half in the Modern Age and seven tenths in the Interstellar. The table lists it before production bonuses, which multiply a late age's output six or seven times over. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
 
 Output is valued at **price parity**. Each age has a price level for each resource (the typical first-copy price in that resource among the age's buildings), and resources are worth each other in the ratio of those levels. A building with two outputs splits its value between them. Because rates follow prices, they grow roughly 5 to 8x per age.
 
@@ -290,7 +290,7 @@ Output is valued at **price parity**. Each age has a price level for each resour
 - Wood Camp (Primitive): costs 16 wood and makes 0.569 wood/tick fully staffed, so it repays itself in 28 ticks (56 seconds).
 - Stone Pit (Stone): costs 180 stone and 300 wood. At Stone Age parity (240 stone = 360 wood) that is worth 380 stone, and at 3.48 stone/tick it repays in about 3 minutes 40 seconds.
 
-**Flow resources keep hand-set rates:** food, faith, culture and soldiers. They feed workers, set morale and epoch odds, fill culture storage or make up your army, and the requirements that ask for them are sized to those rates. Resources nothing in the age costs (marble and iron ore, for example, or knowledge outside the Medieval to Colonial Ages) also keep fixed rates.
+**Flow resources keep hand-set rates:** food, faith, culture and soldiers. They feed workers, set morale and epoch odds, fill culture storage or make up your army, and the requirements that ask for them are sized to those rates. **Nanobots** keep theirs too: they are a build material, asked for in the hundreds of thousands where an age's other prices are in the trillions, so a Nanobot Vat makes the 6.55K a tick it is listed at and a building that asks for nanobots is not valued by them. Resources nothing in the age costs (marble and iron ore, for example, or knowledge outside the Medieval to Colonial Ages) also keep fixed rates.
 
 | Age | Target time | Payback (fully staffed) | Build-time cap | Storage build cap |
 |-----|-------------|-------------------------|----------------|-------------------|
@@ -302,26 +302,35 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Medieval | 11h 42m | 1.8h | 1h 57m | 14m 36s |
 | Renaissance | 15h 36m | 5.2h | 2h 36m | 19m 30s |
 | Colonial | 18h 12m | 3.4h | 3h 2m | 22m 44s |
-| Industrial | 20h 48m | 4.2h | 3h 28m | 26m |
+| Industrial | 20h 48m | 4.8h | 3h 28m | 26m |
 | Victorian | 23h 24m | 8.3h | 3h 54m | 29m 14s |
 | Electric | 26h | 10.2h | 4h 20m | 32m 30s |
 | Atomic | 31h 12m | 13.4h | 5h 12m | 39m |
 | Modern | 31h 12m | 14.6h | 5h 12m | 39m |
 | Information | 36h 24m | 8.3h | 6h 4m | 45m 30s |
 | Digital | 41h 36m | 22.7h | 6h 56m | 52m |
-| Cyberpunk | 46h 48m | 19.2h | 7h 48m | 58m 30s |
-| Fusion | 52h | 49.0h | 8h 40m | 1h 5m |
-| Space | 57h 12m | 32.6h | 9h 32m | 1h 11m 30s |
+| Cyberpunk | 46h 48m | 27.5h | 7h 48m | 58m 30s |
+| Fusion | 52h | 71.8h | 8h 40m | 1h 5m |
+| Space | 57h 12m | 53.6h | 9h 32m | 1h 11m 30s |
 | Interstellar | 62h 24m | 44.4h | 10h 24m | 1h 18m |
-| Galactic | 62h 24m | 84.7h | 10h 24m | 1h 18m |
+| Galactic | 62h 24m | 94.1h | 10h 24m | 1h 18m |
 | Quantum | 62h 24m | 24.9h | 10h 24m | 1h 18m |
 | Transcendent | 62h 24m | 26.2h | 10h 24m | 1h 18m |
 
 The Renaissance's payback is 2x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with a fifth more knowledge and cheaper, quicker building, and the age had dropped to three quarters of its target. Its University makes 76.3 knowledge/tick, Exchange 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
 
-The Electric Era's ages repay more slowly too, since the Steel and Electric Eras gained their techs: Victorian 1.7x, Electric 1.45x and Atomic 1.75x what the curve gives. With nine techs an age where there were three, the keystone costs a tenth of what the age makes of knowledge, where it cost a quarter to a half, and research no longer holds those ages up; their buildings and their requirements do. A Bessemer Plant makes 141K steel/tick (was 240K), an Electric Arc Furnace 874K (was 1.27M) and a Breeder Reactor 1.26M electricity (was 2.21M). The Bronze Age's payback is 1.1x (a Lumber Mill makes 7.91 wood/tick, was 8.7; a Quarry 4 stone, was 4.4): the age ran at under two thirds of its target.
+**From the Victorian Age on the curve is steeper.** The finished tech tree took research off the critical path of every age from the Victorian on: a wonder's keystone costs about a tenth of what its age makes of knowledge, where it cost a quarter to a half. What paces those ages is what their buildings make and what their requirements ask, and on the old curve a full run played the ages from the Modern to the Galactic at 0.38 to 0.56 of their targets (the Information Age aside, at 0.84). The Victorian, Electric and Atomic Ages had each been set by hand, at 1.7, 1.45 and 1.75 times the old curve; the steeper curve gives them 1.62, 1.67 and 1.71 and carries the Modern, Digital, Cyberpunk and Interstellar Ages as well. A Bessemer Plant makes 148K steel/tick (was 141K), an Electric Arc Furnace 759K (was 874K) and a Breeder Reactor 1.29M electricity (was 1.26M). The Bronze Age's payback is 1.1x (a Lumber Mill makes 7.91 wood/tick; a Quarry 4 stone): the age ran at under two thirds of its target.
 
-The Information and Cyberpunk Ages go the other way, at 0.8x: they ran 1.2 to 1.5x their targets, and the extra time was spent waiting.
+Some ages sit off the curve, because the ages are not smooth: how quick one is depends mostly on how far its prices jump from the age before, which is what you arrive able to pay, and on how much of what it builds with the age before goes on making. An age answers to its own payback with about half the change, and passes about a third of it on to the next.
+
+| Age | Against the curve | Why |
+|-----|-------------------|-----|
+| Industrial | 1.15x | A run that arrives with a large store plays it in under two thirds of its target. |
+| Information | 0.45x | The one late age that ran near its target. You buy your way into data and steel before you make anything, and you arrive from a Modern Age that repays more slowly than it did. It keeps the payback it had. |
+| Fusion | 2.2x | It answers little to its own payback: its requirement is the smallest of its era, and the Cyberpunk Age's producers go on making the electricity it builds with. |
+| Space | 1.4x | |
+| Galactic | 2.0x | The quickest age on the old curve, with the largest bonuses in the game by then. |
+| Quantum, Transcendent | 0.5x | Where they were. No measured run plays them yet. |
 
 Times are at the base tick of 2 seconds; game speed bonuses shorten them in real time. Some construction resources have no producer in certain ages (stone after the Bronze Age, for example); the market sells them at parity instead. See [Resources](resources.md#buying-at-the-market).
 
@@ -357,7 +366,7 @@ Until then they count toward age requirements and milestones and make nothing.
 | Digital to Fusion | nanobots |
 | Space to Quantum | quantum flux |
 
-**Nano Foundry** (Modern Age) is a standalone nanobot producer outside the lineage chain. It gives nanobots a producer as soon as they unlock, two ages before the lineage's own Bio Fabrication Lab. It uses `engineering` workers and makes +80 nanobots/tick.
+**Nano Foundry** (Modern Age) is a standalone nanobot producer outside the lineage chain. It gives nanobots a producer as soon as they unlock, two ages before the lineage's own Bio Fabrication Lab. It uses `engineering` workers and makes +80 nanobots/tick. The lineage's own makers are listed at 3.28K (Bio Fabrication Lab), 6.55K (Nanobot Vat) and 13.1K (Molecular Synthesizer) a tick and make exactly that: nanobots are a build material with hand-set rates, and the market does not trade them.
 
 ### Geological Extraction (Lineage 4)
 

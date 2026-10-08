@@ -279,40 +279,55 @@ func paybackTicks(age string, pos map[string]int) float64 {
 //
 // The ages after the Atomic are not smooth either, and nothing run per pull
 // request plays them: these are set against the deep run (five seeds to a
-// Quantum Age prestige, medians). On the 0.9 curve the Modern Age ran at
-// 0.53x of its target, the Information Age at 0.84x (at 0.8x the curve),
-// the Digital at 0.49x, the Cyberpunk at 0.45x (at 0.8x), the Fusion at
-// 0.45x, the Space Age at 0.56x, the Interstellar at 0.51x and the Galactic
-// at 0.38x. The late segment carries the Modern, Digital and Interstellar
-// Ages; the rest keep an entry, each a multiple of the new curve:
+// Quantum Age prestige, medians), in two passes. On the 0.9 curve the
+// Modern Age ran at 0.53x of its target, the Information Age at 0.84x (at
+// 0.8x the curve), the Digital at 0.49x, the Cyberpunk at 0.45x (at 0.8x),
+// the Fusion at 0.45x, the Space Age at 0.56x, the Interstellar at 0.51x
+// and the Galactic at 0.38x. The late segment carries the Modern, Digital,
+// Cyberpunk and Interstellar Ages (0.73x, 0.77x, 0.71x at 0.7x of it, and
+// 0.80x on the first pass); the rest keep an entry, each a multiple of the
+// new curve:
 //
 //   - Information, 0.45x: the one late age that ran near its target, on
 //     the payback it keeps (it had 0.8x of a curve half as steep). It has
 //     to buy its way into data and steel before it makes anything, it
-//     starts on a Modern Age that now repays more slowly, and it must not
-//     pass 1.2x. Its vault sits on the Storage Covenant's line, so its
-//     producers cannot repay faster than they do without a larger vault.
-//   - Cyberpunk, 0.7x: a third more than it had. Its three producers lost
-//     a quarter of their output with nanobots (flowResources), and the gold
-//     and nanobots it sold at the market are no longer sold (MarketRateAt).
-//   - Fusion, 1.5x, and Galactic, 1.8x: the two quickest, with the
-//     smallest gate and the largest bonuses.
-//   - Space, 0.85x: it follows the Fusion Age's slower producers into
-//     titanium nothing has made before.
+//     starts on a Modern Age that now repays more slowly (1.03x on the
+//     first pass), and it must not pass 1.2x. Its vault sits on the Storage
+//     Covenant's line, so its producers cannot repay faster than they do
+//     without a larger vault.
+//   - Fusion, 2.2x: 0.66x at 1.5x. It answers little to its own payback: a
+//     Fusion Reactor at this rate makes about what a Cyberpunk Age foundry
+//     does, the requirement is the smallest of its era (ten of each), and
+//     the Cyberpunk Age's producers go on making the electricity it builds
+//     with. The Cyberpunk Age on the curve slows it too.
+//   - Space, 1.4x: 0.70x at 0.85x.
+//   - Galactic, 2.0x: 0.78x at 1.8x, with the largest bonuses in the game.
 //   - Quantum and Transcendent, 0.5x: where they were. The bot prestiges on
 //     entering the Quantum Age, so nothing measures them, and a price there
 //     is fifty times a Galactic one: they wait for a run that plays them.
 //
 // What makes one age quick and its neighbour not is mostly how far its
-// prices jump from the age before, which is what a run arrives able to pay.
+// prices jump from the age before, which is what a run arrives able to
+// pay, and how much of what it builds with the age before goes on making.
+// An age answers to its own payback with about half the change (the Modern
+// Age: 1.76 times the payback, 1.38 times the length) and passes about a
+// third of it on to the next (the Information Age, its own payback
+// unchanged, ran 1.23 times longer).
+//
+// The Industrial Age, 1.15x, is the last age before the late segment, and
+// it has two lengths. A run that leaves the Colonial Age with the larger of the
+// two stores the bot builds there (170M against 94M) plays it at 0.59x to
+// 0.64x of its target, the other at 0.77x to 0.91x. Two seeds of five took
+// the quick one before the late segment and three after, which put the
+// median at 0.64x.
 var PaybackAdjust = map[string]float64{
 	"bronze_age":       1.1,
 	"renaissance_age":  2.0,
+	"industrial_age":   1.15,
 	"information_age":  0.45,
-	"cyberpunk_age":    0.7,
-	"fusion_age":       1.5,
-	"space_age":        0.85,
-	"galactic_age":     1.8,
+	"fusion_age":       2.2,
+	"space_age":        1.4,
+	"galactic_age":     2.0,
 	"quantum_age":      0.5,
 	"transcendent_age": 0.5,
 }

@@ -45,7 +45,7 @@ These four come from Geological Extraction mines. Nothing in the game spends the
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
 | Data | `data` | Modern Age | 50 | Made by Hacker buildings from the Information Age; in the Modern Age the market sells it |
-| Nanobots | `nanobots` | Modern Age | 20 | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them |
+| Nanobots | `nanobots` | Modern Age | 20 | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them. A build material with hand-set rates: the market does not trade it |
 | Crypto | `crypto` | Cyberpunk Age | 50 | No building makes it: it comes from the Neon Citadel wonder and the market (Blockchain lowers the market's fee) |
 | Plasma | `plasma` | Fusion Age | 30 | Superheated gas for energy |
 | Titanium | `titanium` | Space Age | 30 | Light metal for space construction |

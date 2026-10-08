@@ -26,7 +26,7 @@ Rates follow your age: see [Exchange Rates](#exchange-rates).
 
 Each pair has a **base rate**: how many units of the resource you get per unit you give, at zero market pressure. The rate of a pair depends on what the two resources are in your current age.
 
-**Construction resources trade at parity.** A *construction resource* of an age is any resource that one of that age's buildings costs (wonders aside), except the flow resources: food, faith, culture and soldiers. Each age has a **price level** for each construction resource: the median first-copy price in that resource among the age's buildings. Any two construction resources of your current age trade at the ratio of their price levels, less a **20% fee**:
+**Construction resources trade at parity.** A *construction resource* of an age is any resource that one of that age's buildings costs (wonders aside), except the flow resources (food, faith, culture and soldiers) and nanobots, a build material the market does not trade at all. Each age has a **price level** for each construction resource: the median first-copy price in that resource among the age's buildings. Any two construction resources of your current age trade at the ratio of their price levels, less a **20% fee**:
 
 ```
 base rate (give A, get B) = price level of B ÷ price level of A × 0.8
@@ -78,7 +78,11 @@ The **Trade** panel (`trade list`) lists every pair open to you in your current 
 | Space | dark\_matter→gold |
 | Quantum | quantum\_flux→gold |
 
-Where both sides of a listed pair are construction resources of your current age, it trades at parity like any other pair (gold → wood is 3.43 in the Bronze Age, 0.96 in the Iron Age). Otherwise it keeps a fixed rate. That is always the case for pairs with food, faith or culture, and for pairs with wood, stone, iron, coal and the rest in ages where no building costs them. The fixed rates:
+Where both sides of a listed pair are construction resources of your current age, it trades at parity like any other pair (gold → wood is 3.43 in the Bronze Age, 0.96 in the Iron Age).
+
+**A listed pair is closed where the age builds with what it sells but not with what it takes.** What an age builds with, it sells for the other things it builds with, at parity. So gold buys data in the Modern and Information Ages (both build with gold) and not in the Digital or Cyberpunk Ages, where nothing costs gold any more and the Information Age's hubs still make it by the hundreds of millions; gold → crypto is closed in the Cyberpunk Age the same way. Buy data and crypto there with electricity, or with each other. From the Fusion Age on, where no building costs data, gold buys it again at the fixed rate (the Space Age's requirement asks for some). The same rule closes coal → gold in the Colonial Age, oil → gold in the Atomic and Information Ages and iron → gold from the Modern Age. Pairs that take food, faith or culture are never closed.
+
+Otherwise a listed pair keeps a fixed rate. That is always the case for pairs with food, faith or culture, and for pairs with wood, stone, iron, coal and the rest in ages where no building costs them. The fixed rates:
 
 | You give | You get | Fixed Rate |
 |---|---|---|
