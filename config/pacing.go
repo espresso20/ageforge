@@ -327,7 +327,12 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // The Electric and Modern Ages, 1.1x each: on the curve the second pass read
 // them at 0.63x and 0.69x, a hair under the lines they are held to (0.65x
 // for an age of the first run, 0.7x for a late one). The Electric Age has
-// two lengths, like the Industrial below, so its median wobbles.
+// two lengths, like the Industrial below, so its median wobbles. A third
+// pass on these entries read 0.65x and 0.70x, the Information Age at 1.12x
+// (it follows the Modern Age's payback), the Digital at 0.69x, the
+// Cyberpunk and Fusion Ages at 0.86x, the Space Age at 0.99x, the
+// Interstellar at 0.98x and the Galactic at 0.81x, with the first run to
+// the Modern Age at 5.50 days.
 //
 // The Industrial Age, 1.15x, is the last age before the late segment, and
 // it has two lengths. A run that leaves the Colonial Age with the larger of the
