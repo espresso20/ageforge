@@ -306,6 +306,16 @@ func paybackTicks(age string, pos map[string]int) float64 {
 //     entering the Quantum Age, so nothing measures them, and a price there
 //     is fifty times a Galactic one: they wait for a run that plays them.
 //
+// On these entries the second pass read 0.69x in the Modern Age, 1.06x in
+// the Information Age, 0.75x in the Digital, 0.86x in the Cyberpunk, 0.84x
+// in the Fusion, 1.01x in the Space Age, 0.97x in the Interstellar and
+// 0.82x in the Galactic, with the first run to the Modern Age at 5.47 days.
+// A median of five seeds moves by 0.05 or so from one pass to the next in
+// an age with two lengths (the Industrial, the Electric, the Information),
+// so an age set near a line can read on either side of it: the Electric Age
+// read 0.67x, 0.71x and 0.63x on three passes, its payback a seventh longer
+// on the last two.
+//
 // What makes one age quick and its neighbour not is mostly how far its
 // prices jump from the age before, which is what a run arrives able to
 // pay, and how much of what it builds with the age before goes on making.
@@ -672,7 +682,10 @@ func ResearchBudgetShareOf(age string) float64 {
 // 489M since before the tree was finished, flat from the Fusion Age on,
 // where a run makes twice that. The Quantum and Transcendent Ages carry the
 // trend on: the bot prestiges on entering the Quantum Age and never plays
-// them.
+// them. On the curve's late segment the ages run longer and the bot staffs
+// more research as its prices rise, so the same run read higher again from
+// the Space Age on (1.14B, 1.57B and 1.70B in the Space, Interstellar and
+// Galactic Ages); these were not moved a second time.
 var KnowledgePerHour = map[string]float64{
 	"primitive_age":    1.1e3,
 	"stone_age":        5.05e3,
