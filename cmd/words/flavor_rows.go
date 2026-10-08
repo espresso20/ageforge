@@ -5,6 +5,8 @@ import (
 	"go/ast"
 	"sort"
 	"strings"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // flavor_rows.go reads the flavor catalogs: the sentences each catalog can
@@ -34,14 +36,14 @@ var moments = []*moment{
 	{"enc_standoff", "encounter_standoff", "Standoff with a civilization at war with you", "when an expedition runs into a civilization you are at war with and nobody fights", "civilization", "bronze_age", areaFlavorEnc},
 	{"enc_cap", "encounter_full", "A boon you have no room for", "when an expedition meets a civilization while you already hold as many boons as you can", "civilization", "bronze_age", areaFlavorEnc},
 	{"war_raid", "raid", "Raid", "when a civilization at war with you raids", "civilization", "bronze_age", areaFlavorRaid},
-	{"harb_arrival", "harbinger_arrival", "A harbinger arrives", "when the age's harbinger arrives", "risk", "iron_age", areaFlavorHarbIn},
-	{"harb_warn", "harbinger_warning", "The harbinger's warning", "when the harbinger gives the warning", "risk", "iron_age", areaFlavorHarbIn},
+	{"harb_arrival", "harbinger_arrival", "A harbinger arrives", "when the age's harbinger arrives", "risk", "", areaFlavorHarbIn},
+	{"harb_warn", "harbinger_warning", "The harbinger's warning", "when the harbinger gives the warning", "risk", "", areaFlavorHarbIn},
 	{"harb_appeased", "harbinger_appeased", "After you appease", "after you pay to appease the harbinger", "risk", "iron_age", areaFlavorHarbDo},
 	{"harb_braced", "harbinger_braced", "After you brace", "after you pay to brace against the doom", "risk", "iron_age", areaFlavorHarbDo},
 	{"harb_invited", "harbinger_invited", "After you invite the doom", "after you invite the doom", "risk", "iron_age", areaFlavorHarbDo},
 	{"harb_vindicated", "harbinger_vindicated", "The warning comes true", "when the harbinger warned and the catastrophe came", "risk", "iron_age", areaFlavorHarbOut},
 	{"harb_spared", "harbinger_spared", "The warning comes to nothing", "when the harbinger warned and the catastrophe did not come", "risk", "iron_age", areaFlavorHarbOut},
-	{"harb_discredited", "harbinger_discredited", "A false prophet is found out", "when a harbinger turns out to have been a false prophet", "risk", "iron_age", areaFlavorHarbOut},
+	{"harb_discredited", "harbinger_discredited", "A false prophet is found out", "when a harbinger turns out to have been a false prophet", "risk", "", areaFlavorHarbOut},
 	{"harb_fulfilled", "harbinger_fulfilled", "An invited doom arrives", "when a doom you invited arrives", "risk", "iron_age", areaFlavorHarbOut},
 	{"run_end", "run_ending", "The end of a run", "at every prestige, as the run ends", "", "medieval_age", areaFlavorEnd},
 }
@@ -395,8 +397,34 @@ func (fr *flavorReader) read(c *catalog, u *unit) (*row, string) {
 		sb.WriteString(" " + slotSentence(u.text))
 	}
 	sb.WriteString(" The game adds the full stop.")
+	if unanswerable(p) {
+		// A false prophet can come in the first era, but the game refuses
+		// every answer to one there.
+		r.unsure = true
+		sb.WriteString(" No catastrophe can strike in the first era, so the game refuses to appease, brace or invite there, and as things stand this line is never reached.")
+	}
 	r.where = sb.String()
 	return r, ""
+}
+
+// unanswerable reports whether a pool holds the lines that follow an answer
+// to a harbinger (appease, brace, invite) in ages where the game allows no
+// answer: the ages of an era in which no catastrophe may strike.
+func unanswerable(p *flavorPool) bool {
+	switch p.m.prefix {
+	case "harb_appeased", "harb_braced", "harb_invited":
+	default:
+		return false
+	}
+	if len(p.ages) == 0 {
+		return false
+	}
+	for _, a := range p.ages {
+		if config.CatastropheAllowed(config.EpochForAge(a)) {
+			return false
+		}
+	}
+	return true
 }
 
 // fieldList returns the values of a list field of a sentence (Kinds, Tones).

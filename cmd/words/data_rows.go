@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-
-	"github.com/espresso20/ageforge/config"
 )
 
 // data_rows.go reads the data definitions: the struct literals in config,
@@ -118,6 +116,8 @@ var fieldRules = map[string]fieldRule{
 		where: "The hint the badge case shows in place of the description while the badge {Name} is still secret."},
 	"config.BadgeDef.Ladder": {id: "badge.{Key}.ladder", kind: kindLabel, area: areaBadges, seen: seenRegular,
 		where: "The heading the badge case puts over the ladder the badge {Name} belongs to."},
+	"config.BadgeFamilyDef.Name": {id: "badge_family.{Key}.name", kind: kindName, area: areaBadges, seen: seenRegular,
+		where: "The name of each badge of the “{Family}” family. The game fills in the slot for each badge."},
 	"config.BadgeFamilyDef.Desc": {id: "badge_family.{Key}.description", kind: kindVoice, area: areaBadges, seen: seenRegular,
 		where: "What the badge case says each badge of the “{Family}” family is for. The game fills in the slots for each badge."},
 	"config.BadgeFamilyDef.Names": {id: "badge.{k}.name", kind: kindName, area: areaBadges, age: "{k}", seen: seenRegular,
@@ -240,7 +240,6 @@ var hiddenFields = map[string]string{
 	"from": "an age key", "until": "an age key", "GainGlyph": "a glyph", "LossGlyph": "a glyph",
 
 	"config.BadgeFamilyDef.Key":  "a template for badge keys",
-	"config.BadgeFamilyDef.Name": "only slots: the name comes from the subject or the rung",
 	"config.BadgeDef.Aliases":    "keys older saves used",
 	"config.BadgeReveal.Key":     "a key",
 	"config.BadgeReward.Theme":   "a theme key",
@@ -292,7 +291,7 @@ var hiddenFields = map[string]string{
 
 // wonderArea moves a wonder's rows to the wonders sheet.
 func wonderArea(c *catalog, u *unit, r *row) {
-	if b, ok := config.BuildingByKey()[u.st().sib["Key"]]; ok && b.Category == "wonder" {
+	if c.w.wonder[u.st().sib["Key"]] {
 		r.area = areaAges
 		r.where = strings.Replace(r.where, "a building:", "a wonder:", 1)
 		r.where = strings.Replace(r.where, "in the Buildings list, on the map, in costs and in the log", "in the Wonders panel, on the map and in the log", 1)
@@ -364,6 +363,10 @@ func (c *catalog) fromRule(rule fieldRule, u *unit) *row {
 	}
 	if rule.fix != nil {
 		rule.fix(c, u, r)
+	}
+	if u.decl == "BadgesHeldOut" {
+		r.unsure = true
+		r.where += " This badge is held out of the game for now (BadgesHeldOut), so nobody can see it yet."
 	}
 	return r
 }

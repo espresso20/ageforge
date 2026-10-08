@@ -236,6 +236,14 @@ func readSheet(path string) ([][]string, error) {
 	}
 	data = bytes.TrimPrefix(data, []byte(bom))
 	rd := csv.NewReader(bytes.NewReader(data))
+	// Some spreadsheets save "CSV" with semicolons or tabs between cells,
+	// depending on the system's language. The header row tells which.
+	firstLine, _, _ := bytes.Cut(data, []byte("\n"))
+	for _, sep := range []rune{';', '\t'} {
+		if bytes.ContainsRune(firstLine, sep) && !bytes.ContainsRune(firstLine, ',') {
+			rd.Comma = sep
+		}
+	}
 	rd.FieldsPerRecord = -1
 	rd.LazyQuotes = true
 	recs, err := rd.ReadAll()

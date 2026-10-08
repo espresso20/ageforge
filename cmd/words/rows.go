@@ -99,6 +99,7 @@ type catalog struct {
 	fl       *flavorReader
 	rows     []*row
 	commands map[string]bool // the words a command can start with
+	cmdWords map[string]bool // the subcommands and argument words that can follow
 	rules    *copyRules      // the game's copy rules, read from its lint tests
 	left     []left
 	byID     map[string]*row
@@ -155,8 +156,9 @@ func read(root string) (*catalog, error) {
 	return c, nil
 }
 
-// link attaches to each row the literals the code compares its text with
-// (a button's label and the "if chosen == label" that reads it), so a
+// link attaches to each row the literals in the same file that the code
+// matches its text with: a button's label and the "if chosen == label" that
+// reads it, a line's "Wonder: " and the HasPrefix that looks for it. A
 // rewrite changes both.
 func (c *catalog) link() {
 	byFileText := map[string]*row{}
@@ -167,7 +169,7 @@ func (c *catalog) link() {
 		}
 	}
 	for _, l := range c.left {
-		if l.why != whyMatched || keyLike(l.u.text) {
+		if (l.why != whyMatched && l.why != whyOp) || keyLike(l.u.text) {
 			continue
 		}
 		if r, ok := byFileText[l.u.f.rel+"\x00"+l.u.text]; ok {

@@ -105,7 +105,7 @@ func readme(c *catalog) string {
 
 	p("# The game's words, as spreadsheets")
 	p("")
-	p("Every line a player can read in AgeForge is a row in one of these files. Rewrite a line by typing your version next to it, then run the import and the game's source is changed to match. Nothing here is the game itself: delete this folder and export again whenever you like, and what you have typed is carried over.")
+	p("Every line a player can read in AgeForge is a row in one of these files. Rewrite a line by typing your version next to it, then run the import and the game's source is changed to match. Nothing in this folder is the game itself. Run the export again whenever you like: what you have typed is carried over to the new sheets.")
 	p("")
 	p("## The files")
 	p("")
@@ -139,7 +139,7 @@ func readme(c *catalog) string {
 	p("- `id`: the row's name. It says where the text lives in the source. Do not change it.")
 	p("- `where`: when a player sees this line.")
 	p("- `kind`: `voice` (descriptions, flavor, story), `message` (log lines, refusals, hints, help), `label` (menu entries, headings, short interface words) or `name` (the name of a building, tech, badge and so on).")
-	p("- `age`: the age a player first meets the line in, numbered so the column sorts to the early game. `00 Main menu` is before the first age. Blank when the tool cannot tell.")
+	p("- `age`: the age a player first meets the line in, numbered so the column sorts to the early game. `00 Main menu` is before the first age. For text in a panel or a command's reply it is the age the panel or command first works in, which can be earlier than the line itself. Blank when the tool cannot tell.")
 	p("- `keep`: what your version must carry over unchanged (see the rules).")
 	p("- `max`: the longest the line may be, in characters. Blank when nothing sets a limit.")
 	p("- `current`: the line as it is now. Do not change it: the import uses it to check that the source still says what you were looking at.")
@@ -181,13 +181,21 @@ func readme(c *catalog) string {
 	p("")
 	for _, mo := range moments {
 		var pools []string
-		total := 0
+		total, perAge, perAgeN := 0, 0, 0
 		for _, pl := range c.fl.order {
 			if pl.m != mo || pl.size == 0 {
 				continue
 			}
 			total += pl.size
-			pools = append(pools, fmt.Sprintf("%s %d", poolName(c.w, pl), pl.size))
+			if _, isAge := c.w.ageIdx[pl.bucket]; isAge {
+				perAge++
+				perAgeN += pl.size
+				continue
+			}
+			pools = append(pools, fmt.Sprintf("`%s` (%s) %d", pl.bucket, poolName(c.w, pl), pl.size))
+		}
+		if perAge > 0 {
+			pools = append(pools, fmt.Sprintf("and %d pools named for one age each (`stone_age`, `iron_age` and so on), %d sentences between them", perAge, perAgeN))
 		}
 		p("### %s", mo.title)
 		p("")

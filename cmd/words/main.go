@@ -16,6 +16,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // defaultDir is where the sheets go, from the repository root. It is in
@@ -38,16 +39,32 @@ func run(args []string, wd string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	// Flags may come before or after the folder: "import sheets --dry-run"
+	// must not be read as a real import of two folders.
+	var flags, rest []string
+	for _, a := range args[1:] {
+		if strings.HasPrefix(a, "-") {
+			flags = append(flags, a)
+		} else {
+			rest = append(rest, a)
+		}
+	}
 	fs := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	fs.SetOutput(out)
 	dry := fs.Bool("dry-run", false, "import: print what would change and what would be refused, and write nothing")
 	noSame := fs.Bool("no-same", false, "import: do not give a blank same_as row the rewrite of the row it points to")
-	if err := fs.Parse(args[1:]); err != nil {
+	if err := fs.Parse(flags); err != nil {
 		return err
 	}
+	if len(rest) > 1 {
+		return fmt.Errorf("%s takes one folder, got %d: %s", args[0], len(rest), strings.Join(rest, " "))
+	}
+	if (*dry || *noSame) && args[0] != "import" {
+		return fmt.Errorf("--dry-run and --no-same belong to import")
+	}
 	dir := filepath.Join(root, filepath.FromSlash(defaultDir))
-	if fs.NArg() > 0 {
-		dir = fs.Arg(0)
+	if len(rest) == 1 {
+		dir = rest[0]
 		if !filepath.IsAbs(dir) {
 			dir = filepath.Join(wd, dir)
 		}

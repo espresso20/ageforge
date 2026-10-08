@@ -19,19 +19,25 @@ import (
 
 // Why a unit is left out. The export reports the counts.
 const (
-	whyNoWords = "no words in it: layout, a number format or a glyph"
-	whyMatched = "text the code compares or looks things up by, not text it shows"
-	whyKey     = "a key or identifier"
-	whyOp      = "the pattern of a text operation (what to find, cut or replace), not shown"
-	whyDev     = "read by developers only: the dev console, a debugging dump or an internal failure"
-	whyPath    = "a file name, path or web address"
-	whySyntax  = "a command as the player types it, which must match the command parser"
-	whyArt     = "art or a map glyph, not words"
+	whyReadBack = "text the game reads back out of old saves, so it has to stay as it is"
+	whyNoWords  = "no words in it: layout, a number format or a glyph"
+	whyMatched  = "text the code compares or looks things up by, not text it shows"
+	whyKey      = "a key or identifier"
+	whyOp       = "the pattern of a text operation (what to find, cut or replace), not shown"
+	whyDev      = "read by developers only: the dev console, a debugging dump or an internal failure"
+	whyPath     = "a file name, path or web address"
+	whySyntax   = "a command as the player types it, which must match the command parser"
+	whyArt      = "art or a map glyph, not words"
 )
 
 // keyish matches a single token that reads as a key: lower case, digits and
-// the punctuation keys are written with.
-var keyish = regexp.MustCompile(`^[a-z0-9_.:/#*<>=+,@&|\\-]+$`)
+// the punctuation keys are written with. capsKey is the same in capitals
+// with a digit or an underscore in it ("UTF-8", "TERM_PROGRAM"): a word in
+// capitals alone ("FLOWS") is a label.
+var (
+	keyish  = regexp.MustCompile(`^[a-z0-9_.:/#*<>=+,@&|\\-]+$`)
+	capsKey = regexp.MustCompile(`^[A-Z0-9_-]*[0-9_][A-Z0-9_-]*$`)
+)
 
 // keyLike reports whether text reads as a key or identifier rather than as
 // words for a player.
@@ -39,7 +45,7 @@ func keyLike(s string) bool {
 	if s == "" || strings.ContainsAny(s, " \t\n") {
 		return false
 	}
-	if keyish.MatchString(s) {
+	if keyish.MatchString(s) || capsKey.MatchString(s) {
 		return true
 	}
 	if strings.ContainsAny(s, "_/\\") {
@@ -70,7 +76,9 @@ var (
 	opAllArgs  = map[string]bool{"strings.NewReplacer": true, "fmt.Sscanf": true, "fmt.Sscan": true, "fmt.Fscanf": true, "regexp.MustCompile": true, "regexp.Compile": true, "time.Parse": true}
 	pathPkgs   = map[string]bool{"filepath": true, "path": true, "os": true, "exec": true, "http": true, "url": true, "json": true, "hex": true, "base64": true, "ioutil": true, "io": true, "runtime": true, "nerdfont": true}
 	devCalls   = map[string]bool{"panic": true, "log.Printf": true, "log.Println": true, "log.Fatalf": true, "log.Fatal": true, "debugf": true}
-	syntaxArgs = map[string]bool{"sub#0": true, "sub#1": true, "panel#0": true, "confirmYes#0": true, "usageFor#0": true, "subUsage#0": true, "usageFor#1": true, "subUsage#1": true}
+	syntaxArgs = map[string]bool{"sub#0": true, "sub#1": true, "panel#0": true, "confirmYes#0": true, "usageFor#0": true, "subUsage#0": true, "helpRow#0": true}
+	// Calls that take a noun and put it in a sentence ("Unknown %s '%s'.").
+	nounArgs = map[string]bool{"unknownKeyError#0": true}
 	// Calls that put a single lower-case word in front of the player.
 	wordCalls = map[string]bool{"Count": true, "Plural": true, "plural": true, "pluralize": true}
 	// Calls that write a line to the game log; the text is their last
@@ -156,6 +164,11 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	if !hasWord(u.text) {
 		return nil, whyNoWords
 	}
+	for _, marker := range cr.c.rules.readBack {
+		if strings.Contains(u.text, marker) {
+			return nil, whyReadBack
+		}
+	}
 	if r, why, done := cr.special(u); done {
 		if r != nil {
 			cr.defaults(u, r)
@@ -166,7 +179,7 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	case "compare", "case", "index", "mapkey":
 		return nil, whyMatched
 	}
-	isErr, isLog, single := false, false, false
+	isErr, isLog, single, noun := false, false, false, false
 	for i, cs := range u.calls {
 		q := cs.fn
 		if cs.pkg != "" {
@@ -194,15 +207,17 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 			isLog = true
 		case i == 0 && wordCalls[cs.fn] && cs.arg >= 1:
 			single = true
+		case i == 0 && u.near == "call" && nounArgs[fmt.Sprintf("%s#%d", cs.fn, cs.arg)]:
+			noun = true
 		}
 	}
-	if keyLike(u.text) && !single && !cr.prose[cr.parent[u]] {
+	if keyLike(u.text) && !single && !noun && !cr.prose[cr.parent[u]] {
 		return nil, whyKey
 	}
 	if looksLikePath(u.text) {
 		return nil, whyPath
 	}
-	if cr.c.isCommand(u.text) && !single {
+	if cr.c.isCommand(u.text) && !single && !noun {
 		return nil, whySyntax
 	}
 	if strings.IndexFunc(u.text, func(r rune) bool { return r < 0x20 && r != '\n' && r != '\t' }) >= 0 {
@@ -283,7 +298,9 @@ func (cr *codeReader) defaults(u *unit, r *row) {
 	}
 	switch cr.f.dir {
 	case "ui", "game", "boon":
-		r.rules |= rulesUI
+		if !cr.c.rules.exemptFiles[cr.f.rel] {
+			r.rules |= rulesUI
+		}
 	case "config":
 		r.rules |= rulesConfig | rulesDocs
 	}
@@ -308,33 +325,36 @@ func oneLine(s string) string {
 	return strings.TrimSpace(s)
 }
 
-// commandWord matches one word of a command as it is typed: lower case, a
-// key, a number, or an argument in angle or square brackets.
-var commandWord = regexp.MustCompile(`^[a-z0-9_<>\[\]|-]+$`)
-
 // isCommand reports whether text is a command a player types ("gather wood
-// 5", "account badges", "plan build <building> [count]") and not a sentence.
-// Such text must match the command parser, so it is not for rewriting.
+// 5", "account badges", "plan build <building> [count]") and not a sentence:
+// it starts with a command, and every word after is a subcommand, a word an
+// argument takes, a key, a number or an argument in brackets. Such text must
+// match the command parser, so it is not for rewriting.
 func (c *catalog) isCommand(s string) bool {
 	words := strings.Fields(s)
-	if len(words) == 0 || len(words) > 6 || !c.commands[words[0]] {
-		return false
+	if len(words) < 2 || len(words) > 6 || !c.commands[words[0]] {
+		return false // one word alone is a key or a label, and is judged as one
 	}
-	for _, w := range words {
-		if !commandWord.MatchString(w) {
+	for _, w := range words[1:] {
+		_, isKey := c.w.name[w]
+		switch {
+		case c.cmdWords[w], isKey, strings.Contains(w, "_"):
+		case commandArg.MatchString(w):
+		default:
 			return false
 		}
-		switch w {
-		case "the", "to", "a", "an", "of", "and", "it", "your", "with", "for", "in", "on", "is", "by", "at", "as", "or", "when", "its", "now":
-			return false
-		}
 	}
-	return len(words) > 1 || s == words[0]
+	return true
 }
 
-// readCommands lists the names and aliases in the command registry.
+// commandArg matches an argument as a command's form writes it: a number,
+// or a name in angle or square brackets.
+var commandArg = regexp.MustCompile(`^([0-9]+|<[a-z0-9_|-]+>|\[[a-z0-9_|<>-]+\])$`)
+
+// readCommands lists the words of the command registry: the commands a line
+// can start with, and the subcommands and argument words that can follow.
 func (c *catalog) readCommands() {
-	c.commands = map[string]bool{}
+	c.commands, c.cmdWords = map[string]bool{}, map[string]bool{}
 	f := c.m.byRel["ui/commands.go"]
 	if f == nil {
 		return
@@ -342,10 +362,28 @@ func (c *catalog) readCommands() {
 	for _, u := range c.m.units(f) {
 		s := u.st()
 		cs := u.call()
+		inCall := len(u.calls) > 0 && cs.out == 0
+		depth := 0
+		for _, st := range u.structs {
+			if st.typ == "ui.Command" {
+				depth++
+			}
+		}
 		switch {
-		case s.typ == "ui.Command" && (s.field == "Name" || s.field == "Aliases") && (len(u.calls) == 0 || cs.out > 0):
+		case !inCall && s.typ == "ui.Command" && (s.field == "Name" || s.field == "Aliases"):
+			c.cmdWords[u.text] = true
+			if depth == 1 && u.fn == "registry" && u.text != "confirm" && u.text != "yes" {
+				c.commands[u.text] = true
+			}
+		case !inCall && s.typ == "ui.Arg" && s.field == "Words":
+			c.cmdWords[u.text] = true
+		case inCall && cs.fn == "sub" && cs.arg == 0:
+			c.cmdWords[u.text] = true
+		case inCall && cs.fn == "panel" && cs.arg == 0:
+			c.cmdWords[u.text] = true
 			c.commands[u.text] = true
-		case len(u.calls) > 0 && cs.out == 0 && (cs.fn == "sub" || cs.fn == "panel") && cs.arg == 0:
+		case inCall && cs.fn == "panel" && cs.arg >= 2:
+			c.cmdWords[u.text] = true
 			c.commands[u.text] = true
 		}
 	}

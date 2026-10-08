@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"strings"
-
-	"github.com/espresso20/ageforge/config"
 )
 
 // code_special.go holds what the code reader has to be told: what each
@@ -369,7 +367,7 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 		case u.decl == "buildingFlavor" && u.near == "elem":
 			r := c.fromRule(fieldRule{id: "building.{k}.flavor", kind: kindVoice, area: areaBuildings, age: "{k}", seen: seenRegular,
 				where: "The line in italics under the description of {name:k} in the Buildings list and the Buildings panel."}, u)
-			if b, ok := config.BuildingByKey()[u.coll[0].key]; ok && b.Category == "wonder" {
+			if w.wonder[u.coll[0].key] {
 				r.area = areaAges
 				r.where = strings.Replace(r.where, "in the Buildings list and the Buildings panel", "in the Wonders panel", 1)
 			}
@@ -414,6 +412,11 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 			r.area, r.seen, r.age = areaAges, seenRegular, w.ageOf(arg(1))
 			r.rules = rulesConfig | rulesDocs
 			return r, "", true
+		case len(u.calls) > 0 && cs.fn == "ladder" && cs.arg == 6 && u.near == "elem":
+			r := newRow(fmt.Sprintf("badge_ladder.%s.rung.%d", idSafe(arg(0)), u.coll[0].index+1), kindName,
+				fmt.Sprintf("The name of badge %d of the ladder “%s”: in the badge case, and in the toast and log line when it is earned.", u.coll[0].index+1, arg(1)))
+			r.area, r.seen, r.rules = areaBadges, seenRegular, rulesConfig|rulesDocs
+			return r, "", true
 		case inCall && cs.fn == "ladder":
 			key := idSafe(arg(0))
 			var r *row
@@ -427,11 +430,6 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 			default:
 				return nil, whyKey, true
 			}
-			r.area, r.seen, r.rules = areaBadges, seenRegular, rulesConfig|rulesDocs
-			return r, "", true
-		case len(u.calls) > 0 && cs.fn == "ladder" && cs.arg == 6 && u.near == "elem":
-			r := newRow(fmt.Sprintf("badge_ladder.%s.rung.%d", idSafe(arg(0)), u.coll[0].index+1), kindName,
-				fmt.Sprintf("The name of badge %d of the ladder “%s”: in the badge case, and in the toast and log line when it is earned.", u.coll[0].index+1, arg(1)))
 			r.area, r.seen, r.rules = areaBadges, seenRegular, rulesConfig|rulesDocs
 			return r, "", true
 		case inCall && cs.fn == "mapLook" && (cs.arg == 1 || cs.arg == 2):

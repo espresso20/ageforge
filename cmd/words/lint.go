@@ -37,6 +37,8 @@ type copyRules struct {
 	retiredTerms []pattern
 	rawAmount    *regexp.Regexp
 	bang         *regexp.Regexp
+	exemptFiles  map[string]bool // files the wording guards skip
+	readBack     []string        // text the game parses back out of old saves
 	// ui/stale_copy_test.go
 	retiredCopy []pattern
 	// ui/docs_lint_test.go: the wiki's lint.
@@ -224,6 +226,19 @@ func loadRules(root string) (*copyRules, error) {
 	cr.retiredTerms, _ = get(guard.patterns("retiredTerms")).([]pattern)
 	cr.rawAmount, _ = get(guard.regex("rawAmountRe")).(*regexp.Regexp)
 	cr.bang, _ = get(guard.regex("bang")).(*regexp.Regexp)
+	cr.readBack, _ = get(guard.strings("copyExemptLiterals")).([]string)
+	cr.exemptFiles = map[string]bool{}
+	if e, e2 := guard.value("copyExemptFiles"); e2 != nil {
+		fail(e2)
+	} else if cl, ok := e.(*ast.CompositeLit); ok {
+		for _, el := range cl.Elts {
+			if kv, ok := el.(*ast.KeyValueExpr); ok {
+				if rel, ok := stringLit(kv.Key); ok {
+					cr.exemptFiles[rel] = true
+				}
+			}
+		}
+	}
 	stale := src("ui/stale_copy_test.go")
 	cr.retiredCopy, _ = get(stale.patterns("retiredCopy")).([]pattern)
 	docs := src("ui/docs_lint_test.go")

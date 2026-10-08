@@ -341,6 +341,30 @@ go test -tags mapcapture -run TestWriteSiteScreens ./ui
 
 To add a screen, add a shot to `TestWriteSiteScreens` (`ui/site_screens_test.go`) and a one-line `<figure class="screen" data-screen="name">` with a one-sentence `<figcaption>` to the wiki page that explains it. `TestDocScreens` (`go test ./ui`) fails on a figure with no file and on a file no page shows.
 
+### Copy-editing sheets
+
+`cmd/words` is the copy-editing export and import. It writes every line a player reads to CSV sheets, one row a line, and writes the rows that come back edited into the string literals they came from.
+
+```bash
+go run ./cmd/words export            # the sheets and a README, in words/export/ (git-ignored)
+go run ./cmd/words import --dry-run  # what would change and what would be refused; writes nothing
+go run ./cmd/words import            # apply every filled row, gofmt what it touched, build
+go run ./cmd/words status            # lines and words rewritten and remaining, by sheet
+go run ./cmd/words left              # every string the export leaves out, with the reason
+```
+
+The export finds the text by parsing the source (`go/parser`), so nothing has to register a string anywhere. Each row has an `id` that says where the text lives (`tech.calendar.description`, `flavor.expedition_fail.any.017`, `ui.help.commands.plan.build`), a sentence on when a player sees it, the pieces a rewrite must keep (format verbs, slots, style tags, key names, glyphs) and a `yours` column, which is the only one to fill. The import refuses a row, and says why, when its id is gone, the source no longer reads what the sheet's `current` says, a kept piece is missing or out of order, the line runs past its limit, or it breaks one of the copy rules. The rules are the lint tests' own: the import reads their lists out of `ui/copy_guard_test.go`, `ui/stale_copy_test.go`, `ui/docs_lint_test.go`, `config/effect_text_test.go`, `config/event_flavor_test.go` and `flavor/flavor_test.go` when it runs, so a term retired in a lint is refused by the import the same day. It does not run the tests: `go test ./...` comes after it.
+
+`words/ledger.json` is committed. It holds the id and a hash of the text for each row an import has applied, which is all `status` needs; commit it with the source changes of the same import. A name's rename is listed with the wiki pages, pictures and tests that still quote the old name, and the wiki's tech tables are regenerated (`UPDATE_WIKI=1 go test ./config -run TestTechWikiTables`).
+
+When you add content, three guards in `go test ./cmd/words` keep the export whole:
+
+- A struct in `config` that gains a field holding text fails `TestConfigFieldsAreAllClassified` until the field is in `fieldRules` (a player reads it: its id, kind and where sentence) or `hiddenFields` (a key or a note), both in `cmd/words/data_rows.go`.
+- A new package fails `TestEveryPackageIsAccountedFor` until it is in `scanned` or `notScanned` (`cmd/words/source.go`).
+- A new flavor pool fails `TestFlavorPoolsAreAllRead` until its catalog is in `moments` (`cmd/words/flavor_rows.go`).
+
+Text built in ordinary code (panels, log lines, refusals) needs no entry: the reader keeps what reaches the screen and leaves out keys, command syntax, file names and the dev console. A new source file gets a better where sentence from a line in `fileNotes` (`cmd/words/code_special.go`). `TestRulesAreRead` fails if a lint's list is renamed or changes shape, which is the cue to update `loadRules` (`cmd/words/lint.go`).
+
 ---
 
 ## Project Structure

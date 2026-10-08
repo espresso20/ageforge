@@ -19,12 +19,13 @@ type world struct {
 	eraName  map[string]string
 	keyAge   map[string]int    // building, tech, milestone and other keys -> the age they arrive in
 	name     map[string]string // any key -> what the game calls it
+	wonder   map[string]bool   // the building keys that are wonders
 }
 
 func newWorld() *world {
 	w := &world{
 		ageIdx: map[string]int{}, eraAge: map[string]int{}, eraName: map[string]string{},
-		keyAge: map[string]int{}, name: map[string]string{},
+		keyAge: map[string]int{}, name: map[string]string{}, wonder: map[string]bool{},
 	}
 	for i, a := range config.Ages() {
 		w.ageKeys = append(w.ageKeys, a.Key)
@@ -53,6 +54,7 @@ func newWorld() *world {
 	}
 	for _, b := range config.BaseBuildings() {
 		put(b.Key, b.Name, w.ageIdx[b.RequiredAge])
+		w.wonder[b.Key] = b.Category == "wonder"
 	}
 	for _, t := range config.Technologies() {
 		put("tech:"+t.Key, t.Name, w.ageIdx[t.Age])
