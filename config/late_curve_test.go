@@ -32,20 +32,20 @@ func TestPaybackCurve(t *testing.T) {
 		}
 	}
 	// The ages the late segment covers have no entry of their own.
-	for _, a := range []string{"victorian_age", "electric_age", "atomic_age", "modern_age", "digital_age", "cyberpunk_age", "interstellar_age"} {
+	for _, a := range []string{"victorian_age", "atomic_age", "digital_age", "cyberpunk_age", "interstellar_age"} {
 		if v, ok := PaybackAdjust[a]; ok {
 			t.Errorf("%s has an entry (%v); the curve's late segment covers it", a, v)
 		}
 	}
 	// What the segment gives the three it folded in, against the 0.9 curve.
-	for a, want := range map[string]float64{"victorian_age": 1.62, "electric_age": 1.67, "atomic_age": 1.71} {
+	for a, want := range map[string]float64{"victorian_age": 1.62, "electric_age": 1.67 * 1.1, "atomic_age": 1.71} {
 		got := PaybackTicks(a) / (AgeTargetTicks(a) * math.Pow(1+float64(pos[a])/3, PaybackEpochExponent) / PaybackDivisor)
 		if math.Abs(got-want) > 0.01 {
 			t.Errorf("%s repays %.3f times more slowly than the 0.9 curve gives, want %.2f", a, got, want)
 		}
 	}
 	// The share of the target, for the wiki's table.
-	for a, want := range map[string]float64{"colonial_age": 0.185, "industrial_age": 0.231, "victorian_age": 0.354, "modern_age": 0.467, "information_age": 0.228, "cyberpunk_age": 0.587, "fusion_age": 1.382, "galactic_age": 1.508} {
+	for a, want := range map[string]float64{"colonial_age": 0.185, "industrial_age": 0.231, "victorian_age": 0.354, "electric_age": 0.430, "modern_age": 0.514, "information_age": 0.228, "cyberpunk_age": 0.587, "fusion_age": 1.382, "galactic_age": 1.508} {
 		if got := PaybackTicks(a) / AgeTargetTicks(a); math.Abs(got-want) > 0.002 {
 			t.Errorf("%s: payback is %.3f of the target, want %.3f", a, got, want)
 		}

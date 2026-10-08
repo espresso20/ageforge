@@ -110,6 +110,7 @@ type Set struct {
 	built       map[string]map[string]float64
 	flowStaffed map[string]map[string]float64
 	military    []config.MilitaryScaleDef // by age order
+	typStore    map[string]map[string]float64
 
 	names  [numKinds]map[string]string
 	counts map[string]int

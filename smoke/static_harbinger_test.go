@@ -2,6 +2,7 @@ package smoke
 
 import (
 	"maps"
+	"slices"
 	"strings"
 	"testing"
 
@@ -132,6 +133,8 @@ func TestBraceTakesEffort(t *testing.T) {
 	cosmic := config.EpochByKey()["cosmic_era"].Ages
 	income, built := rules.Core().TypicalIncome, rules.Core().BuildingOutput
 	passages, tears, ordinary := 0, 0, 0
+	capped := map[string]int{} // arrival age -> materials on their ceiling
+	var allCapped []string     // the ages whose every material is on it
 	for _, r := range rows {
 		if r.FinalEra != (r.Epoch == "cosmic_era") {
 			t.Errorf("%s (target %q) in %s: final era is %v", r.Epoch, r.TargetEpoch, r.Age, r.FinalEra)
@@ -164,14 +167,64 @@ func TestBraceTakesEffort(t *testing.T) {
 			}
 		default:
 			ordinary++
-			// A third of the warning, give or take the same rounding.
-			if share := slowest / r.WarningTicks; share < 1.0/3 || share > 1.1/3 {
-				t.Errorf("a doom of %s in %s: Brace level 1 takes %.3f of the shortest warning (%.2f hours of income), want a third", r.Epoch, r.Age, share, hours)
+			// A third of the warning, give or take the same rounding, unless
+			// the ceiling holds every material under it: three fifths of a
+			// moderate builder's store.
+			onCeiling, all := 0, true
+			for res, c := range r.BraceL1 {
+				limit, ok := r.BraceCeiling[res]
+				if !ok || limit <= 0 || r.TypicalStore[res] <= 0 {
+					t.Errorf("a doom of %s in %s: no ceiling for %s (%v of a store of %v)", r.Epoch, r.Age, res, limit, r.TypicalStore[res])
+				}
+				if c > limit {
+					t.Errorf("a doom of %s in %s: Brace asks %v %s, over its ceiling %v", r.Epoch, r.Age, c, res, limit)
+				}
+				if c >= braceAtCeiling*limit {
+					onCeiling++
+				} else {
+					all = false
+				}
+			}
+			capped[r.Age] = onCeiling
+			share := slowest / r.WarningTicks
+			if share > 1.1/3 || share < 1.0/3 && !all {
+				t.Errorf("a doom of %s in %s: Brace level 1 takes %.3f of the shortest warning (%.2f hours of income) with %d of %d materials on their ceiling, want a third", r.Epoch, r.Age, share, hours, onCeiling, len(r.BraceL1))
+			}
+			if all {
+				allCapped = append(allCapped, r.Age)
 			}
 		}
 	}
 	if passages != len(cosmic) || tears != len(cosmic) || ordinary != len(rows)-2*len(cosmic) || ordinary == 0 {
 		t.Fatalf("%d Last Passage rows, %d Reality Tear rows and %d ordinary rows of %d for %v", passages, tears, ordinary, len(rows), cosmic)
+	}
+	// The ceiling bites: without it the price was one and a half to three
+	// times a moderate store from the Colonial Age on. It holds some
+	// material in every age from the Classical on, and every material in two
+	// (the Industrial and Modern Ages), where the price is then quicker to
+	// make than a third of the warning.
+	if capped["iron_age"] > 1 || capped["colonial_age"] == 0 || capped["cyberpunk_age"] == 0 || capped["space_age"] == 0 {
+		t.Errorf("materials on their ceiling by age: %v; want the ceiling to hold from the Colonial Age to the Space Age", capped)
+	}
+	if want := []string{"industrial_age", "modern_age"}; !slices.Equal(allCapped, want) {
+		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same two", allCapped, want)
+	}
+	// The final era's two threads have no ceiling, and a moderate builder's
+	// store holds them all the same, the Last Passage's with little to spare
+	// in the age it arrives in.
+	for _, b := range BraceStoreRows(rows, income) {
+		if b.Epoch != "cosmic_era" {
+			if b.StoreShare > 0.6+1e-9 {
+				t.Errorf("a doom of %s in %s: the largest part is %.2f of a moderate store, over the ceiling", b.Epoch, b.Age, b.StoreShare)
+			}
+			continue
+		}
+		if len(b.Capped) != 0 || b.StoreShare <= 0 || b.StoreShare > 1 {
+			t.Errorf("%s (Last Passage %v) in %s: the largest part is %.2f of a moderate store with %v on a ceiling; want it held and no ceiling", b.Epoch, b.LastPassage, b.Age, b.StoreShare, b.Capped)
+		}
+		if b.LastPassage && b.Age == cosmic[0] && b.StoreShare < 0.9 {
+			t.Errorf("the Last Passage in %s takes %.2f of a moderate store; it was 0.97, and the wiki says it leaves little room", b.Age, b.StoreShare)
+		}
 	}
 
 	// The check fires on broken numbers, on either thread of the final era's
@@ -193,6 +246,9 @@ func TestBraceTakesEffort(t *testing.T) {
 			for i, r := range rows {
 				r.BraceL1 = maps.Clone(r.BraceL1)
 				if r.Epoch == tg.epoch && (r.TargetEpoch == "") == tg.lastPassage && r.Age == tg.age {
+					// The ceiling is tested on its own below: these are the
+					// rules about the warning, with it out of the way.
+					r.BraceCeiling = nil
 					row = r
 					change(&r)
 				}
@@ -253,6 +309,41 @@ func TestBraceTakesEffort(t *testing.T) {
 			r.BraceL1["crypto"] = 1
 		}), BraceRuleMaterial, "crypto")
 	}
+	// The ceiling, on an ordinary doom's row as it stands (the Industrial
+	// Age's, where every material sits on it).
+	ceiling := func(change func(r *PriceRow)) []BraceRuleProblem {
+		broken := make([]PriceRow, len(rows))
+		for i, r := range rows {
+			r.BraceL1, r.BraceCeiling = maps.Clone(r.BraceL1), maps.Clone(r.BraceCeiling)
+			if r.Epoch == "steel_era" && r.Age == "industrial_age" {
+				change(&r)
+			}
+			broken[i] = r
+		}
+		return braceRuleProblems(broken, income, built)
+	}
+	if got := ceiling(func(*PriceRow) {}); len(got) != 0 {
+		t.Errorf("the Industrial Age's row as it stands: %v", got)
+	}
+	// A price over the ceiling breaks the store rule.
+	if got := ceiling(func(r *PriceRow) { r.BraceL1["gold"] = r.BraceCeiling["gold"] * 1.01 }); len(got) != 1 || got[0].Rule != BraceRuleStore || got[0].Resource != "gold" || got[0].String() == "" {
+		t.Errorf("gold a hundredth over its ceiling: %v, want the store rule on gold", got)
+	}
+	// Without its ceiling the same price is too little for the warning: the
+	// ceiling is what excuses it, and nothing else does.
+	if got := ceiling(func(r *PriceRow) { r.BraceCeiling = nil }); len(got) != 1 || got[0].Rule != BraceRuleEffort {
+		t.Errorf("the Industrial Age's price with no ceiling: %v, want the effort rule", got)
+	}
+	// A price well under both the ceiling and the warning's share is still
+	// caught.
+	if got := ceiling(func(r *PriceRow) {
+		for res := range r.BraceL1 {
+			r.BraceL1[res] = r.BraceCeiling[res] / 2
+		}
+	}); len(got) != 1 || got[0].Rule != BraceRuleEffort {
+		t.Errorf("half the ceiling of every material: %v, want the effort rule", got)
+	}
+
 	// The two prices the rule dropped: the Modern Age's data, which it buys
 	// at the market, and the Neon Era's crypto.
 	for _, r := range rows {

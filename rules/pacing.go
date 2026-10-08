@@ -26,7 +26,13 @@ func (s *Set) derive() {
 	s.built = config.BuildingOutputs(s.buildings, s.ageKeys, config.AnyResource)
 	s.flowStaffed = config.StaffedOutputs(s.buildings, s.ageKeys, config.IsFlowResource)
 	s.military = config.MilitaryScales(s.techs, s.ageKeys)
+	s.typStore = config.TypicalStorages(s.buildings, s.resources, s.ageKeys)
 }
+
+// TypicalStorage is what a moderate builder's store holds of res in age:
+// its base storage and config.FlowCopies copies of every storage building
+// up to the age (config.TypicalStorages). 0 for an unknown age or resource.
+func (s *Set) TypicalStorage(res, age string) float64 { return s.typStore[age][res] }
 
 // MilitaryScale is the military yardstick of the age with the given order
 // on this set's tree (config.MilitaryScales): what the typical player's

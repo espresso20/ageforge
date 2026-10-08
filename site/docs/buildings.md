@@ -304,9 +304,9 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Colonial | 18h 12m | 3.4h | 3h 2m | 22m 44s |
 | Industrial | 20h 48m | 4.8h | 3h 28m | 26m |
 | Victorian | 23h 24m | 8.3h | 3h 54m | 29m 14s |
-| Electric | 26h | 10.2h | 4h 20m | 32m 30s |
+| Electric | 26h | 11.2h | 4h 20m | 32m 30s |
 | Atomic | 31h 12m | 13.4h | 5h 12m | 39m |
-| Modern | 31h 12m | 14.6h | 5h 12m | 39m |
+| Modern | 31h 12m | 16.0h | 5h 12m | 39m |
 | Information | 36h 24m | 8.3h | 6h 4m | 45m 30s |
 | Digital | 41h 36m | 22.7h | 6h 56m | 52m |
 | Cyberpunk | 46h 48m | 27.5h | 7h 48m | 58m 30s |
@@ -319,13 +319,15 @@ Output is valued at **price parity**. Each age has a price level for each resour
 
 The Renaissance's payback is 2x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with a fifth more knowledge and cheaper, quicker building, and the age had dropped to three quarters of its target. Its University makes 76.3 knowledge/tick, Exchange 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
 
-**From the Victorian Age on the curve is steeper.** The finished tech tree took research off the critical path of every age from the Victorian on: a wonder's keystone costs about a tenth of what its age makes of knowledge, where it cost a quarter to a half. What paces those ages is what their buildings make and what their requirements ask, and on the old curve a full run played the ages from the Modern to the Galactic at 0.38 to 0.56 of their targets (the Information Age aside, at 0.84). The Victorian, Electric and Atomic Ages had each been set by hand, at 1.7, 1.45 and 1.75 times the old curve; the steeper curve gives them 1.62, 1.67 and 1.71 and carries the Modern, Digital, Cyberpunk and Interstellar Ages as well. A Bessemer Plant makes 148K steel/tick (was 141K), an Electric Arc Furnace 759K (was 874K) and a Breeder Reactor 1.29M electricity (was 1.26M). The Bronze Age's payback is 1.1x (a Lumber Mill makes 7.91 wood/tick; a Quarry 4 stone): the age ran at under two thirds of its target.
+**From the Victorian Age on the curve is steeper.** The finished tech tree took research off the critical path of every age from the Victorian on: a wonder's keystone costs about a tenth of what its age makes of knowledge, where it cost a quarter to a half. What paces those ages is what their buildings make and what their requirements ask, and on the old curve a full run played the ages from the Modern to the Galactic at 0.38 to 0.56 of their targets (the Information Age aside, at 0.84). The Victorian, Electric and Atomic Ages had each been set by hand, at 1.7, 1.45 and 1.75 times the old curve; the steeper curve gives them 1.62, 1.67 and 1.71 and carries the Digital, Cyberpunk and Interstellar Ages as well. A Bessemer Plant makes 148K steel/tick (was 141K), an Electric Arc Furnace 690K (was 874K) and a Breeder Reactor 1.29M electricity (was 1.26M). The Bronze Age's payback is 1.1x (a Lumber Mill makes 7.91 wood/tick; a Quarry 4 stone): the age ran at under two thirds of its target.
 
 Some ages sit off the curve, because the ages are not smooth: how quick one is depends mostly on how far its prices jump from the age before, which is what you arrive able to pay, and on how much of what it builds with the age before goes on making. An age answers to its own payback with about half the change, and passes about a third of it on to the next.
 
 | Age | Against the curve | Why |
 |-----|-------------------|-----|
 | Industrial | 1.15x | A run that arrives with a large store plays it in under two thirds of its target. |
+| Electric | 1.1x | It ran a little under two thirds of its target on the curve alone. |
+| Modern | 1.1x | It ran a little under seven tenths of its target on the curve alone. |
 | Information | 0.45x | The one late age that ran near its target. You buy your way into data and steel before you make anything, and you arrive from a Modern Age that repays more slowly than it did. It keeps the payback it had. |
 | Fusion | 2.2x | It answers little to its own payback: its requirement is the smallest of its era, and the Cyberpunk Age's producers go on making the electricity it builds with. |
 | Space | 1.4x | |

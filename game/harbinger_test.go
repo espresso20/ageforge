@@ -506,28 +506,32 @@ func TestHarbingerCostExamples(t *testing.T) {
 	// 2,340 ticks = 108.9K; a third is 36.3K → 37K. The materials are the
 	// era's core resources that the age's buildings make: the Modern Age
 	// buys its data at the market, and nothing but a wonder makes crypto, so
-	// neither is asked for. It was 12% of the most the era's advances ask,
-	// the same in every age of the era (eraBraceCost): 26.4K stone, 6.36K
-	// iron and 21.6K gold for the whole Iron Era.
+	// neither is asked for. No material asks for more than three fifths of
+	// what a moderate builder's store holds (five copies of every storage
+	// building so far), rounded down to two figures: the Classical Age's
+	// store is 1.15M, so its gold and iron stop at 680K where a third of
+	// the warning is 920K and 760K. It was 12% of the most the era's
+	// advances ask, the same in every age of the era (eraBraceCost): 26.4K
+	// stone, 6.36K iron and 21.6K gold for the whole Iron Era.
 	dooms1 := []struct {
 		epoch, age string
 		brace      map[string]float64
 	}{
 		{"iron_era", "iron_age", map[string]float64{"gold": 140000, "iron": 170000, "stone": 37000}},
-		{"iron_era", "classical_age", map[string]float64{"gold": 920000, "iron": 760000, "stone": 51000}},
-		{"iron_era", "medieval_age", map[string]float64{"gold": 4900000, "iron": 3700000, "stone": 66000}},
-		{"steel_era", "renaissance_age", map[string]float64{"gold": 23000000, "steel": 4500000}},
-		{"steel_era", "colonial_age", map[string]float64{"gold": 510000000, "steel": 69000000}},
-		{"steel_era", "industrial_age", map[string]float64{"gold": 3400000000, "steel": 2500000000}},
-		{"electric_era", "victorian_age", map[string]float64{"electricity": 1700000, "oil": 1400000000, "steel": 13000000000}},
-		{"electric_era", "electric_age", map[string]float64{"electricity": 24000000000, "oil": 4900000000, "steel": 53000000000}},
-		{"electric_era", "atomic_age", map[string]float64{"electricity": 180000000000, "oil": 6500000000, "steel": 240000000000}},
-		{"digital_era", "modern_age", map[string]float64{"electricity": 810000000000, "gold": 1100000000000}},
-		{"digital_era", "information_age", map[string]float64{"data": 590000000000, "electricity": 16000000000000, "gold": 39000000000000}},
-		{"digital_era", "digital_age", map[string]float64{"data": 2400000000000, "electricity": 50000000000000, "gold": 48000000000000}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 8100000000000, "electricity": 230000000000000}},
-		{"neon_era", "fusion_age", map[string]float64{"data": 9400000000000, "electricity": 470000000000000}},
-		{"neon_era", "space_age", map[string]float64{"data": 11000000000000, "electricity": 1.7e+15}},
+		{"iron_era", "classical_age", map[string]float64{"gold": 680000, "iron": 680000, "stone": 51000}},
+		{"iron_era", "medieval_age", map[string]float64{"gold": 2800000, "iron": 2800000, "stone": 66000}},
+		{"steel_era", "renaissance_age", map[string]float64{"gold": 16000000, "steel": 4500000}},
+		{"steel_era", "colonial_age", map[string]float64{"gold": 190000000, "steel": 69000000}},
+		{"steel_era", "industrial_age", map[string]float64{"gold": 1200000000, "steel": 1200000000}},
+		{"electric_era", "victorian_age", map[string]float64{"electricity": 1700000, "oil": 1400000000, "steel": 5100000000}},
+		{"electric_era", "electric_age", map[string]float64{"electricity": 21000000000, "oil": 4600000000, "steel": 21000000000}},
+		{"electric_era", "atomic_age", map[string]float64{"electricity": 90000000000, "oil": 6100000000, "steel": 90000000000}},
+		{"digital_era", "modern_age", map[string]float64{"electricity": 420000000000, "gold": 420000000000}},
+		{"digital_era", "information_age", map[string]float64{"data": 590000000000, "electricity": 7300000000000, "gold": 7300000000000}},
+		{"digital_era", "digital_age", map[string]float64{"data": 2400000000000, "electricity": 15000000000000, "gold": 15000000000000}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 8100000000000, "electricity": 81000000000000}},
+		{"neon_era", "fusion_age", map[string]float64{"data": 9400000000000, "electricity": 190000000000000}},
+		{"neon_era", "space_age", map[string]float64{"data": 11000000000000, "electricity": 790000000000000}},
 	}
 	listed := 0
 	for _, ep := range config.Epochs() {

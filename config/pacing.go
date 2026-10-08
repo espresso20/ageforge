@@ -283,10 +283,10 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // Modern Age ran at 0.53x of its target, the Information Age at 0.84x (at
 // 0.8x the curve), the Digital at 0.49x, the Cyberpunk at 0.45x (at 0.8x),
 // the Fusion at 0.45x, the Space Age at 0.56x, the Interstellar at 0.51x
-// and the Galactic at 0.38x. The late segment carries the Modern, Digital,
-// Cyberpunk and Interstellar Ages (0.73x, 0.77x, 0.71x at 0.7x of it, and
-// 0.80x on the first pass); the rest keep an entry, each a multiple of the
-// new curve:
+// and the Galactic at 0.38x. The late segment carries the Digital,
+// Cyberpunk and Interstellar Ages (0.77x, 0.71x at 0.7x of it, and 0.80x
+// on the first pass); the rest keep an entry, each a multiple of the new
+// curve:
 //
 //   - Information, 0.45x: the one late age that ran near its target, on
 //     the payback it keeps (it had 0.8x of a curve half as steep). It has
@@ -324,6 +324,11 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // third of it on to the next (the Information Age, its own payback
 // unchanged, ran 1.23 times longer).
 //
+// The Electric and Modern Ages, 1.1x each: on the curve the second pass read
+// them at 0.63x and 0.69x, a hair under the lines they are held to (0.65x
+// for an age of the first run, 0.7x for a late one). The Electric Age has
+// two lengths, like the Industrial below, so its median wobbles.
+//
 // The Industrial Age, 1.15x, is the last age before the late segment, and
 // it has two lengths. A run that leaves the Colonial Age with the larger of the
 // two stores the bot builds there (170M against 94M) plays it at 0.59x to
@@ -334,6 +339,8 @@ var PaybackAdjust = map[string]float64{
 	"bronze_age":       1.1,
 	"renaissance_age":  2.0,
 	"industrial_age":   1.15,
+	"electric_age":     1.1,
+	"modern_age":       1.1,
 	"information_age":  0.45,
 	"fusion_age":       2.2,
 	"space_age":        1.4,
@@ -1008,6 +1015,46 @@ func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bo
 			}
 		}
 		out[age] = made
+	}
+	return out
+}
+
+// TypicalStorages is what a moderate builder's store holds of each resource
+// in each age, as age -> resource -> storage: the resource's base storage
+// and FlowCopies copies of every storage building from the Primitive Age up
+// to and including the age (the ones that store everything, and any that
+// store that resource alone). Techs' storage bonus is left out: it is what
+// a town holds for building its vaults, the count the moderate economy
+// keeps of everything. Pure.
+func TypicalStorages(defs []BuildingDef, resources []ResourceDef, order []string) map[string]map[string]float64 {
+	idx := make(map[string]int, len(order))
+	for i, a := range order {
+		idx[a] = i
+	}
+	out := make(map[string]map[string]float64, len(order))
+	for i, age := range order {
+		all := 0.0
+		own := map[string]float64{}
+		for _, d := range defs {
+			if j, ok := idx[d.RequiredAge]; !ok || j > i || d.Category != "storage" {
+				continue
+			}
+			for _, e := range d.Effects {
+				if e.Type != "storage" || e.Value <= 0 {
+					continue
+				}
+				if e.Target == "all" {
+					all += float64(FlowCopies * e.Value)
+				} else {
+					own[e.Target] += float64(FlowCopies * e.Value)
+				}
+			}
+		}
+		held := make(map[string]float64, len(resources))
+		for _, r := range resources {
+			held[r.Key] = r.BaseStorage + all + own[r.Key]
+		}
+		out[age] = held
 	}
 	return out
 }

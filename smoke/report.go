@@ -439,6 +439,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	s.writePacingTable(&sb)
 	s.writeAgeGates(&sb)
 	s.writeMarket(&sb)
+	s.writeQuiet(&sb)
 	s.writeFirstRun(&sb)
 	s.writeEarly(&sb)
 	s.writeLaterRun(&sb)
@@ -713,6 +714,50 @@ func (s *Summary) writeMarket(sb *strings.Builder) {
 			continue
 		}
 		fmt.Fprintf(sb, "| %s | %s | %s |\n", age, list(bought[age], seeds[age]), list(sold[age], seeds[age]))
+	}
+}
+
+// writeQuiet says what each first-cycle age's longest quiet stretch was made
+// of (AgeSplit.Quiet), as medians across seeds: whether the player had
+// anything left to open when it began, and what there was to do in it.
+// Written only when some run recorded one.
+func (s *Summary) writeQuiet(sb *strings.Builder) {
+	type row struct {
+		secs, open, left, types, built, researching, affordable, banking, nothing []float64
+	}
+	rows := map[string]*row{}
+	for _, r := range s.Runs {
+		for _, a := range r.Ages {
+			q := a.Quiet
+			if a.Cycle != 1 || q == nil || q.Samples == 0 || a.Unfinished || a.Prestiged {
+				continue
+			}
+			w := rows[a.Age]
+			if w == nil {
+				w = &row{}
+				rows[a.Age] = w
+			}
+			n := float64(q.Samples)
+			w.secs = append(w.secs, a.QuietSecs)
+			w.open, w.left, w.types = append(w.open, float64(q.TechsOpen)), append(w.left, float64(q.TechsLeft)), append(w.types, float64(q.TypesLeft))
+			w.built = append(w.built, float64(q.Built))
+			w.researching, w.affordable = append(w.researching, float64(q.Researching)/n), append(w.affordable, float64(q.Affordable)/n)
+			w.banking, w.nothing = append(w.banking, float64(q.Banking)/n), append(w.nothing, float64(q.Nothing)/n)
+		}
+	}
+	if len(rows) == 0 {
+		return
+	}
+	med := func(v []float64) float64 { _, m, _ := spread(v); return m }
+	sb.WriteString("\nWhat the longest quiet stretch of each first-cycle age was made of (median across seeds). When it began: the techs that could be researched, the age's techs not yet researched, and the age's building types never built. In it: the buildings finished (copies of types already seen), and the share of the bot's decisions at which a tech was being researched, at which some building of the age or open tech could be paid for at once, at which the wonder had a price left and something in store to pay toward it, and at which none of that was true and nothing was under construction (the player could start nothing).\n\n")
+	sb.WriteString("| age | longest quiet | open techs | age's techs left | building types left | buildings finished | researching | something affordable | wonder to pay toward | nothing to start |\n|---|---|---|---|---|---|---|---|---|---|\n")
+	for _, age := range config.AgeOrder() {
+		w := rows[age]
+		if w == nil {
+			continue
+		}
+		fmt.Fprintf(sb, "| %s | %s | %.0f | %.0f | %.0f | %.0f | %.0f%% | %.0f%% | %.0f%% | %.0f%% |\n", age, dur(med(w.secs)), med(w.open), med(w.left), med(w.types), med(w.built),
+			med(w.researching)*100, med(w.affordable)*100, med(w.banking)*100, med(w.nothing)*100)
 	}
 }
 

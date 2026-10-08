@@ -391,6 +391,15 @@ const doomChoiceMinRatio = 0.5
 // income as Brace does on either count. Brace used to cost seconds of
 // income from an era's second age on, which made the ratio thousands to
 // one.
+//
+// Brace has a ceiling too: no material asks for more than three fifths of
+// a moderate builder's store. In most ages one material stays under it and
+// still takes a third of the warning, so the ratio stands. In two ages
+// every material is on the ceiling, Brace is made in about a sixth of the
+// warning, and Appease falls under the bar: doomChoiceUnderTheCeiling
+// names them with what they read. The ceiling is the rule that wins there
+// (a Brace nobody's store holds is no answer at all), and the list is
+// where that is said out loud.
 func TestOrdinaryDoomChoice(t *testing.T) {
 	const mid = 0.5
 	ge := catEngine(t, "iron_age", 1)
@@ -407,6 +416,7 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 	}
 	braceSaves := math.Max(braceBuildings, braceStock)
 	checked := 0
+	seen := map[string]bool{}
 	for _, ep := range config.Epochs() {
 		if !config.FateAllowed(ep.Key) || config.IsFinalEpoch(ep.Key) {
 			continue
@@ -422,14 +432,33 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 			if appeaseHours <= braceHours {
 				t.Errorf("%s: Appease level 1 takes %.2f h of income, Brace level 1 %.2f h: Appease must stay the dearer", age, appeaseHours, braceHours)
 			}
+			// Every material on its ceiling?
+			capped := true
+			for res, c := range doomBraceCost(ep.Key, age, 1) {
+				if c < 0.9*ordinaryDoomBraceStoreShare*rules.Core().TypicalStorage(res, age) {
+					capped = false
+				}
+			}
+			warning := harbingerLeadMin * config.AgeTargetTicks(age) * config.TickSeconds / 3600
+			share := braceHours / warning
+			if want, under := doomChoiceUnderTheCeiling[age]; under {
+				seen[age] = true
+				if !capped || ratio >= doomChoiceMinRatio || math.Abs(ratio-want) > 0.02 {
+					t.Errorf("%s is listed as under the bar at %.2fx with every material on its ceiling; it reads %.3fx (every material capped: %v)", age, want, ratio, capped)
+				}
+				if share >= ordinaryDoomBraceShare {
+					t.Errorf("%s: Brace level 1 takes %.2f of the shortest warning, want under a third on the ceiling", age, share)
+				}
+				t.Logf("%s, every material on its ceiling: Brace 1 is %.2f h of income (%.2f of the warning), Appease 1 %.2f h; Appease 1 saves %.2fx what Brace 1 does per hour, under the %vx bar", age, braceHours, share, appeaseHours, ratio, doomChoiceMinRatio)
+				continue
+			}
 			if ratio < doomChoiceMinRatio {
 				t.Errorf("%s: Appease level 1 saves %.2fx what Brace level 1 does per hour of income (%.2f h against %.2f h), want at least %vx", age, ratio, appeaseHours, braceHours, doomChoiceMinRatio)
 			}
 			// The warning pays for Brace: a third of it, give or take the
 			// rounding up to two figures.
-			warning := harbingerLeadMin * config.AgeTargetTicks(age) * config.TickSeconds / 3600
-			if share := braceHours / warning; share < ordinaryDoomBraceShare || share > 1.1*ordinaryDoomBraceShare {
-				t.Errorf("%s: Brace level 1 takes %.2f of the shortest warning (%.2f h of %.2f), want a third", age, share, braceHours, warning)
+			if capped || share < ordinaryDoomBraceShare || share > 1.1*ordinaryDoomBraceShare {
+				t.Errorf("%s: Brace level 1 takes %.2f of the shortest warning (%.2f h of %.2f; every material capped: %v), want a third", age, share, braceHours, warning, capped)
 			}
 			// The old price fails the bar from the era's second age on.
 			if age != ep.Ages[0] {
@@ -443,6 +472,20 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 	if checked == 0 {
 		t.Fatal("no age checked")
 	}
+	if len(seen) != len(doomChoiceUnderTheCeiling) {
+		t.Errorf("ages listed under the bar: %v; met: %v", doomChoiceUnderTheCeiling, seen)
+	}
+}
+
+// doomChoiceUnderTheCeiling is the ages where every material of an ordinary
+// doom's Brace sits on its ceiling (three fifths of a moderate builder's
+// store), with what Appease level 1 then saves per hour of income against
+// Brace level 1: under doomChoiceMinRatio, because Brace is made in about a
+// sixth of the warning there. Both ages build with two materials that
+// their vaults hold little of beside what they make.
+var doomChoiceUnderTheCeiling = map[string]float64{
+	"industrial_age": 0.33,
+	"modern_age":     0.39,
 }
 
 // incomeHoursOfMade is incomeHours over the resources of cost the age makes
