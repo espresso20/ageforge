@@ -272,6 +272,12 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 		r.kind = kindLabel
 		what = "A label or short piece of text"
 	}
+	if u.fn == "String" && u.recv != "" && keyish.MatchString(strings.TrimSpace(u.text)) {
+		// One lower-case word that names a value: other code may match on
+		// it as well as show it.
+		r.unsure = true
+		what = "The name of a setting or state (" + u.recv + "), which the code may also match on, so it may not be safe to change,"
+	}
 	where := what + " " + cr.note.place + "."
 	if u.chain != nil && u.chain.parts >= 1 && strings.TrimSpace(u.chain.pattern) != strings.TrimSpace(u.text) {
 		where += " It is one piece of a line the game puts together, which reads: “" + oneLine(u.chain.pattern) + "” (… is what the game fills in)."
