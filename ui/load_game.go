@@ -34,6 +34,12 @@ type loadGameBrowser struct {
 
 	saves []game.SaveInfo // current rows, sorted most-recent first
 
+	// cur is the save the main menu's Continue opens (game.CurrentGame), and
+	// mainGame the save the player marked as the main game ("" for none).
+	cur      game.CurrentGame
+	hasCur   bool
+	mainGame string
+
 	// backPage is the page to return to on Back/Esc (e.g. "splash" from the menu,
 	// "dashboard" when opened mid-game). startOnLoad gates engine.Start() after a
 	// successful load: true from the splash (first start), false mid-game (the
@@ -52,6 +58,11 @@ type loadGameBrowser struct {
 // a successful load should start the engine (true from the splash for the first
 // start, false mid-game where the engine is already running).
 func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, backPage string, startOnLoad bool) tview.Primitive {
+	return newLoadGameBrowser(app, pages, engine, backPage, startOnLoad).root
+}
+
+// newLoadGameBrowser builds the browser; its root is the page.
+func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, backPage string, startOnLoad bool) *loadGameBrowser {
 	b := &loadGameBrowser{
 		app:         app,
 		pages:       pages,
@@ -109,24 +120,24 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 	})
 
 	// ── Footer ───────────────────────────────────────────────────────────────
-	footer := tview.NewTextView().
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
-		SetText(footerBar())
+	// Written for the width it is drawn at, so no key is cut off at 80 columns.
+	footer := newFitView(func(w, h int) string { return keyBar(loadGameKeys, w, h) })
+	footer.SetTextAlign(tview.AlignCenter)
+	footer.changed()
 
 	// ── Layout ───────────────────────────────────────────────────────────────
 	b.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(title, 1, 0, false).
 		AddItem(b.subtitle, 1, 0, false).
 		AddItem(b.list, 0, 1, true).     // weighted — takes remaining space
-		AddItem(legend, 6, 0, false).    // 4 content lines + border
+		AddItem(legend, 7, 0, false).    // 5 content lines + border
 		AddItem(b.detail, 10, 0, false). // fits 6 content lines + optional badge + border
 		AddItem(footer, 1, 0, false)
 
 	b.list.SetInputCapture(b.handleKey)
 
 	b.refresh(0)
-	return b.root
+	return b
 }
 
 // refresh re-reads the save listing, re-sorts most-recent first, rebuilds the
@@ -153,7 +164,16 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 		b.saves[i] = r.Info
 	}
 
-	b.subtitle.SetText(fmt.Sprintf("[gray]%s · %s[-]", savesDirLabel(), pluralSaves(len(saves))))
+	// Which save the main menu's Continue opens, and why: the subtitle says
+	// it, and its row carries the mark.
+	b.cur, b.hasCur = game.PickCurrentGame(saves, "", "")
+	b.mainGame = ""
+	if acct := b.engine.Account(); acct != nil {
+		var last string
+		b.mainGame, last = acct.GameRecord()
+		b.cur, b.hasCur = game.PickCurrentGame(saves, b.mainGame, last)
+	}
+	b.subtitle.SetText(fmt.Sprintf("[gray]%s · %s%s[-]", savesDirLabel(), pluralSaves(len(saves)), b.continueNote()))
 
 	b.list.Clear()
 	if len(rows) == 0 {
@@ -165,7 +185,7 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 	// The active save is the one the autosave currently follows; mark its row.
 	activeName := b.engine.ActiveSaveName()
 	for _, r := range rows {
-		b.list.AddItem(rowLabel(r.Info, r.Prefix, r.Info.Name == activeName), "", 0, nil)
+		b.list.AddItem(rowLabel(r.Info, r.Prefix, r.Info.Name == activeName)+b.currentTag(r.Info), "", 0, nil)
 	}
 
 	// Restore a sensible selection (clamp to range).
@@ -181,13 +201,60 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 	b.updateDetail(wantIdx)
 }
 
+// continueNote is the end of the subtitle: which save Continue opens.
+func (b *loadGameBrowser) continueNote() string {
+	if !b.hasCur {
+		return ""
+	}
+	return " · Continue opens " + b.cur.Save.Name
+}
+
+// currentTag is the trailing tag of the row Continue opens: the main game's
+// mark when the player marked it, else a plain "continue".
+func (b *loadGameBrowser) currentTag(s game.SaveInfo) string {
+	switch {
+	case s.Corrupt:
+		return ""
+	case s.Name == b.mainGame && b.mainGame != "":
+		return "   [accent]◆ main game[-]"
+	case b.hasCur && s.Name == b.cur.Save.Name:
+		return "   [label]▸ continue[-]"
+	}
+	return ""
+}
+
+// currentLine is the detail pane's line for the save Continue opens, with
+// the reason, or "" for any other save.
+func (b *loadGameBrowser) currentLine(s game.SaveInfo) string {
+	if !b.hasCur || s.Name != b.cur.Save.Name {
+		return ""
+	}
+	switch b.cur.Why {
+	case game.CurrentMain:
+		return "[accent]◆ The main game:[-] [gray]Continue opens it. M unmarks it.[-]"
+	case game.CurrentLast:
+		return "[label]▸ Continue opens this game,[-] [gray]the one last played. M marks it as the main game.[-]"
+	}
+	return "[label]▸ Continue opens this game,[-] [gray]the newest save. M marks it as the main game.[-]"
+}
+
+// detailFor is the detail pane's text for a save: its facts, then the line
+// about Continue when it is the one.
+func (b *loadGameBrowser) detailFor(s game.SaveInfo) string {
+	out := detailText(s, b.parentPresent(s), b.engine.AccountID())
+	if line := b.currentLine(s); line != "" && !s.Corrupt {
+		out += "\n" + line
+	}
+	return out
+}
+
 // updateDetail renders the detail pane for the save at index. Out-of-range or
 // empty selections render nothing harmful.
 func (b *loadGameBrowser) updateDetail(index int) {
 	if index < 0 || index >= len(b.saves) {
 		return
 	}
-	b.detail.SetText(detailText(b.saves[index], b.parentPresent(b.saves[index]), b.engine.AccountID()))
+	b.detail.SetText(b.detailFor(b.saves[index]))
 }
 
 // parentPresent reports whether s names a lineage parent that is itself among
@@ -235,6 +302,9 @@ func (b *loadGameBrowser) handleKey(event *tcell.EventKey) *tcell.EventKey {
 		case 'c', 'C':
 			b.doDuplicate()
 			return nil
+		case 'm', 'M':
+			b.doMarkMain()
+			return nil
 		case 'q', 'Q':
 			b.back()
 			return nil
@@ -258,12 +328,12 @@ func (b *loadGameBrowser) doLoad() {
 		return
 	}
 	if s.Corrupt {
-		b.detail.SetText(detailText(s, b.parentPresent(s), b.engine.AccountID()) + "\n\n[red]Can't load a corrupt save.[-]")
+		b.detail.SetText(b.detailFor(s) + "\n\n[red]Can't load a corrupt save.[-]")
 		return
 	}
 	if err := b.engine.LoadGame(s.Name); err != nil {
 		b.engine.AddLog("error", fmt.Sprintf("Load failed: %v", err))
-		b.detail.SetText(detailText(s, b.parentPresent(s), b.engine.AccountID()) + fmt.Sprintf("\n\n[red]Load failed: %v[-]", err))
+		b.detail.SetText(b.detailFor(s) + fmt.Sprintf("\n\n[red]Load failed: %v[-]", err))
 		return
 	}
 	b.engine.AddLog("success", "Game loaded.")
@@ -275,6 +345,34 @@ func (b *loadGameBrowser) doLoad() {
 	if b.startOnLoad {
 		go b.engine.Start()
 	}
+}
+
+// doMarkMain marks the selected save as the main game, the one the main
+// menu's Continue opens whatever was played last, or unmarks it when it is
+// the main game already. The mark lives in the account's settings.
+func (b *loadGameBrowser) doMarkMain() {
+	s, ok := b.selected()
+	if !ok {
+		return
+	}
+	acct := b.engine.Account()
+	switch {
+	case s.Corrupt:
+		b.detail.SetText(b.detailFor(s) + "\n\n[red]A corrupt save cannot be the main game.[-]")
+		return
+	case acct == nil:
+		b.detail.SetText(b.detailFor(s) + "\n\n[red]The main game is kept on an account, and none is in use.[-]")
+		return
+	}
+	name := s.Name
+	if b.mainGame == s.Name {
+		name = ""
+	}
+	if err := acct.SetMainGame(name); err != nil {
+		b.detail.SetText(b.detailFor(s) + fmt.Sprintf("\n\n[red]The main game could not be saved to your account: %v[-]", err))
+		return
+	}
+	b.refresh(b.list.GetCurrentItem())
 }
 
 // doDelete shows a red confirm modal, then deletes on confirm and refreshes.
@@ -299,6 +397,10 @@ func (b *loadGameBrowser) doDelete() {
 				b.engine.AddLog("error", fmt.Sprintf("Delete failed: %v", err))
 				b.detail.SetText(fmt.Sprintf("[red]Delete failed: %v[-]", err))
 				return
+			}
+			// The account's records of its current game let go of the name.
+			if acct := b.engine.Account(); acct != nil {
+				_ = acct.ForgetGame(s.Name)
 			}
 			// Keep the selection near where it was; clamp happens in refresh.
 			b.refresh(curIdx)
@@ -360,6 +462,10 @@ func (b *loadGameBrowser) doRename() {
 		}
 		if b.engine.ActiveParentName() == s.Name {
 			b.engine.SetActiveParentName(newName)
+		}
+		// And the account's records of its current game follow the name.
+		if acct := b.engine.Account(); acct != nil {
+			_ = acct.RenameGame(s.Name, newName)
 		}
 		b.pages.RemovePage(page)
 		b.app.SetFocus(b.list)
@@ -482,17 +588,64 @@ func footerButton(key, label string) string {
 	return theme.KeycapButton(key, label)
 }
 
-// footerBar is the Load Game action bar: a keycap button per action so the
-// player can see at a glance which key triggers what.
+// footerKey is one action on a key bar: its key, its name, and a shorter
+// name for a bar with little room ("" when the name is short already).
+type footerKey struct{ key, label, short string }
+
+// keyBar lays a key bar out for a box w cells wide and rows lines tall. It
+// writes the fullest form that fits on one line: every name in full, then
+// the shorter names, then those set closer. A bar still too long for one
+// line is set in full over two when the box has them.
+func keyBar(keys []footerKey, w, rows int) string {
+	line := func(ks []footerKey, short bool, gap string) string {
+		parts := make([]string, len(ks))
+		for i, k := range ks {
+			label := k.label
+			if short && k.short != "" {
+				label = k.short
+			}
+			parts[i] = footerButton(k.key, label)
+		}
+		return strings.Join(parts, gap)
+	}
+	for _, form := range []struct {
+		short bool
+		gap   string
+	}{{false, "  "}, {true, "  "}, {true, " "}} {
+		if l := line(keys, form.short, form.gap); visibleLen(l) <= w {
+			return l
+		}
+	}
+	if rows >= 2 {
+		// Two lines, as even as the buttons allow.
+		for _, short := range []bool{false, true} {
+			for cut := (len(keys) + 1) / 2; cut < len(keys); cut++ {
+				a, b := line(keys[:cut], short, "  "), line(keys[cut:], short, "  ")
+				if visibleLen(a) <= w && visibleLen(b) <= w {
+					return a + "\n" + b
+				}
+			}
+		}
+	}
+	return line(keys, true, " ")
+}
+
+// loadGameKeys are the Load Game browser's actions.
+var loadGameKeys = []footerKey{
+	{"↑↓", "Navigate", "Move"},
+	{"Enter", "Load", ""},
+	{"D", "Delete", ""},
+	{"R", "Rename", ""},
+	{"C", "Duplicate", "Copy"},
+	{"M", "Main game", "Main"},
+	{"Esc", "Back", ""},
+}
+
+// footerBar is the Load Game action bar with every name in full: a keycap
+// button per action, so the player can see at a glance which key triggers
+// what. The page fits it to its width (keyBar).
 func footerBar() string {
-	return "  " + strings.Join([]string{
-		footerButton("↑↓", "Navigate"),
-		footerButton("Enter", "Load"),
-		footerButton("D", "Delete"),
-		footerButton("R", "Rename"),
-		footerButton("C", "Duplicate"),
-		footerButton("Esc", "Back"),
-	}, "  ") + "  "
+	return keyBar(loadGameKeys, 1<<16, 1)
 }
 
 // legendText returns the static Key-box markup: one row symbol per line with a
@@ -502,6 +655,7 @@ func legendText() string {
 	return strings.Join([]string{
 		"[gold]★ auto[-]      automatic save slot (overwritten on autosave)",
 		"[label]● active[-]    the save your game is autosaving into",
+		"[accent]◆ main game[-] Continue on the main menu opens it (M marks one)",
 		"[red]⚠ modified[-]  save file edited outside the game",
 		"[red]⚠ corrupt[-]   file could not be read, so it cannot load",
 	}, "\n")

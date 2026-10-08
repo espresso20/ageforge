@@ -35,6 +35,12 @@ type accountSettings struct {
 	// Title is the title the account chose to wear, "" for the title its
 	// badge score holds. A title it no longer holds is not worn.
 	Title string `json:"title,omitempty"`
+	// LastPlayed is the save last loaded or saved on this account, and
+	// MainGame the save the player marked as the main game, "" for none.
+	// Together they say which game the main menu's Continue opens
+	// (current_game.go). A name with no save behind it is ignored.
+	LastPlayed string `json:"last_played,omitempty"`
+	MainGame   string `json:"main_game,omitempty"`
 }
 
 // settingsLocked returns the account's settings, read from its slot the

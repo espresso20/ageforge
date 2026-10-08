@@ -1,12 +1,12 @@
 # Saving & Loading
 
-AgeForge keeps your civilization in named saves, with a regular autosave and a save browser. This page covers where saves live, the commands that manage them, how to read the Load Game browser, and how to delete saves.
+AgeForge keeps your civilization in named saves, with a regular autosave and a save browser. This page covers where saves live, the commands that manage them, which game the main menu's Continue opens, how to read the Load Game browser, and how to delete saves.
 
 ---
 
 ## Starting a new game
 
-When you choose **New Game**, the game asks you to name your civilization and fills in a random name. Press **Enter** to accept it, type your own, or press **Tab** for a new suggestion. That name becomes your active save, and the game autosaves into it from then on.
+When you choose **New game** on the [main menu](how-to-play.md#the-main-menu), the game asks you to name your civilization and fills in a random name. Press **Enter** to accept it, type your own, or press **Tab** for a new suggestion. That name becomes your active save, and the game autosaves into it from then on.
 
 ---
 
@@ -73,7 +73,23 @@ Branching keeps a moment without stopping play: branch before a prestige, a risk
 
 ## Autosave
 
-The game autosaves every 60 seconds to your **active** save, and saves again when `Esc` takes you back to the main menu, so the file on disk is never more than about a minute behind your game. To keep a point you don't want overwritten, save it under a new name (or duplicate it with `c` in the Load Game browser).
+The game autosaves every 60 seconds to your **active** save, and saves again when `Esc` takes you back to the main menu, so the file on disk is never more than about a minute behind your game. Leaving the program from inside a game, with `quit` or with Ctrl+C, saves that game to its own save first. Leaving from the main menu, or from any page it opens, writes nothing: there is no game in play to save. To keep a point you don't want overwritten, save it under a new name (or duplicate it with `c` in the Load Game browser).
+
+---
+
+## Continue and your main game
+
+**Continue** on the main menu opens your **current game**, and the menu draws that game's town behind it. Which save that is follows three rules, in order:
+
+1. **Your main game**, if you marked one. Highlight a save in the Load Game browser and press `m`. It stays the current game, whatever else you play, until you press `m` on it again or delete it.
+2. Otherwise, **the game you played last**: the save you last loaded or saved on this account.
+3. If neither is on record, **the save written most recently**. This is what an account from an older version of the game gets until you play once, and what you get if the save on record is gone.
+
+A save that cannot be read is never the current game. An account with no save has no Continue.
+
+The Load Game browser shows which save Continue opens: its subtitle names it, its row carries `◆ main game` or `▸ continue`, and its detail pane says why. Renaming a save keeps it your main game; deleting it clears the mark.
+
+Both records are kept in the account's `settings.json`, beside your display settings (see [The settings file](account.md#the-settings-file)). They are part of the account, not of any save, so each account has its own current game.
 
 ---
 
@@ -83,7 +99,7 @@ Choosing **Load Game** from the main menu, or typing a bare `load` mid-game, ope
 
 **The save tree.** Saves are arranged as a **tree**, not a flat list. When you [branch](saving-and-loading.md#branching-your-save) a new save off your current run, it appears **indented beneath its parent** with tree connectors (`├─`, `└─`), so you can see which saves descend from which. Top-level saves (ones you started fresh, plus any orphans) are ordered most recent first, and so are each parent's children.
 
-A **● active** marker shows which save your game is autosaving into.
+A **● active** marker shows which save your game is autosaving into, and **◆ main game** or **▸ continue** marks the save the main menu's Continue opens (see [Continue and your main game](#continue-and-your-main-game)).
 
 If a save's parent is **deleted**, the child becomes an **orphan** and moves to the top level of the tree (its detail pane marks the lost parent as *detached*). **Renaming** a save keeps its children attached: they are re-pointed at the new name and re-signed, so they don't load flagged as modified. Children that are already flagged *modified* are left alone, so a rename never clears a tampered save's badge.
 
@@ -96,6 +112,7 @@ If a save's parent is **deleted**, the child becomes an **orphan** and moves to 
 | `d` | Delete the highlighted save (asks you to confirm first) |
 | `r` | Rename the highlighted save |
 | `c` | Duplicate the highlighted save |
+| `m` | Mark the highlighted save as your main game, or unmark it |
 | `Esc` | Return to where you opened it from: the main menu, or your current run if opened mid-game |
 
 ---
@@ -108,6 +125,8 @@ Saves can carry a tag in the list, explained on screen in a bordered **Key** box
 |---|---|
 | ★ auto | The automatic save slot |
 | ● active | The save your game is autosaving into |
+| ◆ main game | The save you marked as your main game: Continue on the main menu opens it |
+| ▸ continue | With no main game marked, the save Continue opens (the game you played last) |
 | ⚠ modified | The save file was edited outside the game (integrity check failed) |
 | ⚠ corrupt | The file could not be read. It is still listed but dimmed, and cannot be loaded |
 
@@ -123,16 +142,16 @@ Saves are signed. If a save file is edited outside the game, the integrity check
 
 To delete one save, highlight it in the Load Game browser and press `d`; the game asks you to confirm first.
 
-To delete them all, choose **Delete all saves** (`x`) on the main menu. After you confirm, it deletes **every save of your active account**: the autosave, your named saves and every branch. The runs in them, and the prestige they carried, are gone. **No backup is made, and it cannot be undone.**
+To delete them all, open **Accounts** on the main menu, highlight the account and press `x` (**Delete saves**). After you confirm, it deletes **every save of that account**: the autosave, your named saves and every branch. The runs in them, and the prestige they carried, are gone. **No backup is made, and it cannot be undone.** (It used to be an entry on the main menu itself, next to Quit.)
 
-Your account itself is kept: its name, theme unlocks, lifetime stats and badges stay, and so do any backups already in `data/backups/`. Other accounts' saves are not touched. To keep a copy, back the account up first with `account backup` (or `b` in the Accounts panel).
+The account itself is kept: its name, theme unlocks, lifetime stats and badges stay, and so do any backups already in `data/backups/`. Other accounts' saves are not touched. To keep a copy, back the account up first with `account backup` (or `b` in the Accounts panel). An account left with no save sees the main menu's first page again, with New game first.
 
 Compare **wiping an account** (`w` in the Accounts panel). A wipe deletes the account itself, identity and unlocks included, along with every save in its slot, but it backs the whole slot up to `data/backups/` first. See [Wiping an account](account.md#wiping-an-account).
 
-| | Delete all saves | Wipe an account |
+| | Delete saves | Wipe an account |
 |---|---|---|
-| Where | Main menu (`x`) | Accounts panel (`w`), behind a type-the-name confirm |
-| Saves | Every save of the active account | Every save of that account |
+| Where | Accounts panel (`x`), behind a confirm | Accounts panel (`w`), behind a type-the-name confirm |
+| Saves | Every save of the highlighted account | Every save of that account |
 | Account name, unlocks, lifetime stats, badges | Kept | Deleted |
 | Backup first | No | Yes, to `data/backups/` |
 

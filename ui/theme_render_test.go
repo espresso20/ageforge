@@ -131,9 +131,9 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	out["theme_picker"] = draw()
 	pages.RemovePage(themePickerPage)
 
-	showWipeConfirmation(app, pages, engine, func() {}, "test")
+	showWipeSavesConfirmation(pages, "Test Account", func() {}, func() {})
 	out["danger_modal"] = draw()
-	pages.RemovePage("wipe_confirm")
+	pages.RemovePage(accountsSavesConfirm)
 
 	// Filled-button modals: Negative-fill ENDURE/SUCCUMB and Positive-fill ACCEPT,
 	// with their escaped "[E]"/"[S]"/"[A]" shortcut labels.

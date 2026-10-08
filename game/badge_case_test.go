@@ -289,9 +289,16 @@ func TestMotionSettingLivesBesideTheAccountFile(t *testing.T) {
 	if !acct.MotionOn() {
 		t.Fatal("motion is off on a new account")
 	}
+	// The file may be there already (it also holds which game was played
+	// last, and a game was), but it says nothing of a setting never set.
 	settings := filepath.Join(accountDir(acct.AccountID), settingsFileName)
-	if _, err := os.Stat(settings); !os.IsNotExist(err) {
-		t.Fatalf("an account that never set anything has a settings file (%v)", err)
+	if data, err := os.ReadFile(settings); err == nil {
+		var unset map[string]any
+		if json.Unmarshal(data, &unset) != nil || unset["motion"] != nil || unset["title"] != nil {
+			t.Fatalf("an account that never set anything has a setting on file: %s", data)
+		}
+	} else if !os.IsNotExist(err) {
+		t.Fatal(err)
 	}
 	before := slotFile(t, acct.AccountID)
 	badges := slotBadgeFile(t, acct.AccountID)

@@ -132,6 +132,8 @@ type GameEngine struct {
 	running    bool
 	stopCh     chan struct{}
 	stopOnce   sync.Once
+	// exitMu makes SaveOnExit one at a time.
+	exitMu sync.Mutex
 	// loopDone is closed when the current Start loop has returned; nil until
 	// Start first runs. Stop waits on it, so once Stop returns no tick,
 	// autosave or account flush from that loop is still in flight. Guarded
@@ -1132,6 +1134,32 @@ func (ge *GameEngine) Running() bool {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
 	return ge.running
+}
+
+// SaveOnExit is what every way out of the program does for the game: the quit command,
+// Ctrl+C, the Quit entry, a signal that ends the process. If a game is in play (the tick
+// loop is going) it is stopped and saved to the save it is being played in, through the
+// same SaveGame every other save takes, so the save holds the game's last moment and the
+// account records it as the game last played. It returns that save's name.
+//
+// With no game in play it does nothing and writes nothing, and returns "": the main
+// menu and every page reached from it hold no game, only an engine waiting for one. (The
+// exit handler used to save whatever the engine held to "autosave": at the menu that
+// wrote an empty game over a real autosave, and in a named game it left the game's own
+// save behind.)
+//
+// It is safe to call more than once and from more than one goroutine: the handler of a
+// signal and the end of main may both reach it, and the second finds nothing to do.
+func (ge *GameEngine) SaveOnExit() (string, error) {
+	ge.exitMu.Lock()
+	defer ge.exitMu.Unlock()
+	if !ge.Running() {
+		return "", nil
+	}
+	// The loop first: once it has stopped, no tick and no autosave can cross the save.
+	ge.Stop()
+	name := ge.ActiveSaveName()
+	return name, ge.SaveGame(name)
 }
 
 // endLiveRun stops a live run (the tick loop is going) and saves it into the slot of the

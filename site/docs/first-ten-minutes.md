@@ -6,6 +6,8 @@ A guided walkthrough of the Primitive Age, your first age. It is tuned to take a
 
 ## Minute 0: You just launched AgeForge
 
+The game opens on its [main menu](how-to-play.md#the-main-menu). On a first visit that is the forge and a title page, with **New game** first: press `Enter` (or `n`), name your civilization, and the game starts.
+
 You're in the **Primitive Age**. The screen shows:
 - The status bar: your account name, `Primitive Age`, the epoch (`◈ Stone Era`), `Pop: 0/0` and `Morale 50%`
 - The Next Age row: what the Stone Age asks for, each item marked ✓ or ✗
@@ -238,6 +240,7 @@ Your first priority: start stone with **Stone Camps** (or `gather stone 25`), th
 | Open the map | `map` |
 | Queue builds for while you're away | `plan build hut 10`, `plan advance` |
 | Save and return to the main menu | `Esc` (with no panel open) |
+| Come back to this game from the main menu | `Enter` on **Continue**, or `c` |
 
 ---
 

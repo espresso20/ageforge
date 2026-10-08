@@ -49,16 +49,3 @@ func BarEmptyColor() string { return theme.Tag(theme.RoleDim) }
 func ApplyAgePalette(ageKey string) {
 	_ = ageKey
 }
-
-// ASCII art for splash screen
-const SplashArt = `
-███████   █████   ███████           ███████  █████   ██████   █████    ███████
-█     █  █        █                 █       █     █  █     █  █        █
-█     █  █        █                 █       █     █  █     █  █        █
-███████  █  ████  █████    █████    █████   █     █  ██████   █  ████  █████
-█     █  █     █  █                 █       █     █  █  █     █     █  █
-█     █  █     █  █                 █       █     █  █   █    █     █  █
-█     █   █████   ███████           █        █████   █    █    █████   ███████
-`
-
-const SplashTagline = "Forge the Ultimate Empire Through the Ages"

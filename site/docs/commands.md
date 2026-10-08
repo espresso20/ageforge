@@ -456,6 +456,7 @@ The game autosaves to your active save every 60 seconds and again when `Esc` tak
 | `↑` / `↓` | Move the highlight between saves |
 | `Enter` | Load the highlighted save |
 | `d` / `r` / `c` | Delete (asks first), rename or duplicate the highlighted save |
+| `m` | Mark the highlighted save as your main game (the one Continue on the main menu opens), or unmark it |
 | `Esc` | Return to where you opened it from: the main menu, or your current run if you opened it mid-game |
 
 See [Saving & Loading](saving-and-loading.md) for branching, the save tree, row tags and save integrity.
@@ -524,7 +525,7 @@ The game keeps several local accounts, one active at a time, each with its own s
 | `theme` | Open the **Themes** picker to browse palettes with live preview (`↑`/`↓` previews, `Enter` keeps, `Esc`/`q` reverts). Also on the main menu |
 | `theme list` | List every theme by name and key, marking the active one, with each theme's light or dark variant, which are accessible, and how to unlock the ones you haven't |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
-| `motion [on\|off]` | Bare, show whether motion is on. `off` holds still everything that moves on its own: the maps, the badges that move in the badge case, and a theme's ambient effect. `on` brings it back (default on). Saved per account |
+| `motion [on\|off]` | Bare, show whether motion is on. `off` holds still everything that moves on its own: the maps, the main menu, the badges that move in the badge case, and a theme's ambient effect. `on` brings it back (default on). Saved per account |
 
 ```
 theme

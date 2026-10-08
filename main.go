@@ -35,16 +35,33 @@ func main() {
 	// Handle OS signals for clean exit
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigs
-		engine.SaveGame("autosave")
-		engine.Stop()
-		app.Stop()
-	}()
+	go exitOnSignal(sigs, engine, app.Stop)
 
-	// Run UI (blocks until exit)
-	if err := app.Run(); err != nil {
+	// Run UI (blocks until exit). It returns however the player leaves: the menu's
+	// Quit, the quit command, Ctrl+C (a key to the terminal, not a signal) or a signal.
+	err := app.Run()
+	leave(engine)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// exitOnSignal waits for a signal that ends the program, then leaves the game and closes
+// the UI, which makes Run return.
+func exitOnSignal(sigs <-chan os.Signal, engine *game.GameEngine, closeUI func()) {
+	<-sigs
+	leave(engine)
+	closeUI()
+}
+
+// leave is the one way out of the game, whatever ended the program. A game in play is
+// saved to its own save (game.SaveOnExit); with no game in play nothing is written. Then
+// the engine is stopped. It may run twice (a signal, then the end of main): the second
+// time there is nothing left to do.
+func leave(engine *game.GameEngine) {
+	if name, err := engine.SaveOnExit(); err != nil {
+		fmt.Fprintf(os.Stderr, "The game could not be saved to '%s': %v\n", name, err)
+	}
+	engine.Stop()
 }

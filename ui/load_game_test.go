@@ -56,7 +56,7 @@ func TestRowTagPrecedence(t *testing.T) {
 func TestLegendTextCoversSymbolsWithMatchingColors(t *testing.T) {
 	legend := legendText()
 	// Every player-facing row symbol must be explained in the Key box.
-	for _, sym := range []string{"★ auto", "⚠ modified", "⚠ corrupt"} {
+	for _, sym := range []string{"★ auto", "● active", "◆ main game", "⚠ modified", "⚠ corrupt"} {
 		if !strings.Contains(legend, sym) {
 			t.Errorf("legendText() missing symbol %q\n%s", sym, legend)
 		}
@@ -75,9 +75,9 @@ func TestLegendTextCoversSymbolsWithMatchingColors(t *testing.T) {
 	if strings.Contains(legend, "elite") {
 		t.Errorf("legendText() leaks the elite easter egg\n%s", legend)
 	}
-	// Four symbols → four content lines (sizing assumes this for the height-6 box).
-	if lines := strings.Count(legend, "\n") + 1; lines != 4 {
-		t.Errorf("legendText() has %d lines, want 4", lines)
+	// Five symbols, five content lines (the box is seven rows tall for them).
+	if lines := strings.Count(legend, "\n") + 1; lines != 5 {
+		t.Errorf("legendText() has %d lines, want 5", lines)
 	}
 }
 
@@ -197,13 +197,13 @@ func contains(s, sub string) bool {
 func TestFooterBarShowsHotkeyButtons(t *testing.T) {
 	bar := footerBar()
 	// Every action label must be present.
-	for _, label := range []string{"Navigate", "Load", "Delete", "Rename", "Duplicate", "Back"} {
+	for _, label := range []string{"Navigate", "Load", "Delete", "Rename", "Duplicate", "Main game", "Back"} {
 		if !contains(bar, label) {
 			t.Errorf("footerBar() missing action label %q", label)
 		}
 	}
 	// Every hotkey must render as a keycap (between the gold cap tag and the label tag).
-	for _, cap := range []string{"] ↑↓ [", "] Enter [", "] D [", "] R [", "] C [", "] Esc ["} {
+	for _, cap := range []string{"] ↑↓ [", "] Enter [", "] D [", "] R [", "] C [", "] M [", "] Esc ["} {
 		if !contains(bar, cap) {
 			t.Errorf("footerBar() missing keycap %q", cap)
 		}
@@ -218,5 +218,44 @@ func TestFooterBarShowsHotkeyButtons(t *testing.T) {
 		if contains(bar, naked) {
 			t.Errorf("footerBar() contains swallowable tag %q — keys will vanish in tview", naked)
 		}
+	}
+}
+
+// TestKeyBarsFitTheirWidth: the Load Game browser's key bar is one line at
+// every width from 80 columns, and the Accounts panel's nine keys are one
+// line where they fit and two where they do not. Nothing is cut off: every
+// key is on the bar at every width.
+func TestKeyBarsFitTheirWidth(t *testing.T) {
+	for w := 80; w <= 200; w++ {
+		bar := keyBar(loadGameKeys, w, 1)
+		if strings.Contains(bar, "\n") || visibleLen(bar) > w {
+			t.Fatalf("Load Game key bar at %d columns: %d cells: %q", w, visibleLen(bar), untag(bar))
+		}
+		for _, k := range loadGameKeys {
+			if !strings.Contains(bar, " "+k.key+" ") {
+				t.Fatalf("Load Game key bar at %d columns lost the key %q", w, k.key)
+			}
+		}
+		acc := keyBar(accountsKeys, w, 2)
+		lines := strings.Split(acc, "\n")
+		if len(lines) > 2 {
+			t.Fatalf("Accounts key bar at %d columns takes %d lines", w, len(lines))
+		}
+		for _, l := range lines {
+			if visibleLen(l) > w {
+				t.Fatalf("Accounts key bar at %d columns: a line of %d cells: %q", w, visibleLen(l), untag(l))
+			}
+		}
+		for _, k := range accountsKeys {
+			if !strings.Contains(acc, " "+k.key+" ") || !strings.Contains(acc, " "+k.label+" ") {
+				t.Fatalf("Accounts key bar at %d columns lost %q %q", w, k.key, k.label)
+			}
+		}
+	}
+	if bar := keyBar(loadGameKeys, 120, 1); !strings.Contains(bar, "Navigate") || !strings.Contains(bar, "Main game") {
+		t.Errorf("with room the Load Game bar names every key in full: %q", untag(bar))
+	}
+	if strings.Contains(keyBar(accountsKeys, 130, 2), "\n") {
+		t.Error("the Accounts bar fits on one line at 130 columns and took two")
 	}
 }

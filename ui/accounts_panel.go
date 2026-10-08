@@ -24,6 +24,7 @@ const accountsPage = "accounts"
 const (
 	accountsImportPage   = "accounts_import"
 	accountsWipeConfirm1 = "accounts_wipe_confirm"
+	accountsSavesConfirm = "accounts_saves_confirm"
 	accountsWipeTypeGate = "accounts_wipe_type"
 	accountsMessagePage  = "accounts_message"
 )
@@ -59,6 +60,11 @@ type accountsPanel struct {
 // TCGiSWYX) NO handler here calls QueueUpdateDraw — tview redraws automatically after each
 // input event, so SetText / re-filling the list / applyAccountTheme all paint on the next frame.
 func CreateAccountsPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string, returnPage string) tview.Primitive {
+	return newAccountsPanel(app, pages, engine, currentVersion, returnPage).root
+}
+
+// newAccountsPanel builds the panel; its root is the page.
+func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string, returnPage string) *accountsPanel {
 	p := &accountsPanel{
 		app:            app,
 		pages:          pages,
@@ -117,10 +123,11 @@ func CreateAccountsPage(app *tview.Application, pages *tview.Pages, engine *game
 		SetTextAlign(tview.AlignCenter)
 
 	// ── Footer ─────────────────────────────────────────────────────────────────
-	footer := tview.NewTextView().
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
-		SetText(accountsFooterBar())
+	// Two rows: nine actions do not fit on one line under 126 columns, so on a
+	// narrower terminal they are set over two (keyBar).
+	footer := newFitView(func(w, h int) string { return keyBar(accountsKeys, w, h) })
+	footer.SetTextAlign(tview.AlignCenter)
+	footer.changed()
 
 	// ── Layout ─────────────────────────────────────────────────────────────────
 	p.root = tview.NewFlex().SetDirection(tview.FlexRow).
@@ -128,12 +135,12 @@ func CreateAccountsPage(app *tview.Application, pages *tview.Pages, engine *game
 		AddItem(subtitle, 1, 0, false).
 		AddItem(body, 0, 1, true). // weighted — list+detail take remaining space
 		AddItem(p.status, 1, 0, false).
-		AddItem(footer, 1, 0, false)
+		AddItem(footer, 2, 0, false)
 
 	p.list.SetInputCapture(p.handleKey)
 
 	p.refresh(0)
-	return p.root
+	return p
 }
 
 // refresh re-reads the account listing, rebuilds the list rows, and restores a clamped
@@ -218,6 +225,9 @@ func (p *accountsPanel) handleKey(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		case 'w', 'W':
 			p.doWipe()
+			return nil
+		case 'x', 'X':
+			p.doDeleteSaves()
 			return nil
 		case 'q', 'Q':
 			p.back()
@@ -460,6 +470,55 @@ func (p *accountsPanel) doRecovery() {
 	)
 	p.showMessage("Recovery code", msg)
 	p.engine.NoteRecoveryShown(s.AccountID)
+}
+
+// wipeSavesLabel is the destructive button on the delete-all-saves dialog.
+const wipeSavesLabel = "Delete all saves"
+
+// showWipeSavesConfirmation asks before every save of an account is deleted. It is the
+// dialog the main menu's "Delete all saves" always showed; the entry now lives here, away
+// from Quit, and names the account it acts on. confirmed runs on the destructive button;
+// done runs after either answer, once the dialog is gone.
+func showWipeSavesConfirmation(pages *tview.Pages, account string, confirmed, done func()) {
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("⚠  Delete all saves?\n\nEvery save of the account \"%s\" is deleted.\nThose runs and their prestige are lost.\nThe account (themes, lifetime stats, badges) is kept.\n\nThis cannot be undone.", account)).
+		AddButtons([]string{"Cancel", wipeSavesLabel}).
+		SetDoneFunc(func(_ int, buttonLabel string) {
+			pages.RemovePage(accountsSavesConfirm)
+			if buttonLabel == wipeSavesLabel {
+				confirmed()
+			}
+			done()
+		})
+	styleDangerModal(modal)
+	pages.AddPage(accountsSavesConfirm, modal, true, true)
+}
+
+// doDeleteSaves deletes every save of the SELECTED account after the confirmation. The
+// account stays. The main menu reads its saves again when the panel closes, so an account
+// left with no game goes back to the first page.
+func (p *accountsPanel) doDeleteSaves() {
+	s, ok := p.selected()
+	if !ok {
+		return
+	}
+	idx := p.list.GetCurrentItem()
+	showWipeSavesConfirmation(p.pages, displayNameOr(s), func() {
+		n, err := p.engine.WipeSavesByID(s.AccountID)
+		if err != nil {
+			p.status.SetText(fmt.Sprintf("[red]Could not delete the saves: %v[-]", err))
+			return
+		}
+		p.refresh(idx)
+		switch n {
+		case 0:
+			p.status.SetText(fmt.Sprintf("[gray]%s has no saves to delete.[-]", displayNameOr(s)))
+		case 1:
+			p.status.SetText(fmt.Sprintf("[gray]Deleted the 1 save of %s.[-]", displayNameOr(s)))
+		default:
+			p.status.SetText(fmt.Sprintf("[gray]Deleted the %d saves of %s.[-]", n, displayNameOr(s)))
+		}
+	}, func() { p.app.SetFocus(p.list) })
 }
 
 // doWipe runs the two-step gate for permanently deleting the SELECTED account (identity + theme
@@ -715,19 +774,23 @@ func accountDetailText(s game.AccountSummary, recovery string) string {
 	return strings.Join(lines, "\n")
 }
 
-// accountsFooterBar is the Accounts panel action bar: a keycap button per action (footerButton
-// lives in load_game.go).
+// accountsKeys are the Accounts panel's actions. Each acts on the selected account.
+var accountsKeys = []footerKey{
+	{"Enter", "Switch", ""},
+	{"n", "New", ""},
+	{"e", "Export", ""},
+	{"b", "Backup", ""},
+	{"i", "Import", ""},
+	{"r", "Recovery", ""},
+	{"x", "Delete saves", ""},
+	{"w", "Wipe", ""},
+	{"Esc", "Back", ""},
+}
+
+// accountsFooterBar is the Accounts panel action bar on one line: a keycap button per
+// action (footerButton lives in load_game.go). The panel fits it to its width (keyBar).
 func accountsFooterBar() string {
-	return "  " + strings.Join([]string{
-		footerButton("Enter", "Switch"),
-		footerButton("n", "New"),
-		footerButton("e", "Export"),
-		footerButton("b", "Backup"),
-		footerButton("i", "Import"),
-		footerButton("r", "Recovery"),
-		footerButton("w", "Wipe"),
-		footerButton("Esc", "Back"),
-	}, "  ") + "  "
+	return keyBar(accountsKeys, 1<<16, 1)
 }
 
 // displayNameOr returns the summary's DisplayName, or "(unnamed)" when empty.
