@@ -211,6 +211,33 @@ type AgeSplit struct {
 	// bound.
 	KnowledgeHour float64 `json:"knowledge_per_hour_1x,omitempty"`
 	PoolAll       float64 `json:"production_all_earned,omitempty"`
+	// KnowledgeBought is the knowledge the market sold in the age, and
+	// KnowledgeMade what the age's own income added up to over the same
+	// ticks (the rate KnowledgeHour averages): how much of an age's
+	// research was bought.
+	KnowledgeBought float64 `json:"knowledge_bought,omitempty"`
+	KnowledgeMade   float64 `json:"knowledge_made,omitempty"`
+	// Gates is when each thing the advance waits for was first in place
+	// (nil for an age the run did not sample).
+	Gates *AgeGates `json:"gates,omitempty"`
+}
+
+// AgeGates is when each thing an advance waits for was first in place, in
+// ticks from entering the age as the bot's decisions sampled it; -1 for one
+// that never was while the age lasted (or that the age does not have). The
+// last of them to come is what the age waited for, and the wonder's build
+// time is WonderBuilt less the later of WonderTech and WonderFunded.
+type AgeGates struct {
+	// WonderTech: the wonder's keystone tech is researched.
+	WonderTech int `json:"wonder_tech"`
+	// WonderFunded: the wonder's bank holds its whole price.
+	WonderFunded int `json:"wonder_funded"`
+	// WonderBuilt: the wonder stands.
+	WonderBuilt int `json:"wonder_built"`
+	// Buildings: every building the next age asks for stands.
+	Buildings int `json:"buildings"`
+	// Resources: the store holds every resource the next age asks for.
+	Resources int `json:"resources"`
 }
 
 // CycleSplit is the time from a fresh start to prestige.
@@ -386,6 +413,13 @@ type runner struct {
 	knowTicks  int
 	poolAll    float64
 	quietAfter string
+	// gates is when each thing the advance waits for was first in place in
+	// this age, wonder the age's wonder once the state has named it, and
+	// boughtK0 the knowledge the market had sold when the age began.
+	gates    AgeGates
+	wonder   string
+	boughtK0 float64
+	boughtK  float64
 	// advancing is set while control calls AdvanceAge, so the age-advance
 	// bus handler leaves that advance to control.
 	advancing bool
@@ -632,7 +666,54 @@ func (r *runner) split(unfinished bool) AgeSplit {
 		a.KnowledgeHour = r.knowSum / float64(r.knowTicks) / math.Max(r.speeds[r.age], 1) * 3600 / config.TickSeconds
 	}
 	a.PoolAll = r.poolAll
+	if r.knowTicks > 0 {
+		g := r.gates
+		a.Gates = &g
+		a.KnowledgeMade = r.knowSum
+		a.KnowledgeBought = math.Max(r.boughtK-r.boughtK0, 0)
+	}
 	return a
+}
+
+// trackGates notes the first sampled tick of the age at which each thing
+// the advance waits for is in place (AgeGates).
+func (r *runner) trackGates(st game.GameState) {
+	at := r.ticks - r.ageT0
+	mark := func(dst *int, ok bool) {
+		if ok && *dst < 0 {
+			*dst = at
+		}
+	}
+	if st.CurrentAgeWonderKey != "" {
+		r.wonder = st.CurrentAgeWonderKey
+	}
+	if w, ok := st.Buildings[r.wonder]; ok && r.wonder != "" {
+		mark(&r.gates.WonderTech, w.NeedsTech == "")
+		mark(&r.gates.WonderFunded, w.WonderBankFull || w.Count > 0)
+		mark(&r.gates.WonderBuilt, w.Count > 0)
+	}
+	if st.NextAge != "" {
+		blds := true
+		for k, n := range st.NextAgeBldReqs {
+			if st.Buildings[k].Count < n {
+				blds = false
+			}
+		}
+		mark(&r.gates.Buildings, blds)
+		res := true
+		for k, v := range st.NextAgeResReqs {
+			if st.Resources[k].Amount < v {
+				res = false
+			}
+		}
+		mark(&r.gates.Resources, res)
+	}
+	bought := st.Trade.TotalBought["knowledge"]
+	if bought < r.boughtK {
+		// A new run (prestige or Succumb) starts the market's totals again.
+		r.boughtK0 = 0
+	}
+	r.boughtK = bought
 }
 
 // trackNovelty marks the new decisions in st (a building type built for the
@@ -707,6 +788,9 @@ func (r *runner) enterAge(st game.GameState) {
 	r.quietMark, r.quietWhat = r.sim, "entering "+st.Age
 	r.quietMax, r.quietAfter = 0, ""
 	r.knowSum, r.knowTicks, r.poolAll = 0, 0, 0
+	r.gates = AgeGates{WonderTech: -1, WonderFunded: -1, WonderBuilt: -1, Buildings: -1, Resources: -1}
+	r.wonder = ""
+	r.boughtK0 = r.boughtK
 }
 
 // closeAge records the age just completed. Its verdict is graded across
@@ -737,6 +821,7 @@ func (r *runner) observe(st game.GameState) {
 	}
 	r.knowTicks += r.cfg.DecideEvery
 	r.poolAll = st.Pools["production_all"].Earned
+	r.trackGates(st)
 
 	for _, ev := range st.ActiveEvents {
 		if !r.prevEvt[ev.Key] {
