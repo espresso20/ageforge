@@ -50,24 +50,48 @@ func realCatalog(t *testing.T) *catalog {
 	return theCat
 }
 
-// rowWith finds the one row whose text is exactly text and whose id starts
-// with prefix. Rows in ordinary code are numbered within their function, so
-// the tests find those by text, which does not move when code is added.
-func rowWith(t *testing.T, c *catalog, prefix, text string) *row {
+// pick returns the first row that passes ok. The tests choose their rows by
+// what they are (a log line with two format verbs, a label the code matches
+// on), never by what they say: the wording is what this tool is for
+// changing, and a test that quoted it would break on the first import.
+func pick(t *testing.T, c *catalog, what string, ok func(*row) bool) *row {
 	t.Helper()
-	var found *row
 	for _, r := range c.rows {
-		if r.current == text && strings.HasPrefix(r.id, prefix) {
-			if found != nil {
-				t.Fatalf("two rows under %s read %q: %s and %s", prefix, text, found.id, r.id)
-			}
-			found = r
+		if ok(r) {
+			return r
 		}
 	}
-	if found == nil {
-		t.Fatalf("no row under %s reads %q", prefix, text)
+	t.Fatalf("the export has no row that is %s", what)
+	return nil
+}
+
+// plain reports whether a row has no pieces a rewrite must keep.
+func plain(r *row) bool { return len(r.kept()) == 0 }
+
+// verbsOf lists a row's format verbs in order.
+func verbsOf(r *row) []string {
+	var out []string
+	for _, k := range r.kept() {
+		if k.kind == tokVerb {
+			out = append(out, k.text)
+		}
 	}
-	return found
+	return out
+}
+
+// tagged reports whether a row opens with a style tag, closes it at the
+// end, and has nothing else to keep but glyphs.
+func tagged(r *row) bool {
+	ks := r.kept()
+	if len(ks) < 2 || !isStyleTag(ks[0].text) || ks[len(ks)-1].text != "[-]" || !strings.HasSuffix(r.current, "[-]") {
+		return false
+	}
+	for _, k := range ks[1 : len(ks)-1] {
+		if k.kind != tokGlyph {
+			return false
+		}
+	}
+	return true
 }
 
 // ----- the export -----
@@ -119,46 +143,50 @@ func TestExportCoversKnownLines(t *testing.T) {
 	c := realCatalog(t)
 
 	tech := c.byID["tech.calendar.description"]
-	if tech == nil || tech.kind != kindVoice || tech.area != areaTechs || !strings.Contains(tech.where, "Calendar") {
+	if tech == nil || tech.kind != kindVoice || tech.area != areaTechs || !strings.Contains(tech.where, c.w.called("tech:calendar")) {
 		t.Errorf("tech.calendar.description: got %+v", tech)
 	}
 	if code := c.byID["tech.calendar.code"]; code == nil || code.max != 5 {
 		t.Errorf("tech.calendar.code should carry the tree's five-letter limit, got %+v", code)
 	}
 	badge := c.byID["badge.age_stone_age.name"]
-	if badge == nil || badge.kind != kindName || badge.current != "Rock Solid" || badge.area != areaBadges {
+	if badge == nil || badge.kind != kindName || badge.area != areaBadges {
 		t.Errorf("badge.age_stone_age.name: got %+v", badge)
 	}
-	if age := c.byID["age.stone_age.name"]; age == nil || age.age != 2 || c.ageText(age) != "02 Stone Age" {
+	if age := c.byID["age.stone_age.name"]; age == nil || age.age != 2 || !strings.HasPrefix(c.ageText(age), "02 ") {
 		t.Errorf("age.stone_age.name: got %+v", age)
 	}
 
-	line := rowWith(t, c, "flavor.expedition_fail.any.", "Seven back of nine")
-	if line.kind != kindVoice || line.area != areaFlavorExp || line.rules&rulesSkel == 0 || line.max == 0 {
-		t.Errorf("a flavor sentence: got %+v", line)
+	line := c.byID["flavor.expedition_fail.any.001"]
+	if line == nil || line.kind != kindVoice || line.area != areaFlavorExp || line.rules&rulesSkel == 0 || line.max == 0 {
+		t.Errorf("a flavor sentence (flavor.expedition_fail.any.001): got %+v", line)
 	}
-	slotted := rowWith(t, c, "flavor.expedition_fail.any.", "Whoever was carrying ~ has not been asked about it yet")
+	slotted := pick(t, c, "a flavor sentence with a slot", func(r *row) bool {
+		return r.rules&rulesSkel != 0 && strings.Contains(r.current, "~") && !strings.Contains(r.current, "{")
+	})
 	if got := keepColumn(slotted.kept()); got != "~" {
-		t.Errorf("a sentence with a slot keeps %q, want ~", got)
+		t.Errorf("%s keeps %q, want ~", slotted.id, got)
 	}
-	if !strings.Contains(slotted.where, "exp_fail_kit") {
-		t.Errorf("a sentence with a slot should name its word list: %s", slotted.where)
+	if !strings.Contains(slotted.where, "flavor.words.") {
+		t.Errorf("%s should name the word list that fills its slot: %s", slotted.id, slotted.where)
 	}
-	frag := rowWith(t, c, "flavor.words.exp_fail_kit.", "the spare rope")
-	if frag.rules&rulesBank == 0 || !strings.Contains(frag.where, "~") || !strings.Contains(frag.where, "flavor.expedition_fail.") {
-		t.Errorf("a word-list entry must say how it is used, got: %s", frag.where)
+	frag := c.byID["flavor.words.exp_fail_kit.001"]
+	if frag == nil || frag.rules&rulesBank == 0 || !strings.Contains(frag.where, "~") || !strings.Contains(frag.where, "flavor.expedition_fail.") {
+		t.Errorf("a word-list entry (flavor.words.exp_fail_kit.001) must say how it is used, got %+v", frag)
 	}
 
-	logLine := rowWith(t, c, "game.engine.finishBuild.", "%s built (you have %d).")
-	if logLine.kind != kindMessage || logLine.area != areaLog || keepColumn(logLine.kept()) != "%s %d" {
-		t.Errorf("a log line with format verbs: kind %s, sheet %s, keep %q", logLine.kind, logLine.area.file, keepColumn(logLine.kept()))
+	logLine := pick(t, c, "a log line with two format verbs", func(r *row) bool {
+		return r.u.f.rel == "game/engine.go" && r.u.inCall("addLog") && len(verbsOf(r)) == 2 && len(r.kept()) == 2
+	})
+	if logLine.kind != kindMessage || logLine.area != areaLog || keepColumn(logLine.kept()) != strings.Join(verbsOf(logLine), " ") {
+		t.Errorf("%s: kind %s, sheet %s, keep %q", logLine.id, logLine.kind, logLine.area.file, keepColumn(logLine.kept()))
 	}
-	tagged := rowWith(t, c, "ui.accounts_panel.", "[gold]═══ Accounts ═══[-]")
-	if tagged.area != areaScreens || keepColumn(tagged.kept()) != "[gold] ═══ ═══ [-]" || tagged.age != 0 {
-		t.Errorf("a tagged interface string: sheet %s, keep %q, age %d", tagged.area.file, keepColumn(tagged.kept()), tagged.age)
+	title := pick(t, c, "a tagged interface string", func(r *row) bool { return r.u.f.rel == "ui/accounts_panel.go" && tagged(r) })
+	if title.area != areaScreens || title.age != 0 || !strings.HasPrefix(keepColumn(title.kept()), title.kept()[0].text+" ") {
+		t.Errorf("%s: sheet %s, keep %q, age %d", title.id, title.area.file, keepColumn(title.kept()), title.age)
 	}
 	help := c.byID["ui.help.commands.plan.build"]
-	if help == nil || help.kind != kindMessage || !strings.Contains(help.where, "plan build <building> [count]") {
+	if help == nil || help.kind != kindMessage || !strings.Contains(help.where, "plan build") {
 		t.Errorf("ui.help.commands.plan.build: got %+v", help)
 	}
 
@@ -192,7 +220,7 @@ func TestFirstHours(t *testing.T) {
 	if n < 1000 {
 		t.Errorf("%s would hold only %d rows", firstHoursFile, n)
 	}
-	menu := rowWith(t, c, "ui.menu.", "New game")
+	menu := pick(t, c, "a main menu entry", func(r *row) bool { return r.u.f.rel == "ui/menu.go" && r.kind == kindLabel })
 	hut := c.byID["building.hut.name"]
 	if !inFirstHours(menu) || !inFirstHours(hut) || menu.seen > hut.seen {
 		t.Errorf("the main menu should come before a building's name in %s", firstHoursFile)
