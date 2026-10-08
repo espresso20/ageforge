@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -183,14 +184,22 @@ func TestLastPassageModalLayoutFitsWidth(t *testing.T) {
 // the odds; once it has come, the answers are closed.
 func TestHarbingerPanelLastPassage(t *testing.T) {
 	d, engine, pages := harbDashboard(t, "interstellar_age")
-	txt := untag(harbingerPanelText(engine.GetState(), "", false, false))
+	state := engine.GetState()
+	txt := untag(harbingerPanelText(state, "", false, false))
 	t.Logf("Cosmic Era harbinger panel:\n%s", txt)
+	// The prices are the thread's own, as the engine has them (the game's
+	// tests pin the figures): the panel prints them in full, with what is
+	// held.
+	h := state.Harbinger
+	if h == nil || h.AppeaseCost["faith"] <= 0 || h.AppeaseCost["culture"] <= 0 || h.BraceCost["titanium"] <= 0 || h.BraceCost["dark_matter"] <= 0 {
+		t.Fatalf("the Last Passage's thread has no prices to print: %+v", h)
+	}
 	for _, want := range []string{
 		"The Distress Beacon", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
 		"Published odds:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
 		"Next level: 70% kept.", "Guarantees the Last Passage at your next prestige",
-		"Next level costs: 1.3B faith (have 0), 20B culture (have 0)",
-		"Next level costs: 27Q titanium (have 0), 21Q dark matter (have 0)",
+		fmt.Sprintf("Next level costs: %s faith (have 0), %s culture (have 0)", FormatNumber(h.AppeaseCost["faith"]), FormatNumber(h.AppeaseCost["culture"])),
+		fmt.Sprintf("Next level costs: %s titanium (have 0), %s dark matter (have 0)", FormatNumber(h.BraceCost["titanium"]), FormatNumber(h.BraceCost["dark_matter"])),
 	} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("panel missing %q:\n%s", want, txt)

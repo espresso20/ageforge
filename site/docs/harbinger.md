@@ -272,20 +272,20 @@ Both answers are priced by the age the harbinger arrives in, and keep that price
 | Steel Era | Renaissance Age | 23M gold, 4.5M steel | 1.1 h | 11K faith, 96K culture | 3.1 h to 9.4 h |
 | | Colonial Age | 510M gold, 69M steel | 1.2 h | 32K faith, 240K culture | 3.6 h to 10.9 h |
 | | Industrial Age | 3.8B gold, 2.8B steel | 1.4 h | 110K faith, 1.1M culture | 4.2 h to 12.5 h |
-| Electric Era | Victorian Age | 13B steel, 1.3B oil, 1.7M electricity | 1.6 h | 210K faith, 2.5M culture | 4.7 h to 14.0 h |
-| | Electric Age | 58B steel, 5.2B oil, 27B electricity | 1.7 h | 500K faith, 6.3M culture | 5.2 h to 15.6 h |
-| | Atomic Age | 240B steel, 7B oil, 180B electricity | 2.2 h | 1.2M faith, 17M culture | 6.2 h to 18.7 h |
-| Digital Era | Modern Age | 1.7T gold, 1.3T electricity | 2.1 h | 2.6M faith, 36M culture | 6.2 h to 18.7 h |
-| | Information Age | 40T gold, 17T electricity, 600B data | 2.5 h | 6.2M faith, 92M culture | 7.3 h to 21.8 h |
-| | Digital Age | 49T gold, 87T electricity, 4.3T data | 2.8 h | 16M faith, 230M culture | 8.3 h to 25.0 h |
-| Neon Era | Cyberpunk Age | 600T electricity, 21T data | 3.2 h | 34M faith, 510M culture | 9.4 h to 28.1 h |
-| | Fusion Age | 1.6Q electricity, 24T data | 3.6 h | 76M faith, 1.2B culture | 10.4 h to 31.2 h |
-| | Space Age | 4.8Q electricity, 28T data | 3.9 h | 170M faith, 2.7B culture | 11.4 h to 34.3 h |
-| Cosmic Era: the Reality Tear | Interstellar Age | 14Q titanium, 11Q dark matter | 11.4 h | 380M faith, 5.8B culture | 12.5 h to 37.4 h |
-| | Galactic Age | 14Q titanium, 240Q dark matter | 10.8 h | 780M faith, 13B culture | 12.5 h to 37.4 h |
-| | Quantum Age | 15Q titanium, 250Q dark matter | 10.9 h | 1.7B faith, 27B culture | 12.5 h to 37.4 h |
-| | Transcendent Age | 16Q titanium, 270Q dark matter | 10.7 h | 1.8B faith, 29B culture | 12.5 h to 37.4 h |
-| Cosmic Era: the Last Passage | Interstellar Age, as you enter the era | 27Q titanium, 21Q dark matter | 21.7 h | 1.3B faith, 20B culture | until you prestige |
+| Electric Era | Victorian Age | 14B steel, 1.4B oil, 1.7M electricity | 1.7 h | 210K faith, 2.5M culture | 4.7 h to 14.0 h |
+| | Electric Age | 53B steel, 4.9B oil, 24B electricity | 1.8 h | 500K faith, 6.3M culture | 5.2 h to 15.6 h |
+| | Atomic Age | 240B steel, 6.5B oil, 180B electricity | 2.2 h | 1.2M faith, 17M culture | 6.2 h to 18.7 h |
+| Digital Era | Modern Age | 1.1T gold, 810B electricity | 2.1 h | 2.6M faith, 36M culture | 6.2 h to 18.7 h |
+| | Information Age | 39T gold, 16T electricity, 590B data | 2.5 h | 6.2M faith, 92M culture | 7.3 h to 21.8 h |
+| | Digital Age | 48T gold, 50T electricity, 2.4T data | 2.8 h | 16M faith, 230M culture | 8.3 h to 25.0 h |
+| Neon Era | Cyberpunk Age | 300T electricity, 11T data | 3.3 h | 34M faith, 510M culture | 9.4 h to 28.1 h |
+| | Fusion Age | 650T electricity, 13T data | 3.7 h | 76M faith, 1.2B culture | 10.4 h to 31.2 h |
+| | Space Age | 2.6Q electricity, 14T data | 3.9 h | 170M faith, 2.7B culture | 11.4 h to 34.3 h |
+| Cosmic Era: the Reality Tear | Interstellar Age | 7.9Q titanium, 5.1Q dark matter | 10.4 h | 380M faith, 5.8B culture | 12.5 h to 37.4 h |
+| | Galactic Age | 8.4Q titanium, 67Q dark matter | 10.5 h | 780M faith, 13B culture | 12.5 h to 37.4 h |
+| | Quantum Age | 8.7Q titanium, 70Q dark matter | 10.5 h | 1.7B faith, 27B culture | 12.5 h to 37.4 h |
+| | Transcendent Age | 9.5Q titanium, 76Q dark matter | 10.5 h | 1.8B faith, 29B culture | 12.5 h to 37.4 h |
+| Cosmic Era: the Last Passage | Interstellar Age, as you enter the era | 16Q titanium, 11Q dark matter | 22.5 h | 1.3B faith, 20B culture | until you prestige |
 
 The warning times are for a first run. On known ground an age and its warning are both shorter by the age's [Era Mastery](prestige.md#era-mastery) speed, and the age makes that much more per tick, so the price is the same.
 

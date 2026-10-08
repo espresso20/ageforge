@@ -303,19 +303,19 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Renaissance | 15h 36m | 5.2h | 2h 36m | 19m 30s |
 | Colonial | 18h 12m | 3.4h | 3h 2m | 22m 44s |
 | Industrial | 20h 48m | 4.2h | 3h 28m | 26m |
-| Victorian | 23h 24m | 8.7h | 3h 54m | 29m 14s |
-| Electric | 26h | 8.8h | 4h 20m | 32m 30s |
-| Atomic | 31h 12m | 13.7h | 5h 12m | 39m |
-| Modern | 31h 12m | 8.3h | 5h 12m | 39m |
-| Information | 36h 24m | 8.2h | 6h 4m | 45m 30s |
-| Digital | 41h 36m | 12.4h | 6h 56m | 52m |
-| Cyberpunk | 46h 48m | 11.7h | 7h 48m | 58m 30s |
-| Fusion | 52h | 17.1h | 8h 40m | 1h 5m |
-| Space | 57h 12m | 19.7h | 9h 32m | 1h 11m 30s |
-| Interstellar | 62h 24m | 22.5h | 10h 24m | 1h 18m |
-| Galactic | 62h 24m | 23.4h | 10h 24m | 1h 18m |
-| Quantum | 62h 24m | 24.4h | 10h 24m | 1h 18m |
-| Transcendent | 62h 24m | 25.3h | 10h 24m | 1h 18m |
+| Victorian | 23h 24m | 8.3h | 3h 54m | 29m 14s |
+| Electric | 26h | 10.2h | 4h 20m | 32m 30s |
+| Atomic | 31h 12m | 13.4h | 5h 12m | 39m |
+| Modern | 31h 12m | 14.6h | 5h 12m | 39m |
+| Information | 36h 24m | 8.3h | 6h 4m | 45m 30s |
+| Digital | 41h 36m | 22.7h | 6h 56m | 52m |
+| Cyberpunk | 46h 48m | 19.2h | 7h 48m | 58m 30s |
+| Fusion | 52h | 49.0h | 8h 40m | 1h 5m |
+| Space | 57h 12m | 32.6h | 9h 32m | 1h 11m 30s |
+| Interstellar | 62h 24m | 44.4h | 10h 24m | 1h 18m |
+| Galactic | 62h 24m | 84.7h | 10h 24m | 1h 18m |
+| Quantum | 62h 24m | 24.9h | 10h 24m | 1h 18m |
+| Transcendent | 62h 24m | 26.2h | 10h 24m | 1h 18m |
 
 The Renaissance's payback is 2x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.3x while the age's requirement also asked for 30M knowledge; that requirement is gone (see [Keystone Techs](ages.md#keystone-techs)), and the payback carries its share. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with a fifth more knowledge and cheaper, quicker building, and the age had dropped to three quarters of its target. Its University makes 76.3 knowledge/tick, Exchange 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
 

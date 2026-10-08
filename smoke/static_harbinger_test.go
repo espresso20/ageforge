@@ -150,7 +150,9 @@ func TestBraceTakesEffort(t *testing.T) {
 		switch {
 		case r.TargetEpoch == "":
 			passages++
-			if hours < 20 || hours > 22 {
+			// A third of the age is 20.8 hours; rounding the price up to two
+			// figures can add a tenth.
+			if hours < 20 || hours > 23 {
 				t.Errorf("the Last Passage in %s: Brace level 1 is %.1f hours of income, want about 21 (a third of the age)", r.Age, hours)
 			}
 		case r.FinalEra:

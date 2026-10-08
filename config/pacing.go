@@ -137,6 +137,11 @@ const (
 	// PaybackTicks.
 	PaybackDivisor       = 16.0
 	PaybackEpochExponent = 0.9
+	// PaybackLateExponent is the exponent from PaybackLateFrom on (the
+	// Victorian Age, the first of the Electric Era): the curve's second
+	// segment. See PaybackTicks.
+	PaybackLateExponent = 1.25
+	PaybackLateFrom     = "victorian_age"
 	// BuildTimeDivisor caps construction at target / BuildTimeDivisor, for
 	// wonders too: an age's wonder must stand before the next advance.
 	BuildTimeDivisor = 6.0
@@ -156,7 +161,18 @@ const (
 // sets morale and catastrophe odds, culture fills its own caps and pays for
 // festivals and monuments, soldiers are an army). Their producers keep their
 // literal rates, and requirements on them are sized to those rates.
-var flowResources = map[string]bool{"food": true, "faith": true, "culture": true, "soldiers": true}
+//
+// Nanobots are one of them for the second reason alone: a build material
+// whose amounts were sized by hand to its producers' typed rates (a Nanobot
+// Vat is listed at 6,554 a tick, and a Cyberpunk Age building asks for
+// 150K of them where it asks for trillions of everything else). Priced, the
+// 150K made a price level of its own, so the payback rule cut the vat to 20
+// a tick and the market traded one nanobot for 66M electricity at parity.
+// The Modern Age's Nano Foundry, in an age that does not price them, kept
+// its 80 a tick: half of what it made was sold, a fifth to a third on top
+// of the Digital and Cyberpunk Ages' whole income, and an Ancient Cache's
+// 40% of a store, in nanobots, paid for an age outright.
+var flowResources = map[string]bool{"food": true, "faith": true, "culture": true, "soldiers": true, "nanobots": true}
 
 // IsFlowResource reports whether res is exempt from the Payback Rule and
 // market parity.
@@ -181,8 +197,18 @@ func AgeTargetTicks(age string) float64 {
 // The exponent was 1.25 while techs added into the bonus pools. With their
 // bonuses in a small layer of their own, a building has to carry more of
 // an age itself, and the more so the later the age: 0.9 gives a producer
-// of the Bronze Age 1.2 times the output it had, one of the Victorian Age
-// 1.6 times and one of the Space Age 1.9 times.
+// of the Bronze Age 1.2 times the output it had.
+//
+// The curve has two segments. 0.9 holds to the Industrial Age. From the
+// Victorian Age on the exponent is 1.25 again (PaybackLateExponent): 0.35 of
+// the target in the Victorian Age, 0.47 in the Modern, 0.67 in the Space
+// Age, 0.75 in the Galactic. Research came off the critical path of every
+// age from the Victorian on when the tree was finished, and a full run of
+// the bot to a Quantum Age prestige (five seeds) played the ages on the
+// 0.9 curve at 0.38 to 0.56 of their targets from the Modern Age on, the
+// Information Age aside. The Victorian, Electric and Atomic Ages had been
+// set one by one to 1.7, 1.45 and 1.75 times the 0.9 curve; the segment
+// gives them 1.63, 1.67 and 1.71 and they have no entry any more.
 func PaybackTicks(age string) float64 {
 	return paybackTicks(age, AgePositions(AgeOrder()))
 }
@@ -194,7 +220,13 @@ func paybackTicks(age string, pos map[string]int) float64 {
 	if v, ok := PaybackAdjust[age]; ok {
 		adj = v
 	}
-	return adj * AgeTargetTicks(age) * detmath.Pow(epochProgress(age, pos), PaybackEpochExponent) / PaybackDivisor
+	exp := PaybackEpochExponent
+	if i, ok := pos[age]; ok {
+		if from, ok := pos[PaybackLateFrom]; ok && i >= from {
+			exp = PaybackLateExponent
+		}
+	}
+	return adj * AgeTargetTicks(age) * detmath.Pow(epochProgress(age, pos), exp) / PaybackDivisor
 }
 
 // PaybackAdjust multiplies the payback of the ages it lists: the curve is
@@ -241,23 +273,48 @@ func paybackTicks(age string, pos map[string]int) float64 {
 // the Colonial Age's did, so that one was put back. A slower payback
 // lengthens both.
 //
-// Six entries is a list that says the curve itself wants reshaping from the
-// Victorian Age on. That is for the change that measures the ages after the
-// Atomic, which nothing run per pull request does: fold these into the
-// exponent then, and drop the entries the new curve covers.
+// Six entries was a list that said the curve itself wanted reshaping from
+// the Victorian Age on, and it has been (PaybackLateExponent): the
+// Victorian, Electric and Atomic Ages sit on the curve now.
 //
-// The Information and Cyberpunk Ages go the other way: the smoke bot ran
-// them at 1.2 to 1.5x their targets (Information on every curve), and the
-// overshoot is spent waiting, the longest stretches of those ages with
-// nothing new to do. Their producers repay faster (0.8x).
+// The ages after the Atomic are not smooth either, and nothing run per pull
+// request plays them: these are set against the deep run (five seeds to a
+// Quantum Age prestige, medians). On the 0.9 curve the Modern Age ran at
+// 0.53x of its target, the Information Age at 0.84x (at 0.8x the curve),
+// the Digital at 0.49x, the Cyberpunk at 0.45x (at 0.8x), the Fusion at
+// 0.45x, the Space Age at 0.56x, the Interstellar at 0.51x and the Galactic
+// at 0.38x. The late segment carries the Modern, Digital and Interstellar
+// Ages; the rest keep an entry, each a multiple of the new curve:
+//
+//   - Information, 0.45x: the one late age that ran near its target, on
+//     the payback it keeps (it had 0.8x of a curve half as steep). It has
+//     to buy its way into data and steel before it makes anything, it
+//     starts on a Modern Age that now repays more slowly, and it must not
+//     pass 1.2x. Its vault sits on the Storage Covenant's line, so its
+//     producers cannot repay faster than they do without a larger vault.
+//   - Cyberpunk, 0.7x: a third more than it had. Its three producers lost
+//     a quarter of their output with nanobots (flowResources), and the gold
+//     and nanobots it sold at the market are no longer sold (MarketRateAt).
+//   - Fusion, 1.5x, and Galactic, 1.8x: the two quickest, with the
+//     smallest gate and the largest bonuses.
+//   - Space, 0.85x: it follows the Fusion Age's slower producers into
+//     titanium nothing has made before.
+//   - Quantum and Transcendent, 0.5x: where they were. The bot prestiges on
+//     entering the Quantum Age, so nothing measures them, and a price there
+//     is fifty times a Galactic one: they wait for a run that plays them.
+//
+// What makes one age quick and its neighbour not is mostly how far its
+// prices jump from the age before, which is what a run arrives able to pay.
 var PaybackAdjust = map[string]float64{
-	"bronze_age":      1.1,
-	"renaissance_age": 2.0,
-	"victorian_age":   1.7,
-	"electric_age":    1.45,
-	"atomic_age":      1.75,
-	"information_age": 0.8,
-	"cyberpunk_age":   0.8,
+	"bronze_age":       1.1,
+	"renaissance_age":  2.0,
+	"information_age":  0.45,
+	"cyberpunk_age":    0.7,
+	"fusion_age":       1.5,
+	"space_age":        0.85,
+	"galactic_age":     1.8,
+	"quantum_age":      0.5,
+	"transcendent_age": 0.5,
 }
 
 // epochProgress counts epochs of three ages each, continuously: 1 in the
@@ -594,8 +651,13 @@ func ResearchBudgetShareOf(age string) float64 {
 // Atomic Age): the bot staffs its knowledge buildings differently as tech
 // prices move, so those two are good to a third. A first run prestiges on
 // entering the Modern Age, so nothing run per PR measures that age or any
-// after it. The Modern Age is an estimate between its neighbours. The
-// Information Age and every age after it keep the numbers they had.
+// after it. The Modern to Galactic Ages are what the deep run measured
+// (five seeds to a Quantum Age prestige on the finished tree, medians: 188M,
+// 286M, 498M, 654M, 853M, 944M, 967M and 1.05B). They had stood at 275M to
+// 489M since before the tree was finished, flat from the Fusion Age on,
+// where a run makes twice that. The Quantum and Transcendent Ages carry the
+// trend on: the bot prestiges on entering the Quantum Age and never plays
+// them.
 var KnowledgePerHour = map[string]float64{
 	"primitive_age":    1.1e3,
 	"stone_age":        5.05e3,
@@ -609,16 +671,16 @@ var KnowledgePerHour = map[string]float64{
 	"victorian_age":    115e6,
 	"electric_age":     220e6,
 	"atomic_age":       258e6,
-	"modern_age":       275e6,
-	"information_age":  293e6,
-	"digital_age":      449e6,
-	"cyberpunk_age":    449e6,
-	"fusion_age":       489e6,
-	"space_age":        489e6,
-	"interstellar_age": 489e6,
-	"galactic_age":     489e6,
-	"quantum_age":      486e6,
-	"transcendent_age": 486e6,
+	"modern_age":       190e6,
+	"information_age":  290e6,
+	"digital_age":      500e6,
+	"cyberpunk_age":    650e6,
+	"fusion_age":       850e6,
+	"space_age":        940e6,
+	"interstellar_age": 970e6,
+	"galactic_age":     1.05e9,
+	"quantum_age":      1.1e9,
+	"transcendent_age": 1.15e9,
 }
 
 // AgeKnowledge is the knowledge age makes in its target time:
@@ -710,11 +772,23 @@ func MarketRate(from, to, age string) (float64, bool) {
 
 // MarketRateAt is MarketRate against the listed pairs (keyed "from:to") and
 // an age's price levels.
+//
+// A listed pair is closed in an age that prices what it buys and not what
+// it takes (a flow resource aside, which no age prices). The typed rate of
+// a listed pair is for goods the age does not build with; what an age does
+// build with it sells for its other construction resources, at parity.
+// Gold is the case: the Information Age's hubs make it by the hundreds of
+// millions, no age after builds with it, and at the typed 0.15 data and
+// 0.04 crypto a gold it bought the Digital and Cyberpunk Ages about as
+// much data again as they made.
 func MarketRateAt(from, to string, listed map[string]ExchangeRateDef, lv map[string]float64) (float64, bool) {
 	if from == to {
 		return 0, false
 	}
 	if def, ok := listed[from+":"+to]; ok {
+		if listedPairClosed(def, lv) {
+			return 0, false
+		}
 		return ExchangeRateAt(def, lv), true
 	}
 	if lv[from] > 0 && lv[to] > 0 {
@@ -723,9 +797,17 @@ func MarketRateAt(from, to string, listed map[string]ExchangeRateDef, lv map[str
 	return 0, false
 }
 
+// listedPairClosed reports whether a listed pair does not trade in an age
+// with price levels lv: the age prices what the pair buys and not what it
+// takes, and what it takes is not a flow resource (see MarketRateAt).
+func listedPairClosed(def ExchangeRateDef, lv map[string]float64) bool {
+	return lv[def.To] > 0 && lv[def.From] <= 0 && !flowResources[def.From]
+}
+
 // MarketPairs lists what the market offers in age: every listed pair whose
-// MinAge has been reached, plus every ordered pair of the age's construction
-// resources, each with its rate for age as BaseRate. Sorted by from, then to.
+// MinAge has been reached and that the age has not closed (MarketRateAt),
+// plus every ordered pair of the age's construction resources, each with
+// its rate for age as BaseRate. Sorted by from, then to.
 func MarketPairs(age string) []ExchangeRateDef {
 	return MarketPairsAt(age, BaseExchangeRates(), AgePositions(AgeOrder()), PriceLevels(age))
 }
@@ -736,7 +818,7 @@ func MarketPairsAt(age string, listed []ExchangeRateDef, pos map[string]int, lv 
 	seen := map[string]bool{}
 	var out []ExchangeRateDef
 	for _, def := range listed {
-		if pos[def.MinAge] > pos[age] {
+		if pos[def.MinAge] > pos[age] || listedPairClosed(def, lv) {
 			continue
 		}
 		def.BaseRate = ExchangeRateAt(def, lv)

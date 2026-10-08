@@ -137,10 +137,10 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 // there).
 func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {1300000000, 20000000000, 2.1e16, 2.7e16},
-		"galactic_age":     {2600000000, 42000000000, 4.7e17, 2.8e16},
-		"quantum_age":      {5400000000, 89000000000, 4.9e17, 2.9e16},
-		"transcendent_age": {5900000000, 97000000000, 5.3e17, 3.2e16},
+		"interstellar_age": {1300000000, 20000000000, 1.1e+16, 1.6e+16},
+		"galactic_age":     {2600000000, 42000000000, 1.4e+17, 1.7e+16},
+		"quantum_age":      {5400000000, 89000000000, 1.4e+17, 1.8e+16},
+		"transcendent_age": {5900000000, 97000000000, 1.6e+17, 1.9e+16},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -246,11 +246,11 @@ func TestLastPassageChoice(t *testing.T) {
 	first := ages[0]
 	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
 	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
-	if math.Abs(braceHours-21.7) > 0.05 || math.Abs(appeaseHours-32.9) > 0.05 {
-		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.7 and 32.9", first, braceHours, appeaseHours)
+	if math.Abs(braceHours-22.5) > 0.05 || math.Abs(appeaseHours-32.9) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 22.5 and 32.9", first, braceHours, appeaseHours)
 	}
-	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.661) > 0.005 {
-		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.661", first, ratio)
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.686) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.686", first, ratio)
 	}
 
 	// The faith band moves the odds, not the choice: both savings scale with
