@@ -146,10 +146,16 @@ func (ge *GameEngine) doomInvited(era string) bool {
 
 // ----- production -----
 
-// noteProduced adds what the tick's rates produce to the batch, and sends
-// the batch every config.BadgeProducedTicks ticks. Only a held account
-// counts production, so a game without one does no work here. scale is the
-// ticks the rates stand for (1 on a live tick).
+// noteProduced adds what the rates produce to the batch, and sends the
+// batch every config.BadgeProducedTicks ticks. Only a held account counts
+// production, so a game without one does no work here. scale is the ticks
+// the rates stand for (1 on a live tick; the time away, at its efficiency,
+// offline).
+//
+// What counts is what was made, whether or not there was room to store it:
+// a rate is the sum of what buildings, workers and techs produce. Food's
+// rate alone has something taken off it, what the people eat, and that is
+// put back: a town that eats what it grows has still grown it.
 func (ge *GameEngine) noteProduced(scale float64) {
 	if ge.account == nil || ge.badges == nil || !ge.badges.countsProduction {
 		return
@@ -158,8 +164,17 @@ func (ge *GameEngine) noteProduced(scale float64) {
 		ge.produced = make(map[string]float64, len(ge.Resources.order))
 	}
 	for _, key := range ge.Resources.order {
-		if r := ge.Resources.resources[key]; r.Rate > 0 && ge.Resources.unlocked[key] {
-			ge.produced[key] += float64(r.Rate * scale)
+		r := ge.Resources.resources[key]
+		if !ge.Resources.unlocked[key] {
+			continue
+		}
+		made := r.Rate
+		if r.Breakdown.FoodDrain < 0 {
+			// The drain is taken off before Era Mastery scales the rate.
+			made -= float64(r.Breakdown.FoodDrain * ge.speedK())
+		}
+		if made > 0 {
+			ge.produced[key] += float64(made * scale)
 		}
 	}
 	if ge.tick-ge.producedTick >= config.BadgeProducedTicks {
@@ -170,6 +185,9 @@ func (ge *GameEngine) noteProduced(scale float64) {
 // flushProduced reports the batch and empties it.
 func (ge *GameEngine) flushProduced() {
 	ge.producedTick = ge.tick
+	if ge.produced == nil {
+		return
+	}
 	for _, key := range ge.Resources.order {
 		if n := ge.produced[key]; n > 0 {
 			ge.produced[key] = 0

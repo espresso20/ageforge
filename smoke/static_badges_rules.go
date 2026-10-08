@@ -116,7 +116,7 @@ func (c *badgeCheck) moreRules(def config.BadgeDef, label string, r *BadgeReach)
 		r.Need, r.Limit = def.Threshold, limit
 		r.Basis = fmt.Sprintf("%d%% of the %s %s slots %s's buildings hold", int(config.BadgeStaffShare*100), grouped(slots), def.Subject, where)
 		switch {
-		case def.Counter != "ev.staffed."+def.Subject || def.Event != config.BadgeEvCensus:
+		case def.Counter != "ev.staffed."+def.Subject || def.Event != config.BadgeEvCensus || !def.AnySubject:
 			c.fail(def.Key, "staffing", fmt.Sprintf("%s must count the census's workers in its own domain.", label))
 		case def.Threshold <= 0 || def.Threshold > limit:
 			c.fail(def.Key, "staffing", fmt.Sprintf("%s needs %s workers in %s, and may ask for at most %s (%s).", label, grouped(int(def.Threshold)), def.Subject, grouped(int(limit)), r.Basis))
@@ -136,9 +136,6 @@ func (c *badgeCheck) moreRules(def config.BadgeDef, label string, r *BadgeReach)
 		if strings.TrimSpace(def.Proof.Why) == "" {
 			c.fail(def.Key, "occurs", fmt.Sprintf("%s says only that it can happen. Say why a player can bring it about (config.Occurs).", label))
 		}
-		if why := c.subjectMissing(def); why != "" {
-			c.fail(def.Key, "existence", fmt.Sprintf("%s %s, so it can never be earned.", label, why))
-		}
 
 	default:
 		return false
@@ -146,17 +143,66 @@ func (c *badgeCheck) moreRules(def config.BadgeDef, label string, r *BadgeReach)
 	return true
 }
 
-// subjectMissing checks the subject of a badge that rests on "the game
-// does this" against the game's tables, and says what is missing ("" when
-// nothing is).
+// subjectMissing checks the subject of a badge judged on an event against
+// what that event is about, and says what is wrong ("" when nothing is): a
+// subject the game does not have, or a subject on an event that has none.
+// Either way the event would never match the row, and the badge could
+// never be earned. A row that sets AnySubject is not held to its event's
+// subject, so it is not checked here.
 func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
-	if def.Subject == "" {
+	if def.Subject == "" || def.AnySubject {
+		return ""
+	}
+	building := func() string {
+		if _, ok := c.m.defs[def.Subject]; !ok {
+			return fmt.Sprintf("names the building %q, which does not exist", def.Subject)
+		}
 		return ""
 	}
 	switch def.Event {
-	case config.BadgeEvCivMet, config.BadgeEvCivAllied, config.BadgeEvWarEnded, config.BadgeEvWarStarted, config.BadgeEvWorkersLent:
+	case config.BadgeEvBuildingBuilt, config.BadgeEvBuilt, config.BadgeEvBuildingSold, config.BadgeEvBuildingUpgraded:
+		return building()
+	case config.BadgeEvWonderRaised, config.BadgeEvWonderBanked:
+		for _, a := range c.m.ages {
+			if c.set.Wonder(a.Key) == def.Subject {
+				return ""
+			}
+		}
+		return fmt.Sprintf("names the wonder %q, which is no age's wonder", def.Subject)
+	case config.BadgeEvBuiltLineage:
+		for _, d := range c.m.defs {
+			if d.LineageKey == def.Subject {
+				return ""
+			}
+		}
+		return fmt.Sprintf("names the lineage %q, which no building belongs to", def.Subject)
+	case config.BadgeEvResearchDone, config.BadgeEvMemoryAccepted, config.BadgeEvMemoryDeclined:
+		if _, ok := c.set.Tech(def.Subject); !ok {
+			return fmt.Sprintf("names the tech %q, which does not exist", def.Subject)
+		}
+	case config.BadgeEvMilestone:
+		if _, ok := c.set.Milestone(def.Subject); !ok {
+			return fmt.Sprintf("names the milestone %q, which does not exist", def.Subject)
+		}
+	case config.BadgeEvChain:
+		for _, ch := range c.set.MilestoneChains() {
+			if ch.Key == def.Subject {
+				return ""
+			}
+		}
+		return fmt.Sprintf("names the milestone chain %q, which does not exist", def.Subject)
+	case config.BadgeEvGathered, config.BadgeEvBlackMarket, config.BadgeEvMarketTrade, config.BadgeEvProduced:
+		if _, ok := c.m.resAge[def.Subject]; !ok {
+			return fmt.Sprintf("names the resource %q, which does not exist", def.Subject)
+		}
+	case config.BadgeEvCivMet, config.BadgeEvCivAllied, config.BadgeEvWarEnded, config.BadgeEvWarStarted,
+		config.BadgeEvWorkersLent, config.BadgeEvGiftSent, config.BadgeEvDeal:
 		if _, ok := c.set.Faction(def.Subject); !ok {
 			return fmt.Sprintf("names the civilization %q, which does not exist", def.Subject)
+		}
+	case config.BadgeEvCivStatus:
+		if !slices.Contains([]string{"friendly", "allied", "embargo", "neutral"}, def.Subject) {
+			return fmt.Sprintf("names the standing %q, which no civilization takes", def.Subject)
 		}
 	case config.BadgeEvHarbingerMet, config.BadgeEvAppeased, config.BadgeEvBraced, config.BadgeEvInvited:
 		for _, a := range c.m.ages {
@@ -165,9 +211,18 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 			}
 		}
 		return fmt.Sprintf("names the harbinger %q, which does not exist", def.Subject)
-	case config.BadgeEvEndured, config.BadgeEvSuccumbed:
+	case config.BadgeEvHarbingerResolved:
+		verdicts := []string{game.HarbingerOutcomeFulfilled, game.HarbingerOutcomeVindicated, game.HarbingerOutcomeSpared, game.HarbingerOutcomeDiscredited}
+		if !slices.Contains(verdicts, def.Subject) {
+			return fmt.Sprintf("names the verdict %q, which no thread ends in (%v)", def.Subject, verdicts)
+		}
+	case config.BadgeEvEndured, config.BadgeEvSuccumbed, config.BadgeEvDoomNamed:
 		if !c.set.CatastropheAllowed(def.Subject) {
 			return fmt.Sprintf("asks for a doom in the era %q, where none can strike", def.Subject)
+		}
+	case config.BadgeEvEraLeft:
+		if _, ok := c.set.Era(def.Subject); !ok {
+			return fmt.Sprintf("names the era %q, which does not exist", def.Subject)
 		}
 	case config.BadgeEvExpedition:
 		order := c.set.Indexes()
@@ -187,6 +242,13 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 			}
 		}
 		return fmt.Sprintf("names the awakening %q, which does not exist", def.Subject)
+	case config.BadgeEvEraEvent:
+		for _, e := range append(c.set.GoodEraEvents(), c.set.ChallengingEraEvents()...) {
+			if e.Type == def.Subject {
+				return ""
+			}
+		}
+		return fmt.Sprintf("names the kind of era event %q, which none is", def.Subject)
 	case config.BadgeEvAdvancedTheme:
 		if _, ok := theme.ByKey(def.Subject); !ok {
 			return fmt.Sprintf("names the theme %q, which does not exist", def.Subject)
@@ -203,10 +265,28 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 		if !slices.Contains([]string{"endured", "succumbed", "spared"}, def.Subject) {
 			return fmt.Sprintf("asks for the Last Passage to end %q, which it cannot", def.Subject)
 		}
-	case config.BadgeEvAgeReached:
+	case config.BadgeEvAgeReached, config.BadgeEvPrestige, config.BadgeEvLegacyPrestige:
 		if _, ok := c.m.idx[def.Subject]; !ok {
 			return fmt.Sprintf("asks for the age %q, which does not exist", def.Subject)
 		}
+	case config.BadgeEvUpgradeBought, config.BadgeEvKit:
+		if !slices.Contains(c.set.LegacyKit(), def.Subject) {
+			return fmt.Sprintf("names the legacy kit item %q, which does not exist", def.Subject)
+		}
+	case config.BadgeEvBadge:
+		// The event's subject is the family of the badge just earned.
+		for _, d := range c.set.Badges() {
+			if d.Family == def.Subject {
+				return ""
+			}
+		}
+		return fmt.Sprintf("names the badge family %q, which has no badge", def.Subject)
+	case config.BadgeEvVisitor:
+		// The map's own word for what was looked at: not checked here.
+	default:
+		// Everything else is reported with no subject: a row that names
+		// one would wait for a subject that never comes.
+		return fmt.Sprintf("names the subject %q, but the event %q is reported with none (set AnySubject if the badge is about %q and judged on every %s)", def.Subject, def.Event, def.Subject, def.Event)
 	}
 	return ""
 }

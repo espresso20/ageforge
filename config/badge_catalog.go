@@ -191,8 +191,11 @@ func BadgeFamilies() []BadgeFamilyDef {
 				"transcendent_age": 27,
 			},
 			RevealAtAge: true,
-			Proof:       StaticProof(BadgeRuleAgeCopies),
-			Emblem:      "hall",
+			// Judged as each building finishes: the event is about the
+			// building, the badge about its age.
+			AnySubject: true,
+			Proof:      StaticProof(BadgeRuleAgeCopies),
+			Emblem:     "hall",
 		},
 		// F5. Every tech of an age, in one run.
 		{
@@ -202,8 +205,11 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Scope: BadgeRun, Event: BadgeEvResearchDone, Counter: "researched_age.{key}",
 			Measure:     BadgeMeasureTechs,
 			RevealAtAge: true,
-			Proof:       StaticProof(BadgeRuleTechs),
-			Emblem:      "knowledge",
+			// Judged as each tech finishes: the event is about the tech, the
+			// badge about its age.
+			AnySubject: true,
+			Proof:      StaticProof(BadgeRuleTechs),
+			Emblem:     "knowledge",
 		},
 		// F6. A lineage's buildings across every run (appendix A: a
 		// quarter of a run, one, four, ten and twenty-five runs).
@@ -248,10 +254,12 @@ func BadgeFamilies() []BadgeFamilyDef {
 				"metallurgy": {150, 290}, "energy": {76, 150}, "hacker": {260, 520},
 			},
 			RevealBySubject: true,
-			Proof:           StaticProof(BadgeRuleStaffing),
-			Ladder:          "{name}",
-			Emblem:          "lineage.{key}",
-			Emblems:         map[string]string{"lumber": "lineage.organic_extraction", "masonry": "lineage.geological_extraction"},
+			// The census has no subject: it carries every domain's count.
+			AnySubject: true,
+			Proof:      StaticProof(BadgeRuleStaffing),
+			Ladder:     "{name}",
+			Emblem:     "lineage.{key}",
+			Emblems:    map[string]string{"lumber": "lineage.organic_extraction", "masonry": "lineage.geological_extraction"},
 		},
 		// F8. A resource produced across every run (appendix B: a quarter
 		// of a run, one, five and twenty-five runs; a resource that comes

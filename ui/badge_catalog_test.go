@@ -15,6 +15,7 @@ import (
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/all"
 )
 
 // The full catalog on the case: the hand-drawn legendary badges, the
@@ -429,5 +430,54 @@ func TestBadgeThemesSayHowTheyAreEarned(t *testing.T) {
 	}
 	if !acct.HasTheme("bronze") {
 		t.Fatal("reaching the Bronze Age did not unlock Bronze")
+	}
+}
+
+// TestBadgeLooksMatchTheGame: the themes, map styles and glyph sets the
+// catalog has a badge for are the ones the game has, and each theme a
+// badge gives is given by the badge the catalog says.
+func TestBadgeLooksMatchTheGame(t *testing.T) {
+	set := rules.Core()
+	listed := map[string]config.BadgeThemeDef{}
+	for _, th := range config.BadgeThemes() {
+		listed[th.Key] = th
+	}
+	for _, th := range theme.All() {
+		row, ok := listed[th.Key]
+		if !ok {
+			t.Errorf("the theme %s has no row in the catalog's table (config.BadgeThemes)", th.Key)
+			continue
+		}
+		if row.Name != th.Name || row.Badge != th.UnlockBadge {
+			t.Errorf("the theme %s: the catalog says %q, given by %q; the registry says %q, given by %q", th.Key, row.Name, row.Badge, th.Name, th.UnlockBadge)
+		}
+		if _, ok := set.Badge("theme." + th.Key); !ok {
+			t.Errorf("no badge for advancing in the theme %s", th.Key)
+		}
+		delete(listed, th.Key)
+	}
+	for key := range listed {
+		t.Errorf("the catalog lists the theme %s, which the game does not have", key)
+	}
+	reg := all.Registry()
+	for _, style := range config.BadgeMapStyles {
+		if _, ok := reg.New(style); !ok {
+			t.Errorf("the catalog names the map style %q, which the game does not have", style)
+		}
+	}
+	if got := reg.Names(); len(got) != len(config.BadgeMapStyles) {
+		t.Errorf("the game has the map styles %v; the catalog has badges for %v", got, config.BadgeMapStyles)
+	}
+	var tiers []string
+	for _, tier := range caseTiers {
+		tiers = append(tiers, tier.String())
+	}
+	for _, g := range config.BadgeMapGlyphs {
+		if !sliceContains(tiers, g) {
+			t.Errorf("the catalog names the glyph set %q; the game has %v", g, tiers)
+		}
+	}
+	if len(tiers) != len(config.BadgeMapGlyphs) {
+		t.Errorf("the game has the glyph sets %v; the catalog has badges for %v", tiers, config.BadgeMapGlyphs)
 	}
 }

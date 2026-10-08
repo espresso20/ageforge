@@ -408,6 +408,8 @@ func (c *badgeCheck) exists(def config.BadgeDef, label string) {
 	default:
 		if !slices.Contains(c.events, def.Event) {
 			miss(fmt.Sprintf("is judged on the event %q, which the game does not report", def.Event))
+		} else if why := c.subjectMissing(def); why != "" {
+			miss(why)
 		}
 		if def.Counter != "" {
 			if def.Scope == config.BadgeMoment {

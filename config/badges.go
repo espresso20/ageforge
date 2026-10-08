@@ -628,10 +628,17 @@ type BadgeDef struct {
 	// "special".
 	Family string
 	// Subject is the config key the badge is about. For a Run or Moment
-	// badge the event's subject must equal it ("" matches any).
+	// badge the event's subject must equal it ("" matches any), unless
+	// AnySubject is set.
 	Subject string
-	Name    string
-	Desc    string
+	// AnySubject: the badge is about Subject, and the event it is judged on
+	// is about something else (an age's buildings are counted as each
+	// building of it finishes; the census has no subject at all). The
+	// event's subject is not held to Subject; the row's counter and
+	// conditions name what is read.
+	AnySubject bool
+	Name       string
+	Desc       string
 	// Hint is the one line a secret badge shows until it is earned.
 	Hint   string
 	Tier   BadgeTier
@@ -827,6 +834,8 @@ type BadgeFamilyDef struct {
 	// reached, whatever its table's usual rule (an age's badge otherwise
 	// shows one age early).
 	RevealAtAge bool
+	// AnySubject is BadgeDef.AnySubject for every badge of the family.
+	AnySubject bool
 }
 
 // BadgeEraTiers is the tier of a badge about an age, by its era's order:

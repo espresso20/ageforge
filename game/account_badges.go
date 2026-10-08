@@ -296,7 +296,7 @@ func (a *Account) countLocked(book *badgeBook, name string, n float64, ctx badge
 
 // meetsLocked reports whether a Run or Moment badge's row holds for an event.
 func (a *Account) meetsLocked(def *config.BadgeDef, ev Event, ctx badgeCtx) bool {
-	if def.Subject != "" && def.Subject != ev.Subject {
+	if def.Subject != "" && !def.AnySubject && def.Subject != ev.Subject {
 		return false
 	}
 	if def.InAge != "" && def.InAge != ctx.age {

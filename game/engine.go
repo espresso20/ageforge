@@ -4789,6 +4789,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		}
 		w := ge.overflowWonder()
 		losses := ge.overflowScratch[:0]
+		ge.noteProduced(float64(n) * OfflineEfficiency)
 		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
 			func(res string, g float64) { gains[res] += g },
 			func(res string, lost float64) {
@@ -4829,14 +4830,11 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.harbingerTickCheck()
 	}
 	ge.away = false
-	// What the time away produced, and the return: how long, whether the
-	// allowance cut it short, what the build plan started and what it has
-	// left.
-	if ge.account != nil && ge.badges.countsProduction {
-		for _, res := range sortedKeys(gains) {
-			ge.tell(Event{Kind: config.BadgeEvProduced, Subject: res, N: gains[res]})
-		}
-	}
+	// What the time away produced is counted as it is on a live tick
+	// (noteProduced, above); the last batch goes now. Then the return: how
+	// long, whether the allowance cut it short, what the build plan started
+	// and what it has left.
+	ge.flushProduced()
 	ge.report(Event{Kind: config.BadgeEvReturned, Attrs: map[string]float64{
 		"ticks": float64(offlineTicks), "capped": boolFact(capped),
 		"plan_started": ge.runFacts.Counts[config.BadgeEvPlanStarted] - planStartsBefore,
