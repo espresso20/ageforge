@@ -265,7 +265,7 @@ func TestLastPassageChoice(t *testing.T) {
 
 	// The prices this replaced fail it: Brace at the era's price, which the
 	// Reality Tear's thread keeps, and Appease on the whole age.
-	oldBrace := incomeHours(t, harbingerBraceCost("cosmic_era", 1), first)
+	oldBrace := incomeHours(t, eraBraceCost("cosmic_era", 1), first)
 	oldAppease := incomeHours(t, warningAppeaseCostIn(rules.Core(), "cosmic_era", first, config.AgeTargetTicks(first), 1), first)
 	oldRatio := valueRatio(oldAppease, oldBrace)
 	t.Logf("the old prices: Brace 1 %.4f h, Appease 1 %.1f h; ratio 1 to %.0f", oldBrace, oldAppease, 1/oldRatio)
@@ -280,13 +280,12 @@ func TestLastPassageChoice(t *testing.T) {
 // makes.
 const secondLevelMinRatio = 0.5
 
-// In the final era, whose two threads are priced on their warnings, a second
-// level is worth buying: level 2 of Brace and of Appease, on the Last
-// Passage's thread and on the Reality Tear's, each save at least half as
-// much per hour of income as that answer's level 1 does when bought first.
-// They cost the same again as level 1. At double, which every other era's
-// level 2 still costs, three of the four fall short (logged at the end, with
-// an ordinary doom's figures).
+// A second level is worth buying, in every thread: level 2 of Brace and of
+// Appease, on the Last Passage's thread, on the Reality Tear's and on an
+// ordinary doom's, each save at least half as much per hour of income as
+// that answer's level 1 does when bought first. They cost the same again as
+// level 1. At double, which level 2 cost outside the final era until the
+// ordinary Brace rule, three of the five fall short.
 func TestSecondLevelsWorthBuying(t *testing.T) {
 	const mid = 0.5
 	// What each level saves. The Last Passage: the expected share of the
@@ -303,23 +302,15 @@ func TestSecondLevelsWorthBuying(t *testing.T) {
 	type answer struct {
 		name  string
 		saves [2]float64 // level 1 bought first, then level 2
-		cost  func(age string, level int) map[string]float64
-	}
-	lpAppease := func(age string, level int) map[string]float64 {
-		return lastPassageAppeaseCost("cosmic_era", age, level)
-	}
-	lpBrace := func(age string, level int) map[string]float64 { return lastPassageBraceCost("cosmic_era", age, level) }
-	tearAppease := func(age string, level int) map[string]float64 { return doomAppeaseCost("cosmic_era", age, level) }
-	tearBrace := func(age string, level int) map[string]float64 { return doomBraceCost("cosmic_era", age, level) }
-	answers := []answer{
-		{"the Last Passage's Brace", [2]float64{loss(0, 0) - loss(0, 1), loss(0, 1) - loss(0, 2)}, lpBrace},
-		{"the Last Passage's Appease", [2]float64{loss(0, 0) - loss(1, 0), loss(1, 0) - loss(2, 0)}, lpAppease},
-		{"the Reality Tear's Brace, buildings", [2]float64{endure(0).DestroyPct - endure(1).DestroyPct, endure(1).DestroyPct - endure(2).DestroyPct}, tearBrace},
-		{"the Reality Tear's Brace, stock", [2]float64{endure(1).KeepFrac - endure(0).KeepFrac, endure(2).KeepFrac - endure(1).KeepFrac}, tearBrace},
-		{"the Reality Tear's Appease", [2]float64{strike(0) - strike(1), strike(1) - strike(2)}, tearAppease},
 	}
 	// What the effects alone give, level 2 over level 1: the ratio at the
 	// same price. At double the price it halves.
+	lpBrace := answer{"the Last Passage's Brace", [2]float64{loss(0, 0) - loss(0, 1), loss(0, 1) - loss(0, 2)}}
+	lpAppease := answer{"the Last Passage's Appease", [2]float64{loss(0, 0) - loss(1, 0), loss(1, 0) - loss(2, 0)}}
+	doomBuildings := answer{"a doom's Brace, buildings", [2]float64{endure(0).DestroyPct - endure(1).DestroyPct, endure(1).DestroyPct - endure(2).DestroyPct}}
+	doomStock := answer{"a doom's Brace, stock", [2]float64{endure(1).KeepFrac - endure(0).KeepFrac, endure(2).KeepFrac - endure(1).KeepFrac}}
+	doomAppease := answer{"a doom's Appease", [2]float64{strike(0) - strike(1), strike(1) - strike(2)}}
+	answers := []answer{lpBrace, lpAppease, doomBuildings, doomStock, doomAppease}
 	wantEffect := []float64{0.75, 0.6, 1, 1, 0.6}
 	for i, a := range answers {
 		if a.saves[0] <= 0 || a.saves[1] <= 0 {
@@ -329,23 +320,50 @@ func TestSecondLevelsWorthBuying(t *testing.T) {
 			t.Errorf("%s: level 2 saves %.3f of what level 1 does, want %v", a.name, got, wantEffect[i])
 		}
 	}
-	for _, age := range epochAges(t, "cosmic_era") {
-		for _, a := range answers {
-			h1, h2 := incomeHours(t, a.cost(age, 1), age), incomeHours(t, a.cost(age, 2), age)
-			ratio := (a.saves[1] / h2) / (a.saves[0] / h1)
-			if ratio < secondLevelMinRatio {
-				t.Errorf("%s, foretold in %s: level 2 (%.1f h of income) saves %.2fx what level 1 (%.1f h) does per hour, want at least %vx", a.name, age, h2, ratio, h1, secondLevelMinRatio)
-			}
-			if h2 != h1 {
-				t.Errorf("%s, foretold in %s: level 2 takes %.2f h of income and level 1 %.2f h; in the final era they cost the same", a.name, age, h2, h1)
-			}
-			if age == "interstellar_age" {
-				t.Logf("%s: level 1 %.1f h, level 2 %.1f h more; level 2 saves %.2fx what level 1 does per hour (%.2fx at double the price)", a.name, h1, h2, ratio, ratio/2)
+	// Every thread a run can meet, at the prices of every age its harbinger
+	// can arrive in.
+	type priced struct {
+		answer
+		cost func(age string, level int) map[string]float64
+	}
+	checked := 0
+	for _, ep := range config.Epochs() {
+		if !config.FateAllowed(ep.Key) {
+			continue
+		}
+		epoch := ep.Key
+		threads := []priced{
+			{doomBuildings, func(age string, level int) map[string]float64 { return doomBraceCost(epoch, age, level) }},
+			{doomStock, func(age string, level int) map[string]float64 { return doomBraceCost(epoch, age, level) }},
+			{doomAppease, func(age string, level int) map[string]float64 { return doomAppeaseCost(epoch, age, level) }},
+		}
+		if config.IsFinalEpoch(epoch) {
+			threads = append(threads,
+				priced{lpBrace, func(age string, level int) map[string]float64 { return lastPassageBraceCost(epoch, age, level) }},
+				priced{lpAppease, func(age string, level int) map[string]float64 { return lastPassageAppeaseCost(epoch, age, level) }})
+		}
+		for _, age := range ep.Ages {
+			for _, a := range threads {
+				checked++
+				h1, h2 := incomeHours(t, a.cost(age, 1), age), incomeHours(t, a.cost(age, 2), age)
+				ratio := (a.saves[1] / h2) / (a.saves[0] / h1)
+				if ratio < secondLevelMinRatio {
+					t.Errorf("%s, foretold in %s: level 2 (%.1f h of income) saves %.2fx what level 1 (%.1f h) does per hour, want at least %vx", a.name, age, h2, ratio, h1, secondLevelMinRatio)
+				}
+				if h2 != h1 {
+					t.Errorf("%s, foretold in %s: level 2 takes %.2f h of income and level 1 %.2f h; they cost the same", a.name, age, h2, h1)
+				}
+				if age == "interstellar_age" || age == "victorian_age" {
+					t.Logf("%s, foretold in %s: level 1 %.1f h, level 2 %.1f h more; level 2 saves %.2fx what level 1 does per hour (%.2fx at double the price)", a.name, age, h1, h2, ratio, ratio/2)
+				}
 			}
 		}
 	}
+	if checked == 0 {
+		t.Fatal("no thread checked")
+	}
 	// At double the price the bar catches the Last Passage's Brace and both
-	// threads' Appease; a doom's Brace sits exactly on it.
+	// kinds of Appease; a doom's Brace sits exactly on it.
 	short := 0
 	for i := range answers {
 		if wantEffect[i]/2 < secondLevelMinRatio {
@@ -355,26 +373,89 @@ func TestSecondLevelsWorthBuying(t *testing.T) {
 	if short != 3 {
 		t.Errorf("at double the price %d of the %d second levels fall short of %v, want 3: the test would not have caught the old prices", short, len(answers), secondLevelMinRatio)
 	}
+}
 
-	// Every other era's level 2 still costs double: Appease level 2 saves
-	// 0.3 of what level 1 does per hour, and Brace level 2 a half.
-	for _, c := range []struct {
-		name         string
-		cost1, cost2 map[string]float64
-		effect       float64
-	}{
-		{"an Electric Era doom's Appease", doomAppeaseCost("electric_era", "victorian_age", 1), doomAppeaseCost("electric_era", "victorian_age", 2), 0.6},
-		{"an Electric Era doom's Brace", doomBraceCost("electric_era", "victorian_age", 1), doomBraceCost("electric_era", "victorian_age", 2), 1},
-	} {
-		price := 0.0
-		for res, v := range c.cost1 {
-			price = math.Max(price, c.cost2[res]/v)
+// doomChoiceMinRatio is the least an ordinary doom's Appease level 1 may
+// save per hour of a moderate economy's income, as a share of what its
+// Brace level 1 saves per hour: the bar the Last Passage's choice is held
+// to (lastPassageChoiceMinRatio), for every other thread.
+const doomChoiceMinRatio = 0.5
+
+// An ordinary doom's two answers are a choice in every age its harbinger
+// can arrive in. Appease level 1 takes two fifths off the chance the doom
+// strikes, so it saves two fifths of whatever an Endure would cost. Brace
+// level 1 softens the Endure itself: a quarter of the buildings that would
+// fall stand, and 15 points more of every stock are kept (0.176 of what
+// would be lost). Appease is the dearer (three quarters of the warning
+// against a third), and still saves at least half as much per hour of
+// income as Brace does on either count. Brace used to cost seconds of
+// income from an era's second age on, which made the ratio thousands to
+// one.
+func TestOrdinaryDoomChoice(t *testing.T) {
+	const mid = 0.5
+	ge := catEngine(t, "iron_age", 1)
+	e0, e1 := ge.endurePreview(0, ge.age), ge.endurePreview(1, ge.age)
+	if e0.Garrison != 0 {
+		t.Fatalf("the test engine has a garrison (%v)", e0.Garrison)
+	}
+	// As shares of what an unanswered Endure costs.
+	appeaseSaves := 1 - StrikeChanceAt(mid, 1)/StrikeChanceAt(mid, 0)
+	braceBuildings := (e0.DestroyPct - e1.DestroyPct) / e0.DestroyPct
+	braceStock := (e1.KeepFrac - e0.KeepFrac) / (1 - e0.KeepFrac)
+	if math.Abs(appeaseSaves-0.4) > 1e-9 || math.Abs(braceBuildings-0.25) > 1e-9 || math.Abs(braceStock-0.15/0.85) > 1e-9 {
+		t.Fatalf("level 1 saves: Appease %v of the loss, Brace %v of the buildings and %v of the stock; want 0.4, 0.25 and 0.176", appeaseSaves, braceBuildings, braceStock)
+	}
+	braceSaves := math.Max(braceBuildings, braceStock)
+	checked := 0
+	for _, ep := range config.Epochs() {
+		if !config.FateAllowed(ep.Key) || config.IsFinalEpoch(ep.Key) {
+			continue
 		}
-		t.Logf("%s (not held to the bar): level 2 costs %.0fx level 1 and saves %.2fx what it does per hour", c.name, price, c.effect/price)
-		if price != 2 {
-			t.Errorf("%s: level 2 costs %vx level 1; an ordinary doom's still costs double", c.name, price)
+		for _, age := range ep.Ages {
+			checked++
+			appeaseHours := incomeHours(t, doomAppeaseCost(ep.Key, age, 1), age)
+			braceHours := incomeHours(t, doomBraceCost(ep.Key, age, 1), age)
+			ratio := (appeaseSaves / appeaseHours) / (braceSaves / braceHours)
+			if age == ep.Ages[0] {
+				t.Logf("%s: Brace 1 is %.2f h of income, Appease 1 %.2f h; Appease 1 saves %.2fx what Brace 1 does per hour", age, braceHours, appeaseHours, ratio)
+			}
+			if appeaseHours <= braceHours {
+				t.Errorf("%s: Appease level 1 takes %.2f h of income, Brace level 1 %.2f h: Appease must stay the dearer", age, appeaseHours, braceHours)
+			}
+			if ratio < doomChoiceMinRatio {
+				t.Errorf("%s: Appease level 1 saves %.2fx what Brace level 1 does per hour of income (%.2f h against %.2f h), want at least %vx", age, ratio, appeaseHours, braceHours, doomChoiceMinRatio)
+			}
+			// The warning pays for Brace: a third of it, give or take the
+			// rounding up to two figures.
+			warning := harbingerLeadMin * config.AgeTargetTicks(age) * config.TickSeconds / 3600
+			if share := braceHours / warning; share < ordinaryDoomBraceShare || share > 1.1*ordinaryDoomBraceShare {
+				t.Errorf("%s: Brace level 1 takes %.2f of the shortest warning (%.2f h of %.2f), want a third", age, share, braceHours, warning)
+			}
+			// The old price fails the bar from the era's second age on.
+			if age != ep.Ages[0] {
+				oldHours := incomeHoursOfMade(eraBraceCost(ep.Key, 1), age)
+				if old := (appeaseSaves / appeaseHours) / (braceSaves / oldHours); old >= doomChoiceMinRatio {
+					t.Errorf("%s: the era's old price (%.4f h of income) gives a ratio of %.3f: the test would not have caught it", age, oldHours, old)
+				}
+			}
 		}
 	}
+	if checked == 0 {
+		t.Fatal("no age checked")
+	}
+}
+
+// incomeHoursOfMade is incomeHours over the resources of cost the age makes
+// at all: the old era price named some an age only buys.
+func incomeHoursOfMade(cost map[string]float64, age string) float64 {
+	slowest := 0.0
+	for res, c := range cost {
+		if rules.Core().BuildingOutput(res, age) <= 0 {
+			continue
+		}
+		slowest = math.Max(slowest, c/config.TypicalIncome(res, age))
+	}
+	return slowest * config.TickSeconds / 3600
 }
 
 // --- the outlook -------------------------------------------------------------------

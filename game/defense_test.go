@@ -2,6 +2,7 @@ package game
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"strings"
@@ -18,16 +19,29 @@ func giveSoldiers(ge *GameEngine, n float64) {
 	ge.Resources.Add("soldiers", n)
 }
 
-// soldiersFor returns how many soldiers blunt exactly half the cap (defense ==
-// threat) in age, with no military_power bonus.
+// soldiersFor returns how many soldiers match the threat of age with no
+// military_power bonus (defense == threat, which blunts half the cap): the
+// first whole number that does, since the threat follows the military
+// yardstick and is no longer a round figure.
 func soldiersFor(age string) float64 {
+	return math.Ceil(threatOf(age) / 2)
+}
+
+// threatOf is the raid threat of age.
+func threatOf(age string) float64 {
 	order := 0
 	for i, a := range config.AgeOrder() {
 		if a == age {
 			order = i
 		}
 	}
-	return config.AgeThreat(order) / 2
+	return config.AgeThreat(order)
+}
+
+// matched is what soldiersFor(age) soldiers blunt of a raid in age: half
+// the cap, give or take the last soldier.
+func matched(age string) float64 {
+	return config.DefenseMitigation(2*soldiersFor(age), threatOf(age))
 }
 
 func eventDef(t *testing.T, key string) config.EventDef {
@@ -106,8 +120,8 @@ func TestRaidMitigation_NoSoldiersIsZero(t *testing.T) {
 		t.Fatalf("no soldiers blunts %v, want 0", m)
 	}
 	giveSoldiers(ge, soldiersFor("iron_age"))
-	if m := ge.raidMitigation(); math.Abs(m-config.DefenseMitigationCap/2) > 1e-12 {
-		t.Fatalf("defense == threat blunts %v, want %v", m, config.DefenseMitigationCap/2)
+	if m := ge.raidMitigation(); math.Abs(m-matched("iron_age")) > 1e-12 || math.Abs(m-config.DefenseMitigationCap/2) > 1e-6 {
+		t.Fatalf("defense == threat blunts %v, want %v (half the cap)", m, matched("iron_age"))
 	}
 }
 
@@ -137,7 +151,7 @@ func TestRaidEvent_StealBluntedByGarrison(t *testing.T) {
 		t.Errorf("no garrison, yet a defense tally: %+v", ge0.Stats.Defense)
 	}
 	food1, gold1, ge1 := run(soldiersFor("iron_age"))
-	m := config.DefenseMitigationCap / 2
+	m := matched("iron_age")
 	for _, c := range []struct {
 		res       string
 		base, got float64
@@ -153,7 +167,7 @@ func TestRaidEvent_StealBluntedByGarrison(t *testing.T) {
 	if tally == nil || tally.Raids != 1 || math.Abs(tally.Resources["food"]-food0*m) > 1e-9 {
 		t.Errorf("defense tally = %+v, want 1 raid and %v food saved", tally, food0*m)
 	}
-	if !logHas(ge1, "Your garrison blunted about 22% of the raid") {
+	if !logHas(ge1, fmt.Sprintf("Your garrison blunted about %.0f%% of the raid", m*100)) {
 		t.Error("no log line saying what the garrison kept")
 	}
 }
@@ -219,7 +233,7 @@ func TestWarRaid_BluntedByGarrison(t *testing.T) {
 		t.Fatalf("undefended war raid took %v gold, want 200", base)
 	}
 	got, ge := run(soldiersFor("iron_age"))
-	if want := 200 * (1 - config.DefenseMitigationCap/2); math.Abs(got-want) > 1e-9 {
+	if want := 200 * (1 - matched("iron_age")); math.Abs(got-want) > 1e-9 {
 		t.Errorf("guarded war raid took %v gold, want %v", got, want)
 	}
 	if !logHas(ge, "Your garrison kept 45 gold") {

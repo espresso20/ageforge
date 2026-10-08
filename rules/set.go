@@ -102,6 +102,7 @@ type Set struct {
 	flowIncome  map[string]map[string]float64
 	typIncome   map[string]map[string]float64
 	flowBuilt   map[string]map[string]float64
+	built       map[string]map[string]float64
 
 	names  [numKinds]map[string]string
 	counts map[string]int

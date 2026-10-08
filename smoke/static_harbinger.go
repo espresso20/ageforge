@@ -2,6 +2,7 @@ package smoke
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -18,7 +19,7 @@ import (
 // that the thread's shortest warning makes), so a longer curve raises it
 // while faith and culture storage stay as typed; this is the check that
 // catches a curve change outgrowing storage. Level 2 is checked at its own
-// price: double level 1, or the same again in the final era.
+// price, the same again as level 1.
 //
 // The Appease rule check (StaticAppeaseRules) holds each level-1 Appease
 // price to the warning it is priced on: a moderate economy
@@ -27,13 +28,15 @@ import (
 // Passage, and the Last Passage's must cost more than a doom's foretold in
 // the same age.
 //
-// The Brace rule check (StaticBraceRules) holds every Brace that is priced
-// on its warning, the final era's two (the Last Passage's, which guards the
-// run's points, and its fated doom's), to real effort: level 1 must take a
-// moderate economy (config.TypicalIncome) at least WarningBraceMinHours of
-// income, and that economy must make every resource it asks for inside the
-// thread's shortest warning. An ordinary doom's Brace is priced on what its
-// era's advances ask and is not held to either.
+// The Brace rule check (StaticBraceRules) holds every thread's level-1
+// Brace, in every era, to real effort: it must take a moderate economy
+// (config.TypicalIncome) at least BraceMinWarningShare of the thread's
+// shortest warning, and in the final era (the Last Passage's, which guards
+// the run's points, and its fated doom's) at least WarningBraceMinHours of
+// income; that economy must make every resource it asks for inside the
+// warning; and every one must be a material the moderate economy's own
+// buildings make by the arrival age, not one the age buys at the market or
+// only a wonder trickles out.
 
 // HarbingerPriceProblem is one price no storage in its arrival age holds.
 type HarbingerPriceProblem struct {
@@ -152,24 +155,35 @@ func appeaseRuleProblems(rows []PriceRow, income func(res, age string) float64) 
 	return out
 }
 
-// WarningBraceMinHours is the least a level-1 Brace priced on its warning
-// may cost: the hours at 1x a moderate economy needs to make the slowest of
-// its resources. Both of the final era's were a share of the era's largest
-// age requirement, which the Interstellar Age makes in under 7 ticks.
+// WarningBraceMinHours is the least a level-1 Brace of the final era's two
+// threads may cost: the hours at 1x a moderate economy needs to make the
+// slowest of its resources. Both were once a share of the era's largest age
+// requirement, which the Interstellar Age makes in under 7 ticks.
 const WarningBraceMinHours = 10.0
+
+// BraceMinWarningShare is the least a level-1 Brace of any thread may cost,
+// as the share of the thread's shortest warning a moderate economy needs to
+// make the slowest of its resources. An ordinary doom's is priced at a
+// third of it; before that it was a share of what the era's advances ask,
+// which later ages make in seconds (the Electric Era's: 2 seconds of the
+// Atomic Age's income).
+const BraceMinWarningShare = 0.3
 
 // The rules a BraceRuleProblem can break.
 const (
 	// BraceRuleEffort: level 1 takes a moderate economy less than
+	// BraceMinWarningShare of the warning, or in the final era less than
 	// WarningBraceMinHours of income.
 	BraceRuleEffort = "effort"
 	// BraceRuleWarning: level 1 asks more of a resource than a moderate
 	// economy makes in the thread's shortest warning.
 	BraceRuleWarning = "warning"
+	// BraceRuleMaterial: level 1 asks for a resource no building of the
+	// moderate economy makes by the arrival age.
+	BraceRuleMaterial = "material"
 )
 
-// BraceRuleProblem is one level-1 Brace price, of a thread whose Brace is
-// priced on its warning, that breaks a pricing rule.
+// BraceRuleProblem is one level-1 Brace price that breaks a pricing rule.
 type BraceRuleProblem struct {
 	Epoch string `json:"epoch"`
 	// Age is the age the thread's harbinger arrives in.
@@ -181,9 +195,13 @@ type BraceRuleProblem struct {
 	Resource string  `json:"resource"`
 	Price    float64 `json:"price"`
 	// Limit is what the price is held to: what a moderate economy makes of
-	// the resource in WarningBraceMinHours (BraceRuleEffort, at least), or
-	// in the shortest warning (BraceRuleWarning, at most).
+	// the resource in the least time the price may take (BraceRuleEffort,
+	// at least), or in the shortest warning (BraceRuleWarning, at most); 0
+	// for BraceRuleMaterial.
 	Limit float64 `json:"limit"`
+	// Hours is the least time the price may take, in hours at 1x
+	// (BraceRuleEffort).
+	Hours float64 `json:"hours,omitempty"`
 }
 
 // thread names the thread the problem is in.
@@ -197,39 +215,58 @@ func (p BraceRuleProblem) thread() string {
 // String says what is wrong in plain words.
 func (p BraceRuleProblem) String() string {
 	switch {
+	case p.Rule == BraceRuleMaterial:
+		return fmt.Sprintf("%s asks %s %s for Brace level 1, which no building of a moderate economy makes by then", p.thread(), num(p.Price), p.Resource)
 	case p.Rule == BraceRuleWarning:
 		return fmt.Sprintf("%s asks %s %s for Brace level 1, more than the %s a moderate economy makes in its shortest warning", p.thread(), num(p.Price), p.Resource, num(p.Limit))
 	case p.Resource == "":
-		return fmt.Sprintf("%s asks nothing for Brace level 1; it must cost at least %g hours of a moderate economy's income", p.thread(), WarningBraceMinHours)
+		return fmt.Sprintf("%s asks nothing for Brace level 1; it must cost at least %.3g hours of a moderate economy's income", p.thread(), p.Hours)
 	}
-	return fmt.Sprintf("%s asks %s %s for Brace level 1, its dearest part, under the %s a moderate economy makes in %g hours", p.thread(), num(p.Price), p.Resource, num(p.Limit), WarningBraceMinHours)
+	return fmt.Sprintf("%s asks %s %s for Brace level 1, its dearest part, under the %s a moderate economy makes in %.3g hours", p.thread(), num(p.Price), p.Resource, num(p.Limit), p.Hours)
 }
 
-// StaticBraceRules checks the level-1 Brace price of every thread whose
-// Brace is priced on its warning (the Last Passage's and the final era's
-// doom's), for every age its harbinger can arrive in, on the core ruleset's
-// incomes (the ones HarbingerPrices is priced on).
+// StaticBraceRules checks every thread's level-1 Brace price, for every
+// age its harbinger can arrive in, on the core ruleset's incomes (the ones
+// HarbingerPrices is priced on).
 func StaticBraceRules() []BraceRuleProblem {
-	return braceRuleProblems(HarbingerPrices(), rules.Core().TypicalIncome)
+	return braceRuleProblems(HarbingerPrices(), rules.Core().TypicalIncome, rules.Core().BuildingOutput)
 }
 
-// braceRuleProblems is StaticBraceRules over rows and income (the per-tick
-// income of a resource in an age at a moderate economy): the check's
+// braceMinTicks is the least a row's level-1 Brace may take a moderate
+// economy, in ticks at 1x: BraceMinWarningShare of its warning, and in the
+// final era WarningBraceMinHours at least.
+func braceMinTicks(r PriceRow) float64 {
+	ticks := float64(BraceMinWarningShare * r.WarningTicks)
+	if r.FinalEra {
+		ticks = math.Max(ticks, WarningBraceMinHours*3600/config.TickSeconds)
+	}
+	return ticks
+}
+
+// braceRuleProblems is StaticBraceRules over rows, income (the per-tick
+// income of a resource in an age at a moderate economy) and built (what
+// that economy's own buildings make of it by then): the check's
 // broken-number tests feed in altered prices.
-func braceRuleProblems(rows []PriceRow, income func(res, age string) float64) []BraceRuleProblem {
-	minTicks := WarningBraceMinHours * 3600 / config.TickSeconds
+func braceRuleProblems(rows []PriceRow, income, built func(res, age string) float64) []BraceRuleProblem {
 	var out []BraceRuleProblem
 	for _, r := range rows {
-		if !r.BraceOnWarning {
-			continue
-		}
+		minTicks := braceMinTicks(r)
+		hours := minTicks * config.TickSeconds / 3600
 		add := func(rule, res string, price, limit float64) {
-			out = append(out, BraceRuleProblem{Epoch: r.Epoch, Age: r.Age, LastPassage: r.TargetEpoch == "", Rule: rule, Resource: res, Price: price, Limit: limit})
+			p := BraceRuleProblem{Epoch: r.Epoch, Age: r.Age, LastPassage: r.TargetEpoch == "", Rule: rule, Resource: res, Price: price, Limit: limit}
+			if rule == BraceRuleEffort {
+				p.Hours = hours
+			}
+			out = append(out, p)
 		}
 		// The price takes as long as its slowest resource: that one must take
-		// the hours. A resource nothing makes breaks the warning rule below.
+		// the time. A resource no building makes breaks the material rule.
 		slowest, slowestTicks := "", 0.0
 		for _, res := range sortedKeys(r.BraceL1) {
+			if built(res, r.Age) <= 0 {
+				add(BraceRuleMaterial, res, r.BraceL1[res], 0)
+				continue
+			}
 			rate := income(res, r.Age)
 			if made := float64(rate * r.WarningTicks); r.BraceL1[res] > made {
 				add(BraceRuleWarning, res, r.BraceL1[res], made)
@@ -275,7 +312,7 @@ func writeHarbingerPrices(sb *strings.Builder, problems []HarbingerPriceProblem,
 			fmt.Fprintf(sb, "| %s | %s | %s %s | %s |\n", p.thread(), p.Rule, num(p.Price), p.Resource, held)
 		}
 	}
-	fmt.Fprintf(sb, "\nEvery level-1 Brace price that is priced on its warning (the final era's: the Last Passage's and its fated doom's), for every age the harbinger can arrive in: it must take a moderate economy (config.TypicalIncome) at least %g hours of income, and that economy must make each resource it asks for inside the thread's shortest warning.\n\n", WarningBraceMinHours)
+	fmt.Fprintf(sb, "\nEvery level-1 Brace price, for every age the harbinger can arrive in: it must take a moderate economy (config.TypicalIncome) at least %g of the thread's shortest warning (and in the final era, for the Last Passage and its fated doom, at least %g hours of income), that economy must make each resource it asks for inside the warning, and each must be a material its own buildings make by then.\n\n", BraceMinWarningShare, WarningBraceMinHours)
 	if len(brace) == 0 {
 		sb.WriteString("No problems.\n")
 		return
@@ -283,8 +320,11 @@ func writeHarbingerPrices(sb *strings.Builder, problems []HarbingerPriceProblem,
 	sb.WriteString("| thread | rule | price | held to |\n|---|---|---|---|\n")
 	for _, p := range brace {
 		held := "at most " + num(p.Limit)
-		if p.Rule == BraceRuleEffort {
+		switch p.Rule {
+		case BraceRuleEffort:
 			held = "at least " + num(p.Limit)
+		case BraceRuleMaterial:
+			held = "a material the age makes"
 		}
 		fmt.Fprintf(sb, "| %s | %s | %s %s | %s |\n", p.thread(), p.Rule, num(p.Price), p.Resource, held)
 	}

@@ -23,6 +23,7 @@ func (s *Set) derive() {
 	s.flowIncome = config.Incomes(s.buildings, s.techs, s.ageKeys, config.IsFlowResource)
 	s.typIncome = config.Incomes(s.buildings, s.techs, s.ageKeys, config.AnyResource)
 	s.flowBuilt = config.BuildingOutputs(s.buildings, s.ageKeys, config.IsFlowResource)
+	s.built = config.BuildingOutputs(s.buildings, s.ageKeys, config.AnyResource)
 }
 
 // Target is the time a player should spend in age at 1x (0 for an age with
@@ -71,6 +72,11 @@ func (s *Set) FlowIncome(res, age string) float64 { return s.flowIncome[age][res
 // of every non-wonder producer of the flow resource res up to and including
 // age, per tick (config.BuildingOutputs).
 func (s *Set) FlowBuildingOutput(res, age string) float64 { return s.flowBuilt[age][res] }
+
+// BuildingOutput is FlowBuildingOutput for any resource: what the moderate
+// economy's own buildings make of res by age, before any bonus (0 for a
+// resource only a wonder, a tech or the market supplies by then).
+func (s *Set) BuildingOutput(res, age string) float64 { return s.built[age][res] }
 
 // TypicalIncome is FlowIncome for any resource, construction ones included.
 func (s *Set) TypicalIncome(res, age string) float64 { return s.typIncome[age][res] }

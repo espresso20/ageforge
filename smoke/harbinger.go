@@ -432,15 +432,16 @@ type PriceRow struct {
 	// age's pacing target for a doom, two thirds of it for the Last Passage.
 	WarningTicks float64 `json:"appease_warning_ticks"`
 	// AppeaseL1 and AppeaseL2 are each level's own price: level 2 costs
-	// double level 1, or the same again in the final era.
+	// the same again as level 1.
 	AppeaseL1 map[string]float64 `json:"appease_l1_cost"`
 	AppeaseL2 map[string]float64 `json:"appease_l2_cost"`
-	// BraceL1 and BraceL2 likewise. Brace is priced by the era for a doom;
-	// in the final era, on the same warning as Appease (BraceOnWarning), for
-	// its fated doom and for the Last Passage.
-	BraceL1        map[string]float64 `json:"brace_l1_cost"`
-	BraceL2        map[string]float64 `json:"brace_l2_cost"`
-	BraceOnWarning bool               `json:"brace_on_warning,omitempty"`
+	// BraceL1 and BraceL2 likewise. Brace is priced on the same warning as
+	// Appease, in the materials the arrival age makes; FinalEra marks the
+	// final era's two threads (its fated doom's and the Last Passage's),
+	// whose Brace costs more of the warning.
+	BraceL1  map[string]float64 `json:"brace_l1_cost"`
+	BraceL2  map[string]float64 `json:"brace_l2_cost"`
+	FinalEra bool               `json:"final_era,omitempty"`
 	// MaxStorage is -1 where an uncapped storage building covers the resource.
 	MaxStorage map[string]float64 `json:"max_storage_in_age"`
 }
@@ -456,7 +457,7 @@ func HarbingerPrices() []PriceRow {
 		row := PriceRow{
 			Epoch: p.Epoch, TargetEpoch: p.Epoch, Age: p.Age, WarningTicks: p.WarningTicks,
 			AppeaseL1: p.AppeaseL1, AppeaseL2: p.AppeaseL2, BraceL1: p.BraceL1, BraceL2: p.BraceL2,
-			BraceOnWarning: p.BraceOnWarning, MaxStorage: map[string]float64{},
+			FinalEra: p.FinalEra, MaxStorage: map[string]float64{},
 		}
 		if p.LastPassage {
 			row.TargetEpoch = ""

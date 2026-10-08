@@ -114,28 +114,27 @@ func TestAppeasePricesFitTheWarning(t *testing.T) {
 	}), AppeaseRuleOrdinary, "culture")
 }
 
-// TestWarningBraceTakesEffort: every Brace priced on its warning, the Last
-// Passage's and the Reality Tear's in every age of the Cosmic Era the thread
-// can begin in, takes a moderate economy at least ten hours of income at
-// level 1 and is made inside the thread's shortest warning. Both used to be
-// the era's price, a share of the largest age requirement, which the
-// Interstellar Age makes in under 7 ticks; the check is what keeps a
-// requirement-sized price from coming back.
-func TestWarningBraceTakesEffort(t *testing.T) {
+// TestBraceTakesEffort: every thread's level-1 Brace, in every era and
+// every age its harbinger can arrive in, takes a moderate economy a real
+// share of the thread's shortest warning and is made inside it, in
+// materials the age's own buildings make. An ordinary doom's takes a third
+// of its warning; the final era's two take more (the Reality Tear's about
+// ten and a half hours of income, the Last Passage's about twenty-one).
+// Every one of them used to be a share of what the era's advances ask, which
+// later ages make in seconds; the check is what keeps a requirement-sized
+// price from coming back.
+func TestBraceTakesEffort(t *testing.T) {
 	for _, p := range StaticBraceRules() {
 		t.Errorf("%s", p)
 	}
 
 	rows := HarbingerPrices()
 	cosmic := config.EpochByKey()["cosmic_era"].Ages
-	income := rules.Core().TypicalIncome
-	passages, tears := 0, 0
+	income, built := rules.Core().TypicalIncome, rules.Core().BuildingOutput
+	passages, tears, ordinary := 0, 0, 0
 	for _, r := range rows {
-		if r.BraceOnWarning != (r.Epoch == "cosmic_era") {
-			t.Errorf("%s (target %q) in %s: Brace priced on the warning is %v; only the Cosmic Era's threads are", r.Epoch, r.TargetEpoch, r.Age, r.BraceOnWarning)
-		}
-		if !r.BraceOnWarning {
-			continue
+		if r.FinalEra != (r.Epoch == "cosmic_era") {
+			t.Errorf("%s (target %q) in %s: final era is %v", r.Epoch, r.TargetEpoch, r.Age, r.FinalEra)
 		}
 		if len(r.BraceL1) == 0 || r.WarningTicks <= 0 {
 			t.Errorf("%s (target %q) in %s: no Brace price (%v) or no warning (%v ticks) to check", r.Epoch, r.TargetEpoch, r.Age, r.BraceL1, r.WarningTicks)
@@ -148,100 +147,130 @@ func TestWarningBraceTakesEffort(t *testing.T) {
 			}
 		}
 		hours := slowest * config.TickSeconds / 3600
-		if r.TargetEpoch == "" {
+		switch {
+		case r.TargetEpoch == "":
 			passages++
 			if hours < 20 || hours > 22 {
 				t.Errorf("the Last Passage in %s: Brace level 1 is %.1f hours of income, want about 21 (a third of the age)", r.Age, hours)
 			}
-			continue
-		}
-		tears++
-		// A price rounds up to two figures, which moves the hours by up to
-		// 10% (1.01 becomes 1.1, as the Interstellar Age's dark matter does).
-		if hours < WarningBraceMinHours || hours > 11.6 {
-			t.Errorf("the Reality Tear in %s: Brace level 1 is %.1f hours of income, want about 10.5 (a sixth of the age)", r.Age, hours)
+		case r.FinalEra:
+			tears++
+			// A price rounds up to two figures, which moves the hours by up to
+			// 10% (1.01 becomes 1.1, as the Interstellar Age's dark matter does).
+			if hours < WarningBraceMinHours || hours > 11.6 {
+				t.Errorf("the Reality Tear in %s: Brace level 1 is %.1f hours of income, want about 10.5 (a sixth of the age)", r.Age, hours)
+			}
+		default:
+			ordinary++
+			// A third of the warning, give or take the same rounding.
+			if share := slowest / r.WarningTicks; share < 1.0/3 || share > 1.1/3 {
+				t.Errorf("a doom of %s in %s: Brace level 1 takes %.3f of the shortest warning (%.2f hours of income), want a third", r.Epoch, r.Age, share, hours)
+			}
 		}
 	}
-	if passages != len(cosmic) || tears != len(cosmic) {
-		t.Fatalf("%d Last Passage rows and %d Reality Tear rows for %v", passages, tears, cosmic)
+	if passages != len(cosmic) || tears != len(cosmic) || ordinary != len(rows)-2*len(cosmic) || ordinary == 0 {
+		t.Fatalf("%d Last Passage rows, %d Reality Tear rows and %d ordinary rows of %d for %v", passages, tears, ordinary, len(rows), cosmic)
 	}
 
-	// The check fires on broken numbers, on either thread of the era's first
-	// age, and on no ordinary doom.
-	for _, lastPassage := range []bool{true, false} {
-		name := "the Reality Tear: "
-		if lastPassage {
-			name = "the Last Passage: "
-		}
+	// The check fires on broken numbers, on either thread of the final era's
+	// first age and on an ordinary doom's.
+	type target struct {
+		name, epoch, age string
+		lastPassage      bool
+		a, b             string // two of its materials, a the slowest
+	}
+	electric := config.EpochByKey()["electric_era"].Ages
+	for _, tg := range []target{
+		{"the Last Passage: ", "cosmic_era", cosmic[0], true, "titanium", "dark_matter"},
+		{"the Reality Tear: ", "cosmic_era", cosmic[0], false, "titanium", "dark_matter"},
+		{"an Electric Era doom: ", "electric_era", electric[1], false, "steel", "oil"},
+	} {
+		var row PriceRow
 		alter := func(change func(r *PriceRow)) []BraceRuleProblem {
 			broken := make([]PriceRow, len(rows))
 			for i, r := range rows {
 				r.BraceL1 = maps.Clone(r.BraceL1)
-				if r.Epoch == "cosmic_era" && (r.TargetEpoch == "") == lastPassage && r.Age == cosmic[0] {
+				if r.Epoch == tg.epoch && (r.TargetEpoch == "") == tg.lastPassage && r.Age == tg.age {
+					row = r
 					change(&r)
 				}
 				broken[i] = r
 			}
-			return braceRuleProblems(broken, income)
+			return braceRuleProblems(broken, income, built)
 		}
 		want := func(what string, got []BraceRuleProblem, rule string, resources ...string) {
 			t.Helper()
 			if len(got) != len(resources) {
-				t.Errorf("%s%s: %d problem(s) %v, want %d", name, what, len(got), got, len(resources))
+				t.Errorf("%s%s: %d problem(s) %v, want %d", tg.name, what, len(got), got, len(resources))
 				return
 			}
 			for i, p := range got {
-				if p.Rule != rule || p.Resource != resources[i] || p.Age != cosmic[0] || p.LastPassage != lastPassage || p.String() == "" {
-					t.Errorf("%s%s: problem %d is %+v, want rule %s on %q in %s", name, what, i, p, rule, resources[i], cosmic[0])
+				if p.Rule != rule || p.Resource != resources[i] || p.Age != tg.age || p.LastPassage != tg.lastPassage || p.String() == "" {
+					t.Errorf("%s%s: problem %d is %+v, want rule %s on %q in %s", tg.name, what, i, p, rule, resources[i], tg.age)
 				}
 			}
 		}
-		// The era's price: 1.56T dark matter and 75.6B titanium, seconds of
-		// income. Dark matter is its dearest part, at under 7 ticks.
-		want("the era's price", alter(func(r *PriceRow) {
-			r.BraceL1 = map[string]float64{"dark_matter": 1.56e12, "titanium": 7.56e10}
-		}), BraceRuleEffort, "dark_matter")
-		// Nine hours of income is still too little: titanium at nine, dark
-		// matter at eight.
-		want("nine hours of income", alter(func(r *PriceRow) {
-			r.BraceL1["dark_matter"] = income("dark_matter", r.Age) * 8 * 3600 / config.TickSeconds
-			r.BraceL1["titanium"] = income("titanium", r.Age) * 9 * 3600 / config.TickSeconds
-		}), BraceRuleEffort, "titanium")
+		if got := alter(func(*PriceRow) {}); len(got) != 0 || row.Age != tg.age || row.BraceL1[tg.a] <= 0 || row.BraceL1[tg.b] <= 0 {
+			t.Fatalf("%sno row to break (%+v), or it is broken already: %v", tg.name, row, got)
+		}
+		least := braceMinTicks(row)
+		// The era's old price, a share of its largest requirements: seconds of
+		// income. The Cosmic Era's was 1.56T dark matter and 75.6B titanium
+		// (dark matter its dearest part, under 7 ticks), the Electric Era's
+		// 56.4M steel, 924K oil and 3.96M electricity (steel, 3 ticks of the
+		// Electric Age's income; the electricity is under one).
+		old, dearest := map[string]float64{"dark_matter": 1.56e12, "titanium": 7.56e10}, "dark_matter"
+		if tg.epoch == "electric_era" {
+			old, dearest = map[string]float64{"steel": 5.64e7, "oil": 9.24e5, "electricity": 3.96e6}, "steel"
+		}
+		want("the era's old price", alter(func(r *PriceRow) { r.BraceL1 = maps.Clone(old) }), BraceRuleEffort, dearest)
+		// Nine tenths of the least it may take is still too little.
+		want("just under the least", alter(func(r *PriceRow) {
+			for res := range r.BraceL1 {
+				r.BraceL1[res] = income(res, r.Age) * least * 0.8
+			}
+			r.BraceL1[tg.a] = income(tg.a, r.Age) * least * 0.9
+		}), BraceRuleEffort, tg.a)
 		// One dear resource is enough: the price takes as long as its slowest part.
-		if got := alter(func(r *PriceRow) { r.BraceL1["dark_matter"] = 1 }); len(got) != 0 {
-			t.Errorf("%sa price with one cheap resource and one dear one: %v, want no problem", name, got)
+		if got := alter(func(r *PriceRow) { r.BraceL1[tg.b] = 1 }); len(got) != 0 {
+			t.Errorf("%sa price with one cheap resource and the rest dear: %v, want no problem", tg.name, got)
 		}
 		want("nothing asked", alter(func(r *PriceRow) {
 			r.BraceL1 = map[string]float64{}
 		}), BraceRuleEffort, "")
 		// More than the warning makes of one resource.
 		want("more than the warning makes", alter(func(r *PriceRow) {
-			r.BraceL1["titanium"] = income("titanium", r.Age) * r.WarningTicks * 1.01
-		}), BraceRuleWarning, "titanium")
-		// A resource nothing makes in the arrival age can never be gathered there.
-		want("a resource nothing makes yet", alter(func(r *PriceRow) {
+			r.BraceL1[tg.a] = income(tg.a, r.Age) * r.WarningTicks * 1.01
+		}), BraceRuleWarning, tg.a)
+		// A resource no building makes by the arrival age: one nothing makes
+		// at all, and crypto, which only a wonder trickles out.
+		want("a resource nothing makes", alter(func(r *PriceRow) {
 			r.BraceL1["antimatter_fuel_nobody_makes"] = 1
-		}), BraceRuleWarning, "antimatter_fuel_nobody_makes")
+		}), BraceRuleMaterial, "antimatter_fuel_nobody_makes")
+		want("a resource only a wonder makes", alter(func(r *PriceRow) {
+			r.BraceL1["crypto"] = 1
+		}), BraceRuleMaterial, "crypto")
 	}
-	// An ordinary doom's row is left alone, however cheap its Brace: against
-	// an income no price is ten hours of, only the Cosmic Era's rows break.
-	for _, p := range braceRuleProblems(rows, func(string, string) float64 { return 1e30 }) {
-		if p.Epoch != "cosmic_era" {
-			t.Errorf("an ordinary doom's Brace is held to the warning rule: %s", p)
+	// The two prices the rule dropped: the Modern Age's data, which it buys
+	// at the market, and the Neon Era's crypto.
+	for _, r := range rows {
+		if _, ok := r.BraceL1["crypto"]; ok {
+			t.Errorf("%s in %s: Brace asks crypto, which no building makes", r.Epoch, r.Age)
+		}
+		if _, ok := r.BraceL1["data"]; ok && r.Age == "modern_age" {
+			t.Errorf("%s in %s: Brace asks data, which the Modern Age buys", r.Epoch, r.Age)
+		}
+		if _, ok := r.BraceL1["data"]; !ok && r.Age == "information_age" {
+			t.Errorf("%s in %s: Brace asks no data, which the Information Age makes", r.Epoch, r.Age)
 		}
 	}
 }
 
 // TestHarbingerSecondLevelPrices: the price table carries each level's own
-// price. Level 2 costs double level 1 in every era but the final one, where
-// both threads charge the same again.
+// price, and level 2 costs the same again as level 1 in every thread.
 func TestHarbingerSecondLevelPrices(t *testing.T) {
 	checked := 0
 	for _, r := range HarbingerPrices() {
-		want := 2.0
-		if r.Epoch == "cosmic_era" {
-			want = 1
-		}
 		for _, pair := range []struct {
 			answer string
 			l1, l2 map[string]float64
@@ -251,9 +280,8 @@ func TestHarbingerSecondLevelPrices(t *testing.T) {
 			}
 			for res, l1 := range pair.l1 {
 				checked++
-				// An era's Brace rounds each level up to a whole unit.
-				if got := pair.l2[res]; got < want*l1-1 || got > want*l1+1 {
-					t.Errorf("%s (target %q) in %s: %s level 2 asks %v %s, want %v times level 1's %v", r.Epoch, r.TargetEpoch, r.Age, pair.answer, got, res, want, l1)
+				if got := pair.l2[res]; got != l1 {
+					t.Errorf("%s (target %q) in %s: %s level 2 asks %v %s, want level 1's %v again", r.Epoch, r.TargetEpoch, r.Age, pair.answer, got, res, l1)
 				}
 			}
 		}

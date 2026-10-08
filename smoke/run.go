@@ -10,6 +10,7 @@ package smoke
 import (
 	"bufio"
 	"fmt"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -217,6 +218,14 @@ type AgeSplit struct {
 	// research was bought.
 	KnowledgeBought float64 `json:"knowledge_bought,omitempty"`
 	KnowledgeMade   float64 `json:"knowledge_made,omitempty"`
+	// Made, Bought and Sold are the age's whole market picture, per
+	// resource: what its own income added up to over the sampled ticks
+	// (positive rates only), and what the market sold the player and took
+	// from them. A resource bought far past what was made is one the age
+	// gets at the market; one sold in bulk is what paid for it.
+	Made   map[string]float64 `json:"made,omitempty"`
+	Bought map[string]float64 `json:"market_bought,omitempty"`
+	Sold   map[string]float64 `json:"market_sold,omitempty"`
 	// Gates is when each thing the advance waits for was first in place
 	// (nil for an age the run did not sample).
 	Gates *AgeGates `json:"gates,omitempty"`
@@ -420,6 +429,12 @@ type runner struct {
 	wonder   string
 	boughtK0 float64
 	boughtK  float64
+	// made is each resource's income summed over the age's sampled ticks;
+	// bought0 and sold0 are the market's run totals when the age began, and
+	// bought and sold the totals as last seen.
+	made            map[string]float64
+	bought0, bought map[string]float64
+	sold0, sold     map[string]float64
 	// advancing is set while control calls AdvanceAge, so the age-advance
 	// bus handler leaves that advance to control.
 	advancing bool
@@ -671,8 +686,24 @@ func (r *runner) split(unfinished bool) AgeSplit {
 		a.Gates = &g
 		a.KnowledgeMade = r.knowSum
 		a.KnowledgeBought = math.Max(r.boughtK-r.boughtK0, 0)
+		a.Made = maps.Clone(r.made)
+		a.Bought, a.Sold = since(r.bought, r.bought0), since(r.sold, r.sold0)
 	}
 	return a
+}
+
+// since is now less then per key, for the keys that grew.
+func since(now, then map[string]float64) map[string]float64 {
+	var out map[string]float64
+	for k, v := range now {
+		if d := v - then[k]; d > 0 {
+			if out == nil {
+				out = map[string]float64{}
+			}
+			out[k] = d
+		}
+	}
+	return out
 }
 
 // trackGates notes the first sampled tick of the age at which each thing
@@ -712,8 +743,18 @@ func (r *runner) trackGates(st game.GameState) {
 	if bought < r.boughtK {
 		// A new run (prestige or Succumb) starts the market's totals again.
 		r.boughtK0 = 0
+		r.bought0, r.sold0 = nil, nil
 	}
 	r.boughtK = bought
+	r.bought, r.sold = st.Trade.TotalBought, st.Trade.TotalSold
+	if r.made == nil {
+		r.made = map[string]float64{}
+	}
+	for k, rs := range st.Resources {
+		if rs.Rate > 0 {
+			r.made[k] += float64(rs.Rate * float64(r.cfg.DecideEvery))
+		}
+	}
 }
 
 // trackNovelty marks the new decisions in st (a building type built for the
@@ -791,6 +832,8 @@ func (r *runner) enterAge(st game.GameState) {
 	r.gates = AgeGates{WonderTech: -1, WonderFunded: -1, WonderBuilt: -1, Buildings: -1, Resources: -1}
 	r.wonder = ""
 	r.boughtK0 = r.boughtK
+	r.made = nil
+	r.bought0, r.sold0 = maps.Clone(r.bought), maps.Clone(r.sold)
 }
 
 // closeAge records the age just completed. Its verdict is graded across
