@@ -228,13 +228,14 @@ const menuColdIron = 1.6
 // menuRampStops works out the six stops of a theme's heat ramp (the
 // wordmark) and fire ramp (the forge).
 //
-// A ramp runs from the page to the theme's strongest ink through two of
-// its own colours, so it stands out more with every step whichever way the
-// theme runs: brighter on a dark theme, darker on a light one, where hot
-// iron is ink on paper. A theme whose accent is a colour of fire burns red
-// to gold (its Negative, then its Highlight or Accent). Any other burns in
-// its own two colours (Accent and Label): green on Source, magenta to cyan
-// on Glitch. A theme of one ink runs straight from paper to ink.
+// A ramp runs from the page to the theme's strongest ink through the
+// theme's own colours, so it stands out more with every step whichever way
+// the theme runs: brighter on a dark theme, darker on a light one, where
+// hot iron is ink on paper. A theme whose accent is a colour of fire burns
+// from embers to gold (its Negative warmed with its Accent, then its Accent
+// or Highlight). Any other burns in its own two colours (Accent and Label):
+// green on Source, magenta to cyan on Glitch. A theme of one ink runs
+// straight from paper to ink.
 func menuRampStops(th theme.Theme) (heat, fire [6]tcell.Color) {
 	bg, ink, bright := th.Color(theme.RoleBackground), th.Color(theme.RoleText), th.Color(theme.RoleBright)
 	if th.Duotone {
@@ -246,19 +247,28 @@ func menuRampStops(th theme.Theme) (heat, fire [6]tcell.Color) {
 		fire[0], fire[1] = bg, theme.Mix(bg, ink, 0.22)
 		return heat, fire
 	}
-	lo, hi := th.Color(theme.RoleAccent), th.Color(theme.RoleLabel)
-	if warmColour(th.Color(theme.RoleAccent)) {
-		lo, hi = th.Color(theme.RoleNegative), th.Color(theme.RoleAccent)
-		if warmColour(th.Color(theme.RoleHighlight)) {
-			hi = th.Color(theme.RoleHighlight)
+	cold := theme.Legible(theme.Mix(bg, th.Color(theme.RoleDim), 0.30), bg, menuColdIron)
+	accent := th.Color(theme.RoleAccent)
+	if warmColour(accent) {
+		// A fire: embers are the theme's red warmed with its accent (a
+		// burnt orange on Forge), and the flame climbs to the stronger of
+		// its accent and its highlight.
+		ember, hi := theme.Mix(th.Color(theme.RoleNegative), accent, 0.25), accent
+		if hl := th.Color(theme.RoleHighlight); warmColour(hl) && theme.ContrastRatio(hl, bg) > theme.ContrastRatio(hi, bg) {
+			hi = hl
 		}
+		mid, top := theme.Mix(ember, hi, 0.5), theme.Mix(hi, bright, 0.75)
+		heat = [6]tcell.Color{cold, theme.Mix(bg, ember, 0.42), theme.Mix(bg, ember, 0.78), mid, hi, top}
+		fire = [6]tcell.Color{bg, theme.Mix(bg, ember, 0.30), theme.Mix(bg, ember, 0.70), mid, hi, top}
+	} else {
+		lo, hi := accent, th.Color(theme.RoleLabel)
+		if theme.ContrastRatio(lo, bg) > theme.ContrastRatio(hi, bg) {
+			lo, hi = hi, lo
+		}
+		mid, top := theme.Mix(lo, hi, 0.5), theme.Mix(hi, bright, 0.75)
+		heat = [6]tcell.Color{cold, theme.Mix(bg, lo, 0.5), lo, mid, hi, top}
+		fire = [6]tcell.Color{bg, theme.Mix(bg, lo, 0.30), theme.Mix(bg, lo, 0.70), mid, hi, top}
 	}
-	if theme.ContrastRatio(lo, bg) > theme.ContrastRatio(hi, bg) {
-		lo, hi = hi, lo
-	}
-	mid, top := theme.Mix(lo, hi, 0.5), theme.Mix(hi, bright, 0.75)
-	heat = [6]tcell.Color{theme.Legible(theme.Mix(bg, th.Color(theme.RoleDim), 0.30), bg, menuColdIron), theme.Mix(bg, lo, 0.5), lo, mid, hi, top}
-	fire = [6]tcell.Color{bg, theme.Mix(bg, lo, 0.30), theme.Mix(bg, lo, 0.70), mid, hi, top}
 	// Hotter always stands out more than cooler: a stop that does not is
 	// pushed toward the theme's ink until it does.
 	for _, ramp := range []*[6]tcell.Color{&heat, &fire} {
