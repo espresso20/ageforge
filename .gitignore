@@ -49,3 +49,6 @@ data/*.corrupt
 # Smoke test reports (make smoke)
 smoke-report/
 /map_captures/
+
+# Copy-editing sheets (go run ./cmd/words export): working files, not source
+words/export/
