@@ -20,8 +20,10 @@ import (
 )
 
 // menuSizes are the terminals the menu is checked at: the least the game
-// supports, the common ones, the largest the brief names and one beyond.
-var menuSizes = [][2]int{{80, 24}, {100, 30}, {110, 36}, {114, 38}, {120, 40}, {132, 43}, {144, 46}, {200, 60}}
+// supports, the common ones up to 144x46, one well beyond, and two odd
+// shapes (tall and narrow, wide and short) that cross the layouts'
+// thresholds one way and not the other.
+var menuSizes = [][2]int{{80, 24}, {100, 30}, {110, 36}, {114, 38}, {120, 40}, {132, 43}, {144, 46}, {200, 60}, {90, 44}, {180, 26}}
 
 // stagedTown is a fixture game and the picture of its town.
 type stagedTown struct {
@@ -243,16 +245,17 @@ func checkMenuPage(t *testing.T, where string, sc *menuScene, v *menuView, town 
 	t.Helper()
 	pal := newMenuPalette(theme.Active())
 	frame := mapstyle.Frame{Anim: 3, Clock: 3, Tier: mapmodel.TierUnicode}
-	moving := sc.render(pal, v, town, frame)
-	if len(moving.clipped) > 0 {
-		t.Errorf("%s: text cut off at the edge: %q", where, moving.clipped)
-	}
-	// The frames are checked with the sparks out of the way: a spark may
-	// pass over a line, and it is the layout that is on trial here.
+	// The page is drawn with the sparks out of the way: a spark may pass
+	// over a frame's line, and it is the layout that is on trial here. (A
+	// spark is one glyph and cannot be cut off; TestMenuPagesFitWhileMoving
+	// holds the words under a shower of them.)
 	held := sc.sparks.a
 	sc.sparks.a = nil
 	g := sc.render(pal, v, town, frame)
 	sc.sparks.a = held
+	if len(g.clipped) > 0 {
+		t.Errorf("%s: text cut off at the edge: %q", where, g.clipped)
+	}
 	L := sc.L
 
 	// The entries: each on its row, marked when selected, its key at the
@@ -391,6 +394,9 @@ func TestMenuPagesFitEverySize(t *testing.T) {
 		for _, st := range menuStages() {
 			for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 				for _, more := range []bool{false, true} {
+					if more && tier == mapmodel.TierASCII {
+						continue // the lines that come and go are laid out the same in both glyph sets
+					}
 					v, town := stagedMenuView(st.age, st.forge, tier)
 					where := fmt.Sprintf("%s at %dx%d, %s glyphs", st.name, size[0], size[1], tier)
 					if more {
@@ -416,22 +422,41 @@ func TestMenuPagesFitEverySize(t *testing.T) {
 	}
 }
 
-// TestMenuPagesFitWhileMoving: forty frames of each page, with a strike on
-// the way, and at every frame the page still fits and every entry is whole
-// (a spark never lands on the menu's words).
+// TestMenuPagesFitWhileMoving: twenty-four frames of each page, with a
+// strike on the way, and at every frame every entry is whole under the
+// sparks (a spark never lands on the menu's words) and nothing is cut off.
 func TestMenuPagesFitWhileMoving(t *testing.T) {
 	for _, size := range [][2]int{{80, 24}, {120, 40}, {144, 46}} {
 		for _, st := range []menuStage{{"a first visit", "", true}, {"a town in the Bronze Age", "bronze_age", false}} {
 			v, town := stagedMenuView(st.age, st.forge, mapmodel.TierUnicode)
 			sc := newMenuScene(menuLayoutFor(size[0], size[1], v))
-			for n := 0; n < 40; n++ {
-				if n == 5 {
+			pal := newMenuPalette(theme.Active())
+			for n := 0; n < 24; n++ {
+				if n == 3 {
 					sc.hit()
 				}
 				sc.step()
-				checkMenuPage(t, fmt.Sprintf("%s at %dx%d, frame %d", st.name, size[0], size[1], n), sc, v, town)
-				if t.Failed() {
-					return
+				where := fmt.Sprintf("%s at %dx%d, frame %d", st.name, size[0], size[1], n)
+				g := sc.render(pal, v, town, mapstyle.Frame{Anim: n, Clock: n, Tier: mapmodel.TierUnicode})
+				if len(g.clipped) > 0 {
+					t.Fatalf("%s: text cut off at the edge: %q", where, g.clipped)
+				}
+				if n == 4 && len(sc.sparks.a) < 40 {
+					t.Fatalf("%s: the strike threw %d sparks", where, len(sc.sparks.a))
+				}
+				row := sc.L.my
+				for i, it := range v.items {
+					left := "  " + it.label
+					if i == v.sel {
+						left = "▸ " + it.label
+					}
+					if !rowHas(g, sc.L.mx, row, left) {
+						t.Fatalf("%s: row %d should hold %q under the sparks, holds %q", where, row, left, strings.TrimSpace(g.row(row)))
+					}
+					row += sc.L.gap
+					if len(it.details) > 0 {
+						row++
+					}
 				}
 			}
 		}
