@@ -31,10 +31,14 @@ type stagedTown struct {
 
 var stagedTowns = map[string]stagedTown{}
 
+// stagedEngine is the engine a staged menu asks for its ruleset. The pages
+// are staged from fixtures, so nothing else of it is read.
+var stagedEngine = game.NewGameEngine()
+
 // stagedMenuView is a menu's view as refresh would build it for a game in
 // age, or for a first visit (age "").
 func stagedMenuView(age string, forge bool, tier mapmodel.GlyphTier) (*menuView, *menuTown) {
-	m := &mainMenu{version: "v4.0.0", reg: all.Registry()}
+	m := &mainMenu{version: "v4.0.0", reg: all.Registry(), engine: stagedEngine}
 	m.set = defaultMapSettings(m.reg)
 	m.set.Tier = tier
 	var town *menuTown

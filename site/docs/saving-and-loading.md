@@ -83,7 +83,7 @@ The game autosaves every 60 seconds to your **active** save, and saves again whe
 
 1. **Your main game**, if you marked one. Highlight a save in the Load Game browser and press `m`. It stays the current game, whatever else you play, until you press `m` on it again or delete it.
 2. Otherwise, **the game you played last**: the save you last loaded or saved on this account.
-3. If neither is on record, **the save written most recently**. This is what an account from before v4 gets until you play once, and what you get if the save on record is gone.
+3. If neither is on record, **the save written most recently**. This is what an account from an older version of the game gets until you play once, and what you get if the save on record is gone.
 
 A save that cannot be read is never the current game. An account with no save has no Continue.
 
@@ -142,13 +142,13 @@ Saves are signed. If a save file is edited outside the game, the integrity check
 
 To delete one save, highlight it in the Load Game browser and press `d`; the game asks you to confirm first.
 
-To delete them all, open **Accounts** on the main menu, highlight the account and press `x` (**Delete saves**). After you confirm, it deletes **every save of that account**: the autosave, your named saves and every branch. The runs in them, and the prestige they carried, are gone. **No backup is made, and it cannot be undone.** (Before v4 this was an entry on the main menu itself, next to Quit.)
+To delete them all, open **Accounts** on the main menu, highlight the account and press `x` (**Delete saves**). After you confirm, it deletes **every save of that account**: the autosave, your named saves and every branch. The runs in them, and the prestige they carried, are gone. **No backup is made, and it cannot be undone.** (It used to be an entry on the main menu itself, next to Quit.)
 
 The account itself is kept: its name, theme unlocks, lifetime stats and badges stay, and so do any backups already in `data/backups/`. Other accounts' saves are not touched. To keep a copy, back the account up first with `account backup` (or `b` in the Accounts panel). An account left with no save sees the main menu's first page again, with New game first.
 
 Compare **wiping an account** (`w` in the Accounts panel). A wipe deletes the account itself, identity and unlocks included, along with every save in its slot, but it backs the whole slot up to `data/backups/` first. See [Wiping an account](account.md#wiping-an-account).
 
-| | Delete all saves | Wipe an account |
+| | Delete saves | Wipe an account |
 |---|---|---|
 | Where | Accounts panel (`x`), behind a confirm | Accounts panel (`w`), behind a type-the-name confirm |
 | Saves | Every save of the highlighted account | Every save of that account |

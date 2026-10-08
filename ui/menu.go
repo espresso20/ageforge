@@ -12,7 +12,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -269,7 +268,7 @@ func (m *mainMenu) buildViewWith(badges []string) {
 	}
 	m.view.forge = !m.hasCur || m.town == nil || m.town.failed
 	m.view.plain = m.set.Tier == mapmodel.TierASCII
-	m.view.ages = len(config.Ages())
+	m.view.ages = len(m.engine.Rules().AgeKeys())
 	m.view.edition = menuEdition(m.version)
 	m.view.versions = []string{m.version}
 	if m.update {
