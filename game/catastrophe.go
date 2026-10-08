@@ -230,6 +230,8 @@ func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
 	ep, _ := ge.rules.Era(epochKey)
 	catName, _ := ge.rules.Catastrophe(epochKey)
 	ge.pendingCatastrophe = epochKey
+	// The doom has a name now, warned of or not.
+	ge.note(config.BadgeEvDoomNamed, epochKey)
 
 	eventName := catName
 	if source != catastropheRolled {
@@ -397,6 +399,7 @@ func (ge *GameEngine) Endure() error {
 	// Then the garrison, measured before the blow lands (soldiers are stock
 	// too, and fall with the rest).
 	outcome := ge.endurePreview(brace, ge.age)
+	invited := ge.doomInvited(epochKey)
 	keep := outcome.KeepFrac
 	ge.survivedEpochs[epochKey] = true
 	ge.setCatastropheOutcome(epochKey, CatastropheEndured)
@@ -464,6 +467,7 @@ func (ge *GameEngine) Endure() error {
 	ge.applyMorale(endureMoraleHit)
 	ge.report(Event{Kind: config.BadgeEvEndured, Subject: epochKey, Attrs: map[string]float64{
 		"brace": float64(brace), "saved": float64(outcome.BuildingsSaved),
+		"garrison": float64(outcome.Garrison), "invited": boolFact(invited),
 	}})
 	return nil
 }
@@ -496,7 +500,8 @@ func (ge *GameEngine) Succumb() error {
 	ep, _ := ge.rules.Era(epochKey)
 	ge.setCatastropheOutcome(epochKey, CatastropheSuccumbed)
 	// Reported while the run that fell is still here to be judged against.
-	ge.note(config.BadgeEvSuccumbed, epochKey)
+	ge.report(Event{Kind: config.BadgeEvSuccumbed, Subject: epochKey,
+		Attrs: map[string]float64{"invited": boolFact(ge.doomInvited(epochKey))}})
 
 	newLegacy := !ge.legacyBonuses[epochKey]
 	legacyNote := "Legacy bonus earned."

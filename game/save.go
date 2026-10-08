@@ -962,6 +962,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// The run's facts for the badges. A save from before them has none: the run's
 	// past is unknown (Whole stays false), except that a run still in its first age
 	// entered it at tick 0.
+	ge.ageTold = "" // the save's age is where this run already is: nothing to tell
 	ge.runFacts = RunFacts{}
 	if save.RunFacts != nil {
 		ge.runFacts = save.RunFacts.clone()

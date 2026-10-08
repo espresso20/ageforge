@@ -1,43 +1,85 @@
 package rules
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
 )
 
-// The seed catalog: the four account achievements of account.json version
-// 1 as badges, and one or two more of each kind. A change here is a change
-// to what accounts hold, so the keys are pinned.
-func TestSeedCatalog(t *testing.T) {
-	want := []string{
+// The catalog, family by family. A change here is a change to what
+// accounts can hold, so the counts are pinned; the tech family and the
+// ladders made from the game's tables follow the tables.
+func TestCatalog(t *testing.T) {
+	s := Core()
+	want := map[string]int{
+		"age": s.NumAges() - 1, "swift": len(s.Eras()), "wonder": s.NumAges(), "maximalist": s.NumAges(),
+		"techs": s.NumAges(), "lineage": 75, "domain": 22, "resource": 94, "civ": 4 * len(s.Factions()),
+		"harbinger": 34, "doom": 15, "expedition": 16, "theme": 16, "map": 5,
+		"awakening": 7, "ladder": 73, "special": 71,
+	}
+	got := map[string]int{}
+	seen := map[string]bool{}
+	points := 0
+	for _, b := range s.Badges() {
+		got[b.Family]++
+		if seen[b.Key] {
+			t.Errorf("the key %s is in the catalog twice", b.Key)
+		}
+		seen[b.Key] = true
+		points += b.Points()
+	}
+	for fam, n := range want {
+		if got[fam] != n {
+			t.Errorf("family %s has %d badges, want %d", fam, got[fam], n)
+		}
+	}
+	for fam, n := range got {
+		if _, ok := want[fam]; !ok {
+			t.Errorf("family %s (%d badges) is not in this test", fam, n)
+		}
+	}
+	if n := len(s.Badges()); n != 566 {
+		t.Errorf("the catalog has %d badges, want 566", n)
+	}
+	if points != 13070 {
+		t.Errorf("the badges add up to %d points, want 13,070", points)
+	}
+
+	// The badges accounts have held since the seed catalog keep their keys.
+	for _, key := range []string{
 		"age.stone_age", "age.iron_age", "age.modern_age",
 		"lineage.housing.1", "lineage.housing.2",
 		"ladder.prestiges.1", "ladder.prestiges.2", "ladder.prestiges.3", "ladder.prestiges.4",
 		"special.hut_hoarder", "special.fashionably_late", "special.liquidation_sale",
 		"special.hand_in_the_cookie_jar", "special.touched_by_the_source", "special.creative_accounting",
-	}
-	var got []string
-	for _, b := range Core().Badges() {
-		got = append(got, b.Key)
-	}
-	if !slices.Equal(got, want) {
-		t.Errorf("the catalog is\n %v\nwant\n %v", got, want)
+	} {
+		if !seen[key] {
+			t.Errorf("the seed catalog's badge %s is gone: accounts hold it", key)
+		}
 	}
 	for alias, key := range map[string]string{
 		"first_prestige": "ladder.prestiges.1", "prestige_x10": "ladder.prestiges.3",
 		"reached_iron": "age.iron_age", "reached_modern": "age.modern_age",
 	} {
-		if got, ok := Core().BadgeForAlias(alias); !ok || got != key {
+		if got, ok := s.BadgeForAlias(alias); !ok || got != key {
 			t.Errorf("the old achievement %s is the badge %q (found %v), want %s", alias, got, ok, key)
 		}
 	}
-	if _, ok := Core().BadgeForAlias("no_such_achievement"); ok {
+	if _, ok := s.BadgeForAlias("no_such_achievement"); ok {
 		t.Error("an unknown alias found a badge")
 	}
-	if problems := BadgeProblems(config.Badges(), config.BadgeFamilies(), Core()); len(problems) != 0 {
+	if problems := BadgeProblems(config.Badges(), config.BadgeFamilies(), s); len(problems) != 0 {
 		t.Errorf("the badge tables have problems: %v", problems)
+	}
+	// A badge held out of the catalog is in no account's reach, and its
+	// key is free for the day it comes back.
+	for _, h := range config.BadgesHeldOut() {
+		if seen[h.Badge.Key] {
+			t.Errorf("%s is held out and in the catalog", h.Badge.Key)
+		}
+		if h.Why == "" {
+			t.Errorf("%s is held out without a reason", h.Badge.Key)
+		}
 	}
 }
 
@@ -74,8 +116,11 @@ func TestFamilyBadges(t *testing.T) {
 	if rung.Reveal.Kind != config.BadgeVisible {
 		t.Errorf("housing starts in the first age, so its ladder shows from the start: %+v", rung.Reveal)
 	}
-	if _, ok := s.Badge("lineage.housing.3"); ok {
+	if _, ok := s.Badge("lineage.housing.6"); ok {
 		t.Error("a rung with no count in the ladder table was made")
+	}
+	if top, _ := s.Badge("lineage.housing.5"); top.Tier != config.BadgeLegendary {
+		t.Errorf("the top housing rung is %s, want legendary", top.Tier.Name())
 	}
 
 	first, _ := s.Badge("ladder.prestiges.1")

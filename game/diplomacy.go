@@ -115,6 +115,9 @@ type DiplomacyManager struct {
 	// notices are log lines raised outside Tick (an embargo that starts a
 	// war); the next Tick returns them first. Transient, not saved.
 	notices []string
+	// warEvents is the wars that started and ended since the engine last
+	// asked (takeWarEvents). Transient, not saved.
+	warEvents []warEvent
 
 	// met is the civilizations met since the engine last asked (takeMet), for
 	// its report of first contact. Transient, not saved: a loaded game's
@@ -451,9 +454,37 @@ func (dm *DiplomacyManager) recordProvocation(fs *FactionState, def config.Facti
 	fs.Provocations++
 	if !fs.AtWar && fs.Opinion < warOpinionThreshold && fs.Provocations >= warProvocationThreshold {
 		fs.AtWar = true
+		dm.warEvents = append(dm.warEvents, warEvent{faction: def.Key, started: true, wars: dm.warCount()})
 		return true
 	}
 	return false
+}
+
+// warEvent is a war that started or ended, for the engine's records
+// (takeWarEvents). wars is how many were under way once it had started.
+type warEvent struct {
+	faction string
+	started bool
+	wars    int
+}
+
+// warCount is how many civilizations are at war with the player.
+func (dm *DiplomacyManager) warCount() int {
+	n := 0
+	for _, fs := range dm.factions {
+		if fs.AtWar {
+			n++
+		}
+	}
+	return n
+}
+
+// takeWarEvents returns the wars that started and ended since the last
+// call, in the order they happened, and forgets them. Transient, not saved.
+func (dm *DiplomacyManager) takeWarEvents() []warEvent {
+	out := dm.warEvents
+	dm.warEvents = nil
+	return out
 }
 
 // RaidTradeRoute records that the player raided this civ's trade route — a
@@ -504,6 +535,7 @@ func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64
 	}
 	// Peace: end the war, reset provocations, nudge opinion up to a wary truce.
 	dm.endWar(fs)
+	dm.warEvents = append(dm.warEvents, warEvent{faction: factionKey})
 	fs.Opinion += 25
 	if fs.Opinion > 0 {
 		fs.Opinion = 0 // a truce is wary neutrality at best, never instant friendship
@@ -797,6 +829,7 @@ func (dm *DiplomacyManager) processWar(tick int, age string) []string {
 		// Wait-them-out: peace after a provocation-free cooldown.
 		if tick-fs.LastProvocationTick >= cooldown {
 			dm.endWar(fs)
+			dm.warEvents = append(dm.warEvents, warEvent{faction: key})
 			messages = append(messages, fmt.Sprintf("The war with the %s has burned out. An uneasy peace settles.", def.Name))
 			continue
 		}

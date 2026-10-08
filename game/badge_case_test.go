@@ -40,7 +40,7 @@ func TestBadgeListIsKeptAndNeverStale(t *testing.T) {
 		t.Helper()
 		got, sum := ge.Badges()
 		want, wantSum := freshViews(ge)
-		if !reflect.DeepEqual(got, want) || sum != wantSum {
+		if !reflect.DeepEqual(got, want) || !reflect.DeepEqual(sum, wantSum) {
 			t.Fatalf("after %s the kept list is stale:\n got %+v\nwant %+v", step, got, want)
 		}
 		again, _ := ge.Badges()
@@ -128,7 +128,7 @@ func TestBadgeViewsCarryArtAndRewards(t *testing.T) {
 	}
 	for i, key := range []string{badgeHousing1, badgeHousing2} {
 		v := viewOf(t, views, key)
-		if v.Ladder != "Housing" || v.Rung != i+1 || v.Rungs != 2 || v.Emblem != "lineage.housing" {
+		if v.Ladder != "Housing" || v.Rung != i+1 || v.Rungs != 5 || v.Emblem != "lineage.housing" {
 			t.Errorf("%s: ladder %q rung %d of %d, emblem %q", key, v.Ladder, v.Rung, v.Rungs, v.Emblem)
 		}
 	}

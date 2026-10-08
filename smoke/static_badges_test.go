@@ -108,11 +108,11 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 			family(t, src, "ladder").Counter = "high_fives"
 		}},
 		{"a counter the check has no run for", "ladder.prestiges.1", "lifetime", func(src *rules.Source) {
-			family(t, src, "ladder").Counter = config.BadgeEvFestival
+			family(t, src, "ladder").Counter = config.BadgeEvGiftSent
 		}},
 		{"an age no advance reaches", "age.primitive_age", "gate", func(src *rules.Source) {
 			f := family(t, src, "age")
-			f.Only = []string{"primitive_age"}
+			f.Except, f.Only = nil, []string{"primitive_age"}
 		}},
 		{"an event the game does not report", sale, "existence", func(src *rules.Source) {
 			special(t, src, sale).Event = "building_juggled"
@@ -128,7 +128,7 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 			special(t, src, sale).Threshold = 1e7
 		}},
 		{"a run count the check cannot bound", sale, "run_count", func(src *rules.Source) {
-			special(t, src, sale).Counter = "run." + config.BadgeEvFestival
+			special(t, src, sale).Counter = "run." + config.BadgeEvGiftSent
 		}},
 		{"no proof", sale, "proof", func(src *rules.Source) {
 			special(t, src, sale).Proof = config.BadgeProof{}

@@ -9,7 +9,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/theme"
 )
 
 // The account commands during play (achievements audit B1, B3 and B4), through the real
@@ -199,8 +198,9 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 }
 
 // TestDevTouchedRunUnlocksThemes: a run the developer console has changed unlocks themes
-// like any other. With dev mode on, `/age galactic_age` completes the theme milestones on
-// the next tick, and the dashboard writes their themes to the account.
+// like any other. With dev mode on, `/age galactic_age` jumps past five ages whose badges
+// give a theme; the account is told of every age the jump passed on the next tick, and
+// holds their themes.
 func TestDevTouchedRunUnlocksThemes(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	prev := game.DevModeActive
@@ -209,7 +209,8 @@ func TestDevTouchedRunUnlocksThemes(t *testing.T) {
 	if err := eng.StartNewNamedGame("dev"); err != nil {
 		t.Fatal(err)
 	}
-	d.refresh() // the first sync, before anything is completed
+	eng.StepTicks(1)
+	d.refresh()
 
 	if msg := game.DevExecCommand("/age galactic_age", eng); msg != "jumped to galactic_age" {
 		t.Fatalf("/age: %q", msg)
@@ -219,56 +220,21 @@ func TestDevTouchedRunUnlocksThemes(t *testing.T) {
 	if !state.DevTouched || !state.AccountRecords {
 		t.Fatalf("after /age: DevTouched=%v AccountRecords=%v, want marked and still recording", state.DevTouched, state.AccountRecords)
 	}
-	var want []string
-	for _, key := range completedUnlockKeys(state.Milestones) {
-		if themeKey, ok := theme.UnlockedBy(key); ok {
-			want = append(want, themeKey)
-		}
-	}
-	if len(want) == 0 {
-		t.Fatal("precondition: no theme-gating milestone completed, so the test proves nothing")
-	}
 	d.refresh()
-	for _, themeKey := range want {
+	for _, themeKey := range []string{"bronze", "parchment", "monochrome", "cyberpunk", "cosmic"} {
 		if !eng.Account().HasTheme(themeKey) {
 			t.Errorf("a dev-touched run did not unlock the theme %q: account holds %v", themeKey, eng.Account().UnlockedThemes())
 		}
 	}
-}
-
-// TestThemeUnlocksFollowAccountRecords: the dashboard grants a milestone's theme only when
-// the run records to the account, and a skipped key is still evaluated for a later run.
-func TestThemeUnlocksFollowAccountRecords(t *testing.T) {
-	d, eng := mapTestDashboard(t, true)
-	const key = "bronze_pioneer"
-	themeKey, ok := theme.UnlockedBy(key)
-	if !ok {
-		t.Fatalf("%s no longer gates a theme; pick another key", key)
+	// Each unlock is said once, in the log.
+	said := 0
+	for _, e := range eng.GetState().Log {
+		if strings.Contains(e.Message, "New theme unlocked") {
+			said++
+		}
 	}
-	state := game.GameState{Milestones: game.MilestoneState{
-		Milestones: map[string]game.MilestoneInfo{key: {Completed: true}},
-	}}
-
-	d.processThemeUnlocks(state) // AccountRecords false: another account's run
-	if eng.Account().HasTheme(themeKey) {
-		t.Fatal("a run that does not record to the account unlocked a theme")
-	}
-	state.AccountRecords = true
-	d.processThemeUnlocks(state)
-	if !eng.Account().HasTheme(themeKey) {
-		t.Error("a clean run's milestone did not unlock its theme")
-	}
-
-	// After a switch, the new account's own run earns the theme too, although the key
-	// was processed for the first account earlier in this session.
-	other, err := game.CreateAccount("Other Player")
-	if err != nil {
-		t.Fatal(err)
-	}
-	eng.SetAccount(other)
-	d.processThemeUnlocks(state)
-	if !other.HasTheme(themeKey) {
-		t.Error("the second account's run did not unlock the theme after a switch")
+	if said != 5 {
+		t.Errorf("%d theme unlocks announced, want 5", said)
 	}
 }
 
