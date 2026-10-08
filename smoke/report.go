@@ -491,6 +491,17 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	for _, k := range sortedKeys(all) {
 		fmt.Fprintf(&sb, "- `%s`: %d / %d\n", k, acts[k], errs[k])
 	}
+	// What the rejected actions were told (the first few of each run).
+	told := false
+	for _, r := range s.Runs {
+		for _, f := range r.Stats.Refusals {
+			if !told {
+				sb.WriteString("\nWhat the rejected actions were told (the first of each run):\n\n")
+				told = true
+			}
+			fmt.Fprintf(&sb, "- seed %d, %s, tick %d: `%s %s`: %s\n", r.Seed, f.Age, f.Tick, f.Kind, f.Detail, f.Message)
+		}
+	}
 
 	s.writeFates(&sb)
 	s.writeHarbingers(&sb)

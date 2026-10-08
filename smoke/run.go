@@ -245,6 +245,8 @@ type Stats struct {
 	StarvationDeaths      int            `json:"starvation_deaths"`
 	Actions               map[string]int `json:"bot_actions"`
 	ActionErrors          map[string]int `json:"bot_action_errors"`
+	// Refusals is what the first rejected actions were told (Bot.Refusals).
+	Refusals []Refusal `json:"bot_refusals,omitempty"`
 	// FateAtAdvance counts the advances that waited because a fated doom
 	// had to settle first: its harbinger came to the gate, or it struck.
 	FateAtAdvance int `json:"fate_at_advance,omitempty"`
@@ -592,6 +594,7 @@ func (r *runner) finish() {
 	res.FinalAge = r.age
 	res.Stats.Actions = r.bot.Actions
 	res.Stats.ActionErrors = r.bot.Errors
+	res.Stats.Refusals = r.bot.Refusals
 	r.closeFate(FateOpen)
 	if r.stopReason != OutcomeDone {
 		res.Ages = append(res.Ages, r.split(true))
@@ -889,7 +892,7 @@ func (r *runner) control(st *game.GameState) bool {
 			// bot's, so it is counted on its own.
 			r.res.Stats.FateAtAdvance++
 		} else {
-			r.bot.Errors["advance"]++
+			r.bot.refuse("advance", from, err.Error())
 		}
 	}
 
@@ -922,7 +925,7 @@ func (r *runner) control(st *game.GameState) bool {
 					before.Research.TotalResearched, before.Stats.TotalBuilt, before.Prestige.Level), before, true)
 		}
 		if err := r.ge.DoPrestige(); err != nil {
-			r.bot.Errors["prestige"]++
+			r.bot.refuse("prestige", before.Age, err.Error())
 			return false
 		}
 		ending := "plain"
