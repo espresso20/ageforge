@@ -73,7 +73,7 @@ Branching keeps a moment without stopping play: branch before a prestige, a risk
 
 ## Autosave
 
-The game autosaves every 60 seconds to your **active** save, and saves again when `Esc` takes you back to the main menu, so the file on disk is never more than about a minute behind your game. To keep a point you don't want overwritten, save it under a new name (or duplicate it with `c` in the Load Game browser).
+The game autosaves every 60 seconds to your **active** save, and saves again when `Esc` takes you back to the main menu, so the file on disk is never more than about a minute behind your game. Leaving the program from inside a game, with `quit` or with Ctrl+C, saves that game to its own save first. Leaving from the main menu, or from any page it opens, writes nothing: there is no game in play to save. To keep a point you don't want overwritten, save it under a new name (or duplicate it with `c` in the Load Game browser).
 
 ---
 

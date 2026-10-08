@@ -1295,7 +1295,10 @@ func (d *Dashboard) submitInput() {
 		d.cmdHistory = append(d.cmdHistory, cmd)
 	}
 	if strings.ToLower(cmd) == "quit" {
-		d.engine.SaveGame(d.engine.ActiveSaveName())
+		// The same way out as Ctrl+C and a signal: the game in play is
+		// stopped and saved to its own save. (A failure has nowhere to be
+		// shown: the screen goes with the app.)
+		_, _ = d.engine.SaveOnExit()
 		d.app.Stop()
 		return
 	}

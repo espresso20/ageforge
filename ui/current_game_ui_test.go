@@ -2,6 +2,7 @@ package ui
 
 import (
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -269,5 +270,69 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 	r.key(tcell.KeyEsc, 0)
 	if r.front() != "splash" || r.m.hasCur || !r.m.view.forge || r.m.view.items[0].id != miNew {
 		t.Errorf("back at the menu: front %q, a current game %v, forge page %v, first entry %q", r.front(), r.m.hasCur, r.m.view.forge, r.m.view.items[0].id)
+	}
+}
+
+// TestQuitCommandSavesTheGameUnderItsName: quit in a game takes the same
+// way out as Ctrl+C and a signal (game.SaveOnExit). The game is stopped
+// and saved to its own save with its last moment in it, and no autosave is
+// written beside it.
+func TestQuitCommandSavesTheGameUnderItsName(t *testing.T) {
+	d, eng := mapTestDashboard(t, true)
+	if err := eng.StartNewNamedGame("Rome"); err != nil {
+		t.Fatal(err)
+	}
+	go eng.Start()
+	t.Cleanup(eng.Stop)
+	waitRunning(t, eng)
+	if _, err := eng.GatherResource("food", 3); err != nil {
+		t.Fatal(err)
+	}
+	want := eng.GetState().Resources["food"].Amount
+
+	d.runForTest("quit")
+
+	if eng.Running() {
+		t.Error("the game is still running after quit")
+	}
+	st, err := game.ViewSave("Rome")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := st.Resources["food"].Amount; got != want {
+		t.Errorf("Rome's save holds %v food, the game ended on %v", got, want)
+	}
+	if game.SaveExists(game.AutosaveName) {
+		t.Error("quit wrote an autosave beside the named game")
+	}
+	if cur, ok := eng.CurrentGame(); !ok || cur.Save.Name != "Rome" {
+		t.Errorf("after quit Continue opens %q", cur.Save.Name)
+	}
+}
+
+// TestMenuQuitWritesNothing: Quit on the main menu ends the program with
+// no game in play, and writes nothing: not the engine's empty game, not the
+// game the player came back from.
+func TestMenuQuitWritesNothing(t *testing.T) {
+	r := newMenuRig(t, "ashford")
+	root := filepath.Dir(filepath.Dir(game.DataDir()))
+	// A game is played and left with Esc, as the dashboard does it.
+	r.press('c')
+	waitRunning(t, r.eng)
+	if err := r.eng.SaveGame(r.eng.ActiveSaveName()); err != nil {
+		t.Fatal(err)
+	}
+	r.eng.Stop()
+	r.pages.SwitchToPage("splash")
+	before := dataTree(t, root)
+
+	r.press('q')
+	// What main does once Run has returned.
+	if name, err := r.eng.SaveOnExit(); name != "" || err != nil {
+		t.Errorf("after Quit on the menu the exit saved %q (%v)", name, err)
+	}
+	r.eng.Stop()
+	if !reflect.DeepEqual(before, dataTree(t, root)) {
+		t.Error("Quit on the menu wrote a file")
 	}
 }
