@@ -234,8 +234,8 @@ type AgeSplit struct {
 	Entry      map[string]float64 `json:"stock_at_entry,omitempty"`
 	EntryStore float64            `json:"store_at_entry,omitempty"`
 	Made       map[string]float64 `json:"made,omitempty"`
-	Bought map[string]float64 `json:"market_bought,omitempty"`
-	Sold   map[string]float64 `json:"market_sold,omitempty"`
+	Bought     map[string]float64 `json:"market_bought,omitempty"`
+	Sold       map[string]float64 `json:"market_sold,omitempty"`
 	// Gates is when each thing the advance waits for was first in place
 	// (nil for an age the run did not sample).
 	Gates *AgeGates `json:"gates,omitempty"`
