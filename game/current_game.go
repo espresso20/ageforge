@@ -1,6 +1,12 @@
 package game
 
-import "sort"
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+)
 
 // current_game.go says which of an account's saves is "the current game":
 // the one the main menu draws behind itself and Continue opens.
@@ -158,4 +164,66 @@ func (ge *GameEngine) CurrentGame() (cur CurrentGame, ok bool) {
 		mainGame, lastPlayed = acct.GameRecord()
 	}
 	return PickCurrentGame(saves, mainGame, lastPlayed)
+}
+
+// WipeSavesByID deletes every save in the slot of the account with this ID
+// and returns how many it deleted. The account itself is kept: its themes,
+// lifetime stats and badges. It is the Accounts panel's "delete all saves",
+// which acts on the selected account, current or not.
+//
+// The account's records of its current game go with the saves, so a later
+// save that happens to take a deleted one's name is not mistaken for it.
+// When the account is the one held, the run in memory was one of its saves:
+// the engine is reset to a fresh game, as it would be at a launch.
+func (ge *GameEngine) WipeSavesByID(id string) (int, error) {
+	if !validAccountID(id) {
+		return 0, fmt.Errorf("there is no account with the ID %q", id)
+	}
+	dir := filepath.Join(accountDir(id), "saves")
+	entries, err := os.ReadDir(dir)
+	if err != nil && !os.IsNotExist(err) {
+		return 0, fmt.Errorf("could not read the save folder: %w", err)
+	}
+	n := 0
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
+			continue
+		}
+		if err := os.Remove(filepath.Join(dir, e.Name())); err != nil {
+			return n, fmt.Errorf("could not delete the save file: %w", err)
+		}
+		n++
+	}
+	if held := ge.Account(); held != nil && held.AccountID == id {
+		_ = held.ForgetGame("")
+		ge.Reset()
+		return n, nil
+	}
+	forgetGamesInSlot(id)
+	return n, nil
+}
+
+// forgetGamesInSlot drops the current-game records from the settings file
+// of an account that is not held (the held one goes through ForgetGame, so
+// what it has in memory stays true). Best effort: a record with no save
+// behind it is ignored anyway.
+func forgetGamesInSlot(id string) {
+	path := filepath.Join(accountDir(id), settingsFileName)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	var s accountSettings
+	if json.Unmarshal(data, &s) != nil || s.MainGame == "" && s.LastPlayed == "" {
+		return
+	}
+	s.MainGame, s.LastPlayed, s.Version = "", "", settingsFileVersion
+	out, err := json.MarshalIndent(&s, "", "  ")
+	if err != nil {
+		return
+	}
+	tmp := path + ".tmp"
+	if os.WriteFile(tmp, out, 0644) == nil {
+		_ = os.Rename(tmp, path)
+	}
 }
