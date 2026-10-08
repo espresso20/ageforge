@@ -144,8 +144,13 @@ func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.Expedit
 		if exp.SoldiersNeeded > 0 {
 			soldiers = fmt.Sprintf("Soldiers: %d  ", exp.SoldiersNeeded)
 		}
-		fmt.Fprintf(sb, "   %sDuration: %s  Difficulty: [%s]%.0f%%[-] (chance of failure before bonuses)\n",
-			soldiers, durationStr, diffColor, exp.Difficulty*100)
+		// The listed difficulty, and what the army leaves of it today.
+		note := "(chance of failure before bonuses)"
+		if exp.Chance > 0 && exp.Chance < exp.Difficulty-0.0005 {
+			note = fmt.Sprintf("(chance of failure; %.0f%% with your army)", exp.Chance*100)
+		}
+		fmt.Fprintf(sb, "   %sDuration: %s  Difficulty: [%s]%.0f%%[-] %s\n",
+			soldiers, durationStr, diffColor, exp.Difficulty*100, note)
 		if cost := formatExpeditionCost(exp.Cost, state); cost != "" {
 			fmt.Fprintf(sb, "   Cost: %s\n", cost)
 		}

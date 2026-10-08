@@ -135,6 +135,11 @@ type GameSave struct {
 	// measure once, on load (restoreFaithState).
 	FaithMeasure  *FaithSave `json:"faith_measure,omitempty"`
 	FaithMeasured bool       `json:"faith_measured,omitempty"`
+	// CultureMeasure and CultureMeasured are the same for the run's culture
+	// measure, what culture strength is read from (culture.go;
+	// restoreCultureState). Both omitempty.
+	CultureMeasure  *CultureSave `json:"culture_measure,omitempty"`
+	CultureMeasured bool         `json:"culture_measured,omitempty"`
 	// The Last Passage (see last_passage.go). omitempty, so saves without it
 	// keep their bytes and signatures. PendingLastPassage is a prestige from
 	// the final epoch waiting for Endure or Succumb; CosmicLegacy is the
@@ -707,6 +712,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		ParkedHarbinger:        copyHarbingerSave(ge.parkedHarbinger),
 		FaithMeasure:           ge.faithSaveCopy(),
 		FaithMeasured:          true,
+		CultureMeasure:         ge.cultureSaveCopy(),
+		CultureMeasured:        true,
 		PendingLastPassage:     ge.pendingLastPassage,
 		CosmicLegacy:           ge.cosmicLegacy,
 		Morale:                 ge.morale,
@@ -1029,6 +1036,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.restoreFateState(&save)
 	ge.restoreHarbingerState(&save)
 	ge.restoreFaithState(&save)
+	ge.restoreCultureState(&save)
 
 	// Restore history collector
 	if save.History != nil {

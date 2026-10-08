@@ -23,6 +23,35 @@ func (s *Set) derive() {
 	s.flowIncome = config.Incomes(s.buildings, s.techs, s.ageKeys, config.IsFlowResource)
 	s.typIncome = config.Incomes(s.buildings, s.techs, s.ageKeys, config.AnyResource)
 	s.flowBuilt = config.BuildingOutputs(s.buildings, s.ageKeys, config.IsFlowResource)
+	s.built = config.BuildingOutputs(s.buildings, s.ageKeys, config.AnyResource)
+	s.flowStaffed = config.StaffedOutputs(s.buildings, s.ageKeys, config.IsFlowResource)
+	s.military = config.MilitaryScales(s.techs, s.ageKeys)
+	s.typStore = config.TypicalStorages(s.buildings, s.resources, s.ageKeys)
+}
+
+// TypicalStorage is what a moderate builder's store holds of res in age:
+// its base storage and config.FlowCopies copies of every storage building
+// up to the age (config.TypicalStorages). 0 for an unknown age or resource.
+func (s *Set) TypicalStorage(res, age string) float64 { return s.typStore[age][res] }
+
+// MilitaryScale is the military yardstick of the age with the given order
+// on this set's tree (config.MilitaryScales): what the typical player's
+// military power was when the raid threat and the missions were measured,
+// what it is now, and the two scales that put the difference back.
+func (s *Set) MilitaryScale(order int) config.MilitaryScaleDef {
+	return config.MilitaryScaleIn(s.military, order)
+}
+
+// AgeThreat is the raid threat of the age with the given order, on this
+// set's military yardstick.
+func (s *Set) AgeThreat(order int) float64 {
+	return config.AgeThreatAt(order, s.MilitaryScale(order).Threat)
+}
+
+// MissionPower is military power as a mission's difficulty reads it in the
+// age with the given order: power × the age's MilitaryScale.Mission.
+func (s *Set) MissionPower(power float64, order int) float64 {
+	return float64(power * s.MilitaryScale(order).Mission)
 }
 
 // Target is the time a player should spend in age at 1x (0 for an age with
@@ -71,6 +100,15 @@ func (s *Set) FlowIncome(res, age string) float64 { return s.flowIncome[age][res
 // of every non-wonder producer of the flow resource res up to and including
 // age, per tick (config.BuildingOutputs).
 func (s *Set) FlowBuildingOutput(res, age string) float64 { return s.flowBuilt[age][res] }
+
+// FlowStaffedOutput is the part of FlowBuildingOutput that buildings with
+// worker slots make (config.StaffedOutputs).
+func (s *Set) FlowStaffedOutput(res, age string) float64 { return s.flowStaffed[age][res] }
+
+// BuildingOutput is FlowBuildingOutput for any resource: what the moderate
+// economy's own buildings make of res by age, before any bonus (0 for a
+// resource only a wonder, a tech or the market supplies by then).
+func (s *Set) BuildingOutput(res, age string) float64 { return s.built[age][res] }
 
 // TypicalIncome is FlowIncome for any resource, construction ones included.
 func (s *Set) TypicalIncome(res, age string) float64 { return s.typIncome[age][res] }

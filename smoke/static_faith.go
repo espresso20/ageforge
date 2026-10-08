@@ -195,14 +195,18 @@ type faithIncome struct {
 // faithIncomes reads the model from set: the moderate set is
 // FlowBuildingOutput at the model's bonus, and the rest of FlowIncome is
 // what every town is given.
-func faithIncomes(set *rules.Set) []faithIncome {
-	wonder := map[string]float64{} // age -> faith of the wonder built there, before bonuses
+func faithIncomes(set *rules.Set) []faithIncome { return flowIncomes(set, "faith") }
+
+// flowIncomes is faithIncomes for any flow resource a strength is read from
+// (faith, culture).
+func flowIncomes(set *rules.Set, res string) []faithIncome {
+	wonder := map[string]float64{} // age -> res of the wonder built there, before bonuses
 	for _, d := range set.Buildings() {
 		if d.Category != "wonder" {
 			continue
 		}
 		for _, e := range d.Effects {
-			if e.Type == "production" && e.Target == "faith" && e.Value > 0 {
+			if e.Type == "production" && e.Target == res && e.Value > 0 {
 				wonder[d.RequiredAge] += e.Value
 			}
 		}
@@ -210,24 +214,19 @@ func faithIncomes(set *rules.Set) []faithIncome {
 	var out []faithIncome
 	for _, ep := range set.Eras() {
 		for _, a := range ep.Ages {
-			bonus := faithModelBonus(set, a)
+			// What config.Incomes multiplies the resource's output by in the
+			// age: the all-production pool the model holds by then, through
+			// the soft cap as the engine applies it, times the tech layer.
+			bonus := config.IncomeFactor(set.Techs(), set.Indexes(), a, res)
 			in := faithIncome{epoch: ep.Key, age: a, ticks: set.TargetTicks(a),
-				set: float64(set.FlowBuildingOutput("faith", a) * bonus), givenWonder: float64(wonder[a] * bonus)}
-			if in.given = set.FlowIncome("faith", a) - in.set; in.given < 0 {
+				set: float64(set.FlowBuildingOutput(res, a) * bonus), givenWonder: float64(wonder[a] * bonus)}
+			if in.given = set.FlowIncome(res, a) - in.set; in.given < 0 {
 				in.given = 0
 			}
 			out = append(out, in)
 		}
 	}
 	return out
-}
-
-// faithModelBonus is what config.Incomes multiplies faith output by in
-// age: the all-production pool the model holds by then, through the soft
-// cap as the engine applies it, times the tech layer on faith
-// (config.IncomeFactor).
-func faithModelBonus(set *rules.Set, age string) float64 {
-	return config.IncomeFactor(set.Techs(), set.Indexes(), age, "faith")
 }
 
 // faithStrengthProblems is StaticFaithStrength over a model and a rule (the

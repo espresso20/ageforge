@@ -427,7 +427,7 @@ type MilitaryState struct {
 	SoldierCap    int
 	SoldierRate   float64
 	DefenseRating float64
-	// Threat is the current age's raid threat (config.AgeThreat) and
+	// Threat is the current age's raid threat (rules.Set.AgeThreat) and
 	// Mitigation the share of a raid the garrison would blunt against it
 	// (config.DefenseMitigation, 0..config.DefenseMitigationCap).
 	Threat     float64
@@ -498,6 +498,10 @@ type ExpeditionInfo struct {
 	DurationMin int
 	DurationMax int
 	Difficulty  float64
+	// Chance is the mission's chance of failure now, with the player's
+	// military power counted on the current age's yardstick
+	// (config.MissionDifficulty). Difficulty is the listed one, before it.
+	Chance      float64
 	Cost        map[string]float64
 	Description string
 	CanLaunch   bool

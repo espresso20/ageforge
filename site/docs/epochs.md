@@ -70,15 +70,48 @@ The outcome is decided in steps.
 
 **Step 2: if the roll is bad,** you get a Challenging event, applied at once with no choice. A transition never brings a catastrophe. Entering an era from the Iron Era on also rolls, in secret, whether a doom is fated somewhere inside it; a [harbinger](harbinger.md) always warns before it strikes. See [When It Triggers](catastrophe.md#when-it-triggers).
 
-**Step 3: if the roll is good,** your culture, as a share of culture storage, decides which tiers you can draw from:
+**Step 3: if the roll is good,** your **culture strength** decides which tiers you can draw from:
 
-| Culture % of Storage | Eligible Tiers |
-|--------------------------|----------------|
+| Culture strength | Eligible Tiers |
+|------------------|----------------|
 | 40% or less | Minor only |
 | Over 40% | Minor + Major |
 | Over 75% (15% chance) | All tiers (Legendary eligible) |
 
-The Legendary draw is a 15% chance inside the over-75% bracket, so it doesn't fire every time even with full culture storage. The other 85% of those rolls draw from Minor + Major.
+The Legendary draw is a 15% chance inside the over-75% bracket, so it doesn't fire every time even at full strength. The other 85% of those rolls draw from Minor + Major.
+
+#### Culture strength
+
+Culture strength works like [faith strength](faith.md#faith-threshold-bands). It is the culture you hold that your own culture buildings made, measured against what four and a half **moderate sets** of culture buildings would have made over the same run. A moderate set is five copies of every culture building your age has (the Amphitheater onward; culture buildings take no workers).
+
+```
+devotion         = what your culture buildings have made this run ÷ what a moderate set would have made
+share kept       = culture you hold ÷ the culture your income has made this run   (at most 100%)
+culture strength = devotion × share kept ÷ 4.5                                    (at most 100%)
+```
+
+| Your culture buildings | Culture strength (nothing spent) | Good events open |
+|------------------------|----------------------------------|------------------|
+| none | 0% | Minor |
+| a moderate set | 22% | Minor |
+| twice that | 44% | Minor + Major |
+| three times | 67% | Minor + Major |
+| three and a half times | 78% | Minor + Major, and the Legendary on 15% of rolls |
+
+- **Major events open at a devotion over 1.8**, the Legendary over 3.375.
+- **Spending culture lowers it.** A festival, a Black Market deal, a monument or an Appease paid in culture takes its share of the strength with it: spend half the culture your income has made and your strength halves.
+- **Culture you did not make counts for nothing past what you spent.** Culture bought at the market, an event's gift or a wonder's and a tech's culture can make up for culture you spent; it never raises your strength above what your culture buildings earned.
+- It follows the whole run, not the age: nothing jumps when you advance, so the roll reads what the Epochs panel showed you before you advanced. The panel prints it: "Good events at the next era: Minor only", with your culture strength, devotion and share kept under it.
+
+The tier used to read how full culture's storage was. Culture has no store of its own to speak of: it is kept in the general one, which every storage building raises. No town filled it by making culture. A moderate town's whole run of culture, never spent, came to under 8% of the smallest store an era's gate leaves you holding, and under 1% from the Modern Age on; three and a half times the culture buildings reached 19% at best, at the Iron Era's end. The one way over 40% was the market, which sells 3 culture for a gold: from the Medieval Age to the Digital Age, six to twelve minutes of a moderate economy's gold filled a typical store that far. Buying culture no longer opens a tier; building for it does.
+
+| Leaving | Old rule: a moderate town's culture, of its store | Old rule: three and a half times the buildings | Now: moderate | Now: twice | Now: three and a half times |
+|---------|---------------------------------------------------|-----------------------------------------------|---------------|------------|-----------------------------|
+| the Iron Era (Medieval Age) | 7.5% | 19% | 22%, Minor | 44%, Major | 78%, Legendary |
+| the Steel Era (Industrial Age) | 2.5% | 7.9% | 22%, Minor | 44%, Major | 78%, Legendary |
+| the Electric Era (Atomic Age) | 0.05% | 0.2% | 22%, Minor | 44%, Major | 78%, Legendary |
+| the Digital Era (Digital Age) | 0.01% | 0.04% | 22%, Minor | 44%, Major | 78%, Legendary |
+| the Neon Era (Space Age) | 0.002% | 0.007% | 22%, Minor | 44%, Major | 78%, Legendary |
 
 > Faith sets your odds of a good event; culture sets how good it can be. You need both to get the best outcomes reliably.
 
@@ -121,7 +154,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 | Trade Winds | +5 gold/tick | 374 ticks (~12m 28s) |
 | Cultural Festival | +30% of your culture and +20% of your faith at once, then culture +1/tick and faith +1/tick. Never rolled on entering the Iron Era: culture unlocks in the Classical Age | 374 ticks |
 
-### Major events (culture over 40% of storage)
+### Major events (culture strength over 40%)
 
 | Event | Effect | Duration |
 |-------|--------|----------|
@@ -130,7 +163,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 | The Architect's Gift | 10 free copies of your most-built non-wonder building | Instant |
 | Peaceful Century | +20% all production | 749 ticks (~24m 58s) |
 
-### Legendary event (culture over 75%, 15% chance)
+### Legendary event (culture strength over 75%, 15% chance)
 
 | Event | Effect | Duration |
 |-------|--------|----------|
@@ -265,7 +298,7 @@ A duration of 0 means the effect happens once. A duration above 0 means the even
 
 Keep about twice a moderate set of faith buildings, fully staffed, for a faith strength in the middle band (about 44%). Invest in culture buildings at a moderate pace. Take transition events as they come without over-optimizing.
 
-In the middle band the odds are a coin flip. With decent culture (over 40% of storage) you're eligible for Major events. You won't hit Legendary, but The Grand Discovery and Worker Innovation are both strong. A first run to the Modern Age crosses 4 epoch transitions (into the Iron, Steel, Electric and Digital Eras), so at a steady 50% good rate you can expect about 2 good events and 2 challenging ones. Catastrophes come separately: at mid faith a first run can expect about 0.6 of them.
+In the middle band the odds are a coin flip. With about twice a moderate set of culture buildings (a culture strength over 40%) you're eligible for Major events. You won't hit Legendary, but The Grand Discovery and Worker Innovation are both strong. A first run to the Modern Age crosses 4 epoch transitions (into the Iron, Steel, Electric and Digital Eras), so at a steady 50% good rate you can expect about 2 good events and 2 challenging ones. Catastrophes come separately: at mid faith a first run can expect about 0.6 of them.
 
 Best for: a first or second run, players who don't want to commit hard to one strategy, relaxed sessions.
 
@@ -281,13 +314,13 @@ Best for: players who want steady income and dislike variance. It also suits run
 
 ### Culture Rusher
 
-Put culture buildings first and push culture as close to full storage as you can, aiming for the over-75% bracket before each epoch boundary.
+Put culture buildings first: three and a half times a moderate set, kept from the Classical Age on, and spend as little culture as you can, aiming for a culture strength over 75% before each epoch boundary.
 
 The Legendary tier is the goal. Epoch Blessing (+15% all production) and Worker Innovation (+10%) are the two strongest transition events, and both last the rest of the run. They pay off most when they land at the Iron or Steel Era transition: from about the Electric Age a full set of milestones takes the all-production pool past +200%, where a bonus counts a quarter, and a late Blessing then adds about 4 points.
 
-Culture also opens Major events (over 40% of storage), which are strictly better than Minor events. The Grand Discovery (up to 3 free techs) and The Architect's Gift (10 free buildings) can skip you ahead a long way.
+Culture also opens Major events (a culture strength over 40%, about twice a moderate set of culture buildings), which are strictly better than Minor events. The Grand Discovery (up to 3 free techs) and The Architect's Gift (10 free buildings) can skip you ahead a long way.
 
-Trade-offs: culture buildings cost a lot. This approach is slower to build production in the early epochs but speeds up in the mid-game once Major and Legendary events start landing.
+Trade-offs: culture buildings cost a lot, and culture you spend on festivals, Black Market deals or Appease comes off your strength. This approach is slower to build production in the early epochs but speeds up in the mid-game once Major and Legendary events start landing.
 
 Best for: research-focused runs, players who know the tech tree well, longer sessions where the late-game payoff matters.
 

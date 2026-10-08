@@ -90,6 +90,10 @@ type Bot struct {
 	// rejected ones. Both feed the report.
 	Actions map[string]int
 	Errors  map[string]int
+	// Refusals keeps what the first few rejected actions were told, so the
+	// report can say what went wrong, not only how often (refusalsKept at
+	// most: a bot that is refused every tick must not fill the report).
+	Refusals []Refusal
 
 	// Trace, if set, receives one line per attempted action.
 	Trace io.Writer
@@ -97,6 +101,7 @@ type Bot struct {
 	// or both (Appease up to level 2, Brace level 1).
 	Harbinger string
 	tick      int
+	age       string
 	// sold and bought remember the tick each resource last left or entered
 	// through the market, so two trading rules can't undo each other.
 	sold, bought map[string]int
@@ -300,7 +305,7 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 
 // Play makes one round of economic decisions from a fresh snapshot.
 func (b *Bot) Play(st game.GameState) {
-	b.tick = st.Tick
+	b.tick, b.age = st.Tick, st.Age
 	if st.PendingMemoryTech != "" {
 		b.act("accept_memory", st.PendingMemoryTech, b.ge.AcceptAncientMemory())
 	}
@@ -1288,6 +1293,27 @@ func (b *Bot) queuedCount(st game.GameState, key string) int {
 	return n
 }
 
+// Refusal is one action the game refused: when, in which age, what the bot
+// asked for and what it was told.
+type Refusal struct {
+	Tick    int    `json:"tick"`
+	Age     string `json:"age"`
+	Kind    string `json:"kind"`
+	Detail  string `json:"detail,omitempty"`
+	Message string `json:"message"`
+}
+
+// refusalsKept is how many refusals a run's report carries in full.
+const refusalsKept = 20
+
+// refuse counts a rejected action of kind and keeps what it was told.
+func (b *Bot) refuse(kind, detail, message string) {
+	b.Errors[kind]++
+	if len(b.Refusals) < refusalsKept {
+		b.Refusals = append(b.Refusals, Refusal{Tick: b.tick, Age: b.age, Kind: kind, Detail: detail, Message: message})
+	}
+}
+
 func (b *Bot) act(kind, detail string, err error) bool {
 	if b.Trace != nil {
 		res := "ok"
@@ -1297,7 +1323,7 @@ func (b *Bot) act(kind, detail string, err error) bool {
 		fmt.Fprintf(b.Trace, "tick %d %s %s: %s\n", b.tick, kind, detail, res)
 	}
 	if err != nil {
-		b.Errors[kind]++
+		b.refuse(kind, detail, err.Error())
 		return false
 	}
 	b.Actions[kind]++
@@ -1380,14 +1406,22 @@ func (b *Bot) tryBuild(p *plan, key, kind string) bool {
 	if !p.fits(c) || !p.affordable(c) {
 		return false
 	}
+	// What the copy really costs is read off the stores: the game floors
+	// each copy's price, so the second copy bought in one decision can cost
+	// a fraction more than the first's price times the scale (cost), and a
+	// plan that booked the estimate went on to sell wood it did not have.
+	held := make(map[string]float64, len(c))
+	for r := range c {
+		held[r] = b.ge.Resources.Get(r)
+	}
 	if !b.act(kind, key, b.ge.BuildBuilding(key)) {
 		return false
 	}
 	if b.RecordPlan {
 		b.ge.NotePlanForTest(game.PlanBuild, key, 1)
 	}
-	for r, v := range c {
-		p.amt[r] -= v
+	for r := range c {
+		p.amt[r] -= held[r] - b.ge.Resources.Get(r)
 	}
 	p.extra[key]++
 	for _, e := range b.defs[key].Effects {

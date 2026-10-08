@@ -10,6 +10,7 @@ package smoke
 import (
 	"bufio"
 	"fmt"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -211,6 +212,85 @@ type AgeSplit struct {
 	// bound.
 	KnowledgeHour float64 `json:"knowledge_per_hour_1x,omitempty"`
 	PoolAll       float64 `json:"production_all_earned,omitempty"`
+	// KnowledgeBought is the knowledge the market sold in the age, and
+	// KnowledgeMade what the age's own income added up to over the same
+	// ticks (the rate KnowledgeHour averages): how much of an age's
+	// research was bought.
+	KnowledgeBought float64 `json:"knowledge_bought,omitempty"`
+	KnowledgeMade   float64 `json:"knowledge_made,omitempty"`
+	// FaithStrength and CultureStrength are what the rolls that read faith
+	// and culture would have read as the age ended (game/faith.go,
+	// game/culture.go): where a real run's town stands against the bands.
+	FaithStrength   float64 `json:"faith_strength,omitempty"`
+	CultureStrength float64 `json:"culture_strength,omitempty"`
+	// Made, Bought and Sold are the age's whole market picture, per
+	// resource: what its own income added up to over the sampled ticks
+	// (positive rates only), and what the market sold the player and took
+	// from them. A resource bought far past what was made is one the age
+	// gets at the market; one sold in bulk is what paid for it.
+	// Quiet says what the longest quiet stretch (QuietSecs) was made of: nil
+	// for an age the run did not sample.
+	Quiet *QuietStretch `json:"quiet,omitempty"`
+	// Entry is what the store held at the age's first sampled tick (amounts
+	// of a whole unit or more), and EntryStore the general store's cap then
+	// (gold's): what a run carried in.
+	Entry      map[string]float64 `json:"stock_at_entry,omitempty"`
+	EntryStore float64            `json:"store_at_entry,omitempty"`
+	Made       map[string]float64 `json:"made,omitempty"`
+	Bought     map[string]float64 `json:"market_bought,omitempty"`
+	Sold       map[string]float64 `json:"market_sold,omitempty"`
+	// Gates is when each thing the advance waits for was first in place
+	// (nil for an age the run did not sample).
+	Gates *AgeGates `json:"gates,omitempty"`
+}
+
+// QuietStretch is what a quiet stretch was made of: a stretch with no
+// building type built for the first time and no tech finished. It tells a
+// stretch where the player had nothing new left to open from one where they
+// had nothing to do at all.
+type QuietStretch struct {
+	// Samples is how many of the bot's decisions fell in the stretch.
+	Samples int `json:"samples"`
+	// TechsOpen is how many techs could be researched when the stretch
+	// began (age and prerequisites met, not yet researched), and
+	// TechsLeft how many of the current age's techs were not yet
+	// researched then, open or not.
+	TechsOpen int `json:"techs_open"`
+	TechsLeft int `json:"techs_left"`
+	// TypesLeft is how many building types of the current age had never
+	// been built when it began.
+	TypesLeft int `json:"building_types_left"`
+	// Built is how many buildings (copies of types already seen) were
+	// finished during it.
+	Built int `json:"built"`
+	// Researching, Affordable and Banking are the samples at which a tech
+	// was being researched, at least one building of the age or open tech
+	// could be paid for at once, and the wonder still had a price to pay toward
+	// with something in store to pay it (a sample can count for all three).
+	// Nothing is the samples at which none of the three was true and
+	// nothing was under construction: the player could start nothing.
+	Researching int `json:"researching"`
+	Affordable  int `json:"affordable"`
+	Banking     int `json:"banking"`
+	Nothing     int `json:"nothing"`
+}
+
+// AgeGates is when each thing an advance waits for was first in place, in
+// ticks from entering the age as the bot's decisions sampled it; -1 for one
+// that never was while the age lasted (or that the age does not have). The
+// last of them to come is what the age waited for, and the wonder's build
+// time is WonderBuilt less the later of WonderTech and WonderFunded.
+type AgeGates struct {
+	// WonderTech: the wonder's keystone tech is researched.
+	WonderTech int `json:"wonder_tech"`
+	// WonderFunded: the wonder's bank holds its whole price.
+	WonderFunded int `json:"wonder_funded"`
+	// WonderBuilt: the wonder stands.
+	WonderBuilt int `json:"wonder_built"`
+	// Buildings: every building the next age asks for stands.
+	Buildings int `json:"buildings"`
+	// Resources: the store holds every resource the next age asks for.
+	Resources int `json:"resources"`
 }
 
 // CycleSplit is the time from a fresh start to prestige.
@@ -245,6 +325,8 @@ type Stats struct {
 	StarvationDeaths      int            `json:"starvation_deaths"`
 	Actions               map[string]int `json:"bot_actions"`
 	ActionErrors          map[string]int `json:"bot_action_errors"`
+	// Refusals is what the first rejected actions were told (Bot.Refusals).
+	Refusals []Refusal `json:"bot_refusals,omitempty"`
 	// FateAtAdvance counts the advances that waited because a fated doom
 	// had to settle first: its harbinger came to the gate, or it struck.
 	FateAtAdvance int `json:"fate_at_advance,omitempty"`
@@ -384,6 +466,32 @@ type runner struct {
 	knowTicks  int
 	poolAll    float64
 	quietAfter string
+	// gates is when each thing the advance waits for was first in place in
+	// this age, wonder the age's wonder once the state has named it, and
+	// boughtK0 the knowledge the market had sold when the age began.
+	gates    AgeGates
+	wonder   string
+	boughtK0 float64
+	boughtK  float64
+	// made is each resource's income summed over the age's sampled ticks;
+	// bought0 and sold0 are the market's run totals when the age began, and
+	// bought and sold the totals as last seen.
+	made            map[string]float64
+	bought0, bought map[string]float64
+	sold0, sold     map[string]float64
+	// stretch is the quiet stretch running now, stretchBuilt0 the buildings
+	// standing when it began, and quietBest the longest one of the age so
+	// far (see QuietStretch).
+	stretch       QuietStretch
+	stretchBuilt0 int
+	stretchOpen   bool
+	quietBest     QuietStretch
+	// entry is the store at the age's first sampled tick, entryStore the
+	// general store's cap then.
+	entry      map[string]float64
+	entryStore float64
+	// faithS and cultureS are the faith and culture strength as last seen.
+	faithS, cultureS float64
 	// advancing is set while control calls AdvanceAge, so the age-advance
 	// bus handler leaves that advance to control.
 	advancing bool
@@ -592,6 +700,7 @@ func (r *runner) finish() {
 	res.FinalAge = r.age
 	res.Stats.Actions = r.bot.Actions
 	res.Stats.ActionErrors = r.bot.Errors
+	res.Stats.Refusals = r.bot.Refusals
 	r.closeFate(FateOpen)
 	if r.stopReason != OutcomeDone {
 		res.Ages = append(res.Ages, r.split(true))
@@ -623,13 +732,103 @@ func (r *runner) split(unfinished bool) AgeSplit {
 		quiet, after = gap, r.quietWhat
 	}
 	a.QuietSecs, a.QuietAfter = quiet.Seconds(), after
+	if best := r.quietBest; r.sim-r.quietMark > r.quietMax && r.stretchOpen {
+		// The stretch still running is the longest.
+		q := r.stretch
+		a.Quiet = &q
+	} else if best.Samples > 0 {
+		a.Quiet = &best
+	}
 	if r.knowTicks > 0 {
 		// A rate is per tick at the age's speed: per hour at 1x is that
 		// over k, times the ticks in an hour.
 		a.KnowledgeHour = r.knowSum / float64(r.knowTicks) / math.Max(r.speeds[r.age], 1) * 3600 / config.TickSeconds
 	}
 	a.PoolAll = r.poolAll
+	if r.knowTicks > 0 {
+		g := r.gates
+		a.Gates = &g
+		a.KnowledgeMade = r.knowSum
+		a.KnowledgeBought = math.Max(r.boughtK-r.boughtK0, 0)
+		a.Made = maps.Clone(r.made)
+		a.Entry, a.EntryStore = r.entry, r.entryStore
+		a.FaithStrength, a.CultureStrength = r.faithS, r.cultureS
+		a.Bought, a.Sold = since(r.bought, r.bought0), since(r.sold, r.sold0)
+	}
 	return a
+}
+
+// since is now less then per key, for the keys that grew.
+func since(now, then map[string]float64) map[string]float64 {
+	var out map[string]float64
+	for k, v := range now {
+		if d := v - then[k]; d > 0 {
+			if out == nil {
+				out = map[string]float64{}
+			}
+			out[k] = d
+		}
+	}
+	return out
+}
+
+// trackGates notes the first sampled tick of the age at which each thing
+// the advance waits for is in place (AgeGates).
+func (r *runner) trackGates(st game.GameState) {
+	at := r.ticks - r.ageT0
+	mark := func(dst *int, ok bool) {
+		if ok && *dst < 0 {
+			*dst = at
+		}
+	}
+	if st.CurrentAgeWonderKey != "" {
+		r.wonder = st.CurrentAgeWonderKey
+	}
+	if w, ok := st.Buildings[r.wonder]; ok && r.wonder != "" {
+		mark(&r.gates.WonderTech, w.NeedsTech == "")
+		mark(&r.gates.WonderFunded, w.WonderBankFull || w.Count > 0)
+		mark(&r.gates.WonderBuilt, w.Count > 0)
+	}
+	if st.NextAge != "" {
+		blds := true
+		for k, n := range st.NextAgeBldReqs {
+			if st.Buildings[k].Count < n {
+				blds = false
+			}
+		}
+		mark(&r.gates.Buildings, blds)
+		res := true
+		for k, v := range st.NextAgeResReqs {
+			if st.Resources[k].Amount < v {
+				res = false
+			}
+		}
+		mark(&r.gates.Resources, res)
+	}
+	bought := st.Trade.TotalBought["knowledge"]
+	if bought < r.boughtK {
+		// A new run (prestige or Succumb) starts the market's totals again.
+		r.boughtK0 = 0
+		r.bought0, r.sold0 = nil, nil
+	}
+	r.boughtK = bought
+	r.bought, r.sold = st.Trade.TotalBought, st.Trade.TotalSold
+	r.faithS, r.cultureS = st.CatastropheOutlook.FaithStrength, st.CatastropheOutlook.CultureStrength
+	if r.made == nil {
+		r.made = map[string]float64{}
+		r.entry = map[string]float64{}
+		for k, rs := range st.Resources {
+			if rs.Amount >= 1 {
+				r.entry[k] = rs.Amount
+			}
+		}
+		r.entryStore = st.Resources["gold"].Storage
+	}
+	for k, rs := range st.Resources {
+		if rs.Rate > 0 {
+			r.made[k] += float64(rs.Rate * float64(r.cfg.DecideEvery))
+		}
+	}
 }
 
 // trackNovelty marks the new decisions in st (a building type built for the
@@ -640,11 +839,17 @@ func (r *runner) trackNovelty(st game.GameState) {
 		r.novTechs = 0
 		r.seenBld = make(map[string]bool)
 	}
+	total := 0
+	for _, b := range st.Buildings {
+		total += b.Count
+	}
 	mark := func(what string) {
 		if gap := r.sim - r.quietMark; gap > r.quietMax {
 			r.quietMax, r.quietAfter = gap, r.quietWhat
+			r.quietBest = r.stretch
 		}
 		r.quietMark, r.quietWhat = r.sim, what
+		r.stretchOpen = false
 	}
 	if st.Research.TotalResearched > r.novTechs {
 		r.novTechs = st.Research.TotalResearched
@@ -655,6 +860,71 @@ func (r *runner) trackNovelty(st game.GameState) {
 			r.seenBld[k] = true
 			mark("new " + k)
 		}
+	}
+	r.sampleStretch(st, total)
+}
+
+// sampleStretch adds this decision to the quiet stretch running now,
+// starting it if a mark has just closed the one before (QuietStretch).
+func (r *runner) sampleStretch(st game.GameState, built int) {
+	if !r.stretchOpen {
+		r.stretchOpen, r.stretchBuilt0 = true, built
+		r.stretch = QuietStretch{}
+		for _, t := range st.Research.Techs {
+			if t.Available {
+				r.stretch.TechsOpen++
+			}
+			if t.Age == st.Age && !t.Researched {
+				r.stretch.TechsLeft++
+			}
+		}
+		for _, b := range st.Buildings {
+			if b.AgeKey == st.Age && b.Count == 0 {
+				r.stretch.TypesLeft++
+			}
+		}
+	}
+	q := &r.stretch
+	q.Samples++
+	q.Built = max(built-r.stretchBuilt0, 0)
+	busy := len(st.BuildQueue) > 0
+	if st.Research.CurrentTech != "" {
+		q.Researching++
+		busy = true
+	}
+	affordable := false
+	for _, b := range st.Buildings {
+		// A building of the age (the age lock keeps older ones from being
+		// built again) that could be paid for at once.
+		if b.AgeKey == st.Age && b.CanBuild && !b.AtMaxCount && !b.IsLegacy {
+			affordable = true
+			break
+		}
+	}
+	if !affordable && st.Research.CurrentTech == "" {
+		know := st.Resources["knowledge"].Amount
+		for _, t := range st.Research.Techs {
+			if t.Available && t.Cost <= know {
+				affordable = true
+				break
+			}
+		}
+	}
+	if affordable {
+		q.Affordable++
+		busy = true
+	}
+	if w, ok := st.Buildings[st.CurrentAgeWonderKey]; ok && st.CurrentAgeWonderKey != "" && !w.WonderBankFull {
+		for res, c := range w.NextCost {
+			if w.WonderBank[res] < c && st.Resources[res].Amount >= 1 {
+				q.Banking++
+				busy = true
+				break
+			}
+		}
+	}
+	if !busy {
+		q.Nothing++
 	}
 }
 
@@ -703,7 +973,13 @@ func (r *runner) enterAge(st game.GameState) {
 	r.timedOut = false
 	r.quietMark, r.quietWhat = r.sim, "entering "+st.Age
 	r.quietMax, r.quietAfter = 0, ""
+	r.stretchOpen, r.quietBest = false, QuietStretch{}
 	r.knowSum, r.knowTicks, r.poolAll = 0, 0, 0
+	r.gates = AgeGates{WonderTech: -1, WonderFunded: -1, WonderBuilt: -1, Buildings: -1, Resources: -1}
+	r.wonder = ""
+	r.boughtK0 = r.boughtK
+	r.made = nil
+	r.bought0, r.sold0 = maps.Clone(r.bought), maps.Clone(r.sold)
 }
 
 // closeAge records the age just completed. Its verdict is graded across
@@ -734,6 +1010,7 @@ func (r *runner) observe(st game.GameState) {
 	}
 	r.knowTicks += r.cfg.DecideEvery
 	r.poolAll = st.Pools["production_all"].Earned
+	r.trackGates(st)
 
 	for _, ev := range st.ActiveEvents {
 		if !r.prevEvt[ev.Key] {
@@ -889,7 +1166,7 @@ func (r *runner) control(st *game.GameState) bool {
 			// bot's, so it is counted on its own.
 			r.res.Stats.FateAtAdvance++
 		} else {
-			r.bot.Errors["advance"]++
+			r.bot.refuse("advance", from, err.Error())
 		}
 	}
 
@@ -922,7 +1199,7 @@ func (r *runner) control(st *game.GameState) bool {
 					before.Research.TotalResearched, before.Stats.TotalBuilt, before.Prestige.Level), before, true)
 		}
 		if err := r.ge.DoPrestige(); err != nil {
-			r.bot.Errors["prestige"]++
+			r.bot.refuse("prestige", before.Age, err.Error())
 			return false
 		}
 		ending := "plain"

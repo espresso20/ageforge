@@ -77,6 +77,12 @@ func (ge *GameEngine) militaryPower() float64 {
 	return ge.Research.Bonus(config.EffectMilitaryPower, "") + ge.permanentBonuses["military_power"] + prestige["military_power"] + wonders["military_power"]
 }
 
+// missionPower is militaryPower as a mission's difficulty reads it in the
+// current age (rules.Set.MissionPower). Read-only.
+func (ge *GameEngine) missionPower() float64 {
+	return ge.rules.MissionPower(ge.militaryPower(), ge.progress.GetAgeOrder()[ge.age])
+}
+
 // expeditionReward is the summed expedition_reward bonus, from the same
 // sources as militaryPower. Read-only.
 func (ge *GameEngine) expeditionReward() float64 {
@@ -90,9 +96,9 @@ func (ge *GameEngine) defenseRating() float64 {
 	return ge.Military.CalculateDefense(int(ge.Resources.Get("soldiers")), ge.militaryPower())
 }
 
-// ageThreat is the raid threat of age (config.AgeThreat by its order).
+// ageThreat is the raid threat of age (the ruleset's AgeThreat by its order).
 func (ge *GameEngine) ageThreat(age string) float64 {
-	return config.AgeThreat(ge.progress.GetAgeOrder()[age])
+	return ge.rules.AgeThreat(ge.progress.GetAgeOrder()[age])
 }
 
 // raidMitigation is the share of a raid's losses the garrison blunts right

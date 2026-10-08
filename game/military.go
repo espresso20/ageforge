@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"sort"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -396,18 +397,20 @@ type ExpeditionResult struct {
 // complete independently — a scouting and a military expedition resolve on their
 // own schedules.
 //
-// Success probability per expedition: successRoll > (DifficultyBase - militaryBonus×0.3).
-// militaryBonus reduces effective difficulty; expeditionBonus scales reward amounts.
+// Success probability per expedition: successRoll > config.MissionDifficulty
+// (DifficultyBase less 0.3 × missionPower, 5% at least). missionPower is the
+// player's military power on the current age's yardstick (rules.Set.MissionPower);
+// expeditionBonus scales reward amounts.
 // Soldiers are spent at launch (win or lose); success vs failure differs only in
 // reward (full vs 30%), not in any extra soldier loss. The success roll comes
 // from rng, one draw per resolving expedition, scouting before military.
-func (mm *MilitaryManager) Tick(rng *rand.Rand, militaryBonus, expeditionBonus float64) []ExpeditionResult {
+func (mm *MilitaryManager) Tick(rng *rand.Rand, missionPower, expeditionBonus float64) []ExpeditionResult {
 	// Iterate categories in a stable order so resolution logs/results are
 	// deterministic regardless of map iteration order.
 	cats := []string{ExpeditionScouting, ExpeditionMilitary}
 	var results []ExpeditionResult
 	for _, cat := range cats {
-		if res, ok := mm.tickCategory(rng, cat, militaryBonus, expeditionBonus); ok {
+		if res, ok := mm.tickCategory(rng, cat, missionPower, expeditionBonus); ok {
 			results = append(results, res)
 		}
 	}
@@ -416,7 +419,7 @@ func (mm *MilitaryManager) Tick(rng *rand.Rand, militaryBonus, expeditionBonus f
 
 // tickCategory advances one category's active expedition. ok is true only on the
 // tick the expedition resolves (carrying its rewards + message).
-func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, militaryBonus, expeditionBonus float64) (ExpeditionResult, bool) {
+func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, missionPower, expeditionBonus float64) (ExpeditionResult, bool) {
 	active := mm.activeByCat[category]
 	if active == nil {
 		return ExpeditionResult{}, false
@@ -434,11 +437,9 @@ func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, militar
 		return ExpeditionResult{}, false
 	}
 
-	// Success calculation: military bonus reduces difficulty
-	difficulty := def.DifficultyBase - float64(militaryBonus*0.3)
-	if difficulty < 0.05 {
-		difficulty = 0.05
-	}
+	// Success calculation: military power, on the age's yardstick, reduces
+	// difficulty (config.MissionDifficulty).
+	difficulty := config.MissionDifficulty(def.DifficultyBase, missionPower)
 
 	successRoll := rng.Float64()
 	success := successRoll > difficulty

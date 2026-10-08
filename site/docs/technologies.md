@@ -492,16 +492,16 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `television` | Television | optional | 858M kp | 3,510 | `cinema` | Opens the Monument of Ages |
-| `information_theory` | Information Theory | optional | 858M kp | 3,510 | `modern_physics` | +5% knowledge production |
-| `containerization` | Containerization | optional | 858M kp | 3,510 | `corporations` | Opens the Seaport, trade routes bring in 10% more |
-| `suburbs` | Suburbs | optional | 858M kp | 3,510 | `green_revolution` | +5% housing |
-| `nanofabrication` | Nanofabrication | optional | 858M kp | 3,510 | `computers` | Buildings cost 3% less |
-| `titanium_alloys` | Titanium Alloys | optional | 858M kp | 3,510 | `chemical_engineering` | +5% steel production |
-| `special_forces` | Special Forces | optional | 858M kp | 3,510 | `nuclear_deterrence` | Campaigns take 15% less time |
-| `electricity_tech` | Advanced Electrics | spine | 515M kp | 2,808 | `nuclear_fission` | Opens the Power Grid Hub, +5% electricity production |
-| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 686M kp | 3,510 | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
-| `computers` | Computers | spine | 515M kp | 2,808 | `electricity_tech` | +5% knowledge production, research takes 3% less time |
+| `television` | Television | optional | 593M kp | 3,510 | `cinema` | Opens the Monument of Ages |
+| `information_theory` | Information Theory | optional | 593M kp | 3,510 | `modern_physics` | +5% knowledge production |
+| `containerization` | Containerization | optional | 593M kp | 3,510 | `corporations` | Opens the Seaport, trade routes bring in 10% more |
+| `suburbs` | Suburbs | optional | 593M kp | 3,510 | `green_revolution` | +5% housing |
+| `nanofabrication` | Nanofabrication | optional | 593M kp | 3,510 | `computers` | Buildings cost 3% less |
+| `titanium_alloys` | Titanium Alloys | optional | 593M kp | 3,510 | `chemical_engineering` | +5% steel production |
+| `special_forces` | Special Forces | optional | 593M kp | 3,510 | `nuclear_deterrence` | Campaigns take 15% less time |
+| `electricity_tech` | Advanced Electrics | spine | 356M kp | 2,808 | `nuclear_fission` | Opens the Power Grid Hub, +5% electricity production |
+| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 474M kp | 3,510 | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
+| `computers` | Computers | spine | 356M kp | 2,808 | `electricity_tech` | +5% knowledge production, research takes 3% less time |
 
 ---
 
@@ -509,17 +509,17 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `social_media` | Social Media | optional | 923M kp | 4,095 | `internet` | +5% culture production, festivals cost 20% less |
-| `search_engines` | Search Engines | optional | 923M kp | 4,095 | `internet` | Research takes 3% less time |
-| `e_commerce` | E-commerce | optional | 923M kp | 4,095 | `containerization`, `internet` | Opens the Container Terminal, market fee 2 points lower |
-| `medical_nanobots` | Medical Nanobots | optional | 923M kp | 4,095 | `nanofabrication` | +5% housing, +5% food production |
-| `internet_of_things` | Internet of Things | optional | 923M kp | 4,095 | `social_media`, `cybersecurity`, `medical_nanobots` | Opens the Smart Farm, opens the Smart Complex |
-| `embedded_systems` | Embedded Systems | optional | 923M kp | 4,095 | `nanofabrication` | Construction takes 4% less time |
-| `precision_mining` | Precision Mining | optional | 923M kp | 4,095 | `titanium_alloys` | +5% steel production |
-| `cybersecurity` | Cybersecurity | spine | 554M kp | 3,276 | `computers` | Opens the Cyber Command, +10% military power |
-| `smart_grid` | Smart Grid | optional | 923M kp | 4,095 | `electricity_tech` | Opens the Microgrid Array, +5% electricity production |
-| `space_stations` | Space Stations | optional | 923M kp | 4,095 | `satellite_tech` | +8% expedition rewards |
-| `internet` | Internet | **keystone** (Global Network) | 738M kp | 4,095 | `computers`, `satellite_tech` | +5% data production |
+| `social_media` | Social Media | optional | 913M kp | 4,095 | `internet` | +5% culture production, festivals cost 20% less |
+| `search_engines` | Search Engines | optional | 913M kp | 4,095 | `internet` | Research takes 3% less time |
+| `e_commerce` | E-commerce | optional | 913M kp | 4,095 | `containerization`, `internet` | Opens the Container Terminal, market fee 2 points lower |
+| `medical_nanobots` | Medical Nanobots | optional | 913M kp | 4,095 | `nanofabrication` | +5% housing, +5% food production |
+| `internet_of_things` | Internet of Things | optional | 913M kp | 4,095 | `social_media`, `cybersecurity`, `medical_nanobots` | Opens the Smart Farm, opens the Smart Complex |
+| `embedded_systems` | Embedded Systems | optional | 913M kp | 4,095 | `nanofabrication` | Construction takes 4% less time |
+| `precision_mining` | Precision Mining | optional | 913M kp | 4,095 | `titanium_alloys` | +5% steel production |
+| `cybersecurity` | Cybersecurity | spine | 548M kp | 3,276 | `computers` | Opens the Cyber Command, +10% military power |
+| `smart_grid` | Smart Grid | optional | 913M kp | 4,095 | `electricity_tech` | Opens the Microgrid Array, +5% electricity production |
+| `space_stations` | Space Stations | optional | 913M kp | 4,095 | `satellite_tech` | +8% expedition rewards |
+| `internet` | Internet | **keystone** (Global Network) | 731M kp | 4,095 | `computers`, `satellite_tech` | +5% data production |
 
 ---
 
@@ -527,19 +527,19 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `virtual_reality` | Virtual Reality | optional | 1.2B kp | 4,680 | `social_media` | Morale can rise 5 points higher |
-| `open_science` | Open Science | optional | 1.2B kp | 4,680 | `search_engines` | +5% knowledge production |
-| `automated_logistics` | Automated Logistics | optional | 1.2B kp | 4,680 | `e_commerce` | Opens the Logistics Hub, trade routes take 15% less time |
-| `global_village` | Global Village | capstone | 1.92B kp | 7,488 | `e_commerce`, `social_media` | Every civilization offers 1 more deal, alliances cost 50% less |
-| `gene_editing` | Gene Editing | optional | 1.2B kp | 4,680 | `medical_nanobots` | +5% food production |
-| `self_replication` | Self-Replication | optional | 1.2B kp | 4,680 | `medical_nanobots`, `machine_learning` | +10% nanobots production, construction takes 5% less time |
-| `nano_alloys` | Nano Alloys | optional | 1.2B kp | 4,680 | `precision_mining` | +5% steel production |
-| `drone_warfare` | Drone Warfare | optional | 1.2B kp | 4,680 | `cybersecurity` | +10% military power |
-| `grid_storage` | Grid Storage | optional | 1.2B kp | 4,680 | `smart_grid` | Opens the Quantum Battery Array, +5% storage |
-| `reusable_launchers` | Reusable Launchers | optional | 1.2B kp | 4,680 | `space_stations` | Expeditions take 10% less time |
-| `machine_learning` | Machine Learning | **keystone** (World Simulation) | 961M kp | 4,680 | `internet`, `cybersecurity` | +5% data production, research takes 3% less time |
-| `cloud_computing` | Cloud Computing | optional | 1.2B kp | 4,680 | `internet` | +8% storage |
-| `general_ai` | General AI | capstone | 1.92B kp | 7,488 | `machine_learning`, `cloud_computing` | Research takes 6% less time |
+| `virtual_reality` | Virtual Reality | optional | 1.34B kp | 4,680 | `social_media` | Morale can rise 5 points higher |
+| `open_science` | Open Science | optional | 1.34B kp | 4,680 | `search_engines` | +5% knowledge production |
+| `automated_logistics` | Automated Logistics | optional | 1.34B kp | 4,680 | `e_commerce` | Opens the Logistics Hub, trade routes take 15% less time |
+| `global_village` | Global Village | capstone | 2.14B kp | 7,488 | `e_commerce`, `social_media` | Every civilization offers 1 more deal, alliances cost 50% less |
+| `gene_editing` | Gene Editing | optional | 1.34B kp | 4,680 | `medical_nanobots` | +5% food production |
+| `self_replication` | Self-Replication | optional | 1.34B kp | 4,680 | `medical_nanobots`, `machine_learning` | +10% nanobots production, construction takes 5% less time |
+| `nano_alloys` | Nano Alloys | optional | 1.34B kp | 4,680 | `precision_mining` | +5% steel production |
+| `drone_warfare` | Drone Warfare | optional | 1.34B kp | 4,680 | `cybersecurity` | +10% military power |
+| `grid_storage` | Grid Storage | optional | 1.34B kp | 4,680 | `smart_grid` | Opens the Quantum Battery Array, +5% storage |
+| `reusable_launchers` | Reusable Launchers | optional | 1.34B kp | 4,680 | `space_stations` | Expeditions take 10% less time |
+| `machine_learning` | Machine Learning | **keystone** (World Simulation) | 1.07B kp | 4,680 | `internet`, `cybersecurity` | +5% data production, research takes 3% less time |
+| `cloud_computing` | Cloud Computing | optional | 1.34B kp | 4,680 | `internet` | +8% storage |
+| `general_ai` | General AI | capstone | 2.14B kp | 7,488 | `machine_learning`, `cloud_computing` | Research takes 6% less time |
 
 ---
 
@@ -547,16 +547,16 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `holography` | Holography | optional | 2.01B kp | 5,265 | `cybernetics`, `blockchain` | Opens the Holographic Theater |
-| `neural_interface` | Neural Interface | spine | 1.21B kp | 4,212 | `machine_learning` | +4% knowledge production |
-| `blockchain` | Blockchain | optional | 2.01B kp | 5,265 | `cybersecurity`, `cloud_computing` | Market fee 2 points lower |
-| `synthetic_food` | Synthetic Food | optional | 2.01B kp | 5,265 | `gene_editing` | +4% food production |
-| `cybernetics` | Cybernetics | **keystone** (Neon Citadel) | 1.61B kp | 5,265 | `neural_interface` | Opens the Combat Aug Center, +10% military power |
-| `dark_crystal_mining` | Dark Crystal Mining | optional | 2.01B kp | 5,265 | `nano_alloys` | +4% dark matter crystals production |
-| `augmented_soldiers` | Augmented Soldiers | optional | 2.01B kp | 5,265 | `cybernetics`, `drone_warfare` | +10% military power, room for 10% more soldiers |
-| `dark_energy` | Dark Energy | optional | 2.01B kp | 5,265 | `grid_storage` | Opens the Dark Energy Tap, +4% electricity production |
-| `lunar_outposts` | Lunar Outposts | optional | 2.01B kp | 5,265 | `reusable_launchers` | +8% expedition rewards |
-| `darknets` | Darknets | optional | 2.01B kp | 5,265 | `cloud_computing` | +4% data production |
+| `holography` | Holography | optional | 2.91B kp | 5,265 | `cybernetics`, `blockchain` | Opens the Holographic Theater |
+| `neural_interface` | Neural Interface | spine | 1.75B kp | 4,212 | `machine_learning` | +4% knowledge production |
+| `blockchain` | Blockchain | optional | 2.91B kp | 5,265 | `cybersecurity`, `cloud_computing` | Market fee 2 points lower |
+| `synthetic_food` | Synthetic Food | optional | 2.91B kp | 5,265 | `gene_editing` | +4% food production |
+| `cybernetics` | Cybernetics | **keystone** (Neon Citadel) | 2.33B kp | 5,265 | `neural_interface` | Opens the Combat Aug Center, +10% military power |
+| `dark_crystal_mining` | Dark Crystal Mining | optional | 2.91B kp | 5,265 | `nano_alloys` | +4% dark matter crystals production |
+| `augmented_soldiers` | Augmented Soldiers | optional | 2.91B kp | 5,265 | `cybernetics`, `drone_warfare` | +10% military power, room for 10% more soldiers |
+| `dark_energy` | Dark Energy | optional | 2.91B kp | 5,265 | `grid_storage` | Opens the Dark Energy Tap, +4% electricity production |
+| `lunar_outposts` | Lunar Outposts | optional | 2.91B kp | 5,265 | `reusable_launchers` | +8% expedition rewards |
+| `darknets` | Darknets | optional | 2.91B kp | 5,265 | `cloud_computing` | +4% data production |
 
 ---
 
@@ -564,17 +564,17 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `neural_art` | Neural Art | optional | 2.29B kp | 5,850 | `holography` | +4% culture production |
-| `unified_theory` | Unified Theory | optional | 2.29B kp | 5,850 | `neural_interface`, `plasma_physics` | Research takes 3% less time |
-| `maglev_transit` | Maglev Transit | optional | 2.29B kp | 5,850 | `superconductors` | Opens the Energy Exchange |
-| `closed_biospheres` | Closed Biospheres | optional | 2.29B kp | 5,850 | `synthetic_food` | +5% housing |
-| `molecular_assembly` | Molecular Assembly | optional | 2.29B kp | 5,850 | `cybernetics`, `self_replication` | Construction takes 5% less time |
-| `superconductors` | Superconductors | spine | 1.37B kp | 4,680 | `plasma_physics` | +8% storage |
-| `plasma_weapons` | Plasma Weapons | optional | 2.29B kp | 5,850 | `augmented_soldiers`, `plasma_physics` | +10% military power |
-| `fusion_power` | Fusion Power | **keystone** (Stellar Cradle) | 1.83B kp | 5,850 | `nuclear_fission`, `cybernetics` | +4% electricity production, +4% plasma production |
-| `plasma_physics` | Plasma Physics | spine | 1.37B kp | 4,680 | `fusion_power` | +4% plasma production |
-| `fusion_drives` | Fusion Drives | optional | 2.29B kp | 5,850 | `fusion_power`, `lunar_outposts` | Expeditions take 10% less time |
-| `quantum_networking` | Quantum Networking | optional | 2.29B kp | 5,850 | `darknets` | +4% data production |
+| `neural_art` | Neural Art | optional | 3.98B kp | 5,850 | `holography` | +4% culture production |
+| `unified_theory` | Unified Theory | optional | 3.98B kp | 5,850 | `neural_interface`, `plasma_physics` | Research takes 3% less time |
+| `maglev_transit` | Maglev Transit | optional | 3.98B kp | 5,850 | `superconductors` | Opens the Energy Exchange |
+| `closed_biospheres` | Closed Biospheres | optional | 3.98B kp | 5,850 | `synthetic_food` | +5% housing |
+| `molecular_assembly` | Molecular Assembly | optional | 3.98B kp | 5,850 | `cybernetics`, `self_replication` | Construction takes 5% less time |
+| `superconductors` | Superconductors | spine | 2.39B kp | 4,680 | `plasma_physics` | +8% storage |
+| `plasma_weapons` | Plasma Weapons | optional | 3.98B kp | 5,850 | `augmented_soldiers`, `plasma_physics` | +10% military power |
+| `fusion_power` | Fusion Power | **keystone** (Stellar Cradle) | 3.18B kp | 5,850 | `nuclear_fission`, `cybernetics` | +4% electricity production, +4% plasma production |
+| `plasma_physics` | Plasma Physics | spine | 2.39B kp | 4,680 | `fusion_power` | +4% plasma production |
+| `fusion_drives` | Fusion Drives | optional | 3.98B kp | 5,850 | `fusion_power`, `lunar_outposts` | Expeditions take 10% less time |
+| `quantum_networking` | Quantum Networking | optional | 3.98B kp | 5,850 | `darknets` | +4% data production |
 
 ---
 
@@ -582,19 +582,19 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `overview_effect` | Overview Effect | optional | 1.91B kp | 6,435 | `neural_art` | Morale can rise 5 points higher |
-| `deep_space_astronomy` | Deep Space Astronomy | optional | 1.91B kp | 6,435 | `unified_theory` | +4% knowledge production |
-| `asteroid_claims` | Asteroid Claims | optional | 1.91B kp | 6,435 | `maglev_transit` | Trade routes bring in 10% more |
-| `stellar_cartography` | Stellar Cartography | capstone | 3.05B kp | 10,296 | `asteroid_claims`, `deep_space_astronomy` | Expeditions take 20% less time, +10% expedition rewards |
-| `hydroponics` | Hydroponics | optional | 1.91B kp | 6,435 | `closed_biospheres` | +4% food production |
-| `zero_g_manufacturing` | Zero-G Manufacturing | spine | 1.14B kp | 5,148 | `orbital_mechanics`, `superconductors` | Construction takes 6% less time |
-| `asteroid_refining` | Asteroid Refining | optional | 1.91B kp | 6,435 | `space_mining` | +4% titanium production |
-| `orbital_defense` | Orbital Defense | optional | 1.91B kp | 6,435 | `plasma_weapons`, `orbital_mechanics` | Raids on you take 10% less |
-| `orbital_solar` | Orbital Solar | optional | 1.91B kp | 6,435 | `plasma_physics` | +4% electricity production, +4% plasma production |
-| `orbital_mechanics` | Orbital Mechanics | **keystone** (Dyson Scaffold) | 1.53B kp | 6,435 | `rocketry`, `plasma_physics` | +10% expedition rewards |
-| `space_mining` | Space Mining | spine | 1.14B kp | 5,148 | `orbital_mechanics` | +4% titanium production, +4% steel production |
-| `space_elevator` | Space Elevator | capstone | 3.05B kp | 10,296 | `zero_g_manufacturing`, `space_mining` | Buildings cost 4% less, +8% storage |
-| `orbital_relays` | Orbital Relays | optional | 1.91B kp | 6,435 | `quantum_networking`, `orbital_mechanics` | +4% data production |
+| `overview_effect` | Overview Effect | optional | 3.67B kp | 6,435 | `neural_art` | Morale can rise 5 points higher |
+| `deep_space_astronomy` | Deep Space Astronomy | optional | 3.67B kp | 6,435 | `unified_theory` | +4% knowledge production |
+| `asteroid_claims` | Asteroid Claims | optional | 3.67B kp | 6,435 | `maglev_transit` | Trade routes bring in 10% more |
+| `stellar_cartography` | Stellar Cartography | capstone | 5.87B kp | 10,296 | `asteroid_claims`, `deep_space_astronomy` | Expeditions take 20% less time, +10% expedition rewards |
+| `hydroponics` | Hydroponics | optional | 3.67B kp | 6,435 | `closed_biospheres` | +4% food production |
+| `zero_g_manufacturing` | Zero-G Manufacturing | spine | 2.2B kp | 5,148 | `orbital_mechanics`, `superconductors` | Construction takes 6% less time |
+| `asteroid_refining` | Asteroid Refining | optional | 3.67B kp | 6,435 | `space_mining` | +4% titanium production |
+| `orbital_defense` | Orbital Defense | optional | 3.67B kp | 6,435 | `plasma_weapons`, `orbital_mechanics` | Raids on you take 10% less |
+| `orbital_solar` | Orbital Solar | optional | 3.67B kp | 6,435 | `plasma_physics` | +4% electricity production, +4% plasma production |
+| `orbital_mechanics` | Orbital Mechanics | **keystone** (Dyson Scaffold) | 2.93B kp | 6,435 | `rocketry`, `plasma_physics` | +10% expedition rewards |
+| `space_mining` | Space Mining | spine | 2.2B kp | 5,148 | `orbital_mechanics` | +4% titanium production, +4% steel production |
+| `space_elevator` | Space Elevator | capstone | 5.87B kp | 10,296 | `zero_g_manufacturing`, `space_mining` | Buildings cost 4% less, +8% storage |
+| `orbital_relays` | Orbital Relays | optional | 3.67B kp | 6,435 | `quantum_networking`, `orbital_mechanics` | +4% data production |
 
 ---
 
@@ -602,16 +602,16 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `void_contemplation` | Void Contemplation | optional | 2.92B kp | 7,020 | `overview_effect` | Appeasing a harbinger costs 20% less |
-| `xenology` | Xenology | optional | 2.92B kp | 7,020 | `deep_space_astronomy` | Research takes 3% less time |
-| `interstellar_trade` | Interstellar Trade | optional | 2.92B kp | 7,020 | `asteroid_claims`, `warp_drive` | Opens the Warp Commerce route |
-| `protein_synthesis` | Protein Synthesis | optional | 2.92B kp | 7,020 | `hydroponics` | +4% food production, +4% housing |
-| `hull_printing` | Hull Printing | optional | 2.92B kp | 7,020 | `zero_g_manufacturing` | Buildings cost 2% less, construction takes 4% less time |
-| `stellar_core_mining` | Stellar Core Mining | optional | 2.92B kp | 7,020 | `asteroid_refining` | Opens the Stellar Core Drill, +4% titanium production |
-| `fleet_doctrine` | Fleet Doctrine | optional | 2.92B kp | 7,020 | `orbital_defense` | +10% military power |
-| `stellar_engineering` | Stellar Engineering | spine | 1.75B kp | 5,616 | `warp_drive` | Opens the Pulsar Tap, +4% plasma production, +4% electricity production |
-| `warp_drive` | Warp Drive | **keystone** (Warp Nexus) | 2.34B kp | 7,020 | `space_mining`, `zero_g_manufacturing` | +10% expedition rewards, +4% dark matter production |
-| `galactic_network` | Galactic Network | optional | 2.92B kp | 7,020 | `orbital_relays` | +4% data production |
+| `void_contemplation` | Void Contemplation | optional | 5.8B kp | 7,020 | `overview_effect` | Appeasing a harbinger costs 20% less |
+| `xenology` | Xenology | optional | 5.8B kp | 7,020 | `deep_space_astronomy` | Research takes 3% less time |
+| `interstellar_trade` | Interstellar Trade | optional | 5.8B kp | 7,020 | `asteroid_claims`, `warp_drive` | Opens the Warp Commerce route |
+| `protein_synthesis` | Protein Synthesis | optional | 5.8B kp | 7,020 | `hydroponics` | +4% food production, +4% housing |
+| `hull_printing` | Hull Printing | optional | 5.8B kp | 7,020 | `zero_g_manufacturing` | Buildings cost 2% less, construction takes 4% less time |
+| `stellar_core_mining` | Stellar Core Mining | optional | 5.8B kp | 7,020 | `asteroid_refining` | Opens the Stellar Core Drill, +4% titanium production |
+| `fleet_doctrine` | Fleet Doctrine | optional | 5.8B kp | 7,020 | `orbital_defense` | +10% military power |
+| `stellar_engineering` | Stellar Engineering | spine | 3.48B kp | 5,616 | `warp_drive` | Opens the Pulsar Tap, +4% plasma production, +4% electricity production |
+| `warp_drive` | Warp Drive | **keystone** (Warp Nexus) | 4.64B kp | 7,020 | `space_mining`, `zero_g_manufacturing` | +10% expedition rewards, +4% dark matter production |
+| `galactic_network` | Galactic Network | optional | 5.8B kp | 7,020 | `orbital_relays` | +4% data production |
 
 ---
 
@@ -619,17 +619,17 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `galactic_memory` | Galactic Memory | optional | 2.64B kp | 7,020 | `void_contemplation` | +4% culture production |
-| `cosmology` | Cosmology | optional | 2.64B kp | 7,020 | `xenology` | Research takes 3% less time |
-| `federation_charter` | Federation Charter | optional | 2.64B kp | 7,020 | `interstellar_trade`, `xenology` | Alliances give 25% more, every civilization offers 1 more deal |
-| `matter_conversion` | Matter Conversion | optional | 2.64B kp | 7,020 | `protein_synthesis` | +4% food production, +4% housing |
-| `dyson_engineering` | Dyson Engineering | optional | 2.64B kp | 7,020 | `stellar_engineering`, `hull_printing` | Buildings cost 2% less |
-| `neutron_mining` | Neutron Mining | optional | 2.64B kp | 7,020 | `stellar_core_mining` | Opens the Neutron Star Mine, +4% antimatter production |
-| `armada_command` | Armada Command | optional | 2.64B kp | 7,020 | `fleet_doctrine` | +10% military power |
-| `antimatter_synthesis` | Antimatter Synthesis | spine | 1.58B kp | 5,616 | `galactic_navigation` | Opens the Quasar Tap, +4% antimatter production |
-| `galactic_navigation` | Galactic Navigation | **keystone** (Cosmic Beacon) | 2.11B kp | 7,020 | `warp_drive`, `stellar_engineering` | +4% dark matter production, +10% expedition rewards |
-| `terraforming` | Terraforming | optional | 2.64B kp | 7,020 | `warp_drive` | +6% housing |
-| `mind_uploading` | Mind Uploading | optional | 2.64B kp | 7,020 | `galactic_network` | +4% data production |
+| `galactic_memory` | Galactic Memory | optional | 5.67B kp | 7,020 | `void_contemplation` | +4% culture production |
+| `cosmology` | Cosmology | optional | 5.67B kp | 7,020 | `xenology` | Research takes 3% less time |
+| `federation_charter` | Federation Charter | optional | 5.67B kp | 7,020 | `interstellar_trade`, `xenology` | Alliances give 25% more, every civilization offers 1 more deal |
+| `matter_conversion` | Matter Conversion | optional | 5.67B kp | 7,020 | `protein_synthesis` | +4% food production, +4% housing |
+| `dyson_engineering` | Dyson Engineering | optional | 5.67B kp | 7,020 | `stellar_engineering`, `hull_printing` | Buildings cost 2% less |
+| `neutron_mining` | Neutron Mining | optional | 5.67B kp | 7,020 | `stellar_core_mining` | Opens the Neutron Star Mine, +4% antimatter production |
+| `armada_command` | Armada Command | optional | 5.67B kp | 7,020 | `fleet_doctrine` | +10% military power |
+| `antimatter_synthesis` | Antimatter Synthesis | spine | 3.4B kp | 5,616 | `galactic_navigation` | Opens the Quasar Tap, +4% antimatter production |
+| `galactic_navigation` | Galactic Navigation | **keystone** (Cosmic Beacon) | 4.54B kp | 7,020 | `warp_drive`, `stellar_engineering` | +4% dark matter production, +10% expedition rewards |
+| `terraforming` | Terraforming | optional | 5.67B kp | 7,020 | `warp_drive` | +6% housing |
+| `mind_uploading` | Mind Uploading | optional | 5.67B kp | 7,020 | `galactic_network` | +4% data production |
 
 ---
 
@@ -637,18 +637,18 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `reality_art` | Reality Art | optional | 2.17B kp | 7,020 | `galactic_memory` | +4% culture production |
-| `quantum_mechanics` | Quantum Mechanics | **keystone** (Reality Anchor) | 1.73B kp | 7,020 | `antimatter_synthesis` | +4% quantum flux production |
-| `timeless_archive` | Timeless Archive | capstone | 3.47B kp | 11,232 | `cosmology`, `quantum_mechanics` | Research takes 6% less time |
-| `probability_markets` | Probability Markets | optional | 2.17B kp | 7,020 | `federation_charter` | Market fee 2 points lower |
-| `quantum_cultivation` | Quantum Cultivation | optional | 2.17B kp | 7,020 | `matter_conversion` | +4% food production |
-| `reality_manipulation` | Reality Manipulation | spine | 1.3B kp | 5,616 | `quantum_mechanics` | +4% quantum flux production |
-| `reality_engineering` | Reality Engineering | capstone | 3.47B kp | 11,232 | `reality_manipulation`, `dyson_engineering` | Buildings cost 4% less, construction takes 8% less time |
-| `quantum_metallurgy` | Quantum Metallurgy | optional | 2.17B kp | 7,020 | `neutron_mining` | Opens the Quantum Metal Works, +4% antimatter production |
-| `probability_warfare` | Probability Warfare | optional | 2.17B kp | 7,020 | `armada_command` | +10% military power, campaigns bring back 15% more |
-| `zero_point_energy` | Zero-Point Energy | optional | 2.17B kp | 7,020 | `antimatter_synthesis` | Opens the Zero Point Generator |
-| `wormholes` | Wormholes | optional | 2.17B kp | 7,020 | `galactic_navigation` | Trade routes take 20% less time, expeditions take 15% less time |
-| `quantum_computing` | Quantum Computing | optional | 2.17B kp | 7,020 | `clockwork_automation`, `quantum_mechanics` | +15% game speed |
+| `reality_art` | Reality Art | optional | 4.9B kp | 7,020 | `galactic_memory` | +4% culture production |
+| `quantum_mechanics` | Quantum Mechanics | **keystone** (Reality Anchor) | 3.92B kp | 7,020 | `antimatter_synthesis` | +4% quantum flux production |
+| `timeless_archive` | Timeless Archive | capstone | 7.84B kp | 11,232 | `cosmology`, `quantum_mechanics` | Research takes 6% less time |
+| `probability_markets` | Probability Markets | optional | 4.9B kp | 7,020 | `federation_charter` | Market fee 2 points lower |
+| `quantum_cultivation` | Quantum Cultivation | optional | 4.9B kp | 7,020 | `matter_conversion` | +4% food production |
+| `reality_manipulation` | Reality Manipulation | spine | 2.94B kp | 5,616 | `quantum_mechanics` | +4% quantum flux production |
+| `reality_engineering` | Reality Engineering | capstone | 7.84B kp | 11,232 | `reality_manipulation`, `dyson_engineering` | Buildings cost 4% less, construction takes 8% less time |
+| `quantum_metallurgy` | Quantum Metallurgy | optional | 4.9B kp | 7,020 | `neutron_mining` | Opens the Quantum Metal Works, +4% antimatter production |
+| `probability_warfare` | Probability Warfare | optional | 4.9B kp | 7,020 | `armada_command` | +10% military power, campaigns bring back 15% more |
+| `zero_point_energy` | Zero-Point Energy | optional | 4.9B kp | 7,020 | `antimatter_synthesis` | Opens the Zero Point Generator |
+| `wormholes` | Wormholes | optional | 4.9B kp | 7,020 | `galactic_navigation` | Trade routes take 20% less time, expeditions take 15% less time |
+| `quantum_computing` | Quantum Computing | optional | 4.9B kp | 7,020 | `clockwork_automation`, `quantum_mechanics` | +15% game speed |
 
 ---
 
@@ -656,10 +656,10 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 
 | Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|---|
-| `transcendence` | Transcendence | **keystone** (Singularity Core) | 1.92B kp | 7,020 | `reality_manipulation` | +5% all production |
-| `omniversal_exchange` | Omniversal Exchange | optional | 2.39B kp | 7,020 | `probability_markets` | Opens the Omniversal Bazaar |
-| `singularity_engineering` | Singularity Engineering | optional | 2.39B kp | 7,020 | `reality_manipulation` | Opens the Singularity Engine |
-| `omniversal_command` | Omniversal Command | optional | 2.39B kp | 7,020 | `probability_warfare` | Opens the Omniversal War Council |
+| `transcendence` | Transcendence | **keystone** (Singularity Core) | 4.53B kp | 7,020 | `reality_manipulation` | +5% all production |
+| `omniversal_exchange` | Omniversal Exchange | optional | 5.67B kp | 7,020 | `probability_markets` | Opens the Omniversal Bazaar |
+| `singularity_engineering` | Singularity Engineering | optional | 5.67B kp | 7,020 | `reality_manipulation` | Opens the Singularity Engine |
+| `omniversal_command` | Omniversal Command | optional | 5.67B kp | 7,020 | `probability_warfare` | Opens the Omniversal War Council |
 
 ---
 
@@ -944,7 +944,7 @@ Canceling costs you the full knowledge payment and the progress, with no refund.
 
 ### The Grand Discovery Epoch Event
 
-**The Grand Discovery**, a major good epoch event, instantly completes up to 3 unresearched techs of your current age or earlier, for free. It can come at an epoch transition when your culture is over 40% of its storage (see [Good Epoch Events](epochs.md#good-epoch-events)).
+**The Grand Discovery**, a major good epoch event, instantly completes up to 3 unresearched techs of your current age or earlier, for free. It can come at an epoch transition when your culture strength is over 40% (see [Good Epoch Events](epochs.md#good-epoch-events)).
 
 It doesn't weigh which techs are worth most: it takes the first three unresearched techs in alphabetical order of their keys, prerequisites or not. You can shape what it takes by researching the alphabetically early techs of your age first, which leaves the slots for the rest.
 

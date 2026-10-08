@@ -462,7 +462,7 @@ Both finish the prestige and raise your prestige level. Both add a line to the c
 
 The result is rounded down, so a small run can keep 0 points. Here Brace changes only the points share: buildings and resources reset anyway, and your soldiers don't change it. The log records a Vindicated verdict, or Fulfilled if you invited it.
 
-Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 21Q dark matter and 27Q titanium, about 22 hours of a moderate economy's income. Appease (1.3B faith and 20B culture a level, about 33 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
+Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 11Q dark matter and 9.6Q titanium, about 22 hours of a moderate economy's income. Appease (1.3B faith and 20B culture a level, about 33 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
 
 **Succumb** earns no points from this run and grants the [Cosmic Legacy](#cosmic-legacy). If you already carry it, Succumb is closed ("You already carry the Cosmic Legacy. Succumb is closed to you.") and Endure is the only choice.
 

@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -33,20 +34,22 @@ import (
 // Answers belong to the doom, not the figure, and carry across handoffs:
 //
 //   - Appease (faith + culture): each level multiplies the REAL strike chance
-//     by harbingerAppeaseFactor. Two levels; the second costs double, or
-//     the same again in the final era (levelPrice). Every thread is priced
-//     on its warning, in the age its harbinger arrives in: three quarters of
-//     what that age makes in the shortest warning. A doom's shortest warning
-//     is a fifth of the age (15% of what it makes), the Last Passage's two
-//     thirds of it (half of what it makes).
+//     by harbingerAppeaseFactor. Two levels; the second costs the same
+//     again (levelPrice). Every thread is priced on its warning, in the age
+//     its harbinger arrives in: three quarters of what that age makes in the
+//     shortest warning. A doom's shortest warning is a fifth of the age (15%
+//     of what it makes), the Last Passage's two thirds of it (half of what
+//     it makes).
 //   - Brace (the epoch's core resources): softens an Endure if the doom
 //     strikes. Two levels, stored on the pending catastrophe so it still
-//     applies when Endure is chosen later. A doom's is priced on what the
-//     era's advances ask. In the final era, where an age's requirement is a
-//     few ticks of income, both threads' are priced on their warnings like
-//     their Appease: the Last Passage's, which guards the run's points, at
-//     half of what its warning makes (a third of the age), its fated doom's
-//     at five sixths of its own (a sixth of the age).
+//     applies when Endure is chosen later; the second costs the same again.
+//     Every thread's is priced on its warning like its Appease, in the
+//     materials the age its harbinger arrives in makes: a doom's at a third
+//     of what its shortest warning makes (a fifteenth of the age), and no
+//     more of any material than three fifths of what a moderate builder's
+//     store holds. The final era's two cost more: the Last Passage's, which guards the run's
+//     points, half of what its warning makes (a third of the age), its
+//     fated doom's five sixths of its own (a sixth of the age).
 //   - Invite: makes the strike certain (it still comes when it was fated to).
 //     Free and final; Appease is pointless afterwards and refuses. In an era
 //     where nothing can be fated (the Stone Era) all three are refused.
@@ -80,9 +83,8 @@ const (
 
 	// Costs belong to the thread, not the player's current caps or age: a
 	// thread's price is set when its harbinger arrives and is the same in
-	// every age it lives through. Level 2 costs double; in the final era,
-	// whose two threads are priced on their warnings in both answers, it
-	// costs the same again (levelPrice).
+	// every age it lives through. Level 2 of either answer costs the same
+	// again as level 1 (levelPrice).
 	//
 	// Appease is priced on what a player can make while the warning lasts,
 	// not on a stock saved before it. Faith is a flow resource at hand-set
@@ -97,10 +99,14 @@ const (
 	//     Level 1 is harbingerAppeaseWindowShare of what that age makes in
 	//     the shortest warning (harbingerLeadMin of its pacing target):
 	//     three quarters of it, 15% of the age, so the warning itself pays
-	//     for it in most threads. Level 2 costs double, so both levels
-	//     together are 45% of the age: more than the average warning makes,
-	//     and a stretch that takes a long warning or faith kept beforehand
-	//     (doomAppeaseCostIn). It used to be a quarter of what the whole era
+	//     for it in most threads. Level 2 costs the same again, so both
+	//     levels together are 30% of the age: what the average warning
+	//     makes, and out of reach in a short one without faith kept
+	//     beforehand (doomAppeaseCostIn). Level 2 cost double until the
+	//     second levels were held to the first (below): it saved 0.3 of what
+	//     level 1 does per hour of income, the purchase nobody makes. The
+	//     shares the bot measured below are from that price.
+	//     It used to be a quarter of what the whole era
 	//     makes, which no warning could earn: the bot afforded level 1 in
 	//     15 of 46 threads, level 2 in 6 and Brace in 41, and Appease only
 	//     from faith it already held.
@@ -138,14 +144,33 @@ const (
 	// raising the base chance from 12% to 18% (×1.5), and ×0.6 still leaves
 	// 0.9× of where it started, so Appease always lowers the odds.
 	//
-	// Brace, for a doom: 12% of the most the epoch asks of each core resource
-	// across its remaining advances (into its later ages and into the next
-	// epoch), for resources the player has held since the epoch began. It
-	// softens a catastrophe that may not come, so it is priced under what the
-	// epoch asks, but it draws on several resources at once.
+	// Brace, for a doom: priced on the doom's shortest warning, in the age
+	// its harbinger arrives in. Level 1 is ordinaryDoomBraceShare of what a
+	// moderate economy (TypicalIncome) makes of each material in that
+	// warning: a third of it, a fifteenth of the age, so the effort grows
+	// with the age (26 minutes of income in the Iron Age, 3.8 hours in the
+	// Space Age). And it has a ceiling, material by material:
+	// ordinaryDoomBraceStoreShare of what a moderate builder's store holds
+	// of it (TypicalStorage: five copies of every storage building so far),
+	// whichever is the smaller. Without the ceiling the price outgrew the
+	// store from the Colonial Age on, one and a half to three times what
+	// five copies of each vault hold, and the smoke bot's store held it in
+	// one doom's thread of seven: an answer that asked for a storage plan
+	// before it asked for anything else. The materials are the era's core resources (what its
+	// remaining advances ask for, held since the era began) that the
+	// moderate economy's buildings make by that age (braceMaterials): the
+	// Modern Age buys its data at the market and no age makes crypto, so
+	// neither is asked for there.
+	// It used to be 12% of the most the era's advances ask of each, the same
+	// in every age of the era. Requirements grow far slower than income, so
+	// the price collapsed as the ages passed (the Electric Era's: 188
+	// minutes of income in its first age, 7 seconds in its second, 2 in its
+	// third) and asked the Modern Age for 19.2B data it makes 3 of a tick.
+	// The share keeps the Iron Age where it was (24 minutes of income
+	// across its three materials, most of it stone).
 	//
-	// Brace, for the Last Passage: the same resources, priced on the thread's
-	// warning the way its Appease is. Level 1 is lastPassageBraceShare of
+	// Brace, for the Last Passage: the same materials, priced on the thread's
+	// own warning. Level 1 is lastPassageBraceShare of
 	// what a moderate economy (TypicalIncome) makes of each in that warning,
 	// in the age the harbinger arrives in: half the warning, a third of the
 	// age, about 21 hours of income. Level 2 costs the same again, so both
@@ -175,19 +200,23 @@ const (
 	// hours of income (doomBraceCostIn). It kept the era's price one change
 	// longer than the Last Passage's did, under 7 ticks of income.
 	//
-	// Second levels, in the final era. At double the price, level 2 of each
-	// answer bought less for more: per hour of income the Last Passage's
-	// Brace level 2 saved 0.375 of what level 1 does (15 points of the run
-	// kept, after 20) and either thread's Appease level 2 0.3 (0.24 of the
-	// chance, after 0.4). At the same price again they save 0.75 and 0.6,
-	// and the doom's Brace level 2, which softens an Endure by as much as
-	// level 1, saves the same. TestSecondLevelsWorthBuying holds each to at
-	// least a half. Every other era's level 2 still costs double.
+	// Second levels. At double the price, level 2 of each answer bought
+	// less for more: per hour of income the Last Passage's Brace level 2
+	// saved 0.375 of what level 1 does (15 points of the run kept, after
+	// 20) and any thread's Appease level 2 0.3 (0.24 of the chance, after
+	// 0.4). At the same price again they save 0.75 and 0.6, and a doom's
+	// Brace level 2, which softens an Endure by as much as level 1, saves
+	// the same. TestSecondLevelsWorthBuying holds each to at least a half,
+	// in every era: the final era's came first, the others' with the
+	// ordinary Brace rule.
 	harbingerAppeaseWindowShare = 0.75
 	lastPassageWarning          = 2.0 / 3.0
 	lastPassageBraceShare       = 0.5
 	finalDoomBraceShare         = 5.0 / 6.0
-	harbingerBraceCostFrac      = 0.12
+	ordinaryDoomBraceShare      = 1.0 / 3.0
+	// ordinaryDoomBraceStoreShare is the ceiling on an ordinary doom's Brace,
+	// per material, as a share of a moderate builder's store.
+	ordinaryDoomBraceStoreShare = 0.6
 )
 
 // Endure numbers by Brace level (index 0 = unbraced): share of destroyable
@@ -732,16 +761,10 @@ func threadAppeaseCostIn(set *rules.Set, h *HarbingerSave, level int) map[string
 	return doomAppeaseCostIn(set, h.EpochKey, h.startAge(), level)
 }
 
-// levelPrice is what level (1 or 2) of an answer costs in a thread of
-// epochKey when its level 1 costs l1: double for level 2, or the same again
-// in the final era, whose two threads are priced on their warnings in both
-// answers. Pure.
-func levelPrice(set *rules.Set, epochKey string, l1 float64, level int) float64 {
-	if set.IsFinalEra(epochKey) {
-		return l1
-	}
-	return l1 * float64(level)
-}
+// levelPrice is what level (1 or 2) of an answer costs when its level 1
+// costs l1: the same again, in every thread. It is the one place that rule
+// lives (level 2 once cost double outside the final era). Pure.
+func levelPrice(l1 float64, _ int) float64 { return l1 }
 
 // doomAppeaseCostIn is the price of Appease level (1 or 2) for a doom of
 // epochKey whose harbinger arrived in age: warningAppeaseCostIn over a
@@ -796,7 +819,7 @@ func warningAppeaseCostIn(set *rules.Set, epochKey, age string, window float64, 
 		// expectedAgeTicks is for durations.
 		income := float64(set.FlowIncome(k, age) * window)
 		if l1 := ceilSignificant(float64(income*harbingerAppeaseWindowShare), 2); l1 > 0 {
-			cost[k] = levelPrice(set, epochKey, l1, level)
+			cost[k] = levelPrice(l1, level)
 		}
 	}
 	return cost
@@ -837,34 +860,57 @@ func harbingerBraceBasisIn(set *rules.Set, epochKey string) map[string]float64 {
 	return basis
 }
 
-// harbingerBraceCostIn is the era's price of Brace level (1 or 2): what the
-// thread of a doom of epochKey asks in every era but the final one
-// (doomBraceCostIn), harbingerBraceCostFrac × level of each basis amount.
-// Pure.
-func harbingerBraceCostIn(set *rules.Set, epochKey string, level int) map[string]float64 {
-	cost := map[string]float64{}
-	for k, v := range harbingerBraceBasisIn(set, epochKey) {
-		cost[k] = math.Ceil(v * harbingerBraceCostFrac * float64(level))
+// braceMaterials is what a thread of epochKey whose harbinger arrives in
+// age pays Brace in: the era's core resources (harbingerBraceBasisIn) that
+// the moderate economy's buildings make by that age, sorted. A resource the
+// age only buys at the market (data in the Modern Age) or that nothing but
+// a wonder makes (crypto) is left out. Pure.
+func braceMaterials(set *rules.Set, epochKey, age string) []string {
+	var out []string
+	for k := range harbingerBraceBasisIn(set, epochKey) {
+		if set.BuildingOutput(k, age) > 0 {
+			out = append(out, k)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+// doomBraceCostIn is the price of Brace level (1 or 2) in the thread of a
+// doom of epochKey whose harbinger arrived in age, priced on the doom's
+// shortest warning (warningBraceCostIn): level 1 is ordinaryDoomBraceShare
+// of what the age makes in it, and no more of any material than
+// ordinaryDoomBraceStoreShare of a moderate builder's store; in the final
+// era finalDoomBraceShare of the warning, with no ceiling. Pure.
+func doomBraceCostIn(set *rules.Set, epochKey, age string, level int) map[string]float64 {
+	if set.IsFinalEra(epochKey) {
+		return warningBraceCostIn(set, epochKey, age, shortestWarningTicks(set, age, false), finalDoomBraceShare, level)
+	}
+	cost := warningBraceCostIn(set, epochKey, age, shortestWarningTicks(set, age, false), ordinaryDoomBraceShare, level)
+	// The ceiling: no material asks for more than its share of a moderate
+	// builder's store, rounded down to two figures so it stays under it.
+	for k, v := range cost {
+		if limit := floorSignificant(float64(set.TypicalStorage(k, age)*ordinaryDoomBraceStoreShare), 2); limit > 0 && v > limit {
+			cost[k] = limit
+		}
 	}
 	return cost
 }
 
-// doomBraceCostIn is the price of Brace level (1 or 2) in the thread of a
-// doom of epochKey whose harbinger arrived in age. In every era but the
-// final one it is the era's price, whatever the age (harbingerBraceCostIn).
-// In the final era, where the era's price is a few ticks of income, it is
-// priced on the doom's shortest warning (warningBraceCostIn): level 1 is
-// finalDoomBraceShare of what the age makes in it. Pure.
-func doomBraceCostIn(set *rules.Set, epochKey, age string, level int) map[string]float64 {
-	if !braceOnWarning(set, epochKey) {
-		return harbingerBraceCostIn(set, epochKey, level)
+// floorSignificant rounds v down to sig significant figures (v itself if
+// v <= 0).
+func floorSignificant(v float64, sig int) float64 {
+	if v <= 0 {
+		return v
 	}
-	return warningBraceCostIn(set, epochKey, age, shortestWarningTicks(set, age, false), finalDoomBraceShare, level)
+	exp := int(math.Ceil(detmath.Log10(v))) - sig
+	if exp >= 0 {
+		mag := detmath.Pow(10, float64(exp))
+		return math.Floor(v/mag+1e-9) * mag
+	}
+	mag := detmath.Pow(10, float64(-exp))
+	return math.Floor(float64(v*mag)+1e-9) / mag
 }
-
-// braceOnWarning reports whether the threads of epochKey price Brace on
-// their warning: the final era's. Pure.
-func braceOnWarning(set *rules.Set, epochKey string) bool { return set.IsFinalEra(epochKey) }
 
 // lastPassageBraceCostIn is the price of Brace level (1 or 2) in the Last
 // Passage's thread of epochKey when its harbinger arrived in age:
@@ -876,19 +922,18 @@ func lastPassageBraceCostIn(set *rules.Set, epochKey, age string, level int) map
 
 // warningBraceCostIn is the price of Brace level (1 or 2) in a thread of
 // epochKey whose harbinger arrived in age and whose shortest warning lasts
-// window ticks, in the resources the era's Brace asks for
-// (harbingerBraceBasisIn): for level 1, share of what each one's
-// TypicalIncome in set makes in that warning, rounded up to two significant
-// figures; for level 2, what levelPrice makes of that. A resource nothing
-// makes by then is left out. Like an Appease price it is set by the age the
+// window ticks, in the materials that age pays Brace in (braceMaterials):
+// for level 1, share of what each one's TypicalIncome in set makes in that
+// warning, rounded up to two significant figures; for level 2, what
+// levelPrice makes of that. Like an Appease price it is set by the age the
 // harbinger arrives in and does not depend on Era Mastery. Pure.
 func warningBraceCostIn(set *rules.Set, epochKey, age string, window, share float64, level int) map[string]float64 {
 	cost := map[string]float64{}
-	for k := range harbingerBraceBasisIn(set, epochKey) {
+	for _, k := range braceMaterials(set, epochKey, age) {
 		// An income over the warning, as in warningAppeaseCostIn.
 		income := float64(set.TypicalIncome(k, age) * window)
 		if l1 := ceilSignificant(float64(income*share), 2); l1 > 0 {
-			cost[k] = levelPrice(set, epochKey, l1, level)
+			cost[k] = levelPrice(l1, level)
 		}
 	}
 	return cost
@@ -917,20 +962,25 @@ type HarbingerPrice struct {
 	// LastPassage marks the Cosmic Era's Last Passage thread.
 	LastPassage bool
 	// WarningTicks is the shortest warning the thread is priced on, in ticks
-	// at 1x (shortestWarningTicks): what Appease level 1 must be payable
-	// within, and Brace level 1 where BraceOnWarning.
+	// at 1x (shortestWarningTicks): what level 1 of both answers must be
+	// payable within.
 	WarningTicks float64
 	// AppeaseL1 and AppeaseL2 are what each level costs when bought (level
 	// 2's own price, not the two together).
 	AppeaseL1 map[string]float64
 	AppeaseL2 map[string]float64
-	// BraceL1 and BraceL2 likewise: by the era for a doom, or by the age the
-	// harbinger arrives in where BraceOnWarning.
+	// BraceL1 and BraceL2 likewise, by the age the harbinger arrives in.
 	BraceL1 map[string]float64
 	BraceL2 map[string]float64
-	// BraceOnWarning: the thread's Brace is priced on its warning, as both
-	// of the final era's threads' are.
-	BraceOnWarning bool
+	// FinalEra marks the final era's two threads, whose Brace costs more of
+	// the warning than an ordinary doom's.
+	FinalEra bool
+	// BraceCeiling is the most an ordinary doom's Brace level 1 may ask of
+	// each of its materials: ordinaryDoomBraceStoreShare of a moderate
+	// builder's store in the arrival age. Nil for the final era's threads,
+	// which have no ceiling. TypicalStore is that store, for every thread.
+	BraceCeiling map[string]float64
+	TypicalStore map[string]float64
 }
 
 // HarbingerPriceTable is HarbingerPriceTableIn for the core ruleset.
@@ -948,19 +998,33 @@ func HarbingerPriceTableIn(set *rules.Set) []HarbingerPrice {
 			continue
 		}
 		for _, a := range ep.Ages {
-			rows = append(rows, HarbingerPrice{Epoch: ep.Key, Age: a, WarningTicks: shortestWarningTicks(set, a, false),
+			row := HarbingerPrice{Epoch: ep.Key, Age: a, WarningTicks: shortestWarningTicks(set, a, false),
 				AppeaseL1: doomAppeaseCostIn(set, ep.Key, a, 1), AppeaseL2: doomAppeaseCostIn(set, ep.Key, a, 2),
 				BraceL1: doomBraceCostIn(set, ep.Key, a, 1), BraceL2: doomBraceCostIn(set, ep.Key, a, 2),
-				BraceOnWarning: braceOnWarning(set, ep.Key)})
+				FinalEra: set.IsFinalEra(ep.Key), TypicalStore: map[string]float64{}}
+			if !row.FinalEra {
+				row.BraceCeiling = map[string]float64{}
+			}
+			for _, k := range braceMaterials(set, ep.Key, a) {
+				row.TypicalStore[k] = set.TypicalStorage(k, a)
+				if !row.FinalEra {
+					row.BraceCeiling[k] = float64(set.TypicalStorage(k, a) * ordinaryDoomBraceStoreShare)
+				}
+			}
+			rows = append(rows, row)
 		}
 		if !set.IsFinalEra(ep.Key) {
 			continue
 		}
 		for _, a := range ep.Ages {
-			rows = append(rows, HarbingerPrice{Epoch: ep.Key, Age: a, LastPassage: true, WarningTicks: shortestWarningTicks(set, a, true),
+			row := HarbingerPrice{Epoch: ep.Key, Age: a, LastPassage: true, WarningTicks: shortestWarningTicks(set, a, true),
 				AppeaseL1: lastPassageAppeaseCostIn(set, ep.Key, a, 1), AppeaseL2: lastPassageAppeaseCostIn(set, ep.Key, a, 2),
 				BraceL1: lastPassageBraceCostIn(set, ep.Key, a, 1), BraceL2: lastPassageBraceCostIn(set, ep.Key, a, 2),
-				BraceOnWarning: true})
+				FinalEra: true, TypicalStore: map[string]float64{}}
+			for _, k := range braceMaterials(set, ep.Key, a) {
+				row.TypicalStore[k] = set.TypicalStorage(k, a)
+			}
+			rows = append(rows, row)
 		}
 	}
 	return rows
@@ -1325,8 +1389,10 @@ func (ge *GameEngine) clearHarbingerRun() {
 	ge.harbingerCheckedEpoch = ""
 	ge.catastropheInvited = false
 	ge.pendingBraceLevel = 0
-	// The faith the rolls read belongs to the run too (faith.go).
+	// The faith and the culture the rolls read belong to the run too
+	// (faith.go, culture.go).
 	ge.clearFaithRun()
+	ge.clearCultureRun()
 }
 
 // --- View ---------------------------------------------------------------------

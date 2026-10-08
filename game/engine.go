@@ -218,6 +218,10 @@ type GameEngine struct {
 	// follows, set by recalculateRates with the rate. Not persisted.
 	faithMeasure FaithSave
 	faithRate    faithRates
+	// cultureMeasure and cultureRate are the same for culture: what culture
+	// strength is read from (culture.go). Persisted.
+	cultureMeasure CultureSave
+	cultureRate    faithRates
 	// sessionStart is the state the loaded save left (see SessionMark); nil
 	// for a game that was not loaded. Not persisted.
 	sessionStart *SessionMark
@@ -1389,8 +1393,10 @@ func (ge *GameEngine) doTick() {
 	// goes to the wonder bank while overflow is on (overflow.go).
 	ge.noteProduced(1)
 	ge.applyTickRates()
-	// The faith measure follows the tick's faith (faith.go).
+	// The faith and culture measures follow the tick's income (faith.go,
+	// culture.go).
 	ge.accrueFaith(1)
+	ge.accrueCulture(1)
 
 	// Credit the lifetime soldiers-trained counter with the post-clamp delta.
 	// Soldiers discarded at the storage cap don't count; the helper floors at 0
@@ -1605,14 +1611,14 @@ func (ge *GameEngine) processEvents() {
 
 // processExpeditions handles military expedition progress
 func (ge *GameEngine) processExpeditions() {
-	militaryBonus, expeditionBonus := ge.militaryPower(), ge.expeditionReward()
+	missionPower, expeditionBonus := ge.missionPower(), ge.expeditionReward()
 	for _, cat := range []string{ExpeditionScouting, ExpeditionMilitary} {
 		if active := ge.Military.ActiveByCategory(cat); active != nil {
 			ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Name, active.TicksLeft))
 		}
 	}
 	// Tick all active expeditions (one per category); each may resolve this tick.
-	for _, res := range ge.Military.Tick(ge.gameRNG(), militaryBonus, expeditionBonus) {
+	for _, res := range ge.Military.Tick(ge.gameRNG(), missionPower, expeditionBonus) {
 		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Key, len(res.Rewards)))
 		ge.addLog("event", res.Message)
 		// Cosmetic flavour, generated HERE rather than in MilitaryManager because
@@ -2115,23 +2121,27 @@ func (ge *GameEngine) recalculateRates() {
 	// the town's own faith buildings make, and what a moderate set would
 	// make in their place. Each goes through the steps the rate went through
 	// above, so the two differ only in the buildings and their staffing.
-	faithFactor := poolFactor("faith_rate", r.AddTotal("faith_rate"), soft)
-	faithLayer := ge.Research.OutputFactor("faith") // the tech layer
-	faithTrade := ge.Diplomacy.GetTradeBonus("faith")
-	faithLegacy := ge.cosmicLegacyFactor()
-	ge.noteFaithRates(production["faith"]-ge.Buildings.wonderProduction("faith"), workerOutput["faith"],
-		func(base, byWorkers float64) float64 {
+	// The culture measure (culture.go) follows culture's the same way.
+	legacyFactor := ge.cosmicLegacyFactor()
+	measured := func(res string) func(base, byWorkers float64) float64 {
+		ownFactor := poolFactor(res+"_rate", r.AddTotal(res+"_rate"), soft)
+		layer := ge.Research.OutputFactor(res) // the tech layer
+		trade := ge.Diplomacy.GetTradeBonus(res)
+		return func(base, byWorkers float64) float64 {
 			rate := float64(base * mMult)
 			rate = float64(rate * prodAllFactor)
-			rate = float64(rate * faithFactor)
+			rate = float64(rate * ownFactor)
 			rate += float64(float64(byWorkers*mMult) * gatherDelta)
-			rate = float64(rate * faithLayer)
-			if faithTrade > 0 {
-				rate += float64(rate * faithTrade)
+			rate = float64(rate * layer)
+			if trade > 0 {
+				rate += float64(rate * trade)
 			}
-			rate = float64(rate * faithLegacy)
+			rate = float64(rate * legacyFactor)
 			return float64(rate * k)
-		})
+		}
+	}
+	ge.noteFaithRates(production["faith"]-ge.Buildings.wonderProduction("faith"), workerOutput["faith"], measured("faith"))
+	ge.noteCultureRates(production["culture"]-ge.Buildings.wonderProduction("culture"), workerOutput["culture"], measured("culture"))
 
 	// Recalculate storage from buildings + milestones, then the techs'
 	// percentage on every store.
@@ -2497,21 +2507,22 @@ func (ge *GameEngine) rollEpochEvent(epochKey string) {
 	ge.rollChallengingEpochEvent(epochKey)
 }
 
-// rollGoodEpochEvent picks a good epoch event gated by culture fill %.
-//   - >40% culture fill → major+minor events eligible.
-//   - >75% culture fill with 15% chance → all tiers (legendary) eligible.
+// rollGoodEpochEvent picks a good epoch event from the tiers the town's
+// culture strength opens (culture.go):
+//   - over CultureMajorAbove → major+minor events eligible.
+//   - over CultureLegendaryAbove, on cultureLegendaryChance of the rolls →
+//     all tiers (legendary) eligible.
 //
-// Must be called under engine write lock.
+// The tier used to read the fill of culture's store, which is the general
+// store: no town filled it by making culture, and any town could by buying
+// it. Must be called under engine write lock.
 func (ge *GameEngine) rollGoodEpochEvent() {
-	cultureStorage := ge.Resources.GetStorage("culture")
 	tier := "minor"
-	if cultureStorage > 0 {
-		culturePct := ge.Resources.Get("culture") / cultureStorage
-		if culturePct > 0.75 && ge.gameRNG().Float64() < 0.15 {
-			tier = "legendary"
-		} else if culturePct > 0.40 {
-			tier = "major"
-		}
+	switch best := CultureTierAt(ge.cultureStrength()); {
+	case best == CultureTierLegendary && ge.gameRNG().Float64() < cultureLegendaryChance:
+		tier = "legendary"
+	case best != CultureTierMinor:
+		tier = "major"
 	}
 
 	pool := ge.rules.GoodEraEvents()
@@ -4534,6 +4545,10 @@ func (ge *GameEngine) GetState() GameState {
 	// Geographic Society's buildings, workers or dispatch countdown. Build the
 	// snapshot here and graft the automatic-dispatch view on afterwards.
 	militarySnap := ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus)
+	missionPower := ge.missionPower()
+	for i := range militarySnap.Expeditions {
+		militarySnap.Expeditions[i].Chance = config.MissionDifficulty(militarySnap.Expeditions[i].Difficulty, missionPower)
+	}
 	militarySnap.AutoExpedition = ge.autoExpeditionSnapshot()
 	militarySnap.Threat = ge.ageThreat(ge.age)
 	militarySnap.Mitigation = config.DefenseMitigation(militarySnap.DefenseRating, militarySnap.Threat)
@@ -4804,6 +4819,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 			})
 		ge.overflowScratch = losses
 		ge.accrueFaith(float64(n) * OfflineEfficiency)
+		ge.accrueCulture(float64(n) * OfflineEfficiency)
 		// What the wonder didn't take goes toward the plan's queued copies.
 		ge.bankPlanOverflow(losses, planBanked)
 		ge.tick += n

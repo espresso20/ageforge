@@ -125,62 +125,6 @@ func TestFaithStrengthBars(t *testing.T) {
 	}
 }
 
-// leastGeneralStore is, per age, the least general storage a player can be
-// holding on entering it: the base store plus the most any age gate so far
-// has forced them to hold at once (ladderForced; storage is never lost).
-// Faith is kept in the general store.
-func leastGeneralStore() map[string]float64 {
-	ages, defs := config.Ages(), config.BuildingByKey()
-	base := 0.0
-	for _, r := range config.BaseResources() {
-		if r.Key == "faith" {
-			base = r.BaseStorage
-		}
-	}
-	out := map[string]float64{}
-	least := base
-	for i, a := range ages {
-		if i > 0 {
-			if forced, _ := ladderForced(ages[i-1], a, defs); forced+base > least {
-				least = forced + base
-			}
-		}
-		out[a.Key] = least
-	}
-	return out
-}
-
-// typicalGeneralStore is, per age, the general storage of a moderate builder:
-// the base store and config.FlowCopies copies of every storage building up
-// to that age.
-func typicalGeneralStore() map[string]float64 {
-	idx := map[string]int{}
-	for i, a := range config.AgeOrder() {
-		idx[a] = i
-	}
-	out := map[string]float64{}
-	for i, a := range config.AgeOrder() {
-		total := 0.0
-		for _, r := range config.BaseResources() {
-			if r.Key == "faith" {
-				total = r.BaseStorage
-			}
-		}
-		for _, d := range config.BaseBuildings() {
-			if j, ok := idx[d.RequiredAge]; !ok || j > i || d.Category != "storage" {
-				continue
-			}
-			for _, e := range d.Effects {
-				if e.Type == "storage" && (e.Target == "all" || e.Target == "faith") {
-					total += e.Value * config.FlowCopies
-				}
-			}
-		}
-		out[a] = total
-	}
-	return out
-}
-
 // TestFaithNeverFilledTheGeneralStore keeps the arithmetic that retired the
 // old rule. The faith bands read faith as a share of its storage, but faith
 // has no store of its own: it is kept in the general one, and no building

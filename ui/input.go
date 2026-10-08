@@ -2460,6 +2460,34 @@ func faithStrengthFigure(state game.GameState) string {
 	return fmt.Sprintf("%.0f%% (devotion %sx, %.0f%% of your faith kept)", o.FaithStrength*100, devotion, o.FaithKept*100)
 }
 
+// cultureStrengthFigure is faithStrengthFigure for culture: the strength the
+// good epoch event's tier is read from, with the two things it comes from.
+func cultureStrengthFigure(state game.GameState) string {
+	o := state.CatastropheOutlook
+	if o.CultureDevotion <= 0 {
+		return fmt.Sprintf("%.0f%% (your culture buildings have made no culture yet)", o.CultureStrength*100)
+	}
+	devotion := fmt.Sprintf("%.1f", o.CultureDevotion)
+	if o.CultureDevotion >= 10 {
+		devotion = fmt.Sprintf("%.0f", o.CultureDevotion)
+	} else if o.CultureDevotion < 0.1 {
+		devotion = fmt.Sprintf("%.2f", o.CultureDevotion)
+	}
+	return fmt.Sprintf("%.0f%% (devotion %sx, %.0f%% of your culture kept)", o.CultureStrength*100, devotion, o.CultureKept*100)
+}
+
+// cultureTierText names the tiers of good epoch event a culture strength
+// opens.
+func cultureTierText(tier game.CultureTier) string {
+	switch tier {
+	case game.CultureTierLegendary:
+		return "Minor, Major and a chance at the Legendary"
+	case game.CultureTierMajor:
+		return "Minor and Major"
+	}
+	return "Minor only"
+}
+
 // catastropheOutlookText renders the no-pending status line for the bare
 // `catastrophe` command: what the player can know. In an era that can be
 // fated, a doom is only ever known through its harbinger, so with none here

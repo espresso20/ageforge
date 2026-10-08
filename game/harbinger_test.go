@@ -485,11 +485,8 @@ func TestHarbingerCostSameAcrossEpoch(t *testing.T) {
 				t.Errorf("%s at %s: costs %v / %v, first age %v / %v", ep.Key, age, v.AppeaseCost, v.BraceCost, first.AppeaseCost, first.BraceCost)
 			}
 		}
-		// Level 2 costs double, or the same again in the final era.
-		wantTwo := 2.0
-		if config.IsFinalEpoch(ep.Key) {
-			wantTwo = 1
-		}
+		// Level 2 costs the same again, in every era.
+		const wantTwo = 1.0
 		if two := threadBraceCost(ge.harbinger, 2); len(two) != len(first.BraceCost) {
 			t.Errorf("%s: level 2 brace resources differ", ep.Key)
 		} else {
@@ -503,47 +500,72 @@ func TestHarbingerCostSameAcrossEpoch(t *testing.T) {
 }
 
 func TestHarbingerCostExamples(t *testing.T) {
-	cases := []struct {
-		epoch string
-		brace map[string]float64
+	// An ordinary doom's Brace is priced on its shortest warning, in the age
+	// its harbinger arrives in: a third of what a moderate economy makes of
+	// each material in a fifth of the age. Iron Age stone: 46.5 a tick over
+	// 2,340 ticks = 108.9K; a third is 36.3K → 37K. The materials are the
+	// era's core resources that the age's buildings make: the Modern Age
+	// buys its data at the market, and nothing but a wonder makes crypto, so
+	// neither is asked for. No material asks for more than three fifths of
+	// what a moderate builder's store holds (five copies of every storage
+	// building so far), rounded down to two figures: the Classical Age's
+	// store is 1.15M, so its gold and iron stop at 680K where a third of
+	// the warning is 920K and 760K. It was 12% of the most the era's
+	// advances ask, the same in every age of the era (eraBraceCost): 26.4K
+	// stone, 6.36K iron and 21.6K gold for the whole Iron Era.
+	dooms1 := []struct {
+		epoch, age string
+		brace      map[string]float64
 	}{
-		// No knowledge in any of them: Brace is priced off what the era's
-		// advances ask for, and no gate asks for knowledge any more (the
-		// Stone, Iron and Steel Eras' prices had a knowledge part).
-		{"stone_era", map[string]float64{"food": 9600, "wood": 4800}},
-		{"steel_era", map[string]float64{"gold": 1800000, "steel": 288000}},
-		// The Cosmic Era's own price, off its advances for resources held from
-		// Interstellar (dark matter 13T, titanium 630B → 12%; antimatter and
-		// quantum flux arrive later). Nothing is charged it any more: both of
-		// the era's threads price Brace on their warnings (below). It is
-		// still what says which resources they ask for.
-		{"cosmic_era", map[string]float64{"dark_matter": 1560000000000, "titanium": 75600000000}},
-		// The other eras, as the wiki lists them: an ordinary doom's Brace
-		// has not moved.
-		{"iron_era", map[string]float64{"stone": 26400, "iron": 6360, "gold": 21600}},
-		{"electric_era", map[string]float64{"steel": 56400000, "oil": 924000, "electricity": 3960000}},
-		{"digital_era", map[string]float64{"gold": 156000000, "electricity": 117600000000, "data": 19200000000}},
-		{"neon_era", map[string]float64{"electricity": 288000000000, "data": 46800000000, "crypto": 3000000000}},
+		{"iron_era", "iron_age", map[string]float64{"gold": 140000, "iron": 170000, "stone": 37000}},
+		{"iron_era", "classical_age", map[string]float64{"gold": 680000, "iron": 680000, "stone": 51000}},
+		{"iron_era", "medieval_age", map[string]float64{"gold": 2800000, "iron": 2800000, "stone": 66000}},
+		{"steel_era", "renaissance_age", map[string]float64{"gold": 16000000, "steel": 4500000}},
+		{"steel_era", "colonial_age", map[string]float64{"gold": 190000000, "steel": 69000000}},
+		{"steel_era", "industrial_age", map[string]float64{"gold": 1200000000, "steel": 1200000000}},
+		{"electric_era", "victorian_age", map[string]float64{"electricity": 1700000, "oil": 1400000000, "steel": 5100000000}},
+		{"electric_era", "electric_age", map[string]float64{"electricity": 21000000000, "oil": 4600000000, "steel": 21000000000}},
+		{"electric_era", "atomic_age", map[string]float64{"electricity": 90000000000, "oil": 6100000000, "steel": 90000000000}},
+		{"digital_era", "modern_age", map[string]float64{"electricity": 420000000000, "gold": 420000000000}},
+		{"digital_era", "information_age", map[string]float64{"data": 590000000000, "electricity": 7300000000000, "gold": 7300000000000}},
+		{"digital_era", "digital_age", map[string]float64{"data": 2400000000000, "electricity": 15000000000000, "gold": 15000000000000}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 8100000000000, "electricity": 81000000000000}},
+		{"neon_era", "fusion_age", map[string]float64{"data": 9400000000000, "electricity": 190000000000000}},
+		{"neon_era", "space_age", map[string]float64{"data": 11000000000000, "electricity": 790000000000000}},
 	}
-	for _, c := range cases {
-		if got := harbingerBraceCost(c.epoch, 1); !reflect.DeepEqual(got, c.brace) {
-			t.Errorf("%s brace = %v, want %v", c.epoch, got, c.brace)
+	listed := 0
+	for _, ep := range config.Epochs() {
+		if config.FateAllowed(ep.Key) && !config.IsFinalEpoch(ep.Key) {
+			listed += len(ep.Ages)
 		}
-		if config.IsFinalEpoch(c.epoch) {
-			continue
+	}
+	if len(dooms1) != listed {
+		t.Fatalf("an ordinary doom's brace is listed for %d ages, want every age of the eras a doom is fated in (%d)", len(dooms1), listed)
+	}
+	for _, c := range dooms1 {
+		if got := doomBraceCost(c.epoch, c.age, 1); !reflect.DeepEqual(got, c.brace) {
+			t.Errorf("a doom of the %s foretold in the %s: brace = %v, want %v", c.epoch, c.age, got, c.brace)
 		}
-		// An ordinary doom is charged the era's price wherever its harbinger
-		// arrives, and double for level 2.
-		for _, age := range epochAges(t, c.epoch) {
-			if got := doomBraceCost(c.epoch, age, 1); !reflect.DeepEqual(got, c.brace) {
-				t.Errorf("a doom of the %s foretold in the %s: brace = %v, want the era's %v", c.epoch, age, got, c.brace)
+		// Level 2 costs the same again.
+		if got := doomBraceCost(c.epoch, c.age, 2); !reflect.DeepEqual(got, c.brace) {
+			t.Errorf("a doom of the %s foretold in the %s: brace level 2 = %v, want level 1's %v again", c.epoch, c.age, got, c.brace)
+		}
+		for res := range c.brace {
+			if res == "crypto" || res == "faith" || res == "culture" || res == "knowledge" || c.age == "modern_age" && res == "data" {
+				t.Errorf("a doom of the %s foretold in the %s asks %s for Brace", c.epoch, c.age, res)
 			}
-			for res, v := range doomBraceCost(c.epoch, age, 2) {
-				if v != math.Ceil(c.brace[res]*2) {
-					t.Errorf("a doom of the %s foretold in the %s: level 2 asks %v %s, want double %v", c.epoch, age, v, res, c.brace[res])
-				}
-			}
 		}
+	}
+	// The old price, for the record of what it did: the Electric Era's took
+	// a moderate economy over an hour and a half of the Victorian Age's
+	// electricity and seconds of the Atomic Age's.
+	old := eraBraceCost("electric_era", 1)
+	if want := map[string]float64{"steel": 56400000, "oil": 924000, "electricity": 3960000}; !reflect.DeepEqual(old, want) {
+		t.Errorf("the Electric Era's old price = %v, want %v", old, want)
+	}
+	first, last := epochAges(t, "electric_era")[0], epochAges(t, "electric_era")[2]
+	if early, late := old["electricity"]/config.TypicalIncome("electricity", first), old["electricity"]/config.TypicalIncome("electricity", last); early < 1000 || late > 1 {
+		t.Errorf("the Electric Era's old price took %.0f ticks of %s electricity and %.2f of %s's; the collapse the rule replaced is gone from the numbers", early, first, late, last)
 	}
 
 	// The Cosmic Era's fated doom, the Reality Tear, is priced on its own
@@ -563,10 +585,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// income in the Interstellar Age, 10%, 15% and 20% in the three after.
 		// Then the tree's last techs: Asteroid Refining and Stellar Core
 		// Mining add 8% to titanium.
-		{"interstellar_age", map[string]float64{"dark_matter": 1.1e16, "titanium": 1.4e16}},
-		{"galactic_age", map[string]float64{"dark_matter": 2.4e17, "titanium": 1.4e16}},
-		{"quantum_age", map[string]float64{"dark_matter": 2.5e17, "titanium": 1.5e16}},
-		{"transcendent_age", map[string]float64{"dark_matter": 2.7e17, "titanium": 1.6e16}},
+		{"interstellar_age", map[string]float64{"dark_matter": 5.1e+15, "titanium": 4.8e+15}},
+		{"galactic_age", map[string]float64{"dark_matter": 6.1e+16, "titanium": 5.1e+15}},
+		{"quantum_age", map[string]float64{"dark_matter": 6.3e+16, "titanium": 5.3e+15}},
+		{"transcendent_age", map[string]float64{"dark_matter": 6.9e+16, "titanium": 5.8e+15}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(tears) {
 		t.Fatalf("the Cosmic Era has ages %v; the Reality Tear's brace is listed for %d", ages, len(tears))
@@ -575,7 +597,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 		if got := doomBraceCost("cosmic_era", c.age, 1); !reflect.DeepEqual(got, c.brace) {
 			t.Errorf("the Reality Tear foretold in the %s: brace = %v, want %v", c.age, got, c.brace)
 		}
-		// In the final era level 2 costs the same again.
+		// Level 2 costs the same again.
 		if got := doomBraceCost("cosmic_era", c.age, 2); !reflect.DeepEqual(got, c.brace) {
 			t.Errorf("the Reality Tear foretold in the %s: brace level 2 = %v, want level 1's %v again", c.age, got, c.brace)
 		}
@@ -634,10 +656,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// the soft cap, as the Reality Tear's rows above: 5% to 20%.
 		// And by the tree's last techs: 4% more culture each from Neural
 		// Art, Galactic Memory and Reality Art, 8% more titanium.
-		{"interstellar_age", map[string]float64{"faith": 1300000000, "culture": 20000000000}, map[string]float64{"dark_matter": 2.1e16, "titanium": 2.7e16}},
-		{"galactic_age", map[string]float64{"faith": 2600000000, "culture": 42000000000}, map[string]float64{"dark_matter": 4.7e17, "titanium": 2.8e16}},
-		{"quantum_age", map[string]float64{"faith": 5400000000, "culture": 89000000000}, map[string]float64{"dark_matter": 4.9e17, "titanium": 2.9e16}},
-		{"transcendent_age", map[string]float64{"faith": 5900000000, "culture": 97000000000}, map[string]float64{"dark_matter": 5.3e17, "titanium": 3.2e16}},
+		{"interstellar_age", map[string]float64{"faith": 1300000000, "culture": 20000000000}, map[string]float64{"dark_matter": 1.1e+16, "titanium": 9.6e+15}},
+		{"galactic_age", map[string]float64{"faith": 2600000000, "culture": 42000000000}, map[string]float64{"dark_matter": 1.3e+17, "titanium": 1.1e+16}},
+		{"quantum_age", map[string]float64{"faith": 5400000000, "culture": 89000000000}, map[string]float64{"dark_matter": 1.3e+17, "titanium": 1.1e+16}},
+		{"transcendent_age", map[string]float64{"faith": 5900000000, "culture": 97000000000}, map[string]float64{"dark_matter": 1.4e+17, "titanium": 1.2e+16}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(passages) {
 		t.Fatalf("the Cosmic Era has ages %v; the Last Passage's price is listed for %d", ages, len(passages))
@@ -708,7 +730,7 @@ func TestThreadAppeaseCost(t *testing.T) {
 			passages++
 			if !reflect.DeepEqual(r.AppeaseL1, lastPassageAppeaseCost(r.Epoch, r.Age, 1)) || !reflect.DeepEqual(r.AppeaseL2, lastPassageAppeaseCost(r.Epoch, r.Age, 2)) ||
 				!reflect.DeepEqual(r.BraceL1, lastPassageBraceCost(r.Epoch, r.Age, 1)) || !reflect.DeepEqual(r.BraceL2, lastPassageBraceCost(r.Epoch, r.Age, 2)) ||
-				len(r.BraceL1) == 0 || !r.BraceOnWarning ||
+				len(r.BraceL1) == 0 || !r.FinalEra ||
 				r.WarningTicks != lastPassageWarning*config.AgeTargetTicks(r.Age) || !config.IsFinalEpoch(r.Epoch) {
 				t.Errorf("table: Last Passage row %+v", r)
 			}
@@ -717,7 +739,7 @@ func TestThreadAppeaseCost(t *testing.T) {
 		dooms++
 		if !reflect.DeepEqual(r.AppeaseL1, doomAppeaseCost(r.Epoch, r.Age, 1)) || !reflect.DeepEqual(r.AppeaseL2, doomAppeaseCost(r.Epoch, r.Age, 2)) ||
 			!reflect.DeepEqual(r.BraceL1, doomBraceCost(r.Epoch, r.Age, 1)) || !reflect.DeepEqual(r.BraceL2, doomBraceCost(r.Epoch, r.Age, 2)) ||
-			len(r.BraceL1) == 0 || r.BraceOnWarning != config.IsFinalEpoch(r.Epoch) ||
+			len(r.BraceL1) == 0 || r.FinalEra != config.IsFinalEpoch(r.Epoch) ||
 			r.WarningTicks != harbingerLeadMin*config.AgeTargetTicks(r.Age) {
 			t.Errorf("table: row %+v", r)
 		}
@@ -761,17 +783,19 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 		t.Error("no Appease log line")
 	}
 
-	// Level 2 costs double. Seven prices of ten are left: strength 0.7 → mid
-	// band: 75%, ×0.36.
+	// Level 2 costs the same again. Eight prices of ten are left: strength
+	// 0.8 → still the high band: 60%, ×0.36. (At double, seven were left and
+	// the town fell to the mid band, 75%: the second level paid for itself
+	// in strength lost.)
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
-	left := 7 * pf
+	left := 8 * pf
 	if f := ge.Resources.Get("faith"); math.Abs(f-left) > 1e-6*pf {
-		t.Errorf("after level 2: faith %v, want %v (level 2 costs double)", f, left)
+		t.Errorf("after level 2: faith %v, want %v (level 2 costs the same again)", f, left)
 	}
-	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.75*0.36) > 1e-9 {
-		t.Errorf("level 2 probability %v, want %v", o.Probability, 0.75*0.36)
+	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.60*0.36) > 1e-9 {
+		t.Errorf("level 2 probability %v, want %v", o.Probability, 0.60*0.36)
 	}
 	if st := ge.GetState(); st.Harbinger.AppeaseLevel != 2 || st.Harbinger.AppeaseBlocked == "" || st.Harbinger.AppeaseCost != nil {
 		t.Errorf("view after cap = %+v", st.Harbinger)
@@ -834,14 +858,14 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 			t.Cleanup(SetDataDirForTest(t.TempDir()))
 			ge := threadEngine(t, "iron_era", 6)
 			fillBraceStock(ge, 1e9)
-			price := harbingerBraceCost("iron_era", 1)
+			price := threadBraceCost(ge.harbinger, 1)
 			res := sortedKeys(price)[0]
 			for i := 1; i <= tc.level; i++ {
 				stockBefore := ge.Resources.Get(res)
 				if err := ge.HarbingerBrace(); err != nil {
 					t.Fatal(err)
 				}
-				if got, want := stockBefore-ge.Resources.Get(res), harbingerBraceCost("iron_era", i)[res]; got != want {
+				if got, want := stockBefore-ge.Resources.Get(res), price[res]; got != want || want <= 0 {
 					t.Errorf("level %d took %v %s, want %v", i, got, res, want)
 				}
 			}
@@ -1128,12 +1152,12 @@ func TestSuccumbAndPrestigeResetHarbinger(t *testing.T) {
 // harbinger can arrive in, a moderate faith (and culture) economy
 // (config.FlowIncome) makes level 1 inside the shortest warning (in three
 // quarters of it: 15% of the age), so no full warning is too short for it
-// and nothing has to be saved beforehand. Level 2 costs double (the same
-// again in the final era), so both levels together cost more than the
-// shortest warning makes: the stretch a longer warning, or faith kept
+// and nothing has to be saved beforehand. Level 2 costs the same again, so
+// both levels together cost more than the shortest warning makes (one and
+// a half times it): the stretch a longer warning, or faith kept
 // beforehand, pays for. It is never more than the longest warning makes.
 func TestAppeasePayableWithinTheWarning(t *testing.T) {
-	if harbingerAppeaseWindowShare > 1 || 3*harbingerAppeaseWindowShare <= 1 {
+	if harbingerAppeaseWindowShare > 1 || 2*harbingerAppeaseWindowShare <= 1 {
 		t.Fatalf("window share %v: level 1 must fit the shortest warning, and both levels must not", harbingerAppeaseWindowShare)
 	}
 	checked := 0
@@ -1141,10 +1165,7 @@ func TestAppeasePayableWithinTheWarning(t *testing.T) {
 		if !config.FateAllowed(ep.Key) {
 			continue
 		}
-		wantTwo := 2.0
-		if config.IsFinalEpoch(ep.Key) {
-			wantTwo = 1
-		}
+		const wantTwo = 1.0
 		for _, age := range ep.Ages {
 			cost1, cost2 := doomAppeaseCost(ep.Key, age, 1), doomAppeaseCost(ep.Key, age, 2)
 			if cost1["faith"] <= 0 {
@@ -1253,7 +1274,7 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 		if !config.IsFinalEpoch(ep.Key) {
 			continue
 		}
-		era := harbingerBraceCost(ep.Key, 1)
+		era := eraBraceCost(ep.Key, 1)
 		for _, age := range ep.Ages {
 			for _, th := range []struct {
 				name           string
@@ -1297,21 +1318,28 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 	}
 }
 
-// A thread's Brace price is its own: an ordinary doom's by its era, the same
-// wherever its harbinger arrives; in the Cosmic Era by the age the thread's
-// harbinger arrived in, the same in every age it lives through, and the
-// Last Passage's twice the Reality Tear's.
+// A thread's Brace price is its own: by the age the thread's harbinger
+// arrived in, the same in every age it lives through; an ordinary doom's a
+// third of what its warning makes, and in the Cosmic Era the Last Passage's
+// twice the Reality Tear's.
 func TestThreadBraceCost(t *testing.T) {
-	// A doom's thread: the era's price, whichever age it began in.
+	// A doom's thread: the price of the age it began in, not the era's old
+	// one, and dearer the later it begins.
 	ages := epochAges(t, "electric_era")
-	era := harbingerBraceCost("electric_era", 1)
+	first := doomBraceCost("electric_era", ages[0], 1)
 	ge := threadEngine(t, "electric_era", 6)
-	if got := ge.GetState().Harbinger.BraceCost; !reflect.DeepEqual(got, era) || len(era) == 0 {
-		t.Fatalf("a doom's thread started in %s: brace %v, want the era's %v", ages[0], got, era)
+	if got := ge.GetState().Harbinger.BraceCost; !reflect.DeepEqual(got, first) || len(first) == 0 || reflect.DeepEqual(first, eraBraceCost("electric_era", 1)) {
+		t.Fatalf("a doom's thread started in %s: brace %v, want %v (not the era's old %v)", ages[0], got, first, eraBraceCost("electric_era", 1))
 	}
 	late := &HarbingerSave{Age: ages[2], Chain: []string{ages[1], ages[2]}, EpochKey: "electric_era", TargetEpoch: "electric_era"}
-	if got := threadBraceCost(late, 1); !reflect.DeepEqual(got, era) {
-		t.Errorf("a doom foretold in %s: brace %v, want the era's %v", ages[1], got, era)
+	second := doomBraceCost("electric_era", ages[1], 1)
+	if got := threadBraceCost(late, 1); !reflect.DeepEqual(got, second) {
+		t.Errorf("a doom foretold in %s and living in %s: brace %v, want the price of the age it was foretold in, %v", ages[1], ages[2], got, second)
+	}
+	for res, v := range first {
+		if second[res] <= v {
+			t.Errorf("a doom foretold in %s asks %v %s, no more than one foretold in %s (%v): the price follows what the age makes", ages[1], second[res], res, ages[0], v)
+		}
 	}
 
 	// The Last Passage's thread keeps the price of the age it arrived in
@@ -1375,8 +1403,8 @@ func TestThreadBraceCost(t *testing.T) {
 		t.Fatalf("setup: live %+v parked %+v", h, parked)
 	}
 	tear := doomBraceCost("cosmic_era", cosmic[0], 1)
-	if got := both.GetState().Harbinger.BraceCost; !reflect.DeepEqual(got, tear) || len(tear) != 2 || reflect.DeepEqual(tear, harbingerBraceCost("cosmic_era", 1)) {
-		t.Errorf("the Reality Tear's thread: brace %v, want %v (not the era's %v)", got, tear, harbingerBraceCost("cosmic_era", 1))
+	if got := both.GetState().Harbinger.BraceCost; !reflect.DeepEqual(got, tear) || len(tear) != 2 || reflect.DeepEqual(tear, eraBraceCost("cosmic_era", 1)) {
+		t.Errorf("the Reality Tear's thread: brace %v, want %v (not the era's %v)", got, tear, eraBraceCost("cosmic_era", 1))
 	}
 	if got := threadBraceCost(both.parkedHarbinger, 1); !reflect.DeepEqual(got, want1) {
 		t.Errorf("the waiting Last Passage thread: brace %v, want %v", got, want1)

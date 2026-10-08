@@ -159,6 +159,14 @@ type CatastropheOutlook struct {
 	// the run's faith income still held (at most 1).
 	FaithDevotion float64
 	FaithKept     float64
+	// CultureStrength is the current culture strength in [0,1], which sets
+	// the tiers of good epoch event open at the next advance into a new era
+	// (CultureTier, the best of them), and CultureDevotion and CultureKept
+	// the two things it comes from (culture.go).
+	CultureStrength float64
+	CultureTier     CultureTier
+	CultureDevotion float64
+	CultureKept     float64
 }
 
 func catastropheTierFor(p float64) CatastropheTier {
@@ -315,6 +323,9 @@ func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 	held, strength := ge.Resources.Get("faith"), ge.faithStrength()
 	out := CatastropheOutlook{Passage: PassageEpoch, Tier: CatastropheTierNone, FaithStrength: strength, FaithBand: FaithBandAt(strength),
 		FaithDevotion: FaithDevotionOf(ge.faithMeasure), FaithKept: FaithKeptOf(held, ge.faithMeasure)}
+	culture := ge.cultureStrength()
+	out.CultureStrength, out.CultureTier = culture, CultureTierAt(culture)
+	out.CultureDevotion, out.CultureKept = CultureDevotionOf(ge.cultureMeasure), CultureKeptOf(ge.Resources.Get("culture"), ge.cultureMeasure)
 	if next, ok := ge.rules.NextEra(ge.currentEpoch); ok {
 		out.NextEpochKey = next.Key
 	}

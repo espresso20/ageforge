@@ -255,6 +255,10 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range fp {
 		res.fail("faith_"+p.Rule, "%s", p)
 	}
+	cp, cr := StaticCultureStrength()
+	for _, p := range cp {
+		res.fail("culture_"+p.Rule, "%s", p)
+	}
 	dp := StaticDepth()
 	for _, p := range dp {
 		res.fail("depth_points", "%s", p)
@@ -271,7 +275,7 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range bp {
 		res.fail("badge_"+p.Kind, "%s", p.Why)
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(fp), len(dp), research, len(bp))
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d culture tier(s) out of reach; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(fp), len(cp), len(dp), research, len(bp))
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, rows)
@@ -285,6 +289,9 @@ func runStatic(e *Env, res *Result) {
 	var ff strings.Builder
 	writeFaithStrength(&ff, fp, fr)
 	res.section("Faith strength", "%s", ff.String())
+	var cuf strings.Builder
+	writeCultureStrength(&cuf, cp, cr)
+	res.section("Culture strength", "%s", cuf.String())
 	var df strings.Builder
 	writeDepthStatic(&df, dp)
 	res.section("Depth points", "%s", df.String())

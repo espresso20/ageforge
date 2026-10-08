@@ -42,8 +42,10 @@ type lookupCount struct{ config, core int }
 var pureConfig = map[string]bool{
 	"AgePositions": true, "AnyResource": true, "StretchTicksBy": true,
 	"ClampMastery": true, "MasteryK": true, "AgeSpeed": true,
-	"DefenseMitigation": true, "AgeThreat": true,
-	"DurationText": true, "FormatAmount": true, "FormatPercent": true, "FormatRateValue": true,
+	"DefenseMitigation": true, "AgeThreatAt": true,
+	"MilitaryScales": true, "MilitaryScaleIn": true, "MissionDifficulty": true,
+	"TypicalStorages": true,
+	"DurationText":    true, "FormatAmount": true, "FormatPercent": true, "FormatRateValue": true,
 	"PickLogFlavor": true, "LogFlavorMoments": true,
 	"PriceLevelsByAge": true, "Incomes": true, "FlowDealLevels": true,
 	"ExchangeRateAt": true, "MarketRateAt": true, "MarketPairsAt": true, "MarketOffersAt": true,

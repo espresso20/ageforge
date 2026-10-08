@@ -45,7 +45,7 @@ These four come from Geological Extraction mines. Nothing in the game spends the
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
 | Data | `data` | Modern Age | 50 | Made by Hacker buildings from the Information Age; in the Modern Age the market sells it |
-| Nanobots | `nanobots` | Modern Age | 20 | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them |
+| Nanobots | `nanobots` | Modern Age | 20 | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them. A build material with hand-set rates: the market does not trade it |
 | Crypto | `crypto` | Cyberpunk Age | 50 | No building makes it: it comes from the Neon Citadel wonder and the market (Blockchain lowers the market's fee) |
 | Plasma | `plasma` | Fusion Age | 30 | Superheated gas for energy |
 | Titanium | `titanium` | Space Age | 30 | Light metal for space construction |
@@ -114,7 +114,7 @@ Faith can't be bought at the market.
 
 Culture comes from the Culture/Arts lineage (Amphitheater onward). These buildings take no workers and produce culture on their own, so you can build them while your workers stay elsewhere. Each one also raises culture storage and lifts morale.
 
-Culture has two jobs. Its **fill % of storage** decides which tier of good epoch event you can get at an epoch transition: over 40% makes Major events eligible, and over 75% adds a 15% chance at the Legendary one (see [Epochs](epochs.md)). And culture is **spent**, on the things below. Prestige resets culture along with every other resource.
+Culture has two jobs. Your **culture strength** decides which tier of good epoch event you can get at an epoch transition: over 40% makes Major events eligible, and over 75% adds a 15% chance at the Legendary one. It is what your own culture buildings have made against a moderate set, times the share of your culture you have kept, so it takes about twice a moderate set to open Major events, and culture you spend or buy does not help (see [Culture strength](epochs.md#culture-strength)). And culture is **spent**, on the things below. Prestige resets culture along with every other resource.
 
 ### Culture sinks
 

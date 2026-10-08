@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math"
 	"math/rand"
 
 	"github.com/espresso20/ageforge/config"
@@ -74,8 +75,16 @@ func harbingerBraceBasis(epochKey string) map[string]float64 {
 	return harbingerBraceBasisIn(rules.Core(), epochKey)
 }
 
-func harbingerBraceCost(epochKey string, level int) map[string]float64 {
-	return harbingerBraceCostIn(rules.Core(), epochKey, level)
+// eraBraceCost is the price an ordinary doom's Brace had before it was
+// priced on the warning: 12% of the most the era's remaining advances ask
+// of each core resource, the same in every age of the era, doubled for
+// level 2. Kept for the tests that show what the old price did.
+func eraBraceCost(epochKey string, level int) map[string]float64 {
+	cost := map[string]float64{}
+	for k, v := range harbingerBraceBasis(epochKey) {
+		cost[k] = math.Ceil(v * 0.12 * float64(level))
+	}
+	return cost
 }
 
 func doomBraceCost(epochKey, age string, level int) map[string]float64 {

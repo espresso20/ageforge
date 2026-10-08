@@ -95,6 +95,16 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 		}
 	}
 
+	// What a good event at the next era's door could be: the tiers the
+	// town's culture strength opens (game/culture.go). Shown once culture is
+	// held, while there is an era to come.
+	if _, next := set.NextEra(state.EpochKey); next && state.Resources["culture"].Unlocked {
+		o := state.CatastropheOutlook
+		fmt.Fprintf(sb, " Good events at the next era: %s\n", cultureTierText(o.CultureTier))
+		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf("   Culture strength %s. Major from %.0f%%, the Legendary from %.0f%%.",
+			cultureStrengthFigure(state), game.CultureMajorAbove*100, game.CultureLegendaryAbove*100)) + "\n")
+	}
+
 	sb.WriteString("\n")
 
 	// Catastrophe status. Only what the player has seen: a doom not yet
