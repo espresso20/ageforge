@@ -53,6 +53,6 @@ New to the game? Install it, then follow [Your First Age](first-ten-minutes.md).
 | `Tab` or `→` | Take the completion shown in dim text after the cursor (`→` only at the end of the line). Press `Tab` again for the next suggestion, `Shift+Tab` for the previous one |
 | `↑` / `↓` | Step through your command history |
 | `PgUp` / `PgDn` | Scroll the Buildings list when no panel is open (in the Map, they zoom) |
-| `Esc` | Close the open panel. With no panel open: save, stop the game and return to the main menu |
+| `Esc` | Close the open panel. With no panel open: save, stop the game and return to the [main menu](how-to-play.md#the-main-menu), where Continue opens the game again |
 
 Type commands at the `>` prompt at the bottom of the screen.

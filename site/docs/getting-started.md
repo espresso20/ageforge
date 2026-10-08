@@ -71,9 +71,9 @@ AgeForge draws a full-screen text interface. It works best with:
 
 ## Updating
 
-The main menu has **Check for updates** (`u`). It asks GitHub for the latest release and, if it is newer than yours, offers to download and install it. The download is checked against the release's published checksums. On macOS and Linux it replaces the `ageforge` binary in place, and the new version runs the next time you start the game. On Windows it saves the new `.exe` beside the old one for you to swap in.
+The [main menu](how-to-play.md#the-main-menu) has **Check for updates** (`u`). It asks GitHub for the latest release and, if it is newer than yours, offers to download and install it. The download is checked against the release's published checksums. On macOS and Linux it replaces the `ageforge` binary in place, and the new version runs the next time you start the game. On Windows it saves the new `.exe` beside the old one for you to swap in.
 
-Release builds also check in the background when the main menu opens. If a newer release exists, **Update available (u)** appears beside the version number.
+Release builds also check in the background when the main menu opens. If a newer release exists, **update available (u)** appears beside the version number.
 
 A build from source is a development build: it skips the background check, and Check for updates says it isn't available. Update it with `git pull` and `go build -o ageforge .` again.
 
@@ -85,4 +85,4 @@ Updating replaces only the binary: your `data/` folder, with your accounts and s
 
 The game keeps its data (accounts, saves and backups) in a `data/` folder next to the `ageforge` binary, on every platform. Keep the binary and its `data/` folder together when you move them. See [Saving & Loading](saving-and-loading.md) for the layout.
 
-The game autosaves every 60 seconds. `Esc` closes the open panel; with no panel open, it saves, stops the game and returns to the main menu.
+The game autosaves every 60 seconds. `Esc` closes the open panel; with no panel open, it saves, stops the game and returns to the main menu, where **Continue** opens that game again.

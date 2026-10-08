@@ -40,7 +40,7 @@ A **truecolor** terminal is recommended for exact colors.
 
 ### Motion
 
-A few things in the game move on their own: the [Map](map.md) and the mini map, some badges in the [badge case](account.md#the-badge-case), and the ambient effect of the five themes that have one. One setting turns all of it off:
+A few things in the game move on their own: the [Map](map.md) and the mini map, the [main menu](how-to-play.md#the-main-menu), some badges in the [badge case](account.md#the-badge-case), and the ambient effect of the five themes that have one. One setting turns all of it off:
 
 | Command | What it does |
 |---|---|

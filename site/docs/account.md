@@ -19,7 +19,7 @@ data/
     └── <account_id>/
         ├── account.json         # that account's identity and account-wide progress
         ├── badges.json          # that account's badges (once it has any)
-        ├── settings.json        # that account's motion setting (once it is changed)
+        ├── settings.json        # that account's display settings and which game is current
         └── saves/               # that account's game saves
 ```
 
@@ -31,7 +31,7 @@ The `data/active-account` pointer records which account is current. Each `data/a
 
 A game belongs to the account it was started or loaded under. Its saves go to that account's slot, and its prestiges and age-ups count for that account only.
 
-You can switch accounts during a game with `account switch <name>`. The game is saved to the account it belongs to, and you go back to the main menu, where you load one of the new account's games or start a new one. The game you left never carries on under the other account. (The **Accounts** panel on the main menu switches the same way; there is no game running there.)
+You can switch accounts during a game with `account switch <name>`. The game is saved to the account it belongs to, and you go back to the main menu, which now shows the new account's current game: Continue opens it, or you load another of its games or start a new one. The game you left never carries on under the other account. (The **Accounts** panel on the main menu switches the same way; there is no game running there.)
 
 ### Upgrading from an older version
 
@@ -83,10 +83,11 @@ From the panel:
 | `b` | **Backup** the highlighted account: a full copy of its slot (`account.json`, `badges.json`, `settings.json` and `saves/`) to `data/backups/` (see [Backups](#backups)) |
 | `i` | **Import** an account from a backup file |
 | `r` | Show a **recovery code** for restoring an identity (see [The recovery code](#the-recovery-code)) |
+| `x` | **Delete saves**: delete every save of the highlighted account, after a confirm. The account itself is kept (see [Deleting saves](saving-and-loading.md#deleting-saves)) |
 | `w` | **Wipe** the highlighted account (permanent, behind a type-the-name confirm) |
 | `Esc` | **Back** to the main menu |
 
-This panel is where you manage accounts: switch between civilizations, create new ones, back them up, and wipe one behind the type-your-name confirm described under [Wiping an account](#wiping-an-account).
+This panel is where you manage accounts: switch between civilizations, create new ones, back them up, delete an account's saves, and wipe one behind the type-your-name confirm described under [Wiping an account](#wiping-an-account). On a terminal narrower than 126 columns the panel's keys are listed on two lines.
 
 ---
 
@@ -252,6 +253,8 @@ Badges are separate from [milestones](milestones.md). A milestone belongs to one
 badges
 ```
 
+The main menu's **Badges** entry (`b`) opens the same case with no game loaded, and shows your count and your title on the menu itself.
+
 #### The badge case
 
 The case is a panel over the whole screen but the command bar. It shows every badge the account holds or can earn as a small badge in a grid, by family, with the selected badge at full size beside it.
@@ -349,7 +352,7 @@ The file is signed, and the signature covers the account ID:
 
 ### The settings file
 
-The motion setting (`motion on` and `motion off`) and the title you chose to wear (`title`) are kept in a third file in the slot, `settings.json`. It is there for the same reason `badges.json` is: `account.json` keeps the shape older versions of the game know, so a newer setting goes beside it. The file holds display preferences and nothing you earn, so it is plain text and unsigned, and the game writes it only once you change one of them. If it is missing or cannot be read, motion is on and you wear the title your score holds. A title is only worn while the account holds it, so writing one into the file by hand gives nothing. A [backup](#backups) copies it; an export does not carry it.
+The motion setting (`motion on` and `motion off`), the title you chose to wear (`title`), and which game the main menu's Continue opens (the game you played last, and your [main game](saving-and-loading.md#continue-and-your-main-game) if you marked one) are kept in a third file in the slot, `settings.json`. It is there for the same reason `badges.json` is: `account.json` keeps the shape older versions of the game know, so a newer setting goes beside it. The file holds preferences and nothing you earn, so it is plain text and unsigned, and the game writes it when one of them changes: a setting you change, or the first time you play a game. If it is missing or cannot be read, motion is on, you wear the title your score holds, and Continue opens the save written most recently. A title is only worn while the account holds it, so writing one into the file by hand gives nothing. A [backup](#backups) copies it; an export does not carry it.
 
 ---
 

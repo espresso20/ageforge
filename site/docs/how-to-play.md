@@ -4,6 +4,37 @@ AgeForge is a **command-driven idle civilization game**. Resources accumulate on
 
 ---
 
+## The main menu
+
+The game opens on its main menu, and `Esc` brings you back to it from a game.
+
+<figure class="screen" data-screen="menu"><figcaption>The main menu of an account with a game, at 120 columns by 40 rows: its own town behind the menu, Continue first, and a caption that names the town and its age.</figcaption></figure>
+
+Once your account has a game, the menu is drawn over **your own town**: the map of your current game, in your map style, glyph set and theme, at the age that game is in, moving as the [Map](map.md) does. It is a look at the save and nothing more. The game is not loaded or run, no time away is counted, and nothing is written, so looking at the menu costs you nothing and earns you nothing. **Continue** is first and already selected: press `Enter` and you are back in that game. Under it are the town, its age and its people, and beside it the save's name.
+
+<figure class="screen" data-screen="menu-first"><figcaption>The main menu on a first visit: the wordmark as iron on the fire, the menu as a table of contents, and the forge on its plate.</figcaption></figure>
+
+An account with no game yet sees the forge and a title page, with **New game** first. The same page shows if your save cannot be read.
+
+| Entry | Key | What it does |
+|---|---|---|
+| **Continue** | `c` | Opens your current game. It is on the menu once the account has a save |
+| **New game** | `n` | Asks you to name a civilization, then starts it (see [Starting a new game](saving-and-loading.md#starting-a-new-game)) |
+| **Load game** | `l` | Opens the [Load Game browser](saving-and-loading.md#the-load-game-browser), where you can also mark your main game |
+| **Badges** | `b` | Shows how many badges you hold and the title you wear, and opens the [badge case](account.md#the-badge-case). No game needs to be loaded |
+| **Themes** | `t` | Opens the [theme](themes.md) picker |
+| **Accounts** | `a` | Opens the [Accounts panel](account.md#the-accounts-panel): switch, create, back up and wipe accounts, and delete an account's saves |
+| **Check for updates** | `u` | Asks for the latest release (see [Updating](getting-started.md#updating)) |
+| **Quit** | `q` | Leaves the game |
+
+`↑` and `↓` move the selection and `Enter` opens it; each entry's letter opens it directly. Choosing an entry strikes the title: a flare and a burst of sparks, then the entry opens. The version is on the page, and so is **update available (u)** when a newer release is out.
+
+**Which game Continue opens.** Your account remembers the game you played last, and that is your current game. If you keep several games and want one of them on the menu whatever you played last, mark it as your **main game** with `m` in the Load Game browser. See [Continue and your main game](saving-and-loading.md#continue-and-your-main-game).
+
+**Motion and size.** `motion off` holds the menu to one still picture, like the maps (see [Motion](themes.md#motion)). The menu fits any terminal from 80 columns by 24 rows up. With `map glyphs ascii` it is drawn without block characters. On a light theme the fire and the hot iron are ink on paper: hotter is darker.
+
+---
+
 ## The core loop
 
 ```
@@ -54,7 +85,7 @@ The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it 
 - **PgUp / PgDn** scroll the Buildings list.
 - **Ctrl+R** turns the Resources box to its next page, when it has more resources than it can show.
 - **↑ / ↓** step through your command history.
-- **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the main menu.
+- **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the [main menu](#the-main-menu), where **Continue** takes you back in.
 - Common commands have short names: `b` is `build`, `r` is `recruit`, `a` is `assign`, `s` is `status`, `t` is `trade`. See [Command shortcuts](commands.md#command-shortcuts) for the full list.
 
 ---
