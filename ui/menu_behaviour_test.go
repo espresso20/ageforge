@@ -621,7 +621,9 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 // panicStyle is a map style that fails when it draws.
 type panicStyle struct{ mapstyle.Style }
 
-func (panicStyle) Draw(tcell.Screen, mapstyle.Rect, mapstyle.Frame) { panic("the map cannot draw this") }
+func (panicStyle) Draw(tcell.Screen, mapstyle.Rect, mapstyle.Frame) {
+	panic("the map cannot draw this")
+}
 
 // noErrorOnPage fails if a drawn page says anything went wrong.
 func noErrorOnPage(t *testing.T, where string, scr menuScreen) {

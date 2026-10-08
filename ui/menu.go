@@ -100,20 +100,10 @@ type mainMenu struct {
 	checkUpdates func()
 }
 
-// CreateSplashPage creates the main menu.
+// CreateSplashPage creates the main menu. A release build also asks, in
+// the background, whether a newer version is out.
 func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) tview.Primitive {
-	m := &mainMenu{
-		Box: tview.NewBox(), app: app, pages: pages, engine: engine, version: currentVersion,
-		reg: all.Registry(), now: time.Now, active: true,
-		eliteMsg: eliteLines[rand.Intn(len(eliteLines))],
-	}
-	m.start = m.now()
-	m.later = func(fn func()) {
-		time.AfterFunc(menuStrikeHold, func() { app.QueueUpdateDraw(fn) })
-	}
-	m.checkUpdates = func() { showUpdateCheck(app, pages, currentVersion) }
-	m.refresh(true)
-
+	m := newMainMenu(app, pages, engine, currentVersion)
 	// Background update check: a no-op on dev builds or network errors.
 	if currentVersion != "dev" {
 		go func() {
@@ -127,6 +117,23 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 			})
 		}()
 	}
+	return m
+}
+
+// newMainMenu makes the menu and reads what it says. It asks the network
+// nothing.
+func newMainMenu(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) *mainMenu {
+	m := &mainMenu{
+		Box: tview.NewBox(), app: app, pages: pages, engine: engine, version: currentVersion,
+		reg: all.Registry(), now: time.Now, active: true,
+		eliteMsg: eliteLines[rand.Intn(len(eliteLines))],
+	}
+	m.start = m.now()
+	m.later = func(fn func()) {
+		time.AfterFunc(menuStrikeHold, func() { app.QueueUpdateDraw(fn) })
+	}
+	m.checkUpdates = func() { showUpdateCheck(app, pages, currentVersion) }
+	m.refresh(true)
 	return m
 }
 

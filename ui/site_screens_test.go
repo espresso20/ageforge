@@ -66,6 +66,12 @@ const (
 	sitePairW, sitePairH = 80, 24
 
 	siteScreensSeed = 20261007
+
+	// siteMenuVersion is the version the main menu's pictures carry: the
+	// release the menu was drawn for. (A test build has none of its own.)
+	siteMenuVersion = "v4.0.0"
+	// siteMenuGame is the name the menu's picture gives the staged game.
+	siteMenuGame = "Meridia"
 )
 
 // siteStage is one staged game and the dashboard that draws it.
@@ -574,6 +580,75 @@ type siteShots struct {
 	out     string
 	textDir string
 	bytes   map[string]int
+	// town is the Bronze Age town's save, as the game writes it: the main
+	// menu's picture shows it behind the menu.
+	town []byte
+}
+
+// saveBytes saves the stage's game as the game does, returns the file's
+// bytes and takes the file away again.
+func (s *siteStage) saveBytes(name string) []byte {
+	s.t.Helper()
+	if err := s.eng.SaveGame(name); err != nil {
+		s.t.Fatal(err)
+	}
+	path := filepath.Join(game.DataDir(), "saves", name+".json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		s.t.Fatal(err)
+	}
+	if err := os.Remove(path); err != nil {
+		s.t.Fatal(err)
+	}
+	return data
+}
+
+// takeMenu draws the main menu of eng's account as it stands, at the
+// dashboard's size and in the default theme, and writes it as name. The
+// menu is the real page (menu.go), at rest: its clock is held, so the
+// picture is the frame a still menu shows.
+func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
+	w.t.Helper()
+	if err := theme.SetActive(theme.DefaultKey); err != nil {
+		w.t.Fatal(err)
+	}
+	app, pages := tview.NewApplication(), tview.NewPages()
+	m := newMainMenu(app, pages, eng, siteMenuVersion)
+	still := time.Unix(0, 0)
+	m.start, m.now = still, func() time.Time { return still }
+	m.eliteMsg, m.view.elite = [3]string{}, [3]string{}
+	defer m.leave()
+
+	cols, rows := siteDashW, siteDashH
+	sim := tcell.NewSimulationScreen("UTF-8")
+	if err := sim.Init(); err != nil {
+		w.t.Fatal(err)
+	}
+	defer sim.Fini()
+	sim.SetSize(cols, rows)
+	screen := theme.WrapScreen(sim)
+	screen.Clear()
+	m.SetRect(0, 0, cols, rows)
+	m.Draw(screen)
+	screen.Show()
+	cells, _, _ := sim.GetContents()
+	raw, text, err := encodeSiteScreen(cells, cols, rows, theme.Color(theme.RoleText), theme.Color(theme.RoleBackground), false)
+	if err != nil {
+		w.t.Fatalf("%s: %v", name, err)
+	}
+	if _, dup := w.bytes[name]; dup {
+		w.t.Fatalf("two screens are named %q", name)
+	}
+	w.bytes[name] = len(raw)
+	if err := os.WriteFile(filepath.Join(w.out, name+".json"), raw, 0o644); err != nil {
+		w.t.Fatal(err)
+	}
+	if w.textDir != "" {
+		if err := os.WriteFile(filepath.Join(w.textDir, name+".txt"), []byte(text), 0o644); err != nil {
+			w.t.Fatal(err)
+		}
+	}
+	w.t.Logf("%-18s %3dx%-2d %6d bytes", name, cols, rows, len(raw))
 }
 
 // take draws the stage as it stands, at the capture size and in the default
@@ -640,6 +715,8 @@ func TestWriteSiteScreens(t *testing.T) {
 
 	s.bronzeTown()
 	shots.takeIn(s, "dashboard", theme.DefaultKey, siteDashW, siteDashH)
+	// The town as it stands, for the main menu's picture (writeBadgeScreens).
+	shots.town = s.saveBytes("town")
 	for _, p := range []struct {
 		name, cmd, heading string
 	}{
@@ -789,6 +866,13 @@ func TestWriteSiteScreens(t *testing.T) {
 //     the prestige ladder and leave the last one part way;
 //   - the clock badges are dated by is pinned, so the date in the detail is
 //     the same on every run.
+//
+// The main menu's two pictures are taken on the same account: the first
+// page before it has a game, and the town page at the end. One liberty
+// there: the town behind the menu is the Bronze Age town of the first
+// stage (the one the dashboard and the map pictures show), whose save is
+// put in the account's slot under a name and marked as its main game. The
+// menu itself is the real page, reading that save as it reads any other.
 func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	t.Helper()
 	day := time.Date(2026, time.September, 29, 12, 0, 0, 0, time.UTC)
@@ -800,6 +884,8 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 		t.Fatal(err)
 	}
 	s.eng.SetAccount(acct)
+	// A first visit: an account, and no game yet.
+	shots.takeMenu(s.eng, "menu-first")
 	if err := s.eng.StartNewNamedGame("Rome"); err != nil {
 		t.Fatal(err)
 	}
@@ -890,6 +976,19 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	}
 	shots.take(s, "badge-legend")
 	s.close()
+
+	// The menu with a game: the town of the first stage, as this account's
+	// main game.
+	if len(shots.town) == 0 {
+		t.Fatal("the first stage left no town for the menu's picture")
+	}
+	if err := os.WriteFile(filepath.Join(game.DataDir(), "saves", siteMenuGame+".json"), shots.town, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := acct.SetMainGame(siteMenuGame); err != nil {
+		t.Fatal(err)
+	}
+	shots.takeMenu(s.eng, "menu")
 }
 
 // viewOfBadge is one badge of the engine's account, as the case sees it.
