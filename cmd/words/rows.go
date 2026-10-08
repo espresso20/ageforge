@@ -101,6 +101,7 @@ type catalog struct {
 	commands map[string]bool // the words a command can start with
 	cmdWords map[string]bool // the subcommands and argument words that can follow
 	rules    *copyRules      // the game's copy rules, read from its lint tests
+	matched  map[string]bool // "package\x00text" for every text a package compares or looks up
 	left     []left
 	byID     map[string]*row
 }
@@ -119,8 +120,21 @@ func read(root string) (*catalog, error) {
 	fl := newFlavorReader(m)
 	c.fl = fl
 	c.readCommands()
+	// What each package matches on, so a word it also compares is not
+	// mistaken for text.
+	c.matched = map[string]bool{}
+	perFile := map[*srcFile][]*unit{}
 	for _, f := range m.files {
-		units := m.units(f)
+		perFile[f] = m.units(f)
+		for _, u := range perFile[f] {
+			switch u.near {
+			case "mapkey", "compare", "case", "index":
+				c.matched[f.dir+"\x00"+u.text] = true
+			}
+		}
+	}
+	for _, f := range m.files {
+		units := perFile[f]
 		cr := newCodeReader(c, f, units)
 		for _, u := range units {
 			var r *row

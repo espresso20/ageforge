@@ -212,8 +212,12 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 			noun = true
 		}
 	}
+	maybeWord := false
 	if keyLike(u.text) && !single && !noun && !cr.prose[cr.parent[u]] {
-		return nil, whyKey
+		if !cr.c.mightBeShown(u) {
+			return nil, whyKey
+		}
+		maybeWord = true
 	}
 	if looksLikePath(u.text) {
 		return nil, whyPath
@@ -278,6 +282,14 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 		// it as well as show it.
 		r.unsure = true
 		what = "The name of a setting or state (" + u.recv + "), which the code may also match on, so it may not be safe to change,"
+	}
+	if maybeWord {
+		// One lower-case word that is no key the reader knows of: it may be
+		// shown as it is ("none", "yesterday"), or matched on somewhere the
+		// reader cannot see.
+		r.unsure = true
+		r.kind = kindLabel
+		what = "A single word that may be shown as it is, or may be a key the code matches on. Found"
 	}
 	where := what + " " + cr.note.place + "."
 	if u.chain != nil && u.chain.parts >= 1 && strings.TrimSpace(u.chain.pattern) != strings.TrimSpace(u.text) {
@@ -400,4 +412,23 @@ func (c *catalog) readCommands() {
 			c.commands[u.text] = true
 		}
 	}
+}
+
+var bareWord = regexp.MustCompile(`^[a-z]{2,}$`)
+
+// mightBeShown reports whether a key-like string in the display code could
+// still be a word a player reads: one plain lower-case word, in a file of
+// the interface, that is not a key of the game's data, a command word or a
+// color, and that the code of its package never compares or looks up.
+func (c *catalog) mightBeShown(u *unit) bool {
+	if !bareWord.MatchString(u.text) || !(u.f.dir == "ui" || strings.HasPrefix(u.f.dir, "ui/")) {
+		return false
+	}
+	if c.commands[u.text] || c.cmdWords[u.text] || colorNames[u.text] || c.matched[u.f.dir+"\x00"+u.text] {
+		return false
+	}
+	if _, isKey := c.w.name[u.text]; isKey || c.w.keys[u.text] {
+		return false
+	}
+	return true
 }

@@ -20,12 +20,13 @@ type world struct {
 	keyAge   map[string]int    // building, tech, milestone and other keys -> the age they arrive in
 	name     map[string]string // any key -> what the game calls it
 	wonder   map[string]bool   // the building keys that are wonders
+	keys     map[string]bool   // every bare key of the game's data
 }
 
 func newWorld() *world {
 	w := &world{
 		ageIdx: map[string]int{}, eraAge: map[string]int{}, eraName: map[string]string{},
-		keyAge: map[string]int{}, name: map[string]string{}, wonder: map[string]bool{},
+		keyAge: map[string]int{}, name: map[string]string{}, wonder: map[string]bool{}, keys: map[string]bool{},
 	}
 	for i, a := range config.Ages() {
 		w.ageKeys = append(w.ageKeys, a.Key)
@@ -45,6 +46,7 @@ func newWorld() *world {
 		}
 	}
 	put := func(key, name string, age int) {
+		w.keys[key[strings.LastIndexByte(key, ':')+1:]] = true
 		if name != "" {
 			w.name[key] = name
 		}
@@ -70,6 +72,12 @@ func newWorld() *world {
 	}
 	for _, x := range config.Harbingers() {
 		put("harbinger:"+x.Key, x.Name, w.ageIdx[x.Age])
+	}
+	for _, d := range config.WorkerDomains() {
+		w.keys[d] = true
+	}
+	for _, l := range config.TechLanes() {
+		w.keys[l.Key] = true
 	}
 	for _, x := range config.FeatureLocks() {
 		if t, ok := config.TechByKey()[x.Tech]; ok {
