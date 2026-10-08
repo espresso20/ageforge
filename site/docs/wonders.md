@@ -82,7 +82,7 @@ The flow resources (food, faith, culture) aren't priced that way. Those parts ar
 
 Wonders are banked a deposit at a time, but each part of a wonder's price fits in the most storage you can build in its age, so you never have to bank one resource in several rounds while sitting at its storage limit.
 
-No wonder takes longer to build than a sixth of its age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). Build times below are in ticks, with the real time beside them; one tick is 2 seconds. These are first-run times: on known ground [Era Mastery](prestige.md#era-mastery) divides them by the age's speed, and the Wonders panel shows the shorter time. **Architecture**, a Renaissance Age tech, takes a quarter off the time of every wonder you start after it, and the techs that cut all construction then take their share of what is left.
+No wonder takes longer to build than a sixth of its age's target length. Build times below are in ticks, with the real time beside them; one tick is 2 seconds. These are first-run times: on known ground [Era Mastery](prestige.md#era-mastery) divides them by the age's speed, and the Wonders panel shows the shorter time. **Architecture**, a Renaissance Age tech, takes a quarter off the time of every wonder you start after it, and the techs that cut all construction then take their share of what is left.
 
 ---
 

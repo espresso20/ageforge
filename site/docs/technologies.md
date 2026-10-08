@@ -56,7 +56,7 @@ The tech tree draws each keystone with a ★ on a double frame and each capstone
 
 No tech has a price or a time of its own. Both follow from its age and its kind.
 
-**Time.** Each age has a research cap: one eighth of the age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). A tech takes a share of its age's cap:
+**Time.** Each age has a research cap: one eighth of the age's target length. A tech takes a share of its age's cap:
 
 | Kind | Share of the age's research cap |
 |---|---|

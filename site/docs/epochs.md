@@ -20,7 +20,7 @@ Ages and epochs do different jobs: **ages are about what you build; epochs are a
 
 The Cosmic Era is the only epoch with 4 ages instead of 3.
 
-Each age has a target length in real time, from 15 minutes for the Primitive Age up to 31h 12m for the Atomic Age, then 31h 12m to 57h 12m through the Digital and Neon Eras and 62h 24m for each Cosmic Era age (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). By epoch that is 4h 54m for the Stone Era, 27h 18m for the Iron Era, 54h 36m for the Steel Era, 80h 36m for the Electric Era, 109h 12m for the Digital Era, 156 hours for the Neon Era and 249h 36m for the Cosmic Era. On a first run the Modern Age, where a full run's prestige comes, arrives after about a week (the smoke-test bot takes about 4.9 days); prestige opens earlier, at the Medieval Age, as an early taste. From the Bronze Age on, ages and the clocks inside them (event durations, cooldowns, awakenings) run 2.6 times as long as on the earlier three-day curve. The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production.
+On a first run the Modern Age, where a full run's prestige comes, arrives after about a week (the smoke-test bot takes about 4.9 days); prestige opens earlier, at the Medieval Age, as an early taste. From the Bronze Age on, ages and the clocks inside them (event durations, cooldowns, awakenings) run 2.6 times as long as on the earlier three-day curve. The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production.
 
 ### What each epoch is like
 
