@@ -228,9 +228,14 @@ type AgeSplit struct {
 	// (positive rates only), and what the market sold the player and took
 	// from them. A resource bought far past what was made is one the age
 	// gets at the market; one sold in bulk is what paid for it.
-	Made   map[string]float64 `json:"made,omitempty"`
-	Bought map[string]float64 `json:"market_bought,omitempty"`
-	Sold   map[string]float64 `json:"market_sold,omitempty"`
+	// Entry is what the store held at the age's first sampled tick (amounts
+	// of a whole unit or more), and EntryStore the general store's cap then
+	// (gold's): what a run carried in.
+	Entry      map[string]float64 `json:"stock_at_entry,omitempty"`
+	EntryStore float64            `json:"store_at_entry,omitempty"`
+	Made       map[string]float64 `json:"made,omitempty"`
+	Bought     map[string]float64 `json:"market_bought,omitempty"`
+	Sold       map[string]float64 `json:"market_sold,omitempty"`
 	// Gates is when each thing the advance waits for was first in place
 	// (nil for an age the run did not sample).
 	Gates *AgeGates `json:"gates,omitempty"`
@@ -440,6 +445,10 @@ type runner struct {
 	made            map[string]float64
 	bought0, bought map[string]float64
 	sold0, sold     map[string]float64
+	// entry is the store at the age's first sampled tick, entryStore the
+	// general store's cap then.
+	entry      map[string]float64
+	entryStore float64
 	// faithS and cultureS are the faith and culture strength as last seen.
 	faithS, cultureS float64
 	// advancing is set while control calls AdvanceAge, so the age-advance
@@ -694,6 +703,7 @@ func (r *runner) split(unfinished bool) AgeSplit {
 		a.KnowledgeMade = r.knowSum
 		a.KnowledgeBought = math.Max(r.boughtK-r.boughtK0, 0)
 		a.Made = maps.Clone(r.made)
+		a.Entry, a.EntryStore = r.entry, r.entryStore
 		a.FaithStrength, a.CultureStrength = r.faithS, r.cultureS
 		a.Bought, a.Sold = since(r.bought, r.bought0), since(r.sold, r.sold0)
 	}
@@ -758,6 +768,13 @@ func (r *runner) trackGates(st game.GameState) {
 	r.faithS, r.cultureS = st.CatastropheOutlook.FaithStrength, st.CatastropheOutlook.CultureStrength
 	if r.made == nil {
 		r.made = map[string]float64{}
+		r.entry = map[string]float64{}
+		for k, rs := range st.Resources {
+			if rs.Amount >= 1 {
+				r.entry[k] = rs.Amount
+			}
+		}
+		r.entryStore = st.Resources["gold"].Storage
 	}
 	for k, rs := range st.Resources {
 		if rs.Rate > 0 {
