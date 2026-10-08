@@ -104,6 +104,11 @@ func helpProvider(_ game.GameState, screenW int) string {
 	keys(researchKeys...)
 	note("Zoom is a command too: research tree close, research tree far.")
 
+	sb.WriteString("\n[gold]═══ The badge case ═══[-]\n")
+	note("Your account's badges. The prompt keeps working while it is open; the case takes the keys that print nothing.")
+	keys(badgeKeys...)
+	note("Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off holds everything still.")
+
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	var short []string
 	for _, c := range reg {

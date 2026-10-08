@@ -17,6 +17,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/rivo/uniseg"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -755,6 +756,8 @@ func TestWriteSiteScreens(t *testing.T) {
 	shots.take(s, "prestige")
 	s.close()
 
+	writeBadgeScreens(t, shots)
+
 	// A screen dropped from the list leaves no file behind.
 	old, err := filepath.Glob(filepath.Join(out, "*.json"))
 	if err != nil {
@@ -771,6 +774,89 @@ func TestWriteSiteScreens(t *testing.T) {
 		total += n
 	}
 	t.Logf("wrote %d screens to %s: %d bytes", len(shots.bytes), out, total)
+}
+
+// writeBadgeScreens takes the badge case's pictures: a badge's toast on the
+// dashboard, the case, and one badge's detail. Badges belong to an account,
+// which the game above is played without, so these have a stage of their
+// own: a new account (in the test's own data folder, never the player's)
+// and a named game on it, played through the Primitive and Stone Ages the
+// same way. That play earns the Stone Age's badge and the first Housing
+// rung for real. Two more liberties, and no others:
+//
+//   - the account's ten prestiges are reported through the engine's test
+//     hook, which stands in for ten runs of play: they earn three rungs of
+//     the prestige ladder and leave the last one part way;
+//   - the clock badges are dated by is pinned, so the date in the detail is
+//     the same on every run.
+func writeBadgeScreens(t *testing.T, shots *siteShots) {
+	t.Helper()
+	day := time.Date(2026, time.September, 29, 12, 0, 0, 0, time.UTC)
+	t.Cleanup(game.SetBadgeClockForTest(func() time.Time { return day }))
+
+	s := newSiteStage(t)
+	acct, err := game.CreateNamedAccount("Ada")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.eng.SetAccount(acct)
+	if err := s.eng.StartNewNamedGame("Rome"); err != nil {
+		t.Fatal(err)
+	}
+	s.eng.SeedRNG(siteScreensSeed)
+	still := time.Unix(0, 0)
+	s.d.badgePanel.start, s.d.badgePanel.now = still, func() time.Time { return still }
+
+	s.toBronze()
+	s.dismiss() // the Bronze Age's splash
+	s.level(map[string]float64{"food": 0.62, "wood": 0.48, "stone": 0.71, "knowledge": 0.36})
+	s.wait(3)
+	for i := 0; i < 10; i++ {
+		s.eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
+	}
+	s.d.refresh() // the dashboard announces what was earned
+	s.holdToast()
+	shots.take(s, "badge-toast")
+	s.quiet()
+
+	// The case, on the gold rung of the prestige ladder: earned badges of
+	// three tiers, rungs still to earn, and the badges the account may not
+	// see yet.
+	const rung = "ladder.prestiges.3"
+	s.open("badges", "")
+	p := s.d.badgePanel
+	for i := 0; p.view.sel != rung; i++ {
+		if i > 200 || !p.routeKey(tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModNone), "") {
+			t.Fatalf("the arrows never reached %s (on %s)", rung, p.view.sel)
+		}
+	}
+	views, sum := s.eng.Badges()
+	seen := map[string]bool{}
+	for _, v := range views {
+		switch {
+		case v.Hidden:
+			seen["hidden"] = true
+		case v.Earned:
+			seen[v.Tier] = true
+		default:
+			seen["locked"] = true
+		}
+	}
+	for _, want := range []string{"bronze", "silver", "gold", "locked", "hidden"} {
+		if !seen[want] {
+			t.Fatalf("the staged account has no %s badge to show: %+v", want, sum)
+		}
+	}
+	shots.take(s, "badge-case")
+	s.close()
+
+	// One badge's detail, by its name.
+	s.open("badges serial reincarnator", "")
+	if !p.view.card || p.view.sel != rung {
+		t.Fatalf("the detail did not open on %s", rung)
+	}
+	shots.take(s, "badge-detail")
+	s.close()
 }
 
 // --- the file format ----------------------------------------------------------

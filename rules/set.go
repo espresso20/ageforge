@@ -61,6 +61,8 @@ type Set struct {
 	badges     []config.BadgeDef // hand-written, then each family's
 	badgeByKey map[string]config.BadgeDef
 	badgeAlias map[string]string // an older account file's key -> badge key
+	// badgeTitles is the titles a badge score earns, lowest first.
+	badgeTitles []config.BadgeScoreTitle
 
 	events        []config.EventDef
 	eraEvents     []config.EventDef
@@ -152,6 +154,7 @@ func Compile(src Source) *Set {
 	s.buildNames()
 	s.buildCounts()
 	s.buildBadges(src.Badges, src.BadgeFamilies)
+	s.badgeTitles = slices.Clone(src.BadgeTitles)
 	return s
 }
 

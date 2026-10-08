@@ -8,7 +8,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
@@ -23,83 +22,6 @@ import (
 // Nothing below names a lane, an age or a tech: lanes, kinds, emblems,
 // prerequisites and what a tech opens all come from the ruleset, so a
 // content change redraws the map by adding data.
-
-// tStyle is how a cell is painted. The panel maps each to theme roles.
-type tStyle uint8
-
-const (
-	tsText    tStyle = iota // body text
-	tsDim                   // locked, later, hints
-	tsBright                // ready to start
-	tsHi                    // in progress, numbers
-	tsLane                  // the cell's lane colour (researched)
-	tsGold                  // the selected tech's chain, steps still to do
-	tsGoldDim               // the chain's steps already done
-	tsGood                  // names you hold
-	tsSel                   // the selection
-	tsChip                  // title and key bars
-	tsChipKey               // a key on a bar
-	tsChipDim               // quiet text on a bar
-	tsBorder                // the card's frame
-)
-
-// tCell is one cell of the panel.
-type tCell struct {
-	r    rune
-	st   tStyle
-	lane int8 // index into the tree's lanes for tsLane, else -1
-}
-
-// tGrid is a block of cells.
-type tGrid struct {
-	w, h int
-	c    []tCell
-}
-
-func newTGrid(w, h int) *tGrid {
-	g := &tGrid{w: max(w, 0), h: max(h, 0)}
-	g.c = make([]tCell, g.w*g.h)
-	for i := range g.c {
-		g.c[i] = tCell{r: ' ', lane: -1}
-	}
-	return g
-}
-
-func (g *tGrid) in(x, y int) bool { return x >= 0 && y >= 0 && x < g.w && y < g.h }
-
-func (g *tGrid) at(x, y int) tCell {
-	if !g.in(x, y) {
-		return tCell{r: ' ', lane: -1}
-	}
-	return g.c[y*g.w+x]
-}
-
-func (g *tGrid) put(x, y int, r rune, st tStyle, lane int) {
-	if g.in(x, y) {
-		g.c[y*g.w+x] = tCell{r: r, st: st, lane: int8(lane)}
-	}
-}
-
-// text writes s from (x, y), one cell a rune, and returns the next x.
-func (g *tGrid) text(x, y int, s string, st tStyle, lane int) int {
-	for _, r := range s {
-		g.put(x, y, r, st, lane)
-		x++
-	}
-	return x
-}
-
-// String is the grid as lines of text, trailing spaces kept.
-func (g *tGrid) String() string {
-	var sb strings.Builder
-	for y := 0; y < g.h; y++ {
-		for x := 0; x < g.w; x++ {
-			sb.WriteRune(g.c[y*g.w+x].r)
-		}
-		sb.WriteByte('\n')
-	}
-	return sb.String()
-}
 
 // treeGeom is the size of things at one zoom and width.
 type treeGeom struct {
@@ -545,15 +467,6 @@ func lineRune(c lineCell) rune {
 
 // ----- drawing the map -----
 
-// frameRunes is a badge frame: the four corners, then the flat and the
-// upright edge.
-type frameRunes struct{ tl, tr, bl, br, h, v rune }
-
-var (
-	frameRound  = frameRunes{'╭', '╮', '╰', '╯', '─', '│'}
-	frameDouble = frameRunes{'╔', '╗', '╚', '╝', '═', '║'}
-)
-
 // badgeRows is a tech's badge as rows of runes, badgeW wide: the frame says
 // its kind (rounded for optional, double for the spine and keystones, half
 // blocks for a capstone), the edges its state (dashed while it waits, or
@@ -590,29 +503,22 @@ func badgeRows(g treeGeom, n *treeNode, progress float64) []string {
 		f = frameDouble
 	}
 	if n.mark == markLocked {
-		f.h, f.v = '┄', '┆'
+		f = f.dashed()
 	}
-	h := func(k int) string { return strings.Repeat(string(f.h), k) }
-	foot := h(2) + "▾" + h(2)
+	foot := f.flat(2) + "▾" + f.flat(2)
 	if n.mark == markRunning {
 		done := int(math.Round(5 * progress))
 		done = min(max(done, 0), 5)
 		foot = strings.Repeat("▓", done) + strings.Repeat("░", 5-done)
 	}
 	if big {
-		return []string{
-			" " + string(f.tl) + h(5) + string(f.tr) + " ",
-			string(f.tl) + string(f.br) + "     " + string(f.bl) + string(f.tr),
-			string(f.v) + "   " + e + "   " + string(f.v),
-			string(f.bl) + string(f.tr) + "     " + string(f.tl) + string(f.br),
-			" " + string(f.bl) + foot + string(f.br) + " ",
-		}
+		return octagonRows(f, "     ", "   "+e+"   ", "     ", foot)
 	}
-	top := h(5)
+	top := f.flat(5)
 	if n.ts.Kind == config.TechKeystone {
-		top = "★" + h(4)
+		top = "★" + f.flat(4)
 	}
-	return []string{string(f.tl) + top + string(f.tr), string(f.v) + "  " + e + "  " + string(f.v), string(f.bl) + foot + string(f.br)}
+	return boxRows(f, top, "  "+e+"  ", foot)
 }
 
 // markStyle is the style a tech's badge and name take from its state.
@@ -1444,19 +1350,6 @@ func (g *tGrid) styledText(x, y int, s string) int {
 	return x
 }
 
-// largeBadge is the card's badge, 17 by 9: a ring and the tech's emblem.
-var largeBadge = []string{
-	"    ▄▄█████▄▄    ",
-	"  ▄█▓▒░░░░░▒▓█▄  ",
-	" █▓░         ░▓█ ",
-	"▐█▒           ▒█▌",
-	"▐█▒           ▒█▌",
-	"▐█▒           ▒█▌",
-	" █▓░         ░▓█ ",
-	"  ▀█▓▒░░░░░▒▓█▀  ",
-	"    ▀▀█████▀▀    ",
-}
-
 // kindWords names a tech's kind for the card's caption.
 func kindWords(n *treeNode) string {
 	switch {
@@ -1533,7 +1426,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 		if n.def.Capstone {
 			ring = tsHi
 		}
-		for dy, row := range largeBadge {
+		for dy, row := range ringRows() {
 			out.text(x0+3, y0+2+dy, row, ring, n.lane)
 		}
 		out.put(x0+3+8, y0+2+4, n.emblem, tsBright, -1)
@@ -1563,15 +1456,4 @@ var plainFold = map[rune]rune{
 }
 
 // foldPlain rewrites a grid for the plain glyph tier: nothing but ASCII.
-func foldPlain(g *tGrid) {
-	for i, c := range g.c {
-		if c.r < 0x80 {
-			continue
-		}
-		if r, ok := plainFold[c.r]; ok {
-			g.c[i].r = r
-		} else {
-			g.c[i].r = mapmodel.Fold(c.r, mapmodel.TierASCII)
-		}
-	}
-}
+func foldPlain(g *tGrid) { foldGrid(g, plainFold) }

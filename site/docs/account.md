@@ -19,6 +19,7 @@ data/
     └── <account_id>/
         ├── account.json         # that account's identity and account-wide progress
         ├── badges.json          # that account's badges (once it has any)
+        ├── settings.json        # that account's motion setting (once it is changed)
         └── saves/               # that account's game saves
 ```
 
@@ -51,7 +52,7 @@ The account holds two distinct things:
 | Part | What it is |
 |---|---|
 | **Identity** | Your chosen name and the account ID derived from it |
-| **Data** | Your earned account-wide progress (theme unlocks, lifetime stats, badges) and your prefs: your theme, map style, map glyphs and mini map setting |
+| **Data** | Your earned account-wide progress (theme unlocks, lifetime stats, badges) and your prefs: your theme, map style, map glyphs, mini map setting and motion setting |
 
 The split matters because the two halves are recovered very differently (see below). Your **identity** is carried by either your account name *or* the recovery code (both point at the same ID). The **data** is backed up separately with an account **export** (see [Exporting & importing accounts](#exporting-amp-importing-accounts)).
 
@@ -77,7 +78,7 @@ From the panel:
 | `Enter` | **Switch** to the highlighted account (it becomes active; its saves show in the Load Game browser) |
 | `n` | **New account**: name and create a fresh account alongside your existing ones |
 | `e` | **Export** the highlighted account to a signed backup file |
-| `b` | **Backup** the highlighted account: a full copy of its slot (`account.json`, `badges.json` and `saves/`) to `data/backups/` (see [Backups](#backups)) |
+| `b` | **Backup** the highlighted account: a full copy of its slot (`account.json`, `badges.json`, `settings.json` and `saves/`) to `data/backups/` (see [Backups](#backups)) |
 | `i` | **Import** an account from a backup file |
 | `r` | Show a **recovery code** for restoring an identity (see [The recovery code](#the-recovery-code)) |
 | `w` | **Wipe** the highlighted account (permanent, behind a type-the-name confirm) |
@@ -153,7 +154,7 @@ If the file is missing or has been tampered with, the import is refused with an 
 
 ## Backups
 
-A **backup** is a full copy of an account's slot on disk: its `account.json` and `badges.json` **plus a recursive copy of that slot's `saves/` folder**. It holds more than an [export](#exporting-amp-importing-accounts). An export writes only the account-wide progress (unlocks, lifetime stats, badges, prefs) into a single file and carries **no saves**, while a backup copies the whole slot, your games included.
+A **backup** is a full copy of an account's slot on disk: its `account.json`, `badges.json` and `settings.json` **plus a recursive copy of that slot's `saves/` folder**. It holds more than an [export](#exporting-amp-importing-accounts). An export writes only the account-wide progress (unlocks, lifetime stats, badges, prefs) into a single file and carries **no saves**, while a backup copies the whole slot, your games included.
 
 The game makes a backup at three points:
 
@@ -169,6 +170,7 @@ data/
     └── <name>-<id8>-<timestamp>/
         ├── account.json
         ├── badges.json
+        ├── settings.json
         └── saves/
 ```
 
@@ -178,7 +180,7 @@ data/
 
 ### Restoring from a backup
 
-There's no restore command. A backup is just files, so you put them back by hand: copy the backup folder's `account.json`, `badges.json` and `saves/` back into that account's slot at `data/accounts/<id>/`. The `<id8>` in the backup folder name is the start of the full `<id>`; the full ID is the slot's directory name under `data/accounts/`.
+There's no restore command. A backup is just files, so you put them back by hand: copy the backup folder's `account.json`, `badges.json`, `settings.json` (if it has one) and `saves/` back into that account's slot at `data/accounts/<id>/`. The `<id8>` in the backup folder name is the start of the full `<id>`; the full ID is the slot's directory name under `data/accounts/`.
 
 ---
 
@@ -238,9 +240,66 @@ A **badge** is a permanent mark on your account for something you did in a game:
 
 Badges are separate from [milestones](milestones.md). A milestone belongs to one run: it pays a reward inside that run and starts over with the next. A badge belongs to the account and gives nothing inside a run, so the same game plays the same way whatever the account has earned.
 
-**When you earn one**, the game shows a toast and writes one line to the log.
+**When you earn one**, the game shows a toast and writes one line to the log. The toast carries the badge in small, in its tier's colors, then its name, its tier and what it was for.
 
-**To see them**, open the **Stats** panel (`stats`) and look under **Lifetime (account)**, or type:
+<figure class="screen" data-screen="badge-toast"><figcaption>A badge earned: the toast sits in the bar under the status line, and the log keeps the same words.</figcaption></figure>
+
+**To see them**, open the badge case:
+
+```
+badges
+```
+
+#### The badge case
+
+The case is a panel over the whole screen but the command bar. It shows every badge the account holds or can earn as a small badge in a grid, by family, with the selected badge at full size beside it.
+
+<figure class="screen" data-screen="badge-case"><figcaption>The badge case. The top bar counts what is earned and gives the score and the title it holds; the line at the foot says how far the next rung is.</figcaption></figure>
+
+A badge looks like what it is:
+
+| It looks like | It is |
+|---|---|
+| A rounded box with a notch under it | **Bronze**, earned |
+| A box with double lines | **Silver**, earned |
+| A frame of half blocks | **Gold**, earned |
+| The same frame with a star at each corner | **Platinum**, earned |
+| A solid ring of blocks | **Legendary**, earned |
+| A dashed box with a `?` | In sight, not earned yet. The detail says what it asks for |
+| A solid slab | Hidden: a secret badge, or one about something you have not come across yet. A slab with `…` in it stands for all the hidden badges of its family, however many there are |
+| A strike through the badge | Earned in a modified game. It adds no points |
+
+The frame is the tier, so tiers are told apart by shape as well as by color: in every theme, in the themes that draw in one ink, and in the plain glyph set (`map glyphs ascii`), where the same shapes are drawn with ordinary characters. At full size a tier grows with its worth, from a three-row bronze box to a nine-row legendary ring. The glyph in the middle is the badge's emblem, and every emblem is a symbol the [Map](map.md) already draws: a lineage wears its map symbol, an age the town center of its era.
+
+- **Tabs** run along the top: All, one for each family, and **Next**, which lists the badges you are closest to, nearest first. `Tab` steps through them.
+- **Ladders** sit on a line of their own, lowest rung first, with the ladder's name and how far its next rung is beside them.
+- **`Enter`** opens the selected badge's detail: the badge at full size with everything the case knows about it. `badges <name>` opens a detail directly.
+
+<figure class="screen" data-screen="badge-detail"><figcaption>One badge's detail: its tier, rarity and points, what it asked for, when it was earned and in which game, and its place on its ladder.</figcaption></figure>
+
+Platinum badges glint, legendary badges turn through their colors with a band of light crossing the rim, and a few special badges have a drawing of their own that moves. Nothing else in the case moves, and `motion off` holds all of it still (see [Motion](themes.md#motion)).
+
+The keys are listed under [Badges](commands.md#badges) on the commands page and in the Help panel.
+
+#### Titles
+
+Your badge points add up to a **score**, and the score holds a **title**. The badge case shows it in its top bar, with the next title and what it asks for when the window is wide enough.
+
+| Title | Score |
+|---|---|
+| Settler | 0 |
+| Headman | 250 |
+| Magistrate | 1,000 |
+| Sovereign | 3,000 |
+| Paragon | 6,000 |
+| Eternal | 10,000 |
+| Completionist | Every badge that counts, none of them earned in a modified game |
+
+Past Settler, the status bar shows the title beside your account's name when the window has room for it. A title changes nothing in a game.
+
+#### The plain list
+
+The **Stats** panel (`stats`) lists the same badges as text under **Lifetime (account)**, and so does:
 
 ```
 account badges
@@ -272,6 +331,7 @@ A few things about how badges are counted:
 - **The four old achievements are badges now.** First Prestige, Serial Reincarnator, Age of Iron and Into the Modern Age carry over, and an account that had them keeps them.
 - **The developer console does not block badges.** The developer console is a testing tool. A game it has changed is marked in its save, and the log says so once, but it still records to the account like any other game: if a badge's condition is met, the badge is earned. Unlocking the console earns a badge of its own.
 - **A modified game marks what it earns.** A badge earned in a save that was edited outside the game is listed as earned in a modified game and adds no points. The same goes for a badge earned on an account whose `account.json` was edited, and for every badge in a `badges.json` that was edited.
+- **A badge can give a theme.** Two [themes](themes.md#ambient-effects), Source and Glitch, come from secret badges. Earning the badge unlocks the theme on the account, for good.
 
 ### Where badges are stored
 
@@ -284,6 +344,10 @@ The file is signed, and the signature covers the account ID:
 - A `badges.json` that was edited by hand, or copied in from another account, is flagged, and its badges are listed as earned in a modified game. That flag belongs to `badges.json` only; it never marks `account.json` as modified.
 - If `badges.json` is deleted or cannot be read, the game rebuilds what `account.json` proves (ages reached, prestiges made). Dates, counts and badges with no record there are gone, so keep an [export](#exporting-amp-importing-accounts) or a [backup](#backups).
 - An export carries the badge file inside it, and a backup copies it, so both bring your badges back.
+
+### The settings file
+
+The motion setting (`motion on` and `motion off`) is kept in a third file in the slot, `settings.json`. It is there for the same reason `badges.json` is: `account.json` keeps the shape older versions of the game know, so a newer setting goes beside it. The file holds a display preference and nothing you earn, so it is plain text and unsigned, and the game writes it only once you change the setting. If it is missing or cannot be read, motion is on. A [backup](#backups) copies it; an export does not carry it.
 
 ---
 

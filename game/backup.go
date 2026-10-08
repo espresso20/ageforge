@@ -105,6 +105,15 @@ func BackupAccount(id string) (string, error) {
 	} else if !os.IsNotExist(err) {
 		return "", fmt.Errorf("failed to stat badges.json for backup: %w", err)
 	}
+	// And the settings file, when the account has one.
+	srcSettings := filepath.Join(slot, settingsFileName)
+	if _, err := os.Stat(srcSettings); err == nil {
+		if err := copyFile(srcSettings, filepath.Join(dst, settingsFileName)); err != nil {
+			return "", fmt.Errorf("failed to back up settings.json: %w", err)
+		}
+	} else if !os.IsNotExist(err) {
+		return "", fmt.Errorf("failed to stat settings.json for backup: %w", err)
+	}
 
 	// Copy the slot's saves/ subtree if present (a slot may legitimately have none yet).
 	srcSaves := filepath.Join(slot, "saves")

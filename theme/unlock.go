@@ -32,7 +32,7 @@ func buildUnlockIndex() {
 		t := registry[key]
 		uk := t.UnlockKey()
 		if uk == "" {
-			continue // always-available (Accessible / Forge) — nothing to unlock
+			continue // always available, or a badge's reward: nothing to unlock here
 		}
 		if existing, dup := idx[uk]; dup {
 			panic("theme: unlock key " + uk + " maps to both " + existing + " and " + t.Key)
