@@ -32,6 +32,11 @@ func (s *skyStyle) onSky(m *mapmodel.Model) bool {
 
 func (s *skyStyle) Name() string { return s.g.Name() }
 
+// SceneInset: the full view keeps one row for its header and four below
+// the map for the news, the inspector and the status lines, on the ground
+// and in the sky alike (view.Draw, skyView.Draw).
+func (s *skyStyle) SceneInset(w, h int) (top, bottom int) { return 1, 4 }
+
 func (s *skyStyle) Draw(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
 	if s.onSky(f.Model) {
 		s.sv.Draw(scr, r, f)

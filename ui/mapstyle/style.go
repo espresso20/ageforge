@@ -91,6 +91,15 @@ type Style interface {
 	SetOption(o Option, on bool)
 }
 
+// Scenic is implemented by a style whose full view can be shown as a
+// picture, without the bars round it. SceneInset reports how many rows of
+// the full view at w by h are above and below the scene itself: the
+// header, the status lines, the key bar. The main menu draws a save's map
+// behind itself and leaves those rows out.
+type Scenic interface {
+	SceneInset(w, h int) (top, bottom int)
+}
+
 // CompactNews is implemented by a style whose compact view prints the
 // since-last-visit news itself, so the mini map's frame does not repeat it.
 type CompactNews interface {

@@ -71,6 +71,10 @@ func newView() *view { return &view{follow: true, changes: true} }
 
 func (v *view) Name() string { return "skyline" }
 
+// SceneInset: the full view keeps one row for its header and two below
+// the scene for the strip and the key bar (chrome.go).
+func (v *view) SceneInset(w, h int) (top, bottom int) { return 1, 2 }
+
 // viewW is the width the cursor maths assume before the first draw.
 func (v *view) viewW() int {
 	if v.lastW > 0 {
