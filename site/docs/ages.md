@@ -336,7 +336,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset for prestige points to spend on the legacy kit. See [Prestige System](prestige.md).
 
-**Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport, Power Grid Hub, Titanium Smelter, Oil Refinery, TV Studio, Space Program, Nano Foundry, Monument of Ages · **Resources:** Data, Nanobots
+**Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport (after Containerization), Power Grid Hub (after Advanced Electrics), Titanium Smelter, Oil Refinery, TV Studio, Space Program, Nano Foundry, Monument of Ages (after Television) · **Resources:** Data, Nanobots
 
 ---
 
@@ -353,7 +353,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Tower Blocks | 30 |
 | Oil Refineries | 15 |
 
-**Unlocks:** Smart Complex (after Internet of Things), Info Vault, Smart Farm (after Internet of Things), Smart Refinery, Precision Mine, Innovation Hub, Digital Temple, Cyber Command, Venture Hub, Container Terminal, Smart Grid Node, Aerospace Foundry, Microgrid Array, Server Farm, Media Center, Global Network · **New domain:** hacker
+**Unlocks:** Smart Complex (after Internet of Things), Info Vault, Smart Farm (after Internet of Things), Smart Refinery, Precision Mine, Innovation Hub, Digital Temple, Cyber Command (after Cybersecurity), Venture Hub, Container Terminal (after E-commerce), Smart Grid Node, Aerospace Foundry, Microgrid Array (after Smart Grid), Server Farm, Media Center, Global Network · **New domain:** hacker
 
 ---
 
@@ -369,7 +369,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Media Centers | 15 |
 | Innovation Hubs | 15 |
 
-**Unlocks:** Megaplex, Digital Archive, Nano Farm, Bio Fabrication Lab, Nano Drill Complex, AI Research Lab, Cyber Shrine, Drone Warfare Center, Crypto Exchange, Logistics Hub, Neural Grid, Nano Alloy Plant, Quantum Battery Array, Data Center, VR Studio, World Simulation
+**Unlocks:** Megaplex, Digital Archive, Nano Farm, Bio Fabrication Lab, Nano Drill Complex, AI Research Lab, Cyber Shrine, Drone Warfare Center, Crypto Exchange, Logistics Hub (after Automated Logistics), Neural Grid, Nano Alloy Plant, Quantum Battery Array (after Grid Storage), Data Center, VR Studio, World Simulation
 
 ---
 
@@ -385,7 +385,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Data Centers | 15 |
 | Neural Grids | 15 |
 
-**Unlocks:** Arcology Pod, Cyber Vault, Vat Farm, Nanobot Vat, Dark Crystal Mine, Neuro Research Center, Neon Sanctuary, Combat Aug Center, Black Market, Augmentation Foundry, Dark Matter Refinery, Dark Energy Tap, Cyber Hub, Holographic Theater (after Holography), Neon Citadel · **Resources:** Crypto, Dark Matter Crystals
+**Unlocks:** Arcology Pod, Cyber Vault, Vat Farm, Nanobot Vat, Dark Crystal Mine, Neuro Research Center, Neon Sanctuary, Combat Aug Center (after Cybernetics), Black Market, Augmentation Foundry, Dark Matter Refinery, Dark Energy Tap (after Dark Energy), Cyber Hub, Holographic Theater (after Holography), Neon Citadel · **Resources:** Crypto, Dark Matter Crystals
 
 ---
 
@@ -435,7 +435,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Orbital Habitats | 15 |
 | Solar Collector Arrays | 10 |
 
-**Unlocks:** Generation Ship, Stellar Vault, Protein Synthesizer, Reality Matter Weaver, Stellar Core Drill, Xenology Institute, Void Monastery, Fleet Command, Galactic Trade Hub, Warp Drive Plant, Antimatter Forge, Pulsar Tap, Galactic Network Node, Cultural Beacon, Warp Nexus · **Resource:** Dark Matter
+**Unlocks:** Generation Ship, Stellar Vault, Protein Synthesizer, Reality Matter Weaver, Stellar Core Drill (after Stellar Core Mining), Xenology Institute, Void Monastery, Fleet Command, Galactic Trade Hub, Warp Drive Plant, Antimatter Forge, Pulsar Tap (after Stellar Engineering), Galactic Network Node, Cultural Beacon, Warp Nexus · **Resource:** Dark Matter
 
 ---
 
@@ -451,7 +451,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Generation Ships | 30 |
 | Antimatter Forges | 15 |
 
-**Unlocks:** Dyson Sphere Habitat, Galactic Vault, Matter Converter, Cosmic Organic Works, Neutron Star Mine, Cosmic Research Station, Stellar Shrine, Stellar Armada HQ, Stellar Exchange, Dyson Assembly, Stellar Metallurgy, Quasar Tap, Consciousness Upload Hub, Civilization Archive, Cosmic Beacon · **Resource:** Antimatter
+**Unlocks:** Dyson Sphere Habitat, Galactic Vault, Matter Converter, Cosmic Organic Works, Neutron Star Mine (after Neutron Mining), Cosmic Research Station, Stellar Shrine, Stellar Armada HQ, Stellar Exchange, Dyson Assembly, Stellar Metallurgy, Quasar Tap (after Antimatter Synthesis), Consciousness Upload Hub, Civilization Archive, Cosmic Beacon · **Resource:** Antimatter
 
 ---
 
@@ -467,7 +467,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Stellar Metallurgy | 15 |
 | Dyson Sphere Habitats | 30 |
 
-**Unlocks:** Reality Fold, Quantum Vault, Quantum Cultivator, Reality Harvester, Reality Excavator, Reality Academy, Transcendence Hall, Probability War Room, Probability Market, Reality Forge, Quantum Metal Works, Zero Point Generator, Reality Processor, Reality Art Engine, Reality Anchor · **Resource:** Quantum Flux
+**Unlocks:** Reality Fold, Quantum Vault, Quantum Cultivator, Reality Harvester, Reality Excavator, Reality Academy, Transcendence Hall, Probability War Room, Probability Market, Reality Forge, Quantum Metal Works (after Quantum Metallurgy), Zero Point Generator (after Zero-Point Energy), Reality Processor, Reality Art Engine, Reality Anchor · **Resource:** Quantum Flux
 
 ---
 
@@ -485,7 +485,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 The end of the progression. Prestige has been available since the Medieval Age (Age 5), and a full run since the Modern Age (Age 12). A prestige from the Transcendent Age pays the most points a single run can, 3,279: each Cosmic Era age the run completes adds 729 (see [Prestige Points Formula](prestige.md#prestige-points-formula)).
 
-**Unlocks:** Singularity Core, Transcendent Nexus, Omniversal War Council, Omniversal Bazaar, Singularity Engine
+**Unlocks:** Singularity Core, Transcendent Nexus, Omniversal War Council (after Omniversal Command), Omniversal Bazaar (after Omniversal Exchange), Singularity Engine (after Singularity Engineering)
 
 ```
 prestige confirm yes

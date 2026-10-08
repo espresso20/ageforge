@@ -161,8 +161,8 @@ func TestCapstonesAreTheLongOnes(t *testing.T) {
 			t.Errorf("%s takes %d ticks: the longest other tech of its age takes %d and the cap is %g", tech.Key, tech.ResearchTicks, longest[tech.Age], limit)
 		}
 	}
-	if seen != 6 {
-		t.Errorf("%d capstones, want 6: two for each of the Iron, Steel and Electric Eras", seen)
+	if seen != 12 {
+		t.Errorf("%d capstones, want 12: two for each era from the Iron Era on", seen)
 	}
 }
 

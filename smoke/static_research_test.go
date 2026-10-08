@@ -93,10 +93,13 @@ func TestResearchCovenant(t *testing.T) {
 
 // TestResearchCovenantCatchesBrokenNumbers keeps the guard honest. With
 // every price doubled, the Renaissance's first tech would need more vaults
-// than the Entry rule allows, and the Warp Nexus's keystone, its research
-// and the wonder's construction would not fit the Interstellar Age. A
-// keystone priced over the age's storage and a storage building too small
-// to help are caught too.
+// than the Entry rule allows. With the tree complete no age's keystone is
+// within a factor of two of its age any more (the Interstellar and Galactic
+// Ages, which held two techs each, were): at six times the price the two
+// ages whose wonder waits for two techs of its own age, the Modern and the
+// Cyberpunk, would not fit the keystone, its research and the wonder's
+// construction. A keystone priced over the age's storage and a storage
+// building too small to help are caught too.
 func TestResearchCovenantCatchesBrokenNumbers(t *testing.T) {
 	defs := config.BuildingByKey()
 	if got := researchProblems(config.Technologies(), defs); len(got) != 0 {
@@ -111,14 +114,20 @@ func TestResearchCovenantCatchesBrokenNumbers(t *testing.T) {
 			t.Errorf("at twice the price the %s's first tech still fits within the allowance: %v", age, got[age])
 		}
 	}
-	for _, age := range []string{"interstellar_age", "galactic_age"} {
-		if !hasProblem(got[age], "over 100%") {
-			t.Errorf("at twice the price what the %s's wonder waits for should not fit the age: %v", age, got[age])
+	for _, age := range config.AgeOrder() {
+		if hasProblem(got[age], "over 100%") {
+			t.Errorf("at twice the price what the %s's wonder waits for no longer fits the age: %v", age, got[age])
 		}
 	}
-	for _, age := range []string{"stone_age", "medieval_age", "victorian_age", "fusion_age"} {
-		if hasProblem(got[age], "over 100%") {
-			t.Errorf("at twice the price what the %s's wonder waits for still fits the age: %v", age, got[age])
+	six := researchProblems(scaledTechs(6), defs)
+	for _, age := range []string{"modern_age", "cyberpunk_age"} {
+		if !hasProblem(six[age], "over 100%") {
+			t.Errorf("at six times the price what the %s's wonder waits for should not fit the age: %v", age, six[age])
+		}
+	}
+	for _, age := range []string{"medieval_age", "victorian_age", "fusion_age", "interstellar_age", "galactic_age"} {
+		if hasProblem(six[age], "over 100%") {
+			t.Errorf("at six times the price what the %s's wonder waits for still fits the age: %v", age, six[age])
 		}
 	}
 

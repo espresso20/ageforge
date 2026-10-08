@@ -68,7 +68,7 @@ Housing caps your population, so the ladder climbs with the ages: Small Village 
 | Tech Pioneer | Research 22 techs | +5% research speed |
 | Scholar's Haven | Build 3 Libraries and staff 50 knowledge workers | +10% knowledge rate |
 | Renaissance Mind *(hidden)* | Research 82 techs | +10% research speed |
-| Tech Master *(hidden)* | Research 104 techs (Information Age) | +10% research speed, +5% all production |
+| Tech Master *(hidden)* | Research 113 techs (Information Age) | +10% research speed, +5% all production |
 
 Tech Master asks for more techs than the tree holds before the Information Age, and only completes from that age on, so finishing this chain means playing past the Modern Age before you prestige. The tech-count milestones follow the tree as it grows: each stays first within reach in the age it always was (Tech Pioneer in the Iron Age, Deep Thinker in the Renaissance, Philosophes in the Industrial Age, Renaissance Mind in the Electric Age).
 
@@ -226,7 +226,7 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Deep Thinker | Research 45 techs (Bronze Age) | +5% knowledge rate |
 | Philosophes | Research 63 techs (Classical Age) | +5% research speed |
 | Grand Library Built *(hidden)* | Build the Great Library (Classical Age) | +15% knowledge rate |
-| Tech Ascendant *(hidden)* | Research all 128 techs (Transcendent Age) | +20% research speed |
+| Tech Ascendant *(hidden)* | Research all 202 techs (Transcendent Age) | +20% research speed |
 
 **Settlement**
 
@@ -253,7 +253,7 @@ Yes. A milestone that doesn't name a later age fits inside a normal run: everyth
 |---|---|
 | Settlement, Builder, Military, Ancient Ages | the Atomic Age (a normal run) |
 | Trade | the Modern Age (Maritime Empire's Seaports) |
-| Scholar | the Information Age (Tech Master's 104 techs, counted from the Information Age on) |
+| Scholar | the Information Age (Tech Master's 113 techs, counted from the Information Age on) |
 
 Some milestones count buildings you can only build in their own age: Stone Pits, Temples, Trading Posts, Coal Plants, Castle Keeps and others. Build them before you advance. If a milestone still needs them in a later age (Devout Settlement's Shrines in the Stone Age, Power Grid's Coal Plants in the Victorian Age), don't upgrade them away when the game offers.
 

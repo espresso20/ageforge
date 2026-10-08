@@ -251,8 +251,9 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 // run and what a run brings in of a listed import, how high morale can
 // rise, a scouting expedition and a campaign launched off a fixed roll and
 // what a campaign brings back of its listed loot, how long a set of deals
-// lasts, what a gift costs and earns, what an ally adds per point of its
-// listed bonus, the share of its price a festival costs, how long it lasts
+// lasts and how many it holds, what a gift costs and earns, what an
+// alliance costs, what an ally adds per point of its listed bonus, the
+// share of its price an Appease level costs, the share of its price a festival costs, how long it lasts
 // and the wait before the next, a wonder's construction time, how many
 // soldiers can be held, the share of its price an upgrade costs.
 // Hand gathering and raid losses are read as the engine's own term: a real
@@ -275,6 +276,11 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 		config.MechanicAllianceBonus:         ge.Diplomacy.AllyBonus(config.FactionDef{TradeBonus: 1}),
 		config.MechanicCampaignReward:        ge.Military.CampaignPay(truthRefTicks) / truthRefTicks,
 		config.MechanicSoldierStorage:        ge.soldierRoom(truthRefCost) / truthRefCost,
+		config.MechanicAllianceCost:          ge.Diplomacy.AllyPrice(),
+		config.MechanicAppeaseCost:           ge.appeaseCut(truthRefCost) / truthRefCost,
+		// A peaceful civilization's set for a neutral player: two deals,
+		// and what the techs add.
+		config.MechanicDealSlots: float64(ge.newDealEnv().slots("peaceful", 0)),
 	}
 	out[config.MechanicUpgradeCost] = ge.Buildings.upgradePrice(truthRefCost) / truthRefCost
 	// A festival's price is a share of the culture store: read it against

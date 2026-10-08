@@ -258,13 +258,14 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// quantum_flux is the terminal resource; matching antimatter rate is the intended cap.
 	b = append(b, BuildingDef{
 		Name: "Quantum Metal Works", Key: "quantum_metal_works", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 225e12, "antimatter": 67e15, "dark_matter": 57e15},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 4.0}},
-		BuildTicks:  30000,
-		RequiredAge: "quantum_age",
-		Description: "Quantum-state metalworking across dimensions.",
-		LineageKey:  "metallurgy", LineageTier: 17,
+		BaseCost:     map[string]float64{"quantum_flux": 225e12, "antimatter": 67e15, "dark_matter": 57e15},
+		CostScale:    1.35,
+		Effects:      []Effect{{Type: "production", Target: "quantum_flux", Value: 4.0}},
+		BuildTicks:   30000,
+		RequiredAge:  "quantum_age",
+		RequiredTech: "quantum_metallurgy",
+		Description:  "Quantum-state metalworking across dimensions.",
+		LineageKey:   "metallurgy", LineageTier: 17,
 		WorkerDomain: "metallurgy", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})
