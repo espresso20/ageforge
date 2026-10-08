@@ -310,7 +310,7 @@ Sources add together:
 
 | Source | How to get it | Bonus |
 |--------|-------------|---------------|
-| Techs | Military techs grant military power | +0.10 to +0.20 per tech, +2.01 with all of them |
+| Techs | Eighteen military techs grant military power | +0.10 to +0.15 per tech, +2.01 with all eighteen |
 | Milestones | Complete military milestones | +0.05 to +0.10 each |
 
 There's no cap on military power, but difficulty never drops below **0.05** (a 5% minimum failure chance). A mission reads military power through the age's mission scale (see [Success chance](#success-chance)), so a player who keeps up with the military techs reaches that floor on every campaign from the Industrial Age on, and a player who skips them does not.
