@@ -6,11 +6,13 @@ import (
 
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
-// armyGarrison is a Classical Age garrison sized to blunt 28% of a raid:
-// 2,108,000 soldiers, defense 4.216M against a threat of 2.56M.
+// armyGarrison is a Classical Age garrison: 2,108,000 soldiers, defense
+// 4.216M. It was sized to blunt 28% of a raid against a threat of 2.56M;
+// against the 2M the age's threat is on the military yardstick it blunts 31%.
 const armyGarrison = 2108000
 
 func TestArmyPanel_NoGarrison(t *testing.T) {
@@ -58,10 +60,14 @@ func TestArmyPanel_Garrison(t *testing.T) {
 	engine.SetGarrisonForTest("classical_age", armyGarrison)
 	txt := untag(militaryProvider(engine.GetState(), 0))
 	for _, want := range []string{
-		"Threat:    2.56M (raids in the Classical Age)",
-		"Your garrison would blunt about 28% of a raid.",
+		// The Classical Age's threat on the military yardstick: 2.56M
+		// times 0.78 (config.MilitaryScaleAt), so this garrison, with no
+		// military power of its own, blunts more than the 28% it was
+		// sized for.
+		"Threat:    2M (raids in the Classical Age)",
+		"Your garrison would blunt about 31% of a raid.",
 		"Raids, war raids and an Endure's losses all hit you that much softer.",
-		"Twice the garrison: about 35%. No army blunts more than 45%.",
+		"Twice the garrison: about 36%. No army blunts more than 45%.",
 	} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("Army panel missing %q:\n%s", want, txt)
@@ -74,8 +80,8 @@ func TestArmyPanel_GarrisonOutmatchedLater(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("industrial_age", armyGarrison)
 	txt := untag(militaryProvider(engine.GetState(), 0))
-	if !strings.Contains(txt, "Your garrison would blunt about 4% of a raid.") {
-		t.Errorf("an outmatched garrison should blunt about 4%%:\n%s", txt)
+	if !strings.Contains(txt, "Your garrison would blunt about 6% of a raid.") {
+		t.Errorf("an outmatched garrison should blunt about 6%%:\n%s", txt)
 	}
 }
 
@@ -104,7 +110,7 @@ func TestArmyPanel_OnScreen(t *testing.T) {
 	if !d.overlayMgr.Show("army", engine.GetState()) {
 		t.Fatal("overlay army not registered")
 	}
-	if !gridHas(screenGrid(t, pages, w, h), "Your garrison would blunt about 28% of a raid.") {
+	if !gridHas(screenGrid(t, pages, w, h), "Your garrison would blunt about 31% of a raid.") {
 		t.Error("the garrison line is not on screen")
 	}
 }
@@ -113,7 +119,7 @@ func TestArmyPanel_OnScreen(t *testing.T) {
 func TestCatastropheModal_EndureCountsGarrison(t *testing.T) {
 	const w, h = 160, 50
 	engine := game.NewGameEngine()
-	engine.SetGarrisonForTest("iron_age", 640000) // defense == the Iron Age threat
+	engine.SetGarrisonForTest("iron_age", config.AgeThreat(3)/2) // defense == the Iron Age threat
 	if err := engine.ForceCatastropheForTest(); err != nil {
 		t.Fatal(err)
 	}

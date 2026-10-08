@@ -77,6 +77,12 @@ func (ge *GameEngine) militaryPower() float64 {
 	return ge.Research.Bonus(config.EffectMilitaryPower, "") + ge.permanentBonuses["military_power"] + prestige["military_power"] + wonders["military_power"]
 }
 
+// missionPower is militaryPower as a mission's difficulty reads it in the
+// current age (config.MissionPower). Read-only.
+func (ge *GameEngine) missionPower() float64 {
+	return config.MissionPower(ge.militaryPower(), ge.progress.GetAgeOrder()[ge.age])
+}
+
 // expeditionReward is the summed expedition_reward bonus, from the same
 // sources as militaryPower. Read-only.
 func (ge *GameEngine) expeditionReward() float64 {

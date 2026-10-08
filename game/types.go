@@ -498,6 +498,10 @@ type ExpeditionInfo struct {
 	DurationMin int
 	DurationMax int
 	Difficulty  float64
+	// Chance is the mission's chance of failure now, with the player's
+	// military power counted on the current age's yardstick
+	// (config.MissionDifficulty). Difficulty is the listed one, before it.
+	Chance      float64
 	Cost        map[string]float64
 	Description string
 	CanLaunch   bool

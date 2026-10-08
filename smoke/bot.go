@@ -1406,14 +1406,22 @@ func (b *Bot) tryBuild(p *plan, key, kind string) bool {
 	if !p.fits(c) || !p.affordable(c) {
 		return false
 	}
+	// What the copy really costs is read off the stores: the game floors
+	// each copy's price, so the second copy bought in one decision can cost
+	// a fraction more than the first's price times the scale (cost), and a
+	// plan that booked the estimate went on to sell wood it did not have.
+	held := make(map[string]float64, len(c))
+	for r := range c {
+		held[r] = b.ge.Resources.Get(r)
+	}
 	if !b.act(kind, key, b.ge.BuildBuilding(key)) {
 		return false
 	}
 	if b.RecordPlan {
 		b.ge.NotePlanForTest(game.PlanBuild, key, 1)
 	}
-	for r, v := range c {
-		p.amt[r] -= v
+	for r := range c {
+		p.amt[r] -= held[r] - b.ge.Resources.Get(r)
 	}
 	p.extra[key]++
 	for _, e := range b.defs[key].Effects {

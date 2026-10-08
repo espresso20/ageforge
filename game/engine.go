@@ -1591,14 +1591,14 @@ func (ge *GameEngine) processEvents() {
 
 // processExpeditions handles military expedition progress
 func (ge *GameEngine) processExpeditions() {
-	militaryBonus, expeditionBonus := ge.militaryPower(), ge.expeditionReward()
+	missionPower, expeditionBonus := ge.missionPower(), ge.expeditionReward()
 	for _, cat := range []string{ExpeditionScouting, ExpeditionMilitary} {
 		if active := ge.Military.ActiveByCategory(cat); active != nil {
 			ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Name, active.TicksLeft))
 		}
 	}
 	// Tick all active expeditions (one per category); each may resolve this tick.
-	for _, res := range ge.Military.Tick(ge.gameRNG(), militaryBonus, expeditionBonus) {
+	for _, res := range ge.Military.Tick(ge.gameRNG(), missionPower, expeditionBonus) {
 		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Key, len(res.Rewards)))
 		ge.addLog("event", res.Message)
 		// Cosmetic flavour, generated HERE rather than in MilitaryManager because
@@ -4499,6 +4499,10 @@ func (ge *GameEngine) GetState() GameState {
 	// Geographic Society's buildings, workers or dispatch countdown. Build the
 	// snapshot here and graft the automatic-dispatch view on afterwards.
 	militarySnap := ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus)
+	missionPower := ge.missionPower()
+	for i := range militarySnap.Expeditions {
+		militarySnap.Expeditions[i].Chance = config.MissionDifficulty(militarySnap.Expeditions[i].Difficulty, missionPower)
+	}
 	militarySnap.AutoExpedition = ge.autoExpeditionSnapshot()
 	militarySnap.Threat = ge.ageThreat(ge.age)
 	militarySnap.Mitigation = config.DefenseMitigation(militarySnap.DefenseRating, militarySnap.Threat)
