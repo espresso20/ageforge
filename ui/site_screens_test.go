@@ -819,14 +819,25 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	shots.take(s, "badge-toast")
 	s.quiet()
 
-	// The case, on the gold rung of the prestige ladder: earned badges of
-	// three tiers, rungs still to earn, and the badges the account may not
-	// see yet.
-	const rung = "ladder.prestiges.3"
+	// The case as it opens: the All tab, every family in sight under its
+	// heading, on an account a few ages in.
 	s.open("badges", "")
 	p := s.d.badgePanel
+	if p.view.tab != caseTabAll {
+		t.Fatalf("the case opened on the tab %q", p.view.tab)
+	}
+	shots.take(s, "badge-families")
+	s.close()
+
+	// The Ladders tab, on the gold rung of the prestige ladder: earned
+	// rungs of three tiers, rungs still to earn, and each ladder's count.
+	const rung = "ladder.prestiges.3"
+	s.open("badges ladders", "")
+	if p.view.tab != "ladder" {
+		t.Fatalf("badges ladders opened the tab %q", p.view.tab)
+	}
 	for i := 0; p.view.sel != rung; i++ {
-		if i > 200 || !p.routeKey(tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModNone), "") {
+		if i > 20 || !p.routeKey(tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModNone), "") {
 			t.Fatalf("the arrows never reached %s (on %s)", rung, p.view.sel)
 		}
 	}
@@ -857,6 +868,41 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	}
 	shots.take(s, "badge-detail")
 	s.close()
+
+	// A legendary special with a drawing of its own: every milestone chain
+	// finished in one run. It is not a secret, so the wiki may show it.
+	const legend = "special.six_for_six"
+	state := s.eng.GetState()
+	if def, ok := state.Ruleset().Badge(legend); !ok || def.Hint != "" || def.Tier != config.BadgeLegendary {
+		t.Fatalf("%s is not a legendary badge the wiki may show: %+v", legend, def)
+	}
+	for _, chain := range state.Ruleset().MilestoneChains() {
+		s.eng.ReportForTest(config.BadgeEvChain, chain.Key)
+	}
+	s.d.refresh()
+	s.quiet()
+	s.open("badges six for six", "")
+	if !p.view.card || p.view.sel != legend {
+		t.Fatalf("the detail did not open on %s (on %s)", legend, p.view.sel)
+	}
+	if m := medalOf(viewOfBadge(t, s.eng, legend), p.view.tier); m.special == "" || m.state != medalEarned {
+		t.Fatalf("%s is not drawn by hand: %+v", legend, m)
+	}
+	shots.take(s, "badge-legend")
+	s.close()
+}
+
+// viewOfBadge is one badge of the engine's account, as the case sees it.
+func viewOfBadge(t *testing.T, eng *game.GameEngine, key string) game.BadgeView {
+	t.Helper()
+	views, _ := eng.Badges()
+	for _, v := range views {
+		if v.Key == key {
+			return v
+		}
+	}
+	t.Fatalf("no badge %s", key)
+	return game.BadgeView{}
 }
 
 // --- the file format ----------------------------------------------------------

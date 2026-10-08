@@ -55,12 +55,12 @@ func (v *view) mandalaFor(n, W, S int) *mandalaLayout {
 func (v *view) composeMandala(f mapstyle.Frame, W, H int) *scene {
 	m := f.Model
 	v.lastW = W
-	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H, S: max(0, H-2), top: 1, sel: -1}
+	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H, S: max(0, H-2), top: 1, sel: -1}
 	s.groundY = s.S // no ground: it is sky to the last row
 	s.p, s.mp = v.palettes(m)
 	s.cam = v.cam // left as it was: there is nothing to scroll
 	if v.inspect {
-		v.resolve(m, v.targetsFor(m, W, v.cam), f.Anim)
+		v.resolve(m, v.targetsFor(m, W, v.cam), f.VisitFrame())
 		v.reveal = false // nothing scrolls
 	}
 	v.fb.reset(W, H)
@@ -112,7 +112,7 @@ func (v *view) mandalaKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		if !v.inspect { // the first key only puts the cursor out
 			v.inspect, dx, drow, tab = true, 0, 0, 0
 		}
-		v.step(m, f.Anim, dx, drow, tab)
+		v.step(m, f.VisitFrame(), dx, drow, tab)
 	}
 	switch key {
 	case tcell.KeyTab, tcell.KeyBacktab:

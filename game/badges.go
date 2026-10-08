@@ -1,6 +1,7 @@
 package game
 
 import (
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -61,6 +62,17 @@ const (
 	factStanding = "standing."
 	factEvent    = "ev."
 	factLife     = "life."
+	// standing_age.<age>: the age's buildings standing, wonders aside.
+	// researched_age.<age>: the age's techs researched.
+	factStandingAge   = "standing_age."
+	factResearchedAge = "researched_age."
+	// acct.<fact>: something the account itself knows (its days played).
+	factAccount = "acct."
+	// ev.staffed.<domain>: the census's count of workers in a domain.
+	factStaffed = "staffed."
+	// A run tally that ends in factAnySubject is the tally of whatever
+	// the event's own subject is ("run.deal_taken.*").
+	factAnySubject = ".*"
 )
 
 // badgeBook is a ruleset's badges, indexed for judging. It never changes;
@@ -79,8 +91,28 @@ type badgeBook struct {
 	// counter, in a condition or in its reveal rule. No other is stored.
 	counters map[string]bool
 	// runTallies is the per-subject run tallies kept ("building_built.hut").
-	// A tally by kind alone is always kept.
-	runTallies map[string]bool
+	// A tally by kind alone is always kept. wildTallies is the kinds a
+	// badge counts by whatever subject the event has ("deal_taken.*"): for
+	// those every subject is tallied.
+	runTallies  map[string]bool
+	wildTallies map[string]bool
+	// untallied is the events that are judged and never tallied in a run
+	// (config.BadgeSessionEvents).
+	untallied map[string]bool
+	// countsProduction: some badge counts production, so the tick keeps
+	// its batches (badge_hooks.go).
+	countsProduction bool
+	// domains is the worker domains a badge asks the census for.
+	domains []string
+	// ageBuildings is each age's buildings, wonders aside; ageTechs its
+	// techs. A badge counts them standing, or researched.
+	ageBuildings map[string][]string
+	ageTechs     map[string][]string
+	// rung is a ladder badge's place on its ladder and the ladder's
+	// length, from 1.
+	rung map[string][2]int
+	// setOf is the badges of each set, for the titles a whole set gives.
+	setOf map[string][]string
 }
 
 // newBadgeBook indexes set's badges.
@@ -93,25 +125,72 @@ func newBadgeBook(set *rules.Set) *badgeBook {
 		byCounter:  map[string][]int{},
 		counters:   map[string]bool{},
 		runTallies: map[string]bool{},
+
+		wildTallies:  map[string]bool{},
+		untallied:    map[string]bool{},
+		ageBuildings: map[string][]string{},
+		ageTechs:     map[string][]string{},
+		rung:         map[string][2]int{},
+		setOf:        map[string][]string{},
+	}
+	for _, kind := range set.BadgeSessionEvents() {
+		b.untallied[kind] = true
+	}
+	for _, d := range set.Buildings() {
+		if d.Category != "wonder" {
+			b.ageBuildings[d.RequiredAge] = append(b.ageBuildings[d.RequiredAge], d.Key)
+		}
+	}
+	for _, age := range set.AgeKeys() {
+		for _, t := range set.TechsOf(age) {
+			b.ageTechs[age] = append(b.ageTechs[age], t.Key)
+		}
 	}
 	fact := func(name string) {
 		switch {
 		case strings.HasPrefix(name, factLife):
 			b.counters[strings.TrimPrefix(name, factLife)] = true
 		case strings.HasPrefix(name, factRun):
-			b.runTallies[strings.TrimPrefix(name, factRun)] = true
+			tally := strings.TrimPrefix(name, factRun)
+			if kind, ok := strings.CutSuffix(tally, factAnySubject); ok {
+				b.wildTallies[kind] = true
+			}
+			b.runTallies[tally] = true
+		case strings.HasPrefix(name, factEvent+factStaffed):
+			if d := strings.TrimPrefix(name, factEvent+factStaffed); !slices.Contains(b.domains, d) {
+				b.domains = append(b.domains, d)
+			}
 		}
+	}
+	// A ladder is a run of badges of one family under one ladder name.
+	for i := 0; i < len(b.defs); {
+		j := i + 1
+		if b.defs[i].Ladder != "" {
+			for j < len(b.defs) && b.defs[j].Ladder == b.defs[i].Ladder && b.defs[j].Family == b.defs[i].Family {
+				j++
+			}
+			for k := i; k < j; k++ {
+				b.rung[b.defs[k].Key] = [2]int{k - i + 1, j - i}
+			}
+		}
+		i = j
 	}
 	for i, d := range b.defs {
 		if _, taken := b.byKey[d.Key]; taken {
 			continue
 		}
 		b.byKey[d.Key] = i
+		if d.Set != "" && !d.Integrity() {
+			b.setOf[d.Set] = append(b.setOf[d.Set], d.Key)
+		}
 		switch d.Scope {
 		case config.BadgeLifetime:
 			if d.Counter != "" {
 				b.byCounter[d.Counter] = append(b.byCounter[d.Counter], i)
 				b.counters[d.Counter] = true
+				if strings.HasPrefix(d.Counter, config.BadgeEvProduced+".") {
+					b.countsProduction = true
+				}
 			}
 		default:
 			if d.Event != "" {
@@ -185,15 +264,19 @@ type RunFacts struct {
 	// AgeTick is the tick the run entered its current age, when AgeKnown.
 	AgeTick  int  `json:"age_tick,omitempty"`
 	AgeKnown bool `json:"age_known,omitempty"`
+	// EraTick is the tick the run entered its current era, when EraKnown.
+	// A save from before it was kept learns it at its next era.
+	EraTick  int  `json:"era_tick,omitempty"`
+	EraKnown bool `json:"era_known,omitempty"`
 }
 
 // newRunFacts is the facts of a run at its first tick.
-func newRunFacts() RunFacts { return RunFacts{Whole: true, AgeKnown: true} }
+func newRunFacts() RunFacts { return RunFacts{Whole: true, AgeKnown: true, EraKnown: true} }
 
 // empty reports whether nothing is recorded: such facts are left out of the
 // save, so a save from before them keeps its bytes when written again.
 func (f *RunFacts) empty() bool {
-	return !f.Whole && !f.AgeKnown && f.AgeTick == 0 && len(f.Counts) == 0 && len(f.Net) == 0 && len(f.High) == 0
+	return !f.Whole && !f.AgeKnown && f.AgeTick == 0 && !f.EraKnown && f.EraTick == 0 && len(f.Counts) == 0 && len(f.Net) == 0 && len(f.High) == 0
 }
 
 // clone returns a copy that shares no map with f.
@@ -243,7 +326,7 @@ func (f *RunFacts) note(book *badgeBook, ev Event) {
 	}
 	f.Counts[ev.Kind] += ev.amount()
 	if ev.Subject != "" {
-		if name := ev.Kind + "." + ev.Subject; book.runTallies[name] {
+		if name := ev.Kind + "." + ev.Subject; book.runTallies[name] || book.wildTallies[ev.Kind] {
 			f.Counts[name] += ev.amount()
 		}
 	}
@@ -276,12 +359,14 @@ func (f *RunFacts) sold(key string, n int) {
 // judges the run's milestones (on the tick) and the account's badges.
 // Callers hold ge.mu for writing.
 func (ge *GameEngine) report(ev Event) {
-	switch ev.Kind {
-	case config.BadgeEvTick:
+	switch {
+	case ev.Kind == config.BadgeEvTick:
 		// The run layer. Milestones read the run's state, and completing
 		// one reports it in turn.
 		ge.checkMilestones()
-	case config.BadgeEvAgeReached:
+	case ge.badges.untallied[ev.Kind]:
+		// About the session or the account: judged, not tallied.
+	case ev.Kind == config.BadgeEvAgeReached:
 		ge.runFacts.AgeTick, ge.runFacts.AgeKnown = ge.tick, true
 		ge.runFacts.note(ge.badges, ev)
 	default:
@@ -372,6 +457,20 @@ func (ge *GameEngine) badgeCtxLocked(ev Event) badgeCtx {
 			switch {
 			case strings.HasPrefix(name, factRun):
 				return ge.runFacts.Counts[strings.TrimPrefix(name, factRun)], ge.runFacts.Whole
+			case strings.HasPrefix(name, factStandingAge):
+				n := 0
+				for _, k := range ge.badges.ageBuildings[strings.TrimPrefix(name, factStandingAge)] {
+					n += ge.Buildings.GetCount(k)
+				}
+				return float64(n), true
+			case strings.HasPrefix(name, factResearchedAge):
+				n := 0
+				for _, k := range ge.badges.ageTechs[strings.TrimPrefix(name, factResearchedAge)] {
+					if ge.Research.IsResearched(k) {
+						n++
+					}
+				}
+				return float64(n), true
 			case strings.HasPrefix(name, factStanding):
 				return float64(ge.Buildings.GetCount(strings.TrimPrefix(name, factStanding))), true
 			case strings.HasPrefix(name, factEvent):
@@ -399,6 +498,13 @@ var badgePreds = map[string]func(ge *GameEngine, def *config.BadgeDef) bool{
 			return false
 		}
 		return float64(ge.tick-ge.runFacts.AgeTick) >= float64(def.Threshold*target)
+	},
+	// The run's credited time away is Threshold times its time played, or
+	// more. A run's ticks are its time played and its time away together.
+	config.BadgePredMostlyAway: func(ge *GameEngine, def *config.BadgeDef) bool {
+		away := ge.runFacts.Counts[config.BadgeEvAwayTicks]
+		played := float64(ge.tick) - away
+		return ge.runFacts.Whole && def.Threshold > 0 && away > 0 && played >= 0 && away >= float64(def.Threshold*played)
 	},
 }
 

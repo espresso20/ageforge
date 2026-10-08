@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "account_id": "aafe923ab83a6f69c8cb5ee6e3c418fd",
+  "display_name": "Theme reached",
+  "created": "2026-10-07T20:35:13.294643-05:00",
+  "last_seen": "2026-10-07T20:35:13.294643-05:00",
+  "unlocks": {},
+  "stats": {
+    "highest_age": "galactic_age",
+    "civilizations_started": 1
+  },
+  "achievements": [
+    "reached_iron",
+    "reached_modern"
+  ],
+  "prefs": {},
+  "_sig": "9e522a5fa93f2df8ea73667d30d1ab5335f7e54b4dea7926cc5d611de4fb5467"
+}

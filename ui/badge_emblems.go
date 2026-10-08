@@ -37,11 +37,47 @@ var badgeEmblems = map[string]badgeEmblem{
 	"hut":   {glyph: mapmodel.G(mapmodel.SymHut)},
 	"sun":   {glyph: mapmodel.G(mapmodel.SymSun)},
 	"trade": {glyph: mapmodel.G(mapmodel.SymTrade)},
+	// What the families wear.
+	"wonder":    {glyph: mapmodel.G(mapmodel.SymWonder)},
+	"hall":      {glyph: mapmodel.G(mapmodel.SymHall)},
+	"housing":   {glyph: mapmodel.G(mapmodel.SymHouse)},
+	"knowledge": {glyph: mapmodel.G(mapmodel.SymKnowledge)},
+	"faith":     {glyph: mapmodel.G(mapmodel.SymFaith)},
+	"culture":   {glyph: mapmodel.G(mapmodel.SymCulture)},
+	"monument":  {glyph: mapmodel.G(mapmodel.SymMonument)},
+	"engineer":  {glyph: mapmodel.G(mapmodel.SymEngineer)},
+	"military":  {glyph: mapmodel.G(mapmodel.SymMilitary)},
+	"war":       {glyph: mapmodel.G(mapmodel.SymWar)},
+	"diplomacy": {glyph: mapmodel.G(mapmodel.SymDiplomacy)},
+	"civ":       {glyph: mapmodel.G(mapmodel.SymCiv)},
+	"harbinger": {glyph: mapmodel.G(mapmodel.SymHarbinger)},
+	"hazard":    {glyph: mapmodel.G(mapmodel.SymHazard)},
+	"ruin":      {glyph: mapmodel.G(mapmodel.SymRuin)},
+	"alien":     {glyph: mapmodel.G(mapmodel.SymUFO)},
+	// The resources: a store, or the symbol of what makes one.
+	"store":  {glyph: mapmodel.G(mapmodel.SymStore)},
+	"food":   {glyph: mapmodel.G(mapmodel.SymFood)},
+	"wood":   {glyph: mapmodel.G(mapmodel.SymWood)},
+	"mine":   {glyph: mapmodel.G(mapmodel.SymMine)},
+	"metal":  {glyph: mapmodel.G(mapmodel.SymMetal)},
+	"gold":   {glyph: mapmodel.G(mapmodel.SymGold)},
+	"energy": {glyph: mapmodel.G(mapmodel.SymEnergy)},
+	"data":   {glyph: mapmodel.G(mapmodel.SymDataStore)},
 	// The integrity badges: a store for the jar, the scholars' mark for
 	// the ledger, the hackers' for the source. Each has a sprite.
 	"cookie_jar": {glyph: mapmodel.G(mapmodel.SymStore), special: specialCookieJar},
 	"ledger":     {glyph: mapmodel.G(mapmodel.SymKnowledge), special: specialLedger},
 	"source":     {glyph: mapmodel.G(mapmodel.SymHacker), special: specialSource},
+	// The hand-drawn legendary badges (badge_art_legend.go). The glyph is
+	// what the grid and the toast show.
+	"sprite.chains":    {glyph: emblemStar.glyph, special: specialChains},
+	"sprite.boxes":     {glyph: emblemStar.glyph, special: specialBoxes},
+	"sprite.museum":    {glyph: mapmodel.G(mapmodel.SymMonument), special: specialMuseum},
+	"sprite.wonders":   {glyph: mapmodel.G(mapmodel.SymWonder), special: specialWonders},
+	"sprite.rogues":    {glyph: mapmodel.G(mapmodel.SymHarbinger), special: specialRogues},
+	"sprite.endings":   {glyph: mapmodel.G(mapmodel.SymRuin), special: specialEndings},
+	"sprite.undying":   {glyph: mapmodel.G(mapmodel.SymHazard), special: specialUndying},
+	"sprite.transcend": {glyph: mapmodel.G(mapmodel.SymPlazaCosmic), special: specialTranscend},
 }
 
 // The emblems a family writes from its subject.

@@ -298,6 +298,7 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 		return 0, errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: key, Count: count})
+	ge.notePlanSize()
 	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], count)
 	return count, nil
 }

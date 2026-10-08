@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
@@ -55,10 +56,11 @@ func currentEraName(state game.GameState) string {
 }
 
 // themeUnlockHint is a locked theme's unlock condition in words the player
-// may read: a theme earned in an age they cannot see yet says so without
-// naming it.
+// may read: a theme that comes with the badge of an age they cannot see yet
+// says so without naming it.
 func themeUnlockHint(t theme.Theme, state game.GameState) string {
-	if m, ok := state.Ruleset().Milestone(t.UnlockMilestone); ok && m.MinAge != "" && !game.SightOf(&state).Age(m.MinAge) {
+	def, ok := state.Ruleset().Badge(t.UnlockBadge)
+	if ok && def.Event == config.BadgeEvAgeReached && def.Subject != "" && !game.SightOf(&state).Age(def.Subject) {
 		return "Reach a later age"
 	}
 	return t.UnlockHint

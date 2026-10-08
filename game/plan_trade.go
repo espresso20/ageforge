@@ -55,6 +55,7 @@ func (ge *GameEngine) PlanAddTrade(give, get string, amount float64) error {
 		return errPlanFull()
 	}
 	ge.plan = append(ge.plan, it)
+	ge.notePlanSize()
 	ge.logPlanAddLocked(it, 1)
 	return nil
 }

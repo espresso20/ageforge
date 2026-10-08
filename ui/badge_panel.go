@@ -318,9 +318,9 @@ func (p *badgePanel) tab(dir int) {
 
 // findBadgeTab reads a word as a tab: a family's key or its heading, in
 // any case ("ages", "age", "Lineages").
-func findBadgeTab(views []game.BadgeView, word string) (string, bool) {
+func findBadgeTab(views []game.BadgeView, counted bool, word string) (string, bool) {
 	word = strings.ToLower(strings.TrimSpace(word))
-	for _, t := range caseTabs(views) {
+	for _, t := range caseTabs(views, counted) {
 		if t.key == caseTabAll || t.key == caseTabNext {
 			continue
 		}

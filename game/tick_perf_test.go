@@ -68,6 +68,87 @@ func BenchmarkTick(b *testing.B) {
 	}
 }
 
+// newStaffedLateGameEngine is newLateGameEngine with its buildings staffed,
+// so the census has a payroll to read. With account set it is held by an
+// account that has earned nothing, in a temp data root: every badge in the
+// catalog is still to be judged, which is the most a tick can cost.
+func newStaffedLateGameEngine(tb testing.TB, account bool) *GameEngine {
+	tb.Helper()
+	ge := newLateGameEngine(tb)
+	if account {
+		tb.Cleanup(SetDataDirForTest(tb.TempDir()))
+		acct, err := CreateAccount("Bench")
+		if err != nil {
+			tb.Fatal(err)
+		}
+		ge.SetAccount(acct)
+		ge.runAccountID = acct.AccountID
+	}
+	ge.mu.Lock()
+	ge.Workers.domains["worker"].count = 4000
+	for key, def := range ge.Buildings.defs {
+		if n := ge.Buildings.counts[key]; n > 0 && def.WorkerCapacity > 0 {
+			ge.Workers.domains["worker"].assignments[key] = n * def.WorkerCapacity
+		}
+	}
+	ge.recalculateRates()
+	ge.mu.Unlock()
+	return ge
+}
+
+// BenchmarkTickBadges measures what the badges add to a tick: the same
+// staffed late-game tick with no account, where nothing is judged, and with
+// an account held, where the tick's report is judged against the whole
+// catalog, what the rates produced is batched for the resource ladders, and
+// every config.BadgeCensusTicks ticks the census is taken.
+func BenchmarkTickBadges(b *testing.B) {
+	for _, held := range []bool{false, true} {
+		name := "no_account"
+		if held {
+			name = "account"
+		}
+		b.Run(name, func(b *testing.B) {
+			ge := newStaffedLateGameEngine(b, held)
+			for i := 0; i < config.BadgeCensusTicks; i++ {
+				ge.doTick() // warm up through one census and several batches
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				ge.doTick()
+			}
+		})
+	}
+}
+
+// TestBadgesAddLittleToATick: a tick with an account held, judged against
+// the whole catalog, allocates little more than a tick with none. The
+// catalog is hundreds of rows; a tick may not walk them.
+func TestBadgesAddLittleToATick(t *testing.T) {
+	bare := newStaffedLateGameEngine(t, false)
+	held := newStaffedLateGameEngine(t, true)
+	for i := 0; i < config.BadgeCensusTicks; i++ {
+		bare.doTick()
+		held.doTick()
+	}
+	if held.account == nil || len(held.badges.defs) < 500 {
+		t.Fatalf("precondition: the held engine judges %d badges", len(held.badges.defs))
+	}
+	// Averaged over whole census periods, so the census and the production
+	// batches are in the count.
+	runs := 2 * config.BadgeCensusTicks
+	without := testing.AllocsPerRun(runs, bare.doTick)
+	with := testing.AllocsPerRun(runs, held.doTick)
+	if extra := with - without; extra > 12 {
+		t.Errorf("a tick with an account allocates %.1f times, %.1f more than without (%.1f): the badges must not cost a tick more than a dozen allocations", with, extra, without)
+	}
+	// The tick's own report is judged against the rows that listen for a
+	// tick, not the catalog.
+	if n := len(held.badges.byEvent[config.BadgeEvTick]); n > 4 {
+		t.Errorf("%d badges are judged on every tick: a row that needs a count should wait for the census", n)
+	}
+}
+
 // BenchmarkHarborRouteBonus isolates the harbour route-income sum that runs
 // once per tick from processTrade.
 func BenchmarkHarborRouteBonus(b *testing.B) {

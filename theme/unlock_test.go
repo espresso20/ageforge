@@ -2,98 +2,54 @@ package theme
 
 import "testing"
 
-// TestUnlockedByRoundTrip checks the reverse lookup: every gated theme's declared
-// unlock key maps back to that exact theme, and an unmapped key returns ok=false.
-func TestUnlockedByRoundTrip(t *testing.T) {
-	gatedSeen := 0
+// TestGivenByRoundTrip checks the reverse lookup: every gated theme is given
+// by the badge it names, and a badge that gives no theme gives none.
+func TestGivenByRoundTrip(t *testing.T) {
+	gated := 0
 	for _, th := range All() {
-		if !th.Gated() || th.UnlockBadge != "" {
-			continue // a badge's theme is unlocked by the engine, not through this index
-		}
-		gatedSeen++
-		key := th.UnlockKey()
-		gotTheme, ok := UnlockedBy(key)
-		if !ok {
-			t.Errorf("UnlockedBy(%q): ok=false, want the theme %q", key, th.Key)
+		if !th.Gated() {
 			continue
 		}
-		if gotTheme != th.Key {
-			t.Errorf("UnlockedBy(%q) = %q, want %q", key, gotTheme, th.Key)
+		gated++
+		if got := GivenBy(th.UnlockBadge); len(got) != 1 || got[0] != th.Key {
+			t.Errorf("GivenBy(%q) = %v, want only %q: one badge gives one theme", th.UnlockBadge, got, th.Key)
 		}
 	}
-	if gatedSeen == 0 {
-		t.Fatal("no gated themes found — expected the 5 flavor themes to be gated")
+	if gated != 10 {
+		t.Errorf("%d gated themes, want the 10 flavor themes", gated)
 	}
-
-	// An unmapped key (a real milestone that grants no theme) returns ok=false.
-	if got, ok := UnlockedBy("first_shelter"); ok {
-		t.Errorf("UnlockedBy(\"first_shelter\") = (%q, true), want ok=false", got)
-	}
-	// A completely bogus key likewise.
-	if got, ok := UnlockedBy("totally_not_a_key"); ok {
-		t.Errorf("UnlockedBy(\"totally_not_a_key\") = (%q, true), want ok=false", got)
-	}
-	// Empty key never unlocks (un-gated themes contribute "" and must not be indexed).
-	if got, ok := UnlockedBy(""); ok {
-		t.Errorf("UnlockedBy(\"\") = (%q, true), want ok=false", got)
+	for _, key := range []string{"", "age.stone_age", "totally_not_a_key"} {
+		if got := GivenBy(key); len(got) != 0 {
+			t.Errorf("GivenBy(%q) = %v, want none", key, got)
+		}
 	}
 }
 
-// TestGatedThemeRegistryConsistency is the registry-consistency guard (the theming design
-// §5): every gated theme (non-Accessible, non-default) declares EXACTLY ONE of
-// UnlockMilestone / UnlockChain and a non-empty UnlockHint; every always-available
-// theme (Accessible or the default Forge) declares NEITHER and no hint.
+// TestGatedThemeRegistryConsistency is the registry-consistency guard: every
+// gated theme (not Accessible, not Standard) names the badge that gives it
+// and carries a hint; every always-available theme names none and has no
+// hint. An effect is one the UI draws.
 func TestGatedThemeRegistryConsistency(t *testing.T) {
 	for _, th := range All() {
-		alwaysAvailable := th.AlwaysAvailable()
-		hasMilestone := th.UnlockMilestone != ""
-		hasChain := th.UnlockChain != ""
-		hasBadge := th.UnlockBadge != ""
-
-		if alwaysAvailable {
-			if hasMilestone || hasChain || hasBadge {
-				t.Errorf("theme %q is always-available (accessible=%v, default=%v) but declares an unlock condition (milestone=%q chain=%q); it must declare neither",
-					th.Key, th.Accessible, th.Key == DefaultKey, th.UnlockMilestone, th.UnlockChain)
+		if th.AlwaysAvailable() {
+			if th.UnlockBadge != "" || th.UnlockHint != "" || th.Gated() {
+				t.Errorf("theme %q is always available but declares an unlock (badge %q, hint %q)", th.Key, th.UnlockBadge, th.UnlockHint)
 			}
-			if th.UnlockHint != "" {
-				t.Errorf("theme %q is always-available but has UnlockHint=%q; it must be empty", th.Key, th.UnlockHint)
-			}
-			if th.Gated() {
-				t.Errorf("theme %q is always-available but Gated() reports true", th.Key)
+			if th.Effect != "" {
+				t.Errorf("theme %q is always available and carries the effect %q: an accessible theme holds still", th.Key, th.Effect)
 			}
 			continue
 		}
-
-		// Gated theme: exactly one of milestone, chain and badge, and a hint.
-		set := 0
-		for _, has := range []bool{hasMilestone, hasChain, hasBadge} {
-			if has {
-				set++
-			}
-		}
-		if set != 1 {
-			t.Errorf("gated theme %q must set EXACTLY ONE of UnlockMilestone/UnlockChain/UnlockBadge; got milestone=%q chain=%q badge=%q",
-				th.Key, th.UnlockMilestone, th.UnlockChain, th.UnlockBadge)
-		}
-		if hasBadge {
-			if got, ok := UnlockedBy(th.UnlockBadge); ok {
-				t.Errorf("badge theme %q is in the milestone unlock index (as %q): the engine unlocks it", th.Key, got)
-			}
-			switch th.Effect {
-			case "", EffectRain, EffectGlitch:
-			default:
-				t.Errorf("theme %q carries the effect %q, which the UI does not draw", th.Key, th.Effect)
-			}
+		if th.UnlockBadge == "" || !th.Gated() {
+			t.Errorf("gated theme %q names no badge that gives it", th.Key)
 		}
 		if th.UnlockHint == "" {
 			t.Errorf("gated theme %q has an empty UnlockHint; a locked theme must explain how to unlock it", th.Key)
 		}
-		if !th.Gated() {
-			t.Errorf("gated theme %q reports Gated()=false", th.Key)
-		}
-		// UnlockKey must return the set key.
-		if want := th.UnlockMilestone + th.UnlockChain; th.UnlockKey() != want {
-			t.Errorf("theme %q UnlockKey()=%q, want %q", th.Key, th.UnlockKey(), want)
+		switch th.Effect {
+		case "", EffectRain, EffectGlitch, EffectEmbers, EffectGreenbar, EffectPrism:
+		default:
+			t.Errorf("theme %q carries the effect %q, which the UI does not draw", th.Key, th.Effect)
 		}
 	}
 }

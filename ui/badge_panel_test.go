@@ -98,7 +98,7 @@ func TestBadgesCommandOpensTheCase(t *testing.T) {
 	for cmd, key := range map[string]string{
 		"badges rock solid":          "age.stone_age",
 		"badges Rock":                "age.stone_age",
-		"badges hobbyist":            "lineage.housing.1",
+		"badges housing hobbyist":    "lineage.housing.1",
 		"badges serial reincarnator": "ladder.prestiges.3",
 		"badges hut hoarder":         "special.hut_hoarder",
 	} {
@@ -541,7 +541,7 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 	// dashboard once the command bar is taken off: nothing is drawn, and
 	// nothing breaks.
 	for _, size := range [][2]int{{0, 0}, {40, 0}, {40, -2}, {-3, 5}} {
-		for _, effect := range []string{theme.EffectRain, theme.EffectGlitch} {
+		for _, effect := range []string{theme.EffectRain, theme.EffectGlitch, theme.EffectEmbers, theme.EffectGreenbar, theme.EffectPrism} {
 			drawThemeEffect(tcell.NewSimulationScreen("UTF-8"), 0, 0, size[0], size[1], effect, 7, false)
 		}
 	}

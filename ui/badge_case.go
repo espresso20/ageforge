@@ -147,6 +147,9 @@ func (l caseLine) need() int {
 type caseTab struct {
 	key, title            string
 	earned, shown, hidden int
+	// sight is how many of the family's badges have something to show
+	// (badgeInSight).
+	sight int
 }
 
 // caseModel is the case laid out for one tab at one size.
@@ -181,9 +184,11 @@ func familyTitle(key string) string {
 	return textfmt.Capitalize(strings.ReplaceAll(key, "_", " "))
 }
 
-// caseTabs lists the tabs: All, each family that has a badge to list in
-// the families' own order, and Next.
-func caseTabs(views []game.BadgeView) []caseTab {
+// caseTabs lists the tabs: All, each family in sight in the families' own
+// order, and Next. A family with nothing in sight has no tab and no
+// heading: its name alone would say what is ahead. Once the account may
+// know how many badges are withheld (counted), every family is listed.
+func caseTabs(views []game.BadgeView, counted bool) []caseTab {
 	stat := map[string]*caseTab{}
 	var seen []string
 	for _, v := range views {
@@ -192,6 +197,9 @@ func caseTabs(views []game.BadgeView) []caseTab {
 			t = &caseTab{key: v.Family, title: familyTitle(v.Family)}
 			stat[v.Family] = t
 			seen = append(seen, v.Family)
+		}
+		if badgeInSight(v) {
+			t.sight++
 		}
 		switch {
 		case v.Integrity:
@@ -207,7 +215,7 @@ func caseTabs(views []game.BadgeView) []caseTab {
 	tabs := []caseTab{{key: caseTabAll, title: "All"}}
 	listed := map[string]bool{}
 	add := func(key string) {
-		if t := stat[key]; t != nil && !listed[key] {
+		if t := stat[key]; t != nil && !listed[key] && (t.sight > 0 || counted) {
 			listed[key] = true
 			tabs = append(tabs, *t)
 		}
@@ -226,7 +234,7 @@ func groupID(family string) string { return "hidden." + family }
 
 // buildCase lays the badges out for a tab at a size.
 func buildCase(views []game.BadgeView, sum game.BadgeSummary, account bool, tab string, lay caseLayout) *caseModel {
-	m := &caseModel{account: account, sum: sum, tabs: caseTabs(views), lay: lay, by: map[string]int{}}
+	m := &caseModel{account: account, sum: sum, tabs: caseTabs(views, sum.HiddenCounted), lay: lay, by: map[string]int{}}
 	known := false
 	for _, t := range m.tabs {
 		known = known || t.key == tab
@@ -814,17 +822,19 @@ func (m *caseModel) drawTitle(out *tGrid) {
 		}
 	}
 	left = "  " + strings.TrimPrefix(left, " · ")
-	right := sum.Title + " "
+	// The title the account wears, and the next one its score reaches.
+	worn := wornTitle(sum)
+	right := worn + " "
 	if sum.NextTitle != "" && w >= 100 {
-		right = fmt.Sprintf("%s · %s at %s ", sum.Title, sum.NextTitle, wholeNumber(sum.NextTitleAt))
+		right = fmt.Sprintf("%s · %s at %s ", worn, sum.NextTitle, wholeNumber(sum.NextTitleAt))
 	}
 	if x+runeLen(left)+2+runeLen(right) > w {
 		left = fmt.Sprintf("  %d/%d · %s pts", sum.Earned, sum.Shown, wholeNumber(sum.Points))
 	}
 	x = out.text(x, 0, clipRunes(left, max(w-x, 0)), tsChip, -1)
 	if rx := w - runeLen(right); rx > x+1 {
-		rx = out.text(rx, 0, sum.Title, tsChipKey, -1)
-		out.text(rx, 0, strings.TrimPrefix(right, sum.Title), tsChipDim, -1)
+		rx = out.text(rx, 0, worn, tsChipKey, -1)
+		out.text(rx, 0, strings.TrimPrefix(right, worn), tsChipDim, -1)
 	}
 }
 
@@ -913,6 +923,12 @@ func (m *caseModel) drawLadderLabel(out *tGrid, ln caseLine, x, y int) {
 	out.text(x, y, clipRunes(ln.ladder, room), tsText, -1)
 	if ln.next == nil {
 		out.text(x, y+1, clipRunes("complete", room), tsGood, -1)
+		return
+	}
+	if ln.next.Target <= 0 {
+		// A ladder that is not climbed by a lifetime count (a payroll is
+		// judged on the workers at work at one time): name the next rung.
+		out.text(x, y+1, clipRunes("next: "+ln.next.Name, room), tsDim, -1)
 		return
 	}
 	out.text(x, y+1, clipRunes(countText(ln.next.Progress, ln.next.Target), room), tsHi, -1)

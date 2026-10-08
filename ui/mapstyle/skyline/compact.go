@@ -48,7 +48,7 @@ func (v *view) composeCompact(f mapstyle.Frame, W, H int) {
 	}
 	p, mp := v.palettes(m)
 	v.fb.reset(W, H)
-	s := &scene{v: v, m: m, lay: lay, p: p, mp: mp, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H,
+	s := &scene{v: v, m: m, lay: lay, p: p, mp: mp, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H,
 		S: H - 1, top: 1, groundY: H - 2, sel: -1, band: bandOf(m.AgeIdx)}
 	s.city, s.inCity = mapmodel.CityLookAt(m.AgeIdx)
 	bg := chromeBg()

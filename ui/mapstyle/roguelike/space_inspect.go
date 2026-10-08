@@ -17,7 +17,7 @@ func (v *skyView) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
 	if s == nil || !v.g.inspect {
 		return mapstyle.Inspection{}, false
 	}
-	v.anim, v.tier = f.Anim, f.Tier
+	v.anim, v.visit, v.clock, v.tier = f.Anim, f.VisitFrame(), f.Clock, f.Tier
 	return v.describe(s, v.cur), true
 }
 

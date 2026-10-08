@@ -2,6 +2,7 @@ package rules
 
 import (
 	"fmt"
+	"math"
 	"slices"
 	"sort"
 	"strconv"
@@ -22,13 +23,29 @@ type badgeSubject struct {
 // buildBadges expands the families into badges, in table order, and puts
 // the hand-written ones after them. A family row that cannot be expanded
 // (no Key template, a ladder without counts) makes no badges; the guard
-// test reports it.
+// test reports it. Thresholds that belong to the game's tables are filled
+// in last (config.BadgeMeasure).
 func (s *Set) buildBadges(written []config.BadgeDef, families []config.BadgeFamilyDef) {
 	s.badges = nil
 	for _, f := range families {
 		s.badges = append(s.badges, s.expandFamily(f)...)
 	}
 	s.badges = append(s.badges, written...)
+	inSet := map[string]int{}
+	for _, b := range s.badges {
+		if b.Set != "" && !b.Integrity() {
+			inSet[b.Set]++
+		}
+	}
+	for i := range s.badges {
+		b := &s.badges[i]
+		switch b.Measure {
+		case config.BadgeMeasureMilestones:
+			b.Threshold = float64(len(s.milestones))
+		case config.BadgeMeasureSet:
+			b.Threshold = float64(inSet[strings.TrimPrefix(b.Counter, config.BadgeEvBadge+".set.")])
+		}
+	}
 	s.badgeByKey = make(map[string]config.BadgeDef, len(s.badges))
 	s.badgeAlias = map[string]string{}
 	for _, b := range s.badges {
@@ -55,11 +72,24 @@ func (s *Set) expandFamily(f config.BadgeFamilyDef) []config.BadgeDef {
 			continue
 		}
 		if len(f.Rungs) == 0 {
-			out = append(out, s.familyBadge(f, sub, config.BadgeRung{}, 0, f.Threshold))
+			threshold := f.Threshold
+			if t, ok := f.Thresholds[sub.key]; ok {
+				threshold = t
+			}
+			if f.Measure == config.BadgeMeasureTechs {
+				threshold = float64(len(s.techsByAge[sub.key]))
+				if threshold == 0 {
+					continue // an age with no techs has no syllabus
+				}
+			}
+			out = append(out, s.familyBadge(f, sub, config.BadgeRung{}, 0, threshold))
 			continue
 		}
-		counts := f.Ladders[sub.key]
-		for i, rung := range f.Rungs {
+		rungs, counts := f.Rungs, f.Ladders[sub.key]
+		if f.Measure == config.BadgeMeasureProduction {
+			rungs, counts = s.productionLadder(f, sub)
+		}
+		for i, rung := range rungs {
 			if i >= len(counts) {
 				break
 			}
@@ -69,34 +99,124 @@ func (s *Set) expandFamily(f config.BadgeFamilyDef) []config.BadgeDef {
 	return out
 }
 
+// RunProduction is what one run produces of a resource: the sum, over the
+// run's ages, of the resource's typical income times the age's pacing
+// target in ticks. A run is the ages before the one a full prestige is made
+// from (runEnd is the last of them); deep is true for a resource that comes
+// after them, which is measured over its own first two ages instead.
+func (s *Set) RunProduction(res string) (perRun float64, deep bool) {
+	def, ok := s.resourceByKey[res]
+	if !ok {
+		return 0, false
+	}
+	first, last := 0, s.runEndPos()
+	if pos, ok := s.agePos[def.Age]; ok && pos > last {
+		first, last, deep = pos, min(pos+1, len(s.ageKeys)-1), true
+	}
+	for i := first; i <= last; i++ {
+		age := s.ageKeys[i]
+		perRun += float64(s.typIncome[age][res] * s.targetTicks[age])
+	}
+	return perRun, deep
+}
+
+// runEndPos is the place of a run's last age: the age before the Digital
+// Era's first, which is where a full prestige is made from.
+func (s *Set) runEndPos() int {
+	for _, e := range s.eras {
+		if e.Order == badgeRunEras && len(e.Ages) > 0 {
+			if pos, ok := s.agePos[e.Ages[0]]; ok && pos > 0 {
+				return pos - 1
+			}
+		}
+	}
+	return len(s.ageKeys) - 1
+}
+
+// badgeRunEras is how many eras a run plays through before a full
+// prestige: the Stone, Iron, Steel and Electric Eras.
+const badgeRunEras = 4
+
+// productionLadder is a resource's rungs and their counts: a number of
+// runs each, of what one run produces. A resource that comes after a run's
+// last age skips the first rung.
+func (s *Set) productionLadder(f config.BadgeFamilyDef, sub badgeSubject) ([]config.BadgeRung, []float64) {
+	perRun, deep := s.RunProduction(sub.key)
+	if perRun <= 0 {
+		return nil, nil
+	}
+	rungs, runs := f.Rungs, f.Runs
+	if deep && len(rungs) > 1 && len(runs) > 1 {
+		rungs, runs = rungs[1:], runs[1:]
+	}
+	counts := make([]float64, 0, len(runs))
+	for _, r := range runs {
+		counts = append(counts, twoFigures(float64(perRun*r)))
+	}
+	return rungs, counts
+}
+
+// twoFigures rounds v down to two significant figures, so a rung reads as
+// a round number and never asks for more runs than it says.
+func twoFigures(v float64) float64 {
+	if v <= 0 {
+		return 0
+	}
+	// The power of ten that leaves two figures before the point, found by
+	// stepping: no logarithm, so the rung is the same on every machine.
+	mag := 1.0
+	for v/mag >= 100 {
+		mag *= 10
+	}
+	for v/mag < 10 {
+		mag /= 10
+	}
+	return math.Floor(v/mag) * mag
+}
+
 // familyBadge is the badge of one subject (and rung n, from 1; 0 for a
 // family that is not a ladder).
 func (s *Set) familyBadge(f config.BadgeFamilyDef, sub badgeSubject, rung config.BadgeRung, n int, threshold float64) config.BadgeDef {
+	mid := sub.name
+	if strings.HasPrefix(mid, "The ") {
+		mid = "the " + strings.TrimPrefix(mid, "The ")
+	}
 	fill := strings.NewReplacer(
 		"{key}", sub.key,
 		"{name}", sub.name,
+		"{Name}", textfmt.Capitalize(sub.name),
+		"{mid}", mid,
+		"{short}", strings.TrimSuffix(sub.name, " Age"),
 		"{lname}", strings.ToLower(sub.name),
 		"{rung}", rung.Name,
 		"{n}", strconv.Itoa(n),
 		"{count}", badgeCount(threshold),
 		"{era}", strconv.Itoa(s.eraOrderOfAge(sub.age)),
+		"{techs}", techsLine(int(threshold), sub.name),
 	).Replace
 	b := config.BadgeDef{
-		Key:       fill(f.Key),
-		Family:    f.Family,
-		Subject:   sub.key,
-		Name:      strings.TrimSpace(fill(f.Name)),
-		Desc:      fill(f.Desc),
-		Tier:      f.Tier,
-		Rarity:    f.Rarity,
-		Scope:     f.Scope,
-		Counter:   fill(f.Counter),
-		Threshold: threshold,
-		Event:     fill(f.Event),
-		InAge:     fill(f.InAge),
-		Reveal:    f.Reveal,
-		Proof:     f.Proof,
-		Emblem:    fill(f.Emblem),
+		Key:        fill(f.Key),
+		Family:     f.Family,
+		Subject:    sub.key,
+		AnySubject: f.AnySubject,
+		Name:       strings.TrimSpace(fill(f.Name)),
+		Desc:       fill(f.Desc),
+		Hint:       f.Hint,
+		Tier:       f.Tier,
+		Rarity:     f.Rarity,
+		Scope:      f.Scope,
+		Counter:    fill(f.Counter),
+		Threshold:  threshold,
+		Event:      fill(f.Event),
+		InAge:      fill(f.InAge),
+		When:       slices.Clone(f.When),
+		Reveal:     f.Reveal,
+		Proof:      f.Proof,
+		Emblem:     fill(f.Emblem),
+		Set:        fill(f.Set),
+	}
+	if e, ok := f.Emblems[sub.key]; ok {
+		b.Emblem = e
 	}
 	if n > 0 {
 		b.Ladder = strings.TrimSpace(fill(f.Ladder))
@@ -115,15 +235,30 @@ func (s *Set) familyBadge(f config.BadgeFamilyDef, sub badgeSubject, rung config
 	if f.RevealBySubject {
 		b.Reveal = sub.reveal
 	}
+	if f.RevealAtAge {
+		b.Reveal = s.revealAtAge(sub.age)
+	}
 	if name := f.Names[b.Key]; name != "" {
 		b.Name = name
 	}
 	if desc := f.Descs[b.Key]; desc != "" {
-		b.Desc = desc
+		b.Desc = fill(desc)
 	}
 	b.Aliases = slices.Clone(f.Aliases[b.Key])
 	b.Reward = f.Rewards[b.Key]
 	return b
+}
+
+// techsLine is the description of an age's syllabus: every tech of the
+// age, said the way the number reads.
+func techsLine(n int, age string) string {
+	switch {
+	case n == 1:
+		return "Research the one " + age + " tech."
+	case n == 2:
+		return "Research both " + age + " techs in one run."
+	}
+	return "Research all " + strconv.Itoa(n) + " " + age + " techs in one run."
 }
 
 // eraOrderOfAge is the order of the era an age belongs to, 0 for an age
@@ -159,6 +294,14 @@ func (s *Set) BadgeTitle(points int, complete bool) (title string, rank int, nex
 func badgeCount(v float64) string {
 	if v == float64(int64(v)) && v < 1e6 {
 		return textfmt.Int(int(v))
+	}
+	if v >= 1e18 {
+		// Past the last suffix: the count in Q, its thousands set off.
+		q := strconv.FormatInt(int64(math.Round(v/1e15)), 10)
+		for i := len(q) - 3; i > 0; i -= 3 {
+			q = q[:i] + "," + q[i:]
+		}
+		return q + "Q"
 	}
 	return config.FormatAmount(v)
 }
@@ -238,6 +381,50 @@ func (s *Set) badgeSubjects(src config.BadgeSource) []badgeSubject {
 				reveal: config.RevealUntilSeen(config.BadgeEvAwakening + "." + a.Key),
 			})
 		}
+	case config.BadgeSourceDooms:
+		for _, e := range s.eras {
+			if !s.CatastropheAllowed(e.Key) || len(e.Ages) == 0 {
+				continue
+			}
+			name, _ := s.Catastrophe(e.Key)
+			out = append(out, badgeSubject{key: e.Key, name: name, age: e.Ages[0], reveal: config.RevealUntilDoomNamed(e.Key)})
+		}
+	case config.BadgeSourceDomains:
+		// A domain a building can be staffed in, with the age of the first
+		// such building.
+		first := map[string]int{}
+		for _, b := range s.buildings {
+			if b.WorkerDomain == "" || b.WorkerCapacity <= 0 {
+				continue
+			}
+			pos, ok := s.agePos[b.RequiredAge]
+			if !ok {
+				continue
+			}
+			if cur, seen := first[b.WorkerDomain]; !seen || pos < cur {
+				first[b.WorkerDomain] = pos
+			}
+		}
+		for _, d := range s.domains {
+			pos, ok := first[d]
+			if !ok {
+				continue
+			}
+			age := s.ageKeys[pos]
+			out = append(out, badgeSubject{key: d, name: textfmt.Capitalize(d), age: age, reveal: s.revealAtAge(age)})
+		}
+	case config.BadgeSourceExpeditions:
+		for _, x := range s.badgeExpeditions {
+			out = append(out, badgeSubject{key: x.Key, name: x.Name, age: x.MinAge, reveal: s.revealAtAge(x.MinAge)})
+		}
+	case config.BadgeSourceThemes:
+		for _, t := range s.badgeThemes {
+			sub := badgeSubject{key: t.Key, name: t.Name}
+			if t.Badge != "" {
+				sub.reveal = config.RevealUntilBadge(t.Badge)
+			}
+			out = append(out, sub)
+		}
 	}
 	return out
 }
@@ -309,3 +496,26 @@ func BadgeProblems(written []config.BadgeDef, families []config.BadgeFamilyDef, 
 	}
 	return out
 }
+
+// BadgeWornTitles returns the titles badges give (config.BadgeTitles): each
+// is held with its badge, or with every badge of its set.
+func (s *Set) BadgeWornTitles() []config.BadgeTitleDef { return slices.Clone(s.badgeWornTitles) }
+
+// BadgesInSet returns the keys of the badges of a set, in catalog order.
+func (s *Set) BadgesInSet(set string) []string {
+	var out []string
+	for _, b := range s.badges {
+		if b.Set == set && !b.Integrity() {
+			out = append(out, b.Key)
+		}
+	}
+	return out
+}
+
+// BadgeSessionEvents is the events that are told to the account and never
+// tallied in a run's facts (config.BadgeSessionEvents).
+func (s *Set) BadgeSessionEvents() []string { return config.BadgeSessionEvents() }
+
+// IsFlowResource reports whether res is a flow resource: one that is spent
+// as it is made rather than saved up (config.IsFlowResource).
+func (s *Set) IsFlowResource(res string) bool { return config.IsFlowResource(res) }

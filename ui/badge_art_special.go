@@ -1,8 +1,10 @@
 package ui
 
-// badge_art_special.go holds the hand-drawn badges: the three integrity
-// badges, each a sprite of 17 by 9 with a glitch of its own. They go
-// through the same grid, inks and fold as every other badge (medal.go).
+// badge_art_special.go holds the hand-drawn badges of the three integrity
+// badges, each a sprite of 17 by 9 with a glitch of its own, and the one
+// door every hand-drawn badge is drawn through (drawSpecial); the legendary
+// ones are in badge_art_legend.go. They go through the same grid, inks and
+// fold as every other badge (medal.go).
 //
 // Every frame is a pure function of the frame number. The noise is a hash
 // of the frame and the cell, never a random number, so a frame always
@@ -75,6 +77,10 @@ func drawSpecial(g *tGrid, x, y int, m medal, n int, plain bool) {
 		drawLedger(g, x, y, frame, rest)
 	case specialSource:
 		drawSource(g, x, y, frame, plain)
+	default:
+		if sp, ok := legendSprites[m.special]; ok {
+			drawLegend(g, x, y, sp, frame, rest, plain)
+		}
 	}
 	if m.crossed && rest {
 		strike(g, x, y, specialW, specialH, -1, -1)

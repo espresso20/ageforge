@@ -1,8 +1,8 @@
 # 🎨 Themes & Accessibility
 
-AgeForge's interface colors come from swappable **themes**: 13 themes in all, **dark** and **light**. You can switch at any time and the change applies at once. Your choice is saved with your **account**, not with a game save, so it carries across every save and every new game. Loading an old save never changes your theme.
+AgeForge's interface colors come from swappable **themes**: 16 themes in all, **dark** and **light**. You can switch at any time and the change applies at once. Your choice is saved with your **account**, not with a game save, so it carries across every save and every new game. Loading an old save never changes your theme.
 
-Themes come in three groups: **Standard** (the default dark **Forge** and the light **Daylight**), **Accessibility** (colorblind-safe and high-contrast, in dark and light), and **Unlockable** flavor themes you earn by reaching later ages, or with a secret badge. Standard and Accessibility themes are always unlocked.
+Themes come in three groups: **Standard** (the default dark **Forge** and the light **Daylight**), **Accessibility** (colorblind-safe and high-contrast, in dark and light), and **Unlockable** flavor themes that come with a [badge](badges.md): five for reaching an age, five for other badges. Standard and Accessibility themes are always unlocked.
 
 ---
 
@@ -23,6 +23,9 @@ Themes come in three groups: **Standard** (the default dark **Forge** and the li
 | **Cosmic** | `cosmic` | Unlockable | Dark | Reach the Galactic Age |
 | **Source** | `source` | Unlockable | Dark | Given by a secret badge. Phosphor green on black, with code rain |
 | **Glitch** | `glitch` | Unlockable | Dark | Given by a secret badge. Cyan and magenta on violet black, with tears of static |
+| **Ashfall** | `ashfall` | Unlockable | Dark | Succumb to every era's catastrophe. Ember orange on soot, with sparks rising |
+| **Ledger** | `ledger` | Unlockable | Light | Take 100 deals from civilizations. Ink and bookkeeper's green on green-bar paper |
+| **Prismatic** | `prismatic` | Unlockable | Dark | Earn 400 badges. Starlight on blue-black, with glints that turn through the spectrum |
 
 ### Every theme paints its own background
 
@@ -37,7 +40,7 @@ A **truecolor** terminal is recommended for exact colors.
 
 ### Motion
 
-A few things in the game move on their own: the [Map](map.md) and the mini map, some badges in the [badge case](account.md#the-badge-case), and the ambient effect of the two themes that have one. One setting turns all of it off:
+A few things in the game move on their own: the [Map](map.md) and the mini map, some badges in the [badge case](account.md#the-badge-case), and the ambient effect of the five themes that have one. One setting turns all of it off:
 
 | Command | What it does |
 |---|---|
@@ -67,7 +70,7 @@ theme daylight
 
 ### The picker
 
-The picker and `theme list` show a locked theme's unlock condition. One earned in an age past your next one reads "Reach a later age" instead of naming the age, so the list doesn't spoil ages you haven't reached (the table above has them all).
+The picker and `theme list` show a locked theme's unlock condition. One earned in an age past your next one reads "Reach a later age" instead of naming the age, so the list doesn't spoil ages you haven't reached (the table above has them all). A theme whose badge is still hidden from you says only what kind of badge gives it.
 
 The picker fills the window and **previews** each theme as you move to it. Themes are grouped under **Standard**, **Accessibility**, and **Unlockable** headings, and each row is tagged **light** or **dark**, **accessible**, or **locked** (`🔒`).
 
@@ -116,7 +119,7 @@ The [Map](map.md) follows your theme too, including light ones. Both styles, rog
 
 ## 🔓 Unlocking flavor themes
 
-Beyond the Standard and Accessibility groups, AgeForge has **flavor themes**: cosmetic looks you unlock by reaching an age, and two that come with a badge.
+Beyond the Standard and Accessibility groups, AgeForge has ten **flavor themes**. Each is the reward of a [badge](badges.md#themes-from-badges): earn the badge and the theme is unlocked.
 
 | Theme | Variant | Unlocks when you… |
 |---|---|---|
@@ -125,22 +128,38 @@ Beyond the Standard and Accessibility groups, AgeForge has **flavor themes**: co
 | **Monochrome** | Dark | Reach the Information Age |
 | **Cyberpunk** | Dark | Reach the Cyberpunk Age |
 | **Cosmic** | Dark | Reach the Galactic Age |
-| **Source** | Dark | Earn a secret [badge](account.md#badges) |
+| **Ledger** | Light | Take 100 deals from civilizations, across all your runs |
+| **Ashfall** | Dark | Succumb to every era's catastrophe |
+| **Prismatic** | Dark | Earn 400 badges |
+| **Source** | Dark | Earn a secret badge |
 | **Glitch** | Dark | Earn another secret badge |
 
-Unlocks are **account-wide and permanent**: earn a theme on one empire and it's yours on **every save and every future new game**, just like the accessibility themes.
+Unlocks are **account-wide and permanent**: earn a theme on one empire and it's yours on **every save and every future new game**, just like the accessibility themes. When a badge unlocks a theme, the log says so.
 
-Until you've earned it, a flavor theme shows in the picker (and in `theme list`) with a `🔒` and its unlock condition. You can still preview a locked theme, but you can't make it your active theme until you reach the age, or earn the badge, that unlocks it. The two badge themes say only that a secret badge gives them: the badges are secret, so the game does not say how they are earned.
+The five age themes come with the badge for reaching their age. They used to come from milestones; the condition is the same, and an account that had already reached an age keeps its theme, or gets it the first time this version opens the account.
+
+Until you've earned it, a flavor theme shows in the picker (and in `theme list`) with a `🔒` and its unlock condition. You can still preview a locked theme, but you can't make it your active theme until you earn the badge that unlocks it. The picker never says more than the badge case does: Source and Glitch say only that a secret badge gives them, and Ashfall and Ledger say what kind of badge gives them until that badge is in sight.
 
 ### Ambient effects
 
-**Source** and **Glitch** each carry an ambient effect on the dashboard. In Source, code falls down the empty columns. In Glitch, a tear of static crosses the screen now and then. An effect is only ever drawn in cells that are otherwise empty, with clear space between it and any text, and never in the command bar, so nothing you read or type is covered. `motion off` turns the effects off (see [Motion](#motion)); the colors stay.
+Five themes carry an ambient effect on the dashboard:
+
+| Theme | Effect |
+|---|---|
+| **Source** | Code falls down the empty columns |
+| **Glitch** | A tear of static crosses the screen now and then |
+| **Ashfall** | Sparks drift up the empty columns |
+| **Ledger** | Every other row of the empty space is tinted, like green-bar paper |
+| **Prismatic** | Glints in the empty space turn slowly through the spectrum |
+
+An effect is only ever drawn in cells that are otherwise empty, with clear space between it and any text, and never in the command bar, so nothing you read or type is covered. `motion off` turns the effects off (see [Motion](#motion)); the colors stay.
 
 ---
 
 ## See also
 
 - [All Commands](commands.md): the full `theme` command reference
+- [Badges](badges.md): the badges that unlock the flavor themes
 - [Account & Recovery](account.md): how theme unlocks (and other account-wide progress) are kept and moved between machines
-- [The 22 Ages](ages.md): the ages that unlock the flavor themes
+- [The 22 Ages](ages.md): the ages whose badges unlock five of them
 - [The Map](map.md): the map styles and glyph sets

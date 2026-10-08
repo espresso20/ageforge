@@ -180,6 +180,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdAccount(args, engine)
 	case "badges", "achievements":
 		return cmdBadges(args, engine)
+	case "title":
+		return cmdTitle(args, engine)
 	case "theme":
 		return cmdTheme(args, engine)
 	case "icons":
@@ -2866,8 +2868,8 @@ func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
 		res.Badges = badgeRequest{tab: caseTabNext, setTab: true}
 		return res
 	}
-	views, _ := engine.Badges()
-	if tab, ok := findBadgeTab(views, want); ok {
+	views, sum := engine.Badges()
+	if tab, ok := findBadgeTab(views, sum.HiddenCounted, want); ok {
 		res.Badges = badgeRequest{tab: tab, setTab: true}
 		return res
 	}
@@ -2876,6 +2878,69 @@ func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
 		return res
 	}
 	return CommandResult{Type: "error", Message: fmt.Sprintf("No badge or family in sight is called %q. Type badges to look through them.", strings.Join(args, " "))}
+}
+
+// wornTitle is the title an account wears: the one it chose, or the one
+// its badge score holds.
+func wornTitle(sum game.BadgeSummary) string {
+	if sum.Worn != "" {
+		return sum.Worn
+	}
+	return sum.Title
+}
+
+// cmdTitle lists the titles the account holds, or chooses the one it
+// wears. A title comes from the badge score (every account has one) or
+// from a badge; "title default" goes back to the score's. The choice is
+// the account's: it shows in the status bar and the badge case, and
+// changes nothing in a run.
+func cmdTitle(args []string, engine *game.GameEngine) CommandResult {
+	acct := engine.Account()
+	if acct == nil {
+		return CommandResult{Type: "warning", Message: "Titles belong to an account, and none is loaded. Type account to make one."}
+	}
+	_, sum := engine.Badges()
+	if len(args) == 0 {
+		var names []string
+		for _, t := range sum.Titles {
+			if t == wornTitle(sum) {
+				t += " (worn)"
+			}
+			names = append(names, t)
+		}
+		msg := "[gold]Titles:[-] " + strings.Join(names, ", ") + "."
+		if len(sum.Titles) > 1 {
+			msg += " Type title and a name to wear one, or title default for the one your badge score gives."
+		} else {
+			msg += " Some badges give a title of their own: the badge case says which."
+		}
+		return CommandResult{Type: "info", Message: msg}
+	}
+	want := strings.Join(args, " ")
+	if strings.EqualFold(want, "default") {
+		want = ""
+	} else {
+		// A title by its name, or the one title that starts with what was typed.
+		var starts []string
+		for _, t := range sum.Titles {
+			if strings.EqualFold(t, want) {
+				starts = []string{t}
+				break
+			}
+			if strings.HasPrefix(strings.ToLower(t), strings.ToLower(want)) {
+				starts = append(starts, t)
+			}
+		}
+		if len(starts) != 1 {
+			return CommandResult{Type: "error", Message: fmt.Sprintf("You do not hold a title called %q. Type title to list the ones you hold.", want)}
+		}
+		want = starts[0]
+	}
+	if err := acct.SetTitle(want, sum.Titles); err != nil {
+		return errorResult(fmt.Errorf("the title could not be saved: %w", err))
+	}
+	_, sum = engine.Badges()
+	return CommandResult{Type: game.LogRoutine, Message: "You now wear the title " + wornTitle(sum) + "."}
 }
 
 // cmdMotion shows or sets the motion setting: whether the maps, the badge

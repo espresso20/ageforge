@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // account_settings.go keeps the account's settings that came after
@@ -31,6 +32,9 @@ type accountSettings struct {
 	Version int `json:"version"`
 	// Motion is the motion setting: "off", or empty for the default (on).
 	Motion string `json:"motion,omitempty"`
+	// Title is the title the account chose to wear, "" for the title its
+	// badge score holds. A title it no longer holds is not worn.
+	Title string `json:"title,omitempty"`
 }
 
 // settingsLocked returns the account's settings, read from its slot the
@@ -98,5 +102,27 @@ func (a *Account) SetMotion(on bool) error {
 	if !on {
 		s.Motion = "off"
 	}
+	return a.saveSettingsLocked()
+}
+
+// SetTitle chooses the title the account wears: one it holds, or "" to go
+// back to the title its badge score holds. It writes settings.json only.
+// held is the titles the account holds now (BadgeSummary.Titles).
+func (a *Account) SetTitle(title string, held []string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if title != "" {
+		found := false
+		for _, t := range held {
+			if strings.EqualFold(t, title) {
+				title, found = t, true
+			}
+		}
+		if !found {
+			return fmt.Errorf("You do not hold the title %q.", title)
+		}
+	}
+	a.settingsLocked().Title = title
+	a.badgeRev++ // the badge summary carries the title worn
 	return a.saveSettingsLocked()
 }

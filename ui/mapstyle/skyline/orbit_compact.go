@@ -24,7 +24,7 @@ func (v *view) composeSkyCompact(f mapstyle.Frame, W, H int, sc mapmodel.SkyScen
 	p, mp := v.palettes(m)
 	v.fb.reset(W, H)
 	S := H - 1
-	s := &scene{v: v, m: m, p: p, mp: mp, fb: &v.fb, tier: f.Tier, anim: f.Anim, W: W, H: H,
+	s := &scene{v: v, m: m, p: p, mp: mp, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H,
 		S: S, top: 1, groundY: compactBase(S), sel: -1, band: bandOf(m.AgeIdx)}
 	if sc == mapmodel.SkyMandala {
 		s.groundY = max(0, S) // no baseline and no panorama: the mandala has every row

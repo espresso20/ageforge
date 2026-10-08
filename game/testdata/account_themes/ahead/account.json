@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "account_id": "0d829ddbc09d5bfab4986a5e56db5c6e",
+  "display_name": "Theme ahead",
+  "created": "2026-10-07T20:35:13.292902-05:00",
+  "last_seen": "2026-10-07T20:35:13.292902-05:00",
+  "unlocks": {
+    "themes": [
+      "bronze",
+      "cyberpunk",
+      "cosmic"
+    ]
+  },
+  "stats": {
+    "highest_age": "bronze_age",
+    "civilizations_started": 1
+  },
+  "prefs": {
+    "active_theme": "cosmic"
+  },
+  "_sig": "5bc8b1a18f1e385bcbc355d77371dcc64968d9c2dfa36c2fc5cd07a6d9ffff07"
+}

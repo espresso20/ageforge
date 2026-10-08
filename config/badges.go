@@ -225,9 +225,69 @@ const (
 	// its recovery code was shown.
 	BadgeEvExported      = "account_exported"
 	BadgeEvRecoveryShown = "recovery_code_shown"
-	// BadgeEvBadge: a badge was earned. Subject: its family. Integrity
-	// badges are not reported.
+	// BadgeEvBadge: a badge was earned. Subject: its family. Attributes:
+	// "top" (1 for the last rung of a ladder). A badge in a set also counts
+	// "badge_earned.set.<set>". Integrity badges are not reported.
 	BadgeEvBadge = "badge_earned"
+	// BadgeEvProduced: what buildings, workers and techs produced of a
+	// resource since the last report (a batch every few ticks, and one for
+	// time away). Subject: the resource. Amount: how much. Trades, loot,
+	// refunds and gifts are not production.
+	BadgeEvProduced = "produced"
+	// BadgeEvCensus: the state of the run, every BadgeCensusTicks ticks.
+	// Attributes: "staffed.<domain>" (workers at work in a domain), "full"
+	// (1 when every capped resource in use is at its cap), "age" (the
+	// age's place in the order, from 0).
+	BadgeEvCensus = "census"
+	// BadgeEvWarStarted: a civilization went to war with the player.
+	// Subject: the civilization. Attribute: "wars" (wars under way now).
+	// BadgeEvWarEnded: a war ended. Attribute: "tribute" (1 when it was
+	// bought off, 0 when it burned out).
+	BadgeEvWarStarted = "war_started"
+	BadgeEvWarEnded   = "war_ended"
+	// BadgeEvGiftSent: a gift was sent. Subject: the civilization.
+	BadgeEvGiftSent = "gift_sent"
+	// BadgeEvWorkersLent: a civilization lent workers. Subject: the
+	// civilization.
+	BadgeEvWorkersLent = "workers_lent"
+	// BadgeEvDoomNamed: a harbinger's warning named an era's doom, or the
+	// doom struck. Subject: the era.
+	BadgeEvDoomNamed = "doom_named"
+	// BadgeEvEraLeft: the run left an era (entered the next, or made a
+	// prestige from the last age). Subject: the era left. Attribute:
+	// "pace" (the ticks spent in the era over its ages' pacing targets).
+	BadgeEvEraLeft = "era_left"
+	// BadgeEvPlanQueued: something was added to the build plan. Attribute:
+	// "size" (items waiting now).
+	BadgeEvPlanQueued = "plan_queued"
+	// BadgeEvWonderOverflow: overflow fed a wonder's bank for the first
+	// time in the run.
+	BadgeEvWonderOverflow = "wonder_overflow"
+	// BadgeEvWonderBanked: a wonder's bank was filled by overflow.
+	// Attribute: "away" (1 when it filled during time away).
+	BadgeEvWonderBanked = "wonder_banked"
+	// BadgeEvRuinsCarried: a run began with ruins of a civilization that
+	// fell.
+	BadgeEvRuinsCarried = "ruins_carried"
+	// BadgeEvLegacyPrestige: a prestige completed while Cosmic Legacy was
+	// held.
+	BadgeEvLegacyPrestige = "prestige_with_legacy"
+	// BadgeEvKit: a legacy kit item was bought. Attribute: "left" (kit
+	// items not owned yet).
+	BadgeEvKit = "kit_bought"
+
+	// The events about how the account looks. They are read off the
+	// account's own settings when the run advances an age, so they are
+	// never tallied in a run (BadgeSessionEvents).
+	//
+	// BadgeEvAdvancedTheme, BadgeEvAdvancedStyle, BadgeEvAdvancedGlyphs: the
+	// theme, map style and glyph set worn at an advance. Subject: its key.
+	BadgeEvAdvancedTheme  = "advanced_in_theme"
+	BadgeEvAdvancedStyle  = "advanced_with_style"
+	BadgeEvAdvancedGlyphs = "advanced_with_glyphs"
+	// BadgeEvVisitor: a visitor on the map was inspected. Subject: its
+	// kind.
+	BadgeEvVisitor = "visitor_inspected"
 
 	// The integrity events. Like the day played they are about the session,
 	// not the run (BadgeSessionEvents).
@@ -257,8 +317,18 @@ func BadgeEventKinds() []string {
 		BadgeEvReturned, BadgeEvAwayTicks,
 		BadgeEvDayPlayed, BadgeEvExported, BadgeEvRecoveryShown, BadgeEvBadge,
 		BadgeEvDevUnlocked, BadgeEvSaveModified, BadgeEvSaveElite,
+		BadgeEvProduced, BadgeEvCensus, BadgeEvWarStarted, BadgeEvWarEnded, BadgeEvGiftSent,
+		BadgeEvWorkersLent, BadgeEvDoomNamed, BadgeEvEraLeft, BadgeEvPlanQueued,
+		BadgeEvWonderOverflow, BadgeEvWonderBanked, BadgeEvRuinsCarried, BadgeEvLegacyPrestige, BadgeEvKit,
+		BadgeEvAdvancedTheme, BadgeEvAdvancedStyle, BadgeEvAdvancedGlyphs, BadgeEvVisitor,
 	}
 }
+
+// BadgeCensusTicks is how often the run's state is reported (BadgeEvCensus).
+const BadgeCensusTicks = 50
+
+// BadgeProducedTicks is how often production is reported (BadgeEvProduced).
+const BadgeProducedTicks = 10
 
 // BadgeSessionEvents are the events that are about the session or the
 // account rather than the run: the tick itself, a new calendar day, an
@@ -271,6 +341,11 @@ func BadgeSessionEvents() []string {
 	return []string{
 		BadgeEvTick, BadgeEvDayPlayed, BadgeEvExported, BadgeEvRecoveryShown, BadgeEvBadge,
 		BadgeEvDevUnlocked, BadgeEvSaveModified, BadgeEvSaveElite,
+		// Counted for the account, in batches or by the clock: a tally of
+		// them in the run would only be bulk.
+		BadgeEvProduced, BadgeEvCensus,
+		// How the account looks, not what the run did.
+		BadgeEvAdvancedTheme, BadgeEvAdvancedStyle, BadgeEvAdvancedGlyphs, BadgeEvVisitor,
 	}
 }
 
@@ -293,6 +368,9 @@ const (
 	// BadgeSecret never shows until earned. A secret badge lists as a
 	// silhouette with its Hint.
 	BadgeSecret
+	// BadgeRevealOnBadge shows once the account holds the badge Key: a
+	// theme's badge shows when the theme is unlocked.
+	BadgeRevealOnBadge
 )
 
 // BadgeReveal is a badge's spoiler rule.
@@ -318,6 +396,15 @@ func RevealUntilCivMet(civ string) BadgeReveal {
 func RevealUntilHarbingerMet(figure string) BadgeReveal {
 	return BadgeReveal{Kind: BadgeRevealOnCounter, Key: BadgeEvHarbingerMet + "." + figure}
 }
+
+// RevealUntilDoomNamed hides a badge until a warning has named the era's
+// doom, or it has struck.
+func RevealUntilDoomNamed(era string) BadgeReveal {
+	return BadgeReveal{Kind: BadgeRevealOnCounter, Key: BadgeEvDoomNamed + "." + era}
+}
+
+// RevealUntilBadge hides a badge until the account holds the badge key.
+func RevealUntilBadge(key string) BadgeReveal { return BadgeReveal{Kind: BadgeRevealOnBadge, Key: key} }
 
 // RevealUntilSeen hides a badge until the lifetime counter is above 0.
 func RevealUntilSeen(counter string) BadgeReveal {
@@ -395,6 +482,44 @@ const (
 	// BadgeRuleRunCount: Threshold of something a run can do at least that
 	// often. The guard knows the limit for each event it can prove.
 	BadgeRuleRunCount = "run_count"
+	// BadgeRuleCeiling: every copy of the building Subject that can stand
+	// in its own age, or fewer: the last one the storage buildable there
+	// (or its max count) allows. Unlike BadgeRuleCopies it may ask for the
+	// very last copy.
+	BadgeRuleCeiling = "ceiling"
+	// BadgeRuleAgeCopies: Threshold buildings of the age InAge standing
+	// together, at most BadgeAgeShare of what the age's storage allows of
+	// all of them.
+	BadgeRuleAgeCopies = "age_copies"
+	// BadgeRuleWonder: the subject is the wonder of an age, which the
+	// advance from that age asks for (or, in the last age, one its storage
+	// can pay for).
+	BadgeRuleWonder = "wonder"
+	// BadgeRuleTechs: every tech of the age Subject, counted from the tech
+	// tree: Threshold is that count, and no tech shuts another out.
+	BadgeRuleTechs = "techs"
+	// BadgeRuleStaffing: Threshold workers at work in the domain Subject
+	// at once, at most BadgeStaffShare of the slots a run's buildings of
+	// that domain can hold, and no more than the housing a run can build.
+	BadgeRuleStaffing = "staffing"
+	// BadgeRuleHabit: a count of calendar days or of visits. It measures a
+	// habit, not pacing, so it is not held to a number of runs.
+	BadgeRuleHabit = "habit"
+	// BadgeRuleOccurs: the thing asked for is something the game does, and
+	// the row's Why says, in words, why a player can bring it about. The
+	// guard checks what it can from the tables: that the subject exists
+	// (a civilization, a harbinger, an era a doom can strike in, an
+	// expedition, an awakening, a theme) and that the event is reported.
+	BadgeRuleOccurs = "occurs"
+)
+
+const (
+	// BadgeAgeShare is the most of an age's whole building ceiling an age
+	// maximalist badge may ask for.
+	BadgeAgeShare = 0.75
+	// BadgeStaffShare is the most of a domain's worker slots a staffing
+	// badge may ask for.
+	BadgeStaffShare = 0.25
 )
 
 const (
@@ -414,10 +539,50 @@ type BadgeProof struct {
 	Kind BadgeProofKind
 	// Rule is the static rule, or the bot style.
 	Rule string
+	// Why is the argument in words, for a proof the guard cannot compute
+	// (BadgeRuleOccurs asks for one).
+	Why string
 }
 
 // StaticProof is a proof from config by rule.
 func StaticProof(rule string) BadgeProof { return BadgeProof{Kind: BadgeProofStatic, Rule: rule} }
+
+// Occurs is the proof that something happens in the game, with the reason
+// a player can bring it about.
+func Occurs(why string) BadgeProof {
+	return BadgeProof{Kind: BadgeProofStatic, Rule: BadgeRuleOccurs, Why: why}
+}
+
+// BotProof is a proof by play: a smoke bot of the style earns it.
+func BotProof(style string) BadgeProof { return BadgeProof{Kind: BadgeProofBot, Rule: style} }
+
+// DerivedProof is the proof of a badge that follows from other badges.
+func DerivedProof() BadgeProof { return BadgeProof{Kind: BadgeProofDerived} }
+
+// BadgeMeasure says how a threshold is filled in when the ruleset is
+// compiled, for a number that belongs to the game's tables and not to the
+// badge.
+type BadgeMeasure uint8
+
+const (
+	// BadgeMeasureNone: the threshold is as written.
+	BadgeMeasureNone BadgeMeasure = iota
+	// BadgeMeasureProduction: a family's rungs are counted in runs. The
+	// threshold is Runs times what one run produces of the subject: the
+	// sum, over the run's ages, of the typical income of the resource
+	// times the age's pacing target. A run is the ages before the one a
+	// full prestige is made from; a resource that comes later is measured
+	// over its first two ages.
+	BadgeMeasureProduction
+	// BadgeMeasureTechs: the threshold is the number of techs the subject
+	// age has.
+	BadgeMeasureTechs
+	// BadgeMeasureMilestones: the threshold is the number of milestones.
+	BadgeMeasureMilestones
+	// BadgeMeasureSet: the threshold is the number of badges in the set
+	// the counter names ("badge_earned.set.<set>").
+	BadgeMeasureSet
+)
 
 // BadgeOp compares a fact with a value.
 type BadgeOp uint8
@@ -449,6 +614,9 @@ const (
 	// BadgePredAgeOverstay: the run has spent Threshold times the pacing
 	// target of the age it is in, in that age.
 	BadgePredAgeOverstay = "age_overstay"
+	// BadgePredMostlyAway: the run's credited time away is Threshold times
+	// its time played, or more.
+	BadgePredMostlyAway = "mostly_away"
 )
 
 // BadgeDef is one badge.
@@ -460,10 +628,17 @@ type BadgeDef struct {
 	// "special".
 	Family string
 	// Subject is the config key the badge is about. For a Run or Moment
-	// badge the event's subject must equal it ("" matches any).
+	// badge the event's subject must equal it ("" matches any), unless
+	// AnySubject is set.
 	Subject string
-	Name    string
-	Desc    string
+	// AnySubject: the badge is about Subject, and the event it is judged on
+	// is about something else (an age's buildings are counted as each
+	// building of it finishes; the census has no subject at all). The
+	// event's subject is not held to Subject; the row's counter and
+	// conditions name what is read.
+	AnySubject bool
+	Name       string
+	Desc       string
 	// Hint is the one line a secret badge shows until it is earned.
 	Hint   string
 	Tier   BadgeTier
@@ -492,8 +667,15 @@ type BadgeDef struct {
 	// "" for a badge on none. The rungs of a ladder share a Counter and
 	// are told apart by their Threshold.
 	Ladder string
-	Reward BadgeReward
-	Proof  BadgeProof
+	// Set names a set the badge belongs to ("civ.met"). Earning it adds
+	// to the counter "badge_earned.set.<Set>", which a badge for the whole
+	// set counts.
+	Set string
+	// Measure fills Threshold from the game's tables when the ruleset is
+	// compiled.
+	Measure BadgeMeasure
+	Reward  BadgeReward
+	Proof   BadgeProof
 	// Aliases are the keys this badge had in older account files (the four
 	// account achievements). An account holding one holds the badge.
 	Aliases []string
@@ -556,6 +738,18 @@ const (
 	BadgeSourceHarbingers
 	// BadgeSourceAwakenings: one per awakening, revealed when it fires.
 	BadgeSourceAwakenings
+	// BadgeSourceDooms: one per era a doom can strike in. {name} is the
+	// catastrophe ("The Great Plague"). Revealed when a warning names it.
+	BadgeSourceDooms
+	// BadgeSourceDomains: one per worker domain a building can be staffed
+	// in, revealed with its first building's age.
+	BadgeSourceDomains
+	// BadgeSourceExpeditions: one per expedition (BadgeExpeditions),
+	// revealed with its age.
+	BadgeSourceExpeditions
+	// BadgeSourceThemes: one per theme (BadgeThemes). A theme a badge
+	// gives shows when that badge is held.
+	BadgeSourceThemes
 )
 
 // BadgeRung is one step of a ladder.
@@ -572,6 +766,8 @@ type BadgeRung struct {
 //	{lname} the name in lower case      {rung}  the rung's name
 //	{n}     the rung's number, from 1   {count} the threshold, written out
 //	{era}   the order of the subject's era, from 0
+//	{Name}  the name with its first letter in upper case
+//	{techs} "all 6", "both" or "the one", for the subject age's techs
 type BadgeFamilyDef struct {
 	// Family is the badges' Family.
 	Family string
@@ -616,9 +812,30 @@ type BadgeFamilyDef struct {
 	Aliases map[string][]string
 	Rewards map[string]BadgeReward
 	// Emblem is every badge's emblem and Ladder the name of each subject's
-	// ladder, both templates ("lineage.{key}", "{name}").
-	Emblem string
-	Ladder string
+	// ladder, both templates ("lineage.{key}", "{name}"). Emblems
+	// overrides Emblem for a subject.
+	Emblem  string
+	Emblems map[string]string
+	Ladder  string
+	// Set is the set every badge of the family joins.
+	Set string
+	// Measure and Runs fill the thresholds from the game's tables: Runs is
+	// one number of runs a rung (BadgeMeasureProduction).
+	Measure BadgeMeasure
+	Runs    []float64
+	// Hint is every badge's hint, for a secret family.
+	Hint string
+	// When is every badge's extra conditions.
+	When []BadgeCond
+	// Thresholds is each subject's threshold, for a family that is not a
+	// ladder and whose number belongs to the subject (an age's buildings).
+	Thresholds map[string]float64
+	// RevealAtAge reveals each badge when the subject's own age is
+	// reached, whatever its table's usual rule (an age's badge otherwise
+	// shows one age early).
+	RevealAtAge bool
+	// AnySubject is BadgeDef.AnySubject for every badge of the family.
+	AnySubject bool
 }
 
 // BadgeEraTiers is the tier of a badge about an age, by its era's order:
@@ -626,143 +843,4 @@ type BadgeFamilyDef struct {
 // Digital and Neon gold, the Cosmic platinum.
 var BadgeEraTiers = []BadgeTier{
 	BadgeBronze, BadgeBronze, BadgeSilver, BadgeSilver, BadgeGold, BadgeGold, BadgePlatinum,
-}
-
-// BadgeFamilies returns the generated families.
-//
-// This is the seed catalog: Only keeps a few subjects of each family, enough
-// to exercise every path. The full catalog drops the Only lines and adds
-// rows.
-func BadgeFamilies() []BadgeFamilyDef {
-	return []BadgeFamilyDef{
-		{
-			Family: "age", Source: BadgeSourceAges,
-			Only: []string{"stone_age", "iron_age", "modern_age"},
-			Key:  "age.{key}", Name: "{name}", Desc: "Reach the {name}.",
-			Names: map[string]string{
-				"age.stone_age":  "Rock Solid",
-				"age.iron_age":   "Age of Iron",
-				"age.modern_age": "Into the Modern Age",
-			},
-			TierByEra: true,
-			Tiers:     map[string]BadgeTier{"transcendent_age": BadgeLegendary},
-			Scope:     BadgeMoment, Event: BadgeEvAgeReached,
-			RevealBySubject: true,
-			Proof:           StaticProof(BadgeRuleGate),
-			// An age wears the town centre of its era.
-			Emblem: "centre.{era}",
-			Aliases: map[string][]string{
-				"age.iron_age":   {"reached_iron"},
-				"age.modern_age": {"reached_modern"},
-			},
-		},
-		{
-			Family: "lineage", Source: BadgeSourceLineages,
-			Only: []string{"housing"},
-			Key:  "lineage.{key}.{n}", Name: "{name} {rung}",
-			Desc:  "Build {count} {lname} buildings across all your runs. Sold and rebuilt copies count once.",
-			Scope: BadgeLifetime, Counter: BadgeEvBuiltLineage + ".{key}",
-			Rungs: []BadgeRung{
-				{Name: "Hobbyist", Tier: BadgeBronze},
-				{Name: "Contractor", Tier: BadgeSilver},
-				{Name: "Magnate", Tier: BadgeGold},
-				{Name: "Tycoon", Tier: BadgePlatinum},
-				{Name: "Dynasty", Tier: BadgeLegendary},
-			},
-			Ladders:         map[string][]float64{"housing": {14, 57}},
-			RevealBySubject: true,
-			Proof:           StaticProof(BadgeRuleLifetime),
-			Emblem:          "lineage.{key}", Ladder: "{name}",
-		},
-		{
-			Family: "ladder", Source: BadgeSourceNone,
-			Key: "ladder.prestiges.{n}", Name: "{rung}",
-			Desc:  "Prestige {count} times.",
-			Scope: BadgeLifetime, Counter: BadgeEvPrestige,
-			Rungs: []BadgeRung{
-				{Name: "First Prestige", Tier: BadgeBronze},
-				{Name: "Creature of Habit", Tier: BadgeSilver},
-				{Name: "Serial Reincarnator", Tier: BadgeGold},
-				{Name: "Eternal Return", Tier: BadgeLegendary},
-			},
-			Descs:   map[string]string{"ladder.prestiges.1": "Prestige for the first time."},
-			Ladders: map[string][]float64{"": {1, 3, 10, 25}},
-			Proof:   StaticProof(BadgeRuleLifetime),
-			Emblem:  "star", Ladder: "Prestiges",
-			Aliases: map[string][]string{
-				"ladder.prestiges.1": {"first_prestige"},
-				"ladder.prestiges.3": {"prestige_x10"},
-			},
-		},
-	}
-}
-
-// Badges returns the hand-written badges: the specials and the integrity
-// badges. The seed catalog holds one or two of each kind.
-func Badges() []BadgeDef {
-	return []BadgeDef{
-		{
-			Key: "special.hut_hoarder", Family: "special", Subject: "hut",
-			Name: "Hut Hoarder",
-			// The prices quoted are checked against the cost curve
-			// (TestHutHoarderQuotesRealPrices).
-			Desc: "Have 60 huts standing before you leave the Primitive Age. The 60th costs 18,956 wood, 1,354 times the first.",
-			Tier: BadgeGold, Rarity: BadgeEpic,
-			Scope: BadgeRun, Event: BadgeEvBuildingBuilt, InAge: "primitive_age",
-			Counter: "standing.hut", Threshold: 60,
-			Emblem: "hut",
-			Proof:  StaticProof(BadgeRuleCopies),
-		},
-		{
-			Key: "special.fashionably_late", Family: "special",
-			Name:  "Fashionably Late",
-			Desc:  "Spend ten times the Primitive Age's pacing target in the Primitive Age.",
-			Tier:  BadgeBronze,
-			Scope: BadgeRun, Event: BadgeEvTick, InAge: "primitive_age",
-			Pred: BadgePredAgeOverstay, Threshold: 10,
-			Emblem: "sun",
-			Proof:  StaticProof(BadgeRuleTime),
-		},
-		{
-			Key: "special.liquidation_sale", Family: "special",
-			Name:  "Liquidation Sale",
-			Desc:  "Sell 100 buildings in one run.",
-			Hint:  "Something about a clearance.",
-			Tier:  BadgeBronze,
-			Scope: BadgeRun, Event: BadgeEvBuildingSold,
-			Counter: "run." + BadgeEvBuildingSold, Threshold: 100,
-			Reveal: BadgeReveal{Kind: BadgeSecret},
-			Emblem: "trade",
-			Proof:  StaticProof(BadgeRuleRunCount),
-		},
-		{
-			Key: "special.hand_in_the_cookie_jar", Family: "special",
-			Name:  "Hand in the Cookie Jar",
-			Desc:  "Unlock the developer console.",
-			Scope: BadgeMoment, Event: BadgeEvDevUnlocked,
-			Reveal: BadgeReveal{Kind: BadgeSecret},
-			Emblem: "cookie_jar",
-			Proof:  BadgeProof{Kind: BadgeProofIntegrity},
-		},
-		{
-			Key: "special.touched_by_the_source", Family: "special",
-			Name:  "Touched by the Source",
-			Desc:  "Load a save that carries the forge master's proof.",
-			Scope: BadgeMoment, Event: BadgeEvSaveElite,
-			Reveal: BadgeReveal{Kind: BadgeSecret},
-			Emblem: "source",
-			Reward: BadgeReward{Theme: "source"},
-			Proof:  BadgeProof{Kind: BadgeProofIntegrity},
-		},
-		{
-			Key: "special.creative_accounting", Family: "special",
-			Name:  "Creative Accounting",
-			Desc:  "Load a save that was edited outside the game.",
-			Scope: BadgeMoment, Event: BadgeEvSaveModified,
-			Reveal: BadgeReveal{Kind: BadgeSecret},
-			Emblem: "ledger",
-			Reward: BadgeReward{Theme: "glitch"},
-			Proof:  BadgeProof{Kind: BadgeProofIntegrity},
-		},
-	}
 }

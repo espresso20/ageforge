@@ -39,6 +39,7 @@ type scene struct {
 	fb      *fb
 	tier    mapmodel.GlyphTier
 	anim    int
+	visit   int // the frame the rare visitor is drawn at (Frame.VisitFrame)
 	W, H    int
 	S       int // scene rows
 	top     int // screen row of scene row 0
@@ -1373,7 +1374,7 @@ func (s *scene) cursor() {
 		}
 		return
 	case t.kind == tUFO:
-		if x, y, ok := saucerAt(s.m, s.anim, s.W); ok {
+		if x, y, ok := saucerAt(s.m, s.visit, s.W); ok {
 			mark, my := '▼', y-1
 			if my < 0 {
 				mark, my = '▲', y+1

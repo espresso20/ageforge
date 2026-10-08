@@ -484,3 +484,42 @@ func TestVisitor(t *testing.T) {
 		}
 	}
 }
+
+// TestVisitorComesWithMotionOff: with the motion setting off the animation
+// frame holds at 0 and the clock runs on, so the visitor still arrives,
+// stands where the middle of its visit puts it, inspects as
+// mapstyle.KindAlien, and leaves when the visit ends.
+func TestVisitorComesWithMotionOff(t *testing.T) {
+	m := modelFor(t, fixture.Options{Age: "space_age", Seed: 7})
+	for a, kinds := 0, 0; kinds < 3; kinds++ {
+		sg := mapmodel.NextSighting(m.Seed, true, a)
+		a = sg.Start + sg.Frames
+		still := func(clock int) mapstyle.Frame {
+			return mapstyle.Frame{Model: m, Clock: clock, Tier: mapmodel.TierUnicode}
+		}
+		v := newView()
+		at := func(clock int) (visit, bool) {
+			s := capture.NewScreen(164, 50)
+			fillScreen(s)
+			v.Draw(s, mapstyle.Rect{X: 2, Y: 1, W: 160, H: 48}, still(clock))
+			return v.visitNow()
+		}
+		first, ok := at(sg.Start + 1)
+		if !ok {
+			t.Fatalf("with motion off no visitor shows inside a visit (kind %d)", sg.Kind)
+		}
+		last, ok := at(sg.Start + sg.Frames - 1)
+		if !ok || last.at != first.at {
+			t.Errorf("with motion off the visitor moved during its visit: %v, then %v", first.at, last.at)
+		}
+		v.cur = first.at[1]
+		if ins, _ := v.Inspect(still(sg.Start + 1)); ins.Kind != mapstyle.KindAlien {
+			t.Errorf("with motion off the visitor does not inspect as one: %+v", ins)
+		}
+		for _, clock := range []int{sg.Start - 1, sg.Start + sg.Frames} {
+			if _, ok := at(clock); ok {
+				t.Errorf("with motion off a visitor shows at clock %d, outside its visit", clock)
+			}
+		}
+	}
+}

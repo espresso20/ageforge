@@ -2,6 +2,8 @@
 
 AgeForge has 77 milestones, and 33 of them form 6 chains. Completing every milestone in a chain grants your civilization a **title** and a **temporary game speed boost**. Some milestones stay hidden until you make progress toward them.
 
+Milestones belong to one run: they pay inside it and start over with the next. What you keep across runs is on your account, as [badges](badges.md). Milestones feed some of those: two badge ladders count the milestones and the chains you complete across all your runs, and a few one-off badges ask for chains finished in a single run.
+
 Every milestone and every chain can be completed. See [Can every milestone be done?](#can-every-milestone-be-done) below.
 
 > When a milestone or chain completes, the log shows the achievement, its reward, and a short cosmetic **flavor quip** on a dim line below ("You built a Wonder. Your neighbors are impressed. One is drafting a strongly worded letter."). The quip is only there for character; the reward text above it is the part that matters.
@@ -11,6 +13,8 @@ Every milestone and every chain can be completed. See [Can every milestone be do
 ---
 
 ## Civilization titles
+
+A civilization title belongs to the run you are playing and shows in the Milestones panel. It is not the title your account wears, which comes from your badges (see [Titles](badges.md#titles)).
 
 When a chain is completed, its title overrides any count-based fallback. The boost adds to game speed, so +300% runs the game four times as fast for its duration:
 

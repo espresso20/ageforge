@@ -557,6 +557,10 @@ func (ge *GameEngine) harbingerLogLines() {
 // under the write lock and must not call back into the engine.
 func (ge *GameEngine) publishHarbinger(def config.HarbingerDef, targetEpoch string, handoff bool) {
 	ge.note(config.BadgeEvHarbingerMet, def.Key)
+	if targetEpoch != "" {
+		// The warning names the era's doom.
+		ge.note(config.BadgeEvDoomNamed, targetEpoch)
+	}
 	ge.Bus.Publish(EventData{
 		Type: EventHarbingerArrived,
 		Payload: map[string]interface{}{
@@ -1159,7 +1163,8 @@ func (ge *GameEngine) HarbingerInvite() error {
 	h := ge.harbinger
 	h.Invited = true
 	def, _ := ge.rules.Harbinger(h.Age)
-	ge.note(config.BadgeEvInvited, def.Key)
+	ge.report(Event{Kind: config.BadgeEvInvited, Subject: def.Key,
+		Attrs: map[string]float64{"last": boolFact(h.TargetEpoch == "")}})
 	if h.TargetEpoch == "" {
 		ge.inviteCatastrophe()
 		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",

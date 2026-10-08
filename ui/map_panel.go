@@ -33,7 +33,17 @@ func animFrame(motion bool, since time.Duration) int {
 	if !motion {
 		return 0
 	}
-	return int(since / mapAnimStep)
+	return worldFrame(since)
+}
+
+// worldFrame is the map's clock after since, in animation frames. It runs
+// whatever the motion setting says: the picture can hold still, but what
+// happens in the world (a visitor arriving) still happens.
+func worldFrame(since time.Duration) int { return int(since / mapAnimStep) }
+
+// mapFrame is the frame a map draws after since.
+func mapFrame(m *mapmodel.Model, set mapSettings, since time.Duration) mapstyle.Frame {
+	return mapstyle.Frame{Model: m, Anim: animFrame(set.Motion, since), Clock: worldFrame(since), Tier: set.Tier}
 }
 
 // mapIconsHint is the one-time hint the first Map panel open shows.
@@ -114,6 +124,10 @@ type mapPanel struct {
 	// toPrompt hands a key the map does not take to the command bar, and
 	// the keyboard with it, when the panel itself has the focus.
 	toPrompt func(ev *tcell.EventKey)
+	// spotted is told when the cursor is on the rare visitor, once a
+	// visit; onVisitor is whether it was there at the last look.
+	spotted   func(kind string)
+	onVisitor bool
 }
 
 func newMapPanel(mv *mapViews) *mapPanel {
@@ -155,6 +169,20 @@ func (p *mapPanel) update(state game.GameState) {
 		p.set = s
 	}
 	p.model = p.mv.model(&state)
+	p.lookForVisitor()
+}
+
+// lookForVisitor tells the game when the cursor stands on the rare visitor
+// (mapstyle.KindAlien), once each time it comes to stand there. It runs on
+// every refresh while the panel is open and after every key, never from
+// Draw: the game takes its own lock to hear it.
+func (p *mapPanel) lookForVisitor() {
+	in, ok := p.current().Inspect(p.frame())
+	on := ok && in.Kind == mapstyle.KindAlien
+	if on && !p.onVisitor && p.spotted != nil {
+		p.spotted(in.Kind)
+	}
+	p.onVisitor = on
 }
 
 // current is the active style's view, with the panel's flows setting.
@@ -179,7 +207,7 @@ func (p *mapPanel) setFlows(mode string) bool {
 }
 
 func (p *mapPanel) frame() mapstyle.Frame {
-	return mapstyle.Frame{Model: p.model, Anim: animFrame(p.set.Motion, p.now().Sub(p.start)), Tier: p.set.Tier}
+	return mapFrame(p.model, p.set, p.now().Sub(p.start))
 }
 
 // Draw draws the style over all but the last row, and the key bar on it.
@@ -316,6 +344,7 @@ func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
 	used := p.current().HandleKey(ev, p.frame())
 	if used {
 		p.note = ""
+		p.lookForVisitor()
 	}
 	return used
 }

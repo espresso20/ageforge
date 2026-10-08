@@ -158,5 +158,6 @@ func (ge *GameEngine) PlanAddResearchChain(key string) ([]string, error) {
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: k, Count: 1})
 		ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], 1)
 	}
+	ge.notePlanSize()
 	return chain, nil
 }

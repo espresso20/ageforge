@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -43,6 +44,28 @@ func sellSome(ge *GameEngine, key string, n int) {
 	ge.noteSold(key, n)
 }
 
+// incidental reports whether key is a badge an advance earns on the side:
+// the looks the account wears as it advances (theme, map style, glyphs) and
+// the awakening an age brings. The tests about other badges set them aside.
+func incidental(key string) bool {
+	for _, p := range []string{"theme.", "map.", "awakening."} {
+		if strings.HasPrefix(key, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// mainKeys is keys without the incidental badges.
+func mainKeys(keys []string) []string {
+	return slices.DeleteFunc(slices.Clone(keys), incidental)
+}
+
+// mainViews is views without the incidental badges.
+func mainViews(views []BadgeView) []BadgeView {
+	return slices.DeleteFunc(slices.Clone(views), func(v BadgeView) bool { return incidental(v.Key) })
+}
+
 func counter(a *Account, name string) float64 {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -69,9 +92,16 @@ func TestAgeBadgeEarnedOnAdvance(t *testing.T) {
 		t.Errorf("the badge is %+v, want dated, earned in the save \"run\" and unflagged", e)
 	}
 
-	earned := ge.DrainEarnedBadges()
+	all := ge.DrainEarnedBadges()
+	earned := mainViews(all)
 	if len(earned) != 1 || earned[0].Key != badgeStone || earned[0].Name != "Rock Solid" || earned[0].Hidden {
 		t.Fatalf("drained %+v, want the Stone Age badge with its text", earned)
+	}
+	// The advance also earns what the account wore as it advanced.
+	for _, key := range []string{"theme.forge", "map.style.roguelike", "map.glyphs.unicode"} {
+		if !slices.ContainsFunc(all, func(v BadgeView) bool { return v.Key == key }) {
+			t.Errorf("advancing in the default looks did not earn %s: %v", key, earnedKeys(all))
+		}
 	}
 	if got, want := BadgeLogLine(earned[0]), "Badge earned: Rock Solid (bronze). Reach the Stone Age."; got != want {
 		t.Errorf("log line %q, want %q", got, want)
@@ -206,8 +236,13 @@ func TestLineageLadderCountsABuildOnce(t *testing.T) {
 	acct.mu.Lock()
 	names := sortedKeys(acct.Counters)
 	acct.mu.Unlock()
-	if !slices.Equal(names, []string{housing}) {
-		t.Errorf("the account keeps counters no badge names: %v", names)
+	for _, name := range names {
+		if !ge.badges.counters[name] {
+			t.Errorf("the account keeps the counter %s, which no badge names", name)
+		}
+	}
+	if !slices.Contains(names, housing) || slices.Contains(names, config.BadgeEvBuilt+".hut") {
+		t.Errorf("counters kept: %v, want the housing lineage and not the hut itself", names)
 	}
 
 	// The marks are the run's: they are saved with it and come back.
@@ -354,7 +389,7 @@ func TestDevTouchedRunEarnsBadges(t *testing.T) {
 
 	want := []string{badgeStone, badgePrestige1, badgeHousing1, badgeSale}
 	slices.Sort(want)
-	if earned := acct.EarnedBadges(); !slices.Equal(earned, want) {
+	if earned := mainKeys(acct.EarnedBadges()); !slices.Equal(earned, want) {
 		t.Errorf("a dev-touched run earned %v, want %v", earned, want)
 	}
 	for _, key := range acct.EarnedBadges() {
@@ -369,7 +404,7 @@ func TestDevTouchedRunEarnsBadges(t *testing.T) {
 	if stats.TotalPrestiges != 1 || stats.HighestAge != "stone_age" {
 		t.Errorf("lifetime stats from a dev-touched run: %+v", stats)
 	}
-	if pending := ge.DrainEarnedBadges(); len(pending) != len(want) {
+	if pending := mainViews(ge.DrainEarnedBadges()); len(pending) != len(want) {
 		t.Errorf("%d toasts queued, want %d", len(pending), len(want))
 	}
 }
@@ -396,7 +431,7 @@ func TestCookieJar(t *testing.T) {
 	if !v.Earned || !v.Integrity || v.Points != 0 || v.Tier != "" || v.Hidden {
 		t.Errorf("the cookie jar badge: %+v", v)
 	}
-	if after != before {
+	if !reflect.DeepEqual(after, before) {
 		t.Errorf("an integrity badge moved the totals: before %+v, after %+v", before, after)
 	}
 	// It is earned the same in a run the console has already changed, and
@@ -453,8 +488,22 @@ func TestModifiedSaveCrossesItsBadges(t *testing.T) {
 	if !stone.Earned || !stone.Crossed {
 		t.Fatalf("a badge earned in a modified game: %+v", stone)
 	}
-	if sum.Earned != 1 || sum.Points != 0 {
-		t.Errorf("totals with one crossed badge: %+v, want 1 earned and 0 points", sum)
+	// Everything the advance earned is crossed, and a crossed badge is
+	// worth nothing.
+	crossed := 0
+	for _, v := range views {
+		if v.Integrity {
+			continue
+		}
+		if v.Earned && !v.Crossed {
+			t.Errorf("%s was earned uncrossed in a modified game", v.Key)
+		}
+		if v.Earned {
+			crossed++
+		}
+	}
+	if crossed == 0 || sum.Earned != crossed || sum.Points != 0 {
+		t.Errorf("totals with %d crossed badges: %+v, want them earned and 0 points", crossed, sum)
 	}
 }
 
@@ -518,22 +567,40 @@ func TestBadgesHideWhatTheSpoilerRulesHide(t *testing.T) {
 			t.Errorf("%s should be a silhouette with no text: %+v", key, v)
 		}
 	}
+	// A hidden badge carries nothing that says what it is.
+	hidden := 0
 	for _, v := range views {
 		if !v.Hidden {
 			continue
 		}
-		for _, leak := range []string{"Iron", "Modern", "Liquidation", "Sell"} {
-			if strings.Contains(v.Name+v.Desc, leak) {
-				t.Errorf("the hidden badge %s names %q: %+v", v.Key, leak, v)
-			}
+		hidden++
+		def, _ := rules.Core().Badge(v.Key)
+		// A secret badge shows its one-line hint, and nothing else.
+		if hint := v.Desc; (v.Secret && hint != def.Hint) || (!v.Secret && hint != "") {
+			t.Errorf("the hidden badge %s shows %q", v.Key, hint)
+		}
+		if v.Name != BadgeHiddenName || v.Emblem != "" || v.Ladder != "" || v.RewardTheme != "" || v.RewardTitle != "" {
+			t.Errorf("the hidden badge %s says something: %+v", v.Key, v)
 		}
 	}
-	// 14 badges: 2 integrity (unlisted), 3 hidden (two ages, one secret), 9 shown.
-	if sum.Shown != 9 || sum.Hidden != 3 || sum.Earned != 0 || sum.HiddenCounted {
-		t.Errorf("totals for a new account: %+v", sum)
+	// The integrity badges are unlisted until earned; every other badge is
+	// shown or hidden, and a new account is told only how many it can see.
+	listed := 0
+	for _, d := range rules.Core().Badges() {
+		if !d.Integrity() {
+			listed++
+		}
 	}
-	if len(views) != 12 {
-		t.Errorf("%d badges listed, want 12 (the integrity badges are left out)", len(views))
+	if len(views) != listed {
+		t.Errorf("%d badges listed, want %d (the integrity badges are left out)", len(views), listed)
+	}
+	if sum.Hidden != hidden || sum.Shown != listed-hidden || hidden == 0 || sum.Earned != 0 || sum.HiddenCounted {
+		t.Errorf("totals for a new account: %+v, with %d of %d hidden", sum, hidden, listed)
+	}
+	// A new account sees the first age's badges and nothing of the last
+	// era's: most of the catalog is still ahead of it.
+	if sum.Shown >= sum.Hidden {
+		t.Errorf("a new account sees %d badges and has %d hidden; most of the catalog should be ahead of it", sum.Shown, sum.Hidden)
 	}
 
 	// Reaching the Bronze Age makes the Iron Age the next one: its badge shows.
@@ -629,12 +696,27 @@ func TestBadgesDoNotChangeTheRun(t *testing.T) {
 func TestBadgeForEarningBadges(t *testing.T) {
 	isolateAccountDir(t)
 	src := rules.FromConfig()
-	src.Badges = append(src.Badges, config.BadgeDef{
-		Key: "special.collector", Family: "special", Name: "Collector", Desc: "Earn 2 badges.",
-		Tier: config.BadgeBronze, Scope: config.BadgeLifetime,
-		Counter: config.BadgeEvBadge, Threshold: 2,
-		Proof: config.BadgeProof{Kind: config.BadgeProofDerived},
-	})
+	// A catalog of four: the integrity badges, two plain ones and the one
+	// that counts them.
+	src.BadgeFamilies = nil
+	src.Badges = slices.DeleteFunc(src.Badges, func(d config.BadgeDef) bool { return !d.Integrity() })
+	src.Badges = append(src.Badges,
+		config.BadgeDef{
+			Key: "age.stone_age", Family: "age", Subject: "stone_age", Name: "Rock Solid", Desc: "Reach the Stone Age.",
+			Tier: config.BadgeBronze, Scope: config.BadgeMoment, Event: config.BadgeEvAgeReached,
+			Proof: config.StaticProof(config.BadgeRuleGate),
+		},
+		config.BadgeDef{
+			Key: "ladder.prestiges.1", Family: "ladder", Name: "First Prestige", Desc: "Prestige for the first time.",
+			Tier: config.BadgeBronze, Scope: config.BadgeLifetime, Counter: config.BadgeEvPrestige, Threshold: 1,
+			Proof: config.StaticProof(config.BadgeRuleLifetime),
+		},
+		config.BadgeDef{
+			Key: "special.collector", Family: "special", Name: "Collector", Desc: "Earn 2 badges.",
+			Tier: config.BadgeBronze, Scope: config.BadgeLifetime,
+			Counter: config.BadgeEvBadge, Threshold: 2,
+			Proof: config.BadgeProof{Kind: config.BadgeProofDerived},
+		})
 	acct, err := CreateAccount("Ada")
 	if err != nil {
 		t.Fatal(err)
@@ -741,9 +823,15 @@ func TestListAccountsCountsBadges(t *testing.T) {
 		t.Fatal(err)
 	}
 	before := slotFile(t, acct.AccountID)
+	want := 0
+	for _, key := range acct.EarnedBadges() {
+		if def, _ := rules.Core().Badge(key); !def.Integrity() {
+			want++
+		}
+	}
 	list := ge.ListAccounts()
-	if len(list) != 1 || list[0].Badges != 1 {
-		t.Errorf("the account list counts %+v, want 1 badge (the integrity badge is left out)", list)
+	if len(list) != 1 || want == 0 || list[0].Badges != want {
+		t.Errorf("the account list counts %+v, want %d badges (the integrity badge is left out)", list, want)
 	}
 	if after := slotFile(t, acct.AccountID); string(after) != string(before) {
 		t.Error("listing the accounts rewrote an account file")

@@ -114,24 +114,6 @@ type Dashboard struct {
 	// Owned by the tview goroutine.
 	iconsWin *iconsWindow
 
-	// Milestone-gated theme unlocks (the theming design §5; see theme_unlock.go). Both fields
-	// are owned by the UI goroutine — touched only from refresh(), which runs inside
-	// QueueUpdateDraw and never under the engine lock, so account.UnlockTheme's Save
-	// is safe here.
-	//
-	// themeProcessedKeys de-dupes: each completed milestone/chain key is handled once
-	// per process, so we don't re-ask UnlockedBy / UnlockTheme every tick.
-	//
-	// themeSyncDone is false until the first refresh has processed the load's already-
-	// completed milestones; that first pass unlocks their themes SILENTLY (retroactive
-	// grants), and only unlocks during live play afterward fire the toast.
-	themeProcessedKeys map[string]bool
-	themeSyncDone      bool
-	// themeAccountID is the account themeProcessedKeys and themeSyncDone belong to. When
-	// the account changes they start over, so the new account's own run is evaluated
-	// (silently on its first pass) instead of skipping keys another account processed.
-	themeAccountID string
-
 	// The maps: the shared model builder and style registry, the Map panel
 	// and the dashboard's mini map. UI goroutine only. mapLocal holds the
 	// map settings when no account is loaded (session only).
@@ -164,17 +146,16 @@ type Dashboard struct {
 func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.Pages) *Dashboard {
 	mv := newMapViews(all.Registry())
 	d := &Dashboard{
-		app:                app,
-		engine:             engine,
-		mapViews:           mv,
-		mapPanel:           newMapPanel(mv),
-		researchPanel:      newResearchPanel(),
-		badgePanel:         newBadgePanel(),
-		miniMap:            newMiniMap(mv),
-		pages:              pages,
-		stopCh:             make(chan struct{}),
-		histIdx:            -1,
-		themeProcessedKeys: make(map[string]bool),
+		app:           app,
+		engine:        engine,
+		mapViews:      mv,
+		mapPanel:      newMapPanel(mv),
+		researchPanel: newResearchPanel(),
+		badgePanel:    newBadgePanel(),
+		miniMap:       newMiniMap(mv),
+		pages:         pages,
+		stopCh:        make(chan struct{}),
+		histIdx:       -1,
 	}
 	d.build()
 	d.overlayMgr = NewOverlayManager(d.pages, d.app, func() {
@@ -249,6 +230,11 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.inputField.SetText(cmd)
 	}
 	d.mapPanel.prompt = func() string { return d.inputField.GetText() }
+	d.mapPanel.spotted = func(kind string) {
+		// tview goroutine (a refresh or a key handler), outside the engine
+		// lock: the account hears that its player looked at a visitor.
+		d.engine.NoteVisitorInspected(kind)
+	}
 	d.mapPanel.toPrompt = func(ev *tcell.EventKey) {
 		// The map itself had the keyboard: give it back to the prompt,
 		// starting with this key.
@@ -793,12 +779,9 @@ func (d *Dashboard) refresh() {
 	state := d.engine.GetState()
 	d.lastState = &state
 
-	// Milestone-gated theme unlocks (the theming design §5). Runs here, in the UI goroutine,
-	// because account.UnlockTheme persists (file I/O) and must not run under the
-	// engine lock / in a Bus handler. GetState() above already released the lock.
-	d.processThemeUnlocks(state)
-	// Badges earned since the last refresh: a toast and a log line each. Here for
-	// the same reason as the themes: outside the engine lock, never in a Bus handler.
+	// Badges earned since the last refresh: a toast and a log line each, and a
+	// line for the theme a badge gives. Here, in the UI goroutine: outside the
+	// engine lock, never in a Bus handler.
 	d.announceBadges()
 
 	// Phase 9: catastrophe modal — show once per new pending catastrophe; Esc hides it
@@ -870,61 +853,10 @@ func (d *Dashboard) refresh() {
 	d.refreshWorkerMini(state)
 }
 
-// processThemeUnlocks grants milestone-gated themes for newly-completed milestones/
-// chains (the theming design §5), toasting only genuinely-new unlocks during live play.
-//
-// Locking: this is called from refresh() (inside QueueUpdateDraw, on the tview
-// goroutine), which does NOT hold the engine lock — it operates on the GetState()
-// snapshot. So the account Save inside UnlockTheme is safe here; doing this in a Bus
-// handler or under ge.mu would deadlock (CLAUDE.md Bus rule).
-//
-// First-sync handling: the first call processes the load's already-completed
-// milestones with themeSyncDone==false, so evaluateThemeUnlock unlocks their themes
-// SILENTLY (no toast spam for retroactive grants). Subsequent calls run with
-// themeSyncDone==true, so a milestone completed during play toasts once. Each
-// completed key is recorded in themeProcessedKeys so it's evaluated only once per
-// process (idempotent regardless, since UnlockTheme is a no-op once owned).
-//
-// Only a run that records to the account grants themes (state.AccountRecords): not one
-// that belongs to another account (the game still in memory after an account switch,
-// whose milestones are not this account's). Such a run's keys are left unprocessed, so
-// the account's own run loaded later is still evaluated.
-func (d *Dashboard) processThemeUnlocks(state game.GameState) {
-	if !state.AccountRecords {
-		return
-	}
-	var acct *game.Account
-	if d.engine != nil {
-		acct = d.engine.Account()
-	}
-	if acct != nil && acct.AccountID != d.themeAccountID {
-		d.themeAccountID = acct.AccountID
-		d.themeProcessedKeys = make(map[string]bool)
-		d.themeSyncDone = false
-	}
-	firstSync := !d.themeSyncDone
-
-	for _, key := range completedUnlockKeys(state.Milestones) {
-		if d.themeProcessedKeys[key] {
-			continue // already handled this process
-		}
-		d.themeProcessedKeys[key] = true
-		res := evaluateThemeUnlock(acct, key, firstSync)
-		if res.Toast {
-			// AddLog takes the engine lock internally, but we don't hold it here, so
-			// this is safe (it's a plain method call, not a Bus subscriber).
-			d.engine.AddLog("success", themeUnlockToast(res.ThemeName))
-		}
-	}
-
-	// Mark first-sync complete after the first pass so live-play unlocks toast.
-	d.themeSyncDone = true
-}
-
 // announceBadges drains the badges the account earned since the last refresh
 // (the engine judged them under its lock and only queued them) and gives each a
 // toast in the badge's own colours, written for the width of the toast bar, and
-// one log line. The line is fixed per badge, so earning one draws
+// one log line, with a second line for the theme it unlocks when it gives one. The line is fixed per badge, so earning one draws
 // nothing from the run's random streams.
 func (d *Dashboard) announceBadges() {
 	if d.engine == nil {
@@ -933,6 +865,9 @@ func (d *Dashboard) announceBadges() {
 	for _, v := range d.engine.DrainEarnedBadges() {
 		d.toastMgr.ShowFit(func(w int) string { return badgeToast(v, d.mapSettings().Tier, w) }, 5*time.Second)
 		d.engine.AddLog("success", game.BadgeLogLine(v))
+		if t, ok := theme.ByKey(v.RewardTheme); ok {
+			d.engine.AddLog("success", themeUnlockToast(t.Name))
+		}
 	}
 }
 
@@ -1070,10 +1005,10 @@ func statusLine(state game.GameState, w int) string {
 				name = name[:19] + "…"
 			}
 			acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
-			// The title the account's badge score holds, once it is past the
-			// one every account starts with, and only on a bar with room.
-			if sum := state.AccountStats.BadgeSummary; sum.TitleRank > 0 && level == 0 {
-				acctStr = fmt.Sprintf("[gold]%s[-] [gray]%s[-] · ", name, sum.Title)
+			// The title the account wears, once it is not the one every
+			// account starts with, and only on a bar with room.
+			if sum := state.AccountStats.BadgeSummary; level == 0 && (sum.TitleRank > 0 || wornTitle(sum) != sum.Title) {
+				acctStr = fmt.Sprintf("[gold]%s[-] [gray]%s[-] · ", name, wornTitle(sum))
 			}
 		}
 		hint := ""

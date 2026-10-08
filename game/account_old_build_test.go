@@ -2,6 +2,7 @@ package game
 
 import (
 	"encoding/json"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -105,9 +106,11 @@ func TestNewLayoutFixtureIsCurrent(t *testing.T) {
 
 // TestOldBuildResaveKeepsBadges: the older build loaded the account,
 // changed a setting and saved it, never seeing the badge file. Loaded here
-// afterwards the account is unflagged, every badge is still earned and
-// dated as before, and neither file is rewritten, on the first load or the
-// second.
+// afterwards the account is unflagged and every badge is still earned and
+// dated as before. The catalog has grown since the fixture was written, so
+// the first load also grants what the record proves under it (the Bronze
+// Age, between the two ages the fixture holds), undated. account.json is
+// not rewritten, and a second load rewrites neither file.
 func TestOldBuildResaveKeepsBadges(t *testing.T) {
 	isolateAccountDir(t)
 	id, accountRaw, badgesRaw := installSplit(t, "after_old_resave/account.json", true)
@@ -115,22 +118,31 @@ func TestOldBuildResaveKeepsBadges(t *testing.T) {
 	if len(before.Badges) < 4 {
 		t.Fatalf("precondition: the fixture holds %d badges", len(before.Badges))
 	}
+	const picked = "age.bronze_age"
+	wantBadges := maps.Clone(before.Badges)
+	wantBadges[picked] = BadgeEarned{}
+	wantCounters := maps.Clone(before.Counters)
+	wantCounters[config.BadgeEvBadge] = float64(len(wantBadges))
 
+	var firstBadges []byte
 	for load := 1; load <= 2; load++ {
 		ge, acct := openIn(t, id)
 		if acct.Tampered || acct.BadgesTampered {
 			t.Fatalf("load %d: the account reads as modified after the older build saved it (account %v, badge file %v)", load, acct.Tampered, acct.BadgesTampered)
 		}
-		if !reflect.DeepEqual(acct.Badges, before.Badges) {
-			t.Errorf("load %d: badges\n got %+v\nwant %+v", load, acct.Badges, before.Badges)
+		if !reflect.DeepEqual(acct.Badges, wantBadges) {
+			t.Errorf("load %d: badges\n got %+v\nwant %+v", load, acct.Badges, wantBadges)
 		}
 		for key, e := range acct.Badges {
+			if key == picked {
+				continue
+			}
 			if e.At == 0 || e.Run == "" || e.Flags != 0 {
 				t.Errorf("load %d: %s is %+v, want dated, with its run, uncrossed", load, key, e)
 			}
 		}
-		if !reflect.DeepEqual(acct.Counters, before.Counters) || !slices.Equal(acct.Days, before.Days) {
-			t.Errorf("load %d: counters %v days %v, want %v %v", load, acct.Counters, acct.Days, before.Counters, before.Days)
+		if !reflect.DeepEqual(acct.Counters, wantCounters) || !slices.Equal(acct.Days, before.Days) {
+			t.Errorf("load %d: counters %v days %v, want %v %v", load, acct.Counters, acct.Days, wantCounters, before.Days)
 		}
 		// What the older build changed is there.
 		if _, glyphs, _ := acct.MapPrefs(); glyphs != "ascii" {
@@ -145,8 +157,16 @@ func TestOldBuildResaveKeepsBadges(t *testing.T) {
 		if got := slotFile(t, id); string(got) != string(accountRaw) {
 			t.Errorf("load %d rewrote account.json:\nwas %s\nnow %s", load, accountRaw, got)
 		}
-		if got := slotBadgeFile(t, id); string(got) != string(badgesRaw) {
-			t.Errorf("load %d rewrote the badge file:\nwas %s\nnow %s", load, badgesRaw, got)
+		got := slotBadgeFile(t, id)
+		if load == 1 {
+			firstBadges = got
+			if bf := storedBadges(t, got); !verifyBadgeFile(&bf) || bf.Tampered {
+				t.Errorf("the badge file after the first load: verifies %v, tampered %v", verifyBadgeFile(&bf), bf.Tampered)
+			}
+			continue
+		}
+		if string(got) != string(firstBadges) {
+			t.Errorf("load %d rewrote the badge file:\nwas %s\nnow %s", load, firstBadges, got)
 		}
 	}
 }
@@ -155,9 +175,10 @@ func TestOldBuildResaveKeepsBadges(t *testing.T) {
 // file sitting in the slot, the older build played on and earned two
 // old-style achievements (reached_modern, prestige_x10) and nine more
 // prestiges. This build picks all of it up: the badges are granted, undated
-// and uncrossed, the counter catches up, what was earned before keeps its
-// date, account.json is left as the older build wrote it, and a second load
-// writes identical bytes.
+// and uncrossed (with the badge of every age up to the one reached), the
+// counter catches up, what was earned before keeps its date, account.json is
+// left as the older build wrote it but for the theme a granted age badge
+// unlocks, and a second load writes identical bytes.
 func TestOldBuildAchievementsBecomeBadges(t *testing.T) {
 	isolateAccountDir(t)
 	id, accountRaw, badgesRaw := installSplit(t, "after_old_play/account.json", true)
@@ -167,10 +188,15 @@ func TestOldBuildAchievementsBecomeBadges(t *testing.T) {
 	if acct.Tampered || acct.BadgesTampered {
 		t.Fatalf("the account reads as modified after the older build played it (account %v, badge file %v)", acct.Tampered, acct.BadgesTampered)
 	}
-	want := []string{badgeIron, badgeModern, badgeStone, badgePrestige1, badgePrestige3, badgePrestige10, badgeHousing1}
+	want := append(ageBadges("modern_age"), badgePrestige1, badgePrestige3, badgePrestige10, badgeHousing1)
 	slices.Sort(want)
 	if got := acct.EarnedBadges(); !slices.Equal(got, want) {
 		t.Fatalf("badges %v, want %v", got, want)
+	}
+	// The Renaissance Age's badge gives Parchment; the account already had
+	// Bronze, and keeps it.
+	if got := acct.UnlockedThemes(); !slices.Equal(got, []string{"bronze", "parchment"}) {
+		t.Errorf("unlocked themes %v, want bronze (held) and parchment (from the Renaissance Age badge)", got)
 	}
 	for key, e := range acct.Badges {
 		if was, held := before.Badges[key]; held {
@@ -193,9 +219,13 @@ func TestOldBuildAchievementsBecomeBadges(t *testing.T) {
 		t.Errorf("picking up the older build's play announced badges: %+v", earned)
 	}
 
-	// account.json is the older build's, untouched; the badge file caught up.
-	if got := slotFile(t, id); string(got) != string(accountRaw) {
-		t.Errorf("account.json was rewritten:\nwas %s\nnow %s", accountRaw, got)
+	// account.json is the older build's but for the theme; the badge file
+	// caught up.
+	firstAccount := slotFile(t, id)
+	assertOldShape(t, firstAccount)
+	assertOnlyUnlocksDiffer(t, accountRaw, firstAccount)
+	if disk := slotAccount(t, id); !verifyAccount(disk) || disk.Tampered {
+		t.Errorf("account.json after the theme: verifies %v, tampered %v", verifyAccount(disk), disk.Tampered)
 	}
 	first := slotBadgeFile(t, id)
 	if string(first) == string(badgesRaw) {
@@ -213,7 +243,7 @@ func TestOldBuildAchievementsBecomeBadges(t *testing.T) {
 	if again.Tampered || again.BadgesTampered || len(ge2.DrainEarnedBadges()) != 0 {
 		t.Errorf("the second load: flags %v %v", again.Tampered, again.BadgesTampered)
 	}
-	if got := slotFile(t, id); string(got) != string(accountRaw) {
+	if got := slotFile(t, id); string(got) != string(firstAccount) {
 		t.Error("the second load rewrote account.json")
 	}
 	if got := slotBadgeFile(t, id); string(got) != string(first) {
@@ -256,8 +286,10 @@ func TestOldBuildImportsNewExport(t *testing.T) {
 	if acct.Tampered || acct.BadgesTampered {
 		t.Errorf("flags after loading the older build's import: %v %v", acct.Tampered, acct.BadgesTampered)
 	}
-	if earned := acct.EarnedBadges(); !slices.Equal(earned, []string{badgeIron, badgeStone, badgePrestige1}) {
-		t.Errorf("badges from the record: %v", earned)
+	wantEarned := append(ageBadges("iron_age"), badgePrestige1)
+	slices.Sort(wantEarned)
+	if earned := acct.EarnedBadges(); !slices.Equal(earned, wantEarned) {
+		t.Errorf("badges from the record: %v, want %v", earned, wantEarned)
 	}
 }
 
