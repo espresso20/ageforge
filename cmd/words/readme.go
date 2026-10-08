@@ -180,22 +180,25 @@ func readme(c *catalog) string {
 	p("A sentence in an `any` pool can turn up in every age, so it must not name anything that belongs to one era. The other pools are held to their ages. Each catalog also has to keep its mix: about one sentence in five of 3 to 6 words, about one in ten over 33, and at least three in ten told flat with no joke. `go test ./flavor` checks the mix after an import, so a batch of rewrites that all get longer or all get shorter can fail it even when every row is fine.")
 	p("")
 	for _, mo := range moments {
-		var pools []string
-		total, perAge, perAgeN := 0, 0, 0
+		var pools, ofAge []string
+		total, perAgeN := 0, 0
 		for _, pl := range c.fl.order {
 			if pl.m != mo || pl.size == 0 {
 				continue
 			}
 			total += pl.size
+			entry := fmt.Sprintf("`%s` (%s) %d", pl.bucket, poolName(c.w, pl), pl.size)
 			if _, isAge := c.w.ageIdx[pl.bucket]; isAge {
-				perAge++
+				ofAge = append(ofAge, entry)
 				perAgeN += pl.size
 				continue
 			}
-			pools = append(pools, fmt.Sprintf("`%s` (%s) %d", pl.bucket, poolName(c.w, pl), pl.size))
+			pools = append(pools, entry)
 		}
-		if perAge > 0 {
-			pools = append(pools, fmt.Sprintf("and %d pools named for one age each (`stone_age`, `iron_age` and so on), %d sentences between them", perAge, perAgeN))
+		if len(ofAge) > 4 {
+			pools = append(pools, fmt.Sprintf("and %d pools each held to one age and named for it (`stone_age`, `iron_age` and so on), %d sentences between them", len(ofAge), perAgeN))
+		} else {
+			pools = append(pools, ofAge...)
 		}
 		p("### %s", mo.title)
 		p("")

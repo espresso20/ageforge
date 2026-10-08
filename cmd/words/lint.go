@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode"
@@ -355,7 +356,13 @@ func (cr *copyRules) check(r *row, yours string) []string {
 		if len(spans) == 0 {
 			spans = allSpans
 		}
-		for word, homes := range cr.eraWords {
+		words := make([]string, 0, len(cr.eraWords))
+		for word := range cr.eraWords {
+			words = append(words, word)
+		}
+		sort.Strings(words)
+		for _, word := range words {
+			homes := cr.eraWords[word]
 			if !cr.eraRes[word].MatchString(yours) || cr.eraRes[word].MatchString(r.current) {
 				continue
 			}
