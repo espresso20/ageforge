@@ -165,7 +165,7 @@ func readme(c *catalog) string {
 	p("")
 	p("## Renaming something")
 	p("")
-	p("A `name` row is the name of a building, tech, badge, age and so on. The game looks things up by key, never by name, so a rename is safe for saves. It does show up in other places, which the import lists for you after it applies the row: wiki pages under `site/docs`, the landing page, and tests that quote the old name. The wiki's tech tables are regenerated for you. The other pages are yours to edit, and the wiki's pictures of the game are redrawn with `go test -tags mapcapture -run TestWriteSiteScreens ./ui`.")
+	p("A `name` row is the name of a building, tech, badge, age and so on. The game looks things up by key, never by name, so a rename is safe for saves. It does show up in other places, which the import lists for you after it applies the row: wiki pages under `site/docs`, the landing page, and tests that quote the old name. The wiki's tech tables are regenerated for you. For a line that is not a name, the import lists the wiki pages that still quote it word for word. The other pages are yours to edit, and the wiki's pictures of the game are redrawn with `go test -tags mapcapture -run TestWriteSiteScreens ./ui`.")
 	p("")
 	p("Three kinds of name have a second copy that must match, and `same_as` keeps them together: an expedition's name (the badge case has its own copy), a theme's name (the same), and a title a badge gives. A trade route's name and description also decide how the route travels on the map: the map looks for words such as rail, ship, port, air and warp.")
 	p("")

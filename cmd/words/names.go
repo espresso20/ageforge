@@ -112,6 +112,13 @@ func followUps(c *catalog, root string, changes []change, o importOptions, out i
 		fmt.Fprintln(out, "  wiki: a page under site/, to edit by hand. generated: a picture of the game, redrawn with")
 		fmt.Fprintln(out, "  go test -tags mapcapture -run TestWriteSiteScreens ./ui. test: a test that quotes the name.")
 	}
+	// Any other rewritten line that the wiki quotes word for word.
+	if stale := wikiQuotes(root, changes); len(stale) > 0 {
+		fmt.Fprintln(out, "\nThe wiki still quotes these lines as they were. The import does not edit it:")
+		for _, line := range stale {
+			fmt.Fprintln(out, "  "+line)
+		}
+	}
 	if !tables {
 		return
 	}
@@ -130,4 +137,40 @@ func followUps(c *catalog, root string, changes []change, o importOptions, out i
 		}
 		fmt.Fprintln(out, "\nRegenerated the wiki's tech tables (site/docs/technologies.md).")
 	}
+}
+
+// wikiQuotes lists the wiki pages that still hold the old text of a
+// rewritten line that is not a name, a page a line: the page, how many
+// lines, and the first few ids. Only lines long enough to be found
+// reliably (twelve characters) are looked for.
+func wikiQuotes(root string, changes []change) []string {
+	var lines []change
+	for _, ch := range changes {
+		if ch.r.kind != kindName && len([]rune(strings.TrimSpace(ch.r.current))) >= 12 {
+			lines = append(lines, ch)
+		}
+	}
+	if len(lines) == 0 {
+		return nil
+	}
+	var out []string
+	for _, q := range loadQuoters(root) {
+		if q.kind != "wiki" {
+			continue
+		}
+		var ids []string
+		for _, ch := range lines {
+			if strings.Contains(q.text, strings.TrimSpace(ch.r.current)) {
+				ids = append(ids, ch.r.id)
+			}
+		}
+		switch {
+		case len(ids) == 0:
+		case len(ids) <= 3:
+			out = append(out, fmt.Sprintf("%s: %s", q.rel, strings.Join(ids, ", ")))
+		default:
+			out = append(out, fmt.Sprintf("%s: %d lines (%s, ...)", q.rel, len(ids), strings.Join(ids[:3], ", ")))
+		}
+	}
+	return out
 }

@@ -544,6 +544,13 @@ func (fr *flavorReader) bankRows(c *catalog) {
 		first := users[0]
 		r.area = first.area
 		r.age = first.age
+		// The entry and the longest sentence that takes it must fit the
+		// line together.
+		longest := 0
+		for _, us := range users {
+			longest = max(longest, len([]rune(us.current)))
+		}
+		r.max = c.rules.maxLine - longest
 		seen := map[string]bool{}
 		for _, us := range users {
 			if us.age < r.age {

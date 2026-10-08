@@ -459,4 +459,22 @@ func TestRenameListsWhatQuotesTheName(t *testing.T) {
 			t.Errorf("the follow-up after a rename should mention %q:\n%s", want, out.String())
 		}
 	}
+	// A line that is not a name, which a wiki page quotes word for word.
+	root := realRoot(t)
+	for _, q := range loadQuoters(root) {
+		if q.kind != "wiki" {
+			continue
+		}
+		for _, row := range c.rows {
+			text := strings.TrimSpace(row.current)
+			if row.kind == kindName || len([]rune(text)) < 12 || !strings.Contains(q.text, text) {
+				continue
+			}
+			got := strings.Join(wikiQuotes(root, []change{{r: row, text: text + " More."}}), "\n")
+			if !strings.Contains(got, q.rel+": "+row.id) {
+				t.Errorf("%s quotes %s and should be listed, got %q", q.rel, row.id, got)
+			}
+			return
+		}
+	}
 }
