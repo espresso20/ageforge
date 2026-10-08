@@ -133,21 +133,41 @@ type Theme struct {
 	// and the empty-pair for the always-available set.
 	UnlockMilestone string // milestone key (config/milestones.go) — XOR with UnlockChain
 	UnlockChain     string // milestone-chain key — XOR with UnlockMilestone
+	// UnlockBadge is the key of the account badge whose reward the theme is
+	// (config/badges.go). The engine unlocks the theme when the badge is earned,
+	// so a badge theme is in no unlock index here: the field is the theme's side
+	// of the pairing, for the picker and the registry tests. A gated theme sets
+	// exactly one of UnlockMilestone, UnlockChain and UnlockBadge.
+	UnlockBadge string
 
 	// UnlockHint is the human-readable unlock condition shown for a LOCKED theme in
 	// the picker detail pane and `theme list` (e.g. "Reach the Cyberpunk Age").
 	// Required for gated themes; empty for always-available ones.
 	UnlockHint string
+
+	// Effect names an ambient effect the theme carries: a little motion drawn
+	// in cells that are otherwise empty (EffectRain, EffectGlitch). "" for none.
+	// The UI draws it, and only while the game's motion setting is on.
+	Effect string
 }
+
+// The ambient effects a theme may carry.
+const (
+	// EffectRain: code falling down the empty columns.
+	EffectRain = "rain"
+	// EffectGlitch: now and then a row of static tears across the empty cells.
+	EffectGlitch = "glitch"
+)
 
 // Gated reports whether the theme is milestone-gated (declares an unlock
 // condition). Always-available themes (Accessible / Standard) are not gated.
 func (t Theme) Gated() bool {
-	return t.UnlockMilestone != "" || t.UnlockChain != ""
+	return t.UnlockMilestone != "" || t.UnlockChain != "" || t.UnlockBadge != ""
 }
 
 // UnlockKey returns the single milestone-or-chain key that unlocks a gated theme
-// (whichever of UnlockMilestone/UnlockChain is set), and "" for an un-gated theme.
+// (whichever of UnlockMilestone/UnlockChain is set), and "" for an un-gated theme
+// and for one a badge gives (UnlockBadge: the engine unlocks those).
 func (t Theme) UnlockKey() string {
 	if t.UnlockMilestone != "" {
 		return t.UnlockMilestone

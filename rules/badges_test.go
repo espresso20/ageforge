@@ -16,7 +16,7 @@ func TestSeedCatalog(t *testing.T) {
 		"lineage.housing.1", "lineage.housing.2",
 		"ladder.prestiges.1", "ladder.prestiges.2", "ladder.prestiges.3", "ladder.prestiges.4",
 		"special.hut_hoarder", "special.fashionably_late", "special.liquidation_sale",
-		"special.hand_in_the_cookie_jar", "special.creative_accounting",
+		"special.hand_in_the_cookie_jar", "special.touched_by_the_source", "special.creative_accounting",
 	}
 	var got []string
 	for _, b := range Core().Badges() {

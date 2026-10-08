@@ -333,6 +333,30 @@ type BadgeReward struct {
 	Title string
 }
 
+// BadgeScoreTitle is a title the account's badge score earns.
+type BadgeScoreTitle struct {
+	// Points is the least score that holds the title.
+	Points int
+	Title  string
+}
+
+// BadgeScoreTitles returns the score titles, lowest first. The first one
+// asks for nothing, so every account holds a title.
+func BadgeScoreTitles() []BadgeScoreTitle {
+	return []BadgeScoreTitle{
+		{0, "Settler"},
+		{250, "Headman"},
+		{1000, "Magistrate"},
+		{3000, "Sovereign"},
+		{6000, "Paragon"},
+		{10000, "Eternal"},
+	}
+}
+
+// BadgeCompleteTitle is the title of an account that holds every badge
+// that counts toward completion.
+const BadgeCompleteTitle = "Completionist"
+
 // BadgeProofKind is how a badge is known to be earnable.
 type BadgeProofKind uint8
 
@@ -459,8 +483,15 @@ type BadgeDef struct {
 	// Reveal is the spoiler rule. Text shown before the reveal may name no
 	// age later than the one it reveals at; the guard checks it.
 	Reveal BadgeReveal
-	// Emblem is the symbol the badge case draws; "" takes the family's.
+	// Emblem names the symbol the badge case draws: a name from the
+	// case's emblem table ("hut", "star"), "lineage.<key>" for a
+	// lineage's map symbol, or "centre.<n>" for the town centre of era n.
+	// "" takes the family's, and a star without one.
 	Emblem string
+	// Ladder is the name of the ladder the badge is a rung of ("Housing"),
+	// "" for a badge on none. The rungs of a ladder share a Counter and
+	// are told apart by their Threshold.
+	Ladder string
 	Reward BadgeReward
 	Proof  BadgeProof
 	// Aliases are the keys this badge had in older account files (the four
@@ -540,6 +571,7 @@ type BadgeRung struct {
 //	{key}   the subject's key           {name}  its display name
 //	{lname} the name in lower case      {rung}  the rung's name
 //	{n}     the rung's number, from 1   {count} the threshold, written out
+//	{era}   the order of the subject's era, from 0
 type BadgeFamilyDef struct {
 	// Family is the badges' Family.
 	Family string
@@ -583,6 +615,10 @@ type BadgeFamilyDef struct {
 	// Aliases and Rewards are by badge key.
 	Aliases map[string][]string
 	Rewards map[string]BadgeReward
+	// Emblem is every badge's emblem and Ladder the name of each subject's
+	// ladder, both templates ("lineage.{key}", "{name}").
+	Emblem string
+	Ladder string
 }
 
 // BadgeEraTiers is the tier of a badge about an age, by its era's order:
@@ -613,6 +649,8 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Scope:     BadgeMoment, Event: BadgeEvAgeReached,
 			RevealBySubject: true,
 			Proof:           StaticProof(BadgeRuleGate),
+			// An age wears the town centre of its era.
+			Emblem: "centre.{era}",
 			Aliases: map[string][]string{
 				"age.iron_age":   {"reached_iron"},
 				"age.modern_age": {"reached_modern"},
@@ -634,6 +672,7 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Ladders:         map[string][]float64{"housing": {14, 57}},
 			RevealBySubject: true,
 			Proof:           StaticProof(BadgeRuleLifetime),
+			Emblem:          "lineage.{key}", Ladder: "{name}",
 		},
 		{
 			Family: "ladder", Source: BadgeSourceNone,
@@ -649,6 +688,7 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Descs:   map[string]string{"ladder.prestiges.1": "Prestige for the first time."},
 			Ladders: map[string][]float64{"": {1, 3, 10, 25}},
 			Proof:   StaticProof(BadgeRuleLifetime),
+			Emblem:  "star", Ladder: "Prestiges",
 			Aliases: map[string][]string{
 				"ladder.prestiges.1": {"first_prestige"},
 				"ladder.prestiges.3": {"prestige_x10"},
@@ -670,7 +710,8 @@ func Badges() []BadgeDef {
 			Tier: BadgeGold, Rarity: BadgeEpic,
 			Scope: BadgeRun, Event: BadgeEvBuildingBuilt, InAge: "primitive_age",
 			Counter: "standing.hut", Threshold: 60,
-			Proof: StaticProof(BadgeRuleCopies),
+			Emblem: "hut",
+			Proof:  StaticProof(BadgeRuleCopies),
 		},
 		{
 			Key: "special.fashionably_late", Family: "special",
@@ -679,7 +720,8 @@ func Badges() []BadgeDef {
 			Tier:  BadgeBronze,
 			Scope: BadgeRun, Event: BadgeEvTick, InAge: "primitive_age",
 			Pred: BadgePredAgeOverstay, Threshold: 10,
-			Proof: StaticProof(BadgeRuleTime),
+			Emblem: "sun",
+			Proof:  StaticProof(BadgeRuleTime),
 		},
 		{
 			Key: "special.liquidation_sale", Family: "special",
@@ -690,6 +732,7 @@ func Badges() []BadgeDef {
 			Scope: BadgeRun, Event: BadgeEvBuildingSold,
 			Counter: "run." + BadgeEvBuildingSold, Threshold: 100,
 			Reveal: BadgeReveal{Kind: BadgeSecret},
+			Emblem: "trade",
 			Proof:  StaticProof(BadgeRuleRunCount),
 		},
 		{
@@ -698,6 +741,17 @@ func Badges() []BadgeDef {
 			Desc:  "Unlock the developer console.",
 			Scope: BadgeMoment, Event: BadgeEvDevUnlocked,
 			Reveal: BadgeReveal{Kind: BadgeSecret},
+			Emblem: "cookie_jar",
+			Proof:  BadgeProof{Kind: BadgeProofIntegrity},
+		},
+		{
+			Key: "special.touched_by_the_source", Family: "special",
+			Name:  "Touched by the Source",
+			Desc:  "Load a save that carries the forge master's proof.",
+			Scope: BadgeMoment, Event: BadgeEvSaveElite,
+			Reveal: BadgeReveal{Kind: BadgeSecret},
+			Emblem: "source",
+			Reward: BadgeReward{Theme: "source"},
 			Proof:  BadgeProof{Kind: BadgeProofIntegrity},
 		},
 		{
@@ -706,6 +760,8 @@ func Badges() []BadgeDef {
 			Desc:  "Load a save that was edited outside the game.",
 			Scope: BadgeMoment, Event: BadgeEvSaveModified,
 			Reveal: BadgeReveal{Kind: BadgeSecret},
+			Emblem: "ledger",
+			Reward: BadgeReward{Theme: "glitch"},
 			Proof:  BadgeProof{Kind: BadgeProofIntegrity},
 		},
 	}

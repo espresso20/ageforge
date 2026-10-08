@@ -38,6 +38,7 @@ const sweepTimeout = 4 * time.Second
 // should open. The first block mirrors the sidebar list (buildSidebarText).
 var sweepOverlays = []struct{ cmd, overlay string }{
 	{"milestones", "milestones"},
+	{"badges", "badges"},
 	{"research", "techs"},
 	{"plan", "plan"},
 	{"expedition", "expedition"},
@@ -54,6 +55,7 @@ var sweepOverlays = []struct{ cmd, overlay string }{
 	{"help", "help"},
 	// Not in the sidebar, still reachable by command.
 	{"buildings", "buildings"},
+	{"achievements", "badges"},
 	{"diplomacy", "factions"},
 	{"citymap", "map"},
 	{"worldmap", "map"},
@@ -64,7 +66,7 @@ var sweepOverlays = []struct{ cmd, overlay string }{
 var sweepCommands = []string{
 	"status", "rates", "build", "upgrade", "wonder", "festival", "blackmarket",
 	"prestige", "prestige shop", "catastrophe", "theme", "theme list",
-	"saves", "account", "plan list", "wonder overflow", "map style", "map glyphs",
+	"saves", "account", "plan list", "wonder overflow", "map style", "map glyphs", "motion",
 }
 
 type sweeper struct {

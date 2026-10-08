@@ -68,6 +68,7 @@ type Dashboard struct {
 	pendingEpochChanged bool   // whether the pending age advance also crossed an epoch boundary
 	toastMgr            *ToastManager
 	toastTV             *tview.TextView
+	toastW              int // the toast bar's width as last drawn; 0 before that
 	contentArea         *tview.Flex
 
 	// Shame badge — set once on first load when CheaterBadge is true
@@ -139,14 +140,22 @@ type Dashboard struct {
 	// researchPanel is the Research panel, the tech tree as a map
 	// (research_panel.go).
 	researchPanel *researchPanel
-	miniMap       *miniMap
-	mapDock       *mapDock
-	mapLocal      *mapSettings
+	// badgePanel is the badge case (badge_panel.go).
+	badgePanel *badgePanel
+	miniMap    *miniMap
+	mapDock    *mapDock
+	mapLocal   *mapSettings
 	// icons is the guided icons check (icons.go).
 	icons *iconsFlow
 	// mapOpen is set while the Map panel is open, so the refresh loop
 	// redraws it at the animation rate. Read off the UI goroutine.
 	mapOpen atomic.Bool
+	// fxOn is set while the active theme's ambient effect is drawn
+	// (theme_fx.go), for the same reason. rootFx is the root that draws
+	// it and fxStart the effect's clock.
+	fxOn    atomic.Bool
+	rootFx  *fxRoot
+	fxStart time.Time
 
 	stopCh chan struct{}
 }
@@ -160,6 +169,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		mapViews:           mv,
 		mapPanel:           newMapPanel(mv),
 		researchPanel:      newResearchPanel(),
+		badgePanel:         newBadgePanel(),
 		miniMap:            newMiniMap(mv),
 		pages:              pages,
 		stopCh:             make(chan struct{}),
@@ -184,6 +194,12 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		}
 	}
 	d.overlayMgr.RegisterWidget("techs", "Research", d.researchPanel.open, d.researchPanel.update, true)
+	// The badge case: the account's badges. It leaves the keyboard with the
+	// command bar too.
+	d.badgePanel.settings = d.mapSettings
+	d.badgePanel.prompt = d.researchPanel.prompt
+	d.badgePanel.toPrompt = d.researchPanel.toPrompt
+	d.overlayMgr.RegisterWidget("badges", "Badges", d.badgePanel.open, d.badgePanel.update, true)
 	d.overlayMgr.Register("army", "Army", militaryProvider)
 	d.overlayMgr.Register("expedition", "Expeditions", expeditionsProvider)
 	d.overlayMgr.Register("trade", "Trade", tradeProvider)
@@ -299,6 +315,13 @@ func (d *Dashboard) build() {
 	d.toastTV = tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
+
+	// The bar's width, once it has been drawn: a toast written to fit
+	// (a badge's) asks for it. Until then it is 0, any width.
+	d.toastTV.SetDrawFunc(func(_ tcell.Screen, x, y, w, h int) (int, int, int, int) {
+		d.toastW = w
+		return x, y, w, h
+	})
 
 	// Subscribe to events for toasts
 	// NOTE: Bus handlers run under the engine write lock. Never call GetState()
@@ -511,6 +534,11 @@ func (d *Dashboard) build() {
 			(d.researchPanel.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && d.researchPanel.closeCard()) {
 			return nil
 		}
+		// And the open badge case, where Esc closes a badge's detail first.
+		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "badges" && d.inputField.HasFocus() &&
+			(d.badgePanel.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && d.badgePanel.closeCard()) {
+			return nil
+		}
 		switch event.Key() {
 		case resourcePageKey:
 			// The Resources box's next page, when it has more rows than it
@@ -557,7 +585,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 // sidebarPanels is the Panels list, in order.
-var sidebarPanels = []string{"milestones", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "map", "help"}
+var sidebarPanels = []string{"milestones", "badges", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "map", "help"}
 
 // buildSidebarText is the Panels list in one column, the open panel
 // highlighted: the list as it shows when the screen is tall enough for it.
@@ -577,7 +605,9 @@ func buildSidebarText(active string) string {
 // sidebarText is the Panels list for a box w cells wide and h rows tall
 // inside: one column when every name gets a row (under a blank line when
 // there is a row to spare), else two columns read down then across, so a
-// short screen still lists every panel.
+// short screen still lists every panel. When even two columns are too
+// many rows (the smallest screen), the first column stays a name a row and
+// the rest are packed beside it, as many to a row as fit.
 func sidebarText(active string, w, h int) string {
 	n := len(sidebarPanels)
 	if h > n {
@@ -586,7 +616,58 @@ func sidebarText(active string, w, h int) string {
 	if h == n {
 		return strings.TrimPrefix(buildSidebarText(active), "\n")
 	}
+	cell := func(cmd string, width int) string {
+		padded := cmd + strings.Repeat(" ", max(width-len(cmd), 0))
+		if cmd == active {
+			return theme.Selected(padded)
+		}
+		return "[white]" + padded + "[-]"
+	}
+	// pack writes names as rows of at most room cells, a space between two.
+	pack := func(names []string, room int) [][]string {
+		var rows [][]string
+		used := 0
+		for _, name := range names {
+			if len(rows) == 0 || used+1+len(name) > room {
+				rows = append(rows, nil)
+				used = -1
+			}
+			rows[len(rows)-1] = append(rows[len(rows)-1], name)
+			used += 1 + len(name)
+		}
+		return rows
+	}
+	join := func(names []string) string {
+		cells := make([]string, len(names))
+		for i, name := range names {
+			cells[i] = cell(name, len(name))
+		}
+		return strings.Join(cells, " ")
+	}
+	var sb strings.Builder
 	rows := (n + 1) / 2
+	if rows > h && h > 0 {
+		leftW := 0
+		for _, cmd := range sidebarPanels[:h] {
+			leftW = max(leftW, len(cmd))
+		}
+		right := pack(sidebarPanels[h:], w-leftW-1)
+		if len(right) > h {
+			// Not even that fits: every name, packed across the box.
+			for _, row := range pack(sidebarPanels, w) {
+				sb.WriteString(join(row) + "\n")
+			}
+			return sb.String()
+		}
+		for i := 0; i < h; i++ {
+			sb.WriteString(cell(sidebarPanels[i], leftW))
+			if i < len(right) {
+				sb.WriteString(" " + join(right[i]))
+			}
+			sb.WriteString("\n")
+		}
+		return sb.String()
+	}
 	leftW, rightW := 0, 0
 	for i, cmd := range sidebarPanels {
 		if i < rows {
@@ -596,14 +677,6 @@ func sidebarText(active string, w, h int) string {
 		}
 	}
 	gap := max(1, min(2, w-leftW-rightW))
-	cell := func(cmd string, width int) string {
-		padded := cmd + strings.Repeat(" ", width-len(cmd))
-		if cmd == active {
-			return theme.Selected(padded)
-		}
-		return "[white]" + padded + "[-]"
-	}
-	var sb strings.Builder
 	for i := 0; i < rows; i++ {
 		sb.WriteString(cell(sidebarPanels[i], leftW))
 		if j := i + rows; j < n {
@@ -614,9 +687,34 @@ func sidebarText(active string, w, h int) string {
 	return sb.String()
 }
 
-// Root returns the root primitive for page registration
+// Root returns the root primitive for page registration: the layout, and
+// over it the active theme's ambient effect.
 func (d *Dashboard) Root() tview.Primitive {
-	return d.root
+	if d.rootFx == nil {
+		d.rootFx = &fxRoot{Flex: d.root, after: d.drawEffect}
+	}
+	return d.rootFx
+}
+
+// drawEffect draws the active theme's ambient effect over the dashboard,
+// when the theme has one and the motion setting is on.
+func (d *Dashboard) drawEffect(scr tcell.Screen, x, y, w, h int) {
+	effect := theme.Active().Effect
+	if effect == "" {
+		d.fxOn.Store(false)
+		return
+	}
+	set := d.mapSettings()
+	d.fxOn.Store(set.Motion)
+	if !set.Motion {
+		return
+	}
+	if d.fxStart.IsZero() {
+		d.fxStart = time.Now()
+	}
+	// Not in the command bar: nothing moves where the player types.
+	h -= promptRows
+	drawThemeEffect(scr, x, y, w, h, effect, int(time.Since(d.fxStart)/mapAnimStep), set.Tier == mapmodel.TierASCII)
 }
 
 // StartUpdates begins the UI refresh loop, polling at 500 ms (2 fps).
@@ -639,10 +737,15 @@ func (d *Dashboard) StartUpdates() {
 			case <-anim.C:
 				// The open Map panel animates between refreshes: a redraw
 				// is enough, since its frame counter runs on the clock.
-				if d.mapOpen.Load() {
+				// So does the badge case, while it shows a badge that moves,
+				// and a theme with an ambient effect.
+				if d.mapOpen.Load() || d.badgePanel.moving.Load() || d.fxOn.Load() {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
+						}
+						if d.overlayMgr.ActiveName() != "badges" {
+							d.badgePanel.moving.Store(false)
 						}
 					})
 				}
@@ -748,7 +851,7 @@ func (d *Dashboard) refresh() {
 	d.refreshStatus(state)
 	d.refreshAgeProgress(state)
 	d.refreshLog(state)
-	d.toastTV.SetText(safeTags(d.toastMgr.GetCurrent()))
+	d.toastTV.SetText(safeTags(d.toastMgr.CurrentFor(d.toastW)))
 
 	// Economy tab is always visible as the permanent background
 	d.economyTab.Refresh(state)
@@ -820,14 +923,15 @@ func (d *Dashboard) processThemeUnlocks(state game.GameState) {
 
 // announceBadges drains the badges the account earned since the last refresh
 // (the engine judged them under its lock and only queued them) and gives each a
-// toast and one log line. The line is fixed per badge, so earning one draws
+// toast in the badge's own colours, written for the width of the toast bar, and
+// one log line. The line is fixed per badge, so earning one draws
 // nothing from the run's random streams.
 func (d *Dashboard) announceBadges() {
 	if d.engine == nil {
 		return
 	}
 	for _, v := range d.engine.DrainEarnedBadges() {
-		d.toastMgr.Show(badgeToast(v), "gold", 5*time.Second)
+		d.toastMgr.ShowFit(func(w int) string { return badgeToast(v, d.mapSettings().Tier, w) }, 5*time.Second)
 		d.engine.AddLog("success", game.BadgeLogLine(v))
 	}
 }
@@ -966,6 +1070,11 @@ func statusLine(state game.GameState, w int) string {
 				name = name[:19] + "…"
 			}
 			acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
+			// The title the account's badge score holds, once it is past the
+			// one every account starts with, and only on a bar with room.
+			if sum := state.AccountStats.BadgeSummary; sum.TitleRank > 0 && level == 0 {
+				acctStr = fmt.Sprintf("[gold]%s[-] [gray]%s[-] · ", name, sum.Title)
+			}
 		}
 		hint := ""
 		switch level {
@@ -1300,6 +1409,9 @@ func (d *Dashboard) submitInput() {
 	if result.OverlayName == "techs" {
 		d.researchPanel.request(result.ResearchZoom, result.ResearchCard)
 	}
+	if result.OverlayName == "badges" {
+		d.badgePanel.request(result.Badges)
+	}
 	if result.Icons {
 		d.startIcons()
 	}
@@ -1314,10 +1426,14 @@ func (d *Dashboard) submitInput() {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
 		d.updateSidebar(result.OverlayName)
-		if result.OverlayName == "map" || result.OverlayName == "techs" {
+		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" {
 			// The command bar keeps the keyboard while the map is open.
 			d.overlayMgr.FocusOn(d.inputField)
 		}
+	} else if d.overlayMgr.ActiveName() == "badges" {
+		// A command typed over the case (map glyphs, motion): show what it
+		// changed now rather than at the next refresh.
+		d.badgePanel.update(d.engine.GetState())
 	} else if d.overlayMgr.ActiveName() == "techs" {
 		// A command typed over the tree (research <tech>, plan research):
 		// show what it changed now rather than at the next refresh.

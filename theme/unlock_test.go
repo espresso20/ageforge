@@ -7,8 +7,8 @@ import "testing"
 func TestUnlockedByRoundTrip(t *testing.T) {
 	gatedSeen := 0
 	for _, th := range All() {
-		if !th.Gated() {
-			continue
+		if !th.Gated() || th.UnlockBadge != "" {
+			continue // a badge's theme is unlocked by the engine, not through this index
 		}
 		gatedSeen++
 		key := th.UnlockKey()
@@ -48,9 +48,10 @@ func TestGatedThemeRegistryConsistency(t *testing.T) {
 		alwaysAvailable := th.AlwaysAvailable()
 		hasMilestone := th.UnlockMilestone != ""
 		hasChain := th.UnlockChain != ""
+		hasBadge := th.UnlockBadge != ""
 
 		if alwaysAvailable {
-			if hasMilestone || hasChain {
+			if hasMilestone || hasChain || hasBadge {
 				t.Errorf("theme %q is always-available (accessible=%v, default=%v) but declares an unlock condition (milestone=%q chain=%q); it must declare neither",
 					th.Key, th.Accessible, th.Key == DefaultKey, th.UnlockMilestone, th.UnlockChain)
 			}
@@ -63,10 +64,26 @@ func TestGatedThemeRegistryConsistency(t *testing.T) {
 			continue
 		}
 
-		// Gated theme: exactly one of milestone/chain (XOR), and a hint.
-		if hasMilestone == hasChain {
-			t.Errorf("gated theme %q must set EXACTLY ONE of UnlockMilestone/UnlockChain; got milestone=%q chain=%q",
-				th.Key, th.UnlockMilestone, th.UnlockChain)
+		// Gated theme: exactly one of milestone, chain and badge, and a hint.
+		set := 0
+		for _, has := range []bool{hasMilestone, hasChain, hasBadge} {
+			if has {
+				set++
+			}
+		}
+		if set != 1 {
+			t.Errorf("gated theme %q must set EXACTLY ONE of UnlockMilestone/UnlockChain/UnlockBadge; got milestone=%q chain=%q badge=%q",
+				th.Key, th.UnlockMilestone, th.UnlockChain, th.UnlockBadge)
+		}
+		if hasBadge {
+			if got, ok := UnlockedBy(th.UnlockBadge); ok {
+				t.Errorf("badge theme %q is in the milestone unlock index (as %q): the engine unlocks it", th.Key, got)
+			}
+			switch th.Effect {
+			case "", EffectRain, EffectGlitch:
+			default:
+				t.Errorf("theme %q carries the effect %q, which the UI does not draw", th.Key, th.Effect)
+			}
 		}
 		if th.UnlockHint == "" {
 			t.Errorf("gated theme %q has an empty UnlockHint; a locked theme must explain how to unlock it", th.Key)

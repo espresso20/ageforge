@@ -39,6 +39,10 @@ type CommandResult struct {
 	// tech's card. Empty leaves the panel as it was.
 	ResearchZoom string
 	ResearchCard string
+	// Badges says how the badge case (OverlayName "badges") opens: on a
+	// tab, or on a badge with its detail open. The zero value leaves the
+	// case as it was.
+	Badges badgeRequest
 	// Icons asks the dashboard to start the guided icons check.
 	Icons bool
 	// MapPref is a map setting change (map style, map glyphs, minimap) for
@@ -155,6 +159,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdMapStyle(args, engine)
 	case "minimap":
 		return cmdMinimap(args, engine)
+	case "motion":
+		return cmdMotion(args, engine)
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "harbinger", "harb":
@@ -172,6 +178,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdLoad(args, engine)
 	case "account", "acct":
 		return cmdAccount(args, engine)
+	case "badges", "achievements":
+		return cmdBadges(args, engine)
 	case "theme":
 		return cmdTheme(args, engine)
 	case "icons":
@@ -2808,6 +2816,70 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	}
 	if err := acct.SetMapGlyphs(name); err != nil {
 		return errorResult(fmt.Errorf("the map glyphs could not be saved: %w", err))
+	}
+	return res
+}
+
+// cmdBadges opens the badge case: bare, on a family's tab ("badges ages"),
+// on the badges nearest their count ("badges next"), or on one badge's
+// detail by its name ("badges hut hoarder"). A name is looked for among the
+// badges in sight only: a withheld badge has no name to find.
+func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
+	res := CommandResult{OverlayName: "badges"}
+	if len(args) == 0 {
+		return res
+	}
+	want := strings.ToLower(strings.Join(args, " "))
+	if want == "all" {
+		res.Badges = badgeRequest{tab: caseTabAll, setTab: true}
+		return res
+	}
+	if want == "next" {
+		res.Badges = badgeRequest{tab: caseTabNext, setTab: true}
+		return res
+	}
+	views, _ := engine.Badges()
+	if tab, ok := findBadgeTab(views, want); ok {
+		res.Badges = badgeRequest{tab: tab, setTab: true}
+		return res
+	}
+	if key, ok := findBadge(views, want); ok {
+		res.Badges = badgeRequest{sel: key, card: true}
+		return res
+	}
+	return CommandResult{Type: "error", Message: fmt.Sprintf("No badge or family in sight is called %q. Type badges to look through them.", strings.Join(args, " "))}
+}
+
+// cmdMotion shows or sets the motion setting: whether the maps, the badge
+// case and a theme's ambient effect move. On by default.
+func cmdMotion(args []string, engine *game.GameEngine) CommandResult {
+	acct := engine.Account()
+	if len(args) == 0 {
+		state := "off"
+		if resolveMapSettings(acct, all.Registry()).Motion {
+			state = "on"
+		}
+		return CommandResult{Type: "info", Message: "Motion: " + state + ". Type motion on or motion off to change it."}
+	}
+	if len(args) > 1 {
+		return usageError(usageFor("motion"), fmt.Errorf("on or off, please"))
+	}
+	val := strings.ToLower(args[0])
+	if val != "on" && val != "off" {
+		return usageError(usageFor("motion"), fmt.Errorf("motion takes on or off, not %q", args[0]))
+	}
+	on := val == "on"
+	res := CommandResult{Type: game.LogRoutine, Message: "Motion off. The maps, the badge case and theme effects hold still. Type motion on to bring it back.",
+		MapPref: mapPref{Key: "motion", Value: val}}
+	if on {
+		res.Message = "Motion on. The maps, the badge case and theme effects move again."
+	}
+	if acct == nil {
+		res.Type, res.Message = "info", res.Message+mapSessionOnly
+		return res
+	}
+	if err := acct.SetMotion(on); err != nil {
+		return errorResult(fmt.Errorf("the motion setting could not be saved: %w", err))
 	}
 	return res
 }
