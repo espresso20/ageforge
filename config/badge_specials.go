@@ -416,20 +416,20 @@ func Badges() []BadgeDef {
 		},
 		{
 			Key: "special.collector", Family: "special",
-			Name: "Collector", Desc: "Earn 25 badges.",
-			Tier: BadgeBronze, Scope: BadgeLifetime, Counter: BadgeEvBadge, Threshold: 25,
+			Name: "Collector", Desc: "Earn 15 badges.",
+			Tier: BadgeBronze, Scope: BadgeLifetime, Counter: BadgeEvBadge, Threshold: 15,
 			Emblem: "star", Ladder: "Badges earned", Proof: DerivedProof(),
 		},
 		{
 			Key: "special.curator", Family: "special",
-			Name: "Curator", Desc: "Earn 100 badges.",
-			Tier: BadgeSilver, Scope: BadgeLifetime, Counter: BadgeEvBadge, Threshold: 100,
+			Name: "Curator", Desc: "Earn 45 badges.",
+			Tier: BadgeSilver, Scope: BadgeLifetime, Counter: BadgeEvBadge, Threshold: 45,
 			Emblem: "star", Ladder: "Badges earned", Proof: DerivedProof(),
 		},
 		{
 			Key: "special.archivist", Family: "special",
-			Name: "Archivist", Desc: "Earn 250 badges.",
-			Tier: BadgeGold, Scope: BadgeLifetime, Counter: BadgeEvBadge, Threshold: 250,
+			Name: "Archivist", Desc: "Earn 135 badges.",
+			Tier: BadgeGold, Scope: BadgeLifetime, Counter: BadgeEvBadge, Threshold: 135,
 			Emblem: "star", Ladder: "Badges earned", Proof: DerivedProof(),
 		},
 		{

@@ -128,6 +128,10 @@ type EconomyTab struct {
 	// resPage is the page of the Resources box on show (Ctrl+R turns it),
 	// and resPages how many its rows took at the last draw.
 	resPage, resPages int
+	// bldFirst is the first entry of the Buildings list on show (PgUp and
+	// PgDn move it a page of whole entries), bldShown how many entries the
+	// last draw showed and bldRows how many rows it had for them.
+	bldFirst, bldShown, bldRows int
 }
 
 // NewEconomyTab constructs the economy tab widget tree: the left column
@@ -144,8 +148,13 @@ func NewEconomyTab() *EconomyTab {
 	})
 	t.resourceTV.SetBorder(true).SetTitle(" Resources ")
 
-	t.buildingTV = newFitView(func(w, _ int) string { return buildingLines(t.state, w) })
-	t.buildingTV.SetScrollable(true)
+	t.buildingTV = newFitView(func(w, h int) string {
+		head, entries := buildingEntries(t.state, w)
+		lines, first, shown := layoutBuildings(head, entries, w, h, t.bldFirst)
+		t.bldFirst, t.bldShown, t.bldRows = first, shown, h
+		return strings.Join(lines, "\n")
+	})
+	t.buildingTV.SetScrollable(false)
 	t.buildingTV.SetBorder(true).SetTitle(" Buildings ")
 
 	t.constructionTV = newFitView(func(w, h int) string {
@@ -360,15 +369,36 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 	return lines
 }
 
-// buildingLines writes the Buildings list for a list w cells wide: this
-// age's buildings, each with its cost, what it does, its flavor line and its
-// worker slots, every line broken on purpose and indented under its own
-// start (a cost breaks between its parts, never inside one).
+// buildingLines writes the whole Buildings list for a list w cells wide,
+// every entry of it (the box itself shows a page of whole entries:
+// layoutBuildings).
 func buildingLines(state game.GameState, w int) string {
+	head, entries := buildingEntries(state, w)
+	var lines []string
+	if head != "" {
+		lines = append(lines, head)
+	}
+	for _, e := range entries {
+		lines = append(lines, e...)
+	}
+	return strings.Join(lines, "\n")
+}
+
+// buildingEntries writes the Buildings list for a list w cells wide as its
+// heading and its entries: this age's buildings, each with its cost, what
+// it does, its flavor line and its worker slots, every line broken on
+// purpose and indented under its own start (a cost breaks between its
+// parts, never inside one). The first-steps guide, while it shows, is the
+// last entry. An entry is the lines of one building: the box shows it
+// whole or not at all.
+func buildingEntries(state game.GameState, w int) (head string, entries [][]string) {
 	if w < 8 {
-		return ""
+		return "", nil
 	}
 	set := state.Ruleset()
+	entry := func(text string) {
+		entries = append(entries, strings.Split(strings.TrimRight(text, "\n"), "\n"))
+	}
 
 	// Only the current age's buildings.
 	keys := make([]string, 0)
@@ -379,14 +409,14 @@ func buildingLines(state game.GameState, w int) string {
 	}
 	sort.Strings(keys)
 
-	var sb strings.Builder
 	if len(keys) > 0 {
 		ageName := state.Age
 		if def, ok := set.Age(state.Age); ok {
 			ageName = def.Name
 		}
-		fmt.Fprintf(&sb, " [gold]── %s ──[-]\n", truncate(ageName, w-7))
+		head = fmt.Sprintf(" [gold]── %s ──[-]", truncate(ageName, w-7))
 		for _, key := range keys {
+			var sb strings.Builder
 			bs := state.Buildings[key]
 			icon, iconW := "[red]✗[-]", 1
 			switch {
@@ -442,12 +472,12 @@ func buildingLines(state game.GameState, w int) string {
 				}
 				sb.WriteString(hangingRow("   ", fmt.Sprintf("[gold]↑ Upgrade available: %s. Type: upgrade %s[-]", newName, key), w))
 			}
+			entry(sb.String())
 		}
-		sb.WriteString("\n")
 	}
 
-	if sb.Len() == 0 {
-		sb.WriteString(" [gray]No buildings unlocked yet[-]")
+	if len(entries) == 0 {
+		head = " [gray]No buildings unlocked yet[-]"
 	}
 
 	// Early-game onboarding: fill the otherwise-empty lower Buildings space with a
@@ -458,9 +488,71 @@ func buildingLines(state game.GameState, w int) string {
 	// logged 30+ minutes of play. PlayTime is wall-clock (time.Since(GameStarted)),
 	// so it's robust against tick-speed bonuses that a raw tick count would inflate.
 	if isEarlyGame(state.Age) && state.Stats.PlayTime < 30*time.Minute {
-		sb.WriteString(renderOnboarding(w))
+		entry(renderOnboarding(w))
 	}
-	return sb.String()
+	return head, entries
+}
+
+// layoutBuildings lays the Buildings list out in a box w cells wide and h
+// rows high, from entry first on: the heading, then as many whole entries
+// as fit. An entry is never cut: one that does not fit whole is left for
+// the next page, and the box says how many are above and below and which
+// keys turn the page. It returns the lines, the first entry it really
+// started from (first is brought into range) and how many it showed. A box
+// too short for even one entry shows the top of that entry, as much as
+// fits: the one case an entry is cut.
+func layoutBuildings(head string, entries [][]string, w, h, first int) (lines []string, from, shown int) {
+	if head != "" {
+		lines = append(lines, head)
+	}
+	total := 0
+	for _, e := range entries {
+		total += len(e)
+	}
+	if len(lines)+total <= h || h <= 0 {
+		// It all fits (or the box has no size yet): the whole list.
+		for _, e := range entries {
+			lines = append(lines, e...)
+		}
+		return lines, 0, len(entries)
+	}
+	from = min(max(first, 0), len(entries)-1)
+	room := h - len(lines)
+	if from > 0 {
+		room-- // the line that says what is above
+	}
+	end := from
+	for end < len(entries) {
+		need := len(entries[end])
+		if end < len(entries)-1 {
+			need++ // the line that says what is below
+		}
+		if need > room {
+			break
+		}
+		room -= len(entries[end])
+		end++
+	}
+	if from > 0 {
+		lines = append(lines, theme.Paint(theme.RoleDim, truncate(fmt.Sprintf(" ↑ %d more above: PgUp", from), w)))
+	}
+	if end == from {
+		// Not even one entry fits whole: show the top of it.
+		cut := max(h-len(lines)-1, 0)
+		lines = append(lines, entries[from][:min(cut, len(entries[from]))]...)
+		end = from + 1
+	} else {
+		for _, e := range entries[from:end] {
+			lines = append(lines, e...)
+		}
+	}
+	if below := len(entries) - end; below > 0 {
+		lines = append(lines, theme.Paint(theme.RoleDim, truncate(fmt.Sprintf(" ↓ %d more below: PgDn", below), w)))
+	}
+	if len(lines) > h {
+		lines = lines[:h] // a box of a row or two has no room for the notes
+	}
+	return lines, from, end - from
 }
 
 // costRow writes a cost under lead ("   Cost: "), wrapped to w cells with
@@ -489,16 +581,37 @@ func costRow(lead string, cost map[string]float64, w int) string {
 	return lead + strings.Join(lines, "\n"+strings.Repeat(" ", indent)) + "\n"
 }
 
-// ScrollUp scrolls the buildings panel up
+// ScrollUp turns the Buildings list back a page of whole entries.
 func (t *EconomyTab) ScrollUp() {
-	row, col := t.buildingTV.GetScrollOffset()
-	t.buildingTV.ScrollTo(row-10, col)
+	if t.bldFirst <= 0 {
+		return
+	}
+	// The page that ends just above the one on show: as many entries as
+	// fit in the box, counted back from it.
+	_, _, w, _ := t.buildingTV.GetInnerRect()
+	_, entries := buildingEntries(t.state, w)
+	first := min(t.bldFirst, len(entries))
+	room := t.bldRows - 3 // the heading and the two lines that say what is above and below
+	for first > 0 && len(entries[first-1]) <= room {
+		room -= len(entries[first-1])
+		first--
+	}
+	if first == t.bldFirst {
+		first--
+	}
+	t.bldFirst = max(first, 0)
+	t.buildingTV.changed()
 }
 
-// ScrollDown scrolls the buildings panel down
+// ScrollDown turns the Buildings list on a page of whole entries.
 func (t *EconomyTab) ScrollDown() {
-	row, col := t.buildingTV.GetScrollOffset()
-	t.buildingTV.ScrollTo(row+10, col)
+	_, _, w, _ := t.buildingTV.GetInnerRect()
+	_, entries := buildingEntries(t.state, w)
+	if t.bldFirst+t.bldShown >= len(entries) {
+		return // the last entry is on show
+	}
+	t.bldFirst += max(t.bldShown, 1)
+	t.buildingTV.changed()
 }
 
 // domainToLabel maps domain strings to friendly display labels.

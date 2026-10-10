@@ -57,7 +57,7 @@ These four come from Geological Extraction mines. Nothing in the game spends the
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Soldiers | `soldiers` | Iron Age | 0 | Made by military buildings when workers staff them; spent on campaigns |
+| Soldiers | `soldiers` | Iron Age, or your first military building | 0 | Made by military buildings; they stand as your garrison and are spent on campaigns |
 
 Soldiers are a true stockpiled resource (the 26th). See [Soldiers](#soldiers) below and [Military](military.md) for the full mechanics.
 
@@ -250,7 +250,7 @@ Gold pays for the market, diplomacy gifts and many mid-to-late game buildings.
 
 ## Soldiers
 
-Soldiers are a stockpiled resource (the 26th) that unlocks at the **Iron Age**. Only military buildings produce them.
+Soldiers are a stockpiled resource (the 26th). They unlock when your first military building stands (a War Camp can be built in the Stone Age), and at the **Iron Age** for a town that built none. Only military buildings produce them.
 
 **How soldiers are produced:** each military building (War Camp, Barracks and their successors) produces soldiers every tick when military-domain workers staff it, the same way food or wood production scales with workers. A fully staffed military building produces its soldier cap ÷ 50 soldiers per tick (at least 0.1/tick). War Camps and Barracks come before the Iron Age but make no soldiers until it.
 

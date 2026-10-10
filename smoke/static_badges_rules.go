@@ -301,11 +301,11 @@ func (c *badgeCheck) runTicks(from int) float64 {
 	return sum
 }
 
-// runEras is the eras a run plays through, and how many of them a doom can
-// strike in.
-func (c *badgeCheck) runEras() (eras, dooms int) {
+// runEras is the eras a run has played in by the end of the age at place
+// through, and how many of them a doom can strike in.
+func (c *badgeCheck) runEras(through int) (eras, dooms int) {
 	seen := map[string]bool{}
-	for i := 0; i <= c.m.runEnd; i++ {
+	for i := 0; i <= through; i++ {
 		if era := c.set.EraOf(c.m.ages[i].Key); !seen[era] {
 			seen[era] = true
 			eras++
@@ -321,8 +321,13 @@ func (c *badgeCheck) runEras() (eras, dooms int) {
 // fits into the run's ages from place from on, each age's cooldown
 // stretched as the game stretches it.
 func (c *badgeCheck) every(from, cooldown int) float64 {
+	return c.everyBy(from, cooldown, c.m.runEnd)
+}
+
+// everyBy is every, counted to the end of the age at place through.
+func (c *badgeCheck) everyBy(from, cooldown, through int) float64 {
 	n := 0.0
-	for i := max(from, 0); i <= c.m.runEnd; i++ {
+	for i := max(from, 0); i <= through; i++ {
 		age := c.m.ages[i].Key
 		if wait := c.set.StretchTicks(age, cooldown); wait > 0 {
 			n += float64(c.set.TargetTicks(age) / float64(wait))
@@ -340,23 +345,56 @@ const (
 	dealRefresh         = 1800
 )
 
-// morePerRun is what one run adds to the counters the catalog's ladders
-// climb.
-func (c *badgeCheck) morePerRun(counter string) (perRun float64, basis string, ok bool) {
-	m := c.m
-	eras, dooms := c.runEras()
-	ages := m.runEnd + 1
-	if res, found := strings.CutPrefix(counter, config.BadgeEvProduced+"."); found {
-		p, deep := c.set.RunProduction(res)
-		basis = "one run's typical income of it, age by age, over each age's pacing target"
-		if deep {
-			basis = "its typical income over the pacing targets of its first two ages (it comes after a run's last age)"
+// share is how much of what a run adds from the age at place from on has
+// been added by the end of the age at place through, by the pacing targets:
+// the unit for the rates the tables cannot give, which are known for a whole
+// run only.
+func (c *badgeCheck) share(from, through int) float64 {
+	from = max(from, 0)
+	if through < from {
+		return 0
+	}
+	done, all := 0.0, 0.0
+	for i := from; i <= max(through, c.m.runEnd); i++ {
+		t := c.set.TargetTicks(c.m.ages[i].Key)
+		if i <= through {
+			done += t
 		}
-		return p, basis, true
+		if i <= c.m.runEnd {
+			all += t
+		}
+	}
+	if all <= 0 {
+		return 0
+	}
+	return done / all
+}
+
+// moreAdded is what an ordinary first run has added, by the end of the age
+// at place through, to the counters the catalog's ladders climb. With the
+// run's last age it is what one run adds.
+func (c *badgeCheck) moreAdded(counter string, through int) (n float64, basis string, ok bool) {
+	m := c.m
+	eras, dooms := c.runEras(through)
+	ages := through + 1
+	if res, found := strings.CutPrefix(counter, config.BadgeEvProduced+"."); found {
+		if through == m.runEnd {
+			p, deep := c.set.RunProduction(res)
+			basis = "one run's typical income of it, age by age, over each age's pacing target"
+			if deep {
+				basis = "its typical income over the pacing targets of its first two ages (it comes after a run's last age)"
+			}
+			return p, basis, true
+		}
+		return c.set.ProductionThrough(res, m.ages[through].Key), "a run's typical income of it, age by age, over each age's pacing target, through the " + m.ageName(through), true
 	}
 	if civ, found := strings.CutPrefix(counter, config.BadgeEvDeal+"."); found {
-		if _, exists := c.set.Faction(civ); !exists {
+		f, exists := c.set.Faction(civ)
+		if !exists {
 			return 0, "no such civilization", true
+		}
+		if pos, known := m.idx[f.MinAge]; through < m.runEnd && (!known || pos > through) {
+			return 0, "the civilization has not been met", true
 		}
 		return 1, "one deal a run from a civilization that has been met: its offers come round again every " + grouped(dealRefresh) + " ticks", true
 	}
@@ -376,7 +414,7 @@ func (c *badgeCheck) morePerRun(counter string) (perRun float64, basis string, o
 		// chance of its first age's harbinger.
 		expect := 0.0
 		seen := map[string]bool{}
-		for i := 0; i <= m.runEnd; i++ {
+		for i := 0; i <= through; i++ {
 			era := c.set.EraOf(m.ages[i].Key)
 			if seen[era] {
 				continue
@@ -393,11 +431,11 @@ func (c *badgeCheck) morePerRun(counter string) (perRun float64, basis string, o
 	case config.BadgeEvWonderRaised:
 		return float64(ages), fmt.Sprintf("the wonder of each of a run's %d ages", ages), true
 	case config.BadgeEvResearchDone:
-		return float64(m.techs[m.runEnd]), "the techs of a run's ages", true
+		return float64(m.techs[through]), "the techs of a run's ages", true
 	case config.BadgeEvMilestone:
 		n := 0
 		for _, ms := range c.set.Milestones() {
-			if pos, known := m.idx[ms.MinAge]; ms.MinAge == "" || known && pos <= m.runEnd {
+			if pos, known := m.idx[ms.MinAge]; ms.MinAge == "" || known && pos <= through {
 				n++
 			}
 		}
@@ -409,7 +447,7 @@ func (c *badgeCheck) morePerRun(counter string) (perRun float64, basis string, o
 			for _, k := range ch.MilestoneKeys {
 				ms, known := c.set.Milestone(k)
 				pos, aged := m.idx[ms.MinAge]
-				within = within && known && (ms.MinAge == "" || aged && pos <= m.runEnd)
+				within = within && known && (ms.MinAge == "" || aged && pos <= through)
 			}
 			if within {
 				n++
@@ -422,7 +460,7 @@ func (c *badgeCheck) morePerRun(counter string) (perRun float64, basis string, o
 		order := c.set.Indexes()
 		mm := game.NewMilitaryManager()
 		n := 0.0
-		for i := 0; i <= m.runEnd; i++ {
+		for i := 0; i <= through; i++ {
 			age := m.ages[i].Key
 			slowest := 0
 			for _, x := range mm.GetAvailableExpeditions(age, order) {
@@ -436,30 +474,36 @@ func (c *badgeCheck) morePerRun(counter string) (perRun float64, basis string, o
 	case config.BadgeEvDeal:
 		met := 0
 		for _, f := range c.set.Factions() {
-			if pos, known := m.idx[f.MinAge]; known && pos <= m.runEnd {
+			if pos, known := m.idx[f.MinAge]; known && pos <= through {
 				met++
 			}
 		}
 		return float64(met), fmt.Sprintf("one deal a run from each of the %d civilizations a run meets", met), true
 	case config.BadgeEvRaidBlunted:
-		return botRaidsBluntedPerRun, "about 30 a run, as the nightly bot's garrison did", true
+		return float64(botRaidsBluntedPerRun * c.share(c.firstAge(counter), through)), "about 30 a run, as the nightly bot's garrison did", true
 	case config.BadgeEvBuildingUpgraded:
-		return botUpgradesPerRun, "about 850 copies a run, as the nightly bot upgraded", true
+		return float64(botUpgradesPerRun * c.share(c.firstAge(counter), through)), "about 850 copies a run, as the nightly bot upgraded", true
 	case config.BadgeEvPlanStarted:
-		n := float64(config.BadgeRunShare * float64(m.builds[m.runEnd]))
-		return n, fmt.Sprintf("%d%% of the %s buildings a run can hold, as for the lineage ladders", int(config.BadgeRunShare*100), grouped(m.builds[m.runEnd])), true
+		n := float64(config.BadgeRunShare * float64(m.builds[through]))
+		return n, fmt.Sprintf("%d%% of the %s buildings a run can hold, as for the lineage ladders", int(config.BadgeRunShare*100), grouped(m.builds[through])), true
 	case config.BadgeEvFestival:
 		from := m.resAge["culture"]
-		return c.every(from, festivalCooldown), "a festival every cooldown from the age culture comes in", true
+		return c.everyBy(from, festivalCooldown, through), "a festival every cooldown from the age culture comes in", true
 	case config.BadgeEvBlackMarket:
-		return c.every(m.idx["colonial_age"], blackMarketCooldown), "a deal every cooldown from the age the black market opens in", true
+		return c.everyBy(m.idx["colonial_age"], blackMarketCooldown, through), "a deal every cooldown from the age the black market opens in", true
 	case config.BadgeEvMemoryAccepted:
+		if through < m.runEnd {
+			return 0, "an Ancient Memory is offered after a prestige", true
+		}
 		return botMemoriesPerPrestige, "about one Ancient Memory every other prestige, as the nightly bot was offered", true
 	case config.BadgeEvEraEvent + ".bad_challenging":
-		return botHardTimesPerRun, "about 1.4 a run, as the nightly bot met", true
+		return float64(botHardTimesPerRun * c.share(c.firstAge(counter), through)), "about 1.4 a run, as the nightly bot met", true
 	case config.BadgeEvMarketTrade:
-		return humanMarketTradesPerRun, "a few trades an age, typed by hand", true
+		return float64(humanMarketTradesPerRun * c.share(c.firstAge(counter), through)), "a few trades an age, typed by hand", true
 	case config.BadgeEvLegacyPrestige:
+		if through < m.runEnd {
+			return 0, "a run prestiges after its last age", true
+		}
 		return 1, "one prestige a run, once Cosmic Legacy is held", true
 	}
 	return 0, "", false

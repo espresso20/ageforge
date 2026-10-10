@@ -57,31 +57,8 @@ func TestBuildingDescriptionsComeFromEffects(t *testing.T) {
 	}
 }
 
-// eventFragments returns the phrases an event's LogMessage must contain for
-// each effect, lowercased.
-func eventFragments(e EventDef) (frags []string, hasSteal, hasRate bool) {
-	for _, eff := range e.Effects {
-		switch eff.Type {
-		case "instant_resource":
-			frags = append(frags, "+"+FormatAmount(eff.Value)+" "+ResourceLabel(eff.Target))
-		case "steal_resource":
-			hasSteal = true
-			frags = append(frags, FormatAmount(eff.Value)+" "+ResourceLabel(eff.Target))
-		case "production":
-			hasRate = true
-			frags = append(frags, strings.ToLower(RateText(eff.Target, eff.Value)))
-		case "worker_loss":
-			frags = append(frags, FormatPercent(eff.Value)+" of your workers")
-		}
-	}
-	for i := range frags {
-		frags[i] = strings.ToLower(frags[i])
-	}
-	return frags, hasSteal, hasRate
-}
-
-// raidEvents are the raid-type events the Army PR owns; their text is left to
-// it, so they are exempt from the strict effect check below.
+// raidEvents are the raid-type events the Army PR owns; their text is left
+// to it, so the text lint below leaves them alone.
 var raidEvents = map[string]bool{"tribal_raid": true, "bandit_raid": true, "pirate_attack": true}
 
 // bannedEffectClaims are phrases event text used for effects no event has.
@@ -91,47 +68,125 @@ var bannedEffectClaims = []string{
 	"research up", "all trade routes", "ticks",
 }
 
-// TestEventTextMatchesEffects: an event's log line states every effect it
-// applies, with the real amount and duration, and no number it does not have.
-func TestEventTextMatchesEffects(t *testing.T) {
+// TestEventTextCarriesNoNumbers: an event's amounts follow the town it
+// happens to (event_size.go), so its own sentence states none. The engine
+// writes what the event did after it, from the amounts it applied
+// (game.TestEventLineStatesWhatHappened checks that line).
+func TestEventTextCarriesNoNumbers(t *testing.T) {
 	for _, e := range allEventDefs() {
-		if raidEvents[e.Key] {
-			continue
-		}
-		msg := strings.ToLower(e.LogMessage)
-		frags, hasSteal, hasRate := eventFragments(e)
-		// A timed event's length depends on the age it fires in (its
-		// Duration is stretched), so the text carries a placeholder the
-		// engine fills in, never a number of its own.
-		if hasRate && e.Duration > 0 {
-			frags = append(frags, "for {dur}")
-		}
-		if (hasRate && e.Duration > 0) != strings.Contains(e.LogMessage, "{dur}") {
-			t.Errorf("%s: a log line says how long a timed rate lasts with {dur}, and only then: %q", e.Key, e.LogMessage)
-		}
-		sort.Slice(frags, func(i, j int) bool { return len(frags[i]) > len(frags[j]) })
-		rest := msg
-		for _, f := range frags {
-			if !strings.Contains(rest, f) {
-				t.Errorf("%s: log %q is missing %q", e.Key, e.LogMessage, f)
-				continue
+		for label, s := range map[string]string{"log line": e.LogMessage, "description": e.Description} {
+			if digitRe.MatchString(s) {
+				t.Errorf("%s: the %s quotes a number: %q", e.Key, label, s)
 			}
-			rest = strings.Replace(rest, f, "", 1)
-		}
-		if hasSteal && !strings.Contains(msg, "up to") {
-			t.Errorf("%s: a loss is capped at what you hold; say %q: %q", e.Key, "up to", e.LogMessage)
-		}
-		if digitRe.MatchString(rest) {
-			t.Errorf("%s: log %q quotes a number no effect backs (left over: %q)", e.Key, e.LogMessage, rest)
-		}
-		if digitRe.MatchString(e.Description) {
-			t.Errorf("%s: description %q quotes numbers", e.Key, e.Description)
-		}
-		for _, b := range bannedEffectClaims {
-			if strings.Contains(msg, b) || strings.Contains(strings.ToLower(e.Description), b) {
-				t.Errorf("%s: text claims %q, which no event effect does: %q / %q", e.Key, b, e.LogMessage, e.Description)
+			low := strings.ToLower(s)
+			for _, frag := range []string{"{dur}", "/tick", "up to"} {
+				if strings.Contains(low, frag) {
+					t.Errorf("%s: the %s says %q, which the engine writes from the real amounts: %q", e.Key, label, frag, s)
+				}
+			}
+			for _, b := range bannedEffectClaims {
+				if strings.Contains(low, b) {
+					t.Errorf("%s: text claims %q, which no event effect does: %q", e.Key, b, s)
+				}
 			}
 		}
+	}
+}
+
+// TestEventEffectsAreSized: every effect of every random and era event is a
+// size the engine fits to the town (a gain in minutes of income, a loss as a
+// share of the stock, a rate as a share of income) or a share of the
+// workers, and each sits in the range the sizes were tuned in.
+func TestEventEffectsAreSized(t *testing.T) {
+	resources := ResourceByKey()
+	for _, e := range allEventDefs() {
+		if len(e.Effects) == 0 {
+			t.Errorf("%s has no effects", e.Key)
+		}
+		rates := 0
+		for _, eff := range e.Effects {
+			if eff.Type != "worker_loss" {
+				if _, ok := resources[eff.Target]; !ok {
+					t.Errorf("%s: effect %+v names no resource", e.Key, eff)
+				}
+			}
+			switch eff.Type {
+			case EventGain:
+				if eff.Value < 3 || eff.Value > 15 {
+					t.Errorf("%s: a gain of %v minutes of income; gains run from 3 to 15", e.Key, eff.Value)
+				}
+			case EventLoss:
+				if eff.Value < 0.05 || eff.Value > EventLossMostShare {
+					t.Errorf("%s: a loss of %v of the stock; losses run from 5%% to %v%%", e.Key, eff.Value, EventLossMostShare*100)
+				}
+			case EventRate:
+				rates++
+				if eff.Value == 0 || eff.Value < -0.5 || eff.Value > 1 {
+					t.Errorf("%s: a rate of %v of income; rates run from -50%% to +100%%", e.Key, eff.Value)
+				}
+			case "worker_loss":
+				if eff.Value <= 0 || eff.Value > 0.25 {
+					t.Errorf("%s: %v of the workers lost; at most a quarter", e.Key, eff.Value)
+				}
+			default:
+				t.Errorf("%s: effect type %q is not a size (EventGain, EventLoss, EventRate) or worker_loss", e.Key, eff.Type)
+			}
+		}
+		if (rates > 0) != (e.Duration > 0) {
+			t.Errorf("%s has %d rates and a duration of %d ticks: an event lasts when it has a rate, and only then", e.Key, rates, e.Duration)
+		}
+	}
+}
+
+// TestEventSizeBands: the sizing rule itself. A gain or a boost follows the
+// town's income inside the band around the age's typical income, a setback
+// takes a share of what the town really makes, and a loss takes its share
+// of the stock inside its own band, never more than EventLossMostShare.
+func TestEventSizeBands(t *testing.T) {
+	const typical = 10.0
+	gain := Effect{Type: EventGain, Target: "food", Value: 5}
+	perMinute := EventTicksPerMinute
+	for _, c := range []struct {
+		name         string
+		income, want float64
+	}{
+		{"a moderate town gets its own income", 10, 5 * perMinute * 10},
+		{"a town that makes none gets the floor", 0, 5 * perMinute * typical * EventIncomeFloor},
+		{"a huge town is held to the ceiling", 1000, 5 * perMinute * typical * EventIncomeCeil},
+	} {
+		if got := EventSize(gain, EventTown{Income: c.income, Typical: typical}); got != c.want {
+			t.Errorf("gain: %s: %v, want %v", c.name, got, c.want)
+		}
+	}
+	boost, setback := Effect{Type: EventRate, Target: "food", Value: 0.5}, Effect{Type: EventRate, Target: "food", Value: -0.5}
+	if got, want := EventSize(boost, EventTown{Income: 0, Typical: typical}), 0.5*typical*EventIncomeFloor; got != want {
+		t.Errorf("a boost in a town that makes none: %v a tick, want the floor %v", got, want)
+	}
+	if got := EventSize(setback, EventTown{Income: 0, Typical: typical}); got != 0 {
+		t.Errorf("a setback in a town that makes none: %v a tick, want nothing", got)
+	}
+	if got, want := EventSize(setback, EventTown{Income: 8, Typical: typical}), -4.0; got != want {
+		t.Errorf("a setback of half of 8 a tick: %v, want %v", got, want)
+	}
+	loss := Effect{Type: EventLoss, Target: "food", Value: 0.08}
+	floor, ceil := EventBand(loss, typical)
+	for _, c := range []struct {
+		name        string
+		stock, want float64
+	}{
+		{"a full store loses its share", 10000, 800},
+		{"an empty store loses nothing", 0, 0},
+		{"a thin store loses the floor, within a quarter of it", 200, floor},
+		{"a nearly empty store loses a quarter", 40, 10},
+		{"a hoard is held to the ceiling", 1e9, ceil},
+	} {
+		if got := EventSize(loss, EventTown{Stock: c.stock, Typical: typical}); got != c.want {
+			t.Errorf("loss: %s: %v, want %v", c.name, got, c.want)
+		}
+	}
+	// No band where the age has no typical income: the town's own numbers.
+	if got, want := EventSize(gain, EventTown{Income: 3}), 5*perMinute*3; got != want {
+		t.Errorf("a gain with no typical income: %v, want %v", got, want)
 	}
 }
 

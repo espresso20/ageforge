@@ -81,6 +81,15 @@ func Distinguishable(a, b tcell.Color, sim string) bool {
 	return ca.DistanceCIEDE2000(cb) >= DistinguishableThreshold
 }
 
+// Distance is how different two colors look: the CIEDE2000 ΔE between them,
+// in this library's units (0 is the same color, about 0.02 is just
+// noticeable side by side, DistinguishableThreshold is two colors nobody
+// confuses). The map picks its cursor's color with it: the candidate
+// furthest from everything else on the map.
+func Distance(a, b tcell.Color) float64 {
+	return toColorful(a).DistanceCIEDE2000(toColorful(b))
+}
+
 // toColorful converts a tcell.Color to a go-colorful Color via its RGB components.
 func toColorful(c tcell.Color) colorful.Color {
 	r, g, b := rgbUnit(c)

@@ -147,7 +147,7 @@ var fieldRules = map[string]fieldRule{
 	"config.EventDef.Description": {id: "event.{Key}.description", kind: kindVoice, area: areaEvents, age: "{MinAge}", seen: seenRare,
 		where: "The description of the event {Name}, shown with it while it lasts."},
 	"config.EventDef.LogMessage": {id: "event.{Key}.log", kind: kindVoice, area: areaEvents, age: "{MinAge}", seen: seenNews, rules: rulesNoMark,
-		where: "What the log says when the event {Name} happens. The numbers in it are checked against what the event does, so keep them as they are."},
+		where: "What the log says when the event {Name} happens. It carries no numbers: the game writes what the event did after it (what was lost and gained, each rate and how long it lasts), so leave numbers out."},
 	"config.EpochEventDef.Name": {id: "era_event.{Key}.name", kind: kindName, area: areaEvents, age: "iron_age", seen: seenRare,
 		where: "The name of an era event: in the log when it happens, in the Epoch panel and on the age splash."},
 	"config.EpochEventDef.FlavorText": {id: "era_event.{Key}.text", kind: kindVoice, area: areaEvents, age: "iron_age", seen: seenRare,

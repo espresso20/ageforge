@@ -15,8 +15,17 @@ import (
 // (storage raised to fit).
 func giveSoldiers(ge *GameEngine, n float64) {
 	ge.Resources.UnlockResource("soldiers")
-	ge.Resources.AddStorage("soldiers", n)
+	room(ge, "soldiers", n)
 	ge.Resources.Add("soldiers", n)
+}
+
+// room gives ge storage for n more of res that a rates pass keeps, as a
+// milestone's storage reward would be. An event reads the rates afresh when
+// it fires, and that pass works every store out from what the town has and
+// holds its stock to it: room added to the store by hand would be gone.
+func room(ge *GameEngine, res string, n float64) {
+	ge.permanentBonuses[res] += n
+	ge.Resources.AddStorage(res, n)
 }
 
 // soldiersFor returns how many soldiers match the threat of age with no
@@ -134,8 +143,8 @@ func TestRaidEvent_StealBluntedByGarrison(t *testing.T) {
 	}
 	run := func(soldiers float64) (food, gold float64, ge *GameEngine) {
 		ge = catEngine(t, "iron_age", 1)
-		ge.Resources.AddStorage("food", 10000)
-		ge.Resources.AddStorage("gold", 10000)
+		room(ge, "food", 10000)
+		room(ge, "gold", 10000)
 		ge.Resources.UnlockResource("gold")
 		ge.Resources.Add("food", 1000)
 		ge.Resources.Add("gold", 1000)
@@ -143,7 +152,7 @@ func TestRaidEvent_StealBluntedByGarrison(t *testing.T) {
 			giveSoldiers(ge, soldiers)
 		}
 		f, g := ge.Resources.Get("food"), ge.Resources.Get("gold")
-		ge.applyEventEffects(def)
+		ge.fireEvent(def)
 		return f - ge.Resources.Get("food"), g - ge.Resources.Get("gold"), ge
 	}
 	food0, gold0, ge0 := run(0)
@@ -180,7 +189,7 @@ func TestRaidEvent_WorkerLossBlunted(t *testing.T) {
 		if soldiers > 0 {
 			giveSoldiers(ge, soldiers)
 		}
-		ge.applyEventEffects(def)
+		ge.fireEvent(def)
 		return 100 - ge.Workers.TotalPop()
 	}
 	base, guarded := run(0), run(soldiersFor("iron_age"))
@@ -199,12 +208,12 @@ func TestNonRaidEventIgnoresGarrison(t *testing.T) {
 	}
 	run := func(soldiers float64) float64 {
 		ge := catEngine(t, "iron_age", 1)
-		ge.Resources.AddStorage("wood", 10000)
+		room(ge, "wood", 10000)
 		ge.Resources.Add("wood", 1000)
 		if soldiers > 0 {
 			giveSoldiers(ge, soldiers)
 		}
-		ge.applyEventEffects(def)
+		ge.fireEvent(def)
 		return ge.Resources.Get("wood")
 	}
 	if a, b := run(0), run(1e6); a != b {
@@ -219,7 +228,7 @@ func TestWarRaid_BluntedByGarrison(t *testing.T) {
 	run := func(soldiers float64) (float64, *GameEngine) {
 		ge := catEngine(t, "iron_age", 4)
 		ge.Resources.UnlockResource("gold")
-		ge.Resources.AddStorage("gold", 10000)
+		room(ge, "gold", 10000)
 		ge.Resources.Add("gold", 1000)
 		if soldiers > 0 {
 			giveSoldiers(ge, soldiers)
@@ -247,7 +256,7 @@ func TestWarRaid_GarrisonNeverMakesAMissLand(t *testing.T) {
 	faction := config.BaseFactions()[0].Key
 	ge := catEngine(t, "iron_age", 4)
 	ge.Resources.UnlockResource("gold")
-	ge.Resources.AddStorage("gold", 10000)
+	room(ge, "gold", 10000)
 	ge.Resources.Add("gold", 150)
 	giveSoldiers(ge, soldiersFor("iron_age"))
 	ge.Diplomacy.pendingRaids = []RaidRequest{{FactionKey: faction, Resource: "gold", Amount: 200, Message: "raided"}}
@@ -264,13 +273,17 @@ func TestWarRaid_GarrisonNeverMakesAMissLand(t *testing.T) {
 func TestRaidEvent_LogsActualLosses(t *testing.T) {
 	ge := catEngine(t, "iron_age", 1)
 	ge.Resources.UnlockResource("gold")
-	ge.Resources.AddStorage("food", 10000)
-	ge.Resources.AddStorage("gold", 10000)
-	ge.Resources.Add("food", 1000)
-	ge.Resources.Add("gold", 1000)
-	ge.applyEventEffects(eventDef(t, "bandit_raid"))
-	if !logHas(ge, "You lost 10 food and 5 gold.") {
+	room(ge, "food", 1e6)
+	room(ge, "gold", 1e6)
+	ge.Resources.Add("food", 200000-ge.Resources.Get("food"))
+	ge.Resources.Add("gold", 100000-ge.Resources.Get("gold"))
+	// The raid takes 6% of each stock, and the line says what that came to.
+	ge.fireEvent(eventDef(t, "bandit_raid"))
+	if !logHas(ge, "Lost 12K food and 6K gold.") {
 		t.Error("bandit raid does not log the amounts it took")
+	}
+	if got := ge.Resources.Get("food"); math.Abs(got-188000) > 1e-6 {
+		t.Errorf("food after the raid = %v, want 188000", got)
 	}
 }
 
@@ -341,7 +354,7 @@ func TestEndure_BraceAndGarrison(t *testing.T) {
 		ge.Buildings.counts[b[0]] = 50
 		ge.Buildings.counts[b[1]] = 50
 		ge.Resources.UnlockResource("gold")
-		ge.Resources.AddStorage("gold", 100000)
+		room(ge, "gold", 100000)
 		ge.Resources.Add("gold", 10000)
 		if soldiers > 0 {
 			giveSoldiers(ge, soldiers)
@@ -444,9 +457,9 @@ func TestDefenseTally_SaveLoad(t *testing.T) {
 
 	ge := catEngine(t, "iron_age", 2)
 	giveSoldiers(ge, soldiersFor("iron_age"))
-	ge.Resources.AddStorage("food", 10000)
+	room(ge, "food", 10000)
 	ge.Resources.Add("food", 1000)
-	ge.applyEventEffects(eventDef(t, "bandit_raid"))
+	ge.fireEvent(eventDef(t, "bandit_raid"))
 	want := ge.Stats.Defense.clone()
 	if want == nil || want.Raids != 1 {
 		t.Fatalf("tally before save = %+v", want)

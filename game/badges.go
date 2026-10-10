@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -604,6 +605,27 @@ func (ge *GameEngine) DrainEarnedBadges() []BadgeView {
 		}
 	}
 	return out
+}
+
+// DrainBadgeCatchUp returns how many badges the held account was given
+// from its own record since the last call (a rung whose count it had
+// already passed when it was loaded), and forgets the count. They raise no
+// toast each; the dashboard says the number in one line
+// (BadgeCatchUpLine).
+func (ge *GameEngine) DrainBadgeCatchUp() int {
+	ge.mu.RLock()
+	acct := ge.account
+	ge.mu.RUnlock()
+	if acct == nil {
+		return 0
+	}
+	return acct.drainCaughtUp()
+}
+
+// BadgeCatchUpLine is the one line for n badges an account was given from
+// its own record when it was loaded.
+func BadgeCatchUpLine(n int) string {
+	return textfmt.Count(n, "badge", "badges") + " earned from your earlier play."
 }
 
 // BadgeLogLine is the log line for a badge just earned. It is fixed per

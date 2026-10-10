@@ -21,6 +21,7 @@ func TestMiniMapAppearsWhereTheDocsSay(t *testing.T) {
 		d := NewDashboard(tview.NewApplication(), game.NewGameEngine(), tview.NewPages())
 		pages := tview.NewPages()
 		pages.AddPage("dashboard", d.Root(), true, true)
+		miniOn(t, d)
 		drawnDashboard(t, d, pages, w, h)
 		return d.mapDock.shown
 	}

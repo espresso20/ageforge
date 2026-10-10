@@ -12,6 +12,12 @@ type ResourceDef struct {
 	BaseStorage float64 // starting storage cap before storage buildings; units match production rates (per-tick)
 	Age         string  // the age whose UnlockResources list unlocks it (TestResourceAgesMatchAgeUnlocks)
 	Description string
+	// BuiltUnlocks: the first standing building that makes the resource
+	// unlocks it, whatever the age. Soldiers are the one: a War Camp can be
+	// built two ages before the age that brings soldiers to every town, and
+	// it trains them from the day it stands. Without one, the resource
+	// waits for its Age.
+	BuiltUnlocks bool
 }
 
 // BaseResources returns all resource definitions
@@ -32,7 +38,7 @@ func BaseResources() []ResourceDef {
 		{Name: "Gold", Key: "gold", BaseStorage: 50, Age: "bronze_age", Description: "Currency and trade"},
 		// Iron Age (Iron Era); coal unlocks in the Renaissance Age (Steel Era)
 		{Name: "Coal", Key: "coal", BaseStorage: 50, Age: "renaissance_age", Description: "Fuel for smelting and industry"},
-		{Name: "Soldiers", Key: "soldiers", BaseStorage: 0, Age: "iron_age", Description: "Trained fighting force produced by military buildings; spent on campaigns"},
+		{Name: "Soldiers", Key: "soldiers", BaseStorage: 0, Age: "iron_age", BuiltUnlocks: true, Description: "Trained fighting force produced by military buildings; spent on campaigns"},
 		// Iron Age (Iron Era): intermediate ores for Geological Extraction and Metallurgy
 		{Name: "Marble", Key: "marble", BaseStorage: 30, Age: "iron_age", Description: "Polished stone from quarries"},
 		{Name: "Iron Ore", Key: "iron_ore", BaseStorage: 30, Age: "iron_age", Description: "Raw iron ore from mines and quarries"},

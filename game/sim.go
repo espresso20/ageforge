@@ -146,3 +146,26 @@ func (ge *GameEngine) SetLegacyBonusForTest(epochs ...string) {
 	}
 	ge.recalculateRates()
 }
+
+// SetTownForTest stands the given number of copies of each building, as
+// that many finished builds would, and brings the population to people
+// (idle, housing allowing). Unknown buildings are ignored. A test hook for
+// other packages (the dashboard's render tests draw a town of a given
+// size); not reachable from play.
+func (ge *GameEngine) SetTownForTest(buildings map[string]int, people int) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	for _, key := range sortedKeys(buildings) {
+		if _, ok := ge.Buildings.defs[key]; !ok || buildings[key] < 0 {
+			continue
+		}
+		ge.Buildings.counts[key] = buildings[key]
+		ge.Buildings.unlocked[key] = true
+	}
+	ge.recalculateRates()
+	ge.Workers.UnlockType("worker")
+	if more := people - ge.Workers.TotalPop(); more > 0 {
+		ge.Workers.Recruit("worker", more, ge.popCapLocked())
+	}
+	ge.recalculateRates()
+}

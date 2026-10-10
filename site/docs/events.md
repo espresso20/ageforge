@@ -43,21 +43,39 @@ Milestone chain boosts, festivals, epoch transition events and Endure's reconstr
 Events are either **instant** or **timed**:
 
 - **Instant:** the effect is applied once, when the event fires. The log line is all you'll see.
-- **Timed:** the event stays active for its duration and its per-tick effects apply the whole time. When it expires, the log prints an "ended" line that repeats what it cost you when it fired (workers who fled, resources stolen), in yellow.
+- **Timed:** the event stays active for its duration and its per-tick effects apply the whole time. When it expires, the log prints an "ended" line.
 
-Every duration and cooldown is set as a base length, which is exact in the Primitive and Stone Ages. From the Bronze Age on, a timed event lasts 2.6 times its base length (rounded to the nearest tick) and its cooldown is 2.6 times as long; instant amounts don't change. The tables below give each event's duration as it runs: events that can't fire before the Bronze Age always run the stretched length, and the three timed events that can fire earlier (Storm, Drought, Plague) show both.
+Every duration and cooldown is set as a base length, which is exact in the Primitive and Stone Ages. From the Bronze Age on, a timed event lasts 2.6 times its base length (rounded to the nearest tick) and its cooldown is 2.6 times as long. The tables below give each event's duration as it runs: events that can't fire before the Bronze Age always run the stretched length, and the three timed events that can fire earlier (Storm, Drought, Plague) show both.
 
 ### Seeing what happened
 
-The main log reports each event as it fires, with its effect. When an event takes resources or workers, the next line says exactly what you lost (`You lost 10 food and 5 gold.` or `You lost 8 food and 3 workers.`), counting only what actually left your stores. The **Logs** panel (`logs`) keeps the history with tick numbers, so check it after time away.
+The main log reports each event as it fires, and the line says exactly what it did, in the amounts that were applied: `Lost 800 food and 1K wood.`, `Gained 2.4K food.`, `Food -8.2/tick for ~52s.` A loss counts only what actually left your stores. The **Logs** panel (`logs`) keeps the history with tick numbers, so check it after time away.
 
-A timed event's log line says how long it lasts in the age it fired in (Gold Rush reads `for ~30s` in the Stone Age and `for ~1m 18s` from the Bronze Age on), and the Stats panel counts it down.
+A timed event's log line says how long it lasts in the age it fired in (a Drought reads `for ~20s` in the Stone Age and `for ~52s` from the Bronze Age on), and the Stats panel counts it down.
 
-An instant grant goes into your storage, and storage only takes what it has room for. When a full store cuts a grant short, the next line says what fit (`Storage was nearly full: only 25 food (of 250) fit.`). Milestone rewards and boon lumps do the same.
+An instant gain goes into your storage, and storage only takes what it has room for. When a full store cuts a gain short, the next line says what fit (`Storage was nearly full: only 25 food (of 225) fit.`). Milestone rewards and boon lumps do the same.
 
 The **Stats panel** (`stats`) lists every active timed event under "Active Events" with the time left on it (e.g. `~2m 30s`) and its ongoing effect, color-coded: **green** for a bonus, **red** for a penalty. A production-boost event shows `all production +10%` in green. (On the colorblind-safe and high-contrast [themes](themes.md), bonuses show **blue** and penalties **orange**, with `▲`/`▼` marking the sign.) Instant effects (resource grants, thefts, worker loss) are not listed there, since they already happened.
 
-Event log lines carry a little personality (wandering traders "smelling of cabbage and opportunity"), but the joke always sits alongside the mechanical summary, never in place of it.
+Event log lines carry a little personality (wandering traders "smelling of cabbage and opportunity"), and the amounts always follow it in the same line.
+
+---
+
+## How Big an Event Is
+
+An event's size follows the town it happens to. Nothing is a fixed amount:
+
+- **A loss takes a share of what you hold** of the resource: 5% to 12% for an ordinary event, up to 20% for the worst. A town with 10,000 food loses 800 to a Beast Stampede; a town with 500 loses 40.
+- **A gain gives minutes of your own income** of the resource: 3 to 15 minutes of what your town makes of it, all at once.
+- **A timed change is a share of your income** of the resource for as long as the event lasts: a Drought takes half of your food production, a Gold Rush doubles your gold production.
+
+Each amount is worked out when the event fires and is held to a band that depends on the age, counted in what a moderate town of that age makes of the resource:
+
+- A gain or a boost is sized on your income, but on at least a quarter and at most four times the age's typical income. A town that makes little of the resource still gets something, and a very large town does not get a windfall out of scale with its age.
+- A setback to production has no floor: a town that makes none of the resource loses none.
+- A loss is never more than a quarter of what you hold and never more than half an hour of the age's typical income.
+
+The log line states the real amounts: what you lost, what you gained, each change per tick and how long it lasts.
 
 ---
 
@@ -69,42 +87,42 @@ These 26 events belong to no epoch. They can fire in any epoch, throughout the w
 
 | Name | Key | Min Age | Weight | Effect | Duration | Notes |
 |------|-----|---------|--------|--------|----------|-------|
-| Bountiful Harvest | `bountiful_harvest` | Primitive | 15 | +250 food | Instant | Most common good event early |
-| Wandering Traders | `wandering_traders` | Bronze | 12 | +15 gold, +10 food | Instant | |
-| Skilled Immigrants | `skilled_immigrants` | Stone | 10 | +10 knowledge | Instant | |
-| Gold Rush | `gold_rush` | Bronze | 8 | +1.0 gold/tick | 39 ticks (~1m 18s) | |
-| Trade Boom | `trade_boom` | Medieval | 8 | +2.0 gold/tick | 52 ticks (~1m 44s) | |
-| Ancient Discovery | `ancient_discovery` | Iron | 6 | +50 knowledge | Instant | |
-| Renaissance Fair | `renaissance_fair` | Renaissance | 10 | +0.5 culture/tick, +0.5 gold/tick | 39 ticks (~1m 18s) | |
-| Colonial Windfall | `colonial_windfall` | Colonial | 8 | +100 gold, +30 culture | Instant | |
-| Power Surge | `power_surge_base` | Victorian | 6 | +3.0 electricity/tick | 26 ticks (~52s) | |
-| Crypto Boom | `crypto_boom` | Cyberpunk | 7 | +5.0 crypto/tick | 39 ticks (~1m 18s) | |
-| First Contact | `first_contact` | Space | 3 | +500 knowledge, +50 titanium | Instant | Rarest good event |
-| Dark Matter Rift | `dark_matter_rift` | Interstellar | 4 | +3.0 dark matter/tick | 39 ticks (~1m 18s) | |
-| Quantum Fluctuation | `quantum_fluctuation` | Quantum | 3 | +5.0 quantum flux/tick | 26 ticks (~52s) | |
+| Bountiful Harvest | `bountiful_harvest` | Primitive | 15 | +5 min of food income | Instant | Most common good event early |
+| Wandering Traders | `wandering_traders` | Bronze | 12 | +5 min of gold income, +3 min of food income | Instant | |
+| Skilled Immigrants | `skilled_immigrants` | Stone | 10 | +5 min of knowledge income | Instant | |
+| Gold Rush | `gold_rush` | Bronze | 8 | Gold production +100% | 39 ticks (~1m 18s) | |
+| Trade Boom | `trade_boom` | Medieval | 8 | Gold production +100% | 52 ticks (~1m 44s) | |
+| Ancient Discovery | `ancient_discovery` | Iron | 6 | +10 min of knowledge income | Instant | |
+| Renaissance Fair | `renaissance_fair` | Renaissance | 10 | Culture production +50%, gold production +50% | 39 ticks (~1m 18s) | |
+| Colonial Windfall | `colonial_windfall` | Colonial | 8 | +8 min of gold income, +5 min of culture income | Instant | |
+| Power Surge | `power_surge_base` | Victorian | 6 | Electricity production +100% | 26 ticks (~52s) | |
+| Crypto Boom | `crypto_boom` | Fusion | 7 | Crypto production +100% | 39 ticks (~1m 18s) | |
+| First Contact | `first_contact` | Space | 3 | +15 min of knowledge income, +5 min of titanium income | Instant | Rarest good event |
+| Dark Matter Rift | `dark_matter_rift` | Interstellar | 4 | Dark matter production +100% | 39 ticks (~1m 18s) | |
+| Quantum Fluctuation | `quantum_fluctuation` | Quantum | 3 | Quantum flux production +100% | 26 ticks (~52s) | |
 
 ### Bad Events
 
 | Name | Key | Min Age | Weight | Effect | Duration | Notes |
 |------|-----|---------|--------|--------|----------|-------|
-| Storm | `storm` | Primitive | 14 | Wood -0.3/tick | 5 ticks (~10s); 13 (~26s) from Bronze | Most common bad event |
-| Drought | `drought` | Primitive | 12 | Food -0.5/tick | 10 ticks (~20s); 26 (~52s) from Bronze | |
-| Bandit Raid | `bandit_raid` | Bronze | 10 | -10 food, -5 gold stolen | Instant | **Raid** (garrison blunts) |
-| Plague | `plague` | Stone | 6 | Food -1.0/tick, -15% workers | 8 ticks (~16s); 21 (~42s) from Bronze | **Workers permanently lost** |
-| Mine Collapse | `mine_collapse` | Iron | 7 | Iron -0.5/tick, -5% workers | 21 ticks (~42s) | **Workers permanently lost** |
-| Heresy | `heresy` | Medieval | 5 | Faith -0.5/tick | 31 ticks (~1m 2s) | |
-| Pirate Attack | `pirate_attack` | Colonial | 7 | -50 gold, -30 food stolen | Instant | **Raid** (garrison blunts) |
-| Nuclear Scare | `nuclear_scare` | Atomic | 4 | Electricity -2.0/tick, knowledge -1.0/tick | 31 ticks (~1m 2s) | |
-| Data Breach | `data_breach` | Information | 6 | -50 data, -100 gold stolen | Instant | **Raid** (garrison blunts) |
-| Industrial Accident | `industrial_accident` | Industrial | 8 | -10 steel, -15 oil stolen, -7% workers | Instant | **Workers permanently lost** |
-| Crypto Winter | `crypto_winter` | Cyberpunk | 8 | -4.5 crypto stolen | 36 ticks (~1m 12s) | The theft happens once, when it fires |
+| Storm | `storm` | Primitive | 14 | Wood production -50% | 5 ticks (~10s); 13 (~26s) from Bronze | Most common bad event |
+| Drought | `drought` | Primitive | 12 | Food production -50% | 10 ticks (~20s); 26 (~52s) from Bronze | |
+| Bandit Raid | `bandit_raid` | Bronze | 10 | Lose 6% of your food, 6% of your gold | Instant | **Raid** (garrison blunts) |
+| Plague | `plague` | Stone | 6 | -15% workers, food production -50% | 8 ticks (~16s); 21 (~42s) from Bronze | **Workers permanently lost** |
+| Mine Collapse | `mine_collapse` | Iron | 7 | -5% workers, iron production -50% | 21 ticks (~42s) | **Workers permanently lost** |
+| Heresy | `heresy` | Medieval | 5 | Faith production -50% | 31 ticks (~1m 2s) | |
+| Pirate Attack | `pirate_attack` | Colonial | 7 | Lose 8% of your gold, 5% of your food | Instant | **Raid** (garrison blunts) |
+| Nuclear Scare | `nuclear_scare` | Atomic | 4 | Electricity production -40%, knowledge production -30% | 31 ticks (~1m 2s) | |
+| Data Breach | `data_breach` | Information | 6 | Lose 10% of your data, 8% of your gold | Instant | **Raid** (garrison blunts) |
+| Industrial Accident | `industrial_accident` | Industrial | 8 | Lose 6% of your steel, 6% of your oil, -7% workers | Instant | **Workers permanently lost** |
+| Crypto Winter | `crypto_winter` | Cyberpunk | 8 | Lose 12% of your crypto | Instant | |
 
 ### Mixed Events
 
 | Name | Key | Min Age | Weight | Effect | Duration | Notes |
 |------|-----|---------|--------|--------|----------|-------|
-| Earthquake | `earthquake` | Stone | 5 | -15 wood stolen, +20 stone | Instant | Trade-off |
-| Plasma Storm | `plasma_storm` | Fusion | 5 | Electricity -5.0/tick, plasma +3.0/tick | 26 ticks (~52s) | Hurts power, helps plasma |
+| Earthquake | `earthquake` | Stone | 5 | Lose 5% of your wood, +5 min of stone income | Instant | Trade-off |
+| Plasma Storm | `plasma_storm` | Fusion | 5 | Electricity production -50%, plasma production +50% | 26 ticks (~52s) | Hurts power, helps plasma |
 
 ### Raids and your garrison
 
@@ -114,20 +132,20 @@ The raids are:
 
 | Event | Key | Where | What the garrison blunts |
 |-------|-----|-------|--------------------------|
-| Bandit Raid | `bandit_raid` | base event, Bronze Age on | food and gold stolen |
-| Pirate Attack | `pirate_attack` | base event, Colonial Age on | gold and food stolen |
-| Data Breach | `data_breach` | base event, Information Age on | data and gold stolen |
-| Tribal Raid | `tribal_raid` | Stone Era | food stolen and workers who flee (not the food production penalty) |
+| Bandit Raid | `bandit_raid` | base event, Bronze Age on | food and gold taken |
+| Pirate Attack | `pirate_attack` | base event, Colonial Age on | gold and food taken |
+| Data Breach | `data_breach` | base event, Information Age on | data and gold taken |
+| Tribal Raid | `tribal_raid` | Stone Era | food taken and workers who flee (not the food production penalty) |
 | Beast Stampede | `beast_stampede` | Stone Era | wood and food lost |
-| The Great Breach | `epoch_data_breach` | Digital Era | data stolen (not the knowledge production penalty) |
-| Corporate Espionage | `corporate_espionage` | Neon Era | gold and data stolen |
+| The Great Breach | `epoch_data_breach` | Digital Era | data taken (not the knowledge production penalty) |
+| Corporate Espionage | `corporate_espionage` | Neon Era | gold and data taken |
 
-Soldiers only exist from the Iron Age, so the two Stone Era raids (and a Bandit Raid in the Bronze Age) still hit in full in a normal run. Only the stolen resources and lost workers are blunted; a raid's production penalty runs in full. Disasters and unrest are not raids, and soldiers do nothing against them: `plague`, `mine_collapse`, `industrial_accident`, `crypto_winter`, `earthquake` and the rest take their full toll.
+Soldiers train as soon as a military building stands, and a War Camp can be built in the Stone Age, so a garrison blunts the two Stone Era raids and a Bandit Raid in the Bronze Age too. The raid threat of the Stone and Bronze Ages is sized to a War Camp and Barracks garrison (see [Military](military.md)). Only the stolen resources and lost workers are blunted; a raid's production penalty runs in full. Disasters and unrest are not raids, and soldiers do nothing against them: `plague`, `mine_collapse`, `industrial_accident`, `crypto_winter`, `earthquake` and the rest take their full toll.
 
 When the garrison blunts a raid, the log adds a green line under the event, for example:
 
 ```
-Your garrison blunted about 28% of the raid: you kept 3 food and 1 gold.
+Your garrison blunted about 28% of the raid: you kept 168 food and 210 gold.
 ```
 
 What it kept is added to the **Saved this run** line in the Army panel.
@@ -138,9 +156,9 @@ What it kept is added to the **Saved this run** line in the Army panel.
 
 | Effect | What it does |
 |--------|--------------|
-| Resource grant | Adds a fixed amount of a resource once, when the event fires. |
-| Production change | Adds a flat amount to one resource's per-tick rate (or subtracts it) for as long as the event lasts. It is not a percentage: +3.0 electricity/tick is +3.0 no matter how much you already make. |
-| Theft | Removes a fixed amount of a resource once, when the event fires (never more than you have). For a timed event, the amount is repeated in the "ended" line. |
+| Gain | Adds minutes of your own income of a resource once, when the event fires. |
+| Production change | Adds a share of your own income of one resource to its per-tick rate (or takes it off) for as long as the event lasts. The amount is worked out when the event fires and stays the same until it ends. |
+| Loss | Removes a share of what you hold of a resource once, when the event fires. |
 | Worker loss | Removes a percentage of your workers **permanently**, when the event fires, from every building in proportion and from the idle pool alike. They do not return when the event ends. |
 
 Every random event also nudges **morale** when it fires: a good event lifts it by 4 points and a bad one lowers it by 4 (mixed events leave it alone). This applies to the base events above and to the epoch-exclusive events alike. Epoch transition events don't change morale. See [Morale](morale.md).
@@ -189,12 +207,12 @@ Every awakening after the Stone Age's fires from the Bronze Age on, so its durat
 
 ## Responding to Events
 
-**Production penalties** (`drought`, `storm`, `heresy`, `nuclear_scare`): short, flat per-tick penalties you can't avoid, so ride them out. A drought takes 0.5 food a tick for 26 ticks from the Bronze Age on, 13 food in all. Don't restructure your workers over a penalty that lasts under a minute.
+**Production penalties** (`drought`, `storm`, `heresy`, `nuclear_scare`): short penalties you can't avoid, so ride them out. A drought takes half of your food production for 26 ticks from the Bronze Age on, 13 ticks of food in all. Don't restructure your workers over a penalty that lasts under a minute.
 
-**Thefts** (`bandit_raid`, `pirate_attack`, `data_breach` and the thefts in other events): the resources are gone the moment the event fires. The amounts are fixed and never grow, while your income does, so they are small by the time each can fire: a Pirate Attack takes 50 gold and 30 food, and the largest theft in the game, Corporate Espionage in the Neon Era, takes 10K gold and 8K data. Normal reserves cover them; there is nothing to stockpile for. Many thefts are raids (see [Raids and your garrison](#raids-and-your-garrison)), so a garrison takes a share off them.
+**Losses** (`bandit_raid`, `pirate_attack`, `data_breach` and the losses in other events): the resources are gone the moment the event fires. A loss is a share of what you hold, so a full store loses more than a thin one. Spend what you have saved before you walk away from the game, and keep a garrison: it blunts the raids among them.
 
 **Worker loss** (`plague`, `mine_collapse`, `industrial_accident`): the only lasting damage. Lost workers come out of every building in proportion, idle ones included, so keeping workers idle doesn't shield anything. With auto-recruit on (the default), the game refills the empty slots as housing and food allow; with it off, `recruit` and `assign` to replace them. See [Workers](workers-and-domains.md).
 
-**Good events** need no preparation. Boosts like `gold_rush` and `crypto_boom` add a flat amount per tick that doesn't grow with your workers, so let them run. Knowledge windfalls (`skilled_immigrants`, `ancient_discovery`, `first_contact`) can cover the last of a tech's cost; research is paid in full when you start it, so check whether you can now afford the next one.
+**Good events** need no preparation. Boosts like `gold_rush` and `crypto_boom` add a share of what you make, worked out when they fire, so let them run. A gain lands in storage, so room in the store is the only thing that can waste one. Knowledge windfalls (`skilled_immigrants`, `ancient_discovery`, `first_contact`) can cover the last of a tech's cost; research is paid in full when you start it, so check whether you can now afford the next one.
 
 **Faith and culture affect epoch transition events, not random events.** Stacking faith doesn't make `bountiful_harvest` more likely or `drought` less likely. See [Epochs](epochs.md).

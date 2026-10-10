@@ -152,6 +152,13 @@ type EpochEventDef struct {
 	FlavorText string // dramatic one-liner shown in the age splash and epoch overlay
 	Type       string // "good_minor" | "good_major" | "good_legendary" | "bad_challenging"
 	Duration   int    // ticks the effect lasts; 0 = instant
+	// Rates are the event's timed changes to a resource's rate, as sizes
+	// (EventRate: a share of the town's own income of the resource, see
+	// event_size.go). The engine turns each into an amount per tick when the
+	// event fires. The flavor text states the share; the log line under it
+	// states the amount. A Target of "" stands for the era's primary
+	// resource (Resource Drought).
+	Rates []Effect
 }
 
 // epochEventAge is the age epoch events are timed for. They fire on entering
@@ -191,13 +198,18 @@ func GoodEpochEvents() []EpochEventDef {
 		},
 		{
 			Key: "trade_winds", Name: "Trade Winds", Type: "good_minor",
-			FlavorText: "A steady wind fills the sails. Gold +5/tick for {dur}.",
+			FlavorText: "A steady wind fills the sails. Gold production +50% for {dur}.",
 			Duration:   144, // ~5 min on the base curve
+			Rates:      []Effect{{Type: EventRate, Target: "gold", Value: 0.5}},
 		},
 		{
 			Key: "cultural_festival", Name: "Cultural Festival", Type: "good_minor",
-			FlavorText: "A grand festival brings everyone together. Culture +30% and faith +20% of what you hold, then culture +1/tick and faith +1/tick for {dur}.",
+			FlavorText: "A grand festival brings everyone together. Culture +30% and faith +20% of what you hold, then culture production +50% and faith production +50% for {dur}.",
 			Duration:   144, // ~5 min on the base curve
+			Rates: []Effect{
+				{Type: EventRate, Target: "culture", Value: 0.5},
+				{Type: EventRate, Target: "faith", Value: 0.5},
+			},
 		},
 		// --- Major (medium culture required) ---
 		{
@@ -234,13 +246,15 @@ func ChallengingEpochEvents() []EpochEventDef {
 	return stretchEpochEvents([]EpochEventDef{
 		{
 			Key: "the_famine", Name: "The Famine", Type: "bad_challenging",
-			FlavorText: "Crops wither and the granaries run empty. Food -3/tick for {dur}.",
+			FlavorText: "Crops wither and the granaries run empty. Food production -30% for {dur}.",
 			Duration:   120,
+			Rates:      []Effect{{Type: EventRate, Target: "food", Value: -0.3}},
 		},
 		{
 			Key: "merchant_betrayal", Name: "Merchant Betrayal", Type: "bad_challenging",
-			FlavorText: "Your trading partners vanish with 50% of your gold. Gold -2/tick for {dur}.",
+			FlavorText: "Your trading partners vanish with 50% of your gold. Gold production -30% for {dur}.",
 			Duration:   72,
+			Rates:      []Effect{{Type: EventRate, Target: "gold", Value: -0.3}},
 		},
 		{
 			Key: "the_great_fire", Name: "The Great Fire", Type: "bad_challenging",
@@ -249,28 +263,33 @@ func ChallengingEpochEvents() []EpochEventDef {
 		},
 		{
 			Key: "epidemic", Name: "Epidemic", Type: "bad_challenging",
-			FlavorText: "A plague moves through your population. 20% of your workers die, and food -1.5/tick for {dur}.",
+			FlavorText: "A plague moves through your population. 20% of your workers die, and food production -20% for {dur}.",
 			Duration:   180,
+			Rates:      []Effect{{Type: EventRate, Target: "food", Value: -0.2}},
 		},
 		{
 			Key: "resource_drought", Name: "Resource Drought", Type: "bad_challenging",
-			FlavorText: "The epoch's main building material runs short. Its production -3/tick for {dur}.",
+			FlavorText: "The epoch's main building material runs short. Its production -40% for {dur}.",
 			Duration:   90,
+			Rates:      []Effect{{Type: EventRate, Target: "", Value: -0.4}},
 		},
 		{
 			Key: "political_instability", Name: "Political Instability", Type: "bad_challenging",
-			FlavorText: "Rival courts tear at the throne. You lose 60% of your faith, and knowledge -2/tick for {dur}.",
+			FlavorText: "Rival courts tear at the throne. You lose 60% of your faith, and knowledge production -30% for {dur}.",
 			Duration:   60,
+			Rates:      []Effect{{Type: EventRate, Target: "knowledge", Value: -0.3}},
 		},
 		{
 			Key: "economic_crash", Name: "Economic Crash", Type: "bad_challenging",
-			FlavorText: "Markets implode. You lose 50% of your gold, and gold -3/tick for {dur}.",
+			FlavorText: "Markets implode. You lose 50% of your gold, and gold production -40% for {dur}.",
 			Duration:   216,
+			Rates:      []Effect{{Type: EventRate, Target: "gold", Value: -0.4}},
 		},
 		{
 			Key: "the_dark_age", Name: "The Dark Age", Type: "bad_challenging",
-			FlavorText: "Your scholars fall silent. Current research is canceled with no refund, you lose 80% of your knowledge, and knowledge -3/tick for {dur}.",
+			FlavorText: "Your scholars fall silent. Current research is canceled with no refund, you lose 80% of your knowledge, and knowledge production -40% for {dur}.",
 			Duration:   144,
+			Rates:      []Effect{{Type: EventRate, Target: "knowledge", Value: -0.4}},
 		},
 	})
 }

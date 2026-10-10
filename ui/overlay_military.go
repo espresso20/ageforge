@@ -20,9 +20,10 @@ func militaryProvider(state game.GameState, _ int) string {
 	fmt.Fprintf(&sb, " [gold]═══ Army Overview ═══[-]\n\n")
 	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %s / %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap)))
 	if rs, ok := state.Resources["soldiers"]; ok && !rs.Unlocked {
-		// Military buildings can stand before soldiers exist: nothing trains
-		// in them until the age that brings soldiers, and the panel says so.
-		fmt.Fprintf(&sb, " [gold]Training:[-]  %s\n", theme.Paint(theme.RoleDim, "not yet. Soldiers arrive in "+ageRef(state, "iron_age")+"."))
+		// Soldiers begin with the first military building (a War Camp
+		// trains them from the day it stands): until one is built there is
+		// nobody to train, and the panel says so.
+		fmt.Fprintf(&sb, " [gold]Training:[-]  %s\n", theme.Paint(theme.RoleDim, "not yet. A military building trains soldiers."))
 	} else {
 		fmt.Fprintf(&sb, " [gold]Training:[-]  %s/tick\n", FormatRate(mil.SoldierRate))
 	}
@@ -75,13 +76,8 @@ func militaryProvider(state game.GameState, _ int) string {
 	sb.WriteString(lockNotes(state, config.FeatureCampaigns))
 	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
 		sb.WriteString(" [gray]No campaigns available yet.[-]\n")
-		// Ages are named only once the player can see them (spoilers.go).
-		train := " which military buildings train, once you can build them."
-		if game.SightOf(&state).Age("iron_age") {
-			train = " which military buildings train from " + ageRef(state, "iron_age") + "."
-		}
 		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" Campaigns open in %s and cost soldiers,", ageRef(state, "bronze_age"))) + "\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, train) + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, " which military buildings train.") + "\n")
 	} else {
 		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary, state)
 	}

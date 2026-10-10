@@ -55,8 +55,38 @@ func TestMilitaryYardstick(t *testing.T) {
 			prev = th
 		}
 	}
-	if s := MilitaryScaleAt(0); s.Threat != 1 || s.Mission != 1 || AgeThreat(0) != DefenseThreatBase {
-		t.Errorf("the Primitive Age's yardstick is %+v and its threat %v, want no scale and the base", s, AgeThreat(0))
+	if s := MilitaryScaleAt(0); s.Threat != 1 || s.Mission != 1 || AgeThreat(0) != EarlyThreatPrimitive {
+		t.Errorf("the Primitive Age's yardstick is %+v and its threat %v, want no scale and the early threat", s, AgeThreat(0))
+	}
+	// From the Iron Age on the threat is the measured curve, untouched by
+	// the early threats: the base doubled once an age, on the age's scale.
+	curve := DefenseThreatBase
+	for i := range order {
+		if i >= 3 {
+			if got, want := AgeThreat(i), curve*MilitaryScaleAt(i).Threat; math.Abs(got-want) > 1e-6*want {
+				t.Errorf("%s: the threat is %.0f, want the curve's %.0f", order[i], got, want)
+			}
+		}
+		curve *= DefenseThreatGrowth
+	}
+	// Before it, the threat is sized to the garrison a moderate set of the
+	// age's military buildings trains over the age's pacing target: that
+	// garrison blunts about a fifth of a raid, and half of it about an
+	// eighth.
+	for i, age := range order[1:3] {
+		garrison := FlowIncome("soldiers", age) * AgeTargetTicks(age)
+		if garrison <= 0 {
+			t.Fatalf("%s: a moderate town trains no soldiers", age)
+		}
+		rating := 2 * garrison * (1 + MilitaryScaleAt(i+1).Now)
+		full := DefenseMitigation(rating, AgeThreat(i+1))
+		half := DefenseMitigation(rating/2, AgeThreat(i+1))
+		if full < 0.17 || full > 0.26 {
+			t.Errorf("%s: a moderate garrison of %.0f soldiers blunts %.3f of a raid, want about a fifth", age, garrison, full)
+		}
+		if half < 0.10 || half > 0.17 {
+			t.Errorf("%s: half a moderate garrison blunts %.3f of a raid, want about an eighth", age, half)
+		}
 	}
 	// A mission's odds: the listed difficulty with no army, the floor with a
 	// large one.

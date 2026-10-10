@@ -82,6 +82,21 @@ func (m *miniMap) update(set mapSettings, state *game.GameState) {
 	m.model = m.mv.model(state)
 }
 
+// pointAt marks the Map panel's cursor on the mini map, as the same
+// highlighted cell, for a style whose compact view can (mapstyle.Pointing).
+// The two keep a view of the style each: the panel's has the cursor.
+func (m *miniMap) pointAt(p *mapPanel) {
+	dst, ok := m.styles.get(m.set.Style).(mapstyle.Pointing)
+	if !ok || p == nil {
+		return
+	}
+	if src, ok := p.styles.get(m.set.Style).(mapstyle.Pointing); ok {
+		dst.Point(src.Pointer())
+		return
+	}
+	dst.Point(mapstyle.Pointer{}, false)
+}
+
 // Draw draws the border, the compact view inside it and the news line.
 func (m *miniMap) Draw(scr tcell.Screen) {
 	t0 := time.Now()

@@ -106,11 +106,11 @@ func TestFamilyBadges(t *testing.T) {
 	if !ok {
 		t.Fatal("no second housing rung")
 	}
-	if rung.Name != "Housing Contractor" || rung.Tier != config.BadgeSilver || rung.Threshold != 57 ||
+	if rung.Name != "Housing Contractor" || rung.Tier != config.BadgeSilver || rung.Threshold != 36 ||
 		rung.Counter != "built.lineage.housing" || rung.Scope != config.BadgeLifetime {
 		t.Errorf("the second housing rung: %+v", rung)
 	}
-	if want := "Build 57 housing buildings across all your runs. Sold and rebuilt copies count once."; rung.Desc != want {
+	if want := "Build 36 housing buildings across all your runs. Sold and rebuilt copies count once."; rung.Desc != want {
 		t.Errorf("description %q, want %q", rung.Desc, want)
 	}
 	if rung.Reveal.Kind != config.BadgeVisible {

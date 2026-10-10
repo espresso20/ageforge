@@ -12,9 +12,8 @@ You're in the **Primitive Age**. The screen shows:
 - The status bar: your account name, `Primitive Age`, the epoch (`◈ Stone Era`), `Pop: 0/0` and `Morale 50%`
 - The Next Age row: what the Stone Age asks for, each item marked ✓ or ✗
 - The Economy panel, which is always on screen: Resources, Under construction and the Log on the left, the Buildings list on the right, with the Getting started guide under it
-- On a terminal of 105 columns by 34 rows or larger, a **mini map** above the Buildings list
 
-The mini map draws your town from your real buildings, so it grows as you build. On smaller terminals it hides to leave the Buildings list room. Type `map` any time to open the full [Map](map.md) (Esc closes it), and `icons` if you want real icons on it.
+Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. `minimap on` puts a short mini map above the Buildings list, on a terminal of 105 columns by 34 rows or larger.
 
 <figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: stores nearly empty, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
 
@@ -205,7 +204,7 @@ When you reach the Stone Age:
 - **Standing Stones**: a better faith building, once you research Ritual (it needs Language, a Primitive Age tech)
 - **Longhouse**: bigger housing (+25 housing each)
 - **Storage Pit**: +2.75K storage for every resource (up to 25)
-- **War Camp**: an early military building. Soldiers unlock in the Iron Age, so it can wait
+- **War Camp**: an early military building. It trains soldiers from the day it stands, and a garrison blunts the raids of the Stone and Bronze Ages (see [Military](military.md))
 - **Great Monolith**: the Stone Age wonder, required to reach the Bronze Age
 
 Your older buildings don't change on their own. Type `upgrade` to see which ones can become their Stone Age version (gathering camps into forager posts, for example); see [Building Upgrades](buildings.md#building-upgrades).

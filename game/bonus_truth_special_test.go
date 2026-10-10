@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // The promises that are not one effect of one config entry: Era Mastery's
@@ -366,19 +367,24 @@ func TestBonusTruthWorkerOutput(t *testing.T) {
 	}
 }
 
-// TestBonusTruthGrantsSayWhatFit: an event's or a milestone's text states
-// its full grant ("+250 food"). Storage takes only what fits, so when it
-// cuts the grant short the log says what the player got; with room it says
-// nothing.
+// TestBonusTruthGrantsSayWhatFit: an event's line or a milestone's text
+// states its full grant. Storage takes only what fits, so when it cuts the
+// grant short the log says what the player got; with room it says nothing.
 func TestBonusTruthGrantsSayWhatFit(t *testing.T) {
 	lastLine := func(ge *GameEngine) string { return ge.log[len(ge.log)-1].Message }
-	harvest := config.EventByKey()["bountiful_harvest"] // +250 food
+	harvest := config.EventByKey()["bountiful_harvest"] // minutes of food income
 	reward := []config.Effect{{Type: "instant_resource", Target: "food", Value: 250}}
 
-	// A new game holds 50 food at most, and starts with 25.
+	// A new game holds 50 food at most, and starts with 25. It makes no
+	// food yet, so the harvest is sized on the floor: a share of what a
+	// moderate Primitive Age town makes.
 	ge := NewGameEngine()
-	ge.applyEventEffects(harvest)
-	if got, want := lastLine(ge), "  → Storage was nearly full: only 25 food (of 250) fit."; got != want {
+	grant := config.EventSize(harvest.Effects[0], config.EventTown{Typical: ge.rules.TypicalIncome("food", ge.age)})
+	if grant <= 25 {
+		t.Fatalf("the harvest gives a new game %v food: the test needs it to overflow the store", grant)
+	}
+	ge.fireEvent(harvest)
+	if got, want := lastLine(ge), "  → Storage was nearly full: only 25 food (of "+textfmt.Number(grant)+") fit."; got != want {
 		t.Errorf("a clipped event grant logs %q, want %q", got, want)
 	}
 	ge.applyMilestoneRewards(reward)
@@ -389,7 +395,7 @@ func TestBonusTruthGrantsSayWhatFit(t *testing.T) {
 	// With room, the text is the whole truth: no extra line.
 	roomy := newTruthEngine("stone_age", truthClean)
 	lines := len(roomy.log)
-	roomy.applyEventEffects(harvest)
+	roomy.fireEvent(harvest)
 	roomy.applyMilestoneRewards(reward)
 	for _, e := range roomy.log[lines:] {
 		if strings.Contains(e.Message, "Storage was nearly full") {
@@ -419,7 +425,7 @@ func TestBonusTruthAncientMemory(t *testing.T) {
 // event runs config.PacingStretch times its typed duration; the log used to
 // quote the typed one ("for ~20s" for a drought that ran 52 seconds).
 func TestBonusTruthEventDurations(t *testing.T) {
-	drought := config.EventByKey()["drought"] // food -0.5/tick, typed for 10 ticks
+	drought := config.EventByKey()["drought"] // a share of food income, typed for 10 ticks
 	for _, c := range []struct {
 		age   string
 		ticks int
@@ -428,9 +434,11 @@ func TestBonusTruthEventDurations(t *testing.T) {
 		{"stone_age", drought.Duration, "for ~20s."},
 		{"iron_age", config.StretchTicks("iron_age", drought.Duration), "for ~52s."},
 	} {
-		ge := NewGameEngine()
+		ge := newTruthEngine(c.age, truthClean)
 		ge.SeedRNG(1)
-		ge.age, ge.currentEpoch = c.age, "no epoch: universal events only"
+		ge.currentEpoch = "no epoch: universal events only"
+		ge.Buildings.counts["gathering_camp"] = 10
+		ge.recalculateRates()
 		ge.tick = 100000
 		ge.Events.defs = []config.EventDef{drought}
 		ge.Events.nextEventTick = 0
@@ -440,18 +448,18 @@ func TestBonusTruthEventDurations(t *testing.T) {
 		}
 		line := ""
 		for _, e := range ge.log {
-			if strings.Contains(e.Message, "Food -0.5/tick") {
+			if strings.Contains(e.Message, drought.LogMessage) {
 				line = e.Message
 			}
 		}
-		if !strings.HasSuffix(line, c.want) || strings.Contains(line, "{dur}") {
-			t.Errorf("%s: the log says %q, want it to end %q", c.age, line, c.want)
+		if !strings.Contains(line, "/tick") || !strings.HasSuffix(line, c.want) {
+			t.Errorf("%s: the log says %q, want a rate and for it to end %q", c.age, line, c.want)
 		}
 	}
 	// And no event text carries a duration of its own.
 	for _, def := range append(config.RandomEvents(), config.EpochExclusiveEvents()...) {
-		if strings.Contains(def.LogMessage, "for ~") {
-			t.Errorf("event %s quotes its own duration (%q): say \"for {dur}\"", def.Key, def.LogMessage)
+		if strings.Contains(def.LogMessage, "for ~") || strings.Contains(def.LogMessage, "{dur}") {
+			t.Errorf("event %s quotes its own duration (%q): the engine writes it", def.Key, def.LogMessage)
 		}
 	}
 }

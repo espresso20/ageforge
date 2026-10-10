@@ -114,6 +114,10 @@ func (u unlockOrder) makesBeforeUnlock(d BuildingDef, res string) bool {
 	if !ok {
 		return false
 	}
+	// A resource its own buildings unlock is made from the first copy.
+	if r.BuiltUnlocks {
+		return false
+	}
 	built, okB := u.ages[d.RequiredAge]
 	unlocks, okR := u.ages[r.Age]
 	return okB && okR && unlocks > built

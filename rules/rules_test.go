@@ -75,7 +75,7 @@ func TestCoreMatchesConfigTables(t *testing.T) {
 		}
 	}
 	for key, want := range config.EpochEventByKey() {
-		if got, ok := s.EraEvent(key); !ok || got != want {
+		if got, ok := s.EraEvent(key); !ok || !reflect.DeepEqual(got, want) {
 			t.Errorf("EraEvent(%q) differs from config", key)
 		}
 	}

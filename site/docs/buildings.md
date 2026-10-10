@@ -346,7 +346,6 @@ Several lineages change which resource they produce as you move through the ages
 
 | Building (age) | Output | Unlocks in |
 |---|---|---|
-| War Camp (Stone), Barracks (Bronze) | soldiers | Iron Age |
 | Colosseum (Iron) | culture | Classical Age |
 | Uranium Mine (Victorian), Nuclear Extraction Plant (Electric) | uranium | Atomic Age |
 | Titanium Mine (Modern), Precision Mine (Information), Nano Drill Complex (Digital) | titanium ore | Space Age |

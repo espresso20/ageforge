@@ -88,25 +88,27 @@ These count across all your runs. A dot separates the rungs.
 | Appeasements | 1 · 10 · 50 |
 | Braces | 1 · 10 · 50 |
 | Invitations | 1 · 5 · 20 |
-| Wonders raised | 25 · 100 · 300 |
-| Techs researched | 100 · 500 · 1,200 |
-| Milestones | 100 · 400 · 1,000 |
+| Wonders raised | 2 · 24 · 300 |
+| Techs researched | 5 · 77 · 1,200 |
+| Milestones | 5 · 70 · 1,000 |
 | Milestone chains | 1 · 10 · 30 |
-| Expeditions | 10 · 50 · 200 · 500 |
-| Faction deals | 5 · 25 · 100 |
-| Raids blunted | 10 · 100 · 500 |
+| Expeditions | 4 · 20 · 100 · 500 |
+| Faction deals | 1 · 10 · 100 |
+| Raids blunted | 1 · 22 · 500 |
 | Returns | 1 · 25 · 100 |
 | Plan items started | 50 · 500 · 5,000 |
-| Buildings upgraded | 250 · 2,500 · 20,000 |
+| Buildings upgraded | 20 · 630 · 20,000 |
 | Festivals | 1 · 10 · 50 |
 | Black market deals | 1 · 10 · 50 |
 | Ancient Memories | 1 · 5 · 12 |
 | Hard times weathered | 1 · 10 · 30 |
-| Market trades | 50 · 500 · 5,000 |
+| Market trades | 10 · 220 · 5,000 |
 
 One more ladder of three rungs is secret.
 
-The top rung of a ladder that counts play is set so that about 25 full runs reach it, and no ladder asks for more. Returns counts the times you came back to a game, so it climbs with the days, not the runs.
+The first rung of a ladder is one a first run earns early: by the Bronze Age, or by the second age after the thing it counts first appears. Many first rungs ask for one of something. The top rung of a ladder that counts play is set so that about 25 full runs reach it, and no ladder asks for more. Returns counts the times you came back to a game, so it climbs with the days, not the runs.
+
+A ladder can be lowered between versions of the game. An account that had already passed a rung is given it the next time it is loaded, and the log says how many badges that was in one line.
 
 ### Lineage ladders
 
@@ -114,20 +116,20 @@ Each lineage has five rungs: Hobbyist, Contractor, Magnate, Tycoon and Dynasty. 
 
 | Lineage | Rungs |
 |---|---|
-| Culture arts | 6 · 22 · 88 · 220 · 550 |
+| Culture arts | 5 · 16 · 52 · 160 · 550 |
 | Energy | 5 · 10 · 40 · 100 · 250 |
-| Engineering | 7 · 26 · 100 · 260 · 650 |
-| Faith | 10 · 38 · 150 · 380 · 950 |
-| Food | 10 · 38 · 150 · 380 · 950 |
+| Engineering | 6 · 19 · 62 · 200 · 650 |
+| Faith | 8 · 26 · 87 · 280 · 950 |
+| Food | 9 · 28 · 92 · 290 · 950 |
 | Geological extraction | 10 · 40 · 160 · 400 · 1,000 |
 | Hacker | 5 · 17 · 68 · 170 · 430 |
 | Harbor | 3 · 5 · 20 · 50 · 130 |
-| Housing | 14 · 57 · 230 · 570 · 1,400 |
-| Knowledge | 10 · 38 · 150 · 380 · 950 |
-| Metallurgy | 6 · 23 · 92 · 230 · 580 |
-| Military | 9 · 35 · 140 · 350 · 880 |
-| Organic extraction | 10 · 39 · 160 · 390 · 980 |
-| Storage | 8 · 33 · 130 · 330 · 810 |
+| Housing | 11 · 36 · 120 · 410 · 1,400 |
+| Knowledge | 8 · 26 · 87 · 280 · 950 |
+| Metallurgy | 5 · 16 · 53 · 170 · 580 |
+| Military | 7 · 23 · 78 · 260 · 880 |
+| Organic extraction | 9 · 29 · 93 · 300 · 980 |
+| Storage | 7 · 22 · 75 · 240 · 810 |
 | Trade | 6 · 24 · 96 · 240 · 600 |
 
 ### Payrolls
@@ -150,7 +152,15 @@ A payroll badge asks for that many workers at work in one domain at the same tim
 
 ### Resource ladders
 
-Each resource has a ladder: Trickle, Stream, River and Flood. The rungs are set from what one full run produces of that resource: a quarter of a run, one run, five runs and twenty-five. A resource that only comes after a first run's last age has no Trickle, and its rungs are measured over its own first two ages. The badge case shows each rung's number and how far along you are.
+Each resource has a ladder: Trickle, Stream, River and Flood. The first rung is what an ordinary town makes of the resource in the first age it makes any, so a first run earns it in that age or soon after. The top rung is twenty-five full runs of it, and the rungs between climb in even steps, each the same number of times the one before. A resource that only comes after a first run's last age has no Trickle, and its top rung is measured over its own first two ages. The badge case shows each rung's number and how far along you are.
+
+Three of them, as examples:
+
+| Resource | Trickle | Stream | River | Flood |
+|---|---|---|---|---|
+| Food | 2,700 | 920K | 310M | 100B |
+| Wood | 1,400 | 240K | 42M | 7.2B |
+| Stone | 27K | 760K | 21M | 610M |
 
 ## What stays hidden
 

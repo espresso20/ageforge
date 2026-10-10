@@ -35,7 +35,7 @@ The bottom row is a **key bar**: it shows what `Enter` will do, the current styl
 
 ### The inspect cursor
 
-In both styles a cursor picks out one thing at a time: a building, a wonder, a civilization. The Map reports its **name**, a few **details** (how many you own, how many workers staff it, what changed) and the **whole command** to type for it, for example `build hut` or `diplomacy gift riverlands_tribes`. Press `Enter` to put that command into the prompt, edit it if you like, and press Enter again to run it.
+In both styles a cursor picks out one thing at a time: a building, a wonder, a civilization. The cursor is a highlighted cell: a solid block in a color the map itself does not use in your theme (an orange on the dark themes), with the glyph beneath it still showing. In the skyline it is a highlighted bar under the building and the building's name on a highlighted label. It blinks slowly, and holds steady when `motion` is off. The Map reports its **name**, a few **details** (how many you own, how many workers staff it, what changed) and the **whole command** to type for it, for example `build hut` or `diplomacy gift riverlands_tribes`. Press `Enter` to put that command into the prompt, edit it if you like, and press Enter again to run it.
 
 ### Since your last visit
 
@@ -186,8 +186,8 @@ Three settings shape the Map. They are saved **per account**, like your theme: t
 | `map glyphs unicode` | Box drawing, blocks and widely supported symbols (the default) |
 | `map glyphs nerd` | Nerd Font icons. Needs a Nerd Font in your terminal; every icon has a Unicode fallback |
 | `minimap` | Show whether the dashboard's mini map is on |
-| `minimap off` | Hide the mini map, so the Buildings list gets the whole column |
-| `minimap on` | Show the mini map again (the default) |
+| `minimap off` | Hide the mini map, so the Buildings list gets the whole column (the default) |
+| `minimap on` | Show the mini map above the Buildings list |
 | `map flows` | The flows overlay: where your economy is stuck (see [The flows overlay](#the-flows-overlay)). `map flows on` and `map flows off` set it; bare, it switches. It lasts for the session |
 
 All of them work while the Map is open, so you see the change at once.
@@ -200,9 +200,9 @@ All of them work while the Map is open, so you see the change at once.
 
 ## The mini map
 
-The dashboard shows a compact view of the Map above the **Buildings** list, in a border titled "Map · Roguelike" or "Map · Skyline". It follows your `map style` and `map glyphs` settings and shows the since-last-visit news too (for the skyline, in its bottom border).
+The mini map is off by default. Type `minimap on` and the dashboard shows a compact view of the Map above the **Buildings** list, in a border titled "Map · Roguelike" or "Map · Skyline"; the setting is remembered with your account. It follows your `map style` and `map glyphs` settings and shows the since-last-visit news too (for the skyline, in its bottom border).
 
-It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it and gives the list the whole column; `minimap on` brings it back.
+It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it again and gives the list the whole column. In the roguelike style it marks the tile the Map panel's cursor is on with the same highlighted cell.
 
 The mini map needs room: it appears on terminals of 105 columns by 34 rows and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
 

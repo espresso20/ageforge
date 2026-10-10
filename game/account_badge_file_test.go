@@ -173,8 +173,10 @@ func TestOldAccountGetsItsBadgeFile(t *testing.T) {
 	}{
 		{
 			// All four achievements, 11 prestiges, the Information Age reached.
-			file:     "account_v1_full.json",
-			badges:   append(ageBadges("information_age"), badgePrestige1, badgePrestige3, badgePrestige10),
+			file: "account_v1_full.json",
+			// Thirteen ages and three prestige rungs: enough badges for
+			// the first rung of the ladder over earned badges.
+			badges:   append(ageBadges("information_age"), badgePrestige1, badgePrestige3, badgePrestige10, badgeCollector),
 			prestige: 11,
 		},
 		{
@@ -345,7 +347,7 @@ func TestV1ExportImports(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := append(ageBadges("information_age"), badgePrestige1, badgePrestige3, badgePrestige10)
+	want := append(ageBadges("information_age"), badgePrestige1, badgePrestige3, badgePrestige10, badgeCollector)
 	slices.Sort(want)
 
 	// Through the engine: brought up before it is saved.

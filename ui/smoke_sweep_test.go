@@ -455,6 +455,7 @@ func TestSmokeUISweep(t *testing.T) {
 	h := s.reproHarness
 
 	steps := 0
+	miniAsked := false // "minimap on" has been typed
 	for i, th := range theme.All() {
 		key := th.Key
 		s.step = "switch theme to " + key
@@ -487,7 +488,17 @@ func TestSmokeUISweep(t *testing.T) {
 
 		s.ghost(key)
 
+		// The mini map is off until asked for: no mini map on the first
+		// dashboard, and one once minimap on is typed. The setting is
+		// remembered, so the themes after the first find it on.
 		s.step = "[" + key + "] mini map"
+		if !miniAsked {
+			if s.miniMapShown() {
+				s.fail("the mini map shows on a dashboard nobody turned it on for")
+			}
+			s.submit("minimap on")
+			miniAsked = true
+		}
 		s.wait("the mini map on the dashboard", s.miniMapShown)
 
 		for _, o := range sweepOverlays {

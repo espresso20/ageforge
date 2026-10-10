@@ -1349,12 +1349,17 @@ func (s *scene) labelFree(x, y, n int) bool {
 	return true
 }
 
+// cursor draws the inspect cursor: highlighted cells in the cursor's own
+// colours (mapstyle.Palette.CursorStyle), blinking slowly while the map
+// moves. A lot gets a highlighted bar under it and its name on a
+// highlighted label; the tether, the visitor and a town on the ridge get a
+// highlighted pointer.
 func (s *scene) cursor() {
 	if !s.v.inspect {
 		return
 	}
-	acc := s.mp.Fg[mapmodel.CAccent]
-	bgc := s.mp.Bg
+	cfg, cbg, _ := s.mp.CursorStyle(s.anim).Decompose()
+	mark := func(x, y int, ch rune) { s.fb.set(x, y, ch, cfg, cbg, dTop) }
 	name := ""
 	var x0, x1, top int
 	switch t := s.v.cur; {
@@ -1368,24 +1373,24 @@ func (s *scene) cursor() {
 		}
 	case t.kind == tTether:
 		if x := s.elevatorX(); x >= 0 && x < s.W {
-			s.fb.fg(x-1, s.Y(s.groundY/2), '►', acc, dTop)
+			mark(x-1, s.Y(s.groundY/2), '►')
 			lbl := " " + mapmodel.FeatTether.Info().Title + " "
-			s.fb.text(clampInt(x-textLen(lbl)/2, 0, max(0, s.W-textLen(lbl))), s.Y(s.groundY/2-2), lbl, bgc, acc, dTop)
+			s.fb.text(clampInt(x-textLen(lbl)/2, 0, max(0, s.W-textLen(lbl))), s.Y(s.groundY/2-2), lbl, cfg, cbg, dTop)
 		}
 		return
 	case t.kind == tUFO:
 		if x, y, ok := saucerAt(s.m, s.visit, s.W); ok {
-			mark, my := '▼', y-1
+			ch, my := '▼', y-1
 			if my < 0 {
-				mark, my = '▲', y+1
+				ch, my = '▲', y+1
 			}
-			s.fb.fg(x+1, s.Y(my), mark, acc, dTop)
+			mark(x+1, s.Y(my), ch)
 		}
 		return
 	case t.kind != tLot:
 		for _, it := range s.ridge {
 			if (t.kind == tHarbinger && it.fac == nil) || (it.fac != nil && it.fac.Key == t.key) {
-				s.fb.fg(it.x, s.Y(s.ridgeTop(it.x)-6), '▼', acc, dTop)
+				mark(it.x, s.Y(s.ridgeTop(it.x)-6), '▼')
 			}
 		}
 		return
@@ -1393,14 +1398,14 @@ func (s *scene) cursor() {
 		return
 	}
 	for x := x0 + 1; x < x1; x++ {
-		s.fb.fg(x, s.Y(s.groundY+2), '─', acc, dTop)
+		mark(x, s.Y(s.groundY+2), '─')
 	}
-	s.fb.fg(x0, s.Y(s.groundY+2), '└', acc, dTop)
-	s.fb.fg(x1, s.Y(s.groundY+2), '┘', acc, dTop)
-	s.fb.fg((x0+x1)/2, s.Y(s.groundY+1), '▲', acc, dTop)
+	mark(x0, s.Y(s.groundY+2), '└')
+	mark(x1, s.Y(s.groundY+2), '┘')
+	mark((x0+x1)/2, s.Y(s.groundY+1), '▲')
 	lbl := " " + name + " "
 	n := textLen(lbl)
-	s.fb.text(clampInt((x0+x1)/2-n/2, 0, max(0, s.W-n)), s.Y(max(0, top-2)), lbl, bgc, acc, dTop)
+	s.fb.text(clampInt((x0+x1)/2-n/2, 0, max(0, s.W-n)), s.Y(max(0, top-2)), lbl, cfg, cbg, dTop)
 }
 
 // ------------------------------------------------------------ ridge items
