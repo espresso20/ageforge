@@ -853,7 +853,9 @@ func (d *Dashboard) refresh() {
 	d.refreshWorkerMini(state)
 }
 
-// announceBadges drains the badges the account earned since the last refresh
+// announceBadges says what the account earned since the last refresh. Badges
+// its record already proved when it was loaded get one line between them.
+// Then it drains the badges the account earned since the last refresh
 // (the engine judged them under its lock and only queued them) and gives each a
 // toast in the badge's own colours, written for the width of the toast bar, and
 // one log line, with a second line for the theme it unlocks when it gives one. The line is fixed per badge, so earning one draws
@@ -861,6 +863,13 @@ func (d *Dashboard) refresh() {
 func (d *Dashboard) announceBadges() {
 	if d.engine == nil {
 		return
+	}
+	// Badges the account's own record already proved when it was loaded
+	// (a ladder was lowered since): one line for all of them.
+	if n := d.engine.DrainBadgeCatchUp(); n > 0 {
+		line := game.BadgeCatchUpLine(n)
+		d.toastMgr.Show(line, "green", 5*time.Second)
+		d.engine.AddLog("success", line)
 	}
 	for _, v := range d.engine.DrainEarnedBadges() {
 		d.toastMgr.ShowFit(func(w int) string { return badgeToast(v, d.mapSettings().Tier, w) }, 5*time.Second)

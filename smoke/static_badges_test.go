@@ -1,6 +1,7 @@
 package smoke
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -72,6 +73,92 @@ func family(t *testing.T, src *rules.Source, name string) *config.BadgeFamilyDef
 	return nil
 }
 
+// ladderFamily returns a pointer to the ladder family in src that the badge
+// case calls name ("Wonders raised").
+func ladderFamily(t *testing.T, src *rules.Source, name string) *config.BadgeFamilyDef {
+	t.Helper()
+	for i := range src.BadgeFamilies {
+		if src.BadgeFamilies[i].Family == "ladder" && src.BadgeFamilies[i].Ladder == name {
+			return &src.BadgeFamilies[i]
+		}
+	}
+	t.Fatalf("no ladder %s", name)
+	return nil
+}
+
+// TestFirstRungsComeEarly is the first-rung rule on the real catalog, with
+// the table it rests on: every lifetime ladder's first rung is one
+// occurrence, or a count an ordinary first run has by the time it reaches
+// the Bronze Age, or the second age after the ladder's subject first
+// appears. It was written after a first playthrough met "Produce 1B food"
+// as the first food rung, with a million food made by the Bronze Age.
+func TestFirstRungsComeEarly(t *testing.T) {
+	first := StaticFirstRungs()
+	if len(first) < 60 {
+		t.Fatalf("only %d lifetime ladders were checked", len(first))
+	}
+	byName := map[string]FirstRung{}
+	for _, r := range first {
+		if r.Need > 1 && r.Need > r.Have {
+			t.Errorf("%s: the first rung (%s) asks for %s, and an ordinary first run has %s by the %s", r.Ladder, r.Key, config.FormatAmount(r.Need), config.FormatAmount(r.Have), r.By)
+		}
+		for i := 1; i < len(r.Rungs); i++ {
+			if r.Rungs[i] <= r.Rungs[i-1] {
+				t.Errorf("%s: rung %d (%v) is not above rung %d (%v)", r.Ladder, i+1, r.Rungs[i], i, r.Rungs[i-1])
+			}
+		}
+		if strings.HasPrefix(r.Key, "resource.") {
+			byName[strings.TrimSuffix(strings.TrimPrefix(r.Key, "resource."), "."+r.Key[strings.LastIndex(r.Key, ".")+1:])] = r
+		}
+		t.Logf("%-22s first rung %-8s from the %-16s by the %-16s (a first run has %s)", r.Ladder, config.FormatAmount(r.Need), r.From, r.By, config.FormatAmount(r.Have))
+	}
+
+	// Food: a town passes the first rung well before it leaves the Stone
+	// Age, a quarter of the way into what it makes there at the latest.
+	set := rules.Core()
+	food, ok := byName["food"]
+	if !ok {
+		t.Fatal("no food ladder")
+	}
+	if most := set.ProductionThrough("food", "primitive_age") + 0.25*(set.ProductionThrough("food", "stone_age")-set.ProductionThrough("food", "primitive_age")); food.Need > most {
+		t.Errorf("the first food rung asks for %s; a town has made %s a quarter of the way through the Stone Age", config.FormatAmount(food.Need), config.FormatAmount(most))
+	}
+	if food.Need >= 1e6 {
+		t.Errorf("the first food rung asks for %s: the playtest had made a million by the Bronze Age and was nowhere near the old one", config.FormatAmount(food.Need))
+	}
+
+	// Every resource ladder climbs in even multiplicative steps, from the
+	// first age's production to twenty-five runs: no step is more than a
+	// quarter longer than another (the rungs are rounded to two figures).
+	if len(byName) != len(set.Resources()) {
+		t.Errorf("%d resource ladders for %d resources", len(byName), len(set.Resources()))
+	}
+	badges := 0
+	for _, res := range set.Resources() {
+		r := byName[res.Key]
+		badges += len(r.Rungs)
+		if len(r.Rungs) < 3 {
+			t.Errorf("%s has %d rungs", res.Key, len(r.Rungs))
+			continue
+		}
+		low, high := math.Inf(1), 0.0
+		for i := 1; i < len(r.Rungs); i++ {
+			step := r.Rungs[i] / r.Rungs[i-1]
+			low, high = math.Min(low, step), math.Max(high, step)
+		}
+		if high > 1.25*low {
+			t.Errorf("%s: the rungs %v climb in steps from x%.3g to x%.3g, not evenly", res.Key, r.Rungs, low, high)
+		}
+		perRun, _ := set.RunProduction(res.Key)
+		if top := r.Rungs[len(r.Rungs)-1]; top > config.BadgeMaxRuns*perRun || top < 0.9*config.BadgeMaxRuns*perRun {
+			t.Errorf("%s: the top rung is %s, want %d runs of %s", res.Key, config.FormatAmount(top), config.BadgeMaxRuns, config.FormatAmount(perRun))
+		}
+	}
+	if badges != 94 {
+		t.Errorf("the resource ladders have %d badges, want the 94 the catalog had", badges)
+	}
+}
+
 // TestBadgeGuardCatchesTheUnreachable breaks the catalog one way at a
 // time and checks the covenant says so: a guard that passes everything
 // proves nothing.
@@ -100,6 +187,15 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 		}},
 		{"a ladder past 25 runs", "lineage.housing.2", "lifetime", func(src *rules.Source) {
 			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {14, 1e6}}
+		}},
+		{"a first rung a first run does not build in time", "lineage.housing.1", "first_rung", func(src *rules.Source) {
+			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {30, 57, 230, 570, 1400}}
+		}},
+		{"a first rung of two runs' wonders", "ladder.wonders.1", "first_rung", func(src *rules.Source) {
+			ladderFamily(t, src, "Wonders raised").Ladders = map[string][]float64{"": {25, 100, 300}}
+		}},
+		{"a first rung of more badges than the first ages give", "special.collector", "first_rung", func(src *rules.Source) {
+			special(t, src, "special.collector").Threshold = 25
 		}},
 		{"a ladder of prestiges past 25 runs", "ladder.prestiges.4", "lifetime", func(src *rules.Source) {
 			family(t, src, "ladder").Ladders = map[string][]float64{"": {1, 3, 10, 26}}

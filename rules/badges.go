@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
@@ -137,23 +138,83 @@ func (s *Set) runEndPos() int {
 // prestige: the Stone, Iron, Steel and Electric Eras.
 const badgeRunEras = 4
 
-// productionLadder is a resource's rungs and their counts: a number of
-// runs each, of what one run produces. A resource that comes after a run's
-// last age skips the first rung.
+// ProductionThrough is what an ordinary first run has produced of a
+// resource by the end of age: the sum, over the ages up to and including it,
+// of the resource's typical income times the age's pacing target in ticks.
+func (s *Set) ProductionThrough(res, age string) float64 {
+	last, ok := s.agePos[age]
+	if !ok {
+		return 0
+	}
+	sum := 0.0
+	for i := 0; i <= last; i++ {
+		a := s.ageKeys[i]
+		sum += float64(s.typIncome[a][res] * s.targetTicks[a])
+	}
+	return sum
+}
+
+// FirstProduction is the first age an ordinary town makes a resource in
+// (the first with a typical income of it, from the age the resource unlocks
+// in; from the first age for a resource its own buildings unlock) and what
+// it makes of it there: that income over the age's pacing target. "" and 0
+// for a resource no age makes.
+func (s *Set) FirstProduction(res string) (age string, made float64) {
+	def, ok := s.resourceByKey[res]
+	if !ok {
+		return "", 0
+	}
+	from := s.agePos[def.Age]
+	if def.BuiltUnlocks {
+		from = 0
+	}
+	for _, a := range s.ageKeys[from:] {
+		if inc := s.typIncome[a][res]; inc > 0 {
+			return a, float64(inc * s.targetTicks[a])
+		}
+	}
+	return "", 0
+}
+
+// productionLadder is a resource's rungs and their counts. The first rung
+// is what an ordinary town makes of the resource in the first age it makes
+// any, so a first run earns it there or soon after. The top rung is
+// f.TopRuns runs of what one run produces. The rungs between climb in even
+// multiplicative steps. A resource that comes after a run's last age has
+// one rung fewer (it skips the first tier), on the same rule.
 func (s *Set) productionLadder(f config.BadgeFamilyDef, sub badgeSubject) ([]config.BadgeRung, []float64) {
 	perRun, deep := s.RunProduction(sub.key)
-	if perRun <= 0 {
+	_, first := s.FirstProduction(sub.key)
+	if perRun <= 0 || first <= 0 || f.TopRuns <= 0 {
 		return nil, nil
 	}
-	rungs, runs := f.Rungs, f.Runs
-	if deep && len(rungs) > 1 && len(runs) > 1 {
-		rungs, runs = rungs[1:], runs[1:]
+	rungs := f.Rungs
+	if deep && len(rungs) > 1 {
+		rungs = rungs[1:]
 	}
-	counts := make([]float64, 0, len(runs))
-	for _, r := range runs {
-		counts = append(counts, twoFigures(float64(perRun*r)))
+	return rungs, evenLadder(first, float64(perRun*f.TopRuns), len(rungs))
+}
+
+// evenLadder is n counts from first to top in even multiplicative steps,
+// each rounded down to two figures. A top at or under first leaves the one
+// rung.
+func evenLadder(first, top float64, n int) []float64 {
+	first = twoFigures(first)
+	if n <= 1 || top <= first {
+		return []float64{first}
 	}
-	return rungs, counts
+	counts := make([]float64, 0, n)
+	for i := 0; i < n; i++ {
+		v := first
+		switch {
+		case i == n-1:
+			v = top
+		case i > 0:
+			v = float64(first * detmath.Pow(top/first, float64(i)/float64(n-1)))
+		}
+		counts = append(counts, twoFigures(v))
+	}
+	return counts
 }
 
 // twoFigures rounds v down to two significant figures, so a rung reads as

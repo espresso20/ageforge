@@ -333,6 +333,13 @@ type Account struct {
 	// saved: a badge earned just before the game closes is simply in the list.
 	pendingEarned []string
 
+	// pendingCaughtUp is how many badges the last reconciliation gave the
+	// account from its own record (ensureBadges: a rung whose count it had
+	// already passed, after a ladder was lowered) and has not announced.
+	// They raise no toast each: the dashboard drains the count
+	// (GameEngine.DrainBadgeCatchUp) and says it in one line. Not saved.
+	pendingCaughtUp int
+
 	// badgeRev counts the changes to Badges and Counters, and badgeViews keeps
 	// the last badge list it built for a revision (account_badges.go): the
 	// list is asked for on every snapshot and changes on few of them.

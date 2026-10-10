@@ -486,6 +486,16 @@ func (a *Account) drainEarned() []string {
 	return out
 }
 
+// drainCaughtUp returns how many badges reconciliation has given the
+// account since the last call, and forgets the count.
+func (a *Account) drainCaughtUp() int {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	n := a.pendingCaughtUp
+	a.pendingCaughtUp = 0
+	return n
+}
+
 // ensureBadges reconciles the account's badges with its record, under the
 // ruleset's badges, and reports whether it changed anything. It is what
 // gives an account from before badges its badge file, and what picks up
@@ -499,7 +509,10 @@ func (a *Account) drainEarned() []string {
 //   - What the record already proves is granted: the badge of every age up
 //     to the highest reached, and every ladder rung a counter has passed.
 //
-// Everything it grants is silent: undated, and no toast. A badge granted on
+// Everything it grants is silent: undated, and no toast of its own. However
+// many it grants, the dashboard says so in one line (pendingCaughtUp): a
+// ladder whose rungs were lowered can give an account a dozen at once. A
+// badge granted on
 // an account flagged as edited, or into a badge file flagged as edited, is
 // crossed, like any other earned there; on a healthy account nothing is.
 // In memory only; the caller flushes.
@@ -511,6 +524,11 @@ func (a *Account) ensureBadges(book *badgeBook) bool {
 
 func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 	changed := false
+	// What this pass grants is announced in one line, however many there
+	// are (pendingCaughtUp): counted off the badges held before and after,
+	// so a badge one of them leads to is counted too.
+	held := len(a.Badges)
+	defer func() { a.pendingCaughtUp += max(len(a.Badges)-held, 0) }()
 	grant := func(def *config.BadgeDef) {
 		if def != nil && !a.earnedLocked(def.Key) {
 			a.grantLocked(book, def, badgeCtx{}, true, 0)

@@ -567,12 +567,15 @@ type BadgeMeasure uint8
 const (
 	// BadgeMeasureNone: the threshold is as written.
 	BadgeMeasureNone BadgeMeasure = iota
-	// BadgeMeasureProduction: a family's rungs are counted in runs. The
-	// threshold is Runs times what one run produces of the subject: the
-	// sum, over the run's ages, of the typical income of the resource
-	// times the age's pacing target. A run is the ages before the one a
-	// full prestige is made from; a resource that comes later is measured
-	// over its first two ages.
+	// BadgeMeasureProduction: a family's rungs are counts of the subject
+	// produced. The first rung is what an ordinary town makes of it in the
+	// first age it makes any (its typical income times that age's pacing
+	// target), so a first run earns it there or soon after. The top rung
+	// is TopRuns times what one run produces: the sum, over the run's
+	// ages, of the typical income times the age's pacing target. The rungs
+	// between climb in even multiplicative steps. A run is the ages before
+	// the one a full prestige is made from; a resource that comes later is
+	// measured over its first two ages.
 	BadgeMeasureProduction
 	// BadgeMeasureTechs: the threshold is the number of techs the subject
 	// age has.
@@ -819,10 +822,10 @@ type BadgeFamilyDef struct {
 	Ladder  string
 	// Set is the set every badge of the family joins.
 	Set string
-	// Measure and Runs fill the thresholds from the game's tables: Runs is
-	// one number of runs a rung (BadgeMeasureProduction).
+	// Measure and TopRuns fill the thresholds from the game's tables:
+	// TopRuns is how many runs the top rung takes (BadgeMeasureProduction).
 	Measure BadgeMeasure
-	Runs    []float64
+	TopRuns float64
 	// Hint is every badge's hint, for a secret family.
 	Hint string
 	// When is every badge's extra conditions.
