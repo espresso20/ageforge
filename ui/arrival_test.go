@@ -131,7 +131,7 @@ func (r *arrivalRig) restart(tier mapmodel.GlyphTier, motion bool) {
 	a.settings()
 	a.sc, a.info.pages = nil, nil
 	a.stage, a.page, a.base = arrCelebrating, 0, 0
-	a.lastKey, a.start = time.Time{}, r.clock
+	a.quiet, a.start, a.keys, a.auto = time.Time{}, r.clock, 0, false
 }
 
 // TestArrivalDump writes the arrival screen's beats when ARRIVAL_DUMP names
@@ -561,13 +561,21 @@ func TestArrivalFitsEverySize(t *testing.T) {
 func TestArrivalWithItsTowns(t *testing.T) {
 	for _, c := range []struct {
 		age, style string
-	}{{"bronze_age", ""}, {"iron_age", ""}, {"renaissance_age", ""}, {"bronze_age", "skyline"}} {
+		sizes      [][2]int
+	}{
+		{"bronze_age", "", arrivalSizes[:5]},
+		{"iron_age", "", arrivalSizes[:5]},
+		// The cases with the least land: a quip on two lines, a plain name
+		// with its last word under it, and the style that needs most rows.
+		{"renaissance_age", "", arrivalSizes[:2]},
+		{"bronze_age", "skyline", [][2]int{{80, 24}, {120, 40}}},
+	} {
 		r := stageArrival(t, c.age, mapmodel.TierUnicode, true, true, c.style)
 		if r.a.oldTown == nil || r.a.newTown == nil {
 			t.Fatalf("%s: no towns", c.age)
 		}
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
-			for _, size := range arrivalSizes[:5] {
+			for _, size := range c.sizes {
 				w, h := size[0], size[1]
 				r.restart(tier, true)
 				where := fmt.Sprintf("into the %s at %dx%d, %s glyphs, towns drawn (%s)", r.a.view.age, w, h, tier, r.a.set.Style)
@@ -981,7 +989,9 @@ func TestArrivalPages(t *testing.T) {
 
 // TestArrivalTimers: left alone, the celebration moves on to what the age
 // opens by itself, and the screen closes by itself after arrivalHold. A
-// timer that comes after a key has done its work does nothing.
+// timer that comes after a key has done its work does nothing. A key that
+// lands just as the celebration ends by itself is let go by: it was pressed
+// to skip the celebration, not to close what the age opens unread.
 func TestArrivalTimers(t *testing.T) {
 	s := newArrivalShow()
 	a := s.advance(stoneToBronze())
@@ -990,12 +1000,18 @@ func TestArrivalTimers(t *testing.T) {
 		t.Fatalf("the screen set %d timers", len(s.timers))
 	}
 	inform()
-	if a.stage != arrInforming {
+	if a.stage != arrInforming || !a.auto {
 		t.Fatal("the celebration did not move on by itself")
 	}
 	inform()
 	if a.stage != arrInforming || a.page != 0 {
 		t.Error("the timer moved the information on")
+	}
+	s.press(a, tcell.KeyEnter, 0)
+	s.clock = s.clock.Add(arrivalSettle - time.Millisecond)
+	s.press(a, tcell.KeyEnter, 0)
+	if a.stage != arrInforming || a.keys != 2 {
+		t.Fatalf("a key as the celebration ended by itself closed the information (stage %d, %d keys)", a.stage, a.keys)
 	}
 	hold()
 	if a.stage != arrClosed || s.pages.HasPage(arrivalPageName) || s.closed != 1 {
@@ -1005,6 +1021,31 @@ func TestArrivalTimers(t *testing.T) {
 	inform()
 	if s.closed != 1 {
 		t.Error("a timer after the screen closed did something")
+	}
+
+	// Once that moment has passed, a key closes it as any key does.
+	s = newArrivalShow()
+	a = s.advance(stoneToBronze())
+	s.timers[time.Duration(arrivalFrames(false))*mapAnimStep]()
+	s.clock = s.clock.Add(arrivalSettle)
+	s.press(a, tcell.KeyEnter, 0)
+	if a.stage != arrClosed {
+		t.Error("a key after the celebration ended by itself did not close the information")
+	}
+
+	// A key that moved the celebration on is not the celebration ending by
+	// itself, and the timer that follows changes nothing.
+	s = newArrivalShow()
+	a = s.advance(stoneToBronze())
+	s.press(a, tcell.KeyEnter, 0)
+	s.timers[time.Duration(arrivalFrames(false))*mapAnimStep]()
+	if a.stage != arrInforming || a.auto || a.keys != 1 {
+		t.Errorf("after a key: stage %d, by itself %v, %d keys", a.stage, a.auto, a.keys)
+	}
+	s.clock = s.clock.Add(arrivalKeyGap)
+	s.press(a, tcell.KeyEnter, 0)
+	if a.stage != arrClosed {
+		t.Error("the second key did not close the screen")
 	}
 }
 

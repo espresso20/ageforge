@@ -46,6 +46,14 @@ const (
 	// key held down, or pressed twice by one tap, does not close both
 	// stages at once.
 	arrivalKeyGap = 200 * time.Millisecond
+	// arrivalSettle is how long keys are let go by after the celebration
+	// has moved on by itself: a key pressed to skip it, landing just as it
+	// ended, was not meant to close what the age opens unread.
+	arrivalSettle = 400 * time.Millisecond
+	// arrivalBreath is the least time the clock leaves between one frame
+	// drawn and the next asked for, so that on a terminal that draws slowly
+	// the keyboard is still answered between frames.
+	arrivalBreath = mapAnimStep / 3
 )
 
 // The arrival's stages.
@@ -89,7 +97,13 @@ type arrival struct {
 	base    int
 	stage   int
 	page    int
-	lastKey time.Time
+	// quiet: keys before this moment are let go by (arrivalKeyGap,
+	// arrivalSettle). keys counts every key the screen was given, heeded or
+	// not, and auto records that the celebration moved on by itself: the
+	// freeze harness reads both.
+	quiet   time.Time
+	keys    int
+	auto    bool
 	stop    chan struct{}
 	cancels []func()
 	// after runs fn on the event loop once d has passed, and returns how to
@@ -287,7 +301,7 @@ func (a *arrival) frames() int { return arrivalFrames(a.view.epoch) }
 func (a *arrival) begin() {
 	a.start = a.now()
 	a.cancels = append(a.cancels,
-		a.after(time.Duration(a.frames())*mapAnimStep, func() { a.inform() }),
+		a.after(time.Duration(a.frames())*mapAnimStep, a.informByItself),
 		a.after(arrivalHold, a.close))
 }
 
@@ -301,6 +315,17 @@ func (a *arrival) inform() {
 		a.sc.settle()
 	}
 	a.rebase()
+}
+
+// informByItself is inform when the celebration has run its length: the
+// script's last frame, or its timer. Keys are let go by for a moment after.
+func (a *arrival) informByItself() {
+	if a.stage != arrCelebrating {
+		return
+	}
+	a.auto = true
+	a.inform()
+	a.quiet = a.now().Add(arrivalSettle)
 }
 
 // close takes the screen down and gives the keyboard back to the prompt.
@@ -340,6 +365,10 @@ func (a *arrival) rebase() {
 }
 
 // startClock starts the redraw clock, at the map's rate. Draw calls it.
+// The clock waits for each frame to be drawn before it counts toward the
+// next, and always leaves a breath between them: the script runs on the
+// time, not on the frames drawn, so a slow terminal skips frames and still
+// answers its keys.
 func (a *arrival) startClock() {
 	if a.stop != nil || a.om == nil || a.om.app == nil {
 		return
@@ -348,12 +377,14 @@ func (a *arrival) startClock() {
 	a.stop = stop
 	app := a.om.app
 	go func() {
-		tk := time.NewTicker(mapAnimStep)
-		defer tk.Stop()
+		t := time.NewTimer(mapAnimStep)
+		defer t.Stop()
 		for {
 			select {
-			case <-tk.C:
+			case <-t.C:
+				asked := time.Now()
 				app.QueueUpdateDraw(func() {})
+				t.Reset(max(mapAnimStep-time.Since(asked), arrivalBreath))
 			case <-stop:
 				return
 			}
@@ -377,11 +408,12 @@ func (a *arrival) InputHandler() func(event *tcell.EventKey, setFocus func(p tvi
 
 // key is a key press, whichever key it was.
 func (a *arrival) key() {
+	a.keys++
 	now := a.now()
-	if !a.lastKey.IsZero() && now.Sub(a.lastKey) < arrivalKeyGap {
+	if now.Before(a.quiet) {
 		return
 	}
-	a.lastKey = now
+	a.quiet = now.Add(arrivalKeyGap)
 	switch a.stage {
 	case arrCelebrating:
 		a.inform()
@@ -465,7 +497,7 @@ func (a *arrival) frameGrid(w, h int) *mGrid {
 				a.sc.step()
 			}
 			if a.sc.frame >= a.frames() {
-				a.inform()
+				a.informByItself()
 			}
 		} else {
 			for i := 0; a.sc.frame < target && i < menuCatchUp; i++ {

@@ -372,24 +372,61 @@ func (h *reproHarness) arrivalStage() int {
 
 // dismissArrival closes the arrival screen the way a player does: a key
 // moves on from the celebration to what the age opens, and a second key
-// closes it. Each must be answered within 2s, or the screen is frozen.
+// closes it. Each key must reach the screen within 2s, or the screen is
+// frozen.
+//
+// The harness waits for each key to reach the screen before it looks at
+// what the key did (the screen counts the keys it is given), and presses
+// the next only while the screen is still up: a key pressed after the
+// screen had closed would be typed at the prompt, or, if it were Esc, leave
+// the game. On a machine that draws slowly the celebration may end by
+// itself before the first key gets there; the screen then lets keys go by
+// for a moment (arrivalSettle), so closing it can take more than one press.
 func (h *reproHarness) dismissArrival(label string, k tcell.Key, r rune) {
 	h.t.Helper()
-	if h.arrivalStage() == arrCelebrating {
+	var a *arrival
+	h.onUI(func() { a = h.a.dashboard.overlayMgr.arrival })
+	if a == nil {
+		h.t.Fatalf("[%s] no arrival screen is up\n%s", label, h.describeUI())
+	}
+	look := func() (stage, keys int, auto bool) {
+		h.onUI(func() { stage, keys, auto = a.stage, a.keys, a.auto })
+		return
+	}
+	press := func() {
+		h.t.Helper()
+		_, before, _ := look()
 		h.key(k, r)
 		deadline := time.Now().Add(2 * time.Second)
-		for h.arrivalStage() == arrCelebrating {
+		for {
+			if _, keys, _ := look(); keys > before {
+				return
+			}
 			if time.Now().After(deadline) {
-				h.t.Fatalf("[%s] FROZEN: the celebration did not move on for key %v/%q within 2s\n%s", label, k, r, h.describeUI())
+				h.t.Fatalf("[%s] FROZEN: key %v/%q did not reach the arrival screen within 2s\n%s", label, k, r, h.describeUI())
 			}
 			time.Sleep(15 * time.Millisecond)
 		}
-		if !h.hasPage("age_splash") {
+	}
+	if stage, _, _ := look(); stage == arrCelebrating {
+		press()
+		switch stage, _, auto := look(); {
+		case stage == arrCelebrating:
+			h.t.Fatalf("[%s] FROZEN: the celebration did not move on for key %v/%q\n%s", label, k, r, h.describeUI())
+		case stage == arrClosed && !auto:
 			h.t.Fatalf("[%s] the first key closed the screen: what the age opens was never shown\n%s", label, h.describeUI())
 		}
-		time.Sleep(arrivalKeyGap + 20*time.Millisecond) // a second press, not the first held down
 	}
-	h.key(k, r)
+	for tries := 0; ; tries++ {
+		if stage, _, _ := look(); stage != arrInforming {
+			break
+		}
+		if tries >= 8 {
+			h.t.Fatalf("[%s] FROZEN: %d presses of key %v/%q did not close what the age opens\n%s", label, tries, k, r, h.describeUI())
+		}
+		time.Sleep(arrivalKeyGap + 20*time.Millisecond) // a second press, not the first held down
+		press()
+	}
 	deadline := time.Now().Add(2 * time.Second)
 	for h.hasPage("age_splash") {
 		if time.Now().After(deadline) {
