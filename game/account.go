@@ -255,7 +255,7 @@ type AccountPrefs struct {
 	// was shown, so it is shown once per account.
 	MapIconsHint bool `json:"map_icons_hint,omitempty"`
 	// Minimap is the dashboard mini map setting: "on", "off", or empty for
-	// the default (on).
+	// the default (off).
 	Minimap string `json:"minimap,omitempty"`
 }
 
@@ -1199,11 +1199,12 @@ func (a *Account) SetMapGlyphs(tier string) error {
 	return a.Save()
 }
 
-// MinimapOn reports whether the dashboard's mini map is on (the default).
+// MinimapOn reports whether the dashboard's mini map is on. It is off until
+// the player turns it on (minimap on): an account that never chose has none.
 func (a *Account) MinimapOn() bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.Prefs.Minimap != "off"
+	return a.Prefs.Minimap == "on"
 }
 
 // SetMinimap persists the mini map setting.

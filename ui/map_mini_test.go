@@ -62,8 +62,20 @@ func newMiniDashboard(t testing.TB) (*Dashboard, *tview.Pages) {
 	pages := tview.NewPages()
 	d := NewDashboard(tview.NewApplication(), eng, pages)
 	pages.AddPage("dashboard", d.Root(), true, true)
-	d.refresh()
+	miniOn(t, d)
 	return d, pages
+}
+
+// miniOn turns the dashboard's mini map on, as "minimap on" does. It is
+// off until the player asks for it.
+func miniOn(t testing.TB, d *Dashboard) {
+	t.Helper()
+	d.inputField.SetText("minimap on")
+	d.submitInput()
+	if !d.mapSettings().Minimap {
+		t.Fatal("minimap on did not turn the mini map on")
+	}
+	d.refresh()
 }
 
 // TestMiniMapFitsAndHides: the mini map shows on a roomy terminal, with the
@@ -124,8 +136,9 @@ func TestMiniMapSize(t *testing.T) {
 	}
 }
 
-// TestMinimapSetting: minimap off gives the Buildings list the whole
-// column and is saved to the account; minimap on brings the mini map back.
+// TestMinimapSetting: the mini map is off until the player turns it on.
+// minimap on shows it above the Buildings list and is saved to the account;
+// minimap off gives the list the whole column back.
 func TestMinimapSetting(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	pages := tview.NewPages()
@@ -139,8 +152,21 @@ func TestMinimapSetting(t *testing.T) {
 		}
 		return d.mapDock.shown
 	}
-	if !show() {
-		t.Fatal("the mini map is not on by default")
+	// Off until asked for: the Buildings list has the whole column, and no
+	// model is built for a map nobody sees.
+	if show() {
+		t.Fatal("the mini map shows on a dashboard nobody turned it on for")
+	}
+	if eng.Account().MinimapOn() || d.mapDock.wantsModel() {
+		t.Error("a new account has the mini map on, or builds models for it")
+	}
+	if res := HandleCommand("minimap", eng); !strings.Contains(res.Message, "Mini map: off") {
+		t.Errorf("bare minimap: %+v", res)
+	}
+	// On, and remembered by the account.
+	d.runForTest("minimap on")
+	if !show() || !eng.Account().MinimapOn() {
+		t.Fatal("minimap on did not show the mini map, or was not saved to the account")
 	}
 	if res := HandleCommand("minimap", eng); !strings.Contains(res.Message, "Mini map: on") {
 		t.Errorf("bare minimap: %+v", res)
@@ -167,6 +193,7 @@ func TestMinimapSetting(t *testing.T) {
 // TestMiniMapFollowsSettings: map style switches the mini map too.
 func TestMiniMapFollowsSettings(t *testing.T) {
 	d, _ := mapTestDashboard(t, true)
+	miniOn(t, d)
 	d.runForTest("map style skyline")
 	d.refresh()
 	if d.miniMap.set.Style != "skyline" {

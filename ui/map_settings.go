@@ -17,7 +17,8 @@ import (
 type mapSettings struct {
 	Style string
 	Tier  mapmodel.GlyphTier
-	// Minimap: the dashboard shows the mini map (the default).
+	// Minimap: the dashboard shows the mini map above the Buildings list.
+	// Off unless the player turned it on (minimap on).
 	Minimap bool
 	// HintShown: the one-time "Type icons" hint was shown on this account.
 	HintShown bool
@@ -28,7 +29,7 @@ type mapSettings struct {
 
 // defaultMapSettings is the settings with nothing chosen.
 func defaultMapSettings(reg *mapstyle.Registry) mapSettings {
-	return mapSettings{Style: reg.Default(), Tier: mapmodel.TierUnicode, Minimap: true, Motion: true}
+	return mapSettings{Style: reg.Default(), Tier: mapmodel.TierUnicode, Minimap: false, Motion: true}
 }
 
 // resolveMapSettings reads the account's map settings against the style

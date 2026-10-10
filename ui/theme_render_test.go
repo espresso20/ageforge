@@ -25,6 +25,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	pages := tview.NewPages()
 	d := NewDashboard(app, engine, pages)
 	pages.AddPage("dashboard", d.Root(), true, true)
+	miniOn(t, d) // the mini map's colours are part of the sweep
 	d.refresh()
 
 	sim := tcell.NewSimulationScreen("UTF-8")
