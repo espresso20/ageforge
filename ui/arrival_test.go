@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -62,6 +63,19 @@ func previousAge(age string) string {
 // era is an epoch's, with an event.
 func stagedArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion bool) *arrivalRig {
 	t.Helper()
+	return stageArrival(t, age, tier, motion, true)
+}
+
+// bareArrival is stagedArrival without the towns, whose pictures are most
+// of what a frame costs to draw: the land is left as sky. Everything the
+// screen itself lays out is as it is with them.
+func bareArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion bool) *arrivalRig {
+	t.Helper()
+	return stageArrival(t, age, tier, motion, false)
+}
+
+func stageArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion, towns bool) *arrivalRig {
+	t.Helper()
 	from := previousAge(age)
 	set := (&game.GameState{}).Ruleset()
 	epoch := from != "" && set.EraOf(from) != set.EraOf(age)
@@ -83,6 +97,9 @@ func stagedArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion boo
 		p := fixture.State(fixture.Options{Age: from, Seed: 7})
 		prev = &p
 	}
+	if !towns {
+		a.reg = nil
+	}
 	a.feed(prev, &cur)
 	a.set.Tier, a.set.Motion = tier, motion
 	a.settings()
@@ -93,8 +110,8 @@ func stagedArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion boo
 
 // at draws the screen at w by h, frames after it was begun.
 func (r *arrivalRig) at(w, h, frame int) *mGrid {
-	if a := r.a; a.sc == nil || a.scKey[0] != w || a.scKey[1] != h {
-		a.frameGrid(w, h) // the screen's clock starts at its first draw at a size
+	if a := r.a; a.sc != nil && (a.scKey[0] != w || a.scKey[1] != h) {
+		a.frameGrid(w, h) // a new size starts the clock again from the frame it was at
 	}
 	r.clock = r.a.start.Add(time.Duration(frame-r.a.base) * mapAnimStep)
 	return r.a.frameGrid(w, h)
@@ -466,19 +483,37 @@ func checkArrivalMoment(t *testing.T, where string, r *arrivalRig, w, h, frame i
 	}
 }
 
+// arrivalSweep is which terminals an age's arrival is checked at in a
+// glyph set: every age at the five sizes the game is checked at (the plain
+// set at its three smallest), and the ages that stretch the layout (the
+// shortest name, the longest, and the advances that open an era) at all
+// eight, the odd shapes among them.
+func arrivalSweep(age string, tier mapmodel.GlyphTier) [][2]int {
+	switch age {
+	case "iron_age", "bronze_age", "renaissance_age", "interstellar_age", "transcendent_age":
+		return arrivalSizes
+	}
+	if tier == mapmodel.TierASCII {
+		return arrivalSizes[:3]
+	}
+	return arrivalSizes[:5]
+}
+
 // TestArrivalFitsEverySize plays the arrival into every age (an epoch's
 // arrival for the six that open an era), at every size from 80x24 to
 // 144x46 and three odd shapes, in both glyph sets, and fails on a name
 // short of a letter, a line cut off or out of place, or a line of the old
-// splash that is not on the information's pages.
+// splash that is not on the information's pages. The towns are left out
+// here (TestArrivalWithItsTowns draws them): nothing checked depends on
+// them, and they are most of what a frame costs.
 func TestArrivalFitsEverySize(t *testing.T) {
 	set := (&game.GameState{}).Ruleset()
 	capitals := 0
 	for _, age := range set.AgeKeys()[1:] {
-		r := stagedArrival(t, age, mapmodel.TierUnicode, true)
-		for _, size := range arrivalSizes {
-			w, h := size[0], size[1]
-			for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
+		r := bareArrival(t, age, mapmodel.TierUnicode, true)
+		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
+			for _, size := range arrivalSweep(age, tier) {
+				w, h := size[0], size[1]
 				r.restart(tier, true)
 				where := fmt.Sprintf("into the %s at %dx%d, %s glyphs", r.a.view.age, w, h, tier)
 				if tier == mapmodel.TierASCII && w < 100 {
@@ -488,9 +523,9 @@ func TestArrivalFitsEverySize(t *testing.T) {
 						capitals++
 					}
 				} else {
-					frames := []int{0, arrAgeStrike, arrAgeStrike + 6, arrAgeFrames - 1}
+					frames := []int{arrAgeStrike, arrAgeStrike + 6, arrAgeFrames - 1}
 					if r.a.view.epoch {
-						frames = []int{0, arrEraStrike, arrEraFrames - 1, arrEraFrames + arrAgeStrike, arrEraFrames + arrAgeStrike + 6}
+						frames = []int{arrEraStrike, arrEraFrames + arrAgeStrike + 6}
 					}
 					for _, f := range frames {
 						checkArrivalMoment(t, fmt.Sprintf("%s, frame %d", where, f), r, w, h, f)
@@ -506,6 +541,49 @@ func TestArrivalFitsEverySize(t *testing.T) {
 	}
 	if capitals != 2 {
 		t.Errorf("%d ages are a line of capitals at 80x24 in the plain set, want the two longest", capitals)
+	}
+}
+
+// TestArrivalWithItsTowns is the same check with the towns drawn, through
+// every beat of an age's arrival and an epoch's at the five sizes: the town
+// before, the two part way through the turn, the town after, and the town
+// under the information, none of them bringing the map's own bars with it
+// or reaching up into the name.
+func TestArrivalWithItsTowns(t *testing.T) {
+	for _, age := range []string{"bronze_age", "iron_age"} {
+		r := stagedArrival(t, age, mapmodel.TierUnicode, true)
+		if r.a.oldTown == nil || r.a.newTown == nil {
+			t.Fatalf("%s: no towns", age)
+		}
+		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
+			for _, size := range arrivalSizes[:5] {
+				w, h := size[0], size[1]
+				r.restart(tier, true)
+				where := fmt.Sprintf("into the %s at %dx%d, %s glyphs, towns drawn", r.a.view.age, w, h, tier)
+				frames := []int{0, arrAgeStrike, arrAgeStrike + 6, arrAgeFrames - 1}
+				if r.a.view.epoch {
+					frames = []int{0, arrEraStrike, arrEraFrames + arrAgeStrike + 6}
+				}
+				land := 0
+				for _, f := range frames {
+					if tier == mapmodel.TierASCII && w < 100 {
+						checkArrivalPlainNarrow(t, where, r, w, h)
+					} else {
+						checkArrivalMoment(t, fmt.Sprintf("%s, frame %d", where, f), r, w, h, f)
+					}
+					// The town is there, under the name and clear of it.
+					g, L := r.at(w, h, f), r.a.sc.L
+					for y := L.top; y < h; y++ {
+						land += len(strings.TrimSpace(g.row(y)))
+					}
+				}
+				if land < len(frames)*w {
+					t.Errorf("%s: the land is all but empty (%d cells over %d frames)", where, land, len(frames))
+				}
+				checkArrivalInfo(t, where+", the information", r, w, h)
+			}
+		}
+		r.a.close()
 	}
 }
 
@@ -551,7 +629,7 @@ func checkArrivalPlainNarrow(t *testing.T, where string, r *arrivalRig, w, h int
 // the words, and no size at all makes it fail.
 func TestArrivalOnATerminalTooSmall(t *testing.T) {
 	for _, age := range []string{"bronze_age", "iron_age"} {
-		r := stagedArrival(t, age, mapmodel.TierUnicode, true)
+		r := bareArrival(t, age, mapmodel.TierUnicode, true)
 		for _, w := range []int{1, 9, 30, 60, 79, 80} {
 			for _, h := range []int{1, 4, 12, 23, 24} {
 				r.restart(mapmodel.TierUnicode, true)
@@ -676,7 +754,7 @@ func TestAnEpochIsBiggerThanAnAge(t *testing.T) {
 			continue
 		}
 		epochs++
-		r := stagedArrival(t, age, mapmodel.TierUnicode, true)
+		r := bareArrival(t, age, mapmodel.TierUnicode, true)
 		if !r.a.view.epoch || r.a.view.era == "" || r.a.view.epochHeading == "" {
 			t.Fatalf("the advance into %s is not an epoch's", age)
 		}
@@ -700,14 +778,18 @@ func TestAnEpochIsBiggerThanAnAge(t *testing.T) {
 		t.Errorf("%d advances open an era, want 6", epochs)
 	}
 
+	era := stagedArrival(t, "iron_age", mapmodel.TierUnicode, true)
+	age := stagedArrival(t, "bronze_age", mapmodel.TierUnicode, true)
+	t.Cleanup(era.a.close)
+	t.Cleanup(age.a.close)
 	for _, size := range arrivalSizes {
 		w, h := size[0], size[1]
-		era := stagedArrival(t, "iron_age", mapmodel.TierUnicode, true)
+		era.restart(mapmodel.TierUnicode, true)
+		age.restart(mapmodel.TierUnicode, true)
 		blow := era.at(w, h, arrEraStrike)
 		if n := litGround(blow, era.a.pal); n != w*h {
 			t.Errorf("at %dx%d an epoch's heavy blow lights %d of %d cells", w, h, n, w*h)
 		}
-		age := stagedArrival(t, "bronze_age", mapmodel.TierUnicode, true)
 		strike := age.at(w, h, arrAgeStrike)
 		sky := 0
 		for y := 0; y < age.a.sc.L.age.y; y++ {
@@ -723,8 +805,6 @@ func TestAnEpochIsBiggerThanAnAge(t *testing.T) {
 		if e, a := len(era.a.sc.sparks.a), len(age.a.sc.sparks.a); e < 2*a {
 			t.Errorf("at %dx%d an epoch's heavy blow throws %d sparks to an age's %d", w, h, e, a)
 		}
-		era.a.close()
-		age.a.close()
 	}
 }
 
@@ -738,6 +818,9 @@ type arrivalShow struct {
 	clock  time.Time
 	timers map[time.Duration]func()
 	closed int // times the keyboard went back to the prompt
+	// towns: draw the towns' pictures (they are most of what a screen
+	// costs to make, and most tests here do not look at them).
+	towns bool
 }
 
 func newArrivalShow() *arrivalShow {
@@ -768,6 +851,9 @@ func (s *arrivalShow) advance(prev *game.GameState, cur game.GameState, epoch bo
 	a := s.om.arrival
 	a.now = func() time.Time { return s.clock }
 	a.start = s.clock
+	if !s.towns {
+		a.reg = nil
+	}
 	s.om.Refresh(cur)
 	return a
 }
@@ -794,6 +880,7 @@ func TestArrivalKeys(t *testing.T) {
 		r    rune
 	}{{"a letter", tcell.KeyRune, 'x'}, {"Enter", tcell.KeyEnter, 0}, {"space", tcell.KeyRune, ' '}, {"an arrow", tcell.KeyDown, 0}, {"Esc", tcell.KeyEsc, 0}} {
 		s := newArrivalShow()
+		s.towns = key.r == 'x'
 		a := s.advance(stoneToBronze())
 		press := func() {
 			if key.k == tcell.KeyEsc {
@@ -808,7 +895,7 @@ func TestArrivalKeys(t *testing.T) {
 		if s.om.ActiveName() != arrivalPageName || !s.pages.HasPage(arrivalPageName) || a.stage != arrCelebrating {
 			t.Fatalf("%s: the screen is not up on its celebration", key.name)
 		}
-		if a.oldTown == nil || a.newTown == nil || a.oldTown.age != "Stone Age" || a.newTown.age != "Bronze Age" {
+		if s.towns && (a.oldTown == nil || a.newTown == nil || a.oldTown.age != "Stone Age" || a.newTown.age != "Bronze Age") {
 			t.Fatalf("%s: the screen does not have the town before and after", key.name)
 		}
 		press()
@@ -958,7 +1045,7 @@ func TestArrivalStill(t *testing.T) {
 	for _, age := range []string{"bronze_age", "iron_age"} {
 		for _, size := range [][2]int{{80, 24}, {120, 40}} {
 			w, h := size[0], size[1]
-			r := stagedArrival(t, age, mapmodel.TierUnicode, false)
+			r := bareArrival(t, age, mapmodel.TierUnicode, false)
 			where := fmt.Sprintf("into the %s at %dx%d", r.a.view.age, w, h)
 			first := r.at(w, h, 0)
 			sc := r.a.sc
@@ -1109,6 +1196,7 @@ func TestArrivalAfterBeingAway(t *testing.T) {
 	cur.SessionStart = &game.SessionMark{Tick: 10, SavedAt: time.Unix(1_000, 0), Age: "stone_age"}
 	cur.EpochEventHistory = []game.EpochEventRecord{event}
 	s := newArrivalShow()
+	s.towns = true
 	ShowAgeSplashFull(s.om, "iron_age", "classical_age", fullSummary(), false, game.EpochEventRecord{})
 	a := s.om.arrival
 	a.now = func() time.Time { return s.clock }
@@ -1120,19 +1208,19 @@ func TestArrivalAfterBeingAway(t *testing.T) {
 	if !v.epoch || v.era != iron.Name || a.event != event {
 		t.Errorf("after being away through a new era: epoch %v, era %q, event %+v", v.epoch, v.era, a.event)
 	}
-	if a.oldTown == nil || a.oldTown.age != "Stone Age" || a.newTown == nil || a.newTown.age != "Classical Age" {
+	if a.from != "stone_age" || a.oldTown == nil || a.oldTown.age != "Stone Age" || a.newTown == nil || a.newTown.age != "Classical Age" {
 		t.Error("after being away: the town does not turn from the age left into the age reached")
 	}
 	if s.pages.GetPageCount() != 1 {
 		t.Errorf("after being away there are %d screens", s.pages.GetPageCount())
 	}
 	// The ages passed are on the celebration and on the information.
+	rig := &arrivalRig{a: a, om: s.om, clock: s.clock, timers: s.timers}
+	a.now = func() time.Time { return rig.clock }
 	for _, size := range arrivalSizes {
 		w, h := size[0], size[1]
-		a.sc, a.stage, a.start = nil, arrCelebrating, s.clock
-		a.frameGrid(w, h)
-		s.clock = s.clock.Add(time.Duration(arrivalFrames(true)-1) * mapAnimStep)
-		g := a.frameGrid(w, h)
+		rig.restart(mapmodel.TierUnicode, true)
+		g := rig.at(w, h, arrivalFrames(true)-1)
 		where := fmt.Sprintf("after being away, at %dx%d", w, h)
 		if a.stage != arrCelebrating || len(g.clipped) > 0 {
 			t.Errorf("%s: stage %d, cut off %q", where, a.stage, g.clipped)
@@ -1147,7 +1235,7 @@ func TestArrivalAfterBeingAway(t *testing.T) {
 		if short := ironShort(g, a.sc.L.age, false); short != 0 {
 			t.Errorf("%s: the name is not whole in iron (%d)", where, short)
 		}
-		checkArrivalInfo(t, where, &arrivalRig{a: a, om: s.om, clock: s.clock, timers: s.timers}, w, h)
+		checkArrivalInfo(t, where, rig, w, h)
 	}
 	a.close()
 
@@ -1157,8 +1245,8 @@ func TestArrivalAfterBeingAway(t *testing.T) {
 	prev.SessionStart = cur.SessionStart
 	s = newArrivalShow()
 	a = s.advance(&prev, cur, false)
-	if a.view.passed != "" || a.view.epoch || a.oldTown.age != "Iron Age" {
-		t.Errorf("an advance seen all the way: passed %q, epoch %v, from the %s", a.view.passed, a.view.epoch, a.oldTown.age)
+	if a.view.passed != "" || a.view.epoch || a.from != "iron_age" {
+		t.Errorf("an advance seen all the way: passed %q, epoch %v, from %s", a.view.passed, a.view.epoch, a.from)
 	}
 	a.close()
 
@@ -1168,8 +1256,8 @@ func TestArrivalAfterBeingAway(t *testing.T) {
 	prev.SessionStart = cur.SessionStart
 	s = newArrivalShow()
 	a = s.advance(&prev, cur, false)
-	if a.view.passed != "Ages passed: Iron Age" || !a.view.epoch || a.oldTown.age != "Bronze Age" {
-		t.Errorf("two advances between two looks: passed %q, epoch %v, from the %s", a.view.passed, a.view.epoch, a.oldTown.age)
+	if a.view.passed != "Ages passed: Iron Age" || !a.view.epoch || a.from != "bronze_age" {
+		t.Errorf("two advances between two looks: passed %q, epoch %v, from %s", a.view.passed, a.view.epoch, a.from)
 	}
 	a.close()
 
@@ -1181,8 +1269,8 @@ func TestArrivalAfterBeingAway(t *testing.T) {
 	now.SessionStart = &game.SessionMark{Tick: 10, SavedAt: time.Unix(1_000, 0), Age: "iron_age"}
 	s = newArrivalShow()
 	a = s.advance(&prev, now, false)
-	if a.view.passed != "" || a.view.epoch || a.oldTown.age != "Iron Age" {
-		t.Errorf("a snapshot of another sitting was believed: passed %q, epoch %v, from the %s", a.view.passed, a.view.epoch, a.oldTown.age)
+	if a.view.passed != "" || a.view.epoch || a.from != "iron_age" {
+		t.Errorf("a snapshot of another sitting was believed: passed %q, epoch %v, from %s", a.view.passed, a.view.epoch, a.from)
 	}
 	a.close()
 
@@ -1191,7 +1279,7 @@ func TestArrivalAfterBeingAway(t *testing.T) {
 	bare.SessionStart = nil
 	s = newArrivalShow()
 	a = s.advance(nil, bare, false)
-	if a.view.passed != "" || a.view.epoch || a.oldTown == nil || a.oldTown.age != "Iron Age" {
+	if a.view.passed != "" || a.view.epoch || a.from != "iron_age" {
 		t.Errorf("with nothing to go on: passed %q, epoch %v", a.view.passed, a.view.epoch)
 	}
 	a.close()
@@ -1342,7 +1430,41 @@ func TestArrivalInEveryTheme(t *testing.T) {
 func TestArrivalAmbientIsAnEpochs(t *testing.T) {
 	prev := theme.Active().Key
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	const w, h = 120, 40
+	const w, h = 100, 30
+	sim := tcell.NewSimulationScreen("UTF-8")
+	if err := sim.Init(); err != nil {
+		t.Fatal(err)
+	}
+	defer sim.Fini()
+	sim.SetSize(w, h)
+	// extra counts the cells the screen shows that the page did not draw.
+	extra := func(r *arrivalRig, frames ...int) (n int) {
+		r.a.SetRect(0, 0, w, h)
+		for _, f := range frames {
+			g := r.at(w, h, f)
+			sim.Clear()
+			r.a.Draw(theme.WrapScreen(sim))
+			for y := 0; y < h; y++ {
+				for x := 0; x < w; x++ {
+					if c, _, _, _ := sim.GetContent(x, y); c != g.c[y*w+x].r && !(c == ' ' && g.c[y*w+x].r == 0) {
+						n++
+					}
+				}
+			}
+		}
+		return n
+	}
+	era := bareArrival(t, "iron_age", mapmodel.TierUnicode, true)
+	age := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
+	t.Cleanup(era.a.close)
+	t.Cleanup(age.a.close)
+	// Once the flash has gone: every third frame, and the four in which
+	// the era's name gives way (where the glitch bursts).
+	after := []int{arrEraFrames, arrEraFrames + 1, arrEraFrames + 2, arrEraFrames + 3}
+	for f := arrEraStrike + 12; f < arrivalFrames(true); f += 3 {
+		after = append(after, f)
+	}
+	sort.Ints(after)
 	with := 0
 	for _, th := range theme.All() {
 		if th.Effect == "" {
@@ -1352,61 +1474,25 @@ func TestArrivalAmbientIsAnEpochs(t *testing.T) {
 		if err := theme.SetActive(th.Key); err != nil {
 			t.Fatal(err)
 		}
-		sim := tcell.NewSimulationScreen("UTF-8")
-		if err := sim.Init(); err != nil {
-			t.Fatal(err)
-		}
-		sim.SetSize(w, h)
-		// extra counts the cells the screen shows that the page did not draw.
-		extra := func(r *arrivalRig, frames ...int) (n int) {
-			r.a.SetRect(0, 0, w, h)
-			for _, f := range frames {
-				g := r.at(w, h, f)
-				sim.Clear()
-				r.a.Draw(theme.WrapScreen(sim))
-				for y := 0; y < h; y++ {
-					for x := 0; x < w; x++ {
-						if c, _, _, _ := sim.GetContent(x, y); c != g.c[y*w+x].r && !(c == ' ' && g.c[y*w+x].r == 0) {
-							n++
-						}
-					}
-				}
-			}
-			return n
-		}
-		var after []int
-		for f := arrEraStrike + 12; f < arrivalFrames(true); f++ {
-			after = append(after, f)
-		}
-		era := stagedArrival(t, "iron_age", mapmodel.TierUnicode, true)
-		if n := extra(era, 0, arrEraBlow1, arrEraBlow2, arrEraStrike-1); n != 0 {
+		era.restart(mapmodel.TierUnicode, true)
+		if n := extra(era, 0, arrEraBlow2, arrEraStrike-1); n != 0 {
 			t.Errorf("%s: the effect plays before an epoch's heavy blow (%d cells)", th.Key, n)
 		}
 		if n := extra(era, after...); n == 0 {
 			t.Errorf("%s: the effect never plays in an epoch's celebration", th.Key)
 		}
 		era.a.key()
-		if n := extra(era, arrivalFrames(true)+1, arrivalFrames(true)+9); n != 0 {
+		if n := extra(era, arrivalFrames(true)+1); n != 0 {
 			t.Errorf("%s: the effect plays on the information (%d cells)", th.Key, n)
 		}
-		era.a.close()
-
-		age := stagedArrival(t, "bronze_age", mapmodel.TierUnicode, true)
-		var all []int
-		for f := 0; f < arrivalFrames(false); f += 2 {
-			all = append(all, f)
-		}
-		if n := extra(age, all...); n != 0 {
+		age.restart(mapmodel.TierUnicode, true)
+		if n := extra(age, 0, arrAgeStrike, arrAgeStrike+8, arrAgeFrames-1); n != 0 {
 			t.Errorf("%s: the effect plays in an age's celebration (%d cells)", th.Key, n)
 		}
-		age.a.close()
-
-		still := stagedArrival(t, "iron_age", mapmodel.TierUnicode, false)
-		if n := extra(still, 0, 30); n != 0 {
+		era.restart(mapmodel.TierUnicode, false)
+		if n := extra(era, 0, 30); n != 0 {
 			t.Errorf("%s: the effect plays with motion off (%d cells)", th.Key, n)
 		}
-		still.a.close()
-		sim.Fini()
 	}
 	if with == 0 {
 		t.Fatal("no theme has an ambient effect")

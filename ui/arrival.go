@@ -70,6 +70,8 @@ type arrival struct {
 	// once it has one (feed).
 	view arrivalView
 	fed  bool
+	// from is the age left behind, once feed has worked it out.
+	from string
 
 	// The town, before and after, in the player's map style.
 	reg              *mapstyle.Registry
@@ -238,6 +240,7 @@ func (a *arrival) feed(prev, cur *game.GameState) {
 	}
 	if fi >= 0 {
 		from = keys[fi]
+		a.from = from
 		if set.EraOf(from) != set.EraOf(a.newAge) {
 			a.epoch = true
 		}
@@ -429,10 +432,11 @@ func (a *arrival) frameGrid(w, h int) *mGrid {
 		epoch = 1
 	}
 	if key := [4]int{w, h, epoch, len(v.underLines(w - 6))}; a.sc == nil || key != a.scKey {
-		// A new size: the scene starts over and is played up to where the
-		// old one was, so a resize does not replay the celebration.
-		at := 0
-		if a.sc != nil {
+		// The first draw makes the scene, on the clock that begin started.
+		// A new size makes it again and plays it up to where the old one
+		// was, so a resize does not replay the celebration.
+		at, resized := 0, a.sc != nil
+		if resized {
 			at = a.sc.frame
 		}
 		a.sc, a.scKey = newArrivalScene(arrivalLayoutFor(w, h, v), v.epoch), key
@@ -447,7 +451,9 @@ func (a *arrival) frameGrid(w, h int) *mGrid {
 				a.sc.step()
 			}
 		}
-		a.rebase()
+		if resized {
+			a.rebase()
+		}
 	}
 	since := time.Duration(0)
 	if v.motion {

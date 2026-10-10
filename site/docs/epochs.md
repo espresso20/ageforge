@@ -64,6 +64,10 @@ See [Events](events.md#age-awakenings) for exact durations and how awakenings sh
 
 Every time you cross into a **new epoch** (the first age advance that crosses an epoch boundary), the game rolls your epoch transition event exactly once. The roll never repeats for the same epoch in the same run.
 
+<figure class="screen" data-screen="epoch-arrival"><figcaption>Entering a new epoch, here the Iron Era: the era's name takes the screen first, twice the height of an age's, and its heavy blow lights the whole screen.</figcaption></figure>
+
+The advance that opens an epoch gets a bigger [arrival](ages.md) than any other: two blows build up to a heavy one, the era's name comes before the age's, and your theme's ambient effect plays in the sky if it has one. The event the roll brought is listed with what the age opens.
+
 The outcome is decided in steps.
 
 **Step 1: good or bad?** Your faith strength sets the odds of a good event: 40% below a strength of 25%, 50% from 25% to 75%, 60% above 75%. A typical town reads about 22% and rolls at 40%; it takes more faith buildings than a moderate set, kept staffed, to do better. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
