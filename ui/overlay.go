@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/gdamore/tcell/v2"
@@ -48,6 +50,18 @@ type OverlayManager struct {
 	app     *tview.Application
 	onClose func() // called after hide to restore focus to the command input field
 	screenW int    // updated every frame via SetBeforeDrawFunc
+
+	// seen is the last snapshot Refresh was given: for the arrival screen
+	// it is the game as it stood before the advance (arrival.go). arrival is
+	// that screen while it is up. engine, when the app has given it one,
+	// lets the screen read the game's state and the player's display
+	// settings at once; without it the next Refresh brings the state.
+	seen    *game.GameState
+	arrival *arrival
+	engine  *game.GameEngine
+	// after, when set, is how the arrival screen sets its timers (tests hold
+	// them); nil means the clock.
+	after func(d time.Duration, fn func()) (cancel func())
 }
 
 // NewOverlayManager creates an OverlayManager. onClose is called whenever an
@@ -191,6 +205,7 @@ func (om *OverlayManager) Show(name string, state game.GameState) bool {
 		e.tv.ScrollToBeginning()
 		if om.active != name {
 			if om.active != "" {
+				om.dropArrival()
 				om.pages.RemovePage(om.active)
 			}
 			om.pages.AddPage(name, e.root, true, true)
@@ -207,6 +222,7 @@ func (om *OverlayManager) Show(name string, state game.GameState) bool {
 		root := om.buildWidgetRoot(we, prim)
 		// Always rebuild and replace — widget overlays don't cache their root.
 		if om.active != "" {
+			om.dropArrival()
 			om.pages.RemovePage(om.active)
 		}
 		om.pages.AddPage(name, root, true, true)
@@ -224,12 +240,34 @@ func (om *OverlayManager) Hide() {
 	if om.active == "" {
 		return
 	}
+	om.dropArrival()
 	om.pages.RemovePage(om.active)
 	om.active = ""
 	om.focus = nil
 	if om.onClose != nil {
 		om.onClose()
 	}
+}
+
+// dropArrival lets go of the arrival screen, if it is up: its clock and its
+// timers stop. Taking its page down is the caller's.
+func (om *OverlayManager) dropArrival() {
+	if a := om.arrival; a != nil {
+		om.arrival = nil
+		a.close()
+	}
+}
+
+// arrivalKey gives a key press to the arrival screen when it is the overlay
+// in front, and reports whether it took it. It is how Esc reaches that
+// screen as a key like any other (see the app's input capture): the
+// dashboard would answer Esc with Hide before the screen saw it.
+func (om *OverlayManager) arrivalKey() bool {
+	if om == nil || om.arrival == nil || om.active != arrivalPageName {
+		return false
+	}
+	om.arrival.key()
+	return true
 }
 
 // FocusOn makes p hold the keyboard while the active overlay shows, in place
@@ -257,6 +295,11 @@ func (om *OverlayManager) Focus() bool {
 // For text overlays the content is updated in-place.
 // For widget overlays the primitive is rebuilt and the page is replaced.
 func (om *OverlayManager) Refresh(state game.GameState) {
+	prev := om.seen
+	om.seen = &state
+	if om.arrival != nil {
+		om.arrival.feed(prev, &state)
+	}
 	if om.active == "" {
 		return
 	}

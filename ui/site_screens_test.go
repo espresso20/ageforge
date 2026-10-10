@@ -79,6 +79,9 @@ type siteStage struct {
 	// onTree takes the tech tree's pictures, part way through the Classical
 	// Age (toMedieval calls it).
 	onTree func()
+	// onIron takes the picture of an epoch's arrival, as the advance into
+	// the Iron Age opens the Iron Era (toIron calls it).
+	onIron func()
 	t      *testing.T
 	eng    *game.GameEngine
 	d      *Dashboard
@@ -98,6 +101,10 @@ func newSiteStage(t *testing.T) *siteStage {
 	still := time.Unix(0, 0)
 	d.mapPanel.start, d.mapPanel.now = still, func() time.Time { return still }
 	d.miniMap.start, d.miniMap.now = still, func() time.Time { return still }
+	// The arrival screen reads the game through the engine, as it does in
+	// the app (app.go). Its timers are held: nothing here waits for them.
+	d.overlayMgr.engine = eng
+	d.overlayMgr.after = func(time.Duration, func()) func() { return func() {} }
 	return &siteStage{t: t, eng: eng, d: d, app: app, pages: pages}
 }
 
@@ -394,11 +401,39 @@ func (s *siteStage) until(what string, done func(st game.GameState) bool) {
 	}
 }
 
-// dismiss lets the dashboard put up whatever it has waiting (an age splash)
-// and closes it, as any key would.
+// dismiss lets the dashboard put up whatever it has waiting (the arrival
+// screen of an advance) and closes it.
 func (s *siteStage) dismiss() {
 	s.d.refresh()
 	s.close()
+}
+
+// arrive lets the dashboard put up the arrival screen it has waiting, and
+// holds the screen's clock at a frame of its celebration.
+func (s *siteStage) arrive(frame int) {
+	s.t.Helper()
+	s.d.refresh()
+	a := s.d.overlayMgr.arrival
+	if a == nil {
+		s.t.Fatal("no arrival screen came up")
+	}
+	still := time.Unix(0, 0)
+	a.start, a.base = still, 0
+	a.now = func() time.Time { return still.Add(time.Duration(frame) * mapAnimStep) }
+}
+
+// inform moves the arrival screen on from its celebration to what the age
+// opens, as any key does.
+func (s *siteStage) inform() {
+	s.t.Helper()
+	a := s.d.overlayMgr.arrival
+	if a == nil {
+		s.t.Fatal("no arrival screen is up")
+	}
+	a.key()
+	if a.stage != arrInforming {
+		s.t.Fatal("a key did not move the arrival screen on")
+	}
 }
 
 // toBronze plays a new game through the Primitive and Stone Ages, each age's
@@ -410,6 +445,7 @@ func (s *siteStage) toBronze() {
 	s.learn("tool_making", "fire_mastery", "language")
 	s.wonder("sacred_grove")
 	s.advance()
+	s.dismiss() // the Stone Age's arrival, seen and closed, as in play
 	// The Standing Stones wait for Ritual: research comes first, as it
 	// would in play.
 	s.raiseAll(siteBuild{"storage_pit", 4}, siteBuild{"longhouse", 15}, siteBuild{"forager_post", 4},
@@ -480,6 +516,9 @@ func (s *siteStage) toIron() {
 	s.wonder("stonehenge")
 	// The last item of the plan is the advance: it goes by itself.
 	s.until("the planned advance", func(st game.GameState) bool { return st.Age == "iron_age" })
+	if s.onIron != nil {
+		s.onIron()
+	}
 	s.dismiss()
 	// From the Iron Era on a doom may be fated in secret. The era is kept
 	// quiet while the town is built, and the doom the pictures need is fated
@@ -709,7 +748,12 @@ func TestWriteSiteScreens(t *testing.T) {
 	s := newSiteStage(t)
 	shots.takeIn(s, "new-game", theme.DefaultKey, siteDashW, siteDashH)
 	s.toBronze()
-	// The first refresh after an advance puts up the new age's splash.
+	// The first refresh after an advance puts up the arrival screen: the
+	// celebration, held here just after the strike with the town part way
+	// through its turn, then what the age opens.
+	s.arrive(arrAgeStrike + 3)
+	shots.takeIn(s, "age-arrival", theme.DefaultKey, siteDashW, siteDashH)
+	s.inform()
 	shots.take(s, "age-advance")
 	s.close()
 
@@ -748,6 +792,12 @@ func TestWriteSiteScreens(t *testing.T) {
 	shots.takeIn(s, "theme-daylight", "daylight", sitePairW, sitePairH)
 	s.close()
 
+	// The advance into the Iron Age opens the Iron Era: an epoch's arrival,
+	// held just after the heavy blow, with the screen still lit.
+	s.onIron = func() {
+		s.arrive(arrEraStrike + 1)
+		shots.takeIn(s, "epoch-arrival", theme.DefaultKey, siteDashW, siteDashH)
+	}
 	s.toIron()
 	s.quiet()
 	s.level(map[string]float64{"food": 0.58, "wood": 0.77, "stone": 0.49, "knowledge": 0.31, "gold": 0.66, "iron": 0.52, "marble": 0.28, "iron_ore": 0.44, "faith": 0.63})

@@ -26,6 +26,9 @@ import (
 type menuTown struct {
 	model *mapmodel.Model
 	style mapstyle.Style
+	// builder lays the town out; it keeps the last model while nothing the
+	// maps draw has changed (update).
+	builder *mapmodel.Builder
 	// name and age caption the picture: the town's name and its age's.
 	name, age string
 
@@ -40,7 +43,16 @@ type menuTown struct {
 // newMenuTown builds the picture of a save's state in a style. nil when
 // there is nothing to draw.
 func newMenuTown(st *game.GameState, reg *mapstyle.Registry, styleName string) (t *menuTown) {
-	if st == nil || reg == nil {
+	return newMenuTownOn(mapmodel.NewBuilder(nil), st, reg, styleName, true)
+}
+
+// newMenuTownOn is newMenuTown on a builder the caller keeps, so that two
+// pictures of one game (the arrival screen's town before and after) lay the
+// land out once: the land is most of what a picture costs to make. follows
+// is for the picture that will follow the game (update): it takes the
+// builder's cache. The other is built aside and stays as it is.
+func newMenuTownOn(builder *mapmodel.Builder, st *game.GameState, reg *mapstyle.Registry, styleName string, follows bool) (t *menuTown) {
+	if st == nil || reg == nil || builder == nil {
 		return nil
 	}
 	defer func() {
@@ -58,15 +70,36 @@ func newMenuTown(st *game.GameState, reg *mapstyle.Registry, styleName string) (
 	for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges, mapstyle.OptWorld} {
 		style.SetOption(o, false)
 	}
-	m := mapmodel.NewBuilder(nil).Model(st, nil)
+	var m *mapmodel.Model
+	if follows {
+		m = builder.Model(st, nil)
+	} else {
+		m = builder.Build(st, nil)
+	}
 	if m == nil {
 		return nil
 	}
-	t = &menuTown{model: m, style: style, age: m.AgeName}
+	t = &menuTown{model: m, style: style, builder: builder, age: m.AgeName}
 	if m.Town.World != nil {
 		t.name = m.Town.World.Name
 	}
 	return t
+}
+
+// update draws the picture from a newer state of the same game from here
+// on (the arrival screen stays up while the game runs under it).
+func (t *menuTown) update(st *game.GameState) {
+	if t == nil || t.failed || st == nil {
+		return
+	}
+	defer func() {
+		if recover() != nil {
+			t.failed = true
+		}
+	}()
+	if m := t.builder.Model(st, nil); m != nil {
+		t.model = m
+	}
 }
 
 // townFade is how far a cell of the picture is mixed toward the page, by
@@ -84,6 +117,19 @@ const (
 // draw paints the picture into the w by h block of g at (x0, y0) and
 // reports whether it did. flare is the strike's flash.
 func (t *menuTown) draw(g *mGrid, pal *menuPalette, x0, y0, w, h int, f mapstyle.Frame, flare bool) (ok bool) {
+	return t.paint(g, pal, x0, y0, w, h, false, f, flare)
+}
+
+// drawFoot is draw for a block that may have fewer rows than a style lays
+// its full view out in: the picture is then laid out at the least height
+// it takes and the block shows the foot of it, so a skyline keeps its
+// ground and a map the town at its middle. (The arrival screen's land is
+// what is left under a name and its lines.)
+func (t *menuTown) drawFoot(g *mGrid, pal *menuPalette, x0, y0, w, h int, f mapstyle.Frame, flare bool) (ok bool) {
+	return t.paint(g, pal, x0, y0, w, h, true, f, flare)
+}
+
+func (t *menuTown) paint(g *mGrid, pal *menuPalette, x0, y0, w, h int, foot bool, f mapstyle.Frame, flare bool) (ok bool) {
 	if t == nil || t.failed || w <= 0 || h <= 0 {
 		return false
 	}
@@ -97,6 +143,12 @@ func (t *menuTown) draw(g *mGrid, pal *menuPalette, x0, y0, w, h int, f mapstyle
 		top, bottom = sc.SceneInset(w, h)
 	}
 	fw, fh := w, h+top+bottom
+	if foot && fh < townMinH {
+		// Rows of the picture above the block: it is laid out taller than
+		// the block and the block shows its foot.
+		top += townMinH - fh
+		fh = townMinH
+	}
 	if fw < townMinW || fh < townMinH {
 		return false
 	}

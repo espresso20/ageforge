@@ -2,7 +2,13 @@
 
 AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources and worker domains, and adds a new district to your [skyline](map.md#skyline). Advancement requires meeting all resource and building requirements **and** completing the age's wonder.
 
-<figure class="screen" data-screen="age-advance"><figcaption>The splash that greets an advance, here into the Bronze Age: what the new age unlocks, its wonder, and the buildings ready to upgrade.</figcaption></figure>
+<figure class="screen" data-screen="age-arrival"><figcaption>Reaching a new age, here the Bronze Age: its name is struck in iron, sparks fly, and the town turns from the age you left into the new one.</figcaption></figure>
+
+An advance opens on the arrival: the whole screen, in your map style, theme and glyph set. Any key moves on to what the age opens, and a second key closes it. `Esc` counts as a key. Left alone, the arrival moves on by itself and the screen closes after 20 seconds. The game keeps running underneath the whole time. With `motion off` the arrival is a single still frame.
+
+<figure class="screen" data-screen="age-advance"><figcaption>What the new age opens, shown after the arrival: its buildings and resources, its wonder, and the buildings ready to upgrade.</figcaption></figure>
+
+If more than one age goes by before the screen can show (a queued [`plan advance`](plan.md) goes by itself), there is one arrival, for the furthest age, with the ages passed listed under its name.
 
 ## Wonder Requirement
 

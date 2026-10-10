@@ -12,7 +12,7 @@ A window opens with the two choices, Endure and Succumb. Press E or S, or move b
 
 While a catastrophe is pending, the status bar shows a **☄ CATASTROPHE PENDING** badge, and the game refuses to advance to the next age or prestige. Type `catastrophe` to reopen the choice. The pending catastrophe is saved with your game, so if you close the game or come back after a long idle, the window opens again when the save loads.
 
-If a catastrophe strikes while the age-advance splash is on screen, the splash comes first. The catastrophe window opens once you dismiss the splash with any key, or when the splash times out after 20 seconds.
+If a catastrophe strikes while the arrival screen of an age advance is up, the arrival comes first. The catastrophe window opens once you close that screen (any key moves on to what the age opens, and a second key closes it), or when it closes by itself after 20 seconds.
 
 ---
 
