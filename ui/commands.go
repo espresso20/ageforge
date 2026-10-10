@@ -329,7 +329,7 @@ func registry() []*Command {
 		{Name: "style", Section: secGame, Args: []Arg{mapStyleArg},
 			Help: []Usage{{"style [roguelike|skyline]", "Same as map style"}}},
 		{Name: "minimap", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
-			Help: []Usage{{"minimap [on|off]", "Show or set the mini map above the Buildings list (default on)"}}},
+			Help: []Usage{{"minimap [on|off]", "Show or set the mini map above the Buildings list (default off)"}}},
 		{Name: "motion", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
 			Help: []Usage{{"motion [on|off]", "Show or set motion: whether the maps, the badge case and theme effects move (default on)"}}},
 		{Name: "icons", Section: secGame,

@@ -17,9 +17,12 @@ type Palette struct {
 	WaterBg tcell.Color // a faint water tint under sea cells
 	FreshBg tcell.Color // under tiles new since the last visit
 	FlowBg  tcell.Color // under tiles the flows overlay flags
-	Cursor  tcell.Style // the inspect cursor
-	Chrome  tcell.Style // header and status lines
-	Epoch   int
+	// Cursor is the inspect cursor: a highlighted cell (see cursor.go).
+	// CursorAlt is the other half of its slow blink; draw it through
+	// CursorStyle.
+	Cursor, CursorAlt tcell.Style
+	Chrome            tcell.Style // header and status lines
+	Epoch             int
 }
 
 // NewPalette derives the class colours from theme roles: each class starts
@@ -55,7 +58,7 @@ func NewPalette(epoch int) *Palette {
 	p.WaterBg = theme.Mix(bg, theme.MapHueColor(theme.HueWaterDeep), 0.10)
 	p.FreshBg = theme.Mix(bg, theme.Color(theme.RolePositive), 0.25)
 	p.FlowBg = theme.Mix(bg, theme.Color(theme.RoleWarning), 0.22)
-	p.Cursor = tcell.StyleDefault.Foreground(theme.Color(theme.RoleSelectionText)).Background(theme.Color(theme.RoleSelection))
+	p.FitCursor()
 	p.Chrome = tcell.StyleDefault.Foreground(theme.Color(theme.RoleText)).Background(theme.Color(theme.RoleSurface))
 	return p
 }

@@ -106,6 +106,21 @@ type CompactNews interface {
 	CompactShowsNews() bool
 }
 
+// Pointer is where a style's cursor stands, in the style's own terms (for
+// the roguelike, a tile of the settlement).
+type Pointer struct{ X, Y int }
+
+// Pointing is implemented by a style whose compact view can mark where the
+// cursor of another view of the same style stands: the mini map marks the
+// Map panel's cursor, as the same highlighted cell.
+type Pointing interface {
+	// Pointer reports where the cursor is; ok is false with no cursor out,
+	// or where the cursor is not a place on the ground.
+	Pointer() (p Pointer, ok bool)
+	// Point marks p in the compact view from now on (ok false: no mark).
+	Point(p Pointer, ok bool)
+}
+
 // Option is a view option several styles share, so a setting or a key
 // binding can drive any of them the same way.
 type Option uint8

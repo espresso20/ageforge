@@ -30,22 +30,36 @@ func TestArmyPanel_NoGarrison(t *testing.T) {
 	}
 }
 
-// Before the age that brings soldiers the panel says nothing trains yet, and
-// names that age only once the player can see it. After it, the rate shows.
+// Until a military building stands the panel says nothing trains yet, and
+// what does. A War Camp trains soldiers from the day it stands, two ages
+// before the age that brings them to every town: the panel then shows the
+// rate and what the garrison does.
 func TestArmyPanel_TrainingBeforeSoldiers(t *testing.T) {
 	engine := game.NewGameEngine()
 	txt := untag(militaryProvider(engine.GetState(), 0))
-	if !strings.Contains(txt, "Training:  not yet. Soldiers arrive in a later age.") || strings.Contains(txt, "/tick\n Defense") {
-		t.Errorf("a new game's Army panel should say soldiers are not here yet, with no rate:\n%s", txt)
+	if !strings.Contains(txt, "Training:  not yet. A military building trains soldiers.") || strings.Contains(txt, "/tick\n Defense") {
+		t.Errorf("a new game's Army panel should say nothing trains yet, with no rate:\n%s", txt)
+	}
+	if !strings.Contains(txt, "which military buildings train.") {
+		t.Errorf("the Army panel should say what trains soldiers:\n%s", txt)
 	}
 	if err := engine.EnterAgeForTest("stone_age"); err != nil {
 		t.Fatal(err)
 	}
+	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Training:  not yet. A military building trains soldiers.") {
+		t.Errorf("a Stone Age town with no War Camp should still say nothing trains:\n%s", txt)
+	}
+	// A garrison in the Stone Age: the panel shows the rate, and what the
+	// garrison does against a Stone Age raid.
+	engine.SetGarrisonForTest("stone_age", 1500)
+	txt = untag(militaryProvider(engine.GetState(), 0))
+	for _, want := range []string{"Training:  +0.0/tick", "(raids in the Stone Age)", "Your garrison would blunt about 22% of a raid."} {
+		if !strings.Contains(txt, want) {
+			t.Errorf("the Stone Age Army panel with a garrison is missing %q:\n%s", want, txt)
+		}
+	}
 	if err := engine.EnterAgeForTest("bronze_age"); err != nil {
 		t.Fatal(err)
-	}
-	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Training:  not yet. Soldiers arrive in the Iron Age.") {
-		t.Errorf("the Bronze Age Army panel should name the Iron Age:\n%s", txt)
 	}
 	if err := engine.EnterAgeForTest("iron_age"); err != nil {
 		t.Fatal(err)

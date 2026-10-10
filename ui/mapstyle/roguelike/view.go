@@ -34,8 +34,12 @@ func Entry() mapstyle.Entry {
 // view is one open map. What it draws is a function of the frame, the
 // view's own state and the active theme.
 type view struct {
-	zoom                            int
-	cur                             mapmodel.Pt
+	zoom int
+	cur  mapmodel.Pt
+	// mark is a tile the compact view highlights, with the cursor's own
+	// colours: where another view's cursor stands (mapstyle.Pointing).
+	mark                            mapmodel.Pt
+	marked                          bool
 	seed                            int64
 	placed, recentre                bool
 	flows, inspect, legend, changes bool
@@ -169,6 +173,9 @@ func (v *view) palette(epoch, age int) *pal {
 	}
 	p.scan = theme.Mix(bg, p.Fg[mapmodel.CLife], 0.14)
 	p.border = tcell.StyleDefault.Foreground(theme.Legible(theme.Color(theme.RoleBorder), bg, 1.8)).Background(bg)
+	// The colours are final (a night city has its own): the cursor's fill
+	// is chosen against them.
+	p.FitCursor()
 	v.pal = p
 	return p
 }

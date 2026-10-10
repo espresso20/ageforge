@@ -255,7 +255,7 @@ type AccountPrefs struct {
 	// was shown, so it is shown once per account.
 	MapIconsHint bool `json:"map_icons_hint,omitempty"`
 	// Minimap is the dashboard mini map setting: "on", "off", or empty for
-	// the default (on).
+	// the default (off).
 	Minimap string `json:"minimap,omitempty"`
 }
 
@@ -332,6 +332,13 @@ type Account struct {
 	// it (GameEngine.DrainEarnedBadges) and writes the toast and the log line. Not
 	// saved: a badge earned just before the game closes is simply in the list.
 	pendingEarned []string
+
+	// pendingCaughtUp is how many badges the last reconciliation gave the
+	// account from its own record (ensureBadges: a rung whose count it had
+	// already passed, after a ladder was lowered) and has not announced.
+	// They raise no toast each: the dashboard drains the count
+	// (GameEngine.DrainBadgeCatchUp) and says it in one line. Not saved.
+	pendingCaughtUp int
 
 	// badgeRev counts the changes to Badges and Counters, and badgeViews keeps
 	// the last badge list it built for a revision (account_badges.go): the
@@ -1192,11 +1199,12 @@ func (a *Account) SetMapGlyphs(tier string) error {
 	return a.Save()
 }
 
-// MinimapOn reports whether the dashboard's mini map is on (the default).
+// MinimapOn reports whether the dashboard's mini map is on. It is off until
+// the player turns it on (minimap on): an account that never chose has none.
 func (a *Account) MinimapOn() bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.Prefs.Minimap != "off"
+	return a.Prefs.Minimap == "on"
 }
 
 // SetMinimap persists the mini map setting.

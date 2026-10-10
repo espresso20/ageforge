@@ -13,14 +13,14 @@ The military system covers four things:
 - **Milestones.** Five military milestones form a chain with a title at the end. The early ones grant permanent military power; the later ones grant all production.
 - **Prestige.** The army resets with the run, and nothing you buy with prestige points raises military power or mission rewards. What carries over is who your missions found: with the legacy kit's [Old Friends](prestige.md#old-friends), every civilization you have met is met again on later runs without a mission.
 
-**Soldiers are a resource**, not a count of workers. Your military buildings produce and store them: staff a War Camp or Barracks with workers and it adds to the `soldiers` resource every tick, the same way a Farm adds food. Soldiers unlock in the **Iron Age**. Before that, the scouting expeditions (see [Missions](#missions)) let you explore without any soldiers.
+**Soldiers are a resource**, not a count of workers. Your military buildings produce and store them: staff a War Camp or Barracks with workers and it adds to the `soldiers` resource every tick, the same way a Farm adds food. Soldiers begin with your first military building: a War Camp can be built in the Stone Age and trains them from the day it stands. A town with no military building has none until the **Iron Age**, which brings them to every town. The scouting expeditions (see [Missions](#missions)) let you explore without any soldiers.
 
 There are two kinds of mission:
 
 | Kind | Command | Costs | Available |
 |---|---|---|---|
 | Scouting expedition | `expedition <key>` | resources only, 0 soldiers | from the start; there are three: `scout_party`, `scout_ruins`, `naval_expedition`. The last two wait for the Exploration tech, and the Naval Expedition for Navigation as well |
-| Military campaign | `campaign <key>` | soldiers | the first opens in the Bronze Age, once Military Tactics is researched, but you have no soldiers until the Iron Age |
+| Military campaign | `campaign <key>` | soldiers | the first opens in the Bronze Age, once Military Tactics is researched; it costs soldiers, which a War Camp or a Barracks trains |
 
 ---
 
@@ -28,7 +28,7 @@ There are two kinds of mission:
 
 ### What soldiers are
 
-Soldiers are a stockpiled resource (`soldiers`) that unlocks in the **Iron Age**. You bank them the way you bank food or wood, then spend them on campaigns.
+Soldiers are a stockpiled resource (`soldiers`). They unlock when your first military building stands, whatever the age (a War Camp in the Stone Age, a Barracks in the Bronze), and in the **Iron Age** for a town that built none. You bank them the way you bank food or wood, then spend them on campaigns. Until then they stand as your garrison, which blunts raids.
 
 Staffed military buildings produce soldiers every tick. A fully staffed building makes about its soldier cap ÷ 50 per tick (at least 0.1/tick), so more workers and more buildings mean faster soldiers. Your soldier storage is the sum of every military building's soldier cap, plus every storage effect that raises all resources (the general storage buildings and the "all storage" techs). That second part is most of it: by the Iron Age a typical civilization can hold a couple of hundred thousand soldiers, far more than the military buildings' own caps. The **Military-Industrial Complex**, the Atomic Age's Military capstone, adds 20% to the whole of it, and **Augmented Soldiers** (Cyberpunk Age) 10% more. Campaigns spend soldiers from the stockpile at launch (see [Missions](#missions)).
 
@@ -62,7 +62,7 @@ army
 
 This opens the **Army** panel: soldier count, defense rating, the running campaign (if any) and how many campaigns you've completed. Under the defense rating it shows what the army does for you:
 
-- **Training:** soldiers per tick. A War Camp or a Barracks can stand before the Iron Age brings soldiers; until then nothing trains in it, and the line reads "not yet. Soldiers arrive in the Iron Age."
+- **Training:** soldiers per tick. Before your first military building it reads "not yet. A military building trains soldiers."
 - **Threat:** the raid threat of your current age.
 - "Your garrison would blunt about N% of a raid.": the share it takes off raids and war raids in your current age (an Endure measures it against the age the catastrophe strikes in). After it comes what twice the garrison would blunt, and a reminder that no army blunts more than 45%. With no soldiers it reads "You have no garrison: raids hit you with full force."
 - **Saved this run:** once the garrison has saved something, the buildings, workers and resources (the four largest) it kept, and how many raids it blunted. Like other run stats, it resets with the run.
@@ -116,7 +116,7 @@ Five of them wait for a tech of their own age: the Barracks (Military Tactics), 
 
 Missions are timed and paid from your stockpiles. There are two kinds:
 
-- **Scouting expeditions** (`scout_party`, `scout_ruins`, `naval_expedition`) cost resources and 0 soldiers. These are open before soldiers exist.
+- **Scouting expeditions** (`scout_party`, `scout_ruins`, `naval_expedition`) cost resources and 0 soldiers. These need no military building.
 - **Military campaigns** (the other 13) cost soldiers.
 
 The cost comes out of your stockpiles the moment you launch, and there's no refund. The mission then runs for a number of ticks rolled at launch within its own range, and resolves. A success pays full loot and a failure 30% of it; the cost is gone either way. A failure is also less likely to meet a civilization, and a meeting on a failed run never brings a gift, usually a setback (see [What missions are worth](#what-missions-are-worth)). You can run one scouting expedition and one campaign at the same time, but not two of the same kind.
@@ -129,7 +129,7 @@ Times on this page are at the base tick of 2 seconds. Tick-speed bonuses (some t
 
 Campaigns spend soldiers at launch, and you can't launch one you can't afford. The scouting expeditions charge resources up front: `scout_party` costs 30 food and 30 wood, `scout_ruins` 40 food and 30 wood, and `naval_expedition` 150 food and 100 wood.
 
-Every mission has a first age, and some have a last age after which they disappear. `scout_party` runs from the Primitive Age through the Bronze Age and is gone once you reach the Iron Age, when soldiers arrive. `scout_ruins` opens in the Bronze Age and `naval_expedition` in the Renaissance Age.
+Every mission has a first age, and some have a last age after which they disappear. `scout_party` runs from the Primitive Age through the Bronze Age and is gone once you reach the Iron Age. `scout_ruins` opens in the Bronze Age and `naval_expedition` in the Renaissance Age.
 
 The reward is paid when the mission resolves. The soldiers and resources you paid don't come into it; they were spent at launch.
 
@@ -238,7 +238,7 @@ That is 3 scouting expeditions and 13 campaigns.
 
 The Duration column is each mission's range in ticks, as the panel shows it. From the Bronze Age on, where ages and their timers run 2.6 times as long, every range is 2.6 times its base length, so the column already includes that. The actual time is rolled evenly within that range at launch, so nothing resolves in under 100 ticks (156 from the Bronze Age on), and `scout_party` runs 100-160 ticks (about 130 on average; 260-416 in the Bronze Age). The time-left readout counts down the rolled value. Techs shorten the range, and the panels list it as it stands: Cartography, Aviation, Reusable Launchers and Fusion Drives take 10% each off scouting expeditions, Wormholes 15% and Stellar Cartography 20% (45% of the listed time with all six), and a **General Staff** (Victorian Age) and **Special Forces** (Modern Age) take 15% each off campaigns.
 
-There are no soldiers before the Iron Age, so scouting fills the gap. `scout_party` costs 30 food and 30 wood, runs 100-160 ticks (260-416 in the Bronze Age) and pays about 60 food, 60 wood and 20 stone, a net gain worth repeating through the Primitive, Stone and Bronze ages. It disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 40 food and 30 wood) carries scouting on from there, and `naval_expedition` (Renaissance Age, 150 food and 100 wood) is the late scouting option, harder (0.50) than `scout_ruins` (0.20).
+Before your first military building there are no soldiers, so scouting fills the gap. `scout_party` costs 30 food and 30 wood, runs 100-160 ticks (260-416 in the Bronze Age) and pays about 60 food, 60 wood and 20 stone, a net gain worth repeating through the Primitive, Stone and Bronze ages. It disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 40 food and 30 wood) carries scouting on from there, and `naval_expedition` (Renaissance Age, 150 food and 100 wood) is the late scouting option, harder (0.50) than `scout_ruins` (0.20).
 
 `campaign trade_escort` (Iron Age, 3 soldiers, 156-260 ticks, 0.30 difficulty) is the cheapest, easiest campaign to keep running. Durations are rolled, so keep one of each kind running rather than counting on a fixed timer.
 
@@ -338,7 +338,7 @@ Your defense rating is measured against the **raid threat** of the age you are i
 
 ```
 defense  = soldiers × 2.0 × (1 + military power)
-threat   = 160,000 × 2^(age order) × the age's threat scale      # Primitive Age = order 0
+threat   = 160,000 × 2^(age order) × the age's threat scale      # from the Iron Age (order 3) on
 blunted  = 45% × defense ÷ (defense + threat)
 ```
 
@@ -378,7 +378,21 @@ The threat **about doubles every age**, the same rate at which each new military
 | Quantum Age | 0.40 | 67.5B | 33.8B |
 | Transcendent Age | 0.40 | 135B | 67.5B |
 
-The Primitive, Stone and Bronze Ages have threats of 160K, 320K and 613K, but soldiers don't exist until the Iron Age. A `military_power` bonus cuts the soldiers needed: at +1.0, half as many.
+A `military_power` bonus cuts the soldiers needed: at +1.0, half as many.
+
+### Before the Iron Age
+
+The doubling curve was measured from the Iron Age on, where the age gates ask every town for military buildings. Before it nothing asks for one, so a garrison is the War Camps and Barracks you chose to build, and the three early ages have raid threats sized to that:
+
+| Age | Threat | Soldiers for 22.5% (no military bonus) | What trains them |
+|-----|--------|----------------------------------------|------------------|
+| Primitive Age | 1K | none can train | no military building yet |
+| Stone Age | 3K | 1,500 | War Camp: 0.2 soldiers/tick with its 3 posts staffed, a fifth of that with none |
+| Bronze Age | 43.1K | 21.6K | Barracks (after Military Tactics): 0.4 soldiers/tick with its 4 posts staffed |
+
+Five staffed War Camps train 1 soldier a tick. Over a Stone Age of ordinary length that garrison comes to blunt about a fifth of a raid, and half of it about an eighth. In the Bronze Age the same holds for five War Camps and five Barracks. A garrison carried into the next age meets that age's larger threat, so it has to keep growing, as it does later.
+
+The raids of these ages are Tribal Raid and Beast Stampede (Stone Era) and Bandit Raid (Bronze Age on). See [Raids and your garrison](events.md#raids-and-your-garrison).
 
 ### The garrison you already have
 
@@ -400,7 +414,7 @@ A player with **no soldiers** takes exactly the losses they always did. From the
 
 ### Endure: Brace first, then the garrison
 
-A catastrophe strikes at a fated moment anywhere in its era (Iron to Cosmic), so the garrison meets the threat of whatever age you are in when it strikes. Soldiers first unlock in the Iron Age, so an Iron Era doom that strikes early in the Iron Age finds little garrison to count.
+A catastrophe strikes at a fated moment anywhere in its era (Iron to Cosmic), so the garrison meets the threat of whatever age you are in when it strikes. A town that built no War Camp or Barracks has its first soldiers in the Iron Age, so an Iron Era doom that strikes early in the Iron Age finds little garrison to count.
 
 1. **Brace** applies first: 20% / 15% / 10% of buildings fall and 15% / 30% / 45% of stock is kept at Brace 0 / 1 / 2.
 2. **The garrison** then blunts its share of what is left: the braced share of buildings destroyed shrinks by that share, and it keeps that share of the stock Brace would have let go. Buildings saved round down, so the garrison never saves more than its share.

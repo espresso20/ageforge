@@ -34,9 +34,11 @@ const (
 	// reaches it.
 	DefenseMitigationCap = 0.45
 
-	// DefenseThreatBase is the raid threat of the Primitive Age (age order 0),
-	// in Defense Rating points: 1.28M in the Iron Age, 2.56M in the
-	// Classical, doubling on. Measured, not guessed. Every player carries a
+	// DefenseThreatBase is where the threat curve starts (age order 0), in
+	// Defense Rating points: 1.28M in the Iron Age, 2.56M in the
+	// Classical, doubling on. The curve is the threat from the Iron Age on;
+	// the three ages before it have threats of their own (EarlyThreat*).
+	// Measured, not guessed. Every player carries a
 	// garrison they never chose: the age gates ask for military buildings (15
 	// Hunting Lodges, 15 Military Academies, 15 Bunker Complexes, ...), the
 	// lineage carries them into every later age, and they train soldiers
@@ -66,16 +68,61 @@ const (
 // AgeThreatAt is the raid threat for the age with the given order (0 =
 // Primitive Age) on a military yardstick whose threat scale there is scale
 // (MilitaryScaleDef.Threat): DefenseThreatBase × DefenseThreatGrowth^order ×
-// scale. The power is built by repeated exact multiplication (no math.Pow)
-// so every machine gets the same bits. Negative orders count as 0. Pure: an
-// engine reads its ruleset's threat (rules.Set.AgeThreat), which calls this
-// with its own tree's scale.
+// scale from the Iron Age on, and EarlyThreat × scale before it. The power
+// is built by repeated exact multiplication (no math.Pow) so every machine
+// gets the same bits. Negative orders count as 0. Pure: an engine reads its
+// ruleset's threat (rules.Set.AgeThreat), which calls this with its own
+// tree's scale.
 func AgeThreatAt(order int, scale float64) float64 {
+	if t, early := earlyThreat(order); early {
+		return float64(t * scale)
+	}
 	t := DefenseThreatBase
 	for i := 0; i < order; i++ {
 		t *= DefenseThreatGrowth
 	}
 	return float64(t * scale)
+}
+
+// The threat before the Iron Age.
+//
+// The doubling curve was measured from the Iron Age on, where every town
+// carries a garrison the age gates ask for and general storage holds
+// soldiers by the hundred thousand. Before it nothing asks for a military
+// building: a garrison is a War Camp (Stone Age) or a Barracks (Bronze Age)
+// someone chose to build and staff, training 0.2 and 0.4 soldiers a tick.
+// Against the curve's 320K and 613K such a garrison blunted nothing, so the
+// building did nothing for two ages.
+//
+// The two early threats are sized to that garrison instead: a moderate set
+// of the age's military buildings, fully staffed (FlowIncome of soldiers: 1
+// a tick in the Stone Age, 3 in the Bronze), trains over the age's pacing
+// target a garrison that blunts about a fifth of a raid, and half of that
+// garrison about an eighth. A larger garrison blunts more, toward the same
+// cap as ever. The Primitive Age has no military building, so no garrison
+// ever meets its threat: it is set under the Stone Age's so the threat
+// still rises with every age.
+const (
+	// EarlyThreatPrimitive, EarlyThreatStone and EarlyThreatBronze are the
+	// raid threats of the three ages before the Iron Age, in Defense Rating
+	// points.
+	EarlyThreatPrimitive = 1000.0
+	EarlyThreatStone     = 3000.0
+	EarlyThreatBronze    = 45000.0
+)
+
+// earlyThreat is the threat of an age before the Iron Age (orders 0 to 2),
+// and whether order is such an age.
+func earlyThreat(order int) (threat float64, early bool) {
+	switch {
+	case order <= 0:
+		return EarlyThreatPrimitive, true
+	case order == 1:
+		return EarlyThreatStone, true
+	case order == 2:
+		return EarlyThreatBronze, true
+	}
+	return 0, false
 }
 
 // AgeThreat is AgeThreatAt on the yardstick of the tree this package

@@ -335,7 +335,7 @@ func (v *skyView) drawSkyMap(cv *mapstyle.Canvas, x, y, w, h int) {
 	if cx, cy, ok := v.sg.cellOf(v.cur); ok && v.g.inspect && !v.compact {
 		for i := 0; i < v.sg.cellW && cx+i < v.sg.x+v.sg.w; i++ {
 			r, _ := cv.Get(cx+i, cy)
-			cv.Put(cx+i, cy, r, v.g.pal.Cursor.Bold(true))
+			cv.Put(cx+i, cy, r, v.g.pal.CursorStyle(v.g.anim))
 		}
 	}
 }

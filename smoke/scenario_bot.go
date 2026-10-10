@@ -271,7 +271,7 @@ func runStatic(e *Env, res *Result) {
 			res.fail("research_covenant", "%s", p)
 		}
 	}
-	bp, breach := StaticBadges()
+	bp, breach, bfirst := staticBadgesFull()
 	for _, p := range bp {
 		res.fail("badge_"+p.Kind, "%s", p.Why)
 	}
@@ -312,6 +312,6 @@ func runStatic(e *Env, res *Result) {
 	writeCaps(&cf, caps)
 	res.section("Bonus pools against their caps", "%s", cf.String())
 	var bf strings.Builder
-	writeBadges(&bf, bp, breach)
+	writeBadges(&bf, bp, breach, bfirst)
 	res.section("Badge Covenant", "%s", strings.TrimPrefix(bf.String(), "\n### Badges\n\n"))
 }

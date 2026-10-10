@@ -33,6 +33,10 @@ import (
 //     threshold takes more than config.BadgeMaxRuns runs. A run adds one
 //     prestige, and config.BadgeRunShare of a lineage's ceiling (every tier
 //     up to the run's last age raised to its storage limit);
+//   - first rung: it is the first rung of a lifetime ladder, asks for more
+//     than one, and an ordinary first run does not have that much by the
+//     time it reaches the Bronze Age, or the second age after the one its
+//     subject first appears in (static_badges_first.go);
 //   - static "time": the threshold is not a multiple of an age's pacing
 //     target, through a predicate that reads it as one;
 //   - static "run_count": it asks for more of something than a run can do;
@@ -74,8 +78,8 @@ var BadgeBotStyles = []string{"greedy", "idle", "harbinger", "succumber", "cosmi
 type BadgeProblem struct {
 	Key string `json:"key"`
 	// Kind is the check that fails: "proof", "gate", "copies", "lifetime",
-	// "time", "run_count", "existence", "bot", "spoiler", "text",
-	// "integrity", "alias" or "table".
+	// "first_rung", "time", "run_count", "existence", "bot", "spoiler",
+	// "text", "integrity", "alias" or "table".
 	Kind string `json:"kind"`
 	Why  string `json:"why"`
 }
@@ -96,12 +100,24 @@ type BadgeReach struct {
 // Covenant. It returns what breaks it and every badge's verdict, in catalog
 // order.
 func StaticBadges() ([]BadgeProblem, []BadgeReach) {
-	return staticBadges(rules.Core(), config.Badges(), config.BadgeFamilies(), config.BuildingByKey(), game.PrestigeRunAge)
+	problems, reach, _ := staticBadgesFull()
+	return problems, reach
+}
+
+// staticBadgesFull is StaticBadges with every ladder's first rung.
+func staticBadgesFull() ([]BadgeProblem, []BadgeReach, []FirstRung) {
+	return staticBadgesAll(rules.Core(), config.Badges(), config.BadgeFamilies(), config.BuildingByKey(), game.PrestigeRunAge)
 }
 
 // staticBadges is StaticBadges over the given ruleset and tables (the tests
 // hand it broken ones).
 func staticBadges(set *rules.Set, written []config.BadgeDef, families []config.BadgeFamilyDef, defs map[string]config.BuildingDef, prestigeAge string) ([]BadgeProblem, []BadgeReach) {
+	problems, reach, _ := staticBadgesAll(set, written, families, defs, prestigeAge)
+	return problems, reach
+}
+
+// staticBadgesAll is staticBadges with every ladder's first rung.
+func staticBadgesAll(set *rules.Set, written []config.BadgeDef, families []config.BadgeFamilyDef, defs map[string]config.BuildingDef, prestigeAge string) ([]BadgeProblem, []BadgeReach, []FirstRung) {
 	c := &badgeCheck{
 		set:    set,
 		m:      newMilestoneModel(defs, prestigeAge),
@@ -123,6 +139,7 @@ func staticBadges(set *rules.Set, written []config.BadgeDef, families []config.B
 			seenRung[rung] = def.Key
 		}
 	}
+	first := c.firstRungs(badges)
 	for _, key := range IntegrityBadges {
 		if def, ok := set.Badge(key); !ok || !def.Integrity() {
 			c.fail(key, "integrity", fmt.Sprintf("%s is on the list of integrity badges but is not one in the catalog.", key))
@@ -133,7 +150,7 @@ func staticBadges(set *rules.Set, written []config.BadgeDef, families []config.B
 			c.fail(old, "alias", fmt.Sprintf("No badge lists the old account achievement %q as an alias, so an account that holds it would lose it.", old))
 		}
 	}
-	return c.problems, c.reach
+	return c.problems, c.reach, first
 }
 
 type badgeCheck struct {
@@ -286,13 +303,25 @@ func (c *badgeCheck) static(def config.BadgeDef, label string, r *BadgeReach) {
 // perRun is what one run adds to a lifetime counter, and what that number
 // is in words. ok is false for a counter the check has no proof for.
 func (c *badgeCheck) perRun(counter string) (perRun float64, basis string, ok bool) {
+	return c.added(counter, c.m.runEnd)
+}
+
+// added is what an ordinary first run has added to a lifetime counter by
+// the end of the age at place through, and what that number is in words.
+// With the run's last age it is what one run adds (perRun). ok is false for
+// a counter the check has no proof for.
+func (c *badgeCheck) added(counter string, through int) (n float64, basis string, ok bool) {
 	m := c.m
+	through = min(max(through, 0), len(m.ages)-1)
 	switch {
 	case counter == config.BadgeEvPrestige:
+		if through < m.runEnd {
+			return 0, "a run prestiges after its last age", true
+		}
 		return 1, "one prestige", true
 	default:
-		if perRun, basis, ok := c.morePerRun(counter); ok {
-			return perRun, basis, true
+		if n, basis, ok := c.moreAdded(counter, through); ok {
+			return n, basis, true
 		}
 	}
 	switch {
@@ -308,12 +337,12 @@ func (c *badgeCheck) perRun(counter string) (perRun float64, basis string, ok bo
 				continue
 			}
 			deep += ceil.n
-			if ceil.age <= m.runEnd {
+			if ceil.age <= through {
 				total += ceil.n
 			}
 		}
-		basis = fmt.Sprintf("%d%% of the %s %s buildings a run can hold through the %s", int(config.BadgeRunShare*100), grouped(total), lineage, m.ageName(m.runEnd))
-		if total == 0 {
+		basis = fmt.Sprintf("%d%% of the %s %s buildings a run can hold through the %s", int(config.BadgeRunShare*100), grouped(total), lineage, m.ageName(through))
+		if total == 0 && through == m.runEnd {
 			// A lineage that starts after the run's last age is measured
 			// in deep runs: every tier it has.
 			total = deep
@@ -490,7 +519,7 @@ func (c *badgeCheck) text(def config.BadgeDef, label string) {
 }
 
 // writeBadges adds the Badge Covenant's table to the static report.
-func writeBadges(sb *strings.Builder, problems []BadgeProblem, reach []BadgeReach) {
+func writeBadges(sb *strings.Builder, problems []BadgeProblem, reach []BadgeReach, first []FirstRung) {
 	sb.WriteString("\n### Badges\n\n")
 	if len(problems) == 0 {
 		fmt.Fprintf(sb, "All %d badges can be earned.\n\n", len(reach))
@@ -510,5 +539,19 @@ func writeBadges(sb *strings.Builder, problems []BadgeProblem, reach []BadgeReac
 			limit = config.FormatAmount(r.Limit)
 		}
 		fmt.Fprintf(sb, "| %s (`%s`) | %s | %s | %s | %s |\n", r.Name, r.Key, r.Proof, need, limit, r.Basis)
+	}
+	if len(first) == 0 {
+		return
+	}
+	// The first rung of every lifetime ladder against what an ordinary
+	// first run holds by its deadline (static_badges_first.go).
+	sb.WriteString("\n#### First rungs\n\n")
+	sb.WriteString("| ladder | first rung | its subject appears in | due on reaching | a first run has | rungs |\n|---|---|---|---|---|---|\n")
+	for _, r := range first {
+		rungs := make([]string, 0, len(r.Rungs))
+		for _, v := range r.Rungs {
+			rungs = append(rungs, config.FormatAmount(v))
+		}
+		fmt.Fprintf(sb, "| %s (`%s`) | %s | %s | %s | %s | %s |\n", r.Ladder, r.Key, config.FormatAmount(r.Need), r.From, r.By, config.FormatAmount(r.Have), strings.Join(rungs, " · "))
 	}
 }

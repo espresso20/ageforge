@@ -211,8 +211,11 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Proof:      StaticProof(BadgeRuleTechs),
 			Emblem:     "knowledge",
 		},
-		// F6. A lineage's buildings across every run (appendix A: a
-		// quarter of a run, one, four, ten and twenty-five runs).
+		// F6. A lineage's buildings across every run. The top rung is
+		// twenty-five runs. The first rung is one an ordinary first run
+		// holds by the second age after the lineage's first (the guard
+		// checks it), and where that took lowering it the rungs between
+		// climb in even multiplicative steps.
 		{
 			Family: "lineage", Source: BadgeSourceLineages,
 			Key: "lineage.{key}.{n}", Name: "{name} {rung}",
@@ -220,20 +223,20 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Scope: BadgeLifetime, Counter: BadgeEvBuiltLineage + ".{key}",
 			Rungs: lineageRungs,
 			Ladders: map[string][]float64{
-				"culture_arts":          {6, 22, 88, 220, 550},
+				"culture_arts":          {5, 16, 52, 160, 550},
 				"energy":                {5, 10, 40, 100, 250},
-				"engineering":           {7, 26, 100, 260, 650},
-				"faith":                 {10, 38, 150, 380, 950},
-				"food":                  {10, 38, 150, 380, 950},
+				"engineering":           {6, 19, 62, 200, 650},
+				"faith":                 {8, 26, 87, 280, 950},
+				"food":                  {9, 28, 92, 290, 950},
 				"geological_extraction": {10, 40, 160, 400, 1000},
 				"hacker":                {5, 17, 68, 170, 430},
 				"harbor":                {3, 5, 20, 50, 130},
-				"housing":               {14, 57, 230, 570, 1400},
-				"knowledge":             {10, 38, 150, 380, 950},
-				"metallurgy":            {6, 23, 92, 230, 580},
-				"military":              {9, 35, 140, 350, 880},
-				"organic_extraction":    {10, 39, 160, 390, 980},
-				"storage":               {8, 33, 130, 330, 810},
+				"housing":               {11, 36, 120, 410, 1400},
+				"knowledge":             {8, 26, 87, 280, 950},
+				"metallurgy":            {5, 16, 53, 170, 580},
+				"military":              {7, 23, 78, 260, 880},
+				"organic_extraction":    {9, 29, 93, 300, 980},
+				"storage":               {7, 22, 75, 240, 810},
 				"trade":                 {6, 24, 96, 240, 600},
 			},
 			RevealBySubject: true,
@@ -261,16 +264,18 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Emblem:     "lineage.{key}",
 			Emblems:    map[string]string{"lumber": "lineage.organic_extraction", "masonry": "lineage.geological_extraction"},
 		},
-		// F8. A resource produced across every run (appendix B: a quarter
-		// of a run, one, five and twenty-five runs; a resource that comes
-		// after a run's last age starts at one).
+		// F8. A resource produced across every run. The first rung is what
+		// an ordinary town makes of it in the first age it makes any, the
+		// top rung twenty-five runs, and the rungs between climb in even
+		// multiplicative steps (a resource that comes after a run's last
+		// age has one rung fewer).
 		{
 			Family: "resource", Source: BadgeSourceResources,
 			Key: "resource.{key}.{n}", Name: "{name} {rung}",
 			Desc:  "Produce {count} {lname} across all your runs. Trades, loot and gifts are not production.",
 			Scope: BadgeLifetime, Counter: BadgeEvProduced + ".{key}",
 			Rungs:   resourceRungs,
-			Measure: BadgeMeasureProduction, Runs: []float64{0.25, 1, 5, 25},
+			Measure: BadgeMeasureProduction, TopRuns: BadgeMaxRuns,
 			RevealBySubject: true,
 			Proof:           StaticProof(BadgeRuleLifetime),
 			Emblem:          "store", Ladder: "{name}",
@@ -425,9 +430,11 @@ func ladder(key, name, counter, desc, first string, counts []float64, rungs []st
 }
 
 // badgeLadders returns the twenty-three ladders. The numbers are the
-// design's: each rung is a count of runs of ordinary play (a ladder's last
-// rung at most twenty-five), which the guard checks against what one run
-// adds to the counter.
+// design's: a last rung of at most twenty-five runs of ordinary play, and a
+// first rung an ordinary first run holds by the Bronze Age, or by the
+// second age after the thing it counts first appears. The guard checks both
+// against what a run adds to the counter. A ladder whose first rung was
+// lowered to meet the second rule climbs in even multiplicative steps.
 func badgeLadders() []BadgeFamilyDef {
 	visible := BadgeReveal{}
 	warned := RevealUntilSeen(BadgeEvDoomNamed)
@@ -451,25 +458,25 @@ func badgeLadders() []BadgeFamilyDef {
 		ladder("exposed", "False prophets", BadgeEvHarbingerResolved+"."+"discredited", "See {count} false prophets exposed.", "See a false prophet exposed.",
 			[]float64{1, 3, 5}, []string{"Called the Bluff", "Fact Checker", "Professional Skeptic"}, "harbinger", BadgeReveal{Kind: BadgeSecret}, life),
 		ladder("wonders", "Wonders raised", BadgeEvWonderRaised, "Raise {count} wonders across all your runs.", "",
-			[]float64{25, 100, 300}, []string{"Sightseer", "Monument Habit", "Wonder Fatigue"}, "wonder", visible, life),
+			[]float64{2, 24, 300}, []string{"Sightseer", "Monument Habit", "Wonder Fatigue"}, "wonder", visible, life),
 		ladder("techs", "Techs researched", BadgeEvResearchDone, "Research {count} techs across all your runs.", "",
-			[]float64{100, 500, 1200}, []string{"Curious", "Well Read", "Know-It-All"}, "knowledge", visible, life),
+			[]float64{5, 77, 1200}, []string{"Curious", "Well Read", "Know-It-All"}, "knowledge", visible, life),
 		ladder("milestones", "Milestones", BadgeEvMilestone, "Complete {count} milestones across all your runs.", "",
-			[]float64{100, 400, 1000}, []string{"Goal Oriented", "Overachiever", "Checklist Enthusiast"}, "star", visible, life),
+			[]float64{5, 70, 1000}, []string{"Goal Oriented", "Overachiever", "Checklist Enthusiast"}, "star", visible, life),
 		ladder("chains", "Milestone chains", BadgeEvChain, "Complete {count} milestone chains across all your runs.", "Complete your first milestone chain.",
 			[]float64{1, 10, 30}, []string{"Linked", "Chain Smoker", "Unbroken"}, "star", visible, life),
 		ladder("expeditions", "Expeditions", BadgeEvExpedition, "Come back from {count} successful expeditions.", "",
-			[]float64{10, 50, 200, 500}, []string{"Day Tripper", "Seasoned Traveler", "Frequent Flyer", "Never Home"}, "military", visible, life),
-		ladder("deals", "Faction deals", BadgeEvDeal, "Take {count} deals from civilizations.", "",
-			[]float64{5, 25, 100}, []string{"Deal Maker", "Preferred Customer", "Closer"}, "trade", RevealUntilSeen(BadgeEvCivMet), life),
-		ladder("raids", "Raids blunted", BadgeEvRaidBlunted, "Have your garrison blunt {count} raids.", "",
-			[]float64{10, 100, 500}, []string{"Held the Gate", "Wall of Shields", "Not on My Watch"}, "military", RevealUntilSeen(BadgeEvRaidBlunted), life),
+			[]float64{4, 20, 100, 500}, []string{"Day Tripper", "Seasoned Traveler", "Frequent Flyer", "Never Home"}, "military", visible, life),
+		ladder("deals", "Faction deals", BadgeEvDeal, "Take {count} deals from civilizations.", "Take a deal from a civilization.",
+			[]float64{1, 10, 100}, []string{"Deal Maker", "Preferred Customer", "Closer"}, "trade", RevealUntilSeen(BadgeEvCivMet), life),
+		ladder("raids", "Raids blunted", BadgeEvRaidBlunted, "Have your garrison blunt {count} raids.", "Have your garrison blunt a raid.",
+			[]float64{1, 22, 500}, []string{"Held the Gate", "Wall of Shields", "Not on My Watch"}, "military", RevealUntilSeen(BadgeEvRaidBlunted), life),
 		ladder("returns", "Returns", BadgeEvReturned, "Come back to a game that kept going {count} times.", "Come back to a game that kept going without you.",
 			[]float64{1, 25, 100}, []string{"Welcome Back", "Frequent Guest", "Part of the Furniture"}, "housing", visible, StaticProof(BadgeRuleHabit)),
 		ladder("plan", "Plan items started", BadgeEvPlanStarted, "Have the build plan start {count} items.", "",
 			[]float64{50, 500, 5000}, []string{"Delegator", "Middle Management", "Autopilot"}, "engineer", visible, life),
 		ladder("upgrades", "Buildings upgraded", BadgeEvBuildingUpgraded, "Upgrade {count} buildings across all your runs.", "",
-			[]float64{250, 2500, 20000}, []string{"Renovator", "Property Developer", "Urban Renewal"}, "engineer", visible, life),
+			[]float64{20, 630, 20000}, []string{"Renovator", "Property Developer", "Urban Renewal"}, "engineer", visible, life),
 		ladder("festivals", "Festivals", BadgeEvFestival, "Hold {count} festivals.", "Hold a festival.",
 			[]float64{1, 10, 50}, []string{"Party Starter", "Social Calendar", "Festival Circuit"}, "culture", RevealUntilSeen(BadgeEvFestival), life),
 		ladder("blackmarket", "Black market deals", BadgeEvBlackMarket, "Make {count} deals at the black market.", "Make a deal at the black market.",
@@ -479,7 +486,7 @@ func badgeLadders() []BadgeFamilyDef {
 		ladder("hardships", "Hard times weathered", BadgeEvEraEvent+".bad_challenging", "Weather {count} challenging era events.", "Weather a challenging era event.",
 			[]float64{1, 10, 30}, []string{"Rough Patch", "Thick Skin", "Calloused"}, "hazard", visible, life),
 		ladder("trades", "Market trades", BadgeEvMarketTrade, "Make {count} trades at the market.", "",
-			[]float64{50, 500, 5000}, []string{"Haggler", "Day Trader", "Market Maker"}, "trade", RevealUntilSeen(BadgeEvMarketTrade), life),
+			[]float64{10, 220, 5000}, []string{"Haggler", "Day Trader", "Market Maker"}, "trade", RevealUntilSeen(BadgeEvMarketTrade), life),
 	}
 	for i := range out {
 		switch out[i].Ladder {

@@ -63,7 +63,7 @@ go build -o ageforge .
 
 AgeForge draws a full-screen text interface. It works best with:
 
-- a terminal **at least 120 columns wide and 40 rows tall**. A smaller one works, but the dashboard's mini map hides to leave the Buildings list room
+- a terminal **at least 120 columns wide and 40 rows tall**. A smaller one works: the dashboard fits any terminal from 80 columns by 24 rows up
 - 24-bit (truecolor) ANSI color, which modern terminals support
 - a **monospace font**, such as JetBrains Mono, Cascadia Code or Fira Code
 

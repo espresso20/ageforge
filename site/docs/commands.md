@@ -20,7 +20,7 @@ As you type, the best completion of the line shows in dim text after the cursor:
 | `→` | Take the completion, when the cursor is at the end of the line |
 | `Enter` | If the line is already a whole command, run it exactly as typed. If not, and the completion makes it one, run the completion (`adv` runs `advance`). Otherwise run the line as typed, and the game says what is wrong with it. |
 
-Two more keys belong to the dashboard, with no panel open: `PgUp` and `PgDn` scroll the Buildings list, and `Ctrl+R` turns the Resources box to its next page when it has more resources than it can show. The Help panel lists every key.
+Two more keys belong to the dashboard, with no panel open: `PgUp` and `PgDn` turn the Buildings list a page of whole entries (the box says how many are above and below), and `Ctrl+R` turns the Resources box to its next page when it has more resources than it can show. The Help panel lists every key.
 
 Commands that can't be undone are never run from a completion: `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `festival confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
 
@@ -294,7 +294,7 @@ The Map draws your empire from your real game state: your buildings and the work
 | `map style [roguelike\|skyline]` | Bare, show the current style. With a name, switch to it (default roguelike). Saved per account |
 | `map flows [on\|off]` | The Map's flows overlay (full stores, understaffed buildings, idle workers): on, off, or bare to switch it. Lasts for the session |
 | `style [roguelike\|skyline]` | Same as `map style` |
-| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `off` hides it so the Buildings list gets the whole column; `on` brings it back (default on). Saved per account |
+| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it above the Buildings list; `off` hides it so the list gets the whole column (default off). Saved per account |
 | `map glyphs [ascii\|unicode\|nerd]` | Bare, show the current glyph set. With a name, switch to it (default unicode). `nerd` needs a Nerd Font in your terminal; every icon has a Unicode fallback. Saved per account |
 | `citymap` | Same as `map` |
 | `worldmap` | Same as `map`, opened on the known world (the roguelike style's region zoom) |
@@ -311,7 +311,7 @@ worldmap
 icons
 ```
 
-`map style`, `map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. On terminals of 105 columns by 34 rows and larger the dashboard also shows a short **mini map** of the active style above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
+`map style`, `map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The **mini map** is off until you type `minimap on`. Then, on terminals of 105 columns by 34 rows and larger, the dashboard shows a short mini map of the active style above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
 
 The command bar keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing, in every style:
 

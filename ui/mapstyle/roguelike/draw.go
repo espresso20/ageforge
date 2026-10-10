@@ -286,7 +286,7 @@ func (v *view) drawMap(cv *mapstyle.Canvas, x, y, w, h int) {
 	if cx, cy, ok := v.g.cellOf(v.cur); ok && v.inspect {
 		for i := 0; i < v.g.cellW && cx+i < v.g.x+v.g.w; i++ {
 			r, _ := cv.Get(cx+i, cy)
-			cv.Put(cx+i, cy, r, v.pal.Cursor.Bold(true))
+			cv.Put(cx+i, cy, r, v.pal.CursorStyle(v.anim))
 		}
 	}
 }
