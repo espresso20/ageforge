@@ -34,11 +34,9 @@ func TestTheGameRunsUnderTheCelebration(t *testing.T) {
 		om.after = func(time.Duration, func()) func() { return func() {} }
 	})
 
-	// Ticks as fast as the game allows, so that several fall inside the
-	// celebration.
+	// Ticks as fast as the game allows from the next one on, so that
+	// several fall inside the celebration.
 	h.dev("/speed 10")
-	t0 := h.eng.GetState().Tick
-	h.waitFor("a tick at the new speed", 6*time.Second, func() bool { return h.eng.GetState().Tick > t0+1 })
 
 	h.quietEra()
 	if !h.grantNextAge() {

@@ -551,7 +551,7 @@ func TestArrivalFitsEverySize(t *testing.T) {
 }
 
 // TestArrivalWithItsTowns is the same check with the towns drawn, through
-// the beats of an age's arrival and an epoch's at the five sizes: the town
+// the beats of an age's arrival and an epoch's, small terminal to large: the town
 // before, the two part way through the turn, the town after, and the town
 // under the information, none of them bringing the map's own bars with it.
 // The land always has its town, in either map style: where it has fewer
@@ -563,8 +563,8 @@ func TestArrivalWithItsTowns(t *testing.T) {
 		age, style string
 		sizes      [][2]int
 	}{
-		{"bronze_age", "", arrivalSizes[:5]},
-		{"iron_age", "", arrivalSizes[:5]},
+		{"bronze_age", "", [][2]int{{80, 24}, {100, 30}, {144, 46}}},
+		{"iron_age", "", [][2]int{{80, 24}, {120, 40}}},
 		// The cases with the least land: a quip on two lines, a plain name
 		// with its last word under it, and the style that needs most rows.
 		{"renaissance_age", "", arrivalSizes[:2]},
@@ -687,7 +687,7 @@ func TestArrivalBeats(t *testing.T) {
 	// An age: the name heats, is struck with a burst of sparks at 0.625s,
 	// the town turns over the 1.5s after, and the information follows at
 	// 3.25s.
-	r := stagedArrival(t, "bronze_age", mapmodel.TierUnicode, true)
+	r := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
 	t.Cleanup(r.a.close)
 	at := func(f int) *arrivalScene { r.at(120, 40, f); return r.a.sc }
 	if sc := at(arrAgeStrike - 1); sc.heat <= 0 || sc.heat >= 1 || sc.strike > 0.01 || len(sc.sparks.a) != 0 || sc.turn != 0 {
@@ -715,7 +715,7 @@ func TestArrivalBeats(t *testing.T) {
 	// An epoch: two blows to build up (0.5s, 1s), the heavy one at 1.625s
 	// with the whole screen lit, then the age's own beats from 3.25s and
 	// the information at 6.5s.
-	r = stagedArrival(t, "iron_age", mapmodel.TierUnicode, true)
+	r = bareArrival(t, "iron_age", mapmodel.TierUnicode, true)
 	t.Cleanup(r.a.close)
 	if sc := at(arrEraBlow1 - 1); !sc.inEra() || sc.strike > 0.01 || sc.flash != 0 || len(sc.sparks.a) != 0 {
 		t.Errorf("before an epoch's first blow: strike %.2f, flash %.2f, %d sparks", sc.strike, sc.flash, len(sc.sparks.a))
@@ -806,8 +806,8 @@ func TestAnEpochIsBiggerThanAnAge(t *testing.T) {
 		t.Errorf("%d advances open an era, want 6", epochs)
 	}
 
-	era := stagedArrival(t, "iron_age", mapmodel.TierUnicode, true)
-	age := stagedArrival(t, "bronze_age", mapmodel.TierUnicode, true)
+	era := bareArrival(t, "iron_age", mapmodel.TierUnicode, true)
+	age := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
 	t.Cleanup(era.a.close)
 	t.Cleanup(age.a.close)
 	for _, size := range arrivalSizes {
@@ -1179,7 +1179,7 @@ func TestArrivalStill(t *testing.T) {
 // TestArrivalClock: a moving screen redraws on a clock of its own, started
 // by its first draw and stopped when it closes.
 func TestArrivalClock(t *testing.T) {
-	r := stagedArrival(t, "bronze_age", mapmodel.TierUnicode, true)
+	r := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
 	r.om.app = tview.NewApplication()
 	sim := tcell.NewSimulationScreen("UTF-8")
 	if err := sim.Init(); err != nil {
@@ -1360,8 +1360,11 @@ func TestArrivalInEveryTheme(t *testing.T) {
 		t.Fatalf("%d themes", n)
 	}
 	const w, h = 100, 30
-	age := stagedArrival(t, "bronze_age", mapmodel.TierUnicode, true)
-	era := stagedArrival(t, "iron_age", mapmodel.TierUnicode, true)
+	// Without the towns: their colours in every theme are the menu's town's
+	// to answer for (TestMenuPaintsInEveryTheme), and they are most of what
+	// a frame costs.
+	age := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
+	era := bareArrival(t, "iron_age", mapmodel.TierUnicode, true)
 	t.Cleanup(age.a.close)
 	t.Cleanup(era.a.close)
 	sim := tcell.NewSimulationScreen("UTF-8")

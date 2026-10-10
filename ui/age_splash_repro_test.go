@@ -358,6 +358,19 @@ func (h *reproHarness) quietEra() {
 	_ = h.eng.ForceQuietFateForTest(h.eng.GetState().EpochKey) // none in the final epoch
 }
 
+// still turns the account's motion setting off, so the arrival screen is
+// one frame and nothing redraws while it is up. The walk through every age
+// (TestReproAgeSplashAllAges) keeps it moving, and so does
+// TestTheGameRunsUnderTheCelebration; the tests about what follows the
+// screen (a catastrophe's window, the screen closing by itself) do not need
+// the celebration drawn eight times a second under the race detector.
+func (h *reproHarness) still() {
+	h.t.Helper()
+	if err := h.eng.Account().SetMotion(false); err != nil {
+		h.t.Fatalf("turning motion off: %v", err)
+	}
+}
+
 // arrivalStage reports the arrival screen's stage, or arrClosed when none
 // is up.
 func (h *reproHarness) arrivalStage() int {
@@ -393,13 +406,14 @@ func (h *reproHarness) dismissArrival(label string, k tcell.Key, r rune) {
 		h.onUI(func() { stage, keys, auto = a.stage, a.keys, a.auto })
 		return
 	}
-	press := func() {
+	// press sends the key and waits for it to reach the screen. before is
+	// the screen's key count as last read; it returns what the key left.
+	press := func(before int) (stage, keys int, auto bool) {
 		h.t.Helper()
-		_, before, _ := look()
 		h.key(k, r)
 		deadline := time.Now().Add(2 * time.Second)
 		for {
-			if _, keys, _ := look(); keys > before {
+			if stage, keys, auto = look(); keys > before {
 				return
 			}
 			if time.Now().After(deadline) {
@@ -408,24 +422,22 @@ func (h *reproHarness) dismissArrival(label string, k tcell.Key, r rune) {
 			time.Sleep(15 * time.Millisecond)
 		}
 	}
-	if stage, _, _ := look(); stage == arrCelebrating {
-		press()
-		switch stage, _, auto := look(); {
+	stage, keys, auto := look()
+	if stage == arrCelebrating {
+		stage, keys, auto = press(keys)
+		switch {
 		case stage == arrCelebrating:
 			h.t.Fatalf("[%s] FROZEN: the celebration did not move on for key %v/%q\n%s", label, k, r, h.describeUI())
 		case stage == arrClosed && !auto:
 			h.t.Fatalf("[%s] the first key closed the screen: what the age opens was never shown\n%s", label, h.describeUI())
 		}
 	}
-	for tries := 0; ; tries++ {
-		if stage, _, _ := look(); stage != arrInforming {
-			break
-		}
+	for tries := 0; stage == arrInforming; tries++ {
 		if tries >= 8 {
 			h.t.Fatalf("[%s] FROZEN: %d presses of key %v/%q did not close what the age opens\n%s", label, tries, k, r, h.describeUI())
 		}
 		time.Sleep(arrivalKeyGap + 20*time.Millisecond) // a second press, not the first held down
-		press()
+		stage, keys, _ = press(keys)
 	}
 	deadline := time.Now().Add(2 * time.Second)
 	for h.hasPage("age_splash") {
@@ -490,11 +502,19 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 }
 
 // TestReproAgeSplashAllAges walks every age via the typed `advance` command.
+// It is the one walk with the arrival screen moving: the celebration plays
+// and the information's embers drift at every age, with the redraw clock
+// started and stopped each time. It runs on a 120x40 terminal (the size the
+// wiki calls large), which keeps eight frames a second affordable under the
+// race detector, where a frame costs by the cell. The other harness tests
+// hold the screen still (still) on the harness's 200x60, which the status
+// bar's pending badge needs.
 func TestReproAgeSplashAllAges(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow end-to-end UI regression test; skipped with -short")
 	}
 	h := newReproHarness(t)
+	h.sim.SetSize(120, 40)
 	for i := 0; ; i++ {
 		if !h.grantNextAge() {
 			break
@@ -532,6 +552,7 @@ func TestReproAgeSplashWithCatastrophe(t *testing.T) {
 		t.Skip("slow end-to-end UI regression test; skipped with -short")
 	}
 	h := newReproHarness(t)
+	h.still()
 	for i := 0; i < 6; i++ { // primitive → … → renaissance (Iron and Steel eras)
 		if !h.grantNextAge() {
 			break
@@ -622,6 +643,7 @@ func TestReproAgeSplashCatastropheAutoDismiss(t *testing.T) {
 		t.Skip("slow end-to-end UI regression test; skipped with -short")
 	}
 	h := newReproHarness(t)
+	h.still()
 	h.reachBronze()
 	h.advanceIntoIronWithCatastrophe()
 	h.waitFor("age_splash", 3*time.Second, func() bool { return h.hasPage("age_splash") })
@@ -667,6 +689,7 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 		t.Skip("slow end-to-end UI regression test; skipped with -short")
 	}
 	h := newReproHarness(t)
+	h.still()
 	h.reachBronze()
 	h.advanceIntoIronWithCatastrophe()
 	h.waitFor("age_splash", 3*time.Second, func() bool { return h.hasPage("age_splash") })

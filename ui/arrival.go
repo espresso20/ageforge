@@ -284,10 +284,12 @@ func (a *arrival) feed(prev, cur *game.GameState) {
 	if prev != nil && sameRun(prev, cur) && prev.Age == from {
 		before = *prev
 	}
+	// One builder for both: it is the same land, laid out once.
+	builder := mapmodel.NewBuilder(nil)
 	if fi >= 0 {
-		a.oldTown = newMenuTown(&before, a.reg, a.set.Style)
+		a.oldTown = newMenuTownOn(builder, &before, a.reg, a.set.Style, false)
 	}
-	a.newTown = newMenuTown(cur, a.reg, a.set.Style)
+	a.newTown = newMenuTownOn(builder, cur, a.reg, a.set.Style, true)
 	a.sc, a.info.pages = nil, nil
 }
 

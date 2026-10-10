@@ -43,7 +43,16 @@ type menuTown struct {
 // newMenuTown builds the picture of a save's state in a style. nil when
 // there is nothing to draw.
 func newMenuTown(st *game.GameState, reg *mapstyle.Registry, styleName string) (t *menuTown) {
-	if st == nil || reg == nil {
+	return newMenuTownOn(mapmodel.NewBuilder(nil), st, reg, styleName, true)
+}
+
+// newMenuTownOn is newMenuTown on a builder the caller keeps, so that two
+// pictures of one game (the arrival screen's town before and after) lay the
+// land out once: the land is most of what a picture costs to make. follows
+// is for the picture that will follow the game (update): it takes the
+// builder's cache. The other is built aside and stays as it is.
+func newMenuTownOn(builder *mapmodel.Builder, st *game.GameState, reg *mapstyle.Registry, styleName string, follows bool) (t *menuTown) {
+	if st == nil || reg == nil || builder == nil {
 		return nil
 	}
 	defer func() {
@@ -61,8 +70,12 @@ func newMenuTown(st *game.GameState, reg *mapstyle.Registry, styleName string) (
 	for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges, mapstyle.OptWorld} {
 		style.SetOption(o, false)
 	}
-	builder := mapmodel.NewBuilder(nil)
-	m := builder.Model(st, nil)
+	var m *mapmodel.Model
+	if follows {
+		m = builder.Model(st, nil)
+	} else {
+		m = builder.Build(st, nil)
+	}
 	if m == nil {
 		return nil
 	}
