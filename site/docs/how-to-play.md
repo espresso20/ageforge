@@ -58,9 +58,9 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 │ Name · Stone Age  ◈ Stone Era  |  Pop: 18/30  Morale 54%  |  hint        │  status bar
 │ Next Age: Bronze Age  ✗ Food 3.1K/4K  ✓ Knowledge 1.5K/1.5K  ✗ Stone ... │  next age row
 ├─ Resources ──────────┬─ Buildings ──────────────────────┬─ Panels ───────┤
-│ amounts and rates    │ (mini map on a large terminal)   │ panel names    │
+│ amounts and rates    │ (mini map above it: minimap on)  │ panel names    │
 ├─ Under construction ─┤ what you can build, what you own │ ...            │
-│ progress bars        │ PgUp / PgDn scroll               │                │
+│ progress bars        │ PgUp / PgDn turn the page        │                │
 ├─ Log ────────────────┤                                  ├─ Workers ──────┤
 │ ...                  │                                  │ pop, idle,     │
 │                      │                                  │ housing, food  │
@@ -71,9 +71,9 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 
 The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row marks each requirement ✓ or ✗, and names the age's wonder until it stands. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
 
-<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, construction and the log on the left, the mini map over the Buildings list, the panel names and the Workers box on the right.</figcaption></figure>
+<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, construction and the log on the left, the Buildings list in the middle, the panel names and the Workers box on the right.</figcaption></figure>
 
-The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row: its amount over its cap, its rate, a bar, and a marker when the store is nearly full (`◈`) or falling (`▼`). On a narrow terminal a row gives up the bar first, then the cap, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map shows from 105 columns by 34 rows.
+The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row: its amount over its cap, its rate, a bar, and a marker when the store is nearly full (`◈`) or falling (`▼`). On a narrow terminal a row gives up the bar first, then the cap, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`; it then shows from 105 columns by 34 rows.
 
 ---
 
@@ -82,7 +82,7 @@ The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it 
 - Type a panel's name to open it: `research`, `army`, `trade`, `factions`, `map`, `help` and so on.
 - `help` opens the Help panel: a full command reference plus the list of every panel you can open.
 - **Tab** or **→** takes the completion shown in dim text after the cursor; press **Tab** again for the next one.
-- **PgUp / PgDn** scroll the Buildings list.
+- **PgUp / PgDn** turn the Buildings list a page. The list never shows part of an entry: an entry that does not fit whole waits for the next page, and the box says how many are above and below.
 - **Ctrl+R** turns the Resources box to its next page, when it has more resources than it can show.
 - **↑ / ↓** step through your command history.
 - **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the [main menu](#the-main-menu), where **Continue** takes you back in.

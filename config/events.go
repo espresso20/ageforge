@@ -135,8 +135,8 @@ func RandomEvents() []EventDef {
 			Description: "Bandits attack and steal resources. They left a thank-you note, which is somehow worse.",
 			LogMessage:  "Bandits cleaned out the stores and left a polite thank-you note.",
 			Effects: []Effect{
-				{Type: EventLoss, Target: "food", Value: 0.08},
-				{Type: EventLoss, Target: "gold", Value: 0.08},
+				{Type: EventLoss, Target: "food", Value: 0.06},
+				{Type: EventLoss, Target: "gold", Value: 0.06},
 			},
 		},
 		{
@@ -182,7 +182,7 @@ func RandomEvents() []EventDef {
 			Description: "An earthquake rearranges the village. The new layout is, on balance, worse.",
 			LogMessage:  "The ground shrugged and rearranged the village, and the cracks turned up stone.",
 			Effects: []Effect{
-				{Type: EventLoss, Target: "wood", Value: 0.06},
+				{Type: EventLoss, Target: "wood", Value: 0.05},
 				{Type: EventGain, Target: "stone", Value: 5},
 			},
 		},
@@ -204,8 +204,8 @@ func RandomEvents() []EventDef {
 			Description: "A factory accident. The safety poster, now on fire, reminded everyone to be careful.",
 			LogMessage:  "Something exploded that wasn't supposed to, and the 'Be Careful' poster is also on fire.",
 			Effects: []Effect{
-				{Type: EventLoss, Target: "steel", Value: 0.08},
-				{Type: EventLoss, Target: "oil", Value: 0.08},
+				{Type: EventLoss, Target: "steel", Value: 0.06},
+				{Type: EventLoss, Target: "oil", Value: 0.06},
 				{Type: "worker_loss", Value: 0.07},
 			},
 		},
@@ -229,8 +229,8 @@ func RandomEvents() []EventDef {
 			Description: "Pirates raid your trade routes. They are, regrettably, very good at this.",
 			LogMessage:  "Pirates hit the trade lanes again. They're alarmingly professional about it.",
 			Effects: []Effect{
-				{Type: EventLoss, Target: "gold", Value: 0.1},
-				{Type: EventLoss, Target: "food", Value: 0.06},
+				{Type: EventLoss, Target: "gold", Value: 0.08},
+				{Type: EventLoss, Target: "food", Value: 0.05},
 			},
 		},
 		{

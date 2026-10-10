@@ -268,13 +268,13 @@ func TestRaidEvent_LogsActualLosses(t *testing.T) {
 	ge.Resources.AddStorage("gold", 1e6)
 	ge.Resources.Add("food", 200000-ge.Resources.Get("food"))
 	ge.Resources.Add("gold", 100000-ge.Resources.Get("gold"))
-	// The raid takes 8% of each stock, and the line says what that came to.
+	// The raid takes 6% of each stock, and the line says what that came to.
 	ge.fireEvent(eventDef(t, "bandit_raid"))
-	if !logHas(ge, "Lost 16K food and 8K gold.") {
+	if !logHas(ge, "Lost 12K food and 6K gold.") {
 		t.Error("bandit raid does not log the amounts it took")
 	}
-	if got := ge.Resources.Get("food"); math.Abs(got-184000) > 1e-6 {
-		t.Errorf("food after the raid = %v, want 184000", got)
+	if got := ge.Resources.Get("food"); math.Abs(got-188000) > 1e-6 {
+		t.Errorf("food after the raid = %v, want 188000", got)
 	}
 }
 

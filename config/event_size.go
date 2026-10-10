@@ -53,7 +53,7 @@ const (
 	// EventLossFloorMinutes and EventLossCeilMinutes bound a loss, in
 	// minutes of the age's typical income.
 	EventLossFloorMinutes = 0.1
-	EventLossCeilMinutes  = 60.0
+	EventLossCeilMinutes  = 30.0
 
 	// EventLossMostShare is the most of a stock any one loss takes.
 	EventLossMostShare = 0.25
