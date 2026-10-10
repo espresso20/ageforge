@@ -49,6 +49,9 @@ func (a *App) setup() {
 	applyAccountTheme(a.engine)
 
 	a.dashboard = NewDashboard(a.tviewApp, a.engine, a.pages)
+	// The arrival screen draws the player's town in their map style: it
+	// reads the game and the account's settings through the engine.
+	a.dashboard.overlayMgr.engine = a.engine
 
 	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, a.version)
 

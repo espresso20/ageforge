@@ -3,10 +3,6 @@ package ui
 import (
 	"fmt"
 	"strings"
-	"time"
-
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -15,82 +11,104 @@ import (
 
 // ShowAgeSplash is the simplified variant of ShowAgeSplashFull for callers that
 // don't have an AgeAdvanceSummary or EpochEventRecord available.
-// It auto-dismisses after 20 seconds or on any keypress.
 func ShowAgeSplash(om *OverlayManager, oldAge, newAge string) {
 	ShowAgeSplashFull(om, oldAge, newAge, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{})
 }
 
-// ShowAgeSplashFull is the full variant of ShowAgeSplash that also displays the
-// available-upgrades summary and optional epoch event reveal.
+// ShowAgeSplashFull puts up the arrival screen for an advance into newAge
+// (arrival.go): the moment first, the age's name struck in iron over the
+// player's town, then what the age opens, the upgrades on offer and the
+// epoch's event. It moves on from the first to the second by itself or on
+// any key, and closes on a key or after twenty seconds.
 func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	summary game.AgeAdvanceSummary, epochChanged bool, epochEvent game.EpochEventRecord) {
-	// Age title overlay
-	titleTV := tview.NewTextView().
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
-
-	titleTV.SetText(safeTags(buildAgeSplashText(newAge, summary, epochChanged, epochEvent)))
-
-	// Layout: text-only flex with focusable=true so the overlay itself receives input
-	overlay := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(titleTV, 0, 1, true)
-
-	// dismissed guards against double-dismiss (both the timer goroutine and a
-	// keypress can fire simultaneously; we only want to remove the page once).
-	dismissed := false
-	dismiss := func() {
-		if dismissed {
-			return
-		}
-		dismissed = true
-		om.Hide()
+	a := newArrival(om, oldAge, newAge, summary, epochChanged, epochEvent)
+	// With the engine at hand the screen has the game's state from its first
+	// frame; without, the next refresh brings it (OverlayManager.Refresh).
+	if om.engine != nil {
+		cur := om.engine.GetState()
+		a.feed(om.seen, &cur)
 	}
 
-	// SetInputCapture on the overlay Flex so all keypresses trigger dismiss.
-	// A container's capture fires for keys routed to any focused child, and
-	// keeping titleTV as the focusable item means a Pages re-focus (e.g. when
-	// a page above is removed) lands on titleTV inside this Flex rather than
-	// on a bare primitive with no key handler.
-	overlay.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		dismiss()
-		return nil
-	})
-
-	// Auto-dismiss after 20 seconds
-	go func() {
-		time.Sleep(20 * time.Second)
-		om.app.QueueUpdateDraw(func() {
-			dismiss()
-		})
-	}()
-
-	// Remove any currently active overlay first, then add the splash
+	// Remove any currently active overlay first, then add the screen. It
+	// holds the keyboard itself, so a re-focus of the page stack (a window
+	// closing over it) lands on something that handles keys.
+	if om.arrival != nil {
+		om.arrival.close()
+	}
 	if om.active != "" {
 		om.pages.RemovePage(om.active)
 	}
-	om.pages.AddPage("age_splash", overlay, true, true)
-	om.active = "age_splash"
-	om.app.SetFocus(overlay)
+	om.pages.AddPage(arrivalPageName, a, true, true)
+	om.active, om.arrival, om.focus = arrivalPageName, a, a
+	om.app.SetFocus(a)
+	a.begin()
 }
 
-// buildAgeSplashText assembles the full splash body string for an age advance.
-// It is split out from ShowAgeSplashFull so it can be unit-tested without a live
-// tview app. Pure function: same inputs → same string, no side effects.
+// splashKind says what a line of the arrival's text is, so the screen can
+// lay each kind out in its place (arrival_page.go).
+type splashKind uint8
+
+const (
+	skBlank       splashKind = iota
+	skRule                   // the rules round the heading
+	skTitle                  // the age's name
+	skDesc                   // its description
+	skQuip                   // its quip
+	skBody                   // what the age opens: a label and a list
+	skWonder                 // the wonder, and how to raise it
+	skSection                // a heading inside the text
+	skUpgradeHelp            // how to upgrade
+	skUpgradeRow             // one upgrade on offer
+	skLegacy                 // one building now legacy
+	skEpoch                  // the new epoch and its event
+	skPrompt                 // how to go on
+)
+
+// splashLine is one line of the arrival's text: as tview markup, and what
+// kind of line it is.
+type splashLine struct {
+	text string
+	kind splashKind
+}
+
+// buildAgeSplashText assembles the full text of an age advance: the age's
+// name, description and quip, what it opens, the upgrades on offer and the
+// epoch's event. It is the arrival screen's words, every one of them; the
+// screen lays the same lines out (ageSplashLines). Pure function: same
+// inputs → same string, no side effects.
 func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 	epochChanged bool, epochEvent game.EpochEventRecord) string {
+	lines := ageSplashLines(newAge, summary, epochChanged, epochEvent)
+	out := make([]string, len(lines))
+	for i, l := range lines {
+		out[i] = l.text
+	}
+	return strings.Join(out, "\n")
+}
+
+// ageSplashLines is the text of an age advance, line by line.
+func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
+	epochChanged bool, epochEvent game.EpochEventRecord) []splashLine {
 	ages := config.AgeByKey()
 	newDef := ages[newAge]
 
-	var sb strings.Builder
-	fmt.Fprintf(&sb, "\n\n")
-	fmt.Fprintf(&sb, "[gold]══════════════════════════════════[-]\n")
-	fmt.Fprintf(&sb, "[gold::b]★  %s  ★[-]\n", strings.ToUpper(newDef.Name))
-	fmt.Fprintf(&sb, "[white]\"%s\"[-]\n", newDef.Description)
-	if newDef.Quip != "" {
-		fmt.Fprintf(&sb, "[gray::i]%s[-:-:-]\n", newDef.Quip)
+	var lines []splashLine
+	add := func(kind splashKind, format string, args ...any) {
+		lines = append(lines, splashLine{text: fmt.Sprintf(format, args...), kind: kind})
 	}
-	fmt.Fprintf(&sb, "[gold]══════════════════════════════════[-]\n")
-	fmt.Fprintf(&sb, "\n")
+	blank := func() { add(skBlank, "") }
+
+	blank()
+	blank()
+	add(skRule, "[gold]══════════════════════════════════[-]")
+	add(skTitle, "[gold::b]★  %s  ★[-]", strings.ToUpper(newDef.Name))
+	add(skDesc, "[white]\"%s\"[-]", newDef.Description)
+	if newDef.Quip != "" {
+		add(skQuip, "[gray::i]%s[-:-:-]", newDef.Quip)
+	}
+	add(skRule, "[gold]══════════════════════════════════[-]")
+	blank()
 
 	// Show new unlocks
 	allBuildings := config.BuildingByKey()
@@ -111,9 +129,9 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 				bNames = append(bNames, def.Name)
 			}
 		}
-		fmt.Fprintf(&sb, "[cyan]New buildings:[-] %s\n", strings.Join(bNames, ", "))
+		add(skBody, "[cyan]New buildings:[-] %s", strings.Join(bNames, ", "))
 		if len(later) > 0 {
-			fmt.Fprintf(&sb, "[cyan]Opened later by research:[-] %s\n", strings.Join(later, ", "))
+			add(skBody, "[cyan]Opened later by research:[-] %s", strings.Join(later, ", "))
 		}
 	}
 	if len(newDef.UnlockResources) > 0 {
@@ -121,24 +139,25 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 		for _, rKey := range newDef.UnlockResources {
 			rNames = append(rNames, game.ResourceName(rKey))
 		}
-		fmt.Fprintf(&sb, "[green]New resources:[-] %s\n", strings.Join(rNames, ", "))
+		add(skBody, "[green]New resources:[-] %s", strings.Join(rNames, ", "))
 	}
 	if len(newDef.UnlockVillagers) > 0 {
 		wNames := make([]string, 0, len(newDef.UnlockVillagers))
 		for _, wKey := range newDef.UnlockVillagers {
 			wNames = append(wNames, textfmt.Capitalize(strings.ReplaceAll(wKey, "_", " ")))
 		}
-		fmt.Fprintf(&sb, "[yellow]New worker types:[-] %s\n", strings.Join(wNames, ", "))
+		add(skBody, "[yellow]New worker types:[-] %s", strings.Join(wNames, ", "))
 	}
 
 	// Highlight the wonder for this age
 	for _, bKey := range newDef.UnlockBuildings {
 		if def, ok := allBuildings[bKey]; ok && def.Category == "wonder" {
-			fmt.Fprintf(&sb, "\n[gold::b]★ Wonder unlocked: %s[-]\n", def.Name)
+			blank()
+			add(skWonder, "[gold::b]★ Wonder unlocked: %s[-]", def.Name)
 			if tech, ok := techs[def.RequiredTech]; ok {
-				fmt.Fprintf(&sb, "[white]Bank its cost and research %s, its keystone, then build it.[-]\n", tech.Name)
+				add(skWonder, "[white]Bank its cost and research %s, its keystone, then build it.[-]", tech.Name)
 			} else {
-				sb.WriteString("[white]Bank its cost, then build it.[-]\n")
+				add(skWonder, "[white]Bank its cost, then build it.[-]")
 			}
 			break
 		}
@@ -147,11 +166,11 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 	// Upgrade summary. Advancing only offers these upgrades (the buildings
 	// stay as they are until the player runs `upgrade`), so say that.
 	if len(summary.BuildingsTransformed) > 0 || len(summary.BuildingsLegacy) > 0 {
-		fmt.Fprintf(&sb, "\n")
+		blank()
 		if len(summary.BuildingsTransformed) > 0 {
-			fmt.Fprintf(&sb, "[yellow]── Upgrades available ──[-]\n")
-			fmt.Fprintf(&sb, "  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to upgrade one.\n")
-			// Every line of the splash is centered on its own, so the
+			add(skSection, "[yellow]── Upgrades available ──[-]")
+			add(skUpgradeHelp, "  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to upgrade one.")
+			// Every line of the text is centered on its own, so the
 			// counts only line up when the rows are all one width: each
 			// label is padded to the longest, each count to the widest.
 			labels := make([]string, len(summary.BuildingsTransformed))
@@ -171,12 +190,12 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 				labelW, countW = max(labelW, runeLen(labels[i])), max(countW, runeLen(counts[i]))
 			}
 			for i := range labels {
-				fmt.Fprintf(&sb, "%s%s  %s%s\n", labels[i], strings.Repeat(" ", labelW-runeLen(labels[i])),
+				add(skUpgradeRow, "%s%s  %s%s", labels[i], strings.Repeat(" ", labelW-runeLen(labels[i])),
 					counts[i], strings.Repeat(" ", countW-runeLen(counts[i])))
 			}
 		}
 		if len(summary.BuildingsLegacy) > 0 {
-			fmt.Fprintf(&sb, "[yellow]── Legacy buildings ──[-]\n")
+			add(skSection, "[yellow]── Legacy buildings ──[-]")
 			for _, legKey := range summary.BuildingsLegacy {
 				legName := legKey
 				if def, ok := allBuildings[legKey]; ok {
@@ -184,7 +203,7 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 				} else {
 					legName = strings.ReplaceAll(legKey, "_", " ")
 				}
-				fmt.Fprintf(&sb, "  [gray]%s[-]\n", legName)
+				add(skLegacy, "  [gray]%s[-]", legName)
 			}
 		}
 	}
@@ -219,14 +238,17 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 			flavorText = evDef.FlavorText
 		}
 
-		fmt.Fprintf(&sb, "\n[gold]══ New epoch ══[-]\n")
-		fmt.Fprintf(&sb, "[%s]%s %s[-]\n", epochColor, epochIcon, epochEvent.EpochName)
-		fmt.Fprintf(&sb, "\n[%s]%s[-]\n", eventColor, epochEvent.EventName)
+		blank()
+		add(skEpoch, "[gold]══ New epoch ══[-]")
+		add(skEpoch, "[%s]%s %s[-]", epochColor, epochIcon, epochEvent.EpochName)
+		blank()
+		add(skEpoch, "[%s]%s[-]", eventColor, epochEvent.EventName)
 		if flavorText != "" {
-			fmt.Fprintf(&sb, "[white]\"%s\"[-]\n", flavorText)
+			add(skEpoch, "[white]\"%s\"[-]", flavorText)
 		}
 	}
 
-	fmt.Fprintf(&sb, "\n[gray]Press any key to continue.[-]")
-	return sb.String()
+	blank()
+	add(skPrompt, "[gray]Press any key to continue.[-]")
+	return lines
 }

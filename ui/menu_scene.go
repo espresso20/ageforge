@@ -2,6 +2,7 @@ package ui
 
 import (
 	"math"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -347,14 +348,137 @@ func (r *menuRand) f() float64 { return float64(r.next()>>11) / float64(1<<53) }
 
 // ---- the wordmark ----
 
-// menuFont is the wordmark's letters, six pixels wide and seven tall.
+// menuFont is the pixel alphabet the wordmark and the arrival screens are
+// set in: seven pixels tall, strokes two pixels thick, corners cut by one.
+// A letter is six pixels wide; I is four, and M and W, which need a middle,
+// are seven. The six letters of AGEFORGE came first (the menu's wordmark)
+// and the rest are drawn in their hand. It covers A to Z, the hyphen and
+// the space, which is every age's and every era's name and any that may
+// follow.
 var menuFont = map[rune][7]string{
 	'A': {".####.", "##..##", "##..##", "######", "##..##", "##..##", "##..##"},
-	'G': {".#####", "##....", "##....", "##.###", "##..##", "##..##", ".#####"},
+	'B': {"#####.", "##..##", "##..##", "#####.", "##..##", "##..##", "#####."},
+	'C': {".#####", "##....", "##....", "##....", "##....", "##....", ".#####"},
+	'D': {"#####.", "##..##", "##..##", "##..##", "##..##", "##..##", "#####."},
 	'E': {"######", "##....", "##....", "#####.", "##....", "##....", "######"},
 	'F': {"######", "##....", "##....", "#####.", "##....", "##....", "##...."},
+	'G': {".#####", "##....", "##....", "##.###", "##..##", "##..##", ".#####"},
+	'H': {"##..##", "##..##", "##..##", "######", "##..##", "##..##", "##..##"},
+	'I': {"####", ".##.", ".##.", ".##.", ".##.", ".##.", "####"},
+	'J': {"...###", "....##", "....##", "....##", "##..##", "##..##", ".####."},
+	'K': {"##..##", "##.##.", "####..", "###...", "####..", "##.##.", "##..##"},
+	'L': {"##....", "##....", "##....", "##....", "##....", "##....", "######"},
+	'M': {"##...##", "###.###", "#######", "##.#.##", "##...##", "##...##", "##...##"},
+	'N': {"##..##", "###.##", "######", "##.###", "##..##", "##..##", "##..##"},
 	'O': {".####.", "##..##", "##..##", "##..##", "##..##", "##..##", ".####."},
+	'P': {"#####.", "##..##", "##..##", "#####.", "##....", "##....", "##...."},
+	'Q': {".####.", "##..##", "##..##", "##..##", "##.###", "##..##", ".#####"},
 	'R': {"#####.", "##..##", "##..##", "#####.", "##.##.", "##..##", "##..##"},
+	'S': {".#####", "##....", "##....", ".####.", "....##", "....##", "#####."},
+	'T': {"######", "..##..", "..##..", "..##..", "..##..", "..##..", "..##.."},
+	'U': {"##..##", "##..##", "##..##", "##..##", "##..##", "##..##", ".####."},
+	'V': {"##..##", "##..##", "##..##", "##..##", "##..##", ".####.", "..##.."},
+	'W': {"##...##", "##...##", "##...##", "##.#.##", "#######", "###.###", "##...##"},
+	'X': {"##..##", "##..##", ".####.", "..##..", ".####.", "##..##", "##..##"},
+	'Y': {"##..##", "##..##", "##..##", ".####.", "..##..", "..##..", "..##.."},
+	'Z': {"######", "....##", "...##.", "..##..", ".##...", "##....", "######"},
+	'-': {"....", "....", "....", "####", "....", "....", "...."},
+	' ': {"...", "...", "...", "...", "...", "...", "..."},
+}
+
+// pixelWord sets text in the pixel alphabet, one pixel between letters,
+// and reports whether every character of it has a letter there. Lower
+// case is set as upper.
+func pixelWord(text string) (rows [menuWordH]string, ok bool) {
+	first := true
+	for _, r := range strings.ToUpper(text) {
+		glyph, has := menuFont[r]
+		if !has {
+			return rows, false
+		}
+		for y := range rows {
+			if !first {
+				rows[y] += "."
+			}
+			rows[y] += glyph[y]
+		}
+		first = false
+	}
+	return rows, !first
+}
+
+// ironMode is how the pixels of a word in iron are put on cells: sx cells
+// wide and sy rows tall each, or, with half set, two pixels to a cell (each
+// half a cell wide and sy rows tall), for a long name on a narrow screen.
+type ironMode struct {
+	sx, sy int
+	half   bool
+}
+
+// size is how many cells a word px pixels wide takes in the mode.
+func (m ironMode) size(px int) (w, h int) {
+	if m.half {
+		return (px + 1) / 2, menuWordH * m.sy
+	}
+	return px * m.sx, menuWordH * m.sy
+}
+
+// ironHeat is how hot pixel (px, py) of a word w pixels wide is at time t:
+// wordHeat for a word of any width.
+func ironHeat(px, py, w int, t, strike, uc float64) float64 {
+	u, v := 0.5, float64(py)/float64(menuWordH-1)
+	if w > 1 {
+		u = float64(px) / float64(w-1)
+	}
+	grain := mapmodel.HashF(int64(px), int64(py), int64(math.Floor(t*6)))
+	return 0.28 + 0.2*math.Sin(t*0.9-u*5) + 0.14*math.Sin(t*0.37+u*11) + 0.24*v + 0.05*(2*grain-1) + strike*(1-0.55*math.Abs(u-uc))
+}
+
+// drawIron draws a word set by pixelWord with its top left corner at
+// (x0, y0), each pixel as hot as heat says. In the plain glyph set a pixel
+// is a # on a ground of nearly its own colour, in place of a block, and
+// there are no half cells: the caller picks a whole-cell mode.
+func drawIron(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, y0 int, mode ironMode, heat func(px, py int) float64, plain bool) {
+	w := len(rows[0])
+	lit := func(px, py int) bool { return px < w && rows[py][px] == '#' }
+	for py := 0; py < menuWordH; py++ {
+		if mode.half {
+			for cx := 0; cx*2 < w; cx++ {
+				l, r := lit(cx*2, py), lit(cx*2+1, py)
+				if !l && !r {
+					continue
+				}
+				for dy := 0; dy < mode.sy; dy++ {
+					x, y := x0+cx, y0+py*mode.sy+dy
+					switch {
+					case l && r:
+						g.set(x, y, '▌', rampAt(&pal.heat, heat(cx*2, py)), rampAt(&pal.heat, heat(cx*2+1, py)), false)
+					case l:
+						g.put(x, y, '▌', rampAt(&pal.heat, heat(cx*2, py)))
+					default:
+						g.put(x, y, '▐', rampAt(&pal.heat, heat(cx*2+1, py)))
+					}
+				}
+			}
+			continue
+		}
+		for px := 0; px < w; px++ {
+			if !lit(px, py) {
+				continue
+			}
+			col := rampAt(&pal.heat, heat(px, py))
+			for dy := 0; dy < mode.sy; dy++ {
+				for dx := 0; dx < mode.sx; dx++ {
+					x, y := x0+px*mode.sx+dx, y0+py*mode.sy+dy
+					if plain {
+						g.set(x, y, '#', col, theme.Mix(col, pal.bg, 0.3), true)
+					} else {
+						g.put(x, y, '█', col)
+					}
+				}
+			}
+		}
+	}
 }
 
 // menuWord is AGEFORGE in the font, one pixel between letters.

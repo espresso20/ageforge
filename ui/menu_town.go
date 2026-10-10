@@ -26,6 +26,9 @@ import (
 type menuTown struct {
 	model *mapmodel.Model
 	style mapstyle.Style
+	// builder lays the town out; it keeps the last model while nothing the
+	// maps draw has changed (update).
+	builder *mapmodel.Builder
 	// name and age caption the picture: the town's name and its age's.
 	name, age string
 
@@ -58,15 +61,32 @@ func newMenuTown(st *game.GameState, reg *mapstyle.Registry, styleName string) (
 	for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges, mapstyle.OptWorld} {
 		style.SetOption(o, false)
 	}
-	m := mapmodel.NewBuilder(nil).Model(st, nil)
+	builder := mapmodel.NewBuilder(nil)
+	m := builder.Model(st, nil)
 	if m == nil {
 		return nil
 	}
-	t = &menuTown{model: m, style: style, age: m.AgeName}
+	t = &menuTown{model: m, style: style, builder: builder, age: m.AgeName}
 	if m.Town.World != nil {
 		t.name = m.Town.World.Name
 	}
 	return t
+}
+
+// update draws the picture from a newer state of the same game from here
+// on (the arrival screen stays up while the game runs under it).
+func (t *menuTown) update(st *game.GameState) {
+	if t == nil || t.failed || st == nil {
+		return
+	}
+	defer func() {
+		if recover() != nil {
+			t.failed = true
+		}
+	}()
+	if m := t.builder.Model(st, nil); m != nil {
+		t.model = m
+	}
 }
 
 // townFade is how far a cell of the picture is mixed toward the page, by

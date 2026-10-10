@@ -358,13 +358,54 @@ func (h *reproHarness) quietEra() {
 	_ = h.eng.ForceQuietFateForTest(h.eng.GetState().EpochKey) // none in the final epoch
 }
 
+// arrivalStage reports the arrival screen's stage, or arrClosed when none
+// is up.
+func (h *reproHarness) arrivalStage() int {
+	stage := arrClosed
+	h.onUI(func() {
+		if a := h.a.dashboard.overlayMgr.arrival; a != nil {
+			stage = a.stage
+		}
+	})
+	return stage
+}
+
+// dismissArrival closes the arrival screen the way a player does: a key
+// moves on from the celebration to what the age opens, and a second key
+// closes it. Each must be answered within 2s, or the screen is frozen.
+func (h *reproHarness) dismissArrival(label string, k tcell.Key, r rune) {
+	h.t.Helper()
+	if h.arrivalStage() == arrCelebrating {
+		h.key(k, r)
+		deadline := time.Now().Add(2 * time.Second)
+		for h.arrivalStage() == arrCelebrating {
+			if time.Now().After(deadline) {
+				h.t.Fatalf("[%s] FROZEN: the celebration did not move on for key %v/%q within 2s\n%s", label, k, r, h.describeUI())
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+		if !h.hasPage("age_splash") {
+			h.t.Fatalf("[%s] the first key closed the screen: what the age opens was never shown\n%s", label, h.describeUI())
+		}
+		time.Sleep(arrivalKeyGap + 60*time.Millisecond) // a second press, not the first held down
+	}
+	h.key(k, r)
+	deadline := time.Now().Add(2 * time.Second)
+	for h.hasPage("age_splash") {
+		if time.Now().After(deadline) {
+			h.t.Fatalf("[%s] FROZEN: splash not dismissed by key %v/%q within 2s\n%s", label, k, r, h.describeUI())
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
 // advanceAndCheckWith runs doAdvance, waits for the age splash, then plays the
 // resulting sequence the way a player would until the dashboard is back:
 //
-//  1. The splash says "Press any key to continue", so the first key pressed
-//     (rotating x / Enter / Esc / space) must dismiss it within 2s, whatever
-//     else the same advance left pending. A catastrophe modal stacked on top
-//     of the splash swallows that key: the reported freeze.
+//  1. The splash says "Press any key to continue", so a key (rotating x /
+//     Enter / Esc / space) must move it on within 2s and a second must close
+//     it, whatever else the same advance left pending. A catastrophe modal
+//     stacked on top of the splash swallows that key: the reported freeze.
 //  2. If a catastrophe modal appears afterwards, press catChoice ('e' endure;
 //     there is no defer any more, and a pending catastrophe would block the
 //     next advance); it must close within 2s.
@@ -382,14 +423,7 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 	h.t.Logf("%s front=%s", label, h.frontPage())
 
 	dk := dismissKeys[i%len(dismissKeys)]
-	h.key(dk.k, dk.r)
-	deadline := time.Now().Add(2 * time.Second)
-	for h.hasPage("age_splash") {
-		if time.Now().After(deadline) {
-			h.t.Fatalf("[%s] FROZEN: splash not dismissed by key %v/%q within 2s\n%s", label, dk.k, dk.r, h.describeUI())
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
+	h.dismissArrival(label, dk.k, dk.r)
 
 	for step := 0; step < 4; step++ {
 		// Let refresh() surface a catastrophe held back while the splash was up.
@@ -600,8 +634,7 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	h.advanceIntoIronWithCatastrophe()
 	h.waitFor("age_splash", 3*time.Second, func() bool { return h.hasPage("age_splash") })
 	time.Sleep(550 * time.Millisecond)
-	h.key(tcell.KeyEnter, 0)
-	h.waitFor("splash dismissed", 2*time.Second, func() bool { return !h.hasPage("age_splash") })
+	h.dismissArrival("into the Iron Age", tcell.KeyEnter, 0)
 	h.waitFor("catastrophe modal", 3*time.Second, func() bool { return h.frontPage() == "catastrophe" })
 
 	h.key(tcell.KeyEsc, 0)

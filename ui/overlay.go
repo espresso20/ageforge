@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/gdamore/tcell/v2"
@@ -48,6 +50,18 @@ type OverlayManager struct {
 	app     *tview.Application
 	onClose func() // called after hide to restore focus to the command input field
 	screenW int    // updated every frame via SetBeforeDrawFunc
+
+	// seen is the last snapshot Refresh was given: for the arrival screen
+	// it is the game as it stood before the advance (arrival.go). arrival is
+	// that screen while it is up. engine, when the app has given it one,
+	// lets the screen read the game's state and the player's display
+	// settings at once; without it the next Refresh brings the state.
+	seen    *game.GameState
+	arrival *arrival
+	engine  *game.GameEngine
+	// after, when set, is how the arrival screen sets its timers (tests hold
+	// them); nil means the clock.
+	after func(d time.Duration, fn func()) (cancel func())
 }
 
 // NewOverlayManager creates an OverlayManager. onClose is called whenever an
@@ -220,8 +234,23 @@ func (om *OverlayManager) Show(name string, state game.GameState) bool {
 }
 
 // Hide closes the active overlay and calls onClose (to restore input focus).
+//
+// The arrival screen is the one overlay a single Hide does not always
+// close: Esc reaches the dashboard before it reaches the screen, and the
+// dashboard answers Esc with Hide. So that Esc is a key like any other
+// there (the first moves on from the celebration to what the age opens,
+// the next closes), a Hide during the celebration is passed to the screen
+// as a key. Once it shows the information, Hide closes it.
 func (om *OverlayManager) Hide() {
 	if om.active == "" {
+		return
+	}
+	if a := om.arrival; a != nil && om.active == arrivalPageName {
+		if a.stage == arrCelebrating {
+			a.key()
+			return
+		}
+		a.close() // lets go of its clock and timers, then hides (below, via Hide again)
 		return
 	}
 	om.pages.RemovePage(om.active)
@@ -257,6 +286,11 @@ func (om *OverlayManager) Focus() bool {
 // For text overlays the content is updated in-place.
 // For widget overlays the primitive is rebuilt and the page is replaced.
 func (om *OverlayManager) Refresh(state game.GameState) {
+	prev := om.seen
+	om.seen = &state
+	if om.arrival != nil {
+		om.arrival.feed(prev, &state)
+	}
 	if om.active == "" {
 		return
 	}
