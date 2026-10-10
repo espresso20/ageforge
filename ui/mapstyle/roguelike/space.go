@@ -32,6 +32,17 @@ func (s *skyStyle) onSky(m *mapmodel.Model) bool {
 
 func (s *skyStyle) Name() string { return s.g.Name() }
 
+// Pointer reports the tile the ground view's cursor is on, when it is out
+// on the settlement (mapstyle.Pointing).
+func (s *skyStyle) Pointer() (mapstyle.Pointer, bool) {
+	return mapstyle.Pointer{X: s.g.cur.X, Y: s.g.cur.Y}, s.g.inspect && s.g.zoom != zRegion
+}
+
+// Point marks a tile in the ground view's compact form (mapstyle.Pointing).
+func (s *skyStyle) Point(p mapstyle.Pointer, ok bool) {
+	s.g.mark, s.g.marked = mapmodel.Pt{X: p.X, Y: p.Y}, ok
+}
+
 // SceneInset: the full view keeps one row for its header and four below
 // the map for the news, the inspector and the status lines, on the ground
 // and in the sky alike (view.Draw, skyView.Draw).

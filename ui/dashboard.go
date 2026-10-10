@@ -845,6 +845,7 @@ func (d *Dashboard) refresh() {
 	d.mapDock.off = !set.Minimap
 	if d.mapDock.wantsModel() {
 		d.miniMap.update(set, &state)
+		d.miniMap.pointAt(d.mapPanel)
 	}
 
 	// Update overlay content and sidebar highlight

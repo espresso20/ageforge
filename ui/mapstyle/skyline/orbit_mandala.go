@@ -274,7 +274,8 @@ func (o *orb) mandalaCursor(l *mandalaLayout, rings []mapmodel.MandalaRing) {
 	if ch == ' ' || ch == 0 || ch == '█' {
 		ch = mapmodel.R(mapmodel.SymPetal, o.tier)
 	}
-	o.fb.set(x, y, ch, o.mp.Bg, o.mp.Fg[mapmodel.CAccent], dTop)
+	cfg, cbg, _ := o.mp.CursorStyle(o.anim).Decompose()
+	o.fb.set(x, y, ch, cfg, cbg, dTop)
 }
 
 // mandalaLegend is the legend line: what the mandala is made of.

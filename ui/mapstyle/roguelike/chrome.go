@@ -384,6 +384,12 @@ func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) 
 		v.g, v.compact = g, true
 		v.drawTiles(cv, g)
 		v.drawLife(cv)
+		// Where the Map panel's cursor stands, as the same highlighted
+		// cell (mapstyle.Pointing).
+		if cx, cy, ok := v.g.cellOf(v.mark); ok && v.marked {
+			r, _ := cv.Get(cx, cy)
+			cv.Put(cx, cy, r, v.pal.CursorStyle(v.anim))
+		}
 		v.g, v.compact = saved, false
 	}
 }
