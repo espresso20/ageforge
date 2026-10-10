@@ -36,6 +36,10 @@ import (
 const arrivalPageName = "age_splash"
 
 const (
+	// arrivalFxLead sets a theme's ambient effect ahead of the script, so
+	// that the one that comes in bursts (the glitch, every 64 frames from
+	// its 57th) bursts as the era's name gives way to the age's.
+	arrivalFxLead = 57 - arrEraFrames
 	// arrivalHold is how long the screen stays up when no key is pressed.
 	arrivalHold = 20 * time.Second
 	// arrivalKeyGap is the least time between two keys that each count: a
@@ -313,8 +317,9 @@ func (a *arrival) close() {
 	if a.om == nil {
 		return
 	}
-	// Only if the screen is still the overlay in front: another overlay may
-	// have taken its place, and that one is not this screen's to close.
+	// Only if the screen is still the manager's: when another overlay took
+	// its place, or the manager is the one closing it, the page in front is
+	// not this screen's to take down.
 	if a.om.arrival == a {
 		a.om.arrival = nil
 		if a.om.active == arrivalPageName {
@@ -401,7 +406,7 @@ func (a *arrival) Draw(scr tcell.Screen) {
 	// screen leaves empty, once the heavy blow has landed.
 	if a.view.motion && a.view.epoch && a.stage == arrCelebrating && a.sc.frame >= arrEraStrike {
 		if effect := theme.Active().Effect; effect != "" {
-			drawThemeEffect(scr, x, y, w, h, effect, a.sc.frame, a.view.plain)
+			drawThemeEffect(scr, x, y, w, h, effect, a.sc.frame+arrivalFxLead, a.view.plain)
 		}
 	}
 	if a.view.motion {

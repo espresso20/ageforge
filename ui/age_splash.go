@@ -33,9 +33,7 @@ func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	// Remove any currently active overlay first, then add the screen. It
 	// holds the keyboard itself, so a re-focus of the page stack (a window
 	// closing over it) lands on something that handles keys.
-	if om.arrival != nil {
-		om.arrival.close()
-	}
+	om.dropArrival() // an arrival still up gives way to this one: they do not stack
 	if om.active != "" {
 		om.pages.RemovePage(om.active)
 	}

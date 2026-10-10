@@ -471,7 +471,10 @@ func drawIron(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, y0 int, mo
 				for dx := 0; dx < mode.sx; dx++ {
 					x, y := x0+px*mode.sx+dx, y0+py*mode.sy+dy
 					if plain {
-						g.set(x, y, '#', col, theme.Mix(col, pal.bg, 0.3), true)
+						// A ground of the letter's ink, a little back from
+						// it so the mark shows, and never too far back to
+						// read as a block on the page.
+						g.set(x, y, '#', col, theme.Legible(theme.Mix(col, pal.bg, 0.3), pal.bg, 3), true)
 					} else {
 						g.put(x, y, '█', col)
 					}

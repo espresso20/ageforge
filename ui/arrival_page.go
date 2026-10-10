@@ -432,6 +432,22 @@ func (sc *arrivalScene) drawTowns(g *mGrid, pal *menuPalette, old, cur *menuTown
 	}
 }
 
+// readable holds the ink of n cells from (x, y) to a contrast of 3 on
+// what is behind each: words on a screen the flash has lit.
+func readable(g *mGrid, pal *menuPalette, x, y, n int) {
+	for i := x; i < x+n; i++ {
+		if !g.in(i, y) {
+			continue
+		}
+		c := &g.c[y*g.w+i]
+		bg := pal.bg
+		if c.hasBg {
+			bg = c.bg
+		}
+		c.fg = theme.Legible(c.fg, bg, 3)
+	}
+}
+
 // dim takes the cells of a block k of the way to the page: the town under
 // an era's name stands back.
 func dim(g *mGrid, pal *menuPalette, x, y, w, h int, k float64) {
@@ -482,12 +498,14 @@ func (sc *arrivalScene) renderMoment(pal *menuPalette, v *arrivalView, old, cur 
 		sc.sparks.draw(g, pal)
 		sc.drawName(g, pal, p, v.plain)
 		if head := v.epochHeading; head != "" && runeLen(head) <= L.w-4 && p.y >= 2 {
-			g.text(centred(L.w, runeLen(head)), p.y-2, head, pal.accent, true)
+			x := centred(L.w, runeLen(head))
+			readable(g, pal, x, p.y-2, g.text(x, p.y-2, head, pal.accent, true))
 		}
 		// A still screen holds this frame, so it names the age too.
 		if !v.motion && p.y+p.h+1 < L.hint {
 			line := truncate(v.age, L.w-4)
-			g.text(centred(L.w, runeLen(line)), p.y+p.h+1, line, pal.ink, true)
+			x := centred(L.w, runeLen(line))
+			readable(g, pal, x, p.y+p.h+1, g.text(x, p.y+p.h+1, line, pal.ink, true))
 		}
 	} else {
 		sc.drawTowns(g, pal, old, cur, mf, flare)

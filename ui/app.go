@@ -52,6 +52,16 @@ func (a *App) setup() {
 	// The arrival screen draws the player's town in their map style: it
 	// reads the game and the account's settings through the engine.
 	a.dashboard.overlayMgr.engine = a.engine
+	// Esc reaches the dashboard before it reaches an overlay, and the
+	// dashboard answers it by closing the overlay at once. On the arrival
+	// screen Esc is a key like any other (the first moves on to what the age
+	// opens, the next closes), so that screen is offered it first.
+	a.tviewApp.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
+		if ev.Key() == tcell.KeyEsc && a.dashboard.overlayMgr.arrivalKey() {
+			return nil
+		}
+		return ev
+	})
 
 	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, a.version)
 

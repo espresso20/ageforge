@@ -205,6 +205,7 @@ func (om *OverlayManager) Show(name string, state game.GameState) bool {
 		e.tv.ScrollToBeginning()
 		if om.active != name {
 			if om.active != "" {
+				om.dropArrival()
 				om.pages.RemovePage(om.active)
 			}
 			om.pages.AddPage(name, e.root, true, true)
@@ -221,6 +222,7 @@ func (om *OverlayManager) Show(name string, state game.GameState) bool {
 		root := om.buildWidgetRoot(we, prim)
 		// Always rebuild and replace — widget overlays don't cache their root.
 		if om.active != "" {
+			om.dropArrival()
 			om.pages.RemovePage(om.active)
 		}
 		om.pages.AddPage(name, root, true, true)
@@ -234,31 +236,38 @@ func (om *OverlayManager) Show(name string, state game.GameState) bool {
 }
 
 // Hide closes the active overlay and calls onClose (to restore input focus).
-//
-// The arrival screen is the one overlay a single Hide does not always
-// close: Esc reaches the dashboard before it reaches the screen, and the
-// dashboard answers Esc with Hide. So that Esc is a key like any other
-// there (the first moves on from the celebration to what the age opens,
-// the next closes), a Hide during the celebration is passed to the screen
-// as a key. Once it shows the information, Hide closes it.
 func (om *OverlayManager) Hide() {
 	if om.active == "" {
 		return
 	}
-	if a := om.arrival; a != nil && om.active == arrivalPageName {
-		if a.stage == arrCelebrating {
-			a.key()
-			return
-		}
-		a.close() // lets go of its clock and timers, then hides (below, via Hide again)
-		return
-	}
+	om.dropArrival()
 	om.pages.RemovePage(om.active)
 	om.active = ""
 	om.focus = nil
 	if om.onClose != nil {
 		om.onClose()
 	}
+}
+
+// dropArrival lets go of the arrival screen, if it is up: its clock and its
+// timers stop. Taking its page down is the caller's.
+func (om *OverlayManager) dropArrival() {
+	if a := om.arrival; a != nil {
+		om.arrival = nil
+		a.close()
+	}
+}
+
+// arrivalKey gives a key press to the arrival screen when it is the overlay
+// in front, and reports whether it took it. It is how Esc reaches that
+// screen as a key like any other (see the app's input capture): the
+// dashboard would answer Esc with Hide before the screen saw it.
+func (om *OverlayManager) arrivalKey() bool {
+	if om == nil || om.arrival == nil || om.active != arrivalPageName {
+		return false
+	}
+	om.arrival.key()
+	return true
 }
 
 // FocusOn makes p hold the keyboard while the active overlay shows, in place
