@@ -173,6 +173,8 @@ var fileNotes = map[string]fileNote{
 	"ui/age_splash.go":           {place: "on the splash shown when you reach a new age", age: "stone_age", seen: seenRare, voice: true},
 	"ui/ancient_memory_modal.go": {place: "in the Ancient Memory offer after a prestige", age: "medieval_age", seen: seenRare, voice: true},
 	"ui/app.go":                  {place: "when the game starts", age: "menu", seen: seenAlways},
+	"ui/arrival.go":              {place: "on the screen shown when you reach a new age", age: "stone_age", seen: seenRare},
+	"ui/arrival_page.go":         {place: "on the screen shown when you reach a new age", age: "stone_age", seen: seenRare},
 	"ui/badge_art_legend.go":     {skip: whyArt},
 	"ui/badge_art_special.go":    {skip: whyArt},
 	"ui/badge_case.go":           {place: "in the badge case", age: "primitive_age"},

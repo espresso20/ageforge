@@ -382,12 +382,12 @@ func (h *reproHarness) dismissArrival(label string, k tcell.Key, r rune) {
 			if time.Now().After(deadline) {
 				h.t.Fatalf("[%s] FROZEN: the celebration did not move on for key %v/%q within 2s\n%s", label, k, r, h.describeUI())
 			}
-			time.Sleep(50 * time.Millisecond)
+			time.Sleep(15 * time.Millisecond)
 		}
 		if !h.hasPage("age_splash") {
 			h.t.Fatalf("[%s] the first key closed the screen: what the age opens was never shown\n%s", label, h.describeUI())
 		}
-		time.Sleep(arrivalKeyGap + 60*time.Millisecond) // a second press, not the first held down
+		time.Sleep(arrivalKeyGap + 20*time.Millisecond) // a second press, not the first held down
 	}
 	h.key(k, r)
 	deadline := time.Now().Add(2 * time.Second)
@@ -395,7 +395,7 @@ func (h *reproHarness) dismissArrival(label string, k tcell.Key, r rune) {
 		if time.Now().After(deadline) {
 			h.t.Fatalf("[%s] FROZEN: splash not dismissed by key %v/%q within 2s\n%s", label, k, r, h.describeUI())
 		}
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(15 * time.Millisecond)
 	}
 }
 

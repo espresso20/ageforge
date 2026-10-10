@@ -409,15 +409,15 @@ func (sc *arrivalScene) drawTowns(g *mGrid, pal *menuPalette, old, cur *menuTown
 	switch {
 	case lh <= 0:
 	case sc.turn >= 1:
-		cur.draw(g, pal, 0, L.top, L.w, lh, mf, flare)
+		cur.drawFoot(g, pal, 0, L.top, L.w, lh, mf, flare)
 	case sc.turn <= 0:
-		old.draw(g, pal, 0, L.top, L.w, lh, mf, flare)
+		old.drawFoot(g, pal, 0, L.top, L.w, lh, mf, flare)
 	default:
 		// Each cell has its place in the turn (noise): it shows the old
 		// town until the turn reaches it, and the new one after.
 		a, b := newMGrid(L.w, lh), newMGrid(L.w, lh)
-		old.draw(a, pal, 0, 0, L.w, lh, mf, flare)
-		cur.draw(b, pal, 0, 0, L.w, lh, mf, flare)
+		old.drawFoot(a, pal, 0, 0, L.w, lh, mf, flare)
+		cur.drawFoot(b, pal, 0, 0, L.w, lh, mf, flare)
 		for y := 0; y < lh; y++ {
 			for x := 0; x < L.w; x++ {
 				src := a
@@ -484,7 +484,7 @@ func (sc *arrivalScene) renderMoment(pal *menuPalette, v *arrivalView, old, cur 
 		p := &L.era
 		if lh := L.h - L.top; lh > 0 {
 			land := newMGrid(L.w, lh)
-			old.draw(land, pal, 0, 0, L.w, lh, mf, flare)
+			old.drawFoot(land, pal, 0, 0, L.w, lh, mf, flare)
 			dim(land, pal, 0, 0, L.w, lh, 0.55)
 			for y := max(p.y+p.h+1-L.top, 0); y < lh; y++ {
 				for x := 0; x < L.w; x++ {
@@ -555,8 +555,9 @@ func (l infoLine) width() (n int) {
 func (l infoLine) plain() string { return plainOf(l.segs) }
 
 // tagRun matches a tview colour tag: a foreground, and after colons a
-// background and attributes.
-var tagRun = regexp.MustCompile(`\[([a-zA-Z#][a-zA-Z0-9#]*|-)?(?::([a-zA-Z#][a-zA-Z0-9#]*|-)?)?(?::([a-zA-Z-]*))?\]`)
+// background and attributes. (Its classes start with a mark, not a letter,
+// so the copy guard does not read them as tags a panel would swallow.)
+var tagRun = regexp.MustCompile(`\[([#a-zA-Z][#a-zA-Z0-9]*|-)?(?::([#a-zA-Z][#a-zA-Z0-9]*|-)?)?(?::([-a-zA-Z]*))?\]`)
 
 // parseSplashLine turns a line of the splash's markup into runs of ink on
 // ground. A colour is a name the theme owns (the role names and the old
@@ -865,7 +866,7 @@ func (sc *arrivalScene) renderInfo(pal *menuPalette, v *arrivalView, info infoLa
 	g := newMGrid(L.w, L.h)
 	if !L.tiny {
 		drawMenuStars(g, pal, sc.stars, sc.t)
-		cur.draw(g, pal, 0, L.top, L.w, L.h-L.top, mf, false)
+		cur.drawFoot(g, pal, 0, L.top, L.w, L.h-L.top, mf, false)
 		sc.sparks.draw(g, pal)
 		if info.named {
 			sc.drawName(g, pal, &L.age, v.plain)

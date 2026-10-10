@@ -104,6 +104,19 @@ const (
 // draw paints the picture into the w by h block of g at (x0, y0) and
 // reports whether it did. flare is the strike's flash.
 func (t *menuTown) draw(g *mGrid, pal *menuPalette, x0, y0, w, h int, f mapstyle.Frame, flare bool) (ok bool) {
+	return t.paint(g, pal, x0, y0, w, h, false, f, flare)
+}
+
+// drawFoot is draw for a block that may have fewer rows than a style lays
+// its full view out in: the picture is then laid out at the least height
+// it takes and the block shows the foot of it, so a skyline keeps its
+// ground and a map the town at its middle. (The arrival screen's land is
+// what is left under a name and its lines.)
+func (t *menuTown) drawFoot(g *mGrid, pal *menuPalette, x0, y0, w, h int, f mapstyle.Frame, flare bool) (ok bool) {
+	return t.paint(g, pal, x0, y0, w, h, true, f, flare)
+}
+
+func (t *menuTown) paint(g *mGrid, pal *menuPalette, x0, y0, w, h int, foot bool, f mapstyle.Frame, flare bool) (ok bool) {
 	if t == nil || t.failed || w <= 0 || h <= 0 {
 		return false
 	}
@@ -117,6 +130,12 @@ func (t *menuTown) draw(g *mGrid, pal *menuPalette, x0, y0, w, h int, f mapstyle
 		top, bottom = sc.SceneInset(w, h)
 	}
 	fw, fh := w, h+top+bottom
+	if foot && fh < townMinH {
+		// Rows of the picture above the block: it is laid out taller than
+		// the block and the block shows its foot.
+		top += townMinH - fh
+		fh = townMinH
+	}
 	if fw < townMinW || fh < townMinH {
 		return false
 	}

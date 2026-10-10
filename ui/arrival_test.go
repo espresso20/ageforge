@@ -63,7 +63,7 @@ func previousAge(age string) string {
 // era is an epoch's, with an event.
 func stagedArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion bool) *arrivalRig {
 	t.Helper()
-	return stageArrival(t, age, tier, motion, true)
+	return stageArrival(t, age, tier, motion, true, "")
 }
 
 // bareArrival is stagedArrival without the towns, whose pictures are most
@@ -71,10 +71,12 @@ func stagedArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion boo
 // screen itself lays out is as it is with them.
 func bareArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion bool) *arrivalRig {
 	t.Helper()
-	return stageArrival(t, age, tier, motion, false)
+	return stageArrival(t, age, tier, motion, false, "")
 }
 
-func stageArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion, towns bool) *arrivalRig {
+// stageArrival: towns draws the towns' pictures, in the map style named
+// ("" for the default).
+func stageArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion, towns bool, style string) *arrivalRig {
 	t.Helper()
 	from := previousAge(age)
 	set := (&game.GameState{}).Ruleset()
@@ -99,6 +101,9 @@ func stageArrival(t testing.TB, age string, tier mapmodel.GlyphTier, motion, tow
 	}
 	if !towns {
 		a.reg = nil
+	}
+	if style != "" {
+		a.set.Style = style
 	}
 	a.feed(prev, &cur)
 	a.set.Tier, a.set.Motion = tier, motion
@@ -170,6 +175,7 @@ func TestArrivalDump(t *testing.T) {
 				{"bronze_age", mapmodel.TierUnicode, false, []int{0, 40}},
 				{"iron_age", mapmodel.TierUnicode, false, []int{0, 60}},
 				{"iron_age", mapmodel.TierASCII, true, []int{14, 36, 56}},
+				{"renaissance_age", mapmodel.TierASCII, true, []int{14, 36, 56}},
 			} {
 				r := stagedArrival(t, c.age, c.tier, c.motion)
 				for _, f := range c.frames {
@@ -545,40 +551,54 @@ func TestArrivalFitsEverySize(t *testing.T) {
 }
 
 // TestArrivalWithItsTowns is the same check with the towns drawn, through
-// every beat of an age's arrival and an epoch's at the five sizes: the town
+// the beats of an age's arrival and an epoch's at the five sizes: the town
 // before, the two part way through the turn, the town after, and the town
-// under the information, none of them bringing the map's own bars with it
-// or reaching up into the name.
+// under the information, none of them bringing the map's own bars with it.
+// The land always has its town, in either map style: where it has fewer
+// rows than a style lays its picture out in (a small terminal, a quip that
+// takes two lines, a name with its last word under it) it shows the foot
+// of the picture, never an empty sky.
 func TestArrivalWithItsTowns(t *testing.T) {
-	for _, age := range []string{"bronze_age", "iron_age"} {
-		r := stagedArrival(t, age, mapmodel.TierUnicode, true)
+	for _, c := range []struct {
+		age, style string
+	}{{"bronze_age", ""}, {"iron_age", ""}, {"renaissance_age", ""}, {"bronze_age", "skyline"}} {
+		r := stageArrival(t, c.age, mapmodel.TierUnicode, true, true, c.style)
 		if r.a.oldTown == nil || r.a.newTown == nil {
-			t.Fatalf("%s: no towns", age)
+			t.Fatalf("%s: no towns", c.age)
 		}
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 			for _, size := range arrivalSizes[:5] {
 				w, h := size[0], size[1]
 				r.restart(tier, true)
-				where := fmt.Sprintf("into the %s at %dx%d, %s glyphs, towns drawn", r.a.view.age, w, h, tier)
-				frames := []int{0, arrAgeStrike, arrAgeStrike + 6, arrAgeFrames - 1}
+				where := fmt.Sprintf("into the %s at %dx%d, %s glyphs, towns drawn (%s)", r.a.view.age, w, h, tier, r.a.set.Style)
+				frames := []int{0, arrAgeStrike + 6, arrAgeFrames - 1}
 				if r.a.view.epoch {
-					frames = []int{0, arrEraStrike, arrEraFrames + arrAgeStrike + 6}
+					frames = []int{0, arrEraStrike, arrEraFrames + arrAgeStrike + 6, arrEraFrames + arrAgeFrames - 1}
 				}
-				land := 0
 				for _, f := range frames {
 					if tier == mapmodel.TierASCII && w < 100 {
+						if f != frames[len(frames)-1] {
+							continue
+						}
 						checkArrivalPlainNarrow(t, where, r, w, h)
 					} else {
 						checkArrivalMoment(t, fmt.Sprintf("%s, frame %d", where, f), r, w, h, f)
 					}
-					// The town is there, under the name and clear of it.
+					// The town is there, under the name and clear of it:
+					// two rows' worth of it at the least (a skyline is
+					// mostly sky; stars and sparks alone are a few cells).
 					g, L := r.at(w, h, f), r.a.sc.L
-					for y := L.top; y < h; y++ {
-						land += len(strings.TrimSpace(g.row(y)))
+					from := L.top
+					if r.a.sc.inEra() {
+						from = max(from, L.era.y+L.era.h+1)
 					}
-				}
-				if land < len(frames)*w {
-					t.Errorf("%s: the land is all but empty (%d cells over %d frames)", where, land, len(frames))
+					land := 0
+					for y := from; y < h; y++ {
+						land += len([]rune(strings.Join(strings.Fields(g.row(y)), "")))
+					}
+					if rows := h - from; rows < 4 || land < 2*w {
+						t.Errorf("%s, frame %d: the land (%d rows) is all but empty: %d cells drawn", where, f, rows, land)
+					}
 				}
 				checkArrivalInfo(t, where+", the information", r, w, h)
 			}
