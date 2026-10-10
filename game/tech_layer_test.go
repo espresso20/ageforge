@@ -256,6 +256,9 @@ func TestTechGatherAndRaids(t *testing.T) {
 	// A raid event takes its cut too; a loss that is no raid does not.
 	ev := NewGameEngine()
 	learn(ev, "imperial_legions")
+	// Room for the stock that a rates pass keeps: an event reads the rates
+	// afresh, and the pass holds every stock to its store.
+	ev.permanentBonuses["gold"] = 1e6
 	setResource(ev, "gold", 1000)
 	ev.mu.Lock()
 	ev.fireEvent(config.EventDef{Key: "zz_raid", Name: "Raid", Raid: true, Effects: []config.Effect{{Type: "steal_resource", Target: "gold", Value: 100}}})

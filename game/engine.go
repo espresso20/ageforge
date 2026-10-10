@@ -1632,7 +1632,13 @@ func (ge *GameEngine) processEvents() {
 // Under the write lock.
 func (ge *GameEngine) fireEvent(def config.EventDef) {
 	// The event's sizes become amounts for this town (event_size.go), and
-	// a timed event keeps them for as long as it lasts.
+	// a timed event keeps them for as long as it lasts. They are read off
+	// the town's rates, so the rates are worked out afresh first: the ones
+	// in hand date from the last tick's pass, and a game loaded since then
+	// has its own from the load, which need not be the same to the last
+	// bit. Sized from the state as it stands, an event is the same event
+	// whether or not the game was saved and loaded just before it.
+	ge.recalculateRates()
 	effects := ge.sizeEffects(def.Effects)
 	if def.Duration > 0 {
 		ge.Events.SetActiveEffects(def.Key, effects)
@@ -2751,12 +2757,14 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 			ge.addLog("warning", "  → The fire burned out before it reached any buildings.")
 		}
 	case "epidemic":
+		// The rate first: it is a share of what the town made when the
+		// plague arrived, before it took the workers.
+		ge.injectEpochRates("epoch_epidemic", ev, "warning", "")
 		before := ge.Workers.TotalPop()
 		ge.Workers.RemovePct(0.20)
 		if lost := before - ge.Workers.TotalPop(); lost > 0 {
 			ge.addLog("warning", fmt.Sprintf("  → %s lost.", textfmt.Count(lost, "worker", "workers")))
 		}
-		ge.injectEpochRates("epoch_epidemic", ev, "warning", "")
 	case "resource_drought":
 		// Debuff epoch's primary resource
 		primaryRes := "wood" // fallback
@@ -2796,6 +2804,8 @@ func (ge *GameEngine) injectEpochRates(key string, ev config.EpochEventDef, logT
 		}
 		rates = append(rates, r)
 	}
+	// Sized from the rates as they stand now (see fireEvent).
+	ge.recalculateRates()
 	effects := ge.sizeEffects(rates)
 	if len(effects) == 0 {
 		return

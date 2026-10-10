@@ -307,3 +307,47 @@ func TestEventSizeFollowsTheTown(t *testing.T) {
 		t.Errorf("a stampede through a town with 300 of each took %v food and %v wood, want something and at most a quarter (75)", food, wood)
 	}
 }
+
+// TestEventSizeSurvivesASaveAndLoad: an event is sized from the town as it
+// stands when it fires, not from the rates the last tick left behind. A
+// building that finished after that tick's rates pass is counted, so a game
+// saved and loaded just before an event (whose rates the load worked out
+// afresh) meets the same event as the game that played on.
+func TestEventSizeSurvivesASaveAndLoad(t *testing.T) {
+	isolateAccountDir(t)
+	a := NewGameEngine()
+	a.SeedRNG(7)
+	a.SetTownForTest(map[string]int{"hut": 20, "stash": 10, "gathering_camp": 6}, 30)
+	a.mu.Lock()
+	a.Workers.Assign("worker", "gathering_camp", 12)
+	a.mu.Unlock()
+	a.StepTicks(20)
+	// Four more camps finish after the tick's rates pass: the rates in
+	// hand are now a tick out of date.
+	a.mu.Lock()
+	a.Buildings.counts["gathering_camp"] += 4
+	stale := a.Resources.resources["food"].Rate
+	a.mu.Unlock()
+	if err := a.SaveGame("sized"); err != nil {
+		t.Fatal(err)
+	}
+	b := NewGameEngine()
+	if err := b.LoadGame("sized"); err != nil {
+		t.Fatal(err)
+	}
+	if fresh := b.Resources.resources["food"].Rate; fresh == stale {
+		t.Fatalf("the loaded game's food rate equals the stale one (%v): the test needs them to differ", fresh)
+	}
+	harvest := config.EventByKey()["bountiful_harvest"]
+	gained := func(ge *GameEngine) float64 {
+		ge.mu.Lock()
+		defer ge.mu.Unlock()
+		ge.permanentBonuses["food"] += 1e6 // room for the harvest, from the event's own rates pass
+		before := ge.Resources.Get("food")
+		ge.fireEvent(harvest)
+		return ge.Resources.Get("food") - before
+	}
+	if ga, gb := gained(a), gained(b); ga != gb || ga <= 0 {
+		t.Errorf("the game that played on gained %v food from the harvest and the one saved and loaded %v", ga, gb)
+	}
+}
