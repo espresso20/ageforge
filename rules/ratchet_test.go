@@ -51,6 +51,7 @@ var pureConfig = map[string]bool{
 	"ExchangeRateAt": true, "MarketRateAt": true, "MarketPairsAt": true, "MarketOffersAt": true,
 	"DealPriceLevelAt": true, "PricedResourcesAt": true,
 	"TechTerms": true, "RouteFeature": true, "TechCodeFor": true,
+	"IsSizedEffect": true, "EventSize": true, "EventBand": true,
 }
 
 const (

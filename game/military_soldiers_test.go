@@ -113,66 +113,98 @@ func TestMilitaryBuildings_ProduceAndStoreSoldiers(t *testing.T) {
 	}
 }
 
-// TestLockedSoldiers_NothingTrainsOrCounts: a War Camp or a Barracks can
-// stand before the Iron Age unlocks soldiers. Until then nothing trains:
-// the soldiers rate is 0 (so the Army panel shows no training), nothing is
-// held, and the stats count nothing gathered. The unlock turns all three on.
-func TestLockedSoldiers_NothingTrainsOrCounts(t *testing.T) {
-	ge := NewGameEngine()
-	const barracks = "barracks"
-	def := config.BuildingByKey()[barracks]
-
-	ge.mu.Lock()
-	ge.Buildings.counts[barracks] = 2
-	ge.Buildings.unlocked[barracks] = true
-	ge.Resources.AddStorage("food", 1e9)
-	ge.Workers.UnlockType("worker")
-	slots := def.WorkerCapacity * 2
-	if !ge.Workers.Recruit("worker", slots, 100000) || !ge.Workers.Assign("worker", barracks, slots) {
-		ge.mu.Unlock()
-		t.Fatal("could not staff the barracks")
-	}
-	if ge.Resources.IsUnlocked("soldiers") {
-		ge.mu.Unlock()
-		t.Fatal("soldiers are unlocked in a new game; the test needs them locked")
-	}
-	ge.mu.Unlock()
-
-	run := func(ticks int) {
+// TestSoldiersTrainFromTheFirstMilitaryBuilding: soldiers are locked until
+// the Iron Age for a town with no military building, and nothing is held or
+// counted before then. The first military building to stand unlocks them,
+// whatever the age (config.ResourceDef.BuiltUnlocks): a War Camp trains
+// soldiers in the Stone Age, staffed or not, and every post in it produces.
+func TestSoldiersTrainFromTheFirstMilitaryBuilding(t *testing.T) {
+	const camp = "war_camp"
+	def := config.BuildingByKey()[camp]
+	run := func(ge *GameEngine, ticks int) {
 		for i := 0; i < ticks; i++ {
 			ge.mu.Lock()
 			ge.Resources.Add("food", 1e6)
+			ge.morale = 1.0
 			ge.mu.Unlock()
 			ge.StepTicks(1)
 		}
 	}
-	run(40)
-	st := ge.GetState()
-	if rate := st.Resources["soldiers"].Rate; rate != 0 {
-		t.Errorf("locked soldiers have a rate of %v, want 0", rate)
-	}
-	if st.Military.SoldierRate != 0 {
-		t.Errorf("the Army panel's training rate is %v with soldiers locked, want 0", st.Military.SoldierRate)
-	}
-	if st.Military.SoldierCount != 0 || st.Resources["soldiers"].Amount != 0 {
-		t.Errorf("locked soldiers were held: %d", st.Military.SoldierCount)
-	}
-	if got := st.Stats.TotalGathered["soldiers"]; got != 0 {
-		t.Errorf("the stats count %v soldiers gathered that were never held", got)
-	}
-	if got := ge.Stats.SoldiersTrained; got != 0 {
-		t.Errorf("the stats count %v soldiers trained with soldiers locked", got)
+	stone := func() *GameEngine {
+		ge := NewGameEngine()
+		ge.mu.Lock()
+		ge.applyAgeUnlocks("stone_age")
+		ge.age, ge.currentEpoch = "stone_age", ge.rules.EraOf("stone_age")
+		ge.Workers.SetAge("stone_age")
+		ge.Resources.AddStorage("food", 1e9)
+		ge.Workers.UnlockType("worker")
+		ge.mu.Unlock()
+		return ge
 	}
 
-	ge.mu.Lock()
-	ge.Resources.UnlockResource("soldiers")
-	ge.mu.Unlock()
-	run(10)
-	st = ge.GetState()
-	if st.Resources["soldiers"].Rate <= 0 || st.Military.SoldierCount <= 0 {
-		t.Errorf("unlocked soldiers do not train: rate %v, held %d", st.Resources["soldiers"].Rate, st.Military.SoldierCount)
+	// No military building: soldiers stay locked, and nothing counts.
+	ge := stone()
+	run(ge, 40)
+	st := ge.GetState()
+	if st.Resources["soldiers"].Unlocked || st.Resources["soldiers"].Rate != 0 || st.Military.SoldierCount != 0 {
+		t.Errorf("a Stone Age town with no War Camp has soldiers: %+v", st.Resources["soldiers"])
 	}
-	if st.Stats.TotalGathered["soldiers"] <= 0 {
-		t.Error("the stats count no soldiers once they train")
+	if got := st.Stats.TotalGathered["soldiers"]; got != 0 || ge.Stats.SoldiersTrained != 0 {
+		t.Errorf("the stats count %v soldiers gathered and %v trained in a town with no War Camp", got, ge.Stats.SoldiersTrained)
+	}
+
+	// One War Camp, unstaffed: soldiers unlock and train at the unstaffed
+	// rate.
+	ge.mu.Lock()
+	ge.Buildings.counts[camp] = 1
+	ge.Buildings.unlocked[camp] = true
+	ge.mu.Unlock()
+	run(ge, 1)
+	st = ge.GetState()
+	if !st.Resources["soldiers"].Unlocked {
+		t.Fatal("a standing War Camp did not unlock soldiers")
+	}
+	idle := st.Resources["soldiers"].Rate
+	if idle <= 0 || st.Military.SoldierRate != idle {
+		t.Errorf("an unstaffed War Camp trains %v soldiers a tick (the Army panel says %v), want more than none", idle, st.Military.SoldierRate)
+	}
+
+	// Staffed, every post adds to it: no post in a War Camp produces
+	// nothing.
+	prev := idle
+	for post := 1; post <= def.WorkerCapacity; post++ {
+		ge.mu.Lock()
+		ok := ge.Workers.Recruit("worker", 1, 100000) && ge.Workers.Assign("worker", camp, 1)
+		ge.mu.Unlock()
+		if !ok {
+			t.Fatalf("could not staff post %d of the War Camp", post)
+		}
+		run(ge, 1)
+		rate := ge.GetState().Resources["soldiers"].Rate
+		if rate <= prev {
+			t.Errorf("post %d of the War Camp adds nothing: %v soldiers a tick, %v before", post, rate, prev)
+		}
+		prev = rate
+	}
+	run(ge, 20)
+	st = ge.GetState()
+	if st.Military.SoldierCount <= 0 || st.Stats.TotalGathered["soldiers"] <= 0 || ge.Stats.SoldiersTrained <= 0 {
+		t.Errorf("a staffed War Camp trained nobody: %d held, %v gathered, %v trained", st.Military.SoldierCount, st.Stats.TotalGathered["soldiers"], ge.Stats.SoldiersTrained)
+	}
+	if st.Military.Mitigation <= 0 {
+		t.Errorf("a Stone Age garrison of %d blunts nothing of a raid (threat %v)", st.Military.SoldierCount, st.Military.Threat)
+	}
+
+	// The unlock is the run's: it is saved and comes back.
+	isolateAccountDir(t)
+	if err := ge.SaveGame("garrison"); err != nil {
+		t.Fatal(err)
+	}
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame("garrison"); err != nil {
+		t.Fatal(err)
+	}
+	if got := loaded.GetState(); !got.Resources["soldiers"].Unlocked || got.Military.SoldierCount != st.Military.SoldierCount {
+		t.Errorf("after a load the garrison is %d soldiers (unlocked %v), want %d", got.Military.SoldierCount, got.Resources["soldiers"].Unlocked, st.Military.SoldierCount)
 	}
 }

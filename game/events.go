@@ -392,29 +392,52 @@ func buildLossSuffix(event ActiveEvent) string {
 	return " " + strings.Join(parts, ", ") + "."
 }
 
-// applyEventEffects applies a triggered random event's instant and on-trigger
-// effects, then logs what the player actually lost (amounts and workers, at
-// once, not when a timed event ends). A Raid event meets the garrison first,
-// and a second line says what it kept. Under the write lock.
-func (ge *GameEngine) applyEventEffects(def config.EventDef) {
+// SetActiveEffects replaces the effects of the active event with the given
+// key (the amounts an event's sizes came to when it fired). Nothing when no
+// such event is active.
+func (em *EventManager) SetActiveEffects(key string, effects []config.Effect) {
+	for i := range em.active {
+		if em.active[i].Key == key {
+			em.active[i].Effects = effects
+		}
+	}
+}
+
+// applyEventEffects applies a triggered random event's effects, already
+// sized for this town (sizeEffects): its gains, its losses and the workers
+// it drives off. Its timed rates are applied by the rates pass while the
+// event is active; they are returned with the rest so the log line can
+// state them. A Raid event meets the garrison first, and the second value
+// is the line that says what it kept ("" when it kept nothing). Under the
+// write lock.
+func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Effect) (eventOutcome, string) {
 	// A raid meets the garrison: it blunts a share of what the raiders
 	// take (config/defense.go). 0 with no soldiers, and every loss below
-	// is then exactly what it always was.
+	// is then exactly what it was sized at.
 	guard := 0.0
 	if def.Raid {
 		guard = ge.raidMitigation()
 	}
-	var lostRes, keptRes map[string]float64
-	var granted, fit map[string]float64 // what the event's text promised, and what storage took
-	lostWorkers, keptWorkers := 0, 0
-	for _, eff := range def.Effects {
+	var out eventOutcome
+	var keptRes map[string]float64
+	keptWorkers := 0
+	k := ge.speedK()
+	for _, eff := range effects {
 		switch eff.Type {
-		case "instant_resource":
-			if granted == nil {
-				granted, fit = make(map[string]float64), make(map[string]float64)
+		case "production":
+			// As the player sees it: the rates pass scales it with the
+			// rest of the economy.
+			shown := eff
+			if k > 0 && k != 1 {
+				shown.Value = float64(eff.Value * k)
 			}
-			granted[eff.Target] += eff.Value
-			fit[eff.Target] += ge.grantLocked(eff.Target, eff.Value)
+			out.rates = append(out.rates, shown)
+		case "instant_resource":
+			if out.gained == nil {
+				out.gained, out.fit = make(map[string]float64), make(map[string]float64)
+			}
+			out.gained[eff.Target] += eff.Value
+			out.fit[eff.Target] += ge.grantLocked(eff.Target, eff.Value)
 			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s %+.1f", eff.Type, eff.Target, eff.Value))
 		case "steal_resource":
 			current := ge.Resources.Get(eff.Target)
@@ -436,10 +459,10 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef) {
 				keptRes[eff.Target] += kept
 			}
 			if loss > 0 && ge.Resources.Remove(eff.Target, loss) {
-				if lostRes == nil {
-					lostRes = make(map[string]float64)
+				if out.lost == nil {
+					out.lost = make(map[string]float64)
 				}
-				lostRes[eff.Target] += loss
+				out.lost[eff.Target] += loss
 			}
 			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s -%.1f", eff.Type, eff.Target, loss))
 		case "worker_loss":
@@ -454,20 +477,12 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef) {
 			}
 			before := ge.Workers.TotalPop()
 			ge.Workers.RemovePct(pct)
-			lostWorkers += before - ge.Workers.TotalPop()
+			out.workers += before - ge.Workers.TotalPop()
 			ge.addLog("debug", fmt.Sprintf("Event effect: worker_loss %.0f%%", pct*100))
 		}
 	}
-	// The event's text states the full grant: say so when a full store
-	// took less.
-	if line := clippedLine(granted, fit); line != "" {
-		ge.addLog("info", line)
-	}
-	if parts := lossParts(lostRes, lostWorkers); len(parts) > 0 {
-		ge.addLog("warning", "  You lost "+joinAnd(parts)+".")
-	}
-	if line := garrisonSavedLine(guard, keptRes, keptWorkers); line != "" {
-		ge.addLog("success", line)
+	line := garrisonSavedLine(guard, keptRes, keptWorkers)
+	if line != "" {
 		t := ge.defenseTally()
 		t.Raids++
 		ge.note(config.BadgeEvRaidBlunted, "")
@@ -476,4 +491,5 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef) {
 			ge.recordSavedResource(res, keptRes[res])
 		}
 	}
+	return out, line
 }

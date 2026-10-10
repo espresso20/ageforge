@@ -1608,16 +1608,7 @@ func (ge *GameEngine) processEvents() {
 
 	for _, def := range triggered {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
-		// The log line says how long a timed event really lasts: its
-		// duration is stretched with the age (EventManager.Tick).
-		line := def.LogText(ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
-		// Setbacks log as warnings so they don't read like windfalls.
-		if def.Sentiment == "bad" {
-			ge.addLog("warning", line)
-		} else {
-			ge.addLog("event", line)
-		}
-		ge.applyEventEffects(def)
+		ge.fireEvent(def)
 	}
 
 	for _, ae := range expired {
@@ -1634,6 +1625,35 @@ func (ge *GameEngine) processEvents() {
 		case "bad":
 			ge.applyMorale(-0.04)
 		}
+	}
+}
+
+// fireEvent applies a random event that has just triggered and logs it.
+// Under the write lock.
+func (ge *GameEngine) fireEvent(def config.EventDef) {
+	// The event's sizes become amounts for this town (event_size.go), and
+	// a timed event keeps them for as long as it lasts.
+	effects := ge.sizeEffects(def.Effects)
+	if def.Duration > 0 {
+		ge.Events.SetActiveEffects(def.Key, effects)
+	}
+	out, garrison := ge.applyEventEffects(def, effects)
+	// The log line states what the event did, with the real amounts, and
+	// how long a timed event lasts: its duration is stretched with the age
+	// (EventManager.Tick).
+	line := eventLine(def.LogMessage, out, ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
+	// Setbacks log as warnings so they don't read like windfalls.
+	if def.Sentiment == "bad" {
+		ge.addLog("warning", line)
+	} else {
+		ge.addLog("event", line)
+	}
+	// A gain is stated in full: say so when a full store took less.
+	if clipped := clippedLine(out.gained, out.fit); clipped != "" {
+		ge.addLog("info", clipped)
+	}
+	if garrison != "" {
+		ge.addLog("success", garrison)
 	}
 }
 
@@ -1921,6 +1941,14 @@ func (ge *GameEngine) recalculateRates() {
 	// 1.0+moraleMaxBonus when morale is high, down to moraleMinMult when low.
 	mMult := ge.moraleMultiplier()
 	production, workerOutput := ge.Buildings.productionWithWorkerOutput(ge.Workers.GetAssignedCount)
+	// A resource its own buildings unlock (ResourceDef.BuiltUnlocks:
+	// soldiers) is unlocked by the first standing building that makes it,
+	// whatever the age: a War Camp trains soldiers from the day it stands.
+	for _, def := range ge.Resources.defs {
+		if def.BuiltUnlocks && production[def.Key] > 0 && !ge.Resources.unlocked[def.Key] {
+			ge.Resources.UnlockResource(def.Key)
+		}
+	}
 	for res, rate := range production {
 		moraleRate := float64(rate * mMult)
 		r := ge.Resources.resources[res]
@@ -2135,10 +2163,10 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// A resource the age has not unlocked yet makes nothing. Its buildings
-	// can stand first (a War Camp or a Barracks before the Iron Age brings
-	// soldiers) and ApplyRates never adds to a locked store, so the rate they
-	// were given above was a fiction: the Army panel showed training under
-	// way and the stats counted soldiers nobody ever held.
+	// can stand first (a Uranium Mine two ages before uranium) and
+	// ApplyRates never adds to a locked store, so the rate they were given
+	// above was a fiction. (Soldiers are not such a resource: their own
+	// buildings unlock them, above.)
 	for _, def := range ge.Resources.defs {
 		if r := ge.Resources.resources[def.Key]; r != nil && !ge.Resources.unlocked[def.Key] {
 			r.Rate, r.Breakdown = 0, RateBreakdown{}
@@ -2647,9 +2675,8 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 			}
 		}
 	case "trade_winds":
-		// Flat +5 gold/tick for Duration ticks
-		ge.injectEpochEffects("epoch_trade_winds", ev,
-			[]config.Effect{{Type: "production", Target: "gold", Value: 5.0}})
+		// A share of the town's gold income for Duration ticks
+		ge.injectEpochRates("epoch_trade_winds", ev, "success", "")
 	case "cultural_festival":
 		// Instant culture +30%, faith +20%; timed production boost
 		culture := ge.gainResource("culture", ge.Resources.Get("culture")*0.30)
@@ -2657,10 +2684,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		if gained := Amounts(map[string]float64{"culture": culture, "faith": faith}); gained != "nothing" {
 			ge.addLog("success", fmt.Sprintf("  → +%s.", gained))
 		}
-		ge.injectEpochEffects("epoch_cultural_festival", ev, []config.Effect{
-			{Type: "production", Target: "culture", Value: 1.0},
-			{Type: "production", Target: "faith", Value: 1.0},
-		})
+		ge.injectEpochRates("epoch_cultural_festival", ev, "success", "")
 	case "grand_discovery":
 		// Complete 3 free techs from current age
 		completed := ge.Research.ForceCompleteN(3, ge.age, ageOrder)
@@ -2710,12 +2734,10 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 	ge.addLog("warning", fmt.Sprintf("⚠ %s. %s", ev.Name, ev.FlavorText))
 	switch ev.Key {
 	case "the_famine":
-		ge.injectEpochEffects("epoch_famine", ev,
-			[]config.Effect{{Type: "production", Target: "food", Value: -3.0}})
+		ge.injectEpochRates("epoch_famine", ev, "warning", "")
 	case "merchant_betrayal":
 		ge.loseShare("gold", 0.50)
-		ge.injectEpochEffects("epoch_merchant_betrayal", ev,
-			[]config.Effect{{Type: "production", Target: "gold", Value: -2.0}})
+		ge.injectEpochRates("epoch_merchant_betrayal", ev, "warning", "")
 	case "the_great_fire":
 		destroyed, _ := ge.Buildings.DestroyRandom(ge.gameRNG(), 8)
 		ge.releaseWorkersFrom(destroyed)
@@ -2734,39 +2756,66 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		if lost := before - ge.Workers.TotalPop(); lost > 0 {
 			ge.addLog("warning", fmt.Sprintf("  → %s lost.", textfmt.Count(lost, "worker", "workers")))
 		}
-		ge.injectEpochEffects("epoch_epidemic", ev,
-			[]config.Effect{{Type: "production", Target: "food", Value: -1.5}})
+		ge.injectEpochRates("epoch_epidemic", ev, "warning", "")
 	case "resource_drought":
 		// Debuff epoch's primary resource
 		primaryRes := "wood" // fallback
 		if ep, ok := ge.rules.Era(epochKey); ok {
 			primaryRes = ep.PrimaryResource
 		}
-		drought := []config.Effect{{Type: "production", Target: primaryRes, Value: -3.0}}
-		ge.injectEpochEffects("epoch_resource_drought", ev, drought)
-		// The text cannot name the resource (it depends on the epoch), so say it.
-		ge.logTimedEffects("warning", drought, ev.Duration)
+		// The text cannot name the resource (it depends on the epoch); the
+		// line under it does.
+		ge.injectEpochRates("epoch_resource_drought", ev, "warning", primaryRes)
 	case "political_instability":
 		ge.loseShare("faith", 0.60)
-		ge.injectEpochEffects("epoch_political_instability", ev, []config.Effect{
-			{Type: "production", Target: "knowledge", Value: -2.0},
-		})
+		ge.injectEpochRates("epoch_political_instability", ev, "warning", "")
 	case "economic_crash":
 		ge.loseShare("gold", 0.50)
-		ge.injectEpochEffects("epoch_economic_crash", ev,
-			[]config.Effect{{Type: "production", Target: "gold", Value: -3.0}})
+		ge.injectEpochRates("epoch_economic_crash", ev, "warning", "")
 	case "the_dark_age":
 		if tech, ok := ge.Research.CancelResearch(); ok {
 			ge.addLog("warning", fmt.Sprintf("  → Research on %s canceled (no refund).", ge.rules.Name(rules.KindTech, tech)))
 		}
 		ge.loseShare("knowledge", 0.80)
-		ge.injectEpochEffects("epoch_dark_age", ev,
-			[]config.Effect{{Type: "production", Target: "knowledge", Value: -3.0}})
+		ge.injectEpochRates("epoch_dark_age", ev, "warning", "")
 	}
 }
 
+// injectEpochRates starts an epoch event's timed rates (ev.Rates), sized
+// for this town (event_size.go), and logs the amounts they came to under
+// the event's headline: "  → Food -4.8/tick for ~10m." The flavor text
+// states each rate as a share of the town's production; this line is the
+// amount. primary stands in for a rate that names no resource (the era's
+// primary one). A rate that comes to nothing (a town that makes none of
+// the resource) starts nothing and logs nothing. Caller holds ge.mu.
+func (ge *GameEngine) injectEpochRates(key string, ev config.EpochEventDef, logType, primary string) {
+	rates := make([]config.Effect, 0, len(ev.Rates))
+	for _, r := range ev.Rates {
+		if r.Target == "" {
+			r.Target = primary
+		}
+		rates = append(rates, r)
+	}
+	effects := ge.sizeEffects(rates)
+	if len(effects) == 0 {
+		return
+	}
+	ge.injectEpochEffects(key, ev, effects)
+	// As the player sees them: the rates pass scales event output with
+	// the rest of the economy.
+	shown := make([]config.Effect, len(effects))
+	copy(shown, effects)
+	if k := ge.speedK(); k > 0 && k != 1 {
+		for i := range shown {
+			shown[i].Value = float64(shown[i].Value * k)
+		}
+	}
+	ge.logTimedEffects(logType, shown, ev.Duration)
+}
+
 // injectEpochEffects starts an epoch event's timed effects. It logs nothing:
-// the event's flavor text already states them. Caller holds ge.mu.
+// the event's flavor text already states them (a rate sized for the town
+// goes through injectEpochRates, which logs its amount). Caller holds ge.mu.
 func (ge *GameEngine) injectEpochEffects(key string, ev config.EpochEventDef, effects []config.Effect) {
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       key,

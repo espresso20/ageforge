@@ -21,6 +21,7 @@ const (
 	badgeModern     = "age.modern_age"
 	badgeHousing1   = "lineage.housing.1"
 	badgeHousing2   = "lineage.housing.2"
+	badgeCollector  = "special.collector" // 15 badges earned
 	badgeHutHoarder = "special.hut_hoarder"
 	badgeLate       = "special.fashionably_late"
 	badgeSale       = "special.liquidation_sale"

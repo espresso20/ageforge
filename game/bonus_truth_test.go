@@ -13,6 +13,7 @@ import (
 
 	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // The bonus truth guard.
@@ -1085,6 +1086,62 @@ var truthKinds = map[string]truthKind{
 			return truthMeasured{Delivered: d, Noise: noise, Allowed: meterIs("stock:" + p.Eff.Target)}
 		},
 	},
+	// An event's gain: V minutes of the town's own income of the resource,
+	// at once (config.EventGain). Read in minutes, off the amount V minutes
+	// come to in this town.
+	"event_gain": {
+		Unit: "minutes of income",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			key := "stock:" + p.Eff.Target
+			want := config.EventSize(p.Eff, ge.eventTown(p.Eff.Target, false))
+			if want <= 0 {
+				return truthMeasured{Skip: "the town makes none of it and the age has no typical income of it"}
+			}
+			d, noise := truthDiff(before, after, key)
+			per := want / p.Eff.Value
+			return truthMeasured{Delivered: d / per, Noise: noise / per, Allowed: meterIs(key)}
+		},
+	},
+	// An event's loss: the share V of what the town holds (config.EventLoss,
+	// no garrison in the lab). Read as a share, off the amount that share
+	// comes to in this town.
+	"event_loss": {
+		Unit: "share of the stock",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			key := "stock:" + p.Eff.Target
+			town := ge.eventTown(p.Eff.Target, false)
+			town.Stock = before[key]
+			want := config.EventSize(p.Eff, town)
+			if want <= 0 {
+				return truthMeasured{Skip: "the store is empty"}
+			}
+			d, noise := truthDiff(before, after, key)
+			// A raid's take is cut by the techs' share before it lands
+			// (config.MechanicRaidLoss); any other loss is taken whole.
+			cut := 1.0
+			if p.Raid {
+				cut = ge.raidLossFactor()
+			}
+			per := want / p.Eff.Value * cut
+			return truthMeasured{Delivered: -d / per, Noise: noise / per, Allowed: meterIs(key)}
+		},
+	},
+	// An event's timed rate: the share V of the town's own income of the
+	// resource, each tick (config.EventRate). Read as a share, off the
+	// amount per tick that share comes to in this town.
+	"event_rate": {
+		Unit: "share of income per tick",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			key := "rate:" + p.Eff.Target
+			want := config.EventSize(p.Eff, ge.eventTown(p.Eff.Target, true))
+			if want == 0 {
+				return truthMeasured{Skip: "the town makes none of it"}
+			}
+			d, noise := truthDiff(before, after, key)
+			per := want / p.Eff.Value * ge.speedK()
+			return truthMeasured{Delivered: d / per, Noise: math.Abs(noise / per), Allowed: meterIs(key)}
+		},
+	},
 	// "Up to V <resource>" lost at once (no garrison in the lab).
 	"steal": {
 		Unit: "taken from the store",
@@ -1292,6 +1349,18 @@ func truthEffectKind(source string, e config.Effect) string {
 	case "steal_resource":
 		if isRes(e.Target) {
 			return "steal"
+		}
+	case config.EventGain:
+		if isRes(e.Target) {
+			return "event_gain"
+		}
+	case config.EventLoss:
+		if isRes(e.Target) {
+			return "event_loss"
+		}
+	case config.EventRate:
+		if isRes(e.Target) {
+			return "event_rate"
 		}
 	case "worker_loss":
 		return "worker_loss"
@@ -1501,6 +1570,12 @@ func truthEffectText(e config.Effect) string {
 		return fmt.Sprintf("%+g %s at once", e.Value, ResourceName(e.Target))
 	case "steal_resource":
 		return fmt.Sprintf("up to %g %s lost", e.Value, ResourceName(e.Target))
+	case config.EventGain:
+		return fmt.Sprintf("%g minutes of %s income at once", e.Value, ResourceName(e.Target))
+	case config.EventLoss:
+		return fmt.Sprintf("%g%% of your %s lost", e.Value*100, ResourceName(e.Target))
+	case config.EventRate:
+		return fmt.Sprintf("%+g%% of your %s income a tick", e.Value*100, ResourceName(e.Target))
 	case "worker_loss":
 		return fmt.Sprintf("%g%% of your workers lost", e.Value*100)
 	case "morale":
@@ -1753,10 +1828,11 @@ func truthEventSwitch(ge *GameEngine, def config.EventDef, eff config.Effect) tr
 		on: func() {
 			one := def
 			one.Effects = []config.Effect{eff}
+			sized := ge.sizeEffects(one.Effects)
 			if one.Duration > 0 {
-				ge.Events.active = append(ge.Events.active, ActiveEvent{Key: one.Key, Name: one.Name, TicksLeft: one.Duration, Effects: one.Effects})
+				ge.Events.active = append(ge.Events.active, ActiveEvent{Key: one.Key, Name: one.Name, TicksLeft: one.Duration, Effects: sized})
 			}
-			ge.applyEventEffects(one)
+			ge.applyEventEffects(one, sized)
 		},
 		restore: func() {},
 	}
@@ -1806,16 +1882,13 @@ func truthAwakeningPromises() []truthPromise {
 	return out
 }
 
-var (
-	truthAllRe  = regexp.MustCompile(`[Aa]ll production ([+-]\d+)%`)
-	truthFlatRe = regexp.MustCompile(`([A-Za-z][a-z ]*?) ([+-][\d.]+)/tick`)
-)
+var truthAllRe = regexp.MustCompile(`[Aa]ll production ([+-]\d+)%`)
 
-// truthEpochEventPromises reads the rate promises out of every epoch
-// event's own text ("All production +100%", "Gold +5/tick") and measures
-// them with the whole event applied through the engine's own step. The
-// events are code, not data, so the text is the only statement of what they
-// do.
+// truthEpochEventPromises reads the rate promises of every epoch event:
+// "All production +100%" out of its own text, and its timed rates
+// (EpochEventDef.Rates, "Gold production +50%") from its definition, which
+// the text must state. It measures them with the whole event applied
+// through the engine's own step.
 func truthEpochEventPromises(t *testing.T) []truthPromise {
 	var out []truthPromise
 	labels := map[string]string{}
@@ -1876,32 +1949,25 @@ func truthEpochEventPromises(t *testing.T) []truthPromise {
 					Text: m[0], Kind: "all_production", wire: wire,
 				})
 			}
-			for _, m := range truthFlatRe.FindAllStringSubmatch(def.FlavorText, -1) {
-				v, _ := strconv.ParseFloat(m[2], 64)
-				// The words before the number end in the resource's name:
-				// "then culture", "and faith", "Gold".
-				words := strings.Fields(strings.ToLower(m[1]))
-				name, res, ok := strings.Join(words, " "), "", false
-				for i := range words {
-					if res, ok = labels[strings.Join(words[i:], " ")]; ok {
-						break
-					}
-				}
-				if name == "its production" {
+			// The timed rates are data (EpochEventDef.Rates): a share of the
+			// town's own production each. The text must state the share.
+			for _, rate := range def.Rates {
+				res, label := rate.Target, strings.ToLower(ResourceName(rate.Target))
+				if res == "" {
 					// "The epoch's main building material": the era's own.
-					res, ok = config.EpochByKey()[config.EpochForAge(age)].PrimaryResource, true
+					res, label = config.EpochByKey()[config.EpochForAge(age)].PrimaryResource, "its"
 				}
-				if ok && def.Key == "cultural_festival" {
+				if def.Key == "cultural_festival" {
 					age = entryFor("culture")
 				}
-				if !ok {
-					t.Errorf("epoch event %s promises %q, and %q is no resource: word it as \"<Resource> +N/tick\"", def.Key, m[0], name)
-					continue
+				said := label + " production " + textfmt.SignedPercent(rate.Value)
+				if !strings.Contains(strings.ToLower(def.FlavorText), said) {
+					t.Errorf("epoch event %s changes a rate by %q, and its text does not say so: %q", def.Key, said, def.FlavorText)
 				}
+				rate.Target = res
 				out = append(out, truthPromise{
 					Source: "epoch event", Key: def.Key, Name: def.Name, Age: age, Count: 1,
-					Eff:  config.Effect{Type: "production", Target: res, Value: v},
-					Text: m[0], Kind: "flat_rate", wire: wire,
+					Eff: rate, Text: said, Kind: "event_rate", wire: wire,
 				})
 			}
 			// The promises of one event are measured together, in one age,
@@ -2225,7 +2291,7 @@ func truthPoolResource(p truthPromise) string {
 // is not about one resource's rate or stock).
 func truthPaidIn(p truthPromise) string {
 	switch p.Kind {
-	case "flat_rate", "building_output", "instant", "steal", "drain", "boon_drain":
+	case "flat_rate", "building_output", "instant", "steal", "drain", "boon_drain", "event_gain", "event_loss", "event_rate":
 		return p.Eff.Target
 	}
 	return truthPoolResource(p)
@@ -2244,8 +2310,12 @@ func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
 	// reads. A promise that says it is for later is measured from the age
 	// its resource unlocks in; any other is one the game cannot keep.
 	if res := truthPaidIn(p); res != "" {
-		unlock := config.ResourceByKey()[res].Age
-		if ageOrders()[unlock] > ageOrders()[p.Age] {
+		def := config.ResourceByKey()[res]
+		unlock := def.Age
+		// A resource its own buildings unlock (soldiers) is made by the
+		// first of them, whatever the age.
+		selfUnlocked := def.BuiltUnlocks && p.Kind == "building_output"
+		if ageOrders()[unlock] > ageOrders()[p.Age] && !selfUnlocked {
 			if !p.Later {
 				v.Class, v.Note = truthLocked, ResourceName(res)+" is locked until "+AgeName(unlock)+", and nothing in the text says so"
 				return v

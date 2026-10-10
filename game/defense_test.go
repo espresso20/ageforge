@@ -143,7 +143,7 @@ func TestRaidEvent_StealBluntedByGarrison(t *testing.T) {
 			giveSoldiers(ge, soldiers)
 		}
 		f, g := ge.Resources.Get("food"), ge.Resources.Get("gold")
-		ge.applyEventEffects(def)
+		ge.fireEvent(def)
 		return f - ge.Resources.Get("food"), g - ge.Resources.Get("gold"), ge
 	}
 	food0, gold0, ge0 := run(0)
@@ -180,7 +180,7 @@ func TestRaidEvent_WorkerLossBlunted(t *testing.T) {
 		if soldiers > 0 {
 			giveSoldiers(ge, soldiers)
 		}
-		ge.applyEventEffects(def)
+		ge.fireEvent(def)
 		return 100 - ge.Workers.TotalPop()
 	}
 	base, guarded := run(0), run(soldiersFor("iron_age"))
@@ -204,7 +204,7 @@ func TestNonRaidEventIgnoresGarrison(t *testing.T) {
 		if soldiers > 0 {
 			giveSoldiers(ge, soldiers)
 		}
-		ge.applyEventEffects(def)
+		ge.fireEvent(def)
 		return ge.Resources.Get("wood")
 	}
 	if a, b := run(0), run(1e6); a != b {
@@ -264,13 +264,17 @@ func TestWarRaid_GarrisonNeverMakesAMissLand(t *testing.T) {
 func TestRaidEvent_LogsActualLosses(t *testing.T) {
 	ge := catEngine(t, "iron_age", 1)
 	ge.Resources.UnlockResource("gold")
-	ge.Resources.AddStorage("food", 10000)
-	ge.Resources.AddStorage("gold", 10000)
-	ge.Resources.Add("food", 1000)
-	ge.Resources.Add("gold", 1000)
-	ge.applyEventEffects(eventDef(t, "bandit_raid"))
-	if !logHas(ge, "You lost 10 food and 5 gold.") {
+	ge.Resources.AddStorage("food", 1e6)
+	ge.Resources.AddStorage("gold", 1e6)
+	ge.Resources.Add("food", 200000-ge.Resources.Get("food"))
+	ge.Resources.Add("gold", 100000-ge.Resources.Get("gold"))
+	// The raid takes 8% of each stock, and the line says what that came to.
+	ge.fireEvent(eventDef(t, "bandit_raid"))
+	if !logHas(ge, "Lost 16K food and 8K gold.") {
 		t.Error("bandit raid does not log the amounts it took")
+	}
+	if got := ge.Resources.Get("food"); math.Abs(got-184000) > 1e-6 {
+		t.Errorf("food after the raid = %v, want 184000", got)
 	}
 }
 
@@ -446,7 +450,7 @@ func TestDefenseTally_SaveLoad(t *testing.T) {
 	giveSoldiers(ge, soldiersFor("iron_age"))
 	ge.Resources.AddStorage("food", 10000)
 	ge.Resources.Add("food", 1000)
-	ge.applyEventEffects(eventDef(t, "bandit_raid"))
+	ge.fireEvent(eventDef(t, "bandit_raid"))
 	want := ge.Stats.Defense.clone()
 	if want == nil || want.Raids != 1 {
 		t.Fatalf("tally before save = %+v", want)

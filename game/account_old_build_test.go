@@ -188,7 +188,7 @@ func TestOldBuildAchievementsBecomeBadges(t *testing.T) {
 	if acct.Tampered || acct.BadgesTampered {
 		t.Fatalf("the account reads as modified after the older build played it (account %v, badge file %v)", acct.Tampered, acct.BadgesTampered)
 	}
-	want := append(ageBadges("modern_age"), badgePrestige1, badgePrestige3, badgePrestige10, badgeHousing1)
+	want := append(ageBadges("modern_age"), badgePrestige1, badgePrestige3, badgePrestige10, badgeHousing1, badgeCollector)
 	slices.Sort(want)
 	if got := acct.EarnedBadges(); !slices.Equal(got, want) {
 		t.Fatalf("badges %v, want %v", got, want)
