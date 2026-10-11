@@ -230,7 +230,7 @@ Spending faith lowers the share of your faith you have kept, and your [faith str
 
 Brace spends the materials your age makes. Level 1 costs a third of what a moderate economy makes of each of them during the doom's shortest warning: a fifth of the age the harbinger arrives in, so a fifteenth of what that age makes. That is 27 minutes of income in the Iron Age and about four hours in the Space Age: the effort grows with the age, as the warning does.
 
-- **The materials** are the era's core resources (the ones its advances ask for, that you already had when the era began, with faith and culture left out) that the buildings of a moderate economy make by then. The Modern Age buys its data at the market, so a harbinger who arrives there asks for gold and electricity only. Nothing but a wonder makes crypto, so no Neon Era harbinger asks for it.
+- **The materials** come from a written list for each era, and of that list only the ones the buildings of a moderate economy make by then. The Iron Era's list is gold, iron and stone. The Steel Era's is gold and steel. The Electric Era's is electricity, oil and steel. The Digital Era's is data, electricity and gold. The Neon Era's is data and electricity. The Cosmic Era's is dark matter and titanium. The Modern Age buys its data at the market, so a harbinger who arrives there asks for gold and electricity only. The Stone Era has no list: nothing can strike there.
 - **A moderate economy** is five fully staffed copies of every producer so far, with the bonuses a typical player holds by then: the same measure Appease uses for faith.
 - The price belongs to the thread, like Appease's: it is set from the age the harbinger arrives in and keeps that price through every age the thread lives in.
 - Level 2 costs the same again as level 1.
@@ -267,21 +267,21 @@ Both answers are priced by the age the harbinger arrives in, and keep that price
 | Era | Harbinger arrives in | Brace (level 1) | Hours of income | Appease (level 1) | The warning lasts |
 |-----|----------------------|-----------------|-----------------|-------------------|-------------------|
 | Stone Era | any age | refused: nothing can strike there | | refused | |
-| Iron Era | Iron Age | 37K stone, 170K iron, 140K gold | 27 min | 1.6K faith | 1.3 h to 3.9 h |
-| | Classical Age | 51K stone, 680K iron, 680K gold | 37 min | 2.7K faith | 1.8 h to 5.5 h |
-| | Medieval Age | 66K stone, 2.8M iron, 2.8M gold | 47 min | 5K faith | 2.3 h to 7.0 h |
-| Steel Era | Renaissance Age | 16M gold, 4.5M steel | 1.0 h | 11K faith, 96K culture | 3.1 h to 9.4 h |
-| | Colonial Age | 190M gold, 69M steel | 1.2 h | 32K faith, 240K culture | 3.6 h to 10.9 h |
-| | Industrial Age | 1.2B gold, 1.2B steel | 41 min | 110K faith, 1.1M culture | 4.2 h to 12.5 h |
-| Electric Era | Victorian Age | 5.1B steel, 1.4B oil, 1.7M electricity | 1.7 h | 210K faith, 2.5M culture | 4.7 h to 14.0 h |
-| | Electric Age | 21B steel, 4.6B oil, 21B electricity | 1.8 h | 500K faith, 6.3M culture | 5.2 h to 15.6 h |
-| | Atomic Age | 90B steel, 6.1B oil, 90B electricity | 2.1 h | 1.2M faith, 17M culture | 6.2 h to 18.7 h |
-| Digital Era | Modern Age | 420B gold, 420B electricity | 1.2 h | 2.6M faith, 36M culture | 6.2 h to 18.7 h |
-| | Information Age | 7.3T gold, 7.3T electricity, 590B data | 2.4 h | 6.2M faith, 92M culture | 7.3 h to 21.8 h |
-| | Digital Age | 15T gold, 15T electricity, 2.4T data | 2.8 h | 16M faith, 230M culture | 8.3 h to 25.0 h |
-| Neon Era | Cyberpunk Age | 81T electricity, 8.1T data | 3.1 h | 34M faith, 510M culture | 9.4 h to 28.1 h |
-| | Fusion Age | 190T electricity, 9.4T data | 3.5 h | 76M faith, 1.2B culture | 10.4 h to 31.2 h |
-| | Space Age | 790T electricity, 11T data | 3.9 h | 170M faith, 2.7B culture | 11.4 h to 34.3 h |
+| Iron Era | Iron Age | 37K stone, 99K iron, 99K gold | 27 min | 1.6K faith | 1.3 h to 3.9 h |
+| | Classical Age | 51K stone, 760K iron, 900K gold | 37 min | 2.7K faith | 1.8 h to 5.5 h |
+| | Medieval Age | 66K stone, 3.1M iron, 3.1M gold | 47 min | 5K faith | 2.3 h to 7.0 h |
+| Steel Era | Renaissance Age | 14M gold, 4.5M steel | 1.0 h | 11K faith, 96K culture | 3.1 h to 9.4 h |
+| | Colonial Age | 62M gold, 62M steel | 1.1 h | 32K faith, 240K culture | 3.6 h to 10.9 h |
+| | Industrial Age | 280M gold, 280M steel | 10 min | 110K faith, 1.1M culture | 4.2 h to 12.5 h |
+| Electric Era | Victorian Age | 2.8B steel, 1.4B oil, 1.7M electricity | 1.7 h | 210K faith, 2.5M culture | 4.7 h to 14.0 h |
+| | Electric Age | 27B steel, 4.6B oil, 22B electricity | 1.8 h | 500K faith, 6.3M culture | 5.2 h to 15.6 h |
+| | Atomic Age | 230B steel, 6.1B oil, 170B electricity | 2.1 h | 1.2M faith, 17M culture | 6.2 h to 18.7 h |
+| Digital Era | Modern Age | 960B gold, 750B electricity | 2.1 h | 2.6M faith, 36M culture | 6.2 h to 18.7 h |
+| | Information Age | 2.5T gold, 2.5T electricity, 590B data | 2.4 h | 6.2M faith, 92M culture | 7.3 h to 21.8 h |
+| | Digital Age | 16T gold, 16T electricity, 2.4T data | 2.8 h | 16M faith, 230M culture | 8.3 h to 25.0 h |
+| Neon Era | Cyberpunk Age | 67T electricity, 8.1T data | 3.1 h | 34M faith, 510M culture | 9.4 h to 28.1 h |
+| | Fusion Age | 240T electricity, 9.4T data | 3.5 h | 76M faith, 1.2B culture | 10.4 h to 31.2 h |
+| | Space Age | 1.2Q electricity, 11T data | 3.9 h | 170M faith, 2.7B culture | 11.4 h to 34.3 h |
 | Cosmic Era: the Reality Tear | Interstellar Age | 4.8Q titanium, 5.1Q dark matter | 10.4 h | 380M faith, 5.8B culture | 12.5 h to 37.4 h |
 | | Galactic Age | 5.1Q titanium, 61Q dark matter | 10.5 h | 780M faith, 13B culture | 12.5 h to 37.4 h |
 | | Quantum Age | 5.3Q titanium, 63Q dark matter | 10.5 h | 1.7B faith, 27B culture | 12.5 h to 37.4 h |
@@ -385,7 +385,7 @@ The Cosmic Era's threads got there first. Both once shared the era's price, 12% 
 
 Second levels cost the same again as the first, in every era. They used to cost double, and a second level bought less for more: per hour of income the Last Passage's Brace level 2 saved three eighths of what level 1 did, and any thread's Appease level 2 three tenths. At the same price they save three quarters and three fifths, and a doom's Brace level 2 softens an Endure by as much as level 1 for the same price. The Cosmic Era's threads changed first; every other era's followed.
 
-**Brace or Appease against a doom.** Appease level 1 takes two fifths off the chance the doom strikes. Brace level 1 softens the Endure if it does: a quarter of the buildings that would fall stand, and you keep 30% of your stock in place of 15%. Appease is the dearer (three quarters of the shortest warning in faith and culture, against a third of it in materials), and per hour of income it saves about seven tenths of what Brace does. In the Industrial and Modern Ages, where the ceiling holds every material of the price, Brace takes about a sixth of the warning and Appease saves a third to two fifths of what it does per hour: Brace is the plain bargain there. They are paid in different resources, so a town that keeps faith buildings and producers both running can hold both.
+**Brace or Appease against a doom.** Appease level 1 takes two fifths off the chance the doom strikes. Brace level 1 softens the Endure if it does: a quarter of the buildings that would fall stand, and you keep 30% of your stock in place of 15%. Appease is the dearer (three quarters of the shortest warning in faith and culture, against a third of it in materials), and per hour of income it saves about seven tenths of what Brace does. In the Industrial Age, where the ceiling holds every material of the price, Brace costs only 10 minutes of income: it is the plain bargain there. They are paid in different resources, so a town that keeps faith buildings and producers both running can hold both.
 
 ---
 

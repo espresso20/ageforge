@@ -46,10 +46,10 @@ Balance values are *defined* in ticks (a tech costs so many ticks of research, a
 
 | Command | Description |
 |---|---|
-| `build <building> [count\|max]` | Start constructing a building (default 1; `max` builds as many as you can afford, up to the building's limit) |
+| `build <building> [count\|max]` | Start constructing a building (default 1; `max` builds as many as you can afford, up to the building's limit). A price larger than a store can hold cannot be bought: the game says so and names the storage building to build. The age's wonder is the one exception |
 | `sell <building> [count]` | Demolish copies of a building and get back 50% of what they cost; their workers go back to idle. Wonders and storage can't be sold, nothing can be sold in the Primitive Age, and a building with a copy under construction can't be sold until it finishes. A refund your storage can't hold is lost. |
 | `upgrade` | List the buildings you can upgrade now, with the cost of upgrading every copy |
-| `upgrade <building> [count\|all]` | Turn copies of a building into the next age's tier of the same line. With no count it upgrades all copies. Each copy costs the new building's price minus what the old copy would sell for (half of what it cost), resource by resource and never below zero. It stops at the new building's max count. Storage buildings are never upgraded; older storage keeps counting. |
+| `upgrade <building> [count\|all]` | Turn copies of a building into the next age's tier of the same line. With no count it upgrades all copies. Each copy costs the new building's price minus what the old copy would sell for (half of what it cost), resource by resource and never below zero. It stops at the new building's max count, and a price larger than a store can hold cannot be paid. Storage buildings are never upgraded; older storage keeps counting. |
 | `advance` | Advance to the next age once its requirements are met. The age never advances by itself (see `plan advance` to queue it) |
 | `gather <food\|wood\|stone> [amount]` | Gather food, wood or stone by hand: 3 by default, at most 25 per use. With Tool Making researched every gather brings 2 more. Not available after the Medieval Age. |
 | `buildings` | Open the **Buildings** panel |
@@ -73,7 +73,7 @@ See [Buildings](buildings.md) and [Ages](ages.md).
 
 ## Build Plan
 
-A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, not counting research, and what a full store would throw away (after the wonder's share) is banked toward its items' next copies. Full rules on the [Build Plan](plan.md) page. With the prestige legacy kit's [Plan Template](prestige.md#plan-template), later runs add each age's part of the plan you wrote when they enter that age.
+A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, not counting research, and an item whose price is larger than a store cannot start (it reads `blocked  needs more <resource> storage`). Full rules on the [Build Plan](plan.md) page. With the prestige legacy kit's [Plan Template](prestige.md#plan-template), later runs add each age's part of the plan you wrote when they enter that age.
 
 | Command | Description |
 |---|---|
@@ -84,7 +84,7 @@ A list of builds and techs the game starts for you, in order, as the resources c
 | `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too; they wait for the advance. |
 | `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as you can pay its price. While it waits it holds its price back from the items below, and it drops out if the offer rotates away. See [Factions & Diplomacy](factions.md). |
 | `plan list` | Print the plan with each item's status |
-| `plan remove <n>` (or `plan rm`) | Remove item `n` (what overflow banked for it goes back to your stores, up to their caps) |
+| `plan remove <n>` (or `plan rm`) | Remove item `n` |
 | `plan up <n>` | Move item `n` one place up |
 | `plan down <n>` | Move item `n` one place down |
 | `plan clear` | Empty the plan |
@@ -211,7 +211,7 @@ Keys with underscores can be typed with spaces: `expedition scout ruins` is the 
 |---|---|
 | `trade` | Open the **Trade** panel |
 | `trade list` | List the market's exchange rates (build a market first) |
-| `trade <give> <get> <amount to give>` | Sell that amount of `<give>` for `<get>` at the market rate (needs a market or a later trade building). `trade wood stone 100` sells 100 wood for stone |
+| `trade <give> <get> <amount to give>` | Sell that amount of `<give>` for `<get>` at the market rate (needs a market or a later trade building). `trade wood stone 100` sells 100 wood for stone. If the `<get>` store has room for less than the sale pays, only what fits is sold and you are charged for that; into a full store it refuses with `<Resource> storage is full.` and charges nothing |
 | `trade route` (or `trade route list`) | List your active trade routes and the routes you can start |
 | `trade route start <route>` | Start a trade route. Routes wait for The Wheel, a Bronze Age tech |
 | `trade route stop <route>` | Stop an active trade route |
@@ -268,7 +268,7 @@ You meet civilizations by running scouting expeditions, not by building anything
 | `wonder collect <res\|all> [amt\|all\|max]` (or `wonder bank …`) | Bank a resource toward the current wonder. With an amount, bank that much (at most what the wonder still needs). With `all`, `max` or no amount, bank as much as it still needs, up to what you have. `wonder collect all` does this for every resource the wonder still needs |
 | `wonder overflow` | Show whether overflow is on |
 | `wonder overflow on` | Bank what full stores would waste into the current wonder (the default) |
-| `wonder overflow off` | Stop banking overflow into a wonder you have not planned. A wonder in your [build plan](plan.md#overflow-pays-the-plan) still takes overflow; without one, production over a storage cap is lost |
+| `wonder overflow off` | Stop banking overflow into the wonder. Production over a storage cap is lost |
 | `build <wonder>` | Build the wonder once its bank is full and its [keystone tech](wonders.md#the-keystone-tech) is researched |
 | `wonders` | Open the **Wonders** panel: a progress bar for each required resource, and a sprite of each completed wonder |
 
@@ -281,7 +281,7 @@ build great_monolith
 
 A deposit says how much went in and the bank's new total. When nothing can go in, the command says why: the wonder is already built, it doesn't need that resource (and which ones it does), that part of the bank is already full, you have none on hand, or you asked for more than you have. `wonder bank all` banks what it can and lists what it skipped.
 
-**Overflow.** While overflow is on, production that a full store would throw away goes into the current age's wonder bank instead, for every resource the wonder still needs and only up to what it still needs. It never takes from what you hold, and works during offline catch-up too. What the wonder doesn't need goes toward your build plan's queued copies (see [Build Plan](plan.md#overflow-pays-the-plan)). See [Wonders](wonders.md).
+**Overflow.** While overflow is on, production that a full store would throw away goes into the current age's wonder bank instead, for every resource the wonder still needs and only up to what it still needs. It never takes from what you hold, and works during offline catch-up too. The bank fills to the wonder's price and stops; after that, and once the wonder is built, the surplus is lost, as it is while overflow is off. It does not pay toward the build plan. See [Wonders](wonders.md).
 
 ---
 

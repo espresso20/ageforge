@@ -153,9 +153,11 @@ What Geological Extraction is good for is stone (up to the Bronze Age), uranium 
 
 ## Resource Storage
 
-Every resource has a small base storage (10 to 50). **Storage buildings** raise the cap of every resource at once: one per age from the Stash to the Quantum Vault, up to 25 copies each (50 Stashes). A few technologies raise every cap too, culture buildings add culture storage, and military buildings add soldier storage. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table.
+Every resource has a small base storage (10 to 50). **Storage buildings** raise the cap of every resource at once: one per age from the Stash to the Quantum Vault, with no limit on copies. Each copy costs 1.75 times the one before it. A few technologies raise every cap too, culture buildings add culture storage, and military buildings add soldier storage. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table.
 
-**How much it holds.** A full stack of an age's storage, with every earlier age's, holds at least **4.5 hours** of that age's typical production of each resource its buildings cost, from the Bronze Age on. The Primitive and Stone Ages hold an hour and a half: they fill fast and are meant to. Four techs raise every store by a percentage (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each), and the 4.5 hours count them. A player who checks in every few hours loses little to a full store. On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production, so a store still holds the same hours of income.
+**How much it holds.** Each age's storage building is sized by one written rule: five copies of it, on top of the stores of the earlier ages, hold the dearest single price the age asks of a full town, with a quarter to spare. Every age gate asks for five copies of the storage building of the age you are leaving. Four techs raise every store by a percentage (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each). On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production.
+
+**Storage is a wall.** A building or an upgrade whose price in any one resource is larger than that resource's store cannot be bought, by `build`, `build <n>`, `build max`, `upgrade` or the [build plan](plan.md). The game says so and names the storage building to build. The age's wonder is the one exception: it is paid through its bank. See [Storage is a wall](buildings.md#storage-is-a-wall).
 
 **Storage is permanent.**
 
@@ -164,7 +166,9 @@ Every resource has a small base storage (10 to 50). **Storage buildings** raise 
 - It can't be sold.
 - Catastrophes don't destroy it.
 
-**Production a full store would waste goes somewhere useful first.** It goes into the current age's [wonder](wonders.md#overflow) bank, up to what the wonder still needs, then into your [build plan](plan.md#overflow-pays-the-plan), toward the next copy of each queued building in plan order. Only what neither needs is lost. This works during offline catch-up too.
+**What a full store cannot hold** goes into the current age's [wonder](wonders.md#overflow) bank while wonder overflow is on, up to what the wonder still needs, and is otherwise lost. It does not pay toward the build plan. This works during offline catch-up too.
+
+**Gains that meet a full store.** Expedition and campaign loot, black market wins, event gains, milestone rewards and the Ancient Cache lose what does not fit, and the log says `Storage was nearly full: only ... fit.` A sold building's refund loses what does not fit too. A market sale into a store with room for part of it sells only what fits and charges only for that; into a full store it refuses with `<Resource> storage is full.` and charges nothing.
 
 **Priority:** build this age's storage early in every age. Late resources (plasma, titanium, dark matter, antimatter, quantum flux) start at 10 to 30 storage and fill almost at once without it.
 
