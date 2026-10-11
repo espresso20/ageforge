@@ -958,6 +958,20 @@ func (a *Account) countableBadges(book *badgeBook) int {
 	return n
 }
 
+// BadgesEarnedSince is how many badges the account earned at or after t.
+// Badges from before badges were dated are never counted.
+func (a *Account) BadgesEarnedSince(t time.Time) int {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	since, n := t.Unix(), 0
+	for _, b := range a.Badges {
+		if b.At != 0 && b.At >= since {
+			n++
+		}
+	}
+	return n
+}
+
 // EarnedBadges returns the keys of the badges the account holds, sorted.
 func (a *Account) EarnedBadges() []string {
 	a.mu.Lock()

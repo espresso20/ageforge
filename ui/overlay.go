@@ -58,7 +58,9 @@ type OverlayManager struct {
 	// settings at once; without it the next Refresh brings the state.
 	seen    *game.GameState
 	arrival *arrival
-	engine  *game.GameEngine
+	// film is the film of a run's ending while it plays (ending.go).
+	film   *ending
+	engine *game.GameEngine
 	// after, when set, is how the arrival screen sets its timers (tests hold
 	// them); nil means the clock.
 	after func(d time.Duration, fn func()) (cancel func())
@@ -256,6 +258,17 @@ func (om *OverlayManager) dropArrival() {
 		om.arrival = nil
 		a.close()
 	}
+	if e := om.film; e != nil {
+		om.film = nil
+		e.close()
+	}
+}
+
+// FullScreenUp reports whether the arrival screen or the film of a run's
+// ending has the whole screen: the dashboard holds its own windows back
+// until it is gone.
+func (om *OverlayManager) FullScreenUp() bool {
+	return om.active == arrivalPageName || om.active == endingPageName
 }
 
 // arrivalKey gives a key press to the arrival screen when it is the overlay
@@ -263,11 +276,16 @@ func (om *OverlayManager) dropArrival() {
 // screen as a key like any other (see the app's input capture): the
 // dashboard would answer Esc with Hide before the screen saw it.
 func (om *OverlayManager) arrivalKey() bool {
-	if om == nil || om.arrival == nil || om.active != arrivalPageName {
-		return false
+	switch {
+	case om == nil:
+	case om.arrival != nil && om.active == arrivalPageName:
+		om.arrival.key()
+		return true
+	case om.film != nil && om.active == endingPageName:
+		om.film.key()
+		return true
 	}
-	om.arrival.key()
-	return true
+	return false
 }
 
 // FocusOn makes p hold the keyboard while the active overlay shows, in place
@@ -299,6 +317,9 @@ func (om *OverlayManager) Refresh(state game.GameState) {
 	om.seen = &state
 	if om.arrival != nil {
 		om.arrival.feed(prev, &state)
+	}
+	if om.film != nil {
+		om.film.feed(prev, &state)
 	}
 	if om.active == "" {
 		return

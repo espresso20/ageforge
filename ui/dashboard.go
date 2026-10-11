@@ -59,13 +59,17 @@ type Dashboard struct {
 	workerMiniTV  *fitView
 
 	// Shared UI
-	logTV               *tview.TextView
-	statusTV            *fitView
-	ageTV               *fitView
-	inputField          *commandInput
-	lastAge             string
-	pendingAgeSplash    string // set by bus handler, consumed by refresh()
-	pendingEpochChanged bool   // whether the pending age advance also crossed an epoch boundary
+	logTV            *tview.TextView
+	statusTV         *fitView
+	ageTV            *fitView
+	inputField       *commandInput
+	lastAge          string
+	pendingAgeSplash string // set by bus handler, consumed by refresh()
+	// pendingEnding is the record of a run that just ended (a prestige, a
+	// fall), set by the bus handler and taken by refresh(), which plays its
+	// film. Atomic: the handler runs wherever the engine was called from.
+	pendingEnding       atomic.Pointer[game.RunEnding]
+	pendingEpochChanged bool // whether the pending age advance also crossed an epoch boundary
 	toastMgr            *ToastManager
 	toastTV             *tview.TextView
 	toastW              int // the toast bar's width as last drawn; 0 before that
@@ -361,6 +365,12 @@ func (d *Dashboard) build() {
 			epochIcon = "✦"
 		}
 		d.toastMgr.Show(fmt.Sprintf("%s %s dawns", epochIcon, epochName), "gold", 6*time.Second)
+	})
+	d.engine.Bus.Subscribe(game.EventRunEnded, func(e game.EventData) {
+		// Runs under the engine write lock: the payload only.
+		if end, ok := e.Payload["ending"].(game.RunEnding); ok {
+			d.pendingEnding.Store(&end)
+		}
 	})
 	d.engine.Bus.Subscribe(game.EventHarbingerArrived, func(e game.EventData) {
 		// Runs under the engine write lock: payload and the toast queue only.
@@ -775,14 +785,23 @@ func (d *Dashboard) refresh() {
 
 		ShowAgeSplashFull(d.overlayMgr, oldAge, newAge, summary, epochChanged, epochEvent)
 	}
+	// A run that just ended (a prestige, a fall): its film, before the
+	// overlay manager is given the new run's state below, so that what it
+	// last saw is still the town that was given up.
+	if end := d.pendingEnding.Swap(nil); end != nil {
+		ShowRunEnding(d.overlayMgr, *end)
+	}
 
 	state := d.engine.GetState()
 	d.lastState = &state
 
 	// Badges earned since the last refresh: a toast and a log line each, and a
 	// line for the theme a badge gives. Here, in the UI goroutine: outside the
-	// engine lock, never in a Bus handler.
-	d.announceBadges()
+	// engine lock, never in a Bus handler. They wait for the film of a run's
+	// ending, which covers the toast bar, and are told when it is over.
+	if d.overlayMgr.ActiveName() != endingPageName {
+		d.announceBadges()
+	}
 
 	// Phase 9: catastrophe modal — show once per new pending catastrophe; Esc hides it
 	// until the player types `catastrophe` (or loads a save, which shows it again).
@@ -802,7 +821,7 @@ func (d *Dashboard) refresh() {
 		if d.pages.HasPage(catastrophePage) {
 			d.closeCatastropheModal() // e.g. a save without a pending catastrophe was loaded
 		}
-	} else if d.catModalShown != pending && d.overlayMgr.ActiveName() != "age_splash" {
+	} else if d.catModalShown != pending && !d.overlayMgr.FullScreenUp() {
 		if d.pages.HasPage(catastrophePage) {
 			d.pages.RemovePage(catastrophePage) // stale modal for a different epoch
 		}
@@ -813,7 +832,9 @@ func (d *Dashboard) refresh() {
 	// Ancient Memory offer modal — same single-show pattern as the catastrophe modal.
 	if state.PendingMemoryTech == "" {
 		d.memoryModalShown = "" // reset so a future run's cache can show fresh
-	} else if d.memoryModalShown == "" {
+	} else if d.memoryModalShown == "" && !d.overlayMgr.FullScreenUp() {
+		// Not over the film of the run that just ended: the new run's
+		// first window waits for it.
 		d.memoryModalShown = state.PendingMemoryTech
 		d.showAncientMemoryModal(state.PendingMemoryTech, state.PendingMemoryTechName)
 	}
