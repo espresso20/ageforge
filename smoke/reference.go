@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 )
 
 // The reference players: three ways of playing, each a rule anyone can
@@ -135,7 +136,7 @@ func (t *refTables) refTown(i int) map[string]int {
 }
 
 func copyPrice(d config.BuildingDef, owned int) map[string]float64 {
-	f := math.Pow(d.CostScale, float64(owned))
+	f := detmath.Pow(d.CostScale, float64(owned))
 	out := make(map[string]float64, len(d.BaseCost))
 	for r, v := range d.BaseCost {
 		out[r] = math.Max(1, math.Floor(float64(v*f)))
