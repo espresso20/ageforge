@@ -63,7 +63,7 @@ Once a hut stands and your camps are built, workers arrive on their own. The gam
 workers
 ```
 
-`workers` opens the Workers panel: your population, idle count and food use, and the **Shares** section, which says what auto-recruit is doing (recruiting, no housing left, every worker slot filled, waiting for food) and how your workers are spread across the domains. Every worker eats food each tick, so the game recruits only while your food rate stays positive with a margin to spare. More huts make room for more workers, and more buildings give them more slots to fill.
+`workers` opens the Workers panel: your population, idle count and food use, and the **Roster** section, which says what auto-recruit is doing (recruiting, no housing left, every worker slot filled, waiting for food) and how your workers are spread across the domains. Every worker eats food each tick, so the game recruits only while your food rate stays positive with a margin to spare. More huts make room for more workers, and more buildings give them more slots to fill.
 
 You don't pick a domain for a worker. It takes the class of the building it works in: a worker on a `gathering_camp` is a Forager, one on a `story_circle` a Shaman. Type `status` for population, idle count and food drain.
 
@@ -76,10 +76,10 @@ By default every domain is on auto: your workers spread across your buildings in
 To put more of your workers on one kind of work, give it a share of the workforce:
 
 ```
-workers share knowledge 40
+roster knowledge 40
 ```
 
-Now 40% of your workers go to knowledge, as far as your story circles have slots, and the other domains split the rest by their slots. `workers share knowledge auto` undoes it, and `workers share auto` puts every domain back on auto. Don't set food to 0: food is what lets the game recruit.
+Now 40% of your workers go to knowledge, as far as your story circles have slots, and the other domains split the rest by their slots. `roster knowledge auto` undoes it, and `roster auto` puts every domain back on auto. Don't set food to 0: food is what lets the game recruit.
 
 You can also take over by hand. `assign` and `unassign` work as always, and the game never moves a worker you placed. After any worker command it waits a minute before placing anyone, so it won't grab the workers you are moving. If you'd rather recruit yourself, `workers auto-recruit off` stops automatic recruiting; idle workers still go to work by your shares.
 
@@ -88,7 +88,7 @@ assign story_circle 1
 workers auto-recruit off
 ```
 
-The Workers box in the sidebar should show **Idle: 0**. The game recruits only into empty slots and puts idle workers to work within seconds; after a worker command of yours, it waits a minute first. See [Worker Shares](workers-and-domains.md#worker-shares) for the details.
+The Workers box in the sidebar should show **Idle: 0**. The game recruits only into empty slots and puts idle workers to work within seconds; after a worker command of yours, it waits a minute first. See [The Roster](workers-and-domains.md#the-roster) for the details.
 
 ---
 
@@ -127,7 +127,7 @@ The Economy panel is always on screen. Look at the rate column:
 - `wood: +N/t` should be positive (each staffed wood camp adds about +0.57)
 - `knowledge: +N/t` should be positive (five staffed story circles make +1.0)
 
-If food is negative, build another gathering camp; workers come to staff it. If knowledge is low, build more story circles, or give knowledge a bigger share with `workers share knowledge 40`.
+If food is negative, build another gathering camp; workers come to staff it. If knowledge is low, build more story circles, or give knowledge a bigger share with `roster knowledge 40`.
 
 ---
 
@@ -224,9 +224,9 @@ Your first priority: start stone with **Stone Camps** (or `gather stone 25`), th
 | Build a stash | `build stash` |
 | Build a story circle | `build story_circle` |
 | Build a shrine | `build shrine` |
-| See your workers, their shares and what auto-recruit is doing | `workers` |
-| Put more workers on knowledge | `workers share knowledge 40` |
-| Put every domain back on auto | `workers share auto` |
+| See your workers, the roster and what auto-recruit is doing | `workers` |
+| Put more workers on knowledge | `roster knowledge 40` |
+| Put every domain back on auto | `roster auto` |
 | Place a worker by hand | `assign story_circle 1` |
 | Take a worker out of a building | `unassign gathering_camp 1` |
 | Recruit by hand instead | `workers auto-recruit off`, then `recruit [count]` or `recruit max` |
@@ -243,4 +243,4 @@ Your first priority: start stone with **Stone Camps** (or `gather stone 25`), th
 
 ---
 
-> **Tip:** The game is idle, so you don't need to babysit it. It recruits workers and puts them to work by your [worker shares](workers-and-domains.md#worker-shares), while you are away too. Leave a [build plan](plan.md) before you step away: `plan build hut 10`, `plan research fire_mastery`, `plan advance`. The plan starts each item as the resources come in, while you play and while you are away, and pays for it only when it starts.
+> **Tip:** The game is idle, so you don't need to babysit it. It recruits workers and puts them to work by your [roster](workers-and-domains.md#the-roster), while you are away too. Leave a [build plan](plan.md) before you step away: `plan build hut 10`, `plan research fire_mastery`, `plan advance`. The plan starts each item as the resources come in, while you play and while you are away, and pays for it only when it starts.

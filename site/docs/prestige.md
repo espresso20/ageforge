@@ -1,6 +1,6 @@
 # Prestige System
 
-Prestige is the reset loop. From the **Medieval Age** (Age 5) on, you can give up your entire civilization to earn **Prestige Points**, and the deeper the run went, the more it pays: every age the run completed adds points, and each era's ages are worth three times the era before. Points buy the **legacy kit**, three items that carry your run's automation into every future run: your build plan, your worker shares and the civilizations you met. Every age the run completed also runs faster from then on: see [Era Mastery](#era-mastery).
+Prestige is the reset loop. From the **Medieval Age** (Age 5) on, you can give up your entire civilization to earn **Prestige Points**, and the deeper the run went, the more it pays: every age the run completed adds points, and each era's ages are worth three times the era before. Points buy the **legacy kit**, three items that carry your run's automation into every future run: your build plan, your roster and the civilizations you met. Every age the run completed also runs faster from then on: see [Era Mastery](#era-mastery).
 
 ```
 prestige confirm yes
@@ -135,7 +135,7 @@ The prestige shop sells the **legacy kit**: three items that carry your run's au
 | Item | Key | Cost | What it does |
 |------|-----|------|--------------|
 | Plan Template | `legacy_plan` | 9 | Your build plan carries over: each age's part of the plan you wrote is added again when you enter that age |
-| Worker Shares | `legacy_workers` | 36 | Your worker shares carry over to each new run |
+| Roster | `legacy_workers` | 36 | Your roster carries over to each new run |
 | Old Friends | `legacy_factions` | 54 | Civilizations you have met are met again as soon as your age reaches theirs, at neutral opinion |
 
 The whole kit costs 99 points: a Medieval Age taste (9 points) buys the Plan Template, and a first Modern Age run (120) buys the rest and leaves 21.
@@ -143,25 +143,25 @@ The whole kit costs 99 points: a Medieval Age taste (9 points) buys the Plan Tem
 ```
 prestige shop                  # the kit: each item's price (or "owned") and what the kit remembers
 prestige buy legacy_plan       # buy the Plan Template
-prestige buy legacy_workers    # buy Worker Shares
+prestige buy legacy_workers    # buy Roster
 ```
 
 You can buy kit items at any time, not only right after a prestige. Points left over from earlier runs can be spent as soon as you log in.
 
 ### The kit remembers before you buy it
 
-From your first prestige or Succumb on, the game remembers your runs whether or not you own any kit items: the plan you wrote, your worker shares and every civilization you met. An item bought later puts that memory to work at once, on the run you are in: the Plan Template adds the current age's part of the template to the plan (unless you have already planned something in this age), your remembered worker shares are set (unless you have set some), and remembered civilizations within reach are met.
+From your first prestige or Succumb on, the game remembers your runs whether or not you own any kit items: the plan you wrote, your roster and every civilization you met. An item bought later puts that memory to work at once, on the run you are in: the Plan Template adds the current age's part of the template to the plan (unless you have already planned something in this age), your remembered roster is set (unless you have set some shares), and remembered civilizations within reach are met.
 
 `prestige shop` lists what the kit remembers under the items, for example:
 
 ```
   What the kit remembers from your runs
   Plan: 41 items over 9 ages.
-  Worker shares: 3 domains.
+  Roster: 3 domains.
   Civilizations met: 4.
 ```
 
-Before your first prestige the shop says: "The kit remembers your plan, worker shares and the civilizations you meet. Nothing is remembered yet: it starts with your first prestige."
+Before your first prestige the shop says: "The kit remembers your plan, roster and the civilizations you meet. Nothing is remembered yet: it starts with your first prestige."
 
 ### Plan Template
 
@@ -179,11 +179,11 @@ If the plan is full, the line also says how many items waited out, and an item t
 
 **Your techs come along.** The techs you queue with `plan research` are recorded like any other item, so with the Plan Template they are planned again on later runs, in the age you planned them in. That is your own research path: the game never chooses what you research next. Only the techs in your plan start without you, and a tech you start by hand with `research` is not recorded.
 
-### Worker Shares
+### Roster
 
-With Worker Shares owned, the [worker shares](workers-and-domains.md#worker-shares) you set carry over into each new run, and into the rebuild after a Succumb, instead of going back to auto. The new run's log says so ("Worker Shares: your shares carry over.", with the split). Auto-recruit was already kept across prestige.
+With Roster owned, the [roster](workers-and-domains.md#the-roster) you set carries over into each new run, and into the rebuild after a Succumb, instead of going back to auto. The new run's log says so ("Roster: your shares carry over.", with the split). Auto-recruit was already kept across prestige.
 
-The kit remembers the shares you had when the run ended. If a run ends with every domain on auto, the kit keeps the shares it remembered before, unless you own Worker Shares, in which case the next run starts on auto too.
+The kit remembers the shares you had when the run ended. If a run ends with every domain on auto, the kit keeps the shares it remembered before, unless you own Roster, in which case the next run starts on auto too.
 
 ### Old Friends
 
@@ -339,7 +339,7 @@ Once you own all three, the shop has nothing more to sell, and the points you ea
 - All resources (reset to starting amounts: 15 food, 12 wood)
 - All buildings and build queue
 - The build plan (with the Plan Template owned, the first age's part of the template goes back in at once)
-- All workers (recruited and assigned). Worker shares go back to auto, unless you own Worker Shares
+- All workers (recruited and assigned). The roster goes back to auto, unless you own Roster
 - All research (tech tree reverts)
 - Milestones and milestone chains
 - The run's structure count
@@ -350,7 +350,7 @@ Once you own all three, the shop has nothing more to sell, and the points you ea
 
 ### Persists Across Prestige
 - Prestige level, prestige points and the legacy kit items you own
-- What the kit remembers: the plan template (the techs you planned included), your worker shares and the civilizations you have met (it is used only by the items you own)
+- What the kit remembers: the plan template (the techs you planned included), your roster and the civilizations you have met (it is used only by the items you own)
 - Your auto-recruit and wonder overflow settings
 - Era Mastery: every age's mastery, and your record (the deepest age you have ever entered)
 - Ruins (from past Succumb events), which carry into the new run

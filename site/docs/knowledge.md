@@ -8,7 +8,7 @@ No age asks for knowledge to advance. What an age needs of it is one tech: the *
 
 ## How Knowledge is Produced
 
-Knowledge is produced by **Knowledge lineage buildings**, at full rate when their worker slots are filled. Workers in them are Knowledge workers; see [Workers](workers-and-domains.md) for recruiting, worker shares and the domain table.
+Knowledge is produced by **Knowledge lineage buildings**, at full rate when their worker slots are filled. Workers in them are Knowledge workers; see [Workers](workers-and-domains.md) for recruiting, the roster and the domain table.
 
 **Knowledge lineage** (in order):
 
