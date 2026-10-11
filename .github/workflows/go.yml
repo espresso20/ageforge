@@ -25,7 +25,8 @@ jobs:
     # go test -race took about 10 minutes on master until 2026-10-02, when
     # the runners got about 40% slower and master itself started timing out
     # at 15 (the roguelike map tests were still running).
-    timeout-minutes: 25
+    # 40, not 25: the race run takes 22 minutes on a slow runner, and a timeout here blocks every merge.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
 
