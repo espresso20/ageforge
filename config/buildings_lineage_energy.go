@@ -17,10 +17,10 @@ func buildingsLineageEnergy() []BuildingDef {
 	// Validator will show HIGH_BOOST on this transition — intentional cross-resource pivot.
 	b = append(b, BuildingDef{
 		Name: "Coal Plant", Key: "coal_plant", Category: "production",
-		BaseCost:     map[string]float64{"steel": 22e6, "coal": 8e6, "gold": 12e6},
-		CostScale:    1.35,
-		Effects:      []Effect{{Type: "production", Target: "coal", Value: 10}},
-		BuildTicks:   25000,
+		BaseCost:     map[string]float64{"steel": 9.3e07, "coal": 3.4e07, "gold": 5.1e07},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "coal", Value: 11500}},
+		BuildTicks:   6240,
 		RequiredAge:  "industrial_age",
 		RequiredTech: "steam_power",
 		Description:  "Industrial coal processing plant.",
@@ -31,13 +31,13 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 1 — victorian_age  output=electricity  rate=50  (+ some coal)
 	b = append(b, BuildingDef{
 		Name: "Steam Turbine", Key: "steam_turbine", Category: "production",
-		BaseCost:  map[string]float64{"steel": 185e6, "coal": 90e6, "gold": 110e6},
-		CostScale: 1.35,
+		BaseCost:  map[string]float64{"steel": 7.8e08, "coal": 3.8e08, "gold": 4.7e08},
+		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "electricity", Value: 50},
-			{Type: "production", Target: "coal", Value: 5},
+			{Type: "production", Target: "coal", Value: 106000},
 		},
-		BuildTicks:  50000,
+		BuildTicks:  7020,
 		RequiredAge: "victorian_age",
 		Description: "A steam turbine hall with its own coal seam.",
 		LineageKey:  "energy", LineageTier: 1,
@@ -47,10 +47,10 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 2 — electric_age  output=electricity  rate=100
 	b = append(b, BuildingDef{
 		Name: "Dynamo Hall", Key: "power_generator", Category: "production",
-		BaseCost:     map[string]float64{"steel": 1.1e9, "electricity": 450e6, "coal": 300e6},
-		CostScale:    1.35,
-		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 100}},
-		BuildTicks:   75000,
+		BaseCost:     map[string]float64{"steel": 4.7e09, "electricity": 1.9e09, "coal": 1.3e09},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 240000}},
+		BuildTicks:   7800,
 		RequiredAge:  "electric_age",
 		RequiredTech: "power_distribution",
 		Description:  "Electric power generator.",
@@ -61,10 +61,10 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 3 — atomic_age  output=electricity  rate=200
 	b = append(b, BuildingDef{
 		Name: "Breeder Reactor", Key: "nuclear_reactor", Category: "production",
-		BaseCost:    map[string]float64{"steel": 5.8e9, "electricity": 2.4e9, "uranium": 600e6},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 200}},
-		BuildTicks:  100000,
+		BaseCost:    map[string]float64{"steel": 2.5e10, "electricity": 1e10, "uranium": 2.5e09},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 1290000}},
+		BuildTicks:  9360,
 		RequiredAge: "atomic_age",
 		Description: "Nuclear fission reactor.",
 		LineageKey:  "energy", LineageTier: 3,
@@ -75,13 +75,13 @@ func buildingsLineageEnergy() []BuildingDef {
 	// electricity raised from 100→250 so upgrading from nuclear_reactor (200 elec) never regresses
 	b = append(b, BuildingDef{
 		Name: "Oil Refinery", Key: "oil_refinery", Category: "production",
-		BaseCost:  map[string]float64{"steel": 33e9, "electricity": 12e9, "oil": 2e9},
-		CostScale: 1.35,
+		BaseCost:  map[string]float64{"steel": 1.4e11, "electricity": 5.1e10, "oil": 8.5e09},
+		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "oil", Value: 20},
-			{Type: "production", Target: "electricity", Value: 250},
+			{Type: "production", Target: "oil", Value: 546000},
+			{Type: "production", Target: "electricity", Value: 2500000},
 		},
-		BuildTicks:  150000,
+		BuildTicks:  9360,
 		RequiredAge: "modern_age",
 		Description: "Modern oil refinery and power generation.",
 		LineageKey:  "energy", LineageTier: 4,
@@ -91,10 +91,10 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 5 — information_age  output=electricity  rate=400
 	b = append(b, BuildingDef{
 		Name: "Microgrid Array", Key: "smart_energy_grid", Category: "production",
-		BaseCost:     map[string]float64{"electricity": 105e9, "data": 11e9, "steel": 190e9},
-		CostScale:    1.35,
-		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 400}},
-		BuildTicks:   300000,
+		BaseCost:     map[string]float64{"electricity": 4.4e11, "data": 4.7e10, "steel": 8e11},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 9.309999999999999e07}},
+		BuildTicks:   10920,
 		RequiredAge:  "information_age",
 		RequiredTech: "smart_grid",
 		Description:  "AI-optimized microgrid batteries.",
@@ -105,10 +105,10 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 6 — digital_age  output=electricity  rate=800
 	b = append(b, BuildingDef{
 		Name: "Quantum Battery Array", Key: "quantum_battery_array", Category: "production",
-		BaseCost:     map[string]float64{"electricity": 490e9, "data": 62e9, "steel": 720e9, "nanobots": 3200},
-		CostScale:    1.35,
-		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 800}},
-		BuildTicks:   500000,
+		BaseCost:     map[string]float64{"electricity": 2.1e12, "data": 2.6e11, "steel": 3e12, "nanobots": 14000},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 1.54e08}},
+		BuildTicks:   12480,
 		RequiredAge:  "digital_age",
 		RequiredTech: "grid_storage",
 		Description:  "Quantum-state battery arrays.",
@@ -119,10 +119,10 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 7 — cyberpunk_age  output=electricity  rate=1600
 	b = append(b, BuildingDef{
 		Name: "Dark Energy Tap", Key: "dark_energy_tap", Category: "production",
-		BaseCost:     map[string]float64{"data": 240e9, "crypto": 1.25e12, "electricity": 2.5e12, "nanobots": 36000},
-		CostScale:    1.35,
-		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 1600}},
-		BuildTicks:   1000000,
+		BaseCost:     map[string]float64{"data": 1e12, "crypto": 5.3e12, "electricity": 1.1e13, "nanobots": 150000},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 7.55e08}},
+		BuildTicks:   14040,
 		RequiredAge:  "cyberpunk_age",
 		RequiredTech: "dark_energy",
 		Description:  "Taps dark energy streams for electricity.",
@@ -133,13 +133,13 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 8 — fusion_age  output=plasma  rate=20
 	b = append(b, BuildingDef{
 		Name: "Tokamak Array", Key: "fusion_reactor_array", Category: "production",
-		BaseCost:  map[string]float64{"plasma": 5.2e12, "electricity": 16e12, "steel": 21e12},
-		CostScale: 1.35,
+		BaseCost:  map[string]float64{"plasma": 2.2e13, "electricity": 6.8e13, "steel": 8.9e13},
+		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "plasma", Value: 20},
-			{Type: "production", Target: "electricity", Value: 2000},
+			{Type: "production", Target: "plasma", Value: 2.59e08},
+			{Type: "production", Target: "electricity", Value: 7.76e08},
 		},
-		BuildTicks:  1500000,
+		BuildTicks:  15600,
 		RequiredAge: "fusion_age",
 		Description: "Array of fusion reactors producing plasma.",
 		LineageKey:  "energy", LineageTier: 8,
@@ -150,13 +150,13 @@ func buildingsLineageEnergy() []BuildingDef {
 	// electricity preserved from fusion_reactor_array (2000) — upgrading must never regress
 	b = append(b, BuildingDef{
 		Name: "Solar Collector Array", Key: "solar_collector_array", Category: "production",
-		BaseCost:  map[string]float64{"titanium": 90e12, "plasma": 45e12, "electricity": 112e12},
-		CostScale: 1.35,
+		BaseCost:  map[string]float64{"titanium": 3.8e14, "plasma": 1.9e14, "electricity": 4.7e14},
+		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "plasma", Value: 40},
-			{Type: "production", Target: "electricity", Value: 2500},
+			{Type: "production", Target: "plasma", Value: 2.92e09},
+			{Type: "production", Target: "electricity", Value: 7.31e09},
 		},
-		BuildTicks:  2000000,
+		BuildTicks:  17160,
 		RequiredAge: "space_age",
 		Description: "Orbital solar collectors feeding plasma energy.",
 		LineageKey:  "energy", LineageTier: 9,
@@ -168,13 +168,13 @@ func buildingsLineageEnergy() []BuildingDef {
 	// solar_collector_array: plasma:40 + electricity:2500 → pulsar_tap: plasma:80 + electricity:3200
 	b = append(b, BuildingDef{
 		Name: "Pulsar Tap", Key: "pulsar_tap", Category: "production",
-		BaseCost:  map[string]float64{"dark_matter": 110e12, "titanium": 840e12, "plasma": 520e12},
-		CostScale: 1.35,
+		BaseCost:  map[string]float64{"dark_matter": 4.7e14, "titanium": 3.6e15, "plasma": 2.2e15},
+		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "plasma", Value: 80},
-			{Type: "production", Target: "electricity", Value: 3200},
+			{Type: "production", Target: "plasma", Value: 4.25e10},
+			{Type: "production", Target: "electricity", Value: 7.94e09},
 		},
-		BuildTicks:   2500000,
+		BuildTicks:   18720,
 		RequiredAge:  "interstellar_age",
 		RequiredTech: "stellar_engineering",
 		Description:  "Taps pulsar radiation for plasma and electricity.",
@@ -188,10 +188,10 @@ func buildingsLineageEnergy() []BuildingDef {
 	// quasar_tap → zero_point_generator jumps 5x (dark_matter:10 → quantum_flux:50) — also an intentional pivot.
 	b = append(b, BuildingDef{
 		Name: "Quasar Tap", Key: "quasar_tap", Category: "production",
-		BaseCost:     map[string]float64{"antimatter": 220e12, "dark_matter": 1.1e15, "titanium": 5.5e15},
-		CostScale:    1.35,
-		Effects:      []Effect{{Type: "production", Target: "dark_matter", Value: 10}},
-		BuildTicks:   3000000,
+		BaseCost:     map[string]float64{"antimatter": 9.3e14, "dark_matter": 4.7e15, "titanium": 2.3e16},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "dark_matter", Value: 8.23e10}},
+		BuildTicks:   18720,
 		RequiredAge:  "galactic_age",
 		RequiredTech: "antimatter_synthesis",
 		Description:  "Taps quasar jets for dark matter.",
@@ -202,10 +202,10 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 12 — quantum_age  output=quantum_flux  rate=50
 	b = append(b, BuildingDef{
 		Name: "Zero Point Generator", Key: "zero_point_generator", Category: "production",
-		BaseCost:     map[string]float64{"quantum_flux": 230e12, "antimatter": 68e15, "dark_matter": 58e15},
-		CostScale:    1.35,
-		Effects:      []Effect{{Type: "production", Target: "quantum_flux", Value: 50}},
-		BuildTicks:   5000000,
+		BaseCost:     map[string]float64{"quantum_flux": 9.7e14, "antimatter": 2.9e17, "dark_matter": 2.5e17},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "quantum_flux", Value: 6.7e10}},
+		BuildTicks:   18720,
 		RequiredAge:  "quantum_age",
 		RequiredTech: "zero_point_energy",
 		Description:  "Generates energy from quantum zero-point fields.",

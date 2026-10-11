@@ -23,8 +23,8 @@ func buildingsMonuments() []BuildingDef {
 		// Classical Age — first real culture stockpiles appear. Small primer.
 		{
 			Name: "Cultural Obelisk", Key: "cultural_obelisk", Category: "monument",
-			BaseCost:  map[string]float64{"culture": 2500, "stone": 60000},
-			CostScale: 1.0,
+			BaseCost:  map[string]float64{"culture": 710, "stone": 17000},
+			CostScale: 1.15,
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.01},
 			},
@@ -37,43 +37,43 @@ func buildingsMonuments() []BuildingDef {
 		// Medieval Age — culture flows steadily from great halls and cathedrals.
 		{
 			Name: "Grand Amphitheater", Key: "grand_amphitheatre_monument", Category: "monument",
-			BaseCost:  map[string]float64{"culture": 25000, "stone": 400000, "gold": 120000},
-			CostScale: 1.0,
+			BaseCost:  map[string]float64{"culture": 7100, "stone": 110000, "gold": 34000},
+			CostScale: 1.15,
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.02},
 			},
 			RequiredAge: "medieval_age",
 			MaxCount:    1,
-			BuildTicks:  5000,
+			BuildTicks:  3510,
 			Description: "A monumental arena for the games and pageants of an age.",
 			LineageKey:  "monument",
 		},
 		// Industrial Age — mass media and museums pour out culture; bigger sink.
 		{
 			Name: "Eternal Library", Key: "eternal_library_monument", Category: "monument",
-			BaseCost:  map[string]float64{"culture": 500000, "steel": 600000, "gold": 2.0e6},
-			CostScale: 1.0,
+			BaseCost:  map[string]float64{"culture": 140000, "steel": 170000, "gold": 570000},
+			CostScale: 1.15,
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.03},
 			},
 			RequiredAge: "industrial_age",
 			MaxCount:    1,
-			BuildTicks:  9000,
+			BuildTicks:  6240,
 			Description: "A vast archive preserving the knowledge of every age.",
 			LineageKey:  "monument",
 		},
 		// Modern Age — late-game culture runs to the billions; the heavy sink.
 		{
 			Name: "Monument of Ages", Key: "monument_of_ages", Category: "monument",
-			BaseCost:  map[string]float64{"culture": 2.5e7, "gold": 5.0e7},
-			CostScale: 1.0,
+			BaseCost:  map[string]float64{"culture": 7100000, "gold": 1.4e07},
+			CostScale: 1.15,
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.05},
 			},
 			RequiredAge:  "modern_age",
 			RequiredTech: "television",
 			MaxCount:     1,
-			BuildTicks:   15000,
+			BuildTicks:   9360,
 			Description:  "A timeless edifice commemorating the whole span of your civilization.",
 			LineageKey:   "monument",
 		},

@@ -205,7 +205,7 @@ type AgeSplit struct {
 	QuietAfter string  `json:"quiet_after,omitempty"`
 	// KnowledgeHour is the knowledge the age made per hour at 1x, averaged
 	// over the age as the bot's decisions sampled it: what
-	// config.KnowledgePerHour is re-measured from. PoolAll is what the
+	// the old knowledge-per-hour table was measured from. PoolAll is what the
 	// all-production pool had earned when the age ended, before the soft
 	// cap (2 is +200%, the knee: past it a point counts a quarter): how
 	// full a real run's pool is, beside the static caps report's upper

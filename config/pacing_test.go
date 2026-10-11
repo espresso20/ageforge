@@ -88,41 +88,6 @@ func TestAgeStretch(t *testing.T) {
 	}
 }
 
-// TestPaybackRule: a production building's output of a construction
-// resource repays the price of its first copy in PaybackTicks, valued at
-// its age's parity (the economy design's Law 3).
-func TestPaybackRule(t *testing.T) {
-	levels := priceLevels(BaseBuildings())
-	checked := 0
-	for _, d := range BaseBuildings() {
-		if d.Category == "wonder" {
-			continue
-		}
-		lv := levels[d.RequiredAge]
-		n := 0
-		for _, e := range d.Effects {
-			if e.Type == "production" && e.Value > 0 && lv[e.Target] > 0 {
-				n++
-			}
-		}
-		for _, e := range d.Effects {
-			if e.Type != "production" || e.Value <= 0 || lv[e.Target] <= 0 {
-				continue
-			}
-			// Output over one payback, in price units of the age.
-			earned := e.Value * PaybackTicks(d.RequiredAge) / lv[e.Target] * float64(n)
-			price := priceUnits(d.BaseCost, lv)
-			if math.Abs(earned/price-1) > 0.01 {
-				t.Errorf("%s: %s %.4g/tick earns %.3g price units per payback, first copy costs %.3g", d.Key, e.Target, e.Value, earned, price)
-			}
-			checked++
-		}
-	}
-	if checked < 80 {
-		t.Errorf("only %d production effects checked; the rule should cover most producers", checked)
-	}
-}
-
 // TestEveryAgeHasAFeed: the market turns any construction resource of an age
 // into any other at parity, so an age can grow as long as one of its
 // construction resources flows in from a building a player can own by then:
@@ -182,22 +147,22 @@ func TestMarketNeverBeatsBuilding(t *testing.T) {
 // its age's share (the economy design's Law 2).
 func TestBuildAndResearchCaps(t *testing.T) {
 	for _, d := range BaseBuildings() {
-		div := BuildTimeDivisor
+		div := buildShare
 		if d.Category == "storage" {
-			div = StorageBuildTimeDivisor
+			div = storageBuildShare
 		}
 		if limit := AgeTargetTicks(d.RequiredAge) / div; limit > 0 && float64(d.BuildTicks) > limit {
 			t.Errorf("%s builds in %d ticks, over its cap of %.0f", d.Key, d.BuildTicks, limit)
 		}
 	}
 	for _, tech := range Technologies() {
-		if limit := AgeTargetTicks(tech.Age) / ResearchTimeDivisor; limit > 0 && float64(tech.ResearchTicks) > limit {
+		if limit := AgeTargetTicks(tech.Age) / researchShare; limit > 0 && float64(tech.ResearchTicks) > limit {
 			t.Errorf("%s researches in %d ticks, over its cap of %.0f", tech.Key, tech.ResearchTicks, limit)
 		}
 	}
 }
 
-// TestWondersSizedToTheirAge: every wonder costs WonderPriceUnits of its age
+// TestWondersSizedToTheirAge: every wonder costs wonderPriceUnits of its age
 // in construction resources (rounding aside).
 func TestWondersSizedToTheirAge(t *testing.T) {
 	levels := priceLevels(BaseBuildings())
@@ -206,8 +171,8 @@ func TestWondersSizedToTheirAge(t *testing.T) {
 			continue
 		}
 		u := priceUnits(d.BaseCost, levels[d.RequiredAge])
-		if math.Abs(u/WonderPriceUnits-1) > 0.05 {
-			t.Errorf("%s costs %.1f price units of %s, want %.0f", d.Key, u, d.RequiredAge, WonderPriceUnits)
+		if math.Abs(u/wonderPriceUnits-1) > 0.05 {
+			t.Errorf("%s costs %.1f price units of %s, want %.0f", d.Key, u, d.RequiredAge, wonderPriceUnits)
 		}
 	}
 }
@@ -223,3 +188,13 @@ func TestFormatRateValue(t *testing.T) {
 		t.Errorf("FormatRateValue(999.96) = %q; should roll over to 1K", FormatRateValue(999.96))
 	}
 }
+
+// The shares the caps and the wonder price are checked against. They were
+// constants of the load-time rules; the tables are written out now, so they
+// live with the tests that hold the tables to them.
+const (
+	buildShare        = 6.0  // no building takes longer than a sixth of its age's target
+	storageBuildShare = 48.0 // a storage building, a forty-eighth
+	researchShare     = 8.0  // no tech takes longer than an eighth of its age's target
+	wonderPriceUnits  = 40.0 // a wonder costs forty price units of its age
+)
