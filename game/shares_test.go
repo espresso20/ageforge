@@ -65,7 +65,7 @@ func TestShares_FreshRunGetsStaffed(t *testing.T) {
 	if r := st.Resources["food"].Rate; r <= 0 {
 		t.Errorf("food rate %v after the recruits", r)
 	}
-	if !logHas(ge, "Shares: recruited") {
+	if !logHas(ge, "Roster: recruited") {
 		t.Error("no routine line for the recruits")
 	}
 	found := false
@@ -121,7 +121,7 @@ func TestShares_OfflineRecruitsAndAssigns(t *testing.T) {
 	if r := ge.Resources.GetRate("food"); r <= 0 {
 		t.Errorf("food rate %v after the offline recruits", r)
 	}
-	if !logHas(ge, "While you were away, your worker shares recruited") {
+	if !logHas(ge, "While you were away, your roster recruited") {
 		t.Error("the welcome back doesn't say the shares recruited")
 	}
 }

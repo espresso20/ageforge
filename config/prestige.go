@@ -132,8 +132,8 @@ func PrestigeUpgrades() []PrestigeUpgradeDef {
 			MaxTier: 1, Costs: []int{9},
 		},
 		{
-			Key: LegacyWorkers, Name: "Worker Shares",
-			Description: "Your worker shares carry over to each new run",
+			Key: LegacyWorkers, Name: "Roster",
+			Description: "Your roster carries over to each new run",
 			EffectKey:   "workers", EffectType: "legacy",
 			MaxTier: 1, Costs: []int{36},
 		},

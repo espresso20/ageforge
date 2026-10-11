@@ -364,7 +364,12 @@ func editDistance(a, b string) int {
 }
 
 func sortedSubs(c *Command) []*Command {
-	out := append([]*Command(nil), c.Subs...)
+	var out []*Command
+	for _, s := range c.Subs {
+		if !s.Quiet {
+			out = append(out, s) // an old form still runs; it is not offered
+		}
+	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
 }
@@ -456,7 +461,7 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 	return nil
 }
 
-// shareDomainKeys is what `workers share` suggests: the domains you have
+// shareDomainKeys is what `roster` suggests: the domains you have
 // worker buildings in or a share set for, in domain order, then the rest.
 func shareDomainKeys(st game.GameState) []string {
 	var first, rest []string

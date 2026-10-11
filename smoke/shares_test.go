@@ -10,25 +10,24 @@ import (
 	"github.com/espresso20/ageforge/ui"
 )
 
-// The fuzz corpus reaches the worker shares commands: the registry gives it
-// `workers`, and the completions its walks follow lead into `workers share
-// <domain> [percent|auto]` and `workers auto-recruit [on|off]`.
+// The fuzz corpus reaches the roster and the workers commands: the registry
+// gives it `roster` and `workers`, and the completions its walks follow lead
+// into `roster <domain> [percent|auto]` and `workers auto-recruit [on|off]`.
+// The roster's old name (`workers share`) is not offered, and still runs.
 func TestFuzzCorpusCoversWorkerShares(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	ge := game.NewGameEngine()
 	gen := newFuzzer(11, ge)
-	found := false
-	for _, c := range gen.commands {
-		found = found || c == "workers"
-	}
-	if !found {
-		t.Fatalf("the fuzz corpus has no workers command: %v", gen.commands)
+	for _, want := range []string{"workers", "roster"} {
+		if !slices.Contains(gen.commands, want) {
+			t.Fatalf("the fuzz corpus has no %s command: %v", want, gen.commands)
+		}
 	}
 	comp := ui.NewAutoCompleter(ge)
 	for line, want := range map[string][]string{
-		"workers ":              {"workers share", "workers auto-recruit"},
-		"workers share ":        {"workers share food", "workers share astronaut", "workers share auto"},
-		"workers share food ":   {"workers share food auto"},
+		"workers ":              {"workers auto-recruit"},
+		"roster ":               {"roster food", "roster astronaut", "roster auto"},
+		"roster food ":          {"roster food auto"},
 		"workers auto-recruit ": {"workers auto-recruit on", "workers auto-recruit off"},
 	} {
 		got := comp(line)
@@ -39,7 +38,8 @@ func TestFuzzCorpusCoversWorkerShares(t *testing.T) {
 		}
 	}
 	// And the lines it builds from them run without breaking anything.
-	for _, line := range []string{"workers share food 30", "workers share knowledge 1e308", "workers share auto", "workers share military NaN", "workers auto-recruit off", "workers auto-recruit on"} {
+	for _, line := range []string{"roster food 30", "roster knowledge 1e308", "roster auto", "roster military NaN",
+		"workers share food 30", "workers share knowledge 1e308", "workers share auto", "workers share military NaN", "workers auto-recruit off", "workers auto-recruit on"} {
 		ui.HandleCommand(line, ge)
 	}
 	ge.StepTicks(50)

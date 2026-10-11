@@ -53,7 +53,7 @@ const (
 	ArgAccount                        // a local account's name
 	ArgPlanItem                       // a plan item's number
 	ArgDeal                           // a trade deal's number, of the civilization in the previous argument
-	ArgDomain                         // a worker domain (workers share)
+	ArgDomain                         // a worker domain (roster)
 	ArgPercent                        // a percent: a number, with or without a % sign
 )
 
@@ -89,7 +89,11 @@ type Command struct {
 	Panel string
 	// Dashboard: run by the dashboard itself, not HandleCommand (quit).
 	Dashboard bool
-	Help      []Usage
+	// Quiet: an old form kept working for habit, not shown: it is parsed
+	// and run, but Help does not list it, the completer does not offer it,
+	// and it is not among the forms the wiki has to document.
+	Quiet bool
+	Help  []Usage
 }
 
 // Help panel sections, in display order.
@@ -108,7 +112,7 @@ const (
 var helpSections = []struct{ name, note string }{
 	{secActions, ""},
 	{secPlan, "Queue builds and techs; each starts, and is paid for, when the resources are there, even while you are away."},
-	{secWorkers, ""},
+	{secWorkers, "The roster used to be called worker shares: workers share still works."},
 	{secResearch, ""},
 	{secTrade, ""},
 	{secWonders, ""},
@@ -198,16 +202,19 @@ func registry() []*Command {
 		{Name: "dismiss", Section: secWorkers, Dangerous: true,
 			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
 			Help: []Usage{{"dismiss <building> [count|all]", "Dismiss workers from a building; they leave your population (default 1)"}}},
-		{Name: "workers", Section: secWorkers, BareOK: true, Panel: "Workers: domains, shares & assignments",
-			Help: []Usage{{"workers", "Open the Workers panel (domains, shares, assignments)"}},
+		{Name: "roster", Section: secWorkers, BareOK: true,
+			Args: []Arg{{Kind: ArgDomain, Words: []string{"auto"}}, {Kind: ArgPercent, Words: []string{"auto"}, Optional: true}},
+			Help: []Usage{
+				{"roster", "Show your roster: each domain's part of the workforce"},
+				{"roster <domain> [percent|auto]", "Set a domain's share of your workers (0 keeps it empty; auto, the default, follows its buildings' slots); no percent shows it"},
+				{"roster auto", "Put every domain back on auto"},
+			}},
+		{Name: "workers", Section: secWorkers, BareOK: true, Panel: "Workers: domains, roster & assignments",
+			Help: []Usage{{"workers", "Open the Workers panel (domains, roster, assignments)"}},
 			Subs: []*Command{
-				{Name: "share", BareOK: true,
-					Args: []Arg{{Kind: ArgDomain, Words: []string{"auto"}}, {Kind: ArgPercent, Words: []string{"auto"}, Optional: true}},
-					Help: []Usage{
-						{"workers share", "Show your worker shares: each domain's part of the workforce"},
-						{"workers share <domain> [percent|auto]", "Set a domain's share of your workers (0 keeps it empty; auto, the default, follows its buildings' slots); no percent shows it"},
-						{"workers share auto", "Put every domain back on auto"},
-					}},
+				// The roster's old name: `workers share ...` is `roster ...`.
+				{Name: "share", BareOK: true, Quiet: true,
+					Args: []Arg{{Kind: ArgDomain, Words: []string{"auto"}}, {Kind: ArgPercent, Words: []string{"auto"}, Optional: true}}},
 				{Name: "auto-recruit", Aliases: []string{"autorecruit"},
 					Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
 					Help: []Usage{{"workers auto-recruit [on|off]", "Show or set whether the game recruits into empty worker slots as housing and food allow (on by default)"}}},
@@ -459,6 +466,9 @@ func Commands() []CommandInfo {
 func nextWords(c *Command, aliases bool) []string {
 	var out []string
 	for _, s := range c.Subs {
+		if s.Quiet && !aliases {
+			continue // an old form: accepted like an alias, not a form of its own
+		}
 		out = append(out, s.Name)
 		if aliases {
 			out = append(out, s.Aliases...)

@@ -13,9 +13,11 @@ import (
 
 // Worker shares: how the workforce splits across the worker domains, and the
 // routine that keeps to it, live and offline (site/docs/workers-and-domains.md,
-// "Worker shares").
+// "The roster"). A player meets it as the roster: the `roster` command, the
+// Workers panel's Roster section, the kit item. The code, the save and the
+// kit item's key keep the old name.
 //
-//   - A share is a percent of the workforce for one domain (`workers share
+//   - A share is a percent of the workforce for one domain (`roster
 //     knowledge 40`). Domains without one are on auto: they split what the
 //     set shares leave in proportion to their worker slots. With no shares
 //     set, the default, every domain is on auto, so the workers follow the
@@ -659,12 +661,12 @@ func (ge *GameEngine) keepSharesLive() {
 		return
 	}
 	ge.recalculateRates()
-	ge.addLog(LogRoutine, "Shares: "+c.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
+	ge.addLog(LogRoutine, "Roster: "+c.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
 	if before == 0 && c.hired > 0 {
 		// The first recruits of a run (or after everyone died): say once,
 		// as a note rather than a routine line, that this happens on its
 		// own.
-		ge.addLog("info", "Workers arrive on their own: the game recruits into empty worker slots while housing and food allow, and puts them to work by your worker shares. Type workers to see them; workers auto-recruit off to recruit by hand.")
+		ge.addLog("info", "Workers arrive on their own: the game recruits into empty worker slots while housing and food allow, and puts them to work by your roster. Type workers to see them; workers auto-recruit off to recruit by hand.")
 	}
 }
 
@@ -780,7 +782,7 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 	if moved > 0 || c.any() {
 		ge.recalculateRates()
 	}
-	line := "Worker shares: " + sharesLine(ge.rules, ge.workerShares) + "."
+	line := "Roster: " + sharesLine(ge.rules, ge.workerShares) + "."
 	if moved > 0 {
 		line += " Moved " + textfmt.Count(moved, "worker", "workers") + " to match."
 	}

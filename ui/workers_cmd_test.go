@@ -21,51 +21,59 @@ func sharesTestEngine(t *testing.T) *game.GameEngine {
 	return ge
 }
 
-// The workers command: bare opens the panel; share shows, sets and clears
-// shares; auto-recruit shows and sets recruiting. Changes reply as routine
+// The workers command: bare opens the panel; auto-recruit shows and sets
+// recruiting. The roster command shows, sets and clears shares, under its
+// name and under its old one (workers share), which still runs it. Changes reply as routine
 // lines (the Workers panel shows the result), a food share of 0 as a
 // warning, and bad input with the usage.
 func TestWorkersCommand(t *testing.T) {
+	for _, roster := range []string{"roster", "workers share"} {
+		testRosterCommand(t, roster)
+	}
+}
+
+// testRosterCommand runs the roster command under one of its names.
+func testRosterCommand(t *testing.T, roster string) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	ge := sharesTestEngine(t)
 
 	if res := HandleCommand("workers", ge); res.OverlayName != "workers" {
 		t.Errorf("bare workers = %+v, want the Workers panel", res)
 	}
-	res := HandleCommand("workers share knowledge 40", ge)
+	res := HandleCommand(roster+" knowledge 40", ge)
 	if res.Type != game.LogRoutine || !strings.Contains(res.Message, "Knowledge 40%") {
-		t.Errorf("workers share knowledge 40 = %+v", res)
+		t.Errorf(roster+" knowledge 40 = %+v", res)
 	}
 	if got := ge.WorkerShares()["knowledge"]; got != 40 {
 		t.Errorf("knowledge share = %v, want 40", got)
 	}
-	if res := HandleCommand("workers share lumber 12.5%", ge); res.Type == "error" || ge.WorkerShares()["lumber"] != 12.5 {
+	if res := HandleCommand(roster+" lumber 12.5%", ge); res.Type == "error" || ge.WorkerShares()["lumber"] != 12.5 {
 		t.Errorf("a percent with a %% sign: %+v, shares %v", res, ge.WorkerShares())
 	}
-	res = HandleCommand("workers share", ge)
+	res = HandleCommand(roster, ge)
 	if res.Type != "info" || !strings.Contains(res.Message, "Knowledge: 40% (set)") || !strings.Contains(res.Message, "(auto)") {
-		t.Errorf("workers share listing = %+v", res)
+		t.Errorf(roster+" listing = %+v", res)
 	}
-	if res := HandleCommand("workers share knowledge", ge); res.Type != "info" || !strings.HasPrefix(res.Message, "Knowledge: 40% (set)") {
+	if res := HandleCommand(roster+" knowledge", ge); res.Type != "info" || !strings.HasPrefix(res.Message, "Knowledge: 40% (set)") {
 		t.Errorf("one domain's share = %+v", res)
 	}
-	if res := HandleCommand("workers share knowledge auto", ge); res.Type != game.LogRoutine {
-		t.Errorf("workers share knowledge auto = %+v", res)
+	if res := HandleCommand(roster+" knowledge auto", ge); res.Type != game.LogRoutine {
+		t.Errorf(roster+" knowledge auto = %+v", res)
 	}
 	if _, set := ge.WorkerShares()["knowledge"]; set {
 		t.Error("knowledge still has a share after auto")
 	}
-	if res := HandleCommand("workers share food 0", ge); res.Type != "warning" {
+	if res := HandleCommand(roster+" food 0", ge); res.Type != "warning" {
 		t.Errorf("a food share of 0 = %+v, want a warning", res)
 	}
-	if res := HandleCommand("workers share auto", ge); res.Type != game.LogRoutine || ge.WorkerShares() != nil {
-		t.Errorf("workers share auto = %+v, shares %v", res, ge.WorkerShares())
+	if res := HandleCommand(roster+" auto", ge); res.Type != game.LogRoutine || ge.WorkerShares() != nil {
+		t.Errorf(roster+" auto = %+v, shares %v", res, ge.WorkerShares())
 	}
 
 	for _, line := range []string{
-		"workers share knowledge 101", "workers share knowledge -1", "workers share knowledge NaN",
-		"workers share knowledge Inf", "workers share wizards 10", "workers share auto 10",
-		"workers share knowledge 10 20", "workers auto-recruit maybe", "workers dance",
+		roster + " knowledge 101", roster + " knowledge -1", roster + " knowledge NaN",
+		roster + " knowledge Inf", roster + " wizards 10", roster + " auto 10",
+		roster + " knowledge 10 20", "workers auto-recruit maybe", "workers dance",
 	} {
 		if res := HandleCommand(line, ge); res.Type != "error" {
 			t.Errorf("%q = %+v, want a refusal", line, res)
@@ -92,11 +100,25 @@ func TestWorkersCompletion(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	ge := sharesTestEngine(t)
 	comp := NewAutoCompleter(ge)
-	got := comp("workers ")
-	for _, want := range []string{"workers share", "workers auto-recruit"} {
+	// The roster's old name still runs and still completes once typed, but
+	// it is not offered.
+	if got := comp("workers "); !slices.Equal(got, []string{"workers auto-recruit"}) {
+		t.Errorf("completing %q = %v, want auto-recruit alone", "workers ", got)
+	}
+	if got := comp("ros"); !slices.Contains(got, "roster") {
+		t.Errorf("completing %q = %v, want roster", "ros", got)
+	}
+	got := comp("roster ")
+	if len(got) < 3 || got[0] != "roster food" {
+		t.Errorf("completing %q = %v, want the domains with buildings first", "roster ", got)
+	}
+	for _, want := range []string{"roster knowledge", "roster astronaut", "roster auto"} {
 		if !slices.Contains(got, want) {
-			t.Errorf("completing %q = %v, want %q", "workers ", got, want)
+			t.Errorf("completing %q = %v, want %q", "roster ", got, want)
 		}
+	}
+	if got := comp("roster knowledge "); !slices.Contains(got, "roster knowledge auto") {
+		t.Errorf("completing %q = %v, want auto", "roster knowledge ", got)
 	}
 	got = comp("workers share ")
 	if len(got) < 3 || got[0] != "workers share food" {
@@ -119,33 +141,41 @@ func TestWorkersCompletion(t *testing.T) {
 
 	// Enter runs whole commands as typed, a percent with its sign included.
 	c := newCompleter(ge, nil)
-	for _, line := range []string{"workers", "workers share", "workers share knowledge 40", "workers share knowledge 40%", "workers share auto", "workers auto-recruit off"} {
+	for _, line := range []string{"workers", "roster", "roster knowledge 40", "roster knowledge 40%", "roster auto",
+		"workers share", "workers share knowledge 40", "workers share knowledge 40%", "workers share auto", "workers auto-recruit off"} {
 		if !c.complete(line) {
 			t.Errorf("%q is not a whole command", line)
 		}
 	}
-	if c.complete("workers share wizards 10") {
+	if c.complete("workers share wizards 10") || c.complete("roster wizards 10") {
 		t.Error("an unknown domain counts as a whole command")
 	}
 }
 
-// The Help panel lists the workers commands under Workers, and the Workers
-// panel shows the shares and what auto-recruit is doing.
+// The Help panel lists the roster and the workers commands under Workers
+// (the roster's old name in one line, not as a command of its own), and the
+// Workers panel shows the roster and what auto-recruit is doing.
 func TestWorkersHelpAndPanel(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	help := helpProvider(game.GameState{}, 0)
-	for _, want := range []string{"workers share", "workers auto-recruit", "Put every domain back on auto"} {
+	for _, want := range []string{"roster", "roster auto", "workers auto-recruit", "Put every domain back on auto", "workers share still works"} {
 		if !strings.Contains(help, want) {
 			t.Errorf("the Help panel has no %q", want)
 		}
 	}
+	if strings.Contains(help, "workers share <") || strings.Count(help, "workers share") != 1 {
+		t.Error("the Help panel lists the roster's old name as a command")
+	}
 	ge := sharesTestEngine(t)
 	ge.StepTicks(10)
-	if res := HandleCommand("workers share knowledge 50", ge); res.Type == "error" {
+	if res := HandleCommand("roster knowledge 50", ge); res.Type == "error" {
 		t.Fatal(res.Message)
 	}
 	panel := workersProvider(ge.GetState(), 0)
-	for _, want := range []string{"Shares", "Auto-recruit:", "Knowledge", "set", "auto", "workers share <domain> <percent|auto>"} {
+	if strings.Contains(panel, "workers share") || strings.Contains(panel, "Shares") {
+		t.Errorf("the Workers panel still uses the roster's old name:\n%s", panel)
+	}
+	for _, want := range []string{"Roster", "Auto-recruit:", "Knowledge", "set", "auto", "roster <domain> <percent|auto>"} {
 		if !strings.Contains(panel, want) {
 			t.Errorf("the Workers panel has no %q:\n%s", want, panel)
 		}
