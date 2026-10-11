@@ -57,6 +57,39 @@ func TestStorageTablesFollowTheRule(t *testing.T) {
 	}
 }
 
+// TestGatesAskForTheReferenceStore: every gate asks for five copies of the
+// storage building of the age it leaves, and for no other storage building.
+// The store those copies give is the one the storage rule sized to pay for
+// the next age's first storage building; a town let through with less could
+// never build storage again (the age lock forbids the older building).
+func TestGatesAskForTheReferenceStore(t *testing.T) {
+	defs := BaseBuildings()
+	storage := map[string]bool{}
+	for _, d := range defs {
+		if d.Category == "storage" {
+			storage[d.Key] = true
+		}
+	}
+	want := GateStorageCopies(defs, Ages())
+	asked := 0
+	for _, a := range Ages() {
+		for key, n := range want[a.Key] {
+			asked++
+			if a.BuildingReqs[key] != n {
+				t.Errorf("the gate into the %s asks for %d %s, the rule gives %d", a.Name, a.BuildingReqs[key], key, n)
+			}
+		}
+		for key, n := range a.BuildingReqs {
+			if storage[key] && want[a.Key][key] != n {
+				t.Errorf("the gate into the %s asks for %d %s, which the rule does not give", a.Name, n, key)
+			}
+		}
+	}
+	if asked != len(storage) {
+		t.Errorf("%d gates ask for storage, want one for each of the %d storage buildings", asked, len(storage))
+	}
+}
+
 // TestFirstStorageCopyFitsTheStoreArrivedWith: in every age the first copy of
 // the storage building fits under the reference store of the age before it
 // (the first Stash under what a new game holds), and each copy up to the

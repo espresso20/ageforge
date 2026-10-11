@@ -34,6 +34,15 @@ import (
 // A gate then asks, in every construction resource of the age (knowledge
 // aside: no gate asks for knowledge), for GateStoreShare of the store that
 // resource needs (GateRuleAmounts), rounded to two figures.
+//
+// A gate also asks for StorageRuleCopies copies of the storage building of
+// the age it leaves (GateStorageCopies). Rule 4 speaks of the reference
+// town; this makes it true of every town. An older age's storage building
+// cannot be built in a later age, and a store is a wall, so a town that
+// arrived holding less than the new age's first storage building costs could
+// never raise a store again: one Stash and a Storage Pit at 520 wood. With
+// the copies asked for, whoever passes a gate arrives with the reference
+// store, and rule 4 sized that to pay for the first copy.
 const (
 	StorageRuleCopies = 5
 	StorageRuleRoom   = 1.25
@@ -49,6 +58,25 @@ const (
 	// copy owned: Kittens Game's barn.
 	StorageRate = 1.75
 )
+
+// GateStorageCopies is what the gate out of each age asks for in storage
+// buildings, by the age the gate leads into: StorageRuleCopies copies of the
+// storage building of the age left. An age with no storage building of its
+// own asks for none.
+func GateStorageCopies(defs []BuildingDef, ages []AgeDef) map[string]map[string]int {
+	out := map[string]map[string]int{}
+	for i := 0; i+1 < len(ages); i++ {
+		for _, d := range defs {
+			if d.Category == "storage" && d.RequiredAge == ages[i].Key {
+				if out[ages[i+1].Key] == nil {
+					out[ages[i+1].Key] = map[string]int{}
+				}
+				out[ages[i+1].Key][d.Key] = StorageRuleCopies
+			}
+		}
+	}
+	return out
+}
 
 // storageRuleCount is how many copies of d the reference town holds.
 func storageRuleCount(d BuildingDef, gate map[string]int) int {

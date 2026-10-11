@@ -19,10 +19,15 @@ import (
 //   - each required building can be built in that age (the age lock forbids
 //     building an older age's buildings, and they may have been upgraded away);
 //   - the last required copy of it costs at most 1/GateBuildingMargin of the
-//     storage for every resource it costs;
-//   - the age's wonder, which every advance also requires, costs at most
-//     1/GateWonderMargin of the storage in each resource (wonders are banked
-//     a deposit at a time, so no margin: each part must fit one full store);
+//     store the gates force (gateStore) for every resource it costs: the
+//     storage rule's own room (config.StorageRuleRoom), against the store it
+//     sizes for exactly this;
+//   - the age's wonder, which every advance also requires, is the one price
+//     allowed over a store: it is paid into its bank in rounds (deposits,
+//     overflow), so it is held to no storage margin (it was held to one full
+//     store while a store was 25 copies; the Dyson Scaffold's steel is two
+//     and a half of the Space Age's walled stores). Its parts are checked
+//     for a source, below;
 //   - every resource the gate asks for, directly, in a required building's
 //     price, in the wonder's or in the price of the wonder's keystone tech
 //     (knowledge), can be had in that age from a cold start (see
@@ -38,17 +43,30 @@ import (
 //     of the age;
 //   - the storage ladder: the first copy of the new age's storage building
 //     fits, with GateLadderMargin to spare, in the least storage the gate
-//     forces a player to hold (see ladderForced). Storage is never lost (no
-//     catastrophe takes it and it can't be sold), so that is the least
-//     anyone enters the age with, and the age lock leaves the new age's
-//     storage as the only storage they can build there.
+//     forces a player to hold (see ladderForced and gateStore). Storage is
+//     never lost (no catastrophe takes it and it can't be sold), so that is
+//     the least anyone enters the age with, and the age lock leaves the new
+//     age's storage as the only storage they can build there.
+//
+// Storage is a wall since the storage rule (config/storage_rule.go), and two
+// of these are stated in its terms. A gate asks for five copies of the
+// storage building of the age it leaves, so the least storage it forces is
+// the store those copies give on top of every earlier gate's (gateStore): the
+// rule's reference store. And a required storage copy is not held to
+// GateBuildingMargin against the most storage of the age: it is the building
+// that makes that storage, so each copy up to the last one asked for must
+// fit, with the rule's own margin, under the store the copies before it
+// give. The ladder's margin is the rule's too (it was 1.25 while storage was
+// sized to hours of income and five times what any price needed): the rule
+// sizes five copies to hold the next age's first storage building and
+// config.StorageRuleMargin more.
 const (
-	GateBuildingMargin  = 2.0
+	GateBuildingMargin  = config.StorageRuleRoom
 	GateResourceMargin  = 1.25
-	GateWonderMargin    = 1.0
+	GateWonderMargin    = 1.0 // no longer checked: see the wonder, above
 	GateTrickleHours    = 48.0
 	GateFlowMarketUnits = 10.0
-	GateLadderMargin    = 1.25
+	GateLadderMargin    = config.StorageRuleMargin
 )
 
 // GateProblem is an age requirement that breaks the Gate Covenant, found from
@@ -612,8 +630,28 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 			// Report the resource with the least headroom, so one row per building.
 			var worst *GateProblem
 			for _, res := range sortedKeys(d.BaseCost) {
+				if d.Category == "storage" {
+					// Each copy asked for, under the store the copies
+					// before it give: the storage every earlier gate
+					// forced, and this building's own earlier copies.
+					before := gateStore(ages[:i+1], defs) + baseStorage(res)
+					for k := 1; k <= n; k++ {
+						price := lastCopyPrice(d, res, k)
+						m := before + float64(float64(k-1)*storagePerCopy(d))
+						if price*config.StorageRuleMargin <= m {
+							continue
+						}
+						if worst == nil || m/price < worst.MaxStorage/worst.Need {
+							worst = &GateProblem{From: from.Key, To: to.Key, Kind: "building", Key: bld, Count: k,
+								Resource: res, Need: price, MaxStorage: m, Margin: config.StorageRuleMargin}
+						}
+					}
+					continue
+				}
+				// Under the store the gates force by the time the copy is
+				// bought: this gate's own storage copies included.
 				last := lastCopyPrice(d, res, n)
-				m := MaxStorage(from.Key, res)
+				m := gateStore(ages[:i+2], defs) + baseStorage(res)
 				consider(bld, res, last, m)
 				if last*GateBuildingMargin <= m {
 					continue
@@ -627,25 +665,12 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 				out = append(out, *worst)
 			}
 		}
-		if wonder != "" {
-			var worst *GateProblem
-			for _, res := range sortedKeys(defs[wonder].BaseCost) {
-				c := defs[wonder].BaseCost[res]
-				m := MaxStorage(from.Key, res)
-				consider(wonder, res, c, m)
-				if c*GateWonderMargin <= m {
-					continue
-				}
-				if worst == nil || m/c < worst.MaxStorage/worst.Need {
-					worst = &GateProblem{From: from.Key, To: to.Key, Kind: "wonder", Key: wonder,
-						Resource: res, Need: c, MaxStorage: m, Margin: GateWonderMargin}
-				}
-			}
-			if worst != nil {
-				out = append(out, *worst)
-			}
-		}
-		out = append(out, ladderProblems(from, to, defs)...)
+		// The wonder is not held to a store: it is the one price allowed
+		// over one, paid into its bank in rounds (deposits, overflow), and
+		// the storage rule leaves it out of what a store must hold. What its
+		// price is made of is checked above, with the gate's other needs:
+		// every part of it must have a source from a cold start.
+		out = append(out, ladderProblems(ages[:i+2], from, to, defs)...)
 		if tight.Key != "" {
 			slack = append(slack, tight)
 		}
@@ -705,14 +730,56 @@ func ladderForced(from, to config.AgeDef, defs map[string]config.BuildingDef) (f
 	return forced, by
 }
 
-// ladderProblems checks the storage ladder for one advance: the first copy of
-// each storage building of `to` must fit, with GateLadderMargin to spare, in
-// the storage the gate forces (ladderForced). One row per storage building,
-// for the resource with the least headroom. A player who met the gate with
-// nothing to spare could otherwise never raise a cap in `to`: the age lock
-// forbids every older storage building.
-func ladderProblems(from, to config.AgeDef, defs map[string]config.BuildingDef) []GateProblem {
+// storagePerCopy is what one copy of d adds to every store (its "all"
+// storage).
+func storagePerCopy(d config.BuildingDef) float64 {
+	per := 0.0
+	for _, e := range d.Effects {
+		if e.Type == "storage" && e.Target == "all" {
+			per += e.Value
+		}
+	}
+	return per
+}
+
+// baseStorage is what res holds before any building.
+func baseStorage(res string) float64 {
+	for _, r := range config.BaseResources() {
+		if r.Key == res {
+			return r.BaseStorage
+		}
+	}
+	return 0
+}
+
+// gateStore is the storage, on top of a resource's base, that the gates into
+// ages[1:] force between them: every storage copy they ask for, at what a
+// copy holds. A town that has advanced into the last of ages holds at least
+// this, in the one place a town can get it: an older age's storage cannot be
+// built later.
+func gateStore(ages []config.AgeDef, defs map[string]config.BuildingDef) float64 {
+	total := 0.0
+	for _, a := range ages[1:] {
+		for _, bld := range sortedKeys(a.BuildingReqs) {
+			if d, ok := defs[bld]; ok && d.Category == "storage" {
+				total += float64(float64(a.BuildingReqs[bld]) * storagePerCopy(d))
+			}
+		}
+	}
+	return total
+}
+
+// ladderProblems checks the storage ladder for one advance, the last of
+// ages: the first copy of each storage building of `to` must fit, with
+// GateLadderMargin to spare, in the storage the gates force: the larger of
+// the gate's biggest single price (ladderForced) and the store the storage
+// copies asked for so far give (gateStore, on the resource's base). One row
+// per storage building, for the resource with the least headroom. A player
+// who met the gate with nothing to spare could otherwise never raise a cap
+// in `to`: the age lock forbids every older storage building.
+func ladderProblems(ages []config.AgeDef, from, to config.AgeDef, defs map[string]config.BuildingDef) []GateProblem {
 	forced, by := ladderForced(from, to, defs)
+	store := gateStore(ages, defs)
 	var out []GateProblem
 	for _, k := range sortedKeys(defs) {
 		d := defs[k]
@@ -722,11 +789,15 @@ func ladderProblems(from, to config.AgeDef, defs map[string]config.BuildingDef) 
 		var worst *GateProblem
 		for _, res := range sortedKeys(d.BaseCost) {
 			c := d.BaseCost[res]
-			if c*GateLadderMargin <= forced || (worst != nil && c <= worst.Need) {
+			held, heldBy := forced, by
+			if s := store + baseStorage(res); s > held {
+				held, heldBy = s, "the storage copies the gates ask for"
+			}
+			if c*GateLadderMargin <= held || (worst != nil && c <= worst.Need) {
 				continue
 			}
 			worst = &GateProblem{From: from.Key, To: to.Key, Kind: "ladder", Key: k, Resource: res,
-				Need: c, MaxStorage: forced, Margin: GateLadderMargin, ForcedBy: by}
+				Need: c, MaxStorage: held, Margin: GateLadderMargin, ForcedBy: heldBy}
 		}
 		if worst != nil {
 			out = append(out, *worst)

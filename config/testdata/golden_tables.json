@@ -7559,6 +7559,7 @@
    },
    "buildings": {
     "electric_arc_furnace": 15,
+    "electric_warehouse": 5,
     "physics_laboratory": 15,
     "power_station": 15
    }
@@ -7571,7 +7572,8 @@
    "buildings": {
     "elders_hall": 5,
     "longhouse": 15,
-    "stone_pit": 5
+    "stone_pit": 5,
+    "storage_pit": 5
    }
   },
   "classical_age": {
@@ -7583,6 +7585,7 @@
    },
    "buildings": {
     "agora": 12,
+    "granary": 5,
     "hunting_lodge": 15,
     "trading_post": 10
    }
@@ -7598,6 +7601,7 @@
    "buildings": {
     "art_studio": 12,
     "exchange": 12,
+    "renaissance_vault": 5,
     "university": 12
    }
   },
@@ -7610,6 +7614,7 @@
    "buildings": {
     "ai_research_lab": 15,
     "data_center": 15,
+    "digital_archive": 5,
     "neural_grid": 15
    }
   },
@@ -7621,6 +7626,7 @@
     "steel": 840000000000
    },
    "buildings": {
+    "info_vault": 5,
     "innovation_hub": 15,
     "media_center": 15,
     "server_farm": 10
@@ -7638,7 +7644,8 @@
    "buildings": {
     "academy": 12,
     "bessemer_plant": 12,
-    "steam_turbine": 12
+    "steam_turbine": 12,
+    "victorian_vault": 5
    }
   },
   "fusion_age": {
@@ -7651,7 +7658,8 @@
    "buildings": {
     "arcology_pod": 25,
     "augmentation_foundry": 15,
-    "black_market": 15
+    "black_market": 15,
+    "cyber_vault": 5
    }
   },
   "galactic_age": {
@@ -7663,6 +7671,7 @@
    "buildings": {
     "antimatter_forge": 15,
     "generation_ship": 30,
+    "stellar_vault": 5,
     "warp_drive_plant": 15
    }
   },
@@ -7675,6 +7684,7 @@
     "wood": 13000000
    },
    "buildings": {
+    "colonial_warehouse": 5,
     "plantation": 8,
     "port": 10
    }
@@ -7688,6 +7698,7 @@
     "steel": 400000000000
    },
    "buildings": {
+    "modern_depot": 5,
     "oil_refinery": 15,
     "think_tank": 20,
     "tower_block": 30
@@ -7702,6 +7713,7 @@
    },
    "buildings": {
     "launch_complex": 10,
+    "orbital_depot": 5,
     "orbital_habitat": 15,
     "solar_collector_array": 10
    }
@@ -7716,7 +7728,8 @@
    "buildings": {
     "lumber_mill": 8,
     "quarry": 8,
-    "scriptorium": 5
+    "scriptorium": 5,
+    "warehouse": 5
    }
   },
   "medieval_age": {
@@ -7727,6 +7740,7 @@
     "wood": 25000
    },
    "buildings": {
+    "classical_vault": 5,
     "library": 15,
     "merchant_quarter": 5,
     "military_academy": 15
@@ -7741,6 +7755,7 @@
     "uranium": 8400000000
    },
    "buildings": {
+    "atomic_vault": 5,
     "bunker_complex": 18,
     "nuclear_reactor": 18,
     "research_campus": 18
@@ -7758,6 +7773,7 @@
    },
    "buildings": {
     "dyson_sphere_habitat": 30,
+    "galactic_vault": 5,
     "stellar_exchange": 15,
     "stellar_metallurgy": 15
    }
@@ -7771,6 +7787,7 @@
    "buildings": {
     "castle_keep": 5,
     "guildhall": 10,
+    "keep": 5,
     "monastery_library": 5
    }
   },
@@ -7783,6 +7800,7 @@
    "buildings": {
     "fusion_reactor": 10,
     "fusion_reactor_array": 10,
+    "fusion_vault": 5,
     "plasma_command": 10
    }
   },
@@ -7792,6 +7810,7 @@
    },
    "buildings": {
     "hut": 10,
+    "stash": 5,
     "story_circle": 5
    }
   },
@@ -7803,6 +7822,7 @@
    },
    "buildings": {
     "probability_war_room": 15,
+    "quantum_vault": 5,
     "reality_academy": 20,
     "reality_forge": 15
    }
@@ -7816,6 +7836,7 @@
     "stone": 120000000
    },
    "buildings": {
+    "industrial_depot": 5,
     "iron_works_complex": 5,
     "steel_mill": 5,
     "tenement": 30
