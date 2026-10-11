@@ -59,7 +59,7 @@ func Awakenings() []AwakeningDef {
 			EpochKey: "iron_era", TriggerAge: "iron_age",
 			Name:       "Discovery of Metallurgy",
 			FlavorText: "The forge runs hotter than any fire before it, and the smiths cannot smelt fast enough. Iron +2/tick for {dur}.",
-			Duration:   500,
+			Duration:   1300,
 			Effects: []Effect{
 				{Type: "production", Target: "iron", Value: 2.0},
 			},
@@ -69,7 +69,7 @@ func Awakenings() []AwakeningDef {
 			EpochKey: "steel_era", TriggerAge: "industrial_age",
 			Name:       "Steam Breakthrough",
 			FlavorText: "The first steam engine coughs, catches and roars. All production +25% for {dur}.",
-			Duration:   200,
+			Duration:   520,
 			Effects: []Effect{
 				{Type: "production_all", Value: 0.25},
 			},
@@ -79,7 +79,7 @@ func Awakenings() []AwakeningDef {
 			EpochKey: "electric_era", TriggerAge: "victorian_age",
 			Name:       "The Grid Wakes",
 			FlavorText: "The grid hums to life, lamps come on across the skyline, and machines take up the night shift. Electricity +2/tick and all production +10% for {dur}.",
-			Duration:   300,
+			Duration:   780,
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 2.0},
 				{Type: "production_all", Value: 0.10},
@@ -90,7 +90,7 @@ func Awakenings() []AwakeningDef {
 			EpochKey: "digital_era", TriggerAge: "modern_age",
 			Name:       "Networks Wake",
 			FlavorText: "Knowledge stops being scarce. The networks come online and the archives open. Data +2/tick, knowledge +1/tick for {dur}.",
-			Duration:   300,
+			Duration:   780,
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 2.0},
 				{Type: "production", Target: "knowledge", Value: 1.0},
@@ -101,7 +101,7 @@ func Awakenings() []AwakeningDef {
 			EpochKey: "neon_era", TriggerAge: "cyberpunk_age",
 			Name:       "Cybernetic Awakening",
 			FlavorText: "Flesh and circuit reach an accord, and augmented crews work without tiring. All production +20% for {dur}.",
-			Duration:   250,
+			Duration:   650,
 			Effects: []Effect{
 				{Type: "production_all", Value: 0.20},
 			},
@@ -111,7 +111,7 @@ func Awakenings() []AwakeningDef {
 			EpochKey: "cosmic_era", TriggerAge: "interstellar_age",
 			Name:       "First Contact Signal",
 			FlavorText: "A pattern threads through the static, too regular to be noise and too strange to be ours. Your engineers cannot stop listening. Dark matter +1.5/tick and all production +10% for {dur}.",
-			Duration:   400,
+			Duration:   1040,
 			Effects: []Effect{
 				{Type: "production", Target: "dark_matter", Value: 1.5},
 				{Type: "production_all", Value: 0.10},
@@ -119,7 +119,6 @@ func Awakenings() []AwakeningDef {
 		},
 	}
 	for i := range defs {
-		defs[i].Duration = StretchTicks(defs[i].TriggerAge, defs[i].Duration)
 		defs[i].FlavorText = withDuration(defs[i].FlavorText, defs[i].Duration)
 	}
 	return defs

@@ -41,16 +41,10 @@ import (
 // game.BaseTickInterval (a game test checks it).
 const TickSeconds = 2.0
 
-// AgeTargets is the time a player should spend in each age at 1x, entering
-// it to entering the next: baseAgeTargets × AgeStretch, about a week to the
-// Modern Age and the first prestige. The final age's entry only sizes its
-// buildings.
-var AgeTargets = stretchedTargets()
-
 // PacingStretch is how much longer every age from the Bronze Age on runs than
-// on the curve its clocks were typed for (baseAgeTargets, about three days to
-// the Modern Age). AgeTargets multiplies baseAgeTargets by it, and every
-// clock counted in ticks (the random-event delay, event and boon durations,
+// on the curve the game's tick clocks were first typed for (about three days
+// to the Modern Age). AgeTargets already holds the stretched lengths. Every
+// clock counted in ticks while the game runs (the random-event delay, event and boon durations,
 // raids, routes, expeditions, cooldowns) is multiplied by it through
 // StretchTicks, so an age holds as many events, raids and routes as it did
 // before, each lasting the same share of it. A future change to the curve is
@@ -64,7 +58,7 @@ var unstretchedAges = map[string]bool{"primitive_age": true, "stone_age": true}
 // AgeStretch is the factor age's clocks run at: 1 for the Primitive and
 // Stone Ages (and an unknown age), PacingStretch from the Bronze Age on.
 func AgeStretch(age string) float64 {
-	if _, ok := baseAgeTargets[age]; !ok || unstretchedAges[age] {
+	if _, ok := AgeTargets[age]; !ok || unstretchedAges[age] {
 		return 1
 	}
 	return PacingStretch
@@ -95,40 +89,34 @@ func withDuration(text string, ticks int) string {
 }
 
 // stretchedTargets is baseAgeTargets × AgeStretch, to the second.
-func stretchedTargets() map[string]time.Duration {
-	out := make(map[string]time.Duration, len(baseAgeTargets))
-	for age, d := range baseAgeTargets {
-		secs := math.Round(float64(d.Seconds() * AgeStretch(age)))
-		out[age] = time.Duration(secs) * time.Second
-	}
-	return out
-}
 
-// baseAgeTargets is the curve the game's tick clocks were written for, before
-// the one-week stretch. Edit a target here; AgeTargets follows.
-var baseAgeTargets = map[string]time.Duration{
+// AgeTargets is the time a player is meant to spend in each age at 1x, from
+// entering it to entering the next: about a week to the Modern Age and the
+// first prestige. The numbers are written here as they are used. The final
+// age's entry only sizes its buildings.
+var AgeTargets = map[string]time.Duration{
 	"primitive_age":    15 * time.Minute,
 	"stone_age":        45 * time.Minute,
-	"bronze_age":       90 * time.Minute,
-	"iron_age":         150 * time.Minute,
-	"classical_age":    210 * time.Minute,
-	"medieval_age":     270 * time.Minute,
-	"renaissance_age":  6 * time.Hour,
-	"colonial_age":     7 * time.Hour,
-	"industrial_age":   8 * time.Hour,
-	"victorian_age":    9 * time.Hour,
-	"electric_age":     10 * time.Hour,
-	"atomic_age":       12 * time.Hour,
-	"modern_age":       12 * time.Hour,
-	"information_age":  14 * time.Hour,
-	"digital_age":      16 * time.Hour,
-	"cyberpunk_age":    18 * time.Hour,
-	"fusion_age":       20 * time.Hour,
-	"space_age":        22 * time.Hour,
-	"interstellar_age": 24 * time.Hour,
-	"galactic_age":     24 * time.Hour,
-	"quantum_age":      24 * time.Hour,
-	"transcendent_age": 24 * time.Hour,
+	"bronze_age":       234 * time.Minute,
+	"iron_age":         390 * time.Minute,
+	"classical_age":    546 * time.Minute,
+	"medieval_age":     702 * time.Minute,
+	"renaissance_age":  936 * time.Minute,
+	"colonial_age":     1092 * time.Minute,
+	"industrial_age":   1248 * time.Minute,
+	"victorian_age":    1404 * time.Minute,
+	"electric_age":     26 * time.Hour,
+	"atomic_age":       1872 * time.Minute,
+	"modern_age":       1872 * time.Minute,
+	"information_age":  2184 * time.Minute,
+	"digital_age":      2496 * time.Minute,
+	"cyberpunk_age":    2808 * time.Minute,
+	"fusion_age":       52 * time.Hour,
+	"space_age":        3432 * time.Minute,
+	"interstellar_age": 3744 * time.Minute,
+	"galactic_age":     3744 * time.Minute,
+	"quantum_age":      3744 * time.Minute,
+	"transcendent_age": 3744 * time.Minute,
 }
 
 const (

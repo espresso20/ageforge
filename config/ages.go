@@ -32,11 +32,10 @@ type AgeDef struct {
 // Callers that need random access should use AgeByKey(). Callers that need the
 // sorted key list should use AgeOrder().
 //
-// All advancement requirements (ResourceReqs/BuildingReqs) are passed through
-// normalizeAgeRequirements before return, so every consumer — AgeByKey, AgeOrder,
-// and game/progress.go's CheckAdvancement (which sources its slice from Ages()) —
-// sees the same normalized values. Ages() rebuilds the slice from inline literals
-// on every call, so normalization operates on fresh maps and cannot compound.
+// The advancement requirements (ResourceReqs/BuildingReqs) below are the
+// numbers the game asks for: nothing rewrites them after this table. Ages()
+// rebuilds the slice from inline literals on every call, so a caller may
+// change its copy freely.
 //
 // Gate Covenant (from the economy design): every BuildingReqs entry
 // names a building you can build in the age you advance FROM (the age lock
@@ -50,7 +49,7 @@ type AgeDef struct {
 // RequiredTech), so research never competes with a requirement for the same
 // knowledge (TestNoGateAsksForKnowledge).
 func Ages() []AgeDef {
-	return normalizeAgeRequirements([]AgeDef{
+	return []AgeDef{
 		// === 0: PRIMITIVE AGE (Stone Era) ===
 		{
 			Name: "Primitive Age", Key: "primitive_age", Order: 0,
@@ -67,7 +66,7 @@ func Ages() []AgeDef {
 			EpochKey:        "stone_era",
 			Description:     "Stone tools and the first permanent camps.",
 			Quip:            "Turns out you can hit almost anything with a rock. Revolutionary.",
-			ResourceReqs:    map[string]float64{"food": 500, "wood": 500},
+			ResourceReqs:    map[string]float64{"food": 1000, "wood": 1000},
 			BuildingReqs:    map[string]int{"hut": 10, "story_circle": 5},
 			UnlockBuildings: []string{"longhouse", "storage_pit", "forager_post", "woodcutter_camp", "stone_camp", "stone_pit", "elders_hall", "standing_stones", "war_camp", "great_monolith"},
 			UnlockResources: []string{"stone"},
@@ -78,7 +77,7 @@ func Ages() []AgeDef {
 			EpochKey:        "stone_era",
 			Description:     "Metalworking arrives, and with it trade.",
 			Quip:            "Things are about to get significantly less wooden.",
-			ResourceReqs:    map[string]float64{"food": 2000, "wood": 4000, "stone": 2000},
+			ResourceReqs:    map[string]float64{"food": 4000, "wood": 8000, "stone": 4000},
 			BuildingReqs:    map[string]int{"longhouse": 15, "stone_pit": 5, "elders_hall": 5},
 			UnlockBuildings: []string{"house", "warehouse", "farm", "lumber_mill", "quarry", "scriptorium", "altar", "barracks", "market", "smithy", "stonehenge"},
 			UnlockResources: []string{"iron", "gold"},
@@ -89,8 +88,8 @@ func Ages() []AgeDef {
 			EpochKey:        "iron_era",
 			Description:     "Iron tools and weapons spread.",
 			Quip:            "Harder, sharper, and far more likely to end an argument permanently.",
-			ResourceReqs:    map[string]float64{"food": 40000, "wood": 20000, "stone": 8000, "iron": 4000},
-			BuildingReqs:    map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 3},
+			ResourceReqs:    map[string]float64{"food": 80000, "wood": 40000, "stone": 16000, "iron": 8000},
+			BuildingReqs:    map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 5},
 			UnlockBuildings: []string{"townhouse", "granary", "field_works", "timber_yard", "marble_quarry", "agora", "temple", "hunting_lodge", "legion_fort", "trading_post", "ironworks", "smelter", "colosseum"},
 			UnlockResources: []string{"marble", "iron_ore", "soldiers"},
 		},
@@ -100,7 +99,7 @@ func Ages() []AgeDef {
 			EpochKey:        "iron_era",
 			Description:     "Great empires are built and philosophy flourishes.",
 			Quip:            "Everyone is suddenly very interested in columns and the meaning of life.",
-			ResourceReqs:    map[string]float64{"stone": 75000, "iron": 15000, "gold": 8000},
+			ResourceReqs:    map[string]float64{"stone": 130000, "iron": 26000, "gold": 14000},
 			BuildingReqs:    map[string]int{"hunting_lodge": 15, "agora": 12, "trading_post": 10},
 			UnlockBuildings: []string{"villa", "classical_vault", "estate_farm", "wood_workshop", "marble_works", "library", "oracle_house", "military_academy", "merchant_quarter", "aqueduct", "forge", "amphitheater", "parthenon", "cultural_obelisk"},
 			UnlockResources: []string{"culture"},
@@ -111,8 +110,8 @@ func Ages() []AgeDef {
 			EpochKey:        "iron_era",
 			Description:     "Kingdoms rise and feudalism takes hold.",
 			Quip:            "A golden age, assuming you were lucky enough to be born golden.",
-			ResourceReqs:    map[string]float64{"stone": 125000, "iron": 30000, "gold": 20000},
-			BuildingReqs:    map[string]int{"merchant_quarter": 3, "library": 15, "military_academy": 15},
+			ResourceReqs:    map[string]float64{"stone": 220000, "iron": 53000, "gold": 35000},
+			BuildingReqs:    map[string]int{"merchant_quarter": 5, "library": 15, "military_academy": 15},
 			UnlockBuildings: []string{"manor", "keep", "demesne", "sawmill", "stonemasons_guild", "monastery_library", "cathedral", "castle_keep", "guildhall", "workshop", "ironmonger", "great_hall", "great_library", "grand_amphitheatre_monument"},
 			UnlockResources: []string{"steel"},
 		},
@@ -127,8 +126,8 @@ func Ages() []AgeDef {
 			// does), and faith comes from the faith lineage's flat rates with
 			// the techs' share on top: +28% by the Medieval Age since Ritual and
 			// Calendar joined Theology (it was +8%, and the gate 4600).
-			ResourceReqs:    map[string]float64{"gold": 100000, "steel": 500, "faith": 5450},
-			BuildingReqs:    map[string]int{"monastery_library": 5, "guildhall": 10, "castle_keep": 3},
+			ResourceReqs:    map[string]float64{"gold": 180000, "steel": 880, "faith": 9500},
+			BuildingReqs:    map[string]int{"monastery_library": 5, "guildhall": 10, "castle_keep": 5},
 			UnlockBuildings: []string{"estate", "renaissance_vault", "market_garden", "coal_mine", "iron_mine", "university", "basilica", "fortress", "exchange", "mill", "foundry", "art_studio", "sistine_chapel"},
 			UnlockResources: []string{"coal"},
 		},
@@ -138,7 +137,7 @@ func Ages() []AgeDef {
 			EpochKey:        "steel_era",
 			Description:     "Exploration and trade span the globe.",
 			Quip:            "You discover lands that were, somewhat awkwardly, already discovered.",
-			ResourceReqs:    map[string]float64{"gold": 470000, "steel": 76500, "culture": 200000},
+			ResourceReqs:    map[string]float64{"gold": 710000, "steel": 110000, "culture": 300000},
 			BuildingReqs:    map[string]int{"exchange": 12, "university": 12, "art_studio": 12},
 			UnlockBuildings: []string{"settlement_block", "colonial_warehouse", "plantation", "coal_works", "deep_iron_mine", "natural_philosophy_hall", "mission", "fort", "port", "harbor", "dockyard", "iron_works", "concert_hall", "embassy", "grand_lighthouse"},
 		},
@@ -148,7 +147,7 @@ func Ages() []AgeDef {
 			EpochKey:        "steel_era",
 			Description:     "Machines take over production.",
 			Quip:            "Smoke everywhere, hours endless, output magnificent. Two out of three.",
-			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000},
+			ResourceReqs:    map[string]float64{"steel": 470000, "gold": 3800000},
 			BuildingReqs:    map[string]int{"plantation": 8, "port": 10},
 			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "harbor_authority", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "grand_embassy", "geographic_society", "crystal_palace", "eternal_library_monument"},
 			UnlockResources: []string{"oil"},
@@ -161,8 +160,8 @@ func Ages() []AgeDef {
 			Quip:        "Progress, propriety, and a truly heroic amount of repressed feeling.",
 			// note: no oil requirement. Nothing produces oil before the Victorian
 			// Age's own oil derrick, so asking for it on the way in walled the gate.
-			ResourceReqs:    map[string]float64{"steel": 1625000, "gold": 9687500},
-			BuildingReqs:    map[string]int{"steel_mill": 5, "iron_works_complex": 3, "tenement": 30},
+			ResourceReqs:    map[string]float64{"steel": 2400000, "gold": 1.5e07},
+			BuildingReqs:    map[string]int{"steel_mill": 5, "iron_works_complex": 5, "tenement": 30},
 			UnlockBuildings: []string{"row_house", "victorian_vault", "mechanized_farm", "oil_derrick", "uranium_mine", "academy", "grand_cathedral", "garrison", "bank", "steam_works", "bessemer_plant", "steam_turbine", "grand_museum", "eiffel_tower"},
 			UnlockResources: []string{"electricity"},
 		},
@@ -172,7 +171,7 @@ func Ages() []AgeDef {
 			EpochKey:        "electric_era",
 			Description:     "Electric light and power reach daily life.",
 			Quip:            "Lightning, domesticated. The dark is now strictly optional.",
-			ResourceReqs:    map[string]float64{"steel": 9125000, "oil": 2625000, "electricity": 850000},
+			ResourceReqs:    map[string]float64{"steel": 1.1e07, "oil": 3300000, "electricity": 1100000},
 			BuildingReqs:    map[string]int{"steam_turbine": 12, "academy": 12, "bessemer_plant": 12},
 			UnlockBuildings: []string{"apartment_block", "electric_warehouse", "industrial_farm", "oil_field", "nuclear_extraction_plant", "physics_laboratory", "revival_hall", "command_post", "financial_district", "power_station", "electric_arc_furnace", "power_generator", "radio_station", "hoover_dam"},
 		},
@@ -182,7 +181,7 @@ func Ages() []AgeDef {
 			EpochKey:        "electric_era",
 			Description:     "Nuclear power, for better and worse.",
 			Quip:            "You have split the atom. The atom is taking it personally.",
-			ResourceReqs:    map[string]float64{"steel": 85625000, "electricity": 9250000, "oil": 6125000},
+			ResourceReqs:    map[string]float64{"steel": 1.1e08, "electricity": 1.2e07, "oil": 7700000},
 			BuildingReqs:    map[string]int{"electric_arc_furnace": 15, "power_station": 15, "physics_laboratory": 15},
 			UnlockBuildings: []string{"housing_project", "atomic_vault", "agricultural_complex", "petroleum_refinery", "uranium_processing_works", "research_campus", "spiritual_center", "bunker_complex", "corporate_hq", "nuclear_plant", "advanced_alloy_plant", "nuclear_reactor", "cinema", "particle_accelerator", "monument_of_ages"},
 			UnlockResources: []string{"uranium"},
@@ -193,7 +192,7 @@ func Ages() []AgeDef {
 			EpochKey:        "digital_era",
 			Description:     "Technology and innovation define the era.",
 			Quip:            "Everything is connected now, which seemed like a good idea at the time.",
-			ResourceReqs:    map[string]float64{"electricity": 26250000, "uranium": 5500000, "steel": 378125000},
+			ResourceReqs:    map[string]float64{"electricity": 3.3e07, "uranium": 6900000, "steel": 4.7e08},
 			BuildingReqs:    map[string]int{"nuclear_reactor": 18, "bunker_complex": 18, "research_campus": 18},
 			UnlockBuildings: []string{"tower_block", "modern_depot", "agri_complex", "oil_platform", "titanium_mine", "think_tank", "meditation_center", "special_ops_hq", "investment_firm", "seaport", "power_grid_hub", "titanium_smelter", "oil_refinery", "tv_studio", "space_program", "nano_foundry"},
 			UnlockResources: []string{"data", "nanobots"},
@@ -204,7 +203,7 @@ func Ages() []AgeDef {
 			EpochKey:        "digital_era",
 			Description:     "The Internet connects the world.",
 			Quip:            "The sum of all human knowledge, now mostly used to argue.",
-			ResourceReqs:    map[string]float64{"electricity": 531250000, "data": 55000000, "gold": 1000000000},
+			ResourceReqs:    map[string]float64{"electricity": 6.6e08, "data": 6.9e07, "gold": 1.3e09},
 			BuildingReqs:    map[string]int{"think_tank": 20, "tower_block": 30, "oil_refinery": 15},
 			UnlockBuildings: []string{"smart_complex", "info_vault", "smart_farm", "smart_refinery", "precision_mine", "innovation_hub", "digital_temple", "cyber_command", "venture_hub", "container_terminal", "smart_grid_node", "aerospace_foundry", "smart_energy_grid", "server_farm", "media_center", "global_network"},
 		},
@@ -214,7 +213,7 @@ func Ages() []AgeDef {
 			EpochKey:        "digital_era",
 			Description:     "Full digitization of civilization.",
 			Quip:            "Civilization has been successfully uploaded. Please do not close this window.",
-			ResourceReqs:    map[string]float64{"data": 2500000000, "electricity": 15625000000},
+			ResourceReqs:    map[string]float64{"data": 3.1e09, "electricity": 2e10},
 			BuildingReqs:    map[string]int{"server_farm": 10, "media_center": 15, "innovation_hub": 15},
 			UnlockBuildings: []string{"megaplex", "digital_archive", "nano_farm", "bio_fabrication_lab", "nano_drill_complex", "ai_research_lab", "cyber_shrine", "drone_warfare_center", "crypto_exchange", "logistics_hub", "neural_grid", "nano_alloy_plant", "quantum_battery_array", "data_center", "vr_studio", "world_simulation"},
 		},
@@ -224,7 +223,7 @@ func Ages() []AgeDef {
 			EpochKey:        "neon_era",
 			Description:     "Neon lights and cybernetic augmentation.",
 			Quip:            "High tech, low life, and a worrying number of replacement arms.",
-			ResourceReqs:    map[string]float64{"data": 125000000000, "electricity": 781250000000},
+			ResourceReqs:    map[string]float64{"data": 1.6e11, "electricity": 9.8e11},
 			BuildingReqs:    map[string]int{"ai_research_lab": 15, "data_center": 15, "neural_grid": 15},
 			UnlockBuildings: []string{"arcology_pod", "cyber_vault", "vat_farm", "nanobot_vat", "dark_crystal_mine", "neuro_research_center", "neon_sanctuary", "combat_aug_center", "black_market", "augmentation_foundry", "dark_matter_refinery", "dark_energy_tap", "cyber_hub", "holographic_theater", "neon_citadel"},
 			UnlockResources: []string{"crypto", "dark_matter_crystals"},
@@ -235,7 +234,7 @@ func Ages() []AgeDef {
 			EpochKey:        "neon_era",
 			Description:     "Fusion brings clean, plentiful energy.",
 			Quip:            "Endless clean power, at last. Only forty years later than promised.",
-			ResourceReqs:    map[string]float64{"electricity": 390625000000, "crypto": 20000000000, "data": 62500000000},
+			ResourceReqs:    map[string]float64{"electricity": 4.9e11, "crypto": 2.5e10, "data": 7.8e10},
 			BuildingReqs:    map[string]int{"augmentation_foundry": 15, "arcology_pod": 25, "black_market": 15},
 			UnlockBuildings: []string{"habitat_ring", "fusion_vault", "bio_reactor_farm", "molecular_synthesizer", "exotic_mineral_extractor", "theoretical_institute", "quantum_chapel", "plasma_command", "energy_exchange", "fusion_reactor", "exotic_matter_forge", "fusion_reactor_array", "quantum_server_farm", "neural_art_complex", "stellar_cradle"},
 			UnlockResources: []string{"plasma"},
@@ -246,7 +245,7 @@ func Ages() []AgeDef {
 			EpochKey:        "neon_era",
 			Description:     "Orbital expansion begins.",
 			Quip:            "Space: vast, silent, and absolutely covered in your garbage now.",
-			ResourceReqs:    map[string]float64{"plasma": 50000000000, "electricity": 1953125000000, "data": 312500000000},
+			ResourceReqs:    map[string]float64{"plasma": 6.3e10, "electricity": 2.4e12, "data": 3.9e11},
 			BuildingReqs:    map[string]int{"fusion_reactor": 10, "fusion_reactor_array": 10, "plasma_command": 10},
 			UnlockBuildings: []string{"orbital_habitat", "orbital_depot", "hydroponic_bay", "quantum_organic_extractor", "asteroid_crystal_mine", "deep_space_observatory", "orbital_sanctuary", "space_force_base", "asteroid_market", "launch_complex", "orbital_refinery", "solar_collector_array", "orbital_data_relay", "zero_g_gallery", "dyson_scaffold"},
 			UnlockResources: []string{"titanium", "titanium_ore"},
@@ -257,7 +256,7 @@ func Ages() []AgeDef {
 			EpochKey:        "cosmic_era",
 			Description:     "Ships cross the space between stars.",
 			Quip:            "The nearest neighbor is four light-years away. Finally, some peace.",
-			ResourceReqs:    map[string]float64{"titanium": 100000000000, "plasma": 250000000000},
+			ResourceReqs:    map[string]float64{"titanium": 1.3e11, "plasma": 3.1e11},
 			BuildingReqs:    map[string]int{"launch_complex": 10, "orbital_habitat": 15, "solar_collector_array": 10},
 			UnlockBuildings: []string{"generation_ship", "stellar_vault", "protein_synthesizer", "reality_matter_weaver", "stellar_core_drill", "xenology_institute", "void_monastery", "fleet_command", "galactic_trade_hub", "warp_drive_plant", "antimatter_forge", "pulsar_tap", "galactic_network_node", "cultural_beacon", "warp_nexus"},
 			UnlockResources: []string{"dark_matter"},
@@ -268,7 +267,7 @@ func Ages() []AgeDef {
 			EpochKey:        "cosmic_era",
 			Description:     "Galactic civilization spans the cosmos.",
 			Quip:            "An empire too large to govern and too distant to feel real.",
-			ResourceReqs:    map[string]float64{"dark_matter": 200000000000, "titanium": 500000000000},
+			ResourceReqs:    map[string]float64{"dark_matter": 2.5e11, "titanium": 6.3e11},
 			BuildingReqs:    map[string]int{"warp_drive_plant": 15, "generation_ship": 30, "antimatter_forge": 15},
 			UnlockBuildings: []string{"dyson_sphere_habitat", "galactic_vault", "matter_converter", "cosmic_organic_works", "neutron_star_mine", "cosmic_research_station", "stellar_shrine", "stellar_armada_hq", "stellar_exchange", "dyson_assembly", "stellar_metallurgy", "quasar_tap", "consciousness_upload_hub", "civilization_archive", "cosmic_beacon"},
 			UnlockResources: []string{"antimatter"},
@@ -279,7 +278,7 @@ func Ages() []AgeDef {
 			EpochKey:        "cosmic_era",
 			Description:     "Reality bends to quantum mastery.",
 			Quip:            "Whether you've entered it is, technically, both.",
-			ResourceReqs:    map[string]float64{"antimatter": 5000000000000, "dark_matter": 10000000000000},
+			ResourceReqs:    map[string]float64{"antimatter": 6.3e12, "dark_matter": 1.3e13},
 			BuildingReqs:    map[string]int{"stellar_exchange": 15, "stellar_metallurgy": 15, "dyson_sphere_habitat": 30},
 			UnlockBuildings: []string{"reality_fold", "quantum_vault", "quantum_cultivator", "reality_harvester", "reality_excavator", "reality_academy", "transcendence_hall", "probability_war_room", "probability_market", "reality_forge", "quantum_metal_works", "zero_point_generator", "reality_processor", "reality_art_engine", "reality_anchor"},
 			UnlockResources: []string{"quantum_flux"},
@@ -290,92 +289,11 @@ func Ages() []AgeDef {
 			EpochKey:        "cosmic_era",
 			Description:     "The last age. There is nowhere further to go.",
 			Quip:            "You have become everything. It is quieter than the brochure suggested.",
-			ResourceReqs:    map[string]float64{"quantum_flux": 150000000000000, "antimatter": 250000000000000},
+			ResourceReqs:    map[string]float64{"quantum_flux": 1.9e14, "antimatter": 3.1e14},
 			BuildingReqs:    map[string]int{"reality_academy": 20, "reality_forge": 15, "probability_war_room": 15},
 			UnlockBuildings: []string{"singularity_core", "transcendent_nexus", "omniversal_war_council", "omniversal_bazaar", "singularity_engine"},
 		},
-	})
-}
-
-// normalizeAgeRequirements applies the EPIC economy-rebalance sub-ticket 3
-// "moderate requirements bump" to age advancement gates.
-//
-// This is a DELIBERATELY LIGHTER pass than the original ticket's proposed 2–5x
-// across-the-board hike. Sub-tickets 1 (flattened cost curves) and 2 (carryover
-// fixes) already tightened pacing, so a heavy requirements raise on top would risk
-// a grind wall. The bands below are the tuned compromise — bump them here if a
-// later pass wants to push or relax the curve.
-//
-// It operates on the freshly-built slice from Ages() (inline literals → fresh maps
-// every call), so it is naturally idempotent w.r.t. Ages(): nothing compounds.
-// We still defensively copy each req map before mutating, in case a future refactor
-// ever shares map references between AgeDefs.
-//
-// Policy:
-//   - ResourceReqs: every value multiplied by the age's band factor, then rounded to
-//     2 significant figures (reusing roundSignificant from buildings.go) for readability.
-//   - BuildingReqs: for the early/mid ages (stone_age..information_age), raise any count
-//     below buildingReqFloor up to the floor; counts already at/above it are untouched.
-//     This only strengthens the thinnest gates and leaves late ages alone.
-//   - primitive_age has no requirements and is skipped.
-func normalizeAgeRequirements(ages []AgeDef) []AgeDef {
-	// === Resource requirement multipliers, by age key (re-tune here) ===
-	// Early ages get the hardest squeeze; the curve eases as the cost-curve and
-	// carryover fixes do more of the pacing work in later ages.
-	resourceReqMultipliers := map[string]float64{
-		// Early (Stone/Iron eras) — 2.0x
-		"stone_age": 2.0, "bronze_age": 2.0, "iron_age": 2.0,
-		// Mid (classical → renaissance) — 1.75x
-		"classical_age": 1.75, "medieval_age": 1.75, "renaissance_age": 1.75,
-		// Industrializing (colonial → victorian) — 1.5x
-		"colonial_age": 1.5, "industrial_age": 1.5, "victorian_age": 1.5,
-		// Late (electric → transcendent) — 1.25x
-		"electric_age": 1.25, "atomic_age": 1.25, "modern_age": 1.25,
-		"information_age": 1.25, "digital_age": 1.25, "cyberpunk_age": 1.25,
-		"fusion_age": 1.25, "space_age": 1.25, "interstellar_age": 1.25,
-		"galactic_age": 1.25, "quantum_age": 1.25, "transcendent_age": 1.25,
-		// primitive_age intentionally absent (no requirements).
 	}
-
-	// === Building requirement floor (re-tune here) ===
-	// Any BuildingReq below this floor is raised to it, but ONLY for the ages in
-	// buildingFloorAges. This firms up the thinnest gates without touching late ages.
-	const buildingReqFloor = 5
-	buildingFloorAges := map[string]bool{
-		"stone_age": true, "bronze_age": true, "iron_age": true,
-		"classical_age": true, "medieval_age": true, "renaissance_age": true,
-		"colonial_age": true, "industrial_age": true, "victorian_age": true,
-		"electric_age": true, "atomic_age": true, "modern_age": true,
-		"information_age": true,
-		// digital_age onward (and primitive_age) intentionally excluded.
-	}
-
-	for i := range ages {
-		age := &ages[i]
-
-		// Resource requirements: scale + round.
-		if factor, ok := resourceReqMultipliers[age.Key]; ok && len(age.ResourceReqs) > 0 {
-			scaled := make(map[string]float64, len(age.ResourceReqs))
-			for res, amount := range age.ResourceReqs {
-				scaled[res] = roundSignificant(amount*factor, 2)
-			}
-			age.ResourceReqs = scaled
-		}
-
-		// Building requirements: apply the floor for the gated ages.
-		if buildingFloorAges[age.Key] && len(age.BuildingReqs) > 0 {
-			floored := make(map[string]int, len(age.BuildingReqs))
-			for bld, count := range age.BuildingReqs {
-				if count < buildingReqFloor {
-					count = buildingReqFloor
-				}
-				floored[bld] = count
-			}
-			age.BuildingReqs = floored
-		}
-	}
-
-	return ages
 }
 
 // AgeByKey returns a map of key -> AgeDef

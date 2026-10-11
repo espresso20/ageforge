@@ -19,9 +19,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// not cost ~2.9x a gathering camp. See Ety5GDPw.
 	b = append(b, BuildingDef{
 		Name: "Wood Camp", Key: "wood_camp", Category: "production",
-		BaseCost:    map[string]float64{"wood": 20},
-		CostScale:   1.12,
-		Effects:     []Effect{{Type: "production", Target: "wood", Value: 0.20}},
+		BaseCost:    map[string]float64{"wood": 16},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "wood", Value: 0.569}},
 		BuildTicks:  20,
 		RequiredAge: "primitive_age",
 		Description: "A basic camp for collecting wood.",
@@ -32,9 +32,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 1 — stone_age  rate=0.40  output=wood
 	b = append(b, BuildingDef{
 		Name: "Woodcutter Camp", Key: "woodcutter_camp", Category: "production",
-		BaseCost:    map[string]float64{"wood": 120, "stone": 60},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "wood", Value: 0.40}},
+		BaseCost:    map[string]float64{"wood": 360, "stone": 180},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "wood", Value: 5.76}},
 		BuildTicks:  50,
 		RequiredAge: "stone_age",
 		Description: "Choppers fell trees with stone axes.",
@@ -45,9 +45,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 2 — bronze_age  rate=0.80  output=wood
 	b = append(b, BuildingDef{
 		Name: "Lumber Mill", Key: "lumber_mill", Category: "production",
-		BaseCost:    map[string]float64{"wood": 700, "stone": 400, "iron": 150},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "wood", Value: 0.80}},
+		BaseCost:    map[string]float64{"wood": 2100, "stone": 1200, "iron": 450},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "wood", Value: 7.91}},
 		BuildTicks:  150,
 		RequiredAge: "bronze_age",
 		Description: "Bronze-saw lumber processing.",
@@ -58,9 +58,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 3 — iron_age  rate=1.60  output=wood
 	b = append(b, BuildingDef{
 		Name: "Timber Yard", Key: "timber_yard", Category: "production",
-		BaseCost:    map[string]float64{"stone": 4000, "iron": 2500, "wood": 3000},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "wood", Value: 1.60}},
+		BaseCost:    map[string]float64{"stone": 12000, "iron": 7500, "wood": 9000},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "wood", Value: 19.2}},
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "Iron-saw timber processing yard.",
@@ -71,9 +71,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 4 — classical_age  rate=3.20  output=wood
 	b = append(b, BuildingDef{
 		Name: "Wood Workshop", Key: "wood_workshop", Category: "production",
-		BaseCost:    map[string]float64{"stone": 30000, "gold": 10000, "iron": 8000},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "wood", Value: 3.20}},
+		BaseCost:    map[string]float64{"stone": 90000, "gold": 30000, "iron": 24000},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "wood", Value: 54.4}},
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "Skilled carpenters working at full tilt.",
@@ -84,9 +84,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 5 — medieval_age  rate=6.40  output=wood
 	b = append(b, BuildingDef{
 		Name: "Sawmill", Key: "sawmill", Category: "production",
-		BaseCost:    map[string]float64{"stone": 160000, "gold": 55000, "knowledge": 15000},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "wood", Value: 6.40}},
+		BaseCost:    map[string]float64{"stone": 480000, "gold": 170000, "knowledge": 45000},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "wood", Value: 6.4}},
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "Water-wheel-powered sawmill.",
@@ -97,9 +97,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 6 — renaissance_age  rate=12.80  output=coal
 	b = append(b, BuildingDef{
 		Name: "Coal Mine", Key: "coal_mine", Category: "production",
-		BaseCost:    map[string]float64{"gold": 550000, "steel": 200000, "knowledge": 80000},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "coal", Value: 12.80}},
+		BaseCost:    map[string]float64{"gold": 1700000, "steel": 600000, "knowledge": 240000},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "coal", Value: 106}},
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
 		Description: "Early coal extraction for industry.",
@@ -110,9 +110,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 7 — colonial_age  rate=25.60  output=coal
 	b = append(b, BuildingDef{
 		Name: "Coal Works", Key: "coal_works", Category: "production",
-		BaseCost:    map[string]float64{"gold": 3e6, "steel": 1.5e6},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "coal", Value: 25.60}},
+		BaseCost:    map[string]float64{"gold": 9000000, "steel": 4500000},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "coal", Value: 25.6}},
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
 		Description: "Organized coal extraction and processing.",
@@ -123,9 +123,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 8 — industrial_age  rate=51.20  output=coal
 	b = append(b, BuildingDef{
 		Name: "Steam Colliery", Key: "steam_coal_plant", Category: "production",
-		BaseCost:    map[string]float64{"steel": 22e6, "coal": 8e6, "gold": 12e6},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "coal", Value: 51.20}},
+		BaseCost:    map[string]float64{"steel": 6.6e07, "coal": 2.4e07, "gold": 3.6e07},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "coal", Value: 8130}},
 		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
 		Description: "Steam-powered coal extraction plant.",
@@ -136,9 +136,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 9 — victorian_age  rate=102.40  output=oil
 	b = append(b, BuildingDef{
 		Name: "Oil Derrick", Key: "oil_derrick", Category: "production",
-		BaseCost:    map[string]float64{"steel": 170e6, "iron": 80e6, "gold": 100e6},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 102.40}},
+		BaseCost:    map[string]float64{"steel": 5.1e08, "iron": 2.4e08, "gold": 3e08},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 46000}},
 		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
 		Description: "Early oil extraction derrick.",
@@ -149,9 +149,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 10 — electric_age  rate=204.80  output=oil
 	b = append(b, BuildingDef{
 		Name: "Oil Field", Key: "oil_field", Category: "production",
-		BaseCost:    map[string]float64{"steel": 900e6, "electricity": 350e6, "oil": 100e6},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 204.80}},
+		BaseCost:    map[string]float64{"steel": 2.7e09, "electricity": 1.1e09, "oil": 3e08},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 69100}},
 		BuildTicks:  3600,
 		RequiredAge: "electric_age",
 		Description: "Electrified oil field operations.",
@@ -162,9 +162,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 11 — atomic_age  rate=409.60  output=oil
 	b = append(b, BuildingDef{
 		Name: "Petroleum Refinery", Key: "petroleum_refinery", Category: "production",
-		BaseCost:    map[string]float64{"steel": 5e9, "electricity": 2e9, "uranium": 300e6},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 409.60}},
+		BaseCost:    map[string]float64{"steel": 1.5e10, "electricity": 6e09, "uranium": 9e08},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 409.6}},
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
 		Description: "Advanced petroleum refinery.",
@@ -175,9 +175,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 12 — modern_age  rate=819.20  output=oil
 	b = append(b, BuildingDef{
 		Name: "Oil Platform", Key: "oil_platform", Category: "production",
-		BaseCost:    map[string]float64{"steel": 28e9, "electricity": 10e9, "data": 800e6},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 819.20}},
+		BaseCost:    map[string]float64{"steel": 8.4e10, "electricity": 3e10, "data": 2.4e09},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 655000}},
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
 		Description: "Offshore AI-monitored oil platform.",
@@ -188,9 +188,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 13 — information_age  rate=1638.40  output=oil
 	b = append(b, BuildingDef{
 		Name: "Smart Refinery", Key: "smart_refinery", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 75e9, "data": 7e9, "steel": 140e9},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 1638.40}},
+		BaseCost:    map[string]float64{"electricity": 2.3e11, "data": 2.1e10, "steel": 4.2e11},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 1638.4}},
 		BuildTicks:  3600,
 		RequiredAge: "information_age",
 		Description: "AI-optimized smart petroleum refinery.",
@@ -201,9 +201,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 14 — digital_age  rate=3276.80  output=nanobots
 	b = append(b, BuildingDef{
 		Name: "Bio Fabrication Lab", Key: "bio_fabrication_lab", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 380e9, "data": 45e9, "steel": 550e9},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 3276.80}},
+		BaseCost:    map[string]float64{"electricity": 1.1e12, "data": 1.4e11, "steel": 1.7e12},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 3276.8}},
 		BuildTicks:  3600,
 		RequiredAge: "digital_age",
 		Description: "Digital-biological nanofabrication.",
@@ -214,9 +214,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 15 — cyberpunk_age  rate=6553.60  output=nanobots
 	b = append(b, BuildingDef{
 		Name: "Nanobot Vat", Key: "nanobot_vat", Category: "production",
-		BaseCost:    map[string]float64{"data": 180e9, "crypto": 1.2e12, "electricity": 2.5e12},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 6553.60}},
+		BaseCost:    map[string]float64{"data": 5.4e11, "crypto": 3.6e12, "electricity": 7.5e12},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 6553.6}},
 		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
 		Description: "Vat-grown nanobot manufacturing.",
@@ -227,9 +227,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 16 — fusion_age  rate=13107.20  output=nanobots
 	b = append(b, BuildingDef{
 		Name: "Molecular Synthesizer", Key: "molecular_synthesizer", Category: "production",
-		BaseCost:    map[string]float64{"plasma": 4e12, "electricity": 14e12, "steel": 18e12},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 13107.20}},
+		BaseCost:    map[string]float64{"plasma": 1.2e13, "electricity": 4.2e13, "steel": 5.4e13},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 13107.2}},
 		BuildTicks:  3600,
 		RequiredAge: "fusion_age",
 		Description: "Plasma-powered molecular synthesis.",
@@ -240,9 +240,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 17 — space_age  rate=26214.40  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Quantum Organic Extractor", Key: "quantum_organic_extractor", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 75e12, "plasma": 35e12, "electricity": 90e12},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 26214.40}},
+		BaseCost:    map[string]float64{"titanium": 2.3e14, "plasma": 1.1e14, "electricity": 2.7e14},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 26214.4}},
 		BuildTicks:  3600,
 		RequiredAge: "space_age",
 		Description: "Quantum-state organic matter extraction.",
@@ -253,9 +253,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 18 — interstellar_age  rate=52428.80  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Reality Matter Weaver", Key: "reality_matter_weaver", Category: "production",
-		BaseCost:    map[string]float64{"dark_matter": 90e12, "titanium": 750e12, "plasma": 450e12},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 52428.80}},
+		BaseCost:    map[string]float64{"dark_matter": 2.7e14, "titanium": 2.3e15, "plasma": 1.4e15},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 52428.8}},
 		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
 		Description: "Weaves reality matter into quantum flux.",
@@ -266,9 +266,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 19 — galactic_age  rate=104857.60  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Cosmic Organic Works", Key: "cosmic_organic_works", Category: "production",
-		BaseCost:    map[string]float64{"antimatter": 180e12, "dark_matter": 900e12, "titanium": 4.5e15},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 104857.60}},
+		BaseCost:    map[string]float64{"antimatter": 5.4e14, "dark_matter": 2.7e15, "titanium": 1.4e16},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 104857.6}},
 		BuildTicks:  3600,
 		RequiredAge: "galactic_age",
 		Description: "Galactic-scale cosmic organic works.",
@@ -279,9 +279,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 20 — quantum_age  rate=209715.20  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Reality Harvester", Key: "reality_harvester", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 180e12, "antimatter": 55e15, "dark_matter": 45e15},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 209715.20}},
+		BaseCost:    map[string]float64{"quantum_flux": 5.4e14, "antimatter": 1.7e17, "dark_matter": 1.4e17},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 3.81e10}},
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
 		Description: "Harvests raw quantum flux from reality itself.",
@@ -301,9 +301,9 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// =========================================================================
 	b = append(b, BuildingDef{
 		Name: "Nano Foundry", Key: "nano_foundry", Category: "production",
-		BaseCost:     map[string]float64{"steel": 40e9, "electricity": 16e9, "data": 2e9},
-		CostScale:    1.35,
-		Effects:      []Effect{{Type: "production", Target: "nanobots", Value: 80.0}},
+		BaseCost:     map[string]float64{"steel": 1.7e11, "electricity": 6.8e10, "data": 8.5e09},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "nanobots", Value: 80}},
 		BuildTicks:   3600,
 		RequiredAge:  "modern_age",
 		Description:  "Molecular assembly line printing self-organizing nanobots.",
