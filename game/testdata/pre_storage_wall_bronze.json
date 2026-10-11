@@ -1,0 +1,294 @@
+{
+  "timestamp": "2026-10-10T22:35:00.043127-05:00",
+  "tick": 30,
+  "age": "bronze_age",
+  "seed": 73,
+  "rng_draws": 6,
+  "resources": {
+    "antimatter": 0,
+    "coal": 0,
+    "crypto": 0,
+    "culture": 0,
+    "dark_matter": 0,
+    "dark_matter_crystals": 0,
+    "data": 0,
+    "electricity": 0,
+    "faith": 0,
+    "food": 748560,
+    "gold": 2500,
+    "iron": 4000,
+    "iron_ore": 0,
+    "knowledge": 372655,
+    "marble": 0,
+    "nanobots": 0,
+    "oil": 0,
+    "plasma": 0,
+    "quantum_flux": 0,
+    "soldiers": 0,
+    "steel": 0,
+    "stone": 748560,
+    "titanium": 0,
+    "titanium_ore": 0,
+    "uranium": 0,
+    "wood": 748560
+  },
+  "storage": {
+    "antimatter": 748524,
+    "coal": 748560,
+    "crypto": 748560,
+    "culture": 748560,
+    "dark_matter": 748524,
+    "dark_matter_crystals": 748512,
+    "data": 748560,
+    "electricity": 748560,
+    "faith": 748560,
+    "food": 748560,
+    "gold": 748560,
+    "iron": 748560,
+    "iron_ore": 748536,
+    "knowledge": 748536,
+    "marble": 748536,
+    "nanobots": 748524,
+    "oil": 748560,
+    "plasma": 748536,
+    "quantum_flux": 748512,
+    "soldiers": 748500,
+    "steel": 748536,
+    "stone": 748560,
+    "titanium": 748536,
+    "titanium_ore": 748524,
+    "uranium": 748536,
+    "wood": 748560
+  },
+  "buildings": {
+    "elders_hall": 21,
+    "farm": 6,
+    "forager_post": 20,
+    "gathering_camp": 15,
+    "great_monolith": 1,
+    "house": 12,
+    "hut": 32,
+    "longhouse": 40,
+    "lumber_mill": 6,
+    "market": 3,
+    "quarry": 6,
+    "sacred_grove": 1,
+    "scriptorium": 5,
+    "smithy": 4,
+    "stash": 50,
+    "stone_camp": 30,
+    "stone_pit": 22,
+    "storage_pit": 25,
+    "story_circle": 15,
+    "warehouse": 25,
+    "wood_camp": 15,
+    "woodcutter_camp": 21
+  },
+  "workers": {
+    "worker": {
+      "count": 0,
+      "food_cost": 0.07526400000000001,
+      "assignment": {}
+    }
+  },
+  "unlocked": {
+    "resources": [
+      "food",
+      "wood",
+      "knowledge",
+      "faith",
+      "stone",
+      "iron",
+      "gold"
+    ],
+    "buildings": [
+      "hut",
+      "stash",
+      "gathering_camp",
+      "wood_camp",
+      "story_circle",
+      "shrine",
+      "sacred_grove",
+      "longhouse",
+      "storage_pit",
+      "forager_post",
+      "woodcutter_camp",
+      "stone_camp",
+      "stone_pit",
+      "elders_hall",
+      "standing_stones",
+      "war_camp",
+      "great_monolith",
+      "house",
+      "warehouse",
+      "farm",
+      "lumber_mill",
+      "quarry",
+      "scriptorium",
+      "altar",
+      "barracks",
+      "market",
+      "smithy",
+      "stonehenge"
+    ],
+    "workers": [
+      "worker"
+    ]
+  },
+  "stats": {
+    "total_built": 0,
+    "total_recruited": 0,
+    "total_gathered": {},
+    "game_started": "2026-10-10T22:35:00.041309-05:00",
+    "ages_reached": [
+      "primitive_age",
+      "stone_age",
+      "bronze_age"
+    ],
+    "soldiers_trained": 0
+  },
+  "research": {
+    "researched": [
+      "agriculture",
+      "animal_husbandry",
+      "boatbuilding",
+      "bronze_working",
+      "calendar",
+      "currency",
+      "fire_mastery",
+      "language",
+      "map_making",
+      "masonry",
+      "military_tactics",
+      "pottery",
+      "primitive_writing",
+      "ritual",
+      "stoneworking",
+      "the_wheel",
+      "tool_making",
+      "woodworking"
+    ],
+    "current_tech": "",
+    "ticks_left": 0,
+    "total_ticks": 0
+  },
+  "military": {
+    "completed_count": 0,
+    "total_loot": {}
+  },
+  "events": {
+    "last_fired": {},
+    "active": [],
+    "next_event_tick": 156,
+    "good_streak": 0,
+    "bad_streak": 0
+  },
+  "milestones": [],
+  "permanent_bonuses": {},
+  "build_queue": [],
+  "prestige": {
+    "level": 0,
+    "total_earned": 0,
+    "available": 0,
+    "upgrades": {},
+    "furthest": "primitive_age",
+    "run_furthest": "primitive_age",
+    "mastery_seeded": true,
+    "shop_version": 2
+  },
+  "trade": {
+    "active_routes": {},
+    "supply_pressure": {},
+    "total_exchanged": {},
+    "total_imported": {},
+    "total_exported": {}
+  },
+  "diplomacy": {
+    "factions": {}
+  },
+  "speed_multiplier": 1,
+  "pending_upgrades_saved": true,
+  "current_epoch": "stone_era",
+  "succumb_research_derived": true,
+  "fate": {
+    "epoch_key": "stone_era",
+    "entry_tick": 1,
+    "window": 8820
+  },
+  "faith_measure": {
+    "moderate": 0.3000000000000001
+  },
+  "faith_measured": true,
+  "culture_measured": true,
+  "morale": 0.5,
+  "history": {
+    "samples": [
+      {
+        "tick": 10,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 20,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 30,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      }
+    ],
+    "age_markers": null
+  },
+  "run_facts": {
+    "whole": true,
+    "age_known": true,
+    "era_known": true
+  },
+  "plan": [
+    {
+      "kind": "build",
+      "key": "warehouse",
+      "count": 3,
+      "banked": {
+        "stone": 9000,
+        "wood": 21000
+      }
+    },
+    {
+      "kind": "build",
+      "key": "house",
+      "count": 10,
+      "banked": {
+        "wood": 1500
+      }
+    },
+    {
+      "kind": "build",
+      "key": "farm",
+      "count": 20
+    }
+  ],
+  "pacing_week": true,
+  "tree_version": 5,
+  "_sig": "aaa2765ce9c1b562dec4540bbdeb489b6198f4f75d39c6bc56f27cef38f46d7d"
+}
