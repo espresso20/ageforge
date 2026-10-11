@@ -182,16 +182,20 @@ func TestHutHoarderNeedsTheCountAndTheAge(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada")
 
+	// The count, from the catalog (30 since the storage wall: at most 31 huts
+	// can stand in the Primitive Age).
+	def, _ := rules.Core().Badge(badgeHutHoarder)
+	n := int(def.Threshold)
 	ge.mu.Lock()
-	ge.Buildings.counts["hut"] = 58
+	ge.Buildings.counts["hut"] = n - 2
 	ge.mu.Unlock()
-	finishOne(ge, "hut") // 59
+	finishOne(ge, "hut") // n-1
 	if hasBadge(acct, badgeHutHoarder) {
-		t.Fatal("59 huts earned Hut Hoarder")
+		t.Fatalf("%d huts earned Hut Hoarder", n-1)
 	}
-	finishOne(ge, "hut") // 60
+	finishOne(ge, "hut") // n
 	if !hasBadge(acct, badgeHutHoarder) {
-		t.Fatal("the 60th hut in the Primitive Age did not earn Hut Hoarder")
+		t.Fatalf("hut %d in the Primitive Age did not earn Hut Hoarder", n)
 	}
 
 	// The same count in a later age earns nothing.
@@ -199,11 +203,11 @@ func TestHutHoarderNeedsTheCountAndTheAge(t *testing.T) {
 	ge2, acct2 := devEngine(t, "Bea")
 	ge2.mu.Lock()
 	ge2.age = "stone_age"
-	ge2.Buildings.counts["hut"] = 59
+	ge2.Buildings.counts["hut"] = n - 1
 	ge2.mu.Unlock()
 	finishOne(ge2, "hut")
 	if hasBadge(acct2, badgeHutHoarder) {
-		t.Error("60 huts standing in the Stone Age earned a Primitive Age badge")
+		t.Errorf("%d huts standing in the Stone Age earned a Primitive Age badge", n)
 	}
 }
 
@@ -218,8 +222,8 @@ func TestLineageLadderCountsABuildOnce(t *testing.T) {
 	// The first rung's count, from the catalog.
 	first, _ := rules.Core().Badge(badgeHousing1)
 	need := int(first.Threshold)
-	if need < 7 {
-		t.Fatalf("the first housing rung asks for %d: the test sells five and needs more than that", need)
+	if need < 6 {
+		t.Fatalf("the first housing rung asks for %d: the test builds the rung's count less one and sells five of them", need)
 	}
 	for i := 0; i < need-1; i++ {
 		finishOne(ge, "hut")

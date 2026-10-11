@@ -292,8 +292,8 @@ func staticStorage(defs map[string]config.BuildingDef, ages []config.AgeDef) ([]
 			case !cost[res]:
 				problems = append(problems, StorageProblem{Age: ages[i].Key, Rule: "gate_amount", Why: fmt.Sprintf("the gate into %s asks for %s %s, which no building of %s costs", to.Key, num(have), res, ages[i].Key)})
 			default:
-				want := gateShare * storageRoom * ask[res]
-				if math.Abs(have-want) > gateRoundSlack*want {
+				want := float64(gateShare * storageRoom * ask[res])
+				if math.Abs(have-want) > float64(gateRoundSlack*want) {
 					problems = append(problems, StorageProblem{Age: ages[i].Key, Rule: "gate_amount", Why: fmt.Sprintf("the gate into %s asks for %s %s, want %s: a quarter of the store the dearest price (%s) needs, with a quarter more", to.Key, num(have), res, num(want), num(ask[res]))})
 				}
 			}
