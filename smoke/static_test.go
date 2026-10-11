@@ -42,132 +42,111 @@ func TestGateCovenant(t *testing.T) {
 	}
 }
 
-// TestStorageCovenant: the most storage buildable in every age holds
-// config.StorageHold(age) hours of the age's typical production of each of
-// its construction resources (the economy design's Law 1): 4.5 from the Bronze Age
-// on, 1.5 in the Primitive and Stone Ages. A store that fills in minutes
-// throws away most of what a player makes between visits.
+// TestStorageCovenant: the storage tables follow the storage rule, checked
+// from the tables alone (see static_storage.go): sizes that hold the dearest
+// price of the age and a quarter more, copies that each fit under the ones
+// before, a town that arrives able to pay the next age's first storage and
+// housing, gates that ask for the five copies and a quarter of each store, and
+// the wall in the first four ages at exactly five copies.
 func TestStorageCovenant(t *testing.T) {
-	rows := StaticStorage()
-	if len(rows) == 0 {
-		t.Fatal("no ages checked")
+	problems, rows := StaticStorage()
+	if len(rows) < 20 {
+		t.Fatalf("only %d ages have a storage building", len(rows))
 	}
-	for _, r := range rows {
-		if !r.OK() {
-			t.Errorf("%s: the most %s storage buildable (%s) holds %.2f h of typical income (%s/tick), under %g h; raise the age's storage per copy",
-				r.Age, r.Resource, num(r.MaxStorage), r.Hours, num(r.Income), r.Want())
-		}
+	for _, p := range problems {
+		t.Errorf("%s (%s)", p, p.Rule)
 	}
 }
 
-// TestStorageCovenantCatchesBrokenStorage keeps the guard honest: the
-// storage the Renaissance to Victorian Ages had before the covenant (500K,
-// 10M, 50M and 350M per copy, where a full store held under half an hour of
-// gold or steel) must each be flagged, and so must halving every storage
-// building, which puts nearly every age under. The covenant counts hours of
-// typical income, and on the one-week curve a tick from the Bronze Age on
-// makes 1/config.PacingStretch as much, so every store holds that much
-// longer: the broken numbers are divided by the stretch of the building's age
-// to stay as short as they were.
+// TestStorageCovenantCatchesBrokenStorage keeps the guard honest: each way
+// the tables can part from the storage rule must be flagged under the rule
+// that names it, in the age it breaks, and the real tables must flag nothing.
 func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
-	defsByKey := config.BuildingByKey()
-	stretch := func(k string) float64 { return config.AgeStretch(defsByKey[k].RequiredAge) }
-	old := map[string]float64{
-		"renaissance_vault":  500e3,
-		"colonial_warehouse": 10e6,
-		"industrial_depot":   50e6,
-		"victorian_vault":    350e6,
-	}
-	withStorage := func(per func(key string, v float64) float64) map[string]config.BuildingDef {
-		defs := config.BuildingByKey()
-		for k, d := range defs {
-			if d.Category != "storage" {
-				continue
-			}
-			effs := append([]config.Effect(nil), d.Effects...)
-			for i, e := range effs {
-				if e.Type == "storage" {
-					effs[i].Value = per(k, e.Value)
-				}
-			}
-			d.Effects = effs
-			defs[k] = d
+	flagged := func(defs map[string]config.BuildingDef, ages []config.AgeDef) map[string]bool {
+		problems, _ := staticStorage(defs, ages)
+		out := map[string]bool{}
+		for _, p := range problems {
+			out[p.Rule+"/"+p.Age] = true
 		}
+		return out
+	}
+	// edit returns the real tables with one storage building changed.
+	edit := func(key string, change func(d *config.BuildingDef)) map[string]config.BuildingDef {
+		defs := config.BuildingByKey()
+		d := defs[key]
+		d.Effects = append([]config.Effect(nil), d.Effects...)
+		change(&d)
+		defs[key] = d
 		return defs
 	}
-	broken := withStorage(func(k string, v float64) float64 {
-		if o, ok := old[k]; ok {
-			return o / stretch(k)
-		}
-		return v
-	})
-	flagged := map[string]bool{}
-	for _, r := range staticStorage(broken, config.TypicalIncome) {
-		if !r.OK() {
-			flagged[r.Age] = true
-		}
-	}
-	for _, age := range []string{"renaissance_age", "colonial_age", "industrial_age", "victorian_age"} {
-		if !flagged[age] {
-			t.Errorf("%s: the pre-covenant storage was not flagged", age)
-		}
-	}
-	halved := 0
-	for _, r := range staticStorage(withStorage(func(k string, v float64) float64 { return v / 2 / stretch(k) }), config.TypicalIncome) {
-		if !r.OK() {
-			halved++
-		}
-	}
-	if halved < 10 {
-		t.Errorf("halving every storage building flagged only %d ages", halved)
-	}
-
-	// The 4.5-hour threshold (Pacing v2's away-proofing). Each storage
-	// building it raised, put back alone on its old storage per copy, must
-	// leave its own age short: the raises were the least that pass, at two
-	// significant figures. Under the old 1.5-hour covenant none of them was.
-	// The Victorian Vault (1.1B) and the Electric Warehouse (3.5B) left the
-	// list when their ages' producers were set to repay more slowly
-	// (config.PaybackAdjust): typical income fell there, and the old sizes
-	// would hold 4.5 hours again. Their storage was left where it is. The
-	// Cyber Vault (8T) left it the same way when the curve's late segment
-	// and the Cyberpunk Age's entry slowed that age's producers.
-	before := map[string]float64{
-		"warehouse": 11e3, "classical_vault": 110e3, "keep": 410e3,
-		"colonial_warehouse": 33e6, "industrial_depot": 170e6,
-		"info_vault": 790e9,
-	}
-	for _, k := range sortedKeys(before) {
-		reverted := withStorage(func(key string, v float64) float64 {
-			if key == k {
-				return before[k]
-			}
-			return v
-		})
-		age := defsByKey[k].RequiredAge
-		for _, r := range staticStorage(reverted, config.TypicalIncome) {
-			if r.Age == age && r.OK() {
-				t.Errorf("%s back at %s per copy: %s still holds %.2f h of typical income; the 4.5-hour covenant should flag it", k, num(before[k]), age, r.Hours)
+	scaleSize := func(by float64) func(d *config.BuildingDef) {
+		return func(d *config.BuildingDef) {
+			for i, e := range d.Effects {
+				if e.Type == "storage" {
+					d.Effects[i].Value = e.Value * by
+				}
 			}
 		}
 	}
-}
-
-// TestStorageCovenantHours: the first hour of the game keeps its pace. The
-// Primitive and Stone Ages are graded at config.EarlyStorageHoldHours (the
-// Stone Age holds about 1.54 hours and keeps its storage), every later age
-// at config.StorageHoldHours.
-func TestStorageCovenantHours(t *testing.T) {
-	if config.StorageHoldHours != 4.5 || config.EarlyStorageHoldHours != 1.5 {
-		t.Fatalf("covenant hours %g and %g; the docs and the storage table say 4.5 and 1.5", config.StorageHoldHours, config.EarlyStorageHoldHours)
-	}
-	for _, r := range StaticStorage() {
-		want := config.StorageHoldHours
-		if r.Age == "primitive_age" || r.Age == "stone_age" {
-			want = config.EarlyStorageHoldHours
+	// editGate returns the real ages with one gate's requirements changed.
+	editGate := func(to string, change func(b map[string]int, r map[string]float64)) []config.AgeDef {
+		ages := config.Ages()
+		for i := range ages {
+			if ages[i].Key != to {
+				continue
+			}
+			b, r := map[string]int{}, map[string]float64{}
+			for k, v := range ages[i].BuildingReqs {
+				b[k] = v
+			}
+			for k, v := range ages[i].ResourceReqs {
+				r[k] = v
+			}
+			change(b, r)
+			ages[i].BuildingReqs, ages[i].ResourceReqs = b, r
 		}
-		if r.Want() != want {
-			t.Errorf("%s is graded at %g h, want %g h", r.Age, r.Want(), want)
+		return ages
+	}
+	defs, ages := config.BuildingByKey(), config.Ages()
+	if got := flagged(defs, ages); len(got) > 0 {
+		t.Fatalf("the real tables are flagged: %v", got)
+	}
+	cases := []struct {
+		name  string
+		defs  map[string]config.BuildingDef
+		ages  []config.AgeDef
+		wants []string
+	}{
+		// A store a tenth too small for what the age asks: five copies must
+		// hold the dearest price and a quarter more.
+		{"a small Classical Vault", edit("classical_vault", scaleSize(0.1)), ages, []string{"hold/classical_age"}},
+		{"a small Stash", edit("stash", scaleSize(0.1)), ages, []string{"hold/primitive_age"}},
+		// A store the next age's first storage building does not fit in.
+		{"a Victorian Vault priced past the Industrial store", edit("victorian_vault", func(d *config.BuildingDef) {
+			cost := map[string]float64{}
+			for k, v := range d.BaseCost {
+				cost[k] = v * 100
+			}
+			d.BaseCost = cost
+		}), ages, []string{"arrive/industrial_age", "climb/victorian_age"}},
+		// Storage with a copy limit, or climbing at the wrong rate.
+		{"a copy limit on the Warehouse", edit("warehouse", func(d *config.BuildingDef) { d.MaxCount = 25 }), ages, []string{"curve/bronze_age"}},
+		{"a slow Granary", edit("granary", func(d *config.BuildingDef) { d.CostScale = 1.15 }), ages, []string{"curve/iron_age", "wall/iron_age"}},
+		// A late store that climbs too slowly walls far past the reference.
+		{"a slow Fusion Vault", edit("fusion_vault", func(d *config.BuildingDef) { d.CostScale = 1.2 }), ages, []string{"curve/fusion_age", "wall/fusion_age"}},
+		// Gates.
+		{"a gate without the storage copies", config.BuildingByKey(), editGate("iron_age", func(b map[string]int, r map[string]float64) { delete(b, "warehouse") }), []string{"gate_copies/bronze_age"}},
+		{"a gate asking for three copies", config.BuildingByKey(), editGate("classical_age", func(b map[string]int, r map[string]float64) { b["granary"] = 3 }), []string{"gate_copies/iron_age"}},
+		{"a gate asking twice the stone", config.BuildingByKey(), editGate("medieval_age", func(b map[string]int, r map[string]float64) { r["stone"] *= 2 }), []string{"gate_amount/classical_age"}},
+		{"a gate asking for faith", config.BuildingByKey(), editGate("renaissance_age", func(b map[string]int, r map[string]float64) { r["faith"] = 44000 }), []string{"gate_amount/medieval_age"}},
+		{"a gate that forgets a material", config.BuildingByKey(), editGate("medieval_age", func(b map[string]int, r map[string]float64) { delete(r, "iron") }), []string{"gate_amount/classical_age"}},
+	}
+	for _, c := range cases {
+		got := flagged(c.defs, c.ages)
+		for _, w := range c.wants {
+			if !got[w] {
+				t.Errorf("%s: want %s flagged, got %v", c.name, w, got)
+			}
 		}
 	}
 }

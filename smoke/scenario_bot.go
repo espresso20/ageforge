@@ -227,13 +227,9 @@ func runStatic(e *Env, res *Result) {
 	for _, g := range problems {
 		res.fail("gate_"+g.Kind, "%s -> %s: %s %s (need %s, max storage %s)", g.From, g.To, g.Key, g.Resource, num(g.Need), num(g.MaxStorage))
 	}
-	rows := StaticStorage()
-	short := 0
-	for _, r := range rows {
-		if !r.OK() {
-			short++
-			res.fail("storage_covenant", "%s: max %s storage %s holds %.2f h of typical income %s/tick (want %g h)", r.Age, r.Resource, num(r.MaxStorage), r.Hours, num(r.Income), r.Want())
-		}
+	sp, rows := StaticStorage()
+	for _, p := range sp {
+		res.fail("storage_"+p.Rule, "%s", p)
 	}
 	mp, mr := StaticMilestones()
 	for _, p := range mp {
@@ -275,10 +271,10 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range bp {
 		res.fail("badge_"+p.Kind, "%s", p.Why)
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d culture tier(s) out of reach; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(slack), short, len(mp), len(hp), len(ar), len(br), len(fp), len(cp), len(dp), research, len(bp))
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d departure(s) from the storage rule; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d culture tier(s) out of reach; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(slack), len(sp), len(mp), len(hp), len(ar), len(br), len(fp), len(cp), len(dp), research, len(bp))
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
-	writeStorage(&st, rows)
+	writeStorage(&st, sp, rows)
 	res.section("Storage Covenant", "%s", st.String())
 	var mf strings.Builder
 	writeMilestones(&mf, mp, mr)
