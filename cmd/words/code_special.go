@@ -85,7 +85,7 @@ var fileNotes = map[string]fileNote{
 	"game/research.go":          {place: "about research", age: "primitive_age", seen: seenNews},
 	"game/save.go":              {place: "about saving and loading", age: "menu"},
 	"game/session_mark.go":      {place: "about the session"},
-	"game/shares.go":            {place: "about worker shares and auto-recruit", age: "primitive_age", seen: seenNews},
+	"game/shares.go":            {place: "about the roster and auto-recruit", age: "primitive_age", seen: seenNews},
 	"game/sim.go":               {place: "about the time the game ran while you were away", age: "primitive_age"},
 	"game/spoilers.go":          {place: "that stands in for the name of something not met yet", age: "primitive_age"},
 	"game/stats.go":             {place: "in the run's statistics", age: "primitive_age"},

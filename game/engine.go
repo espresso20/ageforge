@@ -4979,7 +4979,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.rules)+".")
 	}
 	if staffed.any() {
-		ge.addLog("info", "While you were away, your worker shares "+staffed.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
+		ge.addLog("info", "While you were away, your roster "+staffed.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
 	}
 }
 

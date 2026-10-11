@@ -142,6 +142,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return CommandResult{OverlayName: "wonders"}
 	case "workers":
 		return cmdWorkers(args, engine)
+	case "roster":
+		return cmdRoster(args, engine)
 	case "logs":
 		return CommandResult{OverlayName: "logs"}
 	case "epoch":
@@ -508,27 +510,27 @@ func cmdWonderOverflow(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: "Usage: wonder overflow [on|off]", Type: "error"}
 }
 
-// cmdWorkers is `workers`: bare opens the Workers panel, `workers share`
-// shows or sets the worker shares and `workers auto-recruit [on|off]` shows
-// or sets recruiting.
+// cmdWorkers is `workers`: bare opens the Workers panel and `workers
+// auto-recruit [on|off]` shows or sets recruiting. `workers share` is the
+// roster's old name and still runs it.
 func cmdWorkers(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		return CommandResult{OverlayName: "workers"}
 	}
 	switch strings.ToLower(args[0]) {
 	case "share":
-		return cmdWorkersShare(args[1:], engine)
+		return cmdRoster(args[1:], engine)
 	case "auto-recruit", "autorecruit":
 		return cmdAutoRecruit(args[1:], engine)
 	}
 	return CommandResult{Message: fmt.Sprintf("Unknown workers command '%s'. %s", args[0], subUsage("workers")), Type: "error"}
 }
 
-// cmdWorkersShare is `workers share [domain] [percent|auto]` and `workers
-// share auto`: show the shares, show one domain's, set one, or put one or
-// all back on auto. A change replies with the shares now and what moved.
-func cmdWorkersShare(args []string, engine *game.GameEngine) CommandResult {
-	usage := usageFor("workers share")
+// cmdRoster is `roster [domain] [percent|auto]` and `roster auto`: show the
+// roster, show one domain's share of it, set one, or put one or all back on
+// auto. A change replies with the roster now and what moved.
+func cmdRoster(args []string, engine *game.GameEngine) CommandResult {
+	usage := usageFor("roster")
 	if len(args) == 0 {
 		return CommandResult{Message: sharesText(engine.GetState(), ""), Type: "info"}
 	}
@@ -573,7 +575,7 @@ func parsePercent(arg string) (float64, error) {
 	return v, nil
 }
 
-// sharesText is `workers share`: each domain's share of the workforce with
+// sharesText is `roster`: each domain's share of the workforce with
 // its workers and slots, and whether auto-recruit is on. With domain set,
 // that domain's line only.
 func sharesText(st game.GameState, domain string) string {
@@ -587,14 +589,14 @@ func sharesText(st game.GameState, domain string) string {
 		return fmt.Sprintf("%s: on auto. You have no %s buildings yet.", game.DomainName(domain), strings.ToLower(game.DomainName(domain)))
 	}
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "[gold]Worker shares[-] (auto-recruit %s)\n", onOff(st.Workers.AutoRecruit))
+	fmt.Fprintf(&sb, "[gold]Roster[-] (auto-recruit %s)\n", onOff(st.Workers.AutoRecruit))
 	if len(rows) == 0 {
 		sb.WriteString("  No worker buildings yet: every domain is on auto.\n")
 	}
 	for _, r := range rows {
 		sb.WriteString("  " + shareRowText(r) + "\n")
 	}
-	sb.WriteString("Set one with 'workers share <domain> <percent|auto>'.")
+	sb.WriteString("Set one with 'roster <domain> <percent|auto>'.")
 	return sb.String()
 }
 
@@ -634,7 +636,7 @@ func cmdAutoRecruit(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: "Auto-recruit on: the game recruits into empty worker slots while housing and food allow.", Type: game.LogRoutine}
 	case "off":
 		engine.SetAutoRecruit(false)
-		return CommandResult{Message: "Auto-recruit off: recruit by hand with 'recruit'. Idle workers still go to work by your shares.", Type: game.LogRoutine}
+		return CommandResult{Message: "Auto-recruit off: recruit by hand with 'recruit'. Idle workers still go to work by your roster.", Type: game.LogRoutine}
 	}
 	return CommandResult{Message: usageFor("workers auto-recruit"), Type: "error"}
 }

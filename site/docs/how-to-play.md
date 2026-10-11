@@ -42,10 +42,10 @@ Build → Staff → Research → Advance → Repeat
 ```
 
 1. **Build** structures to add housing, storage and production
-2. **Staff** them: workers arrive on their own while housing and food allow and go to work by your [worker shares](workers-and-domains.md#worker-shares). Steer the split with `workers share`, or `recruit` and `assign` by hand
+2. **Staff** them: workers arrive on their own while housing and food allow and go to work by your [roster](workers-and-domains.md#the-roster). Steer the split with `roster`, or `recruit` and `assign` by hand
 3. **Research** technologies that multiply your output
 4. **Advance** to the next age with `advance` once its requirements are met and the age's wonder is built
-5. **Prestige** for points that buy the [legacy kit](prestige.md#the-legacy-kit), which carries your plan, worker shares and civilizations into later runs. Prestige opens at the Medieval Age, but a run to the Modern Age (or later) pays far more. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
+5. **Prestige** for points that buy the [legacy kit](prestige.md#the-legacy-kit), which carries your plan, roster and civilizations into later runs. Prestige opens at the Medieval Age, but a run to the Modern Age (or later) pays far more. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
 
 New to the game? [Your First Age](first-ten-minutes.md) walks you through the Primitive Age step by step, from the first `gather` to the Sacred Grove.
 
@@ -98,7 +98,7 @@ That is the first run. After a prestige, every age the run completed runs faster
 
 You don't need to watch it. Check in a few times a day, spend what has built up, and set the game up for the hours you're away:
 
-- **Offline progress.** When you load a save, the game credits the time since you saved it, up to **24 hours**, at **50%** of your production. It runs that time in steps, so construction and research finish, the build plan starts what the income pays for, and your worker shares recruit and staff as the hours pass. The welcome-back lines in the log say what happened.
+- **Offline progress.** When you load a save, the game credits the time since you saved it, up to **24 hours**, at **50%** of your production. It runs that time in steps, so construction and research finish, the build plan starts what the income pays for, and your roster recruits and staffs as the hours pass. The welcome-back lines in the log say what happened.
 - **The build plan.** Queue up to 60 builds, techs, trades and an advance with `plan build`, `plan research`, `plan trade` and `plan advance`. The game starts each item, in order, as the resources come in, and pays for it only when it starts. See [The Build Plan](plan.md).
 - **Overflow.** Production a full store would waste goes into your age's wonder bank (`wonder overflow`, on by default), and what the wonder doesn't need goes toward the plan's queued copies.
 - **Storage.** From the Bronze Age on, an age's storage built out in full holds about 4.5 hours of that age's typical income. Past that, anything overflow doesn't take is lost, so build storage before a long absence.
@@ -128,7 +128,7 @@ Worship and culture buildings, your faith income, good events and age advances r
 
 ## Workers
 
-Workers fall into 12 worker domains (food, lumber, masonry, knowledge, faith and so on), each tied to its own buildings. A worker takes the domain of the building it works in. Workers arrive on their own while housing and food allow and go to work by your worker shares (`workers share`; every domain is on auto by default). You can also recruit with `recruit [count|max]` and assign with `assign <building> [count|all]`.
+Workers fall into 12 worker domains (food, lumber, masonry, knowledge, faith and so on), each tied to its own buildings. A worker takes the domain of the building it works in. Workers arrive on their own while housing and food allow and go to work by your roster (`roster`; every domain is on auto by default). You can also recruit with `recruit [count|max]` and assign with `assign <building> [count|all]`.
 
 Assigned workers raise a building's output. A building with no workers still produces at 20% (the floor), and a fully staffed one at 100%. Only food workers make food, but every worker eats it. See [Workers & Domains](workers-and-domains.md) for the full guide.
 

@@ -71,7 +71,7 @@ If food runs out, one worker starves every 5 ticks (10 seconds) until there is f
 
 **How to increase food:**
 - Build more Food lineage buildings (`gathering_camp`, `forager_post`, `farm`, ...). Workers come to staff them on their own.
-- Give food a bigger [worker share](workers-and-domains.md#worker-shares), or `assign gathering_camp 3` by hand
+- Give food a bigger [share of the roster](workers-and-domains.md#the-roster), or `assign gathering_camp 3` by hand
 - Research Tool Making, Fire Mastery, Animal Husbandry and Agriculture: +10% food each, and they add up
 
 **Watch the food rate** in the Economy panel. Auto-recruit keeps a food margin for you; `recruit max` does not.
@@ -84,7 +84,7 @@ Knowledge pays for research. Every technology costs knowledge, and from the Medi
 
 **How to increase knowledge:**
 - Build Knowledge lineage buildings (Story Circle, Elders' Hall, Scriptorium, ...). Workers come to staff them.
-- Give knowledge a bigger [worker share](workers-and-domains.md#worker-shares): `workers share knowledge 40`
+- Give knowledge a bigger [share of the roster](workers-and-domains.md#the-roster): `roster knowledge 40`
 - Buy it at the market with gold (see below)
 
 Knowledge storage starts at 30 and grows with your storage buildings, like every other resource. A tech priced above your knowledge storage can't start until you build more storage.

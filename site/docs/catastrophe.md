@@ -149,7 +149,7 @@ Storage is never destroyed by an Endure (nor by The Great Fire epoch event), bec
 **Recovery checklist:**
 
 1. The log lists every lost building by name. Rebuild food and housing first.
-2. Let the workers come back: with auto-recruit on (the default), the game recruits into empty worker slots as housing and food allow. See [Worker shares](workers-and-domains.md#worker-shares).
+2. Let the workers come back: with auto-recruit on (the default), the game recruits into empty worker slots as housing and food allow. See [The roster](workers-and-domains.md#the-roster).
 3. Wait out the 562-tick reconstruction debuff; it can't be removed early.
 
 ---
@@ -166,14 +166,14 @@ You also get the epoch's **legacy bonus** (table below), permanently, and **Anci
 
 The run also ends as a prestige run does for [Era Mastery](prestige.md#era-mastery): every age it completed gains a mastery level, so the rebuild runs on known ground. The catastrophe box lists it when there is a level to gain.
 
-Then the civilization resets to the Primitive Age: buildings, resources, workers, research, milestones, events, the build queue and the build plan. You start with 15 food and 12 wood. No prestige points are earned, but your prestige level, points, [legacy kit](prestige.md#the-legacy-kit) and [Era Mastery](prestige.md#era-mastery) are kept, and the kit items you own work on the rebuild (the Plan Template puts the first age's part of your plan back, Worker Shares sets your shares). The ages the fallen run completed have gained a mastery level, so they run at least 2x on the rebuild, and every age 6 or more behind your record runs at least 4x ([catch-up](prestige.md#catch-up)). Storage follows that speed from the first moment of the new run. The festival and black market cooldowns start over with the run. Morale restarts at 50%, and the civilization log gets a line.
+Then the civilization resets to the Primitive Age: buildings, resources, workers, research, milestones, events, the build queue and the build plan. You start with 15 food and 12 wood. No prestige points are earned, but your prestige level, points, [legacy kit](prestige.md#the-legacy-kit) and [Era Mastery](prestige.md#era-mastery) are kept, and the kit items you own work on the rebuild (the Plan Template puts the first age's part of your plan back, Roster sets your shares). The ages the fallen run completed have gained a mastery level, so they run at least 2x on the rebuild, and every age 6 or more behind your record runs at least 4x ([catch-up](prestige.md#catch-up)). Storage follows that speed from the first moment of the new run. The festival and black market cooldowns start over with the run. Morale restarts at 50%, and the civilization log gets a line.
 
 ### What carries forward
 
 | Item | After Succumb |
 |------|---------------|
 | Prestige level, points and the legacy kit | Kept |
-| What the legacy kit remembers | Kept, plus the fallen run's plan (the techs you planned included), worker shares and civilizations met |
+| What the legacy kit remembers | Kept, plus the fallen run's plan (the techs you planned included), roster and civilizations met |
 | Era Mastery and your record (the deepest age you have ever entered) | Kept, and every age the fallen run completed gains a mastery level |
 | Ruins | Kept, plus up to 8 new, capped at 24 |
 | Legacy flags (bonuses and Ancient Knowledge) | Kept, plus this epoch |

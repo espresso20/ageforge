@@ -477,7 +477,7 @@ func (ge *GameEngine) captureLegacyLocked() {
 // holds the write lock.
 func (ge *GameEngine) startRunLegacyLocked() {
 	if ge.applyLegacySharesLocked() {
-		ge.addLog("info", "Worker Shares: your shares carry over. "+sharesLine(ge.rules, ge.workerShares)+".")
+		ge.addLog("info", "Roster: your shares carry over. "+sharesLine(ge.rules, ge.workerShares)+".")
 	}
 	ge.applyPlanTemplateLocked()
 	ge.meetOldFriendsLocked()
@@ -510,7 +510,7 @@ func (ge *GameEngine) legacyOnPurchaseLocked(key string) {
 		}
 	case config.LegacyWorkers:
 		if ge.applyLegacySharesLocked() {
-			ge.addLog("info", "Your remembered worker shares are set again. "+ge.applySharesLocked("").Line)
+			ge.addLog("info", "Your remembered roster is set again. "+ge.applySharesLocked("").Line)
 		}
 	case config.LegacyFactions:
 		ge.meetOldFriendsLocked()

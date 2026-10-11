@@ -30,7 +30,7 @@ func workersProvider(state game.GameState, _ int) string {
 		fmt.Fprintf(&sb, "[white]Workers  [yellow]0[white] / [green]%d[white]\n\n", maxPop)
 		fmt.Fprint(&sb, "[gray]No workers yet. They come on their own once you have housing and a building with worker slots,\n")
 		fmt.Fprint(&sb, "or recruit by hand with: [cyan]recruit [count|max][-]\n\n")
-		sb.WriteString(workerSection("Shares"))
+		sb.WriteString(workerSection("Roster"))
 		writeShares(&sb, state)
 		return sb.String()
 	}
@@ -97,8 +97,8 @@ func workersProvider(state game.GameState, _ int) string {
 	}
 	sb.WriteString("\n")
 
-	// ── Shares ───────────────────────────────────
-	sb.WriteString(workerSection("Shares"))
+	// ── Roster ───────────────────────────────────
+	sb.WriteString(workerSection("Roster"))
 	writeShares(&sb, state)
 	sb.WriteString("\n")
 
@@ -228,7 +228,7 @@ func workersProvider(state game.GameState, _ int) string {
 	return sb.String()
 }
 
-// writeShares is the Workers panel's Shares section: what auto-recruit is
+// writeShares is the Workers panel's Roster section: what auto-recruit is
 // doing, then each domain's share of the workforce (set, or auto: by its
 // buildings' slots) with its workers and slots.
 func writeShares(sb *strings.Builder, state game.GameState) {
@@ -246,7 +246,7 @@ func writeShares(sb *strings.Builder, state game.GameState) {
 		fmt.Fprintf(sb, "  [cyan]%-12s[-] %s  %s [cyan]%d[white]/[green]%d[-]\n",
 			r.Name, share, assignBar(r.Workers, r.Slots, 10), r.Workers, r.Slots)
 	}
-	sb.WriteString("  [gray]Set a share with:[-] [cyan]workers share <domain> <percent|auto>[-]\n")
+	sb.WriteString("  [gray]Set a share with:[-] [cyan]roster <domain> <percent|auto>[-]\n")
 }
 
 // recruitLine says what auto-recruit is doing (game.RecruitStatus).

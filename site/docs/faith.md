@@ -133,10 +133,10 @@ Shrine → Standing Stones → Altar → Temple → Oracle House → Cathedral �
 
 Faith is a **flow resource**: unlike construction resources, whose rates follow the [Payback Rule](buildings.md#how-production-rates-are-set), faith rates are set by hand and double each tier, and the requirements that ask for faith are sized to them. Faith cannot be bought at the market. Early on, the big faith sources are not the lineage buildings: the **Stonehenge** wonder (Bronze Age) adds 0.6 faith/tick, the **Theology** tech (Medieval Age) 0.3 faith/tick and the **Sistine Chapel** wonder (Renaissance Age) 1.8 faith/tick.
 
-**Staffing faith buildings.** A Shrine holds 2 workers; later faith buildings hold more (the Workers column above). By default [worker shares](workers-and-domains.md#worker-shares) staff your faith buildings along with everything else, so a new Shrine fills on its own while housing and food allow. To push more of your workforce into faith, give the domain a share, or assign by hand:
+**Staffing faith buildings.** A Shrine holds 2 workers; later faith buildings hold more (the Workers column above). By default the [roster](workers-and-domains.md#the-roster) staffs your faith buildings along with everything else, so a new Shrine fills on its own while housing and food allow. To push more of your workforce into faith, give the domain a share, or assign by hand:
 
 ```
-workers share faith 20    # keep 20% of your workers on faith buildings
+roster faith 20    # keep 20% of your workers on faith buildings
 assign shrine 2           # put 2 workers on your Shrines
 ```
 

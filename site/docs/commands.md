@@ -12,7 +12,7 @@ This page lists every command. Each section links to the page that explains the 
 
 ## The prompt
 
-As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` the same, then the next age's; `plan research` every unresearched tech on your tree, the ones you can start first; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `workers share` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders or storage, and nothing in the Primitive Age); `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
+As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` the same, then the next age's; `plan research` every unresearched tech on your tree, the ones you can start first; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `roster` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders or storage, and nothing in the Primitive Age); `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
 
 | Key | What it does |
 |---|---|
@@ -26,7 +26,7 @@ Commands that can't be undone are never run from a completion: `Enter` on `plan 
 
 ## The log
 
-The log in the main window says what each command did and what happened in the game: a build started, queued or finished, a gather, a sale, workers recruited or assigned, a worker share set, what the worker shares routine does (`Shares: recruited 3 workers (population 12/20), put 2 idle workers to work.`), a trade, a research started, a plan item added, and events, milestones, age advances, harbingers, warnings and errors. Each line starts with what happened, with no tick number. Routine confirmations are in the plain text color, so events, warnings and errors stand out.
+The log in the main window says what each command did and what happened in the game: a build started, queued or finished, a gather, a sale, workers recruited or assigned, a share of the roster set, what the roster routine does (`Roster: recruited 3 workers (population 12/20), put 2 idle workers to work.`), a trade, a research started, a plan item added, and events, milestones, age advances, harbingers, warnings and errors. Each line starts with what happened, with no tick number. Routine confirmations are in the plain text color, so events, warnings and errors stand out.
 
 The **Logs** panel (`logs`) shows the same lines with the tick each one happened on and a mark for its kind: `[*]` an event, `[+]` a success, `[i]` a note, `[!]` a warning, `[X]` an error, and `·` a routine confirmation.
 
@@ -106,17 +106,18 @@ plan rm 4
 
 | Command | Description |
 |---|---|
-| `recruit [count\|max]` | Recruit workers into free housing. New workers start idle; put them to work with `assign`, or leave them: a minute later any still idle go to work by your worker shares |
+| `recruit [count\|max]` | Recruit workers into free housing. New workers start idle; put them to work with `assign`, or leave them: a minute later any still idle go to work by your roster |
 | `assign <building> [count\|all]` | Assign idle workers to a building (the building sets their domain) |
 | `unassign <building> [count\|all]` | Take workers out of a building and back to idle |
 | `dismiss <building> [count\|all]` | Remove workers from a building and from your population for good |
-| `workers` | Open the **Workers** panel (summary, worker shares and what auto-recruit is doing, slot use, domain breakdown) |
-| `workers share` | Print each domain's share of your workforce with its workers and slots (`Knowledge: 40% (set), 8 workers in 10 slots`), and whether auto-recruit is on |
-| `workers share <domain> [percent\|auto]` | With a percent from 0 to 100, set that domain's share of your workforce; decimals and a `%` sign are allowed (`workers share lumber 12.5%`), and 0 keeps the domain empty. With `auto`, put the domain back on auto. With neither, print its line |
-| `workers share auto` | Put every domain back on auto, the default: workers follow your buildings' worker slots |
+| `workers` | Open the **Workers** panel (summary, the roster and what auto-recruit is doing, slot use, domain breakdown) |
+| `roster` | Print each domain's share of your workforce with its workers and slots (`Knowledge: 40% (set), 8 workers in 10 slots`), and whether auto-recruit is on |
+| `roster <domain> [percent\|auto]` | With a percent from 0 to 100, set that domain's share of your workforce; decimals and a `%` sign are allowed (`roster lumber 12.5%`), and 0 keeps the domain empty. With `auto`, put the domain back on auto. With neither, print its line |
+| `roster auto` | Put every domain back on auto, the default: workers follow your buildings' worker slots |
+| `workers share ...` | The roster's old name. It still works, with the same arguments |
 | `workers auto-recruit [on\|off]` (or `workers autorecruit`) | Bare, show whether auto-recruit is on. `on` (the default) lets the game recruit into empty worker slots while housing and food allow; `off` leaves recruiting to you |
 
-You don't have to recruit or assign workers yourself. With auto-recruit on (the default), the game recruits into empty worker slots while housing and food allow, and every 5 ticks (about 10 seconds) it puts idle workers to work by your **worker shares**: each domain's percent of your whole workforce, with domains on auto splitting the rest by their worker slots. It never takes a worker out of a building to keep to the shares, except out of a domain set to 0, so your own `assign` and `unassign` stick, and after any worker command it waits a minute before it places anyone. The full rules are in [Worker Shares](workers-and-domains.md#worker-shares).
+You don't have to recruit or assign workers yourself. With auto-recruit on (the default), the game recruits into empty worker slots while housing and food allow, and every 5 ticks (about 10 seconds) it puts idle workers to work by your **roster**: each domain's percent of your whole workforce, with domains on auto splitting the rest by their worker slots. It never takes a worker out of a building to keep to the shares, except out of a domain set to 0, so your own `assign` and `unassign` stick, and after any worker command it waits a minute before it places anyone. The full rules are in [Roster](workers-and-domains.md#the-roster).
 
 ```
 recruit
@@ -129,12 +130,12 @@ unassign shrine all
 dismiss shrine 2
 dismiss barracks all
 workers
-workers share
-workers share knowledge 40
-workers share lumber 12.5%
-workers share military 0
-workers share knowledge auto
-workers share auto
+roster
+roster knowledge 40
+roster lumber 12.5%
+roster military 0
+roster knowledge auto
+roster auto
 workers auto-recruit off
 ```
 
@@ -334,8 +335,8 @@ With something typed, `Tab` and `Enter` act on the prompt instead. Each style li
 | `prestige` | View prestige status and available points, how many legacy kit items you own, the points a prestige would pay now and what prestiging from the next age would pay (and how many more), the [Era Mastery](prestige.md#era-mastery) speed of the age you are in and the ages your next prestige would raise. Before the Modern Age it notes that a prestige now is an early taste. In the Cosmic Era it also shows the chance of the Last Passage and which figure is warning of it, and shows the Cosmic Legacy if you hold it |
 | `prestige confirm` | Explain what confirming would do: the points you would earn, what resets, and what you keep (prestige points, the legacy kit and what it remembers, and Era Mastery). Before the Modern Age it says that this is an early taste, what it pays and what a full run pays. In the Cosmic Era this includes what Endure (share of this run's points) and Succumb (the Cosmic Legacy) would give you if the Last Passage comes |
 | `prestige confirm yes` | Prestige now: a new run, keeping your points, the legacy kit and Era Mastery. It requires the Medieval Age, and before the Modern Age it is an early taste that pays little. In the Cosmic Era an open Reality Tear settles first, then it rolls the Last Passage; if either comes, prestige waits for your choice |
-| `prestige shop` | View the legacy kit: each item's price, or "owned", and what the kit remembers from your runs (plan items and the ages they cover, worker shares, civilizations met) |
-| `prestige buy <item>` | Buy a legacy kit item: `legacy_plan` (Plan Template, 9 points), `legacy_workers` (Worker Shares, 36) or `legacy_factions` (Old Friends, 54). It works at once, on the run you are in |
+| `prestige shop` | View the legacy kit: each item's price, or "owned", and what the kit remembers from your runs (plan items and the ages they cover, roster, civilizations met) |
+| `prestige buy <item>` | Buy a legacy kit item: `legacy_plan` (Plan Template, 9 points), `legacy_workers` (Roster, 36) or `legacy_factions` (Old Friends, 54). It works at once, on the run you are in |
 | `stats` | Open the **Stats** panel: empire statistics, active events, resource rates, active multipliers, your prestige points, what a prestige pays now and from the next age, your [Era Mastery](prestige.md#era-mastery) in the current age and the legacy kit items you own |
 
 ```

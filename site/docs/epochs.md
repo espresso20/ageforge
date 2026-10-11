@@ -192,7 +192,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 | Economic Crash | Lose half your gold, then gold production -40% | 562 ticks |
 | The Dark Age | Current research canceled, lose 80% of your knowledge, then knowledge production -40% | 374 ticks |
 
-The Great Fire and Epidemic are the two you least want to see. Eight lost buildings in the early game set you back a long way. Lost workers come back on their own: with auto-recruit on (the default), the game recruits into the empty worker slots as housing and food allow (see [Worker shares](workers-and-domains.md#worker-shares)), but output dips until they do.
+The Great Fire and Epidemic are the two you least want to see. Eight lost buildings in the early game set you back a long way. Lost workers come back on their own: with auto-recruit on (the default), the game recruits into the empty worker slots as housing and food allow (see [The roster](workers-and-domains.md#the-roster)), but output dips until they do.
 
 ---
 
@@ -391,7 +391,7 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 - The Epoch panel records the transition and its outcome
 - Your status bar icon and color change
 
-**After Succumb:** the run starts over in the Primitive Age with your ruins, legacy bonuses, Ancient Knowledge, prestige points, [legacy kit](prestige.md#the-legacy-kit) and [Era Mastery](prestige.md#era-mastery). The kit remembers the fallen run's plan, worker shares and civilizations, and the items you own work on the rebuild. Every age the fallen run completed gains a mastery level, as at a prestige, so the rebuild runs them at least 2x, and ages 6 or more behind your record run at least 4x ([catch-up](prestige.md#catch-up)). See [What carries forward](catastrophe.md#what-carries-forward).
+**After Succumb:** the run starts over in the Primitive Age with your ruins, legacy bonuses, Ancient Knowledge, prestige points, [legacy kit](prestige.md#the-legacy-kit) and [Era Mastery](prestige.md#era-mastery). The kit remembers the fallen run's plan, roster and civilizations, and the items you own work on the rebuild. Every age the fallen run completed gains a mastery level, as at a prestige, so the rebuild runs them at least 2x, and ages 6 or more behind your record run at least 4x ([catch-up](prestige.md#catch-up)). See [What carries forward](catastrophe.md#what-carries-forward).
 
 **After Prestige:** like Succumb, but chosen, from the Medieval Age on, and it earns prestige points to spend on the [legacy kit](prestige.md#the-legacy-kit): every age the run completed pays, and each era's ages pay three times what the era before paid, so a prestige before the Modern Age is an early taste that pays little. It is refused while a catastrophe is pending. Before the Cosmic Era a doom that hasn't struck yet ends with the run, and from the Cosmic Era it can bring the [Last Passage](prestige.md#the-last-passage). Every age below the run's furthest age gains a mastery level, so it runs faster on the next run. The per-run epoch event history is cleared; the civilization log carries. See [What Resets vs Persists](prestige.md#what-resets-vs-persists).
 
