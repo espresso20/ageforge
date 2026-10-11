@@ -137,11 +137,11 @@ func StorageRuleSizes(defs []BuildingDef, ages []AgeDef, baseStore float64) (siz
 		}
 		size := math.Max((need-prev)/StorageRuleCopies, StorageRuleFloor*asked/StorageRuleCopies)
 		for k := 2; k <= StorageRuleCopies; k++ {
-			size = math.Max(size, (StorageRuleMargin*maxPrice(b, k-1)-prev)/float64(k-1))
+			size = math.Max(size, (float64(StorageRuleMargin*maxPrice(b, k-1))-prev)/float64(k-1))
 		}
 		size = roundUpSignificant(size, 2)
 		sizes[b.Key] = size
-		prev += StorageRuleCopies * size
+		prev += float64(StorageRuleCopies * size)
 		store[ages[i].Key] = prev
 	}
 	return sizes, store
