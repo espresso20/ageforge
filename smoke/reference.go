@@ -396,6 +396,8 @@ func overCap(price, caps map[string]float64) bool {
 type refWalk struct {
 	Hours  []float64
 	Income []float64
+	// Runs is each age's stay as it ended: the town the player left with.
+	Runs []refRun
 }
 
 // walk sends a player through all 22 ages at the given Era Mastery speed.
@@ -425,6 +427,7 @@ func (t *refTables) walk(player string, speed float64, refIncome []float64, over
 		counts = run.counts
 		w.Hours = append(w.Hours, run.ticks/refTicksPerHour)
 		w.Income = append(w.Income, units(run.end.income, t.levels[i])/refIncome[i])
+		w.Runs = append(w.Runs, run)
 	}
 	return w
 }

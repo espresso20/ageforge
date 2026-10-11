@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // The economy's properties: what must be true of the numbers for the game to
@@ -46,7 +47,6 @@ var KnownPropertyFailures = map[int]string{
 	17: "fails in 12 of 22 ages; worst 13 techs in the Digital Age",
 	18: "not worked out here yet",
 	19: "a full run earns 3279 points and everything for sale costs 99",
-	20: "not worked out here yet",
 }
 
 // Properties is the whole check: the properties, and how long each age
@@ -468,7 +468,59 @@ func StaticProperties() Properties {
 	}
 	earned := config.DepthPoints(t.ages[n-1].Key)
 	add(19, "the points a full run earns can all be spent", sink >= earned, fmt.Sprintf("a full run earns %d points and everything for sale costs %d", earned, sink))
-	add(20, "nothing a player can hold is larger than the largest unit the game can print", false, "not worked out here yet")
+
+	// 20. The largest amount any of the three players can hold in a store or
+	// be quoted (the next copy of any building of the age, the gate out of
+	// it, the age's wonder and techs), at Era Mastery 1 and at the top of the
+	// table, against the largest number the game can print.
+	topWalks := map[string]refWalk{
+		"ordinary":  t.walk("ordinary", RefTopMastery, refIncome, false),
+		"lingering": t.walk("lingering", RefTopMastery, refIncome, false),
+		"check-in":  t.walk("check-in", RefTopMastery, refIncome, false),
+	}
+	baseWalks := map[string]refWalk{"ordinary": ordinary, "lingering": lingering, "check-in": checkIn}
+	wonders := map[string]map[string]float64{}
+	for _, d := range config.BaseBuildings() {
+		if d.Category == "wonder" {
+			wonders[d.RequiredAge] = d.BaseCost
+		}
+	}
+	biggest, biggestAt := 0.0, ""
+	see := func(v float64, what, player, mastery, age string) {
+		if v > biggest {
+			biggest = v
+			biggestAt = fmt.Sprintf("%s (%s, %s, %s, %s)", textfmt.Number(v), what, player, mastery, age)
+		}
+	}
+	for _, player := range []string{"ordinary", "lingering", "check-in"} {
+		for m, w := range []refWalk{baseWalks[player], topWalks[player]} {
+			mastery := []string{"Era Mastery 1", "top of the Era Mastery table"}[m]
+			for i, run := range w.Runs {
+				age := t.ages[i].Name
+				for r, v := range run.end.caps {
+					see(v, r+" store", player, mastery, age)
+				}
+				for _, d := range t.byAge[i] {
+					for r, v := range copyPrice(d, run.counts[d.Key]) {
+						see(v, "next "+d.Name+", "+r, player, mastery, age)
+					}
+				}
+				for r, v := range wonders[t.ages[i].Key] {
+					see(v, "wonder, "+r, player, mastery, age)
+				}
+				if next, _ := t.gate(i); next != nil {
+					for r, v := range next {
+						see(v, "gate, "+r, player, mastery, age)
+					}
+				}
+				if k := len(t.techs[i]); k > 0 {
+					see(t.techs[i][k-1], "dearest tech", player, mastery, age)
+				}
+			}
+		}
+	}
+	add(20, "nothing any of the three reference players can hold or be quoted is larger than the largest printable number", biggest <= textfmt.MaxNumber(),
+		fmt.Sprintf("the largest is %s, against %s printable", biggestAt, textfmt.Number(textfmt.MaxNumber())))
 	add(21, "the ordinary player's length of each age is printed beside its design target", true, "printed below")
 	return out
 }
