@@ -254,6 +254,15 @@ func TestPlan_InvalidItemsDropOut(t *testing.T) {
 
 func TestPlan_AddRespectsMaxCountAndMerges(t *testing.T) {
 	ge := planTestEngine(t)
+	// A building with a copy limit. Storage had one (50 Stashes) until the
+	// storage wall; only wonders and monuments have one now, at 1, so the
+	// test gives its own engine's Stash the old limit to count against.
+	limited := ge.Buildings.defs["stash"]
+	if limited.MaxCount != 0 {
+		t.Fatalf("setup: the Stash has a copy limit of %d; storage has none since the storage wall", limited.MaxCount)
+	}
+	limited.MaxCount = 50
+	ge.Buildings.defs["stash"] = limited
 	ge.Buildings.counts["stash"] = 48
 	n, err := ge.PlanAddBuild("stash", 5)
 	if err != nil || n != 2 {

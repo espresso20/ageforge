@@ -204,6 +204,11 @@ type GameSave struct {
 	// OverCapGrace is the resources kept above a cap that shrank when Era
 	// Mastery's speed dropped (the grace rule, mastery.go). omitempty.
 	OverCapGrace map[string]bool `json:"over_cap_grace,omitempty"`
+	// StorageRules is the storage rules the save was written under
+	// (config.StorageRules; absent on saves from before the storage wall).
+	// A save from before them keeps its stock and its plan's banks
+	// (keepStockFromBeforeTheWall).
+	StorageRules int `json:"storage_rules,omitempty"`
 	// TreeVersion is the tech tree's rules the save was written under
 	// (config.TechTreeVersion; absent on saves from before the tree's first
 	// lock). TreeGraceAge is the age a save from an older version was in
@@ -739,6 +744,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		PlanLog:                clonePlanTemplate(ge.planLog),
 		PacingWeek:             true,
 		OverCapGrace:           ge.Resources.graceSave(),
+		StorageRules:           config.StorageRules,
 		TreeVersion:            config.TechTreeVersion,
 		TreeGraceAge:           ge.Buildings.graceAge,
 		GrantedFeatures:        ge.grantedFeatureKeys(),
@@ -1105,6 +1111,10 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// rule starts from the loaded age's speed, not the one this engine ran
 	// at before.
 	ge.Resources.loadGrace(save.OverCapGrace)
+	beforeTheWall := save.StorageRules < config.StorageRules
+	if beforeTheWall {
+		ge.keepStockFromBeforeTheWall()
+	}
 	ge.lastK = ge.speedK()
 
 	ge.recalculateRates()
@@ -1157,6 +1167,9 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// its grace covers; its next save carries the tree's version.
 	if treeGraced {
 		ge.addLog("info", ge.treeNotice(save.TreeVersion))
+	}
+	if beforeTheWall {
+		ge.addLog("info", storageWallNotice)
 	}
 
 	// Tell the UI a different game state is live (e.g. so a pending catastrophe
@@ -1779,4 +1792,26 @@ func DuplicateSave(filename string) (string, error) {
 		return "", fmt.Errorf("could not write the copy: %w", err)
 	}
 	return dst, nil
+}
+
+// storageWallNotice is the line a save from before the storage wall gets on
+// its first load.
+const storageWallNotice = "Storage changed. A storage building's price now climbs much faster with each copy, a price larger than a store can no longer be bought, and overflow no longer pays the plan. You keep every building you have. Stock above a store's new limit stays until you spend it, and what your plan had banked went back to your stores."
+
+// keepStockFromBeforeTheWall carries a save written under the old storage
+// rules across to the new ones without taking anything: what the plan's
+// items had banked from overflow goes back to the stores, over their caps if
+// need be, and every stock is marked to stay above its cap until it is spent
+// (the grace rule the stores already keep for a drop in Era Mastery's
+// speed). Called on load, before the stores are worked out.
+func (ge *GameEngine) keepStockFromBeforeTheWall() {
+	for i := range ge.plan {
+		for _, res := range sortedKeys(ge.plan[i].Banked) {
+			if r, ok := ge.Resources.resources[res]; ok && ge.plan[i].Banked[res] > 0 {
+				r.Amount += ge.plan[i].Banked[res]
+			}
+		}
+		ge.plan[i].Banked = nil
+	}
+	ge.Resources.markGraceAll()
 }

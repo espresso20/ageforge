@@ -63,6 +63,7 @@ func TestIdleCheckInSpendsTheVisit(t *testing.T) {
 // TestMergeProgression: per-seed sessions pool into one graded session, the
 // median is taken across all of them, and a seed reported twice is refused.
 func TestMergeProgression(t *testing.T) {
+	needBotPlay(t)
 	part := func(seed int64, bronzeSecs float64) *Session {
 		cfg := DefaultConfig()
 		cfg.Seeds = []int64{seed}
@@ -113,6 +114,7 @@ func TestMergeProgression(t *testing.T) {
 // scenario carried over with its verdict, an empty shard (nothing selected)
 // contributing nothing, and a scenario from two shards refused.
 func TestMergeShards(t *testing.T) {
+	needBotPlay(t)
 	roundTrip := func(s *Session) *Session {
 		data, err := json.Marshal(s)
 		if err != nil {

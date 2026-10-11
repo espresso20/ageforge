@@ -15,33 +15,6 @@ func ageByKeyT(t *testing.T, key string) AgeDef {
 	return a
 }
 
-// stone_age sits in the 2.0x band. Raw food 500 -> 1000, wood 500 -> 1000.
-// (It asked for knowledge too until the wonders got their keystone techs:
-// TestNoGateAsksForKnowledge.)
-func TestNormalizeAgeRequirements_StoneAgeResourceScaling(t *testing.T) {
-	stone := ageByKeyT(t, "stone_age")
-
-	wantFood := roundSignificant(500*2.0, 2)
-	if got := stone.ResourceReqs["food"]; got != wantFood {
-		t.Errorf("stone_age food req = %v, want %v", got, wantFood)
-	}
-	wantWood := roundSignificant(500*2.0, 2)
-	if got := stone.ResourceReqs["wood"]; got != wantWood {
-		t.Errorf("stone_age wood req = %v, want %v", got, wantWood)
-	}
-}
-
-// modern_age sits in the 1.25x band. Raw uranium 5,500,000 -> *1.25.
-func TestNormalizeAgeRequirements_LateAgeUses125Factor(t *testing.T) {
-	modern := ageByKeyT(t, "modern_age")
-
-	const rawUranium = 5_500_000.0
-	want := roundSignificant(rawUranium*1.25, 2)
-	if got := modern.ResourceReqs["uranium"]; got != want {
-		t.Errorf("modern_age uranium req = %v, want %v (1.25x band)", got, want)
-	}
-}
-
 // Building floor: iron_age scriptorium was 3, must be raised to the floor of 5.
 // A count above the floor like bronze_age longhouse (15) must be left unchanged.
 func TestNormalizeAgeRequirements_BuildingFloor(t *testing.T) {

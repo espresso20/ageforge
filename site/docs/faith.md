@@ -146,14 +146,13 @@ Workers aren't recruited into a domain. A worker counts as a Faith worker while 
 
 ## Faith Costs
 
-Two things ask for faith directly:
+No age gate asks for faith. One building does:
 
 | What | Faith needed |
 |------|--------------|
-| Entering the Renaissance Age | 9.5K, alongside 180K gold and 880 steel |
 | Sistine Chapel (Renaissance wonder) | 20K, alongside culture, gold and stone |
 
-Bank faith through the Medieval Age so the Renaissance requirement doesn't hold you up. The age requirement only checks your faith, and your faith carries into the new age untouched. The Sistine Chapel, which you must build before leaving the Renaissance Age, does spend it (through `wonder collect`). That lowers the share of your faith you have kept, and your faith strength with it, until your income makes the faith back. If you have worked your way into the middle or top band, keep an eye on the odds when an epoch boundary is close or a harbinger has come.
+Your faith carries into a new age untouched. The Sistine Chapel, which you must build before leaving the Renaissance Age, spends it (through `wonder collect`). That lowers the share of your faith you have kept, and your faith strength with it, until your income makes the faith back. If you have worked your way into the middle or top band, keep an eye on the odds when an epoch boundary is close or a harbinger has come.
 
 ---
 

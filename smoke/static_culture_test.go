@@ -49,16 +49,18 @@ func TestCultureStrengthBars(t *testing.T) {
 		// made its culture reached the 40% Major events asked, a moderate one
 		// stayed under 8% and under 1% from the Modern Age on; and from the
 		// Medieval Age (where the market starts selling culture) to the
-		// Digital Age, under ten minutes of a moderate economy's gold bought
-		// it instead.
+		// Digital Age, a moderate economy's gold bought it instead in under a
+		// thousand ticks (under 400 before the storage wall; the walled
+		// stores are larger against the gold of the Atomic Age, which takes
+		// 970).
 		if !transitions[r.Age] {
 			continue
 		}
 		if r.OldFillTop >= game.CultureMajorAbove || r.OldFill >= 0.08 || pos[r.Age] >= pos["modern_age"] && r.OldFill >= 0.01 {
 			t.Errorf("%s: the old rule read %.3f for a moderate town and %.3f for %g times the buildings; the store was never filled by making culture", r.Age, r.OldFill, r.OldFillTop, CultureTopSets)
 		}
-		if pos[r.Age] <= pos["digital_age"] && (r.OldGoldTicks <= 0 || r.OldGoldTicks > 400) {
-			t.Errorf("%s: %v ticks of gold bought the old rule's 40%%, want a few hundred at most", r.Age, r.OldGoldTicks)
+		if pos[r.Age] <= pos["digital_age"] && (r.OldGoldTicks <= 0 || r.OldGoldTicks > 1000) {
+			t.Errorf("%s: %v ticks of gold bought the old rule's 40%%, want under a thousand", r.Age, r.OldGoldTicks)
 		}
 	}
 	var sb strings.Builder

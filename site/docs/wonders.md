@@ -38,13 +38,15 @@ A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it 
 
 ### Overflow
 
-**Wonder overflow** is on by default. When a resource the current age's wonder still needs would be clamped at its storage limit, the part the limit would cut off goes into the wonder's bank instead of being lost, up to what the wonder still needs of it. It never takes anything you hold: only what production was about to waste. It works during offline catch-up too. What the wonder doesn't need then goes toward your [build plan](plan.md#overflow-pays-the-plan)'s queued copies, with or without wonder overflow, so the wonder always comes first.
+**Wonder overflow** is on by default. When a resource the current age's wonder still needs would be clamped at its storage limit, the part the limit would cut off goes into the wonder's bank instead of being lost, up to what the wonder still needs of it. It never takes anything you hold: only what production was about to waste. It works during offline catch-up too.
 
-A wonder you have put in your build plan is one of those queued copies. With wonder overflow off it still takes overflow, in plan order, into its own bank, so a planned wonder's bank fills while you are away either way. Turning wonder overflow off only stops a wonder you have not planned from taking it.
+The bank fills to the wonder's price and stops, and the log says `The <Wonder> bank is full.` once. After that, and once the wonder is built, a full store's surplus is lost. It is lost too while wonder overflow is off. It no longer pays toward the [build plan](plan.md)'s queued copies.
+
+A wonder you have put in your build plan takes overflow on the same terms as one you have not: only while wonder overflow is on.
 
 ```
 wonder overflow        # is it on?
-wonder overflow off    # only a wonder in your build plan takes overflow
+wonder overflow off    # a full store's surplus is lost
 wonder overflow on
 ```
 
@@ -80,7 +82,7 @@ Because every wonder stands between you and the next age, each one costs about t
 
 The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **500 food**, the Great Monolith **1.5K food**, and the Sistine Chapel **20K faith**.
 
-Wonders are banked a deposit at a time, but each part of a wonder's price fits in the most storage you can build in its age, so you never have to bank one resource in several rounds while sitting at its storage limit.
+A part of a wonder's price can be larger than the store for that resource. That is why the wonder is the one purchase the size of a store does not block (see [Storage is a wall](buildings.md#storage-is-a-wall)): it is banked a deposit at a time, and overflow adds to the deposits.
 
 No wonder takes longer to build than a sixth of its age's target length. Build times below are in ticks, with the real time beside them; one tick is 2 seconds. These are first-run times: on known ground [Era Mastery](prestige.md#era-mastery) divides them by the age's speed, and the Wonders panel shows the shorter time. **Architecture**, a Renaissance Age tech, takes a quarter off the time of every wonder you start after it, and the techs that cut all construction then take their share of what is left.
 

@@ -153,6 +153,45 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 	return ge
 }
 
+// truthRoom gives a lab town room for amount more of res: copies of the
+// newest storage building it can build, until the store holds what it has
+// and amount on top. A store is a wall, and a gain it cannot hold is cut
+// short (TestBonusTruthGrantsSayWhatFit, TestPaidIntoAFullStore); a meter
+// that reads a gain off the stock needs a store that takes all of it. More
+// storage changes nothing else a town makes.
+func truthRoom(ge *GameEngine, res string, amount float64) {
+	r := ge.Resources.resources[res]
+	if r == nil || r.Storage-r.Amount >= amount {
+		return
+	}
+	order := ageOrders()
+	best := ""
+	for _, key := range ge.Buildings.order {
+		def := ge.Buildings.defs[key]
+		at, ok := order[def.RequiredAge]
+		if def.Category != "storage" || !ok || at > order[ge.age] {
+			continue
+		}
+		if best == "" || at > order[ge.Buildings.defs[best].RequiredAge] {
+			best = key
+		}
+	}
+	if best == "" {
+		return
+	}
+	held := r.Storage
+	ge.Buildings.counts[best]++
+	ge.recalculateRates()
+	per := r.Storage - held
+	if per <= 0 {
+		return
+	}
+	if short := amount - (r.Storage - r.Amount); short > 0 {
+		ge.Buildings.counts[best] += int(math.Ceil(short / per))
+		ge.recalculateRates()
+	}
+}
+
 // truthLab hands out the lab engines, one per age and mode, built on first
 // use. Probes share them: each switches its bonus on and off again.
 type truthLab struct {
@@ -1824,7 +1863,13 @@ func truthEventAge(def config.EventDef) string {
 // instant event's timed effect is never applied, and reads as nothing.
 func truthEventSwitch(ge *GameEngine, def config.EventDef, eff config.Effect) truthSwitch {
 	return truthSwitch{
-		off: func() { ge.Resources.resources["soldiers"].Amount = 0 }, // no garrison: a raid takes its full share
+		off: func() {
+			ge.Resources.resources["soldiers"].Amount = 0 // no garrison: a raid takes its full share
+			if eff.Type == config.EventGain {
+				// Room for the whole gain: the meter reads it off the stock.
+				truthRoom(ge, eff.Target, config.EventSize(eff, ge.eventTown(eff.Target, false)))
+			}
+		},
 		on: func() {
 			one := def
 			one.Effects = []config.Effect{eff}

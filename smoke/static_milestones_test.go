@@ -90,8 +90,9 @@ func preCovenantMilestones(t *testing.T) []config.MilestoneDef {
 // never be completed (the last Stone Pit, Temple, Trading Post and Coal
 // Plant cost more than their age can store; a billion and ten billion
 // people need more housing than the game has; 20,000 structures is more
-// than a run holds), three were out of reach in a run (10M and 100M people,
-// 5,000 structures), and two named an age too early for their count (15
+// than a run holds), four were out of reach in a run (10M and 100M people,
+// 5,000 structures, and 2,000: the storage wall put it past the half of what
+// a run holds that a count may ask), and two named an age too early for their count (15
 // wonders, every tech). A third did when it shipped, 50 techs by the
 // Industrial Age: the tree has since grown past it (53 by then), so that
 // number is no longer broken and is not patched in.
@@ -107,7 +108,7 @@ func TestMilestoneFeasibilityCatchesBrokenMilestones(t *testing.T) {
 	want := map[string]string{
 		"stone_mason": "building", "temple_city": "building", "trade_empire": "building", "power_grid": "building",
 		"metropolis": "population", "urban_sprawl": "population", "megalopolis": "population", "global_city": "population",
-		"master_builder": "builds", "grand_architect": "builds",
+		"seasoned_builder": "builds", "master_builder": "builds", "grand_architect": "builds",
 		"tech_ascendant": "techs", "wonder_empire": "wonders",
 		"settlement_chain": "chain", "builder_chain": "chain", "trade_chain": "chain",
 	}
@@ -168,12 +169,14 @@ func TestMilestoneFeasibilityBoundaries(t *testing.T) {
 	pits.MinBuildings = map[string]int{"stone_pit": c.n + 1}
 	expect("stone pits past the ceiling", pits, true, "Stone Pits", "Stone Age", "storage", grouped(c.n))
 
-	g := m.ceiling("granary")
-	if g.res != "" {
-		t.Fatalf("granary ceiling = %+v, want its max count to bind", g)
+	// A copy limit is the other ceiling. No storage building has one since
+	// the storage wall (the wall stops it instead); the monuments do: one each.
+	g := m.ceiling("cultural_obelisk")
+	if g.res != "" || g.n != 1 {
+		t.Fatalf("cultural_obelisk ceiling = %+v, want its max count (1) to bind", g)
 	}
-	gran := config.MilestoneDef{Name: "Granaries", Key: "granaries", MinBuildings: map[string]int{"granary": g.n + 1}}
-	expect("granaries past the max count", gran, true, "max count")
+	obelisks := config.MilestoneDef{Name: "Obelisks", Key: "obelisks", MinBuildings: map[string]int{"cultural_obelisk": g.n + 1}}
+	expect("obelisks past the max count", obelisks, true, "max count")
 
 	end := m.runEnd
 	popLimit := int(MilestonePopShare * m.housing[end])
@@ -204,10 +207,10 @@ func TestMilestoneFeasibilityBoundaries(t *testing.T) {
 		expect("wonders past their own age", late, true, "wonders", game.AgeName(m.ages[after].Key))
 	}
 
-	sum := config.MilestoneDef{Name: "Sum", Key: "sum", MinBuildingSum: config.BuildingSum{Keys: []string{"stone_pit", "granary"}, Count: c.n + g.n}}
+	sum := config.MilestoneDef{Name: "Sum", Key: "sum", MinBuildingSum: config.BuildingSum{Keys: []string{"stone_pit", "cultural_obelisk"}, Count: c.n + g.n}}
 	expect("building sum at the ceiling", sum, false)
 	sum.MinBuildingSum.Count++
-	expect("building sum past the ceiling", sum, true, "Stone Pits and Granaries", "between them")
+	expect("building sum past the ceiling", sum, true, "Stone Pits and Cultural Obelisks", "between them")
 
 	gold := m.limitOf(t, config.MilestoneDef{MinResources: map[string]float64{"gold": 1}}, end)
 	hoard := config.MilestoneDef{Name: "Hoard", Key: "hoard", MinResources: map[string]float64{"gold": gold}}

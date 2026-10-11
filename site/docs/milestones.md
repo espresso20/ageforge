@@ -86,10 +86,10 @@ Tech Master asks for more techs than the tree holds before the Information Age, 
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| Stone Mason | Build 30 Stone Pits | +10% stone rate |
+| Stone Mason | Build 23 Stone Pits | +10% stone rate |
 | Master Builder | Build 1,000 total structures | -5% build cost |
 | Wonder Builder *(hidden)* | Build 1 wonder | +5% all production |
-| Grand Architect *(hidden)* | Build 2,000 structures (Medieval Age) | -5% build cost, +5% all production |
+| Grand Architect *(hidden)* | Build 1,365 structures (Medieval Age) | -5% build cost, +5% all production |
 | Wonder Collector *(hidden)* | Build 8 wonders (Colonial Age) | +10% all production |
 
 Stone Pits can only be built in the Stone Age, so build them before you advance. Structures count every building you finish this run, wonders included (upgrades don't count, and the count starts over when you prestige).
@@ -109,7 +109,7 @@ The `-5% build cost` rewards here (Master Builder, Grand Architect) are real dis
 | First Soldiers | Train 5 soldiers (Iron Age) | +5% military power |
 | War Machine | Train 250 soldiers | +10% military power |
 | Iron Legion *(hidden)* | Train 500 soldiers and build 10 Barracks (Classical Age) | +5% all production |
-| Fortress State *(hidden)* | Build 20 Castle Keeps (Medieval Age) | +10% military power, +5% all production |
+| Fortress State *(hidden)* | Build 14 Castle Keeps (Medieval Age) | +10% military power, +5% all production |
 | Military Superpower *(hidden)* | Train 2,000 soldiers (Industrial Age) | +15% all production |
 
 Soldier counts are soldiers trained over the run, not the size of your current army.
@@ -194,8 +194,8 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Milestone | Condition | Reward |
 |---|---|---|
 | First Shrine | Build 1 Shrine | +10 faith |
-| Devout Settlement | Build 25 Shrines (Stone Age) | +5% faith rate |
-| Temple City *(hidden)* | Build 25 Temples (Iron Age) | +10% faith rate |
+| Devout Settlement | Build 16 Shrines (Stone Age) | +5% faith rate |
+| Temple City *(hidden)* | Build 18 Temples (Iron Age) | +10% faith rate |
 | Cathedral Age *(hidden)* | Build 10 Cathedrals (Medieval Age) | +10% faith rate, +5% knowledge rate |
 
 **Epoch and longevity** (the Milestones panel's Epoch group)
@@ -207,18 +207,18 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Enduring Civilization *(hidden)* | Reach tick 130K in a run (~3 days of play) | +5% all production |
 | Age Hopper | Reach the Classical Age and research 10 techs | +5% all production |
 | Industrial Titan *(hidden)* | Stockpile 10K coal and 5K iron ore (Industrial Age) | +10% all production |
-| Power Grid *(hidden)* | Build 20 Coal Plants and 10 Steam Turbines (Victorian Age) | +10% all production |
+| Power Grid *(hidden)* | Build 13 Coal Plants and 10 Steam Turbines (Victorian Age) | +10% all production |
 
 **Builder**
 
 | Milestone | Condition | Reward |
 |---|---|---|
 | First Storehouse | Build 1 Stash | +20 food, +20 wood |
-| Storage Network | Build 10 Storage Pits (Stone Age) | +5% food rate |
-| Granary Keeper | Build 25 Granaries (Bronze Age) | +5% food rate |
+| Storage Network | Build 5 Storage Pits (Stone Age) | +5% food rate |
+| Granary Keeper | Build 5 Granaries (Bronze Age) | +5% food rate |
 | Lumber Operation | Build 25 Wood Camps (Stone Age) | +10% wood rate |
 | Early Builder | Build 250 structures (Bronze Age) | -3% build cost |
-| Mining Syndicate | Build 25 Stone Pits and 10 Iron Mines (Iron Age) | +10% iron rate |
+| Mining Syndicate | Build 23 Stone Pits and 10 Iron Mines (Iron Age) | +10% iron rate |
 | Forge Master | Build 15 Smithies (Iron Age) | +5% iron rate, -3% build cost |
 | Seasoned Builder | Build 500 structures (Iron Age) | -3% build cost |
 | Wonder Empire *(hidden)* | Build 15 wonders (Digital Age) | +15% all production |

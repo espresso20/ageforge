@@ -1,6 +1,6 @@
 # The Build Plan
 
-AgeForge is paced for a player who checks in a few times a day. The build plan is how you put the hours between visits to work: a list of builds, techs, trades, deals with other civilizations and an advance that the game starts for you, in order, as the resources come in. It runs while you play, and it runs while you are away (offline catch-up executes it as the time passes, not in one lump at the end). What your full stores would throw away goes toward the plan's next copies instead of being lost (see [Overflow pays the plan](#overflow-pays-the-plan)), and the plan holds up to **60 items**, not counting research.
+AgeForge is paced for a player who checks in a few times a day. The build plan is how you put the hours between visits to work: a list of builds, techs, trades, deals with other civilizations and an advance that the game starts for you, in order, as the resources come in. It runs while you play, and it runs while you are away (offline catch-up executes it as the time passes, not in one lump at the end). A price larger than a store cannot be paid, so the plan will not start it (see [Full stores and the plan](#full-stores-and-the-plan)). The plan holds up to **60 items**, not counting research.
 
 Open it with `plan`. Add to it with commands:
 
@@ -25,10 +25,10 @@ plan build longhouse 15        # a next-age building waits for the advance
 - **Paid when it starts, not when you add it.** Adding an item costs nothing. Each copy is paid for at the moment it starts, at the price it has then, through the same checks as `build` and `research` (the age lock, a building's limit, one research at a time).
 - **In order, every tick.** After each tick's production the game walks the plan from the top and starts everything it can afford. A build item with a count starts as many copies as the resources cover.
 - **Waiting items hold their price.** An item that can't start yet doesn't block the items after it, but it holds back the price of its next copy. A later item only starts if it can be paid from what is left, so a cheap item lower down can never delay one above it, and resources the top items don't need aren't left idle. The order is your priority.
-- **Some items hold nothing.** An item that can't start for a reason money won't fix holds nothing back: a price bigger than your storage (build storage first, or let overflow bank the part over it), a resource the current income won't bring in within a day (it needs the market or a producer first), or the next age's building before the advance.
-- **A wonder pays its bank from what you hold.** A wonder's price in the plan is what its bank still lacks. Once what you hold (after what the items above it hold back) covers all of that, the plan banks it and starts construction, so you don't need to `wonder collect` for it. While it waits it holds nothing back: it is a big bill, and holding it would stall everything below it. A part bigger than a full store can't be paid at once; deposits and overflow fill it over time, and a wonder in the plan takes overflow whether [wonder overflow](wonders.md#overflow) is on or off. A wonder whose [keystone tech](wonders.md#the-keystone-tech) is not researched yet waits for it (`waits for Stoneworking`) and starts once it is; overflow fills its bank in the meantime.
+- **Some items hold nothing.** An item that can't start for a reason money won't fix holds nothing back: a price bigger than your storage (it reads `blocked  needs more <resource> storage`: build storage first), a resource the current income won't bring in within a day (it needs the market or a producer first), or the next age's building before the advance.
+- **A wonder pays its bank from what you hold.** A wonder's price in the plan is what its bank still lacks. Once what you hold (after what the items above it hold back) covers all of that, the plan banks it and starts construction, so you don't need to `wonder collect` for it. While it waits it holds nothing back: it is a big bill, and holding it would stall everything below it. A part bigger than a full store can't be paid at once; deposits and overflow fill it over time, and the plan's wonder takes overflow only while [wonder overflow](wonders.md#overflow) is on. A wonder whose [keystone tech](wonders.md#the-keystone-tech) is not researched yet waits for it (`waits for Stoneworking`) and starts once it is; overflow fills its bank in the meantime while wonder overflow is on.
 - **Techs queue.** Only the first research item in the plan can take the research slot when it frees up; later ones still hold their knowledge. See [The research queue](#the-research-queue) for what `plan research` adds and which techs it takes.
-- **Trades are paced.** A trade item holds back what it will sell (what the items above leave, up to what it still wants) and sells once the market has recovered from its last sale, so the rate stays within a percent of the market's instead of sinking by selling every tick. It never buys more than the store has room for, and like `trade` it needs a trade building. With an amount, the item drops out once it has bought that much. With no amount it is an open-ended sell order: it stays until you remove it, and while the store it buys into is full it pauses and holds nothing back.
+- **Trades are paced.** A trade item holds back what it will sell (what the items above leave, up to what it still wants) and sells once the market has recovered from its last sale, so the rate stays within a percent of the market's instead of sinking by selling every tick. It never buys more than the store has room for: a lump into a store with room for part of it sells that part and charges only for it. Like `trade` it needs a trade building. With an amount, the item drops out once it has bought that much. With no amount it is an open-ended sell order: it stays until you remove it, and while the store it buys into is full it pauses and holds nothing back.
 - **Deals wait for their price.** A deal item (`plan deal <civ> <n>`, see [Trade deals](factions.md#trade-deals)) is a one-off purchase at a fixed price, so it runs like a single build: it holds its price back while it waits and takes the deal once what is left covers it. It holds nothing while the goods wouldn't fit in their store or the civilization won't trade (war, embargo, rivalry, hostility). It drops out once taken, or when the offer is gone: the civilization's offers rotated or you took it by hand. Offers don't rotate while you are away, so a deal planned before you leave is still there for the plan to take.
 - **Advance at its place.** An advance item advances the moment the requirements are met, when the walk reaches it: items above it go first, items below wait for the next tick, so they can't spend what the requirements count.
 - **Dead items drop out.** A building of an earlier age after an advance, a building at its limit, a tech already researched, a trade the new age's market doesn't offer: each leaves the plan with a line in the log.
@@ -56,19 +56,13 @@ Planned research: Imperial Legions, after the 2 techs it needs first (Military T
 
 `research <tech>` itself is unchanged: it starts one tech now and refuses one whose prerequisites you do not hold.
 
-## Overflow pays the plan
+## Full stores and the plan
 
-When a store is full, the production it would throw away goes toward your plan instead of being lost:
+What a full store cannot hold goes into this age's [wonder bank](wonders.md#overflow) while wonder overflow is on, and is otherwise lost. It does not pay toward the plan's items.
 
-- **The wonder first.** [Wonder overflow](wonders.md#overflow) takes what this age's wonder still needs, as before.
-- **Then the plan, in order.** What is left goes into the bank of the first build item that needs that resource, up to the price of its next copy, then the next item's, and so on down the plan. Whatever no item needs is lost as before.
-- **The bank pays first.** When the copy starts, its bank pays its share of the price and your stores pay the rest. While it waits, the item holds back only what its bank doesn't cover, so the items below get more of what you hold.
-- **Over the cap.** A copy priced above your storage, which could never start before, starts once overflow has banked the part over the cap and your stores hold the rest. Until then it shows as blocked, with what it has banked.
-- **A queued wonder banks too.** A wonder in your plan takes overflow in plan order like any other item, into its own bank (the one `wonder collect` fills), up to what that bank still lacks. With wonder overflow on, this age's wonder has had first call already; with it off, putting the wonder in the plan is what lets its bank fill while you are away.
-- **Only what you queued.** Overflow only pays for copies in your plan; it never starts anything on its own. Only this age's buildings bank: the next age's, its wonder included, wait for the advance.
-- **Banks go back.** Removing an item, clearing the plan, an item dropping out, and advancing put its bank back into your stores, up to their caps (the rest was overflow and still doesn't fit). The advance does this before it trims your stockpiles, so a bank never carries more into the next age than your stores could.
+A plan item whose price is larger than a store cannot start, however long you wait. It shows as blocked and reads `blocked  needs more <resource> storage` until you build more storage (see [Storage is a wall](buildings.md#storage-is-a-wall)). The age's wonder is the one exception: it is paid through its bank.
 
-It works during offline catch-up too, and the welcome back says how much overflow banked toward your plan. The Plan panel shows each item's bank. There is no switch: a plan with nothing in it banks nothing.
+A save from before this rule had banked part of its items' prices in the plan. Those banks are returned to your stores when the save loads (see [Old saves](saving-and-loading.md#saves-from-before-the-storage-wall)).
 
 ## The Plan panel
 
@@ -77,7 +71,7 @@ It works during offline catch-up too, and the welcome back says how much overflo
  ▸  1. Hut ×3
        ready    starts next tick for 14 wood
     2. Story Circle
-       blocked  needs more wood storage (12 wood banked from overflow)
+       blocked  needs more wood storage
     3. Wood Camp
        ready    starts next tick for 16 wood
     4. Stash ×2
@@ -88,13 +82,13 @@ It works during offline catch-up too, and the welcome back says how much overflo
   ↑↓  select   U  up   D  down   X  remove   C  clear
 ```
 
-**ready** starts on the next tick, **waiting** is saving up (the bar is how much of the next price its bank and what is free after the items above cover), **blocked** says what it is waiting for. What an item has banked from overflow shows on its line. `C` asks for a second press before it clears.
+**ready** starts on the next tick, **waiting** is saving up (the bar is how much of the next price what is free after the items above covers), **blocked** says what it is waiting for. `C` asks for a second press before it clears.
 
 <figure class="screen" data-screen="plan"><figcaption>The Plan panel with five items: houses saving up for their next copy, a tech held back by the research slot, two builds waiting their turn for wood, and an advance that goes once the next age is ready.</figcaption></figure>
 
 ## Offline
 
-Offline progress covers up to **24 hours**; time away beyond that isn't credited. When you come back, the offline catch-up runs in one-minute steps: each step credits that minute's production (at the usual 50% offline rate, up to your storage), moves construction and research on, and lets the plan start what the step paid for. Buildings under construction and research finish while you're away, and the plan's queued techs start one after another. What a full store would waste during a step goes to the wonder and then toward the plan, as in live play. Each step also runs the [roster](workers-and-domains.md#the-roster) routine: it puts idle workers to work by your shares and, with auto-recruit on, recruits into empty worker slots as housing and food allow, so what the plan builds gets staffed while you're away. The welcome back says what it did, for example "While you were away, your roster recruited 12 workers (population 40/50), put 3 idle workers to work." A day away resolves in a few milliseconds. With an empty plan, nothing under construction and no workers for the roster routine to place or recruit, the steps pay the same total as one lump payment would.
+Offline progress covers up to **24 hours**; time away beyond that isn't credited. When you come back, the offline catch-up runs in one-minute steps: each step credits that minute's production (at the usual 50% offline rate, up to your storage), moves construction and research on, and lets the plan start what the step paid for. Buildings under construction and research finish while you're away, and the plan's queued techs start one after another. What a full store would waste during a step goes to the wonder while wonder overflow is on, and is otherwise lost, as in live play. Each step also runs the [roster](workers-and-domains.md#the-roster) routine: it puts idle workers to work by your shares and, with auto-recruit on, recruits into empty worker slots as housing and food allow, so what the plan builds gets staffed while you're away. The welcome back says what it did, for example "While you were away, your roster recruited 12 workers (population 40/50), put 3 idle workers to work." A day away resolves in a few milliseconds. With an empty plan, nothing under construction and no workers for the roster routine to place or recruit, the steps pay the same total as one lump payment would.
 
 ## The Plan Template
 
@@ -108,9 +102,9 @@ The techs you planned come along with everything else: a `plan research` item is
 
 ## Saving
 
-The plan is saved with your game, banks included, and comes back exactly as it was. Prestige, Succumb and a new game clear it; with the Plan Template owned, a new run (or the rebuild after a Succumb) starts with the first age's part of your template.
+The plan is saved with your game and comes back exactly as it was. Prestige, Succumb and a new game clear it; with the Plan Template owned, a new run (or the rebuild after a Succumb) starts with the first age's part of your template.
 
 ## See also
 
-- [Wonder overflow](wonders.md#overflow): what a full store would waste goes into the current wonder first.
-- [Storage](buildings.md#storage-buildings-21-tiers): each age's storage holds at least 4.5 hours of its typical production from the Bronze Age on (an hour and a half in the Primitive and Stone Ages).
+- [Wonder overflow](wonders.md#overflow): what a full store would waste goes into the current wonder while overflow is on.
+- [Storage](buildings.md#storage-buildings-21-tiers): no copy limit, 1.75 times more for each copy, and a price larger than a store cannot be bought.

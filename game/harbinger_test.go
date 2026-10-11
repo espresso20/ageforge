@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // --- helpers ------------------------------------------------------------------
@@ -102,7 +103,7 @@ func setStock(ge *GameEngine, stock map[string][2]float64) {
 // fillBraceStock gives every Brace resource of the running thread a full bank.
 func fillBraceStock(ge *GameEngine, store float64) {
 	stock := map[string][2]float64{}
-	for k := range harbingerBraceBasis(ge.harbinger.EpochKey) {
+	for _, k := range eraBraceMaterials(ge.harbinger.EpochKey) {
 		stock[k] = [2]float64{store, store}
 	}
 	setStock(ge, stock)
@@ -221,7 +222,7 @@ func TestHarbingerNeverNamesTheEraToCome(t *testing.T) {
 			for k := range doomAppeaseCost(ep.Key, ep.Ages[0], HarbingerMaxAppease) {
 				stock[k] = [2]float64{1e12, 1e12}
 			}
-			for k := range harbingerBraceBasis(ep.Key) {
+			for _, k := range eraBraceMaterials(ep.Key) {
 				stock[k] = [2]float64{1e12, 1e12}
 			}
 			setStock(ge, stock)
@@ -504,34 +505,37 @@ func TestHarbingerCostExamples(t *testing.T) {
 	// its harbinger arrives in: a third of what a moderate economy makes of
 	// each material in a fifth of the age. Iron Age stone: 46.5 a tick over
 	// 2,340 ticks = 108.9K; a third is 36.3K → 37K. The materials are the
-	// era's core resources that the age's buildings make: the Modern Age
-	// buys its data at the market, and nothing but a wonder makes crypto, so
-	// neither is asked for. No material asks for more than three fifths of
-	// what a moderate builder's store holds (five copies of every storage
-	// building so far), rounded down to two figures: the Classical Age's
-	// store is 1.15M, so its gold and iron stop at 680K where a third of
-	// the warning is 920K and 760K. It was 12% of the most the era's
-	// advances ask, the same in every age of the era (eraBraceCost): 26.4K
-	// stone, 6.36K iron and 21.6K gold for the whole Iron Era.
+	// era's written list (config.EpochDef.BraceMaterials) that the age's
+	// buildings make: the Modern Age buys its data at the market, so it is
+	// not asked for there. The list is not read from the age gates, which
+	// since the storage wall name every material an era's buildings are
+	// paid in: the Iron Era's Brace is still gold, iron and stone. No
+	// material asks for more than three fifths of what a moderate builder's
+	// store holds (five copies of every storage building so far), rounded
+	// down to two figures: the Iron Age's store is 165.6K, so its gold and
+	// iron stop at 99K where a third of the warning is 135K and 165K. It
+	// was 12% of the most the era's advances asked, the same in every age
+	// of the era (eraBraceCost): 26.4K stone, 6.36K iron and 21.6K gold for
+	// the whole Iron Era.
 	dooms1 := []struct {
 		epoch, age string
 		brace      map[string]float64
 	}{
-		{"iron_era", "iron_age", map[string]float64{"gold": 140000, "iron": 170000, "stone": 37000}},
-		{"iron_era", "classical_age", map[string]float64{"gold": 680000, "iron": 680000, "stone": 51000}},
-		{"iron_era", "medieval_age", map[string]float64{"gold": 2800000, "iron": 2800000, "stone": 66000}},
-		{"steel_era", "renaissance_age", map[string]float64{"gold": 16000000, "steel": 4500000}},
-		{"steel_era", "colonial_age", map[string]float64{"gold": 190000000, "steel": 69000000}},
-		{"steel_era", "industrial_age", map[string]float64{"gold": 1200000000, "steel": 1200000000}},
-		{"electric_era", "victorian_age", map[string]float64{"electricity": 1700000, "oil": 1400000000, "steel": 5100000000}},
-		{"electric_era", "electric_age", map[string]float64{"electricity": 21000000000, "oil": 4600000000, "steel": 21000000000}},
-		{"electric_era", "atomic_age", map[string]float64{"electricity": 90000000000, "oil": 6100000000, "steel": 90000000000}},
-		{"digital_era", "modern_age", map[string]float64{"electricity": 420000000000, "gold": 420000000000}},
-		{"digital_era", "information_age", map[string]float64{"data": 590000000000, "electricity": 7300000000000, "gold": 7300000000000}},
-		{"digital_era", "digital_age", map[string]float64{"data": 2400000000000, "electricity": 15000000000000, "gold": 15000000000000}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 8100000000000, "electricity": 81000000000000}},
-		{"neon_era", "fusion_age", map[string]float64{"data": 9400000000000, "electricity": 190000000000000}},
-		{"neon_era", "space_age", map[string]float64{"data": 11000000000000, "electricity": 790000000000000}},
+		{"iron_era", "iron_age", map[string]float64{"gold": 99000, "iron": 99000, "stone": 37000}},
+		{"iron_era", "classical_age", map[string]float64{"gold": 900000, "iron": 760000, "stone": 51000}},
+		{"iron_era", "medieval_age", map[string]float64{"gold": 3100000, "iron": 3100000, "stone": 66000}},
+		{"steel_era", "renaissance_age", map[string]float64{"gold": 14000000, "steel": 4500000}},
+		{"steel_era", "colonial_age", map[string]float64{"gold": 62000000, "steel": 62000000}},
+		{"steel_era", "industrial_age", map[string]float64{"gold": 280000000, "steel": 280000000}},
+		{"electric_era", "victorian_age", map[string]float64{"electricity": 1700000, "oil": 1400000000, "steel": 2800000000}},
+		{"electric_era", "electric_age", map[string]float64{"electricity": 22000000000, "oil": 4600000000, "steel": 27000000000}},
+		{"electric_era", "atomic_age", map[string]float64{"electricity": 170000000000, "oil": 6100000000, "steel": 230000000000}},
+		{"digital_era", "modern_age", map[string]float64{"electricity": 750000000000, "gold": 960000000000}},
+		{"digital_era", "information_age", map[string]float64{"data": 590000000000, "electricity": 2500000000000, "gold": 2500000000000}},
+		{"digital_era", "digital_age", map[string]float64{"data": 2400000000000, "electricity": 16000000000000, "gold": 16000000000000}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 8100000000000, "electricity": 67000000000000}},
+		{"neon_era", "fusion_age", map[string]float64{"data": 9400000000000, "electricity": 240000000000000}},
+		{"neon_era", "space_age", map[string]float64{"data": 11000000000000, "electricity": 1.2e+15}},
 	}
 	listed := 0
 	for _, ep := range config.Epochs() {
@@ -1265,9 +1269,12 @@ func TestLastPassageAppeasePayableWithinItsWarning(t *testing.T) {
 // resource in the warning, so the warning pays for it. The Last Passage's is
 // half of its warning (two thirds of the age), the Reality Tear's five
 // sixths of a doom's shortest (a fifth of the age), which makes it half the
-// Last Passage's. Level 2 costs the same again. Both ask for the resources
-// the era's own price names, and far more of them: an age's requirement,
-// which that price is a share of, is a few ticks of the Cosmic Era's income.
+// Last Passage's. Level 2 costs the same again. Both ask for the era's
+// written materials that the age's buildings make (braceMaterials), which
+// are the ones the era's old price named: dark matter and titanium, and no
+// plasma, though the era's gates name it since the storage wall. They ask
+// far more of them: an age's requirement, which that price was a share of,
+// was a few ticks of the Cosmic Era's income.
 func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 	checked := 0
 	for _, ep := range config.Epochs() {
@@ -1284,8 +1291,17 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 				{"the Last Passage", lastPassageBraceCost(ep.Key, age, 1), lastPassageBraceCost(ep.Key, age, 2), lastPassageWarning, lastPassageBraceShare},
 				{"the era's doom", doomBraceCost(ep.Key, age, 1), doomBraceCost(ep.Key, age, 2), harbingerLeadMin, finalDoomBraceShare},
 			} {
-				if len(th.cost1) == 0 || len(th.cost1) != len(era) || len(th.cost2) != len(th.cost1) {
-					t.Fatalf("%s in %s: %s's brace asks %v (level 2 %v), the era's price %v", ep.Key, age, th.name, th.cost1, th.cost2, era)
+				materials := braceMaterials(rules.Core(), ep.Key, age)
+				if len(th.cost1) == 0 || len(th.cost1) != len(materials) || len(th.cost2) != len(th.cost1) {
+					t.Fatalf("%s in %s: %s's brace asks %v (level 2 %v), the era's materials are %v", ep.Key, age, th.name, th.cost1, th.cost2, materials)
+				}
+				for res := range era {
+					if th.cost1[res] <= 0 {
+						t.Errorf("%s in %s: %s's brace asks no %s, which the era's old price named", ep.Key, age, th.name, res)
+					}
+				}
+				if len(th.cost1) != len(era) {
+					t.Errorf("%s in %s: %s's brace asks %v, want only what the era's old price named (%v)", ep.Key, age, th.name, th.cost1, era)
 				}
 				for res, l1 := range th.cost1 {
 					checked++
@@ -1364,7 +1380,7 @@ func TestThreadBraceCost(t *testing.T) {
 	if !reflect.DeepEqual(want2, want1) {
 		t.Errorf("the Last Passage's level 2 asks %v, want level 1's %v again", want2, want1)
 	}
-	setStock(lp, map[string][2]float64{"dark_matter": {1e18, 1e18}, "titanium": {1e18, 1e18}})
+	fillBraceStock(lp, 1e18) // every material the price names
 	if err := lp.HarbingerBrace(); err != nil {
 		t.Fatal(err)
 	}
@@ -1414,7 +1430,7 @@ func TestThreadBraceCost(t *testing.T) {
 	if err := both.HarbingerBrace(); err == nil || both.harbinger.BraceLevel != 0 {
 		t.Errorf("bracing against the Reality Tear with 10T of each: err %v, level %d; want refused", err, both.harbinger.BraceLevel)
 	}
-	setStock(both, map[string][2]float64{"dark_matter": {1e18, 1e18}, "titanium": {1e18, 1e18}})
+	fillBraceStock(both, 1e18) // every material the price names
 	for level := 1; level <= HarbingerMaxBrace; level++ {
 		before := both.Resources.Get("dark_matter")
 		if err := both.HarbingerBrace(); err != nil {

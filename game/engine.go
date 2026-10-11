@@ -377,10 +377,6 @@ type GameEngine struct {
 	// the current age's wonder (overflow.go). The player's preference: saved,
 	// kept across prestige and Succumb, cleared by Reset.
 	wonderOverflowOff bool
-	// overflowScratch is applyTickRates' reusable list of what the caps cut
-	// off this tick, so a tick with overflow allocates nothing for it. Not
-	// state: never saved, emptied before each use.
-	overflowScratch []overflowLoss
 	// Worker shares (shares.go). workerShares is the split the player set,
 	// domain → percent (nil: every domain on auto); saved, put back on auto
 	// by prestige, Succumb and Reset. autoRecruitOff turns off the routine's
@@ -1682,9 +1678,7 @@ func (ge *GameEngine) processExpeditions() {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 		}
 		// Add rewards to resources
-		for resource, amount := range res.Rewards {
-			ge.Resources.Add(resource, amount)
-		}
+		ge.applyExpeditionRewards(res.Rewards)
 		if res.Success {
 			ge.note(config.BadgeEvExpedition, res.Key)
 		}
@@ -1698,6 +1692,19 @@ func (ge *GameEngine) processExpeditions() {
 	// The Geographic Society's standing orders. Runs LAST so a party that resolved
 	// above has already freed the scouting slot — see processAutoExpeditions.
 	ge.processAutoExpeditions()
+}
+
+// applyExpeditionRewards puts a resolved expedition's loot into the stores. The
+// message already states the full loot: when a full store took less, a line
+// under it says what fit. Under the write lock.
+func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
+	fit := make(map[string]float64, len(rewards))
+	for _, resource := range sortedKeys(rewards) {
+		fit[resource] = ge.gainResource(resource, rewards[resource])
+	}
+	if clipped := clippedLine(rewards, fit); clipped != "" {
+		ge.addLog("info", clipped)
+	}
 }
 
 // processTrade handles trade route ticks
@@ -2672,13 +2679,26 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 				textfmt.Count(gained, "new worker", "new workers"), ge.Workers.TotalPop()))
 		}
 	case "ancient_cache":
-		// Fill 40% of each resource's storage cap
-		const cacheFill = 0.40
-		for _, def := range ge.Resources.defs {
-			cap := ge.Resources.GetStorage(def.Key)
-			if cap > 0 && ge.Resources.IsUnlocked(def.Key) {
-				ge.Resources.Add(def.Key, cap*cacheFill)
+		// Minutes of the town's own income of every unlocked resource,
+		// sized like any other gain (config.EventSize), and in knowledge at
+		// most the price of the age's cheapest tech. A store takes what it
+		// has room for; the line under the headline says when one took less.
+		gave, fit := map[string]float64{}, map[string]float64{}
+		for _, key := range ge.Resources.order {
+			if !ge.Resources.IsUnlocked(key) {
+				continue
 			}
+			gain := config.EventSize(config.Effect{Type: config.EventGain, Target: key, Value: config.AncientCacheMinutes}, ge.eventTown(key, false))
+			if key == "knowledge" {
+				gain = math.Min(gain, ge.cheapestTechPrice())
+			}
+			if gain > 0 {
+				had := ge.Resources.Get(key)
+				gave[key], fit[key] = gain, ge.Resources.Add(key, gain)-had
+			}
+		}
+		if clipped := clippedLine(gave, fit); clipped != "" {
+			ge.addLog("info", clipped)
 		}
 	case "trade_winds":
 		// A share of the town's gold income for Duration ticks
@@ -3108,6 +3128,9 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 	if ge.bmRandFloat() < blackMarketWinChance {
 		got := ge.gainResource(resource, reward)
 		ge.addLog("success", fmt.Sprintf("The smuggling run paid off: %s bought %s.", Amount(cost, "culture"), Amount(got, resource)))
+		if clipped := clippedLine(map[string]float64{resource: reward}, map[string]float64{resource: got}); clipped != "" {
+			ge.addLog("info", clipped)
+		}
 		return true, reward, nil
 	}
 	ge.addLog("warning", fmt.Sprintf("The smuggling run failed. You lost %s.", Amount(cost, "culture")))
@@ -3510,6 +3533,9 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 		if len(prepaid) > 0 {
 			cost, _ = splitBank(cost, prepaid)
 		}
+		if res := ge.overStore(cost); res != "" {
+			return fmt.Errorf("%s", ge.storeTooSmallText(def.Name, res, cost[res]))
+		}
 		if !ge.Resources.Pay(cost) {
 			return fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(cost))
 		}
@@ -3577,7 +3603,18 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		return 0, ge.previousAgeBuildError(key, def)
 	}
 
+	// A wonder is paid through its bank, one copy, by the single path: the
+	// store check and the bank rules are that path's.
+	if def.Category == "wonder" {
+		if err := ge.startBuildLocked(key, false); err != nil {
+			return 0, err
+		}
+		return 1, nil
+	}
+
 	built := 0
+	var overRes string // the store that stopped the loop, if one did
+	var overAmt float64
 	for i := 0; i < count; i++ {
 		// Check MaxCount against fully-built + queued + what we're about to add
 		if def.MaxCount > 0 {
@@ -3591,6 +3628,12 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		// instances so the exponential curve is not bypassed by batch purchases.
 		unitCost, ok := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		if !ok {
+			break
+		}
+		// A copy priced over a store cannot be bought however long the player
+		// waits: the same check, and the same refusal, as a single build.
+		if res := ge.overStore(unitCost); res != "" {
+			overRes, overAmt = res, unitCost[res]
 			break
 		}
 		if !ge.Resources.Pay(unitCost) {
@@ -3622,6 +3665,9 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 			if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
 				return 0, fmt.Errorf("%s is at its max count of %d.", def.Name, def.MaxCount)
 			}
+		}
+		if overRes != "" {
+			return 0, fmt.Errorf("%s", ge.storeTooSmallText(def.Name, overRes, overAmt))
 		}
 		unitCost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		return 0, fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(unitCost))
@@ -3884,6 +3930,32 @@ func (ge *GameEngine) staffableBuilding(key string) (config.BuildingDef, error) 
 // shortfallText names what a cost is short of: "10 gold (have 5)" for each
 // resource the player lacks, or the whole cost when nothing is short.
 // Caller holds ge.mu.
+// overStore is the first resource (in key order) of which cost asks more
+// than its store can hold and more than is held, or "": a price like that
+// cannot be paid however long the player waits. Stock kept above a store
+// from an older save can still be spent, so a price it covers is not over.
+func (ge *GameEngine) overStore(cost map[string]float64) string {
+	for _, res := range sortedKeys(cost) {
+		if cost[res] > ge.Resources.GetStorage(res) && cost[res] > ge.Resources.Get(res) {
+			return res
+		}
+	}
+	return ""
+}
+
+// storeTooSmallText is the refusal for a price larger than a store: which
+// store, how much it holds, and what to build to enlarge it (the age's
+// storage building, when the age has one).
+func (ge *GameEngine) storeTooSmallText(what, res string, amount float64) string {
+	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", what, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
+	for _, d := range ge.rules.Buildings() {
+		if d.Category == "storage" && d.RequiredAge == ge.age {
+			return line + " Build more storage first: " + d.Name + "."
+		}
+	}
+	return line
+}
+
 func (ge *GameEngine) shortfallText(cost map[string]float64) string {
 	var short []string
 	for _, res := range sortedKeys(cost) {
@@ -4898,7 +4970,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	gains := make(map[string]float64)
 	banked := make(map[string]float64)
 	bankedInto := ""
-	planBanked := make(map[string]float64)
 	var starts planStarts
 	var staffed staffCounts
 	for done := 0; done < offlineTicks; {
@@ -4909,7 +4980,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 			n = k
 		}
 		w := ge.overflowWonder()
-		losses := ge.overflowScratch[:0]
 		ge.noteProduced(float64(n) * OfflineEfficiency)
 		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
 			func(res string, g float64) { gains[res] += g },
@@ -4917,17 +4987,10 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 				if b := ge.bankOverflow(w, res, lost); b > 0 {
 					banked[res] += b
 					bankedInto = w
-					lost -= b
-				}
-				if lost > 0 {
-					losses = append(losses, overflowLoss{res: res, amount: lost})
 				}
 			})
-		ge.overflowScratch = losses
 		ge.accrueFaith(float64(n) * OfflineEfficiency)
 		ge.accrueCulture(float64(n) * OfflineEfficiency)
-		// What the wonder didn't take goes toward the plan's queued copies.
-		ge.bankPlanOverflow(losses, planBanked)
 		ge.tick += n
 		done += n
 		ge.Trade.DecayPressure(n) // the plan's trades meet a market that recovers as time passes
@@ -4972,9 +5035,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	if len(banked) > 0 {
 		ge.addLog("info", fmt.Sprintf("Overflow banked into %s: %s.", ge.Buildings.defs[bankedInto].Name, Amounts(banked)))
 	}
-	if len(planBanked) > 0 {
-		ge.addLog("info", fmt.Sprintf("Overflow banked toward your plan: %s.", Amounts(planBanked)))
-	}
 	if !starts.empty() {
 		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.rules)+".")
 	}
@@ -4992,11 +5052,16 @@ func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float6
 	defer ge.mu.Unlock()
 
 	ge.Trade.SetAge(ge.age)
-	got, err := ge.Trade.Exchange(from, to, amount, ge.Resources, ge.Buildings, ge.tick)
+	asked := amount * ge.Trade.RateIn(from, to, ge.age) // before the sale moves the rate
+	gave, got, err := ge.Trade.exchange(from, to, amount, ge.Resources, ge.Buildings, ge.tick)
 	if err != nil {
 		return 0, err
 	}
-	ge.addLog(LogRoutine, fmt.Sprintf("Traded %s for %s.", Amount(amount, from), Amount(got, to)))
+	ge.addLog(LogRoutine, fmt.Sprintf("Traded %s for %s.", Amount(gave, from), Amount(got, to)))
+	// A store with room for less than the sale asked for took a smaller sale.
+	if gave < amount {
+		ge.addLog("info", clippedLine(map[string]float64{to: asked}, map[string]float64{to: got}))
+	}
 	ge.note(config.BadgeEvMarketTrade, from)
 	return got, nil
 }
@@ -5183,6 +5248,9 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 		return fmt.Errorf("Could not work out the cost to upgrade %s. Please report this bug.", oldDef.Name)
 	}
 
+	if res := ge.overStore(cost); res != "" {
+		return fmt.Errorf("%s", ge.storeTooSmallText("Upgrading "+buildingCountIn(ge.rules, count, key), res, cost[res]))
+	}
 	if !ge.Resources.CanAfford(cost) {
 		return fmt.Errorf("Cannot afford to upgrade %s: need %s.", buildingCountIn(ge.rules, count, key), ge.shortfallText(cost))
 	}
@@ -5392,4 +5460,16 @@ func (ge *GameEngine) prestigeUpgradeLine(key string) string {
 		return fmt.Sprintf("Bought %s (tier %d).", def.Name, tier)
 	}
 	return fmt.Sprintf("Bought %s (tier %d): %s.", def.Name, tier, effect)
+}
+
+// cheapestTechPrice is the price of the cheapest tech of the current age, or
+// 0 when the age has none.
+func (ge *GameEngine) cheapestTechPrice() float64 {
+	least := 0.0
+	for _, t := range ge.rules.Techs() {
+		if t.Age == ge.age && t.Cost > 0 && (least == 0 || t.Cost < least) {
+			least = t.Cost
+		}
+	}
+	return least
 }

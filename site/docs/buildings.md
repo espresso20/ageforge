@@ -426,35 +426,45 @@ Your 20 Gathering Camps stay Gathering Camps, producing at their full rate, unti
 
 Storage buildings form their own lineage and add storage for **every** resource at once. They need no workers: build them and your storage goes up.
 
-Every storage building is **capped at 25 copies** (Stash at 50). The cap is deliberate. Each tier's storage per copy is at least its largest build cost, so a full stack always adds more storage than it costs, and a storage building never becomes an unaffordable wall. The cost curve would eventually outrun even that, so the stack stops just short of that point. Build the next age's storage instead of over-stacking.
+Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Their sizes follow one written rule: five copies of an age's storage building, added to the stores of the earlier ages, hold the dearest single price that age asks of a full town, with a quarter to spare. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
 
-| Building | Age | Storage per copy (every resource) | Max |
-|----------|-----|--------|-----|
-| Stash | Primitive | +500 | 50 |
-| Storage Pit | Stone | +2.75K | 25 |
-| Warehouse | Bronze | +21K | 25 |
-| Granary | Iron | +35K | 25 |
-| Classical Vault | Classical | +170K | 25 |
-| Strongroom | Medieval | +710K | 25 |
-| Renaissance Vault | Renaissance | +4.6M | 25 |
-| Colonial Warehouse | Colonial | +60M | 25 |
-| Industrial Depot | Industrial | +340M | 25 |
-| Victorian Vault | Victorian | +1.3B | 25 |
-| Electric Warehouse | Electric | +5.5B | 25 |
-| Atomic Vault | Atomic | +23B | 25 |
-| Modern Depot | Modern | +110B | 25 |
-| Info Vault | Information | +2.3T | 25 |
-| Digital Archive | Digital | +2.7T | 25 |
-| Cyber Vault | Cyberpunk | +22T | 25 |
-| Fusion Vault | Fusion | +38T | 25 |
-| Orbital Depot | Space | +200T | 25 |
-| Stellar Vault | Interstellar | +2Q | 25 |
-| Galactic Vault | Galactic | +34Q | 25 |
-| Quantum Vault | Quantum | +200Q | 25 |
+| Building | Age | Storage per copy (every resource) |
+|----------|-----|--------|
+| Stash | Primitive | +100 |
+| Storage Pit | Stone | +1.2K |
+| Warehouse | Bronze | +6.8K |
+| Granary | Iron | +25K |
+| Classical Vault | Classical | +270K |
+| Strongroom | Medieval | +760K |
+| Renaissance Vault | Renaissance | +3.8M |
+| Colonial Warehouse | Colonial | +16M |
+| Industrial Depot | Industrial | +75M |
+| Victorian Vault | Victorian | +870M |
+| Electric Warehouse | Electric | +8.1B |
+| Atomic Vault | Atomic | +83B |
+| Modern Depot | Modern | +230B |
+| Info Vault | Information | +530B |
+| Digital Archive | Digital | +4.5T |
+| Cyber Vault | Cyberpunk | +17T |
+| Fusion Vault | Fusion | +60T |
+| Orbital Depot | Space | +350T |
+| Stellar Vault | Interstellar | +5.8Q |
+| Galactic Vault | Galactic | +40Q |
+| Quantum Vault | Quantum | +1.5Qi |
 
-A full stack of an age's storage (with every earlier age's) holds at least **4.5 hours** of that age's typical production of each resource it builds with from the Bronze Age on, and an hour and a half in the Primitive and Stone Ages, which fill fast and are meant to. (That is with the storage techs researched: Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.) A player who checks in every few hours loses little to full storage. For longer absences the [build plan](plan.md) spends income as it arrives, and what full storage would still waste goes to the [wonder](wonders.md#overflow) and then [toward the plan's next copies](plan.md#overflow-pays-the-plan).
+Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.
 
-> **Tip:** Stash is capped at 50. Build them out before you leave the Primitive Age, then start on Storage Pits as soon as you enter the Stone Age. A full store stops that resource piling up: what it would waste goes into the current wonder's bank while the wonder still needs it (unless you typed `wonder overflow off`), then toward your plan's next copies, and anything neither needs is lost. So build storage first whenever you enter a new age.
+### Storage is a wall
+
+A building or an upgrade whose price in any one resource is larger than the store for that resource can hold **cannot be bought**. That holds for `build`, `build <n>`, `build max`, `upgrade` and the [build plan](plan.md). The game says so and names the storage building to build:
+
+```
+<Building> costs <amount> <resource>, more than your <resource> storage holds (<size>). Build more storage first: <Storage building>.
+```
+
+The age's wonder is the one exception: it is paid through its bank, a round at a time (see [Wonders](wonders.md#overflow)), so it may cost more than a store holds.
+
+A full store stops that resource piling up. What it cannot hold goes into the current wonder's bank while the wonder still needs it (unless you typed `wonder overflow off`), and is lost otherwise. It no longer pays toward the plan's next copies. So build storage first whenever you enter a new age.
 
 Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its capacity for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
 

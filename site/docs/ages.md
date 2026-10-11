@@ -56,8 +56,9 @@ The age progress bar shows `✗ Keystone: <tech>` beside the wonder until the te
 Every age can be finished, and an automated test checks this in every release. The test holds each age to these rules:
 
 - Every building requirement names a building you can build in the age you are advancing **from**, never an older one you can no longer build.
-- The last required copy of each building costs at most **half** the storage you can build by then (every storage building up to your current age at its build cap), so a full set of storage always leaves room to afford it.
-- Each part of the age's wonder fits in that storage too.
+- Every advance asks for **five copies of the storage building of the age you are leaving**. A town that passes a gate arrives holding the store the rules size for it, and storage is a wall (see [Storage](buildings.md#storage-buildings-21-tiers)), so no town can pass without it.
+- The last required copy of each building costs at most **80%** of the store the gates force you to hold, so a town that met the earlier gates can always afford it. A resource the gate asks for is held to the same 80%.
+- Each resource amount a gate asks for is about **31%** of the dearest single price the age you are leaving charges in that resource, at the copy counts the gate asks for, rounded to two figures.
 - The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age, and each one's knowledge cost fits the knowledge storage you can build in that age with room to spare.
 - The keystone is affordable well inside the age: the knowledge it costs (with the techs of its own age it stands on), the time to research them and the time to build the wonder fit inside the age's target length together, with at least a fifth of the age to spare.
 - The cheapest tech of an age fits the knowledge storage you are sure to enter the age with, or does within two of the age's storage buildings.
@@ -68,7 +69,7 @@ Every age can be finished, and an automated test checks this in every release. T
 
 When your civilization crosses into a new age:
 
-1. **Carryover is capped.** Each resource the new age *uses as a build cost* is capped to roughly **8× the cheapest new-age starter building's cost** in that resource, enough to pay for a handful of opening buildings. If you were already below that cap, your stockpile carries over untouched. Anything above the cap is lost, so stockpiling before an advance doesn't pay. Resources the new age does **not** build with (mainly food) keep **10%** of what you had, and **faith is exempt** (it carries over in full). Whatever the [build plan](plan.md) had banked from overflow goes back to your stores first, so it is trimmed like the rest. You enter each age with a small head start.
+1. **Carryover is capped.** Each resource the new age *uses as a build cost* is capped to roughly **8× the cheapest new-age starter building's cost** in that resource, enough to pay for a handful of opening buildings. If you were already below that cap, your stockpile carries over untouched. Anything above the cap is lost, so stockpiling before an advance doesn't pay. Resources the new age does **not** build with (mainly food) keep **10%** of what you had, and **faith is exempt** (it carries over in full). You enter each age with a small head start.
 2. **Buildings whose next tier arrives in the new age are marked as upgradeable.** They are not converted automatically. Storage buildings never upgrade: every stash, storage pit or vault you built keeps counting toward your storage for the rest of the run. Each upgradeable building shows a gold hint in the Economy panel:
    ```
    ↑ Upgrade available → Forager Post  type: upgrade gathering_camp
@@ -125,10 +126,10 @@ Starting age. No requirements.
 
 | Requirement | Amount |
 |---|---|
-| Food | 1K |
-| Wood | 1K |
+| Wood | 33 |
 | Huts | 10 |
 | Story Circles | 5 |
+| Stashes | 5 |
 
 **Unlocks:** Longhouse, Storage Pit, Forager Post, Woodcutter Camp, Stone Camp, Stone Pit, Elders' Hall, Standing Stones (after Ritual), War Camp, Great Monolith · **Resource:** Stone · **New domains:** masonry, military
 
@@ -140,12 +141,12 @@ Starting age. No requirements.
 
 | Requirement | Amount |
 |---|---|
-| Food | 4K |
-| Wood | 8K |
-| Stone | 4K |
+| Wood | 420 |
+| Stone | 230 |
 | Longhouses | 15 |
 | Stone Pits | 5 |
 | Elders' Halls | 5 |
+| Storage Pits | 5 |
 
 **Unlocks:** House, Warehouse, Farm, Lumber Mill, Quarry, Scriptorium, Altar (after Calendar), Barracks (after Military Tactics), Market, Smithy, Stonehenge · **Resources:** Iron, Gold · **New domains:** trade, engineering
 
@@ -157,13 +158,14 @@ Starting age. No requirements.
 
 | Requirement | Amount |
 |---|---|
-| Food | 80K |
-| Wood | 40K |
-| Stone | 16K |
-| Iron | 8K |
+| Wood | 3.2K |
+| Stone | 2.2K |
+| Iron | 660 |
+| Gold | 330 |
 | Lumber Mills | 8 |
 | Quarries | 8 |
 | Scriptoria | 5 |
+| Warehouses | 5 |
 
 **Unlocks:** Townhouse, Granary, Field Works, Timber Yard, Marble Quarry, Agora, Temple, Hunting Lodge, Legion Fort (after Siege Warfare), Trading Post, Ironworks, Smelter (after Iron Smelting), Colosseum · **Resources:** Marble, Iron Ore, Soldiers · **New domain:** metallurgy
 
@@ -175,12 +177,14 @@ Starting age. No requirements.
 
 | Requirement | Amount |
 |---|---|
-| Stone | 130K |
-| Iron | 26K |
-| Gold | 14K |
+| Stone | 35K |
+| Iron | 16K |
+| Gold | 11K |
+| Wood | 4.9K |
 | Hunting Lodges | 15 |
 | Agoras | 12 |
 | Trading Posts | 10 |
+| Granaries | 5 |
 
 **Unlocks:** Villa, Classical Vault, Terrace Farm, Wood Workshop, Marble Works, Library, Oracle House, Military Academy, Merchant Quarter, Aqueduct, Forge (after Metal Casting), Amphitheater, Parthenon, Cultural Obelisk · **Resource:** Culture
 
@@ -192,12 +196,14 @@ Starting age. No requirements.
 
 | Requirement | Amount |
 |---|---|
-| Stone | 220K |
-| Iron | 53K |
-| Gold | 35K |
+| Stone | 380K |
+| Iron | 93K |
+| Gold | 140K |
+| Wood | 25K |
 | Merchant Quarters | 5 |
 | Libraries | 15 |
 | Military Academies | 15 |
+| Classical Vaults | 5 |
 
 Prestige becomes available at this age. A prestige from here to the Atomic Age is an early taste: it pays 9 points from the Medieval Age, enough for the Plan Template, while a run to the Modern Age pays 120. Type `prestige` to see what a prestige pays now and from the next age. See [Prestige System](prestige.md).
 
@@ -211,12 +217,13 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 | Requirement | Amount |
 |---|---|
-| Gold | 180K |
-| Steel | 880 |
-| Faith | 9.5K |
+| Gold | 450K |
+| Iron | 160K |
+| Stone | 1.3M |
 | Monastery Libraries | 5 |
 | Guildhalls | 10 |
 | Castle Keeps | 5 |
+| Strongrooms | 5 |
 
 **Unlocks:** Estate, Renaissance Vault, Market Garden, Coal Mine, Iron Mine, University, Basilica, Fortress, Exchange, Mill, Foundry (after Blast Furnace), Art Studio, Sistine Chapel · **Resource:** Coal
 
@@ -228,12 +235,15 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 | Requirement | Amount |
 |---|---|
-| Gold | 710K |
-| Steel | 110K |
-| Culture | 300K |
+| Gold | 6M |
+| Steel | 2.2M |
+| Coal | 190K |
+| Iron | 230K |
+| Stone | 1.6M |
 | Exchanges | 12 |
 | Universities | 12 |
 | Art Studios | 12 |
+| Renaissance Vaults | 5 |
 
 **Unlocks:** Settlement Block, Colonial Warehouse, Plantation, Coal Works, Deep Iron Mine, Natural Philosophy Hall, Mission, Fort, Port, Harbor (after Mercantilism), Dockyard, Colonial Steelworks (after Coke Smelting), Concert Hall, Embassy (after Embassies), Grand Lighthouse
 
@@ -245,10 +255,14 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 | Requirement | Amount |
 |---|---|
-| Steel | 470K |
-| Gold | 3.8M |
+| Steel | 13M |
+| Gold | 26M |
+| Iron | 13M |
+| Stone | 11M |
+| Wood | 13M |
 | Plantations | 8 |
 | Ports | 10 |
+| Colonial Warehouses | 5 |
 
 **Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Colliery, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Harbor Authority, Integrated Steelworks, Steel Mill, Coal Plant (after Steam Power), Opera House, Grand Embassy (after the Concert of Nations), Geographic Society (after Geographic Societies), Crystal Palace, Eternal Library · **Resource:** Oil · **New domain:** energy
 
@@ -260,11 +274,15 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 | Requirement | Amount |
 |---|---|
-| Steel | 2.4M |
-| Gold | 15M |
+| Steel | 98M |
+| Gold | 98M |
+| Coal | 35M |
+| Iron | 80M |
+| Stone | 120M |
 | Steel Mills | 5 |
 | Integrated Steelworks | 5 |
 | Tenements | 30 |
+| Industrial Depots | 5 |
 
 **Unlocks:** Row House, Victorian Vault, Mechanized Farm, Oil Derrick, Uranium Mine, Academy, Grand Cathedral, Garrison, Bank, Steam Works (after Electrification), Bessemer Plant, Steam Turbine, Grand Museum, Eiffel Tower · **Resource:** Electricity
 
@@ -276,12 +294,16 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 | Requirement | Amount |
 |---|---|
-| Steel | 11M |
-| Oil | 3.3M |
-| Electricity | 1.1M |
+| Steel | 1.2B |
+| Oil | 130M |
+| Coal | 610M |
+| Gold | 740M |
+| Iron | 260M |
+| Stone | 200M |
 | Steam Turbines | 12 |
 | Academies | 12 |
 | Bessemer Plants | 12 |
+| Victorian Vaults | 5 |
 
 **Unlocks:** Apartment Block, Electric Warehouse, Industrial Farm, Oil Field, Nuclear Extraction Plant, Physics Laboratory, Revival Hall, Command Post, Financial District, Power Station, Electric Arc Furnace, Dynamo Hall (after Power Distribution), Radio Station, Hoover Dam
 
@@ -293,12 +315,15 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 | Requirement | Amount |
 |---|---|
-| Steel | 110M |
-| Electricity | 12M |
-| Oil | 7.7M |
+| Steel | 11B |
+| Electricity | 4.6B |
+| Oil | 490M |
+| Coal | 3.8B |
+| Gold | 6.6B |
 | Electric Arc Furnaces | 15 |
 | Power Stations | 15 |
 | Physics Laboratories | 15 |
+| Electric Warehouses | 5 |
 
 **Unlocks:** Housing Project, Atomic Vault, Agricultural Complex, Petroleum Refinery, Uranium Processing Works, Research Campus, Spiritual Center, Bunker Complex, Corporate HQ, Nuclear Plant (after Civilian Reactors), Advanced Alloy Plant, Breeder Reactor, Cinema, Particle Accelerator · **Resource:** Uranium
 
@@ -310,12 +335,15 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 | Requirement | Amount |
 |---|---|
-| Electricity | 33M |
-| Uranium | 6.9M |
-| Steel | 470M |
+| Electricity | 34B |
+| Uranium | 8.4B |
+| Steel | 84B |
+| Gold | 11B |
+| Stone | 110B |
 | Breeder Reactors | 18 |
 | Bunker Complexes | 18 |
 | Research Campuses | 18 |
+| Atomic Vaults | 5 |
 
 From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset for prestige points to spend on the legacy kit. See [Prestige System](prestige.md).
 
@@ -329,12 +357,15 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Requirement | Amount |
 |---|---|
-| Electricity | 660M |
-| Data | 69M |
-| Gold | 1.3B |
+| Electricity | 130B |
+| Data | 13B |
+| Gold | 33B |
+| Oil | 19B |
+| Steel | 400B |
 | Think Tanks | 20 |
 | Tower Blocks | 30 |
 | Oil Refineries | 15 |
+| Modern Depots | 5 |
 
 **Unlocks:** Smart Complex (after Internet of Things), Info Vault, Smart Farm (after Internet of Things), Smart Refinery, Precision Mine, Innovation Hub, Digital Temple, Cyber Command (after Cybersecurity), Venture Hub, Container Terminal (after E-commerce), Smart Grid Node, Aerospace Foundry, Microgrid Array (after Smart Grid), Server Farm, Media Center, Global Network · **New domain:** hacker
 
@@ -346,11 +377,14 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Requirement | Amount |
 |---|---|
-| Data | 3.1B |
-| Electricity | 20B |
+| Data | 60B |
+| Electricity | 600B |
+| Gold | 1.1T |
+| Steel | 840B |
 | Server Farms | 10 |
 | Media Centers | 15 |
 | Innovation Hubs | 15 |
+| Info Vaults | 5 |
 
 **Unlocks:** Megaplex, Digital Archive, Nano Farm, Bio Fabrication Lab, Nano Drill Complex, AI Research Lab, Cyber Shrine, Drone Warfare Center, Crypto Exchange, Logistics Hub (after Automated Logistics), Neural Grid, Nano Alloy Plant, Quantum Battery Array (after Grid Storage), Data Center, VR Studio, World Simulation
 
@@ -362,11 +396,13 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Requirement | Amount |
 |---|---|
-| Data | 160B |
-| Electricity | 980B |
+| Data | 550B |
+| Electricity | 4.4T |
+| Steel | 6.6T |
 | AI Research Labs | 15 |
 | Data Centers | 15 |
 | Neural Grids | 15 |
+| Digital Archives | 5 |
 
 **Unlocks:** Arcology Pod, Cyber Vault, Vat Farm, Nanobot Vat, Dark Crystal Mine, Neuro Research Center, Neon Sanctuary, Combat Aug Center (after Cybernetics), Black Market, Augmentation Foundry, Dark Matter Refinery, Dark Energy Tap (after Dark Energy), Cyber Hub, Holographic Theater (after Holography), Neon Citadel · **Resources:** Crypto, Dark Matter Crystals
 
@@ -378,12 +414,14 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Requirement | Amount |
 |---|---|
-| Electricity | 490B |
-| Crypto | 25B |
-| Data | 78B |
+| Electricity | 27T |
+| Crypto | 14T |
+| Data | 2.7T |
+| Steel | 27T |
 | Augmentation Foundries | 15 |
 | Arcology Pods | 25 |
 | Black Market Hubs | 15 |
+| Cyber Vaults | 5 |
 
 **Unlocks:** Habitat Ring, Fusion Vault, Bio Reactor Farm, Molecular Synthesizer, Exotic Mineral Extractor, Theoretical Institute, Quantum Chapel, Plasma Command, Energy Exchange (after Maglev Transit), Fusion Reactor, Exotic Matter Forge, Tokamak Array, Quantum Server Farm, Neural Art Complex, Stellar Cradle · **Resource:** Plasma
 
@@ -395,12 +433,13 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Requirement | Amount |
 |---|---|
-| Plasma | 63B |
-| Electricity | 2.4T |
-| Data | 390B |
+| Plasma | 24T |
+| Electricity | 75T |
+| Steel | 100T |
 | Fusion Reactors | 10 |
 | Tokamak Arrays | 10 |
 | Plasma Commands | 10 |
+| Fusion Vaults | 5 |
 
 **Unlocks:** Orbital Habitat, Orbital Depot, Hydroponic Bay, Quantum Organic Extractor, Asteroid Crystal Mine, Deep Space Observatory, Orbital Sanctuary, Space Force Base, Asteroid Market, Launch Complex, Orbital Refinery, Solar Collector Array, Orbital Data Relay, Zero G Gallery, Dyson Scaffold · **Resources:** Titanium, Titanium Ore
 
@@ -412,11 +451,14 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Requirement | Amount |
 |---|---|
-| Titanium | 130B |
-| Plasma | 310B |
+| Titanium | 420T |
+| Plasma | 260T |
+| Electricity | 520T |
+| Steel | 310T |
 | Launch Complexes | 10 |
 | Orbital Habitats | 15 |
 | Solar Collector Arrays | 10 |
+| Orbital Depots | 5 |
 
 **Unlocks:** Generation Ship, Stellar Vault, Protein Synthesizer, Reality Matter Weaver, Stellar Core Drill (after Stellar Core Mining), Xenology Institute, Void Monastery, Fleet Command, Galactic Trade Hub, Warp Drive Plant, Antimatter Forge, Pulsar Tap (after Stellar Engineering), Galactic Network Node, Cultural Beacon, Warp Nexus · **Resource:** Dark Matter
 
@@ -428,11 +470,13 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Requirement | Amount |
 |---|---|
-| Dark Matter | 250B |
-| Titanium | 630B |
+| Dark Matter | 970T |
+| Titanium | 7.7Q |
+| Plasma | 4.9Q |
 | Warp Drive Plants | 15 |
 | Generation Ships | 30 |
 | Antimatter Forges | 15 |
+| Stellar Vaults | 5 |
 
 **Unlocks:** Dyson Sphere Habitat, Galactic Vault, Matter Converter, Cosmic Organic Works, Neutron Star Mine (after Neutron Mining), Cosmic Research Station, Stellar Shrine, Stellar Armada HQ, Stellar Exchange, Dyson Assembly, Stellar Metallurgy, Quasar Tap (after Antimatter Synthesis), Consciousness Upload Hub, Civilization Archive, Cosmic Beacon · **Resource:** Antimatter
 
@@ -444,11 +488,13 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Requirement | Amount |
 |---|---|
-| Antimatter | 6.3T |
-| Dark Matter | 13T |
+| Antimatter | 2.2Q |
+| Dark Matter | 11Q |
+| Titanium | 57Q |
 | Stellar Exchanges | 15 |
 | Stellar Metallurgy | 15 |
 | Dyson Sphere Habitats | 30 |
+| Galactic Vaults | 5 |
 
 **Unlocks:** Reality Fold, Quantum Vault, Quantum Cultivator, Reality Harvester, Reality Excavator, Reality Academy, Transcendence Hall, Probability War Room, Probability Market, Reality Forge, Quantum Metal Works (after Quantum Metallurgy), Zero Point Generator (after Zero-Point Energy), Reality Processor, Reality Art Engine, Reality Anchor · **Resource:** Quantum Flux
 
@@ -460,11 +506,13 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Requirement | Amount |
 |---|---|
-| Quantum Flux | 190T |
-| Antimatter | 310T |
+| Quantum Flux | 2.7Q |
+| Antimatter | 800Q |
+| Dark Matter | 670Q |
 | Reality Academies | 20 |
 | Reality Forges | 15 |
 | Probability War Rooms | 15 |
+| Quantum Vaults | 5 |
 
 The end of the progression. Prestige has been available since the Medieval Age (Age 5), and a full run since the Modern Age (Age 12). A prestige from the Transcendent Age pays the most points a single run can, 3,279: each Cosmic Era age the run completes adds 729 (see [Prestige Points Formula](prestige.md#prestige-points-formula)).
 

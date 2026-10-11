@@ -16,9 +16,9 @@ trade list
 plan trade <give> <get> [amount to get]
 ```
 
-- `trade` makes one exchange now. The amount counts what you **give**.
+- `trade` makes one exchange now. The amount counts what you **give**. If the `get` store has room for less than the sale would pay, the sale shrinks to what fits and you are charged only for that. If the store is full, the game says `<Resource> storage is full.` (for example `Stone storage is full.`) and charges nothing.
 - `trade list` shows every rate open to your age, including any market pressure penalty. Bare `trade` opens the **Trade** panel, which shows the same rates and your routes.
-- `plan trade` puts a **sell order** in the [build plan](plan.md): as `give` comes in, the plan sells it for `get` at the market rate. Here the amount counts what you **get**. With an amount, the order drops out once it has bought that much. With no amount it keeps selling until you remove it, and it pauses while the `get` store is full. It sells in lumps once the pair's rate has recovered from its last sale, so it keeps within about 1% of the market rate, and it only sells what the plan items above it leave free. It also drops out if the pair stops trading (an age advance can do that).
+- `plan trade` puts a **sell order** in the [build plan](plan.md): as `give` comes in, the plan sells it for `get` at the market rate. Here the amount counts what you **get**. With an amount, the order drops out once it has bought that much. With no amount it keeps selling until you remove it, and it pauses while the `get` store is full. A sell order into a store with room for less than a lump takes the same smaller sale, and charges only for that. It sells in lumps once the pair's rate has recovered from its last sale, so it keeps within about 1% of the market rate, and it only sells what the plan items above it leave free. It also drops out if the pair stops trading (an age advance can do that).
 
 Rates follow your age: see [Exchange Rates](#exchange-rates).
 
@@ -149,6 +149,8 @@ A route **stops itself** if you fall below its required building count while it 
 
 If a cycle comes round and you don't have enough of what the route gives away, that cycle is skipped with no penalty (the log says so once per shortage), and the route tries again next cycle.
 
+A route also respects your stores. A run brings in only as much as the import store has room for, and takes only the matching share of what it gives away. A run with room for half of what it pays takes half of its export. A route with several imports scales the whole run to the tightest store, and the log says `Storage was nearly full: only ... fit.` when a run came in short. If an import store has no room at all, the run does not happen: nothing is taken and nothing comes in. That skip is silent, and the route tries again next cycle. Only the amounts that actually moved count toward the route's totals.
+
 Every completed cycle also raises opinion by +1 with every civilization you have met that isn't at war with you. See [What routes are worth](#what-routes-are-worth).
 
 ### Trade Disruption (War & Embargo)
@@ -263,5 +265,5 @@ Resource exchange stays useful to the end: it's how you get construction resourc
 - A route needs its building. `trade route start <route>` refuses with an error if you don't have the required building at the required count. In `trade route list`, routes with a red ✗ are waiting on buildings.
 - Market pressure fades by itself. If a rate looks low, wait a few ticks and it recovers.
 - An embargo mostly hurts you. It cancels that civilization's ally bonus, stops its deals, disrupts your routes that bring in its specialty and counts as a provocation. See [Factions & Diplomacy](factions.md#war-amp-peace).
-- Routes skip a cycle, they don't fail, when you run short. If you don't have what a route gives away when its cycle comes round, that cycle is skipped and the route stays active. Top up the stockpile and it carries on next cycle.
+- Routes skip a cycle, they don't fail, when you run short. If you don't have what a route gives away when its cycle comes round, that cycle is skipped and the route stays active. Top up the stockpile and it carries on next cycle. A route whose import store is full skips its cycle the same way, without taking anything.
 - `trade` and `plan trade` count the amount from different sides: `trade wood gold 500` gives 500 wood, `plan trade wood gold 500` buys 500 gold.

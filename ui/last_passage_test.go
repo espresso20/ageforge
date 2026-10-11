@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -180,6 +179,84 @@ func TestLastPassageModalLayoutFitsWidth(t *testing.T) {
 	}
 }
 
+// costItems are the materials of a price as the Harbinger panel prints them
+// in the game's resource order, each with what is held ("9.6Qi titanium
+// (have 0)"; the test's town holds none).
+func costItems(state game.GameState, cost map[string]float64) []string {
+	var items []string
+	for _, def := range state.Ruleset().Resources() {
+		if need, ok := cost[def.Key]; ok {
+			items = append(items, game.Amount(need, def.Key)+" (have 0)")
+		}
+	}
+	return items
+}
+
+// checkCostBlock opens the Harbinger panel over state at 80 by 24 and checks
+// the nth "Next level costs" block: it begins on a row of its own, holds
+// every material whole on a row (none wrapped or cut), in order, and runs
+// on over consecutive rows.
+func checkCostBlock(t *testing.T, d *Dashboard, pages *tview.Pages, state game.GameState, nth int, cost map[string]float64) {
+	t.Helper()
+	const w, h = 80, 24
+	items := costItems(state, cost)
+	if len(items) != len(cost) {
+		t.Fatalf("the price has %d materials, the panel can name %d", len(cost), len(items))
+	}
+	d.overlayMgr.screenW = w
+	if !d.overlayMgr.Show("harbinger", state) {
+		t.Fatal("harbinger overlay not registered")
+	}
+	defer d.overlayMgr.Hide()
+	tv := d.overlayMgr.entries["harbinger"].tv
+	var at []int
+	for i, line := range strings.Split(tv.GetText(true), "\n") {
+		if strings.Contains(line, "Next level costs:") {
+			at = append(at, i)
+		}
+	}
+	if len(at) <= nth {
+		t.Fatalf("the panel has %d price lines, want one at index %d", len(at), nth)
+	}
+	tv.ScrollTo(at[nth]-1, 0)
+	rows := strings.Split(renderText(t, pages, w, h), "\n")
+	first, last := -1, -1
+	for _, item := range items {
+		row := -1
+		for i, r := range rows {
+			if strings.Contains(r, item) {
+				row = i
+				break
+			}
+		}
+		if row < 0 {
+			t.Errorf("%q is not whole on one row of the %dx%d screen:\n%s", item, w, h, strings.Join(rows, "\n"))
+			continue
+		}
+		if first < 0 {
+			first = row
+		}
+		if row < last {
+			t.Errorf("%q is out of order on the screen", item)
+		}
+		last = row
+	}
+	if first >= 0 && !strings.Contains(rows[first], "Next level costs:") {
+		t.Errorf("the first material is not on the row that says what it is: %q", rows[first])
+	}
+	if first >= 0 {
+		for _, r := range rows[first : last+1] {
+			has := false
+			for _, item := range items {
+				has = has || strings.Contains(r, item)
+			}
+			if !has {
+				t.Errorf("a row inside the price holds no material: %q", r)
+			}
+		}
+	}
+}
+
 // The Cosmic Era panel warns of the Last Passage, talks in points, and prints
 // the odds; once it has come, the answers are closed.
 func TestHarbingerPanelLastPassage(t *testing.T) {
@@ -198,8 +275,6 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 		"The Distress Beacon", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
 		"Published odds:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
 		"Next level: 70% kept.", "Guarantees the Last Passage at your next prestige",
-		fmt.Sprintf("Next level costs: %s faith (have 0), %s culture (have 0)", FormatNumber(h.AppeaseCost["faith"]), FormatNumber(h.AppeaseCost["culture"])),
-		fmt.Sprintf("Next level costs: %s titanium (have 0), %s dark matter (have 0)", FormatNumber(h.BraceCost["titanium"]), FormatNumber(h.BraceCost["dark_matter"])),
 	} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("panel missing %q:\n%s", want, txt)
@@ -207,6 +282,23 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 	}
 	if strings.Contains(txt, "passage into the") || strings.Contains(txt, "buildings fall") {
 		t.Errorf("panel talks about an epoch passage:\n%s", txt)
+	}
+
+	// The prices are printed in full whatever the number of materials: the
+	// thread's own two, and four, each on one row of an 80 by 24 screen.
+	four := map[string]float64{"titanium": 9.6e18, "dark_matter": 1.1e19, "plasma": 1.18e19, "nanobots": 7.3e18}
+	for _, tc := range []struct {
+		name  string
+		brace map[string]float64
+	}{{"two materials", h.BraceCost}, {"four materials", four}} {
+		t.Run(tc.name, func(t *testing.T) {
+			st := engine.GetState()
+			hv := *st.Harbinger
+			hv.BraceCost = tc.brace
+			st.Harbinger = &hv
+			checkCostBlock(t, d, pages, st, 0, hv.AppeaseCost)
+			checkCostBlock(t, d, pages, st, 1, hv.BraceCost)
+		})
 	}
 
 	if err := engine.ForceLastPassageForTest("interstellar_age"); err != nil {

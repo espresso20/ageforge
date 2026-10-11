@@ -154,7 +154,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 |-------|--------|----------|
 | Age of Plenty | +100% all production (double) | 562 ticks (~18m 44s) |
 | Population Surge | +15% workers added | Instant |
-| Ancient Cache | Adds 40% of each resource's storage to that resource | Instant |
+| Ancient Cache | Pays 15 minutes of your town's income of every unlocked resource (in knowledge, at most the price of the cheapest tech of the age you entered). A store takes only what it has room for, and the log says `Storage was nearly full: only ... fit.` when one took less | Instant |
 | Trade Winds | Gold production +50% | 374 ticks (~12m 28s) |
 | Cultural Festival | +30% of your culture and +20% of your faith at once, then culture production +50% and faith production +50%. Never rolled on entering the Iron Era: culture unlocks in the Classical Age | 374 ticks |
 

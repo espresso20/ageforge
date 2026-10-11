@@ -94,13 +94,13 @@ The Workers box in the sidebar should show **Idle: 0**. The game recruits only i
 
 ## Step 5: Build stashes
 
-Food and wood start with only 50 storage each, and knowledge with 30. Storage fills fast, and anything past it is wasted. A stash costs **35 wood** and gives **+500 storage** for every resource, and you can build up to 50.
+Food and wood start with only 50 storage each, and knowledge with 30. Storage fills fast, and anything past it is wasted. A stash costs **35 wood** and gives **+100 storage** for every resource. There is no limit on copies, but each one costs 1.75 times the one before it.
 
 ```
 build stash
 ```
 
-Build two early. The Stone Age asks for 1K food and 1K wood and the Sacred Grove for 1K wood, and you need the room to hold them. A stash also lifts your knowledge storage past the 47 knowledge Tool Making costs.
+Build two early so there is room to hold what comes in. The Stone Age asks for **five stashes**. A stash also lifts your knowledge storage past the 47 knowledge Tool Making costs.
 
 ---
 
@@ -165,11 +165,10 @@ The grove also gives +0.02 knowledge/tick and +0.05 food/tick permanently.
 ## Step 10: Check the Next Age row and advance
 
 The Next Age row under the status bar always shows what you need for the **next age**. For the Stone Age:
-- Food: 1K
-- Wood: 1K
-- Knowledge: 150
+- Wood: 33
 - Huts: 10
 - Story Circles: 5
+- Stashes: 5
 - The Sacred Grove built
 
 Keep building huts and story circles (new huts bring new workers) and keep knowledge flowing. When every item has its ✓, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
@@ -184,7 +183,7 @@ Before you advance, you should have:
 - [ ] 10 huts
 - [ ] 5 story circles
 - [ ] The Sacred Grove built
-- [ ] 2-3 stashes
+- [ ] 5 stashes
 - [ ] Staffed gathering camps and wood camps
 - [ ] 10+ workers, none idle
 - [ ] Food rate positive by at least +3/tick
@@ -203,13 +202,13 @@ When you reach the Stone Age:
 - **Elders' Hall**: a better knowledge building
 - **Standing Stones**: a better faith building, once you research Ritual (it needs Language, a Primitive Age tech)
 - **Longhouse**: bigger housing (+25 housing each)
-- **Storage Pit**: +2.75K storage for every resource (up to 25)
+- **Storage Pit**: +1.2K storage for every resource
 - **War Camp**: an early military building. It trains soldiers from the day it stands, and a garrison blunts the raids of the Stone and Bronze Ages (see [Military](military.md))
 - **Great Monolith**: the Stone Age wonder, required to reach the Bronze Age
 
 Your older buildings don't change on their own. Type `upgrade` to see which ones can become their Stone Age version (gathering camps into forager posts, for example); see [Building Upgrades](buildings.md#building-upgrades).
 
-Your first priority: start stone with **Stone Camps** (or `gather stone 25`), then build **Stone Pits**, **Woodcutter Camps** and **Longhouses** so workers have room to come and staff them. The Stone Age is tuned to take about **45 minutes**, and the Bronze Age needs 4K food, 8K wood, 4K stone, 1.5K knowledge, 15 longhouses, 5 stone pits, 5 elders' halls and the Great Monolith. From the Bronze Age on, each age takes hours: see [How to Play](how-to-play.md) for the long game.
+Your first priority: start stone with **Stone Camps** (or `gather stone 25`), then build **Stone Pits**, **Woodcutter Camps** and **Longhouses** so workers have room to come and staff them. The Bronze Age needs 420 wood, 230 stone, 15 longhouses, 5 stone pits, 5 elders' halls, 5 storage pits and the Great Monolith. From the Bronze Age on, each age takes hours: see [How to Play](how-to-play.md) for the long game.
 
 ---
 

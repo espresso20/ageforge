@@ -134,6 +134,14 @@ func TestFaithStrengthBars(t *testing.T) {
 // game began, both stayed under the middle band's 25% in every age; against
 // a typical store they stayed under 7%, and under 1% from the Renaissance
 // Age on. So every roll read the bottom band.
+//
+// On the walled stores (the storage rule) that holds in every age but one.
+// The Iron Age's least store is 31.9K, the five Warehouses' and no more, and
+// a devoted economy through the longest warning holds 59% of it and a
+// moderate hoard 35%: the old measure could have reached the middle band
+// there, and 11% of a typical store. The test says so, in that age only, so
+// a store that moves it either way is seen. The rule it retired stays
+// retired: faith has a store of its own.
 func TestFaithNeverFilledTheGeneralStore(t *testing.T) {
 	for _, d := range config.BaseBuildings() {
 		for _, e := range d.Effects {
@@ -169,12 +177,16 @@ func TestFaithNeverFilledTheGeneralStore(t *testing.T) {
 			name  string
 			faith float64
 		}{{"a devoted economy through the longest warning", devoted}, {"a moderate economy's hoard since the start", hoard}} {
-			if share := c.faith / least[m.Age]; share >= game.FaithMidAt {
-				t.Errorf("%s: %s holds %v faith, %.3f of the least store (%v): the old measure could reach the middle band here", m.Age, c.name, c.faith, share, least[m.Age])
+			reaches := m.Age == "iron_age" // the one age whose walled least store is that small
+			if share := c.faith / least[m.Age]; (share >= game.FaithMidAt) != reaches {
+				t.Errorf("%s: %s holds %v faith, %.3f of the least store (%v): the old measure reaching the middle band here is %v, want %v", m.Age, c.name, c.faith, share, least[m.Age], share >= game.FaithMidAt, reaches)
 			}
 			limit := 0.07
 			if config.AgePositions(config.AgeOrder())[m.Age] >= config.AgePositions(config.AgeOrder())["renaissance_age"] {
 				limit = 0.01
+			}
+			if reaches {
+				limit = 0.12 // a devoted economy holds 0.1145 of the Iron Age's typical store
 			}
 			if share := c.faith / typical[m.Age]; share >= limit && m.Age != "transcendent_age" {
 				t.Errorf("%s: %s holds %.4f of a typical store, want under %v", m.Age, c.name, share, limit)

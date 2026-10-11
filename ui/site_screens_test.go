@@ -196,6 +196,9 @@ func (s *siteStage) raise(key string, n int) {
 // fits reports whether the stores can hold the price of key's next copy.
 func (s *siteStage) fits(key string) bool {
 	st := s.eng.GetState()
+	if st.Buildings[key].Category == "wonder" {
+		return true // a wonder is paid through its bank, not held to a store
+	}
 	for res, cost := range st.Buildings[key].NextCost {
 		if st.Resources[res].Storage < cost {
 			return false
@@ -456,7 +459,7 @@ func (s *siteStage) inform() {
 // buildings bought and built in turn and its wonder raised, and makes both
 // advances for real. It stops on the Bronze Age's first tick.
 func (s *siteStage) toBronze() {
-	s.raiseAll(siteBuild{"stash", 3}, siteBuild{"gathering_camp", 4}, siteBuild{"wood_camp", 4},
+	s.raiseAll(siteBuild{"stash", 5}, siteBuild{"gathering_camp", 4}, siteBuild{"wood_camp", 4},
 		siteBuild{"hut", 10}, siteBuild{"story_circle", 5}, siteBuild{"shrine", 2})
 	s.learn("tool_making", "fire_mastery", "language")
 	s.wonder("sacred_grove")
@@ -464,7 +467,7 @@ func (s *siteStage) toBronze() {
 	s.dismiss() // the Stone Age's arrival, seen and closed, as in play
 	// The Standing Stones wait for Ritual: research comes first, as it
 	// would in play.
-	s.raiseAll(siteBuild{"storage_pit", 4}, siteBuild{"longhouse", 15}, siteBuild{"forager_post", 4},
+	s.raiseAll(siteBuild{"storage_pit", 5}, siteBuild{"longhouse", 15}, siteBuild{"forager_post", 4},
 		siteBuild{"woodcutter_camp", 4}, siteBuild{"stone_camp", 3}, siteBuild{"stone_pit", 5},
 		siteBuild{"elders_hall", 5}, siteBuild{"war_camp", 2})
 	s.learn("ritual")
@@ -542,7 +545,7 @@ func (s *siteStage) toIron() {
 	if err := s.eng.ForceQuietFateForTest("iron_era"); err != nil {
 		s.t.Fatal(err)
 	}
-	s.raiseAll(siteBuild{"granary", 3}, siteBuild{"townhouse", 6}, siteBuild{"field_works", 4}, siteBuild{"timber_yard", 4},
+	s.raiseAll(siteBuild{"granary", 5}, siteBuild{"townhouse", 6}, siteBuild{"field_works", 4}, siteBuild{"timber_yard", 4},
 		siteBuild{"marble_quarry", 3}, siteBuild{"agora", 4}, siteBuild{"temple", 2}, siteBuild{"hunting_lodge", 4},
 		siteBuild{"trading_post", 3}, siteBuild{"ironworks", 2})
 	// The Smelter and the Legion Fort wait for their techs, and scouting
@@ -559,7 +562,7 @@ func (s *siteStage) toMedieval() {
 	if err := s.eng.Endure(); err != nil {
 		s.t.Fatalf("enduring: %v", err)
 	}
-	s.raiseAll(siteBuild{"granary", 3})
+	s.raiseTo("granary", 5)
 	s.raiseTo("agora", 12)
 	s.raiseTo("hunting_lodge", 15)
 	s.raiseTo("trading_post", 10)
@@ -567,7 +570,7 @@ func (s *siteStage) toMedieval() {
 	s.wonder("colosseum")
 	s.advance()
 	s.dismiss()
-	s.raiseAll(siteBuild{"classical_vault", 4}, siteBuild{"villa", 6}, siteBuild{"estate_farm", 4}, siteBuild{"wood_workshop", 3},
+	s.raiseAll(siteBuild{"classical_vault", 5}, siteBuild{"villa", 6}, siteBuild{"estate_farm", 4}, siteBuild{"wood_workshop", 3},
 		siteBuild{"marble_works", 3}, siteBuild{"library", 15}, siteBuild{"oracle_house", 2}, siteBuild{"military_academy", 15},
 		siteBuild{"merchant_quarter", 5}, siteBuild{"aqueduct", 2}, siteBuild{"amphitheater", 2})
 	// The Forge waits for Metal Casting.
@@ -589,8 +592,8 @@ func (s *siteStage) toMedieval() {
 	s.wonder("parthenon")
 	s.advance()
 	s.dismiss()
-	// Four keeps: Feudalism's price (the age sets it) has to fit the stores.
-	s.raiseAll(siteBuild{"keep", 4}, siteBuild{"manor", 5}, siteBuild{"demesne", 3}, siteBuild{"sawmill", 3},
+	// Five keeps, as the gate asks: Feudalism's price (the age sets it) has to fit the stores.
+	s.raiseAll(siteBuild{"keep", 5}, siteBuild{"manor", 5}, siteBuild{"demesne", 3}, siteBuild{"sawmill", 3},
 		siteBuild{"stonemasons_guild", 2}, siteBuild{"monastery_library", 3},
 		siteBuild{"castle_keep", 2}, siteBuild{"guildhall", 3}, siteBuild{"workshop", 2}, siteBuild{"ironmonger", 2})
 	// The Cathedral waits for Theology, the age's keystone, and Feudalism

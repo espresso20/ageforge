@@ -638,21 +638,21 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		if DevGodMode {
 			return planCheck{}
 		}
-		// Overflow's bank pays first: only the rest must fit under the caps,
-		// come in, and be held back while the item waits.
+		// A bank an old save carried pays first (overflow no longer fills
+		// one): only the rest must fit under the caps, come in, and be held
+		// back while the item waits. A price larger than a store cannot be
+		// bought, unless stock kept above the store already covers it.
 		chk := planCheck{cost: cost}
 		if len(it.Banked) > 0 {
 			chk.price = cost
 			chk.cost, chk.banked = splitBank(cost, it.Banked)
 		}
-		for _, res := range sortedKeys(chk.cost) {
-			if chk.cost[res] > ge.Resources.GetStorage(res) {
-				chk.blocked = "needs more " + res + " storage"
-				return chk
-			}
+		if res := ge.overStore(chk.cost); res != "" {
+			chk.blocked = "needs more " + ge.rules.ResourceLabel(res) + " storage"
+			return chk
 		}
 		if res := ge.planUnfunded(chk.cost); res != "" {
-			chk.blocked = "too little " + res + " coming in"
+			chk.blocked = "too little " + ge.rules.ResourceLabel(res) + " coming in"
 			return chk
 		}
 		chk.reserve = true
@@ -670,7 +670,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 			return planCheck{cost: cost, blocked: "needs more knowledge storage"}
 		}
 		if res := ge.planUnfunded(cost); res != "" {
-			return planCheck{cost: cost, blocked: "too little " + res + " coming in"}
+			return planCheck{cost: cost, blocked: "too little " + ge.rules.ResourceLabel(res) + " coming in"}
 		}
 		if ge.Research.currentTech != "" {
 			return planCheck{cost: cost, blocked: "research slot busy", reserve: true}

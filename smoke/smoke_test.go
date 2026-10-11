@@ -14,6 +14,7 @@ import (
 // without a panic or an invariant violation. The full run lives behind
 // `make smoke`.
 func TestBotClearsPrimitiveAge(t *testing.T) {
+	needBotPlay(t)
 	if testing.Short() {
 		t.Skip("plays ~12k ticks")
 	}
