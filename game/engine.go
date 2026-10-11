@@ -3589,7 +3589,18 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		return 0, ge.previousAgeBuildError(key, def)
 	}
 
+	// A wonder is paid through its bank, one copy, by the single path: the
+	// store check and the bank rules are that path's.
+	if def.Category == "wonder" {
+		if err := ge.startBuildLocked(key, false); err != nil {
+			return 0, err
+		}
+		return 1, nil
+	}
+
 	built := 0
+	var overRes string // the store that stopped the loop, if one did
+	var overAmt float64
 	for i := 0; i < count; i++ {
 		// Check MaxCount against fully-built + queued + what we're about to add
 		if def.MaxCount > 0 {
@@ -3603,6 +3614,12 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		// instances so the exponential curve is not bypassed by batch purchases.
 		unitCost, ok := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		if !ok {
+			break
+		}
+		// A copy priced over a store cannot be bought however long the player
+		// waits: the same check, and the same refusal, as a single build.
+		if res := ge.overStore(unitCost); res != "" {
+			overRes, overAmt = res, unitCost[res]
 			break
 		}
 		if !ge.Resources.Pay(unitCost) {
@@ -3634,6 +3651,9 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 			if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
 				return 0, fmt.Errorf("%s is at its max count of %d.", def.Name, def.MaxCount)
 			}
+		}
+		if overRes != "" {
+			return 0, fmt.Errorf("%s", ge.storeTooSmallText(def.Name, overRes, overAmt))
 		}
 		unitCost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		return 0, fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(unitCost))
