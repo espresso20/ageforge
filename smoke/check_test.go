@@ -1,6 +1,7 @@
 package smoke
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -44,8 +45,10 @@ func problemChecks(ps []problem) map[string]string {
 }
 
 // The stall the nightly took 36 simulated hours to time out on is named at
-// the first sweep: the vault can't fit, so the 25 copies the old check
-// counted as buildable add nothing, and the academies are out of reach too.
+// the first sweep: the vault can't fit, so no copy of it adds anything, and
+// the academies the gate asks for are over the store the player can reach.
+// That, and not the wall itself, is what makes it a stall: a walled store is
+// the normal state (see the tests below).
 func TestStorageLadder_NamesAStorageStall(t *testing.T) {
 	st := victorianStall(130e6)
 	got := problemChecks(storageProblems(st, config.BuildingByKey()))
@@ -53,7 +56,7 @@ func TestStorageLadder_NamesAStorageStall(t *testing.T) {
 	if !ok {
 		t.Fatalf("no storage_unreachable problem; got %v", got)
 	}
-	for _, want := range []string{"victorian_vault", "193M steel", "130M cap"} {
+	for _, want := range []string{"victorian_vault", "193M steel", "130M cap", "academy #10"} {
 		if !strings.Contains(msg, want) {
 			t.Errorf("storage_unreachable message %q lacks %q", msg, want)
 		}
@@ -66,8 +69,10 @@ func TestStorageLadder_NamesAStorageStall(t *testing.T) {
 	}
 }
 
-// With the two depots standing (478M), the vault fits, every copy after it
-// fits the caps the ones before raised, and nothing is flagged.
+// With the two depots standing (478M), the vault fits and the ladder climbs
+// copy by copy until the next copy costs more than the store the copies
+// before it give: a wall, worked out here by hand from the vault's size and
+// its 1.75 climb. The academies are under that store, so nothing is flagged.
 func TestStorageLadder_ClimbsWhenTheFirstCopyFits(t *testing.T) {
 	st := victorianStall(478e6)
 	defs := config.BuildingByKey()
@@ -79,8 +84,14 @@ func TestStorageLadder_ClimbsWhenTheFirstCopyFits(t *testing.T) {
 		t.Fatalf("unexpected stall %+v", *stall)
 	}
 	vault := defs["victorian_vault"]
-	if want := 478e6 + float64(vault.MaxCount)*vault.Effects[0].Value; caps["steel"] < want*(1-1e-9) {
-		t.Errorf("steel reachable = %.4g, want all %d vaults: %.4g", caps["steel"], vault.MaxCount, want)
+	store, price, copies := 478e6, st.Buildings["victorian_vault"].NextCost["steel"], 0
+	for price <= store {
+		store += vault.Effects[0].Value
+		price *= vault.CostScale
+		copies++
+	}
+	if copies < 3 || math.IsInf(caps["steel"], 0) || math.Abs(caps["steel"]-store) > 1e-9*store {
+		t.Errorf("steel reachable = %.6g, want %.6g (%d copies of the vault, then a copy at %.6g that does not fit)", caps["steel"], store, copies, price)
 	}
 	if strings.Contains(Blockers(st), "storage stuck") {
 		t.Errorf("Blockers names a stall that isn't there: %q", Blockers(st))
@@ -99,19 +110,37 @@ func TestStorageLadder_QueuedStorageCounts(t *testing.T) {
 	}
 	vault.NextCost = next
 	st.Buildings["victorian_vault"] = vault
-	if _, stall := storageLadder(st, config.BuildingByKey()); stall != nil {
+	defs := config.BuildingByKey()
+	caps, stall := storageLadder(st, defs)
+	if stall != nil {
 		t.Errorf("a queued vault should lift the caps, got stall %+v", *stall)
+	}
+	if want := 130e6 + defs["victorian_vault"].Effects[0].Value; caps["steel"] <= want {
+		t.Errorf("steel reachable = %.6g, want more than the queued vault's %.6g", caps["steel"], want)
 	}
 }
 
-// All copies built is a full store, not a stall.
+// A walled store is not a stall. Storage has no copy limit since the storage
+// rule; the last copy a player can buy is the one that fits, and the next one
+// costs more than the cap. With the vault over the cap and nothing the gate
+// asks for over it, there is nothing the player cannot buy.
 func TestStorageLadder_MaxedStorageIsNoStall(t *testing.T) {
 	st := victorianStall(130e6)
-	vault := st.Buildings["victorian_vault"]
-	vault.Count = config.BuildingByKey()["victorian_vault"].MaxCount
-	vault.AtMaxCount = true
-	st.Buildings["victorian_vault"] = vault
-	if _, stall := storageLadder(st, config.BuildingByKey()); stall != nil {
-		t.Errorf("maxed storage reported as a stall: %+v", *stall)
+	st.NextAgeBldReqs = map[string]int{}
+	st.NextAgeResReqs = map[string]float64{"electricity": 1.1e6}
+	defs := config.BuildingByKey()
+	if _, stall := storageLadder(st, defs); stall != nil {
+		t.Errorf("a walled store with nothing over it reported as a stall: %+v", *stall)
+	}
+	if ps := storageProblems(st, defs); len(ps) > 0 {
+		t.Errorf("a walled store with nothing over it: want no problems, got %v", ps)
+	}
+	if strings.Contains(Blockers(st), "storage stuck") {
+		t.Errorf("Blockers names a stall that isn't there: %q", Blockers(st))
+	}
+	// The same wall with a requirement over it is the stall.
+	st.NextAgeResReqs = map[string]float64{"steel": 400e6}
+	if _, stall := storageLadder(st, defs); stall == nil {
+		t.Errorf("400M steel asked for over a 130M cap with the vault out of reach: want a stall")
 	}
 }

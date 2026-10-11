@@ -145,31 +145,44 @@ func storageProblems(st game.GameState, defs map[string]config.BuildingDef) []pr
 	return out
 }
 
-// storageStall is storage that can never grow again: this age's storage
-// building has copies left, but the next one costs more than the cap it must
-// fit under, and the age lock forbids every older storage building. It is
-// what a storage loss used to cause (an Endure took both Industrial Depots
-// on the way into the Victorian Age, leaving 130M against a 193M vault), and
-// what a gate that forced too little storage would cause.
+// storageStall is a purchase the player must make to finish the age that
+// costs more than any store he can reach. A store is a wall since the storage
+// rule (config/storage_rule.go): the last copy of this age's storage building
+// he can buy is the one that fits under the store the copies before it give,
+// the next copy costs more than the cap, and the age lock forbids every older
+// storage building. That wall is the normal state, not a stall; it is a stall
+// only when something the gate needs (a resource requirement, a required
+// building's last copy, the keystone tech's knowledge) is over the store at
+// the wall. A gate that forced too little storage would cause it, and so did
+// a storage loss (an Endure took both Industrial Depots on the way into the
+// Victorian Age).
 type storageStall struct {
-	key       string  // this age's storage building
+	key       string  // this age's storage building, whose next copy is the wall
 	res       string  // the resource whose cap its next copy overflows most
 	cost, cap float64 // that copy's price in res, and the res cap
+	needs     string  // what the player must buy that the reachable store cannot hold
 }
 
 func (s *storageStall) message(st game.GameState) string {
-	return fmt.Sprintf("storage can never grow in %s: the next %s costs %s %s, over the %s cap, and no older storage can be built",
-		st.Age, s.key, num(s.cost), s.res, num(s.cap))
+	return fmt.Sprintf("storage can never grow in %s: the next %s costs %s %s, over the %s cap, and no older storage can be built; %s is over the most storage reachable",
+		st.Age, s.key, num(s.cost), s.res, num(s.cap), s.needs)
 }
+
+// ladderCopies bounds the copies one building adds to the ladder: a price
+// climbing at its CostScale outruns a store that grows by a fixed amount a
+// copy, so the walk ends within a few copies unless the price barely climbs,
+// and past this many it is called unbounded.
+const ladderCopies = 1000
 
 // storageLadder is the most storage reachable in this age, built a copy at a
 // time the way a player has to: a copy counts only once its price fits under
 // the caps the copies before it reached, so storage whose next copy costs
 // more than today's cap adds nothing. Copies under construction are paid for
 // and count from the start. Only this age's buildings can be bought (the age
-// lock). A cap an uncapped building raises (MaxCount 0) is +Inf once its next
-// copy fits. stall is set when this age's storage still has copies left but
-// not one can be bought.
+// lock). A building whose price barely climbs (ladderCopies copies bought)
+// raises its caps without top. stall is set when the walk ends at a wall (this
+// age's storage building has a next copy that does not fit) and something the
+// player must buy to finish the age is over the caps reached.
 func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[string]float64, *storageStall) {
 	caps := make(map[string]float64, len(st.Resources))
 	for _, k := range sortedKeys(st.Resources) {
@@ -208,10 +221,11 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 	}
 
 	type rung struct {
-		key  string
-		def  config.BuildingDef
-		next map[string]float64 // price of the next copy
-		left int                // copies left under MaxCount; -1 when uncapped
+		key    string
+		def    config.BuildingDef
+		next   map[string]float64 // price of the next copy
+		left   int                // copies left under MaxCount; -1 when uncapped
+		bought int                // copies the walk has bought
 	}
 	var rungs []*rung
 	for _, key := range sortedKeys(st.Buildings) {
@@ -250,15 +264,23 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 		return true
 	}
 
-	grew := false
 	for progress := true; progress; {
 		progress = false
 		for _, g := range rungs {
 			if g.left == 0 || !fits(g.next) {
 				continue
 			}
-			if g.left < 0 {
-				// Uncapped: every later copy fits too, so its caps have no top.
+			raise(g.def, 1)
+			g.bought++
+			progress = true
+			if g.left > 0 {
+				g.left--
+			}
+			for r, c := range g.next {
+				g.next[r] = float64(c * g.def.CostScale)
+			}
+			if g.left < 0 && g.bought >= ladderCopies {
+				// The price barely climbs: its caps have no top.
 				for _, e := range g.def.Effects {
 					if e.Type != "storage" || e.Value <= 0 {
 						continue
@@ -270,25 +292,18 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 					}
 				}
 				g.left = 0
-			} else {
-				raise(g.def, 1)
-				g.left--
-				for r, c := range g.next {
-					g.next[r] = float64(c * g.def.CostScale)
-				}
 			}
-			grew = grew || g.def.Category == "storage"
-			progress = true
 		}
 	}
-	if grew {
+	needs := requiredOverStorage(st, defs, caps)
+	if needs == "" {
 		return caps, nil
 	}
 	for _, g := range rungs {
 		if g.def.Category != "storage" || g.left == 0 {
 			continue
 		}
-		s := &storageStall{key: g.key}
+		s := &storageStall{key: g.key, needs: needs}
 		for _, r := range sortedKeys(g.next) {
 			if c := g.next[r]; c > caps[r] && (s.res == "" || c/caps[r] > s.cost/s.cap) {
 				s.res, s.cost, s.cap = r, c, caps[r]
@@ -327,6 +342,31 @@ func lastCopyOverStorage(st game.GameState, bld string, defs map[string]config.B
 		}
 	}
 	return "", 0, 0, false
+}
+
+// requiredOverStorage names the first thing the player must buy to finish the
+// age that the caps cannot hold, or "" when the caps hold all of it: a
+// next-age resource requirement, the last copy of a required building, or the
+// knowledge of a tech the age's wonder waits for.
+func requiredOverStorage(st game.GameState, defs map[string]config.BuildingDef, caps map[string]float64) string {
+	for _, res := range sortedKeys(st.NextAgeResReqs) {
+		if need := st.NextAgeResReqs[res]; need > caps[res] {
+			return fmt.Sprintf("%s %s", num(need), res)
+		}
+	}
+	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
+		if def, ok := defs[bld]; ok && def.Category != "wonder" {
+			if res, cost, _, over := lastCopyOverStorage(st, bld, defs, caps); over {
+				return fmt.Sprintf("%s #%d, %s %s", bld, st.NextAgeBldReqs[bld], num(cost), res)
+			}
+		}
+	}
+	for _, key := range keystoneChain(st) {
+		if t := st.Research.Techs[key]; t.Cost > caps["knowledge"] && key != st.Research.CurrentTech {
+			return fmt.Sprintf("%s, %s knowledge", key, num(t.Cost))
+		}
+	}
+	return ""
 }
 
 // Blockers lists what stands between st and the next age, one clause per
