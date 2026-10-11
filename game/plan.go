@@ -638,8 +638,10 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		if DevGodMode {
 			return planCheck{}
 		}
-		// Overflow's bank pays first: only the rest must fit under the caps,
-		// come in, and be held back while the item waits.
+		// A bank an old save carried pays first (overflow no longer fills
+		// one): only the rest must fit under the caps, come in, and be held
+		// back while the item waits. A price larger than a store cannot be
+		// bought, unless stock kept above the store already covers it.
 		chk := planCheck{cost: cost}
 		if len(it.Banked) > 0 {
 			chk.price = cost

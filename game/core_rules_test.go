@@ -1,7 +1,6 @@
 package game
 
 import (
-	"math"
 	"math/rand"
 
 	"github.com/espresso20/ageforge/config"
@@ -75,14 +74,28 @@ func harbingerBraceBasis(epochKey string) map[string]float64 {
 	return harbingerBraceBasisIn(rules.Core(), epochKey)
 }
 
-// eraBraceCost is the price an ordinary doom's Brace had before it was
-// priced on the warning: 12% of the most the era's remaining advances ask
-// of each core resource, the same in every age of the era, doubled for
-// level 2. Kept for the tests that show what the old price did.
+// oldEraBrace is the price an ordinary doom's Brace had before it was priced
+// on the warning: 12% of the most the era's remaining advances asked of each
+// core resource, the same in every age of the era. It is written down, not
+// worked out: the gates it was a share of have since been derived again
+// (config/storage_rule.go), and 12% of today's gates is not the price that
+// was.
+var oldEraBrace = map[string]map[string]float64{
+	"stone_era":    {"food": 9600, "wood": 4800},
+	"iron_era":     {"gold": 21600, "iron": 6360, "stone": 26400},
+	"steel_era":    {"gold": 1.8e+06, "steel": 288000},
+	"electric_era": {"electricity": 3.96e+06, "oil": 924000, "steel": 5.64e+07},
+	"digital_era":  {"data": 1.92e+10, "electricity": 1.176e+11, "gold": 1.56e+08},
+	"neon_era":     {"crypto": 3e+09, "data": 4.68e+10, "electricity": 2.88e+11},
+	"cosmic_era":   {"dark_matter": 1.56e+12, "titanium": 7.56e+10},
+}
+
+// eraBraceCost is that old price, doubled for level 2. Kept for the tests
+// that show what the old price did.
 func eraBraceCost(epochKey string, level int) map[string]float64 {
 	cost := map[string]float64{}
-	for k, v := range harbingerBraceBasis(epochKey) {
-		cost[k] = math.Ceil(v * 0.12 * float64(level))
+	for k, v := range oldEraBrace[epochKey] {
+		cost[k] = v * float64(level)
 	}
 	return cost
 }

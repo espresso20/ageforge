@@ -18,20 +18,14 @@ import (
 // of the bank, the usual "bank is full" line when the bank fills, and a total
 // in the welcome-back summary.
 //
-// Overflow pays the plan (Pacing v2, away-proofing): what is left after the
-// wonder, which would be lost, goes into the banks of the build plan's items
-// instead, in plan order, each up to what its next copy still lacks (see
-// bankPlanOverflow, and plan.go for how a bank pays). It is always on: like
-// the wonder's, it only takes what a cap was about to discard, and only for
-// copies the player queued. It needs no switch of its own: a player who
-// wants nothing banked plans nothing. Live play logs nothing per tick (the
-// Plan panel shows each bank); the welcome-back summary totals it.
-//
-// A wonder queued in the plan is a queued build like any other: it takes
-// the plan's overflow in plan order, into its own bank (the one deposits
-// fill), up to what that bank still lacks. So a planned wonder's bank fills
-// while the player is away even with wonder overflow turned off; with it on,
-// the age's wonder has had first call already and takes nothing more here.
+// A store is a wall (the storage wall): what is left after the wonder is
+// lost, and a price larger than a store cannot be bought (overStore in
+// engine.go, checkPlanItem in plan.go). The age's wonder is the one price
+// allowed over a store, because it is paid into this bank in rounds.
+// Overflow used to pay the plan too, banking toward the next copy of every
+// queued build; it does not any more, and a wonder queued in the plan takes
+// overflow on the same terms as one that is not: only while wonder overflow
+// is on. The end of this file reads the plan banks an old save carries.
 
 // SetWonderOverflow turns wonder overflow on or off.
 func (ge *GameEngine) SetWonderOverflow(on bool) {

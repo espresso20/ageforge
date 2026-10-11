@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -111,8 +112,16 @@ func TestEpochEventTextMatchesEffects(t *testing.T) {
 			after := ge.Resources.Get(r)
 			switch {
 			case ev.Key == "ancient_cache":
+				// Minutes of the town's own income: the text states how
+				// many, read here off the gold the store took.
 				if r == "gold" {
-					need(config.FormatPercent((after-before[r])/ge.Resources.GetStorage(r)) + " of its storage")
+					town := ge.eventTown(r, false)
+					perMinute := config.EventSize(config.Effect{Type: config.EventGain, Target: r, Value: 1}, town)
+					if perMinute <= 0 || after <= before[r] {
+						t.Errorf("%s: the test town gained no gold, so the minutes read as nothing", ev.Key)
+						break
+					}
+					need(fmt.Sprintf("%g minutes of what your town makes", math.Round((after-before[r])/perMinute*1e6)/1e6))
 				}
 			case after < before[r]:
 				need(config.FormatPercent(1-after/before[r]) + " of your " + r)

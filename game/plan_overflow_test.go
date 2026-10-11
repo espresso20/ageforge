@@ -7,13 +7,13 @@ import (
 	"time"
 )
 
-// Overflow pays the plan (overflow.go, bankPlanOverflow): what a cap cuts off,
-// after the wonder, goes into the banks of the plan's build items in plan
-// order, each up to its next copy's price, and the copy pays from its bank
-// first.
+// Overflow does not pay the plan (overflow.go): what a full store cannot hold
+// goes to the age's wonder when wonder overflow is on, and is otherwise
+// lost. A plan item banks nothing. What is left here: a wonder queued in the
+// plan, and the banks a save from before the storage wall still carries.
 
-// overflowEngine is planTestEngine with wonder overflow off, so the plan gets
-// everything a cap cuts off, and wood storage set to cap.
+// overflowEngine is planTestEngine with wonder overflow off and wood storage
+// set to cap.
 func overflowEngine(t *testing.T, cap float64) *GameEngine {
 	t.Helper()
 	ge := planTestEngine(t)
@@ -23,11 +23,11 @@ func overflowEngine(t *testing.T, cap float64) *GameEngine {
 	return ge
 }
 
-// A wonder queued in the plan takes the plan's overflow into its own bank,
-// in plan order, with wonder overflow off: a player who checks in a few
-// times a day no longer has to be there for the bank to fill. A part of the
-// price bigger than a full store is banked this way, and once the stores
-// cover what is left the plan pays it and starts the wonder.
+// A wonder queued in the plan is paid the way a wonder is: its bank takes
+// what the stores discard while wonder overflow is on, and the plan pays the
+// rest and starts it once the stores cover what the bank lacks. With wonder
+// overflow off nothing is banked, planned or not: the switch means what it
+// says, and the item waits on its bank. No other plan item banks anything.
 func TestPlanOverflow_QueuedWonderBanks(t *testing.T) {
 	ge := planTestEngine(t)
 	ge.wonderOverflowOff = true
@@ -39,51 +39,47 @@ func TestPlanOverflow_QueuedWonderBanks(t *testing.T) {
 	for k := range ge.Resources.resources {
 		ge.Resources.SetRate(k, 0)
 	}
-	// Not queued: with wonder overflow off nothing reaches the wonder.
 	woodCap := need["wood"] / 4 // the wood part is four full stores
 	ge.Resources.resources["wood"].Storage = woodCap
 	setAmount(ge, "wood", woodCap)
 	rate := need["wood"] / 10
 	ge.Resources.SetRate("wood", rate)
-	ge.applyTickRates()
-	if len(ge.Buildings.wonderBanks[w]) != 0 {
-		t.Fatalf("wonder overflow is off and the wonder is not planned, but its bank holds %v", ge.Buildings.wonderBanks[w])
-	}
-
-	// Queued behind a hut: the hut's next copy takes the overflow first, the
-	// wonder what is left, tick by tick.
 	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := ge.PlanAddBuild(w, 1); err != nil {
 		t.Fatal(err)
 	}
-	hut := ge.Buildings.GetCost("hut")["wood"]
-	if hut >= rate {
-		t.Fatalf("setup: a hut costs %v wood, the tick overflows %v", hut, rate)
-	}
+
+	// Wonder overflow off: the tick's surplus is lost. Neither the hut nor
+	// the wonder banks it, and the store stays at its cap.
 	ge.applyTickRates()
-	if got := ge.plan[0].Banked["wood"]; abs(got-hut) > 1e-9 {
-		t.Errorf("the hut above the wonder banked %v, want its price %v first", got, hut)
+	if len(ge.Buildings.wonderBanks[w]) != 0 {
+		t.Errorf("wonder overflow is off, but the planned wonder's bank holds %v", ge.Buildings.wonderBanks[w])
 	}
-	if got := ge.Buildings.wonderBanks[w]["wood"]; abs(got-(rate-hut)) > 1e-9 {
-		t.Errorf("the queued wonder banked %v, want the %v the hut left", got, rate-hut)
-	}
-	if ge.plan[1].Banked != nil {
-		t.Errorf("the wonder item holds an item bank %v: a wonder banks into its own", ge.plan[1].Banked)
+	if ge.plan[0].Banked != nil || ge.plan[1].Banked != nil {
+		t.Errorf("plan items banked overflow: hut %v, wonder %v", ge.plan[0].Banked, ge.plan[1].Banked)
 	}
 	if got := ge.Resources.Get("wood"); got != woodCap {
-		t.Errorf("the store changed to %v: overflow only takes what the cap cut off", got)
+		t.Errorf("the store changed to %v: a full store stays full", got)
 	}
 	st := ge.GetState()
 	if v := st.Plan[1]; v.Status != PlanStatusBlocked || v.Note != "bank not full" {
 		t.Errorf("the wonder is %s (%s) while four stores of wood are still to bank, want blocked (bank not full)", v.Status, v.Note)
 	}
 
-	// The plan walk runs with the ticks: the hut starts from its bank, and
-	// the overflow goes on into the wonder until the stores cover what its
-	// bank lacks. Then the plan pays the rest and starts the wonder. Nobody
-	// deposited anything.
+	// Wonder overflow on: the whole surplus goes to the wonder, wherever it
+	// sits in the plan, and still none to the hut.
+	ge.wonderOverflowOff = false
+	ge.applyTickRates()
+	if got := ge.Buildings.wonderBanks[w]["wood"]; abs(got-rate) > 1e-9 || ge.plan[0].Banked != nil {
+		t.Errorf("wonder overflow on: the wonder banked %v and the hut %v, want the whole %v in the wonder", got, ge.plan[0].Banked, rate)
+	}
+
+	// The plan walk runs with the ticks: the hut is paid from the store,
+	// and the overflow goes on into the wonder until the stores cover what
+	// its bank lacks. Then the plan pays the rest and starts the wonder.
+	// Nobody deposited anything.
 	ge.Resources.resources["food"].Storage = 2 * need["food"]
 	setAmount(ge, "food", need["food"])
 	for i := 0; i < 20 && queued(ge, w) == 0; i++ {
@@ -94,71 +90,60 @@ func TestPlanOverflow_QueuedWonderBanks(t *testing.T) {
 		t.Fatalf("the queued wonder never started: bank %v of %v, plan %+v", ge.Buildings.wonderBanks[w], need, ge.plan)
 	}
 	if queued(ge, "hut") != 1 {
-		t.Errorf("the hut above the wonder did not start from its bank")
+		t.Errorf("the hut above the wonder did not start")
 	}
 	if !logHas(ge, "Overflow finished banking") && ge.Buildings.wonderBanks[w]["wood"] < need["wood"]-woodCap-1e-6 {
 		t.Errorf("the wonder started with %v wood banked of %v and a store of %v", ge.Buildings.wonderBanks[w]["wood"], need["wood"], woodCap)
 	}
-
-	// With wonder overflow on, the age's wonder has first call wherever it
-	// sits in the plan (TestPlanOverflow_WonderFirst): nothing changes.
-	on := planTestEngine(t)
-	w = on.progress.WonderForAge(on.age)
-	if _, err := on.PlanAddBuild("hut", 1); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := on.PlanAddBuild(w, 1); err != nil {
-		t.Fatal(err)
-	}
-	for k := range on.Resources.resources {
-		on.Resources.SetRate(k, 0)
-	}
-	on.Resources.SetRate("wood", rate)
-	setAmount(on, "wood", on.Resources.GetStorage("wood"))
-	on.applyTickRates()
-	if got := on.Buildings.wonderBanks[w]["wood"]; abs(got-rate) > 1e-9 || on.plan[0].Banked != nil {
-		t.Errorf("wonder overflow on: the wonder banked %v and the hut %v, want the whole %v in the wonder", got, on.plan[0].Banked, rate)
-	}
 }
 
-// Offline catch-up fills a queued wonder's bank the same way, starts the
-// wonder when the stores cover the rest, and says what was banked.
+// Offline catch-up fills the age's wonder's bank the same way, starts a
+// planned wonder when the stores cover the rest, and says what was banked.
+// With wonder overflow off it banks nothing, planned or not.
 func TestPlanOverflow_QueuedWonderBanksOffline(t *testing.T) {
-	ge := planTestEngine(t)
-	ge.wonderOverflowOff = true
-	ge.Buildings.counts["wood_camp"] = 20
-	ge.Buildings.counts["gathering_camp"] = 20
-	ge.Buildings.counts["stash"] = 0
-	ge.recalculateRates()
-	w := ge.progress.WonderForAge(ge.age)
-	need := ge.Buildings.defs[w].BaseCost
-	woodCap := ge.Resources.GetStorage("wood")
-	if need["wood"] <= woodCap {
-		t.Skipf("setup: the wonder's %v wood fits the %v cap", need["wood"], woodCap)
-	}
-	if ge.Resources.GetRate("wood") <= 0 || ge.Resources.GetRate("food") <= 0 {
-		t.Fatalf("setup: wood %v/tick, food %v/tick", ge.Resources.GetRate("wood"), ge.Resources.GetRate("food"))
-	}
-	ge.plan = []PlanItem{{Kind: PlanBuild, Key: w, Count: 1}}
-	setAmount(ge, "wood", woodCap)
-	ge.SimulateOffline(8 * time.Hour)
-	if queued(ge, w) == 0 && ge.Buildings.GetCount(w) == 0 {
-		t.Fatalf("eight hours away with the wonder planned: bank %v of %v, not started (plan %+v)", ge.Buildings.wonderBanks[w], need, ge.plan)
-	}
-	if !logHas(ge, "Overflow banked toward your plan") {
-		t.Error("no offline summary of what the plan banked")
+	away := func(overflow, planned bool) (*GameEngine, string) {
+		ge := planTestEngine(t)
+		ge.wonderOverflowOff = !overflow
+		ge.Buildings.counts["wood_camp"] = 20
+		ge.Buildings.counts["gathering_camp"] = 20
+		ge.Buildings.counts["stash"] = 0
+		ge.recalculateRates()
+		w := ge.progress.WonderForAge(ge.age)
+		need := ge.Buildings.defs[w].BaseCost
+		woodCap := ge.Resources.GetStorage("wood")
+		if need["wood"] <= woodCap {
+			t.Fatalf("setup: the wonder's %v wood fits the %v cap", need["wood"], woodCap)
+		}
+		if ge.Resources.GetRate("wood") <= 0 || ge.Resources.GetRate("food") <= 0 {
+			t.Fatalf("setup: wood %v/tick, food %v/tick", ge.Resources.GetRate("wood"), ge.Resources.GetRate("food"))
+		}
+		if planned {
+			ge.plan = []PlanItem{{Kind: PlanBuild, Key: w, Count: 1}}
+		}
+		setAmount(ge, "wood", woodCap)
+		ge.SimulateOffline(8 * time.Hour)
+		return ge, w
 	}
 
-	// Not planned, with wonder overflow off: nothing is banked, as before.
-	idle := planTestEngine(t)
-	idle.wonderOverflowOff = true
-	idle.Buildings.counts["wood_camp"] = 20
-	idle.Buildings.counts["stash"] = 0
-	idle.recalculateRates()
-	setAmount(idle, "wood", idle.Resources.GetStorage("wood"))
-	idle.SimulateOffline(8 * time.Hour)
-	if len(idle.Buildings.wonderBanks[w]) != 0 {
-		t.Errorf("wonder overflow off and nothing planned, but the bank holds %v", idle.Buildings.wonderBanks[w])
+	ge, w := away(true, true)
+	if queued(ge, w) == 0 && ge.Buildings.GetCount(w) == 0 {
+		t.Fatalf("eight hours away with the wonder planned: bank %v of %v, not started (plan %+v)", ge.Buildings.wonderBanks[w], ge.Buildings.defs[w].BaseCost, ge.plan)
+	}
+	if !logHas(ge, "Overflow banked into "+ge.Buildings.defs[w].Name) {
+		t.Error("no offline summary of what the wonder banked")
+	}
+	if logHas(ge, "toward your plan") {
+		t.Error("the offline summary still speaks of overflow banked toward the plan")
+	}
+
+	for _, planned := range []bool{true, false} {
+		off, w := away(false, planned)
+		if len(off.Buildings.wonderBanks[w]) != 0 || queued(off, w) != 0 || off.Buildings.GetCount(w) != 0 {
+			t.Errorf("wonder overflow off (planned: %v): bank %v, queued %d, built %d; want nothing banked and nothing started", planned, off.Buildings.wonderBanks[w], queued(off, w), off.Buildings.GetCount(w))
+		}
+		if planned && (len(off.plan) != 1 || off.plan[0].Banked != nil) {
+			t.Errorf("wonder overflow off: the planned wonder's item is %+v, want it waiting with no bank", off.plan)
+		}
 	}
 }
 

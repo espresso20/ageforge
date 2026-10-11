@@ -2670,7 +2670,9 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 	case "ancient_cache":
 		// Minutes of the town's own income of every unlocked resource,
 		// sized like any other gain (config.EventSize), and in knowledge at
-		// most the price of the age's cheapest tech.
+		// most the price of the age's cheapest tech. A store takes what it
+		// has room for; the line under the headline says when one took less.
+		gave, fit := map[string]float64{}, map[string]float64{}
 		for _, key := range ge.Resources.order {
 			if !ge.Resources.IsUnlocked(key) {
 				continue
@@ -2680,8 +2682,12 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 				gain = math.Min(gain, ge.cheapestTechPrice())
 			}
 			if gain > 0 {
-				ge.Resources.Add(key, gain)
+				had := ge.Resources.Get(key)
+				gave[key], fit[key] = gain, ge.Resources.Add(key, gain)-had
 			}
+		}
+		if clipped := clippedLine(gave, fit); clipped != "" {
+			ge.addLog("info", clipped)
 		}
 	case "trade_winds":
 		// A share of the town's gold income for Duration ticks

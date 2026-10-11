@@ -35,8 +35,16 @@ func TestAdvanceAge_StorageNeverOffersUpgrade(t *testing.T) {
 			t.Errorf("log still advises upgrading stashes: %q", l.Message)
 		}
 	}
-	if got := ge.Buildings.GetStorageBonuses()["all"]; got != 32*500 {
-		t.Errorf("storage bonus after advancing = %v, want %v", got, 32*500)
+	// Every Stash still holds what a Stash holds (100 since the storage
+	// wall; read from its definition).
+	each := 0.0
+	for _, eff := range ge.Buildings.defs["stash"].Effects {
+		if eff.Type == "storage" && eff.Target == "all" {
+			each = eff.Value
+		}
+	}
+	if got := ge.Buildings.GetStorageBonuses()["all"]; each <= 0 || got != 32*each {
+		t.Errorf("storage bonus after advancing = %v, want %v (32 Stashes of %v)", got, 32*each, each)
 	}
 }
 
@@ -60,6 +68,16 @@ func TestUpgradeBuilding_RespectsTargetMaxCount(t *testing.T) {
 	ge := stoneAgeWithStashes(t, 32)
 	// Force the old offer back, as a pre-fix save in memory would have it.
 	ge.Buildings.SetPendingUpgrade("stash", "storage_pit")
+	// The target needs a copy limit for an upgrade to respect. Storage had
+	// one (25 Storage Pits) until the storage wall; only wonders and
+	// monuments have one now, so the test gives its own engine's Storage
+	// Pit the old limit.
+	limited := ge.Buildings.defs["storage_pit"]
+	if limited.MaxCount != 0 {
+		t.Fatalf("setup: the Storage Pit has a copy limit of %d; storage has none since the storage wall", limited.MaxCount)
+	}
+	limited.MaxCount = 25
+	ge.Buildings.defs["storage_pit"] = limited
 	ge.Buildings.counts["storage_pit"] = 24
 	for _, r := range []string{"wood", "stone"} {
 		ge.Resources.AddStorage(r, 1e9)

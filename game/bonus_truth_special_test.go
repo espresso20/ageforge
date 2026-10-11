@@ -182,16 +182,45 @@ func TestBonusTruthEpochEventsAtOnce(t *testing.T) {
 				t.Errorf("workers gained: %v, want %v (15%% of %v)", got, want, before.workers)
 			}
 		},
-		// "Every unlocked resource gains 40% of its storage."
+		// "You gain 15 minutes of what your town makes of every resource."
+		// Of its own income, counted inside the band every gain is held to
+		// (a quarter of to four times what a moderate town of the age
+		// makes), and in knowledge no more than the age's cheapest tech
+		// costs. The lab's stores have room for all of it.
 		"ancient_cache": func(t *testing.T, ge *GameEngine, before, after world) {
+			cheapest := 0.0
+			for _, tech := range ge.rules.Techs() {
+				if tech.Age == ge.age && tech.Cost > 0 && (cheapest == 0 || tech.Cost < cheapest) {
+					cheapest = tech.Cost
+				}
+			}
+			paid := 0
 			for _, key := range ge.Resources.order {
-				if !ge.Resources.IsUnlocked(key) || before.store[key] <= 0 {
+				if !ge.Resources.IsUnlocked(key) {
 					continue
 				}
-				// The lab starts at half a store: 40% more fits.
-				if got, want := after.stock[key]-before.stock[key], 0.40*before.store[key]; !near(got, want) {
-					t.Errorf("%s gained %v, want %v (40%% of its storage)", key, got, want)
+				town := ge.eventTown(key, false)
+				income := town.Income
+				if town.Typical > 0 {
+					income = math.Min(math.Max(income, 0.25*town.Typical), 4*town.Typical)
 				}
+				want := 15 * (60 / config.TickSeconds) * income
+				if key == "knowledge" {
+					want = math.Min(want, cheapest)
+				}
+				if room := before.store[key] - before.stock[key]; room < want {
+					t.Errorf("%s: the lab's store has room for %v of the %v the cache pays; the check needs all of it to fit", key, room, want)
+					continue
+				}
+				if got := after.stock[key] - before.stock[key]; !near(got, want) {
+					t.Errorf("%s gained %v, want %v (15 minutes of the town's income)", key, got, want)
+				}
+				if want > 0 {
+					paid++
+				}
+			}
+			if paid < 5 {
+				t.Errorf("the cache paid in %d resources: the lab's town should make more than that", paid)
 			}
 		},
 		// "Up to 3 techs you can research now are completed for free."
@@ -258,6 +287,13 @@ func TestBonusTruthEpochEventsAtOnce(t *testing.T) {
 				// faith exist, and techs of the age are left to discover.
 				ge := newTruthEngine("classical_age", truthClean)
 				ge.Research.currentTech, ge.Research.ticksLeft, ge.Research.totalTicks = "tool_making", 10, 10
+				if def.Key == "ancient_cache" {
+					for _, key := range ge.Resources.order {
+						if ge.Resources.IsUnlocked(key) {
+							truthRoom(ge, key, config.EventSize(config.Effect{Type: config.EventGain, Target: key, Value: config.AncientCacheMinutes}, ge.eventTown(key, false)))
+						}
+					}
+				}
 				before := look(ge)
 				if good {
 					ge.applyGoodEpochEvent(def)

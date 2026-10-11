@@ -172,12 +172,17 @@ func TestEventLineStatesWhatHappened(t *testing.T) {
 		ge := newTruthEngine(truthEventAge(def), truthTypical)
 		ge.Resources.resources["soldiers"].Amount = 0 // no garrison: the losses land whole
 		setWorkers(ge, 200)
-		// Half of every store, in a store with room for any gain.
+		// Half of every store, and room for the whole of every gain: a gain
+		// a full store cuts short has a line of its own
+		// (TestBonusTruthGrantsSayWhatFit).
+		for _, eff := range def.Effects {
+			if eff.Type == config.EventGain {
+				truthRoom(ge, eff.Target, config.EventSize(eff, ge.eventTown(eff.Target, false)))
+			}
+		}
 		before := map[string]float64{}
 		for _, key := range ge.Resources.order {
-			r := ge.Resources.resources[key]
-			r.Storage = r.Storage * 1000
-			before[key] = r.Amount
+			before[key] = ge.Resources.resources[key].Amount
 		}
 		popBefore := ge.Workers.TotalPop()
 		logged := len(ge.log)
@@ -280,9 +285,14 @@ func TestEventSizeFollowsTheTown(t *testing.T) {
 	stampede := func(stock float64) (food, wood float64, line string) {
 		ge := newTruthEngine("stone_age", truthClean)
 		ge.Resources.resources["soldiers"].Amount = 0
+		// The town holds stock of each: it has the storage for it (the
+		// event works the stores out afresh, so a store typed in here would
+		// not last).
 		for _, res := range []string{"food", "wood"} {
 			r := ge.Resources.resources[res]
-			r.Storage, r.Amount = 1e9, stock
+			r.Amount = 0
+			truthRoom(ge, res, stock)
+			r.Amount = stock
 		}
 		logged := len(ge.log)
 		ge.fireEvent(def)

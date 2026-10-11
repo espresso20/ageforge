@@ -136,11 +136,13 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 // begins in (the era's first in play; a later one for a thread that began
 // there).
 func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
-	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {1300000000, 20000000000, 1.1e+16, 9.6e+15},
-		"galactic_age":     {2600000000, 42000000000, 1.3e+17, 1.1e+16},
-		"quantum_age":      {5400000000, 89000000000, 1.3e+17, 1.1e+16},
-		"transcendent_age": {5900000000, 97000000000, 1.4e+17, 1.2e+16},
+	// Plasma is in the price since the storage wall: the era's gates name
+	// every material its buildings are paid in, and Brace asks for those.
+	prices := map[string][5]float64{ // faith, culture; dark matter, titanium, plasma
+		"interstellar_age": {1300000000, 20000000000, 1.1e+16, 9.6e+15, 3.7e+16},
+		"galactic_age":     {2600000000, 42000000000, 1.3e+17, 1.1e+16, 3.9e+16},
+		"quantum_age":      {5400000000, 89000000000, 1.3e+17, 1.1e+16, 4.1e+16},
+		"transcendent_age": {5900000000, 97000000000, 1.4e+17, 1.2e+16, 4.4e+16},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -149,8 +151,8 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 		if !ok || v.AppeaseCost["faith"] != want[0] || v.AppeaseCost["culture"] != want[1] || len(v.AppeaseCost) != 2 {
 			t.Errorf("%s: appease = %v, want %v faith and %v culture", age, v.AppeaseCost, want[0], want[1])
 		}
-		if !ok || v.BraceCost["dark_matter"] != want[2] || v.BraceCost["titanium"] != want[3] || len(v.BraceCost) != 2 {
-			t.Errorf("%s: brace = %v, want %v dark matter and %v titanium", age, v.BraceCost, want[2], want[3])
+		if !ok || v.BraceCost["dark_matter"] != want[2] || v.BraceCost["titanium"] != want[3] || v.BraceCost["plasma"] != want[4] || len(v.BraceCost) != 3 {
+			t.Errorf("%s: brace = %v, want %v dark matter, %v titanium and %v plasma", age, v.BraceCost, want[2], want[3], want[4])
 		}
 		if v.EndurePointsPct != 50 || v.NextEndurePointsPct != 70 {
 			t.Errorf("%s: endure points %d%% next %d%%", age, v.EndurePointsPct, v.NextEndurePointsPct)
@@ -393,13 +395,16 @@ const doomChoiceMinRatio = 0.5
 // one.
 //
 // Brace has a ceiling too: no material asks for more than three fifths of
-// a moderate builder's store. In most ages one material stays under it and
-// still takes a third of the warning, so the ratio stands. In two ages
-// every material is on the ceiling, Brace is made in about a sixth of the
-// warning, and Appease falls under the bar: doomChoiceUnderTheCeiling
-// names them with what they read. The ceiling is the rule that wins there
-// (a Brace nobody's store holds is no answer at all), and the list is
-// where that is said out loud.
+// a moderate builder's store. Where one material stays under it and still
+// takes a third of the warning, the ratio stands. In an age where every
+// material is on the ceiling, Brace is made in less of the warning and
+// Appease can fall under the bar: doomChoiceUnderTheCeiling names such ages
+// with what they read. The ceiling is the rule that wins there (a Brace
+// nobody's store holds is no answer at all), and the list is where that is
+// said out loud. It is empty since the storage wall: an era's gates name
+// every material its buildings are paid in, Brace asks for each, and in
+// every age at least one of them (stone, iron, oil) is far under its
+// ceiling.
 func TestOrdinaryDoomChoice(t *testing.T) {
 	const mid = 0.5
 	ge := catEngine(t, "iron_age", 1)
@@ -480,13 +485,12 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // doomChoiceUnderTheCeiling is the ages where every material of an ordinary
 // doom's Brace sits on its ceiling (three fifths of a moderate builder's
 // store), with what Appease level 1 then saves per hour of income against
-// Brace level 1: under doomChoiceMinRatio, because Brace is made in about a
-// sixth of the warning there. Both ages build with two materials that
-// their vaults hold little of beside what they make.
-var doomChoiceUnderTheCeiling = map[string]float64{
-	"industrial_age": 0.33,
-	"modern_age":     0.39,
-}
+// Brace level 1: under doomChoiceMinRatio, because Brace is made in less of
+// the warning there. It listed the Industrial Age (0.33x) and the Modern Age
+// (0.39x) while those ages' Brace was asked in two materials, both on the
+// ceiling; with every material of the era in the price they read 0.69x and
+// 0.71x and Brace takes its third of the warning again.
+var doomChoiceUnderTheCeiling = map[string]float64{}
 
 // incomeHoursOfMade is incomeHours over the resources of cost the age makes
 // at all: the old era price named some an age only buys.
