@@ -68,12 +68,16 @@ jobs:
         run: go test -race -timeout 15m ./...
 
   # The smoke suite's fast tier on every pull request (see CONTRIBUTING.md,
-  # "Smoke testing"): static gates, docsync, a few seeds of play, save/load,
-  # offline catch-up, command fuzzing, accounts, perf budgets and the UI at
-  # small terminal sizes. Fails on crashes, soft-locks, invariant violations,
-  # save/load divergence, fuzz failures, account failures, docs mismatches
-  # and blown perf budgets, and on a Primitive or Stone Age that leaves its
-  # pacing band (-pacing enforce: the game got meaningfully slower or faster).
+  # "Smoke testing"), without the scenarios that play the test bot: static
+  # gates, docsync, accounts, perf budgets and the UI at small terminal sizes.
+  #
+  # The bot is switched off for now (2026-10-10) while the economy's numbers
+  # are being re-derived by calculation: it does not play on pull requests and
+  # no pacing band can fail a change. The nightly and weekly Smoke workflow
+  # and the Determinism workflow are disabled in the repository settings for
+  # the same reason. To switch it back on: restore the line below to
+  # `go run ./cmd/smoke -tier fast -pacing enforce -v -out smoke-report`
+  # and run `gh workflow enable Smoke` and `gh workflow enable Determinism`.
   smoke:
     name: smoke (fast tier)
     if: github.event_name == 'pull_request'
@@ -97,7 +101,7 @@ jobs:
 
       - name: Smoke (fast tier)
         id: smoke
-        run: go run ./cmd/smoke -tier fast -pacing enforce -v -out smoke-report
+        run: go run ./cmd/smoke -tier fast -scenario static,docsync,accounts,perf,ui -v -out smoke-report
 
       - name: Job summary
         if: ${{ always() }}
