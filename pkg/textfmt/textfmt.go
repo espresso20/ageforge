@@ -14,22 +14,43 @@ import (
 	"time"
 )
 
-var suffixes = []struct {
+// units are the suffixes Number prints, smallest first, each a thousand of
+// the one before: thousand, million, billion, trillion, quadrillion, and
+// from there quintillion, sextillion, septillion, octillion, nonillion and
+// decillion. The largest store in the game is tens of quintillions, so the
+// table runs five units past what an amount in play needs.
+var units = []struct {
 	threshold float64
 	suffix    string
 }{
-	{1e15, "Q"},
-	{1e12, "T"},
-	{1e9, "B"},
-	{1e6, "M"},
 	{1e3, "K"},
+	{1e6, "M"},
+	{1e9, "B"},
+	{1e12, "T"},
+	{1e15, "Q"},
+	{1e18, "Qi"},
+	{1e21, "Sx"},
+	{1e24, "Sp"},
+	{1e27, "Oc"},
+	{1e30, "No"},
+	{1e33, "Dc"},
+}
+
+// MaxNumber is the largest amount Number is sure to print with at most three
+// digits before its unit: 999 of the last unit. Past it there is no unit
+// left to move to, and the digits pile up in front of the last one
+// (1000Dc, 25000Dc). Nothing a player can hold or be quoted should reach it.
+func MaxNumber() float64 {
+	return 999 * units[len(units)-1].threshold
 }
 
 // Number formats an amount or rate for display: three significant figures,
-// trailing zeros dropped, and a K/M/B/T/Q suffix from a thousand up
-// (950, 12.5, 0.711, 1.5K, 1.23M, 876M). Rounding goes through strconv, so
-// the output is identical on every architecture (config descriptions built
-// with it are part of the determinism fingerprint).
+// trailing zeros dropped, and a unit from a thousand up, K M B T Q and then
+// Qi Sx Sp Oc No Dc (950, 12.5, 0.711, 1.5K, 1.23M, 876M, 11.8Qi). Up to
+// MaxNumber it never prints more than three digits before the unit. Rounding
+// goes through strconv, so the output is identical on every architecture
+// (config descriptions built with it are part of the determinism
+// fingerprint).
 func Number(n float64) string {
 	if math.IsNaN(n) || math.IsInf(n, 0) {
 		return "0"
@@ -49,26 +70,15 @@ func Number(n float64) string {
 		}
 		abs = 1000 // 999.96 rolls over to 1K
 	}
-	for i := len(suffixes) - 1; i >= 0; i-- {
-		// walk from K upwards so a rollover (999.6K) moves to the next suffix
-		s := suffixes[i]
-		if abs < s.threshold {
-			continue
-		}
-		next := math.Inf(1)
-		if i > 0 {
-			next = suffixes[i-1].threshold
-		}
-		if abs >= next {
-			continue
-		}
-		str := sig3(abs / s.threshold)
-		if str == "1000" && i > 0 {
-			return prefix + "1" + suffixes[i-1].suffix
-		}
-		return prefix + str + s.suffix
+	i := 0
+	for i < len(units)-1 && abs >= units[i+1].threshold {
+		i++
 	}
-	return prefix + sig3(abs)
+	s := sig3(abs / units[i].threshold)
+	if s == "1000" && i < len(units)-1 {
+		return prefix + "1" + units[i+1].suffix // 999.6K rolls over to 1M
+	}
+	return prefix + s + units[i].suffix
 }
 
 // sig3 prints v (0 < v < ~1000) with three significant figures and no

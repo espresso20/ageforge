@@ -31,6 +31,10 @@ const (
 	resBarGood = 8  // the box gives up spacing before it lets the bar under this
 	resBarMin  = 4  // under this a bar says nothing: it goes
 	resNameCap = 14 // names are shortened to this before the bar is given up
+	// resNameFloor is as far as a name is cut, past resNameCap, to keep a
+	// bar of resBarMin: a two-letter unit makes the amounts wider by a cell
+	// or two, and a long name gives that back before the bar goes.
+	resNameFloor = 12
 )
 
 // resRow is one resource's row before it is laid out.
@@ -225,6 +229,11 @@ func fitResourceFormat(rows []resRow, w int) resFormat {
 	capped := min(longest, resNameCap)
 	for _, least := range []int{resBarGood, resBarMin} {
 		if try(longest, least) || (capped < longest && try(capped, least)) {
+			return f
+		}
+	}
+	for n := capped - 1; n >= resNameFloor && n < longest; n-- {
+		if try(n, resBarMin) {
 			return f
 		}
 	}

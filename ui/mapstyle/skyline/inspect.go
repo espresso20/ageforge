@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
@@ -360,6 +361,8 @@ func lotInspection(m *mapmodel.Model, key string, cp int) inspectionData {
 // humanN renders a rate compactly: 3.2, 41, 1.2k.
 func humanN(n float64) string {
 	switch {
+	case n >= 999.95e9:
+		return textfmt.Number(n) // past the B of this table: the game's own units
 	case n >= 1e9:
 		return strconv.FormatFloat(n/1e9, 'f', 1, 64) + "B"
 	case n >= 1e6:
