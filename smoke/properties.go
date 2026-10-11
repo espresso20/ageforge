@@ -456,7 +456,7 @@ func StaticProperties() Properties {
 	bad, where, val = carried(wallTop)
 	add(17, fmt.Sprintf("at the top of the Era Mastery table a full knowledge store still pays for at most %d techs of the age entered", propTechsCarried), bad == 0, worst(bad, where, val))
 
-	// 18 and 20 need the game's own formulas and are stated, not worked out.
+	// 18 needs the game's own formulas and is stated, not worked out.
 	add(18, "the reference town's faith and culture strength fall in the middle band", false, "not worked out here yet")
 
 	// 19. Prestige points and what they buy.
