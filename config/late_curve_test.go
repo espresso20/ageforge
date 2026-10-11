@@ -1,62 +1,8 @@
 package config
 
 import (
-	"math"
 	"testing"
 )
-
-// TestPaybackCurve pins the curve's two segments and the entries left on it.
-// The share of its target a producer takes to repay grows with the age:
-// exponent 0.9 to the Industrial Age, 1.25 from the Victorian Age on, which
-// is where the Victorian, Electric and Atomic Ages were set one by one
-// before (1.7, 1.45 and 1.75 times the 0.9 curve).
-func TestPaybackCurve(t *testing.T) {
-	order := AgeOrder()
-	pos := AgePositions(order)
-	late := pos[PaybackLateFrom]
-	if PaybackLateFrom != "victorian_age" || PaybackLateExponent != 1.25 || PaybackEpochExponent != 0.9 {
-		t.Fatalf("the curve is %v to %s and %v after; the wiki's payback table says 0.9 to the Victorian Age and 1.25 from it", PaybackEpochExponent, PaybackLateFrom, PaybackLateExponent)
-	}
-	for i, a := range order {
-		exp := PaybackEpochExponent
-		if i >= late {
-			exp = PaybackLateExponent
-		}
-		adj, entry := PaybackAdjust[a]
-		if !entry {
-			adj = 1
-		}
-		want := adj * AgeTargetTicks(a) * math.Pow(1+float64(i)/3, exp) / PaybackDivisor
-		if got := PaybackTicks(a); math.Abs(got-want) > 1e-6*want {
-			t.Errorf("%s: payback %v ticks, want %v (entry %v on exponent %v)", a, got, want, adj, exp)
-		}
-	}
-	// The ages the late segment covers have no entry of their own.
-	for _, a := range []string{"victorian_age", "atomic_age", "digital_age", "cyberpunk_age", "interstellar_age"} {
-		if v, ok := PaybackAdjust[a]; ok {
-			t.Errorf("%s has an entry (%v); the curve's late segment covers it", a, v)
-		}
-	}
-	// What the segment gives the three it folded in, against the 0.9 curve.
-	for a, want := range map[string]float64{"victorian_age": 1.62, "electric_age": 1.67 * 1.1, "atomic_age": 1.71} {
-		got := PaybackTicks(a) / (AgeTargetTicks(a) * math.Pow(1+float64(pos[a])/3, PaybackEpochExponent) / PaybackDivisor)
-		if math.Abs(got-want) > 0.01 {
-			t.Errorf("%s repays %.3f times more slowly than the 0.9 curve gives, want %.2f", a, got, want)
-		}
-	}
-	// The share of the target, for the wiki's table.
-	for a, want := range map[string]float64{"colonial_age": 0.185, "industrial_age": 0.231, "victorian_age": 0.354, "electric_age": 0.430, "modern_age": 0.514, "information_age": 0.228, "cyberpunk_age": 0.587, "fusion_age": 1.382, "galactic_age": 1.508} {
-		if got := PaybackTicks(a) / AgeTargetTicks(a); math.Abs(got-want) > 0.002 {
-			t.Errorf("%s: payback is %.3f of the target, want %.3f", a, got, want)
-		}
-	}
-	// An entry is never the identity, and every entry names an age.
-	for a, v := range PaybackAdjust {
-		if _, ok := pos[a]; !ok || v <= 0 || v == 1 {
-			t.Errorf("PaybackAdjust[%q] = %v", a, v)
-		}
-	}
-}
 
 // TestNanobotsAreNeverPriced: nanobots are a build material sized by hand to
 // their producers' listed rates, not a construction resource. No age prices

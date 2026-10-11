@@ -20,9 +20,7 @@ type TechDef struct {
 	// Emblem is the one glyph inside the tech's badge, one cell wide. Left
 	// empty, it is the lane's glyph.
 	Emblem string
-	// Cost is the knowledge paid when research starts. It is not typed on a
-	// tech: normalizeResearchCosts sets it from the age's knowledge budget
-	// and the tech's kind (pacing.go).
+	// Cost is the knowledge paid when research starts, written on the tech.
 	Cost float64
 	// Prerequisites are the tech keys that must all be researched first.
 	Prerequisites []string
@@ -35,19 +33,16 @@ type TechDef struct {
 	Effects     []TechEffect // applied permanently when research finishes
 	Description string
 	// ResearchTicks is the game ticks research takes at 1x, before research
-	// speed and Era Mastery. It is not typed on a tech either:
-	// normalizeResearchTicks sets it from the age's research cap and the
-	// tech's kind (pacing.go).
+	// speed and Era Mastery, written on the tech.
 	ResearchTicks int
 }
 
 // Technologies returns every tech definition, ordered loosely by age.
 // Use TechByKey() for random access or TechsByAge() to group by age.
 //
-// No tech carries a cost or a research time here. Both follow from the tech's
-// age and its kind (pacing.go: normalizeResearchCosts, normalizeResearchTicks),
-// and its kind follows from the wonders (TechKinds), so moving a keystone or
-// adding a tech re-prices its age with nothing to retype.
+// Every tech carries its own price and research time. Nothing re-prices an
+// age when a tech is added or a keystone moves: a new tech needs its own two
+// numbers, and the golden record shows what changed.
 func Technologies() []TechDef {
 	techs := rawTechnologies()
 	// The wonders alone decide the kinds, and they are all in the raw table:
@@ -56,8 +51,8 @@ func Technologies() []TechDef {
 	return fillTechArt(techs)
 }
 
-// rawTechnologies is the tech table as it is written: no cost, no research
-// time, and art only where a tech sets its own.
+// rawTechnologies is the tech table as it is written, with art only where a
+// tech sets its own.
 func rawTechnologies() []TechDef {
 	return []TechDef{
 		// === PRIMITIVE AGE ===

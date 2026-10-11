@@ -82,9 +82,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Stash", Key: "stash", Category: "storage",
 			// note: the first copy MUST stay affordable within wood's 50 base storage
 			// cap — stash is the only building that raises that cap, so a first-copy
-			// cost above 50 is an unbuildable deadlock. normalizeCostCurves multiplies
-			// this base by ~1.17 (storage 1.15->1.13, pivot@10), so keep the raw base
-			// well under ~42. 30 -> ~35 normalized, a comfortable margin under 50.
+			// cost above 50 is an unbuildable deadlock. 35 leaves a comfortable margin.
 			BaseCost:  map[string]float64{"wood": 35},
 			CostScale: 1.13,
 			MaxCount:  50,
@@ -961,57 +959,6 @@ func roundSignificant(v float64, sig int) float64 {
 		return 1
 	}
 	return rounded
-}
-
-// normalizeCostCurves rewrites every building's cost curve as part of the
-// economy rebalance (sub-ticket 1: flatten cost curves).
-//
-// Why: the old curves trivialized copy #1 (some bases were tiny relative to the
-// steep CostScale) and then exploded in the late copies, making mid/late builds
-// either free or impossibly expensive. We pivot around the 10th copy so the
-// mid-game cost of a building is preserved while de-trivializing copy #1 and
-// removing the late explosion.
-//
-// The 10th copy of a building costs base*scale^9. Holding base*scale^9 constant
-// while changing scale to a flatter value requires multiplying base by
-// (oldScale/newScale)^9. We apply that, then round the new base to 2 significant
-// figures for readability.
-//
-// Wonders (CostScale 1.0, MaxCount 1) are intentionally left untouched.
-//
-// This operates on the freshly-constructed defs handed to it each call, reading
-// each def's literal CostScale as the "old" value, so it is idempotent with
-// respect to BaseBuildings() (which rebuilds from literals every call). The
-// BaseCost maps are fresh per-call literals from the lineage constructors, so
-// in-place mutation here cannot alias another copy.
-func normalizeCostCurves(defs []BuildingDef) []BuildingDef {
-	// --- Policy constants (re-tune here) ---
-	const (
-		pivotCopy    = 10   // copy whose cost we hold constant across the rewrite
-		scaleDefault = 1.15 // new CostScale for production/research/military/etc.
-		scaleInfra   = 1.13 // new CostScale for storage + housing (infrastructure)
-	)
-	const exponent = pivotCopy - 1 // base*scale^exponent is the pivot cost
-
-	for i := range defs {
-		d := &defs[i]
-		if d.Category == "wonder" {
-			continue // flat-cost, single-instance — leave completely unchanged
-		}
-
-		newScale := scaleDefault
-		if d.Category == "storage" || d.Category == "housing" {
-			newScale = scaleInfra
-		}
-
-		// Multiplier that preserves the pivot (10th) copy cost.
-		m := detmath.Pow(d.CostScale/newScale, float64(exponent))
-		for res := range d.BaseCost {
-			d.BaseCost[res] = roundSignificant(d.BaseCost[res]*m, 2)
-		}
-		d.CostScale = newScale
-	}
-	return defs
 }
 
 func BaseBuildings() []BuildingDef {

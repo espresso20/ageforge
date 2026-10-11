@@ -56,6 +56,7 @@ type goldenTables struct {
 	EpochEvents    map[string]int                `json:"epoch_event_ticks"`
 	Awakenings     map[string]int                `json:"awakening_ticks"`
 	TradeRoutes    map[string]int                `json:"trade_route_ticks"`
+	DealLevels     map[string]map[string]float64 `json:"deal_flow_levels"`
 }
 
 func liveGoldenTables() goldenTables {
@@ -92,6 +93,7 @@ func liveGoldenTables() goldenTables {
 	}
 	g.TypicalIncome = Incomes(defs, techs, order, AnyResource)
 	g.TypicalStorage = TypicalStorages(defs, BaseResources(), order)
+	g.DealLevels = FlowDealLevels(defs, AgePositions(order))
 	for _, e := range append(GoodEpochEvents(), ChallengingEpochEvents()...) {
 		g.EpochEvents[e.Key] = e.Duration
 	}
