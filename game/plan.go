@@ -647,14 +647,12 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 			chk.price = cost
 			chk.cost, chk.banked = splitBank(cost, it.Banked)
 		}
-		for _, res := range sortedKeys(chk.cost) {
-			if chk.cost[res] > ge.Resources.GetStorage(res) && chk.cost[res] > ge.Resources.Get(res) {
-				chk.blocked = "needs more " + res + " storage"
-				return chk
-			}
+		if res := ge.overStore(chk.cost); res != "" {
+			chk.blocked = "needs more " + ge.rules.ResourceLabel(res) + " storage"
+			return chk
 		}
 		if res := ge.planUnfunded(chk.cost); res != "" {
-			chk.blocked = "too little " + res + " coming in"
+			chk.blocked = "too little " + ge.rules.ResourceLabel(res) + " coming in"
 			return chk
 		}
 		chk.reserve = true
@@ -672,7 +670,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 			return planCheck{cost: cost, blocked: "needs more knowledge storage"}
 		}
 		if res := ge.planUnfunded(cost); res != "" {
-			return planCheck{cost: cost, blocked: "too little " + res + " coming in"}
+			return planCheck{cost: cost, blocked: "too little " + ge.rules.ResourceLabel(res) + " coming in"}
 		}
 		if ge.Research.currentTech != "" {
 			return planCheck{cost: cost, blocked: "research slot busy", reserve: true}
