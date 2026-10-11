@@ -408,8 +408,14 @@ func TestStaticCaps(t *testing.T) {
 		t.Fatalf("%d rows for %d ages", len(rows), len(config.AgeOrder()))
 	}
 	all := func(r CapRow) float64 { return r.All() }
-	if got := KneePassedIn(rows, 0, all); got != "electric_age" {
-		t.Errorf("all production passes its knee on what stands alone in %q, want the Electric Age", got)
+	// The Electric Age holds +196%, four points short of the knee (+200%): the
+	// Atomic Age passes it. It was the Electric Age before the storage wall,
+	// when Grand Architect (+5%) could be finished in the Victorian Age; the
+	// wall cut the structures a run holds by an age, and 1,365 of them (half
+	// of the 2,731 a run holds by the Atomic Age, the most a count may ask)
+	// is not within reach before the Atomic Age.
+	if got := KneePassedIn(rows, 0, all); got != "atomic_age" {
+		t.Errorf("all production passes its knee on what stands alone in %q, want the Atomic Age", got)
 	}
 	if got := KneePassedIn(rows, FestivalBonus+PlentyBonus, all); got != "industrial_age" {
 		t.Errorf("all production passes its knee with a festival and an Age of Plenty in %q, want the Industrial Age", got)
