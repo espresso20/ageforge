@@ -37,8 +37,8 @@ func (p *harbingerPanel) reset() {
 }
 
 // provider renders the panel for OverlayManager.
-func (p *harbingerPanel) provider(state game.GameState, _ int) string {
-	return harbingerPanelText(state, p.note, p.noteGood, p.inviteArmed)
+func (p *harbingerPanel) provider(state game.GameState, screenW int) string {
+	return harbingerPanelTextAt(state, screenW, p.note, p.noteGood, p.inviteArmed)
 }
 
 // harbingerAction is one of the panel's three answers.
@@ -119,8 +119,18 @@ func harbingerInviteRefusal(st game.GameState) error {
 	return fmt.Errorf("cannot invite: %s", st.Harbinger.InviteBlocked)
 }
 
-// harbingerPanelText renders the panel. Pure: state in, text out.
+// harbingerPanelText renders the panel for the narrowest screen the game
+// draws. Pure: state in, text out.
 func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed bool) string {
+	return harbingerPanelTextAt(state, narrowestScreenW, note, noteGood, inviteArmed)
+}
+
+// narrowestScreenW is the narrowest terminal the game is laid out for.
+const narrowestScreenW = 80
+
+// harbingerPanelTextAt renders the panel for a screen screenW cells wide, so
+// the lines that can run long (the prices) are broken to fit the box.
+func harbingerPanelTextAt(state game.GameState, screenW int, note string, noteGood, inviteArmed bool) string {
 	var sb strings.Builder
 	sb.WriteString(theme.Paint(theme.RoleAccent, "═══ Harbinger ═══") + "\n\n")
 
@@ -128,7 +138,7 @@ func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed
 	if h == nil {
 		harbingerAbsentText(&sb, state)
 	} else {
-		harbingerPresentText(&sb, state, h, inviteArmed)
+		harbingerPresentText(&sb, state, h, overlayTextWidth(screenW), inviteArmed)
 	}
 
 	if note != "" {
@@ -175,7 +185,7 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 }
 
 // harbingerPresentText is the panel with a harbinger present.
-func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.HarbingerView, inviteArmed bool) {
+func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.HarbingerView, width int, inviteArmed bool) {
 	fmt.Fprintf(sb, " %s   %s\n", theme.Paint(theme.RoleBright, capFirstUI(h.Name)),
 		theme.Paint(theme.RoleDim, h.AgeName+" harbinger"))
 	sb.WriteString(" " + theme.Paint(theme.RoleLabel, h.Description) + "\n")
@@ -233,7 +243,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	fmt.Fprintf(sb, " %s %s   %s\n", theme.Keycap("A"), theme.Paint(theme.RoleBright, "Appease: "+h.AppeaseLabel),
 		harbingerLevelText(h.AppeaseLevel, game.HarbingerMaxAppease))
 	sb.WriteString(theme.Paint(theme.RoleDim, "     Each level multiplies the real chance it strikes by 0.6.") + "\n")
-	harbingerCostLine(sb, state, h.AppeaseBlocked, h.AppeaseCost)
+	harbingerCostLine(sb, state, width, h.AppeaseBlocked, h.AppeaseCost)
 	sb.WriteString("\n")
 
 	// Brace.
@@ -253,7 +263,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		}
 		sb.WriteString(harbingerGarrisonLine(h) + "\n")
 	}
-	harbingerCostLine(sb, state, h.BraceBlocked, h.BraceCost)
+	harbingerCostLine(sb, state, width, h.BraceBlocked, h.BraceCost)
 	sb.WriteString("\n")
 
 	// Invite.
@@ -278,8 +288,10 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 }
 
 // harbingerCostLine prints the next level's cost, each resource colored by
-// whether you have it, or why the action is unavailable.
-func harbingerCostLine(sb *strings.Builder, state game.GameState, blocked string, cost map[string]float64) {
+// whether you have it, or why the action is unavailable. A price in any
+// number of materials fits a box width cells wide: when the line would run
+// past it the materials continue on the next line, under the first.
+func harbingerCostLine(sb *strings.Builder, state game.GameState, width int, blocked string, cost map[string]float64) {
 	if blocked != "" {
 		sb.WriteString("     " + theme.Paint(theme.RoleDim, "Unavailable: "+blocked+".") + "\n")
 		return
@@ -302,7 +314,25 @@ func harbingerCostLine(sb *strings.Builder, state game.GameState, blocked string
 			parts = append(parts, theme.Paint(theme.RoleNegative, item+" (have "+FormatNumber(math.Floor(have))+")"))
 		}
 	}
-	sb.WriteString("     Next level costs: " + strings.Join(parts, ", ") + "\n")
+	const lead = "     Next level costs: "
+	indent := strings.Repeat(" ", len(lead))
+	line, lineW := lead, len(lead)
+	for i, part := range parts {
+		w := visibleLen(part)
+		if i > 0 {
+			if lineW+1+w > width && lineW > len(indent) {
+				sb.WriteString(strings.TrimRight(line, " ") + "\n")
+				line, lineW = indent, len(indent)
+			} else {
+				line, lineW = line+" ", lineW+1
+			}
+		}
+		line, lineW = line+part, lineW+w
+		if i < len(parts)-1 {
+			line, lineW = line+",", lineW+1
+		}
+	}
+	sb.WriteString(line + "\n")
 }
 
 // harbingerLevelText renders "Level 1 / 2".
