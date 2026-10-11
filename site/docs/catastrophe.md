@@ -158,6 +158,8 @@ Storage is never destroyed by an Endure (nor by The Great Fire epoch event), bec
 
 Let the civilization fall, and keep something permanent.
 
+A Succumb ends the run, and the ending is told on the whole screen as a [prestige](prestige.md)'s is, in a lower voice: the town goes cold and dark, what the fall leaves you is read out, and the new land comes up out of the dark. Any key skips to the next part.
+
 Up to 8 of your buildings other than wonders and storage become **ruins**, picked at random from the same seeded, fixed-order pool as Endure. Ruins produce at 50% of base rate with no workers. They carry across Succumb and prestige, but the total is capped at 24. When new ruins push past the cap, the lowest-value ruins crumble first (earliest age first, then lowest base output), so a late-game fall replaces primitive rubble. A save loaded with more than 24 ruins is trimmed the same way.
 
 You also get the epoch's **legacy bonus** (table below), permanently, and **Ancient Knowledge**: research takes 0.8 times as long for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another step.

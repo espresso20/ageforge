@@ -422,6 +422,22 @@ func (s *siteStage) arrive(frame int) {
 	a.now = func() time.Time { return still.Add(time.Duration(frame) * mapAnimStep) }
 }
 
+// endFilm lets the dashboard put up the film of the run that just ended,
+// and holds its clock at a frame: at is given the film's beats and says
+// which.
+func (s *siteStage) endFilm(at func(spans []endSpan) int) {
+	s.t.Helper()
+	s.d.refresh()
+	e := s.d.overlayMgr.film
+	if e == nil {
+		s.t.Fatal("no film came up")
+	}
+	frame := at(e.spans())
+	still := time.Unix(0, 0)
+	e.start, e.base, e.sc = still, 0, nil
+	e.now = func() time.Time { return still.Add(time.Duration(frame) * mapAnimStep) }
+}
+
 // inform moves the arrival screen on from its celebration to what the age
 // opens, as any key does.
 func (s *siteStage) inform() {
@@ -881,6 +897,23 @@ func TestWriteSiteScreens(t *testing.T) {
 	s.say("prestige")
 	s.open("logs", "")
 	shots.take(s, "prestige")
+	s.close()
+	// The prestige itself: the staged game is given up for real, and its
+	// film is held at two of its beats, the town part burnt down and the
+	// word just struck.
+	s.say("prestige confirm yes")
+	s.endFilm(func([]endSpan) int { return endBurnHold + 9 })
+	shots.takeIn(s, "prestige-ending", theme.DefaultKey, siteDashW, siteDashH)
+	s.endFilm(func(spans []endSpan) int {
+		for _, sp := range spans {
+			if sp.beat == beatStrike {
+				return sp.from + endBlow + 2
+			}
+		}
+		t.Fatal("the film of a prestige has no strike")
+		return 0
+	})
+	shots.takeIn(s, "prestige-strike", theme.DefaultKey, siteDashW, siteDashH)
 	s.close()
 
 	writeBadgeScreens(t, shots)
