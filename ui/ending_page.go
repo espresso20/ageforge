@@ -69,7 +69,7 @@ const (
 	endBlow2        = 5
 	endBlow3        = 8
 	endBlow         = 11
-	endStrikeFrames = 22
+	endStrikeFrames = 24
 
 	// The beginning.
 	endDawnFrames = 20
@@ -274,6 +274,7 @@ type endReck struct {
 	of     []int      // the line each row belongs to
 	first  []int      // each line's first row
 	at     []int      // the frame each line lands at
+	silent []bool     // a verdict: it lands without a spark
 	frames int        // how long the beat is
 }
 
@@ -312,6 +313,7 @@ func endReckFor(v *endView, pal *menuPalette, w int) endReck {
 	for i, l := range v.lines {
 		r.first = append(r.first, len(r.rows))
 		r.at = append(r.at, t)
+		r.silent = append(r.silent, l.kind == elVerdict)
 		for _, row := range wrapInfo(infoLine{segs: endLineSegs(l, l.count, pal, v.plain)}, w) {
 			r.rows = append(r.rows, row)
 			r.of = append(r.of, i)
@@ -422,7 +424,13 @@ func burn(f int) float64 {
 // of the light.
 func (sc *endScene) enter(s endSpan) {
 	sc.heat, sc.strike, sc.flash, sc.ring, sc.shake, sc.landed = 0, 0, 0, -1, 0, 0
-	if s.beat == beatBeginning {
+	switch s.beat {
+	case beatReckoning:
+		// A verdict is heard in still air.
+		if len(sc.reck.silent) > 0 && sc.reck.silent[0] {
+			sc.sparks.a = nil
+		}
+	case beatBeginning:
 		sc.sparks.a = nil
 		if sc.prestige {
 			sc.flash, sc.strike = 0.9, 1
@@ -467,11 +475,11 @@ func (sc *endScene) step() {
 		// A line lands: the ember flares and throws a few sparks. A
 		// verdict lands in silence.
 		for sc.landed < len(sc.reck.at) && sc.reck.at[sc.landed] <= f {
-			sc.landed++
-			if sc.prestige && sc.reck.rows != nil {
+			if sc.prestige && !sc.reck.silent[sc.landed] {
 				sc.strike = 0.9
 				sc.sparks.emit(&sc.rnd, float64(L.ex), float64(L.ey), 5+min(sc.level, 10), 5, 0.7)
 			}
+			sc.landed++
 		}
 	case beatStrike:
 		p := sc.L.word
@@ -533,11 +541,13 @@ func (sc *endScene) pose(s endSpan) {
 	case beatReckoning:
 		sc.landed = len(sc.reck.at)
 	case beatStrike:
+		// A generator of its own: the still is the same every time.
+		rnd := menuRand{s: 0x2545f4914f6cdd1d}
 		sc.heat, sc.strike, sc.flash = 1, 0.7, 0.45
-		sc.sparks.emit(&sc.rnd, float64(p.x)+float64(p.w)/2, float64(p.y+p.h), 90, float64(p.w)*0.95, 1.1)
-		sc.sparks.emit(&sc.rnd, float64(sc.L.w)/2, float64(sc.L.h)*0.62, 60, float64(sc.L.w), 1.2)
+		sc.sparks.emit(&rnd, float64(p.x)+float64(p.w)/2, float64(p.y+p.h), 90, float64(p.w)*0.95, 1.1)
+		sc.sparks.emit(&rnd, float64(sc.L.w)/2, float64(sc.L.h)*0.62, 60, float64(sc.L.w), 1.2)
 		for i := 0; i < 9; i++ {
-			sc.sparks.step(&sc.rnd)
+			sc.sparks.step(&rnd)
 		}
 	case beatBeginning:
 		sc.flash, sc.strike = 0, 0.35
@@ -717,10 +727,21 @@ func (sc *endScene) drawReckoning(g *mGrid, pal *menuPalette, v *endView, f int,
 	}
 }
 
+// endLightGone is the light below which the screen is dark again, and the
+// theme's own weather shows in it.
+const endLightGone = 0.05
+
+// lightUp lights the whole screen by the blow's flash.
+func (sc *endScene) lightUp(g *mGrid, pal *menuPalette) {
+	if sc.flash > endLightGone {
+		light(g, pal, sc.flash)
+	}
+}
+
 // drawStrike: the word for it in iron, every cell lit.
 func (sc *endScene) drawStrike(g *mGrid, pal *menuPalette, v *endView) {
 	L, p := sc.L, sc.L.word
-	light(g, pal, sc.flash)
+	sc.lightUp(g, pal)
 	if sc.ring >= 0 {
 		// The ring: a band of light going out from the middle of the word.
 		cx, cy := float64(p.x)+float64(p.w)/2, float64(p.y)+float64(p.h)/2
@@ -778,7 +799,7 @@ func (sc *endScene) drawBeginning(g *mGrid, pal *menuPalette, v *endView, cur *m
 		// A fall's dawn comes up out of the dark.
 		dim(g, pal, 0, L.dawnTop, L.w, lh, math.Max(0, 1-float64(f+1)/10))
 	}
-	light(g, pal, sc.flash)
+	sc.lightUp(g, pal)
 	sc.sparks.draw(g, pal)
 	if L.wsx > 0 {
 		drawWordmark(g, pal, L.wx, L.wy, L.wsx, sc.t, sc.strike, 0.5, v.plain)

@@ -279,14 +279,10 @@ func (e *ending) Draw(scr tcell.Screen) {
 		(s.beat == beatStrike && f >= endBlow || s.beat == beatBeginning) {
 		if effect := theme.Active().Effect; effect != "" {
 			// The effect that comes in bursts (the glitch, every 64
-			// frames from its 57th) bursts as the flash of the blow goes.
-			blow := endBlow
-			for _, sp := range e.sc.spans {
-				if sp.beat == beatStrike {
-					blow += sp.from
-				}
-			}
-			n := e.sc.frame + 57 - (blow + 9)
+			// frames from its 57th) bursts as the new land comes out of
+			// the light.
+			dawn := e.sc.spans[len(e.sc.spans)-1].from + 9
+			n := e.sc.frame + 57 - dawn + 64
 			drawThemeEffect(scr, x, y, w, h, effect, n, e.view.plain)
 			drawThemeEffect(scr, x, y, w, h, effect, n+29, e.view.plain)
 		}
