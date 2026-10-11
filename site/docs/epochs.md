@@ -20,7 +20,7 @@ Ages and epochs do different jobs: **ages are about what you build; epochs are a
 
 The Cosmic Era is the only epoch with 4 ages instead of 3.
 
-On a first run the Modern Age, where a full run's prestige comes, arrives after about a week (the smoke-test bot takes about 4.9 days); prestige opens earlier, at the Medieval Age, as an early taste. From the Bronze Age on, ages and the clocks inside them (event durations, cooldowns, awakenings) run 2.6 times as long as on the earlier three-day curve. The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production.
+On a first run the Modern Age, where a full run's prestige comes, arrives after about a week; prestige opens earlier, at the Medieval Age, as an early taste. From the Bronze Age on, ages and the clocks inside them (event durations, cooldowns, awakenings) run 2.6 times as long as on the earlier three-day curve. The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production.
 
 ### What each epoch is like
 
@@ -361,8 +361,6 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 ## Tips and Common Mistakes
 
 **Know which faith band you are in.** Below a faith strength of 25%, your good-event odds are 40% and a fated doom strikes 90% of the time. That is where a typical town sits, and the game is balanced for it. Storage has nothing to do with it: faith strength measures your faith buildings against a moderate set, and how much of your faith you have kept. If you want better odds, build past the moderate set early and keep the buildings staffed. Check the faith row before you advance into a new epoch: the roll reads the strength it shows.
-
-**Culture storage matters as much as culture production.** The tier check uses the share of storage, not the raw amount. A small culture storage at 90% beats a large one at 10%. Don't build more culture storage than you can fill before the transition.
 
 **The anti-streak rule is your safety net during normal play.** After two bad events in a row, the next one is good or mixed; after three good ones, the next is usually bad or mixed. See [Events](events.md#anti-streak-system).
 

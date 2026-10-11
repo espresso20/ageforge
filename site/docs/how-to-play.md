@@ -92,7 +92,7 @@ The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it 
 
 ## A week-long first run
 
-A first run takes about **a week of real time** to reach the Modern Age, where a full run's prestige comes (prestige opens earlier, at the Medieval Age about 20 hours in, as an early taste that pays little). A tick is 2 seconds of real time.
+A first run takes about **a week of real time** to reach the Modern Age, where a full run's prestige comes (prestige opens earlier, at the Medieval Age, as an early taste that pays little). A tick is 2 seconds of real time.
 
 That is the first run. After a prestige, every age the run completed runs faster the next time, twice as fast after one completion and up to 4.2x after ten (4x at once for ages 6 or more behind your record), so later runs reach the Modern Age much sooner (see [Era Mastery](prestige.md#era-mastery)).
 
