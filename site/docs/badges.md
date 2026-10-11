@@ -56,7 +56,7 @@ A badge's rarity follows its tier unless the badge says otherwise: a few are rar
 | **Wonders** | 22 | Raising each age's wonder |
 | **Maximalists** | 22 | Having most of the buildings an age allows built at the same time, before you leave it |
 | **Research** | 22 | Researching every tech of an age in one run |
-| **Lineages** | 75 | Building a lineage's buildings across all your runs: five rungs for each of the 15 lineages |
+| **Lineages** | 75 | Building a lineage's buildings across all your runs: five rungs for each of the 14 lineages and for storage |
 | **Payrolls** | 22 | Workers at work in one domain at the same time: two rungs for each of 11 domains |
 | **Resources** | 94 | Producing a resource across all your runs: four rungs for the resources of a first run, three for the later ones |
 | **Civilizations** | 44 | Four for each civilization: meeting it, allying with it, taking five of its deals, and making peace after a war with it |
@@ -112,7 +112,7 @@ A ladder can be lowered between versions of the game. An account that had alread
 
 ### Lineage ladders
 
-Each lineage has five rungs: Hobbyist, Contractor, Magnate, Tycoon and Dynasty. They count buildings of the lineage built across all your runs.
+Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contractor, Magnate, Tycoon and Dynasty. They count buildings of the lineage built across all your runs.
 
 | Lineage | Rungs |
 |---|---|
