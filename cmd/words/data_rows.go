@@ -230,7 +230,7 @@ var hiddenFields = map[string]string{
 	"Pred": "a key", "Emblem": "an emblem's name or glyph", "Set": "a key", "Aliases": "keys older saves used",
 	"Only": "keys", "Except": "keys", "Emblems": "emblem names", "Theme": "a theme key", "Badge": "a badge key",
 	"Rule": "a key", "Why": "a note for developers", "Fact": "a key", "Lane": "a key", "Prerequisites": "tech keys",
-	"AnyOf": "tech keys", "Icon": "a glyph", "Color": "a color name", "PrimaryResource": "a resource key",
+	"AnyOf": "tech keys", "Icon": "a glyph", "Color": "a color name", "PrimaryResource": "a resource key", "BraceMaterials": "resource keys",
 	"EnergyResource": "a resource key", "CatastropheKey": "a key", "Sentiment": "a key", "Tech": "a tech key",
 	"EffectKey": "a key", "EffectType": "a key", "From": "a key", "To": "a key", "RequiredBld": "a building key",
 	"Specialty": "a resource key", "Personality": "a key the code and the flavor catalogs match on",

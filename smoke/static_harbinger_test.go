@@ -2,6 +2,7 @@ package smoke
 
 import (
 	"maps"
+	"math"
 	"slices"
 	"strings"
 	"testing"
@@ -198,20 +199,33 @@ func TestBraceTakesEffort(t *testing.T) {
 	if passages != len(cosmic) || tears != len(cosmic) || ordinary != len(rows)-2*len(cosmic) || ordinary == 0 {
 		t.Fatalf("%d Last Passage rows, %d Reality Tear rows and %d ordinary rows of %d for %v", passages, tears, ordinary, len(rows), cosmic)
 	}
-	// The ceiling bites: without it the price was one and a half to three
-	// times a moderate store from the Colonial Age on. It holds some
-	// material in every age from the Classical on, and every material in two
-	// (the Industrial and Modern Ages), where the price is then quicker to
-	// make than a third of the warning.
-	if capped["iron_age"] > 1 || capped["colonial_age"] == 0 || capped["cyberpunk_age"] == 0 || capped["space_age"] == 0 {
-		t.Errorf("materials on their ceiling by age: %v; want the ceiling to hold from the Colonial Age to the Space Age", capped)
+	// The ceiling bites. Before the storage wall the price without it was one
+	// and a half to three times a moderate store from the Colonial Age on.
+	// Since the wall a store is sized by what an age's buildings cost
+	// (config/storage_rule.go), not by what the age makes, and the ceiling
+	// holds some material in every age a doom can come in but the Atomic
+	// Age. It holds every material in two, the Colonial and Industrial Ages
+	// (gold and steel both), where the price is then quicker to make than a
+	// third of the warning. The counts are read from the price table.
+	wantCapped := map[string]int{
+		"iron_age": 2, "classical_age": 1, "medieval_age": 2,
+		"renaissance_age": 1, "colonial_age": 2, "industrial_age": 2,
+		"victorian_age": 1, "electric_age": 1, "atomic_age": 0,
+		"modern_age": 1, "information_age": 2, "digital_age": 2,
+		"cyberpunk_age": 1, "fusion_age": 1, "space_age": 1,
 	}
-	if want := []string{"industrial_age", "modern_age"}; !slices.Equal(allCapped, want) {
+	if !maps.Equal(capped, wantCapped) {
+		t.Errorf("materials on their ceiling by age: %v; want %v", capped, wantCapped)
+	}
+	if want := []string{"colonial_age", "industrial_age"}; !slices.Equal(allCapped, want) {
 		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same two", allCapped, want)
 	}
 	// The final era's two threads have no ceiling, and a moderate builder's
-	// store holds them all the same, the Last Passage's with little to spare
-	// in the age it arrives in.
+	// store holds them all the same. The Last Passage's takes about a third
+	// of it in the age it arrives in (0.35: 11Q dark matter of a store of
+	// 31Q). Before the storage wall it took 0.97 and left little room: the
+	// price has not moved, the Interstellar Age's store is about 2.8 times what
+	// it was.
 	for _, b := range BraceStoreRows(rows, income) {
 		if b.Epoch != "cosmic_era" {
 			if b.StoreShare > 0.6+1e-9 {
@@ -222,8 +236,8 @@ func TestBraceTakesEffort(t *testing.T) {
 		if len(b.Capped) != 0 || b.StoreShare <= 0 || b.StoreShare > 1 {
 			t.Errorf("%s (Last Passage %v) in %s: the largest part is %.2f of a moderate store with %v on a ceiling; want it held and no ceiling", b.Epoch, b.LastPassage, b.Age, b.StoreShare, b.Capped)
 		}
-		if b.LastPassage && b.Age == cosmic[0] && b.StoreShare < 0.9 {
-			t.Errorf("the Last Passage in %s takes %.2f of a moderate store; it was 0.97, and the wiki says it leaves little room", b.Age, b.StoreShare)
+		if b.LastPassage && b.Age == cosmic[0] && math.Abs(b.StoreShare-0.35) > 0.02 {
+			t.Errorf("the Last Passage in %s takes %.2f of a moderate store, want 0.35", b.Age, b.StoreShare)
 		}
 	}
 

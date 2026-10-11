@@ -70,8 +70,8 @@ func lastPassageAppeaseCost(epochKey, age string, level int) map[string]float64 
 	return lastPassageAppeaseCostIn(rules.Core(), epochKey, age, level)
 }
 
-func harbingerBraceBasis(epochKey string) map[string]float64 {
-	return harbingerBraceBasisIn(rules.Core(), epochKey)
+func eraBraceMaterials(epochKey string) []string {
+	return eraBraceMaterialsIn(rules.Core(), epochKey)
 }
 
 // oldEraBrace is the price an ordinary doom's Brace had before it was priced

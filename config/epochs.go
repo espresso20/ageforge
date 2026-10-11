@@ -18,6 +18,17 @@ type EpochDef struct {
 	EnergyResource  string   // dominant energy/fuel resource for this era
 	CatastropheKey  string   // key used to look up the catastrophe event definition for this epoch
 	Description     string
+	// BraceMaterials is what a doom of this era may ask Brace in: a written
+	// list, not read from the age gates. It was once worked out from them
+	// (every resource an advance of the era asked for, held since the era
+	// began, less faith and culture), and so grew whenever the gates named
+	// another material. The lists are what that gave before the gates were
+	// derived from the stores (config/storage_rule.go). Of them an age asks
+	// only what its buildings make (game.braceMaterials): the Modern Age
+	// buys its data at the market, so data is asked from the Information Age
+	// on. The Neon Era's advances also asked for crypto, which no building
+	// makes and no Brace ever asked for, so it is not written here.
+	BraceMaterials []string
 }
 
 // Epochs returns all 7 epoch definitions in order.
@@ -30,6 +41,7 @@ func Epochs() []EpochDef {
 			PrimaryResource: "wood", EnergyResource: "food",
 			CatastropheKey: "meteor_impact",
 			Description:    "Humanity's first steps with wood, stone and fire.",
+			BraceMaterials: []string{"food", "wood"},
 		},
 		{
 			Name: "Iron Era", Key: "iron_era", Order: 1,
@@ -38,6 +50,7 @@ func Epochs() []EpochDef {
 			PrimaryResource: "iron", EnergyResource: "coal",
 			CatastropheKey: "barbarian_invasion",
 			Description:    "Empires of iron and faith rise and fall.",
+			BraceMaterials: []string{"gold", "iron", "stone"},
 		},
 		{
 			Name: "Steel Era", Key: "steel_era", Order: 2,
@@ -46,6 +59,7 @@ func Epochs() []EpochDef {
 			PrimaryResource: "steel", EnergyResource: "coal",
 			CatastropheKey: "industrial_collapse",
 			Description:    "Steam and steel carry trade around the globe.",
+			BraceMaterials: []string{"gold", "steel"},
 		},
 		{
 			Name: "Electric Era", Key: "electric_era", Order: 3,
@@ -54,6 +68,7 @@ func Epochs() []EpochDef {
 			PrimaryResource: "steel", EnergyResource: "electricity",
 			CatastropheKey: "nuclear_meltdown",
 			Description:    "Electricity and the atom reshape civilization.",
+			BraceMaterials: []string{"electricity", "oil", "steel"},
 		},
 		{
 			Name: "Digital Era", Key: "digital_era", Order: 4,
@@ -62,6 +77,7 @@ func Epochs() []EpochDef {
 			PrimaryResource: "data", EnergyResource: "electricity",
 			CatastropheKey: "digital_collapse",
 			Description:    "Data becomes the thing everyone wants.",
+			BraceMaterials: []string{"data", "electricity", "gold"},
 		},
 		{
 			Name: "Neon Era", Key: "neon_era", Order: 5,
@@ -70,6 +86,7 @@ func Epochs() []EpochDef {
 			PrimaryResource: "plasma", EnergyResource: "plasma",
 			CatastropheKey: "solar_event",
 			Description:    "Augmented reality and the conquest of the solar system.",
+			BraceMaterials: []string{"data", "electricity"},
 		},
 		{
 			Name: "Cosmic Era", Key: "cosmic_era", Order: 6,
@@ -78,6 +95,7 @@ func Epochs() []EpochDef {
 			PrimaryResource: "dark_matter", EnergyResource: "antimatter",
 			CatastropheKey: "reality_fracture",
 			Description:    "Between stars and beyond time itself.",
+			BraceMaterials: []string{"dark_matter", "titanium"},
 		},
 	}
 }

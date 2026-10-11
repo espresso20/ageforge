@@ -156,11 +156,10 @@ const (
 	// store from the Colonial Age on, one and a half to three times what
 	// five copies of each vault hold, and the smoke bot's store held it in
 	// one doom's thread of seven: an answer that asked for a storage plan
-	// before it asked for anything else. The materials are the era's core resources (what its
-	// remaining advances ask for, held since the era began) that the
-	// moderate economy's buildings make by that age (braceMaterials): the
-	// Modern Age buys its data at the market and no age makes crypto, so
-	// neither is asked for there.
+	// before it asked for anything else. The materials are the era's written
+	// list (config.EpochDef.BraceMaterials) that the moderate economy's
+	// buildings make by that age (braceMaterials): the Modern Age buys its
+	// data at the market, so it is not asked for there.
 	// It used to be 12% of the most the era's advances ask of each, the same
 	// in every age of the era. Requirements grow far slower than income, so
 	// the price collapsed as the ages passed (the Electric Era's: 188
@@ -704,21 +703,6 @@ func (ge *GameEngine) harbingerDisplay() (CatastropheTier, float64) {
 
 // --- Costs --------------------------------------------------------------------
 
-// harbingerAdvanceAges are the ages still to be entered from epochKey's first
-// age through the passage: its later ages and the next epoch's first age. In
-// the final epoch, whose passage is prestige, that is its own later ages.
-func harbingerAdvanceAges(set *rules.Set, epochKey string) []string {
-	ep, ok := set.Era(epochKey)
-	if !ok || len(ep.Ages) == 0 {
-		return nil
-	}
-	out := append([]string(nil), ep.Ages[1:]...)
-	if next, ok := set.NextEra(epochKey); ok && len(next.Ages) > 0 {
-		out = append(out, next.Ages[0])
-	}
-	return out
-}
-
 // harbingerHeldSinceStart reports the resources unlocked by the time the
 // player enters epochKey's first age (the ages' UnlockResources, cumulative),
 // so a price built from them is payable in every age of the epoch.
@@ -840,34 +824,25 @@ func ceilSignificant(v float64, sig int) float64 {
 	return math.Ceil(float64(v*mag)-1e-9) / mag
 }
 
-// harbingerBraceBasisIn is, per core resource, the most any remaining advance
-// of epochKey asks for it in set, for resources held since the epoch began,
-// minus faith and culture (they belong to Appease). Pure.
-func harbingerBraceBasisIn(set *rules.Set, epochKey string) map[string]float64 {
-	held := harbingerHeldSinceStart(set, epochKey)
-	basis := map[string]float64{}
-	for _, a := range harbingerAdvanceAges(set, epochKey) {
-		def, _ := set.Age(a)
-		for k, v := range def.ResourceReqs {
-			if k == "faith" || k == "culture" || !held[k] {
-				continue
-			}
-			if v > basis[k] {
-				basis[k] = v
-			}
-		}
+// eraBraceMaterialsIn is what a doom of epochKey may ask Brace in, in set:
+// the era's written list (config.EpochDef.BraceMaterials). It is not read
+// from the age gates: when it was, a gate that named another material put
+// that material into every Brace of the era. Pure.
+func eraBraceMaterialsIn(set *rules.Set, epochKey string) []string {
+	ep, ok := set.Era(epochKey)
+	if !ok {
+		return nil
 	}
-	return basis
+	return append([]string(nil), ep.BraceMaterials...)
 }
 
 // braceMaterials is what a thread of epochKey whose harbinger arrives in
-// age pays Brace in: the era's core resources (harbingerBraceBasisIn) that
+// age pays Brace in: the era's Brace materials (eraBraceMaterialsIn) that
 // the moderate economy's buildings make by that age, sorted. A resource the
-// age only buys at the market (data in the Modern Age) or that nothing but
-// a wonder makes (crypto) is left out. Pure.
+// age only buys at the market (data in the Modern Age) is left out. Pure.
 func braceMaterials(set *rules.Set, epochKey, age string) []string {
 	var out []string
-	for k := range harbingerBraceBasisIn(set, epochKey) {
+	for _, k := range eraBraceMaterialsIn(set, epochKey) {
 		if set.BuildingOutput(k, age) > 0 {
 			out = append(out, k)
 		}
