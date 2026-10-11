@@ -485,12 +485,8 @@ func TestPanelsListAlwaysWhole(t *testing.T) {
 func TestNextAgeRowKeepsGoalsWhole(t *testing.T) {
 	st := game.GameState{
 		NextAge: "iron_age", NextAgeName: "Iron Age",
-		NextAgeResReqs: map[string]float64{"food": 80000, "iron": 8000, "stone": 16000, "wood": 40000},
-		NextAgeBldReqs: map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 5},
-		Resources: map[string]game.ResourceState{
-			"food": {Amount: 49600}, "iron": {Amount: 15400}, "stone": {Amount: 15300}, "wood": {Amount: 1410},
-		},
-		Buildings:           map[string]game.BuildingState{"lumber_mill": {Count: 4}, "quarry": {Count: 3}, "scriptorium": {Count: 3}},
+		NextAgeBldReqs:      map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 5, "smelter": 6, "ironworks": 4, "temple": 5, "market": 3},
+		Buildings:           map[string]game.BuildingState{"lumber_mill": {Count: 4}, "quarry": {Count: 3}, "scriptorium": {Count: 5}, "smelter": {Count: 2}, "ironworks": {Count: 1}, "temple": {Count: 2}},
 		CurrentAgeWonderKey: "stonehenge", CurrentAgeWonderName: "Stonehenge",
 	}
 	goals := ageGoals(st)
@@ -517,7 +513,7 @@ func TestNextAgeRowKeepsGoalsWhole(t *testing.T) {
 			t.Errorf("width %d: %d of %d requirements listed and no count of the rest:\n%s", w, listed, len(goals), joined)
 		}
 	}
-	if all := untag(strings.Join(ageProgressLines(st, 140, 2), "\n")); !strings.Contains(all, "✓ Iron 15.4K/8K") || !strings.Contains(all, "✗ Wonder: Stonehenge") {
+	if all := untag(strings.Join(ageProgressLines(st, 140, 2), "\n")); !strings.Contains(all, "✓ "+game.BuildingName("scriptorium")+" 5/5") || !strings.Contains(all, "✗ Wonder: Stonehenge") {
 		t.Errorf("a wide strip lists every requirement:\n%s", all)
 	}
 	if small := untag(strings.Join(ageProgressLines(st, 78, 2), "\n")); !strings.Contains(small, "✓ 1 met") && !strings.Contains(small, "more") {

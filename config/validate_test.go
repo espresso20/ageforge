@@ -120,18 +120,6 @@ func TestConfig_AgeKeysExist(t *testing.T) {
 	buildingKeys := BuildingByKey()
 
 	for _, age := range ages {
-		for res := range age.ResourceReqs {
-			if _, ok := resourceKeys[res]; !ok {
-				t.Errorf("\n"+
-					"  Bad resource key in age advancement requirements\n"+
-					"  File:     config/ages.go\n"+
-					"  Age:      %q (%s)\n"+
-					"  Field:    ResourceReqs\n"+
-					"  Got:      %q  <-- this resource doesn't exist\n"+
-					"  Fix:      Check config/resources.go for valid resource keys%s\n",
-					age.Key, age.Name, res, hintFromMap(res, resourceKeys))
-			}
-		}
 		for bld := range age.BuildingReqs {
 			if _, ok := buildingKeys[bld]; !ok {
 				t.Errorf("\n"+

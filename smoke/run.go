@@ -289,8 +289,6 @@ type AgeGates struct {
 	WonderBuilt int `json:"wonder_built"`
 	// Buildings: every building the next age asks for stands.
 	Buildings int `json:"buildings"`
-	// Resources: the store holds every resource the next age asks for.
-	Resources int `json:"resources"`
 }
 
 // CycleSplit is the time from a fresh start to prestige.
@@ -797,13 +795,6 @@ func (r *runner) trackGates(st game.GameState) {
 			}
 		}
 		mark(&r.gates.Buildings, blds)
-		res := true
-		for k, v := range st.NextAgeResReqs {
-			if st.Resources[k].Amount < v {
-				res = false
-			}
-		}
-		mark(&r.gates.Resources, res)
 	}
 	bought := st.Trade.TotalBought["knowledge"]
 	if bought < r.boughtK {
@@ -975,7 +966,7 @@ func (r *runner) enterAge(st game.GameState) {
 	r.quietMax, r.quietAfter = 0, ""
 	r.stretchOpen, r.quietBest = false, QuietStretch{}
 	r.knowSum, r.knowTicks, r.poolAll = 0, 0, 0
-	r.gates = AgeGates{WonderTech: -1, WonderFunded: -1, WonderBuilt: -1, Buildings: -1, Resources: -1}
+	r.gates = AgeGates{WonderTech: -1, WonderFunded: -1, WonderBuilt: -1, Buildings: -1}
 	r.wonder = ""
 	r.boughtK0 = r.boughtK
 	r.made = nil

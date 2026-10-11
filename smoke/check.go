@@ -100,8 +100,7 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 }
 
 // storageProblems flags storage that can never grow again in this age, a
-// next-age resource requirement no reachable storage can hold, a required
-// building that can't be built or whose last copy can't fit under any
+// required building that can't be built or whose last copy can't fit under any
 // reachable cap, and a tech the age's wonder waits for (its keystone, or
 // one the keystone stands on) whose price no reachable knowledge storage
 // can hold.
@@ -110,14 +109,6 @@ func storageProblems(st game.GameState, defs map[string]config.BuildingDef) []pr
 	caps, stall := storageLadder(st, defs)
 	if stall != nil {
 		out = append(out, problem{"storage_unreachable", stall.message(st)})
-	}
-	for _, res := range sortedKeys(st.NextAgeResReqs) {
-		need := st.NextAgeResReqs[res]
-		if got := caps[res]; need > got {
-			out = append(out, problem{"requirement_over_storage",
-				fmt.Sprintf("advancing to %s needs %s %s but the most storage reachable in %s is %s",
-					st.NextAge, num(need), res, st.Age, num(got))})
-		}
 	}
 	for _, key := range keystoneChain(st) {
 		if t := st.Research.Techs[key]; t.Cost > caps["knowledge"] && key != st.Research.CurrentTech {
@@ -347,15 +338,10 @@ func lastCopyOverStorage(st game.GameState, bld string, defs map[string]config.B
 }
 
 // requiredOverStorage names the first thing the player must buy to finish the
-// age that the caps cannot hold, or "" when the caps hold all of it: a
-// next-age resource requirement, the last copy of a required building, or the
-// knowledge of a tech the age's wonder waits for.
+// age that the caps cannot hold, or "" when the caps hold all of it: the last
+// copy of a required building, or the knowledge of a tech the age's wonder
+// waits for.
 func requiredOverStorage(st game.GameState, defs map[string]config.BuildingDef, caps map[string]float64) string {
-	for _, res := range sortedKeys(st.NextAgeResReqs) {
-		if need := st.NextAgeResReqs[res]; need > caps[res] {
-			return fmt.Sprintf("%s %s", num(need), res)
-		}
-	}
 	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
 		if def, ok := defs[bld]; ok && def.Category != "wonder" {
 			if res, cost, _, over := lastCopyOverStorage(st, bld, defs, caps); over {
@@ -380,21 +366,6 @@ func Blockers(st game.GameState) string {
 	if stall != nil {
 		// The root cause when it is there: nothing below can be fixed.
 		out = append(out, fmt.Sprintf("storage stuck (next %s costs %s %s, over the %s cap)", stall.key, num(stall.cost), stall.res, num(stall.cap)))
-	}
-	for _, res := range sortedKeys(st.NextAgeResReqs) {
-		need := st.NextAgeResReqs[res]
-		rs := st.Resources[res]
-		if rs.Amount >= need {
-			continue
-		}
-		note := ""
-		switch {
-		case rs.Storage < need:
-			note = ", cap below requirement"
-		case rs.Rate <= 0:
-			note = ", not being produced"
-		}
-		out = append(out, fmt.Sprintf("%s %s/%s (cap %s, %+.3g/t%s)", res, num(rs.Amount), num(need), num(rs.Storage), rs.Rate, note))
 	}
 	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
 		need := st.NextAgeBldReqs[bld]

@@ -215,10 +215,6 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 			p.queued[k]++
 		}
 	}
-	for res, v := range st.NextAgeResReqs {
-		p.target[res] += v
-		p.capNeed[res] = math.Max(p.capNeed[res], v)
-	}
 	// Sorted: several buildings add to one resource's target, and a float
 	// sum in map order moves the last bit from run to run.
 	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
@@ -505,7 +501,7 @@ func (b *Bot) planAhead(st game.GameState) {
 	for res, r := range st.Resources {
 		if r.Unlocked {
 			income := (math.Max(r.Rate, 0) + ahead[res]) * planIncomeSlack
-			budget[res] = p.amt[res] + float64(income*b.CheckInTicks) - st.NextAgeResReqs[res]
+			budget[res] = p.amt[res] + float64(income*b.CheckInTicks)
 		}
 	}
 	covers := func(c map[string]float64) bool {
@@ -1818,7 +1814,7 @@ func (b *Bot) bankWonder(p *plan) {
 		if left <= 0 {
 			continue
 		}
-		keep := p.st.NextAgeResReqs[res] + p.hold[res]
+		keep := p.hold[res]
 		onlyWonder := p.target[res]-left <= keep
 		switch {
 		case p.invest && !onlyWonder && b.CheckInTicks > 0:
@@ -1871,7 +1867,6 @@ func (b *Bot) research(p *plan) {
 		}
 		return
 	}
-	req := p.st.NextAgeResReqs["knowledge"]
 	capK := p.storage["knowledge"]
 	rate := p.st.Resources["knowledge"].Rate
 	for _, key := range b.restOrder(p) {
@@ -1879,7 +1874,7 @@ func (b *Bot) research(p *plan) {
 		if !t.Available || t.Researched || t.Cost > k {
 			continue
 		}
-		ok := k-t.Cost >= req
+		ok := k >= t.Cost
 		if !ok && k >= 0.98*capK && rate > 0 {
 			// Knowledge is being wasted at the cap; spend it if refilling
 			// takes less time than the slowest other requirement.
@@ -1913,11 +1908,10 @@ func (b *Bot) startResearch(p *plan, key string) bool {
 	return true
 }
 
-// festival spends culture on a production buff when this age does not ask
-// for culture and it is piling up.
+// festival spends culture on a production buff when it is piling up.
 func (b *Bot) festival(p *plan) {
 	c, ok := p.st.Resources["culture"]
-	if !ok || !c.Unlocked || p.st.NextAgeResReqs["culture"] > 0 || c.Amount < 0.8*c.Storage {
+	if !ok || !c.Unlocked || c.Amount < 0.8*c.Storage {
 		return
 	}
 	if !p.open(config.FeatureFestivals) {

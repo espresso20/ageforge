@@ -1168,12 +1168,11 @@ func TestNoCosmicFateLeaksBeforeItsHarbinger(t *testing.T) {
 }
 
 // newProgressManagerMet is ge's progress manager with the current age's
-// requirements met (every resource and building requirement removed).
+// requirements met (every building requirement removed).
 func newProgressManagerMet(t *testing.T, ge *GameEngine) *ProgressManager {
 	t.Helper()
 	pm := NewProgressManager()
 	for i := range pm.ages {
-		pm.ages[i].ResourceReqs = nil
 		pm.ages[i].BuildingReqs = nil
 	}
 	pm.ageWonders = map[string]string{}

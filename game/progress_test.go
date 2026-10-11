@@ -42,21 +42,37 @@ func TestProgressManager_GetAgeName(t *testing.T) {
 
 func TestProgressManager_CheckAdvancement(t *testing.T) {
 	pm := NewProgressManager()
-	rm := NewResourceManager()
 	bm := NewBuildingManager()
 
 	// Should not advance with nothing
-	next := pm.CheckAdvancement("primitive_age", rm, bm)
+	next := pm.CheckAdvancement("primitive_age", bm)
 	if next != "" {
-		t.Errorf("should not advance with no resources, got %v", next)
+		t.Errorf("should not advance with no buildings, got %v", next)
 	}
 }
 
 func TestProgressManager_GetRequirements(t *testing.T) {
 	pm := NewProgressManager()
 
-	resReqs, bldReqs := pm.GetRequirementsForNext("primitive_age")
-	if len(resReqs) == 0 && len(bldReqs) == 0 {
+	if bldReqs := pm.GetRequirementsForNext("primitive_age"); len(bldReqs) == 0 {
 		t.Error("next age should have some requirements")
+	}
+}
+
+// A gate asks for buildings and the wonder, and no amount of any resource:
+// with empty stores, the buildings and the wonder in place open it, and the
+// check never reads a store.
+func TestProgressManager_GateAsksForNoResources(t *testing.T) {
+	pm := NewProgressManager()
+	bm := NewBuildingManager()
+	for key, n := range pm.GetUnlocks(pm.GetNextAge("primitive_age")).BuildingReqs {
+		bm.counts[key] = n
+	}
+	if next := pm.CheckAdvancement("primitive_age", bm); next != "" {
+		t.Fatalf("the gate opened without the wonder: %q", next)
+	}
+	bm.counts[pm.WonderForAge("primitive_age")] = 1
+	if next := pm.CheckAdvancement("primitive_age", bm); next != "stone_age" {
+		t.Errorf("buildings and wonder in place, empty stores: gate leads to %q, want stone_age", next)
 	}
 }

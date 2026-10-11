@@ -384,11 +384,6 @@ func (s *siteStage) until(what string, done func(st game.GameState) bool) {
 		if i > 20000 {
 			st := s.eng.GetState()
 			var short []string
-			for _, k := range sortedKeysOf(st.NextAgeResReqs) {
-				if rs := st.Resources[k]; rs.Storage < st.NextAgeResReqs[k] {
-					short = append(short, fmt.Sprintf("%s storage %.0f of %.0f", k, rs.Storage, st.NextAgeResReqs[k]))
-				}
-			}
 			for _, k := range sortedKeysOf(st.NextAgeBldReqs) {
 				if st.Buildings[k].Count < st.NextAgeBldReqs[k] {
 					short = append(short, fmt.Sprintf("%s %d of %d", k, st.Buildings[k].Count, st.NextAgeBldReqs[k]))

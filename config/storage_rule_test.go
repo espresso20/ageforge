@@ -3,10 +3,9 @@ package config
 import "testing"
 
 // TestStorageTablesFollowTheRule recomputes every storage building's size
-// and every gate's amounts from the storage rule (storage_rule.go) and holds
-// the tables to it. A size or an amount typed by hand that the rule does not
-// give fails here; so does a price or a gate count that moved without the
-// sizes being worked out again.
+// from the storage rule (storage_rule.go) and holds the tables to it. A size
+// typed by hand that the rule does not give fails here; so does a price or a
+// gate count that moved without the sizes being worked out again.
 func TestStorageTablesFollowTheRule(t *testing.T) {
 	defs := BaseBuildings()
 	ages := Ages()
@@ -41,19 +40,6 @@ func TestStorageTablesFollowTheRule(t *testing.T) {
 	}
 	if seen != len(sizes) || seen == 0 {
 		t.Fatalf("%d storage buildings in the table, %d sized by the rule", seen, len(sizes))
-	}
-	gates := GateRuleAmounts(defs, ages)
-	for _, a := range ages {
-		want := gates[a.Key]
-		if len(a.ResourceReqs) != len(want) {
-			t.Errorf("the gate into the %s asks for %d resources, the rule gives %d: %v against %v", a.Name, len(a.ResourceReqs), len(want), a.ResourceReqs, want)
-			continue
-		}
-		for r, v := range want {
-			if a.ResourceReqs[r] != v {
-				t.Errorf("the gate into the %s asks for %s %s, the rule gives %s", a.Name, FormatRateValue(a.ResourceReqs[r]), r, FormatRateValue(v))
-			}
-		}
 	}
 }
 

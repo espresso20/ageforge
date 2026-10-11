@@ -48,23 +48,13 @@ func TestNormalizeAgeRequirements_LateAgesNoBuildingFloor(t *testing.T) {
 }
 
 // Idempotency: Ages() rebuilds from literals each call, so two calls must yield
-// identical ResourceReqs with no compounding of the multiplier.
+// identical BuildingReqs with no compounding of the multiplier.
 func TestNormalizeAgeRequirements_Idempotent(t *testing.T) {
 	first := AgeByKey()
 	second := AgeByKey()
 
 	for key, a1 := range first {
 		a2 := second[key]
-		if len(a1.ResourceReqs) != len(a2.ResourceReqs) {
-			t.Fatalf("age %q ResourceReqs len changed between calls: %d vs %d",
-				key, len(a1.ResourceReqs), len(a2.ResourceReqs))
-		}
-		for res, v1 := range a1.ResourceReqs {
-			if v2 := a2.ResourceReqs[res]; v1 != v2 {
-				t.Errorf("age %q resource %q differs across Ages() calls: %v vs %v (compounding?)",
-					key, res, v1, v2)
-			}
-		}
 		for bld, c1 := range a1.BuildingReqs {
 			if c2 := a2.BuildingReqs[bld]; c1 != c2 {
 				t.Errorf("age %q building %q differs across Ages() calls: %d vs %d",

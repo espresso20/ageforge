@@ -121,12 +121,7 @@ func TestPlanAdvance_AdvancesWhenReadyAndDropsTheOldAge(t *testing.T) {
 		t.Fatal("advanced before the requirements were met")
 	}
 	// Meet the Stone Age gate by hand.
-	reqs, blds := ge.progress.GetRequirementsForNext(ge.age)
-	for r, v := range reqs {
-		ge.Resources.resources[r].Storage = v * 2
-		setAmount(ge, r, v)
-	}
-	for k, n := range blds {
+	for k, n := range ge.progress.GetRequirementsForNext(ge.age) {
 		ge.Buildings.counts[k] = n
 	}
 	w := ge.progress.WonderForAge(ge.age)
@@ -203,12 +198,7 @@ func planAdvanceAway(t *testing.T, autoRecruit bool) *GameEngine {
 		t.Fatal(err)
 	}
 	// Meet the Stone Age gate by hand.
-	reqs, blds := ge.progress.GetRequirementsForNext(ge.age)
-	for r, v := range reqs {
-		ge.Resources.resources[r].Storage = v * 2
-		setAmount(ge, r, v)
-	}
-	for k, n := range blds {
+	for k, n := range ge.progress.GetRequirementsForNext(ge.age) {
 		ge.Buildings.counts[k] = max(ge.Buildings.counts[k], n)
 	}
 	ge.Buildings.counts[ge.progress.WonderForAge(ge.age)] = 1

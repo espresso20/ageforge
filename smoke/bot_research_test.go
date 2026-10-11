@@ -2,7 +2,6 @@ package smoke
 
 import (
 	"reflect"
-	"slices"
 	"strings"
 	"testing"
 
@@ -120,51 +119,6 @@ func TestBotResearchesTheKeystoneFirst(t *testing.T) {
 	b.research(p)
 	if got := ge.GetState().Research.CurrentTech; got != "language" {
 		t.Errorf("after the keystone the bot is researching %q, want the cheapest (language, a spine tech of the first age)", got)
-	}
-}
-
-// TestBotCountsATechOnlySourceAsRequired: in the Modern Age the Information
-// Age asks for steel and no Modern building makes it: Steel Forging's flat
-// output is its only source (Satellite Tech's data is the other). So the bot
-// must research them too. Every gate now asks for the raw materials, so the
-// Steel Forging chain and Satellite Tech are on the Modern wonder's keystone
-// chain already; the second half takes the wonder and the required
-// buildings away, so that what is left is only what the resources ask.
-func TestBotCountsATechOnlySourceAsRequired(t *testing.T) {
-	ge, b := botIn(t, "modern_age")
-	p := b.newPlan(ge.GetState())
-	if p.st.NextAgeResReqs["steel"] <= 0 || b.madeHere(p, "steel") {
-		t.Fatalf("setup: the Information Age asks for %v steel, a Modern building makes it: %v", p.st.NextAgeResReqs["steel"], b.madeHere(p, "steel"))
-	}
-	for _, key := range []string{"steel_forging", "satellite_tech"} {
-		if !b.unblocked(p, key, true) {
-			t.Fatalf("setup: %s should be the only source of a resource the Information Age asks for", key)
-		}
-	}
-	for _, key := range []string{"steel_forging", "satellite_tech"} {
-		if !slices.Contains(p.must, key) {
-			t.Errorf("the whole age cannot be left without %s: %v", key, p.must)
-		}
-	}
-	// With nothing else required, the tech-only sources stand alone, each
-	// after the chain it stands on (by the cost of the tech, cheapest first).
-	p.st.CurrentAgeWonderKey = ""
-	p.needBld = nil
-	got := b.mustTechs(p)
-	want := []string{"tool_making", "stoneworking", "bronze_working", "iron_smelting", "steel_forging"}
-	if len(got) < len(want) || !reflect.DeepEqual(got[:len(want)], want) {
-		t.Errorf("what only the resources ask for: %v, want it to begin %v", got, want)
-	}
-	if !slices.Contains(got, "satellite_tech") {
-		t.Errorf("what only the resources ask for: %v, want Satellite Tech", got)
-	}
-	// Satellite Tech stands on the whole chain behind it (aviation and
-	// rocketry among it), and nothing else is counted: the Information Age's
-	// techs make nothing the Information Age asks for in the Modern Age.
-	for _, key := range got {
-		if key == "computers" || key == "internet" {
-			t.Errorf("%s is counted as required for a resource", key)
-		}
 	}
 }
 

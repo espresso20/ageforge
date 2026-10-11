@@ -269,9 +269,6 @@ func TestNextAgeRowListsTheStorageRequirement(t *testing.T) {
 	all[wallStore] = 3
 	all[st.CurrentAgeWonderKey] = 1
 	eng.Buildings.LoadCounts(all)
-	for res, n := range st.NextAgeResReqs {
-		eng.SetStockForTest(res, n)
-	}
 	eng.StepTicks(1)
 	if r := HandleCommand("advance", eng); r.Type != "error" || !strings.Contains(r.Message, "Next Age bar") {
 		t.Errorf("advance with two stores short: %+v", r)

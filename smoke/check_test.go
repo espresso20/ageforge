@@ -21,7 +21,6 @@ func victorianStall(capacity float64) game.GameState {
 	return game.GameState{
 		Age:            "victorian_age",
 		NextAge:        "electric_age",
-		NextAgeResReqs: map[string]float64{"electricity": 1.1e6},
 		NextAgeBldReqs: map[string]int{"academy": 10},
 		Resources:      res,
 		Buildings: map[string]game.BuildingState{
@@ -127,7 +126,6 @@ func TestStorageLadder_QueuedStorageCounts(t *testing.T) {
 func TestStorageLadder_MaxedStorageIsNoStall(t *testing.T) {
 	st := victorianStall(130e6)
 	st.NextAgeBldReqs = map[string]int{}
-	st.NextAgeResReqs = map[string]float64{"electricity": 1.1e6}
 	defs := config.BuildingByKey()
 	if _, stall := storageLadder(st, defs); stall != nil {
 		t.Errorf("a walled store with nothing over it reported as a stall: %+v", *stall)
@@ -139,9 +137,9 @@ func TestStorageLadder_MaxedStorageIsNoStall(t *testing.T) {
 		t.Errorf("Blockers names a stall that isn't there: %q", Blockers(st))
 	}
 	// The same wall with a requirement over it is the stall.
-	st.NextAgeResReqs = map[string]float64{"steel": 400e6}
+	st.NextAgeBldReqs = map[string]int{"academy": 10}
 	if _, stall := storageLadder(st, defs); stall == nil {
-		t.Errorf("400M steel asked for over a 130M cap with the vault out of reach: want a stall")
+		t.Errorf("10 academies asked for, the last over a 130M cap with the vault out of reach: want a stall")
 	}
 }
 
@@ -152,7 +150,6 @@ func TestStorageLadder_MaxedStorageIsNoStall(t *testing.T) {
 func TestRequiredCopyInTheQueueIsBought(t *testing.T) {
 	defs := config.BuildingByKey()
 	st := victorianStall(130e6)
-	st.NextAgeResReqs = map[string]float64{}
 	st.NextAgeBldReqs = map[string]int{"victorian_vault": 1}
 	vault := st.Buildings["victorian_vault"]
 	next := map[string]float64{}

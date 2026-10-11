@@ -1075,25 +1075,17 @@ func (d *Dashboard) refreshAgeProgress(game.GameState) {
 	d.ageTV.changed()
 }
 
-// ageGoal is one thing the next age asks for: its text ("Food 49.6K/80K")
+// ageGoal is one thing the next age asks for: its text ("Hut 7/10")
 // and whether it is met.
 type ageGoal struct {
 	text string
 	met  bool
 }
 
-// ageGoals lists what the next age asks for: resources, buildings, then the
+// ageGoals lists what the next age asks for: buildings, then the
 // age's wonder and its keystone tech while they are still to do.
 func ageGoals(state game.GameState) []ageGoal {
 	var goals []ageGoal
-	for _, key := range sortedKeysOf(state.NextAgeResReqs) {
-		req := state.NextAgeResReqs[key]
-		current := 0.0
-		if rs, ok := state.Resources[key]; ok {
-			current = rs.Amount
-		}
-		goals = append(goals, ageGoal{fmt.Sprintf("%s %s/%s", textfmt.Capitalize(game.ResourceName(key)), FormatNumber(current), FormatNumber(req)), current >= req})
-	}
 	for _, key := range sortedKeysOf(state.NextAgeBldReqs) {
 		req := state.NextAgeBldReqs[key]
 		current := 0
