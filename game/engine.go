@@ -1678,9 +1678,7 @@ func (ge *GameEngine) processExpeditions() {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 		}
 		// Add rewards to resources
-		for resource, amount := range res.Rewards {
-			ge.Resources.Add(resource, amount)
-		}
+		ge.applyExpeditionRewards(res.Rewards)
 		if res.Success {
 			ge.note(config.BadgeEvExpedition, res.Key)
 		}
@@ -1694,6 +1692,19 @@ func (ge *GameEngine) processExpeditions() {
 	// The Geographic Society's standing orders. Runs LAST so a party that resolved
 	// above has already freed the scouting slot — see processAutoExpeditions.
 	ge.processAutoExpeditions()
+}
+
+// applyExpeditionRewards puts a resolved expedition's loot into the stores. The
+// message already states the full loot: when a full store took less, a line
+// under it says what fit. Under the write lock.
+func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
+	fit := make(map[string]float64, len(rewards))
+	for _, resource := range sortedKeys(rewards) {
+		fit[resource] = ge.gainResource(resource, rewards[resource])
+	}
+	if clipped := clippedLine(rewards, fit); clipped != "" {
+		ge.addLog("info", clipped)
+	}
 }
 
 // processTrade handles trade route ticks
@@ -3117,6 +3128,9 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 	if ge.bmRandFloat() < blackMarketWinChance {
 		got := ge.gainResource(resource, reward)
 		ge.addLog("success", fmt.Sprintf("The smuggling run paid off: %s bought %s.", Amount(cost, "culture"), Amount(got, resource)))
+		if clipped := clippedLine(map[string]float64{resource: reward}, map[string]float64{resource: got}); clipped != "" {
+			ge.addLog("info", clipped)
+		}
 		return true, reward, nil
 	}
 	ge.addLog("warning", fmt.Sprintf("The smuggling run failed. You lost %s.", Amount(cost, "culture")))
@@ -5038,11 +5052,16 @@ func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float6
 	defer ge.mu.Unlock()
 
 	ge.Trade.SetAge(ge.age)
-	got, err := ge.Trade.Exchange(from, to, amount, ge.Resources, ge.Buildings, ge.tick)
+	asked := amount * ge.Trade.RateIn(from, to, ge.age) // before the sale moves the rate
+	gave, got, err := ge.Trade.exchange(from, to, amount, ge.Resources, ge.Buildings, ge.tick)
 	if err != nil {
 		return 0, err
 	}
-	ge.addLog(LogRoutine, fmt.Sprintf("Traded %s for %s.", Amount(amount, from), Amount(got, to)))
+	ge.addLog(LogRoutine, fmt.Sprintf("Traded %s for %s.", Amount(gave, from), Amount(got, to)))
+	// A store with room for less than the sale asked for took a smaller sale.
+	if gave < amount {
+		ge.addLog("info", clippedLine(map[string]float64{to: asked}, map[string]float64{to: got}))
+	}
 	ge.note(config.BadgeEvMarketTrade, from)
 	return got, nil
 }

@@ -131,12 +131,13 @@ func (ge *GameEngine) runPlanTrade(it *PlanItem, reserved map[string]float64) (f
 		return 0, 0
 	}
 	ge.Trade.SetAge(ge.age)
-	got, err := ge.Trade.Exchange(it.Key, it.To, n, ge.Resources, ge.Buildings, ge.tick)
+	gave, got, err := ge.Trade.exchange(it.Key, it.To, n, ge.Resources, ge.Buildings, ge.tick)
 	if err != nil {
 		ge.addLog("debug", fmt.Sprintf("Plan: %s refused: %v", ge.planItemLabel(*it), err))
 		reserved[it.Key] += n
 		return 0, 0
 	}
+	n = gave
 	it.Got += got
 	if it.Amount > 0 {
 		it.Amount -= got

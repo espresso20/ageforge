@@ -221,11 +221,19 @@ func (tm *TradeManager) Pressure(from, to string) float64 {
 // much get the player received. amount always counts the give side, matching
 // the command `trade <give> <get> <amount>`.
 func (tm *TradeManager) Exchange(give, get string, amount float64, resources *ResourceManager, buildings *BuildingManager, tick int) (float64, error) {
+	_, got, err := tm.exchange(give, get, amount, resources, buildings, tick)
+	return got, err
+}
+
+// exchange is Exchange for a caller that also needs what was actually given:
+// a store with less room than the sale pays for takes a smaller sale, so the
+// player is charged only for what it can hold. A store with no room refuses.
+func (tm *TradeManager) exchange(give, get string, amount float64, resources *ResourceManager, buildings *BuildingManager, tick int) (gave, got float64, err error) {
 	from, to := give, get
 	key := from + ":" + to
 	base, ok := tm.marketRate(from, to, tm.age)
 	if !ok {
-		return 0, fmt.Errorf("The market does not trade %s for %s in this age. Type trade list to see the rates.", ResourceName(from), ResourceName(to))
+		return 0, 0, fmt.Errorf("The market does not trade %s for %s in this age. Type trade list to see the rates.", ResourceName(from), ResourceName(to))
 	}
 
 	// Require a trade building: a market or anything its lineage becomes.
@@ -233,7 +241,7 @@ func (tm *TradeManager) Exchange(give, get string, amount float64, resources *Re
 	// suggests on reaching the Iron Age) shut the exchange until ports.
 	traders := buildings.TradeBuildingCount()
 	if traders < 1 {
-		return 0, fmt.Errorf("You need a Market to trade.")
+		return 0, 0, fmt.Errorf("You need a Market to trade.")
 	}
 
 	// Check sender has enough
@@ -241,9 +249,9 @@ func (tm *TradeManager) Exchange(give, get string, amount float64, resources *Re
 		// Amounts print to three figures: when the two read the same, say
 		// how far short instead ("to give 247 (you have 247)" says nothing).
 		if textfmt.Number(amount) == textfmt.Number(have) {
-			return 0, fmt.Errorf("Not enough %s to give %s: you are %s short.", ResourceName(from), textfmt.Number(amount), textfmt.Number(amount-have))
+			return 0, 0, fmt.Errorf("Not enough %s to give %s: you are %s short.", ResourceName(from), textfmt.Number(amount), textfmt.Number(amount-have))
 		}
-		return 0, fmt.Errorf("Not enough %s to give %s (you have %s).", ResourceName(from), textfmt.Number(amount), textfmt.Number(have))
+		return 0, 0, fmt.Errorf("Not enough %s to give %s (you have %s).", ResourceName(from), textfmt.Number(amount), textfmt.Number(have))
 	}
 
 	// Calculate received amount with supply pressure
@@ -252,7 +260,17 @@ func (tm *TradeManager) Exchange(give, get string, amount float64, resources *Re
 	if rate < base*0.5 {
 		rate = base * 0.5 // floor at 50% of base
 	}
-	got := float64(amount * rate)
+	got = float64(amount * rate)
+
+	// A full store is a wall: sell only what it can hold, and charge for
+	// only that.
+	room := resources.GetStorage(to) - resources.Get(to)
+	if !(room > 0) {
+		return 0, 0, fmt.Errorf("%s storage is full.", textfmt.Capitalize(ResourceName(to)))
+	}
+	if got > room {
+		amount, got = room/rate, room
+	}
 
 	// Execute trade
 	resources.Remove(from, amount)
@@ -273,7 +291,7 @@ func (tm *TradeManager) Exchange(give, get string, amount float64, resources *Re
 	tm.totalSold[from] += amount
 	tm.totalBought[to] += got
 
-	return got, nil
+	return amount, got, nil
 }
 
 // StartRoute activates a trade route
@@ -390,6 +408,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				}
 
 				// Add imports (with diplomacy ally bonus + harbour bonus)
+				promised, took := map[string]float64{}, map[string]float64{}
 				for res, amount := range def.Import {
 					bonus := harborBonus
 					if diplomacy != nil {
@@ -399,8 +418,14 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 					// a share of the listed import, so each delivers what it
 					// says whatever the others are.
 					actual := float64(amount * (tm.RoutePay(1) + bonus))
+					before := resources.Get(res)
 					resources.Add(res, actual)
-					tm.totalImported[res] += actual
+					promised[res], took[res] = actual, resources.Get(res)-before
+					tm.totalImported[res] += took[res]
+				}
+				// A cycle a full store cut short says what fit.
+				if line := clippedLine(promised, took); line != "" {
+					messages = append(messages, line)
 				}
 
 				route.CyclesDone++
