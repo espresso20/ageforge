@@ -311,7 +311,7 @@ func checkEndingFrames(t *testing.T, where string, r *endingRig, w, h int) {
 	r.at(w, h, s.from)
 	sc = e.sc
 	for i := range v.lines {
-		g := frame(s.from + sc.reck.at[i] + endCountUp)
+		g := frame(min(s.from+sc.reck.at[i]+endCountUp, s.end()-1))
 		last := len(sc.reck.rows)
 		if i+1 < len(sc.reck.first) {
 			last = sc.reck.first[i+1]
@@ -479,12 +479,12 @@ func TestEndingBeats(t *testing.T) {
 	if sc.spans[0].frames != endBurnFrames || sc.spans[2].frames != endStrikeFrames || sc.spans[3].frames != endDawnFrames {
 		t.Errorf("the beats are %d, %d, %d and %d frames", sc.spans[0].frames, sc.spans[1].frames, sc.spans[2].frames, sc.spans[3].frames)
 	}
-	// Ten to thirteen seconds, whatever the run earned.
+	// Ten to twelve and three quarter seconds, whatever the run earned.
 	for name, end := range endings() {
 		v := endViewFor(end, r.e.pal)
 		spans := endSpans(v.prestige, true, endReckFor(&v, r.e.pal, 76).frames)
 		total := spans[len(spans)-1].end()
-		lo, hi := 80, 106
+		lo, hi := 80, 102
 		if !v.prestige {
 			lo, hi = 56, 88 // a fall has no strike
 		}
@@ -1039,7 +1039,11 @@ func TestEndingAmbientIsThePrestiges(t *testing.T) {
 		for f := 0; f < strike.from+endBlow; f += 5 {
 			before = append(before, f)
 		}
-		for f := strike.from + endBlow + 10; f < film.e.sc.total(); f++ {
+		// From when the light of the blow has gone: the strike's last
+		// frames, and the second half of the beginning.
+		dawn, _ := endSpanOf(film.e.sc, beatBeginning)
+		after = append(after, strike.from+endBlow+10, strike.end()-1)
+		for f := dawn.from + 9; f < dawn.end(); f += 2 {
 			after = append(after, f)
 		}
 		if n := extra(film, before...); n != 0 {

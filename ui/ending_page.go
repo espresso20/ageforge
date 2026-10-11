@@ -49,9 +49,9 @@ const (
 const (
 	// The ending: the town stands a moment, burns, and the tail is the
 	// ember's alone.
-	endBurnFrames = 28
-	endBurnHold   = 4
-	endBurnTail   = 4
+	endBurnFrames = 26
+	endBurnHold   = 3
+	endBurnTail   = 3
 
 	// The reckoning: a lead before its first line, a step between two
 	// lines (a shorter one when there are many), a hold after a verdict,
@@ -60,8 +60,8 @@ const (
 	endStep        = 3
 	endStepFast    = 2
 	endManyLines   = 7
-	endVerdictHold = 8
-	endTail        = 5
+	endVerdictHold = 7
+	endTail        = 6
 	endCountUp     = 4 // frames a number takes to count up
 
 	// The strike: three blows build up, then the heavy one.

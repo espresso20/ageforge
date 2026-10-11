@@ -17,6 +17,24 @@ func (h *reproHarness) film() (e *ending) {
 	return e
 }
 
+// promptAfterFilm waits for the prompt to have the keyboard once a film is
+// over. A new run may open on an Ancient Memory (the game rolls for one):
+// its window waits for the film, comes up at the next refresh with the
+// keyboard, and is declined here.
+func (h *reproHarness) promptAfterFilm() {
+	h.t.Helper()
+	time.Sleep(650 * time.Millisecond) // a refresh, for that window to open if it will
+	if h.frontPage() == ancientMemoryPage {
+		if h.inputHasFocus() {
+			h.t.Fatalf("an Ancient Memory is in front and the keyboard is with the prompt under it\n%s", h.describeUI())
+		}
+		h.key(tcell.KeyRune, 'd')
+	}
+	h.waitFor("the prompt to have the keyboard", 5*time.Second, func() bool {
+		return h.frontPage() == "dashboard" && h.inputHasFocus()
+	})
+}
+
 // TestTheNewRunTicksUnderTheFilm is a prestige on the running app, typed at
 // the prompt, with the film left to play: no key is pressed. One film comes
 // up, on the ending, with the town that was given up and the new run's
@@ -26,6 +44,9 @@ func (h *reproHarness) film() (e *ending) {
 // keyboard, the new run is in its first age at the next prestige level,
 // and nothing else is left on the screen. This is the one film that plays
 // moving under the race detector.
+//
+// The same game then falls to a catastrophe, with the screen held still
+// (fallFilm): the other way a run ends, through the windows that lead to it.
 func TestTheNewRunTicksUnderTheFilm(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow end-to-end UI test; skipped with -short")
@@ -74,7 +95,7 @@ func TestTheNewRunTicksUnderTheFilm(t *testing.T) {
 
 	// While it plays: every look is taken on the event loop.
 	seen := map[int]bool{}
-	ticks, frames, refreshed, closed := 0, 0, false, false
+	ticks, frames, refreshed, closed, covered := 0, 0, false, false, false
 	began := time.Now()
 	for !closed {
 		if time.Since(began) > 40*time.Second {
@@ -86,6 +107,9 @@ func TestTheNewRunTicksUnderTheFilm(t *testing.T) {
 				return
 			}
 			seen[e.beat().beat] = true
+			if front, _ := h.a.pages.GetFrontPage(); front != endingPageName {
+				covered = true
+			}
 			ticks = h.eng.GetState().Tick - tick0
 			if e.sc != nil {
 				frames = e.sc.frame - frame0
@@ -112,30 +136,30 @@ func TestTheNewRunTicksUnderTheFilm(t *testing.T) {
 	if took := time.Since(began); took < 6*time.Second {
 		t.Errorf("the film was over in %v with no key pressed", took)
 	}
+	if covered {
+		t.Error("something was put over the film while it played")
+	}
 
 	// It closed by itself, and the game is there.
-	h.waitFor("the prompt to have the keyboard", 3*time.Second, func() bool {
-		return h.frontPage() == "dashboard" && h.inputHasFocus()
-	})
+	h.promptAfterFilm()
 	if st := h.eng.GetState(); st.Age != "primitive_age" || st.Prestige.Level != level+1 {
 		t.Errorf("after the film: %s at prestige level %d", st.Age, st.Prestige.Level)
 	}
-	time.Sleep(700 * time.Millisecond)
 	if h.hasPage(endingPageName) || h.hasPage(arrivalPageName) || h.film() != nil {
 		t.Errorf("something followed the film\n%s", h.describeUI())
 	}
+
+	h.fallFilm()
 }
 
-// TestReproFallFilm is the other way a run ends, through the windows that
-// lead to it, with the screen held still: the arrival of an age, then the
+// fallFilm is the other way a run ends, through the windows that lead to
+// it, with the screen held still: the arrival of an age, then the
 // catastrophe's window (which waits for the arrival), then Succumb, then
-// the film of the fall (which the next run's first window would wait for).
-// Each key must reach the film, and the last gives the prompt the keyboard.
-func TestReproFallFilm(t *testing.T) {
-	if testing.Short() {
-		t.Skip("slow end-to-end UI test; skipped with -short")
-	}
-	h := newReproHarness(t)
+// the film of the fall (which the next run's first window waits for). Each
+// key must reach the film, and the last gives the prompt the keyboard.
+func (h *reproHarness) fallFilm() {
+	t := h.t
+	t.Helper()
 	h.still()
 	h.onUI(func() {
 		if err := h.eng.EnterAgeForTest("iron_age"); err != nil {
@@ -188,9 +212,7 @@ func TestReproFallFilm(t *testing.T) {
 			time.Sleep(15 * time.Millisecond)
 		}
 	}
-	h.waitFor("the prompt to have the keyboard", 3*time.Second, func() bool {
-		return h.frontPage() == "dashboard" && h.inputHasFocus()
-	})
+	h.promptAfterFilm()
 }
 
 // TestDashboardPlaysTheFilm: the dashboard takes the record of a run's
@@ -247,5 +269,43 @@ func TestDashboardPlaysTheFilm(t *testing.T) {
 	d.refresh()
 	if om.film != nil || om.ActiveName() != "" || pages.HasPage(endingPageName) {
 		t.Error("the film played again, or did not close")
+	}
+}
+
+// TestAWindowThatWaitsGetsTheKeyboardBack: an Ancient Memory left
+// unanswered is still in front when an arrival that came up over it closes
+// (a planned advance goes by itself), and it has the keyboard again. It
+// used to be left in front with the keyboard at the prompt under it, where
+// no key could reach it.
+func TestAWindowThatWaitsGetsTheKeyboardBack(t *testing.T) {
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	pages := tview.NewPages()
+	app := tview.NewApplication()
+	d := NewDashboard(app, game.NewGameEngine(), pages)
+	pages.AddPage("dashboard", d.Root(), true, true)
+	d.overlayMgr.after = func(time.Duration, func()) func() { return func() {} }
+	d.showAncientMemoryModal("pottery", "Pottery")
+	button := app.GetFocus()
+	if button == nil || button == tview.Primitive(d.inputField) {
+		t.Fatal("the Ancient Memory window did not take the keyboard")
+	}
+	ShowAgeSplashFull(d.overlayMgr, "primitive_age", "stone_age", game.AgeAdvanceSummary{}, false, game.EpochEventRecord{})
+	if app.GetFocus() != tview.Primitive(d.overlayMgr.arrival) {
+		t.Fatal("the arrival did not take the keyboard")
+	}
+	d.overlayMgr.arrival.close()
+	if front, _ := pages.GetFrontPage(); front != ancientMemoryPage || app.GetFocus() != button {
+		t.Errorf("after the arrival closed: %q in front, the keyboard with the window's button %v", front, app.GetFocus() == button)
+	}
+	// The same for the film of a run's ending.
+	ShowRunEnding(d.overlayMgr, sampleEnding(game.RunEndFallen, 1))
+	d.overlayMgr.film.close()
+	if front, _ := pages.GetFrontPage(); front != ancientMemoryPage || app.GetFocus() != button {
+		t.Errorf("after the film closed: %q in front", front)
+	}
+	// Answered, it gives the keyboard to the prompt.
+	d.closeAncientMemoryModal()
+	if app.GetFocus() != tview.Primitive(d.inputField) || pages.HasPage(ancientMemoryPage) {
+		t.Error("the prompt did not get the keyboard when the window closed")
 	}
 }

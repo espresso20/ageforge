@@ -90,6 +90,9 @@ type Dashboard struct {
 	catReshow atomic.Bool
 	// catFocus is the catastrophe modal button that owns focus while it is open.
 	catFocus tview.Primitive
+	// memFocus is the Ancient Memory window's button that owns focus while
+	// it is open.
+	memFocus tview.Primitive
 
 	// memoryModalShown guards the Ancient Memory offer modal the same way catModalShown
 	// guards the catastrophe modal: it holds the offered tech key once shown so a Defer
