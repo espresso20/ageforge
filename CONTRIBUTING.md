@@ -237,6 +237,24 @@ go test ./game/ -v -count=1                            # one package
 
 CI (`.github/workflows/go.yml`) runs `gofmt -l`, `go vet`, `go build`, a cross-compile of the release targets and `go test -race` on every PR and every push to `master`. Run `gofmt -w .` before pushing.
 
+### The economy's numbers
+
+The numbers of the economy are written where they are used. A building's first price (`BaseCost`), the rate each further copy climbs at (`CostScale`), what a copy makes or holds (`Effects`) and how long it takes to build (`BuildTicks`) are in the `config/buildings*.go` files; a tech's price and research time are in `config/research.go`; a gate's amounts and counts are in `config/ages.go`; how long each age is meant to last is `AgeTargets` in `config/pacing.go`. Nothing rewrites them when the game loads. To change a number, change it there.
+
+```bash
+go test ./config -run TestGoldenTables                  # every number against the record, to the unit
+go test ./config -run TestGoldenTables -update-golden   # record a change you meant; commit the diff
+go test ./smoke -run TestProperties -v                  # the properties table, as below
+go run ./cmd/smoke -scenario static -out smoke-report   # the same, in the static report
+AGEFORGE_LONG_TESTS=1 go test ./smoke -run TestOrdinaryPath   # the engine walk on the frontier, time away from every age
+go test ./smoke -run '^$' -fuzz=FuzzCommand -fuzztime=1m      # fuzz the command handler from its kept corpus
+```
+
+- **The golden record** (`config/testdata/golden_tables.json`) holds every building, tech, gate and age target, and the price levels, market rates, typical incomes and stores worked out from them. `TestGoldenTables` names each entry that differs. A pull request that changes a number shows it twice: in the table and in the record's diff.
+- **The reference players** (`smoke/reference.go`) are three ways of playing written as rules: an ordinary player who builds the reference town, pays the wonder and advances; a lingering one who buys everything and stays three times as long; a check-in one who is away at half rate and advances at the first eight-hour visit after the gate opens. Their path through the 22 ages is arithmetic on the tables. No bot plays it.
+- **The properties** (`smoke/properties.go`) are what must be true for the game to be in proportion for all three: how long income takes to double against the length of the age, what a full store can pay for, what the market sells against what buildings make, and so on. The ones that do not hold today are listed in `KnownPropertyFailures` with today's reading. The static scenario and `go test` fail when a listed property starts to hold (delete its line), when an unlisted one stops holding, or when a listed reading changes (write the new reading down). A change to the economy should make that list shorter.
+- **The ordinary path** (`smoke/ordinary_path_test.go`) drives the real engine along the ordinary player's purchases with the resources granted: every purchase accepted, every wonder built, every gate opened, a save from every age loading back to the same game.
+
 ### Smoke testing
 
 The unit tests prove pieces work. The smoke suite proves the game holds together: it boots the real engine with no UI and plays it, saves and reloads it, closes it for hours, types garbage at it, and checks the docs against it. It is one runner (`cmd/smoke`, package `smoke`) with named scenarios that share a report. Ticks run synchronously through `GameEngine.StepTicks`, so days of play take seconds, and seeds are fully reproducible: the same seed gives the same report.

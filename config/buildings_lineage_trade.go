@@ -15,9 +15,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 0 — bronze_age  rate=0.05
 	b = append(b, BuildingDef{
 		Name: "Market", Key: "market", Category: "production",
-		BaseCost:    map[string]float64{"wood": 1000, "stone": 700, "iron": 200},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 0.05}},
+		BaseCost:    map[string]float64{"wood": 5900, "stone": 4100, "iron": 1200},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 5.47}},
 		BuildTicks:  150,
 		RequiredAge: "bronze_age",
 		Description: "A trading market for barter and coin.",
@@ -32,9 +32,9 @@ func buildingsLineageTrade() []BuildingDef {
 		// producer and its only trade building (the market needs one), and
 		// the Bronze Age market is optional, so a gold price locked players
 		// out of gold for the whole age. The Payback Rule re-derives its rate.
-		BaseCost:    map[string]float64{"stone": 5500, "iron": 2500},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 0.10}},
+		BaseCost:    map[string]float64{"stone": 32000, "iron": 15000},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 23.9}},
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "A regional trading post.",
@@ -45,9 +45,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 2 — classical_age  rate=0.20
 	b = append(b, BuildingDef{
 		Name: "Merchant Quarter", Key: "merchant_quarter", Category: "production",
-		BaseCost:    map[string]float64{"stone": 35000, "gold": 15000, "iron": 10000},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 0.20}},
+		BaseCost:    map[string]float64{"stone": 210000, "gold": 88000, "iron": 59000},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 112}},
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "An urban merchant district.",
@@ -58,9 +58,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 3 — medieval_age  rate=0.40
 	b = append(b, BuildingDef{
 		Name: "Guildhall", Key: "guildhall", Category: "production",
-		BaseCost:    map[string]float64{"stone": 200000, "gold": 70000, "knowledge": 20000},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 0.40}},
+		BaseCost:    map[string]float64{"stone": 1200000, "gold": 410000, "knowledge": 120000},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 405}},
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "Merchant guilds organize regional trade.",
@@ -71,9 +71,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 4 — renaissance_age  rate=0.80
 	b = append(b, BuildingDef{
 		Name: "Exchange", Key: "exchange", Category: "production",
-		BaseCost:    map[string]float64{"gold": 700000, "steel": 250000, "knowledge": 100000},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 0.80}},
+		BaseCost:    map[string]float64{"gold": 4100000, "steel": 1500000, "knowledge": 590000},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 1380}},
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
 		Description: "A commodity exchange for international trade.",
@@ -84,9 +84,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 5 — colonial_age  rate=1.60
 	b = append(b, BuildingDef{
 		Name: "Port", Key: "port", Category: "production",
-		BaseCost:    map[string]float64{"gold": 4e6, "steel": 2e6},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 1.60}},
+		BaseCost:    map[string]float64{"gold": 2.3e07, "steel": 1.2e07},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 8210}},
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
 		Description: "A colonial maritime trade port.",
@@ -97,9 +97,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 6 — industrial_age  rate=3.20
 	b = append(b, BuildingDef{
 		Name: "Stock Exchange", Key: "stock_exchange", Category: "production",
-		BaseCost:    map[string]float64{"steel": 28e6, "coal": 10e6, "gold": 18e6},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 3.20}},
+		BaseCost:    map[string]float64{"steel": 1.6e08, "coal": 5.9e07, "gold": 1.1e08},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 36100}},
 		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
 		Description: "Industrial-era stock exchange.",
@@ -110,9 +110,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 7 — victorian_age  rate=6.40
 	b = append(b, BuildingDef{
 		Name: "Bank", Key: "bank", Category: "production",
-		BaseCost:    map[string]float64{"steel": 190e6, "gold": 100e6, "iron": 80e6},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6.40}},
+		BaseCost:    map[string]float64{"steel": 1.1e09, "gold": 5.9e08, "iron": 4.7e08},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 128000}},
 		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
 		Description: "A Victorian national bank.",
@@ -123,9 +123,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 8 — electric_age  rate=12.80
 	b = append(b, BuildingDef{
 		Name: "Financial District", Key: "financial_district", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.1e9, "electricity": 450e6, "gold": 750e6},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 12.80}},
+		BaseCost:    map[string]float64{"steel": 6.5e09, "electricity": 2.6e09, "gold": 4.4e09},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 768000}},
 		BuildTicks:  3600,
 		RequiredAge: "electric_age",
 		Description: "Electric-age financial district.",
@@ -136,9 +136,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 9 — atomic_age  rate=25.60
 	b = append(b, BuildingDef{
 		Name: "Corporate HQ", Key: "corporate_hq", Category: "production",
-		BaseCost:    map[string]float64{"steel": 5.5e9, "electricity": 2.2e9, "gold": 3.5e9},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 25.60}},
+		BaseCost:    map[string]float64{"steel": 3.2e10, "electricity": 1.3e10, "gold": 2.1e10},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 2790000}},
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
 		Description: "Multinational corporate headquarters.",
@@ -149,9 +149,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 10 — modern_age  rate=51.20
 	b = append(b, BuildingDef{
 		Name: "Investment Firm", Key: "investment_firm", Category: "production",
-		BaseCost:    map[string]float64{"steel": 32e9, "electricity": 12e9, "data": 1.2e9},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 51.20}},
+		BaseCost:    map[string]float64{"steel": 1.9e11, "electricity": 7e10, "data": 7e09},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6160000}},
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
 		Description: "Global investment and wealth management.",
@@ -162,9 +162,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 11 — information_age  rate=102.40
 	b = append(b, BuildingDef{
 		Name: "Venture Hub", Key: "venture_hub", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 85e9, "data": 9e9, "gold": 160e9},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 102.40}},
+		BaseCost:    map[string]float64{"electricity": 5e11, "data": 5.3e10, "gold": 9.4e11},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 2.11e08}},
 		BuildTicks:  3600,
 		RequiredAge: "information_age",
 		Description: "Digital venture capital hub.",
@@ -175,9 +175,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 12 — digital_age  rate=204.80
 	b = append(b, BuildingDef{
 		Name: "Crypto Exchange", Key: "crypto_exchange", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 420e9, "data": 52e9},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 204.80}},
+		BaseCost:    map[string]float64{"electricity": 2.5e12, "data": 3.1e11},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 204.8}},
 		BuildTicks:  3600,
 		RequiredAge: "digital_age",
 		Description: "Decentralized digital currency exchange.",
@@ -188,9 +188,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 13 — cyberpunk_age  rate=409.60
 	b = append(b, BuildingDef{
 		Name: "Black Market Hub", Key: "black_market", Category: "production",
-		BaseCost:    map[string]float64{"data": 200e9, "crypto": 1.05e12, "electricity": 2.1e12},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 409.60}},
+		BaseCost:    map[string]float64{"data": 1.2e12, "crypto": 6.2e12, "electricity": 1.2e13},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 409.6}},
 		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
 		Description: "Underground black market network.",
@@ -201,9 +201,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 14 — fusion_age  rate=819.20
 	b = append(b, BuildingDef{
 		Name: "Energy Exchange", Key: "energy_exchange", Category: "production",
-		BaseCost:     map[string]float64{"plasma": 4.2e12, "electricity": 12e12, "steel": 16e12},
-		CostScale:    1.40,
-		Effects:      []Effect{{Type: "production", Target: "gold", Value: 819.20}},
+		BaseCost:     map[string]float64{"plasma": 2.5e13, "electricity": 7e13, "steel": 9.4e13},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "gold", Value: 819.2}},
 		BuildTicks:   3600,
 		RequiredAge:  "fusion_age",
 		RequiredTech: "maglev_transit",
@@ -215,9 +215,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 15 — space_age  rate=1638.40
 	b = append(b, BuildingDef{
 		Name: "Asteroid Market", Key: "asteroid_market", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 75e12, "plasma": 35e12, "electricity": 88e12},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 1638.40}},
+		BaseCost:    map[string]float64{"titanium": 4.4e14, "plasma": 2.1e14, "electricity": 5.2e14},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 1638.4}},
 		BuildTicks:  3600,
 		RequiredAge: "space_age",
 		Description: "Mineral trading hub in the asteroid belt.",
@@ -228,9 +228,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 16 — interstellar_age  rate=3276.80
 	b = append(b, BuildingDef{
 		Name: "Galactic Trade Hub", Key: "galactic_trade_hub", Category: "production",
-		BaseCost:    map[string]float64{"dark_matter": 88e12, "titanium": 700e12, "plasma": 430e12},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 3276.80}},
+		BaseCost:    map[string]float64{"dark_matter": 5.2e14, "titanium": 4.1e15, "plasma": 2.5e15},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 3276.8}},
 		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
 		Description: "Interstellar trade network hub.",
@@ -241,9 +241,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 17 — galactic_age  rate=6553.60
 	b = append(b, BuildingDef{
 		Name: "Stellar Exchange", Key: "stellar_exchange", Category: "production",
-		BaseCost:    map[string]float64{"antimatter": 175e12, "dark_matter": 880e12, "titanium": 4.4e15},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6553.60}},
+		BaseCost:    map[string]float64{"antimatter": 1e15, "dark_matter": 5.2e15, "titanium": 2.6e16},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6553.6}},
 		BuildTicks:  3600,
 		RequiredAge: "galactic_age",
 		Description: "Galaxy-spanning stellar exchange.",
@@ -254,9 +254,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 18 — quantum_age  rate=13107.20
 	b = append(b, BuildingDef{
 		Name: "Probability Market", Key: "probability_market", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 195e12, "antimatter": 59e15, "dark_matter": 48e15},
-		CostScale:   1.40,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 13107.20}},
+		BaseCost:    map[string]float64{"quantum_flux": 1.1e15, "antimatter": 3.5e17, "dark_matter": 2.8e17},
+		CostScale:   1.15,
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 13107.2}},
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
 		Description: "Trades across all probable timelines.",
@@ -267,9 +267,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 19 — transcendent_age  rate=26214.40
 	b = append(b, BuildingDef{
 		Name: "Omniversal Bazaar", Key: "omniversal_bazaar", Category: "production",
-		BaseCost:     map[string]float64{"quantum_flux": 1.95e15, "antimatter": 590e15, "dark_matter": 480e15},
-		CostScale:    1.40,
-		Effects:      []Effect{{Type: "production", Target: "gold", Value: 26214.40}},
+		BaseCost:     map[string]float64{"quantum_flux": 1.1e16, "antimatter": 3.5e18, "dark_matter": 2.8e18},
+		CostScale:    1.15,
+		Effects:      []Effect{{Type: "production", Target: "gold", Value: 26214.4}},
 		BuildTicks:   3600,
 		RequiredAge:  "transcendent_age",
 		RequiredTech: "omniversal_exchange",

@@ -12,7 +12,7 @@ import (
 // Player-facing wording for effects.
 //
 // Descriptions that quote numbers go stale the moment a balance pass touches
-// the data behind them (the Payback Rule rewrites most production rates on
+// the data behind them (the tables' production rates were once rewritten on
 // every call to BaseBuildings), so the mechanical half of a building
 // description is built here from the building's runtime Effects. The lineage
 // files hold only the flavor sentence. Event, epoch-event and awakening text is
@@ -200,9 +200,8 @@ func buildingEffectTextIn(d BuildingDef, u unlockOrder) string {
 
 // appendEffectText finishes every building's Description: the flavor
 // sentence from the lineage file, then the mechanical sentence built from the
-// runtime Effects. It runs last in BaseBuildings, after the Payback Rule has
-// set the rates, so the numbers a player reads are the numbers the engine
-// uses.
+// runtime Effects. It runs last in BaseBuildings, so the numbers a player
+// reads are the numbers the engine uses.
 func appendEffectText(defs []BuildingDef) []BuildingDef {
 	u := newUnlockOrder()
 	for i := range defs {
