@@ -296,39 +296,41 @@ func Milestones() []MilestoneDef {
 				{Type: "instant_resource", Target: "wood", Value: 20},
 			},
 		},
-		// storage_network — 10 storage pits; stone/bronze age
+		// storage_network — 5 storage pits (it was 10; since the storage wall a
+		// store holds the copies of the fifth and no more); stone/bronze age
 		{
 			Name: "Storage Network", Key: "storage_network",
-			Description:  "Build 10 Storage Pits.",
+			Description:  "Build 5 Storage Pits.",
 			Flavor:       "Ten pits of carefully hoarded surplus. The hoarding instinct, finally, pays off.",
 			Category:     "builder",
 			MinAge:       "stone_age",
-			MinBuildings: map[string]int{"storage_pit": 10},
+			MinBuildings: map[string]int{"storage_pit": 5},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "food_rate", Value: 0.05},
 			},
 		},
-		// granary_keeper — 25 granaries; bronze age
+		// granary_keeper — 5 granaries (it was 25; the Iron Age's walled store holds
+		// five); bronze age
 		{
 			Name: "Granary Keeper", Key: "granary_keeper",
-			Description:  "Build 25 Granaries.",
+			Description:  "Build 5 Granaries.",
 			Flavor:       "Twenty-five granaries. The mice consider this a personal invitation.",
 			Category:     "builder",
 			MinAge:       "bronze_age",
-			MinBuildings: map[string]int{"granary": 25},
+			MinBuildings: map[string]int{"granary": 5},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "food_rate", Value: 0.05},
 			},
 		},
-		// stone_mason: 30 stone pits. Stone Pits are built only in the Stone
-		// Age, where storage holds at most 40.
+		// stone_mason: 23 stone pits (it was 30). Stone Pits are built only in
+		// the Stone Age, where the walled store lets 23 stand.
 		{
 			Name: "Stone Mason", Key: "stone_mason",
-			Description:  "Build 30 Stone Pits.",
+			Description:  "Build 23 Stone Pits.",
 			Flavor:       "Thirty pits of honest stone. Your masons can finally stop improvising with mud.",
 			Category:     "builder",
 			MinAge:       "stone_age",
-			MinBuildings: map[string]int{"stone_pit": 30},
+			MinBuildings: map[string]int{"stone_pit": 23},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "stone_rate", Value: 0.10},
 			},
@@ -360,14 +362,14 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.03},
 			},
 		},
-		// mining_syndicate — 25 stone pits + 10 iron mines; iron age
+		// mining_syndicate — 23 stone pits (it was 25) + 10 iron mines; iron age
 		{
 			Name: "Mining Syndicate", Key: "mining_syndicate",
-			Description:  "Build 25 Stone Pits and 10 Iron Mines.",
+			Description:  "Build 23 Stone Pits and 10 Iron Mines.",
 			Flavor:       "Stone and iron in industrial quantities. The hills are getting visibly nervous.",
 			Category:     "builder",
 			MinAge:       "iron_age",
-			MinBuildings: map[string]int{"stone_pit": 25, "iron_mine": 10},
+			MinBuildings: map[string]int{"stone_pit": 23, "iron_mine": 10},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "iron_rate", Value: 0.10},
 			},
@@ -417,13 +419,16 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
+		// grand_architect: 1,365 structures (it was 2,000): half of the 2,731
+		// every building so far makes when each is built once to its walled
+		// store, the most a build-count milestone may ask (smoke.MilestoneBuildShare).
 		{
 			Name: "Grand Architect", Key: "grand_architect",
-			Description: "Build 2,000 structures total.",
+			Description: "Build 1,365 structures total.",
 			Flavor:      "Two thousand buildings. The mapmakers have unionized and gone home.",
 			Category:    "builder", Hidden: true,
 			MinAge:        "medieval_age",
-			MinTotalBuilt: 2000,
+			MinTotalBuilt: 1365,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.05},
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
@@ -640,15 +645,15 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
-		// fortress_state: 20 castle keeps; medieval age. Dual payout —
+		// fortress_state: 14 castle keeps (it was 20); medieval age. Dual payout —
 		// keeps a military_power bonus but adds broad production_all.
 		{
 			Name: "Fortress State", Key: "fortress_state",
-			Description: "Build 20 Castle Keeps.",
+			Description: "Build 14 Castle Keeps.",
 			Flavor:      "Twenty castle keeps. Your kingdom is now less a country and more a very pointed suggestion.",
 			Category:    "military", Hidden: true,
 			MinAge:       "medieval_age",
-			MinBuildings: map[string]int{"castle_keep": 20},
+			MinBuildings: map[string]int{"castle_keep": 14},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "military_power", Value: 0.10},
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
@@ -808,27 +813,28 @@ func Milestones() []MilestoneDef {
 				{Type: "instant_resource", Target: "faith", Value: 10},
 			},
 		},
-		// devout_settlement: raised to 25 shrines; stone age
+		// devout_settlement: 16 shrines (it was 25; the Primitive Age's walled store
+		// lets 16 stand); stone age
 		{
 			Name: "Devout Settlement", Key: "devout_settlement",
-			Description:  "Build 25 Shrines.",
+			Description:  "Build 16 Shrines.",
 			Flavor:       "Twenty-five shrines. The priests have begun, gently, competing for foot traffic.",
 			Category:     "faith",
 			MinAge:       "stone_age",
-			MinBuildings: map[string]int{"shrine": 25},
+			MinBuildings: map[string]int{"shrine": 16},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "faith_rate", Value: 0.05},
 			},
 		},
-		// temple_city: 25 temples. Temples are built only in the Iron Age,
-		// where storage holds at most 31.
+		// temple_city: 18 temples (it was 25). Temples are built only in the
+		// Iron Age, where the walled store lets 18 stand.
 		{
 			Name: "Temple City", Key: "temple_city",
-			Description: "Build 25 Temples.",
+			Description: "Build 18 Temples.",
 			Flavor:      "Twenty-five temples. A holy city, with surprisingly aggressive parking.",
 			Category:    "faith", Hidden: true,
 			MinAge:       "iron_age",
-			MinBuildings: map[string]int{"temple": 25},
+			MinBuildings: map[string]int{"temple": 18},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "faith_rate", Value: 0.10},
 			},
@@ -911,16 +917,16 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
 			},
 		},
-		// power_grid: 20 coal plants + 10 steam turbines; victorian age. Coal
-		// Plants are built only in the Industrial Age, where storage holds at
-		// most 29.
+		// power_grid: 13 coal plants (it was 20) + 10 steam turbines; victorian
+		// age. Coal Plants are built only in the Industrial Age, where the
+		// walled store lets 13 stand.
 		{
 			Name: "Power Grid", Key: "power_grid",
-			Description: "Build 20 Coal Plants and 10 Steam Turbines.",
+			Description: "Build 13 Coal Plants and 10 Steam Turbines.",
 			Flavor:      "The lights stay on all night now. Nobody is entirely sure this is an improvement.",
 			Category:    "epoch", Hidden: true,
 			MinAge:       "victorian_age",
-			MinBuildings: map[string]int{"coal_plant": 20, "steam_turbine": 10},
+			MinBuildings: map[string]int{"coal_plant": 13, "steam_turbine": 10},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
 			},

@@ -290,7 +290,7 @@ func (m *milestoneModel) maxStorage(i int, res string) float64 {
 
 // ceiling is how many copies of building k can ever stand: copies are built
 // only in the building's own age, so each must fit the most storage
-// buildable there. A wonder is 1 when each part of its price fits one store.
+// buildable there. A wonder is 1 whatever it costs: it is paid through its bank.
 func (m *milestoneModel) ceiling(k string) copyCeiling {
 	if c, ok := m.copies[k]; ok {
 		return c
@@ -308,13 +308,11 @@ func (m *milestoneModel) ceiling(k string) copyCeiling {
 	case c.age < 0:
 		// never buildable: no copies
 	case d.Category == "wonder":
+		// One copy, whatever it costs: a wonder is paid into its bank in
+		// rounds and may cost more than a store (the one price allowed to,
+		// config/storage_rule.go). Whether each part of it has a source is the
+		// Gate Covenant's question.
 		c.n = 1
-		for _, res := range sortedKeys(d.BaseCost) {
-			if s := m.maxStorage(c.age, res); d.BaseCost[res]*GateWonderMargin > s {
-				c.n, c.res, c.price, c.store = 0, res, d.BaseCost[res], s
-				break
-			}
-		}
 	default:
 		for c.n < copyLimit && (d.MaxCount <= 0 || c.n < d.MaxCount) {
 			res, price, store := m.hardest(d, c.n+1, c.age)
