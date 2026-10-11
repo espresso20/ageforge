@@ -79,6 +79,8 @@ jobs:
   # the same reason. To switch it back on: restore the line below to
   # `go run ./cmd/smoke -tier fast -pacing enforce -v -out smoke-report`
   # and run `gh workflow enable Smoke` and `gh workflow enable Determinism`.
+  # The smoke package's unit tests that need the bot to play well are skipped
+  # the same way (smoke/bot_switch_test.go); set AGEFORGE_BOT_TESTS=1 to run them.
   smoke:
     name: smoke (fast tier)
     if: github.event_name == 'pull_request'

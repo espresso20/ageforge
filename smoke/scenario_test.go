@@ -172,6 +172,7 @@ func TestPrestigeHookedMechanics(t *testing.T) {
 }
 
 func TestFuzzShortRun(t *testing.T) {
+	needBotPlay(t)
 	if testing.Short() || raceEnabled {
 		t.Skip("plays a few thousand ticks")
 	}
