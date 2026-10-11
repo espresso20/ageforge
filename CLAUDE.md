@@ -57,10 +57,19 @@ This project is large. Burning main context on file reads is wasteful. Follow th
 - Reviewing subagent summaries and deciding next steps
 
 **Subagent rules:**
-- Use `subagent_type=general-purpose` for read+write tasks (implementation, docs)
+- Use the `builder` or `investigator` agent for read+write tasks (see the model rules below); `subagent_type=general-purpose` with an explicit `model` where they do not exist
 - Use `subagent_type=Explore` for read-only research across multiple files
 - Every subagent prompt must be **fully self-contained**: list exact files to read, exact changes needed, verify with `go build ./...` and `go test ./...`, return a summary of changes made
-- Spawn parallel subagents for independent work (e.g. Phase 11a + 11b simultaneously; Phase 12 docs in 3-4 parallel batches)
+- One subagent at a time unless Adam asks for speed. Parts that touch different folders may run in separate worktrees; parts that touch the same files run one after another
+- Cut work so one part fits one context (by package or folder). A subagent that runs out of room has wasted its run
+
+**Which model does the work (applies to local and remote sessions):**
+- The session's own model designs, decides, writes the specs and reviews. It does not do bulk reading or implementation
+- Subagents run on a cheaper model. Use the `builder` agent (Haiku) for anything that can be specified exactly, and the `investigator` agent (Sonnet) when the task needs judgment that cannot be written down in advance, such as debugging or triaging failing tests
+- Where those agent types do not exist (a remote session), use `subagent_type=general-purpose` with `model: "haiku"` or `model: "sonnet"`. Never run a subagent on Opus or Fable unless Adam asks
+- Every spec says what is already done, what is left, what done looks like and what to report. Long specs go in a file outside the repository
+- Subagents commit and push in small steps and stop at a clean checkpoint when cut off
+- The test bot is switched off: no subagent runs the smoke suite's bot scenarios or the Determinism script unless Adam says to turn it back on
 
 **Never read these files in main context** (too large — always delegate):
 - `config/buildings_new*.go`, `config/ages.go`, `config/buildings.go`
