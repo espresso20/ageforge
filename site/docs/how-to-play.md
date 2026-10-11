@@ -100,8 +100,8 @@ You don't need to watch it. Check in a few times a day, spend what has built up,
 
 - **Offline progress.** When you load a save, the game credits the time since you saved it, up to **24 hours**, at **50%** of your production. It runs that time in steps, so construction and research finish, the build plan starts what the income pays for, and your roster recruits and staffs as the hours pass. The welcome-back lines in the log say what happened.
 - **The build plan.** Queue up to 60 builds, techs, trades and an advance with `plan build`, `plan research`, `plan trade` and `plan advance`. The game starts each item, in order, as the resources come in, and pays for it only when it starts. See [The Build Plan](plan.md).
-- **Overflow.** Production a full store would waste goes into your age's wonder bank (`wonder overflow`, on by default), and what the wonder doesn't need goes toward the plan's queued copies.
-- **Storage.** From the Bronze Age on, an age's storage built out in full holds about 4.5 hours of that age's typical income. Past that, anything overflow doesn't take is lost, so build storage before a long absence.
+- **Overflow.** Production a full store would waste goes into your age's wonder bank (`wonder overflow`, on by default) until the bank holds the wonder's price. When overflow is off, or the bank is full, it is lost. It does not pay toward the plan.
+- **Storage.** Storage is a wall. A building or an upgrade whose price is larger than a store can hold cannot be bought, and the game names the storage building to build. Storage buildings have no copy limit, each copy costs 1.75 times the one before it, and every age gate asks for five copies of the storage building of the age you are leaving. Anything overflow doesn't take is lost, so build storage before a long absence.
 
 ---
 
@@ -113,7 +113,7 @@ From the Iron Era on, each era may hide a fated catastrophe. It can strike at an
 
 ## Resource management tips
 
-- Each resource has a storage limit. Once a resource is full, anything more it would produce is wasted, unless wonder overflow banks it.
+- Each resource has a storage limit. Once a resource is full, anything more it would produce is wasted, unless wonder overflow banks it. A price larger than a store cannot be paid, so build storage before the building that needs it.
 - **Food drain:** every worker eats the same amount, whatever building it staffs. That amount is set by your age: 0.06 food/tick per worker in the Primitive Age, rising 12% with each age. Keep food production above total drain. If food hits zero, one worker dies every 5 ticks (10 seconds) until food recovers. See [Food drain](workers-and-domains.md#food-drain) and [Starvation](workers-and-domains.md#starvation).
 - **Food** runs out first early on. Keep your gathering camps staffed before anything else, then build up knowledge.
 - Watch the rates in the Resources box. A negative rate is draining you.

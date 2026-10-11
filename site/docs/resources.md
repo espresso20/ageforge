@@ -2,6 +2,8 @@
 
 AgeForge has **26 resources** that unlock as you advance through the 22 ages. They accumulate on their own from your buildings and the workers in them. Every resource starts with a small base storage, so storage buildings decide how much of anything you can hold.
 
+Amounts print with up to three figures and a unit from a thousand up: K, M, B, T and Q, and past Q the units go on as Qi, Sx, Sp, Oc, No and Dc (1.5K, 876M, 11.8Qi).
+
 ---
 
 ## Full Resource Table
@@ -145,7 +147,7 @@ Geological Extraction mines produce marble, iron ore, titanium ore and dark matt
 The ores count toward two milestones:
 
 - **Industrial Titan** (Industrial Age): stockpile 10,000 coal and 5,000 iron ore.
-- **Mining Syndicate**: build 25 stone pits and 10 iron mines.
+- **Mining Syndicate**: build 23 stone pits and 10 iron mines.
 
 What Geological Extraction is good for is stone (up to the Bronze Age), uranium (from the Atomic Age) and antimatter (from the Galactic Age). Its other buildings, from the Iron Age's marble quarry to the Space Age's crystal mine, make only ore. Within a domain, workers fill the newest buildings first, so an ore mine draws masonry workers away from your older stone quarries. Build ore mines for the milestones, not for production. No building of the Iron Age or later makes stone: your older quarries keep making it, and the market sells it (see [Buying at the Market](#buying-at-the-market)). For the same reason, don't `upgrade` your quarries in the Iron Age: the upgrade turns them into marble quarries, which make ore instead of stone.
 

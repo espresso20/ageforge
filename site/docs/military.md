@@ -119,7 +119,7 @@ Missions are timed and paid from your stockpiles. There are two kinds:
 - **Scouting expeditions** (`scout_party`, `scout_ruins`, `naval_expedition`) cost resources and 0 soldiers. These need no military building.
 - **Military campaigns** (the other 13) cost soldiers.
 
-The cost comes out of your stockpiles the moment you launch, and there's no refund. The mission then runs for a number of ticks rolled at launch within its own range, and resolves. A success pays full loot and a failure 30% of it; the cost is gone either way. A failure is also less likely to meet a civilization, and a meeting on a failed run never brings a gift, usually a setback (see [What missions are worth](#what-missions-are-worth)). You can run one scouting expedition and one campaign at the same time, but not two of the same kind.
+The cost comes out of your stockpiles the moment you launch, and there's no refund. The mission then runs for a number of ticks rolled at launch within its own range, and resolves. A success pays full loot and a failure 30% of it; the cost is gone either way. Loot goes into your stores, and a store takes only what it has room for: the rest is lost, and the log says `Storage was nearly full: only ... fit.` A failure is also less likely to meet a civilization, and a meeting on a failed run never brings a gift, usually a setback (see [What missions are worth](#what-missions-are-worth)). You can run one scouting expedition and one campaign at the same time, but not two of the same kind.
 
 <figure class="screen" data-screen="expeditions"><figcaption>The Expeditions panel with scouts on the road: the expedition under way, then the ones this age offers, each with its time, risk and cost.</figcaption></figure>
 
@@ -396,7 +396,7 @@ The raids of these ages are Tribal Raid and Beast Stampede (Stone Era) and Bandi
 
 ### The garrison you already have
 
-Every player carries a garrison without trying. The age gates ask for military buildings (15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 3 Castle Keeps for the Renaissance, 15 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent). You keep those buildings into every later age, and they train soldiers even with no workers assigned, at a fifth of the staffed rate. A player who builds only what the gates ask for blunts roughly **8-19%** of a raid from the Iron Age on (measured on the smoke-test bot, which does nothing else for its army).
+Every player carries a garrison without trying. The age gates ask for military buildings (15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 5 Castle Keeps for the Renaissance, 18 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent). You keep those buildings into every later age, and they train soldiers even with no workers assigned, at a fifth of the staffed rate. A player who builds only what the gates ask for blunts roughly **8-19%** of a raid from the Iron Age on (measured on the smoke-test bot, which does nothing else for its army).
 
 A deliberate army is what pushes toward the 45% ceiling: more military buildings of the current age, workers staffed into them, and `military_power` research.
 
@@ -451,7 +451,7 @@ The five military milestones form a chain. Completing all five grants a title, a
 | `first_soldiers` | First Soldiers | train 5 soldiers | Iron Age | +0.05 military power |
 | `war_machine` | War Machine | train 250 soldiers | Iron Age | +0.10 military power |
 | `iron_legion` | Iron Legion | train 500 soldiers, build 10 Barracks | Classical Age | +5% all production |
-| `fortress_state` | Fortress State | build 20 Castle Keeps | Medieval Age | +0.10 military power, +5% all production |
+| `fortress_state` | Fortress State | build 14 Castle Keeps | Medieval Age | +0.10 military power, +5% all production |
 | `military_superpower` | Military Superpower | train 2,000 soldiers | Industrial Age | +15% all production |
 
 `iron_legion`, `fortress_state` and `military_superpower` are **hidden** until you are more than halfway to them or reach the age before their minimum age, so expect them to appear mid-game.
@@ -475,7 +475,7 @@ The five military milestones form a chain. Completing all five grants a title, a
 - Go for `iron_legion` (train 500 soldiers, build 10 Barracks) for its +5% all production.
 - Pick the easiest campaign you can afford rather than the one with the best loot. With no military power, `conquer_territory` (0.60) fails more often than it wins, and each failure that meets someone brings a setback.
 - For scouting, `scout_ruins` (0.20) is cheaper and easier than `naval_expedition` (0.50), so it meets more civilizations per run. The Geographic Society sends the cheapest one on its own.
-- The age gates ask for military buildings (15 Hunting Lodges, 15 Military Academies, 3 Castle Keeps), and staffed they build your garrison too.
+- The age gates ask for military buildings (15 Hunting Lodges, 15 Military Academies, 5 Castle Keeps), and staffed they build your garrison too.
 - Research military techs as they appear. Each one counts for more than its figure: a mission reads military power through the age's mission scale, so +0.15 in the Iron Age takes about 6 points off a campaign's chance to fail.
 
 ### Late game (Modern Age onward)
@@ -533,7 +533,7 @@ See [Morale](morale.md) for the full system.
 
 **Workers need a built building.** You can't assign workers to a building you haven't built yet.
 
-**Plan Castle Keeps early for `fortress_state`.** It needs 20 Castle Keeps (Medieval Age), a large stone and iron investment, so start building them as soon as you reach the Medieval Age. The +0.10 military power and +5% all production are worth the cost.
+**Plan Castle Keeps early for `fortress_state`.** It needs 14 Castle Keeps (Medieval Age), a large stone and iron investment, so start building them as soon as you reach the Medieval Age. The +0.10 military power and +5% all production are worth the cost.
 
 **Keep missions running.** There's no cooldown beyond the mission's own duration (100 to 160 ticks in the Primitive and Stone Ages, 156 to 416 from the Bronze Age on, rolled at launch). When one resolves, send the next.
 

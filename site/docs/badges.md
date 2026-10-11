@@ -96,7 +96,7 @@ These count across all your runs. A dot separates the rungs.
 | Faction deals | 1 · 10 · 100 |
 | Raids blunted | 1 · 22 · 500 |
 | Returns | 1 · 25 · 100 |
-| Plan items started | 50 · 500 · 5,000 |
+| Plan items started | 32 · 500 · 5,000 |
 | Buildings upgraded | 20 · 630 · 20,000 |
 | Festivals | 1 · 10 · 50 |
 | Black market deals | 1 · 10 · 50 |
@@ -116,21 +116,21 @@ Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contracto
 
 | Lineage | Rungs |
 |---|---|
-| Culture arts | 5 · 16 · 52 · 160 · 550 |
-| Energy | 5 · 10 · 40 · 100 · 250 |
-| Engineering | 6 · 19 · 62 · 200 · 650 |
-| Faith | 8 · 26 · 87 · 280 · 950 |
-| Food | 9 · 28 · 92 · 290 · 950 |
-| Geological extraction | 10 · 40 · 160 · 400 · 1,000 |
-| Hacker | 5 · 17 · 68 · 170 · 430 |
-| Harbor | 3 · 5 · 20 · 50 · 130 |
-| Housing | 11 · 36 · 120 · 410 · 1,400 |
-| Knowledge | 8 · 26 · 87 · 280 · 950 |
-| Metallurgy | 5 · 16 · 53 · 170 · 580 |
-| Military | 7 · 23 · 78 · 260 · 880 |
-| Organic extraction | 9 · 29 · 93 · 300 · 980 |
-| Storage | 7 · 22 · 75 · 240 · 810 |
-| Trade | 6 · 24 · 96 · 240 · 600 |
+| Culture arts | 3 · 16 · 52 · 160 · 390 |
+| Energy | 2 · 10 · 40 · 100 · 170 |
+| Engineering | 3 · 19 · 62 · 200 · 420 |
+| Faith | 3 · 26 · 87 · 280 · 600 |
+| Food | 4 · 28 · 92 · 290 · 610 |
+| Geological extraction | 8 · 40 · 160 · 400 · 670 |
+| Hacker | 3 · 17 · 68 · 170 · 370 |
+| Harbor | 2 · 4 · 10 · 24 · 55 |
+| Housing | 6 · 36 · 120 · 410 · 1,000 |
+| Knowledge | 3 · 26 · 87 · 280 · 590 |
+| Metallurgy | 3 · 16 · 53 · 170 · 370 |
+| Military | 3 · 23 · 78 · 260 · 570 |
+| Organic extraction | 4 · 29 · 93 · 300 · 640 |
+| Storage | 1 · 3 · 13 · 49 · 180 |
+| Trade | 2 · 24 · 96 · 240 · 360 |
 
 ### Payrolls
 
@@ -138,16 +138,16 @@ A payroll badge asks for that many workers at work in one domain at the same tim
 
 | Domain | Rungs |
 |---|---|
-| Food | 270 · 530 |
-| Lumber | 270 · 540 |
-| Masonry | 270 · 550 |
-| Knowledge | 160 · 320 |
-| Faith | 160 · 310 |
-| Military | 270 · 540 |
-| Trade | 170 · 340 |
-| Engineering | 180 · 360 |
-| Metallurgy | 150 · 290 |
-| Energy | 76 · 150 |
+| Food | 270 · 450 |
+| Lumber | 270 · 468 |
+| Masonry | 270 · 477 |
+| Knowledge | 160 · 274 |
+| Faith | 160 · 265 |
+| Military | 270 · 444 |
+| Trade | 170 · 237 |
+| Engineering | 180 · 305 |
+| Metallurgy | 150 · 248 |
+| Energy | 76 · 137 |
 | Hacker | 260 · 520 |
 
 ### Resource ladders
