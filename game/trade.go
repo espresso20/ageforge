@@ -441,7 +441,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				// Consume exports
 				for res, amount := range def.Export {
 					resources.Remove(res, amount*scale)
-					tm.totalExported[res] += amount * scale
+					tm.totalExported[res] += float64(amount * scale)
 				}
 
 				// Add imports
