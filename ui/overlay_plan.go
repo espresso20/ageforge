@@ -130,6 +130,18 @@ func planStatusText(v game.PlanItemView) string {
 	}
 }
 
+// planNote is why a blocked item waits, as the engine words it, with the
+// resource of "needs more <resource> storage" written as its name ("dark
+// matter", not the key "dark_matter").
+func planNote(v game.PlanItemView) string {
+	if res, ok := strings.CutPrefix(v.Note, "needs more "); ok {
+		if res, ok = strings.CutSuffix(res, " storage"); ok && game.ResourceName(res) != res {
+			return "needs more " + strings.ToLower(game.ResourceName(res)) + " storage"
+		}
+	}
+	return v.Note
+}
+
 // planItemTitle is "Hut ×3 (2 started)", "research Tool Making" or
 // "trade food for wood: 500 wood still to buy, 300 bought".
 func planItemTitle(v game.PlanItemView) string {
@@ -166,7 +178,7 @@ func planItemTitle(v game.PlanItemView) string {
 func planItemDetail(v game.PlanItemView, state game.GameState) string {
 	switch v.Status {
 	case game.PlanStatusBlocked:
-		note := v.Note
+		note := planNote(v)
 		if len(v.Banked) > 0 {
 			note += " (" + formatPlanCost(v.Banked) + " banked from overflow)"
 		}
@@ -242,7 +254,7 @@ func sortedMapKeys(m map[string]float64) []string {
 func planPanelText(state game.GameState, sel int, note string, noteGood, clearArmed bool) string {
 	var sb strings.Builder
 	sb.WriteString(theme.Paint(theme.RoleAccent, "═══ Build plan ═══") + "\n")
-	sb.WriteString(theme.Paint(theme.RoleDim, " Started in order as resources come in, while you play and while you are away.\n Each item is paid when it starts. A waiting item holds its price back from the\n items below it; items below may still start with what it doesn't need.\n Overflow from full storage is banked toward items' next copies, in order.") + "\n\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, " Started in order as resources come in, while you play and while you are away.\n Each item is paid when it starts. A waiting item holds its price back from the\n items below it; items below may still start with what it doesn't need.") + "\n\n")
 
 	if len(state.Plan) == 0 {
 		sb.WriteString(" The plan is empty.\n\n")
@@ -301,7 +313,7 @@ func planListText(state game.GameState) string {
 				status += " (short of " + game.ResourceName(v.Short) + ")"
 			}
 		case game.PlanStatusBlocked:
-			status = "blocked: " + v.Note
+			status = "blocked: " + planNote(v)
 		}
 		if len(v.Banked) > 0 {
 			status += ", " + formatPlanCost(v.Banked) + " banked"

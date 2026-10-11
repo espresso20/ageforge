@@ -804,6 +804,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 		state := engine.GetState()
 		var lines []string
 		lines = append(lines, "[gold]Available buildings:[-]")
+		wall := &storeWall{state: state}
 		for _, key := range sortedKeysOf(state.Buildings) {
 			b := state.Buildings[key]
 			if !b.Unlocked {
@@ -817,6 +818,9 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 			}
 			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] (%d built) - Cost: %s %s",
 				affordable, key, b.Count, FormatCost(b.NextCost), b.Description))
+			if line := wall.line(b); line != "" {
+				lines = append(lines, "      [yellow]"+line+"[-]")
+			}
 		}
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}

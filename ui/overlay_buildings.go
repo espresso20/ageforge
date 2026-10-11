@@ -13,8 +13,9 @@ import (
 // the current age, grouped by age in chronological order (oldest first).
 // This is a read-only browser: players use the build command to construct.
 // Each row shows the key the build command takes next to the name.
-func buildingsProvider(state game.GameState, _ int) string {
+func buildingsProvider(state game.GameState, screenW int) string {
 	var sb strings.Builder
+	wall := &storeWall{state: state}
 
 	set := state.Ruleset()
 	ageOrder := set.AgeKeys()
@@ -118,6 +119,11 @@ func buildingsProvider(state game.GameState, _ int) string {
 			// Cost and description on indent.
 			if len(bs.NextCost) > 0 && !bs.IsLegacy {
 				fmt.Fprintf(&sb, "   [gray]Cost: %s[-]\n", FormatCost(bs.NextCost))
+				if isCurrent {
+					if line := wall.line(bs); line != "" {
+						sb.WriteString(hangingRow("   ", "[yellow]"+line+"[-]", overlayTextWidth(screenW)))
+					}
+				}
 			}
 			if bs.Description != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)

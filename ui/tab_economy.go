@@ -415,6 +415,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 			ageName = def.Name
 		}
 		head = fmt.Sprintf(" [gold]── %s ──[-]", truncate(ageName, w-7))
+		wall := &storeWall{state: state}
 		for _, key := range keys {
 			var sb strings.Builder
 			bs := state.Buildings[key]
@@ -436,6 +437,9 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 				sb.WriteString(hangingRow("   ", "[yellow]Building limit reached.[-]", w))
 			} else {
 				sb.WriteString(costRow("   Cost: ", bs.NextCost, w))
+				if line := wall.line(bs); line != "" {
+					sb.WriteString(hangingRow("   ", "[yellow]"+line+"[-]", w))
+				}
 			}
 			sb.WriteString(hangingRow("   ", "[gray]"+glueRates(bs.Description)+"[-]", w))
 			if bs.Flavor != "" {
