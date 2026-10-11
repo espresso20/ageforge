@@ -144,3 +144,29 @@ func TestStorageLadder_MaxedStorageIsNoStall(t *testing.T) {
 		t.Errorf("400M steel asked for over a 130M cap with the vault out of reach: want a stall")
 	}
 }
+
+// A required copy in the build queue is bought: the next cost the game shows
+// is already the price of the copy after it, so a gate that asks for five
+// Warehouses is not blocked by the price of a sixth while the fifth is
+// building (the perf scenario's long run was flagged for this).
+func TestRequiredCopyInTheQueueIsBought(t *testing.T) {
+	defs := config.BuildingByKey()
+	st := victorianStall(130e6)
+	st.NextAgeResReqs = map[string]float64{}
+	st.NextAgeBldReqs = map[string]int{"victorian_vault": 1}
+	vault := st.Buildings["victorian_vault"]
+	next := map[string]float64{}
+	for r, c := range vault.NextCost {
+		next[r] = c * 100 // far over any store: the price of the copy after the queued one
+	}
+	vault.NextCost = next
+	st.Buildings["victorian_vault"] = vault
+
+	if _, ok := problemChecks(storageProblems(st, defs))["required_building_over_storage"]; !ok {
+		t.Fatalf("with the required vault unbought and priced over every store, want it flagged")
+	}
+	st.BuildQueue = []game.BuildQueueSnapshot{{Name: "Victorian Vault", TicksLeft: 100, TotalTicks: 500}}
+	if msg, ok := problemChecks(storageProblems(st, defs))["required_building_over_storage"]; ok {
+		t.Errorf("the one vault the gate asks for is in the queue; flagged: %s", msg)
+	}
+}

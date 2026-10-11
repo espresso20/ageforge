@@ -321,14 +321,16 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 func lastCopyOverStorage(st game.GameState, bld string, defs map[string]config.BuildingDef, caps map[string]float64) (res string, cost, capacity float64, over bool) {
 	need := st.NextAgeBldReqs[bld]
 	bs := st.Buildings[bld]
-	if bs.Count >= need || len(bs.NextCost) == 0 {
-		return "", 0, 0, false
-	}
+	// A copy in the build queue is paid for, and the next cost is already the
+	// price of the copy after it.
 	queued := 0
 	for _, q := range st.BuildQueue {
 		if q.Name == bs.Name {
 			queued++
 		}
+	}
+	if bs.Count+queued >= need || len(bs.NextCost) == 0 {
+		return "", 0, 0, false
 	}
 	steps := float64(need - 1 - bs.Count - queued)
 	if steps < 0 {
