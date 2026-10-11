@@ -3,7 +3,6 @@ package smoke
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -41,35 +40,24 @@ import (
 //     its buildings);
 //   - the gate out of the age asks for storageCopies copies of its storage
 //     building, so every town that passes arrives with the reference store;
-//   - the gate asks for gateShare of the store each material needs (the
-//     dearest price the age's buildings ask in it, and a quarter more), in
-//     every material the age's buildings cost but food, faith, culture and
-//     knowledge, to two figures;
 //   - the wall: in the first earlyWallAges ages that have storage, the store
 //     walls at exactly five copies (a sixth is priced over the store); in
 //     the later ages a player reaches at most lateReach times the reference
 //     store (the climb is 1.75, but the dearest buildings of the age are not
 //     the storage building).
 const (
-	storageCopies  = 5
-	storageRoom    = 1.25
-	storageMargin  = 1.05
-	storageClimb   = 1.75
-	gateShare      = 0.25
-	earlyWallAges  = 4
-	lateReach      = 2.8
-	gateRoundSlack = 0.051 // two figures: the largest relative rounding is 5%
+	storageCopies = 5
+	storageRoom   = 1.25
+	storageMargin = 1.05
+	storageClimb  = 1.75
+	earlyWallAges = 4
+	lateReach     = 2.8
 )
-
-// gateFreeResources are the resources no gate asks for: the flow resources
-// (food, faith, culture, soldiers, nanobots), which have no price to size a
-// store by, and knowledge, which a tech is paid in.
-var gateFreeResources = map[string]bool{"food": true, "faith": true, "culture": true, "soldiers": true, "nanobots": true, "knowledge": true}
 
 // StorageProblem is a place the tables part from the storage rule.
 type StorageProblem struct {
 	Age  string `json:"age"`
-	Rule string `json:"rule"` // curve, hold, climb, arrive, gate_copies, gate_amount, wall
+	Rule string `json:"rule"` // curve, hold, climb, arrive, gate_copies, wall
 	Why  string `json:"why"`
 }
 
@@ -270,51 +258,12 @@ func staticStorage(defs map[string]config.BuildingDef, ages []config.AgeDef) ([]
 			fail("wall", "a player reaches %s in %s, %.2f times the reference store (%s); at most %g times", num(row.Reached), age.Key, row.Ratio(), num(row.Store), lateReach)
 		}
 	}
-
-	// What each gate asks to hold.
-	for i := 0; i+1 < n; i++ {
-		to := ages[i+1]
-		cost := map[string]bool{}
-		for _, d := range byAge[i] {
-			if d.Category == "storage" {
-				continue
-			}
-			for res := range d.BaseCost {
-				cost[res] = true
-			}
-		}
-		ask := asks(i)
-		for _, res := range sortedKeys(to.ResourceReqs) {
-			have := to.ResourceReqs[res]
-			switch {
-			case gateFreeResources[res]:
-				problems = append(problems, StorageProblem{Age: ages[i].Key, Rule: "gate_amount", Why: fmt.Sprintf("the gate into %s asks for %s %s; no gate asks for %s", to.Key, num(have), res, res)})
-			case !cost[res]:
-				problems = append(problems, StorageProblem{Age: ages[i].Key, Rule: "gate_amount", Why: fmt.Sprintf("the gate into %s asks for %s %s, which no building of %s costs", to.Key, num(have), res, ages[i].Key)})
-			default:
-				want := float64(gateShare * storageRoom * ask[res])
-				if math.Abs(have-want) > float64(gateRoundSlack*want) {
-					problems = append(problems, StorageProblem{Age: ages[i].Key, Rule: "gate_amount", Why: fmt.Sprintf("the gate into %s asks for %s %s, want %s: a quarter of the store the dearest price (%s) needs, with a quarter more", to.Key, num(have), res, num(want), num(ask[res]))})
-				}
-			}
-		}
-		var missing []string
-		for res := range cost {
-			if _, asked := to.ResourceReqs[res]; !asked && !gateFreeResources[res] {
-				missing = append(missing, res)
-			}
-		}
-		sort.Strings(missing)
-		if len(missing) > 0 {
-			problems = append(problems, StorageProblem{Age: ages[i].Key, Rule: "gate_amount", Why: fmt.Sprintf("the gate into %s does not ask for %s, which the buildings of %s cost", to.Key, strings.Join(missing, ", "), ages[i].Key)})
-		}
-	}
 	return problems, rows
 }
 
 // writeStorage renders the Storage Covenant check.
 func writeStorage(sb *strings.Builder, problems []StorageProblem, rows []StorageRow) {
-	fmt.Fprintf(sb, "Storage is a wall, sized by the storage rule (config/storage_rule.go) and checked here from the tables alone: five copies of an age's storage building, on the earlier stores, hold the dearest price the age asks of the reference town and a quarter more; each copy up to the fifth fits under the copies before it; a town arrives able to pay the next age's first storage building and housing; each gate asks for five copies of the storage building of the age it leaves and %g of the store each material needs; the first %d ages wall at exactly five copies and the later ones reach at most %g times the reference store. `go test ./smoke` fails on any row below.\n\n", gateShare, earlyWallAges, lateReach)
+	fmt.Fprintf(sb, "Storage is a wall, sized by the storage rule (config/storage_rule.go) and checked here from the tables alone: five copies of an age's storage building, on the earlier stores, hold the dearest price the age asks of the reference town and a quarter more; each copy up to the fifth fits under the copies before it; a town arrives able to pay the next age's first storage building and housing; each gate asks for five copies of the storage building of the age it leaves (and for no amount of any resource); the first %d ages wall at exactly five copies and the later ones reach at most %g times the reference store. `go test ./smoke` fails on any row below.\n\n", earlyWallAges, lateReach)
 	if len(problems) == 0 {
 		sb.WriteString("No problems.\n\n")
 	} else {

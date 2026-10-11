@@ -276,7 +276,7 @@ func fuzzStepRun(ge *game.GameEngine, bot *Bot, s fuzzStep, defs map[string]conf
 	}
 	for _, p := range invariantProblems(st, defs) {
 		// Storage feasibility is a property of config, not of a command.
-		if strings.HasPrefix(p.check, "required_") || p.check == "requirement_over_storage" {
+		if strings.HasPrefix(p.check, "required_") {
 			continue
 		}
 		return &fuzzFailure{check: p.check, msg: fmt.Sprintf("after %q: %s", s.Cmd, p.msg), detail: Dump(st, 0, 0)}

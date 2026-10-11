@@ -2,15 +2,14 @@ package config
 
 import (
 	"math"
-	"sort"
 
 	"github.com/espresso20/ageforge/detmath"
 )
 
-// The storage rule: how large each age's storage building is, and what a
-// gate asks to hold. Both are written in the tables (the storage buildings'
-// own effects, the ages' ResourceReqs); this file is the derivation, and a
-// test recomputes the tables from it and fails when an entry drifts.
+// The storage rule: how large each age's storage building is. It is written
+// in the tables (the storage buildings' own effects); this file is the
+// derivation, and a test recomputes the tables from it and fails when an
+// entry drifts.
 //
 // The reference town holds StorageRuleCopies copies of every building, or
 // the gate's count where the gate asks for more. For each age, in order:
@@ -31,10 +30,6 @@ import (
 //  5. The size is the smallest that satisfies 2 to 4, never under
 //     StorageRuleFloor of what rule 2 asks in all, rounded up to two figures.
 //
-// A gate then asks, in every construction resource of the age (knowledge
-// aside: no gate asks for knowledge), for GateStoreShare of the store that
-// resource needs (GateRuleAmounts), rounded to two figures.
-//
 // A gate also asks for StorageRuleCopies copies of the storage building of
 // the age it leaves (GateStorageCopies). Rule 4 speaks of the reference
 // town; this makes it true of every town. An older age's storage building
@@ -48,7 +43,6 @@ const (
 	StorageRuleRoom   = 1.25
 	StorageRuleMargin = 1.05
 	StorageRuleFloor  = 0.05
-	GateStoreShare    = 0.25
 	// StorageRules is the version of the storage rules a save is written
 	// under: 1 from the storage wall on (a price larger than a store cannot
 	// be bought, overflow does not pay the plan). A save without it is from
@@ -173,47 +167,4 @@ func StorageRuleSizes(defs []BuildingDef, ages []AgeDef, baseStore float64) (siz
 		store[ages[i].Key] = prev
 	}
 	return sizes, store
-}
-
-// GateRuleAmounts works out what the gate out of each age asks to hold, by
-// the age the gate leads into. For every construction resource of the age
-// left (knowledge aside), the store that resource needs is the dearest price
-// the reference town pays in it, plus StorageRuleRoom; the gate asks for
-// GateStoreShare of that.
-//
-// It is not a share of the one store every resource has. That store is sized
-// by the age's dearest resource, and a quarter of it in a resource the age
-// prices low is worth more than the whole age: 80 price units of uranium to
-// leave the Atomic Age, 3,000 of quantum flux to leave the Quantum Age, where
-// a wonder costs 40.
-func GateRuleAmounts(defs []BuildingDef, ages []AgeDef) map[string]map[string]float64 {
-	levels := priceLevels(defs)
-	out := map[string]map[string]float64{}
-	for i := 0; i+1 < len(ages); i++ {
-		gate := ages[i+1].BuildingReqs
-		dearest := map[string]float64{}
-		for _, d := range defs {
-			if d.RequiredAge != ages[i].Key || d.Category == "wonder" || d.Category == "monument" || d.Category == "storage" {
-				continue
-			}
-			f := detmath.Pow(d.CostScale, float64(storageRuleCount(d, gate)-1))
-			for r, v := range d.BaseCost {
-				dearest[r] = math.Max(dearest[r], math.Max(1, math.Floor(v*f)))
-			}
-		}
-		res := make([]string, 0, len(levels[ages[i].Key]))
-		for r := range levels[ages[i].Key] {
-			res = append(res, r)
-		}
-		sort.Strings(res)
-		asks := map[string]float64{}
-		for _, r := range res {
-			if r == "knowledge" || dearest[r] <= 0 {
-				continue
-			}
-			asks[r] = roundSignificant(GateStoreShare*StorageRuleRoom*dearest[r], 2)
-		}
-		out[ages[i+1].Key] = asks
-	}
-	return out
 }

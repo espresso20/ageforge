@@ -7550,13 +7550,6 @@
  },
  "gates": {
   "atomic_age": {
-   "resources": {
-    "coal": 3800000000,
-    "electricity": 4600000000,
-    "gold": 6600000000,
-    "oil": 490000000,
-    "steel": 11000000000
-   },
    "buildings": {
     "electric_arc_furnace": 15,
     "electric_warehouse": 5,
@@ -7565,10 +7558,6 @@
    }
   },
   "bronze_age": {
-   "resources": {
-    "stone": 230,
-    "wood": 420
-   },
    "buildings": {
     "elders_hall": 5,
     "longhouse": 15,
@@ -7577,12 +7566,6 @@
    }
   },
   "classical_age": {
-   "resources": {
-    "gold": 11000,
-    "iron": 16000,
-    "stone": 35000,
-    "wood": 4900
-   },
    "buildings": {
     "agora": 12,
     "granary": 5,
@@ -7591,13 +7574,6 @@
    }
   },
   "colonial_age": {
-   "resources": {
-    "coal": 190000,
-    "gold": 6000000,
-    "iron": 230000,
-    "steel": 2200000,
-    "stone": 1600000
-   },
    "buildings": {
     "art_studio": 12,
     "exchange": 12,
@@ -7606,11 +7582,6 @@
    }
   },
   "cyberpunk_age": {
-   "resources": {
-    "data": 550000000000,
-    "electricity": 4400000000000,
-    "steel": 6600000000000
-   },
    "buildings": {
     "ai_research_lab": 15,
     "data_center": 15,
@@ -7619,12 +7590,6 @@
    }
   },
   "digital_age": {
-   "resources": {
-    "data": 60000000000,
-    "electricity": 600000000000,
-    "gold": 1100000000000,
-    "steel": 840000000000
-   },
    "buildings": {
     "info_vault": 5,
     "innovation_hub": 15,
@@ -7633,14 +7598,6 @@
    }
   },
   "electric_age": {
-   "resources": {
-    "coal": 610000000,
-    "gold": 740000000,
-    "iron": 260000000,
-    "oil": 130000000,
-    "steel": 1200000000,
-    "stone": 200000000
-   },
    "buildings": {
     "academy": 12,
     "bessemer_plant": 12,
@@ -7649,12 +7606,6 @@
    }
   },
   "fusion_age": {
-   "resources": {
-    "crypto": 14000000000000,
-    "data": 2700000000000,
-    "electricity": 27000000000000,
-    "steel": 27000000000000
-   },
    "buildings": {
     "arcology_pod": 25,
     "augmentation_foundry": 15,
@@ -7663,11 +7614,6 @@
    }
   },
   "galactic_age": {
-   "resources": {
-    "dark_matter": 970000000000000,
-    "plasma": 4900000000000000,
-    "titanium": 7700000000000000
-   },
    "buildings": {
     "antimatter_forge": 15,
     "generation_ship": 30,
@@ -7676,13 +7622,6 @@
    }
   },
   "industrial_age": {
-   "resources": {
-    "gold": 26000000,
-    "iron": 13000000,
-    "steel": 13000000,
-    "stone": 11000000,
-    "wood": 13000000
-   },
    "buildings": {
     "colonial_warehouse": 5,
     "plantation": 8,
@@ -7690,13 +7629,6 @@
    }
   },
   "information_age": {
-   "resources": {
-    "data": 13000000000,
-    "electricity": 130000000000,
-    "gold": 33000000000,
-    "oil": 19000000000,
-    "steel": 400000000000
-   },
    "buildings": {
     "modern_depot": 5,
     "oil_refinery": 15,
@@ -7705,12 +7637,6 @@
    }
   },
   "interstellar_age": {
-   "resources": {
-    "electricity": 520000000000000,
-    "plasma": 260000000000000,
-    "steel": 310000000000000,
-    "titanium": 420000000000000
-   },
    "buildings": {
     "launch_complex": 10,
     "orbital_depot": 5,
@@ -7719,12 +7645,6 @@
    }
   },
   "iron_age": {
-   "resources": {
-    "gold": 330,
-    "iron": 660,
-    "stone": 2200,
-    "wood": 3200
-   },
    "buildings": {
     "lumber_mill": 8,
     "quarry": 8,
@@ -7733,12 +7653,6 @@
    }
   },
   "medieval_age": {
-   "resources": {
-    "gold": 140000,
-    "iron": 93000,
-    "stone": 380000,
-    "wood": 25000
-   },
    "buildings": {
     "classical_vault": 5,
     "library": 15,
@@ -7747,13 +7661,6 @@
    }
   },
   "modern_age": {
-   "resources": {
-    "electricity": 34000000000,
-    "gold": 11000000000,
-    "steel": 84000000000,
-    "stone": 110000000000,
-    "uranium": 8400000000
-   },
    "buildings": {
     "atomic_vault": 5,
     "bunker_complex": 18,
@@ -7762,15 +7669,9 @@
    }
   },
   "primitive_age": {
-   "resources": null,
    "buildings": null
   },
   "quantum_age": {
-   "resources": {
-    "antimatter": 2200000000000000,
-    "dark_matter": 11000000000000000,
-    "titanium": 57000000000000000
-   },
    "buildings": {
     "dyson_sphere_habitat": 30,
     "galactic_vault": 5,
@@ -7779,11 +7680,6 @@
    }
   },
   "renaissance_age": {
-   "resources": {
-    "gold": 450000,
-    "iron": 160000,
-    "stone": 1300000
-   },
    "buildings": {
     "castle_keep": 5,
     "guildhall": 10,
@@ -7792,11 +7688,6 @@
    }
   },
   "space_age": {
-   "resources": {
-    "electricity": 75000000000000,
-    "plasma": 24000000000000,
-    "steel": 100000000000000
-   },
    "buildings": {
     "fusion_reactor": 10,
     "fusion_reactor_array": 10,
@@ -7805,9 +7696,6 @@
    }
   },
   "stone_age": {
-   "resources": {
-    "wood": 33
-   },
    "buildings": {
     "hut": 10,
     "stash": 5,
@@ -7815,11 +7703,6 @@
    }
   },
   "transcendent_age": {
-   "resources": {
-    "antimatter": 800000000000000000,
-    "dark_matter": 670000000000000000,
-    "quantum_flux": 2700000000000000
-   },
    "buildings": {
     "probability_war_room": 15,
     "quantum_vault": 5,
@@ -7828,13 +7711,6 @@
    }
   },
   "victorian_age": {
-   "resources": {
-    "coal": 35000000,
-    "gold": 98000000,
-    "iron": 80000000,
-    "steel": 98000000,
-    "stone": 120000000
-   },
    "buildings": {
     "industrial_depot": 5,
     "iron_works_complex": 5,

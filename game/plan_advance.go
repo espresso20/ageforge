@@ -41,7 +41,7 @@ func (ge *GameEngine) planAdvanceBlocker() string {
 		return "this is the final age"
 	case ge.pendingCatastrophe != "":
 		return "a catastrophe is pending"
-	case ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings) == "":
+	case ge.progress.CheckAdvancement(ge.age, ge.Buildings) == "":
 		return "waiting for the requirements"
 	}
 	return ""

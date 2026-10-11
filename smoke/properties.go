@@ -90,8 +90,6 @@ const (
 	propResearchHigh = 0.90
 	propRewardLow    = 1.0  // a fixed reward is worth at least this many minutes of income
 	propRewardHigh   = 30.0 // and at most this many
-	propGateLow      = 0.10 // a gate amount is at least this share of the reference store
-	propGateHigh     = 0.60
 	// warningShare is the shortest harbinger warning as a share of the
 	// age's target (game/harbinger.go).
 	warningShare = 0.20
@@ -365,32 +363,10 @@ func StaticProperties() Properties {
 	add(12, fmt.Sprintf("what a fixed reward pays is worth between %g and %g minutes of the reference town's income of it (trade routes; loot, flat bonuses and named events are not worked out here yet)", propRewardLow, propRewardHigh), small == 0,
 		fmt.Sprintf("%d of %d trade route payments fall outside it", small, routes))
 
-	// 13. Gate amounts against the store each resource needs: the dearest
-	// price the reference town pays in it, plus the storage rule's room.
-	asked, outside := 0, 0
-	for i := range t.ages {
-		amounts, _ := t.gate(i)
-		dearest := map[string]float64{}
-		for _, d := range t.byAge[i] {
-			if d.Category == "storage" {
-				continue
-			}
-			for res, v := range copyPrice(d, t.refCount(d)-1) {
-				dearest[res] = math.Max(dearest[res], v)
-			}
-		}
-		for res, amount := range amounts {
-			if dearest[res] <= 0 {
-				continue
-			}
-			asked++
-			if share := amount / float64(config.StorageRuleRoom*dearest[res]); share < propGateLow || share > propGateHigh {
-				outside++
-			}
-		}
-	}
-	add(13, fmt.Sprintf("every amount a gate asks for is between %.0f%% and %.0f%% of the store that resource needs (the dearest price the reference town pays in it, and a quarter more)", 100*propGateLow, 100*propGateHigh), outside == 0,
-		fmt.Sprintf("%d of %d gate amounts fall outside it", outside, asked))
+	// 13. (gone) It held every amount a gate asks for to a share of the store
+	// that resource needs. No gate asks for an amount of a resource now (the
+	// owner's decision of 2026-10-11), so it has nothing to measure. The
+	// numbers of the others stay as they are, so the list has no 13.
 
 	// 14. The era gift (the Ancient Cache): minutes of the town's income,
 	// and in knowledge no more than the cheapest tech of the age entered.
@@ -470,8 +446,8 @@ func StaticProperties() Properties {
 	add(19, "the points a full run earns can all be spent", sink >= earned, fmt.Sprintf("a full run earns %d points and everything for sale costs %d", earned, sink))
 
 	// 20. The largest amount any of the three players can hold in a store or
-	// be quoted (the next copy of any building of the age, the gate out of
-	// it, the age's wonder and techs), at Era Mastery 1 and at the top of the
+	// be quoted (the next copy of any building of the age, the age's wonder
+	// and techs), at Era Mastery 1 and at the top of the
 	// table, against the largest number the game can print.
 	topWalks := map[string]refWalk{
 		"ordinary":  t.walk("ordinary", RefTopMastery, refIncome, false),
@@ -508,11 +484,6 @@ func StaticProperties() Properties {
 				for r, v := range wonders[t.ages[i].Key] {
 					see(v, "wonder, "+r, player, mastery, age)
 				}
-				if next, _ := t.gate(i); next != nil {
-					for r, v := range next {
-						see(v, "gate, "+r, player, mastery, age)
-					}
-				}
 				if k := len(t.techs[i]); k > 0 {
 					see(t.techs[i][k-1], "dearest tech", player, mastery, age)
 				}
@@ -538,7 +509,7 @@ func hoursText(h float64) string {
 // writeProperties renders the check for the report.
 func writeProperties(sb *strings.Builder, p Properties) {
 	sb.WriteString("What must be true of the economy's numbers, worked out from the game's tables alone for three reference players: an ordinary one who builds five of everything (or what the gate asks), pays the wonder and advances; a lingering one who buys everything and stays three times as long; and a check-in one who is away at half rate and advances at the first eight-hour visit after the gate opens. No bot is involved.\n\n")
-	sb.WriteString("A property marked \"known failure\" does not hold today and is written down as such, with today's reading. The check fails when one of those starts to hold, when any other stops holding, or when a reading changes.\n\n")
+	sb.WriteString("A property marked \"known failure\" does not hold today and is written down as such, with today's reading. The check fails when one of those starts to hold, when any other stops holding, or when a reading changes. There is no property 13: it was about the amounts a gate asks for, and no gate asks for one now.\n\n")
 	sb.WriteString("| # | property | today | |\n|---|---|---|---|\n")
 	for _, pr := range p.List {
 		mark := "holds"
