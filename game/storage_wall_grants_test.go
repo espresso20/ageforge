@@ -139,8 +139,9 @@ func TestWallGrants_DealIntoAFullStoreIsRefusedNotCharged(t *testing.T) {
 	wallHeld(t, ge)
 }
 
-// A trade route's run into a full store loses the surplus and says what
-// fit. (It still takes its export: see the report, that is a decision.)
+// A trade route's run into a store with room for part of it moves that part
+// and says what fit (the export taken is checked in
+// TestWallGrants_RouteRunTakesOnlyWhatFits).
 func TestWallGrants_RouteRunSaysWhatFit(t *testing.T) {
 	ge := newSeededEngine(9)
 	for _, a := range []string{"stone_age", "bronze_age"} {
@@ -171,6 +172,71 @@ func TestWallGrants_RouteRunSaysWhatFit(t *testing.T) {
 	}
 	if got := ge.Trade.totalImported[imp]; math.Abs(got-1) > 1e-9 {
 		t.Errorf("the route's tally counts %v %s imported, want the 1 that fit", got, imp)
+	}
+	wallHeld(t, ge)
+}
+
+// A route run follows the market sale's rule: with room for part of the
+// import it takes a proportional part of the export; with no room it does
+// not happen and takes and grants nothing.
+func TestWallGrants_RouteRunTakesOnlyWhatFits(t *testing.T) {
+	ge := newSeededEngine(9)
+	for _, a := range []string{"stone_age", "bronze_age"} {
+		if err := ge.EnterAgeForTest(a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	def := ge.Trade.routeDefs["local_barter"]
+	ge.Buildings.counts[def.RequiredBld] = def.MinCount
+	ge.recalculateRates()
+	var imp, exp string
+	for imp = range def.Import {
+	}
+	for exp = range def.Export {
+	}
+	ge.Resources.UnlockResource(imp)
+	fillStore(ge, exp, 1e6, 1e9)
+	run := func(room float64) []string {
+		fillStore(ge, imp, 100, 100+room)
+		ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
+		return ge.Trade.Tick(ge.Resources, ge.Buildings, nil, 0)
+	}
+
+	// Room for a quarter of the run's import: a quarter of its export goes.
+	full := ge.Trade.RoutePay(def.Import[imp])
+	run(full / 4)
+	wantOut := def.Export[exp] / 4
+	if got := 1e6 - ge.Resources.Get(exp); math.Abs(got-wantOut) > 1e-6 {
+		t.Errorf("%s taken = %v, want a quarter of the run's export (%v)", exp, got, wantOut)
+	}
+	if got := ge.Trade.totalExported[exp]; math.Abs(got-wantOut) > 1e-6 {
+		t.Errorf("the route's tally counts %v %s exported, want %v", got, exp, wantOut)
+	}
+	if got := ge.Resources.Get(imp); math.Abs(got-(100+full/4)) > 1e-6 {
+		t.Errorf("%s = %v, want the cap", imp, got)
+	}
+	wallHeld(t, ge)
+
+	// No room: nothing is taken and nothing is granted.
+	fillStore(ge, exp, 1e6, 1e9)
+	exported, imported := ge.Trade.totalExported[exp], ge.Trade.totalImported[imp]
+	msgs := run(0)
+	if got := ge.Resources.Get(exp); got != 1e6 {
+		t.Errorf("%s = %v after a run into a full store, want nothing taken", exp, got)
+	}
+	if got := ge.Resources.Get(imp); got != 100 {
+		t.Errorf("%s = %v after a run into a full store, want it unchanged", imp, got)
+	}
+	if ge.Trade.totalExported[exp] != exported || ge.Trade.totalImported[imp] != imported {
+		t.Error("a run into a full store changed the route's tallies")
+	}
+	if len(msgs) != 0 {
+		t.Errorf("a run into a full store said %q, want silence", msgs)
+	}
+	if r := ge.Trade.activeRoutes["local_barter"]; r.CyclesDone != 0 || !r.Starved {
+		t.Errorf("a run into a full store: cycles %d, starved %v, want 0 and true", r.CyclesDone, r.Starved)
 	}
 	wallHeld(t, ge)
 }

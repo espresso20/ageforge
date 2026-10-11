@@ -400,26 +400,55 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				}
 			}
 
+			// What a run brings in, with the diplomacy ally bonus and the
+			// harbor bonus. The techs' term and those bonuses are each a
+			// share of the listed import, so each delivers what it says
+			// whatever the others are.
+			imports := make(map[string]float64, len(def.Import))
+			for res, amount := range def.Import {
+				bonus := harborBonus
+				if diplomacy != nil {
+					bonus += diplomacy.GetTradeBonus(res)
+				}
+				imports[res] = float64(amount * (tm.RoutePay(1) + bonus))
+			}
+
+			// A full store is a wall: a run moves only as much as the tightest
+			// import store has room for, at the route's rate, and takes only
+			// that share of its export. With no room at all the run does not
+			// happen, as when the export stock is short.
+			scale := float64(1)
+			if canAfford {
+				for res, actual := range imports {
+					if !(actual > 0) {
+						continue
+					}
+					room := resources.GetStorage(res) - resources.Get(res)
+					if !(room > 0) {
+						scale = 0
+						break
+					}
+					if share := room / actual; share < scale {
+						scale = share
+					}
+				}
+				if !(scale > 0) {
+					canAfford = false
+				}
+			}
+
 			if canAfford {
 				// Consume exports
 				for res, amount := range def.Export {
-					resources.Remove(res, amount)
-					tm.totalExported[res] += amount
+					resources.Remove(res, amount*scale)
+					tm.totalExported[res] += amount * scale
 				}
 
-				// Add imports (with diplomacy ally bonus + harbour bonus)
+				// Add imports
 				promised, took := map[string]float64{}, map[string]float64{}
-				for res, amount := range def.Import {
-					bonus := harborBonus
-					if diplomacy != nil {
-						bonus += diplomacy.GetTradeBonus(res)
-					}
-					// The techs' term and the ally and harbor bonuses are each
-					// a share of the listed import, so each delivers what it
-					// says whatever the others are.
-					actual := float64(amount * (tm.RoutePay(1) + bonus))
+				for res, actual := range imports {
 					before := resources.Get(res)
-					resources.Add(res, actual)
+					resources.Add(res, actual*scale)
 					promised[res], took[res] = actual, resources.Get(res)-before
 					tm.totalImported[res] += took[res]
 				}
