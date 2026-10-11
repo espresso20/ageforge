@@ -297,7 +297,7 @@ The Cosmic Era's passage is prestige, which you may take in any of its ages. The
 
 If you prestige as soon as you arrive, only what you already hold can pay. A thread that begins in a later age (only a save from an older version that was already deeper in the era) is priced on that age: 2.6B faith, 42B culture, 130Q dark matter and 11Q titanium in the Galactic Age, and 5.4B faith, 89B culture, 130Q dark matter and 11Q titanium in the Quantum Age.
 
-The Reality Tear's thread is priced the same way on a doom's warning, which is at least a fifth of the age. Its Brace level 1 is five sixths of what a moderate economy makes of dark matter and titanium in that fifth, a sixth of what the whole age does and half the Last Passage's: 5.1Q dark matter and 4.8Q titanium if its harbinger arrives in the Interstellar Age, about ten and a half hours of income. Its Appease is a doom's: 380M faith and 5B culture there, about nine and a half hours. Level 2 of each costs the same again. Each thread keeps its own levels, so answering one doesn't answer the other.
+The Reality Tear's thread is priced the same way on a doom's warning, which is at least a fifth of the age. Its Brace level 1 is five sixths of what a moderate economy makes of dark matter and titanium in that fifth, a sixth of what the whole age does and half the Last Passage's: 5.1Q dark matter and 4.8Q titanium if its harbinger arrives in the Interstellar Age, about ten and a half hours of income. Its Appease is a doom's: 380M faith and 5.8B culture there, about nine and a half hours. Level 2 of each costs the same again. Each thread keeps its own levels, so answering one doesn't answer the other.
 
 #### Brace or Appease against the Last Passage
 

@@ -195,7 +195,7 @@ The prompt suggests completions for all worker commands, shown dim after the cur
 | `unassign ` and `dismiss ` | only buildings that currently have workers assigned |
 | `unassign barracks ` | `all` |
 | `recruit ` | `max` |
-| `workers ` | `share`, `auto-recruit` |
+| `workers ` | `auto-recruit` |
 | `roster ` | the worker domains, the ones you have worker buildings in (or a share set for) first, then the rest, and `auto` |
 | `roster knowledge ` | `auto` |
 | `workers auto-recruit ` | `off`, `on` |

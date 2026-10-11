@@ -373,7 +373,7 @@ Culture resets with every other resource. A new run starts with none.
 
 ## Legacy Bonuses
 
-Each Succumb to a catastrophe grants that epoch's **legacy bonus**, a permanent production bonus for the epoch's main resources, and **Ancient Knowledge**, +25% research speed per distinct epoch succumbed. Both survive prestige and apply from tick 1 of every run. See [Succumb](catastrophe.md#succumb) and the [Legacy Bonus Table](catastrophe.md#legacy-bonus-table).
+Each Succumb to a catastrophe grants that epoch's **legacy bonus**, a permanent production bonus for the epoch's main resources, and **Ancient Knowledge**, research time ×0.8 for each distinct epoch succumbed in. Both survive prestige and apply from tick 1 of every run. See [Succumb](catastrophe.md#succumb) and the [Legacy Bonus Table](catastrophe.md#legacy-bonus-table).
 
 ---
 
