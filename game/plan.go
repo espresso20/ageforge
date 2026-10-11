@@ -646,7 +646,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 			chk.cost, chk.banked = splitBank(cost, it.Banked)
 		}
 		for _, res := range sortedKeys(chk.cost) {
-			if chk.cost[res] > ge.Resources.GetStorage(res) {
+			if chk.cost[res] > ge.Resources.GetStorage(res) && chk.cost[res] > ge.Resources.Get(res) {
 				chk.blocked = "needs more " + res + " storage"
 				return chk
 			}

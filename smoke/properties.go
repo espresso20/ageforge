@@ -31,23 +31,19 @@ type Property struct {
 // KnownPropertyFailures is every property that does not hold today, with
 // today's reading. Later changes to the economy shorten it.
 var KnownPropertyFailures = map[int]string{
-	1:  "43 buildings climb at another rate (1.13)",
-	2:  "fails in 4 of 22 ages; worst 0.15 of the age in the Primitive Age",
-	3:  "fails in 14 of 22 ages; worst 9.3 times in the Primitive Age",
-	4:  "fails in 21 of 22 ages; worst 9.8 times in the Primitive Age",
-	5:  "fails in 14 of 22 ages; worst 13 techs in the Digital Age",
-	6:  "in 1 of 22 ages the reference town cannot be finished without banking past the store; first the Transcendent Age",
-	7:  "fails in 1 of 22 ages; first the Transcendent Age",
+	1:  "22 buildings climb at another rate (1.13)",
+	2:  "fails in 5 of 22 ages; worst 0.13 of the age in the Primitive Age",
+	3:  "fails in 6 of 22 ages; worst 4.6 times in the Primitive Age",
+	4:  "fails in 1 of 22 ages; worst 2.7 times in the Quantum Age",
+	5:  "fails in 11 of 22 ages; worst 13 techs in the Digital Age",
 	8:  "fails in 17 of 22 ages; worst 0.0% eaten in the Transcendent Age",
 	9:  "fails in 22 of 22 ages; worst room for 19553 people per job in the Transcendent Age",
-	10: "fails in 19 of 22 ages; worst 6.5 times the age in the Electric Age",
+	10: "fails in 20 of 22 ages; worst 6.4 times the age in the Electric Age",
 	11: "fails in 20 of 22 ages; worst 483727 times what the buildings make in the Information Age",
 	12: "27 of 27 trade route payments fall outside it",
-	13: "45 of 54 gate amounts fall outside it",
-	14: "at 4 of 6 era lines the Ancient Cache pays a reference town for more than one tech; most 10 techs entering the Modern Age",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
-	16: "fails in 5 of 22 ages; worst 6.5 times in the Primitive Age",
-	17: "fails in 17 of 22 ages; worst 13 techs in the Digital Age",
+	16: "fails in 4 of 22 ages; worst 4.6 times in the Primitive Age",
+	17: "fails in 12 of 22 ages; worst 13 techs in the Digital Age",
 	18: "not worked out here yet",
 	19: "a full run earns 3279 points and everything for sale costs 99",
 	20: "not worked out here yet",
@@ -96,10 +92,8 @@ const (
 	propRewardHigh   = 30.0 // and at most this many
 	propGateLow      = 0.10 // a gate amount is at least this share of the reference store
 	propGateHigh     = 0.60
-	// cacheShare is the share of every store the Ancient Cache era event
-	// fills (game/engine.go), and warningShare the shortest harbinger
-	// warning as a share of the age's target (game/harbinger.go).
-	cacheShare   = 0.40
+	// warningShare is the shortest harbinger warning as a share of the
+	// age's target (game/harbinger.go).
 	warningShare = 0.20
 )
 
@@ -115,9 +109,9 @@ func StaticProperties() Properties {
 		ref[i] = t.state(towns[i], i, 1)
 		refIncome[i] = units(ref[i].income, t.levels[i])
 	}
-	ordinary := t.walk("ordinary", 1, refIncome)
-	lingering := t.walk("lingering", 1, refIncome)
-	checkIn := t.walk("check-in", 1, refIncome)
+	ordinary := t.walk("ordinary", 1, refIncome, false)
+	lingering := t.walk("lingering", 1, refIncome, false)
+	checkIn := t.walk("check-in", 1, refIncome, false)
 	out := Properties{Ordinary: ordinary.Hours, Lingering: lingering.Hours, CheckIn: checkIn.Hours}
 	for _, a := range t.ages {
 		out.Ages = append(out.Ages, a.Name)
@@ -371,31 +365,42 @@ func StaticProperties() Properties {
 	add(12, fmt.Sprintf("what a fixed reward pays is worth between %g and %g minutes of the reference town's income of it (trade routes; loot, flat bonuses and named events are not worked out here yet)", propRewardLow, propRewardHigh), small == 0,
 		fmt.Sprintf("%d of %d trade route payments fall outside it", small, routes))
 
-	// 13. Gate amounts against the reference store.
+	// 13. Gate amounts against the store each resource needs: the dearest
+	// price the reference town pays in it, plus the storage rule's room.
 	asked, outside := 0, 0
 	for i := range t.ages {
 		amounts, _ := t.gate(i)
+		dearest := map[string]float64{}
+		for _, d := range t.byAge[i] {
+			if d.Category == "storage" {
+				continue
+			}
+			for res, v := range copyPrice(d, t.refCount(d)-1) {
+				dearest[res] = math.Max(dearest[res], v)
+			}
+		}
 		for res, amount := range amounts {
-			if res == "faith" || ref[i].caps[res] <= 0 {
+			if dearest[res] <= 0 {
 				continue
 			}
 			asked++
-			if share := amount / ref[i].caps[res]; share < propGateLow || share > propGateHigh {
+			if share := amount / float64(config.StorageRuleRoom*dearest[res]); share < propGateLow || share > propGateHigh {
 				outside++
 			}
 		}
 	}
-	add(13, fmt.Sprintf("every amount a gate asks for is between %.0f%% and %.0f%% of the reference store", 100*propGateLow, 100*propGateHigh), outside == 0,
+	add(13, fmt.Sprintf("every amount a gate asks for is between %.0f%% and %.0f%% of the store that resource needs (the dearest price the reference town pays in it, and a quarter more)", 100*propGateLow, 100*propGateHigh), outside == 0,
 		fmt.Sprintf("%d of %d gate amounts fall outside it", outside, asked))
 
-	// 14. A gift sized by the store.
+	// 14. The era gift (the Ancient Cache): minutes of the town's income,
+	// and in knowledge no more than the cheapest tech of the age entered.
 	bad, where = 0, ""
 	most := 0
 	for i := 1; i < n; i++ {
-		if t.ages[i].EpochKey == t.ages[i-1].EpochKey {
+		if t.ages[i].EpochKey == t.ages[i-1].EpochKey || len(t.techs[i]) == 0 {
 			continue
 		}
-		k := float64(ref[i-1].caps["knowledge"] * cacheShare)
+		k := math.Min(float64(ref[i-1].income["knowledge"]*config.AncientCacheMinutes*refTicksPerHour/60), t.techs[i][0])
 		paid := 0
 		for _, price := range t.techs[i] {
 			if price <= k {
@@ -414,7 +419,7 @@ func StaticProperties() Properties {
 	if bad > 0 {
 		today = fmt.Sprintf("at %d of 6 era lines the Ancient Cache pays a reference town for more than one tech; most %d techs entering the %s", bad, most, where)
 	}
-	add(14, "a gift sized by the store pays for at most one tech of the age entered", bad == 0, today)
+	add(14, "the era gift pays for at most one tech of the age entered", bad == 0, today)
 
 	// 15. Warnings against the visit gap.
 	bad, where = 0, ""

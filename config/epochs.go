@@ -166,6 +166,12 @@ type EpochEventDef struct {
 // PacingStretch, so every one does.
 const epochEventAge = "iron_age"
 
+// AncientCacheMinutes is what the Ancient Cache pays: this many minutes of
+// the town's own income of every unlocked resource, sized like any other
+// gain (EventSize). In knowledge it pays at most the price of the cheapest
+// tech of the age entered.
+const AncientCacheMinutes = 15.0
+
 // stretchEpochEvents re-times epoch events for the pacing curve: each typed
 // Duration is the base-curve value, stretched by StretchTicks, and "{dur}"
 // in the flavor text becomes the stretched duration.
@@ -192,8 +198,8 @@ func GoodEpochEvents() []EpochEventDef {
 		},
 		{
 			Key: "ancient_cache", Name: "Ancient Cache", Type: "good_minor",
-			FlavorText: "Explorers open a sealed vault of ancient stores. Every unlocked resource gains 40% of its storage.",
-			Duration:   0, // instant: fills 40% of every resource's storage
+			FlavorText: "Explorers open a sealed vault of ancient stores. You gain 15 minutes of what your town makes of every resource.",
+			Duration:   0, // instant: AncientCacheMinutes of the town's income of every resource
 		},
 		{
 			Key: "trade_winds", Name: "Trade Winds", Type: "good_minor",

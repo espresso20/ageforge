@@ -22,8 +22,8 @@ import (
 //     the reference town (RefCopies of every building, or the gate's count
 //     where the gate asks for more), then pays the wonder, and advances the
 //     moment both are done.
-//   - The lingering player buys the cheapest thing he can afford with no
-//     limit, pays the wonder once the reference counts are met, and stays
+//   - The lingering player buys the cheapest thing he can afford and that
+//     fits under his stores, with no other limit, pays the wonder once the reference counts are met, and stays
 //     RefLinger times as long as it took him to open the gate.
 //   - The check-in player is always away: his income runs at RefAwayRate (the
 //     offline rule), the plan buys the cheapest thing with no limit, and he
@@ -399,11 +399,14 @@ type refWalk struct {
 }
 
 // walk sends a player through all 22 ages at the given Era Mastery speed.
-func (t *refTables) walk(player string, speed float64, refIncome []float64) refWalk {
+// overflow plays the rule the game had before the storage wall, where a
+// price over the store could still be bought; the properties read the walk
+// without it.
+func (t *refTables) walk(player string, speed float64, refIncome []float64, overflow bool) refWalk {
 	var w refWalk
 	counts := map[string]int{}
 	for i := range t.ages {
-		p := refPlay{wonder: true, overflow: true, rate: 1, speed: speed, horizon: 4e7}
+		p := refPlay{wonder: true, overflow: overflow, rate: 1, speed: speed, horizon: 4e7}
 		switch player {
 		case "ordinary":
 			p.only = map[string]int{}

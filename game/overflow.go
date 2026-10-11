@@ -102,117 +102,32 @@ func (ge *GameEngine) bankOverflow(w, res string, lost float64) float64 {
 	return dep
 }
 
-// applyTickRates applies one tick of production, banking what the caps cut
-// off into the wonder when overflow is on, and what is left into the plan.
+// applyTickRates applies one tick of production. What a full store cannot
+// hold goes to the age's wonder, up to what its bank still lacks, when wonder
+// overflow is on; the rest is lost. Nothing is banked toward the plan: a
+// price larger than a store cannot be bought, and the store is the limit.
 func (ge *GameEngine) applyTickRates() {
 	w := ge.overflowWonder()
-	if w == "" && len(ge.plan) == 0 {
+	if w == "" {
 		ge.Resources.ApplyRates()
 		return
 	}
-	losses := ge.overflowScratch[:0]
 	ge.Resources.ApplyRatesCapped(func(res string, lost float64) {
-		if lost -= ge.bankOverflow(w, res, lost); lost > 0 {
-			losses = append(losses, overflowLoss{res: res, amount: lost})
-		}
+		ge.bankOverflow(w, res, lost)
 	})
-	ge.overflowScratch = losses
-	ge.bankPlanOverflow(losses, nil)
 }
 
-// ===== Overflow pays the plan =====
+// ===== Plan banks from before the storage wall =====
+//
+// Overflow used to pay the plan: what a full store discarded was banked
+// toward the plan's next copies, so a price larger than a store could still
+// be bought. It no longer is. What is left here reads the banks an old save
+// carries and gives them back to the stores.
 
 // planBankEpsilon is the least a plan bank tracks: a part of a price within
 // it counts as paid, so float dust never leaves a copy waiting on a
 // thousandth of a resource (the wonder bank uses the same margin).
 const planBankEpsilon = 0.001
-
-// overflowLoss is what a cap cut off of one resource in one tick or offline
-// step, after the wonder took its share.
-type overflowLoss struct {
-	res    string
-	amount float64
-}
-
-// bankPlanOverflow puts what the caps cut off (after the wonder) into the
-// banks of the plan's build items, in plan order: each item takes what the
-// price of its next copy still lacks of each resource, the first item first,
-// and what no item needs is lost as before. An item banks only if it could
-// start in this age: a build of this age (not the next age's, which waits for
-// the advance, so nothing is carried past the advance's stockpile trim) and
-// not at its MaxCount (a wonder built or under construction is at its).
-// It adds what it banked to into, by resource, when into is
-// non-nil. A wonder of this age takes its share into its own bank
-// (bankOverflow), up to what the bank lacks, whether or not wonder overflow
-// is on. Cheap when nothing overflowed or nothing is planned, so it runs
-// every tick. Must be called with the write lock held.
-func (ge *GameEngine) bankPlanOverflow(losses []overflowLoss, into map[string]float64) {
-	if len(losses) == 0 || len(ge.plan) == 0 {
-		return
-	}
-	open := len(losses)      // losses with something left to place
-	var above map[string]int // capped buildings: copies the items above will take
-	for i := range ge.plan {
-		it := &ge.plan[i]
-		if it.Kind != PlanBuild || it.Count <= 0 {
-			continue
-		}
-		def, ok := ge.Buildings.defs[it.Key]
-		if !ok || (def.RequiredAge != "" && def.RequiredAge != ge.age) || !ge.Buildings.IsUnlocked(it.Key) {
-			continue
-		}
-		if def.MaxCount > 0 {
-			planned := above[it.Key]
-			if above == nil {
-				above = map[string]int{}
-			}
-			above[it.Key] += it.Count
-			if ge.Buildings.GetCount(it.Key)+ge.Buildings.GetQueueCount(it.Key, ge.buildQueue)+planned >= def.MaxCount {
-				continue
-			}
-		}
-		for j := range losses {
-			l := &losses[j]
-			if l.amount <= 0 || def.BaseCost[l.res] <= 0 {
-				continue
-			}
-			if def.Category == "wonder" {
-				// A queued wonder: its own bank takes what it still lacks.
-				dep := ge.bankOverflow(it.Key, l.res, l.amount)
-				if dep <= 0 {
-					continue
-				}
-				if into != nil {
-					into[l.res] += dep
-				}
-				if l.amount -= dep; l.amount <= 0 {
-					if open--; open == 0 {
-						return
-					}
-				}
-				continue
-			}
-			// One resource's price at a time: no map per item per tick.
-			want := ge.Buildings.NextCost(it.Key, l.res, ge.buildQueue) - it.Banked[l.res]
-			if want <= planBankEpsilon {
-				continue
-			}
-			dep := min(l.amount, want)
-			if it.Banked == nil {
-				it.Banked = make(map[string]float64, len(def.BaseCost))
-			}
-			it.Banked[l.res] += dep
-			if into != nil {
-				into[l.res] += dep
-			}
-			if l.amount -= dep; l.amount <= 0 {
-				if open--; open == 0 {
-					return
-				}
-			}
-		}
-	}
-}
 
 // splitBank splits the price of a banked item's next copy into what the bank
 // covers (used: at most the price, per resource) and what is still due from

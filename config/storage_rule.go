@@ -40,6 +40,11 @@ const (
 	StorageRuleMargin = 1.05
 	StorageRuleFloor  = 0.05
 	GateStoreShare    = 0.25
+	// StorageRules is the version of the storage rules a save is written
+	// under: 1 from the storage wall on (a price larger than a store cannot
+	// be bought, overflow does not pay the plan). A save without it is from
+	// before, and keeps its stock on load.
+	StorageRules = 1
 	// StorageRate is the rate a storage building's price climbs at for each
 	// copy owned: Kittens Game's barn.
 	StorageRate = 1.75
