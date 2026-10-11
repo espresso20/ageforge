@@ -186,6 +186,8 @@ var fileNotes = map[string]fileNote{
 	"ui/command_input.go":        {place: "at the command prompt", age: "primitive_age", seen: seenAlways},
 	"ui/commands.go":             {place: "in the Help panel", age: "primitive_age", seen: seenRegular},
 	"ui/dashboard.go":            {place: "in the main window", age: "primitive_age", seen: seenAlways},
+	"ui/ending.go":               {place: "on the film shown when a run ends in a prestige or a fall", age: "medieval_age", seen: seenRare},
+	"ui/ending_page.go":          {place: "on the film shown when a run ends in a prestige or a fall", age: "medieval_age", seen: seenRare},
 	"ui/fit.go":                  {place: "in the main window", age: "primitive_age", seen: seenAlways},
 	"ui/icons.go":                {place: "in the icons check (the icons command)", age: "primitive_age", seen: seenRare},
 	"ui/input.go":                {place: "in the reply to a command you typed", age: "primitive_age", seen: seenNews},

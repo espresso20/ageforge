@@ -89,10 +89,12 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 		switch event.Key() {
 		case tcell.KeyTab, tcell.KeyRight:
 			focusIdx = (focusIdx + 1) % len(focusOrder)
+			d.memFocus = focusOrder[focusIdx]
 			d.app.SetFocus(focusOrder[focusIdx])
 			return nil
 		case tcell.KeyBacktab, tcell.KeyLeft:
 			focusIdx = (focusIdx - 1 + len(focusOrder)) % len(focusOrder)
+			d.memFocus = focusOrder[focusIdx]
 			d.app.SetFocus(focusOrder[focusIdx])
 			return nil
 		case tcell.KeyRune:
@@ -111,6 +113,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 	})
 
 	d.pages.AddPage(ancientMemoryPage, modal, true, true)
+	d.memFocus = btnAccept
 	d.app.SetFocus(btnAccept)
 }
 
@@ -120,5 +123,6 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 // tick and won't re-pop it.
 func (d *Dashboard) closeAncientMemoryModal() {
 	d.pages.RemovePage(ancientMemoryPage)
+	d.memFocus = nil
 	d.returnFocus()
 }

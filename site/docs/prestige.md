@@ -28,6 +28,14 @@ prestige
 
 This shows your current level, available points, how many legacy kit items you own, the points you would earn right now and what prestiging from the next age would pay instead (and how many more), and your [Era Mastery](#era-mastery): how fast the age you are in runs and which ages your next prestige would raise. Before the Modern Age it adds a note that a prestige now is an early taste. Before the Medieval Age it says where prestige opens and what a prestige there pays. To view the shop without committing:
 
+<figure class="screen" data-screen="prestige-ending"><figcaption>A prestige begins with an ending: the town you built, on the whole screen, burning down from its edges until one ember is left.</figcaption></figure>
+
+A prestige plays out on the whole screen, in your map style, theme and glyph set. The town you built burns down to an ember. In the dark, what the run earned is counted out a line at a time: the age it reached, its prestige points, the badges it earned, the ages that gained mastery, and everything else the log reports. Then the word is struck in iron, with a star for every prestige so far, and the first fire of the new run is lit on its land.
+
+<figure class="screen" data-screen="prestige-strike"><figcaption>The strike, here at a first prestige: one star, and the game's own line for what the run paid.</figcaption></figure>
+
+Any key skips to the next part, and on the last part closes it. `Esc` counts as a key. Left alone it plays through and closes by itself, and the new run is already running underneath. With `motion off` each part is a single still frame. If the [Last Passage](#the-last-passage) came to this prestige, what it did is the first thing said, and it stands alone a moment before anything is counted. A [Succumb](catastrophe.md#succumb) to a catastrophe ends a run too, and gets the same telling in a lower voice: the town goes cold instead of burning, and there is no strike.
+
 <figure class="screen" data-screen="prestige"><figcaption>Prestige has no panel of its own: the command answers in the log, read here in the Logs panel in the Medieval Age, where an early taste would pay 9 points.</figcaption></figure>
 
 ```

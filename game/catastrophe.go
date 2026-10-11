@@ -538,6 +538,9 @@ func (ge *GameEngine) Succumb() error {
 	// order, civilizations met and shares before the reset.
 	ge.captureLegacyLocked()
 	savedLegacy := copyBoolMap(ge.legacyBonuses)
+	// The ending's record, for whoever tells it (run_ending.go).
+	end := RunEnding{Kind: RunEndFallen, Age: ge.age, Level: ge.Prestige.GetLevel(), Catastrophe: catName}
+	runStarted := ge.Stats.GameStarted
 	savedCatHistory := append([]string(nil), ge.catastropheHistory...)
 	savedEpochHistory := append([]EpochEventRecord(nil), ge.epochEventHistory...)
 	savedPrestige := ge.Prestige
@@ -614,27 +617,29 @@ func (ge *GameEngine) Succumb() error {
 
 	ge.recalculateTickSpeed()
 
-	ge.addLog("event", fmt.Sprintf("☄ %s: civilization has fallen. A new dawn.", catName))
+	ge.sayEnding(&end, EndLineVerdict, "event", fmt.Sprintf("☄ %s: civilization has fallen. A new dawn.", catName))
 	if newLegacy {
-		ge.addLog("success", fmt.Sprintf("%s legacy bonus (permanent): %s.", ep.Name, legacyBonusText(ge.rules, epochKey)))
+		ge.sayEnding(&end, EndLineLegacy, "success", fmt.Sprintf("%s legacy bonus (permanent): %s.", ep.Name, legacyBonusText(ge.rules, epochKey)))
 	} else {
-		ge.addLog("info", fmt.Sprintf("The %s legacy was already yours; no new legacy bonus.", ep.Name))
+		ge.sayEnding(&end, EndLineLegacy, "info", fmt.Sprintf("The %s legacy was already yours; no new legacy bonus.", ep.Name))
 	}
-	ge.addLog("success", fmt.Sprintf("Ancient Knowledge: research time %s for each epoch succumbed in, now %s (permanent).", ResearchFactorText(SuccumbResearchTimeFactor), ResearchFactorText(ge.succumbResearchFactor())))
+	ge.sayEnding(&end, EndLineKnowledge, "success", fmt.Sprintf("Ancient Knowledge: research time %s for each epoch succumbed in, now %s (permanent).", ResearchFactorText(SuccumbResearchTimeFactor), ResearchFactorText(ge.succumbResearchFactor())))
 	if masteryLine != "" {
-		ge.addLog("info", masteryLine)
+		ge.sayEnding(&end, EndLineMastery, "info", masteryLine)
 	}
 	if line := ge.masteryEntryLine(ge.age, 1); line != "" {
-		ge.addLog("info", line)
+		ge.sayEnding(&end, EndLineGround, "info", line)
 	}
 	if len(savedRuins) > 0 {
-		ge.addLog("info", fmt.Sprintf("%s from fallen civilizations carry forward (max %d).", textfmt.Count(ge.Buildings.RuinTotal(), "ruin", "ruins"), MaxRuins))
+		ge.sayEnding(&end, EndLineRuins, "info", fmt.Sprintf("%s from fallen civilizations carry forward (max %d).", textfmt.Count(ge.Buildings.RuinTotal(), "ruin", "ruins"), MaxRuins))
 	}
 	if droppedRuins > 0 {
-		ge.addLog("info", fmt.Sprintf("%s crumbled to make room.", textfmt.Count(droppedRuins, "older, lower-value ruin", "older, lower-value ruins")))
+		ge.sayEnding(&end, EndLineRuins, "info", fmt.Sprintf("%s crumbled to make room.", textfmt.Count(droppedRuins, "older, lower-value ruin", "older, lower-value ruins")))
 	}
 	// The legacy kit: shares, the first age's template slice, old friends.
+	kitFrom := len(ge.log)
 	ge.startRunLegacyLocked()
+	ge.takeEndingLines(&end, kitFrom, EndLineKit)
 	ge.addLog("info", "Type [cyan]help[-] to rebuild.")
 	// The run that starts here is a new civilization.
 	ge.noteCivilizationStartedLocked()
@@ -643,6 +648,7 @@ func (ge *GameEngine) Succumb() error {
 	// a first-ever Succumb with no prestige history offers nothing — see the gate).
 	ge.maybeOfferAncientMemory()
 
+	ge.publishRunEnded(end, runStarted)
 	return nil
 }
 

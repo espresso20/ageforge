@@ -534,14 +534,24 @@ func (d *Dashboard) iconsKey(event *tcell.EventKey) *tcell.EventKey {
 }
 
 // returnFocus gives the keyboard back when a window over the dashboard
-// closes: to the icons window if it is still open, else to the open panel,
-// else to the prompt. Without it a splash closing over the icons window
-// would leave the prompt focused under it, where Esc leaves the game.
+// closes: to the icons window if it is still open, else to a window that
+// waits on a choice (the catastrophe's, an Ancient Memory's), else to the
+// open panel, else to the prompt. Without it a splash closing over the
+// icons window would leave the prompt focused under it, where Esc leaves
+// the game; and an arrival that came up over an Ancient Memory left
+// unanswered (a planned advance goes by itself) would leave that window in
+// front with no key able to reach it.
 func (d *Dashboard) returnFocus() {
 	switch {
 	case d.icons != nil && d.icons.open && d.iconsWin != nil && d.pages.HasPage(iconsPage):
 		d.pages.SendToFront(iconsPage)
 		d.iconsWin.setFocus(d.app, d.iconsWin.focus)
+	case d.catFocus != nil && d.pages.HasPage(catastrophePage):
+		d.pages.SendToFront(catastrophePage)
+		d.app.SetFocus(d.catFocus)
+	case d.memFocus != nil && d.pages.HasPage(ancientMemoryPage):
+		d.pages.SendToFront(ancientMemoryPage)
+		d.app.SetFocus(d.memFocus)
 	case d.overlayMgr != nil && d.overlayMgr.Focus():
 	default:
 		d.app.SetFocus(d.inputField)

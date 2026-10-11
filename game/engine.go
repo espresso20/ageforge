@@ -4323,6 +4323,12 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// the managers holding it are reset.
 	ge.captureLegacyLocked()
 	prestigedFrom := ge.age
+	// The ending's record, for whoever tells it (run_ending.go).
+	end := RunEnding{Kind: how.endingKind(), Age: prestigedFrom, Level: ge.Prestige.GetLevel(), Points: points, Full: full}
+	if how == lastPassageEndured || how == lastPassageSuccumbed {
+		end.Catastrophe, _ = ge.rules.LastPassage()
+	}
+	runStarted := ge.Stats.GameStarted
 
 	// The reports of the run's ending, while the run they are judged against (its
 	// facts, its buildings) is still here. The Last Passage's outcome comes first.
@@ -4417,34 +4423,45 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.recalculateTickSpeed()
 
 	ge.log = carried
-	ge.addLog("success", fmt.Sprintf("Prestige complete. Level %d, %s earned.",
+	// The old run's last lines: what the Last Passage did, then the run's
+	// closing line (runEndingLines writes them in those categories).
+	for _, l := range carried {
+		kind := EndLineVerdict
+		if l.Type == "info" {
+			kind = EndLineVoice
+		}
+		end.Lines = append(end.Lines, RunEndingLine{Kind: kind, Level: l.Type, Text: l.Message})
+	}
+	ge.sayEnding(&end, EndLineComplete, "success", fmt.Sprintf("Prestige complete. Level %d, %s earned.",
 		ge.Prestige.GetLevel(), textfmt.Count(points, "prestige point", "prestige points")))
 	// An early prestige pays little: say so, and what a deeper run pays.
 	if line := EarlyPrestigeLine(sight, prestigedFrom, points, true); line != "" {
-		ge.addLog("info", line)
+		ge.sayEnding(&end, EndLineEarly, "info", line)
 	}
 	if newLegacy {
-		ge.addLog("success", fmt.Sprintf("✦ Cosmic Legacy: all production %s, permanent. It survives every prestige and every fall.", textfmt.SignedPercent(CosmicLegacyProductionBonus)))
+		ge.sayEnding(&end, EndLineLegacy, "success", fmt.Sprintf("✦ Cosmic Legacy: all production %s, permanent. It survives every prestige and every fall.", textfmt.SignedPercent(CosmicLegacyProductionBonus)))
 	} else if ge.cosmicLegacy {
-		ge.addLog("info", fmt.Sprintf("Cosmic Legacy active: all production %s.", textfmt.SignedPercent(CosmicLegacyProductionBonus)))
+		ge.sayEnding(&end, EndLineLegacy, "info", fmt.Sprintf("Cosmic Legacy active: all production %s.", textfmt.SignedPercent(CosmicLegacyProductionBonus)))
 	}
 	if masteryLine != "" {
-		ge.addLog("info", masteryLine)
+		ge.sayEnding(&end, EndLineMastery, "info", masteryLine)
 	}
 	if line := ge.masteryEntryLine(ge.age, 1); line != "" {
-		ge.addLog("info", line)
+		ge.sayEnding(&end, EndLineGround, "info", line)
 	}
 	if n := ge.legacyEpochCount(); n > 0 {
-		ge.addLog("info", fmt.Sprintf("Ancient Knowledge from %s you succumbed in: research time %s.",
+		ge.sayEnding(&end, EndLineKnowledge, "info", fmt.Sprintf("Ancient Knowledge from %s you succumbed in: research time %s.",
 			textfmt.Count(n, "epoch", "epochs"), ResearchFactorText(ge.succumbResearchFactor())))
 	}
 	if len(savedRuins) > 0 {
-		ge.addLog("info", fmt.Sprintf("Ruins carried forward from past civilizations: %s.",
+		ge.sayEnding(&end, EndLineRuins, "info", fmt.Sprintf("Ruins carried forward from past civilizations: %s.",
 			textfmt.Count(len(savedRuins), "type", "types")))
 		ge.note(config.BadgeEvRuinsCarried, "")
 	}
 	// The legacy kit: shares, the first age's template slice, old friends.
+	kitFrom := len(ge.log)
 	ge.startRunLegacyLocked()
+	ge.takeEndingLines(&end, kitFrom, EndLineKit)
 	ge.addLog("info", "Type [cyan]help[-] to get started again.")
 
 	// Account lifetime stat (Phase 6): record the prestige IN-MEMORY only — we hold
@@ -4460,6 +4477,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// Roll for an Ancient Memory cache — prestige level is now >= 1, the age is
 	// primitive, and the flag was just cleared above, so this fresh run is eligible.
 	ge.maybeOfferAncientMemory()
+
+	ge.publishRunEnded(end, runStarted)
 }
 
 // BuyPrestigeUpgrade purchases a prestige upgrade tier

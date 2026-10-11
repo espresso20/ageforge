@@ -23,6 +23,9 @@ const (
 	// (ui/fate_guard_test.go).
 	EventFateRolled   = "fate_rolled"
 	EventFateResolved = "fate_resolved"
+	// EventRunEnded carries the record of a run that just ended in a
+	// prestige or a fall (run_ending.go), as Payload["ending"], a RunEnding.
+	EventRunEnded = "run_ended"
 )
 
 // EventData carries data for an event
