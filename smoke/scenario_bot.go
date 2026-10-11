@@ -311,6 +311,14 @@ func runStatic(e *Env, res *Result) {
 	var cf strings.Builder
 	writeCaps(&cf, caps)
 	res.section("Bonus pools against their caps", "%s", cf.String())
+	// The economy's properties, for the three reference players.
+	props := StaticProperties()
+	for _, p := range props.Problems() {
+		res.fail("property", "%s", p)
+	}
+	var pf strings.Builder
+	writeProperties(&pf, props)
+	res.section("The economy's properties, by calculation", "%s", pf.String())
 	var bf strings.Builder
 	writeBadges(&bf, bp, breach, bfirst)
 	res.section("Badge Covenant", "%s", strings.TrimPrefix(bf.String(), "\n### Badges\n\n"))
