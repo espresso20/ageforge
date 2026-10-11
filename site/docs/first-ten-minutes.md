@@ -1,6 +1,6 @@
 # Your First Age
 
-A guided walkthrough of the Primitive Age, your first age. It is tuned to take about **15 minutes** of real time; follow this and you'll reach the Stone Age in about that time. The steps follow the **Getting started** guide the game shows under the Buildings list.
+A guided walkthrough of the Primitive Age, your first age. The steps follow the **Getting started** guide the game shows under the Buildings list.
 
 ---
 

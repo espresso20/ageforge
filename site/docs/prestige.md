@@ -315,7 +315,7 @@ Measured with the smoke-test bot, a near-perfect player, on the one-week curve (
 | Third run | 1.9 days |
 | Veteran (mastery 10 through the Space Age, record in the Interstellar Age) | 1.2 days |
 
-On known ground the early ages are short: at 4x the Primitive and Stone Ages are paced at about 15 minutes together and the Bronze Age at under an hour. The start of a run rewards checking in often.
+On known ground the early ages are short. The start of a run rewards checking in often.
 
 ---
 
