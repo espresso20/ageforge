@@ -47,8 +47,10 @@ const (
 
 // The script, in animation frames (eight a second).
 const (
-	// The ending: the town burns for all but the tail, which is the ember's.
-	endBurnFrames = 22
+	// The ending: the town stands a moment, burns, and the tail is the
+	// ember's alone.
+	endBurnFrames = 28
+	endBurnHold   = 4
 	endBurnTail   = 4
 
 	// The reckoning: a lead before its first line, a step between two
@@ -67,10 +69,10 @@ const (
 	endBlow2        = 5
 	endBlow3        = 8
 	endBlow         = 11
-	endStrikeFrames = 24
+	endStrikeFrames = 22
 
 	// The beginning.
-	endDawnFrames = 22
+	endDawnFrames = 20
 
 	// With the motion setting off each beat is one still frame, and this is
 	// its turn.
@@ -412,7 +414,7 @@ func (sc *endScene) span(frame int) (endSpan, int) {
 
 // burn is how far the ending's fire has come at frame f of the beat.
 func burn(f int) float64 {
-	return math.Min(1.3, float64(f)/float64(endBurnFrames-endBurnTail)*1.3)
+	return 1.25 * math.Max(0, math.Min(1, float64(f-endBurnHold)/float64(endBurnFrames-endBurnHold-endBurnTail)))
 }
 
 // enter sets a beat's own state at its start. What is in the air stays
@@ -615,7 +617,7 @@ func (sc *endScene) drawEnding(g *mGrid, pal *menuPalette, v *endView, old *menu
 	lh := L.h - L.top
 	land := newMGrid(L.w, max(lh, 1))
 	old.drawFoot(land, pal, 0, 0, L.w, lh, mf, false)
-	hot, low := rampAt(&pal.heat, 0.95), rampAt(&pal.fire, 0.45)
+	low := rampAt(&pal.fire, 0.45)
 	for y := 0; y < lh; y++ {
 		for x := 0; x < L.w; x++ {
 			c := land.c[y*L.w+x]
@@ -630,7 +632,7 @@ func (sc *endScene) drawEnding(g *mGrid, pal *menuPalette, v *endView, old *menu
 					c.fg = theme.Mix(c.fg, low, 0.5)
 				}
 			case d < 0.12: // burning (or, in a fall, going grey)
-				c.fg, c.bold = hot, true
+				c.fg, c.bold = rampAt(&pal.heat, 0.95-2.6*d), true
 				if !v.prestige {
 					c.fg, c.bold = pal.dim, false
 				}
@@ -656,7 +658,7 @@ func (sc *endScene) drawEnding(g *mGrid, pal *menuPalette, v *endView, old *menu
 	for i, line := range L.voice {
 		g.textOn(centred(L.w, runeLen(line)+2), 3+i, " "+line+" ", pal.dim, pal.bg, false)
 	}
-	sc.drawEmber(g, pal, v, math.Max(0, math.Min(1, (p-0.8)/0.3)))
+	sc.drawEmber(g, pal, v, math.Max(0, math.Min(1, (p-0.85)/0.3)))
 }
 
 // drawEmber draws the last point of light, k of the way lit.
