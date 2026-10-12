@@ -39,7 +39,8 @@ import (
 // The game behind the pictures is played, not painted: one seeded run from
 // the Primitive Age to the Medieval Age through the engine's own methods and
 // the prompt's own commands, with every building paid for and waited for,
-// every wonder banked and every age advanced for real. Staging takes four
+// every wonder banked and every age advanced for real. Each gate is met as the
+// game lists it (meetGate reads the Next Age list), not from counts typed here. Staging takes four
 // liberties, and no others:
 //
 //   - stores are topped up between purchases (stock), which stands in for
@@ -372,6 +373,22 @@ func (s *siteStage) raiseAll(list ...siteBuild) {
 	}
 }
 
+// meetGate builds what the gate out of the current age asks for, as the game
+// lists it (NextAgeBldReqs): every building to the count it asks. The wonder
+// is not in that list, and each age's keystone must be learned before this
+// runs, so every building on the list can be built. What the staging builds
+// for the pictures comes first; this tops it up to the gate and no further.
+func (s *siteStage) meetGate() {
+	s.t.Helper()
+	st := s.eng.GetState()
+	for _, k := range sortedKeysOf(st.NextAgeBldReqs) {
+		if need := st.Buildings[k].NeedsTech; need != "" {
+			s.t.Fatalf("the gate out of %s asks for %s, which waits for %s: learn it before meetGate", st.Age, k, need)
+		}
+		s.raiseTo(k, st.NextAgeBldReqs[k])
+	}
+}
+
 // raiseTo builds a building until there are n of it.
 func (s *siteStage) raiseTo(key string, n int) {
 	s.t.Helper()
@@ -457,6 +474,7 @@ func (s *siteStage) toBronze() {
 	s.raiseAll(siteBuild{"stash", 5}, siteBuild{"gathering_camp", 4}, siteBuild{"wood_camp", 4},
 		siteBuild{"hut", 10}, siteBuild{"story_circle", 5}, siteBuild{"shrine", 2})
 	s.learn("tool_making", "fire_mastery", "language")
+	s.meetGate()
 	s.wonder("sacred_grove")
 	s.advance()
 	s.dismiss() // the Stone Age's arrival, seen and closed, as in play
@@ -468,6 +486,7 @@ func (s *siteStage) toBronze() {
 	s.learn("ritual")
 	s.raiseAll(siteBuild{"standing_stones", 2})
 	s.learn("stoneworking", "pottery", "primitive_writing", "woodworking")
+	s.meetGate()
 	s.wonder("great_monolith")
 	s.advance()
 }
@@ -527,6 +546,7 @@ func (s *siteStage) toIron() {
 	s.raiseTo("warehouse", 5)
 	s.learn("animal_husbandry", "agriculture", "military_tactics", "map_making")
 	s.raiseAll(siteBuild{"barracks", 2})
+	s.meetGate()
 	s.wonder("stonehenge")
 	// The last item of the plan is the advance: it goes by itself.
 	s.until("the planned advance", func(st game.GameState) bool { return st.Age == "iron_age" })
@@ -562,6 +582,7 @@ func (s *siteStage) toMedieval() {
 	s.raiseTo("hunting_lodge", 15)
 	s.raiseTo("trading_post", 10)
 	s.learn("mathematics", "road_building")
+	s.meetGate()
 	s.wonder("colosseum")
 	s.advance()
 	s.dismiss()
@@ -584,6 +605,7 @@ func (s *siteStage) toMedieval() {
 	}
 	s.until("Philosophy researched", func(st game.GameState) bool { return st.Research.CurrentTech == "" })
 	s.learn("civil_engineering")
+	s.meetGate()
 	s.wonder("parthenon")
 	s.advance()
 	s.dismiss()
