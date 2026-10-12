@@ -44,7 +44,7 @@ Build → Staff → Research → Advance → Repeat
 1. **Build** structures to add housing, storage and production
 2. **Staff** them: workers arrive on their own while housing and food allow and go to work by your [roster](workers-and-domains.md#the-roster). Steer the split with `roster`, or `recruit` and `assign` by hand
 3. **Research** technologies that multiply your output
-4. **Advance** to the next age with `advance` once its requirements are met and the age's wonder is built
+4. **Advance** to the next age with `advance` once the buildings it asks for stand and the age's wonder is built (see [Advancement Requirements](ages.md#advancement-requirements))
 5. **Prestige** for points that buy the [legacy kit](prestige.md#the-legacy-kit), which carries your plan, roster and civilizations into later runs. Prestige opens at the Medieval Age, but a run to the Modern Age (or later) pays far more. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
 
 New to the game? [Your First Age](first-ten-minutes.md) walks you through the Primitive Age step by step, from the first `gather` to the Sacred Grove.
@@ -69,7 +69,7 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row marks each requirement ✓ or ✗, and names the age's wonder until it stands. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
+The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row marks each building the next age asks for ✓ or ✗, with your count beside it, and names the age's wonder until it stands. When the list is longer than the row, the row counts what is met (`✓ 3 met`) and what it has no room for (`+4 more`), so the buildings still to build come first. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
 
 <figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, construction and the log on the left, the Buildings list in the middle, the panel names and the Workers box on the right.</figcaption></figure>
 

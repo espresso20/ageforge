@@ -2,7 +2,7 @@
 
 Knowledge pays for all research. It accumulates over time and is spent when you start researching a technology. Your knowledge rate and storage decide how quickly you can move through the tech tree. A few buildings also cost knowledge, most of all the Modern Age wonder, the Space Program.
 
-No age asks for knowledge to advance. What an age needs of it is one tech: the **keystone** its wonder cannot be built without, and the techs that one stands on (see [Keystone Techs](ages.md#keystone-techs)). The rest of your knowledge is yours to spend on the techs you choose.
+No age asks you to hold knowledge to advance. The gates do ask for knowledge buildings: 5 Story Circles for the Stone Age, 5 Elders' Halls for the Bronze Age, 5 Scriptoria for the Iron Age and so on (see [Advancement Requirements](ages.md#advancement-requirements)). What an age needs of research itself is one tech: the **keystone** its wonder cannot be built without, and the techs that one stands on (see [Keystone Techs](ages.md#keystone-techs)). The rest of your knowledge is yours to spend on the techs you choose.
 
 ---
 
