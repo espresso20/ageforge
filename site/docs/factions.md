@@ -2,7 +2,7 @@
 
 The world beyond your borders holds an **11-civilization roster** of other powers. You meet them by sending missions. Each one holds an **opinion** of you, and opinion decides what it offers: trade deals, gifts after an encounter, an alliance that raises your production of its specialty, workers on loan. Provoke one while it hates you and it goes to war. Everything they are doing to you is on the **Factions** panel (`factions`).
 
-The market, trade routes, harbors and the black market are on [Trade](trade.md).
+Trade routes, harbors and the black market are on [Trade](trade.md).
 
 ---
 
@@ -124,11 +124,13 @@ Every deal is worded from your side, the same way on the panel, in `diplomacy de
 | **Buy** | one of your construction resources | the civilization's specialty, sized by the goods |
 | **Sell** | one of the three resources whose stores are fullest | the civilization's specialty, a little more than a Buy pays |
 | **Goodwill** | one of the three resources whose stores are fullest | **+5 opinion** instead of goods (only offered below opinion 50) |
-| **Rare** | one of your construction resources | a construction resource of the **next** age that this age's market doesn't sell, at a steep price (0.6 of its next-age parity) |
+| **Rare** | one of your construction resources | a construction resource of the **next** age that this age does not price, at a steep price (0.6 of its next-age parity) |
 
-Next to each line the panel shows how much better than the market the deal pays (`+15% vs market`), `next age's goods` for a Rare deal, or `not sold at the market` when the market doesn't trade the pair. A price you can't pay yet shows in red, and deals you've taken are dimmed.
+Next to a Rare deal the panel shows `next age's goods`. A price you can't pay yet shows in red, and deals you've taken are dimmed.
 
-Where the market trades the pair, a deal pays **5% to 25% better than the market** (it trades at 0.84 to 1.0 of parity, where the market pays 0.8). Where the market doesn't trade the pair, the rate comes from the two resources' price levels (food and culture are valued by what the age's producers of them make). A deal never pays better than parity, so trading still never beats building. Deals ignore market pressure: each one is a fixed contract.
+A deal stands on its own. Its rate is the ratio of the two resources' price levels times a multiple of 0.84 to 1.0 of parity, and it never pays better than parity. Food and culture are valued by what the age's producers of them make, so a deal that gives you food or culture costs much more than it did when the market set the price. Each deal is a fixed contract.
+
+The market no longer sells anything, so the Rare list changed: wood in the Renaissance Age, coal in the Colonial Age and stone in the Electric Age are now rare goods.
 
 A civilization's personality sets how many deals it offers and which kinds:
 
