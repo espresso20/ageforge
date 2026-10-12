@@ -156,7 +156,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "titanium", Value: 0.5},
-			{Type: "production", Target: "steel", Value: 14300000},
+			{Type: "production", Target: "steel", Value: 17100000},
 		},
 		BuildTicks:  9360,
 		RequiredAge: "modern_age",

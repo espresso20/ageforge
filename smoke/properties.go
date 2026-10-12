@@ -38,7 +38,7 @@ var KnownPropertyFailures = map[int]string{
 	4:  "fails in 3 of 22 ages; worst 2.9 times in the Quantum Age",
 	5:  "fails in 11 of 22 ages; worst 13 techs in the Digital Age",
 	8:  "fails in 15 of 22 ages; worst 0.0% eaten in the Transcendent Age",
-	9:  "fails in 21 of 22 ages; worst room for 17654 people per job in the Transcendent Age",
+	9:  "fails in 21 of 22 ages; worst room for 17603 people per job in the Transcendent Age",
 	10: "fails in 21 of 22 ages; worst 4.5 times the age in the Electric Age",
 	11: "fails in 20 of 22 ages; worst 708338 times what the buildings make in the Information Age",
 	12: "27 of 27 trade route payments fall outside it",

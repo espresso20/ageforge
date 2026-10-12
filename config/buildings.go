@@ -549,7 +549,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Modern Age — normal costs: 15B-40B
 		{
 			Name: "Space Program", Key: "space_program", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 1.232e12, "gold": 1.104e12, "electricity": 6.88e11},
+			BaseCost:  map[string]float64{"steel": 1.32e12, "gold": 1.19e12, "electricity": 7.38e11},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 6},

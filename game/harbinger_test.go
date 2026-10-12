@@ -506,8 +506,9 @@ func TestHarbingerCostExamples(t *testing.T) {
 	// each material in a fifth of the age. Iron Age stone: 74.4 a tick over
 	// 2,340 ticks = 174.2K; a third is 58.1K → 59K. The materials are the
 	// era's written list (config.EpochDef.BraceMaterials) that the age's
-	// buildings make: the Modern Age buys its data at the market, so it is
-	// not asked for there. The list is not read from the age gates, which
+	// buildings make: the Modern Age had no maker of data and bought it at the
+	// market, so it was not asked for there; the Mainframe Hall makes it now,
+	// and it is. The list is not read from the age gates, which
 	// since the storage wall name every material an era's buildings are
 	// paid in: the Iron Era's Brace is still gold, iron and stone. No
 	// material asks for more than three fifths of what a moderate builder's
@@ -532,10 +533,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		{"electric_era", "victorian_age", map[string]float64{"electricity": 2700000, "oil": 2200000000, "steel": 2900000000}},
 		{"electric_era", "electric_age", map[string]float64{"electricity": 30000000000, "oil": 7300000000, "steel": 50000000000}},
 		{"electric_era", "atomic_age", map[string]float64{"electricity": 270000000000, "oil": 9800000000, "steel": 270000000000}},
-		{"digital_era", "modern_age", map[string]float64{"electricity": 960000000000, "gold": 960000000000}},
-		{"digital_era", "information_age", map[string]float64{"data": 940000000000, "electricity": 3000000000000, "gold": 3000000000000}},
-		{"digital_era", "digital_age", map[string]float64{"data": 3800000000000, "electricity": 16000000000000, "gold": 16000000000000}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 13000000000000, "electricity": 100000000000000}},
+		{"digital_era", "modern_age", map[string]float64{"data": 46000000000, "electricity": 960000000000, "gold": 960000000000}},
+		{"digital_era", "information_age", map[string]float64{"data": 1000000000000, "electricity": 3000000000000, "gold": 3000000000000}},
+		{"digital_era", "digital_age", map[string]float64{"data": 3900000000000, "electricity": 16000000000000, "gold": 16000000000000}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 14000000000000, "electricity": 100000000000000}},
 		{"neon_era", "fusion_age", map[string]float64{"data": 16000000000000, "electricity": 360000000000000}},
 		{"neon_era", "space_age", map[string]float64{"data": 18000000000000, "electricity": 1.2e+15}},
 	}
@@ -557,7 +558,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 			t.Errorf("a doom of the %s foretold in the %s: brace level 2 = %v, want level 1's %v again", c.epoch, c.age, got, c.brace)
 		}
 		for res := range c.brace {
-			if res == "crypto" || res == "faith" || res == "culture" || res == "knowledge" || c.age == "modern_age" && res == "data" {
+			if res == "crypto" || res == "faith" || res == "culture" || res == "knowledge" {
 				t.Errorf("a doom of the %s foretold in the %s asks %s for Brace", c.epoch, c.age, res)
 			}
 		}

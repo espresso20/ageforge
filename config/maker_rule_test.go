@@ -57,38 +57,42 @@ func checkMakerHolesAreFilledByRule(t *testing.T) {
 	defs, ages, techs := BaseBuildings(), Ages(), Technologies()
 	fills := map[string]MakerFill{}
 	for _, f := range MakerFills() {
-		fills[f.Age+"/"+f.Material] = f
+		if f.Rule < 5 {
+			fills[f.Age+"/"+f.Material+"/"+f.Building] = f
+		}
 	}
 	open := map[string]MakerOpenHole{}
 	for _, o := range MakerOpenHoles() {
 		open[o.Age+"/"+o.Material] = o
 	}
-	seen := map[string]bool{}
+	seenFill, seenOpen := map[string]bool{}, map[string]bool{}
 	for _, h := range MakerHoles(defs, ages, techs, MakerFills()) {
 		id := h.Age + "/" + h.Material
-		seen[id] = true
 		switch h.Rule {
 		case 1, 2, 3:
-			f, ok := fills[id]
+			fid := id + "/" + h.Building
+			seenFill[fid] = true
+			f, ok := fills[fid]
 			if !ok {
 				t.Errorf("%s: rule %d gives %s, and MakerFills has no entry", id, h.Rule, h.Building)
-			} else if f.Building != h.Building || f.Rule != h.Rule {
-				t.Errorf("%s: the rules give %s by rule %d, MakerFills says %s by rule %d", id, h.Building, h.Rule, f.Building, f.Rule)
+			} else if f.Rule != h.Rule {
+				t.Errorf("%s: the rules give %s by rule %d, MakerFills says rule %d", id, h.Building, h.Rule, f.Rule)
 			}
 		default:
+			seenOpen[id] = true
 			if _, ok := open[id]; !ok {
 				t.Errorf("%s: the rules leave it open (%s), and MakerOpenHoles does not list it", id, h.Why)
 			}
 		}
 	}
 	for id := range fills {
-		if !seen[id] {
-			t.Errorf("MakerFills lists %s, which is not a hole", id)
+		if !seenFill[id] {
+			t.Errorf("MakerFills lists %s, which the rules do not give", id)
 		}
 	}
 	for id := range open {
-		if !seen[id] {
-			t.Errorf("MakerOpenHoles lists %s, which is not a hole", id)
+		if !seenOpen[id] {
+			t.Errorf("MakerOpenHoles lists %s, which is not an open hole", id)
 		}
 	}
 	byKey := BuildingByKey()

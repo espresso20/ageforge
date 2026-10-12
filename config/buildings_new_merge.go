@@ -18,7 +18,7 @@ package config
 // 10. culture_arts     — 17 tiers (classical → quantum)
 // 11. metallurgy       — 18 tiers (iron → quantum)
 // 12. energy           — 13 tiers (industrial → quantum)
-// 13. hacker           — 8 tiers (information → quantum)
+// 13. hacker           — 9 tiers (modern → quantum)
 // 14. harbor           — 5 tiers (colonial → digital); boosts trade-route income
 func NewProductionBuildings() []BuildingDef {
 	out := buildingsLineageFood()

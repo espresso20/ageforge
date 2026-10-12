@@ -186,7 +186,7 @@ func Ages() []AgeDef {
 			Description:     "Technology and innovation define the era.",
 			Quip:            "Everything is connected now, which seemed like a good idea at the time.",
 			BuildingReqs:    map[string]int{"nuclear_reactor": 18, "bunker_complex": 18, "research_campus": 18, "atomic_vault": 5, "agricultural_complex": 8, "uranium_processing_works": 8, "petroleum_refinery": 8, "spiritual_center": 8, "corporate_hq": 8, "cinema": 8, "advanced_alloy_plant": 8},
-			UnlockBuildings: []string{"tower_block", "modern_depot", "agri_complex", "oil_platform", "titanium_mine", "think_tank", "meditation_center", "special_ops_hq", "investment_firm", "seaport", "power_grid_hub", "titanium_smelter", "oil_refinery", "tv_studio", "space_program", "nano_foundry"},
+			UnlockBuildings: []string{"tower_block", "modern_depot", "agri_complex", "oil_platform", "titanium_mine", "think_tank", "meditation_center", "special_ops_hq", "investment_firm", "seaport", "power_grid_hub", "titanium_smelter", "oil_refinery", "mainframe_hall", "tv_studio", "space_program", "nano_foundry"},
 			UnlockResources: []string{"data", "nanobots"},
 		},
 		// === 13: INFORMATION AGE (Digital Era) ===
@@ -195,7 +195,7 @@ func Ages() []AgeDef {
 			EpochKey:        "digital_era",
 			Description:     "The Internet connects the world.",
 			Quip:            "The sum of all human knowledge, now mostly used to argue.",
-			BuildingReqs:    map[string]int{"think_tank": 20, "tower_block": 30, "oil_refinery": 15, "modern_depot": 5, "agri_complex": 8, "titanium_mine": 8, "oil_platform": 8, "nano_foundry": 8, "power_grid_hub": 8, "meditation_center": 8, "special_ops_hq": 8, "investment_firm": 8, "tv_studio": 8, "titanium_smelter": 8},
+			BuildingReqs:    map[string]int{"think_tank": 20, "tower_block": 30, "oil_refinery": 15, "modern_depot": 5, "agri_complex": 8, "titanium_mine": 8, "oil_platform": 8, "nano_foundry": 8, "power_grid_hub": 8, "meditation_center": 8, "special_ops_hq": 8, "investment_firm": 8, "tv_studio": 8, "titanium_smelter": 8, "mainframe_hall": 8},
 			UnlockBuildings: []string{"smart_complex", "info_vault", "smart_farm", "smart_refinery", "precision_mine", "innovation_hub", "digital_temple", "cyber_command", "venture_hub", "container_terminal", "smart_grid_node", "aerospace_foundry", "smart_energy_grid", "server_farm", "media_center", "global_network"},
 		},
 		// === 14: DIGITAL AGE (Digital Era) ===

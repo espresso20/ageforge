@@ -68,7 +68,7 @@ var MakerPaybackTicks = map[string]float64{
 	"victorian_age":    14896,
 	"electric_age":     20116,
 	"atomic_age":       25407,
-	"modern_age":       28869,
+	"modern_age":       25950,
 	"information_age":  15227,
 	"digital_age":      40929,
 	"cyberpunk_age":    50249,
@@ -81,7 +81,10 @@ var MakerPaybackTicks = map[string]float64{
 }
 
 // MakerFill is one hole the rules fill: in Age, Building also makes Material,
-// by Rule 1, 2 or 3. The building tables hold the output; MakerFills is the
+// by Rule 1, 2 or 3. Rule 5 is a maker placed by the owner's decision where
+// the rules found no building to fill a hole (the Modern Age's data): a new
+// building, put on the standard like any maker; the rules read it as a maker
+// that is there. The building tables hold the output; MakerFills is the
 // record of why, and a test proves it against the rules.
 type MakerFill struct {
 	Age, Material, Building string
@@ -96,6 +99,7 @@ type MakerOpenHole struct {
 // MakerFills lists every hole the rules fill, in age order.
 func MakerFills() []MakerFill {
 	return []MakerFill{
+		{Age: "modern_age", Material: "data", Building: "mainframe_hall", Rule: 5},
 		{Age: "iron_age", Material: "iron", Building: "marble_quarry", Rule: 2},
 		{Age: "iron_age", Material: "stone", Building: "marble_quarry", Rule: 2},
 		{Age: "classical_age", Material: "iron", Building: "marble_works", Rule: 2},
@@ -131,7 +135,6 @@ func MakerFills() []MakerFill {
 // MakerOpenHoles lists every hole the rules leave open.
 func MakerOpenHoles() []MakerOpenHole {
 	return []MakerOpenHole{
-		{Age: "modern_age", Material: "data", Why: "nothing made data before this age (its first maker is the Information Age's Server Farm), so no lineage made it last."},
 		{Age: "transcendent_age", Material: "quantum_flux", Why: "the last age has no makers of its own: its only building that a run can build without an optional tech is housing, so the Singularity Core's quantum flux has no lineage to fill it."},
 	}
 }
@@ -343,7 +346,9 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 	}
 	skip := map[string]bool{}
 	for _, f := range fills {
-		skip[f.Building+"/"+f.Material] = true
+		if f.Rule < 5 { // a placed maker is a maker that is there
+			skip[f.Building+"/"+f.Material] = true
+		}
 	}
 	var out []MakerHole
 	for i, a := range ages {

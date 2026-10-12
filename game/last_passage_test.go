@@ -498,8 +498,10 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // income): 0.06x, under the bar (0.05 of the warning and 0.10x at five
 // copies). The Colonial Age's is 95M of each, 0.29 of the warning, 0.60x: its
 // steel was 69M, a third of the warning, until the town grew. The Modern
-// Age's is 960B of electricity and gold, 0.27 of the warning, 0.56x. The
-// Colonial and Modern Ages are over the bar. Before the wall the list was
+// Age's was 960B of electricity and gold, 0.27 of the warning, 0.56x; it left
+// the list when the Mainframe Hall gave the age a maker of data, which Brace
+// then asks for (46B, a third of the warning, under its ceiling). The
+// Colonial Age is over the bar. Before the wall the list was
 // the Industrial Age (0.33x) and the Modern Age (0.39x). The maker rule gave
 // stone a maker in the Iron, Classical and Medieval Ages, so stone is no
 // longer a trickle there and its Brace stops at the ceiling with gold and
@@ -517,7 +519,6 @@ var doomChoiceOnTheCeiling = map[string]float64{
 	"medieval_age":   0.41,
 	"colonial_age":   0.60,
 	"industrial_age": 0.06,
-	"modern_age":     0.56,
 }
 
 // incomeHoursOfMade is incomeHours over the resources of cost the age makes

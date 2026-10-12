@@ -211,8 +211,10 @@ func TestBraceTakesEffort(t *testing.T) {
 	// the warning. The maker rule gave stone a maker in the Iron, Classical
 	// and Medieval Ages, so its Brace joins gold and iron on the ceiling there
 	// (all three of the Iron Era's materials, in all three ages), and the
-	// Electric Age's electricity and steel moved. The counts are read from
-	// the price table.
+	// Electric Age's electricity and steel moved. The Modern Age left the
+	// all-capped list when the Mainframe Hall gave it a maker of data: its
+	// data Brace is under the ceiling. The counts are read from the price
+	// table.
 	wantCapped := map[string]int{
 		"iron_age": 3, "classical_age": 3, "medieval_age": 3,
 		"renaissance_age": 1, "colonial_age": 2, "industrial_age": 2,
@@ -223,8 +225,8 @@ func TestBraceTakesEffort(t *testing.T) {
 	if !maps.Equal(capped, wantCapped) {
 		t.Errorf("materials on their ceiling by age: %v; want %v", capped, wantCapped)
 	}
-	if want := []string{"iron_age", "classical_age", "medieval_age", "colonial_age", "industrial_age", "modern_age"}; !slices.Equal(allCapped, want) {
-		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same six", allCapped, want)
+	if want := []string{"iron_age", "classical_age", "medieval_age", "colonial_age", "industrial_age"}; !slices.Equal(allCapped, want) {
+		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same five", allCapped, want)
 	}
 	// The final era's two threads have no ceiling, and a moderate builder's
 	// store holds them all the same. The Last Passage's takes over half of
@@ -375,17 +377,16 @@ func TestBraceTakesEffort(t *testing.T) {
 		t.Errorf("half the ceiling of every material: %v, want the effort rule", got)
 	}
 
-	// The two prices the rule dropped: the Modern Age's data, which it buys
-	// at the market, and the Neon Era's crypto.
+	// The two prices the rule dropped: the Modern Age's data, which it bought
+	// at the market until the Mainframe Hall gave the age a maker (so the
+	// Digital Era's Brace asks it in the Modern Age now, as in the
+	// Information Age), and the Neon Era's crypto.
 	for _, r := range rows {
 		if _, ok := r.BraceL1["crypto"]; ok {
 			t.Errorf("%s in %s: Brace asks crypto, which no building makes", r.Epoch, r.Age)
 		}
-		if _, ok := r.BraceL1["data"]; ok && r.Age == "modern_age" {
-			t.Errorf("%s in %s: Brace asks data, which the Modern Age buys", r.Epoch, r.Age)
-		}
-		if _, ok := r.BraceL1["data"]; !ok && r.Age == "information_age" {
-			t.Errorf("%s in %s: Brace asks no data, which the Information Age makes", r.Epoch, r.Age)
+		if _, ok := r.BraceL1["data"]; !ok && r.Epoch == "digital_era" && (r.Age == "modern_age" || r.Age == "information_age") {
+			t.Errorf("%s in %s: Brace asks no data, which the age makes", r.Epoch, r.Age)
 		}
 	}
 }
