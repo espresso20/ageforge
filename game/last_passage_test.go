@@ -515,17 +515,17 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // longer a trickle there and its Brace stops at the ceiling with gold and
 // iron: all three materials of the Iron Era are on it, where stone alone was
 // under it (59K, 82K and 110K a third of the warning made of it). The Iron
-// Age reads 0.50x with Brace at 0.24 of the warning, the Medieval Age 0.41x
-// at 0.19; the Iron and Medieval Ages are
-// under the bar. The Classical Age's stone is 870K, a third of the warning
+// Age reads 0.66x with Brace at 0.31 of the warning, the Medieval Age 0.44x
+// at 0.21 (the stores the ceiling is taken from got smaller when the raw
+// materials split the prices in two); the Medieval Age is under the bar. The Classical Age's stone is 870K, a third of the warning
 // rounded up and under its 900K ceiling: the age is not on it (a price counts
 // as on the ceiling only when it equals the price row's own BraceCeiling, the
 // rounded-down price a capped material is given; the test took a tenth of
 // room before, which counted this age), and its Brace takes 0.34 of the
 // warning, the ratio 0.70x.
 var doomChoiceOnTheCeiling = map[string]float64{
-	"iron_age":       0.50,
-	"medieval_age":   0.41,
+	"iron_age":       0.66,
+	"medieval_age":   0.44,
 	"colonial_age":   0.60,
 	"industrial_age": 0.06,
 }
