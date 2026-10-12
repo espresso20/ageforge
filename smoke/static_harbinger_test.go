@@ -156,8 +156,15 @@ func TestBraceTakesEffort(t *testing.T) {
 			passages++
 			// A third of the age is 20.8 hours; rounding the price up to two
 			// figures can add a tenth.
-			if hours < 20 || hours > 23 {
-				t.Errorf("the Last Passage in %s: Brace level 1 is %.1f hours of income, want about 21 (a third of the age)", r.Age, hours)
+			// A material on its ceiling asks less than that.
+			onCeiling := false
+			for res, c := range r.BraceL1 {
+				if limit, ok := r.BraceCeiling[res]; ok && c >= float64(limit*braceAtCeiling) {
+					onCeiling = true
+				}
+			}
+			if hours > 23 || hours < 20 && !onCeiling {
+				t.Errorf("the Last Passage in %s: Brace level 1 is %.1f hours of income, want about 21 (a third of the age), or less on its ceiling", r.Age, hours)
 			}
 		case r.FinalEra:
 			tears++
@@ -242,11 +249,19 @@ func TestBraceTakesEffort(t *testing.T) {
 			}
 			continue
 		}
+		if b.LastPassage {
+			// The Last Passage has the ceiling a doom has since the
+			// Interstellar Age's titanium outgrew its store.
+			if b.StoreShare <= 0 || b.StoreShare > 0.6+1e-9 {
+				t.Errorf("the Last Passage in %s: the largest part is %.2f of a moderate store, want it held under the ceiling", b.Age, b.StoreShare)
+			}
+			if b.Age == cosmic[0] && math.Abs(b.StoreShare-0.60) > 0.02 {
+				t.Errorf("the Last Passage in %s takes %.2f of a moderate store, want 0.60 (titanium on its ceiling)", b.Age, b.StoreShare)
+			}
+			continue
+		}
 		if len(b.Capped) != 0 || b.StoreShare <= 0 || b.StoreShare > 1 {
 			t.Errorf("%s (Last Passage %v) in %s: the largest part is %.2f of a moderate store with %v on a ceiling; want it held and no ceiling", b.Epoch, b.LastPassage, b.Age, b.StoreShare, b.Capped)
-		}
-		if b.LastPassage && b.Age == cosmic[0] && math.Abs(b.StoreShare-0.55) > 0.02 {
-			t.Errorf("the Last Passage in %s takes %.2f of a moderate store, want 0.55", b.Age, b.StoreShare)
 		}
 	}
 
@@ -314,7 +329,9 @@ func TestBraceTakesEffort(t *testing.T) {
 			r.BraceL1[tg.a] = income(tg.a, r.Age) * least * 0.9
 		}), BraceRuleEffort, tg.a)
 		// One dear resource is enough: the price takes as long as its slowest part.
-		if got := alter(func(r *PriceRow) { r.BraceL1[tg.b] = 1 }); len(got) != 0 {
+		// (The Last Passage's real titanium sits on its ceiling, under the least;
+		// give the slowest part the least it may take.)
+		if got := alter(func(r *PriceRow) { r.BraceL1[tg.a] = income(tg.a, r.Age) * least; r.BraceL1[tg.b] = 1 }); len(got) != 0 {
 			t.Errorf("%sa price with one cheap resource and the rest dear: %v, want no problem", tg.name, got)
 		}
 		want("nothing asked", alter(func(r *PriceRow) {

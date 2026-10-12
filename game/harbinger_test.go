@@ -664,8 +664,8 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// the soft cap, as the Reality Tear's rows above: 5% to 20%.
 		// And by the tree's last techs: 4% more culture each from Neural
 		// Art, Galactic Memory and Reality Art, 8% more titanium.
-		{"interstellar_age", map[string]float64{"faith": 2000000000, "culture": 31000000000}, map[string]float64{"dark_matter": 6.7e+15, "titanium": 1.6e+17}},
-		{"galactic_age", map[string]float64{"faith": 4200000000, "culture": 67000000000}, map[string]float64{"dark_matter": 1.9e+17, "titanium": 4.5e+17}},
+		{"interstellar_age", map[string]float64{"faith": 2000000000, "culture": 31000000000}, map[string]float64{"dark_matter": 6.7e+15, "titanium": 2.7e+16}},
+		{"galactic_age", map[string]float64{"faith": 4200000000, "culture": 67000000000}, map[string]float64{"dark_matter": 1.7e+17, "titanium": 1.7e+17}},
 		{"quantum_age", map[string]float64{"faith": 8700000000, "culture": 150000000000}, map[string]float64{"dark_matter": 6e+18, "titanium": 4.7e+17}},
 		{"transcendent_age", map[string]float64{"faith": 9400000000, "culture": 160000000000}, map[string]float64{"dark_matter": 6.6e+18, "titanium": 5.1e+17}},
 	}
@@ -1316,8 +1316,13 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 						t.Errorf("%s in %s: %s's level 2 %s = %v, want level 1's %v again", ep.Key, age, th.name, res, th.cost2[res], l1)
 					}
 					made := config.TypicalIncome(res, age) * config.AgeTargetTicks(age) * th.warning
-					// Rounded up to two significant figures: within 10% of the share.
-					if l1 < made*th.share || l1 > 1.1*made*th.share || l1 > made {
+					// Rounded up to two significant figures: within 10% of the
+					// share; the Last Passage's, like a doom's, no more than
+					// its ceiling, three fifths of a moderate store, rounded
+					// down to two figures, where the share is over it.
+					ceiling := floorSignificant(rules.Core().TypicalStorage(res, age)*ordinaryDoomBraceStoreShare, 2)
+					onCeiling := th.name == "the Last Passage" && l1 == ceiling && made*th.share > ceiling
+					if !onCeiling && (l1 < made*th.share || l1 > 1.1*made*th.share || l1 > made) {
 						t.Errorf("%s in %s: %s's level 1 %s (%v) is not its share of what the warning makes (%v)", ep.Key, age, th.name, res, l1, made*th.share)
 					}
 					if l1 <= 1000*era[res] {
@@ -1326,7 +1331,12 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 				}
 			}
 			// The doom's is half the Last Passage's, give or take the rounding.
+			// A material the Last Passage's ceiling holds is no longer in that
+			// ratio: the doom has no ceiling.
 			for res, lp := range lastPassageBraceCost(ep.Key, age, 1) {
+				if lp == floorSignificant(rules.Core().TypicalStorage(res, age)*ordinaryDoomBraceStoreShare, 2) {
+					continue
+				}
 				if ratio := doomBraceCost(ep.Key, age, 1)[res] / lp; ratio < 0.45 || ratio > 0.55 {
 					t.Errorf("%s in %s: the doom's %s is %.2f of the Last Passage's, want about half", ep.Key, age, res, ratio)
 				}

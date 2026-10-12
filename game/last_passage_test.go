@@ -91,7 +91,7 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatalf("appease: %v", err)
 	}
-	fillBraceStock(ge, 2e17)
+	fillBraceStock(ge, 5e16)
 	if err := ge.HarbingerBrace(); err != nil {
 		t.Fatalf("brace: %v", err)
 	}
@@ -139,8 +139,8 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {2000000000, 31000000000, 6.7e+15, 1.6e+17},
-		"galactic_age":     {4200000000, 67000000000, 1.9e+17, 4.5e+17},
+		"interstellar_age": {2000000000, 31000000000, 6.7e+15, 2.7e+16},
+		"galactic_age":     {4200000000, 67000000000, 1.7e+17, 1.7e+17},
 		"quantum_age":      {8700000000, 150000000000, 6e+18, 4.7e+17},
 		"transcendent_age": {9400000000, 160000000000, 6.6e+18, 5.1e+17},
 	}
@@ -248,11 +248,11 @@ func TestLastPassageChoice(t *testing.T) {
 	first := ages[0]
 	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
 	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
-	if math.Abs(braceHours-21.11) > 0.05 || math.Abs(appeaseHours-31.61) > 0.05 {
-		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.11 and 31.61", first, braceHours, appeaseHours)
+	if math.Abs(braceHours-21.01) > 0.05 || math.Abs(appeaseHours-31.61) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.01 and 31.61", first, braceHours, appeaseHours)
 	}
-	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.668) > 0.005 {
-		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.668", first, ratio)
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.665) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.665", first, ratio)
 	}
 
 	// The faith band moves the odds, not the choice: both savings scale with
