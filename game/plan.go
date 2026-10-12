@@ -77,9 +77,13 @@ import (
 const (
 	PlanBuild    = "build"
 	PlanResearch = "research"
-	PlanTrade    = "trade"
 	PlanAdvance  = "advance"
 )
+
+// retiredPlanTrade is the kind of the plan's sell orders, which the market's
+// swap took with it. An old save may still carry some; they are dropped on
+// load (retiredSellOrders counts them for the notice).
+const retiredPlanTrade = "trade"
 
 // MaxPlanItems caps the plan's length: 60 items, room for a day away on the
 // one-week curve (an age's storage, its required buildings, a few producers
@@ -126,9 +130,9 @@ type PlanItem struct {
 	Key     string `json:"key"`
 	Count   int    `json:"count"`
 	Started int    `json:"started,omitempty"`
-	// Trade items (plan_trade.go): Key is what is sold, To what is bought,
-	// Amount how much of To is still wanted (0: no limit) and Got how much
-	// the item has bought so far. Count stays 1 until Amount is met.
+	// To, Amount and Got were the retired sell orders' (what was bought, how
+	// much of it was still wanted, how much had been). They stay so a signed
+	// save still reads; nothing sets them now.
 	To     string  `json:"to,omitempty"`
 	Amount float64 `json:"amount,omitempty"`
 	Got    float64 `json:"got,omitempty"`
@@ -157,10 +161,6 @@ type PlanItemView struct {
 	Name    string
 	Count   int
 	Started int
-	// To, Amount and Got are a trade item's (see PlanItem).
-	To     string
-	Amount float64
-	Got    float64
 	// Cost is the price of the next start (for a wonder, what its bank still lacks).
 	Cost map[string]float64
 	// Banked is the part of Cost a build item's overflow bank already holds
@@ -236,16 +236,13 @@ func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 		} else {
 			it.Banked = nil
 		}
-		if (it.Kind != PlanBuild && it.Kind != PlanResearch && it.Kind != PlanTrade && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 {
+		if (it.Kind != PlanBuild && it.Kind != PlanResearch && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 {
 			continue
 		}
 		if load := planLoad(out); it.Kind != PlanResearch && load >= MaxPlanItems || it.Kind == PlanResearch && len(out)-load >= set.TechCount() {
 			continue
 		}
 		if it.Kind == PlanDeal && (it.Key == "" || it.Deal <= 0) {
-			continue
-		}
-		if it.Kind == PlanTrade && (it.To == "" || !(it.Amount >= 0) || math.IsInf(it.Amount, 0) || !(it.Got >= 0)) {
 			continue
 		}
 		if it.Kind != PlanBuild {
@@ -375,15 +372,8 @@ func errPlanFull() error {
 	return fmt.Errorf("The plan is full (%d items, not counting research). Remove one with plan remove <n> first.", MaxPlanItems)
 }
 
-// planItemLabel is "3 Huts", "research Pottery", "trade iron ore for food"
-// or, with an amount left to buy, "trade iron ore for 500 food".
+// planItemLabel is "3 Huts" or "research Pottery".
 func (ge *GameEngine) planItemLabel(it PlanItem) string {
-	if it.Kind == PlanTrade {
-		if it.Amount > 0 {
-			return "trade " + ResourceName(it.Key) + " for " + Amount(it.Amount, it.To)
-		}
-		return "trade " + ResourceName(it.Key) + " for " + ResourceName(it.To)
-	}
 	if it.Kind == PlanAdvance {
 		return "advance when ready"
 	}
@@ -510,25 +500,10 @@ type planStarts struct {
 	builds map[string]int
 	order  []string // build keys in first-start order
 	techs  []string
-	// trades sums what trade items sold and bought, by "from>to".
-	trades     map[string][2]float64
-	tradeOrder []string
 	// advanced is the age an advance item moved to ("" if none).
 	advanced string
 	// deals are the deal items taken, as labels.
 	deals []string
-}
-
-func (s *planStarts) addTrade(from, to string, sold, got float64) {
-	if s.trades == nil {
-		s.trades = map[string][2]float64{}
-	}
-	k := from + ">" + to
-	if _, ok := s.trades[k]; !ok {
-		s.tradeOrder = append(s.tradeOrder, k)
-	}
-	t := s.trades[k]
-	s.trades[k] = [2]float64{t[0] + sold, t[1] + got}
 }
 
 func (s *planStarts) addBuild(key string) {
@@ -542,11 +517,11 @@ func (s *planStarts) addBuild(key string) {
 }
 
 func (s *planStarts) empty() bool {
-	return len(s.order) == 0 && len(s.techs) == 0 && len(s.tradeOrder) == 0 && s.advanced == "" && len(s.deals) == 0
+	return len(s.order) == 0 && len(s.techs) == 0 && s.advanced == "" && len(s.deals) == 0
 }
 
 // describe renders the starts as verb-led clauses: "started building 2 Huts
-// and 1 Farm, started researching Pottery, traded 5K coal for 1.2K food".
+// and 1 Farm, started researching Pottery".
 // Callers prefix it ("Plan: ", "While you were away, your plan "). set names
 // the buildings and techs.
 func (s *planStarts) describe(set *rules.Set) string {
@@ -564,11 +539,6 @@ func (s *planStarts) describe(set *rules.Set) string {
 			names = append(names, techDefName(set, k))
 		}
 		parts = append(parts, "started researching "+textfmt.List(names))
-	}
-	for _, k := range s.tradeOrder {
-		from, to, _ := strings.Cut(k, ">")
-		t := s.trades[k]
-		parts = append(parts, fmt.Sprintf("traded %s for %s", Amount(t[0], from), Amount(t[1], to)))
 	}
 	parts = append(parts, s.deals...)
 	if s.advanced != "" {
@@ -789,21 +759,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 				continue
 			}
 			out = append(out, it)
-			continue
-		}
-		if it.Kind == PlanTrade {
-			if reason := ge.planTradeInvalid(it); reason != "" {
-				ge.addLog("warning", fmt.Sprintf("Plan: dropped %s (%s).", ge.planItemLabel(it), reason))
-				continue
-			}
-			if sold, got := ge.runPlanTrade(&it, reserved); got > 0 {
-				started = true
-				ge.note(config.BadgeEvPlanStarted, PlanTrade)
-				starts.addTrade(it.Key, it.To, sold, got)
-			}
-			if it.Count > 0 {
-				out = append(out, it)
-			}
 			continue
 		}
 		var reason, missing string
@@ -1035,10 +990,6 @@ func (ge *GameEngine) planViews() []PlanItemView {
 	researchSeen := false
 	out := make([]PlanItemView, 0, len(ge.plan))
 	for i, it := range ge.plan {
-		if it.Kind == PlanTrade {
-			out = append(out, ge.planTradeView(it, reserved))
-			continue
-		}
 		if it.Kind == PlanAdvance {
 			out = append(out, ge.planAdvanceView(it))
 			continue

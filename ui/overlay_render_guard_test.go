@@ -154,7 +154,6 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 	s.Military.ExpeditionBonus = 0.1
 
 	// Trade: a blockade, routes in every state.
-	s.Trade.TradeBuildings = 0
 	s.Trade.DisruptedResources = []string{"iron_ore"}
 	s.Trade.ActiveRoutes = []game.ActiveRouteInfo{
 		{Name: "Tin Road", Key: "tin_road", TicksLeft: 30, CyclesDone: 1,

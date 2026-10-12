@@ -1,7 +1,6 @@
 package game
 
 import (
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -22,83 +21,6 @@ func bronzeEngine(t *testing.T) *GameEngine {
 		ge.Resources.resources[r].Storage = 1e6
 	}
 	return ge
-}
-
-func TestPlanTrade_SellsOnceTheMarketRecoversAndStopsAtItsAmount(t *testing.T) {
-	ge := bronzeEngine(t)
-	setAmount(ge, "wood", 50_000)
-	setAmount(ge, "stone", 0)
-	if err := ge.PlanAddTrade("wood", "stone", 1000); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.PlanAddTrade("wood", "stone", 5); err == nil {
-		t.Error("planned the same pair twice")
-	}
-	ge.runPlanTick()
-	got := ge.Resources.Get("stone")
-	if got < 1000-1e-6 || got > 1000+1e-6 {
-		t.Fatalf("stone after the trade = %v, want exactly the 1000 asked for", got)
-	}
-	if len(ge.plan) != 0 {
-		t.Errorf("a finished trade stayed in the plan: %+v", ge.plan)
-	}
-	if !logHas(ge, "traded") {
-		t.Error("no summary line for the trade")
-	}
-
-	// An open-ended trade waits for the market to recover between sales.
-	if err := ge.PlanAddTrade("wood", "stone", 0); err != nil {
-		t.Fatal(err)
-	}
-	ge.Trade.supplyPressure["wood:stone"] = 0.5
-	before := ge.Resources.Get("wood")
-	ge.runPlanTick()
-	if ge.Resources.Get("wood") != before {
-		t.Error("sold into a market that hasn't recovered")
-	}
-	if v := ge.planViews(); len(v) != 1 || !strings.Contains(v[0].Note, "recovering") {
-		t.Errorf("view = %+v", v)
-	}
-	ge.Trade.DecayPressure(1000)
-	ge.runPlanTick()
-	if ge.Resources.Get("wood") >= before {
-		t.Error("didn't sell once the market recovered")
-	}
-}
-
-// A trade item holds back what it will sell from the items below it.
-func TestPlanTrade_ReservesForItself(t *testing.T) {
-	ge := bronzeEngine(t)
-	setAmount(ge, "wood", 20_000)
-	ge.Trade.supplyPressure["wood:stone"] = 0.5 // not due yet
-	if err := ge.PlanAddTrade("wood", "stone", 0); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ge.PlanAddBuild("market", 1); err != nil {
-		t.Fatal(err)
-	}
-	ge.runPlanTick()
-	if queued(ge, "market") != 0 {
-		t.Error("a build below the trade spent the wood the trade holds")
-	}
-}
-
-func TestPlanTrade_InvalidPairsAndMissingMarket(t *testing.T) {
-	ge := newSeededEngine(1)
-	if err := ge.PlanAddTrade("wood", "wood", 0); err == nil {
-		t.Error("planned a trade of a resource for itself")
-	}
-	if err := ge.PlanAddTrade("wood", "iron", 0); err == nil {
-		t.Error("planned a trade for a locked resource")
-	}
-	be := bronzeEngine(t)
-	be.Buildings.counts["market"] = 0
-	if err := be.PlanAddTrade("wood", "stone", 0); err != nil {
-		t.Fatal(err)
-	}
-	if v := be.planViews(); len(v) != 1 || !strings.Contains(v[0].Note, "Market") {
-		t.Errorf("view without a market = %+v", v)
-	}
 }
 
 func TestPlanAdvance_AdvancesWhenReadyAndDropsTheOldAge(t *testing.T) {
@@ -277,31 +199,5 @@ func TestPlan_StaffingLeavesCurrentBuildingsAlone(t *testing.T) {
 	}
 	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp"); got != 0 {
 		t.Errorf("the plan moved %d workers out of this age's wood camps", got)
-	}
-}
-
-// Offline trades meet a market that recovers as the time passes.
-func TestOffline_TradesAsTimePasses(t *testing.T) {
-	ge := bronzeEngine(t)
-	ge.Buildings.counts["lumber_mill"] = 20
-	ge.recalculateRates()
-	for _, r := range []string{"wood", "stone"} {
-		ge.Resources.resources[r].Storage = 1e6
-	}
-	setAmount(ge, "stone", 0)
-	if err := ge.PlanAddTrade("wood", "stone", 0); err != nil {
-		t.Fatal(err)
-	}
-	ge.SimulateOffline(2 * time.Hour)
-	if ge.Resources.Get("stone") <= 0 {
-		t.Error("two hours offline with a trade planned bought no stone")
-	}
-	summary := regexp.MustCompile(`^While you were away, your plan traded [0-9.]+[KMBT]? wood for [0-9.]+[KMBT]? stone\.$`)
-	found := false
-	for _, l := range ge.log {
-		found = found || summary.MatchString(l.Message)
-	}
-	if !found {
-		t.Errorf("no offline trade summary matching %s", summary)
 	}
 }

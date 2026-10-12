@@ -31,30 +31,18 @@ func (ge *GameEngine) mechanicTicks(key string, ticks int) int {
 	return techTimeTicks(ticks, ge.Research.Mechanic(key))
 }
 
-// marketFeeScale is what the techs' cut of the market's fee multiplies every
-// market rate by: the market pays 1 - fee of parity, so a fee of 17 points
-// where config.ExchangeFee is 20 pays 0.83 / 0.80 of the listed rate. 1 with
-// no tech.
-func marketFeeScale(feeShift float64) float64 {
-	if feeShift == 0 {
-		return 1
-	}
-	return (1 - (config.ExchangeFee + feeShift)) / (1 - config.ExchangeFee)
-}
-
 // pushMechanics hands the managers the mechanic numbers they read on their
-// own: the market's fee, a route's time and what it brings in (trade), a
+// own: a route's time and what it brings in (trade), a
 // scouting expedition's time, a campaign's time and what it brings back
 // (military), a gift's price and what it earns, a deal set's life and what
 // an ally adds (diplomacy), what an upgrade costs (buildings). recalculateRates calls it, so
 // they follow every change to what is researched, a load and a new run
 // included. Caller holds the lock.
 func (ge *GameEngine) pushMechanics() {
-	fee := marketFeeScale(ge.Research.Mechanic(config.MechanicMarketFee))
-	ge.Trade.SetTechTerms(fee, ge.Research.Mechanic(config.MechanicRouteTicks), ge.Research.Mechanic(config.MechanicRouteIncome))
+	ge.Trade.SetTechTerms(ge.Research.Mechanic(config.MechanicRouteTicks), ge.Research.Mechanic(config.MechanicRouteIncome))
 	ge.Military.SetScoutTime(ge.Research.Mechanic(config.MechanicExpeditionTicks))
 	ge.Military.SetCampaignTerms(ge.Research.Mechanic(config.MechanicCampaignTicks), ge.Research.Mechanic(config.MechanicCampaignReward))
-	ge.Diplomacy.SetTechTerms(ge.Research.Mechanic(config.MechanicGiftCost), ge.Research.Mechanic(config.MechanicDealRefreshTicks), fee)
+	ge.Diplomacy.SetTechTerms(ge.Research.Mechanic(config.MechanicGiftCost), ge.Research.Mechanic(config.MechanicDealRefreshTicks))
 	ge.Diplomacy.SetGiftAndAllyTerms(ge.Research.Mechanic(config.MechanicGiftOpinion), ge.Research.Mechanic(config.MechanicAllianceBonus))
 	ge.Diplomacy.SetAllyCostTerm(ge.Research.Mechanic(config.MechanicAllianceCost))
 	ge.Buildings.SetUpgradeCostTerm(ge.Research.Mechanic(config.MechanicUpgradeCost))

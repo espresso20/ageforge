@@ -95,16 +95,12 @@ func TestEngineAmountGuards(t *testing.T) {
 	ge.applyAgeUnlocks("stone_age")
 	ge.applyAgeUnlocks("bronze_age")
 	ge.age = "bronze_age"
-	ge.Buildings.counts["market"] = 1
 	ge.recalculateRates()
 	ge.Resources.Add("food", 40)
 	ge.Resources.Add("wood", 40)
 
 	bad := []float64{math.NaN(), math.Inf(1), math.Inf(-1), 0, -5}
 	for _, amt := range bad {
-		if _, err := ge.ExchangeResources("food", "wood", amt); err == nil {
-			t.Errorf("ExchangeResources(%v) succeeded", amt)
-		}
 		if _, err := ge.GatherResource("food", amt); err == nil {
 			t.Errorf("GatherResource(%v) succeeded", amt)
 		}

@@ -3035,20 +3035,49 @@ func (ge *GameEngine) blackMarketCost() float64 {
 
 // blackMarketReward computes the resource payout for a winning deal on the given
 // resource. The culture stake is treated as its own gold-value; the win pays
-// blackMarketWinMult × that, converted into the chosen resource via its
-// "<res>:gold" exchange rate (so a unit of a "more valuable" resource pays out
-// fewer units). Gold pays out directly. Returns 0 if the resource has no defined
-// gold valuation (and thus can't be a black-market target).
+// blackMarketWinMult × that, converted into the chosen resource via the
+// smugglers' own gold rate for it (blackMarketGoldRate: a unit of a "more
+// valuable" resource pays out fewer units). Gold pays out directly. Returns 0
+// if the resource has no defined gold valuation (and thus can't be a
+// black-market target).
 func (ge *GameEngine) blackMarketReward(resource string, stake float64) float64 {
 	goldValue := stake * blackMarketWinMult
 	if resource == "gold" {
 		return goldValue
 	}
-	def, ok := ge.rules.ListedRate(resource, "gold")
-	if !ok || def.BaseRate <= 0 {
+	rate, ok := blackMarketGoldRate(resource)
+	if !ok || rate <= 0 {
 		return 0
 	}
-	return goldValue / def.BaseRate
+	return goldValue / rate
+}
+
+// blackMarketGoldRate is how much gold the smugglers count one unit of res
+// worth: the nine resources they deal in, and no others. (They are the rates
+// the market used to list for selling each of these for gold; the black
+// market keeps its own copy now that the market does not swap.)
+func blackMarketGoldRate(res string) (float64, bool) {
+	switch res {
+	case "iron":
+		return 2, true
+	case "coal":
+		return 0.08, true
+	case "steel":
+		return 5, true
+	case "oil":
+		return 3, true
+	case "electricity":
+		return 0.5, true
+	case "data":
+		return 5, true
+	case "crypto":
+		return 20, true
+	case "dark_matter":
+		return 50, true
+	case "quantum_flux":
+		return 100, true
+	}
+	return 0, false
 }
 
 // BlackMarketStatus is the snapshot the `blackmarket` command renders.
@@ -4991,7 +5020,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.accrueCulture(float64(n) * OfflineEfficiency)
 		ge.tick += n
 		done += n
-		ge.Trade.DecayPressure(n) // the plan's trades meet a market that recovers as time passes
 		changed := ge.advanceBuildQueue(n)
 		if ge.advanceResearch(n) {
 			changed = true
@@ -5039,29 +5067,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	if staffed.any() {
 		ge.addLog("info", "While you were away, your roster "+staffed.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
 	}
-}
-
-// ExchangeResources performs a resource exchange via the trade system
-func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float64, error) {
-	if err := checkAmount(amount); err != nil {
-		return 0, err
-	}
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-
-	ge.Trade.SetAge(ge.age)
-	asked := amount * ge.Trade.RateIn(from, to, ge.age) // before the sale moves the rate
-	gave, got, err := ge.Trade.exchange(from, to, amount, ge.Resources, ge.Buildings, ge.tick)
-	if err != nil {
-		return 0, err
-	}
-	ge.addLog(LogRoutine, fmt.Sprintf("Traded %s for %s.", Amount(gave, from), Amount(got, to)))
-	// A store with room for less than the sale asked for took a smaller sale.
-	if gave < amount {
-		ge.addLog("info", clippedLine(map[string]float64{to: asked}, map[string]float64{to: got}))
-	}
-	ge.note(config.BadgeEvMarketTrade, from)
-	return got, nil
 }
 
 // StartTradeRoute activates a trade route

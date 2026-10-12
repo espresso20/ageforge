@@ -501,18 +501,6 @@ func (bm *BuildingManager) GetPopCapacity() int {
 	return cap
 }
 
-// TradeBuildingCount is how many buildings of the trade lineage (market,
-// trading post, ... port, ...) stand. Any of them opens the exchange.
-func (bm *BuildingManager) TradeBuildingCount() int {
-	n := 0
-	for key, count := range bm.counts {
-		if bm.defs[key].LineageKey == "trade" {
-			n += count
-		}
-	}
-	return n
-}
-
 // GetStorageBonuses returns per-resource storage bonuses from buildings
 // "all" key means it applies to every resource
 func (bm *BuildingManager) GetStorageBonuses() map[string]float64 {
