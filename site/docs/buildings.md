@@ -243,10 +243,12 @@ You keep all your progress and production. A Gathering Camp in the Food lineage 
 | 10 | Culture/Arts | None | culture | 17 | Amphitheater | Reality Art Engine |
 | 11 | Metallurgy | metallurgy | iron → steel → titanium → dark matter → antimatter → quantum flux | 18 | Smelter | Quantum Metal Works |
 | 12 | Energy | energy | coal → electricity → plasma → dark matter → quantum flux | 13 | Coal Plant | Zero Point Generator |
-| 13 | Hacker/Digital | hacker | data | 8 | Server Farm | Reality Processor |
+| 13 | Hacker/Digital | hacker | data | 9 | Mainframe Hall | Reality Processor |
 | 14 | Harbor | trade | gold (+trade-route income) | 5 | Harbor | Logistics Hub |
 
-> Lineages 8 to 14 start in later ages (Trade and Engineering in the Bronze Age, Culture/Arts in the Classical, Metallurgy in the Iron, Energy in the Industrial, Hacker/Digital in the Information and Harbor in the Colonial), so they have fewer tiers. The Housing and Culture/Arts lineages have no worker domain: they work without workers. The **Harbor** lineage also raises trade income: besides producing gold, each harbor adds a percentage bonus to the income of *every* active trade route. See [Trade](trade.md#harbor-lineage-trade-route-income).
+> Lineages 8 to 14 start in later ages (Trade and Engineering in the Bronze Age, Culture/Arts in the Classical, Metallurgy in the Iron, Energy in the Industrial, Hacker/Digital in the Modern and Harbor in the Colonial), so they have fewer tiers. The Housing and Culture/Arts lineages have no worker domain: they work without workers. The **Harbor** lineage also raises trade income: besides producing gold, each harbor adds a percentage bonus to the income of *every* active trade route. See [Trade](trade.md#harbor-lineage-trade-route-income).
+
+The **Mainframe Hall** (Modern Age) is the first tier of the Hacker/Digital lineage and the first building that makes data. It uses `hacker` workers, the Modern Age's gate asks for eight of it, and its next tier is the Server Farm in the Information Age.
 
 ---
 
@@ -284,7 +286,7 @@ Buildings without a worker domain (Housing, Culture/Arts) produce exactly `base_
 
 For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/9 in the Iron Age, a sixth in the Renaissance (stretched to a third there; see below) and a fifth in the Industrial Age. From the Victorian Age on it grows faster: over a third of the age there, nearly a half in the Modern Age and seven tenths in the Interstellar. The table lists it before production bonuses, which multiply a late age's output six or seven times over. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
 
-Output is valued at **price parity**. Each age has a price level for each resource (the typical first-copy price in that resource among the age's buildings), and resources are worth each other in the ratio of those levels. A building with two outputs splits its value between them. Because rates follow prices, they grow roughly 5 to 8x per age.
+Output is valued at **price parity**. Each age has a price level for each resource (the typical first-copy price in that resource among the age's buildings), and resources are worth each other in the ratio of those levels. A building with two outputs splits its value between them, in proportion to what the age's gate asks of each. Because rates follow prices, they grow roughly 5 to 8x per age.
 
 **Examples:**
 - Wood Camp (Primitive): costs 16 wood and makes 0.569 wood/tick fully staffed, so it repays itself in 28 ticks (56 seconds).
@@ -305,16 +307,16 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Industrial | 20h 48m | 4.8h | 3h 28m | 26m |
 | Victorian | 23h 24m | 8.3h | 3h 54m | 29m 14s |
 | Electric | 26h | 11.2h | 4h 20m | 32m 30s |
-| Atomic | 31h 12m | 13.4h | 5h 12m | 39m |
-| Modern | 31h 12m | 16.0h | 5h 12m | 39m |
-| Information | 36h 24m | 8.3h | 6h 4m | 45m 30s |
+| Atomic | 31h 12m | 14.1h | 5h 12m | 39m |
+| Modern | 31h 12m | 14.4h | 5h 12m | 39m |
+| Information | 36h 24m | 8.5h | 6h 4m | 45m 30s |
 | Digital | 41h 36m | 22.7h | 6h 56m | 52m |
-| Cyberpunk | 46h 48m | 27.5h | 7h 48m | 58m 30s |
+| Cyberpunk | 46h 48m | 27.9h | 7h 48m | 58m 30s |
 | Fusion | 52h | 71.8h | 8h 40m | 1h 5m |
 | Space | 57h 12m | 53.6h | 9h 32m | 1h 11m 30s |
 | Interstellar | 62h 24m | 44.4h | 10h 24m | 1h 18m |
 | Galactic | 62h 24m | 94.1h | 10h 24m | 1h 18m |
-| Quantum | 62h 24m | 24.9h | 10h 24m | 1h 18m |
+| Quantum | 62h 24m | 28.5h | 10h 24m | 1h 18m |
 | Transcendent | 62h 24m | 26.2h | 10h 24m | 1h 18m |
 
 The Renaissance's payback is 2x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with a fifth more knowledge and cheaper, quicker building, and the age had dropped to three quarters of its target. Its University makes 76.3 knowledge/tick, Exchange 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
@@ -334,7 +336,17 @@ Some ages sit off the curve, because the ages are not smooth: how quick one is d
 | Galactic | 2.0x | The quickest age on the old curve, with the largest bonuses in the game by then. |
 | Quantum, Transcendent | 0.5x | Where they were. No measured run plays them yet. |
 
-Times are at the base tick of 2 seconds; game speed bonuses shorten them in real time. Some construction resources have no producer in certain ages (stone after the Bronze Age, for example); the market sells them at parity instead. See [Resources](resources.md#buying-at-the-market).
+Times are at the base tick of 2 seconds; game speed bonuses shorten them in real time. Every construction resource an age charges for has a maker in that age: see [The Maker Rule](#the-maker-rule).
+
+---
+
+## The Maker Rule
+
+Every material an age charges for, in a building its gate asks for or in its wonder, has a maker in that age: a building of that age that makes it. Every maker is set on one standard, so a maker repays the price of its first copy in the same number of ticks as the age's other makers (the Payback Rule above). The rule covers building materials. It leaves out knowledge, nanobots and the flow resources, food, faith, culture and soldiers.
+
+Two shortages are left as they are. The Colonial Age has no maker of wood and the Electric Age has none of coal, and the older buildings you keep cover them. One exception is listed: the last age's wonder is paid from the Quantum Age's makers, because the Transcendent Age has none of its own.
+
+There is no market that swaps one material for another, so a town that wants a material builds a maker of it. The output tables below give a building's second material after the word with.
 
 ---
 
@@ -355,7 +367,7 @@ Several lineages change which resource they produce as you move through the ages
 | Quantum Organic Extractor (Space), Reality Matter Weaver (Interstellar), Cosmic Organic Works (Galactic) | quantum flux | Quantum Age |
 | Stellar Core Drill, Antimatter Forge (Interstellar) | antimatter | Galactic Age |
 
-Until then they count toward age requirements and milestones and make nothing.
+Until then they count toward age requirements and milestones and make none of that resource.
 
 ### Organic Extraction (Lineage 3)
 
@@ -367,19 +379,23 @@ Until then they count toward age requirements and milestones and make nothing.
 | Digital to Fusion | nanobots |
 | Space to Quantum | quantum flux |
 
-**Nano Foundry** (Modern Age) is a standalone nanobot producer outside the lineage chain. It gives nanobots a producer as soon as they unlock, two ages before the lineage's own Bio Fabrication Lab. It uses `engineering` workers and makes +80 nanobots/tick. The lineage's own makers are listed at 3.28K (Bio Fabrication Lab), 6.55K (Nanobot Vat) and 13.1K (Molecular Synthesizer) a tick and make exactly that: nanobots are a build material with hand-set rates, and the market does not trade them.
+**Nano Foundry** (Modern Age) is a standalone nanobot producer outside the lineage chain. It gives nanobots a producer as soon as they unlock, two ages before the lineage's own Bio Fabrication Lab. It uses `engineering` workers and makes +80 nanobots/tick. The lineage's own makers are listed at 3.28K (Bio Fabrication Lab), 6.55K (Nanobot Vat) and 13.1K (Molecular Synthesizer) a tick and make exactly that: nanobots are a build material with hand-set rates.
 
 ### Geological Extraction (Lineage 4)
 
 | Ages | Output Resource |
 |------|----------------|
 | Stone to Bronze | stone |
-| Iron to Classical | marble and iron ore |
-| Medieval to Industrial | iron ore |
-| Victorian to Atomic | uranium |
+| Iron to Classical | marble and iron ore, with stone and iron |
+| Medieval to Industrial | iron ore, with stone and iron |
+| Victorian | uranium, with stone |
+| Electric | uranium |
+| Atomic | uranium, with stone |
 | Modern to Digital | titanium ore |
 | Cyberpunk to Space | dark matter crystals |
 | Interstellar to Quantum | antimatter |
+
+The quarries and mines from the Iron Age to the Industrial make stone and iron themselves, and the Uranium Mine and the Uranium Processing Works make stone. The marble, the iron ore, the titanium ore and the dark matter crystals are made and spent by nothing.
 
 ### Engineering (Lineage 9)
 
@@ -389,8 +405,10 @@ Until then they count toward age requirements and milestones and make nothing.
 | Renaissance to Victorian | steel |
 | Electric to Digital | electricity |
 | Cyberpunk to Space | plasma (with electricity in the Cyberpunk and Fusion Ages) |
-| Interstellar to Galactic | dark matter |
-| Quantum to Transcendent | quantum flux |
+| Interstellar | dark matter, with plasma |
+| Galactic | dark matter |
+| Quantum | quantum flux, with dark matter |
+| Transcendent | quantum flux |
 
 ### Metallurgy (Lineage 11)
 
@@ -399,11 +417,12 @@ Metallurgy buildings produce metal directly; they do not use up ore.
 | Ages | Output Resource |
 |------|----------------|
 | Iron to Medieval | iron |
-| Renaissance to Atomic | steel |
-| Modern to Digital | titanium |
-| Cyberpunk to Fusion | dark matter |
-| Space | titanium |
-| Interstellar to Galactic | antimatter |
+| Renaissance to Industrial | steel |
+| Victorian to Atomic | steel, with iron |
+| Modern to Digital | steel, with titanium |
+| Cyberpunk to Fusion | steel, with dark matter |
+| Space | titanium, with steel |
+| Interstellar to Galactic | antimatter, with titanium |
 | Quantum | quantum flux |
 
 ---
@@ -440,16 +459,16 @@ Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one
 | Colonial Warehouse | Colonial | +27M |
 | Industrial Depot | Industrial | +88M |
 | Victorian Vault | Victorian | +850M |
-| Electric Warehouse | Electric | +8.1B |
-| Atomic Vault | Atomic | +83B |
+| Electric Warehouse | Electric | +16B |
+| Atomic Vault | Atomic | +75B |
 | Modern Depot | Modern | +230B |
-| Info Vault | Information | +530B |
-| Digital Archive | Digital | +4.5T |
-| Cyber Vault | Cyberpunk | +17T |
-| Fusion Vault | Fusion | +60T |
-| Orbital Depot | Space | +350T |
-| Stellar Vault | Interstellar | +5.8Q |
-| Galactic Vault | Galactic | +40Q |
+| Info Vault | Information | +680B |
+| Digital Archive | Digital | +4.4T |
+| Cyber Vault | Cyberpunk | +28T |
+| Fusion Vault | Fusion | +87T |
+| Orbital Depot | Space | +300T |
+| Stellar Vault | Interstellar | +8.6Q |
+| Galactic Vault | Galactic | +50Q |
 | Quantum Vault | Quantum | +2.3Qi |
 
 Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.
