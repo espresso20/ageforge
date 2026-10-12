@@ -7,12 +7,13 @@ package config
 // for less.
 //
 // No gate asks for an amount of a resource. A gate asks for the town its age
-// is priced for: the reference town, which holds StorageRuleCopies copies of
-// every building (the storage rule's town, and smoke's RefCopies). For the
+// is priced for: the reference town, which holds TownCopies copies of every
+// building that is not storage (the storage rule's town, and smoke's
+// RefCopies; the town rule, town_rule.go, says why eight). For the
 // gate that leaves age A, on top of whatever the gate asks for today (a
 // count is never lowered):
 //
-//  1. StorageRuleCopies copies of every building introduced in A that makes
+//  1. TownCopies copies of every building introduced in A that makes
 //     something: a production effect with a positive value. That is food,
 //     wood, stone, metals, gold, power and the rest; knowledge, faith and
 //     culture; and soldiers, for a military building. The gate keeps the
@@ -97,7 +98,7 @@ func makesSomething(d BuildingDef) bool {
 // GateTown works the gate rule out: what the gate that leaves each age must
 // ask for besides what it asks for today, by building key, keyed by the age
 // the gate leads into (as the ages' BuildingReqs are read). Each count is the
-// reference town's, StorageRuleCopies, or the building's MaxCount when that
+// reference town's, TownCopies, or the building's MaxCount when that
 // is smaller. Buildings in GateTownLeftOut are not in it.
 func GateTown(defs []BuildingDef, ages []AgeDef, techs []TechDef) map[string]map[string]int {
 	held := GateTownHeldTechs(defs, ages, techs)
@@ -121,7 +122,7 @@ func GateTown(defs []BuildingDef, ages []AgeDef, techs []TechDef) map[string]map
 			if _, skip := left[d.Key]; skip {
 				continue
 			}
-			n := StorageRuleCopies
+			n := TownCopies
 			if d.MaxCount > 0 {
 				n = min(n, d.MaxCount)
 			}

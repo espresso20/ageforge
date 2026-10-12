@@ -11,16 +11,17 @@ import (
 // derivation, and a test recomputes the tables from it and fails when an
 // entry drifts.
 //
-// The reference town holds StorageRuleCopies copies of every building, or
-// the gate's count where the gate asks for more. For each age, in order:
+// The reference town holds TownCopies copies of every building that is not
+// storage, or the gate's count where the gate asks for more; of the age's
+// storage building it holds StorageRuleCopies. For each age, in order:
 //
 //  1. The dearest ask is the largest single price, in any one resource, the
 //     reference town pays in the age: the last copy of each building other
 //     than storage, at its reference count. A wonder is not counted: it is
 //     paid into its bank and may be larger than a store.
-//  2. Five copies of the age's storage building, on top of what the stores of
+//  2. StorageRuleCopies copies of the age's storage building, on top of what the stores of
 //     earlier ages hold, must hold the dearest ask and StorageRuleRoom more.
-//  3. Each copy of the storage building up to the fifth must fit under the
+//  3. Each copy of the storage building up to the last must fit under the
 //     store the copies before it give, with StorageRuleMargin to spare.
 //  4. A town must arrive in the next age able to pay the first copy of that
 //     age's storage building and of its house, with StorageRuleMargin to
@@ -72,9 +73,10 @@ func GateStorageCopies(defs []BuildingDef, ages []AgeDef) map[string]map[string]
 	return out
 }
 
-// storageRuleCount is how many copies of d the reference town holds.
+// storageRuleCount is how many copies of d, a building that is not storage,
+// the reference town holds.
 func storageRuleCount(d BuildingDef, gate map[string]int) int {
-	return max(StorageRuleCopies, gate[d.Key])
+	return max(TownCopies, gate[d.Key])
 }
 
 func maxPrice(d BuildingDef, owned int) float64 {
