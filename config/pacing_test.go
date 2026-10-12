@@ -196,5 +196,10 @@ const (
 	buildShare        = 6.0  // no building takes longer than a sixth of its age's target
 	storageBuildShare = 48.0 // a storage building, a forty-eighth
 	researchShare     = 8.0  // no tech takes longer than an eighth of its age's target
-	wonderPriceUnits  = 40.0 // a wonder costs forty price units of its age
+	// A wonder is paid for with what the town an age is priced for earns, so
+	// it grows with the town: eight price units of its age for each copy of
+	// it (forty for a town of five, which the wonders were priced for before
+	// the town was eight; the wait stays the same as the town grows).
+	wonderUnitsPerTownCopy = 8.0
+	wonderPriceUnits       = wonderUnitsPerTownCopy * TownCopies
 )
