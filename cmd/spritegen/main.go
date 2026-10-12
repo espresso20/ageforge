@@ -571,7 +571,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Generate per-building sprites for all 284 buildings (3 variations each)
+	// Generate per-building sprites for every building in the catalog (3 variations each)
 	if err := GenerateAllBuildingSprites("assets/sprites/buildings"); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to generate building sprites: %v\n", err)
 		os.Exit(1)
