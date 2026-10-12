@@ -312,9 +312,11 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 20 — quantum_age  rate=83886.08  output=antimatter
 	b = append(b, BuildingDef{
 		Name: "Reality Excavator", Key: "reality_excavator", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 5.71e15},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "antimatter", Value: 9.19e12}},
+		BaseCost:  map[string]float64{"titanium": 5.71e15},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "antimatter", Value: 7.04e12},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
 		Description: "Excavates antimatter from the quantum foam.",

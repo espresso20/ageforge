@@ -193,7 +193,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BaseCost:  map[string]float64{"data": 1.84e12, "electricity": 1.84e13},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "crypto", Value: 2.82e8},
+			{Type: "production", Target: "crypto", Value: 337000000},
 			{Type: "production", Target: "gold", Value: 409.6},
 		},
 		BuildTicks:  3600,

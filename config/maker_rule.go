@@ -84,7 +84,11 @@ var MakerPaybackTicks = map[string]float64{
 // by Rule 1, 2 or 3. Rule 5 is a maker placed by the owner's decision where
 // the rules found no building to fill a hole (the Modern Age's data): a new
 // building, put on the standard like any maker; the rules read it as a maker
-// that is there. The building tables hold the output; MakerFills is the
+// that is there. Rule 6 is a maker that was already there, whose price was
+// re-authored (the cold start's first makers, the Server Farm, the Black Market
+// Hub) or whose age's price levels moved under it: its output is re-derived
+// from its price, so it sits on the standard again; it is read as a maker that
+// is there too. The building tables hold the output; MakerFills is the
 // record of why, and a test proves it against the rules.
 type MakerFill struct {
 	Age, Material, Building string
@@ -113,19 +117,29 @@ func MakerFills() []MakerFill {
 		{Age: "industrial_age", Material: "stone", Building: "steam_mine", Rule: 3},
 		{Age: "victorian_age", Material: "iron", Building: "bessemer_plant", Rule: 3},
 		{Age: "victorian_age", Material: "stone", Building: "uranium_mine", Rule: 3},
+		{Age: "electric_age", Material: "electricity", Building: "power_generator", Rule: 6},
 		{Age: "electric_age", Material: "iron", Building: "electric_arc_furnace", Rule: 3},
 		{Age: "atomic_age", Material: "iron", Building: "advanced_alloy_plant", Rule: 3},
 		{Age: "atomic_age", Material: "stone", Building: "uranium_processing_works", Rule: 3},
 		{Age: "modern_age", Material: "data", Building: "mainframe_hall", Rule: 5},
+		{Age: "modern_age", Material: "electricity", Building: "power_grid_hub", Rule: 6},
+		{Age: "modern_age", Material: "oil", Building: "oil_platform", Rule: 6},
+		{Age: "modern_age", Material: "oil", Building: "oil_refinery", Rule: 6},
+		{Age: "modern_age", Material: "electricity", Building: "oil_refinery", Rule: 6},
+		{Age: "modern_age", Material: "gold", Building: "seaport", Rule: 6},
 		{Age: "modern_age", Material: "steel", Building: "titanium_smelter", Rule: 3},
+		{Age: "information_age", Material: "data", Building: "server_farm", Rule: 6},
 		{Age: "information_age", Material: "steel", Building: "aerospace_foundry", Rule: 3},
 		{Age: "digital_age", Material: "steel", Building: "nano_alloy_plant", Rule: 3},
+		{Age: "cyberpunk_age", Material: "crypto", Building: "black_market", Rule: 6},
 		{Age: "cyberpunk_age", Material: "steel", Building: "dark_matter_refinery", Rule: 3},
 		{Age: "fusion_age", Material: "steel", Building: "exotic_matter_forge", Rule: 3},
 		{Age: "space_age", Material: "steel", Building: "orbital_refinery", Rule: 3},
 		{Age: "interstellar_age", Material: "plasma", Building: "warp_drive_plant", Rule: 3},
 		{Age: "interstellar_age", Material: "titanium", Building: "antimatter_forge", Rule: 3},
 		{Age: "galactic_age", Material: "titanium", Building: "stellar_metallurgy", Rule: 3},
+		{Age: "quantum_age", Material: "antimatter", Building: "reality_excavator", Rule: 6},
+		{Age: "quantum_age", Material: "quantum_flux", Building: "reality_harvester", Rule: 6},
 		{Age: "quantum_age", Material: "dark_matter", Building: "reality_forge", Rule: 3},
 	}
 }
@@ -614,8 +628,12 @@ func MakerStandard(defs []BuildingDef, ages []AgeDef, paybacks map[string]float6
 		byKey[d.Key] = d
 	}
 	touched := map[string]bool{}
+	rederived := map[string]bool{}
 	for _, f := range fills {
 		touched[f.Building] = true
+		if f.Rule == 6 {
+			rederived[f.Building] = true
+		}
 	}
 	out := map[string]map[string]float64{}
 	for key := range touched {
@@ -633,7 +651,10 @@ func MakerStandard(defs []BuildingDef, ages []AgeDef, paybacks map[string]float6
 				// unit of it, a single median price, so that a raw form's
 				// maker still makes it.
 				weight[e.Target] = gate[d.RequiredAge][e.Target]
-				if weight[e.Target] <= 0 {
+				if weight[e.Target] <= 0 || rederived[key] {
+					// (A maker that was already there keeps the split it was
+					// written with, equal units: every dual maker in the
+					// tables splits so.)
 					weight[e.Target] = 1
 				}
 				share += weight[e.Target]

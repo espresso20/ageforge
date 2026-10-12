@@ -15,11 +15,10 @@ import (
 // the fills; the fills sit on the standard, so the median of the tables as
 // they are moves by less than a fifth of a percent, and the healthy makers of
 // every age cluster around it.
-// Four makers sit outside a tenth of their median, all first makers whose
-// price moved without their output (the Server Farm 0.925 and the Black Market
-// Hub 1.196, re-priced without their own material by an earlier change; the
-// Reality Excavator 0.766 and Harvester 1.179, re-priced for the Quantum Age's
-// cold start). The rest sit within half a percent.
+// The band is the tightest every healthy maker of every age passes, at two
+// figures: 0.99 to 1.01 (the tables measure 0.997 to 1.004). A maker whose price
+// was re-authored, or whose age's price levels moved under it, has its output
+// re-derived from its price (Rule 6 in MakerFills), so it stays inside it.
 func TestMakerPaybackTable(t *testing.T) {
 	defs := BaseBuildings()
 	got := MakerPaybacks(defs, AgeOrder())
@@ -37,8 +36,8 @@ func TestMakerPaybackTable(t *testing.T) {
 		if math.Abs(g.Median/want-1) > 0.002 {
 			t.Errorf("%s: with the fills the median payback is %.6g ticks, %.2f%% from MakerPaybackTicks' %.6g", age, g.Median, (g.Median/want-1)*100, want)
 		}
-		if g.Lo/g.Median < 0.75 || g.Hi/g.Median > 1.25 {
-			t.Errorf("%s: healthy makers pay back between %.3f and %.3f of the median %.6g (want within 0.75 to 1.25)", age, g.Lo/g.Median, g.Hi/g.Median, g.Median)
+		if g.Lo/g.Median < 0.99 || g.Hi/g.Median > 1.01 {
+			t.Errorf("%s: healthy makers pay back between %.3f and %.3f of the median %.6g (want within 0.99 to 1.01)", age, g.Lo/g.Median, g.Hi/g.Median, g.Median)
 		}
 		t.Logf("%-17s payback %-9.6g healthy %d of %d makers, %.3f to %.3f of the median", age, g.Median, g.Healthy, g.Makers, g.Lo/g.Median, g.Hi/g.Median)
 	}

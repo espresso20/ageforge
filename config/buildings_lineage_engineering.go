@@ -157,9 +157,11 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 10 — modern_age  output=electricity  rate=102.40
 	b = append(b, BuildingDef{
 		Name: "Power Grid Hub", Key: "power_grid_hub", Category: "production",
-		BaseCost:     map[string]float64{"steel": 1.5e11, "electricity": 5.9e10, "data": 6.4e09},
-		CostScale:    1.15,
-		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 6290000}},
+		BaseCost:  map[string]float64{"steel": 1.5e11, "electricity": 5.9e10, "data": 6.4e09},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "electricity", Value: 7290000},
+		},
 		BuildTicks:   3600,
 		RequiredAge:  "modern_age",
 		RequiredTech: "electricity_tech",

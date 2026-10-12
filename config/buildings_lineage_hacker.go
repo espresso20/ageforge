@@ -30,9 +30,11 @@ func buildingsLineageHacker() []BuildingDef {
 	// tier 1 — information_age  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Server Farm", Key: "server_farm", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 5.96e11, "steel": 1.13e12},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "data", Value: 8540000}},
+		BaseCost:  map[string]float64{"electricity": 5.96e11, "steel": 1.13e12},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "data", Value: 7900000},
+		},
 		BuildTicks:  10920,
 		RequiredAge: "information_age",
 		Description: "Large server farm processing data.",

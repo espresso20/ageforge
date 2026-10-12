@@ -51,34 +51,27 @@ func TestFirstMakersKeepTheirPriceUnits(t *testing.T) {
 	}
 }
 
-// TestBlackMarketMakesCryptoAtParity: the lineage entry names crypto as the
-// Black Market Hub's output, so it makes crypto. Its output is the parity
-// figure of its age: take every other maker of the age of a resource the age
-// prices, value its output per tick in price units (output over the level of
-// what it makes), take the median, and turn that into crypto at crypto's own
-// level. The median of three makers (the Cyber Hub's data, the Augmentation
-// Foundry's and the Dark Energy Tap's electricity) is 8.54e-5 price units a
-// tick; crypto's level is 3.3e12, so 2.82e8 a tick. The three are the makers
-// the age had when that figure was worked out, so the steel the maker rule
-// later gave the Dark Matter Refinery is left out of the median (MakerExcluded
-// reads the tables as they stood before it). It keeps the gold it always made,
-// beside the crypto: the Cyberpunk Age prices no gold, so that gold is left as
-// it was (the maker rule's trade buildings).
-func TestBlackMarketMakesCryptoAtParity(t *testing.T) {
-	defs := BuildingByKey()
-	d := defs["black_market"]
+// TestBlackMarketMakesCryptoAtTheStandard: the lineage entry names crypto as
+// the Black Market Hub's output, so it makes crypto, and it keeps the gold it
+// always made beside it (the Cyberpunk Age prices no gold, so that gold is left
+// as it was). Its crypto is on the maker rule's standard like any maker's: its
+// first-copy price in units over the age's payback, turned into crypto at
+// crypto's own level (a Rule 6 fill, held by TestEveryHoleIsFilledByRule). It
+// was set to the median output of the age's other makers, which is 20% off the
+// standard once the price is counted.
+func TestBlackMarketMakesCryptoAtTheStandard(t *testing.T) {
+	d := BuildingByKey()["black_market"]
 	if d.OutputResource != "crypto" {
 		t.Errorf("black_market output resource = %q, want crypto (its lineage entry names it)", d.OutputResource)
 	}
-	var made []float64
-	got, gold := 0.0, 0.0
+	crypto, gold := 0.0, 0.0
 	for _, e := range d.Effects {
 		if e.Type != "production" {
 			continue
 		}
 		switch e.Target {
 		case "crypto":
-			got += e.Value
+			crypto += e.Value
 		case "gold":
 			gold += e.Value
 		default:
@@ -88,27 +81,14 @@ func TestBlackMarketMakesCryptoAtParity(t *testing.T) {
 	if gold != 409.6 {
 		t.Errorf("black_market makes %.4g gold a tick, want the 409.6 it always made", gold)
 	}
-	skip := MakerExcluded()
-	levels := PriceLevels(d.RequiredAge)
-	if levels["crypto"] <= 0 {
+	lv := PriceLevels(d.RequiredAge)
+	if lv["crypto"] <= 0 {
 		t.Fatalf("%s has no price level for crypto", d.RequiredAge)
 	}
-	for _, o := range BaseBuildings() {
-		if o.RequiredAge != d.RequiredAge || o.Category == "wonder" || o.Key == d.Key {
-			continue
-		}
-		for _, e := range o.Effects {
-			if e.Type == "production" && e.Value > 0 && levels[e.Target] > 0 && !skip[o.Key+"/"+e.Target] {
-				made = append(made, e.Value/levels[e.Target])
-			}
-		}
-	}
-	if len(made) == 0 {
-		t.Fatal("no other maker of a priced resource in the age")
-	}
-	want := median(made) * levels["crypto"]
-	if math.Abs(got/want-1) > 0.005 { // the literal is written to three figures
-		t.Errorf("black_market makes %.4g crypto a tick, parity with %d other makers of %s gives %.4g", got, len(made), d.RequiredAge, want)
+	price := priceUnits(d.BaseCost, lv)
+	want := float64(price/MakerPaybackTicks[d.RequiredAge]) * lv["crypto"]
+	if math.Abs(crypto/want-1) > 0.005 { // the literal is written to three figures
+		t.Errorf("black_market makes %.4g crypto a tick, the standard is %.4g", crypto, want)
 	}
 }
 
