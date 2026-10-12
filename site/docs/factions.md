@@ -130,7 +130,7 @@ Next to a Rare deal the panel shows `next age's goods`. A price you can't pay ye
 
 A deal stands on its own. Its rate is the ratio of the two resources' price levels times a multiple of 0.84 to 1.0 of parity, and it never pays better than parity. Food and culture are valued by what the age's producers of them make, so a deal that gives you food or culture costs much more than it did when the market set the price. Each deal is a fixed contract.
 
-The market no longer sells anything, so the Rare list changed: wood in the Renaissance Age, coal in the Colonial Age and stone in the Electric Age are now rare goods.
+Without the market swap the Rare list changed: wood in the Renaissance Age, coal in the Colonial Age and stone in the Electric Age are now rare goods.
 
 A civilization's personality sets how many deals it offers and which kinds:
 
