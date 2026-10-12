@@ -208,19 +208,23 @@ func TestBraceTakesEffort(t *testing.T) {
 	// warning outgrows the ceiling of more of them than it did against five
 	// copies: it holds every material in three, the Colonial, Industrial and
 	// Modern Ages, where the price is then quicker to make than a third of
-	// the warning. The counts are read from the price table.
+	// the warning. The maker rule gave stone a maker in the Iron, Classical
+	// and Medieval Ages, so its Brace joins gold and iron on the ceiling there
+	// (all three of the Iron Era's materials, in all three ages), and the
+	// Electric Age's electricity and steel moved. The counts are read from
+	// the price table.
 	wantCapped := map[string]int{
-		"iron_age": 2, "classical_age": 2, "medieval_age": 2,
+		"iron_age": 3, "classical_age": 3, "medieval_age": 3,
 		"renaissance_age": 1, "colonial_age": 2, "industrial_age": 2,
-		"victorian_age": 1, "electric_age": 2, "atomic_age": 2,
+		"victorian_age": 1, "electric_age": 1, "atomic_age": 2,
 		"modern_age": 2, "information_age": 2, "digital_age": 2,
 		"cyberpunk_age": 1, "fusion_age": 1, "space_age": 1,
 	}
 	if !maps.Equal(capped, wantCapped) {
 		t.Errorf("materials on their ceiling by age: %v; want %v", capped, wantCapped)
 	}
-	if want := []string{"colonial_age", "industrial_age", "modern_age"}; !slices.Equal(allCapped, want) {
-		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same three", allCapped, want)
+	if want := []string{"iron_age", "classical_age", "medieval_age", "colonial_age", "industrial_age", "modern_age"}; !slices.Equal(allCapped, want) {
+		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same six", allCapped, want)
 	}
 	// The final era's two threads have no ceiling, and a moderate builder's
 	// store holds them all the same. The Last Passage's takes over half of

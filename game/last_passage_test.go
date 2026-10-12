@@ -91,7 +91,7 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatalf("appease: %v", err)
 	}
-	fillBraceStock(ge, 5e16)
+	fillBraceStock(ge, 2e17)
 	if err := ge.HarbingerBrace(); err != nil {
 		t.Fatalf("brace: %v", err)
 	}
@@ -139,10 +139,10 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {2000000000, 31000000000, 1.7e+16, 1.6e+16},
-		"galactic_age":     {4200000000, 67000000000, 2e+17, 1.7e+16},
-		"quantum_age":      {8700000000, 150000000000, 2.1e+17, 1.7e+16},
-		"transcendent_age": {9400000000, 160000000000, 2.2e+17, 1.9e+16},
+		"interstellar_age": {2000000000, 31000000000, 6.7e+15, 1.6e+17},
+		"galactic_age":     {4200000000, 67000000000, 1.9e+17, 4.5e+17},
+		"quantum_age":      {8700000000, 150000000000, 9.3e+18, 4.7e+17},
+		"transcendent_age": {9400000000, 160000000000, 1.1e+19, 5.1e+17},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -248,11 +248,11 @@ func TestLastPassageChoice(t *testing.T) {
 	first := ages[0]
 	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
 	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
-	if math.Abs(braceHours-21.76) > 0.05 || math.Abs(appeaseHours-31.61) > 0.05 {
-		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.76 and 31.61", first, braceHours, appeaseHours)
+	if math.Abs(braceHours-21.11) > 0.05 || math.Abs(appeaseHours-31.61) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.11 and 31.61", first, braceHours, appeaseHours)
 	}
-	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.689) > 0.005 {
-		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.689", first, ratio)
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.668) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.668", first, ratio)
 	}
 
 	// The faith band moves the odds, not the choice: both savings scale with
@@ -500,8 +500,18 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // steel was 69M, a third of the warning, until the town grew. The Modern
 // Age's is 960B of electricity and gold, 0.27 of the warning, 0.56x. The
 // Colonial and Modern Ages are over the bar. Before the wall the list was
-// the Industrial Age (0.33x) and the Modern Age (0.39x).
+// the Industrial Age (0.33x) and the Modern Age (0.39x). The maker rule gave
+// stone a maker in the Iron, Classical and Medieval Ages, so stone is no
+// longer a trickle there and its Brace stops at the ceiling with gold and
+// iron: all three materials of the Iron Era are on it, where stone alone was
+// under it (59K, 82K and 110K a third of the warning made of it). The Iron
+// Age reads 0.33x with Brace at 0.16 of the warning, the Classical Age 0.52x
+// at 0.25, the Medieval Age 0.37x at 0.17; the Iron and Medieval Ages are
+// under the bar.
 var doomChoiceOnTheCeiling = map[string]float64{
+	"iron_age":       0.33,
+	"classical_age":  0.52,
+	"medieval_age":   0.37,
 	"colonial_age":   0.60,
 	"industrial_age": 0.06,
 	"modern_age":     0.56,
