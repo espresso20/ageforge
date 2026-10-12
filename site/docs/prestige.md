@@ -165,7 +165,7 @@ Before your first prestige the shop says: "The kit remembers your plan, roster a
 
 ### Plan Template
 
-**What it records.** As you write your [build plan](plan.md), the game records each item with the age you added it in: builds, techs, trades and advances (`plan build`, `plan research`, `plan trade`, `plan advance`). A build counts the copies you added, and removing an item takes back the copies it never started, so a build's count ends as what you started plus what is still waiting. A trade you remove after it has bought something stays recorded, as a trade for the amount it bought. Deals (`plan deal`) are not recorded, because a civilization's offers end with the run. Each age records up to 60 items.
+**What it records.** As you write your [build plan](plan.md), the game records each item with the age you added it in: builds, techs and advances (`plan build`, `plan research`, `plan advance`). A build counts the copies you added, and removing an item takes back the copies it never started, so a build's count ends as what you started plus what is still waiting. A trade you remove after it has bought something stays recorded, as a trade for the amount it bought. Deals (`plan deal`) are not recorded, because a civilization's offers end with the run. Each age records up to 60 items.
 
 **When it becomes the template.** At each prestige and Succumb, age by age. An age the run wrote in takes this run's part (with the Plan Template owned, so does every age the run entered). Ages the run never reached keep the part an older run wrote, so a short run never wipes a deeper one: a Medieval Age taste after a Modern Age run keeps that run's plan for the Renaissance to the Atomic Age.
 
