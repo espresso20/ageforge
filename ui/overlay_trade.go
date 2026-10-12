@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"math"
 	"sort"
 	"strings"
 
@@ -11,45 +10,13 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// tradeProvider renders the Trade panel: market rates, trade routes and the
-// allied bonuses that change trade income.
+// tradeProvider renders the Trade routes panel: the routes, and the allied
+// bonuses that change trade income.
 func tradeProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	trade := state.Trade
 
-	// === Market rates ===
-	fmt.Fprintf(&sb, " [gold]═══ Market rates ═══[-]\n\n")
-	if trade.TradeBuildings < 1 {
-		sb.WriteString(" [yellow]Trading needs a Market: build market[-]\n\n")
-	}
-	if len(trade.ExchangeRates) == 0 {
-		sb.WriteString(" [gray]The market has no rates in this age.[-]\n")
-	} else {
-		keys := make([]string, 0, len(trade.ExchangeRates))
-		for k := range trade.ExchangeRates {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, key := range keys {
-			sb.WriteString(" " + exchangeRateLine(trade.ExchangeRates[key]) + "\n")
-		}
-	}
-
-	sb.WriteString("\n [gray]Commands: trade <give> <get> <amount to give>[-]\n")
-	sb.WriteString(" [gray]Example: trade food wood 50[-]\n")
-
-	if len(trade.TotalSold) > 0 || len(trade.TotalBought) > 0 {
-		sb.WriteString("\n [gold]Traded at the market:[-]\n")
-		if len(trade.TotalSold) > 0 {
-			fmt.Fprintf(&sb, "   Sold: %s\n", game.Amounts(trade.TotalSold))
-		}
-		if len(trade.TotalBought) > 0 {
-			fmt.Fprintf(&sb, "   Bought: %s\n", game.Amounts(trade.TotalBought))
-		}
-	}
-
-	// === Trade routes ===
-	sb.WriteString("\n [gold]═══ Trade routes ═══[-]\n\n")
+	sb.WriteString(" [gold]═══ Trade routes ═══[-]\n\n")
 	sb.WriteString(lockNotes(state, config.FeatureTradeRoutes, config.FeatureRouteRailFreight, config.FeatureRouteWarpCommerce, config.FeatureBlackMarket))
 
 	// Disruption banner: a war or an embargo blockades these resources, and
@@ -121,44 +88,6 @@ func tradeProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n [gray]Opinion and deals with other civilizations: type factions[-]\n")
 
 	return sb.String()
-}
-
-// exchangeRateLine renders one market rate from the player's side:
-// "1 food → 0.50 wood (-30% from recent selling)". The rate shown is the one
-// the market pays: never below the 50% floor game.TradeManager applies, so
-// the percentage never shows a drop larger than 50%.
-func exchangeRateLine(info game.ExchangeRateInfo) string {
-	rate := info.Rate
-	if floor := info.BaseRate * 0.5; rate < floor {
-		rate = floor
-	}
-	rateColor := "white"
-	if rate > info.BaseRate {
-		rateColor = "green"
-	} else if rate < info.BaseRate*0.9 {
-		rateColor = "yellow"
-	}
-	shift := ""
-	if info.BaseRate > 0 {
-		pct := math.Round((rate/info.BaseRate - 1) * 100)
-		switch {
-		case pct <= -1:
-			shift = fmt.Sprintf(" [red](%.0f%% from recent selling)[-]", pct)
-		case pct >= 1:
-			shift = fmt.Sprintf(" [green](+%.0f%% while the market recovers)[-]", pct)
-		}
-	}
-	return fmt.Sprintf("1 %s → [%s]%s %s[-]%s",
-		game.ResourceName(info.From), rateColor, marketRate(rate), game.ResourceName(info.To), shift)
-}
-
-// marketRate prints a per-unit rate: two decimals below 100 (0.50, 1.25),
-// the shared number format above that.
-func marketRate(r float64) string {
-	if r < 100 {
-		return fmt.Sprintf("%.2f", r)
-	}
-	return textfmt.Number(r)
 }
 
 // writeAllyTradeBonuses lists the allies currently boosting your income, the

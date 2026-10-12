@@ -552,7 +552,7 @@ func TestDiplomacyThreshold(t *testing.T) {
 }
 
 // TestFactionsProvider_RendersDeals: a civ's card lists its trade deals,
-// numbered, with the edge over the market, taken offers marked, and the
+// numbered, taken offers marked, and the
 // price in the Negative role when you can't pay it; a civ that won't trade
 // says why. Only theme role tags colour the deal lines.
 func TestFactionsProvider_RendersDeals(t *testing.T) {
@@ -560,7 +560,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 		Resources: map[string]game.ResourceState{"stone": {Amount: 100}, "iron": {Amount: 1e6}},
 		Diplomacy: game.DiplomacyState{Factions: map[string]game.FactionInfo{
 			"riverlands_tribes": {Name: "Riverlands Tribes", Discovered: true, Status: "neutral", DealRefreshIn: 900, Deals: []game.DealInfo{
-				{Num: 1, Kind: game.DealWant, Give: "stone", GiveAmt: 2100, Get: "food", GetAmt: 3000, Edge: 0.13},
+				{Num: 1, Kind: game.DealWant, Give: "stone", GiveAmt: 2100, Get: "food", GetAmt: 3000},
 				{Num: 2, Kind: game.DealFavor, Give: "iron", GiveAmt: 727, Standing: 5},
 				{Num: 3, Kind: game.DealSell, Give: "iron", GiveAmt: 10, Get: "food", GetAmt: 12, Taken: true},
 				{Num: 4, Kind: game.DealWant, Give: "iron_ore", GiveAmt: 50, Get: "dark_matter", GetAmt: 2},
@@ -573,7 +573,6 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	for _, want := range []string{
 		"Deals: new offers in",
 		"1. Sell: give 2.1K stone → get 3K food",
-		"+13% vs market",
 		"2. Goodwill: give 727 iron → get +5 opinion",
 		"3. Buy: give 10 iron → get 12 food  taken",
 		"Deals: none while they are at war with you.",

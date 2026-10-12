@@ -56,7 +56,7 @@ func TestPlanCommands(t *testing.T) {
 	}
 }
 
-func TestPlanTradeAndAdvanceCommands(t *testing.T) {
+func TestPlanAdvanceCommand(t *testing.T) {
 	engine := game.NewGameEngine()
 	if res := HandleCommand("plan advance", engine); res.Type == "error" {
 		t.Fatalf("plan advance: %s", res.Message)
@@ -64,10 +64,8 @@ func TestPlanTradeAndAdvanceCommands(t *testing.T) {
 	if res := HandleCommand("plan advance", engine); res.Type != "error" {
 		t.Error("a second plan advance was accepted")
 	}
-	for _, c := range []string{"plan trade", "plan trade wood", "plan trade wood iron", "plan trade wood wood", "plan trade wood food -5", "plan advance now"} {
-		if res := HandleCommand(c, engine); res.Type != "error" {
-			t.Errorf("%q = %+v, want an error", c, res)
-		}
+	if res := HandleCommand("plan advance now", engine); res.Type != "error" {
+		t.Errorf("plan advance now = %+v, want an error", res)
 	}
 	text := plainText(planPanelText(engine.GetState(), 0, "", false, false))
 	if !strings.Contains(text, "advance to the Stone Age") || !strings.Contains(text, "waiting for the requirements") {
@@ -78,7 +76,7 @@ func TestPlanTradeAndAdvanceCommands(t *testing.T) {
 func TestPlanAutocomplete(t *testing.T) {
 	engine := game.NewGameEngine()
 	comp := NewAutoCompleter(engine)
-	if got := strings.Join(comp("plan "), ","); got != "plan advance,plan build,plan clear,plan deal,plan down,plan list,plan remove,plan research,plan trade,plan up" {
+	if got := strings.Join(comp("plan "), ","); got != "plan advance,plan build,plan clear,plan deal,plan down,plan list,plan remove,plan research,plan up" {
 		t.Errorf("plan subcommands = %s", got)
 	}
 	builds := strings.Join(comp("plan build "), ",")

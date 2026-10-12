@@ -50,7 +50,7 @@ func TestHostileNumericArguments(t *testing.T) {
 	templates := []string{
 		"recruit %s", "assign gathering_camp %s", "unassign gathering_camp %s",
 		"dismiss gathering_camp %s", "sell hut %s", "build hut %s", "upgrade hut %s",
-		"gather food %s", "trade food wood %s", "wonder collect food %s",
+		"gather food %s", "wonder collect food %s",
 	}
 	for _, tpl := range templates {
 		for _, n := range hostileNumbers {

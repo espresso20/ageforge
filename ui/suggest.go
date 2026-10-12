@@ -137,7 +137,7 @@ func buildUniverse() map[ArgKind]map[string]bool {
 		ArgBuilding: b, ArgPlanBuilding: b, ArgSellBuilding: b, ArgWorkerBuilding: b,
 		ArgStaffedBuilding: b, ArgUpgradeBuilding: b,
 		ArgTech: set(techs), ArgPlanTech: set(techs),
-		ArgResource: r, ArgWonderResource: r, ArgTradeFrom: r, ArgTradeTo: r,
+		ArgResource: r, ArgWonderResource: r,
 		ArgFaction: set(factions), ArgTheme: set(themes),
 		ArgExpedition: set(expeditions), ArgCampaign: set(expeditions),
 		ArgRouteAvailable: set(routes), ArgRouteActive: set(routes),
@@ -385,7 +385,7 @@ func sortedWords(ws []string) []string {
 func (c *completer) values(k ArgKind, prev []string) []string {
 	st := c.state()
 	key := strconv.Itoa(int(k))
-	if (k == ArgTradeTo || k == ArgDeal) && len(prev) > 0 {
+	if k == ArgDeal && len(prev) > 0 {
 		key += ":" + strings.ToLower(prev[0])
 	}
 	if v, ok := c.cache[key]; ok {
@@ -418,14 +418,6 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return unlockedResourceKeys(st)
 	case ArgWonderResource:
 		return wonderNeedKeys(st)
-	case ArgTradeFrom:
-		return tradeKeys(st, "")
-	case ArgTradeTo:
-		from := ""
-		if len(prev) > 0 {
-			from = prev[0]
-		}
-		return tradeKeys(st, from)
 	case ArgFaction:
 		return discoveredFactionKeys(st)
 	case ArgTheme:
@@ -624,33 +616,6 @@ func wonderNeedKeys(state game.GameState) []string {
 		}
 		return 1
 	})
-}
-
-// tradeKeys is the market's side of an exchange: with from empty, what it
-// buys from you; otherwise what it sells for from. Before there is a market
-// it falls back to every unlocked resource (the game then says a market is
-// needed).
-func tradeKeys(state game.GameState, from string) []string {
-	if len(state.Trade.ExchangeRates) == 0 {
-		return unlockedResourceKeys(state)
-	}
-	seen := map[string]bool{}
-	var keys []string
-	for _, x := range state.Trade.ExchangeRates {
-		k := x.From
-		if from != "" {
-			if !strings.EqualFold(x.From, from) {
-				continue
-			}
-			k = x.To
-		}
-		if !seen[k] && state.Resources[k].Unlocked {
-			seen[k] = true
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 // sellableBuildingKeys is what `sell` suggests: the buildings with at least
