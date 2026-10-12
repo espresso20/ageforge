@@ -45,7 +45,12 @@ func TestFirstMakersKeepTheirPriceUnits(t *testing.T) {
 // what it makes), take the median, and turn that into crypto at crypto's own
 // level. The median of three makers (the Cyber Hub's data, the Augmentation
 // Foundry's and the Dark Energy Tap's electricity) is 8.54e-5 price units a
-// tick; crypto's level is 3.3e12, so 2.82e8 a tick.
+// tick; crypto's level is 3.3e12, so 2.82e8 a tick. The three are the makers
+// the age had when that figure was worked out, so the steel the maker rule
+// later gave the Dark Matter Refinery is left out of the median (MakerExcluded
+// reads the tables as they stood before it). It keeps the gold it always made,
+// beside the crypto: the Cyberpunk Age prices no gold, so that gold is left as
+// it was (the maker rule's trade buildings).
 func TestBlackMarketMakesCryptoAtParity(t *testing.T) {
 	defs := BuildingByKey()
 	d := defs["black_market"]
@@ -53,16 +58,24 @@ func TestBlackMarketMakesCryptoAtParity(t *testing.T) {
 		t.Errorf("black_market output resource = %q, want crypto (its lineage entry names it)", d.OutputResource)
 	}
 	var made []float64
-	got := 0.0
+	got, gold := 0.0, 0.0
 	for _, e := range d.Effects {
 		if e.Type != "production" {
 			continue
 		}
-		if e.Target != "crypto" {
-			t.Errorf("black_market makes %s, want only crypto", e.Target)
+		switch e.Target {
+		case "crypto":
+			got += e.Value
+		case "gold":
+			gold += e.Value
+		default:
+			t.Errorf("black_market makes %s, want only crypto and the gold it always made", e.Target)
 		}
-		got += e.Value
 	}
+	if gold != 409.6 {
+		t.Errorf("black_market makes %.4g gold a tick, want the 409.6 it always made", gold)
+	}
+	skip := MakerExcluded()
 	levels := PriceLevels(d.RequiredAge)
 	if levels["crypto"] <= 0 {
 		t.Fatalf("%s has no price level for crypto", d.RequiredAge)
@@ -72,7 +85,7 @@ func TestBlackMarketMakesCryptoAtParity(t *testing.T) {
 			continue
 		}
 		for _, e := range o.Effects {
-			if e.Type == "production" && e.Value > 0 && levels[e.Target] > 0 {
+			if e.Type == "production" && e.Value > 0 && levels[e.Target] > 0 && !skip[o.Key+"/"+e.Target] {
 				made = append(made, e.Value/levels[e.Target])
 			}
 		}

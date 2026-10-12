@@ -242,9 +242,12 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 16 — interstellar_age  output=dark_matter  rate=6553.60
 	b = append(b, BuildingDef{
 		Name: "Warp Drive Plant", Key: "warp_drive_plant", Category: "production",
-		BaseCost:    map[string]float64{"dark_matter": 4.2e14, "titanium": 3.4e15, "plasma": 2.1e15},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "dark_matter", Value: 1.58e10}},
+		BaseCost:  map[string]float64{"dark_matter": 4.2e14, "titanium": 3.4e15, "plasma": 2.1e15},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "dark_matter", Value: 7.79e9},
+			{Type: "production", Target: "plasma", Value: 4.01e10},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
 		Description: "Warp drive manufacturing harnessing dark matter.",
@@ -268,9 +271,12 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 18 — quantum_age  output=quantum_flux  rate=26214.40
 	b = append(b, BuildingDef{
 		Name: "Reality Forge", Key: "reality_forge", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 9.3e14, "antimatter": 2.8e17, "dark_matter": 2.3e17},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 6.35e10}},
+		BaseCost:  map[string]float64{"quantum_flux": 9.3e14, "antimatter": 2.8e17, "dark_matter": 2.3e17},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "quantum_flux", Value: 3.13e10},
+			{Type: "production", Target: "dark_matter", Value: 7.8e12},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
 		Description: "Forges structures from the quantum fabric.",

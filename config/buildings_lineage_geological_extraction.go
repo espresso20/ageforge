@@ -62,6 +62,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "marble", Value: 0.64},
 			{Type: "production", Target: "iron_ore", Value: 0.64},
+			{Type: "production", Target: "stone", Value: 20},
 		},
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
@@ -78,6 +79,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "marble", Value: 1.28},
 			{Type: "production", Target: "iron_ore", Value: 1.28},
+			{Type: "production", Target: "stone", Value: 130},
 		},
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
@@ -89,9 +91,12 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 5 — medieval_age  rate=2.56  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Stonemason's Guild", Key: "stonemasons_guild", Category: "production",
-		BaseCost:    map[string]float64{"stone": 480000, "gold": 150000, "knowledge": 45000},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 2.56}},
+		BaseCost:  map[string]float64{"stone": 480000, "gold": 150000, "knowledge": 45000},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "iron_ore", Value: 2.56},
+			{Type: "production", Target: "stone", Value: 462},
+		},
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "Guild of stonemasons extracting iron ore.",
@@ -102,9 +107,13 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 6 — renaissance_age  rate=5.12  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Iron Mine", Key: "iron_mine", Category: "production",
-		BaseCost:    map[string]float64{"gold": 1500000, "steel": 540000, "knowledge": 230000},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 5.12}},
+		BaseCost:  map[string]float64{"gold": 1500000, "steel": 540000, "knowledge": 230000},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "iron_ore", Value: 5.12},
+			{Type: "production", Target: "iron", Value: 16.8},
+			{Type: "production", Target: "stone", Value: 199},
+		},
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
 		Description: "Deep iron ore mining.",
@@ -115,9 +124,12 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 7 — colonial_age  rate=10.24  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Deep Iron Mine", Key: "deep_iron_mine", Category: "production",
-		BaseCost:    map[string]float64{"gold": 9000000, "steel": 5400000},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 10.24}},
+		BaseCost:  map[string]float64{"gold": 9000000, "steel": 5400000},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "iron_ore", Value: 10.24},
+			{Type: "production", Target: "stone", Value: 1730},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
 		Description: "Colonial deep iron ore extraction.",
@@ -128,9 +140,13 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 8 — industrial_age  rate=20.48  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Steam Mine", Key: "steam_mine", Category: "production",
-		BaseCost:    map[string]float64{"steel": 6.6e07, "coal": 2.4e07, "gold": 3.6e07},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 20.48}},
+		BaseCost:  map[string]float64{"steel": 6.6e07, "coal": 2.4e07, "gold": 3.6e07},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "iron_ore", Value: 20.48},
+			{Type: "production", Target: "iron", Value: 3130},
+			{Type: "production", Target: "stone", Value: 4450},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
 		Description: "Steam-powered industrial iron ore mine.",
@@ -141,9 +157,12 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 9 — victorian_age  rate=40.96  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Uranium Mine", Key: "uranium_mine", Category: "production",
-		BaseCost:    map[string]float64{"steel": 5.3e08, "iron": 2.4e08, "gold": 3e08},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 40.96}},
+		BaseCost:  map[string]float64{"steel": 5.3e08, "iron": 2.4e08, "gold": 3e08},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "uranium", Value: 40.96},
+			{Type: "production", Target: "stone", Value: 46600},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
 		Description: "Early uranium ore extraction.",
@@ -167,9 +186,12 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 11 — atomic_age  rate=163.84  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Uranium Processing Works", Key: "uranium_processing_works", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.5e10, "electricity": 6e09, "uranium": 1.2e09},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 171000}},
+		BaseCost:  map[string]float64{"steel": 1.5e10, "electricity": 6e09, "uranium": 1.2e09},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "uranium", Value: 114000},
+			{Type: "production", Target: "stone", Value: 1020000},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
 		Description: "Industrial uranium processing.",
