@@ -33,7 +33,7 @@ package config
 // The covenants on gates (smoke.StaticGates) hold the result: each building
 // asked for is buildable in A, and its last required copy fits the store with
 // the covenant's margin. A building a covenant rules out is not silently
-// dropped: it is named in gateTownLeftOut, with the reason, and the test
+// dropped: it is named in GateTownLeftOut, with the reason, and the test
 // proves the list is true.
 
 // GateTownLeftOut names the buildings the gate rule would ask for and a

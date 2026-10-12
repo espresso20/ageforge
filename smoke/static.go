@@ -35,6 +35,11 @@ import (
 //     whose flat output alone covers the whole amount within
 //     GateTrickleHours. Older ages' producers only pay for first copies and
 //     seed market parity;
+//   - a town arrives in the next age with empty stores and the buildings the
+//     gates so far asked for, so the first copy of every building of that age
+//     a run can build, and its first tech, must be payable from that cold
+//     start, and a flow resource in one is held to the bound below, with its
+//     constant (firstCopyProblems);
 //   - every flow resource (food, faith, culture, soldiers) the gate asks for is
 //     made within the age's pacing target at config.FlowIncome, or the rest
 //     can be bought at the market for at most GateFlowMarketUnits price units
