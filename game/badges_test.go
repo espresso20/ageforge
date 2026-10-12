@@ -924,10 +924,26 @@ func TestEveryDeclaredEventIsReported(t *testing.T) {
 		}
 	}
 	for _, name := range sortedKeys(names) {
-		if !used[name] {
+		_, retired := retiredBadgeEvents[name]
+		switch {
+		case !used[name] && !retired:
 			t.Errorf("config.%s is declared but the engine never reports it", name)
+		case used[name] && retired:
+			t.Errorf("config.%s is reported again: remove it from retiredBadgeEvents", name)
 		}
 	}
+	for name := range retiredBadgeEvents {
+		if _, ok := names[name]; !ok {
+			t.Errorf("retiredBadgeEvents lists config.%s, which is no longer declared: remove it", name)
+		}
+	}
+}
+
+// retiredBadgeEvents are events the catalog still declares and the engine no
+// longer reports, each with why. The next part (config and rules) takes them
+// out of the catalog and this list with them.
+var retiredBadgeEvents = map[string]string{
+	"BadgeEvMarketTrade": "the market no longer swaps resources, so nothing fires a market trade",
 }
 
 // TestDayPlayedIsNotedOncePerDay: starting or loading a game notes the
