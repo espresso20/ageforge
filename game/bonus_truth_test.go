@@ -548,6 +548,12 @@ func truthRouteIncome(t *testing.T, ge *GameEngine) (float64, string) {
 		if order[def.MinAge] > order[ge.age] || ge.Buildings.GetCount(def.RequiredBld) < def.MinCount {
 			continue
 		}
+		// The route books what came in as the store's change, so an import
+		// into a store of trillions is read to the nearest few thousandths
+		// of a unit: an empty import store reads it exactly.
+		for res := range def.Import {
+			ge.Resources.resources[res].Amount = 0
+		}
 		for res, amount := range def.Export {
 			r := ge.Resources.resources[res]
 			r.Amount = math.Max(r.Amount, amount)

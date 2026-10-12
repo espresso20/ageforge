@@ -30,7 +30,7 @@ func (s *Set) derive() {
 }
 
 // TypicalStorage is what a moderate builder's store holds of res in age:
-// its base storage and config.FlowCopies copies of every storage building
+// its base storage and config.StorageRuleCopies copies of every storage building
 // up to the age (config.TypicalStorages). 0 for an unknown age or resource.
 func (s *Set) TypicalStorage(res, age string) float64 { return s.typStore[age][res] }
 

@@ -39,7 +39,8 @@ const culturePerSet = int(config.FlowCopies)
 // cultureTown is faithTown for culture: an engine in age with sets moderate
 // sets' worth of culture buildings, every wonder of an earlier age that
 // makes culture standing, and a store nothing here could fill. sets may be
-// fractional in steps of 1/5.
+// fractional in steps of 1/culturePerSet, which is why the Legendary probe is
+// 3.5 sets and not 3.6: that is 28.8 buildings.
 func cultureTown(t *testing.T, age string, sets float64) *GameEngine {
 	t.Helper()
 	ge := catEngine(t, age, 7)
@@ -129,7 +130,7 @@ func TestCultureStrengthFollowsDevotion(t *testing.T) {
 		for _, c := range []struct {
 			sets float64
 			tier CultureTier
-		}{{0, CultureTierMinor}, {1, CultureTierMinor}, {2, CultureTierMajor}, {3, CultureTierMajor}, {3.6, CultureTierLegendary}} {
+		}{{0, CultureTierMinor}, {1, CultureTierMinor}, {2, CultureTierMajor}, {3, CultureTierMajor}, {3.5, CultureTierLegendary}} {
 			ge := cultureTown(t, age, c.sets)
 			ge.StepTicks(120)
 			o := ge.CatastropheOutlook()
@@ -158,11 +159,11 @@ func TestCultureStrengthFollowsDevotion(t *testing.T) {
 // not raise it past what the town's own buildings earned, which is how the
 // old rule (the fill of culture's store, the general one) was met.
 func TestCultureStrengthAfterSpendingAndBuying(t *testing.T) {
-	ge := cultureTown(t, "renaissance_age", 3.6)
+	ge := cultureTown(t, "renaissance_age", 3.5)
 	ge.StepTicks(300)
 	top := ge.cultureStrength()
 	if CultureTierAt(top) != CultureTierLegendary {
-		t.Fatalf("a town of 3.6 sets reads %.3f, want the Legendary tier open", top)
+		t.Fatalf("a town of 3.5 sets reads %.3f, want the Legendary tier open", top)
 	}
 	held, made := ge.Resources.Get("culture"), ge.cultureMeasure.Own+ge.cultureMeasure.Other
 	if held < made || !ge.Resources.Remove("culture", held-made/2) {
@@ -243,8 +244,8 @@ func TestGoodEpochEventTierFollowsCultureStrength(t *testing.T) {
 	if got := tiers(2); got["good_major"] < rolls/4 || got["good_legendary"] != 0 || got["good_minor"] < rolls/4 {
 		t.Errorf("twice the culture buildings, %d good rolls: %v, want Minor and Major events and no Legendary", rolls, got)
 	}
-	if got := tiers(3.6); got["good_legendary"] < rolls/200 || got["good_legendary"] > rolls/25 || got["good_major"] < rolls/4 {
-		t.Errorf("3.6 times the culture buildings, %d good rolls: %v, want Major events and about one Legendary in 67", rolls, got)
+	if got := tiers(3.5); got["good_legendary"] < rolls/200 || got["good_legendary"] > rolls/25 || got["good_major"] < rolls/4 {
+		t.Errorf("3.5 times the culture buildings, %d good rolls: %v, want Major events and about one Legendary in 67", rolls, got)
 	}
 }
 

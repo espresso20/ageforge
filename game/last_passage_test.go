@@ -139,10 +139,10 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {1300000000, 20000000000, 1.1e+16, 9.6e+15},
-		"galactic_age":     {2600000000, 42000000000, 1.3e+17, 1.1e+16},
-		"quantum_age":      {5400000000, 89000000000, 1.3e+17, 1.1e+16},
-		"transcendent_age": {5900000000, 97000000000, 1.4e+17, 1.2e+16},
+		"interstellar_age": {2000000000, 31000000000, 1.7e+16, 1.6e+16},
+		"galactic_age":     {4200000000, 67000000000, 2e+17, 1.7e+16},
+		"quantum_age":      {8700000000, 150000000000, 2.1e+17, 1.7e+16},
+		"transcendent_age": {9400000000, 160000000000, 2.2e+17, 1.9e+16},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -248,11 +248,11 @@ func TestLastPassageChoice(t *testing.T) {
 	first := ages[0]
 	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
 	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
-	if math.Abs(braceHours-22.5) > 0.05 || math.Abs(appeaseHours-32.9) > 0.05 {
-		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 22.5 and 32.9", first, braceHours, appeaseHours)
+	if math.Abs(braceHours-21.76) > 0.05 || math.Abs(appeaseHours-31.61) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.76 and 31.61", first, braceHours, appeaseHours)
 	}
-	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.686) > 0.005 {
-		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.686", first, ratio)
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.689) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.689", first, ratio)
 	}
 
 	// The faith band moves the odds, not the choice: both savings scale with
@@ -489,20 +489,22 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // Brace level 1. Brace is made in less than its third of the warning
 // there, so the ratio falls, and may fall under doomChoiceMinRatio.
 //
-// Only the Industrial Age is one, of the Steel Era, whose Brace is gold and
-// steel. Since the storage wall a store is sized by what the age's buildings
-// cost, not by what the age makes, and the Steel Era makes far more than it
-// is asked for. The Industrial Age's Brace is 350M of each, 0.05 of the
-// warning (twelve minutes of income): 0.10x, under the bar. The Colonial Age
-// was listed too, at 0.62x on 62M of each; the town of eight asks its store
-// to be larger (a Colonial Warehouse holds 27M, from 16M), the gold stays on
-// the ceiling at 95M and the steel does not, at 69M, which is 0.33 of the
-// warning, so the Colonial Age is held to the third and to the bar like any
-// other age (0.69x). Before the wall the list was the Industrial Age (0.33x)
-// and the Modern Age (0.39x); the Modern Age's Brace takes its third of the
-// warning again.
+// The Colonial, Industrial and Modern Ages are. Since the storage wall a
+// store is sized by what the age's buildings cost, not by what the age makes,
+// and the moderate economy of eight copies makes 1.6 times what five did
+// against the same store (the storage rule's five copies of each vault), so
+// a third of the warning outgrows more ceilings. The Industrial Age's Brace
+// is 350M of each of gold and steel, 0.03 of the warning (seven minutes of
+// income): 0.06x, under the bar (0.05 of the warning and 0.10x at five
+// copies). The Colonial Age's is 95M of each, 0.29 of the warning, 0.60x: its
+// steel was 69M, a third of the warning, until the town grew. The Modern
+// Age's is 960B of electricity and gold, 0.27 of the warning, 0.56x. The
+// Colonial and Modern Ages are over the bar. Before the wall the list was
+// the Industrial Age (0.33x) and the Modern Age (0.39x).
 var doomChoiceOnTheCeiling = map[string]float64{
-	"industrial_age": 0.10,
+	"colonial_age":   0.60,
+	"industrial_age": 0.06,
+	"modern_age":     0.56,
 }
 
 // incomeHoursOfMade is incomeHours over the resources of cost the age makes

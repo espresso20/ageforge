@@ -26,9 +26,9 @@ import (
 //   - Market parity (MarketRate): the market trades any two construction
 //     resources of the current age at the ratio of their price levels, less
 //     ExchangeFee.
-//   - The reference town (Incomes, TypicalStorages): what five staffed copies
-//     of every producer make (FlowCopies), and what the storage rule's five
-//     copies of every store hold (StorageRuleCopies).
+//   - The reference town (Incomes, TypicalStorages): what TownCopies staffed
+//     copies of every producer make (FlowCopies is that number), and what the
+//     storage rule's five copies of every store hold (StorageRuleCopies).
 //
 // A construction resource of an age is one that appears in the first-copy
 // price of at least one of that age's buildings (wonders aside), except the
@@ -362,10 +362,12 @@ func MarketPairsAt(age string, listed []ExchangeRateDef, pos map[string]int, lv 
 
 // FlowCopies is the "reasonable production level" of a flow resource: how
 // many copies of each of its producers a player who invests moderately in it
-// keeps, fully staffed. Flow producers keep hand-set rates (Law 3), so
-// anything sized to what an age produces of a flow resource (harbinger
-// Appease prices, the Gate Covenant's flow check) is sized to FlowIncome.
-const FlowCopies = 5.0
+// keeps, fully staffed. It is the town an age is priced for (TownCopies), not
+// a second town: the moderate economy and the gate rule count the same
+// copies. Flow producers keep hand-set rates (Law 3), so anything sized to
+// what an age produces of a flow resource (harbinger Appease prices, the Gate
+// Covenant's flow check) is sized to FlowIncome.
+const FlowCopies = float64(TownCopies)
 
 // ProductionAllHeld is the all-production pool a well-played game holds in
 // each age, as earned, before the soft cap (ProductionSoftCap): the "+X% all
@@ -438,7 +440,7 @@ func AnyResource(string) bool { return true }
 // The Storage Covenant (the economy design's Law 1): the most storage buildable in an
 // age must hold at least StorageHold(age) hours of the age's TypicalIncome at
 // 1x, for every construction resource of the age. Typical income is a
-// moderate investment (five copies of each producer); the smoke bot ends an
+// moderate investment (TownCopies copies of each producer); the smoke bot ends an
 // age making one to three times it.
 //
 //   - StorageHoldHours, 4.5 hours from the Bronze Age on: about three hours

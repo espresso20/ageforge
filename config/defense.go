@@ -95,8 +95,8 @@ func AgeThreatAt(order int, scale float64) float64 {
 // building did nothing for two ages.
 //
 // The two early threats are sized to that garrison instead: a moderate set
-// of the age's military buildings, fully staffed (FlowIncome of soldiers: 1
-// a tick in the Stone Age, 3 in the Bronze), trains over the age's pacing
+// of the age's military buildings, fully staffed (FlowIncome of soldiers: 1.6
+// a tick in the Stone Age, 4.8 in the Bronze), trains over the age's pacing
 // target a garrison that blunts about a fifth of a raid, and half of that
 // garrison about an eighth. A larger garrison blunts more, toward the same
 // cap as ever. The Primitive Age has no military building, so no garrison
@@ -107,8 +107,8 @@ const (
 	// raid threats of the three ages before the Iron Age, in Defense Rating
 	// points.
 	EarlyThreatPrimitive = 1000.0
-	EarlyThreatStone     = 3000.0
-	EarlyThreatBronze    = 45000.0
+	EarlyThreatStone     = 4800.0
+	EarlyThreatBronze    = 72000.0
 )
 
 // earlyThreat is the threat of an age before the Iron Age (orders 0 to 2),
