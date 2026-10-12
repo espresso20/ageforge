@@ -48,7 +48,6 @@ var pureConfig = map[string]bool{
 	"DurationText":    true, "FormatAmount": true, "FormatPercent": true, "FormatRateValue": true,
 	"PickLogFlavor": true, "LogFlavorMoments": true,
 	"PriceLevelsByAge": true, "Incomes": true, "FlowDealLevels": true,
-	"ExchangeRateAt": true, "MarketRateAt": true, "MarketPairsAt": true, "MarketOffersAt": true,
 	"DealPriceLevelAt": true, "PricedResourcesAt": true,
 	"TechTerms": true, "RouteFeature": true, "TechCodeFor": true,
 	"IsSizedEffect": true, "EventSize": true, "EventBand": true,

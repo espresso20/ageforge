@@ -1,15 +1,5 @@
 package config
 
-// ExchangeRateDef defines a one-directional spot exchange between two resources.
-// The actual exchange rate seen in-game is BaseRate adjusted by market pressure
-// (repeated trades drive rates down for a while — see game/trade.go).
-type ExchangeRateDef struct {
-	From     string  // resource key being sold
-	To       string  // resource key being bought
-	BaseRate float64 // units of To received per 1 unit of From at zero market pressure
-	MinAge   string  // earliest age at which this exchange is unlocked
-}
-
 // TradeRouteDef defines a passive recurring trade route. Once started, the
 // engine automatically exports Export resources and adds Import resources every
 // TicksPerRun ticks. The route stops if Export resources are insufficient.
@@ -61,71 +51,6 @@ var ValidPersonalities = map[string]bool{
 	"peaceful":     true,
 	"mercantile":   true,
 	"isolationist": true,
-}
-
-// BaseExchangeRates returns all exchange rate definitions
-func BaseExchangeRates() []ExchangeRateDef {
-	return []ExchangeRateDef{
-		// Bronze Age basics
-		{From: "food", To: "wood", BaseRate: 1.0, MinAge: "bronze_age"},
-		{From: "wood", To: "food", BaseRate: 1.0, MinAge: "bronze_age"},
-		{From: "food", To: "stone", BaseRate: 0.8, MinAge: "bronze_age"},
-		{From: "stone", To: "food", BaseRate: 1.25, MinAge: "bronze_age"},
-		{From: "wood", To: "stone", BaseRate: 0.9, MinAge: "bronze_age"},
-		{From: "stone", To: "wood", BaseRate: 1.1, MinAge: "bronze_age"},
-
-		// Gold exchanges
-		{From: "gold", To: "food", BaseRate: 50, MinAge: "bronze_age"},
-		{From: "gold", To: "wood", BaseRate: 40, MinAge: "bronze_age"},
-		{From: "gold", To: "stone", BaseRate: 30, MinAge: "bronze_age"},
-
-		// Iron Age
-		{From: "iron", To: "gold", BaseRate: 2.0, MinAge: "iron_age"},
-		{From: "gold", To: "iron", BaseRate: 0.4, MinAge: "iron_age"},
-		{From: "iron", To: "stone", BaseRate: 3.0, MinAge: "iron_age"},
-
-		// Medieval
-		{From: "gold", To: "knowledge", BaseRate: 5.0, MinAge: "medieval_age"},
-		{From: "gold", To: "culture", BaseRate: 3.0, MinAge: "medieval_age"},
-		{From: "faith", To: "culture", BaseRate: 2.0, MinAge: "medieval_age"},
-
-		// Colonial
-		{From: "gold", To: "coal", BaseRate: 10, MinAge: "colonial_age"},
-		{From: "coal", To: "gold", BaseRate: 0.08, MinAge: "colonial_age"},
-
-		// Industrial
-		{From: "steel", To: "gold", BaseRate: 5.0, MinAge: "industrial_age"},
-		{From: "oil", To: "gold", BaseRate: 3.0, MinAge: "industrial_age"},
-
-		// Electric
-		{From: "electricity", To: "gold", BaseRate: 0.5, MinAge: "electric_age"},
-
-		// Modern Age (data unlocks here)
-		// note: was information_age. Data unlocks in the Modern Age, where ten
-		// buildings (think_tank among them, which the Information Age requires)
-		// cost it and nothing but a 1/tick tech produced it; the market is the
-		// Modern Age's way in.
-		{From: "data", To: "gold", BaseRate: 5.0, MinAge: "modern_age"},
-		{From: "gold", To: "data", BaseRate: 0.15, MinAge: "modern_age"},
-
-		// Cyberpunk
-		{From: "crypto", To: "gold", BaseRate: 20.0, MinAge: "cyberpunk_age"},
-		{From: "gold", To: "crypto", BaseRate: 0.04, MinAge: "cyberpunk_age"},
-
-		// Space Age+
-		{From: "dark_matter", To: "gold", BaseRate: 50.0, MinAge: "space_age"},
-		{From: "quantum_flux", To: "gold", BaseRate: 100.0, MinAge: "quantum_age"},
-	}
-}
-
-// ExchangeRateByKey returns exchange rates keyed by "from:to" (e.g. "gold:food").
-// This compound key format avoids ambiguity between directional rate pairs.
-func ExchangeRateByKey() map[string]ExchangeRateDef {
-	out := make(map[string]ExchangeRateDef)
-	for _, def := range BaseExchangeRates() {
-		out[def.From+":"+def.To] = def
-	}
-	return out
 }
 
 // BaseTradeRoutes returns all trade route definitions, with TicksPerRun

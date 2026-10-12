@@ -25,11 +25,10 @@ import (
 // The rates the tables cannot give: what the nightly greedy bot did in a
 // run, as the badge design recorded it.
 const (
-	botRaidsBluntedPerRun   = 30.0
-	botUpgradesPerRun       = 850.0
-	botHardTimesPerRun      = 1.4
-	botMemoriesPerPrestige  = 0.5
-	humanMarketTradesPerRun = 200.0
+	botRaidsBluntedPerRun  = 30.0
+	botUpgradesPerRun      = 850.0
+	botHardTimesPerRun     = 1.4
+	botMemoriesPerPrestige = 0.5
 )
 
 // moreRules runs one of the catalog's static proofs and reports whether
@@ -191,7 +190,7 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 			}
 		}
 		return fmt.Sprintf("names the milestone chain %q, which does not exist", def.Subject)
-	case config.BadgeEvGathered, config.BadgeEvBlackMarket, config.BadgeEvMarketTrade, config.BadgeEvProduced:
+	case config.BadgeEvGathered, config.BadgeEvBlackMarket, config.BadgeEvProduced:
 		if _, ok := c.m.resAge[def.Subject]; !ok {
 			return fmt.Sprintf("names the resource %q, which does not exist", def.Subject)
 		}
@@ -498,8 +497,6 @@ func (c *badgeCheck) moreAdded(counter string, through int) (n float64, basis st
 		return botMemoriesPerPrestige, "about one Ancient Memory every other prestige, as the nightly bot was offered", true
 	case config.BadgeEvEraEvent + ".bad_challenging":
 		return float64(botHardTimesPerRun * c.share(c.firstAge(counter), through)), "about 1.4 a run, as the nightly bot met", true
-	case config.BadgeEvMarketTrade:
-		return float64(humanMarketTradesPerRun * c.share(c.firstAge(counter), through)), "a few trades an age, typed by hand", true
 	case config.BadgeEvLegacyPrestige:
 		if through < m.runEnd {
 			return 0, "a run prestiges after its last age", true

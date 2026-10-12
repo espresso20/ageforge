@@ -163,9 +163,9 @@ func TestMechanics(t *testing.T) {
 		}
 		seen[m.Key] = true
 	}
-	fee := MechanicByKey()[MechanicMarketFee]
-	if got := fee.Apply(ExchangeFee, -0.03); math.Abs(got-0.17) > 1e-12 {
-		t.Errorf("a fee of %v with 3 points off is %v, want 0.17", ExchangeFee, got)
+	gather := MechanicByKey()[MechanicGatherAmount]
+	if got := gather.Apply(1, 2); got != 3 {
+		t.Errorf("a gather of 1 with 2 more is %v, want 3", got)
 	}
 	route := MechanicByKey()[MechanicRouteTicks]
 	if got := route.Apply(100, 0.85); got != 85 {

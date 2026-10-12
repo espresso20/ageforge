@@ -123,26 +123,6 @@ func TestEveryAgeHasAFeed(t *testing.T) {
 	}
 }
 
-// TestMarketNeverBeatsBuilding: a round trip through the market at parity
-// always loses value, so trading can't manufacture resources.
-func TestMarketNeverBeatsBuilding(t *testing.T) {
-	for _, a := range Ages() {
-		for _, x := range MarketPairs(a.Key) {
-			back, ok := MarketRate(x.To, x.From, a.Key)
-			if !ok {
-				continue
-			}
-			lv := exchangeLevels()[a.Key]
-			if lv[x.From] <= 0 || lv[x.To] <= 0 {
-				continue // a listed flow pair keeps its literal rates
-			}
-			if x.BaseRate*back >= 1 {
-				t.Errorf("%s: %s->%s->%s returns %.3g of what went in", a.Key, x.From, x.To, x.From, x.BaseRate*back)
-			}
-		}
-	}
-}
-
 // TestBuildAndResearchCaps: nothing takes longer to build or research than
 // its age's share (the economy design's Law 2).
 func TestBuildAndResearchCaps(t *testing.T) {

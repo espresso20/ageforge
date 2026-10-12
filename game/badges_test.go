@@ -940,11 +940,9 @@ func TestEveryDeclaredEventIsReported(t *testing.T) {
 }
 
 // retiredBadgeEvents are events the catalog still declares and the engine no
-// longer reports, each with why. The next part (config and rules) takes them
-// out of the catalog and this list with them.
-var retiredBadgeEvents = map[string]string{
-	"BadgeEvMarketTrade": "the market no longer swaps resources, so nothing fires a market trade",
-}
+// longer reports, each with why. None today: the market's trade event went
+// with its ladder.
+var retiredBadgeEvents = map[string]string{}
 
 // TestDayPlayedIsNotedOncePerDay: starting or loading a game notes the
 // calendar day on the account, once.

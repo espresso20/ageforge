@@ -42,7 +42,6 @@ func main() {
 	write(outDir, "epochs.json", config.Epochs())
 	write(outDir, "events.json", config.RandomEvents())
 	write(outDir, "trade_routes.json", config.BaseTradeRoutes())
-	write(outDir, "exchange_rates.json", config.BaseExchangeRates())
 	write(outDir, "factions.json", config.BaseFactions())
 	write(outDir, "worker_classes.json", config.WorkerClasses())
 	write(outDir, "building_upgrades.json", config.BuildingUpgrades())

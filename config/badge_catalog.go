@@ -429,7 +429,7 @@ func ladder(key, name, counter, desc, first string, counts []float64, rungs []st
 	return f
 }
 
-// badgeLadders returns the twenty-three ladders. The numbers are the
+// badgeLadders returns the twenty-two ladders. The numbers are the
 // design's: a last rung of at most twenty-five runs of ordinary play, and a
 // first rung an ordinary first run holds by the Bronze Age, or by the
 // second age after the thing it counts first appears. The guard checks both
@@ -485,8 +485,6 @@ func badgeLadders() []BadgeFamilyDef {
 			[]float64{1, 5, 12}, []string{"Faint Recollection", "Old Soul", "Total Recall"}, "knowledge", RevealUntilSeen(BadgeEvPrestige), life),
 		ladder("hardships", "Hard times weathered", BadgeEvEraEvent+".bad_challenging", "Weather {count} challenging era events.", "Weather a challenging era event.",
 			[]float64{1, 10, 30}, []string{"Rough Patch", "Thick Skin", "Calloused"}, "hazard", visible, life),
-		ladder("trades", "Market trades", BadgeEvMarketTrade, "Make {count} trades at the market.", "",
-			[]float64{10, 220, 5000}, []string{"Haggler", "Day Trader", "Market Maker"}, "trade", RevealUntilSeen(BadgeEvMarketTrade), life),
 	}
 	for i := range out {
 		switch out[i].Ladder {

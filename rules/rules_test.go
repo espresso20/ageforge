@@ -58,7 +58,6 @@ func TestCoreMatchesConfigTables(t *testing.T) {
 	check("ChallengingEraEvents", s.ChallengingEraEvents(), config.ChallengingEpochEvents())
 	check("Factions", s.Factions(), config.BaseFactions())
 	check("TradeRoutes", s.TradeRoutes(), config.BaseTradeRoutes())
-	check("ExchangeRates", s.ExchangeRates(), config.BaseExchangeRates())
 	check("WorkerDomains", s.WorkerDomains(), config.WorkerDomains())
 	check("PrestigeUpgrades", s.PrestigeUpgrades(), config.PrestigeUpgrades())
 	check("ShopUpgrades", s.ShopUpgrades(), config.ActivePrestigeUpgrades())
@@ -180,17 +179,12 @@ func TestCoreMatchesConfigPerAge(t *testing.T) {
 	flowLevels := config.FlowDealLevels(config.BaseBuildings(), config.AgePositions(order))
 	flow := config.Incomes(config.BaseBuildings(), config.Technologies(), order, config.IsFlowResource)
 	typical := config.Incomes(config.BaseBuildings(), config.Technologies(), order, config.AnyResource)
-	listed := config.ExchangeRateByKey()
-	pos := config.AgePositions(order)
 	for _, age := range probeAges {
 		if !reflect.DeepEqual(s.PriceLevels(age), levels[age]) {
 			t.Errorf("PriceLevels(%q) differs from config", age)
 		}
 		if got, want := s.PricedResources(age), config.PricedResourcesAt(levels[age]); len(got) != len(want) || (len(want) > 0 && !reflect.DeepEqual(got, want)) {
 			t.Errorf("PricedResources(%q) = %v, config %v", age, got, want)
-		}
-		if got, want := s.MarketPairs(age), config.MarketPairsAt(age, config.BaseExchangeRates(), pos, levels[age]); !reflect.DeepEqual(got, want) {
-			t.Errorf("MarketPairs(%q) differs from config", age)
 		}
 		for _, r := range resources {
 			if got, want := s.FlowIncome(r, age), flow[age][r]; got != want {
@@ -201,23 +195,6 @@ func TestCoreMatchesConfigPerAge(t *testing.T) {
 			}
 			if got, want := s.DealPriceLevel(r, age), config.DealPriceLevelAt(r, levels[age], flowLevels[age]); !sameLevel(got, want) {
 				t.Errorf("DealPriceLevel(%q, %q) = %v, config %v", r, age, got, want)
-			}
-			for _, to := range resources {
-				got, okG := s.MarketRate(r, to, age)
-				want, okW := config.MarketRateAt(r, to, listed, levels[age])
-				if got != want || okG != okW {
-					t.Errorf("MarketRate(%q, %q, %q) = %v, %v; config %v, %v", r, to, age, got, okG, want, okW)
-				}
-				got, okG = s.MarketOffers(r, to, age)
-				want, okW = config.MarketOffersAt(r, to, age, listed, pos, levels[age])
-				if got != want || okG != okW {
-					t.Errorf("MarketOffers(%q, %q, %q) = %v, %v; config %v, %v", r, to, age, got, okG, want, okW)
-				}
-			}
-		}
-		for _, x := range config.BaseExchangeRates() {
-			if got, want := s.ExchangeRate(x, age), config.ExchangeRateAt(x, levels[age]); got != want {
-				t.Errorf("ExchangeRate(%s:%s, %q) = %v, config %v", x.From, x.To, age, got, want)
 			}
 		}
 	}
@@ -238,25 +215,12 @@ func TestPackageLookupsMatchTheirTables(t *testing.T) {
 			if got, want := config.DealPriceLevel(r, age), s.DealPriceLevel(r, age); !sameLevel(got, want) {
 				t.Errorf("config.DealPriceLevel(%q, %q) = %v, set %v", r, age, got, want)
 			}
-			got, okG := config.MarketRate(r, "gold", age)
-			want, okW := s.MarketRate(r, "gold", age)
-			if got != want || okG != okW {
-				t.Errorf("config.MarketRate(%q, gold, %q) = %v, %v; set %v, %v", r, age, got, okG, want, okW)
-			}
-			got, okG = config.MarketOffers(r, "gold", age)
-			want, okW = s.MarketOffers(r, "gold", age)
-			if got != want || okG != okW {
-				t.Errorf("config.MarketOffers(%q, gold, %q) = %v, %v; set %v, %v", r, age, got, okG, want, okW)
-			}
 		}
 		if !reflect.DeepEqual(config.PriceLevels(age), s.PriceLevels(age)) {
 			t.Errorf("config.PriceLevels(%q) differs from the set", age)
 		}
 		if got, want := config.PricedResources(age), s.PricedResources(age); len(got) != len(want) || (len(want) > 0 && !reflect.DeepEqual(got, want)) {
 			t.Errorf("config.PricedResources(%q) = %v, set %v", age, got, want)
-		}
-		if !reflect.DeepEqual(config.MarketPairs(age), s.MarketPairs(age)) {
-			t.Errorf("config.MarketPairs(%q) differs from the set", age)
 		}
 	}
 }
@@ -463,11 +427,10 @@ func TestSetHandsOutCopies(t *testing.T) {
 		"Events": s.Events(), "EraEvents": s.EraEvents(), "EventMap": s.EventMap(),
 		"GoodEraEvents": s.GoodEraEvents(), "ChallengingEraEvents": s.ChallengingEraEvents(),
 		"Factions": s.Factions(), "TradeRoutes": s.TradeRoutes(),
-		"ExchangeRates": s.ExchangeRates(),
 		"WorkerDomains": s.WorkerDomains(), "PrestigeUpgrades": s.PrestigeUpgrades(),
 		"ShopUpgrades": s.ShopUpgrades(), "LegacyKit": s.LegacyKit(),
 		"PriceLevels": s.PriceLevels(age), "PricedResources": s.PricedResources(age),
-		"MarketPairs": s.MarketPairs(age), "Counts": s.Counts(),
+		"Counts": s.Counts(),
 	} {
 		v := reflect.ValueOf(got)
 		if v.Len() == 0 {

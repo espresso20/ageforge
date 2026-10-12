@@ -83,8 +83,6 @@ type Set struct {
 	lockByKey    map[string]config.FeatureLockDef
 	mechanics    []config.MechanicDef
 	mechanicBy   map[string]config.MechanicDef
-	exchange     []config.ExchangeRateDef
-	exchangeBy   map[string]config.ExchangeRateDef // "from:to"
 
 	classes       []config.WorkerClassDef
 	classByDomain map[string][]config.WorkerClassDef
@@ -140,7 +138,6 @@ func Compile(src Source) *Set {
 		lockByKey:  make(map[string]config.FeatureLockDef, len(src.FeatureLocks)),
 		mechanics:  slices.Clone(src.Mechanics),
 		mechanicBy: make(map[string]config.MechanicDef, len(src.Mechanics)),
-		exchange:   slices.Clone(src.ExchangeRates),
 		classes:    slices.Clone(src.WorkerClasses),
 		domains:    slices.Clone(src.WorkerDomains),
 		upgrades:   slices.Clone(src.PrestigeUpgrades),
@@ -290,10 +287,6 @@ func (s *Set) indexDefs() {
 	s.factionByKey = make(map[string]config.FactionDef, len(s.factions))
 	for _, f := range s.factions {
 		s.factionByKey[f.Key] = f
-	}
-	s.exchangeBy = make(map[string]config.ExchangeRateDef, len(s.exchange))
-	for _, x := range s.exchange {
-		s.exchangeBy[x.From+":"+x.To] = x
 	}
 	for _, d := range s.locks {
 		s.lockByKey[d.Key] = d
@@ -636,15 +629,6 @@ func (s *Set) FeaturesOpenedBy(tech string) []config.FeatureLockDef {
 func (s *Set) Mechanic(key string) (config.MechanicDef, bool) {
 	d, ok := s.mechanicBy[key]
 	return d, ok
-}
-
-// ExchangeRates returns the listed market pairs, in definition order.
-func (s *Set) ExchangeRates() []config.ExchangeRateDef { return slices.Clone(s.exchange) }
-
-// ListedRate returns the listed market pair that sells from for to.
-func (s *Set) ListedRate(from, to string) (config.ExchangeRateDef, bool) {
-	x, ok := s.exchangeBy[from+":"+to]
-	return x, ok
 }
 
 // WorkerDomains returns the worker domain keys in their fixed order.

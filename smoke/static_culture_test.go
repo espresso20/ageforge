@@ -55,22 +55,14 @@ func TestCultureStrengthBars(t *testing.T) {
 			t.Errorf("%s: none %v, moderate %v, twice %v, three times %v, %gx %v; want each town's sets over %g at every moment", r.Age, r.None, r.Moderate, r.Twice, r.Thrice, CultureTopSets, r.Top, game.CultureFullSets)
 		}
 		// The rule this replaced: where an epoch roll falls, no town that
-		// made its culture reached the 40% Major events asked, a moderate one
-		// stayed under oldFillMedieval and under oldFillModern from the Modern
-		// Age on; and from the
-		// Medieval Age (where the market starts selling culture) to the
-		// Digital Age, a moderate economy's gold bought it instead in under a
-		// thousand ticks (under 400 before the storage wall; the walled
-		// stores are larger against the gold of the Atomic Age, which takes
-		// 970).
+		// made its culture reached the 40% Major events asked, and a moderate
+		// one stayed under oldFillMedieval, and under oldFillModern from the
+		// Modern Age on.
 		if !transitions[r.Age] {
 			continue
 		}
 		if r.OldFillTop >= game.CultureMajorAbove || r.OldFill >= oldFillMedieval || pos[r.Age] >= pos["modern_age"] && r.OldFill >= oldFillModern {
 			t.Errorf("%s: the old rule read %.3f for a moderate town and %.3f for %g times the buildings; the store was never filled by making culture", r.Age, r.OldFill, r.OldFillTop, CultureTopSets)
-		}
-		if pos[r.Age] <= pos["digital_age"] && (r.OldGoldTicks <= 0 || r.OldGoldTicks > 1000) {
-			t.Errorf("%s: %v ticks of gold bought the old rule's 40%%, want under a thousand", r.Age, r.OldGoldTicks)
 		}
 	}
 	var sb strings.Builder
