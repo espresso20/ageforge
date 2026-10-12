@@ -410,8 +410,8 @@ func (bm *BuildingManager) GetEffects() []config.Effect {
 // unstaffedShare is what a building with worker slots makes with nobody in
 // it; workers add the rest, staffedShare at a full crew.
 const (
-	unstaffedShare = 0.20
-	staffedShare   = 0.80
+	unstaffedShare = config.UnstaffedShare
+	staffedShare   = config.StaffedShare
 )
 
 // WorkerScaledProduction computes production rates per resource, applying worker fill ratios.

@@ -524,7 +524,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 		brace      map[string]float64
 	}{
 		{"iron_era", "iron_age", map[string]float64{"gold": 99000, "iron": 99000, "stone": 99000}},
-		{"iron_era", "classical_age", map[string]float64{"gold": 900000, "iron": 900000, "stone": 900000}},
+		{"iron_era", "classical_age", map[string]float64{"gold": 900000, "iron": 900000, "stone": 870000}},
 		{"iron_era", "medieval_age", map[string]float64{"gold": 3100000, "iron": 3100000, "stone": 3100000}},
 		{"steel_era", "renaissance_age", map[string]float64{"gold": 14000000, "steel": 7200000}},
 		{"steel_era", "colonial_age", map[string]float64{"gold": 95000000, "steel": 95000000}},

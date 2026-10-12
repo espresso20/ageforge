@@ -118,9 +118,12 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 7 — electric_age  output=steel  rate=8.0
 	b = append(b, BuildingDef{
 		Name: "Electric Arc Furnace", Key: "electric_arc_furnace", Category: "production",
-		BaseCost:    map[string]float64{"steel": 5.1e09, "electricity": 2.1e09, "gold": 3e09},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "steel", Value: 690000}},
+		BaseCost:  map[string]float64{"steel": 5.1e09, "electricity": 2.1e09, "gold": 3e09},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "steel", Value: 659000},
+			{Type: "production", Target: "iron", Value: 9010},
+		},
 		BuildTicks:  7800,
 		RequiredAge: "electric_age",
 		Description: "Electric arc furnace for high-grade steel.",

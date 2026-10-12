@@ -2,6 +2,7 @@ package config
 
 import (
 	"math"
+	"slices"
 	"sort"
 )
 
@@ -42,7 +43,8 @@ import (
 // for makes the standard once, split between them in proportion to what the
 // age's gate asks of each, in units (the buildings the gate requires, every
 // required copy at the price it is bought at; the wonder is not part of what
-// the gate asks). A building keeps the output it has when it is not touched
+// the gate asks). A material the gate asks
+// nothing of counts as one unit (a single median price). A building keeps the output it has when it is not touched
 // by a fill.
 
 // MakerHealthyShare is how much of the age's best output (units per tick) a
@@ -94,11 +96,15 @@ type MakerOpenHole struct {
 // MakerFills lists every hole the rules fill, in age order.
 func MakerFills() []MakerFill {
 	return []MakerFill{
+		{Age: "iron_age", Material: "iron", Building: "marble_quarry", Rule: 2},
 		{Age: "iron_age", Material: "stone", Building: "marble_quarry", Rule: 2},
+		{Age: "classical_age", Material: "iron", Building: "marble_works", Rule: 2},
 		{Age: "classical_age", Material: "stone", Building: "marble_works", Rule: 2},
+		{Age: "medieval_age", Material: "iron", Building: "stonemasons_guild", Rule: 2},
 		{Age: "medieval_age", Material: "stone", Building: "stonemasons_guild", Rule: 3},
 		{Age: "renaissance_age", Material: "iron", Building: "iron_mine", Rule: 2},
 		{Age: "renaissance_age", Material: "stone", Building: "iron_mine", Rule: 3},
+		{Age: "colonial_age", Material: "iron", Building: "deep_iron_mine", Rule: 2},
 		{Age: "colonial_age", Material: "stone", Building: "deep_iron_mine", Rule: 3},
 		{Age: "colonial_age", Material: "wood", Building: "coal_works", Rule: 3},
 		{Age: "industrial_age", Material: "iron", Building: "steam_mine", Rule: 2},
@@ -106,6 +112,7 @@ func MakerFills() []MakerFill {
 		{Age: "victorian_age", Material: "iron", Building: "bessemer_plant", Rule: 3},
 		{Age: "victorian_age", Material: "stone", Building: "uranium_mine", Rule: 3},
 		{Age: "electric_age", Material: "coal", Building: "power_generator", Rule: 3},
+		{Age: "electric_age", Material: "iron", Building: "electric_arc_furnace", Rule: 3},
 		{Age: "atomic_age", Material: "iron", Building: "advanced_alloy_plant", Rule: 3},
 		{Age: "atomic_age", Material: "stone", Building: "uranium_processing_works", Rule: 3},
 		{Age: "modern_age", Material: "steel", Building: "titanium_smelter", Rule: 3},
@@ -124,15 +131,9 @@ func MakerFills() []MakerFill {
 // MakerOpenHoles lists every hole the rules leave open.
 func MakerOpenHoles() []MakerOpenHole {
 	return []MakerOpenHole{
-		{Age: "electric_age", Material: "iron", Why: "two lineages made iron last (the Medieval Age: workshop, engineering; ironmonger, metallurgy) and each has a building this age that a run can build: power_station and electric_arc_furnace. The rule names no one."},
 		{Age: "electric_age", Material: "stone", Why: "the Hoover Dam is priced in stone and no Electric Age building is, so the age has no level for stone to put a standard on."},
 		{Age: "modern_age", Material: "data", Why: "nothing made data before this age (its first maker is the Information Age's Server Farm), so no lineage made it last."},
-		{Age: "interstellar_age", Material: "electricity", Why: "the lineage that last made electricity (energy, the Space Age) has only an optional-tech building this age: pulsar_tap."},
-		{Age: "galactic_age", Material: "plasma", Why: "the lineage that last made plasma (energy, the Interstellar Age) has only an optional-tech building this age: quasar_tap."},
-		{Age: "quantum_age", Material: "titanium", Why: "the lineage that last made titanium (metallurgy, the Space Age) has only an optional-tech building this age: quantum_metal_works."},
-		{Age: "transcendent_age", Material: "antimatter", Why: "the lineage that last made antimatter (geological extraction, the Quantum Age) has no building this age."},
-		{Age: "transcendent_age", Material: "dark_matter", Why: "energy (quasar_tap) has no building this age, and engineering has only an optional-tech one: singularity_engine."},
-		{Age: "transcendent_age", Material: "quantum_flux", Why: "energy, metallurgy and organic extraction have no building this age, and engineering has only an optional-tech one: singularity_engine."},
+		{Age: "transcendent_age", Material: "quantum_flux", Why: "the last age has no makers of its own: its only building that a run can build without an optional tech is housing, so the Singularity Core's quantum flux has no lineage to fill it."},
 	}
 }
 
@@ -273,15 +274,74 @@ type MakerHole struct {
 // makerRaw is the raw form of each material that has one.
 var makerRaw = map[string]string{"iron": "iron_ore", "stone": "marble", "titanium": "titanium_ore", "dark_matter": "dark_matter_crystals"}
 
-// MakerHoles works the maker rule out from defs: every hole, in age order, and
-// who fills it. It reads the tables without the pairs in fills, as they stood
-// before the fills were made: pass nil to find the holes of tables that hold no
-// fill, or MakerFills() to read the tables as they are and find the same holes.
+// UnstaffedShare is what a building with worker slots makes with nobody in it,
+// as a share of its listed output; workers add StaffedShare at a full crew.
+// The game's own rates read these (game/buildings.go).
+const (
+	UnstaffedShare = 0.20
+	StaffedShare   = 0.80
+)
+
+// FullCrewShare is what a building with worker slots makes at a full crew, as
+// a share of its listed output: the unstaffed share plus what workers add. The
+// game pays a building listed x count x (UnstaffedShare + StaffedShare x crew
+// fill), so the listed output of a table is already the fully staffed rate and
+// FullCrewShare is 1. The shortage test of the maker rule counts a carried
+// building that has worker slots at its listed output times this (staffed
+// output); the cold start's thin-source bound reads the same listed output. A
+// full crew makes 1 / UnstaffedShare = 5 times what an empty building does,
+// which is not a multiple of the listed output.
+const FullCrewShare = UnstaffedShare + StaffedShare
+
+// MakerTieBreaks are the ties between lineages the rules cannot decide, as the
+// owner decided them: "age/material" -> the building that fills it.
+var MakerTieBreaks = map[string]string{
+	"electric_age/iron": "electric_arc_furnace",
+}
+
+// makerCarried is, for the age at position i, the copies of each building the
+// gates so far required and the wonders of the earlier ages: what every town
+// brings into the age (the cold start's carried set).
+func makerCarried(defs []BuildingDef, ages []AgeDef, i int) map[string]int {
+	copies := map[string]int{}
+	for j := 1; j <= i && j < len(ages); j++ {
+		for k, n := range ages[j].BuildingReqs {
+			copies[k] = n
+		}
+		for _, d := range defs {
+			if d.Category == "wonder" && d.RequiredAge == ages[j-1].Key {
+				copies[d.Key] = 1
+			}
+		}
+	}
+	return copies
+}
+
+// MakerHoles works the maker rule out from defs, in age order.
+//
+// Rule 2 first: every building of an age whose output is the raw form of a
+// material the age prices also makes that material, hole or not (Rule 2
+// entries, one per building and material). Then the holes: a material the
+// gate or the wonder is priced in that no healthy maker a run can build makes,
+// and that is short: the copies every town carries into the age (the gates'
+// required copies and the earlier wonders, as the tables hold them, with a
+// building that has worker slots counted staffed, at FullCrewShare
+// times its listed output) cannot make what the gate and the wonder ask of it
+// in one target of the age. A material that is not short is not a hole.
+//
+// "Last made" in rule 3 is read on the tables without the pairs in fills, as
+// they stood before the fills were made; the carried supply is read on the
+// tables as they are. Pass MakerFills() to read tables that hold them; the
+// holes of tables that hold none come from passing nil.
 func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []MakerFill) []MakerHole {
 	levels := priceLevels(defs)
 	held := GateTownHeldTechs(defs, ages, techs)
 	gate, wonder := MakerAsks(defs, ages)
 	pos := AgePositions(ageKeys(ages))
+	byKey := make(map[string]BuildingDef, len(defs))
+	for _, d := range defs {
+		byKey[d.Key] = d
+	}
 	skip := map[string]bool{}
 	for _, f := range fills {
 		skip[f.Building+"/"+f.Material] = true
@@ -301,6 +361,23 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 			}
 			return false
 		}
+		carried := makerCarried(defs, ages, i)
+		supply := func(res string) float64 {
+			total := 0.0
+			for _, k := range sortedBuildingKeys(carried) {
+				d := byKey[k]
+				mult := 1.0
+				if d.WorkerCapacity > 0 {
+					mult = FullCrewShare
+				}
+				for _, e := range d.Effects {
+					if e.Type == "production" && e.Value > 0 && e.Target == res {
+						total += float64(float64(carried[k]) * e.Value * mult)
+					}
+				}
+			}
+			return total
+		}
 		best := 0.0
 		outUnits := map[string]float64{}
 		for _, d := range defs {
@@ -308,6 +385,34 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 				_, o := makerUnits(d, lv, skip)
 				outUnits[d.Key] = o
 				best = math.Max(best, o)
+			}
+		}
+		var rows []MakerHole
+		// Rule 2, for every material the age prices that has a raw form.
+		rawFilled := map[string]bool{}
+		for res := range lv {
+			rw := makerRaw[res]
+			if rw == "" {
+				continue
+			}
+			for _, d := range defs {
+				if d.RequiredAge == a.Key && d.Category != "wonder" && buildable(d) && makes(d, rw) {
+					rows = append(rows, MakerHole{Age: a.Key, Material: res, Building: d.Key, Rule: 2})
+					rawFilled[res] = true
+				}
+			}
+		}
+		// A wonder part in a material the age does not price has no level to
+		// put a standard on: the rules cannot decide it.
+		for _, d := range defs {
+			if d.RequiredAge != a.Key || d.Category != "wonder" {
+				continue
+			}
+			for res, c := range d.BaseCost {
+				if c > 0 && lv[res] <= 0 && !makerSkipped(res) {
+					rows = append(rows, MakerHole{Age: a.Key, Material: res,
+						Why: "the wonder is priced in " + res + " and no building of the age is, so the age has no level to put a standard on"})
+				}
 			}
 		}
 		asked := map[string]bool{}
@@ -319,49 +424,30 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 		}
 		var mats []string
 		for res := range asked {
-			if !makerSkipped(res) {
+			if !makerSkipped(res) && !rawFilled[res] {
 				mats = append(mats, res)
 			}
 		}
 		sort.Strings(mats)
-		// A wonder part in a material the age does not price has no level to
-		// put a standard on: the rules cannot decide it.
-		var unpriced []string
-		for _, d := range defs {
-			if d.RequiredAge != a.Key || d.Category != "wonder" {
-				continue
-			}
-			for res, c := range d.BaseCost {
-				if c > 0 && lv[res] <= 0 && !makerSkipped(res) {
-					unpriced = append(unpriced, res)
-				}
-			}
-		}
-		sort.Strings(unpriced)
-		for _, res := range unpriced {
-			out = append(out, MakerHole{Age: a.Key, Material: res,
-				Why: "the wonder is priced in " + res + " and no building of the age is, so the age has no level to put a standard on"})
-		}
 		for _, res := range mats {
 			healthy := false
-			var trickle, raw []string
+			var trickle []string
 			for _, d := range defs {
-				if d.RequiredAge != a.Key || d.Category == "wonder" || !buildable(d) {
+				if d.RequiredAge != a.Key || d.Category == "wonder" || !buildable(d) || !makes(d, res) {
 					continue
 				}
-				if makes(d, res) {
-					if outUnits[d.Key] >= float64(MakerHealthyShare*best) {
-						healthy = true
-					} else {
-						trickle = append(trickle, d.Key)
-					}
-				}
-				if rw := makerRaw[res]; rw != "" && makes(d, rw) {
-					raw = append(raw, d.Key)
+				if outUnits[d.Key] >= float64(MakerHealthyShare*best) {
+					healthy = true
+				} else {
+					trickle = append(trickle, d.Key)
 				}
 			}
 			if healthy {
 				continue
+			}
+			ask := float64((gate[a.Key][res] + wonder[a.Key][res]) * lv[res])
+			if float64(supply(res)*AgeTargetTicks(a.Key)) >= ask {
+				continue // the carried copies make what is asked: no shortage
 			}
 			h := MakerHole{Age: a.Key, Material: res}
 			switch {
@@ -369,10 +455,6 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 				h.Rule, h.Building = 1, trickle[0]
 			case len(trickle) > 1:
 				h.Why = "several trickle makers: " + joinKeys(trickle)
-			case len(raw) == 1:
-				h.Rule, h.Building = 2, raw[0]
-			case len(raw) > 1:
-				h.Why = "several makers of the raw form: " + joinKeys(raw)
 			default:
 				// Rule 3: the lineages that made it in the latest earlier age.
 				last := -1
@@ -399,6 +481,8 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 				switch {
 				case len(fit) == 1:
 					h.Rule, h.Building = 3, fit[0]
+				case len(fit) > 1 && slices.Contains(fit, MakerTieBreaks[a.Key+"/"+res]):
+					h.Rule, h.Building = 3, MakerTieBreaks[a.Key+"/"+res]
 				case len(fit) > 1:
 					h.Why = "two lineages made it last, and both have a building this age: " + joinKeys(fit)
 				default:
@@ -406,10 +490,26 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 					h.Why = "nothing fits"
 				}
 			}
-			out = append(out, h)
+			rows = append(rows, h)
 		}
+		sort.SliceStable(rows, func(x, y int) bool {
+			if rows[x].Material != rows[y].Material {
+				return rows[x].Material < rows[y].Material
+			}
+			return rows[x].Building < rows[y].Building
+		})
+		out = append(out, rows...)
 	}
 	return out
+}
+
+func sortedBuildingKeys(m map[string]int) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func ageKeys(ages []AgeDef) []string {
@@ -454,19 +554,25 @@ func MakerStandard(defs []BuildingDef, ages []AgeDef, paybacks map[string]float6
 		lv := levels[d.RequiredAge]
 		price := priceUnits(d.BaseCost, lv)
 		var mats []string
+		weight := map[string]float64{}
 		share := 0.0
 		for _, e := range d.Effects {
 			if e.Type == "production" && e.Value > 0 && lv[e.Target] > 0 {
 				mats = append(mats, e.Target)
-				share += gate[d.RequiredAge][e.Target]
+				// What the gate asks of it; where the gate asks nothing of a
+				// priced material (the Colonial Age's gate asks no iron) one
+				// unit of it, a single median price, so that a raw form's
+				// maker still makes it.
+				weight[e.Target] = gate[d.RequiredAge][e.Target]
+				if weight[e.Target] <= 0 {
+					weight[e.Target] = 1
+				}
+				share += weight[e.Target]
 			}
 		}
 		out[key] = map[string]float64{}
 		for _, res := range mats {
-			units := float64(price / paybacks[d.RequiredAge])
-			if share > 0 {
-				units = float64(units * gate[d.RequiredAge][res] / share)
-			}
+			units := float64(float64(price/paybacks[d.RequiredAge]) * weight[res] / share)
 			out[key][res] = float64(units * lv[res])
 		}
 	}

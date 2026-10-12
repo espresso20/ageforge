@@ -109,6 +109,9 @@ func checkMakerHolesAreFilledByRule(t *testing.T) {
 	}
 	var left []string
 	for _, h := range MakerHoles(defs, ages, techs, nil) {
+		if h.Rule == 2 {
+			continue // a raw form's maker makes the material hole or not
+		}
 		if _, ok := open[h.Age+"/"+h.Material]; !ok {
 			left = append(left, h.Age+"/"+h.Material)
 		}

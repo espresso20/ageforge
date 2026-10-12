@@ -62,7 +62,8 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "marble", Value: 0.64},
 			{Type: "production", Target: "iron_ore", Value: 0.64},
-			{Type: "production", Target: "stone", Value: 20},
+			{Type: "production", Target: "stone", Value: 10.8},
+			{Type: "production", Target: "iron", Value: 4.15},
 		},
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
@@ -79,7 +80,8 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "marble", Value: 1.28},
 			{Type: "production", Target: "iron_ore", Value: 1.28},
-			{Type: "production", Target: "stone", Value: 130},
+			{Type: "production", Target: "stone", Value: 63.6},
+			{Type: "production", Target: "iron", Value: 14.5},
 		},
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
@@ -95,7 +97,8 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "iron_ore", Value: 2.56},
-			{Type: "production", Target: "stone", Value: 462},
+			{Type: "production", Target: "iron", Value: 30.1},
+			{Type: "production", Target: "stone", Value: 314},
 		},
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
@@ -128,7 +131,8 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "iron_ore", Value: 10.24},
-			{Type: "production", Target: "stone", Value: 1730},
+			{Type: "production", Target: "iron", Value: 176},
+			{Type: "production", Target: "stone", Value: 1690},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
