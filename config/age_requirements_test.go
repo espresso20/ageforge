@@ -15,12 +15,14 @@ func ageByKeyT(t *testing.T, key string) AgeDef {
 	return a
 }
 
-// Building floor: iron_age scriptorium was 3, must be raised to the floor of 5.
+// Building floor: iron_age scriptorium was 3, then raised to a floor of 5, and
+// is now the gate rule's count (the reference town's, from the gate rule).
 // A count above the floor like bronze_age longhouse (15) must be left unchanged.
 func TestNormalizeAgeRequirements_BuildingFloor(t *testing.T) {
 	iron := ageByKeyT(t, "iron_age")
-	if got := iron.BuildingReqs["scriptorium"]; got != 5 {
-		t.Errorf("iron_age scriptorium req = %d, want 5 (raised to floor)", got)
+	want := GateTown(BaseBuildings(), Ages(), Technologies())["iron_age"]["scriptorium"]
+	if got := iron.BuildingReqs["scriptorium"]; got != want || want != TownCopies {
+		t.Errorf("iron_age scriptorium req = %d, want %d (the gate rule's count, TownCopies = %d)", got, want, TownCopies)
 	}
 
 	bronze := ageByKeyT(t, "bronze_age")

@@ -2,7 +2,7 @@
 
 Knowledge pays for all research. It accumulates over time and is spent when you start researching a technology. Your knowledge rate and storage decide how quickly you can move through the tech tree. A few buildings also cost knowledge, most of all the Modern Age wonder, the Space Program.
 
-No age asks you to hold knowledge to advance. The gates do ask for knowledge buildings: 5 Story Circles for the Stone Age, 5 Elders' Halls for the Bronze Age, 5 Scriptoria for the Iron Age and so on (see [Advancement Requirements](ages.md#advancement-requirements)). What an age needs of research itself is one tech: the **keystone** its wonder cannot be built without, and the techs that one stands on (see [Keystone Techs](ages.md#keystone-techs)). The rest of your knowledge is yours to spend on the techs you choose.
+No age asks you to hold knowledge to advance. The gates do ask for knowledge buildings: 8 Story Circles for the Stone Age, 8 Elders' Halls for the Bronze Age, 8 Scriptoria for the Iron Age and so on (see [Advancement Requirements](ages.md#advancement-requirements)). What an age needs of research itself is one tech: the **keystone** its wonder cannot be built without, and the techs that one stands on (see [Keystone Techs](ages.md#keystone-techs)). The rest of your knowledge is yours to spend on the techs you choose.
 
 ---
 
@@ -96,7 +96,7 @@ Each trade pushes that pair's rate down a little, by the same step whatever its 
 
 ### Paying for the Space Program
 
-The Modern Age wonder, the **Space Program**, costs **600B knowledge** along with 770B steel, 690B gold and 430B electricity. Your knowledge buildings make thousands per tick at that point, nowhere near enough. The practical way to pay is the market's gold to knowledge pair: at 5 knowledge per gold, 600B knowledge costs about 120B gold, less than a fifth of the gold the wonder asks for anyway.
+The Modern Age wonder, the **Space Program**, costs **600B knowledge** along with 1.23T steel, 1.1T gold and 688B electricity. Your knowledge buildings make thousands per tick at that point, nowhere near enough. The practical way to pay is the market's gold to knowledge pair: at 5 knowledge per gold, 600B knowledge costs about 120B gold, less than a fifth of the gold the wonder asks for anyway.
 
 1. Raise your knowledge storage to hold what you buy: knowledge bought past the cap is lost. Each Modern Depot adds 110B to every store.
 2. Trade gold for knowledge in a few large lumps. Amounts can be typed in e-notation: `trade gold knowledge 2e10` sells 20B gold for about 100B knowledge.
@@ -124,7 +124,7 @@ There is also a prestige-run path to free research: early in a new run (Primitiv
 
 ## Tips
 
-- Get your first Story Circle and 2 Knowledge workers before your first age advance, because early research unlocks pay off quickly. The Stone Age asks for 5 Story Circles and the Bronze Age for 5 Elders' Halls, and the Stone Age's wonder needs Stoneworking, which stands on Tool Making.
+- Get your first Story Circle and 2 Knowledge workers before your first age advance, because early research unlocks pay off quickly. The Stone Age asks for 8 Story Circles and the Bronze Age for 8 Elders' Halls, and the Stone Age's wonder needs Stoneworking, which stands on Tool Making.
 - In each new age, find the keystone first (the ★ on the tech tree). The wonder waits for it, and the advance waits for the wonder.
 - Research is paid up front, so start a tech as soon as you can afford it, or queue it with `plan research`. Knowledge that sits at its storage limit is wasted.
 - Plan for the Space Program before the Modern Age: build up gold income and storage, then buy the knowledge.

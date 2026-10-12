@@ -35,9 +35,9 @@ import (
 //     (see below).
 //   - A wonder's price is what its bank still lacks. Once what is held,
 //     after the reservations above it, covers all of that, the plan banks it
-//     and starts the wonder. While it waits it reserves nothing: it is 40
-//     price units of its age, and holding that back would stall everything
-//     below it for hours. Deposits, wonder overflow and the plan's overflow
+//     and starts the wonder. While it waits it reserves nothing: it is a
+//     town's worth of price units of its age, and holding that back would
+//     stall everything below it for hours. Deposits, wonder overflow and the plan's overflow
 //     (a queued wonder takes it in plan order, with wonder overflow on or
 //     off) fill the bank; a part bigger than a full store can only be banked
 //     that way.

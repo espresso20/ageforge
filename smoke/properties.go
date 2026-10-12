@@ -33,17 +33,17 @@ type Property struct {
 // today's reading. Later changes to the economy shorten it.
 var KnownPropertyFailures = map[int]string{
 	1:  "22 buildings climb at another rate (1.13)",
-	2:  "fails in 5 of 22 ages; worst 0.13 of the age in the Primitive Age",
-	3:  "fails in 6 of 22 ages; worst 4.6 times in the Primitive Age",
-	4:  "fails in 1 of 22 ages; worst 2.7 times in the Quantum Age",
+	2:  "fails in 3 of 22 ages; worst 0.28 of the age in the Primitive Age",
+	3:  "fails in 3 of 22 ages; worst 3.7 times in the Quantum Age",
+	4:  "fails in 1 of 22 ages; worst 3.0 times in the Quantum Age",
 	5:  "fails in 11 of 22 ages; worst 13 techs in the Digital Age",
-	8:  "fails in 17 of 22 ages; worst 0.0% eaten in the Transcendent Age",
-	9:  "fails in 22 of 22 ages; worst room for 19553 people per job in the Transcendent Age",
-	10: "fails in 20 of 22 ages; worst 6.4 times the age in the Electric Age",
-	11: "fails in 20 of 22 ages; worst 483727 times what the buildings make in the Information Age",
+	8:  "fails in 15 of 22 ages; worst 0.0% eaten in the Transcendent Age",
+	9:  "fails in 21 of 22 ages; worst room for 17654 people per job in the Transcendent Age",
+	10: "fails in 20 of 22 ages; worst 4.6 times the age in the Electric Age",
+	11: "fails in 20 of 22 ages; worst 708963 times what the buildings make in the Information Age",
 	12: "27 of 27 trade route payments fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
-	16: "fails in 4 of 22 ages; worst 4.6 times in the Primitive Age",
+	16: "fails in 2 of 22 ages; worst 3.0 times in the Primitive Age",
 	17: "fails in 12 of 22 ages; worst 13 techs in the Digital Age",
 	18: "not worked out here yet",
 	19: "a full run earns 3279 points and everything for sale costs 99",
@@ -253,7 +253,7 @@ func StaticProperties() Properties {
 			if d.Category != "storage" {
 				continue
 			}
-			for k := 0; k < RefCopies; k++ {
+			for k := 0; k < refCopies(d); k++ {
 				if overCap(copyPrice(d, k), t.state(c, i, 1).caps) {
 					ok = false
 				}
@@ -508,7 +508,7 @@ func hoursText(h float64) string {
 
 // writeProperties renders the check for the report.
 func writeProperties(sb *strings.Builder, p Properties) {
-	sb.WriteString("What must be true of the economy's numbers, worked out from the game's tables alone for three reference players: an ordinary one who builds five of everything (or what the gate asks), pays the wonder and advances; a lingering one who buys everything and stays three times as long; and a check-in one who is away at half rate and advances at the first eight-hour visit after the gate opens. No bot is involved.\n\n")
+	sb.WriteString("What must be true of the economy's numbers, worked out from the game's tables alone for three reference players: an ordinary one who builds eight of everything but storage and five of each store (or what the gate asks), pays the wonder and advances; a lingering one who buys everything and stays three times as long; and a check-in one who is away at half rate and advances at the first eight-hour visit after the gate opens. No bot is involved.\n\n")
 	sb.WriteString("A property marked \"known failure\" does not hold today and is written down as such, with today's reading. The check fails when one of those starts to hold, when any other stops holding, or when a reading changes. There is no property 13: it was about the amounts a gate asks for, and no gate asks for one now.\n\n")
 	sb.WriteString("| # | property | today | |\n|---|---|---|---|\n")
 	for _, pr := range p.List {

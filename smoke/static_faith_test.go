@@ -39,10 +39,23 @@ func TestFaithStrengthBars(t *testing.T) {
 		}
 	}
 	// The wonders the check is about are in the model: the age after
-	// Stonehenge, every town is given far more faith than a moderate set makes.
+	// Stonehenge, every town is given at least the faith Stonehenge makes.
+	// (This was "three times a moderate set's", which held at 0.72 against
+	// 0.15; the moderate set is eight copies now, 0.288, and the same
+	// Stonehenge is 2.5 times it. What the line means is that the wonder is
+	// walked, so it says that.)
+	stonehenge := 0.0
+	for _, e := range config.BuildingByKey()["stonehenge"].Effects {
+		if e.Type == "production" && e.Target == "faith" {
+			stonehenge = e.Value
+		}
+	}
+	if stonehenge <= 0 {
+		t.Fatal("Stonehenge makes no faith: the check below has nothing to walk")
+	}
 	for _, r := range rows {
-		if r.Age == "iron_age" && r.Given < 3*r.ModerateSet {
-			t.Errorf("iron_age: every town is given %v faith a tick against a moderate set's %v; the check means to walk Stonehenge's 0.6", r.Given, r.ModerateSet)
+		if r.Age == "iron_age" && r.Given < stonehenge {
+			t.Errorf("iron_age: every town is given %v faith a tick against a moderate set's %v; the check means to walk Stonehenge's %v", r.Given, r.ModerateSet, stonehenge)
 		}
 	}
 	var sb strings.Builder
@@ -125,6 +138,21 @@ func TestFaithStrengthBars(t *testing.T) {
 	}
 }
 
+const (
+	devotedEconomy = "a devoted economy through the longest warning"
+	moderateHoard  = "a moderate economy's hoard since the start"
+)
+
+// reachesMiddleBand is, for each of the two readings, the ages where the
+// retired measure (faith against the least general store) would have reached
+// the middle band: where a walled least store is that small beside what the
+// town of eight makes. Worked out from the tables; a store or an income that
+// moves it either way fails the test.
+var reachesMiddleBand = map[string]map[string]bool{
+	devotedEconomy: {"primitive_age": true, "stone_age": true, "bronze_age": true, "iron_age": true, "classical_age": true},
+	moderateHoard:  {"iron_age": true, "classical_age": true},
+}
+
 // TestFaithNeverFilledTheGeneralStore keeps the arithmetic that retired the
 // old rule. The faith bands read faith as a share of its storage, but faith
 // has no store of its own: it is kept in the general one, and no building
@@ -135,12 +163,16 @@ func TestFaithStrengthBars(t *testing.T) {
 // a typical store they stayed under 7%, and under 1% from the Renaissance
 // Age on. So every roll read the bottom band.
 //
-// On the walled stores (the storage rule) that holds in every age but one.
-// The Iron Age's least store is 31.9K, the five Warehouses' and no more, and
-// a devoted economy through the longest warning holds 59% of it and a
-// moderate hoard 35%: the old measure could have reached the middle band
-// there, and 11% of a typical store. The test says so, in that age only, so
-// a store that moves it either way is seen. The rule it retired stays
+// On the walled stores (the storage rule) that holds in the later ages and
+// not in the early ones. The moderate economy is eight copies now, a store is
+// still five, so what a town makes is 1.6 times as much of the same store. A
+// devoted economy through the longest warning holds 26% of the least store in
+// the Primitive Age, 34% in the Stone and Bronze Ages, 66% in the Iron Age
+// (the five Warehouses' 31.9K and no more) and 30% in the Classical Age; a
+// moderate hoard 40% of it in the Iron Age and 26% in the Classical. The old
+// measure could have reached the middle band there, and a devoted economy
+// holds 13% of the Iron Age's typical store. The test says so, in those ages
+// only, so a store that moves it either way is seen. The rule it retired stays
 // retired: faith has a store of its own.
 func TestFaithNeverFilledTheGeneralStore(t *testing.T) {
 	for _, d := range config.BaseBuildings() {
@@ -176,8 +208,8 @@ func TestFaithNeverFilledTheGeneralStore(t *testing.T) {
 		for _, c := range []struct {
 			name  string
 			faith float64
-		}{{"a devoted economy through the longest warning", devoted}, {"a moderate economy's hoard since the start", hoard}} {
-			reaches := m.Age == "iron_age" // the one age whose walled least store is that small
+		}{{devotedEconomy, devoted}, {moderateHoard, hoard}} {
+			reaches := reachesMiddleBand[c.name][m.Age]
 			if share := c.faith / least[m.Age]; (share >= game.FaithMidAt) != reaches {
 				t.Errorf("%s: %s holds %v faith, %.3f of the least store (%v): the old measure reaching the middle band here is %v, want %v", m.Age, c.name, c.faith, share, least[m.Age], share >= game.FaithMidAt, reaches)
 			}
@@ -185,8 +217,8 @@ func TestFaithNeverFilledTheGeneralStore(t *testing.T) {
 			if config.AgePositions(config.AgeOrder())[m.Age] >= config.AgePositions(config.AgeOrder())["renaissance_age"] {
 				limit = 0.01
 			}
-			if reaches {
-				limit = 0.12 // a devoted economy holds 0.1145 of the Iron Age's typical store
+			if m.Age == "iron_age" {
+				limit = 0.13 // a devoted economy holds 0.1282 of the Iron Age's typical store
 			}
 			if share := c.faith / typical[m.Age]; share >= limit && m.Age != "transcendent_age" {
 				t.Errorf("%s: %s holds %.4f of a typical store, want under %v", m.Age, c.name, share, limit)

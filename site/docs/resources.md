@@ -103,7 +103,7 @@ Faith comes from Faith lineage buildings (Shrine, Standing Stones, Altar, ...), 
 
 Faith does two jobs:
 
-- **Odds.** Your faith strength sets the odds of a good epoch event and of a fated catastrophe striking. It measures what your faith buildings have made against a moderate set (five staffed copies of each), times the share of your faith you have kept. A typical town sits in the bottom band; more faith buildings and fuller crews move it up. It is not a share of storage: faith is kept in the general store, which it could never fill. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
+- **Odds.** Your faith strength sets the odds of a good epoch event and of a fated catastrophe striking. It measures what your faith buildings have made against a moderate set (eight staffed copies of each), times the share of your faith you have kept. A typical town sits in the bottom band; more faith buildings and fuller crews move it up. It is not a share of storage: faith is kept in the general store, which it could never fill. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
 - **Morale.** Your faith income (faith per tick, not the stockpile) lifts morale a little every tick, up to a limit, and worship buildings lift it too. See [Morale](morale.md).
 
 Faith can't be bought at the market.
@@ -157,7 +157,7 @@ What Geological Extraction is good for is stone (up to the Bronze Age), uranium 
 
 Every resource has a small base storage (10 to 50). **Storage buildings** raise the cap of every resource at once: one per age from the Stash to the Quantum Vault, with no limit on copies. Each copy costs 1.75 times the one before it. A few technologies raise every cap too, culture buildings add culture storage, and military buildings add soldier storage. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table.
 
-**How much it holds.** Each age's storage building is sized by one written rule: five copies of it, on top of the stores of the earlier ages, hold the dearest single price the age asks of a full town, with a quarter to spare. Every age gate asks for five copies of the storage building of the age you are leaving. Four techs raise every store by a percentage (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each). On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production.
+**How much it holds.** Each age's storage building is sized by one written rule: five copies of it, on top of the stores of the earlier ages, hold the dearest single price the age asks of a full town (eight copies of every building that makes something), with a quarter to spare. Every age gate asks for five copies of the storage building of the age you are leaving. Four techs raise every store by a percentage (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each). On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production.
 
 **Storage is a wall.** A building or an upgrade whose price in any one resource is larger than that resource's store cannot be bought, by `build`, `build <n>`, `build max`, `upgrade` or the [build plan](plan.md). The game says so and names the storage building to build. The age's wonder is the one exception: it is paid through its bank. See [Storage is a wall](buildings.md#storage-is-a-wall).
 

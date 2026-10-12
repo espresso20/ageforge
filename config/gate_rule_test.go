@@ -64,8 +64,8 @@ func TestGateTownRuleAsksOnlyForWhatARunCanBuild(t *testing.T) {
 			switch {
 			case d.RequiredAge != ages[from].Key:
 				t.Errorf("%s: the gate into %s asks for it, it is built in %s", k, to, d.RequiredAge)
-			case n != StorageRuleCopies:
-				t.Errorf("%s: %d copies, the reference town holds %d", k, n, StorageRuleCopies)
+			case n != TownCopies:
+				t.Errorf("%s: %d copies, the reference town holds %d", k, n, TownCopies)
 			case !makesSomething(d):
 				t.Errorf("%s makes nothing", k)
 			case d.Category == "wonder" || d.Category == "monument" || d.Category == "storage" || d.Category == "housing":
@@ -134,7 +134,7 @@ func TestGateTownRuleCatchesAGateThatAsksForLess(t *testing.T) {
 		t.Fatalf("setup: the real gates fall short of the rule: %v", got)
 	}
 	delete(ages[1].BuildingReqs, "gathering_camp")
-	ages[2].BuildingReqs["forager_post"] = StorageRuleCopies - 1
+	ages[2].BuildingReqs["forager_post"] = TownCopies - 1
 	got := gateTownShortfalls(defs, ages, techs)
 	if len(got) != 2 {
 		t.Fatalf("want the two broken gates reported, got %v", got)

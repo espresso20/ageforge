@@ -56,7 +56,7 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ Name · Stone Age  ◈ Stone Era  |  Pop: 18/30  Morale 54%  |  hint        │  status bar
-│ Next Age: Bronze Age  ✗ Food 3.1K/4K  ✓ Knowledge 1.5K/1.5K  ✗ Stone ... │  next age row
+│ Next Age: Bronze Age  ✗ Wonder: Great Monolith  ✗ Elders' Hall 3/8 ...   │  next age row
 ├─ Resources ──────────┬─ Buildings ──────────────────────┬─ Panels ───────┤
 │ amounts and rates    │ (mini map above it: minimap on)  │ panel names    │
 ├─ Under construction ─┤ what you can build, what you own │ ...            │

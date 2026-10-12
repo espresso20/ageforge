@@ -143,10 +143,15 @@ func TestContentOldSaveGetsAnAgeOfGrace(t *testing.T) {
 		!strings.Contains(line, "the locks start when you next advance") || strings.Contains(line, "smaller") {
 		t.Errorf("%d research update lines, the last %q; want one about the new techs that names the Bronze Age", n, line)
 	}
-	// The bank is as the old game left it: half of every part.
-	for res, need := range ge.Buildings.defs["stonehenge"].BaseCost {
-		if got := ge.Buildings.wonderBanks["stonehenge"][res]; got != need/2 {
-			t.Errorf("Stonehenge's bank holds %v %s, want half of %v", got, res, need)
+	// The bank is as the old game left it: half of every part of the price
+	// then, which the file holds (the price is the tables' now, higher).
+	banked := savedFixture(t, contentFixtureFresh).WonderBanks["stonehenge"]
+	if len(banked) != len(ge.Buildings.defs["stonehenge"].BaseCost) {
+		t.Fatalf("the save banks %d parts of Stonehenge, the game prices it in %d", len(banked), len(ge.Buildings.defs["stonehenge"].BaseCost))
+	}
+	for res, had := range banked {
+		if got := ge.Buildings.wonderBanks["stonehenge"][res]; got != had {
+			t.Errorf("Stonehenge's bank holds %v %s, the save held %v", got, res, had)
 		}
 	}
 	// In the grace age every lock is open.

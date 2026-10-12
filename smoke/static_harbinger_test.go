@@ -203,29 +203,32 @@ func TestBraceTakesEffort(t *testing.T) {
 	// and a half to three times a moderate store from the Colonial Age on.
 	// Since the wall a store is sized by what an age's buildings cost
 	// (config/storage_rule.go), not by what the age makes, and the ceiling
-	// holds some material in every age a doom can come in but the Atomic
-	// Age. It holds every material in two, the Colonial and Industrial Ages
-	// (gold and steel both), where the price is then quicker to make than a
-	// third of the warning. The counts are read from the price table.
+	// holds some material in every age a doom can come in. The moderate
+	// economy is eight copies and a moderate store five, so a third of the
+	// warning outgrows the ceiling of more of them than it did against five
+	// copies: it holds every material in three, the Colonial, Industrial and
+	// Modern Ages, where the price is then quicker to make than a third of
+	// the warning. The counts are read from the price table.
 	wantCapped := map[string]int{
-		"iron_age": 2, "classical_age": 1, "medieval_age": 2,
+		"iron_age": 2, "classical_age": 2, "medieval_age": 2,
 		"renaissance_age": 1, "colonial_age": 2, "industrial_age": 2,
-		"victorian_age": 1, "electric_age": 1, "atomic_age": 0,
-		"modern_age": 1, "information_age": 2, "digital_age": 2,
+		"victorian_age": 1, "electric_age": 2, "atomic_age": 2,
+		"modern_age": 2, "information_age": 2, "digital_age": 2,
 		"cyberpunk_age": 1, "fusion_age": 1, "space_age": 1,
 	}
 	if !maps.Equal(capped, wantCapped) {
 		t.Errorf("materials on their ceiling by age: %v; want %v", capped, wantCapped)
 	}
-	if want := []string{"colonial_age", "industrial_age"}; !slices.Equal(allCapped, want) {
-		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same two", allCapped, want)
+	if want := []string{"colonial_age", "industrial_age", "modern_age"}; !slices.Equal(allCapped, want) {
+		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same three", allCapped, want)
 	}
 	// The final era's two threads have no ceiling, and a moderate builder's
-	// store holds them all the same. The Last Passage's takes about a third
-	// of it in the age it arrives in (0.35: 11Q dark matter of a store of
-	// 31Q). Before the storage wall it took 0.97 and left little room: the
-	// price has not moved, the Interstellar Age's store is about 2.8 times what
-	// it was.
+	// store holds them all the same. The Last Passage's takes over half of
+	// it in the age it arrives in (0.55: 17Q dark matter of a store of 31Q;
+	// 0.35 against a town of five, since the price follows the moderate
+	// economy and the store does not). Before the storage wall it took 0.97
+	// and left little room: the Interstellar Age's store is about 2.8 times
+	// what it was.
 	for _, b := range BraceStoreRows(rows, income) {
 		if b.Epoch != "cosmic_era" {
 			if b.StoreShare > 0.6+1e-9 {
@@ -236,8 +239,8 @@ func TestBraceTakesEffort(t *testing.T) {
 		if len(b.Capped) != 0 || b.StoreShare <= 0 || b.StoreShare > 1 {
 			t.Errorf("%s (Last Passage %v) in %s: the largest part is %.2f of a moderate store with %v on a ceiling; want it held and no ceiling", b.Epoch, b.LastPassage, b.Age, b.StoreShare, b.Capped)
 		}
-		if b.LastPassage && b.Age == cosmic[0] && math.Abs(b.StoreShare-0.35) > 0.02 {
-			t.Errorf("the Last Passage in %s takes %.2f of a moderate store, want 0.35", b.Age, b.StoreShare)
+		if b.LastPassage && b.Age == cosmic[0] && math.Abs(b.StoreShare-0.55) > 0.02 {
+			t.Errorf("the Last Passage in %s takes %.2f of a moderate store, want 0.55", b.Age, b.StoreShare)
 		}
 	}
 
@@ -252,7 +255,7 @@ func TestBraceTakesEffort(t *testing.T) {
 	for _, tg := range []target{
 		{"the Last Passage: ", "cosmic_era", cosmic[0], true, "titanium", "dark_matter"},
 		{"the Reality Tear: ", "cosmic_era", cosmic[0], false, "titanium", "dark_matter"},
-		{"an Electric Era doom: ", "electric_era", electric[1], false, "steel", "oil"},
+		{"an Electric Era doom: ", "electric_era", electric[1], false, "oil", "steel"},
 	} {
 		var row PriceRow
 		alter := func(change func(r *PriceRow)) []BraceRuleProblem {

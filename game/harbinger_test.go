@@ -503,8 +503,8 @@ func TestHarbingerCostSameAcrossEpoch(t *testing.T) {
 func TestHarbingerCostExamples(t *testing.T) {
 	// An ordinary doom's Brace is priced on its shortest warning, in the age
 	// its harbinger arrives in: a third of what a moderate economy makes of
-	// each material in a fifth of the age. Iron Age stone: 46.5 a tick over
-	// 2,340 ticks = 108.9K; a third is 36.3K → 37K. The materials are the
+	// each material in a fifth of the age. Iron Age stone: 74.4 a tick over
+	// 2,340 ticks = 174.2K; a third is 58.1K → 59K. The materials are the
 	// era's written list (config.EpochDef.BraceMaterials) that the age's
 	// buildings make: the Modern Age buys its data at the market, so it is
 	// not asked for there. The list is not read from the age gates, which
@@ -513,7 +513,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 	// material asks for more than three fifths of what a moderate builder's
 	// store holds (five copies of every storage building so far), rounded
 	// down to two figures: the Iron Age's store is 165.6K, so its gold and
-	// iron stop at 99K where a third of the warning is 135K and 165K. It
+	// iron stop at 99K where a third of the warning is 216K and 264K. It
 	// was 12% of the most the era's advances asked, the same in every age
 	// of the era (eraBraceCost): 26.4K stone, 6.36K iron and 21.6K gold for
 	// the whole Iron Era.
@@ -521,21 +521,21 @@ func TestHarbingerCostExamples(t *testing.T) {
 		epoch, age string
 		brace      map[string]float64
 	}{
-		{"iron_era", "iron_age", map[string]float64{"gold": 99000, "iron": 99000, "stone": 37000}},
-		{"iron_era", "classical_age", map[string]float64{"gold": 900000, "iron": 760000, "stone": 51000}},
-		{"iron_era", "medieval_age", map[string]float64{"gold": 3100000, "iron": 3100000, "stone": 66000}},
-		{"steel_era", "renaissance_age", map[string]float64{"gold": 14000000, "steel": 4500000}},
-		{"steel_era", "colonial_age", map[string]float64{"gold": 62000000, "steel": 62000000}},
-		{"steel_era", "industrial_age", map[string]float64{"gold": 280000000, "steel": 280000000}},
-		{"electric_era", "victorian_age", map[string]float64{"electricity": 1700000, "oil": 1400000000, "steel": 2800000000}},
-		{"electric_era", "electric_age", map[string]float64{"electricity": 22000000000, "oil": 4600000000, "steel": 27000000000}},
-		{"electric_era", "atomic_age", map[string]float64{"electricity": 170000000000, "oil": 6100000000, "steel": 230000000000}},
-		{"digital_era", "modern_age", map[string]float64{"electricity": 750000000000, "gold": 960000000000}},
-		{"digital_era", "information_age", map[string]float64{"data": 590000000000, "electricity": 2500000000000, "gold": 2500000000000}},
-		{"digital_era", "digital_age", map[string]float64{"data": 2400000000000, "electricity": 16000000000000, "gold": 16000000000000}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 8100000000000, "electricity": 67000000000000}},
-		{"neon_era", "fusion_age", map[string]float64{"data": 9400000000000, "electricity": 240000000000000}},
-		{"neon_era", "space_age", map[string]float64{"data": 11000000000000, "electricity": 1.2e+15}},
+		{"iron_era", "iron_age", map[string]float64{"gold": 99000, "iron": 99000, "stone": 59000}},
+		{"iron_era", "classical_age", map[string]float64{"gold": 900000, "iron": 900000, "stone": 82000}},
+		{"iron_era", "medieval_age", map[string]float64{"gold": 3100000, "iron": 3100000, "stone": 110000}},
+		{"steel_era", "renaissance_age", map[string]float64{"gold": 14000000, "steel": 7200000}},
+		{"steel_era", "colonial_age", map[string]float64{"gold": 95000000, "steel": 95000000}},
+		{"steel_era", "industrial_age", map[string]float64{"gold": 350000000, "steel": 350000000}},
+		{"electric_era", "victorian_age", map[string]float64{"electricity": 2700000, "oil": 2200000000, "steel": 2900000000}},
+		{"electric_era", "electric_age", map[string]float64{"electricity": 27000000000, "oil": 7300000000, "steel": 27000000000}},
+		{"electric_era", "atomic_age", map[string]float64{"electricity": 270000000000, "oil": 9800000000, "steel": 270000000000}},
+		{"digital_era", "modern_age", map[string]float64{"electricity": 960000000000, "gold": 960000000000}},
+		{"digital_era", "information_age", map[string]float64{"data": 940000000000, "electricity": 2500000000000, "gold": 2500000000000}},
+		{"digital_era", "digital_age", map[string]float64{"data": 3800000000000, "electricity": 16000000000000, "gold": 16000000000000}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 13000000000000, "electricity": 67000000000000}},
+		{"neon_era", "fusion_age", map[string]float64{"data": 16000000000000, "electricity": 240000000000000}},
+		{"neon_era", "space_age", map[string]float64{"data": 18000000000000, "electricity": 1.2e+15}},
 	}
 	listed := 0
 	for _, ep := range config.Epochs() {
@@ -575,8 +575,8 @@ func TestHarbingerCostExamples(t *testing.T) {
 	// The Cosmic Era's fated doom, the Reality Tear, is priced on its own
 	// warning: five sixths of what the age its harbinger arrives in makes in
 	// a doom's shortest warning, a sixth of the age. Interstellar Age dark
-	// matter: 237B a tick over 22,464 ticks = 5.32Q; five sixths is 4.44Q →
-	// 4.5Q. The Galactic Age makes 21 times the dark matter and no more
+	// matter: 434B a tick over 22,464 ticks = 9.75Q; five sixths is 8.12Q →
+	// 8.2Q. The Galactic Age makes 21 times the dark matter and no more
 	// titanium. It was the era's 1.56T dark matter and 75.6B titanium.
 	tears := []struct {
 		age   string
@@ -589,10 +589,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// income in the Interstellar Age, 10%, 15% and 20% in the three after.
 		// Then the tree's last techs: Asteroid Refining and Stellar Core
 		// Mining add 8% to titanium.
-		{"interstellar_age", map[string]float64{"dark_matter": 5.1e+15, "titanium": 4.8e+15}},
-		{"galactic_age", map[string]float64{"dark_matter": 6.1e+16, "titanium": 5.1e+15}},
-		{"quantum_age", map[string]float64{"dark_matter": 6.3e+16, "titanium": 5.3e+15}},
-		{"transcendent_age", map[string]float64{"dark_matter": 6.9e+16, "titanium": 5.8e+15}},
+		{"interstellar_age", map[string]float64{"dark_matter": 8.2e+15, "titanium": 7.7e+15}},
+		{"galactic_age", map[string]float64{"dark_matter": 9.7e+16, "titanium": 8.1e+15}},
+		{"quantum_age", map[string]float64{"dark_matter": 1.1e+17, "titanium": 8.4e+15}},
+		{"transcendent_age", map[string]float64{"dark_matter": 1.1e+17, "titanium": 9.2e+15}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(tears) {
 		t.Fatalf("the Cosmic Era has ages %v; the Reality Tear's brace is listed for %d", ages, len(tears))
@@ -609,25 +609,26 @@ func TestHarbingerCostExamples(t *testing.T) {
 
 	// A doom's Appease is priced on its warning: three quarters of what the
 	// age its harbinger arrives in makes in the shortest warning, 15% of the
-	// age. Iron Age faith: 0.75 a tick, 0.9 with Ritual's and Calendar's
-	// +10% each, over 11,700 ticks = 10,530; 15% is 1,580 → 1,600. The Iron
+	// age. Iron Age faith: 0.84 a tick (Stonehenge's 0.6 and eight sets of the
+	// faith buildings, 0.03 a set), 1.008 with Ritual's and Calendar's +10% each, over 11,700
+	// ticks = 11,794; 15% is 1,769 → 1,800. The Iron
 	// Era asks no culture (it arrives in the Classical Age, after the era
 	// began).
 	dooms := []struct {
 		epoch, age string
 		appease    map[string]float64
 	}{
-		{"iron_era", "iron_age", map[string]float64{"faith": 1600}},
+		{"iron_era", "iron_age", map[string]float64{"faith": 1800}},
 		// The model counts the tech layer: Ritual's and Calendar's +10% faith
 		// from the Bronze Age, Theology's +8% from the Medieval Age,
 		// the culture of Patronage, Romanticism, Museums, Cinema and Social
 		// Media, the two +5% on all production.
-		{"iron_era", "medieval_age", map[string]float64{"faith": 5000}},
-		{"steel_era", "renaissance_age", map[string]float64{"faith": 11000, "culture": 96000}},
-		{"steel_era", "industrial_age", map[string]float64{"faith": 110000, "culture": 1100000}},
+		{"iron_era", "medieval_age", map[string]float64{"faith": 6600}},
+		{"steel_era", "renaissance_age", map[string]float64{"faith": 15000, "culture": 150000}},
+		{"steel_era", "industrial_age", map[string]float64{"faith": 150000, "culture": 1600000}},
 		// The Cosmic Era's row also carries the soft cap: the model's pool is
 		// past +200% there and a quarter of the rest counts, 5% more income.
-		{"cosmic_era", "interstellar_age", map[string]float64{"faith": 380000000, "culture": 5800000000}},
+		{"cosmic_era", "interstellar_age", map[string]float64{"faith": 600000000, "culture": 9300000000}},
 	}
 	for _, c := range dooms {
 		if got := doomAppeaseCost(c.epoch, c.age, 1); !reflect.DeepEqual(got, c.appease) {
@@ -638,10 +639,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 	// The Last Passage's thread is priced on its own warning, two thirds of
 	// the age its harbinger arrives in (74,880 of the Interstellar Age's
 	// 112,320 ticks). Appease is three quarters of what the warning makes,
-	// half of what the age does: culture at 239,958 a tick makes 17.97B in
-	// the warning; 75% is 13.5B → 14B. Brace is half of what the warning
-	// makes, a third of the age: dark matter at 237B a tick makes 17.7Q in
-	// the warning; half is 8.87Q → 8.9Q. Its thread comes with the era's
+	// half of what the age does: culture at 548,114 a tick makes 41.04B in
+	// the warning; 75% is 30.8B → 31B. Brace is half of what the warning
+	// makes, a third of the age: dark matter at 434B a tick makes 32.5Q in
+	// the warning; half is 16.25Q → 17Q. Its thread comes with the era's
 	// first age; the later rows price a thread that began there (an older
 	// save, the dev console): the Galactic Age makes 21 times the dark
 	// matter and no more titanium. Appease was 3.1B faith and 48B culture in
@@ -660,10 +661,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// the soft cap, as the Reality Tear's rows above: 5% to 20%.
 		// And by the tree's last techs: 4% more culture each from Neural
 		// Art, Galactic Memory and Reality Art, 8% more titanium.
-		{"interstellar_age", map[string]float64{"faith": 1300000000, "culture": 20000000000}, map[string]float64{"dark_matter": 1.1e+16, "titanium": 9.6e+15}},
-		{"galactic_age", map[string]float64{"faith": 2600000000, "culture": 42000000000}, map[string]float64{"dark_matter": 1.3e+17, "titanium": 1.1e+16}},
-		{"quantum_age", map[string]float64{"faith": 5400000000, "culture": 89000000000}, map[string]float64{"dark_matter": 1.3e+17, "titanium": 1.1e+16}},
-		{"transcendent_age", map[string]float64{"faith": 5900000000, "culture": 97000000000}, map[string]float64{"dark_matter": 1.4e+17, "titanium": 1.2e+16}},
+		{"interstellar_age", map[string]float64{"faith": 2000000000, "culture": 31000000000}, map[string]float64{"dark_matter": 1.7e+16, "titanium": 1.6e+16}},
+		{"galactic_age", map[string]float64{"faith": 4200000000, "culture": 67000000000}, map[string]float64{"dark_matter": 2e+17, "titanium": 1.7e+16}},
+		{"quantum_age", map[string]float64{"faith": 8700000000, "culture": 150000000000}, map[string]float64{"dark_matter": 2.1e+17, "titanium": 1.7e+16}},
+		{"transcendent_age", map[string]float64{"faith": 9400000000, "culture": 160000000000}, map[string]float64{"dark_matter": 2.2e+17, "titanium": 1.9e+16}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(passages) {
 		t.Fatalf("the Cosmic Era has ages %v; the Last Passage's price is listed for %d", ages, len(passages))

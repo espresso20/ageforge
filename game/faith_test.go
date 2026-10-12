@@ -36,12 +36,12 @@ func faithBuildingsUpTo(age string) []string {
 // unstaffedPerSet is how many copies of a faith building with nobody in them
 // make what config.FlowCopies fully staffed ones do: an empty building makes
 // a fifth of a full one.
-const unstaffedPerSet = 25
+const unstaffedPerSet = int(config.FlowCopies) * 5
 
 // faithTown is an engine in age with sets moderate sets' worth of faith
 // buildings (unstaffed copies, which make the same faith with no workers to
 // feed), every faith wonder of an earlier age standing, and a store nothing
-// here could fill. sets may be fractional in steps of 1/25.
+// here could fill. sets may be fractional in steps of 1/unstaffedPerSet.
 func faithTown(t *testing.T, age string, sets float64) *GameEngine {
 	t.Helper()
 	ge := catEngine(t, age, 7)
@@ -71,7 +71,7 @@ func faithTown(t *testing.T, age string, sets float64) *GameEngine {
 // building age has.
 func setFaithBuildings(ge *GameEngine, age string, sets float64) {
 	for _, key := range faithBuildingsUpTo(age) {
-		ge.Buildings.counts[key] = int(math.Round(sets * unstaffedPerSet))
+		ge.Buildings.counts[key] = int(math.Round(sets * float64(unstaffedPerSet)))
 	}
 }
 

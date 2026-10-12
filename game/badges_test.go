@@ -1025,7 +1025,10 @@ func TestSessionEventsStayOutOfTheRun(t *testing.T) {
 // every other rung its record proves. None of them raises a toast of its
 // own: the dashboard is told how many there were, once. The counts are the
 // owner's first playthrough, a Bronze Age account that had made a million
-// food while the first food rung asked for a billion.
+// food while the first food rung asked for a billion, with the food count
+// carried over to the town of eight: the food rungs are an ordinary town's
+// income over the age, which that town grew by 1.6, so the second rung is
+// 1.4 million now and the million that proved it then does not.
 func TestLoweredLaddersCatchUpInOneLine(t *testing.T) {
 	isolateAccountDir(t)
 	acct, err := CreateAccount("Ada")
@@ -1035,7 +1038,7 @@ func TestLoweredLaddersCatchUpInOneLine(t *testing.T) {
 	book := coreBook()
 	acct.mu.Lock()
 	acct.Counters = map[string]float64{
-		config.BadgeEvProduced + ".food":        1.07e6,
+		config.BadgeEvProduced + ".food":        1.712e6, // 1.07e6 then, times the 1.6 the town grew by
 		config.BadgeEvProduced + ".wood":        9e5,
 		config.BadgeEvBuiltLineage + ".housing": 32,
 		config.BadgeEvWonderRaised:              2,

@@ -39,7 +39,7 @@ build gathering_camp
 build wood_camp
 ```
 
-A gathering camp makes **+1.0 food/tick** and a wood camp about **+0.57 wood/tick** when fully staffed (3 workers each). An unstaffed building still runs at 20%, so a staffed camp makes **5x** what an empty one does. Workers come to staff them once you have housing (next step). The Stone Age asks for **five of each camp**, so keep adding them as wood comes in.
+A gathering camp makes **+1.0 food/tick** and a wood camp about **+0.57 wood/tick** when fully staffed (3 workers each). An unstaffed building still runs at 20%, so a staffed camp makes **5x** what an empty one does. Workers come to staff them once you have housing (next step). The Stone Age asks for **eight of each camp**, so keep adding them as wood comes in.
 
 ---
 
@@ -106,13 +106,13 @@ Build two early so there is room to hold what comes in. The Stone Age asks for *
 
 ## Step 6: Build story circles and a shrine
 
-Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed (2 workers). The Stone Age needs **5 story circles**, and knowledge is what you spend on research. A story circle costs 60 wood and takes 75 ticks (2m 30s) to build, so start them early.
+Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed (2 workers). The Stone Age needs **8 story circles**, and knowledge is what you spend on research. A story circle costs 60 wood and takes 75 ticks (2m 30s) to build, so start them early.
 
 ```
 build story_circle
 ```
 
-Also build **shrines** (60 wood for the first). The Stone Age asks for **5 shrines**. Shrines produce faith and lift morale a little. Faith matters later: it lowers the odds that a catastrophe strikes and pays to appease a harbinger (see [Faith](faith.md)).
+Also build **shrines** (60 wood for the first). The Stone Age asks for **8 shrines**. Shrines produce faith and lift morale a little. Faith matters later: it lowers the odds that a catastrophe strikes and pays to appease a harbinger (see [Faith](faith.md)).
 
 ```
 build shrine
@@ -125,7 +125,7 @@ build shrine
 The Economy panel is always on screen. Look at the rate column:
 - `food: +N/t` should be positive (each staffed gathering camp adds +1.0; aim for at least +2)
 - `wood: +N/t` should be positive (each staffed wood camp adds about +0.57)
-- `knowledge: +N/t` should be positive (five staffed story circles make +1.0)
+- `knowledge: +N/t` should be positive (eight staffed story circles make +1.6)
 
 If food is negative, build another gathering camp; workers come to staff it. If knowledge is low, build more story circles, or give knowledge a bigger share with `roster knowledge 40`.
 
@@ -146,8 +146,8 @@ It costs the 47 knowledge up front, takes 23 ticks (46 seconds) and gives +10% f
 ## Step 9: Build the Sacred Grove (required to advance)
 
 Every age has a wonder, and you can't advance until it stands. The Sacred Grove costs:
-- 1K wood
-- 500 food
+- 1.6K wood
+- 800 food
 
 Bank the resources, then build it (75 ticks, 2m 30s):
 
@@ -165,12 +165,12 @@ The grove also gives +0.02 knowledge/tick and +0.05 food/tick permanently.
 ## Step 10: Check the Next Age row and advance
 
 The Next Age row under the status bar always shows what you need for the **next age**. For the Stone Age:
-- Gathering Camps: 5
+- Gathering Camps: 8
 - Huts: 10
-- Shrines: 5
+- Shrines: 8
 - Stashes: 5
-- Story Circles: 5
-- Wood Camps: 5
+- Story Circles: 8
+- Wood Camps: 8
 - The Sacred Grove built
 
 No age asks you to hold an amount of a resource, and advancing spends none. See [Advancement Requirements](ages.md#advancement-requirements) for the rule. Keep building huts (new huts bring new workers) and keep knowledge flowing. When every item has its ✓, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
@@ -182,12 +182,12 @@ No age asks you to hold an amount of a resource, and advancing spends none. See 
 ## Checklist at the Stone Age transition
 
 Before you advance, you should have:
-- [ ] 5 gathering camps
-- [ ] 5 wood camps
+- [ ] 8 gathering camps
+- [ ] 8 wood camps
 - [ ] 10 huts
-- [ ] 5 shrines
+- [ ] 8 shrines
 - [ ] 5 stashes
-- [ ] 5 story circles
+- [ ] 8 story circles
 - [ ] The Sacred Grove built
 - [ ] Staffed gathering camps and wood camps
 - [ ] 10+ workers, none idle
@@ -213,7 +213,7 @@ When you reach the Stone Age:
 
 Your older buildings don't change on their own. Type `upgrade` to see which ones can become their Stone Age version (gathering camps into forager posts, for example); see [Building Upgrades](buildings.md#building-upgrades).
 
-Your first priority: start stone with **Stone Camps** (or `gather stone 25`), then build **Stone Pits**, **Woodcutter Camps** and **Longhouses** so workers have room to come and staff them. The Bronze Age asks for 5 each of Elders' Halls, Forager Posts, Stone Camps, Stone Pits, Storage Pits, War Camps and Woodcutter Camps, 15 Longhouses and the Great Monolith. See [How to Play](how-to-play.md) for the long game.
+Your first priority: start stone with **Stone Camps** (or `gather stone 25`), then build **Stone Pits**, **Woodcutter Camps** and **Longhouses** so workers have room to come and staff them. The Bronze Age asks for 8 each of Elders' Halls, Forager Posts, Stone Camps, Stone Pits, War Camps and Woodcutter Camps, 5 Storage Pits, 15 Longhouses and the Great Monolith. See [How to Play](how-to-play.md) for the long game.
 
 ---
 

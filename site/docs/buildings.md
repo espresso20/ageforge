@@ -426,7 +426,7 @@ Your 20 Gathering Camps stay Gathering Camps, producing at their full rate, unti
 
 Storage buildings form their own lineage and add storage for **every** resource at once. They need no workers: build them and your storage goes up.
 
-Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Their sizes follow one written rule: five copies of an age's storage building, added to the stores of the earlier ages, hold the dearest single price that age asks of a full town, with a quarter to spare. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
+Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Their sizes follow one written rule: five copies of an age's storage building, added to the stores of the earlier ages, hold the dearest single price that age asks of a full town (eight copies of every building that makes something), with a quarter to spare. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
 
 | Building | Age | Storage per copy (every resource) |
 |----------|-----|--------|
@@ -437,9 +437,9 @@ Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one
 | Classical Vault | Classical | +270K |
 | Strongroom | Medieval | +760K |
 | Renaissance Vault | Renaissance | +3.8M |
-| Colonial Warehouse | Colonial | +16M |
-| Industrial Depot | Industrial | +75M |
-| Victorian Vault | Victorian | +870M |
+| Colonial Warehouse | Colonial | +27M |
+| Industrial Depot | Industrial | +88M |
+| Victorian Vault | Victorian | +850M |
 | Electric Warehouse | Electric | +8.1B |
 | Atomic Vault | Atomic | +83B |
 | Modern Depot | Modern | +230B |
@@ -450,7 +450,7 @@ Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one
 | Orbital Depot | Space | +350T |
 | Stellar Vault | Interstellar | +5.8Q |
 | Galactic Vault | Galactic | +40Q |
-| Quantum Vault | Quantum | +1.5Qi |
+| Quantum Vault | Quantum | +2.3Qi |
 
 Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.
 
@@ -508,7 +508,7 @@ build <wonder_key>                              start construction once it is fu
 
 Full stores bank into the wonder on their own ([overflow](wonders.md#overflow)), and a wonder in your [build plan](plan.md) banks and starts by itself once what you hold covers the rest.
 
-You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 40 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/6 of the age's target time to build.
+You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 64 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/6 of the age's target time to build.
 
 Every wonder adds a little production of one or two resources, and many add more: a percentage to all production (the Crystal Palace, Hoover Dam and the last four wonders), to knowledge output or to expedition rewards, or housing or storage. All-production bonuses add into [the all-production pool](resources.md#the-all-production-cap), which applies in full up to +200% and a quarter of every point past it.
 

@@ -16,7 +16,7 @@ Faith is a resource that accumulates from Faith lineage buildings and faith-doma
 
 Your faith strength is your **devotion** times **the share of your faith you have kept**, divided by four and a half.
 
-- **Devotion** is what your own faith buildings have made this run, against what a moderate set of them would have made in your town. A moderate set is five fully staffed copies of every faith building your age has. A moderate town has a devotion of 1.0x.
+- **Devotion** is what your own faith buildings have made this run, against what a moderate set of them would have made in your town. A moderate set is eight fully staffed copies of every faith building your age has. A moderate town has a devotion of 1.0x.
 - **The share kept** is the faith you hold against the faith your income has made this run. It is 100% until you spend or lose faith.
 
 | Faith strength | Band | Good epoch event | Fated doom strikes | Last Passage |
@@ -39,7 +39,7 @@ Your faith strength is your **devotion** times **the share of your faith you hav
 | 4.5x or more | 100% | top |
 
 - **Devotion is counted over the whole run**, so it moves slowly. Each age's faith buildings make about twice the last age's, so what you build now soon outweighs what you built before, but faith buildings put up just before a roll change little.
-- **Staffing counts.** An empty faith building makes a fifth of what a full one does. Five full copies are worth twenty-five empty ones.
+- **Staffing counts.** An empty faith building makes a fifth of what a full one does. Eight full copies are worth forty empty ones.
 - **Faith from wonders, techs and events does not count.** Stonehenge and the Sistine Chapel each make more faith when they go up than a moderate set of faith buildings does, the Theology tech adds more, and every town gets them. That faith is yours to spend, but no building the game requires of you can raise your band.
 - **Nothing changes when you advance.** The measure follows your run, not your age, so the epoch roll at an advance reads the faith strength you were shown before it.
 - **Your town's bonuses cancel out.** The moderate set is measured in your town: with your morale, your production bonuses, your Era Mastery speed and your time away. Only the faith buildings and their crews make the difference.
@@ -52,30 +52,30 @@ A moderate set by age. The last two columns are what your faith buildings must a
 
 | Age | Faith buildings in a moderate set | It makes, per tick | Middle band from | Top band over |
 |-----|-----------------------------------|--------------------|------------------|---------------|
-| Primitive Age | 5 | 0.01 | 0.0112 | 0.0338 |
-| Stone Age | 10 | 0.03 | 0.0338 | 0.101 |
-| Bronze Age | 15 | 0.07 | 0.0788 | 0.236 |
-| Iron Age | 20 | 0.15 | 0.169 | 0.506 |
-| Classical Age | 25 | 0.31 | 0.349 | 1.05 |
-| Medieval Age | 30 | 0.63 | 0.709 | 2.13 |
-| Renaissance Age | 35 | 1.27 | 1.43 | 4.29 |
-| Colonial Age | 40 | 2.55 | 2.87 | 8.61 |
-| Industrial Age | 45 | 5.11 | 5.75 | 17.2 |
-| Victorian Age | 50 | 10.2 | 11.5 | 34.5 |
-| Electric Age | 55 | 20.5 | 23 | 69.1 |
-| Atomic Age | 60 | 41 | 46.1 | 138 |
-| Modern Age | 65 | 81.9 | 92.1 | 276 |
-| Information Age | 70 | 164 | 184 | 553 |
-| Digital Age | 75 | 328 | 369 | 1.11K |
-| Cyberpunk Age | 80 | 655 | 737 | 2.21K |
-| Fusion Age | 85 | 1.31K | 1.47K | 4.42K |
-| Space Age | 90 | 2.62K | 2.95K | 8.85K |
-| Interstellar Age | 95 | 5.24K | 5.9K | 17.7K |
-| Galactic Age | 100 | 10.5K | 11.8K | 35.4K |
-| Quantum Age | 105 | 21K | 23.6K | 70.8K |
-| Transcendent Age | 105 | 21K | 23.6K | 70.8K |
+| Primitive Age | 8 | 0.016 | 0.018 | 0.054 |
+| Stone Age | 16 | 0.048 | 0.054 | 0.162 |
+| Bronze Age | 24 | 0.112 | 0.126 | 0.378 |
+| Iron Age | 32 | 0.24 | 0.27 | 0.81 |
+| Classical Age | 40 | 0.496 | 0.558 | 1.67 |
+| Medieval Age | 48 | 1.01 | 1.13 | 3.4 |
+| Renaissance Age | 56 | 2.03 | 2.29 | 6.86 |
+| Colonial Age | 64 | 4.08 | 4.59 | 13.8 |
+| Industrial Age | 72 | 8.18 | 9.2 | 27.6 |
+| Victorian Age | 80 | 16.4 | 18.4 | 55.2 |
+| Electric Age | 88 | 32.8 | 36.8 | 111 |
+| Atomic Age | 96 | 65.5 | 73.7 | 221 |
+| Modern Age | 104 | 131 | 147 | 442 |
+| Information Age | 112 | 262 | 295 | 885 |
+| Digital Age | 120 | 524 | 590 | 1.77K |
+| Cyberpunk Age | 128 | 1.05K | 1.18K | 3.54K |
+| Fusion Age | 136 | 2.1K | 2.36K | 7.08K |
+| Space Age | 144 | 4.19K | 4.72K | 14.2K |
+| Interstellar Age | 152 | 8.39K | 9.44K | 28.3K |
+| Galactic Age | 160 | 16.8K | 18.9K | 56.6K |
+| Quantum Age | 168 | 33.6K | 37.7K | 113K |
+| Transcendent Age | 168 | 33.6K | 37.7K | 113K |
 
-Each faith building makes twice what the one before it does, so the newest one carries about half of a moderate set's faith: ten fully staffed copies of it make about what the whole set does. The per-building rates are under [How to Produce Faith](#how-to-produce-faith).
+Each faith building makes twice what the one before it does, so the newest one carries about half of a moderate set's faith: sixteen fully staffed copies of it make about what the whole set does. The per-building rates are under [How to Produce Faith](#how-to-produce-faith).
 
 **Why it isn't a share of storage.** It used to be: the bands read your faith as a percentage of your faith storage. But faith has no store of its own. It is kept in the general store, which is sized for building materials and grows about tenfold an age while faith income doubles. Against the least storage the age gates force on anyone, an economy three times as devoted as the moderate one, saving through a doom's longest warning, reached 20% in the Iron Age, 21% in the Classical Age and under 5% from the Medieval Age on, and by the Cosmic Era a whole age's faith was millionths of the store. So every roll read the bottom band, whatever you did, and those are the odds every game so far was played at. They still are for a typical town. What changed is that the middle and top rows can now be reached, by a town that works at it.
 
