@@ -649,11 +649,11 @@ func Milestones() []MilestoneDef {
 		// keeps a military_power bonus but adds broad production_all.
 		{
 			Name: "Fortress State", Key: "fortress_state",
-			Description: "Build 14 Castle Keeps.",
+			Description: "Build 13 Castle Keeps.",
 			Flavor:      "Twenty castle keeps. Your kingdom is now less a country and more a very pointed suggestion.",
 			Category:    "military", Hidden: true,
 			MinAge:       "medieval_age",
-			MinBuildings: map[string]int{"castle_keep": 14},
+			MinBuildings: map[string]int{"castle_keep": 13},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "military_power", Value: 0.10},
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
