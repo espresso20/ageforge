@@ -963,7 +963,9 @@ type HarbingerPrice struct {
 	FinalEra bool
 	// BraceCeiling is the most an ordinary doom's or the Last Passage's Brace
 	// level 1 may ask of each of its materials: ordinaryDoomBraceStoreShare of
-	// a moderate builder's store in the arrival age. Nil for the final era's
+	// a moderate builder's store in the arrival age, rounded down to two
+	// figures (the price a capped material is given). A price equal to it is
+	// on its ceiling. Nil for the final era's
 	// fated doom, which has no ceiling. TypicalStore is that store, for every
 	// thread.
 	BraceCeiling map[string]float64
@@ -995,7 +997,7 @@ func HarbingerPriceTableIn(set *rules.Set) []HarbingerPrice {
 			for _, k := range braceMaterials(set, ep.Key, a) {
 				row.TypicalStore[k] = set.TypicalStorage(k, a)
 				if !row.FinalEra {
-					row.BraceCeiling[k] = float64(set.TypicalStorage(k, a) * ordinaryDoomBraceStoreShare)
+					row.BraceCeiling[k] = floorSignificant(float64(set.TypicalStorage(k, a)*ordinaryDoomBraceStoreShare), 2)
 				}
 			}
 			rows = append(rows, row)
@@ -1010,7 +1012,7 @@ func HarbingerPriceTableIn(set *rules.Set) []HarbingerPrice {
 				FinalEra: true, TypicalStore: map[string]float64{}, BraceCeiling: map[string]float64{}}
 			for _, k := range braceMaterials(set, ep.Key, a) {
 				row.TypicalStore[k] = set.TypicalStorage(k, a)
-				row.BraceCeiling[k] = float64(set.TypicalStorage(k, a) * ordinaryDoomBraceStoreShare)
+				row.BraceCeiling[k] = floorSignificant(float64(set.TypicalStorage(k, a)*ordinaryDoomBraceStoreShare), 2)
 			}
 			rows = append(rows, row)
 		}

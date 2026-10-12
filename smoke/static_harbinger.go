@@ -190,8 +190,9 @@ const (
 )
 
 // braceAtCeiling is how close to its ceiling a price counts as sitting on
-// it: the ceiling is rounded down to two figures, which can take a tenth off.
-const braceAtCeiling = 0.9
+// it: exactly. The row's ceiling is the rounded-down price a capped material
+// is given (game.HarbingerPrice), so a price on it equals it.
+const braceAtCeiling = 1.0
 
 // BraceRuleProblem is one level-1 Brace price that breaks a pricing rule.
 type BraceRuleProblem struct {

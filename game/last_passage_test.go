@@ -435,9 +435,17 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 				t.Errorf("%s: Appease level 1 takes %.2f h of income, Brace level 1 %.2f h: Appease must stay the dearer", age, appeaseHours, braceHours)
 			}
 			// Every material on its ceiling?
+			// (the price row's own ceiling: the price a capped material is
+			// given, so a price on it equals it)
 			capped := true
+			var row HarbingerPrice
+			for _, r := range HarbingerPriceTable() {
+				if r.Epoch == ep.Key && r.Age == age && !r.LastPassage {
+					row = r
+				}
+			}
 			for res, c := range doomBraceCost(ep.Key, age, 1) {
-				if c < 0.9*ordinaryDoomBraceStoreShare*rules.Core().TypicalStorage(res, age) {
+				if limit, ok := row.BraceCeiling[res]; !ok || c < limit {
 					capped = false
 				}
 			}
@@ -507,15 +515,16 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // longer a trickle there and its Brace stops at the ceiling with gold and
 // iron: all three materials of the Iron Era are on it, where stone alone was
 // under it (59K, 82K and 110K a third of the warning made of it). The Iron
-// Age reads 0.50x with Brace at 0.24 of the warning, the Classical Age 0.70x
-// at 0.34, the Medieval Age 0.41x at 0.19; the Iron and Medieval Ages are
+// Age reads 0.50x with Brace at 0.24 of the warning, the Medieval Age 0.41x
+// at 0.19; the Iron and Medieval Ages are
 // under the bar. The Classical Age's stone is 870K, a third of the warning
-// rounded up, within a tenth of the 900K ceiling: the count of "every
-// material on its ceiling" takes it for capped, while its Brace takes a
-// third of the warning, which the on-the-ceiling check refuses (0.34).
+// rounded up and under its 900K ceiling: the age is not on it (a price counts
+// as on the ceiling only when it equals the price row's own BraceCeiling, the
+// rounded-down price a capped material is given; the test took a tenth of
+// room before, which counted this age), and its Brace takes 0.34 of the
+// warning, the ratio 0.70x.
 var doomChoiceOnTheCeiling = map[string]float64{
 	"iron_age":       0.50,
-	"classical_age":  0.70,
 	"medieval_age":   0.41,
 	"colonial_age":   0.60,
 	"industrial_age": 0.06,

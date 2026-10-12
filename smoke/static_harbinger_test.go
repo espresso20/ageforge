@@ -218,12 +218,15 @@ func TestBraceTakesEffort(t *testing.T) {
 	// the warning. The maker rule gave stone a maker in the Iron, Classical
 	// and Medieval Ages, so its Brace joins gold and iron on the ceiling there
 	// (all three of the Iron Era's materials, in all three ages), and the
-	// Electric Age's electricity and steel moved. The Modern Age left the
+	// Electric Age's electricity and steel moved. A price counts as on its
+	// ceiling only when it equals the row's ceiling (the rounded-down price a
+	// capped material is given), so the Classical Age, whose stone is a third
+	// of the warning and under it, is not. The Modern Age left the
 	// all-capped list when the Mainframe Hall gave it a maker of data: its
 	// data Brace is under the ceiling. The counts are read from the price
 	// table.
 	wantCapped := map[string]int{
-		"iron_age": 3, "classical_age": 3, "medieval_age": 3,
+		"iron_age": 3, "classical_age": 2, "medieval_age": 3,
 		"renaissance_age": 1, "colonial_age": 2, "industrial_age": 2,
 		"victorian_age": 1, "electric_age": 1, "atomic_age": 2,
 		"modern_age": 2, "information_age": 2, "digital_age": 2,
@@ -232,8 +235,8 @@ func TestBraceTakesEffort(t *testing.T) {
 	if !maps.Equal(capped, wantCapped) {
 		t.Errorf("materials on their ceiling by age: %v; want %v", capped, wantCapped)
 	}
-	if want := []string{"iron_age", "classical_age", "medieval_age", "colonial_age", "industrial_age"}; !slices.Equal(allCapped, want) {
-		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same five", allCapped, want)
+	if want := []string{"iron_age", "medieval_age", "colonial_age", "industrial_age"}; !slices.Equal(allCapped, want) {
+		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same four", allCapped, want)
 	}
 	// The final era's two threads have no ceiling, and a moderate builder's
 	// store holds them all the same. The Last Passage's takes over half of
