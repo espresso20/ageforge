@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -52,8 +53,10 @@ func TestArmyPanel_TrainingBeforeSoldiers(t *testing.T) {
 	// A garrison in the Stone Age: the panel shows the rate, and what the
 	// garrison does against a Stone Age raid.
 	engine.SetGarrisonForTest("stone_age", 1500)
-	txt = untag(militaryProvider(engine.GetState(), 0))
-	for _, want := range []string{"Training:  +0.0/tick", "(raids in the Stone Age)", "Your garrison would blunt about 22% of a raid."} {
+	state := engine.GetState()
+	txt = untag(militaryProvider(state, 0))
+	blunt := config.DefenseMitigation(state.Military.DefenseRating, config.AgeThreat(config.AgeByKey()["stone_age"].Order)) * 100
+	for _, want := range []string{"Training:  +0.0/tick", "(raids in the Stone Age)", fmt.Sprintf("Your garrison would blunt about %.0f%% of a raid.", blunt)} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("the Stone Age Army panel with a garrison is missing %q:\n%s", want, txt)
 		}

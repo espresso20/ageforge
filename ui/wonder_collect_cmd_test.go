@@ -4,12 +4,23 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
+// sacredGrovePrice is the Sacred Grove's price from the building table.
+func sacredGrovePrice(t *testing.T) map[string]float64 {
+	t.Helper()
+	d, ok := config.BuildingByKey()["sacred_grove"]
+	if !ok || d.BaseCost["food"] <= 0 || d.BaseCost["wood"] <= 0 {
+		t.Fatalf("the Sacred Grove has no food and wood price: %+v", d.BaseCost)
+	}
+	return d.BaseCost
+}
+
 // newWonderTestEngine is newCaseTestEngine with food set to food: in the
-// Primitive Age the Sacred Grove needs 500 food and 1,000 wood; in the Bronze
-// Age Stonehenge needs no food.
+// Primitive Age the Sacred Grove needs food and wood (see sacredGrovePrice);
+// in the Bronze Age Stonehenge needs no food.
 func newWonderTestEngine(t *testing.T, age string, food float64) *game.GameEngine {
 	t.Helper()
 	ge := newCaseTestEngine(t, age)
@@ -24,6 +35,7 @@ func newWonderTestEngine(t *testing.T, age string, food float64) *game.GameEngin
 func TestWonderBankCommand(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	const bronze = "bronze_age"
+	foodPrice := sacredGrovePrice(t)["food"]
 	forms := []string{"wonder bank food all", "wonder bank food 100", "wonder bank food max", "wonder bank food", "wonder collect food all"}
 	cases := []struct {
 		name  string
@@ -34,7 +46,7 @@ func TestWonderBankCommand(t *testing.T) {
 		err   string             // what a refusal must say
 	}{
 		{name: "needs food", food: 50000,
-			want: map[string]float64{"wonder bank food all": 500, "wonder bank food 100": 100, "wonder bank food max": 500, "wonder bank food": 500, "wonder collect food all": 500}},
+			want: map[string]float64{"wonder bank food all": foodPrice, "wonder bank food 100": 100, "wonder bank food max": foodPrice, "wonder bank food": foodPrice, "wonder collect food all": foodPrice}},
 		{name: "some food", food: 60,
 			want: map[string]float64{"wonder bank food all": 60, "wonder bank food max": 60, "wonder bank food": 60, "wonder collect food all": 60},
 			err:  "not enough food: need 100, have 60"},
@@ -100,19 +112,20 @@ func TestWonderBankCommand(t *testing.T) {
 func TestWonderBankAllResources(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 
+	price := sacredGrovePrice(t)
 	ge := newWonderTestEngine(t, "", 0)
 	res := HandleCommand("wonder bank all", ge)
 	if res.Type != "info" || res.Message != "Not banked: food (you have none)." {
 		t.Errorf("no food: %+v", res)
 	}
-	if got := ge.GetState().Buildings["sacred_grove"].WonderBank["wood"]; got != 1000 {
-		t.Errorf("wood banked = %v, want 1000", got)
+	if got := ge.GetState().Buildings["sacred_grove"].WonderBank["wood"]; got != price["wood"] {
+		t.Errorf("wood banked = %v, want %v", got, price["wood"])
 	}
 	if res := HandleCommand("wonder bank all", ge); res.Type != "error" ||
 		res.Message != "Nothing banked: food (you have none), wood (already has all it needs)." {
 		t.Errorf("again: %+v", res)
 	}
-	ge.Resources.LoadAmounts(map[string]float64{"food": 800})
+	ge.Resources.LoadAmounts(map[string]float64{"food": price["food"] + 300})
 	res = HandleCommand("wonder bank all max", ge)
 	if res.Type != "success" || res.Message != "" || !ge.GetState().Buildings["sacred_grove"].WonderBankFull {
 		t.Errorf("rest of the food: %+v", res)
