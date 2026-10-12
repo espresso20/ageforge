@@ -1,0 +1,122 @@
+package config
+
+import (
+	"math"
+	"testing"
+)
+
+// The market's exchange is going, so a resource must have a maker in the town
+// that needs it. These tests hold the tables to the rules that gave each
+// resource its first maker. Each figure below was worked out from the tables
+// as they stood before the change, and is written here so the rule can be
+// checked again.
+
+// TestFirstMakersKeepTheirPriceUnits: a first maker is paid for with what a
+// town already makes, and its price in the age's price units does not move.
+// The Server Farm (the first maker of data) lost its data part, and the Black
+// Market Hub (the first maker of crypto) lost its crypto part; what remained
+// was scaled by one factor each. Units are counted against the age's levels as
+// they now stand, which the change moved a little (data, crypto), so the
+// bound is one percent.
+func TestFirstMakersKeepTheirPriceUnits(t *testing.T) {
+	defs := BuildingByKey()
+	for _, c := range []struct {
+		key, gone string
+		was       float64 // price units before the change
+	}{
+		{"server_farm", "data", 4.7259},
+		{"black_market", "crypto", 5.1457},
+	} {
+		d := defs[c.key]
+		if _, has := d.BaseCost[c.gone]; has {
+			t.Errorf("%s is still priced in %s, the resource it is the first maker of", c.key, c.gone)
+		}
+		got := priceUnits(d.BaseCost, PriceLevels(d.RequiredAge))
+		if math.Abs(got/c.was-1) > 0.01 {
+			t.Errorf("%s costs %.4f price units of %s, want %.4f as before", c.key, got, d.RequiredAge, c.was)
+		}
+	}
+}
+
+// TestBlackMarketMakesCryptoAtParity: the lineage entry names crypto as the
+// Black Market Hub's output, so it makes crypto. Its output is the parity
+// figure of its age: take every other maker of the age of a resource the age
+// prices, value its output per tick in price units (output over the level of
+// what it makes), take the median, and turn that into crypto at crypto's own
+// level. The median of three makers (the Cyber Hub's data, the Augmentation
+// Foundry's and the Dark Energy Tap's electricity) is 8.54e-5 price units a
+// tick; crypto's level is 3.3e12, so 2.82e8 a tick.
+func TestBlackMarketMakesCryptoAtParity(t *testing.T) {
+	defs := BuildingByKey()
+	d := defs["black_market"]
+	if d.OutputResource != "crypto" {
+		t.Errorf("black_market output resource = %q, want crypto (its lineage entry names it)", d.OutputResource)
+	}
+	var made []float64
+	got := 0.0
+	for _, e := range d.Effects {
+		if e.Type != "production" {
+			continue
+		}
+		if e.Target != "crypto" {
+			t.Errorf("black_market makes %s, want only crypto", e.Target)
+		}
+		got += e.Value
+	}
+	levels := PriceLevels(d.RequiredAge)
+	if levels["crypto"] <= 0 {
+		t.Fatalf("%s has no price level for crypto", d.RequiredAge)
+	}
+	for _, o := range BaseBuildings() {
+		if o.RequiredAge != d.RequiredAge || o.Category == "wonder" || o.Key == d.Key {
+			continue
+		}
+		for _, e := range o.Effects {
+			if e.Type == "production" && e.Value > 0 && levels[e.Target] > 0 {
+				made = append(made, e.Value/levels[e.Target])
+			}
+		}
+	}
+	if len(made) == 0 {
+		t.Fatal("no other maker of a priced resource in the age")
+	}
+	want := median(made) * levels["crypto"]
+	if math.Abs(got/want-1) > 0.005 { // the literal is written to three figures
+		t.Errorf("black_market makes %.4g crypto a tick, parity with %d other makers of %s gives %.4g", got, len(made), d.RequiredAge, want)
+	}
+}
+
+// TestWonderPartsFitTheirAge: a flow part of a wonder's price (food, faith,
+// culture) is covered by the age's income within its target, and the Space
+// Program asks nothing its age does not price. It asked 6e11 knowledge, which
+// the Modern Age does not price and no town made from buildings; the Sistine
+// Chapel asked 12.8M culture where the Renaissance Age's income makes 952K in
+// its target, and now asks 950K, the largest figure of two significant digits
+// that income covers.
+func TestWonderPartsFitTheirAge(t *testing.T) {
+	for _, d := range BaseBuildings() {
+		if d.Category != "wonder" {
+			continue
+		}
+		for res, c := range d.BaseCost {
+			if !IsFlowResource(res) || c <= 0 {
+				continue
+			}
+			if made := FlowIncome(res, d.RequiredAge) * AgeTargetTicks(d.RequiredAge); c > made {
+				t.Errorf("%s asks %.4g %s, more than the %.4g the age's income makes in its target", d.Key, c, res, made)
+			}
+		}
+	}
+	space := BuildingByKey()["space_program"]
+	levels := PriceLevels(space.RequiredAge)
+	for res := range space.BaseCost {
+		if levels[res] <= 0 {
+			t.Errorf("space_program asks %s, which %s does not price", res, space.RequiredAge)
+		}
+	}
+	sistine := BuildingByKey()["sistine_chapel"]
+	made := FlowIncome("culture", sistine.RequiredAge) * AgeTargetTicks(sistine.RequiredAge)
+	if got := sistine.BaseCost["culture"]; got != 950000 || made < 950000 || made >= 960000 {
+		t.Errorf("sistine_chapel culture = %.4g with %.4g made in the target: want 950000, the largest two-figure number the income covers", got, made)
+	}
+}
