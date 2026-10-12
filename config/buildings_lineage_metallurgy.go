@@ -234,9 +234,10 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 14 — space_age  output=titanium (rate set by the Payback Rule)
 	// note: was dark_matter at 4/tick, a resource that only unlocks in the
 	// Interstellar Age. Titanium unlocks in the Space Age and nearly every
-	// Space building costs it, yet nothing there made it: the market was the
-	// only way in. The refinery doesn't cost titanium either (its 88T went to
-	// plasma), so it can start the supply, like the Bronze Age smithy and iron.
+	// Space building costs it, yet nothing there made it. The refinery doesn't
+	// cost titanium either (its 88T went to plasma), so it can start the
+	// supply, like the Bronze Age smithy and iron. With no market to buy from,
+	// it makes the age's steel as well.
 	b = append(b, BuildingDef{
 		Name: "Orbital Refinery", Key: "orbital_refinery", Category: "production",
 		BaseCost:  map[string]float64{"plasma": 4.7e14, "electricity": 4.7e14},

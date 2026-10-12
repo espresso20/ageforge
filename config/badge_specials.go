@@ -682,11 +682,11 @@ func BadgesHeldOut() []BadgeHeldOutDef {
 		{
 			Badge: BadgeDef{
 				Key: "special.autarky", Family: "special", Subject: "modern_age",
-				Name: "Autarky", Desc: "Reach the Modern Age without the market, a trade route or a faction deal.",
+				Name: "Autarky", Desc: "Reach the Modern Age without a trade route or a faction deal.",
 				Tier: BadgePlatinum, Rarity: BadgeEpic, Scope: BadgeMoment, Event: BadgeEvAgeReached,
 				Emblem: "trade", Proof: BotProof("autarky"),
 			},
-			Why: "Needs an autarky bot: the gate check proves every gate has a source, and the market is one of the sources it accepts, so the tables do not show the run can be made without it.",
+			Why: "Needs an autarky bot: the gate check proves every gate has a source, so the tables do not show the run can be made without a trade route or a faction deal.",
 		},
 		{
 			Badge: BadgeDef{

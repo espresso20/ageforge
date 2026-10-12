@@ -2002,8 +2002,8 @@ func (ge *GameEngine) recalculateRates() {
 	// the price. GetCost/BuildBatchCost/UpgradeCost all read it, so the
 	// charged cost and the displayed cost are computed from the SAME factor.
 	ge.Buildings.SetCostMultiplier(ge.buildCostFactor(r.AddTotal("build_cost")))
-	// The mechanic numbers the managers read (the market's fee, a route's
-	// time, a gift's price) follow the techs researched.
+	// The mechanic numbers the managers read (a route's time, a gift's
+	// price) follow the techs researched.
 	ge.pushMechanics()
 
 	// Apply production_all bonus (multiplier on all positive rates).
