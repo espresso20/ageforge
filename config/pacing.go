@@ -27,7 +27,8 @@ import (
 //     resources of the current age at the ratio of their price levels, less
 //     ExchangeFee.
 //   - The reference town (Incomes, TypicalStorages): what five staffed copies
-//     of everything make and hold.
+//     of every producer make (FlowCopies), and what the storage rule's five
+//     copies of every store hold (StorageRuleCopies).
 //
 // A construction resource of an age is one that appears in the first-copy
 // price of at least one of that age's buildings (wonders aside), except the
@@ -496,9 +497,9 @@ func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bo
 
 // TypicalStorages is what a moderate builder's store holds of each resource
 // in each age, as age -> resource -> storage: the resource's base storage
-// and FlowCopies copies of every storage building from the Primitive Age up
-// to and including the age (the ones that store everything, and any that
-// store that resource alone). Techs' storage bonus is left out: it is what
+// and StorageRuleCopies copies of every storage building from the Primitive
+// Age up to and including the age (the ones that store everything, and any
+// that store that resource alone): the reference store of the storage rule. Techs' storage bonus is left out: it is what
 // a town holds for building its vaults, the count the moderate economy
 // keeps of everything. Pure.
 func TypicalStorages(defs []BuildingDef, resources []ResourceDef, order []string) map[string]map[string]float64 {
@@ -519,9 +520,9 @@ func TypicalStorages(defs []BuildingDef, resources []ResourceDef, order []string
 					continue
 				}
 				if e.Target == "all" {
-					all += float64(FlowCopies * e.Value)
+					all += float64(StorageRuleCopies * e.Value)
 				} else {
-					own[e.Target] += float64(FlowCopies * e.Value)
+					own[e.Target] += float64(StorageRuleCopies * e.Value)
 				}
 			}
 		}

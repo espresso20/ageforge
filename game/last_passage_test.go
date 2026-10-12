@@ -489,18 +489,20 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // Brace level 1. Brace is made in less than its third of the warning
 // there, so the ratio falls, and may fall under doomChoiceMinRatio.
 //
-// Both are ages of the Steel Era, whose Brace is gold and steel. Since the
-// storage wall a store is sized by what the age's buildings cost, not by
-// what the age makes, and the Steel Era makes far more than it is asked
-// for. The Colonial Age's Brace is 62M of each, 0.30 of the warning: just
-// under the third, and 0.62x, still over the bar. The Industrial Age's is
-// 280M of each, 0.04 of the warning (ten minutes of income): 0.08x, under
-// the bar. Before the wall the list was the Industrial Age (0.33x) and the
-// Modern Age (0.39x); the Modern Age's Brace takes its third of the warning
-// again.
+// Only the Industrial Age is one, of the Steel Era, whose Brace is gold and
+// steel. Since the storage wall a store is sized by what the age's buildings
+// cost, not by what the age makes, and the Steel Era makes far more than it
+// is asked for. The Industrial Age's Brace is 350M of each, 0.05 of the
+// warning (twelve minutes of income): 0.10x, under the bar. The Colonial Age
+// was listed too, at 0.62x on 62M of each; the town of eight asks its store
+// to be larger (a Colonial Warehouse holds 27M, from 16M), the gold stays on
+// the ceiling at 95M and the steel does not, at 69M, which is 0.33 of the
+// warning, so the Colonial Age is held to the third and to the bar like any
+// other age (0.69x). Before the wall the list was the Industrial Age (0.33x)
+// and the Modern Age (0.39x); the Modern Age's Brace takes its third of the
+// warning again.
 var doomChoiceOnTheCeiling = map[string]float64{
-	"colonial_age":   0.62,
-	"industrial_age": 0.08,
+	"industrial_age": 0.10,
 }
 
 // incomeHoursOfMade is incomeHours over the resources of cost the age makes
