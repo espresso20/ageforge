@@ -255,7 +255,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 2.5e11, "electricity": 9.9e10, "data": 1.6e09},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 5.3e11}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 6.8e11}},
 			BuildTicks:  900,
 			RequiredAge: "information_age",
 			Description: "Digital-physical storage hybrid.",
@@ -267,7 +267,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 1.2e12, "data": 2.5e10, "electricity": 3.7e11},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 4.5e12}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 4.4e12}},
 			BuildTicks:  1000,
 			RequiredAge: "digital_age",
 			Description: "Quantum-encrypted storage.",
@@ -279,7 +279,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 7.4e12, "data": 1.5e11, "crypto": 2.5e10},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.7e13}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2.8e13}},
 			BuildTicks:  1400,
 			RequiredAge: "cyberpunk_age",
 			Description: "Encrypted digital vault.",
@@ -291,7 +291,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 2.5e13, "plasma": 1.2e12, "electricity": 1.2e13},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 6e13}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 4.9e13}},
 			BuildTicks:  1950,
 			RequiredAge: "fusion_age",
 			Description: "Plasma-shielded storage.",
@@ -459,7 +459,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Renaissance Age — normal costs: 400k-600k
 		{
 			Name: "Sistine Chapel", Key: "sistine_chapel", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 3.84e07, "gold": 3.84e07, "faith": 32000, "culture": 12800000},
+			BaseCost:  map[string]float64{"stone": 3.84e07, "gold": 3.84e07, "faith": 32000, "culture": 950000},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 3.5},
@@ -549,7 +549,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Modern Age — normal costs: 15B-40B
 		{
 			Name: "Space Program", Key: "space_program", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 1.232e12, "gold": 1.104e12, "electricity": 6.88e11, "knowledge": 6e11},
+			BaseCost:  map[string]float64{"steel": 1.232e12, "gold": 1.104e12, "electricity": 6.88e11},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 6},

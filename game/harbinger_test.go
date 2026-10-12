@@ -531,9 +531,9 @@ func TestHarbingerCostExamples(t *testing.T) {
 		{"electric_era", "electric_age", map[string]float64{"electricity": 27000000000, "oil": 7300000000, "steel": 27000000000}},
 		{"electric_era", "atomic_age", map[string]float64{"electricity": 270000000000, "oil": 9800000000, "steel": 270000000000}},
 		{"digital_era", "modern_age", map[string]float64{"electricity": 960000000000, "gold": 960000000000}},
-		{"digital_era", "information_age", map[string]float64{"data": 940000000000, "electricity": 2500000000000, "gold": 2500000000000}},
+		{"digital_era", "information_age", map[string]float64{"data": 940000000000, "electricity": 3000000000000, "gold": 3000000000000}},
 		{"digital_era", "digital_age", map[string]float64{"data": 3800000000000, "electricity": 16000000000000, "gold": 16000000000000}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 13000000000000, "electricity": 67000000000000}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 13000000000000, "electricity": 100000000000000}},
 		{"neon_era", "fusion_age", map[string]float64{"data": 16000000000000, "electricity": 240000000000000}},
 		{"neon_era", "space_age", map[string]float64{"data": 18000000000000, "electricity": 1.2e+15}},
 	}

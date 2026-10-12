@@ -258,6 +258,7 @@ func TestBraceTakesEffort(t *testing.T) {
 		{"an Electric Era doom: ", "electric_era", electric[1], false, "oil", "steel"},
 	} {
 		var row PriceRow
+		builtBy := built
 		alter := func(change func(r *PriceRow)) []BraceRuleProblem {
 			broken := make([]PriceRow, len(rows))
 			for i, r := range rows {
@@ -271,7 +272,7 @@ func TestBraceTakesEffort(t *testing.T) {
 				}
 				broken[i] = r
 			}
-			return braceRuleProblems(broken, income, built)
+			return braceRuleProblems(broken, income, builtBy)
 		}
 		want := func(what string, got []BraceRuleProblem, rule string, resources ...string) {
 			t.Helper()
@@ -318,13 +319,22 @@ func TestBraceTakesEffort(t *testing.T) {
 			r.BraceL1[tg.a] = income(tg.a, r.Age) * r.WarningTicks * 1.01
 		}), BraceRuleWarning, tg.a)
 		// A resource no building makes by the arrival age: one nothing makes
-		// at all, and crypto, which only a wonder trickles out.
+		// at all, and one only a wonder trickles out. Crypto was that until the
+		// Black Market Hub made it, so the second case takes the hub's output
+		// away: with only the wonder making it, the check must flag it.
 		want("a resource nothing makes", alter(func(r *PriceRow) {
 			r.BraceL1["antimatter_fuel_nobody_makes"] = 1
 		}), BraceRuleMaterial, "antimatter_fuel_nobody_makes")
+		builtBy = func(res, age string) float64 {
+			if res == "crypto" {
+				return 0
+			}
+			return built(res, age)
+		}
 		want("a resource only a wonder makes", alter(func(r *PriceRow) {
 			r.BraceL1["crypto"] = 1
 		}), BraceRuleMaterial, "crypto")
+		builtBy = built
 	}
 	// The ceiling, on an ordinary doom's row as it stands (the Industrial
 	// Age's, where every material sits on it).
