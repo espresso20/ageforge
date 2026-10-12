@@ -19,8 +19,9 @@ import (
 //     reference town pays in the age: the last copy of each building other
 //     than storage, at its reference count. A wonder is not counted: it is
 //     paid into its bank and may be larger than a store.
-//  2. StorageRuleCopies copies of the age's storage building, on top of what the stores of
-//     earlier ages hold, must hold the dearest ask and StorageRuleRoom more.
+//  2. StorageRuleCopies copies of the age's storage building, on top of what
+//     the stores of earlier ages hold, must hold the dearest ask and
+//     StorageRuleRoom more.
 //  3. Each copy of the storage building up to the last must fit under the
 //     store the copies before it give, with StorageRuleMargin to spare.
 //  4. A town must arrive in the next age able to pay the first copy of that
