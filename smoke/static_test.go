@@ -348,17 +348,27 @@ func TestGateCovenantCatchesAnUnpayableFirstCopy(t *testing.T) {
 	}
 }
 
+// vaultBetween is the multiple of today's Victorian Vault price that sits
+// between the gate's biggest single price without the depots (the eighth
+// Harbor Authority) and the store the depots give: the first copy at that
+// price, with the ladder's margin, is over the one and under the other.
+const vaultBetween = 2.5
+
 // TestGateCovenantCatchesBrokenLadder: the storage ladder. Entering the
 // Victorian Age, the only storage a player can build is the Victorian Vault
 // (210M steel for the first copy), so the gate must make them hold more than
-// that first. The gate asks for five Industrial Depots, which hold 479M with
+// that first. The gate asks for five Industrial Depots, which hold 599M with
 // the stores before them, and so the vault fits whatever else the gate asks.
 // Without those copies the gate's biggest single price is all it forces. Since
-// the gate rule that is the fifth Harbor Authority (315M steel), which already
-// outgrows today's vault; so a vault at twice today's price is the case that
-// sits between the two (420M, over 315M and under the depots' 479M), and a
-// vault at three times today's outgrows even the depots. Without the depots,
-// 10 tenements change nothing: the gate's biggest price is not the tenements'.
+// the gate asks for eight of everything that makes something, that is the
+// eighth Harbor Authority (479M steel), which already outgrows today's vault;
+// so a vault at two and a half times today's price is the case that sits
+// between the two (525M, with the ladder's margin 551M: over 479M and under
+// the depots' 599M), and a vault at three times today's outgrows even the
+// depots. Without the depots, 10 tenements change nothing: the gate's biggest
+// price is not the tenements'. (The case between was twice today's price while
+// the gate asked for five Harbor Authorities, 315M: any multiple from 2.2 to
+// 2.7 sits between these two.)
 func TestGateCovenantCatchesBrokenLadder(t *testing.T) {
 	ladderRows := func(problems []GateProblem) []GateProblem {
 		var out []GateProblem
@@ -387,13 +397,13 @@ func TestGateCovenantCatchesBrokenLadder(t *testing.T) {
 		t.Errorf("10 tenements with the five depots asked for: want no problems, got %+v", problems)
 	}
 
-	// With the depots, a vault at twice today's price fits the store they give.
-	problems, _ = staticGates(config.Ages(), vaultTimes(2))
+	// With the depots, a vault between the two fits the store they give.
+	problems, _ = staticGates(config.Ages(), vaultTimes(vaultBetween))
 	if rows := ladderRows(problems); len(rows) != 0 {
-		t.Errorf("a doubled vault with the depots: want no ladder row, got %+v", rows)
+		t.Errorf("a vault at %gx with the depots: want no ladder row, got %+v", vaultBetween, rows)
 	}
 
-	// Without them the gate forces only its biggest price, the fifth Harbor
+	// Without them the gate forces only its biggest price, the eighth Harbor
 	// Authority, and today's vault is under it (the gate rule did that) ...
 	noDepots := func(b map[string]int) {
 		tenements10(b)
@@ -401,13 +411,13 @@ func TestGateCovenantCatchesBrokenLadder(t *testing.T) {
 	}
 	problems, _ = staticGates(editedGate("victorian_age", noDepots), config.BuildingByKey())
 	if rows := ladderRows(problems); len(rows) != 0 {
-		t.Errorf("10 tenements and no depots: today's vault fits under the fifth Harbor Authority, want no ladder row, got %+v", rows)
+		t.Errorf("10 tenements and no depots: today's vault fits under the eighth Harbor Authority, want no ladder row, got %+v", rows)
 	}
-	// ... and a vault at twice today's price is over it.
-	problems, _ = staticGates(editedGate("victorian_age", noDepots), vaultTimes(2))
+	// ... and a vault between the two is over it.
+	problems, _ = staticGates(editedGate("victorian_age", noDepots), vaultTimes(vaultBetween))
 	rows := ladderRows(problems)
-	if len(rows) != 1 || rows[0].Key != "victorian_vault" || rows[0].From != "industrial_age" || rows[0].Resource != "steel" || !strings.Contains(rows[0].ForcedBy, "harbor_authority #5") {
-		t.Errorf("10 tenements, no depots and a doubled vault: want one ladder row for the vault's steel against the fifth Harbor Authority, got %+v", rows)
+	if len(rows) != 1 || rows[0].Key != "victorian_vault" || rows[0].From != "industrial_age" || rows[0].Resource != "steel" || !strings.Contains(rows[0].ForcedBy, "harbor_authority #8") {
+		t.Errorf("10 tenements, no depots and a vault at %gx: want one ladder row for the vault's steel against the eighth Harbor Authority, got %+v", vaultBetween, rows)
 	}
 
 	// A vault at three times today's price outgrows the store the five depots give.
