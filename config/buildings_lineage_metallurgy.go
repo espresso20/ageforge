@@ -143,7 +143,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// Titanium is a tier-5 resource; starting rate 0.50 matches the iron/steel pivot pattern.
 	b = append(b, BuildingDef{
 		Name: "Titanium Smelter", Key: "titanium_smelter", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.4e11, "electricity": 5.5e10, "data": 5.1e09},
+		BaseCost:    map[string]float64{"steel": 2.05e11, "electricity": 8.06e10},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "titanium", Value: 0.5}},
 		BuildTicks:  9360,

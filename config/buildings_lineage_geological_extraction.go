@@ -180,7 +180,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 12 — modern_age  rate=327.68  output=titanium_ore
 	b = append(b, BuildingDef{
 		Name: "Titanium Mine", Key: "titanium_mine", Category: "production",
-		BaseCost:    map[string]float64{"steel": 8.4e10, "electricity": 3e10, "data": 2.4e09},
+		BaseCost:    map[string]float64{"steel": 1.16e11, "electricity": 4.15e10},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 327.68}},
 		BuildTicks:  3600,

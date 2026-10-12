@@ -146,7 +146,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 8 — modern_age  rate=120  cap=+250000
 	b = append(b, BuildingDef{
 		Name: "TV Studio", Key: "tv_studio", Category: "production",
-		BaseCost:  map[string]float64{"steel": 1e11, "electricity": 3.9e10, "data": 3.6e09},
+		BaseCost:  map[string]float64{"steel": 1.46e11, "electricity": 5.7e10},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 120},

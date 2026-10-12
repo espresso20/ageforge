@@ -180,7 +180,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 12 — modern_age  soldiers=40960
 	b = append(b, BuildingDef{
 		Name: "Special Ops HQ", Key: "special_ops_hq", Category: "military",
-		BaseCost:    map[string]float64{"steel": 1.5e11, "electricity": 5.1e10, "data": 4.2e09},
+		BaseCost:    map[string]float64{"steel": 2.08e11, "electricity": 7.06e10},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "storage", Target: "soldiers", Value: 40960}, {Type: "production", Target: "soldiers", Value: 819.2}},
 		BuildTicks:  3600,

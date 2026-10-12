@@ -175,7 +175,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 12 — modern_age  rate=819.20  output=oil
 	b = append(b, BuildingDef{
 		Name: "Oil Platform", Key: "oil_platform", Category: "production",
-		BaseCost:    map[string]float64{"steel": 8.4e10, "electricity": 3e10, "data": 2.4e09},
+		BaseCost:    map[string]float64{"steel": 1.16e11, "electricity": 4.15e10},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "oil", Value: 655000}},
 		BuildTicks:  3600,
@@ -301,7 +301,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// =========================================================================
 	b = append(b, BuildingDef{
 		Name: "Nano Foundry", Key: "nano_foundry", Category: "production",
-		BaseCost:     map[string]float64{"steel": 1.7e11, "electricity": 6.8e10, "data": 8.5e09},
+		BaseCost:     map[string]float64{"steel": 2.78e11, "electricity": 1.11e11},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "nanobots", Value: 80}},
 		BuildTicks:   3600,

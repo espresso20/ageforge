@@ -149,7 +149,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 10 — modern_age  rate=51.20
 	b = append(b, BuildingDef{
 		Name: "Investment Firm", Key: "investment_firm", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.9e11, "electricity": 7e10, "data": 7e09},
+		BaseCost:    map[string]float64{"steel": 2.82e11, "electricity": 1.04e11},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6160000}},
 		BuildTicks:  3600,

@@ -243,7 +243,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 8.7e10, "gold": 6.2e10, "electricity": 2e10},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2.3e11}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 3.8e11}},
 			BuildTicks:  800,
 			RequiredAge: "modern_age",
 			Description: "Automated logistics center.",
@@ -255,7 +255,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 2.5e11, "electricity": 9.9e10, "data": 1.6e09},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 6.8e11}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 5.3e11}},
 			BuildTicks:  900,
 			RequiredAge: "information_age",
 			Description: "Digital-physical storage hybrid.",

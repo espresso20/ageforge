@@ -172,7 +172,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 12 — modern_age  rate=204.8
 	b = append(b, BuildingDef{
 		Name: "Think Tank", Key: "think_tank", Category: "research",
-		BaseCost:    map[string]float64{"steel": 9e10, "electricity": 3e10, "data": 3e09},
+		BaseCost:    map[string]float64{"steel": 1.31e11, "electricity": 4.38e10},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 204.8}},
 		BuildTicks:  3600,

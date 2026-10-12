@@ -175,7 +175,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 12 — modern_age  rate=2048.00
 	b = append(b, BuildingDef{
 		Name: "Agritech Campus", Key: "agri_complex", Category: "production",
-		BaseCost:    map[string]float64{"steel": 9e10, "electricity": 3.6e10, "data": 3e09},
+		BaseCost:    map[string]float64{"steel": 1.28e11, "electricity": 5.12e10},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 2048}},
 		BuildTicks:  3600,
