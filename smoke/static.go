@@ -31,9 +31,9 @@ import (
 //     price, in the wonder's or in the price of the wonder's keystone tech
 //     (knowledge), can be had in that age from a cold start (see
 //     coldStart): by a player who skipped every building no gate required,
-//     through that age's own buildings (bought with what is reachable), hand
-//     gathering, techs whose flat output alone covers the whole amount within
-//     GateTrickleHours. Older ages' producers only pay for first copies;
+//     through that age's own buildings (bought with what is reachable), the
+//     buildings the earlier gates required, hand gathering, techs whose flat
+//     output alone covers the whole amount within GateTrickleHours;
 //   - a town arrives in the next age with empty stores and the buildings the
 //     gates so far asked for, so the first copy of every building of that age
 //     a run can build, and its first tech, must be payable from that cold
@@ -195,13 +195,14 @@ func StaticGates() ([]GateProblem, []GateSlack) {
 // tech: the age must keep another way to make what it makes, or its tech
 // must be on the spine in time.
 //
-// Carried producers are sized to older prices, so, as in the old rule, they
-// only bootstrap A's buildings (pay for a first copy);
-// a gate's total must come from A itself: A's own producers (bought with
-// what is reachable), hand gathering (through the Medieval Age), or techs
-// whose flat output covers the amount within GateTrickleHours. And the first copy of
-// each building of A, and the first tech, must be payable within the bound the
-// covenant puts on a flow resource (firstCopyProblems).
+// A resource is a way in when A's own producers (bought with what is
+// reachable) make it, when a building an earlier gate required makes it,
+// when it is hand gathered (through the Medieval Age), or when techs whose
+// flat output covers the amount within GateTrickleHours do. How thin a carried
+// supply is against a price is not judged for a resource that is not a flow
+// resource: the flow bound is the covenant's only test of supply against a
+// price. And the first copy of each building of A, and the first tech, must be
+// payable within that bound (firstCopyProblems).
 type coldStart struct {
 	age      string
 	unlocked map[string]bool
@@ -366,10 +367,13 @@ func (cs *coldStart) covers(res string, amount float64) bool {
 	return cs.trickle[res]*GateTrickleHours*3600/config.TickSeconds >= amount
 }
 
-// sources reports whether the age supplies the whole amount of res a gate
-// asks for.
+// sources reports whether a town has a way to make res, for the amount a gate
+// asks for: a building of the age that can be paid for makes it, a building an
+// earlier gate required (and so every town carries) makes it, or techs cover
+// it. With the market gone this is the only way in, so the carried makers
+// count here as they do for a first copy (affords).
 func (cs *coldStart) sources(res string, amount float64) bool {
-	return cs.unlocked[res] && (cs.reach[res] || cs.covers(res, amount))
+	return cs.unlocked[res] && (cs.reach[res] || cs.boot[res] || cs.covers(res, amount))
 }
 
 // solve grows reach to a fixed point: buy every building of the age whose
