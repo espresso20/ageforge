@@ -105,6 +105,8 @@ These count across all your runs. A dot separates the rungs.
 
 One more ladder of three rungs is secret.
 
+The ladder that counted market trades (Haggler, Day Trader and Market Maker) is retired with the market's swap. An account that had earned its rungs loads as before. The rungs no longer show and no longer score.
+
 The first rung of a ladder is one a first run earns early: by the Bronze Age, or by the second age after the thing it counts first appears. Many first rungs ask for one of something. The top rung of a ladder that counts play is set so that about 25 full runs reach it, and no ladder asks for more. Returns counts the times you came back to a game, so it climbs with the days, not the runs.
 
 A ladder can be lowered between versions of the game. An account that had already passed a rung is given it the next time it is loaded, and the log says how many badges that was in one line.
