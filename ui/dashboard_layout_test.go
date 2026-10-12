@@ -498,7 +498,7 @@ func TestNextAgeRowKeepsGoalsWhole(t *testing.T) {
 	if all := untag(strings.Join(ageProgressLines(st, 140, 2), "\n")); !strings.Contains(all, "✓ "+game.BuildingName("scriptorium")+" 5/5") || !strings.Contains(all, "✗ Wonder: Stonehenge") {
 		t.Errorf("a wide strip lists every requirement:\n%s", all)
 	}
-	if small := untag(strings.Join(ageProgressLines(st, 78, 2), "\n")); !strings.Contains(small, "✓ 1 met") && !strings.Contains(small, "more") {
+	if small := untag(strings.Join(ageProgressLines(st, 60, 2), "\n")); !strings.Contains(small, "✓ 1 met") && !strings.Contains(small, "more") {
 		t.Errorf("a narrow strip counts what it leaves out:\n%s", small)
 	}
 	if done := untag(ageProgressLines(game.GameState{}, 80, 2)[0]); !strings.Contains(done, "final age") {
@@ -532,6 +532,20 @@ func TestNextAgeRowKeepsGoalsWhole(t *testing.T) {
 				lo = 30 // the longest gates: every width from a cramped one up
 			}
 			checkNextAgeRow(t, gate, lo, 160)
+			// The wonder and its keystone lead the strip, so no list of
+			// buildings, however long, pushes them out of sight.
+			for w := 80; w <= 160; w++ {
+				strip := untag(strings.Join(ageProgressLines(gate, w, 2), "\n"))
+				if !strings.Contains(strip, "✗ Wonder: "+game.BuildingName(wonder)) {
+					t.Errorf("%s at width %d, %d built: the wonder is not in the strip:\n%s", next.Key, w, built, strip)
+				}
+				if tech != "" && !strings.Contains(strip, "✗ Keystone: "+game.TechName(tech)) {
+					t.Errorf("%s at width %d, %d built: the keystone is not in the strip:\n%s", next.Key, w, built, strip)
+				}
+				if first := strings.Index(strip, "Wonder: "); first > strings.Index(strip, "/") && strings.Contains(strip, "/") {
+					t.Errorf("%s at width %d: a building is listed before the wonder:\n%s", next.Key, w, strip)
+				}
+			}
 			if len(next.BuildingReqs) >= 14 {
 				longest = next.Key
 				for _, w := range []int{80, 100} {
@@ -570,6 +584,9 @@ func TestNextAgeStripOnTheLongestGate(t *testing.T) {
 		cells := drawnDashboard(t, d, pages, w, h)
 		rows := checkFitted(t, fmt.Sprintf("%s at %dx%d, Next Age", age, w, h), d.ageTV, cells, w)
 		strip := strings.Join(rows, "\n")
+		if wonder := game.BuildingName(eng.GetState().CurrentAgeWonderKey); !strings.Contains(strip, "✗ Wonder: "+wonder) {
+			t.Errorf("%s at %dx%d: the strip does not show the wonder %q:\n%s", age, w, h, wonder, strip)
+		}
 		if !strings.Contains(strip, "Next Age:") || !countedNote.MatchString(strip) {
 			t.Errorf("%s at %dx%d: the strip does not say what it leaves out:\n%s", age, w, h, strip)
 		}

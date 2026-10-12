@@ -68,7 +68,7 @@ This age's wonder shows up only once you start it: bank some of its cost or queu
 
 Completing a wonder is **required** to advance to the next age. Each age unlocks one wonder, and `advance` is refused until that wonder is built.
 
-The wonder requirement appears in the **age progress bar** at the top of the screen alongside your other advancement requirements. If the wonder is still missing, you will see a red notice: `✗ Wonder: <name>`, followed by `✗ Keystone: <tech>` while its keystone tech is still to research.
+The wonder requirement leads the **age progress bar** at the top of the screen, ahead of the buildings the age asks for. If the wonder is still missing, you will see a red notice: `✗ Wonder: <name>`, followed by `✗ Keystone: <tech>` while its keystone tech is still to research.
 
 If you try to advance before completing your age's wonder, the game will tell you which wonder is blocking and remind you to research its keystone if that is missing, then to use `wonder collect` and `build <key>`.
 

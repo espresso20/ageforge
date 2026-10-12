@@ -69,7 +69,7 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row marks each building the next age asks for ✓ or ✗, with your count beside it, and names the age's wonder until it stands. When the list is longer than the row, the row counts what is met (`✓ 3 met`) and what it has no room for (`+4 more`), so the buildings still to build come first. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
+The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row leads with the age's wonder, and its keystone tech while that is still to research, until they are done. Then it marks each building the next age asks for ✓ or ✗, with your count beside it. When the list is longer than the row, the row counts what is met (`✓ 3 met`) and what it has no room for (`+4 more`), so the buildings still to build come first. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
 
 <figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, construction and the log on the left, the Buildings list in the middle, the panel names and the Workers box on the right.</figcaption></figure>
 

@@ -9,7 +9,7 @@ import "fmt"
 // it advances (the rest of the plan belongs to the old age and drops out).
 // It takes effect at its place in the plan: the items above it run first,
 // in the age they were planned for, and those below wait for the next tick,
-// so they cannot spend what the requirements count. The next age's
+// when what belonged to the old age drops out. The next age's
 // buildings and techs may be planned ahead; they wait for the advance.
 
 // PlanAddAdvance appends an advance item (at most one).

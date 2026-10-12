@@ -1082,18 +1082,11 @@ type ageGoal struct {
 	met  bool
 }
 
-// ageGoals lists what the next age asks for: buildings, then the
-// age's wonder and its keystone tech while they are still to do.
+// ageGoals lists what the next age asks for: the age's wonder and its
+// keystone tech while they are still to do, then the buildings. The wonder
+// leads so that a long list of buildings can never push it out of sight.
 func ageGoals(state game.GameState) []ageGoal {
 	var goals []ageGoal
-	for _, key := range sortedKeysOf(state.NextAgeBldReqs) {
-		req := state.NextAgeBldReqs[key]
-		current := 0
-		if bs, ok := state.Buildings[key]; ok {
-			current = bs.Count
-		}
-		goals = append(goals, ageGoal{fmt.Sprintf("%s %d/%d", game.BuildingName(key), current, req), current >= req})
-	}
 	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
 	if state.CurrentAgeWonderKey != "" {
 		goals = append(goals, ageGoal{"Wonder: " + state.CurrentAgeWonderName, false})
@@ -1102,12 +1095,21 @@ func ageGoals(state game.GameState) []ageGoal {
 			goals = append(goals, ageGoal{"Keystone: " + game.TechName(tech), false})
 		}
 	}
+	for _, key := range sortedKeysOf(state.NextAgeBldReqs) {
+		req := state.NextAgeBldReqs[key]
+		current := 0
+		if bs, ok := state.Buildings[key]; ok {
+			current = bs.Count
+		}
+		goals = append(goals, ageGoal{fmt.Sprintf("%s %d/%d", game.BuildingName(key), current, req), current >= req})
+	}
 	return goals
 }
 
 // ageProgressLines writes the Next Age row for a strip w cells wide and h
-// rows tall: the age's name, then what it asks for, each marked ✓ or ✗ and
-// kept whole on its line. When the strip is too small for all of it, what is
+// rows tall: the age's name, then what it asks for (the wonder and its
+// keystone first, then the buildings), each marked ✓ or ✗ and kept whole on
+// its line. When the strip is too small for all of it, what is
 // already met is counted instead of listed, and after that the list ends
 // with how many more there are.
 func ageProgressLines(state game.GameState, w, h int) []string {
