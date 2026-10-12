@@ -88,12 +88,11 @@ func TestAgeStretch(t *testing.T) {
 	}
 }
 
-// TestEveryAgeHasAFeed: the market turns any construction resource of an age
-// into any other at parity, so an age can grow as long as one of its
-// construction resources flows in from a building a player can own by then:
-// one of that age's, or an older one, since old buildings keep producing.
-// (This is what the Renaissance lacked for steel before the rebalance, and
-// every age from the Modern on for steel.)
+// TestEveryAgeHasAFeed: an age can grow as long as one of its construction
+// resources flows in from a building a player can own by then: one of that
+// age's, or an older one, since old buildings keep producing. (This is what
+// the Renaissance lacked for steel before the rebalance, and every age from
+// the Modern on for steel.)
 func TestEveryAgeHasAFeed(t *testing.T) {
 	defs := BaseBuildings()
 	levels := priceLevels(defs)
