@@ -140,6 +140,12 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 			t.Errorf("space_program asks %s, which %s does not price", res, space.RequiredAge)
 		}
 	}
+	// The Hoover Dam asked 8e10 stone, a material no Electric Age building is
+	// priced in: it sat outside the wonder's units, as the Space Program's
+	// knowledge did, and no building of the age made it. It asks none now.
+	if _, has := BuildingByKey()["hoover_dam"].BaseCost["stone"]; has {
+		t.Errorf("hoover_dam is priced in stone, which no Electric Age building is priced in or makes")
+	}
 	sistine := BuildingByKey()["sistine_chapel"]
 	made := FlowIncome("culture", sistine.RequiredAge) * AgeTargetTicks(sistine.RequiredAge)
 	if got := sistine.BaseCost["culture"]; got != 950000 || made < 950000 || made >= 960000 {

@@ -519,7 +519,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Electric Age — normal costs: 500M-1B
 		{
 			Name: "Hoover Dam", Key: "hoover_dam", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 1.136e11, "stone": 8e10, "electricity": 3.2e10},
+			BaseCost:  map[string]float64{"steel": 1.136e11, "electricity": 3.2e10},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 10},

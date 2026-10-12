@@ -2595,8 +2595,7 @@
    "age": "electric_age",
    "cost": {
     "electricity": 32000000000,
-    "steel": 113600000000,
-    "stone": 80000000000
+    "steel": 113600000000
    },
    "rate": 1,
    "effects": [

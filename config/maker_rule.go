@@ -131,7 +131,6 @@ func MakerFills() []MakerFill {
 // MakerOpenHoles lists every hole the rules leave open.
 func MakerOpenHoles() []MakerOpenHole {
 	return []MakerOpenHole{
-		{Age: "electric_age", Material: "stone", Why: "the Hoover Dam is priced in stone and no Electric Age building is, so the age has no level for stone to put a standard on."},
 		{Age: "modern_age", Material: "data", Why: "nothing made data before this age (its first maker is the Information Age's Server Farm), so no lineage made it last."},
 		{Age: "transcendent_age", Material: "quantum_flux", Why: "the last age has no makers of its own: its only building that a run can build without an optional tech is housing, so the Singularity Core's quantum flux has no lineage to fill it."},
 	}
