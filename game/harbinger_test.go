@@ -594,8 +594,8 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// Mining add 8% to titanium.
 		{"interstellar_age", map[string]float64{"dark_matter": 3.4e+15, "titanium": 7.9e+16}},
 		{"galactic_age", map[string]float64{"dark_matter": 9.2e+16, "titanium": 2.3e+17}},
-		{"quantum_age", map[string]float64{"dark_matter": 4.7e+18, "titanium": 2.4e+17}},
-		{"transcendent_age", map[string]float64{"dark_matter": 5.1e+18, "titanium": 2.6e+17}},
+		{"quantum_age", map[string]float64{"dark_matter": 3e+18, "titanium": 2.4e+17}},
+		{"transcendent_age", map[string]float64{"dark_matter": 3.3e+18, "titanium": 2.6e+17}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(tears) {
 		t.Fatalf("the Cosmic Era has ages %v; the Reality Tear's brace is listed for %d", ages, len(tears))
@@ -666,8 +666,8 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// Art, Galactic Memory and Reality Art, 8% more titanium.
 		{"interstellar_age", map[string]float64{"faith": 2000000000, "culture": 31000000000}, map[string]float64{"dark_matter": 6.7e+15, "titanium": 1.6e+17}},
 		{"galactic_age", map[string]float64{"faith": 4200000000, "culture": 67000000000}, map[string]float64{"dark_matter": 1.9e+17, "titanium": 4.5e+17}},
-		{"quantum_age", map[string]float64{"faith": 8700000000, "culture": 150000000000}, map[string]float64{"dark_matter": 9.3e+18, "titanium": 4.7e+17}},
-		{"transcendent_age", map[string]float64{"faith": 9400000000, "culture": 160000000000}, map[string]float64{"dark_matter": 1.1e+19, "titanium": 5.1e+17}},
+		{"quantum_age", map[string]float64{"faith": 8700000000, "culture": 150000000000}, map[string]float64{"dark_matter": 6e+18, "titanium": 4.7e+17}},
+		{"transcendent_age", map[string]float64{"faith": 9400000000, "culture": 160000000000}, map[string]float64{"dark_matter": 6.6e+18, "titanium": 5.1e+17}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(passages) {
 		t.Fatalf("the Cosmic Era has ages %v; the Last Passage's price is listed for %d", ages, len(passages))

@@ -271,11 +271,11 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 18 — quantum_age  output=quantum_flux  rate=26214.40
 	b = append(b, BuildingDef{
 		Name: "Reality Forge", Key: "reality_forge", Category: "production",
-		BaseCost:  map[string]float64{"quantum_flux": 9.3e14, "antimatter": 2.8e17, "dark_matter": 2.3e17},
+		BaseCost:  map[string]float64{"antimatter": 4.44e17, "quantum_flux": 1.47e15},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "quantum_flux", Value: 3.13e10},
-			{Type: "production", Target: "dark_matter", Value: 7.8e12},
+			{Type: "production", Target: "quantum_flux", Value: 2.87e10},
+			{Type: "production", Target: "dark_matter", Value: 4.98e12},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",

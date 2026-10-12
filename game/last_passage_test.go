@@ -141,8 +141,8 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
 		"interstellar_age": {2000000000, 31000000000, 6.7e+15, 1.6e+17},
 		"galactic_age":     {4200000000, 67000000000, 1.9e+17, 4.5e+17},
-		"quantum_age":      {8700000000, 150000000000, 9.3e+18, 4.7e+17},
-		"transcendent_age": {9400000000, 160000000000, 1.1e+19, 5.1e+17},
+		"quantum_age":      {8700000000, 150000000000, 6e+18, 4.7e+17},
+		"transcendent_age": {9400000000, 160000000000, 6.6e+18, 5.1e+17},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)

@@ -76,7 +76,7 @@ var MakerPaybackTicks = map[string]float64{
 	"space_age":        96530,
 	"interstellar_age": 79991,
 	"galactic_age":     169450,
-	"quantum_age":      44783,
+	"quantum_age":      51348,
 	"transcendent_age": 47204,
 }
 

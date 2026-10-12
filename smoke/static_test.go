@@ -639,3 +639,28 @@ func TestColdStartIgnoresThinCarriedSources(t *testing.T) {
 		t.Errorf("the real tables: want no uranium problem in the Atomic Age, got %d", n)
 	}
 }
+
+// TestColdStartOpenIsTheOneException: the real tables have exactly one
+// cold-start problem, the Transcendent Age's Singularity Core, and ColdStartOpen
+// names it. If a maker ever pays for it the row goes and this test says to
+// delete the exception; if anything else breaks, it is reported with the
+// covenant's other problems and not hidden here.
+func TestColdStartOpenIsTheOneException(t *testing.T) {
+	all, _ := staticGatesAll(config.Ages(), config.BuildingByKey())
+	if len(all) != len(ColdStartOpen) {
+		t.Fatalf("the real tables have %d cold-start problems, ColdStartOpen names %d: %+v", len(all), len(ColdStartOpen), all)
+	}
+	for i, o := range ColdStartOpen {
+		g := all[i]
+		if g.From != o.From || g.Kind != o.Kind || g.Key != o.Key || g.Resource != o.Resource {
+			t.Errorf("ColdStartOpen[%d] = %+v, the covenant finds %+v", i, o, g)
+		}
+	}
+	open := false
+	for _, h := range config.MakerOpenHoles() {
+		open = open || (h.Age == "transcendent_age" && h.Material == "quantum_flux")
+	}
+	if !open {
+		t.Errorf("the Transcendent Age's quantum flux is a cold-start exception and not an open hole in config.MakerOpenHoles")
+	}
+}

@@ -669,7 +669,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Quantum Age — normal costs: 2.5Q-5Q
 		{
 			Name: "Reality Anchor", Key: "reality_anchor", Category: "wonder",
-			BaseCost:  map[string]float64{"quantum_flux": 3.84e16, "antimatter": 6.24e16, "dark_matter": 7.04e16},
+			BaseCost:  map[string]float64{"quantum_flux": 5.6e16, "antimatter": 9.11e16, "dark_matter": 1.03e17},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "quantum_flux", Value: 15},

@@ -282,7 +282,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 20 — quantum_age  rate=209715.20  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Reality Harvester", Key: "reality_harvester", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 5.4e14, "antimatter": 1.7e17, "dark_matter": 1.4e17},
+		BaseCost:    map[string]float64{"antimatter": 6.74e17},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 3.81e10}},
 		BuildTicks:  3600,

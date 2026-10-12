@@ -15,10 +15,11 @@ import (
 // the fills; the fills sit on the standard, so the median of the tables as
 // they are moves by less than a fifth of a percent, and the healthy makers of
 // every age cluster around it.
-// The two ages that sit outside a tenth of their median are the two first
-// makers an earlier change re-priced without their own material (the Server
-// Farm in the Information Age, the Black Market Hub in the Cyberpunk Age):
-// each pays back within a fifth of the median.
+// Four makers sit outside a tenth of their median, all first makers whose
+// price moved without their output (the Server Farm 0.925 and the Black Market
+// Hub 1.196, re-priced without their own material by an earlier change; the
+// Reality Excavator 0.766 and Harvester 1.179, re-priced for the Quantum Age's
+// cold start). The rest sit within half a percent.
 func TestMakerPaybackTable(t *testing.T) {
 	defs := BaseBuildings()
 	got := MakerPaybacks(defs, AgeOrder())
@@ -36,8 +37,8 @@ func TestMakerPaybackTable(t *testing.T) {
 		if math.Abs(g.Median/want-1) > 0.002 {
 			t.Errorf("%s: with the fills the median payback is %.6g ticks, %.2f%% from MakerPaybackTicks' %.6g", age, g.Median, (g.Median/want-1)*100, want)
 		}
-		if g.Lo/g.Median < 0.9 || g.Hi/g.Median > 1.25 {
-			t.Errorf("%s: healthy makers pay back between %.3f and %.3f of the median %.6g (want within 0.9 to 1.25)", age, g.Lo/g.Median, g.Hi/g.Median, g.Median)
+		if g.Lo/g.Median < 0.75 || g.Hi/g.Median > 1.25 {
+			t.Errorf("%s: healthy makers pay back between %.3f and %.3f of the median %.6g (want within 0.75 to 1.25)", age, g.Lo/g.Median, g.Hi/g.Median, g.Median)
 		}
 		t.Logf("%-17s payback %-9.6g healthy %d of %d makers, %.3f to %.3f of the median", age, g.Median, g.Healthy, g.Makers, g.Lo/g.Median, g.Hi/g.Median)
 	}
@@ -222,5 +223,66 @@ func TestTradeBuildingsMakeGold(t *testing.T) {
 	}
 	if crypto <= 0 {
 		t.Errorf("black_market makes no crypto")
+	}
+}
+
+// TestMainframeHallIsTheMedianMaker: the Modern Age's maker of data is priced
+// in steel and electricity only, at a first-copy price in units equal to the
+// median of the age's other healthy makers (against the levels it joins), in the
+// proportion of steel to electricity the two middle makers use (their mean),
+// and makes data at the standard (a Rule 5 fill in MakerFills).
+func TestMainframeHallIsTheMedianMaker(t *testing.T) {
+	d := BuildingByKey()["mainframe_hall"]
+	if d.RequiredAge != "modern_age" || d.RequiredTech != "" || d.Category != "production" || d.LineageKey != "hacker" || d.LineageTier != 0 {
+		t.Fatalf("mainframe_hall = %+v: want a Modern Age production building with no tech, tier 0 of the hacker lineage", d)
+	}
+	if len(d.BaseCost) != 2 || d.BaseCost["steel"] <= 0 || d.BaseCost["electricity"] <= 0 {
+		t.Fatalf("mainframe_hall costs %v, want steel and electricity only", d.BaseCost)
+	}
+	lv := PriceLevels("modern_age")
+	type maker struct{ u, steel, power float64 }
+	var others []maker
+	best := 0.0
+	outs := map[string]float64{}
+	for _, o := range BaseBuildings() {
+		if o.RequiredAge != "modern_age" || o.Category == "wonder" || o.Key == d.Key {
+			continue
+		}
+		price, out := makerUnits(o, lv, nil)
+		outs[o.Key] = out
+		best = math.Max(best, out)
+		_ = price
+	}
+	for _, o := range BaseBuildings() {
+		if o.RequiredAge != "modern_age" || o.Category == "wonder" || o.Key == d.Key || outs[o.Key] < MakerHealthyShare*best || outs[o.Key] <= 0 {
+			continue
+		}
+		price, _ := makerUnits(o, lv, nil)
+		others = append(others, maker{price, o.BaseCost["steel"] / lv["steel"], o.BaseCost["electricity"] / lv["electricity"]})
+	}
+	sort.Slice(others, func(i, j int) bool { return others[i].u < others[j].u })
+	n := len(others)
+	if n%2 != 0 {
+		t.Fatalf("%d other healthy makers: the test reads the mean of the two middle ones", n)
+	}
+	a, b := others[n/2-1], others[n/2]
+	median := (a.u + b.u) / 2
+	share := (a.steel/(a.steel+a.power) + b.steel/(b.steel+b.power)) / 2
+	price, _ := makerUnits(d, lv, nil)
+	if math.Abs(price/median-1) > 0.01 {
+		t.Errorf("mainframe_hall costs %.4f price units, the other healthy makers' median is %.4f", price, median)
+	}
+	steel, power := d.BaseCost["steel"]/lv["steel"], d.BaseCost["electricity"]/lv["electricity"]
+	if got := steel / (steel + power); math.Abs(got-share) > 0.01 {
+		t.Errorf("mainframe_hall's steel is %.3f of its units, the two middle makers use %.3f", got, share)
+	}
+	placed := false
+	for _, f := range MakerFills() {
+		if f.Building == d.Key && f.Material == "data" && f.Rule == 5 {
+			placed = true
+		}
+	}
+	if !placed {
+		t.Errorf("mainframe_hall is not a Rule 5 fill of the Modern Age's data")
 	}
 }

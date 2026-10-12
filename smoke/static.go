@@ -443,7 +443,34 @@ func (cs *coldStart) solve(defs map[string]config.BuildingDef) {
 	}
 }
 
+// ColdStartOpen is the one cold-start problem the tables may have, named here
+// and not skipped: the Transcendent Age's Singularity Core is priced in 576
+// quadrillion quantum flux, and the last age has no makers of its own (its only
+// building a run can build without an optional tech is housing), so the carried
+// copies cannot make it in a target of the age. The maker rule lists it as an
+// open hole (config.MakerOpenHoles). TestColdStartOpenIsTheOneException proves
+// the row is there and that nothing else is.
+var ColdStartOpen = []GateProblem{
+	{From: "transcendent_age", Kind: "dead_building", Key: "singularity_core", Resource: "quantum_flux"},
+}
+
+// staticGates is staticGatesAll without the rows ColdStartOpen names.
 func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]GateProblem, []GateSlack) {
+	all, slack := staticGatesAll(ages, defs)
+	var out []GateProblem
+	for _, g := range all {
+		open := false
+		for _, o := range ColdStartOpen {
+			open = open || (g.From == o.From && g.Kind == o.Kind && g.Key == o.Key && g.Resource == o.Resource)
+		}
+		if !open {
+			out = append(out, g)
+		}
+	}
+	return out, slack
+}
+
+func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]GateProblem, []GateSlack) {
 	var out []GateProblem
 	cold := coldStarts(ages, defs)
 	techs := config.TechByKey()
