@@ -1,0 +1,470 @@
+{
+ "aerospace_foundry": {
+  "data": 42000000000,
+  "electricity": 400000000000,
+  "steel": 740000000000
+ },
+ "agora": {
+  "gold": 7500,
+  "iron": 4500,
+  "stone": 15000
+ },
+ "agri_complex": {
+  "data": 3000000000,
+  "electricity": 36000000000,
+  "steel": 90000000000
+ },
+ "ai_research_lab": {
+  "data": 150000000000,
+  "electricity": 1200000000000,
+  "steel": 1800000000000
+ },
+ "amphitheater": {
+  "gold": 36000,
+  "stone": 120000,
+  "wood": 45000
+ },
+ "aqueduct": {
+  "gold": 42000,
+  "iron": 34000,
+  "stone": 150000
+ },
+ "asteroid_market": {
+  "electricity": 520000000000000,
+  "plasma": 210000000000000,
+  "titanium": 440000000000000
+ },
+ "augmentation_foundry": {
+  "crypto": 5100000000000,
+  "data": 970000000000,
+  "electricity": 10000000000000,
+  "nanobots": 160000
+ },
+ "bio_fabrication_lab": {
+  "data": 140000000000,
+  "electricity": 1100000000000,
+  "steel": 1700000000000
+ },
+ "bio_reactor_farm": {
+  "electricity": 45000000000000,
+  "plasma": 15000000000000,
+  "steel": 60000000000000
+ },
+ "black_market": {
+  "data": 1840000000000,
+  "electricity": 18400000000000
+ },
+ "castle_keep": {
+  "gold": 210000,
+  "iron": 300000,
+  "stone": 930000
+ },
+ "church": {
+  "gold": 30000000,
+  "iron": 24000000,
+  "stone": 60000000
+ },
+ "colosseum": {
+  "gold": 100800,
+  "iron": 113600,
+  "stone": 512000
+ },
+ "combat_aug_center": {
+  "crypto": 4700000000000,
+  "data": 890000000000,
+  "electricity": 9300000000000
+ },
+ "crystal_palace": {
+  "coal": 640000000,
+  "gold": 496000000,
+  "iron": 640000000,
+  "steel": 720000000
+ },
+ "cultural_obelisk": {
+  "culture": 710,
+  "stone": 17000
+ },
+ "cyber_hub": {
+  "crypto": 5000000000000,
+  "data": 950000000000,
+  "electricity": 9900000000000,
+  "nanobots": 150000
+ },
+ "dark_energy_tap": {
+  "crypto": 5300000000000,
+  "data": 1000000000000,
+  "electricity": 11000000000000,
+  "nanobots": 150000
+ },
+ "dark_matter_refinery": {
+  "crypto": 4900000000000,
+  "data": 930000000000,
+  "electricity": 9700000000000
+ },
+ "data_center": {
+  "data": 250000000000,
+  "electricity": 2000000000000,
+  "nanobots": 13000,
+  "steel": 2900000000000
+ },
+ "deep_space_observatory": {
+  "electricity": 300000000000000,
+  "plasma": 120000000000000,
+  "titanium": 240000000000000
+ },
+ "drone_warfare_center": {
+  "data": 230000000000,
+  "electricity": 1900000000000,
+  "steel": 2800000000000
+ },
+ "embassy": {
+  "gold": 47000000,
+  "iron": 23000000
+ },
+ "energy_exchange": {
+  "electricity": 70000000000000,
+  "plasma": 25000000000000,
+  "steel": 94000000000000
+ },
+ "estate_farm": {
+  "gold": 36000,
+  "iron": 30000,
+  "stone": 110000
+ },
+ "exotic_matter_forge": {
+  "electricity": 64000000000000,
+  "plasma": 20000000000000,
+  "steel": 85000000000000
+ },
+ "field_works": {
+  "iron": 6000,
+  "stone": 15000,
+  "wood": 9000
+ },
+ "forge": {
+  "gold": 51000,
+  "stone": 150000
+ },
+ "fusion_reactor": {
+  "electricity": 99100000000000,
+  "steel": 136000000000000
+ },
+ "fusion_reactor_array": {
+  "electricity": 68000000000000,
+  "plasma": 22000000000000,
+  "steel": 89000000000000
+ },
+ "global_network": {
+  "data": 928000000000,
+  "electricity": 1536000000000,
+  "gold": 3840000000000,
+  "steel": 7680000000000
+ },
+ "great_hall": {
+  "gold": 210000,
+  "iron": 90000,
+  "stone": 630000
+ },
+ "holographic_theater": {
+  "crypto": 3300000000000,
+  "data": 650000000000,
+  "electricity": 6600000000000
+ },
+ "hydroponic_bay": {
+  "electricity": 300000000000000,
+  "plasma": 120000000000000,
+  "titanium": 240000000000000
+ },
+ "investment_firm": {
+  "data": 7000000000,
+  "electricity": 70000000000,
+  "steel": 190000000000
+ },
+ "ironmonger": {
+  "gold": 280000,
+  "iron": 110000,
+  "stone": 850000
+ },
+ "ironworks": {
+  "iron": 13000,
+  "stone": 25000
+ },
+ "launch_complex": {
+  "electricity": 440000000000000,
+  "plasma": 180000000000000,
+  "titanium": 360000000000000
+ },
+ "legion_fort": {
+  "gold": 8500,
+  "iron": 15000,
+  "stone": 30000
+ },
+ "library": {
+  "gold": 36000,
+  "iron": 24000,
+  "stone": 110000
+ },
+ "mainframe_hall": {
+  "electricity": 80100000000,
+  "steel": 218000000000
+ },
+ "meditation_center": {
+  "electricity": 30000000000,
+  "gold": 60000000000,
+  "steel": 84000000000
+ },
+ "merchant_quarter": {
+  "gold": 88000,
+  "iron": 59000,
+  "stone": 210000
+ },
+ "military_academy": {
+  "gold": 64000,
+  "iron": 42000,
+  "stone": 170000
+ },
+ "mill": {
+  "gold": 2500000,
+  "iron": 420000
+ },
+ "molecular_synthesizer": {
+  "electricity": 42000000000000,
+  "plasma": 12000000000000,
+  "steel": 54000000000000
+ },
+ "nano_alloy_plant": {
+  "data": 240000000000,
+  "electricity": 1900000000000,
+  "nanobots": 17000,
+  "steel": 2800000000000
+ },
+ "nano_farm": {
+  "data": 150000000000,
+  "electricity": 1200000000000,
+  "steel": 1800000000000
+ },
+ "nano_foundry": {
+  "data": 8500000000,
+  "electricity": 68000000000,
+  "steel": 170000000000
+ },
+ "nanobot_vat": {
+  "crypto": 3600000000000,
+  "data": 540000000000,
+  "electricity": 7500000000000
+ },
+ "neon_citadel": {
+  "crypto": 19200000000000,
+  "data": 10240000000000,
+  "electricity": 123200000000000,
+  "steel": 160000000000000
+ },
+ "neon_sanctuary": {
+  "crypto": 2700000000000,
+  "data": 510000000000,
+  "electricity": 5400000000000
+ },
+ "neural_art_complex": {
+  "electricity": 42000000000000,
+  "plasma": 14000000000000,
+  "steel": 57000000000000
+ },
+ "neural_grid": {
+  "data": 250000000000,
+  "electricity": 2000000000000,
+  "nanobots": 15000,
+  "steel": 3000000000000
+ },
+ "neuro_research_center": {
+  "crypto": 3000000000000,
+  "data": 600000000000,
+  "electricity": 6000000000000
+ },
+ "oil_platform": {
+  "data": 2400000000,
+  "electricity": 30000000000,
+  "steel": 84000000000
+ },
+ "oil_refinery": {
+  "electricity": 51000000000,
+  "oil": 8500000000,
+  "steel": 140000000000
+ },
+ "oracle_house": {
+  "gold": 30000,
+  "iron": 15000,
+  "stone": 90000
+ },
+ "orbital_data_relay": {
+  "electricity": 450000000000000,
+  "plasma": 180000000000000,
+  "titanium": 360000000000000
+ },
+ "orbital_refinery": {
+  "electricity": 470000000000000,
+  "plasma": 470000000000000
+ },
+ "orbital_sanctuary": {
+  "electricity": 270000000000000,
+  "plasma": 90000000000000,
+  "titanium": 210000000000000
+ },
+ "parthenon": {
+  "gold": 704000,
+  "iron": 704000,
+  "stone": 1600000
+ },
+ "plasma_command": {
+  "electricity": 59000000000000,
+  "plasma": 21000000000000,
+  "steel": 76000000000000
+ },
+ "power_grid_hub": {
+  "data": 6400000000,
+  "electricity": 59000000000,
+  "steel": 150000000000
+ },
+ "quantum_battery_array": {
+  "data": 260000000000,
+  "electricity": 2100000000000,
+  "nanobots": 14000,
+  "steel": 3000000000000
+ },
+ "quantum_chapel": {
+  "electricity": 39000000000000,
+  "plasma": 12000000000000,
+  "steel": 51000000000000
+ },
+ "quantum_organic_extractor": {
+  "electricity": 270000000000000,
+  "plasma": 110000000000000,
+  "titanium": 230000000000000
+ },
+ "quantum_server_farm": {
+  "electricity": 64000000000000,
+  "plasma": 22000000000000,
+  "steel": 85000000000000
+ },
+ "seaport": {
+  "electricity": 72000000000,
+  "gold": 4800000000,
+  "steel": 210000000000
+ },
+ "server_farm": {
+  "electricity": 596000000000,
+  "steel": 1130000000000
+ },
+ "smart_energy_grid": {
+  "data": 47000000000,
+  "electricity": 440000000000,
+  "steel": 800000000000
+ },
+ "smart_farm": {
+  "data": 24000000000,
+  "electricity": 240000000000,
+  "steel": 450000000000
+ },
+ "smart_grid_node": {
+  "data": 42000000000,
+  "electricity": 420000000000,
+  "steel": 760000000000
+ },
+ "smart_refinery": {
+  "data": 21000000000,
+  "electricity": 230000000000,
+  "steel": 420000000000
+ },
+ "smelter": {
+  "iron": 11000,
+  "stone": 23000
+ },
+ "solar_collector_array": {
+  "electricity": 470000000000000,
+  "plasma": 190000000000000,
+  "titanium": 380000000000000
+ },
+ "space_force_base": {
+  "electricity": 400000000000000,
+  "plasma": 160000000000000,
+  "titanium": 340000000000000
+ },
+ "space_program": {
+  "electricity": 738000000000,
+  "gold": 1190000000000,
+  "steel": 1320000000000
+ },
+ "special_ops_hq": {
+  "data": 4200000000,
+  "electricity": 51000000000,
+  "steel": 150000000000
+ },
+ "stellar_cradle": {
+  "electricity": 736000000000000,
+  "plasma": 544000000000000,
+  "steel": 688000000000000
+ },
+ "temple": {
+  "gold": 6000,
+  "iron": 3000,
+  "stone": 15000
+ },
+ "theoretical_institute": {
+  "electricity": 45000000000000,
+  "plasma": 15000000000000,
+  "steel": 60000000000000
+ },
+ "think_tank": {
+  "data": 3000000000,
+  "electricity": 30000000000,
+  "steel": 90000000000
+ },
+ "timber_yard": {
+  "iron": 7500,
+  "stone": 12000,
+  "wood": 9000
+ },
+ "titanium_smelter": {
+  "data": 5100000000,
+  "electricity": 55000000000,
+  "steel": 140000000000
+ },
+ "trading_post": {
+  "iron": 15000,
+  "stone": 32000
+ },
+ "tv_studio": {
+  "data": 3600000000,
+  "electricity": 39000000000,
+  "steel": 100000000000
+ },
+ "vat_farm": {
+  "crypto": 3000000000000,
+  "data": 600000000000,
+  "electricity": 6000000000000
+ },
+ "vr_studio": {
+  "data": 160000000000,
+  "electricity": 1300000000000,
+  "steel": 1900000000000
+ },
+ "wood_workshop": {
+  "gold": 30000,
+  "iron": 24000,
+  "stone": 90000
+ },
+ "workshop": {
+  "gold": 250000,
+  "iron": 130000,
+  "stone": 800000
+ },
+ "world_simulation": {
+  "data": 1600000000000,
+  "electricity": 32000000000000,
+  "steel": 54400000000000
+ },
+ "zero_g_gallery": {
+  "electricity": 300000000000000,
+  "plasma": 120000000000000,
+  "titanium": 250000000000000
+ }
+}

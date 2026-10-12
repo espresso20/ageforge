@@ -59,7 +59,7 @@ func buildingsLineageHarbor() []BuildingDef {
 	// tier 2 — modern_age
 	b = append(b, BuildingDef{
 		Name: "Seaport", Key: "seaport", Category: "production",
-		BaseCost:  map[string]float64{"steel": 2.1e11, "electricity": 7.2e10, "gold": 4.8e09},
+		BaseCost:  map[string]float64{"steel": 1.05e11, "titanium_ore": 1.05e11, "electricity": 7.2e10, "gold": 4.8e09},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 4370000},

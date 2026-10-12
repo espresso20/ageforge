@@ -32,7 +32,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 1 — iron_age  output=iron  rate=0.20
 	b = append(b, BuildingDef{
 		Name: "Ironworks", Key: "ironworks", Category: "production",
-		BaseCost:    map[string]float64{"stone": 25000, "iron": 13000},
+		BaseCost:    map[string]float64{"stone": 12500, "marble": 12500, "iron": 6500, "iron_ore": 6500},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "iron", Value: 17.8}},
 		BuildTicks:  300,
@@ -45,7 +45,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 2 — classical_age  output=iron  rate=0.40
 	b = append(b, BuildingDef{
 		Name: "Aqueduct", Key: "aqueduct", Category: "production",
-		BaseCost:    map[string]float64{"stone": 150000, "gold": 42000, "iron": 34000},
+		BaseCost:    map[string]float64{"stone": 75000, "marble": 75000, "gold": 42000, "iron": 17000, "iron_ore": 17000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "iron", Value: 43.2}},
 		BuildTicks:  600,
@@ -58,7 +58,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 3 — medieval_age  output=iron  rate=0.80
 	b = append(b, BuildingDef{
 		Name: "Workshop", Key: "workshop", Category: "production",
-		BaseCost:    map[string]float64{"stone": 800000, "gold": 250000, "iron": 130000},
+		BaseCost:    map[string]float64{"stone": 800000, "gold": 250000, "iron": 65000, "iron_ore": 65000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "iron", Value: 140}},
 		BuildTicks:  1200,
@@ -74,7 +74,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		// note: no steel in the price. Every steel producer cost steel, with a
 		// 0.1/tick tech the only way in, so the Renaissance walled at ~850K
 		// steel per mill. The mill is the bootstrap; the foundry still costs steel.
-		BaseCost:    map[string]float64{"gold": 2500000, "iron": 420000},
+		BaseCost:    map[string]float64{"gold": 2500000, "iron": 210000, "iron_ore": 210000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "steel", Value: 191}},
 		BuildTicks:  2400,
@@ -157,7 +157,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 10 — modern_age  output=electricity  rate=102.40
 	b = append(b, BuildingDef{
 		Name: "Power Grid Hub", Key: "power_grid_hub", Category: "production",
-		BaseCost:  map[string]float64{"steel": 1.5e11, "electricity": 5.9e10, "data": 6.4e09},
+		BaseCost:  map[string]float64{"steel": 7.5e10, "titanium_ore": 7.5e10, "electricity": 5.9e10, "data": 6.4e09},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "electricity", Value: 7290000},
@@ -173,7 +173,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 11 — information_age  output=electricity  rate=204.80
 	b = append(b, BuildingDef{
 		Name: "Smart Grid Node", Key: "smart_grid_node", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 4.2e11, "data": 4.2e10, "steel": 7.6e11},
+		BaseCost:    map[string]float64{"electricity": 4.2e11, "data": 4.2e10, "steel": 3.8e11, "titanium_ore": 3.8e11},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 8.68e07}},
 		BuildTicks:  3600,
@@ -186,7 +186,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 12 — digital_age  output=electricity  rate=409.60
 	b = append(b, BuildingDef{
 		Name: "Neural Grid", Key: "neural_grid", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 2e12, "data": 2.5e11, "steel": 3e12, "nanobots": 15000},
+		BaseCost:    map[string]float64{"electricity": 2e12, "data": 2.5e11, "steel": 1.5e12, "titanium_ore": 1.5e12, "nanobots": 15000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 1.5e08}},
 		BuildTicks:  3600,
@@ -199,7 +199,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 13 — cyberpunk_age  output=plasma+electricity  rate: plasma=819.20, electricity=500
 	b = append(b, BuildingDef{
 		Name: "Augmentation Foundry", Key: "augmentation_foundry", Category: "production",
-		BaseCost:  map[string]float64{"data": 9.7e11, "crypto": 5.1e12, "electricity": 1e13, "nanobots": 160000},
+		BaseCost:  map[string]float64{"data": 9.7e11, "crypto": 5.1e12, "electricity": 5e12, "dark_matter_crystals": 5e12, "nanobots": 160000},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "plasma", Value: 819.2},
@@ -215,7 +215,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 14 — fusion_age  output=plasma  rate=1638.40
 	b = append(b, BuildingDef{
 		Name: "Fusion Reactor", Key: "fusion_reactor", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 9.91e13, "steel": 1.36e14},
+		BaseCost:  map[string]float64{"electricity": 4.96e13, "dark_matter_crystals": 4.95e13, "steel": 1.36e14},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "plasma", Value: 2.59e08},
@@ -231,7 +231,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 15 — space_age  output=plasma  rate=3276.80
 	b = append(b, BuildingDef{
 		Name: "Launch Complex", Key: "launch_complex", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 3.6e14, "plasma": 1.8e14, "electricity": 4.4e14},
+		BaseCost:    map[string]float64{"titanium": 3.6e14, "plasma": 1.8e14, "electricity": 2.2e14, "dark_matter_crystals": 2.2e14},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "plasma", Value: 5.52e09}},
 		BuildTicks:  3600,

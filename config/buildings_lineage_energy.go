@@ -77,7 +77,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// electricity raised from 100→250 so upgrading from nuclear_reactor (200 elec) never regresses
 	b = append(b, BuildingDef{
 		Name: "Oil Refinery", Key: "oil_refinery", Category: "production",
-		BaseCost:  map[string]float64{"steel": 1.4e11, "electricity": 5.1e10, "oil": 8.5e09},
+		BaseCost:  map[string]float64{"steel": 7e10, "titanium_ore": 7e10, "electricity": 5.1e10, "oil": 8.5e09},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "oil", Value: 540000},
@@ -93,7 +93,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 5 — information_age  output=electricity  rate=400
 	b = append(b, BuildingDef{
 		Name: "Microgrid Array", Key: "smart_energy_grid", Category: "production",
-		BaseCost:     map[string]float64{"electricity": 4.4e11, "data": 4.7e10, "steel": 8e11},
+		BaseCost:     map[string]float64{"electricity": 4.4e11, "data": 4.7e10, "steel": 4e11, "titanium_ore": 4e11},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 9.309999999999999e07}},
 		BuildTicks:   10920,
@@ -107,7 +107,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 6 — digital_age  output=electricity  rate=800
 	b = append(b, BuildingDef{
 		Name: "Quantum Battery Array", Key: "quantum_battery_array", Category: "production",
-		BaseCost:     map[string]float64{"electricity": 2.1e12, "data": 2.6e11, "steel": 3e12, "nanobots": 14000},
+		BaseCost:     map[string]float64{"electricity": 2.1e12, "data": 2.6e11, "steel": 1.5e12, "titanium_ore": 1.5e12, "nanobots": 14000},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 1.54e08}},
 		BuildTicks:   12480,
@@ -121,7 +121,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 7 — cyberpunk_age  output=electricity  rate=1600
 	b = append(b, BuildingDef{
 		Name: "Dark Energy Tap", Key: "dark_energy_tap", Category: "production",
-		BaseCost:     map[string]float64{"data": 1e12, "crypto": 5.3e12, "electricity": 1.1e13, "nanobots": 150000},
+		BaseCost:     map[string]float64{"data": 1e12, "crypto": 5.3e12, "electricity": 5.5e12, "dark_matter_crystals": 5.5e12, "nanobots": 150000},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 7.55e08}},
 		BuildTicks:   14040,
@@ -135,7 +135,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 8 — fusion_age  output=plasma  rate=20
 	b = append(b, BuildingDef{
 		Name: "Tokamak Array", Key: "fusion_reactor_array", Category: "production",
-		BaseCost:  map[string]float64{"plasma": 2.2e13, "electricity": 6.8e13, "steel": 8.9e13},
+		BaseCost:  map[string]float64{"plasma": 2.2e13, "electricity": 3.4e13, "dark_matter_crystals": 3.4e13, "steel": 8.9e13},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "plasma", Value: 2.59e08},
@@ -152,7 +152,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// electricity preserved from fusion_reactor_array (2000) — upgrading must never regress
 	b = append(b, BuildingDef{
 		Name: "Solar Collector Array", Key: "solar_collector_array", Category: "production",
-		BaseCost:  map[string]float64{"titanium": 3.8e14, "plasma": 1.9e14, "electricity": 4.7e14},
+		BaseCost:  map[string]float64{"titanium": 3.8e14, "plasma": 1.9e14, "electricity": 2.35e14, "dark_matter_crystals": 2.35e14},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "plasma", Value: 2.92e09},

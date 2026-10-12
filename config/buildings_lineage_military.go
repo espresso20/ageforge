@@ -62,7 +62,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 3 — iron_age  soldiers=80
 	b = append(b, BuildingDef{
 		Name: "Legion Fort", Key: "legion_fort", Category: "military",
-		BaseCost:     map[string]float64{"stone": 30000, "iron": 15000, "gold": 8500},
+		BaseCost:     map[string]float64{"stone": 15000, "marble": 15000, "iron": 7500, "iron_ore": 7500, "gold": 8500},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "storage", Target: "soldiers", Value: 80}, {Type: "production", Target: "soldiers", Value: 1.6}},
 		BuildTicks:   300,
@@ -76,7 +76,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 4 — classical_age  soldiers=160
 	b = append(b, BuildingDef{
 		Name: "Military Academy", Key: "military_academy", Category: "military",
-		BaseCost:    map[string]float64{"stone": 170000, "gold": 64000, "iron": 42000},
+		BaseCost:    map[string]float64{"stone": 85000, "marble": 85000, "gold": 64000, "iron": 21000, "iron_ore": 21000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "storage", Target: "soldiers", Value: 160}, {Type: "production", Target: "soldiers", Value: 3.2}},
 		BuildTicks:  600,
@@ -89,7 +89,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 5 — medieval_age  soldiers=320
 	b = append(b, BuildingDef{
 		Name: "Castle Keep", Key: "castle_keep", Category: "military",
-		BaseCost:    map[string]float64{"stone": 930000, "iron": 300000, "gold": 210000},
+		BaseCost:    map[string]float64{"stone": 930000, "iron": 150000, "iron_ore": 150000, "gold": 210000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "storage", Target: "soldiers", Value: 320}, {Type: "production", Target: "soldiers", Value: 6.4}},
 		BuildTicks:  1200,
@@ -180,7 +180,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 12 — modern_age  soldiers=40960
 	b = append(b, BuildingDef{
 		Name: "Special Ops HQ", Key: "special_ops_hq", Category: "military",
-		BaseCost:    map[string]float64{"steel": 1.5e11, "electricity": 5.1e10, "data": 4.2e09},
+		BaseCost:    map[string]float64{"steel": 7.5e10, "titanium_ore": 7.5e10, "electricity": 5.1e10, "data": 4.2e09},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "storage", Target: "soldiers", Value: 40960}, {Type: "production", Target: "soldiers", Value: 819.2}},
 		BuildTicks:  3600,
@@ -207,7 +207,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 14 — digital_age  soldiers=163840
 	b = append(b, BuildingDef{
 		Name: "Drone Warfare Center", Key: "drone_warfare_center", Category: "military",
-		BaseCost:    map[string]float64{"electricity": 1.9e12, "data": 2.3e11, "steel": 2.8e12},
+		BaseCost:    map[string]float64{"electricity": 1.9e12, "data": 2.3e11, "steel": 1.4e12, "titanium_ore": 1.4e12},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "storage", Target: "soldiers", Value: 163840}, {Type: "production", Target: "soldiers", Value: 3276.8}},
 		BuildTicks:  3600,
@@ -220,7 +220,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 15 — cyberpunk_age  soldiers=327680
 	b = append(b, BuildingDef{
 		Name: "Combat Aug Center", Key: "combat_aug_center", Category: "military",
-		BaseCost:     map[string]float64{"data": 8.9e11, "crypto": 4.7e12, "electricity": 9.3e12},
+		BaseCost:     map[string]float64{"data": 8.9e11, "crypto": 4.7e12, "electricity": 4.65e12, "dark_matter_crystals": 4.65e12},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "storage", Target: "soldiers", Value: 327680}, {Type: "production", Target: "soldiers", Value: 6553.6}},
 		BuildTicks:   3600,
@@ -234,7 +234,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 16 — fusion_age  soldiers=655360
 	b = append(b, BuildingDef{
 		Name: "Plasma Command", Key: "plasma_command", Category: "military",
-		BaseCost:    map[string]float64{"plasma": 2.1e13, "electricity": 5.9e13, "steel": 7.6e13},
+		BaseCost:    map[string]float64{"plasma": 2.1e13, "electricity": 2.95e13, "dark_matter_crystals": 2.95e13, "steel": 7.6e13},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "storage", Target: "soldiers", Value: 655360}, {Type: "production", Target: "soldiers", Value: 13107.2}},
 		BuildTicks:  3600,
@@ -247,7 +247,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 17 — space_age  soldiers=1310720
 	b = append(b, BuildingDef{
 		Name: "Space Force Base", Key: "space_force_base", Category: "military",
-		BaseCost:    map[string]float64{"titanium": 3.4e14, "plasma": 1.6e14, "electricity": 4e14},
+		BaseCost:    map[string]float64{"titanium": 3.4e14, "plasma": 1.6e14, "electricity": 2e14, "dark_matter_crystals": 2e14},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "storage", Target: "soldiers", Value: 1310720}, {Type: "production", Target: "soldiers", Value: 26214.4}},
 		BuildTicks:  3600,

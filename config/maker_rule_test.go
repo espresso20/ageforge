@@ -235,19 +235,31 @@ func TestMainframeHallIsTheMedianMaker(t *testing.T) {
 	if d.RequiredAge != "modern_age" || d.RequiredTech != "" || d.Category != "production" || d.LineageKey != "hacker" || d.LineageTier != 0 {
 		t.Fatalf("mainframe_hall = %+v: want a Modern Age production building with no tech, tier 0 of the hacker lineage", d)
 	}
-	if len(d.BaseCost) != 2 || d.BaseCost["steel"] <= 0 || d.BaseCost["electricity"] <= 0 {
-		t.Fatalf("mainframe_hall costs %v, want steel and electricity only", d.BaseCost)
+	// The Modern Age's steel is paired with titanium ore (config.RawPartner): a
+	// building pays half of its steel part as titanium ore, at the same level.
+	if len(d.BaseCost) != 3 || d.BaseCost["steel"] <= 0 || d.BaseCost["titanium_ore"] <= 0 || d.BaseCost["electricity"] <= 0 {
+		t.Fatalf("mainframe_hall costs %v, want steel (half of it as titanium ore) and electricity only", d.BaseCost)
 	}
 	lv := PriceLevels("modern_age")
 	type maker struct{ u, steel, power float64 }
 	var others []maker
 	best := 0.0
 	outs := map[string]float64{}
+	// The Hall was priced against the makers the age had when no raw was
+	// priced; the Titanium Mine, a maker of nothing else, became one when
+	// titanium ore did. Its output is left out, as it was when the Hall's
+	// price was set (the price in units did not move).
+	noRaw := map[string]bool{}
+	for _, o := range BaseBuildings() {
+		for _, raw := range RawMaterials {
+			noRaw[o.Key+"/"+raw] = true
+		}
+	}
 	for _, o := range BaseBuildings() {
 		if o.RequiredAge != "modern_age" || o.Category == "wonder" || o.Key == d.Key {
 			continue
 		}
-		price, out := makerUnits(o, lv, nil)
+		price, out := makerUnits(o, lv, noRaw)
 		outs[o.Key] = out
 		best = math.Max(best, out)
 		_ = price
@@ -257,21 +269,21 @@ func TestMainframeHallIsTheMedianMaker(t *testing.T) {
 			continue
 		}
 		price, _ := makerUnits(o, lv, nil)
-		others = append(others, maker{price, o.BaseCost["steel"] / lv["steel"], o.BaseCost["electricity"] / lv["electricity"]})
+		others = append(others, maker{price, (o.BaseCost["steel"] + o.BaseCost["titanium_ore"]) / lv["steel"], o.BaseCost["electricity"] / lv["electricity"]})
 	}
 	sort.Slice(others, func(i, j int) bool { return others[i].u < others[j].u })
 	n := len(others)
-	if n%2 != 0 {
-		t.Fatalf("%d other healthy makers: the test reads the mean of the two middle ones", n)
+	a, b := others[n/2], others[n/2] // an odd number: the middle one
+	if n%2 == 0 {                    // an even number: the mean of the two middle ones
+		a, b = others[n/2-1], others[n/2]
 	}
-	a, b := others[n/2-1], others[n/2]
 	median := (a.u + b.u) / 2
 	share := (a.steel/(a.steel+a.power) + b.steel/(b.steel+b.power)) / 2
 	price, _ := makerUnits(d, lv, nil)
 	if math.Abs(price/median-1) > 0.01 {
 		t.Errorf("mainframe_hall costs %.4f price units, the other healthy makers' median is %.4f", price, median)
 	}
-	steel, power := d.BaseCost["steel"]/lv["steel"], d.BaseCost["electricity"]/lv["electricity"]
+	steel, power := (d.BaseCost["steel"]+d.BaseCost["titanium_ore"])/lv["steel"], d.BaseCost["electricity"]/lv["electricity"]
 	if got := steel / (steel + power); math.Abs(got-share) > 0.01 {
 		t.Errorf("mainframe_hall's steel is %.3f of its units, the two middle makers use %.3f", got, share)
 	}

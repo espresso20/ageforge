@@ -15,7 +15,7 @@ func buildingsLineageHacker() []BuildingDef {
 	// standard (config/maker_rule.go), priced in steel and electricity only
 	b = append(b, BuildingDef{
 		Name: "Mainframe Hall", Key: "mainframe_hall", Category: "production",
-		BaseCost:  map[string]float64{"steel": 2.18e11, "electricity": 8.01e10},
+		BaseCost:  map[string]float64{"steel": 1.09e11, "titanium_ore": 1.09e11, "electricity": 8.01e10},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "data", Value: 541000},
@@ -30,7 +30,7 @@ func buildingsLineageHacker() []BuildingDef {
 	// tier 1 — information_age  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Server Farm", Key: "server_farm", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 5.96e11, "steel": 1.13e12},
+		BaseCost:  map[string]float64{"electricity": 5.96e11, "steel": 5.65e11, "titanium_ore": 5.65e11},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "data", Value: 7900000},
@@ -45,7 +45,7 @@ func buildingsLineageHacker() []BuildingDef {
 	// tier 2 — digital_age  rate=4.0
 	b = append(b, BuildingDef{
 		Name: "Data Center", Key: "data_center", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 2e12, "data": 2.5e11, "steel": 2.9e12, "nanobots": 13000},
+		BaseCost:    map[string]float64{"electricity": 2e12, "data": 2.5e11, "steel": 1.45e12, "titanium_ore": 1.45e12, "nanobots": 13000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "data", Value: 1.83e07}},
 		BuildTicks:  12480,
@@ -58,7 +58,7 @@ func buildingsLineageHacker() []BuildingDef {
 	// tier 3 — cyberpunk_age  rate=8.0
 	b = append(b, BuildingDef{
 		Name: "Cyber Hub", Key: "cyber_hub", Category: "production",
-		BaseCost:    map[string]float64{"data": 9.5e11, "crypto": 5e12, "electricity": 9.9e12, "nanobots": 150000},
+		BaseCost:    map[string]float64{"data": 9.5e11, "crypto": 5e12, "electricity": 4.95e12, "dark_matter_crystals": 4.95e12, "nanobots": 150000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "data", Value: 5.239999999999999e07}},
 		BuildTicks:  14040,
@@ -71,7 +71,7 @@ func buildingsLineageHacker() []BuildingDef {
 	// tier 4 — fusion_age  rate=16.0
 	b = append(b, BuildingDef{
 		Name: "Quantum Server Farm", Key: "quantum_server_farm", Category: "production",
-		BaseCost:    map[string]float64{"plasma": 2.2e13, "electricity": 6.4e13, "steel": 8.5e13},
+		BaseCost:    map[string]float64{"plasma": 2.2e13, "electricity": 3.2e13, "dark_matter_crystals": 3.2e13, "steel": 8.5e13},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "data", Value: 16}},
 		BuildTicks:  15600,
@@ -84,7 +84,7 @@ func buildingsLineageHacker() []BuildingDef {
 	// tier 5 — space_age  rate=32.0
 	b = append(b, BuildingDef{
 		Name: "Orbital Data Relay", Key: "orbital_data_relay", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 3.6e14, "plasma": 1.8e14, "electricity": 4.5e14},
+		BaseCost:    map[string]float64{"titanium": 3.6e14, "plasma": 1.8e14, "electricity": 2.25e14, "dark_matter_crystals": 2.25e14},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "data", Value: 32}},
 		BuildTicks:  17160,

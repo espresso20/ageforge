@@ -55,7 +55,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 3 — iron_age  rate=1.6
 	b = append(b, BuildingDef{
 		Name: "Agora", Key: "agora", Category: "research",
-		BaseCost:    map[string]float64{"stone": 15000, "gold": 7500, "iron": 4500},
+		BaseCost:    map[string]float64{"stone": 7500, "marble": 7500, "gold": 7500, "iron": 2250, "iron_ore": 2250},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 1.6}},
 		BuildTicks:  300,
@@ -68,7 +68,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 4 — classical_age  rate=3.2
 	b = append(b, BuildingDef{
 		Name: "Library", Key: "library", Category: "research",
-		BaseCost:    map[string]float64{"stone": 110000, "gold": 36000, "iron": 24000},
+		BaseCost:    map[string]float64{"stone": 55000, "marble": 55000, "gold": 36000, "iron": 12000, "iron_ore": 12000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 3.2}},
 		BuildTicks:  600,
@@ -172,7 +172,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 12 — modern_age  rate=204.8
 	b = append(b, BuildingDef{
 		Name: "Think Tank", Key: "think_tank", Category: "research",
-		BaseCost:    map[string]float64{"steel": 9e10, "electricity": 3e10, "data": 3e09},
+		BaseCost:    map[string]float64{"steel": 4.5e10, "titanium_ore": 4.5e10, "electricity": 3e10, "data": 3e09},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 204.8}},
 		BuildTicks:  3600,
@@ -198,7 +198,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 14 — digital_age  rate=819.2
 	b = append(b, BuildingDef{
 		Name: "AI Research Lab", Key: "ai_research_lab", Category: "research",
-		BaseCost:    map[string]float64{"electricity": 1.2e12, "data": 1.5e11, "steel": 1.8e12},
+		BaseCost:    map[string]float64{"electricity": 1.2e12, "data": 1.5e11, "steel": 9e11, "titanium_ore": 9e11},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 819.2}},
 		BuildTicks:  3600,
@@ -211,7 +211,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 15 — cyberpunk_age  rate=1638.4
 	b = append(b, BuildingDef{
 		Name: "Neuro Research Center", Key: "neuro_research_center", Category: "research",
-		BaseCost:    map[string]float64{"data": 6e11, "crypto": 3e12, "electricity": 6e12},
+		BaseCost:    map[string]float64{"data": 6e11, "crypto": 3e12, "electricity": 3e12, "dark_matter_crystals": 3e12},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 1638.4}},
 		BuildTicks:  3600,
@@ -224,7 +224,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 16 — fusion_age  rate=3276.8
 	b = append(b, BuildingDef{
 		Name: "Theoretical Institute", Key: "theoretical_institute", Category: "research",
-		BaseCost:    map[string]float64{"plasma": 1.5e13, "electricity": 4.5e13, "steel": 6e13},
+		BaseCost:    map[string]float64{"plasma": 1.5e13, "electricity": 2.25e13, "dark_matter_crystals": 2.25e13, "steel": 6e13},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 3276.8}},
 		BuildTicks:  3600,
@@ -237,7 +237,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 17 — space_age  rate=6553.6
 	b = append(b, BuildingDef{
 		Name: "Deep Space Observatory", Key: "deep_space_observatory", Category: "research",
-		BaseCost:    map[string]float64{"titanium": 2.4e14, "plasma": 1.2e14, "electricity": 3e14},
+		BaseCost:    map[string]float64{"titanium": 2.4e14, "plasma": 1.2e14, "electricity": 1.5e14, "dark_matter_crystals": 1.5e14},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 6553.6}},
 		BuildTicks:  3600,

@@ -177,6 +177,31 @@ func priceLevels(defs []BuildingDef) map[string]map[string]float64 {
 			out[age][res] = median(v)
 		}
 	}
+	// A raw and its partner (RawPartner) share one level in an age that makes
+	// the raw: the median, over the age's buildings, of the two amounts added
+	// together. A building that moves half of its partner part into the raw
+	// keeps the sum, so the pair's level is the partner's level from before any
+	// raw was priced, and every price in units is what it was.
+	for age := range prices {
+		for _, raw := range RawMaterials {
+			partner := RawPartner(defs, age, raw)
+			if partner == "" {
+				continue
+			}
+			var sums []float64
+			for _, d := range defs {
+				if d.RequiredAge != age || d.Category == "wonder" {
+					continue
+				}
+				if s := d.BaseCost[partner] + d.BaseCost[raw]; s > 0 {
+					sums = append(sums, s)
+				}
+			}
+			lv := median(sums)
+			out[age][partner] = lv
+			out[age][raw] = lv
+		}
+	}
 	return out
 }
 
