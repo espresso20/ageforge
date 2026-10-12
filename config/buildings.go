@@ -216,7 +216,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 1.3e09, "electricity": 2.1e08, "iron": 8.6e08},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8.1e09}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.6e10}},
 			BuildTicks:  600,
 			RequiredAge: "electric_age",
 			Description: "Climate-controlled storage.",
@@ -231,7 +231,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 1.2e10, "stone": 1.9e10, "iron": 7.4e09},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8.3e10}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 7.5e10}},
 			BuildTicks:  700,
 			RequiredAge: "atomic_age",
 			Description: "Radiation-shielded storage.",
@@ -291,7 +291,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 2.5e13, "plasma": 1.2e12, "electricity": 1.2e13},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 4.9e13}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8.7e13}},
 			BuildTicks:  1950,
 			RequiredAge: "fusion_age",
 			Description: "Plasma-shielded storage.",
@@ -303,7 +303,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 1.8e14, "plasma": 2.1e13, "electricity": 1.1e14},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 3.5e14}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 3e14}},
 			BuildTicks:  2145,
 			RequiredAge: "space_age",
 			Description: "Zero-gravity storage facility.",
@@ -319,7 +319,7 @@ func baseBuildingsRaw() []BuildingDef {
 			// storage had fallen out of band with its own prices (median first copy
 			// 13-57% of max storage vs 3-8% everywhere else), so no age gate there
 			// fit the Storage Covenant. See the Gate Covenant in smoke/static.go.
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 5.8e15}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8.6e15}},
 			BuildTicks:  2340,
 			RequiredAge: "interstellar_age",
 			Description: "Pocket-dimension storage.",
@@ -331,7 +331,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"dark_matter": 3.5e14, "titanium": 1.8e15, "plasma": 7.1e14},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 4e16}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 5e16}},
 			BuildTicks:  2340,
 			RequiredAge: "galactic_age",
 			Description: "Galaxy-spanning storage network.",
@@ -534,7 +534,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Atomic Age — normal costs: 3B-10B
 		{
 			Name: "Particle Accelerator", Key: "particle_accelerator", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 1.6e11, "electricity": 2.24e11, "uranium": 2.56e10},
+			BaseCost:  map[string]float64{"steel": 1.86e11, "electricity": 2.6e11, "uranium": 2.98e10},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 10},
