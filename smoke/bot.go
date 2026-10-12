@@ -30,11 +30,6 @@ import (
 //   - staff buildings by how much each worker moves the requirements forward
 //   - prefer producers it can pay for within a few horizons over pricier
 //     ones that need a resource nothing makes yet
-//   - at the market: buy food when workers starve, buy whatever blocks the
-//     most wanted purchase (storage included) with spare resources, and
-//     otherwise even out the slowest target; never undo a recent trade, and
-//     never sell what the most wanted purchase is being saved for unless it
-//     sits at its cap
 //   - bank surplus into the age's wonder, research affordable techs with
 //     surplus knowledge (a tech that makes a missing target resource
 //     first), and hand-gather while the game allows it
@@ -102,9 +97,6 @@ type Bot struct {
 	Harbinger string
 	tick      int
 	age       string
-	// sold and bought remember the tick each resource last left or entered
-	// through the market, so two trading rules can't undo each other.
-	sold, bought map[string]int
 }
 
 // gatherYield matches the command line's per-command cap (ui gatherMaxYield).
@@ -133,8 +125,6 @@ func NewBot(ge *game.GameEngine) *Bot {
 		HorizonTicks: 900, // 30 minutes at 1x
 		Actions:      make(map[string]int),
 		Errors:       make(map[string]int),
-		sold:         make(map[string]int),
-		bought:       make(map[string]int),
 	}
 }
 
@@ -168,9 +158,7 @@ type plan struct {
 	// blocker is the resource keeping the most wanted purchase out of reach;
 	// hand-gathering goes there first.
 	blocker string
-	// blockNeed is how much of blocker that purchase costs; blockCost is its
-	// whole price, which trades for the blocker must not sell off.
-	blockNeed float64
+	// blockCost is that purchase's whole price, which a deal must not give away.
 	blockCost map[string]float64
 }
 
@@ -326,7 +314,6 @@ func (b *Bot) Play(st game.GameState) {
 	b.bankWonder(p)
 	b.research(p)
 	b.festival(p)
-	b.trade(p)
 	if b.Deals {
 		b.takeDeals(p)
 	}
@@ -452,7 +439,7 @@ const planIncomeSlack = 1.5
 const planStoreTicks = 1800
 
 // planAhead is how a check-in player leaves the game: a build plan
-// (`plan build`, `plan research`, `plan trade`) for the hours until the next
+// (`plan build`, `plan research`) for the hours until the next
 // visit, so the income of those hours is spent as it comes in instead of
 // piling up at the caps. It replaces the previous visit's plan. Wonder
 // overflow stays on (the default), so what the plan doesn't spend and the
@@ -470,16 +457,14 @@ const planStoreTicks = 1800
 //  3. the next age's required buildings;
 //  4. housing when the population is capped and worker slots stand empty;
 //  5. producers of the slowest requirements, slowest first;
-//  6. techs the knowledge budget covers, a missing producer's tech first;
-//  7. trades for what the age buys rather than makes, from what overflows.
+//  6. techs the knowledge budget covers, a missing producer's tech first.
 //
 // While the goal is beyond the horizon (investing), producers go before
 // storage and required buildings: a waiting item holds its price back, and a
 // required building waiting on stone would hold back the stone pits that
 // bootstrap it. Storage and required buildings get a copy even when the
 // budget can't cover one, as long as what they lack is coming in: they are
-// what the age needs, and the plan waits for them. Anything short of a
-// resource nothing makes is first bought at the market (fundAtMarket).
+// what the age needs, and the plan waits for them.
 func (b *Bot) planAhead(st game.GameState) {
 	if b.CheckInTicks <= 0 {
 		return
@@ -514,13 +499,9 @@ func (b *Bot) planAhead(st game.GameState) {
 	}
 	// accrues reports whether every part of c the budget lacks is being
 	// made, so the plan will get there by waiting.
-	// tradeIn is what the plan's trade items buy: it comes in while the
-	// player is away even though nothing makes it (the Bronze Age's gold
-	// before a market stands, the later ages' market-only stone).
-	tradeIn := map[string]bool{}
 	accrues := func(c map[string]float64) bool {
 		for r, v := range c {
-			if budget[r] < v && st.Resources[r].Rate+ahead[r] <= 0 && !tradeIn[r] {
+			if budget[r] < v && st.Resources[r].Rate+ahead[r] <= 0 {
 				return false
 			}
 		}
@@ -532,20 +513,6 @@ func (b *Bot) planAhead(st game.GameState) {
 			c := b.cost(p, key)
 			if !p.fits(c) {
 				break
-			}
-			if !covers(c) && n == 0 {
-				b.fundAtMarket(p, c, budget)
-			}
-			if essential {
-				// What the age hardly makes and the budget lacks (the
-				// Atomic Age's iron for its vaults) is kept topped up at
-				// the market while the player is away.
-				for _, r := range sortedKeys(c) {
-					scarce := (st.Resources[r].Rate+ahead[r])*b.CheckInTicks < 0.1*c[r]
-					if budget[r] < c[r] && scarce && !tradeIn[r] && b.planTopUp(p, st, r) {
-						tradeIn[r] = true
-					}
-				}
 			}
 			if !covers(c) && !(essential && accrues(c)) {
 				break
@@ -629,17 +596,6 @@ func (b *Bot) planAhead(st game.GameState) {
 		}
 	}
 
-	// Trades go first: a build waiting on stone holds back the gold it also
-	// costs, so a trade below it could never sell that gold for the stone.
-	// Each is capped at what is missing.
-	b.planTrades(p, st)
-	if b.hasTrader(st) {
-		for _, v := range b.ge.GetState().Plan {
-			if v.Kind == game.PlanTrade {
-				tradeIn[v.To] = true
-			}
-		}
-	}
 	if p.invest {
 		producers()
 		storage()
@@ -746,142 +702,6 @@ func (b *Bot) planNextAge(next string) {
 	}
 }
 
-// maxPlanTrades bounds the trade items a check-in player leaves.
-const maxPlanTrades = 4
-
-// planTrades adds `plan trade` items for the resources the age still needs
-// that the income before the next visit won't bring (the market-only stone
-// and iron of the later ages): each sold from the resource that fills its
-// store before the next visit with the most to spare, for what is missing.
-// A seller can serve several targets while its spare lasts: what it makes
-// before the next visit past a full store and past what the age still needs
-// of it.
-func (b *Bot) planTrades(p *plan, st game.GameState) {
-	traders := 0
-	for key, bs := range st.Buildings {
-		if b.defs[key].LineageKey == "trade" {
-			traders += bs.Count
-		}
-	}
-	income := func(r string) float64 { return float64(math.Max(st.Resources[r].Rate, 0) * b.CheckInTicks) }
-	if traders == 0 {
-		// No market yet: if the age needs a resource nothing makes, plan
-		// the cheapest trade building first; the trade items below wait
-		// for it.
-		missing := false
-		for _, res := range p.worst {
-			if st.Resources[res].Rate <= 0 && p.target[res] > p.amt[res] {
-				missing = true
-			}
-		}
-		key, cheapest := "", math.Inf(1)
-		for _, k := range sortedKeys(st.Buildings) {
-			if b.defs[k].LineageKey != "trade" || !b.buildable(p, k) {
-				continue
-			}
-			if f := p.costFrac(b.cost(p, k)); f < cheapest {
-				key, cheapest = k, f
-			}
-		}
-		if !missing || key == "" {
-			return
-		}
-		_, err := b.ge.PlanAddBuild(key, 1)
-		b.act("plan_market", key, err)
-	}
-	spare := map[string]float64{}
-	spareOf := func(r string) float64 {
-		if v, ok := spare[r]; ok {
-			return v
-		}
-		v := p.amt[r] + income(r) - math.Max(0, p.target[r])
-		spare[r] = math.Max(v, 0)
-		return spare[r]
-	}
-	added := 0
-	for _, want := range p.worst {
-		short := p.target[want] - p.amt[want] - income(want)
-		// Several sellers may serve one target, best first, until what is
-		// missing is covered.
-		for short > 0 && added < maxPlanTrades {
-			from, best, rate := "", 0.0, 0.0
-			for _, k := range sortedKeys(st.Trade.ExchangeRates) {
-				x := st.Trade.ExchangeRates[k]
-				if x.To != want || x.Rate <= 0 || x.From == want {
-					continue
-				}
-				if v := spareOf(x.From) * x.Rate; v > best && !b.planHasTrade(x.From, want) {
-					from, best, rate = x.From, v, x.Rate
-				}
-			}
-			if from == "" || best < 1 {
-				break
-			}
-			amount := math.Min(short, best)
-			// A resource the age makes little of is kept topped up instead
-			// (no amount): what it buys also feeds the other items of the
-			// plan that cost it, which an amount sized to the gate misses.
-			ask := amount
-			if income(want) < 0.5*(p.target[want]-p.amt[want]) {
-				ask = 0
-			}
-			if !b.act("plan_trade", from+"->"+want, b.ge.PlanAddTrade(from, want, ask)) {
-				break
-			}
-			added++
-			spare[from] -= amount / rate
-			short -= amount
-		}
-	}
-}
-
-// planTopUp adds a `plan trade` item that keeps res topped up (no amount),
-// sold from the resource with the most to spare before the next visit (what
-// it holds and makes, less what the age still needs of it). Reports whether
-// it added one.
-func (b *Bot) planTopUp(p *plan, st game.GameState, res string) bool {
-	if !b.hasTrader(st) {
-		return false
-	}
-	from, best := "", 0.0
-	for _, k := range sortedKeys(st.Trade.ExchangeRates) {
-		x := st.Trade.ExchangeRates[k]
-		if x.To != res || x.Rate <= 0 || x.From == res || b.planHasTrade(x.From, res) {
-			continue
-		}
-		spare := p.amt[x.From] + float64(math.Max(st.Resources[x.From].Rate, 0)*b.CheckInTicks) - math.Max(0, p.target[x.From])
-		if v := spare * x.Rate; v > best {
-			from, best = x.From, v
-		}
-	}
-	if from == "" || best < 1 {
-		return false
-	}
-	return b.act("plan_topup", from+"->"+res, b.ge.PlanAddTrade(from, res, 0))
-}
-
-// hasTrader reports whether a trade building stands, so the market is open
-// and a plan trade item can sell while the player is away. (A trade item
-// waiting for one still holds back what it would sell.)
-func (b *Bot) hasTrader(st game.GameState) bool {
-	for key, bs := range st.Buildings {
-		if bs.Count > 0 && b.defs[key].LineageKey == "trade" {
-			return true
-		}
-	}
-	return false
-}
-
-// planHasTrade reports whether the plan already trades from for to.
-func (b *Bot) planHasTrade(from, to string) bool {
-	for _, v := range b.ge.GetState().Plan {
-		if v.Kind == game.PlanTrade && v.Key == from && v.To == to {
-			return true
-		}
-	}
-	return false
-}
-
 // planTechs adds research to the plan if the slot will be free before the
 // next visit: first the techs the age cannot be left without, in order (the
 // keystone's chain, then what unlocks something the bot wants to build),
@@ -926,9 +746,8 @@ func (b *Bot) planTechs(p *plan, st game.GameState, budget map[string]float64) {
 // expandStorage is the first thing a check-in player does on arriving to
 // full stores: build the storage the hours until the next visit call for
 // (newPlan's capNeed: requirements, prices, and the income ahead up to what
-// the age still needs), buying at the market whatever storage input nothing
-// makes, with what sits at the caps before anything else spends it. Reports
-// whether it built anything.
+// the age still needs), with what sits at the caps before anything else
+// spends it. Reports whether it built anything.
 func (b *Bot) expandStorage(st game.GameState) bool {
 	p := b.newPlan(st)
 	built := false
@@ -949,14 +768,6 @@ func (b *Bot) expandStorage(st game.GameState) bool {
 			skip[res] = true
 			continue
 		}
-		c := b.cost(p, key)
-		if !p.affordable(c) {
-			have := make(map[string]float64, len(p.amt))
-			for k, v := range p.amt {
-				have[k] = v
-			}
-			b.fundAtMarket(p, c, have)
-		}
 		if !b.tryBuild(p, key, "build_storage") {
 			skip[res] = true
 			continue
@@ -964,56 +775,6 @@ func (b *Bot) expandStorage(st game.GameState) bool {
 		built = true
 	}
 	return built
-}
-
-// fundAtMarket buys, before leaving, what a plan item's price c needs and the
-// hours ahead won't bring: each resource the budget lacks (the Industrial
-// Age's stone and iron, the Atomic Age's iron and stone come only from the
-// market). It sells what refills before the next visit anyway (income over
-// the interval at least a full store), never what c itself needs, at most a
-// quarter of a store per trade and a few trades per resource. The trades are
-// real (`trade`); budget follows what changed hands.
-func (b *Bot) fundAtMarket(p *plan, c map[string]float64, budget map[string]float64) {
-	traders := 0
-	for key, bs := range p.st.Buildings {
-		if b.defs[key].LineageKey == "trade" {
-			traders += bs.Count
-		}
-	}
-	if traders == 0 {
-		return
-	}
-	rates := p.st.Trade.ExchangeRates
-	for _, r := range sortedKeys(c) {
-		for i := 0; i < 6; i++ {
-			short := math.Min(c[r]-budget[r], p.storage[r]-p.amt[r])
-			if short <= 0 {
-				break
-			}
-			from, best, sell := "", 0.0, 0.0
-			for _, k := range sortedKeys(rates) {
-				x := rates[k]
-				if x.To != r || x.Rate <= 0 || p.st.Resources[x.From].Rate*b.CheckInTicks < p.storage[x.From] {
-					continue
-				}
-				n := math.Min(math.Min(p.amt[x.From]-c[x.From], 0.25*p.storage[x.From]), short/x.Rate)
-				if v := n * x.Rate; n >= 1 && v > best {
-					from, best, sell = x.From, v, n
-				}
-			}
-			if from == "" {
-				break
-			}
-			got, err := b.exchange(from, r, sell)
-			if !b.act("trade_plan", from+"->"+r, err) {
-				break
-			}
-			p.amt[from] -= sell
-			p.amt[r] += got
-			budget[from] -= sell
-			budget[r] += got
-		}
-	}
 }
 
 // traceCheckIn writes what a visit finds or leaves: each resource the age
@@ -1040,8 +801,6 @@ func (b *Bot) traceCheckIn(what string, st game.GameState) {
 		for _, v := range st.Plan {
 			s := fmt.Sprintf("%s x%d %s", v.Key, v.Count, v.Status)
 			switch v.Kind {
-			case game.PlanTrade:
-				s = fmt.Sprintf("trade %s->%s (got %s, want %s more) %s", v.Key, v.To, num(v.Got), num(v.Amount), v.Status)
 			case game.PlanAdvance:
 				s = "advance " + v.Status
 			}
@@ -1067,215 +826,6 @@ func (b *Bot) actionCount() int {
 		}
 	}
 	return n
-}
-
-// trade sells one resource for the slowest target resource at the market, as
-// a player would with `trade`. It picks the amount that evens out the two
-// resources' times to target (never selling one that would then become the
-// slower of the two), skips rates pushed below 60% of base by recent trades,
-// and makes at most one exchange per decision.
-func (b *Bot) trade(p *plan) {
-	traders := 0
-	for key, bs := range p.st.Buildings {
-		if b.defs[key].LineageKey == "trade" {
-			traders += bs.Count
-		}
-	}
-	if traders == 0 {
-		return
-	}
-	rates := p.st.Trade.ExchangeRates
-	if b.tradeForFood(p, rates) || b.tradeForBlocker(p, rates) || b.tradeOverflow(p, rates) {
-		return
-	}
-	for _, want := range p.worst {
-		room := math.Min(p.target[want], p.storage[want]) - p.amt[want]
-		if room <= 0 || b.recently(b.sold, want) {
-			continue
-		}
-		dW := p.target[want] - p.amt[want]
-		rW := math.Max(p.st.Resources[want].Rate, 1e-6)
-		from, rate, sell := "", 0.0, 0.0
-		for _, k := range sortedKeys(rates) {
-			x := rates[k]
-			if x.To != want || x.Rate < x.BaseRate*0.6 || p.amt[x.From] < 1 || b.recently(b.bought, x.From) {
-				continue
-			}
-			dS := p.target[x.From] - p.amt[x.From]
-			rS := p.st.Resources[x.From].Rate
-			var n float64
-			switch {
-			case rS > 0:
-				// (dW - r n)/rW == (dS + n)/rS
-				n = (float64(dW*rS) - float64(dS*rW)) / (float64(x.Rate*rS) + rW)
-			case dS < 0:
-				n = -dS // not produced: only the surplus is spare
-			}
-			// Don't sell what the most wanted purchase is being saved for,
-			// unless it sits at its cap: with a target nothing produces, this
-			// trade would otherwise drain the purchase's inputs as fast as
-			// they come in (the Space Age's plasma and electricity, traded
-			// away for titanium while the producers they would buy wait).
-			spare := p.amt[x.From]
-			if spare < 0.95*p.storage[x.From] {
-				spare -= p.blockCost[x.From]
-			}
-			n = math.Min(math.Min(n, spare), 0.25*p.storage[x.From])
-			n = math.Min(n, room/x.Rate)
-			if n*x.Rate > sell*rate {
-				from, rate, sell = x.From, x.Rate, n
-			}
-		}
-		if from != "" && sell > 0 && sell < 1 && room < rate && p.amt[from]-p.blockCost[from] >= 1 {
-			sell = 1 // less than one unit short: buy a little over (see tradeInto)
-		}
-		if from == "" || sell < 1 {
-			continue
-		}
-		if got, err := b.exchange(from, want, sell); b.act("trade", from+"->"+want, err) {
-			p.amt[from] -= sell
-			p.amt[want] += got
-			b.sold[from], b.bought[want] = b.tick, b.tick
-		}
-		return
-	}
-}
-
-// tradeOverflow is a check-in player's trade: whatever will be lost at a cap
-// before the next visit (held now plus what comes in by then, over the cap)
-// is sold for the slowest target resource that still has room by then.
-// Selling it costs nothing, since it would be gone anyway. Only with
-// CheckInTicks set; reports whether it traded.
-func (b *Bot) tradeOverflow(p *plan, rates map[string]game.ExchangeRateInfo) bool {
-	if b.CheckInTicks <= 0 {
-		return false
-	}
-	ahead := func(res string) float64 {
-		return p.amt[res] + float64(math.Max(p.st.Resources[res].Rate, 0)*b.CheckInTicks)
-	}
-	for _, want := range p.worst {
-		room := math.Min(p.target[want], p.storage[want]) - ahead(want)
-		if room <= 0 || b.recently(b.sold, want) {
-			continue
-		}
-		from, best, sell := "", 0.0, 0.0
-		for _, k := range sortedKeys(rates) {
-			x := rates[k]
-			if x.To != want || x.Rate <= 0 || x.Rate < x.BaseRate*0.6 || b.recently(b.bought, x.From) {
-				continue
-			}
-			over := math.Min(ahead(x.From)-p.storage[x.From], p.amt[x.From])
-			n := math.Min(over, room/x.Rate)
-			if v := n * x.Rate; n >= 1 && v > best {
-				from, best, sell = x.From, v, n
-			}
-		}
-		if from == "" {
-			continue
-		}
-		got, err := b.exchange(from, want, sell)
-		if !b.act("trade_overflow", from+"->"+want, err) {
-			return false
-		}
-		p.amt[from] -= sell
-		p.amt[want] += got
-		b.sold[from], b.bought[want] = b.tick, b.tick
-		return true
-	}
-	return false
-}
-
-// tradeForBlocker buys the resource blocking the most wanted purchase when
-// the market sells it: it sells whatever the bot holds the most spare of
-// (above what this age's targets need), at most a quarter of that cap per
-// trade. Reports whether it traded.
-func (b *Bot) tradeForBlocker(p *plan, rates map[string]game.ExchangeRateInfo) bool {
-	want := p.blocker
-	if want == "" {
-		return false
-	}
-	return b.tradeInto(p, rates, want, math.Min(p.blockNeed, p.storage[want])-p.amt[want], p.blockCost)
-}
-
-// tradeForFood buys food when workers are starving and no food building is
-// affordable (the Iron Age field works costs iron the bot may not have).
-// Starvation drags morale down and every rate with it, a spiral a player
-// would break at the market.
-func (b *Bot) tradeForFood(p *plan, rates map[string]game.ExchangeRateInfo) bool {
-	food := p.st.Resources["food"]
-	if p.foodRate >= 0 || food.Amount > 0.1*food.Storage {
-		return false
-	}
-	return b.tradeInto(p, rates, "food", float64(0.25*food.Storage)-food.Amount, nil)
-}
-
-// tradeInto sells whatever the bot holds the most spare of for up to short
-// of want, in one trade. keep is a price whose inputs must not be sold.
-func (b *Bot) tradeInto(p *plan, rates map[string]game.ExchangeRateInfo, want string, short float64, keep map[string]float64) bool {
-	if short <= 0 || b.recently(b.sold, want) {
-		return false
-	}
-	from, best, sell, fromSpare, fromRate := "", 0.0, 0.0, 0.0, 0.0
-	for _, k := range sortedKeys(rates) {
-		x := rates[k]
-		if x.To != want || x.Rate < x.BaseRate*0.6 || x.Rate <= 0 || b.recently(b.bought, x.From) {
-			continue
-		}
-		// Spare is what this age's targets and the purchase itself don't
-		// need, or, for a resource sitting at its cap, whatever the cap is
-		// wasting anyway. (Selling the purchase's other inputs would just
-		// swap which one blocks it.)
-		spare := p.amt[x.From] - p.target[x.From] - keep[x.From]
-		if p.amt[x.From] >= 0.95*p.storage[x.From] {
-			spare = math.Max(spare, math.Min(0.25*p.storage[x.From], p.amt[x.From]-keep[x.From]))
-		}
-		if spare <= 0 {
-			continue
-		}
-		n := math.Min(math.Min(spare, 0.25*p.storage[x.From]), short/x.Rate)
-		if v := n * x.Rate; v > best {
-			from, best, sell, fromSpare, fromRate = x.From, v, n, spare, x.Rate
-		}
-	}
-	// The market trades whole units. Short by less than one unit of the best
-	// source (the last stone a wonder bank lacks, bought with gold at several
-	// stone a coin), a player sells one and buys a little over; the bot does
-	// too, when that unit is spare, instead of waiting for income that may
-	// never come (an Endure can take an old resource's last producers).
-	if from != "" && sell > 0 && sell < 1 && short < fromRate && fromSpare >= 1 {
-		sell = 1
-	}
-	if from == "" || sell < 1 {
-		return false
-	}
-	got, err := b.exchange(from, want, sell)
-	if !b.act("trade", from+"->"+want, err) {
-		return false
-	}
-	p.amt[from] -= sell
-	p.amt[want] += got
-	b.sold[from], b.bought[want] = b.tick, b.tick
-	return true
-}
-
-// exchange trades amount of from for to at the market. With RecordPlan it
-// also writes the trade into the run's plan log, as a trade item buying
-// what this one got (GameEngine.NoteTradeForTest).
-func (b *Bot) exchange(from, to string, amount float64) (float64, error) {
-	got, err := b.ge.ExchangeResources(from, to, amount)
-	if err == nil && b.RecordPlan && got > 0 {
-		b.ge.NoteTradeForTest(from, to, got)
-	}
-	return got, err
-}
-
-// recently reports whether m records res within the last 150 ticks (5 min).
-// The game tick restarts at prestige, so a record from a later tick than now
-// is from the previous run and doesn't count.
-func (b *Bot) recently(m map[string]int, res string) bool {
-	t, ok := m[res]
-	d := b.tick - t
-	return ok && d >= 0 && d < 150
 }
 
 // queuedCount is how many copies of key are under construction.
@@ -1465,7 +1015,7 @@ func (b *Bot) buyOrBootstrap(p *plan, key, kind string, depth int) bool {
 		return false
 	}
 	if p.blocker == "" {
-		p.blocker, p.blockNeed, p.blockCost = block, c[block], c
+		p.blocker, p.blockCost = block, c
 	}
 	if depth > 0 {
 		if k2, ok := b.bestFor(p, producer(block)); ok && k2 != key {
@@ -1761,8 +1311,7 @@ func (b *Bot) build(p *plan) {
 	}
 
 	// 3. Storage for anything that must fit under a cap. A storage building
-	// the bot can't pay for records its blocker, so the market can supply it
-	// (the Renaissance vault's stone, which nothing in that age produces).
+	// the bot can't pay for records its blocker.
 	for _, res := range sortedKeys(p.capNeed) {
 		for i := 0; i < 50 && p.capNeed[res] > p.storage[res]*0.98; i++ {
 			key, ok := b.bestFor(p, storer(res))

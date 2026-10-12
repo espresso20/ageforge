@@ -10,7 +10,6 @@ package smoke
 import (
 	"bufio"
 	"fmt"
-	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -212,22 +211,11 @@ type AgeSplit struct {
 	// bound.
 	KnowledgeHour float64 `json:"knowledge_per_hour_1x,omitempty"`
 	PoolAll       float64 `json:"production_all_earned,omitempty"`
-	// KnowledgeBought is the knowledge the market sold in the age, and
-	// KnowledgeMade what the age's own income added up to over the same
-	// ticks (the rate KnowledgeHour averages): how much of an age's
-	// research was bought.
-	KnowledgeBought float64 `json:"knowledge_bought,omitempty"`
-	KnowledgeMade   float64 `json:"knowledge_made,omitempty"`
 	// FaithStrength and CultureStrength are what the rolls that read faith
 	// and culture would have read as the age ended (game/faith.go,
 	// game/culture.go): where a real run's town stands against the bands.
 	FaithStrength   float64 `json:"faith_strength,omitempty"`
 	CultureStrength float64 `json:"culture_strength,omitempty"`
-	// Made, Bought and Sold are the age's whole market picture, per
-	// resource: what its own income added up to over the sampled ticks
-	// (positive rates only), and what the market sold the player and took
-	// from them. A resource bought far past what was made is one the age
-	// gets at the market; one sold in bulk is what paid for it.
 	// Quiet says what the longest quiet stretch (QuietSecs) was made of: nil
 	// for an age the run did not sample.
 	Quiet *QuietStretch `json:"quiet,omitempty"`
@@ -236,9 +224,6 @@ type AgeSplit struct {
 	// (gold's): what a run carried in.
 	Entry      map[string]float64 `json:"stock_at_entry,omitempty"`
 	EntryStore float64            `json:"store_at_entry,omitempty"`
-	Made       map[string]float64 `json:"made,omitempty"`
-	Bought     map[string]float64 `json:"market_bought,omitempty"`
-	Sold       map[string]float64 `json:"market_sold,omitempty"`
 	// Gates is when each thing the advance waits for was first in place
 	// (nil for an age the run did not sample).
 	Gates *AgeGates `json:"gates,omitempty"`
@@ -465,18 +450,9 @@ type runner struct {
 	poolAll    float64
 	quietAfter string
 	// gates is when each thing the advance waits for was first in place in
-	// this age, wonder the age's wonder once the state has named it, and
-	// boughtK0 the knowledge the market had sold when the age began.
-	gates    AgeGates
-	wonder   string
-	boughtK0 float64
-	boughtK  float64
-	// made is each resource's income summed over the age's sampled ticks;
-	// bought0 and sold0 are the market's run totals when the age began, and
-	// bought and sold the totals as last seen.
-	made            map[string]float64
-	bought0, bought map[string]float64
-	sold0, sold     map[string]float64
+	// this age, and wonder the age's wonder once the state has named it.
+	gates  AgeGates
+	wonder string
 	// stretch is the quiet stretch running now, stretchBuilt0 the buildings
 	// standing when it began, and quietBest the longest one of the age so
 	// far (see QuietStretch).
@@ -746,28 +722,10 @@ func (r *runner) split(unfinished bool) AgeSplit {
 	if r.knowTicks > 0 {
 		g := r.gates
 		a.Gates = &g
-		a.KnowledgeMade = r.knowSum
-		a.KnowledgeBought = math.Max(r.boughtK-r.boughtK0, 0)
-		a.Made = maps.Clone(r.made)
 		a.Entry, a.EntryStore = r.entry, r.entryStore
 		a.FaithStrength, a.CultureStrength = r.faithS, r.cultureS
-		a.Bought, a.Sold = since(r.bought, r.bought0), since(r.sold, r.sold0)
 	}
 	return a
-}
-
-// since is now less then per key, for the keys that grew.
-func since(now, then map[string]float64) map[string]float64 {
-	var out map[string]float64
-	for k, v := range now {
-		if d := v - then[k]; d > 0 {
-			if out == nil {
-				out = map[string]float64{}
-			}
-			out[k] = d
-		}
-	}
-	return out
 }
 
 // trackGates notes the first sampled tick of the age at which each thing
@@ -796,17 +754,8 @@ func (r *runner) trackGates(st game.GameState) {
 		}
 		mark(&r.gates.Buildings, blds)
 	}
-	bought := st.Trade.TotalBought["knowledge"]
-	if bought < r.boughtK {
-		// A new run (prestige or Succumb) starts the market's totals again.
-		r.boughtK0 = 0
-		r.bought0, r.sold0 = nil, nil
-	}
-	r.boughtK = bought
-	r.bought, r.sold = st.Trade.TotalBought, st.Trade.TotalSold
 	r.faithS, r.cultureS = st.CatastropheOutlook.FaithStrength, st.CatastropheOutlook.CultureStrength
-	if r.made == nil {
-		r.made = map[string]float64{}
+	if r.entry == nil {
 		r.entry = map[string]float64{}
 		for k, rs := range st.Resources {
 			if rs.Amount >= 1 {
@@ -814,11 +763,6 @@ func (r *runner) trackGates(st game.GameState) {
 			}
 		}
 		r.entryStore = st.Resources["gold"].Storage
-	}
-	for k, rs := range st.Resources {
-		if rs.Rate > 0 {
-			r.made[k] += float64(rs.Rate * float64(r.cfg.DecideEvery))
-		}
 	}
 }
 
@@ -968,9 +912,7 @@ func (r *runner) enterAge(st game.GameState) {
 	r.knowSum, r.knowTicks, r.poolAll = 0, 0, 0
 	r.gates = AgeGates{WonderTech: -1, WonderFunded: -1, WonderBuilt: -1, Buildings: -1}
 	r.wonder = ""
-	r.boughtK0 = r.boughtK
-	r.made = nil
-	r.bought0, r.sold0 = maps.Clone(r.bought), maps.Clone(r.sold)
+	r.entry = nil
 }
 
 // closeAge records the age just completed. Its verdict is graded across

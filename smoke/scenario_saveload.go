@@ -2,7 +2,6 @@ package smoke
 
 import (
 	"fmt"
-	"maps"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -43,29 +42,22 @@ type checkpoint struct {
 	memory botMemory
 }
 
-// botMemory is what the bot carries between decisions: the ticks it last
-// traded each resource, so two trading rules can't undo each other. It is the
-// player's memory, not the game's, so no save carries it, and a player who
-// reloads still remembers what they just did. The loaded run's fresh bot is
-// given the uninterrupted bot's copy, or the two would trade differently from
-// the first decision and every checkpoint would read as a divergence.
+// botMemory is what the bot carries between decisions: the tick it last saw.
+// It is the player's memory, not the game's, so no save carries it, and a
+// player who reloads still remembers what they just did. The loaded run's
+// fresh bot is given the uninterrupted bot's copy, or the two would decide
+// differently from the first decision and every checkpoint would read as a
+// divergence.
 type botMemory struct {
-	tick         int
-	sold, bought map[string]int
+	tick int
 }
 
 func rememberBot(b *Bot) botMemory {
-	return botMemory{tick: b.tick, sold: maps.Clone(b.sold), bought: maps.Clone(b.bought)}
+	return botMemory{tick: b.tick}
 }
 
 func (m botMemory) restore(b *Bot) {
 	b.tick = m.tick
-	if m.sold != nil {
-		b.sold = maps.Clone(m.sold)
-	}
-	if m.bought != nil {
-		b.bought = maps.Clone(m.bought)
-	}
 }
 
 // saveloadSkip lists GameState paths that legitimately differ between an

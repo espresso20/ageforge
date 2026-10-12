@@ -357,9 +357,7 @@ func documentedShortcuts(md string) map[string]string {
 }
 
 // requiredForms are command shapes with no keyword to find them by.
-var requiredForms = []struct{ cmd, prefix, what string }{
-	{"trade", "`trade <", "the resource exchange, trade <from> <to> <amount>"},
-}
+var requiredForms = []struct{ cmd, prefix, what string }{}
 
 func runDocsync(e *Env, res *Result) {
 	if e.RepoRoot == "" {
