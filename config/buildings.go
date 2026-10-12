@@ -180,7 +180,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"wood": 2600000, "stone": 1700000, "gold": 1000000},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.6e07}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2.7e07}},
 			BuildTicks:  300,
 			RequiredAge: "colonial_age",
 			Description: "Trade goods warehouse.",
@@ -192,7 +192,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 2.6e07, "iron": 3.4e07, "coal": 1.7e07},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 7.5e07}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8.8e07}},
 			BuildTicks:  400,
 			RequiredAge: "industrial_age",
 			Description: "Industrial-scale storage.",
@@ -204,7 +204,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 2.1e08, "gold": 1.7e08, "iron": 1.3e08},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8.7e08}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8.5e08}},
 			BuildTicks:  500,
 			RequiredAge: "victorian_age",
 			Description: "Reinforced vault.",
@@ -345,7 +345,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"antimatter": 5e15, "dark_matter": 9.9e15, "titanium": 2.5e15},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.5e18}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2.3e18}},
 			BuildTicks:  2340,
 			RequiredAge: "quantum_age",
 			Description: "Stores matter in quantum superposition.",
