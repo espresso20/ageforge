@@ -134,13 +134,13 @@ func (r ResearchRow) Problems() []string {
 // ResearchTimeKnown lists the ages where, for the reference town, the
 // keystone, its research and the wonder take more than the age's target, with
 // the share they take today. The Time rule used to count knowledge at a rate
-// read off bot runs; it counts what five staffed copies of the knowledge
-// buildings make now, and one age does not fit. An age listed here that
+// read off bot runs; it counts what eight staffed copies of the knowledge
+// buildings make now. One age did not fit with five copies (the Electric Age,
+// at 102%); the town of eight makes 1.6 times the knowledge its buildings
+// give and the age takes 72%, so none is listed. An age listed here that
 // starts to fit, or an age not listed that stops fitting, fails the check, so
 // this table only ever gets shorter on purpose.
-var ResearchTimeKnown = map[string]float64{
-	"electric_age": 1.02,
-}
+var ResearchTimeKnown = map[string]float64{}
 
 // StaticResearch checks every age against the Research Covenant and returns
 // one row per age, failing or not.
@@ -149,7 +149,7 @@ func StaticResearch() []ResearchRow {
 }
 
 // referenceKnowledge is what the reference town makes of knowledge in an
-// age's target time: five fully staffed copies of every knowledge building
+// age's target time: eight fully staffed copies of every knowledge building
 // so far, with the bonuses the tables give that town, for as many ticks as
 // the age is meant to last. It is worked out from the building and tech
 // tables alone.
@@ -301,7 +301,7 @@ func configChain(techs map[string]config.TechDef, key string, have map[string]bo
 
 // writeResearch renders the Research Covenant check.
 func writeResearch(sb *strings.Builder, rows []ResearchRow) {
-	fmt.Fprintf(sb, "Each age's wonder needs its keystone tech (the Research Covenant). The first tech of an age must fit the knowledge storage a player enters the age with, or do so within %d copies of the age's own storage building. Every tech the wonder waits for must fit, with %gx to spare, in the most knowledge storage buildable in the age. And the keystone must be affordable well inside the age: its knowledge, with the techs of its own age it stands on, as a share of what the reference town (five staffed copies of every knowledge building so far) makes in the age's target time, plus its research time and the wonder's build time as shares of the target, may not pass 100%%. \"Carried in\" is what a run that researched nothing an earlier wonder did not ask for owes on top, as a share of what the age makes: reported, not failed. `go test ./smoke` fails on any row marked ✗.\n\n",
+	fmt.Fprintf(sb, "Each age's wonder needs its keystone tech (the Research Covenant). The first tech of an age must fit the knowledge storage a player enters the age with, or do so within %d copies of the age's own storage building. Every tech the wonder waits for must fit, with %gx to spare, in the most knowledge storage buildable in the age. And the keystone must be affordable well inside the age: its knowledge, with the techs of its own age it stands on, as a share of what the reference town (eight staffed copies of every knowledge building so far) makes in the age's target time, plus its research time and the wonder's build time as shares of the target, may not pass 100%%. \"Carried in\" is what a run that researched nothing an earlier wonder did not ask for owes on top, as a share of what the age makes: reported, not failed. `go test ./smoke` fails on any row marked ✗.\n\n",
 		TechEntryStorageCopies, GateResourceMargin)
 	sb.WriteString("| age | first tech | costs | enters with | storage copies first | the wonder waits for | costs | of the age's knowledge | + research | + build | of the age | carried in | |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, r := range rows {

@@ -10,6 +10,15 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
+// The old rule read the fill of culture's store against the culture a
+// moderate set had made, so what it read is proportional to the town: a
+// moderate one stayed under 8% (1% from the Modern Age on) for a town of
+// five, and the town of eight makes 8/5 of the culture over the same store.
+const (
+	oldFillMedieval = 0.08 * float64(config.TownCopies) / 5
+	oldFillModern   = 0.01 * float64(config.TownCopies) / 5
+)
+
 // TestCultureStrengthBars: walked through the whole run at the pacing
 // targets, a moderate town stays on Minor good epoch events at every moment
 // a roll can fall, a town with twice the culture buildings has Major events
@@ -47,7 +56,8 @@ func TestCultureStrengthBars(t *testing.T) {
 		}
 		// The rule this replaced: where an epoch roll falls, no town that
 		// made its culture reached the 40% Major events asked, a moderate one
-		// stayed under 8% and under 1% from the Modern Age on; and from the
+		// stayed under oldFillMedieval and under oldFillModern from the Modern
+		// Age on; and from the
 		// Medieval Age (where the market starts selling culture) to the
 		// Digital Age, a moderate economy's gold bought it instead in under a
 		// thousand ticks (under 400 before the storage wall; the walled
@@ -56,7 +66,7 @@ func TestCultureStrengthBars(t *testing.T) {
 		if !transitions[r.Age] {
 			continue
 		}
-		if r.OldFillTop >= game.CultureMajorAbove || r.OldFill >= 0.08 || pos[r.Age] >= pos["modern_age"] && r.OldFill >= 0.01 {
+		if r.OldFillTop >= game.CultureMajorAbove || r.OldFill >= oldFillMedieval || pos[r.Age] >= pos["modern_age"] && r.OldFill >= oldFillModern {
 			t.Errorf("%s: the old rule read %.3f for a moderate town and %.3f for %g times the buildings; the store was never filled by making culture", r.Age, r.OldFill, r.OldFillTop, CultureTopSets)
 		}
 		if pos[r.Age] <= pos["digital_age"] && (r.OldGoldTicks <= 0 || r.OldGoldTicks > 1000) {

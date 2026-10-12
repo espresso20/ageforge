@@ -262,8 +262,8 @@ func leastGeneralStore() map[string]float64 {
 }
 
 // typicalGeneralStore is, per age, the general storage of a moderate builder:
-// the base store and config.FlowCopies copies of every storage building up
-// to that age.
+// the base store and config.StorageRuleCopies copies of every storage
+// building up to that age.
 func typicalGeneralStore() map[string]float64 {
 	idx := map[string]int{}
 	for i, a := range config.AgeOrder() {
@@ -283,7 +283,7 @@ func typicalGeneralStore() map[string]float64 {
 			}
 			for _, e := range d.Effects {
 				if e.Type == "storage" && (e.Target == "all" || e.Target == "faith") {
-					total += float64(e.Value * config.FlowCopies)
+					total += float64(e.Value * config.StorageRuleCopies)
 				}
 			}
 		}
