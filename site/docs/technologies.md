@@ -260,7 +260,7 @@ what a resource makes = buildings and workers × pools (in full to +200%, a quar
 ```
 
 - **Bonuses on the same thing add up.** Two +5% techs on the same resource give +10%, not ×1.1025. A tech's bonus on all production adds to its bonuses on one resource: with +20% stone and +5% all production, stone runs at ×1.25.
-- **Nothing caps the layer.** The tree is finite, and all of its techs together come to +99% knowledge, +119% food, +42% steel, +31% gold and +10% all production. The last tech you take does its full step.
+- **Nothing caps the layer.** The tree is finite, and all of its techs together come to +99% knowledge, +119% food, +42% steel, +40% gold, +4% crypto and +10% all production. The last tech you take does its full step.
 - **Flat amounts stay amounts.** Steel Forging's +0.25 steel a tick and Satellite Technology's +1 data are the first source of a resource, not a bonus, and the layer does not multiply them.
 - **Cuts multiply, and each has a floor.** A tech that cuts a price or a time takes its share of what the cuts before it left: two 3% cuts on building costs leave 0.97 × 0.97. Building costs never fall under 10% of the listed price, construction under 40% of its time, or research under 50% of its time, however many cuts stack. All of today's techs together stay far from every floor.
 - **Storage and housing are percentages** of everything you hold: +10% storage is 10% more of every store, and +5% housing is 5% more housing, rounded up to a whole person.
@@ -287,7 +287,7 @@ Some commands wait for a tech. Until it is researched, the command is refused wi
 | The Rail Freight route (`trade route start rail_freight`) | Railroads | Industrial |
 | The Warp Commerce route (`trade route start warp_commerce`) | Interstellar Trade | Interstellar |
 
-The Scout Party needs no tech: it is a walk into the hills, open from the first age through the Bronze Age. Scout Nearby Ruins is listed from the Bronze Age and waits for Exploration, an Iron Age tech, which needs Map Making or Boatbuilding. The market needs no tech either, only its building. The panels say which tech a command waits for (the Trade, Expeditions, Army and Factions panels, and `festival`). Every lock has its tech now: Warp Commerce's, Interstellar Trade, was the last to arrive.
+The Scout Party needs no tech: it is a walk into the hills, open from the first age through the Bronze Age. Scout Nearby Ruins is listed from the Bronze Age and waits for Exploration, an Iron Age tech, which needs Map Making or Boatbuilding. The panels say which tech a command waits for (the Trade, Expeditions, Army and Factions panels, and `festival`). Every lock has its tech now: Warp Commerce's, Interstellar Trade, was the last to arrive.
 
 **Saves from before a lock.** A game saved before a command waited for its tech keeps every command open in the age it was in, and keeps for the rest of that run any command it was already using: a campaign under way, a route running, an ally, a festival held. In that age its buildings and its wonder wait for no tech either. One line in the log says so when the save is first loaded. The locks start with the next age for what that run never used, and with the next run for the rest. This covers the four commands and the seven buildings that found their tech with the Stone and Iron Eras' new techs, Stonehenge's keystone, the nine buildings that found theirs with the Steel and Electric Eras' techs, and the Warp Commerce route and the nineteen buildings that found theirs with the Digital, Neon and Cosmic Eras' (a game saved in one of those ages keeps its age's buildings open until it advances, and a Warp Commerce route it was running stays open for the run).
 
@@ -789,12 +789,6 @@ These techs move a single number of a game mechanic.
 | Tech | Age | Effect |
 |---|---|---|
 | Tool Making | Primitive | Gathering by hand brings 2 more |
-| Currency | Bronze | Market fee 3 points lower |
-| Banking | Medieval | Market fee 3 points lower |
-| Wire Transfers | Electric | Market fee 2 points lower |
-| E-commerce | Information | Market fee 2 points lower |
-| Blockchain | Cyberpunk | Market fee 2 points lower |
-| Probability Markets | Quantum | Market fee 2 points lower |
 | Road Building | Iron | Trade routes take 15% less time |
 | Railroads | Industrial | Trade routes take 15% less time |
 | Automated Logistics | Digital | Trade routes take 15% less time |
@@ -836,7 +830,6 @@ These techs move a single number of a game mechanic.
 | Global Village | Digital | Alliances cost 50% less |
 | Void Contemplation | Interstellar | Appeasing a harbinger costs 20% less |
 
-- **Market fee.** The market keeps 20 points of every trade (see [Trade](trade.md)). Currency, Banking, Wire Transfers, E-commerce, Blockchain and Probability Markets take 14 points off between them, so with all six the market keeps 6 and pays 17.5% more on every trade. The fee never falls under 5 points. Faction deals keep their edge over the market's rate as it stands.
 - **Trade route time, expedition time, deal refresh, festival cooldown.** A cut shortens the timer when it is next set: a route's next run, the next expedition sent, the next set of offers, the next festival. Cuts multiply (two 15% cuts leave 72% of a route's time) and none takes a timer under 40% of its length: the four cuts of a route's time leave 49% of it, and the six of an expedition's 45%. Expedition time is for scouting expeditions, and the Army panel lists their times with it; campaigns have a number of their own.
 - **Campaign time, campaign loot, soldier storage.** A General Staff and Special Forces each cut the time of every campaign sent after them by 15%. The Military-Industrial Complex makes every campaign bring back 20% more of its listed loot, won or lost, on top of your expedition rewards, and Probability Warfare 15% more again; the Military-Industrial Complex gives room for 20% more soldiers and Augmented Soldiers 10% more of that. See [Military](military.md).
 - **Wonder construction.** With Architecture a wonder takes three quarters of its listed time to build, and the cuts of all construction then apply to what is left. It is the one cut a wonder has to itself. See [Wonders](wonders.md).
@@ -914,9 +907,9 @@ Together +96%, added to the wonders' and milestones' expedition rewards.
 
 Knowledge comes from the Knowledge lineage (Story Circle, Elders' Hall and on up to the Reality Academy), staffed by knowledge workers: **Shamans** in the Primitive Age, **Quantum Theorists** by the Quantum Age. Assign them with `assign <building_key> [count|all]`. The rates for every tier are on the [Knowledge](knowledge.md) page.
 
-From the Atomic Age on a tech costs from 500M to a few billion (a capstone up to 3.47B), far more than the lineage makes: a fully staffed Research Campus makes about 102 knowledge a tick, under 6M over the whole Atomic Age. For those the market is the practical source: from the Industrial Age on, gold buys knowledge at a flat 5 knowledge per gold. See [Knowledge at the Market](knowledge.md#knowledge-at-the-market). `plan trade gold knowledge` buys it as gold comes in, and a `plan research` item behind it starts the tech once the knowledge is there.
+From the Atomic Age on a tech costs from 500M to a few billion (a capstone up to 3.47B). The market does not sell knowledge, so your Knowledge buildings are the source you plan around.
 
-Either way, your knowledge storage must hold a tech's full cost before you can pay for it.
+Your knowledge storage must hold a tech's full cost before you can pay for it.
 
 ---
 
@@ -958,7 +951,7 @@ Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige
 
 ### Late-Game Knowledge Scaling
 
-Knowledge costs rise steeply, from 38 kp for Tool Making to billions in the late ages (Cybernetics 1.61B, the Timeless Archive 3.47B). Raise your knowledge storage ahead of them, and plan on buying most of that knowledge with gold (see [Paying for Research](#paying-for-research)).
+Knowledge costs rise steeply, from 38 kp for Tool Making to billions in the late ages (Cybernetics 1.61B, the Timeless Archive 3.47B). Raise your knowledge storage ahead of them.
 
 ---
 
@@ -978,4 +971,4 @@ Knowledge costs rise steeply, from 38 kp for Tool Making to billions in the late
 
 ---
 
-*See also: [Knowledge](knowledge.md) for making and buying knowledge; [The Build Plan](plan.md) for queuing research; [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire; [Prestige](prestige.md) for the Plan Template and the Ancient Civilization Memory; [Buildings](buildings.md) for the buildings techs open.*
+*See also: [Knowledge](knowledge.md) for making knowledge; [The Build Plan](plan.md) for queuing research; [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire; [Prestige](prestige.md) for the Plan Template and the Ancient Civilization Memory; [Buildings](buildings.md) for the buildings techs open.*
