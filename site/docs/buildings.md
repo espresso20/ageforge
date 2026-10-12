@@ -1,6 +1,6 @@
 # Buildings
 
-AgeForge uses a **14-lineage system** with 301 total buildings spanning production lineages, storage, wonders, cultural monuments and four standalone buildings (two embassies, the Geographic Society and the Nano Foundry). Buildings belong to lineages that span the full 22-age arc. When you advance an age, buildings that have a next-tier equivalent do **not** change on their own. They get a pending upgrade marker, and you upgrade them at your own pace with the `upgrade` command.
+AgeForge uses a **14-lineage system** with 302 total buildings spanning production lineages, storage, wonders, cultural monuments and four standalone buildings (two embassies, the Geographic Society and the Nano Foundry). Buildings belong to lineages that span the full 22-age arc. When you advance an age, buildings that have a next-tier equivalent do **not** change on their own. They get a pending upgrade marker, and you upgrade them at your own pace with the `upgrade` command.
 
 For the full wonder list see [Wonders](wonders.md).
 

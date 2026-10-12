@@ -1,6 +1,6 @@
 # Badges
 
-A **badge** is a permanent mark on your account for something you did in a game. There are 563 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
+A **badge** is a permanent mark on your account for something you did in a game. There are 560 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
 
 Badges are cosmetic. A badge gives points, sometimes a title or a theme, and nothing inside a run: the same game plays the same way whatever the account has earned. They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
 
@@ -45,7 +45,7 @@ Each badge has a tier, and a tier is worth points. Your points add up to a **sco
 | Platinum | 50 | Epic |
 | Legendary | 100 | Legendary |
 
-A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 13,070 points.
+A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 13,030 points.
 
 ## The families
 
@@ -64,7 +64,7 @@ A badge's rarity follows its tier unless the badge says otherwise: a few are rar
 | **Catastrophes** | 15 | Enduring and succumbing to each of the six catastrophes, and the three ways the Last Passage can end |
 | **Expeditions** | 16 | Coming back from each expedition with a success |
 | **Awakenings** | 7 | Witnessing each awakening |
-| **Ladders** | 73 | Counts kept across all your runs, in 23 ladders |
+| **Ladders** | 70 | Counts kept across all your runs, in 22 ladders |
 | **Themes** | 16 | Advancing an age while wearing each theme |
 | **Maps** | 5 | Advancing an age with each map style and each glyph set |
 | **Specials** | 68 | One-off feats, from the easy to the very hard |
@@ -102,7 +102,6 @@ These count across all your runs. A dot separates the rungs.
 | Black market deals | 1 · 10 · 50 |
 | Ancient Memories | 1 · 5 · 12 |
 | Hard times weathered | 1 · 10 · 30 |
-| Market trades | 10 · 220 · 5,000 |
 
 One more ladder of three rungs is secret.
 
