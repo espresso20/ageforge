@@ -645,29 +645,12 @@ type ActiveEventState struct {
 
 // TradeState represents the trade system state for UI
 type TradeState struct {
-	ExchangeRates   map[string]ExchangeRateInfo
 	ActiveRoutes    []ActiveRouteInfo
 	AvailableRoutes []TradeRouteInfo
-	TotalExchanged  map[string]float64 // sold plus bought, per resource
-	TotalSold       map[string]float64 // given at the market, per resource
-	TotalBought     map[string]float64 // received at the market, per resource
 	TotalImported   map[string]float64
 	// DisruptedResources lists resources currently blockaded by war/embargo; any
 	// active route importing one is suspended until the conflict ends.
 	DisruptedResources []string
-	// TradeBuildings is how many trade buildings (Market lineage) the player
-	// owns. The rates above are listed regardless; trading itself needs at
-	// least one, so the UI shows "You need a Market to trade." when it is 0.
-	TradeBuildings int
-}
-
-// ExchangeRateInfo represents a single exchange rate for UI
-type ExchangeRateInfo struct {
-	From     string
-	To       string
-	Rate     float64
-	BaseRate float64
-	Pressure float64
 }
 
 // ActiveRouteInfo represents an active trade route for UI

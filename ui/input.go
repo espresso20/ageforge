@@ -2078,63 +2078,17 @@ func cmdTrade(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		return CommandResult{OverlayName: "trade"}
 	}
-	subcmd := strings.ToLower(args[0])
-
-	if subcmd == "list" {
-		return cmdTradeList(engine)
-	}
-	if subcmd == "route" {
+	switch strings.ToLower(args[0]) {
+	case "route":
 		return cmdTradeRoute(args[1:], engine)
-	}
-	if subcmd == "black" {
+	case "black":
 		// `trade black [resource]` is an alias for the black-market command.
 		return cmdBlackMarket(args[1:], engine)
 	}
-
-	// Market trade: trade <give> <get> <amount>, where amount is how much of
-	// give to sell.
-	if len(args) < 3 {
-		return CommandResult{Message: usageFor("trade") + ". Or 'trade list' for market rates, 'trade route list' for routes.", Type: "error"}
-	}
-	give := strings.ToLower(args[0])
-	get := strings.ToLower(args[1])
-	amount, err := parseAmount(args[2])
-	if err != nil {
-		return usageError(usageFor("trade"), err)
-	}
-
-	if _, err := engine.ExchangeResources(give, get, amount); err != nil {
-		return errorResult(err)
-	}
-	return CommandResult{Type: "success"} // the engine logs both sides of the trade
-}
-
-// cmdTradeList is `trade list`: the market rate of every pair that trades
-// this age, as "food → gold: 0.25 gold per food". The rates are listed with
-// or without a trade building; trading itself needs one.
-func cmdTradeList(engine *game.GameEngine) CommandResult {
-	state := engine.GetState()
-	trade := state.Trade
-	var lines []string
-	lines = append(lines, "[gold]Market rates:[-]")
-	if trade.TradeBuildings == 0 {
-		lines = append(lines, "  [yellow]You need a Market to trade.[-]")
-	}
-	if len(trade.ExchangeRates) == 0 {
-		lines = append(lines, "  [gray]Nothing trades at the market this age.[-]")
-	}
-	for _, key := range sortedKeysOf(trade.ExchangeRates) {
-		info := trade.ExchangeRates[key]
-		line := fmt.Sprintf("  [cyan]%s → %s[-]: %s %s per %s", info.From, info.To,
-			strings.TrimPrefix(textfmt.RateValue(info.Rate), "+"), game.ResourceName(info.To), game.ResourceName(info.From))
-		if info.Pressure > 0.05 {
-			// The market takes 30% off the rate at full supply pressure, and
-			// never more than half.
-			line += fmt.Sprintf(" (%s lower after recent sales)", textfmt.Percent(math.Min(info.Pressure*0.3, 0.5)))
-		}
-		lines = append(lines, line)
-	}
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	// The market no longer swaps resources: `trade list` and `trade <give>
+	// <get> <amount>` are gone, and answer as any unknown command does (the
+	// way the retired `speed` does).
+	return CommandResult{Message: unknownCommandText("trade " + strings.ToLower(args[0])), Type: "error"}
 }
 
 func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
@@ -2690,28 +2644,8 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		n := engine.PlanClear()
 		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%s).", textfmt.Count(n, "item", "items")), Type: game.LogRoutine}
 	case "trade":
-		// plan trade <give> <get> [amount]: amount is how much of get to buy.
-		if len(rest) < 2 || len(rest) > 3 {
-			return CommandResult{Message: usageFor("plan trade"), Type: "error"}
-		}
-		give, get := strings.ToLower(rest[0]), strings.ToLower(rest[1])
-		amount := 0.0
-		if len(rest) == 3 {
-			a, err := parseAmount(rest[2])
-			if err != nil {
-				return usageError(usageFor("plan trade"), err)
-			}
-			amount = a
-		}
-		if err := engine.PlanAddTrade(give, get, amount); err != nil {
-			return errorResult(err)
-		}
-		if amount > 0 {
-			return CommandResult{Message: fmt.Sprintf("Plan: buy %s with %s as it comes in.",
-				game.Amount(amount, get), game.ResourceName(give)), Type: game.LogRoutine}
-		}
-		return CommandResult{Message: fmt.Sprintf("Plan: buy %s with %s as it comes in, until you remove the item.",
-			game.ResourceName(get), game.ResourceName(give)), Type: game.LogRoutine}
+		// The plan's sell orders are gone with the market's swap.
+		return CommandResult{Message: unknownCommandText("plan trade"), Type: "error"}
 	case "deal":
 		usage := usageFor("plan deal")
 		if len(rest) < 2 {

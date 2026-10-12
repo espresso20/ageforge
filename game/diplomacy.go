@@ -91,9 +91,9 @@ type DiplomacyManager struct {
 	rules    *rules.Set
 	factions map[string]*FactionState
 
-	// giftCost, dealRefresh and feeScale are the techs' terms the manager
-	// reads (SetTechTerms).
-	giftCost, dealRefresh, feeScale float64
+	// giftCost and dealRefresh are the techs' terms the manager reads
+	// (SetTechTerms).
+	giftCost, dealRefresh float64
 	// giftOpinion and allyBonus are two more (SetGiftAndAllyTerms), and
 	// allyCost a third (SetAllyCostTerm).
 	giftOpinion, allyBonus, allyCost float64
@@ -559,11 +559,9 @@ func (dm *DiplomacyManager) endWar(fs *FactionState) {
 
 // SetTechTerms sets the techs' terms the manager reads: giftCost on what a
 // gift costs (config.MechanicGiftCost), dealRefresh on how long a set of
-// offers lasts (config.MechanicDealRefreshTicks), and feeScale, the cut of
-// the market's fee as the multiplier market rates carry, which deals are
-// priced and compared against. 0 reads as 1 for each.
-func (dm *DiplomacyManager) SetTechTerms(giftCost, dealRefresh, feeScale float64) {
-	dm.giftCost, dm.dealRefresh, dm.feeScale = giftCost, dealRefresh, feeScale
+// offers lasts (config.MechanicDealRefreshTicks). 0 reads as 1 for each.
+func (dm *DiplomacyManager) SetTechTerms(giftCost, dealRefresh float64) {
+	dm.giftCost, dm.dealRefresh = giftCost, dealRefresh
 }
 
 // SetGiftAndAllyTerms sets two more of the techs' terms: giftOpinion on the
@@ -926,7 +924,7 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			info.Status = fs.Status
 			info.TradeCount = fs.TradeCount
 			info.AtWar = fs.AtWar
-			info.Deals = dealInfos(dm.rules, fs, age, dm.feeScale)
+			info.Deals = dealInfos(fs, age)
 			info.DealsBlocked = dealBlocked(*fs)
 			info.DealRefreshIn = max(dm.dealRefreshFor(age)-fs.DealTicks, 0)
 		} else if ageOrder[age] >= ageOrder[def.MinAge] {

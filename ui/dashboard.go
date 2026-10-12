@@ -190,7 +190,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.RegisterWidget("badges", "Badges", d.badgePanel.open, d.badgePanel.update, true)
 	d.overlayMgr.Register("army", "Army", militaryProvider)
 	d.overlayMgr.Register("expedition", "Expeditions", expeditionsProvider)
-	d.overlayMgr.Register("trade", "Trade", tradeProvider)
+	d.overlayMgr.Register("trade", "Trade routes", tradeProvider)
 	// The Factions panel, under two names pointing at one provider (the
 	// citymap/map precedent below). "factions" is the primary — it is what the
 	// sidebar lists, and the sidebar highlight matches on the registered name, so

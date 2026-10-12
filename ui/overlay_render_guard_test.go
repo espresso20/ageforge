@@ -140,7 +140,7 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 	guild := s.Diplomacy.Factions["merchant_guild"]
 	guild.DealRefreshIn = 90
 	guild.Deals = []game.DealInfo{
-		{Num: 1, Kind: game.DealWant, Give: "iron_ore", GiveAmt: 2100, Get: "food", GetAmt: 3000, Edge: 0.13},
+		{Num: 1, Kind: game.DealWant, Give: "iron_ore", GiveAmt: 2100, Get: "food", GetAmt: 3000},
 		{Num: 2, Kind: game.DealFavor, Give: "iron_ore", GiveAmt: 727, Standing: 5},
 		{Num: 3, Kind: game.DealRare, Give: "gold", GiveAmt: 10, Get: "dark_matter", GetAmt: 1},
 		{Num: 4, Kind: "", Give: "wood", GiveAmt: 10, Get: "iron_ore", GetAmt: 12, Taken: true},
@@ -153,16 +153,7 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 	s.Military.TotalLoot = map[string]float64{"iron_ore": 1234, "gold": 56}
 	s.Military.ExpeditionBonus = 0.1
 
-	// Trade: pressure both ways, a blockade, routes in every state.
-	s.Trade.TradeBuildings = 0
-	s.Trade.ExchangeRates = map[string]game.ExchangeRateInfo{
-		"food:wood":     {From: "food", To: "wood", Rate: 0.3, BaseRate: 1, Pressure: 2.5},
-		"wood:iron_ore": {From: "wood", To: "iron_ore", Rate: 0.55, BaseRate: 0.5, Pressure: -0.3},
-		"stone:gold":    {From: "stone", To: "gold", Rate: 0.1, BaseRate: 0.1},
-	}
-	s.Trade.TotalExchanged = map[string]float64{"food": 1500, "iron_ore": 20}
-	s.Trade.TotalSold = map[string]float64{"food": 1500}
-	s.Trade.TotalBought = map[string]float64{"iron_ore": 20, "dark_matter": 3}
+	// Trade: a blockade, routes in every state.
 	s.Trade.DisruptedResources = []string{"iron_ore"}
 	s.Trade.ActiveRoutes = []game.ActiveRouteInfo{
 		{Name: "Tin Road", Key: "tin_road", TicksLeft: 30, CyclesDone: 1,
@@ -181,8 +172,6 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 	s.Plan = []game.PlanItemView{
 		{Kind: game.PlanBuild, Key: "lumber_mill", Name: "Lumber Mill", Count: 3, Started: 1, Status: game.PlanStatusWaiting,
 			Progress: 0.4, Short: "iron_ore", Cost: map[string]float64{"iron_ore": 300, "wood": 100}},
-		{Kind: game.PlanTrade, Key: "food", To: "iron_ore", Amount: 500, Got: 300, Status: game.PlanStatusReady, Count: 1},
-		{Kind: game.PlanTrade, Key: "wood", To: "gold", Status: game.PlanStatusBlocked, Note: "no market", Count: 1},
 		{Kind: game.PlanResearch, Key: tkeys[1], Name: s.Research.Techs[tkeys[1]].Name, Status: game.PlanStatusReady, Count: 1,
 			Cost: map[string]float64{"knowledge": 1200}},
 	}

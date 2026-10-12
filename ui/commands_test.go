@@ -139,6 +139,7 @@ var notSubcommands = map[string]bool{
 	"":         true, // empty-argument checks
 	"allied":   true, // a faction status the diplomacy status list checks
 	"worldmap": true, // cmdMap checks which alias it was typed as (worldmap opens on the world)
+	"trade":    true, // cmdPlan answers the retired `plan trade` as an unknown command; the registry lists none
 }
 
 // TestRegistryMatchesDispatcher holds the registry and HandleCommand

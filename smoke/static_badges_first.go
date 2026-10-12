@@ -118,14 +118,6 @@ func (c *badgeCheck) firstAge(counter string) int {
 			}
 		}
 		return first
-	case config.BadgeEvMarketTrade:
-		first := len(m.ages) - 1
-		for _, x := range c.set.ExchangeRates() {
-			if pos, known := m.idx[x.MinAge]; known {
-				first = min(first, pos)
-			}
-		}
-		return first
 	case config.BadgeEvFestival:
 		return m.resAge["culture"]
 	case config.BadgeEvBlackMarket:

@@ -139,10 +139,10 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {2000000000, 31000000000, 1.7e+16, 1.6e+16},
-		"galactic_age":     {4200000000, 67000000000, 2e+17, 1.7e+16},
-		"quantum_age":      {8700000000, 150000000000, 2.1e+17, 1.7e+16},
-		"transcendent_age": {9400000000, 160000000000, 2.2e+17, 1.9e+16},
+		"interstellar_age": {2000000000, 31000000000, 6.7e+15, 2.7e+16},
+		"galactic_age":     {4200000000, 67000000000, 1.7e+17, 1.7e+17},
+		"quantum_age":      {8700000000, 150000000000, 6e+18, 4.7e+17},
+		"transcendent_age": {9400000000, 160000000000, 6.6e+18, 5.1e+17},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -248,11 +248,11 @@ func TestLastPassageChoice(t *testing.T) {
 	first := ages[0]
 	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
 	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
-	if math.Abs(braceHours-21.76) > 0.05 || math.Abs(appeaseHours-31.61) > 0.05 {
-		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.76 and 31.61", first, braceHours, appeaseHours)
+	if math.Abs(braceHours-21.01) > 0.05 || math.Abs(appeaseHours-31.61) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.01 and 31.61", first, braceHours, appeaseHours)
 	}
-	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.689) > 0.005 {
-		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.689", first, ratio)
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.665) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.665", first, ratio)
 	}
 
 	// The faith band moves the odds, not the choice: both savings scale with
@@ -435,9 +435,17 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 				t.Errorf("%s: Appease level 1 takes %.2f h of income, Brace level 1 %.2f h: Appease must stay the dearer", age, appeaseHours, braceHours)
 			}
 			// Every material on its ceiling?
+			// (the price row's own ceiling: the price a capped material is
+			// given, so a price on it equals it)
 			capped := true
+			var row HarbingerPrice
+			for _, r := range HarbingerPriceTable() {
+				if r.Epoch == ep.Key && r.Age == age && !r.LastPassage {
+					row = r
+				}
+			}
 			for res, c := range doomBraceCost(ep.Key, age, 1) {
-				if c < 0.9*ordinaryDoomBraceStoreShare*rules.Core().TypicalStorage(res, age) {
+				if limit, ok := row.BraceCeiling[res]; !ok || c < limit {
 					capped = false
 				}
 			}
@@ -498,13 +506,28 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // income): 0.06x, under the bar (0.05 of the warning and 0.10x at five
 // copies). The Colonial Age's is 95M of each, 0.29 of the warning, 0.60x: its
 // steel was 69M, a third of the warning, until the town grew. The Modern
-// Age's is 960B of electricity and gold, 0.27 of the warning, 0.56x. The
-// Colonial and Modern Ages are over the bar. Before the wall the list was
-// the Industrial Age (0.33x) and the Modern Age (0.39x).
+// Age's was 960B of electricity and gold, 0.27 of the warning, 0.56x; it left
+// the list when the Mainframe Hall gave the age a maker of data, which Brace
+// then asks for (46B, a third of the warning, under its ceiling). The
+// Colonial Age is over the bar. Before the wall the list was
+// the Industrial Age (0.33x) and the Modern Age (0.39x). The maker rule gave
+// stone a maker in the Iron, Classical and Medieval Ages, so stone is no
+// longer a trickle there and its Brace stops at the ceiling with gold and
+// iron: all three materials of the Iron Era are on it, where stone alone was
+// under it (59K, 82K and 110K a third of the warning made of it). The Iron
+// Age reads 0.50x with Brace at 0.24 of the warning, the Medieval Age 0.41x
+// at 0.19; the Iron and Medieval Ages are
+// under the bar. The Classical Age's stone is 870K, a third of the warning
+// rounded up and under its 900K ceiling: the age is not on it (a price counts
+// as on the ceiling only when it equals the price row's own BraceCeiling, the
+// rounded-down price a capped material is given; the test took a tenth of
+// room before, which counted this age), and its Brace takes 0.34 of the
+// warning, the ratio 0.70x.
 var doomChoiceOnTheCeiling = map[string]float64{
+	"iron_age":       0.50,
+	"medieval_age":   0.41,
 	"colonial_age":   0.60,
 	"industrial_age": 0.06,
-	"modern_age":     0.56,
 }
 
 // incomeHoursOfMade is incomeHours over the resources of cost the age makes

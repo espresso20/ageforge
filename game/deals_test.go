@@ -104,13 +104,13 @@ func TestDeals_PerPersonality(t *testing.T) {
 		}
 	}
 	// Rates rise with standing, mercantile pays best, aggressive worst, and
-	// every one beats the market (0.8 of parity) without passing parity.
+	// every one stays from dealRateMin of parity up to parity.
 	for _, pers := range []string{"peaceful", "mercantile", "aggressive", "isolationist"} {
 		for _, kind := range []string{DealSell, DealWant} {
 			prev := 0.0
 			for tier := 0; tier <= 2; tier++ {
 				m := dealMult(pers, tier, kind)
-				if m <= 1-config.ExchangeFee || m > 1 || m < prev {
+				if m < dealRateMin || m > 1 || m < prev {
 					t.Errorf("dealMult(%s, %d, %s) = %v (previous tier %v)", pers, tier, kind, m, prev)
 				}
 				prev = m
@@ -176,18 +176,18 @@ func checkDeal(t *testing.T, def config.FactionDef, fs FactionState, env dealEnv
 	if !(d.GetAmt >= 1) || d.GetAmt > dealGetShare*env.storage[d.Get]*1.001 {
 		t.Errorf("%s %+v: bad goods amount", def.Key, d)
 	}
+	// A deal stands on its own: the ratio of the two price levels times its
+	// multiple (dealRateMin to 1 of parity, good to the 3 figures an amount
+	// is rounded to), whatever any market would pay.
 	rate := d.GetAmt / d.GiveAmt
-	if m, ok := config.MarketOffers(d.Give, d.Get, env.age); ok {
-		if rate <= m {
-			t.Errorf("%s %+v: rate %v does not beat the market's %v", def.Key, d, rate, m)
-		}
-		if edge := rate/m - 1; edge < 0.04 || edge > 0.26 {
-			t.Errorf("%s %+v: edge %.3f outside 5-25%%", def.Key, d, edge)
-		}
-	}
 	lf, lt := config.DealPriceLevel(d.Give, env.age), config.DealPriceLevel(d.Get, env.age)
-	if _, market := config.MarketOffers(d.Give, d.Get, env.age); !market && lf > 0 && lt > 0 && rate > lt/lf*1.001 {
-		t.Errorf("%s %+v: rate %v beats parity %v", def.Key, d, rate, lt/lf)
+	if lf > 0 && lt > 0 {
+		if rate > lt/lf*1.001 {
+			t.Errorf("%s %+v: rate %v beats parity %v", def.Key, d, rate, lt/lf)
+		}
+		if rate < lt/lf*dealRateMin*0.99 {
+			t.Errorf("%s %+v: rate %v is under %v of parity %v", def.Key, d, rate, dealRateMin, lt/lf)
+		}
 	}
 }
 

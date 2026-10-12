@@ -159,15 +159,18 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 // the Renaissance) could never be built. The smithy is also the Bronze Age's
 // only maker of iron, and a town brings no iron into the age (the gates ask
 // for no amount of anything), so the chain breaks with it: every Bronze Age
-// building priced in iron is dead, so is everything priced in the gold the
-// market makes, and so is the knowledge the scriptorium makes. The gate into
-// the Iron Age asks for the smithy, so it is an unsourced row there too.
+// building priced in iron is dead, and so is everything priced in the gold
+// the market makes. The gate into the Iron Age asks for the smithy, so it is
+// an unsourced row there too. (The knowledge the scriptorium makes is not
+// part of the chain: the Stone Age's elders hall, which an earlier gate
+// asked for, still makes it.)
 //
 // The flow and sourcing checks, with numbers that slip past a store check:
-// the Sistine Chapel's 6M faith, which no market sells; the Stellar Cradle's
-// 940T uranium, which only Atomic Age mines (unbuildable by the Fusion Age)
-// produced. (No gate asks for an amount of a resource, so none of the cases
-// is a gate's resource amount.)
+// the Sistine Chapel's 6M faith, more than the age's income makes in its
+// target; the Stellar Cradle's 940T uranium, which only the Atomic Age's
+// mines make and a Fusion Age town carries as 8 works, 0.9M a tick against
+// the 94,000 ticks of the age's target. (No gate asks for an amount of a
+// resource, so none of the cases is a gate's resource amount.)
 //
 // The wonder is the one price allowed over a store, so a Sistine Chapel whose
 // stone outgrows every Renaissance warehouse is not a problem, and the covenant
@@ -209,10 +212,9 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 	want := map[string]bool{"building/longhouse": false, "unbuildable/barracks": false,
 		"dead_building/smithy": false, "flow/sistine_chapel": false,
 		"unsourced/stellar_cradle": false,
-		// the chain from the smithy's coal: no iron, so no market (gold) and
-		// no scriptorium (knowledge, and with it the keystone's price)
+		// the chain from the smithy's coal: no iron, so no market (gold)
 		"unsourced/smithy": false, "unsourced/lumber_mill": false, "unsourced/altar": false,
-		"unsourced/calendar": false, "dead_building/altar": false, "dead_building/barracks": false,
+		"dead_building/altar": false, "dead_building/barracks": false,
 		"dead_building/lumber_mill": false, "dead_building/market": false, "dead_building/quarry": false,
 		"dead_building/scriptorium": false, "dead_building/warehouse": false}
 	for _, g := range problems {
@@ -245,19 +247,16 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 
 // TestGateCovenantCatchesColdStartTraps feeds the covenant the Iron Age
 // trading post as it was, priced in gold. The post is the Iron Age's only
-// gold producer and its only trade building (the market needs one), so a town
-// that arrived without a trade building could never get gold in the Iron Age:
-// not for the trading post, nor for the agoras, legion forts and temples, nor
-// for the knowledge Mathematics, the Colosseum's keystone, costs, which only
-// the gold-priced agora makes. The old rule counted market parity without
-// asking whether a trade building could stand.
+// gold producer, so a town that arrived without a gold producer could never
+// get gold in the Iron Age: not for the trading post, nor for the agoras,
+// legion forts and temples.
 //
 // A town arrives with empty stores and the buildings every gate so far asked
 // for, so whether that trap is open depends on the gate. The gate out of the
 // Bronze Age asks for the Bronze Age market (the gate rule: it makes gold), so
-// the exchange is open in the Iron Age and the same price is fine: that is the
-// real tables, the last case. The trap is a gate that lets a town through
-// without a market, the first.
+// the town brings gold with it and the same price is fine: that is the real
+// tables, the last case. The trap is a gate that lets a town through without
+// the market building, the first.
 func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
 	oldPost := func() map[string]config.BuildingDef {
 		defs := config.BuildingByKey()
@@ -274,11 +273,11 @@ func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
 	if problems, _ := staticGates(config.Ages(), config.BuildingByKey()); len(problems) > 0 {
 		t.Fatalf("setup: the real tables, and no trap, should break nothing: %+v", problems)
 	}
-	noMarket := editedGate("iron_age", func(b map[string]int) { delete(b, "market") })
-	problems, _ := staticGates(noMarket, oldPost())
+	withoutMarketBuilding := editedGate("iron_age", func(b map[string]int) { delete(b, "market") })
+	problems, _ := staticGates(withoutMarketBuilding, oldPost())
 	want := map[string]bool{"dead_building/trading_post": false, "dead_building/agora": false,
 		"dead_building/legion_fort": false, "dead_building/temple": false,
-		"unsourced/agora/gold": false, "unsourced/mathematics/knowledge": false}
+		"unsourced/agora/gold": false}
 	for _, g := range problems {
 		k := g.Kind + "/" + g.Key
 		if g.Kind == "unsourced" {
@@ -296,7 +295,7 @@ func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
 		}
 	}
 
-	// The real gate asks for the market, so it stands in the Iron Age.
+	// The real gate asks for the market, so the town arrives making gold.
 	if problems, _ := staticGates(config.Ages(), oldPost()); len(problems) > 0 {
 		t.Errorf("with the Bronze Age market asked for by the gate, want no problems, got %+v", problems)
 	}
@@ -340,7 +339,7 @@ func TestGateCovenantCatchesAnUnpayableFirstCopy(t *testing.T) {
 
 	// A town that arrives with nothing that makes knowledge.
 	ages := config.Ages()
-	empty := &coldStart{idx: 1, age: "stone_age", unlocked: map[string]bool{"knowledge": true},
+	empty := &coldStart{age: "stone_age", unlocked: map[string]bool{"knowledge": true},
 		trickle: map[string]float64{}, boot: map[string]bool{}, reach: map[string]bool{}, held: map[string]bool{}}
 	rows := firstCopyProblems(ages[0], ages[1], empty, map[string]config.BuildingDef{}, config.Technologies())
 	if len(rows) != 1 || rows[0].Kind != "unsourced" || rows[0].Resource != "knowledge" {
@@ -556,5 +555,112 @@ func TestGateCovenantCatchesABuildingBehindAnOptionalTech(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("with the Market behind an optional tech the Iron Age's gold should have no source; problems: %+v", problems)
+	}
+}
+
+// TestEveryAgeStandsWithoutTheMarket: the market's exchange is not a source of
+// anything. Every resource an age's gate and buildings are priced in has a way
+// into a town that does not pass through it, age by age: a maker the town can
+// pay for in the age, a maker an earlier gate required, or hand gathering. The
+// covenant reports no problem for any age, and its report says nothing of
+// buying.
+func TestEveryAgeStandsWithoutTheMarket(t *testing.T) {
+	problems, _ := StaticGates()
+	byAge := map[string][]GateProblem{}
+	for _, g := range problems {
+		byAge[g.From] = append(byAge[g.From], g)
+	}
+	for _, a := range config.Ages() {
+		t.Run(a.Key, func(t *testing.T) {
+			for _, g := range byAge[a.Key] {
+				t.Errorf("%s has no way to make %s without the market: %+v", a.Key, g.Resource, g)
+			}
+		})
+	}
+	var sb strings.Builder
+	(&Summary{Gates: []GateProblem{{From: "a", To: "b", Kind: "flow", Key: "k", Resource: "culture", Need: 2, Made: 1}}}).writeGates(&sb)
+	for _, word := range []string{"market", "bought", "price units"} {
+		if strings.Contains(strings.ToLower(sb.String()), word) {
+			t.Errorf("the gate report still talks of %q:\n%s", word, sb.String())
+		}
+	}
+}
+
+// TestColdStartIgnoresThinCarriedSources: a source the gates carried into an
+// age counts toward the first copy of a building of that age only if the
+// carried required copies, at their listed output, make the copy's price in
+// one target of the age. The Atomic Age's Uranium Processing Works was priced
+// in 1.2 billion uranium, the only uranium its age makes; the Victorian and
+// Electric mines every town carries make about 983 a tick, 55 million in the
+// age's target. That is a trickle against the price, so with the old price the
+// age had no way to its first uranium and everything priced in it was dead.
+// (The works lost the uranium part, the rest scaled up so the price in units
+// did not move: the real tables.)
+func TestColdStartIgnoresThinCarriedSources(t *testing.T) {
+	ages := config.Ages()
+	atomic := -1
+	for i, a := range ages {
+		if a.Key == "atomic_age" {
+			atomic = i
+		}
+	}
+	oldWorks := func() map[string]config.BuildingDef {
+		defs := config.BuildingByKey()
+		works := defs["uranium_processing_works"]
+		works.BaseCost = map[string]float64{"steel": 1.5e10, "electricity": 6e9, "uranium": 1.2e9}
+		defs["uranium_processing_works"] = works
+		return defs
+	}
+	cs := coldStarts(ages, oldWorks())[atomic]
+	made := cs.made["uranium"] * config.AgeTargetTicks("atomic_age")
+	if made <= 0 || made >= 1.2e9 {
+		t.Fatalf("setup: the carried mines make %.4g uranium in the Atomic Age's target, want something under the works' 1.2e9", made)
+	}
+	if !cs.affords("uranium", made/2) {
+		t.Errorf("a price of half what the carried copies make in a target: want it payable")
+	}
+	if cs.affords("uranium", made*2) {
+		t.Errorf("a price of twice what the carried copies make in a target: want it a trickle against the price")
+	}
+	dead := func(defs map[string]config.BuildingDef) int {
+		problems, _ := staticGates(ages, defs)
+		n := 0
+		for _, g := range problems {
+			if g.From == "atomic_age" && g.Resource == "uranium" {
+				n++
+			}
+		}
+		return n
+	}
+	if n := dead(oldWorks()); n == 0 {
+		t.Errorf("the works priced in uranium: want the Atomic Age's uranium buildings flagged, got none")
+	}
+	if n := dead(config.BuildingByKey()); n != 0 {
+		t.Errorf("the real tables: want no uranium problem in the Atomic Age, got %d", n)
+	}
+}
+
+// TestColdStartOpenIsTheOneException: the real tables have exactly one
+// cold-start problem, the Transcendent Age's Singularity Core, and ColdStartOpen
+// names it. If a maker ever pays for it the row goes and this test says to
+// delete the exception; if anything else breaks, it is reported with the
+// covenant's other problems and not hidden here.
+func TestColdStartOpenIsTheOneException(t *testing.T) {
+	all, _ := staticGatesAll(config.Ages(), config.BuildingByKey())
+	if len(all) != len(ColdStartOpen) {
+		t.Fatalf("the real tables have %d cold-start problems, ColdStartOpen names %d: %+v", len(all), len(ColdStartOpen), all)
+	}
+	for i, o := range ColdStartOpen {
+		g := all[i]
+		if g.From != o.From || g.Kind != o.Kind || g.Key != o.Key || g.Resource != o.Resource {
+			t.Errorf("ColdStartOpen[%d] = %+v, the covenant finds %+v", i, o, g)
+		}
+	}
+	open := false
+	for _, h := range config.MakerOpenHoles() {
+		open = open || (h.Age == "transcendent_age" && h.Material == "quantum_flux")
+	}
+	if !open {
+		t.Errorf("the Transcendent Age's quantum flux is a cold-start exception and not an open hole in config.MakerOpenHoles")
 	}
 }

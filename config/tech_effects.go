@@ -211,7 +211,7 @@ func (t TechDef) GeneralEffects() []Effect {
 
 // Text is e in player words, without a capital or a full stop, the way the
 // Research panel lists effects: "+10% food production", "+10% storage",
-// "buildings cost 3% less", "market fee 3 points lower".
+// "buildings cost 3% less", "gathering by hand brings 2 more".
 func (e TechEffect) Text() string {
 	pct := FormatPercent(e.Value)
 	switch e.Kind {

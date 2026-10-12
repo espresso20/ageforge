@@ -24,10 +24,10 @@ type EpochDef struct {
 	// began, less faith and culture), and so grew whenever the gates named
 	// another material. The lists are what that gave before the gates were
 	// derived from the stores (config/storage_rule.go). Of them an age asks
-	// only what its buildings make (game.braceMaterials): the Modern Age
-	// buys its data at the market, so data is asked from the Information Age
-	// on. The Neon Era's advances also asked for crypto, which no building
-	// makes and no Brace ever asked for, so it is not written here.
+	// only what its buildings make (game.braceMaterials): the Mainframe Hall
+	// makes data in the Modern Age, so data is asked from the Modern Age on.
+	// The Neon Era's advances also asked for crypto, which no Brace ever
+	// asked for, so it is not written here.
 	BraceMaterials []string
 }
 

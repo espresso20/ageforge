@@ -1,0 +1,360 @@
+{
+  "timestamp": "2026-10-12T11:23:38.853948-05:00",
+  "tick": 0,
+  "age": "bronze_age",
+  "seed": 81,
+  "rng_draws": 6,
+  "quip_draws": 2,
+  "resources": {
+    "antimatter": 0,
+    "coal": 0,
+    "crypto": 0,
+    "culture": 0,
+    "dark_matter": 0,
+    "dark_matter_crystals": 0,
+    "data": 0,
+    "electricity": 0,
+    "faith": 0,
+    "food": 0.25,
+    "gold": 3389.0935714285715,
+    "iron": 0,
+    "iron_ore": 0,
+    "knowledge": 0,
+    "marble": 0,
+    "nanobots": 0,
+    "oil": 0,
+    "plasma": 0,
+    "quantum_flux": 0,
+    "soldiers": 0,
+    "steel": 0,
+    "stone": 20084,
+    "titanium": 0,
+    "titanium_ore": 0,
+    "uranium": 0,
+    "wood": 57499
+  },
+  "storage": {
+    "antimatter": 20,
+    "coal": 50,
+    "crypto": 50,
+    "culture": 50,
+    "dark_matter": 20,
+    "dark_matter_crystals": 10,
+    "data": 50,
+    "electricity": 50,
+    "faith": 50,
+    "food": 1000000,
+    "gold": 4000,
+    "iron": 1000000,
+    "iron_ore": 30,
+    "knowledge": 30,
+    "marble": 30,
+    "nanobots": 20,
+    "oil": 50,
+    "plasma": 30,
+    "quantum_flux": 10,
+    "soldiers": 0,
+    "steel": 30,
+    "stone": 21000,
+    "titanium": 30,
+    "titanium_ore": 20,
+    "uranium": 30,
+    "wood": 61000
+  },
+  "buildings": {
+    "hut": 6,
+    "market": 1
+  },
+  "workers": {
+    "worker": {
+      "count": 0,
+      "food_cost": 0.07526400000000001,
+      "assignment": {}
+    }
+  },
+  "unlocked": {
+    "resources": [
+      "food",
+      "wood",
+      "knowledge",
+      "faith",
+      "stone",
+      "iron",
+      "gold"
+    ],
+    "buildings": [
+      "hut",
+      "stash",
+      "gathering_camp",
+      "wood_camp",
+      "story_circle",
+      "shrine",
+      "sacred_grove",
+      "longhouse",
+      "storage_pit",
+      "forager_post",
+      "woodcutter_camp",
+      "stone_camp",
+      "stone_pit",
+      "elders_hall",
+      "standing_stones",
+      "war_camp",
+      "great_monolith",
+      "house",
+      "warehouse",
+      "farm",
+      "lumber_mill",
+      "quarry",
+      "scriptorium",
+      "altar",
+      "barracks",
+      "market",
+      "smithy",
+      "stonehenge"
+    ],
+    "workers": [
+      "worker"
+    ]
+  },
+  "stats": {
+    "total_built": 0,
+    "total_recruited": 0,
+    "total_gathered": {},
+    "game_started": "2026-10-12T11:23:38.853206-05:00",
+    "ages_reached": [
+      "primitive_age",
+      "stone_age",
+      "bronze_age"
+    ],
+    "soldiers_trained": 0
+  },
+  "research": {
+    "researched": [
+      "envoys",
+      "the_wheel"
+    ],
+    "current_tech": "",
+    "ticks_left": 0,
+    "total_ticks": 0
+  },
+  "military": {
+    "completed_count": 0,
+    "total_loot": {}
+  },
+  "events": {
+    "last_fired": {},
+    "active": [
+      {
+        "Key": "awakening_pottery_mastery",
+        "Name": "Pottery Mastery",
+        "TicksLeft": 250,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "food",
+            "Value": 1
+          },
+          {
+            "Type": "production",
+            "Target": "stone",
+            "Value": 0.5
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      }
+    ],
+    "next_event_tick": -1,
+    "good_streak": 0,
+    "bad_streak": 0
+  },
+  "milestones": [],
+  "permanent_bonuses": {},
+  "build_queue": [],
+  "prestige": {
+    "level": 0,
+    "total_earned": 0,
+    "available": 0,
+    "upgrades": {},
+    "furthest": "bronze_age",
+    "run_furthest": "bronze_age",
+    "mastery_seeded": true,
+    "shop_version": 2,
+    "legacy_plan": [
+      {
+        "age": "stone_age",
+        "kind": "build",
+        "key": "stone_pit",
+        "count": 3
+      },
+      {
+        "age": "bronze_age",
+        "kind": "trade",
+        "key": "wood",
+        "to": "gold",
+        "amount": 400
+      },
+      {
+        "age": "bronze_age",
+        "kind": "build",
+        "key": "farm",
+        "count": 2
+      }
+    ]
+  },
+  "trade": {
+    "active_routes": {
+      "local_barter": {
+        "Key": "local_barter",
+        "TicksLeft": 26,
+        "CyclesDone": 0
+      }
+    },
+    "supply_pressure": {
+      "stone:wood": 0.07142857142857144,
+      "wood:gold": 0.14285714285714288,
+      "wood:stone": 0.07142857142857144
+    },
+    "total_exchanged": {
+      "gold": 389.0935714285714,
+      "stone": 684,
+      "wood": 3299
+    },
+    "total_sold": {
+      "stone": 300,
+      "wood": 2900
+    },
+    "total_bought": {
+      "gold": 389.0935714285714,
+      "stone": 384,
+      "wood": 399
+    },
+    "total_imported": {},
+    "total_exported": {}
+  },
+  "diplomacy": {
+    "factions": {
+      "riverlands_tribes": {
+        "discovered": true,
+        "opinion": 0,
+        "status": "neutral",
+        "trade_count": 0,
+        "at_war": false,
+        "provocations": 0,
+        "raided_routes": 0,
+        "embargoes": 0,
+        "last_provocation_tick": 0,
+        "deals": [
+          {
+            "id": 17,
+            "kind": "sell",
+            "give": "iron",
+            "give_amt": 968,
+            "get": "food",
+            "get_amt": 1140
+          },
+          {
+            "id": 18,
+            "kind": "want",
+            "give": "stone",
+            "give_amt": 2230,
+            "get": "food",
+            "get_amt": 3160
+          }
+        ],
+        "deal_round": 1,
+        "deals_for": "bronze_age"
+      }
+    }
+  },
+  "speed_multiplier": 1,
+  "pending_upgrades_saved": true,
+  "current_epoch": "stone_era",
+  "awakenings_fired": {
+    "awakening_pottery_mastery": true
+  },
+  "succumb_research_derived": true,
+  "faith_measured": true,
+  "culture_measured": true,
+  "morale": 0.6599999999999999,
+  "history": {
+    "samples": null,
+    "age_markers": [
+      {
+        "tick": 0,
+        "age_name": "stone_age"
+      },
+      {
+        "tick": 0,
+        "age_name": "bronze_age"
+      }
+    ]
+  },
+  "run_facts": {
+    "whole": true,
+    "counts": {
+      "age_reached": 2,
+      "awakening": 1,
+      "market_trade": 4,
+      "plan_queued": 4
+    },
+    "age_known": true,
+    "era_known": true
+  },
+  "plan": [
+    {
+      "kind": "build",
+      "key": "farm",
+      "count": 2
+    },
+    {
+      "kind": "trade",
+      "key": "wood",
+      "count": 1,
+      "to": "stone",
+      "amount": 1500
+    },
+    {
+      "kind": "trade",
+      "key": "stone",
+      "count": 1,
+      "to": "gold"
+    },
+    {
+      "kind": "build",
+      "key": "lumber_mill",
+      "count": 1
+    }
+  ],
+  "plan_log": [
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "farm",
+      "count": 2
+    },
+    {
+      "age": "bronze_age",
+      "kind": "trade",
+      "key": "wood",
+      "to": "stone",
+      "amount": 1500
+    },
+    {
+      "age": "bronze_age",
+      "kind": "trade",
+      "key": "stone",
+      "to": "gold"
+    },
+    {
+      "age": "bronze_age",
+      "kind": "build",
+      "key": "lumber_mill",
+      "count": 1
+    }
+  ],
+  "pacing_week": true,
+  "storage_rules": 1,
+  "tree_version": 5,
+  "_sig": "55e32d045ff05d6ed829bfa7ff069fcb45c76ba3169253356abccc59d37de88c"
+}

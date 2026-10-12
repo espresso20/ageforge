@@ -69,9 +69,8 @@ type Source struct {
 	TradeRoutes []config.TradeRouteDef
 	// FeatureLocks is the commands that wait for a tech, and Mechanics the
 	// mechanic numbers a tech can move.
-	FeatureLocks  []config.FeatureLockDef
-	Mechanics     []config.MechanicDef
-	ExchangeRates []config.ExchangeRateDef
+	FeatureLocks []config.FeatureLockDef
+	Mechanics    []config.MechanicDef
 
 	WorkerClasses []config.WorkerClassDef
 	WorkerDomains []string
@@ -138,7 +137,6 @@ func FromConfig() Source {
 		TradeRoutes:          config.BaseTradeRoutes(),
 		FeatureLocks:         config.FeatureLocks(),
 		Mechanics:            config.Mechanics(),
-		ExchangeRates:        config.BaseExchangeRates(),
 		WorkerClasses:        config.WorkerClasses(),
 		WorkerDomains:        config.WorkerDomains(),
 		PrestigeUpgrades:     config.PrestigeUpgrades(),

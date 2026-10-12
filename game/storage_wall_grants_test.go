@@ -39,62 +39,6 @@ func fillStore(ge *GameEngine, res string, have, cap float64) {
 	ge.Resources.resources[res].Amount = have
 }
 
-// A market sale into a store with room for less than the sale pays takes a
-// smaller sale and charges for only that; into a full store it is refused.
-// The plan's trade item meets the same wall.
-func TestWallGrants_MarketSaleIsNotChargedForWhatCannotBeHeld(t *testing.T) {
-	ge := bronzeEngine(t)
-	setAmount(ge, "wood", 50_000)
-	fillStore(ge, "stone", 90, 100)
-	rate := ge.Trade.RateIn("wood", "stone", ge.age)
-	if rate <= 0 {
-		t.Fatal("setup: the market does not trade wood for stone")
-	}
-
-	got, err := ge.ExchangeResources("wood", "stone", 10_000)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if math.Abs(got-10) > 1e-9 || ge.Resources.Get("stone") != 100 {
-		t.Errorf("sold into 10 stone of room: received %v, stone = %v, want 10 and 100", got, ge.Resources.Get("stone"))
-	}
-	if gave := 50_000 - ge.Resources.Get("wood"); math.Abs(gave-10/rate) > 1e-6 {
-		t.Errorf("charged %v wood for 10 stone, want %v: only what the store could hold", gave, 10/rate)
-	}
-	if !logHas(ge, nearlyFull+"10 stone") {
-		t.Error("no line saying the store took less than the sale asked for")
-	}
-	wallHeld(t, ge)
-
-	// Full: refused, nothing charged, the market's pressure untouched.
-	wood, pressure := ge.Resources.Get("wood"), ge.Trade.Pressure("wood", "stone")
-	if _, err := ge.ExchangeResources("wood", "stone", 100); err == nil || !strings.Contains(err.Error(), "storage is full") {
-		t.Errorf("sale into a full store = %v, want a refusal", err)
-	}
-	if ge.Resources.Get("wood") != wood || ge.Trade.Pressure("wood", "stone") != pressure {
-		t.Error("a refused sale still cost wood or moved the market")
-	}
-
-	// The plan: a trade item sells only what fits and stops charging.
-	pe := bronzeEngine(t)
-	setAmount(pe, "wood", 50_000)
-	fillStore(pe, "stone", 97, 100)
-	if err := pe.PlanAddTrade("wood", "stone", 0); err != nil {
-		t.Fatal(err)
-	}
-	pe.runPlanTick()
-	if pe.Resources.Get("stone") > 100 {
-		t.Errorf("the plan's trade filled stone to %v", pe.Resources.Get("stone"))
-	}
-	wood = pe.Resources.Get("wood")
-	pe.Trade.DecayPressure(1000)
-	pe.runPlanTick()
-	if pe.Resources.Get("wood") != wood {
-		t.Error("the plan kept selling wood into a full stone store")
-	}
-	wallHeld(t, pe)
-}
-
 // A deal whose goods do not fit is refused before it charges anything, by
 // hand and from the plan.
 func TestWallGrants_DealIntoAFullStoreIsRefusedNotCharged(t *testing.T) {

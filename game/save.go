@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -293,7 +292,9 @@ func PeekSaveBadges(filename string) (cheater, elite bool) {
 	return gs.CheaterBadge, false
 }
 
-// TradeSave holds trade state for save
+// TradeSave holds trade state for save. SupplyPressure, TotalExchanged,
+// TotalSold and TotalBought belong to the market's retired swap: a save reads
+// them (it is signed over them as written) and writes them empty.
 type TradeSave struct {
 	ActiveRoutes   map[string]ActiveRoute `json:"active_routes"`
 	SupplyPressure map[string]float64     `json:"supply_pressure"`
@@ -591,14 +592,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	for k, v := range ge.Trade.activeRoutes {
 		tradeActiveRoutes[k] = *v
 	}
-	tradePressure := make(map[string]float64, len(ge.Trade.supplyPressure))
-	for k, v := range ge.Trade.supplyPressure {
-		tradePressure[k] = v
-	}
-	tradeExchanged := make(map[string]float64, len(ge.Trade.totalExchanged))
-	for k, v := range ge.Trade.totalExchanged {
-		tradeExchanged[k] = v
-	}
 	tradeImported := make(map[string]float64, len(ge.Trade.totalImported))
 	for k, v := range ge.Trade.totalImported {
 		tradeImported[k] = v
@@ -687,10 +680,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		},
 		Trade: TradeSave{
 			ActiveRoutes:   tradeActiveRoutes,
-			SupplyPressure: tradePressure,
-			TotalExchanged: tradeExchanged,
-			TotalSold:      maps.Clone(ge.Trade.totalSold),
-			TotalBought:    maps.Clone(ge.Trade.totalBought),
+			SupplyPressure: map[string]float64{},
+			TotalExchanged: map[string]float64{},
 			TotalImported:  tradeImported,
 			TotalExported:  tradeExported,
 		},
@@ -1099,6 +1090,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// to what the plan accepts; items that can no longer start drop out, with
 	// a log line, on the next tick.
 	ge.plan = loadPlanIn(ge.rules, save.Plan)
+	sellOrders := retiredSellOrders(save.Plan)
 	ge.planLog = loadPlanTemplate(ge.rules, save.PlanLog)
 	ge.wonderOverflowOff = save.WonderOverflowOff
 	// The worker shares: a hand-edited map keeps its known domains, each
@@ -1170,6 +1162,11 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	}
 	if beforeTheWall {
 		ge.addLog("info", storageWallNotice)
+	}
+	// A save whose plan held sell orders hears once that they are gone; its
+	// next save has none, so the line never repeats.
+	if sellOrders > 0 {
+		ge.addLog("info", marketSwapNotice)
 	}
 
 	// Tell the UI a different game state is live (e.g. so a pending catastrophe
@@ -1792,6 +1789,23 @@ func DuplicateSave(filename string) (string, error) {
 		return "", fmt.Errorf("could not write the copy: %w", err)
 	}
 	return dst, nil
+}
+
+// marketSwapNotice is the line a save whose plan held sell orders gets on its
+// first load: the market no longer swaps resources, and the orders were
+// dropped (loadPlanIn skips the retired kind).
+const marketSwapNotice = "The market no longer swaps resources. The sell orders in your plan were removed."
+
+// retiredSellOrders is how many of a saved plan's items are the market
+// swap's sell orders.
+func retiredSellOrders(saved []PlanItem) int {
+	n := 0
+	for _, it := range saved {
+		if it.Kind == retiredPlanTrade {
+			n++
+		}
+	}
+	return n
 }
 
 // storageWallNotice is the line a save from before the storage wall gets on

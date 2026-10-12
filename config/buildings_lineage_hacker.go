@@ -7,24 +7,42 @@ func buildingsLineageHacker() []BuildingDef {
 
 	// =========================================================================
 	// LINEAGE 13 — HACKER/DIGITAL (lineageKey: "hacker", domain: "hacker", output: "data")
-	// starts at information_age (tier 0)
+	// starts at modern_age (tier 0)
 	// rate = 2.0 * 2^tier  CostScale: 1.35  Category: "production"
 	// =========================================================================
 
-	// tier 0 — information_age  rate=2.0
+	// tier 0 — modern_age  the first maker of data: put on the maker rule's
+	// standard (config/maker_rule.go), priced in steel and electricity only
 	b = append(b, BuildingDef{
-		Name: "Server Farm", Key: "server_farm", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 4e11, "data": 4.2e10, "steel": 7.6e11},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "data", Value: 8540000}},
-		BuildTicks:  10920,
-		RequiredAge: "information_age",
-		Description: "Large server farm processing data.",
+		Name: "Mainframe Hall", Key: "mainframe_hall", Category: "production",
+		BaseCost:  map[string]float64{"steel": 2.18e11, "electricity": 8.01e10},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "data", Value: 541000},
+		},
+		BuildTicks:  9360,
+		RequiredAge: "modern_age",
+		Description: "Room-sized computers that keep the records.",
 		LineageKey:  "hacker", LineageTier: 0,
 		WorkerDomain: "hacker", WorkerCapacity: 8,
 		EpochKey: "digital_era", OutputResource: "data",
 	})
-	// tier 1 — digital_age  rate=4.0
+	// tier 1 — information_age  rate=2.0
+	b = append(b, BuildingDef{
+		Name: "Server Farm", Key: "server_farm", Category: "production",
+		BaseCost:  map[string]float64{"electricity": 5.96e11, "steel": 1.13e12},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "data", Value: 7900000},
+		},
+		BuildTicks:  10920,
+		RequiredAge: "information_age",
+		Description: "Large server farm processing data.",
+		LineageKey:  "hacker", LineageTier: 1,
+		WorkerDomain: "hacker", WorkerCapacity: 8,
+		EpochKey: "digital_era", OutputResource: "data",
+	})
+	// tier 2 — digital_age  rate=4.0
 	b = append(b, BuildingDef{
 		Name: "Data Center", Key: "data_center", Category: "production",
 		BaseCost:    map[string]float64{"electricity": 2e12, "data": 2.5e11, "steel": 2.9e12, "nanobots": 13000},
@@ -33,11 +51,11 @@ func buildingsLineageHacker() []BuildingDef {
 		BuildTicks:  12480,
 		RequiredAge: "digital_age",
 		Description: "Hyper-scale data center.",
-		LineageKey:  "hacker", LineageTier: 1,
+		LineageKey:  "hacker", LineageTier: 2,
 		WorkerDomain: "hacker", WorkerCapacity: 10,
 		EpochKey: "digital_era", OutputResource: "data",
 	})
-	// tier 2 — cyberpunk_age  rate=8.0
+	// tier 3 — cyberpunk_age  rate=8.0
 	b = append(b, BuildingDef{
 		Name: "Cyber Hub", Key: "cyber_hub", Category: "production",
 		BaseCost:    map[string]float64{"data": 9.5e11, "crypto": 5e12, "electricity": 9.9e12, "nanobots": 150000},
@@ -46,11 +64,11 @@ func buildingsLineageHacker() []BuildingDef {
 		BuildTicks:  14040,
 		RequiredAge: "cyberpunk_age",
 		Description: "Cyberpunk underground hacker hub.",
-		LineageKey:  "hacker", LineageTier: 2,
+		LineageKey:  "hacker", LineageTier: 3,
 		WorkerDomain: "hacker", WorkerCapacity: 12,
 		EpochKey: "neon_era", OutputResource: "data",
 	})
-	// tier 3 — fusion_age  rate=16.0
+	// tier 4 — fusion_age  rate=16.0
 	b = append(b, BuildingDef{
 		Name: "Quantum Server Farm", Key: "quantum_server_farm", Category: "production",
 		BaseCost:    map[string]float64{"plasma": 2.2e13, "electricity": 6.4e13, "steel": 8.5e13},
@@ -59,11 +77,11 @@ func buildingsLineageHacker() []BuildingDef {
 		BuildTicks:  15600,
 		RequiredAge: "fusion_age",
 		Description: "Quantum-computing server farm.",
-		LineageKey:  "hacker", LineageTier: 3,
+		LineageKey:  "hacker", LineageTier: 4,
 		WorkerDomain: "hacker", WorkerCapacity: 14,
 		EpochKey: "neon_era", OutputResource: "data",
 	})
-	// tier 4 — space_age  rate=32.0
+	// tier 5 — space_age  rate=32.0
 	b = append(b, BuildingDef{
 		Name: "Orbital Data Relay", Key: "orbital_data_relay", Category: "production",
 		BaseCost:    map[string]float64{"titanium": 3.6e14, "plasma": 1.8e14, "electricity": 4.5e14},
@@ -72,11 +90,11 @@ func buildingsLineageHacker() []BuildingDef {
 		BuildTicks:  17160,
 		RequiredAge: "space_age",
 		Description: "Orbital relay node for stellar data networks.",
-		LineageKey:  "hacker", LineageTier: 4,
+		LineageKey:  "hacker", LineageTier: 5,
 		WorkerDomain: "hacker", WorkerCapacity: 16,
 		EpochKey: "neon_era", OutputResource: "data",
 	})
-	// tier 5 — interstellar_age  rate=64.0
+	// tier 6 — interstellar_age  rate=64.0
 	b = append(b, BuildingDef{
 		Name: "Galactic Network Node", Key: "galactic_network_node", Category: "production",
 		BaseCost:    map[string]float64{"dark_matter": 4.5e14, "titanium": 3.5e15, "plasma": 2.2e15},
@@ -85,11 +103,11 @@ func buildingsLineageHacker() []BuildingDef {
 		BuildTicks:  18720,
 		RequiredAge: "interstellar_age",
 		Description: "Interstellar galactic network node.",
-		LineageKey:  "hacker", LineageTier: 5,
+		LineageKey:  "hacker", LineageTier: 6,
 		WorkerDomain: "hacker", WorkerCapacity: 18,
 		EpochKey: "cosmic_era", OutputResource: "data",
 	})
-	// tier 6 — galactic_age  rate=128.0
+	// tier 7 — galactic_age  rate=128.0
 	b = append(b, BuildingDef{
 		Name: "Consciousness Upload Hub", Key: "consciousness_upload_hub", Category: "production",
 		BaseCost:    map[string]float64{"antimatter": 9.1e14, "dark_matter": 4.6e15, "titanium": 2.3e16},
@@ -98,11 +116,11 @@ func buildingsLineageHacker() []BuildingDef {
 		BuildTicks:  18720,
 		RequiredAge: "galactic_age",
 		Description: "Uploads and processes consciousness data.",
-		LineageKey:  "hacker", LineageTier: 6,
+		LineageKey:  "hacker", LineageTier: 7,
 		WorkerDomain: "hacker", WorkerCapacity: 20,
 		EpochKey: "cosmic_era", OutputResource: "data",
 	})
-	// tier 7 — quantum_age  rate=256.0
+	// tier 8 — quantum_age  rate=256.0
 	b = append(b, BuildingDef{
 		Name: "Reality Processor", Key: "reality_processor", Category: "production",
 		BaseCost:    map[string]float64{"quantum_flux": 9.9e14, "antimatter": 3e17, "dark_matter": 2.5e17},
@@ -111,7 +129,7 @@ func buildingsLineageHacker() []BuildingDef {
 		BuildTicks:  18720,
 		RequiredAge: "quantum_age",
 		Description: "Processes data from the very structure of reality.",
-		LineageKey:  "hacker", LineageTier: 7,
+		LineageKey:  "hacker", LineageTier: 8,
 		WorkerDomain: "hacker", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "data",
 	})

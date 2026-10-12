@@ -110,9 +110,11 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 7 — colonial_age  rate=25.60  output=coal
 	b = append(b, BuildingDef{
 		Name: "Coal Works", Key: "coal_works", Category: "production",
-		BaseCost:    map[string]float64{"gold": 9000000, "steel": 4500000},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "coal", Value: 25.6}},
+		BaseCost:  map[string]float64{"gold": 9000000, "steel": 4500000},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "coal", Value: 25.6},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
 		Description: "Organized coal extraction and processing.",
@@ -175,9 +177,11 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 12 — modern_age  rate=819.20  output=oil
 	b = append(b, BuildingDef{
 		Name: "Oil Platform", Key: "oil_platform", Category: "production",
-		BaseCost:    map[string]float64{"steel": 8.4e10, "electricity": 3e10, "data": 2.4e09},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 655000}},
+		BaseCost:  map[string]float64{"steel": 8.4e10, "electricity": 3e10, "data": 2.4e09},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "oil", Value: 649000},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
 		Description: "Offshore AI-monitored oil platform.",
@@ -279,9 +283,11 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 20 — quantum_age  rate=209715.20  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Reality Harvester", Key: "reality_harvester", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 5.4e14, "antimatter": 1.7e17, "dark_matter": 1.4e17},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 3.81e10}},
+		BaseCost:  map[string]float64{"antimatter": 6.74e17},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "quantum_flux", Value: 4.49e10},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
 		Description: "Harvests raw quantum flux from reality itself.",

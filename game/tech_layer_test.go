@@ -276,9 +276,9 @@ func TestTechGatherAndRaids(t *testing.T) {
 }
 
 // TestTechMechanicsReachTheirCommands: each mechanic number a tech moves is
-// read where the game uses it: a market trade, a route's time, a scouting
-// expedition's, a gift's price, a festival's price and wait, a deal set's
-// life.
+// read where the game uses it: a route's time, a scouting expedition's, a
+// gift's price, a festival's price and wait, a deal set's life. (The market's
+// fee is not among them: nothing reads it now that the market does not swap.)
 func TestTechMechanicsReachTheirCommands(t *testing.T) {
 	ge := newTruthEngine("modern_age", truthClean)
 	read := func() map[string]float64 {
@@ -286,17 +286,13 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 		return truthMechanics(ge)
 	}
 	before := read()
-	// Currency, Banking: the fee falls 3 points each. Road Building,
-	// Railroads: routes 15% faster each. Cartography: expeditions 10%
+	// Road Building, Railroads: routes 15% faster each. Cartography: expeditions 10%
 	// faster. Telecommunications: deals 30% sooner, gifts 25% cheaper.
 	// Radio: festivals 20% sooner. Social Media (the next age's): 20%
 	// cheaper.
 	learn(ge, "currency", "banking", "road_building", "railroads", "cartography", "telecommunications", "radio", "social_media", "the_wheel")
 	after := read()
 	near := func(got, want, tol float64) bool { return math.Abs(got-want) <= tol }
-	if got, want := after[config.MechanicMarketFee], config.ExchangeFee-0.06; !near(got, want, 1e-9) || !near(before[config.MechanicMarketFee], config.ExchangeFee, 1e-9) {
-		t.Errorf("the market's fee is %v (%v before), want %v (%v before)", got, before[config.MechanicMarketFee], want, config.ExchangeFee)
-	}
 	for key, want := range map[string]float64{
 		config.MechanicRouteTicks:            0.85 * 0.85,
 		config.MechanicDealRefreshTicks:      0.70,
@@ -314,26 +310,6 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 		t.Errorf("a gift costs %v with Telecommunications, want 150", got)
 	}
 
-	// The market pays what the lower fee leaves, on a real trade.
-	plain := newTruthEngine("modern_age", truthClean)
-	priced := plain.rules.PricedResources("modern_age")
-	from, to := priced[0], priced[1]
-	trade := func(e *GameEngine) float64 {
-		e.recalculateRates()
-		setResource(e, from, 1e9)
-		setResource(e, to, 0)
-		e.Resources.resources[to].Storage = 1e18
-		got, err := e.ExchangeResources(from, to, 1000)
-		if err != nil {
-			t.Fatalf("trading %s for %s: %v", from, to, err)
-		}
-		return got
-	}
-	full, cut := trade(plain), trade(ge)
-	if want := full * (1 - config.ExchangeFee + 0.06) / (1 - config.ExchangeFee); !near(cut, want, 1e-6*want) {
-		t.Errorf("1,000 %s buys %v %s at a 14 point fee and %v at 20, want %v", from, cut, to, full, want)
-	}
-
 	// A route started now takes the shorter run.
 	def := ge.Trade.routeDefs["local_barter"]
 	ge.Buildings.counts[def.RequiredBld] = def.MinCount
@@ -345,6 +321,7 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 	}
 
 	// A campaign keeps its time: the cut is for scouting expeditions.
+	plain := newTruthEngine("modern_age", truthClean)
 	march := func(e *GameEngine) int {
 		delete(e.Military.activeByCat, ExpeditionMilitary)
 		if err := e.Military.LaunchExpedition(rand.New(rand.NewSource(3)), "raid_bandits", e.age, ageOrders()); err != nil {

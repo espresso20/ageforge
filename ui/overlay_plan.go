@@ -142,25 +142,13 @@ func planNote(v game.PlanItemView) string {
 	return v.Note
 }
 
-// planItemTitle is "Hut ×3 (2 started)", "research Tool Making" or
-// "trade food for wood: 500 wood still to buy, 300 bought".
+// planItemTitle is "Hut ×3 (2 started)" or "research Tool Making".
 func planItemTitle(v game.PlanItemView) string {
 	switch v.Kind {
 	case game.PlanResearch:
 		return "research " + v.Name
 	case game.PlanAdvance:
 		return v.Name
-	case game.PlanTrade:
-		s := "trade " + game.ResourceName(v.Key) + " for " + game.ResourceName(v.To)
-		if v.Amount > 0 {
-			s += ": " + game.Amount(v.Amount, v.To) + " still to buy"
-		} else {
-			s += ": keeps " + game.ResourceName(v.To) + " topped up"
-		}
-		if v.Got > 0 {
-			s += ", " + FormatNumber(v.Got) + " bought"
-		}
-		return s
 	}
 	s := v.Name
 	if v.Count > 1 {

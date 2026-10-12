@@ -357,7 +357,7 @@ func TestPlanTemplateWithinPlanCap(t *testing.T) {
 	ge.mu.Lock()
 	ge.plan = nil
 	for i := range MaxPlanItems - 1 {
-		ge.plan = append(ge.plan, PlanItem{Kind: PlanTrade, Key: "wood", To: "food", Count: 1, Amount: float64(i + 1)})
+		ge.plan = append(ge.plan, PlanItem{Kind: PlanDeal, Key: "riverlands_tribes", Deal: i + 1, Count: 1})
 	}
 	ge.mu.Unlock()
 	ge.SetLegacyForTest(LegacyKit{Plan: plan}, true)
@@ -555,7 +555,7 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 	isolateAccountDir(t)
 	ge := newSeededEngine(19)
 	kit := LegacyKit{
-		Plan:     []PlanTemplateItem{{Age: "stone_age", Kind: PlanBuild, Key: "stone_pit", Count: 4}, {Age: "stone_age", Kind: PlanResearch, Key: "pottery"}, {Age: "stone_age", Kind: PlanTrade, Key: "wood", To: "stone", Amount: 50}, {Age: "stone_age", Kind: PlanAdvance}},
+		Plan:     []PlanTemplateItem{{Age: "stone_age", Kind: PlanBuild, Key: "stone_pit", Count: 4}, {Age: "stone_age", Kind: PlanResearch, Key: "pottery"}, {Age: "stone_age", Kind: PlanAdvance}},
 		Factions: []string{"riverlands_tribes"},
 		Shares:   map[string]float64{"knowledge": 30},
 	}
@@ -640,23 +640,5 @@ func TestPrestigeRecordedByAge(t *testing.T) {
 	}
 	if !strings.Contains(string(data), `"prestiges_by_age"`) {
 		t.Errorf("account stats JSON %s has no prestiges_by_age", data)
-	}
-}
-
-// TestPlanLogTradeRemoval: a trade item removed after it bought something
-// stays written as what it bought; one that bought nothing goes.
-func TestPlanLogTradeRemoval(t *testing.T) {
-	ge := newSeededEngine(22)
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	ge.planLog = []PlanTemplateItem{
-		{Age: "primitive_age", Kind: PlanTrade, Key: "wood", To: "food", Amount: 500},
-		{Age: "primitive_age", Kind: PlanTrade, Key: "food", To: "wood"},
-	}
-	ge.unlogPlanItemLocked(PlanItem{Kind: PlanTrade, Key: "wood", To: "food", Amount: 380, Got: 120})
-	ge.unlogPlanItemLocked(PlanItem{Kind: PlanTrade, Key: "food", To: "wood"})
-	want := []PlanTemplateItem{{Age: "primitive_age", Kind: PlanTrade, Key: "wood", To: "food", Amount: 120}}
-	if !reflect.DeepEqual(ge.planLog, want) {
-		t.Errorf("plan log after removing the trades: %+v, want %+v", ge.planLog, want)
 	}
 }

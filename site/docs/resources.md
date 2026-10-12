@@ -18,7 +18,7 @@ Amounts print with up to three figures and a unit from a thousand up: K, M, B, T
 | Faith | `faith` | Primitive Age | 50 | Never drains on its own; your faith strength (your faith buildings against a moderate set, times the share of your faith you have kept) sets the epoch and catastrophe odds, and faith income lifts morale |
 | Stone | `stone` | Stone Age | 50 | Durable construction material |
 | Iron | `iron` | Bronze Age | 50 | Metal for tools, weapons and early engineering |
-| Gold | `gold` | Bronze Age | 50 | Currency for the market, diplomacy and many buildings |
+| Gold | `gold` | Bronze Age | 50 | Pays for diplomacy and many buildings |
 | Culture | `culture` | Classical Age | 50 | Spent on monuments, festivals and more; its fill % of storage decides which good epoch events you can get |
 
 ### Ores
@@ -46,9 +46,9 @@ These four come from Geological Extraction mines. Nothing in the game spends the
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Data | `data` | Modern Age | 50 | Made by Hacker buildings from the Information Age; in the Modern Age the market sells it |
-| Nanobots | `nanobots` | Modern Age | 20 | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them. A build material with hand-set rates: the market does not trade it |
-| Crypto | `crypto` | Cyberpunk Age | 50 | No building makes it: it comes from the Neon Citadel wonder and the market (Blockchain lowers the market's fee) |
+| Data | `data` | Modern Age | 50 | Made by Hacker buildings from the Modern Age, starting with the Mainframe Hall |
+| Nanobots | `nanobots` | Modern Age | 20 | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them. A build material with hand-set rates |
+| Crypto | `crypto` | Cyberpunk Age | 50 | Made by the Black Market Hub, with a trickle from the Neon Citadel wonder. Blockchain adds 4% to it |
 | Plasma | `plasma` | Fusion Age | 30 | Superheated gas for energy |
 | Titanium | `titanium` | Space Age | 30 | Light metal for space construction |
 | Dark Matter | `dark_matter` | Interstellar Age | 20 | Exotic matter for warp technology |
@@ -82,18 +82,15 @@ If food runs out, one worker starves every 5 ticks (10 seconds) until there is f
 
 ## Knowledge
 
-Knowledge pays for research. Every technology costs knowledge, and from the Medieval to the Colonial Age buildings cost it too. The Modern Age's wonder, the Space Program, costs 600B knowledge.
+Knowledge pays for research. Every technology costs knowledge, and from the Medieval to the Colonial Age buildings cost it too.
 
 **How to increase knowledge:**
 - Build Knowledge lineage buildings (Story Circle, Elders' Hall, Scriptorium, ...). Workers come to staff them.
 - Give knowledge a bigger [share of the roster](workers-and-domains.md#the-roster): `roster knowledge 40`
-- Buy it at the market with gold (see below)
 
 Knowledge storage starts at 30 and grows with your storage buildings, like every other resource. A tech priced above your knowledge storage can't start until you build more storage.
 
 Each Knowledge building has its own fully staffed rate: 0.2 knowledge/tick for a Story Circle, 0.6 for an Elders' Hall, 2.0 for a Scriptorium, 1.6 for an Agora and 3.2 for a Library. While buildings cost knowledge (Medieval to Colonial), it counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): a Monastery Library makes 30.1/tick, a University 61.1. See [Knowledge](knowledge.md) for the full lineage.
-
-**Gold for knowledge.** From the Medieval Age on, the market sells knowledge for gold. From the Medieval to the Colonial Age it trades at parity like any construction resource (1 gold buys 0.2 knowledge in the Medieval Age, 0.07 in the Colonial Age). From the Industrial Age on the rate is a fixed **5 knowledge per gold**, the practical way to pay for something like the Space Program.
 
 ---
 
@@ -105,8 +102,6 @@ Faith does two jobs:
 
 - **Odds.** Your faith strength sets the odds of a good epoch event and of a fated catastrophe striking. It measures what your faith buildings have made against a moderate set (eight staffed copies of each), times the share of your faith you have kept. A typical town sits in the bottom band; more faith buildings and fuller crews move it up. It is not a share of storage: faith is kept in the general store, which it could never fill. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
 - **Morale.** Your faith income (faith per tick, not the stockpile) lifts morale a little every tick, up to a limit, and worship buildings lift it too. See [Morale](morale.md).
-
-Faith can't be bought at the market.
 
 **Advice:** Keep faith workers in your faith buildings well before an epoch transition. The buildings make only a trickle with no one in them.
 
@@ -142,14 +137,14 @@ Culture also pays for:
 
 ## What the ores are for
 
-Geological Extraction mines produce marble, iron ore, titanium ore and dark matter crystals. **Nothing spends them.** No building, technology, wonder, age requirement or market pair asks for any of the four, and the Metallurgy lineage doesn't refine them: metallurgy buildings make iron, steel, titanium, dark matter, antimatter and quantum flux and consume nothing, like every other producer.
+Geological Extraction mines produce marble, iron ore, titanium ore and dark matter crystals. **Nothing spends them.** No building, technology, wonder or age requirement asks for any of the four, and the Metallurgy lineage doesn't refine them: metallurgy buildings make iron, steel, titanium, dark matter, antimatter and quantum flux and consume nothing, like every other producer.
 
 The ores count toward two milestones:
 
 - **Industrial Titan** (Industrial Age): stockpile 10,000 coal and 5,000 iron ore.
 - **Mining Syndicate**: build 23 stone pits and 10 iron mines.
 
-What Geological Extraction is good for is stone (up to the Bronze Age), uranium (from the Atomic Age) and antimatter (from the Galactic Age). Its other buildings, from the Iron Age's marble quarry to the Space Age's crystal mine, make only ore. Within a domain, workers fill the newest buildings first, so an ore mine draws masonry workers away from your older stone quarries. Build ore mines for the milestones, not for production. No building of the Iron Age or later makes stone: your older quarries keep making it, and the market sells it (see [Buying at the Market](#buying-at-the-market)). For the same reason, don't `upgrade` your quarries in the Iron Age: the upgrade turns them into marble quarries, which make ore instead of stone.
+What Geological Extraction is good for is stone, iron (from the Iron Age to the Industrial), uranium (from the Victorian Age) and antimatter (from the Galactic Age). The Marble Quarry of the Iron Age through the Steam Mine of the Industrial Age make stone and iron as well as ore, because the ages charge for stone and iron. The mines that make only ore are the Modern to Digital Age titanium ore mines and the Cyberpunk to Space Age crystal mines. Within a domain, workers fill the newest buildings first, so a mine that makes only ore draws masonry workers away from your older quarries. Build those for the milestones, not for production.
 
 ---
 
@@ -223,29 +218,29 @@ Bonuses to one resource ("+10% gold production" from a milestone or a wonder) ha
 
 ## Production Rates
 
-Every building rate in the game is the **fully staffed** rate shown in the building's description. For **construction resources** (anything the buildings of your current age cost) the rate follows the **Payback Rule**: fully staffed, a producer earns back the price of its first copy within the age's payback time. That time is a growing share of the age: under a minute in the Primitive Age, 58 minutes in the Iron Age, 5 hours in the Renaissance. Later ages repay more slowly because your older buildings keep producing too. The **flow resources** (food, faith, culture and soldiers) keep hand-set rates, and the requirements that ask for them are sized to match. Details and the full table are on [Buildings](buildings.md#how-production-rates-are-set).
+Every building rate in the game is the **fully staffed** rate shown in the building's description. For **construction resources** (anything the buildings of your current age cost) the rate follows the **Payback Rule**: fully staffed, a producer earns back the price of its first copy within the age's payback time. That time is a growing share of the age: under a minute in the Primitive Age, 45 minutes in the Iron Age, 5 hours in the Renaissance. Later ages repay more slowly because your older buildings keep producing too. The **flow resources** (food, faith, culture and soldiers) keep hand-set rates, and the requirements that ask for them are sized to match. Details and the full table are on [Buildings](buildings.md#how-production-rates-are-set).
 
 ---
 
-## Buying at the Market
+## Where the Hard Ones Come From
 
-Once you own any trade-lineage building (a `market` or its successors), the market trades **any two construction resources of your current age** at their **price parity less a 20% fee**. Each age has a price level per resource (the typical first-copy price in that resource), and one unit buys `0.8 × (price level of what you buy) / (price level of what you sell)`. In the Space Age, for example, steel and titanium are priced 180T and 245T, so 1 steel buys 1.09 titanium and 1 titanium buys 0.588 steel. Any pair of construction resources works (steel → titanium in the Space Age, data → crypto in the Cyberpunk Age). A listed pair with a resource that isn't a construction resource of the age (food, culture, faith, or knowledge outside the Medieval to Colonial Ages) trades at its fixed rate. Repeated trades of one pair push its rate down (floor 50%), and a round trip always loses value, so trading never beats building. See [Trade](trade.md#resource-exchange).
+There is no market to buy a material from. A material an age charges for comes from a building of that age that makes it (see [The Maker Rule](buildings.md#the-maker-rule)). Several of these makers sit in a lineage you might not look in:
 
-Some construction resources have **no producing building in certain ages**, and the market is where you get them. Producers you built in earlier ages keep running, but the current age has none to build:
+- **Stone** from the Iron Age on: the Marble Quarry through the Steam Mine, then the Uranium Mine and the Uranium Processing Works (all Geological Extraction).
+- **Iron**: the Marble Quarry through the Steam Mine in Geological Extraction, then the Bessemer Plant, the Electric Arc Furnace and the Advanced Alloy Plant in Metallurgy.
+- **Steel** from the Modern Age on: the Titanium Smelter, Aerospace Foundry, Nano Alloy Plant, Dark Matter Refinery, Exotic Matter Forge and Orbital Refinery (Metallurgy).
+- **Titanium** in the Space Age from the Orbital Refinery, in the Interstellar Age from the Antimatter Forge and in the Galactic Age from Stellar Metallurgy. The earlier titanium smelters make only a trickle.
+- **Data** from the Modern Age: the Mainframe Hall, then the Server Farm and the rest of the Hacker lineage.
+- **Crypto** in the Cyberpunk Age: the Black Market Hub, with a trickle from the Neon Citadel wonder.
+- **Plasma** in the Interstellar Age: the Warp Drive Plant. **Dark matter** in the Quantum Age: the Reality Forge.
 
-- **Stone** from the Iron Age on
-- **Iron** from the Renaissance Age on
-- **Steel** from the Modern Age on
-- **Titanium** from the Interstellar Age on (in the Space Age the Orbital Refinery makes it; earlier titanium smelters make only a trickle)
-- **Crypto** in the Cyberpunk Age (apart from the Neon Citadel wonder)
-
-The same goes for wood in the Colonial Age, coal in the Electric Age, data in the Modern Age, plasma in the Galactic Age, dark matter from the Quantum Age on and antimatter in the Transcendent Age. Faith can't be bought at the market at all. A [build plan](plan.md) trade item (`plan trade <give> <get>`) buys these as the resources come in, while you are away too.
+Two materials have no maker of their own age: wood in the Colonial Age and coal in the Electric Age. The older buildings you keep cover them.
 
 ---
 
 ## Gold
 
-Gold pays for the market, diplomacy gifts and many mid-to-late game buildings.
+Gold pays for diplomacy gifts and many mid-to-late game buildings.
 
 **How to increase gold:**
 - Build Trade lineage buildings (Market, Trading Post, Merchant Quarter, ...) and staff them

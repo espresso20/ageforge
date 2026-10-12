@@ -189,9 +189,6 @@ const (
 	BadgeEvEraEvent = "era_event"
 	// BadgeEvAwakening: an awakening fired. Subject: the awakening.
 	BadgeEvAwakening = "awakening"
-	// BadgeEvMarketTrade: one exchange at the market. Subject: the resource
-	// given.
-	BadgeEvMarketTrade = "market_trade"
 	// BadgeEvCivMet: a civilization was met for the first time this run.
 	// Subject: the civilization.
 	BadgeEvCivMet = "civ_met"
@@ -312,7 +309,7 @@ func BadgeEventKinds() []string {
 		BadgeEvHarbingerMet, BadgeEvHarbingerResolved, BadgeEvAppeased, BadgeEvBraced, BadgeEvInvited,
 		BadgeEvDeal, BadgeEvExpedition, BadgeEvFestival, BadgeEvBlackMarket,
 		BadgeEvMemoryAccepted, BadgeEvMemoryDeclined, BadgeEvEraEvent, BadgeEvAwakening,
-		BadgeEvMarketTrade, BadgeEvCivMet, BadgeEvCivStatus, BadgeEvCivAllied,
+		BadgeEvCivMet, BadgeEvCivStatus, BadgeEvCivAllied,
 		BadgeEvRaidBlunted, BadgeEvLowMorale, BadgeEvUpgradeBought, BadgeEvPlanStarted,
 		BadgeEvReturned, BadgeEvAwayTicks,
 		BadgeEvDayPlayed, BadgeEvExported, BadgeEvRecoveryShown, BadgeEvBadge,

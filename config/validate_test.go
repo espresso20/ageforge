@@ -346,39 +346,6 @@ func TestConfig_TradeKeysExist(t *testing.T) {
 	ageKeys := buildKeySet(Ages(), func(a AgeDef) string { return a.Key })
 	buildingKeys := BuildingByKey()
 
-	for _, rate := range BaseExchangeRates() {
-		if _, ok := resourceKeys[rate.From]; !ok {
-			t.Errorf("\n"+
-				"  Bad resource key in exchange rate\n"+
-				"  File:     config/trade.go (BaseExchangeRates)\n"+
-				"  Rate:     %s -> %s\n"+
-				"  Field:    From\n"+
-				"  Got:      %q  <-- this resource doesn't exist\n"+
-				"  Fix:      Check config/resources.go for valid resource keys%s\n",
-				rate.From, rate.To, rate.From, hintFromMap(rate.From, resourceKeys))
-		}
-		if _, ok := resourceKeys[rate.To]; !ok {
-			t.Errorf("\n"+
-				"  Bad resource key in exchange rate\n"+
-				"  File:     config/trade.go (BaseExchangeRates)\n"+
-				"  Rate:     %s -> %s\n"+
-				"  Field:    To\n"+
-				"  Got:      %q  <-- this resource doesn't exist\n"+
-				"  Fix:      Check config/resources.go for valid resource keys%s\n",
-				rate.From, rate.To, rate.To, hintFromMap(rate.To, resourceKeys))
-		}
-		if rate.MinAge != "" && !ageKeys[rate.MinAge] {
-			t.Errorf("\n"+
-				"  Bad age key in exchange rate\n"+
-				"  File:     config/trade.go (BaseExchangeRates)\n"+
-				"  Rate:     %s -> %s\n"+
-				"  Field:    MinAge\n"+
-				"  Got:      %q  <-- this age doesn't exist\n"+
-				"  Fix:      Check config/ages.go for valid age keys%s\n",
-				rate.From, rate.To, rate.MinAge, hint(rate.MinAge, ageKeys))
-		}
-	}
-
 	for _, route := range BaseTradeRoutes() {
 		if route.MinAge != "" && !ageKeys[route.MinAge] {
 			t.Errorf("\n"+

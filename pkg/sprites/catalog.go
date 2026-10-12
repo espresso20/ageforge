@@ -9,7 +9,7 @@ type BuildingDef struct {
 	AgeKey  string
 }
 
-// AllBuildings is the full catalog of production buildings (284 entries across 13 lineages).
+// AllBuildings is the full catalog of production buildings (246 entries across 13 lineages).
 var AllBuildings = []BuildingDef{
 	// Lineage 1: Housing
 	{"hut", 1, 0, "primitive_age"},
@@ -273,12 +273,13 @@ var AllBuildings = []BuildingDef{
 	{"zero_point_generator", 12, 12, "quantum_age"},
 
 	// Lineage 13: Hacker
-	{"server_farm", 13, 0, "information_age"},
-	{"data_center", 13, 1, "digital_age"},
-	{"cyber_hub", 13, 2, "cyberpunk_age"},
-	{"quantum_server_farm", 13, 3, "fusion_age"},
-	{"orbital_data_relay", 13, 4, "space_age"},
-	{"galactic_network_node", 13, 5, "interstellar_age"},
-	{"consciousness_upload_hub", 13, 6, "galactic_age"},
-	{"reality_processor", 13, 7, "quantum_age"},
+	{"mainframe_hall", 13, 0, "modern_age"},
+	{"server_farm", 13, 1, "information_age"},
+	{"data_center", 13, 2, "digital_age"},
+	{"cyber_hub", 13, 3, "cyberpunk_age"},
+	{"quantum_server_farm", 13, 4, "fusion_age"},
+	{"orbital_data_relay", 13, 5, "space_age"},
+	{"galactic_network_node", 13, 6, "interstellar_age"},
+	{"consciousness_upload_hub", 13, 7, "galactic_age"},
+	{"reality_processor", 13, 8, "quantum_age"},
 }

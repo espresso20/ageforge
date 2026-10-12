@@ -567,8 +567,8 @@ func diplomacyThreshold(status string, opinion int, key string, allyCost float64
 }
 
 // writeFactionDeals renders a civ's trade deals on its card: one numbered
-// line per offer (the number `diplomacy accept` takes), with how much better
-// than the market it pays, or why the civ offers nothing. Theme roles only.
+// line per offer (the number `diplomacy accept` takes), or why the civ offers
+// nothing. Theme roles only.
 func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameState, usable int) {
 	if f.DealsBlocked != "" {
 		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleWarning, "Deals: none while they are "+f.DealsBlocked+"."))
@@ -586,7 +586,7 @@ func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameS
 }
 
 // dealLine renders one offer from the player's side, in the words of
-// game.DealTerms: "1. Buy: give 516 wood → get 618 food   +20% vs market".
+// game.DealTerms: "1. Buy: give 516 wood → get 618 food".
 // What you can't pay yet is in the Negative role; a taken offer is dim.
 // Resource keys go in as display names, so "iron_ore" reads "iron ore".
 func dealLine(d game.DealInfo, state game.GameState, width int) string {
@@ -598,12 +598,8 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	switch {
 	case d.Taken:
 		note = "taken"
-	case d.Edge > 0:
-		note = fmt.Sprintf("%+.0f%% vs market", d.Edge*100)
 	case d.Kind == game.DealRare:
 		note = "next age's goods"
-	case d.Get != "":
-		note = "not sold at the market"
 	}
 	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber))
 	if d.Taken {

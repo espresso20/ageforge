@@ -80,7 +80,7 @@ Once completed, the wonder appears as a landmark on the Map (`map` command).
 
 Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **64 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). Each wonder has its own resource mix.
 
-The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **800 food**, the Great Monolith **2.4K food**, and the Sistine Chapel **32K faith**.
+The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **800 food**, the Great Monolith **2.4K food**, and the Sistine Chapel **32K faith** and **950K culture**.
 
 A part of a wonder's price can be larger than the store for that resource. That is why the wonder is the one purchase the size of a store does not block (see [Storage is a wall](buildings.md#storage-is-a-wall)): it is banked a deposit at a time, and overflow adds to the deposits.
 
@@ -181,7 +181,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Stone | 38.4M |
 | Gold | 38.4M |
 | Faith | 32K |
-| Culture | 12.8M |
+| Culture | 950K |
 
 **Bonus:** +3.5 culture/t · +1.8 faith/t
 
@@ -233,7 +233,6 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Resource | Cost |
 |---|---|
 | Steel | 114B |
-| Stone | 80B |
 | Electricity | 32B |
 
 **Bonus:** +10.0 electricity/t · **+20% all production**
@@ -245,9 +244,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 160B |
-| Electricity | 224B |
-| Uranium | 25.6B |
+| Steel | 186B |
+| Electricity | 260B |
+| Uranium | 29.8B |
 
 **Bonus:** +10.0 knowledge/t · +1.5 uranium/t
 
@@ -258,10 +257,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 1.23T |
-| Gold | 1.1T |
-| Electricity | 688B |
-| Knowledge | 600B |
+| Steel | 1.32T |
+| Gold | 1.19T |
+| Electricity | 738B |
 
 **Bonus:** +6.0 knowledge/t · +8.0 culture/t
 
@@ -365,9 +363,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Quantum Flux | 38.4Q |
-| Antimatter | 62.4Q |
-| Dark Matter | 70.4Q |
+| Quantum Flux | 56Q |
+| Antimatter | 91.1Q |
+| Dark Matter | 103Q |
 
 **Bonus:** +15.0 quantum flux/t · **+50% all production**
 
@@ -384,7 +382,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 **Bonus:** **+200% all production** · +20.0 quantum flux/t
 
-> The Singularity Core is the last wonder and has the biggest bill in the game. Its +200% all production is the largest bonus in the game. By the Transcendent Age the pool is far past +200%, where a bonus counts a quarter, so it adds 50 points to what the pool applies.
+> The Singularity Core is the last wonder and has the biggest bill in the game. Its +200% all production is the largest bonus in the game. By the Transcendent Age the pool is far past +200%, where a bonus counts a quarter, so it adds 50 points to what the pool applies. The Transcendent Age has no makers of its own, so the Singularity Core is paid from the Quantum Age's makers (see [The Maker Rule](buildings.md#the-maker-rule)).
 
 ---
 

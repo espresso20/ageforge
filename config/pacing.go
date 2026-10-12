@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
@@ -23,17 +22,13 @@ import (
 //
 //   - Price levels (PriceLevels): the median first-copy price of a resource
 //     among an age's buildings.
-//   - Market parity (MarketRate): the market trades any two construction
-//     resources of the current age at the ratio of their price levels, less
-//     ExchangeFee.
 //   - The reference town (Incomes, TypicalStorages): what TownCopies staffed
 //     copies of every producer make (FlowCopies is that number), and what the
 //     storage rule's five copies of every store hold (StorageRuleCopies).
 //
 // A construction resource of an age is one that appears in the first-copy
 // price of at least one of that age's buildings (wonders aside), except the
-// flow resources below. Its price level is the median of those prices; the
-// parity of two resources is the ratio of their price levels.
+// flow resources below. Its price level is the median of those prices.
 
 // TickSeconds is the length of one tick at 1x. It must equal
 // game.BaseTickInterval (a game test checks it).
@@ -115,11 +110,6 @@ var AgeTargets = map[string]time.Duration{
 	"transcendent_age": 3744 * time.Minute,
 }
 
-const (
-	// ExchangeFee is what the market keeps on a trade at parity.
-	ExchangeFee = 0.2
-)
-
 // flowResources are never priced for the rules above, even where a building
 // costs them: their amounts drive other systems (food feeds workers, faith
 // sets morale and catastrophe odds, culture fills its own caps and pays for
@@ -138,8 +128,7 @@ const (
 // 40% of a store, in nanobots, paid for an age outright.
 var flowResources = map[string]bool{"food": true, "faith": true, "culture": true, "soldiers": true, "nanobots": true}
 
-// IsFlowResource reports whether res is one of the flow resources, which have no price level and
-// market parity.
+// IsFlowResource reports whether res is one of the flow resources, which have no price level.
 func IsFlowResource(res string) bool { return flowResources[res] }
 
 // AgeTargetTicks is AgeTargets[age] in ticks at 1x (0 for an unknown age).
@@ -201,16 +190,6 @@ func median(v []float64) float64 {
 	return (s[n/2-1] + s[n/2]) / 2
 }
 
-// roundRate rounds a derived rate to 3 significant figures. Unlike
-// roundSignificant it never floors a small positive value at 1.
-func roundRate(v float64) float64 {
-	if v <= 0 {
-		return v
-	}
-	mag := detmath.Pow(10, 3-math.Ceil(detmath.Log10(v)))
-	return math.Round(v*mag) / mag
-}
-
 // priceUnits is a price measured in price levels of age: 1.0 is a building
 // that costs the median of one resource. Resources without a level (flow
 // resources) do not count.
@@ -236,128 +215,17 @@ func FormatRateValue(v float64) string {
 	return textfmt.Number(v)
 }
 
-// The lookups below (PriceLevels, ExchangeRate, MarketRate, MarketPairs,
-// FlowIncome, TypicalIncome, and DealPriceLevel, PricedResources and
-// MarketOffers in deals.go) describe the tables this package defines and
+// The lookups below (PriceLevels, FlowIncome, TypicalIncome, and
+// DealPriceLevel and PricedResources in deals.go) describe the tables this package defines and
 // keep nothing between calls: each one rebuilds the building table, about a
 // millisecond. They are for tests and tools. An engine reads the same
 // numbers from its rules.Set, which works them out once with the pure
-// functions beside them (PriceLevelsByAge, ExchangeRateAt, MarketRateAt,
-// MarketPairsAt, Incomes, FlowDealLevels, MarketOffersAt).
+// functions beside them (PriceLevelsByAge, Incomes, FlowDealLevels).
 
 // PriceLevels returns the median first-copy price of each construction
 // resource in age (nil for an age with no buildings).
 func PriceLevels(age string) map[string]float64 {
 	return priceLevels(BaseBuildings())[age]
-}
-
-// exchangeLevels is every age's price levels, rebuilt on every call.
-func exchangeLevels() map[string]map[string]float64 {
-	return priceLevels(BaseBuildings())
-}
-
-// ExchangeRate is the market rate from def.From to def.To in age: parity
-// minus ExchangeFee when both are construction resources of age, the
-// literal BaseRate otherwise.
-func ExchangeRate(def ExchangeRateDef, age string) float64 {
-	return ExchangeRateAt(def, PriceLevels(age))
-}
-
-// ExchangeRateAt is ExchangeRate against an age's price levels.
-func ExchangeRateAt(def ExchangeRateDef, lv map[string]float64) float64 {
-	from, to := lv[def.From], lv[def.To]
-	if from <= 0 || to <= 0 {
-		return def.BaseRate
-	}
-	return roundRate(to / from * (1 - ExchangeFee))
-}
-
-// MarketRate is the rate the market pays for one from in age, and whether
-// the pair trades at all. Any two construction resources of age trade at
-// parity less ExchangeFee; the listed pairs (BaseExchangeRates) trade at
-// ExchangeRate. The listed pairs keep their historical behavior of not
-// checking MinAge here; MarketPairs is what the UI and the bot offer.
-func MarketRate(from, to, age string) (float64, bool) {
-	return MarketRateAt(from, to, ExchangeRateByKey(), PriceLevels(age))
-}
-
-// MarketRateAt is MarketRate against the listed pairs (keyed "from:to") and
-// an age's price levels.
-//
-// A listed pair is closed in an age that prices what it buys and not what
-// it takes (a flow resource aside, which no age prices). The typed rate of
-// a listed pair is for goods the age does not build with; what an age does
-// build with it sells for its other construction resources, at parity.
-// Gold is the case: the Information Age's hubs make it by the hundreds of
-// millions, no age after builds with it, and at the typed 0.15 data and
-// 0.04 crypto a gold it bought the Digital and Cyberpunk Ages about as
-// much data again as they made.
-func MarketRateAt(from, to string, listed map[string]ExchangeRateDef, lv map[string]float64) (float64, bool) {
-	if from == to {
-		return 0, false
-	}
-	if def, ok := listed[from+":"+to]; ok {
-		if listedPairClosed(def, lv) {
-			return 0, false
-		}
-		return ExchangeRateAt(def, lv), true
-	}
-	if lv[from] > 0 && lv[to] > 0 {
-		return ExchangeRateAt(ExchangeRateDef{From: from, To: to}, lv), true
-	}
-	return 0, false
-}
-
-// listedPairClosed reports whether a listed pair does not trade in an age
-// with price levels lv: the age prices what the pair buys and not what it
-// takes, and what it takes is not a flow resource (see MarketRateAt).
-func listedPairClosed(def ExchangeRateDef, lv map[string]float64) bool {
-	return lv[def.To] > 0 && lv[def.From] <= 0 && !flowResources[def.From]
-}
-
-// MarketPairs lists what the market offers in age: every listed pair whose
-// MinAge has been reached and that the age has not closed (MarketRateAt),
-// plus every ordered pair of the age's construction resources, each with
-// its rate for age as BaseRate. Sorted by from, then to.
-func MarketPairs(age string) []ExchangeRateDef {
-	return MarketPairsAt(age, BaseExchangeRates(), AgePositions(AgeOrder()), PriceLevels(age))
-}
-
-// MarketPairsAt is MarketPairs against the listed pairs, each age's
-// position and age's price levels. It leaves listed as it found it.
-func MarketPairsAt(age string, listed []ExchangeRateDef, pos map[string]int, lv map[string]float64) []ExchangeRateDef {
-	seen := map[string]bool{}
-	var out []ExchangeRateDef
-	for _, def := range listed {
-		if pos[def.MinAge] > pos[age] || listedPairClosed(def, lv) {
-			continue
-		}
-		def.BaseRate = ExchangeRateAt(def, lv)
-		seen[def.From+":"+def.To] = true
-		out = append(out, def)
-	}
-	res := make([]string, 0, len(lv))
-	for r := range lv {
-		res = append(res, r)
-	}
-	sort.Strings(res)
-	for _, from := range res {
-		for _, to := range res {
-			if from == to || seen[from+":"+to] {
-				continue
-			}
-			def := ExchangeRateDef{From: from, To: to, MinAge: age}
-			def.BaseRate = ExchangeRateAt(def, lv)
-			out = append(out, def)
-		}
-	}
-	sort.SliceStable(out, func(i, j int) bool {
-		if out[i].From != out[j].From {
-			return out[i].From < out[j].From
-		}
-		return out[i].To < out[j].To
-	})
-	return out
 }
 
 // FlowCopies is the "reasonable production level" of a flow resource: how

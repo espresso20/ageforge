@@ -286,8 +286,7 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 }
 
 // truthMechanics reads every mechanic number a tech can move
-// (config.Mechanics), each where the game uses it: what the market pays on a
-// pair it trades at parity (as the fee that leaves), a route's time per
+// (config.Mechanics), each where the game uses it: a route's time per
 // run and what a run brings in of a listed import, how high morale can
 // rise, a scouting expedition and a campaign launched off a fixed roll and
 // what a campaign brings back of its listed loot, how long a set of deals
@@ -327,13 +326,6 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 	// what it would be with no tech, so only the techs' cut moves it.
 	if full := math.Max(festivalMinCost, ge.Resources.GetStorage("culture")*festivalCostFraction); full > 0 {
 		out[config.MechanicFestivalCost] = ge.festivalCost() / full
-	}
-	if priced := ge.rules.PricedResources(ge.age); len(priced) >= 2 {
-		from, to := priced[0], priced[1]
-		base, ok := ge.rules.MarketRate(from, to, ge.age)
-		if paid, _ := ge.Trade.marketRate(from, to, ge.age); ok && base > 0 {
-			out[config.MechanicMarketFee] = 1 - (1-config.ExchangeFee)*paid/base
-		}
 	}
 	// A mission of each kind, launched off a fixed roll.
 	for cat, key := range map[string]string{ExpeditionScouting: config.MechanicExpeditionTicks, ExpeditionMilitary: config.MechanicCampaignTicks} {

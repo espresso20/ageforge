@@ -208,10 +208,11 @@ func TestPlanTechWaitsForWhatItNeeds(t *testing.T) {
 // pools the rest of the game reads hold only what techs share with it.
 func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 	ge := NewGameEngine()
-	// Banking: +8% gold, market fee 3 points lower. Alchemy: +8% knowledge.
-	// Pottery: +10% storage. Feudalism: +8% housing. Steel Forging: first
-	// steel (0.25 a tick), +8% iron. Chronometry: +5% game speed.
-	learn(ge, "banking", "alchemy", "pottery", "feudalism", "steel_forging", "chronometry")
+	// Banking: +8% gold. Alchemy: +8% knowledge. Pottery: +10% storage.
+	// Feudalism: +8% housing. Steel Forging: first steel (0.25 a tick), +8%
+	// iron. Chronometry: +5% game speed. Priesthood: morale can rise 5
+	// points higher.
+	learn(ge, "banking", "alchemy", "pottery", "feudalism", "steel_forging", "chronometry", "priesthood")
 	rm := ge.Research
 	for _, c := range []struct {
 		kind   config.TechEffectKind
@@ -227,7 +228,7 @@ func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 		{config.EffectHousing, "", 0.08},
 		{config.EffectAllOutput, "", 0},
 		{config.EffectGameSpeed, "", 0.05},
-		{config.EffectMechanic, config.MechanicMarketFee, -0.03},
+		{config.EffectMechanic, config.MechanicMoraleCap, 0.05},
 		// A kind that multiplies reads 1 with no tech.
 		{config.EffectBuildCost, "", 1},
 		{config.EffectBuildTime, "", 1},
@@ -261,7 +262,7 @@ func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 		!reflect.DeepEqual(rs.Output, map[string]float64{"gold": 0.08, "knowledge": 0.08, "iron": 0.08}) ||
 		rs.Storage != 0.10 || rs.Housing != 0.08 || rs.AllOutput != 0 ||
 		rs.BuildCost != 1 || rs.BuildTime != 1 || rs.ResearchTime != 1 ||
-		!reflect.DeepEqual(rs.Mechanics, map[string]float64{config.MechanicMarketFee: -0.03}) {
+		!reflect.DeepEqual(rs.Mechanics, map[string]float64{config.MechanicMoraleCap: 0.05}) {
 		t.Errorf("the snapshot holds %+v", rs)
 	}
 }

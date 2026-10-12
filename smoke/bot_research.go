@@ -26,8 +26,8 @@ import (
 // While a tech of the first two groups is still to start, the bot saves its
 // knowledge for it: nothing of the third group starts, the knowledge those
 // techs cost is a target of the age like any requirement (so the bot builds
-// knowledge producers and storage for it, and buys knowledge at the market
-// where it sells), and the wonder bank does not take it.
+// knowledge producers and storage for it), and the wonder bank does not take
+// it.
 
 // techChain appends key and everything it still needs to out, what it needs
 // first: every unresearched prerequisite, all the way down, and, for an

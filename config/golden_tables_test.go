@@ -41,15 +41,13 @@ type goldenGate struct {
 
 // goldenTables is the record of every number the economy's tables hold once
 // the game has loaded them: prices, rates, outputs, storage sizes, build and
-// research times, gates, and the price levels and market rates worked out
-// from them.
+// research times, gates, and the price levels worked out from them.
 type goldenTables struct {
 	Buildings      map[string]goldenBuilding     `json:"buildings"`
 	Techs          map[string]goldenTech         `json:"techs"`
 	Gates          map[string]goldenGate         `json:"gates"`
 	AgeTargetSecs  map[string]float64            `json:"age_target_seconds"`
 	PriceLevels    map[string]map[string]float64 `json:"price_levels"`
-	MarketRates    map[string]map[string]float64 `json:"market_rates"`
 	TypicalIncome  map[string]map[string]float64 `json:"typical_income"`
 	TypicalStorage map[string]map[string]float64 `json:"typical_storage"`
 	EpochEvents    map[string]int                `json:"epoch_event_ticks"`
@@ -61,7 +59,7 @@ type goldenTables struct {
 func liveGoldenTables() goldenTables {
 	g := goldenTables{
 		Buildings: map[string]goldenBuilding{}, Techs: map[string]goldenTech{}, Gates: map[string]goldenGate{},
-		AgeTargetSecs: map[string]float64{}, PriceLevels: map[string]map[string]float64{}, MarketRates: map[string]map[string]float64{},
+		AgeTargetSecs: map[string]float64{}, PriceLevels: map[string]map[string]float64{},
 		EpochEvents: map[string]int{}, Awakenings: map[string]int{}, TradeRoutes: map[string]int{},
 	}
 	defs := BaseBuildings()
@@ -82,13 +80,6 @@ func liveGoldenTables() goldenTables {
 		g.Gates[a.Key] = goldenGate{Buildings: a.BuildingReqs}
 		g.AgeTargetSecs[a.Key] = AgeTargets[a.Key].Seconds()
 		g.PriceLevels[a.Key] = PriceLevels(a.Key)
-		rates := map[string]float64{}
-		for _, p := range MarketPairs(a.Key) {
-			if r, ok := MarketRate(p.From, p.To, a.Key); ok {
-				rates[p.From+">"+p.To] = r
-			}
-		}
-		g.MarketRates[a.Key] = rates
 	}
 	g.TypicalIncome = Incomes(defs, techs, order, AnyResource)
 	g.TypicalStorage = TypicalStorages(defs, BaseResources(), order)

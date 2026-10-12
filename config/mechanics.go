@@ -6,11 +6,11 @@ import (
 )
 
 // A mechanic number is one constant of a game mechanic that a tech can move:
-// the market's fee, how long a trade route takes, what a gift costs. The
-// engine reads such a number as "the constant, with the tech term": the
-// constant times the term for a mechanic that multiplies, the constant plus
-// the term for one that adds. With no tech researched the term is 1 or 0 and
-// the number is the constant.
+// how long a trade route takes, what a gift costs. The engine reads such a
+// number as "the constant, with the tech term": the constant times the term
+// for a mechanic that multiplies, the constant plus the term for one that
+// adds. With no tech researched the term is 1 or 0 and the number is the
+// constant.
 //
 // The table lists the numbers a tech moves today. A number joins it in the
 // same change that gives a tech an effect on it and teaches the engine to
@@ -20,9 +20,6 @@ import (
 const (
 	// MechanicGatherAmount is added to what one `gather` brings in.
 	MechanicGatherAmount = "gather_amount"
-	// MechanicMarketFee is added to the market's fee (ExchangeFee, a
-	// fraction of parity): -0.03 is 3 points lower.
-	MechanicMarketFee = "market_fee"
 	// MechanicRouteTicks multiplies the time a trade route takes per run.
 	MechanicRouteTicks = "route_ticks"
 	// MechanicExpeditionTicks multiplies the time a scouting expedition
@@ -92,7 +89,7 @@ const (
 // MechanicDef is one mechanic number a tech can move.
 type MechanicDef struct {
 	Key string
-	// Name is the number in running text: "market fee".
+	// Name is the number in running text: "gift cost".
 	Name string
 	// Multiplies says how effects on the number stack: each multiplies it
 	// (a Value of -0.15 leaves 85% of it), or, when false, each is added to
@@ -113,8 +110,6 @@ func Mechanics() []MechanicDef {
 	return []MechanicDef{
 		{Key: MechanicGatherAmount, Name: "hand gathering", Min: 0, Max: 25,
 			Text: "gathering by hand brings %s more", Unit: UnitAmount},
-		{Key: MechanicMarketFee, Name: "market fee", Min: -0.15, Max: 0,
-			Text: "market fee %s lower", Unit: UnitPoints},
 		{Key: MechanicRouteTicks, Name: "trade route time", Multiplies: true, Min: 0.40, Max: 1,
 			Text: "trade routes take %s less time", Unit: UnitPercent},
 		{Key: MechanicExpeditionTicks, Name: "expedition time", Multiplies: true, Min: 0.40, Max: 1,
@@ -173,7 +168,7 @@ var mechanicIndex = sync.OnceValue(func() map[string]MechanicDef {
 func MechanicByKey() map[string]MechanicDef { return mechanicIndex() }
 
 // EffectText is one effect of size v on the number, in player words:
-// "trade routes take 15% less time", "market fee 3 points lower".
+// "trade routes take 15% less time", "morale can rise 5 points higher".
 func (m MechanicDef) EffectText(v float64) string {
 	var size string
 	switch m.Unit {

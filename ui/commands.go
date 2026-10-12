@@ -40,8 +40,6 @@ const (
 	ArgPlanTech                       // a tech the plan takes
 	ArgResource                       // an unlocked resource
 	ArgWonderResource                 // a resource the current wonder's bank still needs
-	ArgTradeFrom                      // a resource the market buys from you
-	ArgTradeTo                        // a resource the market sells for the previous argument
 	ArgFaction                        // a discovered civilization
 	ArgTheme                          // an unlocked theme
 	ArgSave                           // an existing save
@@ -176,8 +174,6 @@ func registry() []*Command {
 				sub("build", "plan build <building> [count]", "Add copies of a building (this age's, or the next age's to build after you advance)", Arg{Kind: ArgPlanBuilding}, optCount),
 				{Name: "research", Aliases: []string{"res"}, Args: []Arg{{Kind: ArgPlanTech}},
 					Help: []Usage{{"plan research <tech>", "Add a tech and, before it, the techs it still needs (techs start one at a time, in order)"}}},
-				sub("trade", "plan trade <give> <get> [amount]", "Sell <give> for <get> as it comes in, until <amount> <get> is bought (no amount: until you remove it)",
-					Arg{Kind: ArgTradeFrom}, Arg{Kind: ArgTradeTo}, Arg{Kind: ArgNumber, Optional: true}),
 				sub("advance", "plan advance", "Advance as soon as the next age is ready"),
 				sub("deal", "plan deal <civ> <n>", "Take a civilization's trade deal n once its price is there",
 					Arg{Kind: ArgFaction}, Arg{Kind: ArgDeal}),
@@ -246,11 +242,8 @@ func registry() []*Command {
 			Subs: []*Command{sub("list", "campaign list", "List available campaigns")}},
 
 		// Trade & Diplomacy
-		{Name: "trade", Aliases: []string{"t"}, Section: secTrade, BareOK: true, Panel: "Market rates & trade routes",
-			Args: []Arg{{Kind: ArgTradeFrom}, {Kind: ArgTradeTo}, {Kind: ArgNumber}},
-			Help: []Usage{{"trade <give> <get> <amount>", "Sell <amount> of <give> for <get> at the market rate"}},
+		{Name: "trade", Aliases: []string{"t"}, Section: secTrade, BareOK: true, Panel: "Trade routes",
 			Subs: []*Command{
-				sub("list", "trade list", "Show market rates"),
 				{Name: "route", BareOK: true, Subs: []*Command{
 					sub("list", "trade route list", "List trade routes"),
 					sub("start", "trade route start <route>", "Start a trade route", Arg{Kind: ArgRouteAvailable}),

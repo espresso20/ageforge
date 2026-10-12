@@ -47,9 +47,11 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 2 — electric_age  output=electricity  rate=100
 	b = append(b, BuildingDef{
 		Name: "Dynamo Hall", Key: "power_generator", Category: "production",
-		BaseCost:     map[string]float64{"steel": 4.7e09, "electricity": 1.9e09, "coal": 1.3e09},
-		CostScale:    1.15,
-		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 240000}},
+		BaseCost:  map[string]float64{"steel": 4.7e09, "electricity": 1.9e09, "coal": 1.3e09},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "electricity", Value: 223000},
+		},
 		BuildTicks:   7800,
 		RequiredAge:  "electric_age",
 		RequiredTech: "power_distribution",
@@ -78,8 +80,8 @@ func buildingsLineageEnergy() []BuildingDef {
 		BaseCost:  map[string]float64{"steel": 1.4e11, "electricity": 5.1e10, "oil": 8.5e09},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "oil", Value: 546000},
-			{Type: "production", Target: "electricity", Value: 2500000},
+			{Type: "production", Target: "oil", Value: 540000},
+			{Type: "production", Target: "electricity", Value: 2860000},
 		},
 		BuildTicks:  9360,
 		RequiredAge: "modern_age",

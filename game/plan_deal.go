@@ -43,7 +43,7 @@ func (ge *GameEngine) PlanAddDeal(key string, n int) error {
 		return err
 	}
 	if fs.DealsFor != ge.age || n < 1 || n > len(fs.Deals) {
-		return fmt.Errorf("There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(dealInfos(ge.rules, fs, ge.age, ge.Diplomacy.feeScale)))
+		return fmt.Errorf("There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(dealInfos(fs, ge.age)))
 	}
 	d := fs.Deals[n-1]
 	if d.Taken {

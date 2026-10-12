@@ -32,6 +32,18 @@ Storage changed. A storage building's price now climbs much faster with each cop
 
 ---
 
+## Saves from before the market ended
+
+A game saved while the market could swap resources loads as usual. Everything it built, researched and holds stays. If its build plan held sell orders, they are removed, and the log says so once, on the first load:
+
+```
+The market no longer swaps resources. The sell orders in your plan were removed.
+```
+
+The next save has no sell orders, so the line does not come back.
+
+---
+
 ## Commands
 
 | Command | Description |

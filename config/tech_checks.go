@@ -82,7 +82,7 @@ type TechCheck struct {
 }
 
 // String is the check as the tree's tables write it: "rate(food) x1.10",
-// "market_fee -0.03", "can_build(barracks) 0>1".
+// "route_ticks -0.15", "can_build(barracks) 0>1".
 func (c TechCheck) String() string {
 	what := c.Measure
 	switch {

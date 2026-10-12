@@ -1,147 +1,29 @@
 # Trade
 
-The market and the routes move resources around your economy. The **resource exchange** swaps one resource for another at your age's prices, on demand. **Trade routes** run in the background, swapping a small fixed bundle of goods every few ticks, and every completed cycle raises the opinion of you held by every civilization you have met (except one at war with you). **Harbors** raise what the routes pay, and the **black market** gambles culture on a haul.
+Trade routes and the black market move resources around your economy. **Trade routes** run in the background, trading a small fixed bundle of goods every few ticks, and every completed cycle raises the opinion of you held by every civilization you have met (except one at war with you). **Harbors** raise what the routes pay, and the **black market** gambles culture on a haul.
+
+The game has no market where one resource swaps for another. Every material an age charges for comes from a building: see [The maker rule](buildings.md#the-maker-rule).
 
 The other civilizations (meeting them, opinion, deals, alliances, war) have their own page: [Factions & Diplomacy](factions.md).
 
 ---
 
-## Resource Exchange
-
-An exchange is an instant, one-off swap between two resources. You need at least one trade building first: a `market` or anything later in the trade lineage (trading post, merchant quarter, guildhall, exchange, port, stock exchange, bank, ...). Upgraded buildings count too, so upgrading your markets keeps the exchange open. The gate into the Iron Age asks for five Markets (see [Advancement Requirements](ages.md#advancement-requirements)), so you hold a trade building by the time you advance.
-
-```
-trade <give> <get> <amount to give>
-trade list
-plan trade <give> <get> [amount to get]
-```
-
-- `trade` makes one exchange now. The amount counts what you **give**. If the `get` store has room for less than the sale would pay, the sale shrinks to what fits and you are charged only for that. If the store is full, the game says `<Resource> storage is full.` (for example `Stone storage is full.`) and charges nothing.
-- `trade list` shows every rate open to your age, including any market pressure penalty. Bare `trade` opens the **Trade** panel, which shows the same rates and your routes.
-- `plan trade` puts a **sell order** in the [build plan](plan.md): as `give` comes in, the plan sells it for `get` at the market rate. Here the amount counts what you **get**. With an amount, the order drops out once it has bought that much. With no amount it keeps selling until you remove it, and it pauses while the `get` store is full. A sell order into a store with room for less than a lump takes the same smaller sale, and charges only for that. It sells in lumps once the pair's rate has recovered from its last sale, so it keeps within about 1% of the market rate, and it only sells what the plan items above it leave free. It also drops out if the pair stops trading (an age advance can do that).
-
-Rates follow your age: see [Exchange Rates](#exchange-rates).
-
-### Exchange Rates
-
-Each pair has a **base rate**: how many units of the resource you get per unit you give, at zero market pressure. The rate of a pair depends on what the two resources are in your current age.
-
-**Construction resources trade at parity.** A *construction resource* of an age is any resource that one of that age's buildings costs (wonders aside), except the flow resources (food, faith, culture and soldiers) and nanobots, a build material the market does not trade at all. Each age has a **price level** for each construction resource: the median first-copy price in that resource among the age's buildings. Any two construction resources of your current age trade at the ratio of their price levels, less a **20% fee**:
-
-```
-base rate (give A, get B) = price level of B ÷ price level of A × 0.8
-```
-
-**Six techs lower the fee.** Currency and Banking take 3 points off each, and Wire Transfers, E-commerce, Blockchain and Probability Markets 2 each, so with all six the market keeps 6% and pays 17.5% more than the rates on this page (every market rate is scaled the same way, the listed pairs included). The fee never falls under 5%.
-
-That covers every pair of them, including pairs that were never on the list: steel for titanium in the Space Age, data for crypto in the Cyberpunk Age, gold for stone. Price levels change with each age, so these rates do too. Because of the fee a round trip always loses value (0.8 × 0.8 keeps 64%), so trading never beats building. The exchange is how you get the resources no building of your age makes: stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age on, titanium, crypto.
-
-Examples from each age (base rates, before pressure; "wood → stone 0.48" means you get 0.48 stone per wood):
-
-| Age | Examples |
-|---|---|
-| Bronze | wood → stone 0.48, stone → wood 1.33, gold → iron 0.792, iron → gold 0.808 |
-| Iron | gold → stone 1.6, wood → gold 0.667, iron → wood 1.07 |
-| Classical | iron → stone 3.67, gold → iron 0.533, wood → stone 1.96 |
-| Medieval | knowledge → gold 3.2, gold → knowledge 0.2, iron → stone 3.93 |
-| Renaissance | coal → steel 1.41, gold → steel 0.267, knowledge → steel 2 |
-| Colonial | wood → iron 7.08, steel → gold 1.78, knowledge → steel 4.11 |
-| Industrial | coal → steel 2.1, iron → steel 2.8, stone → gold 1.2 |
-| Victorian | oil → steel 1.8, coal → oil 0.457, gold → steel 1.31 |
-| Electric | oil → steel 4, electricity → gold 1.7, coal → electricity 0.64 |
-| Atomic | uranium → steel 8, gold → uranium 0.109, electricity → iron 0.94 |
-| Modern | data → steel 20.5, oil → electricity 3.67, gold → data 0.0963 |
-| Information | data → gold 17.2, electricity → steel 1.33, steel → data 0.048 |
-| Digital | data → steel 9.25, electricity → data 0.0985, steel → electricity 0.562 |
-| Cyberpunk | data → crypto 4.42, steel → crypto 0.46, crypto → electricity 1.95 |
-| Fusion | plasma → steel 3.2, electricity → plasma 0.267, steel → electricity 0.6 |
-| Space | steel → titanium 1.09, plasma → titanium 1.63, titanium → steel 0.588 |
-| Interstellar | electricity → titanium 6.86, dark\_matter → plasma 4, plasma → dark\_matter 0.16 |
-| Galactic | plasma → titanium 16.9, antimatter → dark\_matter 4, dark\_matter → antimatter 0.16 |
-| Quantum | titanium → quantum\_flux 0.198, quantum\_flux → antimatter 232, dark\_matter → antimatter 0.96 |
-| Transcendent | dark\_matter → antimatter 0.96, antimatter → dark\_matter 0.667 |
-
-The **Trade** panel (`trade list`) lists every pair open to you in your current age with its live rate.
-
-**Listed pairs.** The market also keeps its original list of pairs, unlocked by age:
-
-| Age | Available Pairs |
-|---|---|
-| Bronze | food↔wood, food↔stone, wood↔stone, gold→food/wood/stone |
-| Iron | iron↔gold, iron→stone |
-| Medieval | gold→knowledge, gold→culture, faith→culture |
-| Colonial | gold↔coal |
-| Industrial | steel→gold, oil→gold |
-| Electric | electricity→gold |
-| Modern | data↔gold |
-| Cyberpunk | crypto↔gold |
-| Space | dark\_matter→gold |
-| Quantum | quantum\_flux→gold |
-
-Where both sides of a listed pair are construction resources of your current age, it trades at parity like any other pair (gold → wood is 3.43 in the Bronze Age, 0.96 in the Iron Age).
-
-**A listed pair is closed where the age builds with what it sells but not with what it takes.** What an age builds with, it sells for the other things it builds with, at parity. So gold buys data in the Modern and Information Ages (both build with gold) and not in the Digital or Cyberpunk Ages, where nothing costs gold any more and the Information Age's hubs still make it by the hundreds of millions; gold → crypto is closed in the Cyberpunk Age the same way. Buy data and crypto there with electricity, or with each other. From the Fusion Age on, where no building costs data, gold buys it again at the fixed rate (the Space Age's requirement asks for some). The same rule closes coal → gold in the Colonial Age, oil → gold in the Atomic and Information Ages and iron → gold from the Modern Age. Pairs that take food, faith or culture are never closed.
-
-Otherwise a listed pair keeps a fixed rate. That is always the case for pairs with food, faith or culture, and for pairs with wood, stone, iron, coal and the rest in ages where no building costs them. The fixed rates:
-
-| You give | You get | Fixed Rate |
-|---|---|---|
-| food | wood | 1.0 |
-| wood | food | 1.0 |
-| food | stone | 0.8 |
-| stone | food | 1.25 |
-| wood | stone | 0.9 |
-| stone | wood | 1.1 |
-| gold | food | 50 |
-| gold | wood | 40 |
-| gold | stone | 30 |
-| iron | gold | 2.0 |
-| gold | iron | 0.4 |
-| iron | stone | 3.0 |
-| gold | knowledge | 5.0 |
-| gold | culture | 3.0 |
-| faith | culture | 2.0 |
-| gold | coal | 10 |
-| coal | gold | 0.08 |
-| steel | gold | 5.0 |
-| oil | gold | 3.0 |
-| electricity | gold | 0.5 |
-| data | gold | 5.0 |
-| gold | data | 0.15 |
-| crypto | gold | 20.0 |
-| gold | crypto | 0.04 |
-| dark\_matter | gold | 50.0 |
-| quantum\_flux | gold | 100.0 |
-
-### Market Pressure
-
-Every exchange you make on a pair adds **supply pressure** to that pair, and pressure lowers the rate:
-
-```
-effective rate = base rate × (1 − pressure × 0.30)
-```
-
-Pressure tops out at 1.0, so repeated trading can cut a pair's rate by at most 30%.
-
-Pressure **decays 2% per tick**, multiplicatively, so a pair you leave alone recovers fully on its own. More trade buildings help too: each trade-lineage building you own (market, port, bank, ...) shrinks the pressure a single trade adds (`+0.10 ÷ (1 + trade buildings × 0.20)`). Every trade adds the same step whatever its size, so one large trade costs less in pressure than many small ones.
-
-**When to exchange:** turn a surplus into something you're short on, or buy a resource you can't produce yet or that no building of your age produces. Don't hit the same pair over and over in quick succession, because you'll drive its rate down. Spread trades across different pairs, wait a few ticks between repeat swaps on one pair, or let a `plan trade` order do the timing for you.
-
----
-
 ## Trade Routes
 
-Trade routes run in the background. Every few ticks a route takes a set of resources from you and gives you others in return. Routes don't suffer market pressure; they only need the required buildings and enough of what they take in stock.
+Trade routes run in the background. Every few ticks a route takes a set of resources from you and gives you others in return. They only need the required buildings and enough of what they take in stock.
 
-<figure class="screen" data-screen="trade"><figcaption>The Trade panel, scrolled to its routes: the last of the market rates, then Local Barter part way through a cycle.</figcaption></figure>
+<figure class="screen" data-screen="trade"><figcaption>The Trade routes panel, with Local Barter part way through a cycle.</figcaption></figure>
 
 ### Commands
 
 ```
+trade
 trade route list
 trade route start <route>
 trade route stop <route>
 ```
+
+`trade` on its own opens the **Trade routes** panel: your active routes, the routes you could start, and any allied bonuses.
 
 `trade route list` shows your active routes (with the approximate time left on the current cycle and the number of cycles completed) and the routes you could start (a green checkmark if you have the required building, a red X if not). `trade route start <route>` starts a route; it fails if the required building isn't built or you haven't reached the route's age. `trade route stop <route>` stops a route at once, mid-cycle. There's no limit on how many routes can run at once.
 
@@ -193,7 +75,7 @@ Every route opens in the Bronze Age or later. From the Bronze Age on, ages and t
 
 What a route gives is boosted by your harbors and by an ally whose specialty it brings in: `amount × (1 + harbor bonus + ally bonus)`.
 
-**Techs and routes.** Trade routes wait for **The Wheel**, a Bronze Age tech (it needs Woodworking): until it is researched `trade route start` is refused and names it, and the Trade panel says so. The market itself needs no tech. Boatbuilding, Containerization and Asteroid Claims each make every run bring in 10% more of what the route lists (33% with all three); a harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building, Railroads and Automated Logistics each make every route run 15% faster, and Wormholes 20% (with all four a route's next run takes 49% of the ticks listed). And **Rail Freight waits for Railroads**: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. **Warp Commerce waits for Interstellar Trade** in the same way, an Interstellar Age tech that needs Asteroid Claims and Warp Drive. A game that was already running either route when its rule arrived keeps it for the rest of that run.
+**Techs and routes.** Trade routes wait for **The Wheel**, a Bronze Age tech (it needs Woodworking): until it is researched `trade route start` is refused and names it, and the Trade panel says so. Boatbuilding, Containerization and Asteroid Claims each make every run bring in 10% more of what the route lists (33% with all three); a harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building, Railroads and Automated Logistics each make every route run 15% faster, and Wormholes 20% (with all four a route's next run takes 49% of the ticks listed). And **Rail Freight waits for Railroads**: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. **Warp Commerce waits for Interstellar Trade** in the same way, an Interstellar Age tech that needs Asteroid Claims and Warp Drive. A game that was already running either route when its rule arrived keeps it for the rest of that run.
 
 ---
 
@@ -227,7 +109,7 @@ trade black <resource>   # the same, through the trade command
 
 `bm` works in place of `blackmarket`.
 
-A run costs `max(5K, 10% of your culture storage)` culture, so the price grows as you do. It has a **55% chance** to pay out. A win pays **2.5×** the culture you staked, counted as gold, in the resource you chose, converted at that resource's fixed rate to gold from the table above. So the smugglers deal only in gold and the resources with a fixed price in gold: iron, coal, steel, oil, electricity, data, crypto, dark matter and quantum flux. For example, a 5K culture stake that wins pays 12.5K gold, 6,250 iron or 156K coal. A haul bigger than the room in that store is cut to fit. The culture is spent up front, win or lose. After each run there's a cooldown of 624 ticks (about 21 minutes).
+A run costs `max(5K, 10% of your culture storage)` culture, so the price grows as you do. It has a **55% chance** to pay out. A win pays **2.5×** the culture you staked, counted as gold, in the resource you chose, converted at the smugglers' own rate for that resource. So the smugglers deal only in gold and nine resources, at these rates in gold for one unit: iron 2, coal 0.08, steel 5, oil 3, electricity 0.5, data 5, crypto 20, dark matter 50 and quantum flux 100. For example, a 5K culture stake that wins pays 12.5K gold, 6,250 iron or 156K coal. A haul bigger than the room in that store is cut to fit. The culture is spent up front, win or lose. After each run there's a cooldown of 624 ticks (about 21 minutes).
 
 Use it to turn a culture surplus into whatever you're short on, if you can live with the odds.
 
@@ -247,23 +129,10 @@ So:
 - Prefer routes whose goods you can spare. A route that eats a resource you're short on costs more than the opinion is worth.
 - More routes means more cycles, and every cycle counts with every civilization you know. Once opinion sits near +100 with everyone, more routes add nothing.
 
-### Market pressure
-
-- Don't use the same pair back to back. Check `trade list` before a repeat trade: a `↓` marker with a percentage means you're paying the penalty.
-- If you need a lot of one resource, give different resources for it (for example, iron for gold, then wood for gold) rather than selling iron over and over, or make one large trade instead of several small ones.
-- Every trade-lineage building reduces how fast pressure builds. By the Colonial Age, five or so trade buildings (ports, exchanges, banks, ...) make pressure a minor issue for occasional exchanges.
-- For a steady need (stone after the Bronze Age, say), a `plan trade` order sells as the resource comes in and waits out the pressure for you, including while you're away.
-
-### End-game
-
-Resource exchange stays useful to the end: it's how you get construction resources your age has no producer for (titanium, crypto, steel from the Modern Age on), and how you rebalance between the ones you do make. A [faction deal](factions.md#trade-deals) for the same pair pays 5% to 25% better than the market, so check the Factions panel before a big exchange.
-
 ---
 
 ## Tips & Common Mistakes
 
 - A route needs its building. `trade route start <route>` refuses with an error if you don't have the required building at the required count. In `trade route list`, routes with a red ✗ are waiting on buildings.
-- Market pressure fades by itself. If a rate looks low, wait a few ticks and it recovers.
 - An embargo mostly hurts you. It cancels that civilization's ally bonus, stops its deals, disrupts your routes that bring in its specialty and counts as a provocation. See [Factions & Diplomacy](factions.md#war-amp-peace).
 - Routes skip a cycle, they don't fail, when you run short. If you don't have what a route gives away when its cycle comes round, that cycle is skipped and the route stays active. Top up the stockpile and it carries on next cycle. A route whose import store is full skips its cycle the same way, without taking anything.
-- `trade` and `plan trade` count the amount from different sides: `trade wood gold 500` gives 500 wood, `plan trade wood gold 500` buys 500 gold.

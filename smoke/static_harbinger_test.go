@@ -156,8 +156,15 @@ func TestBraceTakesEffort(t *testing.T) {
 			passages++
 			// A third of the age is 20.8 hours; rounding the price up to two
 			// figures can add a tenth.
-			if hours < 20 || hours > 23 {
-				t.Errorf("the Last Passage in %s: Brace level 1 is %.1f hours of income, want about 21 (a third of the age)", r.Age, hours)
+			// A material on its ceiling asks less than that.
+			onCeiling := false
+			for res, c := range r.BraceL1 {
+				if limit, ok := r.BraceCeiling[res]; ok && c >= float64(limit*braceAtCeiling) {
+					onCeiling = true
+				}
+			}
+			if hours > 23 || hours < 20 && !onCeiling {
+				t.Errorf("the Last Passage in %s: Brace level 1 is %.1f hours of income, want about 21 (a third of the age), or less on its ceiling", r.Age, hours)
 			}
 		case r.FinalEra:
 			tears++
@@ -208,27 +215,36 @@ func TestBraceTakesEffort(t *testing.T) {
 	// warning outgrows the ceiling of more of them than it did against five
 	// copies: it holds every material in three, the Colonial, Industrial and
 	// Modern Ages, where the price is then quicker to make than a third of
-	// the warning. The counts are read from the price table.
+	// the warning. The maker rule gave stone a maker in the Iron, Classical
+	// and Medieval Ages, so its Brace joins gold and iron on the ceiling there
+	// (all three of the Iron Era's materials, in all three ages), and the
+	// Electric Age's electricity and steel moved. A price counts as on its
+	// ceiling only when it equals the row's ceiling (the rounded-down price a
+	// capped material is given), so the Classical Age, whose stone is a third
+	// of the warning and under it, is not. The Modern Age left the
+	// all-capped list when the Mainframe Hall gave it a maker of data: its
+	// data Brace is under the ceiling. The counts are read from the price
+	// table.
 	wantCapped := map[string]int{
-		"iron_age": 2, "classical_age": 2, "medieval_age": 2,
+		"iron_age": 3, "classical_age": 2, "medieval_age": 3,
 		"renaissance_age": 1, "colonial_age": 2, "industrial_age": 2,
-		"victorian_age": 1, "electric_age": 2, "atomic_age": 2,
+		"victorian_age": 1, "electric_age": 1, "atomic_age": 2,
 		"modern_age": 2, "information_age": 2, "digital_age": 2,
 		"cyberpunk_age": 1, "fusion_age": 1, "space_age": 1,
 	}
 	if !maps.Equal(capped, wantCapped) {
 		t.Errorf("materials on their ceiling by age: %v; want %v", capped, wantCapped)
 	}
-	if want := []string{"colonial_age", "industrial_age", "modern_age"}; !slices.Equal(allCapped, want) {
-		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same three", allCapped, want)
+	if want := []string{"iron_age", "medieval_age", "colonial_age", "industrial_age"}; !slices.Equal(allCapped, want) {
+		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same four", allCapped, want)
 	}
-	// The final era's two threads have no ceiling, and a moderate builder's
-	// store holds them all the same. The Last Passage's takes over half of
-	// it in the age it arrives in (0.55: 17Q dark matter of a store of 31Q;
-	// 0.35 against a town of five, since the price follows the moderate
-	// economy and the store does not). Before the storage wall it took 0.97
-	// and left little room: the Interstellar Age's store is about 2.8 times
-	// what it was.
+	// The final era's two threads have the ceiling a doom has, and a moderate
+	// builder's store holds them with room to spare. The Last Passage's takes
+	// 0.60 of it in the age it arrives in (titanium on its ceiling; it was 0.55
+	// of dark matter, 17Q of a store of 31Q, until the Interstellar Age had a
+	// maker of titanium and the price, which follows the moderate economy and
+	// not the store, outgrew the store: 3.55 for the Last Passage, 1.75 for the
+	// Reality Tear). Before the storage wall it took 0.97.
 	for _, b := range BraceStoreRows(rows, income) {
 		if b.Epoch != "cosmic_era" {
 			if b.StoreShare > 0.6+1e-9 {
@@ -236,11 +252,11 @@ func TestBraceTakesEffort(t *testing.T) {
 			}
 			continue
 		}
-		if len(b.Capped) != 0 || b.StoreShare <= 0 || b.StoreShare > 1 {
-			t.Errorf("%s (Last Passage %v) in %s: the largest part is %.2f of a moderate store with %v on a ceiling; want it held and no ceiling", b.Epoch, b.LastPassage, b.Age, b.StoreShare, b.Capped)
+		if b.StoreShare <= 0 || b.StoreShare > 0.6+1e-9 {
+			t.Errorf("%s (Last Passage %v) in %s: the largest part is %.2f of a moderate store, want it held under the ceiling", b.Epoch, b.LastPassage, b.Age, b.StoreShare)
 		}
-		if b.LastPassage && b.Age == cosmic[0] && math.Abs(b.StoreShare-0.55) > 0.02 {
-			t.Errorf("the Last Passage in %s takes %.2f of a moderate store, want 0.55", b.Age, b.StoreShare)
+		if b.LastPassage && b.Age == cosmic[0] && math.Abs(b.StoreShare-0.60) > 0.02 {
+			t.Errorf("the Last Passage in %s takes %.2f of a moderate store, want 0.60 (titanium on its ceiling)", b.Age, b.StoreShare)
 		}
 	}
 
@@ -258,6 +274,7 @@ func TestBraceTakesEffort(t *testing.T) {
 		{"an Electric Era doom: ", "electric_era", electric[1], false, "oil", "steel"},
 	} {
 		var row PriceRow
+		builtBy := built
 		alter := func(change func(r *PriceRow)) []BraceRuleProblem {
 			broken := make([]PriceRow, len(rows))
 			for i, r := range rows {
@@ -271,7 +288,7 @@ func TestBraceTakesEffort(t *testing.T) {
 				}
 				broken[i] = r
 			}
-			return braceRuleProblems(broken, income, built)
+			return braceRuleProblems(broken, income, builtBy)
 		}
 		want := func(what string, got []BraceRuleProblem, rule string, resources ...string) {
 			t.Helper()
@@ -307,7 +324,9 @@ func TestBraceTakesEffort(t *testing.T) {
 			r.BraceL1[tg.a] = income(tg.a, r.Age) * least * 0.9
 		}), BraceRuleEffort, tg.a)
 		// One dear resource is enough: the price takes as long as its slowest part.
-		if got := alter(func(r *PriceRow) { r.BraceL1[tg.b] = 1 }); len(got) != 0 {
+		// (The Last Passage's real titanium sits on its ceiling, under the least;
+		// give the slowest part the least it may take.)
+		if got := alter(func(r *PriceRow) { r.BraceL1[tg.a] = income(tg.a, r.Age) * least; r.BraceL1[tg.b] = 1 }); len(got) != 0 {
 			t.Errorf("%sa price with one cheap resource and the rest dear: %v, want no problem", tg.name, got)
 		}
 		want("nothing asked", alter(func(r *PriceRow) {
@@ -318,13 +337,22 @@ func TestBraceTakesEffort(t *testing.T) {
 			r.BraceL1[tg.a] = income(tg.a, r.Age) * r.WarningTicks * 1.01
 		}), BraceRuleWarning, tg.a)
 		// A resource no building makes by the arrival age: one nothing makes
-		// at all, and crypto, which only a wonder trickles out.
+		// at all, and one only a wonder trickles out. Crypto was that until the
+		// Black Market Hub made it, so the second case takes the hub's output
+		// away: with only the wonder making it, the check must flag it.
 		want("a resource nothing makes", alter(func(r *PriceRow) {
 			r.BraceL1["antimatter_fuel_nobody_makes"] = 1
 		}), BraceRuleMaterial, "antimatter_fuel_nobody_makes")
+		builtBy = func(res, age string) float64 {
+			if res == "crypto" {
+				return 0
+			}
+			return built(res, age)
+		}
 		want("a resource only a wonder makes", alter(func(r *PriceRow) {
 			r.BraceL1["crypto"] = 1
 		}), BraceRuleMaterial, "crypto")
+		builtBy = built
 	}
 	// The ceiling, on an ordinary doom's row as it stands (the Industrial
 	// Age's, where every material sits on it).
@@ -361,17 +389,16 @@ func TestBraceTakesEffort(t *testing.T) {
 		t.Errorf("half the ceiling of every material: %v, want the effort rule", got)
 	}
 
-	// The two prices the rule dropped: the Modern Age's data, which it buys
-	// at the market, and the Neon Era's crypto.
+	// The two prices the rule dropped: the Modern Age's data, which it bought
+	// at the market until the Mainframe Hall gave the age a maker (so the
+	// Digital Era's Brace asks it in the Modern Age now, as in the
+	// Information Age), and the Neon Era's crypto.
 	for _, r := range rows {
 		if _, ok := r.BraceL1["crypto"]; ok {
 			t.Errorf("%s in %s: Brace asks crypto, which no building makes", r.Epoch, r.Age)
 		}
-		if _, ok := r.BraceL1["data"]; ok && r.Age == "modern_age" {
-			t.Errorf("%s in %s: Brace asks data, which the Modern Age buys", r.Epoch, r.Age)
-		}
-		if _, ok := r.BraceL1["data"]; !ok && r.Age == "information_age" {
-			t.Errorf("%s in %s: Brace asks no data, which the Information Age makes", r.Epoch, r.Age)
+		if _, ok := r.BraceL1["data"]; !ok && r.Epoch == "digital_era" && (r.Age == "modern_age" || r.Age == "information_age") {
+			t.Errorf("%s in %s: Brace asks no data, which the age makes", r.Epoch, r.Age)
 		}
 	}
 }

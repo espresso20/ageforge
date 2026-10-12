@@ -88,12 +88,11 @@ func TestAgeStretch(t *testing.T) {
 	}
 }
 
-// TestEveryAgeHasAFeed: the market turns any construction resource of an age
-// into any other at parity, so an age can grow as long as one of its
-// construction resources flows in from a building a player can own by then:
-// one of that age's, or an older one, since old buildings keep producing.
-// (This is what the Renaissance lacked for steel before the rebalance, and
-// every age from the Modern on for steel.)
+// TestEveryAgeHasAFeed: an age can grow as long as one of its construction
+// resources flows in from a building a player can own by then: one of that
+// age's, or an older one, since old buildings keep producing. (This is what
+// the Renaissance lacked for steel before the rebalance, and every age from
+// the Modern on for steel.)
 func TestEveryAgeHasAFeed(t *testing.T) {
 	defs := BaseBuildings()
 	levels := priceLevels(defs)
@@ -119,26 +118,6 @@ func TestEveryAgeHasAFeed(t *testing.T) {
 		}
 		if !fed {
 			t.Errorf("%s: no building a player can own produces any of its construction resources", a.Key)
-		}
-	}
-}
-
-// TestMarketNeverBeatsBuilding: a round trip through the market at parity
-// always loses value, so trading can't manufacture resources.
-func TestMarketNeverBeatsBuilding(t *testing.T) {
-	for _, a := range Ages() {
-		for _, x := range MarketPairs(a.Key) {
-			back, ok := MarketRate(x.To, x.From, a.Key)
-			if !ok {
-				continue
-			}
-			lv := exchangeLevels()[a.Key]
-			if lv[x.From] <= 0 || lv[x.To] <= 0 {
-				continue // a listed flow pair keeps its literal rates
-			}
-			if x.BaseRate*back >= 1 {
-				t.Errorf("%s: %s->%s->%s returns %.3g of what went in", a.Key, x.From, x.To, x.From, x.BaseRate*back)
-			}
 		}
 	}
 }

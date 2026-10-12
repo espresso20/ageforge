@@ -167,7 +167,6 @@ func rawTechnologies() []TechDef {
 			Description:   "Standardized money raises gold output.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "gold", Value: 0.10},
-				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.03},
 			},
 		},
 		{
@@ -388,7 +387,6 @@ func rawTechnologies() []TechDef {
 			Description:   "Financial institutions raise gold output and gold storage.",
 			Effects: []TechEffect{
 				{Kind: EffectOutput, Target: "gold", Value: 0.08},
-				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.03},
 			},
 		},
 		{
@@ -805,7 +803,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"telecommunications"},
 			Description:   "Money goes down a telegraph wire and arrives before the letter that announces it.",
 			Effects: []TechEffect{
-				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.02},
+				{Kind: EffectOutput, Target: "gold", Value: 0.05},
 			},
 		},
 		{
@@ -1092,9 +1090,6 @@ func rawTechnologies() []TechDef {
 			Age: "information_age", Lane: LaneTrade,
 			Prerequisites: []string{"containerization", "internet"},
 			Description:   "The shop is a page, and the till never closes.",
-			Effects: []TechEffect{
-				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.02},
-			},
 		},
 		{
 			// note: the original spec wanted this to cut worker FOOD COST, but the
@@ -1317,15 +1312,12 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			// No bonus on crypto: only the Neon Citadel makes any, so there is
-			// nothing for one to raise in this age. Crypto is bought at the
-			// market, which is what the fee cut helps.
 			Name: "Blockchain", Key: "blockchain", Cost: 2.91e09, ResearchTicks: 5265, Code: "BLOCK", Emblem: "⋈",
 			Age: "cyberpunk_age", Lane: LaneTrade,
 			Prerequisites: []string{"cybersecurity", "cloud_computing"},
 			Description:   "Decentralized trustless systems.",
 			Effects: []TechEffect{
-				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.02},
+				{Kind: EffectOutput, Target: "crypto", Value: 0.04},
 			},
 		},
 		{
@@ -1857,7 +1849,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"federation_charter"},
 			Description:   "A price on every outcome, and a buyer for the ones that never happen.",
 			Effects: []TechEffect{
-				{Kind: EffectMechanic, Target: MechanicMarketFee, Value: -0.02},
+				{Kind: EffectOutput, Target: "gold", Value: 0.04},
 			},
 		},
 		{

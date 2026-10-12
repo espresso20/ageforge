@@ -410,8 +410,8 @@ func (bm *BuildingManager) GetEffects() []config.Effect {
 // unstaffedShare is what a building with worker slots makes with nobody in
 // it; workers add the rest, staffedShare at a full crew.
 const (
-	unstaffedShare = 0.20
-	staffedShare   = 0.80
+	unstaffedShare = config.UnstaffedShare
+	staffedShare   = config.StaffedShare
 )
 
 // WorkerScaledProduction computes production rates per resource, applying worker fill ratios.
@@ -499,18 +499,6 @@ func (bm *BuildingManager) GetPopCapacity() int {
 		}
 	}
 	return cap
-}
-
-// TradeBuildingCount is how many buildings of the trade lineage (market,
-// trading post, ... port, ...) stand. Any of them opens the exchange.
-func (bm *BuildingManager) TradeBuildingCount() int {
-	n := 0
-	for key, count := range bm.counts {
-		if bm.defs[key].LineageKey == "trade" {
-			n += count
-		}
-	}
-	return n
 }
 
 // GetStorageBonuses returns per-resource storage bonuses from buildings

@@ -35,8 +35,8 @@ import (
 // the run's points, and its fated doom's) at least WarningBraceMinHours of
 // income; that economy must make every resource it asks for inside the
 // warning; and every one must be a material the moderate economy's own
-// buildings make by the arrival age, not one the age buys at the market or
-// only a wonder trickles out. An ordinary doom's has a ceiling as well: no
+// buildings make by the arrival age, not one that only a wonder trickles
+// out. An ordinary doom's has a ceiling as well: no
 // material may ask for more than its BraceCeiling, three fifths of what a
 // moderate builder's store holds (five copies of every storage building),
 // and a price that sits on its ceiling has given all the effort it may.
@@ -190,8 +190,9 @@ const (
 )
 
 // braceAtCeiling is how close to its ceiling a price counts as sitting on
-// it: the ceiling is rounded down to two figures, which can take a tenth off.
-const braceAtCeiling = 0.9
+// it: exactly. The row's ceiling is the rounded-down price a capped material
+// is given (game.HarbingerPrice), so a price on it equals it.
+const braceAtCeiling = 1.0
 
 // BraceRuleProblem is one level-1 Brace price that breaks a pricing rule.
 type BraceRuleProblem struct {

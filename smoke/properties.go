@@ -33,14 +33,13 @@ type Property struct {
 // today's reading. Later changes to the economy shorten it.
 var KnownPropertyFailures = map[int]string{
 	1:  "22 buildings climb at another rate (1.13)",
-	2:  "fails in 3 of 22 ages; worst 0.28 of the age in the Primitive Age",
-	3:  "fails in 3 of 22 ages; worst 3.7 times in the Quantum Age",
-	4:  "fails in 1 of 22 ages; worst 3.0 times in the Quantum Age",
+	2:  "fails in 2 of 22 ages; worst 0.28 of the age in the Primitive Age",
+	3:  "fails in 3 of 22 ages; worst 3.0 times in the Primitive Age",
+	4:  "fails in 3 of 22 ages; worst 2.9 times in the Quantum Age",
 	5:  "fails in 11 of 22 ages; worst 13 techs in the Digital Age",
 	8:  "fails in 15 of 22 ages; worst 0.0% eaten in the Transcendent Age",
-	9:  "fails in 21 of 22 ages; worst room for 17654 people per job in the Transcendent Age",
-	10: "fails in 20 of 22 ages; worst 4.6 times the age in the Electric Age",
-	11: "fails in 20 of 22 ages; worst 708963 times what the buildings make in the Information Age",
+	9:  "fails in 21 of 22 ages; worst room for 17603 people per job in the Transcendent Age",
+	10: "fails in 21 of 22 ages; worst 4.5 times the age in the Electric Age",
 	12: "27 of 27 trade route payments fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
 	16: "fails in 2 of 22 ages; worst 3.0 times in the Primitive Age",
@@ -324,23 +323,9 @@ func StaticProperties() Properties {
 	}
 	add(10, fmt.Sprintf("at the knowledge his own buildings make, research takes the ordinary player between %.0f%% and %.0f%% of each age", 100*propResearchLow, 100*propResearchHigh), bad == 0, worst(bad, where, val))
 
-	// 11. The market against the buildings, for knowledge.
-	bad, where, val = 0, "", ""
-	high = 0
-	for i, a := range t.ages {
-		rate, ok := config.MarketRate("gold", "knowledge", a.Key)
-		if !ok || ref[i].income["knowledge"] <= 0 {
-			continue
-		}
-		x := float64(ref[i].income["gold"]*rate) / ref[i].income["knowledge"]
-		if x > 1 {
-			bad++
-		}
-		if x > high {
-			high, where, val = x, a.Name, fmt.Sprintf("%.0f times what the buildings make", x)
-		}
-	}
-	add(11, "selling the reference town's gold never brings in more knowledge than its own knowledge buildings make", bad == 0, worst(bad, where, val))
+	// 11. (gone) It held the gold sold for knowledge against what the
+	// buildings make. The market no longer swaps, so there is nothing to
+	// sell. The numbers of the others stay as they are, so the list has no 11.
 
 	// 12. Fixed rewards, for trade routes.
 	routes, small := 0, 0

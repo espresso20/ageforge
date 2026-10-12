@@ -5,7 +5,7 @@ import "sort"
 // Price levels for faction trade deals (game/deals.go).
 //
 // A deal needs a value for both sides of it. For the construction resources
-// of an age that is the market's price level (PriceLevels): the median
+// of an age that is its price level (PriceLevels): the median
 // first-copy price. Flow resources have no price level, because no building
 // is priced in them, so a deal values them the other way round: by what a
 // price unit invested in the age's producers of them returns over
@@ -14,7 +14,7 @@ import "sort"
 // so the two kinds of level are in the same unit and a deal can trade food
 // for iron.
 
-// DealPriceLevel is res's price level in age for faction deals: the market's
+// DealPriceLevel is res's price level in age for faction deals: the price
 // level for a construction resource of age, and for a flow resource the
 // median over age's producers of it of rate x DealPaybackTicks[age] /
 // priceUnits(first copy). 0 when res has neither (a flow resource nothing
@@ -34,7 +34,7 @@ func DealPriceLevelAt(res string, lv, flow map[string]float64) float64 {
 }
 
 // PricedResources lists the construction resources of age, sorted: the ones
-// with a market price level.
+// with a price level.
 func PricedResources(age string) []string {
 	return PricedResourcesAt(PriceLevels(age))
 }
@@ -47,25 +47,6 @@ func PricedResourcesAt(lv map[string]float64) []string {
 	}
 	sort.Strings(out)
 	return out
-}
-
-// MarketOffers is the rate the market pays for one from in age, and whether
-// it trades the pair there at all: MarketRate, except that a listed pair
-// (BaseExchangeRates) counts only once its MinAge is reached, as in
-// MarketPairs, which is what the trade panel and `trade` offer.
-func MarketOffers(from, to, age string) (float64, bool) {
-	return MarketOffersAt(from, to, age, ExchangeRateByKey(), AgePositions(AgeOrder()), PriceLevels(age))
-}
-
-// MarketOffersAt is MarketOffers against the listed pairs (keyed "from:to"),
-// each age's position and age's price levels.
-func MarketOffersAt(from, to, age string, listed map[string]ExchangeRateDef, pos map[string]int, lv map[string]float64) (float64, bool) {
-	if def, ok := listed[from+":"+to]; ok {
-		if pos[def.MinAge] > pos[age] {
-			return 0, false
-		}
-	}
-	return MarketRateAt(from, to, listed, lv)
 }
 
 // DealPaybackTicks is, for each age, how many ticks of a flow producer's

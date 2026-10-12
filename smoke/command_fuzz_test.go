@@ -16,12 +16,12 @@ var commandCorpus = []string{
 	"build nosuchthing", "sell hut", "upgrade hut", "research", "research language", "research cancel",
 	"advance", "wonder collect all", "wonder collect wood 1e309", "recruit max", "recruit 5", "assign war_camp 5",
 	"workers share food 40", "workers share food 400%", "workers share knowledge -5",
-	"trade gold knowledge 10", "trade wood wood 1", "trade list", "trade route start local_barter",
-	"plan add build hut 3", "plan research language", "plan trade wood stone 10", "plan remove 1", "plan up 0", "plan clear",
+	"trade route start local_barter",
+	"plan add build hut 3", "plan research language", "plan remove 1", "plan up 0", "plan clear",
 	"expedition scout_party", "campaign raid_bandits", "prestige", "prestige confirm", "prestige buy legacy_plan",
 	"catastrophe", "appease", "brace", "invite", "endure", "succumb", "rates", "stats", "milestones", "badges",
 	"build hut\x00", "build\thut", "BUILD HUT", "build  hut   5  ", "plan add build " + strings.Repeat("a", 512),
-	strings.Repeat("build hut ", 64), "🙂", "build 🙂 5", "research \"language\"", "trade gold knowledge NaN", "trade gold knowledge Inf",
+	strings.Repeat("build hut ", 64), "🙂", "build 🙂 5", "research \"language\"",
 }
 
 // FuzzCommand puts anything at all through the game's command handler on a

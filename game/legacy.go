@@ -17,7 +17,7 @@ import (
 // kit").
 //
 //   - Plan Template (config.LegacyPlan). The engine records the plan as it is
-//     written (ge.planLog): every build, research, trade and advance item the
+//     written (ge.planLog): every build, research and advance item the
 //     player adds, tagged with the age it was added in. A build counts the
 //     copies added; removing an item takes back the copies it never started,
 //     so a build's count ends as what was started plus what is still
@@ -47,7 +47,9 @@ import (
 // tree, and nothing here should choose a research path for the player.
 
 // PlanTemplateItem is one item of the plan template, as saved: the age it
-// was written in and the item (see PlanItem; Count is a build's copies).
+// was written in and the item (see PlanItem; Count is a build's copies). To
+// and Amount were the retired sell orders'; a template read from a save
+// skips those rows, and nothing sets the fields now.
 type PlanTemplateItem struct {
 	Age    string  `json:"age"`
 	Kind   string  `json:"kind"`
@@ -109,11 +111,6 @@ func loadPlanTemplate(set *rules.Set, saved []PlanTemplateItem) []PlanTemplateIt
 				continue
 			}
 			it.Count = 0
-		case PlanTrade:
-			if it.Key == "" || it.To == "" || !(it.Amount >= 0) || it.Amount > 1e18 {
-				continue
-			}
-			it.Count = 0
 		case PlanAdvance:
 			it.Key, it.Count = "", 0
 		default:
@@ -163,7 +160,7 @@ func uniqueKeys(keys []string) []string {
 
 // logPlanAddLocked records that the player added it to the plan (count
 // copies of a build) in the current age. A build merges into the age's entry
-// for the same building, a research, trade or advance item already recorded
+// for the same building, a research or advance item already recorded
 // for the age is not recorded twice, and an age holds at most MaxPlanItems
 // entries. Caller holds the write lock.
 func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
@@ -185,11 +182,6 @@ func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
 			if e.Key == it.Key {
 				return
 			}
-		case PlanTrade:
-			if e.Key == it.Key && e.To == it.To {
-				e.Amount = it.Amount
-				return
-			}
 		case PlanAdvance:
 			return
 		}
@@ -201,8 +193,6 @@ func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
 	switch it.Kind {
 	case PlanBuild:
 		t.Count = count
-	case PlanTrade:
-		t.To, t.Amount = it.To, it.Amount
 	case PlanAdvance:
 		t.Key = ""
 	}
@@ -210,8 +200,7 @@ func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
 }
 
 // unlogPlanItemLocked takes back what the player removed from the plan: a
-// build loses the copies it never started (it.Count), a trade that bought
-// something keeps what it bought (it.Got) as its amount, and any other item
+// build loses the copies it never started (it.Count), and any other item
 // loses its entry. The entry looked for is the current age's, then the
 // latest earlier one. Caller holds the write lock.
 func (ge *GameEngine) unlogPlanItemLocked(it PlanItem) {
@@ -223,8 +212,6 @@ func (ge *GameEngine) unlogPlanItemLocked(it PlanItem) {
 			return false
 		}
 		switch it.Kind {
-		case PlanTrade:
-			return e.Key == it.Key && e.To == it.To
 		case PlanAdvance:
 			return true
 		}
@@ -255,9 +242,6 @@ func (ge *GameEngine) unlogPlanItemLocked(it PlanItem) {
 		if ge.planLog[idx].Count > 0 {
 			return
 		}
-	case it.Kind == PlanTrade && it.Got > 0:
-		ge.planLog[idx].Amount = it.Got
-		return
 	}
 	ge.planLog = slices.Delete(ge.planLog, idx, idx+1)
 	if len(ge.planLog) == 0 {
@@ -314,20 +298,6 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 			return false, false
 		}
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: t.Key, Count: 1})
-	case PlanTrade:
-		it := PlanItem{Kind: PlanTrade, Key: t.Key, To: t.To, Count: 1, Amount: t.Amount}
-		if ge.planTradeInvalid(it) != "" {
-			return false, false
-		}
-		for _, p := range ge.plan {
-			if p.Kind == PlanTrade && p.Key == t.Key && p.To == t.To {
-				return false, false
-			}
-		}
-		if full {
-			return false, true
-		}
-		ge.plan = append(ge.plan, it)
 	case PlanAdvance:
 		for _, it := range ge.plan {
 			if it.Kind == PlanAdvance {
@@ -735,22 +705,4 @@ func (ge *GameEngine) NoteAdvanceForTest(age string) {
 		}
 	}
 	ge.planLog = append(ge.planLog, PlanTemplateItem{Age: age, Kind: PlanAdvance})
-}
-
-// NoteTradeForTest records in the run's plan log a trade item selling give
-// for get, adding got to what the current age's item buys, as if the player
-// had planned the trades they made. A test hook for other packages (the
-// smoke suite records a bot's trades to make the canned veteran template);
-// not reachable from play.
-func (ge *GameEngine) NoteTradeForTest(give, get string, got float64) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	for i := range ge.planLog {
-		e := &ge.planLog[i]
-		if e.Age == ge.age && e.Kind == PlanTrade && e.Key == give && e.To == get {
-			e.Amount = float64(e.Amount + got)
-			return
-		}
-	}
-	ge.logPlanAddLocked(PlanItem{Kind: PlanTrade, Key: give, To: get, Count: 1, Amount: got}, 1)
 }
