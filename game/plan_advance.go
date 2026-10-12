@@ -9,7 +9,7 @@ import "fmt"
 // it advances (the rest of the plan belongs to the old age and drops out).
 // It takes effect at its place in the plan: the items above it run first,
 // in the age they were planned for, and those below wait for the next tick,
-// so they cannot spend what the requirements count. The next age's
+// when what belonged to the old age drops out. The next age's
 // buildings and techs may be planned ahead; they wait for the advance.
 
 // PlanAddAdvance appends an advance item (at most one).
@@ -41,7 +41,7 @@ func (ge *GameEngine) planAdvanceBlocker() string {
 		return "this is the final age"
 	case ge.pendingCatastrophe != "":
 		return "a catastrophe is pending"
-	case ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings) == "":
+	case ge.progress.CheckAdvancement(ge.age, ge.Buildings) == "":
 		return "waiting for the requirements"
 	}
 	return ""

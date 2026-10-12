@@ -1504,7 +1504,7 @@ func (ge *GameEngine) doTick() {
 	// Check age advancement — notify once when ready, but require player to
 	// type 'advance' to confirm. ageReady resets if requirements drop (e.g.
 	// resources consumed) so the notification fires again if they're re-met.
-	if nextAge := ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings); nextAge != "" {
+	if nextAge := ge.progress.CheckAdvancement(ge.age, ge.Buildings); nextAge != "" {
 		if !ge.ageReady {
 			ge.ageReady = true
 			nextName := ge.progress.GetAgeName(nextAge)
@@ -3332,7 +3332,7 @@ func (ge *GameEngine) AdvanceAge() error {
 	}
 
 	if !ge.ageReady {
-		nextAge := ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings)
+		nextAge := ge.progress.CheckAdvancement(ge.age, ge.Buildings)
 		if nextAge == "" {
 			// Check if wonder is the only blocker
 			wonderKey := ge.progress.WonderForAge(ge.age)
@@ -4687,11 +4687,10 @@ func (ge *GameEngine) GetState() GameState {
 	}
 
 	var nextAgeName string
-	var nextAgeResReqs map[string]float64
 	var nextAgeBldReqs map[string]int
 	if nextAge != "" {
 		nextAgeName = ge.progress.GetAgeName(nextAge)
-		nextAgeResReqs, nextAgeBldReqs = ge.progress.GetRequirementsForNext(ge.age)
+		nextAgeBldReqs = ge.progress.GetRequirementsForNext(ge.age)
 	}
 
 	ageOrder := ge.progress.GetAgeOrder()
@@ -4765,7 +4764,6 @@ func (ge *GameEngine) GetState() GameState {
 		CurrentAgeWonderName: currentAgeWonderName,
 		NextAge:              nextAge,
 		NextAgeName:          nextAgeName,
-		NextAgeResReqs:       nextAgeResReqs,
 		NextAgeBldReqs:       nextAgeBldReqs,
 		Resources:            ge.Resources.Snapshot(),
 		Buildings:            ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount),

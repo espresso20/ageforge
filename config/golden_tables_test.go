@@ -36,8 +36,7 @@ type goldenTech struct {
 }
 
 type goldenGate struct {
-	Resources map[string]float64 `json:"resources"`
-	Buildings map[string]int     `json:"buildings"`
+	Buildings map[string]int `json:"buildings"`
 }
 
 // goldenTables is the record of every number the economy's tables hold once
@@ -80,7 +79,7 @@ func liveGoldenTables() goldenTables {
 	}
 	order := AgeOrder()
 	for _, a := range Ages() {
-		g.Gates[a.Key] = goldenGate{Resources: a.ResourceReqs, Buildings: a.BuildingReqs}
+		g.Gates[a.Key] = goldenGate{Buildings: a.BuildingReqs}
 		g.AgeTargetSecs[a.Key] = AgeTargets[a.Key].Seconds()
 		g.PriceLevels[a.Key] = PriceLevels(a.Key)
 		rates := map[string]float64{}

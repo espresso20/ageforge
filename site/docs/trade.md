@@ -8,7 +8,7 @@ The other civilizations (meeting them, opinion, deals, alliances, war) have thei
 
 ## Resource Exchange
 
-An exchange is an instant, one-off swap between two resources. You need at least one trade building first: a `market` or anything later in the trade lineage (trading post, merchant quarter, guildhall, exchange, port, stock exchange, bank, ...). Upgraded buildings count too, so upgrading your markets keeps the exchange open. If you skipped the market in the Bronze Age, the Iron Age trading post costs only stone and iron, so you can always open the exchange.
+An exchange is an instant, one-off swap between two resources. You need at least one trade building first: a `market` or anything later in the trade lineage (trading post, merchant quarter, guildhall, exchange, port, stock exchange, bank, ...). Upgraded buildings count too, so upgrading your markets keeps the exchange open. The gate into the Iron Age asks for five Markets (see [Advancement Requirements](ages.md#advancement-requirements)), so you hold a trade building by the time you advance.
 
 ```
 trade <give> <get> <amount to give>

@@ -1075,24 +1075,25 @@ func (d *Dashboard) refreshAgeProgress(game.GameState) {
 	d.ageTV.changed()
 }
 
-// ageGoal is one thing the next age asks for: its text ("Food 49.6K/80K")
+// ageGoal is one thing the next age asks for: its text ("Hut 7/10")
 // and whether it is met.
 type ageGoal struct {
 	text string
 	met  bool
 }
 
-// ageGoals lists what the next age asks for: resources, buildings, then the
-// age's wonder and its keystone tech while they are still to do.
+// ageGoals lists what the next age asks for: the age's wonder and its
+// keystone tech while they are still to do, then the buildings. The wonder
+// leads so that a long list of buildings can never push it out of sight.
 func ageGoals(state game.GameState) []ageGoal {
 	var goals []ageGoal
-	for _, key := range sortedKeysOf(state.NextAgeResReqs) {
-		req := state.NextAgeResReqs[key]
-		current := 0.0
-		if rs, ok := state.Resources[key]; ok {
-			current = rs.Amount
+	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
+	if state.CurrentAgeWonderKey != "" {
+		goals = append(goals, ageGoal{"Wonder: " + state.CurrentAgeWonderName, false})
+		// Its keystone tech, while that is still to research.
+		if tech := state.Buildings[state.CurrentAgeWonderKey].NeedsTech; tech != "" {
+			goals = append(goals, ageGoal{"Keystone: " + game.TechName(tech), false})
 		}
-		goals = append(goals, ageGoal{fmt.Sprintf("%s %s/%s", textfmt.Capitalize(game.ResourceName(key)), FormatNumber(current), FormatNumber(req)), current >= req})
 	}
 	for _, key := range sortedKeysOf(state.NextAgeBldReqs) {
 		req := state.NextAgeBldReqs[key]
@@ -1102,20 +1103,13 @@ func ageGoals(state game.GameState) []ageGoal {
 		}
 		goals = append(goals, ageGoal{fmt.Sprintf("%s %d/%d", game.BuildingName(key), current, req), current >= req})
 	}
-	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
-	if state.CurrentAgeWonderKey != "" {
-		goals = append(goals, ageGoal{"Wonder: " + state.CurrentAgeWonderName, false})
-		// Its keystone tech, while that is still to research.
-		if tech := state.Buildings[state.CurrentAgeWonderKey].NeedsTech; tech != "" {
-			goals = append(goals, ageGoal{"Keystone: " + game.TechName(tech), false})
-		}
-	}
 	return goals
 }
 
 // ageProgressLines writes the Next Age row for a strip w cells wide and h
-// rows tall: the age's name, then what it asks for, each marked ✓ or ✗ and
-// kept whole on its line. When the strip is too small for all of it, what is
+// rows tall: the age's name, then what it asks for (the wonder and its
+// keystone first, then the buildings), each marked ✓ or ✗ and kept whole on
+// its line. When the strip is too small for all of it, what is
 // already met is counted instead of listed, and after that the list ends
 // with how many more there are.
 func ageProgressLines(state game.GameState, w, h int) []string {

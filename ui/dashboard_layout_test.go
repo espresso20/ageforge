@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -482,49 +485,164 @@ func TestPanelsListAlwaysWhole(t *testing.T) {
 // TestNextAgeRowKeepsGoalsWhole: a requirement is never broken across the
 // strip's two rows, and a strip too small for all of them counts the ones
 // already met instead of listing them, then the ones it has no room for.
+// It holds for a made-up gate and for the real ones, the longest of which
+// asks for fourteen kinds of building besides the wonder and its keystone.
 func TestNextAgeRowKeepsGoalsWhole(t *testing.T) {
 	st := game.GameState{
 		NextAge: "iron_age", NextAgeName: "Iron Age",
-		NextAgeResReqs: map[string]float64{"food": 80000, "iron": 8000, "stone": 16000, "wood": 40000},
-		NextAgeBldReqs: map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 5},
-		Resources: map[string]game.ResourceState{
-			"food": {Amount: 49600}, "iron": {Amount: 15400}, "stone": {Amount: 15300}, "wood": {Amount: 1410},
-		},
-		Buildings:           map[string]game.BuildingState{"lumber_mill": {Count: 4}, "quarry": {Count: 3}, "scriptorium": {Count: 3}},
+		NextAgeBldReqs:      map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 5, "smelter": 6, "ironworks": 4, "temple": 5, "market": 3},
+		Buildings:           map[string]game.BuildingState{"lumber_mill": {Count: 4}, "quarry": {Count: 3}, "scriptorium": {Count: 5}, "smelter": {Count: 2}, "ironworks": {Count: 1}, "temple": {Count: 2}},
 		CurrentAgeWonderKey: "stonehenge", CurrentAgeWonderName: "Stonehenge",
 	}
+	checkNextAgeRow(t, st, 30, 160)
+	if all := untag(strings.Join(ageProgressLines(st, 140, 2), "\n")); !strings.Contains(all, "✓ "+game.BuildingName("scriptorium")+" 5/5") || !strings.Contains(all, "✗ Wonder: Stonehenge") {
+		t.Errorf("a wide strip lists every requirement:\n%s", all)
+	}
+	if small := untag(strings.Join(ageProgressLines(st, 60, 2), "\n")); !strings.Contains(small, "✓ 1 met") && !strings.Contains(small, "more") {
+		t.Errorf("a narrow strip counts what it leaves out:\n%s", small)
+	}
+	if done := untag(ageProgressLines(game.GameState{}, 80, 2)[0]); !strings.Contains(done, "final age") {
+		t.Errorf("the last age says so: %q", done)
+	}
+
+	// Every real gate, as the game states it, from nothing built and from half
+	// built, at the two smallest terminals and a wide one. The longest gate is
+	// held at every width.
+	ages, defs := config.Ages(), config.BaseBuildings()
+	longest := ""
+	for i := 0; i+1 < len(ages); i++ {
+		next := ages[i+1]
+		wonder, tech := "", ""
+		for _, d := range defs {
+			if d.Category == "wonder" && d.RequiredAge == ages[i].Key {
+				wonder, tech = d.Key, d.RequiredTech
+			}
+		}
+		for _, built := range []int{0, 2} { // 0: nothing; 2: half of each count
+			bs := map[string]game.BuildingState{wonder: {NeedsTech: tech}}
+			for k, n := range next.BuildingReqs {
+				if built > 0 {
+					bs[k] = game.BuildingState{Count: n / built}
+				}
+			}
+			gate := game.GameState{NextAge: next.Key, NextAgeName: next.Name, NextAgeBldReqs: next.BuildingReqs, Buildings: bs,
+				CurrentAgeWonderKey: wonder, CurrentAgeWonderName: game.BuildingName(wonder)}
+			lo := 80
+			if len(next.BuildingReqs) >= 14 {
+				lo = 30 // the longest gates: every width from a cramped one up
+			}
+			checkNextAgeRow(t, gate, lo, 160)
+			// The wonder and its keystone lead the strip, so no list of
+			// buildings, however long, pushes them out of sight.
+			for w := 80; w <= 160; w++ {
+				strip := untag(strings.Join(ageProgressLines(gate, w, 2), "\n"))
+				if !strings.Contains(strip, "✗ Wonder: "+game.BuildingName(wonder)) {
+					t.Errorf("%s at width %d, %d built: the wonder is not in the strip:\n%s", next.Key, w, built, strip)
+				}
+				if tech != "" && !strings.Contains(strip, "✗ Keystone: "+game.TechName(tech)) {
+					t.Errorf("%s at width %d, %d built: the keystone is not in the strip:\n%s", next.Key, w, built, strip)
+				}
+				if first := strings.Index(strip, "Wonder: "); first > strings.Index(strip, "/") && strings.Contains(strip, "/") {
+					t.Errorf("%s at width %d: a building is listed before the wonder:\n%s", next.Key, w, strip)
+				}
+			}
+			if len(next.BuildingReqs) >= 14 {
+				longest = next.Key
+				for _, w := range []int{80, 100} {
+					lines := untag(strings.Join(ageProgressLines(gate, w, 2), "\n"))
+					if !strings.Contains(lines, " more") {
+						t.Errorf("%s at width %d: a 14-kind gate must say how many it leaves out:\n%s", next.Key, w, lines)
+					}
+				}
+			}
+		}
+	}
+	if longest == "" {
+		t.Error("no real gate asks for 14 kinds of building: the test no longer holds the longest gate")
+	}
+}
+
+// TestNextAgeStripOnTheLongestGate draws the real dashboard in the age whose
+// gate asks for the most kinds of building, at the two smallest terminals,
+// and holds the Next Age strip to what it wrote: whole lines, none cut or
+// wrapped, with the count of what it leaves out.
+func TestNextAgeStripOnTheLongestGate(t *testing.T) {
+	restoreForge(t)
+	ages := config.Ages()
+	age, kinds := "", 0
+	for i := 0; i+1 < len(ages); i++ {
+		if n := len(ages[i+1].BuildingReqs); n > kinds {
+			age, kinds = ages[i].Key, n
+		}
+	}
+	d, pages, eng := stagedDashboard(t, age)
+	if got := len(eng.GetState().NextAgeBldReqs); got != kinds {
+		t.Fatalf("the game lists %d kinds for the gate out of %s, the table has %d", got, age, kinds)
+	}
+	for _, sz := range [][2]int{{80, 24}, {100, 30}} {
+		w, h := sz[0], sz[1]
+		cells := drawnDashboard(t, d, pages, w, h)
+		rows := checkFitted(t, fmt.Sprintf("%s at %dx%d, Next Age", age, w, h), d.ageTV, cells, w)
+		strip := strings.Join(rows, "\n")
+		if wonder := game.BuildingName(eng.GetState().CurrentAgeWonderKey); !strings.Contains(strip, "✗ Wonder: "+wonder) {
+			t.Errorf("%s at %dx%d: the strip does not show the wonder %q:\n%s", age, w, h, wonder, strip)
+		}
+		if !strings.Contains(strip, "Next Age:") || !countedNote.MatchString(strip) {
+			t.Errorf("%s at %dx%d: the strip does not say what it leaves out:\n%s", age, w, h, strip)
+		}
+	}
+}
+
+// countedNote finds the strip's count of what it left out: "+4 more" or
+// "✓ 3 met".
+var countedNote = regexp.MustCompile(`(?:\+(\d+) more|✓ (\d+) met)`)
+
+// checkNextAgeRow holds the Next Age strip for st, two rows tall, to its
+// rules at every width from lo to hi: no line wider than the strip, no
+// requirement broken across the two rows, the title whole, and every
+// requirement either listed or counted (as met, or as more).
+func checkNextAgeRow(t *testing.T, st game.GameState, lo, hi int) {
+	t.Helper()
 	goals := ageGoals(st)
-	for w := 30; w <= 160; w++ {
+	title := "Next Age: " + st.NextAgeName
+	for w := lo; w <= hi; w++ {
 		lines := ageProgressLines(st, w, 2)
 		if len(lines) > 2 {
-			t.Fatalf("width %d: %d lines", w, len(lines))
+			t.Fatalf("%s, width %d: %d lines", st.NextAge, w, len(lines))
 		}
 		joined := untag(strings.Join(lines, "\n"))
 		for _, line := range strings.Split(joined, "\n") {
 			if runeLen(line) > w {
-				t.Errorf("width %d: a line of %d cells: %q", w, runeLen(line), line)
+				t.Errorf("%s, width %d: a line of %d cells: %q", st.NextAge, w, runeLen(line), line)
 			}
+		}
+		if w >= runeLen(title)+1 && !strings.Contains(joined, title) {
+			t.Errorf("%s, width %d: the title is cut: %q", st.NextAge, w, joined)
 		}
 		listed := 0
 		for _, g := range goals {
 			if strings.Contains(joined, g.text) {
 				listed++
-			} else if first := strings.Fields(g.text)[0]; strings.Contains(strings.ReplaceAll(joined, "Next Age: Iron Age", ""), first+" ") && first != "Iron" {
-				t.Errorf("width %d: %q is broken across the strip:\n%s", w, g.text, joined)
+				continue
+			}
+			// A requirement that is not listed must not show in part: its name
+			// without the count ("Oil Refinery", not "Oil Refinery 0/15").
+			name := strings.TrimSpace(strings.TrimRight(g.text, "0123456789/"))
+			if name != "" && strings.Contains(strings.ReplaceAll(joined, title, ""), name) {
+				t.Errorf("%s, width %d: %q is broken across the strip:\n%s", st.NextAge, w, g.text, joined)
 			}
 		}
-		if listed < len(goals) && !strings.Contains(joined, "met") && !strings.Contains(joined, "more") {
-			t.Errorf("width %d: %d of %d requirements listed and no count of the rest:\n%s", w, listed, len(goals), joined)
+		if listed < len(goals) {
+			counted := 0
+			if m := countedNote.FindStringSubmatch(joined); m != nil {
+				counted, _ = strconv.Atoi(m[1] + m[2])
+			}
+			if counted == 0 {
+				t.Errorf("%s, width %d: %d of %d requirements listed and no count of the rest:\n%s", st.NextAge, w, listed, len(goals), joined)
+			} else if listed+counted != len(goals) {
+				t.Errorf("%s, width %d: %d listed and %d counted, of %d requirements:\n%s", st.NextAge, w, listed, counted, len(goals), joined)
+			}
 		}
-	}
-	if all := untag(strings.Join(ageProgressLines(st, 140, 2), "\n")); !strings.Contains(all, "✓ Iron 15.4K/8K") || !strings.Contains(all, "✗ Wonder: Stonehenge") {
-		t.Errorf("a wide strip lists every requirement:\n%s", all)
-	}
-	if small := untag(strings.Join(ageProgressLines(st, 78, 2), "\n")); !strings.Contains(small, "✓ 1 met") && !strings.Contains(small, "more") {
-		t.Errorf("a narrow strip counts what it leaves out:\n%s", small)
-	}
-	if done := untag(ageProgressLines(game.GameState{}, 80, 2)[0]); !strings.Contains(done, "final age") {
-		t.Errorf("the last age says so: %q", done)
 	}
 }
 

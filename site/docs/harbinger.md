@@ -356,7 +356,7 @@ The Reality Tear's row is from the same runs, when its Brace was the era's price
 
 All of these runs were played while the faith bands read storage, so every doom in them rolled at the bottom band's 90% (see [Why it isn't a share of storage](faith.md#faith-threshold-bands)). That is still what a typical town rolls at, and the bot is one.
 
-Faith you spend on Appease is faith the next age requirement can't count: keep what the next age asks for, and what the Sistine Chapel still needs, before you appease.
+Faith you spend on Appease is faith the Sistine Chapel can't use: keep what it still needs before you appease.
 
 ### Invite: choose the catastrophe
 

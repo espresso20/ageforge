@@ -7550,295 +7550,318 @@
  },
  "gates": {
   "atomic_age": {
-   "resources": {
-    "coal": 3800000000,
-    "electricity": 4600000000,
-    "gold": 6600000000,
-    "oil": 490000000,
-    "steel": 11000000000
-   },
    "buildings": {
+    "command_post": 5,
     "electric_arc_furnace": 15,
     "electric_warehouse": 5,
+    "financial_district": 5,
+    "industrial_farm": 5,
+    "nuclear_extraction_plant": 5,
+    "oil_field": 5,
     "physics_laboratory": 15,
-    "power_station": 15
+    "power_generator": 5,
+    "power_station": 15,
+    "radio_station": 5,
+    "revival_hall": 5
    }
   },
   "bronze_age": {
-   "resources": {
-    "stone": 230,
-    "wood": 420
-   },
    "buildings": {
     "elders_hall": 5,
+    "forager_post": 5,
     "longhouse": 15,
+    "stone_camp": 5,
     "stone_pit": 5,
-    "storage_pit": 5
+    "storage_pit": 5,
+    "war_camp": 5,
+    "woodcutter_camp": 5
    }
   },
   "classical_age": {
-   "resources": {
-    "gold": 11000,
-    "iron": 16000,
-    "stone": 35000,
-    "wood": 4900
-   },
    "buildings": {
     "agora": 12,
+    "field_works": 5,
     "granary": 5,
     "hunting_lodge": 15,
+    "ironworks": 5,
+    "marble_quarry": 5,
+    "temple": 5,
+    "timber_yard": 5,
     "trading_post": 10
    }
   },
   "colonial_age": {
-   "resources": {
-    "coal": 190000,
-    "gold": 6000000,
-    "iron": 230000,
-    "steel": 2200000,
-    "stone": 1600000
-   },
    "buildings": {
     "art_studio": 12,
+    "basilica": 5,
+    "coal_mine": 5,
     "exchange": 12,
+    "fortress": 5,
+    "iron_mine": 5,
+    "market_garden": 5,
+    "mill": 5,
     "renaissance_vault": 5,
     "university": 12
    }
   },
   "cyberpunk_age": {
-   "resources": {
-    "data": 550000000000,
-    "electricity": 4400000000000,
-    "steel": 6600000000000
-   },
    "buildings": {
     "ai_research_lab": 15,
+    "bio_fabrication_lab": 5,
+    "crypto_exchange": 5,
+    "cyber_shrine": 5,
     "data_center": 15,
     "digital_archive": 5,
-    "neural_grid": 15
+    "drone_warfare_center": 5,
+    "nano_alloy_plant": 5,
+    "nano_drill_complex": 5,
+    "nano_farm": 5,
+    "neural_grid": 15,
+    "vr_studio": 5
    }
   },
   "digital_age": {
-   "resources": {
-    "data": 60000000000,
-    "electricity": 600000000000,
-    "gold": 1100000000000,
-    "steel": 840000000000
-   },
    "buildings": {
+    "aerospace_foundry": 5,
+    "digital_temple": 5,
     "info_vault": 5,
     "innovation_hub": 15,
     "media_center": 15,
-    "server_farm": 10
+    "precision_mine": 5,
+    "server_farm": 10,
+    "smart_grid_node": 5,
+    "smart_refinery": 5,
+    "venture_hub": 5
    }
   },
   "electric_age": {
-   "resources": {
-    "coal": 610000000,
-    "gold": 740000000,
-    "iron": 260000000,
-    "oil": 130000000,
-    "steel": 1200000000,
-    "stone": 200000000
-   },
    "buildings": {
     "academy": 12,
+    "bank": 5,
     "bessemer_plant": 12,
+    "garrison": 5,
+    "grand_cathedral": 5,
+    "grand_museum": 5,
+    "mechanized_farm": 5,
+    "oil_derrick": 5,
     "steam_turbine": 12,
+    "uranium_mine": 5,
     "victorian_vault": 5
    }
   },
   "fusion_age": {
-   "resources": {
-    "crypto": 14000000000000,
-    "data": 2700000000000,
-    "electricity": 27000000000000,
-    "steel": 27000000000000
-   },
    "buildings": {
     "arcology_pod": 25,
     "augmentation_foundry": 15,
     "black_market": 15,
-    "cyber_vault": 5
+    "combat_aug_center": 5,
+    "cyber_hub": 5,
+    "cyber_vault": 5,
+    "dark_crystal_mine": 5,
+    "dark_matter_refinery": 5,
+    "nanobot_vat": 5,
+    "neon_sanctuary": 5,
+    "neuro_research_center": 5,
+    "vat_farm": 5
    }
   },
   "galactic_age": {
-   "resources": {
-    "dark_matter": 970000000000000,
-    "plasma": 4900000000000000,
-    "titanium": 7700000000000000
-   },
    "buildings": {
     "antimatter_forge": 15,
+    "cultural_beacon": 5,
+    "fleet_command": 5,
+    "galactic_network_node": 5,
+    "galactic_trade_hub": 5,
     "generation_ship": 30,
+    "protein_synthesizer": 5,
+    "reality_matter_weaver": 5,
     "stellar_vault": 5,
-    "warp_drive_plant": 15
+    "void_monastery": 5,
+    "warp_drive_plant": 15,
+    "xenology_institute": 5
    }
   },
   "industrial_age": {
-   "resources": {
-    "gold": 26000000,
-    "iron": 13000000,
-    "steel": 13000000,
-    "stone": 11000000,
-    "wood": 13000000
-   },
    "buildings": {
+    "coal_works": 5,
     "colonial_warehouse": 5,
+    "concert_hall": 5,
+    "deep_iron_mine": 5,
+    "dockyard": 5,
+    "fort": 5,
+    "mission": 5,
+    "natural_philosophy_hall": 5,
     "plantation": 8,
     "port": 10
    }
   },
   "information_age": {
-   "resources": {
-    "data": 13000000000,
-    "electricity": 130000000000,
-    "gold": 33000000000,
-    "oil": 19000000000,
-    "steel": 400000000000
-   },
    "buildings": {
+    "agri_complex": 5,
+    "investment_firm": 5,
+    "meditation_center": 5,
     "modern_depot": 5,
+    "nano_foundry": 5,
+    "oil_platform": 5,
     "oil_refinery": 15,
+    "power_grid_hub": 5,
+    "special_ops_hq": 5,
     "think_tank": 20,
-    "tower_block": 30
+    "titanium_mine": 5,
+    "titanium_smelter": 5,
+    "tower_block": 30,
+    "tv_studio": 5
    }
   },
   "interstellar_age": {
-   "resources": {
-    "electricity": 520000000000000,
-    "plasma": 260000000000000,
-    "steel": 310000000000000,
-    "titanium": 420000000000000
-   },
    "buildings": {
+    "asteroid_crystal_mine": 5,
+    "asteroid_market": 5,
+    "deep_space_observatory": 5,
+    "hydroponic_bay": 5,
     "launch_complex": 10,
+    "orbital_data_relay": 5,
     "orbital_depot": 5,
     "orbital_habitat": 15,
-    "solar_collector_array": 10
+    "orbital_refinery": 5,
+    "orbital_sanctuary": 5,
+    "quantum_organic_extractor": 5,
+    "solar_collector_array": 10,
+    "space_force_base": 5,
+    "zero_g_gallery": 5
    }
   },
   "iron_age": {
-   "resources": {
-    "gold": 330,
-    "iron": 660,
-    "stone": 2200,
-    "wood": 3200
-   },
    "buildings": {
+    "altar": 5,
+    "farm": 5,
     "lumber_mill": 8,
+    "market": 5,
     "quarry": 8,
     "scriptorium": 5,
+    "smithy": 5,
     "warehouse": 5
    }
   },
   "medieval_age": {
-   "resources": {
-    "gold": 140000,
-    "iron": 93000,
-    "stone": 380000,
-    "wood": 25000
-   },
    "buildings": {
+    "amphitheater": 5,
+    "aqueduct": 5,
     "classical_vault": 5,
+    "estate_farm": 5,
     "library": 15,
+    "marble_works": 5,
     "merchant_quarter": 5,
-    "military_academy": 15
+    "military_academy": 15,
+    "oracle_house": 5,
+    "wood_workshop": 5
    }
   },
   "modern_age": {
-   "resources": {
-    "electricity": 34000000000,
-    "gold": 11000000000,
-    "steel": 84000000000,
-    "stone": 110000000000,
-    "uranium": 8400000000
-   },
    "buildings": {
+    "advanced_alloy_plant": 5,
+    "agricultural_complex": 5,
     "atomic_vault": 5,
     "bunker_complex": 18,
+    "cinema": 5,
+    "corporate_hq": 5,
     "nuclear_reactor": 18,
-    "research_campus": 18
+    "petroleum_refinery": 5,
+    "research_campus": 18,
+    "spiritual_center": 5,
+    "uranium_processing_works": 5
    }
   },
   "primitive_age": {
-   "resources": null,
    "buildings": null
   },
   "quantum_age": {
-   "resources": {
-    "antimatter": 2200000000000000,
-    "dark_matter": 11000000000000000,
-    "titanium": 57000000000000000
-   },
    "buildings": {
+    "civilization_archive": 5,
+    "consciousness_upload_hub": 5,
+    "cosmic_organic_works": 5,
+    "cosmic_research_station": 5,
+    "dyson_assembly": 5,
     "dyson_sphere_habitat": 30,
     "galactic_vault": 5,
+    "matter_converter": 5,
+    "stellar_armada_hq": 5,
     "stellar_exchange": 15,
-    "stellar_metallurgy": 15
+    "stellar_metallurgy": 15,
+    "stellar_shrine": 5
    }
   },
   "renaissance_age": {
-   "resources": {
-    "gold": 450000,
-    "iron": 160000,
-    "stone": 1300000
-   },
    "buildings": {
     "castle_keep": 5,
+    "cathedral": 5,
+    "demesne": 5,
+    "great_hall": 5,
     "guildhall": 10,
+    "ironmonger": 5,
     "keep": 5,
-    "monastery_library": 5
+    "monastery_library": 5,
+    "sawmill": 5,
+    "stonemasons_guild": 5,
+    "workshop": 5
    }
   },
   "space_age": {
-   "resources": {
-    "electricity": 75000000000000,
-    "plasma": 24000000000000,
-    "steel": 100000000000000
-   },
    "buildings": {
+    "bio_reactor_farm": 5,
+    "exotic_matter_forge": 5,
+    "exotic_mineral_extractor": 5,
     "fusion_reactor": 10,
     "fusion_reactor_array": 10,
     "fusion_vault": 5,
-    "plasma_command": 10
+    "molecular_synthesizer": 5,
+    "neural_art_complex": 5,
+    "plasma_command": 10,
+    "quantum_chapel": 5,
+    "quantum_server_farm": 5,
+    "theoretical_institute": 5
    }
   },
   "stone_age": {
-   "resources": {
-    "wood": 33
-   },
    "buildings": {
+    "gathering_camp": 5,
     "hut": 10,
+    "shrine": 5,
     "stash": 5,
-    "story_circle": 5
+    "story_circle": 5,
+    "wood_camp": 5
    }
   },
   "transcendent_age": {
-   "resources": {
-    "antimatter": 800000000000000000,
-    "dark_matter": 670000000000000000,
-    "quantum_flux": 2700000000000000
-   },
    "buildings": {
+    "probability_market": 5,
     "probability_war_room": 15,
+    "quantum_cultivator": 5,
     "quantum_vault": 5,
     "reality_academy": 20,
-    "reality_forge": 15
+    "reality_art_engine": 5,
+    "reality_excavator": 5,
+    "reality_forge": 15,
+    "reality_harvester": 5,
+    "reality_processor": 5,
+    "transcendence_hall": 5
    }
   },
   "victorian_age": {
-   "resources": {
-    "coal": 35000000,
-    "gold": 98000000,
-    "iron": 80000000,
-    "steel": 98000000,
-    "stone": 120000000
-   },
    "buildings": {
+    "agricultural_works": 5,
+    "church": 5,
+    "coal_plant": 5,
+    "harbor_authority": 5,
     "industrial_depot": 5,
     "iron_works_complex": 5,
+    "military_base": 5,
+    "opera_house": 5,
+    "research_institute": 5,
+    "steam_coal_plant": 5,
+    "steam_mine": 5,
     "steel_mill": 5,
+    "stock_exchange": 5,
     "tenement": 30
    }
   }

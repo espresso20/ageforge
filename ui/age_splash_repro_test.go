@@ -12,7 +12,6 @@ package ui
 
 import (
 	"fmt"
-	"math"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -98,20 +97,6 @@ func newReproHarness(t *testing.T) *reproHarness {
 	h.waitFor("dashboard visible with input focus", 5*time.Second, func() bool {
 		return h.frontPage() == "dashboard" && h.inputHasFocus()
 	})
-	// Raise storage once, high enough for every age's resource requirements,
-	// then wait for recalculateRates() (runs each tick) to apply it.
-	maxReq := 0.0
-	for _, age := range config.Ages() {
-		for _, v := range age.ResourceReqs {
-			maxReq = math.Max(maxReq, v)
-		}
-	}
-	sKey, sVal := bigStorageKey()
-	for i := 0; i < int(math.Ceil(maxReq*1.5/sVal))+1; i++ {
-		h.dev("/build " + sKey)
-	}
-	t0 := eng.GetState().Tick
-	h.waitFor("storage recalculated", 10*time.Second, func() bool { return eng.GetState().Tick > t0+1 })
 	return h
 }
 
@@ -259,19 +244,6 @@ func (h *reproHarness) submit(cmd string) {
 	h.waitFor("command submitted on the first Enter", 3*time.Second, func() bool { return h.inputText() == "" })
 }
 
-// bigStorageKey returns the storage building with the largest "all" bonus.
-func bigStorageKey() (string, float64) {
-	best, bestV := "", 0.0
-	for _, b := range config.BuildingByKey() {
-		for _, e := range b.Effects {
-			if e.Type == "storage" && e.Target == "all" && e.Value > bestV {
-				best, bestV = b.Key, e.Value
-			}
-		}
-	}
-	return best, bestV
-}
-
 // grantNextAge satisfies every requirement of the next age using the dev
 // commands (all engine mutation happens under the engine lock). Returns false
 // if already at the final age.
@@ -284,32 +256,18 @@ func (h *reproHarness) grantNextAge() bool {
 	if h.built == nil {
 		h.built = map[string]int{}
 	}
-	rebuilt := false
 	for key, b := range st.Buildings {
 		for c := b.Count; c < h.built[key]; c++ {
 			h.dev("/build " + key)
-			rebuilt = true
 		}
 	}
-	if rebuilt {
-		// Storage caps are recomputed on the next tick, not on /build.
-		h.waitFor("storage to recover after rebuilding", 10*time.Second, func() bool {
-			s := h.eng.GetState()
-			for res, v := range s.NextAgeResReqs {
-				if rs, ok := s.Resources[res]; ok && rs.Storage < v {
-					return false
-				}
-			}
-			return true
-		})
-		st = h.eng.GetState()
-	}
+	// Let a tick or two pass: what was just built counts from the next tick,
+	// not from /build, and the arrival tests rely on the engine having
+	// ticked between one grant and the next advance.
+	t0 := h.eng.GetState().Tick
+	h.waitFor("the buildings to count", 10*time.Second, func() bool { return h.eng.GetState().Tick > t0+1 })
+	st = h.eng.GetState()
 	defer h.recordBuilt()
-	for res, v := range st.NextAgeResReqs {
-		if rs, ok := st.Resources[res]; ok && rs.Storage < v {
-			h.t.Fatalf("storage for %s too low: %.0f < %.0f", res, rs.Storage, v)
-		}
-	}
 	for bld, n := range st.NextAgeBldReqs {
 		for c := st.Buildings[bld].Count; c < n; c++ {
 			h.dev("/build " + bld)
@@ -317,9 +275,6 @@ func (h *reproHarness) grantNextAge() bool {
 	}
 	if st.CurrentAgeWonderKey != "" {
 		h.dev("/build " + st.CurrentAgeWonderKey)
-	}
-	for res := range st.NextAgeResReqs {
-		h.dev("/give " + res + " 1e18")
 	}
 	return true
 }

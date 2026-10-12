@@ -10,8 +10,14 @@ import (
 // holding, or a reading that moves, fails here.
 func TestProperties(t *testing.T) {
 	p := StaticProperties()
-	if len(p.List) != 21 {
-		t.Fatalf("%d properties, want 21", len(p.List))
+	// Numbered 1 to 21 without 13, which was about gate amounts and is gone.
+	if len(p.List) != 20 {
+		t.Fatalf("%d properties, want 20", len(p.List))
+	}
+	for _, pr := range p.List {
+		if pr.N == 13 {
+			t.Error("property 13 is back: no gate asks for an amount of a resource, so it has nothing to measure")
+		}
 	}
 	for _, problem := range p.Problems() {
 		t.Error(problem)

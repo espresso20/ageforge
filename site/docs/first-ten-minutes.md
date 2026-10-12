@@ -39,7 +39,7 @@ build gathering_camp
 build wood_camp
 ```
 
-A gathering camp makes **+1.0 food/tick** and a wood camp about **+0.57 wood/tick** when fully staffed (3 workers each). An unstaffed building still runs at 20%, so a staffed camp makes **5x** what an empty one does. Workers come to staff them once you have housing (next step).
+A gathering camp makes **+1.0 food/tick** and a wood camp about **+0.57 wood/tick** when fully staffed (3 workers each). An unstaffed building still runs at 20%, so a staffed camp makes **5x** what an empty one does. Workers come to staff them once you have housing (next step). The Stone Age asks for **five of each camp**, so keep adding them as wood comes in.
 
 ---
 
@@ -112,7 +112,7 @@ Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed (2 wo
 build story_circle
 ```
 
-Also build your first **shrine** (60 wood). Shrines produce faith and lift morale a little. Faith matters later: it lowers the odds that a catastrophe strikes and pays to appease a harbinger (see [Faith](faith.md)).
+Also build **shrines** (60 wood for the first). The Stone Age asks for **5 shrines**. Shrines produce faith and lift morale a little. Faith matters later: it lowers the odds that a catastrophe strikes and pays to appease a harbinger (see [Faith](faith.md)).
 
 ```
 build shrine
@@ -165,13 +165,15 @@ The grove also gives +0.02 knowledge/tick and +0.05 food/tick permanently.
 ## Step 10: Check the Next Age row and advance
 
 The Next Age row under the status bar always shows what you need for the **next age**. For the Stone Age:
-- Wood: 33
+- Gathering Camps: 5
 - Huts: 10
-- Story Circles: 5
+- Shrines: 5
 - Stashes: 5
+- Story Circles: 5
+- Wood Camps: 5
 - The Sacred Grove built
 
-Keep building huts and story circles (new huts bring new workers) and keep knowledge flowing. When every item has its ✓, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
+No age asks you to hold an amount of a resource, and advancing spends none. See [Advancement Requirements](ages.md#advancement-requirements) for the rule. Keep building huts (new huts bring new workers) and keep knowledge flowing. When every item has its ✓, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
 
 > **A harbinger?** A `⚑ Harbinger` badge may appear on the status bar. Type `harbinger` to read it, or ignore it: it never blocks anything, and no catastrophe can strike before the Iron Era. See [The Harbinger](harbinger.md).
 
@@ -180,10 +182,13 @@ Keep building huts and story circles (new huts bring new workers) and keep knowl
 ## Checklist at the Stone Age transition
 
 Before you advance, you should have:
+- [ ] 5 gathering camps
+- [ ] 5 wood camps
 - [ ] 10 huts
+- [ ] 5 shrines
+- [ ] 5 stashes
 - [ ] 5 story circles
 - [ ] The Sacred Grove built
-- [ ] 5 stashes
 - [ ] Staffed gathering camps and wood camps
 - [ ] 10+ workers, none idle
 - [ ] Food rate positive by at least +3/tick
@@ -208,7 +213,7 @@ When you reach the Stone Age:
 
 Your older buildings don't change on their own. Type `upgrade` to see which ones can become their Stone Age version (gathering camps into forager posts, for example); see [Building Upgrades](buildings.md#building-upgrades).
 
-Your first priority: start stone with **Stone Camps** (or `gather stone 25`), then build **Stone Pits**, **Woodcutter Camps** and **Longhouses** so workers have room to come and staff them. The Bronze Age needs 420 wood, 230 stone, 15 longhouses, 5 stone pits, 5 elders' halls, 5 storage pits and the Great Monolith. From the Bronze Age on, each age takes hours: see [How to Play](how-to-play.md) for the long game.
+Your first priority: start stone with **Stone Camps** (or `gather stone 25`), then build **Stone Pits**, **Woodcutter Camps** and **Longhouses** so workers have room to come and staff them. The Bronze Age asks for 5 each of Elders' Halls, Forager Posts, Stone Camps, Stone Pits, Storage Pits, War Camps and Woodcutter Camps, 15 Longhouses and the Great Monolith. See [How to Play](how-to-play.md) for the long game.
 
 ---
 

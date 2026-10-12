@@ -382,7 +382,7 @@ A `military_power` bonus cuts the soldiers needed: at +1.0, half as many.
 
 ### Before the Iron Age
 
-The doubling curve was measured from the Iron Age on, where the age gates ask every town for military buildings. Before it nothing asks for one, so a garrison is the War Camps and Barracks you chose to build, and the three early ages have raid threats sized to that:
+The doubling curve was measured from the Iron Age on, where every town carries the military buildings the age gates asked for. Before it, the only military building a gate asks for is the War Camp (five of them, to leave the Stone Age), so a garrison is mostly the War Camps and Barracks you chose to build, and the three early ages have raid threats sized to that:
 
 | Age | Threat | Soldiers for 22.5% (no military bonus) | What trains them |
 |-----|--------|----------------------------------------|------------------|
@@ -396,7 +396,7 @@ The raids of these ages are Tribal Raid and Beast Stampede (Stone Era) and Bandi
 
 ### The garrison you already have
 
-Every player carries a garrison without trying. The age gates ask for military buildings (15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 5 Castle Keeps for the Renaissance, 18 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent). You keep those buildings into every later age, and they train soldiers even with no workers assigned, at a fifth of the staffed rate. A player who builds only what the gates ask for blunts roughly **8-19%** of a raid from the Iron Age on (measured on the smoke-test bot, which does nothing else for its army).
+Every player carries a garrison without trying. The age gates ask for military buildings (5 War Camps for the Bronze Age, 15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 5 Castle Keeps for the Renaissance, 18 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent, and five of each age's own military building in most of the ages between; see [Advancement Requirements](ages.md#advancement-requirements)). You keep those buildings into every later age, and they train soldiers even with no workers assigned, at a fifth of the staffed rate. A player who builds only what the gates ask for blunts roughly **8-19%** of a raid from the Iron Age on (measured on the smoke-test bot, which does nothing else for its army).
 
 A deliberate army is what pushes toward the 45% ceiling: more military buildings of the current age, workers staffed into them, and `military_power` research.
 

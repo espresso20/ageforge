@@ -107,7 +107,6 @@ func walkOrdinary(t *testing.T, each func(age config.AgeDef, ge *game.GameEngine
 		if i+1 == len(tables.ages) {
 			break
 		}
-		grant(ge, tables.ages[i+1].ResourceReqs)
 		if err := ge.AdvanceAge(); err != nil {
 			t.Fatalf("%s: the gate to the %s did not open: %v", age.Name, tables.ages[i+1].Name, err)
 		}

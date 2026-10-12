@@ -28,7 +28,6 @@ type GameState struct {
 	CurrentAgeWonderName string // display name of that wonder
 	NextAge              string
 	NextAgeName          string
-	NextAgeResReqs       map[string]float64
 	NextAgeBldReqs       map[string]int
 	Resources            map[string]ResourceState
 	Buildings            map[string]BuildingState

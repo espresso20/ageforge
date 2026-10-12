@@ -67,12 +67,11 @@ func (b *Bot) answerHarbinger(st game.GameState) bool {
 }
 
 // spareFor reports whether cost leaves what the next advance still needs of
-// each resource: its requirement and what the age's wonder still has to be
-// banked. A player saves faith for the Sistine Chapel before appeasing with
+// each resource: what the age's wonder still has to be banked. A player saves faith for the Sistine Chapel before appeasing with
 // it; the bot used to spend it first and stall the Renaissance.
 func (b *Bot) spareFor(st game.GameState, cost map[string]float64) bool {
 	for res, c := range cost {
-		keep := st.NextAgeResReqs[res]
+		keep := 0.0
 		if w := st.CurrentAgeWonderKey; w != "" {
 			if left := b.defs[w].BaseCost[res] - st.Buildings[w].WonderBank[res]; left > 0 {
 				keep += left

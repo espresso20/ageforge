@@ -32,7 +32,10 @@ import (
 // An age's length for a player is the first moment the town has made what
 // that player bought. It is an output of the tables, not a target.
 const (
-	RefCopies      = 5
+	// RefCopies is the reference town's copies of every building. It is the
+	// storage rule's number and the gate rule's (config.StorageRuleCopies), so
+	// the town a gate asks for is the town these players build.
+	RefCopies      = config.StorageRuleCopies
 	RefWonderUnits = 40.0
 	RefLinger      = 3.0
 	RefAwayRate    = 0.5
@@ -109,18 +112,18 @@ func newRefTables() *refTables {
 	return t
 }
 
-// gate is what the game asks to leave age i.
-func (t *refTables) gate(i int) (map[string]float64, map[string]int) {
+// gate is the buildings the game asks for to leave age i (no gate asks for an
+// amount of a resource).
+func (t *refTables) gate(i int) map[string]int {
 	if i+1 >= len(t.ages) {
-		return nil, nil
+		return nil
 	}
-	return t.ages[i+1].ResourceReqs, t.ages[i+1].BuildingReqs
+	return t.ages[i+1].BuildingReqs
 }
 
 // refCount is how many copies of d the reference town holds.
 func (t *refTables) refCount(d config.BuildingDef) int {
-	_, counts := t.gate(t.idx[d.RequiredAge])
-	return max(RefCopies, counts[d.Key])
+	return max(RefCopies, t.gate(t.idx[d.RequiredAge])[d.Key])
 }
 
 // refTown is the reference town standing in age i: every age so far at its

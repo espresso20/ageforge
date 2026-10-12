@@ -57,19 +57,16 @@ func (pm *ProgressManager) GetNextAge(currentKey string) string {
 	return pm.ages[i+1].Key
 }
 
-// CheckAdvancement checks if requirements are met for the next age
-func (pm *ProgressManager) CheckAdvancement(currentKey string, resources *ResourceManager, buildings *BuildingManager) string {
+// CheckAdvancement checks if requirements are met for the next age: the
+// buildings its gate asks for and the current age's wonder. No gate asks for
+// an amount of a resource, and advancing spends none.
+func (pm *ProgressManager) CheckAdvancement(currentKey string, buildings *BuildingManager) string {
 	nextKey := pm.GetNextAge(currentKey)
 	if nextKey == "" {
 		return ""
 	}
 	nextAge := pm.ages[pm.ageIndex[nextKey]]
 
-	for res, amount := range nextAge.ResourceReqs {
-		if resources.Get(res) < amount {
-			return ""
-		}
-	}
 	for bld, count := range nextAge.BuildingReqs {
 		if buildings.GetCount(bld) < count {
 			return ""
@@ -106,13 +103,13 @@ func (pm *ProgressManager) GetAgeOrder() map[string]int {
 	return out
 }
 
-// GetRequirementsForNext returns copies of the requirements for the next age
-// (they end up in GameState, and the originals are the engine's age table).
-func (pm *ProgressManager) GetRequirementsForNext(currentKey string) (map[string]float64, map[string]int) {
+// GetRequirementsForNext returns a copy of the building counts the gate into
+// the next age asks for (it ends up in GameState, and the original is the
+// engine's age table).
+func (pm *ProgressManager) GetRequirementsForNext(currentKey string) map[string]int {
 	nextKey := pm.GetNextAge(currentKey)
 	if nextKey == "" {
-		return nil, nil
+		return nil
 	}
-	nextAge := pm.ages[pm.ageIndex[nextKey]]
-	return maps.Clone(nextAge.ResourceReqs), maps.Clone(nextAge.BuildingReqs)
+	return maps.Clone(pm.ages[pm.ageIndex[nextKey]].BuildingReqs)
 }
