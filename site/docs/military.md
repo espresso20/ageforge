@@ -382,21 +382,21 @@ A `military_power` bonus cuts the soldiers needed: at +1.0, half as many.
 
 ### Before the Iron Age
 
-The doubling curve was measured from the Iron Age on, where every town carries the military buildings the age gates asked for. Before it, the only military building a gate asks for is the War Camp (five of them, to leave the Stone Age), so a garrison is mostly the War Camps and Barracks you chose to build, and the three early ages have raid threats sized to that:
+The doubling curve was measured from the Iron Age on, where every town carries the military buildings the age gates asked for. Before it, the only military building a gate asks for is the War Camp (eight of them, to leave the Stone Age), so a garrison is mostly the War Camps and Barracks you chose to build, and the three early ages have raid threats sized to that:
 
 | Age | Threat | Soldiers for 22.5% (no military bonus) | What trains them |
 |-----|--------|----------------------------------------|------------------|
 | Primitive Age | 1K | none can train | no military building yet |
-| Stone Age | 3K | 1,500 | War Camp: 0.2 soldiers/tick with its 3 posts staffed, a fifth of that with none |
-| Bronze Age | 43.1K | 21.6K | Barracks (after Military Tactics): 0.4 soldiers/tick with its 4 posts staffed |
+| Stone Age | 4.8K | 2,400 | War Camp: 0.2 soldiers/tick with its 3 posts staffed, a fifth of that with none |
+| Bronze Age | 69K | 34.5K | Barracks (after Military Tactics): 0.4 soldiers/tick with its 4 posts staffed |
 
-Five staffed War Camps train 1 soldier a tick. Over a Stone Age of ordinary length that garrison comes to blunt about a fifth of a raid, and half of it about an eighth. In the Bronze Age the same holds for five War Camps and five Barracks. A garrison carried into the next age meets that age's larger threat, so it has to keep growing, as it does later.
+Eight staffed War Camps train 1.6 soldiers a tick. Over a Stone Age of ordinary length that garrison comes to blunt about a fifth of a raid, and half of it about an eighth. In the Bronze Age the same holds for eight War Camps and eight Barracks. A garrison carried into the next age meets that age's larger threat, so it has to keep growing, as it does later.
 
 The raids of these ages are Tribal Raid and Beast Stampede (Stone Era) and Bandit Raid (Bronze Age on). See [Raids and your garrison](events.md#raids-and-your-garrison).
 
 ### The garrison you already have
 
-Every player carries a garrison without trying. The age gates ask for military buildings (5 War Camps for the Bronze Age, 15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 5 Castle Keeps for the Renaissance, 18 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent, and five of each age's own military building in most of the ages between; see [Advancement Requirements](ages.md#advancement-requirements)). You keep those buildings into every later age, and they train soldiers even with no workers assigned, at a fifth of the staffed rate. A player who builds only what the gates ask for blunts roughly **8-19%** of a raid from the Iron Age on (measured on the smoke-test bot, which does nothing else for its army).
+Every player carries a garrison without trying. The age gates ask for military buildings (8 War Camps for the Bronze Age, 15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 8 Castle Keeps for the Renaissance, 18 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent, and eight of each age's own military building in most of the ages between; see [Advancement Requirements](ages.md#advancement-requirements)). You keep those buildings into every later age, and they train soldiers even with no workers assigned, at a fifth of the staffed rate. A player who builds only what the gates ask for blunts roughly **8-19%** of a raid from the Iron Age on (measured on the smoke-test bot, which does nothing else for its army).
 
 A deliberate army is what pushes toward the 45% ceiling: more military buildings of the current age, workers staffed into them, and `military_power` research.
 

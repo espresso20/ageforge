@@ -158,9 +158,9 @@ Three of them, as examples:
 
 | Resource | Trickle | Stream | River | Flood |
 |---|---|---|---|---|
-| Food | 2,700 | 920K | 310M | 100B |
-| Wood | 1,400 | 240K | 42M | 7.2B |
-| Stone | 27K | 760K | 21M | 610M |
+| Food | 4,300 | 1.4M | 500M | 170B |
+| Wood | 2,200 | 380K | 66M | 11B |
+| Stone | 44K | 1.2M | 35M | 980M |
 
 ## What stays hidden
 

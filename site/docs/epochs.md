@@ -107,15 +107,15 @@ culture strength = devotion × share kept ÷ 4.5                                
 - **Culture you did not make counts for nothing past what you spent.** Culture bought at the market, an event's gift or a wonder's and a tech's culture can make up for culture you spent; it never raises your strength above what your culture buildings earned.
 - It follows the whole run, not the age: nothing jumps when you advance, so the roll reads what the Epochs panel showed you before you advanced. The panel prints it: "Good events at the next era: Minor only", with your culture strength, devotion and share kept under it.
 
-The tier used to read how full culture's storage was. Culture has no store of its own to speak of: it is kept in the general one, which every storage building raises. No town filled it by making culture. A moderate town's whole run of culture, never spent, came to under 8% of the smallest store an era's gate leaves you holding, and under 1% from the Modern Age on; three and a half times the culture buildings reached 19% at best, at the Iron Era's end. The one way over 40% was the market, which sells 3 culture for a gold: from the Medieval Age to the Digital Age, six to twelve minutes of a moderate economy's gold filled a typical store that far. Buying culture no longer opens a tier; building for it does.
+The tier used to read how full culture's storage was. Culture has no store of its own to speak of: it is kept in the general one, which every storage building raises. No town filled it by making culture. A moderate town's whole run of culture, never spent, came to 10% at most of the smallest store an era's gate leaves you holding, and under 1% from the Modern Age on; three and a half times the culture buildings reached 29% at best, at the Iron Era's end. The one way over 40% was the market, which sells 3 culture for a gold: from the Medieval Age to the Digital Age, one to twenty minutes of a moderate economy's gold filled a typical store that far. Buying culture no longer opens a tier; building for it does.
 
 | Leaving | Old rule: a moderate town's culture, of its store | Old rule: three and a half times the buildings | Now: moderate | Now: twice | Now: three and a half times |
 |---------|---------------------------------------------------|-----------------------------------------------|---------------|------------|-----------------------------|
-| the Iron Era (Medieval Age) | 7.5% | 19% | 22%, Minor | 44%, Major | 78%, Legendary |
-| the Steel Era (Industrial Age) | 2.5% | 7.9% | 22%, Minor | 44%, Major | 78%, Legendary |
-| the Electric Era (Atomic Age) | 0.05% | 0.2% | 22%, Minor | 44%, Major | 78%, Legendary |
-| the Digital Era (Digital Age) | 0.01% | 0.04% | 22%, Minor | 44%, Major | 78%, Legendary |
-| the Neon Era (Space Age) | 0.002% | 0.007% | 22%, Minor | 44%, Major | 78%, Legendary |
+| the Iron Era (Medieval Age) | 10% | 29% | 22%, Minor | 44%, Major | 78%, Legendary |
+| the Steel Era (Industrial Age) | 3.0% | 9.9% | 22%, Minor | 44%, Major | 78%, Legendary |
+| the Electric Era (Atomic Age) | 0.075% | 0.3% | 22%, Minor | 44%, Major | 78%, Legendary |
+| the Digital Era (Digital Age) | 0.019% | 0.066% | 22%, Minor | 44%, Major | 78%, Legendary |
+| the Neon Era (Space Age) | 0.003% | 0.01% | 22%, Minor | 44%, Major | 78%, Legendary |
 
 > Faith sets your odds of a good event; culture sets how good it can be. You need both to get the best outcomes reliably.
 
