@@ -2491,18 +2491,6 @@ func truthPool(p truthPromise) string {
 var truthAccepted = map[string]string{
 	"LOCKED RESOURCE/ally stellar_federation": "the Stellar Federation is met in the Space Age and its specialty, dark matter, unlocks in the Interstellar Age: " +
 		"an alliance made early pays nothing for one age. Moving the civilization or the resource is a design call.",
-	"NOT MEASURED/tech currency": "the market no longer has a fee: nothing in the engine reads config.MechanicMarketFee since the swap was removed, so the tech promises a cut of nothing. " +
-		"The tech's effect row and the mechanic go in the next part (config); remove this line with them.",
-	"NOT MEASURED/tech banking": "the market no longer has a fee: nothing in the engine reads config.MechanicMarketFee since the swap was removed, so the tech promises a cut of nothing. " +
-		"The tech's effect row and the mechanic go in the next part (config); remove this line with them.",
-	"NOT MEASURED/tech wire_transfers": "the market no longer has a fee: nothing in the engine reads config.MechanicMarketFee since the swap was removed, so the tech promises a cut of nothing. " +
-		"The tech's effect row and the mechanic go in the next part (config); remove this line with them.",
-	"NOT MEASURED/tech e_commerce": "the market no longer has a fee: nothing in the engine reads config.MechanicMarketFee since the swap was removed, so the tech promises a cut of nothing. " +
-		"The tech's effect row and the mechanic go in the next part (config); remove this line with them.",
-	"NOT MEASURED/tech blockchain": "the market no longer has a fee: nothing in the engine reads config.MechanicMarketFee since the swap was removed, so the tech promises a cut of nothing. " +
-		"The tech's effect row and the mechanic go in the next part (config); remove this line with them.",
-	"NOT MEASURED/tech probability_markets": "the market no longer has a fee: nothing in the engine reads config.MechanicMarketFee since the swap was removed, so the tech promises a cut of nothing. " +
-		"The tech's effect row and the mechanic go in the next part (config); remove this line with them.",
 }
 
 // TestBonusTruth is the guard: every promise measured, every miss a failure

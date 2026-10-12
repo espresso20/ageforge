@@ -98,7 +98,7 @@ func TestResearchPanelBonuses(t *testing.T) {
 	out := section(t, statsProvider(st, 120), "Research bonuses", "Resource rates")
 	for _, want := range []string{
 		"[green]+5%    [-] All production\n",
-		"[green]+31%   [-] Gold production\n",
+		"[green]+36%   [-] Gold production\n",
 		"[green]+86%   [-] Knowledge production\n",
 		"[green]+25%   [-] Storage\n",
 		"[green]+37%   [-] Housing\n",
@@ -111,7 +111,6 @@ func TestResearchPanelBonuses(t *testing.T) {
 		"[green]+21%   [-] Trade route income\n",
 		"[green]+5     [-] Morale ceiling, in points\n",
 		"[green]-28%   [-] Trade route time\n",
-		"[green]-8     [-] Market fee, in points\n",
 		"[green]+2     [-] Hand gathering\n",
 		"[green]+15%   [-] Game speed\n",
 		"[gray]Output:[-]  +1 data/tick, +0.25 steel/tick",
@@ -122,6 +121,9 @@ func TestResearchPanelBonuses(t *testing.T) {
 	}
 	if strings.Contains(out, "capped") || strings.Contains(out, "a quarter") {
 		t.Errorf("a tech's bonus carries a cap note:\n%s", out)
+	}
+	if strings.Contains(out, "Market fee") {
+		t.Errorf("the market has no fee to cut:\n%s", out)
 	}
 }
 
