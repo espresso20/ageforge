@@ -186,11 +186,15 @@ func TestKeystoneOldSaveKeepsItsAge(t *testing.T) {
 	if n != 1 || !strings.Contains(line, "Iron Age") || !strings.Contains(line, "the locks start when you next advance") {
 		t.Errorf("%d research update lines, the last %q; want one that names the Iron Age and says when the lock starts", n, line)
 	}
-	// Half the bank was in the save, and it is still there.
-	def := ge.Buildings.defs["colosseum"]
-	for res, need := range def.BaseCost {
-		if got := ge.Buildings.wonderBanks["colosseum"][res]; got < need/2 {
-			t.Errorf("the Colosseum's bank holds %v %s, the save held %v", got, res, need/2)
+	// Half the bank (of the price then) was in the save, and it is still
+	// there: the file says what it held.
+	banked := savedFixture(t, keystoneFixtureBanked).WonderBanks["colosseum"]
+	if len(banked) != len(ge.Buildings.defs["colosseum"].BaseCost) {
+		t.Fatalf("the save banks %d parts of the Colosseum, the game prices it in %d", len(banked), len(ge.Buildings.defs["colosseum"].BaseCost))
+	}
+	for res, had := range banked {
+		if got := ge.Buildings.wonderBanks["colosseum"][res]; got < had {
+			t.Errorf("the Colosseum's bank holds %v %s, the save held %v", got, res, had)
 		}
 	}
 	bs := ge.GetState().Buildings["colosseum"]
