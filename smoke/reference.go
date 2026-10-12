@@ -32,7 +32,10 @@ import (
 // An age's length for a player is the first moment the town has made what
 // that player bought. It is an output of the tables, not a target.
 const (
-	RefCopies      = 5
+	// RefCopies is the reference town's copies of every building. It is the
+	// storage rule's number and the gate rule's (config.StorageRuleCopies), so
+	// the town a gate asks for is the town these players build.
+	RefCopies      = config.StorageRuleCopies
 	RefWonderUnits = 40.0
 	RefLinger      = 3.0
 	RefAwayRate    = 0.5
