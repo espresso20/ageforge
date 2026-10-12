@@ -86,7 +86,7 @@ The Legendary draw is a 15% chance inside the over-75% bracket, so it doesn't fi
 
 #### Culture strength
 
-Culture strength works like [faith strength](faith.md#faith-threshold-bands). It is the culture you hold that your own culture buildings made, measured against what four and a half **moderate sets** of culture buildings would have made over the same run. A moderate set is five copies of every culture building your age has (the Amphitheater onward; culture buildings take no workers).
+Culture strength works like [faith strength](faith.md#faith-threshold-bands). It is the culture you hold that your own culture buildings made, measured against what four and a half **moderate sets** of culture buildings would have made over the same run. A moderate set is eight copies of every culture building your age has (the Amphitheater onward; culture buildings take no workers).
 
 ```
 devotion         = what your culture buildings have made this run ÷ what a moderate set would have made

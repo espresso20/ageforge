@@ -78,9 +78,9 @@ Once completed, the wonder appears as a landmark on the Map (`map` command).
 
 ## What wonders cost
 
-Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **40 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). Each wonder has its own resource mix.
+Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **64 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). Each wonder has its own resource mix.
 
-The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **500 food**, the Great Monolith **1.5K food**, and the Sistine Chapel **20K faith**.
+The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **800 food**, the Great Monolith **2.4K food**, and the Sistine Chapel **32K faith**.
 
 A part of a wonder's price can be larger than the store for that resource. That is why the wonder is the one purchase the size of a store does not block (see [Storage is a wall](buildings.md#storage-is-a-wall)): it is banked a deposit at a time, and overflow adds to the deposits.
 
@@ -101,8 +101,8 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Wood | 1K |
-| Food | 500 |
+| Wood | 1.6K |
+| Food | 800 |
 
 **Bonus:** +0.02 knowledge/t · +0.05 food/t
 
@@ -113,9 +113,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 6.3K |
-| Wood | 5K |
-| Food | 1.5K |
+| Stone | 10.1K |
+| Wood | 8K |
+| Food | 2.4K |
 
 **Bonus:** +0.05 knowledge/t · +5K storage for every resource
 
@@ -126,9 +126,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 34K |
-| Wood | 19K |
-| Iron | 3.4K |
+| Stone | 54.4K |
+| Wood | 30.4K |
+| Iron | 5.44K |
 
 **Bonus:** +0.8 knowledge/t · +0.6 faith/t
 
@@ -139,9 +139,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 320K |
-| Iron | 71K |
-| Gold | 63K |
+| Stone | 512K |
+| Iron | 114K |
+| Gold | 101K |
 
 **Bonus:** +100 housing · +2.0 culture/t
 
@@ -152,9 +152,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 1M |
-| Gold | 440K |
-| Iron | 440K |
+| Stone | 1.6M |
+| Gold | 704K |
+| Iron | 704K |
 
 **Bonus:** +2.0 culture/t · +1.2 knowledge/t
 
@@ -165,9 +165,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 3.5M |
-| Gold | 2.7M |
-| Knowledge | 840K |
+| Stone | 5.6M |
+| Gold | 4.32M |
+| Knowledge | 1.34M |
 
 **Bonus:** +2.0 knowledge/t · **+30% knowledge output**
 
@@ -178,10 +178,10 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 24M |
-| Gold | 24M |
-| Faith | 20K |
-| Culture | 8M |
+| Stone | 38.4M |
+| Gold | 38.4M |
+| Faith | 32K |
+| Culture | 12.8M |
 
 **Bonus:** +3.5 culture/t · +1.8 faith/t
 
@@ -192,9 +192,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 160M |
-| Gold | 120M |
-| Steel | 23M |
+| Stone | 256M |
+| Gold | 192M |
+| Steel | 36.8M |
 
 **Bonus:** +5.0 gold/t · **+80% expedition reward**, the biggest expedition bonus of any wonder
 
@@ -205,10 +205,10 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 450M |
-| Iron | 400M |
-| Gold | 310M |
-| Coal | 400M |
+| Steel | 720M |
+| Iron | 640M |
+| Gold | 496M |
+| Coal | 640M |
 
 **Bonus:** **+15% all production** · +8.0 gold/t
 
@@ -219,9 +219,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 4.7B |
-| Iron | 3.8B |
-| Gold | 5.1B |
+| Steel | 7.52B |
+| Iron | 6.08B |
+| Gold | 8.16B |
 
 **Bonus:** +5.0 culture/t · +2.0 knowledge/t
 
@@ -232,9 +232,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 71B |
-| Stone | 50B |
-| Electricity | 20B |
+| Steel | 114B |
+| Stone | 80B |
+| Electricity | 32B |
 
 **Bonus:** +10.0 electricity/t · **+20% all production**
 
@@ -245,9 +245,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 100B |
-| Electricity | 140B |
-| Uranium | 16B |
+| Steel | 160B |
+| Electricity | 224B |
+| Uranium | 25.6B |
 
 **Bonus:** +10.0 knowledge/t · +1.5 uranium/t
 
@@ -258,9 +258,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 770B |
-| Gold | 690B |
-| Electricity | 430B |
+| Steel | 1.23T |
+| Gold | 1.1T |
+| Electricity | 688B |
 | Knowledge | 600B |
 
 **Bonus:** +6.0 knowledge/t · +8.0 culture/t
@@ -272,10 +272,10 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 4.8T |
-| Data | 580B |
-| Electricity | 960B |
-| Gold | 2.4T |
+| Steel | 7.68T |
+| Data | 928B |
+| Electricity | 1.54T |
+| Gold | 3.84T |
 
 **Bonus:** +30.0 data/t · **+30% knowledge output**
 
@@ -286,9 +286,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 34T |
-| Data | 1T |
-| Electricity | 20T |
+| Steel | 54.4T |
+| Data | 1.6T |
+| Electricity | 32T |
 
 **Bonus:** +60.0 data/t · +15.0 knowledge/t
 
@@ -299,10 +299,10 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 100T |
-| Electricity | 77T |
-| Crypto | 12T |
-| Data | 6.4T |
+| Steel | 160T |
+| Electricity | 123T |
+| Crypto | 19.2T |
+| Data | 10.2T |
 
 **Bonus:** +10.0 crypto/t · **+500 housing**
 
@@ -313,9 +313,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 430T |
-| Plasma | 340T |
-| Electricity | 460T |
+| Steel | 688T |
+| Plasma | 544T |
+| Electricity | 736T |
 
 **Bonus:** +15.0 plasma/t · +200.0 electricity/t
 
@@ -326,9 +326,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Titanium | 910T |
-| Plasma | 660T |
-| Steel | 5.5Q |
+| Titanium | 1.46Q |
+| Plasma | 1.06Q |
+| Steel | 8.8Q |
 
 **Bonus:** +200.0 electricity/t · +30.0 plasma/t
 
@@ -339,9 +339,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Titanium | 31Q |
-| Dark Matter | 2.2Q |
-| Plasma | 29Q |
+| Titanium | 49.6Q |
+| Dark Matter | 3.52Q |
+| Plasma | 46.4Q |
 
 **Bonus:** +8.0 dark matter/t · **+80% all production**
 
@@ -352,9 +352,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Dark Matter | 23Q |
-| Antimatter | 17Q |
-| Titanium | 65Q |
+| Dark Matter | 36.8Q |
+| Antimatter | 27.2Q |
+| Titanium | 104Q |
 
 **Bonus:** +10.0 antimatter/t · **+50% all production**
 
@@ -365,9 +365,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Quantum Flux | 24Q |
-| Antimatter | 39Q |
-| Dark Matter | 44Q |
+| Quantum Flux | 38.4Q |
+| Antimatter | 62.4Q |
+| Dark Matter | 70.4Q |
 
 **Bonus:** +15.0 quantum flux/t · **+50% all production**
 
@@ -378,9 +378,9 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Quantum Flux | 360Q |
-| Antimatter | 370Q |
-| Dark Matter | 370Q |
+| Quantum Flux | 576Q |
+| Antimatter | 592Q |
+| Dark Matter | 592Q |
 
 **Bonus:** **+200% all production** · +20.0 quantum flux/t
 
