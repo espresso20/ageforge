@@ -136,9 +136,11 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 9 — atomic_age  rate=25.60
 	b = append(b, BuildingDef{
 		Name: "Corporate HQ", Key: "corporate_hq", Category: "production",
-		BaseCost:    map[string]float64{"steel": 3.2e10, "electricity": 1.3e10, "gold": 2.1e10},
-		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 2790000}},
+		BaseCost:  map[string]float64{"steel": 3.2e10, "electricity": 1.3e10, "gold": 2.1e10},
+		CostScale: 1.15,
+		Effects: []Effect{
+			{Type: "production", Target: "gold", Value: 2390000},
+		},
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
 		Description: "Multinational corporate headquarters.",

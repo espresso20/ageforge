@@ -33,7 +33,11 @@ import (
 //     coldStart): by a player who skipped every building no gate required,
 //     through that age's own buildings (bought with what is reachable), the
 //     buildings the earlier gates required, hand gathering, techs whose flat
-//     output alone covers the whole amount within GateTrickleHours;
+//     output alone covers the whole amount within GateTrickleHours. A price
+//     paid once (the wonder, its keystone tech, the first copy of a building)
+//     is held to a bound on a carried source: the copies the gates required,
+//     at their listed output, must make that price in one target of the age
+//     (CarriedSupplyTargets);
 //   - a town arrives in the next age with empty stores and the buildings the
 //     gates so far asked for, so the first copy of every building of that age
 //     a run can build, and its first tech, must be payable from that cold
@@ -199,19 +203,29 @@ func StaticGates() ([]GateProblem, []GateSlack) {
 // reachable) make it, when a building an earlier gate required makes it,
 // when it is hand gathered (through the Medieval Age), or when techs whose
 // flat output covers the amount within GateTrickleHours do. How thin a carried
-// supply is against a price is not judged for a resource that is not a flow
-// resource: the flow bound is the covenant's only test of supply against a
-// price. And the first copy of each building of A, and the first tech, must be
-// payable within that bound (firstCopyProblems).
+// supply is against a gate's total is not judged for a resource that is not a
+// flow resource: the flow bound is the covenant's only test of supply against
+// a total. The first copy of each building of A, and the first tech, must be
+// payable within that bound (firstCopyProblems), and a carried supply counts
+// toward a first copy only if it is not thin: the copies the gates required,
+// at their listed output, must make the copy's price in one target of A
+// (CarriedSupplyTargets).
 type coldStart struct {
 	age      string
 	unlocked map[string]bool
 	trickle  map[string]float64 // flat per-tick tech output up to the age
-	boot     map[string]bool    // steady carried supply: bootstraps and seeds parity only
+	boot     map[string]bool    // steady carried supply: bootstraps a gate's total and a first copy it is not too thin for
+	made     map[string]float64 // per tick, at listed output: the carried required copies of what they make
 	reach    map[string]bool    // resources the age itself supplies in bulk
 	carried  map[string]bool    // buildings carried over
 	held     map[string]bool    // techs no run leaves the age without
 }
+
+// CarriedSupplyTargets is how many targets of the new age the carried required
+// copies get to make a first copy's price in: one. A carried supply that
+// cannot make the price in that time is a trickle against it, and does not
+// count.
+const CarriedSupplyTargets = 1.0
 
 // handGatherable mirrors the gather command: food, wood and stone, by hand,
 // up to and including the Medieval Age.
@@ -279,6 +293,7 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 	out := make([]*coldStart, len(ages))
 	unlocked := map[string]bool{}
 	carried := map[string]bool{}
+	copies := map[string]int{} // how many copies of each carried building the gates required
 	trickle := map[string]float64{}
 	techs := config.Technologies()
 	// held is, age by age, the techs no run leaves the age without: the gate
@@ -293,11 +308,13 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 			unlocked[r] = true
 		}
 		if i > 0 {
-			for bld := range a.BuildingReqs {
+			for bld, n := range a.BuildingReqs {
 				carried[bld] = true
+				copies[bld] = n
 			}
 			if w := ageWonder(ages[i-1], defs); w != "" {
 				carried[w] = true
+				copies[w] = 1
 			}
 		}
 		for _, t := range techs {
@@ -311,13 +328,14 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 			}
 		}
 		cs := &coldStart{age: a.Key, unlocked: cloneSet(unlocked),
-			trickle: cloneMap(trickle), boot: map[string]bool{}, reach: map[string]bool{},
+			trickle: cloneMap(trickle), boot: map[string]bool{}, made: map[string]float64{}, reach: map[string]bool{},
 			carried: cloneSet(carried), held: held[i]}
 		for _, k := range sortedKeys(carried) {
 			d := defs[k]
 			for _, e := range d.Effects {
 				if e.Type == "production" && e.Value > 0 && unlocked[e.Target] {
 					cs.boot[e.Target] = true
+					cs.made[e.Target] += float64(float64(copies[k]) * e.Value)
 				}
 			}
 		}
@@ -352,13 +370,23 @@ func cloneMap(m map[string]float64) map[string]float64 {
 	return out
 }
 
-// affords reports whether amount of res can be paid once in the age: the age
-// supplies it, a carried producer does, or techs cover it.
+// affords reports whether amount of res can be paid once in the age, as the
+// first copy of a building or a tech: the age supplies it, the carried
+// required copies make it in CarriedSupplyTargets targets of the age (a
+// carried supply that cannot is a trickle against the price and does not
+// count), or techs cover it.
 func (cs *coldStart) affords(res string, amount float64) bool {
 	if !cs.unlocked[res] {
 		return false
 	}
-	return cs.reach[res] || cs.boot[res] || cs.covers(res, amount)
+	return cs.reach[res] || cs.carriedMakes(res, amount) || cs.covers(res, amount)
+}
+
+// carriedMakes reports whether the copies of the buildings the gates so far
+// required, at their listed output, make amount of res within
+// CarriedSupplyTargets targets of the age.
+func (cs *coldStart) carriedMakes(res string, amount float64) bool {
+	return cs.boot[res] && float64(cs.made[res]*config.AgeTargetTicks(cs.age)*CarriedSupplyTargets) >= amount
 }
 
 // covers reports whether techs within GateTrickleHours cover amount of res
@@ -427,6 +455,7 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 		// all (the requirement, every required copy undiscounted, the wonder).
 		needs := map[string]string{}
 		amount := map[string]float64{}
+		thin := map[string]bool{} // parts of a once-bought price the cold start cannot make in time
 		for _, bld := range sortedKeys(to.BuildingReqs) {
 			for res := range defs[bld].BaseCost {
 				if _, ok := needs[res]; !ok {
@@ -451,6 +480,17 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 					needs["knowledge"] = t.Key
 				}
 				amount["knowledge"] += t.Cost
+				if !cold[i].affords("knowledge", t.Cost) {
+					thin["knowledge"] = true
+				}
+			}
+			// The wonder and its keystone tech are bought once, so each part
+			// of their price is a first copy: a carried supply too thin to
+			// make it in a target of the age does not count (affords).
+			for res, c := range defs[wonder].BaseCost {
+				if c > 0 && !config.IsFlowResource(res) && !cold[i].affords(res, c) {
+					thin[res] = true
+				}
 			}
 		}
 		gated := sortedKeys(to.BuildingReqs)
@@ -463,7 +503,7 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 			}
 		}
 		for _, res := range sortedKeys(needs) {
-			if !cold[i].sources(res, amount[res]) {
+			if !cold[i].sources(res, amount[res]) || thin[res] {
 				out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "unsourced", Key: needs[res], Resource: res})
 				continue
 			}

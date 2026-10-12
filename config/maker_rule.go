@@ -33,7 +33,9 @@ import (
 //     (iron_ore for iron, marble for stone, titanium_ore for titanium,
 //     dark_matter_crystals for dark matter): it also makes the material;
 //  3. else the age's building in the lineage that last made the material in an
-//     earlier age: it also makes the material;
+//     earlier age, on the tables as they stood before any fill (a fill is not
+//     a lineage's history: it would hand iron to the mines, which made iron ore
+//     for it): it also makes the material;
 //  4. else nothing fits, and the hole is listed (MakerOpenHoles).
 //
 // A building that ends up making two or more of the materials its age charges
@@ -53,8 +55,8 @@ const MakerHealthyShare = 0.01
 // holds that rule's figures, for the flow resources).
 var MakerPaybackTicks = map[string]float64{
 	"primitive_age":    28.12,
-	"stone_age":        109.4,
-	"bronze_age":       764.6,
+	"stone_age":        109.38,
+	"bronze_age":       764.57,
 	"iron_age":         1365.7,
 	"classical_age":    2193.1,
 	"medieval_age":     3183.9,
@@ -63,14 +65,14 @@ var MakerPaybackTicks = map[string]float64{
 	"industrial_age":   8667.1,
 	"victorian_age":    14896,
 	"electric_age":     20116,
-	"atomic_age":       24074,
+	"atomic_age":       25407,
 	"modern_age":       28869,
 	"information_age":  15227,
 	"digital_age":      40929,
 	"cyberpunk_age":    50249,
-	"fusion_age":       129266,
+	"fusion_age":       129379,
 	"space_age":        96530,
-	"interstellar_age": 80015,
+	"interstellar_age": 79991,
 	"galactic_age":     169450,
 	"quantum_age":      44783,
 	"transcendent_age": 47204,
@@ -123,6 +125,7 @@ func MakerFills() []MakerFill {
 func MakerOpenHoles() []MakerOpenHole {
 	return []MakerOpenHole{
 		{Age: "electric_age", Material: "iron", Why: "two lineages made iron last (the Medieval Age: workshop, engineering; ironmonger, metallurgy) and each has a building this age that a run can build: power_station and electric_arc_furnace. The rule names no one."},
+		{Age: "electric_age", Material: "stone", Why: "the Hoover Dam is priced in stone and no Electric Age building is, so the age has no level for stone to put a standard on."},
 		{Age: "modern_age", Material: "data", Why: "nothing made data before this age (its first maker is the Information Age's Server Farm), so no lineage made it last."},
 		{Age: "interstellar_age", Material: "electricity", Why: "the lineage that last made electricity (energy, the Space Age) has only an optional-tech building this age: pulsar_tap."},
 		{Age: "galactic_age", Material: "plasma", Why: "the lineage that last made plasma (energy, the Interstellar Age) has only an optional-tech building this age: quasar_tap."},
@@ -137,8 +140,8 @@ func MakerOpenHoles() []MakerOpenHole {
 func makerSkipped(res string) bool { return res == "knowledge" || flowResources[res] }
 
 // MakerExcluded is the set of (building, material) pairs MakerFills put into
-// the tables, keyed "building/material": the derivation reads the tables
-// without them, as they stood before the fills.
+// the tables, keyed "building/material": the tables as they stood before the
+// fills read without them.
 func MakerExcluded() map[string]bool {
 	out := map[string]bool{}
 	for _, f := range MakerFills() {
@@ -275,14 +278,18 @@ type MakerHole struct {
 var makerRaw = map[string]string{"iron": "iron_ore", "stone": "marble", "titanium": "titanium_ore", "dark_matter": "dark_matter_crystals"}
 
 // MakerHoles works the maker rule out from defs: every hole, in age order, and
-// who fills it. Pairs in skip (keyed "building/material") are left out of the
-// tables it reads: pass MakerExcluded() to read the tables as they stood before
-// the fills.
-func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, skip map[string]bool) []MakerHole {
+// who fills it. It reads the tables without the pairs in fills, as they stood
+// before the fills were made: pass nil to find the holes of tables that hold no
+// fill, or MakerFills() to read the tables as they are and find the same holes.
+func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []MakerFill) []MakerHole {
 	levels := priceLevels(defs)
 	held := GateTownHeldTechs(defs, ages, techs)
 	gate, wonder := MakerAsks(defs, ages)
 	pos := AgePositions(ageKeys(ages))
+	skip := map[string]bool{}
+	for _, f := range fills {
+		skip[f.Building+"/"+f.Material] = true
+	}
 	var out []MakerHole
 	for i, a := range ages {
 		lv := levels[a.Key]
@@ -321,6 +328,24 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, skip map[str
 			}
 		}
 		sort.Strings(mats)
+		// A wonder part in a material the age does not price has no level to
+		// put a standard on: the rules cannot decide it.
+		var unpriced []string
+		for _, d := range defs {
+			if d.RequiredAge != a.Key || d.Category != "wonder" {
+				continue
+			}
+			for res, c := range d.BaseCost {
+				if c > 0 && lv[res] <= 0 && !makerSkipped(res) {
+					unpriced = append(unpriced, res)
+				}
+			}
+		}
+		sort.Strings(unpriced)
+		for _, res := range unpriced {
+			out = append(out, MakerHole{Age: a.Key, Material: res,
+				Why: "the wonder is priced in " + res + " and no building of the age is, so the age has no level to put a standard on"})
+		}
 		for _, res := range mats {
 			healthy := false
 			var trickle, raw []string

@@ -130,7 +130,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 8 — electric_age  output=electricity  rate=25.60
 	b = append(b, BuildingDef{
 		Name: "Power Station", Key: "power_station", Category: "production",
-		BaseCost:    map[string]float64{"steel": 5.1e09, "electricity": 2.1e09, "coal": 1.7e09},
+		BaseCost:    map[string]float64{"steel": 9.49e9, "coal": 3.16e9},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 273000}},
 		BuildTicks:  3600,
@@ -213,7 +213,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 14 — fusion_age  output=plasma  rate=1638.40
 	b = append(b, BuildingDef{
 		Name: "Fusion Reactor", Key: "fusion_reactor", Category: "production",
-		BaseCost:  map[string]float64{"plasma": 2.1e13, "electricity": 6.8e13, "steel": 9.3e13},
+		BaseCost:  map[string]float64{"electricity": 9.91e13, "steel": 1.36e14},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "plasma", Value: 2.59e08},
@@ -242,11 +242,11 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 16 — interstellar_age  output=dark_matter  rate=6553.60
 	b = append(b, BuildingDef{
 		Name: "Warp Drive Plant", Key: "warp_drive_plant", Category: "production",
-		BaseCost:  map[string]float64{"dark_matter": 4.2e14, "titanium": 3.4e15, "plasma": 2.1e15},
+		BaseCost:  map[string]float64{"titanium": 5.09e15, "plasma": 3.14e15},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "dark_matter", Value: 7.79e9},
-			{Type: "production", Target: "plasma", Value: 4.01e10},
+			{Type: "production", Target: "dark_matter", Value: 6.45e9},
+			{Type: "production", Target: "plasma", Value: 4.68e10},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",

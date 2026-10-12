@@ -46,8 +46,9 @@ func TestMakerPaybackTable(t *testing.T) {
 	}
 }
 
-// TestMakerHolesAreFilledByRule proves the fills against the rules. Read the
-// tables without the fills (MakerExcluded), the rules find holes: every one
+// TestMakerHolesAreFilledByRule proves the fills against the rules. Taking the
+// ages in order, each on the tables as the fills of the ages before it leave
+// them and without its own, the rules find holes: every one
 // the rules decide is in MakerFills with the same building and rule, every
 // one they cannot decide is in MakerOpenHoles, and nothing else is in either
 // list. Read the tables as they are, the only (age, material) left without a
@@ -63,7 +64,7 @@ func TestMakerHolesAreFilledByRule(t *testing.T) {
 		open[o.Age+"/"+o.Material] = o
 	}
 	seen := map[string]bool{}
-	for _, h := range MakerHoles(defs, ages, techs, MakerExcluded()) {
+	for _, h := range MakerHoles(defs, ages, techs, MakerFills()) {
 		id := h.Age + "/" + h.Material
 		seen[id] = true
 		switch h.Rule {
@@ -154,8 +155,9 @@ var tradeGoldUnpriced = []string{
 }
 
 // TestTradeBuildingsMakeGold: every trade-lineage building makes gold, and in
-// an age that prices gold it makes it at the standard (it is a healthy maker,
-// within the cluster). The ones in an age that prices no gold are the listed
+// an age that prices gold it makes it at the standard (its payback is the
+// age's, to half a percent; the Atomic Age's Corporate HQ was moved there when
+// the Uranium Processing Works' re-price moved the age's price levels). The ones in an age that prices no gold are the listed
 // ones. The Black Market Hub makes crypto as well.
 func TestTradeBuildingsMakeGold(t *testing.T) {
 	var unpriced []string
@@ -180,8 +182,8 @@ func TestTradeBuildingsMakeGold(t *testing.T) {
 		}
 		price, out := makerUnits(d, lv, nil)
 		pb := MakerPaybackTicks[d.RequiredAge]
-		if r := float64(price/out) / pb; r < 0.9 || r > 1.25 {
-			t.Errorf("%s pays back in %.3g of payback(%s): its gold is not on the standard", d.Key, r, d.RequiredAge)
+		if r := float64(price/out) / pb; math.Abs(r-1) > 0.005 {
+			t.Errorf("%s pays back in %.4g of payback(%s): its gold is not on the standard", d.Key, r, d.RequiredAge)
 		}
 	}
 	sort.Strings(unpriced)

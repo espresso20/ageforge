@@ -15,7 +15,8 @@ import (
 // town already makes, and its price in the age's price units does not move.
 // The Server Farm (the first maker of data) lost its data part, and the Black
 // Market Hub (the first maker of crypto) lost its crypto part; what remained
-// was scaled by one factor each. Units are counted against the age's levels as
+// was scaled by one factor each. Five more first makers lost the part of the
+// price in the material they make, for the reason below. Units are counted against the age's levels as
 // they now stand, which the change moved a little (data, crypto), so the
 // bound is one percent.
 func TestFirstMakersKeepTheirPriceUnits(t *testing.T) {
@@ -26,6 +27,18 @@ func TestFirstMakersKeepTheirPriceUnits(t *testing.T) {
 	}{
 		{"server_farm", "data", 4.7259},
 		{"black_market", "crypto", 5.1457},
+		// The cold start counts a carried supply toward a first copy only if
+		// the copies the gates required make the price in one target of the
+		// age. These first makers of an age's material were priced in the
+		// material itself, which the carried copies make far too slowly
+		// (the Uranium Processing Works asked 1.2 billion uranium, the
+		// carried mines make 55 million in the Atomic Age's target), so each
+		// lost that part, the rest scaled by one factor.
+		{"uranium_processing_works", "uranium", 2.7524},
+		{"power_station", "electricity", 4.5833},
+		{"fusion_reactor", "plasma", 4.4611},
+		{"warp_drive_plant", "dark_matter", 4.2167},
+		{"stellar_metallurgy", "antimatter", 4.4167},
 	} {
 		d := defs[c.key]
 		if _, has := d.BaseCost[c.gone]; has {

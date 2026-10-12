@@ -167,9 +167,10 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 //
 // The flow and sourcing checks, with numbers that slip past a store check:
 // the Sistine Chapel's 6M faith, more than the age's income makes in its
-// target; the Stellar Cradle's 940T quantum flux, which no building makes
-// before the Space Age. (No gate asks for an amount of a resource, so none
-// of the cases is a gate's resource amount.)
+// target; the Stellar Cradle's 940T uranium, which only the Atomic Age's
+// mines make and a Fusion Age town carries as 8 works, 0.9M a tick against
+// the 94,000 ticks of the age's target. (No gate asks for an amount of a
+// resource, so none of the cases is a gate's resource amount.)
 //
 // The wonder is the one price allowed over a store, so a Sistine Chapel whose
 // stone outgrows every Renaissance warehouse is not a problem, and the covenant
@@ -202,7 +203,7 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 	sistine.BaseCost = map[string]float64{"stone": 200e6, "gold": 10e6, "faith": 6e6, "culture": 8e6}
 	defs["sistine_chapel"] = sistine
 	cradle := defs["stellar_cradle"]
-	cradle.BaseCost = map[string]float64{"quantum_flux": 940e12}
+	cradle.BaseCost = map[string]float64{"uranium": 940e12}
 	for k, v := range defs["stellar_cradle"].BaseCost {
 		cradle.BaseCost[k] = v
 	}
@@ -582,5 +583,59 @@ func TestEveryAgeStandsWithoutTheMarket(t *testing.T) {
 		if strings.Contains(strings.ToLower(sb.String()), word) {
 			t.Errorf("the gate report still talks of %q:\n%s", word, sb.String())
 		}
+	}
+}
+
+// TestColdStartIgnoresThinCarriedSources: a source the gates carried into an
+// age counts toward the first copy of a building of that age only if the
+// carried required copies, at their listed output, make the copy's price in
+// one target of the age. The Atomic Age's Uranium Processing Works was priced
+// in 1.2 billion uranium, the only uranium its age makes; the Victorian and
+// Electric mines every town carries make about 983 a tick, 55 million in the
+// age's target. That is a trickle against the price, so with the old price the
+// age had no way to its first uranium and everything priced in it was dead.
+// (The works lost the uranium part, the rest scaled up so the price in units
+// did not move: the real tables.)
+func TestColdStartIgnoresThinCarriedSources(t *testing.T) {
+	ages := config.Ages()
+	atomic := -1
+	for i, a := range ages {
+		if a.Key == "atomic_age" {
+			atomic = i
+		}
+	}
+	oldWorks := func() map[string]config.BuildingDef {
+		defs := config.BuildingByKey()
+		works := defs["uranium_processing_works"]
+		works.BaseCost = map[string]float64{"steel": 1.5e10, "electricity": 6e9, "uranium": 1.2e9}
+		defs["uranium_processing_works"] = works
+		return defs
+	}
+	cs := coldStarts(ages, oldWorks())[atomic]
+	made := cs.made["uranium"] * config.AgeTargetTicks("atomic_age")
+	if made <= 0 || made >= 1.2e9 {
+		t.Fatalf("setup: the carried mines make %.4g uranium in the Atomic Age's target, want something under the works' 1.2e9", made)
+	}
+	if !cs.affords("uranium", made/2) {
+		t.Errorf("a price of half what the carried copies make in a target: want it payable")
+	}
+	if cs.affords("uranium", made*2) {
+		t.Errorf("a price of twice what the carried copies make in a target: want it a trickle against the price")
+	}
+	dead := func(defs map[string]config.BuildingDef) int {
+		problems, _ := staticGates(ages, defs)
+		n := 0
+		for _, g := range problems {
+			if g.From == "atomic_age" && g.Resource == "uranium" {
+				n++
+			}
+		}
+		return n
+	}
+	if n := dead(oldWorks()); n == 0 {
+		t.Errorf("the works priced in uranium: want the Atomic Age's uranium buildings flagged, got none")
+	}
+	if n := dead(config.BuildingByKey()); n != 0 {
+		t.Errorf("the real tables: want no uranium problem in the Atomic Age, got %d", n)
 	}
 }

@@ -186,11 +186,11 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 11 — atomic_age  rate=163.84  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Uranium Processing Works", Key: "uranium_processing_works", Category: "production",
-		BaseCost:  map[string]float64{"steel": 1.5e10, "electricity": 6e09, "uranium": 1.2e09},
+		BaseCost:  map[string]float64{"steel": 2.46e10, "electricity": 9.85e9},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "uranium", Value: 114000},
-			{Type: "production", Target: "stone", Value: 1020000},
+			{Type: "production", Target: "uranium", Value: 110000},
+			{Type: "production", Target: "stone", Value: 1040000},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",

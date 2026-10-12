@@ -33,12 +33,12 @@
     {
      "type": "production",
      "target": "steel",
-     "value": 2710000
+     "value": 2550000
     },
     {
      "type": "production",
      "target": "iron",
-     "value": 58800
+     "value": 54200
     }
    ],
    "build_ticks": 9360,
@@ -1011,7 +1011,7 @@
     {
      "type": "production",
      "target": "gold",
-     "value": 2790000
+     "value": 2390000
     }
    ],
    "build_ticks": 3600,
@@ -1792,7 +1792,7 @@
     {
      "type": "production",
      "target": "steel",
-     "value": 1940000000
+     "value": 1930000000
     }
    ],
    "build_ticks": 15600,
@@ -2014,9 +2014,8 @@
    "category": "production",
    "age": "fusion_age",
    "cost": {
-    "electricity": 68000000000000,
-    "plasma": 21000000000000,
-    "steel": 93000000000000
+    "electricity": 99100000000000,
+    "steel": 136000000000000
    },
    "rate": 1.15,
    "effects": [
@@ -4274,12 +4273,12 @@
     {
      "type": "production",
      "target": "electricity",
-     "value": 203000
+     "value": 175000
     },
     {
      "type": "production",
      "target": "coal",
-     "value": 46200
+     "value": 88500
     }
    ],
    "build_ticks": 7800,
@@ -4310,9 +4309,8 @@
    "category": "production",
    "age": "electric_age",
    "cost": {
-    "coal": 1700000000,
-    "electricity": 2100000000,
-    "steel": 5100000000
+    "coal": 3160000000,
+    "steel": 9490000000
    },
    "rate": 1.15,
    "effects": [
@@ -5696,21 +5694,20 @@
    "category": "production",
    "age": "galactic_age",
    "cost": {
-    "antimatter": 890000000000000,
-    "dark_matter": 4400000000000000,
-    "titanium": 22000000000000000
+    "dark_matter": 6630000000000000,
+    "titanium": 33100000000000000
    },
    "rate": 1.15,
    "effects": [
     {
      "type": "production",
      "target": "antimatter",
-     "value": 7240000000
+     "value": 5940000000
     },
     {
      "type": "production",
      "target": "titanium",
-     "value": 210000000000
+     "value": 242000000000
     }
    ],
    "build_ticks": 18720,
@@ -6236,21 +6233,20 @@
    "category": "production",
    "age": "atomic_age",
    "cost": {
-    "electricity": 6000000000,
-    "steel": 15000000000,
-    "uranium": 1200000000
+    "electricity": 9850000000,
+    "steel": 24600000000
    },
    "rate": 1.15,
    "effects": [
     {
      "type": "production",
      "target": "uranium",
-     "value": 114000
+     "value": 110000
     },
     {
      "type": "production",
      "target": "stone",
-     "value": 1020000
+     "value": 1040000
     }
    ],
    "build_ticks": 3600,
@@ -6439,21 +6435,20 @@
    "category": "production",
    "age": "interstellar_age",
    "cost": {
-    "dark_matter": 420000000000000,
-    "plasma": 2100000000000000,
-    "titanium": 3400000000000000
+    "plasma": 3140000000000000,
+    "titanium": 5090000000000000
    },
    "rate": 1.15,
    "effects": [
     {
      "type": "production",
      "target": "dark_matter",
-     "value": 7790000000
+     "value": 6450000000
     },
     {
      "type": "production",
      "target": "plasma",
-     "value": 40100000000
+     "value": 46800000000
     }
    ],
    "build_ticks": 3600,
@@ -8014,12 +8009,12 @@
  },
  "price_levels": {
   "atomic_age": {
-   "electricity": 6300000000,
+   "electricity": 7550000000,
    "gold": 11000000000,
    "iron": 7400000000,
-   "steel": 15000000000,
+   "steel": 17000000000,
    "stone": 26500000000,
-   "uranium": 1500000000
+   "uranium": 1600000000
   },
   "bronze_age": {
    "gold": 525,
@@ -8053,7 +8048,7 @@
    "steel": 1850000000000
   },
   "electric_age": {
-   "coal": 1500000000,
+   "coal": 2230000000,
    "electricity": 1200000000,
    "gold": 2550000000,
    "iron": 860000000,
@@ -8152,46 +8147,46 @@
  },
  "market_rates": {
   "atomic_age": {
-   "electricity\u003egold": 1.4,
-   "electricity\u003eiron": 0.94,
-   "electricity\u003esteel": 1.9,
-   "electricity\u003estone": 3.37,
-   "electricity\u003euranium": 0.19,
+   "electricity\u003egold": 1.17,
+   "electricity\u003eiron": 0.784,
+   "electricity\u003esteel": 1.8,
+   "electricity\u003estone": 2.81,
+   "electricity\u003euranium": 0.17,
    "faith\u003eculture": 2,
    "food\u003estone": 0.8,
    "food\u003ewood": 1,
    "gold\u003ecoal": 10,
    "gold\u003eculture": 3,
-   "gold\u003eelectricity": 0.458,
+   "gold\u003eelectricity": 0.549,
    "gold\u003efood": 50,
    "gold\u003eiron": 0.538,
    "gold\u003eknowledge": 5,
-   "gold\u003esteel": 1.09,
+   "gold\u003esteel": 1.24,
    "gold\u003estone": 1.93,
-   "gold\u003euranium": 0.109,
+   "gold\u003euranium": 0.116,
    "gold\u003ewood": 40,
-   "iron\u003eelectricity": 0.681,
+   "iron\u003eelectricity": 0.816,
    "iron\u003egold": 1.19,
-   "iron\u003esteel": 1.62,
+   "iron\u003esteel": 1.84,
    "iron\u003estone": 2.86,
-   "iron\u003euranium": 0.162,
-   "steel\u003eelectricity": 0.336,
-   "steel\u003egold": 0.587,
-   "steel\u003eiron": 0.395,
-   "steel\u003estone": 1.41,
-   "steel\u003euranium": 0.08,
-   "stone\u003eelectricity": 0.19,
+   "iron\u003euranium": 0.173,
+   "steel\u003eelectricity": 0.355,
+   "steel\u003egold": 0.518,
+   "steel\u003eiron": 0.348,
+   "steel\u003estone": 1.25,
+   "steel\u003euranium": 0.0753,
+   "stone\u003eelectricity": 0.228,
    "stone\u003efood": 1.25,
    "stone\u003egold": 0.332,
    "stone\u003eiron": 0.223,
-   "stone\u003esteel": 0.453,
-   "stone\u003euranium": 0.0453,
+   "stone\u003esteel": 0.513,
+   "stone\u003euranium": 0.0483,
    "stone\u003ewood": 1.1,
-   "uranium\u003eelectricity": 3.36,
-   "uranium\u003egold": 5.87,
-   "uranium\u003eiron": 3.95,
-   "uranium\u003esteel": 8,
-   "uranium\u003estone": 14.1,
+   "uranium\u003eelectricity": 3.78,
+   "uranium\u003egold": 5.5,
+   "uranium\u003eiron": 3.7,
+   "uranium\u003esteel": 8.5,
+   "uranium\u003estone": 13.3,
    "wood\u003efood": 1
   },
   "bronze_age": {
@@ -8338,12 +8333,12 @@
    "wood\u003estone": 0.9
   },
   "electric_age": {
-   "coal\u003eelectricity": 0.64,
-   "coal\u003egold": 1.36,
-   "coal\u003eiron": 0.459,
-   "coal\u003eoil": 0.32,
-   "coal\u003esteel": 1.6,
-   "electricity\u003ecoal": 1,
+   "coal\u003eelectricity": 0.43,
+   "coal\u003egold": 0.915,
+   "coal\u003eiron": 0.309,
+   "coal\u003eoil": 0.215,
+   "coal\u003esteel": 1.08,
+   "electricity\u003ecoal": 1.49,
    "electricity\u003egold": 1.7,
    "electricity\u003eiron": 0.573,
    "electricity\u003eoil": 0.4,
@@ -8351,7 +8346,7 @@
    "faith\u003eculture": 2,
    "food\u003estone": 0.8,
    "food\u003ewood": 1,
-   "gold\u003ecoal": 0.471,
+   "gold\u003ecoal": 0.7,
    "gold\u003eculture": 3,
    "gold\u003eelectricity": 0.376,
    "gold\u003efood": 50,
@@ -8361,18 +8356,18 @@
    "gold\u003esteel": 0.941,
    "gold\u003estone": 30,
    "gold\u003ewood": 40,
-   "iron\u003ecoal": 1.4,
+   "iron\u003ecoal": 2.07,
    "iron\u003eelectricity": 1.12,
    "iron\u003egold": 2.37,
    "iron\u003eoil": 0.558,
    "iron\u003esteel": 2.79,
    "iron\u003estone": 3,
-   "oil\u003ecoal": 2,
+   "oil\u003ecoal": 2.97,
    "oil\u003eelectricity": 1.6,
    "oil\u003egold": 3.4,
    "oil\u003eiron": 1.15,
    "oil\u003esteel": 4,
-   "steel\u003ecoal": 0.4,
+   "steel\u003ecoal": 0.595,
    "steel\u003eelectricity": 0.32,
    "steel\u003egold": 0.68,
    "steel\u003eiron": 0.229,
@@ -8836,21 +8831,21 @@
  },
  "typical_income": {
   "atomic_age": {
-   "coal": 4314172.620800002,
+   "coal": 5375395.020800002,
    "culture": 3038.379750000001,
-   "electricity": 71172843.00000001,
+   "electricity": 70514283.00000001,
    "faith": 221.31732000000008,
    "food": 77892.40165000004,
-   "gold": 101229838.39472003,
-   "iron": 2265044.6372400005,
+   "gold": 90567438.39472003,
+   "iron": 2139722.2372400006,
    "iron_ore": 916.7155200000003,
    "knowledge": 27354.080215000013,
    "marble": 39.513600000000004,
    "oil": 2603586.3840000005,
    "soldiers": 16855.02,
-   "steel": 93699466.00000003,
-   "stone": 26303169.473000005,
-   "uranium": 2460489.2928000004,
+   "steel": 89685386.00000003,
+   "stone": 26793169.473000005,
+   "uranium": 2374249.2928000004,
    "wood": 18968.855500000005
   },
   "bronze_age": {
@@ -8892,17 +8887,17 @@
    "wood": 7432.694400000001
   },
   "cyberpunk_age": {
-   "coal": 5370704.6912,
+   "coal": 6691818.291200001,
    "crypto": 7224840000,
    "culture": 64192.55700000001,
    "dark_matter": 25.62,
    "dark_matter_crystals": 69719.81824000001,
    "data": 2300812970.2845,
-   "electricity": 64336444175.15001,
+   "electricity": 64335528687.15001,
    "faith": 4263.21924,
    "food": 1663067.2292000006,
-   "gold": 15050880445.51728,
-   "iron": 2819749.44636,
+   "gold": 15037606845.51728,
+   "iron": 2663735.84636,
    "iron_ore": 1141.2172800000003,
    "knowledge": 187730.36700000006,
    "marble": 49.1904,
@@ -8910,39 +8905,39 @@
    "oil": 36987232.88,
    "plasma": 20987.904000000002,
    "soldiers": 335801.34,
-   "steel": 29798983359.234383,
-   "stone": 32744761.997,
+   "steel": 29793400639.234383,
+   "stone": 33354761.997,
    "titanium": 89.67,
    "titanium_ore": 58766.13120000001,
-   "uranium": 3063063.1317000003,
+   "uranium": 2955703.1317000003,
    "wood": 23614.289500000003
   },
   "digital_age": {
-   "coal": 5370704.6912,
+   "coal": 6691818.291200001,
    "culture": 31984.557000000004,
    "data": 753130508.7325001,
-   "electricity": 15724113304.250004,
+   "electricity": 15723225144.250004,
    "faith": 2136.4449680000002,
    "food": 815555.1831000003,
-   "gold": 15050866853.350882,
-   "iron": 2819749.44636,
+   "gold": 15037593253.350882,
+   "iron": 2663735.84636,
    "iron_ore": 1141.2172800000003,
    "knowledge": 105531.24806000003,
    "marble": 49.1904,
    "nanobots": 94191.80800000002,
    "oil": 36987232.88,
    "soldiers": 167898.108,
-   "steel": 12597227359.234379,
-   "stone": 32744761.997,
+   "steel": 12591644639.234379,
+   "stone": 33354761.997,
    "titanium": 89.67,
    "titanium_ore": 58766.13120000001,
-   "uranium": 3063063.1317000003,
+   "uranium": 2955703.1317000003,
    "wood": 23614.289500000003
   },
   "electric_age": {
-   "coal": 4050039.6032000007,
+   "coal": 5046289.203200001,
    "culture": 1393.179,
-   "electricity": 10073323.8,
+   "electricity": 9480843.8,
    "faith": 107.52996800000003,
    "food": 35628.22935000001,
    "gold": 24288106.231480002,
@@ -8958,17 +8953,17 @@
    "wood": 17807.497000000003
   },
   "fusion_age": {
-   "coal": 5436737.945600001,
+   "coal": 6774094.745600002,
    "crypto": 7313670032.41875,
    "culture": 134134.9555,
    "dark_matter": 77.80499999999999,
    "dark_matter_crystals": 211731.08736,
    "data": 2407391271.6798754,
-   "electricity": 119973041493.33752,
+   "electricity": 119972087085.33752,
    "faith": 8621.482142000003,
    "food": 3367003.5451000016,
-   "gold": 15235959772.840042,
-   "iron": 2854418.4969300004,
+   "gold": 15222522972.840042,
+   "iron": 2696486.69693,
    "iron_ore": 1155.2486400000003,
    "knowledge": 351912.44725000014,
    "marble": 49.795199999999994,
@@ -8976,39 +8971,39 @@
    "oil": 37441993.940000005,
    "plasma": 14457920864.6912,
    "soldiers": 679865.277,
-   "steel": 98688104302.1758,
-   "stone": 33147361.52975,
+   "steel": 98329242942.1758,
+   "stone": 33764861.529750004,
    "titanium": 90.7725,
    "titanium_ore": 59488.6656,
-   "uranium": 3100723.7439750005,
+   "uranium": 2992043.7439750005,
    "wood": 23904.629125000003
   },
   "galactic_age": {
-   "antimatter": 490799178052.05646,
-   "coal": 5832937.472000002,
+   "antimatter": 451870678052.05646,
+   "coal": 7267753.472000002,
    "crypto": 7846650034.781251,
    "culture": 1186942.6187500004,
-   "dark_matter": 4934636550119.78,
+   "dark_matter": 4894510250119.78,
    "dark_matter_crystals": 530042.0608000001,
    "data": 2834819992.9406257,
-   "electricity": 726200316150.8127,
+   "electricity": 726199232830.8127,
    "faith": 73924.62525,
    "food": 30566019.91437501,
-   "gold": 16346685966.3318,
-   "iron": 3062432.80035,
+   "gold": 16332269966.3318,
+   "iron": 2892991.80035,
    "iron_ore": 1239.4368000000004,
    "knowledge": 2865122.3585250014,
    "marble": 53.42400000000001,
    "nanobots": 701461.3600000002,
    "oil": 40170560.300000004,
-   "plasma": 2935807296448.014,
+   "plasma": 3150642796448.014,
    "quantum_flux": 5105909.760000001,
    "soldiers": 5835319.875000001,
-   "steel": 198438126881.7774,
-   "stone": 35562958.72625001,
-   "titanium": 10938564000108.518,
+   "steel": 198042344081.7774,
+   "stone": 36225458.72625001,
+   "titanium": 11930724000108.518,
    "titanium_ore": 63823.87200000001,
-   "uranium": 3326687.4176250002,
+   "uranium": 3210087.4176250002,
    "wood": 25646.666875000006
   },
   "industrial_age": {
@@ -9027,53 +9022,53 @@
    "wood": 14323.421500000004
   },
   "information_age": {
-   "coal": 5018527.334400002,
+   "coal": 6253010.534400002,
    "culture": 14839.209000000004,
    "data": 214183203.13500002,
-   "electricity": 5682463907.250002,
+   "electricity": 5681633987.250002,
    "faith": 1002.6933840000006,
    "food": 371710.39357500017,
-   "gold": 14063915238.948965,
-   "iron": 2634847.8433200005,
+   "gold": 14051512038.948965,
+   "iron": 2489064.6433200003,
    "iron_ore": 1066.3833600000003,
    "knowledge": 60421.05364500002,
    "marble": 45.964800000000004,
    "nanobots": 1915.2,
    "oil": 34561840.56,
    "soldiers": 78441.80400000002,
-   "steel": 5003871955.031252,
-   "stone": 30597564.489000008,
+   "steel": 4998837715.031252,
+   "stone": 31167564.489000008,
    "titanium": 35.910000000000004,
    "titanium_ore": 23533.977600000002,
-   "uranium": 2862206.5329000005,
+   "uranium": 2761886.5329000005,
    "wood": 22065.811500000007
   },
   "interstellar_age": {
    "antimatter": 554959.3392,
-   "coal": 5546793.369600002,
+   "coal": 6911222.169600002,
    "crypto": 7461720033.075,
    "culture": 548114.2380000001,
-   "dark_matter": 213975720082.404,
+   "dark_matter": 177168600082.404,
    "dark_matter_crystals": 504039.99744000006,
    "data": 2615874952.8555007,
-   "electricity": 690575394981.1501,
+   "electricity": 690574364805.1501,
    "faith": 35154.060984,
    "food": 14269049.764200006,
-   "gold": 15544548464.891043,
-   "iron": 2912200.24788,
+   "gold": 15530839664.891043,
+   "iron": 2751071.4478800003,
    "iron_ore": 1178.6342400000003,
    "knowledge": 1376939.3110200006,
    "marble": 50.8032,
    "nanobots": 667050.0480000002,
    "oil": 38199929.04000001,
-   "plasma": 2791786561150.5645,
+   "plasma": 2996082961150.5645,
    "quantum_flux": 2080899.0720000004,
    "soldiers": 2774526.8040000005,
-   "steel": 188703426317.7657,
-   "stone": 33818360.751,
+   "steel": 188327059277.7657,
+   "stone": 34448360.751,
    "titanium": 4210315200103.1943,
    "titanium_ore": 60692.88960000001,
-   "uranium": 3163491.4311000006,
+   "uranium": 3052611.4311000006,
    "wood": 24388.528500000004
   },
   "iron_age": {
@@ -9103,25 +9098,25 @@
    "wood": 904.6944000000002
   },
   "modern_age": {
-   "coal": 4754394.316800001,
+   "coal": 5923904.716800001,
    "culture": 6640.258500000002,
    "data": 2.8350000000000004,
-   "electricity": 319033518.75000006,
+   "electricity": 318277518.75000006,
    "faith": 479.2404960000002,
    "food": 171659.99790000007,
-   "gold": 427645173.74112016,
-   "iron": 2496171.6410400006,
+   "gold": 415894773.74112016,
+   "iron": 2358061.24104,
    "iron_ore": 1010.2579200000004,
    "knowledge": 40311.59859000002,
    "marble": 43.54560000000001,
    "nanobots": 1814.4000000000003,
    "oil": 32702098.464000005,
    "soldiers": 37154.376000000004,
-   "steel": 518104654.5937502,
-   "stone": 28987166.358000007,
+   "steel": 513508174.5937502,
+   "stone": 29527166.358000007,
    "titanium": 11.340000000000002,
    "titanium_ore": 7431.782400000001,
-   "uranium": 2711564.0838000006,
+   "uranium": 2616524.0838000006,
    "wood": 20904.453000000005
   },
   "primitive_age": {
@@ -9131,31 +9126,31 @@
    "wood": 5.0072
   },
   "quantum_age": {
-   "antimatter": 296215598924863.25,
-   "coal": 6053048.320000002,
+   "antimatter": 296173771424863.25,
+   "coal": 7542008.320000002,
    "crypto": 8142750036.09375,
    "culture": 2534125.2750000004,
-   "dark_matter": 247505849250124.3,
+   "dark_matter": 247464208750124.3,
    "dark_matter_crystals": 550043.648,
    "data": 2941803836.2968755,
-   "electricity": 753604101665.9377,
+   "electricity": 753602977465.9377,
    "faith": 153417.56815000004,
    "food": 64592312.78500003,
-   "gold": 16964032249.813004,
-   "iron": 3177996.30225,
+   "gold": 16949072249.813004,
+   "iron": 3002161.30225,
    "iron_ore": 1286.2080000000005,
    "knowledge": 5914495.863375003,
    "marble": 55.44,
    "nanobots": 727931.6000000001,
    "oil": 41686430.50000001,
-   "plasma": 3046592477446.0522,
+   "plasma": 3269534977446.0522,
    "quantum_flux": 6255403202287.36,
    "soldiers": 12111047.025,
-   "steel": 205926358084.86334,
-   "stone": 36904957.16875,
-   "titanium": 11351340000112.613,
+   "steel": 205515640084.86334,
+   "stone": 37592457.16875,
+   "titanium": 12380940000112.613,
    "titanium_ore": 66232.32,
-   "uranium": 3452222.7918750006,
+   "uranium": 3331222.7918750006,
    "wood": 26614.465625000008
   },
   "renaissance_age": {
@@ -9174,17 +9169,17 @@
    "wood": 904.6944000000002
   },
   "space_age": {
-   "coal": 5480760.115200001,
+   "coal": 6828945.715200001,
    "crypto": 7372890032.68125,
    "culture": 270677.06850000005,
    "dark_matter": 78.435,
    "dark_matter_crystals": 498039.5212800001,
    "data": 2505808397.6156254,
-   "electricity": 382917101200.8375,
+   "electricity": 382916111176.8375,
    "faith": 17372.71456200001,
    "food": 6919055.459925003,
-   "gold": 15359383350.94428,
-   "iron": 2877531.19731,
+   "gold": 15345837750.94428,
+   "iron": 2718320.59731,
    "iron_ore": 1164.6028800000001,
    "knowledge": 694753.8451650004,
    "marble": 50.1984,
@@ -9193,11 +9188,11 @@
    "plasma": 260973437920.37802,
    "quantum_flux": 685375.488,
    "soldiers": 1370745.7470000002,
-   "steel": 186456956956.83987,
-   "stone": 33415761.218250003,
+   "steel": 186085070476.83987,
+   "stone": 34038261.21825,
    "titanium": 303879600098.4795,
    "titanium_ore": 59970.355200000005,
-   "uranium": 3125830.818825,
+   "uranium": 3016270.818825,
    "wood": 24098.188875000003
   },
   "stone_age": {
@@ -9209,31 +9204,31 @@
    "wood": 60.75840000000001
   },
   "transcendent_age": {
-   "antimatter": 323475719776969.56,
-   "coal": 6586817.126400001,
+   "antimatter": 323430042976969.56,
+   "coal": 8207076.326400002,
    "crypto": 8933760039.6,
    "culture": 2746070.298000001,
-   "dark_matter": 270675423360136,
+   "dark_matter": 270629884800136,
    "dark_matter_crystals": 602469.8265600002,
    "data": 3194977257.360001,
-   "electricity": 816257414028.6002,
+   "electricity": 816256196364.6002,
    "faith": 166710.26188800007,
    "food": 69155717.74020003,
-   "gold": 18420193434.152164,
-   "iron": 3447949.3171200007,
+   "gold": 18403950234.152164,
+   "iron": 3257178.117120001,
    "iron_ore": 1405.0713600000006,
    "knowledge": 6345906.149880003,
    "marble": 60.8256,
    "nanobots": 795488.2560000003,
    "oil": 45555194.88000001,
-   "plasma": 3322456733931.2505,
+   "plasma": 3565586333931.2505,
    "quantum_flux": 27027481436154.914,
    "soldiers": 26575103.808000006,
-   "steel": 222996468807.0001,
-   "stone": 40195537.34976001,
-   "titanium": 12395980800122.979,
+   "steel": 222551704647.0001,
+   "stone": 40944337.34976001,
+   "titanium": 13520332800122.98,
    "titanium_ore": 72666.31680000002,
-   "uranium": 3779755.9956000005,
+   "uranium": 3647275.9956000005,
    "wood": 28987.508160000012
   },
   "victorian_age": {
@@ -9927,10 +9922,10 @@
  },
  "deal_flow_levels": {
   "atomic_age": {
-   "culture": 454108.54622458643,
-   "faith": 35592.42237502145,
-   "food": 8350128.416427319,
-   "soldiers": 2293871.1419573785
+   "culture": 502578.6794007196,
+   "faith": 39519.71310938041,
+   "food": 9429046.536076989,
+   "soldiers": 2541891.8588947947
   },
   "bronze_age": {
    "faith": 2.346969448248277,
