@@ -15,7 +15,7 @@ func buildingsLineageHacker() []BuildingDef {
 	// standard (config/maker_rule.go), priced in steel and electricity only
 	b = append(b, BuildingDef{
 		Name: "Mainframe Hall", Key: "mainframe_hall", Category: "production",
-		BaseCost:  map[string]float64{"steel": 1.09e11, "titanium_ore": 1.09e11, "electricity": 8.01e10},
+		BaseCost:  map[string]float64{"steel": 2.18e11, "electricity": 8.01e10},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "data", Value: 541000},

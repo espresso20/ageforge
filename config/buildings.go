@@ -279,7 +279,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 7.4e12, "data": 1.5e11, "crypto": 2.5e10},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.9e13}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2.9e13}},
 			BuildTicks:  1400,
 			RequiredAge: "cyberpunk_age",
 			Description: "Encrypted digital vault.",
@@ -291,7 +291,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 2.5e13, "plasma": 1.2e12, "electricity": 1.2e13},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 9.8e13}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8.8e13}},
 			BuildTicks:  1950,
 			RequiredAge: "fusion_age",
 			Description: "Plasma-shielded storage.",

@@ -314,6 +314,20 @@ var rawPartnerForms = map[string][]string{
 	"dark_matter_crystals": {"dark_matter", "electricity"},
 }
 
+// RawLeftOut names the buildings the raw rule would price in a raw and does
+// not, by building key, with the reason: the Modern Age's data and the
+// Cyberpunk Age's crypto each have one source in their age, and the raw's
+// first maker is priced in it. A raw paid by that source would be a loop (the
+// Mainframe Hall costs titanium ore, which the Titanium Mine makes, and the
+// mine costs the Hall's data), so a town could never start. A test proves each
+// entry is that loop; nothing here is a tuning knob.
+func RawLeftOut() map[string]string {
+	return map[string]string{
+		"mainframe_hall": "the Modern Age's only maker of data, which the Titanium Mine (the first maker of titanium ore) is priced in",
+		"black_market":   "the Cyberpunk Age's only maker of crypto, which the Dark Crystal Mine (the first maker of dark matter crystals) is priced in",
+	}
+}
+
 // ageMakesRaw reports whether a building of age makes raw (a production
 // effect with a positive value).
 func ageMakesRaw(defs []BuildingDef, age, raw string) bool {

@@ -190,7 +190,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 13 — cyberpunk_age  rate=409.60
 	b = append(b, BuildingDef{
 		Name: "Black Market Hub", Key: "black_market", Category: "production",
-		BaseCost:  map[string]float64{"data": 1.84e12, "electricity": 9.2e12, "dark_matter_crystals": 9.2e12},
+		BaseCost:  map[string]float64{"data": 1.84e12, "electricity": 1.84e13},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "crypto", Value: 337000000},

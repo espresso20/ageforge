@@ -235,10 +235,8 @@ func TestMainframeHallIsTheMedianMaker(t *testing.T) {
 	if d.RequiredAge != "modern_age" || d.RequiredTech != "" || d.Category != "production" || d.LineageKey != "hacker" || d.LineageTier != 0 {
 		t.Fatalf("mainframe_hall = %+v: want a Modern Age production building with no tech, tier 0 of the hacker lineage", d)
 	}
-	// The Modern Age's steel is paired with titanium ore (config.RawPartner): a
-	// building pays half of its steel part as titanium ore, at the same level.
-	if len(d.BaseCost) != 3 || d.BaseCost["steel"] <= 0 || d.BaseCost["titanium_ore"] <= 0 || d.BaseCost["electricity"] <= 0 {
-		t.Fatalf("mainframe_hall costs %v, want steel (half of it as titanium ore) and electricity only", d.BaseCost)
+	if len(d.BaseCost) != 2 || d.BaseCost["steel"] <= 0 || d.BaseCost["electricity"] <= 0 {
+		t.Fatalf("mainframe_hall costs %v, want steel and electricity only", d.BaseCost)
 	}
 	lv := PriceLevels("modern_age")
 	type maker struct{ u, steel, power float64 }
@@ -269,6 +267,7 @@ func TestMainframeHallIsTheMedianMaker(t *testing.T) {
 			continue
 		}
 		price, _ := makerUnits(o, lv, nil)
+		// (titanium ore is paired with the Modern Age's steel, at its level)
 		others = append(others, maker{price, (o.BaseCost["steel"] + o.BaseCost["titanium_ore"]) / lv["steel"], o.BaseCost["electricity"] / lv["electricity"]})
 	}
 	sort.Slice(others, func(i, j int) bool { return others[i].u < others[j].u })
@@ -283,7 +282,7 @@ func TestMainframeHallIsTheMedianMaker(t *testing.T) {
 	if math.Abs(price/median-1) > 0.01 {
 		t.Errorf("mainframe_hall costs %.4f price units, the other healthy makers' median is %.4f", price, median)
 	}
-	steel, power := (d.BaseCost["steel"]+d.BaseCost["titanium_ore"])/lv["steel"], d.BaseCost["electricity"]/lv["electricity"]
+	steel, power := d.BaseCost["steel"]/lv["steel"], d.BaseCost["electricity"]/lv["electricity"]
 	if got := steel / (steel + power); math.Abs(got-share) > 0.01 {
 		t.Errorf("mainframe_hall's steel is %.3f of its units, the two middle makers use %.3f", got, share)
 	}

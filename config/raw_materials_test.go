@@ -94,7 +94,7 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 				continue
 			}
 			for _, d := range masterDefs {
-				if d.RequiredAge != age || d.Category == "housing" || d.Category == "storage" || makes(d, raw) || d.BaseCost[partner] <= 0 {
+				if _, left := RawLeftOut()[d.Key]; left || d.RequiredAge != age || d.Category == "housing" || d.Category == "storage" || makes(d, raw) || d.BaseCost[partner] <= 0 {
 					continue
 				}
 				pays[d.Key+"/"+raw] = true
@@ -178,6 +178,73 @@ func TestRawsHaveNoLevelWithoutAMaker(t *testing.T) {
 			}
 			if made && lv[a.Key][raw] <= 0 {
 				t.Errorf("%s makes %s and has no level for it", a.Key, raw)
+			}
+		}
+	}
+}
+
+// TestRawLeftOutIsALoop: every building the raw rule leaves out is the only
+// source, in its age, of a material the age's maker of a raw is priced in:
+// the maker needs what the building makes, so the building cannot need the raw.
+// The sources are the age's own buildings that a run can build and what every
+// town carries into it (the gates' required copies and the earlier wonders).
+func TestRawLeftOutIsALoop(t *testing.T) {
+	defs, ages, techs := BaseBuildings(), Ages(), Technologies()
+	held := GateTownHeldTechs(defs, ages, techs)
+	byKey := BuildingByKey()
+	makes := func(d BuildingDef, res string) bool {
+		for _, e := range d.Effects {
+			if e.Type == "production" && e.Value > 0 && e.Target == res {
+				return true
+			}
+		}
+		return false
+	}
+	for key, why := range RawLeftOut() {
+		d, ok := byKey[key]
+		if !ok || why == "" {
+			t.Errorf("%s is left out of the raw rule and is not a building with a reason", key)
+			continue
+		}
+		pos := AgePositions(ageKeys(ages))[d.RequiredAge]
+		carried := makerCarried(defs, ages, pos)
+		loop := false
+		for _, mine := range defs {
+			if mine.RequiredAge != d.RequiredAge || mine.Key == key {
+				continue
+			}
+			rawMaker := false
+			for _, raw := range RawMaterials {
+				rawMaker = rawMaker || makes(mine, raw)
+			}
+			if !rawMaker {
+				continue
+			}
+			for _, e := range d.Effects {
+				mat := e.Target
+				if e.Type != "production" || e.Value <= 0 || mine.BaseCost[mat] <= 0 || makerSkipped(mat) {
+					continue
+				}
+				other := false
+				for _, o := range defs {
+					if o.Key == key || !makes(o, mat) || (o.Category == "wonder" && o.RequiredAge == d.RequiredAge) {
+						continue // the age's own wonder is paid last: it starts nothing
+					}
+					if (o.RequiredAge == d.RequiredAge && (o.RequiredTech == "" || held[pos][o.RequiredTech])) || carried[o.Key] > 0 {
+						other = true
+					}
+				}
+				if !other {
+					loop = true
+				}
+			}
+		}
+		if !loop {
+			t.Errorf("%s is left out of the raw rule (%s) and no raw maker of its age is priced in something only it makes", key, why)
+		}
+		for _, raw := range RawMaterials {
+			if d.BaseCost[raw] != 0 {
+				t.Errorf("%s is left out and costs %s", key, raw)
 			}
 		}
 	}
