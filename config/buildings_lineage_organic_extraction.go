@@ -114,7 +114,6 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "coal", Value: 25.6},
-			{Type: "production", Target: "wood", Value: 680},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",

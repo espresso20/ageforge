@@ -50,8 +50,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		BaseCost:  map[string]float64{"steel": 4.7e09, "electricity": 1.9e09, "coal": 1.3e09},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "electricity", Value: 175000},
-			{Type: "production", Target: "coal", Value: 88500},
+			{Type: "production", Target: "electricity", Value: 240000},
 		},
 		BuildTicks:   7800,
 		RequiredAge:  "electric_age",

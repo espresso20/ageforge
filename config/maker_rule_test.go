@@ -286,3 +286,31 @@ func TestMainframeHallIsTheMedianMaker(t *testing.T) {
 		t.Errorf("mainframe_hall is not a Rule 5 fill of the Modern Age's data")
 	}
 }
+
+// TestAcceptedShortagesAreRead: each shortage the owner accepts is one: the
+// carried copies need more than one target of the age to make what the gate
+// and the wonder ask of it, nothing in the age makes it at the standard, and
+// the reading written in MakerAcceptedShortages is the tables' (to 1%).
+func TestAcceptedShortagesAreRead(t *testing.T) {
+	defs, ages := BaseBuildings(), Ages()
+	for _, a := range MakerAcceptedShortages() {
+		got := MakerShortageTargets(defs, ages, a.Age, a.Material)
+		t.Logf("%s %s: %.4f targets", a.Age, a.Material, got)
+		if got <= 1 {
+			t.Errorf("%s %s reads %.2f targets: the carried copies cover it, it is no shortage to accept", a.Age, a.Material, got)
+		}
+		if math.Abs(got/a.Targets-1) > 0.01 {
+			t.Errorf("%s %s reads %.3f targets, MakerAcceptedShortages says %.3f", a.Age, a.Material, got, a.Targets)
+		}
+		for _, d := range defs {
+			if d.RequiredAge != a.Age || d.Category == "wonder" {
+				continue
+			}
+			for _, e := range d.Effects {
+				if e.Type == "production" && e.Target == a.Material && e.Value > 0 {
+					t.Errorf("%s makes %s in %s, an accepted shortage: nothing should", d.Key, a.Material, a.Age)
+				}
+			}
+		}
+	}
+}

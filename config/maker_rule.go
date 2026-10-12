@@ -99,7 +99,6 @@ type MakerOpenHole struct {
 // MakerFills lists every hole the rules fill, in age order.
 func MakerFills() []MakerFill {
 	return []MakerFill{
-		{Age: "modern_age", Material: "data", Building: "mainframe_hall", Rule: 5},
 		{Age: "iron_age", Material: "iron", Building: "marble_quarry", Rule: 2},
 		{Age: "iron_age", Material: "stone", Building: "marble_quarry", Rule: 2},
 		{Age: "classical_age", Material: "iron", Building: "marble_works", Rule: 2},
@@ -110,15 +109,14 @@ func MakerFills() []MakerFill {
 		{Age: "renaissance_age", Material: "stone", Building: "iron_mine", Rule: 3},
 		{Age: "colonial_age", Material: "iron", Building: "deep_iron_mine", Rule: 2},
 		{Age: "colonial_age", Material: "stone", Building: "deep_iron_mine", Rule: 3},
-		{Age: "colonial_age", Material: "wood", Building: "coal_works", Rule: 3},
 		{Age: "industrial_age", Material: "iron", Building: "steam_mine", Rule: 2},
 		{Age: "industrial_age", Material: "stone", Building: "steam_mine", Rule: 3},
 		{Age: "victorian_age", Material: "iron", Building: "bessemer_plant", Rule: 3},
 		{Age: "victorian_age", Material: "stone", Building: "uranium_mine", Rule: 3},
-		{Age: "electric_age", Material: "coal", Building: "power_generator", Rule: 3},
 		{Age: "electric_age", Material: "iron", Building: "electric_arc_furnace", Rule: 3},
 		{Age: "atomic_age", Material: "iron", Building: "advanced_alloy_plant", Rule: 3},
 		{Age: "atomic_age", Material: "stone", Building: "uranium_processing_works", Rule: 3},
+		{Age: "modern_age", Material: "data", Building: "mainframe_hall", Rule: 5},
 		{Age: "modern_age", Material: "steel", Building: "titanium_smelter", Rule: 3},
 		{Age: "information_age", Material: "steel", Building: "aerospace_foundry", Rule: 3},
 		{Age: "digital_age", Material: "steel", Building: "nano_alloy_plant", Rule: 3},
@@ -329,7 +327,8 @@ func makerCarried(defs []BuildingDef, ages []AgeDef, i int) map[string]int {
 // required copies and the earlier wonders, as the tables hold them, with a
 // building that has worker slots counted staffed, at FullCrewShare
 // times its listed output) cannot make what the gate and the wonder ask of it
-// in one target of the age. A material that is not short is not a hole.
+// in one target of the age. A material that is not short is not a hole, and neither is a
+// shortage listed in MakerAcceptedShortages.
 //
 // "Last made" in rule 3 is read on the tables without the pairs in fills, as
 // they stood before the fills were made; the carried supply is read on the
@@ -365,23 +364,7 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 			}
 			return false
 		}
-		carried := makerCarried(defs, ages, i)
-		supply := func(res string) float64 {
-			total := 0.0
-			for _, k := range sortedBuildingKeys(carried) {
-				d := byKey[k]
-				mult := 1.0
-				if d.WorkerCapacity > 0 {
-					mult = FullCrewShare
-				}
-				for _, e := range d.Effects {
-					if e.Type == "production" && e.Value > 0 && e.Target == res {
-						total += float64(float64(carried[k]) * e.Value * mult)
-					}
-				}
-			}
-			return total
-		}
+		supply := func(res string) float64 { return makerSupply(defs, ages, i, res) }
 		best := 0.0
 		outUnits := map[string]float64{}
 		for _, d := range defs {
@@ -453,6 +436,9 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 			if float64(supply(res)*AgeTargetTicks(a.Key)) >= ask {
 				continue // the carried copies make what is asked: no shortage
 			}
+			if makerAccepted(a.Key, res) {
+				continue // a shortage the owner accepts: a few more of the older buildings cover it
+			}
 			h := MakerHole{Age: a.Key, Material: res}
 			switch {
 			case len(trickle) == 1:
@@ -505,6 +491,85 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 		out = append(out, rows...)
 	}
 	return out
+}
+
+// makerSupply is what the copies every town carries into the age at position
+// i make of res per tick: the gates' required copies and the earlier wonders,
+// as the tables hold them, at listed output (the listed output of a building
+// with worker slots is its full-crew rate: FullCrewShare of it).
+func makerSupply(defs []BuildingDef, ages []AgeDef, i int, res string) float64 {
+	byKey := make(map[string]BuildingDef, len(defs))
+	for _, d := range defs {
+		byKey[d.Key] = d
+	}
+	carried := makerCarried(defs, ages, i)
+	total := 0.0
+	for _, k := range sortedBuildingKeys(carried) {
+		d := byKey[k]
+		mult := 1.0
+		if d.WorkerCapacity > 0 {
+			mult = FullCrewShare
+		}
+		for _, e := range d.Effects {
+			if e.Type == "production" && e.Value > 0 && e.Target == res {
+				total += float64(float64(carried[k]) * e.Value * mult)
+			}
+		}
+	}
+	return total
+}
+
+// MakerShortageTargets is how many targets of the age the carried copies need
+// to make what the gate and the wonder ask of res: the ask over what the
+// carried copies make in one target. Under 1 the carried copies cover it; 0
+// where nothing is asked or the supply is none (an unreachable ask reads as
+// +Inf only when something is asked).
+func MakerShortageTargets(defs []BuildingDef, ages []AgeDef, age, res string) float64 {
+	pos := AgePositions(ageKeys(ages))
+	i, ok := pos[age]
+	if !ok {
+		return 0
+	}
+	gate, wonder := MakerAsks(defs, ages)
+	lv := priceLevels(defs)[age]
+	ask := float64((gate[age][res] + wonder[age][res]) * lv[res])
+	made := float64(makerSupply(defs, ages, i, res) * AgeTargetTicks(age))
+	if ask <= 0 {
+		return 0
+	}
+	if made <= 0 {
+		return math.Inf(1)
+	}
+	return ask / made
+}
+
+// MakerShortage is a shortage the owner accepts: the carried required copies,
+// at listed output, need Targets targets of Age to make what the gate and the
+// wonder ask of Material, and the player covers the rest with a few more of the
+// older buildings. A test holds each to the lingering reference player's stay
+// (smoke) and to the tables (config).
+type MakerShortage struct {
+	Age, Material string
+	Targets       float64
+}
+
+// MakerAcceptedShortages lists them. The hole test treats a listed pair as not
+// a hole, so no building is made to carry a material it does not read as
+// making (a Coal Works making wood, a Power Generator making coal).
+func MakerAcceptedShortages() []MakerShortage {
+	return []MakerShortage{
+		{Age: "colonial_age", Material: "wood", Targets: 2.16},
+		{Age: "electric_age", Material: "coal", Targets: 2.51},
+	}
+}
+
+func makerAccepted(age, res string) bool {
+	for _, a := range MakerAcceptedShortages() {
+		if a.Age == age && a.Material == res {
+			return true
+		}
+	}
+	return false
 }
 
 func sortedBuildingKeys(m map[string]int) []string {
