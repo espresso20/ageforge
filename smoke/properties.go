@@ -253,7 +253,7 @@ func StaticProperties() Properties {
 			if d.Category != "storage" {
 				continue
 			}
-			for k := 0; k < RefCopies; k++ {
+			for k := 0; k < refCopies(d); k++ {
 				if overCap(copyPrice(d, k), t.state(c, i, 1).caps) {
 					ok = false
 				}

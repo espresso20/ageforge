@@ -19,8 +19,9 @@ import (
 // units. A wonder costs RefWonderUnits of them.
 //
 //   - The ordinary player buys the cheapest thing he can afford, only up to
-//     the reference town (RefCopies of every building, or the gate's count
-//     where the gate asks for more), then pays the wonder, and advances the
+//     the reference town (RefCopies of every building but storage, the
+//     storage rule's copies of each store, or the gate's count where the gate
+//     asks for more), then pays the wonder, and advances the
 //     moment both are done.
 //   - The lingering player buys the cheapest thing he can afford and that
 //     fits under his stores, with no other limit, pays the wonder once the reference counts are met, and stays
@@ -32,9 +33,10 @@ import (
 // An age's length for a player is the first moment the town has made what
 // that player bought. It is an output of the tables, not a target.
 const (
-	// RefCopies is the reference town's copies of every building. It is the
-	// storage rule's number and the gate rule's (config.TownCopies), so
-	// the town a gate asks for is the town these players build.
+	// RefCopies is the reference town's copies of every building that is not
+	// storage: the gate rule's number (config.TownCopies), so the town a gate
+	// asks for is the town these players build. Storage is held to the
+	// storage rule's own (config.StorageRuleCopies: refCopies).
 	RefCopies      = config.TownCopies
 	RefWonderUnits = config.WonderPriceUnits
 	RefLinger      = 3.0
@@ -121,9 +123,19 @@ func (t *refTables) gate(i int) map[string]int {
 	return t.ages[i+1].BuildingReqs
 }
 
+// refCopies is the copies of d the reference town holds before a gate asks
+// for more: the town's for every building that makes something, the storage
+// rule's for a storage building.
+func refCopies(d config.BuildingDef) int {
+	if d.Category == "storage" {
+		return config.StorageRuleCopies
+	}
+	return RefCopies
+}
+
 // refCount is how many copies of d the reference town holds.
 func (t *refTables) refCount(d config.BuildingDef) int {
-	return max(RefCopies, t.gate(t.idx[d.RequiredAge])[d.Key])
+	return max(refCopies(d), t.gate(t.idx[d.RequiredAge])[d.Key])
 }
 
 // refTown is the reference town standing in age i: every age so far at its
