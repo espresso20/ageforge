@@ -46,14 +46,14 @@ func TestMakerPaybackTable(t *testing.T) {
 	}
 }
 
-// TestMakerHolesAreFilledByRule proves the fills against the rules. Taking the
+// checkMakerHolesAreFilledByRule proves the fills against the rules. Taking the
 // ages in order, each on the tables as the fills of the ages before it leave
 // them and without its own, the rules find holes: every one
 // the rules decide is in MakerFills with the same building and rule, every
 // one they cannot decide is in MakerOpenHoles, and nothing else is in either
 // list. Read the tables as they are, the only (age, material) left without a
 // healthy maker a run can build is an open hole.
-func TestMakerHolesAreFilledByRule(t *testing.T) {
+func checkMakerHolesAreFilledByRule(t *testing.T) {
 	defs, ages, techs := BaseBuildings(), Ages(), Technologies()
 	fills := map[string]MakerFill{}
 	for _, f := range MakerFills() {
@@ -118,12 +118,12 @@ func TestMakerHolesAreFilledByRule(t *testing.T) {
 	}
 }
 
-// TestMakerFilledOutputsAreTheStandard holds every output a fill touches to
+// checkMakerFilledOutputsAreTheStandard holds every output a fill touches to
 // the standard: the building's first-copy price in units over payback(A),
 // split by what the age's gate asks of each priced material it makes, turned
 // back into the material by its level. The tables write three figures, so
 // the tolerance is half a percent.
-func TestMakerFilledOutputsAreTheStandard(t *testing.T) {
+func checkMakerFilledOutputsAreTheStandard(t *testing.T) {
 	defs := BaseBuildings()
 	want := MakerStandard(defs, Ages(), MakerPaybackTicks, MakerFills())
 	byKey := BuildingByKey()
@@ -145,6 +145,14 @@ func TestMakerFilledOutputsAreTheStandard(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestEveryHoleIsFilledByRule is the one test of the fills: the holes the
+// rules find are the ones MakerFills fills and MakerOpenHoles lists, and every
+// output a fill touches is what the standard gives.
+func TestEveryHoleIsFilledByRule(t *testing.T) {
+	t.Run("holes", checkMakerHolesAreFilledByRule)
+	t.Run("outputs", checkMakerFilledOutputsAreTheStandard)
 }
 
 // tradeGoldUnpriced are the trade buildings whose age prices nothing in gold:

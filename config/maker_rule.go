@@ -175,10 +175,6 @@ type MakerPayback struct {
 // makers are the age's non-wonder buildings with a priced output, optional
 // tech or not.
 func MakerPaybacks(defs []BuildingDef, order []string) map[string]MakerPayback {
-	return makerPaybacks(defs, order, nil)
-}
-
-func makerPaybacks(defs []BuildingDef, order []string, skip map[string]bool) map[string]MakerPayback {
 	levels := priceLevels(defs)
 	out := map[string]MakerPayback{}
 	for _, age := range order {
@@ -190,7 +186,7 @@ func makerPaybacks(defs []BuildingDef, order []string, skip map[string]bool) map
 			if d.RequiredAge != age || d.Category == "wonder" {
 				continue
 			}
-			price, o := makerUnits(d, lv, skip)
+			price, o := makerUnits(d, lv, nil)
 			if o <= 0 {
 				continue
 			}
