@@ -12,7 +12,7 @@ This page lists every command. Each section links to the page that explains the 
 
 ## The prompt
 
-As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` the same, then the next age's; `plan research` every unresearched tech on your tree, the ones you can start first; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `roster` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders or storage, and nothing in the Primitive Age); `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
+As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` the same, then the next age's; `plan research` every unresearched tech on your tree, the ones you can start first; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `roster` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders or storage, and nothing in the Primitive Age); `trade route start` and `trade route stop` the routes you can start and the routes running; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
 
 | Key | What it does |
 |---|---|
@@ -80,7 +80,6 @@ A list of builds and techs the game starts for you, in order, as the resources c
 | `plan` | Open the **Plan** panel: the items, what each costs next and whether it can start. `↑`/`↓` select, `U`/`D` move the selected item, `X` removes it, `C` twice clears the plan. |
 | `plan build <building> [count]` | Add copies of a building of this age or the next (default 1). The next age's buildings wait for the advance. Adding more of the building at the end of the plan adds to that item. |
 | `plan research <tech>` (or `plan res`) | Add a tech and, before it, the techs it still needs (see [The research queue](plan.md#the-research-queue)). Techs start one at a time, in plan order. It takes any tech on your tech tree: a tech of a later age waits for its age |
-| `plan trade <give> <get> [amount to get]` | Sell `<give>` for `<get>` at the market as it comes in, until that much `<get>` is bought. With no amount, it keeps buying `<get>` until you remove the item, never past your storage cap. Needs a trade building. |
 | `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too; they wait for the advance. |
 | `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as you can pay its price. While it waits it holds its price back from the items below, and it drops out if the offer rotates away. See [Factions & Diplomacy](factions.md). |
 | `plan list` | Print the plan with each item's status |
@@ -93,7 +92,6 @@ A list of builds and techs the game starts for you, in order, as the resources c
 plan build hut 10
 plan build gathering_camp 5
 plan res tool_making
-plan trade gold stone 50000
 plan advance
 plan deal merchant_guild 2
 plan up 3
@@ -209,9 +207,7 @@ Keys with underscores can be typed with spaces: `expedition scout ruins` is the 
 
 | Command | Description |
 |---|---|
-| `trade` | Open the **Trade** panel |
-| `trade list` | List the market's exchange rates (build a market first) |
-| `trade <give> <get> <amount to give>` | Sell that amount of `<give>` for `<get>` at the market rate (needs a market or a later trade building). `trade wood stone 100` sells 100 wood for stone. If the `<get>` store has room for less than the sale pays, only what fits is sold and you are charged for that; into a full store it refuses with `<Resource> storage is full.` and charges nothing |
+| `trade` | Open the **Trade routes** panel |
 | `trade route` (or `trade route list`) | List your active trade routes and the routes you can start |
 | `trade route start <route>` | Start a trade route. Routes wait for The Wheel, a Bronze Age tech |
 | `trade route stop <route>` | Stop an active trade route |
@@ -220,14 +216,12 @@ Keys with underscores can be typed with spaces: `expedition scout ruins` is the 
 | `trade black [resource]` | Same as `blackmarket` |
 
 ```
-trade list
-trade wood stone 100
 trade route start local_barter
 trade route stop local_barter
 blackmarket
 ```
 
-Each trade pushes that pair's rate down a little, and the rate recovers over time. A route whose imports include a resource that a civilization you're at war with or have embargoed specializes in earns nothing until the conflict ends. **Harbors** raise the income of every active route. See [Trade](trade.md).
+A route whose imports include a resource that a civilization you're at war with or have embargoed specializes in earns nothing until the conflict ends. **Harbors** raise the income of every active route. See [Trade](trade.md).
 
 ---
 
