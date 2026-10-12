@@ -370,7 +370,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Primitive Age — normal costs: 30-300
 		{
 			Name: "Sacred Grove", Key: "sacred_grove", Category: "wonder",
-			BaseCost:  map[string]float64{"wood": 1600, "food": 500},
+			BaseCost:  map[string]float64{"wood": 1600, "food": 800},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 0.02},
@@ -384,7 +384,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Stone Age — normal costs: 200-1000
 		{
 			Name: "Great Monolith", Key: "great_monolith", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 10080, "wood": 8000, "food": 1500},
+			BaseCost:  map[string]float64{"stone": 10080, "wood": 8000, "food": 2400},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 0.05},
@@ -459,7 +459,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Renaissance Age — normal costs: 400k-600k
 		{
 			Name: "Sistine Chapel", Key: "sistine_chapel", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 3.84e07, "gold": 3.84e07, "faith": 20000, "culture": 8000000},
+			BaseCost:  map[string]float64{"stone": 3.84e07, "gold": 3.84e07, "faith": 32000, "culture": 12800000},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 3.5},
@@ -519,7 +519,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Electric Age — normal costs: 500M-1B
 		{
 			Name: "Hoover Dam", Key: "hoover_dam", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 1.136e11, "stone": 5e10, "electricity": 3.2e10},
+			BaseCost:  map[string]float64{"steel": 1.136e11, "stone": 8e10, "electricity": 3.2e10},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 10},

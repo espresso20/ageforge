@@ -2396,7 +2396,7 @@
    "category": "wonder",
    "age": "stone_age",
    "cost": {
-    "food": 1500,
+    "food": 2400,
     "stone": 10080,
     "wood": 8000
    },
@@ -2543,7 +2543,7 @@
    "cost": {
     "electricity": 32000000000,
     "steel": 113600000000,
-    "stone": 50000000000
+    "stone": 80000000000
    },
    "rate": 1,
    "effects": [
@@ -4876,7 +4876,7 @@
    "category": "wonder",
    "age": "primitive_age",
    "cost": {
-    "food": 500,
+    "food": 800,
     "wood": 1600
    },
    "rate": 1,
@@ -5072,8 +5072,8 @@
    "category": "wonder",
    "age": "renaissance_age",
    "cost": {
-    "culture": 8000000,
-    "faith": 20000,
+    "culture": 12800000,
+    "faith": 32000,
     "gold": 38400000,
     "stone": 38400000
    },
