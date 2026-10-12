@@ -32,19 +32,15 @@ import (
 //     (knowledge), can be had in that age from a cold start (see
 //     coldStart): by a player who skipped every building no gate required,
 //     through that age's own buildings (bought with what is reachable), hand
-//     gathering, the market (only once a trade building can stand), techs
-//     whose flat output alone covers the whole amount within
-//     GateTrickleHours. Older ages' producers only pay for first copies and
-//     seed market parity;
+//     gathering, techs whose flat output alone covers the whole amount within
+//     GateTrickleHours. Older ages' producers only pay for first copies;
 //   - a town arrives in the next age with empty stores and the buildings the
 //     gates so far asked for, so the first copy of every building of that age
 //     a run can build, and its first tech, must be payable from that cold
 //     start, and a flow resource in one is held to the bound below, with its
 //     constant (firstCopyProblems);
 //   - every flow resource (food, faith, culture, soldiers) the gate asks for is
-//     made within the age's pacing target at config.FlowIncome, or the rest
-//     can be bought at the market for at most GateFlowMarketUnits price units
-//     of the age;
+//     made within the age's pacing target at config.FlowIncome;
 //   - the storage ladder: the first copy of the new age's storage building
 //     fits, with GateLadderMargin to spare, in the least storage the gate
 //     forces a player to hold (see ladderForced and gateStore). Storage is
@@ -65,12 +61,11 @@ import (
 // sizes five copies to hold the next age's first storage building and
 // config.StorageRuleMargin more.
 const (
-	GateBuildingMargin  = config.StorageRuleRoom
-	GateResourceMargin  = 1.25
-	GateWonderMargin    = 1.0 // no longer checked: see the wonder, above
-	GateTrickleHours    = 48.0
-	GateFlowMarketUnits = 10.0
-	GateLadderMargin    = config.StorageRuleMargin
+	GateBuildingMargin = config.StorageRuleRoom
+	GateResourceMargin = 1.25
+	GateWonderMargin   = 1.0 // no longer checked: see the wonder, above
+	GateTrickleHours   = 48.0
+	GateLadderMargin   = config.StorageRuleMargin
 )
 
 // GateProblem is an age requirement that breaks the Gate Covenant, found from
@@ -94,10 +89,8 @@ type GateProblem struct {
 	MaxStorage float64 `json:"max_storage,omitempty"`
 	Margin     float64 `json:"margin,omitempty"`   // the margin the rule asks for
 	BuiltIn    string  `json:"built_in,omitempty"` // unbuildable: the only age the building can be built in
-	// Flow problems: what FlowIncome makes over the age's target, and what the
-	// rest would cost at the market in price units of the age (-1: no route).
-	Made        float64 `json:"made,omitempty"`
-	MarketUnits float64 `json:"market_units,omitempty"`
+	// Flow problems: what FlowIncome makes over the age's target.
+	Made float64 `json:"made,omitempty"`
 	// Ladder problems: Key is the new age's storage building, Need its first
 	// copy's price in Resource, MaxStorage the least storage the gate forces,
 	// and ForcedBy what forces it (a requirement or a required building).
@@ -122,7 +115,7 @@ func (g GateSlack) Ratio() float64 { return g.MaxStorage / g.Need }
 // writeGates renders the static gate check.
 func (s *Summary) writeGates(sb *strings.Builder) {
 	sb.WriteString("\n## Static gate check\n\n")
-	fmt.Fprintf(sb, "From config alone, against the most storage buildable in the age you advance from, with no build_cost discounts. Every building a gate asks for must be buildable in that age, and the tech it waits for, if any, must be finishable in that age. The last required copy of each must cost at most 1/%g of the storage. The wonder is paid through its bank, so it is held to no storage margin. Every resource a gate needs, the wonder's included, must be obtainable in that age from a cold start: a town with empty stores and only the buildings the gates so far asked for. Every flow resource a gate needs must be made within the age's target at a moderate income, or bought for at most %g price units. The first copy of the new age's storage must fit with %gx to spare in the least storage the gate forces a player to hold. On arrival, the first copy of every building of the new age that a run can build, and the cheapest tech of the new age, must be payable from that same cold start. No building may cost a resource with no source in its own age. Together these checks are the Gate Covenant. `go test ./smoke` fails on any row here; the runtime invariants are what fail a run.\n\n", GateBuildingMargin, GateFlowMarketUnits, GateLadderMargin)
+	fmt.Fprintf(sb, "From config alone, against the most storage buildable in the age you advance from, with no build_cost discounts. Every building a gate asks for must be buildable in that age, and the tech it waits for, if any, must be finishable in that age. The last required copy of each must cost at most 1/%g of the storage. The wonder is paid through its bank, so it is held to no storage margin. Every resource a gate needs, the wonder's included, must be obtainable in that age from a cold start: a town with empty stores and only the buildings the gates so far asked for. Every flow resource a gate needs must be made within the age's target at a moderate income. The first copy of the new age's storage must fit with %gx to spare in the least storage the gate forces a player to hold. On arrival, the first copy of every building of the new age that a run can build, and the cheapest tech of the new age, must be payable from that same cold start. No building may cost a resource with no source in its own age. Together these checks are the Gate Covenant. `go test ./smoke` fails on any row here; the runtime invariants are what fail a run.\n\n", GateBuildingMargin, GateLadderMargin)
 	if len(s.Gates) == 0 {
 		sb.WriteString("No problems.\n")
 	} else {
@@ -142,11 +135,7 @@ func (s *Summary) writeGates(sb *strings.Builder) {
 			case "ladder":
 				fmt.Fprintf(sb, "| %s → %s | first %s | %s %s | - | %gx under the %s the gate forces (%s) |\n", g.From, g.To, g.Key, num(g.Need), g.Resource, g.Margin, num(g.MaxStorage), g.ForcedBy)
 			case "flow":
-				market := "no market route"
-				if g.MarketUnits >= 0 {
-					market = fmt.Sprintf("the rest costs %.1f price units", g.MarketUnits)
-				}
-				fmt.Fprintf(sb, "| %s → %s | %s (for %s) | %s %s | - | makes %s in the target; %s (max %g) |\n", g.From, g.To, g.Resource, g.Key, num(g.Need), g.Resource, num(g.Made), market, GateFlowMarketUnits)
+				fmt.Fprintf(sb, "| %s → %s | %s (for %s) | %s %s | - | makes %s in the target |\n", g.From, g.To, g.Resource, g.Key, num(g.Need), g.Resource, num(g.Made))
 			default:
 				fmt.Fprintf(sb, "| %s → %s | %s | %s %s | %s | %gx |\n", g.From, g.To, g.Key, num(g.Need), g.Resource, num(g.MaxStorage), g.Margin)
 			}
@@ -173,15 +162,15 @@ func StaticGates() ([]GateProblem, []GateSlack) {
 }
 
 // coldStart is what a player entering an age is guaranteed to have, and
-// what they can reach from there by building and trading in that age alone.
+// what they can reach from there by building in that age alone.
 // It is the Gate Covenant's model of sourcing ("from a cold start"): a player
 // may skip any building no gate required, so nothing optional from an earlier
 // age may be relied on. The Iron Age trading post was the case that forced
-// it: it cost gold, it was the Iron Age's only gold producer and its only
-// trade building (which the market needs), and the Bronze Age market that
-// would have broken the loop was optional. Since the gate rule
-// (config/gate_rule.go) it is not: the gate out of the Bronze Age asks for
-// the market, and every other building of the age that makes something.
+// it: it cost gold and was the Iron Age's only gold producer, and the Bronze
+// Age building that would have broken the loop was optional. Since the gate
+// rule (config/gate_rule.go) it is not: the gate out of the Bronze Age asks
+// for the market building, and every other building of the age that makes
+// something.
 //
 // A town arrives with empty stores and, of what it owns, only what the gates
 // so far asked for. Nothing else carries over into age A:
@@ -207,22 +196,18 @@ func StaticGates() ([]GateProblem, []GateSlack) {
 // must be on the spine in time.
 //
 // Carried producers are sized to older prices, so, as in the old rule, they
-// only bootstrap A's buildings (pay for a first copy) and seed market parity;
+// only bootstrap A's buildings (pay for a first copy);
 // a gate's total must come from A itself: A's own producers (bought with
-// what is reachable), hand gathering (through the Medieval Age), the market
-// (only with a trade building, carried or buildable in A), or techs whose flat
-// output covers the amount within GateTrickleHours. And the first copy of
+// what is reachable), hand gathering (through the Medieval Age), or techs
+// whose flat output covers the amount within GateTrickleHours. And the first copy of
 // each building of A, and the first tech, must be payable within the bound the
 // covenant puts on a flow resource (firstCopyProblems).
 type coldStart struct {
-	idx      int
 	age      string
 	unlocked map[string]bool
-	levels   map[string]float64 // construction resources of the age
 	trickle  map[string]float64 // flat per-tick tech output up to the age
 	boot     map[string]bool    // steady carried supply: bootstraps and seeds parity only
 	reach    map[string]bool    // resources the age itself supplies in bulk
-	market   bool               // a trade building stands or can be built
 	carried  map[string]bool    // buildings carried over
 	held     map[string]bool    // techs no run leaves the age without
 }
@@ -324,14 +309,11 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 				}
 			}
 		}
-		cs := &coldStart{idx: i, age: a.Key, unlocked: cloneSet(unlocked), levels: rules.Core().PriceLevels(a.Key),
+		cs := &coldStart{age: a.Key, unlocked: cloneSet(unlocked),
 			trickle: cloneMap(trickle), boot: map[string]bool{}, reach: map[string]bool{},
 			carried: cloneSet(carried), held: held[i]}
 		for _, k := range sortedKeys(carried) {
 			d := defs[k]
-			if d.LineageKey == "trade" {
-				cs.market = true
-			}
 			for _, e := range d.Effects {
 				if e.Type == "production" && e.Value > 0 && unlocked[e.Target] {
 					cs.boot[e.Target] = true
@@ -391,8 +373,8 @@ func (cs *coldStart) sources(res string, amount float64) bool {
 }
 
 // solve grows reach to a fixed point: buy every building of the age whose
-// first copy is affordable, open the market once a trade building stands or
-// can be bought, and trade into what the market sells.
+// first copy is affordable. A resource is sourced when a building of the age
+// that can be paid for makes it; nothing is bought from anyone.
 func (cs *coldStart) solve(defs map[string]config.BuildingDef) {
 	keys := sortedKeys(defs)
 	for changed := true; changed; {
@@ -420,70 +402,13 @@ func (cs *coldStart) solve(defs map[string]config.BuildingDef) {
 			if !ok {
 				continue
 			}
-			if d.LineageKey == "trade" && !cs.market {
-				cs.market, changed = true, true
-			}
 			for _, e := range d.Effects {
 				if e.Type == "production" && e.Value > 0 {
 					add(e.Target)
 				}
 			}
 		}
-		if !cs.market {
-			continue
-		}
-		// A construction resource of the age trades at parity with the
-		// others, so any supply of one (carried supplies included) is a way
-		// into all of them.
-		parity := false
-		for r := range cs.levels {
-			parity = parity || cs.reach[r] || cs.boot[r]
-		}
-		if parity {
-			for _, r := range sortedKeys(cs.levels) {
-				add(r)
-			}
-		}
-		for _, x := range rules.Core().ExchangeRates() {
-			if (cs.reach[x.From] || cs.boot[x.From]) && minAgeReached(x.MinAge, cs.idx) {
-				add(x.To)
-			}
-		}
 	}
-}
-
-// minAgeReached reports whether age comes at or before position idx.
-func minAgeReached(age string, idx int) bool {
-	for i, k := range config.AgeOrder() {
-		if k == age {
-			return i <= idx
-		}
-	}
-	return false
-}
-
-// flowMarketUnits is what short of the flow resource res costs at the
-// market in cs's age, in price units of that age: the cheapest listed
-// exchange into res from one of the age's construction resources. -1 if the
-// market is out of reach or sells res for none of them.
-func flowMarketUnits(res string, short float64, cs *coldStart) float64 {
-	if !cs.market {
-		return -1
-	}
-	best := -1.0
-	for _, x := range rules.Core().ExchangeRates() {
-		if x.To != res || !minAgeReached(x.MinAge, cs.idx) || cs.levels[x.From] <= 0 {
-			continue
-		}
-		rate := rules.Core().ExchangeRate(x, cs.age)
-		if rate <= 0 {
-			continue
-		}
-		if u := short / rate / cs.levels[x.From]; best < 0 || u < best {
-			best = u
-		}
-	}
-	return best
 }
 
 func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]GateProblem, []GateSlack) {
@@ -543,10 +468,8 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 			}
 			made := float64(rules.Core().FlowIncome(res, from.Key) * config.AgeTargetTicks(from.Key))
 			if short := amount[res] - made; short > 0 {
-				if u := flowMarketUnits(res, short, cold[i]); u < 0 || u > GateFlowMarketUnits {
-					out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "flow", Key: needs[res], Resource: res,
-						Need: amount[res], Made: made, MarketUnits: u})
-				}
+				out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "flow", Key: needs[res], Resource: res,
+					Need: amount[res], Made: made})
 			}
 		}
 		tight := GateSlack{From: from.Key, To: to.Key, Need: 1, MaxStorage: math.Inf(1)}
@@ -648,10 +571,8 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 // `to` (the cheapest), must each be payable in every resource they cost. A
 // resource is payable when the cold start sources it (dead_building says so
 // for a building; the first tech is checked here). A flow resource is held to
-// the bound the covenant puts on a gate's flow resource, with the same
-// constant: what the reference income makes in the age's pacing target, or the
-// rest bought at the market for at most GateFlowMarketUnits price units. No
-// number is new.
+// the bound the covenant puts on a gate's flow resource: what the reference
+// income makes in the age's pacing target. No number is new.
 func firstCopyProblems(from, to config.AgeDef, cs *coldStart, defs map[string]config.BuildingDef, techs []config.TechDef) []GateProblem {
 	var out []GateProblem
 	check := func(key, res string, price float64) {
@@ -669,10 +590,8 @@ func firstCopyProblems(from, to config.AgeDef, cs *coldStart, defs map[string]co
 		}
 		made := float64(rules.Core().FlowIncome(res, to.Key) * config.AgeTargetTicks(to.Key))
 		if short := price - made; short > 0 {
-			if u := flowMarketUnits(res, short, cs); u < 0 || u > GateFlowMarketUnits {
-				out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "flow", Key: key, Resource: res,
-					Need: price, Made: made, MarketUnits: u})
-			}
+			out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "flow", Key: key, Resource: res,
+				Need: price, Made: made})
 		}
 	}
 	for _, k := range sortedKeys(defs) {
