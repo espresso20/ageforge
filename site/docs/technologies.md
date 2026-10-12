@@ -336,7 +336,7 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 |---|---|---|---|---|---|---|
 | `calendar` | Calendar | **keystone** (Stonehenge) | 4.77K kp | 439 | `ritual` | Opens the Altar, +10% faith production |
 | `map_making` | Map Making | optional | 5.97K kp | 439 | `primitive_writing` | +10% knowledge production |
-| `currency` | Currency | spine | 3.58K kp | 351 | `primitive_writing` | +10% gold production, market fee 3 points lower |
+| `currency` | Currency | spine | 3.58K kp | 351 | `primitive_writing` | +10% gold production |
 | `boatbuilding` | Boatbuilding | optional | 5.97K kp | 439 | `woodworking` | +5% food production, trade routes bring in 10% more |
 | `agriculture` | Agriculture | optional | 5.97K kp | 439 | `animal_husbandry` | +10% food production |
 | `the_wheel` | The Wheel | optional | 5.97K kp | 439 | `woodworking` | Opens trade routes, construction takes 5% less time |
@@ -381,7 +381,7 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 | `theology` | Theology | **keystone** (Great Library) | 1.62M kp | 1,316 | `philosophy` | Opens the Cathedral, +8% faith production |
 | `alchemy` | Alchemy | optional | 2.03M kp | 1,316 | `philosophy` | +8% knowledge production |
 | `scholasticism` | Scholasticism | capstone | 3.24M kp | 2,106 | `alchemy`, `theology` | Research takes 6% less time |
-| `banking` | Banking | spine | 1.22M kp | 1,053 | `currency`, `mathematics` | +8% gold production, market fee 3 points lower |
+| `banking` | Banking | spine | 1.22M kp | 1,053 | `currency`, `mathematics` | +8% gold production |
 | `feudalism` | Feudalism | optional | 2.03M kp | 1,316 | `the_plough` | +8% housing |
 | `chronometry` | Chronometry | optional | 2.03M kp | 1,316 | none | +5% game speed |
 | `guilds` | Guilds | capstone | 3.24M kp | 2,106 | `civil_engineering`, `metal_casting` | Buildings cost 4% less, construction takes 8% less time |
@@ -460,7 +460,7 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 |---|---|---|---|---|---|---|
 | `radio` | Radio | optional | 644M kp | 2,925 | `telecommunications` | Festivals come back 20% sooner |
 | `modern_physics` | Modern Physics | optional | 644M kp | 2,925 | `public_education` | +5% knowledge production |
-| `wire_transfers` | Wire Transfers | optional | 644M kp | 2,925 | `telecommunications` | Market fee 2 points lower |
+| `wire_transfers` | Wire Transfers | optional | 644M kp | 2,925 | `telecommunications` | +5% gold production |
 | `fertilizers` | Fertilizers | optional | 644M kp | 2,925 | `sanitation` | +5% food production |
 | `assembly_line` | Assembly Line | optional | 644M kp | 2,925 | `mass_production` | Construction takes 5% less time |
 | `chemical_engineering` | Chemical Engineering | spine | 386M kp | 2,340 | `mass_production` | +5% oil production, +5% steel production |
@@ -511,7 +511,7 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 |---|---|---|---|---|---|---|
 | `social_media` | Social Media | optional | 913M kp | 4,095 | `internet` | +5% culture production, festivals cost 20% less |
 | `search_engines` | Search Engines | optional | 913M kp | 4,095 | `internet` | Research takes 3% less time |
-| `e_commerce` | E-commerce | optional | 913M kp | 4,095 | `containerization`, `internet` | Opens the Container Terminal, market fee 2 points lower |
+| `e_commerce` | E-commerce | optional | 913M kp | 4,095 | `containerization`, `internet` | Opens the Container Terminal |
 | `medical_nanobots` | Medical Nanobots | optional | 913M kp | 4,095 | `nanofabrication` | +5% housing, +5% food production |
 | `internet_of_things` | Internet of Things | optional | 913M kp | 4,095 | `social_media`, `cybersecurity`, `medical_nanobots` | Opens the Smart Farm, opens the Smart Complex |
 | `embedded_systems` | Embedded Systems | optional | 913M kp | 4,095 | `nanofabrication` | Construction takes 4% less time |
@@ -549,7 +549,7 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 |---|---|---|---|---|---|---|
 | `holography` | Holography | optional | 2.91B kp | 5,265 | `cybernetics`, `blockchain` | Opens the Holographic Theater |
 | `neural_interface` | Neural Interface | spine | 1.75B kp | 4,212 | `machine_learning` | +4% knowledge production |
-| `blockchain` | Blockchain | optional | 2.91B kp | 5,265 | `cybersecurity`, `cloud_computing` | Market fee 2 points lower |
+| `blockchain` | Blockchain | optional | 2.91B kp | 5,265 | `cybersecurity`, `cloud_computing` | +4% crypto production |
 | `synthetic_food` | Synthetic Food | optional | 2.91B kp | 5,265 | `gene_editing` | +4% food production |
 | `cybernetics` | Cybernetics | **keystone** (Neon Citadel) | 2.33B kp | 5,265 | `neural_interface` | Opens the Combat Aug Center, +10% military power |
 | `dark_crystal_mining` | Dark Crystal Mining | optional | 2.91B kp | 5,265 | `nano_alloys` | +4% dark matter crystals production |
@@ -640,7 +640,7 @@ Research time is a share of the age's research cap, one eighth of the age's targ
 | `reality_art` | Reality Art | optional | 4.9B kp | 7,020 | `galactic_memory` | +4% culture production |
 | `quantum_mechanics` | Quantum Mechanics | **keystone** (Reality Anchor) | 3.92B kp | 7,020 | `antimatter_synthesis` | +4% quantum flux production |
 | `timeless_archive` | Timeless Archive | capstone | 7.84B kp | 11,232 | `cosmology`, `quantum_mechanics` | Research takes 6% less time |
-| `probability_markets` | Probability Markets | optional | 4.9B kp | 7,020 | `federation_charter` | Market fee 2 points lower |
+| `probability_markets` | Probability Markets | optional | 4.9B kp | 7,020 | `federation_charter` | +4% gold production |
 | `quantum_cultivation` | Quantum Cultivation | optional | 4.9B kp | 7,020 | `matter_conversion` | +4% food production |
 | `reality_manipulation` | Reality Manipulation | spine | 2.94B kp | 5,616 | `quantum_mechanics` | +4% quantum flux production |
 | `reality_engineering` | Reality Engineering | capstone | 7.84B kp | 11,232 | `reality_manipulation`, `dyson_engineering` | Buildings cost 4% less, construction takes 8% less time |
