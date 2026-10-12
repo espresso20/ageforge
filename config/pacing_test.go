@@ -162,7 +162,7 @@ func TestBuildAndResearchCaps(t *testing.T) {
 	}
 }
 
-// TestWondersSizedToTheirAge: every wonder costs wonderPriceUnits of its age
+// TestWondersSizedToTheirAge: every wonder costs WonderPriceUnits of its age
 // in construction resources (rounding aside).
 func TestWondersSizedToTheirAge(t *testing.T) {
 	levels := priceLevels(BaseBuildings())
@@ -171,8 +171,8 @@ func TestWondersSizedToTheirAge(t *testing.T) {
 			continue
 		}
 		u := priceUnits(d.BaseCost, levels[d.RequiredAge])
-		if math.Abs(u/wonderPriceUnits-1) > 0.05 {
-			t.Errorf("%s costs %.1f price units of %s, want %.0f", d.Key, u, d.RequiredAge, wonderPriceUnits)
+		if math.Abs(u/WonderPriceUnits-1) > 0.05 {
+			t.Errorf("%s costs %.1f price units of %s, want %.0f", d.Key, u, d.RequiredAge, WonderPriceUnits)
 		}
 	}
 }
@@ -196,10 +196,4 @@ const (
 	buildShare        = 6.0  // no building takes longer than a sixth of its age's target
 	storageBuildShare = 48.0 // a storage building, a forty-eighth
 	researchShare     = 8.0  // no tech takes longer than an eighth of its age's target
-	// A wonder is paid for with what the town an age is priced for earns, so
-	// it grows with the town: eight price units of its age for each copy of
-	// it (forty for a town of five, which the wonders were priced for before
-	// the town was eight; the wait stays the same as the town grows).
-	wonderUnitsPerTownCopy = 8.0
-	wonderPriceUnits       = wonderUnitsPerTownCopy * TownCopies
 )

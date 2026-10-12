@@ -30,3 +30,17 @@ const (
 	// town an age is priced for.
 	TownCopies = 8
 )
+
+// The wonder rule: a wonder is paid for with what the town an age is priced
+// for earns, so it grows with the town. Eight price units of its age for each
+// copy of the town (forty for a town of five, which the wonders were priced
+// for before the town was eight; the wait stays the same as the town grows).
+// The tables are authored; a test holds every wonder's price to this, and the
+// reference player's wonder (smoke.RefWonderUnits) reads it.
+const (
+	// WonderUnitsPerTownCopy is the price units of its age a wonder costs for
+	// each copy in the town.
+	WonderUnitsPerTownCopy = 8.0
+	// WonderPriceUnits is the price units of its age one wonder costs.
+	WonderPriceUnits = WonderUnitsPerTownCopy * TownCopies
+)

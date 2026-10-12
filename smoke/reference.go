@@ -36,7 +36,7 @@ const (
 	// storage rule's number and the gate rule's (config.TownCopies), so
 	// the town a gate asks for is the town these players build.
 	RefCopies      = config.TownCopies
-	RefWonderUnits = 40.0
+	RefWonderUnits = config.WonderPriceUnits
 	RefLinger      = 3.0
 	RefAwayRate    = 0.5
 	RefVisitHours  = 8.0
