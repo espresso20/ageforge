@@ -238,13 +238,13 @@ func TestBraceTakesEffort(t *testing.T) {
 	if want := []string{"iron_age", "medieval_age", "colonial_age", "industrial_age"}; !slices.Equal(allCapped, want) {
 		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same four", allCapped, want)
 	}
-	// The final era's two threads have no ceiling, and a moderate builder's
-	// store holds them all the same. The Last Passage's takes over half of
-	// it in the age it arrives in (0.55: 17Q dark matter of a store of 31Q;
-	// 0.35 against a town of five, since the price follows the moderate
-	// economy and the store does not). Before the storage wall it took 0.97
-	// and left little room: the Interstellar Age's store is about 2.8 times
-	// what it was.
+	// The final era's two threads have the ceiling a doom has, and a moderate
+	// builder's store holds them with room to spare. The Last Passage's takes
+	// 0.60 of it in the age it arrives in (titanium on its ceiling; it was 0.55
+	// of dark matter, 17Q of a store of 31Q, until the Interstellar Age had a
+	// maker of titanium and the price, which follows the moderate economy and
+	// not the store, outgrew the store: 3.55 for the Last Passage, 1.75 for the
+	// Reality Tear). Before the storage wall it took 0.97.
 	for _, b := range BraceStoreRows(rows, income) {
 		if b.Epoch != "cosmic_era" {
 			if b.StoreShare > 0.6+1e-9 {
@@ -252,19 +252,11 @@ func TestBraceTakesEffort(t *testing.T) {
 			}
 			continue
 		}
-		if b.LastPassage {
-			// The Last Passage has the ceiling a doom has since the
-			// Interstellar Age's titanium outgrew its store.
-			if b.StoreShare <= 0 || b.StoreShare > 0.6+1e-9 {
-				t.Errorf("the Last Passage in %s: the largest part is %.2f of a moderate store, want it held under the ceiling", b.Age, b.StoreShare)
-			}
-			if b.Age == cosmic[0] && math.Abs(b.StoreShare-0.60) > 0.02 {
-				t.Errorf("the Last Passage in %s takes %.2f of a moderate store, want 0.60 (titanium on its ceiling)", b.Age, b.StoreShare)
-			}
-			continue
+		if b.StoreShare <= 0 || b.StoreShare > 0.6+1e-9 {
+			t.Errorf("%s (Last Passage %v) in %s: the largest part is %.2f of a moderate store, want it held under the ceiling", b.Epoch, b.LastPassage, b.Age, b.StoreShare)
 		}
-		if len(b.Capped) != 0 || b.StoreShare <= 0 || b.StoreShare > 1 {
-			t.Errorf("%s (Last Passage %v) in %s: the largest part is %.2f of a moderate store with %v on a ceiling; want it held and no ceiling", b.Epoch, b.LastPassage, b.Age, b.StoreShare, b.Capped)
+		if b.LastPassage && b.Age == cosmic[0] && math.Abs(b.StoreShare-0.60) > 0.02 {
+			t.Errorf("the Last Passage in %s takes %.2f of a moderate store, want 0.60 (titanium on its ceiling)", b.Age, b.StoreShare)
 		}
 	}
 

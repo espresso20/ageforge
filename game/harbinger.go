@@ -199,8 +199,10 @@ const (
 	// warning is a fifth of the age, so level 1 is finalDoomBraceShare of
 	// what a moderate economy makes in it: five sixths of the warning, a
 	// sixth of the age and half the Last Passage's, about ten and a half
-	// hours of income (doomBraceCostIn). It kept the era's price one change
-	// longer than the Last Passage's did, under 7 ticks of income.
+	// hours of income (doomBraceCostIn), and, as the others', no more of any
+	// material than ordinaryDoomBraceStoreShare of a moderate builder's store.
+	// It kept the era's price one change longer than the Last Passage's did,
+	// under 7 ticks of income.
 	//
 	// Second levels. At double the price, level 2 of each answer bought
 	// less for more: per hour of income the Last Passage's Brace level 2
@@ -859,12 +861,13 @@ func braceMaterials(set *rules.Set, epochKey, age string) []string {
 // shortest warning (warningBraceCostIn): level 1 is ordinaryDoomBraceShare
 // of what the age makes in it, and no more of any material than
 // ordinaryDoomBraceStoreShare of a moderate builder's store; in the final
-// era finalDoomBraceShare of the warning, with no ceiling. Pure.
+// era finalDoomBraceShare of the warning, under the same ceiling. Pure.
 func doomBraceCostIn(set *rules.Set, epochKey, age string, level int) map[string]float64 {
+	share := ordinaryDoomBraceShare
 	if set.IsFinalEra(epochKey) {
-		return warningBraceCostIn(set, epochKey, age, shortestWarningTicks(set, age, false), finalDoomBraceShare, level)
+		share = finalDoomBraceShare
 	}
-	cost := warningBraceCostIn(set, epochKey, age, shortestWarningTicks(set, age, false), ordinaryDoomBraceShare, level)
+	cost := warningBraceCostIn(set, epochKey, age, shortestWarningTicks(set, age, false), share, level)
 	capBraceToStore(set, age, cost)
 	return cost
 }
@@ -959,15 +962,14 @@ type HarbingerPrice struct {
 	BraceL1 map[string]float64
 	BraceL2 map[string]float64
 	// FinalEra marks the final era's two threads, whose Brace costs more of
-	// the warning than an ordinary doom's.
+	// the warning than an ordinary doom's (under the same ceiling).
 	FinalEra bool
 	// BraceCeiling is the most an ordinary doom's or the Last Passage's Brace
 	// level 1 may ask of each of its materials: ordinaryDoomBraceStoreShare of
 	// a moderate builder's store in the arrival age, rounded down to two
-	// figures (the price a capped material is given). A price equal to it is
-	// on its ceiling. Nil for the final era's
-	// fated doom, which has no ceiling. TypicalStore is that store, for every
-	// thread.
+	// figures (the price a capped material is given); every thread has one,
+	// the final era's fated doom included. A price equal to it is on its
+	// ceiling. TypicalStore is that store, for every thread.
 	BraceCeiling map[string]float64
 	TypicalStore map[string]float64
 }
@@ -991,14 +993,10 @@ func HarbingerPriceTableIn(set *rules.Set) []HarbingerPrice {
 				AppeaseL1: doomAppeaseCostIn(set, ep.Key, a, 1), AppeaseL2: doomAppeaseCostIn(set, ep.Key, a, 2),
 				BraceL1: doomBraceCostIn(set, ep.Key, a, 1), BraceL2: doomBraceCostIn(set, ep.Key, a, 2),
 				FinalEra: set.IsFinalEra(ep.Key), TypicalStore: map[string]float64{}}
-			if !row.FinalEra {
-				row.BraceCeiling = map[string]float64{}
-			}
+			row.BraceCeiling = map[string]float64{}
 			for _, k := range braceMaterials(set, ep.Key, a) {
 				row.TypicalStore[k] = set.TypicalStorage(k, a)
-				if !row.FinalEra {
-					row.BraceCeiling[k] = floorSignificant(float64(set.TypicalStorage(k, a)*ordinaryDoomBraceStoreShare), 2)
-				}
+				row.BraceCeiling[k] = floorSignificant(float64(set.TypicalStorage(k, a)*ordinaryDoomBraceStoreShare), 2)
 			}
 			rows = append(rows, row)
 		}

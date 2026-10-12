@@ -592,8 +592,8 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// income in the Interstellar Age, 10%, 15% and 20% in the three after.
 		// Then the tree's last techs: Asteroid Refining and Stellar Core
 		// Mining add 8% to titanium.
-		{"interstellar_age", map[string]float64{"dark_matter": 3.4e+15, "titanium": 7.9e+16}},
-		{"galactic_age", map[string]float64{"dark_matter": 9.2e+16, "titanium": 2.3e+17}},
+		{"interstellar_age", map[string]float64{"dark_matter": 3.4e+15, "titanium": 2.7e+16}},
+		{"galactic_age", map[string]float64{"dark_matter": 9.2e+16, "titanium": 1.7e+17}},
 		{"quantum_age", map[string]float64{"dark_matter": 3e+18, "titanium": 2.4e+17}},
 		{"transcendent_age", map[string]float64{"dark_matter": 3.3e+18, "titanium": 2.6e+17}},
 	}
@@ -1317,11 +1317,12 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 					}
 					made := config.TypicalIncome(res, age) * config.AgeTargetTicks(age) * th.warning
 					// Rounded up to two significant figures: within 10% of the
-					// share; the Last Passage's, like a doom's, no more than
-					// its ceiling, three fifths of a moderate store, rounded
-					// down to two figures, where the share is over it.
+					// share; every Brace, the final era's two threads included,
+					// no more than its ceiling, three fifths of a moderate
+					// store, rounded down to two figures, where the share is
+					// over it.
 					ceiling := floorSignificant(rules.Core().TypicalStorage(res, age)*ordinaryDoomBraceStoreShare, 2)
-					onCeiling := th.name == "the Last Passage" && l1 == ceiling && made*th.share > ceiling
+					onCeiling := l1 == ceiling && made*th.share > ceiling
 					if !onCeiling && (l1 < made*th.share || l1 > 1.1*made*th.share || l1 > made) {
 						t.Errorf("%s in %s: %s's level 1 %s (%v) is not its share of what the warning makes (%v)", ep.Key, age, th.name, res, l1, made*th.share)
 					}
