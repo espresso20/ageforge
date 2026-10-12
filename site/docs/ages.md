@@ -75,8 +75,8 @@ Every age can be finished, and an automated test checks this in every release. T
 - The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age, and each one's knowledge cost fits the knowledge storage you can build in that age with room to spare.
 - The keystone is affordable well inside the age: the knowledge it costs (with the techs of its own age it stands on), the time to research them and the time to build the wonder fit inside the age's target length together, with at least a fifth of the age to spare.
 - The cheapest tech of an age fits the knowledge storage you are sure to enter the age with, or does within two of the age's storage buildings.
-- Every resource a required building, the wonder or the keystone costs has a source in the age itself, even for a town that skipped every building no earlier gate asked for.
-- A food, faith, culture or soldiers cost is something a moderate economy makes in the age, or can buy for a small share of it.
+- Every resource a required building, the wonder or the keystone costs has a source in the age itself, even for a town that skipped every building no earlier gate asked for. See [The Maker Rule](buildings.md#the-maker-rule).
+- A food, faith, culture or soldiers cost is something a moderate economy makes in the age.
 - A town that arrives in a new age with empty stores, and only the buildings the gates asked for, can buy the first copy of every building the age opens, except those that wait for a tech you may never research.
 
 ## What Happens on Age Advance
@@ -386,7 +386,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset for prestige points to spend on the legacy kit. See [Prestige System](prestige.md).
 
-**Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport (after Containerization), Power Grid Hub (after Advanced Electrics), Titanium Smelter, Oil Refinery, TV Studio, Space Program, Nano Foundry, Monument of Ages (after Television) · **Resources:** Data, Nanobots
+**Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport (after Containerization), Power Grid Hub (after Advanced Electrics), Titanium Smelter, Oil Refinery, Mainframe Hall, TV Studio, Space Program, Nano Foundry, Monument of Ages (after Television) · **Resources:** Data, Nanobots
 
 ---
 
@@ -398,6 +398,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 |---|---|
 | Agritech Campus | 8 |
 | Investment Firm | 8 |
+| Mainframe Hall | 8 |
 | Meditation Center | 8 |
 | Modern Depot | 5 |
 | Nano Foundry | 8 |

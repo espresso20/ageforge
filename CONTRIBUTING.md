@@ -250,9 +250,9 @@ AGEFORGE_LONG_TESTS=1 go test ./smoke -run TestOrdinaryPath   # the engine walk 
 go test ./smoke -run '^$' -fuzz=FuzzCommand -fuzztime=1m      # fuzz the command handler from its kept corpus
 ```
 
-- **The golden record** (`config/testdata/golden_tables.json`) holds every building, tech, gate and age target, and the price levels, market rates, typical incomes and stores worked out from them. `TestGoldenTables` names each entry that differs. A pull request that changes a number shows it twice: in the table and in the record's diff.
+- **The golden record** (`config/testdata/golden_tables.json`) holds every building, tech, gate and age target, and the price levels, typical incomes and stores worked out from them. `TestGoldenTables` names each entry that differs. A pull request that changes a number shows it twice: in the table and in the record's diff.
 - **The reference players** (`smoke/reference.go`) are three ways of playing written as rules: an ordinary player who builds the reference town, pays the wonder and advances; a lingering one who buys everything and stays three times as long; a check-in one who is away at half rate and advances at the first eight-hour visit after the gate opens. Their path through the 22 ages is arithmetic on the tables. No bot plays it.
-- **The properties** (`smoke/properties.go`) are what must be true for the game to be in proportion for all three: how long income takes to double against the length of the age, what a full store can pay for, what the market sells against what buildings make, and so on. The ones that do not hold today are listed in `KnownPropertyFailures` with today's reading. The static scenario and `go test` fail when a listed property starts to hold (delete its line), when an unlisted one stops holding, or when a listed reading changes (write the new reading down). A change to the economy should make that list shorter.
+- **The properties** (`smoke/properties.go`) are what must be true for the game to be in proportion for all three: how long income takes to double against the length of the age, what a full store can pay for, what a trade route pays against what buildings make, and so on. The ones that do not hold today are listed in `KnownPropertyFailures` with today's reading. The static scenario and `go test` fail when a listed property starts to hold (delete its line), when an unlisted one stops holding, or when a listed reading changes (write the new reading down). A change to the economy should make that list shorter.
 - **The ordinary path** (`smoke/ordinary_path_test.go`) drives the real engine along the ordinary player's purchases with the resources granted: every purchase accepted, every wonder built, every gate opened, a save from every age loading back to the same game.
 
 ### Smoke testing
@@ -531,14 +531,6 @@ adjusted_difficulty = max(0.05, base_difficulty - military_bonus × 0.3)
 success  = random() > adjusted_difficulty
 loot     = base_reward × (1.0 + expedition_bonus)   # success
 loot     = base_reward × 0.3                         # failure
-```
-
-### Trade & Exchange
-
-```
-rate             = base_rate × (1.0 - pressure × 0.3)   # floor: 50% of base
-pressure_gain    = 0.1 / (1.0 + market_count × 0.2)
-pressure_decay   = pressure × 0.98 per tick
 ```
 
 ### Prestige

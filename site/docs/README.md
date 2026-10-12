@@ -19,7 +19,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 - **26 resources**, from food and wood up to Quantum Flux (soldiers included), and **202 technologies** in prerequisite chains.
 - **The Map**: your empire drawn from your real buildings, in two styles: a roguelike glyph world with three zooms, and a side-on skyline with one district per age. An inspect cursor gives you the command for whatever it is on, and `minimap on` puts a mini map on the dashboard.
 - **Catastrophes and harbingers**: from the Iron Era on, an era may hide a fated catastrophe. A harbinger always comes to warn you first, and when the doom strikes you choose to Endure or Succumb.
-- **Trade**: a market exchange, 21 trade routes, harbors and a black market.
+- **Trade**: 21 trade routes, harbors and a black market.
 - **Factions**: an 11-civilization roster to meet, with opinion, diplomacy, trade deals, boons and setbacks, embassies and war.
 - **The army**: soldiers defend you against raids and fight campaigns. There are 16 expeditions in all (scouting missions and military campaigns), each a gamble of cost against reward.
 - **77 milestones** in 6 chains, with civilization titles.

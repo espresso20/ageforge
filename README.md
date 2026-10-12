@@ -59,7 +59,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **Random Events**: 61 events (26 base + 35 epoch-exclusive) with streak balancing
 - **Milestones**: 77 milestones across 6 chains with civilization titles and temporary speed boosts
 - **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements; on each advance, lineage buildings with a next tier can be upgraded to it (`upgrade`)
-- **Trade System**: 21 trade routes and resource exchange with supply/demand pressure
+- **Trade System**: 21 trade routes, harbors and a black market
 - **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, rotating faction trade deals, boons and setbacks
 - **Prestige**: Reset-and-grow system from the Medieval Age on. Points pay by depth (every completed age pays, 3 times as much for each era: 9 from the Medieval Age, 120 from the Modern Age) and buy the legacy kit, 3 kit items that carry your build plan, worker shares and the civilizations you met into later runs. Era Mastery: every age a run completes runs faster on later runs, up to 4.2x
 - **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name, and `help` lists every command

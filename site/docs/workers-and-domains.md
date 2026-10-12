@@ -350,13 +350,13 @@ A building's domain decides which worker class staffs it. "First Building" is th
 | `knowledge` | Knowledge | knowledge | `story_circle`, `elders_hall`, `scriptorium`, `library` | Primitive Age |
 | `lumber` | Organic Extraction | wood, then coal, oil, nanobots and quantum flux | `wood_camp`, `woodcutter_camp`, `lumber_mill`, `coal_mine` | Primitive Age |
 | `faith` | Faith | faith | `shrine`, `standing_stones`, `altar`, `temple` | Primitive Age |
-| `masonry` | Geological Extraction | stone, then [ores](resources.md#what-the-ores-are-for), uranium and antimatter | `stone_camp`, `stone_pit`, `quarry`, `uranium_mine` | Stone Age |
+| `masonry` | Geological Extraction | stone and iron, then [ores](resources.md#what-the-ores-are-for), uranium and antimatter | `stone_camp`, `stone_pit`, `quarry`, `uranium_mine` | Stone Age |
 | `military` | Military | soldiers (from the Iron Age) | `war_camp`, `barracks`, `hunting_lodge`, `legion_fort` | Stone Age |
 | `trade` | Trade, Harbor | gold | `market`, `trading_post`, `merchant_quarter`, `harbor` | Bronze Age |
 | `engineering` | Engineering | iron, steel, electricity, plasma, dark matter, quantum flux | `smithy`, `ironworks`, `mill`, `power_station`, `fusion_reactor` | Bronze Age |
 | `metallurgy` | Metallurgy | iron, steel, titanium, dark matter, antimatter, quantum flux | `smelter`, `forge`, `foundry`, `steel_mill`, `orbital_refinery` | Iron Age |
 | `energy` | Energy | coal, oil, electricity, plasma, dark matter, quantum flux | `coal_plant`, `steam_turbine`, `nuclear_reactor`, `fusion_reactor_array` | Industrial Age |
-| `hacker` | Hacker | data | `server_farm`, `data_center`, `cyber_hub` | Information Age |
+| `hacker` | Hacker | data | `mainframe_hall`, `server_farm`, `data_center`, `cyber_hub` | Modern Age |
 | `astronaut` | none | nothing | none | No building uses it yet |
 
 - The Nano Foundry (nanobots) takes engineering workers. The Embassy and Grand Embassy take trade workers, and the Geographic Society takes military workers.
@@ -490,9 +490,9 @@ Iron: Furnace Hand → Classical: Ironworker → Medieval: Medieval Smith → Re
 
 Victorian: Stoker → Electric: Power Worker → Atomic: Reactor Technician → Modern: Power Engineer → Information: Grid Operator → Digital: Digital Power Manager → Cyberpunk: Cyber Energy Worker → Fusion: Fusion Technician → Space: Solar Engineer → Interstellar: Dark Energy Worker → Galactic: Antimatter Specialist → **Quantum: Zero-Point Engineer**
 
-### hacker (starts Information Age)
+### hacker (starts Modern Age)
 
-Information: Script Kiddie → Digital: Coder → Cyberpunk: Black Hat → Fusion: AI Hacker → Space: Orbital Hacker → Interstellar: Interstellar Netrunner → Galactic: Galactic Hacker → **Quantum: Quantum Hacker**
+Modern and Information: Script Kiddie → Digital: Coder → Cyberpunk: Black Hat → Fusion: AI Hacker → Space: Orbital Hacker → Interstellar: Interstellar Netrunner → Galactic: Galactic Hacker → **Quantum: Quantum Hacker**
 
 ### astronaut (starts Space Age; no building uses it yet)
 
@@ -510,7 +510,7 @@ Build gathering camps and huts together. Each camp holds 3 workers and auto-recr
 
 - Lumber and masonry buildings are staffed as they finish, as far as housing and food allow. Stone and wood go into most building costs, so keep your housing ahead of your worker slots.
 - A `war_camp` produces the `soldiers` resource from the Iron Age, spent on campaigns. On auto its slots draw workers like any other building's; if you don't need soldiers yet, `roster military 0` keeps those workers for your producers.
-- From the Iron Age, this age's masonry building mines ore that nothing spends, and the routine fills the newest buildings first. Build ore mines only for their milestones (see [What the ores are for](resources.md#what-the-ores-are-for)).
+- From the Iron Age, this age's masonry building makes stone and iron as well as ore that nothing spends, and the routine fills the newest buildings first. A mine that makes only ore is worth building only for its milestones (see [What the ores are for](resources.md#what-the-ores-are-for)).
 
 ### Late game
 
