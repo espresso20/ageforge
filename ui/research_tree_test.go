@@ -818,7 +818,7 @@ func gameIn(t *testing.T, age string) *game.GameEngine {
 // of its code sits there instead. Nothing is drawn in a cell beside the
 // emblem's own. From the Classical Age, where the first six ages are in
 // sight, from the Electric Age, where twelve are, and from the Quantum Age,
-// where the map holds all 202 techs.
+// where the map holds all 203 techs.
 func TestEmblemsSitOnTheGrid(t *testing.T) {
 	for _, c := range []struct {
 		name string
@@ -828,7 +828,7 @@ func TestEmblemsSitOnTheGrid(t *testing.T) {
 	}{
 		{"the Classical Age", classicalGame(t).GetState(), "medieval_age", 41},
 		{"the Electric Age", electricGame(t).GetState(), "atomic_age", 97},
-		{"the Quantum Age", quantumGame(t).GetState(), "transcendent_age", 202},
+		{"the Quantum Age", quantumGame(t).GetState(), "transcendent_age", 203},
 	} {
 		emblemsSitOnTheGrid(t, c.name, c.st, c.last, c.want)
 	}

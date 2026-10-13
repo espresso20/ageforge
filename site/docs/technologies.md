@@ -1,6 +1,6 @@
 # Technologies
 
-Research is your civilization's strongest long-term lever. 202 technologies span all 22 ages, and each one changes your production, military strength, storage, a command you can use, or the pace of the game, for the rest of the run. A tech's bonus is small and always counts in full: no cap holds it back (see [How Tech Bonuses Stack](#how-tech-bonuses-stack)). Only one technology is researched at a time, but the [build plan](plan.md) can queue the next ones and start each as soon as the slot frees up.
+Research is your civilization's strongest long-term lever. 203 technologies span all 22 ages, and each one changes your production, military strength, storage, a command you can use, or the pace of the game, for the rest of the run. A tech's bonus is small and always counts in full: no cap holds it back (see [How Tech Bonuses Stack](#how-tech-bonuses-stack)). Only one technology is researched at a time, but the [build plan](plan.md) can queue the next ones and start each as soon as the slot frees up.
 
 <figure class="screen" data-screen="research"><figcaption>The Research panel in the Classical Age: the tech tree as a map. Philosophy is part way through, Civil Engineering can start, and the Medieval Age waits below the dotted line.</figcaption></figure>
 
@@ -46,7 +46,7 @@ Knowledge is removed from your stockpile when the tech starts, before any ticks 
 Every tech has a **kind**, and its kind decides how long it takes and what it costs.
 
 - A **keystone** is the tech an age's wonder needs before it can be built. There is one in each age from the Stone Age on, and since the next age needs the wonder, the keystone is the one tech an age asks of you. See [Keystone Techs](ages.md#keystone-techs) for the list.
-- The **spine** is every tech a keystone stands on, all the way down: Tool Making under Stoneworking, Steam Power under Industrialization. Keystones and the spine are the only techs a run has to research, 48 of the 202.
+- The **spine** is every tech a keystone stands on, all the way down: Tool Making under Stoneworking, Steam Power under Industrialization. Keystones and the spine are the only techs a run has to research, 48 of the 203.
 - A **capstone** ends a lane for its era: a bigger step that takes as long as the longest tech of its age and is one of its two dearest. No run has to research one. Each era from the Iron Era on has two, twelve in all: Scholasticism and Guilds in the Medieval Age, the Concert of Nations and Interchangeable Parts in the Industrial Age, Big Science and the Military-Industrial Complex in the Atomic Age, the Global Village and General AI in the Digital Age, Stellar Cartography and the Space Elevator in the Space Age, the Timeless Archive and Reality Engineering in the Quantum Age.
 - Everything else is **optional**: yours to take or leave.
 
@@ -104,7 +104,7 @@ Research speed reduces the tick count when research starts. Its sources add toge
 | **Philosophes** milestone (63 techs, from the Classical Age) | +5% | |
 | **Renaissance Mind** milestone (82 techs, from the Renaissance Age) | +10% | Scholar Chain, hidden until you get close |
 | **Tech Master** milestone (113 techs, from the Information Age) | +10% | Scholar Chain, hidden; also +5% all production |
-| **Tech Ascendant** milestone (all 202 techs, Transcendent Age) | +20% | Hidden. It arrives with your last tech, so it never shortens one |
+| **Tech Ascendant** milestone (all 203 techs, Transcendent Age) | +20% | Hidden. It arrives with your last tech, so it never shortens one |
 | **Ancient Knowledge** (Succumb) | not research speed: research time ×0.8 per epoch | For each distinct epoch you Succumb in (Iron to Cosmic, ×0.26 with all six). It multiplies the time research speed leaves, so it is not in this pool and no cap holds it. Kept through Succumb, prestige and save/load. See [Ancient Knowledge](catastrophe.md#ancient-knowledge) |
 | Thirteen techs, from **Scholasticism** to the **Timeless Archive** (see [Building costs, construction time and research time](#building-costs-construction-time-and-research-time)) | not research speed: research time ×0.94 to ×0.97 each | They multiply the time research speed leaves, ×0.587 with all thirteen, and never take it under 50% between them. They are not in this pool |
 

@@ -58,7 +58,7 @@ func TestKnowledgeSave_LoadsWithNoTamperFlagAndKeepsAllItsKnowledge(t *testing.T
 	}
 	held := save.Resources["knowledge"]
 	store := ge.Resources.GetStorage("knowledge")
-	if store != config.KnowledgeBase+2*330000 {
+	if store != config.KnowledgeBase+2*320000 {
 		t.Fatalf("setup: the new store is %v, want the base and two Monastery Libraries", store)
 	}
 	if held < 10*store {
