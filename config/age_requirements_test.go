@@ -16,13 +16,14 @@ func ageByKeyT(t *testing.T, key string) AgeDef {
 }
 
 // Building floor: iron_age scriptorium was 3, then raised to a floor of 5, and
-// is now the gate rule's count (the reference town's, from the gate rule).
+// is now the gate rule's count (a knowledge building's: the knowledge rule's,
+// five copies at KnowledgeRate for the eight it asked at ProducerRate).
 // A count above the floor like bronze_age longhouse (15) must be left unchanged.
 func TestNormalizeAgeRequirements_BuildingFloor(t *testing.T) {
 	iron := ageByKeyT(t, "iron_age")
 	want := GateTown(BaseBuildings(), Ages(), Technologies())["iron_age"]["scriptorium"]
-	if got := iron.BuildingReqs["scriptorium"]; got != want || want != TownCopies {
-		t.Errorf("iron_age scriptorium req = %d, want %d (the gate rule's count, TownCopies = %d)", got, want, TownCopies)
+	if got := iron.BuildingReqs["scriptorium"]; got != want || want != KnowledgeGateCount(TownCopies) || want != 5 {
+		t.Errorf("iron_age scriptorium req = %d, want %d (the gate rule's count, the knowledge rule's for %d)", got, want, TownCopies)
 	}
 
 	bronze := ageByKeyT(t, "bronze_age")
@@ -37,10 +38,11 @@ func TestNormalizeAgeRequirements_BuildingFloor(t *testing.T) {
 // that no floor was silently applied by spot-checking digital_age values stay raw.
 func TestNormalizeAgeRequirements_LateAgesNoBuildingFloor(t *testing.T) {
 	// transcendent_age building reqs are all far above 5 and in the no-floor band;
-	// they must equal their raw literals exactly.
+	// they must equal their raw literals exactly (reality_academy is a
+	// knowledge building: ten copies at KnowledgeRate for its twenty).
 	trans := ageByKeyT(t, "transcendent_age")
 	wantReqs := map[string]int{
-		"reality_academy": 20, "reality_forge": 15, "probability_war_room": 15,
+		"reality_academy": 10, "reality_forge": 15, "probability_war_room": 15,
 	}
 	for k, want := range wantReqs {
 		if got := trans.BuildingReqs[k]; got != want {
