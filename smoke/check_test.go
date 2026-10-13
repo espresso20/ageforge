@@ -12,7 +12,8 @@ import (
 // victorianStall is the nightly's seed 1 after a Nuclear Exchange took both
 // Industrial Depots on the way into the Victorian Age: 130M caps, a first
 // Victorian Vault at 193M steel (build_cost discounts included), and an
-// academy requirement priced past either.
+// academy requirement priced past either (seven copies, the gate's count since
+// knowledge buildings climb at 1.5 a copy).
 func victorianStall(capacity float64) game.GameState {
 	res := map[string]game.ResourceState{}
 	for _, r := range []string{"coal", "electricity", "gold", "iron", "steel"} {
@@ -21,7 +22,7 @@ func victorianStall(capacity float64) game.GameState {
 	return game.GameState{
 		Age:            "victorian_age",
 		NextAge:        "electric_age",
-		NextAgeBldReqs: map[string]int{"academy": 10},
+		NextAgeBldReqs: map[string]int{"academy": 7},
 		Resources:      res,
 		Buildings: map[string]game.BuildingState{
 			"victorian_vault": {Name: "Victorian Vault", Unlocked: true,
@@ -55,7 +56,7 @@ func TestStorageLadder_NamesAStorageStall(t *testing.T) {
 	if !ok {
 		t.Fatalf("no storage_unreachable problem; got %v", got)
 	}
-	for _, want := range []string{"victorian_vault", "193M steel", "130M cap", "academy #10"} {
+	for _, want := range []string{"victorian_vault", "193M steel", "130M cap", "academy #7"} {
 		if !strings.Contains(msg, want) {
 			t.Errorf("storage_unreachable message %q lacks %q", msg, want)
 		}

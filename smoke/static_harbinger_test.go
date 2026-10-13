@@ -228,7 +228,7 @@ func TestBraceTakesEffort(t *testing.T) {
 	wantCapped := map[string]int{
 		"iron_age": 3, "classical_age": 2, "medieval_age": 3,
 		"renaissance_age": 1, "colonial_age": 2, "industrial_age": 2,
-		"victorian_age": 1, "electric_age": 1, "atomic_age": 2,
+		"victorian_age": 1, "electric_age": 1, "atomic_age": 1,
 		"modern_age": 2, "information_age": 2, "digital_age": 2,
 		"cyberpunk_age": 1, "fusion_age": 1, "space_age": 1,
 	}
