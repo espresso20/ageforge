@@ -525,17 +525,19 @@ func plannableBuildingKeys(state game.GameState) []string {
 	return byRank(keys, func(k string) int { return rank[k] })
 }
 
-// techAffordable reports whether the knowledge to start t is in store.
+// techAffordable reports whether the knowledge to start t is in store. A
+// tech priced over the knowledge store is never affordable.
 func techAffordable(state game.GameState, t game.TechState) bool {
-	return state.Resources["knowledge"].Amount >= t.Cost
+	return !t.OverStore && state.Resources["knowledge"].Amount >= t.Cost
 }
 
 // availableTechKeys is what `research` suggests: techs that can start now,
-// the affordable ones first.
+// the affordable ones first. A tech priced over the knowledge store cannot
+// start, so it is not offered.
 func availableTechKeys(state game.GameState) []string {
 	var keys []string
 	for key, ts := range state.Research.Techs {
-		if ts.Available {
+		if ts.Available && !ts.OverStore {
 			keys = append(keys, key)
 		}
 	}
@@ -619,17 +621,18 @@ func wonderNeedKeys(state game.GameState) []string {
 }
 
 // sellableBuildingKeys is what `sell` suggests: the buildings with at least
-// one copy that SellBuilding would take, sorted. It refuses wonders and
-// storage (both permanent) and everything in the Primitive Age, so none of
-// those are offered. A building with a copy under construction stays on the
-// list: that refusal passes once the copy is done, and its reply says so.
+// one copy that SellBuilding would take, sorted. It refuses wonders, storage
+// and knowledge buildings (all permanent) and everything in the Primitive
+// Age, so none of those are offered. A building with a copy under construction
+// stays on the list: that refusal passes once the copy is done, and its reply
+// says so.
 func sellableBuildingKeys(state game.GameState) []string {
 	if state.Age == "primitive_age" {
 		return nil
 	}
 	var keys []string
 	for key, bs := range state.Buildings {
-		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" {
+		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" && bs.KnowledgeStore <= 0 {
 			keys = append(keys, key)
 		}
 	}

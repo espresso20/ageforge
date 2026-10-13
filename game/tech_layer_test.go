@@ -112,8 +112,14 @@ func TestTechStorageAndHousing(t *testing.T) {
 	learn(ge, "pottery", "masonry") // +10% storage each
 	ge.recalculateRates()
 	for _, key := range ge.Resources.order {
-		if got, want := ge.Resources.resources[key].Storage, before[key]*1.20; math.Abs(got-want) > 1e-9*want {
-			t.Errorf("%s storage is %v with two +10%% techs, want %v (x1.20)", key, got, want)
+		// The knowledge store is the knowledge buildings' alone: a tech's
+		// bonus to every store does not raise it.
+		factor := 1.20
+		if key == "knowledge" {
+			factor = 1
+		}
+		if got, want := ge.Resources.resources[key].Storage, before[key]*factor; math.Abs(got-want) > 1e-9*want {
+			t.Errorf("%s storage is %v with two +10%% techs, want %v (x%.2f)", key, got, want, factor)
 		}
 	}
 

@@ -276,8 +276,8 @@ func buildingsLineageEngineering() []BuildingDef {
 		BaseCost:  map[string]float64{"antimatter": 4.44e17, "quantum_flux": 1.47e15},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "quantum_flux", Value: 2.87e10},
-			{Type: "production", Target: "dark_matter", Value: 4.98e12},
+			{Type: "production", Target: "quantum_flux", Value: 2.85e10},
+			{Type: "production", Target: "dark_matter", Value: 5.01e12},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",

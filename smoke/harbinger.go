@@ -605,5 +605,13 @@ func walledCopies(defs map[string]config.BuildingDef, ageKey string) (stores map
 		}
 		copies[key] = n
 	}
+	// Knowledge has a store of its own (config.KnowledgeStoreHeld): the base
+	// and what the knowledge buildings the gates ask for hold. No storage
+	// building raises it.
+	list := make([]config.BuildingDef, 0, len(defs))
+	for _, k := range keys {
+		list = append(list, defs[k])
+	}
+	stores["knowledge"] = config.KnowledgeStoreHeld(list, config.Ages())[ageKey]
 	return stores, copies
 }

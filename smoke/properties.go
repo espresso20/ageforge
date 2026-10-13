@@ -33,19 +33,27 @@ type Property struct {
 // today's reading. Later changes to the economy shorten it.
 var KnownPropertyFailures = map[int]string{
 	1:  "22 buildings climb at another rate (1.13)",
-	2:  "fails in 2 of 22 ages; worst 0.28 of the age in the Primitive Age",
-	3:  "fails in 3 of 22 ages; worst 3.0 times in the Primitive Age",
+	2:  "fails in 3 of 22 ages; worst 0.28 of the age in the Primitive Age",
+	3:  "fails in 5 of 22 ages; worst 3.0 times in the Primitive Age",
 	4:  "fails in 3 of 22 ages; worst 2.9 times in the Quantum Age",
-	5:  "fails in 11 of 22 ages; worst 13 techs in the Digital Age",
-	8:  "fails in 15 of 22 ages; worst 0.0% eaten in the Transcendent Age",
-	9:  "fails in 21 of 22 ages; worst room for 17603 people per job in the Transcendent Age",
-	10: "fails in 21 of 22 ages; worst 4.5 times the age in the Electric Age",
+	8:  "fails in 16 of 22 ages; worst 0.0% eaten in the Transcendent Age",
+	9:  "fails in 21 of 22 ages; worst room for 18320 people per job in the Transcendent Age",
+	10: "fails in 1 of 22 ages; worst 0.8 times the age in the Digital Age",
 	12: "27 of 27 trade route payments fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
 	16: "fails in 2 of 22 ages; worst 3.0 times in the Primitive Age",
-	17: "fails in 12 of 22 ages; worst 13 techs in the Digital Age",
+	17: "fails in 1 of 22 ages; worst 3 techs in the Industrial Age",
 	18: "not worked out here yet",
 	19: "a full run earns 3279 points and everything for sale costs 99",
+}
+
+// KnownPropertyReasons is why a known failure fails, where the reason is a
+// decision and not a table to fix. 17: it fails only in the Industrial Age,
+// where the 10% the advance keeps pays for 3 techs at the top of the mastery
+// table. 10: it fails in the one age KnowledgeLadderHeld names.
+var KnownPropertyReasons = map[int]string{
+	10: "fails only in the age KnowledgeLadderHeld names (the last age has no knowledge building of its own)",
+	17: "fails only in the Industrial Age: no building there is priced in knowledge, so the advance keeps 10% of the store, and at the top of the mastery table (where the town has bought more knowledge buildings by the wall) 10% pays for its 3 cheapest techs; property 5 reads 2 there. A price-ladder question, not tuned here",
 }
 
 // Properties is the whole check: the properties, and how long each age
@@ -190,6 +198,7 @@ func StaticProperties() Properties {
 	carried := func(walls []refRun) (int, string, string) {
 		bad, where, most := 0, "", 0
 		for i := 1; i < n; i++ {
+			// An advance trims knowledge like any stock (game.advanceAge).
 			k := walls[i-1].end.caps["knowledge"]
 			if entry := config.AgeEntryCosts(t.ages[i].Key)["knowledge"]; entry > 0 {
 				k = math.Min(k, 8*entry)

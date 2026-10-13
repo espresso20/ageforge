@@ -135,6 +135,11 @@ func refCopies(d config.BuildingDef) int {
 
 // refCount is how many copies of d the reference town holds.
 func (t *refTables) refCount(d config.BuildingDef) int {
+	if config.IsKnowledgeBuilding(d) {
+		// A knowledge building climbs at its own rate and the gate asks the
+		// spend it always did: the reference players build what it asks.
+		return t.gate(t.idx[d.RequiredAge])[d.Key]
+	}
 	return max(refCopies(d), t.gate(t.idx[d.RequiredAge])[d.Key])
 }
 
@@ -191,6 +196,7 @@ type townState struct {
 func (t *refTables) state(counts map[string]int, i int, speed float64) townState {
 	staffed, free := map[string]float64{}, map[string]float64{}
 	capAll := 0.0
+	kstore := config.KnowledgeBase
 	own := map[string]float64{}
 	s := townState{income: map[string]float64{}, caps: map[string]float64{}}
 	keys := make([]string, 0, len(counts))
@@ -205,6 +211,7 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 			continue
 		}
 		s.jobs += float64(n * float64(d.WorkerCapacity))
+		kstore += float64(n * d.KnowledgeStore)
 		for _, e := range d.Effects {
 			switch {
 			case e.Type == "production" && d.WorkerCapacity > 0:
@@ -253,6 +260,11 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 	for r, b := range t.base {
 		s.caps[r] = float64((b + capAll + own[r]) * speed)
 	}
+	// Knowledge has a store of its own: a base and what knowledge buildings
+	// hold. The general store has nothing to do with it, and neither has Era
+	// Mastery: tech prices do not scale with mastery, so the store they are
+	// set against does not either (game.knowledgeStoreSize).
+	s.caps["knowledge"] = kstore
 	return s
 }
 

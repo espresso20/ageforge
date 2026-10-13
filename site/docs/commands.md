@@ -12,7 +12,7 @@ This page lists every command. Each section links to the page that explains the 
 
 ## The prompt
 
-As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` the same, then the next age's; `plan research` every unresearched tech on your tree, the ones you can start first; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `roster` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders or storage, and nothing in the Primitive Age); `trade route start` and `trade route stop` the routes you can start and the routes running; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
+As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` the same, then the next age's; `plan research` every unresearched tech on your tree, the ones you can start first; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `roster` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders, storage or knowledge buildings, and nothing in the Primitive Age); `trade route start` and `trade route stop` the routes you can start and the routes running; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
 
 | Key | What it does |
 |---|---|
@@ -47,7 +47,7 @@ Balance values are *defined* in ticks (a tech costs so many ticks of research, a
 | Command | Description |
 |---|---|
 | `build <building> [count\|max]` | Start constructing a building (default 1; `max` builds as many as you can afford, up to the building's limit). A price larger than a store can hold cannot be bought: the game says so and names the storage building to build. The age's wonder is the one exception |
-| `sell <building> [count]` | Demolish copies of a building and get back 50% of what they cost; their workers go back to idle. Wonders and storage can't be sold, nothing can be sold in the Primitive Age, and a building with a copy under construction can't be sold until it finishes. A refund your storage can't hold is lost. |
+| `sell <building> [count]` | Demolish copies of a building and get back 50% of what they cost; their workers go back to idle. Wonders, storage and knowledge buildings can't be sold, nothing can be sold in the Primitive Age, and a building with a copy under construction can't be sold until it finishes. A refund your storage can't hold is lost. |
 | `upgrade` | List the buildings you can upgrade now, with the cost of upgrading every copy |
 | `upgrade <building> [count\|all]` | Turn copies of a building into the next age's tier of the same line. With no count it upgrades all copies. Each copy costs the new building's price minus what the old copy would sell for (half of what it cost), resource by resource and never below zero. It stops at the new building's max count, and a price larger than a store can hold cannot be paid. Storage buildings are never upgraded; older storage keeps counting. |
 | `advance` | Advance to the next age once its requirements are met. The age never advances by itself (see `plan advance` to queue it) |
@@ -149,8 +149,8 @@ See [Workers](workers-and-domains.md) for the domain table and the efficiency fo
 | `research tree [close\|far]` | Open the tree zoomed in on big badges (close) or out on the whole tree (far) |
 | `research card <tech>` | Open the tree on a tech's card: what it does, costs and needs |
 | `techs` | Opens the same **Research** panel |
-| `research list` | List the techs you can research now, with their knowledge cost. A ★ marks the keystone its age's wonder needs |
-| `research <tech>` | Start researching a tech |
+| `research list` | List the techs you can research now, with their knowledge cost. A ★ marks the keystone its age's wonder needs. A red ✗ marks a tech priced over your [knowledge store](knowledge.md#the-knowledge-store), with the sentence under it |
+| `research <tech>` | Start researching a tech. A tech priced over your knowledge store is refused, naming the knowledge building to build |
 | `research cancel` | Cancel the current research. Its progress is lost and the knowledge spent is not refunded |
 
 ```

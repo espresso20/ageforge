@@ -250,9 +250,11 @@ func buildTree(state game.GameState, geom treeGeom, ascii bool, sel string) *tre
 				n.mark = markRunning
 			case band.next:
 				n.mark = markNext
-			case ts.PrereqsMet:
+			case ts.PrereqsMet && !ts.OverStore:
 				n.mark = markReady
 			default:
+				// Over the knowledge store: it cannot be started until a
+				// knowledge building raises the store, so it waits.
 				n.mark = markLocked
 			}
 			if band.next {
@@ -762,9 +764,12 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 		out.put(x, h-1, ' ', tsChip, -1)
 	}
 	know := state.Resources["knowledge"]
-	right := fmt.Sprintf("Knowledge %s %s/tick ", FormatNumber(know.Amount), textfmt.RateValue(know.Rate))
+	// Held over the knowledge store, as the Resources box says it.
+	held := FormatNumber(know.Amount) + " / " + FormatNumber(state.KnowledgeStore.Store)
+	right := fmt.Sprintf("Knowledge %s %s/tick ", held, textfmt.RateValue(know.Rate))
 	if w < 100 {
-		right = fmt.Sprintf("%s %s/t ", FormatNumber(know.Amount), textfmt.RateValue(know.Rate))
+		held = FormatNumber(know.Amount) + "/" + FormatNumber(state.KnowledgeStore.Store)
+		right = fmt.Sprintf("%s %s/t ", held, textfmt.RateValue(know.Rate))
 	}
 	title := fmt.Sprintf(" RESEARCH  %d of %d known", m.known, m.inReach)
 	if w >= 100 {
@@ -896,7 +901,13 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	}
 
 	// The status line and the key bar.
-	out.text(0, h-2, clipRunes(m.statusLine(state, v), w), tsText, -1)
+	status := clipRunes(m.statusLine(state, v), w)
+	out.text(0, h-2, status, tsText, -1)
+	for i, r := range []rune(status) {
+		if string(r) == overMark {
+			out.put(i, h-2, r, tsBad, -1)
+		}
+	}
 	keys := [][2]string{{"←↑↓→", "move"}, {"Tab", "next you can start"}, {"PgUp PgDn", "zoom"}, {"Home", "your age"}, {"Enter", "card"}, {"Esc", "close"}}
 	if v.ascii {
 		keys[0][0] = "Arrows"
@@ -970,8 +981,29 @@ func (m *treeModel) beyondLine() string {
 }
 
 // costText is a tech's price and time as the status line says them.
+// A price over the knowledge store carries the mark the Buildings list gives
+// a building that cannot be built (a red cross).
 func costText(state game.GameState, n *treeNode) string {
-	return fmt.Sprintf("%s knowledge, %s", FormatNumber(n.ts.Cost), formatTicks(researchTicks(n.def.ResearchTicks, state), state))
+	s := fmt.Sprintf("%s knowledge, %s", FormatNumber(n.ts.Cost), formatTicks(researchTicks(n.def.ResearchTicks, state), state))
+	if n.overStore() {
+		s = overMark + " " + s
+	}
+	return s
+}
+
+// overStore reports whether the node's price is over the knowledge store
+// now. A tech of an age not reached is not in question yet: it waits for
+// its age first.
+func (n *treeNode) overStore() bool { return n.ts.OverStore && n.mark != markNext }
+
+// overMark is the cross a price over a store carries.
+const overMark = "✗"
+
+// techStoreLine is the over-the-store sentence for a tech, the one the
+// Buildings list gives a building and the engine gives the command, naming
+// the age's knowledge building.
+func techStoreLine(state game.GameState, ts game.TechState) string {
+	return storeTooSmallLine(ts.Name, "knowledge", ts.Cost, state.KnowledgeStore.Store, storageBuildingName(state, "knowledge"))
 }
 
 // statusLine names the selected tech, its state, its price and what it
@@ -1052,6 +1084,7 @@ const (
 	swHi     = '\x03'
 	swGood   = '\x04'
 	swDim    = '\x05'
+	swBad    = '\x06'
 )
 
 func swStyle(r rune) (tStyle, bool) {
@@ -1066,6 +1099,8 @@ func swStyle(r rune) (tStyle, bool) {
 		return tsGood, true
 	case swDim:
 		return tsDim, true
+	case swBad:
+		return tsBad, true
 	}
 	return tsText, false
 }
@@ -1087,7 +1122,7 @@ func cardActionFor(state game.GameState, n *treeNode) cardAction {
 		return actNone
 	case n.plan > 0:
 		return actNone
-	case n.mark == markReady && state.Research.CurrentTech == "" && state.Resources["knowledge"].Amount >= n.ts.Cost:
+	case n.mark == markReady && !n.overStore() && state.Research.CurrentTech == "" && state.Resources["knowledge"].Amount >= n.ts.Cost:
 		return actStart
 	}
 	return actPlan
@@ -1151,6 +1186,9 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	default:
 		out = append(out, fmt.Sprintf("It costs %s of your %s knowledge and takes %s.",
 			sw(swHi, FormatNumber(n.ts.Cost)), sw(swHi, FormatNumber(know)), sw(swHi, took)))
+		if n.overStore() {
+			out[len(out)-1] += " " + sw(swBad, techStoreLine(state, n.ts))
+		}
 	}
 
 	// Where it stands.
@@ -1229,6 +1267,8 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 			act += " It starts once you reach the " + m.bandOf(n).name + " and hold what it needs."
 		case len(first) > 0:
 			act += " They run in that order, one at a time."
+		case n.overStore() && n.mark == markLocked:
+			// The cost line says why.
 		case n.mark == markLocked:
 			act += " It starts once you hold what it needs."
 		case state.Research.CurrentTech != "":

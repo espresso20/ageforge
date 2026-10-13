@@ -125,8 +125,8 @@ func buildingsProvider(state game.GameState, screenW int) string {
 					}
 				}
 			}
-			if bs.Description != "" {
-				fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)
+			if text := buildingText(bs); text != "" {
+				fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)
 			}
 			if bs.Flavor != "" {
 				fmt.Fprintf(&sb, "   [comment::i]%s[-:-:-]\n", bs.Flavor)

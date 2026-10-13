@@ -170,7 +170,7 @@ func NewEconomyTab() *EconomyTab {
 	})
 
 	t.leftCol = &econColumn{Box: tview.NewBox(), resources: t.resourceTV, construction: t.constructionTV,
-		resourceRows: func() int { return resourceBoxNeeds(len(resourceRows(t.state))) }}
+		resourceRows: func() int { return resourceRowsNeed(resourceRows(t.state)) }}
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(t.leftCol, 0, 1, false).
@@ -441,7 +441,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 					sb.WriteString(hangingRow("   ", "[yellow]"+line+"[-]", w))
 				}
 			}
-			sb.WriteString(hangingRow("   ", "[gray]"+glueRates(bs.Description)+"[-]", w))
+			sb.WriteString(hangingRow("   ", "[gray]"+glueRates(buildingText(bs))+"[-]", w))
 			if bs.Flavor != "" {
 				sb.WriteString(hangingRow("   ", "[comment::i]"+bs.Flavor+"[-:-:-]", w))
 			}

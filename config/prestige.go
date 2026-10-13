@@ -57,7 +57,7 @@ func PrestigeUpgrades() []PrestigeUpgradeDef {
 		},
 		{
 			Key: "storage_bonus", Name: "Storage Bonus",
-			Description: "+20 storage for every resource per tier",
+			Description: "+20 storage for every resource but knowledge per tier",
 			EffectKey:   "all", EffectType: "flat_bonus",
 			PerTier: 20, MaxTier: 5,
 			Costs:   []int{2, 3, 4, 6, 8},

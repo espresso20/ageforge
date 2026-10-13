@@ -36,13 +36,46 @@ func storageCounts(ge *GameEngine) map[string]int {
 	return out
 }
 
-func TestDestroyable_SparesWondersAndStorage(t *testing.T) {
+func TestDestroyable_SparesWondersStorageAndKnowledgeBuildings(t *testing.T) {
+	spared := 0
 	for _, k := range sortedKeys(config.BuildingByKey()) {
 		d := config.BuildingByKey()[k]
-		want := d.Category != "wonder" && d.Category != "storage"
+		want := d.Category != "wonder" && d.Category != "storage" && !config.IsKnowledgeBuilding(d)
 		if got := isDestroyable(d); got != want {
 			t.Errorf("isDestroyable(%s, %s) = %v, want %v", k, d.Category, got, want)
 		}
+		if config.IsKnowledgeBuilding(d) {
+			spared++
+		}
+	}
+	if spared == 0 {
+		t.Fatal("no knowledge building found: the test proves nothing")
+	}
+}
+
+// The knowledge buildings are the knowledge store: a catastrophe leaves every
+// copy standing, so the store and the techs priced against it stay.
+func TestEndure_NeverDestroysKnowledgeBuildings(t *testing.T) {
+	ge := catEngine(t, "iron_age", 1)
+	know := pickWorkerBuildings(t, "knowledge")[0]
+	food := pickWorkerBuildings(t, "food")[0]
+	ge.Buildings.counts[know] = 10
+	ge.Buildings.counts[food] = 1
+	ge.recalculateRates()
+	store := ge.Resources.GetStorage("knowledge")
+	if got := ge.Buildings.DestroyableCount(); got != 1 {
+		t.Fatalf("DestroyableCount = %d, want 1 (knowledge buildings don't count)", got)
+	}
+	ge.pendingCatastrophe = "iron_era"
+	if err := ge.Endure(); err != nil {
+		t.Fatalf("Endure: %v", err)
+	}
+	ge.recalculateRates()
+	if got := ge.Buildings.GetCount(know); got != 10 {
+		t.Errorf("Endure took knowledge buildings: %s 10 -> %d", know, got)
+	}
+	if got := ge.Resources.GetStorage("knowledge"); got != store {
+		t.Errorf("Endure moved the knowledge store: %v -> %v", store, got)
 	}
 }
 

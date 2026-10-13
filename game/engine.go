@@ -2226,9 +2226,17 @@ func (ge *GameEngine) recalculateRates() {
 		// Storage grows with Era Mastery's k, as production does, so a store
 		// holds the same hours of income at any speed. The techs' storage
 		// bonus multiplies beside it: +10% of everything the store holds.
-		r.Storage = float64((def.BaseStorage + allBonus + specific) * k)
-		if techStorage != 1 {
-			r.Storage = float64(r.Storage * techStorage)
+		if def.Key == "knowledge" {
+			// Knowledge has a store of its own (knowledge_store.go): its
+			// base and the knowledge buildings' shares. The general
+			// storage buildings, the techs' storage bonus and Era Mastery's
+			// k do not touch it.
+			r.Storage = ge.Buildings.knowledgeStoreSize(def.BaseStorage, specific)
+		} else {
+			r.Storage = float64((def.BaseStorage + allBonus + specific) * k)
+			if techStorage != 1 {
+				r.Storage = float64(r.Storage * techStorage)
+			}
 		}
 		// The soldiers' store has a term of its own on top
 		// (config.MechanicSoldierStorage).
@@ -2298,10 +2306,11 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			continue
 		}
 		def, ok := ge.Buildings.defs[key]
-		// Storage never transforms (decision log: storage is cumulative). An
-		// upgrade would trade a copy the age lock never lets you rebuild for one
-		// of the new tier's capped slots, lowering the most you can ever store.
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
+		// Storage and knowledge buildings never transform (keepsItsTier):
+		// storage is cumulative, and an upgrade would trade a copy the age
+		// lock never lets you rebuild for one of the new tier, lowering the
+		// most you can ever store.
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || keepsItsTier(def) {
 			continue
 		}
 		next, ok := ge.rules.NextTier(def.LineageKey, def.LineageTier, newAge)
@@ -3977,6 +3986,13 @@ func (ge *GameEngine) overStore(cost map[string]float64) string {
 // storage building, when the age has one).
 func (ge *GameEngine) storeTooSmallText(what, res string, amount float64) string {
 	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", what, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
+	if res == "knowledge" {
+		// Only a knowledge building raises the knowledge store: the age's.
+		if d, ok := ge.knowledgeBuildingOfAge(); ok {
+			return line + " Build more storage first: " + d.Name + "."
+		}
+		return line
+	}
 	for _, d := range ge.rules.Buildings() {
 		if d.Category == "storage" && d.RequiredAge == ge.age {
 			return line + " Build more storage first: " + d.Name + "."
@@ -4026,6 +4042,12 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	// raise a cap ever again.
 	if def.Category == "storage" {
 		return fmt.Errorf("Storage cannot be sold: once its age has passed, it can never be rebuilt.")
+	}
+	// Knowledge buildings are the knowledge store, spared the same way (see
+	// isDestroyable). Selling one shrinks that store for good, and a tech
+	// priced over the smaller store could never be started.
+	if def.KnowledgeStore > 0 {
+		return fmt.Errorf("Knowledge buildings cannot be sold: once its age has passed, it can never be rebuilt.")
 	}
 
 	current := ge.Buildings.GetCount(key)
@@ -4100,6 +4122,11 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	// Combine research_speed from all sources (see combinedResearchSpeed). This
 	// must be done before StartResearch so the combined value reduces tick count.
 	combinedResearchSpeed := ge.combinedResearchSpeed()
+	// A tech priced over the knowledge store cannot be started (the wall a
+	// building meets), whichever way it is started: the command and the plan
+	// both come through here.
+	ge.Research.costGate = ge.knowledgeWall
+	defer func() { ge.Research.costGate = nil }()
 	ge.Research.timeMult = ge.succumbResearchFactor() // Ancient Knowledge: × 0.8 per epoch
 	ge.Research.timeK = ge.speedK()                   // Era Mastery: ÷ k after the speed step
 	if err := ge.Research.StartResearchWithSpeed(techKey, ge.age, ageOrder, knowledge, combinedResearchSpeed); err != nil {
@@ -4795,10 +4822,11 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:          nextAgeName,
 		NextAgeBldReqs:       nextAgeBldReqs,
 		Resources:            ge.Resources.Snapshot(),
-		Buildings:            ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount),
+		Buildings:            ge.withKnowledgeFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount)),
+		KnowledgeStore:       ge.knowledgeStoreStateLocked(),
 		BuildQueue:           queue,
 		Workers:              workers,
-		Research:             ge.Research.Snapshot(ge.age, ageOrder),
+		Research:             ge.withKnowledgeWall(ge.Research.Snapshot(ge.age, ageOrder)),
 		Military:             militarySnap,
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
 			Tick:            ge.tick,
@@ -5222,7 +5250,7 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	}
 	newKey, hasPending := ge.Buildings.GetPendingUpgrade(key)
 	newDef, hasNew := ge.rules.Building(newKey)
-	if !hasPending || !hasNew {
+	if !hasPending || !hasNew || oldDef.KnowledgeStore > 0 {
 		return fmt.Errorf("%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
 	}
 	if err := ge.techLockErr(newDef); err != nil {
@@ -5452,7 +5480,7 @@ func (ge *GameEngine) prestigeUpgradeLine(key string) string {
 	case "flat_bonus":
 		switch def.EffectKey {
 		case "all":
-			effect = "storage for every resource " + textfmt.Signed(total)
+			effect = "storage for every resource but knowledge " + textfmt.Signed(total)
 		default:
 			effect = EffectTargetName(def.EffectKey) + " " + textfmt.Signed(total)
 		}

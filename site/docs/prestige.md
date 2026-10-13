@@ -254,7 +254,7 @@ An age at mastery 0 is the **frontier**: no run has completed it, and it runs at
 On **known ground** (an age running faster than 1x, through mastery or [catch-up](#catch-up)):
 
 - **Production.** Every resource's net rate is multiplied by k. This comes last, after the production pools and every other bonus, food drain included, so a balanced food supply stays balanced. The `rates` breakdown shows it as its own **Era Mastery** part.
-- **Storage.** Every cap is multiplied by k too, so a store holds the same hours of income it would at 1x.
+- **Storage.** Every cap but knowledge's is multiplied by k too, so a store holds the same hours of income it would at 1x. The knowledge store is not: tech prices do not scale with mastery, so the store they are set against does not either.
 - **Build times** are divided by k, rounded up, never below one tick.
 - **Research times** are divided by k after your research speed is applied, rounded up, never below one tick. The Research and Wonders panels show the shortened times.
 - **Catastrophe timing.** A fated doom's window and the harbinger's lead shrink with each age's speed (see [Catastrophes on known ground](#catastrophes-on-known-ground)).

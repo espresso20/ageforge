@@ -208,6 +208,11 @@ type GameSave struct {
 	// A save from before them keeps its stock and its plan's banks
 	// (keepStockFromBeforeTheWall).
 	StorageRules int `json:"storage_rules,omitempty"`
+	// KnowledgeRules is the knowledge rules the save was written under
+	// (knowledgeRules; absent on saves from before knowledge had a store of
+	// its own). A save from before them keeps all its knowledge
+	// (keepKnowledgeFromBeforeItsStore). omitempty.
+	KnowledgeRules int `json:"knowledge_rules,omitempty"`
 	// TreeVersion is the tech tree's rules the save was written under
 	// (config.TechTreeVersion; absent on saves from before the tree's first
 	// lock). TreeGraceAge is the age a save from an older version was in
@@ -736,6 +741,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		PacingWeek:             true,
 		OverCapGrace:           ge.Resources.graceSave(),
 		StorageRules:           config.StorageRules,
+		KnowledgeRules:         knowledgeRules,
 		TreeVersion:            config.TechTreeVersion,
 		TreeGraceAge:           ge.Buildings.graceAge,
 		GrantedFeatures:        ge.grantedFeatureKeys(),
@@ -1107,6 +1113,10 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	if beforeTheWall {
 		ge.keepStockFromBeforeTheWall()
 	}
+	beforeTheStore := save.KnowledgeRules < knowledgeRules
+	if beforeTheStore {
+		ge.Resources.markGrace("knowledge")
+	}
 	ge.lastK = ge.speedK()
 
 	ge.recalculateRates()
@@ -1163,6 +1173,9 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	if beforeTheWall {
 		ge.addLog("info", storageWallNotice)
 	}
+	if beforeTheStore {
+		ge.addLog("info", knowledgeStoreNotice)
+	}
 	// A save whose plan held sell orders hears once that they are gone; its
 	// next save has none, so the line never repeats.
 	if sellOrders > 0 {
@@ -1198,9 +1211,10 @@ func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[st
 			continue
 		}
 		def, ok := ge.Buildings.defs[key]
-		// Storage never transforms (see advanceAge), so a save with legacy
-		// stashes gets no stash -> storage_pit offer back.
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
+		// Storage and knowledge buildings never transform (see advanceAge),
+		// so a save with legacy stashes gets no stash -> storage_pit offer
+		// back, nor a knowledge building its next tier.
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || keepsItsTier(def) {
 			continue
 		}
 		best, bestOrder := "", -1
@@ -1807,6 +1821,17 @@ func retiredSellOrders(saved []PlanItem) int {
 	}
 	return n
 }
+
+// knowledgeRules is the version of the knowledge rules a save is written
+// under: 1 from the knowledge store on (knowledge has a store of its own,
+// raised by knowledge buildings alone). A save without it is from before,
+// and keeps every point of knowledge it held: what is over the new store
+// stays until spent and gains nothing, by the grace rule the stores keep.
+const knowledgeRules = 1
+
+// knowledgeStoreNotice is the line a save from before the knowledge store
+// gets on its first load.
+const knowledgeStoreNotice = "Knowledge now has its own store, raised by knowledge buildings. What you hold above it stays until you spend it."
 
 // storageWallNotice is the line a save from before the storage wall gets on
 // its first load.

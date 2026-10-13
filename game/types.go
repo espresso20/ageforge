@@ -34,20 +34,23 @@ type GameState struct {
 	BuildQueue           []BuildQueueSnapshot
 	Workers              WorkerState
 	Research             ResearchState
-	Military             MilitaryState
-	Milestones           MilestoneState
-	ActiveEvents         []ActiveEventState
-	Prestige             PrestigeState
-	Mastery              MasteryState
-	Trade                TradeState
-	Diplomacy            DiplomacyState
-	Log                  []LogEntry
-	Stats                StatsSnapshot
-	SaveExists           bool
-	TickSpeedBonus       float64
-	TickIntervalMs       int
-	CheaterBadge         bool
-	EliteBadge           bool
+	// KnowledgeStore is the knowledge store and what raises it
+	// (knowledge_store.go).
+	KnowledgeStore KnowledgeStoreState
+	Military       MilitaryState
+	Milestones     MilestoneState
+	ActiveEvents   []ActiveEventState
+	Prestige       PrestigeState
+	Mastery        MasteryState
+	Trade          TradeState
+	Diplomacy      DiplomacyState
+	Log            []LogEntry
+	Stats          StatsSnapshot
+	SaveExists     bool
+	TickSpeedBonus float64
+	TickIntervalMs int
+	CheaterBadge   bool
+	EliteBadge     bool
 	// DevTouched is true once the developer console has changed this run (saved with
 	// the run; see GameEngine.markDevTouchedLocked).
 	DevTouched bool
@@ -281,6 +284,9 @@ type BuildingState struct {
 	IsLegacy bool // functional but superseded — can't build more; grayed in UI
 	// Player-driven upgrade: key of next-tier building this can be upgraded to; "" if none
 	PendingUpgrade string
+	// KnowledgeStore is what one copy of this building adds to the knowledge
+	// store (0 for every building but a knowledge building).
+	KnowledgeStore float64
 	// Phase 9: ruins
 	RuinCount int // ruins of this building type (produce at 50%, no workers, can't rebuild)
 }
@@ -405,7 +411,11 @@ type TechState struct {
 	Description   string
 	Researched    bool
 	Available     bool // meets age + prereqs and not yet researched
-	PrereqsMet    bool // every prerequisite, and one of AnyOf
+	// OverStore is true when the tech's price is larger than the knowledge
+	// store and what is held cannot pay it either: it cannot be started
+	// until a knowledge building raises the store.
+	OverStore  bool
+	PrereqsMet bool // every prerequisite, and one of AnyOf
 	// Kind is the tech's place in the tree: a keystone, on the spine, a
 	// capstone or optional (rules.Set.TechKind).
 	Kind config.TechKind

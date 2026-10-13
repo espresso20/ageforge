@@ -64,6 +64,10 @@ func TestGateTownRuleAsksOnlyForWhatARunCanBuild(t *testing.T) {
 			switch {
 			case d.RequiredAge != ages[from].Key:
 				t.Errorf("%s: the gate into %s asks for it, it is built in %s", k, to, d.RequiredAge)
+			case IsKnowledgeBuilding(d):
+				if want := KnowledgeGateCount(KnowledgeGateWas()[k]); n != want {
+					t.Errorf("%s: %d copies, the knowledge rule asks %d", k, n, want)
+				}
 			case n != TownCopies:
 				t.Errorf("%s: %d copies, the reference town holds %d", k, n, TownCopies)
 			case !makesSomething(d):

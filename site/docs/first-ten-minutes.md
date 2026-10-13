@@ -94,19 +94,19 @@ The Workers box in the sidebar should show **Idle: 0**. The game recruits only i
 
 ## Step 5: Build stashes
 
-Food and wood start with only 50 storage each, and knowledge with 30. Storage fills fast, and anything past it is wasted. A stash costs **35 wood** and gives **+100 storage** for every resource. There is no limit on copies, but each one costs 1.75 times the one before it.
+Food and wood start with only 50 storage each. Storage fills fast, and anything past it is wasted. A stash costs **35 wood** and gives **+100 storage** for every resource but knowledge, which has a store of its own (Step 6). There is no limit on copies, but each one costs 1.75 times the one before it.
 
 ```
 build stash
 ```
 
-Build two early so there is room to hold what comes in. The Stone Age asks for **five stashes**. A stash also lifts your knowledge storage past the 47 knowledge Tool Making costs.
+Build two early so there is room to hold what comes in. The Stone Age asks for **five stashes**.
 
 ---
 
 ## Step 6: Build story circles and a shrine
 
-Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed (2 workers). The Stone Age needs **8 story circles**, and knowledge is what you spend on research. A story circle costs 60 wood and takes 75 ticks (2m 30s) to build, so start them early.
+Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed (2 workers). Each also adds **140** to your knowledge store, which starts at 240 and which only knowledge buildings raise. The Stone Age needs **5 story circles**, and knowledge is what you spend on research. A story circle costs 60 wood and takes 75 ticks (2m 30s) to build, so start them early.
 
 ```
 build story_circle
@@ -125,7 +125,7 @@ build shrine
 The Economy panel is always on screen. Look at the rate column:
 - `food: +N/t` should be positive (each staffed gathering camp adds +1.0; aim for at least +2)
 - `wood: +N/t` should be positive (each staffed wood camp adds about +0.57)
-- `knowledge: +N/t` should be positive (eight staffed story circles make +1.6)
+- `knowledge: +N/t` should be positive (five staffed story circles make +1.0)
 
 If food is negative, build another gathering camp; workers come to staff it. If knowledge is low, build more story circles, or give knowledge a bigger share with `roster knowledge 40`.
 
@@ -133,13 +133,13 @@ If food is negative, build another gathering camp; workers come to staff it. If 
 
 ## Step 8: Research your first tech
 
-Once you have 47 knowledge (knowledge storage starts at 30, so you need a stash to hold that much):
+Once you have 306 knowledge (your knowledge store starts at 240, so you need a story circle to hold that much):
 
 ```
 research tool_making
 ```
 
-It costs the 47 knowledge up front, takes 23 ticks (46 seconds) and gives +10% food and +10% wood for the rest of the run, and every `gather` brings 2 more. Get it here if you can: Stoneworking, the tech the Stone Age's wonder needs, stands on it. If you're short, advance first and research it later, or queue it with `plan research tool_making` and the [build plan](plan.md) starts it once the knowledge is there. Fire Mastery (78 knowledge, +10% food and +5% housing) is the age's other tech.
+It costs the 306 knowledge up front, takes 23 ticks (46 seconds) and gives +10% food and +10% wood for the rest of the run, and every `gather` brings 2 more. Get it here if you can: Stoneworking, the tech the Stone Age's wonder needs, stands on it. If you're short, advance first and research it later, or queue it with `plan research tool_making` and the [build plan](plan.md) starts it once the knowledge is there. Language (236 knowledge, +10% knowledge) and Fire Mastery (398 knowledge, +10% food and +5% housing) are the age's other two techs; Fire Mastery needs two story circles to hold it. A tech that costs more than your knowledge store cannot be started, and the game tells you which building to build.
 
 ---
 
@@ -169,7 +169,7 @@ The Next Age row under the status bar always shows what you need for the **next 
 - Huts: 10
 - Shrines: 8
 - Stashes: 5
-- Story Circles: 8
+- Story Circles: 5
 - Wood Camps: 8
 - The Sacred Grove built
 
@@ -187,7 +187,7 @@ Before you advance, you should have:
 - [ ] 10 huts
 - [ ] 8 shrines
 - [ ] 5 stashes
-- [ ] 8 story circles
+- [ ] 5 story circles
 - [ ] The Sacred Grove built
 - [ ] Staffed gathering camps and wood camps
 - [ ] 10+ workers, none idle
@@ -207,7 +207,7 @@ When you reach the Stone Age:
 - **Elders' Hall**: a better knowledge building
 - **Standing Stones**: a better faith building, once you research Ritual (it needs Language, a Primitive Age tech)
 - **Longhouse**: bigger housing (+25 housing each)
-- **Storage Pit**: +1.2K storage for every resource
+- **Storage Pit**: +1.2K storage for every resource but knowledge
 - **War Camp**: an early military building. It trains soldiers from the day it stands, and a garrison blunts the raids of the Stone and Bronze Ages (see [Military](military.md))
 - **Great Monolith**: the Stone Age wonder, required to reach the Bronze Age
 

@@ -164,6 +164,16 @@ func truthRoom(ge *GameEngine, res string, amount float64) {
 	if r == nil || r.Storage-r.Amount >= amount {
 		return
 	}
+	if res == "knowledge" {
+		// Only knowledge buildings raise the knowledge store, and they
+		// make knowledge too, which would move what the meter reads. The
+		// lab raises the store's base on this engine instead.
+		d := ge.Resources.defs[res]
+		d.BaseStorage += amount - (r.Storage - r.Amount)
+		ge.Resources.defs[res] = d
+		ge.recalculateRates()
+		return
+	}
 	order := ageOrders()
 	best := ""
 	for _, key := range ge.Buildings.order {
@@ -876,6 +886,12 @@ var truthKinds = map[string]truthKind{
 			m := truthMeasured{Allowed: meterHasPrefix("storage:", "stock:")}
 			lo, hi := math.Inf(1), math.Inf(-1)
 			for _, key := range ge.Resources.order {
+				// The knowledge store is the knowledge buildings' alone
+				// (knowledge_store.go): a tech's bonus to every store, and
+				// a storage building's, do not reach it.
+				if key == "knowledge" {
+					continue
+				}
 				base := ge.Resources.resources[key].Storage / truthStoreScale(ge, key)
 				if base <= 0 {
 					continue
@@ -1027,7 +1043,7 @@ var truthKinds = map[string]truthKind{
 			return truthMeasured{Delivered: d / p.Count, Noise: noise / p.Count, Allowed: meterIs("rate:"+res, "made:"+res)}
 		},
 	},
-	// "+V storage for every resource" or for one.
+	// "+V storage for every resource but knowledge" or for one.
 	"storage": {
 		Unit: "storage per copy",
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
@@ -1041,6 +1057,9 @@ var truthKinds = map[string]truthKind{
 			m := truthMeasured{Allowed: meterHasPrefix("storage:")}
 			lo, hi := math.Inf(1), math.Inf(-1)
 			for _, key := range ge.Resources.order {
+				if key == "knowledge" {
+					continue // its own store (knowledge_store.go)
+				}
 				scale := count * truthStoreScale(ge, key)
 				d, noise := truthDiff(before, after, "storage:"+key)
 				lo, hi = math.Min(lo, d/scale), math.Max(hi, d/scale)
@@ -1593,7 +1612,7 @@ func truthEffectText(e config.Effect) string {
 	case "storage":
 		switch e.Target {
 		case "all":
-			return fmt.Sprintf("%+g storage for every resource", e.Value)
+			return fmt.Sprintf("%+g storage for every resource but knowledge", e.Value)
 		case "soldiers":
 			return fmt.Sprintf("%+g soldier storage", e.Value)
 		}
@@ -1815,9 +1834,16 @@ func truthBuildingPromises() []truthPromise {
 			if eff.Type == "production" && config.MakesBeforeUnlock(def, eff.Target) && strings.Contains(def.Description, "/tick "+config.OnceUnlocked) {
 				text, later = text+" "+config.OnceUnlocked, true
 			}
+			// A knowledge building standing also holds what one copy of it
+			// adds to the knowledge store (BuildingDef.KnowledgeStore): the
+			// store's own figures are held to in knowledge_store_test.go.
+			var also []string
+			if eff.Type == "production" && eff.Target == "knowledge" && source == "building" && def.KnowledgeStore > 0 {
+				also = []string{"storage:knowledge"}
+			}
 			out = append(out, truthPromise{
 				Source: source, Key: def.Key, Name: def.Name, Age: def.RequiredAge, Eff: eff, Count: count,
-				Text: text, Kind: truthEffectKind(source, eff), Later: later,
+				Text: text, Kind: truthEffectKind(source, eff), Later: later, Also: also,
 				wire: func(ge *GameEngine) truthSwitch {
 					bm := ge.Buildings
 					saved := bm.defs[key]

@@ -98,8 +98,14 @@ func TestMasteryTwinEngines(t *testing.T) {
 				t.Errorf("%s mastery breakdown line %v, want %v", key, k.Breakdown.MasteryRate, want)
 			}
 		}
-		if k.Storage != 2*b.Storage {
-			t.Errorf("%s storage %v at k = 2 against %v, want double", key, k.Storage, b.Storage)
+		// Knowledge has a store of its own that mastery leaves alone
+		// (knowledge_store.go): every other store doubles.
+		wantStore := 2 * b.Storage
+		if key == "knowledge" {
+			wantStore = b.Storage
+		}
+		if k.Storage != wantStore {
+			t.Errorf("%s storage %v at k = 2 against %v, want %v", key, k.Storage, b.Storage, wantStore)
 		}
 	}
 	if rated == 0 {

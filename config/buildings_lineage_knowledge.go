@@ -17,7 +17,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	b = append(b, BuildingDef{
 		Name: "Story Circle", Key: "story_circle", Category: "research",
 		BaseCost:    map[string]float64{"wood": 60},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.2}},
 		BuildTicks:  75,
 		RequiredAge: "primitive_age",
@@ -25,12 +25,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 0,
 		WorkerDomain: "knowledge", WorkerCapacity: 2,
 		EpochKey: "stone_era", OutputResource: "knowledge",
+		KnowledgeStore: 140,
 	})
 	// tier 1 — stone_age  rate=0.6
 	b = append(b, BuildingDef{
 		Name: "Elders' Hall", Key: "elders_hall", Category: "research",
 		BaseCost:    map[string]float64{"wood": 360, "stone": 240},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.6}},
 		BuildTicks:  200,
 		RequiredAge: "stone_age",
@@ -38,12 +39,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 1,
 		WorkerDomain: "knowledge", WorkerCapacity: 2,
 		EpochKey: "stone_era", OutputResource: "knowledge",
+		KnowledgeStore: 370,
 	})
 	// tier 2 — bronze_age  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Scriptorium", Key: "scriptorium", Category: "research",
 		BaseCost:    map[string]float64{"wood": 2100, "stone": 1200, "gold": 600},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 2}},
 		BuildTicks:  150,
 		RequiredAge: "bronze_age",
@@ -51,12 +53,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 2,
 		WorkerDomain: "knowledge", WorkerCapacity: 3,
 		EpochKey: "stone_era", OutputResource: "knowledge",
+		KnowledgeStore: 3100,
 	})
 	// tier 3 — iron_age  rate=1.6
 	b = append(b, BuildingDef{
 		Name: "Agora", Key: "agora", Category: "research",
 		BaseCost:    map[string]float64{"stone": 7500, "marble": 7500, "gold": 7500, "iron": 2250, "iron_ore": 2250},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 1.6}},
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
@@ -64,12 +67,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 3,
 		WorkerDomain: "knowledge", WorkerCapacity: 3,
 		EpochKey: "iron_era", OutputResource: "knowledge",
+		KnowledgeStore: 6400,
 	})
 	// tier 4 — classical_age  rate=3.2
 	b = append(b, BuildingDef{
 		Name: "Library", Key: "library", Category: "research",
 		BaseCost:    map[string]float64{"stone": 55000, "marble": 55000, "gold": 36000, "iron": 12000, "iron_ore": 12000},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 3.2}},
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
@@ -77,12 +81,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 4,
 		WorkerDomain: "knowledge", WorkerCapacity: 4,
 		EpochKey: "iron_era", OutputResource: "knowledge",
+		KnowledgeStore: 19000,
 	})
 	// tier 5 — medieval_age  rate=1.6
 	b = append(b, BuildingDef{
 		Name: "Monastery Library", Key: "monastery_library", Category: "research",
 		BaseCost:    map[string]float64{"stone": 540000, "gold": 180000, "knowledge": 45000},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 42.4}},
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
@@ -90,12 +95,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 5,
 		WorkerDomain: "knowledge", WorkerCapacity: 4,
 		EpochKey: "iron_era", OutputResource: "knowledge",
+		KnowledgeStore: 330000,
 	})
 	// tier 6 — renaissance_age  rate=3.2
 	b = append(b, BuildingDef{
 		Name: "University", Key: "university", Category: "research",
 		BaseCost:    map[string]float64{"gold": 1800000, "steel": 600000, "knowledge": 240000},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 76.3}},
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
@@ -103,12 +109,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 6,
 		WorkerDomain: "knowledge", WorkerCapacity: 5,
 		EpochKey: "steel_era", OutputResource: "knowledge",
+		KnowledgeStore: 820000,
 	})
 	// tier 7 — colonial_age  rate=6.4
 	b = append(b, BuildingDef{
 		Name: "Natural Philosophy Hall", Key: "natural_philosophy_hall", Category: "research",
 		BaseCost:    map[string]float64{"gold": 1.1e07, "steel": 4500000, "knowledge": 900000},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 452}},
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
@@ -116,12 +123,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 7,
 		WorkerDomain: "knowledge", WorkerCapacity: 5,
 		EpochKey: "steel_era", OutputResource: "knowledge",
+		KnowledgeStore: 8.4e06,
 	})
 	// tier 8 — industrial_age  rate=12.8
 	b = append(b, BuildingDef{
 		Name: "Research Institute", Key: "research_institute", Category: "research",
 		BaseCost:    map[string]float64{"steel": 7.5e07, "coal": 2.4e07, "gold": 4.5e07},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 12.8}},
 		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
@@ -129,12 +137,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 8,
 		WorkerDomain: "knowledge", WorkerCapacity: 6,
 		EpochKey: "steel_era", OutputResource: "knowledge",
+		KnowledgeStore: 910000,
 	})
 	// tier 9 — victorian_age  rate=25.6
 	b = append(b, BuildingDef{
 		Name: "Academy", Key: "academy", Category: "research",
 		BaseCost:    map[string]float64{"steel": 5.3e08, "gold": 2.7e08, "iron": 1.8e08},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 25.6}},
 		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
@@ -142,12 +151,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 9,
 		WorkerDomain: "knowledge", WorkerCapacity: 6,
 		EpochKey: "electric_era", OutputResource: "knowledge",
+		KnowledgeStore: 4.5e06,
 	})
 	// tier 10 — electric_age  rate=51.2
 	b = append(b, BuildingDef{
 		Name: "Physics Laboratory", Key: "physics_laboratory", Category: "research",
 		BaseCost:    map[string]float64{"steel": 3e09, "electricity": 1.2e09, "gold": 1.8e09},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 51.2}},
 		BuildTicks:  3600,
 		RequiredAge: "electric_age",
@@ -155,12 +165,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 10,
 		WorkerDomain: "knowledge", WorkerCapacity: 7,
 		EpochKey: "electric_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.1e07,
 	})
 	// tier 11 — atomic_age  rate=102.4
 	b = append(b, BuildingDef{
 		Name: "Research Campus", Key: "research_campus", Category: "research",
 		BaseCost:    map[string]float64{"steel": 1.5e10, "electricity": 6e09, "uranium": 9e08},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 102.4}},
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
@@ -168,12 +179,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 11,
 		WorkerDomain: "knowledge", WorkerCapacity: 7,
 		EpochKey: "electric_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.6e07,
 	})
 	// tier 12 — modern_age  rate=204.8
 	b = append(b, BuildingDef{
 		Name: "Think Tank", Key: "think_tank", Category: "research",
 		BaseCost:    map[string]float64{"steel": 4.5e10, "titanium_ore": 4.5e10, "electricity": 3e10, "data": 3e09},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 204.8}},
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
@@ -181,12 +193,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 12,
 		WorkerDomain: "knowledge", WorkerCapacity: 8,
 		EpochKey: "digital_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.3e07,
 	})
 	// tier 13 — information_age  rate=409.6
 	b = append(b, BuildingDef{
 		Name: "Innovation Hub", Key: "innovation_hub", Category: "research",
 		BaseCost:    map[string]float64{"electricity": 2.4e11, "data": 2.4e10, "gold": 4.5e11},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 409.6}},
 		BuildTicks:  3600,
 		RequiredAge: "information_age",
@@ -194,12 +207,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 13,
 		WorkerDomain: "knowledge", WorkerCapacity: 8,
 		EpochKey: "digital_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.5e07,
 	})
 	// tier 14 — digital_age  rate=819.2
 	b = append(b, BuildingDef{
 		Name: "AI Research Lab", Key: "ai_research_lab", Category: "research",
 		BaseCost:    map[string]float64{"electricity": 1.2e12, "data": 1.5e11, "steel": 9e11, "titanium_ore": 9e11},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 819.2}},
 		BuildTicks:  3600,
 		RequiredAge: "digital_age",
@@ -207,12 +221,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 14,
 		WorkerDomain: "knowledge", WorkerCapacity: 10,
 		EpochKey: "digital_era", OutputResource: "knowledge",
+		KnowledgeStore: 9.4e07,
 	})
 	// tier 15 — cyberpunk_age  rate=1638.4
 	b = append(b, BuildingDef{
 		Name: "Neuro Research Center", Key: "neuro_research_center", Category: "research",
 		BaseCost:    map[string]float64{"data": 6e11, "crypto": 3e12, "electricity": 3e12, "dark_matter_crystals": 3e12},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 1638.4}},
 		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
@@ -220,12 +235,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 15,
 		WorkerDomain: "knowledge", WorkerCapacity: 10,
 		EpochKey: "neon_era", OutputResource: "knowledge",
+		KnowledgeStore: 3.1e08,
 	})
 	// tier 16 — fusion_age  rate=3276.8
 	b = append(b, BuildingDef{
 		Name: "Theoretical Institute", Key: "theoretical_institute", Category: "research",
 		BaseCost:    map[string]float64{"plasma": 1.5e13, "electricity": 2.25e13, "dark_matter_crystals": 2.25e13, "steel": 6e13},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 3276.8}},
 		BuildTicks:  3600,
 		RequiredAge: "fusion_age",
@@ -233,12 +249,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 16,
 		WorkerDomain: "knowledge", WorkerCapacity: 12,
 		EpochKey: "neon_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.5e09,
 	})
 	// tier 17 — space_age  rate=6553.6
 	b = append(b, BuildingDef{
 		Name: "Deep Space Observatory", Key: "deep_space_observatory", Category: "research",
 		BaseCost:    map[string]float64{"titanium": 2.4e14, "plasma": 1.2e14, "electricity": 1.5e14, "dark_matter_crystals": 1.5e14},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 6553.6}},
 		BuildTicks:  3600,
 		RequiredAge: "space_age",
@@ -246,12 +263,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 17,
 		WorkerDomain: "knowledge", WorkerCapacity: 12,
 		EpochKey: "neon_era", OutputResource: "knowledge",
+		KnowledgeStore: 3.4e09,
 	})
 	// tier 18 — interstellar_age  rate=13107.2
 	b = append(b, BuildingDef{
 		Name: "Xenology Institute", Key: "xenology_institute", Category: "research",
 		BaseCost:    map[string]float64{"dark_matter": 3e14, "titanium": 2.4e15, "plasma": 1.5e15},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 13107.2}},
 		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
@@ -259,12 +277,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 18,
 		WorkerDomain: "knowledge", WorkerCapacity: 15,
 		EpochKey: "cosmic_era", OutputResource: "knowledge",
+		KnowledgeStore: 4.9e09,
 	})
 	// tier 19 — galactic_age  rate=26214.4
 	b = append(b, BuildingDef{
 		Name: "Cosmic Research Station", Key: "cosmic_research_station", Category: "research",
 		BaseCost:    map[string]float64{"antimatter": 6e14, "dark_matter": 3e15, "titanium": 1.5e16},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 26214.4}},
 		BuildTicks:  3600,
 		RequiredAge: "galactic_age",
@@ -272,12 +291,13 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 19,
 		WorkerDomain: "knowledge", WorkerCapacity: 15,
 		EpochKey: "cosmic_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.4e09,
 	})
 	// tier 20 — quantum_age  rate=52428.8
 	b = append(b, BuildingDef{
 		Name: "Reality Academy", Key: "reality_academy", Category: "research",
 		BaseCost:    map[string]float64{"quantum_flux": 6e14, "antimatter": 1.8e17, "dark_matter": 1.5e17},
-		CostScale:   1.15,
+		CostScale:   1.5,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 52428.8}},
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
@@ -285,6 +305,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 20,
 		WorkerDomain: "knowledge", WorkerCapacity: 20,
 		EpochKey: "cosmic_era", OutputResource: "knowledge",
+		KnowledgeStore: 5.6e09,
 	})
 
 	return b

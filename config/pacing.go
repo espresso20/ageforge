@@ -327,6 +327,16 @@ func TypicalIncome(res, age string) float64 {
 	return Incomes(BaseBuildings(), Technologies(), AgeOrder(), AnyResource)[age][res]
 }
 
+// flowCopiesOf is the copies of d the moderate town holds: FlowCopies, or for
+// a knowledge building the copies its gate asks for (knowledge_rule.go: it
+// climbs at its own rate and the gate asks the spend it always did).
+func flowCopiesOf(d BuildingDef) float64 {
+	if IsKnowledgeBuilding(d) {
+		return float64(KnowledgeGateCount(KnowledgeGateWas()[d.Key]))
+	}
+	return FlowCopies
+}
+
 // AnyResource accepts every resource: Incomes' filter for TypicalIncome.
 func AnyResource(string) bool { return true }
 
@@ -381,7 +391,7 @@ func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bo
 			}
 			for _, e := range d.Effects {
 				if e.Type == "production" && e.Value > 0 && include(e.Target) {
-					made[e.Target] += float64(FlowCopies * e.Value)
+					made[e.Target] += float64(flowCopiesOf(d) * e.Value)
 				}
 			}
 		}
@@ -394,7 +404,8 @@ func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bo
 // in each age, as age -> resource -> storage: the resource's base storage
 // and StorageRuleCopies copies of every storage building from the Primitive
 // Age up to and including the age (the ones that store everything, and any
-// that store that resource alone): the reference store of the storage rule. Techs' storage bonus is left out: it is what
+// that store that resource alone): the reference store of the storage rule,
+// except knowledge, whose store is the knowledge store. Techs' storage bonus is left out: it is what
 // a town holds for building its vaults, the count the moderate economy
 // keeps of everything. Pure.
 func TypicalStorages(defs []BuildingDef, resources []ResourceDef, order []string) map[string]map[string]float64 {
@@ -403,6 +414,7 @@ func TypicalStorages(defs []BuildingDef, resources []ResourceDef, order []string
 		idx[a] = i
 	}
 	out := make(map[string]map[string]float64, len(order))
+	knowledge := KnowledgeStoreHeld(defs, Ages())
 	for i, age := range order {
 		all := 0.0
 		own := map[string]float64{}
@@ -424,6 +436,11 @@ func TypicalStorages(defs []BuildingDef, resources []ResourceDef, order []string
 		held := make(map[string]float64, len(resources))
 		for _, r := range resources {
 			held[r.Key] = r.BaseStorage + all + own[r.Key]
+		}
+		// Knowledge has a store of its own (knowledge_rule.go): the general
+		// store does not reach it.
+		if _, ok := held["knowledge"]; ok {
+			held["knowledge"] = knowledge[age]
 		}
 		out[age] = held
 	}
@@ -489,7 +506,7 @@ func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(s
 				}
 				switch {
 				case d.Category != "wonder":
-					inc[e.Target] += float64(FlowCopies * e.Value)
+					inc[e.Target] += float64(flowCopiesOf(d) * e.Value)
 				case j < i:
 					inc[e.Target] += e.Value
 				}

@@ -55,7 +55,8 @@ The age progress bar shows `✗ Keystone: <tech>` beside the wonder until the te
 
 An age asks for the town it is priced for. **No age asks you to hold an amount of any resource**, and advancing spends nothing. To leave an age you need:
 
-- **Eight copies of every building of that age that makes something.** That means food, wood, stone, metals, gold, power, knowledge, faith, culture or soldiers.
+- **Eight copies of every building of that age that makes something.** That means food, wood, stone, metals, gold, power, faith, culture or soldiers.
+- **Fewer copies of the age's knowledge building**, because each copy costs 50% more than the one before it (a producer's costs 15% more). The tables below give the count, from 5 to 10. See [Knowledge](knowledge.md#the-knowledge-store).
 - **Every building count the age asked for already.** A building the age asked for in more copies keeps that count.
 - **Five copies of the age's storage building.**
 - **The age's wonder**, built, and **its keystone tech**, researched. See [Wonder Requirement](#wonder-requirement) and [Keystone Techs](#keystone-techs).
@@ -71,10 +72,11 @@ Every age can be finished, and an automated test checks this in every release. T
 
 - Every building requirement names a building you can build in the age you are advancing **from**, never an older one you can no longer build.
 - A town that passes a gate arrives holding the store the rules size for it, because the gate asks for the storage copies. Storage is a wall (see [Storage](buildings.md#storage-buildings-21-tiers)), so no town can pass without them.
+- A town that passes a gate also holds the knowledge store the rules size for it, because the gate asks for the knowledge building's copies. The store holds the age's dearest tech with a quarter to spare, and the second-cheapest tech of the next age with a fifth to spare. A tech priced over the knowledge store cannot be started (see [Knowledge](knowledge.md#the-knowledge-store)).
 - The last required copy of each building costs at most **80%** of the store the gates force you to hold, so a town that met the earlier gates can always afford it.
-- The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age, and each one's knowledge cost fits the knowledge storage you can build in that age with room to spare.
+- The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age, and each one's knowledge cost fits the knowledge store you can build in that age with room to spare.
 - The keystone is affordable well inside the age: the knowledge it costs (with the techs of its own age it stands on), the time to research them and the time to build the wonder fit inside the age's target length together, with at least a fifth of the age to spare.
-- The cheapest tech of an age fits the knowledge storage you are sure to enter the age with, or does within two of the age's storage buildings.
+- The cheapest tech of an age fits the knowledge store you are sure to enter the age with.
 - Every resource a required building, the wonder or the keystone costs has a source in the age itself, even for a town that skipped every building no earlier gate asked for. See [The Maker Rule](buildings.md#the-maker-rule).
 - A food, faith, culture or soldiers cost is something a moderate economy makes in the age.
 - A town that arrives in a new age with empty stores, and only the buildings the gates asked for, can buy the first copy of every building the age opens, except those that wait for a tech you may never research.
@@ -144,7 +146,7 @@ Starting age. No requirements.
 | Hut | 10 |
 | Shrine | 8 |
 | Stash | 5 |
-| Story Circle | 8 |
+| Story Circle | 5 |
 | Wood Camp | 8 |
 
 **Unlocks:** Longhouse, Storage Pit, Forager Post, Woodcutter Camp, Stone Camp, Stone Pit, Elders' Hall, Standing Stones (after Ritual), War Camp, Great Monolith · **Resource:** Stone · **New domains:** masonry, military
@@ -157,7 +159,7 @@ Starting age. No requirements.
 
 | Building | Copies |
 |---|---|
-| Elders' Hall | 8 |
+| Elders' Hall | 5 |
 | Forager Post | 8 |
 | Longhouse | 15 |
 | Stone Camp | 8 |
@@ -181,7 +183,7 @@ Starting age. No requirements.
 | Lumber Mill | 8 |
 | Market | 8 |
 | Quarry | 8 |
-| Scriptorium | 8 |
+| Scriptorium | 5 |
 | Smithy | 8 |
 | Warehouse | 5 |
 
@@ -195,7 +197,7 @@ Starting age. No requirements.
 
 | Building | Copies |
 |---|---|
-| Agora | 12 |
+| Agora | 7 |
 | Field Works | 8 |
 | Granary | 5 |
 | Hunting Lodge | 15 |
@@ -218,7 +220,7 @@ Starting age. No requirements.
 | Amphitheater | 8 |
 | Aqueduct | 8 |
 | Classical Vault | 5 |
-| Library | 15 |
+| Library | 8 |
 | Marble Works | 8 |
 | Merchant Quarter | 8 |
 | Military Academy | 15 |
@@ -244,7 +246,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Great Hall | 8 |
 | Guildhall | 10 |
 | Ironmonger | 8 |
-| Monastery Library | 8 |
+| Monastery Library | 5 |
 | Sawmill | 8 |
 | Stonemason's Guild | 8 |
 | Strongroom | 5 |
@@ -269,7 +271,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Market Garden | 8 |
 | Mill | 8 |
 | Renaissance Vault | 5 |
-| University | 12 |
+| University | 7 |
 
 **Unlocks:** Settlement Block, Colonial Warehouse, Plantation, Coal Works, Deep Iron Mine, Natural Philosophy Hall, Mission, Fort, Port, Harbor (after Mercantilism), Dockyard, Colonial Steelworks (after Coke Smelting), Concert Hall, Embassy (after Embassies), Grand Lighthouse
 
@@ -288,7 +290,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Dockyard | 8 |
 | Fort | 8 |
 | Mission | 8 |
-| Natural Philosophy Hall | 8 |
+| Natural Philosophy Hall | 5 |
 | Plantation | 8 |
 | Port | 10 |
 
@@ -310,7 +312,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Integrated Steelworks | 8 |
 | Military Base | 8 |
 | Opera House | 8 |
-| Research Institute | 8 |
+| Research Institute | 5 |
 | Steam Colliery | 8 |
 | Steam Mine | 8 |
 | Steel Mill | 8 |
@@ -327,7 +329,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 | Building | Copies |
 |---|---|
-| Academy | 12 |
+| Academy | 7 |
 | Bank | 8 |
 | Bessemer Plant | 12 |
 | Garrison | 8 |
@@ -357,7 +359,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Industrial Farm | 8 |
 | Nuclear Extraction Plant | 8 |
 | Oil Field | 8 |
-| Physics Laboratory | 15 |
+| Physics Laboratory | 8 |
 | Power Station | 15 |
 | Radio Station | 8 |
 | Revival Hall | 8 |
@@ -380,7 +382,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Cinema | 8 |
 | Corporate HQ | 8 |
 | Petroleum Refinery | 8 |
-| Research Campus | 18 |
+| Research Campus | 9 |
 | Spiritual Center | 8 |
 | Uranium Processing Works | 8 |
 
@@ -406,7 +408,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Oil Refinery | 15 |
 | Power Grid Hub | 8 |
 | Special Ops HQ | 8 |
-| Think Tank | 20 |
+| Think Tank | 10 |
 | Titanium Mine | 8 |
 | Titanium Smelter | 8 |
 | Tower Block | 30 |
@@ -425,7 +427,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Aerospace Foundry | 8 |
 | Digital Temple | 8 |
 | Info Vault | 5 |
-| Innovation Hub | 15 |
+| Innovation Hub | 8 |
 | Media Center | 15 |
 | Precision Mine | 8 |
 | Server Farm | 10 |
@@ -443,7 +445,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 
 | Building | Copies |
 |---|---|
-| AI Research Lab | 15 |
+| AI Research Lab | 8 |
 | Bio Fabrication Lab | 8 |
 | Crypto Exchange | 8 |
 | Cyber Shrine | 8 |
@@ -476,7 +478,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Dark Matter Refinery | 8 |
 | Nanobot Vat | 8 |
 | Neon Sanctuary | 8 |
-| Neuro Research Center | 8 |
+| Neuro Research Center | 5 |
 | Vat Farm | 8 |
 
 **Unlocks:** Habitat Ring, Fusion Vault, Bio Reactor Farm, Molecular Synthesizer, Exotic Mineral Extractor, Theoretical Institute, Quantum Chapel, Plasma Command, Energy Exchange (after Maglev Transit), Fusion Reactor, Exotic Matter Forge, Tokamak Array, Quantum Server Farm, Neural Art Complex, Stellar Cradle · **Resource:** Plasma
@@ -499,7 +501,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Plasma Command | 10 |
 | Quantum Chapel | 8 |
 | Quantum Server Farm | 8 |
-| Theoretical Institute | 8 |
+| Theoretical Institute | 5 |
 | Tokamak Array | 10 |
 
 **Unlocks:** Orbital Habitat, Orbital Depot, Hydroponic Bay, Quantum Organic Extractor, Asteroid Crystal Mine, Deep Space Observatory, Orbital Sanctuary, Space Force Base, Asteroid Market, Launch Complex, Orbital Refinery, Solar Collector Array, Orbital Data Relay, Zero G Gallery, Dyson Scaffold · **Resource:** Titanium
@@ -514,7 +516,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 |---|---|
 | Asteroid Crystal Mine | 8 |
 | Asteroid Market | 8 |
-| Deep Space Observatory | 8 |
+| Deep Space Observatory | 5 |
 | Hydroponic Bay | 8 |
 | Launch Complex | 10 |
 | Orbital Data Relay | 8 |
@@ -548,7 +550,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Stellar Vault | 5 |
 | Void Monastery | 8 |
 | Warp Drive Plant | 15 |
-| Xenology Institute | 8 |
+| Xenology Institute | 5 |
 
 **Unlocks:** Dyson Sphere Habitat, Galactic Vault, Matter Converter, Cosmic Organic Works, Neutron Star Mine (after Neutron Mining), Cosmic Research Station, Stellar Shrine, Stellar Armada HQ, Stellar Exchange, Dyson Assembly, Stellar Metallurgy, Quasar Tap (after Antimatter Synthesis), Consciousness Upload Hub, Civilization Archive, Cosmic Beacon · **Resource:** Antimatter
 
@@ -563,7 +565,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Civilization Archive | 8 |
 | Consciousness Upload Hub | 8 |
 | Cosmic Organic Works | 8 |
-| Cosmic Research Station | 8 |
+| Cosmic Research Station | 5 |
 | Dyson Assembly | 8 |
 | Dyson Sphere Habitat | 30 |
 | Galactic Vault | 5 |
@@ -587,7 +589,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Probability War Room | 15 |
 | Quantum Cultivator | 8 |
 | Quantum Vault | 5 |
-| Reality Academy | 20 |
+| Reality Academy | 10 |
 | Reality Art Engine | 8 |
 | Reality Excavator | 8 |
 | Reality Forge | 15 |

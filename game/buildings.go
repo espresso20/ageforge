@@ -689,6 +689,11 @@ func (bm *BuildingManager) GetAllPendingUpgrades() map[string]string {
 func (bm *BuildingManager) LoadPendingUpgrades(upgrades map[string]string) {
 	clear(bm.pendingUpgrades)
 	for k, v := range upgrades {
+		// An offer an older game made to a building that now keeps its tier
+		// (a knowledge building) is dropped; the copies stay as they are.
+		if def, ok := bm.defs[k]; ok && def.KnowledgeStore > 0 {
+			continue
+		}
 		bm.pendingUpgrades[k] = v
 	}
 }
@@ -802,16 +807,31 @@ func (bm *BuildingManager) PartialTransform(oldKey, newKey string, count int, re
 const MaxRuins = 24
 
 // isDestroyable reports whether a catastrophe (Endure, the Great Fire, Succumb's
-// ruins) may take a building: anything but a wonder or storage. Both are
-// ageless and the age lock never lets an older one be rebuilt, so losing one
+// ruins) may take a building: anything but a wonder, storage or a knowledge
+// building. They are ageless and the age lock never lets an older one be rebuilt, so losing one
 // is for good. Storage matters most: it is what raises the caps, and an
 // age's first storage copy can cost more than the earlier storage holds once
 // some of it is gone (a first Victorian Vault is about 210M steel). A Nuclear
 // Exchange that took both Industrial Depots on the way into the Victorian Age
 // left 130M of storage, and with it no way to ever build a vault or anything
-// else the age asks for.
+// else the age asks for. A knowledge building is the knowledge store the same
+// way (knowledge_store.go): tech prices are set against it, and a copy lost
+// from an older age cannot be rebuilt, so it is spared too. Only a knowledge
+// building carries a figure (a config test holds it to that).
 func isDestroyable(def config.BuildingDef) bool {
-	return def.Category != "wonder" && def.Category != "storage"
+	return def.Category != "wonder" && !keepsItsTier(def)
+}
+
+// keepsItsTier reports whether a building stays at its tier: storage and
+// knowledge buildings (the ones a catastrophe spares and a sale refuses).
+// Each age's copy is built new in its own age and the earlier ones stay, so
+// the stores they make only grow; an upgrade or an age advance would trade a
+// copy the age lock never lets you rebuild for one of the next tier, and the
+// per-copy figures do not rise by tier (upgrading 4 Natural Philosophy Halls
+// to Research Institutes took the knowledge store from 3.36e7 to 3.64e6).
+// Only a knowledge building carries a knowledge-store figure.
+func keepsItsTier(def config.BuildingDef) bool {
+	return def.Category == "storage" || def.KnowledgeStore > 0
 }
 
 // destroyablePool returns one entry per built destroyable building instance
@@ -840,7 +860,8 @@ func (bm *BuildingManager) destroyablePool() []string {
 }
 
 // DestroyableCount returns how many built building instances a catastrophe can
-// destroy or ruin: everything except wonders and storage (see isDestroyable).
+// destroy or ruin: everything except wonders, storage and knowledge buildings
+// (see isDestroyable).
 func (bm *BuildingManager) DestroyableCount() int {
 	n := 0
 	for key, c := range bm.counts {

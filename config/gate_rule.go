@@ -30,6 +30,8 @@ package config
 //     on.
 //  3. A building can only be asked for as many copies as it can be built in
 //     (its MaxCount, when it has one).
+//  4. A knowledge building is not asked for TownCopies: it climbs at its own
+//     rate and the gate asks the spend it always did (knowledge_rule.go).
 //
 // The covenants on gates (smoke.StaticGates) hold the result: each building
 // asked for is buildable in A, and its last required copy fits the store with
@@ -99,7 +101,8 @@ func makesSomething(d BuildingDef) bool {
 // ask for besides what it asks for today, by building key, keyed by the age
 // the gate leads into (as the ages' BuildingReqs are read). Each count is the
 // reference town's, TownCopies, or the building's MaxCount when that
-// is smaller. Buildings in GateTownLeftOut are not in it.
+// is smaller; a knowledge building's is the knowledge rule's
+// (KnowledgeGateCount). Buildings in GateTownLeftOut are not in it.
 func GateTown(defs []BuildingDef, ages []AgeDef, techs []TechDef) map[string]map[string]int {
 	held := GateTownHeldTechs(defs, ages, techs)
 	left := GateTownLeftOut()
@@ -123,6 +126,11 @@ func GateTown(defs []BuildingDef, ages []AgeDef, techs []TechDef) map[string]map
 				continue
 			}
 			n := TownCopies
+			if IsKnowledgeBuilding(d) {
+				// A knowledge building climbs at KnowledgeRate: the gate
+				// asks the spend it asked before (knowledge_rule.go).
+				n = KnowledgeGateCount(KnowledgeGateWas()[d.Key])
+			}
 			if d.MaxCount > 0 {
 				n = min(n, d.MaxCount)
 			}

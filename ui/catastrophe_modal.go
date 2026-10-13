@@ -50,16 +50,23 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		headerLines = append(headerLines, "[comment]"+tview.Escape(strings.TrimSpace(l))+"[-]")
 	}
 
-	endureLines := []string{
-		"[white]── ENDURE: weather the catastrophe ──[-]",
-		fmt.Sprintf("  [red]• %s of buildings destroyed (wonders and storage are spared)[-]", endurePct(eo.DestroyPct)),
+	// The first line is long: it wraps under its bullet.
+	destroyed := []string{"[white]── ENDURE: weather the catastrophe ──[-]"}
+	for i, l := range tview.WordWrap(fmt.Sprintf("• %s of buildings destroyed (wonders, storage and knowledge buildings are spared)", endurePct(eo.DestroyPct)), inner-4) {
+		lead := ""
+		if i > 0 {
+			lead = "  "
+		}
+		destroyed = append(destroyed, "  [red]"+lead+strings.TrimSpace(l)+"[-]")
+	}
+	endureLines := append(destroyed,
 		fmt.Sprintf("  [red]• All resources reduced to %s[-]", endurePct(eo.KeepFrac*100)),
 		fmt.Sprintf("  [red]• %.0f%% of workers lost; workers of destroyed buildings go idle[-]", game.EndureWorkerLoss*100),
 		fmt.Sprintf("  [red]• All production %.0f%% for %s, morale %+.0f points[-]",
 			game.EndureDebuffProduction*100, formatTicks(game.EndureDebuffTicksIn(st.Age), st), game.EndureMoraleHit*100),
 		"  [green]✓ Age, research, wonders and prestige preserved[-]",
 		"  [green]✓ The epoch badge records that you endured[-]",
-	}
+	)
 	endureLines = append(endureLines, endureDefenseLines(eo)...)
 	endure := strings.Join(endureLines, "\n")
 

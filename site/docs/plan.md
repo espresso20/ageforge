@@ -60,6 +60,8 @@ What a full store cannot hold goes into this age's [wonder bank](wonders.md#over
 
 A plan item whose price is larger than a store cannot start, however long you wait. It shows as blocked and reads `blocked  needs more <resource> storage` until you build more storage (see [Storage is a wall](buildings.md#storage-is-a-wall)). The age's wonder is the one exception: it is paid through its bank.
 
+A tech priced over the knowledge store is held the same way. It reads `blocked  needs more knowledge storage` until you build more of the age's knowledge building, because only knowledge buildings raise that store (see [The Knowledge Store](knowledge.md#the-knowledge-store)). Research starts in plan order, so the techs behind it read `after the research above it` until it can start.
+
 A save from before this rule had banked part of its items' prices in the plan. Those banks are returned to your stores when the save loads (see [Old saves](saving-and-loading.md#saves-from-before-the-storage-wall)).
 
 ## The Plan panel

@@ -438,7 +438,7 @@ You hold 2,108,000 soldiers with no `military_power` bonus: defense 2,108,000 ×
 
 - **In the Classical Age** (threat 2M): 45% × 4.216M / (4.216M + 2M) = about **31%**. A war raid that would take 1,000 gold takes about 690; the Army panel says twice the garrison would blunt about 36%.
 - **In the Industrial Age** (threat 25.2M): 45% × 4.216M / (4.216M + 25.2M) = about **6%**. The same army barely matters four ages later.
-- **Endure at the Renaissance** (threat 7.31M) with Brace 1, 150 buildings that can fall (everything but wonders and storage) and 1,827,500 soldiers (defense 3.655M, half the threat): the garrison share is 15%. Brace 1 alone would destroy 22 buildings and keep 30% of stock; with the garrison, 19 fall (22 × 15% = 3.3, rounded down to 3 saved) and about 40% of stock is kept.
+- **Endure at the Renaissance** (threat 7.31M) with Brace 1, 150 buildings that can fall (everything but wonders, storage and knowledge buildings) and 1,827,500 soldiers (defense 3.655M, half the threat): the garrison share is 15%. Brace 1 alone would destroy 22 buildings and keep 30% of stock; with the garrison, 19 fall (22 × 15% = 3.3, rounded down to 3 saved) and about 40% of stock is kept.
 
 ---
 

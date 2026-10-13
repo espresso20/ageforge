@@ -77,13 +77,21 @@ func GateStorageCopies(defs []BuildingDef, ages []AgeDef) map[string]map[string]
 // storageRuleCount is how many copies of d, a building that is not storage,
 // the reference town holds.
 func storageRuleCount(d BuildingDef, gate map[string]int) int {
+	if IsKnowledgeBuilding(d) {
+		// The town holds the copies the gate asks, at the spend the
+		// knowledge rule keeps (knowledge_rule.go), not TownCopies.
+		return gate[d.Key]
+	}
 	return max(TownCopies, gate[d.Key])
 }
 
 func maxPrice(d BuildingDef, owned int) float64 {
 	f := detmath.Pow(d.CostScale, float64(owned))
 	top := 0.0
-	for _, v := range d.BaseCost {
+	for r, v := range d.BaseCost {
+		if r == "knowledge" {
+			continue // knowledge has a store of its own (knowledge_rule.go)
+		}
 		top = math.Max(top, math.Max(1, math.Floor(v*f)))
 	}
 	return top

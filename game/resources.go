@@ -268,6 +268,17 @@ func (rm *ResourceManager) markGraceAll() {
 	}
 }
 
+// markGrace marks one resource holding stock for the grace rule (as
+// markGraceAll does for every one).
+func (rm *ResourceManager) markGrace(key string) {
+	if r, ok := rm.resources[key]; ok && r.Amount > 0 {
+		if rm.grace == nil {
+			rm.grace = make(map[string]bool)
+		}
+		rm.grace[key] = true
+	}
+}
+
 // Graced reports whether key's stock is under the grace rule.
 func (rm *ResourceManager) Graced(key string) bool { return rm.grace[key] }
 

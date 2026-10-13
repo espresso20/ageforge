@@ -80,7 +80,7 @@ Pay a cost and keep your civilization. With no Brace and no soldiers, enduring c
 
 | Loss | Amount |
 |------|--------|
-| Buildings destroyed | 20% of your buildings other than wonders and storage, rounded down (`floor(those buildings / 5)`), at least 1 if you have any. Wonders and storage are never destroyed and don't count. Brace lowers this to 15% or 10%, and your garrison lowers it further. |
+| Buildings destroyed | 20% of your buildings other than wonders, storage and knowledge buildings, rounded down (`floor(those buildings / 5)`), at least 1 if you have any. Wonders, storage and knowledge buildings are never destroyed and don't count. Brace lowers this to 15% or 10%, and your garrison lowers it further. |
 | Stored resources | Every unlocked resource drops to 15% of its stored amount. Brace raises this to 30% or 45%, and your garrison raises it further. |
 | Workers | 25% of the worker pool is lost. |
 | Production | Reconstruction Effort: all production −10% for 562 ticks (about 18m 44s). |
@@ -142,9 +142,9 @@ If morale was already low, the −10 can push it into the low band, where output
 
 ### How the destruction is picked
 
-Every built building except wonders and storage goes into a pool in a fixed order (sorted by building key). The pool is shuffled with your run's seeded random generator and the first N are destroyed. Destroyed buildings are removed entirely; they don't become ruins. Because the generator is seeded per run, the same run state destroys the same buildings.
+Every built building except wonders, storage and knowledge buildings goes into a pool in a fixed order (sorted by building key). The pool is shuffled with your run's seeded random generator and the first N are destroyed. Destroyed buildings are removed entirely; they don't become ruins. Because the generator is seeded per run, the same run state destroys the same buildings.
 
-Storage is never destroyed by an Endure (nor by The Great Fire epoch event), because it is what raises your caps, and once its age has passed it can never be rebuilt. Losing some could leave your caps too small to pay for this age's storage, and then they could never rise again.
+Storage is never destroyed by an Endure (nor by The Great Fire epoch event), because it is what raises your caps, and once its age has passed it can never be rebuilt. Losing some could leave your caps too small to pay for this age's storage, and then they could never rise again. Knowledge buildings are spared for the same reason: they are the knowledge store, tech prices are set against it, and an older age's copy can never be rebuilt.
 
 **Recovery checklist:**
 
@@ -160,7 +160,7 @@ Let the civilization fall, and keep something permanent.
 
 A Succumb ends the run, and the ending is told on the whole screen as a [prestige](prestige.md)'s is, in a lower voice: the town goes cold and dark, what the fall leaves you is read out, and the new land comes up out of the dark. Any key skips to the next part.
 
-Up to 8 of your buildings other than wonders and storage become **ruins**, picked at random from the same seeded, fixed-order pool as Endure. Ruins produce at 50% of base rate with no workers. They carry across Succumb and prestige, but the total is capped at 24. When new ruins push past the cap, the lowest-value ruins crumble first (earliest age first, then lowest base output), so a late-game fall replaces primitive rubble. A save loaded with more than 24 ruins is trimmed the same way.
+Up to 8 of your buildings other than wonders, storage and knowledge buildings become **ruins**, picked at random from the same seeded, fixed-order pool as Endure. Ruins produce at 50% of base rate with no workers. They carry across Succumb and prestige, but the total is capped at 24. When new ruins push past the cap, the lowest-value ruins crumble first (earliest age first, then lowest base output), so a late-game fall replaces primitive rubble. A save loaded with more than 24 ruins is trimmed the same way.
 
 You also get the epoch's **legacy bonus** (table below), permanently, and **Ancient Knowledge**: research takes 0.8 times as long for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another step.
 

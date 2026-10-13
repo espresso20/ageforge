@@ -22,6 +22,10 @@ type ResearchManager struct {
 	rules      *rules.Set
 	defs       map[string]config.TechDef
 	researched map[string]bool
+	// costGate, when set, is asked about a tech whose other requirements are
+	// met, before its price is looked at: the engine uses it to refuse a
+	// price larger than the knowledge store. Set for one start only.
+	costGate func(def config.TechDef) error
 	// Currently in-progress tech key, or "" if idle.
 	currentTech string
 	ticksLeft   int
@@ -118,6 +122,11 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 			names[i] = rm.defs[k].Name
 		}
 		return fmt.Errorf("%s needs %s researched first.", def.Name, orList(names))
+	}
+	if rm.costGate != nil {
+		if err := rm.costGate(def); err != nil {
+			return err
+		}
 	}
 	// Check cost
 	if knowledge < def.Cost {
