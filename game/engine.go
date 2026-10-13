@@ -2226,9 +2226,17 @@ func (ge *GameEngine) recalculateRates() {
 		// Storage grows with Era Mastery's k, as production does, so a store
 		// holds the same hours of income at any speed. The techs' storage
 		// bonus multiplies beside it: +10% of everything the store holds.
-		r.Storage = float64((def.BaseStorage + allBonus + specific) * k)
-		if techStorage != 1 {
-			r.Storage = float64(r.Storage * techStorage)
+		if def.Key == "knowledge" {
+			// Knowledge has a store of its own (knowledge_store.go): its
+			// base and the knowledge buildings' shares. The general
+			// storage buildings, the techs' storage bonus and Era Mastery's
+			// k do not touch it.
+			r.Storage = ge.Buildings.knowledgeStoreSize(def.BaseStorage, specific)
+		} else {
+			r.Storage = float64((def.BaseStorage + allBonus + specific) * k)
+			if techStorage != 1 {
+				r.Storage = float64(r.Storage * techStorage)
+			}
 		}
 		// The soldiers' store has a term of its own on top
 		// (config.MechanicSoldierStorage).

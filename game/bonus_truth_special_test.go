@@ -37,6 +37,9 @@ func TestBonusTruthEraMastery(t *testing.T) {
 			for _, meter := range sortedKeys(before) {
 				want := before[meter]
 				switch {
+				case meter == "storage:knowledge":
+					// The knowledge store is the knowledge buildings' alone:
+					// mastery leaves it where it was (knowledge_store.go).
 				case strings.HasPrefix(meter, "rate:"), strings.HasPrefix(meter, "storage:"):
 					want *= k
 				case meter == "research", meter == "buildtime":
