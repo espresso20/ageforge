@@ -292,7 +292,7 @@ Output is valued at **price parity**. Each age has a price level for each resour
 - Wood Camp (Primitive): costs 16 wood and makes 0.569 wood/tick fully staffed, so it repays itself in 28 ticks (56 seconds).
 - Stone Pit (Stone): costs 180 stone and 300 wood. At Stone Age parity (240 stone = 360 wood) that is worth 380 stone, and at 3.48 stone/tick it repays in about 3 minutes 40 seconds.
 
-**Flow resources keep hand-set rates:** food, faith, culture and soldiers. They feed workers, set morale and epoch odds, fill culture storage or make up your army. **Nanobots** keep theirs too: they are a build material, asked for in the hundreds of thousands where an age's other prices are in the trillions, so a Nanobot Vat makes the 6.55K a tick it is listed at and a building that asks for nanobots is not valued by them. Resources nothing in the age costs (marble and iron ore, for example, or knowledge outside the Medieval to Colonial Ages) also keep fixed rates.
+**Flow resources keep hand-set rates:** food, faith, culture and soldiers. They feed workers, set morale and epoch odds, fill culture storage or make up your army. **Nanobots** keep theirs too: they are a build material, asked for in the hundreds of thousands where an age's other prices are in the trillions, so a Nanobot Vat makes the 6.55K a tick it is listed at and a building that asks for nanobots is not valued by them. Resources nothing in the age costs (knowledge outside the Medieval to Colonial Ages, for example) also keep fixed rates.
 
 | Age | Target time | Payback (fully staffed) | Build-time cap | Storage build cap |
 |-----|-------------|-------------------------|----------------|-------------------|
@@ -348,6 +348,8 @@ Two shortages are left as they are. The Colonial Age has no maker of wood and th
 
 There is no market that swaps one material for another, so a town that wants a material builds a maker of it. The output tables below give a building's second material after the word with.
 
+Four raw materials are made and spent like wood or stone, in the ages that make them. In such an age every building and the wonder that cost the raw's worked form pay half of that part in the raw instead, one for one: marble with stone (Iron and Classical Age), iron ore with iron (Iron to Industrial Age), titanium ore with steel (Modern to Digital Age) and dark matter crystals with electricity (Cyberpunk to Space Age). The pair share one price level, so no price is larger or smaller overall. Housing, storage, the raws' own makers, the Mainframe Hall and the Black Market Hub pay no raw. See [What the ores are for](resources.md#what-the-ores-are-for).
+
 ---
 
 ## Lineage Output Progression
@@ -360,7 +362,6 @@ Several lineages change which resource they produce as you move through the ages
 |---|---|---|
 | Colosseum (Iron) | culture | Classical Age |
 | Uranium Mine (Victorian), Nuclear Extraction Plant (Electric) | uranium | Atomic Age |
-| Titanium Mine (Modern), Precision Mine (Information), Nano Drill Complex (Digital) | titanium ore | Space Age |
 | Titanium Smelter (Modern), Aerospace Foundry (Information), Nano Alloy Plant (Digital) | titanium | Space Age |
 | Augmentation Foundry (Cyberpunk) | plasma (its electricity counts at once) | Fusion Age |
 | Dark Matter Refinery (Cyberpunk), Exotic Matter Forge (Fusion) | dark matter | Interstellar Age |
@@ -395,7 +396,7 @@ Until then they count toward age requirements and milestones and make none of th
 | Cyberpunk to Space | dark matter crystals |
 | Interstellar to Quantum | antimatter |
 
-The quarries and mines from the Iron Age to the Industrial make stone and iron themselves, and the Uranium Mine and the Uranium Processing Works make stone. The marble, the iron ore, the titanium ore and the dark matter crystals are made and spent by nothing.
+The quarries and mines from the Iron Age to the Industrial make stone and iron themselves, and the Uranium Mine and the Uranium Processing Works make stone. The titanium mines and the crystal mines make only their raw. Every raw is made at the standard rate and spent by the buildings of the ages that make it.
 
 ### Engineering (Lineage 9)
 
@@ -453,19 +454,19 @@ Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one
 | Storage Pit | Stone | +1.2K |
 | Warehouse | Bronze | +6.8K |
 | Granary | Iron | +25K |
-| Classical Vault | Classical | +270K |
-| Strongroom | Medieval | +760K |
+| Classical Vault | Classical | +180K |
+| Strongroom | Medieval | +850K |
 | Renaissance Vault | Renaissance | +3.8M |
 | Colonial Warehouse | Colonial | +27M |
 | Industrial Depot | Industrial | +88M |
 | Victorian Vault | Victorian | +850M |
 | Electric Warehouse | Electric | +16B |
 | Atomic Vault | Atomic | +75B |
-| Modern Depot | Modern | +230B |
-| Info Vault | Information | +680B |
-| Digital Archive | Digital | +4.4T |
-| Cyber Vault | Cyberpunk | +28T |
-| Fusion Vault | Fusion | +87T |
+| Modern Depot | Modern | +100B |
+| Info Vault | Information | +660B |
+| Digital Archive | Digital | +2.7T |
+| Cyber Vault | Cyberpunk | +29T |
+| Fusion Vault | Fusion | +88T |
 | Orbital Depot | Space | +300T |
 | Stellar Vault | Interstellar | +8.6Q |
 | Galactic Vault | Galactic | +50Q |

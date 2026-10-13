@@ -109,7 +109,7 @@ The `-5% build cost` rewards here (Master Builder, Grand Architect) are real dis
 | First Soldiers | Train 5 soldiers (Iron Age) | +5% military power |
 | War Machine | Train 250 soldiers | +10% military power |
 | Iron Legion *(hidden)* | Train 500 soldiers and build 10 Barracks (Classical Age) | +5% all production |
-| Fortress State *(hidden)* | Build 14 Castle Keeps (Medieval Age) | +10% military power, +5% all production |
+| Fortress State *(hidden)* | Build 13 Castle Keeps (Medieval Age) | +10% military power, +5% all production |
 | Military Superpower *(hidden)* | Train 2,000 soldiers (Industrial Age) | +15% all production |
 
 Soldier counts are soldiers trained over the run, not the size of your current army.

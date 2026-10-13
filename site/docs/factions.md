@@ -126,6 +126,8 @@ Every deal is worded from your side, the same way on the panel, in `diplomacy de
 | **Goodwill** | one of the three resources whose stores are fullest | **+5 opinion** instead of goods (only offered below opinion 50) |
 | **Rare** | one of your construction resources | a construction resource of the **next** age that this age does not price, at a steep price (0.6 of its next-age parity) |
 
+In an age that prices a raw material, the raw is one of your construction resources, so a Buy or Rare deal can ask for it (see [What the ores are for](resources.md#what-the-ores-are-for)).
+
 Next to a Rare deal the panel shows `next age's goods`. A price you can't pay yet shows in red, and deals you've taken are dimmed.
 
 A deal stands on its own. Its rate is the ratio of the two resources' price levels times a multiple of 0.84 to 1.0 of parity, and it never pays better than parity. Food and culture are valued by what the age's producers of them make, so a deal that gives you food or culture costs much more than it did when the market set the price. Each deal is a fixed contract.

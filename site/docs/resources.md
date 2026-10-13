@@ -23,14 +23,14 @@ Amounts print with up to three figures and a unit from a thousand up: K, M, B, T
 
 ### Ores
 
-These four come from Geological Extraction mines. Nothing in the game spends them; see [What the ores are for](#what-the-ores-are-for).
+These four come from Geological Extraction mines. In the ages that make one, buildings are priced in it; see [What the ores are for](#what-the-ores-are-for).
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Marble | `marble` | Iron Age | 30 | Mined by the Iron and Classical Age marble quarries |
-| Iron Ore | `iron_ore` | Iron Age | 30 | Mined from the Iron to the Industrial Age |
-| Titanium Ore | `titanium_ore` | Space Age | 20 | Mined by Modern to Digital Age mines, which produce nothing until it unlocks |
-| Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | 10 | Mined from the Cyberpunk to the Space Age |
+| Marble | `marble` | Iron Age | 30 | Made by the Marble Quarry and the Marble Works. Bought in the Iron and Classical Age, with stone |
+| Iron Ore | `iron_ore` | Iron Age | 30 | Made from the Iron to the Industrial Age. Bought in those ages, with iron |
+| Titanium Ore | `titanium_ore` | Modern Age | 20 | Made by the Modern to Digital Age titanium mines. Bought in those ages, with steel |
+| Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | 10 | Made from the Cyberpunk to the Space Age. Bought in those ages, with electricity |
 
 ### Industrial Resources
 
@@ -137,14 +137,27 @@ Culture also pays for:
 
 ## What the ores are for
 
-Geological Extraction mines produce marble, iron ore, titanium ore and dark matter crystals. **Nothing spends them.** No building, technology, wonder or age requirement asks for any of the four, and the Metallurgy lineage doesn't refine them: metallurgy buildings make iron, steel, titanium, dark matter, antimatter and quantum flux and consume nothing, like every other producer.
+In the ages that make one, each of the four is a material like wood or stone. A building of that age pays half of the part that would have been its worked form in the raw instead, one for one. Marble stands in for half the stone (Iron and Classical Age), iron ore for half the iron (Iron to Industrial Age), titanium ore for half the steel (Modern to Digital Age) and dark matter crystals for half the electricity (Cyberpunk to Space Age). The age's wonder is paid the same way. 92 buildings cost a raw, wonders among them.
+
+A raw and its worked form share one price level, so a price in units is what it was: a building that cost 6K stone costs 3K stone and 3K marble. Housing and storage pay no raw, nor do the mines that make it. The Mainframe Hall and the Black Market Hub pay none either, because each makes what its age's mine is priced in.
+
+Where a raw is made:
+
+| Raw | Made by | Bought in |
+|-----|---------|-----------|
+| Marble | Marble Quarry, Marble Works | Iron and Classical Age |
+| Iron Ore | Marble Quarry, Marble Works, Stonemason's Guild, Iron Mine, Deep Iron Mine, Steam Mine | Iron to Industrial Age |
+| Titanium Ore | Titanium Mine, Precision Mine, Nano Drill Complex | Modern to Digital Age |
+| Dark Matter Crystals | Dark Crystal Mine, Exotic Mineral Extractor, Asteroid Crystal Mine | Cyberpunk to Space Age |
+
+A raw can also be a deal good in a faction trade, in the ages that price it (see [Trade deals](factions.md#trade-deals)).
 
 The ores count toward two milestones:
 
 - **Industrial Titan** (Industrial Age): stockpile 10,000 coal and 5,000 iron ore.
 - **Mining Syndicate**: build 23 stone pits and 10 iron mines.
 
-What Geological Extraction is good for is stone, iron (from the Iron Age to the Industrial), uranium (from the Victorian Age) and antimatter (from the Galactic Age). The Marble Quarry of the Iron Age through the Steam Mine of the Industrial Age make stone and iron as well as ore, because the ages charge for stone and iron. The mines that make only ore are the Modern to Digital Age titanium ore mines and the Cyberpunk to Space Age crystal mines. Within a domain, workers fill the newest buildings first, so a mine that makes only ore draws masonry workers away from your older quarries. Build those for the milestones, not for production.
+The quarries and mines of the Iron to the Industrial Age make stone, iron and iron ore, and the Marble Quarry and Marble Works make marble too. The titanium mines and the crystal mines make only their raw, at the standard rate. Within a domain, workers fill the newest buildings first, so a mine that makes only a raw draws masonry workers away from your older quarries.
 
 ---
 
@@ -228,8 +241,10 @@ There is no market to buy a material from. A material an age charges for comes f
 
 - **Stone** from the Iron Age on: the Marble Quarry through the Steam Mine, then the Uranium Mine and the Uranium Processing Works (all Geological Extraction).
 - **Iron**: the Marble Quarry through the Steam Mine in Geological Extraction, then the Bessemer Plant, the Electric Arc Furnace and the Advanced Alloy Plant in Metallurgy.
+- **Marble** in the Iron and Classical Age: the Marble Quarry and the Marble Works. **Iron ore** from the Iron Age to the Industrial: the Marble Quarry, the Marble Works, the Stonemason's Guild, the Iron Mine, the Deep Iron Mine and the Steam Mine.
 - **Steel** from the Modern Age on: the Titanium Smelter, Aerospace Foundry, Nano Alloy Plant, Dark Matter Refinery, Exotic Matter Forge and Orbital Refinery (Metallurgy).
 - **Titanium** in the Space Age from the Orbital Refinery, in the Interstellar Age from the Antimatter Forge and in the Galactic Age from Stellar Metallurgy. The earlier titanium smelters make only a trickle.
+- **Titanium ore** from the Modern Age to the Digital: the Titanium Mine, the Precision Mine and the Nano Drill Complex. **Dark matter crystals** from the Cyberpunk Age to the Space Age: the Dark Crystal Mine, the Exotic Mineral Extractor and the Asteroid Crystal Mine.
 - **Data** from the Modern Age: the Mainframe Hall, then the Server Farm and the rest of the Hacker lineage.
 - **Crypto** in the Cyberpunk Age: the Black Market Hub, with a trickle from the Neon Citadel wonder.
 - **Plasma** in the Interstellar Age: the Warp Drive Plant. **Dark matter** in the Quantum Age: the Reality Forge.

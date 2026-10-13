@@ -510,7 +510,7 @@ Build gathering camps and huts together. Each camp holds 3 workers and auto-recr
 
 - Lumber and masonry buildings are staffed as they finish, as far as housing and food allow. Stone and wood go into most building costs, so keep your housing ahead of your worker slots.
 - A `war_camp` produces the `soldiers` resource from the Iron Age, spent on campaigns. On auto its slots draw workers like any other building's; if you don't need soldiers yet, `roster military 0` keeps those workers for your producers.
-- From the Iron Age, this age's masonry building makes stone and iron as well as ore that nothing spends, and the routine fills the newest buildings first. A mine that makes only ore is worth building only for its milestones (see [What the ores are for](resources.md#what-the-ores-are-for)).
+- From the Iron Age, this age's masonry building makes stone, iron and iron ore, and from the Iron Age to the Classical marble too. The routine fills the newest buildings first. A mine that makes only a raw (the titanium and crystal mines, later on) is worth building for the buildings that cost it (see [What the ores are for](resources.md#what-the-ores-are-for)).
 
 ### Late game
 

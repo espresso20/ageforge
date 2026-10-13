@@ -32,7 +32,7 @@ func buildingsLineageTrade() []BuildingDef {
 		// producer and its only trade building (the market needs one), and
 		// the Bronze Age market is optional, so a gold price locked players
 		// out of gold for the whole age. The Payback Rule re-derives its rate.
-		BaseCost:    map[string]float64{"stone": 32000, "iron": 15000},
+		BaseCost:    map[string]float64{"stone": 16000, "marble": 16000, "iron": 7500, "iron_ore": 7500},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 23.9}},
 		BuildTicks:  300,
@@ -45,7 +45,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 2 — classical_age  rate=0.20
 	b = append(b, BuildingDef{
 		Name: "Merchant Quarter", Key: "merchant_quarter", Category: "production",
-		BaseCost:    map[string]float64{"stone": 210000, "gold": 88000, "iron": 59000},
+		BaseCost:    map[string]float64{"stone": 105000, "marble": 105000, "gold": 88000, "iron": 29500, "iron_ore": 29500},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 112}},
 		BuildTicks:  600,
@@ -151,7 +151,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 10 — modern_age  rate=51.20
 	b = append(b, BuildingDef{
 		Name: "Investment Firm", Key: "investment_firm", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.9e11, "electricity": 7e10, "data": 7e09},
+		BaseCost:    map[string]float64{"steel": 9.5e10, "titanium_ore": 9.5e10, "electricity": 7e10, "data": 7e09},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6160000}},
 		BuildTicks:  3600,
@@ -206,7 +206,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 14 — fusion_age  rate=819.20
 	b = append(b, BuildingDef{
 		Name: "Energy Exchange", Key: "energy_exchange", Category: "production",
-		BaseCost:     map[string]float64{"plasma": 2.5e13, "electricity": 7e13, "steel": 9.4e13},
+		BaseCost:     map[string]float64{"plasma": 2.5e13, "electricity": 3.5e13, "dark_matter_crystals": 3.5e13, "steel": 9.4e13},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "gold", Value: 819.2}},
 		BuildTicks:   3600,
@@ -220,7 +220,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 15 — space_age  rate=1638.40
 	b = append(b, BuildingDef{
 		Name: "Asteroid Market", Key: "asteroid_market", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 4.4e14, "plasma": 2.1e14, "electricity": 5.2e14},
+		BaseCost:    map[string]float64{"titanium": 4.4e14, "plasma": 2.1e14, "electricity": 2.6e14, "dark_matter_crystals": 2.6e14},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 1638.4}},
 		BuildTicks:  3600,

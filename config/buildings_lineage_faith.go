@@ -62,7 +62,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 3 — iron_age  rate=0.016
 	b = append(b, BuildingDef{
 		Name: "Temple", Key: "temple", Category: "research",
-		BaseCost:  map[string]float64{"stone": 15000, "gold": 6000, "iron": 3000},
+		BaseCost:  map[string]float64{"stone": 7500, "marble": 7500, "gold": 6000, "iron": 1500, "iron_ore": 1500},
 		CostScale: 1.15,
 		// Stage 1 proof-of-plumbing: small flat morale lift (see shrine). Stage 2
 		// broadens this to the full set; keep the value modest for now.
@@ -77,7 +77,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 4 — classical_age  rate=0.032
 	b = append(b, BuildingDef{
 		Name: "Oracle House", Key: "oracle_house", Category: "research",
-		BaseCost:    map[string]float64{"stone": 90000, "gold": 30000, "iron": 15000},
+		BaseCost:    map[string]float64{"stone": 45000, "marble": 45000, "gold": 30000, "iron": 7500, "iron_ore": 7500},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.032}, {Type: "morale", Value: 0.0009}},
 		BuildTicks:  600,
@@ -130,7 +130,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 8 — industrial_age  rate=0.512
 	b = append(b, BuildingDef{
 		Name: "Church", Key: "church", Category: "research",
-		BaseCost:    map[string]float64{"stone": 6e07, "gold": 3e07, "iron": 2.4e07},
+		BaseCost:    map[string]float64{"stone": 6e07, "gold": 3e07, "iron": 1.2e07, "iron_ore": 1.2e07},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.512}, {Type: "morale", Value: 0.0015}},
 		BuildTicks:  3600,
@@ -182,7 +182,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 12 — modern_age  rate=8.192
 	b = append(b, BuildingDef{
 		Name: "Meditation Center", Key: "meditation_center", Category: "research",
-		BaseCost:    map[string]float64{"steel": 8.4e10, "electricity": 3e10, "gold": 6e10},
+		BaseCost:    map[string]float64{"steel": 4.2e10, "titanium_ore": 4.2e10, "electricity": 3e10, "gold": 6e10},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 8.192}, {Type: "morale", Value: 0.0027}},
 		BuildTicks:  3600,
@@ -221,7 +221,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 15 — cyberpunk_age  rate=65.536
 	b = append(b, BuildingDef{
 		Name: "Neon Sanctuary", Key: "neon_sanctuary", Category: "research",
-		BaseCost:    map[string]float64{"data": 5.1e11, "crypto": 2.7e12, "electricity": 5.4e12},
+		BaseCost:    map[string]float64{"data": 5.1e11, "crypto": 2.7e12, "electricity": 2.7e12, "dark_matter_crystals": 2.7e12},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 65.536}, {Type: "morale", Value: 0.0041}},
 		BuildTicks:  3600,
@@ -234,7 +234,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 16 — fusion_age  rate=131.072
 	b = append(b, BuildingDef{
 		Name: "Quantum Chapel", Key: "quantum_chapel", Category: "research",
-		BaseCost:    map[string]float64{"plasma": 1.2e13, "electricity": 3.9e13, "steel": 5.1e13},
+		BaseCost:    map[string]float64{"plasma": 1.2e13, "electricity": 1.95e13, "dark_matter_crystals": 1.95e13, "steel": 5.1e13},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 131.072}, {Type: "morale", Value: 0.0047}},
 		BuildTicks:  3600,
@@ -247,7 +247,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 17 — space_age  rate=262.144
 	b = append(b, BuildingDef{
 		Name: "Orbital Sanctuary", Key: "orbital_sanctuary", Category: "research",
-		BaseCost:    map[string]float64{"titanium": 2.1e14, "plasma": 9e13, "electricity": 2.7e14},
+		BaseCost:    map[string]float64{"titanium": 2.1e14, "plasma": 9e13, "electricity": 1.35e14, "dark_matter_crystals": 1.35e14},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 262.144}, {Type: "morale", Value: 0.0054}},
 		BuildTicks:  3600,

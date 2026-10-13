@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -188,9 +189,17 @@ func TestKeystoneOldSaveKeepsItsAge(t *testing.T) {
 	}
 	// Half the bank (of the price then) was in the save, and it is still
 	// there: the file says what it held.
+	// (The save is from before iron ore and marble were priced: it banks the
+	// parts the Colosseum had, and the game prices it in those and the raws.)
 	banked := savedFixture(t, keystoneFixtureBanked).WonderBanks["colosseum"]
-	if len(banked) != len(ge.Buildings.defs["colosseum"].BaseCost) {
-		t.Fatalf("the save banks %d parts of the Colosseum, the game prices it in %d", len(banked), len(ge.Buildings.defs["colosseum"].BaseCost))
+	raws := 0
+	for res := range ge.Buildings.defs["colosseum"].BaseCost {
+		if slices.Contains(config.RawMaterials, res) {
+			raws++
+		}
+	}
+	if len(banked)+raws != len(ge.Buildings.defs["colosseum"].BaseCost) {
+		t.Fatalf("the save banks %d parts of the Colosseum, the game prices it in %d (%d of them raw)", len(banked), len(ge.Buildings.defs["colosseum"].BaseCost), raws)
 	}
 	for res, had := range banked {
 		if got := ge.Buildings.wonderBanks["colosseum"][res]; got < had {

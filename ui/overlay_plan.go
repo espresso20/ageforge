@@ -38,9 +38,9 @@ func (p *planPanel) reset() {
 }
 
 // provider renders the panel for OverlayManager.
-func (p *planPanel) provider(state game.GameState, _ int) string {
+func (p *planPanel) provider(state game.GameState, screenW int) string {
 	p.sel = clampSel(p.sel, len(state.Plan))
-	return planPanelText(state, p.sel, p.note, p.noteGood, p.clearArmed)
+	return planPanelText(state, p.sel, p.note, p.noteGood, p.clearArmed, overlayTextWidth(screenW))
 }
 
 func clampSel(sel, n int) int {
@@ -164,11 +164,17 @@ func planItemTitle(v game.PlanItemView) string {
 // what it is short of, the reason it is blocked, or what it will pay. A build
 // item's overflow bank shows wherever it holds something.
 func planItemDetail(v game.PlanItemView, state game.GameState) string {
+	return strings.ReplaceAll(planItemDetailGlued(v, state), glue, " ")
+}
+
+// planItemDetailGlued is planItemDetail with the spaces inside each material
+// of a price glued, so planDetailRows can wrap between materials.
+func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
 	switch v.Status {
 	case game.PlanStatusBlocked:
 		note := planNote(v)
 		if len(v.Banked) > 0 {
-			note += " (" + formatPlanCost(v.Banked) + " banked from overflow)"
+			note += " (" + planPriceWhole(v.Banked) + " banked from overflow)"
 		}
 		return theme.Paint(theme.RoleDim, note)
 	case game.PlanStatusWaiting:
@@ -199,10 +205,34 @@ func planItemDetail(v game.PlanItemView, state game.GameState) string {
 		case len(due) == 0:
 			return theme.Paint(theme.RoleDim, "starts next tick, paid from its bank")
 		case len(v.Banked) > 0:
-			return theme.Paint(theme.RoleDim, "starts next tick for "+formatPlanCost(due)+" and its bank")
+			return theme.Paint(theme.RoleDim, "starts next tick for "+planPriceWhole(due)+" and its bank")
 		}
-		return theme.Paint(theme.RoleDim, "starts next tick for "+formatPlanCost(v.Cost))
+		return theme.Paint(theme.RoleDim, "starts next tick for "+planPriceWhole(v.Cost))
 	}
+}
+
+// planDetailLead is the cells before an item's detail: the seven that indent
+// the line, the status word (seven) and two spaces.
+const planDetailLead = 16
+
+// planDetailRows is detail on one row when it fits width cells, otherwise
+// wrapped at its spaces onto further rows under the first. The materials of a
+// price are joined with glue, so a material ("49.8T dark matter crystals")
+// is not broken while it fits a row of its own.
+func planDetailRows(detail string, width int) string {
+	if visibleLen(strings.ReplaceAll(detail, glue, " ")) <= width {
+		return strings.ReplaceAll(detail, glue, " ")
+	}
+	return strings.Join(wrapWords(detail, width), "\n"+strings.Repeat(" ", planDetailLead))
+}
+
+// planPriceWhole is formatPlanCost with each material's spaces glued.
+func planPriceWhole(cost map[string]float64) string {
+	var parts []string
+	for _, k := range sortedMapKeys(cost) {
+		parts = append(parts, strings.ReplaceAll(game.Amount(cost[k], k), " ", glue))
+	}
+	return strings.Join(parts, ", ")
 }
 
 // planDue is what an item's next start takes from the stores: its price less
@@ -239,7 +269,9 @@ func sortedMapKeys(m map[string]float64) []string {
 }
 
 // planPanelText renders the panel. Pure: state in, text out.
-func planPanelText(state game.GameState, sel int, note string, noteGood, clearArmed bool) string {
+// width is the cells the text has; a detail that is longer than the room left
+// of the status word goes on over further lines under its first.
+func planPanelText(state game.GameState, sel int, note string, noteGood, clearArmed bool, width int) string {
 	var sb strings.Builder
 	sb.WriteString(theme.Paint(theme.RoleAccent, "═══ Build plan ═══") + "\n")
 	sb.WriteString(theme.Paint(theme.RoleDim, " Started in order as resources come in, while you play and while you are away.\n Each item is paid when it starts. A waiting item holds its price back from the\n items below it; items below may still start with what it doesn't need.") + "\n\n")
@@ -258,7 +290,7 @@ func planPanelText(state game.GameState, sel int, note string, noteGood, clearAr
 			} else {
 				title = theme.Paint(theme.RoleText, tview.Escape(title))
 			}
-			fmt.Fprintf(&sb, " %s%s\n       %s  %s\n", marker, title, planStatusText(v), planItemDetail(v, state))
+			fmt.Fprintf(&sb, " %s%s\n       %s  %s\n", marker, title, planStatusText(v), planDetailRows(planItemDetailGlued(v, state), width-planDetailLead))
 		}
 		// Research takes no room: the 60 are for everything else.
 		load := game.PlanLoad(state.Plan)

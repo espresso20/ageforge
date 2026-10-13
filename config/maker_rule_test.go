@@ -243,11 +243,21 @@ func TestMainframeHallIsTheMedianMaker(t *testing.T) {
 	var others []maker
 	best := 0.0
 	outs := map[string]float64{}
+	// The Hall was priced against the makers the age had when no raw was
+	// priced; the Titanium Mine, a maker of nothing else, became one when
+	// titanium ore did. Its output is left out, as it was when the Hall's
+	// price was set (the price in units did not move).
+	noRaw := map[string]bool{}
+	for _, o := range BaseBuildings() {
+		for _, raw := range RawMaterials {
+			noRaw[o.Key+"/"+raw] = true
+		}
+	}
 	for _, o := range BaseBuildings() {
 		if o.RequiredAge != "modern_age" || o.Category == "wonder" || o.Key == d.Key {
 			continue
 		}
-		price, out := makerUnits(o, lv, nil)
+		price, out := makerUnits(o, lv, noRaw)
 		outs[o.Key] = out
 		best = math.Max(best, out)
 		_ = price
@@ -257,14 +267,15 @@ func TestMainframeHallIsTheMedianMaker(t *testing.T) {
 			continue
 		}
 		price, _ := makerUnits(o, lv, nil)
-		others = append(others, maker{price, o.BaseCost["steel"] / lv["steel"], o.BaseCost["electricity"] / lv["electricity"]})
+		// (titanium ore is paired with the Modern Age's steel, at its level)
+		others = append(others, maker{price, (o.BaseCost["steel"] + o.BaseCost["titanium_ore"]) / lv["steel"], o.BaseCost["electricity"] / lv["electricity"]})
 	}
 	sort.Slice(others, func(i, j int) bool { return others[i].u < others[j].u })
 	n := len(others)
-	if n%2 != 0 {
-		t.Fatalf("%d other healthy makers: the test reads the mean of the two middle ones", n)
+	a, b := others[n/2], others[n/2] // an odd number: the middle one
+	if n%2 == 0 {                    // an even number: the mean of the two middle ones
+		a, b = others[n/2-1], others[n/2]
 	}
-	a, b := others[n/2-1], others[n/2]
 	median := (a.u + b.u) / 2
 	share := (a.steel/(a.steel+a.power) + b.steel/(b.steel+b.power)) / 2
 	price, _ := makerUnits(d, lv, nil)

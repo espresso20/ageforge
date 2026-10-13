@@ -187,7 +187,7 @@ func Ages() []AgeDef {
 			Quip:            "Everything is connected now, which seemed like a good idea at the time.",
 			BuildingReqs:    map[string]int{"nuclear_reactor": 18, "bunker_complex": 18, "research_campus": 18, "atomic_vault": 5, "agricultural_complex": 8, "uranium_processing_works": 8, "petroleum_refinery": 8, "spiritual_center": 8, "corporate_hq": 8, "cinema": 8, "advanced_alloy_plant": 8},
 			UnlockBuildings: []string{"tower_block", "modern_depot", "agri_complex", "oil_platform", "titanium_mine", "think_tank", "meditation_center", "special_ops_hq", "investment_firm", "seaport", "power_grid_hub", "titanium_smelter", "oil_refinery", "mainframe_hall", "tv_studio", "space_program", "nano_foundry"},
-			UnlockResources: []string{"data", "nanobots"},
+			UnlockResources: []string{"data", "nanobots", "titanium_ore"},
 		},
 		// === 13: INFORMATION AGE (Digital Era) ===
 		{
@@ -235,7 +235,7 @@ func Ages() []AgeDef {
 			Quip:            "Space: vast, silent, and absolutely covered in your garbage now.",
 			BuildingReqs:    map[string]int{"fusion_reactor": 10, "fusion_reactor_array": 10, "plasma_command": 10, "fusion_vault": 5, "bio_reactor_farm": 8, "exotic_mineral_extractor": 8, "theoretical_institute": 8, "molecular_synthesizer": 8, "quantum_chapel": 8, "neural_art_complex": 8, "exotic_matter_forge": 8, "quantum_server_farm": 8},
 			UnlockBuildings: []string{"orbital_habitat", "orbital_depot", "hydroponic_bay", "quantum_organic_extractor", "asteroid_crystal_mine", "deep_space_observatory", "orbital_sanctuary", "space_force_base", "asteroid_market", "launch_complex", "orbital_refinery", "solar_collector_array", "orbital_data_relay", "zero_g_gallery", "dyson_scaffold"},
-			UnlockResources: []string{"titanium", "titanium_ore"},
+			UnlockResources: []string{"titanium"},
 		},
 		// === 18: INTERSTELLAR AGE (Cosmic Era) ===
 		{

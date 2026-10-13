@@ -57,8 +57,16 @@ func TestSaveFromBeforeTheBiggerTownLoads(t *testing.T) {
 		if got := def.BaseCost[res]; got != need {
 			t.Errorf("the Colosseum costs %v %s, the tables say %v", got, res, need)
 		}
-		if had := saved.WonderBanks["colosseum"][res]; had >= need/2 {
-			t.Errorf("the save's bank of %v %s is %v of the new price: the fixture does not predate the change", had, res, had/need)
+		// A worked form shares its price with its raw (iron with iron ore):
+		// the save is from before the split, so it is measured against both.
+		whole := need
+		for form, raw := range map[string]string{"iron": "iron_ore", "stone": "marble"} {
+			if res == form {
+				whole += config.BuildingByKey()["colosseum"].BaseCost[raw]
+			}
+		}
+		if had := saved.WonderBanks["colosseum"][res]; had >= whole/2 {
+			t.Errorf("the save's bank of %v %s is %v of the new price: the fixture does not predate the change", had, res, had/whole)
 		}
 	}
 	if ge.Buildings.IsWonderBankFull("colosseum") {

@@ -23,7 +23,7 @@ func buildingsMonuments() []BuildingDef {
 		// Classical Age — first real culture stockpiles appear. Small primer.
 		{
 			Name: "Cultural Obelisk", Key: "cultural_obelisk", Category: "monument",
-			BaseCost:  map[string]float64{"culture": 710, "stone": 17000},
+			BaseCost:  map[string]float64{"culture": 710, "stone": 8500, "marble": 8500},
 			CostScale: 1.15,
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.01},

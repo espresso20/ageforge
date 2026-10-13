@@ -525,7 +525,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 		brace      map[string]float64
 	}{
 		{"iron_era", "iron_age", map[string]float64{"gold": 99000, "iron": 99000, "stone": 99000}},
-		{"iron_era", "classical_age", map[string]float64{"gold": 900000, "iron": 900000, "stone": 870000}},
+		{"iron_era", "classical_age", map[string]float64{"gold": 630000, "iron": 630000, "stone": 520000}},
 		{"iron_era", "medieval_age", map[string]float64{"gold": 3100000, "iron": 3100000, "stone": 3100000}},
 		{"steel_era", "renaissance_age", map[string]float64{"gold": 14000000, "steel": 7200000}},
 		{"steel_era", "colonial_age", map[string]float64{"gold": 95000000, "steel": 95000000}},
@@ -533,10 +533,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		{"electric_era", "victorian_age", map[string]float64{"electricity": 2700000, "oil": 2200000000, "steel": 2900000000}},
 		{"electric_era", "electric_age", map[string]float64{"electricity": 33000000000, "oil": 7300000000, "steel": 50000000000}},
 		{"electric_era", "atomic_age", map[string]float64{"electricity": 270000000000, "oil": 9800000000, "steel": 270000000000}},
-		{"digital_era", "modern_age", map[string]float64{"data": 46000000000, "electricity": 960000000000, "gold": 960000000000}},
-		{"digital_era", "information_age", map[string]float64{"data": 930000000000, "electricity": 3000000000000, "gold": 3000000000000}},
-		{"digital_era", "digital_age", map[string]float64{"data": 3800000000000, "electricity": 16000000000000, "gold": 16000000000000}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 13000000000000, "electricity": 100000000000000}},
+		{"digital_era", "modern_age", map[string]float64{"data": 46000000000, "electricity": 570000000000, "gold": 570000000000}},
+		{"digital_era", "information_age", map[string]float64{"data": 930000000000, "electricity": 2500000000000, "gold": 2500000000000}},
+		{"digital_era", "digital_age", map[string]float64{"data": 3800000000000, "electricity": 10000000000000, "gold": 10000000000000}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 13000000000000, "electricity": 97000000000000}},
 		{"neon_era", "fusion_age", map[string]float64{"data": 16000000000000, "electricity": 360000000000000}},
 		{"neon_era", "space_age", map[string]float64{"data": 18000000000000, "electricity": 1.2e+15}},
 	}

@@ -115,6 +115,7 @@ func MakerFills() []MakerFill {
 		{Age: "colonial_age", Material: "stone", Building: "deep_iron_mine", Rule: 3},
 		{Age: "industrial_age", Material: "iron", Building: "steam_mine", Rule: 2},
 		{Age: "industrial_age", Material: "stone", Building: "steam_mine", Rule: 3},
+		{Age: "industrial_age", Material: "iron_ore", Building: "steam_mine", Rule: 1},
 		{Age: "victorian_age", Material: "iron", Building: "bessemer_plant", Rule: 3},
 		{Age: "victorian_age", Material: "stone", Building: "uranium_mine", Rule: 3},
 		{Age: "electric_age", Material: "electricity", Building: "power_generator", Rule: 6},
@@ -128,13 +129,19 @@ func MakerFills() []MakerFill {
 		{Age: "modern_age", Material: "electricity", Building: "oil_refinery", Rule: 6},
 		{Age: "modern_age", Material: "gold", Building: "seaport", Rule: 6},
 		{Age: "modern_age", Material: "steel", Building: "titanium_smelter", Rule: 3},
+		{Age: "modern_age", Material: "titanium_ore", Building: "titanium_mine", Rule: 1},
 		{Age: "information_age", Material: "data", Building: "server_farm", Rule: 6},
 		{Age: "information_age", Material: "steel", Building: "aerospace_foundry", Rule: 3},
+		{Age: "information_age", Material: "titanium_ore", Building: "precision_mine", Rule: 1},
 		{Age: "digital_age", Material: "steel", Building: "nano_alloy_plant", Rule: 3},
+		{Age: "digital_age", Material: "titanium_ore", Building: "nano_drill_complex", Rule: 1},
 		{Age: "cyberpunk_age", Material: "crypto", Building: "black_market", Rule: 6},
 		{Age: "cyberpunk_age", Material: "steel", Building: "dark_matter_refinery", Rule: 3},
+		{Age: "cyberpunk_age", Material: "dark_matter_crystals", Building: "dark_crystal_mine", Rule: 1},
 		{Age: "fusion_age", Material: "steel", Building: "exotic_matter_forge", Rule: 3},
+		{Age: "fusion_age", Material: "dark_matter_crystals", Building: "exotic_mineral_extractor", Rule: 1},
 		{Age: "space_age", Material: "steel", Building: "orbital_refinery", Rule: 3},
+		{Age: "space_age", Material: "dark_matter_crystals", Building: "asteroid_crystal_mine", Rule: 1},
 		{Age: "interstellar_age", Material: "plasma", Building: "warp_drive_plant", Rule: 3},
 		{Age: "interstellar_age", Material: "titanium", Building: "antimatter_forge", Rule: 3},
 		{Age: "galactic_age", Material: "titanium", Building: "stellar_metallurgy", Rule: 3},
@@ -155,12 +162,14 @@ func MakerOpenHoles() []MakerOpenHole {
 func makerSkipped(res string) bool { return res == "knowledge" || flowResources[res] }
 
 // MakerExcluded is the set of (building, material) pairs MakerFills put into
-// the tables, keyed "building/material": the tables as they stood before the
-// fills read without them.
+// the tables (Rules 2 to 6), keyed "building/material": the tables as they
+// stood before the fills read without them.
 func MakerExcluded() map[string]bool {
 	out := map[string]bool{}
 	for _, f := range MakerFills() {
-		out[f.Building+"/"+f.Material] = true
+		if f.Rule != 1 { // a Rule 1 fill re-derives an output the building already had
+			out[f.Building+"/"+f.Material] = true
+		}
 	}
 	return out
 }
@@ -288,6 +297,71 @@ type MakerHole struct {
 // makerRaw is the raw form of each material that has one.
 var makerRaw = map[string]string{"iron": "iron_ore", "stone": "marble", "titanium": "titanium_ore", "dark_matter": "dark_matter_crystals"}
 
+// RawMaterials are the four raw materials, in the order the tables list them.
+// A raw is a material like wood or stone in the ages that make it: buildings
+// of the age are priced in it, half of what they would cost in its worked form.
+var RawMaterials = []string{"iron_ore", "marble", "titanium_ore", "dark_matter_crystals"}
+
+// rawPartnerForms are, for each raw, the worked forms it can pair with, in
+// order. In an age the raw's partner is the first of them that the age's
+// buildings are priced in (a building keeps half of its partner part, so the
+// answer is the same before any raw was priced). makerRaw is the first form
+// of each.
+var rawPartnerForms = map[string][]string{
+	"iron_ore":             {"iron"},
+	"marble":               {"stone"},
+	"titanium_ore":         {"titanium", "steel"},
+	"dark_matter_crystals": {"dark_matter", "electricity"},
+}
+
+// RawLeftOut names the buildings the raw rule would price in a raw and does
+// not, by building key, with the reason: the Modern Age's data and the
+// Cyberpunk Age's crypto each have one source in their age, and the raw's
+// first maker is priced in it. A raw paid by that source would be a loop (the
+// Mainframe Hall costs titanium ore, which the Titanium Mine makes, and the
+// mine costs the Hall's data), so a town could never start. A test proves each
+// entry is that loop; nothing here is a tuning knob.
+func RawLeftOut() map[string]string {
+	return map[string]string{
+		"mainframe_hall": "the Modern Age's only maker of data, which the Titanium Mine (the first maker of titanium ore) is priced in",
+		"black_market":   "the Cyberpunk Age's only maker of crypto, which the Dark Crystal Mine (the first maker of dark matter crystals) is priced in",
+	}
+}
+
+// ageMakesRaw reports whether a building of age makes raw (a production
+// effect with a positive value).
+func ageMakesRaw(defs []BuildingDef, age, raw string) bool {
+	for _, d := range defs {
+		if d.RequiredAge != age {
+			continue
+		}
+		for _, e := range d.Effects {
+			if e.Type == "production" && e.Value > 0 && e.Target == raw {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// RawPartner is the worked form raw is priced alongside in age: the first of
+// its forms that a (non-wonder) building of the age is priced in. It is "" in
+// an age with no maker of the raw, where the raw is not priced and nothing
+// pairs, and in an age that prices none of its forms.
+func RawPartner(defs []BuildingDef, age, raw string) string {
+	if !ageMakesRaw(defs, age, raw) {
+		return ""
+	}
+	for _, form := range rawPartnerForms[raw] {
+		for _, d := range defs {
+			if d.RequiredAge == age && d.Category != "wonder" && d.BaseCost[form] > 0 {
+				return form
+			}
+		}
+	}
+	return ""
+}
+
 // UnstaffedShare is what a building with worker slots makes with nobody in it,
 // as a share of its listed output; workers add StaffedShare at a full crew.
 // The game's own rates read these (game/buildings.go).
@@ -357,10 +431,18 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 	for _, d := range defs {
 		byKey[d.Key] = d
 	}
-	skip := map[string]bool{}
+	// skip are the outputs a fill put there: read without them, the tables are
+	// as they stood before the fills. skipMade is the same without the Rule 1
+	// pairs: a Rule 1 building made the material already, at a trickle, so it
+	// is still a maker of it (the trickle Rule 1 finds), while its output,
+	// which the fill put on the standard, counts for nothing.
+	skip, skipMade := map[string]bool{}, map[string]bool{}
 	for _, f := range fills {
 		if f.Rule < 5 { // a placed maker is a maker that is there
 			skip[f.Building+"/"+f.Material] = true
+			if f.Rule > 1 {
+				skipMade[f.Building+"/"+f.Material] = true
+			}
 		}
 	}
 	var out []MakerHole
@@ -368,7 +450,7 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 		lv := levels[a.Key]
 		buildable := func(d BuildingDef) bool { return d.RequiredTech == "" || held[i][d.RequiredTech] }
 		makes := func(d BuildingDef, res string) bool {
-			if skip[d.Key+"/"+res] {
+			if skipMade[d.Key+"/"+res] {
 				return false
 			}
 			for _, e := range d.Effects {

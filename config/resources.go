@@ -55,7 +55,7 @@ func BaseResources() []ResourceDef {
 		// Modern Age (Digital Era); titanium ore unlocks in the Space Age
 		{Name: "Data", Key: "data", BaseStorage: 50, Age: "modern_age", Description: "Digital information and analytics"},
 		{Name: "Nanobots", Key: "nanobots", BaseStorage: 20, Age: "modern_age", Description: "Microscopic machines, made by the Nano Foundry from the Modern Age"},
-		{Name: "Titanium Ore", Key: "titanium_ore", BaseStorage: 20, Age: "space_age", Description: "Raw titanium ore from mines"},
+		{Name: "Titanium Ore", Key: "titanium_ore", BaseStorage: 20, Age: "modern_age", Description: "Raw titanium ore from mines"},
 		// Cyberpunk Age (Neon Era)
 		{Name: "Crypto", Key: "crypto", BaseStorage: 50, Age: "cyberpunk_age", Description: "Decentralized digital currency"},
 		{Name: "Dark Matter Crystals", Key: "dark_matter_crystals", BaseStorage: 10, Age: "cyberpunk_age", Description: "Crystallized dark matter from deep mines"},

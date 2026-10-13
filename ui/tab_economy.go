@@ -436,7 +436,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 			if bs.AtMaxCount {
 				sb.WriteString(hangingRow("   ", "[yellow]Building limit reached.[-]", w))
 			} else {
-				sb.WriteString(costRow("   Cost: ", bs.NextCost, w))
+				sb.WriteString(costRow("   Cost: ", buildingPrice(&state, key, bs), w))
 				if line := wall.line(bs); line != "" {
 					sb.WriteString(hangingRow("   ", "[yellow]"+line+"[-]", w))
 				}
@@ -559,26 +559,52 @@ func layoutBuildings(head string, entries [][]string, w, h, first int) (lines []
 	return lines, from, end - from
 }
 
+// buildingPrice is the price a building screen shows for the next copy of
+// key. A wonder is paid through its bank at the price in the ruleset; the
+// build-cost factor that scales every other building's price does not reach
+// it, so the engine's NextCost for a wonder is not what it charges. The bank,
+// the wonder panel and the plan all use the ruleset's price, and so does this.
+func buildingPrice(state *game.GameState, key string, bs game.BuildingState) map[string]float64 {
+	if bs.Category == "wonder" {
+		if def, ok := state.Ruleset().Building(key); ok {
+			return def.BaseCost
+		}
+	}
+	return bs.NextCost
+}
+
 // costRow writes a cost under lead ("   Cost: "), wrapped to w cells with
 // each further line starting under the first part. A part ("1.12K iron")
-// is never broken.
+// is kept whole on a line; one that is wider than the room left of the lead
+// ("49.8T dark matter crystals" in a narrow box) goes on over several lines
+// at its spaces, so nothing of it is cut.
 func costRow(lead string, cost map[string]float64, w int) string {
 	parts := strings.Split(FormatCost(cost), ", ")
 	indent := runeLen(lead)
 	var lines []string
 	cur := ""
+	// begin starts a line with p.
+	begin := func(p string) {
+		if runeLen(p) <= w-indent {
+			cur = p
+			return
+		}
+		chunks := wrapWords(p, w-indent)
+		lines = append(lines, chunks[:len(chunks)-1]...)
+		cur = chunks[len(chunks)-1]
+	}
 	for i, p := range parts {
 		if i < len(parts)-1 {
 			p += ","
 		}
 		switch {
 		case cur == "":
-			cur = p
+			begin(p)
 		case indent+runeLen(cur)+1+runeLen(p) <= w:
 			cur += " " + p
 		default:
 			lines = append(lines, cur)
-			cur = p
+			begin(p)
 		}
 	}
 	lines = append(lines, cur)

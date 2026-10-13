@@ -123,7 +123,7 @@ Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contracto
 | Faith | 3 · 26 · 87 · 280 · 600 |
 | Food | 4 · 28 · 92 · 290 · 610 |
 | Geological extraction | 8 · 40 · 160 · 400 · 670 |
-| Hacker | 3 · 17 · 68 · 170 · 370 |
+| Hacker | 2 · 17 · 68 · 170 · 370 |
 | Harbor | 2 · 4 · 10 · 24 · 55 |
 | Housing | 6 · 36 · 120 · 410 · 1,000 |
 | Knowledge | 3 · 26 · 87 · 280 · 590 |
