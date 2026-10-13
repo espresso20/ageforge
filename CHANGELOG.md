@@ -270,6 +270,7 @@ All notable changes to AgeForge are documented here.
 - Milestone chains rebalanced: completion speed-boosts normalized across all six chains (Military was 18× weaker than Settlement — now in line); the Trade chain expanded 3 → 6 milestones (5 via the milestone revamp, then a sixth — Maritime Empire — with the Trade System Expansion); and Military/Trade/Scholar capstones now pay out broad `production_all` instead of domain-only bonuses, so finishing any chain helps your whole economy.
 
 ### Changed
+- **Knowledge buildings keep their tier, like storage.** An age advance no longer offers them an upgrade and `upgrade` refuses them, because the per-copy figures do not rise by tier and an upgrade could take the knowledge store down (four Natural Philosophy Halls to Research Institutes took it from 3.36e7 to 3.64e6). Each age's knowledge building is built new in its own age and the earlier ones stay. A save that already upgraded some keeps what it has, and an offer it still held for one is dropped. `sell` help now reads `not wonders, storage or knowledge buildings`.
 - **A bonus to every store says it leaves knowledge out.** A tech or a wonder reads `+500 storage for every resource but knowledge`, a storage building's line reads the same, and the Research bonuses line reads `Storage (not knowledge)`.
 - **The catastrophe choice says what is spared:** `wonders, storage and knowledge buildings are spared`.
 - **The over-the-store sentence names the knowledge building** when the price is in knowledge.

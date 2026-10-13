@@ -38,7 +38,7 @@ build                    list all available buildings with costs and count built
 
 When you advance to a new age, buildings that have a next-tier equivalent do **not** change on their own. Each one gets a **pending upgrade** marker and keeps producing at its old rate. You choose when to upgrade, one building type at a time.
 
-Storage buildings never get an upgrade: your stashes, storage pits and vaults keep counting toward your storage for the rest of the run (see [Storage Buildings](#storage-buildings-21-tiers)).
+Storage buildings never get an upgrade: your stashes, storage pits and vaults keep counting toward your storage for the rest of the run (see [Storage Buildings](#storage-buildings-21-tiers)). Knowledge buildings never get one either: they keep their tier, and each age's knowledge building is built new in its own age (see [The Knowledge Store](knowledge.md#the-knowledge-store)).
 
 ### The upgrade hint
 

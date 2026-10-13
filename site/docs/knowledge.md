@@ -76,7 +76,7 @@ A building priced in knowledge (Medieval to Colonial) meets the same wall. Knowl
 
 **The gate sizes it.** The gate asks for copies of the age's knowledge building, and the store they hold is sized to the techs: an age's dearest tech fits with a quarter to spare, and the second-cheapest tech of the next age fits with a fifth to spare. Each knowledge building climbs at 1.5 a copy, so the gate asks for 5 to 10 of them, not the 8 to 20 it did.
 
-**An age advance** trims what you hold, as it does every stock but faith (see [What Happens on Age Advance](ages.md#what-happens-on-age-advance)). Catastrophes spare knowledge buildings, as they spare storage and wonders (see [Catastrophe](catastrophe.md)). Knowledge buildings cannot be sold.
+**An age advance** trims what you hold, as it does every stock but faith (see [What Happens on Age Advance](ages.md#what-happens-on-age-advance)). Catastrophes spare knowledge buildings, as they spare storage and wonders (see [Catastrophe](catastrophe.md)). Knowledge buildings cannot be sold, and they keep their tier: an age advance offers them no upgrade and the `upgrade` command refuses them, so each age's knowledge building is built new in its own age and the earlier ones stay and keep holding what they did.
 
 ---
 
