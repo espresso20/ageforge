@@ -77,6 +77,11 @@ func GateStorageCopies(defs []BuildingDef, ages []AgeDef) map[string]map[string]
 // storageRuleCount is how many copies of d, a building that is not storage,
 // the reference town holds.
 func storageRuleCount(d BuildingDef, gate map[string]int) int {
+	if IsKnowledgeBuilding(d) {
+		// The town holds the copies the gate asks, at the spend the
+		// knowledge rule keeps (knowledge_rule.go), not TownCopies.
+		return gate[d.Key]
+	}
 	return max(TownCopies, gate[d.Key])
 }
 

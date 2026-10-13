@@ -36,12 +36,13 @@ func TestTownCopiesIsTheShortestWait(t *testing.T) {
 }
 
 // TestEveryProducerClimbsAtTheProducerRate: ProducerRate is the rate of every
-// building that makes something, so the derivation above is about the
+// building that makes something and is not a knowledge building (those climb
+// at KnowledgeRate, held in knowledge_rule_test.go), so the derivation above is about the
 // buildings the gate rule asks TownCopies of.
 func TestEveryProducerClimbsAtTheProducerRate(t *testing.T) {
 	seen := 0
 	for _, d := range BaseBuildings() {
-		if d.Category == "wonder" || !makesSomething(d) {
+		if d.Category == "wonder" || !makesSomething(d) || IsKnowledgeBuilding(d) {
 			continue
 		}
 		seen++
