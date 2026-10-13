@@ -75,6 +75,10 @@ type Source struct {
 	WorkerClasses []config.WorkerClassDef
 	WorkerDomains []string
 
+	// Teaching is the ladder of the bonus to what workers make with every
+	// scholar teaching, by the age's place in the order of ages.
+	Teaching []config.TeachingStep
+
 	// PrestigeUpgrades is the whole shop, retired perks included; LegacyKit
 	// the kit's keys in shop order.
 	PrestigeUpgrades []config.PrestigeUpgradeDef
@@ -139,6 +143,7 @@ func FromConfig() Source {
 		Mechanics:            config.Mechanics(),
 		WorkerClasses:        config.WorkerClasses(),
 		WorkerDomains:        config.WorkerDomains(),
+		Teaching:             config.TeachingTable(),
 		PrestigeUpgrades:     config.PrestigeUpgrades(),
 		LegacyKit:            config.LegacyKit(),
 		Targets:              maps.Clone(config.AgeTargets),

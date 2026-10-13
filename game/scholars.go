@@ -142,7 +142,7 @@ func (ge *GameEngine) scholarPosts(n int) (research, teach int) {
 // teachingFull is the worker-output bonus with every scholar teaching, in
 // the town's age.
 func (ge *GameEngine) teachingFull() float64 {
-	return config.TeachingBonus(ge.progress.ageIndex[ge.age])
+	return ge.rules.TeachingBonus(ge.progress.ageIndex[ge.age])
 }
 
 // teachingBonus is the worker-output bonus the scholars give now: the full

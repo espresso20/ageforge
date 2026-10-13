@@ -99,6 +99,7 @@ type Set struct {
 	targetTicks map[string]float64
 	stretch     map[string]float64
 	softCap     config.SoftCap
+	teaching    []config.TeachingStep
 
 	// Worked out from the buildings and techs: age -> resource -> value.
 	priceLevels map[string]map[string]float64
@@ -147,6 +148,7 @@ func Compile(src Source) *Set {
 		targets:    maps.Clone(src.Targets),
 		stretch:    maps.Clone(src.Stretch),
 		softCap:    src.SoftCap,
+		teaching:   slices.Clone(src.Teaching),
 		dooms:      maps.Clone(src.Catastrophes),
 		unknown:    src.UnknownCatastrophe,
 		lastDoom:   src.LastPassage,

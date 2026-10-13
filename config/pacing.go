@@ -160,7 +160,7 @@ func priceLevels(defs []BuildingDef) map[string]map[string]float64 {
 		if d.RequiredAge == "" || d.Category == "wonder" {
 			continue
 		}
-		for res, c := range d.BaseCost {
+		for res, c := range levelPrice(d) {
 			if c <= 0 || flowResources[res] {
 				continue
 			}
@@ -193,7 +193,8 @@ func priceLevels(defs []BuildingDef) map[string]map[string]float64 {
 				if d.RequiredAge != age || d.Category == "wonder" {
 					continue
 				}
-				if s := d.BaseCost[partner] + d.BaseCost[raw]; s > 0 {
+				if lp := levelPrice(d); lp[partner]+lp[raw] > 0 {
+					s := lp[partner] + lp[raw]
 					sums = append(sums, s)
 				}
 			}
@@ -203,6 +204,17 @@ func priceLevels(defs []BuildingDef) map[string]map[string]float64 {
 		}
 	}
 	return out
+}
+
+// levelPrice is the first-copy price a building contributes to its age's price
+// levels: its price in the tables, or for a building that was priced in
+// knowledge the price it had before that part was taken away (see
+// repricedFrom).
+func levelPrice(d BuildingDef) map[string]float64 {
+	if old, ok := repricedFrom[d.Key]; ok {
+		return old
+	}
+	return d.BaseCost
 }
 
 func median(v []float64) float64 {

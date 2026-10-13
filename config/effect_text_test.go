@@ -98,7 +98,7 @@ func TestEventTextCarriesNoNumbers(t *testing.T) {
 // share of the stock, a rate as a share of income) or a share of the
 // workers, and each sits in the range the sizes were tuned in.
 func TestEventEffectsAreSized(t *testing.T) {
-	resources := ResourceByKey()
+	resources := withResearchTarget(ResourceByKey())
 	for _, e := range allEventDefs() {
 		if len(e.Effects) == 0 {
 			t.Errorf("%s has no effects", e.Key)
@@ -202,6 +202,9 @@ func TestAwakeningTextMatchesEffects(t *testing.T) {
 				want = append(want, strings.ToLower(RateText(e.Target, e.Value)))
 			case "production_all":
 				want = append(want, "all production +"+FormatPercent(e.Value))
+			case "research":
+				// Work for the tech in progress: the text says it as research.
+				want = append(want, "research +"+FormatAmount(e.Value)+"/tick")
 			default:
 				t.Errorf("%s: effect type %q has no wording here; add it", a.Key, e.Type)
 			}

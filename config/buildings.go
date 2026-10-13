@@ -163,7 +163,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"stone": 340000, "iron": 100000, "gold": 69000},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 820000}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.5e06}},
 			BuildTicks:  200,
 			RequiredAge: "medieval_age",
 			Description: "Fortified storehouse.",
@@ -175,7 +175,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"stone": 430000, "gold": 260000, "iron": 100000},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 4100000}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 6e06}},
 			BuildTicks:  250,
 			RequiredAge: "renaissance_age",
 			Description: "Ornate storage facility.",
@@ -187,7 +187,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"wood": 2600000, "stone": 1700000, "gold": 1000000},
 			CostScale: 1.75,
 
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2.7e07}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2.4e07}},
 			BuildTicks:  300,
 			RequiredAge: "colonial_age",
 			Description: "Trade goods warehouse.",
