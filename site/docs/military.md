@@ -451,7 +451,7 @@ The five military milestones form a chain. Completing all five grants a title, a
 | `first_soldiers` | First Soldiers | train 5 soldiers | Iron Age | +0.05 military power |
 | `war_machine` | War Machine | train 250 soldiers | Iron Age | +0.10 military power |
 | `iron_legion` | Iron Legion | train 500 soldiers, build 10 Barracks | Classical Age | +5% all production |
-| `fortress_state` | Fortress State | build 14 Castle Keeps | Medieval Age | +0.10 military power, +5% all production |
+| `fortress_state` | Fortress State | build 13 Castle Keeps | Medieval Age | +0.10 military power, +5% all production |
 | `military_superpower` | Military Superpower | train 2,000 soldiers | Industrial Age | +15% all production |
 
 `iron_legion`, `fortress_state` and `military_superpower` are **hidden** until you are more than halfway to them or reach the age before their minimum age, so expect them to appear mid-game.
@@ -533,7 +533,7 @@ See [Morale](morale.md) for the full system.
 
 **Workers need a built building.** You can't assign workers to a building you haven't built yet.
 
-**Plan Castle Keeps early for `fortress_state`.** It needs 14 Castle Keeps (Medieval Age), a large stone and iron investment, so start building them as soon as you reach the Medieval Age. The +0.10 military power and +5% all production are worth the cost.
+**Plan Castle Keeps early for `fortress_state`.** It needs 13 Castle Keeps (Medieval Age), a large stone and iron investment, so start building them as soon as you reach the Medieval Age. The +0.10 military power and +5% all production are worth the cost.
 
 **Keep missions running.** There's no cooldown beyond the mission's own duration (100 to 160 ticks in the Primitive and Stone Ages, 156 to 416 from the Bronze Age on, rolled at launch). When one resolves, send the next.
 

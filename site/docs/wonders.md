@@ -80,6 +80,8 @@ Once completed, the wonder appears as a landmark on the Map (`map` command).
 
 Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **64 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). Each wonder has its own resource mix.
 
+In the ages that make a raw material, a wonder pays half of its stone, iron, steel or electricity part in the raw instead, one for one: marble, iron ore, titanium ore or dark matter crystals. The Colosseum, the Parthenon, the Crystal Palace, the Space Program, the Global Network, the World Simulation, the Neon Citadel and the Stellar Cradle are paid that way, and the wonder's total in price units is unchanged. See [What the ores are for](resources.md#what-the-ores-are-for).
+
 The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **800 food**, the Great Monolith **2.4K food**, and the Sistine Chapel **32K faith** and **950K culture**.
 
 A part of a wonder's price can be larger than the store for that resource. That is why the wonder is the one purchase the size of a store does not block (see [Storage is a wall](buildings.md#storage-is-a-wall)): it is banked a deposit at a time, and overflow adds to the deposits.
@@ -139,8 +141,10 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 512K |
-| Iron | 114K |
+| Stone | 256K |
+| Marble | 256K |
+| Iron | 56.8K |
+| Iron Ore | 56.8K |
 | Gold | 101K |
 
 **Bonus:** +100 housing · +2.0 culture/t
@@ -152,9 +156,11 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 1.6M |
+| Stone | 800K |
+| Marble | 800K |
 | Gold | 704K |
-| Iron | 704K |
+| Iron | 352K |
+| Iron Ore | 352K |
 
 **Bonus:** +2.0 culture/t · +1.2 knowledge/t
 
@@ -206,7 +212,8 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Resource | Cost |
 |---|---|
 | Steel | 720M |
-| Iron | 640M |
+| Iron | 320M |
+| Iron Ore | 320M |
 | Gold | 496M |
 | Coal | 640M |
 
@@ -257,7 +264,8 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 1.32T |
+| Steel | 660B |
+| Titanium Ore | 660B |
 | Gold | 1.19T |
 | Electricity | 738B |
 
@@ -270,7 +278,8 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 7.68T |
+| Steel | 3.84T |
+| Titanium Ore | 3.84T |
 | Data | 928B |
 | Electricity | 1.54T |
 | Gold | 3.84T |
@@ -284,7 +293,8 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Steel | 54.4T |
+| Steel | 27.2T |
+| Titanium Ore | 27.2T |
 | Data | 1.6T |
 | Electricity | 32T |
 
@@ -298,7 +308,8 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Resource | Cost |
 |---|---|
 | Steel | 160T |
-| Electricity | 123T |
+| Electricity | 61.6T |
+| Dark Matter Crystals | 61.6T |
 | Crypto | 19.2T |
 | Data | 10.2T |
 
@@ -313,7 +324,8 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 |---|---|
 | Steel | 688T |
 | Plasma | 544T |
-| Electricity | 736T |
+| Electricity | 368T |
+| Dark Matter Crystals | 368T |
 
 **Bonus:** +15.0 plasma/t · +200.0 electricity/t
 

@@ -386,7 +386,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 
 From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset for prestige points to spend on the legacy kit. See [Prestige System](prestige.md).
 
-**Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport (after Containerization), Power Grid Hub (after Advanced Electrics), Titanium Smelter, Oil Refinery, Mainframe Hall, TV Studio, Space Program, Nano Foundry, Monument of Ages (after Television) · **Resources:** Data, Nanobots
+**Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport (after Containerization), Power Grid Hub (after Advanced Electrics), Titanium Smelter, Oil Refinery, Mainframe Hall, TV Studio, Space Program, Nano Foundry, Monument of Ages (after Television) · **Resources:** Data, Nanobots, Titanium Ore
 
 ---
 
@@ -502,7 +502,7 @@ From this age a prestige counts as a full run: it pays 120 points, against 93 fr
 | Theoretical Institute | 8 |
 | Tokamak Array | 10 |
 
-**Unlocks:** Orbital Habitat, Orbital Depot, Hydroponic Bay, Quantum Organic Extractor, Asteroid Crystal Mine, Deep Space Observatory, Orbital Sanctuary, Space Force Base, Asteroid Market, Launch Complex, Orbital Refinery, Solar Collector Array, Orbital Data Relay, Zero G Gallery, Dyson Scaffold · **Resources:** Titanium, Titanium Ore
+**Unlocks:** Orbital Habitat, Orbital Depot, Hydroponic Bay, Quantum Organic Extractor, Asteroid Crystal Mine, Deep Space Observatory, Orbital Sanctuary, Space Force Base, Asteroid Market, Launch Complex, Orbital Refinery, Solar Collector Array, Orbital Data Relay, Zero G Gallery, Dyson Scaffold · **Resource:** Titanium
 
 ---
 
