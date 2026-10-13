@@ -141,8 +141,8 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
 		"interstellar_age": {2000000000, 31000000000, 6.7e+15, 2.7e+16},
 		"galactic_age":     {4200000000, 67000000000, 1.7e+17, 1.7e+17},
-		"quantum_age":      {8700000000, 150000000000, 6.1e+18, 4.7e+17},
-		"transcendent_age": {9400000000, 160000000000, 6.6e+18, 5.1e+17},
+		"quantum_age":      {8700000000, 150000000000, 6.5e+18, 4.8e+17},
+		"transcendent_age": {9400000000, 160000000000, 7e+18, 5.3e+17},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -515,17 +515,19 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // longer a trickle there and its Brace stops at the ceiling with gold and
 // iron: all three materials of the Iron Era are on it, where stone alone was
 // under it (59K, 82K and 110K a third of the warning made of it). The Iron
-// Age reads 0.66x with Brace at 0.31 of the warning, the Medieval Age 0.44x
-// at 0.21 (the stores the ceiling is taken from got smaller when the raw
-// materials split the prices in two); the Medieval Age is under the bar. The Classical Age's stone is 870K, a third of the warning
+// Age reads 0.61x with Brace at 0.29 of the warning, the Medieval Age 0.39x
+// at 0.18 (the stores the ceiling is taken from got smaller when the raw
+// materials split the prices in two, and the research bonuses on stone, with
+// Masonry and Civil Engineering, raised the income the price is taken from);
+// the Medieval Age is under the bar. The Classical Age's stone is 870K, a third of the warning
 // rounded up and under its 900K ceiling: the age is not on it (a price counts
 // as on the ceiling only when it equals the price row's own BraceCeiling, the
 // rounded-down price a capped material is given; the test took a tenth of
 // room before, which counted this age), and its Brace takes 0.34 of the
 // warning, the ratio 0.70x.
 var doomChoiceOnTheCeiling = map[string]float64{
-	"iron_age":       0.66,
-	"medieval_age":   0.44,
+	"iron_age":       0.61,
+	"medieval_age":   0.39,
 	"colonial_age":   0.60,
 	"industrial_age": 0.06,
 }

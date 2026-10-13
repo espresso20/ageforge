@@ -267,9 +267,9 @@ Both answers are priced by the age the harbinger arrives in, and keep that price
 | Era | Harbinger arrives in | Brace (level 1) | Hours of income | Appease (level 1) | The warning lasts |
 |-----|----------------------|-----------------|-----------------|-------------------|-------------------|
 | Stone Era | any age | refused: nothing can strike there | | refused | |
-| Iron Era | Iron Age | 99K gold, 99K iron, 99K stone | 24 min | 1.8K faith | 1.3 h to 3.9 h |
-|  | Classical Age | 630K gold, 630K iron, 520K stone | 37 min | 3.3K faith | 1.8 h to 5.5 h |
-|  | Medieval Age | 3.1M gold, 3.1M iron, 3.1M stone | 30 min | 6.6K faith | 2.3 h to 7.0 h |
+| Iron Era | Iron Age | 99K gold, 99K iron, 99K stone | 23 min | 1.8K faith | 1.3 h to 3.9 h |
+|  | Classical Age | 720K gold, 720K iron, 600K stone | 37 min | 3.3K faith | 1.8 h to 5.5 h |
+|  | Medieval Age | 3.1M gold, 3.1M iron, 3.1M stone | 26 min | 6.6K faith | 2.3 h to 7.0 h |
 | Steel Era | Renaissance Age | 14M gold, 7.2M steel | 1.0 h | 15K faith, 150K culture | 3.1 h to 9.4 h |
 |  | Colonial Age | 95M gold, 95M steel | 1.0 h | 41K faith, 360K culture | 3.6 h to 10.9 h |
 |  | Industrial Age | 350M gold, 350M steel | 7 min | 150K faith, 1.6M culture | 4.2 h to 12.5 h |
@@ -283,9 +283,9 @@ Both answers are priced by the age the harbinger arrives in, and keep that price
 |  | Fusion Age | 360T electricity, 16T data | 3.7 h | 130M faith, 1.9B culture | 10.4 h to 31.2 h |
 |  | Space Age | 1.2Q electricity, 18T data | 4.0 h | 270M faith, 4.2B culture | 11.4 h to 34.3 h |
 | Cosmic Era: the Reality Tear | Interstellar Age | 27Q titanium, 3.4Q dark matter | 10.7 h | 600M faith, 9.3B culture | 12.5 h to 37.4 h |
-|  | Galactic Age | 170Q titanium, 92Q dark matter | 10.4 h | 1.3B faith, 20B culture | 12.5 h to 37.4 h |
-|  | Quantum Age | 3Qi dark matter, 240Q titanium | 10.8 h | 2.6B faith, 43B culture | 12.5 h to 37.4 h |
-|  | Transcendent Age | 3.3Qi dark matter, 260Q titanium | 10.7 h | 2.9B faith, 47B culture | 12.5 h to 37.4 h |
+|  | Galactic Age | 170Q titanium, 95Q dark matter | 10.4 h | 1.3B faith, 20B culture | 12.5 h to 37.4 h |
+|  | Quantum Age | 3.3Qi dark matter, 240Q titanium | 10.7 h | 2.6B faith, 43B culture | 12.5 h to 37.4 h |
+|  | Transcendent Age | 3.6Qi dark matter, 270Q titanium | 10.7 h | 2.9B faith, 47B culture | 12.5 h to 37.4 h |
 | Cosmic Era: the Last Passage | Interstellar Age, as you enter the era | 27Q titanium, 6.7Q dark matter | 21.0 h | 2B faith, 31B culture | until you prestige |
 
 The warning times are for a first run. On known ground an age and its warning are both shorter by the age's [Era Mastery](prestige.md#era-mastery) speed, and the age makes that much more per tick, so the price is the same.

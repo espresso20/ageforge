@@ -517,22 +517,22 @@ func Milestones() []MilestoneDef {
 		},
 		{
 			Name: "Deep Thinker", Key: "deep_thinker",
-			Description:  "Research 45 techs.",
+			Description:  "Research 46 techs.",
 			Flavor:       "Technology upon technology. Your scholars have begun ending sentences with 'well, actually.'",
 			Category:     "scholar",
 			MinAge:       "bronze_age",
-			MinTechCount: 45,
+			MinTechCount: 46,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.05},
 			},
 		},
 		{
 			Name: "Philosophes", Key: "philosophes",
-			Description:  "Research 63 techs.",
+			Description:  "Research 64 techs.",
 			Flavor:       "Enough technologies to fill a salon. The philosophers now argue about things on purpose.",
 			Category:     "scholar",
 			MinAge:       "classical_age",
-			MinTechCount: 63,
+			MinTechCount: 64,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.05},
 			},
@@ -540,11 +540,11 @@ func Milestones() []MilestoneDef {
 		// renaissance_mind: Renaissance Age gated
 		{
 			Name: "Renaissance Mind", Key: "renaissance_mind",
-			Description: "Research 82 techs.",
+			Description: "Research 83 techs.",
 			Flavor:      "So many technologies that the answer to everything, apparently, requires a sequel.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "renaissance_age",
-			MinTechCount: 82,
+			MinTechCount: 83,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.10},
 			},
@@ -566,11 +566,11 @@ func Milestones() []MilestoneDef {
 		// adds a touch of production_all.
 		{
 			Name: "Tech Master", Key: "tech_master",
-			Description: "Research 113 techs.",
+			Description: "Research 114 techs.",
 			Flavor:      "Technology mastered by the shelf. You now understand the universe well enough to be properly worried.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "information_age",
-			MinTechCount: 113,
+			MinTechCount: 114,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.10},
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},

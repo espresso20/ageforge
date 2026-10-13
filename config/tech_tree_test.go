@@ -256,8 +256,8 @@ func TestRealTechKinds(t *testing.T) {
 			}
 		}
 	}
-	if count[TechKeystone] != 21 || count[TechSpine] != 27 || count[TechCapstone] != 12 || count[TechOptional] != 142 {
-		t.Errorf("kinds: %d keystone, %d spine, %d capstone, %d optional; want 21, 27, 12 and 142",
+	if count[TechKeystone] != 21 || count[TechSpine] != 27 || count[TechCapstone] != 12 || count[TechOptional] != 143 {
+		t.Errorf("kinds: %d keystone, %d spine, %d capstone, %d optional; want 21, 27, 12 and 143",
 			count[TechKeystone], count[TechSpine], count[TechCapstone], count[TechOptional])
 	}
 }
