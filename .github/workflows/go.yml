@@ -60,7 +60,7 @@ jobs:
             GOOS=${target%/*} GOARCH=${target#*/} go build -o /dev/null .
           done
 
-      # Each package gets 15 minutes, not go test's default 10. Under the
+      # Each package gets 25 minutes, not go test's default 10. Under the
       # race detector on these runners the flavor package alone takes 9 to
       # 10 while the ui and map packages share the cores, and on 2026-10-07
       # it timed out three times with nothing failing. 25 still reports a
