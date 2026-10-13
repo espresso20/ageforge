@@ -337,6 +337,7 @@ All notable changes to AgeForge are documented here.
 - **Catastrophe odds are visible**: the bare `catastrophe` command and the Epoch tab show the chance for the next transition (12–18% by faith).
 
 ### Fixed
+- **The recovery code no longer scrolls out of view.** `account` printed it near the top of a long reply, and the log keeps the end of a reply, so on a small terminal the code was gone. The new `account show code` shows the code on its own, and `account` points to it. A badge a command earns is now logged before the command's reply, so the reply stays the last line.
 - **The wonders list no longer says 100% banked when a part is missing.** Each part counts only up to its price, so a bank that lacks a part reads under 100%.
 - **A wonder's price is the same on every screen.** The Buildings panel, the Buildings overlay and the `build` list showed the price cut by the techs that lower build costs (the Neon Citadel read 15.5T crypto), while the bank and the plan charge the full price (19.2T). They now show what the bank charges.
 - **The longest prices fit the screen.** A price in five materials is wrapped at its materials in the Buildings panel, the Buildings overlay and the build plan, so none is cut off or broken inside a word. The Log wraps at words too, which the `build` list needed.

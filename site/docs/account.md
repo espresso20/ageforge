@@ -189,11 +189,13 @@ There's no restore command. A backup is just files, so you put them back by hand
 
 ## The recovery code
 
-Run the `account` command at the `>` prompt to see the active account's short ID and its **recovery code**:
+Run `account show code` at the `>` prompt to see the active account's **recovery code**, and nothing else:
 
 ```
-account
+account show code
 ```
+
+The `account` command shows the short ID and the backup help, and points to this command.
 
 The recovery code looks like this:
 

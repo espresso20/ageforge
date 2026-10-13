@@ -978,8 +978,9 @@ func shortAccountID(id string) string {
 
 // cmdAccount handles the `account` command family (the accounts design §9 Phase 4):
 //
-//	account                 → show the short ID + recovery code + honest "identity,
-//	                          not progress" copy.
+//	account                 → show the short ID + honest "identity, not progress"
+//	                          copy, and point to account show code.
+//	account show code       → show the recovery code, and nothing else.
 //	account switch <name>   → make another local account the live one. In a game this
 //	                          saves the game to its own account and returns to the menu.
 //	account import <path>   → restore a backup into its own account's slot. Never
@@ -1001,7 +1002,6 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		var lines []string
 		lines = append(lines, fmt.Sprintf("[gold]Account:[-] %s  (%s)", acct.Name(), shortAccountID(acct.AccountID)))
-		lines = append(lines, fmt.Sprintf("[gold]Recovery code:[-] %s", acct.RecoveryCode()))
 		lines = append(lines, "")
 		lines = append(lines, recoveryCodeNote...)
 		lines = append(lines, "It is not a password: it only says which account you are. Write it down.")
@@ -1010,7 +1010,6 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "")
 		lines = append(lines, "[gold]Progress backups:[-] each account is its own slot, and an import adds or")
 		lines = append(lines, "restores that account next to your others. Switch accounts in the [gold]Accounts[-] panel on the main menu.")
-		engine.NoteRecoveryShown(acct.AccountID)
 		for _, path := range []string{"account list", "account badges", "account switch", "account export", "account backup", "account import"} {
 			u := helpRow(path)
 			lines = append(lines, fmt.Sprintf("  %-33s %s", u.Form, u.Text))
@@ -1018,6 +1017,9 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "")
 		lines = append(lines, "[red]Wipe account[-] (delete an account's ID, unlocks, stats and saves for good)")
 		lines = append(lines, "lives in the [gold]Accounts[-] panel on the main menu, behind a type-your-name confirmation.")
+		// Last, because the log keeps the end of a long reply in view: the code itself
+		// is its own short reply (account show code), never lost above the fold.
+		lines = append(lines, "Show your recovery code with:  account show code")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
@@ -1054,6 +1056,21 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "")
 		lines = append(lines, "Switch with:  account switch <name>   (or use the Accounts panel on the main menu)")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+
+	case "show":
+		// The recovery code on its own, so it is not lost at the top of a long reply.
+		if len(args) < 2 || !strings.EqualFold(args[1], "code") {
+			return CommandResult{Message: usageFor("account show code"), Type: "error"}
+		}
+		if acct == nil {
+			return CommandResult{
+				Message: "Accounts are unavailable (no account is loaded).",
+				Type:    "warning",
+			}
+		}
+		engine.NoteRecoveryShown(acct.AccountID)
+		// The code alone: with a label it takes a third row of the log at 80x24.
+		return CommandResult{Message: acct.RecoveryCode(), Type: "info"}
 
 	case "switch":
 		if len(args) < 2 {

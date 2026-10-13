@@ -1412,6 +1412,9 @@ func (d *Dashboard) submitInput() {
 		d.mapPanel.update(d.engine.GetState())
 	}
 	if result.Message != "" && result.Type != "success" {
+		// A badge this command earned is announced first, so the reply, which the
+		// player asked for, is the last line in the log and stays in view.
+		d.announceBadges()
 		d.engine.AddLog(result.Type, result.Message)
 	}
 }
