@@ -108,12 +108,12 @@ func logsProvider(state game.GameState, _ int) string {
 	// Research in progress
 	if state.Research.CurrentTech != "" {
 		sb.WriteString("\n [gold]Researching:[-]\n")
-		done := state.Research.TotalTicks - state.Research.TicksLeft
-		bar := ProgressBar(float64(done), float64(state.Research.TotalTicks), 10)
-		// The bar already carries the fraction, so the number beside it is
-		// better spent on the thing the bar cannot say: how long is left.
-		fmt.Fprintf(&sb, "  [cyan]%s[-] %s (%s left)\n",
-			state.Research.CurrentTechName, bar, formatTicks(state.Research.TicksLeft, state))
+		fmt.Fprintf(&sb, "  [cyan]%s[-] %s %d%% (%s)\n",
+			state.Research.CurrentTechName, researchBar(state, 10), researchPercent(state), researchLeft(state))
+		for _, l := range queueLines(state) {
+			fmt.Fprintf(&sb, "  [gray]%s[-]\n", l)
+		}
+		fmt.Fprintf(&sb, "  [gray]%s[-]\n", scholarsLine(state))
 	}
 
 	// Worker assignments (compact)

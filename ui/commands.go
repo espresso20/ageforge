@@ -221,10 +221,16 @@ func registry() []*Command {
 			Args: []Arg{{Kind: ArgTech, Optional: true}},
 			Help: []Usage{{"research <tech>", "Research a tech"}},
 			Subs: []*Command{
-				{Name: "cancel", Dangerous: true, Help: []Usage{{"research cancel", "Cancel current research (the knowledge spent is not refunded)"}}},
+				{Name: "cancel", Dangerous: true, Help: []Usage{{"research cancel", "Cancel current research (the work done on it is lost)"}}},
 				sub("list", "research list", "List available techs"),
 				sub("tree", "research tree [close|far]", "Open the tech tree, zoomed in on big badges (close) or out on the whole tree (far)", Arg{Kind: ArgWord, Words: []string{"close", "far"}, Optional: true}),
-				sub("card", "research card <tech>", "Open the tech tree on a tech's card: what it does, costs and needs", Arg{Kind: ArgTech}),
+				sub("card", "research card <tech>", "Open the tech tree on a tech's card: what it does, how long it takes and what it needs", Arg{Kind: ArgTech}),
+			}},
+		{Name: "scholars", Section: secResearch, BareOK: true,
+			Args: []Arg{{Kind: ArgPercent, Optional: true}},
+			Help: []Usage{
+				{"scholars", "Show your scholars: their kinds, how many research and teach, and what teaching adds"},
+				{"scholars <percent>", "Set the share of your scholars that research (100 by default); the rest teach"},
 			}},
 		panel("techs", ""),
 		{Name: "expedition", Aliases: []string{"exp"}, Section: secResearch, Panel: "Scouting expeditions (resource cost)",

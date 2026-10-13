@@ -348,12 +348,13 @@ func WorkerClassByDomainAndAge(domain, ageKey string) (WorkerClassDef, bool) {
 	return WorkerClassDef{}, false
 }
 
-// WorkerDomains returns the canonical ordered list of all 12 worker domain keys.
+// WorkerDomains returns the canonical ordered list of all 11 worker domain keys.
 // This is used to initialise WorkerState on new games and to drive iteration
-// order in the UI — keep this list in sync with the domains in WorkerClasses().
+// order in the UI. The knowledge classes in WorkerClasses() are not a domain
+// any more (no building has worker slots in it): they name the scholars.
 func WorkerDomains() []string {
 	return []string{
-		"food", "lumber", "masonry", "knowledge",
+		"food", "lumber", "masonry",
 		"faith", "military", "trade", "engineering",
 		"metallurgy", "energy", "hacker", "astronaut",
 	}

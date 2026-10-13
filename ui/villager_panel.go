@@ -14,7 +14,6 @@ var panelDomainLabels = map[string]string{
 	"food":        "Food",
 	"lumber":      "Lumber",
 	"masonry":     "Masonry",
-	"knowledge":   "Knowledge",
 	"faith":       "Faith",
 	"military":    "Military",
 	"trade":       "Trade",

@@ -148,6 +148,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdWorkers(args, engine)
 	case "roster":
 		return cmdRoster(args, engine)
+	case "scholars":
+		return cmdScholars(args, engine)
 	case "logs":
 		return CommandResult{OverlayName: "logs"}
 	case "epoch":
@@ -569,6 +571,45 @@ func cmdRoster(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: reply.Line, Type: game.LogRoutine}
 }
 
+// cmdScholars is `scholars`: the scholars by kind, how many research and
+// teach, and the bonus teaching gives; `scholars <percent>` sets the share
+// that research and prints the engine's reply.
+func cmdScholars(args []string, engine *game.GameEngine) CommandResult {
+	usage := usageFor("scholars")
+	switch len(args) {
+	case 0:
+		return CommandResult{Message: scholarsText(engine.GetState()), Type: "info"}
+	case 1:
+		pct, err := strconv.Atoi(strings.TrimSuffix(args[0], "%"))
+		if err != nil {
+			return CommandResult{Message: usage, Type: "error"}
+		}
+		line, err := engine.SetResearchShare(pct)
+		if err != nil {
+			return errorResult(err)
+		}
+		return CommandResult{Message: line, Type: game.LogRoutine}
+	}
+	return CommandResult{Message: usage, Type: "error"}
+}
+
+// scholarsText is `scholars`: the kinds and counts, the line that says how
+// many research and teach, and the setting.
+func scholarsText(st game.GameState) string {
+	s := st.Scholars
+	if s.Total <= 0 {
+		return "You have " + noScholars + "."
+	}
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "[gold]Scholars[-] %d\n", s.Total)
+	for _, g := range s.Kinds {
+		fmt.Fprintf(&sb, "  %s × %d\n", g.Kind, g.Count)
+	}
+	sb.WriteString(scholarsLine(st) + "\n")
+	fmt.Fprintf(&sb, "%d%% of your scholars research. Set it with 'scholars <percent>'.", s.Share)
+	return sb.String()
+}
+
 // parsePercent reads a share: a number from 0 to 100, with or without a %
 // sign.
 func parsePercent(arg string) (float64, error) {
@@ -824,6 +865,9 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
 			if line := wall.line(b); line != "" {
 				lines = append(lines, "      [yellow]"+line+"[-]")
+			}
+			if limit := atLimit(b); limit != "" {
+				lines = append(lines, "      [yellow]"+limit+"[-]")
 			}
 		}
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
@@ -1474,6 +1518,17 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		lines = append(lines, "  [yellow]"+line+"[-]")
 	}
 
+	// Teaching is a source of the worker output bonus: its own line, with
+	// the share of the scholars that teach.
+	if s := state.Scholars; s.Total > 0 {
+		lines = append(lines, fmt.Sprintf("  [yellow]Teaching: %s to what workers make (%d of %d scholars teach)[-]",
+			textfmt.SignedPercent(s.TeachingBonus), s.Teaching, s.Total))
+	}
+	// The scholars' work is not a resource: its pool is shown here.
+	if line := game.PoolLine(game.PoolOf(state, "knowledge_rate")); line != "" {
+		lines = append(lines, "  [yellow]"+line+"[-]")
+	}
+
 	shown := 0
 	for _, key := range sortedKeysOf(state.Resources) {
 		rs := state.Resources[key]
@@ -1720,18 +1775,22 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 		if !ts.Available {
 			continue
 		}
-		mark := ""
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%s)%s%s", key, ts.Name, formatTicks(ts.TicksNeeded, state), mark, keystoneMark(ts)))
-	}
-
-	if state.Research.CurrentTech != "" {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Currently researching: %s (%s left)[-]",
-			state.Research.CurrentTechName, formatTicks(state.Research.TicksLeft, state)))
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%s)%s", key, ts.Name, techTime(ts, state), keystoneMark(ts)))
 	}
 
 	if len(lines) == 1 {
 		lines = append(lines, "  [gray]No techs to research right now.[-]")
 	}
+	if state.Research.CurrentTech != "" {
+		lines = append(lines, "\n[yellow]Currently researching: "+researchingLine(state, 10)+"[-]")
+	}
+	if q := queueLines(state); len(q) > 0 {
+		lines = append(lines, "[gold]Queued:[-]")
+		for _, l := range q {
+			lines = append(lines, "  "+l)
+		}
+	}
+	lines = append(lines, "[gray]"+scholarsLine(state)+"[-]")
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }

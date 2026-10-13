@@ -2,8 +2,10 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // storage_wall.go is the storage wall as the screens show it: a price larger
@@ -26,12 +28,8 @@ func overStoreRes(state game.GameState, cost map[string]float64) string {
 }
 
 // storageBuildingName is the building that raises the store of res in the
-// current age: the age's storage building, or for knowledge the age's
-// knowledge building (the engine's own choice). "" when the age has none.
+// current age: the age's storage building. "" when the age has none.
 func storageBuildingName(state game.GameState, res string) string {
-	if res == "knowledge" {
-		return ""
-	}
 	for _, d := range state.Ruleset().Buildings() {
 		if d.Category == "storage" && d.RequiredAge == state.Age {
 			return d.Name
@@ -87,8 +85,25 @@ func (sw *storeWall) buildingFor(res string) string {
 }
 
 // buildingText is a building's description as the lists show it. A knowledge
-// building adds what one copy holds, in the form a storage building's
-// description gives its figure: "+140 knowledge storage."
+// building adds the scholars one copy comes with and its copies against the
+// most that can be built: "2 scholars a copy, 3 of 8 built."
 func buildingText(bs game.BuildingState) string {
-	return bs.Description
+	if bs.Scholars <= 0 {
+		return bs.Description
+	}
+	line := fmt.Sprintf("%s a copy", textfmt.Count(bs.Scholars, "scholar", "scholars"))
+	if bs.ScholarCap > 0 {
+		line += fmt.Sprintf(", %d of %d built", bs.Count, bs.ScholarCap)
+	}
+	return strings.TrimSpace(bs.Description + " " + line + ".")
+}
+
+// atLimit is the words the Buildings panel gives a building that can be
+// built no further, for a knowledge building at its cap in the lists that do
+// not show them already.
+func atLimit(bs game.BuildingState) string {
+	if bs.Scholars > 0 && bs.AtMaxCount {
+		return "Building limit reached."
+	}
+	return ""
 }
