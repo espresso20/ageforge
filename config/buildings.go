@@ -51,6 +51,9 @@ type BuildingDef struct {
 	WorkerCapacity int    // max workers assignable per individual building instance; 0 = not applicable
 	EpochKey       string // epoch this building belongs to (e.g. "stone_era", "iron_era")
 	OutputResource string // primary resource produced; used by the engine to remap lineage output on age transition
+	// KnowledgeStore is the knowledge one copy of a knowledge building holds
+	// in the knowledge store (knowledge_rule.go); 0 for every other building.
+	KnowledgeStore float64
 }
 
 // baseBuildingsRaw returns only the storage and wonder BuildingDef entries,

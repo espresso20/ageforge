@@ -14,18 +14,18 @@ import (
 // kind of check. Knowledge is no gate's requirement any more, so nothing but
 // research forces a player to hold it.
 //
+// Knowledge has a store of its own (config.KnowledgeStoreHeld): a base and
+// what the knowledge buildings the gates ask for hold, nothing else. The
+// covenant reads that store.
+//
 //   - Entry: the first tech of an age (its cheapest) fits the knowledge
-//     storage a player enters the age with, or does within
-//     TechEntryStorageCopies copies of the age's own storage building.
-//     "Enters with" is the least anyone can: what the gate into the age
-//     forces (ladderForced: storage is never lost, and every storage
-//     building raises every cap alike), or the priciest tech an earlier
-//     wonder made them pay for, whichever is more. The storage ladder
-//     already promises the age's first storage copy can be paid for from
-//     there, and each copy adds far more storage than the next one costs.
+//     store a town arrives with: the store the town of the age before it
+//     holds (the base, for the first age). Stores are never lost, so a town
+//     arrives with at least that. TechEntryStorageCopies copies of the age's
+//     own knowledge building are allowed before it must fit: none.
 //   - Storage: every tech the wonder waits for fits, with
-//     GateResourceMargin to spare, in the most knowledge storage buildable
-//     in the age.
+//     GateResourceMargin to spare, in the knowledge store of the age's own
+//     knowledge buildings at the copies the gate asks for.
 //   - Time: the keystone is affordable well inside the age's target. The
 //     knowledge it costs, with the techs of its own age it stands on, as a
 //     share of what the reference town makes in its target time
@@ -40,20 +40,15 @@ import (
 // too, and the row reports them (Carried): with today's tree that is more
 // than the Interstellar and Galactic Ages make in their target time, where
 // every tech is on the spine. It is reported, not failed: the ages still
-// finish, late, and the market sells knowledge for gold from the Medieval
-// Age on.
+// finish, late.
 //
 // (That the keystone can be reached in its age at all, and that its
 // knowledge has a source there, are the Gate Covenant's checks.)
 const (
-	// TechEntryStorageCopies is how many copies of an age's storage building
-	// the Entry rule allows before the age's first tech must fit. With the
-	// tree a third of its size each tech cost about three times what it
-	// will, and the Renaissance needed four vaults (its old gate asked for
-	// 30M knowledge held at once: ten). With the Steel and Electric Eras'
-	// techs in the tree no age of theirs needs more than two. Bring it down
-	// as techs are added.
-	TechEntryStorageCopies = 2
+	// TechEntryStorageCopies is how many copies of an age's own knowledge
+	// building the Entry rule allows before the age's first tech must fit:
+	// none. The store a town arrives with holds the first tech of the age.
+	TechEntryStorageCopies = 0
 )
 
 // ResearchRow is one age against the Research Covenant.
@@ -164,32 +159,12 @@ func staticResearch(ages []config.AgeDef, defs map[string]config.BuildingDef, te
 	for _, t := range techs {
 		byKey[t.Key] = t
 	}
-	base := 0.0
-	for _, r := range config.BaseResources() {
-		if r.Key == "knowledge" {
-			base = r.BaseStorage
-		}
-	}
-	// The most a resource's base storage is over knowledge's: the gate's
-	// biggest price sits under that resource's cap, and knowledge's cap is
-	// lower by the difference.
-	lead := 0.0
-	for _, r := range config.BaseResources() {
-		lead = math.Max(lead, r.BaseStorage-base)
-	}
-
 	have := map[string]bool{} // what a keystones-only run has researched so far
-	held := 0.0               // the priciest tech it has paid for
 	var out []ResearchRow
 	for i, a := range ages {
-		row := ResearchRow{Age: a.Key, EntryStorage: base, ForcedBy: "the starting store"}
+		row := ResearchRow{Age: a.Key, EntryStorage: config.KnowledgeBase, ForcedBy: "the base"}
 		if i > 0 {
-			if forced, by := ladderForced(ages[i-1], a, defs); forced-lead > row.EntryStorage {
-				row.EntryStorage, row.ForcedBy = forced-lead, by
-			}
-		}
-		if held > row.EntryStorage {
-			row.EntryStorage, row.ForcedBy = held, "an earlier wonder's tech"
+			row.EntryStorage, row.ForcedBy = maxStorageIn(defs, ages[i-1].Key, "knowledge"), "the knowledge buildings the gates ask for"
 		}
 		for _, t := range techs {
 			if t.Age == a.Key && (row.First == "" || t.Cost < row.FirstCost) {
@@ -217,7 +192,6 @@ func staticResearch(ages []config.AgeDef, defs map[string]config.BuildingDef, te
 				row.ChainCost += t.Cost
 				ticks += t.ResearchTicks
 			}
-			held = math.Max(held, row.ChainMax)
 			row.MaxStorage = maxStorageIn(defs, a.Key, "knowledge")
 			if made := knowledge(a.Key); made > 0 {
 				row.KnowledgeShare = row.ChainCost / made
@@ -235,22 +209,23 @@ func staticResearch(ages []config.AgeDef, defs map[string]config.BuildingDef, te
 	return out
 }
 
-// entryCopies is how many copies of age's storage building it takes before
-// cost of knowledge fits a store of entry: 0 when it fits already, -1 when
-// the age's storage never gets there.
+// entryCopies is how many copies of the age's knowledge building it takes
+// before cost of knowledge fits a store of entry: 0 when it fits already, -1
+// when the copies the gate asks for never get there.
 func entryCopies(age string, cost, entry float64, defs map[string]config.BuildingDef) int {
 	if cost <= entry {
 		return 0
 	}
+	ages := config.Ages()
 	per, most := 0.0, 0
-	for _, k := range sortedKeys(defs) {
-		d := defs[k]
-		if d.Category != "storage" || d.RequiredAge != age {
+	for i, a := range ages {
+		if a.Key != age || i+1 >= len(ages) {
 			continue
 		}
-		for _, e := range d.Effects {
-			if e.Type == "storage" && (e.Target == "all" || e.Target == "knowledge") && e.Value > per {
-				per, most = e.Value, d.MaxCount
+		for _, k := range sortedKeys(defs) {
+			d := defs[k]
+			if d.RequiredAge == age && config.IsKnowledgeBuilding(d) && d.KnowledgeStore > per {
+				per, most = d.KnowledgeStore, ages[i+1].BuildingReqs[k]
 			}
 		}
 	}
@@ -258,7 +233,7 @@ func entryCopies(age string, cost, entry float64, defs map[string]config.Buildin
 		return -1
 	}
 	n := int(math.Ceil((cost - entry) / per))
-	if most > 0 && n > most {
+	if n > most {
 		return -1
 	}
 	return n

@@ -25,6 +25,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 0,
 		WorkerDomain: "knowledge", WorkerCapacity: 2,
 		EpochKey: "stone_era", OutputResource: "knowledge",
+		KnowledgeStore: 140,
 	})
 	// tier 1 — stone_age  rate=0.6
 	b = append(b, BuildingDef{
@@ -38,6 +39,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 1,
 		WorkerDomain: "knowledge", WorkerCapacity: 2,
 		EpochKey: "stone_era", OutputResource: "knowledge",
+		KnowledgeStore: 370,
 	})
 	// tier 2 — bronze_age  rate=2.0
 	b = append(b, BuildingDef{
@@ -51,6 +53,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 2,
 		WorkerDomain: "knowledge", WorkerCapacity: 3,
 		EpochKey: "stone_era", OutputResource: "knowledge",
+		KnowledgeStore: 3100,
 	})
 	// tier 3 — iron_age  rate=1.6
 	b = append(b, BuildingDef{
@@ -64,6 +67,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 3,
 		WorkerDomain: "knowledge", WorkerCapacity: 3,
 		EpochKey: "iron_era", OutputResource: "knowledge",
+		KnowledgeStore: 6400,
 	})
 	// tier 4 — classical_age  rate=3.2
 	b = append(b, BuildingDef{
@@ -77,6 +81,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 4,
 		WorkerDomain: "knowledge", WorkerCapacity: 4,
 		EpochKey: "iron_era", OutputResource: "knowledge",
+		KnowledgeStore: 19000,
 	})
 	// tier 5 — medieval_age  rate=1.6
 	b = append(b, BuildingDef{
@@ -90,6 +95,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 5,
 		WorkerDomain: "knowledge", WorkerCapacity: 4,
 		EpochKey: "iron_era", OutputResource: "knowledge",
+		KnowledgeStore: 330000,
 	})
 	// tier 6 — renaissance_age  rate=3.2
 	b = append(b, BuildingDef{
@@ -103,6 +109,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 6,
 		WorkerDomain: "knowledge", WorkerCapacity: 5,
 		EpochKey: "steel_era", OutputResource: "knowledge",
+		KnowledgeStore: 820000,
 	})
 	// tier 7 — colonial_age  rate=6.4
 	b = append(b, BuildingDef{
@@ -116,6 +123,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 7,
 		WorkerDomain: "knowledge", WorkerCapacity: 5,
 		EpochKey: "steel_era", OutputResource: "knowledge",
+		KnowledgeStore: 8.4e06,
 	})
 	// tier 8 — industrial_age  rate=12.8
 	b = append(b, BuildingDef{
@@ -129,6 +137,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 8,
 		WorkerDomain: "knowledge", WorkerCapacity: 6,
 		EpochKey: "steel_era", OutputResource: "knowledge",
+		KnowledgeStore: 910000,
 	})
 	// tier 9 — victorian_age  rate=25.6
 	b = append(b, BuildingDef{
@@ -142,6 +151,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 9,
 		WorkerDomain: "knowledge", WorkerCapacity: 6,
 		EpochKey: "electric_era", OutputResource: "knowledge",
+		KnowledgeStore: 4.5e06,
 	})
 	// tier 10 — electric_age  rate=51.2
 	b = append(b, BuildingDef{
@@ -155,6 +165,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 10,
 		WorkerDomain: "knowledge", WorkerCapacity: 7,
 		EpochKey: "electric_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.1e07,
 	})
 	// tier 11 — atomic_age  rate=102.4
 	b = append(b, BuildingDef{
@@ -168,6 +179,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 11,
 		WorkerDomain: "knowledge", WorkerCapacity: 7,
 		EpochKey: "electric_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.6e07,
 	})
 	// tier 12 — modern_age  rate=204.8
 	b = append(b, BuildingDef{
@@ -181,6 +193,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 12,
 		WorkerDomain: "knowledge", WorkerCapacity: 8,
 		EpochKey: "digital_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.3e07,
 	})
 	// tier 13 — information_age  rate=409.6
 	b = append(b, BuildingDef{
@@ -194,6 +207,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 13,
 		WorkerDomain: "knowledge", WorkerCapacity: 8,
 		EpochKey: "digital_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.5e07,
 	})
 	// tier 14 — digital_age  rate=819.2
 	b = append(b, BuildingDef{
@@ -207,6 +221,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 14,
 		WorkerDomain: "knowledge", WorkerCapacity: 10,
 		EpochKey: "digital_era", OutputResource: "knowledge",
+		KnowledgeStore: 9.4e07,
 	})
 	// tier 15 — cyberpunk_age  rate=1638.4
 	b = append(b, BuildingDef{
@@ -220,6 +235,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 15,
 		WorkerDomain: "knowledge", WorkerCapacity: 10,
 		EpochKey: "neon_era", OutputResource: "knowledge",
+		KnowledgeStore: 3.1e08,
 	})
 	// tier 16 — fusion_age  rate=3276.8
 	b = append(b, BuildingDef{
@@ -233,6 +249,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 16,
 		WorkerDomain: "knowledge", WorkerCapacity: 12,
 		EpochKey: "neon_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.5e09,
 	})
 	// tier 17 — space_age  rate=6553.6
 	b = append(b, BuildingDef{
@@ -246,6 +263,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 17,
 		WorkerDomain: "knowledge", WorkerCapacity: 12,
 		EpochKey: "neon_era", OutputResource: "knowledge",
+		KnowledgeStore: 3.4e09,
 	})
 	// tier 18 — interstellar_age  rate=13107.2
 	b = append(b, BuildingDef{
@@ -259,6 +277,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 18,
 		WorkerDomain: "knowledge", WorkerCapacity: 15,
 		EpochKey: "cosmic_era", OutputResource: "knowledge",
+		KnowledgeStore: 4.9e09,
 	})
 	// tier 19 — galactic_age  rate=26214.4
 	b = append(b, BuildingDef{
@@ -272,6 +291,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 19,
 		WorkerDomain: "knowledge", WorkerCapacity: 15,
 		EpochKey: "cosmic_era", OutputResource: "knowledge",
+		KnowledgeStore: 1.4e09,
 	})
 	// tier 20 — quantum_age  rate=52428.8
 	b = append(b, BuildingDef{
@@ -285,6 +305,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		LineageKey:  "knowledge", LineageTier: 20,
 		WorkerDomain: "knowledge", WorkerCapacity: 20,
 		EpochKey: "cosmic_era", OutputResource: "knowledge",
+		KnowledgeStore: 5.6e09,
 	})
 
 	return b

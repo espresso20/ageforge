@@ -327,6 +327,16 @@ func TypicalIncome(res, age string) float64 {
 	return Incomes(BaseBuildings(), Technologies(), AgeOrder(), AnyResource)[age][res]
 }
 
+// flowCopiesOf is the copies of d the moderate town holds: FlowCopies, or for
+// a knowledge building the copies its gate asks for (knowledge_rule.go: it
+// climbs at its own rate and the gate asks the spend it always did).
+func flowCopiesOf(d BuildingDef) float64 {
+	if IsKnowledgeBuilding(d) {
+		return float64(KnowledgeGateCount(KnowledgeGateWas()[d.Key]))
+	}
+	return FlowCopies
+}
+
 // AnyResource accepts every resource: Incomes' filter for TypicalIncome.
 func AnyResource(string) bool { return true }
 
@@ -381,7 +391,7 @@ func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bo
 			}
 			for _, e := range d.Effects {
 				if e.Type == "production" && e.Value > 0 && include(e.Target) {
-					made[e.Target] += float64(FlowCopies * e.Value)
+					made[e.Target] += float64(flowCopiesOf(d) * e.Value)
 				}
 			}
 		}
@@ -489,7 +499,7 @@ func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(s
 				}
 				switch {
 				case d.Category != "wonder":
-					inc[e.Target] += float64(FlowCopies * e.Value)
+					inc[e.Target] += float64(flowCopiesOf(d) * e.Value)
 				case j < i:
 					inc[e.Target] += e.Value
 				}
