@@ -645,7 +645,7 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
-		// fortress_state: 14 castle keeps (it was 20); medieval age. Dual payout —
+		// fortress_state: 13 castle keeps (it was 20); medieval age. Dual payout —
 		// keeps a military_power bonus but adds broad production_all.
 		{
 			Name: "Fortress State", Key: "fortress_state",
