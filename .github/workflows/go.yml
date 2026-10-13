@@ -63,7 +63,7 @@ jobs:
       # Each package gets 15 minutes, not go test's default 10. Under the
       # race detector on these runners the flavor package alone takes 9 to
       # 10 while the ui and map packages share the cores, and on 2026-10-07
-      # it timed out three times with nothing failing. 15 still reports a
+      # it timed out three times with nothing failing. 25 still reports a
       # real hang before the job's own limit above.
       - name: go test -race
         # 25m a package, not 15: the ui package alone runs past 15 minutes under the race detector on a slow runner.
