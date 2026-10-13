@@ -276,6 +276,7 @@ func (d *Dashboard) build() {
 	d.logTV = tview.NewTextView().
 		SetDynamicColors(true).
 		SetScrollable(true).
+		SetWordWrap(true).
 		SetMaxLines(100)
 	d.logTV.SetBorder(true).SetTitle(" Log ")
 	theme.Track(func() { d.logTV.SetTitleColor(theme.Color(theme.RoleDim)) })

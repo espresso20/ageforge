@@ -118,7 +118,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 
 			// Cost and description on indent.
 			if len(bs.NextCost) > 0 && !bs.IsLegacy {
-				fmt.Fprintf(&sb, "   [gray]Cost: %s[-]\n", FormatCost(bs.NextCost))
+				sb.WriteString("[gray]" + costRow("   Cost: ", bs.NextCost, overlayTextWidth(screenW)) + "[-]")
 				if isCurrent {
 					if line := wall.line(bs); line != "" {
 						sb.WriteString(hangingRow("   ", "[yellow]"+line+"[-]", overlayTextWidth(screenW)))
