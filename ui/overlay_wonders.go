@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -149,18 +150,17 @@ func wondersProvider(state game.GameState, _ int) string {
 				}
 				fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   %s\n", w.name, w.ageName, ready)
 			} else {
-				// Compute fill percentage
+				// Compute fill percentage: what is paid toward the wonder, so a
+				// part banked past its price counts only up to its price, and
+				// a bank that lacks a part never reads 100%.
 				totalNeed, totalBanked := 0.0, 0.0
 				for res, need := range w.def.BaseCost {
 					totalNeed += need
-					totalBanked += bs.WonderBank[res]
+					totalBanked += math.Min(bs.WonderBank[res], need)
 				}
 				pct := 0.0
 				if totalNeed > 0 {
-					pct = totalBanked / totalNeed * 100
-					if pct > 100 {
-						pct = 100
-					}
+					pct = math.Floor(totalBanked / totalNeed * 100)
 				}
 				if pct > 0 {
 					fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   [yellow](%.0f%% banked)[-]\n",
