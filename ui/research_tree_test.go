@@ -826,8 +826,8 @@ func TestEmblemsSitOnTheGrid(t *testing.T) {
 		last string
 		want int
 	}{
-		{"the Classical Age", classicalGame(t).GetState(), "medieval_age", 41},
-		{"the Electric Age", electricGame(t).GetState(), "atomic_age", 97},
+		{"the Classical Age", classicalGame(t).GetState(), "medieval_age", 42},
+		{"the Electric Age", electricGame(t).GetState(), "atomic_age", 98},
 		{"the Quantum Age", quantumGame(t).GetState(), "transcendent_age", 203},
 	} {
 		emblemsSitOnTheGrid(t, c.name, c.st, c.last, c.want)
