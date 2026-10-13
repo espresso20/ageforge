@@ -1465,7 +1465,7 @@ func (ge *GameEngine) doTick() {
 			ge.addLog("warning", fmt.Sprintf("⚠ Food has run out. One worker dies every %s until you have food again.",
 				ge.durationLocked(starvationDeathInterval)))
 			if q := config.PickLogFlavor(config.LogFlavorStarvation, ge.quipRNG()); q != "" {
-				ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+				ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 			}
 		}
 		if ge.starvationTicks%starvationDeathInterval == 0 && ge.Workers.TotalPop() > 0 {
@@ -1479,7 +1479,7 @@ func (ge *GameEngine) doTick() {
 		ge.starvationTicks = 0
 		ge.addLog("info", "✓ Food is back. Workers have stopped starving.")
 		if q := config.PickLogFlavor(config.LogFlavorStarvationEnded, ge.quipRNG()); q != "" {
-			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
 	}
 
@@ -1587,7 +1587,7 @@ func (ge *GameEngine) finishResearch(completed string) {
 	// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
 	if ge.quipRNG().Intn(2) == 0 {
 		if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
-			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
 	}
 	ge.Bus.Publish(EventData{
@@ -1675,7 +1675,7 @@ func (ge *GameEngine) processExpeditions() {
 		// this is where the seeded rng lives. It is additive: res.Message above
 		// already carried the mechanical outcome and the loot.
 		if q := ge.expeditionFlavorLine(res); q != "" {
-			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
 		// Add rewards to resources
 		ge.applyExpeditionRewards(res.Rewards)
@@ -1855,7 +1855,7 @@ func (ge *GameEngine) checkMilestones() {
 		}
 		// Cosmetic flavour quip on its own dim line (never replaces the reward text).
 		if ms.Flavor != "" {
-			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", ms.Flavor))
+			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", ms.Flavor))
 		}
 		ge.applyMilestoneRewards(ms.Rewards)
 		// Publish milestone event
@@ -1882,7 +1882,7 @@ func (ge *GameEngine) checkMilestones() {
 			ge.durationWithSpeedBonusLocked(boost, chain.BoostValue)))
 		// Cosmetic flavour quip on its own dim line (never replaces the title/boost).
 		if chain.Flavor != "" {
-			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", chain.Flavor))
+			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", chain.Flavor))
 		}
 		ge.startChainBoost(chain, boost)
 		// Publish chain event
@@ -2406,7 +2406,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// Cosmetic flavour echo in the log (distinct from the age splash quip — see ui/age_splash.go).
 	// Age transitions are rare, so it fires every time.
 	if q := config.PickLogFlavor(config.LogFlavorAgeAdvance, ge.quipRNG()); q != "" {
-		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 	}
 
 	// Notify player about the wonder available in this age
@@ -2662,7 +2662,7 @@ func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
 // what the text cannot know (actual counts, amounts, names).
 func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 	ge.note(config.BadgeEvEraEvent, ev.Type)
-	ge.addLog("success", fmt.Sprintf("✦ %s. %s", ev.Name, ev.FlavorText))
+	ge.addLog("success", fmt.Sprintf("✦ %s. [comment]%s[-]", ev.Name, ev.FlavorText))
 	ageOrder := ge.progress.GetAgeOrder()
 	switch ev.Key {
 	case "age_of_plenty":
@@ -2757,7 +2757,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 // cannot state (what burned, who died, how much was lost).
 func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochKey string) {
 	ge.note(config.BadgeEvEraEvent, ev.Type)
-	ge.addLog("warning", fmt.Sprintf("⚠ %s. %s", ev.Name, ev.FlavorText))
+	ge.addLog("warning", fmt.Sprintf("⚠ %s. [comment]%s[-]", ev.Name, ev.FlavorText))
 	switch ev.Key {
 	case "the_famine":
 		ge.injectEpochRates("epoch_famine", ev, "warning", "")
@@ -3338,7 +3338,7 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 			if done == LogRoutine {
 				quip = LogRoutine
 			}
-			ge.addLog(quip, fmt.Sprintf("  [gray]%s[-]", q))
+			ge.addLog(quip, fmt.Sprintf("  [comment]%s[-]", q))
 		}
 	}
 	ge.Stats.RecordBuild()
@@ -4209,7 +4209,7 @@ func (ge *GameEngine) maybeOfferAncientMemory() {
 	ge.ancientMemoryUsed = true
 	ge.pendingMemoryTech = techKey
 	def, _ := ge.rules.Tech(techKey)
-	ge.addLog("event", fmt.Sprintf("✦ %s A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor, def.Name))
+	ge.addLog("event", fmt.Sprintf("✦ [comment]%s[-] A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor, def.Name))
 }
 
 // selectMemoryTech picks a random tech appropriate to the current age, with the

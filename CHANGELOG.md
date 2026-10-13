@@ -258,6 +258,7 @@ All notable changes to AgeForge are documented here.
 - Milestone chains rebalanced: completion speed-boosts normalized across all six chains (Military was 18× weaker than Settlement — now in line); the Trade chain expanded 3 → 6 milestones (5 via the milestone revamp, then a sixth — Maritime Empire — with the Trade System Expansion); and Military/Trade/Scholar capstones now pay out broad `production_all` instead of domain-only bonuses, so finishing any chain helps your whole economy.
 
 ### Changed
+- **The fun lines have a color of their own.** A new theme color, `comment`, is used for flavor sentences and nothing else: a building's line, an age's quip, a milestone's, the log's quips, a harbinger's words, an event's sentence, the catastrophe and arrival screens. It is neon orange in Forge and an orange that reads on the page in the other 15 themes (a light apricot in the colorblind-safe themes and Ashfall, where orange is already taken). No text was changed, only its color.
 - **Bare `trade` opens the Trade routes panel.** It shows routes only. Trade routes, faction deals and the black market are used as before.
 - **Deals pay by deal price levels.** No market sets the rate, and a deal never pays better than parity.
 - **Deals that give food or culture cost much more than before.**

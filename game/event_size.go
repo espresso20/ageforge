@@ -94,7 +94,7 @@ type eventOutcome struct {
 // eventLine is a random event's log line: its own sentence, then what it
 // did, with the real amounts. duration is how long its rates last.
 func eventLine(sentence string, out eventOutcome, duration string) string {
-	parts := []string{strings.TrimSpace(sentence)}
+	parts := []string{"[comment]" + strings.TrimSpace(sentence) + "[-]"}
 	if lost := lossParts(out.lost, out.workers); len(lost) > 0 {
 		parts = append(parts, "Lost "+joinAnd(lost)+".")
 	}

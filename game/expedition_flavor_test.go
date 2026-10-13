@@ -67,7 +67,9 @@ func TestFlavorCallSitesCoverEveryAge(t *testing.T) {
 				t.Errorf("%s: raid line for %s does not lead with the mechanical message: %q", age, def.Key, line)
 				continue
 			}
-			if tail := strings.TrimPrefix(line, raid.Message+" "); !cleanFlavor(tail) {
+			tail := strings.TrimPrefix(line, raid.Message+" ")
+			tail = strings.TrimSuffix(strings.TrimPrefix(tail, "[comment]"), "[-]")
+			if !cleanFlavor(tail) {
 				t.Errorf("%s: raid flavour for %s is %q", age, def.Key, tail)
 			}
 		}

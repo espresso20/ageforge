@@ -90,7 +90,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 			}
 			fmt.Fprintf(sb, " Epoch event: [%s]%s[-]%s\n", evColor, currentEvent.EventName, durationStr)
 			if flavorStr != "" {
-				fmt.Fprintf(sb, " [gray]  %s[-]\n", flavorStr)
+				fmt.Fprintf(sb, " [comment]  %s[-]\n", flavorStr)
 			}
 		}
 	}

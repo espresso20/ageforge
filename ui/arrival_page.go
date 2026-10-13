@@ -134,6 +134,7 @@ type arrivalView struct {
 type underLine struct {
 	text string
 	lead bool
+	quip bool // the age's quip, set in the comment color
 }
 
 // underLines is the lines under the age's name: its description, its quip
@@ -144,10 +145,16 @@ func (v *arrivalView) underLines(w int) (out []underLine) {
 			continue
 		}
 		for _, line := range wrapWords(s, max(w, 8)) {
-			out = append(out, underLine{text: line, lead: i == 0})
+			out = append(out, underLine{text: line, lead: i == 0, quip: i == 1})
 		}
 	}
 	return out
+}
+
+// commentInk is the theme's comment color, nudged to read on the page: the ink
+// of a flavor sentence in the full-screen scenes.
+func commentInk(pal *menuPalette) tcell.Color {
+	return theme.Legible(theme.Color(theme.RoleComment), pal.bg, 4.5)
 }
 
 // drawUnder draws the lines under the age's name, the first n of them.
@@ -159,6 +166,8 @@ func (L arrivalLayout) drawUnder(g *mGrid, pal *menuPalette, v *arrivalView, n i
 		ink := pal.dim
 		if line.lead {
 			ink = pal.ink
+		} else if line.quip {
+			ink = commentInk(pal)
 		}
 		g.textOn(centred(L.w, runeLen(line.text)+2), L.under+i, " "+line.text+" ", ink, pal.bg, false)
 	}
