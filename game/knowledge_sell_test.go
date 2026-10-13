@@ -1,7 +1,7 @@
 package game
 
 import (
-	"sort"
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -81,22 +81,24 @@ func TestSellBuilding_StorageKeepsItsRefusal(t *testing.T) {
 	}
 }
 
-// TestUpgradeKnowledgeBuilding_RecordsStoreChange records what an upgrade does
-// to the knowledge store. It asserts nothing about direction: it logs two real
-// upgrades (one up, one down) and, from the tables, every step down a
-// knowledge lineage, so the result shows in the test log.
-func TestUpgradeKnowledgeBuilding_RecordsStoreChange(t *testing.T) {
-	cases := []struct {
-		age, from, to string
-		count         int
-	}{
-		{"stone_age", "story_circle", "elders_hall", 4},
-		{"colonial_age", "natural_philosophy_hall", "research_institute", 4},
+// Knowledge buildings keep their tier, as storage buildings do: the upgrade
+// command refuses them with the sentence any building without an upgrade gets,
+// and neither it nor an age advance changes their copies or the store.
+//
+// Before this, an advance offered every lineage building its next tier (but
+// storage) and `upgrade` took the offer; the per-copy figures do not rise by
+// tier, so upgrading 4 Natural Philosophy Halls to Research Institutes took
+// the knowledge store from 3.36e7 to 3.64e6.
+func TestUpgradeKnowledgeBuilding_IsRefused(t *testing.T) {
+	cases := []struct{ age, from, to string }{
+		{"stone_age", "story_circle", "elders_hall"},
+		{"colonial_age", "natural_philosophy_hall", "research_institute"},
 	}
 	for _, c := range cases {
 		ge := catEngine(t, c.age, 1)
-		ge.Buildings.counts[c.from] = c.count
-		ge.Buildings.SetPendingUpgrade(c.from, c.to)
+		ge.Buildings.counts[c.from] = 4
+		// Even an offer an older game made stands for nothing.
+		ge.Buildings.pendingUpgrades[c.from] = c.to
 		ge.recalculateRates()
 		for res := range ge.Resources.GetAllStorage() {
 			if res != "knowledge" {
@@ -104,29 +106,127 @@ func TestUpgradeKnowledgeBuilding_RecordsStoreChange(t *testing.T) {
 			}
 			ge.Resources.Add(res, 1e12)
 		}
-		before := ge.Resources.GetStorage("knowledge")
-		if err := ge.UpgradeBuilding(c.from, 0, true); err != nil {
-			t.Fatalf("UpgradeBuilding %s: %v", c.from, err)
+		store := ge.Resources.GetStorage("knowledge")
+		err := ge.UpgradeBuilding(c.from, 0, true)
+		def := config.BuildingByKey()[c.from]
+		want := def.Name + " has no upgrade this age. Type 'upgrade' to list the ones that do."
+		if err == nil || err.Error() != want {
+			t.Errorf("upgrade %s: err = %v, want %q", c.from, err, want)
 		}
 		ge.recalculateRates()
-		after := ge.Resources.GetStorage("knowledge")
-		t.Logf("upgrade %d %s -> %s (%s): knowledge store %.6g -> %.6g", c.count, c.from, c.to, c.age, before, after)
-	}
-
-	byLineage := map[string][]config.BuildingDef{}
-	for _, d := range config.BuildingByKey() {
-		if d.LineageKey == "knowledge" && d.Category != "wonder" {
-			byLineage[d.LineageKey] = append(byLineage[d.LineageKey], d)
+		if got := ge.Buildings.GetCount(c.from); got != 4 {
+			t.Errorf("%s: %d copies after the refused upgrade, want 4", c.from, got)
+		}
+		if got := ge.Buildings.GetCount(c.to); got != 0 {
+			t.Errorf("%s: %d copies after the refused upgrade, want 0", c.to, got)
+		}
+		if got := ge.Resources.GetStorage("knowledge"); got != store {
+			t.Errorf("knowledge store %v -> %v after the refused upgrade", store, got)
 		}
 	}
-	for _, defs := range byLineage {
-		sort.Slice(defs, func(i, j int) bool { return defs[i].LineageTier < defs[j].LineageTier })
-		for i := 1; i < len(defs); i++ {
-			if defs[i].KnowledgeStore < defs[i-1].KnowledgeStore {
-				t.Logf("table: %s (tier %d, %.6g each) -> %s (tier %d, %.6g each) lowers the store per copy",
-					defs[i-1].Key, defs[i-1].LineageTier, defs[i-1].KnowledgeStore,
-					defs[i].Key, defs[i].LineageTier, defs[i].KnowledgeStore)
+}
+
+// TestKnowledgeStore_NeverFallsAcrossAdvances walks the real engine through
+// four advances. In each age the town builds that age's knowledge building
+// and some ordinary ones, then tries every player action that could shrink
+// the store (upgrade and sell, on everything it owns), then advances. No
+// knowledge building changes tier or count, none is offered an upgrade, the
+// ordinary buildings still are (so the transform ran), and the store never
+// goes down.
+func TestKnowledgeStore_NeverFallsAcrossAdvances(t *testing.T) {
+	ages := []string{"medieval_age", "renaissance_age", "colonial_age", "industrial_age", "victorian_age"}
+	ge := catEngine(t, ages[0], 1)
+	var know []config.BuildingDef
+	for _, d := range ge.rules.Buildings() {
+		if d.KnowledgeStore > 0 {
+			know = append(know, d)
+		}
+	}
+	store := func() float64 {
+		ge.recalculateRates()
+		return ge.Resources.GetStorage("knowledge")
+	}
+	last := store()
+	offered := 0
+	for i, age := range ages {
+		for _, d := range know {
+			if d.RequiredAge == age {
+				ge.Buildings.counts[d.Key] = 4
 			}
 		}
+		// Ordinary lineage buildings of the age whose next tier the coming
+		// age has: what the advance offers an upgrade for.
+		if i+1 < len(ages) {
+			for _, d := range ge.rules.Buildings() {
+				if d.RequiredAge != age || d.LineageKey == "" || d.LineageKey == "wonder" || keepsItsTier(d) {
+					continue
+				}
+				if _, ok := ge.rules.NextTier(d.LineageKey, d.LineageTier, ages[i+1]); ok {
+					ge.Buildings.counts[d.Key] = 2
+				}
+			}
+		}
+		for res := range ge.Resources.GetAllStorage() {
+			if res != "knowledge" {
+				ge.Resources.AddStorage(res, 1e15)
+			}
+			ge.Resources.Add(res, 1e15)
+		}
+		if got := store(); got < last {
+			t.Fatalf("%s: the store fell from %v to %v on building", age, last, got)
+		}
+		last = store()
+		counts := map[string]int{}
+		for _, d := range know {
+			counts[d.Key] = ge.Buildings.GetCount(d.Key)
+		}
+		// Every player action that could shrink it.
+		for _, key := range sortedKeys(ge.Buildings.counts) {
+			if ge.Buildings.counts[key] == 0 {
+				continue
+			}
+			def := config.BuildingByKey()[key]
+			err := ge.UpgradeBuilding(key, 0, true)
+			if def.KnowledgeStore > 0 && (err == nil || !strings.Contains(err.Error(), "has no upgrade this age")) {
+				t.Errorf("%s: upgrade %s: %v", age, key, err)
+			}
+			if def.KnowledgeStore > 0 {
+				if err := ge.SellBuilding(key, 1); err == nil {
+					t.Errorf("%s: selling %s succeeded", age, key)
+				}
+			}
+		}
+		for _, d := range know {
+			if got := ge.Buildings.GetCount(d.Key); got != counts[d.Key] {
+				t.Errorf("%s: %s %d -> %d by a player action", age, d.Key, counts[d.Key], got)
+			}
+		}
+		if got := store(); got < last {
+			t.Fatalf("%s: the store fell from %v to %v by a player action", age, last, got)
+		}
+		if i+1 == len(ages) {
+			break
+		}
+		ge.advanceAge(ages[i+1])
+		ge.age = ages[i+1]
+		for _, d := range know {
+			if got := ge.Buildings.GetCount(d.Key); got != counts[d.Key] {
+				t.Errorf("%s -> %s: %s %d -> %d by the advance", age, ages[i+1], d.Key, counts[d.Key], got)
+			}
+			if to, ok := ge.Buildings.GetPendingUpgrade(d.Key); ok {
+				t.Errorf("%s -> %s: %s is offered an upgrade to %s", age, ages[i+1], d.Key, to)
+			}
+		}
+		for _, k := range sortedKeys(ge.Buildings.counts) {
+			if _, ok := ge.Buildings.GetPendingUpgrade(k); ok {
+				offered++
+			}
+		}
+		if got := store(); got < last {
+			t.Fatalf("%s -> %s: the store fell from %v to %v on the advance", age, ages[i+1], last, got)
+		}
+	}
+	if offered == 0 {
+		t.Error("no ordinary building was offered an upgrade on any advance: the walk did not run the transform")
 	}
 }

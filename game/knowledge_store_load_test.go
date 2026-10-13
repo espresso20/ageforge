@@ -184,3 +184,65 @@ func TestKnowledgeSave_AnAdvanceTrimsWhatIsKeptAboveTheStore(t *testing.T) {
 		t.Errorf("knowledge after the advance is %v, want %v (the save held %v)", got, want, held)
 	}
 }
+
+// A save from before knowledge buildings kept their tier loads as it is:
+// knowledge buildings already upgraded stay upgraded (the copies and the
+// store are what the save made), and an upgrade offer it still held for one
+// is dropped. No tamper flag, nothing lost.
+func TestKnowledgeSave_AlreadyUpgradedKeepsWhatItHas(t *testing.T) {
+	isolateAccountDir(t)
+	ge := catEngine(t, "industrial_age", 1)
+	ge.Buildings.counts["research_institute"] = 4      // upgraded away from the halls
+	ge.Buildings.counts["natural_philosophy_hall"] = 2 // not yet, with the offer still standing
+	ge.Buildings.counts["university"] = 3
+	ge.Buildings.pendingUpgrades["natural_philosophy_hall"] = "research_institute"
+	ge.Buildings.pendingUpgrades["university"] = "natural_philosophy_hall"
+	ge.Buildings.MarkLegacy("natural_philosophy_hall")
+	ge.recalculateRates()
+	store := ge.Resources.GetStorage("knowledge")
+	counts := map[string]int{}
+	for _, k := range []string{"research_institute", "natural_philosophy_hall", "university"} {
+		counts[k] = ge.Buildings.GetCount(k)
+	}
+	if err := ge.SaveGame("upgraded"); err != nil {
+		t.Fatal(err)
+	}
+	again := NewGameEngine()
+	if err := again.LoadGame("upgraded"); err != nil {
+		t.Fatal(err)
+	}
+	if again.cheaterBadge {
+		t.Fatal("the save failed its signature check")
+	}
+	for k, n := range counts {
+		if got := again.Buildings.GetCount(k); got != n {
+			t.Errorf("%s: %d copies after the load, the save has %d", k, got, n)
+		}
+	}
+	for _, k := range []string{"natural_philosophy_hall", "university"} {
+		if to, ok := again.Buildings.GetPendingUpgrade(k); ok {
+			t.Errorf("%s still offered an upgrade to %s", k, to)
+		}
+	}
+	again.recalculateRates()
+	if got := again.Resources.GetStorage("knowledge"); got != store {
+		t.Errorf("knowledge store %v after the load, the save made %v", got, store)
+	}
+	// A save from before offers rebuilt from its legacy list: none for a
+	// knowledge building, one for an ordinary one.
+	ordinary := ""
+	for _, d := range again.rules.Buildings() {
+		if d.RequiredAge == "classical_age" && d.LineageKey != "" && d.LineageKey != "wonder" && !keepsItsTier(d) {
+			ordinary = d.Key
+			break
+		}
+	}
+	again.Buildings.counts[ordinary] = 1
+	got := again.rebuildPendingUpgrades([]string{"natural_philosophy_hall", ordinary}, "industrial_age")
+	if _, ok := got["natural_philosophy_hall"]; ok {
+		t.Error("the rebuilt offers include a knowledge building")
+	}
+	if _, ok := got[ordinary]; !ok {
+		t.Errorf("the rebuilt offers lost the ordinary building %s", ordinary)
+	}
+}

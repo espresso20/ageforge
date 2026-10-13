@@ -1211,9 +1211,10 @@ func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[st
 			continue
 		}
 		def, ok := ge.Buildings.defs[key]
-		// Storage never transforms (see advanceAge), so a save with legacy
-		// stashes gets no stash -> storage_pit offer back.
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
+		// Storage and knowledge buildings never transform (see advanceAge),
+		// so a save with legacy stashes gets no stash -> storage_pit offer
+		// back, nor a knowledge building its next tier.
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || keepsItsTier(def) {
 			continue
 		}
 		best, bestOrder := "", -1

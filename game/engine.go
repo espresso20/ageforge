@@ -2306,10 +2306,11 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			continue
 		}
 		def, ok := ge.Buildings.defs[key]
-		// Storage never transforms (decision log: storage is cumulative). An
-		// upgrade would trade a copy the age lock never lets you rebuild for one
-		// of the new tier's capped slots, lowering the most you can ever store.
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
+		// Storage and knowledge buildings never transform (keepsItsTier):
+		// storage is cumulative, and an upgrade would trade a copy the age
+		// lock never lets you rebuild for one of the new tier, lowering the
+		// most you can ever store.
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || keepsItsTier(def) {
 			continue
 		}
 		next, ok := ge.rules.NextTier(def.LineageKey, def.LineageTier, newAge)
@@ -5249,7 +5250,7 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	}
 	newKey, hasPending := ge.Buildings.GetPendingUpgrade(key)
 	newDef, hasNew := ge.rules.Building(newKey)
-	if !hasPending || !hasNew {
+	if !hasPending || !hasNew || oldDef.KnowledgeStore > 0 {
 		return fmt.Errorf("%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
 	}
 	if err := ge.techLockErr(newDef); err != nil {
