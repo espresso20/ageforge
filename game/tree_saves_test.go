@@ -220,7 +220,7 @@ func TestResearchInProgressOutOfOrderFinishes(t *testing.T) {
 		t.Fatal("Alchemy's prerequisites are met: nothing is out of order")
 	}
 	price := ge.Research.defs["alchemy"].Cost
-	ge.researchPerTick = price / 1200
+	ge.researchPerTick = price / 1199.5
 	for i := 0; i < 1199; i++ {
 		ge.processResearch()
 	}

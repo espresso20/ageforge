@@ -44,7 +44,6 @@ var resourceClass = map[string]nounClass{
 	// --- mass nouns (uncountable) -------------------------------------------
 	"food":         massNoun,
 	"wood":         massNoun,
-	"knowledge":    massNoun,
 	"faith":        massNoun,
 	"stone":        massNoun,
 	"iron":         massNoun,
@@ -78,7 +77,6 @@ var resourceClass = map[string]nounClass{
 // Unlisted keys are treated as tangible, so a new abstract resource needs an
 // entry here (TestAbstractResourcesAreNeverGoods catches the regression).
 var abstractResource = map[string]bool{
-	"knowledge":   true,
 	"faith":       true,
 	"culture":     true,
 	"electricity": true,

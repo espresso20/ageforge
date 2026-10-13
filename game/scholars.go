@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -153,7 +154,10 @@ func (ge *GameEngine) teachingBonus() float64 {
 		return 0
 	}
 	_, teach := ge.scholarPosts(n)
-	return float64(ge.teachingFull() * float64(teach) / float64(n))
+	if teach == n {
+		return ge.teachingFull()
+	}
+	return float64(float64(ge.teachingFull()*float64(teach)) / float64(n))
 }
 
 // scholarModifiers is the teaching bonus as a source in the worker output
@@ -344,17 +348,26 @@ func shareOfTech(f float64) string {
 }
 
 // SetResearchShare sets the share of the scholars that research, a percent
-// from 0 to 100. The rest teach.
-func (ge *GameEngine) SetResearchShare(percent int) error {
+// from 0 to 100. The rest teach. It returns the line that says what the
+// setting comes to now.
+func (ge *GameEngine) SetResearchShare(percent int) (string, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	if percent < 0 || percent > 100 {
-		return fmt.Errorf("Scholars research between 0 and 100 percent. You asked for %d.", percent)
+		return "", fmt.Errorf("Scholars research between 0 and 100 percent. You asked for %d.", percent)
 	}
 	ge.scholarShare = percent
 	ge.scholarShareSet = percent != 100
 	ge.recalculateRates()
-	return nil
+	n := ge.scholarTotal()
+	research, teach := ge.scholarPosts(n)
+	switch {
+	case n == 0:
+		return fmt.Sprintf("%d%% of your scholars will research. You have no scholars yet: knowledge buildings come with them.", percent), nil
+	case ge.Research.currentTech == "" && !ge.researchQueued():
+		return fmt.Sprintf("%d%% of your scholars will research. Nothing is being researched, so all %s teach.", percent, textfmt.Count(n, "scholar", "scholars")), nil
+	}
+	return fmt.Sprintf("%d%% of your scholars research: %d research and %d teach.", percent, research, teach), nil
 }
 
 // scholarsStateLocked is the scholars for a snapshot. Must be called with at

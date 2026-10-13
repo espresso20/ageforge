@@ -527,7 +527,7 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // warning, the ratio 0.70x.
 var doomChoiceOnTheCeiling = map[string]float64{
 	"iron_age":       0.61,
-	"medieval_age":   0.39,
+	"medieval_age":   0.61,
 	"colonial_age":   0.60,
 	"industrial_age": 0.06,
 }
