@@ -773,22 +773,40 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	} else {
 		title = fmt.Sprintf(" RESEARCH %d/%d", m.known, m.inReach)
 	}
-	x := out.text(0, 0, clipRunes(title, w), tsChip, -1)
+	x := 0
 	if cur := state.Research.CurrentTech; cur != "" {
 		// The bar leads: the tech in progress, its bar, its percent, what is
-		// left. The scholars take the room that remains.
+		// left. The title gives way to the short one for it, and the scholars
+		// take the room that remains.
 		bar, pct := plainBar(researchFraction(state), 10), researchPercent(state)
 		name := state.Research.CurrentTechName
-		for _, run := range []string{
-			fmt.Sprintf("  ⟳ %s %s %d%% · %s", name, bar, pct, researchLeft(state)),
-			fmt.Sprintf("  ⟳ %s %s %d%%", name, bar, pct),
-			fmt.Sprintf("  ⟳ %s %d%%", bar, pct),
-		} {
-			if x+len([]rune(run)) <= w {
-				x = out.text(x, 0, run, tsChipKey, -1)
+		left := researchLeft(state)
+		short := fmt.Sprintf(" RESEARCH %d/%d", m.known, m.inReach)
+		placed := false
+		for _, ttl := range []string{short} {
+			for _, run := range []string{
+				fmt.Sprintf("  ⟳ %s %s %d%% · %s", name, bar, pct, left),
+				fmt.Sprintf("  ⟳ %s %s %d%%", name, bar, pct),
+			} {
+				if len([]rune(ttl))+len([]rune(run)) <= w {
+					x = out.text(0, 0, ttl, tsChip, -1)
+					x = out.text(x, 0, run, tsChipKey, -1)
+					placed = true
+					break
+				}
+			}
+			if placed {
 				break
 			}
 		}
+		if !placed {
+			x = out.text(0, 0, clipRunes(short, w), tsChip, -1)
+			if run := fmt.Sprintf("  ⟳ %s %d%%", bar, pct); x+len([]rune(run)) <= w {
+				x = out.text(x, 0, run, tsChipKey, -1)
+			}
+		}
+	} else {
+		x = out.text(0, 0, clipRunes(title, w), tsChip, -1)
 	}
 	for _, form := range []string{
 		scholarsShort(state),
@@ -1169,7 +1187,9 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 		}
 		out = append(out, sw(swHi, plainBar(researchFraction(state), 20)+fmt.Sprintf(" %d%%", researchPercent(state))))
 	default:
-		if n.ts.TicksNeeded <= 0 {
+		if n.ts.TicksNeeded <= 0 && idleTeaching(state) {
+			out = append(out, teachUntilStart)
+		} else if n.ts.TicksNeeded <= 0 {
 			out = append(out, needsScholars)
 		} else {
 			out = append(out, fmt.Sprintf("It takes %s.", sw(swHi, formatTicks(n.ts.TicksNeeded, state))))
