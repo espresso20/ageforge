@@ -90,7 +90,7 @@ func GateTownHeldTechs(defs []BuildingDef, ages []AgeDef, techs []TechDef) []map
 // resource (food, gold, knowledge, faith, culture, soldiers and the rest).
 func makesSomething(d BuildingDef) bool {
 	for _, e := range d.Effects {
-		if e.Type == "production" && e.Value > 0 {
+		if _, ok := producedBy(e); ok && e.Value > 0 {
 			return true
 		}
 	}

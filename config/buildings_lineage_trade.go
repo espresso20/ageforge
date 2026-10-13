@@ -58,7 +58,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 3 — medieval_age  rate=0.40
 	b = append(b, BuildingDef{
 		Name: "Guildhall", Key: "guildhall", Category: "production",
-		BaseCost:    map[string]float64{"stone": 1200000, "gold": 410000, "knowledge": 120000},
+		BaseCost:    map[string]float64{"stone": 1910000, "gold": 653000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 405}},
 		BuildTicks:  1200,
@@ -71,7 +71,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 4 — renaissance_age  rate=0.80
 	b = append(b, BuildingDef{
 		Name: "Exchange", Key: "exchange", Category: "production",
-		BaseCost:    map[string]float64{"gold": 4100000, "steel": 1500000, "knowledge": 590000},
+		BaseCost:    map[string]float64{"gold": 6210000, "steel": 2270000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 1380}},
 		BuildTicks:  2400,

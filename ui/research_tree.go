@@ -250,7 +250,7 @@ func buildTree(state game.GameState, geom treeGeom, ascii bool, sel string) *tre
 				n.mark = markRunning
 			case band.next:
 				n.mark = markNext
-			case ts.PrereqsMet && !ts.OverStore:
+			case ts.PrereqsMet:
 				n.mark = markReady
 			default:
 				// Over the knowledge store: it cannot be started until a
@@ -763,14 +763,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 		out.put(x, 0, ' ', tsChip, -1)
 		out.put(x, h-1, ' ', tsChip, -1)
 	}
-	know := state.Resources["knowledge"]
-	// Held over the knowledge store, as the Resources box says it.
-	held := FormatNumber(know.Amount) + " / " + FormatNumber(state.KnowledgeStore.Store)
-	right := fmt.Sprintf("Knowledge %s %s/tick ", held, textfmt.RateValue(know.Rate))
-	if w < 100 {
-		held = FormatNumber(know.Amount) + "/" + FormatNumber(state.KnowledgeStore.Store)
-		right = fmt.Sprintf("%s %s/t ", held, textfmt.RateValue(know.Rate))
-	}
+	right := fmt.Sprintf("Scholars %d ", state.Scholars.Total)
 	title := fmt.Sprintf(" RESEARCH  %d of %d known", m.known, m.inReach)
 	if w >= 100 {
 		if m.nextAge > 0 {
@@ -994,7 +987,7 @@ func costText(state game.GameState, n *treeNode) string {
 // overStore reports whether the node's price is over the knowledge store
 // now. A tech of an age not reached is not in question yet: it waits for
 // its age first.
-func (n *treeNode) overStore() bool { return n.ts.OverStore && n.mark != markNext }
+func (n *treeNode) overStore() bool { return false }
 
 // overMark is the cross a price over a store carries.
 const overMark = "✗"
@@ -1003,7 +996,7 @@ const overMark = "✗"
 // Buildings list gives a building and the engine gives the command, naming
 // the age's knowledge building.
 func techStoreLine(state game.GameState, ts game.TechState) string {
-	return storeTooSmallLine(ts.Name, "knowledge", ts.Cost, state.KnowledgeStore.Store, storageBuildingName(state, "knowledge"))
+	return ""
 }
 
 // statusLine names the selected tech, its state, its price and what it
@@ -1122,7 +1115,7 @@ func cardActionFor(state game.GameState, n *treeNode) cardAction {
 		return actNone
 	case n.plan > 0:
 		return actNone
-	case n.mark == markReady && !n.overStore() && state.Research.CurrentTech == "" && state.Resources["knowledge"].Amount >= n.ts.Cost:
+	case n.mark == markReady && !n.overStore() && state.Research.CurrentTech == "" && true:
 		return actStart
 	}
 	return actPlan

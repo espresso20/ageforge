@@ -122,7 +122,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			MinAge: "colonial_age", RequiredBld: "harbor", MinCount: 1,
 			TicksPerRun: 47,
 			Export:      map[string]float64{"food": 400, "gold": 60},
-			Import:      map[string]float64{"culture": 120, "knowledge": 80},
+			Import:      map[string]float64{"culture": 120, ResearchTarget: 80},
 			Description: "A three-way colonial exchange: send food and gold for culture and knowledge.",
 		},
 		{
@@ -146,7 +146,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			MinAge: "industrial_age", RequiredBld: "stock_exchange", MinCount: 1,
 			TicksPerRun: 42,
 			Export:      map[string]float64{"gold": 400},
-			Import:      map[string]float64{"culture": 200, "knowledge": 150},
+			Import:      map[string]float64{"culture": 200, ResearchTarget: 150},
 			Description: "Pay gold at the cotton exchange for culture and knowledge.",
 		},
 		{

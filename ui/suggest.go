@@ -528,7 +528,7 @@ func plannableBuildingKeys(state game.GameState) []string {
 // techAffordable reports whether the knowledge to start t is in store. A
 // tech priced over the knowledge store is never affordable.
 func techAffordable(state game.GameState, t game.TechState) bool {
-	return !t.OverStore && state.Resources["knowledge"].Amount >= t.Cost
+	return true
 }
 
 // availableTechKeys is what `research` suggests: techs that can start now,
@@ -537,7 +537,7 @@ func techAffordable(state game.GameState, t game.TechState) bool {
 func availableTechKeys(state game.GameState) []string {
 	var keys []string
 	for key, ts := range state.Research.Techs {
-		if ts.Available && !ts.OverStore {
+		if ts.Available {
 			keys = append(keys, key)
 		}
 	}
@@ -632,7 +632,7 @@ func sellableBuildingKeys(state game.GameState) []string {
 	}
 	var keys []string
 	for key, bs := range state.Buildings {
-		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" && bs.KnowledgeStore <= 0 {
+		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" && bs.Scholars <= 0 {
 			keys = append(keys, key)
 		}
 	}

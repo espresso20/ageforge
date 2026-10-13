@@ -17,6 +17,8 @@ import (
 //   - "permanent_bonus": persistent multiplier on Target rate (milestone reward only)
 //   - "morale":          +Value to the civilization's morale per tick while the
 //     building stands (FLAT, not worker-scaled; no Target)
+//   - "research":        +Value of work per tick on the tech in progress, at a full
+//     crew of scholars (a knowledge building) or with no crew (a wonder); no Target
 type Effect struct {
 	Type   string  // see above for valid types
 	Target string  // resource key, building key, or special target (e.g. "all", "production_all")
@@ -51,9 +53,11 @@ type BuildingDef struct {
 	WorkerCapacity int    // max workers assignable per individual building instance; 0 = not applicable
 	EpochKey       string // epoch this building belongs to (e.g. "stone_era", "iron_era")
 	OutputResource string // primary resource produced; used by the engine to remap lineage output on age transition
-	// KnowledgeStore is the knowledge one copy of a knowledge building holds
-	// in the knowledge store (knowledge_rule.go); 0 for every other building.
-	KnowledgeStore float64
+	// Scholars is the scholars one copy of a knowledge building comes with
+	// (scholars.go in the rules): the crew size the building had when it was
+	// staffed from the population. They need no housing or food, and work from
+	// the moment the copy stands. 0 for every other building.
+	Scholars int
 }
 
 // baseBuildingsRaw returns only the storage and wonder BuildingDef entries,
@@ -376,7 +380,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"wood": 1600, "food": 800},
 			CostScale: 1,
 			Effects: []Effect{
-				{Type: "production", Target: "knowledge", Value: 0.02},
+				{Type: "research", Value: 0.02},
 				{Type: "production", Target: "food", Value: 0.05},
 			},
 			RequiredAge: "primitive_age",
@@ -390,7 +394,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"stone": 10080, "wood": 8000, "food": 2400},
 			CostScale: 1,
 			Effects: []Effect{
-				{Type: "production", Target: "knowledge", Value: 0.05},
+				{Type: "research", Value: 0.05},
 				{Type: "storage", Target: "all", Value: 5000},
 			},
 			RequiredAge:  "stone_age",
@@ -405,7 +409,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"stone": 54400, "wood": 30400, "iron": 5440},
 			CostScale: 1,
 			Effects: []Effect{
-				{Type: "production", Target: "knowledge", Value: 0.8},
+				{Type: "research", Value: 0.8},
 				{Type: "production", Target: "faith", Value: 0.6},
 			},
 			RequiredAge:  "bronze_age",
@@ -436,7 +440,7 @@ func baseBuildingsRaw() []BuildingDef {
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 2},
-				{Type: "production", Target: "knowledge", Value: 1.2},
+				{Type: "research", Value: 1.2},
 			},
 			RequiredAge:  "classical_age",
 			RequiredTech: "philosophy",
@@ -447,10 +451,10 @@ func baseBuildingsRaw() []BuildingDef {
 		// Medieval Age — normal costs: 180k-360k
 		{
 			Name: "Great Library", Key: "great_library", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 5600000, "gold": 4320000, "knowledge": 1344000},
+			BaseCost:  map[string]float64{"stone": 10500000, "gold": 8070000},
 			CostScale: 1,
 			Effects: []Effect{
-				{Type: "production", Target: "knowledge", Value: 2},
+				{Type: "research", Value: 2},
 				{Type: "bonus", Target: "knowledge_rate", Value: 0.3},
 			},
 			RequiredAge:  "medieval_age",
@@ -511,7 +515,7 @@ func baseBuildingsRaw() []BuildingDef {
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 5},
-				{Type: "production", Target: "knowledge", Value: 2},
+				{Type: "research", Value: 2},
 			},
 			RequiredAge:  "victorian_age",
 			RequiredTech: "mass_production",
@@ -540,7 +544,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 1.86e11, "electricity": 2.6e11, "uranium": 2.98e10},
 			CostScale: 1,
 			Effects: []Effect{
-				{Type: "production", Target: "knowledge", Value: 10},
+				{Type: "research", Value: 10},
 				{Type: "production", Target: "uranium", Value: 1.5},
 			},
 			RequiredAge:  "atomic_age",
@@ -555,7 +559,7 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:  map[string]float64{"steel": 6.6e11, "titanium_ore": 6.6e11, "gold": 1.19e12, "electricity": 7.38e11},
 			CostScale: 1,
 			Effects: []Effect{
-				{Type: "production", Target: "knowledge", Value: 6},
+				{Type: "research", Value: 6},
 				{Type: "production", Target: "culture", Value: 8},
 			},
 			RequiredAge:  "modern_age",
@@ -586,7 +590,7 @@ func baseBuildingsRaw() []BuildingDef {
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 60},
-				{Type: "production", Target: "knowledge", Value: 15},
+				{Type: "research", Value: 15},
 			},
 			RequiredAge:  "digital_age",
 			RequiredTech: "machine_learning",

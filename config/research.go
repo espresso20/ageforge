@@ -62,7 +62,7 @@ func rawTechnologies() []TechDef {
 			Age: "primitive_age", Lane: LaneKnowledge,
 			Description: "Shared words carry what one person learns to the next.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.10},
 			},
 		},
 		{
@@ -101,7 +101,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"language"},
 			Description:   "Early symbols enable knowledge transfer.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.10},
 			},
 		},
 		{
@@ -157,7 +157,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"primitive_writing"},
 			Description:   "Drawn maps record where things are and how to reach them.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.10},
 			},
 		},
 		{
@@ -243,7 +243,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"primitive_writing"},
 			Description:   "Advanced calculation raises knowledge output.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.08},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.08},
 			},
 		},
 		{
@@ -315,7 +315,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"mathematics"},
 			Description:   "Systematic inquiry into fundamental questions.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.08},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.08},
 			},
 		},
 		{
@@ -379,7 +379,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"philosophy"},
 			Description:   "Proto-chemistry yields material insights.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.08},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.08},
 			},
 		},
 		{
@@ -466,7 +466,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"alchemy", "theology"},
 			Description:   "Printed books carry one idea to a thousand readers at once.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.06},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.06},
 				{Kind: EffectResearchTime, Value: -0.03},
 			},
 		},
@@ -618,7 +618,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"scientific_method"},
 			Description:   "Everything known, set in order and put in print.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.06},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.06},
 			},
 		},
 		{
@@ -730,7 +730,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"encyclopedia"},
 			Description:   "Every child in a schoolroom, and every schoolroom teaching the same lessons.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 				{Kind: EffectResearchTime, Value: -0.03},
 			},
 		},
@@ -807,7 +807,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"public_education"},
 			Description:   "Relativity and the quantum: the old certainties, measured and found short.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 			},
 		},
 		{
@@ -1000,7 +1000,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"modern_physics"},
 			Description:   "Any message is a count of yes and no, and a count can be sent without loss.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 			},
 		},
 		{
@@ -1074,7 +1074,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"electricity_tech"},
 			Description:   "Machines that do the arithmetic of a thousand clerks, and never tire.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 				{Kind: EffectResearchTime, Value: -0.03},
 			},
 		},
@@ -1200,7 +1200,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"search_engines"},
 			Description:   "Every paper and every dataset, free to read the day it is finished.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 			},
 		},
 		{
@@ -1323,7 +1323,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"machine_learning"},
 			Description:   "Direct brain-computer interface technology.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.04},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.04},
 			},
 		},
 		{
@@ -1523,7 +1523,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"unified_theory"},
 			Description:   "Telescopes beyond the air and the glare, looking back to the first light.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.04},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.04},
 			},
 		},
 		{

@@ -34,9 +34,8 @@ type GameState struct {
 	BuildQueue           []BuildQueueSnapshot
 	Workers              WorkerState
 	Research             ResearchState
-	// KnowledgeStore is the knowledge store and what raises it
-	// (knowledge_store.go).
-	KnowledgeStore KnowledgeStoreState
+	// Scholars is the town's scholars and what they do (scholars.go).
+	Scholars       ScholarsState
 	Military       MilitaryState
 	Milestones     MilestoneState
 	ActiveEvents   []ActiveEventState
@@ -284,9 +283,11 @@ type BuildingState struct {
 	IsLegacy bool // functional but superseded — can't build more; grayed in UI
 	// Player-driven upgrade: key of next-tier building this can be upgraded to; "" if none
 	PendingUpgrade string
-	// KnowledgeStore is what one copy of this building adds to the knowledge
-	// store (0 for every building but a knowledge building).
-	KnowledgeStore float64
+	// Scholars is the scholars one copy of this building comes with (0 for
+	// every building but a knowledge building) and ScholarCap the most copies
+	// that can be built (0 where there is no cap).
+	Scholars   int
+	ScholarCap int
 	// Phase 9: ruins
 	RuinCount int // ruins of this building type (produce at 50%, no workers, can't rebuild)
 }
@@ -369,8 +370,20 @@ type ResearchState struct {
 	Techs           map[string]TechState
 	CurrentTech     string
 	CurrentTechName string
-	TicksLeft       int
-	TotalTicks      int
+	// Progress is the work done on the tech in progress and Price the work
+	// it needs (its price); both 0 with none in progress. HeadStart is work
+	// kept for the next tech started.
+	Progress, Price, HeadStart float64
+	// PerTick is the work the researching scholars do each tick, with every
+	// bonus. TicksLeft and TotalTicks are the time the tech in progress has
+	// left and takes at that work (0 when no scholar is researching: it has
+	// no time to show, see NeedsScholars).
+	PerTick       float64
+	TicksLeft     int
+	TotalTicks    int
+	NeedsScholars bool
+	// Queue is the techs planned to be researched next, in order.
+	Queue           []string
 	TotalResearched int
 	// Bonuses is what researched techs add to each bonus pool they share
 	// with the rest of the game, as fractions ("military_power": 0.5 is
@@ -411,11 +424,10 @@ type TechState struct {
 	Description   string
 	Researched    bool
 	Available     bool // meets age + prereqs and not yet researched
-	// OverStore is true when the tech's price is larger than the knowledge
-	// store and what is held cannot pay it either: it cannot be started
-	// until a knowledge building raises the store.
-	OverStore  bool
-	PrereqsMet bool // every prerequisite, and one of AnyOf
+	// TicksNeeded is how long the tech takes the scholars researching now,
+	// from the start (0 when none is researching).
+	TicksNeeded int
+	PrereqsMet  bool // every prerequisite, and one of AnyOf
 	// Kind is the tech's place in the tree: a keystone, on the spine, a
 	// capstone or optional (rules.Set.TechKind).
 	Kind config.TechKind
@@ -581,7 +593,7 @@ type MilestoneSnapshotParams struct {
 	SoldierCount    int // soldiers resource amount (live); used by non-milestone consumers
 	SoldiersTrained int // cumulative lifetime soldiers trained; drives soldier milestones
 	WonderCount     int
-	KnowledgeCount  int
+	KnowledgeCount  int // scholars
 	ResearchedTechs map[string]bool
 	// Sight, when set, hides every unfinished milestone that needs an age the
 	// player cannot see named yet (spoilers.go). nil shows them all.

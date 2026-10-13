@@ -1721,13 +1721,7 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 			continue
 		}
 		mark := ""
-		if ts.OverStore {
-			mark = " [red]" + overMark + "[-]"
-		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%s)%s%s", key, ts.Name, game.Amount(ts.Cost, "knowledge"), mark, keystoneMark(ts)))
-		if ts.OverStore {
-			lines = append(lines, "      [yellow]"+techStoreLine(state, ts)+"[-]")
-		}
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%s)%s%s", key, ts.Name, formatTicks(ts.TicksNeeded, state), mark, keystoneMark(ts)))
 	}
 
 	if state.Research.CurrentTech != "" {

@@ -2,9 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -32,9 +30,6 @@ func overStoreRes(state game.GameState, cost map[string]float64) string {
 // knowledge building (the engine's own choice). "" when the age has none.
 func storageBuildingName(state game.GameState, res string) string {
 	if res == "knowledge" {
-		if def, ok := state.Ruleset().Building(state.KnowledgeStore.NextBuilding); ok {
-			return def.Name
-		}
 		return ""
 	}
 	for _, d := range state.Ruleset().Buildings() {
@@ -95,8 +90,5 @@ func (sw *storeWall) buildingFor(res string) string {
 // building adds what one copy holds, in the form a storage building's
 // description gives its figure: "+140 knowledge storage."
 func buildingText(bs game.BuildingState) string {
-	if bs.KnowledgeStore <= 0 {
-		return bs.Description
-	}
-	return strings.TrimSpace(bs.Description + " +" + config.FormatAmount(bs.KnowledgeStore) + " knowledge storage.")
+	return bs.Description
 }

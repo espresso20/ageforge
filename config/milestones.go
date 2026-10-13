@@ -469,7 +469,7 @@ func Milestones() []MilestoneDef {
 			Description:  "Accumulate 10,000 knowledge.",
 			Flavor:       "Ten thousand units of knowledge, and the faint, dawning awareness of how little you know.",
 			Category:     "scholar",
-			MinResources: map[string]float64{"knowledge": 10000},
+			MinResources: map[string]float64{ResearchTarget: 10000},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.05},
 			},
@@ -482,7 +482,7 @@ func Milestones() []MilestoneDef {
 			Category:     "scholar",
 			MinTechCount: 1,
 			Rewards: []Effect{
-				{Type: "instant_resource", Target: "knowledge", Value: 50},
+				{Type: "instant_resource", Target: ResearchTarget, Value: 50},
 			},
 		},
 		// The tech-count milestones follow the tree. Each is set so that it
@@ -967,7 +967,7 @@ func Milestones() []MilestoneDef {
 			Category:    "ages",
 			MinAge:      "classical_age",
 			Rewards: []Effect{
-				{Type: "instant_resource", Target: "knowledge", Value: 150},
+				{Type: "instant_resource", Target: ResearchTarget, Value: 150},
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.10},
 			},
 		},

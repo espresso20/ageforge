@@ -93,7 +93,7 @@ func Awakenings() []AwakeningDef {
 			Duration:   780,
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 2.0},
-				{Type: "production", Target: "knowledge", Value: 1.0},
+				{Type: "research", Value: 1.0},
 			},
 		},
 		{

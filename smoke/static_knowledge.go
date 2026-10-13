@@ -86,7 +86,7 @@ func KnowledgeMade() []float64 {
 	ordinary := t.walk("ordinary", 1, refIncome, false)
 	out := make([]float64, n)
 	for i := range t.ages {
-		out[i] = float64(ref[i].income["knowledge"] * ordinary.Hours[i] * refTicksPerHour)
+		out[i] = float64(ref[i].income[config.ResearchTarget] * ordinary.Hours[i] * refTicksPerHour)
 	}
 	return out
 }

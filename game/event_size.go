@@ -16,6 +16,10 @@ import (
 // out, so an event is sized on the town and not on the events already
 // running. Never negative. Read from the last rates pass; under the lock.
 func (ge *GameEngine) townIncome(res string) float64 {
+	if res == config.ResearchTarget {
+		// The work all the scholars would do, with no event running.
+		return ge.researchIncome
+	}
 	r := ge.Resources.resources[res]
 	if r == nil {
 		return 0
@@ -59,6 +63,22 @@ func (ge *GameEngine) sizeEffects(effects []config.Effect) []config.Effect {
 			out = append(out, eff)
 			continue
 		}
+		if eff.Target == config.ResearchTarget {
+			// The work scholars do is sized on what they do, and an event's
+			// change to it is a share of it (research_boost).
+			switch eff.Type {
+			case config.EventGain:
+				if v := config.EventSize(eff, ge.eventTown(eff.Target, false)); v != 0 {
+					out = append(out, config.Effect{Type: "instant_resource", Target: eff.Target, Value: v})
+				}
+			case config.EventRate:
+				abs, income := config.EventSize(eff, ge.eventTown(eff.Target, true)), ge.townIncome(eff.Target)
+				if abs != 0 && income > 0 {
+					out = append(out, config.Effect{Type: "research_boost", Value: abs / income})
+				}
+			}
+			continue
+		}
 		if !ge.Resources.IsUnlocked(eff.Target) {
 			continue
 		}
@@ -89,6 +109,8 @@ type eventOutcome struct {
 	// rates are the event's timed changes, per tick as the player sees
 	// them.
 	rates []config.Effect
+	// research is what the event gave the scholars' work: "12% of Banking".
+	research []string
 }
 
 // eventLine is a random event's log line: its own sentence, then what it
@@ -98,7 +120,9 @@ func eventLine(sentence string, out eventOutcome, duration string) string {
 	if lost := lossParts(out.lost, out.workers); len(lost) > 0 {
 		parts = append(parts, "Lost "+joinAnd(lost)+".")
 	}
-	if gained := lossParts(out.gained, 0); len(gained) > 0 {
+	gained := lossParts(out.gained, 0)
+	gained = append(gained, out.research...)
+	if len(gained) > 0 {
 		parts = append(parts, "Gained "+joinAnd(gained)+".")
 	}
 	if text := effectsText(out.rates); text != "" {

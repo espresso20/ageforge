@@ -84,7 +84,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 5 — medieval_age  rate=6.40  output=wood
 	b = append(b, BuildingDef{
 		Name: "Sawmill", Key: "sawmill", Category: "production",
-		BaseCost:    map[string]float64{"stone": 480000, "gold": 170000, "knowledge": 45000},
+		BaseCost:    map[string]float64{"stone": 742000, "gold": 263000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "wood", Value: 6.4}},
 		BuildTicks:  1200,
@@ -97,7 +97,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// tier 6 — renaissance_age  rate=12.80  output=coal
 	b = append(b, BuildingDef{
 		Name: "Coal Mine", Key: "coal_mine", Category: "production",
-		BaseCost:    map[string]float64{"gold": 1700000, "steel": 600000, "knowledge": 240000},
+		BaseCost:    map[string]float64{"gold": 2570000, "steel": 909000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "coal", Value: 106}},
 		BuildTicks:  2400,

@@ -365,6 +365,13 @@ func (ge *GameEngine) capLinesLocked(effects []config.Effect, held bool) []strin
 // a milestone reward) and returns what the store took: the storage cap cuts
 // off the rest. Caller holds the lock.
 func (ge *GameEngine) grantLocked(res string, amount float64) (took float64) {
+	if res == config.ResearchTarget {
+		// Research is not stored: it lands on the tech in progress or is
+		// kept as a head start (grantResearch). Callers that report the
+		// grant say so themselves.
+		ge.grantResearch(amount)
+		return amount
+	}
 	before := ge.Resources.Get(res)
 	return ge.Resources.Add(res, amount) - before
 }

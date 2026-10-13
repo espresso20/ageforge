@@ -11,27 +11,15 @@ import (
 // The Research Covenant: what the tech tree's lock may ask of an age, from
 // config alone. Each age's wonder needs its keystone tech, and the advance
 // needs the wonder, so a keystone is a gate like any other and gets the same
-// kind of check. Knowledge is no gate's requirement any more, so nothing but
-// research forces a player to hold it.
+// kind of check. Knowledge is not held or spent: a tech is work, and the
+// scholars of the knowledge buildings do it, so there is no price to afford
+// and no store to fit it in.
 //
-// Knowledge has a store of its own (config.KnowledgeStoreHeld): a base and
-// what the knowledge buildings the gates ask for hold, nothing else. The
-// covenant reads that store.
-//
-//   - Entry: the first tech of an age (its cheapest) fits the knowledge
-//     store a town arrives with: the store the town of the age before it
-//     holds (the base, for the first age). Stores are never lost, so a town
-//     arrives with at least that. TechEntryStorageCopies copies of the age's
-//     own knowledge building are allowed before it must fit: none.
-//   - Storage: every tech the wonder waits for fits, with
-//     GateResourceMargin to spare, in the knowledge store of the age's own
-//     knowledge buildings at the copies the gate asks for.
-//   - Time: the keystone is affordable well inside the age's target. The
-//     knowledge it costs, with the techs of its own age it stands on, as a
-//     share of what the reference town makes in its target time
-//     (referenceKnowledge),
-//     plus the time to research them, plus the time to build the wonder,
-//     all as shares of the target, come to at most 1.
+//   - Time: the keystone is done well inside the age's target. The work it
+//     takes, with the techs of its own age it stands on, as a share of what
+//     the reference town's scholars do in the age's target time
+//     (referenceKnowledge), plus the time to build the wonder as a share of
+//     the target, come to at most 1.
 //
 // The Time rule counts a run that kept up: one that arrives with the spine
 // techs of earlier ages researched, as the smoke bot does (it takes the
@@ -42,28 +30,14 @@ import (
 // every tech is on the spine. It is reported, not failed: the ages still
 // finish, late.
 //
-// (That the keystone can be reached in its age at all, and that its
-// knowledge has a source there, are the Gate Covenant's checks.)
-const (
-	// TechEntryStorageCopies is how many copies of an age's own knowledge
-	// building the Entry rule allows before the age's first tech must fit:
-	// none. The store a town arrives with holds the first tech of the age.
-	TechEntryStorageCopies = 0
-)
-
+// (That the keystone can be reached in its age at all is the Gate
+// Covenant's check.)
 // ResearchRow is one age against the Research Covenant.
 type ResearchRow struct {
 	Age string `json:"age"`
 	// First is the age's cheapest tech ("" for an age with none).
 	First     string  `json:"first_tech,omitempty"`
 	FirstCost float64 `json:"first_cost,omitempty"`
-	// EntryStorage is the least knowledge storage anyone enters the age
-	// with, and ForcedBy what forces it.
-	EntryStorage float64 `json:"entry_storage"`
-	ForcedBy     string  `json:"forced_by,omitempty"`
-	// StorageCopies is the copies of the age's storage building it takes
-	// before First fits: 0 when it fits on entry, -1 when it never does.
-	StorageCopies int `json:"storage_copies"`
 	// Keystone is the tech the age's wonder needs ("" for none). Chain is
 	// the keystone and the techs of its own age it stands on, what it stands
 	// on first: what a run that kept up still has to research for the
@@ -73,46 +47,31 @@ type ResearchRow struct {
 	Wonder   string   `json:"wonder,omitempty"`
 	Chain    []string `json:"chain,omitempty"`
 	Carried  []string `json:"carried,omitempty"`
-	// ChainCost is the chain's knowledge, ChainMax the priciest tech of the
-	// chain and of what is carried, and MaxStorage the most knowledge
-	// storage buildable in the age.
-	ChainCost  float64 `json:"chain_cost,omitempty"`
-	ChainMax   float64 `json:"chain_max,omitempty"`
-	MaxStorage float64 `json:"max_storage,omitempty"`
-	// The Time rule's three parts, as shares of the age: the chain's cost
-	// over what the age makes, the chain's research time and the wonder's
-	// build time over the target. CarriedShare is what is carried, over what
-	// the age makes (reported, not part of the rule).
+	// ChainCost is the chain's work and ChainMax the priciest tech of the
+	// chain and of what is carried.
+	ChainCost float64 `json:"chain_cost,omitempty"`
+	ChainMax  float64 `json:"chain_max,omitempty"`
+	// The Time rule's two parts, as shares of the age: the chain's work over
+	// what the scholars do in the target, and the wonder's build time over
+	// the target. CarriedShare is what is carried, over what the scholars do
+	// (reported, not part of the rule).
 	KnowledgeShare float64 `json:"knowledge_share,omitempty"`
-	ResearchShare  float64 `json:"research_share,omitempty"`
 	BuildShare     float64 `json:"build_share,omitempty"`
 	CarriedShare   float64 `json:"carried_share,omitempty"`
 }
 
 // TimeShare is the share of the age's target the Time rule counts: the
-// knowledge, the research and the wonder's construction.
+// research and the wonder's construction.
 func (r ResearchRow) TimeShare() float64 {
-	return r.KnowledgeShare + r.ResearchShare + r.BuildShare
+	return r.KnowledgeShare + r.BuildShare
 }
 
 // Problems lists what the row breaks of the covenant, one line each (nil
 // when it keeps it).
 func (r ResearchRow) Problems() []string {
 	var out []string
-	if r.First != "" && (r.StorageCopies < 0 || r.StorageCopies > TechEntryStorageCopies) {
-		need := fmt.Sprintf("%d copies of the age's storage building", r.StorageCopies)
-		if r.StorageCopies < 0 {
-			need = "more storage than the age can build"
-		}
-		out = append(out, fmt.Sprintf("%s: its first tech, %s, costs %s knowledge, and a player may enter the age with %s of knowledge storage (%s): it takes %s before the tech fits (at most %d allowed)",
-			r.Age, r.First, num(r.FirstCost), num(r.EntryStorage), r.ForcedBy, need, TechEntryStorageCopies))
-	}
 	if r.Keystone == "" {
 		return out
-	}
-	if r.ChainMax*GateResourceMargin > r.MaxStorage {
-		out = append(out, fmt.Sprintf("%s: %s waits for a tech that costs %s knowledge, over 1/%g of the %s knowledge storage buildable in the age",
-			r.Age, r.Wonder, num(r.ChainMax), GateResourceMargin, num(r.MaxStorage)))
 	}
 	known, isKnown := ResearchTimeKnown[r.Age]
 	if isKnown && r.TimeShare() <= 1 {
@@ -120,8 +79,8 @@ func (r ResearchRow) Problems() []string {
 			r.Age, 100*r.TimeShare(), r.Age, 100*known))
 	}
 	if r.TimeShare() > 1 && !isKnown {
-		out = append(out, fmt.Sprintf("%s: %s waits for %s (%s knowledge, %.0f%% of what the age makes in its target time); with %.0f%% of the target to research it and %.0f%% to build the wonder that is %.0f%% of the age, over 100%%",
-			r.Age, r.Wonder, strings.Join(r.Chain, ", "), num(r.ChainCost), 100*r.KnowledgeShare, 100*r.ResearchShare, 100*r.BuildShare, 100*r.TimeShare()))
+		out = append(out, fmt.Sprintf("%s: %s waits for %s (%s of work, %.0f%% of what the scholars do in the age's target time); with %.0f%% of the target to build the wonder that is %.0f%% of the age, over 100%%",
+			r.Age, r.Wonder, strings.Join(r.Chain, ", "), num(r.ChainCost), 100*r.KnowledgeShare, 100*r.BuildShare, 100*r.TimeShare()))
 	}
 	return out
 }
@@ -149,7 +108,7 @@ func StaticResearch() []ResearchRow {
 // the age is meant to last. It is worked out from the building and tech
 // tables alone.
 func referenceKnowledge(age string) float64 {
-	return float64(config.TypicalIncome("knowledge", age) * config.AgeTargetTicks(age))
+	return float64(config.TypicalIncome(config.ResearchTarget, age) * config.AgeTargetTicks(age))
 }
 
 // staticResearch is StaticResearch over the given tables; knowledge is what
@@ -161,24 +120,17 @@ func staticResearch(ages []config.AgeDef, defs map[string]config.BuildingDef, te
 	}
 	have := map[string]bool{} // what a keystones-only run has researched so far
 	var out []ResearchRow
-	for i, a := range ages {
-		row := ResearchRow{Age: a.Key, EntryStorage: config.KnowledgeBase, ForcedBy: "the base"}
-		if i > 0 {
-			row.EntryStorage, row.ForcedBy = maxStorageIn(defs, ages[i-1].Key, "knowledge"), "the knowledge buildings the gates ask for"
-		}
+	for _, a := range ages {
+		row := ResearchRow{Age: a.Key}
 		for _, t := range techs {
 			if t.Age == a.Key && (row.First == "" || t.Cost < row.FirstCost) {
 				row.First, row.FirstCost = t.Key, t.Cost
 			}
 		}
-		if row.First != "" {
-			row.StorageCopies = entryCopies(a.Key, row.FirstCost, row.EntryStorage, defs)
-		}
 
 		wonder := ageWonder(a, defs)
 		if key := defs[wonder].RequiredTech; key != "" {
 			row.Keystone, row.Wonder = key, wonder
-			ticks := 0
 			carried := 0.0
 			for _, k := range configChain(byKey, key, have, nil) {
 				t := byKey[k]
@@ -190,9 +142,7 @@ func staticResearch(ages []config.AgeDef, defs map[string]config.BuildingDef, te
 				}
 				row.Chain = append(row.Chain, k)
 				row.ChainCost += t.Cost
-				ticks += t.ResearchTicks
 			}
-			row.MaxStorage = maxStorageIn(defs, a.Key, "knowledge")
 			if made := knowledge(a.Key); made > 0 {
 				row.KnowledgeShare = row.ChainCost / made
 				row.CarriedShare = carried / made
@@ -200,43 +150,12 @@ func staticResearch(ages []config.AgeDef, defs map[string]config.BuildingDef, te
 				row.KnowledgeShare = math.Inf(1)
 			}
 			if target := config.AgeTargetTicks(a.Key); target > 0 {
-				row.ResearchShare = float64(ticks) / target
 				row.BuildShare = float64(defs[wonder].BuildTicks) / target
 			}
 		}
 		out = append(out, row)
 	}
 	return out
-}
-
-// entryCopies is how many copies of the age's knowledge building it takes
-// before cost of knowledge fits a store of entry: 0 when it fits already, -1
-// when the copies the gate asks for never get there.
-func entryCopies(age string, cost, entry float64, defs map[string]config.BuildingDef) int {
-	if cost <= entry {
-		return 0
-	}
-	ages := config.Ages()
-	per, most := 0.0, 0
-	for i, a := range ages {
-		if a.Key != age || i+1 >= len(ages) {
-			continue
-		}
-		for _, k := range sortedKeys(defs) {
-			d := defs[k]
-			if d.RequiredAge == age && config.IsKnowledgeBuilding(d) && d.KnowledgeStore > per {
-				per, most = d.KnowledgeStore, ages[i+1].BuildingReqs[k]
-			}
-		}
-	}
-	if per <= 0 {
-		return -1
-	}
-	n := int(math.Ceil((cost - entry) / per))
-	if n > most {
-		return -1
-	}
-	return n
 }
 
 // configChain appends key and every tech it still needs to out, what it
@@ -276,30 +195,26 @@ func configChain(techs map[string]config.TechDef, key string, have map[string]bo
 
 // writeResearch renders the Research Covenant check.
 func writeResearch(sb *strings.Builder, rows []ResearchRow) {
-	fmt.Fprintf(sb, "Each age's wonder needs its keystone tech (the Research Covenant). The first tech of an age must fit the knowledge storage a player enters the age with, or do so within %d copies of the age's own storage building. Every tech the wonder waits for must fit, with %gx to spare, in the most knowledge storage buildable in the age. And the keystone must be affordable well inside the age: its knowledge, with the techs of its own age it stands on, as a share of what the reference town (eight staffed copies of every knowledge building so far) makes in the age's target time, plus its research time and the wonder's build time as shares of the target, may not pass 100%%. \"Carried in\" is what a run that researched nothing an earlier wonder did not ask for owes on top, as a share of what the age makes: reported, not failed. `go test ./smoke` fails on any row marked ✗.\n\n",
-		TechEntryStorageCopies, GateResourceMargin)
-	sb.WriteString("| age | first tech | costs | enters with | storage copies first | the wonder waits for | costs | of the age's knowledge | + research | + build | of the age | carried in | |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+	fmt.Fprintf(sb, "Each age's wonder needs its keystone tech (the Research Covenant). A tech is work the scholars do, so there is no price to afford and no store to fit it in. The keystone must be done well inside the age: its work, with the techs of its own age it stands on, as a share of what the reference town's scholars (the copies the gates ask for of every knowledge building so far, all researching) do in the age's target time, plus the wonder's build time as a share of the target, may not pass 100%%. \"Carried in\" is what a run that researched nothing an earlier wonder did not ask for owes on top, as a share of what the scholars do: reported, not failed. `go test ./smoke` fails on any row marked ✗.\n\n")
+	sb.WriteString("| age | first tech | work | the wonder waits for | work | of the age's research | + build | of the age | carried in | |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, r := range rows {
 		mark := "✓"
 		if len(r.Problems()) > 0 {
 			mark = "✗"
 		}
-		first, firstCost, copies := "-", "-", "-"
+		first, firstCost := "-", "-"
 		if r.First != "" {
-			first, firstCost, copies = r.First, num(r.FirstCost), fmt.Sprint(r.StorageCopies)
-			if r.StorageCopies < 0 {
-				copies = "never"
-			}
+			first, firstCost = r.First, num(r.FirstCost)
 		}
 		if r.Keystone == "" {
-			fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | - | - | - | - | - | - | - | %s |\n", r.Age, first, firstCost, num(r.EntryStorage), copies, mark)
+			fmt.Fprintf(sb, "| %s | %s | %s | - | - | - | - | - | - | %s |\n", r.Age, first, firstCost, mark)
 			continue
 		}
 		carried := "-"
 		if len(r.Carried) > 0 {
 			carried = fmt.Sprintf("%s (+%.0f%%)", strings.Join(r.Carried, ", "), 100*r.CarriedShare)
 		}
-		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %s | %.0f%% | %.0f%% | %.0f%% | %.0f%% | %s | %s |\n", r.Age, first, firstCost, num(r.EntryStorage), copies,
-			strings.Join(r.Chain, ", "), num(r.ChainCost), 100*r.KnowledgeShare, 100*r.ResearchShare, 100*r.BuildShare, 100*r.TimeShare(), carried, mark)
+		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %.0f%% | %.0f%% | %.0f%% | %s | %s |\n", r.Age, first, firstCost,
+			strings.Join(r.Chain, ", "), num(r.ChainCost), 100*r.KnowledgeShare, 100*r.BuildShare, 100*r.TimeShare(), carried, mark)
 	}
 }

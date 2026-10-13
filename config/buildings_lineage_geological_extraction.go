@@ -93,7 +93,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 5 — medieval_age  rate=2.56  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Stonemason's Guild", Key: "stonemasons_guild", Category: "production",
-		BaseCost:  map[string]float64{"stone": 480000, "gold": 150000, "knowledge": 45000},
+		BaseCost:  map[string]float64{"stone": 759000, "gold": 237000},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "iron_ore", Value: 12.2},
@@ -110,7 +110,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 6 — renaissance_age  rate=5.12  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Iron Mine", Key: "iron_mine", Category: "production",
-		BaseCost:  map[string]float64{"gold": 1500000, "steel": 540000, "knowledge": 230000},
+		BaseCost:  map[string]float64{"gold": 2330000, "steel": 839000},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "iron_ore", Value: 6.18},

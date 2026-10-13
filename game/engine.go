@@ -149,6 +149,20 @@ type GameEngine struct {
 	// saved.
 	workerBonus float64
 
+	// Scholars (scholars.go). scholarShare is the percent of the scholars
+	// that research, meaningful only when scholarShareSet (default 100).
+	// researchPerTick is the work the researching scholars do each tick;
+	// researchIncome is the work all the scholars would do with no event
+	// running (what an event is sized on). Both are derived every rates
+	// pass and not saved.
+	scholarShare    int
+	scholarShareSet bool
+	researchPerTick float64
+	researchIncome  float64
+	// loadedCompletions are techs a loaded save had paid for and waiting out
+	// their time: they completed on load (loadResearch).
+	loadedCompletions []string
+
 	// Dynamic tick speed. speedMultiplier is only ever above 1 through the dev
 	// console's /speed: players have no speed setting (see playerSpeedCap).
 	tickSpeedBonus  float64
@@ -1528,9 +1542,7 @@ func (ge *GameEngine) doTick() {
 		if fr, ok := snap["food"]; ok {
 			foodRate = fr.Rate
 		}
-		if kr, ok := snap["knowledge"]; ok {
-			knowRate = kr.Rate
-		}
+		knowRate = ge.researchPerTick
 		faith := snap["faith"].Amount
 		ge.History.Sample(ge.tick, HistorySample{
 			Population: float64(ge.Workers.TotalPop()),
@@ -1543,27 +1555,6 @@ func (ge *GameEngine) doTick() {
 			AgeOrder:   ageOrder,
 		})
 	}
-}
-
-// processResearch handles research tick
-func (ge *GameEngine) processResearch() {
-	completed := ge.Research.Tick()
-	if completed != "" {
-		ge.finishResearch(completed)
-	} else if ge.Research.currentTech != "" {
-		ge.addLog("debug", fmt.Sprintf("Research: %s %d/%d ticks",
-			ge.Research.currentTech, ge.Research.totalTicks-ge.Research.ticksLeft, ge.Research.totalTicks))
-	}
-}
-
-// advanceResearch moves research on by n ticks at once (offline catch-up).
-// Reports whether a tech completed.
-func (ge *GameEngine) advanceResearch(n int) bool {
-	if completed := ge.Research.Advance(n); completed != "" {
-		ge.finishResearch(completed)
-		return true
-	}
-	return false
 }
 
 // finishResearch logs a completed tech and publishes EventResearchDone.
@@ -1699,17 +1690,26 @@ func (ge *GameEngine) processExpeditions() {
 // under it says what fit. Under the write lock.
 func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
 	fit := make(map[string]float64, len(rewards))
+	kept := make(map[string]float64, len(rewards))
 	for _, resource := range sortedKeys(rewards) {
+		if resource == config.ResearchTarget {
+			// Not stored: it goes to the tech in progress.
+			if said := ge.grantResearch(rewards[resource]); said != "" {
+				ge.addLog("info", "  → Gained "+said+".")
+			}
+			continue
+		}
 		fit[resource] = ge.gainResource(resource, rewards[resource])
+		kept[resource] = rewards[resource]
 	}
-	if clipped := clippedLine(rewards, fit); clipped != "" {
+	if clipped := clippedLine(kept, fit); clipped != "" {
 		ge.addLog("info", clipped)
 	}
 }
 
 // processTrade handles trade route ticks
 func (ge *GameEngine) processTrade() {
-	messages := ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus())
+	messages := ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus(), ge.grantResearch)
 	for _, msg := range messages {
 		ge.addLog("warning", msg)
 	}
@@ -1818,9 +1818,9 @@ func (ge *GameEngine) checkMilestones() {
 	}
 
 	// Soldier milestones key off cumulative lifetime soldiers trained, not the
-	// live military-worker count. Knowledge workers are still a live domain count.
+	// live military-worker count. The scholars are a live count.
 	soldiersTrained := int(ge.Stats.SoldiersTrained)
-	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
+	knowledgeCount := ge.scholarTotal()
 
 	// Count wonders
 	wonderCount := 0
@@ -1912,6 +1912,12 @@ func (ge *GameEngine) applyMilestoneRewards(rewards []config.Effect) {
 	for _, eff := range rewards {
 		switch eff.Type {
 		case "instant_resource":
+			if eff.Target == config.ResearchTarget {
+				if said := ge.grantResearch(eff.Value); said != "" {
+					ge.addLog("info", "  → Gained "+said+".")
+				}
+				continue
+			}
 			granted[eff.Target] += eff.Value
 			fit[eff.Target] += ge.grantLocked(eff.Target, eff.Value)
 		case "permanent_bonus":
@@ -2212,6 +2218,10 @@ func (ge *GameEngine) recalculateRates() {
 	ge.noteFaithRates(production["faith"]-ge.Buildings.wonderProduction("faith"), workerOutput["faith"], measured("faith"))
 	ge.noteCultureRates(production["culture"]-ge.Buildings.wonderProduction("culture"), workerOutput["culture"], measured("culture"))
 
+	// The scholars' work each tick (scholars.go): the knowledge buildings'
+	// figure at a full crew through the steps above that apply to it.
+	ge.updateResearchRate(r, mMult, prodAllFactor, soft)
+
 	// Recalculate storage from buildings + milestones, then the techs'
 	// percentage on every store.
 	storageBonuses := ge.Buildings.GetStorageBonuses()
@@ -2226,17 +2236,9 @@ func (ge *GameEngine) recalculateRates() {
 		// Storage grows with Era Mastery's k, as production does, so a store
 		// holds the same hours of income at any speed. The techs' storage
 		// bonus multiplies beside it: +10% of everything the store holds.
-		if def.Key == "knowledge" {
-			// Knowledge has a store of its own (knowledge_store.go): its
-			// base and the knowledge buildings' shares. The general
-			// storage buildings, the techs' storage bonus and Era Mastery's
-			// k do not touch it.
-			r.Storage = ge.Buildings.knowledgeStoreSize(def.BaseStorage, specific)
-		} else {
-			r.Storage = float64((def.BaseStorage + allBonus + specific) * k)
-			if techStorage != 1 {
-				r.Storage = float64(r.Storage * techStorage)
-			}
+		r.Storage = float64((def.BaseStorage + allBonus + specific) * k)
+		if techStorage != 1 {
+			r.Storage = float64(r.Storage * techStorage)
 		}
 		// The soldiers' store has a term of its own on top
 		// (config.MechanicSoldierStorage).
@@ -2698,12 +2700,16 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 				continue
 			}
 			gain := config.EventSize(config.Effect{Type: config.EventGain, Target: key, Value: config.AncientCacheMinutes}, ge.eventTown(key, false))
-			if key == "knowledge" {
-				gain = math.Min(gain, ge.cheapestTechPrice())
-			}
 			if gain > 0 {
 				had := ge.Resources.Get(key)
 				gave[key], fit[key] = gain, ge.Resources.Add(key, gain)-had
+			}
+		}
+		// The scholars' share: minutes of their work, at most the price of
+		// the age's cheapest tech.
+		if gain := math.Min(config.EventSize(config.Effect{Type: config.EventGain, Target: config.ResearchTarget, Value: config.AncientCacheMinutes}, ge.eventTown(config.ResearchTarget, false)), ge.cheapestTechPrice()); gain > 0 {
+			if said := ge.grantResearch(gain); said != "" {
+				ge.addLog("info", "  → The cache gave "+said+".")
 			}
 		}
 		if clipped := clippedLine(gave, fit); clipped != "" {
@@ -2813,7 +2819,10 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		if tech, ok := ge.Research.CancelResearch(); ok {
 			ge.addLog("warning", fmt.Sprintf("  → Research on %s canceled (no refund).", ge.rules.Name(rules.KindTech, tech)))
 		}
-		ge.loseShare("knowledge", 0.80)
+		if lost := ge.Research.head; lost > 0 {
+			ge.Research.head = 0
+			ge.addLog("warning", "  → The head start you had kept for your next tech is lost.")
+		}
 		ge.injectEpochRates("epoch_dark_age", ev, "warning", "")
 	}
 }
@@ -2907,6 +2916,8 @@ func effectsText(effects []config.Effect) string {
 			parts = append(parts, "all production "+textfmt.SignedPercent(e.Value))
 		case "production":
 			parts = append(parts, ResourceName(e.Target)+" "+textfmt.Rate(e.Value))
+		case "research_boost":
+			parts = append(parts, "research speed "+textfmt.SignedPercent(e.Value))
 		}
 	}
 	return textfmt.List(parts)
@@ -3279,6 +3290,7 @@ func (ge *GameEngine) buildResolver() *Resolver {
 	r.AddAll(ge.eventModifiers())
 	r.AddAll(ge.moraleModifiers())
 	r.AddAll(ge.diplomacyModifiers())
+	r.AddAll(ge.scholarModifiers())
 	return r
 }
 
@@ -3986,13 +3998,6 @@ func (ge *GameEngine) overStore(cost map[string]float64) string {
 // storage building, when the age has one).
 func (ge *GameEngine) storeTooSmallText(what, res string, amount float64) string {
 	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", what, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
-	if res == "knowledge" {
-		// Only a knowledge building raises the knowledge store: the age's.
-		if d, ok := ge.knowledgeBuildingOfAge(); ok {
-			return line + " Build more storage first: " + d.Name + "."
-		}
-		return line
-	}
 	for _, d := range ge.rules.Buildings() {
 		if d.Category == "storage" && d.RequiredAge == ge.age {
 			return line + " Build more storage first: " + d.Name + "."
@@ -4046,7 +4051,7 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	// Knowledge buildings are the knowledge store, spared the same way (see
 	// isDestroyable). Selling one shrinks that store for good, and a tech
 	// priced over the smaller store could never be started.
-	if def.KnowledgeStore > 0 {
+	if def.Scholars > 0 {
 		return fmt.Errorf("Knowledge buildings cannot be sold: once its age has passed, it can never be rebuilt.")
 	}
 
@@ -4117,34 +4122,21 @@ func (ge *GameEngine) StartResearch(techKey string) error {
 // "Started researching").
 func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	ageOrder := ge.progress.GetAgeOrder()
-	knowledge := ge.Resources.Get("knowledge")
-
-	// Combine research_speed from all sources (see combinedResearchSpeed). This
-	// must be done before StartResearch so the combined value reduces tick count.
-	combinedResearchSpeed := ge.combinedResearchSpeed()
-	// A tech priced over the knowledge store cannot be started (the wall a
-	// building meets), whichever way it is started: the command and the plan
-	// both come through here.
-	ge.Research.costGate = ge.knowledgeWall
-	defer func() { ge.Research.costGate = nil }()
-	ge.Research.timeMult = ge.succumbResearchFactor() // Ancient Knowledge: × 0.8 per epoch
-	ge.Research.timeK = ge.speedK()                   // Era Mastery: ÷ k after the speed step
-	if err := ge.Research.StartResearchWithSpeed(techKey, ge.age, ageOrder, knowledge, combinedResearchSpeed); err != nil {
+	// A tech can be started whenever its age and prerequisites allow: it has
+	// no price to afford.
+	if err := ge.Research.StartResearch(techKey, ge.age, ageOrder); err != nil {
 		return err
 	}
-
-	// Pay knowledge cost (waived in godmode)
 	def, _ := ge.rules.Tech(techKey)
-	if !DevGodMode {
-		ge.Resources.Remove("knowledge", def.Cost)
-	}
+	// The posts change with a tech in hand (scholars who taught research).
+	ge.recalculateRates()
 	if DevGodMode {
 		// complete immediately
-		ge.Research.ticksLeft = 0
+		ge.finishResearch(ge.Research.complete(0))
 	}
-	ge.addLog("debug", fmt.Sprintf("Research start: %s (cost: %.0f knowledge, %d ticks)", def.Name, def.Cost, ge.Research.totalTicks))
+	ge.addLog("debug", fmt.Sprintf("Research start: %s (work: %.0f, %d ticks)", def.Name, def.Cost, ge.researchTicksFor(def.Cost)))
 	if !quiet {
-		ge.addLog(LogRoutine, fmt.Sprintf("Started researching %s (%s).", def.Name, ge.durationLocked(ge.Research.totalTicks)))
+		ge.addLog(LogRoutine, ge.startedResearchLine(def))
 	}
 	return nil
 }
@@ -4158,7 +4150,8 @@ func (ge *GameEngine) CancelResearch() error {
 	if !ok {
 		return fmt.Errorf("No research in progress.")
 	}
-	ge.addLog("warning", fmt.Sprintf("Research on %s canceled (no refund).", ge.rules.Name(rules.KindTech, tech)))
+	ge.recalculateRates()
+	ge.addLog("warning", fmt.Sprintf("Research on %s canceled. The work done on it is lost.", ge.rules.Name(rules.KindTech, tech)))
 	return nil
 }
 
@@ -4289,16 +4282,18 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	techKey := ge.pendingMemoryTech
 	ge.pendingMemoryTech = ""
 
-	// Same combined research_speed sources a normal research gets; the memory
-	// penalty (2x ticks) is applied on top inside StartMemoryResearch.
-	combinedResearchSpeed := ge.combinedResearchSpeed()
-	ge.Research.timeMult = ge.succumbResearchFactor() // Ancient Knowledge: × 0.8 per epoch
-	ge.Research.timeK = ge.speedK()                   // Era Mastery: ÷ k after the speed step
-	if err := ge.Research.StartMemoryResearch(techKey, combinedResearchSpeed); err != nil {
+	// The memory penalty (half the work a tick) is applied on top of the same
+	// speed-ups a normal research gets.
+	if err := ge.Research.StartMemoryResearch(techKey); err != nil {
 		return err
 	}
 	def, _ := ge.rules.Tech(techKey)
-	ge.addLog("success", fmt.Sprintf("Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ge.Research.totalTicks)))
+	ge.recalculateRates()
+	if ticks := ge.researchTicksLeft(); ticks > 0 {
+		ge.addLog("success", fmt.Sprintf("Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ticks)))
+	} else {
+		ge.addLog("success", fmt.Sprintf("Recovered the memory of %s. It needs scholars researching to go on.", def.Name))
+	}
 	ge.note(config.BadgeEvMemoryAccepted, techKey)
 	return nil
 }
@@ -4750,7 +4745,7 @@ func (ge *GameEngine) GetState() GameState {
 	}
 
 	ageOrder := ge.progress.GetAgeOrder()
-	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
+	knowledgeCount := ge.scholarTotal()
 	// Soldiers are now a real resource; the military panel reflects the resource
 	// amount, not the derived military-worker count. The soldier milestones key
 	// off the cumulative lifetime trained count instead (ge.Stats.SoldiersTrained).
@@ -4822,17 +4817,17 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:          nextAgeName,
 		NextAgeBldReqs:       nextAgeBldReqs,
 		Resources:            ge.Resources.Snapshot(),
-		Buildings:            ge.withKnowledgeFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount)),
-		KnowledgeStore:       ge.knowledgeStoreStateLocked(),
+		Buildings:            ge.withScholarFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount)),
+		Scholars:             ge.scholarsStateLocked(),
 		BuildQueue:           queue,
 		Workers:              workers,
-		Research:             ge.withKnowledgeWall(ge.Research.Snapshot(ge.age, ageOrder)),
+		Research:             ge.withResearchTimes(ge.Research.Snapshot(ge.age, ageOrder)),
 		Military:             militarySnap,
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
 			Tick:            ge.tick,
 			Age:             ge.age,
 			AgeOrder:        ageOrder,
-			Resources:       ge.Resources.GetAll(),
+			Resources:       ge.milestoneResources(),
 			Buildings:       ge.Buildings.GetAll(),
 			Population:      ge.Workers.TotalPop(),
 			TechCount:       ge.Research.ResearchedCount(),
@@ -5250,7 +5245,7 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	}
 	newKey, hasPending := ge.Buildings.GetPendingUpgrade(key)
 	newDef, hasNew := ge.rules.Building(newKey)
-	if !hasPending || !hasNew || oldDef.KnowledgeStore > 0 {
+	if !hasPending || !hasNew || oldDef.Scholars > 0 {
 		return fmt.Errorf("%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
 	}
 	if err := ge.techLockErr(newDef); err != nil {
@@ -5417,6 +5412,10 @@ func milestoneRewardParts(effects []config.Effect) string {
 	for _, e := range effects {
 		switch e.Type {
 		case "instant_resource":
+			if e.Target == config.ResearchTarget {
+				parts = append(parts, "research progress")
+				continue
+			}
 			parts = append(parts, "+"+Amount(e.Value, e.Target))
 		case "permanent_bonus":
 			parts = append(parts, textfmt.SignedPercent(e.Value)+" "+EffectTargetName(e.Target))
@@ -5480,7 +5479,7 @@ func (ge *GameEngine) prestigeUpgradeLine(key string) string {
 	case "flat_bonus":
 		switch def.EffectKey {
 		case "all":
-			effect = "storage for every resource but knowledge " + textfmt.Signed(total)
+			effect = "storage for every resource " + textfmt.Signed(total)
 		default:
 			effect = EffectTargetName(def.EffectKey) + " " + textfmt.Signed(total)
 		}

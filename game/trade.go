@@ -201,7 +201,7 @@ func (tm *TradeManager) ActiveRouteCount() int {
 // and passes it in. Disrupted routes (those importing a resource a hostile civ
 // specialises in — see DiplomacyManager.DisruptedResources) are skipped for the
 // cycle with a log line.
-func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, harborBonus float64) []string {
+func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, harborBonus float64, research func(work float64) string) []string {
 	var messages []string
 
 	routes := tm.routeDefs
@@ -274,8 +274,8 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 			scale := float64(1)
 			if canAfford {
 				for res, actual := range imports {
-					if !(actual > 0) {
-						continue
+					if !(actual > 0) || res == config.ResearchTarget {
+						continue // research is not stored: it has no store to fill
 					}
 					room := resources.GetStorage(res) - resources.Get(res)
 					if !(room > 0) {
@@ -301,6 +301,14 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				// Add imports
 				promised, took := map[string]float64{}, map[string]float64{}
 				for res, actual := range imports {
+					if res == config.ResearchTarget {
+						if research != nil {
+							if said := research(actual * scale); said != "" {
+								messages = append(messages, "  → "+def.Name+" gave "+said+".")
+							}
+						}
+						continue
+					}
 					before := resources.Get(res)
 					resources.Add(res, actual*scale)
 					promised[res], took[res] = actual, resources.Get(res)-before

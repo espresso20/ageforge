@@ -50,7 +50,7 @@ type AgeDef struct {
 // lowered). TestGatesFollowTheTownRule holds this table to it.
 //
 // No gate asks for an amount of any resource (the owner's decision of
-// 2026-10-11). An age's knowledge goes to its techs, and the one of them the
+// 2026-10-11). An age's research goes to its techs, and the one of them the
 // advance needs is its wonder's keystone (the wonder's RequiredTech).
 func Ages() []AgeDef {
 	return []AgeDef{
@@ -61,7 +61,7 @@ func Ages() []AgeDef {
 			Description:     "Survival. Nothing but your hands and wits.",
 			Quip:            "Fire: discovered. Fingers: regrettably also discovered.",
 			UnlockBuildings: []string{"hut", "stash", "gathering_camp", "wood_camp", "story_circle", "shrine", "sacred_grove"},
-			UnlockResources: []string{"food", "wood", "knowledge", "faith"},
+			UnlockResources: []string{"food", "wood", "faith"},
 			UnlockVillagers: []string{"worker"},
 		},
 		// === 1: STONE AGE (Stone Era) ===

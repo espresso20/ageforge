@@ -424,6 +424,9 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Ef
 	k := ge.speedK()
 	for _, eff := range effects {
 		switch eff.Type {
+		case "research_boost":
+			// A share of the scholars' work: already as the player sees it.
+			out.rates = append(out.rates, eff)
 		case "production":
 			// As the player sees it: the rates pass scales it with the
 			// rest of the economy.
@@ -433,6 +436,12 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Ef
 			}
 			out.rates = append(out.rates, shown)
 		case "instant_resource":
+			if eff.Target == config.ResearchTarget {
+				if said := ge.grantResearch(eff.Value); said != "" {
+					out.research = append(out.research, said)
+				}
+				continue
+			}
 			if out.gained == nil {
 				out.gained, out.fit = make(map[string]float64), make(map[string]float64)
 			}
