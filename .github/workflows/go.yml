@@ -66,7 +66,8 @@ jobs:
       # it timed out three times with nothing failing. 15 still reports a
       # real hang before the job's own limit above.
       - name: go test -race
-        run: go test -race -timeout 15m ./...
+        # 25m a package, not 15: the ui package alone runs past 15 minutes under the race detector on a slow runner.
+        run: go test -race -timeout 25m ./...
 
   # The smoke suite's fast tier on every pull request (see CONTRIBUTING.md,
   # "Smoke testing"), without the scenarios that play the test bot: static
