@@ -154,8 +154,8 @@ func TestFirstRungsComeEarly(t *testing.T) {
 			t.Errorf("%s: the top rung is %s, want %d runs of %s", res.Key, config.FormatAmount(top), config.BadgeMaxRuns, config.FormatAmount(perRun))
 		}
 	}
-	if badges != 94 {
-		t.Errorf("the resource ladders have %d badges, want the 94 the catalog had", badges)
+	if badges != 90 {
+		t.Errorf("the resource ladders have %d badges, want the 90 the catalog has (knowledge is no resource)", badges)
 	}
 }
 

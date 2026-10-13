@@ -336,15 +336,6 @@ func TestGateCovenantCatchesAnUnpayableFirstCopy(t *testing.T) {
 	if !found {
 		t.Errorf("a first copy at a hundred times what the age makes: want a flow row for the obelisk, got %+v", problems)
 	}
-
-	// A town that arrives with nothing that makes knowledge.
-	ages := config.Ages()
-	empty := &coldStart{age: "stone_age", unlocked: map[string]bool{"knowledge": true},
-		trickle: map[string]float64{}, boot: map[string]bool{}, reach: map[string]bool{}, held: map[string]bool{}}
-	rows := firstCopyProblems(ages[0], ages[1], empty, map[string]config.BuildingDef{}, config.Technologies())
-	if len(rows) != 1 || rows[0].Kind != "unsourced" || rows[0].Resource != "knowledge" {
-		t.Errorf("no knowledge on arrival: want one unsourced row for the first tech, got %+v", rows)
-	}
 }
 
 // vaultBetween is the multiple of today's Victorian Vault price that sits

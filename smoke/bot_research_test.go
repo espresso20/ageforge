@@ -168,40 +168,24 @@ func TestTechChainTakesTheCheaperBranch(t *testing.T) {
 }
 
 // TestBlockersNameTheKeystone: the line a soft-lock or a timeout prints says
-// which tech the wonder waits for, what it costs and the knowledge cap, and
-// an age whose keystone no reachable storage can hold is an invariant
-// violation, not a slow age.
+// which tech the wonder waits for and the work it takes. A tech has no price
+// to hold, so no storage can stand in its way.
 func TestBlockersNameTheKeystone(t *testing.T) {
 	ge, _ := botIn(t, "stone_age")
-	// Stores a player has by the Stone Age, so the age's storage can be built.
-	ge.SetStockForTest("wood", 2000)
-	ge.SetStockForTest("stone", 2000)
 	st := ge.GetState()
 	if got := keystoneChain(st); !reflect.DeepEqual(got, []string{"tool_making", "stoneworking"}) {
 		t.Fatalf("the Great Monolith waits for %v", got)
 	}
 	line := Blockers(st)
-	for _, want := range []string{"wonder great_monolith", "needs tool_making (", "needs stoneworking ("} {
+	for _, want := range []string{"wonder great_monolith", "needs tool_making researched (", "needs stoneworking researched ("} {
 		if !strings.Contains(line, want) {
 			t.Errorf("blockers %q do not name %q", line, want)
 		}
 	}
-	// Reachable storage is far above Stoneworking's price in the real game.
 	for _, p := range storageProblems(st, st.Ruleset().BuildingMap()) {
 		if p.check == "keystone_over_storage" {
 			t.Errorf("a new Stone Age game: %s", p.msg)
 		}
-	}
-	// A keystone priced over anything the age can store is caught.
-	ts := st.Research.Techs["stoneworking"]
-	ts.Cost = 1e30
-	st.Research.Techs["stoneworking"] = ts
-	found := false
-	for _, p := range storageProblems(st, st.Ruleset().BuildingMap()) {
-		found = found || p.check == "keystone_over_storage"
-	}
-	if !found {
-		t.Error("a keystone no storage can hold was not flagged")
 	}
 	ge.GrantTechsForTest("tool_making", "stoneworking")
 	if st := ge.GetState(); keystoneChain(st) != nil || strings.Contains(Blockers(st), "needs ") {
