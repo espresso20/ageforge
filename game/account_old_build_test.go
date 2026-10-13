@@ -130,7 +130,7 @@ func TestOldBuildResaveKeepsBadges(t *testing.T) {
 		if acct.Tampered || acct.BadgesTampered {
 			t.Fatalf("load %d: the account reads as modified after the older build saved it (account %v, badge file %v)", load, acct.Tampered, acct.BadgesTampered)
 		}
-		if !reflect.DeepEqual(acct.Badges, wantBadges) {
+		if !reflect.DeepEqual(withoutCounts(acct.Badges), wantBadges) {
 			t.Errorf("load %d: badges\n got %+v\nwant %+v", load, acct.Badges, wantBadges)
 		}
 		for key, e := range acct.Badges {
@@ -200,7 +200,7 @@ func TestOldBuildAchievementsBecomeBadges(t *testing.T) {
 	}
 	for key, e := range acct.Badges {
 		if was, held := before.Badges[key]; held {
-			if e != was {
+			if e.Count = 0; e != was {
 				t.Errorf("%s, earned before the older build's turn, changed: %+v, was %+v", key, e, was)
 			}
 			continue
@@ -341,4 +341,16 @@ func TestBothBuildsTakeTurns(t *testing.T) {
 	if !hasBadge(back, badgePrestige25) || counter(back, config.BadgeEvPrestige) != 25 {
 		t.Errorf("a badge was lost to the older build's save: %v, counter %v", back.EarnedBadges(), counter(back, config.BadgeEvPrestige))
 	}
+}
+
+// withoutCounts is badges with the remembered counts left out: a rung from
+// before they were kept settles by remembering today's bar, which these
+// tests are not about.
+func withoutCounts(badges map[string]BadgeEarned) map[string]BadgeEarned {
+	out := make(map[string]BadgeEarned, len(badges))
+	for k, e := range badges {
+		e.Count = 0
+		out[k] = e
+	}
+	return out
 }

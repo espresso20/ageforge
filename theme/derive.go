@@ -29,6 +29,8 @@ var (
 //	OnAccent      = black or white, whichever reads better on Accent
 //	Chip          = Background 15% toward Text
 //	OnNegative    = Text if it clears 3:1 on Negative, else black or white
+//	Comment       = neon orange, nudged to read on Background (every shipped
+//	                theme sets its own; this is the floor for a new one)
 //
 // Core roles are never touched: a theme that leaves one of those unset is a bug
 // the contrast test will catch.
@@ -63,8 +65,14 @@ func deriveRoles(t Theme) Theme {
 			c[RoleOnNegative] = BestOn(c[RoleNegative])
 		}
 	}
+	if unset(RoleComment) {
+		c[RoleComment] = Legible(neonOrange, c[RoleBackground], 4.5)
+	}
 	return t
 }
+
+// neonOrange is the comment color's starting point.
+var neonOrange = tcell.NewRGBColor(0xff, 0x7a, 0x1a)
 
 // BestOn returns black or white, whichever has the higher contrast against bg.
 func BestOn(bg tcell.Color) tcell.Color {

@@ -26,6 +26,7 @@ var roleTagNames = [numRoles]string{
 	RoleOnAccent:      "onaccent",
 	RoleChip:          "chip",
 	RoleOnNegative:    "onnegative",
+	RoleComment:       "comment",
 }
 
 // legacyAliases are the pre-role color names the UI was written with (~900

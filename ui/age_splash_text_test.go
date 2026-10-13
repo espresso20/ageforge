@@ -24,7 +24,7 @@ func legacyAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 	fmt.Fprintf(&sb, "[gold::b]★  %s  ★[-]\n", strings.ToUpper(newDef.Name))
 	fmt.Fprintf(&sb, "[white]\"%s\"[-]\n", newDef.Description)
 	if newDef.Quip != "" {
-		fmt.Fprintf(&sb, "[gray::i]%s[-:-:-]\n", newDef.Quip)
+		fmt.Fprintf(&sb, "[comment::i]%s[-:-:-]\n", newDef.Quip)
 	}
 	fmt.Fprintf(&sb, "[gold]══════════════════════════════════[-]\n")
 	fmt.Fprintf(&sb, "\n")
@@ -160,7 +160,7 @@ func legacyAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 		fmt.Fprintf(&sb, "[%s]%s %s[-]\n", epochColor, epochIcon, epochEvent.EpochName)
 		fmt.Fprintf(&sb, "\n[%s]%s[-]\n", eventColor, epochEvent.EventName)
 		if flavorText != "" {
-			fmt.Fprintf(&sb, "[white]\"%s\"[-]\n", flavorText)
+			fmt.Fprintf(&sb, "[comment]\"%s\"[-]\n", flavorText)
 		}
 	}
 

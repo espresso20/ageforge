@@ -349,10 +349,11 @@ func registry() []*Command {
 
 		// Accounts
 		{Name: "account", Aliases: []string{"acct"}, Section: secAccounts, BareOK: true,
-			Help: []Usage{{"account", "Show this account's ID, recovery code & backup help"}},
+			Help: []Usage{{"account", "Show this account's ID & backup help"}},
 			Subs: []*Command{
 				sub("list", "account list", "List your local accounts"),
 				sub("badges", "account badges", "List this account's badges, earned and locked"),
+				{Name: "show", Subs: []*Command{sub("code", "account show code", "Show this account's recovery code")}},
 				{Name: "switch", Dangerous: true, Args: []Arg{{Kind: ArgAccount}},
 					Help: []Usage{{"account switch <name>", "Switch to an existing local account"}}},
 				sub("export", "account export [path]", "Back up this account's progress to a file", Arg{Kind: ArgText, Optional: true}),

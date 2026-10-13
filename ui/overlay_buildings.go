@@ -129,7 +129,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)
 			}
 			if bs.Flavor != "" {
-				fmt.Fprintf(&sb, "   [gray::i]%s[-:-:-]\n", bs.Flavor)
+				fmt.Fprintf(&sb, "   [comment::i]%s[-:-:-]\n", bs.Flavor)
 			}
 		}
 		sb.WriteString("\n")

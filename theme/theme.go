@@ -49,6 +49,7 @@ const (
 	RoleOnAccent      // text drawn ON an Accent fill: keycaps, primary buttons (derived: black/white)
 	RoleChip          // chip / keycap-label background (derived: Background 15% toward Text)
 	RoleOnNegative    // text drawn ON a Negative fill: danger modals (derived: Text, else black/white)
+	RoleComment       // the flavor sentences (quips, comments, lore) and nothing else; no other role uses it
 	numRoles
 )
 
@@ -92,6 +93,8 @@ func (r Role) String() string {
 		return "Chip"
 	case RoleOnNegative:
 		return "OnNegative"
+	case RoleComment:
+		return "Comment"
 	default:
 		return "Role(?)"
 	}

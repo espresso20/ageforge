@@ -35,6 +35,7 @@ var surfacePairs = func() []contrastPair {
 			contrastPair{RoleDim, bg, 3.0, 4.5, "secondary text"},
 			contrastPair{RoleAccent, bg, 3.0, 4.5, "titles"},
 			contrastPair{RoleBorder, bg, 3.0, 3.0, "borders (non-text UI)"},
+			contrastPair{RoleComment, bg, 4.5, 4.5, "flavor sentences"},
 		)
 	}
 	ps = append(ps,
@@ -245,4 +246,39 @@ func TestThemedScreen_ResolvesStyles(t *testing.T) {
 func ExampleKeycap() {
 	fmt.Println(Keycap("Esc"))
 	// Output: [onaccent:accent:b] Esc [-:-:-]
+}
+
+// TestCommentColorIsOnlyTheComments: in every theme the comment color is a
+// color no other role uses, so a flavor sentence can never be mistaken for a
+// number, a warning, a gain or a loss (the map cursor's fill is mixed from
+// Warning and Negative, so it cannot land on it either).
+func TestCommentColorIsOnlyTheComments(t *testing.T) {
+	all := All()
+	if len(all) != 16 {
+		t.Fatalf("%d themes, want 16", len(all))
+	}
+	for _, th := range all {
+		c := th.Color(RoleComment)
+		for r := Role(0); r < numRoles; r++ {
+			if r != RoleComment && th.Color(r) == c {
+				t.Errorf("%s: Comment %06x is also %s", th.Key, c.Hex(), r)
+			}
+		}
+		// A new theme that leaves it unset gets a legible orange.
+		bare := deriveRoles(Theme{Colors: [numRoles]tcell.Color{RoleBackground: th.Color(RoleBackground)}})
+		if r := ContrastRatio(bare.Color(RoleComment), th.Color(RoleBackground)); r < 4.5 {
+			t.Errorf("%s: the derived Comment is %.2f:1, want >= 4.5", th.Key, r)
+		}
+	}
+}
+
+// TestCommentIsATag: [comment] is a tag name the theme owns, and it follows
+// the active theme.
+func TestCommentIsATag(t *testing.T) {
+	if role, ok := TagNames()["comment"]; !ok || role != RoleComment {
+		t.Fatalf("TagNames()[comment] = %v, %v", role, ok)
+	}
+	if Tag(RoleComment) != "[comment]" {
+		t.Errorf("Tag(RoleComment) = %q", Tag(RoleComment))
+	}
 }

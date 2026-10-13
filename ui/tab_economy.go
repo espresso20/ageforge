@@ -443,7 +443,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 			}
 			sb.WriteString(hangingRow("   ", "[gray]"+glueRates(bs.Description)+"[-]", w))
 			if bs.Flavor != "" {
-				sb.WriteString(hangingRow("   ", "[gray::i]"+bs.Flavor+"[-:-:-]", w))
+				sb.WriteString(hangingRow("   ", "[comment::i]"+bs.Flavor+"[-:-:-]", w))
 			}
 			if bs.WorkerCapacity > 0 {
 				totalCap := bs.Count * bs.WorkerCapacity

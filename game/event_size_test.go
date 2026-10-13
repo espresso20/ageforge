@@ -199,7 +199,7 @@ func TestEventLineStatesWhatHappened(t *testing.T) {
 		// debug lines around it are for dumps).
 		line := ""
 		for _, e := range ge.log[logged:] {
-			if strings.HasPrefix(e.Message, def.LogMessage) {
+			if strings.HasPrefix(e.Message, "[comment]"+def.LogMessage) {
 				line = e.Message
 			}
 		}
@@ -207,7 +207,7 @@ func TestEventLineStatesWhatHappened(t *testing.T) {
 			t.Errorf("%s: no line starts with the event's own sentence: %v", def.Key, ge.log[logged:])
 			continue
 		}
-		rest := strings.ToLower(strings.TrimPrefix(line, def.LogMessage))
+		rest := strings.ToLower(strings.TrimPrefix(line, "[comment]"+def.LogMessage+"[-]"))
 		take := func(frag, what string) {
 			t.Helper()
 			frag = strings.ToLower(frag)
@@ -297,7 +297,7 @@ func TestEventSizeFollowsTheTown(t *testing.T) {
 		logged := len(ge.log)
 		ge.fireEvent(def)
 		for _, e := range ge.log[logged:] {
-			if strings.HasPrefix(e.Message, def.LogMessage) {
+			if strings.HasPrefix(e.Message, "[comment]"+def.LogMessage) {
 				line = e.Message
 			}
 		}
@@ -307,7 +307,7 @@ func TestEventSizeFollowsTheTown(t *testing.T) {
 	if food != 800 || wood != 1000 {
 		t.Errorf("a stampede through a town with 10K of each took %v food and %v wood, want 800 and 1,000 (8%% and 10%%)", food, wood)
 	}
-	if want := def.LogMessage + " Lost 800 food and 1K wood."; line != want {
+	if want := "[comment]" + def.LogMessage + "[-] Lost 800 food and 1K wood."; line != want {
 		t.Errorf("the line reads %q, want %q", line, want)
 	}
 	// A small town loses the same share, or the token floor, and never more

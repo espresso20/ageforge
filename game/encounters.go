@@ -182,7 +182,7 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 		} else {
 			// No harm done — but no gift either, and not silence.
 			line := ge.factionEncounterFlavor(flavor.EncounterStandoff, target)
-			messages = append(messages, fmt.Sprintf("[gray]✖ %s:[-] %s", target.Name, line))
+			messages = append(messages, fmt.Sprintf("[gray]✖ %s:[-] [comment]%s[-]", target.Name, line))
 		}
 	case !success:
 		if ge.rng.Float64() < malusChanceOnExpeditionFailure {
@@ -209,7 +209,7 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 			}
 		default:
 			line := ge.factionEncounterFlavor(flavor.EncounterAtCapacity, target)
-			messages = append(messages, fmt.Sprintf("[gray]✦ %s:[-] %s", target.Name, line))
+			messages = append(messages, fmt.Sprintf("[gray]✦ %s:[-] [comment]%s[-]", target.Name, line))
 		}
 	default:
 		if line := ge.applyFactionBoon(target, state); line != "" {

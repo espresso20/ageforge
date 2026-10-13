@@ -499,7 +499,8 @@ With something typed, `Tab` and `Enter` act on the prompt instead. The case draw
 
 | Command | Description |
 |---|---|
-| `account` | Show the active account's short ID and **recovery code** (restores identity, not progress) |
+| `account` | Show the active account's short ID and what a backup is (the recovery code restores identity, not progress) |
+| `account show code` | Show the active account's **recovery code**, and nothing else, in a small window that `Esc` closes. The code is not written to the game log, so it is not in the Logs panel, a save or a dump |
 | `account list` | List the local accounts on this machine, marking the active one |
 | `account badges` | List the active account's badges as text, family by family: its points and title, each family's earned badges and the first few still to earn. The **Stats** panel has a shorter digest, and `badges` opens the badge case, which shows them all. See [Badges](badges.md) |
 | `account switch <name>` | Switch to a local account by its name (changes which account's saves you see). During a game, saves the game to its own account and returns to the main menu |
