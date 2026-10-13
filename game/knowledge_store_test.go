@@ -316,3 +316,37 @@ func TestKnowledgeStore_AWondersBankTakesKnowledgePastTheStore(t *testing.T) {
 		t.Errorf("the bank holds %v after three deposits of a full store (%v), want %v and more than one store", bank, store, banked)
 	}
 }
+
+// The snapshot carries the store, what raises it, each knowledge building's
+// figure, and the techs the store is too small for.
+func TestKnowledgeStore_TheStateShowsIt(t *testing.T) {
+	ge := newSeededEngine(7)
+	ge.Buildings.counts["story_circle"] = 1
+	ge.recalculateRates()
+	st := ge.GetState()
+	ks := st.KnowledgeStore
+	if ks.Store != st.Resources["knowledge"].Storage || ks.Store != config.KnowledgeBase+140 {
+		t.Errorf("the state's store is %v (resource %v)", ks.Store, st.Resources["knowledge"].Storage)
+	}
+	if ks.Base != config.KnowledgeBase {
+		t.Errorf("base %v", ks.Base)
+	}
+	if len(ks.Parts) != 1 || ks.Parts[0].Key != "story_circle" || ks.Parts[0].Count != 1 || ks.Parts[0].Each != 140 || ks.Parts[0].Total != 140 {
+		t.Errorf("parts %+v", ks.Parts)
+	}
+	if ks.NextBuilding != "story_circle" || ks.NextEach != 140 {
+		t.Errorf("next building %q (%v)", ks.NextBuilding, ks.NextEach)
+	}
+	if st.Buildings["story_circle"].KnowledgeStore != 140 || st.Buildings["hut"].KnowledgeStore != 0 {
+		t.Error("the buildings' figures are wrong")
+	}
+	dear := dearTech(t, ge)
+	if !st.Research.Techs[dear.Key].OverStore {
+		t.Errorf("%s (%v) is over the store %v and not marked", dear.Key, dear.Cost, ks.Store)
+	}
+	for key, tech := range st.Research.Techs {
+		if tech.Cost <= ks.Store && tech.OverStore {
+			t.Errorf("%s is marked over the store but costs %v", key, tech.Cost)
+		}
+	}
+}

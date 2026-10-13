@@ -4818,10 +4818,11 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:          nextAgeName,
 		NextAgeBldReqs:       nextAgeBldReqs,
 		Resources:            ge.Resources.Snapshot(),
-		Buildings:            ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount),
+		Buildings:            ge.withKnowledgeFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount)),
+		KnowledgeStore:       ge.knowledgeStoreStateLocked(),
 		BuildQueue:           queue,
 		Workers:              workers,
-		Research:             ge.Research.Snapshot(ge.age, ageOrder),
+		Research:             ge.withKnowledgeWall(ge.Research.Snapshot(ge.age, ageOrder)),
 		Military:             militarySnap,
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
 			Tick:            ge.tick,

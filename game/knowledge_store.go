@@ -98,3 +98,46 @@ func (ge *GameEngine) knowledgeWall(def config.TechDef) error {
 	}
 	return fmt.Errorf("%s", ge.storeTooSmallText(def.Name, "knowledge", def.Cost))
 }
+
+// knowledgeStoreStateLocked is the knowledge store for a snapshot. Must be
+// called with at least the read lock held.
+func (ge *GameEngine) knowledgeStoreStateLocked() KnowledgeStoreState {
+	st := KnowledgeStoreState{
+		Store: ge.Resources.GetStorage("knowledge"),
+		Parts: ge.Buildings.knowledgeStoreParts(),
+	}
+	if def, ok := ge.rules.Resource("knowledge"); ok {
+		st.Base = def.BaseStorage
+	}
+	if d, ok := ge.knowledgeBuildingOfAge(); ok {
+		st.NextBuilding, st.NextEach = d.Key, d.KnowledgeStore
+	}
+	return st
+}
+
+// withKnowledgeFigures adds to a snapshot of the buildings what one copy of
+// each knowledge building adds to the knowledge store.
+func (ge *GameEngine) withKnowledgeFigures(bs map[string]BuildingState) map[string]BuildingState {
+	for key, b := range bs {
+		if def, ok := ge.Buildings.defs[key]; ok && def.KnowledgeStore > 0 {
+			b.KnowledgeStore = def.KnowledgeStore
+			bs[key] = b
+		}
+	}
+	return bs
+}
+
+// withKnowledgeWall marks, in a snapshot of the research, every tech the
+// knowledge store is too small for (see knowledgeWall).
+func (ge *GameEngine) withKnowledgeWall(rs ResearchState) ResearchState {
+	if DevGodMode {
+		return rs
+	}
+	for key, t := range rs.Techs {
+		if !t.Researched && ge.overStore(map[string]float64{"knowledge": t.Cost}) != "" {
+			t.OverStore = true
+			rs.Techs[key] = t
+		}
+	}
+	return rs
+}
