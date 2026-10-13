@@ -81,15 +81,15 @@ func TestShares_FreshRunGetsStaffed(t *testing.T) {
 // housing opening a hut at a time, every batch of recruits keeps knowledge
 // at half the workforce, as near as whole workers go.
 func TestShares_HeldAsPopulationGrows(t *testing.T) {
-	ge := sharesEngine(t, 1, map[string]int{"gathering_camp": 10, "wood_camp": 10, "story_circle": 15})
-	if _, err := ge.SetWorkerShare("knowledge", 50); err != nil {
+	ge := sharesEngine(t, 1, map[string]int{"gathering_camp": 10, "wood_camp": 10, "shrine": 15})
+	if _, err := ge.SetWorkerShare("faith", 50); err != nil {
 		t.Fatal(err)
 	}
 	for huts := 1; huts <= 6; huts++ {
 		ge.Buildings.counts["hut"] = huts
 		ge.recalculateRates()
 		ge.keepSharesLive()
-		pop, know := ge.Workers.TotalPop(), ge.Workers.GetDomainCount("knowledge")
+		pop, know := ge.Workers.TotalPop(), ge.Workers.GetDomainCount("faith")
 		if pop != 10*huts {
 			t.Fatalf("%d huts: population %d, want the housing's %d", huts, pop, 10*huts)
 		}
@@ -109,9 +109,9 @@ func TestShares_HeldAsPopulationGrows(t *testing.T) {
 // Offline catch-up recruits and staffs as the time passes, and the welcome
 // back says so.
 func TestShares_OfflineRecruitsAndAssigns(t *testing.T) {
-	ge := sharesEngine(t, 5, map[string]int{"gathering_camp": 5, "wood_camp": 5, "story_circle": 3})
+	ge := sharesEngine(t, 5, map[string]int{"gathering_camp": 5, "wood_camp": 5, "shrine": 3})
 	ge.SimulateOffline(time.Hour)
-	slots := slotsOf(ge, "gathering_camp") + slotsOf(ge, "wood_camp") + slotsOf(ge, "story_circle")
+	slots := slotsOf(ge, "gathering_camp") + slotsOf(ge, "wood_camp") + slotsOf(ge, "shrine")
 	if pop := ge.Workers.TotalPop(); pop != slots {
 		t.Errorf("population after an hour away = %d, want the %d slots filled", pop, slots)
 	}
@@ -135,14 +135,14 @@ func TestShares_NewBuildingsGetStaffed(t *testing.T) {
 		t.Fatalf("setup: population %d, want the camps' 12", pop)
 	}
 	setAmount(ge, "wood", 1000)
-	if err := ge.BuildBuilding("story_circle"); err != nil {
+	if err := ge.BuildBuilding("shrine"); err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 500 && len(ge.buildQueue) > 0; i++ {
 		ge.StepTicks(1)
 	}
 	ge.StepTicks(staffEveryTicks)
-	if got, want := ge.Workers.GetAssignedCount("worker", "story_circle"), slotsOf(ge, "story_circle"); got != want {
+	if got, want := ge.Workers.GetAssignedCount("worker", "shrine"), slotsOf(ge, "shrine"); got != want {
 		t.Errorf("the new story circle has %d of its %d workers", got, want)
 	}
 }
@@ -173,7 +173,7 @@ func TestShares_WaitsAfterAWorkerCommand(t *testing.T) {
 // housing.
 func TestShares_RecruitKeepsFoodAndStopsAtHousing(t *testing.T) {
 	// Food-poor: one gathering camp against many other slots.
-	ge := sharesEngine(t, 10, map[string]int{"gathering_camp": 1, "wood_camp": 10, "story_circle": 10})
+	ge := sharesEngine(t, 10, map[string]int{"gathering_camp": 1, "wood_camp": 10, "shrine": 10})
 	for i := 0; i < 20; i++ {
 		ge.keepSharesLive()
 	}
@@ -218,7 +218,7 @@ func TestShares_RecruitKeepsFoodAndStopsAtHousing(t *testing.T) {
 // buildings a mastered age must recruit exactly what a first run does.
 func TestShares_RecruitKeepsFoodOnKnownGround(t *testing.T) {
 	// Food-poor, as above: one gathering camp against many other slots.
-	build := map[string]int{"gathering_camp": 1, "wood_camp": 10, "story_circle": 10}
+	build := map[string]int{"gathering_camp": 1, "wood_camp": 10, "shrine": 10}
 	first := sharesEngine(t, 10, build)
 	for i := 0; i < 20; i++ {
 		first.keepSharesLive()
@@ -297,7 +297,7 @@ func TestShares_AutoRecruitOff(t *testing.T) {
 // A share of 0 keeps a domain empty: its workers move to free slots
 // elsewhere, and no recruit goes there.
 func TestShares_ZeroKeepsADomainEmpty(t *testing.T) {
-	ge := sharesEngine(t, 1, map[string]int{"gathering_camp": 4, "wood_camp": 4, "story_circle": 4, "shrine": 2})
+	ge := sharesEngine(t, 1, map[string]int{"gathering_camp": 4, "wood_camp": 4, "shrine": 4})
 	ge.keepSharesLive()
 	if ge.Workers.GetDomainCount("faith") == 0 {
 		t.Fatal("setup: auto put nobody in the shrines")
@@ -330,26 +330,26 @@ func TestShares_ZeroKeepsADomainEmpty(t *testing.T) {
 // Setting a share moves workers once to match it. After that the player's own
 // moves stick: the routine only places new and idle workers.
 func TestShares_SettingAShareMovesWorkersOnce(t *testing.T) {
-	ge := sharesEngine(t, 2, map[string]int{"gathering_camp": 4, "wood_camp": 4, "story_circle": 6})
+	ge := sharesEngine(t, 2, map[string]int{"gathering_camp": 4, "wood_camp": 4, "shrine": 6})
 	ge.keepSharesLive()
-	reply, err := ge.SetWorkerShare("knowledge", 60)
+	reply, err := ge.SetWorkerShare("faith", 60)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if know := ge.Workers.GetDomainCount("knowledge"); know != 12 {
+	if know := ge.Workers.GetDomainCount("faith"); know != 12 {
 		t.Errorf("knowledge has %d of 20 workers after a 60%% share, want 12 (%s)", know, reply.Line)
 	}
-	if !strings.Contains(reply.Line, "Knowledge 60%") || !strings.Contains(reply.Line, "Moved") {
+	if !strings.Contains(reply.Line, "Faith 60%") || !strings.Contains(reply.Line, "Moved") {
 		t.Errorf("reply %q doesn't name the share and the move", reply.Line)
 	}
-	if err := ge.UnassignWorker("story_circle", 2); err != nil {
+	if err := ge.UnassignWorker("shrine", 2); err != nil {
 		t.Fatal(err)
 	}
 	if err := ge.AssignWorker("wood_camp", 2); err != nil {
 		t.Fatal(err)
 	}
 	ge.StepTicks(staffHoldTicks + staffEveryTicks)
-	if know := ge.Workers.GetDomainCount("knowledge"); know != 10 {
+	if know := ge.Workers.GetDomainCount("faith"); know != 10 {
 		t.Errorf("knowledge has %d workers after the player moved 2 out, want the 10 they left", know)
 	}
 }
@@ -358,9 +358,9 @@ func TestShares_SettingAShareMovesWorkersOnce(t *testing.T) {
 // run out: with knowledge at 100% the food buildings keep enough workers for
 // the food rate to stay at or above zero.
 func TestShares_RebalanceKeepsFood(t *testing.T) {
-	ge := sharesEngine(t, 2, map[string]int{"gathering_camp": 2, "story_circle": 10})
+	ge := sharesEngine(t, 2, map[string]int{"gathering_camp": 2, "shrine": 10})
 	ge.keepSharesLive()
-	if _, err := ge.SetWorkerShare("knowledge", 100); err != nil {
+	if _, err := ge.SetWorkerShare("faith", 100); err != nil {
 		t.Fatal(err)
 	}
 	if ge.Workers.GetDomainCount("food") == 0 {
@@ -411,8 +411,8 @@ func TestShares_FillOrder(t *testing.T) {
 // auto-recruit on and no new keys written.
 func TestShares_SurviveSaveAndLoad(t *testing.T) {
 	isolateAccountDir(t)
-	ge := sharesEngine(t, 3, map[string]int{"gathering_camp": 2, "wood_camp": 2, "story_circle": 2})
-	if _, err := ge.SetWorkerShare("knowledge", 40); err != nil {
+	ge := sharesEngine(t, 3, map[string]int{"gathering_camp": 2, "wood_camp": 2, "shrine": 2})
+	if _, err := ge.SetWorkerShare("faith", 40); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := ge.SetWorkerShare("faith", 0); err != nil {
@@ -471,8 +471,8 @@ func TestShares_SurviveSaveAndLoad(t *testing.T) {
 // A hand-edited save keeps only what the game could have written: known
 // domains, percents from 0 to 100, a wait no longer than one command's.
 func TestShares_LoadCleansSavedShares(t *testing.T) {
-	got := cleanShares(map[string]float64{"food": 30, "nonsense": 50, "lumber": math.NaN(), "knowledge": 250, "faith": -5, "trade": 12.345})
-	want := map[string]float64{"food": 30, "knowledge": 100, "faith": 0, "trade": 12.3}
+	got := cleanShares(map[string]float64{"food": 30, "nonsense": 50, "lumber": math.NaN(), "masonry": 250, "faith": -5, "trade": 12.345})
+	want := map[string]float64{"food": 30, "masonry": 100, "faith": 0, "trade": 12.3}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("cleanShares = %v, want %v", got, want)
 	}
@@ -485,8 +485,8 @@ func TestShares_LoadCleansSavedShares(t *testing.T) {
 // the player left it; a new game resets both.
 func TestShares_ResetByPrestigeSuccumbAndNewGame(t *testing.T) {
 	setup := func() *GameEngine {
-		ge := sharesEngine(t, 1, map[string]int{"story_circle": 1})
-		if _, err := ge.SetWorkerShare("knowledge", 40); err != nil {
+		ge := sharesEngine(t, 1, map[string]int{"shrine": 1})
+		if _, err := ge.SetWorkerShare("faith", 40); err != nil {
 			t.Fatal(err)
 		}
 		ge.SetAutoRecruit(false)
@@ -514,7 +514,7 @@ func TestShares_ResetByPrestigeSuccumbAndNewGame(t *testing.T) {
 // ShareRows is what the Workers panel shows: auto domains split what the set
 // shares leave by their slots, and set shares over 100% are scaled to fit.
 func TestShares_ShareRows(t *testing.T) {
-	ge := sharesEngine(t, 1, map[string]int{"gathering_camp": 2, "wood_camp": 2, "story_circle": 3})
+	ge := sharesEngine(t, 1, map[string]int{"gathering_camp": 2, "wood_camp": 2, "shrine": 3})
 	rows := func() map[string]ShareRow {
 		out := map[string]ShareRow{}
 		for _, r := range ShareRows(ge.GetState()) {
@@ -523,19 +523,19 @@ func TestShares_ShareRows(t *testing.T) {
 		return out
 	}
 	r := rows()
-	if len(r) != 3 || r["food"].Slots != 6 || r["knowledge"].Slots != 6 {
+	if len(r) != 3 || r["food"].Slots != 6 || r["faith"].Slots != 6 {
 		t.Fatalf("rows = %+v", r)
 	}
-	for _, d := range []string{"food", "lumber", "knowledge"} {
+	for _, d := range []string{"food", "lumber", "faith"} {
 		if r[d].Set || math.Abs(r[d].Percent-100.0/3) > 1e-9 {
 			t.Errorf("%s on auto = %+v, want a third by slots", d, r[d])
 		}
 	}
-	if _, err := ge.SetWorkerShare("knowledge", 50); err != nil {
+	if _, err := ge.SetWorkerShare("faith", 50); err != nil {
 		t.Fatal(err)
 	}
 	r = rows()
-	if !r["knowledge"].Set || r["knowledge"].Percent != 50 || math.Abs(r["food"].Percent-25) > 1e-9 {
+	if !r["faith"].Set || r["faith"].Percent != 50 || math.Abs(r["food"].Percent-25) > 1e-9 {
 		t.Errorf("rows with knowledge at 50%%: %+v", r)
 	}
 	if _, err := ge.SetWorkerShare("food", 100); err != nil {
@@ -545,7 +545,7 @@ func TestShares_ShareRows(t *testing.T) {
 	if math.Abs(r["food"].Percent-100.0/1.5) > 1e-9 || r["lumber"].Percent != 0 {
 		t.Errorf("rows with 150%% set: %+v, want each set share scaled to fit and auto left nothing", r)
 	}
-	if _, ok := rows()["faith"]; ok {
+	if _, ok := rows()["energy"]; ok {
 		t.Error("a domain with no buildings and no share got a row")
 	}
 }
@@ -580,7 +580,7 @@ func TestShares_PlanStaffingFollowsTheShares(t *testing.T) {
 			t.Fatal(err)
 		}
 		if shares {
-			if _, err := ge.SetWorkerShare("masonry", 50); err != nil {
+			if _, err := ge.SetWorkerShare("faith", 50); err != nil {
 				t.Fatal(err)
 			}
 		}

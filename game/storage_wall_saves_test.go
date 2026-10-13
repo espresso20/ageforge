@@ -60,7 +60,6 @@ func TestWriteStorageWallFixture(t *testing.T) {
 	for _, res := range []string{"wood", "stone", "food"} {
 		ge.Resources.Add(res, ge.Resources.GetStorage(res))
 	}
-	ge.Resources.Add("knowledge", 372655-ge.Resources.Get("knowledge"))
 	ge.Resources.Add("iron", 4000-ge.Resources.Get("iron"))
 	ge.Resources.Add("gold", 2500-ge.Resources.Get("gold"))
 	ge.plan = []PlanItem{

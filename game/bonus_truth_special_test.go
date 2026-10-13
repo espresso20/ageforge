@@ -37,9 +37,9 @@ func TestBonusTruthEraMastery(t *testing.T) {
 			for _, meter := range sortedKeys(before) {
 				want := before[meter]
 				switch {
-				case meter == "storage:knowledge":
-					// The knowledge store is the knowledge buildings' alone:
-					// mastery leaves it where it was (knowledge_store.go).
+				case strings.HasPrefix(meter, "aux:"), meter == "base:research", meter == "stock:research":
+					// Not rates: the layer and the pool the work is read
+					// through, the building figures it is made of, and work done.
 				case strings.HasPrefix(meter, "rate:"), strings.HasPrefix(meter, "storage:"):
 					want *= k
 				case meter == "research", meter == "buildtime":
@@ -289,7 +289,7 @@ func TestBonusTruthEpochEventsAtOnce(t *testing.T) {
 				// The Classical Age of the typical player: culture and
 				// faith exist, and techs of the age are left to discover.
 				ge := newTruthEngine("classical_age", truthClean)
-				ge.Research.currentTech, ge.Research.ticksLeft, ge.Research.totalTicks = "tool_making", 10, 10
+				ge.Research.currentTech, ge.Research.progress = "tool_making", 0
 				if def.Key == "ancient_cache" {
 					for _, key := range ge.Resources.order {
 						if ge.Resources.IsUnlocked(key) {
@@ -444,18 +444,26 @@ func TestBonusTruthGrantsSayWhatFit(t *testing.T) {
 }
 
 // TestBonusTruthAncientMemory: a tech from an ancient cache researches at
-// half speed, twice its tick count, after research speed has had its say.
+// half speed: its scholars do half the work a tick, after research speed has
+// had its say.
 func TestBonusTruthAncientMemory(t *testing.T) {
-	const key = "stoneworking"
-	for _, speed := range []float64{0, 0.25} {
-		rm := NewResearchManager()
-		if err := rm.StartMemoryResearch(key, speed); err != nil {
-			t.Fatal(err)
-		}
-		listed := rm.defs[key].ResearchTicks
-		if want := 2 * int(float64(listed)*(1-speed)); rm.totalTicks != want {
-			t.Errorf("an ancient memory at +%v%% research speed takes %d ticks, want %d (twice %d less the bonus)", speed*100, rm.totalTicks, want, listed)
-		}
+	ge := newSeededEngine(7)
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.Buildings.counts["story_circle"] = 5
+	ge.Research.currentTech = "tool_making" // scholars with nothing to research teach
+	ge.recalculateRates()
+	normal := ge.researchPerTick
+	if normal <= 0 {
+		t.Fatal("setup: five Story Circles do no work")
+	}
+	ge.Research.currentTech = ""
+	if err := ge.Research.StartMemoryResearch("stoneworking"); err != nil {
+		t.Fatal(err)
+	}
+	ge.recalculateRates()
+	if got, want := ge.researchPerTick, normal*memoryResearchSlowdown; got != want {
+		t.Errorf("an ancient memory does %v work a tick, want %v (half of %v)", got, want, normal)
 	}
 }
 

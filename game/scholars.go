@@ -180,6 +180,7 @@ func (ge *GameEngine) researchWork(r *Resolver, mMult, prodAllFactor float64, so
 			}
 		}
 	})
+	ge.researchBase = base
 	rate := float64(base * mMult)
 	rate = float64(rate * prodAllFactor)
 	rate = float64(rate * poolFactor("knowledge_rate", r.AddTotal("knowledge_rate"), soft))
@@ -229,12 +230,14 @@ func (ge *GameEngine) researchTimeFactor() float64 {
 func (ge *GameEngine) updateResearchRate(r *Resolver, mMult, prodAllFactor float64, soft config.SoftCap) {
 	n := ge.scholarTotal()
 	research, _ := ge.scholarPosts(n)
+	// The work with every scholar researching: what the posts split.
+	work := ge.researchWork(r, mMult, prodAllFactor, soft)
+	work = float64(work / ge.researchTimeFactor())
+	ge.researchFull = work
 	if n <= 0 || research <= 0 {
 		ge.researchPerTick = 0
 		return
 	}
-	work := ge.researchWork(r, mMult, prodAllFactor, soft)
-	work = float64(work / ge.researchTimeFactor())
 	work = float64(work * float64(research) / float64(n))
 	if ge.Research.slowed {
 		work = float64(work * memoryResearchSlowdown)

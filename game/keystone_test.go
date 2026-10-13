@@ -82,8 +82,6 @@ func TestWonderWaitsForItsKeystone(t *testing.T) {
 
 	// The keystone arrives through research, and says what it opened.
 	learn(ge, "tool_making")
-	ge.Resources.resources["knowledge"].Storage = 1e6
-	setAmount(ge, "knowledge", 1e6)
 	if err := ge.StartResearch("stoneworking"); err != nil {
 		t.Fatal(err)
 	}

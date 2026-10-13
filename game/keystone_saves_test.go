@@ -82,7 +82,7 @@ func TestWriteKeystoneFixtures(t *testing.T) {
 			bank[res] = need / 2
 		}
 		ge.Buildings.wonderBanks["colosseum"] = bank
-		ge.Research.currentTech, ge.Research.ticksLeft, ge.Research.totalTicks = "road_building", 400, 950
+		ge.Research.currentTech, ge.Research.progress = "road_building", 0
 	})
 	write(keystoneFixtureBuilding, "pre_keystone_industrial", "industrial_age", func(ge *GameEngine) {
 		def := ge.Buildings.defs["crystal_palace"]

@@ -67,6 +67,13 @@ func TestEpochEventTextMatchesEffects(t *testing.T) {
 			if res == "" {
 				label, res = "its", era.PrimaryResource
 			}
+			if res == config.ResearchTarget {
+				// A share of the scholars' work: the text states it, the
+				// engine applies exactly that (research_boost).
+				need("research speed " + textfmt.SignedPercent(r.Value))
+				rates[res] = r.Value
+				continue
+			}
 			need(label + " production " + textfmt.SignedPercent(r.Value))
 			sized := r
 			sized.Target = res
@@ -83,6 +90,14 @@ func TestEpochEventTextMatchesEffects(t *testing.T) {
 			need("for " + config.DurationText(ae.TicksLeft))
 			for _, e := range ae.Effects {
 				switch {
+				case e.Type == "research_boost":
+					applied++
+					if want := rates[config.ResearchTarget]; e.Value != want {
+						t.Errorf("%s: research speed changes by %v, want %v (the share its text states)", ev.Key, e.Value, want)
+					}
+					if !logHas(ge, "research speed "+textfmt.SignedPercent(e.Value)) {
+						t.Errorf("%s: no log line states research speed %s", ev.Key, textfmt.SignedPercent(e.Value))
+					}
 				case e.Type == "production":
 					applied++
 					if want, ok := rates[e.Target]; !ok || math.Abs(e.Value-want) > 1e-9*math.Abs(want) {
@@ -164,7 +179,12 @@ func TestEpochAndAwakeningLogsDoNotRepeatText(t *testing.T) {
 		}
 		return ge.log[before:]
 	}
-	for _, key := range []string{"age_of_plenty", "ancient_cache", "worker_innovation", "peaceful_century", "epoch_blessing"} {
+	// The Ancient Cache also says what it gave the scholars (a share of the
+	// tech in progress, or a head start): that is new, not repeated.
+	if got := apply("ancient_cache"); len(got) != 2 || !strings.Contains(got[1].Message, "The cache gave ") {
+		t.Errorf("ancient_cache should log its headline and one line for the scholars' share: %v", got)
+	}
+	for _, key := range []string{"age_of_plenty", "worker_innovation", "peaceful_century", "epoch_blessing"} {
 		if got := apply(key); len(got) != 1 {
 			t.Errorf("%s logged %d lines, want only the headline: %v", key, len(got), got)
 		}

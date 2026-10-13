@@ -385,8 +385,6 @@ func TestPlanTemplateCarriesPlannedResearch(t *testing.T) {
 	ge := newSeededEngine(13)
 	ge.mu.Lock()
 	ge.Prestige.upgrades[config.LegacyPlan] = 1
-	ge.Resources.AddStorage("knowledge", 100000)
-	ge.Resources.Add("knowledge", 2000) // enough for Tool Making (800), not for Fire Mastery after it
 	ge.mu.Unlock()
 	for _, key := range []string{"tool_making", "fire_mastery"} {
 		if err := ge.PlanAddResearch(key); err != nil {
@@ -422,8 +420,6 @@ func TestPlanTemplateCarriesPlannedResearch(t *testing.T) {
 	}
 	ge.mu.Lock()
 	ge.plan = nil // the player drops the plan: the research slot stays idle
-	ge.Resources.AddStorage("knowledge", 100000)
-	ge.Resources.Add("knowledge", 100000)
 	ge.mu.Unlock()
 	ge.StepTicks(5)
 	if cur := ge.GetState().Research.CurrentTech; cur != "" {
@@ -468,7 +464,7 @@ func TestWorkerSharesCarryOver(t *testing.T) {
 	isolateAccountDir(t)
 	for _, own := range []bool{true, false} {
 		ge := newSeededEngine(16)
-		if _, err := ge.SetWorkerShare("knowledge", 40); err != nil {
+		if _, err := ge.SetWorkerShare("faith", 40); err != nil {
 			t.Fatal(err)
 		}
 		if own {
@@ -481,7 +477,7 @@ func TestWorkerSharesCarryOver(t *testing.T) {
 			t.Fatal(err)
 		}
 		got := ge.WorkerShares()
-		if own && got["knowledge"] != 40 {
+		if own && got["faith"] != 40 {
 			t.Errorf("owned: shares after prestige %v, want knowledge 40", got)
 		}
 		if !own && len(got) != 0 {
@@ -557,7 +553,7 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 	kit := LegacyKit{
 		Plan:     []PlanTemplateItem{{Age: "stone_age", Kind: PlanBuild, Key: "stone_pit", Count: 4}, {Age: "stone_age", Kind: PlanResearch, Key: "pottery"}, {Age: "stone_age", Kind: PlanAdvance}},
 		Factions: []string{"riverlands_tribes"},
-		Shares:   map[string]float64{"knowledge": 30},
+		Shares:   map[string]float64{"faith": 30},
 	}
 	ge.SetLegacyForTest(kit, true)
 	if _, err := ge.PlanAddBuild("hut", 2); err != nil {

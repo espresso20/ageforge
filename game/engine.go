@@ -159,6 +159,11 @@ type GameEngine struct {
 	scholarShareSet bool
 	researchPerTick float64
 	researchIncome  float64
+	// researchBase is the sum of the research figures of the standing
+	// buildings (before any bonus) and researchFull the work all the scholars
+	// would do each tick if every one of them researched (the posts split
+	// it): both from the last rates pass, and not saved.
+	researchBase, researchFull float64
 	// loadedCompletions are techs a loaded save had paid for and waiting out
 	// their time: they completed on load (loadResearch).
 	loadedCompletions []string

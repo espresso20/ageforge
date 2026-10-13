@@ -101,7 +101,6 @@ func writeScholarsFixture(t *testing.T, name string, busy bool) {
 		}
 	}
 	ge.mu.Lock()
-	ge.Resources.Add("knowledge", 1e15)
 	if busy {
 		if err := ge.startResearchLocked(picks[0], true); err != nil {
 			ge.mu.Unlock()

@@ -244,8 +244,12 @@ func TestAwakening_AllDefinitionsValid(t *testing.T) {
 					t.Errorf("awakening %q production effect on %q has non-positive value %.2f",
 						a.Key, eff.Target, eff.Value)
 				}
+			case "research":
+				if eff.Value <= 0 {
+					t.Errorf("awakening %q research effect has non-positive value %.2f", a.Key, eff.Value)
+				}
 			default:
-				t.Errorf("awakening %q uses unexpected effect type %q (use production / production_all)",
+				t.Errorf("awakening %q uses unexpected effect type %q (use production / production_all / research)",
 					a.Key, eff.Type)
 			}
 		}

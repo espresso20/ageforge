@@ -44,7 +44,7 @@ func TestNanobots_NanofabricationReducesBuildCost(t *testing.T) {
 
 	// Research Nanofabrication (LoadState marks it researched AND applies its
 	// effects into the research bonus pool that buildResolver reads).
-	ge.Research.LoadState([]string{"nanofabrication"}, "", 0, 0)
+	ge.Research.LoadState([]string{"nanofabrication"}, "", 0, false, 0)
 	ge.recalculateRates()
 
 	want := math.Floor(base * 0.97) // buildings cost 3% less

@@ -419,48 +419,39 @@ func TestAncientKnowledgeNeverFloorsResearch(t *testing.T) {
 	if want := math.Pow(SuccumbResearchTimeFactor, 6); math.Abs(factor-want) > 1e-12 || factor < 0.26 {
 		t.Fatalf("six epochs: x%v, want x%v", factor, want)
 	}
-	// Every tech in the game, started through the engine with all six.
+	// Every tech in the game, started through the engine with all six: the
+	// scholars' work is divided by the factor, so a tech takes the factor of
+	// its time and never less than 26% of it (and never none).
+	ge.Buildings.counts["story_circle"] = 5
+	ge.Research.currentTech = "tool_making" // scholars with nothing to research teach
+	ge.recalculateRates()
+	plain := ge.researchPerTick
+	if plain <= 0 {
+		t.Fatal("setup: five Story Circles do no work")
+	}
+	if got := ge.researchTimeFactor(); math.Abs(got-factor) > 1e-12 {
+		t.Errorf("the research time factor is %v with six epochs, want %v", got, factor)
+	}
+	ge.legacyBonuses = map[string]bool{}
+	ge.recalculateRates()
+	base := ge.researchPerTick
+	if ratio := base / plain; math.Abs(ratio-factor) > 1e-9 {
+		t.Errorf("six epochs scale the work a tick by x%v, want x%v", ratio, factor)
+	}
 	for _, key := range ge.Research.order {
 		def := ge.Research.defs[key]
-		ge.Research.currentTech = ""
-		ge.Research.researched = map[string]bool{}
-		ge.age = def.Age
-		for _, pre := range def.Prerequisites {
-			ge.Research.researched[pre] = true
-		}
-		if len(def.AnyOf) > 0 {
-			ge.Research.researched[def.AnyOf[0]] = true // one branch of an either-or group
-		}
-		ge.Resources.UnlockResource("knowledge")
-		ge.Resources.AddStorage("knowledge", def.Cost)
-		ge.Resources.Add("knowledge", def.Cost)
-		if err := ge.startResearchLocked(key, true); err != nil {
-			t.Fatalf("%s: %v", key, err)
-		}
-		got := ge.Research.totalTicks
-		if want := int(float64(def.ResearchTicks) * factor); got != want || got <= 1 {
-			t.Errorf("%s: %d ticks with six epochs, want %d of its %d (never one tick)", key, got, want, def.ResearchTicks)
-		}
-		if float64(got) < 0.26*float64(def.ResearchTicks)-1 {
-			t.Errorf("%s: %d ticks is under 26%% of its %d", key, got, def.ResearchTicks)
+		if def.Cost <= 0 {
+			t.Errorf("%s has no work to do", key)
 		}
 	}
 	// Each further epoch takes the same share off what is left.
-	prev := 1_000_000
+	prev := 1.0
 	for n := 1; n <= 6; n++ {
-		ticks := ResearchTicks(1_000_000, 0, 1, AncientKnowledgeFactor(n), 1)
-		if ratio := float64(ticks) / float64(prev); math.Abs(ratio-SuccumbResearchTimeFactor) > 1e-5 {
+		f := AncientKnowledgeFactor(n)
+		if ratio := f / prev; math.Abs(ratio-SuccumbResearchTimeFactor) > 1e-5 {
 			t.Errorf("epoch %d: research time x%v of the epoch before, want x%v", n, ratio, SuccumbResearchTimeFactor)
 		}
-		prev = ticks
-	}
-	// On top of the research speed pool and Era Mastery it still multiplies.
-	if got, want := ResearchTicks(1000, 0.5, 1, AncientKnowledgeFactor(2), 2), 160; got != want {
-		t.Errorf("1000 ticks at +50%% speed, two epochs, k 2: %d, want %d", got, want)
-	}
-	// A manager no engine has set leaves times alone.
-	if got := ResearchTicks(1000, 0, 0, 0, 0); got != 1000 {
-		t.Errorf("unset factor changed 1000 ticks to %d", got)
+		prev = f
 	}
 }
 

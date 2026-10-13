@@ -126,7 +126,7 @@ func TestHarborRouteBonus_RaisesIncome(t *testing.T) {
 		// Tick until the route completes exactly one cycle.
 		def := config.TradeRouteByKey()["local_barter"]
 		for i := 0; i < def.TicksPerRun; i++ {
-			ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus())
+			ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus(), nil)
 		}
 		return ge.Resources.Get("wood") - before
 	}
@@ -161,7 +161,7 @@ func TestRouteCycle_RaisesOpinion(t *testing.T) {
 	}
 	def := config.TradeRouteByKey()["silk_road"]
 	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0)
+		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
 	}
 	f := ge.Diplomacy.factions
 	if got := f["riverlands_tribes"].Opinion; got != 11 {
@@ -180,7 +180,7 @@ func TestRouteCycle_RaisesOpinion(t *testing.T) {
 	// A run it cannot afford is skipped and warms no one.
 	setRes(ge, "gold", 0)
 	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0)
+		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
 	}
 	if got := f["riverlands_tribes"].Opinion; got != 11 {
 		t.Errorf("after a skipped run opinion = %d, want 11", got)
@@ -230,7 +230,7 @@ func TestDisruption_BlocksRouteWhenAtWar(t *testing.T) {
 	ge := setup()
 	hostileFaction(ge, "artisan_league", true)
 	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0)
+		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
 	}
 	if got := ge.Resources.Get("culture"); got != 0 {
 		t.Errorf("at war: culture gained = %.1f, want 0 (route should be disrupted)", got)
@@ -245,7 +245,7 @@ func TestDisruption_BlocksRouteWhenAtWar(t *testing.T) {
 	ge = setup()
 	hostileFaction(ge, "artisan_league", false)
 	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0)
+		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
 	}
 	if got := ge.Resources.Get("culture"); got != 0 {
 		t.Errorf("embargo: culture gained = %.1f, want 0", got)
@@ -254,7 +254,7 @@ func TestDisruption_BlocksRouteWhenAtWar(t *testing.T) {
 	// 3) Peace → route runs normally and culture flows.
 	ge = setup()
 	for i := 0; i < def.TicksPerRun; i++ {
-		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0)
+		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0, nil)
 	}
 	if got := ge.Resources.Get("culture"); got <= 0 {
 		t.Errorf("peace: culture gained = %.1f, want > 0 (route should run)", got)

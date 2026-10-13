@@ -16,9 +16,9 @@ func TestResearchBonusesIndependentOfCompletionOrder(t *testing.T) {
 	complete := func(order []string) *ResearchManager {
 		rm := NewResearchManager()
 		for _, key := range order {
-			rm.currentTech, rm.ticksLeft, rm.totalTicks = key, 1, 1
-			if got := rm.Tick(); got != key {
-				t.Fatalf("Tick completed %q, want %q", got, key)
+			rm.currentTech, rm.progress = key, 0
+			if got := rm.AddWork(rm.defs[key].Cost); got != key {
+				t.Fatalf("AddWork completed %q, want %q", got, key)
 			}
 		}
 		return rm
@@ -37,7 +37,7 @@ func TestResearchBonusesIndependentOfCompletionOrder(t *testing.T) {
 	mixed := complete(shuffled)
 
 	loaded := NewResearchManager()
-	loaded.LoadState(forward.GetResearched(), "", 0, 0)
+	loaded.LoadState(forward.GetResearched(), "", 0, false, 0)
 
 	for name, rm := range map[string]*ResearchManager{"backward": backward, "shuffled": mixed, "loaded": loaded} {
 		if !maps.Equal(rm.bonuses, forward.bonuses) {

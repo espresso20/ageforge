@@ -72,9 +72,10 @@ func (ge *GameEngine) sizeEffects(effects []config.Effect) []config.Effect {
 					out = append(out, config.Effect{Type: "instant_resource", Target: eff.Target, Value: v})
 				}
 			case config.EventRate:
-				abs, income := config.EventSize(eff, ge.eventTown(eff.Target, true)), ge.townIncome(eff.Target)
-				if abs != 0 && income > 0 {
-					out = append(out, config.Effect{Type: "research_boost", Value: abs / income})
+				// A share of the scholars' work, as the text states it: it
+				// needs no size, and it holds whenever scholars are at work.
+				if eff.Value != 0 {
+					out = append(out, config.Effect{Type: "research_boost", Value: eff.Value})
 				}
 			}
 			continue

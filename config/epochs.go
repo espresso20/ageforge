@@ -298,7 +298,7 @@ func ChallengingEpochEvents() []EpochEventDef {
 		},
 		{
 			Key: "political_instability", Name: "Political Instability", Type: "bad_challenging",
-			FlavorText: "Rival courts tear at the throne. You lose 60% of your faith, and knowledge production -30% for {dur}.",
+			FlavorText: "Rival courts tear at the throne. You lose 60% of your faith, and research speed -30% for {dur}.",
 			Duration:   156,
 			Rates:      []Effect{{Type: EventRate, Target: ResearchTarget, Value: -0.3}},
 		},
@@ -310,7 +310,7 @@ func ChallengingEpochEvents() []EpochEventDef {
 		},
 		{
 			Key: "the_dark_age", Name: "The Dark Age", Type: "bad_challenging",
-			FlavorText: "Your scholars fall silent. Current research is canceled with no refund, you lose 80% of your knowledge, and knowledge production -40% for {dur}.",
+			FlavorText: "Your scholars fall silent. Current research is canceled and its work is lost, you lose the head start you had kept, and research speed -40% for {dur}.",
 			Duration:   374,
 			Rates:      []Effect{{Type: EventRate, Target: ResearchTarget, Value: -0.4}},
 		},
