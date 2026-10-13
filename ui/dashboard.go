@@ -1298,6 +1298,41 @@ func (d *Dashboard) leaveToMenu(msg string) {
 	d.pages.AddPage(accountNoticePage, notice, true, true)
 }
 
+// codeWindowPage is the page of the small window a command's Window text is
+// shown in.
+const codeWindowPage = "code_window"
+
+// showWindow shows text in a small window over the dashboard, titled with the
+// recovery code's label, and closes it on Esc or Enter. The text lives in the
+// window only: it is never added to the game log.
+func (d *Dashboard) showWindow(text string) {
+	tv := tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter)
+	tv.SetBorder(true).SetTitle(" Recovery code ")
+	tv.SetText("\n" + tview.Escape(text) + "\n\n" + theme.KeycapButton("Esc", "Close"))
+	done := func() {
+		d.pages.RemovePage(codeWindowPage)
+		d.app.SetFocus(d.inputField)
+	}
+	tv.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
+		if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyEnter {
+			done()
+			return nil
+		}
+		return nil
+	})
+	centered := tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(nil, 0, 1, false).
+			AddItem(tv, 7, 0, true).
+			AddItem(nil, 0, 1, false), 49, 0, true).
+		AddItem(nil, 0, 1, false)
+	d.pages.AddPage(codeWindowPage, centered, true, true)
+	d.app.SetFocus(tv)
+}
+
 // submitInput runs the command in the input field, clears it and records it
 // in history. Called on Enter. A whole command runs as typed; otherwise the
 // ghost completion runs when it makes a whole command, except a Dangerous
@@ -1358,6 +1393,10 @@ func (d *Dashboard) submitInput() {
 	result := HandleCommand(text, d.engine)
 	if result.ToMenu {
 		d.leaveToMenu(result.Message)
+		return
+	}
+	if result.Window != "" {
+		d.showWindow(result.Window)
 		return
 	}
 	if result.OpenCatastrophe {

@@ -58,6 +58,10 @@ type CommandResult struct {
 	// to): the dashboard goes to the main menu, without saving again, and shows
 	// Message there, since the log it would go to belongs to the ended run.
 	ToMenu bool
+	// Window is text to show in a small window of its own, and nowhere else: it
+	// is not logged, so it reaches no log panel, snapshot, save or dump. The
+	// dashboard shows it and drops it when the window closes.
+	Window string
 }
 
 // HandleCommand parses a raw command string and dispatches to the appropriate
@@ -1059,7 +1063,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 
 	case "show":
 		// The recovery code on its own, so it is not lost at the top of a long reply.
-		if len(args) < 2 || !strings.EqualFold(args[1], "code") {
+		if len(args) != 2 || !strings.EqualFold(args[1], "code") {
 			return CommandResult{Message: usageFor("account show code"), Type: "error"}
 		}
 		if acct == nil {
@@ -1069,8 +1073,9 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			}
 		}
 		engine.NoteRecoveryShown(acct.AccountID)
-		// The code alone: with a label it takes a third row of the log at 80x24.
-		return CommandResult{Message: acct.RecoveryCode(), Type: "info"}
+		// In a window of its own, not the log: the log is kept (the Logs panel, the
+		// state snapshot, a dump), and the code is not for keeping there.
+		return CommandResult{Window: acct.RecoveryCode(), Type: "info"}
 
 	case "switch":
 		if len(args) < 2 {

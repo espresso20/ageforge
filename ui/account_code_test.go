@@ -1,8 +1,15 @@
 package ui
 
 import (
+	"bytes"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/espresso20/ageforge/game"
+	"github.com/gdamore/tcell/v2"
 )
 
 // The recovery code (card G9Bx4UFM): the bare `account` reply is long and the
@@ -29,10 +36,69 @@ func TestAccountShowCodeIsVisible(t *testing.T) {
 		d, eng := mapTestDashboard(t, true)
 		code := eng.Account().RecoveryCode()
 		d.runForTest("account show code")
-		rows := logRows(t, d, sz[0], sz[1])
-		if got := squash(rows); !strings.Contains(got, code) {
-			t.Errorf("%dx%d: the log does not show the whole code %q:\n%s", sz[0], sz[1], code, strings.Join(rows, "\n"))
+		if front, _ := d.pages.GetFrontPage(); front != codeWindowPage {
+			t.Fatalf("front page %q, want the code window", front)
 		}
+		scr := screenAt(t, d.pages, sz[0], sz[1])
+		if !strings.Contains(scr, code) {
+			t.Errorf("%dx%d: the window does not show the whole code %q:\n%s", sz[0], sz[1], code, scr)
+		}
+	}
+}
+
+// TestAccountShowCodeIsNotKept: the code is shown in a window and nowhere
+// else: not in the game log, the state snapshot, the Logs panel's text, a
+// dump, or the bytes of a save written afterwards. Esc closes the window.
+func TestAccountShowCodeIsNotKept(t *testing.T) {
+	d, eng := mapTestDashboard(t, true)
+	code := eng.Account().RecoveryCode()
+	if err := eng.StartNewNamedGame("Rome"); err != nil {
+		t.Fatal(err)
+	}
+	d.runForTest("account show code")
+	d.refresh()
+	for _, e := range eng.GetLogs() {
+		if strings.Contains(e.Message, code) {
+			t.Fatalf("the game log holds the code: %q", e.Message)
+		}
+	}
+	for _, e := range eng.GetState().Log {
+		if strings.Contains(e.Message, code) {
+			t.Fatalf("the state snapshot's log holds the code: %q", e.Message)
+		}
+	}
+	if strings.Contains(fmt.Sprintf("%+v", eng.GetState()), code) {
+		t.Error("the state snapshot holds the code")
+	}
+	d.pages.RemovePage(codeWindowPage)
+	if scr := screenAt(t, d.pages, 100, 30); strings.Contains(scr, code) {
+		t.Errorf("the code is on screen after its window closed:\n%s", scr)
+	}
+	if err := eng.SaveGame("after-code"); err != nil {
+		t.Fatal(err)
+	}
+	files, _ := filepath.Glob(filepath.Join(game.DataDir(), "saves", "*.json"))
+	if len(files) == 0 {
+		t.Fatal("no save was written")
+	}
+	for _, f := range files {
+		raw, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if bytes.Contains(raw, []byte(code)) {
+			t.Errorf("%s holds the code", f)
+		}
+	}
+}
+
+// TestAccountShowCodeWindowCloses: Esc takes the window away.
+func TestAccountShowCodeWindowCloses(t *testing.T) {
+	d, _ := mapTestDashboard(t, true)
+	d.runForTest("account show code")
+	pressKey(d, d.pages, tcell.KeyEscape, 0)
+	if front, _ := d.pages.GetFrontPage(); front == codeWindowPage {
+		t.Error("Esc left the code window open")
 	}
 }
 
@@ -40,11 +106,15 @@ func TestAccountShowCodeReply(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
 	code := eng.Account().RecoveryCode()
 	res := HandleCommand("account show code", eng)
-	if res.Type != "info" || res.Message != code {
-		t.Errorf("reply = %q (%s), want the code and nothing else", res.Message, res.Type)
+	if res.Type != "info" || res.Window != code || res.Message != "" {
+		t.Errorf("reply = %+v, want the code in a window and nothing logged", res)
 	}
-	if res := HandleCommand("account show", eng); res.Type != "error" || !strings.Contains(res.Message, "account show code") {
-		t.Errorf("account show = %q (%s), want the usage", res.Message, res.Type)
+	// Only the exact form shows it; anything else is the usage line.
+	for _, line := range []string{"account show", "account show code anything", "account show codes", "account show code code", "account show nope"} {
+		res := HandleCommand(line, eng)
+		if res.Window != "" || res.Type != "error" || !strings.Contains(res.Message, "account show code") || strings.Contains(res.Message, code) {
+			t.Errorf("%q = %+v, want the usage line", line, res)
+		}
 	}
 }
 

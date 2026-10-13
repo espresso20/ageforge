@@ -189,7 +189,7 @@ There's no restore command. A backup is just files, so you put them back by hand
 
 ## The recovery code
 
-Run `account show code` at the `>` prompt to see the active account's **recovery code**, and nothing else:
+Run `account show code` at the `>` prompt to see the active account's **recovery code**, and nothing else, in a small window (`Esc` closes it). It is not written to the game log:
 
 ```
 account show code
