@@ -802,16 +802,19 @@ func (bm *BuildingManager) PartialTransform(oldKey, newKey string, count int, re
 const MaxRuins = 24
 
 // isDestroyable reports whether a catastrophe (Endure, the Great Fire, Succumb's
-// ruins) may take a building: anything but a wonder or storage. Both are
-// ageless and the age lock never lets an older one be rebuilt, so losing one
+// ruins) may take a building: anything but a wonder, storage or a knowledge
+// building. They are ageless and the age lock never lets an older one be rebuilt, so losing one
 // is for good. Storage matters most: it is what raises the caps, and an
 // age's first storage copy can cost more than the earlier storage holds once
 // some of it is gone (a first Victorian Vault is about 210M steel). A Nuclear
 // Exchange that took both Industrial Depots on the way into the Victorian Age
 // left 130M of storage, and with it no way to ever build a vault or anything
-// else the age asks for.
+// else the age asks for. A knowledge building is the knowledge store the same
+// way (knowledge_store.go): tech prices are set against it, and a copy lost
+// from an older age cannot be rebuilt, so it is spared too. Only a knowledge
+// building carries a figure (a config test holds it to that).
 func isDestroyable(def config.BuildingDef) bool {
-	return def.Category != "wonder" && def.Category != "storage"
+	return def.Category != "wonder" && def.Category != "storage" && def.KnowledgeStore <= 0
 }
 
 // destroyablePool returns one entry per built destroyable building instance
@@ -840,7 +843,8 @@ func (bm *BuildingManager) destroyablePool() []string {
 }
 
 // DestroyableCount returns how many built building instances a catastrophe can
-// destroy or ruin: everything except wonders and storage (see isDestroyable).
+// destroy or ruin: everything except wonders, storage and knowledge buildings
+// (see isDestroyable).
 func (bm *BuildingManager) DestroyableCount() int {
 	n := 0
 	for key, c := range bm.counts {

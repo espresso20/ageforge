@@ -95,7 +95,7 @@ func setWorkers(ge *GameEngine, total int) { ge.Workers.domains["worker"].count 
 
 func TestEndure_DestroysTwentyPercentOfNonWondersOnly(t *testing.T) {
 	ge := catEngine(t, "iron_age", 1)
-	b := pickWorkerBuildings(t, "food", "knowledge")
+	b := pickWorkerBuildings(t, "food", "metallurgy")
 	ge.Buildings.counts[b[0]] = 10
 	ge.Buildings.counts[b[1]] = 10
 	wonders := pickWonders(t, 5)
@@ -166,7 +166,7 @@ func TestEndure_ReleasesWorkersOfDestroyedBuildings(t *testing.T) {
 
 func TestEndure_WorkerLossIsProportionalAcrossDomains(t *testing.T) {
 	ge := catEngine(t, "iron_age", 3)
-	b := pickWorkerBuildings(t, "food", "knowledge", "military")
+	b := pickWorkerBuildings(t, "food", "metallurgy", "military")
 	assigned := map[string]int{b[0]: 40, b[1]: 20, b[2]: 8}
 	total := 100
 	for _, k := range b {
@@ -256,7 +256,7 @@ func succumbIn(t *testing.T, ge *GameEngine, age string) {
 func TestSuccumb_RuinsResetAndLegacy(t *testing.T) {
 	ge := catEngine(t, "iron_age", 5)
 	setPrestigeLevel(ge, 2)
-	b := pickWorkerBuildings(t, "food", "knowledge")
+	b := pickWorkerBuildings(t, "food", "metallurgy")
 	ge.Buildings.counts[b[0]] = 6
 	ge.Buildings.counts[b[1]] = 6
 	succumbIn(t, ge, "iron_age")
@@ -816,7 +816,7 @@ func TestCatastropheRandomnessIsSeeded(t *testing.T) {
 	// Ruins too.
 	ruins := func(seed int64) map[string]int {
 		ge := catEngine(t, "iron_age", seed)
-		for i, k := range pickWorkerBuildings(t, "food", "knowledge", "military") {
+		for i, k := range pickWorkerBuildings(t, "food", "metallurgy", "military") {
 			ge.Buildings.counts[k] = 5 + i
 		}
 		ge.Buildings.GenerateRuins(ge.gameRNG(), 8)

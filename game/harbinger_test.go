@@ -902,7 +902,7 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 			if ge2.pendingBraceLevel != tc.level {
 				t.Fatalf("pendingBraceLevel after load = %d, want %d", ge2.pendingBraceLevel, tc.level)
 			}
-			b := pickWorkerBuildings(t, "food", "knowledge")
+			b := pickWorkerBuildings(t, "food", "metallurgy")
 			ge2.Buildings.counts = map[string]int{b[0]: 10, b[1]: 10}
 			setStock(ge2, map[string][2]float64{"wood": {1000, 10000}})
 			if err := ge2.Endure(); err != nil {

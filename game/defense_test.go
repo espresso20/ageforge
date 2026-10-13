@@ -350,7 +350,7 @@ func TestComputeEndure_CombinedCap(t *testing.T) {
 func TestEndure_BraceAndGarrison(t *testing.T) {
 	setup := func(soldiers float64) *GameEngine {
 		ge := catEngine(t, "iron_age", 11)
-		b := pickWorkerBuildings(t, "food", "knowledge")
+		b := pickWorkerBuildings(t, "food", "metallurgy")
 		ge.Buildings.counts[b[0]] = 50
 		ge.Buildings.counts[b[1]] = 50
 		ge.Resources.UnlockResource("gold")
@@ -400,7 +400,7 @@ func TestEndure_BraceAndGarrison(t *testing.T) {
 func TestEndure_GarrisonDeterministic(t *testing.T) {
 	run := func() map[string]int {
 		ge := catEngine(t, "iron_age", 42)
-		keys := pickWorkerBuildings(t, "food", "knowledge")
+		keys := pickWorkerBuildings(t, "food", "metallurgy")
 		for _, k := range keys {
 			ge.Buildings.counts[k] = 20
 		}
