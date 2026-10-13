@@ -636,7 +636,9 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		if DevGodMode {
 			cost = nil
 		}
-		if def.Cost > ge.Resources.GetStorage("knowledge") && !DevGodMode {
+		// Over the store and not held (stock kept above a store from an older
+		// save can still pay for it): the same wall the research command meets.
+		if ge.overStore(cost) != "" && !DevGodMode {
 			return planCheck{cost: cost, blocked: "needs more knowledge storage"}
 		}
 		if res := ge.planUnfunded(cost); res != "" {

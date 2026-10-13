@@ -81,7 +81,7 @@ func TestWriteKnowledgeFixture(t *testing.T) {
 	ge.mu.Lock()
 	ge.Resources.Add("knowledge", 1e15)
 	held := ge.Resources.Get("knowledge")
-	ge.plan = []PlanItem{{Kind: PlanResearch, Key: pick}}
+	ge.plan = []PlanItem{{Kind: PlanResearch, Key: pick, Count: 1}}
 	ge.mu.Unlock()
 	t.Logf("tech %s costs %v; knowledge held %v", pick, cost, held)
 	if held < cost*2 {

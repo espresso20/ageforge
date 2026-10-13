@@ -3988,6 +3988,13 @@ func (ge *GameEngine) overStore(cost map[string]float64) string {
 // storage building, when the age has one).
 func (ge *GameEngine) storeTooSmallText(what, res string, amount float64) string {
 	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", what, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
+	if res == "knowledge" {
+		// Only a knowledge building raises the knowledge store: the age's.
+		if d, ok := ge.knowledgeBuildingOfAge(); ok {
+			return line + " Build more storage first: " + d.Name + "."
+		}
+		return line
+	}
 	for _, d := range ge.rules.Buildings() {
 		if d.Category == "storage" && d.RequiredAge == ge.age {
 			return line + " Build more storage first: " + d.Name + "."
@@ -4111,6 +4118,11 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	// Combine research_speed from all sources (see combinedResearchSpeed). This
 	// must be done before StartResearch so the combined value reduces tick count.
 	combinedResearchSpeed := ge.combinedResearchSpeed()
+	// A tech priced over the knowledge store cannot be started (the wall a
+	// building meets), whichever way it is started: the command and the plan
+	// both come through here.
+	ge.Research.costGate = ge.knowledgeWall
+	defer func() { ge.Research.costGate = nil }()
 	ge.Research.timeMult = ge.succumbResearchFactor() // Ancient Knowledge: × 0.8 per epoch
 	ge.Research.timeK = ge.speedK()                   // Era Mastery: ÷ k after the speed step
 	if err := ge.Research.StartResearchWithSpeed(techKey, ge.age, ageOrder, knowledge, combinedResearchSpeed); err != nil {

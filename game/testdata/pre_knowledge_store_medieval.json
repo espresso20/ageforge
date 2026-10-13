@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-12T21:53:50.648451-05:00",
+  "timestamp": "2026-10-13T00:33:46.923088-05:00",
   "tick": 0,
   "age": "medieval_age",
   "seed": 94,
@@ -169,7 +169,7 @@
     "total_built": 0,
     "total_recruited": 0,
     "total_gathered": {},
-    "game_started": "2026-10-12T21:53:50.647596-05:00",
+    "game_started": "2026-10-13T00:33:46.9226-05:00",
     "ages_reached": [
       "primitive_age",
       "stone_age",
@@ -273,11 +273,11 @@
     {
       "kind": "research",
       "key": "guilds",
-      "count": 0
+      "count": 1
     }
   ],
   "pacing_week": true,
   "storage_rules": 1,
   "tree_version": 5,
-  "_sig": "d2c72596887dad026c7212c87cadcf3691352cd94b9bafbaebfae592632f3704"
+  "_sig": "33fbebf4b95b117d955aa71a65d7afeabc37ca4944386f9729640f5b5b138e06"
 }

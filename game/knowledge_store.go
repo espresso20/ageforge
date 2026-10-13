@@ -1,6 +1,10 @@
 package game
 
-import "github.com/espresso20/ageforge/config"
+import (
+	"fmt"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // The knowledge store (config/knowledge_rule.go). Knowledge is not a
 // physical thing, so it has a store of its own: the base the knowledge
@@ -65,4 +69,32 @@ type KnowledgeStoreState struct {
 	NextBuilding string
 	// NextEach is what one copy of NextBuilding adds to the store.
 	NextEach float64
+}
+
+// knowledgeBuildingOfAge is the knowledge building of the current age (the
+// newest one the player can build: an older age's cannot be rebuilt, and
+// its figure is already in the store). ok is false when the age has none.
+func (ge *GameEngine) knowledgeBuildingOfAge() (config.BuildingDef, bool) {
+	var found config.BuildingDef
+	ok := false
+	for _, d := range ge.rules.Buildings() {
+		if d.Category != "wonder" && d.KnowledgeStore > 0 && d.RequiredAge == ge.age {
+			found, ok = d, true
+		}
+	}
+	return found, ok
+}
+
+// knowledgeWall refuses a tech priced over the knowledge store that the
+// stock held cannot pay for either (stock kept above the store from an older
+// save can still be spent). The refusal is the one every store gives
+// (storeTooSmallText). Under the write lock; dev god mode waives prices.
+func (ge *GameEngine) knowledgeWall(def config.TechDef) error {
+	if DevGodMode {
+		return nil
+	}
+	if ge.overStore(map[string]float64{"knowledge": def.Cost}) == "" {
+		return nil
+	}
+	return fmt.Errorf("%s", ge.storeTooSmallText(def.Name, "knowledge", def.Cost))
 }
