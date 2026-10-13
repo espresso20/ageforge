@@ -29,7 +29,9 @@ type KnowledgeStorePart struct {
 func (bm *BuildingManager) knowledgeStoreParts() []KnowledgeStorePart {
 	var parts []KnowledgeStorePart
 	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
-		if !config.IsKnowledgeBuilding(def) || def.KnowledgeStore <= 0 {
+		// Only a knowledge building carries a figure (a test in config holds
+		// it to that), so the figure is the whole test.
+		if def.KnowledgeStore <= 0 {
 			return
 		}
 		parts = append(parts, KnowledgeStorePart{

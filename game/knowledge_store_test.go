@@ -129,3 +129,23 @@ func TestKnowledgeStore_NoBonusNamesIt(t *testing.T) {
 		}
 	}
 }
+
+// An age advance trims every stock but faith's and knowledge's. Knowledge's
+// store is the limit now, and a tech is bought from it, so what the player
+// saved comes through the advance whole.
+func TestKnowledgeStore_AnAdvanceDoesNotTrimKnowledge(t *testing.T) {
+	ge := NewGameEngine()
+	ge.Buildings.counts["story_circle"] = 4
+	ge.recalculateRates()
+	store := ge.Resources.GetStorage("knowledge")
+	ge.Resources.LoadAmounts(map[string]float64{"knowledge": store, "wood": 1e6})
+
+	ge.advanceAge("stone_age")
+
+	if got := ge.Resources.Get("knowledge"); got != store {
+		t.Errorf("knowledge after the advance is %v, want the full store %v", got, store)
+	}
+	if got := ge.Resources.Get("wood"); got >= 1e6 {
+		t.Errorf("setup: the advance trimmed no other stock (wood %v)", got)
+	}
+}

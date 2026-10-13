@@ -261,8 +261,10 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 		s.caps[r] = float64((b + capAll + own[r]) * speed)
 	}
 	// Knowledge has a store of its own: a base and what knowledge buildings
-	// hold. The general store has nothing to do with it.
-	s.caps["knowledge"] = float64(kstore * speed)
+	// hold. The general store has nothing to do with it, and neither has Era
+	// Mastery: tech prices do not scale with mastery, so the store they are
+	// set against does not either (game.knowledgeStoreSize).
+	s.caps["knowledge"] = kstore
 	return s
 }
 

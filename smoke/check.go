@@ -179,14 +179,24 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 	for _, k := range sortedKeys(st.Resources) {
 		caps[k] = st.Resources[k].Storage
 	}
-	// Storage grows with Era Mastery's k, a building's share included.
+	// Storage grows with Era Mastery's k, a building's share included. The
+	// knowledge store does not: it is the knowledge buildings' alone, and
+	// neither a general storage building nor k reaches it
+	// (game.knowledgeStoreSize).
 	k := st.Mastery.K
 	if k <= 0 {
 		k = 1
 	}
 	raise := func(def config.BuildingDef, n float64) {
+		if config.IsKnowledgeBuilding(def) && def.KnowledgeStore > 0 {
+			caps["knowledge"] += float64(def.KnowledgeStore * n)
+		}
 		for _, e := range def.Effects {
 			if e.Type != "storage" || e.Value <= 0 {
+				continue
+			}
+			if e.Target == "knowledge" {
+				caps[e.Target] += float64(e.Value * n)
 				continue
 			}
 			add := float64(float64(e.Value*n) * k)
@@ -195,7 +205,9 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 				continue
 			}
 			for _, r := range sortedKeys(caps) {
-				caps[r] += add
+				if r != "knowledge" {
+					caps[r] += add
+				}
 			}
 		}
 	}
@@ -227,7 +239,9 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 		if def.RequiredAge != "" && def.RequiredAge != st.Age {
 			continue
 		}
-		stores := false
+		// A knowledge building raises the knowledge store, so the walk
+		// buys its copies too.
+		stores := config.IsKnowledgeBuilding(def) && def.KnowledgeStore > 0
 		for _, e := range def.Effects {
 			stores = stores || (e.Type == "storage" && e.Value > 0)
 		}
@@ -277,7 +291,7 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 						continue
 					}
 					for _, r := range sortedKeys(caps) {
-						if e.Target == "all" || e.Target == r {
+						if (e.Target == "all" && r != "knowledge") || e.Target == r {
 							caps[r] = math.Inf(1)
 						}
 					}
