@@ -39,6 +39,7 @@ var Parchment = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x2c, 0x6e, 0x2c), // forest green
 		RoleNegative:   tcell.NewRGBColor(0xa3, 0x2a, 0x1f), // wax red
 		RoleSelection:  tcell.NewRGBColor(0xd8, 0xc4, 0x9a), // darker cream backing
+		RoleComment:    tcell.NewRGBColor(0xad, 0x42, 0x08), // flavor sentences only: rust orange
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -65,6 +66,7 @@ var Bronze = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x8f, 0xb5, 0x4a), // olive gain
 		RoleNegative:   tcell.NewRGBColor(0xe0, 0x6a, 0x3c), // burnt-orange loss
 		RoleSelection:  tcell.NewRGBColor(0x3a, 0x2a, 0x18),
+		RoleComment:    tcell.NewRGBColor(0xff, 0x8a, 0x1a), // flavor sentences only: bright orange, brighter than the bronze accent
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -92,6 +94,7 @@ var Cyberpunk = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x39, 0xff, 0x9e), // neon green gain
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x49, 0x6b), // neon pink-red loss
 		RoleSelection:  tcell.NewRGBColor(0x2a, 0x12, 0x3a),
+		RoleComment:    tcell.NewRGBColor(0xff, 0x8a, 0x1f), // flavor sentences only: neon orange
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -121,6 +124,7 @@ var Monochrome = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0xd8, 0xd8, 0xd8), // lighter grey = gain
 		RoleNegative:   tcell.NewRGBColor(0x9a, 0x9a, 0x9a), // mid grey = loss
 		RoleSelection:  tcell.NewRGBColor(0x33, 0x33, 0x33),
+		RoleComment:    tcell.NewRGBColor(0xe8, 0x88, 0x3a), // flavor sentences only: the one warm ink, for the voice
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -148,6 +152,7 @@ var Cosmic = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x5a, 0xe0, 0xa8), // aurora green
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x6e, 0x8a), // nebula red
 		RoleSelection:  tcell.NewRGBColor(0x24, 0x20, 0x4a),
+		RoleComment:    tcell.NewRGBColor(0xff, 0x9a, 0x3c), // flavor sentences only: nebula orange
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -174,6 +179,7 @@ var Source = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x5d, 0xff, 0xd0), // aqua gain
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x4d, 0x4d), // red loss
 		RoleSelection:  tcell.NewRGBColor(0x0d, 0x2b, 0x17),
+		RoleComment:    tcell.NewRGBColor(0xff, 0x9a, 0x3a), // flavor sentences only: amber against the greens
 		RoleBright:     tcell.NewRGBColor(0xd9, 0xff, 0xe3), // near-white green
 	},
 	GainGlyph:   flavorGainGlyph,
@@ -201,6 +207,7 @@ var Glitch = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x39, 0xff, 0x88), // static green gain
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x3b, 0x3b), // red loss
 		RoleSelection:  tcell.NewRGBColor(0x2a, 0x16, 0x40),
+		RoleComment:    tcell.NewRGBColor(0xff, 0x8a, 0x2a), // flavor sentences only: neon orange
 		RoleBright:     tcell.NewRGBColor(0xff, 0xff, 0xff),
 	},
 	GainGlyph:   flavorGainGlyph,
@@ -229,6 +236,7 @@ var Ashfall = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0xa9, 0xc4, 0x6c), // new growth
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x5a, 0x4d), // burn
 		RoleSelection:  tcell.NewRGBColor(0x2b, 0x21, 0x1c),
+		RoleComment:    tcell.NewRGBColor(0xff, 0xcf, 0x9e), // flavor sentences only: pale apricot: every orange here is taken
 		RoleBright:     tcell.NewRGBColor(0xf3, 0xec, 0xe6),
 	},
 	GainGlyph:   flavorGainGlyph,
@@ -256,6 +264,7 @@ var Ledger = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x14, 0x66, 0x3a), // in the black
 		RoleNegative:   tcell.NewRGBColor(0xb3, 0x26, 0x1e), // in the red
 		RoleSelection:  tcell.NewRGBColor(0xdf, 0xe9, 0xd6),
+		RoleComment:    tcell.NewRGBColor(0xb5, 0x47, 0x09), // flavor sentences only: rust orange
 		RoleBright:     tcell.NewRGBColor(0x0b, 0x13, 0x0e),
 	},
 	GainGlyph:   flavorGainGlyph,
@@ -283,6 +292,7 @@ var Prismatic = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x7d, 0xff, 0xb0), // spring green
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x5c, 0x5c), // red
 		RoleSelection:  tcell.NewRGBColor(0x1d, 0x1b, 0x2c),
+		RoleComment:    tcell.NewRGBColor(0xff, 0x9a, 0x3c), // flavor sentences only: orange
 		RoleBright:     tcell.NewRGBColor(0xff, 0xff, 0xff),
 	},
 	GainGlyph:   flavorGainGlyph,

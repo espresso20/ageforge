@@ -155,8 +155,8 @@ func flavorAfterVerdict(t *testing.T, ge *GameEngine) string {
 		t.Fatal("no harbinger verdict in the log")
 	}
 	for _, m := range msgs[verdict+1:] {
-		if strings.HasPrefix(m, "  [gray]") {
-			return strings.TrimSuffix(strings.TrimPrefix(m, "  [gray]"), "[-]")
+		if strings.HasPrefix(m, "  [comment]") {
+			return strings.TrimSuffix(strings.TrimPrefix(m, "  [comment]"), "[-]")
 		}
 	}
 	t.Fatal("no flavor line after the verdict")

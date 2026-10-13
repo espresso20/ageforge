@@ -144,7 +144,7 @@ func (ge *GameEngine) factionEncounterFlavor(moment flavor.Moment, def config.Fa
 // halves stay separable on purpose — the mechanics never depend on the prose.
 func (ge *GameEngine) raidLogLine(raid RaidRequest) string {
 	if q := ge.raidFlavorLine(raid); q != "" {
-		return raid.Message + " " + q
+		return raid.Message + " [comment]" + q + "[-]"
 	}
 	return raid.Message
 }

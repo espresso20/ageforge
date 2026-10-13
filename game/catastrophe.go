@@ -443,7 +443,7 @@ func (ge *GameEngine) Endure() error {
 
 	debuff := ge.startReconstruction()
 
-	ge.addLog("warning", fmt.Sprintf("☄ ENDURE: %s. %s", catName, catFlavor))
+	ge.addLog("warning", fmt.Sprintf("☄ ENDURE: %s. [comment]%s[-]", catName, catFlavor))
 	ge.addLog("warning", fmt.Sprintf("  Buildings destroyed: %d", destroyCount))
 	for _, desc := range names {
 		ge.addLog("warning", fmt.Sprintf("  → %s lost", desc))
@@ -469,7 +469,7 @@ func (ge *GameEngine) Endure() error {
 	ge.addLog("success", fmt.Sprintf("  ✦ You endured the %s. Its badge records it.", epName))
 	// Cosmetic flavour — a wry beat after surviving the catastrophe.
 	if q := config.PickLogFlavor(config.LogFlavorCatastropheSurvived, ge.quipRNG()); q != "" {
-		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 	}
 
 	ge.catastropheHistory = append(ge.catastropheHistory,

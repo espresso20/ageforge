@@ -666,7 +666,7 @@ func (sc *endScene) drawEnding(g *mGrid, pal *menuPalette, v *endView, old *menu
 	}
 	g.textOn(centred(L.w, runeLen(name)+2), 1, " "+name+" ", pal.ink, pal.bg, true)
 	for i, line := range L.voice {
-		g.textOn(centred(L.w, runeLen(line)+2), 3+i, " "+line+" ", pal.dim, pal.bg, false)
+		g.textOn(centred(L.w, runeLen(line)+2), 3+i, " "+line+" ", commentInk(pal), pal.bg, false)
 	}
 	sc.drawEmber(g, pal, v, math.Max(0, math.Min(1, (p-0.85)/0.3)))
 }

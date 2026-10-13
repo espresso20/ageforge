@@ -37,6 +37,7 @@ var Forge = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x3f, 0xb9, 0x50),
 		RoleNegative:   tcell.NewRGBColor(0xf8, 0x51, 0x49),
 		RoleSelection:  tcell.NewRGBColor(0x21, 0x30, 0x4a),
+		RoleComment:    tcell.NewRGBColor(0xff, 0x7a, 0x1a), // flavor sentences only: neon orange
 		// Extended roles left unset derive to the pre-overhaul look (Surface =
 		// Background, Border = Accent, OnAccent = black, …). Chip is pinned to the
 		// footer-keycap label grey the UI hard-coded before it was a role.

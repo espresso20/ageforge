@@ -103,7 +103,7 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 	add(skTitle, "[gold::b]★  %s  ★[-]", strings.ToUpper(newDef.Name))
 	add(skDesc, "[white]\"%s\"[-]", newDef.Description)
 	if newDef.Quip != "" {
-		add(skQuip, "[gray::i]%s[-:-:-]", newDef.Quip)
+		add(skQuip, "[comment::i]%s[-:-:-]", newDef.Quip)
 	}
 	add(skRule, "[gold]══════════════════════════════════[-]")
 	blank()
@@ -242,7 +242,7 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 		blank()
 		add(skEpoch, "[%s]%s[-]", eventColor, epochEvent.EventName)
 		if flavorText != "" {
-			add(skEpoch, "[white]\"%s\"[-]", flavorText)
+			add(skEpoch, "[comment]\"%s\"[-]", flavorText)
 		}
 	}
 

@@ -32,6 +32,7 @@ var Daylight = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x1a, 0x7f, 0x37), // forest green
 		RoleNegative:   tcell.NewRGBColor(0xcf, 0x22, 0x2e), // brick red
 		RoleSelection:  tcell.NewRGBColor(0xd6, 0xe4, 0xfa), // pale blue row
+		RoleComment:    tcell.NewRGBColor(0xc2, 0x41, 0x0c), // flavor sentences only: deep orange, darkened for the light canvas
 
 		RoleSurface: tcell.NewRGBColor(0xff, 0xff, 0xff), // white panels over the canvas
 		RoleBright:  tcell.NewRGBColor(0x0b, 0x0f, 0x14), // near-black emphasis
@@ -60,6 +61,7 @@ var HighContrastLight = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x00, 0x48, 0xa8), // blue = gain
 		RoleNegative:   tcell.NewRGBColor(0x93, 0x38, 0x00), // dark orange = loss
 		RoleSelection:  tcell.NewRGBColor(0xb8, 0xd4, 0xff),
+		RoleComment:    tcell.NewRGBColor(0xb8, 0x43, 0x00), // flavor sentences only: dark orange, 5.5:1 on white
 
 		RoleBorder: tcell.NewRGBColor(0x00, 0x00, 0x00), // hard black borders
 	},

@@ -47,7 +47,7 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 
 	headerLines := []string{fmt.Sprintf("[red]☄ %s[-]", tview.Escape(catName))}
 	for _, l := range tview.WordWrap(catFlavor, inner-2) {
-		headerLines = append(headerLines, "[gray]"+tview.Escape(strings.TrimSpace(l))+"[-]")
+		headerLines = append(headerLines, "[comment]"+tview.Escape(strings.TrimSpace(l))+"[-]")
 	}
 
 	endureLines := []string{
@@ -110,7 +110,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 
 	headerLines := []string{fmt.Sprintf("[red]☄ %s[-]", tview.Escape(name))}
 	for _, l := range tview.WordWrap(flavorText, inner-2) {
-		headerLines = append(headerLines, "[gray]"+tview.Escape(strings.TrimSpace(l))+"[-]")
+		headerLines = append(headerLines, "[comment]"+tview.Escape(strings.TrimSpace(l))+"[-]")
 	}
 	headerLines = append(headerLines, "[gray]Prestige waits on your answer. Nothing else does.[-]")
 

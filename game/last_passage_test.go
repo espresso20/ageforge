@@ -924,7 +924,7 @@ func TestRunEndingLineAtEveryPrestige(t *testing.T) {
 		if done < 1 {
 			t.Fatalf("%s: no line before the prestige summary:\n%s", age, strings.Join(logMessages(ge), "\n"))
 		}
-		ending := strings.TrimSuffix(strings.TrimPrefix(ge.log[done-1].Message, "  [gray]"), "[-]")
+		ending := strings.TrimSuffix(strings.TrimPrefix(ge.log[done-1].Message, "  [comment]"), "[-]")
 		corpus := runEndingCorpus(age)
 		if !corpus[ending] {
 			t.Errorf("%s: the line before the summary is not a RunEnding line for this age: %q", age, ending)

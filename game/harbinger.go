@@ -501,7 +501,7 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 	ge.addLog("event", fmt.Sprintf("⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
 		capFirst(def.Name), harbingerWarningText(ge.rules, "")))
 	for _, l := range lp.Lines {
-		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", l))
+		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 	ge.publishHarbinger(def, "", false)
 	return true
@@ -564,7 +564,7 @@ func (ge *GameEngine) harbingerSpeak(def config.HarbingerDef, tier CatastropheTi
 // harbingerLogLines writes the current figure's lines to the log in gray.
 func (ge *GameEngine) harbingerLogLines() {
 	for _, l := range ge.harbinger.Lines {
-		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", l))
+		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }
 
@@ -1242,7 +1242,7 @@ func (ge *GameEngine) threadFlavorLog(h *HarbingerSave, moment flavor.Moment, ki
 	}
 	def, _ := ge.rules.Harbinger(h.Age)
 	if l := ge.flavorStream().Line(flavor.Request{Moment: moment, Age: h.Age, Subject: def.Name, Kind: kind}, ge.gameRNG()); l != "" {
-		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", l))
+		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }
 

@@ -38,6 +38,7 @@ var Deuteranopia = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x3b, 0x9e, 0xff), // blue = gain
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x8c, 0x42), // orange = loss
 		RoleSelection:  tcell.NewRGBColor(0x24, 0x3b, 0x55),
+		RoleComment:    tcell.NewRGBColor(0xff, 0xb9, 0x8a), // flavor sentences only: light apricot: orange is this theme's loss color
 	},
 	GainGlyph: gainGlyph,
 	LossGlyph: lossGlyph,
@@ -62,6 +63,7 @@ var Protanopia = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x4f, 0xa8, 0xff), // blue = gain
 		RoleNegative:   tcell.NewRGBColor(0xff, 0xa6, 0x3d), // amber = loss (lighter than deutan's)
 		RoleSelection:  tcell.NewRGBColor(0x24, 0x3b, 0x55),
+		RoleComment:    tcell.NewRGBColor(0xff, 0xb9, 0x8a), // flavor sentences only: light apricot: amber is this theme's loss color
 	},
 	GainGlyph: gainGlyph,
 	LossGlyph: lossGlyph,
@@ -86,6 +88,7 @@ var HighContrast = define(Theme{
 		RolePositive:   tcell.NewRGBColor(0x5a, 0xb6, 0xff), // blue = gain
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x9d, 0x3d), // orange = loss
 		RoleSelection:  tcell.NewRGBColor(0x33, 0x33, 0x33),
+		RoleComment:    tcell.NewRGBColor(0xff, 0xbf, 0x8f), // flavor sentences only: light apricot: orange is this theme's loss color
 	},
 	GainGlyph: gainGlyph,
 	LossGlyph: lossGlyph,

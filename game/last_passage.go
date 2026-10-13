@@ -293,7 +293,7 @@ func (ge *GameEngine) logRunEnding() {
 		}
 	}
 	if l := ge.flavorStream().Line(req, ge.gameRNG()); l != "" {
-		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", l))
+		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }
 

@@ -111,6 +111,8 @@ The first rung of a ladder is one a first run earns early: by the Bronze Age, or
 
 A ladder can be lowered between versions of the game. An account that had already passed a rung is given it the next time it is loaded, and the log says how many badges that was in one line.
 
+A rung keeps the count it was earned at. If a later version of the game moves the bar, a rung you hold still says what you did, and a rung you have not earned shows today's count. A rung that was earned before counts were kept, and whose counter is under today's bar, goes back to unearned the first time the account is loaded. Rungs that give a theme or a title are left alone.
+
 ### Lineage ladders
 
 Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contractor, Magnate, Tycoon and Dynasty. They count buildings of the lineage built across all your runs.

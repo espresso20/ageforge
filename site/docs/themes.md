@@ -29,7 +29,7 @@ Themes come in three groups: **Standard** (the default dark **Forge** and the li
 
 ### Every theme paints its own background
 
-A theme paints the **whole surface**, text included: the page background, panels, borders, selection, text tiers, and the good / warn / bad colors. A light theme looks right on a dark terminal and a dark theme looks right on a light one, so you don't need to match your terminal's colors to the theme.
+A theme paints the **whole surface**, text included: the page background, panels, borders, selection, text tiers, and the good / warn / bad colors. The game's flavor sentences, the quips and comments in the log, on buildings and in the arrival screens, have a color of their own: orange, in every theme (neon orange in Forge). Nothing else is drawn in it. Where orange is already a theme's loss or warning color (the colorblind-safe themes and Ashfall), it is a light apricot. A light theme looks right on a dark terminal and a dark theme looks right on a light one, so you don't need to match your terminal's colors to the theme.
 
 <div class="screen-pair">
 <figure class="screen" data-screen="theme-forge"><figcaption>The Workers panel in Forge, the default theme.</figcaption></figure>
