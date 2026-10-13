@@ -797,6 +797,11 @@ func TestHeldBadgesCountTowardTheCollectors(t *testing.T) {
 		}
 		if held < 30 && !def.Integrity() && !strings.HasPrefix(def.Counter, config.BadgeEvBadge) && def.Family == "lineage" {
 			acct.Badges[def.Key] = BadgeEarned{At: 5, Run: "old"}
+			// The record backs the rung, as a real account's does.
+			if acct.Counters == nil {
+				acct.Counters = map[string]float64{}
+			}
+			acct.Counters[def.Counter] = max(acct.Counters[def.Counter], def.Threshold)
 			held++
 		}
 	}

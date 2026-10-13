@@ -65,6 +65,20 @@ type badgeFile struct {
 func signBadgeFile(b *badgeFile) string {
 	payload := *b
 	payload.Signature = ""
+	// The remembered counts are left out of what is signed: a build from
+	// before them drops the field on reading, and must still find the
+	// signature it expects. They only change the words of a description.
+	for _, e := range payload.Badges {
+		if e.Count != 0 {
+			plain := make(map[string]BadgeEarned, len(payload.Badges))
+			for k, v := range payload.Badges {
+				v.Count = 0
+				plain[k] = v
+			}
+			payload.Badges = plain
+			break
+		}
+	}
 	data, _ := json.Marshal(&payload)
 	return hmacSign(data, saveHMACKey)
 }
@@ -228,6 +242,14 @@ type BadgeEarned struct {
 	Run string `json:"run,omitempty"`
 	// Flags is a set of BadgeFlag bits.
 	Flags int `json:"f,omitempty"`
+	// Count is the count the badge's text carried when it was earned, for a
+	// badge whose text carries one (a ladder rung): the bar it was earned
+	// at, so the text always says what the player did however the game's
+	// tables move later. 0 (left out) for any other badge, and for one
+	// earned before this was kept. It is not under the file's signature
+	// (signBadgeFile), so a build from before it reads the file, and signs
+	// it, as it always did.
+	Count float64 `json:"count,omitempty"`
 }
 
 // BadgeFlagCrossed marks a badge earned in a save edited outside the game,
@@ -393,6 +415,9 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 	if ctx.crossed || a.Tampered || a.BadgesTampered {
 		e.Flags |= BadgeFlagCrossed
 	}
+	if _, counted := book.set.BadgeDescAt(def.Key, def.Threshold); counted {
+		e.Count = def.Threshold
+	}
 	a.Badges[def.Key] = e
 	a.dirty = true
 	a.badgeRev++
@@ -523,7 +548,7 @@ func (a *Account) ensureBadges(book *badgeBook) bool {
 }
 
 func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
-	changed := false
+	changed := a.settleBarsLocked(book)
 	// What this pass grants is announced in one line, however many there
 	// are (pendingCaughtUp): counted off the badges held before and after,
 	// so a badge one of them leads to is counted too.
@@ -623,6 +648,46 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 	return changed
 }
 
+// settleBarsLocked is the one-time cleanup of ladder rungs earned before a
+// badge remembered the bar it was earned at. A rung with no remembered count
+// whose counter is today below the rung's bar was earned under a lower one:
+// it goes back to unearned. A rung whose counter meets today's bar keeps its
+// place and remembers today's count from then on. Only counted ladders are
+// looked at (a rung of a ladder on a lifetime counter whose text carries its
+// count); firsts, age badges and specials are not. A rung that gives a theme
+// or a title is left alone, so nothing it unlocked is taken away. A second
+// run finds every kept rung remembering its count and changes nothing.
+// Callers hold a.mu.
+func (a *Account) settleBarsLocked(book *badgeBook) bool {
+	changed := false
+	for _, key := range sortedKeys(a.Badges) {
+		e := a.Badges[key]
+		def := book.def(key)
+		if e.Count > 0 || def == nil || def.Ladder == "" || def.Scope != config.BadgeLifetime ||
+			def.Counter == "" || def.Threshold <= 0 {
+			continue
+		}
+		if _, counted := book.set.BadgeDescAt(key, def.Threshold); !counted {
+			continue
+		}
+		switch {
+		case a.Counters[def.Counter] >= def.Threshold:
+			e.Count = def.Threshold
+			a.Badges[key] = e
+		case def.Reward.Theme != "" || def.Reward.Title != "":
+			continue
+		default:
+			delete(a.Badges, key)
+		}
+		changed = true
+	}
+	if changed {
+		a.badgeRev++
+		a.dirty = true
+	}
+	return changed
+}
+
 // noteDay records that the account was played on day ("2026-10-07") and
 // returns whether it is new. The list is kept sorted and bounded.
 func (a *Account) noteDay(day string) bool {
@@ -652,8 +717,15 @@ func mergeBadges(a, b map[string]BadgeEarned) map[string]BadgeEarned {
 		out[k] = v
 	}
 	for k, v := range b {
-		if cur, ok := out[k]; !ok || v.At < cur.At {
+		cur, ok := out[k]
+		if !ok || v.At < cur.At {
+			if ok && v.Count == 0 {
+				v.Count = cur.Count // the bar either copy remembers
+			}
 			out[k] = v
+		} else if cur.Count == 0 && v.Count > 0 {
+			cur.Count = v.Count
+			out[k] = cur
 		}
 	}
 	return out
@@ -814,6 +886,11 @@ func (a *Account) viewLocked(book *badgeBook, def *config.BadgeDef, shown bool) 
 		return v
 	}
 	v.Name, v.Desc = def.Name, def.Desc
+	if e, ok := a.Badges[def.Key]; ok && e.Count > 0 {
+		if desc, counted := book.set.BadgeDescAt(def.Key, e.Count); counted {
+			v.Desc = desc // the bar it was earned at
+		}
+	}
 	v.Emblem = def.Emblem
 	v.RewardTheme, v.RewardTitle = def.Reward.Theme, def.Reward.Title
 	if !v.Earned && def.Scope == config.BadgeLifetime && def.Counter != "" && def.Threshold > 0 {

@@ -28,6 +28,7 @@ type badgeSubject struct {
 // in last (config.BadgeMeasure).
 func (s *Set) buildBadges(written []config.BadgeDef, families []config.BadgeFamilyDef) {
 	s.badges = nil
+	s.badgeDesc = map[string]descSource{}
 	for _, f := range families {
 		s.badges = append(s.badges, s.expandFamily(f)...)
 	}
@@ -238,23 +239,7 @@ func twoFigures(v float64) float64 {
 // familyBadge is the badge of one subject (and rung n, from 1; 0 for a
 // family that is not a ladder).
 func (s *Set) familyBadge(f config.BadgeFamilyDef, sub badgeSubject, rung config.BadgeRung, n int, threshold float64) config.BadgeDef {
-	mid := sub.name
-	if strings.HasPrefix(mid, "The ") {
-		mid = "the " + strings.TrimPrefix(mid, "The ")
-	}
-	fill := strings.NewReplacer(
-		"{key}", sub.key,
-		"{name}", sub.name,
-		"{Name}", textfmt.Capitalize(sub.name),
-		"{mid}", mid,
-		"{short}", strings.TrimSuffix(sub.name, " Age"),
-		"{lname}", strings.ToLower(sub.name),
-		"{rung}", rung.Name,
-		"{n}", strconv.Itoa(n),
-		"{count}", badgeCount(threshold),
-		"{era}", strconv.Itoa(s.eraOrderOfAge(sub.age)),
-		"{techs}", techsLine(int(threshold), sub.name),
-	).Replace
+	fill := s.fillAt(sub, rung, n, threshold)
 	b := config.BadgeDef{
 		Key:        fill(f.Key),
 		Family:     f.Family,
@@ -302,8 +287,17 @@ func (s *Set) familyBadge(f config.BadgeFamilyDef, sub badgeSubject, rung config
 	if name := f.Names[b.Key]; name != "" {
 		b.Name = name
 	}
+	tmpl := f.Desc
 	if desc := f.Descs[b.Key]; desc != "" {
 		b.Desc = fill(desc)
+		tmpl = desc
+	}
+	// A description that carries the count can be said for another count.
+	if strings.Contains(tmpl, "{count}") || strings.Contains(tmpl, "{techs}") {
+		if s.badgeDesc == nil {
+			s.badgeDesc = map[string]descSource{}
+		}
+		s.badgeDesc[b.Key] = descSource{sub: sub, rung: rung, n: n, tmpl: tmpl}
 	}
 	b.Aliases = slices.Clone(f.Aliases[b.Key])
 	b.Reward = f.Rewards[b.Key]
@@ -516,6 +510,49 @@ func (s *Set) Badge(key string) (config.BadgeDef, bool) {
 func (s *Set) BadgeForAlias(alias string) (string, bool) {
 	k, ok := s.badgeAlias[alias]
 	return k, ok
+}
+
+// BadgeDescAt is the description of a badge whose text carries a count (a
+// ladder rung, a syllabus), said for count instead of today's threshold: how
+// an earned badge keeps the bar it was earned at. ok is false for a badge
+// whose text carries no count.
+func (s *Set) BadgeDescAt(key string, count float64) (string, bool) {
+	d, ok := s.badgeDesc[key]
+	if !ok {
+		return "", false
+	}
+	return s.fillAt(d.sub, d.rung, d.n, count)(d.tmpl), true
+}
+
+// descSource is what a counted badge's description is made from: the
+// template and the row of the table it is filled for.
+type descSource struct {
+	sub  badgeSubject
+	rung config.BadgeRung
+	n    int
+	tmpl string
+}
+
+// fillAt fills a badge template for one row, as it reads for count: the one
+// place a threshold goes into a badge's text.
+func (s *Set) fillAt(sub badgeSubject, rung config.BadgeRung, n int, count float64) func(string) string {
+	mid := sub.name
+	if strings.HasPrefix(mid, "The ") {
+		mid = "the " + strings.TrimPrefix(mid, "The ")
+	}
+	return strings.NewReplacer(
+		"{key}", sub.key,
+		"{name}", sub.name,
+		"{Name}", textfmt.Capitalize(sub.name),
+		"{mid}", mid,
+		"{short}", strings.TrimSuffix(sub.name, " Age"),
+		"{lname}", strings.ToLower(sub.name),
+		"{rung}", rung.Name,
+		"{n}", strconv.Itoa(n),
+		"{count}", badgeCount(count),
+		"{era}", strconv.Itoa(s.eraOrderOfAge(sub.age)),
+		"{techs}", techsLine(int(count), sub.name),
+	).Replace
 }
 
 // BadgeProblems lists what is wrong with the badge tables themselves: a

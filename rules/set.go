@@ -61,6 +61,8 @@ type Set struct {
 	badges     []config.BadgeDef // hand-written, then each family's
 	badgeByKey map[string]config.BadgeDef
 	badgeAlias map[string]string // an older account file's key -> badge key
+	// badgeDesc says a counted badge's description for any count (BadgeDescAt).
+	badgeDesc map[string]descSource
 	// badgeTitles is the titles a badge score earns, lowest first.
 	badgeTitles []config.BadgeScoreTitle
 	// badgeWornTitles is the titles badges give; badgeExpeditions and
