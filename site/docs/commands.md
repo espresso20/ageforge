@@ -149,8 +149,8 @@ See [Workers](workers-and-domains.md) for the domain table and the efficiency fo
 | `research tree [close\|far]` | Open the tree zoomed in on big badges (close) or out on the whole tree (far) |
 | `research card <tech>` | Open the tree on a tech's card: what it does, costs and needs |
 | `techs` | Opens the same **Research** panel |
-| `research list` | List the techs you can research now, with their knowledge cost. A ★ marks the keystone its age's wonder needs |
-| `research <tech>` | Start researching a tech |
+| `research list` | List the techs you can research now, with their knowledge cost. A ★ marks the keystone its age's wonder needs. A red ✗ marks a tech priced over your [knowledge store](knowledge.md#the-knowledge-store), with the sentence under it |
+| `research <tech>` | Start researching a tech. A tech priced over your knowledge store is refused, naming the knowledge building to build |
 | `research cancel` | Cancel the current research. Its progress is lost and the knowledge spent is not refunded |
 
 ```

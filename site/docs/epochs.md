@@ -185,7 +185,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 |-------|--------|----------|
 | The Famine | Food production -30% | 312 ticks |
 | Merchant Betrayal | Lose half your gold, then gold production -30% | 187 ticks |
-| The Great Fire | Up to 8 random buildings destroyed (never wonders or storage) | Instant |
+| The Great Fire | Up to 8 random buildings destroyed (never wonders, storage or knowledge buildings) | Instant |
 | Epidemic | Lose 20% of workers, then food production -20% | 468 ticks |
 | Resource Drought | Epoch's primary resource: production -40% | 234 ticks |
 | Political Instability | Lose 60% of your faith, then knowledge production -30% | 156 ticks |

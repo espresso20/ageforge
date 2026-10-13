@@ -39,7 +39,7 @@ ticks = base ticks × (1 − research speed) × the techs' cut × 0.8 ^ epochs s
 
 ### Knowledge Cost is Upfront
 
-Knowledge is removed from your stockpile when the tech starts, before any ticks pass. If you don't have enough, the command fails, and since you can't hold more knowledge than your storage, your knowledge storage must be at least the tech's cost. If your knowledge income drops to zero during a long research countdown, **research still completes**: the ticks count down whatever your knowledge income is, because the cost was already paid.
+Knowledge is removed from your stockpile when the tech starts, before any ticks pass. If you don't have enough, the command fails. A tech priced over your knowledge store cannot be started at all, however long you wait: the command refuses it, naming the knowledge building to build, and the tech tree marks its price with a red ✗ (see [The Knowledge Store](knowledge.md#the-knowledge-store)). If your knowledge income drops to zero during a long research countdown, **research still completes**: the ticks count down whatever your knowledge income is, because the cost was already paid.
 
 ### Keystones, the Spine and the Rest
 
@@ -47,14 +47,14 @@ Every tech has a **kind**, and its kind decides how long it takes and what it co
 
 - A **keystone** is the tech an age's wonder needs before it can be built. There is one in each age from the Stone Age on, and since the next age needs the wonder, the keystone is the one tech an age asks of you. See [Keystone Techs](ages.md#keystone-techs) for the list.
 - The **spine** is every tech a keystone stands on, all the way down: Tool Making under Stoneworking, Steam Power under Industrialization. Keystones and the spine are the only techs a run has to research, 48 of the 202.
-- A **capstone** ends a lane for its era: a bigger step that takes longer and costs more than any other tech of its age. No run has to research one. Each era from the Iron Era on has two, twelve in all: Scholasticism and Guilds in the Medieval Age, the Concert of Nations and Interchangeable Parts in the Industrial Age, Big Science and the Military-Industrial Complex in the Atomic Age, the Global Village and General AI in the Digital Age, Stellar Cartography and the Space Elevator in the Space Age, the Timeless Archive and Reality Engineering in the Quantum Age.
+- A **capstone** ends a lane for its era: a bigger step that takes as long as the longest tech of its age and is one of its two dearest. No run has to research one. Each era from the Iron Era on has two, twelve in all: Scholasticism and Guilds in the Medieval Age, the Concert of Nations and Interchangeable Parts in the Industrial Age, Big Science and the Military-Industrial Complex in the Atomic Age, the Global Village and General AI in the Digital Age, Stellar Cartography and the Space Elevator in the Space Age, the Timeless Archive and Reality Engineering in the Quantum Age.
 - Everything else is **optional**: yours to take or leave.
 
 The tech tree draws each keystone with a ★ on a double frame and each capstone in half blocks, a keystone's card names the wonder that waits for it, and `research list` marks it too (`★ keystone: Colosseum`).
 
 ### How Research is Priced
 
-No tech has a price or a time of its own. Both follow from its age and its kind.
+A tech's time follows from its age and its kind. Its price follows its age's ladder.
 
 **Time.** Each age has a research cap: one eighth of the age's target length. A tech takes a share of its age's cap:
 
@@ -67,20 +67,9 @@ No tech has a price or a time of its own. Both follow from its age and its kind.
 
 So a tech you must research takes a sixteenth of its age at most, and a capstone, the long one, a tenth.
 
-**Cost.** An age's techs share one knowledge budget: 90% of the knowledge a well-run civilization makes in the age's target time (50% in the Primitive Age, 30% in the Transcendent Age). The budget is split by weight:
+**Cost.** Inside an age each tech costs **1.3 times the one before it**, from the cheapest to the dearest. An age's techs together cost 80% of the knowledge a well-run town's knowledge buildings make over the age. The Transcendent Age has no knowledge building of its own, so its four techs keep the prices they had. The tables below give every price.
 
-| Kind | Weight |
-|---|---|
-| Spine | 0.6 |
-| Keystone | 0.8 |
-| Optional | 1.0 |
-| Capstone | 1.6 |
-
-A tech costs the budget times its weight, divided by the weights of all the techs in its age. So the techs you must research are the cheap ones, and a keystone always costs less than an optional tech of its age. Researching everything an age offers takes most of the knowledge the age makes, so research lasts the whole age: there is nearly always a tech coming within reach. When an update adds techs to an age, each tech there gets a little cheaper and the age's total stays where it is. Every age now holds the techs the tree was drawn for: three in the Primitive Age, four in the Transcendent, and six to thirteen in each age between.
-
-A keystone costs a twentieth to a seventh of what its age makes of knowledge: a seventh in the Stone Age, about a tenth from the Bronze Age to the Electric Age, and a twentieth to a twelfth from the Atomic Age on, where the ages hold the most techs. The techs a keystone stands on in earlier ages are cheaper still, but they add up if you skipped them, so pick up each age's spine as you go.
-
-The costs and ticks in the tables below are base values. They used to be typed by hand, tech by tech: early techs cost more knowledge than their own age made (the Stone Age's four cost 28.5K against about 4K made), and from the Classical Age on the whole list cost next to nothing but for a few techs priced to land mid-age. Now the early techs are within reach in their own ages and the later ones are a real part of each age.
+The knowledge store is sized to the prices: a town that passes a gate holds the age's dearest tech with a quarter to spare, and the second-cheapest tech of the next age with a fifth to spare. A tech priced over the store cannot be started until a knowledge building raises it (see [The Knowledge Store](knowledge.md#the-knowledge-store)).
 
 ### One Slot, and the Plan as a Queue
 
@@ -738,7 +727,7 @@ These two techs make a resource before any building of their age does. The amoun
 | Matter Conversion | Galactic | +4% housing |
 | Terraforming | Galactic | +6% housing |
 
-Storage bonuses add up to +54% of every store, and housing bonuses to +61%. Housing is rounded up to a whole person, so even the first +5% on a small village houses one more.
+Storage bonuses add up to +54% of every store but knowledge's, and housing bonuses to +61%. Housing is rounded up to a whole person, so even the first +5% on a small village houses one more.
 
 ### Building costs, construction time and research time
 
@@ -907,9 +896,9 @@ Together +96%, added to the wonders' and milestones' expedition rewards.
 
 Knowledge comes from the Knowledge lineage (Story Circle, Elders' Hall and on up to the Reality Academy), staffed by knowledge workers: **Shamans** in the Primitive Age, **Quantum Theorists** by the Quantum Age. Assign them with `assign <building_key> [count|all]`. The rates for every tier are on the [Knowledge](knowledge.md) page.
 
-From the Atomic Age on a tech costs from 500M to a few billion (a capstone up to 3.47B). The market does not sell knowledge, so your Knowledge buildings are the source you plan around.
+A tech costs from 236 knowledge (the cheapest of the Primitive Age) to 91.2B (the dearest of the Quantum Age). The market does not sell knowledge, so your Knowledge buildings are the source you plan around.
 
-Your knowledge storage must hold a tech's full cost before you can pay for it.
+Your knowledge store must hold a tech's full cost before you can start it. Only knowledge buildings raise it.
 
 ---
 
@@ -951,7 +940,7 @@ Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige
 
 ### Late-Game Knowledge Scaling
 
-Knowledge costs rise steeply, from 38 kp for Tool Making to billions in the late ages (Cybernetics 1.61B, the Timeless Archive 3.47B). Raise your knowledge storage ahead of them.
+Knowledge costs rise steeply, from 306 for Tool Making to billions in the late ages (Cybernetics 281M, the Timeless Archive 70.1B). Build your age's knowledge building ahead of them to raise the knowledge store.
 
 ---
 

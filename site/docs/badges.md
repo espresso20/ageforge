@@ -96,7 +96,7 @@ These count across all your runs. A dot separates the rungs.
 | Faction deals | 1 · 10 · 100 |
 | Raids blunted | 1 · 22 · 500 |
 | Returns | 1 · 25 · 100 |
-| Plan items started | 32 · 500 · 5,000 |
+| Plan items started | 29 · 500 · 5,000 |
 | Buildings upgraded | 20 · 630 · 20,000 |
 | Festivals | 1 · 10 · 50 |
 | Black market deals | 1 · 10 · 50 |
@@ -128,7 +128,7 @@ Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contracto
 | Hacker | 2 · 17 · 68 · 170 · 370 |
 | Harbor | 2 · 4 · 10 · 24 · 55 |
 | Housing | 6 · 36 · 120 · 410 · 1,000 |
-| Knowledge | 3 · 26 · 87 · 280 · 590 |
+| Knowledge | 1 · 10 · 35 · 112 · 237 |
 | Metallurgy | 3 · 16 · 53 · 170 · 370 |
 | Military | 3 · 23 · 78 · 260 · 570 |
 | Organic extraction | 4 · 29 · 93 · 300 · 640 |
@@ -144,7 +144,7 @@ A payroll badge asks for that many workers at work in one domain at the same tim
 | Food | 270 · 450 |
 | Lumber | 270 · 468 |
 | Masonry | 270 · 477 |
-| Knowledge | 160 · 274 |
+| Knowledge | 64 · 110 |
 | Faith | 160 · 265 |
 | Military | 270 · 444 |
 | Trade | 170 · 237 |

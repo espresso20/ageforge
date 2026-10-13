@@ -142,7 +142,7 @@ total cost = sum of floor(first-copy price × scale ^ (built + queued + i))
 
 So a batch always costs more per copy than the first copy alone, and queued buildings raise the price of your next purchase before they finish.
 
-Most buildings (production, military, research, trade, diplomacy and monuments) cost **15% more** per copy than the last. Storage and housing buildings grow more gently, at **13%** per copy. Wonders have a flat price and are limited to one each. The scaling lineages still grow exponentially, so plan your production before bulk-buying.
+Most buildings (production, military, trade, diplomacy and monuments) cost **15% more** per copy than the last. Knowledge buildings cost **50% more**. Storage and housing buildings grow more gently, at **13%** per copy. Wonders have a flat price and are limited to one each. The scaling lineages still grow exponentially, so plan your production before bulk-buying.
 
 ### Build-cost reductions
 
@@ -248,6 +248,8 @@ You keep all your progress and production. A Gathering Camp in the Food lineage 
 
 > Lineages 8 to 14 start in later ages (Trade and Engineering in the Bronze Age, Culture/Arts in the Classical, Metallurgy in the Iron, Energy in the Industrial, Hacker/Digital in the Modern and Harbor in the Colonial), so they have fewer tiers. The Housing and Culture/Arts lineages have no worker domain: they work without workers. The **Harbor** lineage also raises trade income: besides producing gold, each harbor adds a percentage bonus to the income of *every* active trade route. See [Trade](trade.md#harbor-lineage-trade-route-income).
 
+The **Knowledge** lineage is the one that raises the [knowledge store](knowledge.md#the-knowledge-store). Each copy adds to it, from +140 for a Story Circle to +5.6B for a Reality Academy, and each copy costs 50% more than the one before it. The gate into the next age asks for 5 to 10 copies of the age's knowledge building. [Knowledge](knowledge.md#how-knowledge-is-produced) has each building's rate, store figure and gate count.
+
 The **Mainframe Hall** (Modern Age) is the first tier of the Hacker/Digital lineage and the first building that makes data. It uses `hacker` workers, the Modern Age's gate asks for eight of it, and its next tier is the Server Farm in the Information Age.
 
 ---
@@ -259,7 +261,7 @@ A building can have one or more of these effects. Knowing them helps you decide 
 | Effect | What It Does |
 |--------|-------------|
 | Production | Adds an amount of a resource each tick, scaled by how many workers it has (see below). Most production buildings do this. |
-| Storage | Raises the storage of one resource, or storage for every resource (storage buildings). |
+| Storage | Raises the storage of one resource, or storage for every resource but knowledge (storage buildings). A knowledge building raises the knowledge store. |
 | Housing | Raises your housing, the number of workers you can have (housing buildings). |
 | Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production (which adds into [the all-production pool](resources.md#the-all-production-cap)). |
 | Trade route income | Raises the income of every trade route (Harbor lineage). |
@@ -444,35 +446,35 @@ Your 20 Gathering Camps stay Gathering Camps, producing at their full rate, unti
 
 ## Storage Buildings (21 tiers)
 
-Storage buildings form their own lineage and add storage for **every** resource at once. They need no workers: build them and your storage goes up.
+Storage buildings form their own lineage and add storage for **every** resource at once, knowledge aside: it has [a store of its own](knowledge.md#the-knowledge-store), raised only by knowledge buildings. They need no workers: build them and your storage goes up.
 
-Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Their sizes follow one written rule: five copies of an age's storage building, added to the stores of the earlier ages, hold the dearest single price that age asks of a full town (eight copies of every building that makes something), with a quarter to spare. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
+Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Their sizes follow one written rule: five copies of an age's storage building, added to the stores of the earlier ages, hold the dearest single price that age asks of a full town (eight copies of every building that makes something, the knowledge building aside), with a quarter to spare. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
 
-| Building | Age | Storage per copy (every resource) |
+| Building | Age | Storage per copy (every resource but knowledge) |
 |----------|-----|--------|
 | Stash | Primitive | +100 |
 | Storage Pit | Stone | +1.2K |
 | Warehouse | Bronze | +6.8K |
 | Granary | Iron | +25K |
-| Classical Vault | Classical | +180K |
-| Strongroom | Medieval | +850K |
-| Renaissance Vault | Renaissance | +3.8M |
+| Classical Vault | Classical | +210K |
+| Strongroom | Medieval | +820K |
+| Renaissance Vault | Renaissance | +4.1M |
 | Colonial Warehouse | Colonial | +27M |
 | Industrial Depot | Industrial | +88M |
-| Victorian Vault | Victorian | +850M |
+| Victorian Vault | Victorian | +1.4B |
 | Electric Warehouse | Electric | +16B |
-| Atomic Vault | Atomic | +75B |
-| Modern Depot | Modern | +100B |
-| Info Vault | Information | +660B |
-| Digital Archive | Digital | +2.7T |
-| Cyber Vault | Cyberpunk | +29T |
-| Fusion Vault | Fusion | +88T |
+| Atomic Vault | Atomic | +79B |
+| Modern Depot | Modern | +340B |
+| Info Vault | Information | +1.5T |
+| Digital Archive | Digital | +3.2T |
+| Cyber Vault | Cyberpunk | +28T |
+| Fusion Vault | Fusion | +87T |
 | Orbital Depot | Space | +300T |
 | Stellar Vault | Interstellar | +8.6Q |
 | Galactic Vault | Galactic | +50Q |
 | Quantum Vault | Quantum | +2.3Qi |
 
-Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.
+Pottery and Masonry add 10% each to every store but knowledge's, and Cloud Computing and Superconductors 8% each later.
 
 ### Storage is a wall
 
@@ -481,6 +483,8 @@ A building or an upgrade whose price in any one resource is larger than the stor
 ```
 <Building> costs <amount> <resource>, more than your <resource> storage holds (<size>). Build more storage first: <Storage building>.
 ```
+
+Knowledge has its own wall. A tech, or a building priced in knowledge, that costs more than the [knowledge store](knowledge.md#the-knowledge-store) holds cannot be started or bought either, and the same sentence names the age's knowledge building instead of its storage building.
 
 The age's wonder is the one exception: it is paid through its bank, a round at a time (see [Wonders](wonders.md#overflow)), so it may cost more than a store holds.
 
@@ -494,7 +498,7 @@ Storage is also permanent: catastrophes never destroy it or turn it into ruins, 
 
 ## Cultural Monuments (4)
 
-Cultural Monuments are one-off structures (one copy each) that turn surplus **culture** into a lasting payoff. Each costs a large lump of culture plus other materials of its age, and gives a bonus to all production while it stands (an Endure can destroy it like any building but wonders and storage). Unlike wonders, they need no resource banking: build them with the normal `build <key>` command. Their bonuses add into the same pool as every other all-production bonus but a tech's. The pool applies in full up to +200% and a quarter of every point past it, so a monument built late still raises your output, by a quarter of what it lists. See [The all-production cap](resources.md#the-all-production-cap).
+Cultural Monuments are one-off structures (one copy each) that turn surplus **culture** into a lasting payoff. Each costs a large lump of culture plus other materials of its age, and gives a bonus to all production while it stands (an Endure can destroy it like any building but wonders, storage and knowledge buildings). Unlike wonders, they need no resource banking: build them with the normal `build <key>` command. Their bonuses add into the same pool as every other all-production bonus but a tech's. The pool applies in full up to +200% and a quarter of every point past it, so a monument built late still raises your output, by a quarter of what it lists. See [The all-production cap](resources.md#the-all-production-cap).
 
 | Monument | Age | Culture Cost | Bonus |
 |----------|-----|--------------|-----------------|
@@ -540,7 +544,7 @@ See [Wonders](wonders.md) for the full list with costs and effects.
 
 ## Ruins
 
-Ruins are what is left of a previous civilization. You get them when you choose **Succumb** during a catastrophe: up to 8 of your buildings (never wonders or storage) become ruins and carry forward into your new run. You can hold at most 24 ruins; when a new batch goes over, the lowest-value ruins (earliest age, then lowest output) crumble first.
+Ruins are what is left of a previous civilization. You get them when you choose **Succumb** during a catastrophe: up to 8 of your buildings (never wonders, storage or knowledge buildings) become ruins and carry forward into your new run. You can hold at most 24 ruins; when a new batch goes over, the lowest-value ruins (earliest age, then lowest output) crumble first.
 
 **How ruins differ from normal buildings:**
 
@@ -549,7 +553,7 @@ Ruins are what is left of a previous civilization. You get them when you choose 
 | Production | `base × count × (0.20 + 0.80 × fill)` | `base × count × 0.50` |
 | Workers | Needed for full output | Not needed (produces on its own) |
 | Can build more? | Yes | No |
-| Destroyed by Endure? | Yes (20% of buildings at random, fewer if you brace; never wonders or storage) | No |
+| Destroyed by Endure? | Yes (20% of buildings at random, fewer if you brace; never wonders, storage or knowledge buildings) | No |
 
 Ruins give your new run a free head start. They produce at 50% of base rate with no workers, so food, wood and stone (or whatever the ruined building made) trickle in from the first tick without any setup.
 

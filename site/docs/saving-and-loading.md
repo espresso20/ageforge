@@ -32,6 +32,16 @@ Storage changed. A storage building's price now climbs much faster with each cop
 
 ---
 
+## Saves from before the knowledge store
+
+A game saved before knowledge had a store of its own loads as usual. It keeps every building copy and all the knowledge it held, including what is above the new knowledge store. That knowledge stays until you spend it and gains nothing (the same rule as [the grace rule](prestige.md#the-grace-rule)), and it can still pay for a tech priced over the store. The log says so once, on the first load:
+
+```
+Knowledge now has its own store, raised by knowledge buildings. What you hold above it stays until you spend it.
+```
+
+---
+
 ## Saves from before the market ended
 
 A game saved while the market could swap resources loads as usual. Everything it built, researched and holds stays. If its build plan held sell orders, they are removed, and the log says so once, on the first load:

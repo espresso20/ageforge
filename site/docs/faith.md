@@ -180,7 +180,7 @@ Before reaching the last age of an epoch (e.g. the Bronze Age before the Iron Er
 
 - If you are leaning into faith: a faith strength of 25% or more for the 50% good roll, over 75% for the 60% one. A typical town rolls at 40%
 - A [culture strength](epochs.md#culture-strength) above 40% (about twice a moderate set of culture buildings) to make Major good events eligible; above 75% also gives a 15% chance at the Legendary one
-- Spare materials to rebuild with, in case The Great Fire destroys up to 8 buildings (never wonders or storage)
+- Spare materials to rebuild with, in case The Great Fire destroys up to 8 buildings (never wonders, storage or knowledge buildings)
 - A gold income that can absorb Economic Crash or Merchant Betrayal, which each take half your gold and then drain more per tick
 
 See [Epochs](epochs.md) for the event tables and [Catastrophe](catastrophe.md) for what a doom does.

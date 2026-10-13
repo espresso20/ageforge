@@ -1,8 +1,10 @@
 # Knowledge
 
-Knowledge pays for all research. It accumulates over time and is spent when you start researching a technology. Your knowledge rate and storage decide how quickly you can move through the tech tree. Buildings cost it too from the Medieval to the Colonial Age.
+Knowledge pays for all research. It accumulates over time and is spent when you start researching a technology. Your knowledge rate and your knowledge store decide how quickly you can move through the tech tree. Buildings cost it too from the Medieval to the Colonial Age.
 
-No age asks you to hold knowledge to advance. The gates do ask for knowledge buildings: 8 Story Circles for the Stone Age, 8 Elders' Halls for the Bronze Age, 8 Scriptoria for the Iron Age and so on (see [Advancement Requirements](ages.md#advancement-requirements)). What an age needs of research itself is one tech: the **keystone** its wonder cannot be built without, and the techs that one stands on (see [Keystone Techs](ages.md#keystone-techs)). The rest of your knowledge is yours to spend on the techs you choose.
+Knowledge is not a physical thing, so it has a **store of its own**, and only knowledge buildings raise it. Storage buildings do not hold it. See [The Knowledge Store](#the-knowledge-store).
+
+No age asks you to hold knowledge to advance. The gates do ask for knowledge buildings: 5 Story Circles for the Stone Age, 5 Elders' Halls for the Bronze Age, 5 Scriptoria for the Iron Age, 7 Agoras for the Classical Age and so on (see [Advancement Requirements](ages.md#advancement-requirements)). What an age needs of research itself is one tech: the **keystone** its wonder cannot be built without, and the techs that one stands on (see [Keystone Techs](ages.md#keystone-techs)). The rest of your knowledge is yours to spend on the techs you choose.
 
 ---
 
@@ -14,31 +16,31 @@ Knowledge is produced by **Knowledge lineage buildings**, at full rate when thei
 
 Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monastery Library → University → Natural Philosophy Hall → Research Institute → Academy → Physics Laboratory → Research Campus → Think Tank → Innovation Hub → AI Research Lab → Neuro Research Center → Theoretical Institute → Deep Space Observatory → Xenology Institute → Cosmic Research Station → Reality Academy
 
-**Knowledge rates (fully staffed, per building):**
+**Knowledge buildings (rates fully staffed, per building; each copy costs 50% more than the one before):**
 
-| Building | Age | Knowledge/tick | Workers |
-|----------|-----|----------------|---------|
-| Story Circle | Primitive | 0.2 | 2 |
-| Elders' Hall | Stone | 0.6 | 2 |
-| Scriptorium | Bronze | 2.0 | 3 |
-| Agora | Iron | 1.6 | 3 |
-| Library | Classical | 3.2 | 4 |
-| Monastery Library | Medieval | 42.4 | 4 |
-| University | Renaissance | 76.3 | 5 |
-| Natural Philosophy Hall | Colonial | 452 | 5 |
-| Research Institute | Industrial | 12.8 | 6 |
-| Academy | Victorian | 25.6 | 6 |
-| Physics Laboratory | Electric | 51.2 | 7 |
-| Research Campus | Atomic | 102 | 7 |
-| Think Tank | Modern | 205 | 8 |
-| Innovation Hub | Information | 410 | 8 |
-| AI Research Lab | Digital | 819 | 10 |
-| Neuro Research Center | Cyberpunk | 1.64K | 10 |
-| Theoretical Institute | Fusion | 3.28K | 12 |
-| Deep Space Observatory | Space | 6.55K | 12 |
-| Xenology Institute | Interstellar | 13.1K | 15 |
-| Cosmic Research Station | Galactic | 26.2K | 15 |
-| Reality Academy | Quantum | 52.4K | 20 |
+| Building | Age | Knowledge/tick | Workers | Adds to the store | Copies the gate asks |
+|----------|-----|----------------|---------|-------------------|----------------------|
+| Story Circle | Primitive | 0.2 | 2 | +140 | 5 |
+| Elders' Hall | Stone | 0.6 | 2 | +370 | 5 |
+| Scriptorium | Bronze | 2.0 | 3 | +3.1K | 5 |
+| Agora | Iron | 1.6 | 3 | +6.4K | 7 |
+| Library | Classical | 3.2 | 4 | +19K | 8 |
+| Monastery Library | Medieval | 42.4 | 4 | +330K | 5 |
+| University | Renaissance | 76.3 | 5 | +820K | 7 |
+| Natural Philosophy Hall | Colonial | 452 | 5 | +8.4M | 5 |
+| Research Institute | Industrial | 12.8 | 6 | +910K | 5 |
+| Academy | Victorian | 25.6 | 6 | +4.5M | 7 |
+| Physics Laboratory | Electric | 51.2 | 7 | +11M | 8 |
+| Research Campus | Atomic | 102 | 7 | +16M | 9 |
+| Think Tank | Modern | 205 | 8 | +13M | 10 |
+| Innovation Hub | Information | 410 | 8 | +15M | 8 |
+| AI Research Lab | Digital | 819 | 10 | +94M | 8 |
+| Neuro Research Center | Cyberpunk | 1.64K | 10 | +310M | 5 |
+| Theoretical Institute | Fusion | 3.28K | 12 | +1.5B | 5 |
+| Deep Space Observatory | Space | 6.55K | 12 | +3.4B | 5 |
+| Xenology Institute | Interstellar | 13.1K | 15 | +4.9B | 5 |
+| Cosmic Research Station | Galactic | 26.2K | 15 | +1.4B | 5 |
+| Reality Academy | Quantum | 52.4K | 20 | +5.6B | 10 |
 
 The first five tiers have hand-set rates. From the **Medieval to the Colonial Age**, buildings also cost knowledge, so knowledge counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): fully staffed, each earns back its first copy's price within the age's payback time. That is why the Monastery Library, University and Natural Philosophy Hall jump so far ahead. From the Industrial Age on, research is the only regular use of knowledge, and the lineage goes back to fixed rates that double each age. Your older halls and universities keep producing through all of this, so don't sell them.
 
@@ -52,17 +54,35 @@ knowledge/tick = base rate × buildings × (0.20 + 0.80 × workers assigned / wo
 
 ---
 
-## Knowledge Storage
+## The Knowledge Store
 
-Knowledge is limited by your storage. Build **Storage lineage** buildings (Stash → Storage Pit → Warehouse → Classical Vault → ...) to raise it. Once knowledge hits its storage limit, further production is wasted. You can only pay for a tech with knowledge you hold, so your storage must be at least the tech's cost. Raise storage before you save up for an expensive one.
+Knowledge is not a physical thing, so it does not sit in the stores that hold food, wood and stone. It has a **store of its own**:
 
-Nothing but research makes you hold knowledge, so check your storage when you enter an age. In the Bronze and Iron Ages and from the Industrial Age on, the cheapest tech of an age fits the storage you are sure to arrive with. In the other ages it takes a storage building of the new age first: one in the Primitive, Stone, Classical and Medieval Ages, and two in the Renaissance and Colonial Ages. The age's other requirements have you building that storage anyway.
+```
+knowledge store = 240 + the copies of each knowledge building × what one copy adds
+```
+
+The 240 is yours with no knowledge building. Each copy of a knowledge building adds its figure from the table above. The Resources box shows knowledge first, set apart from the goods, as the amount held over this store. The Buildings panel shows what a copy adds on each knowledge building.
+
+**Only knowledge buildings raise it.** Storage buildings do not, nor do the techs and wonders that add storage to every resource, Era Mastery or prestige. Once knowledge hits the store, further production is wasted.
+
+**The wall.** A tech priced over the knowledge store cannot be started, however long you wait. The `research` command refuses it, a planned tech waits as blocked ("needs more knowledge storage"), and the tech tree marks its price with a red ✗. The refusal names the knowledge building of your age to build:
+
+```
+Fire Mastery costs 398 knowledge, more than your knowledge storage holds (240). Build more storage first: Elders' Hall.
+```
+
+A building priced in knowledge (Medieval to Colonial) meets the same wall. Knowledge you already hold above the store, from a save made before knowledge had its own store, can still pay.
+
+**The gate sizes it.** The gate asks for copies of the age's knowledge building, and the store they hold is sized to the techs: an age's dearest tech fits with a quarter to spare, and the second-cheapest tech of the next age fits with a fifth to spare. Each knowledge building climbs at 1.5 a copy, so the gate asks for 5 to 10 of them, not the 8 to 20 it did.
+
+**An age advance** trims what you hold, as it does every stock but faith (see [What Happens on Age Advance](ages.md#what-happens-on-age-advance)). Catastrophes spare knowledge buildings, as they spare storage and wonders (see [Catastrophe](catastrophe.md)).
 
 ---
 
 ## What Research Costs
 
-An age's techs share one knowledge budget: 90% of what a well-run civilization makes of knowledge in the age's target time (50% in the Primitive Age, 30% in the Transcendent Age). A spine tech takes 0.6 shares of it, a keystone 0.8 and an optional tech 1.0, so what you must research is the cheap part, and research lasts the whole age. The Stone Age's four techs cost about 3.8K knowledge between them, the Medieval Age's six about 13.7M, the Renaissance's four about 80M, the Atomic Age's four about 5.7B. See [How Research is Priced](technologies.md#how-research-is-priced) and the [tech tables](technologies.md#tech-tree-by-age).
+Inside an age each tech costs **1.3 times the one before it**, from the cheapest to the dearest. An age's techs together cost 80% of the knowledge a well-run town's knowledge buildings make over the age, and the store above is sized so the dearest one fits. The Stone Age's six techs cost about 7.3K knowledge between them, the Medieval Age's nine about 4.2M, the Renaissance's seven about 21M, the Atomic Age's eleven about 1.0B. The Transcendent Age has no knowledge building of its own, so its four techs keep the prices they had. See [How Research is Priced](technologies.md#how-research-is-priced) and the [tech tables](technologies.md#tech-tree-by-age).
 
 ---
 
@@ -101,7 +121,7 @@ There is also a prestige-run path to free research: early in a new run (Primitiv
 
 ## Tips
 
-- Get your first Story Circle and 2 Knowledge workers before your first age advance, because early research unlocks pay off quickly. The Stone Age asks for 8 Story Circles and the Bronze Age for 8 Elders' Halls, and the Stone Age's wonder needs Stoneworking, which stands on Tool Making.
+- Get your first Story Circle and 2 Knowledge workers before your first age advance, because early research unlocks pay off quickly. The Stone Age asks for 5 Story Circles and the Bronze Age for 5 Elders' Halls, and the Stone Age's wonder needs Stoneworking, which stands on Tool Making.
 - In each new age, find the keystone first (the ★ on the tech tree). The wonder waits for it, and the advance waits for the wonder.
-- Research is paid up front, so start a tech as soon as you can afford it, or queue it with `plan research`. Knowledge that sits at its storage limit is wasted.
+- Research is paid up front, so start a tech as soon as you can afford it, or queue it with `plan research`. Knowledge that sits at the store's limit is wasted, and a tech priced over the store waits for a knowledge building.
 - After a Dark Age, move spare workers onto knowledge buildings for a while to rebuild your stock, then restart the research it canceled.
