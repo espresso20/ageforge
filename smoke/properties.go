@@ -37,7 +37,7 @@ var KnownPropertyFailures = map[int]string{
 	3:  "fails in 5 of 22 ages; worst 3.0 times in the Primitive Age",
 	4:  "fails in 3 of 22 ages; worst 2.9 times in the Quantum Age",
 	8:  "fails in 16 of 22 ages; worst 0.0% eaten in the Transcendent Age",
-	9:  "fails in 21 of 22 ages; worst room for 18320 people per job in the Transcendent Age",
+	9:  "fails in 22 of 22 ages; worst room for 19312 people per job in the Transcendent Age",
 	10: "fails in 1 of 22 ages; worst 0.8 times the age in the Digital Age",
 	12: "27 of 27 trade route payments fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
@@ -396,7 +396,7 @@ func StaticProperties() Properties {
 	// 17. (gone) The same as 5, at the top of the mastery table. It goes
 	// with 5, and the list has no 17.
 
-	// 20. The cap is the cap: no town makes more research than the ceiling
+	// 22. The cap is the cap: no town makes more research than the ceiling
 	// property 10 reads. The most copies of a knowledge building the game lets
 	// a town build is the count its gate asks for (MaxCount), so the reference
 	// town, which holds exactly those, is the best a town can do by building.
@@ -418,7 +418,7 @@ func StaticProperties() Properties {
 			where, val = t.ages[i].Name, fmt.Sprintf("%.2f times the ceiling", got/ceiling)
 		}
 	}
-	add(20, "building every knowledge building the game allows makes no more research than the ceiling of property 10", bad == 0, worst(bad, where, val))
+	add(22, "building every knowledge building the game allows makes no more research than the ceiling of property 10", bad == 0, worst(bad, where, val))
 
 	// 18 needs the game's own formulas and is stated, not worked out.
 	add(18, "the reference town's faith and culture strength fall in the middle band", false, "not worked out here yet")

@@ -89,7 +89,6 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 	}
 	// Era Mastery twin check: the same state at mastery 1 (k = 2) in its
 	// age runs every rate at exactly double and holds double the storage,
-	// except knowledge, whose store is the knowledge buildings' alone.
 	{
 		kb, kk := hookedEngine(e, seed), hookedEngine(e, seed)
 		age := kb.GetState().Age
@@ -100,9 +99,6 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 		for _, r := range sortedKeys(bs.Resources) {
 			b, k := bs.Resources[r], ks.Resources[r]
 			wantStore := 2 * b.Storage
-			if r == "knowledge" {
-				wantStore = b.Storage
-			}
 			if k.Rate != 2*b.Rate || k.Storage != wantStore {
 				bad = append(bad, fmt.Sprintf("%s rate %g vs %g, storage %g vs %g", r, k.Rate, b.Rate, k.Storage, b.Storage))
 			}

@@ -6782,7 +6782,7 @@
   },
   "alchemy": {
    "age": "medieval_age",
-   "cost": 286000,
+   "cost": 319000,
    "ticks": 1316
   },
   "animal_husbandry": {
@@ -6797,7 +6797,7 @@
   },
   "architecture": {
    "age": "renaissance_age",
-   "cost": 3290000,
+   "cost": 3570000,
    "ticks": 1755
   },
   "armada_command": {
@@ -6837,12 +6837,12 @@
   },
   "banking": {
    "age": "medieval_age",
-   "cost": 130000,
+   "cost": 145000,
    "ticks": 1053
   },
   "baroque_arts": {
    "age": "colonial_age",
-   "cost": 6130000,
+   "cost": 7300000,
    "ticks": 2048
   },
   "big_science": {
@@ -6852,7 +6852,7 @@
   },
   "blast_furnace": {
    "age": "renaissance_age",
-   "cost": 4280000,
+   "cost": 4630000,
    "ticks": 1755
   },
   "blockchain": {
@@ -6877,7 +6877,7 @@
   },
   "cartography": {
    "age": "colonial_age",
-   "cost": 4710000,
+   "cost": 5610000,
    "ticks": 2048
   },
   "chemical_engineering": {
@@ -6887,7 +6887,7 @@
   },
   "chronometry": {
    "age": "medieval_age",
-   "cost": 483000,
+   "cost": 539000,
    "ticks": 1316
   },
   "cinema": {
@@ -6922,12 +6922,12 @@
   },
   "coke_smelting": {
    "age": "colonial_age",
-   "cost": 29600000,
+   "cost": 35200000,
    "ticks": 2048
   },
   "colonialism": {
    "age": "colonial_age",
-   "cost": 38500000,
+   "cost": 45800000,
    "ticks": 2048
   },
   "computers": {
@@ -6957,7 +6957,7 @@
   },
   "crop_rotation": {
    "age": "renaissance_age",
-   "cost": 2530000,
+   "cost": 2740000,
    "ticks": 1755
   },
   "currency": {
@@ -7027,7 +7027,7 @@
   },
   "embassies": {
    "age": "colonial_age",
-   "cost": 13500000,
+   "cost": 16000000,
    "ticks": 2048
   },
   "embedded_systems": {
@@ -7062,7 +7062,7 @@
   },
   "feudalism": {
    "age": "medieval_age",
-   "cost": 372000,
+   "cost": 415000,
    "ticks": 1316
   },
   "fire_mastery": {
@@ -7077,7 +7077,7 @@
   },
   "fortification": {
    "age": "medieval_age",
-   "cost": 628000,
+   "cost": 701000,
    "ticks": 1316
   },
   "fusion_drives": {
@@ -7147,12 +7147,12 @@
   },
   "guilds": {
    "age": "medieval_age",
-   "cost": 1060000,
+   "cost": 1190000,
    "ticks": 2106
   },
   "gunpowder": {
    "age": "renaissance_age",
-   "cost": 5560000,
+   "cost": 6030000,
    "ticks": 1755
   },
   "holography": {
@@ -7272,7 +7272,7 @@
   },
   "mercantilism": {
    "age": "colonial_age",
-   "cost": 10400000,
+   "cost": 12300000,
    "ticks": 2048
   },
   "metal_casting": {
@@ -7322,7 +7322,7 @@
   },
   "navigation": {
    "age": "renaissance_age",
-   "cost": 1150000,
+   "cost": 1250000,
    "ticks": 1404
   },
   "neural_art": {
@@ -7342,7 +7342,7 @@
   },
   "new_world_crops": {
    "age": "colonial_age",
-   "cost": 17500000,
+   "cost": 20800000,
    "ticks": 2048
   },
   "nuclear_deterrence": {
@@ -7397,7 +7397,7 @@
   },
   "patronage": {
    "age": "renaissance_age",
-   "cost": 1500000,
+   "cost": 1620000,
    "ticks": 1755
   },
   "philosophy": {
@@ -7452,7 +7452,7 @@
   },
   "printing_press": {
    "age": "renaissance_age",
-   "cost": 1950000,
+   "cost": 2110000,
    "ticks": 1755
   },
   "probability_markets": {
@@ -7572,12 +7572,12 @@
   },
   "scholasticism": {
    "age": "medieval_age",
-   "cost": 817000,
+   "cost": 912000,
    "ticks": 2106
   },
   "scientific_method": {
    "age": "colonial_age",
-   "cost": 7970000,
+   "cost": 9490000,
    "ticks": 2048
   },
   "search_engines": {
@@ -7647,7 +7647,7 @@
   },
   "steel_forging": {
    "age": "medieval_age",
-   "cost": 169000,
+   "cost": 189000,
    "ticks": 1053
   },
   "stellar_cartography": {
@@ -7682,7 +7682,7 @@
   },
   "surveying": {
    "age": "colonial_age",
-   "cost": 22800000,
+   "cost": 27100000,
    "ticks": 2048
   },
   "synthetic_food": {
@@ -7717,7 +7717,7 @@
   },
   "theology": {
    "age": "medieval_age",
-   "cost": 220000,
+   "cost": 246000,
    "ticks": 1316
   },
   "timeless_archive": {

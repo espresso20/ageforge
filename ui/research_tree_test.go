@@ -530,13 +530,6 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 			t.Errorf("%s's card tags a tech's bonus as capped:\n%s", key, card)
 		}
 	}
-	// The price is the one the tech starts at, research speed included.
-	st.Pools["research_speed"] = game.BonusPool{Target: "research_speed", Earned: 0.25, Applied: 0.25}
-	def := config.TechByKey()["siege_warfare"]
-	quick := game.ResearchTicks(def.ResearchTicks, 0.25, 1, 1, 1)
-	if want := "takes " + formatTicks(quick, st) + "."; quick >= def.ResearchTicks || !strings.Contains(cardOf(st, "siege_warfare"), want) {
-		t.Errorf("with +25%% research speed Siege Warfare's card should say %q:\n%s", want, cardOf(st, "siege_warfare"))
-	}
 	if out := statsProvider(st, 140); !strings.Contains(out, "Research speed +25%: techs take 75% of their base time.") {
 		t.Errorf("the Stats panel does not say what research speed does")
 	}

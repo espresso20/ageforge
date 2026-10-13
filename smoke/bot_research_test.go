@@ -58,63 +58,34 @@ func giveKnowledge(ge *game.GameEngine, v float64) {
 // the rest goes cheapest first.
 func TestBotResearchesTheKeystoneFirst(t *testing.T) {
 	ge, b := botIn(t, "stone_age")
-	techs := ge.GetState().Research.Techs
-	tool, stone, writing := techs["tool_making"].Cost, techs["stoneworking"].Cost, techs["primitive_writing"].Cost
-	if !(writing < stone) {
-		t.Fatalf("setup: Primitive Writing (%v) should be cheaper than Stoneworking (%v), or saving for the keystone is not tested", writing, stone)
-	}
-
 	p := b.newPlan(ge.GetState())
 	if want := []string{"tool_making", "stoneworking"}; !reflect.DeepEqual(p.must, want) {
 		t.Fatalf("what the Stone Age cannot be left without: %v, want %v", p.must, want)
 	}
-	if got := p.hold["knowledge"]; got != tool+stone {
-		t.Errorf("the bot holds back %v knowledge, want the %v the two techs cost", got, tool+stone)
-	}
-	if p.target["knowledge"] < tool+stone || p.capNeed["knowledge"] < stone {
-		t.Errorf("knowledge target %v and cap need %v, want at least %v and %v", p.target["knowledge"], p.capNeed["knowledge"], tool+stone, stone)
-	}
-
-	// Enough for Tool Making only: it starts, the first of the chain.
-	giveKnowledge(ge, tool)
-	b.research(b.newPlan(ge.GetState()))
+	// A tech has no price: the first of the chain starts at once.
+	b.research(p)
 	if got := ge.GetState().Research.CurrentTech; got != "tool_making" {
-		t.Fatalf("with %v knowledge the bot is researching %q, want tool_making", tool, got)
+		t.Fatalf("the bot is researching %q, want tool_making", got)
 	}
 	finish(t, ge, "tool_making")
 
-	// Enough for Primitive Writing but not for Stoneworking: it waits.
-	giveKnowledge(ge, stone-1)
 	p = b.newPlan(ge.GetState())
 	if want := []string{"stoneworking"}; !reflect.DeepEqual(p.must, want) {
 		t.Fatalf("after Tool Making: %v, want %v", p.must, want)
 	}
 	b.research(p)
-	if got := ge.GetState().Research.CurrentTech; got != "" {
-		t.Fatalf("one knowledge short of the keystone the bot started %q instead of saving", got)
-	}
-	// And the wonder bank does not take the knowledge it is saving. (The
-	// Great Monolith costs none; the rule is the same for one that does.)
-	if got := p.hold["knowledge"]; got != stone {
-		t.Errorf("the bot holds back %v knowledge, want Stoneworking's %v", got, stone)
-	}
-
-	giveKnowledge(ge, stone)
-	b.research(b.newPlan(ge.GetState()))
 	if got := ge.GetState().Research.CurrentTech; got != "stoneworking" {
-		t.Fatalf("with the keystone's price in hand the bot is researching %q", got)
+		t.Fatalf("the bot is researching %q, want the keystone, stoneworking", got)
 	}
-	// In progress it is paid for: nothing is held back for it.
-	if p := b.newPlan(ge.GetState()); p.hold["knowledge"] != 0 || len(p.must) != 1 {
-		t.Errorf("with the keystone in progress: holding %v, must %v", p.hold["knowledge"], p.must)
+	if p := b.newPlan(ge.GetState()); len(p.must) != 1 {
+		t.Errorf("with the keystone in progress: must %v", p.must)
 	}
 	finish(t, ge, "stoneworking")
 
 	// Nothing the age cannot be left without is left: the cheapest goes next.
-	giveKnowledge(ge, 1e6)
 	p = b.newPlan(ge.GetState())
-	if len(p.must) != 0 || p.hold["knowledge"] != 0 {
-		t.Fatalf("with the keystone researched: must %v, holding %v", p.must, p.hold["knowledge"])
+	if len(p.must) != 0 {
+		t.Fatalf("with the keystone researched: must %v", p.must)
 	}
 	b.research(p)
 	if got := ge.GetState().Research.CurrentTech; got != "language" {

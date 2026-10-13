@@ -240,8 +240,8 @@ func newMilestoneModel(defs map[string]config.BuildingDef, prestigeAge string) *
 				m.wonders[i]++
 			}
 			m.housing[i] += float64(house * float64(c.n))
-			if d.WorkerDomain == "knowledge" {
-				m.staff[i] += float64(d.WorkerCapacity * c.n)
+			if d.Scholars > 0 {
+				m.staff[i] += float64(d.Scholars * c.n)
 			}
 		}
 	}
@@ -378,9 +378,6 @@ func (m *milestoneModel) techAge(k string, byKey map[string]config.TechDef, dept
 		if first > a {
 			a = first
 		}
-	}
-	for a < n && t.Cost > m.maxStorage(a, "knowledge") {
-		a++
 	}
 	m.techAt[k] = a
 	return a
