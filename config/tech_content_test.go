@@ -47,6 +47,7 @@ var earlyTree = []techRow{
 	{"irrigation", "iron_age", LaneAgriculture, TechOptional, "agriculture"},
 	{"road_building", "iron_age", LaneCraft, TechOptional, "masonry the_wheel"},
 	{"iron_smelting", "iron_age", LaneMaterials, TechSpine, "bronze_working"},
+	{"quarrying", "iron_age", LaneMaterials, TechOptional, "bronze_working"},
 	{"siege_warfare", "iron_age", LaneMilitary, TechOptional, "military_tactics"},
 
 	{"drama", "classical_age", LaneFaith, TechOptional, "priesthood"},
@@ -261,7 +262,7 @@ func designedTree() []techRow {
 
 // designedTechs is how many techs each filled-in age holds.
 var designedTechs = map[string]int{
-	"primitive_age": 3, "stone_age": 6, "bronze_age": 9, "iron_age": 7, "classical_age": 7, "medieval_age": 9,
+	"primitive_age": 3, "stone_age": 6, "bronze_age": 9, "iron_age": 8, "classical_age": 7, "medieval_age": 9,
 	"renaissance_age": 7, "colonial_age": 9, "industrial_age": 12, "victorian_age": 8, "electric_age": 9, "atomic_age": 11,
 	"modern_age": 10, "information_age": 11, "digital_age": 13, "cyberpunk_age": 10, "fusion_age": 11, "space_age": 13,
 	"interstellar_age": 10, "galactic_age": 11, "quantum_age": 12, "transcendent_age": 4,
@@ -310,8 +311,8 @@ func TestTreeIsAsDesigned(t *testing.T) {
 			t.Errorf("%s holds %d techs: a lane takes three an age at most", laneOfAge, n)
 		}
 	}
-	if len(techs) != 202 || len(designedTechs) != len(Ages()) {
-		t.Errorf("the tree holds %d techs in %d pinned ages, want 202 in all %d: the 77 it had and the 17, 34 and 74 of the three content batches", len(techs), len(designedTechs), len(Ages()))
+	if len(techs) != 203 || len(designedTechs) != len(Ages()) {
+		t.Errorf("the tree holds %d techs in %d pinned ages, want 203 in all %d: the 77 it had, the 17, 34 and 74 of the three content batches and Quarrying", len(techs), len(designedTechs), len(Ages()))
 	}
 }
 
