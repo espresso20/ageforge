@@ -166,3 +166,21 @@ func TestKnowledgeSave_NoticeOnceAndSavedInTheNewShape(t *testing.T) {
 		}
 	}
 }
+
+// What an old save holds above the new store stays until it is spent or
+// until an age advance trims it like any other stock.
+func TestKnowledgeSave_AnAdvanceTrimsWhatIsKeptAboveTheStore(t *testing.T) {
+	ge := knowledgeFixtureView(t)
+	ge.plan = nil
+	held := ge.Resources.Get("knowledge")
+	next := ge.progress.GetNextAge(ge.age)
+	ge.advanceAge(next)
+	want := held * CarryoverResidualPct
+	if entry := ge.rules.AgeEntryCosts(next)["knowledge"]; entry > 0 {
+		want = min(held, CarryoverStarterBuildings*entry)
+	}
+	got := ge.Resources.Get("knowledge")
+	if got != want || got >= held {
+		t.Errorf("knowledge after the advance is %v, want %v (the save held %v)", got, want, held)
+	}
+}

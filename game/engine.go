@@ -2386,10 +2386,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.returnPlanBanks("for the advance")
 	entryCosts := ge.rules.AgeEntryCosts(newAge)
 	for key, r := range ge.Resources.resources {
-		// Faith is cumulative. Knowledge is not trimmed either: its store
-		// (knowledge_store.go) is the limit now, and a tech is bought from
-		// it, so an advance keeps what the player saved.
-		if key == "faith" || key == "knowledge" {
+		if key == "faith" {
 			continue
 		}
 		if entry, ok := entryCosts[key]; ok && entry > 0 {
