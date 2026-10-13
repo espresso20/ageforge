@@ -630,10 +630,9 @@ func sellableBuildingKeys(state game.GameState) []string {
 	if state.Age == "primitive_age" {
 		return nil
 	}
-	defs := config.BuildingByKey()
 	var keys []string
 	for key, bs := range state.Buildings {
-		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" && defs[key].KnowledgeStore <= 0 {
+		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" && bs.KnowledgeStore <= 0 {
 			keys = append(keys, key)
 		}
 	}
