@@ -101,9 +101,9 @@ Research speed reduces the tick count when research starts. Its sources add toge
 | Source | Research speed | Notes |
 |---|---|---|
 | **Tech Pioneer** milestone (research 22 techs) | +5% | Scholar Chain |
-| **Philosophes** milestone (63 techs, from the Classical Age) | +5% | |
-| **Renaissance Mind** milestone (82 techs, from the Renaissance Age) | +10% | Scholar Chain, hidden until you get close |
-| **Tech Master** milestone (113 techs, from the Information Age) | +10% | Scholar Chain, hidden; also +5% all production |
+| **Philosophes** milestone (64 techs, from the Classical Age) | +5% | |
+| **Renaissance Mind** milestone (83 techs, from the Renaissance Age) | +10% | Scholar Chain, hidden until you get close |
+| **Tech Master** milestone (114 techs, from the Information Age) | +10% | Scholar Chain, hidden; also +5% all production |
 | **Tech Ascendant** milestone (all 203 techs, Transcendent Age) | +20% | Hidden. It arrives with your last tech, so it never shortens one |
 | **Ancient Knowledge** (Succumb) | not research speed: research time ×0.8 per epoch | For each distinct epoch you Succumb in (Iron to Cosmic, ×0.26 with all six). It multiplies the time research speed leaves, so it is not in this pool and no cap holds it. Kept through Succumb, prestige and save/load. See [Ancient Knowledge](catastrophe.md#ancient-knowledge) |
 | Thirteen techs, from **Scholasticism** to the **Timeless Archive** (see [Building costs, construction time and research time](#building-costs-construction-time-and-research-time)) | not research speed: research time ×0.94 to ×0.97 each | They multiply the time research speed leaves, ×0.587 with all thirteen, and never take it under 50% between them. They are not in this pool |
@@ -667,24 +667,27 @@ Each raises what one resource's buildings and workers make. Bonuses on the same 
 | Knowledge | Language +10%, Primitive Writing +10%, Map Making +10%, Mathematics +8%, Philosophy +8%, Alchemy +8%, Printing Press +6%, Encyclopedia +6%, Public Education +5%, Modern Physics +5%, Information Theory +5%, Computers +5%, Open Science +5%, Neural Interface +4%, Deep Space Astronomy +4% | +99% |
 | Steel | Blast Furnace +6%, Coke Smelting +6%, Steam Power +6%, Chemical Engineering +5%, Titanium Alloys +5%, Precision Mining +5%, Nano Alloys +5%, Space Mining +4% | +42% |
 | Electricity | Electrification +5%, Power Distribution +5%, Nuclear Fission +5%, Advanced Electrics +5%, Smart Grid +5%, Dark Energy +4%, Fusion Power +4%, Orbital Solar +4%, Stellar Engineering +4% | +41% |
+| Gold | Currency +10%, Road Building +8%, Banking +8%, Wire Transfers +5%, Corporations +5%, Probability Markets +4% | +40% |
 | Culture | Patronage +6%, Romanticism +6%, Museums +5%, Cinema +5%, Social Media +5%, Neural Art +4%, Galactic Memory +4%, Reality Art +4% | +39% |
+| Stone | Stoneworking +10%, Masonry +10%, Bronze Working +10%, Civil Engineering +8% | +38% |
 | Iron | Bronze Working +10%, Iron Smelting +8%, Metal Casting +8%, Steel Forging +8% | +34% |
-| Gold | Currency +10%, Road Building +8%, Banking +8%, Corporations +5% | +31% |
 | Data | Internet +5%, Machine Learning +5%, Darknets +4%, Quantum Networking +4%, Orbital Relays +4%, Galactic Network +4%, Mind Uploading +4% | +30% |
 | Faith | Ritual +10%, Calendar +10%, Theology +8% | +28% |
+| Iron ore | Quarrying +8%, Surveying +6%, Steam Pumps +6%, Geology +5% | +25% |
 | Coal | Coke Smelting +6%, Steam Pumps +6%, Steam Power +6%, Geology +5% | +23% |
 | Wood | Tool Making +10%, Woodworking +10% | +20% |
-| Stone | Stoneworking +10%, Bronze Working +10% | +20% |
 | Plasma | Fusion Power +4%, Plasma Physics +4%, Orbital Solar +4%, Stellar Engineering +4% | +16% |
-| Titanium | Asteroid Refining +4%, Space Mining +4%, Stellar Core Mining +4% | +12% |
+| Titanium | Asteroid Refining +4%, Space Mining +4%, Stellar Core Mining +4%, Quantum Metallurgy +4% | +16% |
+| Dark matter | Warp Drive +4%, Cosmology +4%, Galactic Navigation +4%, Zero-Point Energy +4% | +16% |
+| Dark matter crystals | Dark Crystal Mining +4%, Asteroid Refining +4%, Space Mining +4% | +12% |
 | Antimatter | Neutron Mining +4%, Antimatter Synthesis +4%, Quantum Metallurgy +4% | +12% |
-| Iron ore | Steam Pumps +6%, Geology +5% | +11% |
 | Oil | Chemical Engineering +5%, Plastics +5% | +10% |
+| Titanium ore | Titanium Alloys +5%, Precision Mining +5% | +10% |
 | Nanobots | Self-Replication +10% | +10% |
-| Dark matter | Warp Drive +4%, Galactic Navigation +4% | +8% |
+| Marble | Quarrying +8% | +8% |
 | Quantum flux | Quantum Mechanics +4%, Reality Manipulation +4% | +8% |
 | Uranium | Nuclear Fission +5% | +5% |
-| Dark matter crystals | Dark Crystal Mining +4% | +4% |
+| Crypto | Blockchain +4% | +4% |
 
 ### All production
 
@@ -941,7 +944,7 @@ Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige
 
 ### Late-Game Knowledge Scaling
 
-Knowledge costs rise steeply, from 306 for Tool Making to billions in the late ages (Cybernetics 281M, the Timeless Archive 70.1B). Build your age's knowledge building ahead of them to raise the knowledge store.
+Knowledge costs rise steeply, from 306 for Tool Making to billions in the late ages (Cybernetics 281M, the Timeless Archive 68.8B). Build your age's knowledge building ahead of them to raise the knowledge store.
 
 ---
 
@@ -957,7 +960,7 @@ Knowledge costs rise steeply, from 306 for Tool Making to billions in the late a
 
 **Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but cuts research time to ×0.8 permanently, and each further epoch you Succumb in multiplies it by 0.8 again. The fallen run's completed ages also gain an [Era Mastery](prestige.md#era-mastery) level, so the rebuild is quicker. Players who Succumb at least once begin each later run with faster research from tick one. See [Succumb](catastrophe.md#succumb).
 
-**Don't overlook `civil_engineering`.** Buildings cost 3% less from the Classical Age on, for the rest of the run, and the cut multiplies with every build-cost milestone reward you earn after it.
+**Don't overlook `civil_engineering`.** Buildings cost 3% less from the Classical Age on, for the rest of the run, and the cut multiplies with every build-cost milestone reward you earn after it. It also adds 8% to stone output.
 
 ---
 

@@ -150,6 +150,17 @@ Where a raw is made:
 | Titanium Ore | Titanium Mine, Precision Mine, Nano Drill Complex | Modern to Digital Age |
 | Dark Matter Crystals | Dark Crystal Mine, Exotic Mineral Extractor, Asteroid Crystal Mine | Cyberpunk to Space Age |
 
+Research raises each raw like any other material, and every tech bonus on one adds up with the rest (the full list is under [Output of one resource](technologies.md#output-of-one-resource)):
+
+| Raw | Techs | Together |
+|-----|-------|----------|
+| Marble | Quarrying +8% | +8% |
+| Iron Ore | Quarrying +8%, Surveying +6%, Steam Pumps +6%, Geology +5% | +25% |
+| Titanium Ore | Titanium Alloys +5%, Precision Mining +5% | +10% |
+| Dark Matter Crystals | Dark Crystal Mining +4%, Asteroid Refining +4%, Space Mining +4% | +12% |
+
+Stone, titanium and dark matter have research too: stone +38% (Stoneworking, Masonry, Bronze Working, Civil Engineering), titanium +16% (Quantum Metallurgy joins its three) and dark matter +16% (Cosmology and Zero-Point Energy join its two).
+
 A raw can also be a deal good in a faction trade, in the ages that price it (see [Trade deals](factions.md#trade-deals)).
 
 The ores count toward two milestones:
@@ -259,7 +270,7 @@ Gold pays for diplomacy gifts and many mid-to-late game buildings.
 
 **How to increase gold:**
 - Build Trade lineage buildings (Market, Trading Post, Merchant Quarter, ...) and staff them
-- Research Currency, Road Building and Banking: +10%, +8% and +8% gold, and they add up
+- Research Currency, Road Building, Banking, Wire Transfers, Corporations and Probability Markets: +10%, +8%, +8%, +5%, +5% and +4% gold, and they add up to +40%
 - Trade routes pay small fixed amounts on top (see [Trade](trade.md))
 
 ---

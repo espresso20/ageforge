@@ -21,26 +21,26 @@ Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monaster
 | Building | Age | Knowledge/tick | Workers | Adds to the store | Copies the gate asks |
 |----------|-----|----------------|---------|-------------------|----------------------|
 | Story Circle | Primitive | 0.2 | 2 | +140 | 5 |
-| Elders' Hall | Stone | 0.6 | 2 | +370 | 5 |
-| Scriptorium | Bronze | 2.0 | 3 | +3.1K | 5 |
-| Agora | Iron | 1.6 | 3 | +6.4K | 7 |
-| Library | Classical | 3.2 | 4 | +19K | 8 |
-| Monastery Library | Medieval | 42.4 | 4 | +330K | 5 |
-| University | Renaissance | 76.3 | 5 | +820K | 7 |
-| Natural Philosophy Hall | Colonial | 452 | 5 | +8.4M | 5 |
-| Research Institute | Industrial | 12.8 | 6 | +910K | 5 |
-| Academy | Victorian | 25.6 | 6 | +4.5M | 7 |
+| Elders' Hall | Stone | 0.6 | 2 | +360 | 5 |
+| Scriptorium | Bronze | 2.0 | 3 | +3K | 5 |
+| Agora | Iron | 1.6 | 3 | +6.1K | 7 |
+| Library | Classical | 3.2 | 4 | +20K | 8 |
+| Monastery Library | Medieval | 42.4 | 4 | +320K | 5 |
+| University | Renaissance | 76.3 | 5 | +800K | 7 |
+| Natural Philosophy Hall | Colonial | 452 | 5 | +8.2M | 5 |
+| Research Institute | Industrial | 12.8 | 6 | +1.1M | 5 |
+| Academy | Victorian | 25.6 | 6 | +4.3M | 7 |
 | Physics Laboratory | Electric | 51.2 | 7 | +11M | 8 |
 | Research Campus | Atomic | 102 | 7 | +16M | 9 |
 | Think Tank | Modern | 205 | 8 | +13M | 10 |
-| Innovation Hub | Information | 410 | 8 | +15M | 8 |
+| Innovation Hub | Information | 410 | 8 | +13M | 8 |
 | AI Research Lab | Digital | 819 | 10 | +94M | 8 |
-| Neuro Research Center | Cyberpunk | 1.64K | 10 | +310M | 5 |
+| Neuro Research Center | Cyberpunk | 1.64K | 10 | +320M | 5 |
 | Theoretical Institute | Fusion | 3.28K | 12 | +1.5B | 5 |
-| Deep Space Observatory | Space | 6.55K | 12 | +3.4B | 5 |
-| Xenology Institute | Interstellar | 13.1K | 15 | +4.9B | 5 |
+| Deep Space Observatory | Space | 6.55K | 12 | +3.3B | 5 |
+| Xenology Institute | Interstellar | 13.1K | 15 | +5B | 5 |
 | Cosmic Research Station | Galactic | 26.2K | 15 | +1.4B | 5 |
-| Reality Academy | Quantum | 52.4K | 20 | +5.6B | 10 |
+| Reality Academy | Quantum | 52.4K | 20 | +5.3B | 10 |
 
 The first five tiers have hand-set rates. From the **Medieval to the Colonial Age**, buildings also cost knowledge, so knowledge counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): fully staffed, each earns back its first copy's price within the age's payback time. That is why the Monastery Library, University and Natural Philosophy Hall jump so far ahead. From the Industrial Age on, research is the only regular use of knowledge, and the lineage goes back to fixed rates that double each age. Your older halls and universities keep producing through all of this, so don't sell them.
 
@@ -82,7 +82,7 @@ A building priced in knowledge (Medieval to Colonial) meets the same wall. Knowl
 
 ## What Research Costs
 
-Inside an age each tech costs **1.3 times the one before it**, from the cheapest to the dearest. An age's techs together cost 80% of the knowledge a well-run town's knowledge buildings make over the age, and the store above is sized so the dearest one fits. The Stone Age's six techs cost about 7.3K knowledge between them, the Medieval Age's nine about 4.2M, the Renaissance's seven about 21M, the Atomic Age's eleven about 1.0B. The Transcendent Age has no knowledge building of its own, so its four techs keep the prices they had. See [How Research is Priced](technologies.md#how-research-is-priced) and the [tech tables](technologies.md#tech-tree-by-age).
+Inside an age each tech costs **1.3 times the one before it**, from the cheapest to the dearest. An age's techs together cost 80% of the knowledge a well-run town's knowledge buildings make over the age, and the store above is sized so the dearest one fits. The Stone Age's six techs cost about 7.3K knowledge between them, the Medieval Age's nine about 4.2M, the Renaissance's seven about 20M, the Atomic Age's eleven about 1.0B. The Transcendent Age has no knowledge building of its own, so its four techs keep the prices they had. See [How Research is Priced](technologies.md#how-research-is-priced) and the [tech tables](technologies.md#tech-tree-by-age).
 
 ---
 
