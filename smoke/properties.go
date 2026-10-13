@@ -47,6 +47,16 @@ var KnownPropertyFailures = map[int]string{
 	19: "a full run earns 3279 points and everything for sale costs 99",
 }
 
+// KnownPropertyReasons is why a known failure fails, where the reason is a
+// decision and not a table to fix. 17: at the top of the Era Mastery table the
+// store grows with Era Mastery and the techs' prices do not; the engine part
+// decides that, not the price ladder (ratio 1.3 stays). 10: it fails in the
+// one age KnowledgeLadderHeld names.
+var KnownPropertyReasons = map[int]string{
+	10: "fails only in the age KnowledgeLadderHeld names (the last age has no knowledge building of its own)",
+	17: "the knowledge store grows with Era Mastery and tech prices do not: the engine part decides that, not the price ladder (ratio stays 1.3)",
+}
+
 // Properties is the whole check: the properties, and how long each age
 // lasts for each reference player.
 type Properties struct {

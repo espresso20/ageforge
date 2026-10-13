@@ -7,12 +7,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// knowledgeLadderHeld names an age the ladder cannot price, with the reason;
-// its techs keep the prices they had before the knowledge store.
-var knowledgeLadderHeld = map[string]string{
-	"transcendent_age": "no knowledge building: the store stays at the Quantum Age's, and the age's four techs, priced to 0.8 of what the town makes, cost more than it holds at any ratio",
-}
-
 // TestKnowledgeTechPricesFollowTheLadder: R4. Each age's techs are priced to
 // total KnowledgeLadderShare of what the ordinary reference player's
 // knowledge buildings make during his stay, climbing by KnowledgeLadderRatio
@@ -32,7 +26,7 @@ func TestKnowledgeTechPricesFollowTheLadder(t *testing.T) {
 	held := config.KnowledgeStoreHeld(defs, config.Ages())
 	ages := config.Ages()
 	for i, l := range ladders {
-		if _, stopped := knowledgeLadderHeld[l.Age]; stopped {
+		if _, stopped := KnowledgeLadderHeld[l.Age]; stopped {
 			// The ladder at 1.3 puts the dearest tech over the store, and no
 			// ratio fits: the dearest of n techs priced to a total is never
 			// under total/n.
@@ -76,18 +70,52 @@ func sumOf(v []float64) float64 {
 	return s
 }
 
-// TestKnowledgeHeldAgePricesAreRecorded: the held age keeps its prices from
-// before the knowledge store (their sum is recorded), so a later change shows.
-func TestKnowledgeHeldAgePricesAreRecorded(t *testing.T) {
-	sum, n := 0.0, 0
-	for _, tc := range config.Technologies() {
-		if tc.Age == "transcendent_age" {
-			sum += tc.Cost
-			n++
+// TestKnowledgeLadderHasOneNamedException: the single exception is the last
+// age, its techs keep the held prices, property 10 reads what is recorded for
+// it and holds in every other age, and the Research Covenant, which holds in
+// every age, is checked for it by name.
+func TestKnowledgeLadderHasOneNamedException(t *testing.T) {
+	ages := config.Ages()
+	last := ages[len(ages)-1].Key
+	if len(KnowledgeLadderHeld) != 1 || KnowledgeLadderHeld[last].Reason == "" {
+		t.Fatalf("the ladder's exceptions are %v, want the last age (%s) alone, with a reason", KnowledgeLadderHeld, last)
+	}
+	made := KnowledgeMade()
+	for i, a := range ages {
+		sum := 0.0
+		for _, tc := range config.Technologies() {
+			if tc.Age == a.Key {
+				sum += tc.Cost
+			}
+		}
+		share := sum / made[i]
+		if h, held := KnowledgeLadderHeld[a.Key]; held {
+			if math.Abs(sum-h.TechSum) > 1e6 {
+				t.Errorf("%s: its techs cost %g, held at %g", a.Key, sum, h.TechSum)
+			}
+			if share >= propResearchLow && share <= propResearchHigh || math.Abs(share-h.Property10) > 0.0005 {
+				t.Errorf("%s: property 10 reads %.4f, the exception records %.4f (outside %g to %g)", a.Key, share, h.Property10, propResearchLow, propResearchHigh)
+			}
+			continue
+		}
+		if share < propResearchLow || share > propResearchHigh {
+			t.Errorf("%s: property 10 reads %.3f, outside %g to %g, and the age is not the named exception", a.Key, share, propResearchLow, propResearchHigh)
 		}
 	}
-	if n != 4 || math.Abs(sum-21.54e9) > 1e6 {
-		t.Errorf("the Transcendent Age's %d techs cost %g, held at the 21.54e9 they cost before the knowledge store", n, sum)
+	for _, r := range StaticResearch() {
+		if p := r.Problems(); len(p) > 0 {
+			t.Errorf("the Research Covenant breaks in %s: %v", r.Age, p)
+		}
+	}
+	for n := range KnownPropertyReasons {
+		if _, listed := KnownPropertyFailures[n]; !listed {
+			t.Errorf("property %d has a recorded reason and is not a known failure", n)
+		}
+	}
+	for _, p := range StaticProperties().List {
+		if p.N == 10 && p.Holds {
+			t.Error("property 10 holds: the named exception no longer fails it, take it off the list")
+		}
 	}
 }
 
