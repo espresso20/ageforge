@@ -148,7 +148,7 @@ func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 		case "storage":
 			switch e.Target {
 			case "all":
-				parts = append(parts, "+"+FormatAmount(e.Value)+" storage for every resource")
+				parts = append(parts, "+"+FormatAmount(e.Value)+" storage for every resource but knowledge")
 			case "soldiers":
 				parts = append(parts, "+"+FormatAmount(e.Value)+" soldier storage")
 			default:

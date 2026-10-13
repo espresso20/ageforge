@@ -12,7 +12,7 @@ Every resource you use comes from buildings, and the workers assigned to product
 
 - **More production.** Each extra building of the same tier adds its base rate to your total.
 - **More worker slots.** Worker capacity grows with building count, which raises your production ceiling.
-- **More storage.** Storage buildings add storage for every resource at once.
+- **More storage.** Storage buildings add storage for every resource but knowledge at once.
 - **Progress toward the next age.** Many ages require a minimum building count or specific buildings.
 
 Most of the game comes down to this: build more buildings and fill them with workers.

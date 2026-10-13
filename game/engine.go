@@ -5473,7 +5473,7 @@ func (ge *GameEngine) prestigeUpgradeLine(key string) string {
 	case "flat_bonus":
 		switch def.EffectKey {
 		case "all":
-			effect = "storage for every resource " + textfmt.Signed(total)
+			effect = "storage for every resource but knowledge " + textfmt.Signed(total)
 		default:
 			effect = EffectTargetName(def.EffectKey) + " " + textfmt.Signed(total)
 		}

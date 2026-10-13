@@ -64,7 +64,7 @@ knowledge store = 240 + the copies of each knowledge building × what one copy a
 
 The 240 is yours with no knowledge building. Each copy of a knowledge building adds its figure from the table above. The Resources box shows knowledge first, set apart from the goods, as the amount held over this store. The Buildings panel shows what a copy adds on each knowledge building.
 
-**Only knowledge buildings raise it.** Storage buildings do not, nor do the techs and wonders that add storage to every resource, Era Mastery or prestige. Once knowledge hits the store, further production is wasted.
+**Only knowledge buildings raise it.** Storage buildings do not, nor do the techs and wonders that add storage to every resource but knowledge, Era Mastery or prestige. Once knowledge hits the store, further production is wasted.
 
 **The wall.** A tech priced over the knowledge store cannot be started, however long you wait. The `research` command refuses it, a planned tech waits as blocked ("needs more knowledge storage"), and the tech tree marks its price with a red ✗. The refusal names the knowledge building of your age to build:
 

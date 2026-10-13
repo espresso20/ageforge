@@ -119,7 +119,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Wood | 8K |
 | Food | 2.4K |
 
-**Bonus:** +0.05 knowledge/t · +5K storage for every resource
+**Bonus:** +0.05 knowledge/t · +5K storage for every resource but knowledge
 
 ---
 

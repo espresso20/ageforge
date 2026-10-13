@@ -14,13 +14,6 @@ import (
 // its own that only knowledge buildings raise, so it is left out.
 const everyStore = "storage for every resource but knowledge"
 
-// storageClaim words the "storage for every resource" of a description
-// (written in config, before knowledge had a store of its own) as
-// everyStore does.
-func storageClaim(s string) string {
-	return strings.ReplaceAll(s, "storage for every resource", everyStore)
-}
-
 // formatTechEffect names a config.Effect in glossary words: "+10% all
 // production", "+0.5 food/tick", "+500 storage for every resource but knowledge",
 // "+10 housing", "unlocks Lumber Mill".

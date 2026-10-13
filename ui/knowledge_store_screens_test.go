@@ -283,7 +283,7 @@ func wondersAllText(st game.GameState) string {
 	var sb strings.Builder
 	for _, d := range st.Ruleset().Buildings() {
 		if d.Category == "wonder" {
-			sb.WriteString(storageClaim(d.Description) + "\n")
+			sb.WriteString(d.Description + "\n")
 			for _, e := range d.Effects {
 				sb.WriteString(formatEffect(e) + "\n")
 			}

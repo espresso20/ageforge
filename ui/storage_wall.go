@@ -96,7 +96,7 @@ func (sw *storeWall) buildingFor(res string) string {
 // description gives its figure: "+140 knowledge storage."
 func buildingText(bs game.BuildingState) string {
 	if bs.KnowledgeStore <= 0 {
-		return storageClaim(bs.Description)
+		return bs.Description
 	}
-	return strings.TrimSpace(storageClaim(bs.Description) + " +" + config.FormatAmount(bs.KnowledgeStore) + " knowledge storage.")
+	return strings.TrimSpace(bs.Description + " +" + config.FormatAmount(bs.KnowledgeStore) + " knowledge storage.")
 }

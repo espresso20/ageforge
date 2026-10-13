@@ -1043,7 +1043,7 @@ var truthKinds = map[string]truthKind{
 			return truthMeasured{Delivered: d / p.Count, Noise: noise / p.Count, Allowed: meterIs("rate:"+res, "made:"+res)}
 		},
 	},
-	// "+V storage for every resource" or for one.
+	// "+V storage for every resource but knowledge" or for one.
 	"storage": {
 		Unit: "storage per copy",
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
@@ -1612,7 +1612,7 @@ func truthEffectText(e config.Effect) string {
 	case "storage":
 		switch e.Target {
 		case "all":
-			return fmt.Sprintf("%+g storage for every resource", e.Value)
+			return fmt.Sprintf("%+g storage for every resource but knowledge", e.Value)
 		case "soldiers":
 			return fmt.Sprintf("%+g soldier storage", e.Value)
 		}
