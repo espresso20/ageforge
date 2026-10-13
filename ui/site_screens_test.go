@@ -561,7 +561,7 @@ func (s *siteStage) toIron() {
 		s.t.Fatal(err)
 	}
 	s.raiseAll(siteBuild{"granary", 5}, siteBuild{"townhouse", 6}, siteBuild{"field_works", 4}, siteBuild{"timber_yard", 4},
-		siteBuild{"marble_quarry", 3}, siteBuild{"agora", 4}, siteBuild{"temple", 2}, siteBuild{"hunting_lodge", 4},
+		siteBuild{"marble_quarry", 3}, siteBuild{"agora", 7}, siteBuild{"temple", 2}, siteBuild{"hunting_lodge", 4},
 		siteBuild{"trading_post", 3}, siteBuild{"ironworks", 2})
 	// The Smelter and the Legion Fort wait for their techs, and scouting
 	// past the Scout Party for Exploration.
@@ -578,7 +578,7 @@ func (s *siteStage) toMedieval() {
 		s.t.Fatalf("enduring: %v", err)
 	}
 	s.raiseTo("granary", 5)
-	s.raiseTo("agora", 12)
+	s.raiseTo("agora", 7)
 	s.raiseTo("hunting_lodge", 15)
 	s.raiseTo("trading_post", 10)
 	s.learn("mathematics", "road_building")
@@ -587,7 +587,7 @@ func (s *siteStage) toMedieval() {
 	s.advance()
 	s.dismiss()
 	s.raiseAll(siteBuild{"classical_vault", 5}, siteBuild{"villa", 6}, siteBuild{"estate_farm", 4}, siteBuild{"wood_workshop", 3},
-		siteBuild{"marble_works", 3}, siteBuild{"library", 15}, siteBuild{"oracle_house", 2}, siteBuild{"military_academy", 15},
+		siteBuild{"marble_works", 3}, siteBuild{"library", 8}, siteBuild{"oracle_house", 2}, siteBuild{"military_academy", 15},
 		siteBuild{"merchant_quarter", 5}, siteBuild{"aqueduct", 2}, siteBuild{"amphitheater", 2})
 	// The Forge waits for Metal Casting.
 	s.learn("metal_casting")
