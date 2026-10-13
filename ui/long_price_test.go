@@ -70,7 +70,9 @@ func priceTown(t *testing.T, age, key string) (*Dashboard, *tview.Pages, *game.G
 		}
 	}
 	eng.StepTicks(1)
-	b := eng.GetState().Buildings[key]
+	st = eng.GetState()
+	b := st.Buildings[key]
+	b.NextCost = buildingPrice(&st, key, b) // the price the screens show
 	if !b.Unlocked || len(b.NextCost) == 0 {
 		t.Fatalf("staging: %s is %+v in the %s", key, b, age)
 	}

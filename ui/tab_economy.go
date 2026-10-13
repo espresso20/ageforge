@@ -436,7 +436,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 			if bs.AtMaxCount {
 				sb.WriteString(hangingRow("   ", "[yellow]Building limit reached.[-]", w))
 			} else {
-				sb.WriteString(costRow("   Cost: ", bs.NextCost, w))
+				sb.WriteString(costRow("   Cost: ", buildingPrice(&state, key, bs), w))
 				if line := wall.line(bs); line != "" {
 					sb.WriteString(hangingRow("   ", "[yellow]"+line+"[-]", w))
 				}
@@ -557,6 +557,20 @@ func layoutBuildings(head string, entries [][]string, w, h, first int) (lines []
 		lines = lines[:h] // a box of a row or two has no room for the notes
 	}
 	return lines, from, end - from
+}
+
+// buildingPrice is the price a building screen shows for the next copy of
+// key. A wonder is paid through its bank at the price in the ruleset; the
+// build-cost factor that scales every other building's price does not reach
+// it, so the engine's NextCost for a wonder is not what it charges. The bank,
+// the wonder panel and the plan all use the ruleset's price, and so does this.
+func buildingPrice(state *game.GameState, key string, bs game.BuildingState) map[string]float64 {
+	if bs.Category == "wonder" {
+		if def, ok := state.Ruleset().Building(key); ok {
+			return def.BaseCost
+		}
+	}
+	return bs.NextCost
 }
 
 // costRow writes a cost under lead ("   Cost: "), wrapped to w cells with

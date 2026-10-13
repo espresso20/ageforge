@@ -817,7 +817,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 				affordable = "[red]✗[-]"
 			}
 			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] (%d built) - Cost: %s %s",
-				affordable, key, b.Count, FormatCost(b.NextCost), b.Description))
+				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), b.Description))
 			if line := wall.line(b); line != "" {
 				lines = append(lines, "      [yellow]"+line+"[-]")
 			}
