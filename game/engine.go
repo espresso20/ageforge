@@ -4042,6 +4042,12 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	if def.Category == "storage" {
 		return fmt.Errorf("Storage cannot be sold: once its age has passed, it can never be rebuilt.")
 	}
+	// Knowledge buildings are the knowledge store, spared the same way (see
+	// isDestroyable). Selling one shrinks that store for good, and a tech
+	// priced over the smaller store could never be started.
+	if def.KnowledgeStore > 0 {
+		return fmt.Errorf("Knowledge buildings cannot be sold: once its age has passed, it can never be rebuilt.")
+	}
 
 	current := ge.Buildings.GetCount(key)
 	if current == 0 {

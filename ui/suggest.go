@@ -621,17 +621,19 @@ func wonderNeedKeys(state game.GameState) []string {
 }
 
 // sellableBuildingKeys is what `sell` suggests: the buildings with at least
-// one copy that SellBuilding would take, sorted. It refuses wonders and
-// storage (both permanent) and everything in the Primitive Age, so none of
-// those are offered. A building with a copy under construction stays on the
-// list: that refusal passes once the copy is done, and its reply says so.
+// one copy that SellBuilding would take, sorted. It refuses wonders, storage
+// and knowledge buildings (all permanent) and everything in the Primitive
+// Age, so none of those are offered. A building with a copy under construction
+// stays on the list: that refusal passes once the copy is done, and its reply
+// says so.
 func sellableBuildingKeys(state game.GameState) []string {
 	if state.Age == "primitive_age" {
 		return nil
 	}
+	defs := config.BuildingByKey()
 	var keys []string
 	for key, bs := range state.Buildings {
-		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" {
+		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" && defs[key].KnowledgeStore <= 0 {
 			keys = append(keys, key)
 		}
 	}
