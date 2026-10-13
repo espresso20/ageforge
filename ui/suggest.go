@@ -525,17 +525,19 @@ func plannableBuildingKeys(state game.GameState) []string {
 	return byRank(keys, func(k string) int { return rank[k] })
 }
 
-// techAffordable reports whether the knowledge to start t is in store.
+// techAffordable reports whether the knowledge to start t is in store. A
+// tech priced over the knowledge store is never affordable.
 func techAffordable(state game.GameState, t game.TechState) bool {
-	return state.Resources["knowledge"].Amount >= t.Cost
+	return !t.OverStore && state.Resources["knowledge"].Amount >= t.Cost
 }
 
 // availableTechKeys is what `research` suggests: techs that can start now,
-// the affordable ones first.
+// the affordable ones first. A tech priced over the knowledge store cannot
+// start, so it is not offered.
 func availableTechKeys(state game.GameState) []string {
 	var keys []string
 	for key, ts := range state.Research.Techs {
-		if ts.Available {
+		if ts.Available && !ts.OverStore {
 			keys = append(keys, key)
 		}
 	}

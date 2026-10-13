@@ -821,7 +821,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 				affordable = "[red]✗[-]"
 			}
 			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] (%d built) - Cost: %s %s",
-				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), b.Description))
+				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
 			if line := wall.line(b); line != "" {
 				lines = append(lines, "      [yellow]"+line+"[-]")
 			}
@@ -1720,7 +1720,14 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 		if !ts.Available {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%s)%s", key, ts.Name, game.Amount(ts.Cost, "knowledge"), keystoneMark(ts)))
+		mark := ""
+		if ts.OverStore {
+			mark = " [red]" + overMark + "[-]"
+		}
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%s)%s%s", key, ts.Name, game.Amount(ts.Cost, "knowledge"), mark, keystoneMark(ts)))
+		if ts.OverStore {
+			lines = append(lines, "      [yellow]"+techStoreLine(state, ts)+"[-]")
+		}
 	}
 
 	if state.Research.CurrentTech != "" {

@@ -2,7 +2,9 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -25,9 +27,16 @@ func overStoreRes(state game.GameState, cost map[string]float64) string {
 	return ""
 }
 
-// storageBuildingName is the current age's storage building, "" when the age
-// has none.
-func storageBuildingName(state game.GameState) string {
+// storageBuildingName is the building that raises the store of res in the
+// current age: the age's storage building, or for knowledge the age's
+// knowledge building (the engine's own choice). "" when the age has none.
+func storageBuildingName(state game.GameState, res string) string {
+	if res == "knowledge" {
+		if def, ok := state.Ruleset().Building(state.KnowledgeStore.NextBuilding); ok {
+			return def.Name
+		}
+		return ""
+	}
 	for _, d := range state.Ruleset().Buildings() {
 		if d.Category == "storage" && d.RequiredAge == state.Age {
 			return d.Name
@@ -49,11 +58,10 @@ func storeTooSmallLine(what, res string, amount, store float64, build string) st
 
 // storeWall tells, for each building of a state, whether its next copy is
 // over a store. The storage building it names is looked up once, and only
-// when a line needs it.
+// when a line needs it (per resource: knowledge has its own).
 type storeWall struct {
-	state  game.GameState
-	build  string
-	loaded bool
+	state game.GameState
+	build map[string]string
 }
 
 // line is the over-the-store line for bs, or "" for a building whose next
@@ -67,8 +75,28 @@ func (sw *storeWall) line(bs game.BuildingState) string {
 	if res == "" {
 		return ""
 	}
-	if !sw.loaded {
-		sw.build, sw.loaded = storageBuildingName(sw.state), true
+	return storeTooSmallLine(bs.Name, res, bs.NextCost[res], sw.state.Resources[res].Storage, sw.buildingFor(res))
+}
+
+// buildingFor is the building the over-the-store line names for res, looked
+// up once per resource.
+func (sw *storeWall) buildingFor(res string) string {
+	if b, ok := sw.build[res]; ok {
+		return b
 	}
-	return storeTooSmallLine(bs.Name, res, bs.NextCost[res], sw.state.Resources[res].Storage, sw.build)
+	if sw.build == nil {
+		sw.build = map[string]string{}
+	}
+	sw.build[res] = storageBuildingName(sw.state, res)
+	return sw.build[res]
+}
+
+// buildingText is a building's description as the lists show it. A knowledge
+// building adds what one copy holds, in the form a storage building's
+// description gives its figure: "+140 knowledge storage."
+func buildingText(bs game.BuildingState) string {
+	if bs.KnowledgeStore <= 0 {
+		return storageClaim(bs.Description)
+	}
+	return strings.TrimSpace(storageClaim(bs.Description) + " +" + config.FormatAmount(bs.KnowledgeStore) + " knowledge storage.")
 }

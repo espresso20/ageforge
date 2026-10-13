@@ -134,7 +134,7 @@ func wondersProvider(state game.GameState, _ int) string {
 			fmt.Fprintf(&sb, " %s [gold]★ %s[-]   [gray]%s[-]\n", WonderSpriteIcon(w.key), w.name, w.ageName)
 			fmt.Fprintf(&sb, "   [green]Built[-]\n")
 			if w.def.Description != "" {
-				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
+				fmt.Fprintf(&sb, "   [gray]%s[-]\n", storageClaim(w.def.Description))
 			}
 			if len(w.def.Effects) > 0 {
 				sb.WriteString("   [cyan]Effects:[-]\n")
@@ -202,7 +202,7 @@ func wondersProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "   %s\n", line)
 			}
 			if w.def.Description != "" {
-				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
+				fmt.Fprintf(&sb, "   [gray]%s[-]\n", storageClaim(w.def.Description))
 			}
 			if len(w.def.Effects) > 0 {
 				sb.WriteString("   [cyan]Effects when built:[-]\n")

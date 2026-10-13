@@ -96,32 +96,33 @@ func TestSuggestBuildGameAware(t *testing.T) {
 func TestSuggestResearchGameAware(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()
-	// The first age with available techs of different costs; enough
-	// knowledge for the cheapest but not the dearest.
+	// The first age with an available tech the knowledge store can hold and
+	// one it cannot (a tech priced over the store cannot start, so it is not
+	// offered); knowledge for the cheapest of those that can start.
 	var st game.GameState
-	lo, hi := -1.0, 0.0
+	lo := -1.0
+	over := 0
 	for _, age := range config.AgeOrder() {
 		if err := eng.SummonHarbingerForTest(age); err != nil {
 			t.Fatal(err)
 		}
 		st = eng.GetState()
-		lo, hi = -1.0, 0.0
+		lo, over = -1.0, 0
 		for _, ts := range st.Research.Techs {
-			if ts.Available {
-				if lo < 0 || ts.Cost < lo {
-					lo = ts.Cost
-				}
-				if ts.Cost > hi {
-					hi = ts.Cost
-				}
+			switch {
+			case !ts.Available:
+			case ts.OverStore:
+				over++
+			case lo < 0 || ts.Cost < lo:
+				lo = ts.Cost
 			}
 		}
-		if lo >= 0 && lo < hi {
+		if lo >= 0 && over > 0 {
 			break
 		}
 	}
-	if lo < 0 || lo == hi {
-		t.Fatalf("no age has available techs of different costs")
+	if lo < 0 || over == 0 {
+		t.Fatalf("no age has an available tech under the knowledge store and one over it")
 	}
 	eng.Resources.Add("knowledge", lo-st.Resources["knowledge"].Amount)
 	st = eng.GetState()
@@ -138,14 +139,22 @@ func TestSuggestResearchGameAware(t *testing.T) {
 		if !ts.Available {
 			t.Errorf("research offers %s, which can't start now", key)
 		}
+		if ts.OverStore {
+			t.Errorf("research offers %s, which is priced over the knowledge store", key)
+		}
 		if affordable := ts.Cost <= st.Resources["knowledge"].Amount; affordable && seenDear {
 			t.Errorf("affordable %s sorts after an unaffordable tech: %v", key, got)
 		} else if !affordable {
 			seenDear = true
 		}
 	}
-	if techs == 0 || !seenDear {
-		t.Errorf("research offers %v; want available techs, affordable first", got)
+	if techs == 0 {
+		t.Errorf("research offers %v; want the available techs the store can hold", got)
+	}
+	for key, ts := range st.Research.Techs {
+		if ts.Available && !ts.OverStore && !containsWord(got, "research "+key) {
+			t.Errorf("research does not offer %s, which can start", key)
+		}
 	}
 }
 

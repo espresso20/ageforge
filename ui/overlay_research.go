@@ -10,8 +10,19 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
+// everyStore is what a bonus to every store says. Knowledge has a store of
+// its own that only knowledge buildings raise, so it is left out.
+const everyStore = "storage for every resource but knowledge"
+
+// storageClaim words the "storage for every resource" of a description
+// (written in config, before knowledge had a store of its own) as
+// everyStore does.
+func storageClaim(s string) string {
+	return strings.ReplaceAll(s, "storage for every resource", everyStore)
+}
+
 // formatTechEffect names a config.Effect in glossary words: "+10% all
-// production", "+0.5 food/tick", "+500 storage for every resource",
+// production", "+0.5 food/tick", "+500 storage for every resource but knowledge",
 // "+10 housing", "unlocks Lumber Mill".
 func formatTechEffect(eff config.Effect) string {
 	switch eff.Type {
@@ -21,7 +32,7 @@ func formatTechEffect(eff config.Effect) string {
 		return rateNumber(eff.Value) + " " + game.ResourceName(eff.Target) + "/tick"
 	case "storage":
 		if eff.Target == "all" {
-			return textfmt.Signed(eff.Value) + " storage for every resource"
+			return textfmt.Signed(eff.Value) + " " + everyStore
 		}
 		return textfmt.Signed(eff.Value) + " " + game.ResourceName(eff.Target) + " storage"
 	case "unlock":
@@ -90,7 +101,7 @@ func researchBonusLines(state game.GameState) string {
 		}
 	}
 	if rs.Storage != 0 {
-		line(textfmt.SignedPercent(rs.Storage), "Storage")
+		line(textfmt.SignedPercent(rs.Storage), "Storage (not knowledge)")
 	}
 	if rs.Housing != 0 {
 		line(textfmt.SignedPercent(rs.Housing), "Housing")

@@ -56,10 +56,14 @@ type resRow struct {
 	glyph    string // the marker after the bar: "◈" nearly full, "▼" falling
 	glyphCol string
 	detail   string // a second line for a roomy box, tags and all
+	// apart sets the row off from the goods: it is drawn first, on every
+	// page, with a rule under it (knowledge is not a physical thing).
+	apart bool
 }
 
 // resourceRows is the box's rows for a snapshot: every unlocked resource, in
-// key order.
+// key order. Knowledge is not a physical thing, so its row is set apart
+// from the goods a town stores (resRow.apart).
 func resourceRows(state game.GameState) []resRow {
 	keys := make([]string, 0, len(state.Resources))
 	for k, rs := range state.Resources {
@@ -72,6 +76,11 @@ func resourceRows(state game.GameState) []resRow {
 	for _, key := range keys {
 		rs := state.Resources[key]
 		switch key {
+		case "knowledge":
+			// Its cap is the knowledge store (the state's Storage for it).
+			r := storeRow(rs)
+			r.apart = true
+			rows = append(rows, r)
 		case "culture":
 			rows = append(rows, cultureRow(rs))
 		case "faith":
@@ -305,6 +314,22 @@ func (f resFormat) line(r resRow) string {
 	return b.String()
 }
 
+// apartLines draws a row set apart: its line, and when the grid has no room
+// for a cap column (a narrow box), a second line that holds the store
+// under the amount, so knowledge always shows its amount over its own store.
+func (f resFormat) apartLines(r resRow) []string {
+	lines := []string{f.line(r)}
+	if f.sep != 0 || r.cap == "" || len(r.status) > 0 {
+		return lines
+	}
+	under := "/" + r.cap
+	lead := 1 + f.nameW + f.gap + f.amtW - runeLen(under)
+	if lead < 1 {
+		lead = 1
+	}
+	return append(lines, strings.Repeat(" ", lead)+"[gray]"+under+"[-]")
+}
+
 // progressCells is a bar of width cells, ratio of it filled, in the accent
 // color: progress toward something, where resourceBar is a store filling.
 func progressCells(ratio float64, width int) string {
@@ -369,6 +394,18 @@ func resMoreLine(first, last, total, w int) string {
 // resources without paging: the rows, then the legend.
 func resourceBoxNeeds(n int) int { return n + 1 }
 
+// resourceRowsNeed is the rows inside the box that show rows without paging:
+// resourceBoxNeeds, and a line for the rule under the rows set apart.
+func resourceRowsNeed(rows []resRow) int {
+	need := resourceBoxNeeds(len(rows))
+	for _, r := range rows {
+		if r.apart && len(rows) > 1 {
+			return need + 1
+		}
+	}
+	return need
+}
+
 // layoutResourceBox lays rows out for a box w cells wide and h rows tall
 // inside. It returns the lines to draw (none wider than w, never more than
 // h) and how many pages the rows take: 1 when they all fit. page is the
@@ -378,6 +415,25 @@ func layoutResourceBox(rows []resRow, w, h, page int) (lines []string, pages int
 		return nil, 1
 	}
 	f := fitResourceFormat(rows, w)
+	// The rows set apart (knowledge) lead the box, with a rule under them.
+	var top []resRow
+	var goods []resRow
+	for _, r := range rows {
+		if r.apart {
+			top = append(top, r)
+		} else {
+			goods = append(goods, r)
+		}
+	}
+	var topLines []string
+	for _, r := range top {
+		topLines = append(topLines, f.apartLines(r)...)
+	}
+	rule := ""
+	if len(top) > 0 && len(goods) > 0 {
+		rule = " " + theme.Paint(theme.RoleDim, strings.Repeat("─", max(1, min(w, f.width())-2)))
+	}
+	rows = goods
 	n := len(rows)
 	legend := resLegend(w)
 	var details []int // rows with a detail line that fits
@@ -395,7 +451,10 @@ func layoutResourceBox(rows []resRow, w, h, page int) (lines []string, pages int
 		return false
 	}
 	build := func(airy, withDetails, blank, withLegend bool) []string {
-		var out []string
+		out := append([]string(nil), topLines...)
+		if rule != "" && withLegend {
+			out = append(out, rule)
+		}
 		for i, r := range rows {
 			out = append(out, f.line(r))
 			if withDetails && hasDetail(i) {
@@ -425,15 +484,25 @@ func layoutResourceBox(rows []resRow, w, h, page int) (lines []string, pages int
 			return out, 1
 		}
 	}
-	// A page of rows, and the line that says so.
+	// A page of rows, and the line that says so. The rows set apart stay on
+	// every page.
 	if h == 1 {
-		return []string{resMoreLine(1, n, n, w)}, 1
+		return []string{resMoreLine(1, n+len(top), n+len(top), w)}, 1
 	}
 	size := h - 1
-	pages = (n + size - 1) / size
+	pinned := append([]string(nil), topLines...)
+	if rule != "" && size-len(pinned)-1 >= 6 {
+		pinned = append(pinned, rule)
+	}
+	room := max(1, size-len(pinned))
+	if len(pinned) >= size {
+		pinned, room = pinned[:max(0, size-1)], 1
+	}
+	pages = max(1, (n+room-1)/room)
 	page = ((page % pages) + pages) % pages
-	first := page * size
-	last := min(n, first+size)
+	first := page * room
+	last := min(n, first+room)
+	lines = append(lines, pinned...)
 	for _, r := range rows[first:last] {
 		lines = append(lines, f.line(r))
 	}
