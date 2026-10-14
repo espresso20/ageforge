@@ -35,10 +35,9 @@ var KnownPropertyFailures = map[int]string{
 	1:  "22 buildings climb at another rate (1.13)",
 	2:  "fails in 3 of 22 ages; worst 0.28 of the age in the Primitive Age",
 	3:  "fails in 5 of 22 ages; worst 3.0 times in the Primitive Age",
-	4:  "fails in 3 of 22 ages; worst 2.9 times in the Quantum Age",
+	4:  "fails in 3 of 22 ages; worst 3.0 times in the Quantum Age",
 	8:  "fails in 16 of 22 ages; worst 0.0% eaten in the Transcendent Age",
 	9:  "fails in 22 of 22 ages; worst room for 19312 people per job in the Transcendent Age",
-	10: "fails in 1 of 22 ages; worst 1.2 times the age in the Victorian Age",
 	12: "27 of 27 trade route payments fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
 	16: "fails in 2 of 22 ages; worst 3.0 times in the Primitive Age",
@@ -47,11 +46,8 @@ var KnownPropertyFailures = map[int]string{
 }
 
 // KnownPropertyReasons is why a known failure fails, where the reason is a
-// decision and not a table to fix. 10: it fails in the one age
-// KnowledgeLadderHeld names.
-var KnownPropertyReasons = map[int]string{
-	10: "fails only in the age KnowledgeLadderHeld names (the last age has no knowledge building of its own)",
-}
+// decision and not a table to fix.
+var KnownPropertyReasons = map[int]string{}
 
 // researchBand is the band of property 10 for age: the share of the ordinary
 // player's stay that the age's techs take with every scholar at the cap

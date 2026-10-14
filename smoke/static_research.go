@@ -108,7 +108,7 @@ func StaticResearch() []ResearchRow {
 // the age is meant to last. It is worked out from the building and tech
 // tables alone.
 func referenceKnowledge(age string) float64 {
-	return float64(config.TypicalIncome(config.ResearchTarget, age) * config.AgeTargetTicks(age))
+	return float64(config.TypicalIncome(config.ResearchTarget, age) * config.LatePriceTargetTicks(age))
 }
 
 // staticResearch is StaticResearch over the given tables; knowledge is what
@@ -149,7 +149,7 @@ func staticResearch(ages []config.AgeDef, defs map[string]config.BuildingDef, te
 			} else {
 				row.KnowledgeShare = math.Inf(1)
 			}
-			if target := config.AgeTargetTicks(a.Key); target > 0 {
+			if target := config.LatePriceTargetTicks(a.Key); target > 0 {
 				row.BuildShare = float64(defs[wonder].BuildTicks) / target
 			}
 		}

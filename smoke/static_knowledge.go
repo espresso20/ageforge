@@ -107,29 +107,3 @@ func KnowledgeLadders(techs []config.TechDef, made []float64, ratio func(age str
 	}
 	return out
 }
-
-// KnowledgeHeldAge is an age the knowledge ladder cannot price: a named
-// exception, not a skipped age. Its techs keep the prices they had before the
-// knowledge store.
-type KnowledgeHeldAge struct {
-	// Reason is why the ladder does not price the age.
-	Reason string
-	// TechSum is what its techs cost, held (the tests hold the table to it).
-	TechSum float64
-	// Property10 is the reading of property 10 for the age: its techs over
-	// what the ordinary player's knowledge buildings make in his stay.
-	Property10 float64
-}
-
-// KnowledgeLadderHeld is the single exception to the ladder: the last age has
-// no knowledge building of its own, so its scholars are the Quantum Age's and
-// its four techs keep the prices they were written with. Property 10 stays a
-// known failure for it, at Property10. The tests that hold the properties and
-// the Research Covenant name this entry; no other age is skipped.
-var KnowledgeLadderHeld = map[string]KnowledgeHeldAge{
-	"transcendent_age": {
-		Reason:     "the last age has no knowledge building of its own: its scholars are the Quantum Age's, and its four techs keep the prices they were written with",
-		TechSum:    21.54e9,
-		Property10: 0.043,
-	},
-}
