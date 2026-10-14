@@ -1,127 +1,163 @@
-# Knowledge
+# Scholars and Research
 
-Knowledge pays for all research. It accumulates over time and is spent when you start researching a technology. Your knowledge rate and your knowledge store decide how quickly you can move through the tech tree. Buildings cost it too from the Medieval to the Colonial Age.
+Research is done by **scholars**. A knowledge building comes with its scholars the moment a copy stands. They work on **one technology at a time**, and a bar fills as they do, until it reads 100%. A scholar who is not researching **teaches**, which raises what your workers make.
 
-Knowledge is not a physical thing, so it has a **store of its own**, and only knowledge buildings raise it. Storage buildings do not hold it. See [The Knowledge Store](#the-knowledge-store).
+Knowledge is not a resource. Nothing holds it, spends it or prices a tech in it. There is no store to fill and no amount to afford: a tech needs only its prerequisites and its age to be started.
 
-No age asks you to hold knowledge to advance. The gates do ask for knowledge buildings: 5 Story Circles for the Stone Age, 5 Elders' Halls for the Bronze Age, 5 Scriptoria for the Iron Age, 7 Agoras for the Classical Age and so on (see [Advancement Requirements](ages.md#advancement-requirements)). What an age needs of research itself is one tech: the **keystone** its wonder cannot be built without, and the techs that one stands on (see [Keystone Techs](ages.md#keystone-techs)). The rest of your knowledge is yours to spend on the techs you choose.
+No age asks you to hold anything for research to advance. The gates do ask for knowledge buildings: 5 Story Circles for the Stone Age, 5 Elders' Halls for the Bronze Age, 5 Scriptoria for the Iron Age, 7 Agoras for the Classical Age and so on (see [Advancement Requirements](ages.md#advancement-requirements)). What an age needs of research itself is one tech: the **keystone** its wonder cannot be built without, and the techs that one stands on (see [Keystone Techs](ages.md#keystone-techs)).
 
 ---
 
-## How Knowledge is Produced
+## What a Scholar Is
 
-Knowledge is produced by **Knowledge lineage buildings**, at full rate when their worker slots are filled. Workers in them are Knowledge workers; see [Workers](workers-and-domains.md) for recruiting, the roster and the domain table.
+A scholar is not a worker. He is not recruited, takes no housing, eats no food and needs no assignment. Build a Story Circle and its 2 scholars are at work. Knowledge buildings cannot be sold.
+
+A scholar's **kind** is the worker class of the age of his building: a Shaman in the Primitive Age, an Elder in the Stone Age, a Scribe in the Bronze Age, and so on up to the Quantum Theorist. The `scholars` command lists your kinds and counts (see [Commands](commands.md#scholars)).
 
 **Knowledge lineage** (in order):
 
 Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monastery Library → University → Natural Philosophy Hall → Research Institute → Academy → Physics Laboratory → Research Campus → Think Tank → Innovation Hub → AI Research Lab → Neuro Research Center → Theoretical Institute → Deep Space Observatory → Xenology Institute → Cosmic Research Station → Reality Academy
 
-**Knowledge buildings (rates fully staffed, per building; each copy costs 50% more than the one before):**
+| Building | Age | Scholar | Scholars a copy | Most copies | Work a tick, each |
+|----------|-----|---------|-----------------|-------------|-------------------|
+| Story Circle | Primitive | Shaman | 2 | 5 | 0.2 |
+| Elders' Hall | Stone | Elder | 2 | 5 | 0.6 |
+| Scriptorium | Bronze | Scribe | 3 | 5 | 2 |
+| Agora | Iron | Scholar | 3 | 7 | 1.6 |
+| Library | Classical | Philosopher | 4 | 8 | 3.2 |
+| Monastery Library | Medieval | Friar | 4 | 5 | 42.4 |
+| University | Renaissance | Academician | 5 | 7 | 76.3 |
+| Natural Philosophy Hall | Colonial | Naturalist | 5 | 5 | 452 |
+| Research Institute | Industrial | Engineer-Scientist | 6 | 5 | 12.8 |
+| Academy | Victorian | Victorian Scholar | 6 | 7 | 25.6 |
+| Physics Laboratory | Electric | Research Fellow | 7 | 8 | 51.2 |
+| Research Campus | Atomic | Nuclear Scientist | 7 | 9 | 102 |
+| Think Tank | Modern | Modern Researcher | 8 | 10 | 205 |
+| Innovation Hub | Information | Data Scientist | 8 | 8 | 410 |
+| AI Research Lab | Digital | AI Researcher | 10 | 8 | 819 |
+| Neuro Research Center | Cyberpunk | Cyber-Scholar | 10 | 5 | 1.64K |
+| Theoretical Institute | Fusion | Fusion Theorist | 12 | 5 | 3.28K |
+| Deep Space Observatory | Space | Orbital Researcher | 12 | 5 | 6.55K |
+| Xenology Institute | Interstellar | Stellar Scientist | 15 | 5 | 13.1K |
+| Cosmic Research Station | Galactic | Galactic Researcher | 15 | 5 | 26.2K |
+| Reality Academy | Quantum | Quantum Theorist | 20 | 10 | 52.4K |
 
-| Building | Age | Knowledge/tick | Workers | Adds to the store | Copies the gate asks |
-|----------|-----|----------------|---------|-------------------|----------------------|
-| Story Circle | Primitive | 0.2 | 2 | +140 | 5 |
-| Elders' Hall | Stone | 0.6 | 2 | +360 | 5 |
-| Scriptorium | Bronze | 2.0 | 3 | +3K | 5 |
-| Agora | Iron | 1.6 | 3 | +6.1K | 7 |
-| Library | Classical | 3.2 | 4 | +20K | 8 |
-| Monastery Library | Medieval | 42.4 | 4 | +320K | 5 |
-| University | Renaissance | 76.3 | 5 | +800K | 7 |
-| Natural Philosophy Hall | Colonial | 452 | 5 | +8.2M | 5 |
-| Research Institute | Industrial | 12.8 | 6 | +1.1M | 5 |
-| Academy | Victorian | 25.6 | 6 | +4.3M | 7 |
-| Physics Laboratory | Electric | 51.2 | 7 | +11M | 8 |
-| Research Campus | Atomic | 102 | 7 | +16M | 9 |
-| Think Tank | Modern | 205 | 8 | +13M | 10 |
-| Innovation Hub | Information | 410 | 8 | +13M | 8 |
-| AI Research Lab | Digital | 819 | 10 | +94M | 8 |
-| Neuro Research Center | Cyberpunk | 1.64K | 10 | +320M | 5 |
-| Theoretical Institute | Fusion | 3.28K | 12 | +1.5B | 5 |
-| Deep Space Observatory | Space | 6.55K | 12 | +3.3B | 5 |
-| Xenology Institute | Interstellar | 13.1K | 15 | +5B | 5 |
-| Cosmic Research Station | Galactic | 26.2K | 15 | +1.4B | 5 |
-| Reality Academy | Quantum | 52.4K | 20 | +5.3B | 10 |
+**The cap.** A knowledge building cannot be built past its most copies, the count its age's gate asks for. Each copy costs 50% more than the one before it. The Buildings panel shows a knowledge building's scholars a copy and its copies against its cap (`2 scholars a copy, 3 of 5 built.`), and at the cap it reads `Building limit reached.`
 
-The first five tiers have hand-set rates. From the **Medieval to the Colonial Age**, buildings also cost knowledge, so knowledge counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): fully staffed, each earns back its first copy's price within the age's payback time. That is why the Monastery Library, University and Natural Philosophy Hall jump so far ahead. From the Industrial Age on, research is the only regular use of knowledge, and the lineage goes back to fixed rates that double each age. Your older halls and universities keep producing through all of this, so don't sell them.
-
-Buildings with no workers still produce 20% of their base rate; each filled slot adds its share of the other 80%:
-
-```
-knowledge/tick = base rate × buildings × (0.20 + 0.80 × workers assigned / worker slots)
-```
-
-[Morale](morale.md) multiplies that output, like every building's.
+**Work.** A copy's work a tick is its figure above. The scholars do all of it whether or not you look at them. [Morale](morale.md) multiplies it, like every building's output, and so do the bonuses under [Research Speed](#research-speed).
 
 ---
 
-## The Knowledge Store
-
-Knowledge is not a physical thing, so it does not sit in the stores that hold food, wood and stone. It has a **store of its own**:
-
-```
-knowledge store = 240 + the copies of each knowledge building × what one copy adds
-```
-
-The 240 is yours with no knowledge building. Each copy of a knowledge building adds its figure from the table above. The Resources box shows knowledge first, set apart from the goods, as the amount held over this store. The Buildings panel shows what a copy adds on each knowledge building.
-
-**Only knowledge buildings raise it.** Storage buildings do not, nor do the techs and wonders that add storage to every resource but knowledge, Era Mastery or prestige. Once knowledge hits the store, further production is wasted.
-
-**The wall.** A tech priced over the knowledge store cannot be started, however long you wait. The `research` command refuses it, a planned tech waits as blocked ("needs more knowledge storage"), and the tech tree marks its price with a red ✗. The refusal names the knowledge building of your age to build:
-
-```
-Fire Mastery costs 398 knowledge, more than your knowledge storage holds (240). Build more storage first: Elders' Hall.
-```
-
-A building priced in knowledge (Medieval to Colonial) meets the same wall. Knowledge you already hold above the store, from a save made before knowledge had its own store, can still pay.
-
-**The gate sizes it.** The gate asks for copies of the age's knowledge building, and the store they hold is sized to the techs: an age's dearest tech fits with a quarter to spare, and the second-cheapest tech of the next age fits with a fifth to spare. Each knowledge building climbs at 1.5 a copy, so the gate asks for 5 to 10 of them, not the 8 to 20 it did.
-
-**An age advance** trims what you hold, as it does every stock but faith (see [What Happens on Age Advance](ages.md#what-happens-on-age-advance)). Catastrophes spare knowledge buildings, as they spare storage and wonders (see [Catastrophe](catastrophe.md)). Knowledge buildings cannot be sold, and they keep their tier: an age advance offers them no upgrade and the `upgrade` command refuses them, so each age's knowledge building is built new in its own age and the earlier ones stay and keep holding what they did.
-
----
-
-## What Research Costs
-
-Inside an age each tech costs **1.3 times the one before it**, from the cheapest to the dearest. An age's techs together cost 80% of the knowledge a well-run town's knowledge buildings make over the age, and the store above is sized so the dearest one fits. The Stone Age's six techs cost about 7.3K knowledge between them, the Medieval Age's nine about 4.2M, the Renaissance's seven about 20M, the Atomic Age's eleven about 1.0B. The Transcendent Age has no knowledge building of its own, so its four techs keep the prices they had. See [How Research is Priced](technologies.md#how-research-is-priced) and the [tech tables](technologies.md#tech-tree-by-age).
-
----
-
-## Researching and the Research Queue
+## One Tech at a Time
 
 ```
 research <tech>
 plan research <tech>
 ```
 
-The full knowledge cost is paid **up front**, the moment research starts. Nothing is taken per tick while it runs, so your stored knowledge can rise or fall afterwards without affecting it. Only one technology can be researched at a time, and techs are age-gated: you must be in the right age to research them.
+A tech has a **price**, the work it needs, and a **bar**. Each tick the researching scholars' work fills the bar, and the tech is done when it reads 100%. Only one technology is in progress at a time, and techs are age-gated: you must be in the right age to research them.
 
-To queue techs, add them to the [Build Plan](plan.md) with `plan research <tech>` (or `plan res`). The plan starts them one at a time, in order, as the knowledge comes in, and keeps doing so while you are away. A tech's prerequisites must be researched, in progress or planned above it; a planned tech that loses one waits for it. You can also plan the next age's techs; they wait for the advance.
+Starting a tech costs nothing. Cancelling it (`research cancel`) loses the work done on it.
 
-The plan is the only research queue: the game never chooses what you research next. The techs you plan are remembered with the plan, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) they are planned again on later runs, in the age you planned them in.
+**The bar.** The tech in progress shows a bar, its percent and the time left, wherever research is shown: the header of the Research panel, the tech's card, `research list` and the Activity panel. It is the bar a building under construction has:
 
-Research speed shortens how long each tech takes. It comes from milestones (five milestones, three of them in the Scholar chain, add +50% in total). Seven techs take another 3% to 6% each off the time that leaves (Scholasticism, Printing Press, Scientific Method, Public Education, Big Science, Computers and Machine Learning; a quarter with all of them). Ancient Knowledge, the Succumb reward, then multiplies the time that is left by 0.8 for each distinct epoch you have succumbed in, kept through prestige (see [Ancient Knowledge](catastrophe.md#ancient-knowledge)). On known ground, [Era Mastery](prestige.md#era-mastery) then divides the time again by the age's speed. See [Technologies](technologies.md) for the full tech tree.
+```
+Primitive Writing ████░░░░░░ 40% (~4m 20s left)
+```
+
+**The time.** A tech's time is its remaining work over the work the researching scholars do each tick. A tech you have not started shows the time it would take your scholars as they research now, with research speed, Ancient Knowledge and Era Mastery counted. If no scholar is researching, the screens say the tech needs scholars researching to go on, and the bar stays where it is. With nothing in progress and nothing queued every scholar teaches, so the screens say a time shows once a tech starts. Change who researches and every time changes with it.
+
+**The tables.** The [tech tables](technologies.md#tech-tree-by-age) give each tech's time for a full set of scholars at its age: every knowledge building up to that age built to its cap, researching, before any bonus. A tech costs 1.3 times the one before it inside an age.
+
+---
+
+## The Queue
+
+To line techs up, add them to the [Build Plan](plan.md) with `plan research <tech>` (or `plan res`). The plan's research items are the queue: when the tech in progress is done, the next one starts by itself, in plan order, and keeps doing so while you are away. A tech's prerequisites must be researched, in progress or planned above it; a planned tech that loses one waits for it. You can also plan the next age's techs; they wait for the advance.
+
+The plan is the only research queue: the game never chooses what you research next. `research list` shows the queue in order. The techs you plan are remembered with the plan, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) they are planned again on later runs, in the age you planned them in.
+
+**A head start.** Work that has no tech to land on is kept for the next tech you start, never more than that tech's price. `research list` shows it (`Head start: 12% of Banking`).
+
+---
+
+## Research and Teaching
+
+One setting divides your scholars: the share that **researches**. It is 100% to begin with. The rest **teach**.
+
+```
+scholars              the kinds, how many research and teach, the bonus
+scholars <percent>    set the share that researches
+```
+
+The split goes to whole scholars. With nothing in progress and nothing queued, every scholar teaches, whatever the setting says; start a tech and the researching share goes to work.
+
+**Teaching** raises what your workers make. With every scholar teaching, the bonus is:
+
+| Ages | Worker output |
+|------|---------------|
+| Primitive to Bronze | +10% |
+| Iron to Medieval | +8% |
+| Renaissance to Industrial | +6% |
+| Victorian to Digital | +5% |
+| Cyberpunk and later | +4% |
+
+The bonus is in proportion to the share teaching: half of your scholars teaching give half of it. It is a source in the worker output bonus, with a line of its own in `stats` and `rates`.
+
+---
+
+## Research Speed
+
+Research speed is what shortens a tech's time. It is made of:
+
+- **Research speed** from milestones (five milestones, three of them in the Scholar chain, add +50% in total).
+- **Research output** from techs and wonders, which raises the scholars' work. Fifteen techs add to it (see [Output of one resource](technologies.md#output-of-one-resource)).
+- **Research techs**: seven techs take another 3% to 6% each off the time (Scholasticism, Printing Press, Scientific Method, Public Education, Big Science, Computers and Machine Learning).
+- **Ancient Knowledge**, the Succumb reward, multiplies the time by 0.8 for each distinct epoch you have succumbed in, kept through prestige (see [Ancient Knowledge](catastrophe.md#ancient-knowledge)).
+- **Era Mastery**: on known ground the age's speed multiplies the work (see [Era Mastery](prestige.md#era-mastery)).
+
+The Stats panel lists each of these that you have. See [Technologies](technologies.md) for the full tech tree.
+
+---
+
+## What Used to Give Knowledge
+
+Events, loot, milestone rewards, the Ancient Cache and two trade routes (the colonial exchange and the cotton exchange) still give research. A gain is **progress on the tech in progress**, worth the minutes of your scholars' work it is sized in. With nothing in progress it is a **head start** on the next tech you start. It is never more than that tech's work, and a gain that fills the bar finishes the tech. The log says which: `Gained 12% of Banking.`, `Gained enough to complete Banking.` or `Gained a head start on the next tech.`
 
 ---
 
 ## Epoch Event Interactions
 
-Three epoch transition events affect knowledge directly:
+Three epoch transition events affect research directly:
 
 | Event | Type | Effect |
 |-------|------|--------|
 | The Grand Discovery | Good (Major) | Completes up to 3 techs of your current age or earlier that you haven't researched yet, free |
-| Political Instability | Challenging | Knowledge -2/tick for 156 ticks (plus 60% of your faith lost) |
-| The Dark Age | Challenging | Cancels your current research (the knowledge paid for it is lost), removes 80% of your stored knowledge, then knowledge -3/tick for 374 ticks |
+| Political Instability | Challenging | Research speed -30% for a spell (plus 60% of your faith lost) |
+| The Dark Age | Challenging | Cancels your current research (its work is lost), takes the head start you had kept, then research speed -40% for a spell |
 
-The Dark Age is the most punishing event for knowledge-heavy civilizations. High faith lowers the chance of every bad epoch event, the Dark Age included. Culture does not raise your knowledge rate, but a [culture strength](epochs.md#culture-strength) over 40% at an epoch transition makes Major good events like The Grand Discovery possible. See [Faith](faith.md) and [Epochs](epochs.md).
+The Dark Age is the most punishing event for a research-heavy civilization. High faith lowers the chance of every bad epoch event, the Dark Age included. A [culture strength](epochs.md#culture-strength) over 40% at an epoch transition makes Major good events like The Grand Discovery possible. See [Faith](faith.md) and [Epochs](epochs.md).
 
-There is also a prestige-run path to free research: early in a new run (Primitive or Stone Age), the **Ancient Civilization Memory** cache can offer a single tech with no prerequisites and no knowledge cost, researched at half speed. See [Prestige](prestige.md#ancient-civilization-memory).
+There is also a prestige-run path to free research: early in a new run (Primitive or Stone Age), the **Ancient Civilization Memory** cache can offer a single tech with no prerequisites, researched at half speed. See [Prestige](prestige.md#ancient-civilization-memory).
+
+---
+
+## The Last Age
+
+The Transcendent Age has no knowledge building of its own. Your scholars from the ages before keep working, and they research its four techs.
+
+---
+
+## Old Saves
+
+A save made before scholars loads clean. Stored knowledge becomes a head start. A tech that was paid for and waiting out its time completes on load. Workers on knowledge buildings return to the idle pool. The log says once: `Knowledge is no longer stored. Your scholars now work on one technology at a time.` See [Saving and Loading](saving-and-loading.md).
 
 ---
 
 ## Tips
 
-- Get your first Story Circle and 2 Knowledge workers before your first age advance, because early research unlocks pay off quickly. The Stone Age asks for 5 Story Circles and the Bronze Age for 5 Elders' Halls, and the Stone Age's wonder needs Stoneworking, which stands on Tool Making.
+- Build your first Story Circle before your first age advance: its 2 scholars start the first tech at once, and early research unlocks pay off quickly. The Stone Age asks for 5 Story Circles and the Bronze Age for 5 Elders' Halls, and the Stone Age's wonder needs Stoneworking, which stands on Tool Making.
 - In each new age, find the keystone first (the ★ on the tech tree). The wonder waits for it, and the advance waits for the wonder.
-- Research is paid up front, so start a tech as soon as you can afford it, or queue it with `plan research`. Knowledge that sits at the store's limit is wasted, and a tech priced over the store waits for a knowledge building.
-- After a Dark Age, move spare workers onto knowledge buildings for a while to rebuild your stock, then restart the research it canceled.
+- Queue techs with `plan research` so the bar never stands empty: with nothing in progress your scholars teach.
+- To teach more while a long tech runs, lower the share with `scholars <percent>`. The tech takes longer, and your workers make more.
+- After a Dark Age, restart the research it canceled.

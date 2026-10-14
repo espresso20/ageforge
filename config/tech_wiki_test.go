@@ -38,34 +38,30 @@ func techWikiSpan(ticks int) string {
 	return fmt.Sprintf("%dh", secs/3600)
 }
 
-// scholarWork is the work each tick of a full set of an age's scholars: every
-// copy of the age's knowledge building up to its cap, researching, before any
-// bonus. An age with no knowledge building of its own (the last) takes the
-// set of the age before it.
+// scholarWork is the work each tick of a full set of scholars at an age: every
+// copy of every knowledge building up to and including the age, up to its
+// cap, researching, before any bonus. Knowledge buildings cannot be sold, so
+// the older ones keep working.
 func scholarWork(blds []BuildingDef, ages []AgeDef) map[string]float64 {
 	out := map[string]float64{}
-	last := 0.0
+	total := 0.0
 	for _, age := range ages {
-		w := 0.0
 		for _, b := range blds {
 			if b.RequiredAge != age.Key || !IsKnowledgeBuilding(b) {
 				continue
 			}
 			for _, e := range b.Effects {
 				if e.Type == "research" {
-					w += float64(KnowledgeCap(b.Key)) * e.Value
+					total += float64(KnowledgeCap(b.Key)) * e.Value
 				}
 			}
 		}
-		if w == 0 {
-			w = last
-		}
-		out[age.Key], last = w, w
+		out[age.Key] = total
 	}
 	return out
 }
 
-// techWikiTicks is the ticks a tech takes a full set of its age's scholars.
+// techWikiTicks is the ticks a tech takes a full set of scholars.
 func techWikiTicks(cost, work float64) int {
 	if work <= 0 {
 		return 0
@@ -76,7 +72,7 @@ func techWikiTicks(cost, work float64) int {
 // techWikiSections is every age's section as the wiki should hold it, by
 // age name: the heading with the span of its techs' times, the table's head,
 // and a row for each tech. A tech's time is its price over the work a full
-// set of its age's scholars does each tick, before any bonus.
+// set of scholars does each tick at its age, before any bonus.
 func techWikiSections() map[string]string {
 	techs := Technologies()
 	blds := BaseBuildings()
