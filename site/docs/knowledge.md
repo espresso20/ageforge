@@ -65,7 +65,7 @@ Starting a tech costs nothing. Cancelling it (`research cancel`) loses the work 
 Primitive Writing ████░░░░░░ 40% (~4m 20s left)
 ```
 
-**The time.** A tech's time is its remaining work over the work the researching scholars do each tick. A tech you have not started shows the time it would take your scholars as they research now, with research speed, Ancient Knowledge and Era Mastery counted. If no scholar is researching, the screens say the tech needs scholars researching to go on, and the bar stays where it is. With nothing in progress and nothing queued every scholar teaches, so the screens say a time shows once a tech starts. Change who researches and every time changes with it.
+**The time.** A tech's time is its remaining work over the work the researching scholars do each tick. A tech you have not started shows the time it would take the scholars your research setting puts on research, with research speed, Ancient Knowledge and Era Mastery counted. That holds even when nothing is in progress and every scholar teaches: the time is what the tech would take once started. If the setting leaves no scholar researching, the screens say the tech needs scholars researching to go on, and the bar stays where it is. Change who researches and every time changes with it.
 
 **The tables.** The [tech tables](technologies.md#tech-tree-by-age) give each tech's time for a full set of scholars at its age: every knowledge building up to that age built to its cap, researching, before any bonus. A tech costs 1.3 times the one before it inside an age.
 

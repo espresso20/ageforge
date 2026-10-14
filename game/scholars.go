@@ -135,9 +135,18 @@ func (ge *GameEngine) scholarPosts(n int) (research, teach int) {
 	if ge.Research.currentTech == "" && !ge.researchQueued() {
 		return 0, n
 	}
-	research = (n*ge.scholarShareOf() + 50) / 100
-	research = min(max(research, 0), n)
+	research = ge.shareResearchers(n)
 	return research, n - research
+}
+
+// shareResearchers is how many of n scholars the share setting puts on
+// research, a whole scholar (halves up), whether or not there is a tech to
+// research.
+func (ge *GameEngine) shareResearchers(n int) int {
+	if n <= 0 {
+		return 0
+	}
+	return min(max((n*ge.scholarShareOf()+50)/100, 0), n)
 }
 
 // teachingFull is the worker-output bonus with every scholar teaching, in
@@ -238,15 +247,23 @@ func (ge *GameEngine) updateResearchRate(r *Resolver, mMult, prodAllFactor float
 	work := ge.researchWork(r, mMult, prodAllFactor, soft)
 	work = float64(work / ge.researchTimeFactor())
 	ge.researchFull = work
+	ge.researchPerTick = ge.workOfResearchers(work, n, research)
+	// What a tech started now would get: the share setting's scholars, the
+	// idle override left out.
+	ge.researchIfStarted = ge.workOfResearchers(work, n, ge.shareResearchers(n))
+}
+
+// workOfResearchers is the work each tick of `research` scholars out of n,
+// given the work of all n.
+func (ge *GameEngine) workOfResearchers(full float64, n, research int) float64 {
 	if n <= 0 || research <= 0 {
-		ge.researchPerTick = 0
-		return
+		return 0
 	}
-	work = float64(work * float64(research) / float64(n))
+	work := float64(full * float64(research) / float64(n))
 	if ge.Research.slowed {
 		work = float64(work * memoryResearchSlowdown)
 	}
-	ge.researchPerTick = work
+	return work
 }
 
 // researchTicksFor is how many ticks the work still to do takes at the
@@ -256,6 +273,16 @@ func (ge *GameEngine) researchTicksFor(work float64) int {
 		return 0
 	}
 	return int(math.Ceil(work / ge.researchPerTick))
+}
+
+// researchTicksIfStarted is how many ticks the work takes at the work the
+// scholars the share setting puts on research would do: what a tech not in
+// progress would take if it were started. 0 with no such scholar.
+func (ge *GameEngine) researchTicksIfStarted(work float64) int {
+	if ge.researchIfStarted <= 0 || work <= 0 {
+		return 0
+	}
+	return int(math.Ceil(work / ge.researchIfStarted))
 }
 
 // ResearchTicksLeft is the time the tech in progress has left, in ticks: its
@@ -423,7 +450,11 @@ func (ge *GameEngine) withResearchTimes(rs ResearchState) ResearchState {
 		rs.NeedsScholars = ge.researchPerTick <= 0
 	}
 	for key, t := range rs.Techs {
-		t.TicksNeeded = ge.researchTicksFor(t.Cost)
+		if key == rs.CurrentTech {
+			t.TicksNeeded = ge.researchTicksFor(t.Cost)
+		} else {
+			t.TicksNeeded = ge.researchTicksIfStarted(t.Cost)
+		}
 		rs.Techs[key] = t
 	}
 	return rs

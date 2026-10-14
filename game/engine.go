@@ -158,7 +158,11 @@ type GameEngine struct {
 	scholarShare    int
 	scholarShareSet bool
 	researchPerTick float64
-	researchIncome  float64
+	// researchIfStarted is the work each tick a tech started now would get:
+	// the scholars the share setting puts on research, whether or not a tech
+	// is in progress (so the idle teaching does not zero it).
+	researchIfStarted float64
+	researchIncome    float64
 	// researchBase is the sum of the research figures of the standing
 	// buildings (before any bonus) and researchFull the work all the scholars
 	// would do each tick if every one of them researched (the posts split

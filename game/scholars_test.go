@@ -130,6 +130,60 @@ func TestScholarPostsSplitExactly(t *testing.T) {
 	}
 }
 
+// A tech not in progress shows the time it would take the scholars the share
+// setting puts on research, even while every scholar teaches for want of a
+// tech. With no scholar or a share of 0 it shows no time.
+func TestTechTimeInAnIdleTownCountsTheScholarsWhoWouldResearch(t *testing.T) {
+	ge := scholarEngine(t)
+	st := ge.GetState()
+	if st.Scholars.Researching != 0 || st.Research.PerTick != 0 {
+		t.Fatalf("staging: the town should be idle: %+v", st.Scholars)
+	}
+	n := st.Scholars.Total
+	cost := st.Research.Techs["tool_making"].Cost
+	if n <= 0 || cost <= 0 {
+		t.Fatalf("staging: %d scholars, tool_making costs %v", n, cost)
+	}
+	ge.mu.RLock()
+	full := ge.researchFull
+	ge.mu.RUnlock()
+	for _, pct := range []int{100, 50} {
+		if _, err := ge.SetResearchShare(pct); err != nil {
+			t.Fatal(err)
+		}
+		st = ge.GetState()
+		if st.Scholars.Researching != 0 {
+			t.Fatalf("%d%%: the idle town should still teach, %d research", pct, st.Scholars.Researching)
+		}
+		research := (n*pct + 50) / 100
+		want := int(math.Ceil(cost / (full * float64(research) / float64(n))))
+		got := st.Research.Techs["tool_making"].TicksNeeded
+		if got <= 0 || got != want {
+			t.Errorf("%d%%: idle tool_making takes %d ticks, want %d", pct, got, want)
+		}
+		// Starting it changes nothing about the time.
+		if err := ge.StartResearch("tool_making"); err != nil {
+			t.Fatal(err)
+		}
+		if after := ge.GetState().Research.TotalTicks; after != got {
+			t.Errorf("%d%%: once started it takes %d ticks, before it said %d", pct, after, got)
+		}
+		if err := ge.CancelResearch(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := ge.SetResearchShare(0); err != nil {
+		t.Fatal(err)
+	}
+	if got := ge.GetState().Research.Techs["tool_making"].TicksNeeded; got != 0 {
+		t.Errorf("with a share of 0 a tech shows %d ticks", got)
+	}
+	empty := newSeededEngine(3)
+	if got := empty.GetState().Research.Techs["tool_making"].TicksNeeded; got != 0 {
+		t.Errorf("with no scholars a tech shows %d ticks", got)
+	}
+}
+
 // Teaching raises what workers make, by the age's step in proportion to the
 // share of the scholars that teach, and it is a source of the worker output
 // pool.

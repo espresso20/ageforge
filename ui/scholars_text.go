@@ -61,28 +61,11 @@ func researchLeft(state game.GameState) string {
 	return formatTicks(state.Research.TicksLeft, state) + " left"
 }
 
-// Nothing in progress and nothing queued: every scholar teaches, so no time
-// can be worked out from the scholars researching. timeOnStart and
-// teachUntilStart say so, instead of saying the tech needs scholars.
-const (
-	timeOnStart     = "time shows once started"
-	teachUntilStart = "Your scholars teach until a tech starts, so its time shows then."
-)
-
-// idleTeaching reports whether the scholars teach because there is nothing
-// to research (they are set to research, and there are some).
-func idleTeaching(state game.GameState) bool {
-	return state.Research.CurrentTech == "" && state.Scholars.Total > 0 && state.Scholars.Share > 0 && state.Scholars.Researching == 0
-}
-
 // techTime is the time a tech not started takes the scholars researching
-// now, or that it needs scholars.
+// under the share setting, or that it needs scholars.
 func techTime(ts game.TechState, state game.GameState) string {
-	switch {
-	case ts.TicksNeeded > 0:
+	if ts.TicksNeeded > 0 {
 		return formatTicks(ts.TicksNeeded, state)
-	case idleTeaching(state):
-		return timeOnStart
 	}
 	return needsScholarsShort
 }

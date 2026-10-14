@@ -1187,9 +1187,7 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 		}
 		out = append(out, sw(swHi, plainBar(researchFraction(state), 20)+fmt.Sprintf(" %d%%", researchPercent(state))))
 	default:
-		if n.ts.TicksNeeded <= 0 && idleTeaching(state) {
-			out = append(out, teachUntilStart)
-		} else if n.ts.TicksNeeded <= 0 {
+		if n.ts.TicksNeeded <= 0 {
 			out = append(out, needsScholars)
 		} else {
 			out = append(out, fmt.Sprintf("It takes %s.", sw(swHi, formatTicks(n.ts.TicksNeeded, state))))

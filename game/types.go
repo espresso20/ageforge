@@ -424,8 +424,10 @@ type TechState struct {
 	Description   string
 	Researched    bool
 	Available     bool // meets age + prereqs and not yet researched
-	// TicksNeeded is how long the tech takes the scholars researching now,
-	// from the start (0 when none is researching).
+	// TicksNeeded is how long the tech takes the scholars researching, from
+	// the start. For a tech not in progress it counts the scholars the share
+	// setting puts on research, even while all teach for want of a tech (0
+	// when there are none).
 	TicksNeeded int
 	PrereqsMet  bool // every prerequisite, and one of AnyOf
 	// Kind is the tech's place in the tree: a keystone, on the spine, a

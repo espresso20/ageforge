@@ -150,33 +150,38 @@ func TestTechTimeIsComputedFromTheScholarsResearching(t *testing.T) {
 	check(half, half.Research.Techs["ritual"].TicksNeeded)
 }
 
-// With nothing in progress and nothing queued every scholar teaches, so no
-// time can be worked out: the screens say that, not that scholars are
-// missing. With the share at 0 they say it needs scholars.
-func TestIdleScholarsTeachAndTheScreensSayWhy(t *testing.T) {
+// With nothing in progress and nothing queued every scholar teaches, yet a
+// tech shows the time it would take the scholars set to research. With the
+// share at 0 the screens say it needs scholars.
+func TestIdleScholarsStillShowATechTime(t *testing.T) {
 	ge := scholarGame(t)
 	if err := ge.CancelResearch(); err != nil {
 		t.Fatal(err)
 	}
 	st := ge.GetState()
-	if !idleTeaching(st) {
+	if st.Research.CurrentTech != "" || st.Scholars.Researching != 0 || st.Scholars.Total == 0 {
 		t.Fatalf("staging: %+v", st.Scholars)
 	}
-	if card := cardOf(st, "ritual"); !strings.Contains(card, teachUntilStart) || strings.Contains(card, "needs scholars") {
+	ticks := st.Research.Techs["ritual"].TicksNeeded
+	if ticks <= 0 {
+		t.Fatalf("an idle town shows Ritual at %d ticks", ticks)
+	}
+	want := formatTicks(ticks, st)
+	if card := cardOf(st, "ritual"); !strings.Contains(card, "It takes "+want+".") || strings.Contains(card, "needs scholars") {
 		t.Errorf("idle card:\n%s", card)
 	}
-	if list := cmdResearchList(ge).Message; !strings.Contains(list, "Ritual ("+timeOnStart+")") || strings.Contains(list, "needs scholars") {
+	if list := cmdResearchList(ge).Message; !strings.Contains(list, "Ritual ("+want+")") || strings.Contains(list, "needs scholars") {
 		t.Errorf("idle list:\n%s", list)
 	}
 	if _, err := ge.SetResearchShare(0); err != nil {
 		t.Fatal(err)
 	}
 	st = ge.GetState()
-	if idleTeaching(st) {
-		t.Fatal("at 0 percent the scholars are not idle, they are set to teach")
-	}
 	if card := cardOf(st, "ritual"); !strings.Contains(card, needsScholars) {
 		t.Errorf("share 0 card:\n%s", card)
+	}
+	if list := cmdResearchList(ge).Message; !strings.Contains(list, "Ritual ("+needsScholarsShort+")") {
+		t.Errorf("share 0 list:\n%s", list)
 	}
 }
 
