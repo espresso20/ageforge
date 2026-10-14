@@ -4059,7 +4059,7 @@ func (ge *GameEngine) storeTooSmallText(what, res string, amount float64) string
 // storage building has no copy left that the store could pay for.
 func (ge *GameEngine) storageLimitTail() string {
 	tail := " Your storage is at its limit for this age."
-	if next := ge.progress.GetNextAge(ge.age); next != "" && config.AgeHasStorageBuilding(ge.rules.Buildings(), next) {
+	if next := ge.progress.GetNextAge(ge.age); next != "" && ge.rules.AgeHasStorageBuilding(next) {
 		tail += " The next age has a bigger storage building."
 	}
 	return tail

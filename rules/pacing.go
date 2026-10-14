@@ -34,6 +34,11 @@ func (s *Set) derive() {
 // up to the age (config.TypicalStorages). 0 for an unknown age or resource.
 func (s *Set) TypicalStorage(res, age string) float64 { return s.typStore[age][res] }
 
+// AgeHasStorageBuilding reports whether age has a storage building of its own.
+func (s *Set) AgeHasStorageBuilding(age string) bool {
+	return config.AgeHasStorageBuilding(s.Buildings(), age)
+}
+
 // MilitaryScale is the military yardstick of the age with the given order
 // on this set's tree (config.MilitaryScales): what the typical player's
 // military power was when the raid threat and the missions were measured,
