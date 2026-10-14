@@ -324,7 +324,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 
 	// Find the wonder for the current age
 	var curWonder *wonderInfo
-	for _, w := range getWonderList() {
+	for _, w := range getWonderList(state.Ruleset()) {
 		if w.ageKey == state.Age {
 			wCopy := w
 			curWonder = &wCopy

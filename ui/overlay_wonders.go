@@ -17,7 +17,7 @@ import (
 func renderCurrentWonderSummary(state game.GameState) string {
 	var sb strings.Builder
 	var current *wonderInfo
-	for _, w := range getWonderList() {
+	for _, w := range getWonderList(state.Ruleset()) {
 		if w.ageKey == state.Age {
 			wCopy := w
 			current = &wCopy
@@ -117,7 +117,7 @@ func wondersProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	sb.WriteString(renderCurrentWonderSummary(state))
 
-	wonders := getWonderList()
+	wonders := getWonderList(state.Ruleset())
 	builtCount := 0
 	totalCount := len(wonders)
 

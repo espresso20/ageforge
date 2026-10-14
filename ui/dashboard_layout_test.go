@@ -618,6 +618,11 @@ func TestNextAgeStripShowsWonderBankProgress(t *testing.T) {
 			t.Errorf("width %d: Next Age strip has no %q:\n%s", width, want, strip)
 		}
 	}
+	list := untag(wondersProvider(st, 0))
+	listWant := fmt.Sprintf("(%.0f%% banked)", pct)
+	if !strings.Contains(list, listWant) {
+		t.Errorf("Wonders list has no %q:\n%s", listWant, list)
+	}
 
 	bank := make(map[string]float64, len(def.BaseCost))
 	for resource, cost := range def.BaseCost {
