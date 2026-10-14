@@ -312,18 +312,45 @@ func (ge *GameEngine) processResearch() {
 }
 
 // advanceResearch moves research on by n ticks at once (offline catch-up), at
-// the efficiency the rest of the town works at. Reports whether a tech
-// completed.
-func (ge *GameEngine) advanceResearch(n int) bool {
-	if ge.Research.currentTech == "" || n <= 0 {
-		return false
-	}
-	work := float64(float64(n) * OfflineEfficiency * ge.researchPerTick)
-	if completed := ge.workResearch(work); completed != "" {
+// the efficiency eff the rest of the town works at, as live ticks would: a
+// tech that finishes partway through gives up the rest of the span to the
+// next one the plan starts, at the work a tick that holds after the
+// completion, with the finished tech's effects in place. With nothing to
+// start the scholars teach for what is left. starts collects what the plan
+// starts on the way. Reports whether a tech completed.
+func (ge *GameEngine) advanceResearch(n int, eff float64, starts *planStarts) bool {
+	done := false
+	for n > 0 && ge.Research.currentTech != "" {
+		per := float64(eff * ge.researchPerTick)
+		if per <= 0 {
+			break
+		}
+		// The ticks the tech in progress still needs at this rate, or the
+		// whole span if that is less.
+		k := n
+		if need := ge.Research.currentPrice() - ge.Research.progress; need > 0 {
+			k = min(n, max(1, int(math.Ceil(need/per))))
+		}
+		completed := ge.workResearch(float64(per * float64(k)))
+		n -= k
+		if completed == "" {
+			continue
+		}
+		done = true
 		ge.finishResearch(completed)
-		return true
+		ge.recalculateRates()
+		if n <= 0 {
+			break
+		}
+		// The next tech starts in the tick its predecessor finished. A tech
+		// a head start covers completes as it starts, and the plan's next
+		// one starts a tick later, as on a live tick.
+		ge.runPlan(starts)
+		for n > 0 && ge.Research.currentTech == "" && ge.runPlan(starts) {
+			n--
+		}
 	}
-	return false
+	return done
 }
 
 // workResearch adds work to the tech in progress and counts it (the

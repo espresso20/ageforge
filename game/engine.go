@@ -5071,7 +5071,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.tick += n
 		done += n
 		changed := ge.advanceBuildQueue(n)
-		if ge.advanceResearch(n) {
+		if ge.advanceResearch(n, OfflineEfficiency, &starts) {
 			changed = true
 		}
 		if changed {
