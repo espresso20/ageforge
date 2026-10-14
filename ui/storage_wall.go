@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
@@ -80,7 +81,7 @@ func (sw *storeWall) line(bs game.BuildingState) string {
 		return ""
 	}
 	if bs.StoreLimit || sw.storageAtLimit() {
-		return storageLimitLine(bs.Name, res, bs.NextCost[res], sw.state.Resources[res].Storage, sw.state.NextAge != "")
+		return storageLimitLine(bs.Name, res, bs.NextCost[res], sw.state.Resources[res].Storage, sw.state.NextAge != "" && config.AgeHasStorageBuilding(sw.state.Ruleset().Buildings(), sw.state.NextAge))
 	}
 	return storeTooSmallLine(bs.Name, res, bs.NextCost[res], sw.state.Resources[res].Storage, sw.buildingFor(res))
 }

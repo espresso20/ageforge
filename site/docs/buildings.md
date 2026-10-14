@@ -492,6 +492,8 @@ A storage building is judged against the store it would raise, counting the copi
 <Building> costs <amount> <resource>, more than your <resource> storage holds (<size>). Your storage is at its limit for this age. The next age has a bigger storage building.
 ```
 
+The last sentence is left out in the Quantum Age, whose Quantum Vault has no bigger successor. A storage building still going up counts as it will stand: its storage is multiplied by Era Mastery and by your storage techs, the same as the copies already built.
+
 The gate out of each age asks for five copies of its storage building, and all five can be bought.
 
 A full store stops that resource piling up. What it cannot hold goes into the current wonder's bank while the wonder still needs it (unless you typed `wonder overflow off`), and is lost otherwise. It no longer pays toward the plan's next copies. So build storage first whenever you enter a new age.

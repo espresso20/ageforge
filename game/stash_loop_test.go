@@ -180,3 +180,111 @@ func TestOtherBuildingsAreSentToStorageOnlyWhileStorageCanGrow(t *testing.T) {
 		}
 	}
 }
+
+// Storage copies still going up is judged by the store it will make, and a
+// finished copy's store is multiplied by Era Mastery's k and by the techs'
+// storage bonus. The limit must agree with what the store is once the queue
+// has been built, with either multiplier above 1 or both.
+func TestQueuedStorageCountsWithMasteryAndStorageTech(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		mastery int
+		tech    bool
+		going   int  // Stashes in the queue, none built
+		limit   bool // the next copy (going+1) is really out of reach of the finished store
+	}{
+		{"neither", 0, false, 5, true},  // 574 against 550
+		{"mastery", 1, false, 6, false}, // k = 2: 1005 against 1300; unmultiplied queue said 700
+		{"tech", 0, true, 5, false},     // 574 against 605; unmultiplied queue said 555
+		{"both", 1, true, 6, false},     // 1005 against 1430; unmultiplied queue said 710
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// A town with none built and five going up (the queue is filled
+			// directly: the wall lets a player queue them one at a time only
+			// as each is built). Old code counted the queued copies at their
+			// raw size beside a store already multiplied, so it called the
+			// sixth copy out of reach whenever the multiplier was small.
+			fifthGoingUp := func() *GameEngine {
+				ge := newSeededEngine(1)
+				if tc.mastery > 0 {
+					ge.SetMasteryForTest(map[string]int{"primitive_age": tc.mastery}, "primitive_age")
+					if k := ge.speedK(); k <= 1 {
+						t.Fatalf("setup: Era Mastery %d gives k = %v", tc.mastery, k)
+					}
+				}
+				if tc.tech {
+					ge.GrantTechsForTest("pottery")
+				}
+				ge.mu.Lock()
+				for i := 0; i < tc.going; i++ {
+					ge.buildQueue = append(ge.buildQueue, BuildQueueItem{BuildingKey: "stash", TicksLeft: 9, TotalTicks: 9})
+				}
+				ge.recalculateRates()
+				ge.mu.Unlock()
+				setAmount(ge, "wood", ge.Resources.GetStorage("wood"))
+				return ge
+			}
+			ge := fifthGoingUp()
+			gotLimit := ge.GetState().Buildings["stash"].StoreLimit
+			// The truth: build the queue, and ask whether the next copy fits.
+			for i := 0; i < 1000 && queued(ge, "stash") > 0; i++ {
+				ge.StepTicks(1)
+			}
+			if ge.Buildings.GetCount("stash") != tc.going {
+				t.Fatalf("setup: %d Stashes after the queue (want %d)", ge.Buildings.GetCount("stash"), tc.going)
+			}
+			cost, store := ge.Buildings.GetCost("stash")["wood"], ge.Resources.GetStorage("wood")
+			if truth := cost > store; truth != tc.limit {
+				t.Fatalf("setup: the next Stash costs %v against a store of %v, limit = %v, want %v", cost, store, truth, tc.limit)
+			}
+			if gotLimit != tc.limit {
+				t.Errorf("StoreLimit = %v with %d Stashes going up, want %v (the next costs %v, the finished store is %v)", gotLimit, tc.going, tc.limit, cost, store)
+			}
+			// What a player who types `build stash` then is told.
+			err := fifthGoingUp().BuildBuilding("stash")
+			if tc.limit {
+				if err == nil || !strings.Contains(err.Error(), "at its limit") {
+					t.Errorf("the next Stash with the queue going up was told %v, want the limit", err)
+				}
+			} else if err != nil && strings.Contains(err.Error(), "at its limit") {
+				t.Errorf("a sixth Stash that will fit was told %q", err)
+			}
+		})
+	}
+}
+
+// At the last age's storage building there is no bigger one to point at: the
+// refusal ends after the first sentence. The next age is read from the tables.
+func TestLastStorageTierSaysNothingOfABiggerBuilding(t *testing.T) {
+	ages, defs := config.Ages(), config.BaseBuildings()
+	for i := range ages {
+		if i+1 >= len(ages) {
+			break
+		}
+		has := config.AgeHasStorageBuilding(defs, ages[i+1].Key)
+		if want := ages[i+1].Key != "transcendent_age"; has != want {
+			t.Errorf("AgeHasStorageBuilding(%s) = %v, want %v", ages[i+1].Key, has, want)
+		}
+	}
+	var storage string
+	for _, d := range defs {
+		if d.Category == "storage" && d.RequiredAge == "quantum_age" {
+			storage = d.Key
+		}
+	}
+	ge := newSeededEngine(1)
+	if err := ge.EnterAgeForTest("quantum_age"); err != nil {
+		t.Fatal(err)
+	}
+	ge.SetTownForTest(map[string]int{storage: 60}, 0)
+	err := ge.BuildBuilding(storage)
+	if err == nil || !strings.Contains(err.Error(), "Your storage is at its limit for this age.") {
+		t.Fatalf("build %s = %v, want the limit", storage, err)
+	}
+	if strings.Contains(err.Error(), "bigger storage building") {
+		t.Errorf("the last storage tier points at a bigger building: %q", err)
+	}
+	if !strings.HasSuffix(err.Error(), "at its limit for this age.") {
+		t.Errorf("the refusal should end after the limit sentence: %q", err)
+	}
+}

@@ -1066,7 +1066,12 @@ func (bm *BuildingManager) TransformBuilding(oldKey, newKey string, renameWorker
 // cannot be bought until the next age brings a bigger building. Judging the
 // queued copies in lets a town whose first Stash is still going up wait for
 // it, instead of being told the Stash is at its limit.
-func (bm *BuildingManager) StorageLimit(key string, resources *ResourceManager, queue []BuildQueueItem) string {
+//
+// storeIf is the engine's own store calculation (GameEngine.storeIf): the
+// size of res's store were all storage, or res's alone, to hold that much
+// more in raw building bonus. Queued copies go through it, so Era Mastery and
+// the techs' storage bonus multiply them as they do the copies that stand.
+func (bm *BuildingManager) StorageLimit(key string, resources *ResourceManager, queue []BuildQueueItem, storeIf func(res string, extraAll, extraOwn float64) float64) string {
 	def, ok := bm.defs[key]
 	if !ok || def.Category != "storage" {
 		return ""
@@ -1075,10 +1080,20 @@ func (bm *BuildingManager) StorageLimit(key string, resources *ResourceManager, 
 	queued := float64(bm.GetQueueCount(key, queue))
 	for _, res := range sortedKeys(cost) {
 		store := resources.GetStorage(res)
-		for _, e := range def.Effects {
-			if e.Type == "storage" && (e.Target == "all" || e.Target == res) {
-				store += float64(e.Value * queued)
+		if queued > 0 {
+			var all, own float64
+			for _, e := range def.Effects {
+				if e.Type != "storage" {
+					continue
+				}
+				switch e.Target {
+				case "all":
+					all += float64(e.Value * queued)
+				case res:
+					own += float64(e.Value * queued)
+				}
 			}
+			store = storeIf(res, all, own)
 		}
 		if cost[res] > store && cost[res] > resources.Get(res) {
 			return res
@@ -1091,7 +1106,7 @@ func (bm *BuildingManager) StorageLimit(key string, resources *ResourceManager, 
 // queue is the engine's current build queue, used to compute queue-aware next costs.
 // getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
 // pass nil to skip worker field population.
-func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int) map[string]BuildingState {
+func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int, storeIf func(res string, extraAll, extraOwn float64) float64) map[string]BuildingState {
 	out := make(map[string]BuildingState)
 	for key, def := range bm.defs {
 		// NextCost uses BuildBatchCost so it reflects queue depth — the displayed
@@ -1111,7 +1126,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		if def.MaxCount > 0 && count >= def.MaxCount {
 			state.AtMaxCount = true
 		}
-		state.StoreLimit = bm.StorageLimit(key, resources, queue) != ""
+		state.StoreLimit = bm.StorageLimit(key, resources, queue, storeIf) != ""
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)

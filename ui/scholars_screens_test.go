@@ -545,3 +545,28 @@ func TestEnlightenmentLineNamesScholarOutput(t *testing.T) {
 		t.Errorf("the active Enlightenment reads %q", plain)
 	}
 }
+
+// The last age with a storage building has no bigger one after it: the line
+// ends after the limit sentence. Read from the tables, not the age's place.
+func TestStorageLimitLineNamesABiggerBuildingOnlyWhereThereIsOne(t *testing.T) {
+	for _, tc := range []struct {
+		age  string
+		want bool
+	}{{"stone_age", true}, {"quantum_age", false}} {
+		st := gameIn(t, tc.age).GetState()
+		for k, b := range st.Buildings {
+			if b.Category == "storage" && b.AgeKey == st.Age {
+				b.StoreLimit = true
+				st.Buildings[k] = b
+			}
+		}
+		sw := &storeWall{state: st}
+		line := sw.line(game.BuildingState{Name: "Thing", Unlocked: true, NextCost: map[string]float64{"food": st.Resources["food"].Storage * 10}})
+		if !strings.Contains(line, "Your storage is at its limit for this age.") {
+			t.Fatalf("%s: line = %q", tc.age, line)
+		}
+		if got := strings.Contains(line, "The next age has a bigger storage building."); got != tc.want {
+			t.Errorf("%s: names a bigger building = %v, want %v: %q", tc.age, got, tc.want, line)
+		}
+	}
+}

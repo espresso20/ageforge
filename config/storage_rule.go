@@ -209,3 +209,15 @@ func StorageLastCopy(defs []BuildingDef, ages []AgeDef, base float64, sizes, sto
 	}
 	return out
 }
+
+// AgeHasStorageBuilding reports whether the age has a storage building of its
+// own. The last age has none, and a refusal at the Quantum Vault's limit has
+// no bigger building to point at.
+func AgeHasStorageBuilding(defs []BuildingDef, age string) bool {
+	for _, d := range defs {
+		if d.Category == "storage" && d.RequiredAge == age {
+			return true
+		}
+	}
+	return false
+}
