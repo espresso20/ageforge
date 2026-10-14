@@ -103,6 +103,18 @@ func (pm *ProgressManager) GetAgeOrder() map[string]int {
 	return out
 }
 
+// AgeIndex returns the order index for an age key without copying the age map.
+func (pm *ProgressManager) AgeIndex(key string) (int, bool) {
+	i, ok := pm.ageIndex[key]
+	return i, ok
+}
+
+// ageOrder returns the read-only age index for internal callers that need the
+// full map. External callers must use GetAgeOrder, which protects this map.
+func (pm *ProgressManager) ageOrder() map[string]int {
+	return pm.ageIndex
+}
+
 // GetRequirementsForNext returns a copy of the building counts the gate into
 // the next age asks for (it ends up in GameState, and the original is the
 // engine's age table).

@@ -106,20 +106,28 @@ func (ge *GameEngine) scholarGroups() ([]ScholarGroup, int) {
 
 // scholarTotal is every scholar the town has.
 func (ge *GameEngine) scholarTotal() int {
-	_, total := ge.scholarGroups()
+	total := 0
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+		if def.Scholars > 0 && count > 0 {
+			total += count * def.Scholars
+		}
+	})
 	return total
 }
 
 // researchQueued reports whether the plan holds a research item whose age
 // has been reached: a tech the scholars would take up next.
 func (ge *GameEngine) researchQueued() bool {
-	order := ge.progress.GetAgeOrder()
+	currentAge, _ := ge.progress.AgeIndex(ge.age)
 	for _, it := range ge.plan {
 		if it.Kind != PlanResearch {
 			continue
 		}
-		if def, ok := ge.rules.Tech(it.Key); ok && order[def.Age] <= order[ge.age] {
-			return true
+		if def, ok := ge.rules.Tech(it.Key); ok {
+			techAge, _ := ge.progress.AgeIndex(def.Age)
+			if techAge <= currentAge {
+				return true
+			}
 		}
 	}
 	return false
