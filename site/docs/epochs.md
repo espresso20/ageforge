@@ -32,7 +32,7 @@ On a first run the Modern Age, where a full run's prestige comes, arrives after 
 
 **⚡ Electric Era.** Grid Surge, Oil Strike and Nuclear Theory give small pushes to production and research. This era's catastrophe is The Nuclear Exchange. Nuclear scares and labor movements are short, bearable setbacks.
 
-**▣ Digital Era.** Data replaces iron as the bottleneck. Server Outage, The Great Breach and AI Breakthrough move data and knowledge around in amounts that are small next to Digital Era output. The Great Hack is this era's catastrophe.
+**▣ Digital Era.** Data replaces iron as the bottleneck. Server Outage, The Great Breach and AI Breakthrough move data and research around in amounts that are small next to Digital Era output. The Great Hack is this era's catastrophe.
 
 **◉ Neon Era.** Plasma is both the primary and the energy resource. Neural Uprising is the nastiest event outside the transition roll: it removes 20% of your workers, steals 500 food and drains food at the same time. Corporate Espionage takes 10K gold and 8K data, a small sum by now.
 
@@ -50,7 +50,7 @@ Each epoch has a single **Awakening**: a one-time production boost that fires th
 | ⚔ Iron Era | Discovery of Metallurgy | Iron Age | +2 iron/tick for ~43 min |
 | ⚙ Steel Era | Steam Breakthrough | Industrial Age | +25% all production for ~17 min |
 | ⚡ Electric Era | The Grid Wakes | Victorian Age | +2 electricity/tick, +10% all production for ~26 min |
-| ▣ Digital Era | Networks Wake | Modern Age | +2 data/tick, +1 knowledge/tick for ~26 min |
+| ▣ Digital Era | Networks Wake | Modern Age | +2 data/tick, your scholars work faster for ~26 min |
 | ◉ Neon Era | Cybernetic Awakening | Cyberpunk Age | +20% all production for ~22 min |
 | ✦ Cosmic Era | First Contact Signal | Interstellar Age | +1.5 dark matter/tick, +10% all production for ~35 min |
 
@@ -154,7 +154,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 |-------|--------|----------|
 | Age of Plenty | +100% all production (double) | 562 ticks (~18m 44s) |
 | Population Surge | +15% workers added | Instant |
-| Ancient Cache | Pays 15 minutes of your town's income of every unlocked resource (in knowledge, at most the price of the cheapest tech of the age you entered). A store takes only what it has room for, and the log says `Storage was nearly full: only ... fit.` when one took less | Instant |
+| Ancient Cache | Pays 15 minutes of your town's income of every unlocked resource (in research, progress on the tech in progress or a head start, at most the work of the cheapest tech of the age you entered). A store takes only what it has room for, and the log says `Storage was nearly full: only ... fit.` when one took less | Instant |
 | Trade Winds | Gold production +50% | 374 ticks (~12m 28s) |
 | Cultural Festival | +30% of your culture and +20% of your faith at once, then culture production +50% and faith production +50%. Never rolled on entering the Iron Era: culture unlocks in the Classical Age | 374 ticks |
 
@@ -188,9 +188,9 @@ Type **`epoch`** to open the Epoch panel. It shows:
 | The Great Fire | Up to 8 random buildings destroyed (never wonders, storage or knowledge buildings) | Instant |
 | Epidemic | Lose 20% of workers, then food production -20% | 468 ticks |
 | Resource Drought | Epoch's primary resource: production -40% | 234 ticks |
-| Political Instability | Lose 60% of your faith, then knowledge production -30% | 156 ticks |
+| Political Instability | Lose 60% of your faith, then research speed -30% | 156 ticks |
 | Economic Crash | Lose half your gold, then gold production -40% | 562 ticks |
-| The Dark Age | Current research canceled, lose 80% of your knowledge, then knowledge production -40% | 374 ticks |
+| The Dark Age | Current research canceled and its work lost, lose the head start you kept, then research speed -40% | 374 ticks |
 
 The Great Fire and Epidemic are the two you least want to see. Eight lost buildings in the early game set you back a long way. Lost workers come back on their own: with auto-recruit on (the default), the game recruits into the empty worker slots as housing and food allow (see [The roster](workers-and-domains.md#the-roster)), but output dips until they do.
 
@@ -212,7 +212,7 @@ Durations are what each event runs in its own epoch. The Stone Era's events run 
 | Humming Grove | Good | +5 min of wood income, faith production +50% for 120 ticks |
 | Beast Stampede | Bad | Lose 10% of your wood, 8% of your food |
 | River Blessing | Good | Food production +25% for 144 ticks |
-| Wandering Sage | Good | +10 min of knowledge income, +10 min of faith income |
+| Wandering Sage | Good | research progress worth 10 min of your scholars' work, +10 min of faith income |
 
 ### Iron Era ⚔
 
@@ -222,7 +222,7 @@ Durations are what each event runs in its own epoch. The Stone Era's events run 
 | Locust Swarm | Bad | -12% workers, food production -30% for 312 ticks |
 | Conquered Village | Good | +10 min of gold income |
 | Imperial Road | Good | Gold production +20% for 562 ticks |
-| Oracle's Prophecy | Good | Faith production +30%, knowledge production +15% for 374 ticks |
+| Oracle's Prophecy | Good | Faith production +30%, research speed +15% for 374 ticks |
 
 ### Steel Era ⚙
 
@@ -231,7 +231,7 @@ Durations are what each event runs in its own epoch. The Stone Era's events run 
 | Coal Seam Discovery | Good | Coal production +30% for 468 ticks |
 | Workers' Uprising | Bad | Lose 15% of your faith, -8% workers, food production -15% for 312 ticks |
 | Colonial Bounty | Good | +12 min of gold income |
-| Steam Age Inventor | Good | +8 min of knowledge income, knowledge production +20% for 374 ticks |
+| Steam Age Inventor | Good | research progress worth 8 min of your scholars' work, research speed +20% for 374 ticks |
 | Industrial Blight | Bad | Lose 10% of your faith, food production -20% for 374 ticks |
 
 ### Electric Era ⚡
@@ -242,17 +242,17 @@ Durations are what each event runs in its own epoch. The Stone Era's events run 
 | Oil Strike | Good | +8 min of gold income, oil production +40% for 468 ticks |
 | The Broadcast | Good | +10 min of culture income, faith production +20% for 468 ticks |
 | Labor Movement | Bad | Food production -15%, gold production -15% for 156 ticks |
-| Nuclear Theory | Good | +10 min of knowledge income, knowledge production +25% for 468 ticks |
+| Nuclear Theory | Good | research progress worth 10 min of your scholars' work, research speed +25% for 468 ticks |
 
 ### Digital Era ▣
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| The Great Breach | Bad | Lose 20% of your data, knowledge production -20% for 312 ticks |
+| The Great Breach | Bad | Lose 20% of your data, research speed -20% for 312 ticks |
 | Viral Moment | Good | +15 min of culture income |
 | Tech Monopoly | Good | Gold production +30% for 468 ticks |
 | Server Outage | Bad | Data production -40% for 312 ticks |
-| AI Breakthrough | Good | Knowledge production +30%, data production +20% for 562 ticks |
+| AI Breakthrough | Good | Research speed +30%, data production +20% for 562 ticks |
 
 ### Neon Era ◉
 
@@ -268,11 +268,11 @@ Durations are what each event runs in its own epoch. The Stone Era's events run 
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Reality Fracture | Bad | Quantum flux production -40%, knowledge production -10% for 312 ticks |
+| Reality Fracture | Bad | Quantum flux production -40%, research speed -10% for 312 ticks |
 | Dimensional Harvest | Good | +8 min of antimatter income, +8 min of quantum flux income |
 | Galactic Council | Good | +10 min of gold income, gold production +20% for 562 ticks |
-| Entropy Wave | Bad | Quantum flux production -20%, knowledge production -20% for 374 ticks |
-| Transcendence Signal | Good | +15 min of knowledge income, +10 min of culture income |
+| Entropy Wave | Bad | Quantum flux production -20%, research speed -20% for 374 ticks |
+| Transcendence Signal | Good | research progress worth 15 min of your scholars' work, +10 min of culture income |
 
 ---
 
@@ -364,7 +364,7 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 
 **The anti-streak rule is your safety net during normal play.** After two bad events in a row, the next one is good or mixed; after three good ones, the next is usually bad or mixed. See [Events](events.md#anti-streak-system).
 
-**Know how Challenging events hit.** Merchant Betrayal and Economic Crash take half of whatever gold you hold, and Political Instability takes 60% of your faith, so a bigger stockpile loses more in absolute terms. The per-tick drains (The Famine, Resource Drought, the gold and knowledge drains) are a share of what you make, worked out when the event fires: the log line under the event says what that comes to per tick.
+**Know how Challenging events hit.** Merchant Betrayal and Economic Crash take half of whatever gold you hold, and Political Instability takes 60% of your faith, so a bigger stockpile loses more in absolute terms. The per-tick drains (The Famine, Resource Drought, the gold and research drains) are a share of what you make, worked out when the event fires: the log line under the event says what that comes to per tick.
 
 **Know your epoch's primary resource before you cross in.** The Digital Era wants data production running before you arrive. The Neon Era wants plasma reactors. Don't cross an epoch boundary and then find you can't produce the era's core resource.
 

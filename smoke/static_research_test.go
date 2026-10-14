@@ -39,7 +39,7 @@ func TestResearchCovenant(t *testing.T) {
 	if len(rows) != len(config.Ages()) {
 		t.Fatalf("%d rows, want one per age (%d)", len(rows), len(config.Ages()))
 	}
-	keystones, most := 0, 0
+	keystones := 0
 	worst := ResearchRow{}
 	for _, r := range rows {
 		for _, p := range r.Problems() {
@@ -48,7 +48,6 @@ func TestResearchCovenant(t *testing.T) {
 		if r.First == "" {
 			t.Errorf("%s has no tech to be its first", r.Age)
 		}
-		most = max(most, r.StorageCopies)
 		if r.Keystone == "" {
 			continue
 		}
@@ -62,11 +61,6 @@ func TestResearchCovenant(t *testing.T) {
 	}
 	if keystones != 21 {
 		t.Errorf("%d ages have a keystone, want 21: every age but the Primitive", keystones)
-	}
-	// The allowance is what the worst age needs, no more: when techs are
-	// added and prices fall, this says to bring TechEntryStorageCopies down.
-	if most != TechEntryStorageCopies {
-		t.Errorf("the age that needs the most storage before its first tech fits needs %d copies; TechEntryStorageCopies is %d: make it match", most, TechEntryStorageCopies)
 	}
 	// Even the tightest age leaves a fifth of itself to spare.
 	if _, known := ResearchTimeKnown[worst.Age]; !known && worst.TimeShare() > 0.8 {

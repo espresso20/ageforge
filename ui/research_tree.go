@@ -250,11 +250,9 @@ func buildTree(state game.GameState, geom treeGeom, ascii bool, sel string) *tre
 				n.mark = markRunning
 			case band.next:
 				n.mark = markNext
-			case ts.PrereqsMet && !ts.OverStore:
+			case ts.PrereqsMet:
 				n.mark = markReady
 			default:
-				// Over the knowledge store: it cannot be started until a
-				// knowledge building raises the store, so it waits.
 				n.mark = markLocked
 			}
 			if band.next {
@@ -548,12 +546,7 @@ func (m *treeModel) nameSpan(n *treeNode) (x int, name string) {
 }
 
 // progressOf is how far the research in progress has come, 0 to 1.
-func progressOf(state game.GameState) float64 {
-	if state.Research.TotalTicks <= 0 {
-		return 0
-	}
-	return 1 - float64(state.Research.TicksLeft)/float64(state.Research.TotalTicks)
-}
+func progressOf(state game.GameState) float64 { return researchFraction(state) }
 
 // canvas draws the whole tree on its virtual canvas: the lines first, then
 // every tech over them.
@@ -763,14 +756,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 		out.put(x, 0, ' ', tsChip, -1)
 		out.put(x, h-1, ' ', tsChip, -1)
 	}
-	know := state.Resources["knowledge"]
-	// Held over the knowledge store, as the Resources box says it.
-	held := FormatNumber(know.Amount) + " / " + FormatNumber(state.KnowledgeStore.Store)
-	right := fmt.Sprintf("Knowledge %s %s/tick ", held, textfmt.RateValue(know.Rate))
-	if w < 100 {
-		held = FormatNumber(know.Amount) + "/" + FormatNumber(state.KnowledgeStore.Store)
-		right = fmt.Sprintf("%s %s/t ", held, textfmt.RateValue(know.Rate))
-	}
+	right := ""
 	title := fmt.Sprintf(" RESEARCH  %d of %d known", m.known, m.inReach)
 	if w >= 100 {
 		if m.nextAge > 0 {
@@ -787,14 +773,52 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	} else {
 		title = fmt.Sprintf(" RESEARCH %d/%d", m.known, m.inReach)
 	}
-	x := out.text(0, 0, clipRunes(title, w), tsChip, -1)
+	x := 0
 	if cur := state.Research.CurrentTech; cur != "" {
-		pct := progressOf(state)
-		done := int(math.Round(10 * pct))
-		run := fmt.Sprintf("  ⟳ %s %s%s %d%% · %s left", state.Research.CurrentTechName,
-			strings.Repeat("▓", done), strings.Repeat("░", 10-done), int(math.Round(100*pct)), formatTicks(state.Research.TicksLeft, state))
-		if x+len([]rune(run))+len([]rune(right)) <= w {
-			out.text(x, 0, run, tsChipKey, -1)
+		// The bar leads: the tech in progress, its bar, its percent, what is
+		// left. The title gives way to the short one for it, and the scholars
+		// take the room that remains.
+		bar, pct := plainBar(researchFraction(state), 10), researchPercent(state)
+		name := state.Research.CurrentTechName
+		left := researchLeft(state)
+		short := fmt.Sprintf(" RESEARCH %d/%d", m.known, m.inReach)
+		placed := false
+		for _, ttl := range []string{short} {
+			for _, run := range []string{
+				fmt.Sprintf("  ⟳ %s %s %d%% · %s", name, bar, pct, left),
+				fmt.Sprintf("  ⟳ %s %s %d%%", name, bar, pct),
+			} {
+				if len([]rune(ttl))+len([]rune(run)) <= w {
+					x = out.text(0, 0, ttl, tsChip, -1)
+					x = out.text(x, 0, run, tsChipKey, -1)
+					placed = true
+					break
+				}
+			}
+			if placed {
+				break
+			}
+		}
+		if !placed {
+			x = out.text(0, 0, clipRunes(short, w), tsChip, -1)
+			if run := fmt.Sprintf("  ⟳ %s %d%%", bar, pct); x+len([]rune(run)) <= w {
+				x = out.text(x, 0, run, tsChipKey, -1)
+			}
+		}
+	} else {
+		x = out.text(0, 0, clipRunes(title, w), tsChip, -1)
+	}
+	for _, form := range []string{
+		scholarsShort(state),
+		fmt.Sprintf("%d research, %d teach, %s", state.Scholars.Researching, state.Scholars.Teaching, textfmt.SignedPercent(state.Scholars.TeachingBonus)),
+		fmt.Sprintf("%d research, %d teach", state.Scholars.Researching, state.Scholars.Teaching),
+	} {
+		if state.Scholars.Total <= 0 {
+			break
+		}
+		if x+2+len([]rune(form)) < w {
+			right = form + " "
+			break
 		}
 	}
 	if rx := w - len([]rune(right)); rx > x {
@@ -903,11 +927,6 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	// The status line and the key bar.
 	status := clipRunes(m.statusLine(state, v), w)
 	out.text(0, h-2, status, tsText, -1)
-	for i, r := range []rune(status) {
-		if string(r) == overMark {
-			out.put(i, h-2, r, tsBad, -1)
-		}
-	}
 	keys := [][2]string{{"←↑↓→", "move"}, {"Tab", "next you can start"}, {"PgUp PgDn", "zoom"}, {"Home", "your age"}, {"Enter", "card"}, {"Esc", "close"}}
 	if v.ascii {
 		keys[0][0] = "Arrows"
@@ -980,30 +999,10 @@ func (m *treeModel) beyondLine() string {
 	return fmt.Sprintf("┄┄┄ %s in later ages ┄┄┄", textfmt.Count(m.later, "more tech waits", "more techs wait"))
 }
 
-// costText is a tech's price and time as the status line says them.
-// A price over the knowledge store carries the mark the Buildings list gives
-// a building that cannot be built (a red cross).
+// costText is a tech's time as the status line says it: what it takes the
+// scholars researching now, or that it needs scholars.
 func costText(state game.GameState, n *treeNode) string {
-	s := fmt.Sprintf("%s knowledge, %s", FormatNumber(n.ts.Cost), formatTicks(researchTicks(n.def.ResearchTicks, state), state))
-	if n.overStore() {
-		s = overMark + " " + s
-	}
-	return s
-}
-
-// overStore reports whether the node's price is over the knowledge store
-// now. A tech of an age not reached is not in question yet: it waits for
-// its age first.
-func (n *treeNode) overStore() bool { return n.ts.OverStore && n.mark != markNext }
-
-// overMark is the cross a price over a store carries.
-const overMark = "✗"
-
-// techStoreLine is the over-the-store sentence for a tech, the one the
-// Buildings list gives a building and the engine gives the command, naming
-// the age's knowledge building.
-func techStoreLine(state game.GameState, ts game.TechState) string {
-	return storeTooSmallLine(ts.Name, "knowledge", ts.Cost, state.KnowledgeStore.Store, storageBuildingName(state, "knowledge"))
+	return techTime(n.ts, state)
 }
 
 // statusLine names the selected tech, its state, its price and what it
@@ -1122,7 +1121,7 @@ func cardActionFor(state game.GameState, n *treeNode) cardAction {
 		return actNone
 	case n.plan > 0:
 		return actNone
-	case n.mark == markReady && !n.overStore() && state.Research.CurrentTech == "" && state.Resources["knowledge"].Amount >= n.ts.Cost:
+	case n.mark == markReady && state.Research.CurrentTech == "":
 		return actStart
 	}
 	return actPlan
@@ -1175,21 +1174,26 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	out = append(out, strings.TrimSpace(blurb))
 
 	// What it costs.
-	know := state.Resources["knowledge"].Amount
-	took := formatTicks(researchTicks(n.def.ResearchTicks, state), state)
 	switch n.mark {
 	case markDone:
 		out = append(out, "You already hold this.")
 	case markRunning:
-		out = append(out, fmt.Sprintf("It is being researched: %s done, %s left.",
-			sw(swHi, fmt.Sprintf("%d%%", int(math.Round(100*progressOf(state))))), sw(swHi, formatTicks(state.Research.TicksLeft, state))))
+		if state.Research.NeedsScholars {
+			out = append(out, fmt.Sprintf("It is being researched: %s done. %s",
+				sw(swHi, fmt.Sprintf("%d%%", researchPercent(state))), needsScholars))
+		} else {
+			out = append(out, fmt.Sprintf("It is being researched: %s done, %s left.",
+				sw(swHi, fmt.Sprintf("%d%%", researchPercent(state))), sw(swHi, formatTicks(state.Research.TicksLeft, state))))
+		}
+		out = append(out, sw(swHi, plainBar(researchFraction(state), 20)+fmt.Sprintf(" %d%%", researchPercent(state))))
 	default:
-		out = append(out, fmt.Sprintf("It costs %s of your %s knowledge and takes %s.",
-			sw(swHi, FormatNumber(n.ts.Cost)), sw(swHi, FormatNumber(know)), sw(swHi, took)))
-		if n.overStore() {
-			out[len(out)-1] += " " + sw(swBad, techStoreLine(state, n.ts))
+		if n.ts.TicksNeeded <= 0 {
+			out = append(out, needsScholars)
+		} else {
+			out = append(out, fmt.Sprintf("It takes %s.", sw(swHi, formatTicks(n.ts.TicksNeeded, state))))
 		}
 	}
+	out = append(out, scholarsLine(state))
 
 	// Where it stands.
 	name := func(key string) string {
@@ -1267,21 +1271,17 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 			act += " It starts once you reach the " + m.bandOf(n).name + " and hold what it needs."
 		case len(first) > 0:
 			act += " They run in that order, one at a time."
-		case n.overStore() && n.mark == markLocked:
-			// The cost line says why.
 		case n.mark == markLocked:
 			act += " It starts once you hold what it needs."
 		case state.Research.CurrentTech != "":
 			act += fmt.Sprintf(" %s is running, so it starts in %s.", state.Research.CurrentTechName, formatTicks(state.Research.TicksLeft, state))
-		default:
-			act += " It starts when the knowledge is there."
 		}
 	default:
 		switch {
 		case n.plan > 0:
 			act = fmt.Sprintf("It is item %d in your plan.", n.plan)
 		case n.mark == markRunning:
-			act = "Type research cancel to stop it; the knowledge it cost is not returned."
+			act = "Type research cancel to stop it; the work done on it is lost."
 		}
 	}
 	if note != "" {
@@ -1497,3 +1497,10 @@ var plainFold = map[rune]rune{
 
 // foldPlain rewrites a grid for the plain glyph tier: nothing but ASCII.
 func foldPlain(g *tGrid) { foldGrid(g, plainFold) }
+
+// plainBar is a bar of width cells filled to the fraction f, as the card
+// draws it (no color tags: the card sets its own styles).
+func plainBar(f float64, width int) string {
+	done := min(max(int(f*float64(width)), 0), width)
+	return strings.Repeat("█", done) + strings.Repeat("░", width-done)
+}

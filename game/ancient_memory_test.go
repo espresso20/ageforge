@@ -168,14 +168,15 @@ func TestAncientMemory_AcceptBypassesPrereqsAndHalvesSpeed(t *testing.T) {
 	if ge.Research.currentTech != tech {
 		t.Fatalf("expected %q to be in progress, got %q", tech, ge.Research.currentTech)
 	}
-	// 50% speed with no research_speed bonus == exactly double the base ticks.
-	wantTicks := def.ResearchTicks * 2
-	if ge.Research.totalTicks != wantTicks {
-		t.Errorf("memory research ticks = %d, want %d (2x for half speed)", ge.Research.totalTicks, wantTicks)
+	// 50% speed: the scholars do half the work a tick, and the tech starts
+	// with no progress.
+	if !ge.Research.slowed {
+		t.Error("a memory research is not marked slowed")
 	}
-	if ge.Research.ticksLeft != wantTicks {
-		t.Errorf("memory research ticksLeft = %d, want %d", ge.Research.ticksLeft, wantTicks)
+	if ge.Research.progress != 0 {
+		t.Errorf("memory research starts with progress %v, want 0", ge.Research.progress)
 	}
+	_ = def
 	// The offer is consumed.
 	if ge.pendingMemoryTech != "" {
 		t.Error("pendingMemoryTech should be cleared after accept")
@@ -240,7 +241,6 @@ func TestAncientMemory_PersistsAcrossSaveLoad(t *testing.T) {
 	if err := ge.AcceptAncientMemory(); err != nil {
 		t.Fatalf("accept failed: %v", err)
 	}
-	wantTicks := config.TechByKey()["pottery"].ResearchTicks * 2
 
 	if err := ge.SaveGame("test_ancient_memory"); err != nil {
 		t.Fatalf("SaveGame failed: %v", err)
@@ -262,8 +262,8 @@ func TestAncientMemory_PersistsAcrossSaveLoad(t *testing.T) {
 	if ge2.Research.currentTech != "pottery" {
 		t.Errorf("in-progress memory research lost across save/load, got %q", ge2.Research.currentTech)
 	}
-	if ge2.Research.totalTicks != wantTicks {
-		t.Errorf("doubled-tick research did not round-trip: got %d, want %d", ge2.Research.totalTicks, wantTicks)
+	if !ge2.Research.slowed {
+		t.Error("the half-speed mark did not round-trip")
 	}
 }
 

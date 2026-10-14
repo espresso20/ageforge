@@ -89,15 +89,15 @@ These 26 events belong to no epoch. They can fire in any epoch, throughout the w
 |------|-----|---------|--------|--------|----------|-------|
 | Bountiful Harvest | `bountiful_harvest` | Primitive | 15 | +5 min of food income | Instant | Most common good event early |
 | Wandering Traders | `wandering_traders` | Bronze | 12 | +5 min of gold income, +3 min of food income | Instant | |
-| Skilled Immigrants | `skilled_immigrants` | Stone | 10 | +5 min of knowledge income | Instant | |
+| Skilled Immigrants | `skilled_immigrants` | Stone | 10 | research progress worth 5 min of your scholars' work | Instant | |
 | Gold Rush | `gold_rush` | Bronze | 8 | Gold production +100% | 39 ticks (~1m 18s) | |
 | Trade Boom | `trade_boom` | Medieval | 8 | Gold production +100% | 52 ticks (~1m 44s) | |
-| Ancient Discovery | `ancient_discovery` | Iron | 6 | +10 min of knowledge income | Instant | |
+| Ancient Discovery | `ancient_discovery` | Iron | 6 | research progress worth 10 min of your scholars' work | Instant | |
 | Renaissance Fair | `renaissance_fair` | Renaissance | 10 | Culture production +50%, gold production +50% | 39 ticks (~1m 18s) | |
 | Colonial Windfall | `colonial_windfall` | Colonial | 8 | +8 min of gold income, +5 min of culture income | Instant | |
 | Power Surge | `power_surge_base` | Victorian | 6 | Electricity production +100% | 26 ticks (~52s) | |
 | Crypto Boom | `crypto_boom` | Fusion | 7 | Crypto production +100% | 39 ticks (~1m 18s) | |
-| First Contact | `first_contact` | Space | 3 | +15 min of knowledge income, +5 min of titanium income | Instant | Rarest good event |
+| First Contact | `first_contact` | Space | 3 | research progress worth 15 min of your scholars' work, +5 min of titanium income | Instant | Rarest good event |
 | Dark Matter Rift | `dark_matter_rift` | Interstellar | 4 | Dark matter production +100% | 39 ticks (~1m 18s) | |
 | Quantum Fluctuation | `quantum_fluctuation` | Quantum | 3 | Quantum flux production +100% | 26 ticks (~52s) | |
 
@@ -112,7 +112,7 @@ These 26 events belong to no epoch. They can fire in any epoch, throughout the w
 | Mine Collapse | `mine_collapse` | Iron | 7 | -5% workers, iron production -50% | 21 ticks (~42s) | **Workers permanently lost** |
 | Heresy | `heresy` | Medieval | 5 | Faith production -50% | 31 ticks (~1m 2s) | |
 | Pirate Attack | `pirate_attack` | Colonial | 7 | Lose 8% of your gold, 5% of your food | Instant | **Raid** (garrison blunts) |
-| Nuclear Scare | `nuclear_scare` | Atomic | 4 | Electricity production -40%, knowledge production -30% | 31 ticks (~1m 2s) | |
+| Nuclear Scare | `nuclear_scare` | Atomic | 4 | Electricity production -40%, research speed -30% | 31 ticks (~1m 2s) | |
 | Data Breach | `data_breach` | Information | 6 | Lose 10% of your data, 8% of your gold | Instant | **Raid** (garrison blunts) |
 | Industrial Accident | `industrial_accident` | Industrial | 8 | Lose 6% of your steel, 6% of your oil, -7% workers | Instant | **Workers permanently lost** |
 | Crypto Winter | `crypto_winter` | Cyberpunk | 8 | Lose 12% of your crypto | Instant | |
@@ -137,7 +137,7 @@ The raids are:
 | Data Breach | `data_breach` | base event, Information Age on | data and gold taken |
 | Tribal Raid | `tribal_raid` | Stone Era | food taken and workers who flee (not the food production penalty) |
 | Beast Stampede | `beast_stampede` | Stone Era | wood and food lost |
-| The Great Breach | `epoch_data_breach` | Digital Era | data taken (not the knowledge production penalty) |
+| The Great Breach | `epoch_data_breach` | Digital Era | data taken (not the research speed penalty) |
 | Corporate Espionage | `corporate_espionage` | Neon Era | gold and data taken |
 
 Soldiers train as soon as a military building stands, and a War Camp can be built in the Stone Age, so a garrison blunts the two Stone Era raids and a Bandit Raid in the Bronze Age too. The raid threat of the Stone and Bronze Ages is sized to a War Camp and Barracks garrison (see [Military](military.md)). Only the stolen resources and lost workers are blunted; a raid's production penalty runs in full. Disasters and unrest are not raids, and soldiers do nothing against them: `plague`, `mine_collapse`, `industrial_accident`, `crypto_winter`, `earthquake` and the rest take their full toll.
@@ -197,7 +197,7 @@ Awakenings are one-time boosts, one per epoch, that fire the first time you ente
 | Iron Era ⚔ | Iron Age | Discovery of Metallurgy | +2.0 iron/tick | 1,300 ticks (~43m 20s) |
 | Steel Era ⚙ | Industrial Age | Steam Breakthrough | +25% to all production | 520 ticks (~17m 20s) |
 | Electric Era ⚡ | Victorian Age | The Grid Wakes | +2.0 electricity/tick, +10% all production | 780 ticks (~26 min) |
-| Digital Era ▣ | Modern Age | Networks Wake | +2.0 data/tick, +1.0 knowledge/tick | 780 ticks (~26 min) |
+| Digital Era ▣ | Modern Age | Networks Wake | +2.0 data/tick, and your scholars work faster | 780 ticks (~26 min) |
 | Neon Era ◉ | Cyberpunk Age | Cybernetic Awakening | +20% to all production | 650 ticks (~21m 40s) |
 | Cosmic Era ✦ | Interstellar Age | First Contact Signal | +1.5 dark matter/tick, +10% all production | 1,040 ticks (~34m 40s) |
 
@@ -213,6 +213,6 @@ Every awakening after the Stone Age's fires from the Bronze Age on, so its durat
 
 **Worker loss** (`plague`, `mine_collapse`, `industrial_accident`): the only lasting damage. Lost workers come out of every building in proportion, idle ones included, so keeping workers idle doesn't shield anything. With auto-recruit on (the default), the game refills the empty slots as housing and food allow; with it off, `recruit` and `assign` to replace them. See [Workers](workers-and-domains.md).
 
-**Good events** need no preparation. Boosts like `gold_rush` and `crypto_boom` add a share of what you make, worked out when they fire, so let them run. A gain lands in storage, so room in the store is the only thing that can waste one. Knowledge windfalls (`skilled_immigrants`, `ancient_discovery`, `first_contact`) can cover the last of a tech's cost; research is paid in full when you start it, so check whether you can now afford the next one.
+**Good events** need no preparation. Boosts like `gold_rush` and `crypto_boom` add a share of what you make, worked out when they fire, so let them run. A gain lands in storage, so room in the store is the only thing that can waste one. Research windfalls (`skilled_immigrants`, `ancient_discovery`, `first_contact`) fill the bar of the tech in progress by the share they are worth, or finish it; with nothing in progress they are kept as a head start on the next tech. They never give more than that tech's work. So start a tech before you hope for one.
 
 **Faith and culture affect epoch transition events, not random events.** Stacking faith doesn't make `bountiful_harvest` more likely or `drought` less likely. See [Epochs](epochs.md).

@@ -240,8 +240,8 @@ func newMilestoneModel(defs map[string]config.BuildingDef, prestigeAge string) *
 				m.wonders[i]++
 			}
 			m.housing[i] += float64(house * float64(c.n))
-			if d.WorkerDomain == "knowledge" {
-				m.staff[i] += float64(d.WorkerCapacity * c.n)
+			if d.Scholars > 0 {
+				m.staff[i] += float64(d.Scholars * c.n)
 			}
 		}
 	}
@@ -378,9 +378,6 @@ func (m *milestoneModel) techAge(k string, byKey map[string]config.TechDef, dept
 		if first > a {
 			a = first
 		}
-	}
-	for a < n && t.Cost > m.maxStorage(a, "knowledge") {
-		a++
 	}
 	m.techAt[k] = a
 	return a
@@ -664,6 +661,9 @@ func (m *milestoneModel) techReq(k string) milestoneReq {
 
 // resourceReq: amount of res held at once, in an age from `from` on.
 func (m *milestoneModel) resourceReq(res string, amount float64, from int) milestoneReq {
+	if res == config.ResearchTarget {
+		return m.workReq(amount, from)
+	}
 	unlock, ok := m.resAge[res]
 	if !ok {
 		return unknownReq("resource", res)
@@ -695,6 +695,27 @@ func (m *milestoneModel) resourceReq(res string, amount float64, from int) miles
 				hold, m.due(due), name, num(float64(l*GateResourceMargin)), GateResourceMargin, m.ageName(q.first))
 		}
 		return fmt.Sprintf("needs %s %s, but nothing supplies %s by then. It first fits in the %s.", hold, m.due(due), name, m.ageName(q.first))
+	}
+	return q
+}
+
+// workReq: need work done on techs in the run. The scholars of the copies the
+// gates ask for do what referenceKnowledge says in an age's target time; the
+// work adds up over the ages the run has played.
+func (m *milestoneModel) workReq(amount float64, from int) milestoneReq {
+	limit := func(i int) float64 {
+		total := 0.0
+		for a := max(from, 0); a <= i && a < len(m.ages); a++ {
+			total += referenceKnowledge(m.ages[a].Key)
+		}
+		return total
+	}
+	q := milestoneReq{kind: "work", what: "research", need: amount, limit: limit, first: m.firstAge(max(from, 0), amount, limit)}
+	q.why = func(due int) string {
+		if q.first < 0 {
+			return fmt.Sprintf("needs %s of work done on techs, but the scholars of the copies the gates ask for never do that much.", num(amount))
+		}
+		return fmt.Sprintf("needs %s of work done on techs %s. The scholars first do that much in the %s.", num(amount), m.due(due), m.ageName(q.first))
 	}
 	return q
 }

@@ -75,6 +75,9 @@ func TestEnginesKeepTheirOwnRules(t *testing.T) {
 		t.Error("the core engine's snapshot lists the second set's tech")
 	}
 
+	// Scholars to do the work, in the second engine alone.
+	away.Buildings.counts["story_circle"] = 5
+	away.recalculateRates()
 	// A twin of the core engine that never meets the second one.
 	alone := NewGameEngine()
 	alone.SeedRNG(7)
@@ -125,6 +128,8 @@ func TestRunEndsKeepTheRuleset(t *testing.T) {
 	if err := ge.StartResearch(secondSetTech); err != nil {
 		t.Fatalf("researching the set's own tech after a Succumb: %v", err)
 	}
+	ge.Buildings.counts["story_circle"] = 5
+	ge.recalculateRates()
 	ge.StepTicks(5)
 	if err := ge.SaveGame("ruleset"); err != nil {
 		t.Fatalf("save: %v", err)

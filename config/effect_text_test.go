@@ -98,7 +98,7 @@ func TestEventTextCarriesNoNumbers(t *testing.T) {
 // share of the stock, a rate as a share of income) or a share of the
 // workers, and each sits in the range the sizes were tuned in.
 func TestEventEffectsAreSized(t *testing.T) {
-	resources := ResourceByKey()
+	resources := withResearchTarget(ResourceByKey())
 	for _, e := range allEventDefs() {
 		if len(e.Effects) == 0 {
 			t.Errorf("%s has no effects", e.Key)
@@ -202,6 +202,9 @@ func TestAwakeningTextMatchesEffects(t *testing.T) {
 				want = append(want, strings.ToLower(RateText(e.Target, e.Value)))
 			case "production_all":
 				want = append(want, "all production +"+FormatPercent(e.Value))
+			case "research":
+				// Work for the tech in progress: the text says it as research.
+				want = append(want, "research +"+FormatAmount(e.Value)+"/tick")
 			default:
 				t.Errorf("%s: effect type %q has no wording here; add it", a.Key, e.Type)
 			}
@@ -473,6 +476,25 @@ func TestConfigPlayerTextStyle(t *testing.T) {
 			if strings.Contains(low, b) {
 				t.Errorf("%s: %q in %q", l, b, s)
 			}
+		}
+	}
+}
+
+// The scholars' work pool and the research time pool are two bonuses with two
+// names. A timed boon names the work pool by its old resource key.
+func TestScholarOutputAndResearchSpeedHaveTheirOwnLabels(t *testing.T) {
+	for target, want := range map[string]string{
+		"knowledge_rate": "scholar output",
+		"knowledge":      "scholar output",
+		"research_speed": "research speed",
+	} {
+		if got := EffectTargetLabel(target); got != want {
+			t.Errorf("EffectTargetLabel(%q) = %q, want %q", target, got, want)
+		}
+	}
+	for _, e := range []TechEffect{{Kind: EffectOutput, Target: ResearchTarget, Value: 0.1}} {
+		if got := e.Text(); got != "+10% scholar output" {
+			t.Errorf("a tech's research output reads %q", got)
 		}
 	}
 }

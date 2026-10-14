@@ -82,7 +82,7 @@ func RandomEvents() []EventDef {
 			Description: "Skilled people seek to join your civilization, references and all.",
 			LogMessage:  "Skilled newcomers arrive with strong opinions and stronger résumés.",
 			Effects: []Effect{
-				{Type: EventGain, Target: "knowledge", Value: 5},
+				{Type: EventGain, Target: ResearchTarget, Value: 5},
 			},
 		},
 		{
@@ -92,7 +92,7 @@ func RandomEvents() []EventDef {
 			Description: "Ancient ruins reveal forgotten knowledge, and one very smug skeleton.",
 			LogMessage:  "Ruins older than memory give up their secrets, and one ominous skull.",
 			Effects: []Effect{
-				{Type: EventGain, Target: "knowledge", Value: 10},
+				{Type: EventGain, Target: ResearchTarget, Value: 10},
 			},
 		},
 		{
@@ -251,7 +251,7 @@ func RandomEvents() []EventDef {
 			LogMessage:  "A nuclear scare grips the population and the bunkers are fully staffed.",
 			Effects: []Effect{
 				{Type: EventRate, Target: "electricity", Value: -0.4},
-				{Type: EventRate, Target: "knowledge", Value: -0.3},
+				{Type: EventRate, Target: ResearchTarget, Value: -0.3},
 			},
 		},
 		{
@@ -308,7 +308,7 @@ func RandomEvents() []EventDef {
 			Description: "Contact with alien intelligence yields knowledge. They seem disappointed it took this long.",
 			LogMessage:  "We are not alone, and they seem mildly disappointed in us.",
 			Effects: []Effect{
-				{Type: EventGain, Target: "knowledge", Value: 15},
+				{Type: EventGain, Target: ResearchTarget, Value: 15},
 				{Type: EventGain, Target: "titanium", Value: 5},
 			},
 		},
@@ -392,7 +392,7 @@ func EpochExclusiveEvents() []EventDef {
 			Description: "A traveling elder trades wisdom for a warm fire and a captive audience.",
 			LogMessage:  "An old wanderer talked for nine hours by the fire. Most of it was useful.",
 			Effects: []Effect{
-				{Type: EventGain, Target: "knowledge", Value: 10},
+				{Type: EventGain, Target: ResearchTarget, Value: 10},
 				{Type: EventGain, Target: "faith", Value: 10},
 			},
 		},
@@ -447,7 +447,7 @@ func EpochExclusiveEvents() []EventDef {
 			LogMessage:  "The oracle delivered a prophecy vague enough to never be wrong, and the people are inspired.",
 			Effects: []Effect{
 				{Type: EventRate, Target: "faith", Value: 0.3},
-				{Type: EventRate, Target: "knowledge", Value: 0.15},
+				{Type: EventRate, Target: ResearchTarget, Value: 0.15},
 			},
 		},
 
@@ -491,8 +491,8 @@ func EpochExclusiveEvents() []EventDef {
 			Description: "A brilliant inventor unveils a steam engine. It only exploded twice during the demonstration.",
 			LogMessage:  "An inventor unveiled a steam engine that exploded only twice during the demo, a record.",
 			Effects: []Effect{
-				{Type: EventGain, Target: "knowledge", Value: 8},
-				{Type: EventRate, Target: "knowledge", Value: 0.2},
+				{Type: EventGain, Target: ResearchTarget, Value: 8},
+				{Type: EventRate, Target: ResearchTarget, Value: 0.2},
 			},
 		},
 		{
@@ -558,8 +558,8 @@ func EpochExclusiveEvents() []EventDef {
 			Description: "A physicist publishes a paradigm-shifting theory. Nobody understands it, which proves it's brilliant.",
 			LogMessage:  "A physicist published something nobody understands, so obviously it's genius.",
 			Effects: []Effect{
-				{Type: EventGain, Target: "knowledge", Value: 10},
-				{Type: EventRate, Target: "knowledge", Value: 0.25},
+				{Type: EventGain, Target: ResearchTarget, Value: 10},
+				{Type: EventRate, Target: ResearchTarget, Value: 0.25},
 			},
 		},
 
@@ -572,7 +572,7 @@ func EpochExclusiveEvents() []EventDef {
 			LogMessage:  "Terabytes gone because someone clicked a link promising a free cruise.",
 			Effects: []Effect{
 				{Type: EventLoss, Target: "data", Value: 0.2},
-				{Type: EventRate, Target: "knowledge", Value: -0.2},
+				{Type: EventRate, Target: ResearchTarget, Value: -0.2},
 			},
 		},
 		{
@@ -612,7 +612,7 @@ func EpochExclusiveEvents() []EventDef {
 			Description: "Your research AIs achieve recursive self-improvement. They have asked, very politely, for more compute.",
 			LogMessage:  "The research AI improved itself and then said 'please' for more compute, which is fine and not at all ominous.",
 			Effects: []Effect{
-				{Type: EventRate, Target: "knowledge", Value: 0.3},
+				{Type: EventRate, Target: ResearchTarget, Value: 0.3},
 				{Type: EventRate, Target: "data", Value: 0.2},
 			},
 		},
@@ -686,7 +686,7 @@ func EpochExclusiveEvents() []EventDef {
 			LogMessage:  "Spacetime fractured and now effects keep arriving before their causes.",
 			Effects: []Effect{
 				{Type: EventRate, Target: "quantum_flux", Value: -0.4},
-				{Type: EventRate, Target: "knowledge", Value: -0.1},
+				{Type: EventRate, Target: ResearchTarget, Value: -0.1},
 			},
 		},
 		{
@@ -719,7 +719,7 @@ func EpochExclusiveEvents() []EventDef {
 			LogMessage:  "An entropy wave swept through and everything is now slightly more worn out, the universe included.",
 			Effects: []Effect{
 				{Type: EventRate, Target: "quantum_flux", Value: -0.2},
-				{Type: EventRate, Target: "knowledge", Value: -0.2},
+				{Type: EventRate, Target: ResearchTarget, Value: -0.2},
 			},
 		},
 		{
@@ -729,7 +729,7 @@ func EpochExclusiveEvents() []EventDef {
 			Description: "A signal from the edge of the universe rewrites your understanding of reality. It opens, against all odds, with 'Hello.'",
 			LogMessage:  "A signal from the edge of everything rewrote what we know, and politely began with 'Hello.'",
 			Effects: []Effect{
-				{Type: EventGain, Target: "knowledge", Value: 15},
+				{Type: EventGain, Target: ResearchTarget, Value: 15},
 				{Type: EventGain, Target: "culture", Value: 10},
 			},
 		},

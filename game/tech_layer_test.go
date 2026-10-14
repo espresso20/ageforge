@@ -175,8 +175,8 @@ func TestTechCutsMultiplyAndHoldAtTheirFloor(t *testing.T) {
 	}
 	// Research time: Printing Press's 3% multiplies what the speed pool left.
 	learn(ge, "printing_press")
-	if got := ResearchTicks(100_000, 0.20, ge.Research.TimeFactor(), 0, 1); got != 77_600 {
-		t.Errorf("a 100,000 tick tech with +20%% research speed and a 3%% cut takes %d, want 77,600", got)
+	if got := 0.80 * ge.Research.TimeFactor(); math.Abs(got-0.776) > 1e-12 {
+		t.Errorf("a tech with +20%% research speed and a 3%% cut takes %v of its time, want 0.776", got)
 	}
 
 	// The floors: a made-up tree whose every tech halves all three.

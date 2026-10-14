@@ -147,7 +147,6 @@ func TestPlanningAcrossKnownAges(t *testing.T) {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	ge.Stats.AgesReached = append(ge.Stats.AgesReached, "stone_age", "bronze_age", "iron_age", "classical_age")
-	ge.SetStockForTest("knowledge", 500)
 	res := HandleCommand("plan research philosophy", ge)
 	if want := "Planned research: Philosophy, after the 3 techs it needs first (Language, Primitive Writing, then Mathematics). Techs start one at a time, in plan order. Philosophy waits for the Classical Age."; res.Message != want {
 		t.Errorf("plan research philosophy:\n got %q\nwant %q", res.Message, want)

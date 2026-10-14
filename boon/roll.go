@@ -16,7 +16,7 @@ import (
 // with what the current age has unlocked. Ordered for deterministic selection;
 // tunable data like everything else.
 var rareResourceKeys = []string{
-	"knowledge", "gold", "uranium", "plasma", "titanium",
+	"gold", "uranium", "plasma", "titanium",
 	"dark_matter", "antimatter", "quantum_flux", "crypto", "data",
 }
 
@@ -201,7 +201,7 @@ func ageAppropriateResources(age string) []string {
 }
 
 // rareAgeResources returns the rare pool intersected with what age has unlocked,
-// falling back to knowledge when nothing rare is available yet.
+// falling back to wood when nothing rare is available yet.
 func rareAgeResources(age string) []string {
 	avail := ageAppropriateResources(age)
 	set := make(map[string]bool, len(avail))
@@ -215,7 +215,7 @@ func rareAgeResources(age string) []string {
 		}
 	}
 	if len(out) == 0 {
-		return []string{"knowledge"}
+		return []string{"wood"}
 	}
 	return out
 }

@@ -85,7 +85,9 @@ func StaticCaps() []CapRow {
 			return "", true, true
 		}
 		res, ok = strings.CutSuffix(target, "_rate")
-		if _, isRes := config.ResourceByKey()[res]; !ok || !isRes {
+		// "knowledge_rate" is the research pool: the scholars' work is not a
+		// resource, but its pool follows the same rule as the others.
+		if _, isRes := config.ResourceByKey()[res]; !ok || (!isRes && res != "knowledge") {
 			return "", false, false
 		}
 		return res, false, true

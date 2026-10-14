@@ -93,12 +93,12 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 5 — medieval_age  rate=2.56  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Stonemason's Guild", Key: "stonemasons_guild", Category: "production",
-		BaseCost:  map[string]float64{"stone": 480000, "gold": 150000, "knowledge": 45000},
+		BaseCost:  map[string]float64{"stone": 759000, "gold": 237000},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "iron_ore", Value: 12.2},
-			{Type: "production", Target: "iron", Value: 17.9},
-			{Type: "production", Target: "stone", Value: 314},
+			{Type: "production", Target: "iron_ore", Value: 10.1},
+			{Type: "production", Target: "iron", Value: 14.9},
+			{Type: "production", Target: "stone", Value: 339},
 		},
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
@@ -110,12 +110,12 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 6 — renaissance_age  rate=5.12  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Iron Mine", Key: "iron_mine", Category: "production",
-		BaseCost:  map[string]float64{"gold": 1500000, "steel": 540000, "knowledge": 230000},
+		BaseCost:  map[string]float64{"gold": 2330000, "steel": 839000},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "iron_ore", Value: 6.18},
-			{Type: "production", Target: "iron", Value: 10.6},
-			{Type: "production", Target: "stone", Value: 199},
+			{Type: "production", Target: "iron_ore", Value: 5.27},
+			{Type: "production", Target: "iron", Value: 9.02},
+			{Type: "production", Target: "stone", Value: 207},
 		},
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
@@ -130,9 +130,9 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BaseCost:  map[string]float64{"gold": 9000000, "steel": 5400000},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "iron_ore", Value: 172},
-			{Type: "production", Target: "iron", Value: 172},
-			{Type: "production", Target: "stone", Value: 1640},
+			{Type: "production", Target: "iron_ore", Value: 139},
+			{Type: "production", Target: "iron", Value: 139},
+			{Type: "production", Target: "stone", Value: 1660},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",

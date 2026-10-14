@@ -1,13 +1,13 @@
 # Workers
 
-Workers are your civilization's labor force. Every building that produces resources has worker slots, and staffing it raises its output from a 20% floor up to 100%. Workers come from a **single generic pool**: any worker can go to any building. There are 12 worker domains, and a worker's domain comes from the building it staffs, not from the worker.
+Workers are your civilization's labor force. Every building that produces resources has worker slots, and staffing it raises its output from a 20% floor up to 100%. Workers come from a **single generic pool**: any worker can go to any building. There are 11 worker domains, and a worker's domain comes from the building it staffs, not from the worker.
 
 ---
 
 ## Quick Start
 
 - **Workers come on their own.** Build housing and buildings with worker slots. With auto-recruit on (the default), the game recruits into empty slots while housing and food allow, and puts idle workers to work by your [roster](#the-roster).
-- **Steer, or take over.** `roster knowledge 40` sends more workers to knowledge; `roster military 0` keeps military empty. `recruit` and `assign` still work by hand, and a worker you place stays where you put it.
+- **Steer, or take over.** `roster faith 40` sends more workers to faith; `roster military 0` keeps military empty. `recruit` and `assign` still work by hand, and a worker you place stays where you put it.
 - **Every worker eats.** Each worker eats the current age's food rate every tick, whatever it does. Keep the food rate positive (see [Food Drain](#food-drain)).
 - **Look at the panel.** `workers` opens the Workers panel: morale, food, the roster, open slots and who works where.
 
@@ -34,7 +34,7 @@ An assigned worker takes on the **class name** for that building's domain at the
 
 ## The Roster
 
-You don't have to recruit or assign workers yourself. The game recruits into empty worker slots while housing and food allow (**auto-recruit**, on by default), and puts idle workers to work by your **roster**: how your workforce splits across the 12 domains. You can steer the split, or take over by hand. A worker you place by hand stays where you put it.
+You don't have to recruit or assign workers yourself. The game recruits into empty worker slots while housing and food allow (**auto-recruit**, on by default), and puts idle workers to work by your **roster**: how your workforce splits across the 11 domains. You can steer the split, or take over by hand. A worker you place by hand stays where you put it.
 
 ```
 roster
@@ -48,34 +48,34 @@ The roster used to be called worker shares, and `workers share` still works in p
 | Command | Effect |
 |---------|--------|
 | `roster` | List the shares: one line per domain that has worker buildings or a share set, and whether auto-recruit is on |
-| `roster knowledge` | Show one domain's line |
-| `roster knowledge 40` | Set knowledge to 40% of your workforce |
+| `roster faith` | Show one domain's line |
+| `roster faith 40` | Set faith to 40% of your workforce |
 | `roster lumber 12.5%` | A share is 0 to 100; decimals and a `%` sign are allowed |
 | `roster military 0` | Keep military empty |
-| `roster knowledge auto` | Put knowledge back on auto |
+| `roster faith auto` | Put faith back on auto |
 | `roster auto` | Put every domain back on auto |
 | `workers auto-recruit` | Show whether auto-recruit is on |
 | `workers auto-recruit off` | Stop recruiting automatically; `on` starts it again (`workers autorecruit` works too) |
 
-Each line of `roster` reads like `Knowledge: 40% (set), 8 workers in 10 slots` or `Food: 34% (auto), 12 workers in 15 slots`. The Workers panel (`workers`) shows the same in its **Roster** section, under a line that says what auto-recruit is doing: on, off, waiting after your last worker command, no housing left, every worker slot is filled, waiting for food, or paused because food ran out.
+Each line of `roster` reads like `Faith: 40% (set), 8 workers in 10 slots` or `Food: 34% (auto), 12 workers in 15 slots`. The Workers panel (`workers`) shows the same in its **Roster** section, under a line that says what auto-recruit is doing: on, off, waiting after your last worker command, no housing left, every worker slot is filled, waiting for food, or paused because food ran out.
 
 ### How the split works
 
 - A **share** is a percent of your whole workforce, idle workers included, for one domain.
 - Domains without a share are **on auto**: they split whatever the set shares leave, in proportion to their worker slots (the slots in that domain's built buildings). The default is every domain on auto, so your workers follow your buildings' slots.
-- Set shares that add up to more than 100% are each scaled down to fit: knowledge 80% and military 40% work as about 67% and 33%. The auto domains then get nothing, except overflow: when every domain with a share is full, extra workers go to auto domains with free slots.
+- Set shares that add up to more than 100% are each scaled down to fit: faith 80% and military 40% work as about 67% and 33%. The auto domains then get nothing, except overflow: when every domain with a share is full, extra workers go to auto domains with free slots.
 - A share of **0** keeps a domain empty. Its workers move to free slots elsewhere as room opens, and no new worker goes there. Setting food to 0 replies with a warning: "Food buildings get no workers now: watch your food."
 - A domain never holds more workers than its slots. Workers its share can't place go to other domains with free slots. If you set a share for a domain with no buildings yet, the reply says the share applies once you build one.
 
 **Example.** You have 30 worker slots in each of three domains and 40 workers:
 
-| Domain | Slots | All on auto | With `roster knowledge 50` | Workers then |
+| Domain | Slots | All on auto | With `roster faith 50` | Workers then |
 |--------|-------|-------------|-----------------------------------|--------------|
 | food | 30 | 33% (auto) | 25% (auto) | 10 |
 | lumber | 30 | 33% (auto) | 25% (auto) | 10 |
-| knowledge | 30 | 33% (auto) | 50% (set) | 20 |
+| faith | 30 | 33% (auto) | 50% (set) | 20 |
 
-Knowledge takes its 50% first. Food and lumber split the other 50% by their slots, which are equal, so they get 25% each.
+Faith takes its 50% first. Food and lumber split the other 50% by their slots, which are equal, so they get 25% each.
 
 ### The roster routine
 
@@ -197,7 +197,7 @@ The prompt suggests completions for all worker commands, shown dim after the cur
 | `recruit ` | `max` |
 | `workers ` | `auto-recruit` |
 | `roster ` | the worker domains, the ones you have worker buildings in (or a share set for) first, then the rest, and `auto` |
-| `roster knowledge ` | `auto` |
+| `roster faith ` | `auto` |
 | `workers auto-recruit ` | `off`, `on` |
 
 ### What does not work
@@ -252,32 +252,31 @@ The bonus is added on top of your other production bonuses, not multiplied by th
 - With 3 workers (50% fill): `2.0 × (0.20 + 0.80 × 0.50)` = **1.2 food/tick**
 - With all 6 slots filled: **2.0 food/tick**
 
-**Example: library (Classical Age, knowledge domain)**
+**Example: shrine (Primitive Age, faith domain)**
 
-- Base rate 3.2 knowledge/tick, 4 worker slots
-- Built 3×: 12 slots in total, base output 3.2 × 3 = 9.6 knowledge/tick
-- With 8 workers (67% fill): `9.6 × (0.20 + 0.80 × 0.67)` ≈ **7.0 knowledge/tick**
-- With all 12 slots filled: **9.6 knowledge/tick**
+- Worker slots: 2 each
+- Built 3×: 6 slots in total
+- With 3 workers (50% fill): output is `base × 3 × (0.20 + 0.80 × 0.50)` = **60% of the base**
+- With all 6 slots filled: **100% of the base**
+
+Knowledge buildings have no worker slots: their [scholars](knowledge.md) come with them.
 
 ### Early worker buildings
 
-Worker slots are **per building**: 3 libraries give 3 × 4 = 12 slots.
+Worker slots are **per building**: 3 shrines give 3 × 2 = 6 slots.
 
 | Building | Key | Domain | Worker Slots | Available From |
 |----------|-----|--------|----------------|----------------|
 | Gathering Camp | `gathering_camp` | food | 3 | Primitive Age |
-| Story Circle | `story_circle` | knowledge | 2 | Primitive Age |
 | Wood Camp | `wood_camp` | lumber | 3 | Primitive Age |
 | Shrine | `shrine` | faith | 2 | Primitive Age |
 | Forager Post | `forager_post` | food | 4 | Stone Age |
-| Elders' Hall | `elders_hall` | knowledge | 2 | Stone Age |
 | Stone Camp | `stone_camp` | masonry | 3 | Stone Age |
 | War Camp | `war_camp` | military | 3 | Stone Age |
 | Farm | `farm` | food | 5 | Bronze Age |
 | Smithy | `smithy` | engineering | 4 | Bronze Age |
 | Market | `market` | trade | 3 | Bronze Age |
 | Barracks | `barracks` | military | 4 | Bronze Age |
-| Library | `library` | knowledge | 4 | Classical Age |
 
 For every building see [Buildings](buildings.md).
 
@@ -340,14 +339,13 @@ It starts at 50%, where it has no effect, and the further it moves from 50% the 
 
 ---
 
-## The 12 Worker Domains
+## The 11 Worker Domains
 
 A building's domain decides which worker class staffs it. "First Building" is the age of the earliest building that takes workers in that domain.
 
 | Domain | Lineage | Makes | Example Buildings | First Building |
 |--------|---------|-------|-------------------|----------------|
 | `food` | Food | food | `gathering_camp`, `forager_post`, `farm`, `field_works` | Primitive Age |
-| `knowledge` | Knowledge | knowledge | `story_circle`, `elders_hall`, `scriptorium`, `library` | Primitive Age |
 | `lumber` | Organic Extraction | wood, then coal, oil, nanobots and quantum flux | `wood_camp`, `woodcutter_camp`, `lumber_mill`, `coal_mine` | Primitive Age |
 | `faith` | Faith | faith | `shrine`, `standing_stones`, `altar`, `temple` | Primitive Age |
 | `masonry` | Geological Extraction | stone and iron, then [ores](resources.md#what-the-ores-are-for), uranium and antimatter | `stone_camp`, `stone_pit`, `quarry`, `uranium_mine` | Stone Age |
@@ -367,14 +365,13 @@ A building's domain decides which worker class staffs it. "First Building" is th
 
 ## Worker Class Names by Age
 
-Each domain has one class per age it spans. Before a domain's first class age, a worker shows the domain's first class: a `wood_camp` worker in the Primitive Age is a Gatherer, a `war_camp` worker before the Iron Age a Soldier, and a `coal_plant` worker in the Industrial Age a Stoker. The Transcendent Age keeps the Quantum Age classes. The class name is a label: what a worker eats depends only on the age (see [Food Drain](#food-drain)).
+Each domain has one class per age it spans. (The knowledge classes, Shaman to Quantum Theorist, are not a domain any more: they name the kinds of [scholar](knowledge.md#what-a-scholar-is).) Before a domain's first class age, a worker shows the domain's first class: a `wood_camp` worker in the Primitive Age is a Gatherer, a `war_camp` worker before the Iron Age a Soldier, and a `coal_plant` worker in the Industrial Age a Stoker. The Transcendent Age keeps the Quantum Age classes. The class name is a label: what a worker eats depends only on the age (see [Food Drain](#food-drain)).
 
 ### Quick reference
 
 | Domain | Primitive | Iron | Classical | Medieval | Victorian | Modern |
 |--------|-----------|------|-----------|----------|-----------|--------|
 | food | Forager | Laborer | Peasant | Serf | Agricultural Worker | Modern Farmer |
-| knowledge | Shaman | Scholar | Philosopher | Friar | Victorian Scholar | Modern Researcher |
 | lumber | Gatherer | Lumberjack | Sawyer | Forester | Steam Logger | Petroleum Worker |
 | masonry | - | Miner | Iron Extractor | Medieval Miner | Victorian Quarryman | Modern Geologist |
 | faith | Devotee | Celebrant | Initiate | Acolyte | Parish Priest | Modern Shepherd |
@@ -411,10 +408,6 @@ The food column doubles as the food each worker eats per tick in that age, since
 | Interstellar | Stellar Cultivator | 0.461 |
 | Galactic | Galactic Farmer | 0.517 |
 | Quantum | Quantum Harvester | 0.579 |
-
-### knowledge (starts Primitive Age)
-
-Primitive: Shaman → Stone: Elder → Bronze: Scribe → Iron: Scholar → Classical: Philosopher → Medieval: Friar → Renaissance: Academician → Colonial: Naturalist → Industrial: Engineer-Scientist → Victorian: Victorian Scholar → Electric: Research Fellow → Atomic: Nuclear Scientist → Modern: Modern Researcher → Information: Data Scientist → Digital: AI Researcher → Cyberpunk: Cyber-Scholar → Fusion: Fusion Theorist → Space: Orbital Researcher → Interstellar: Stellar Scientist → Galactic: Galactic Researcher → **Quantum: Quantum Theorist**
 
 ### lumber (starts Stone Age)
 
@@ -504,7 +497,7 @@ Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explore
 
 ### Early game (Primitive and Stone Age)
 
-Build gathering camps and huts together. Each camp holds 3 workers and auto-recruit fills only empty slots, so build camps as you build housing. A worker eats 0.06 food/tick, and a fully staffed camp makes 1.0 food/tick, so a camp covers its own three workers' drain (0.18) several times over. Once food is stable, build story circles to start research; for faster research, give knowledge a bigger share (`roster knowledge 40`). The full walkthrough is [Your First Ten Minutes](first-ten-minutes.md).
+Build gathering camps and huts together. Each camp holds 3 workers and auto-recruit fills only empty slots, so build camps as you build housing. A worker eats 0.06 food/tick, and a fully staffed camp makes 1.0 food/tick, so a camp covers its own three workers' drain (0.18) several times over. Once food is stable, build a story circle: its two scholars start research at once, with no workers needed. The full walkthrough is [Your First Ten Minutes](first-ten-minutes.md).
 
 ### Mid game (Bronze and Iron Age)
 
@@ -520,11 +513,11 @@ Build gathering camps and huts together. Each camp holds 3 workers and auto-recr
 
 ### Milestone: scholars_haven
 
-Needs **50 knowledge workers** and **3 Libraries** built. Three libraries hold only 12 workers, so the other 38 have to be in your other knowledge buildings. Give knowledge a large share (`roster knowledge 60`) and let the routine fill them as workers come. Track progress with `milestones` or `ms`.
+Needs **50 scholars** and **3 Libraries** built. Scholars come with the knowledge buildings, so build up the knowledge lineage: a Library comes with 4. Track progress with `milestones` or `ms`.
 
 ### Specialize or spread
 
-Focusing on one domain can finish milestone chains faster; spreading protects you from shortages. The roster is the lever: auto spreads your workers by worker slots, and a share focuses them (`roster knowledge 50`). Early on, food and knowledge are enough; add military when campaigns open up and trade when gold becomes the bottleneck.
+Focusing on one domain can finish milestone chains faster; spreading protects you from shortages. The roster is the lever: auto spreads your workers by worker slots, and a share focuses them (`roster faith 50`). Early on, food and wood are enough; add military when campaigns open up and trade when gold becomes the bottleneck.
 
 ### Tips
 

@@ -107,7 +107,7 @@ func TestWallGrants_RouteRunSaysWhatFit(t *testing.T) {
 	ge.Resources.UnlockResource(imp)
 	fillStore(ge, imp, 100, 101) // room for 1 of the run's several
 	ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
-	msgs := ge.Trade.Tick(ge.Resources, ge.Buildings, nil, 0)
+	msgs := ge.Trade.Tick(ge.Resources, ge.Buildings, nil, 0, nil)
 	if ge.Resources.Get(imp) != 101 {
 		t.Errorf("%s = %v after a run into 1 of room, want the cap", imp, ge.Resources.Get(imp))
 	}
@@ -145,7 +145,7 @@ func TestWallGrants_RouteRunTakesOnlyWhatFits(t *testing.T) {
 	run := func(room float64) []string {
 		fillStore(ge, imp, 100, 100+room)
 		ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
-		return ge.Trade.Tick(ge.Resources, ge.Buildings, nil, 0)
+		return ge.Trade.Tick(ge.Resources, ge.Buildings, nil, 0, nil)
 	}
 
 	// Room for a quarter of the run's import: a quarter of its export goes.

@@ -57,7 +57,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	metrics := []metricDef{
 		{"Population", "[cyan]", func(s game.HistorySample) float64 { return s.Population }, " workers", false},
 		{"Food rate", "[green]", func(s game.HistorySample) float64 { return s.FoodRate }, "/tick", true},
-		{"Knowledge rate", "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
+		{"Research rate", "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
 		{"Faith", "[gold]", func(s game.HistorySample) float64 { return s.Faith }, "", false},
 		{"Morale", "[yellow]", func(s game.HistorySample) float64 { return s.Morale * 100 }, "%", false},
 		{"All production", "[warning]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},

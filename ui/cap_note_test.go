@@ -70,7 +70,7 @@ func TestStatsPanelShowsCappedPools(t *testing.T) {
 	}
 	for _, want := range []string{
 		"Gold production     [-] [green]+245%[-] [yellow]" + earned(t, st, "gold_rate") + "[-]",
-		"Knowledge production[-] [green]" + applied(st, "knowledge_rate") + "[-] [yellow]" + earned(t, st, "knowledge_rate") + "[-]",
+		"Scholar output      [-] [green]" + applied(st, "knowledge_rate") + "[-] [yellow]" + earned(t, st, "knowledge_rate") + "[-]",
 		"[yellow]" + earned(t, st, "production_all") + "[-]", // morale rides on top of its headline
 		"Iron production     [-] [green]+70%[-]   ",          // under +200%: no note
 	} {
@@ -99,8 +99,8 @@ func TestResearchPanelBonuses(t *testing.T) {
 	for _, want := range []string{
 		"[green]+5%    [-] All production\n",
 		"[green]+36%   [-] Gold production\n",
-		"[green]+86%   [-] Knowledge production\n",
-		"[green]+25%   [-] Storage (not knowledge)\n",
+		"[green]+86%   [-] Research production\n",
+		"[green]+25%   [-] Storage\n",
 		"[green]+37%   [-] Housing\n",
 		"[green]-19%   [-] Building costs\n",
 		"[green]-27%   [-] Construction time\n",
@@ -176,13 +176,13 @@ func TestMilestonesAndWondersTagRewardsPastTheKnee(t *testing.T) {
 	if want := "+5% research speed[-]\n"; !strings.Contains(ms, want) {
 		t.Errorf("a research speed reward with room carries a note, or is gone (want %q)", want)
 	}
-	// The Information Age's wonder, the Global Network, adds knowledge
-	// production to a pool that is already past +200%.
+	// The Information Age's wonder, the Global Network, adds scholar
+	// output to a pool that is already past +200%.
 	if err := ge.EnterAgeForTest("information_age"); err != nil {
 		t.Fatal(err)
 	}
 	wonders := wondersProvider(ge.GetState(), 120)
-	if want := "+30% knowledge production[-] [yellow](counts a quarter past +200%: +7.5% now)[-]"; !strings.Contains(wonders, want) {
+	if want := "+30% scholar output[-] [yellow](counts a quarter past +200%: +7.5% now)[-]"; !strings.Contains(wonders, want) {
 		t.Errorf("the Wonders panel has no wonder effect tagged %q:\n%s", want, wonders)
 	}
 	if want := "+30 data/tick[-]\n"; !strings.Contains(wonders, want) {
@@ -200,7 +200,7 @@ func TestRatesShowsEarnedAgainstApplied(t *testing.T) {
 	all := st.Pools["production_all"]
 	for _, want := range []string{
 		"  [yellow]All production: " + textfmt.SignedPercent(all.Earned) + " earned, " + applied(st, "production_all") + " counts. Past +200% a bonus counts a quarter.[-]",
-		"    [yellow]Knowledge production: +335% earned, +234% counts. Past +200% a bonus counts a quarter.[-]",
+		"  [yellow]Scholar output: +335% earned, +234% counts. Past +200% a bonus counts a quarter.[-]",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("rates is missing %q:\n%s", want, out)

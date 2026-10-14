@@ -90,7 +90,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 5 — medieval_age  rate=0.064
 	b = append(b, BuildingDef{
 		Name: "Cathedral", Key: "cathedral", Category: "research",
-		BaseCost:     map[string]float64{"stone": 600000, "gold": 200000, "knowledge": 45000},
+		BaseCost:     map[string]float64{"stone": 870000, "gold": 290000},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "faith", Value: 0.064}, {Type: "morale", Value: 0.001}},
 		BuildTicks:   1200,
@@ -104,7 +104,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 6 — renaissance_age  rate=0.128
 	b = append(b, BuildingDef{
 		Name: "Basilica", Key: "basilica", Category: "research",
-		BaseCost:    map[string]float64{"gold": 2000000, "stone": 1200000, "knowledge": 300000},
+		BaseCost:    map[string]float64{"gold": 3020000, "stone": 1810000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.128}, {Type: "morale", Value: 0.0012}},
 		BuildTicks:  2400,
@@ -117,7 +117,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 7 — colonial_age  rate=0.256
 	b = append(b, BuildingDef{
 		Name: "Mission", Key: "mission", Category: "research",
-		BaseCost:    map[string]float64{"gold": 9000000, "stone": 6000000, "knowledge": 1200000},
+		BaseCost:    map[string]float64{"gold": 14900000, "stone": 9920000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.256}, {Type: "morale", Value: 0.0013}},
 		BuildTicks:  3600,

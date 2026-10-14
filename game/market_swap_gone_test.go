@@ -60,7 +60,7 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 	for imp = range def.Import {
 	}
 	exp0, imp0 := re.Resources.Get(exp), re.Resources.Get(imp)
-	re.Trade.Tick(re.Resources, re.Buildings, nil, 0)
+	re.Trade.Tick(re.Resources, re.Buildings, nil, 0, nil)
 	paid := re.Resources.Get(imp) - imp0
 	took := exp0 - re.Resources.Get(exp)
 	re.mu.Unlock()

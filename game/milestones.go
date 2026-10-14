@@ -27,6 +27,9 @@ type MilestoneManager struct {
 	chains          []config.MilestoneChainDef
 	chainsCompleted map[string]bool
 	currentTitle    string
+	// researchDone is the work done on techs this run, which the milestone
+	// that counts it reads as a "research" amount. The engine keeps it.
+	researchDone float64
 	// milestoneToChain is a reverse-index built at construction time for O(1)
 	// chain lookup when rendering the milestone list in the UI.
 	milestoneToChain map[string]string // milestone key -> chain key
@@ -125,7 +128,11 @@ func (mm *MilestoneManager) checkMilestone(
 
 	// Check resources
 	for res, required := range def.MinResources {
-		if resources.Get(res) < required {
+		have := resources.Get(res)
+		if res == config.ResearchTarget {
+			have = mm.researchDone
+		}
+		if have < required {
 			return false
 		}
 	}
@@ -389,6 +396,10 @@ func formatRewards(effects []config.Effect) string {
 	for _, e := range effects {
 		switch e.Type {
 		case "instant_resource":
+			if e.Target == config.ResearchTarget {
+				parts = append(parts, "research progress")
+				continue
+			}
 			parts = append(parts, "+"+Amount(e.Value, e.Target))
 		case "permanent_bonus":
 			parts = append(parts, textfmt.SignedPercent(e.Value)+" "+EffectTargetName(e.Target))

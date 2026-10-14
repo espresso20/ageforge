@@ -73,7 +73,7 @@ The status bar also carries your prestige level and civilization title once you 
 
 <figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, construction and the log on the left, the Buildings list in the middle, the panel names and the Workers box on the right.</figcaption></figure>
 
-The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row: its amount over its cap, its rate, a bar, and a marker when the store is nearly full (`◈`) or falling (`▼`). Knowledge is not a physical good, so its row leads the box, with a rule under it when there is room, and its store is always shown: on a narrow terminal it moves to a line under the amount. On a narrow terminal the other rows give up the bar first, then the cap, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`; it then shows from 105 columns by 34 rows.
+The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row: its amount over its cap, its rate, a bar, and a marker when the store is nearly full (`◈`) or falling (`▼`). On a narrow terminal the rows give up the bar first, then the cap, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`; it then shows from 105 columns by 34 rows.
 
 ---
 
@@ -101,7 +101,7 @@ You don't need to watch it. Check in a few times a day, spend what has built up,
 - **Offline progress.** When you load a save, the game credits the time since you saved it, up to **24 hours**, at **50%** of your production. It runs that time in steps, so construction and research finish, the build plan starts what the income pays for, and your roster recruits and staffs as the hours pass. The welcome-back lines in the log say what happened.
 - **The build plan.** Queue up to 60 builds, techs, deals and an advance with `plan build`, `plan research`, `plan deal` and `plan advance`. The game starts each item, in order, as the resources come in, and pays for it only when it starts. See [The Build Plan](plan.md).
 - **Overflow.** Production a full store would waste goes into your age's wonder bank (`wonder overflow`, on by default) until the bank holds the wonder's price. When overflow is off, or the bank is full, it is lost. It does not pay toward the plan.
-- **Storage.** Storage is a wall. A building or an upgrade whose price is larger than a store can hold cannot be bought, and the game names the storage building to build. Knowledge has its own store, raised only by knowledge buildings (see [Knowledge](knowledge.md#the-knowledge-store)). Storage buildings have no copy limit, each copy costs 1.75 times the one before it, and every age gate asks for five copies of the storage building of the age you are leaving. Anything overflow doesn't take is lost, so build storage before a long absence.
+- **Storage.** Storage is a wall. A building or an upgrade whose price is larger than a store can hold cannot be bought, and the game names the storage building to build. Storage buildings have no copy limit, each copy costs 1.75 times the one before it, and every age gate asks for five copies of the storage building of the age you are leaving. Anything overflow doesn't take is lost, so build storage before a long absence.
 
 ---
 
@@ -115,7 +115,7 @@ From the Iron Era on, each era may hide a fated catastrophe. It can strike at an
 
 - Each resource has a storage limit. Once a resource is full, anything more it would produce is wasted, unless wonder overflow banks it. A price larger than a store cannot be paid, so build storage before the building that needs it.
 - **Food drain:** every worker eats the same amount, whatever building it staffs. That amount is set by your age: 0.06 food/tick per worker in the Primitive Age, rising 12% with each age. Keep food production above total drain. If food hits zero, one worker dies every 5 ticks (10 seconds) until food recovers. See [Food drain](workers-and-domains.md#food-drain) and [Starvation](workers-and-domains.md#starvation).
-- **Food** runs out first early on. Keep your gathering camps staffed before anything else, then build up knowledge.
+- **Food** runs out first early on. Keep your gathering camps staffed before anything else, then build a Story Circle: its scholars start research with no workers.
 - Watch the rates in the Resources box. A negative rate is draining you.
 
 ## Morale
@@ -128,7 +128,7 @@ Worship and culture buildings, your faith income, good events and age advances r
 
 ## Workers
 
-Workers fall into 12 worker domains (food, lumber, masonry, knowledge, faith and so on), each tied to its own buildings. A worker takes the domain of the building it works in. Workers arrive on their own while housing and food allow and go to work by your roster (`roster`; every domain is on auto by default). You can also recruit with `recruit [count|max]` and assign with `assign <building> [count|all]`.
+Workers fall into 11 worker domains (food, lumber, masonry, faith and so on), each tied to its own buildings. A worker takes the domain of the building it works in. Workers arrive on their own while housing and food allow and go to work by your roster (`roster`; every domain is on auto by default). You can also recruit with `recruit [count|max]` and assign with `assign <building> [count|all]`.
 
 Assigned workers raise a building's output. A building with no workers still produces at 20% (the floor), and a fully staffed one at 100%. Only food workers make food, but every worker eats it. See [Workers & Domains](workers-and-domains.md) for the full guide.
 

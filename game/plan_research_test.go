@@ -43,8 +43,6 @@ func chainEngine(t *testing.T) *GameEngine {
 	t.Helper()
 	ge := NewGameEngineWith(chainSet())
 	ge.SeedRNG(5)
-	ge.Resources.resources["knowledge"].Storage = 1e6
-	setAmount(ge, "knowledge", 1000)
 	return ge
 }
 
@@ -170,7 +168,6 @@ func TestPlanResearchRefusals(t *testing.T) {
 // in with its whole chain.
 func TestPlanResearchTakesAnyTechInSight(t *testing.T) {
 	ge := newSeededEngine(1)
-	ge.Resources.resources["knowledge"].Storage = 1e9
 	// The next age is in sight on a first run: Pottery brings Fire Mastery.
 	if chain, err := ge.PlanAddResearchChain("pottery"); err != nil || !reflect.DeepEqual(chain, []string{"fire_mastery", "pottery"}) {
 		t.Fatalf("Pottery from the Primitive Age: %v, %v", chain, err)
@@ -215,16 +212,13 @@ func TestPlanResearchTakesAnyTechInSight(t *testing.T) {
 // starts in plan order once its age comes.
 func TestPlanTechOfALaterAgeWaitsItsTurn(t *testing.T) {
 	ge := newSeededEngine(1)
-	ge.Resources.resources["knowledge"].Storage = 1e9
 	for _, k := range []string{"pottery", "tool_making"} { // Fire Mastery, Pottery (Stone Age), Tool Making
 		if err := ge.PlanAddResearch(k); err != nil {
 			t.Fatalf("plan %s: %v", k, err)
 		}
 	}
-	price := func(k string) float64 { d, _ := ge.rules.Tech(k); return d.Cost }
 	// Knowledge for the two techs of this age and no more: Pottery, waiting
 	// for its age above Tool Making, holds none of it back.
-	setAmount(ge, "knowledge", price("fire_mastery")+price("tool_making"))
 	for _, want := range []string{"fire_mastery", "tool_making"} {
 		ge.runPlanTick()
 		if ge.Research.currentTech != want {
@@ -248,7 +242,6 @@ func TestPlanTechOfALaterAgeWaitsItsTurn(t *testing.T) {
 	if err := ge.EnterAgeForTest("stone_age"); err != nil {
 		t.Fatal(err)
 	}
-	setAmount(ge, "knowledge", price("pottery"))
 	ge.runPlanTick()
 	if ge.Research.currentTech != "pottery" {
 		t.Errorf("in the Stone Age: researching %q, want pottery; views %+v", ge.Research.currentTech, ge.planViews())

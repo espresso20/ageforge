@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // storage_wall.go is the storage wall as the screens show it: a price larger
@@ -28,15 +28,8 @@ func overStoreRes(state game.GameState, cost map[string]float64) string {
 }
 
 // storageBuildingName is the building that raises the store of res in the
-// current age: the age's storage building, or for knowledge the age's
-// knowledge building (the engine's own choice). "" when the age has none.
+// current age: the age's storage building. "" when the age has none.
 func storageBuildingName(state game.GameState, res string) string {
-	if res == "knowledge" {
-		if def, ok := state.Ruleset().Building(state.KnowledgeStore.NextBuilding); ok {
-			return def.Name
-		}
-		return ""
-	}
 	for _, d := range state.Ruleset().Buildings() {
 		if d.Category == "storage" && d.RequiredAge == state.Age {
 			return d.Name
@@ -92,11 +85,36 @@ func (sw *storeWall) buildingFor(res string) string {
 }
 
 // buildingText is a building's description as the lists show it. A knowledge
-// building adds what one copy holds, in the form a storage building's
-// description gives its figure: "+140 knowledge storage."
+// building also gives its copies against the most that can be built ("3 of 5
+// built.") and, when the description does not say it (it does: "comes with 2
+// scholars"), its scholars a copy.
 func buildingText(bs game.BuildingState) string {
-	if bs.KnowledgeStore <= 0 {
+	if bs.Scholars <= 0 {
 		return bs.Description
 	}
-	return strings.TrimSpace(bs.Description + " +" + config.FormatAmount(bs.KnowledgeStore) + " knowledge storage.")
+	count := textfmt.Count(bs.Scholars, "scholar", "scholars")
+	line := ""
+	if !strings.Contains(bs.Description, count) {
+		line = count + " a copy"
+	}
+	if bs.ScholarCap > 0 {
+		if line != "" {
+			line += ", "
+		}
+		line += fmt.Sprintf("%d of %d built", bs.Count, bs.ScholarCap)
+	}
+	if line == "" {
+		return bs.Description
+	}
+	return strings.TrimSpace(bs.Description + " " + textfmt.Capitalize(line) + ".")
+}
+
+// atLimit is the words the Buildings panel gives a building that can be
+// built no further, for a knowledge building at its cap in the lists that do
+// not show them already.
+func atLimit(bs game.BuildingState) string {
+	if bs.Scholars > 0 && bs.AtMaxCount {
+		return "Building limit reached."
+	}
+	return ""
 }

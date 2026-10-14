@@ -62,7 +62,7 @@ func rawTechnologies() []TechDef {
 			Age: "primitive_age", Lane: LaneKnowledge,
 			Description: "Shared words carry what one person learns to the next.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.10},
 			},
 		},
 		{
@@ -101,7 +101,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"language"},
 			Description:   "Early symbols enable knowledge transfer.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.10},
 			},
 		},
 		{
@@ -157,7 +157,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"primitive_writing"},
 			Description:   "Drawn maps record where things are and how to reach them.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.10},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.10},
 			},
 		},
 		{
@@ -243,7 +243,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"primitive_writing"},
 			Description:   "Advanced calculation raises knowledge output.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.08},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.08},
 			},
 		},
 		{
@@ -315,7 +315,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"mathematics"},
 			Description:   "Systematic inquiry into fundamental questions.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.08},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.08},
 			},
 		},
 		{
@@ -365,7 +365,7 @@ func rawTechnologies() []TechDef {
 
 		// === MEDIEVAL AGE ===
 		{
-			Name: "Theology", Key: "theology", Cost: 220000, ResearchTicks: 1316, Emblem: "Θ",
+			Name: "Theology", Key: "theology", Cost: 246000, ResearchTicks: 1316, Emblem: "Θ",
 			Age: "medieval_age", Lane: LaneFaith,
 			Prerequisites: []string{"philosophy"},
 			Description:   "Organized religion provides faith and social cohesion.",
@@ -374,17 +374,17 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Alchemy", Key: "alchemy", Cost: 286000, ResearchTicks: 1316, Emblem: "☿",
+			Name: "Alchemy", Key: "alchemy", Cost: 319000, ResearchTicks: 1316, Emblem: "☿",
 			Age: "medieval_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"philosophy"},
 			Description:   "Proto-chemistry yields material insights.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.08},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.08},
 			},
 		},
 		{
 			// The Iron Era's Knowledge capstone.
-			Name: "Scholasticism", Key: "scholasticism", Cost: 817000, ResearchTicks: 2106, Code: "SCHOL", Emblem: "Σ",
+			Name: "Scholasticism", Key: "scholasticism", Cost: 912000, ResearchTicks: 2106, Code: "SCHOL", Emblem: "Σ",
 			Age: "medieval_age", Lane: LaneKnowledge, Capstone: true,
 			Prerequisites: []string{"alchemy", "theology"},
 			Description:   "The schools set every question out, argue it and write the answer down.",
@@ -393,7 +393,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Banking", Key: "banking", Cost: 130000, ResearchTicks: 1053, Code: "BANK", Emblem: "%",
+			Name: "Banking", Key: "banking", Cost: 145000, ResearchTicks: 1053, Code: "BANK", Emblem: "%",
 			Age: "medieval_age", Lane: LaneTrade,
 			Prerequisites: []string{"currency", "mathematics"},
 			Description:   "Financial institutions raise gold output and gold storage.",
@@ -402,7 +402,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Feudalism", Key: "feudalism", Cost: 372000, ResearchTicks: 1316, Emblem: "⌂",
+			Name: "Feudalism", Key: "feudalism", Cost: 415000, ResearchTicks: 1316, Emblem: "⌂",
 			Age: "medieval_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"the_plough"},
 			Description:   "Feudal land grants house more workers.",
@@ -411,7 +411,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Chronometry", Key: "chronometry", Cost: 483000, ResearchTicks: 1316, Emblem: "⊙",
+			Name: "Chronometry", Key: "chronometry", Cost: 539000, ResearchTicks: 1316, Emblem: "⊙",
 			Age: "medieval_age", Lane: LaneCraft,
 			Description: "Precise timekeeping raises game speed.",
 			Effects: []TechEffect{
@@ -420,7 +420,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The Iron Era's Craft capstone.
-			Name: "Guilds", Key: "guilds", Cost: 1.06e06, ResearchTicks: 2106, Code: "GUILD", Emblem: "♜",
+			Name: "Guilds", Key: "guilds", Cost: 1190000, ResearchTicks: 2106, Code: "GUILD", Emblem: "♜",
 			Age: "medieval_age", Lane: LaneCraft, Capstone: true,
 			Prerequisites: []string{"civil_engineering", "metal_casting"},
 			Description:   "Masters, journeymen and set prices: every trade builds to one standard.",
@@ -430,7 +430,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Steel Forging", Key: "steel_forging", Cost: 169000, ResearchTicks: 1053, Emblem: "▣",
+			Name: "Steel Forging", Key: "steel_forging", Cost: 189000, ResearchTicks: 1053, Emblem: "▣",
 			Age: "medieval_age", Lane: LaneMaterials,
 			Prerequisites: []string{"iron_smelting"},
 			Description:   "Refining iron into steel for superior tools and weapons.",
@@ -440,7 +440,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Fortification", Key: "fortification", Cost: 628000, ResearchTicks: 1316, Code: "FORTS", Emblem: "╬",
+			Name: "Fortification", Key: "fortification", Cost: 701000, ResearchTicks: 1316, Code: "FORTS", Emblem: "╬",
 			Age: "medieval_age", Lane: LaneMilitary,
 			Prerequisites: []string{"imperial_legions"},
 			Description:   "Curtain walls and gatehouses make a raid cost more than it takes.",
@@ -452,7 +452,7 @@ func rawTechnologies() []TechDef {
 
 		// === RENAISSANCE AGE ===
 		{
-			Name: "Patronage", Key: "patronage", Cost: 1.5e06, ResearchTicks: 1755, Code: "PATRN", Emblem: "♛",
+			Name: "Patronage", Key: "patronage", Cost: 1620000, ResearchTicks: 1755, Code: "PATRN", Emblem: "♛",
 			Age: "renaissance_age", Lane: LaneFaith,
 			Prerequisites: []string{"banking"},
 			Description:   "Wealthy patrons fund arts and science.",
@@ -461,17 +461,17 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Printing Press", Key: "printing_press", Cost: 1.95e06, ResearchTicks: 1755, Emblem: "¶",
+			Name: "Printing Press", Key: "printing_press", Cost: 2110000, ResearchTicks: 1755, Emblem: "¶",
 			Age: "renaissance_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"alchemy", "theology"},
 			Description:   "Printed books carry one idea to a thousand readers at once.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.06},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.06},
 				{Kind: EffectResearchTime, Value: -0.03},
 			},
 		},
 		{
-			Name: "Navigation", Key: "navigation", Cost: 1.15e06, ResearchTicks: 1404, Emblem: "✶",
+			Name: "Navigation", Key: "navigation", Cost: 1250000, ResearchTicks: 1404, Emblem: "✶",
 			Age: "renaissance_age", Lane: LaneTrade,
 			Prerequisites: []string{"exploration", "mathematics"},
 			Description:   "Star, compass and log line take ships out of sight of land.",
@@ -480,7 +480,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Crop Rotation", Key: "crop_rotation", Cost: 2.53e06, ResearchTicks: 1755, Code: "CROPS", Emblem: "↻",
+			Name: "Crop Rotation", Key: "crop_rotation", Cost: 2740000, ResearchTicks: 1755, Code: "CROPS", Emblem: "↻",
 			Age: "renaissance_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"feudalism"},
 			Description:   "Fields take turns at wheat, roots and rest, and none wears out.",
@@ -489,7 +489,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Architecture", Key: "architecture", Cost: 3.29e06, ResearchTicks: 1755, Code: "ARCH", Emblem: "∧",
+			Name: "Architecture", Key: "architecture", Cost: 3570000, ResearchTicks: 1755, Code: "ARCH", Emblem: "∧",
 			Age: "renaissance_age", Lane: LaneCraft,
 			Prerequisites: []string{"civil_engineering"},
 			Description:   "Drawn plans and worked proportions, before the first stone is laid.",
@@ -499,7 +499,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Blast Furnace", Key: "blast_furnace", Cost: 4.28e06, ResearchTicks: 1755, Emblem: "◭",
+			Name: "Blast Furnace", Key: "blast_furnace", Cost: 4630000, ResearchTicks: 1755, Emblem: "◭",
 			Age: "renaissance_age", Lane: LaneMaterials,
 			Prerequisites: []string{"steel_forging"},
 			Description:   "A taller stack and a harder blast turn out metal by the ton.",
@@ -508,7 +508,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Gunpowder", Key: "gunpowder", Cost: 5.56e06, ResearchTicks: 1755, Code: "POWDR", Emblem: "✸",
+			Name: "Gunpowder", Key: "gunpowder", Cost: 6030000, ResearchTicks: 1755, Code: "POWDR", Emblem: "✸",
 			Age: "renaissance_age", Lane: LaneMilitary,
 			Prerequisites: []string{"alchemy", "siege_warfare"},
 			Description:   "Explosive weapons raise military power.",
@@ -519,7 +519,7 @@ func rawTechnologies() []TechDef {
 
 		// === COLONIAL AGE ===
 		{
-			Name: "Baroque Arts", Key: "baroque_arts", Cost: 6.13e06, ResearchTicks: 2048, Emblem: "❦",
+			Name: "Baroque Arts", Key: "baroque_arts", Cost: 7300000, ResearchTicks: 2048, Emblem: "❦",
 			Age: "colonial_age", Lane: LaneFaith,
 			Prerequisites: []string{"patronage"},
 			Description:   "Music and ornament on a scale built to overwhelm.",
@@ -528,7 +528,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Scientific Method", Key: "scientific_method", Cost: 7.97e06, ResearchTicks: 2048, Emblem: "⊢",
+			Name: "Scientific Method", Key: "scientific_method", Cost: 9490000, ResearchTicks: 2048, Emblem: "⊢",
 			Age: "colonial_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"printing_press"},
 			Description:   "Guess, test, write it down, and let someone else try to break it.",
@@ -537,7 +537,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Cartography", Key: "cartography", Cost: 4.71e06, ResearchTicks: 2048, Emblem: "⊞",
+			Name: "Cartography", Key: "cartography", Cost: 5610000, ResearchTicks: 2048, Emblem: "⊞",
 			Age: "colonial_age", Lane: LaneTrade,
 			Prerequisites: []string{"navigation"},
 			Description:   "Detailed maps bring expeditions home sooner and richer.",
@@ -547,13 +547,13 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Mercantilism", Key: "mercantilism", Cost: 1.04e07, ResearchTicks: 2048, Code: "MERC", Emblem: "£",
+			Name: "Mercantilism", Key: "mercantilism", Cost: 12300000, ResearchTicks: 2048, Code: "MERC", Emblem: "£",
 			Age: "colonial_age", Lane: LaneTrade,
 			Prerequisites: []string{"banking", "navigation"},
 			Description:   "National trade policies maximize wealth.",
 		},
 		{
-			Name: "Embassies", Key: "embassies", Cost: 1.35e07, ResearchTicks: 2048, Emblem: "⚐",
+			Name: "Embassies", Key: "embassies", Cost: 16000000, ResearchTicks: 2048, Emblem: "⚐",
 			Age: "colonial_age", Lane: LaneTrade,
 			Prerequisites: []string{"envoys"},
 			Description:   "A resident envoy in every court, and a house to keep them in.",
@@ -562,7 +562,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "New World Crops", Key: "new_world_crops", Cost: 1.75e07, ResearchTicks: 2048, Code: "MAIZE", Emblem: "✿",
+			Name: "New World Crops", Key: "new_world_crops", Cost: 20800000, ResearchTicks: 2048, Code: "MAIZE", Emblem: "✿",
 			Age: "colonial_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"crop_rotation"},
 			Description:   "Maize, potatoes and beans cross the ocean and feed twice the mouths.",
@@ -572,7 +572,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Surveying", Key: "surveying", Cost: 2.28e07, ResearchTicks: 2048, Code: "SURVY", Emblem: "∠",
+			Name: "Surveying", Key: "surveying", Cost: 27100000, ResearchTicks: 2048, Code: "SURVY", Emblem: "∠",
 			Age: "colonial_age", Lane: LaneCraft,
 			Prerequisites: []string{"architecture"},
 			Description:   "Chain, level and theodolite: the ground is measured before it is built on.",
@@ -583,7 +583,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Coke Smelting", Key: "coke_smelting", Cost: 2.96e07, ResearchTicks: 2048, Emblem: "●",
+			Name: "Coke Smelting", Key: "coke_smelting", Cost: 35200000, ResearchTicks: 2048, Emblem: "●",
 			Age: "colonial_age", Lane: LaneMaterials,
 			Prerequisites: []string{"blast_furnace"},
 			Description:   "Coal baked into coke burns hot enough to smelt without a forest.",
@@ -593,7 +593,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Colonialism", Key: "colonialism", Cost: 3.85e07, ResearchTicks: 2048, Code: "COLNY", Emblem: "⚔",
+			Name: "Colonialism", Key: "colonialism", Cost: 45800000, ResearchTicks: 2048, Code: "COLNY", Emblem: "⚔",
 			Age: "colonial_age", Lane: LaneMilitary,
 			Prerequisites: []string{"cartography", "gunpowder"},
 			Description:   "Overseas territorial expansion.",
@@ -618,7 +618,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"scientific_method"},
 			Description:   "Everything known, set in order and put in print.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.06},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.06},
 			},
 		},
 		{
@@ -730,7 +730,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"encyclopedia"},
 			Description:   "Every child in a schoolroom, and every schoolroom teaching the same lessons.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 				{Kind: EffectResearchTime, Value: -0.03},
 			},
 		},
@@ -807,7 +807,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"public_education"},
 			Description:   "Relativity and the quantum: the old certainties, measured and found short.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 			},
 		},
 		{
@@ -1000,7 +1000,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"modern_physics"},
 			Description:   "Any message is a count of yes and no, and a count can be sent without loss.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 			},
 		},
 		{
@@ -1074,7 +1074,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"electricity_tech"},
 			Description:   "Machines that do the arithmetic of a thousand clerks, and never tire.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 				{Kind: EffectResearchTime, Value: -0.03},
 			},
 		},
@@ -1200,7 +1200,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"search_engines"},
 			Description:   "Every paper and every dataset, free to read the day it is finished.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.05},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.05},
 			},
 		},
 		{
@@ -1323,7 +1323,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"machine_learning"},
 			Description:   "Direct brain-computer interface technology.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.04},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.04},
 			},
 		},
 		{
@@ -1523,7 +1523,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"unified_theory"},
 			Description:   "Telescopes beyond the air and the glare, looking back to the first light.",
 			Effects: []TechEffect{
-				{Kind: EffectOutput, Target: "knowledge", Value: 0.04},
+				{Kind: EffectOutput, Target: ResearchTarget, Value: 0.04},
 			},
 		},
 		{

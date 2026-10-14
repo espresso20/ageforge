@@ -12,7 +12,7 @@ Every resource you use comes from buildings, and the workers assigned to product
 
 - **More production.** Each extra building of the same tier adds its base rate to your total.
 - **More worker slots.** Worker capacity grows with building count, which raises your production ceiling.
-- **More storage.** Storage buildings add storage for every resource but knowledge at once.
+- **More storage.** Storage buildings add storage for every resource at once.
 - **Progress toward the next age.** Many ages require a minimum building count or specific buildings.
 
 Most of the game comes down to this: build more buildings and fill them with workers.
@@ -38,7 +38,7 @@ build                    list all available buildings with costs and count built
 
 When you advance to a new age, buildings that have a next-tier equivalent do **not** change on their own. Each one gets a **pending upgrade** marker and keeps producing at its old rate. You choose when to upgrade, one building type at a time.
 
-Storage buildings never get an upgrade: your stashes, storage pits and vaults keep counting toward your storage for the rest of the run (see [Storage Buildings](#storage-buildings-21-tiers)). Knowledge buildings never get one either: they keep their tier, and each age's knowledge building is built new in its own age (see [The Knowledge Store](knowledge.md#the-knowledge-store)).
+Storage buildings never get an upgrade: your stashes, storage pits and vaults keep counting toward your storage for the rest of the run (see [Storage Buildings](#storage-buildings-21-tiers)). Knowledge buildings never get one either: they keep their tier, and each age's knowledge building is built new in its own age (see [Scholars and Research](knowledge.md#what-a-scholar-is)).
 
 ### The upgrade hint
 
@@ -235,7 +235,7 @@ You keep all your progress and production. A Gathering Camp in the Food lineage 
 | 2 | Food | food | food | 21 | Gathering Camp | Quantum Cultivator |
 | 3 | Organic Extraction | lumber | wood → coal → oil → nanobots → quantum flux | 21 | Wood Camp | Reality Harvester |
 | 4 | Geological Extraction | masonry | stone → iron ore → uranium → titanium ore → dark matter crystals → antimatter | 21 | Stone Camp | Reality Excavator |
-| 5 | Knowledge | knowledge | knowledge | 21 | Story Circle | Reality Academy |
+| 5 | Knowledge | none | research | 21 | Story Circle | Reality Academy |
 | 6 | Faith | faith | faith | 21 | Shrine | Transcendence Hall |
 | 7 | Military | military | soldiers | 22 | War Camp | Omniversal War Council |
 | 8 | Trade | trade | gold | 20 | Market | Omniversal Bazaar |
@@ -246,9 +246,9 @@ You keep all your progress and production. A Gathering Camp in the Food lineage 
 | 13 | Hacker/Digital | hacker | data | 9 | Mainframe Hall | Reality Processor |
 | 14 | Harbor | trade | gold (+trade-route income) | 5 | Harbor | Logistics Hub |
 
-> Lineages 8 to 14 start in later ages (Trade and Engineering in the Bronze Age, Culture/Arts in the Classical, Metallurgy in the Iron, Energy in the Industrial, Hacker/Digital in the Modern and Harbor in the Colonial), so they have fewer tiers. The Housing and Culture/Arts lineages have no worker domain: they work without workers. The **Harbor** lineage also raises trade income: besides producing gold, each harbor adds a percentage bonus to the income of *every* active trade route. See [Trade](trade.md#harbor-lineage-trade-route-income).
+> Lineages 8 to 14 start in later ages (Trade and Engineering in the Bronze Age, Culture/Arts in the Classical, Metallurgy in the Iron, Energy in the Industrial, Hacker/Digital in the Modern and Harbor in the Colonial), so they have fewer tiers. The Housing, Culture/Arts and Knowledge lineages have no worker domain: they work without workers (the Knowledge lineage comes with scholars). The **Harbor** lineage also raises trade income: besides producing gold, each harbor adds a percentage bonus to the income of *every* active trade route. See [Trade](trade.md#harbor-lineage-trade-route-income).
 
-The **Knowledge** lineage is the one that raises the [knowledge store](knowledge.md#the-knowledge-store). Each copy adds to it, from +140 for a Story Circle to +5.6B for a Reality Academy, and each copy costs 50% more than the one before it. The gate into the next age asks for 5 to 10 copies of the age's knowledge building. [Knowledge](knowledge.md#how-knowledge-is-produced) has each building's rate, store figure and gate count.
+The **Knowledge** lineage is the one that comes with scholars. Each copy comes with its scholars, from 2 for a Story Circle to 20 for a Reality Academy, who take no workers, and each copy costs 50% more than the one before it. A knowledge building cannot be built past its cap, the count its age's gate asks for, 5 to 10 copies. [Scholars and Research](knowledge.md#what-a-scholar-is) has each building's scholars, work and cap.
 
 The **Mainframe Hall** (Modern Age) is the first tier of the Hacker/Digital lineage and the first building that makes data. It uses `hacker` workers, the Modern Age's gate asks for eight of it, and its next tier is the Server Farm in the Information Age.
 
@@ -261,7 +261,7 @@ A building can have one or more of these effects. Knowing them helps you decide 
 | Effect | What It Does |
 |--------|-------------|
 | Production | Adds an amount of a resource each tick, scaled by how many workers it has (see below). Most production buildings do this. |
-| Storage | Raises the storage of one resource, or storage for every resource but knowledge (storage buildings). A knowledge building raises the knowledge store. |
+| Storage | Raises the storage of one resource, or storage for every resource (storage buildings). A knowledge building comes with scholars. |
 | Housing | Raises your housing, the number of workers you can have (housing buildings). |
 | Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production (which adds into [the all-production pool](resources.md#the-all-production-cap)). |
 | Trade route income | Raises the income of every trade route (Harbor lineage). |
@@ -294,7 +294,7 @@ Output is valued at **price parity**. Each age has a price level for each resour
 - Wood Camp (Primitive): costs 16 wood and makes 0.569 wood/tick fully staffed, so it repays itself in 28 ticks (56 seconds).
 - Stone Pit (Stone): costs 180 stone and 300 wood. At Stone Age parity (240 stone = 360 wood) that is worth 380 stone, and at 3.48 stone/tick it repays in about 3 minutes 40 seconds.
 
-**Flow resources keep hand-set rates:** food, faith, culture and soldiers. They feed workers, set morale and epoch odds, fill culture storage or make up your army. **Nanobots** keep theirs too: they are a build material, asked for in the hundreds of thousands where an age's other prices are in the trillions, so a Nanobot Vat makes the 6.55K a tick it is listed at and a building that asks for nanobots is not valued by them. Resources nothing in the age costs (knowledge outside the Medieval to Colonial Ages, for example) also keep fixed rates.
+**Flow resources keep hand-set rates:** food, faith, culture and soldiers. They feed workers, set morale and epoch odds, fill culture storage or make up your army. **Nanobots** keep theirs too: they are a build material, asked for in the hundreds of thousands where an age's other prices are in the trillions, so a Nanobot Vat makes the 6.55K a tick it is listed at and a building that asks for nanobots is not valued by them. Research keeps fixed rates too: a knowledge building's work is a hand-set figure (see [Scholars and Research](knowledge.md#what-a-scholar-is)), and nothing is priced in it.
 
 | Age | Target time | Payback (fully staffed) | Build-time cap | Storage build cap |
 |-----|-------------|-------------------------|----------------|-------------------|
@@ -321,9 +321,9 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Quantum | 62h 24m | 28.5h | 10h 24m | 1h 18m |
 | Transcendent | 62h 24m | 26.2h | 10h 24m | 1h 18m |
 
-The Renaissance's payback is 2x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with a fifth more knowledge and cheaper, quicker building, and the age had dropped to three quarters of its target. Its University makes 76.3 knowledge/tick, Exchange 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
+The Renaissance's payback is 2x what the curve gives (about 2.6 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with cheaper, quicker building, and the age had dropped to three quarters of its target. Its Exchange makes 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
 
-**From the Victorian Age on the curve is steeper.** The finished tech tree took research off the critical path of every age from the Victorian on: a wonder's keystone costs about a tenth of what its age makes of knowledge, where it cost a quarter to a half. What paces those ages is what their buildings make and what their requirements ask, and on the old curve a full run played the ages from the Modern to the Galactic at 0.38 to 0.56 of their targets (the Information Age aside, at 0.84). The Victorian, Electric and Atomic Ages had each been set by hand, at 1.7, 1.45 and 1.75 times the old curve; the steeper curve gives them 1.62, 1.67 and 1.71 and carries the Digital, Cyberpunk and Interstellar Ages as well. A Bessemer Plant makes 148K steel/tick (was 141K), an Electric Arc Furnace 690K (was 874K) and a Breeder Reactor 1.29M electricity (was 1.26M). The Bronze Age's payback is 1.1x (a Lumber Mill makes 7.91 wood/tick; a Quarry 4 stone): the age ran at under two thirds of its target.
+**From the Victorian Age on the curve is steeper.** The finished tech tree took research off the critical path of every age from the Victorian on: a wonder's keystone takes a small part of what the age's scholars do. What paces those ages is what their buildings make and what their requirements ask, and on the old curve a full run played the ages from the Modern to the Galactic at 0.38 to 0.56 of their targets (the Information Age aside, at 0.84). The Victorian, Electric and Atomic Ages had each been set by hand, at 1.7, 1.45 and 1.75 times the old curve; the steeper curve gives them 1.62, 1.67 and 1.71 and carries the Digital, Cyberpunk and Interstellar Ages as well. A Bessemer Plant makes 148K steel/tick (was 141K), an Electric Arc Furnace 690K (was 874K) and a Breeder Reactor 1.29M electricity (was 1.26M). The Bronze Age's payback is 1.1x (a Lumber Mill makes 7.91 wood/tick; a Quarry 4 stone): the age ran at under two thirds of its target.
 
 Some ages sit off the curve, because the ages are not smooth: how quick one is depends mostly on how far its prices jump from the age before, which is what you arrive able to pay, and on how much of what it builds with the age before goes on making. An age answers to its own payback with about half the change, and passes about a third of it on to the next.
 
@@ -344,7 +344,7 @@ Times are at the base tick of 2 seconds; game speed bonuses shorten them in real
 
 ## The Maker Rule
 
-Every material an age charges for, in a building its gate asks for or in its wonder, has a maker in that age: a building of that age that makes it. Every maker is set on one standard, so a maker repays the price of its first copy in the same number of ticks as the age's other makers (the Payback Rule above). The rule covers building materials. It leaves out knowledge, nanobots and the flow resources, food, faith, culture and soldiers.
+Every material an age charges for, in a building its gate asks for or in its wonder, has a maker in that age: a building of that age that makes it. Every maker is set on one standard, so a maker repays the price of its first copy in the same number of ticks as the age's other makers (the Payback Rule above). The rule covers building materials. It leaves out nanobots and the flow resources, food, faith, culture and soldiers.
 
 Two shortages are left as they are. The Colonial Age has no maker of wood and the Electric Age has none of coal, and the older buildings you keep cover them. One exception is listed: the last age's wonder is paid from the Quantum Age's makers, because the Transcendent Age has none of its own.
 
@@ -446,11 +446,11 @@ Your 20 Gathering Camps stay Gathering Camps, producing at their full rate, unti
 
 ## Storage Buildings (21 tiers)
 
-Storage buildings form their own lineage and add storage for **every** resource at once, knowledge aside: it has [a store of its own](knowledge.md#the-knowledge-store), raised only by knowledge buildings. They need no workers: build them and your storage goes up.
+Storage buildings form their own lineage and add storage for **every** resource at once. They need no workers: build them and your storage goes up.
 
-Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Their sizes follow one written rule: five copies of an age's storage building, added to the stores of the earlier ages, hold the dearest single price that age asks of a full town (eight copies of every building that makes something, the knowledge building aside), with a quarter to spare. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
+Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Their sizes follow one written rule: five copies of an age's storage building, added to the stores of the earlier ages, hold the dearest single price that age asks of a full town (eight copies of every building that makes something), with a quarter to spare. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
 
-| Building | Age | Storage per copy (every resource but knowledge) |
+| Building | Age | Storage per copy (every resource) |
 |----------|-----|--------|
 | Stash | Primitive | +100 |
 | Storage Pit | Stone | +1.2K |
@@ -474,7 +474,7 @@ Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one
 | Galactic Vault | Galactic | +50Q |
 | Quantum Vault | Quantum | +2.3Qi |
 
-Pottery and Masonry add 10% each to every store but knowledge's, and Cloud Computing and Superconductors 8% each later.
+Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.
 
 ### Storage is a wall
 
@@ -483,8 +483,6 @@ A building or an upgrade whose price in any one resource is larger than the stor
 ```
 <Building> costs <amount> <resource>, more than your <resource> storage holds (<size>). Build more storage first: <Storage building>.
 ```
-
-Knowledge has its own wall. A tech, or a building priced in knowledge, that costs more than the [knowledge store](knowledge.md#the-knowledge-store) holds cannot be started or bought either, and the same sentence names the age's knowledge building instead of its storage building.
 
 The age's wonder is the one exception: it is paid through its bank, a round at a time (see [Wonders](wonders.md#overflow)), so it may cost more than a store holds.
 
@@ -534,7 +532,7 @@ Full stores bank into the wonder on their own ([overflow](wonders.md#overflow)),
 
 You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 64 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/6 of the age's target time to build.
 
-Every wonder adds a little production of one or two resources, and many add more: a percentage to all production (the Crystal Palace, Hoover Dam and the last four wonders), to knowledge output or to expedition rewards, or housing or storage. All-production bonuses add into [the all-production pool](resources.md#the-all-production-cap), which applies in full up to +200% and a quarter of every point past it.
+Every wonder adds a little production of one or two resources, and many add more: a percentage to all production (the Crystal Palace, Hoover Dam and the last four wonders), to research or to expedition rewards, or housing or storage. All-production bonuses add into [the all-production pool](resources.md#the-all-production-cap), which applies in full up to +200% and a quarter of every point past it.
 
 Endure and the Great Fire never destroy wonders, and Succumb never turns them into ruins. They stay for the rest of the run, like storage.
 

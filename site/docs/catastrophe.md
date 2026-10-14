@@ -88,7 +88,7 @@ Pay a cost and keep your civilization. With no Brace and no soldiers, enduring c
 
 For how Brace and soldiers change these numbers, see [Brace](#brace) and [Your garrison](#your-garrison) below.
 
-Workers of the destroyed buildings go idle first, the same as when you sell a building. There is one worker pool, so the 25% loss takes the same share of assigned workers from every building, whatever its domain (food, knowledge, military and so on). Age, research, wonders and prestige are untouched. The next age's requirements are checked again from scratch, since most of the stock they counted is gone. You earn the **Endured** marker on the epoch badge and a line in the civilization log.
+Workers of the destroyed buildings go idle first, the same as when you sell a building. There is one worker pool, so the 25% loss takes the same share of assigned workers from every building, whatever its domain (food, faith, military and so on). Age, research, wonders and prestige are untouched. The next age's requirements are checked again from scratch, since most of the stock they counted is gone. You earn the **Endured** marker on the epoch badge and a line in the civilization log.
 
 ### Brace
 
@@ -144,7 +144,7 @@ If morale was already low, the −10 can push it into the low band, where output
 
 Every built building except wonders, storage and knowledge buildings goes into a pool in a fixed order (sorted by building key). The pool is shuffled with your run's seeded random generator and the first N are destroyed. Destroyed buildings are removed entirely; they don't become ruins. Because the generator is seeded per run, the same run state destroys the same buildings.
 
-Storage is never destroyed by an Endure (nor by The Great Fire epoch event), because it is what raises your caps, and once its age has passed it can never be rebuilt. Losing some could leave your caps too small to pay for this age's storage, and then they could never rise again. Knowledge buildings are spared for the same reason: they are the knowledge store, tech prices are set against it, and an older age's copy can never be rebuilt.
+Storage is never destroyed by an Endure (nor by The Great Fire epoch event), because it is what raises your caps, and once its age has passed it can never be rebuilt. Losing some could leave your caps too small to pay for this age's storage, and then they could never rise again. Knowledge buildings are spared for the same reason: they come with your scholars, and an older age's copy can never be rebuilt.
 
 **Recovery checklist:**
 

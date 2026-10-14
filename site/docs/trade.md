@@ -58,10 +58,10 @@ Every route opens in the Bronze Age or later. From the Bronze Age on, ages and t
 | `mercantile_convoy` | Mercantile Convoy | Renaissance | Exchange ×1 | 300 stone + 200 wood | 90 gold | 42 |
 | `spice_trade` | Spice Trade | Colonial | Port ×1 | 100 gold | 200 food + 50 culture | 47 |
 | `colonial_exports` | Colonial Exports | Colonial | Port ×2 | 500 food | 150 gold | 39 |
-| `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | 400 food + 60 gold | 120 culture + 80 knowledge | 47 |
+| `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | 400 food + 60 gold | 120 culture + research progress | 47 |
 | `tea_clippers` | Tea Clippers | Colonial | Harbor ×2 | 250 gold | 600 food + 90 culture | 52 |
 | `coal_barges` | Coal Barges | Industrial | Harbor ×2 | 300 coal | 220 gold + 150 iron | 36 |
-| `cotton_exchange` | Cotton Exchange | Industrial | Stock Exchange ×1 | 400 gold | 200 culture + 150 knowledge | 42 |
+| `cotton_exchange` | Cotton Exchange | Industrial | Stock Exchange ×1 | 400 gold | 200 culture + research progress | 42 |
 | `steamship_line` | Steamship Line | Industrial | Harbor Authority ×2 | 250 steel + 200 coal | 900 gold | 47 |
 | `rail_freight` | Rail Freight | Industrial | Integrated Steelworks ×1 | 200 iron | 100 gold + 50 coal | 31 |
 | `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | 100 oil | 300 gold | 39 |

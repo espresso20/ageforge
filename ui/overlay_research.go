@@ -10,12 +10,11 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// everyStore is what a bonus to every store says. Knowledge has a store of
-// its own that only knowledge buildings raise, so it is left out.
-const everyStore = "storage for every resource but knowledge"
+// everyStore is what a bonus to every store says.
+const everyStore = "storage for every resource"
 
 // formatTechEffect names a config.Effect in glossary words: "+10% all
-// production", "+0.5 food/tick", "+500 storage for every resource but knowledge",
+// production", "+0.5 food/tick", "+500 storage for every resource",
 // "+10 housing", "unlocks Lumber Mill".
 func formatTechEffect(eff config.Effect) string {
 	switch eff.Type {
@@ -28,6 +27,10 @@ func formatTechEffect(eff config.Effect) string {
 			return textfmt.Signed(eff.Value) + " " + everyStore
 		}
 		return textfmt.Signed(eff.Value) + " " + game.ResourceName(eff.Target) + " storage"
+	case "research":
+		// The scholars' work is a time on a tech, never a number of its own
+		// (config.buildingEffectParts says it the same way).
+		return "speeds research"
 	case "unlock":
 		return "unlocks " + game.BuildingName(eff.Target)
 	case "capacity":
@@ -60,6 +63,11 @@ func rateNumber(v float64) string {
 // together.
 func researchSummaryLines(state game.GameState) string {
 	var sb strings.Builder
+	if state.Scholars.Total > 0 {
+		fmt.Fprintf(&sb, "  [gray]%s[-]\n", scholarsLine(state))
+		fmt.Fprintf(&sb, "  [green]%-7s[-] Worker output from teaching [gray](%s with every scholar teaching)[-]\n",
+			textfmt.SignedPercent(state.Scholars.TeachingBonus), textfmt.SignedPercent(state.Scholars.TeachingFull))
+	}
 	if p, ok := state.Pools["research_speed"]; ok && p.Earned != 0 {
 		fmt.Fprintf(&sb, "  [gray]Research speed %s: techs take %s of their base time. The times on the tech tree include it.[-]%s\n",
 			textfmt.SignedPercent(p.Earned), textfmt.Percent(math.Max(0, 1-p.Applied)), poolTag(state, "research_speed"))
@@ -94,7 +102,7 @@ func researchBonusLines(state game.GameState) string {
 		}
 	}
 	if rs.Storage != 0 {
-		line(textfmt.SignedPercent(rs.Storage), "Storage (not knowledge)")
+		line(textfmt.SignedPercent(rs.Storage), "Storage")
 	}
 	if rs.Housing != 0 {
 		line(textfmt.SignedPercent(rs.Housing), "Housing")

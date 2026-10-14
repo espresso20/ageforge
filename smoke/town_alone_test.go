@@ -74,7 +74,16 @@ func leaveTownAlone(t *testing.T, tb *refTables, i, horizon, step int) aloneAge 
 	ge.SetTownForTest(town, int(ref.workers))
 	ge.SetWonderOverflow(true)
 	for _, d := range tb.byAge[i] {
-		if _, err := ge.PlanAddBuild(d.Key, 1000); err != nil {
+		n := 1000
+		if d.MaxCount > 0 {
+			// A knowledge building stops at the count its gate asks for, and
+			// the reference town holds exactly that.
+			if town[d.Key] >= d.MaxCount {
+				continue
+			}
+			n = d.MaxCount - town[d.Key]
+		}
+		if _, err := ge.PlanAddBuild(d.Key, n); err != nil {
 			t.Fatalf("%s: planning %s: %v", out.age, d.Key, err)
 		}
 	}

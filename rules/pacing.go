@@ -77,6 +77,18 @@ func (s *Set) StretchTicks(age string, ticks int) int {
 // knee, and a share of each point past it (config.SoftCap).
 func (s *Set) SoftCap() config.SoftCap { return s.softCap }
 
+// TeachingBonus is the bonus to what workers make with every scholar
+// teaching, in the age at 0-based position pos in the order of ages.
+func (s *Set) TeachingBonus(pos int) float64 {
+	bonus := 0.0
+	for _, step := range s.teaching {
+		if pos+1 >= step.From {
+			bonus = step.Bonus
+		}
+	}
+	return bonus
+}
+
 // PriceLevels returns the median first-copy price of each construction
 // resource in age (nil for an age with no buildings).
 func (s *Set) PriceLevels(age string) map[string]float64 { return maps.Clone(s.priceLevels[age]) }

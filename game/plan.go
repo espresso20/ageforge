@@ -19,7 +19,7 @@ import (
 //
 //   - An item is paid for when it starts, not when it is queued, through the
 //     same checks as `build` and `research` (age lock, MaxCount, one research
-//     at a time, knowledge cost).
+//     at a time).
 //   - Every tick, after production, the engine walks the plan in order and
 //     starts everything it can. A build item with a count starts as many
 //     copies as it can afford, one at a time along the cost curve.
@@ -55,8 +55,8 @@ import (
 //   - Deal items (plan_deal.go) take a civilization's trade deal once its
 //     fixed price is free, reserving it while they wait, like one build.
 //   - Techs start in plan order: only the first research item can take the
-//     research slot when it frees up. Later research items still reserve
-//     their knowledge.
+//     research slot when it frees up. A tech has no price: it waits for the
+//     slot, and the scholars take it up when it starts.
 //   - Items that can never start drop out with a log line: a building of an
 //     earlier age after an advance, a building at its MaxCount, a tech
 //     already researched.
@@ -66,8 +66,8 @@ import (
 //     that (its prerequisite was removed from above it or moved below it,
 //     the research it waited on was canceled, or a game update changed
 //     what the tech needs) stays and waits: it could still start, so it is
-//     not dropped. While it waits it holds neither the research slot's
-//     turn nor its knowledge, so a prerequisite planned below it can go
+//     not dropped. While it waits it holds not the research slot's
+//     turn, so a prerequisite planned below it can go
 //     first. A tech of an age not reached yet waits for the age the same
 //     way.
 //
@@ -632,31 +632,21 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		if order := ge.progress.GetAgeOrder(); order[def.Age] > order[ge.age] {
 			return planCheck{blocked: "waits for the " + ge.progress.GetAgeName(def.Age)}
 		}
-		cost := map[string]float64{"knowledge": def.Cost}
-		if DevGodMode {
-			cost = nil
-		}
-		// Over the store and not held (stock kept above a store from an older
-		// save can still pay for it): the same wall the research command meets.
-		if ge.overStore(cost) != "" && !DevGodMode {
-			return planCheck{cost: cost, blocked: "needs more knowledge storage"}
-		}
-		if res := ge.planUnfunded(cost); res != "" {
-			return planCheck{cost: cost, blocked: "too little " + ge.rules.ResourceLabel(res) + " coming in"}
-		}
+		// A tech has no price to afford: it waits only for the research slot,
+		// the research above it and what it needs first.
 		if ge.Research.currentTech != "" {
-			return planCheck{cost: cost, blocked: "research slot busy", reserve: true}
+			return planCheck{blocked: "research slot busy", reserve: true}
 		}
 		if !researchFirst {
-			return planCheck{cost: cost, blocked: "after the research above it", reserve: true}
+			return planCheck{blocked: "after the research above it", reserve: true}
 		}
 		if pre := def.MissingPrereq(ge.Research.IsResearched); pre != "" {
-			return planCheck{cost: cost, blocked: "needs " + techDefName(ge.rules, pre) + " first", reserve: true}
+			return planCheck{blocked: "needs " + techDefName(ge.rules, pre) + " first", reserve: true}
 		}
 		if !def.AnyOfMet(ge.Research.IsResearched) {
-			return planCheck{cost: cost, blocked: "needs " + techNamesOr(ge.rules, def.AnyOf) + " first", reserve: true}
+			return planCheck{blocked: "needs " + techNamesOr(ge.rules, def.AnyOf) + " first", reserve: true}
 		}
-		return planCheck{cost: cost, reserve: true}
+		return planCheck{reserve: true}
 	}
 	return planCheck{blocked: "unknown item"}
 }

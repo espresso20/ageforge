@@ -197,7 +197,7 @@ func TestTechHeadroom(t *testing.T) {
 	}{
 		{TechEffectKey{Kind: EffectAllOutput}, 0.10},
 		{TechEffectKey{Kind: EffectOutput, Target: "food"}, 1.19},
-		{TechEffectKey{Kind: EffectOutput, Target: "knowledge"}, 0.99},
+		{TechEffectKey{Kind: EffectOutput, Target: ResearchTarget}, 0.99},
 		{TechEffectKey{Kind: EffectOutput, Target: "gold"}, 0.40},
 		{TechEffectKey{Kind: EffectOutput, Target: "faith"}, 0.28},
 		{TechEffectKey{Kind: EffectOutput, Target: "culture"}, 0.39},
@@ -380,7 +380,7 @@ func TestTechChecks(t *testing.T) {
 		"fire_mastery":                "out:food:10; house:5 | rate(food) x1.10; housing x1.05",
 		"civil_engineering":           "out:stone:8; cost:3 | rate(stone) x1.08; build_price x0.97",
 		"quarrying":                   "out:marble:8; out:iron_ore:8 | rate(marble) x1.08; rate(iron_ore) x1.08",
-		"printing_press":              "out:knowledge:6; research:3 | rate(knowledge) x1.06; research_ticks x0.97",
+		"printing_press":              "out:research:6; research:3 | rate(research) x1.06; research_ticks x0.97",
 		"chronometry":                 "speed:5 | tick_speed +0.05",
 		"navigation":                  "exp:10; feature:naval_expedition | expedition_reward +0.1; allowed(naval_expedition) 0>1",
 	} {

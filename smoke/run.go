@@ -837,9 +837,8 @@ func (r *runner) sampleStretch(st game.GameState, built int) {
 		}
 	}
 	if !affordable && st.Research.CurrentTech == "" {
-		know := st.Resources["knowledge"].Amount
 		for _, t := range st.Research.Techs {
-			if t.Available && t.Cost <= know {
+			if t.Available {
 				affordable = true
 				break
 			}
@@ -938,8 +937,8 @@ func (r *runner) observe(st game.GameState) {
 		r.enterAge(st)
 	}
 	// The age's knowledge income and its all-production pool, for its split.
-	if k, ok := st.Resources["knowledge"]; ok && k.Rate > 0 {
-		r.knowSum += float64(k.Rate * float64(r.cfg.DecideEvery))
+	if st.Research.PerTick > 0 {
+		r.knowSum += float64(st.Research.PerTick * float64(r.cfg.DecideEvery))
 	}
 	r.knowTicks += r.cfg.DecideEvery
 	r.poolAll = st.Pools["production_all"].Earned

@@ -208,11 +208,18 @@ type GameSave struct {
 	// A save from before them keeps its stock and its plan's banks
 	// (keepStockFromBeforeTheWall).
 	StorageRules int `json:"storage_rules,omitempty"`
-	// KnowledgeRules is the knowledge rules the save was written under
-	// (knowledgeRules; absent on saves from before knowledge had a store of
-	// its own). A save from before them keeps all its knowledge
-	// (keepKnowledgeFromBeforeItsStore). omitempty.
+	// KnowledgeRules is the knowledge rules the save was written under, when
+	// knowledge had a store of its own. The store is gone; the field stays so
+	// that a save written under it still verifies, and is written empty.
 	KnowledgeRules int `json:"knowledge_rules,omitempty"`
+	// ScholarRules is the scholar rules the save was written under
+	// (scholarRules; absent on saves from before knowledge went to scholars).
+	// A save from before them has its knowledge turned into work for its
+	// techs, and hears of it once (turnKnowledgeIntoWork).
+	ScholarRules int `json:"scholar_rules,omitempty"`
+	// ScholarShare is the research setting, the percent of the scholars that
+	// research. Absent when it is the default, 100.
+	ScholarShare *int `json:"scholar_share,omitempty"`
 	// TreeVersion is the tech tree's rules the save was written under
 	// (config.TechTreeVersion; absent on saves from before the tree's first
 	// lock). TreeGraceAge is the age a save from an older version was in
@@ -351,8 +358,17 @@ type PrestigeSave struct {
 type ResearchSave struct {
 	Researched  []string `json:"researched"`
 	CurrentTech string   `json:"current_tech"`
-	TicksLeft   int      `json:"ticks_left"`
-	TotalTicks  int      `json:"total_ticks"`
+	// TicksLeft and TotalTicks were the wait a paid-for tech had left. There
+	// is no such wait now: they are written empty, and a save that has them
+	// set holds a tech that was paid for and completes on load.
+	TicksLeft  int `json:"ticks_left"`
+	TotalTicks int `json:"total_ticks"`
+	// Progress is the work done on the tech in progress, Slowed marks an
+	// Ancient Memory research and HeadStart is work kept for the next tech.
+	// Each is omitted when empty.
+	Progress  float64 `json:"progress,omitempty"`
+	Slowed    bool    `json:"slowed,omitempty"`
+	HeadStart float64 `json:"head_start,omitempty"`
 }
 
 // MilitarySave holds military state for save.
@@ -639,14 +655,16 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			GameStarted:     ge.Stats.GameStarted,
 			AgesReached:     agesReached,
 			SoldiersTrained: ge.Stats.SoldiersTrained,
+			ResearchWork:    ge.Stats.ResearchWork,
 			Defense:         ge.Stats.Defense.clone(),
 		},
 		BuildQueue: queue,
 		Research: ResearchSave{
 			Researched:  ge.Research.GetResearched(),
 			CurrentTech: ge.Research.currentTech,
-			TicksLeft:   ge.Research.ticksLeft,
-			TotalTicks:  ge.Research.totalTicks,
+			Progress:    ge.Research.progress,
+			Slowed:      ge.Research.slowed,
+			HeadStart:   ge.headHeld(),
 		},
 		Military: MilitarySave{
 			ActiveScout:    activeScout,
@@ -741,7 +759,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		PacingWeek:             true,
 		OverCapGrace:           ge.Resources.graceSave(),
 		StorageRules:           config.StorageRules,
-		KnowledgeRules:         knowledgeRules,
+		ScholarRules:           scholarRules,
+		ScholarShare:           ge.scholarShareSave(),
 		TreeVersion:            config.TechTreeVersion,
 		TreeGraceAge:           ge.Buildings.graceAge,
 		GrantedFeatures:        ge.grantedFeatureKeys(),
@@ -900,6 +919,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 			GameStarted:     save.Stats.GameStarted,
 			AgesReached:     ages,
 			SoldiersTrained: save.Stats.SoldiersTrained,
+			ResearchWork:    save.Stats.ResearchWork,
 			Defense:         save.Stats.Defense.clone(),
 		}
 	}
@@ -933,7 +953,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	}
 
 	// Restore Phase 3 systems
-	ge.Research.LoadState(save.Research.Researched, save.Research.CurrentTech, save.Research.TicksLeft, save.Research.TotalTicks)
+	ge.loadResearch(&save)
 	scoutActive, militaryActive := ge.Military.migrateActives(save.Military)
 	ge.Military.LoadState(scoutActive, militaryActive, save.Military.CompletedCount, save.Military.TotalLoot)
 	ge.autoExpeditionTicksLeft = save.Military.AutoExpeditionTicksLeft
@@ -1113,9 +1133,9 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	if beforeTheWall {
 		ge.keepStockFromBeforeTheWall()
 	}
-	beforeTheStore := save.KnowledgeRules < knowledgeRules
-	if beforeTheStore {
-		ge.Resources.markGrace("knowledge")
+	beforeScholars := save.ScholarRules < scholarRules
+	if beforeScholars {
+		ge.turnKnowledgeIntoWork(&save)
 	}
 	ge.lastK = ge.speedK()
 
@@ -1173,8 +1193,8 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	if beforeTheWall {
 		ge.addLog("info", storageWallNotice)
 	}
-	if beforeTheStore {
-		ge.addLog("info", knowledgeStoreNotice)
+	if beforeScholars {
+		ge.addLog("info", scholarsNotice)
 	}
 	// A save whose plan held sell orders hears once that they are gone; its
 	// next save has none, so the line never repeats.
@@ -1822,16 +1842,14 @@ func retiredSellOrders(saved []PlanItem) int {
 	return n
 }
 
-// knowledgeRules is the version of the knowledge rules a save is written
-// under: 1 from the knowledge store on (knowledge has a store of its own,
-// raised by knowledge buildings alone). A save without it is from before,
-// and keeps every point of knowledge it held: what is over the new store
-// stays until spent and gains nothing, by the grace rule the stores keep.
-const knowledgeRules = 1
+// scholarRules is the version of the scholar rules a save is written under:
+// 1 from the scholars on (a knowledge building comes with its scholars,
+// research is a progress bar, nothing is stored). A save without it is from
+// before, and its knowledge becomes work (turnKnowledgeIntoWork).
+const scholarRules = 1
 
-// knowledgeStoreNotice is the line a save from before the knowledge store
-// gets on its first load.
-const knowledgeStoreNotice = "Knowledge now has its own store, raised by knowledge buildings. What you hold above it stays until you spend it."
+// scholarsNotice is the line a save from before the scholars hears once.
+const scholarsNotice = "Knowledge is no longer stored. Your scholars now work on one technology at a time."
 
 // storageWallNotice is the line a save from before the storage wall gets on
 // its first load.

@@ -574,7 +574,9 @@ func TestResearchSaysWhatItOpens(t *testing.T) {
 		t.Fatal(err)
 	}
 	ge.mu.Lock()
-	ge.Research.currentTech, ge.Research.ticksLeft, ge.Research.totalTicks = "military_tactics", 1, 1
+	ge.Research.currentTech, ge.Research.progress = "military_tactics", ge.Research.defs["military_tactics"].Cost
+	ge.Research.progress = ge.Research.defs["military_tactics"].Cost - 1
+	ge.researchPerTick = 1
 	ge.processResearch()
 	ge.mu.Unlock()
 	if !ge.Research.IsResearched("military_tactics") || !logHas(ge, "Military Tactics opens campaigns.") {

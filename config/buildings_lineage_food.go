@@ -84,7 +84,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 5 — medieval_age  rate=16.00
 	b = append(b, BuildingDef{
 		Name: "Demesne", Key: "demesne", Category: "production",
-		BaseCost:    map[string]float64{"stone": 540000, "gold": 180000, "knowledge": 60000},
+		BaseCost:    map[string]float64{"stone": 900000, "gold": 300000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 16}},
 		BuildTicks:  1200,
@@ -97,7 +97,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 6 — renaissance_age  rate=32.00
 	b = append(b, BuildingDef{
 		Name: "Market Garden", Key: "market_garden", Category: "production",
-		BaseCost:    map[string]float64{"gold": 1800000, "steel": 600000, "knowledge": 300000},
+		BaseCost:    map[string]float64{"gold": 2930000, "steel": 975000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 32}},
 		BuildTicks:  2400,

@@ -130,17 +130,14 @@ func TestMasteryTwinEngines(t *testing.T) {
 	for _, ge := range []*GameEngine{base, known} {
 		ge.mu.Lock()
 		ge.age = tech.Age
-		ge.Resources.UnlockResource("knowledge")
-		ge.Resources.resources["knowledge"].Storage = tech.Cost * 4
-		ge.Resources.resources["knowledge"].Amount = tech.Cost * 2
 		err := ge.startResearchLocked(tech.Key, true)
 		ge.mu.Unlock()
 		if err != nil {
 			t.Fatalf("research %s: %v", tech.Key, err)
 		}
 	}
-	if b, k := base.Research.totalTicks, known.Research.totalTicks; k != MasteryTicks(b, 2) || k >= b {
-		t.Errorf("research takes %d ticks at k = 2 against %d at k = 1, want %d", k, b, MasteryTicks(b, 2))
+	if b, k := base.researchPerTick, known.researchPerTick; b <= 0 || math.Abs(k-b*2) > 1e-9*b {
+		t.Errorf("the scholars do %v work a tick at k = 2 against %v at k = 1, want twice", k, b)
 	}
 }
 

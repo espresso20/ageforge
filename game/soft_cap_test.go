@@ -38,7 +38,7 @@ func TestRecalculateRates_ResRatePoolFollowsTheSoftCap(t *testing.T) {
 	addProductionBuilding(ge, "test_library", "knowledge", 10.0, 1)
 
 	ge.recalculateRates()
-	base := ge.Resources.GetRate("knowledge")
+	base := resRate(ge, "knowledge")
 	if math.Abs(base-10.0) > 1e-9 {
 		t.Fatalf("baseline knowledge rate = %.6f, want 10.0", base)
 	}
@@ -46,7 +46,7 @@ func TestRecalculateRates_ResRatePoolFollowsTheSoftCap(t *testing.T) {
 	stackRateEvents(ge, "knowledge_rate", 0.50, 40) // Σ = +20.0
 	ge.recalculateRates()
 
-	got := ge.Resources.GetRate("knowledge")
+	got := resRate(ge, "knowledge")
 	if want := base * 7.5; math.Abs(got-want) > 1e-6 {
 		t.Fatalf("stacked knowledge_rate gave rate %.6f (x%.2f), want %.6f (x7.50): +200%% in full and a quarter of the other +1800%%",
 			got, got/base, want)
@@ -145,7 +145,7 @@ func TestSoftCapEveryProductionPool(t *testing.T) {
 			addProductionBuilding(ge, "test_maker", res, 10.0, 1)
 			ge.permanentBonuses[pool] = row.earned
 			ge.recalculateRates()
-			if got, want := ge.Resources.GetRate(res), 10.0*row.factor; math.Abs(got-want) > 1e-9 {
+			if got, want := resRate(ge, res), 10.0*row.factor; math.Abs(got-want) > 1e-9 {
 				t.Errorf("%s at %+.0f%%: %s rate %.6f (x%.4f), want x%.4f", pool, row.earned*100, res, got, got/10, row.factor)
 			}
 			p := ge.bonusPoolLocked(ge.buildResolver(), pool)

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -37,8 +38,6 @@ func treeEngine(t *testing.T) *GameEngine {
 	t.Helper()
 	ge := NewGameEngineWith(treeSet())
 	ge.SeedRNG(3)
-	ge.Resources.resources["knowledge"].Storage = 1e6
-	setAmount(ge, "knowledge", 1000)
 	return ge
 }
 
@@ -52,8 +51,9 @@ func learn(ge *GameEngine, keys ...string) {
 
 // researchOut runs the research in progress to its end.
 func researchOut(ge *GameEngine) {
-	for i := 0; i < 1_000_000 && ge.Research.currentTech != ""; i++ {
-		ge.processResearch()
+	if cur := ge.Research.currentTech; cur != "" {
+		// The scholars do the rest of the work in one go.
+		ge.finishResearch(ge.Research.AddWork(ge.Research.defs[cur].Cost - ge.Research.progress))
 	}
 }
 
@@ -178,7 +178,6 @@ func TestPlanTechWaitsForWhatItNeeds(t *testing.T) {
 	if err := ge.PlanAddResearch("tree_right"); err != nil {
 		t.Fatal(err)
 	}
-	setAmount(ge, "knowledge", 10)
 	if v := ge.planViews(); len(v) != 2 || v[0].Note != "needs Left or Right first" || v[1].Status != PlanStatusReady {
 		t.Errorf("views = %+v, want Join waiting and Right ready below it", v)
 	}
@@ -187,7 +186,6 @@ func TestPlanTechWaitsForWhatItNeeds(t *testing.T) {
 		t.Fatalf("researching %q, want tree_right, the branch planned below the waiting Join", ge.Research.currentTech)
 	}
 	// With its branch in progress Join is an ordinary queued tech again.
-	setAmount(ge, "knowledge", 10)
 	if v := ge.planViews(); len(v) != 1 || v[0].Note != "research slot busy" {
 		t.Errorf("views = %+v, want Join waiting on the slot", v)
 	}
@@ -220,7 +218,7 @@ func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 		want   float64
 	}{
 		{config.EffectOutput, "gold", 0.08},
-		{config.EffectOutput, "knowledge", 0.08},
+		{config.EffectOutput, config.ResearchTarget, 0.08},
 		{config.EffectOutput, "iron", 0.08},
 		{config.EffectFlatOutput, "steel", 0.25},
 		{config.EffectFlatOutput, "gold", 0},
@@ -259,7 +257,7 @@ func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 	rs := ge.GetState().Research
 	if !reflect.DeepEqual(rs.Bonuses, pools) ||
 		!reflect.DeepEqual(rs.Flat, map[string]float64{"steel": 0.25}) ||
-		!reflect.DeepEqual(rs.Output, map[string]float64{"gold": 0.08, "knowledge": 0.08, "iron": 0.08}) ||
+		!reflect.DeepEqual(rs.Output, map[string]float64{"gold": 0.08, config.ResearchTarget: 0.08, "iron": 0.08}) ||
 		rs.Storage != 0.10 || rs.Housing != 0.08 || rs.AllOutput != 0 ||
 		rs.BuildCost != 1 || rs.BuildTime != 1 || rs.ResearchTime != 1 ||
 		!reflect.DeepEqual(rs.Mechanics, map[string]float64{config.MechanicMoraleCap: 0.05}) {
@@ -272,10 +270,12 @@ func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 // takes half as long.
 func TestResearchTimeIsAKindATechCanCarry(t *testing.T) {
 	ge := treeEngine(t)
+	ge.Buildings.counts["story_circle"] = 5
+	ge.recalculateRates()
 	if err := ge.StartResearch("tree_base"); err != nil {
 		t.Fatal(err)
 	}
-	full := ge.Research.totalTicks
+	full := ge.researchTicksLeft()
 	researchOut(ge)
 	learn(ge, "tree_method")
 	if got := ge.Research.TimeFactor(); got != 0.5 {
@@ -284,7 +284,7 @@ func TestResearchTimeIsAKindATechCanCarry(t *testing.T) {
 	if err := ge.StartResearch("tree_left"); err != nil {
 		t.Fatal(err)
 	}
-	if got := ge.Research.totalTicks; full != 4 || got != 2 {
-		t.Errorf("research took %d ticks before the tech and %d after, want 4 and 2", full, got)
+	if got := ge.researchTicksLeft(); full <= 0 || got <= 0 || math.Abs(float64(got)*2-float64(full)) > 1 {
+		t.Errorf("research took %d ticks before the tech and %d after, want twice as long before", full, got)
 	}
 }

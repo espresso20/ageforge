@@ -37,23 +37,20 @@ var KnownPropertyFailures = map[int]string{
 	3:  "fails in 5 of 22 ages; worst 3.0 times in the Primitive Age",
 	4:  "fails in 3 of 22 ages; worst 2.9 times in the Quantum Age",
 	8:  "fails in 16 of 22 ages; worst 0.0% eaten in the Transcendent Age",
-	9:  "fails in 21 of 22 ages; worst room for 18320 people per job in the Transcendent Age",
+	9:  "fails in 22 of 22 ages; worst room for 19312 people per job in the Transcendent Age",
 	10: "fails in 1 of 22 ages; worst 0.8 times the age in the Digital Age",
 	12: "27 of 27 trade route payments fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
 	16: "fails in 2 of 22 ages; worst 3.0 times in the Primitive Age",
-	17: "fails in 1 of 22 ages; worst 3 techs in the Industrial Age",
 	18: "not worked out here yet",
 	19: "a full run earns 3279 points and everything for sale costs 99",
 }
 
 // KnownPropertyReasons is why a known failure fails, where the reason is a
-// decision and not a table to fix. 17: it fails only in the Industrial Age,
-// where the 10% the advance keeps pays for 3 techs at the top of the mastery
-// table. 10: it fails in the one age KnowledgeLadderHeld names.
+// decision and not a table to fix. 10: it fails in the one age
+// KnowledgeLadderHeld names.
 var KnownPropertyReasons = map[int]string{
 	10: "fails only in the age KnowledgeLadderHeld names (the last age has no knowledge building of its own)",
-	17: "fails only in the Industrial Age: no building there is priced in knowledge, so the advance keeps 10% of the store, and at the top of the mastery table (where the town has bought more knowledge buildings by the wall) 10% pays for its 3 cheapest techs; property 5 reads 2 there. A price-ladder question, not tuned here",
 }
 
 // Properties is the whole check: the properties, and how long each age
@@ -89,7 +86,6 @@ func (p Properties) Problems() []string {
 const (
 	propWallIncome   = 2.5  // income at the storage wall, over the reference town's
 	propWallStore    = 2.0  // the store at the wall, over the reference store
-	propTechsCarried = 2    // techs a full knowledge store carried into an age may pay for
 	propFoodLow      = 0.30 // workers eat at least this share of the food grown
 	propFoodHigh     = 0.80
 	propRoomHigh     = 1.5  // houses hold at most this many people per job
@@ -194,35 +190,10 @@ func StaticProperties() Properties {
 	add(3, fmt.Sprintf("income at the storage wall is at most %g times the reference town's", propWallIncome), bad == 0, worst(bad, where, val))
 	add(4, fmt.Sprintf("the store at the wall is at most %g times the reference store", propWallStore), bad4 == 0, worst(bad4, where4, val4))
 
-	// 5 and 17. A full knowledge store carried in.
-	carried := func(walls []refRun) (int, string, string) {
-		bad, where, most := 0, "", 0
-		for i := 1; i < n; i++ {
-			// An advance trims knowledge like any stock (game.advanceAge).
-			k := walls[i-1].end.caps["knowledge"]
-			if entry := config.AgeEntryCosts(t.ages[i].Key)["knowledge"]; entry > 0 {
-				k = math.Min(k, 8*entry)
-			} else {
-				k = float64(k * 0.10)
-			}
-			paid := 0
-			for _, price := range t.techs[i] {
-				if price <= k {
-					k -= price
-					paid++
-				}
-			}
-			if paid > propTechsCarried {
-				bad++
-			}
-			if paid > most {
-				most, where = paid, t.ages[i].Name
-			}
-		}
-		return bad, where, fmt.Sprintf("%d techs", most)
-	}
-	bad, where, val = carried(wall)
-	add(5, fmt.Sprintf("a full knowledge store carried into an age pays for at most %d of its techs", propTechsCarried), bad == 0, worst(bad, where, val))
+	// 5. (gone) It held what a full knowledge store carried into an age
+	// could pay for. Knowledge is not stored now: a tech is work the scholars
+	// do and there is no stock to carry. The numbers of the others stay as
+	// they are, so the list has no 5.
 
 	// 6. Every price the ordinary player meets fits a store he has reached.
 	bad, where = 0, ""
@@ -310,11 +281,12 @@ func StaticProperties() Properties {
 	add(8, fmt.Sprintf("the reference town's workers eat between %.0f%% and %.0f%% of the food it grows", 100*propFoodLow, 100*propFoodHigh), bad == 0, worst(bad, where, val))
 	add(9, fmt.Sprintf("the reference town's houses hold between 1 and %g times its jobs", propRoomHigh), bad9 == 0, worst(bad9, where9, val9))
 
-	// 10. Research against the ordinary player's age.
+	// 10. Research against the ordinary player's age: with every scholar of
+	// the copies the gates ask for (the cap) researching at a full crew.
 	bad, where, val = 0, "", ""
 	high = 0
 	for i := range t.ages {
-		k := ref[i].income["knowledge"]
+		k := ref[i].income[config.ResearchTarget]
 		if len(t.techs[i]) == 0 || k <= 0 {
 			continue
 		}
@@ -330,7 +302,7 @@ func StaticProperties() Properties {
 			high, where, val = share, t.ages[i].Name, fmt.Sprintf("%.1f times the age", share)
 		}
 	}
-	add(10, fmt.Sprintf("at the knowledge his own buildings make, research takes the ordinary player between %.0f%% and %.0f%% of each age", 100*propResearchLow, 100*propResearchHigh), bad == 0, worst(bad, where, val))
+	add(10, fmt.Sprintf("with every scholar at the cap researching, an age's techs take between %.0f%% and %.0f%% of the ordinary player's stay", 100*propResearchLow, 100*propResearchHigh), bad == 0, worst(bad, where, val))
 
 	// 11. (gone) It held the gold sold for knowledge against what the
 	// buildings make. The market no longer swaps, so there is nothing to
@@ -370,7 +342,7 @@ func StaticProperties() Properties {
 		if t.ages[i].EpochKey == t.ages[i-1].EpochKey || len(t.techs[i]) == 0 {
 			continue
 		}
-		k := math.Min(float64(ref[i-1].income["knowledge"]*config.AncientCacheMinutes*refTicksPerHour/60), t.techs[i][0])
+		k := math.Min(float64(ref[i-1].income[config.ResearchTarget]*config.AncientCacheMinutes*refTicksPerHour/60), t.techs[i][0])
 		paid := 0
 		for _, price := range t.techs[i] {
 			if price <= k {
@@ -421,10 +393,32 @@ func StaticProperties() Properties {
 	}
 	add(16, fmt.Sprintf("the check-in player leaves each age making at most %g times what it is priced for", propWallIncome), bad == 0, worst(bad, where, val))
 
-	// 17. The same at the top of the mastery table, where stores are larger
-	// and prices are not.
-	bad, where, val = carried(wallTop)
-	add(17, fmt.Sprintf("at the top of the Era Mastery table a full knowledge store still pays for at most %d techs of the age entered", propTechsCarried), bad == 0, worst(bad, where, val))
+	// 17. (gone) The same as 5, at the top of the mastery table. It goes
+	// with 5, and the list has no 17.
+
+	// 22. The cap is the cap: no town makes more research than the ceiling
+	// property 10 reads. The most copies of a knowledge building the game lets
+	// a town build is the count its gate asks for (MaxCount), so the reference
+	// town, which holds exactly those, is the best a town can do by building.
+	bad, where, val = 0, "", ""
+	for i := range t.ages {
+		most := map[string]int{}
+		for k, c := range towns[i] {
+			most[k] = c
+		}
+		for j := 0; j <= i; j++ {
+			for _, d := range t.byAge[j] {
+				if config.IsKnowledgeBuilding(d) {
+					most[d.Key] = d.MaxCount
+				}
+			}
+		}
+		if got, ceiling := t.state(most, i, 1).income[config.ResearchTarget], ref[i].income[config.ResearchTarget]; got > ceiling*(1+1e-9) {
+			bad++
+			where, val = t.ages[i].Name, fmt.Sprintf("%.2f times the ceiling", got/ceiling)
+		}
+	}
+	add(22, "building every knowledge building the game allows makes no more research than the ceiling of property 10", bad == 0, worst(bad, where, val))
 
 	// 18 needs the game's own formulas and is stated, not worked out.
 	add(18, "the reference town's faith and culture strength fall in the middle band", false, "not worked out here yet")

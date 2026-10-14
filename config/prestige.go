@@ -57,15 +57,15 @@ func PrestigeUpgrades() []PrestigeUpgradeDef {
 		},
 		{
 			Key: "storage_bonus", Name: "Storage Bonus",
-			Description: "+20 storage for every resource but knowledge per tier",
+			Description: "+20 storage for every resource per tier",
 			EffectKey:   "all", EffectType: "flat_bonus",
 			PerTier: 20, MaxTier: 5,
 			Costs:   []int{2, 3, 4, 6, 8},
 			Retired: true,
 		},
 		{
-			Key: "research_speed", Name: "Knowledge Production",
-			Description: "+5% knowledge production per tier",
+			Key: "research_speed", Name: "Research Speed",
+			Description: "+5% research speed per tier",
 			EffectKey:   "knowledge_rate", EffectType: "rate_bonus",
 			PerTier: 0.05, MaxTier: 5,
 			Costs:   []int{2, 3, 5, 8, 10},

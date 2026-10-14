@@ -193,8 +193,6 @@ func TestEngine_StartResearch(t *testing.T) {
 	ge := NewGameEngine()
 
 	ge.mu.Lock()
-	ge.Resources.AddStorage("knowledge", 10000)
-	ge.Resources.Add("knowledge", 2500)
 	ge.mu.Unlock()
 
 	err := ge.StartResearch("tool_making")
@@ -212,8 +210,6 @@ func TestEngine_CancelResearch(t *testing.T) {
 	ge := NewGameEngine()
 
 	ge.mu.Lock()
-	ge.Resources.AddStorage("knowledge", 10000)
-	ge.Resources.Add("knowledge", 2500)
 	ge.mu.Unlock()
 
 	ge.StartResearch("tool_making")

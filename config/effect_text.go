@@ -60,6 +60,12 @@ func EffectTargetLabel(target string) string {
 	case "population":
 		return "housing"
 	}
+	if target == "knowledge_rate" || target == "knowledge" {
+		// The scholars' work pool. "research speed" is the time pool. The
+		// pool kept the key of the resource it used to be, and a timed
+		// boon (Enlightenment) names it by that key.
+		return "scholar output"
+	}
 	if res, ok := strings.CutSuffix(target, "_rate"); ok {
 		return ResourceLabel(res) + " production"
 	}
@@ -141,6 +147,14 @@ func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 				}
 				parts = append(parts, part)
 			}
+		case "research":
+			// A knowledge building comes with its scholars; the work they do
+			// is a time on a tech, never a number of its own.
+			if d.Scholars > 0 {
+				parts = append(parts, "comes with "+scholarCount(d.Scholars))
+			} else if e.Value != 0 {
+				parts = append(parts, "speeds research")
+			}
 		case "capacity":
 			if e.Target == "population" {
 				parts = append(parts, "+"+FormatAmount(e.Value)+" housing")
@@ -148,7 +162,7 @@ func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 		case "storage":
 			switch e.Target {
 			case "all":
-				parts = append(parts, "+"+FormatAmount(e.Value)+" storage for every resource but knowledge")
+				parts = append(parts, "+"+FormatAmount(e.Value)+" storage for every resource")
 			case "soldiers":
 				parts = append(parts, "+"+FormatAmount(e.Value)+" soldier storage")
 			default:
@@ -164,6 +178,14 @@ func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 		}
 	}
 	return parts
+}
+
+// scholarCount is "2 scholars", "1 scholar".
+func scholarCount(n int) string {
+	if n == 1 {
+		return "1 scholar"
+	}
+	return fmt.Sprintf("%d scholars", n)
 }
 
 // OnceUnlocked is what a building's description adds to an output it cannot

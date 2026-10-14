@@ -473,7 +473,6 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]GateProblem, []GateSlack) {
 	var out []GateProblem
 	cold := coldStarts(ages, defs)
-	techs := config.TechByKey()
 	var slack []GateSlack
 	for i := 0; i+1 < len(ages); i++ {
 		from, to := ages[i], ages[i+1]
@@ -499,17 +498,6 @@ func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) ([
 					needs[res] = wonder
 				}
 				amount[res] += c
-			}
-			// The wonder's keystone tech is paid in knowledge, which no gate
-			// asks for itself: the age must make it.
-			if t, ok := techs[defs[wonder].RequiredTech]; ok && t.Cost > 0 {
-				if _, ok := needs["knowledge"]; !ok {
-					needs["knowledge"] = t.Key
-				}
-				amount["knowledge"] += t.Cost
-				if !cold[i].affords("knowledge", t.Cost) {
-					thin["knowledge"] = true
-				}
 			}
 			// The wonder and its keystone tech are bought once, so each part
 			// of their price is a first copy: a carried supply too thin to
@@ -676,15 +664,6 @@ func firstCopyProblems(from, to config.AgeDef, cs *coldStart, defs map[string]co
 		for _, res := range sortedKeys(d.BaseCost) {
 			check(k, res, d.BaseCost[res])
 		}
-	}
-	first := config.TechDef{}
-	for _, t := range techs {
-		if t.Age == to.Key && t.Cost > 0 && (first.Key == "" || t.Cost < first.Cost) {
-			first = t
-		}
-	}
-	if first.Key != "" {
-		check(first.Key, "knowledge", first.Cost)
 	}
 	return out
 }

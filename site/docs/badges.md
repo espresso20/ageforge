@@ -1,6 +1,6 @@
 # Badges
 
-A **badge** is a permanent mark on your account for something you did in a game. There are 560 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
+A **badge** is a permanent mark on your account for something you did in a game. There are 554 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
 
 Badges are cosmetic. A badge gives points, sometimes a title or a theme, and nothing inside a run: the same game plays the same way whatever the account has earned. They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
 
@@ -45,7 +45,7 @@ Each badge has a tier, and a tier is worth points. Your points add up to a **sco
 | Platinum | 50 | Epic |
 | Legendary | 100 | Legendary |
 
-A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 13,030 points.
+A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 12,855 points.
 
 ## The families
 
@@ -57,8 +57,8 @@ A badge's rarity follows its tier unless the badge says otherwise: a few are rar
 | **Maximalists** | 22 | Having most of the buildings an age allows built at the same time, before you leave it |
 | **Research** | 22 | Researching every tech of an age in one run |
 | **Lineages** | 75 | Building a lineage's buildings across all your runs: five rungs for each of the 14 lineages and for storage |
-| **Payrolls** | 22 | Workers at work in one domain at the same time: two rungs for each of 11 domains |
-| **Resources** | 94 | Producing a resource across all your runs: four rungs for the resources of a first run, three for the later ones |
+| **Payrolls** | 20 | Workers at work in one domain at the same time: two rungs for each of 10 domains |
+| **Resources** | 90 | Producing a resource across all your runs: four rungs for the resources of a first run, three for the later ones |
 | **Civilizations** | 44 | Four for each civilization: meeting it, allying with it, taking five of its deals, and making peace after a war with it |
 | **Harbingers** | 34 | Hearing out each of the 22 harbingers, and appeasing each of the first 12 |
 | **Catastrophes** | 15 | Enduring and succumbing to each of the six catastrophes, and the three ways the Last Passage can end |
@@ -128,7 +128,7 @@ Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contracto
 | Hacker | 2 · 17 · 68 · 170 · 370 |
 | Harbor | 2 · 4 · 10 · 24 · 55 |
 | Housing | 6 · 36 · 120 · 410 · 1,000 |
-| Knowledge | 1 · 10 · 35 · 112 · 237 |
+| Knowledge | 1 · 10 · 27 · 71 · 190 |
 | Metallurgy | 3 · 16 · 53 · 170 · 370 |
 | Military | 3 · 23 · 78 · 260 · 570 |
 | Organic extraction | 4 · 29 · 93 · 300 · 640 |
@@ -144,7 +144,6 @@ A payroll badge asks for that many workers at work in one domain at the same tim
 | Food | 270 · 450 |
 | Lumber | 270 · 468 |
 | Masonry | 270 · 477 |
-| Knowledge | 64 · 110 |
 | Faith | 160 · 265 |
 | Military | 270 · 444 |
 | Trade | 170 · 237 |

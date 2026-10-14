@@ -216,6 +216,9 @@ func (e TechEffect) Text() string {
 	pct := FormatPercent(e.Value)
 	switch e.Kind {
 	case EffectOutput:
+		if e.Target == ResearchTarget {
+			return signed(e.Value, pct) + " scholar output"
+		}
 		return signed(e.Value, pct) + " " + ResourceLabel(e.Target) + " production"
 	case EffectAllOutput:
 		return signed(e.Value, pct) + " all production"
@@ -276,6 +279,8 @@ func (e TechEffect) Check(isResource func(string) bool) string {
 		if e.Target != "" {
 			return fmt.Sprintf("%s takes no target, got %q", e.Kind, e.Target)
 		}
+	case e.Kind == EffectOutput && e.Target == ResearchTarget:
+		// The work scholars do: not a resource, but a bonus to it is allowed.
 	case !isResource(e.Target):
 		return fmt.Sprintf("%s names %q, which is not a resource", e.Kind, e.Target)
 	}

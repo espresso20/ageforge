@@ -19,10 +19,9 @@ func planTestEngine(t *testing.T) *GameEngine {
 	ge.Buildings.counts["wood_camp"] = 1
 	ge.Buildings.counts["story_circle"] = 1
 	ge.recalculateRates()
-	if ge.Resources.GetRate("wood") <= 0 || ge.Resources.GetRate("knowledge") <= 0 {
-		t.Fatal("setup: no wood or knowledge income")
+	if ge.Resources.GetRate("wood") <= 0 || ge.scholarTotal() <= 0 {
+		t.Fatal("setup: no wood income or no scholars at work")
 	}
-	ge.Resources.resources["knowledge"].Storage = 1e6
 	return ge
 }
 
@@ -127,14 +126,13 @@ func TestPlan_SkipsPastAWaitingItemForOtherResources(t *testing.T) {
 	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
 		t.Fatal(err)
 	}
-	setAmount(ge, "knowledge", 0)
 	setAmount(ge, "wood", 100)
 	ge.runPlanTick()
 	if queued(ge, "hut") != 1 {
 		t.Error("the hut waited behind research that needs no wood")
 	}
-	if ge.Research.currentTech != "" || len(ge.plan) != 1 {
-		t.Errorf("research started without knowledge, or the item left: %+v", ge.plan)
+	if ge.Research.currentTech != "tool_making" || len(ge.plan) != 0 {
+		t.Errorf("research has no price to wait for: it should have started and left the plan, plan %+v", ge.plan)
 	}
 }
 
@@ -193,7 +191,6 @@ func TestPlan_ResearchQueueStartsInOrder(t *testing.T) {
 	if len(ge.plan) != 2 || ge.plan[0].Key != "fire_mastery" || ge.plan[1].Key != "pottery" {
 		t.Fatalf("plan = %+v, want Fire Mastery then Pottery", ge.plan)
 	}
-	setAmount(ge, "knowledge", 10000)
 	ge.runPlanTick()
 	if ge.Research.currentTech != "fire_mastery" {
 		t.Fatalf("researching %q, want fire_mastery", ge.Research.currentTech)
@@ -201,9 +198,7 @@ func TestPlan_ResearchQueueStartsInOrder(t *testing.T) {
 	if v := ge.planViews(); len(v) != 1 || v[0].Note != "research slot busy" {
 		t.Fatalf("views = %+v, want pottery waiting on the slot", v)
 	}
-	for i := 0; i < 1000 && ge.Research.currentTech != ""; i++ {
-		ge.processResearch()
-	}
+	researchOut(ge)
 	ge.runPlanTick()
 	if ge.Research.currentTech != "pottery" || len(ge.plan) != 0 {
 		t.Errorf("after fire_mastery: researching %q, plan %+v", ge.Research.currentTech, ge.plan)
@@ -224,8 +219,8 @@ func TestPlan_InvalidItemsDropOut(t *testing.T) {
 	ge.Research.researched["tool_making"] = true
 	ge.age = "stone_age" // the huts belong to the Primitive Age now
 	ge.runPlanTick()
-	if len(ge.plan) != 1 || ge.plan[0].Key != "fire_mastery" {
-		t.Errorf("plan = %+v, want only fire_mastery", ge.plan)
+	if len(ge.plan) != 0 || ge.Research.currentTech != "fire_mastery" {
+		t.Errorf("plan = %+v, researching %q, want fire_mastery started and nothing left", ge.plan, ge.Research.currentTech)
 	}
 	if !logHas(ge, "Plan: dropped 2 Huts") || !logHas(ge, "Plan: dropped research Tool Making (already researched)") {
 		t.Error("missing drop log lines")
@@ -239,7 +234,6 @@ func TestPlan_InvalidItemsDropOut(t *testing.T) {
 	if _, err := ge2.PlanRemove(1); err != nil {
 		t.Fatal(err)
 	}
-	setAmount(ge2, "knowledge", 10000)
 	ge2.runPlanTick()
 	if len(ge2.plan) != 1 || ge2.plan[0].Key != "pottery" || ge2.Research.currentTech != "" {
 		t.Errorf("pottery should wait in the plan for Fire Mastery: plan %+v, researching %q", ge2.plan, ge2.Research.currentTech)

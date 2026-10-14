@@ -81,7 +81,7 @@ func TestWriteTreeFixtures(t *testing.T) {
 		ge.Research.researched["alchemy"] = true
 	})
 	write(treeFixtureInProgress, "pre_tree_industrial", "industrial_age", func(ge *GameEngine) {
-		ge.Research.currentTech, ge.Research.ticksLeft, ge.Research.totalTicks = "alchemy", 1200, 2200
+		ge.Research.currentTech, ge.Research.progress = "alchemy", 0
 	})
 	write(treeFixturePlanned, "pre_tree_galactic", "galactic_age", func(ge *GameEngine) {
 		for _, k := range []string{"chronometry", "clockwork_automation"} {
@@ -167,7 +167,7 @@ func TestTreeOldSaveKeepsWhatItResearched(t *testing.T) {
 		// Alchemy does what it does today: +8% knowledge on top of
 		// Primitive Writing's 10% and Mathematics' 8%. The bonuses are
 		// rebuilt from the save's tech list, never read from the save.
-		if got, want := ge.Research.Bonus(config.EffectOutput, "knowledge"), treeFixtureKnowledge(); got != want {
+		if got, want := ge.Research.Bonus(config.EffectOutput, config.ResearchTarget), treeFixtureKnowledge(); got != want {
 			t.Errorf("%s: knowledge output bonus %v, want %v", when, got, want)
 		}
 		// And it counts as a prerequisite: Gunpowder needs Alchemy and Siege
@@ -197,16 +197,11 @@ func TestTreeOldSaveFinishesItsResearch(t *testing.T) {
 	if ge.Research.IsResearched("philosophy") {
 		t.Fatal("Philosophy is researched: the save is not out of order any more")
 	}
-	if !ge.Research.IsResearched("alchemy") {
-		if ge.Research.currentTech != "alchemy" || ge.Research.ticksLeft <= 0 || ge.Research.ticksLeft > 1200 {
-			t.Fatalf("after loading: researching %q with %d ticks left, want alchemy with 1,200 or fewer", ge.Research.currentTech, ge.Research.ticksLeft)
-		}
-		ge.SimulateOffline(MaxOfflineTime)
-	}
+	// A tech the old game had paid for and was waiting out completes on load.
 	if !ge.Research.IsResearched("alchemy") || ge.Research.currentTech != "" {
 		t.Fatalf("Alchemy researched %v, still researching %q", ge.Research.IsResearched("alchemy"), ge.Research.currentTech)
 	}
-	if got, want := ge.Research.Bonus(config.EffectOutput, "knowledge"), treeFixtureKnowledge(); got != want {
+	if got, want := ge.Research.Bonus(config.EffectOutput, config.ResearchTarget), treeFixtureKnowledge(); got != want {
 		t.Errorf("knowledge output bonus %v after Alchemy, want %v", got, want)
 	}
 	again := saveAndLoad(t, ge, "pre_tree_industrial_again")
@@ -220,15 +215,17 @@ func TestTreeOldSaveFinishesItsResearch(t *testing.T) {
 // prerequisite the tree now asks for missing, ticks to its end.
 func TestResearchInProgressOutOfOrderFinishes(t *testing.T) {
 	ge := NewGameEngine()
-	ge.Research.LoadState(treeFixtureTechs, "alchemy", 1200, 2200)
+	ge.Research.LoadState(treeFixtureTechs, "alchemy", 0, false, 0)
 	if def, _ := ge.rules.Tech("alchemy"); def.PrereqsMet(ge.Research.IsResearched) {
 		t.Fatal("Alchemy's prerequisites are met: nothing is out of order")
 	}
+	price := ge.Research.defs["alchemy"].Cost
+	ge.researchPerTick = price / 1199.5
 	for i := 0; i < 1199; i++ {
 		ge.processResearch()
 	}
-	if ge.Research.currentTech != "alchemy" || ge.Research.ticksLeft != 1 {
-		t.Fatalf("one tick from the end: researching %q, %d ticks left", ge.Research.currentTech, ge.Research.ticksLeft)
+	if ge.Research.currentTech != "alchemy" {
+		t.Fatalf("one tick from the end: researching %q", ge.Research.currentTech)
 	}
 	ge.processResearch()
 	if !ge.Research.IsResearched("alchemy") || ge.Research.currentTech != "" {
@@ -249,8 +246,6 @@ func TestTreeOldSavePlanWaits(t *testing.T) {
 	ge := loadTreeFixture(t, treeFixturePlanned, "pre_tree_galactic")
 	// Enough for both, whatever their ages price them at.
 	fund := func(ge *GameEngine) {
-		ge.Resources.resources["knowledge"].Storage = 1e12
-		setAmount(ge, "knowledge", 1e11)
 	}
 	waiting := func(ge *GameEngine, when string) {
 		t.Helper()

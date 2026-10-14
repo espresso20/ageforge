@@ -29,7 +29,6 @@ func BaseResources() []ResourceDef {
 		// Primitive Age (Stone Era)
 		{Name: "Food", Key: "food", BaseStorage: 50, Age: "primitive_age", Description: "Feeds your population"},
 		{Name: "Wood", Key: "wood", BaseStorage: 50, Age: "primitive_age", Description: "Basic building material"},
-		{Name: "Knowledge", Key: "knowledge", BaseStorage: KnowledgeBase, Age: "primitive_age", Description: "Powers research"},
 		{Name: "Faith", Key: "faith", BaseStorage: 50, Age: "primitive_age", Description: "Spiritual influence. Faith income raises morale"},
 		// Stone Age (Stone Era)
 		{Name: "Stone", Key: "stone", BaseStorage: 50, Age: "stone_age", Description: "Durable building material"},

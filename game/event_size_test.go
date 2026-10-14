@@ -116,7 +116,10 @@ func TestEventSizesStayInBand(t *testing.T) {
 			ge := town.ge
 			for _, s := range effects {
 				res := s.eff.Target
-				if !ge.Resources.IsUnlocked(res) {
+				if res == config.ResearchTarget && s.eff.Type == config.EventRate {
+					continue // a share of the scholars' work: it has no size to band
+				}
+				if !ge.Resources.IsUnlocked(res) && res != config.ResearchTarget {
 					// The Cultural Festival waits for culture
 					// (rollGoodEpochEvent); nothing else may name a
 					// resource the age has not unlocked.
@@ -228,6 +231,12 @@ func TestEventLineStatesWhatHappened(t *testing.T) {
 				take(Amount(-d, key), "the "+key+" lost")
 			}
 		}
+		// A gift of research lands on the tech in progress or is kept as a
+		// head start: the line says which, as a share or as a head start.
+		if strings.Contains(rest, "a head start on the next tech") {
+			changed++
+			take("a head start on the next tech", "the research kept")
+		}
 		if lost := popBefore - ge.Workers.TotalPop(); lost > 0 {
 			changed++
 			take(textfmt.Count(lost, "worker", "workers"), "the workers lost")
@@ -237,6 +246,13 @@ func TestEventLineStatesWhatHappened(t *testing.T) {
 				continue
 			}
 			for _, eff := range ae.Effects {
+				if eff.Type == "research_boost" {
+					// A share of the scholars' work, as the text says.
+					changed++
+					take("research speed "+textfmt.SignedPercent(eff.Value), "the change to research speed")
+					rest = strings.Replace(rest, "and ", "", 1)
+					continue
+				}
 				if eff.Type != "production" {
 					continue
 				}

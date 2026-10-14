@@ -104,6 +104,7 @@ func newRefTables() *refTables {
 		for _, r := range resources {
 			f[r.Key] = config.IncomeFactor(techs, pos, a.Key, r.Key)
 		}
+		f[config.ResearchTarget] = config.IncomeFactor(techs, pos, a.Key, config.ResearchTarget)
 		t.factor = append(t.factor, f)
 		fc := 0.1
 		if c, ok := config.WorkerClassByDomainAndAge("food", a.Key); ok {
@@ -196,7 +197,6 @@ type townState struct {
 func (t *refTables) state(counts map[string]int, i int, speed float64) townState {
 	staffed, free := map[string]float64{}, map[string]float64{}
 	capAll := 0.0
-	kstore := config.KnowledgeBase
 	own := map[string]float64{}
 	s := townState{income: map[string]float64{}, caps: map[string]float64{}}
 	keys := make([]string, 0, len(counts))
@@ -211,9 +211,12 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 			continue
 		}
 		s.jobs += float64(n * float64(d.WorkerCapacity))
-		kstore += float64(n * d.KnowledgeStore)
 		for _, e := range d.Effects {
 			switch {
+			case e.Type == "research":
+				// Scholars come with the building and work at a full crew
+				// from the day it stands: no staffing, no housing.
+				free[config.ResearchTarget] += float64(n * e.Value)
 			case e.Type == "production" && d.WorkerCapacity > 0:
 				staffed[e.Target] += float64(n * e.Value)
 			case e.Type == "production":
@@ -260,11 +263,6 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 	for r, b := range t.base {
 		s.caps[r] = float64((b + capAll + own[r]) * speed)
 	}
-	// Knowledge has a store of its own: a base and what knowledge buildings
-	// hold. The general store has nothing to do with it, and neither has Era
-	// Mastery: tech prices do not scale with mastery, so the store they are
-	// set against does not either (game.knowledgeStoreSize).
-	s.caps["knowledge"] = kstore
 	return s
 }
 

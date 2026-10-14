@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -22,14 +21,19 @@ type ResearchManager struct {
 	rules      *rules.Set
 	defs       map[string]config.TechDef
 	researched map[string]bool
-	// costGate, when set, is asked about a tech whose other requirements are
-	// met, before its price is looked at: the engine uses it to refuse a
-	// price larger than the knowledge store. Set for one start only.
-	costGate func(def config.TechDef) error
-	// Currently in-progress tech key, or "" if idle.
+	// Currently in-progress tech key, or "" if idle. The tech's price
+	// (TechDef.Cost) is the work it needs; progress is the work done on it.
+	// The scholars' work each tick is added to it (AddWork) and the tech is
+	// done when progress reaches the price. There is no separate wait.
 	currentTech string
-	ticksLeft   int
-	totalTicks  int
+	progress    float64
+	// slowed marks an Ancient Memory research: the cache recalls a
+	// half-forgotten technology, so its scholars do half the work a tick.
+	slowed bool
+	// head is work done ahead of any tech, kept for the next tech started: a
+	// gain that arrived with none in progress. A tech starts with it, never
+	// with more than its price; the rest is lost.
+	head float64
 	// bonuses is what the researched techs come to together, by what each
 	// effect changes: its kind and its target (config.TechEffectKey). Output
 	// of gold and gold a tick are two keys, so neither can leak into the
@@ -48,15 +52,6 @@ type ResearchManager struct {
 	// order is every tech key, sorted, fixed at construction. Per-tick walks
 	// over researched techs use it so summed effects never follow map order.
 	order []string
-	// timeK is the Era Mastery speed the next research starts at: its time
-	// is divided by it after the research-speed step (MasteryTicks). The
-	// engine sets it before each start; 0 or 1 leaves times alone.
-	timeK float64
-	// timeMult is Ancient Knowledge's factor for the next research
-	// (GameEngine.succumbResearchFactor): its time is multiplied by it after
-	// the research-speed step and before Era Mastery. The engine sets it
-	// before each start; 0 or 1 leaves times alone.
-	timeMult float64
 }
 
 // NewResearchManager creates a new research manager on the core ruleset.
@@ -85,17 +80,10 @@ func (rm *ResearchManager) Rebind(set *rules.Set) {
 	rm.rebuildBonuses()
 }
 
-// StartResearch begins researching a technology using only tech-derived bonuses.
-// Prefer StartResearchWithSpeed to include permanent and prestige bonuses.
-func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder map[string]int, knowledge float64) error {
-	return rm.StartResearchWithSpeed(key, currentAge, ageOrder, knowledge, 0)
-}
-
-// StartResearchWithSpeed begins researching a technology, applying the given
-// research speed bonus (the pool: milestones, wonders, prestige) to reduce the
-// tick count. The techs' own cut of research time is not in it: it multiplies
-// what the pool leaves (ResearchTicks).
-func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string, ageOrder map[string]int, knowledge float64, speedBonus float64) error {
+// StartResearch begins researching a technology. A tech can be started
+// whenever its age and prerequisites allow: it has no price to afford. It
+// starts with the head start the town holds, never more than its price.
+func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder map[string]int) error {
 	def, ok := rm.defs[key]
 	if !ok {
 		return unknownKeyError("tech", key, rm.defs, "Type research list to see what you can research.")
@@ -105,7 +93,7 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 	}
 	if rm.currentTech != "" {
 		currentDef := rm.defs[rm.currentTech]
-		return fmt.Errorf("Already researching %s (%s left). Type research cancel to stop it.", currentDef.Name, DurationText(rm.ticksLeft, BaseTickInterval))
+		return fmt.Errorf("Already researching %s. Type research cancel to stop it.", currentDef.Name)
 	}
 	// Check age requirement
 	if ageOrder[def.Age] > ageOrder[currentAge] {
@@ -123,21 +111,16 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 		}
 		return fmt.Errorf("%s needs %s researched first.", def.Name, orList(names))
 	}
-	if rm.costGate != nil {
-		if err := rm.costGate(def); err != nil {
-			return err
-		}
-	}
-	// Check cost
-	if knowledge < def.Cost {
-		return fmt.Errorf("Not enough knowledge for %s: need %s, have %s.", def.Name, textfmt.Number(def.Cost), textfmt.Number(knowledge))
-	}
-
-	rm.currentTech = key
-	ticks := ResearchTicks(def.ResearchTicks, speedBonus, rm.TimeFactor(), rm.timeMult, rm.timeK)
-	rm.ticksLeft = ticks
-	rm.totalTicks = ticks
+	rm.begin(key, false)
 	return nil
+}
+
+// begin puts tech key in progress with the head start the town holds.
+func (rm *ResearchManager) begin(key string, slowed bool) {
+	rm.currentTech = key
+	rm.slowed = slowed
+	rm.progress = min(rm.head, rm.defs[key].Cost)
+	rm.head = 0
 }
 
 // orList joins names as a choice: "Map Making or Boatbuilding", "A, B or C".
@@ -146,28 +129,6 @@ func orList(names []string) string {
 		return strings.Join(names, "")
 	}
 	return strings.Join(names[:len(names)-1], ", ") + " or " + names[len(names)-1]
-}
-
-// ResearchTicks is how long a tech listed at base ticks takes to research
-// with a research speed bonus of speed, the techs' research time factor
-// tech and Ancient Knowledge's factor mult, on ground of speed k: research
-// speed takes its share off the listed time (+30% leaves 70% of it, rounded
-// down, one tick at least), the techs' factor multiplies what is left (two
-// 3% cuts leave 0.97 x 0.97 of it, never under
-// config.ResearchTimeFloor; rounded down, one tick at least), Ancient
-// Knowledge multiplies that (x0.8 per epoch succumbed in, rounded down, one
-// tick at least), then Era Mastery divides it by k (MasteryTicks). The
-// engine starts research with it and the Research panel lists times with
-// it, so the time a tech shows is the time it takes.
-func ResearchTicks(base int, speed, tech, mult, k float64) int {
-	ticks := base
-	if speed > 0 {
-		ticks = int(float64(ticks) * (1.0 - speed))
-		if ticks < 1 {
-			ticks = 1
-		}
-	}
-	return MasteryTicks(ancientKnowledgeTicks(techTimeTicks(ticks, tech), mult), k)
 }
 
 // techTimeTicks multiplies ticks by the techs' factor on a time, rounded
@@ -190,31 +151,19 @@ func techGrowTicks(ticks int, factor float64) int {
 	return int(float64(float64(ticks) * factor))
 }
 
-// ancientKnowledgeTicks multiplies ticks by Ancient Knowledge's factor mult,
-// rounded down, never below one tick. A factor of 1 or more, or one no
-// engine has set (0), leaves ticks as they are.
-func ancientKnowledgeTicks(ticks int, mult float64) int {
-	if mult <= 0 || mult >= 1 || ticks <= 0 {
-		return ticks
-	}
-	return max(1, int(float64(float64(ticks)*mult)))
-}
-
-// memoryResearchSlowdown is the tick multiplier applied to an Ancient Memory
-// tech: the cache recalls a half-forgotten technology, so it researches at 50%
-// speed (double the tick count). See StartMemoryResearch.
-const memoryResearchSlowdown = 2.0
+// memoryResearchSlowdown is the share of the work a tick that an Ancient
+// Memory tech gets: the cache recalls a half-forgotten technology, so it
+// researches at 50% speed. See StartMemoryResearch.
+const memoryResearchSlowdown = 0.5
 
 // StartMemoryResearch begins researching a technology recovered from an Ancient
-// Memory cache (see GameEngine.AcceptAncientMemory). Unlike StartResearchWithSpeed
-// it deliberately BYPASSES the prerequisite chain, the age gate, and the knowledge
-// cost — the cache hands you the tech "free" of those gates. The tradeoff is speed:
-// the tick count is doubled (50% rate). Because the slowdown is baked into ticksLeft
-// /totalTicks here, it persists through save/load with no extra research-save field.
-//
-// It still refuses if the tech is unknown, already researched, or another research
-// is in progress (one slot, same as normal research).
-func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) error {
+// Memory cache (see GameEngine.AcceptAncientMemory). Unlike StartResearch it
+// deliberately BYPASSES the prerequisite chain and the age gate: the cache
+// hands you the tech "free" of those gates. The tradeoff is speed: its
+// scholars do half the work a tick (slowed). It still refuses if the tech is
+// unknown, already researched, or another research is in progress (one slot,
+// same as normal research).
+func (rm *ResearchManager) StartMemoryResearch(key string) error {
 	def, ok := rm.defs[key]
 	if !ok {
 		return unknownKeyError("tech", key, rm.defs, "Type research list to see what you can research.")
@@ -224,27 +173,11 @@ func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) e
 	}
 	if rm.currentTech != "" {
 		currentDef := rm.defs[rm.currentTech]
-		return fmt.Errorf("Already researching %s (%s left). Type research cancel to stop it.", currentDef.Name, DurationText(rm.ticksLeft, BaseTickInterval))
+		return fmt.Errorf("Already researching %s. Type research cancel to stop it.", currentDef.Name)
 	}
-	// NOTE: age gate, prerequisite loop, and knowledge cost check are intentionally
-	// omitted — that is the whole point of an Ancient Memory.
-
-	rm.currentTech = key
-	ticks := def.ResearchTicks
-	// Apply the same research speed bonus a normal research gets, and the
-	// techs' own cut of research time...
-	if speedBonus > 0 {
-		ticks = int(float64(ticks) * (1.0 - speedBonus))
-	}
-	ticks = techTimeTicks(ticks, rm.TimeFactor())
-	// ...then halve the rate (double the ticks) for the memory penalty.
-	ticks = int(float64(ticks) * memoryResearchSlowdown)
-	if ticks < 1 {
-		ticks = 1
-	}
-	ticks = MasteryTicks(ancientKnowledgeTicks(ticks, rm.timeMult), rm.timeK)
-	rm.ticksLeft = ticks
-	rm.totalTicks = ticks
+	// NOTE: age gate and prerequisite loop are intentionally omitted — that
+	// is the whole point of an Ancient Memory.
+	rm.begin(key, true)
 	return nil
 }
 
@@ -280,50 +213,87 @@ func (rm *ResearchManager) indexPools() {
 	}
 }
 
-// Tick processes one tick of research. Returns completed tech key or empty string.
-func (rm *ResearchManager) Tick() string {
+// AddWork adds work the scholars did to the tech in progress and completes
+// it when its price is reached. Returns the completed tech key, or "" if
+// none completed. Work past the price is kept as a head start for the next
+// tech.
+func (rm *ResearchManager) AddWork(w float64) string {
 	if rm.currentTech == "" {
 		return ""
 	}
-	rm.ticksLeft--
-	if rm.ticksLeft <= 0 {
-		completed := rm.currentTech
-		rm.researched[completed] = true
-
-		// Apply effects as permanent bonuses
-		rm.rebuildBonuses()
-
-		rm.currentTech = ""
-		rm.ticksLeft = 0
-		rm.totalTicks = 0
-		return completed
+	if w > 0 {
+		rm.progress += w
 	}
-	return ""
+	return rm.CompleteIfFull()
 }
 
-// Advance moves research on by n ticks at once (offline catch-up). Returns
-// the completed tech key, or "" if none completed.
-func (rm *ResearchManager) Advance(n int) string {
-	if rm.currentTech == "" || n <= 0 {
+// CompleteIfFull completes the tech in progress when its progress has reached
+// its price, whatever brought it there: work, a grant, or a head start that
+// covered the price when the tech was started. It is the one way a tech
+// completes. Returns the tech completed, "" if none was.
+func (rm *ResearchManager) CompleteIfFull() string {
+	if rm.currentTech == "" {
 		return ""
 	}
-	if rm.ticksLeft > n {
-		rm.ticksLeft -= n
+	price := rm.defs[rm.currentTech].Cost
+	if rm.progress < price {
 		return ""
 	}
-	rm.ticksLeft = 1
-	return rm.Tick()
+	return rm.complete(rm.progress - price)
 }
 
-// CancelResearch cancels current research
+// HeadCap is the most a head start may be worth while it is held: the price
+// of the dearest tech that could be started now (its age reached, its
+// prerequisites met, not yet researched). 0 when there is none.
+func (rm *ResearchManager) HeadCap(currentAge string, ageOrder map[string]int) float64 {
+	top := 0.0
+	for _, def := range rm.defs {
+		if rm.researched[def.Key] || ageOrder[def.Age] > ageOrder[currentAge] || !def.PrereqsMet(rm.IsResearched) {
+			continue
+		}
+		top = max(top, def.Cost)
+	}
+	return top
+}
+
+// complete finishes the tech in progress; over is the work past its price.
+func (rm *ResearchManager) complete(over float64) string {
+	done := rm.currentTech
+	rm.researched[done] = true
+	// Apply effects as permanent bonuses
+	rm.rebuildBonuses()
+	rm.currentTech = ""
+	rm.progress = 0
+	rm.slowed = false
+	rm.head += max(over, 0)
+	return done
+}
+
+// Grant adds work that did not come from the scholars' tick (an event, loot,
+// a milestone). It goes to the tech in progress; with none in progress it is
+// kept as a head start for the next tech started (never more than that
+// tech's price). It returns the work that landed on the tech in progress
+// (0 when it was kept), and the tech completed by it, if any.
+func (rm *ResearchManager) Grant(w float64) (landed float64, completed string) {
+	if w <= 0 {
+		return 0, ""
+	}
+	if rm.currentTech == "" {
+		rm.head += w
+		return 0, ""
+	}
+	return w, rm.AddWork(w)
+}
+
+// CancelResearch cancels current research; the work done on it is lost.
 func (rm *ResearchManager) CancelResearch() (string, bool) {
 	if rm.currentTech == "" {
 		return "", false
 	}
 	tech := rm.currentTech
 	rm.currentTech = ""
-	rm.ticksLeft = 0
-	rm.totalTicks = 0
+	rm.progress = 0
+	rm.slowed = false
 	return tech, true
 }
 
@@ -356,8 +326,8 @@ func (rm *ResearchManager) ForceCompleteN(n int, currentAge string, ageOrder map
 	if len(completed) > 0 && rm.currentTech != "" {
 		if rm.researched[rm.currentTech] {
 			rm.currentTech = ""
-			rm.ticksLeft = 0
-			rm.totalTicks = 0
+			rm.progress = 0
+			rm.slowed = false
 		}
 	}
 	return completed
@@ -407,8 +377,8 @@ func (rm *ResearchManager) OutputFactor(res string) float64 {
 	return 1 + rm.Bonus(config.EffectOutput, res) + rm.Bonus(config.EffectAllOutput, "")
 }
 
-// TimeFactor is the techs' factor on research time (1 with none): what
-// ResearchTicks multiplies the time by after the research speed pool.
+// TimeFactor is the techs' factor on research time (1 with none): the time
+// a tech takes is multiplied by it, after the research speed pool.
 func (rm *ResearchManager) TimeFactor() float64 {
 	return rm.Bonus(config.EffectResearchTime, "")
 }
@@ -510,8 +480,9 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 		Techs:           techs,
 		CurrentTech:     rm.currentTech,
 		CurrentTechName: currentName,
-		TicksLeft:       rm.ticksLeft,
-		TotalTicks:      rm.totalTicks,
+		Progress:        rm.progress,
+		Price:           rm.currentPrice(),
+		HeadStart:       min(rm.head, rm.HeadCap(currentAge, ageOrder)),
 		TotalResearched: len(rm.researched),
 		Bonuses:         rm.GetBonuses(),
 		Flat:            rm.byTarget(config.EffectFlatOutput),
@@ -526,17 +497,26 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 	}
 }
 
+// currentPrice is the price of the tech in progress (0 with none).
+func (rm *ResearchManager) currentPrice() float64 {
+	if rm.currentTech == "" {
+		return 0
+	}
+	return rm.defs[rm.currentTech].Cost
+}
+
 // LoadState restores research state from save data.
 // Bonuses are always recomputed by replaying the effect list of every
 // researched tech — this ensures correct values even if tech definitions
 // changed between versions.
-func (rm *ResearchManager) LoadState(researched []string, currentTech string, ticksLeft, totalTicks int) {
+func (rm *ResearchManager) LoadState(researched []string, currentTech string, progress float64, slowed bool, head float64) {
 	rm.researched = make(map[string]bool)
 	for _, key := range researched {
 		rm.researched[key] = true
 	}
 	rm.rebuildBonuses()
 	rm.currentTech = currentTech
-	rm.ticksLeft = ticksLeft
-	rm.totalTicks = totalTicks
+	rm.progress = max(progress, 0)
+	rm.slowed = slowed && currentTech != ""
+	rm.head = max(head, 0)
 }

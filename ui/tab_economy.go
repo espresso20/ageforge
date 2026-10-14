@@ -96,12 +96,12 @@ var cultureThresholds = []float64{
 
 // cultureThresholdLabels are short effect labels for each threshold (parallel to cultureThresholds).
 var cultureThresholdLabels = []string{
-	"+5% knowledge rate",
-	"+10% knowledge rate",
-	"+15% knowledge rate, unlock wonder tier",
-	"+20% knowledge rate",
-	"+25% knowledge rate, culture events",
-	"+30% knowledge rate",
+	"+5% research speed",
+	"+10% research speed",
+	"+15% research speed, unlock wonder tier",
+	"+20% research speed",
+	"+25% research speed, culture events",
+	"+30% research speed",
 	"+research speed",
 	"+research speed",
 	"+research speed",
@@ -648,7 +648,6 @@ func (t *EconomyTab) ScrollDown() {
 var domainToLabel = map[string]string{
 	"food":        "Food",
 	"faith":       "Faith",
-	"knowledge":   "Knowledge",
 	"military":    "Military",
 	"trade":       "Trade",
 	"engineering": "Engineering",

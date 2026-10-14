@@ -12,7 +12,7 @@ This page lists every command. Each section links to the page that explains the 
 
 ## The prompt
 
-As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` the same, then the next age's; `plan research` every unresearched tech on your tree, the ones you can start first; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `roster` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders, storage or knowledge buildings, and nothing in the Primitive Age); `trade route start` and `trade route stop` the routes you can start and the routes running; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
+As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now; `plan build` the same, then the next age's; `plan research` every unresearched tech on your tree, the ones you can start first; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `roster` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` the buildings you have that it takes (not wonders, storage or knowledge buildings, and nothing in the Primitive Age); `trade route start` and `trade route stop` the routes you can start and the routes running; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
 
 | Key | What it does |
 |---|---|
@@ -109,7 +109,7 @@ plan rm 4
 | `unassign <building> [count\|all]` | Take workers out of a building and back to idle |
 | `dismiss <building> [count\|all]` | Remove workers from a building and from your population for good |
 | `workers` | Open the **Workers** panel (summary, the roster and what auto-recruit is doing, slot use, domain breakdown) |
-| `roster` | Print each domain's share of your workforce with its workers and slots (`Knowledge: 40% (set), 8 workers in 10 slots`), and whether auto-recruit is on |
+| `roster` | Print each domain's share of your workforce with its workers and slots (`Faith: 40% (set), 8 workers in 10 slots`), and whether auto-recruit is on |
 | `roster <domain> [percent\|auto]` | With a percent from 0 to 100, set that domain's share of your workforce; decimals and a `%` sign are allowed (`roster lumber 12.5%`), and 0 keeps the domain empty. With `auto`, put the domain back on auto. With neither, print its line |
 | `roster auto` | Put every domain back on auto, the default: workers follow your buildings' worker slots |
 | `workers share ...` | The roster's old name. It still works, with the same arguments |
@@ -129,10 +129,10 @@ dismiss shrine 2
 dismiss barracks all
 workers
 roster
-roster knowledge 40
+roster faith 40
 roster lumber 12.5%
 roster military 0
-roster knowledge auto
+roster faith auto
 roster auto
 workers auto-recruit off
 ```
@@ -147,11 +147,13 @@ See [Workers](workers-and-domains.md) for the domain table and the efficiency fo
 |---|---|
 | `research` | Open the **Research** panel: the tech tree as a map (see [Reading the Tech Tree](technologies.md#reading-the-tech-tree)) |
 | `research tree [close\|far]` | Open the tree zoomed in on big badges (close) or out on the whole tree (far) |
-| `research card <tech>` | Open the tree on a tech's card: what it does, costs and needs |
+| `research card <tech>` | Open the tree on a tech's card: what it does, how long it takes and what it needs |
 | `techs` | Opens the same **Research** panel |
-| `research list` | List the techs you can research now, with their knowledge cost. A ★ marks the keystone its age's wonder needs. A red ✗ marks a tech priced over your [knowledge store](knowledge.md#the-knowledge-store), with the sentence under it |
-| `research <tech>` | Start researching a tech. A tech priced over your knowledge store is refused, naming the knowledge building to build |
-| `research cancel` | Cancel the current research. Its progress is lost and the knowledge spent is not refunded |
+| `research list` | List the techs you can research now, with the time each would take your scholars. A ★ marks the keystone its age's wonder needs. Under the list: the tech in progress with its bar, percent and time left, the queue in order with the head start if you hold one, and your scholars |
+| `research <tech>` | Start researching a tech. It costs nothing; it needs its prerequisites and its age |
+| `research cancel` | Cancel the current research. The work done on it is lost |
+| `scholars` | Show your scholars: the kinds and counts, how many research and how many teach, and what teaching adds to what workers make |
+| `scholars <percent>` | Set the share of your scholars that research (100 by default). The rest teach. Scholars research between 0 and 100 percent |
 
 ```
 research tool_making
@@ -170,7 +172,7 @@ The **Research** panel (`research`) is a map of the tech tree. Like the Map it l
 | `Enter` | Open the selected tech's card; on the card, do what its last line says (start the tech, or add it to the build plan) |
 | `Esc` | Close the card, then the panel |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`: it adds a tech with what it still needs first. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Knowledge](knowledge.md).
+With something typed, `Tab` and `Enter` act on the prompt instead. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`: it adds a tech with what it still needs first. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Scholars and Research](knowledge.md).
 
 ---
 
@@ -371,7 +373,7 @@ See [Milestones](milestones.md) and [Epochs](epochs.md).
 |---|---|
 | `history` | Open the Civilization History panel: braille line graphs of key metrics over time |
 
-The History panel shows 7 graphs: **Population**, **Food rate**, **Knowledge rate**, **Faith**, **Morale**, **All production** and **Game speed**. It keeps the last 300 samples, one every 10 ticks, so each graph covers about the last 100 minutes. Age advances appear as `│` markers across all graphs. History is saved with your game. See [History](history.md).
+The History panel shows 7 graphs: **Population**, **Food rate**, **Research rate**, **Faith**, **Morale**, **All production** and **Game speed**. It keeps the last 300 samples, one every 10 ticks, so each graph covers about the last 100 minutes. Age advances appear as `│` markers across all graphs. History is saved with your game. See [History](history.md).
 
 ---
 

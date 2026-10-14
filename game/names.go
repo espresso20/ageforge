@@ -108,6 +108,10 @@ func EffectTargetName(target string) string {
 
 // Amount formats one amount of a resource: "23 food", "1.23M iron ore".
 func Amount(v float64, res string) string {
+	if res == config.ResearchTarget {
+		// Work done on a tech is a progress bar, never a number of its own.
+		return "research progress"
+	}
 	return textfmt.Number(v) + " " + ResourceName(res)
 }
 

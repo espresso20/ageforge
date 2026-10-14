@@ -54,10 +54,7 @@ func TestQuarryingSave_AnOldSaveSeesOneMoreOptionalTech(t *testing.T) {
 			}
 
 			// It can be researched, and then it adds its two rows.
-			def := config.TechByKey()["quarrying"]
 			marble, ore := ge.Research.OutputFactor("marble"), ge.Research.OutputFactor("iron_ore")
-			ge.Resources.resources["knowledge"].Storage = 100 * def.Cost
-			setAmount(ge, "knowledge", 2*def.Cost)
 			if err := ge.StartResearch("quarrying"); err != nil {
 				t.Fatalf("starting Quarrying: %v", err)
 			}

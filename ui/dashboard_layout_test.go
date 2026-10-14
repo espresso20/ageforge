@@ -262,8 +262,8 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 			names = append(names, rs.Name)
 		}
 	}
-	if len(names) != 26 {
-		t.Fatalf("the Quantum Age has %d resources unlocked, want all 26", len(names))
+	if len(names) != 25 {
+		t.Fatalf("the Quantum Age has %d resources unlocked, want all 25", len(names))
 	}
 	press := func() {
 		if ev := d.root.GetInputCapture()(tcell.NewEventKey(resourcePageKey, 0, tcell.ModNone)); ev != nil {
@@ -288,9 +288,7 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 			}
 			continue
 		}
-		// Knowledge is set apart and stays at the top of every page; the
-		// pages count the goods under it.
-		if !strings.Contains(first, fmt.Sprintf("of %d", len(names)-1)) || !strings.Contains(first, resourcePageKeyName) {
+		if !strings.Contains(first, fmt.Sprintf("of %d", len(names))) || !strings.Contains(first, resourcePageKeyName) {
 			t.Errorf("%s: the box shows a page of its rows without saying so and naming %s:\n%s", where, resourcePageKeyName, first)
 		}
 		seen := first
@@ -304,8 +302,8 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 				rows++
 			}
 		}
-		if want := len(names) + n - 1; rows != want { // knowledge on every page
-			t.Errorf("%s: %d pages show %d resource rows, want each of the %d once and knowledge on every page (%d)", where, n, rows, len(names), want)
+		if want := len(names); rows != want {
+			t.Errorf("%s: %d pages show %d resource rows, want each of the %d once", where, n, rows, want)
 		}
 		press()
 		if again := box(); again != first {

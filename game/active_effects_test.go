@@ -18,13 +18,30 @@ import (
 // recalculateRates has a positive base rate to multiply. Mirrors addWonder's
 // approach but for a production effect rather than a bonus effect.
 func addProductionBuilding(ge *GameEngine, key, res string, value float64, count int) {
-	ge.Buildings.injectDef(config.BuildingDef{
+	def := config.BuildingDef{
 		Key:      key,
 		Name:     key,
 		Category: "production",
 		Effects:  []config.Effect{{Type: "production", Target: res, Value: value}},
-	})
+	}
+	if res == "knowledge" {
+		// Knowledge is the scholars' work: a building that makes it comes
+		// with a scholar, and the scholar has a tech to research.
+		def.Effects = []config.Effect{{Type: "research", Value: value}}
+		def.Scholars = 1
+		ge.Research.currentTech = "tool_making"
+	}
+	ge.Buildings.injectDef(def)
 	ge.Buildings.counts[key] = count
+}
+
+// resRate is the rate of res as the panels read it; for knowledge, the work
+// the scholars do each tick.
+func resRate(ge *GameEngine, res string) float64 {
+	if res == "knowledge" {
+		return ge.researchPerTick
+	}
+	return ge.Resources.GetRate(res)
 }
 
 // TestRecalculateRates_NegativeResRateReducesRate is the Part D apply-side guard:

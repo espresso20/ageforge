@@ -253,7 +253,7 @@ func TestConfig_TechKeysExist(t *testing.T) {
 func TestConfig_MilestoneKeysExist(t *testing.T) {
 	milestoneKeys := MilestoneByKey()
 	ageKeys := buildKeySet(Ages(), func(a AgeDef) string { return a.Key })
-	resourceKeys := ResourceByKey()
+	resourceKeys := withResearchTarget(ResourceByKey())
 	buildingKeys := BuildingByKey()
 	techKeys := TechByKey()
 
@@ -342,7 +342,7 @@ func TestConfig_MilestoneKeysExist(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestConfig_TradeKeysExist(t *testing.T) {
-	resourceKeys := ResourceByKey()
+	resourceKeys := withResearchTarget(ResourceByKey())
 	ageKeys := buildKeySet(Ages(), func(a AgeDef) string { return a.Key })
 	buildingKeys := BuildingByKey()
 
@@ -452,7 +452,7 @@ func TestConfig_TradeKeysExist(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestConfig_EventKeysExist(t *testing.T) {
-	resourceKeys := ResourceByKey()
+	resourceKeys := withResearchTarget(ResourceByKey())
 	ageKeys := buildKeySet(Ages(), func(a AgeDef) string { return a.Key })
 
 	for _, event := range RandomEvents() {
@@ -631,13 +631,22 @@ func TestConfig_AllResourcesAreReachable(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestConfig_EffectTargetsValid(t *testing.T) {
-	resourceKeys := ResourceByKey()
+	resourceKeys := withResearchTarget(ResourceByKey())
 
 	for _, bld := range BaseBuildings() {
 		for _, eff := range bld.Effects {
 			// "morale" effects act on the civilization's morale dial directly —
 			// they carry no resource Target, so skip target validation.
 			if eff.Type == "morale" {
+				continue
+			}
+			// "research" effects are the scholars' work: they carry no target
+			// either, and a knowledge building (one that comes with scholars)
+			// or a wonder is what carries one.
+			if eff.Type == "research" {
+				if eff.Target != "" || eff.Value <= 0 || (bld.Scholars <= 0 && bld.Category != "wonder") {
+					t.Errorf("%s: research effect %+v needs no target, a positive value and scholars (or a wonder)", bld.Key, eff)
+				}
 				continue
 			}
 			if _, ok := resourceKeys[eff.Target]; !ok && !isSpecialTarget(eff.Target) {
@@ -735,4 +744,16 @@ func init() {
 	_ = fmt.Sprintf
 	_ = strings.Join
 	_ = sort.Strings
+}
+
+// withResearchTarget adds the work scholars do to a set of resource keys: it is
+// not a resource, but it is a valid target for a gain, a rate, a trade
+// route's import and a milestone's reward and requirement.
+func withResearchTarget(m map[string]ResourceDef) map[string]ResourceDef {
+	out := make(map[string]ResourceDef, len(m)+1)
+	for k, v := range m {
+		out[k] = v
+	}
+	out[ResearchTarget] = ResourceDef{Key: ResearchTarget, Name: "Research"}
+	return out
 }

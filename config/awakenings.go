@@ -89,11 +89,11 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_information_age",
 			EpochKey: "digital_era", TriggerAge: "modern_age",
 			Name:       "Networks Wake",
-			FlavorText: "Knowledge stops being scarce. The networks come online and the archives open. Data +2/tick, knowledge +1/tick for {dur}.",
+			FlavorText: "Knowledge stops being scarce. The networks come online and the archives open. Data +2/tick, research +1/tick for {dur}.",
 			Duration:   780,
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 2.0},
-				{Type: "production", Target: "knowledge", Value: 1.0},
+				{Type: "research", Value: 1.0},
 			},
 		},
 		{

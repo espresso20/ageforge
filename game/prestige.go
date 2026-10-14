@@ -321,7 +321,7 @@ func formatPrestigeEffect(def config.PrestigeUpgradeDef, tier int) string {
 		// A flat "all" bonus raises every resource's storage (see the
 		// storage bonuses in engine.go), not production.
 		if def.EffectKey == "all" {
-			return textfmt.Signed(v) + " storage for every resource but knowledge"
+			return textfmt.Signed(v) + " storage for every resource"
 		}
 		return textfmt.Signed(v) + " " + EffectTargetName(def.EffectKey)
 	case "starting_resource":

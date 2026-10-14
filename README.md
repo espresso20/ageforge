@@ -48,9 +48,9 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 
 ## Features
 
-- **Resource Management**: 26 resources across 22 ages with storage limits and production chains
+- **Resource Management**: 25 resources across 22 ages with storage limits and production chains
 - **Building System**: 302 buildings (251 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 4 standalone: the Nano Foundry and 3 diplomatic buildings) with scaling costs and construction queues
-- **Worker System**: 12 domains (food, faith, knowledge, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy); workers arrive on their own and follow your worker shares (`workers share knowledge 40`), with auto-recruit as housing and food allow
+- **Worker System**: 11 domains (food, faith, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy); workers arrive on their own and follow your worker shares (`workers share faith 40`), with auto-recruit as housing and food allow
 - **Tech Tree**: 203 technologies with prerequisites and permanent bonuses
 - **Military**: 13 campaigns that cost soldiers and 3 scouting expeditions that cost resources; your garrison's Defense Rating blunts raids, war raids and catastrophe losses
 - **Epochs and Catastrophes**: 7 epochs; from the Iron Era on a doom may be fated to strike at any moment of an era, and a harbinger comes first (Appease, Brace or Invite). When it strikes you Endure or Succumb, and Succumb's legacy bonuses carry across runs. In the Cosmic Era prestige itself is the Last Passage
@@ -64,7 +64,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **Prestige**: Reset-and-grow system from the Medieval Age on. Points pay by depth (every completed age pays, 3 times as much for each era: 9 from the Medieval Age, 120 from the Modern Age) and buy the legacy kit, 3 kit items that carry your build plan, worker shares and the civilizations you met into later runs. Era Mastery: every age a run completes runs faster on later runs, up to 4.2x
 - **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name, and `help` lists every command
 - **Themes and accounts**: 16 themes, dark and light, including colorblind-safe and high-contrast palettes; local accounts with backups and a recovery code
-- **Badges**: 560 badges to earn on your account, kept in a badge case (`badges`): one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and one-off feats. Badges give points, titles and ten of the themes, and never change a run
+- **Badges**: 554 badges to earn on your account, kept in a badge case (`badges`): one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and one-off feats. Badges give points, titles and ten of the themes, and never change a run
 - **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
 - **Save/Load**: JSON save system with auto-save every 60s and offline progress; saves live in `data/` next to the binary
 
@@ -93,7 +93,7 @@ Or use `make`:
 1. `gather wood` and `gather food`: top up by hand while production is small
 2. `build gathering_camp` and `build wood_camp`: your first food and wood producers
 3. `build hut`: a hut costs 14 wood and gives +10 housing; workers arrive on their own to staff your buildings, as housing and food allow
-4. `workers`: see them, and steer the split with `workers share knowledge 40`
+4. `workers`: see them, and steer the split with `workers share faith 40`
 5. Bank the Sacred Grove, the Primitive Age's wonder, then `advance`
 
 The [first-age walkthrough](https://ageforge.io/docs/#/first-ten-minutes) goes step by step.

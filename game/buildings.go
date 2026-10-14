@@ -691,7 +691,7 @@ func (bm *BuildingManager) LoadPendingUpgrades(upgrades map[string]string) {
 	for k, v := range upgrades {
 		// An offer an older game made to a building that now keeps its tier
 		// (a knowledge building) is dropped; the copies stay as they are.
-		if def, ok := bm.defs[k]; ok && def.KnowledgeStore > 0 {
+		if def, ok := bm.defs[k]; ok && def.Scholars > 0 {
 			continue
 		}
 		bm.pendingUpgrades[k] = v
@@ -831,7 +831,7 @@ func isDestroyable(def config.BuildingDef) bool {
 // to Research Institutes took the knowledge store from 3.36e7 to 3.64e6).
 // Only a knowledge building carries a knowledge-store figure.
 func keepsItsTier(def config.BuildingDef) bool {
-	return def.Category == "storage" || def.KnowledgeStore > 0
+	return def.Category == "storage" || def.Scholars > 0
 }
 
 // destroyablePool returns one entry per built destroyable building instance

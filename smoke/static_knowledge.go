@@ -10,21 +10,15 @@ import (
 
 // The knowledge ladder (R4): tech prices are set against what the knowledge
 // buildings make. For each age, the ordinary reference player's knowledge
-// buildings make, during his stay, the town's knowledge income over the stay
-// (the quantity property 10 reads); the age's techs are priced to total
-// KnowledgeLadderShare of it. Inside the age the prices climb by one ratio,
-// KnowledgeLadderRatio, from the cheapest to the dearest, in the order the
-// age's techs are priced in the table (cheapest first, a tie in table order),
-// and every price is written to three significant figures, the table's usual.
-//
-// The ratio is KnowledgeLadderRatio unless that would put the dearest tech
-// over the age's knowledge store (config.KnowledgeStoreRows) or the cheapest
-// over what a town holds on arrival (the previous age's store, the base for
-// the first age); then the nearest ratio (in steps of KnowledgeLadderStep)
-// that fits. The store is itself worked out from these prices, so the two are
-// solved together: the prices are set first from the stay, the store is
-// worked out from them, and the fit is then checked (and the ratio moved,
-// then the store worked out again, until it holds).
+// buildings (the copies the gates ask for, which is the cap, with their
+// scholars all researching) make, during his stay, a quantity of work: the
+// town's research income over the stay (the quantity property 10 reads); the
+// age's techs are priced to total KnowledgeLadderShare of it. Inside the age
+// the prices climb by one ratio, KnowledgeLadderRatio, from the cheapest to
+// the dearest, in the order the age's techs are priced in the table
+// (cheapest first, a tie in table order), and every price is written to
+// three significant figures, the table's usual. A tech's price is the work it
+// takes; there is no store for it to fit in.
 const (
 	KnowledgeLadderShare = 0.8
 	KnowledgeLadderRatio = 1.3
@@ -86,7 +80,7 @@ func KnowledgeMade() []float64 {
 	ordinary := t.walk("ordinary", 1, refIncome, false)
 	out := make([]float64, n)
 	for i := range t.ages {
-		out[i] = float64(ref[i].income["knowledge"] * ordinary.Hours[i] * refTicksPerHour)
+		out[i] = float64(ref[i].income[config.ResearchTarget] * ordinary.Hours[i] * refTicksPerHour)
 	}
 	return out
 }
@@ -128,15 +122,13 @@ type KnowledgeHeldAge struct {
 }
 
 // KnowledgeLadderHeld is the single exception to the ladder: the last age has
-// no knowledge building of its own, so nothing raises its knowledge store past
-// the Quantum Age's, and its four techs, priced to KnowledgeLadderShare of
-// what the town makes, cost at least total/4 each at any ratio, which with a
-// quarter over is more than the store holds. Property 10 stays a known
-// failure for it, at Property10. The tests that hold the properties and the
-// Research Covenant name this entry; no other age is skipped.
+// no knowledge building of its own, so its scholars are the Quantum Age's and
+// its four techs keep the prices they were written with. Property 10 stays a
+// known failure for it, at Property10. The tests that hold the properties and
+// the Research Covenant name this entry; no other age is skipped.
 var KnowledgeLadderHeld = map[string]KnowledgeHeldAge{
 	"transcendent_age": {
-		Reason:     "the last age has no knowledge building of its own: the store stays at the Quantum Age's, and its four techs cost at least a quarter of 0.8 of what the town makes each at any ratio, which with a quarter over is more than the store holds",
+		Reason:     "the last age has no knowledge building of its own: its scholars are the Quantum Age's, and its four techs keep the prices they were written with",
 		TechSum:    21.54e9,
 		Property10: 0.043,
 	},

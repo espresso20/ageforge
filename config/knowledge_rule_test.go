@@ -1,148 +1,132 @@
 package config
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
-// TestEveryKnowledgeBuildingClimbsAtTheKnowledgeRate: R1. Each class is held
-// to its own rate: producers to ProducerRate (town_rule_test.go), knowledge
-// buildings to KnowledgeRate.
-func TestEveryKnowledgeBuildingClimbsAtTheKnowledgeRate(t *testing.T) {
+// scholarsPerCopy is the crew each knowledge building was staffed with, and
+// is the scholars it comes with now (decision: a knowledge building comes with
+// its scholars, the crew size it had).
+var scholarsPerCopy = map[string]int{
+	"story_circle": 2, "elders_hall": 2, "scriptorium": 3, "agora": 3, "library": 4,
+	"monastery_library": 4, "university": 5, "natural_philosophy_hall": 5,
+	"research_institute": 6, "academy": 6, "physics_laboratory": 7, "research_campus": 7,
+	"think_tank": 8, "innovation_hub": 8, "ai_research_lab": 10, "neuro_research_center": 10,
+	"theoretical_institute": 12, "deep_space_observatory": 12, "xenology_institute": 15,
+	"cosmic_research_station": 15, "reality_academy": 20,
+}
+
+// TestKnowledgeBuildingsComeWithScholars: every knowledge building has the
+// scholars it was staffed with, takes no workers, and no other building has
+// scholars.
+func TestKnowledgeBuildingsComeWithScholars(t *testing.T) {
 	seen := 0
+	for _, d := range BaseBuildings() {
+		want, isK := scholarsPerCopy[d.Key]
+		if IsKnowledgeBuilding(d) != isK {
+			t.Errorf("%s: IsKnowledgeBuilding is %v, the table of scholars says %v", d.Key, IsKnowledgeBuilding(d), isK)
+		}
+		if d.Scholars != want {
+			t.Errorf("%s comes with %d scholars, want %d", d.Key, d.Scholars, want)
+		}
+		if isK {
+			seen++
+			if d.WorkerCapacity != 0 || d.WorkerDomain != "" {
+				t.Errorf("%s takes workers (%s x %d): its scholars come with it", d.Key, d.WorkerDomain, d.WorkerCapacity)
+			}
+		}
+	}
+	if seen != len(scholarsPerCopy) {
+		t.Errorf("%d knowledge buildings, the table lists %d", seen, len(scholarsPerCopy))
+	}
+}
+
+// TestKnowledgeCapIsTheGate: a knowledge building cannot be built past the
+// count its gate asks for, and that count is the one the age tables author.
+func TestKnowledgeCapIsTheGate(t *testing.T) {
+	ages := Ages()
 	for _, d := range BaseBuildings() {
 		if !IsKnowledgeBuilding(d) {
 			continue
 		}
-		seen++
-		if d.CostScale != KnowledgeRate {
-			t.Errorf("%s makes knowledge and climbs at %g a copy, the knowledge rate is %g", d.Key, d.CostScale, KnowledgeRate)
+		cap := KnowledgeCap(d.Key)
+		if d.MaxCount != cap || cap <= 0 {
+			t.Errorf("%s: the most copies is %d, the cap is %d", d.Key, d.MaxCount, cap)
 		}
-	}
-	if seen != len(KnowledgeGateWas()) {
-		t.Errorf("%d knowledge buildings, KnowledgeGateWas lists %d", seen, len(KnowledgeGateWas()))
-	}
-}
-
-// TestKnowledgeGatesAskTheSameSpend: R2. The gate out of an age asks for the
-// count of each knowledge building whose total price at KnowledgeRate is
-// nearest the total the old count cost at ProducerRate (a tie goes to the
-// lower count). Prices climb by one factor in every part of a price, so the
-// totals are compared in units of the first copy.
-func TestKnowledgeGatesAskTheSameSpend(t *testing.T) {
-	ages := Ages()
-	gate := map[string]int{}
-	for _, a := range ages {
-		for k, n := range a.BuildingReqs {
-			gate[k] = n
-		}
-	}
-	for k, was := range KnowledgeGateWas() {
-		want := KnowledgeGateCount(was)
-		if gate[k] != want {
-			t.Errorf("%s: the gate asks %d copies; %d copies at %g (the spend of %d at %g) is %d", k, gate[k], want, KnowledgeRate, was, ProducerRate, want)
-		}
-		// nearest, by brute force, ties lower
-		spend := climbTotal(ProducerRate, was)
-		best, gap := 0, 1e18
-		for n := 1; n < 200; n++ {
-			g := climbTotal(KnowledgeRate, n) - spend
-			if g < 0 {
-				g = -g
-			}
-			if g < gap {
-				best, gap = n, g
-			}
-		}
-		if best != want {
-			t.Errorf("%s: KnowledgeGateCount(%d) = %d, brute force says %d", k, was, want, best)
-		}
-	}
-}
-
-func TestKnowledgeGateCountTieGoesLower(t *testing.T) {
-	// 1 copy costs 1 at any rate: the count for a spend of 1 is 1.
-	if got := KnowledgeGateCount(1); got != 1 {
-		t.Errorf("KnowledgeGateCount(1) = %d", got)
-	}
-}
-
-// TestKnowledgeBaseIsTheFirstTech: R3's base is what a town needs to hold the
-// first age's cheapest tech before it owns any knowledge building: that
-// tech's price, rounded up to two significant figures.
-func TestKnowledgeBaseIsTheFirstTech(t *testing.T) {
-	ages, techs := Ages(), Technologies()
-	if got := KnowledgeBaseFor(ages, techs); got != KnowledgeBase {
-		t.Errorf("KnowledgeBase is %g, the first age's cheapest tech rounds up to %g", KnowledgeBase, got)
-	}
-	cheapest := 0.0
-	for _, tc := range techs {
-		if tc.Age == ages[0].Key && (cheapest == 0 || tc.Cost < cheapest) {
-			cheapest = tc.Cost
-		}
-	}
-	if KnowledgeBase < cheapest {
-		t.Errorf("the base %g cannot hold the first age's cheapest tech, %g", KnowledgeBase, cheapest)
-	}
-	for _, r := range BaseResources() {
-		if r.Key == "knowledge" && r.BaseStorage != KnowledgeBase {
-			t.Errorf("the knowledge resource starts with %g of storage, the knowledge base is %g", r.BaseStorage, KnowledgeBase)
-		}
-	}
-}
-
-// TestKnowledgeStoreFollowsTheRule: R3. What one copy of a knowledge building
-// holds is the figure the rule gives: the gate's copies of the age's knowledge
-// buildings, on top of what the earlier ages' required copies hold, hold the
-// larger of the age's dearest tech plus a quarter and 1.2 times the second-
-// cheapest tech of the next age, rounded up to two significant figures; buildings
-// of one age hold equal amounts.
-func TestKnowledgeStoreFollowsTheRule(t *testing.T) {
-	defs, ages, techs := BaseBuildings(), Ages(), Technologies()
-	rows := KnowledgeStoreRows(defs, ages, techs, KnowledgeBase)
-	held := KnowledgeStoreHeld(defs, ages)
-	seen := 0
-	for i, r := range rows {
-		inAge := 0
-		for _, d := range defs {
-			if d.RequiredAge != r.Age || !IsKnowledgeBuilding(d) {
+		for i, a := range ages {
+			if a.Key != d.RequiredAge || i+1 >= len(ages) {
 				continue
 			}
-			inAge++
-			seen++
-			if d.KnowledgeStore != r.Figure {
-				t.Errorf("%s holds %g knowledge a copy, the rule gives %g", d.Key, d.KnowledgeStore, r.Figure)
+			if got := ages[i+1].BuildingReqs[d.Key]; got != cap {
+				t.Errorf("%s: the gate out of %s asks for %d, the cap is %d", d.Key, a.Key, got, cap)
 			}
-		}
-		if inAge == 0 {
-			if r.Copies != 0 || r.Figure != 0 {
-				t.Errorf("%s has no knowledge building and the rule gives it copies %d, figure %g", r.Age, r.Copies, r.Figure)
-			}
-			// No building of the age can raise the store: the earlier ages'
-			// must already hold what the rule asks.
-			if r.Need > r.Before {
-				t.Errorf("%s has no knowledge building and its store, %g, is under the %g the rule asks", r.Age, r.Before, r.Need)
-			}
-			continue
-		}
-		if r.Figure <= 0 {
-			t.Errorf("%s: the earlier ages already hold %g, the rule asks %g: it gives no figure to author", r.Age, r.Before, r.Need)
-		}
-		if held[r.Age] < r.Need {
-			t.Errorf("%s: the gate's copies hold %g, under the %g the rule asks", r.Age, held[r.Age], r.Need)
-		}
-		if got := rows[i].Held; got != held[r.Age] {
-			t.Errorf("%s: the rule's store is %g, the tables' is %g", r.Age, got, held[r.Age])
 		}
 	}
-	if seen != len(KnowledgeGateWas()) {
-		t.Errorf("%d knowledge buildings checked, %d exist", seen, len(KnowledgeGateWas()))
+	if KnowledgeCap("hut") != 0 {
+		t.Error("a building that is not a knowledge building has a cap")
 	}
 }
 
-// TestNothingButKnowledgeBuildingsRaiseTheKnowledgeStore: R3. The figure is
-// on knowledge buildings alone.
-func TestNothingButKnowledgeBuildingsRaiseTheKnowledgeStore(t *testing.T) {
+// TestKnowledgeIsNotAResourceOrAPrice: nothing is priced in knowledge and no
+// resource holds it.
+func TestKnowledgeIsNotAResourceOrAPrice(t *testing.T) {
+	if _, ok := ResourceByKey()["knowledge"]; ok {
+		t.Error("knowledge is a resource")
+	}
 	for _, d := range BaseBuildings() {
-		if d.KnowledgeStore != 0 && !IsKnowledgeBuilding(d) {
-			t.Errorf("%s holds %g knowledge and is not a knowledge building", d.Key, d.KnowledgeStore)
+		if _, ok := d.BaseCost["knowledge"]; ok {
+			t.Errorf("%s is priced in knowledge", d.Key)
+		}
+	}
+	for _, r := range BaseTradeRoutes() {
+		if _, ok := r.Export["knowledge"]; ok {
+			t.Errorf("route %s asks for knowledge", r.Key)
+		}
+	}
+}
+
+// TestRepricedBuildingsKeepTheirUnits: a building that was priced in
+// knowledge has its other parts multiplied so that its price in the age's
+// price units is what it was with the knowledge part; the age's price levels
+// are the ones they were (they read the prices from before, repricedFrom).
+func TestRepricedBuildingsKeepTheirUnits(t *testing.T) {
+	defs := BaseBuildings()
+	lv := priceLevels(defs)
+	for _, d := range defs {
+		want, ok := repricedUnits[d.Key]
+		if !ok {
+			continue
+		}
+		if got := priceUnits(d.BaseCost, lv[d.RequiredAge]); math.Abs(got/want-1) > 0.003 {
+			t.Errorf("%s costs %.4f price units of %s, it cost %.4f with its knowledge part", d.Key, got, d.RequiredAge, want)
+		}
+	}
+	for k := range repricedUnits {
+		if _, ok := repricedFrom[k]; !ok {
+			t.Errorf("%s has units recorded and no price from before", k)
+		}
+	}
+}
+
+// TestTeachingLadder: with every scholar teaching, the bonus is 10 percent in
+// ages 1 to 3, 8 in 4 to 6, 6 in 7 to 9, 5 in 10 to 15 and 4 in 16 and later.
+func TestTeachingLadder(t *testing.T) {
+	for pos := 0; pos < len(Ages()); pos++ {
+		place := pos + 1
+		want := 0.04
+		switch {
+		case place <= 3:
+			want = 0.10
+		case place <= 6:
+			want = 0.08
+		case place <= 9:
+			want = 0.06
+		case place <= 15:
+			want = 0.05
+		}
+		if got := TeachingBonus(pos); got != want {
+			t.Errorf("age %d: teaching gives %v, want %v", place, got, want)
 		}
 	}
 }

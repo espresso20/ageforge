@@ -159,7 +159,7 @@ func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 				MinAge:   "iron_age", SoldiersNeeded: 3,
 				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.3,
-				Rewards:        map[string]float64{"gold": 50, "knowledge": 10},
+				Rewards:        map[string]float64{"gold": 50, config.ResearchTarget: 10},
 				Description:    "Escort merchants on a dangerous trade route.",
 			},
 			{
@@ -187,7 +187,7 @@ func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.5,
 				Cost:           map[string]float64{"food": 150, "wood": 100},
-				Rewards:        map[string]float64{"gold": 200, "culture": 30, "knowledge": 40},
+				Rewards:        map[string]float64{"gold": 200, "culture": 30, config.ResearchTarget: 40},
 				Description:    "Explore distant lands by sea.",
 			},
 			{
@@ -205,7 +205,7 @@ func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 				MinAge:   "modern_age", SoldiersNeeded: 50,
 				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.8,
-				Rewards:        map[string]float64{"gold": 1000, "electricity": 200, "knowledge": 500},
+				Rewards:        map[string]float64{"gold": 1000, "electricity": 200, config.ResearchTarget: 500},
 				Description:    "Launch a global military campaign for world domination.",
 			},
 			{
@@ -241,7 +241,7 @@ func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 				MinAge:   "space_age", SoldiersNeeded: 40,
 				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.7,
-				Rewards:        map[string]float64{"titanium": 100, "plasma": 80, "knowledge": 300},
+				Rewards:        map[string]float64{"titanium": 100, "plasma": 80, config.ResearchTarget: 300},
 				Description:    "Deploy orbital weapons platform against hostile targets.",
 			},
 			{
@@ -268,7 +268,7 @@ func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 				MinAge:   "quantum_age", SoldiersNeeded: 100,
 				DurationMin: 90, DurationMax: 145,
 				DifficultyBase: 0.85,
-				Rewards:        map[string]float64{"quantum_flux": 20, "antimatter": 50, "knowledge": 5000},
+				Rewards:        map[string]float64{"quantum_flux": 20, "antimatter": 50, config.ResearchTarget: 5000},
 				Description:    "Launch an incursion across quantum realities.",
 			},
 		},

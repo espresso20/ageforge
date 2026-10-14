@@ -29,7 +29,9 @@ func classicalGame(t *testing.T) *game.GameEngine {
 		}
 	}
 	ge.GrantTechsForTest("language", "tool_making", "fire_mastery", "stoneworking", "primitive_writing", "pottery", "woodworking", "bronze_working", "currency", "masonry", "the_wheel", "mathematics", "iron_smelting")
-	ge.SetStockForTest("knowledge", 9e5)
+	// A town of scholars: the times on the screens come from the scholars
+	// researching, so there must be some.
+	ge.SetTownForTest(map[string]int{"story_circle": 5, "elders_hall": 5, "scriptorium": 5, "agora": 7}, 0)
 	if err := ge.StartResearch("philosophy"); err != nil {
 		t.Fatal(err)
 	}
@@ -530,11 +532,16 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 			t.Errorf("%s's card tags a tech's bonus as capped:\n%s", key, card)
 		}
 	}
-	// The price is the one the tech starts at, research speed included.
-	st.Pools["research_speed"] = game.BonusPool{Target: "research_speed", Earned: 0.25, Applied: 0.25}
-	def := config.TechByKey()["siege_warfare"]
-	quick := game.ResearchTicks(def.ResearchTicks, 0.25, 1, 1, 1)
-	if want := "takes " + formatTicks(quick, st) + "."; quick >= def.ResearchTicks || !strings.Contains(cardOf(st, "siege_warfare"), want) {
+	// The time on a card is the one the scholars take now, research speed
+	// included: +25% research speed takes a quarter off.
+	before := st.Research.Techs["siege_warfare"].TicksNeeded
+	ge.GrantBonusForTest("research_speed", 0.25)
+	st = ge.GetState()
+	quick := st.Research.Techs["siege_warfare"].TicksNeeded
+	if before <= 0 || quick <= 0 || quick >= before {
+		t.Fatalf("Siege Warfare takes %d ticks, and %d with +25%% research speed", before, quick)
+	}
+	if want := "It takes " + formatTicks(quick, st) + "."; !strings.Contains(cardOf(st, "siege_warfare"), want) {
 		t.Errorf("with +25%% research speed Siege Warfare's card should say %q:\n%s", want, cardOf(st, "siege_warfare"))
 	}
 	if out := statsProvider(st, 140); !strings.Contains(out, "Research speed +25%: techs take 75% of their base time.") {
@@ -650,11 +657,10 @@ func TestResearchPanelKeys(t *testing.T) {
 	if !p.closeCard() || p.view.card || p.closeCard() {
 		t.Error("Esc should close the card once, and then have nothing to close")
 	}
-	// With the slot free and the knowledge there, the card starts it.
+	// With the slot free, the card starts it.
 	if err := ge.CancelResearch(); err != nil {
 		t.Fatal(err)
 	}
-	ge.SetStockForTest("knowledge", 9e5)
 	p.update(ge.GetState())
 	p.view.sel = "animal_husbandry"
 	p.layout()
@@ -784,7 +790,7 @@ func medievalGame(t *testing.T) *game.GameEngine {
 	}
 	ge.GrantTechsForTest("language", "tool_making", "stoneworking", "primitive_writing", "woodworking", "masonry", "the_wheel",
 		"mathematics", "road_building", "philosophy", "civil_engineering", "alchemy", "theology")
-	ge.SetStockForTest("knowledge", 1e9)
+	ge.SetTownForTest(map[string]int{"story_circle": 5, "elders_hall": 5, "scriptorium": 5, "agora": 7, "library": 8, "monastery_library": 5}, 0)
 	return ge
 }
 
@@ -948,8 +954,9 @@ func TestCapstonesReadByShape(t *testing.T) {
 	if got := g.at(m.left(n)+geom.badgeW-1, n.top+geom.nameH).r; got != '⟳' {
 		t.Errorf("a capstone in progress carries %q at its top right, want the running mark", got)
 	}
-	// It takes the long share of the age's research cap.
-	if def := config.TechByKey()["scholasticism"]; st.Research.TotalTicks <= config.TechByKey()["alchemy"].ResearchTicks || st.Research.TotalTicks > def.ResearchTicks {
-		t.Errorf("Scholasticism runs %d ticks; its base is %d and an optional tech's %d", st.Research.TotalTicks, def.ResearchTicks, config.TechByKey()["alchemy"].ResearchTicks)
+	// It takes the long share of the age's research cap: more than an
+	// optional tech of the age.
+	if got, opt := st.Research.TotalTicks, st.Research.Techs["alchemy"].TicksNeeded; got <= opt || opt <= 0 {
+		t.Errorf("Scholasticism runs %d ticks; an optional tech's is %d", got, opt)
 	}
 }

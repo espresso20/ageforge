@@ -58,63 +58,34 @@ func giveKnowledge(ge *game.GameEngine, v float64) {
 // the rest goes cheapest first.
 func TestBotResearchesTheKeystoneFirst(t *testing.T) {
 	ge, b := botIn(t, "stone_age")
-	techs := ge.GetState().Research.Techs
-	tool, stone, writing := techs["tool_making"].Cost, techs["stoneworking"].Cost, techs["primitive_writing"].Cost
-	if !(writing < stone) {
-		t.Fatalf("setup: Primitive Writing (%v) should be cheaper than Stoneworking (%v), or saving for the keystone is not tested", writing, stone)
-	}
-
 	p := b.newPlan(ge.GetState())
 	if want := []string{"tool_making", "stoneworking"}; !reflect.DeepEqual(p.must, want) {
 		t.Fatalf("what the Stone Age cannot be left without: %v, want %v", p.must, want)
 	}
-	if got := p.hold["knowledge"]; got != tool+stone {
-		t.Errorf("the bot holds back %v knowledge, want the %v the two techs cost", got, tool+stone)
-	}
-	if p.target["knowledge"] < tool+stone || p.capNeed["knowledge"] < stone {
-		t.Errorf("knowledge target %v and cap need %v, want at least %v and %v", p.target["knowledge"], p.capNeed["knowledge"], tool+stone, stone)
-	}
-
-	// Enough for Tool Making only: it starts, the first of the chain.
-	giveKnowledge(ge, tool)
-	b.research(b.newPlan(ge.GetState()))
+	// A tech has no price: the first of the chain starts at once.
+	b.research(p)
 	if got := ge.GetState().Research.CurrentTech; got != "tool_making" {
-		t.Fatalf("with %v knowledge the bot is researching %q, want tool_making", tool, got)
+		t.Fatalf("the bot is researching %q, want tool_making", got)
 	}
 	finish(t, ge, "tool_making")
 
-	// Enough for Primitive Writing but not for Stoneworking: it waits.
-	giveKnowledge(ge, stone-1)
 	p = b.newPlan(ge.GetState())
 	if want := []string{"stoneworking"}; !reflect.DeepEqual(p.must, want) {
 		t.Fatalf("after Tool Making: %v, want %v", p.must, want)
 	}
 	b.research(p)
-	if got := ge.GetState().Research.CurrentTech; got != "" {
-		t.Fatalf("one knowledge short of the keystone the bot started %q instead of saving", got)
-	}
-	// And the wonder bank does not take the knowledge it is saving. (The
-	// Great Monolith costs none; the rule is the same for one that does.)
-	if got := p.hold["knowledge"]; got != stone {
-		t.Errorf("the bot holds back %v knowledge, want Stoneworking's %v", got, stone)
-	}
-
-	giveKnowledge(ge, stone)
-	b.research(b.newPlan(ge.GetState()))
 	if got := ge.GetState().Research.CurrentTech; got != "stoneworking" {
-		t.Fatalf("with the keystone's price in hand the bot is researching %q", got)
+		t.Fatalf("the bot is researching %q, want the keystone, stoneworking", got)
 	}
-	// In progress it is paid for: nothing is held back for it.
-	if p := b.newPlan(ge.GetState()); p.hold["knowledge"] != 0 || len(p.must) != 1 {
-		t.Errorf("with the keystone in progress: holding %v, must %v", p.hold["knowledge"], p.must)
+	if p := b.newPlan(ge.GetState()); len(p.must) != 1 {
+		t.Errorf("with the keystone in progress: must %v", p.must)
 	}
 	finish(t, ge, "stoneworking")
 
 	// Nothing the age cannot be left without is left: the cheapest goes next.
-	giveKnowledge(ge, 1e6)
 	p = b.newPlan(ge.GetState())
-	if len(p.must) != 0 || p.hold["knowledge"] != 0 {
-		t.Fatalf("with the keystone researched: must %v, holding %v", p.must, p.hold["knowledge"])
+	if len(p.must) != 0 {
+		t.Fatalf("with the keystone researched: must %v", p.must)
 	}
 	b.research(p)
 	if got := ge.GetState().Research.CurrentTech; got != "language" {
@@ -197,40 +168,24 @@ func TestTechChainTakesTheCheaperBranch(t *testing.T) {
 }
 
 // TestBlockersNameTheKeystone: the line a soft-lock or a timeout prints says
-// which tech the wonder waits for, what it costs and the knowledge cap, and
-// an age whose keystone no reachable storage can hold is an invariant
-// violation, not a slow age.
+// which tech the wonder waits for and the work it takes. A tech has no price
+// to hold, so no storage can stand in its way.
 func TestBlockersNameTheKeystone(t *testing.T) {
 	ge, _ := botIn(t, "stone_age")
-	// Stores a player has by the Stone Age, so the age's storage can be built.
-	ge.SetStockForTest("wood", 2000)
-	ge.SetStockForTest("stone", 2000)
 	st := ge.GetState()
 	if got := keystoneChain(st); !reflect.DeepEqual(got, []string{"tool_making", "stoneworking"}) {
 		t.Fatalf("the Great Monolith waits for %v", got)
 	}
 	line := Blockers(st)
-	for _, want := range []string{"wonder great_monolith", "needs tool_making (", "needs stoneworking ("} {
+	for _, want := range []string{"wonder great_monolith", "needs tool_making researched (", "needs stoneworking researched ("} {
 		if !strings.Contains(line, want) {
 			t.Errorf("blockers %q do not name %q", line, want)
 		}
 	}
-	// Reachable storage is far above Stoneworking's price in the real game.
 	for _, p := range storageProblems(st, st.Ruleset().BuildingMap()) {
 		if p.check == "keystone_over_storage" {
 			t.Errorf("a new Stone Age game: %s", p.msg)
 		}
-	}
-	// A keystone priced over anything the age can store is caught.
-	ts := st.Research.Techs["stoneworking"]
-	ts.Cost = 1e30
-	st.Research.Techs["stoneworking"] = ts
-	found := false
-	for _, p := range storageProblems(st, st.Ruleset().BuildingMap()) {
-		found = found || p.check == "keystone_over_storage"
-	}
-	if !found {
-		t.Error("a keystone no storage can hold was not flagged")
 	}
 	ge.GrantTechsForTest("tool_making", "stoneworking")
 	if st := ge.GetState(); keystoneChain(st) != nil || strings.Contains(Blockers(st), "needs ") {

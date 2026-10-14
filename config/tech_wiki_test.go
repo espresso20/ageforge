@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"regexp"
 	"strings"
@@ -16,7 +17,7 @@ import (
 //	UPDATE_WIKI=1 go test ./config -run TestTechWikiTables
 const techWikiPage = "../site/docs/technologies.md"
 
-// techWikiSpan is how long an age's techs take, for its heading: seconds
+// techWikiSpan is how long a tech takes, for its row and its heading: seconds
 // under ten minutes, whole minutes after ("2m 16s", "46m", "1h 10m").
 func techWikiSpan(ticks int) string {
 	secs := int(float64(ticks) * TickSeconds)
@@ -37,9 +38,41 @@ func techWikiSpan(ticks int) string {
 	return fmt.Sprintf("%dh", secs/3600)
 }
 
+// scholarWork is the work each tick of a full set of scholars at an age: every
+// copy of every knowledge building up to and including the age, up to its
+// cap, researching, before any bonus. Knowledge buildings cannot be sold, so
+// the older ones keep working.
+func scholarWork(blds []BuildingDef, ages []AgeDef) map[string]float64 {
+	out := map[string]float64{}
+	total := 0.0
+	for _, age := range ages {
+		for _, b := range blds {
+			if b.RequiredAge != age.Key || !IsKnowledgeBuilding(b) {
+				continue
+			}
+			for _, e := range b.Effects {
+				if e.Type == "research" {
+					total += float64(KnowledgeCap(b.Key)) * e.Value
+				}
+			}
+		}
+		out[age.Key] = total
+	}
+	return out
+}
+
+// techWikiTicks is the ticks a tech takes a full set of scholars.
+func techWikiTicks(cost, work float64) int {
+	if work <= 0 {
+		return 0
+	}
+	return int(math.Ceil(cost / work))
+}
+
 // techWikiSections is every age's section as the wiki should hold it, by
-// age name: the heading with the span of its techs' research times, the
-// table's head, and a row for each tech.
+// age name: the heading with the span of its techs' times, the table's head,
+// and a row for each tech. A tech's time is its price over the work a full
+// set of scholars does each tick at its age, before any bonus.
 func techWikiSections() map[string]string {
 	techs := Technologies()
 	blds := BaseBuildings()
@@ -55,13 +88,6 @@ func techWikiSections() map[string]string {
 			opens[b.RequiredTech] = append(opens[b.RequiredTech], "the "+b.Name)
 		}
 	}
-	comma := func(n int) string {
-		s := fmt.Sprint(n)
-		for i := len(s) - 3; i > 0; i -= 3 {
-			s = s[:i] + "," + s[i:]
-		}
-		return s
-	}
 	quote := func(keys []string) []string {
 		out := make([]string, len(keys))
 		for i, k := range keys {
@@ -71,6 +97,7 @@ func techWikiSections() map[string]string {
 	}
 	out := map[string]string{}
 	ages := Ages()
+	work := scholarWork(blds, ages)
 	for i, age := range ages {
 		lo, hi := 0, 0
 		var rows []string
@@ -78,10 +105,11 @@ func techWikiSections() map[string]string {
 			if tc.Age != age.Key {
 				continue
 			}
-			if lo == 0 || tc.ResearchTicks < lo {
-				lo = tc.ResearchTicks
+			ticks := techWikiTicks(tc.Cost, work[age.Key])
+			if lo == 0 || ticks < lo {
+				lo = ticks
 			}
-			hi = max(hi, tc.ResearchTicks)
+			hi = max(hi, ticks)
 			kind := string(kinds[tc.Key])
 			if w := wonderOf[tc.Key]; w != "" {
 				kind = "**keystone** (" + w + ")"
@@ -110,7 +138,7 @@ func techWikiSections() map[string]string {
 			if text != "" {
 				text = strings.ToUpper(text[:1]) + text[1:]
 			}
-			rows = append(rows, fmt.Sprintf("| `%s` | %s | %s | %s kp | %s | %s | %s |", tc.Key, tc.Name, kind, FormatRateValue(tc.Cost), comma(tc.ResearchTicks), needs, text))
+			rows = append(rows, fmt.Sprintf("| `%s` | %s | %s | %s | %s | %s |", tc.Key, tc.Name, kind, techWikiSpan(ticks), needs, text))
 		}
 		if len(rows) == 0 {
 			continue
@@ -122,7 +150,7 @@ func techWikiSections() map[string]string {
 		if i < len(ages)-1 {
 			span += "/tech"
 		}
-		out[age.Name] = fmt.Sprintf("### %s (%s)\n\n| Key | Name | Kind | Cost | Ticks | Prerequisites | Effect |\n|---|---|---|---|---|---|---|\n%s\n", age.Name, span, strings.Join(rows, "\n"))
+		out[age.Name] = fmt.Sprintf("### %s (%s)\n\n| Key | Name | Kind | Time | Prerequisites | Effect |\n|---|---|---|---|---|---|\n%s\n", age.Name, span, strings.Join(rows, "\n"))
 	}
 	return out
 }

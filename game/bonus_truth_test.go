@@ -143,6 +143,11 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 		}
 		ge.Research.rebuildBonuses()
 	}
+	// A head start holds no more than the dearest tech that could be started.
+	// The typical town has every tech of its ages, so give the lab one tech
+	// that is always startable and dearer than any gift: a gift of work is
+	// then measured whole.
+	ge.Research.defs["lab_tech"] = config.TechDef{Name: "Lab Tech", Key: "lab_tech", Age: ageKeys()[0], Cost: 1e18}
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
 	// Half of every store: a grant has room, a loss has something to take.
@@ -279,6 +284,14 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 		out["storage:"+key] = r.Storage
 		out["stock:"+key] = r.Amount
 	}
+	// The scholars' work, with every scholar researching, and the building
+	// figures it is made of (scholars.go). Both read under "rate:", so a
+	// bonus that moves every rate (all production) may move them.
+	out["stock:research"] = ge.Research.progress + ge.Research.head
+	out["aux:layer-research"] = ge.Research.OutputFactor(config.ResearchTarget)
+	out["aux:pool-research"] = poolFactor("knowledge_rate", ge.buildResolver().AddTotal("knowledge_rate"), ge.rules.SoftCap())
+	out["rate:research"] = ge.researchFull
+	out["base:research"] = ge.researchBase
 	out["housing"] = float64(ge.popCapLocked())
 	out["workers"] = float64(ge.Workers.TotalPop())
 	// Game speed: how many base ticks pass per tick interval.
@@ -394,28 +407,21 @@ func truthCut(meter string, unit string) truthKind {
 				return truthMeasured{Skip: "no " + meter + " to read"}
 			}
 			// The reference price and times round to whole units.
-			return truthMeasured{Delivered: after[meter]/before[meter] - 1, Noise: 2 / (truthRefTicks * before[meter]), Allowed: meterIs(meter)}
+			allowed := meterIs(meter)
+			if meter == "research" {
+				allowed = meterIs(meter, "rate:research") // a shorter time is faster work
+			}
+			return truthMeasured{Delivered: after[meter]/before[meter] - 1, Noise: 2 / (truthRefTicks * before[meter]), Allowed: allowed}
 		}}
 }
 
-// truthResearchTime is the share of its listed time a tech takes to research
-// now (1 with no bonus), read by starting a reference tech through the real
-// start and taking it back.
+// truthResearchTime is the share of its work-time a tech takes to research
+// now (1 with no bonus): the factor the scholars' work is divided by
+// (researchTimeFactor: the research speed pool, the techs' cut and Ancient
+// Knowledge), over Era Mastery's speed, which shortens a time the same way.
 func truthResearchTime(t *testing.T, ge *GameEngine) float64 {
 	t.Helper()
-	rm := ge.Research
-	cur, left, total := rm.currentTech, rm.ticksLeft, rm.totalTicks
-	know := ge.Resources.resources["knowledge"].Amount
-	rm.currentTech = ""
-	rm.defs[truthRefTech] = config.TechDef{Key: truthRefTech, Name: "Reference", Age: "primitive_age", ResearchTicks: truthRefTicks}
-	if err := ge.startResearchLocked(truthRefTech, true); err != nil {
-		t.Fatalf("research meter: %v", err)
-	}
-	ticks := rm.totalTicks
-	delete(rm.defs, truthRefTech)
-	rm.currentTech, rm.ticksLeft, rm.totalTicks = cur, left, total
-	ge.Resources.resources["knowledge"].Amount = know
-	return float64(ticks) / truthRefTicks
+	return float64(ge.researchTimeFactor() / ge.speedK())
 }
 
 // truthBuildCost is the share of its listed price a building costs now (1
@@ -1014,6 +1020,104 @@ var truthKinds = map[string]truthKind{
 			return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("rate:" + res)}
 		},
 	},
+	// A knowledge building's or a wonder's figure: each copy does V work a
+	// tick at a full crew, before the bonuses every other output meets.
+	"research_output": {
+		Unit: "work per tick per copy",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			if after["base:research"] <= 0 {
+				return truthMeasured{Skip: "no research figure to read"}
+			}
+			scale := after["rate:research"] / after["base:research"]
+			d, noise := truthDiff(before, after, "rate:research")
+			return truthMeasured{Delivered: d / scale / p.Count, Noise: noise / scale / p.Count, Allowed: meterIs("rate:research", "base:research")}
+		},
+	},
+	// An awakening's "+V research a tick for a while": V more work a tick, in
+	// the scholars' own steps (Cosmic Legacy, Era Mastery, the time cuts).
+	"research_flat": {
+		Unit: "work per tick",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			scale := ge.speedK() * ge.cosmicLegacyFactor() / ge.researchTimeFactor()
+			d, noise := truthDiff(before, after, "rate:research")
+			return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("rate:research")}
+		},
+	},
+	// A tech's "+X% research speed": the tech layer, X of the work the
+	// scholars do after every pooled bonus.
+	"research_layer": {
+		Unit: "of the work the scholars do", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			if before["rate:research"] <= 0 {
+				return truthMeasured{Skip: "no research is done here"}
+			}
+			scale := before["rate:research"] / before["aux:layer-research"]
+			d, noise := truthDiff(before, after, "rate:research")
+			return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("rate:research", "aux:layer-research")}
+		},
+	},
+	// A milestone's or a wonder's "+X% research speed": X points of the
+	// research pool, before the tech layer.
+	"research_pool": {
+		Unit: "points of the work the scholars do", Pool: true,
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			if before["rate:research"] <= 0 {
+				return truthMeasured{Skip: "no research is done here"}
+			}
+			scale := before["rate:research"] / before["aux:pool-research"]
+			d, noise := truthDiff(before, after, "rate:research")
+			return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("rate:research", "aux:pool-research")}
+		},
+	},
+	// An event's "research speed +X%": X of the work the scholars do.
+	"research_event": {
+		Unit: "of the work the scholars do",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			if before["rate:research"] <= 0 {
+				return truthMeasured{Skip: "no research is done here"}
+			}
+			d, noise := truthDiff(before, after, "rate:research")
+			return truthMeasured{Delivered: d / before["rate:research"], Noise: noise / before["rate:research"], Allowed: meterIs("rate:research", "stock:research")}
+		},
+	},
+	// Work given at once lands on the tech in progress, or as a head start:
+	// the reading is the work on the tech in progress and the head start.
+	"research_gain": {
+		Unit: "of work on a tech",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			d, noise := truthDiff(before, after, "stock:research")
+			return truthMeasured{Delivered: d, Noise: noise, Allowed: meterIs("stock:research")}
+		},
+	},
+	// An event's gift of minutes of the scholars' work, read as the work on
+	// the tech in progress and the head start, over a minute of it.
+	"research_event_gain": {
+		Unit: "minutes of income",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			want := config.EventSize(p.Eff, ge.eventTown(p.Eff.Target, false))
+			if want <= 0 {
+				return truthMeasured{Skip: "the age has no typical income of research"}
+			}
+			d, noise := truthDiff(before, after, "stock:research")
+			per := want / p.Eff.Value
+			return truthMeasured{Delivered: d / per, Noise: noise / per, Allowed: meterIs("stock:research")}
+		},
+	},
+	// The scholars' teaching: the town's age sets how much, with every
+	// scholar teaching, on what workers add to their buildings.
+	"teaching": {
+		Unit: "points of base worker output",
+		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
+			crew := truthCrewOutput(ge)
+			if len(crew) == 0 {
+				return truthMeasured{Skip: "no staffed building to read"}
+			}
+			m := truthAcross(ge, before, after, crew, true)
+			// The switch puts the scholars' building up and takes it down.
+			m.Allowed = func(name string) bool { return strings.HasPrefix(name, "rate:") || name == "base:research" }
+			return m
+		},
+	},
 	// "+X% worker output": X points on what workers add to their buildings.
 	"worker_output": {
 		Unit: "points of base worker output", Pool: true,
@@ -1107,7 +1211,7 @@ var truthKinds = map[string]truthKind{
 		Unit: "points of the listed research time", Pool: true,
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
 			// The techs' cut multiplies what the pool leaves of the time.
-			return truthMeasured{Delivered: (before["research"] - after["research"]) / ge.Research.TimeFactor(), Noise: 2 / truthRefTicks, Allowed: meterIs("research")}
+			return truthMeasured{Delivered: (before["research"] - after["research"]) / ge.Research.TimeFactor(), Noise: 2 / truthRefTicks, Allowed: meterIs("research", "rate:research")}
 		},
 	},
 	// "research time x(1 - X)" (Ancient Knowledge): X of the research time
@@ -1117,7 +1221,7 @@ var truthKinds = map[string]truthKind{
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
 			// The reference tech rounds to whole ticks, before and after.
 			noise := 2 / (truthRefTicks * before["research"])
-			return truthMeasured{Delivered: 1 - after["research"]/before["research"], Noise: noise, Allowed: meterIs("research")}
+			return truthMeasured{Delivered: 1 - after["research"]/before["research"], Noise: noise, Allowed: meterIs("research", "rate:research")}
 		},
 	},
 	// "+X% military power": X points on the Defense Rating.
@@ -1333,6 +1437,15 @@ func truthRateTarget(e config.Effect) string {
 	return e.Target
 }
 
+// truthEpochRateKind is the meter for a timed rate of an epoch event: the
+// scholars' work has its own.
+func truthEpochRateKind(rate config.Effect) string {
+	if rate.Target == config.ResearchTarget {
+		return "research_event"
+	}
+	return "event_rate"
+}
+
 // truthEffectKind names the meter for an effect, by the effect's type and
 // target alone. "" is an effect the guard has no meter for: the test fails
 // on it, so nothing a player is promised goes unmeasured.
@@ -1344,6 +1457,9 @@ func truthEffectKind(source string, e config.Effect) string {
 		case config.EffectOutput:
 			if isRes(e.Target) {
 				return "tech_output"
+			}
+			if e.Target == config.ResearchTarget {
+				return "research_layer"
 			}
 		case config.EffectAllOutput, config.EffectStorage, config.EffectHousing,
 			config.EffectBuildCost, config.EffectBuildTime, config.EffectResearchTime:
@@ -1376,6 +1492,14 @@ func truthEffectKind(source string, e config.Effect) string {
 		if res, ok := strings.CutSuffix(e.Target, "_rate"); ok && isRes(res) {
 			return "resource_production"
 		}
+		if e.Target == "knowledge_rate" {
+			return "research_pool"
+		}
+	case "research":
+		if source == "awakening" {
+			return "research_flat"
+		}
+		return "research_output"
 	case "production":
 		if isRes(e.Target) {
 			if source == "building" || source == "wonder" || source == "monument" {
@@ -1402,6 +1526,9 @@ func truthEffectKind(source string, e config.Effect) string {
 		if isRes(e.Target) {
 			return "instant"
 		}
+		if e.Target == config.ResearchTarget {
+			return "research_gain"
+		}
 	case "steal_resource":
 		if isRes(e.Target) {
 			return "steal"
@@ -1410,6 +1537,9 @@ func truthEffectKind(source string, e config.Effect) string {
 		if isRes(e.Target) {
 			return "event_gain"
 		}
+		if e.Target == config.ResearchTarget {
+			return "research_event_gain"
+		}
 	case config.EventLoss:
 		if isRes(e.Target) {
 			return "event_loss"
@@ -1417,6 +1547,9 @@ func truthEffectKind(source string, e config.Effect) string {
 	case config.EventRate:
 		if isRes(e.Target) {
 			return "event_rate"
+		}
+		if e.Target == config.ResearchTarget {
+			return "research_event"
 		}
 	case "worker_loss":
 		return "worker_loss"
@@ -1427,6 +1560,9 @@ func truthEffectKind(source string, e config.Effect) string {
 	}
 	if res, ok := strings.CutSuffix(e.Type, "_rate"); ok && isRes(res) {
 		return "resource_production"
+	}
+	if e.Type == "knowledge_rate" {
+		return "research_pool" // a boon's windfall of research speed
 	}
 	return ""
 }
@@ -1550,14 +1686,14 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 		sw.restore()
 		snap.put(ge)
 		for _, m := range sortedKeys(on) {
-			if truthMoved(off[m], on[m]) {
+			if truthMoved(off[m], on[m]) && !strings.HasPrefix(m, "aux:") {
 				out.Leaks = append(out.Leaks, fmt.Sprintf("%s %+.4g", m, on[m]-off[m]))
 			}
 		}
 		return out
 	}
 	ge := l.engine(age, mode)
-	if res := truthPaidIn(p); res != "" && !ge.Resources.IsUnlocked(res) {
+	if res := truthPaidIn(p); res != "" && res != config.ResearchTarget && !ge.Resources.IsUnlocked(res) {
 		out.Skip = res + " is locked in " + age
 		return out
 	}
@@ -1584,7 +1720,7 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 	}
 	faith := truthMoved(before["rate:faith"], after["rate:faith"])
 	for _, m := range sortedKeys(after) {
-		if !truthMoved(before[m], after[m]) || allowed(m) || p.also(m) {
+		if !truthMoved(before[m], after[m]) || allowed(m) || p.also(m) || strings.HasPrefix(m, "aux:") {
 			continue
 		}
 		if m == "morale" && faith {
@@ -1834,13 +1970,7 @@ func truthBuildingPromises() []truthPromise {
 			if eff.Type == "production" && config.MakesBeforeUnlock(def, eff.Target) && strings.Contains(def.Description, "/tick "+config.OnceUnlocked) {
 				text, later = text+" "+config.OnceUnlocked, true
 			}
-			// A knowledge building standing also holds what one copy of it
-			// adds to the knowledge store (BuildingDef.KnowledgeStore): the
-			// store's own figures are held to in knowledge_store_test.go.
 			var also []string
-			if eff.Type == "production" && eff.Target == "knowledge" && source == "building" && def.KnowledgeStore > 0 {
-				also = []string{"storage:knowledge"}
-			}
 			out = append(out, truthPromise{
 				Source: source, Key: def.Key, Name: def.Name, Age: def.RequiredAge, Eff: eff, Count: count,
 				Text: text, Kind: truthEffectKind(source, eff), Later: later, Also: also,
@@ -2030,13 +2160,16 @@ func truthEpochEventPromises(t *testing.T) []truthPromise {
 					age = entryFor("culture")
 				}
 				said := label + " production " + textfmt.SignedPercent(rate.Value)
+				if res == config.ResearchTarget {
+					said = "research speed " + textfmt.SignedPercent(rate.Value)
+				}
 				if !strings.Contains(strings.ToLower(def.FlavorText), said) {
 					t.Errorf("epoch event %s changes a rate by %q, and its text does not say so: %q", def.Key, said, def.FlavorText)
 				}
 				rate.Target = res
 				out = append(out, truthPromise{
 					Source: "epoch event", Key: def.Key, Name: def.Name, Age: age, Count: 1,
-					Eff: rate, Text: said, Kind: "event_rate", wire: wire,
+					Eff: rate, Text: said, Kind: truthEpochRateKind(rate), wire: wire,
 				})
 			}
 			// The promises of one event are measured together, in one age,
@@ -2229,7 +2362,39 @@ func truthOtherPromises() []truthPromise {
 	cosmic := config.Effect{Type: "cosmic_legacy", Target: "production", Value: CosmicLegacyProductionBonus}
 	festival := config.Effect{Type: "production_all", Target: "production_all", Value: festivalBuffPercent}
 	rebuild := config.Effect{Type: "production_all", Target: "production_all", Value: endureDebuffProduction}
-	return []truthPromise{
+	// The scholars' teaching: each step of the ladder is a promise in the
+	// ages it holds for, with every scholar teaching.
+	var teaching []truthPromise
+	for _, step := range config.TeachingTable() {
+		step := step
+		eff := config.Effect{Type: "bonus", Target: "gather_rate", Value: step.Bonus}
+		teaching = append(teaching, truthPromise{
+			Source: "scholars", Key: fmt.Sprintf("teaching_%d", step.From), Name: "Scholars teaching", Age: ageKeys()[step.From-1], Eff: eff, Count: 1,
+			Text: truthPercent(step.Bonus) + " worker output, with every scholar teaching", Kind: "teaching",
+			wire: func(ge *GameEngine) truthSwitch {
+				hadN, hadShare, hadSet, hadTech := ge.Buildings.counts["story_circle"], ge.scholarShare, ge.scholarShareSet, ge.Research.currentTech
+				return truthSwitch{
+					// Off: every scholar researches. On: every scholar teaches.
+					off: func() {
+						ge.Buildings.counts["story_circle"] = max(hadN, 1)
+						ge.scholarShare, ge.scholarShareSet = 100, false
+						if ge.Research.currentTech == "" {
+							ge.Research.currentTech = "tool_making"
+						}
+					},
+					on: func() {
+						ge.scholarShare, ge.scholarShareSet = 0, true
+					},
+					restore: func() {
+						ge.Buildings.counts["story_circle"] = hadN
+						ge.scholarShare, ge.scholarShareSet = hadShare, hadSet
+						ge.Research.currentTech = hadTech
+					},
+				}
+			},
+		})
+	}
+	return append(teaching, []truthPromise{
 		{
 			// A catastrophe can strike from the Iron Era on.
 			Source: "endure", Key: "reconstruction", Name: "Reconstruction Effort (Endure)", Age: "iron_age", Eff: rebuild, Count: 1,
@@ -2279,7 +2444,7 @@ func truthOtherPromises() []truthPromise {
 				}
 			},
 		},
-	}
+	}...)
 }
 
 // truthPromises is every promise the guard measures.

@@ -106,8 +106,8 @@ func Catalog() []Def {
 			Target:   TargetSpecificResource,
 			Resource: "knowledge",
 			Flavors: []string{
-				"Foreign scholars open their libraries: +{pct} knowledge for {ticks}.",
-				"A spark of shared insight takes hold: +{pct} knowledge for {ticks}.",
+				"Foreign scholars open their libraries: +{pct} research speed for {ticks}.",
+				"A spark of shared insight takes hold: +{pct} research speed for {ticks}.",
 			},
 		},
 		{

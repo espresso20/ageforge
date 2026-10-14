@@ -13,10 +13,10 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 - **22 ages in 7 epochs**, from the Primitive Age to the Transcendent Age.
 - **About a week for a first run**: that is real time, to the Modern Age and a full run's prestige. The game is paced for checking in a few times a day.
 - **Offline progress**: when you load a save, the game credits the time since you saved, up to 24 hours at 50% of your production. Construction and research finish, the build plan runs and your workers keep staffing as that time passes.
-- **Workers that staff themselves**: workers arrive on their own while housing and food allow (auto-recruit) and go to work by your roster across 12 worker domains. You can still recruit and assign by hand.
+- **Workers that staff themselves**: workers arrive on their own while housing and food allow (auto-recruit) and go to work by your roster across 11 worker domains. You can still recruit and assign by hand.
 - **The build plan**: queue up to 60 builds, techs, trades and an advance. The game starts each one as the resources come in, while you play and while you are away.
 - **302 buildings**: a 14-lineage production system plus storage, monuments and 22 wonders, one per age. You need each age's wonder to advance.
-- **26 resources**, from food and wood up to Quantum Flux (soldiers included), and **203 technologies** in prerequisite chains.
+- **25 resources**, from food and wood up to Quantum Flux (soldiers included), and **203 technologies** in prerequisite chains.
 - **The Map**: your empire drawn from your real buildings, in two styles: a roguelike glyph world with three zooms, and a side-on skyline with one district per age. An inspect cursor gives you the command for whatever it is on, and `minimap on` puts a mini map on the dashboard.
 - **Catastrophes and harbingers**: from the Iron Era on, an era may hide a fated catastrophe. A harbinger always comes to warn you first, and when the doom strikes you choose to Endure or Succumb.
 - **Trade**: 21 trade routes, harbors and a black market.
@@ -37,7 +37,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 | Progression | [The 22 Ages](ages.md) · [Wonders](wonders.md) · [Milestones](milestones.md) · [Epochs](epochs.md) · [Prestige](prestige.md) |
 | Eras and Dooms | [Catastrophes](catastrophe.md) · [The Harbinger](harbinger.md) · [Faith](faith.md) |
 | The World | [Trade](trade.md) · [Factions & Diplomacy](factions.md) · [Army & Missions](military.md) · [Events](events.md) |
-| Systems | [Morale](morale.md) · [Knowledge](knowledge.md) |
+| Systems | [Morale](morale.md) · [Scholars and Research](knowledge.md) |
 | Reference | [All Commands](commands.md) · [Civilization History](history.md) |
 | Your Game | [Saving & Loading](saving-and-loading.md) · [Accounts](account.md) · [Badges](badges.md) · [Themes](themes.md) |
 

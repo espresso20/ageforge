@@ -71,15 +71,15 @@ You don't pick a domain for a worker. It takes the class of the building it work
 
 ## Step 4: Steer them (optional)
 
-By default every domain is on auto: your workers spread across your buildings in proportion to their worker slots, so they follow what you build. With every slot filled, that is a full crew everywhere: 3 workers on each gathering camp and wood camp, 2 on each story circle and shrine.
+By default every domain is on auto: your workers spread across your buildings in proportion to their worker slots, so they follow what you build. With every slot filled, that is a full crew everywhere: 3 workers on each gathering camp and wood camp, 2 on each shrine.
 
 To put more of your workers on one kind of work, give it a share of the workforce:
 
 ```
-roster knowledge 40
+roster faith 40
 ```
 
-Now 40% of your workers go to knowledge, as far as your story circles have slots, and the other domains split the rest by their slots. `roster knowledge auto` undoes it, and `roster auto` puts every domain back on auto. Don't set food to 0: food is what lets the game recruit.
+Now 40% of your workers go to faith, as far as your shrines have slots, and the other domains split the rest by their slots. `roster faith auto` undoes it, and `roster auto` puts every domain back on auto. Don't set food to 0: food is what lets the game recruit.
 
 You can also take over by hand. `assign` and `unassign` work as always, and the game never moves a worker you placed. After any worker command it waits a minute before placing anyone, so it won't grab the workers you are moving. If you'd rather recruit yourself, `workers auto-recruit off` stops automatic recruiting; idle workers still go to work by your shares.
 
@@ -94,7 +94,7 @@ The Workers box in the sidebar should show **Idle: 0**. The game recruits only i
 
 ## Step 5: Build stashes
 
-Food and wood start with only 50 storage each. Storage fills fast, and anything past it is wasted. A stash costs **35 wood** and gives **+100 storage** for every resource but knowledge, which has a store of its own (Step 6). There is no limit on copies, but each one costs 1.75 times the one before it.
+Food and wood start with only 50 storage each. Storage fills fast, and anything past it is wasted. A stash costs **35 wood** and gives **+100 storage** for every resource. There is no limit on copies, but each one costs 1.75 times the one before it.
 
 ```
 build stash
@@ -106,7 +106,7 @@ Build two early so there is room to hold what comes in. The Stone Age asks for *
 
 ## Step 6: Build story circles and a shrine
 
-Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed (2 workers). Each also adds **140** to your knowledge store, which starts at 240 and which only knowledge buildings raise. The Stone Age needs **5 story circles**, and knowledge is what you spend on research. A story circle costs 60 wood and takes 75 ticks (2m 30s) to build, so start them early.
+Story circles come with **2 scholars** each. Scholars are not workers: they need no housing, no food and no assignment, and they start research the moment the circle stands. The Stone Age needs **5 story circles**, and a circle cannot be built past 5. A story circle costs 60 wood and takes 75 ticks (2m 30s) to build, so start them early.
 
 ```
 build story_circle
@@ -125,21 +125,20 @@ build shrine
 The Economy panel is always on screen. Look at the rate column:
 - `food: +N/t` should be positive (each staffed gathering camp adds +1.0; aim for at least +2)
 - `wood: +N/t` should be positive (each staffed wood camp adds about +0.57)
-- `knowledge: +N/t` should be positive (five staffed story circles make +1.0)
 
-If food is negative, build another gathering camp; workers come to staff it. If knowledge is low, build more story circles, or give knowledge a bigger share with `roster knowledge 40`.
+If food is negative, build another gathering camp; workers come to staff it. If research is slow to finish, build more story circles: each adds 2 scholars.
 
 ---
 
 ## Step 8: Research your first tech
 
-Once you have 306 knowledge (your knowledge store starts at 240, so you need a story circle to hold that much):
+Once you have a story circle, its scholars can research:
 
 ```
 research tool_making
 ```
 
-It costs the 306 knowledge up front, takes 23 ticks (46 seconds) and gives +10% food and +10% wood for the rest of the run, and every `gather` brings 2 more. Get it here if you can: Stoneworking, the tech the Stone Age's wonder needs, stands on it. If you're short, advance first and research it later, or queue it with `plan research tool_making` and the [build plan](plan.md) starts it once the knowledge is there. Language (236 knowledge, +10% knowledge) and Fire Mastery (398 knowledge, +10% food and +5% housing) are the age's other two techs; Fire Mastery needs two story circles to hold it. A tech that costs more than your knowledge store cannot be started, and the game tells you which building to build.
+It costs nothing to start. A bar fills as your scholars work, and the screens show its percent and the time left. With five story circles it takes about 10 minutes; each circle you add shortens it. It gives +10% food and +10% wood for the rest of the run, and every `gather` brings 2 more. Get it here if you can: Stoneworking, the tech the Stone Age's wonder needs, stands on it. If you'd rather advance first, queue it with `plan research tool_making` and the [build plan](plan.md) starts it when the research slot is free. Language (+10% research speed) and Fire Mastery (+10% food and +5% housing) are the age's other two techs. `research list` shows the time each would take your scholars now.
 
 ---
 
@@ -158,7 +157,7 @@ build sacred_grove
 
 `wonder collect all` banks as much of each needed resource as you have. Run it again whenever your stock refills; your storage limits how much you can bank at once. **Wonder overflow** helps too: it is on by default, and production your full stores would waste goes into the Grove's bank on its own.
 
-The grove also gives +0.02 knowledge/tick and +0.05 food/tick permanently.
+The grove also speeds research and gives +0.05 food/tick permanently.
 
 ---
 
@@ -173,7 +172,7 @@ The Next Age row under the status bar always shows what you need for the **next 
 - Wood Camps: 8
 - The Sacred Grove built
 
-No age asks you to hold an amount of a resource, and advancing spends none. See [Advancement Requirements](ages.md#advancement-requirements) for the rule. Keep building huts (new huts bring new workers) and keep knowledge flowing. When every item has its ✓, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
+No age asks you to hold an amount of a resource, and advancing spends none. See [Advancement Requirements](ages.md#advancement-requirements) for the rule. Keep building huts (new huts bring new workers) and keep your scholars researching. When every item has its ✓, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
 
 > **A harbinger?** A `⚑ Harbinger` badge may appear on the status bar. Type `harbinger` to read it, or ignore it: it never blocks anything, and no catastrophe can strike before the Iron Era. See [The Harbinger](harbinger.md).
 
@@ -204,10 +203,10 @@ When you reach the Stone Age:
 - **Stone Pit**: far more stone, but it costs stone to build
 - **Woodcutter Camp**: a much better wood producer
 - **Forager Post**: a better food producer
-- **Elders' Hall**: a better knowledge building
+- **Elders' Hall**: a better knowledge building, with 2 scholars
 - **Standing Stones**: a better faith building, once you research Ritual (it needs Language, a Primitive Age tech)
 - **Longhouse**: bigger housing (+25 housing each)
-- **Storage Pit**: +1.2K storage for every resource but knowledge
+- **Storage Pit**: +1.2K storage for every resource
 - **War Camp**: an early military building. It trains soldiers from the day it stands, and a garrison blunts the raids of the Stone and Bronze Ages (see [Military](military.md))
 - **Great Monolith**: the Stone Age wonder, required to reach the Bronze Age
 
@@ -229,9 +228,9 @@ Your first priority: start stone with **Stone Camps** (or `gather stone 25`), th
 | Build a story circle | `build story_circle` |
 | Build a shrine | `build shrine` |
 | See your workers, the roster and what auto-recruit is doing | `workers` |
-| Put more workers on knowledge | `roster knowledge 40` |
+| Put more workers on faith | `roster faith 40` |
 | Put every domain back on auto | `roster auto` |
-| Place a worker by hand | `assign story_circle 1` |
+| Place a worker by hand | `assign shrine 1` |
 | Take a worker out of a building | `unassign gathering_camp 1` |
 | Recruit by hand instead | `workers auto-recruit off`, then `recruit [count]` or `recruit max` |
 | Start first research | `research tool_making` |

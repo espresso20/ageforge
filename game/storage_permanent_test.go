@@ -53,16 +53,16 @@ func TestDestroyable_SparesWondersStorageAndKnowledgeBuildings(t *testing.T) {
 	}
 }
 
-// The knowledge buildings are the knowledge store: a catastrophe leaves every
-// copy standing, so the store and the techs priced against it stay.
+// The knowledge buildings come with the scholars: a catastrophe leaves every
+// copy standing, so the scholars stay.
 func TestEndure_NeverDestroysKnowledgeBuildings(t *testing.T) {
 	ge := catEngine(t, "iron_age", 1)
-	know := pickWorkerBuildings(t, "knowledge")[0]
+	know := "monastery_library"
 	food := pickWorkerBuildings(t, "food")[0]
 	ge.Buildings.counts[know] = 10
 	ge.Buildings.counts[food] = 1
 	ge.recalculateRates()
-	store := ge.Resources.GetStorage("knowledge")
+	scholars := ge.scholarTotal()
 	if got := ge.Buildings.DestroyableCount(); got != 1 {
 		t.Fatalf("DestroyableCount = %d, want 1 (knowledge buildings don't count)", got)
 	}
@@ -74,8 +74,8 @@ func TestEndure_NeverDestroysKnowledgeBuildings(t *testing.T) {
 	if got := ge.Buildings.GetCount(know); got != 10 {
 		t.Errorf("Endure took knowledge buildings: %s 10 -> %d", know, got)
 	}
-	if got := ge.Resources.GetStorage("knowledge"); got != store {
-		t.Errorf("Endure moved the knowledge store: %v -> %v", store, got)
+	if got := ge.scholarTotal(); got != scholars {
+		t.Errorf("Endure moved the scholars: %v -> %v", scholars, got)
 	}
 }
 
@@ -117,7 +117,7 @@ func TestEndure_VictorianVaultStaysBuildable(t *testing.T) {
 	} {
 		ge.Buildings.counts[k] = n
 	}
-	for _, k := range pickWorkerBuildings(t, "food", "knowledge", "metallurgy") {
+	for _, k := range pickWorkerBuildings(t, "food", "metallurgy") {
 		ge.Buildings.counts[k] = 100
 	}
 	ge.Buildings.UnlockBuilding("victorian_vault")

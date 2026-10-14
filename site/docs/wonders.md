@@ -106,7 +106,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Wood | 1.6K |
 | Food | 800 |
 
-**Bonus:** +0.02 knowledge/t · +0.05 food/t
+**Bonus:** speeds research · +0.05 food/t
 
 ---
 
@@ -119,7 +119,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Wood | 8K |
 | Food | 2.4K |
 
-**Bonus:** +0.05 knowledge/t · +5K storage for every resource but knowledge
+**Bonus:** speeds research · +5K storage for every resource
 
 ---
 
@@ -132,7 +132,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Wood | 30.4K |
 | Iron | 5.44K |
 
-**Bonus:** +0.8 knowledge/t · +0.6 faith/t
+**Bonus:** speeds research · +0.6 faith/t
 
 ---
 
@@ -162,7 +162,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Iron | 352K |
 | Iron Ore | 352K |
 
-**Bonus:** +2.0 culture/t · +1.2 knowledge/t
+**Bonus:** +2.0 culture/t · speeds research
 
 ---
 
@@ -171,11 +171,10 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 5.6M |
-| Gold | 4.32M |
-| Knowledge | 1.34M |
+| Stone | 10.5M |
+| Gold | 8.07M |
 
-**Bonus:** +2.0 knowledge/t · **+30% knowledge output**
+**Bonus:** **+30% scholar output**
 
 ---
 
@@ -230,7 +229,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Iron | 6.08B |
 | Gold | 8.16B |
 
-**Bonus:** +5.0 culture/t · +2.0 knowledge/t
+**Bonus:** +5.0 culture/t · speeds research
 
 ---
 
@@ -255,7 +254,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Electricity | 260B |
 | Uranium | 29.8B |
 
-**Bonus:** +10.0 knowledge/t · +1.5 uranium/t
+**Bonus:** speeds research · +1.5 uranium/t
 
 ---
 
@@ -269,7 +268,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Gold | 1.19T |
 | Electricity | 738B |
 
-**Bonus:** +6.0 knowledge/t · +8.0 culture/t
+**Bonus:** speeds research · +8.0 culture/t
 
 ---
 
@@ -284,7 +283,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Electricity | 1.54T |
 | Gold | 3.84T |
 
-**Bonus:** +30.0 data/t · **+30% knowledge output**
+**Bonus:** +30.0 data/t · **+30% scholar output**
 
 ---
 
@@ -298,7 +297,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Data | 1.6T |
 | Electricity | 32T |
 
-**Bonus:** +60.0 data/t · +15.0 knowledge/t
+**Bonus:** +60.0 data/t · speeds research
 
 ---
 
@@ -413,7 +412,7 @@ These figures are the morale **ceiling**, how high the morale percentage can cli
 ## Tips
 
 - Bank resources over several deposits as they come in, rather than waiting to cover the whole price at once. Overflow does some of this for you.
-- **Great Library** and **Global Network** each give +30% knowledge output, and the two stack.
+- **Great Library** and **Global Network** each give +30% scholar output, and the two stack.
 - **Grand Lighthouse** and the Rocketry tech both raise expedition rewards, and they stack.
 - Build each age's wonder early. It is required for `advance`, and its bonuses last for the rest of the run.
 - **Crystal Palace** (+15% all production) lands in the Industrial Age, before the all-production pool usually reaches its cap, so it counts in full.

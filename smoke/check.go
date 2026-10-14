@@ -101,21 +101,12 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 
 // storageProblems flags storage that can never grow again in this age, a
 // required building that can't be built or whose last copy can't fit under any
-// reachable cap, and a tech the age's wonder waits for (its keystone, or
-// one the keystone stands on) whose price no reachable knowledge storage
-// can hold.
+// reachable cap.
 func storageProblems(st game.GameState, defs map[string]config.BuildingDef) []problem {
 	var out []problem
 	caps, stall := storageLadder(st, defs)
 	if stall != nil {
 		out = append(out, problem{"storage_unreachable", stall.message(st)})
-	}
-	for _, key := range keystoneChain(st) {
-		if t := st.Research.Techs[key]; t.Cost > caps["knowledge"] && key != st.Research.CurrentTech {
-			out = append(out, problem{"keystone_over_storage",
-				fmt.Sprintf("%s needs %s researched, which costs %s knowledge, but the most knowledge storage reachable in %s is %s",
-					st.CurrentAgeWonderKey, key, num(t.Cost), st.Age, num(caps["knowledge"]))})
-		}
 	}
 	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
 		need, bs, def := st.NextAgeBldReqs[bld], st.Buildings[bld], defs[bld]
@@ -179,24 +170,14 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 	for _, k := range sortedKeys(st.Resources) {
 		caps[k] = st.Resources[k].Storage
 	}
-	// Storage grows with Era Mastery's k, a building's share included. The
-	// knowledge store does not: it is the knowledge buildings' alone, and
-	// neither a general storage building nor k reaches it
-	// (game.knowledgeStoreSize).
+	// Storage grows with Era Mastery's k, a building's share included.
 	k := st.Mastery.K
 	if k <= 0 {
 		k = 1
 	}
 	raise := func(def config.BuildingDef, n float64) {
-		if config.IsKnowledgeBuilding(def) && def.KnowledgeStore > 0 {
-			caps["knowledge"] += float64(def.KnowledgeStore * n)
-		}
 		for _, e := range def.Effects {
 			if e.Type != "storage" || e.Value <= 0 {
-				continue
-			}
-			if e.Target == "knowledge" {
-				caps[e.Target] += float64(e.Value * n)
 				continue
 			}
 			add := float64(float64(e.Value*n) * k)
@@ -205,9 +186,7 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 				continue
 			}
 			for _, r := range sortedKeys(caps) {
-				if r != "knowledge" {
-					caps[r] += add
-				}
+				caps[r] += add
 			}
 		}
 	}
@@ -239,9 +218,7 @@ func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[s
 		if def.RequiredAge != "" && def.RequiredAge != st.Age {
 			continue
 		}
-		// A knowledge building raises the knowledge store, so the walk
-		// buys its copies too.
-		stores := config.IsKnowledgeBuilding(def) && def.KnowledgeStore > 0
+		stores := false
 		for _, e := range def.Effects {
 			stores = stores || (e.Type == "storage" && e.Value > 0)
 		}
@@ -363,11 +340,6 @@ func requiredOverStorage(st game.GameState, defs map[string]config.BuildingDef, 
 			}
 		}
 	}
-	for _, key := range keystoneChain(st) {
-		if t := st.Research.Techs[key]; t.Cost > caps["knowledge"] && key != st.Research.CurrentTech {
-			return fmt.Sprintf("%s, %s knowledge", key, num(t.Cost))
-		}
-	}
 	return ""
 }
 
@@ -395,7 +367,7 @@ func Blockers(st game.GameState) string {
 	if w := st.CurrentAgeWonderKey; w != "" {
 		note := ""
 		for _, key := range keystoneChain(st) {
-			note += fmt.Sprintf("; needs %s (%s knowledge, cap %s)", key, num(st.Research.Techs[key].Cost), num(st.Resources["knowledge"].Storage))
+			note += fmt.Sprintf("; needs %s researched (%s of work)", key, num(st.Research.Techs[key].Cost))
 		}
 		out = append(out, fmt.Sprintf("wonder %s (bank %s%s)", w, bankStr(st, w), note))
 	}

@@ -15,6 +15,10 @@ type GameStats struct {
 	// milestone chain (first_soldiers, standing_army, …). Old saves without this
 	// field default to 0 and re-accrue progress as new soldiers are trained.
 	SoldiersTrained float64 `json:"soldiers_trained"`
+	// ResearchWork is the work done on techs this run, by the scholars and by
+	// everything that gave work (events, loot, milestones). It is what the
+	// Knowledge Seeker milestone counts. Omitted until there is some.
+	ResearchWork float64 `json:"research_work,omitempty"`
 	// Defense is what the army's garrison has saved this run (raids, war
 	// raids, Endure). nil until it saves something; see DefenseTally.
 	Defense *DefenseTally `json:"defense,omitempty"`
