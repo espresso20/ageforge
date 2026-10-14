@@ -48,7 +48,15 @@ type BuildingManager struct {
 	// order is every def key, sorted, fixed at construction (defs never change
 	// after that). eachBuilt walks it so float sums across buildings come out
 	// the same on every run (see sortedKeys) without sorting on every tick.
-	order []string
+	order       []string
+	orderedDefs []config.BuildingDef
+
+	// These sorted subsets save the common effect readers from walking every
+	// building definition. They are rebuilt with order because they depend only
+	// on definitions, never on counts.
+	wonderKeys         []string
+	wonderMonumentKeys []string
+	scholarKeys        []string
 
 	// costMult is the global build-cost multiplier applied to every computed
 	// building cost (GetCost / BuildBatchCost / UpgradeCost new-copy side). It is
@@ -70,11 +78,10 @@ func NewBuildingManager() *BuildingManager { return NewBuildingManagerWith(rules
 // NewBuildingManagerWith creates a building manager with set's buildings.
 func NewBuildingManagerWith(set *rules.Set) *BuildingManager {
 	defs := set.BuildingMap()
-	return &BuildingManager{
+	bm := &BuildingManager{
 		rules:           set,
 		counts:          make(map[string]int),
 		defs:            defs,
-		order:           sortedKeys(defs),
 		unlocked:        make(map[string]bool),
 		wonderBanks:     make(map[string]map[string]float64),
 		legacyBuildings: make(map[string]bool),
@@ -82,6 +89,8 @@ func NewBuildingManagerWith(set *rules.Set) *BuildingManager {
 		pendingUpgrades: make(map[string]string),
 		costMult:        1.0,
 	}
+	bm.rebuildOrder()
+	return bm
 }
 
 // Rebind moves the manager onto set: it takes set's building definitions.
@@ -90,7 +99,31 @@ func NewBuildingManagerWith(set *rules.Set) *BuildingManager {
 func (bm *BuildingManager) Rebind(set *rules.Set) {
 	bm.rules = set
 	bm.defs = set.BuildingMap()
+	bm.rebuildOrder()
+}
+
+// rebuildOrder derives the sorted walk order and its definition-only subsets.
+// Definitions change only at construction or Rebind; tests that inject a def
+// use this too.
+func (bm *BuildingManager) rebuildOrder() {
 	bm.order = sortedKeys(bm.defs)
+	bm.orderedDefs = make([]config.BuildingDef, len(bm.order))
+	bm.wonderKeys = nil
+	bm.wonderMonumentKeys = nil
+	bm.scholarKeys = nil
+	for i, key := range bm.order {
+		def := bm.defs[key]
+		bm.orderedDefs[i] = def
+		if def.Category == "wonder" {
+			bm.wonderKeys = append(bm.wonderKeys, key)
+		}
+		if def.Category == "wonder" || def.Category == "monument" {
+			bm.wonderMonumentKeys = append(bm.wonderMonumentKeys, key)
+		}
+		if def.Scholars > 0 {
+			bm.scholarKeys = append(bm.scholarKeys, key)
+		}
+	}
 }
 
 // eachBuilt calls f for every building type with a positive count, in sorted
@@ -98,9 +131,21 @@ func (bm *BuildingManager) Rebind(set *rules.Set) {
 // It runs several times a tick, so it walks the precomputed order rather than
 // sorting, and allocates nothing.
 func (bm *BuildingManager) eachBuilt(f func(key string, count int, def config.BuildingDef)) {
-	for _, key := range bm.order {
+	for i, key := range bm.order {
 		if c := bm.counts[key]; c > 0 {
-			f(key, c, bm.defs[key])
+			f(key, c, bm.orderedDefs[i])
+		}
+	}
+}
+
+// eachBuiltOf calls f for each built key in keys, preserving the supplied key
+// order. Unknown keys and non-positive counts carry no effects.
+func (bm *BuildingManager) eachBuiltOf(keys []string, f func(key string, count int, def config.BuildingDef)) {
+	for _, key := range keys {
+		if c := bm.counts[key]; c > 0 {
+			if def, ok := bm.defs[key]; ok {
+				f(key, c, def)
+			}
 		}
 	}
 }
@@ -474,7 +519,7 @@ func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(domain, k
 // player chose to put up makes (the faith measure sets it apart, faith.go).
 func (bm *BuildingManager) wonderProduction(res string) float64 {
 	total := 0.0
-	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
+	bm.eachBuiltOf(bm.wonderKeys, func(key string, count int, def config.BuildingDef) {
 		if def.Category != "wonder" {
 			return
 		}

@@ -599,7 +599,7 @@ const AutosaveInterval = 60 * time.Second
 // the ceiling (config.MechanicMoraleCap).
 func (ge *GameEngine) moraleCap() float64 {
 	cap := 1.0
-	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+	ge.Buildings.eachBuiltOf(ge.Buildings.wonderKeys, func(_ string, count int, def config.BuildingDef) {
 		if def.Category == "wonder" {
 			cap += float64(0.05 * float64(count))
 		}
@@ -1602,7 +1602,7 @@ func (ge *GameEngine) finishResearch(completed string) {
 
 // processEvents handles random events
 func (ge *GameEngine) processEvents() {
-	ageOrder := ge.progress.GetAgeOrder()
+	ageOrder := ge.progress.ageOrder()
 	triggered, expired := ge.Events.Tick(ge.gameRNG(), ge.tick, ge.age, ageOrder, ge.currentEpoch)
 
 	for _, def := range triggered {
@@ -1747,7 +1747,7 @@ func (ge *GameEngine) harborRouteBonus() float64 {
 
 // processDiplomacy handles diplomacy ticks
 func (ge *GameEngine) processDiplomacy() {
-	ageOrder := ge.progress.GetAgeOrder()
+	ageOrder := ge.progress.ageOrder()
 	// Mercantile civs warm to trade activity: treat any active trade route as
 	// "traded recently" this window. TradeManager.Tick (which calls RecordTrade) runs in
 	// the same lock, so reading the active count here is safe.
@@ -1823,7 +1823,7 @@ func (ge *GameEngine) processDiplomacy() {
 
 // checkMilestones checks for newly completed milestones and chains
 func (ge *GameEngine) checkMilestones() {
-	ageOrder := ge.progress.GetAgeOrder()
+	ageOrder := ge.progress.ageOrder()
 	researchedTechs := make(map[string]bool, len(ge.Research.researched))
 	for key := range ge.Research.researched {
 		researchedTechs[key] = true
@@ -3207,7 +3207,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 // Must be called with the engine lock held.
 func (ge *GameEngine) getWonderBonuses() map[string]float64 {
 	out := make(map[string]float64)
-	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+	ge.Buildings.eachBuiltOf(ge.Buildings.wonderMonumentKeys, func(_ string, count int, def config.BuildingDef) {
 		if def.Category != "wonder" && def.Category != "monument" {
 			return
 		}
@@ -4358,7 +4358,7 @@ func (ge *GameEngine) LaunchExpedition(key string) error {
 // so it resolves, rewards and rolls its faction encounter on exactly the same
 // path.
 func (ge *GameEngine) launchExpeditionLocked(key string) error {
-	ageOrder := ge.progress.GetAgeOrder()
+	ageOrder := ge.progress.ageOrder()
 
 	def := ge.Military.ExpeditionDefByKey(key)
 	if def == nil {

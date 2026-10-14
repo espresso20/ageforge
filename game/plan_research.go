@@ -110,8 +110,9 @@ func (ge *GameEngine) planTechAhead(key string) bool {
 	if !ok {
 		return false
 	}
-	order := ge.progress.GetAgeOrder()
-	return order[def.Age] > order[ge.age]
+	techAge, _ := ge.progress.AgeIndex(def.Age)
+	currentAge, _ := ge.progress.AgeIndex(ge.age)
+	return techAge > currentAge
 }
 
 // errTechOutOfSight answers a tech key the plan cannot take because the

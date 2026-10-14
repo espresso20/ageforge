@@ -282,7 +282,7 @@ func (ge *GameEngine) processAutoExpeditions() {
 		return
 	}
 
-	def := ge.pickAutoScoutExpedition(ge.progress.GetAgeOrder())
+	def := ge.pickAutoScoutExpedition(ge.progress.ageOrder())
 	if def == nil {
 		// Either the age has no scouting expedition at all, or the stores are too
 		// thin to outfit one. Warn ONCE per dry spell (state change only) — this is
