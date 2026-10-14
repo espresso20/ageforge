@@ -516,7 +516,7 @@ func (s *siteStage) bronzeTown() {
 	s.say("research masonry")
 	s.say("trade route start local_barter")
 	s.wait(310)
-	s.level(map[string]float64{"food": 0.71, "wood": 0.34, "stone": 0.83, "knowledge": 0.46, "gold": 0.37, "iron": 0.22, "faith": 0.41})
+	s.level(map[string]float64{"food": 0.71, "wood": 0.34, "stone": 0.83, "gold": 0.37, "iron": 0.22, "faith": 0.41})
 	s.eng.SetWonderOverflow(true)
 	// The Scout Party needs no tech; scouting past it waits for Exploration.
 	s.say("expedition scout_party")
@@ -836,7 +836,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	}
 	s.toIron()
 	s.quiet()
-	s.level(map[string]float64{"food": 0.58, "wood": 0.77, "stone": 0.49, "knowledge": 0.31, "gold": 0.66, "iron": 0.52, "marble": 0.28, "iron_ore": 0.44, "faith": 0.63})
+	s.level(map[string]float64{"food": 0.58, "wood": 0.77, "stone": 0.49, "gold": 0.66, "iron": 0.52, "marble": 0.28, "iron_ore": 0.44, "faith": 0.63})
 	s.wait(30)
 
 	// A doom is fated for this era, due now: its harbinger comes on the next
@@ -866,7 +866,7 @@ func TestWriteSiteScreens(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	s.level(map[string]float64{"food": 0.64, "wood": 0.81, "stone": 0.57, "knowledge": 0.42, "gold": 0.73, "iron": 0.6, "marble": 0.35, "iron_ore": 0.5, "faith": 0.63})
+	s.level(map[string]float64{"food": 0.64, "wood": 0.81, "stone": 0.57, "gold": 0.73, "iron": 0.6, "marble": 0.35, "iron_ore": 0.5, "faith": 0.63})
 	s.holdToast()
 	// The dashboard puts the choice up by itself on its next refresh.
 	shots.take(s, "catastrophe")
@@ -907,7 +907,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	}
 	s.toMedieval()
 	s.quiet()
-	s.level(map[string]float64{"food": 0.47, "wood": 0.69, "stone": 0.74, "knowledge": 0.38, "gold": 0.55, "iron": 0.61, "marble": 0.43,
+	s.level(map[string]float64{"food": 0.47, "wood": 0.69, "stone": 0.74, "gold": 0.55, "iron": 0.61, "marble": 0.43,
 		"iron_ore": 0.52, "steel": 0.26, "culture": 0.33, "faith": 0.72})
 	s.wait(3)
 	s.open("factions", "")
@@ -998,7 +998,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 
 	s.toBronze()
 	s.dismiss() // the Bronze Age's splash
-	s.level(map[string]float64{"food": 0.62, "wood": 0.48, "stone": 0.71, "knowledge": 0.36})
+	s.level(map[string]float64{"food": 0.62, "wood": 0.48, "stone": 0.71})
 	s.wait(3)
 	for i := 0; i < 10; i++ {
 		s.eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
