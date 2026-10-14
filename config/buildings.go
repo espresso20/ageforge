@@ -790,15 +790,6 @@ type buildingMetaEntry struct {
 // Epoch keys: stone_era, iron_era, steel_era, electric_era, digital_era, neon_era, cosmic_era
 func buildingMeta() map[string]buildingMetaEntry {
 	return map[string]buildingMetaEntry{
-		// ── HOUSING lineage (no workers, no output resource) ──────────────────────
-		"hut":             {LineageKey: "housing", LineageTier: 0, EpochKey: "stone_era"},
-		"house":           {LineageKey: "housing", LineageTier: 1, EpochKey: "stone_era"},
-		"manor":           {LineageKey: "housing", LineageTier: 2, EpochKey: "iron_era"},
-		"apartment":       {LineageKey: "housing", LineageTier: 3, EpochKey: "steel_era"},
-		"skyscraper":      {LineageKey: "housing", LineageTier: 4, EpochKey: "digital_era"},
-		"neon_tower":      {LineageKey: "housing", LineageTier: 5, EpochKey: "neon_era"},
-		"orbital_habitat": {LineageKey: "housing", LineageTier: 6, EpochKey: "neon_era"},
-
 		// ── STORAGE lineage (no workers, no output resource) ─────────────────────
 		"stash":              {LineageKey: "storage", LineageTier: 0, EpochKey: "stone_era"},
 		"storage_pit":        {LineageKey: "storage", LineageTier: 1, EpochKey: "stone_era"},
@@ -821,83 +812,6 @@ func buildingMeta() map[string]buildingMetaEntry {
 		"stellar_vault":      {LineageKey: "storage", LineageTier: 18, EpochKey: "cosmic_era"},
 		"galactic_vault":     {LineageKey: "storage", LineageTier: 19, EpochKey: "cosmic_era"},
 		"quantum_vault":      {LineageKey: "storage", LineageTier: 20, EpochKey: "cosmic_era"},
-
-		// ── FOOD lineage (domain: food) ──────────────────────────────────────────
-		"gathering_camp": {LineageKey: "food", LineageTier: 0, WorkerDomain: "food", WorkerCapacity: 5, EpochKey: "stone_era", OutputResource: "food"},
-		"farm":           {LineageKey: "food", LineageTier: 1, WorkerDomain: "food", WorkerCapacity: 8, EpochKey: "stone_era", OutputResource: "food"},
-		"aqueduct":       {LineageKey: "food", LineageTier: 2, WorkerDomain: "food", WorkerCapacity: 8, EpochKey: "iron_era", OutputResource: "food"},
-		"colony":         {LineageKey: "food", LineageTier: 3, WorkerDomain: "food", WorkerCapacity: 12, EpochKey: "steel_era", OutputResource: "food"},
-		"plantation":     {LineageKey: "food", LineageTier: 4, WorkerDomain: "food", WorkerCapacity: 10, EpochKey: "steel_era", OutputResource: "food"},
-		"colony_ship":    {LineageKey: "food", LineageTier: 5, WorkerDomain: "food", WorkerCapacity: 20, EpochKey: "cosmic_era", OutputResource: "food"},
-
-		// ── ORGANIC EXTRACTION lineage (domain: lumber) ──────────────────────────
-		// Output resource transitions per epoch: wood (stone) → oil (steel/electric) → nanobots (digital+)
-		"woodcutter_camp": {LineageKey: "organic_extraction", LineageTier: 0, WorkerDomain: "lumber", WorkerCapacity: 5, EpochKey: "stone_era", OutputResource: "wood"},
-		"lumber_mill":     {LineageKey: "organic_extraction", LineageTier: 1, WorkerDomain: "lumber", WorkerCapacity: 8, EpochKey: "stone_era", OutputResource: "wood"},
-		"oil_well":        {LineageKey: "organic_extraction", LineageTier: 2, WorkerDomain: "lumber", WorkerCapacity: 10, EpochKey: "steel_era", OutputResource: "oil"},
-
-		// ── GEOLOGICAL EXTRACTION lineage (domain: masonry) ──────────────────────
-		// Output resource transitions per epoch: stone (stone) → iron_ore/marble (iron) → coal (steel) → uranium (electric) → titanium_ore (digital) → dark_matter_crystals (neon) → antimatter (cosmic)
-		"stone_pit": {LineageKey: "geological_extraction", LineageTier: 0, WorkerDomain: "masonry", WorkerCapacity: 5, EpochKey: "stone_era", OutputResource: "stone"},
-		"quarry":    {LineageKey: "geological_extraction", LineageTier: 1, WorkerDomain: "masonry", WorkerCapacity: 8, EpochKey: "stone_era", OutputResource: "stone"},
-		"mine":      {LineageKey: "geological_extraction", LineageTier: 2, WorkerDomain: "masonry", WorkerCapacity: 8, EpochKey: "stone_era", OutputResource: "iron"},
-		"coal_mine": {LineageKey: "geological_extraction", LineageTier: 3, WorkerDomain: "masonry", WorkerCapacity: 10, EpochKey: "iron_era", OutputResource: "coal"},
-
-		// ── FAITH lineage (domain: faith) ────────────────────────────────────────
-		"cathedral": {LineageKey: "faith", LineageTier: 0, WorkerDomain: "faith", WorkerCapacity: 8, EpochKey: "iron_era", OutputResource: "faith"},
-
-		// ── CULTURE/ARTS lineage (no domain — auto-produces passively) ────────────
-		"amphitheater": {LineageKey: "culture_arts", LineageTier: 0, EpochKey: "iron_era", OutputResource: "culture"},
-		"art_studio":   {LineageKey: "culture_arts", LineageTier: 1, EpochKey: "steel_era", OutputResource: "culture"},
-		"media_center": {LineageKey: "culture_arts", LineageTier: 2, EpochKey: "digital_era", OutputResource: "culture"},
-
-		// ── TRADE lineage (domain: trade) ────────────────────────────────────────
-		"market":        {LineageKey: "trade", LineageTier: 0, WorkerDomain: "trade", WorkerCapacity: 5, EpochKey: "stone_era", OutputResource: "gold"},
-		"forum":         {LineageKey: "trade", LineageTier: 1, WorkerDomain: "trade", WorkerCapacity: 8, EpochKey: "iron_era", OutputResource: "gold"},
-		"bank":          {LineageKey: "trade", LineageTier: 2, WorkerDomain: "trade", WorkerCapacity: 10, EpochKey: "steel_era", OutputResource: "gold"},
-		"port":          {LineageKey: "trade", LineageTier: 3, WorkerDomain: "trade", WorkerCapacity: 12, EpochKey: "steel_era", OutputResource: "gold"},
-		"train_station": {LineageKey: "trade", LineageTier: 4, WorkerDomain: "trade", WorkerCapacity: 15, EpochKey: "electric_era", OutputResource: "gold"},
-		"black_market":  {LineageKey: "trade", LineageTier: 5, WorkerDomain: "trade", WorkerCapacity: 15, EpochKey: "neon_era", OutputResource: "crypto"},
-		"galactic_hub":  {LineageKey: "trade", LineageTier: 6, WorkerDomain: "trade", WorkerCapacity: 25, EpochKey: "cosmic_era", OutputResource: "gold"},
-
-		// ── MILITARY lineage (domain: military) ──────────────────────────────────
-		"barracks":     {LineageKey: "military", LineageTier: 0, WorkerDomain: "military", WorkerCapacity: 10, EpochKey: "iron_era"},
-		"castle":       {LineageKey: "military", LineageTier: 1, WorkerDomain: "military", WorkerCapacity: 15, EpochKey: "iron_era"},
-		"bunker":       {LineageKey: "military", LineageTier: 2, WorkerDomain: "military", WorkerCapacity: 20, EpochKey: "electric_era"},
-		"missile_silo": {LineageKey: "military", LineageTier: 3, WorkerDomain: "military", WorkerCapacity: 25, EpochKey: "electric_era"},
-
-		// ── ENGINEERING lineage (domain: engineering) ────────────────────────────
-		"clocktower":     {LineageKey: "engineering", LineageTier: 0, WorkerDomain: "engineering", WorkerCapacity: 8, EpochKey: "electric_era"},
-		"maglev_station": {LineageKey: "engineering", LineageTier: 1, WorkerDomain: "engineering", WorkerCapacity: 15, EpochKey: "neon_era", OutputResource: "gold"},
-		"megastructure":  {LineageKey: "engineering", LineageTier: 2, WorkerDomain: "engineering", WorkerCapacity: 20, EpochKey: "cosmic_era"},
-		"reality_engine": {LineageKey: "engineering", LineageTier: 3, WorkerDomain: "engineering", WorkerCapacity: 25, EpochKey: "cosmic_era", OutputResource: "quantum_flux"},
-
-		// ── METALLURGY lineage (domain: metallurgy) ──────────────────────────────
-		// Consumes geological ores, produces refined metals
-		"smithy":        {LineageKey: "metallurgy", LineageTier: 0, WorkerDomain: "metallurgy", WorkerCapacity: 8, EpochKey: "iron_era", OutputResource: "steel"},
-		"factory":       {LineageKey: "metallurgy", LineageTier: 1, WorkerDomain: "metallurgy", WorkerCapacity: 12, EpochKey: "steel_era", OutputResource: "steel"},
-		"electric_mill": {LineageKey: "metallurgy", LineageTier: 2, WorkerDomain: "metallurgy", WorkerCapacity: 15, EpochKey: "electric_era", OutputResource: "steel"},
-		"plasma_forge":  {LineageKey: "metallurgy", LineageTier: 3, WorkerDomain: "metallurgy", WorkerCapacity: 20, EpochKey: "neon_era", OutputResource: "steel"},
-		"star_forge":    {LineageKey: "metallurgy", LineageTier: 4, WorkerDomain: "metallurgy", WorkerCapacity: 25, EpochKey: "cosmic_era", OutputResource: "steel"},
-
-		// ── ENERGY lineage (domain: energy) ──────────────────────────────────────
-		"power_grid":       {LineageKey: "energy", LineageTier: 0, WorkerDomain: "energy", WorkerCapacity: 10, EpochKey: "electric_era", OutputResource: "electricity"},
-		"reactor":          {LineageKey: "energy", LineageTier: 1, WorkerDomain: "energy", WorkerCapacity: 15, EpochKey: "electric_era", OutputResource: "electricity"},
-		"power_plant":      {LineageKey: "energy", LineageTier: 2, WorkerDomain: "energy", WorkerCapacity: 20, EpochKey: "digital_era", OutputResource: "electricity"},
-		"fusion_reactor":   {LineageKey: "energy", LineageTier: 3, WorkerDomain: "energy", WorkerCapacity: 25, EpochKey: "neon_era", OutputResource: "electricity"},
-		"smart_grid":       {LineageKey: "energy", LineageTier: 4, WorkerDomain: "energy", WorkerCapacity: 20, EpochKey: "digital_era", OutputResource: "electricity"},
-		"antimatter_plant": {LineageKey: "energy", LineageTier: 5, WorkerDomain: "energy", WorkerCapacity: 25, EpochKey: "cosmic_era", OutputResource: "antimatter"},
-
-		// ── HACKER / DIGITAL lineage (domain: hacker) ────────────────────────────
-		"server_farm":         {LineageKey: "hacker", LineageTier: 0, WorkerDomain: "hacker", WorkerCapacity: 15, EpochKey: "digital_era", OutputResource: "data"},
-		"fiber_hub":           {LineageKey: "hacker", LineageTier: 1, WorkerDomain: "hacker", WorkerCapacity: 20, EpochKey: "digital_era", OutputResource: "data"},
-		"data_center":         {LineageKey: "hacker", LineageTier: 2, WorkerDomain: "hacker", WorkerCapacity: 25, EpochKey: "digital_era", OutputResource: "data"},
-		"ai_lab":              {LineageKey: "hacker", LineageTier: 3, WorkerDomain: "hacker", WorkerCapacity: 25, EpochKey: "digital_era", OutputResource: "knowledge"},
-		"augmentation_clinic": {LineageKey: "hacker", LineageTier: 4, WorkerDomain: "hacker", WorkerCapacity: 25, EpochKey: "neon_era", OutputResource: "crypto"},
-
-		// ── ASTRONAUT lineage (domain: astronaut) ────────────────────────────────
-		"launch_pad": {LineageKey: "astronaut", LineageTier: 0, WorkerDomain: "astronaut", WorkerCapacity: 20, EpochKey: "neon_era", OutputResource: "titanium"},
-		"warp_gate":  {LineageKey: "astronaut", LineageTier: 1, WorkerDomain: "astronaut", WorkerCapacity: 25, EpochKey: "cosmic_era", OutputResource: "dark_matter"},
 
 		// ── WONDER lineage (no workers, max 1 each) ───────────────────────────────
 		"sacred_grove":         {LineageKey: "wonder", LineageTier: 0, EpochKey: "stone_era", OutputResource: "knowledge"},
