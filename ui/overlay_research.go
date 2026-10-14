@@ -27,6 +27,10 @@ func formatTechEffect(eff config.Effect) string {
 			return textfmt.Signed(eff.Value) + " " + everyStore
 		}
 		return textfmt.Signed(eff.Value) + " " + game.ResourceName(eff.Target) + " storage"
+	case "research":
+		// The scholars' work is a time on a tech, never a number of its own
+		// (config.buildingEffectParts says it the same way).
+		return "speeds research"
 	case "unlock":
 		return "unlocks " + game.BuildingName(eff.Target)
 	case "capacity":

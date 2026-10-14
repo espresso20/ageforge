@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -284,9 +285,13 @@ func TestKnowledgeBuildingShowsScholarsAndCap(t *testing.T) {
 	if bs.Scholars != 2 || bs.ScholarCap <= 0 {
 		t.Fatalf("staging: %+v", bs)
 	}
-	want := fmt.Sprintf("2 scholars a copy, %d of %d built.", bs.Count, bs.ScholarCap)
-	if got := buildingText(bs); !strings.HasSuffix(got, want) {
-		t.Errorf("buildingText = %q, want it to end %q", got, want)
+	want := fmt.Sprintf("%d of %d built.", bs.Count, bs.ScholarCap)
+	if got := buildingText(bs); !strings.HasSuffix(got, want) || !strings.Contains(got, "2 scholars") {
+		t.Errorf("buildingText = %q, want 2 scholars and it to end %q", got, want)
+	}
+	// A description that does not name the scholars gets them added.
+	if got := buildingText(game.BuildingState{Description: "A hall.", Scholars: 3, ScholarCap: 5, Count: 1}); got != "A hall. 3 scholars a copy, 1 of 5 built." {
+		t.Errorf("buildingText without the scholars in the description = %q", got)
 	}
 	if !strings.Contains(buildingsProvider(st, 120), want) {
 		t.Errorf("the Buildings overlay lacks %q", want)
@@ -492,6 +497,19 @@ func TestSuggestResearchGameAware(t *testing.T) {
 	for key, ts := range st.Research.Techs {
 		if ts.Available && !containsWord(got, "research "+key) {
 			t.Errorf("research does not offer %s, which can start", key)
+		}
+	}
+}
+
+// A wonder's work for the scholars reads as what it is, not as a bare number.
+func TestWonderResearchEffectIsNotANumber(t *testing.T) {
+	if got := formatTechEffect(config.Effect{Type: "research", Value: 0.05}); got != "speeds research" {
+		t.Errorf("a wonder's research effect reads %q", got)
+	}
+	st := scholarGame(t).GetState()
+	for _, l := range strings.Split(wondersProvider(st, 120), "\n") {
+		if strings.TrimSpace(l) == "[green]+0.05[-]" || strings.TrimSpace(l) == "+0.05" {
+			t.Errorf("a bare number in the Wonders panel: %q", l)
 		}
 	}
 }

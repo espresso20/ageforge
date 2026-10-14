@@ -85,17 +85,28 @@ func (sw *storeWall) buildingFor(res string) string {
 }
 
 // buildingText is a building's description as the lists show it. A knowledge
-// building adds the scholars one copy comes with and its copies against the
-// most that can be built: "2 scholars a copy, 3 of 8 built."
+// building also gives its copies against the most that can be built ("3 of 5
+// built.") and, when the description does not say it (it does: "comes with 2
+// scholars"), its scholars a copy.
 func buildingText(bs game.BuildingState) string {
 	if bs.Scholars <= 0 {
 		return bs.Description
 	}
-	line := fmt.Sprintf("%s a copy", textfmt.Count(bs.Scholars, "scholar", "scholars"))
-	if bs.ScholarCap > 0 {
-		line += fmt.Sprintf(", %d of %d built", bs.Count, bs.ScholarCap)
+	count := textfmt.Count(bs.Scholars, "scholar", "scholars")
+	line := ""
+	if !strings.Contains(bs.Description, count) {
+		line = count + " a copy"
 	}
-	return strings.TrimSpace(bs.Description + " " + line + ".")
+	if bs.ScholarCap > 0 {
+		if line != "" {
+			line += ", "
+		}
+		line += fmt.Sprintf("%d of %d built", bs.Count, bs.ScholarCap)
+	}
+	if line == "" {
+		return bs.Description
+	}
+	return strings.TrimSpace(bs.Description + " " + textfmt.Capitalize(line) + ".")
 }
 
 // atLimit is the words the Buildings panel gives a building that can be
