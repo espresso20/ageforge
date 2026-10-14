@@ -783,7 +783,7 @@ type buildingMetaEntry struct {
 //	faith, culture_arts, trade, military, engineering, metallurgy, energy, hacker,
 //	astronaut, wonder
 //
-// Worker domains: food, lumber, masonry, knowledge, faith, military, trade, engineering,
+// Worker domains: food, lumber, masonry, faith, military, trade, engineering,
 //
 //	metallurgy, energy, hacker, astronaut  (culture_arts has no domain)
 //
@@ -843,18 +843,6 @@ func buildingMeta() map[string]buildingMetaEntry {
 		"mine":      {LineageKey: "geological_extraction", LineageTier: 2, WorkerDomain: "masonry", WorkerCapacity: 8, EpochKey: "stone_era", OutputResource: "iron"},
 		"coal_mine": {LineageKey: "geological_extraction", LineageTier: 3, WorkerDomain: "masonry", WorkerCapacity: 10, EpochKey: "iron_era", OutputResource: "coal"},
 
-		// ── KNOWLEDGE lineage (domain: knowledge) ────────────────────────────────
-		"altar":              {LineageKey: "knowledge", LineageTier: 0, WorkerDomain: "knowledge", WorkerCapacity: 3, EpochKey: "stone_era", OutputResource: "knowledge"},
-		"firepit":            {LineageKey: "knowledge", LineageTier: 1, WorkerDomain: "knowledge", WorkerCapacity: 3, EpochKey: "stone_era", OutputResource: "knowledge"},
-		"library":            {LineageKey: "knowledge", LineageTier: 2, WorkerDomain: "knowledge", WorkerCapacity: 5, EpochKey: "stone_era", OutputResource: "knowledge"},
-		"university":         {LineageKey: "knowledge", LineageTier: 3, WorkerDomain: "knowledge", WorkerCapacity: 8, EpochKey: "iron_era", OutputResource: "knowledge"},
-		"observatory":        {LineageKey: "knowledge", LineageTier: 4, WorkerDomain: "knowledge", WorkerCapacity: 8, EpochKey: "steel_era", OutputResource: "knowledge"},
-		"telegraph":          {LineageKey: "knowledge", LineageTier: 5, WorkerDomain: "knowledge", WorkerCapacity: 10, EpochKey: "electric_era", OutputResource: "knowledge"},
-		"telephone_exchange": {LineageKey: "knowledge", LineageTier: 6, WorkerDomain: "knowledge", WorkerCapacity: 12, EpochKey: "electric_era", OutputResource: "knowledge"},
-		"research_lab":       {LineageKey: "knowledge", LineageTier: 7, WorkerDomain: "knowledge", WorkerCapacity: 15, EpochKey: "digital_era", OutputResource: "knowledge"},
-		"space_station":      {LineageKey: "knowledge", LineageTier: 8, WorkerDomain: "knowledge", WorkerCapacity: 20, EpochKey: "neon_era", OutputResource: "knowledge"},
-		"quantum_computer":   {LineageKey: "knowledge", LineageTier: 9, WorkerDomain: "knowledge", WorkerCapacity: 25, EpochKey: "cosmic_era", OutputResource: "knowledge"},
-
 		// ── FAITH lineage (domain: faith) ────────────────────────────────────────
 		"cathedral": {LineageKey: "faith", LineageTier: 0, WorkerDomain: "faith", WorkerCapacity: 8, EpochKey: "iron_era", OutputResource: "faith"},
 
@@ -908,9 +896,8 @@ func buildingMeta() map[string]buildingMetaEntry {
 		"augmentation_clinic": {LineageKey: "hacker", LineageTier: 4, WorkerDomain: "hacker", WorkerCapacity: 25, EpochKey: "neon_era", OutputResource: "crypto"},
 
 		// ── ASTRONAUT lineage (domain: astronaut) ────────────────────────────────
-		"launch_pad":           {LineageKey: "astronaut", LineageTier: 0, WorkerDomain: "astronaut", WorkerCapacity: 20, EpochKey: "neon_era", OutputResource: "titanium"},
-		"warp_gate":            {LineageKey: "astronaut", LineageTier: 1, WorkerDomain: "astronaut", WorkerCapacity: 25, EpochKey: "cosmic_era", OutputResource: "dark_matter"},
-		"transcendence_beacon": {LineageKey: "knowledge", LineageTier: 10, WorkerDomain: "knowledge", WorkerCapacity: 25, EpochKey: "cosmic_era", OutputResource: "quantum_flux"},
+		"launch_pad": {LineageKey: "astronaut", LineageTier: 0, WorkerDomain: "astronaut", WorkerCapacity: 20, EpochKey: "neon_era", OutputResource: "titanium"},
+		"warp_gate":  {LineageKey: "astronaut", LineageTier: 1, WorkerDomain: "astronaut", WorkerCapacity: 25, EpochKey: "cosmic_era", OutputResource: "dark_matter"},
 
 		// ── WONDER lineage (no workers, max 1 each) ───────────────────────────────
 		"sacred_grove":         {LineageKey: "wonder", LineageTier: 0, EpochKey: "stone_era", OutputResource: "knowledge"},
