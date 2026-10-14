@@ -218,15 +218,42 @@ func (rm *ResearchManager) indexPools() {
 // none completed. Work past the price is kept as a head start for the next
 // tech.
 func (rm *ResearchManager) AddWork(w float64) string {
-	if rm.currentTech == "" || w <= 0 {
+	if rm.currentTech == "" {
 		return ""
 	}
-	rm.progress += w
+	if w > 0 {
+		rm.progress += w
+	}
+	return rm.CompleteIfFull()
+}
+
+// CompleteIfFull completes the tech in progress when its progress has reached
+// its price, whatever brought it there: work, a grant, or a head start that
+// covered the price when the tech was started. It is the one way a tech
+// completes. Returns the tech completed, "" if none was.
+func (rm *ResearchManager) CompleteIfFull() string {
+	if rm.currentTech == "" {
+		return ""
+	}
 	price := rm.defs[rm.currentTech].Cost
 	if rm.progress < price {
 		return ""
 	}
 	return rm.complete(rm.progress - price)
+}
+
+// HeadCap is the most a head start may be worth while it is held: the price
+// of the dearest tech that could be started now (its age reached, its
+// prerequisites met, not yet researched). 0 when there is none.
+func (rm *ResearchManager) HeadCap(currentAge string, ageOrder map[string]int) float64 {
+	top := 0.0
+	for _, def := range rm.defs {
+		if rm.researched[def.Key] || ageOrder[def.Age] > ageOrder[currentAge] || !def.PrereqsMet(rm.IsResearched) {
+			continue
+		}
+		top = max(top, def.Cost)
+	}
+	return top
 }
 
 // complete finishes the tech in progress; over is the work past its price.
@@ -455,7 +482,7 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 		CurrentTechName: currentName,
 		Progress:        rm.progress,
 		Price:           rm.currentPrice(),
-		HeadStart:       rm.head,
+		HeadStart:       min(rm.head, rm.HeadCap(currentAge, ageOrder)),
 		TotalResearched: len(rm.researched),
 		Bonuses:         rm.GetBonuses(),
 		Flat:            rm.byTarget(config.EffectFlatOutput),

@@ -664,7 +664,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			CurrentTech: ge.Research.currentTech,
 			Progress:    ge.Research.progress,
 			Slowed:      ge.Research.slowed,
-			HeadStart:   ge.Research.head,
+			HeadStart:   ge.headHeld(),
 		},
 		Military: MilitarySave{
 			ActiveScout:    activeScout,

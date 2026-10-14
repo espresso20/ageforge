@@ -300,6 +300,12 @@ func (ge *GameEngine) processResearch() {
 	if ge.Research.currentTech == "" {
 		return
 	}
+	// A tech whose progress already covers its price completes now, work or
+	// no work (a head start that covered it, a load).
+	if completed := ge.Research.CompleteIfFull(); completed != "" {
+		ge.finishResearch(completed)
+		return
+	}
 	if completed := ge.workResearch(ge.researchPerTick); completed != "" {
 		ge.finishResearch(completed)
 	}
@@ -345,6 +351,9 @@ func (ge *GameEngine) grantResearch(work float64) string {
 	key := ge.Research.currentTech
 	if key == "" {
 		ge.Research.Grant(work)
+		if ge.clampHead() > 0 {
+			return "a head start on the next tech (part is lost: a head start never exceeds the price of the dearest tech you can start now)"
+		}
 		return "a head start on the next tech"
 	}
 	def := ge.Research.defs[key]
@@ -360,6 +369,30 @@ func (ge *GameEngine) grantResearch(work float64) string {
 		return ""
 	}
 	return fmt.Sprintf("%s of %s", shareOfTech((ge.Research.progress-before)/def.Cost), def.Name)
+}
+
+// headCap is the most a held head start may be worth: the price of the
+// dearest tech that could be started now.
+func (ge *GameEngine) headCap() float64 {
+	return ge.Research.HeadCap(ge.age, ge.progress.GetAgeOrder())
+}
+
+// headHeld is the head start the town holds, never above headCap. Safe under
+// the read lock (it changes nothing).
+func (ge *GameEngine) headHeld() float64 {
+	return min(ge.Research.head, ge.headCap())
+}
+
+// clampHead brings the head start held down to headCap and returns what it
+// cut off (lost).
+func (ge *GameEngine) clampHead() float64 {
+	capped := ge.headCap()
+	if ge.Research.head <= capped {
+		return 0
+	}
+	lost := ge.Research.head - capped
+	ge.Research.head = capped
+	return lost
 }
 
 // shareOfTech is a fraction as a percent, "12%" (under 1% as "under 1%").
@@ -502,6 +535,7 @@ func (ge *GameEngine) loadResearch(save *GameSave) {
 			ge.loadedCompletions = append(ge.loadedCompletions, paidAndWaiting)
 		}
 	}
+	ge.clampHead()
 	ge.scholarShare, ge.scholarShareSet = 100, false
 	if save.ScholarShare != nil && *save.ScholarShare >= 0 && *save.ScholarShare < 100 {
 		ge.scholarShare, ge.scholarShareSet = *save.ScholarShare, true
@@ -517,6 +551,7 @@ func (ge *GameEngine) turnKnowledgeIntoWork(save *GameSave) {
 	stock := save.Resources["knowledge"]
 	if stock > 0 {
 		ge.Research.Grant(stock)
+		ge.clampHead()
 	}
 	for _, key := range ge.loadedCompletions {
 		ge.addLog(LogRoutine, fmt.Sprintf("Research complete: %s.", ge.rules.Name(rules.KindTech, key)))

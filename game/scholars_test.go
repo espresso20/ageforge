@@ -279,15 +279,20 @@ func TestResearchGrantsLandOnTheTechInProgress(t *testing.T) {
 	if ge.Research.head != 100 {
 		t.Fatalf("head start %v, want 100", ge.Research.head)
 	}
-	// It starts the next tech, never more than its price.
+	// A head start that covers the price completes the tech at the start.
 	ge.Research.head = 1e12
 	if err := ge.StartResearch("tool_making"); err != nil {
 		t.Fatal(err)
 	}
-	price := ge.Research.defs["tool_making"].Cost
-	if ge.Research.progress != price || ge.Research.head != 0 {
-		t.Errorf("a huge head start gave progress %v (price %v), head %v after it", ge.Research.progress, price, ge.Research.head)
+	if !ge.Research.IsResearched("tool_making") || ge.Research.currentTech != "" || ge.Research.head != 0 {
+		t.Errorf("a huge head start: tool_making researched %v, in progress %q, head %v after it", ge.Research.IsResearched("tool_making"), ge.Research.currentTech, ge.Research.head)
 	}
+	// A head start that covers part of the price starts the next tech part of the way.
+	ge.Research.head = 0
+	if err := ge.StartResearch("fire_mastery"); err != nil {
+		t.Fatal(err)
+	}
+	price := ge.Research.defs["fire_mastery"].Cost
 	ge.Research.progress = 0
 	// In progress: the share of the tech.
 	said := ge.grantResearch(price / 4)
@@ -298,8 +303,8 @@ func TestResearchGrantsLandOnTheTechInProgress(t *testing.T) {
 		t.Errorf("progress %v, want %v", ge.Research.progress, price/4)
 	}
 	// Enough to finish it.
-	if said := ge.grantResearch(price); !strings.Contains(said, "complete") || !ge.Research.IsResearched("tool_making") {
-		t.Errorf("a gift of a whole tech said %q, researched %v", said, ge.Research.IsResearched("tool_making"))
+	if said := ge.grantResearch(price); !strings.Contains(said, "complete") || !ge.Research.IsResearched("fire_mastery") {
+		t.Errorf("a gift of a whole tech said %q, researched %v", said, ge.Research.IsResearched("fire_mastery"))
 	}
 }
 
@@ -374,19 +379,21 @@ func TestScholarsSave_LoadsClean(t *testing.T) {
 	if !ge.Research.IsResearched(save.Research.CurrentTech) || ge.Research.currentTech != "" {
 		t.Errorf("the tech that was paid for (%s) researched %v, in progress %q: it completes on load", save.Research.CurrentTech, ge.Research.IsResearched(save.Research.CurrentTech), ge.Research.currentTech)
 	}
-	if got := ge.Research.head; got != save.Resources["knowledge"] {
-		t.Errorf("head start %v, the save held %v knowledge", got, save.Resources["knowledge"])
+	// The knowledge became a head start, never above the dearest tech that
+	// could be started.
+	if got, want := ge.Research.head, min(save.Resources["knowledge"], ge.headCap()); got != want {
+		t.Errorf("head start %v, want %v (the save held %v knowledge)", got, want, save.Resources["knowledge"])
 	}
 	if _, ok := ge.Resources.resources["knowledge"]; ok {
 		t.Error("the town holds a knowledge resource")
 	}
-	// The head start goes to the next tech, never more than its price.
+	// The head start goes to the next tech. It covers the price of
+	// steel_forging, so the tech completes as it starts.
 	if err := ge.StartResearch("steel_forging"); err != nil {
 		t.Fatal(err)
 	}
-	price := ge.Research.defs["steel_forging"].Cost
-	if ge.Research.progress != min(save.Resources["knowledge"], price) {
-		t.Errorf("the next tech started with %v of %v, want %v", ge.Research.progress, price, min(save.Resources["knowledge"], price))
+	if !ge.Research.IsResearched("steel_forging") || ge.Research.currentTech != "" {
+		t.Errorf("the head start covers steel_forging's price: researched %v, in progress %q", ge.Research.IsResearched("steel_forging"), ge.Research.currentTech)
 	}
 	// A save written after carries no old fields and no notice.
 	if err := ge.SaveGame("scholars_new"); err != nil {
@@ -406,8 +413,8 @@ func TestScholarsSave_LoadsClean(t *testing.T) {
 	if back.cheaterBadge {
 		t.Error("reloading the new save raised the tamper flag")
 	}
-	if back.Research.currentTech != "steel_forging" || back.Research.progress != ge.Research.progress {
-		t.Errorf("reloaded research: %q at %v, want steel_forging at %v", back.Research.currentTech, back.Research.progress, ge.Research.progress)
+	if !back.Research.IsResearched("steel_forging") || back.Research.currentTech != "" || back.Research.head != ge.Research.head {
+		t.Errorf("reloaded research: steel_forging researched %v, in progress %q, head %v, want researched with head %v", back.Research.IsResearched("steel_forging"), back.Research.currentTech, back.Research.head, ge.Research.head)
 	}
 }
 
@@ -456,8 +463,11 @@ func TestScholarsSave_FromTheKnowledgeStoreLoadsClean(t *testing.T) {
 	if ge.cheaterBadge {
 		t.Fatal("tamper flag on the knowledge store fixture")
 	}
-	if ge.Research.head <= 0 || countLines(ge, scholarsNotice) != 1 {
-		t.Errorf("head start %v, notice said %d times", ge.Research.head, countLines(ge, scholarsNotice))
+	// Its knowledge became a head start, and the plan it carried started a
+	// tech the head start covered: the tech is done and the head start spent.
+	old := loadSaveFile(t, "testdata/pre_knowledge_store_medieval.json")
+	if len(ge.Research.researched) <= len(old.Research.Researched) || countLines(ge, scholarsNotice) != 1 {
+		t.Errorf("researched %d (saved %d), notice said %d times", len(ge.Research.researched), len(old.Research.Researched), countLines(ge, scholarsNotice))
 	}
 }
 

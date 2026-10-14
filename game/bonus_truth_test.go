@@ -143,6 +143,11 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 		}
 		ge.Research.rebuildBonuses()
 	}
+	// A head start holds no more than the dearest tech that could be started.
+	// The typical town has every tech of its ages, so give the lab one tech
+	// that is always startable and dearer than any gift: a gift of work is
+	// then measured whole.
+	ge.Research.defs["lab_tech"] = config.TechDef{Name: "Lab Tech", Key: "lab_tech", Age: ageKeys()[0], Cost: 1e18}
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
 	// Half of every store: a grant has room, a loss has something to take.
