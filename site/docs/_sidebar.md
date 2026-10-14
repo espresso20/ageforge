@@ -34,7 +34,7 @@
 
 - **Systems**
   - [Morale](morale.md)
-  - [Knowledge](knowledge.md)
+  - [Scholars and Research](knowledge.md)
 
 - **Reference**
   - [All Commands](commands.md)

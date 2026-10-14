@@ -220,19 +220,19 @@ This table covers all 16 missions. The three scouting expeditions (`scout_party`
 | `scout_party` | Scout Party | Primitive Age (last: Bronze Age) | 0 | 30 food, 30 wood | 100-160t (260-416t in the Bronze Age) | 0.20 | 60 food, 60 wood, 20 stone |
 | `scout_ruins` | Scout Nearby Ruins | Bronze Age | 0 | 40 food, 30 wood | 156-260t | 0.20 | 30 food, 20 wood, 15 stone |
 | `raid_bandits` | Raid Bandit Camp | Bronze Age | 5 | none | 156-260t | 0.40 | 30 gold, 15 iron, 20 food |
-| `trade_escort` | Trade Escort | Iron Age | 3 | none | 156-260t | 0.30 | 50 gold, 10 knowledge |
+| `trade_escort` | Trade Escort | Iron Age | 3 | none | 156-260t | 0.30 | 50 gold, research progress |
 | `conquer_territory` | Conquer Territory | Iron Age | 10 | none | 156-260t | 0.60 | 80 gold, 40 iron, 50 food |
 | `siege_castle` | Siege Enemy Castle | Medieval Age | 15 | none | 156-260t | 0.70 | 150 gold, 30 steel, 20 faith |
-| `naval_expedition` | Naval Expedition | Renaissance Age | 0 | 150 food, 100 wood | 156-260t | 0.50 | 200 gold, 30 culture, 40 knowledge |
+| `naval_expedition` | Naval Expedition | Renaissance Age | 0 | 150 food, 100 wood | 156-260t | 0.50 | 200 gold, 30 culture, research progress |
 | `colonial_campaign` | Colonial Campaign | Industrial Age | 20 | none | 156-260t | 0.60 | 300 gold, 50 oil, 40 steel |
-| `world_domination` | World Domination | Modern Age | 50 | none | 156-260t | 0.80 | 1K gold, 200 electricity, 500 knowledge |
+| `world_domination` | World Domination | Modern Age | 50 | none | 156-260t | 0.80 | 1K gold, 200 electricity, research progress |
 | `cyber_raid` | Cyber Raid | Information Age | 30 | none | 156-260t | 0.60 | 200 data, 50 crypto, 500 gold |
 | `neon_heist` | Neon Heist | Cyberpunk Age | 25 | none | 156-260t | 0.55 | 100 crypto, 150 data, 800 gold |
 | `fusion_assault` | Fusion Plant Assault | Fusion Age | 35 | none | 156-260t | 0.65 | 120 plasma, 500 electricity, 50 uranium |
-| `orbital_strike` | Orbital Strike | Space Age | 40 | none | 156-260t | 0.70 | 100 titanium, 80 plasma, 300 knowledge |
+| `orbital_strike` | Orbital Strike | Space Age | 40 | none | 156-260t | 0.70 | 100 titanium, 80 plasma, research progress |
 | `warp_invasion` | Warp Invasion | Interstellar Age | 60 | none | 169-273t | 0.75 | 50 dark matter, 200 titanium, 2K gold |
 | `galactic_conquest` | Galactic Conquest | Galactic Age | 80 | none | 208-338t | 0.80 | 30 antimatter, 100 dark matter, 5K gold |
-| `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | none | 234-377t | 0.85 | 20 quantum flux, 50 antimatter, 5K knowledge |
+| `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | none | 234-377t | 0.85 | 20 quantum flux, 50 antimatter, research progress |
 
 That is 3 scouting expeditions and 13 campaigns.
 
@@ -513,7 +513,7 @@ A large army has a second cost: **morale**. If more than **30% of your populatio
 | 50% | 20 points | 0.6 points |
 | 60% | 30 points | 0.9 points |
 
-Morale multiplies the output of every worker in your civilization, on a continuous curve centered on 50%. Below 50% it cuts production, down to ×0.50 at the 10% floor. Above 50% it raises production, up to +20% at the top. An oversized army that drags morale down therefore slows every domain at once (food, knowledge, trade and the rest), and the army's food gets harder to cover as your farmers produce less. A lean army leaves room to push morale above 50% instead.
+Morale multiplies the output of every worker in your civilization, on a continuous curve centered on 50%. Below 50% it cuts production, down to ×0.50 at the 10% floor. Above 50% it raises production, up to +20% at the top. An oversized army that drags morale down therefore slows every domain at once (food, research, trade and the rest), and the army's food gets harder to cover as your farmers produce less. A lean army leaves room to push morale above 50% instead.
 
 **Keep military workers at 25-28% of your population or less.** That leaves a buffer below 30% if you lose workers to an event. If you need a large soldier stockpile, staff your military buildings heavily to bank soldiers, then move the extra workers back to civilian buildings. The stored soldiers stay, and the morale drain stops.
 

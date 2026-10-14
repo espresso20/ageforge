@@ -12,39 +12,39 @@ No age asks you to hold anything for research to advance. The gates do ask for k
 
 A scholar is not a worker. He is not recruited, takes no housing, eats no food and needs no assignment. Build a Story Circle and its 2 scholars are at work. Knowledge buildings cannot be sold.
 
-A scholar's **kind** is the worker class of the age of his building: a Shaman in the Primitive Age, an Elder in the Stone Age, a Scribe in the Bronze Age, and so on up to the Quantum Theorist. The `scholars` command lists your kinds and counts (see [Commands](commands.md#scholars)).
+A scholar's **kind** is the worker class of the age of his building: a Shaman in the Primitive Age, an Elder in the Stone Age, a Scribe in the Bronze Age, and so on up to the Quantum Theorist. The `scholars` command lists your kinds and counts (see [Commands](commands.md#research)).
 
 **Knowledge lineage** (in order):
 
 Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monastery Library → University → Natural Philosophy Hall → Research Institute → Academy → Physics Laboratory → Research Campus → Think Tank → Innovation Hub → AI Research Lab → Neuro Research Center → Theoretical Institute → Deep Space Observatory → Xenology Institute → Cosmic Research Station → Reality Academy
 
-| Building | Age | Scholar | Scholars a copy | Most copies | Work a tick, each |
-|----------|-----|---------|-----------------|-------------|-------------------|
-| Story Circle | Primitive | Shaman | 2 | 5 | 0.2 |
-| Elders' Hall | Stone | Elder | 2 | 5 | 0.6 |
-| Scriptorium | Bronze | Scribe | 3 | 5 | 2 |
-| Agora | Iron | Scholar | 3 | 7 | 1.6 |
-| Library | Classical | Philosopher | 4 | 8 | 3.2 |
-| Monastery Library | Medieval | Friar | 4 | 5 | 42.4 |
-| University | Renaissance | Academician | 5 | 7 | 76.3 |
-| Natural Philosophy Hall | Colonial | Naturalist | 5 | 5 | 452 |
-| Research Institute | Industrial | Engineer-Scientist | 6 | 5 | 12.8 |
-| Academy | Victorian | Victorian Scholar | 6 | 7 | 25.6 |
-| Physics Laboratory | Electric | Research Fellow | 7 | 8 | 51.2 |
-| Research Campus | Atomic | Nuclear Scientist | 7 | 9 | 102 |
-| Think Tank | Modern | Modern Researcher | 8 | 10 | 205 |
-| Innovation Hub | Information | Data Scientist | 8 | 8 | 410 |
-| AI Research Lab | Digital | AI Researcher | 10 | 8 | 819 |
-| Neuro Research Center | Cyberpunk | Cyber-Scholar | 10 | 5 | 1.64K |
-| Theoretical Institute | Fusion | Fusion Theorist | 12 | 5 | 3.28K |
-| Deep Space Observatory | Space | Orbital Researcher | 12 | 5 | 6.55K |
-| Xenology Institute | Interstellar | Stellar Scientist | 15 | 5 | 13.1K |
-| Cosmic Research Station | Galactic | Galactic Researcher | 15 | 5 | 26.2K |
-| Reality Academy | Quantum | Quantum Theorist | 20 | 10 | 52.4K |
+| Building | Age | Scholar | Scholars a copy | Most copies |
+|----------|-----|---------|-----------------|-------------|
+| Story Circle | Primitive | Shaman | 2 | 5 |
+| Elders' Hall | Stone | Elder | 2 | 5 |
+| Scriptorium | Bronze | Scribe | 3 | 5 |
+| Agora | Iron | Scholar | 3 | 7 |
+| Library | Classical | Philosopher | 4 | 8 |
+| Monastery Library | Medieval | Friar | 4 | 5 |
+| University | Renaissance | Academician | 5 | 7 |
+| Natural Philosophy Hall | Colonial | Naturalist | 5 | 5 |
+| Research Institute | Industrial | Engineer-Scientist | 6 | 5 |
+| Academy | Victorian | Victorian Scholar | 6 | 7 |
+| Physics Laboratory | Electric | Research Fellow | 7 | 8 |
+| Research Campus | Atomic | Nuclear Scientist | 7 | 9 |
+| Think Tank | Modern | Modern Researcher | 8 | 10 |
+| Innovation Hub | Information | Data Scientist | 8 | 8 |
+| AI Research Lab | Digital | AI Researcher | 10 | 8 |
+| Neuro Research Center | Cyberpunk | Cyber-Scholar | 10 | 5 |
+| Theoretical Institute | Fusion | Fusion Theorist | 12 | 5 |
+| Deep Space Observatory | Space | Orbital Researcher | 12 | 5 |
+| Xenology Institute | Interstellar | Stellar Scientist | 15 | 5 |
+| Cosmic Research Station | Galactic | Galactic Researcher | 15 | 5 |
+| Reality Academy | Quantum | Quantum Theorist | 20 | 10 |
 
 **The cap.** A knowledge building cannot be built past its most copies, the count its age's gate asks for. Each copy costs 50% more than the one before it. The Buildings panel shows a knowledge building's scholars a copy and its copies against its cap (`2 scholars a copy, 3 of 5 built.`), and at the cap it reads `Building limit reached.`
 
-**Work.** A copy's work a tick is its figure above. The scholars do all of it whether or not you look at them. [Morale](morale.md) multiplies it, like every building's output, and so do the bonuses under [Research Speed](#research-speed).
+**Work.** The scholars do their work whether or not you look at them. The game shows it as a time on a tech, not as a number. Later buildings do far more than earlier ones, and they all keep working. [Morale](morale.md) multiplies the work, like every building's output, and so do the bonuses under [Research Speed](#research-speed).
 
 ---
 
@@ -55,7 +55,7 @@ research <tech>
 plan research <tech>
 ```
 
-A tech has a **price**, the work it needs, and a **bar**. Each tick the researching scholars' work fills the bar, and the tech is done when it reads 100%. Only one technology is in progress at a time, and techs are age-gated: you must be in the right age to research them.
+A tech has a price, the work it needs, and a **bar**. Each tick the researching scholars' work fills the bar, and the tech is done when it reads 100%. Only one technology is in progress at a time, and techs are age-gated: you must be in the right age to research them.
 
 Starting a tech costs nothing. Cancelling it (`research cancel`) loses the work done on it.
 

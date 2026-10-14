@@ -525,15 +525,7 @@ func plannableBuildingKeys(state game.GameState) []string {
 	return byRank(keys, func(k string) int { return rank[k] })
 }
 
-// techAffordable reports whether the knowledge to start t is in store. A
-// tech priced over the knowledge store is never affordable.
-func techAffordable(state game.GameState, t game.TechState) bool {
-	return true
-}
-
-// availableTechKeys is what `research` suggests: techs that can start now,
-// the affordable ones first. A tech priced over the knowledge store cannot
-// start, so it is not offered.
+// availableTechKeys is what `research` suggests: techs that can start now.
 func availableTechKeys(state game.GameState) []string {
 	var keys []string
 	for key, ts := range state.Research.Techs {
@@ -541,21 +533,16 @@ func availableTechKeys(state game.GameState) []string {
 			keys = append(keys, key)
 		}
 	}
-	return byRank(keys, func(k string) int {
-		if techAffordable(state, state.Research.Techs[k]) {
-			return 0
-		}
-		return 1
-	})
+	sort.Strings(keys)
+	return keys
 }
 
 // plannableTechKeys is what `plan research` takes: unresearched techs of
 // any age in sight (the spoiler rule: up to the next age, and on known
 // ground every age the account has reached) that are neither in progress
 // nor planned already. Prerequisites may still be missing; the plan adds
-// them first. Suggested in the order research would take them: available
-// and affordable, available, the rest of the ages reached, then the ages
-// ahead, nearest first.
+// them first. Suggested in the order research would take them: available,
+// the rest of the ages reached, then the ages ahead, nearest first.
 func plannableTechKeys(state game.GameState) []string {
 	order := state.Ruleset().Indexes()
 	sight := game.SightOf(&state)
@@ -574,14 +561,12 @@ func plannableTechKeys(state game.GameState) []string {
 	return byRank(keys, func(k string) int {
 		ts := state.Research.Techs[k]
 		switch {
-		case ts.Available && techAffordable(state, ts):
-			return 0
 		case ts.Available:
-			return 1
+			return 0
 		case order[ts.Age] <= order[state.Age]:
-			return 2
+			return 1
 		}
-		return 2 + order[ts.Age] - order[state.Age]
+		return 1 + order[ts.Age] - order[state.Age]
 	})
 }
 

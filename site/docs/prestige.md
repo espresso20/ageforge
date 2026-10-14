@@ -254,7 +254,7 @@ An age at mastery 0 is the **frontier**: no run has completed it, and it runs at
 On **known ground** (an age running faster than 1x, through mastery or [catch-up](#catch-up)):
 
 - **Production.** Every resource's net rate is multiplied by k. This comes last, after the production pools and every other bonus, food drain included, so a balanced food supply stays balanced. The `rates` breakdown shows it as its own **Era Mastery** part.
-- **Storage.** Every cap but knowledge's is multiplied by k too, so a store holds the same hours of income it would at 1x. The knowledge store is not: tech prices do not scale with mastery, so the store they are set against does not either.
+- **Storage.** Every cap is multiplied by k too, so a store holds the same hours of income it would at 1x.
 - **Build times** are divided by k, rounded up, never below one tick.
 - **Research times** are divided by k after your research speed is applied, rounded up, never below one tick. The Research and Wonders panels show the shortened times.
 - **Catastrophe timing.** A fated doom's window and the harbinger's lead shrink with each age's speed (see [Catastrophes on known ground](#catastrophes-on-known-ground)).
@@ -395,7 +395,7 @@ Early in a fresh prestige run, you may find a relic of the civilization you just
 
 When the cache surfaces, you get an **Accept / Decline** choice offering one technology suited to your current age. Press **A** to accept or **D** to decline.
 
-- **Accept** starts research on the offered tech at once, **free of prerequisites**, skipping the usual age requirement and knowledge cost. It completes at **half research speed** (twice the normal tick count).
+- **Accept** starts research on the offered tech at once, **free of prerequisites**, skipping the usual age requirement. It completes at **half the work a tick** (twice the normal time).
 - **Decline** and the cache crumbles to dust. Nothing else happens.
 
 Either way, the run's single cache chance is spent the moment the cache is offered.
@@ -421,7 +421,7 @@ There is exactly **one** cache chance per run, and it is used up the moment the 
 
 Which technology the cache can offer depends on your **prestige level**. At low prestige it offers a tech from near your current age. Higher prestige reaches further: **one extra age of reach per two prestige levels**. A high-prestige player can be offered a tech from an age they haven't reached yet this run, well ahead of the normal curve.
 
-The half-speed penalty applies however advanced the offered tech is, so an out-of-age tech from the cache takes a while to finish. It still skips the prerequisites and knowledge cost it would normally need.
+The half-speed penalty applies however advanced the offered tech is, so an out-of-age tech from the cache takes a while to finish. It still skips the prerequisites it would normally need.
 
 See [Technologies](technologies.md) for the full tech tree and the other free-research path (Grand Discovery).
 

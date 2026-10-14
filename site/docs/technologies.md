@@ -879,7 +879,7 @@ Together +96%, added to the wonders' and milestones' expedition rewards.
 
 Research costs no resource. It is done by your [scholars](knowledge.md), who come with the knowledge lineage (Story Circle, Elders' Hall and on up to the Reality Academy): **Shamans** in the Primitive Age, **Quantum Theorists** by the Quantum Age. They need no assignment. The work of every tier is on the [Scholars and Research](knowledge.md) page.
 
-The market sells nothing for research, so your knowledge buildings are what you plan around. A tech's price runs from 236 work (the cheapest of the Primitive Age) to 91.2B (the dearest of the Quantum Age); the tables give the time for a full set of scholars.
+The market sells nothing for research, so your knowledge buildings are what you plan around. The tables give each tech's time for a full set of scholars.
 
 ---
 
@@ -921,7 +921,7 @@ Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige
 
 ### Late-Game Research Scaling
 
-Prices rise steeply, from 306 for Tool Making to billions in the late ages (Cybernetics 281M, the Timeless Archive 68.8B). The work of your scholars rises with them, so build your age's knowledge building up to its cap.
+Prices rise steeply from the first age to the last. The work of your scholars rises with them, so build your age's knowledge building up to its cap.
 
 ---
 

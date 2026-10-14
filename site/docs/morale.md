@@ -1,12 +1,12 @@
 # Morale
 
-Morale is a civilization-wide stat for the mood of your population. It is shown as a percentage and works as a **two-way dial centered on 50%**: keep it high and production gets a bonus of up to +20%; let it crater and production can fall to half. Unlike faith or knowledge it is not a stored resource you spend. It is a multiplier on what your buildings produce, and you manage it with buildings.
+Morale is a civilization-wide stat for the mood of your population. It is shown as a percentage and works as a **two-way dial centered on 50%**: keep it high and production gets a bonus of up to +20%; let it crater and production can fall to half. Unlike faith it is not a stored resource you spend. It is a multiplier on what your buildings produce, and you manage it with buildings.
 
 ---
 
 ## Why Morale Matters
 
-Morale multiplies **all worker-driven building output** every tick: food, knowledge, trade, soldiers, everything. The same buildings and the same worker assignments produce more when morale is high and less when it is low:
+Morale multiplies **all worker-driven building output** every tick: food, research, trade, soldiers, everything. The same buildings and the same worker assignments produce more when morale is high and less when it is low:
 
 ```
 output = base rate × buildings × (0.20 + 0.80 × workers assigned / worker slots) × morale multiplier

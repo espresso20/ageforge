@@ -197,16 +197,16 @@ A boon is rolled from one catalog shared by every civilization:
 |---|---|---|---|
 | Specialty Windfall | more output of the civilization's specialty | +8% to +20% | 3,900 to 7,800 ticks (2h 10m to 4h 20m) |
 | Resource Surge | more output of a random resource of your age or earlier | +8% to +18% | 3,900 to 6,500 ticks (2h 10m to 3h 37m) |
-| Enlightenment | more knowledge | +12% to +25% | 3,900 to 7,800 ticks |
+| Enlightenment | more research speed | +12% to +25% | 3,900 to 7,800 ticks |
 | Industrious Spell | more of all production | +5% to +12% | 2,600 to 5,200 ticks (1h 27m to 2h 53m) |
 | Time Dilation | faster ticks: the whole game runs faster | +8% to +15% | 1,950 to 3,900 ticks (1h 5m to 2h 10m) |
 | Supply Drop | an instant lump of a random resource of your age or earlier | grows with the age | instant |
-| Grand Cache (rare) | a bigger instant lump of a rarer resource (knowledge, gold, uranium, plasma, ...) | grows with the age | instant |
+| Grand Cache (rare) | a bigger instant lump of a rarer resource (gold, uranium, plasma, ...) | grows with the age | instant |
 | Extra Hands | 3 to 8 temporary workers | | 2,600 to 5,200 ticks |
 
 The sizes are before scaling. Stronger civilizations give bigger boons (×0.98 at strength 1 up to ×1.30 at strength 5), and so do better relations: ×1.15 friendly, ×1.4 allied, ×0.7 from a rival or a civilization under embargo. Industrious Spell adds into [the all-production pool](resources.md#the-all-production-cap) like any all-production bonus, and a specialty boon into its resource's own pool. A pool applies in full up to +200% and a quarter of every point past it, and when a boon lands past +200% its log line says what it adds (`counts a quarter past +200%: +3.75% now`). A lump a full store cuts short says what fit.
 
-Which boon you get depends on the civilization's character. Every civilization favors sharing its specialty. A peaceful one leans toward gentle production and knowledge gifts and rarely speeds time; an aggressive one toward Time Dilation and lumps of spoils; a mercantile one toward lumps of goods and resource surges; an isolationist one toward lumps and the rare Grand Cache. Allies make the Grand Cache more likely too.
+Which boon you get depends on the civilization's character. Every civilization favors sharing its specialty. A peaceful one leans toward gentle production and research gifts and rarely speeds time; an aggressive one toward Time Dilation and lumps of spoils; a mercantile one toward lumps of goods and resource surges; an isolationist one toward lumps and the rare Grand Cache. Allies make the Grand Cache more likely too.
 
 Instant lumps grow with your age, but far more slowly than prices do. A Supply Drop is worth having in the early ages and small change late in the run.
 

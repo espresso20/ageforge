@@ -32,12 +32,19 @@ Storage changed. A storage building's price now climbs much faster with each cop
 
 ---
 
-## Saves from before the knowledge store
+## Saves from before scholars
 
-A game saved before knowledge had a store of its own loads as usual. It keeps every building copy and all the knowledge it held, including what is above the new knowledge store. That knowledge stays until you spend it and gains nothing (the same rule as [the grace rule](prestige.md#the-grace-rule)), and it can still pay for a tech priced over the store. The log says so once, on the first load:
+A game saved before scholars loads as usual and keeps every building copy. Knowledge was a stock before, and it is not any more:
+
+- Knowledge you held becomes a head start on the next tech you start, never more than that tech's work.
+- A tech that was paid for and waiting out its research time completes on load.
+- Workers on knowledge buildings return to the idle pool, and the knowledge buildings come with their scholars.
+- A share you had set for the knowledge domain is ignored.
+
+The log says so once, on the first load:
 
 ```
-Knowledge now has its own store, raised by knowledge buildings. What you hold above it stays until you spend it.
+Knowledge is no longer stored. Your scholars now work on one technology at a time.
 ```
 
 ---
