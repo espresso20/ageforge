@@ -13,14 +13,14 @@ import (
 // buildings (the copies the gates ask for, which is the cap, with their
 // scholars all researching) make, during his stay, a quantity of work: the
 // town's research income over the stay (the quantity property 10 reads); the
-// age's techs are priced to total KnowledgeLadderShare of it. Inside the age
+// age's techs are priced to total config.ResearchShare of it (0.8 in the
+// first age, 1.2 from the Stone Age on: research simmers). Inside the age
 // the prices climb by one ratio, KnowledgeLadderRatio, from the cheapest to
 // the dearest, in the order the age's techs are priced in the table
 // (cheapest first, a tie in table order), and every price is written to
 // three significant figures, the table's usual. A tech's price is the work it
 // takes; there is no store for it to fit in.
 const (
-	KnowledgeLadderShare = 0.8
 	KnowledgeLadderRatio = 1.3
 	KnowledgeLadderStep  = 0.01
 )
@@ -98,7 +98,7 @@ func KnowledgeLadders(techs []config.TechDef, made []float64, ratio func(age str
 	for i, a := range ages {
 		idx := byAge[a.Key]
 		sort.SliceStable(idx, func(x, y int) bool { return techs[idx[x]].Cost < techs[idx[y]].Cost })
-		l := KnowledgeLadder{Age: a.Key, Made: made[i], Total: float64(KnowledgeLadderShare * made[i]), Ratio: ratio(a.Key)}
+		l := KnowledgeLadder{Age: a.Key, Made: made[i], Total: float64(config.ResearchShare(a.Key) * made[i]), Ratio: ratio(a.Key)}
 		for _, k := range idx {
 			l.Techs = append(l.Techs, techs[k].Key)
 		}

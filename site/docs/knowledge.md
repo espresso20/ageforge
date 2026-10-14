@@ -69,6 +69,8 @@ Primitive Writing ████░░░░░░ 40% (~4m 20s left)
 
 **The tables.** The [tech tables](technologies.md#tech-tree-by-age) give each tech's time for a full set of scholars at its age: every knowledge building up to that age built to its cap, researching, before any bonus. A tech costs 1.3 times the one before it inside an age.
 
+**Research simmers.** From the Stone Age on, an age's techs add up to about one and a half times the work the scholars of a typical town do while the town stays in that age. The research of an age takes longer than the age, and the part you have not finished carries forward into the next. The Primitive Age asks for less than a stay's work, so a new player sees a tech finish early. The keystone, the tech the age's wonder needs, is priced to finish inside its age, because you cannot leave without it.
+
 ---
 
 ## The Queue

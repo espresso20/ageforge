@@ -8,7 +8,7 @@ import (
 )
 
 // TestKnowledgeTechPricesFollowTheLadder: R4. Each age's techs are priced to
-// total KnowledgeLadderShare of what the ordinary reference player's
+// total config.ResearchShare of what the ordinary reference player's
 // knowledge buildings make during his stay (their scholars, all researching),
 // climbing by KnowledgeLadderRatio from the cheapest to the dearest in the
 // order the table has them, each to three significant figures. The last age is
@@ -64,17 +64,18 @@ func TestKnowledgeLadderHasOneNamedException(t *testing.T) {
 			}
 		}
 		share := sum / made[i]
+		low, high := researchBand(a.Key)
 		if h, held := KnowledgeLadderHeld[a.Key]; held {
 			if math.Abs(sum-h.TechSum) > 1e6 {
 				t.Errorf("%s: its techs cost %g, held at %g", a.Key, sum, h.TechSum)
 			}
-			if share >= propResearchLow && share <= propResearchHigh || math.Abs(share-h.Property10) > 0.0005 {
-				t.Errorf("%s: property 10 reads %.4f, the exception records %.4f (outside %g to %g)", a.Key, share, h.Property10, propResearchLow, propResearchHigh)
+			if share >= low && share <= high || math.Abs(share-h.Property10) > 0.0005 {
+				t.Errorf("%s: property 10 reads %.4f, the exception records %.4f (outside %g to %g)", a.Key, share, h.Property10, low, high)
 			}
 			continue
 		}
-		if share < propResearchLow || share > propResearchHigh {
-			t.Errorf("%s: property 10 reads %.3f, outside %g to %g, and the age is not the named exception", a.Key, share, propResearchLow, propResearchHigh)
+		if share < low || share > high {
+			t.Errorf("%s: property 10 reads %.3f, outside %g to %g, and the age is not the named exception", a.Key, share, low, high)
 		}
 	}
 	for _, r := range StaticResearch() {

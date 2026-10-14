@@ -20,6 +20,34 @@ import (
 //     are set against it.
 const KnowledgeRate = 1.5
 
+// Research simmers. It is an idle game: a player should be able to get every
+// tech, but it takes some time. The work an age's techs ask is a share of the
+// work the ordinary reference player's scholars do during that age's stay
+// (the knowledge ladder, smoke.KnowledgeLadders, and property 10 hold it).
+// ResearchBaseShare is that share for the first age. From the Stone Age on the
+// share is ResearchBaseShare times ResearchSimmer, so an age's research takes
+// one and a half stays and the unfinished part carries into the next age.
+// ResearchSimmerExemptAge stays at the base share, so a new player sees a tech
+// finish early. The keystone (the tech an age's wonder needs) must still
+// finish inside its age, because the wonder needs it to leave: the Research
+// Covenant holds that, and it is never relaxed to fit the multiplier.
+const (
+	ResearchBaseShare       = 0.8
+	ResearchSimmer          = 1.5
+	ResearchSimmerExemptAge = "primitive_age"
+)
+
+// ResearchShare is the share of the ordinary player's stay in age that the
+// age's techs total in work: ResearchBaseShare in the exempt age,
+// ResearchBaseShare times ResearchSimmer in every other (a constant product,
+// so it is exactly 1.2 and carries no run-time rounding).
+func ResearchShare(age string) float64 {
+	if age == ResearchSimmerExemptAge {
+		return ResearchBaseShare
+	}
+	return ResearchBaseShare * ResearchSimmer
+}
+
 // ResearchTarget is the name an effect gives the work scholars do: the
 // target of a tech's bonus to research (EffectOutput), of an event's gain or
 // rate and of a milestone's reward. It is not a resource: nothing holds it,
