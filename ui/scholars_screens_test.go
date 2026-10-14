@@ -518,3 +518,12 @@ func TestWonderResearchEffectIsNotANumber(t *testing.T) {
 		}
 	}
 }
+
+// An active Enlightenment boon reads as the scholars' work, not as a bonus to
+// a resource that no longer exists.
+func TestEnlightenmentLineNamesScholarOutput(t *testing.T) {
+	plain, _ := effectMagnitude(game.EventEffectInfo{Type: "knowledge_rate", Target: "knowledge", Value: 0.2})
+	if plain != "+20% scholar output" {
+		t.Errorf("the active Enlightenment reads %q", plain)
+	}
+}

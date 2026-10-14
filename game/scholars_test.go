@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
 )
 
@@ -457,5 +458,38 @@ func TestScholarsSave_FromTheKnowledgeStoreLoadsClean(t *testing.T) {
 	}
 	if ge.Research.head <= 0 || countLines(ge, scholarsNotice) != 1 {
 		t.Errorf("head start %v, notice said %d times", ge.Research.head, countLines(ge, scholarsNotice))
+	}
+}
+
+// Enlightenment, the faction boon, says it speeds up research. Granted, it
+// must raise the work the scholars do each tick by its size and nothing else
+// (the time pool is a different pool), and it must end with the boon.
+func TestEnlightenmentBoonRaisesTheScholarsWork(t *testing.T) {
+	var def boon.Def
+	for _, d := range boon.Catalog() {
+		if d.Name == "Enlightenment" {
+			def = d
+		}
+	}
+	if def.Name == "" {
+		t.Fatal("no Enlightenment boon in the catalog")
+	}
+	ge := scholarEngine(t)
+	if err := ge.StartResearch("tool_making"); err != nil {
+		t.Fatal(err)
+	}
+	before := ge.GetState().Research.PerTick
+	if before <= 0 {
+		t.Fatalf("staging: the scholars do %v work", before)
+	}
+	const size = 0.2
+	ge.mu.Lock()
+	ge.applyRolledFactionBoon(config.FactionDef{Name: "Test Folk", Key: "test_folk"},
+		boon.Boon{Kind: boon.RateBuff, Polarity: boon.Positive, Name: def.Name, Resource: def.Resource, Magnitude: size, DurationTicks: 100})
+	ge.recalculateRates()
+	ge.mu.Unlock()
+	after := ge.GetState().Research.PerTick
+	if want := before * (1 + size); math.Abs(after-want) > 1e-9*want {
+		t.Errorf("Enlightenment of +%.0f%% moved the scholars' work from %v to %v, want %v", size*100, before, after, want)
 	}
 }
