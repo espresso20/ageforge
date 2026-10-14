@@ -86,6 +86,20 @@ func renderCurrentWonderSummary(state game.GameState) string {
 	return sb.String()
 }
 
+// wonderBankPercent returns the floored share of a wonder's price that has
+// been paid. A surplus in one resource cannot pay another part of the price.
+func wonderBankPercent(bank, cost map[string]float64) float64 {
+	totalNeed, totalBanked := 0.0, 0.0
+	for res, need := range cost {
+		totalNeed += need
+		totalBanked += math.Min(bank[res], need)
+	}
+	if totalNeed == 0 {
+		return 0
+	}
+	return math.Floor(totalBanked / totalNeed * 100)
+}
+
 // wonderOverflowLine describes the wonder overflow switch for the wonder
 // panels: whether production a full store would waste goes into the bank.
 func wonderOverflowLine(on bool) string {
@@ -150,18 +164,7 @@ func wondersProvider(state game.GameState, _ int) string {
 				}
 				fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   %s\n", w.name, w.ageName, ready)
 			} else {
-				// Compute fill percentage: what is paid toward the wonder, so a
-				// part banked past its price counts only up to its price, and
-				// a bank that lacks a part never reads 100%.
-				totalNeed, totalBanked := 0.0, 0.0
-				for res, need := range w.def.BaseCost {
-					totalNeed += need
-					totalBanked += math.Min(bs.WonderBank[res], need)
-				}
-				pct := 0.0
-				if totalNeed > 0 {
-					pct = math.Floor(totalBanked / totalNeed * 100)
-				}
+				pct := wonderBankPercent(bs.WonderBank, w.def.BaseCost)
 				if pct > 0 {
 					fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   [yellow](%.0f%% banked)[-]\n",
 						w.name, w.ageName, pct)
