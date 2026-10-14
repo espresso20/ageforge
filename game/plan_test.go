@@ -257,6 +257,7 @@ func TestPlan_AddRespectsMaxCountAndMerges(t *testing.T) {
 	}
 	limited.MaxCount = 50
 	ge.Buildings.defs["stash"] = limited
+	ge.Buildings.rebuildOrder()
 	ge.Buildings.counts["stash"] = 48
 	n, err := ge.PlanAddBuild("stash", 5)
 	if err != nil || n != 2 {
