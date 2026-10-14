@@ -1,6 +1,6 @@
 # Resources
 
-AgeForge has **26 resources** that unlock as you advance through the 22 ages. They accumulate on their own from your buildings and the workers in them. Every resource starts with a small base storage, so storage buildings decide how much of anything you can hold.
+AgeForge has **25 resources** that unlock as you advance through the 22 ages. They accumulate on their own from your buildings and the workers in them. Every resource starts with a small base storage, so storage buildings decide how much of anything you can hold. Research is not one of them: it is done by [scholars](knowledge.md), and nothing holds it.
 
 Amounts print with up to three figures and a unit from a thousand up: K, M, B, T and Q, and past Q the units go on as Qi, Sx, Sp, Oc, No and Dc (1.5K, 876M, 11.8Qi).
 
@@ -14,7 +14,6 @@ Amounts print with up to three figures and a unit from a thousand up: K, M, B, T
 |----------|-----|---------|--------------|-------|
 | Food | `food` | Primitive Age | 50 | Every worker eats it every tick, so the rate must stay positive |
 | Wood | `wood` | Primitive Age | 50 | The first building material |
-| Knowledge | `knowledge` | Primitive Age | 240 | Pays for research; buildings also cost it from the Medieval to the Colonial Age. Its store is raised only by knowledge buildings |
 | Faith | `faith` | Primitive Age | 50 | Never drains on its own; your faith strength (your faith buildings against a moderate set, times the share of your faith you have kept) sets the epoch and catastrophe odds, and faith income lifts morale |
 | Stone | `stone` | Stone Age | 50 | Durable construction material |
 | Iron | `iron` | Bronze Age | 50 | Metal for tools, weapons and early engineering |
@@ -77,20 +76,6 @@ If food runs out, one worker starves every 5 ticks (10 seconds) until there is f
 - Research Tool Making, Fire Mastery, Animal Husbandry and Agriculture: +10% food each, and they add up
 
 **Watch the food rate** in the Economy panel. Auto-recruit keeps a food margin for you; `recruit max` does not.
-
----
-
-## Knowledge
-
-Knowledge pays for research. Every technology costs knowledge, and from the Medieval to the Colonial Age buildings cost it too.
-
-**How to increase knowledge:**
-- Build Knowledge lineage buildings (Story Circle, Elders' Hall, Scriptorium, ...). Workers come to staff them.
-- Give knowledge a bigger [share of the roster](workers-and-domains.md#the-roster): `roster knowledge 40`
-
-Knowledge is not a physical thing, so it has a store of its own. It starts at 240 and grows only with your knowledge buildings, not with storage buildings. A tech priced above your knowledge store can't start until you build more knowledge buildings. See [The Knowledge Store](knowledge.md#the-knowledge-store).
-
-Each Knowledge building has its own fully staffed rate: 0.2 knowledge/tick for a Story Circle, 0.6 for an Elders' Hall, 2.0 for a Scriptorium, 1.6 for an Agora and 3.2 for a Library. While buildings cost knowledge (Medieval to Colonial), it counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): a Monastery Library makes 42.4/tick, a University 76.3. See [Knowledge](knowledge.md) for the full lineage.
 
 ---
 
@@ -174,11 +159,11 @@ The quarries and mines of the Iron to the Industrial Age make stone, iron and ir
 
 ## Resource Storage
 
-Every resource has a small base storage (10 to 50; knowledge 240). **Storage buildings** raise the cap of every resource at once, knowledge aside, which has [a store of its own](knowledge.md#the-knowledge-store) raised only by knowledge buildings: one per age from the Stash to the Quantum Vault, with no limit on copies. Each copy costs 1.75 times the one before it. A few technologies raise every cap too, culture buildings add culture storage, and military buildings add soldier storage. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table.
+Every resource has a small base storage (10 to 50). **Storage buildings** raise the cap of every resource at once: one per age from the Stash to the Quantum Vault, with no limit on copies. Each copy costs 1.75 times the one before it. A few technologies raise every cap too, culture buildings add culture storage, and military buildings add soldier storage. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table.
 
-**How much it holds.** Each age's storage building is sized by one written rule: five copies of it, on top of the stores of the earlier ages, hold the dearest single price the age asks of a full town (eight copies of every building that makes something, the knowledge building aside), with a quarter to spare. Every age gate asks for five copies of the storage building of the age you are leaving. Four techs raise every store but knowledge's by a percentage (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each). On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap but knowledge's by the age's speed along with production.
+**How much it holds.** Each age's storage building is sized by one written rule: five copies of it, on top of the stores of the earlier ages, hold the dearest single price the age asks of a full town (eight copies of every building that makes something), with a quarter to spare. Every age gate asks for five copies of the storage building of the age you are leaving. Four techs raise every store by a percentage (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each). On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production.
 
-**Storage is a wall.** A building or an upgrade whose price in any one resource is larger than that resource's store cannot be bought, by `build`, `build <n>`, `build max`, `upgrade` or the [build plan](plan.md). The game says so and names the storage building to build (for knowledge, the age's knowledge building). The age's wonder is the one exception: it is paid through its bank. See [Storage is a wall](buildings.md#storage-is-a-wall).
+**Storage is a wall.** A building or an upgrade whose price in any one resource is larger than that resource's store cannot be bought, by `build`, `build <n>`, `build max`, `upgrade` or the [build plan](plan.md). The game says so and names the storage building to build. The age's wonder is the one exception: it is paid through its bank. See [Storage is a wall](buildings.md#storage-is-a-wall).
 
 **Storage is permanent.**
 
@@ -221,7 +206,7 @@ Two things sit outside the pool and are applied after it, so they count in full 
 - **Technologies.** A tech's "+X% production" multiplies your output after the pool has been applied, and tech bonuses add up among themselves with no cap of their own. See [How Tech Bonuses Stack](technologies.md#how-tech-bonuses-stack).
 - The [Cosmic Legacy](prestige.md#cosmic-legacy), +10% on everything a resource makes.
 
-Bonuses to one resource ("+10% gold production" from a milestone or a wonder) have their own pool for that resource, with the same rule: in full up to +200%, a quarter past it, never under x0.1. No resource's pool reaches +200% in any age: the fullest, knowledge, holds +145% with every scholar milestone and both knowledge wonders.
+Bonuses to one resource ("+10% gold production" from a milestone or a wonder) have their own pool for that resource, with the same rule: in full up to +200%, a quarter past it, never under x0.1. No pool reaches +200% in any age: the fullest, the scholars' work (research speed), holds +145% with every scholar milestone and both research wonders.
 
 **The game tells you what counts.** Nothing is hidden past +200%:
 

@@ -47,7 +47,7 @@ The Sacred Grove needs no tech, so nothing stands between a new game and the Sto
 
 The age progress bar shows `✗ Keystone: <tech>` beside the wonder until the tech is researched, the Wonders panel and `wonder` show the keystone and whether it is done, and the Research panel marks every keystone with a ★. A wonder in your [build plan](plan.md) waits for its keystone and starts once it is researched.
 
-**No age asks for knowledge.** An age's knowledge goes to research, and the keystone is what the advance needs of it. See [how research is priced](technologies.md#how-research-is-priced).
+**No age asks you to hold anything for research.** Your scholars do the research, and the keystone is what the advance needs of it. See [how research is priced](technologies.md#how-research-is-priced).
 
 **A game saved before keystones** keeps the age it was in exempt: there the wonder builds without its keystone, and the lock starts when you next advance. The log says so once, on the first load. Every tech you researched stays researched and every wonder you built stays built.
 
@@ -56,7 +56,7 @@ The age progress bar shows `✗ Keystone: <tech>` beside the wonder until the te
 An age asks for the town it is priced for. **No age asks you to hold an amount of any resource**, and advancing spends nothing. To leave an age you need:
 
 - **Eight copies of every building of that age that makes something.** That means food, wood, stone, metals, gold, power, faith, culture or soldiers.
-- **Fewer copies of the age's knowledge building**, because each copy costs 50% more than the one before it (a producer's costs 15% more). The tables below give the count, from 5 to 10. See [Knowledge](knowledge.md#the-knowledge-store).
+- **Fewer copies of the age's knowledge building**, because each copy costs 50% more than the one before it (a producer's costs 15% more). The tables below give the count, from 5 to 10. See [Scholars and Research](knowledge.md#what-a-scholar-is).
 - **Every building count the age asked for already.** A building the age asked for in more copies keeps that count.
 - **Five copies of the age's storage building.**
 - **The age's wonder**, built, and **its keystone tech**, researched. See [Wonder Requirement](#wonder-requirement) and [Keystone Techs](#keystone-techs).
@@ -72,11 +72,9 @@ Every age can be finished, and an automated test checks this in every release. T
 
 - Every building requirement names a building you can build in the age you are advancing **from**, never an older one you can no longer build.
 - A town that passes a gate arrives holding the store the rules size for it, because the gate asks for the storage copies. Storage is a wall (see [Storage](buildings.md#storage-buildings-21-tiers)), so no town can pass without them.
-- A town that passes a gate also holds the knowledge store the rules size for it, because the gate asks for the knowledge building's copies. The store holds the age's dearest tech with a quarter to spare, and the second-cheapest tech of the next age with a fifth to spare. A tech priced over the knowledge store cannot be started (see [Knowledge](knowledge.md#the-knowledge-store)).
+- A town that passes a gate has the age's knowledge building built to its cap, because the gate asks for that many copies, and the scholars that come with them (see [Scholars and Research](knowledge.md#what-a-scholar-is)).
 - The last required copy of each building costs at most **80%** of the store the gates force you to hold, so a town that met the earlier gates can always afford it.
-- The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age, and each one's knowledge cost fits the knowledge store you can build in that age with room to spare.
-- The keystone is affordable well inside the age: the knowledge it costs (with the techs of its own age it stands on), the time to research them and the time to build the wonder fit inside the age's target length together, with at least a fifth of the age to spare.
-- The cheapest tech of an age fits the knowledge store you are sure to enter the age with.
+- The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age.
 - Every resource a required building, the wonder or the keystone costs has a source in the age itself, even for a town that skipped every building no earlier gate asked for. See [The Maker Rule](buildings.md#the-maker-rule).
 - A food, faith, culture or soldiers cost is something a moderate economy makes in the age.
 - A town that arrives in a new age with empty stores, and only the buildings the gates asked for, can buy the first copy of every building the age opens, except those that wait for a tech you may never research.
@@ -131,8 +129,8 @@ Starting age. No requirements.
 
 **Unlocks:**
 - Buildings: Hut, Stash, Gathering Camp, Wood Camp, Story Circle, Shrine, Sacred Grove
-- Resources: Food, Wood, Knowledge, Faith
-- Worker domains: food, lumber, knowledge, faith
+- Resources: Food, Wood, Faith
+- Worker domains: food, lumber, faith
 
 ---
 
