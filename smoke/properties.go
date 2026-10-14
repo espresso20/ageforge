@@ -38,7 +38,7 @@ var KnownPropertyFailures = map[int]string{
 	4:  "fails in 3 of 22 ages; worst 2.9 times in the Quantum Age",
 	8:  "fails in 16 of 22 ages; worst 0.0% eaten in the Transcendent Age",
 	9:  "fails in 22 of 22 ages; worst room for 19312 people per job in the Transcendent Age",
-	10: "fails in 1 of 22 ages; worst 0.8 times the age in the Digital Age",
+	10: "fails in 1 of 22 ages; worst 1.2 times the age in the Victorian Age",
 	12: "27 of 27 trade route payments fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
 	16: "fails in 2 of 22 ages; worst 3.0 times in the Primitive Age",
@@ -51,6 +51,18 @@ var KnownPropertyFailures = map[int]string{
 // KnowledgeLadderHeld names.
 var KnownPropertyReasons = map[int]string{
 	10: "fails only in the age KnowledgeLadderHeld names (the last age has no knowledge building of its own)",
+}
+
+// researchBand is the band of property 10 for age: the share of the ordinary
+// player's stay that the age's techs take with every scholar at the cap
+// researching. The Primitive Age (config.ResearchSimmerExemptAge) keeps 0.7 to
+// 0.9; every other age's band is that scaled by config.ResearchSimmer, 1.05 to
+// 1.35 (constant products, exact).
+func researchBand(age string) (low, high float64) {
+	if age == config.ResearchSimmerExemptAge {
+		return propResearchLow, propResearchHigh
+	}
+	return propResearchLow * config.ResearchSimmer, propResearchHigh * config.ResearchSimmer
 }
 
 // Properties is the whole check: the properties, and how long each age
@@ -89,7 +101,7 @@ const (
 	propFoodLow      = 0.30 // workers eat at least this share of the food grown
 	propFoodHigh     = 0.80
 	propRoomHigh     = 1.5  // houses hold at most this many people per job
-	propResearchLow  = 0.70 // research takes this share of the ordinary player's age
+	propResearchLow  = 0.70 // research takes this share of the ordinary player's age (the exempt age's band)
 	propResearchHigh = 0.90
 	propRewardLow    = 1.0  // a fixed reward is worth at least this many minutes of income
 	propRewardHigh   = 30.0 // and at most this many
@@ -295,14 +307,15 @@ func StaticProperties() Properties {
 			sum += price
 		}
 		share := sum / k / float64(ordinary.Hours[i]*refTicksPerHour)
-		if share < propResearchLow || share > propResearchHigh {
+		lo, hi := researchBand(t.ages[i].Key)
+		if share < lo || share > hi {
 			bad++
 		}
 		if share > high {
 			high, where, val = share, t.ages[i].Name, fmt.Sprintf("%.1f times the age", share)
 		}
 	}
-	add(10, fmt.Sprintf("with every scholar at the cap researching, an age's techs take between %.0f%% and %.0f%% of the ordinary player's stay", 100*propResearchLow, 100*propResearchHigh), bad == 0, worst(bad, where, val))
+	add(10, fmt.Sprintf("with every scholar at the cap researching, the Primitive Age's techs take between %.0f%% and %.0f%% of the ordinary player's stay, and every later age's between %.0f%% and %.0f%% (research simmers: %g times as long)", 100*propResearchLow, 100*propResearchHigh, 100*propResearchLow*config.ResearchSimmer, 100*propResearchHigh*config.ResearchSimmer, config.ResearchSimmer), bad == 0, worst(bad, where, val))
 
 	// 11. (gone) It held the gold sold for knowledge against what the
 	// buildings make. The market no longer swaps, so there is nothing to
