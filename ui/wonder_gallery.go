@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -33,14 +34,13 @@ type wonderInfo struct {
 }
 
 // getWonderList returns all wonders in age order
-func getWonderList() []wonderInfo {
-	ages := config.Ages()
-	buildings := config.BuildingByKey()
+func getWonderList(set *rules.Set) []wonderInfo {
+	ages := set.Ages()
 
 	var wonders []wonderInfo
 	for _, age := range ages {
 		for _, bKey := range age.UnlockBuildings {
-			if def, ok := buildings[bKey]; ok && def.Category == "wonder" {
+			if def, ok := set.Building(bKey); ok && def.Category == "wonder" {
 				wonders = append(wonders, wonderInfo{
 					key:     bKey,
 					name:    def.Name,
@@ -81,7 +81,7 @@ func (wp *WonderPanel) Primitive() tview.Primitive {
 func (wp *WonderPanel) UpdateState(state game.GameState) {
 	// Find the wonder for the current age
 	var current *wonderInfo
-	for _, w := range getWonderList() {
+	for _, w := range getWonderList(state.Ruleset()) {
 		if w.ageKey == state.Age {
 			wCopy := w
 			current = &wCopy
@@ -109,7 +109,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 		}
 	}
 	// Also hash wonder count for speed display
-	for _, w := range getWonderList() {
+	for _, w := range getWonderList(state.Ruleset()) {
 		if bs, ok := state.Buildings[w.key]; ok && bs.Count > 0 {
 			h ^= hashKey(w.key) * 5
 		}
@@ -212,7 +212,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 
 	// Wonder count
 	wonderCount := 0
-	for _, w := range getWonderList() {
+	for _, w := range getWonderList(state.Ruleset()) {
 		if bs, ok := state.Buildings[w.key]; ok && bs.Count > 0 {
 			wonderCount++
 		}

@@ -593,6 +593,53 @@ func TestNextAgeStripOnTheLongestGate(t *testing.T) {
 	}
 }
 
+func TestNextAgeStripShowsWonderBankProgress(t *testing.T) {
+	eng := game.NewGameEngine()
+	st := eng.GetState()
+	const wonder = "sacred_grove"
+	def, ok := st.Ruleset().Building(wonder)
+	if !ok {
+		t.Fatalf("the ruleset has no %s", wonder)
+	}
+	amount := def.BaseCost["food"] / 2
+	eng.SetStockForTest("food", amount)
+	if result := HandleCommand(fmt.Sprintf("wonder bank food %.0f", amount), eng); result.Type != "success" {
+		t.Fatalf("banking food: %+v", result)
+	}
+	st = eng.GetState()
+	pct := wonderBankPercent(st.Buildings[wonder].WonderBank, def.BaseCost)
+	if pct == 0 {
+		t.Fatal("staging: the partly banked Sacred Grove reads 0%")
+	}
+	want := fmt.Sprintf("✗ Wonder: Sacred Grove %.0f%% banked", pct)
+	for _, width := range []int{80, 100} {
+		strip := untag(strings.Join(ageProgressLines(st, width, 2), "\n"))
+		if !strings.Contains(strip, want) {
+			t.Errorf("width %d: Next Age strip has no %q:\n%s", width, want, strip)
+		}
+	}
+	list := untag(wondersProvider(st, 0))
+	listWant := fmt.Sprintf("(%.0f%% banked)", pct)
+	if !strings.Contains(list, listWant) {
+		t.Errorf("Wonders list has no %q:\n%s", listWant, list)
+	}
+
+	bank := make(map[string]float64, len(def.BaseCost))
+	for resource, cost := range def.BaseCost {
+		bank[resource] = cost
+	}
+	eng.Buildings.LoadWonderBanks(map[string]map[string]float64{wonder: bank})
+	eng.StepTicks(1)
+	if err := eng.BuildBuilding(wonder); err != nil {
+		t.Fatalf("building Sacred Grove: %v", err)
+	}
+	eng.StepTicks(def.BuildTicks + 1)
+	built := untag(strings.Join(ageProgressLines(eng.GetState(), 100, 2), "\n"))
+	if strings.Contains(built, "% banked") {
+		t.Errorf("a built wonder still shows bank progress:\n%s", built)
+	}
+}
+
 // countedNote finds the strip's count of what it left out: "+4 more" or
 // "✓ 3 met".
 var countedNote = regexp.MustCompile(`(?:\+(\d+) more|✓ (\d+) met)`)

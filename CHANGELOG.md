@@ -8,7 +8,7 @@ All notable changes to AgeForge are documented here.
 
 ### Added
 - **Quarrying.** A new Iron Age tech in the Materials lane, after Bronze Working. It adds 8% to marble and iron ore output. It is optional: no wonder and no tech stands on it. The game has 203 techs. An old save keeps everything and sees one more tech to research; it gets no grace age and no update line, because Quarrying locks nothing.
-- **Scholars do the research.** A knowledge building comes with its scholars the moment a copy stands: 2 for a Story Circle, up to 20 for a Reality Academy. They take no housing, food or assignment, and no workers from your population. A scholar's kind is the worker class of his building's age (Shaman, Elder, Scribe and so on). A knowledge building cannot be built past its cap, the count its age's gate asks for, 5 to 10 copies.
+- **Scholars do the research.** A knowledge building comes with its scholars the moment a copy stands: 2 for a Story Circle, up to 20 for a Reality Academy. They take no housing, food or assignment, and no workers from your population. A scholar's kind is the worker class of its building's age (Shaman, Elder, Scribe and so on). A knowledge building cannot be built past its cap, the count its age's gate asks for, 5 to 10 copies.
 - **One tech at a time, and a bar that fills.** The researching scholars' work fills the tech in progress each tick, and it is done at 100%. Starting a tech costs nothing: it needs its prerequisites and its age. The tech's time is worked out from the scholars researching now, so it changes when they do. The plan's research items are the queue and start by themselves.
 - **Scholars who do not research teach.** One setting, the share that researches (100% to begin with), divides them. Teaching raises what workers make: 10% in the Primitive to Bronze Ages down to 4% from the Cyberpunk Age, in proportion to the share teaching. With nothing in progress and nothing queued every scholar teaches.
 - **The `scholars` command.** `scholars` lists your kinds and counts, how many research and teach, and what teaching adds. `scholars <percent>` sets the share that researches.
@@ -277,6 +277,7 @@ All notable changes to AgeForge are documented here.
 - Milestone chains rebalanced: completion speed-boosts normalized across all six chains (Military was 18× weaker than Settlement — now in line); the Trade chain expanded 3 → 6 milestones (5 via the milestone revamp, then a sixth — Maritime Empire — with the Trade System Expansion); and Military/Trade/Scholar capstones now pay out broad `production_all` instead of domain-only bonuses, so finishing any chain helps your whole economy.
 
 ### Changed
+- **The Next Age bar shows the wonder's bank.** An unbuilt wonder reads like `Wonder: Sacred Grove 40% banked`, the same figure the wonders list shows.
 - **Knowledge is no longer a resource.** It is not held, spent, stored or priced. The game has 25 resources, and the Resources box has no knowledge row.
 - **Fifteen buildings and the Great Library that were priced in knowledge are priced in materials,** at the same price in units of their age.
 - **The worker domains are 11.** Nothing has worker slots in the knowledge domain, so it is not offered by the Workers panel, `roster` or the share commands. A share an old save set on it is ignored.
