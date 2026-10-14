@@ -466,7 +466,7 @@ func Milestones() []MilestoneDef {
 		// knowledge_seeker: raised to 10,000 knowledge
 		{
 			Name: "Knowledge Seeker", Key: "knowledge_seeker",
-			Description:  "Accumulate 10,000 knowledge.",
+			Description:  "Accumulate 10,000 research.",
 			Flavor:       "Ten thousand units of knowledge, and the faint, dawning awareness of how little you know.",
 			Category:     "scholar",
 			MinResources: map[string]float64{ResearchTarget: 10000},
@@ -506,7 +506,7 @@ func Milestones() []MilestoneDef {
 		// scholars_haven: raised to 50 knowledge workers + 3 libraries
 		{
 			Name: "Scholar's Haven", Key: "scholars_haven",
-			Description:         "Staff 50 knowledge workers and build 3 Libraries.",
+			Description:         "Staff 50 scholars and build 3 Libraries.",
 			Flavor:              "Three libraries, fifty scholars, and a fierce ongoing dispute about quiet hours.",
 			Category:            "scholar",
 			MinBuildings:        map[string]int{"library": 3},
