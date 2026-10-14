@@ -80,7 +80,7 @@ func (ge *GameEngine) scholarGroups() ([]ScholarGroup, int) {
 	}
 	var rows []row
 	total := 0
-	ge.Buildings.eachBuilt(func(key string, count int, def config.BuildingDef) {
+	ge.Buildings.eachBuiltOf(ge.Buildings.scholarKeys, func(key string, count int, def config.BuildingDef) {
 		if def.Scholars <= 0 || count <= 0 {
 			return
 		}
@@ -107,7 +107,7 @@ func (ge *GameEngine) scholarGroups() ([]ScholarGroup, int) {
 // scholarTotal is every scholar the town has.
 func (ge *GameEngine) scholarTotal() int {
 	total := 0
-	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+	ge.Buildings.eachBuiltOf(ge.Buildings.scholarKeys, func(_ string, count int, def config.BuildingDef) {
 		if def.Scholars > 0 && count > 0 {
 			total += count * def.Scholars
 		}

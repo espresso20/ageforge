@@ -78,6 +78,7 @@ func TestUpgradeBuilding_RespectsTargetMaxCount(t *testing.T) {
 	}
 	limited.MaxCount = 25
 	ge.Buildings.defs["storage_pit"] = limited
+	ge.Buildings.rebuildOrder()
 	ge.Buildings.counts["storage_pit"] = 24
 	for _, r := range []string{"wood", "stone"} {
 		ge.Resources.AddStorage(r, 1e9)

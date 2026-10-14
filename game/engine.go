@@ -599,7 +599,7 @@ const AutosaveInterval = 60 * time.Second
 // the ceiling (config.MechanicMoraleCap).
 func (ge *GameEngine) moraleCap() float64 {
 	cap := 1.0
-	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+	ge.Buildings.eachBuiltOf(ge.Buildings.wonderKeys, func(_ string, count int, def config.BuildingDef) {
 		if def.Category == "wonder" {
 			cap += float64(0.05 * float64(count))
 		}
@@ -3207,7 +3207,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 // Must be called with the engine lock held.
 func (ge *GameEngine) getWonderBonuses() map[string]float64 {
 	out := make(map[string]float64)
-	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+	ge.Buildings.eachBuiltOf(ge.Buildings.wonderMonumentKeys, func(_ string, count int, def config.BuildingDef) {
 		if def.Category != "wonder" && def.Category != "monument" {
 			return
 		}
