@@ -3597,7 +3597,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 			cost, _ = splitBank(cost, prepaid)
 		}
 		if res := ge.overStore(cost); res != "" {
-			return fmt.Errorf("%s", ge.storeTooSmallText(def.Name, res, cost[res]))
+			return fmt.Errorf("%s", ge.buildWallText(def, res, cost[res]))
 		}
 		if !ge.Resources.Pay(cost) {
 			return fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(cost))
@@ -3730,7 +3730,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 			}
 		}
 		if overRes != "" {
-			return 0, fmt.Errorf("%s", ge.storeTooSmallText(def.Name, overRes, overAmt))
+			return 0, fmt.Errorf("%s", ge.buildWallText(def, overRes, overAmt))
 		}
 		unitCost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		return 0, fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(unitCost))
@@ -4008,15 +4008,44 @@ func (ge *GameEngine) overStore(cost map[string]float64) string {
 
 // storeTooSmallText is the refusal for a price larger than a store: which
 // store, how much it holds, and what to build to enlarge it (the age's
-// storage building, when the age has one).
+// storage building, when the age has one and can still be built). When the
+// age's storage building has run out of copies it says so instead of sending
+// the player to it.
 func (ge *GameEngine) storeTooSmallText(what, res string, amount float64) string {
 	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", what, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
 	for _, d := range ge.rules.Buildings() {
 		if d.Category == "storage" && d.RequiredAge == ge.age {
+			if ge.Buildings.StorageLimit(d.Key, ge.Resources, ge.buildQueue) != "" {
+				return line + ge.storageLimitTail()
+			}
 			return line + " Build more storage first: " + d.Name + "."
 		}
 	}
 	return line
+}
+
+// storageLimitTail ends the refusal for a store that cannot grow: the age's
+// storage building has no copy left that the store could pay for.
+func (ge *GameEngine) storageLimitTail() string {
+	tail := " Your storage is at its limit for this age."
+	if ge.progress.GetNextAge(ge.age) != "" {
+		tail += " The next age has a bigger storage building."
+	}
+	return tail
+}
+
+// buildWallText is the refusal for a building priced over a store. A storage
+// building is never sent to itself: with a copy still going up it waits for
+// it, and with none it is at its limit.
+func (ge *GameEngine) buildWallText(def config.BuildingDef, res string, amount float64) string {
+	if def.Category != "storage" {
+		return ge.storeTooSmallText(def.Name, res, amount)
+	}
+	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", def.Name, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
+	if ge.Buildings.StorageLimit(def.Key, ge.Resources, ge.buildQueue) != "" {
+		return line + ge.storageLimitTail()
+	}
+	return line + " The " + def.Name + " already under construction will raise it."
 }
 
 func (ge *GameEngine) shortfallText(cost map[string]float64) string {

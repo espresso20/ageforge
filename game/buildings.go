@@ -1057,6 +1057,36 @@ func (bm *BuildingManager) TransformBuilding(oldKey, newKey string, renameWorker
 	}
 }
 
+// StorageLimit is the first resource (in key order) in which the next copy
+// of storage building key costs more than the store would hold with the
+// copies already queued built, and more than is held; "" when the next copy
+// fits, or key is not a storage building. A store is raised only by storage
+// buildings, so a storage building judged against the store it is meant to
+// raise has run out of copies: the price curve is its limit, and more storage
+// cannot be bought until the next age brings a bigger building. Judging the
+// queued copies in lets a town whose first Stash is still going up wait for
+// it, instead of being told the Stash is at its limit.
+func (bm *BuildingManager) StorageLimit(key string, resources *ResourceManager, queue []BuildQueueItem) string {
+	def, ok := bm.defs[key]
+	if !ok || def.Category != "storage" {
+		return ""
+	}
+	cost, _ := bm.BuildBatchCost(key, 1, queue)
+	queued := float64(bm.GetQueueCount(key, queue))
+	for _, res := range sortedKeys(cost) {
+		store := resources.GetStorage(res)
+		for _, e := range def.Effects {
+			if e.Type == "storage" && (e.Target == "all" || e.Target == res) {
+				store += float64(e.Value * queued)
+			}
+		}
+		if cost[res] > store && cost[res] > resources.Get(res) {
+			return res
+		}
+	}
+	return ""
+}
+
 // Snapshot returns building states for UI.
 // queue is the engine's current build queue, used to compute queue-aware next costs.
 // getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
@@ -1081,6 +1111,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		if def.MaxCount > 0 && count >= def.MaxCount {
 			state.AtMaxCount = true
 		}
+		state.StoreLimit = bm.StorageLimit(key, resources, queue) != ""
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)

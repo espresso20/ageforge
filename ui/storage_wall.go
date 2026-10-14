@@ -49,6 +49,17 @@ func storeTooSmallLine(what, res string, amount, store float64, build string) st
 	return line
 }
 
+// storageLimitLine is the same refusal for a store that cannot grow: the
+// age's storage building has run out of copies, so it names no building to
+// build and says where bigger storage comes from.
+func storageLimitLine(what, res string, amount, store float64, nextAge bool) string {
+	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s). Your storage is at its limit for this age.", what, game.Amount(amount, res), game.ResourceName(res), FormatNumber(store))
+	if nextAge {
+		line += " The next age has a bigger storage building."
+	}
+	return line
+}
+
 // storeWall tells, for each building of a state, whether its next copy is
 // over a store. The storage building it names is looked up once, and only
 // when a line needs it (per resource: knowledge has its own).
@@ -68,7 +79,21 @@ func (sw *storeWall) line(bs game.BuildingState) string {
 	if res == "" {
 		return ""
 	}
+	if bs.StoreLimit || sw.storageAtLimit() {
+		return storageLimitLine(bs.Name, res, bs.NextCost[res], sw.state.Resources[res].Storage, sw.state.NextAge != "")
+	}
 	return storeTooSmallLine(bs.Name, res, bs.NextCost[res], sw.state.Resources[res].Storage, sw.buildingFor(res))
+}
+
+// storageAtLimit reports whether the age's storage building has run out of
+// copies the store could pay for: naming it would send the player in a circle.
+func (sw *storeWall) storageAtLimit() bool {
+	for key, d := range sw.state.Ruleset().BuildingMap() {
+		if d.Category == "storage" && d.RequiredAge == sw.state.Age {
+			return sw.state.Buildings[key].StoreLimit
+		}
+	}
+	return false
 }
 
 // buildingFor is the building the over-the-store line names for res, looked

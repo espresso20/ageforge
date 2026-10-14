@@ -469,10 +469,28 @@ func TestStoreWallNamesTheStorageBuilding(t *testing.T) {
 	if got := storageBuildingName(st, "food"); got != store || store == "" {
 		t.Errorf("food: storageBuildingName = %q, want %q", got, store)
 	}
+	for k, b := range st.Buildings {
+		if b.Name == store {
+			b.StoreLimit = false // the storage building can still grow: name it
+			st.Buildings[k] = b
+		}
+	}
 	sw := &storeWall{state: st}
 	line := sw.line(game.BuildingState{Name: "Thing", Unlocked: true, NextCost: map[string]float64{"food": st.Resources["food"].Storage * 10}})
 	if !strings.HasSuffix(line, "Build more storage first: "+store+".") {
 		t.Errorf("the line for a food price = %q", line)
+	}
+	// With the storage building out of copies it names nothing to build.
+	for k, b := range st.Buildings {
+		if b.Name == store {
+			b.StoreLimit = true
+			st.Buildings[k] = b
+		}
+	}
+	sw = &storeWall{state: st}
+	line = sw.line(game.BuildingState{Name: "Thing", Unlocked: true, NextCost: map[string]float64{"food": st.Resources["food"].Storage * 10}})
+	if strings.Contains(line, "Build more storage first") || !strings.Contains(line, "Your storage is at its limit for this age.") {
+		t.Errorf("the line for a food price with the storage at its limit = %q", line)
 	}
 }
 

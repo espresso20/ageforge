@@ -486,6 +486,14 @@ A building or an upgrade whose price in any one resource is larger than the stor
 
 The age's wonder is the one exception: it is paid through its bank, a round at a time (see [Wonders](wonders.md#overflow)), so it may cost more than a store holds.
 
+A storage building is judged against the store it would raise, counting the copies of it already going up. The price of a storage building climbs faster than the store grows, so each age's storage building has a last copy a town can buy: five Stashes hold 550 wood and the sixth costs 574. Past that copy the storage building is not sent to itself. It says the storage is at its limit for the age, and so does any other building priced over a store that can no longer grow:
+
+```
+<Building> costs <amount> <resource>, more than your <resource> storage holds (<size>). Your storage is at its limit for this age. The next age has a bigger storage building.
+```
+
+The gate out of each age asks for five copies of its storage building, and all five can be bought.
+
 A full store stops that resource piling up. What it cannot hold goes into the current wonder's bank while the wonder still needs it (unless you typed `wonder overflow off`), and is lost otherwise. It no longer pays toward the plan's next copies. So build storage first whenever you enter a new age.
 
 Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its capacity for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
