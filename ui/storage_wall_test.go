@@ -73,35 +73,49 @@ func panelPages(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) [][]st
 // A building whose next copy costs more than a store holds is marked in the
 // Buildings panel: the red cross it has for any building that cannot be
 // bought, and under its cost the engine's own refusal, word for word, naming
-// the resource and the storage building to build.
+// the resource and the storage building to build. The storage building itself
+// is not sent to itself: built 40 times its next copy is over the store it
+// would raise, and the refusal says the storage is at its limit.
 func TestBuildingsPanelMarksAnOverStoreCopy(t *testing.T) {
 	restoreForge(t)
-	d, pages, eng := wallTown(t, map[string]int{wallStore: 40})
-	st := eng.GetState()
-	name := st.Buildings[wallStore].Name
-	if res := overStoreRes(st, st.Buildings[wallStore].NextCost); res == "" {
-		t.Fatalf("staging: the 41st %s (%v) fits the stores", name, st.Buildings[wallStore].NextCost)
-	}
-	want := refusalFor(t, eng, wallStore)
-	if !strings.HasSuffix(want, "Build more storage first: "+name+".") {
-		t.Fatalf("the refusal does not name the Medieval Age's storage: %q", want)
-	}
-	for _, sz := range wallSizes {
-		w, h := sz[0], sz[1]
-		found := false
-		for _, rows := range panelPages(t, d, pages, w, h) {
-			if !strings.Contains(flat(rows), want) {
-				continue
-			}
-			found = true
-			for _, r := range rows {
-				if strings.Contains(r, " "+name+" x40") && !strings.Contains(r, "✗") {
-					t.Errorf("%dx%d: the %s is not marked with the cross: %q", w, h, name, r)
+	for _, tc := range []struct {
+		key    string
+		count  int
+		suffix string
+	}{
+		{"workshop", 80, "Build more storage first: Strongroom."},
+		{wallStore, 40, "Your storage is at its limit for this age. The next age has a bigger storage building."},
+	} {
+		d, pages, eng := wallTown(t, map[string]int{tc.key: tc.count})
+		st := eng.GetState()
+		name := st.Buildings[tc.key].Name
+		if res := overStoreRes(st, st.Buildings[tc.key].NextCost); res == "" {
+			t.Fatalf("staging: the next %s (%v) fits the stores", name, st.Buildings[tc.key].NextCost)
+		}
+		want := refusalFor(t, eng, tc.key)
+		if !strings.HasSuffix(want, tc.suffix) {
+			t.Fatalf("the refusal for %s ends %q, want it to end %q", name, want, tc.suffix)
+		}
+		if tc.key == wallStore && strings.Contains(want, "Build more storage first") {
+			t.Fatalf("the Strongroom is sent to the Strongroom: %q", want)
+		}
+		for _, sz := range wallSizes {
+			w, h := sz[0], sz[1]
+			found := false
+			for _, rows := range panelPages(t, d, pages, w, h) {
+				if !strings.Contains(flat(rows), want) {
+					continue
+				}
+				found = true
+				for _, r := range rows {
+					if strings.Contains(r, " "+name+" x"+fmt.Sprint(tc.count)) && !strings.Contains(r, "✗") {
+						t.Errorf("%dx%d: the %s is not marked with the cross: %q", w, h, name, r)
+					}
 				}
 			}
-		}
-		if !found {
-			t.Errorf("%dx%d: no page of the Buildings panel says %q", w, h, want)
+			if !found {
+				t.Errorf("%dx%d: no page of the Buildings panel says %q", w, h, want)
+			}
 		}
 	}
 	// A copy that fits is not marked.
@@ -111,6 +125,46 @@ func TestBuildingsPanelMarksAnOverStoreCopy(t *testing.T) {
 			if strings.Contains(flat(rows), "more than your") {
 				t.Errorf("%dx%d: a building that fits a store is marked:\n%s", sz[0], sz[1], strings.Join(rows, "\n"))
 			}
+		}
+	}
+}
+
+// The report (card Pi3AczMR) as the Buildings panel drew it: a Primitive Age
+// town with five Stashes, the sixth costing 574 wood against 550 held. The
+// row is a cross with the price, and the line under it says the storage is at
+// its limit; it no longer sends the player to build a Stash.
+func TestBuildingsPanelStashAtItsLimit(t *testing.T) {
+	restoreForge(t)
+	d, pages, eng := stagedDashboard(t, "primitive_age")
+	all := map[string]int{}
+	for k, b := range eng.GetState().Buildings {
+		all[k] = b.Count
+	}
+	all["stash"] = 5
+	eng.Buildings.LoadCounts(all)
+	eng.StepTicks(1)
+	st := eng.GetState()
+	if got := st.Buildings["stash"].NextCost["wood"]; got != 574 {
+		t.Fatalf("staging: the sixth Stash costs %v wood, want 574", got)
+	}
+	want := "Stash costs 574 wood, more than your wood storage holds (550). Your storage is at its limit for this age. The next age has a bigger storage building."
+	if err := eng.BuildBuilding("stash"); err == nil || err.Error() != want {
+		t.Fatalf("build stash = %v, want %q", err, want)
+	}
+	for _, sz := range wallSizes {
+		w, h := sz[0], sz[1]
+		found := false
+		for _, rows := range panelPages(t, d, pages, w, h) {
+			text := flat(rows)
+			if strings.Contains(text, "Build more storage first: Stash") {
+				t.Errorf("%dx%d: the panel sends the player to the Stash:\n%s", w, h, strings.Join(rows, "\n"))
+			}
+			if strings.Contains(text, want) {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%dx%d: no page of the Buildings panel says %q", w, h, want)
 		}
 	}
 }
@@ -213,8 +267,8 @@ func TestBuildListMarksAnOverStoreCopy(t *testing.T) {
 // says overflow is banked toward the plan.
 func TestPlanPanelWaitsOnStorage(t *testing.T) {
 	restoreForge(t)
-	d, pages, eng := wallTown(t, map[string]int{wallStore: 40})
-	if _, err := eng.PlanAddBuild(wallStore, 1); err != nil {
+	d, pages, eng := wallTown(t, map[string]int{"workshop": 80})
+	if _, err := eng.PlanAddBuild("workshop", 1); err != nil {
 		t.Fatal(err)
 	}
 	v := eng.GetState().Plan[0]

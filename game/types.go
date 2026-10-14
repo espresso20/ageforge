@@ -272,6 +272,11 @@ type BuildingState struct {
 	NextCost   map[string]float64
 	CanBuild   bool
 	AtMaxCount bool
+	// StoreLimit marks a storage building whose next copy costs more than
+	// the store would hold with every copy already queued built: the price
+	// curve has run past the store, so no more copies can be bought this
+	// age. It is not AtMaxCount: storage has no copy limit, only a price.
+	StoreLimit bool
 	// Wonder-specific: resources banked toward construction
 	WonderBank     map[string]float64
 	WonderBankFull bool

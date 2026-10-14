@@ -179,3 +179,45 @@ func StorageRuleSizes(defs []BuildingDef, ages []AgeDef, baseStore float64) (siz
 	}
 	return sizes, store
 }
+
+// StorageLastCopy is how many copies of each storage building (by key) the
+// reference town can buy: the last copy k whose price, at k-1 owned, fits
+// under the store the stores of earlier ages and the k-1 copies before it give.
+// The price climbs by StorageRate a copy and the store by one size, so there
+// is always a last copy, and it is never under StorageRuleCopies (rule 3). The
+// next copy is over the store, and a screen must call that a limit, not send
+// the player to build the same storage building again. sizes and store are
+// what StorageRuleSizes gives for the same tables.
+func StorageLastCopy(defs []BuildingDef, ages []AgeDef, base float64, sizes, store map[string]float64) map[string]int {
+	out := map[string]int{}
+	prev := base
+	for _, a := range ages {
+		for _, d := range defs {
+			if d.Category != "storage" || d.RequiredAge != a.Key {
+				continue
+			}
+			last := 0
+			for k := 1; k <= 1000; k++ {
+				if maxPrice(d, k-1) > prev+float64(float64(k-1)*sizes[d.Key]) {
+					break
+				}
+				last = k
+			}
+			out[d.Key] = last
+		}
+		prev = store[a.Key]
+	}
+	return out
+}
+
+// AgeHasStorageBuilding reports whether the age has a storage building of its
+// own. The last age has none, and a refusal at the Quantum Vault's limit has
+// no bigger building to point at.
+func AgeHasStorageBuilding(defs []BuildingDef, age string) bool {
+	for _, d := range defs {
+		if d.Category == "storage" && d.RequiredAge == age {
+			return true
+		}
+	}
+	return false
+}

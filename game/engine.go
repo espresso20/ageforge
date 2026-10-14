@@ -1989,21 +1989,7 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	permanentBonuses := make(map[string]float64)
-	for k, v := range ge.permanentBonuses {
-		permanentBonuses[k] = v
-	}
-	// Add prestige bonuses
-	for k, v := range ge.Prestige.GetBonuses() {
-		permanentBonuses[k] += v
-	}
-	// Add wonder bonus effects (Type "bonus" — multipliers such as production_all,
-	// knowledge_rate, expedition_reward). These are computed dynamically from built
-	// wonders each tick rather than stored in permanentBonuses so that save/load
-	// and prestige resets don't require special migration logic.
-	for k, v := range ge.getWonderBonuses() {
-		permanentBonuses[k] += v
-	}
+	permanentBonuses := ge.permanentBonusMap()
 
 	// Additive bonus pools now come from the resolver — the single source of
 	// truth shared with Breakdown/UI. buildResolver reads only already-held
@@ -2245,18 +2231,7 @@ func (ge *GameEngine) recalculateRates() {
 		specific := storageBonuses[def.Key]
 		specific += permanentBonuses[def.Key]
 		r := ge.Resources.resources[def.Key]
-		// Storage grows with Era Mastery's k, as production does, so a store
-		// holds the same hours of income at any speed. The techs' storage
-		// bonus multiplies beside it: +10% of everything the store holds.
-		r.Storage = float64((def.BaseStorage + allBonus + specific) * k)
-		if techStorage != 1 {
-			r.Storage = float64(r.Storage * techStorage)
-		}
-		// The soldiers' store has a term of its own on top
-		// (config.MechanicSoldierStorage).
-		if def.Key == "soldiers" {
-			r.Storage = ge.soldierRoom(r.Storage)
-		}
+		r.Storage = ge.storeSize(def, allBonus, specific, k, techStorage)
 		// Storage can shrink (a storage building sold or destroyed). Add clamps
 		// on the way in, but a resource with no production never passes through
 		// Add again, so without this it sat above its new cap indefinitely.
@@ -2270,6 +2245,62 @@ func (ge *GameEngine) recalculateRates() {
 			delete(ge.Resources.grace, def.Key)
 		}
 	}
+}
+
+// permanentBonusMap is every permanent bonus summed by name: the engine's own,
+// prestige's, and the built wonders' (Type "bonus" effects: multipliers such as
+// production_all, knowledge_rate, expedition_reward). The wonders' are computed
+// dynamically from built wonders each time rather than stored in
+// permanentBonuses, so save/load and prestige resets need no special
+// migration. recalculateRates and storeIf both read it, so a store is the
+// same size to each.
+func (ge *GameEngine) permanentBonusMap() map[string]float64 {
+	out := make(map[string]float64)
+	for k, v := range ge.permanentBonuses {
+		out[k] = v
+	}
+	for k, v := range ge.Prestige.GetBonuses() {
+		out[k] += v
+	}
+	for k, v := range ge.getWonderBonuses() {
+		out[k] += v
+	}
+	return out
+}
+
+// storeSize is the size of def's store from the storage the buildings and
+// the permanent bonuses give it (allBonus on every store, specific on this one).
+// Storage grows with Era Mastery's k, as production does, so a store holds
+// the same hours of income at any speed. The techs' storage bonus multiplies
+// beside it: +10% of everything the store holds. The soldiers' store has a
+// term of its own on top (config.MechanicSoldierStorage). The one place a
+// store's size is worked out: recalculateRates sets every store with it, and
+// storeIf asks it what a store would be with more storage built. Caller holds
+// the lock.
+func (ge *GameEngine) storeSize(def config.ResourceDef, allBonus, specific, k, techStorage float64) float64 {
+	size := float64((def.BaseStorage + allBonus + specific) * k)
+	if techStorage != 1 {
+		size = float64(size * techStorage)
+	}
+	if def.Key == "soldiers" {
+		size = ge.soldierRoom(size)
+	}
+	return size
+}
+
+// storeIf is the size of res's store were the buildings to give extraAll more
+// on every store and extraOwn more on res alone, in raw building bonus, before
+// Era Mastery and the techs multiply it: what the copies in the build queue
+// will make it. With both 0 it is the store as recalculateRates sets it.
+func (ge *GameEngine) storeIf(res string, extraAll, extraOwn float64) float64 {
+	def, ok := ge.Resources.defs[res]
+	if !ok {
+		return 0
+	}
+	bonuses, permanent := ge.Buildings.GetStorageBonuses(), ge.permanentBonusMap()
+	allBonus := bonuses["all"] + permanent["all"] + extraAll
+	specific := bonuses[res] + permanent[res] + extraOwn
+	return ge.storeSize(def, allBonus, specific, ge.speedK(), 1+ge.Research.Bonus(config.EffectStorage, ""))
 }
 
 // Age-transition resource carryover tuning (EPIC: age-pacing economy rebalance).
@@ -3597,7 +3628,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 			cost, _ = splitBank(cost, prepaid)
 		}
 		if res := ge.overStore(cost); res != "" {
-			return fmt.Errorf("%s", ge.storeTooSmallText(def.Name, res, cost[res]))
+			return fmt.Errorf("%s", ge.buildWallText(def, res, cost[res]))
 		}
 		if !ge.Resources.Pay(cost) {
 			return fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(cost))
@@ -3730,7 +3761,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 			}
 		}
 		if overRes != "" {
-			return 0, fmt.Errorf("%s", ge.storeTooSmallText(def.Name, overRes, overAmt))
+			return 0, fmt.Errorf("%s", ge.buildWallText(def, overRes, overAmt))
 		}
 		unitCost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		return 0, fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(unitCost))
@@ -4008,15 +4039,44 @@ func (ge *GameEngine) overStore(cost map[string]float64) string {
 
 // storeTooSmallText is the refusal for a price larger than a store: which
 // store, how much it holds, and what to build to enlarge it (the age's
-// storage building, when the age has one).
+// storage building, when the age has one and can still be built). When the
+// age's storage building has run out of copies it says so instead of sending
+// the player to it.
 func (ge *GameEngine) storeTooSmallText(what, res string, amount float64) string {
 	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", what, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
 	for _, d := range ge.rules.Buildings() {
 		if d.Category == "storage" && d.RequiredAge == ge.age {
+			if ge.Buildings.StorageLimit(d.Key, ge.Resources, ge.buildQueue, ge.storeIf) != "" {
+				return line + ge.storageLimitTail()
+			}
 			return line + " Build more storage first: " + d.Name + "."
 		}
 	}
 	return line
+}
+
+// storageLimitTail ends the refusal for a store that cannot grow: the age's
+// storage building has no copy left that the store could pay for.
+func (ge *GameEngine) storageLimitTail() string {
+	tail := " Your storage is at its limit for this age."
+	if next := ge.progress.GetNextAge(ge.age); next != "" && ge.rules.AgeHasStorageBuilding(next) {
+		tail += " The next age has a bigger storage building."
+	}
+	return tail
+}
+
+// buildWallText is the refusal for a building priced over a store. A storage
+// building is never sent to itself: with a copy still going up it waits for
+// it, and with none it is at its limit.
+func (ge *GameEngine) buildWallText(def config.BuildingDef, res string, amount float64) string {
+	if def.Category != "storage" {
+		return ge.storeTooSmallText(def.Name, res, amount)
+	}
+	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", def.Name, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
+	if ge.Buildings.StorageLimit(def.Key, ge.Resources, ge.buildQueue, ge.storeIf) != "" {
+		return line + ge.storageLimitTail()
+	}
+	return line + " The " + def.Name + " already under construction will raise it."
 }
 
 func (ge *GameEngine) shortfallText(cost map[string]float64) string {
@@ -4844,7 +4904,7 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:          nextAgeName,
 		NextAgeBldReqs:       nextAgeBldReqs,
 		Resources:            ge.Resources.Snapshot(),
-		Buildings:            ge.withScholarFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount)),
+		Buildings:            ge.withScholarFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.storeIf)),
 		Scholars:             ge.scholarsStateLocked(),
 		BuildQueue:           queue,
 		Workers:              workers,

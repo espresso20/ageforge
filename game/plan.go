@@ -619,6 +619,11 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		}
 		if res := ge.overStore(chk.cost); res != "" {
 			chk.blocked = "needs more " + ge.rules.ResourceLabel(res) + " storage"
+			if ge.Buildings.StorageLimit(it.Key, ge.Resources, ge.buildQueue, ge.storeIf) != "" {
+				// A storage building is not waiting on storage: it has none
+				// left to build this age.
+				chk.blocked = "at its storage limit"
+			}
 			return chk
 		}
 		if res := ge.planUnfunded(chk.cost); res != "" {
