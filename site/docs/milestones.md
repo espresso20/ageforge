@@ -67,10 +67,10 @@ Housing caps your population, so the ladder climbs with the ages: Small Village 
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| Knowledge Seeker | Research steadily this run (a bar in the Milestones panel fills) | +5% research speed |
+| Knowledge Seeker | Research steadily this run (a bar in the Milestones panel fills) | +5% scholar output |
 | First Research | Research 1 tech | research progress |
 | Tech Pioneer | Research 22 techs | +5% research speed |
-| Scholar's Haven | Build 3 Libraries and have 50 scholars | +10% research speed |
+| Scholar's Haven | Build 3 Libraries and have 50 scholars | +10% scholar output |
 | Renaissance Mind *(hidden)* | Research 83 techs | +10% research speed |
 | Tech Master *(hidden)* | Research 114 techs (Information Age) | +10% research speed, +5% all production |
 
@@ -151,9 +151,9 @@ The last three milestones pay out all production, so completing the chain lifts 
 |---|---|---|
 | Bronze Age Pioneer | Bronze Age | +30 iron, +30 gold |
 | Iron Forged | Iron Age | +40 iron, +10% iron rate |
-| Classical Scholar | Classical Age | research progress, +10% research speed |
+| Classical Scholar | Classical Age | research progress, +10% scholar output |
 | Medieval Lord | Medieval Age | +50 faith, +25 steel |
-| Enlightened | Renaissance Age | +75 culture, +15% research speed |
+| Enlightened | Renaissance Age | +75 culture, +15% scholar output |
 
 **Chain reward:** Title "The Ancients" · game speed +250% for 150 ticks
 
@@ -171,7 +171,7 @@ The last three milestones pay out all production, so completing the chain lifts 
 | Electric Dawn *(hidden)* | Electric Age | +15% all production |
 | Atomic Pioneer *(hidden)* | Atomic Age | +15% all production |
 | Modern Era *(hidden)* | Modern Age | +20% all production |
-| Information Pioneer *(hidden)* | Information Age | +20% research speed |
+| Information Pioneer *(hidden)* | Information Age | +20% scholar output |
 | Digital Native *(hidden)* | Digital Age | +20% all production |
 | Jacked In *(hidden)* | Cyberpunk Age | +15% worker output |
 | Fusion Pioneer *(hidden)* | Fusion Age | +20% all production |
@@ -196,7 +196,7 @@ These milestones sit outside the chains and don't count toward any chain title.
 | First Shrine | Build 1 Shrine | +10 faith |
 | Devout Settlement | Build 16 Shrines (Stone Age) | +5% faith rate |
 | Temple City *(hidden)* | Build 18 Temples (Iron Age) | +10% faith rate |
-| Cathedral Age *(hidden)* | Build 10 Cathedrals (Medieval Age) | +10% faith rate, +5% research speed |
+| Cathedral Age *(hidden)* | Build 10 Cathedrals (Medieval Age) | +10% faith rate, +5% scholar output |
 
 **Epoch and longevity** (the Milestones panel's Epoch group)
 
@@ -227,9 +227,9 @@ These milestones sit outside the chains and don't count toward any chain title.
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| Deep Thinker | Research 46 techs (Bronze Age) | +5% research speed |
+| Deep Thinker | Research 46 techs (Bronze Age) | +5% scholar output |
 | Philosophes | Research 64 techs (Classical Age) | +5% research speed |
-| Grand Library Built *(hidden)* | Build the Great Library (Classical Age) | +15% research speed |
+| Grand Library Built *(hidden)* | Build the Great Library (Classical Age) | +15% scholar output |
 | Tech Ascendant *(hidden)* | Research all 203 techs (Transcendent Age) | +20% research speed |
 
 **Settlement**

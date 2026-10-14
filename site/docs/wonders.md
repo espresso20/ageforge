@@ -174,7 +174,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Stone | 10.5M |
 | Gold | 8.07M |
 
-**Bonus:** **+30% research speed**
+**Bonus:** **+30% scholar output**
 
 ---
 
@@ -283,7 +283,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Electricity | 1.54T |
 | Gold | 3.84T |
 
-**Bonus:** +30.0 data/t · **+30% research speed**
+**Bonus:** +30.0 data/t · **+30% scholar output**
 
 ---
 
@@ -412,7 +412,7 @@ These figures are the morale **ceiling**, how high the morale percentage can cli
 ## Tips
 
 - Bank resources over several deposits as they come in, rather than waiting to cover the whole price at once. Overflow does some of this for you.
-- **Great Library** and **Global Network** each give +30% research speed, and the two stack.
+- **Great Library** and **Global Network** each give +30% scholar output, and the two stack.
 - **Grand Lighthouse** and the Rocketry tech both raise expedition rewards, and they stack.
 - Build each age's wonder early. It is required for `advance`, and its bonuses last for the rest of the run.
 - **Crystal Palace** (+15% all production) lands in the Industrial Age, before the all-production pool usually reaches its cap, so it counts in full.

@@ -279,7 +279,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `language` | Language | spine | 7m 52s | none | +10% research speed |
+| `language` | Language | spine | 7m 52s | none | +10% scholar output |
 | `fire_mastery` | Fire Mastery | optional | 13m | none | +10% food production, +5% housing |
 | `tool_making` | Tool Making | spine | 10m | none | +10% food production, +10% wood production, gathering by hand brings 2 more |
 
@@ -290,7 +290,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `ritual` | Ritual | spine | 4m 46s | `language` | Opens the Standing Stones, +10% faith production |
-| `primitive_writing` | Primitive Writing | spine | 6m 12s | `language` | +10% research speed |
+| `primitive_writing` | Primitive Writing | spine | 6m 12s | `language` | +10% scholar output |
 | `pottery` | Pottery | optional | 10m | `fire_mastery` | +10% storage |
 | `animal_husbandry` | Animal Husbandry | optional | 13m | `fire_mastery` | +10% food production |
 | `woodworking` | Woodworking | optional | 17m | `tool_making` | +10% wood production |
@@ -303,7 +303,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `calendar` | Calendar | **keystone** (Stonehenge) | 7m | `ritual` | Opens the Altar, +10% faith production |
-| `map_making` | Map Making | optional | 9m 6s | `primitive_writing` | +10% research speed |
+| `map_making` | Map Making | optional | 9m 6s | `primitive_writing` | +10% scholar output |
 | `currency` | Currency | spine | 4m 8s | `primitive_writing` | +10% gold production |
 | `boatbuilding` | Boatbuilding | optional | 11m | `woodworking` | +5% food production, trade routes bring in 10% more |
 | `agriculture` | Agriculture | optional | 15m | `animal_husbandry` | +10% food production |
@@ -319,7 +319,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `priesthood` | Priesthood | optional | 22m | `calendar` | Morale can rise 5 points higher |
-| `mathematics` | Mathematics | **keystone** (Colosseum) | 17m | `primitive_writing` | +8% research speed |
+| `mathematics` | Mathematics | **keystone** (Colosseum) | 17m | `primitive_writing` | +8% scholar output |
 | `exploration` | Exploration | spine | 10m | one of `map_making` or `boatbuilding` | Opens expeditions past the Scout Party |
 | `irrigation` | Irrigation | optional | 28m | `agriculture` | +8% food production, +5% housing |
 | `road_building` | Road Building | optional | 37m | `masonry`, `the_wheel` | +8% gold production, trade routes take 15% less time |
@@ -334,7 +334,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `drama` | Drama | optional | 30m | `priesthood` | Opens festivals |
-| `philosophy` | Philosophy | **keystone** (Parthenon) | 23m | `mathematics` | +8% research speed |
+| `philosophy` | Philosophy | **keystone** (Parthenon) | 23m | `mathematics` | +8% scholar output |
 | `envoys` | Envoys | optional | 39m | `exploration` | Opens diplomacy |
 | `the_plough` | The Plough | optional | 50m | `irrigation` | +8% food production |
 | `civil_engineering` | Civil Engineering | optional | 1h 6m | `road_building` | +8% stone production, buildings cost 3% less |
@@ -348,7 +348,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `theology` | Theology | **keystone** (Great Library) | 31m | `philosophy` | Opens the Cathedral, +8% faith production |
-| `alchemy` | Alchemy | optional | 40m | `philosophy` | +8% research speed |
+| `alchemy` | Alchemy | optional | 40m | `philosophy` | +8% scholar output |
 | `scholasticism` | Scholasticism | capstone | 1h 55m | `alchemy`, `theology` | Research takes 6% less time |
 | `banking` | Banking | spine | 18m | `currency`, `mathematics` | +8% gold production |
 | `feudalism` | Feudalism | optional | 52m | `the_plough` | +8% housing |
@@ -364,7 +364,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `patronage` | Patronage | **keystone** (Sistine Chapel) | 1h 7m | `banking` | +6% culture production |
-| `printing_press` | Printing Press | optional | 1h 28m | `alchemy`, `theology` | +6% research speed, research takes 3% less time |
+| `printing_press` | Printing Press | optional | 1h 28m | `alchemy`, `theology` | +6% scholar output, research takes 3% less time |
 | `navigation` | Navigation | spine | 52m | `exploration`, `mathematics` | Opens the Naval Expedition, +10% expedition rewards |
 | `crop_rotation` | Crop Rotation | optional | 1h 54m | `feudalism` | +6% food production |
 | `architecture` | Architecture | optional | 2h 29m | `civil_engineering` | Buildings cost 3% less, wonders take 25% less time to build |
@@ -394,7 +394,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `romanticism` | Romanticism | optional | 43m | `baroque_arts` | +6% culture production |
-| `encyclopedia` | Encyclopedia | optional | 56m | `scientific_method` | +6% research speed |
+| `encyclopedia` | Encyclopedia | optional | 56m | `scientific_method` | +6% scholar output |
 | `railroads` | Railroads | optional | 1h 12m | `steam_power`, `road_building` | Opens the Rail Freight route, trade routes take 15% less time |
 | `geographic_societies` | Geographic Societies | optional | 1h 34m | `cartography` | Opens the Geographic Society |
 | `concert_of_nations` | Concert of Nations | capstone | 5h 52m | `embassies`, `geographic_societies` | Opens the Grand Embassy, alliances give 25% more |
@@ -413,7 +413,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `museums` | Museums | optional | 3h 2m | `romanticism` | +5% culture production |
-| `public_education` | Public Education | optional | 3h 57m | `encyclopedia` | +5% research speed, research takes 3% less time |
+| `public_education` | Public Education | optional | 3h 57m | `encyclopedia` | +5% scholar output, research takes 3% less time |
 | `telecommunications` | Telecommunications | optional | 5h 9m | `electrification` | Deals refresh 30% sooner, gifts cost 25% less |
 | `sanitation` | Sanitation | optional | 6h 41m | `seed_drill` | +6% housing |
 | `mass_production` | Mass Production | **keystone** (Eiffel Tower) | 2h 20m | `industrialization` | Construction takes 8% less time |
@@ -428,7 +428,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `radio` | Radio | optional | 5h 28m | `telecommunications` | Festivals come back 20% sooner |
-| `modern_physics` | Modern Physics | optional | 7h 5m | `public_education` | +5% research speed |
+| `modern_physics` | Modern Physics | optional | 7h 5m | `public_education` | +5% scholar output |
 | `wire_transfers` | Wire Transfers | optional | 9h 14m | `telecommunications` | +5% gold production |
 | `fertilizers` | Fertilizers | optional | 12h | `sanitation` | +5% food production |
 | `assembly_line` | Assembly Line | optional | 15h 34m | `mass_production` | Construction takes 5% less time |
@@ -462,7 +462,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `television` | Television | optional | 6h 3m | `cinema` | Opens the Monument of Ages |
-| `information_theory` | Information Theory | optional | 7h 52m | `modern_physics` | +5% research speed |
+| `information_theory` | Information Theory | optional | 7h 52m | `modern_physics` | +5% scholar output |
 | `containerization` | Containerization | optional | 10h 13m | `corporations` | Opens the Seaport, trade routes bring in 10% more |
 | `suburbs` | Suburbs | optional | 13h 18m | `green_revolution` | +5% housing |
 | `nanofabrication` | Nanofabrication | optional | 17h 18m | `computers` | Buildings cost 3% less |
@@ -470,7 +470,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | `special_forces` | Special Forces | optional | 29h 11m | `nuclear_deterrence` | Campaigns take 15% less time |
 | `electricity_tech` | Advanced Electrics | spine | 2h 45m | `nuclear_fission` | Opens the Power Grid Hub, +5% electricity production |
 | `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 4h 39m | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
-| `computers` | Computers | spine | 3h 35m | `electricity_tech` | +5% research speed, research takes 3% less time |
+| `computers` | Computers | spine | 3h 35m | `electricity_tech` | +5% scholar output, research takes 3% less time |
 
 ---
 
@@ -497,7 +497,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `virtual_reality` | Virtual Reality | optional | 1h 56m | `social_media` | Morale can rise 5 points higher |
-| `open_science` | Open Science | optional | 2h 31m | `search_engines` | +5% research speed |
+| `open_science` | Open Science | optional | 2h 31m | `search_engines` | +5% scholar output |
 | `automated_logistics` | Automated Logistics | optional | 3h 17m | `e_commerce` | Opens the Logistics Hub, trade routes take 15% less time |
 | `global_village` | Global Village | capstone | 26h 49m | `e_commerce`, `social_media` | Every civilization offers 1 more deal, alliances cost 50% less |
 | `gene_editing` | Gene Editing | optional | 4h 16m | `medical_nanobots` | +5% food production |
@@ -517,7 +517,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `holography` | Holography | optional | 8h 12m | `cybernetics`, `blockchain` | Opens the Holographic Theater |
-| `neural_interface` | Neural Interface | spine | 4h 51m | `machine_learning` | +4% research speed |
+| `neural_interface` | Neural Interface | spine | 4h 51m | `machine_learning` | +4% scholar output |
 | `blockchain` | Blockchain | optional | 10h 41m | `cybersecurity`, `cloud_computing` | +4% crypto production |
 | `synthetic_food` | Synthetic Food | optional | 13h 52m | `gene_editing` | +4% food production |
 | `cybernetics` | Cybernetics | **keystone** (Neon Citadel) | 6h 19m | `neural_interface` | Opens the Combat Aug Center, +10% military power |
@@ -552,7 +552,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `overview_effect` | Overview Effect | optional | 15h 7m | `neural_art` | Morale can rise 5 points higher |
-| `deep_space_astronomy` | Deep Space Astronomy | optional | 19h 38m | `unified_theory` | +4% research speed |
+| `deep_space_astronomy` | Deep Space Astronomy | optional | 19h 38m | `unified_theory` | +4% scholar output |
 | `asteroid_claims` | Asteroid Claims | optional | 25h 34m | `maglev_transit` | Trade routes bring in 10% more |
 | `stellar_cartography` | Stellar Cartography | capstone | 123h 22m | `asteroid_claims`, `deep_space_astronomy` | Expeditions take 20% less time, +10% expedition rewards |
 | `hydroponics` | Hydroponics | optional | 33h 14m | `closed_biospheres` | +4% food production |

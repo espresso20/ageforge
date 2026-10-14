@@ -479,3 +479,22 @@ func TestConfigPlayerTextStyle(t *testing.T) {
 		}
 	}
 }
+
+// The scholars' work pool and the research time pool are two bonuses with two
+// names. A timed boon names the work pool by its old resource key.
+func TestScholarOutputAndResearchSpeedHaveTheirOwnLabels(t *testing.T) {
+	for target, want := range map[string]string{
+		"knowledge_rate": "scholar output",
+		"knowledge":      "scholar output",
+		"research_speed": "research speed",
+	} {
+		if got := EffectTargetLabel(target); got != want {
+			t.Errorf("EffectTargetLabel(%q) = %q, want %q", target, got, want)
+		}
+	}
+	for _, e := range []TechEffect{{Kind: EffectOutput, Target: ResearchTarget, Value: 0.1}} {
+		if got := e.Text(); got != "+10% scholar output" {
+			t.Errorf("a tech's research output reads %q", got)
+		}
+	}
+}

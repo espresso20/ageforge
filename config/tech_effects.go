@@ -217,7 +217,7 @@ func (e TechEffect) Text() string {
 	switch e.Kind {
 	case EffectOutput:
 		if e.Target == ResearchTarget {
-			return signed(e.Value, pct) + " research speed"
+			return signed(e.Value, pct) + " scholar output"
 		}
 		return signed(e.Value, pct) + " " + ResourceLabel(e.Target) + " production"
 	case EffectAllOutput:

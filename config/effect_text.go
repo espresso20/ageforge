@@ -60,8 +60,11 @@ func EffectTargetLabel(target string) string {
 	case "population":
 		return "housing"
 	}
-	if target == "knowledge_rate" {
-		return "research speed"
+	if target == "knowledge_rate" || target == "knowledge" {
+		// The scholars' work pool. "research speed" is the time pool. The
+		// pool kept the key of the resource it used to be, and a timed
+		// boon (Enlightenment) names it by that key.
+		return "scholar output"
 	}
 	if res, ok := strings.CutSuffix(target, "_rate"); ok {
 		return ResourceLabel(res) + " production"
