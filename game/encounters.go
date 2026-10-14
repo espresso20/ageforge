@@ -137,7 +137,7 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 		return nil
 	}
 
-	ageOrder := ge.progress.GetAgeOrder()
+	ageOrder := ge.progress.ageOrder()
 	undiscovered := ge.eligibleFactions(ageOrder, false)
 	discovered := ge.eligibleFactions(ageOrder, true)
 

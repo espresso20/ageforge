@@ -428,8 +428,10 @@ func truthResearchTime(t *testing.T, ge *GameEngine) float64 {
 // with no discount), read off a reference building's price.
 func truthBuildCost(ge *GameEngine) float64 {
 	ge.Buildings.defs[truthRefBuilding] = config.BuildingDef{Key: truthRefBuilding, BaseCost: map[string]float64{"wood": truthRefCost}, CostScale: 1}
+	ge.Buildings.rebuildOrder()
 	c := ge.Buildings.GetCost(truthRefBuilding)["wood"]
 	delete(ge.Buildings.defs, truthRefBuilding)
+	ge.Buildings.rebuildOrder()
 	return c / truthRefCost
 }
 
@@ -1982,13 +1984,17 @@ func truthBuildingPromises() []truthPromise {
 							d := saved
 							d.Effects = effects
 							bm.defs[key] = d
+							bm.rebuildOrder()
 							bm.counts[key] = int(count)
 						}
 					}
 					return truthSwitch{
-						off:     set(nil),
-						on:      set([]config.Effect{eff}),
-						restore: func() { bm.defs[key] = saved },
+						off: set(nil),
+						on:  set([]config.Effect{eff}),
+						restore: func() {
+							bm.defs[key] = saved
+							bm.rebuildOrder()
+						},
 					}
 				},
 			})

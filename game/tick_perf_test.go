@@ -68,6 +68,57 @@ func BenchmarkTick(b *testing.B) {
 	}
 }
 
+func TestBuiltSubsetsMatchFullOrder(t *testing.T) {
+	ge := newLateGameEngine(t)
+	for key, def := range ge.Buildings.defs {
+		if def.Category == "wonder" || def.Category == "monument" || def.Scholars > 0 {
+			ge.Buildings.counts[key] = 3
+		}
+	}
+
+	wantMorale := 1.0
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+		if def.Category == "wonder" {
+			wantMorale += float64(0.05 * float64(count))
+		}
+	})
+	wantMorale += ge.Research.Mechanic(config.MechanicMoraleCap)
+	if got := ge.moraleCap(); got != wantMorale {
+		t.Errorf("moraleCap = %v, want %v", got, wantMorale)
+	}
+
+	wantBonuses := make(map[string]float64)
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+		if def.Category != "wonder" && def.Category != "monument" {
+			return
+		}
+		for _, eff := range def.Effects {
+			if eff.Type == "bonus" {
+				wantBonuses[eff.Target] += float64(eff.Value * float64(count))
+			}
+		}
+	})
+	gotBonuses := ge.getWonderBonuses()
+	if len(gotBonuses) != len(wantBonuses) {
+		t.Errorf("getWonderBonuses returned %d entries, want %d", len(gotBonuses), len(wantBonuses))
+	}
+	for key, want := range wantBonuses {
+		if got := gotBonuses[key]; got != want {
+			t.Errorf("getWonderBonuses[%q] = %v, want %v", key, got, want)
+		}
+	}
+
+	wantScholars := 0
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+		if def.Scholars > 0 {
+			wantScholars += count * def.Scholars
+		}
+	})
+	if got := ge.scholarTotal(); got != wantScholars {
+		t.Errorf("scholarTotal = %d, want %d", got, wantScholars)
+	}
+}
+
 // newStaffedLateGameEngine is newLateGameEngine with its buildings staffed,
 // so the census has a payroll to read. With account set it is held by an
 // account that has earned nothing, in a temp data root: every badge in the
