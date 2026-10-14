@@ -24,10 +24,14 @@ func (ge *GameEngine) townIncome(res string) float64 {
 	if r == nil {
 		return 0
 	}
+	// Prestige, like Era Mastery, is applied after timed event production.
+	// Undo both final stages before sizing a new event, so its amount is
+	// multiplied exactly once when the rates are next recalculated.
 	made := r.Rate
 	if k := ge.speedK(); k > 0 && k != 1 {
 		made = made / k
 	}
+	made -= r.Breakdown.PrestigeRate
 	made -= r.Breakdown.EventRate
 	made -= r.Breakdown.FoodDrain // the drain is negative: this puts it back
 	return max(made, 0)

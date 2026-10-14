@@ -372,6 +372,72 @@ func TestPrestigeProductionFrontierOnlineOffline(t *testing.T) {
 	if got, want := bonus.Resources.Get(key)-startBonus, (base.Resources.Get(key)-startBase)*factor; !near(got, want) {
 		t.Errorf("offline %s gain = %v, want %v", key, got, want)
 	}
+
+	// Prestige multiplies the net rate too: a food drain remains a deficit,
+	// just a larger one. This holds the final-stage order away from positive
+	// production alone.
+	base, _ = newTown(0)
+	bonus, _ = newTown(201)
+	extraWorkers := int(base.Resources.resources["food"].Rate/base.Workers.FoodCostPerWorker()) + 1
+	base.Workers.domains["worker"].count += extraWorkers
+	bonus.Workers.domains["worker"].count += extraWorkers
+	base.recalculateRates()
+	bonus.recalculateRates()
+	if base.Resources.resources["food"].Rate >= 0 {
+		t.Fatalf("setup: food rate = %v, want a deficit", base.Resources.resources["food"].Rate)
+	}
+	if got, want := bonus.Resources.resources["food"].Rate, base.Resources.resources["food"].Rate*factor; !near(got, want) {
+		t.Errorf("deficit food rate = %v, want %v", got, want)
+	}
+}
+
+// TestPrestigeProductionRateEventSizesBeforePrestige holds rate-sized events
+// to the same final-stage order: a +50% event is sized before the lasting
+// multiplier, then receives that multiplier exactly once online and away.
+func TestPrestigeProductionRateEventSizesBeforePrestige(t *testing.T) {
+	const (
+		age    = "information_age"
+		points = 201 // L is about 5x under the square-root curve.
+	)
+	newTown := func() (*GameEngine, string) {
+		ge := newTruthEngine(age, truthClean)
+		ge.Prestige.LoadState(1, points, 0, nil)
+		ge.recalculateRates()
+		for _, key := range ge.Resources.order {
+			if ge.Resources.resources[key].Rate > 0 {
+				return ge, key
+			}
+		}
+		t.Fatal("frontier town has no positive production")
+		return nil, ""
+	}
+	withEvent := func() (*GameEngine, string) {
+		ge, key := newTown()
+		effects := ge.sizeEffects([]config.Effect{{Type: config.EventRate, Target: key, Value: 0.50}})
+		if len(effects) != 1 || effects[0].Type != "production" || effects[0].Target != key {
+			t.Fatalf("sized event = %+v, want one production effect for %s", effects, key)
+		}
+		ge.Events.InjectEvent(ActiveEvent{Key: "prestige_rate_test", Name: "Prestige Rate Test", TicksLeft: 1 << 20, Effects: effects})
+		ge.recalculateRates()
+		return ge, key
+	}
+
+	base, key := newTown()
+	online, _ := withEvent()
+	if got, want := online.Resources.resources[key].Rate, base.Resources.resources[key].Rate*1.5; !near(got, want) {
+		t.Errorf("online %s rate with +50%% event = %v, want %v", key, got, want)
+	}
+
+	base, key = newTown()
+	offline, _ := withEvent()
+	truthRoom(base, key, base.Resources.resources[key].Rate*10)
+	truthRoom(offline, key, offline.Resources.resources[key].Rate*10)
+	startBase, startOffline := base.Resources.Get(key), offline.Resources.Get(key)
+	base.SimulateOffline(10 * time.Second)
+	offline.SimulateOffline(10 * time.Second)
+	if got, want := offline.Resources.Get(key)-startOffline, (base.Resources.Get(key)-startBase)*1.5; !near(got, want) {
+		t.Errorf("offline %s gain with +50%% event = %v, want %v", key, got, want)
+	}
 }
 
 // TestBonusTruthUnknownEffect: an effect type or target the guard has no
