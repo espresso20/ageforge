@@ -10,47 +10,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// level5Upgrades is the prestige audit's level-5 save: five Modern Age
-// prestiges bought cheapest first, 83 points spent, 3 left (the plan's
-// worked example).
-var level5Upgrades = map[string]int{
-	"gather_boost": 3, "storage_bonus": 3, "research_speed": 3, "military_power": 3,
-	"starting_food": 5, "starting_wood": 4, "population_cap": 3, "expedition_loot": 3,
-	"tick_speed": 0,
-}
-
-const level5Fixture = "testdata/level5_shop_v1.json"
-
-// TestWriteLevel5Fixture regenerates the signed level-5 fixture: a save from
-// before Era Mastery and the legacy kit (no mastery, no shop version, no kit
-// memory), mid-run in the Industrial Age. Run with UPDATE_FIXTURES=1; the committed bytes are what
-// TestShopRefundLevel5Fixture loads, so a renamed or removed save field
-// breaks its signature check.
-func TestWriteLevel5Fixture(t *testing.T) {
-	if os.Getenv("UPDATE_FIXTURES") == "" {
-		t.Skip("set UPDATE_FIXTURES=1 to rewrite " + level5Fixture)
-	}
-	isolateAccountDir(t)
-	ge := newSeededEngine(21)
-	ge.StepTicks(30)
-	ge.mu.Lock()
-	ge.age = "industrial_age"
-	ge.currentEpoch = config.EpochForAge("industrial_age")
-	ge.Stats.AgesReached = []string{"primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"}
-	ge.mu.Unlock()
-	ge.mu.Lock()
-	ge.Prestige.LoadState(5, 86, 3, level5Upgrades)
-	ge.mu.Unlock()
-	oldSave(t, ge, "level5") // from before Era Mastery and the legacy kit
-	data, err := os.ReadFile(savePath("level5"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(level5Fixture, data, 0o644); err != nil {
-		t.Fatal(err)
-	}
-}
-
 // loadFixture copies a committed save into the test's save directory and
 // loads it.
 func loadFixture(t *testing.T, path, name string) *GameEngine {
@@ -70,139 +29,6 @@ func loadFixture(t *testing.T, path, name string) *GameEngine {
 		t.Fatal(err)
 	}
 	return ge
-}
-
-func refundLines(ge *GameEngine) []string {
-	var out []string
-	for _, l := range ge.GetLogs() {
-		if strings.HasPrefix(l.Message, "The prestige shop changed.") {
-			out = append(out, l.Message)
-		}
-	}
-	return out
-}
-
-// TestShopRefundLevel5Fixture: the plan's worked example. A signed level-5
-// save from the first shop still verifies; its 83 spent and 3 unspent old
-// points become 600 new ones (5 prestiges at 120, more than 86 × 4.44 =
-// 382), Available and the lifetime total both; the nine old tiers go to 0
-// and keep their keys; the shop version becomes 2, with one log line. A
-// second load refunds nothing, and the retired perks can't be bought.
-func TestShopRefundLevel5Fixture(t *testing.T) {
-	isolateAccountDir(t)
-	ge := loadFixture(t, level5Fixture, "level5")
-	if ge.cheaterBadge {
-		t.Fatal("the signed level-5 fixture failed its signature check")
-	}
-	st := ge.GetState().Prestige
-	if st.Available != 600 || st.TotalEarned != 600 || st.Level != 5 {
-		t.Errorf("after the refund: available %d, total %d, level %d; want 600, 600, 5", st.Available, st.TotalEarned, st.Level)
-	}
-	if st.ShopVersion != config.PrestigeShopVersion {
-		t.Errorf("shop version %d, want %d", st.ShopVersion, config.PrestigeShopVersion)
-	}
-	for key := range level5Upgrades {
-		u, ok := st.Upgrades[key]
-		if !ok || u.Tier != 0 || !u.Retired {
-			t.Errorf("%s after the refund: %+v (present %v); want tier 0, retired", key, u, ok)
-		}
-		if tier, held := ge.Prestige.upgrades[key]; !held || tier != 0 {
-			t.Errorf("%s: the upgrades map holds %d (key kept %v); want the key kept at 0", key, tier, held)
-		}
-	}
-	want := "The prestige shop changed. Your old perks were refunded as 600 points (5 prestiges at 120 each)."
-	if lines := refundLines(ge); len(lines) != 1 || lines[0] != want {
-		t.Errorf("refund lines %q, want once %q", lines, want)
-	}
-	// Mastery seeding ran too (Pacing v2, PR 5): both one-time steps.
-	if m := ge.Prestige.Mastery("atomic_age"); m != 5 {
-		t.Errorf("Atomic Age mastery %d after seeding, want 5", m)
-	}
-
-	if err := ge.BuyPrestigeUpgrade("gather_boost"); err == nil || !strings.Contains(err.Error(), "old prestige shop") {
-		t.Errorf("buying a retired perk: %v, want a refusal naming the old shop", err)
-	}
-	if err := ge.SaveGame("level5"); err != nil {
-		t.Fatal(err)
-	}
-	if s := readSaveFromDisk(t, "level5"); s.Prestige.ShopVersion != config.PrestigeShopVersion || s.Prestige.Available != 600 {
-		t.Errorf("the next save carries shop version %d, available %d", s.Prestige.ShopVersion, s.Prestige.Available)
-	}
-	again := NewGameEngine()
-	if err := again.LoadGame("level5"); err != nil {
-		t.Fatal(err)
-	}
-	if p := again.GetState().Prestige; p.Available != 600 || p.TotalEarned != 600 || len(refundLines(again)) != 0 || again.cheaterBadge {
-		t.Errorf("second load: available %d, total %d, %d refund lines, tamper %v; want 600, 600, none, false",
-			p.Available, p.TotalEarned, len(refundLines(again)), again.cheaterBadge)
-	}
-}
-
-// TestShopRefundSynthetic: the same refund through the save writer the
-// smoke suite uses, and a level-0 save with nothing to refund is marked
-// silently.
-func TestShopRefundSynthetic(t *testing.T) {
-	isolateAccountDir(t)
-	ge := newSeededEngine(3)
-	if err := ge.WriteShopV1SaveForTest("synthetic", 5, 86, 3, level5Upgrades); err != nil {
-		t.Fatal(err)
-	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("synthetic"); err != nil {
-		t.Fatal(err)
-	}
-	if p := loaded.GetState().Prestige; p.Available != 600 || loaded.cheaterBadge {
-		t.Errorf("synthetic level-5 save: available %d, tamper %v; want 600, false", p.Available, loaded.cheaterBadge)
-	}
-
-	fresh := newSeededEngine(4)
-	if err := fresh.WriteShopV1SaveForTest("level0", 0, 0, 0, nil); err != nil {
-		t.Fatal(err)
-	}
-	zero := NewGameEngine()
-	if err := zero.LoadGame("level0"); err != nil {
-		t.Fatal(err)
-	}
-	if p := zero.GetState().Prestige; p.Available != 0 || p.ShopVersion != config.PrestigeShopVersion || len(refundLines(zero)) != 0 {
-		t.Errorf("level-0 save: available %d, shop version %d, %d refund lines; want 0, %d, none",
-			p.Available, p.ShopVersion, len(refundLines(zero)), config.PrestigeShopVersion)
-	}
-}
-
-// TestShopRefundRule: each past prestige counts as a Modern Age run (120
-// points), or the old points at 120 per 27 when that is more.
-func TestShopRefundRule(t *testing.T) {
-	maxed := map[string]int{}
-	spent := 0
-	for _, def := range config.PrestigeUpgrades() {
-		if def.Retired {
-			maxed[def.Key] = def.MaxTier
-			for _, c := range def.Costs {
-				spent += c
-			}
-		}
-	}
-	cases := []struct {
-		name              string
-		level, available  int
-		upgrades          map[string]int
-		wantOld, wantBack int
-	}{
-		{"level 0", 0, 0, nil, 0, 0},
-		{"level 5 (worked example)", 5, 3, level5Upgrades, 86, 600},
-		{"level 1, 27 points unspent", 1, 27, nil, 27, 120},
-		{"level 1, 60 points (rate wins)", 1, 60, nil, 60, 266},
-		{"level 38, maxed shop", 38, 0, maxed, spent, 4560},
-	}
-	for _, c := range cases {
-		old, back := config.ShopRefund(c.level, c.available, c.upgrades)
-		if old != c.wantOld || back != c.wantBack {
-			t.Errorf("%s: old %d, refund %d; want %d, %d", c.name, old, back, c.wantOld, c.wantBack)
-		}
-	}
-	if spent != 277 {
-		t.Errorf("a maxed first shop cost %d points, want 277 (the frozen costs moved)", spent)
-	}
 }
 
 // TestPrestigeFromMedieval: prestige opens at the Medieval Age and pays its
@@ -293,8 +119,8 @@ func TestPlanLogRecordsThePlanAsWritten(t *testing.T) {
 	ge.mu.Lock()
 	n := len(ge.planLog)
 	ge.mu.Unlock()
-	if n != 0 {
-		t.Errorf("the new run's plan log holds %d items, want 0", n)
+	if n != 2 {
+		t.Errorf("the new run's plan log holds %d items, want the remembered first-age slice", n)
 	}
 }
 
@@ -437,7 +263,7 @@ func TestOldFriendsMetAtTheirAge(t *testing.T) {
 		ge.SetLegacyForTest(LegacyKit{Factions: []string{"riverlands_tribes", "ironhold_clans"}}, false)
 		ge.mu.Lock()
 		if own {
-			ge.Prestige.upgrades[config.LegacyFactions] = 1
+			ge.Prestige.level = 1
 		}
 		ge.advanceAge("stone_age")
 		early := ge.Diplomacy.IsDiscovered("riverlands_tribes")
@@ -458,38 +284,24 @@ func TestOldFriendsMetAtTheirAge(t *testing.T) {
 	}
 }
 
-// TestWorkerSharesCarryOver: with Worker Shares bought, the shares set in a
-// run are set again in the next; without it they go back to auto.
+// TestWorkerSharesCarryOver: the first prestige makes remembered shares free.
 func TestWorkerSharesCarryOver(t *testing.T) {
 	isolateAccountDir(t)
-	for _, own := range []bool{true, false} {
-		ge := newSeededEngine(16)
-		if _, err := ge.SetWorkerShare("faith", 40); err != nil {
-			t.Fatal(err)
-		}
-		if own {
-			ge.mu.Lock()
-			ge.Prestige.upgrades[config.LegacyWorkers] = 1
-			ge.mu.Unlock()
-		}
-		_ = ge.SummonHarbingerForTest("medieval_age")
-		if err := ge.DoPrestige(); err != nil {
-			t.Fatal(err)
-		}
-		got := ge.WorkerShares()
-		if own && got["faith"] != 40 {
-			t.Errorf("owned: shares after prestige %v, want knowledge 40", got)
-		}
-		if !own && len(got) != 0 {
-			t.Errorf("not owned: shares after prestige %v, want none (auto)", got)
-		}
+	ge := newSeededEngine(16)
+	if _, err := ge.SetWorkerShare("faith", 40); err != nil {
+		t.Fatal(err)
+	}
+	_ = ge.SummonHarbingerForTest("medieval_age")
+	if err := ge.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	if got := ge.WorkerShares(); got["faith"] != 40 {
+		t.Errorf("shares after first prestige %v, want faith 40", got)
 	}
 }
 
-// TestKitBoughtAfterPrestigeWorksNow: the kit remembers whether or not it
-// is bought, so Plan Template and Worker Shares bought in the new run's
-// first age apply at once.
-func TestKitBoughtAfterPrestigeWorksNow(t *testing.T) {
+// TestLegacyKitIsFreeAfterFirstPrestige applies remembered automation at once.
+func TestLegacyKitIsFreeAfterFirstPrestige(t *testing.T) {
 	isolateAccountDir(t)
 	ge := newSeededEngine(17)
 	if _, err := ge.PlanAddBuild("hut", 2); err != nil {
@@ -502,22 +314,14 @@ func TestKitBoughtAfterPrestigeWorksNow(t *testing.T) {
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatal(err)
 	}
-	if n := len(ge.GetState().Plan); n != 0 {
-		t.Fatalf("without the kit the new run's plan holds %d items", n)
-	}
-	for _, key := range []string{config.LegacyPlan, config.LegacyWorkers} {
-		if err := ge.BuyPrestigeUpgrade(key); err != nil {
-			t.Fatal(err)
-		}
-	}
 	if p := ge.GetState().Plan; len(p) != 1 || p[0].Key != "hut" || p[0].Count != 2 {
-		t.Errorf("plan after buying the template: %+v, want 2 huts", p)
+		t.Errorf("plan after first prestige: %+v, want 2 huts", p)
 	}
 	if got := ge.WorkerShares(); got["food"] != 50 {
 		t.Errorf("shares after buying Worker Shares: %v, want food 50", got)
 	}
 	if err := ge.BuyPrestigeUpgrade(config.LegacyPlan); err == nil {
-		t.Error("a second Plan Template was sold")
+		t.Error("a legacy kit item was still sold")
 	}
 }
 
@@ -527,7 +331,7 @@ func TestSuccumbReappliesTemplate(t *testing.T) {
 	isolateAccountDir(t)
 	ge := newSeededEngine(18)
 	ge.mu.Lock()
-	ge.Prestige.upgrades[config.LegacyPlan] = 1
+	ge.Prestige.level = 1
 	ge.mu.Unlock()
 	if _, err := ge.PlanAddBuild("hut", 3); err != nil {
 		t.Fatal(err)
@@ -579,8 +383,8 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 	gotLog, ver := clonePlanTemplate(loaded.planLog), loaded.Prestige.shopVersion
 	owned := loaded.Prestige.Owns(config.LegacyFactions)
 	loaded.mu.RUnlock()
-	if !reflect.DeepEqual(gotLog, log) || len(log) == 0 || ver != config.PrestigeShopVersion || !owned {
-		t.Errorf("after load: plan log %+v (want %+v), shop version %d, owns Old Friends %v", gotLog, log, ver, owned)
+	if !reflect.DeepEqual(gotLog, log) || len(log) == 0 || ver != 0 || !owned {
+		t.Errorf("after load: plan log %+v (want %+v), legacy field %d, owns Old Friends %v", gotLog, log, ver, owned)
 	}
 }
 
@@ -608,8 +412,64 @@ func TestNewSaveWritesNoEmptyKitFields(t *testing.T) {
 			t.Errorf("a save writes %s, a Research Memory field", field)
 		}
 	}
-	if !strings.Contains(string(data), `"shop_version": 2`) {
-		t.Error("a new game's save does not write its shop version")
+	if strings.Contains(string(data), `"shop_version"`) {
+		t.Error("a new game's save writes the retired shop version")
+	}
+}
+
+// TestLegacyShopSavesKeepTheirCarryOverAndPoints verifies old signed save
+// fields still load, while level rather than a former purchase turns on the
+// three free carry-overs.
+func TestLegacyShopSavesKeepTheirCarryOverAndPoints(t *testing.T) {
+	isolateAccountDir(t)
+	old := map[string]int{config.LegacyPlan: 1}
+	ge := newSeededEngine(31)
+	ge.mu.Lock()
+	ge.Prestige.LoadState(1, 120, 120, old)
+	ge.Prestige.LoadLegacy(2, []PlanTemplateItem{{Age: "primitive_age", Kind: PlanBuild, Key: "hut", Count: 1}}, []string{"riverlands_tribes"}, map[string]float64{"food": 40})
+	ge.mu.Unlock()
+	if err := ge.SaveGame("old-shop"); err != nil {
+		t.Fatal(err)
+	}
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame("old-shop"); err != nil {
+		t.Fatal(err)
+	}
+	p := loaded.GetState().Prestige
+	if p.TotalEarned != 120 || p.Available != 120 || p.ProductionMultiplier <= 1 {
+		t.Errorf("unspent old points loaded as %+v", p)
+	}
+	for _, key := range config.LegacyKit() {
+		if !loaded.Prestige.Owns(key) {
+			t.Errorf("first-prestige old save does not carry %s", key)
+		}
+	}
+	if err := loaded.SaveGame("old-shop-rewritten"); err != nil {
+		t.Fatal(err)
+	}
+	if saved := readSaveFromDisk(t, "old-shop-rewritten"); saved.Prestige.Upgrades != nil || saved.Prestige.ShopVersion != 0 {
+		t.Errorf("rewritten old save keeps shop state: %+v", saved.Prestige)
+	}
+
+	never := newSeededEngine(32)
+	never.mu.Lock()
+	never.Prestige.LoadState(0, 0, 0, map[string]int{config.LegacyPlan: 1, config.LegacyWorkers: 1, config.LegacyFactions: 1})
+	never.mu.Unlock()
+	if err := never.SaveGame("never-prestiged"); err != nil {
+		t.Fatal(err)
+	}
+	loaded = NewGameEngine()
+	if err := loaded.LoadGame("never-prestiged"); err != nil {
+		t.Fatal(err)
+	}
+	p = loaded.GetState().Prestige
+	if p.ProductionMultiplier != 1 {
+		t.Errorf("never-prestiged multiplier = %v, want 1", p.ProductionMultiplier)
+	}
+	for _, key := range config.LegacyKit() {
+		if loaded.Prestige.Owns(key) {
+			t.Errorf("never-prestiged save carries %s", key)
+		}
 	}
 }
 

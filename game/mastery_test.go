@@ -339,10 +339,8 @@ func TestMasteryPassiveRetired(t *testing.T) {
 	if st.TickSpeedBonus != 0 || st.Prestige.PassiveBonus != 0 {
 		t.Errorf("after a prestige: tick speed %v, passive %v; the passive retired into Era Mastery", st.TickSpeedBonus, st.Prestige.PassiveBonus)
 	}
-	for _, m := range st.Modifiers {
-		if m.Source == "prestige" {
-			t.Errorf("a prestige modifier with no upgrades bought: %+v", m)
-		}
+	if st.Prestige.ProductionMultiplier <= 1 {
+		t.Errorf("prestige production multiplier = %v, want above 1", st.Prestige.ProductionMultiplier)
 	}
 }
 

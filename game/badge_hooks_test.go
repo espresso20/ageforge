@@ -497,31 +497,6 @@ func TestRunPace(t *testing.T) {
 	wantBadges(t, reach(t, int(behind)+1), "a tick over", []string{"age.iron_age"}, "special.early_riser")
 }
 
-// TestKitPurchasesAreReported: buying an item of the legacy kit is
-// reported with how many are left to buy, so the first purchase and the
-// whole kit each have their badge.
-func TestKitPurchasesAreReported(t *testing.T) {
-	isolateAccountDir(t)
-	ge, acct := devEngine(t, "Ada")
-	kit := ge.rules.LegacyKit()
-	if len(kit) < 2 {
-		t.Fatalf("the legacy kit has %d items", len(kit))
-	}
-	ge.mu.Lock()
-	ge.Prestige.available = 1e6
-	ge.Prestige.level = 9
-	ge.mu.Unlock()
-	for i, key := range kit {
-		if err := ge.BuyPrestigeUpgrade(key); err != nil {
-			t.Fatalf("buying %s: %v", key, err)
-		}
-		if i == 0 {
-			wantBadges(t, acct, "the first kit item", []string{"special.maxed_out"}, "special.fully_invested")
-		}
-	}
-	wantBadges(t, acct, "the whole kit", []string{"special.fully_invested"})
-}
-
 // TestPlanSizeIsReported: adding to the build plan reports how long it now
 // is.
 func TestPlanSizeIsReported(t *testing.T) {

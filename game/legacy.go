@@ -507,39 +507,6 @@ func (ge *GameEngine) copyTemplateSliceLocked(age string) {
 	}
 }
 
-// ===== Shop refund =====
-
-// refundShopLocked is the one-time step that moves a save from the first
-// prestige shop to the legacy kit: the retired perks' tiers go to 0 (their
-// keys stay), and the points they cost plus the points left are refunded at
-// the new rate (config.ShopRefund). Available and the lifetime total become
-// the refund, in depth points from here on. Runs once, after the signature
-// check, and marks the save (PrestigeSave.ShopVersion). A save with nothing
-// to refund is marked silently. Caller holds the write lock.
-func (ge *GameEngine) refundShopLocked() {
-	pm := ge.Prestige
-	if pm.shopVersion >= config.PrestigeShopVersion {
-		return
-	}
-	pm.shopVersion = config.PrestigeShopVersion
-	old, refund := config.ShopRefund(pm.level, pm.available, pm.upgrades)
-	for _, def := range pm.upgradeList {
-		if _, held := pm.upgrades[def.Key]; held && def.Retired {
-			pm.upgrades[def.Key] = 0
-		}
-	}
-	if pm.level <= 0 && old <= 0 {
-		return
-	}
-	pm.available, pm.totalEarned = refund, refund
-	how := fmt.Sprintf("%s at %d each", textfmt.Count(pm.level, "prestige", "prestiges"), config.RefundPerPrestige)
-	if refund != pm.level*config.RefundPerPrestige {
-		how = fmt.Sprintf("your %s old points at the new rate", textfmt.Int(old))
-	}
-	ge.addLog("info", fmt.Sprintf("The prestige shop changed. Your old perks were refunded as %s (%s).",
-		textfmt.Count(refund, "point", "points"), how))
-}
-
 // ===== Snapshot =====
 
 // LegacyKitState is what the legacy kit remembers, for the prestige shop.
@@ -629,10 +596,12 @@ func (ge *GameEngine) SetLegacyForTest(kit LegacyKit, own bool) {
 	if !own {
 		return
 	}
-	for _, key := range ge.rules.LegacyKit() {
-		ge.Prestige.upgrades[key] = 1
-		ge.legacyOnPurchaseLocked(key)
+	if ge.Prestige.level == 0 {
+		ge.Prestige.level = 1
 	}
+	ge.applyPlanTemplateLocked()
+	ge.applyLegacySharesLocked()
+	ge.meetOldFriendsLocked()
 }
 
 // NotePlanForTest records kind and key (count copies of a build) in the

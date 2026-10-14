@@ -556,21 +556,6 @@ func Badges() []BadgeDef {
 			Proof:  Occurs("account is a command, and it shows the code."),
 		},
 		{
-			Key: "special.maxed_out", Family: "special",
-			Name: "Maxed Out", Desc: "Buy an item of the legacy kit.",
-			Tier: BadgeBronze, Scope: BadgeMoment, Event: BadgeEvKit,
-			Reveal: RevealUntilSeen(BadgeEvPrestige), Emblem: "star",
-			Proof: Occurs("The cheapest kit item costs the points of one prestige from the Medieval Age."),
-		},
-		{
-			Key: "special.fully_invested", Family: "special",
-			Name: "Fully Invested", Desc: "Own the whole legacy kit.",
-			Tier: BadgeGold, Scope: BadgeMoment, Event: BadgeEvKit,
-			When:   []BadgeCond{never("ev.left")},
-			Reveal: RevealUntilSeen(BadgeEvPrestige), Emblem: "star",
-			Proof: Occurs("The whole kit costs less than the points of one prestige from the Modern Age."),
-		},
-		{
 			Key: "special.lucky_break", Family: "special", Subject: "good_legendary",
 			Name: "Lucky Break", Desc: "Have an era open with a legendary good event.",
 			Tier: BadgeSilver, Scope: BadgeMoment, Event: BadgeEvEraEvent,

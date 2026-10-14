@@ -201,9 +201,6 @@ const (
 	BadgeEvRaidBlunted = "raid_blunted"
 	// BadgeEvLowMorale: morale fell below the point where the game warns.
 	BadgeEvLowMorale = "morale_low"
-	// BadgeEvUpgradeBought: a prestige shop item was bought. Subject: the
-	// item.
-	BadgeEvUpgradeBought = "upgrade_bought"
 	// BadgeEvPlanStarted: the build plan started an item by itself.
 	// Subject: the item's kind ("build", "research", "trade", "deal",
 	// "advance").
@@ -269,9 +266,6 @@ const (
 	// BadgeEvLegacyPrestige: a prestige completed while Cosmic Legacy was
 	// held.
 	BadgeEvLegacyPrestige = "prestige_with_legacy"
-	// BadgeEvKit: a legacy kit item was bought. Attribute: "left" (kit
-	// items not owned yet).
-	BadgeEvKit = "kit_bought"
 
 	// The events about how the account looks. They are read off the
 	// account's own settings when the run advances an age, so they are
@@ -310,13 +304,13 @@ func BadgeEventKinds() []string {
 		BadgeEvDeal, BadgeEvExpedition, BadgeEvFestival, BadgeEvBlackMarket,
 		BadgeEvMemoryAccepted, BadgeEvMemoryDeclined, BadgeEvEraEvent, BadgeEvAwakening,
 		BadgeEvCivMet, BadgeEvCivStatus, BadgeEvCivAllied,
-		BadgeEvRaidBlunted, BadgeEvLowMorale, BadgeEvUpgradeBought, BadgeEvPlanStarted,
+		BadgeEvRaidBlunted, BadgeEvLowMorale, BadgeEvPlanStarted,
 		BadgeEvReturned, BadgeEvAwayTicks,
 		BadgeEvDayPlayed, BadgeEvExported, BadgeEvRecoveryShown, BadgeEvBadge,
 		BadgeEvDevUnlocked, BadgeEvSaveModified, BadgeEvSaveElite,
 		BadgeEvProduced, BadgeEvCensus, BadgeEvWarStarted, BadgeEvWarEnded, BadgeEvGiftSent,
 		BadgeEvWorkersLent, BadgeEvDoomNamed, BadgeEvEraLeft, BadgeEvPlanQueued,
-		BadgeEvWonderOverflow, BadgeEvWonderBanked, BadgeEvRuinsCarried, BadgeEvLegacyPrestige, BadgeEvKit,
+		BadgeEvWonderOverflow, BadgeEvWonderBanked, BadgeEvRuinsCarried, BadgeEvLegacyPrestige,
 		BadgeEvAdvancedTheme, BadgeEvAdvancedStyle, BadgeEvAdvancedGlyphs, BadgeEvVisitor,
 	}
 }

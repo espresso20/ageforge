@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -38,9 +39,8 @@ type PrestigeManager struct {
 	masterySeeded bool
 	speeds        map[string]float64
 
-	// shopVersion is the shop a save was written under (0 or 1: the first
-	// shop; config.PrestigeShopVersion: the legacy kit). Below the current
-	// version, a load refunds the retired perks once (refundShopLocked).
+	// shopVersion is retained solely for old signed saves. New saves write it
+	// as zero because there is no longer a shop.
 	shopVersion int
 
 	// The legacy kit's memory (legacy.go): what the runs so far wrote and
@@ -56,11 +56,10 @@ type PrestigeManager struct {
 	// Not saved.
 	templateApplied string
 
-	// upgradeList / upgradeDefs are the ruleset's shop table, held here so
-	// GetBonuses (hit every tick via the resolver) and Snapshot (every UI
-	// refresh) read it straight. Read-only.
-	upgradeList []config.PrestigeUpgradeDef
-	upgradeDefs map[string]config.PrestigeUpgradeDef
+	// upgradeList / upgradeDefs only decode the former shop's save entries.
+	upgradeList         []config.PrestigeUpgradeDef
+	upgradeDefs         map[string]config.PrestigeUpgradeDef
+	prestigeCoefficient float64
 }
 
 // NewPrestigeManager creates a new prestige manager on the core ruleset.
@@ -77,18 +76,17 @@ func NewPrestigeManagerWith(set *rules.Set) *PrestigeManager {
 		masterySeeded: true,
 		record:        set.AgeKeys()[0],
 		runFurthest:   set.AgeKeys()[0],
-		// A new game starts on the current shop: nothing to refund.
-		shopVersion: config.PrestigeShopVersion,
 	}
 	pm.Rebind(set)
 	return pm
 }
 
-// Rebind moves the manager onto set: it takes set's shop table and works
+// Rebind moves the manager onto set and works
 // every age's speed out again on set's ages. Levels, points, mastery and
 // the legacy kit's memory stay.
 func (pm *PrestigeManager) Rebind(set *rules.Set) {
 	pm.rules = set
+	pm.prestigeCoefficient = set.PrestigeBonusCoefficient()
 	pm.upgradeList = set.PrestigeUpgrades()
 	pm.upgradeDefs = make(map[string]config.PrestigeUpgradeDef, len(pm.upgradeList))
 	for _, def := range pm.upgradeList {
@@ -160,95 +158,49 @@ func (pm *PrestigeManager) Prestige(points int) {
 	pm.available += points
 }
 
+// ProductionMultiplier is the permanent all-production multiplier earned
+// through every prestige point, spent or unspent.
+func (pm *PrestigeManager) ProductionMultiplier() float64 {
+	return 1 + float64(pm.prestigeCoefficient*math.Sqrt(float64(max(pm.totalEarned, 0))))
+}
+
+// NextProductionMultiplier is the multiplier a prestige from age would give.
+func (pm *PrestigeManager) NextProductionMultiplier(age string) float64 {
+	return 1 + float64(pm.prestigeCoefficient*math.Sqrt(float64(max(pm.totalEarned+pm.CalculatePoints(age), 0))))
+}
+
 // BuyUpgrade purchases the next tier of an upgrade. Returns error if can't
 // afford, maxed or retired.
 func (pm *PrestigeManager) BuyUpgrade(key string) error {
-	def, ok := pm.upgradeDefs[key]
-	if !ok {
-		active := map[string]bool{}
-		for _, d := range pm.upgradeList {
-			if !d.Retired {
-				active[d.Key] = true
-			}
-		}
-		return unknownKeyError("legacy kit item", key, active, "Type prestige shop to see the kit.")
-	}
-	if def.Retired {
-		return fmt.Errorf("%s was part of the old prestige shop and can't be bought any more; its points were refunded. Type prestige shop to see the legacy kit.", def.Name)
-	}
-
-	currentTier := pm.upgrades[key]
-	if currentTier >= def.MaxTier {
-		if def.MaxTier == 1 {
-			return fmt.Errorf("You already own %s.", def.Name)
-		}
-		return fmt.Errorf("%s is already at its top tier (%d).", def.Name, def.MaxTier)
-	}
-
-	cost := def.Costs[currentTier]
-	if pm.available < cost {
-		if def.MaxTier == 1 {
-			return fmt.Errorf("%s costs %s (you have %s). Prestige again to earn more.", def.Name, textfmt.Count(cost, "prestige point", "prestige points"), textfmt.Int(pm.available))
-		}
-		return fmt.Errorf("%s tier %d costs %s (you have %s). Prestige again to earn more.", def.Name, currentTier+1, textfmt.Count(cost, "prestige point", "prestige points"), textfmt.Int(pm.available))
-	}
-
-	pm.available -= cost
-	pm.upgrades[key] = currentTier + 1
-	return nil
+	return fmt.Errorf("prestige points are now a permanent production bonus; upgrades are no longer sold")
 }
 
 // Owns reports whether the shop item key (a legacy kit item) is bought.
 // Retired perks never count.
 func (pm *PrestigeManager) Owns(key string) bool {
-	def, ok := pm.upgradeDefs[key]
-	return ok && !def.Retired && pm.upgrades[key] >= 1
+	return pm.level > 0 && (key == config.LegacyPlan || key == config.LegacyWorkers || key == config.LegacyFactions)
 }
 
 // GetBonuses returns the bought upgrades' bonuses as a bonus map. The old
 // passive (+2% production and +1% tick speed per level) retired into Era
 // Mastery (mastery.go), which speeds up the ages a run completed instead.
 func (pm *PrestigeManager) GetBonuses() map[string]float64 {
-	bonuses := make(map[string]float64)
-
-	// Upgrade bonuses (rate and flat bonuses, not starting resources)
-	// List order, not map order: float sums must be the same every run.
-	for _, def := range pm.upgradeList {
-		tier := pm.upgrades[def.Key]
-		if tier <= 0 || def.Retired {
-			continue
-		}
-		if def.EffectType == "rate_bonus" || def.EffectType == "flat_bonus" {
-			bonuses[def.EffectKey] += float64(def.PerTier * float64(tier))
-		}
-	}
-
-	return bonuses
+	return map[string]float64{}
 }
 
 // Modifiers emits one OpAdd Modifier per (target, value) returned by GetBonuses,
 // attributed to Source "prestige". Targets match the engine's current strings
 // (e.g. "production_all", "tick_speed", "<res>_rate") — no renaming.
 func (pm *PrestigeManager) Modifiers() []Modifier {
-	bonuses := pm.GetBonuses()
-	out := make([]Modifier, 0, len(bonuses))
-	for t, v := range bonuses {
-		out = append(out, Modifier{Source: "prestige", Target: t, Op: OpAdd, Value: v})
-	}
-	return out
+	return []Modifier{{Source: "prestige", Target: "prestige_production", Op: OpMul, Value: pm.ProductionMultiplier()}}
 }
 
 // GetStartingResources returns bonus starting resources from prestige upgrades
 func (pm *PrestigeManager) GetStartingResources() map[string]float64 {
 	resources := make(map[string]float64)
-	// List order, not map order: float sums must be the same every run.
 	for _, def := range pm.upgradeList {
-		tier := pm.upgrades[def.Key]
-		if tier <= 0 || def.Retired {
-			continue
-		}
-		if def.EffectType == "starting_resource" {
-			resources[def.EffectKey] += float64(def.PerTier * float64(tier))
+		if def.EffectType == "starting_resource" && pm.upgrades[def.Key] > 0 {
+			resources[def.EffectKey] += float64(def.PerTier * float64(pm.upgrades[def.Key]))
 		}
 	}
 	return resources
@@ -258,33 +210,15 @@ func (pm *PrestigeManager) GetStartingResources() map[string]float64 {
 func (pm *PrestigeManager) Snapshot() PrestigeState {
 	upgrades := make(map[string]PrestigeUpgradeState)
 
-	for _, def := range pm.upgradeList {
-		tier := pm.upgrades[def.Key]
-		nextCost := 0
-		if tier < def.MaxTier {
-			nextCost = def.Costs[tier]
-		}
-		if def.Retired {
-			nextCost = 0
-		}
-		upgrades[def.Key] = PrestigeUpgradeState{
-			Name:        def.Name,
-			Description: def.Description,
-			Tier:        tier,
-			MaxTier:     def.MaxTier,
-			NextCost:    nextCost,
-			Effect:      formatPrestigeEffect(def, tier),
-			Retired:     def.Retired,
-			Kit:         def.EffectType == "legacy",
-		}
-	}
+	// The empty map keeps the existing snapshot field wire-compatible.
 	return PrestigeState{
-		Level:       pm.level,
-		TotalEarned: pm.totalEarned,
-		Available:   pm.available,
-		Upgrades:    upgrades,
-		ShopVersion: pm.shopVersion,
-		Kit:         pm.kitState(),
+		Level:                pm.level,
+		TotalEarned:          pm.totalEarned,
+		Available:            pm.available,
+		Upgrades:             upgrades,
+		ShopVersion:          0,
+		Kit:                  pm.kitState(),
+		ProductionMultiplier: pm.ProductionMultiplier(),
 	}
 }
 

@@ -43,7 +43,6 @@ var KnownPropertyFailures = map[int]string{
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
 	16: "fails in 2 of 22 ages; worst 3.0 times in the Primitive Age",
 	18: "not worked out here yet",
-	19: "a full run earns 3279 points and everything for sale costs 99",
 }
 
 // KnownPropertyReasons is why a known failure fails, where the reason is a
@@ -436,15 +435,8 @@ func StaticProperties() Properties {
 	// 18 needs the game's own formulas and is stated, not worked out.
 	add(18, "the reference town's faith and culture strength fall in the middle band", false, "not worked out here yet")
 
-	// 19. Prestige points and what they buy.
-	sink := 0
-	for _, u := range config.ActivePrestigeUpgrades() {
-		for _, c := range u.Costs {
-			sink += c
-		}
-	}
-	earned := config.DepthPoints(t.ages[n-1].Key)
-	add(19, "the points a full run earns can all be spent", sink >= earned, fmt.Sprintf("a full run earns %d points and everything for sale costs %d", earned, sink))
+	// 19. Prestige points no longer have a shop sink.
+	add(19, "prestige points have no shop sink", len(config.ActivePrestigeUpgrades()) == 0, "the prestige shop has no items")
 
 	// 20. The largest amount any of the three players can hold in a store or
 	// be quoted (the next copy of any building of the age, the age's wonder
