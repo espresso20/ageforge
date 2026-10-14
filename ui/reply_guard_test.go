@@ -51,7 +51,6 @@ var replyGuardCases = []struct{ age, cmd string }{
 	{"", "dismiss gathering_camp"},
 	{"", "plan build hut"},
 	{"", "theme " + theme.DefaultKey},
-	{"", "prestige buy legacy_plan"},
 	{"", "save my_branch"},
 	{"stone_age", "sell hut"},
 	{"bronze_age", "research tool_making"},
@@ -123,7 +122,7 @@ func TestListCommandsAreStable(t *testing.T) {
 	for _, age := range []string{"", "bronze_age", "colonial_age"} {
 		ge := newCaseTestEngine(t, age)
 		ge.Diplomacy.DiscoverFaction("merchant_guild")
-		for _, cmd := range []string{"build", "status", "rates", "research list", "trade route list", "upgrade", "prestige shop"} {
+		for _, cmd := range []string{"build", "status", "rates", "research list", "trade route list", "upgrade", "prestige"} {
 			first := HandleCommand(cmd, ge).Message
 			for i := 0; i < 5; i++ {
 				if again := HandleCommand(cmd, ge).Message; again != first {

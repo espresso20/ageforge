@@ -45,7 +45,7 @@ Build → Staff → Research → Advance → Repeat
 2. **Staff** them: workers arrive on their own while housing and food allow and go to work by your [roster](workers-and-domains.md#the-roster). Steer the split with `roster`, or `recruit` and `assign` by hand
 3. **Research** technologies that multiply your output
 4. **Advance** to the next age with `advance` once the buildings it asks for stand and the age's wonder is built (see [Advancement Requirements](ages.md#advancement-requirements))
-5. **Prestige** for points that buy the [legacy kit](prestige.md#the-legacy-kit), which carries your plan, roster and civilizations into later runs. Prestige opens at the Medieval Age, but a run to the Modern Age (or later) pays far more. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
+5. **Prestige** for a lasting production bonus. After the first prestige, [Plan Template, Roster and Old Friends](prestige.md#carry-overs) carry into later runs. Prestige opens at the Medieval Age, but a run to the Modern Age (or later) pays far more. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
 
 New to the game? [Your First Age](first-ten-minutes.md) walks you through the Primitive Age step by step, from the first `gather` to the Sacred Grove.
 

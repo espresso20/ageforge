@@ -1,10 +1,12 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/rivo/tview"
 )
 
 // `prestige confirm` before the Modern Age says plainly what the early
@@ -41,5 +43,43 @@ func TestPrestigeConfirmSaysAnEarlyPrestigePaysLittle(t *testing.T) {
 	confirm = untag(HandleCommand("prestige confirm", engine).Message)
 	if strings.Contains(confirm, "early taste") || !strings.Contains(confirm, "You will earn 120 prestige points.") {
 		t.Errorf("prestige confirm in the Modern Age is a full run's:\n%s", confirm)
+	}
+}
+
+// A real engine's state, rather than a hand-written snapshot, drives every
+// prestige surface. This catches a field that is present in types but missing
+// from the engine snapshot or rate calculation.
+func TestPrestigedStateShowsLastingBonus(t *testing.T) {
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	engine := game.NewGameEngine()
+	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
+		if err := engine.EnterAgeForTest(age); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := engine.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	state := engine.GetState()
+	want := fmt.Sprintf("x%.2f", state.Prestige.ProductionMultiplier)
+	for _, got := range []string{untag(HandleCommand("prestige", engine).Message), untag(statsProvider(state, 0))} {
+		if !strings.Contains(got, want) {
+			t.Errorf("prestiged state omitted %q:\n%s", want, got)
+		}
+	}
+	if got := untag(HandleCommand("prestige buy legacy_plan", engine).Message); !strings.Contains(got, "Usage:") {
+		t.Errorf("retired prestige buy did not use the unknown-subcommand usage: %q", got)
+	}
+
+	pages := tview.NewPages()
+	dashboard := NewDashboard(tview.NewApplication(), engine, pages)
+	pages.AddPage("dashboard", dashboard.Root(), true, true)
+	dashboard.inputField.SetText("stats")
+	dashboard.submitInput()
+	for _, size := range [][2]int{{80, 24}, {100, 30}} {
+		dashboard.overlayMgr.entries["stats"].tv.ScrollTo(29, 0)
+		if screen := screenAt(t, pages, size[0], size[1]); !strings.Contains(screen, want) {
+			t.Errorf("%dx%d stats screen omitted %q:\n%s", size[0], size[1], want, screen)
+		}
 	}
 }

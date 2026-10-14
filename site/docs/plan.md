@@ -92,11 +92,11 @@ Offline progress covers up to **24 hours**; time away beyond that isn't credited
 
 ## The Plan Template
 
-The game remembers the plan you write, age by age, for the prestige [legacy kit](prestige.md#the-legacy-kit). Each item is recorded with the age you added it in: builds, techs and advances. A build counts the copies you added, and removing an item takes back the copies it never started. Deals aren't recorded, since a civilization's offers end with the run.
+The game remembers the plan you write, age by age, for [Plan Template](prestige.md#plan-template) after your first prestige. Each item is recorded with the age you added it in: builds, techs and advances. A build counts the copies you added, and removing an item takes back the copies it never started. Deals aren't recorded, since a civilization's offers end with the run.
 
 At each prestige and Succumb the record becomes the **template**. An age the run wrote in takes this run's part; an age the run never reached keeps what an older run wrote there, so a short run never wipes a deeper one.
 
-With the kit's **Plan Template** (`prestige buy legacy_plan`, 9 points) owned, the start of every run and every advance add that age's part of the template to the plan, the advance item included if you planned one. A plan written once then chains ages while you are away: the plan advances, the next age's part goes in, and the plan works through it. The items go through the same checks as the plan commands and the 60-item limit, and one log line says what went in (`Plan Template: added 12 items for the Bronze Age.`). The items it adds count as written again, so the template carries forward from run to run. See [Plan Template](prestige.md#plan-template) for the details.
+From the first prestige, **Plan Template** adds that age's part of the template to the plan at the start of every run and every advance, including an advance item you planned. A plan written once then chains ages while you are away: the plan advances, the next age's part goes in, and the plan works through it. The items go through the same checks as the plan commands and the 60-item limit, and one log line says what went in (`Plan Template: added 12 items for the Bronze Age.`). The items it adds count as written again, so the template carries forward from run to run. See [Plan Template](prestige.md#plan-template) for the details.
 
 The techs you planned come along with everything else: a `plan research` item is planned again in the age you added it in, and so is each tech the command added before it. Only planned techs carry over this way. The game never chooses what you research next, and a tech you started by hand with `research` is not part of the template.
 

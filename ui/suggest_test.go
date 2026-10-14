@@ -37,7 +37,7 @@ func TestAutoCompleter_NoRepeatAfterLastArg(t *testing.T) {
 		"research list ", "research cancel ", "research list l", "res cancel c",
 		"expedition list ", "campaign list ",
 		"assign hut all ", "unassign hut all ", "dismiss hut all ",
-		"prestige confirm yes ", "prestige buy x ", "festival confirm yes ",
+		"prestige confirm yes ", "festival confirm yes ",
 		"save list ", "load x ", "gather food ",
 		"account switch x ",
 	} {
