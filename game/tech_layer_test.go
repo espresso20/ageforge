@@ -105,12 +105,9 @@ func TestTechLayerLeavesFlatAmountsAlone(t *testing.T) {
 func TestTechStorageAndHousing(t *testing.T) {
 	ge := newTruthEngine("bronze_age", truthClean)
 	ge.recalculateRates()
-	before := map[string]float64{}
-	for _, key := range ge.Resources.order {
-		before[key] = ge.Resources.resources[key].Storage
-	}
 	learn(ge, "pottery", "masonry") // +10% storage each
 	ge.recalculateRates()
+	bonuses := ge.Buildings.GetStorageBonuses()
 	for _, key := range ge.Resources.order {
 		// The knowledge store is the knowledge buildings' alone: a tech's
 		// bonus to every store does not raise it.
@@ -118,7 +115,10 @@ func TestTechStorageAndHousing(t *testing.T) {
 		if key == "knowledge" {
 			factor = 1
 		}
-		if got, want := ge.Resources.resources[key].Storage, before[key]*factor; math.Abs(got-want) > 1e-9*want {
+		def := ge.Resources.defs[key]
+		want := ge.storeSize(def, bonuses["all"], bonuses[key], ge.speedK(), factor)
+		want = floorStore(ge.storageFloors(), key, want)
+		if got := ge.Resources.resources[key].Storage; math.Abs(got-want) > 1e-9*want {
 			t.Errorf("%s storage is %v with two +10%% techs, want %v (x%.2f)", key, got, want, factor)
 		}
 	}

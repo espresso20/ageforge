@@ -73,9 +73,7 @@ func panelPages(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) [][]st
 // A building whose next copy costs more than a store holds is marked in the
 // Buildings panel: the red cross it has for any building that cannot be
 // bought, and under its cost the engine's own refusal, word for word, naming
-// the resource and the storage building to build. The storage building itself
-// is not sent to itself: built 40 times its next copy is over the store it
-// would raise, and the refusal says the storage is at its limit.
+// the storage building to build.
 func TestBuildingsPanelMarksAnOverStoreCopy(t *testing.T) {
 	restoreForge(t)
 	for _, tc := range []struct {
@@ -84,7 +82,6 @@ func TestBuildingsPanelMarksAnOverStoreCopy(t *testing.T) {
 		suffix string
 	}{
 		{"workshop", 80, "Build more storage first: Strongroom."},
-		{wallStore, 40, "Your storage is at its limit for this age. The next age has a bigger storage building."},
 	} {
 		d, pages, eng := wallTown(t, map[string]int{tc.key: tc.count})
 		st := eng.GetState()
@@ -95,9 +92,6 @@ func TestBuildingsPanelMarksAnOverStoreCopy(t *testing.T) {
 		want := refusalFor(t, eng, tc.key)
 		if !strings.HasSuffix(want, tc.suffix) {
 			t.Fatalf("the refusal for %s ends %q, want it to end %q", name, want, tc.suffix)
-		}
-		if tc.key == wallStore && strings.Contains(want, "Build more storage first") {
-			t.Fatalf("the Strongroom is sent to the Strongroom: %q", want)
 		}
 		for _, sz := range wallSizes {
 			w, h := sz[0], sz[1]
@@ -129,42 +123,32 @@ func TestBuildingsPanelMarksAnOverStoreCopy(t *testing.T) {
 	}
 }
 
-// The report (card Pi3AczMR) as the Buildings panel drew it: a Primitive Age
-// town with five Stashes, the sixth costing 574 wood against 550 held. The
-// row is a cross with the price, and the line under it says the storage is at
-// its limit; it no longer sends the player to build a Stash.
-func TestBuildingsPanelStashAtItsLimit(t *testing.T) {
+func TestBuildingsPanelStashNextCopyFits(t *testing.T) {
 	restoreForge(t)
 	d, pages, eng := stagedDashboard(t, "primitive_age")
 	all := map[string]int{}
 	for k, b := range eng.GetState().Buildings {
 		all[k] = b.Count
 	}
-	all["stash"] = 5
+	// stagedDashboard already has one Stash under construction, and next-copy
+	// prices include queued copies. Four completed plus that one queued copy
+	// stage exactly five owned Stashes.
+	all["stash"] = 4
 	eng.Buildings.LoadCounts(all)
-	eng.StepTicks(1)
 	st := eng.GetState()
 	if got := st.Buildings["stash"].NextCost["wood"]; got != 574 {
 		t.Fatalf("staging: the sixth Stash costs %v wood, want 574", got)
 	}
-	want := "Stash costs 574 wood, more than your wood storage holds (550). Your storage is at its limit for this age. The next age has a bigger storage building."
-	if err := eng.BuildBuilding("stash"); err == nil || err.Error() != want {
-		t.Fatalf("build stash = %v, want %q", err, want)
+	if store := st.Resources["wood"].Storage; store < st.Buildings["stash"].NextCost["wood"] {
+		t.Fatalf("the sixth Stash costs %v wood but store holds %v", st.Buildings["stash"].NextCost["wood"], store)
 	}
 	for _, sz := range wallSizes {
 		w, h := sz[0], sz[1]
-		found := false
 		for _, rows := range panelPages(t, d, pages, w, h) {
 			text := flat(rows)
-			if strings.Contains(text, "Build more storage first: Stash") {
-				t.Errorf("%dx%d: the panel sends the player to the Stash:\n%s", w, h, strings.Join(rows, "\n"))
+			if strings.Contains(text, "Stash costs") && strings.Contains(text, "more than your") {
+				t.Errorf("%dx%d: the panel marks the fitting Stash:\n%s", w, h, strings.Join(rows, "\n"))
 			}
-			if strings.Contains(text, want) {
-				found = true
-			}
-		}
-		if !found {
-			t.Errorf("%dx%d: no page of the Buildings panel says %q", w, h, want)
 		}
 	}
 }
@@ -210,26 +194,20 @@ func TestStorageBuildingShowsNoLimit(t *testing.T) {
 	}
 }
 
-// The build list marks the same copy: `build` under its red cross, the
-// Buildings overlay under its cost.
-func TestBuildListMarksAnOverStoreCopy(t *testing.T) {
+// The build list and overlay do not mark an owned storage building's next
+// copy over-store: its store is floored to that queue-aware price.
+func TestBuildListDoesNotMarkStorageNextCopy(t *testing.T) {
 	restoreForge(t)
 	d, pages, eng := wallTown(t, map[string]int{wallStore: 40})
-	want := refusalFor(t, eng, wallStore)
-	name := eng.GetState().Buildings[wallStore].Name
-	res := HandleCommand("build", eng)
-	lines := strings.Split(untag(res.Message), "\n")
-	marked := false
-	for i, l := range lines {
-		if strings.Contains(l, "✗ "+wallStore+" (40 built)") && i+1 < len(lines) && strings.TrimSpace(lines[i+1]) == want {
-			marked = true
-		}
-		if strings.Contains(l, "more than your") && !strings.Contains(l, want) {
-			t.Errorf("a line of the build list marks a building that fits: %q", l)
+	st := eng.GetState()
+	for res, cost := range st.Buildings[wallStore].NextCost {
+		if st.Resources[res].Storage < cost {
+			t.Fatalf("next %s costs %v %s but store holds %v", wallStore, cost, res, st.Resources[res].Storage)
 		}
 	}
-	if !marked {
-		t.Errorf("`build` does not put %q under the Keep:\n%s", want, untag(res.Message))
+	res := HandleCommand("build", eng)
+	if strings.Contains(untag(res.Message), wallStore+" (40 built)") && strings.Contains(untag(res.Message), "more than your") {
+		t.Errorf("`build` marks the fitting %s over-store:\n%s", wallStore, untag(res.Message))
 	}
 	for _, sz := range wallSizes {
 		w, h := sz[0], sz[1]
@@ -238,25 +216,14 @@ func TestBuildListMarksAnOverStoreCopy(t *testing.T) {
 			t.Fatal("buildings overlay not registered")
 		}
 		tv := d.overlayMgr.entries["buildings"].tv
-		text := strings.Split(strings.TrimRight(tv.GetText(true), "\n"), "\n")
-		var block []string
-		for i, l := range text {
-			if strings.Contains(l, "more than your") || (len(block) > 0 && i > 0 && strings.HasPrefix(l, "   ") && !strings.Contains(l, "Cost:")) {
-				block = append(block, strings.TrimSpace(l))
-			}
-			if len(block) > 0 && strings.HasSuffix(strings.TrimSpace(l), name+".") {
-				break
-			}
-		}
-		if got := flat(block); !strings.Contains(got, want) {
-			t.Errorf("%dx%d: the Buildings overlay says %q, want %q", w, h, got, want)
+		text := tv.GetText(true)
+		if strings.Contains(text, "✗ "+wallStore) && strings.Contains(text, "more than your") {
+			t.Errorf("%dx%d: the Buildings overlay marks the fitting %s:\n%s", w, h, wallStore, text)
 		}
 		tv.ScrollToEnd()
 		screen := renderText(t, pages, w, h)
-		for _, l := range block {
-			if !strings.Contains(screen, l) {
-				t.Errorf("%dx%d: %q is not whole on a row of the overlay:\n%s", w, h, l, screen)
-			}
+		if strings.Contains(screen, "✗ "+wallStore) && strings.Contains(screen, "more than your") {
+			t.Errorf("%dx%d: the rendered Buildings overlay marks the fitting %s:\n%s", w, h, wallStore, screen)
 		}
 		d.overlayMgr.Hide()
 	}

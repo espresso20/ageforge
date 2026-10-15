@@ -72,88 +72,53 @@ func stashTown(t *testing.T, n int) *GameEngine {
 	t.Helper()
 	ge := newSeededEngine(1)
 	ge.SetTownForTest(map[string]int{"stash": n}, 0)
-	if got, want := ge.Resources.GetStorage("wood"), 50+100*float64(n); got != want {
+	flat := 50 + 100*float64(n)
+	next, _ := ge.Buildings.BuildBatchCost("stash", 1, ge.buildQueue)
+	want := flat
+	if n > 0 && next["wood"] > want {
+		want = next["wood"]
+	}
+	if got := ge.Resources.GetStorage("wood"); got != want {
 		t.Fatalf("setup: %d Stashes hold %v wood, want %v", n, got, want)
 	}
 	setAmount(ge, "wood", ge.Resources.GetStorage("wood"))
 	return ge
 }
 
-// The report (card Pi3AczMR): five Stashes hold 550 wood, the sixth costs 574,
-// and the refusal sent the player to "Build more storage first: Stash", the
-// building it was refusing. The sixth Stash really cannot be bought, and the
-// tables promise nothing past the fifth (the gate asks five, and each of
-// those fits), so the fault was the words and the list: a storage building
-// that has run out of copies must say so and name nothing to build.
-func TestSixthStashIsAtItsLimitAndSendsNobodyToTheStash(t *testing.T) {
+func TestStorageNextCopyAlwaysFits(t *testing.T) {
 	ge := stashTown(t, 5)
-	err := ge.BuildBuilding("stash")
-	if err == nil || !strings.Contains(err.Error(), "Stash costs 574 wood, more than your wood storage holds (550).") {
-		t.Fatalf("build stash = %v, want the 574 against 550 refusal", err)
-	}
-	if strings.Contains(err.Error(), "Build more storage first") {
-		t.Errorf("the refusal sends the player back to the Stash: %q", err)
-	}
-	if !strings.Contains(err.Error(), "at its limit") || !strings.Contains(err.Error(), "The next age has a bigger storage building.") {
-		t.Errorf("the refusal does not say the storage is at its limit and where bigger storage comes from: %q", err)
-	}
-	if !ge.GetState().Buildings["stash"].StoreLimit {
-		t.Error("the Stash state does not carry the store limit")
-	}
-	if n, err2 := ge.BuildMultiple("stash", 3); n != 0 || err2 == nil || err2.Error() != err.Error() {
-		t.Errorf("build stash 3 = (%d, %v), want the same refusal", n, err2)
-	}
-	// The gate asked five Stashes and the town has them: it can advance.
-	// (Its other gate buildings are not staged here; the point is that the
-	// refusal above is not what stands between a town and the Stone Age,
-	// which TestStoneAgeIsReachableBuyingExactlyTheGate plays out.)
-
-	// A plan item for it says why it waits.
-	if _, err := ge.PlanAddBuild("stash", 1); err != nil {
-		t.Fatal(err)
-	}
-	if v := ge.planViews(); len(v) != 1 || v[0].Status != PlanStatusBlocked || v[0].Note != "at its storage limit" {
-		t.Errorf("plan view = %+v, want blocked: at its storage limit", v)
+	for copy := 6; copy <= 7; copy++ {
+		cost, _ := ge.Buildings.BuildBatchCost("stash", 1, ge.buildQueue)
+		if store := ge.Resources.GetStorage("wood"); store < cost["wood"] {
+			t.Fatalf("Stash #%d costs %v wood, store holds %v", copy, cost["wood"], store)
+		}
+		setAmount(ge, "wood", ge.Resources.GetStorage("wood"))
+		if err := ge.BuildBuilding("stash"); err != nil {
+			t.Fatalf("build Stash #%d: %v", copy, err)
+		}
+		queuedNext, _ := ge.Buildings.BuildBatchCost("stash", 1, ge.buildQueue)
+		if store := ge.Resources.GetStorage("wood"); store < queuedNext["wood"] {
+			t.Fatalf("with Stash #%d queued, next costs %v wood but store holds %v", copy, queuedNext["wood"], store)
+		}
+		for queued(ge, "stash") > 0 {
+			ge.StepTicks(1)
+		}
+		next, _ := ge.Buildings.BuildBatchCost("stash", 1, ge.buildQueue)
+		if store := ge.Resources.GetStorage("wood"); store < next["wood"] {
+			t.Fatalf("after Stash #%d, next costs %v wood but store holds %v", copy, next["wood"], store)
+		}
 	}
 }
 
-// Every copy up to the fifth is bought, and the fifth is never told it is at
-// a limit: the limit shows only once the sixth is the next copy, counting the
-// copies still going up.
-func TestStashLimitShowsOnlyAfterTheFifthCopy(t *testing.T) {
-	for n := 0; n <= 5; n++ {
-		ge := stashTown(t, n)
-		limit := ge.GetState().Buildings["stash"].StoreLimit
-		if want := n == 5; limit != want {
-			t.Errorf("%d Stashes built: StoreLimit = %v, want %v", n, limit, want)
-		}
-		if n < 5 {
-			if err := ge.BuildBuilding("stash"); err != nil {
-				t.Errorf("copy %d of the Stash refused: %v", n+1, err)
-			}
-		}
+func TestStoragePriceFloorOnlyLiftsWhenNeeded(t *testing.T) {
+	ge := stashTown(t, 1)
+	if got, want := ge.Resources.GetStorage("wood"), float64(150); got != want {
+		t.Errorf("one Stash store = %v, want flat bonus %v", got, want)
 	}
-	// Four built and the fifth going up: the sixth is already out of reach.
-	ge := stashTown(t, 4)
-	if err := ge.BuildBuilding("stash"); err != nil {
-		t.Fatal(err)
-	}
-	err := ge.BuildBuilding("stash")
-	if err == nil || !strings.Contains(err.Error(), "at its limit") {
-		t.Errorf("sixth Stash with the fifth in the queue = %v, want the limit", err)
-	}
-	// One built, the second still waiting on the store the first will raise:
-	// wait, it is not a limit.
+
 	ge = newSeededEngine(1)
-	setAmount(ge, "wood", 50)
-	if err := ge.BuildBuilding("stash"); err != nil {
-		t.Fatal(err)
-	}
-	setAmount(ge, "wood", 50)
-	err = ge.BuildBuilding("stash")
-	if err == nil || strings.Contains(err.Error(), "at its limit") || strings.Contains(err.Error(), "Build more storage first") ||
-		!strings.Contains(err.Error(), "already under construction will raise it") {
-		t.Errorf("second Stash with the first in the queue = %v, want a wait for the first", err)
+	if got, want := ge.Resources.GetStorage("wood"), float64(50); got != want {
+		t.Errorf("no Stash store = %v, want base store %v", got, want)
 	}
 }
 
@@ -164,7 +129,7 @@ func TestOtherBuildingsAreSentToStorageOnlyWhileStorageCanGrow(t *testing.T) {
 	for _, tc := range []struct {
 		stashes   int
 		wantBuild bool
-	}{{2, true}, {5, false}} {
+	}{{2, true}, {5, true}} {
 		ge := stashTown(t, tc.stashes)
 		ge.Buildings.counts["shrine"] = 25 // priced over any store a Primitive town can build
 		cost := ge.Buildings.GetCost("shrine")["wood"]
@@ -193,7 +158,7 @@ func TestQueuedStorageCountsWithMasteryAndStorageTech(t *testing.T) {
 		going   int  // Stashes in the queue, none built
 		limit   bool // the next copy (going+1) is really out of reach of the finished store
 	}{
-		{"neither", 0, false, 5, true},  // 574 against 550
+		{"neither", 0, false, 5, true},  // no Stash is owned, so no floor applies
 		{"mastery", 1, false, 6, false}, // k = 2: 1005 against 1300; unmultiplied queue said 700
 		{"tech", 0, true, 5, false},     // 574 against 605; unmultiplied queue said 555
 		{"both", 1, true, 6, false},     // 1005 against 1430; unmultiplied queue said 710
@@ -234,8 +199,8 @@ func TestQueuedStorageCountsWithMasteryAndStorageTech(t *testing.T) {
 				t.Fatalf("setup: %d Stashes after the queue (want %d)", ge.Buildings.GetCount("stash"), tc.going)
 			}
 			cost, store := ge.Buildings.GetCost("stash")["wood"], ge.Resources.GetStorage("wood")
-			if truth := cost > store; truth != tc.limit {
-				t.Fatalf("setup: the next Stash costs %v against a store of %v, limit = %v, want %v", cost, store, truth, tc.limit)
+			if truth := cost > store; truth {
+				t.Fatalf("setup: the next Stash costs %v against a store of %v after the queued copies finished", cost, store)
 			}
 			if gotLimit != tc.limit {
 				t.Errorf("StoreLimit = %v with %d Stashes going up, want %v (the next costs %v, the finished store is %v)", gotLimit, tc.going, tc.limit, cost, store)
@@ -253,9 +218,9 @@ func TestQueuedStorageCountsWithMasteryAndStorageTech(t *testing.T) {
 	}
 }
 
-// At the last age's storage building there is no bigger one to point at: the
-// refusal ends after the first sentence. The next age is read from the tables.
-func TestLastStorageTierSaysNothingOfABiggerBuilding(t *testing.T) {
+// The last storage tier has no successor in the tables. Its own next copy now
+// fits, so the storage-limit refusal itself is unreachable.
+func TestLastStorageTierHasNoSuccessor(t *testing.T) {
 	ages, defs := config.Ages(), config.BaseBuildings()
 	for i := range ages {
 		if i+1 >= len(ages) {
@@ -277,14 +242,10 @@ func TestLastStorageTierSaysNothingOfABiggerBuilding(t *testing.T) {
 		t.Fatal(err)
 	}
 	ge.SetTownForTest(map[string]int{storage: 60}, 0)
-	err := ge.BuildBuilding(storage)
-	if err == nil || !strings.Contains(err.Error(), "Your storage is at its limit for this age.") {
-		t.Fatalf("build %s = %v, want the limit", storage, err)
-	}
-	if strings.Contains(err.Error(), "bigger storage building") {
-		t.Errorf("the last storage tier points at a bigger building: %q", err)
-	}
-	if !strings.HasSuffix(err.Error(), "at its limit for this age.") {
-		t.Errorf("the refusal should end after the limit sentence: %q", err)
+	cost, _ := ge.Buildings.BuildBatchCost(storage, 1, ge.buildQueue)
+	for res, amount := range cost {
+		if store := ge.Resources.GetStorage(res); store < amount {
+			t.Errorf("next %s costs %v %s but store holds %v", storage, amount, res, store)
+		}
 	}
 }

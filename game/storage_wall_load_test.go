@@ -208,9 +208,9 @@ func TestWallSave_NoticeOnceAndSavedInTheNewShape(t *testing.T) {
 }
 
 // The next copy of the age's storage building is priced by the new curve, a
-// rate of 1.75 on each copy owned, and it is refused when it is over its
-// store, whatever the copies and stock the save kept.
-func TestWallSave_NextStorageCopyIsOnTheNewCurveAndRefused(t *testing.T) {
+// rate of 1.75 on each copy owned, and its price is the floor of each store
+// it uses when the save is loaded.
+func TestWallSave_NextStorageCopyIsOnTheNewCurveAndFits(t *testing.T) {
 	ge := wallFixtureView(t)
 	var key string
 	for _, d := range ge.rules.Buildings() {
@@ -238,16 +238,9 @@ func TestWallSave_NextStorageCopyIsOnTheNewCurveAndRefused(t *testing.T) {
 			t.Errorf("%s: copy %d costs %v of %s, copy %d %v: a ratio of %v, want %v", key, n+1, p, res, n, prev[res], ratio, config.StorageRate)
 		}
 	}
-	res := ge.overStore(next)
-	if res == "" {
-		t.Fatalf("setup: the next %s (%v) fits every store the save holds", key, next)
-	}
-	err := ge.BuildBuilding(key)
-	want := ge.storeTooSmallText(def.Name, res, next[res])
-	if err == nil || err.Error() != want {
-		t.Errorf("build %s = %v, want %q", key, err, want)
-	}
-	if ge.Buildings.GetCount(key) != n || queued(ge, key) != 0 {
-		t.Errorf("the refused %s was bought", key)
+	for res, amount := range next {
+		if store := ge.Resources.GetStorage(res); store < amount {
+			t.Errorf("next %s costs %v %s but store holds %v", key, amount, res, store)
+		}
 	}
 }
