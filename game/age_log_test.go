@@ -1,22 +1,18 @@
 package game
 
-import (
-	"testing"
-	"time"
-)
+import "testing"
 
 func TestRecordAgeLogsEachAgeOnce(t *testing.T) {
 	gs := NewGameStats()
-	at := time.Now()
-	gs.RecordAge("stone_age", 120, at)
-	gs.RecordAge("stone_age", 300, at.Add(time.Minute))
+	gs.RecordAge("stone_age", 120)
+	gs.RecordAge("stone_age", 300)
 
 	if len(gs.AgeLog) != 2 {
 		t.Fatalf("AgeLog has %d entries, want 2 (primitive, stone): %+v", len(gs.AgeLog), gs.AgeLog)
 	}
 	got := gs.AgeLog[1]
-	if got.Age != "stone_age" || got.Tick != 120 || !got.At.Equal(at) {
-		t.Errorf("stone entry = %+v, want stone_age at tick 120, %v", got, at)
+	if got.Age != "stone_age" || got.Tick != 120 {
+		t.Errorf("stone entry = %+v, want stone_age at tick 120", got)
 	}
 	if len(gs.AgesReached) != 2 {
 		t.Errorf("AgesReached = %v, want primitive and stone", gs.AgesReached)
@@ -28,8 +24,8 @@ func TestNewGameStatsLogsThePrimitiveAgeAtTickZero(t *testing.T) {
 	if len(gs.AgeLog) != 1 {
 		t.Fatalf("AgeLog has %d entries, want 1", len(gs.AgeLog))
 	}
-	if e := gs.AgeLog[0]; e.Age != "primitive_age" || e.Tick != 0 || e.At.IsZero() {
-		t.Errorf("first entry = %+v, want primitive_age at tick 0 with a time", e)
+	if e := gs.AgeLog[0]; e.Age != "primitive_age" || e.Tick != 0 {
+		t.Errorf("first entry = %+v, want primitive_age at tick 0", e)
 	}
 }
 
@@ -51,7 +47,7 @@ func TestPrestigeStartsANewAgeLog(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := catEngine(t, "modern_age", 11)
 	ge.tick = 4000
-	ge.Stats.RecordAge("modern_age", 3900, time.Now())
+	ge.Stats.RecordAge("modern_age", 3900)
 
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatalf("DoPrestige: %v", err)
@@ -85,7 +81,7 @@ func TestAgeLogSurvivesSaveAndLoad(t *testing.T) {
 		t.Fatalf("loaded AgeLog has %d entries, want %d: %+v", len(got), len(want), got)
 	}
 	for i := range want {
-		if got[i].Age != want[i].Age || got[i].Tick != want[i].Tick || !got[i].At.Equal(want[i].At) {
+		if got[i].Age != want[i].Age || got[i].Tick != want[i].Tick {
 			t.Errorf("entry %d = %+v, want %+v", i, got[i], want[i])
 		}
 	}

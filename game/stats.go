@@ -29,19 +29,17 @@ type GameStats struct {
 
 // AgeEntry is one age entered this run.
 type AgeEntry struct {
-	Age  string    `json:"age"`
-	Tick int       `json:"tick"`
-	At   time.Time `json:"at"`
+	Age  string `json:"age"`
+	Tick int    `json:"tick"`
 }
 
 // NewGameStats creates a new stats tracker
 func NewGameStats() *GameStats {
-	now := time.Now()
 	return &GameStats{
 		TotalGathered: make(map[string]float64),
-		GameStarted:   now,
+		GameStarted:   time.Now(),
 		AgesReached:   []string{"primitive_age"},
-		AgeLog:        []AgeEntry{{Age: "primitive_age", Tick: 0, At: now}},
+		AgeLog:        []AgeEntry{{Age: "primitive_age", Tick: 0}},
 	}
 }
 
@@ -69,9 +67,9 @@ func (gs *GameStats) RecordSoldiersTrained(amount float64) {
 	}
 }
 
-// RecordAge records reaching a new age, and when (tick and clock time).
+// RecordAge records reaching a new age, and the tick it was entered.
 // The log entry is added only the first time an age is entered this run.
-func (gs *GameStats) RecordAge(age string, tick int, at time.Time) {
+func (gs *GameStats) RecordAge(age string, tick int) {
 	seen := false
 	for _, a := range gs.AgesReached {
 		if a == age {
@@ -87,7 +85,7 @@ func (gs *GameStats) RecordAge(age string, tick int, at time.Time) {
 			return
 		}
 	}
-	gs.AgeLog = append(gs.AgeLog, AgeEntry{Age: age, Tick: tick, At: at})
+	gs.AgeLog = append(gs.AgeLog, AgeEntry{Age: age, Tick: tick})
 }
 
 // Snapshot returns a stats snapshot for UI

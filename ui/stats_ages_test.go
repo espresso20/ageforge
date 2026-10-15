@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/espresso20/ageforge/game"
 )
@@ -20,8 +19,8 @@ func TestStatsShowsAgesThisRun(t *testing.T) {
 	st.TickIntervalMs = 2000
 	st.Tick = 450
 	st.Stats.AgeLog = []game.AgeEntry{
-		{Age: "primitive_age", Tick: 0, At: time.Now()},
-		{Age: "stone_age", Tick: 300, At: time.Now()},
+		{Age: "primitive_age", Tick: 0},
+		{Age: "stone_age", Tick: 300},
 	}
 
 	text := statsProvider(st, 0)
