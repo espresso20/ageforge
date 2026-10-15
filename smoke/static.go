@@ -386,7 +386,7 @@ func (cs *coldStart) affords(res string, amount float64) bool {
 // required, at their listed output, make amount of res within
 // CarriedSupplyTargets targets of the age.
 func (cs *coldStart) carriedMakes(res string, amount float64) bool {
-	return cs.boot[res] && float64(cs.made[res]*config.AgeTargetTicks(cs.age)*CarriedSupplyTargets) >= amount
+	return cs.boot[res] && float64(cs.made[res]*config.LatePriceTargetTicks(cs.age)*CarriedSupplyTargets) >= amount
 }
 
 // covers reports whether techs within GateTrickleHours cover amount of res
@@ -525,7 +525,7 @@ func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) ([
 			if !config.IsFlowResource(res) || amount[res] <= 0 {
 				continue
 			}
-			made := float64(rules.Core().FlowIncome(res, from.Key) * config.AgeTargetTicks(from.Key))
+			made := float64(rules.Core().FlowIncome(res, from.Key) * config.LatePriceTargetTicks(from.Key))
 			if short := amount[res] - made; short > 0 {
 				out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "flow", Key: needs[res], Resource: res,
 					Need: amount[res], Made: made})
@@ -647,7 +647,7 @@ func firstCopyProblems(from, to config.AgeDef, cs *coldStart, defs map[string]co
 		if !config.IsFlowResource(res) {
 			return
 		}
-		made := float64(rules.Core().FlowIncome(res, to.Key) * config.AgeTargetTicks(to.Key))
+		made := float64(rules.Core().FlowIncome(res, to.Key) * config.LatePriceTargetTicks(to.Key))
 		if short := price - made; short > 0 {
 			out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "flow", Key: key, Resource: res,
 				Need: price, Made: made})

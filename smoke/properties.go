@@ -35,23 +35,18 @@ var KnownPropertyFailures = map[int]string{
 	1:  "22 buildings climb at another rate (1.13)",
 	2:  "fails in 3 of 22 ages; worst 0.28 of the age in the Primitive Age",
 	3:  "fails in 5 of 22 ages; worst 3.0 times in the Primitive Age",
-	4:  "fails in 3 of 22 ages; worst 2.9 times in the Quantum Age",
+	4:  "fails in 3 of 22 ages; worst 3.0 times in the Quantum Age",
 	8:  "fails in 16 of 22 ages; worst 0.0% eaten in the Transcendent Age",
 	9:  "fails in 22 of 22 ages; worst room for 19312 people per job in the Transcendent Age",
-	10: "fails in 1 of 22 ages; worst 1.2 times the age in the Victorian Age",
 	12: "27 of 27 trade route payments fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
 	16: "fails in 2 of 22 ages; worst 3.0 times in the Primitive Age",
 	18: "not worked out here yet",
-	19: "a full run earns 3279 points and everything for sale costs 99",
 }
 
 // KnownPropertyReasons is why a known failure fails, where the reason is a
-// decision and not a table to fix. 10: it fails in the one age
-// KnowledgeLadderHeld names.
-var KnownPropertyReasons = map[int]string{
-	10: "fails only in the age KnowledgeLadderHeld names (the last age has no knowledge building of its own)",
-}
+// decision and not a table to fix.
+var KnownPropertyReasons = map[int]string{}
 
 // researchBand is the band of property 10 for age: the share of the ordinary
 // player's stay that the age's techs take with every scholar at the cap
@@ -436,15 +431,8 @@ func StaticProperties() Properties {
 	// 18 needs the game's own formulas and is stated, not worked out.
 	add(18, "the reference town's faith and culture strength fall in the middle band", false, "not worked out here yet")
 
-	// 19. Prestige points and what they buy.
-	sink := 0
-	for _, u := range config.ActivePrestigeUpgrades() {
-		for _, c := range u.Costs {
-			sink += c
-		}
-	}
-	earned := config.DepthPoints(t.ages[n-1].Key)
-	add(19, "the points a full run earns can all be spent", sink >= earned, fmt.Sprintf("a full run earns %d points and everything for sale costs %d", earned, sink))
+	// 19. Prestige points no longer have a shop sink.
+	add(19, "prestige points have no shop sink", len(config.ActivePrestigeUpgrades()) == 0, "the prestige shop has no items")
 
 	// 20. The largest amount any of the three players can hold in a store or
 	// be quoted (the next copy of any building of the age, the age's wonder

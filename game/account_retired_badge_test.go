@@ -10,7 +10,10 @@ import (
 
 // retiredTradeRungs are the rungs of the market-trades ladder, which the
 // catalog no longer holds, and retiredTradeCounter is the counter that fed it.
-var retiredTradeRungs = []string{"ladder.trades.1", "ladder.trades.2", "ladder.trades.3"}
+var retiredTradeRungs = []string{
+	"ladder.trades.1", "ladder.trades.2", "ladder.trades.3",
+	"special.maxed_out", "special.fully_invested",
+}
 
 const retiredTradeCounter = "market_trade"
 

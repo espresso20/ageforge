@@ -11,7 +11,7 @@ The military system covers four things:
 - **Missions.** Scouting expeditions (`expedition <key>`) cost resources; military campaigns (`campaign <key>`) cost soldiers. Each one resolves after a rolled time, pays a fixed bundle of loot and may bring an encounter with a civilization; see [Missions](#missions).
 - **Defense rating.** A figure on the Army panel worked out from your soldier count and military power. Measured against the raid threat of your current age, it blunts part of what raids, war raids and an Endure take from you (at most 45%); see [Defense](#defense-what-your-army-blunts).
 - **Milestones.** Five military milestones form a chain with a title at the end. The early ones grant permanent military power; the later ones grant all production.
-- **Prestige.** The army resets with the run, and nothing you buy with prestige points raises military power or mission rewards. What carries over is who your missions found: with the legacy kit's [Old Friends](prestige.md#old-friends), every civilization you have met is met again on later runs without a mission.
+- **Prestige.** The army resets with the run. Prestige points give a lasting production bonus, not military power or mission rewards. From the first prestige, [Old Friends](prestige.md#old-friends) meets every civilization you have met again on later runs without a mission.
 
 **Soldiers are a resource**, not a count of workers. Your military buildings produce and store them: staff a War Camp or Barracks with workers and it adds to the `soldiers` resource every tick, the same way a Farm adds food. Soldiers begin with your first military building: a War Camp can be built in the Stone Age and trains them from the day it stands. A town with no military building has none until the **Iron Age**, which brings them to every town. The scouting expeditions (see [Missions](#missions)) let you explore without any soldiers.
 
@@ -537,4 +537,4 @@ See [Morale](morale.md) for the full system.
 
 **Keep missions running.** There's no cooldown beyond the mission's own duration (100 to 160 ticks in the Primitive and Stone Ages, 156 to 416 from the Bronze Age on, rolled at launch). When one resolves, send the next.
 
-**Prestige resets the army.** Soldiers, military buildings and the military power from techs and milestones all start over with the run. What a prestige keeps from your missions is the civilizations they found: with [Old Friends](prestige.md#old-friends) from the legacy kit, each is met again as soon as you reach its age.
+**Prestige resets the army.** Soldiers, military buildings and the military power from techs and milestones all start over with the run. From the first prestige, [Old Friends](prestige.md#old-friends) meets civilizations found by missions again as soon as you reach their age.

@@ -453,8 +453,8 @@ func TestPlan_ClearedByPrestigeSuccumbAndReset(t *testing.T) {
 	ge.mu.Lock()
 	ge.completePrestige(prestigePlain)
 	ge.mu.Unlock()
-	if len(ge.plan) != 0 {
-		t.Errorf("after prestige: plan %+v", ge.plan)
+	if len(ge.plan) != 1 || ge.plan[0].Key != "hut" {
+		t.Errorf("after prestige: plan %+v, want remembered huts", ge.plan)
 	}
 	if ge.WonderOverflow() {
 		t.Error("prestige reset the overflow preference")

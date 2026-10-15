@@ -17,8 +17,6 @@ import (
 //   - a second early taste right after a full run gains under
 //     DepthTasteMax of what that run paid (9 of 120): resetting early again
 //     is never worth it;
-//   - prestige opens at the Medieval Age, and a taste there pays for the
-//     first kit item.
 
 // DepthTasteMax is the most a Medieval Age prestige may add, as a share of
 // a Modern Age run's points.
@@ -33,8 +31,7 @@ var depthDocTable = []struct {
 	{"cyberpunk_age", 363}, {"interstellar_age", 1092},
 }
 
-// StaticDepth checks the depth weights, the docs' table, the taste's share
-// and the kit's first price. It returns what breaks.
+// StaticDepth checks the depth weights, the docs' table and the taste's share.
 func StaticDepth() []string {
 	var out []string
 	for _, ep := range config.Epochs() {
@@ -57,9 +54,6 @@ func StaticDepth() []string {
 	if run <= 0 || float64(taste) >= float64(DepthTasteMax*float64(run)) {
 		out = append(out, fmt.Sprintf("a second taste (%s, %d points) after a full run (%s, %d) gains %.1f%%, want under %.0f%%",
 			game.PrestigeMinAge, taste, game.PrestigeRunAge, run, float64(taste*100)/float64(max(run, 1)), DepthTasteMax*100))
-	}
-	if first := config.PrestigeUpgradeByKey()[config.LegacyKit()[0]]; len(first.Costs) == 0 || first.Costs[0] > taste {
-		out = append(out, fmt.Sprintf("the first kit item (%s) costs more than a taste pays (%d)", first.Key, taste))
 	}
 	return out
 }

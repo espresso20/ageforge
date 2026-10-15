@@ -2152,14 +2152,17 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Calculate bonus rates (the difference from multipliers)
-	for _, def := range ge.Resources.defs {
-		r := ge.Resources.resources[def.Key]
-		if r != nil {
-			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.WorkerRate +
-				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain +
-				r.Breakdown.LegacyRate
-			r.Breakdown.BonusRate = r.Rate - knownComponents
+	// Prestige is a permanent whole-economy multiplier after the production
+	// pools, at the same final stage as Era Mastery. It applies to online and
+	// offline ticks through this shared rate path.
+	prestige := r.Total("prestige_production")
+	if prestige != 1 {
+		for _, def := range ge.Resources.defs {
+			if r := ge.Resources.resources[def.Key]; r != nil && r.Rate != 0 {
+				scaled := float64(r.Rate * prestige)
+				r.Breakdown.PrestigeRate = scaled - r.Rate
+				r.Rate = scaled
+			}
 		}
 	}
 
@@ -2176,6 +2179,17 @@ func (ge *GameEngine) recalculateRates() {
 				r.Breakdown.MasteryRate = scaled - r.Rate
 				r.Rate = scaled
 			}
+		}
+	}
+
+	// Calculate bonus rates (the difference from the named rate sources).
+	for _, def := range ge.Resources.defs {
+		r := ge.Resources.resources[def.Key]
+		if r != nil {
+			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.WorkerRate +
+				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain +
+				r.Breakdown.LegacyRate + r.Breakdown.PrestigeRate + r.Breakdown.MasteryRate
+			r.Breakdown.BonusRate = r.Rate - knownComponents
 		}
 	}
 
@@ -2210,6 +2224,7 @@ func (ge *GameEngine) recalculateRates() {
 				rate += float64(rate * trade)
 			}
 			rate = float64(rate * legacyFactor)
+			rate = float64(rate * prestige)
 			return float64(rate * k)
 		}
 	}
@@ -2436,7 +2451,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.lastAgeAdvanceSummary = summary
 
 	ge.applyAgeUnlocks(newAge)
-	ge.Stats.RecordAge(newAge)
+	ge.Stats.RecordAge(newAge, ge.tick)
 
 	// Account lifetime stat (Phase 6): record the highest age reached IN-MEMORY only.
 	// advanceAge holds ge.mu, so RecordAgeReached must not do I/O or re-enter the
@@ -4616,6 +4631,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
+	ge.Stats.AgeLog[0].Tick = ge.tick
+	ge.Stats.AgeLog[0].Age = ge.age
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	// A new run starts at 1x, as after a Succumb or a wipe: the dev console's
@@ -4738,19 +4755,6 @@ func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
 	if err := ge.Prestige.BuyUpgrade(key); err != nil {
 		return err
 	}
-	ge.recalculateRates() // a storage or rate upgrade shows at once, not next tick
-	ge.addLog("success", ge.prestigeUpgradeLine(key))
-	ge.note(config.BadgeEvUpgradeBought, key)
-	if kit := ge.rules.LegacyKit(); slices.Contains(kit, key) {
-		left := 0
-		for _, k := range kit {
-			if !ge.Prestige.Owns(k) {
-				left++
-			}
-		}
-		ge.report(Event{Kind: config.BadgeEvKit, Subject: key, Attrs: map[string]float64{"left": float64(left)}})
-	}
-	ge.legacyOnPurchaseLocked(key)
 	return nil
 }
 
@@ -4773,6 +4777,8 @@ func (ge *GameEngine) Reset() {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
+	ge.Stats.AgeLog[0].Tick = ge.tick
+	ge.Stats.AgeLog[0].Age = ge.age
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.tickSpeedBonus = 0
@@ -4882,6 +4888,7 @@ func (ge *GameEngine) GetState() GameState {
 	prestigeSnap := ge.Prestige.Snapshot()
 	prestigeSnap.CanPrestige = ge.Prestige.CanPrestige(ge.age, ageOrder)
 	prestigeSnap.PendingPoints = ge.Prestige.CalculatePoints(ge.age)
+	prestigeSnap.NextProductionMultiplier = ge.Prestige.NextProductionMultiplier(ge.age)
 	if next := ge.progress.GetNextAge(ge.age); next != "" {
 		prestigeSnap.NextAge, prestigeSnap.NextAgePoints = next, ge.Prestige.CalculatePoints(next)
 	}

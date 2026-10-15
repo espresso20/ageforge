@@ -2,15 +2,12 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// Depth points and the legacy kit on the prestige screens (Pacing v2, PR 6):
-// what a prestige pays now against one age deeper, and the kit the shop
-// sells with what it remembers.
+// Depth points and carry-overs on the prestige screens.
 
 // prestigePointsLines say what a prestige pays now and what one more age
 // adds, for `prestige`.
@@ -38,21 +35,13 @@ func prestigePointsLines(state game.GameState) []string {
 	return lines
 }
 
-// kitOwned counts how many of the kit items in kit are bought.
-func kitOwned(p game.PrestigeState, kit []string) int {
-	n := 0
-	for _, key := range kit {
-		if p.Upgrades[key].Tier > 0 {
-			n++
-		}
+// carryoverStatusLines reports the three automatic carry-overs. They begin
+// with the first prestige, so state level is the only fact needed here.
+func carryoverStatusLines(state game.GameState) []string {
+	if state.Prestige.Level == 0 {
+		return []string{"  Plan Template: [gray]not yet[-]", "  Roster: [gray]not yet[-]", "  Old Friends: [gray]not yet[-]"}
 	}
-	return n
-}
-
-// kitStatusLine is the one-line kit summary for `prestige`.
-func kitStatusLine(state game.GameState) string {
-	kit := state.Ruleset().LegacyKit()
-	return fmt.Sprintf("  Legacy kit: %d of %d owned.", kitOwned(state.Prestige, kit), len(kit))
+	return []string{"  Plan Template: [green]on[-]", "  Roster: [green]on[-]", "  Old Friends: [green]on[-]"}
 }
 
 // kitMemoryLines say what the kit remembers from your runs so far, for the
@@ -73,46 +62,4 @@ func kitMemoryLines(state game.GameState) []string {
 		lines = append(lines, fmt.Sprintf("  Civilizations met: %d.", k.Factions))
 	}
 	return lines
-}
-
-// prestigeShopLines are the shop's items (the retired perks left out) and
-// what the kit remembers.
-func prestigeShopLines(state game.GameState) []string {
-	p := state.Prestige
-	lines := []string{
-		fmt.Sprintf("[gold]Prestige shop[-] (you have [cyan]%s[-])", textfmt.Count(p.Available, "point", "points")),
-		"",
-		"  [gold]The legacy kit[-]: automation that carries over every prestige.",
-	}
-	for _, def := range state.Ruleset().ShopUpgrades() {
-		u, ok := p.Upgrades[def.Key]
-		if !ok {
-			continue
-		}
-		status := "[green]owned[-]"
-		if u.Tier < u.MaxTier {
-			status = "[cyan]" + textfmt.Count(u.NextCost, "point", "points") + "[-]"
-		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] %s (%s): %s.", def.Key, u.Name, status, u.Description))
-	}
-	lines = append(lines, "")
-	lines = append(lines, kitMemoryLines(state)...)
-	lines = append(lines, "\n  Type [cyan]prestige buy <item>[-] to buy one.")
-	return lines
-}
-
-// kitStatsLines are the owned kit items for the stats overlay ("" lines when
-// none are owned).
-func kitStatsLines(state game.GameState) string {
-	p := state.Prestige
-	var sb strings.Builder
-	for _, key := range state.Ruleset().LegacyKit() {
-		if u := p.Upgrades[key]; u.Tier > 0 {
-			if sb.Len() == 0 {
-				sb.WriteString("\n [gold]Legacy kit:[-]\n")
-			}
-			fmt.Fprintf(&sb, "  %s [green]owned[-]\n", u.Name)
-		}
-	}
-	return sb.String()
 }

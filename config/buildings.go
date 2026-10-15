@@ -894,6 +894,10 @@ func BaseBuildings() []BuildingDef {
 	// file having to carry the strings inline. Flavor is purely additive humor;
 	// see building_flavor.go. Functional Description is never modified here.
 	applyBuildingFlavor(result)
+	// Apply the late-age price curve after every authored definition has joined
+	// the runtime table, including storage, wonders and raw-material parts.
+	applyLatePriceClimb(result)
+	rederiveLatePriceStorage(result)
 	// Normalize cost curves at the single chokepoint so every consumer
 	// (BuildingByKey, the engine, the audit tool) inherits flattened values,
 	// then derive production rates and build times from those prices and the

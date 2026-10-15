@@ -238,6 +238,9 @@ type RateBreakdown struct {
 	// MasteryRate is what Era Mastery adds: the net rate × (k − 1) on known
 	// ground (mastery.go), 0 on new ground.
 	MasteryRate float64
+	// PrestigeRate is what lifetime prestige points add after production pools,
+	// at the same final stage as Era Mastery.
+	PrestigeRate float64
 }
 
 // ResourceState represents a single resource's current state
@@ -359,6 +362,7 @@ type StatsSnapshot struct {
 	GameStarted    time.Time
 	PlayTime       time.Duration
 	AgesReached    []string
+	AgeLog         []AgeEntry
 }
 
 // WorkerInfo is used for save/load serialization
@@ -619,6 +623,10 @@ type PrestigeState struct {
 	PendingPoints int // points you'd get if you prestige now
 	CanPrestige   bool
 	PassiveBonus  float64 // retired: always 0 (the passive became Era Mastery)
+	// ProductionMultiplier is the lasting multiplier from all points ever
+	// earned; NextProductionMultiplier includes PendingPoints.
+	ProductionMultiplier     float64
+	NextProductionMultiplier float64
 	// NextAge is the age after the current one ("" in the final age) and
 	// NextAgePoints what a prestige from it would pay, so the prestige
 	// screen can say what one more age adds.

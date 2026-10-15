@@ -2,6 +2,8 @@
 
 AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources and worker domains, and adds a new district to your [skyline](map.md#skyline). Advancement requires the buildings each age asks for **and** completing the age's wonder. No age asks you to hold an amount of any resource.
 
+From the Modern Age on, first-copy prices rise by 1.2 times each age. The Modern Age keeps its authored prices. Stores, wonders and research scale with the price level; resource outputs do not.
+
 <figure class="screen" data-screen="age-arrival"><figcaption>Reaching a new age, here the Bronze Age: its name is struck in iron, sparks fly, and the town turns from the age you left into the new one.</figcaption></figure>
 
 An advance opens on the arrival: the whole screen, in your map style, theme and glyph set. Any key moves on to what the age opens, and a second key closes it. `Esc` counts as a key. Left alone, the arrival moves on by itself and the screen closes after 20 seconds. The game keeps running underneath the whole time. With `motion off` the arrival is a single still frame.
@@ -384,7 +386,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Spiritual Center | 8 |
 | Uranium Processing Works | 8 |
 
-From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset for prestige points to spend on the legacy kit. See [Prestige System](prestige.md).
+From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset and add those points to the lasting production bonus. See [Prestige System](prestige.md).
 
 **Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport (after Containerization), Power Grid Hub (after Advanced Electrics), Titanium Smelter, Oil Refinery, Mainframe Hall, TV Studio, Space Program, Nano Foundry, Monument of Ages (after Television) · **Resources:** Data, Nanobots, Titanium Ore
 

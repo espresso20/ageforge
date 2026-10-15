@@ -77,7 +77,7 @@ Primitive Writing ████░░░░░░ 40% (~4m 20s left)
 
 To line techs up, add them to the [Build Plan](plan.md) with `plan research <tech>` (or `plan res`). The plan's research items are the queue: when the tech in progress is done, the next one starts by itself, in plan order, and keeps doing so while you are away. A tech's prerequisites must be researched, in progress or planned above it; a planned tech that loses one waits for it. You can also plan the next age's techs; they wait for the advance.
 
-The plan is the only research queue: the game never chooses what you research next. `research list` shows the queue in order. The techs you plan are remembered with the plan, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) they are planned again on later runs, in the age you planned them in.
+The plan is the only research queue: the game never chooses what you research next. `research list` shows the queue in order. The techs you plan are remembered with the plan, and [Plan Template](prestige.md#plan-template) plans them again on later runs after your first prestige, in the age you planned them in.
 
 **A head start.** Work that has no tech to land on is kept for the next tech you start, never more than that tech's price. `research list` shows it (`Head start: 12% of Banking`).
 

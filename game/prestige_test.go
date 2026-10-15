@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math"
 	"testing"
 )
 
@@ -61,11 +62,8 @@ func TestPrestigeManager_PrestigeGrantsLevel(t *testing.T) {
 		t.Errorf("level after prestige = %v, want 1", pm.GetLevel())
 	}
 
-	// The passive retired into Era Mastery: a level alone grants nothing.
-	bonuses := pm.GetBonuses()
-	if bonuses["production_all"] != 0 || bonuses["tick_speed"] != 0 {
-		t.Errorf("a level with no upgrades still grants production %v, tick speed %v; the passive retired into Era Mastery",
-			bonuses["production_all"], bonuses["tick_speed"])
+	if got, want := pm.ProductionMultiplier(), 1+0.282*math.Sqrt(5); math.Abs(got-want) > 1e-12 {
+		t.Errorf("production multiplier = %v, want %v", got, want)
 	}
 	if p := pm.Snapshot().PassiveBonus; p != 0 {
 		t.Errorf("PassiveBonus = %v, want 0", p)

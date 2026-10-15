@@ -69,15 +69,15 @@ var MakerPaybackTicks = map[string]float64{
 	"electric_age":     20116,
 	"atomic_age":       25407,
 	"modern_age":       25950,
-	"information_age":  15227,
-	"digital_age":      40929,
-	"cyberpunk_age":    50249,
-	"fusion_age":       129379,
-	"space_age":        96530,
-	"interstellar_age": 79991,
-	"galactic_age":     169450,
-	"quantum_age":      51348,
-	"transcendent_age": 47204,
+	"information_age":  15227 * LatePriceStep,
+	"digital_age":      40929 * LatePriceStep * LatePriceStep,
+	"cyberpunk_age":    50249 * LatePriceStep * LatePriceStep * LatePriceStep,
+	"fusion_age":       129379 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
+	"space_age":        96530 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
+	"interstellar_age": 79991 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
+	"galactic_age":     169450 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
+	"quantum_age":      51348 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
+	"transcendent_age": 47204 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
 }
 
 // MakerFill is one hole the rules fill: in Age, Building also makes Material,
@@ -529,7 +529,7 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 				continue
 			}
 			ask := float64((gate[a.Key][res] + wonder[a.Key][res]) * lv[res])
-			if float64(supply(res)*AgeTargetTicks(a.Key)) >= ask {
+			if float64(supply(res)*LatePriceTargetTicks(a.Key)) >= ask {
 				continue // the carried copies make what is asked: no shortage
 			}
 			if makerAccepted(a.Key, res) {
@@ -629,7 +629,7 @@ func MakerShortageTargets(defs []BuildingDef, ages []AgeDef, age, res string) fl
 	gate, wonder := MakerAsks(defs, ages)
 	lv := priceLevels(defs)[age]
 	ask := float64((gate[age][res] + wonder[age][res]) * lv[res])
-	made := float64(makerSupply(defs, ages, i, res) * AgeTargetTicks(age))
+	made := float64(makerSupply(defs, ages, i, res) * LatePriceTargetTicks(age))
 	if ask <= 0 {
 		return 0
 	}

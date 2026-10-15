@@ -1024,7 +1024,7 @@ func TestCosmicDoomParksTheLastPassageThread(t *testing.T) {
 		t.Errorf("Last Passage state = %+v", lp)
 	}
 	// Appease goes to the doom's thread; the Last Passage's keeps its level.
-	setStock(ge, map[string][2]float64{"faith": {5e10, 5e10}, "culture": {5e10, 5e10}})
+	setStock(ge, map[string][2]float64{"faith": {1e12, 1e12}, "culture": {1e12, 1e12}})
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}

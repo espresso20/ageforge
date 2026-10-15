@@ -268,10 +268,6 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 		if _, ok := c.m.idx[def.Subject]; !ok {
 			return fmt.Sprintf("asks for the age %q, which does not exist", def.Subject)
 		}
-	case config.BadgeEvUpgradeBought, config.BadgeEvKit:
-		if !slices.Contains(c.set.LegacyKit(), def.Subject) {
-			return fmt.Sprintf("names the legacy kit item %q, which does not exist", def.Subject)
-		}
 	case config.BadgeEvBadge:
 		// The event's subject is the family of the badge just earned.
 		for _, d := range c.set.Badges() {

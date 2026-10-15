@@ -108,7 +108,7 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 			if !IsFlowResource(res) || c <= 0 {
 				continue
 			}
-			if made := FlowIncome(res, d.RequiredAge) * AgeTargetTicks(d.RequiredAge); c > made {
+			if made := FlowIncome(res, d.RequiredAge) * LatePriceTargetTicks(d.RequiredAge); c > made {
 				t.Errorf("%s asks %.4g %s, more than the %.4g the age's income makes in its target", d.Key, c, res, made)
 			}
 		}
@@ -127,7 +127,7 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 		t.Errorf("hoover_dam is priced in stone, which no Electric Age building is priced in or makes")
 	}
 	sistine := BuildingByKey()["sistine_chapel"]
-	made := FlowIncome("culture", sistine.RequiredAge) * AgeTargetTicks(sistine.RequiredAge)
+	made := FlowIncome("culture", sistine.RequiredAge) * LatePriceTargetTicks(sistine.RequiredAge)
 	if got := sistine.BaseCost["culture"]; got != 950000 || made < 950000 || made >= 960000 {
 		t.Errorf("sistine_chapel culture = %.4g with %.4g made in the target: want 950000, the largest two-figure number the income covers", got, made)
 	}

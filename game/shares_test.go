@@ -496,8 +496,8 @@ func TestShares_ResetByPrestigeSuccumbAndNewGame(t *testing.T) {
 	ge.mu.Lock()
 	ge.completePrestige(prestigePlain)
 	ge.mu.Unlock()
-	if ge.WorkerShares() != nil || ge.AutoRecruit() {
-		t.Errorf("after prestige: shares %v, auto-recruit %v; want auto, and auto-recruit still off", ge.WorkerShares(), ge.AutoRecruit())
+	if ge.WorkerShares()["faith"] != 40 || ge.AutoRecruit() {
+		t.Errorf("after prestige: shares %v, auto-recruit %v; want remembered shares and auto-recruit still off", ge.WorkerShares(), ge.AutoRecruit())
 	}
 	ge = setup()
 	succumbIn(t, ge, "iron_age")
