@@ -31,6 +31,22 @@ func statsProvider(state game.GameState, _ int) string {
 		fmt.Fprintf(&sb, "   [green]✓[-] %s\n", game.AgeName(age))
 	}
 
+	// Time spent in each age of this run. The last entry is the current age, so
+	// its time runs to the current tick. Nothing is shown for an old save with no log.
+	if len(s.AgeLog) > 0 {
+		sb.WriteString("\n [gold]Ages this run[-]\n")
+		iv := tickInterval(state)
+		for i, e := range s.AgeLog {
+			if i == len(s.AgeLog)-1 {
+				fmt.Fprintf(&sb, "   %-14s %s so far\n", game.AgeName(e.Age),
+					game.DurationText(state.Tick-e.Tick, iv))
+				continue
+			}
+			fmt.Fprintf(&sb, "   %-14s %s\n", game.AgeName(e.Age),
+				game.DurationText(s.AgeLog[i+1].Tick-e.Tick, iv))
+		}
+	}
+
 	sb.WriteString("\n [gold]Total gathered:[-]\n")
 	gKeys := make([]string, 0, len(s.TotalGathered))
 	for k := range s.TotalGathered {
