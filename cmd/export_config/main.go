@@ -66,9 +66,13 @@ func writeBuildingLineages(outDir string) {
 		productionKeys[b.Key] = true
 	}
 
-	// Split production buildings by lineage
+	// Split production buildings by lineage, from the combined list so the
+	// export carries the prices the game charges (the late price climb).
 	byLineage := make(map[string][]config.BuildingDef)
-	for _, b := range production {
+	for _, b := range allBuildings {
+		if !productionKeys[b.Key] {
+			continue
+		}
 		key := b.LineageKey
 		if key == "" {
 			key = "misc"

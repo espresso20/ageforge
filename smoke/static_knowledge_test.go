@@ -11,8 +11,7 @@ import (
 // total config.ResearchShare of what the ordinary reference player's
 // knowledge buildings make during his stay (their scholars, all researching),
 // climbing by KnowledgeLadderRatio from the cheapest to the dearest in the
-// order the table has them, each to three significant figures. The last age is
-// the one named exception (KnowledgeLadderHeld).
+// order the table has them, each to three significant figures.
 func TestKnowledgeTechPricesFollowTheLadder(t *testing.T) {
 	techs := config.Technologies()
 	ladders := KnowledgeLadders(techs, KnowledgeMade(), func(string) float64 { return KnowledgeLadderRatio })
@@ -21,9 +20,6 @@ func TestKnowledgeTechPricesFollowTheLadder(t *testing.T) {
 		byKey[tc.Key] = tc
 	}
 	for _, l := range ladders {
-		if _, stopped := KnowledgeLadderHeld[l.Age]; stopped {
-			continue
-		}
 		for j, k := range l.Techs {
 			if got := byKey[k].Cost; got != l.Prices[j] {
 				t.Errorf("%s: %s costs %g, the ladder gives %g", l.Age, k, got, l.Prices[j])
@@ -45,18 +41,11 @@ func sumOf(v []float64) float64 {
 	return s
 }
 
-// TestKnowledgeLadderHasOneNamedException: the single exception is the last
-// age, its techs keep the held prices, property 10 reads what is recorded for
-// it and holds in every other age, and the Research Covenant, which holds in
-// every age, is checked for it by name.
-func TestKnowledgeLadderHasOneNamedException(t *testing.T) {
-	ages := config.Ages()
-	last := ages[len(ages)-1].Key
-	if len(KnowledgeLadderHeld) != 1 || KnowledgeLadderHeld[last].Reason == "" {
-		t.Fatalf("the ladder's exceptions are %v, want the last age (%s) alone, with a reason", KnowledgeLadderHeld, last)
-	}
+// TestKnowledgeLadderKeepsResearchShare checks every age, including the
+// last, against the research-share rule and the Research Covenant.
+func TestKnowledgeLadderKeepsResearchShare(t *testing.T) {
 	made := KnowledgeMade()
-	for i, a := range ages {
+	for i, a := range config.Ages() {
 		sum := 0.0
 		for _, tc := range config.Technologies() {
 			if tc.Age == a.Key {
@@ -65,15 +54,6 @@ func TestKnowledgeLadderHasOneNamedException(t *testing.T) {
 		}
 		share := sum / made[i]
 		low, high := researchBand(a.Key)
-		if h, held := KnowledgeLadderHeld[a.Key]; held {
-			if math.Abs(sum-h.TechSum) > 1e6 {
-				t.Errorf("%s: its techs cost %g, held at %g", a.Key, sum, h.TechSum)
-			}
-			if share >= low && share <= high || math.Abs(share-h.Property10) > 0.0005 {
-				t.Errorf("%s: property 10 reads %.4f, the exception records %.4f (outside %g to %g)", a.Key, share, h.Property10, low, high)
-			}
-			continue
-		}
 		if share < low || share > high {
 			t.Errorf("%s: property 10 reads %.3f, outside %g to %g, and the age is not the named exception", a.Key, share, low, high)
 		}
@@ -81,16 +61,6 @@ func TestKnowledgeLadderHasOneNamedException(t *testing.T) {
 	for _, r := range StaticResearch() {
 		if p := r.Problems(); len(p) > 0 {
 			t.Errorf("the Research Covenant breaks in %s: %v", r.Age, p)
-		}
-	}
-	for n := range KnownPropertyReasons {
-		if _, listed := KnownPropertyFailures[n]; !listed {
-			t.Errorf("property %d has a recorded reason and is not a known failure", n)
-		}
-	}
-	for _, p := range StaticProperties().List {
-		if p.N == 10 && p.Holds {
-			t.Error("property 10 holds: the named exception no longer fails it, take it off the list")
 		}
 	}
 }

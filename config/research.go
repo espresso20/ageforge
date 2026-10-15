@@ -1081,7 +1081,7 @@ func rawTechnologies() []TechDef {
 
 		// === INFORMATION AGE ===
 		{
-			Name: "Social Media", Key: "social_media", Cost: 8.1e07, ResearchTicks: 4095, Code: "SOCIA", Emblem: "@",
+			Name: "Social Media", Key: "social_media", Cost: 97400000, ResearchTicks: 4095, Code: "SOCIA", Emblem: "@",
 			Age: "information_age", Lane: LaneFaith,
 			Prerequisites: []string{"internet"},
 			Description:   "Mass digital communication platforms.",
@@ -1091,7 +1091,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Search Engines", Key: "search_engines", Cost: 1.05e08, ResearchTicks: 4095, Code: "SEARC", Emblem: "?",
+			Name: "Search Engines", Key: "search_engines", Cost: 127000000, ResearchTicks: 4095, Code: "SEARC", Emblem: "?",
 			Age: "information_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"internet"},
 			Description:   "Everything written down, found in half a second.",
@@ -1100,7 +1100,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "E-commerce", Key: "e_commerce", Cost: 1.37e08, ResearchTicks: 4095, Code: "ECOMM", Emblem: "€",
+			Name: "E-commerce", Key: "e_commerce", Cost: 165000000, ResearchTicks: 4095, Code: "ECOMM", Emblem: "€",
 			Age: "information_age", Lane: LaneTrade,
 			Prerequisites: []string{"containerization", "internet"},
 			Description:   "The shop is a page, and the till never closes.",
@@ -1111,7 +1111,7 @@ func rawTechnologies() []TechDef {
 			// and threading one through WorkerManager isn't a "tiny" engine change.
 			// Substituted a supported, clearly-beneficial effect instead: nanobots
 			// keep the population healthier (bigger pop cap) and better fed (+food).
-			Name: "Medical Nanobots", Key: "medical_nanobots", Cost: 1.78e08, ResearchTicks: 4095, Code: "MEDIC", Emblem: "✚",
+			Name: "Medical Nanobots", Key: "medical_nanobots", Cost: 214000000, ResearchTicks: 4095, Code: "MEDIC", Emblem: "✚",
 			Age: "information_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"nanofabrication"},
 			Description:   "Bloodstream nanobots keep workers healthy, adding housing and food.",
@@ -1123,13 +1123,13 @@ func rawTechnologies() []TechDef {
 		{
 			// Mid-age unlock (Pacing v2): it stands behind three of the
 			// age's techs, so it comes after them.
-			Name: "Internet of Things", Key: "internet_of_things", Cost: 2.31e08, ResearchTicks: 4095, Code: "IOT", Emblem: "⌘",
+			Name: "Internet of Things", Key: "internet_of_things", Cost: 278000000, ResearchTicks: 4095, Code: "IOT", Emblem: "⌘",
 			Age: "information_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"social_media", "cybersecurity", "medical_nanobots"},
 			Description:   "The fridges and the tractors go online and start reporting back. Opens the Smart Farm and the Smart Complex.",
 		},
 		{
-			Name: "Embedded Systems", Key: "embedded_systems", Cost: 3.01e08, ResearchTicks: 4095, Code: "EMBED", Emblem: "▧",
+			Name: "Embedded Systems", Key: "embedded_systems", Cost: 362000000, ResearchTicks: 4095, Code: "EMBED", Emblem: "▧",
 			Age: "information_age", Lane: LaneCraft,
 			Prerequisites: []string{"nanofabrication"},
 			Description:   "A small computer inside every machine, minding it.",
@@ -1138,7 +1138,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Precision Mining", Key: "precision_mining", Cost: 3.91e08, ResearchTicks: 4095, Code: "PRECI", Emblem: "↧",
+			Name: "Precision Mining", Key: "precision_mining", Cost: 470000000, ResearchTicks: 4095, Code: "PRECI", Emblem: "↧",
 			Age: "information_age", Lane: LaneMaterials,
 			Prerequisites: []string{"titanium_alloys"},
 			Description:   "Sensors read the rock ahead of the drill, and nothing is dug twice.",
@@ -1148,7 +1148,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Cybersecurity", Key: "cybersecurity", Cost: 4.79e07, ResearchTicks: 3276, Code: "SECUR", Emblem: "⊘",
+			Name: "Cybersecurity", Key: "cybersecurity", Cost: 57600000, ResearchTicks: 3276, Code: "SECUR", Emblem: "⊘",
 			Age: "information_age", Lane: LaneMilitary,
 			Prerequisites: []string{"computers"},
 			Description:   "Defense against digital threats.",
@@ -1157,7 +1157,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Smart Grid", Key: "smart_grid", Cost: 5.08e08, ResearchTicks: 4095, Code: "SMART", Emblem: "⊹",
+			Name: "Smart Grid", Key: "smart_grid", Cost: 611000000, ResearchTicks: 4095, Code: "SMART", Emblem: "⊹",
 			Age: "information_age", Lane: LaneEnergy,
 			Prerequisites: []string{"electricity_tech"},
 			Description:   "A grid that knows where the power is wanted before the switch is thrown.",
@@ -1166,7 +1166,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Space Stations", Key: "space_stations", Cost: 6.61e08, ResearchTicks: 4095, Code: "STATN", Emblem: "✜",
+			Name: "Space Stations", Key: "space_stations", Cost: 795000000, ResearchTicks: 4095, Code: "STATN", Emblem: "✜",
 			Age: "information_age", Lane: LaneSpace,
 			Prerequisites: []string{"satellite_tech"},
 			Description:   "Crews that live in orbit for months and watch the whole world turn.",
@@ -1175,7 +1175,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Internet", Key: "internet", Cost: 6.23e07, ResearchTicks: 4095, Code: "INTER", Emblem: "※",
+			Name: "Internet", Key: "internet", Cost: 74900000, ResearchTicks: 4095, Code: "INTER", Emblem: "※",
 			Age: "information_age", Lane: LaneComputing,
 			Prerequisites: []string{"computers", "satellite_tech"},
 			Description:   "Global network connecting all of humanity.",
@@ -1186,7 +1186,7 @@ func rawTechnologies() []TechDef {
 
 		// === DIGITAL AGE ===
 		{
-			Name: "Virtual Reality", Key: "virtual_reality", Cost: 8.67e07, ResearchTicks: 4680, Code: "VR", Emblem: "◈",
+			Name: "Virtual Reality", Key: "virtual_reality", Cost: 125000000, ResearchTicks: 4680, Code: "VR", Emblem: "◈",
 			Age: "digital_age", Lane: LaneFaith,
 			Prerequisites: []string{"social_media"},
 			Description:   "Anywhere you like, from a chair, and nearly as good.",
@@ -1195,7 +1195,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Open Science", Key: "open_science", Cost: 1.13e08, ResearchTicks: 4680, Code: "OPEN", Emblem: "∀",
+			Name: "Open Science", Key: "open_science", Cost: 162000000, ResearchTicks: 4680, Code: "OPEN", Emblem: "∀",
 			Age: "digital_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"search_engines"},
 			Description:   "Every paper and every dataset, free to read the day it is finished.",
@@ -1204,7 +1204,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Automated Logistics", Key: "automated_logistics", Cost: 1.46e08, ResearchTicks: 4680, Code: "LOGIS", Emblem: "⇛",
+			Name: "Automated Logistics", Key: "automated_logistics", Cost: 211000000, ResearchTicks: 4680, Code: "LOGIS", Emblem: "⇛",
 			Age: "digital_age", Lane: LaneTrade,
 			Prerequisites: []string{"e_commerce"},
 			Description:   "Warehouses that pick, pack and send without a hand on the parcel.",
@@ -1214,7 +1214,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The Digital Era's Trade capstone.
-			Name: "Global Village", Key: "global_village", Cost: 1.19e09, ResearchTicks: 7488, Code: "GLOBE", Emblem: "⊚",
+			Name: "Global Village", Key: "global_village", Cost: 1720000000, ResearchTicks: 7488, Code: "GLOBE", Emblem: "⊚",
 			Age: "digital_age", Lane: LaneTrade, Capstone: true,
 			Prerequisites: []string{"e_commerce", "social_media"},
 			Description:   "Everyone is a neighbor now, and neighbors do business.",
@@ -1224,7 +1224,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Gene Editing", Key: "gene_editing", Cost: 1.9e08, ResearchTicks: 4680, Code: "GENE", Emblem: "∽",
+			Name: "Gene Editing", Key: "gene_editing", Cost: 274000000, ResearchTicks: 4680, Code: "GENE", Emblem: "∽",
 			Age: "digital_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"medical_nanobots"},
 			Description:   "Crops rewritten a letter at a time, for drought, blight and yield.",
@@ -1233,7 +1233,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Self-Replication", Key: "self_replication", Cost: 2.48e08, ResearchTicks: 4680, Code: "SELF", Emblem: "↺",
+			Name: "Self-Replication", Key: "self_replication", Cost: 356000000, ResearchTicks: 4680, Code: "SELF", Emblem: "↺",
 			Age: "digital_age", Lane: LaneCraft,
 			Prerequisites: []string{"medical_nanobots", "machine_learning"},
 			Description:   "Nanobots that build copies of themselves.",
@@ -1243,7 +1243,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Nano Alloys", Key: "nano_alloys", Cost: 3.22e08, ResearchTicks: 4680, Code: "ALLOY", Emblem: "⬢",
+			Name: "Nano Alloys", Key: "nano_alloys", Cost: 463000000, ResearchTicks: 4680, Code: "ALLOY", Emblem: "⬢",
 			Age: "digital_age", Lane: LaneMaterials,
 			Prerequisites: []string{"precision_mining"},
 			Description:   "Metal laid down grain by grain, with no flaw to start a crack.",
@@ -1252,7 +1252,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Drone Warfare", Key: "drone_warfare", Cost: 4.18e08, ResearchTicks: 4680, Code: "DRONE", Emblem: "✣",
+			Name: "Drone Warfare", Key: "drone_warfare", Cost: 602000000, ResearchTicks: 4680, Code: "DRONE", Emblem: "✣",
 			Age: "digital_age", Lane: LaneMilitary,
 			Prerequisites: []string{"cybersecurity"},
 			Description:   "The pilot is a thousand miles away, and home for dinner.",
@@ -1261,7 +1261,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Grid Storage", Key: "grid_storage", Cost: 5.44e08, ResearchTicks: 4680, Code: "STORE", Emblem: "▮",
+			Name: "Grid Storage", Key: "grid_storage", Cost: 783000000, ResearchTicks: 4680, Code: "STORE", Emblem: "▮",
 			Age: "digital_age", Lane: LaneEnergy,
 			Prerequisites: []string{"smart_grid"},
 			Description:   "Batteries the size of buildings hold the noon sun for the evening.",
@@ -1270,7 +1270,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Reusable Launchers", Key: "reusable_launchers", Cost: 7.07e08, ResearchTicks: 4680, Code: "REUSE", Emblem: "⇅",
+			Name: "Reusable Launchers", Key: "reusable_launchers", Cost: 1020000000, ResearchTicks: 4680, Code: "REUSE", Emblem: "⇅",
 			Age: "digital_age", Lane: LaneSpace,
 			Prerequisites: []string{"space_stations"},
 			Description:   "The rocket lands where it took off, and flies again next week.",
@@ -1279,7 +1279,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Machine Learning", Key: "machine_learning", Cost: 6.67e07, ResearchTicks: 4680, Code: "LEARN", Emblem: "∇",
+			Name: "Machine Learning", Key: "machine_learning", Cost: 96000000, ResearchTicks: 4680, Code: "LEARN", Emblem: "∇",
 			Age: "digital_age", Lane: LaneComputing,
 			Prerequisites: []string{"internet", "cybersecurity"},
 			Description:   "Algorithms that learn and improve autonomously.",
@@ -1289,7 +1289,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Cloud Computing", Key: "cloud_computing", Cost: 9.19e08, ResearchTicks: 4680, Code: "CLOUD", Emblem: "⌒",
+			Name: "Cloud Computing", Key: "cloud_computing", Cost: 1320000000, ResearchTicks: 4680, Code: "CLOUD", Emblem: "⌒",
 			Age: "digital_age", Lane: LaneComputing,
 			Prerequisites: []string{"internet"},
 			Description:   "Distributed computing at global scale.",
@@ -1299,7 +1299,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The Digital Era's Computing capstone.
-			Name: "General AI", Key: "general_ai", Cost: 1.55e09, ResearchTicks: 7488, Code: "AGI", Emblem: "⊨",
+			Name: "General AI", Key: "general_ai", Cost: 2240000000, ResearchTicks: 7488, Code: "AGI", Emblem: "⊨",
 			Age: "digital_age", Lane: LaneComputing, Capstone: true,
 			Prerequisites: []string{"machine_learning", "cloud_computing"},
 			Description:   "A machine that can be handed any question, and asks better ones back.",
@@ -1312,13 +1312,13 @@ func rawTechnologies() []TechDef {
 		{
 			// Mid-age unlock (Pacing v2): it stands behind Cybernetics and
 			// Blockchain, so it comes during the saving-up for the wonder.
-			Name: "Holography", Key: "holography", Cost: 5.48e08, ResearchTicks: 5265, Code: "HOLOG", Emblem: "◬",
+			Name: "Holography", Key: "holography", Cost: 948000000, ResearchTicks: 5265, Code: "HOLOG", Emblem: "◬",
 			Age: "cyberpunk_age", Lane: LaneFaith,
 			Prerequisites: []string{"cybernetics", "blockchain"},
 			Description:   "Light learns to lie convincingly, and every wall becomes an ad. Opens the Holographic Theater.",
 		},
 		{
-			Name: "Neural Interface", Key: "neural_interface", Cost: 3.24e08, ResearchTicks: 4212, Code: "NEURA", Emblem: "ψ",
+			Name: "Neural Interface", Key: "neural_interface", Cost: 561000000, ResearchTicks: 4212, Code: "NEURA", Emblem: "ψ",
 			Age: "cyberpunk_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"machine_learning"},
 			Description:   "Direct brain-computer interface technology.",
@@ -1327,7 +1327,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Blockchain", Key: "blockchain", Cost: 7.12e08, ResearchTicks: 5265, Code: "BLOCK", Emblem: "⋈",
+			Name: "Blockchain", Key: "blockchain", Cost: 1230000000, ResearchTicks: 5265, Code: "BLOCK", Emblem: "⋈",
 			Age: "cyberpunk_age", Lane: LaneTrade,
 			Prerequisites: []string{"cybersecurity", "cloud_computing"},
 			Description:   "Decentralized trustless systems.",
@@ -1336,7 +1336,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Synthetic Food", Key: "synthetic_food", Cost: 9.26e08, ResearchTicks: 5265, Code: "SYNTH", Emblem: "◒",
+			Name: "Synthetic Food", Key: "synthetic_food", Cost: 1600000000, ResearchTicks: 5265, Code: "SYNTH", Emblem: "◒",
 			Age: "cyberpunk_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"gene_editing"},
 			Description:   "Protein grown in a vat, shaped like whatever sells.",
@@ -1346,7 +1346,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The Neon Citadel's keystone, with Holography behind it.
-			Name: "Cybernetics", Key: "cybernetics", Cost: 4.21e08, ResearchTicks: 5265, Code: "CYBER", Emblem: "Ø",
+			Name: "Cybernetics", Key: "cybernetics", Cost: 729000000, ResearchTicks: 5265, Code: "CYBER", Emblem: "Ø",
 			Age: "cyberpunk_age", Lane: LaneCraft,
 			Prerequisites: []string{"neural_interface"},
 			Description:   "Mechanical augmentation of the human body.",
@@ -1355,7 +1355,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Dark Crystal Mining", Key: "dark_crystal_mining", Cost: 1.2e09, ResearchTicks: 5265, Code: "CRYST", Emblem: "♢",
+			Name: "Dark Crystal Mining", Key: "dark_crystal_mining", Cost: 2080000000, ResearchTicks: 5265, Code: "CRYST", Emblem: "♢",
 			Age: "cyberpunk_age", Lane: LaneMaterials,
 			Prerequisites: []string{"nano_alloys"},
 			Description:   "Crystals that bend light the wrong way, cut from the deepest rock.",
@@ -1364,7 +1364,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Augmented Soldiers", Key: "augmented_soldiers", Cost: 1.56e09, ResearchTicks: 5265, Code: "AUGMT", Emblem: "✠",
+			Name: "Augmented Soldiers", Key: "augmented_soldiers", Cost: 2710000000, ResearchTicks: 5265, Code: "AUGMT", Emblem: "✠",
 			Age: "cyberpunk_age", Lane: LaneMilitary,
 			Prerequisites: []string{"cybernetics", "drone_warfare"},
 			Description:   "Soldiers rebuilt to see in the dark and carry twice the load.",
@@ -1374,7 +1374,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Dark Energy", Key: "dark_energy", Cost: 2.03e09, ResearchTicks: 5265, Code: "DARKE", Emblem: "◕",
+			Name: "Dark Energy", Key: "dark_energy", Cost: 3520000000, ResearchTicks: 5265, Code: "DARKE", Emblem: "◕",
 			Age: "cyberpunk_age", Lane: LaneEnergy,
 			Prerequisites: []string{"grid_storage"},
 			Description:   "Power drawn from the pressure that pushes the universe apart.",
@@ -1383,7 +1383,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Lunar Outposts", Key: "lunar_outposts", Cost: 2.64e09, ResearchTicks: 5265, Code: "LUNAR", Emblem: "☽",
+			Name: "Lunar Outposts", Key: "lunar_outposts", Cost: 4580000000, ResearchTicks: 5265, Code: "LUNAR", Emblem: "☽",
 			Age: "cyberpunk_age", Lane: LaneSpace,
 			Prerequisites: []string{"reusable_launchers"},
 			Description:   "A permanent crew on the Moon, and a harbor for everything going further.",
@@ -1392,7 +1392,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Darknets", Key: "darknets", Cost: 3.44e09, ResearchTicks: 5265, Code: "DARKN", Emblem: "▼",
+			Name: "Darknets", Key: "darknets", Cost: 5950000000, ResearchTicks: 5265, Code: "DARKN", Emblem: "▼",
 			Age: "cyberpunk_age", Lane: LaneComputing,
 			Prerequisites: []string{"cloud_computing"},
 			Description:   "Networks under the network, where nobody is who they say.",
@@ -1403,7 +1403,7 @@ func rawTechnologies() []TechDef {
 
 		// === FUSION AGE ===
 		{
-			Name: "Neural Art", Key: "neural_art", Cost: 1.9e09, ResearchTicks: 5850, Code: "ART", Emblem: "❂",
+			Name: "Neural Art", Key: "neural_art", Cost: 3940000000, ResearchTicks: 5850, Code: "ART", Emblem: "❂",
 			Age: "fusion_age", Lane: LaneFaith,
 			Prerequisites: []string{"holography"},
 			Description:   "Art played straight into the mind, with no canvas in between.",
@@ -1412,7 +1412,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Unified Theory", Key: "unified_theory", Cost: 2.48e09, ResearchTicks: 5850, Code: "UNIFY", Emblem: "∮",
+			Name: "Unified Theory", Key: "unified_theory", Cost: 5130000000, ResearchTicks: 5850, Code: "UNIFY", Emblem: "∮",
 			Age: "fusion_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"neural_interface", "plasma_physics"},
 			Description:   "One set of equations for the very large and the very small.",
@@ -1423,13 +1423,13 @@ func rawTechnologies() []TechDef {
 		{
 			// Mid-age unlock (Pacing v2), paced with Plasma Physics (see
 			// there).
-			Name: "Maglev Transit", Key: "maglev_transit", Cost: 3.22e09, ResearchTicks: 5850, Code: "MAGLV", Emblem: "⇒",
+			Name: "Maglev Transit", Key: "maglev_transit", Cost: 6670000000, ResearchTicks: 5850, Code: "MAGLV", Emblem: "⇒",
 			Age: "fusion_age", Lane: LaneTrade,
 			Prerequisites: []string{"superconductors"},
 			Description:   "Superconducting rails float the freight across the city at the speed of a mild panic. Opens the Energy Exchange.",
 		},
 		{
-			Name: "Closed Biospheres", Key: "closed_biospheres", Cost: 4.18e09, ResearchTicks: 5850, Code: "BIOSP", Emblem: "◠",
+			Name: "Closed Biospheres", Key: "closed_biospheres", Cost: 8670000000, ResearchTicks: 5850, Code: "BIOSP", Emblem: "◠",
 			Age: "fusion_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"synthetic_food"},
 			Description:   "A sealed dome that feeds, waters and airs everyone inside it.",
@@ -1438,7 +1438,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Molecular Assembly", Key: "molecular_assembly", Cost: 5.44e09, ResearchTicks: 5850, Code: "MOLEC", Emblem: "⁂",
+			Name: "Molecular Assembly", Key: "molecular_assembly", Cost: 11300000000, ResearchTicks: 5850, Code: "MOLEC", Emblem: "⁂",
 			Age: "fusion_age", Lane: LaneCraft,
 			Prerequisites: []string{"cybernetics", "self_replication"},
 			Description:   "Parts grown to shape, molecule by molecule, with nothing to cut away.",
@@ -1448,7 +1448,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// Paced with Plasma Physics (see there).
-			Name: "Superconductors", Key: "superconductors", Cost: 8.67e08, ResearchTicks: 4680, Code: "SUPER", Emblem: "℧",
+			Name: "Superconductors", Key: "superconductors", Cost: 1800000000, ResearchTicks: 4680, Code: "SUPER", Emblem: "℧",
 			Age: "fusion_age", Lane: LaneMaterials,
 			Prerequisites: []string{"plasma_physics"},
 			Description:   "Zero-resistance materials lose nothing between the reactor and the store.",
@@ -1457,7 +1457,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Plasma Weapons", Key: "plasma_weapons", Cost: 7.07e09, ResearchTicks: 5850, Code: "BEAMS", Emblem: "☇",
+			Name: "Plasma Weapons", Key: "plasma_weapons", Cost: 14600000000, ResearchTicks: 5850, Code: "BEAMS", Emblem: "☇",
 			Age: "fusion_age", Lane: LaneMilitary,
 			Prerequisites: []string{"augmented_soldiers", "plasma_physics"},
 			Description:   "A bolt of contained star, aimed.",
@@ -1466,7 +1466,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Fusion Power", Key: "fusion_power", Cost: 1.46e09, ResearchTicks: 5850, Code: "FUSN", Emblem: "✹",
+			Name: "Fusion Power", Key: "fusion_power", Cost: 3030000000, ResearchTicks: 5850, Code: "FUSN", Emblem: "✹",
 			Age: "fusion_age", Lane: LaneEnergy,
 			Prerequisites: []string{"nuclear_fission", "cybernetics"},
 			Description:   "Controlled fusion adds electricity and plasma.",
@@ -1480,7 +1480,7 @@ func rawTechnologies() []TechDef {
 			// run one after another (each needs the one before), so the
 			// age's research is spread along it. The age used to go 26
 			// hours from its last tech to its wonder.
-			Name: "Plasma Physics", Key: "plasma_physics", Cost: 1.13e09, ResearchTicks: 4680, Code: "PLASM", Emblem: "≀",
+			Name: "Plasma Physics", Key: "plasma_physics", Cost: 2330000000, ResearchTicks: 4680, Code: "PLASM", Emblem: "≀",
 			Age: "fusion_age", Lane: LaneEnergy,
 			Prerequisites: []string{"fusion_power"},
 			Description:   "Mastery of superheated matter states.",
@@ -1489,7 +1489,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Fusion Drives", Key: "fusion_drives", Cost: 9.19e09, ResearchTicks: 5850, Code: "DRIVE", Emblem: "⇑",
+			Name: "Fusion Drives", Key: "fusion_drives", Cost: 19000000000, ResearchTicks: 5850, Code: "DRIVE", Emblem: "⇑",
 			Age: "fusion_age", Lane: LaneSpace,
 			Prerequisites: []string{"fusion_power", "lunar_outposts"},
 			Description:   "A torch that burns for weeks: the outer planets in a season.",
@@ -1498,7 +1498,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Quantum Networking", Key: "quantum_networking", Cost: 1.19e10, ResearchTicks: 5850, Code: "QNET", Emblem: "⊶",
+			Name: "Quantum Networking", Key: "quantum_networking", Cost: 24800000000, ResearchTicks: 5850, Code: "QNET", Emblem: "⊶",
 			Age: "fusion_age", Lane: LaneComputing,
 			Prerequisites: []string{"darknets"},
 			Description:   "Two machines that share a state, and a line nobody can tap.",
@@ -1509,7 +1509,7 @@ func rawTechnologies() []TechDef {
 
 		// === SPACE AGE ===
 		{
-			Name: "Overview Effect", Key: "overview_effect", Cost: 3.02e09, ResearchTicks: 6435, Code: "OVIEW", Emblem: "♁",
+			Name: "Overview Effect", Key: "overview_effect", Cost: 7510000000, ResearchTicks: 6435, Code: "OVIEW", Emblem: "♁",
 			Age: "space_age", Lane: LaneFaith,
 			Prerequisites: []string{"neural_art"},
 			Description:   "Everyone who has seen the whole world from outside comes home changed.",
@@ -1518,7 +1518,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Deep Space Astronomy", Key: "deep_space_astronomy", Cost: 3.92e09, ResearchTicks: 6435, Code: "ASTRO", Emblem: "☄",
+			Name: "Deep Space Astronomy", Key: "deep_space_astronomy", Cost: 9770000000, ResearchTicks: 6435, Code: "ASTRO", Emblem: "☄",
 			Age: "space_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"unified_theory"},
 			Description:   "Telescopes beyond the air and the glare, looking back to the first light.",
@@ -1527,7 +1527,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Asteroid Claims", Key: "asteroid_claims", Cost: 5.1e09, ResearchTicks: 6435, Code: "CLAIM", Emblem: "◊",
+			Name: "Asteroid Claims", Key: "asteroid_claims", Cost: 12700000000, ResearchTicks: 6435, Code: "CLAIM", Emblem: "◊",
 			Age: "space_age", Lane: LaneTrade,
 			Prerequisites: []string{"maglev_transit"},
 			Description:   "A rock, a registry number and a company that owns what is inside it.",
@@ -1537,7 +1537,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The Neon Era's Trade capstone.
-			Name: "Stellar Cartography", Key: "stellar_cartography", Cost: 2.46e10, ResearchTicks: 10296, Code: "CHART", Emblem: "✦",
+			Name: "Stellar Cartography", Key: "stellar_cartography", Cost: 61300000000, ResearchTicks: 10296, Code: "CHART", Emblem: "✦",
 			Age: "space_age", Lane: LaneTrade, Capstone: true,
 			Prerequisites: []string{"asteroid_claims", "deep_space_astronomy"},
 			Description:   "Every star within reach, charted with its worlds and its hazards.",
@@ -1547,7 +1547,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Hydroponics", Key: "hydroponics", Cost: 6.63e09, ResearchTicks: 6435, Code: "HYDRO", Emblem: "⋎",
+			Name: "Hydroponics", Key: "hydroponics", Cost: 16500000000, ResearchTicks: 6435, Code: "HYDRO", Emblem: "⋎",
 			Age: "space_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"closed_biospheres"},
 			Description:   "Roots in running water under lamps: a harvest every month, anywhere.",
@@ -1556,7 +1556,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Zero-G Manufacturing", Key: "zero_g_manufacturing", Cost: 1.37e09, ResearchTicks: 5148, Code: "ZEROG", Emblem: "∅",
+			Name: "Zero-G Manufacturing", Key: "zero_g_manufacturing", Cost: 3420000000, ResearchTicks: 5148, Code: "ZEROG", Emblem: "∅",
 			Age: "space_age", Lane: LaneCraft,
 			Prerequisites: []string{"orbital_mechanics", "superconductors"},
 			Description:   "Space-based manufacturing for perfect materials.",
@@ -1565,7 +1565,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Asteroid Refining", Key: "asteroid_refining", Cost: 8.61e09, ResearchTicks: 6435, Code: "REFIN", Emblem: "◣",
+			Name: "Asteroid Refining", Key: "asteroid_refining", Cost: 21500000000, ResearchTicks: 6435, Code: "REFIN", Emblem: "◣",
 			Age: "space_age", Lane: LaneMaterials,
 			Prerequisites: []string{"space_mining"},
 			Description:   "Ore smelted where it is mined, with the Sun for a furnace.",
@@ -1575,7 +1575,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Orbital Defense", Key: "orbital_defense", Cost: 1.12e10, ResearchTicks: 6435, Code: "ODEF", Emblem: "▽",
+			Name: "Orbital Defense", Key: "orbital_defense", Cost: 27900000000, ResearchTicks: 6435, Code: "ODEF", Emblem: "▽",
 			Age: "space_age", Lane: LaneMilitary,
 			Prerequisites: []string{"plasma_weapons", "orbital_mechanics"},
 			Description:   "Nothing crosses the sky without being seen, and nothing lands without leave.",
@@ -1584,7 +1584,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Orbital Solar", Key: "orbital_solar", Cost: 1.46e10, ResearchTicks: 6435, Code: "SOLAR", Emblem: "✷",
+			Name: "Orbital Solar", Key: "orbital_solar", Cost: 36300000000, ResearchTicks: 6435, Code: "SOLAR", Emblem: "✷",
 			Age: "space_age", Lane: LaneEnergy,
 			Prerequisites: []string{"plasma_physics"},
 			Description:   "Mirrors in permanent daylight, beaming their catch down.",
@@ -1594,7 +1594,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Orbital Mechanics", Key: "orbital_mechanics", Cost: 2.32e09, ResearchTicks: 6435, Code: "ORBIT", Emblem: "☊",
+			Name: "Orbital Mechanics", Key: "orbital_mechanics", Cost: 5780000000, ResearchTicks: 6435, Code: "ORBIT", Emblem: "☊",
 			Age: "space_age", Lane: LaneSpace,
 			Prerequisites: []string{"rocketry", "plasma_physics"},
 			Description:   "Advanced spaceflight and orbital dynamics.",
@@ -1603,7 +1603,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Space Mining", Key: "space_mining", Cost: 1.78e09, ResearchTicks: 5148, Code: "SPACE", Emblem: "◮",
+			Name: "Space Mining", Key: "space_mining", Cost: 4450000000, ResearchTicks: 5148, Code: "SPACE", Emblem: "◮",
 			Age: "space_age", Lane: LaneSpace,
 			Prerequisites: []string{"orbital_mechanics"},
 			Description:   "Asteroid and lunar resource extraction.",
@@ -1615,7 +1615,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The Neon Era's Space capstone.
-			Name: "Space Elevator", Key: "space_elevator", Cost: 3.2e10, ResearchTicks: 10296, Code: "ELEV", Emblem: "↥",
+			Name: "Space Elevator", Key: "space_elevator", Cost: 79700000000, ResearchTicks: 10296, Code: "ELEV", Emblem: "↥",
 			Age: "space_age", Lane: LaneSpace, Capstone: true,
 			Prerequisites: []string{"zero_g_manufacturing", "space_mining"},
 			Description:   "A cable from the ground to orbit: freight goes up for the price of the electricity.",
@@ -1625,7 +1625,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Orbital Relays", Key: "orbital_relays", Cost: 1.89e10, ResearchTicks: 6435, Code: "RELAY", Emblem: "↹",
+			Name: "Orbital Relays", Key: "orbital_relays", Cost: 47100000000, ResearchTicks: 6435, Code: "RELAY", Emblem: "↹",
 			Age: "space_age", Lane: LaneComputing,
 			Prerequisites: []string{"quantum_networking", "orbital_mechanics"},
 			Description:   "A ring of relays, and no corner of the system out of touch.",
@@ -1636,7 +1636,7 @@ func rawTechnologies() []TechDef {
 
 		// === INTERSTELLAR AGE ===
 		{
-			Name: "Void Contemplation", Key: "void_contemplation", Cost: 9.85e09, ResearchTicks: 7020, Code: "VOID", Emblem: "○",
+			Name: "Void Contemplation", Key: "void_contemplation", Cost: 29400000000, ResearchTicks: 7020, Code: "VOID", Emblem: "○",
 			Age: "interstellar_age", Lane: LaneFaith,
 			Prerequisites: []string{"overview_effect"},
 			Description:   "Years between the stars teach a crew to sit with the dark, and to bargain with it.",
@@ -1645,7 +1645,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Xenology", Key: "xenology", Cost: 1.28e10, ResearchTicks: 7020, Code: "XENO", Emblem: "ξ",
+			Name: "Xenology", Key: "xenology", Cost: 38200000000, ResearchTicks: 7020, Code: "XENO", Emblem: "ξ",
 			Age: "interstellar_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"deep_space_astronomy"},
 			Description:   "The study of life that owes nothing to ours.",
@@ -1654,13 +1654,13 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Interstellar Trade", Key: "interstellar_trade", Cost: 1.66e10, ResearchTicks: 7020, Code: "TRADE", Emblem: "⊛",
+			Name: "Interstellar Trade", Key: "interstellar_trade", Cost: 49600000000, ResearchTicks: 7020, Code: "TRADE", Emblem: "⊛",
 			Age: "interstellar_age", Lane: LaneTrade,
 			Prerequisites: []string{"asteroid_claims", "warp_drive"},
 			Description:   "Cargo that outruns the news of its own departure.",
 		},
 		{
-			Name: "Protein Synthesis", Key: "protein_synthesis", Cost: 2.16e10, ResearchTicks: 7020, Code: "PROTN", Emblem: "∾",
+			Name: "Protein Synthesis", Key: "protein_synthesis", Cost: 64500000000, ResearchTicks: 7020, Code: "PROTN", Emblem: "∾",
 			Age: "interstellar_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"hydroponics"},
 			Description:   "Food built from its elements, to any recipe, with no field at all.",
@@ -1670,7 +1670,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Hull Printing", Key: "hull_printing", Cost: 2.81e10, ResearchTicks: 7020, Code: "HULL", Emblem: "▱",
+			Name: "Hull Printing", Key: "hull_printing", Cost: 83900000000, ResearchTicks: 7020, Code: "HULL", Emblem: "▱",
 			Age: "interstellar_age", Lane: LaneCraft,
 			Prerequisites: []string{"zero_g_manufacturing"},
 			Description:   "A ship's hull laid down in one piece, in the dark, by machines.",
@@ -1680,7 +1680,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Stellar Core Mining", Key: "stellar_core_mining", Cost: 3.66e10, ResearchTicks: 7020, Code: "CORE", Emblem: "☉",
+			Name: "Stellar Core Mining", Key: "stellar_core_mining", Cost: 109000000000, ResearchTicks: 7020, Code: "CORE", Emblem: "☉",
 			Age: "interstellar_age", Lane: LaneMaterials,
 			Prerequisites: []string{"asteroid_refining"},
 			Description:   "Dead stars are mostly metal, if you can stand the heat of getting there.",
@@ -1689,7 +1689,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Fleet Doctrine", Key: "fleet_doctrine", Cost: 4.75e10, ResearchTicks: 7020, Code: "FLEET", Emblem: "➤",
+			Name: "Fleet Doctrine", Key: "fleet_doctrine", Cost: 142000000000, ResearchTicks: 7020, Code: "FLEET", Emblem: "➤",
 			Age: "interstellar_age", Lane: LaneMilitary,
 			Prerequisites: []string{"orbital_defense"},
 			Description:   "How to fight a war where the order arrives after the battle.",
@@ -1698,7 +1698,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Stellar Engineering", Key: "stellar_engineering", Cost: 5.83e09, ResearchTicks: 5616, Code: "STELL", Emblem: "✫",
+			Name: "Stellar Engineering", Key: "stellar_engineering", Cost: 17400000000, ResearchTicks: 5616, Code: "STELL", Emblem: "✫",
 			Age: "interstellar_age", Lane: LaneEnergy,
 			Prerequisites: []string{"warp_drive"},
 			Description:   "Harnessing and shaping stars themselves.",
@@ -1708,7 +1708,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Warp Drive", Key: "warp_drive", Cost: 7.58e09, ResearchTicks: 7020, Code: "WARP", Emblem: "≫",
+			Name: "Warp Drive", Key: "warp_drive", Cost: 22600000000, ResearchTicks: 7020, Code: "WARP", Emblem: "≫",
 			Age: "interstellar_age", Lane: LaneSpace,
 			Prerequisites: []string{"space_mining", "zero_g_manufacturing"},
 			Description:   "Faster-than-light propulsion.",
@@ -1718,7 +1718,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Galactic Network", Key: "galactic_network", Cost: 6.18e10, ResearchTicks: 7020, Code: "GNET", Emblem: "✺",
+			Name: "Galactic Network", Key: "galactic_network", Cost: 184000000000, ResearchTicks: 7020, Code: "GNET", Emblem: "✺",
 			Age: "interstellar_age", Lane: LaneComputing,
 			Prerequisites: []string{"orbital_relays"},
 			Description:   "Every colony on one network, whatever the distance.",
@@ -1729,7 +1729,7 @@ func rawTechnologies() []TechDef {
 
 		// === GALACTIC AGE ===
 		{
-			Name: "Galactic Memory", Key: "galactic_memory", Cost: 8.6e09, ResearchTicks: 7020, Code: "MEMRY", Emblem: "✪",
+			Name: "Galactic Memory", Key: "galactic_memory", Cost: 30800000000, ResearchTicks: 7020, Code: "MEMRY", Emblem: "✪",
 			Age: "galactic_age", Lane: LaneFaith,
 			Prerequisites: []string{"void_contemplation"},
 			Description:   "Every song, story and quarrel of every world, kept where none can be lost.",
@@ -1738,7 +1738,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Cosmology", Key: "cosmology", Cost: 1.12e10, ResearchTicks: 7020, Code: "COSMO", Emblem: "∞",
+			Name: "Cosmology", Key: "cosmology", Cost: 40100000000, ResearchTicks: 7020, Code: "COSMO", Emblem: "∞",
 			Age: "galactic_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"xenology"},
 			Description:   "Where everything came from, and how long it has left.",
@@ -1748,7 +1748,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Federation Charter", Key: "federation_charter", Cost: 1.45e10, ResearchTicks: 7020, Code: "FED", Emblem: "⊎",
+			Name: "Federation Charter", Key: "federation_charter", Cost: 52100000000, ResearchTicks: 7020, Code: "FED", Emblem: "⊎",
 			Age: "galactic_age", Lane: LaneTrade,
 			Prerequisites: []string{"interstellar_trade", "xenology"},
 			Description:   "One law of trade and passage for every signatory, whatever they breathe.",
@@ -1758,7 +1758,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Matter Conversion", Key: "matter_conversion", Cost: 1.89e10, ResearchTicks: 7020, Code: "MATTR", Emblem: "⇌",
+			Name: "Matter Conversion", Key: "matter_conversion", Cost: 67700000000, ResearchTicks: 7020, Code: "MATTR", Emblem: "⇌",
 			Age: "galactic_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"protein_synthesis"},
 			Description:   "Rock in, bread out. And walls, and air.",
@@ -1768,7 +1768,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Dyson Engineering", Key: "dyson_engineering", Cost: 2.46e10, ResearchTicks: 7020, Code: "DYSON", Emblem: "◌",
+			Name: "Dyson Engineering", Key: "dyson_engineering", Cost: 88100000000, ResearchTicks: 7020, Code: "DYSON", Emblem: "◌",
 			Age: "galactic_age", Lane: LaneCraft,
 			Prerequisites: []string{"stellar_engineering", "hull_printing"},
 			Description:   "Building at the scale of a star's whole output.",
@@ -1777,7 +1777,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Neutron Mining", Key: "neutron_mining", Cost: 3.19e10, ResearchTicks: 7020, Code: "NEUTN", Emblem: "⊝",
+			Name: "Neutron Mining", Key: "neutron_mining", Cost: 114000000000, ResearchTicks: 7020, Code: "NEUTN", Emblem: "⊝",
 			Age: "galactic_age", Lane: LaneMaterials,
 			Prerequisites: []string{"stellar_core_mining"},
 			Description:   "A teaspoon of the stuff outweighs a mountain, and it is all ore.",
@@ -1786,7 +1786,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Armada Command", Key: "armada_command", Cost: 4.15e10, ResearchTicks: 7020, Code: "ARMAD", Emblem: "✯",
+			Name: "Armada Command", Key: "armada_command", Cost: 149000000000, ResearchTicks: 7020, Code: "ARMAD", Emblem: "✯",
 			Age: "galactic_age", Lane: LaneMilitary,
 			Prerequisites: []string{"fleet_doctrine"},
 			Description:   "A thousand ships on one mind's orders.",
@@ -1795,7 +1795,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Antimatter Synthesis", Key: "antimatter_synthesis", Cost: 5.09e09, ResearchTicks: 5616, Code: "ANTIM", Emblem: "⊖",
+			Name: "Antimatter Synthesis", Key: "antimatter_synthesis", Cost: 18200000000, ResearchTicks: 5616, Code: "ANTIM", Emblem: "⊖",
 			Age: "galactic_age", Lane: LaneEnergy,
 			Prerequisites: []string{"galactic_navigation"},
 			Description:   "Controlled production of antimatter.",
@@ -1804,7 +1804,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Galactic Navigation", Key: "galactic_navigation", Cost: 6.62e09, ResearchTicks: 7020, Code: "GNAV", Emblem: "✵",
+			Name: "Galactic Navigation", Key: "galactic_navigation", Cost: 23700000000, ResearchTicks: 7020, Code: "GNAV", Emblem: "✵",
 			Age: "galactic_age", Lane: LaneSpace,
 			Prerequisites: []string{"warp_drive", "stellar_engineering"},
 			Description:   "Charting paths across the galaxy.",
@@ -1814,7 +1814,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Terraforming", Key: "terraforming", Cost: 5.4e10, ResearchTicks: 7020, Code: "TERRA", Emblem: "◓",
+			Name: "Terraforming", Key: "terraforming", Cost: 193000000000, ResearchTicks: 7020, Code: "TERRA", Emblem: "◓",
 			Age: "galactic_age", Lane: LaneSpace,
 			Prerequisites: []string{"warp_drive"},
 			Description:   "A dead world given air and seas, and a few centuries to settle.",
@@ -1823,7 +1823,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Mind Uploading", Key: "mind_uploading", Cost: 7.02e10, ResearchTicks: 7020, Code: "MIND", Emblem: "⇪",
+			Name: "Mind Uploading", Key: "mind_uploading", Cost: 252000000000, ResearchTicks: 7020, Code: "MIND", Emblem: "⇪",
 			Age: "galactic_age", Lane: LaneComputing,
 			Prerequisites: []string{"galactic_network"},
 			Description:   "A person, copied out of the body and still arguing.",
@@ -1834,7 +1834,7 @@ func rawTechnologies() []TechDef {
 
 		// === QUANTUM AGE ===
 		{
-			Name: "Reality Art", Key: "reality_art", Cost: 1.26e10, ResearchTicks: 7020, Code: "RART", Emblem: "❈",
+			Name: "Reality Art", Key: "reality_art", Cost: 54200000000, ResearchTicks: 7020, Code: "RART", Emblem: "❈",
 			Age: "quantum_age", Lane: LaneFaith,
 			Prerequisites: []string{"galactic_memory"},
 			Description:   "Works made of what might have happened, shown beside what did.",
@@ -1843,7 +1843,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Quantum Mechanics", Key: "quantum_mechanics", Cost: 9.72e09, ResearchTicks: 7020, Code: "QUANT", Emblem: "ℚ",
+			Name: "Quantum Mechanics", Key: "quantum_mechanics", Cost: 41700000000, ResearchTicks: 7020, Code: "QUANT", Emblem: "ℚ",
 			Age: "quantum_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"antimatter_synthesis"},
 			Description:   "Mastery of quantum phenomena at all scales.",
@@ -1853,7 +1853,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The Cosmic Era's Knowledge capstone.
-			Name: "Timeless Archive", Key: "timeless_archive", Cost: 1.03e11, ResearchTicks: 11232, Code: "ARCHV", Emblem: "☰",
+			Name: "Timeless Archive", Key: "timeless_archive", Cost: 442000000000, ResearchTicks: 11232, Code: "ARCHV", Emblem: "☰",
 			Age: "quantum_age", Lane: LaneKnowledge, Capstone: true,
 			Prerequisites: []string{"cosmology", "quantum_mechanics"},
 			Description:   "Everything ever known, and every answer already looked up.",
@@ -1862,7 +1862,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Probability Markets", Key: "probability_markets", Cost: 1.64e10, ResearchTicks: 7020, Code: "PMKT", Emblem: "‰",
+			Name: "Probability Markets", Key: "probability_markets", Cost: 70500000000, ResearchTicks: 7020, Code: "PMKT", Emblem: "‰",
 			Age: "quantum_age", Lane: LaneTrade,
 			Prerequisites: []string{"federation_charter"},
 			Description:   "A price on every outcome, and a buyer for the ones that never happen.",
@@ -1871,7 +1871,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Quantum Cultivation", Key: "quantum_cultivation", Cost: 2.14e10, ResearchTicks: 7020, Code: "QCULT", Emblem: "❃",
+			Name: "Quantum Cultivation", Key: "quantum_cultivation", Cost: 91700000000, ResearchTicks: 7020, Code: "QCULT", Emblem: "❃",
 			Age: "quantum_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"matter_conversion"},
 			Description:   "Every harvest that could have been, and you pick the best one.",
@@ -1880,7 +1880,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Reality Manipulation", Key: "reality_manipulation", Cost: 7.48e09, ResearchTicks: 5616, Code: "REALI", Emblem: "≋",
+			Name: "Reality Manipulation", Key: "reality_manipulation", Cost: 32100000000, ResearchTicks: 5616, Code: "REALI", Emblem: "≋",
 			Age: "quantum_age", Lane: LaneCraft,
 			Prerequisites: []string{"quantum_mechanics"},
 			Description:   "Bending the fabric of spacetime.",
@@ -1890,7 +1890,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The Cosmic Era's Craft capstone.
-			Name: "Reality Engineering", Key: "reality_engineering", Cost: 1.34e11, ResearchTicks: 11232, Code: "RENG", Emblem: "⊠",
+			Name: "Reality Engineering", Key: "reality_engineering", Cost: 575000000000, ResearchTicks: 11232, Code: "RENG", Emblem: "⊠",
 			Age: "quantum_age", Lane: LaneCraft, Capstone: true,
 			Prerequisites: []string{"reality_manipulation", "dyson_engineering"},
 			Description:   "The plans are drawn, and the building has always been there.",
@@ -1900,7 +1900,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Quantum Metallurgy", Key: "quantum_metallurgy", Cost: 2.78e10, ResearchTicks: 7020, Code: "QMET", Emblem: "◪",
+			Name: "Quantum Metallurgy", Key: "quantum_metallurgy", Cost: 119000000000, ResearchTicks: 7020, Code: "QMET", Emblem: "◪",
 			Age: "quantum_age", Lane: LaneMaterials,
 			Prerequisites: []string{"neutron_mining"},
 			Description:   "Metals that are only there when they are needed.",
@@ -1910,7 +1910,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Probability Warfare", Key: "probability_warfare", Cost: 3.61e10, ResearchTicks: 7020, Code: "PWAR", Emblem: "⚄",
+			Name: "Probability Warfare", Key: "probability_warfare", Cost: 155000000000, ResearchTicks: 7020, Code: "PWAR", Emblem: "⚄",
 			Age: "quantum_age", Lane: LaneMilitary,
 			Prerequisites: []string{"armada_command"},
 			Description:   "The battle is fought in every way at once, and you keep the one you won.",
@@ -1920,7 +1920,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Zero-Point Energy", Key: "zero_point_energy", Cost: 4.69e10, ResearchTicks: 7020, Code: "ZPE", Emblem: "∘",
+			Name: "Zero-Point Energy", Key: "zero_point_energy", Cost: 201000000000, ResearchTicks: 7020, Code: "ZPE", Emblem: "∘",
 			Age: "quantum_age", Lane: LaneEnergy,
 			Prerequisites: []string{"antimatter_synthesis"},
 			Description:   "Power from the hum of empty space, which never runs down.",
@@ -1929,7 +1929,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Wormholes", Key: "wormholes", Cost: 6.1e10, ResearchTicks: 7020, Code: "WORM", Emblem: "⌀",
+			Name: "Wormholes", Key: "wormholes", Cost: 262000000000, ResearchTicks: 7020, Code: "WORM", Emblem: "⌀",
 			Age: "quantum_age", Lane: LaneSpace,
 			Prerequisites: []string{"galactic_navigation"},
 			Description:   "A door in one sky that opens on another.",
@@ -1939,7 +1939,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Quantum Computing", Key: "quantum_computing", Cost: 7.93e10, ResearchTicks: 7020, Code: "QCOMP", Emblem: "ℂ",
+			Name: "Quantum Computing", Key: "quantum_computing", Cost: 340000000000, ResearchTicks: 7020, Code: "QCOMP", Emblem: "ℂ",
 			Age: "quantum_age", Lane: LaneComputing,
 			Prerequisites: []string{"clockwork_automation", "quantum_mechanics"},
 			Description:   "Quantum processing raises game speed.",
@@ -1950,7 +1950,7 @@ func rawTechnologies() []TechDef {
 
 		// === TRANSCENDENT AGE ===
 		{
-			Name: "Transcendence", Key: "transcendence", Cost: 4.53e09, ResearchTicks: 7020, Code: "TRANS", Emblem: "Ω",
+			Name: "Transcendence", Key: "transcendence", Cost: 500000000000, ResearchTicks: 7020, Code: "TRANS", Emblem: "Ω",
 			Age: "transcendent_age", Lane: LaneFaith,
 			Prerequisites: []string{"reality_manipulation"},
 			Description:   "A civilization beyond physical limits.",
@@ -1959,19 +1959,19 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Omniversal Exchange", Key: "omniversal_exchange", Cost: 5.67e09, ResearchTicks: 7020, Code: "OMNIX", Emblem: "⇔",
+			Name: "Omniversal Exchange", Key: "omniversal_exchange", Cost: 650000000000, ResearchTicks: 7020, Code: "OMNIX", Emblem: "⇔",
 			Age: "transcendent_age", Lane: LaneTrade,
 			Prerequisites: []string{"probability_markets"},
 			Description:   "A market between every world that is and every world that might have been.",
 		},
 		{
-			Name: "Singularity Engineering", Key: "singularity_engineering", Cost: 5.67e09, ResearchTicks: 7020, Code: "SING", Emblem: "⊡",
+			Name: "Singularity Engineering", Key: "singularity_engineering", Cost: 845000000000, ResearchTicks: 7020, Code: "SING", Emblem: "⊡",
 			Age: "transcendent_age", Lane: LaneCraft,
 			Prerequisites: []string{"reality_manipulation"},
 			Description:   "A whole economy folded into a point that does the work.",
 		},
 		{
-			Name: "Omniversal Command", Key: "omniversal_command", Cost: 5.67e09, ResearchTicks: 7020, Code: "OMNIC", Emblem: "♚",
+			Name: "Omniversal Command", Key: "omniversal_command", Cost: 1.1e+12, ResearchTicks: 7020, Code: "OMNIC", Emblem: "♚",
 			Age: "transcendent_age", Lane: LaneMilitary,
 			Prerequisites: []string{"probability_warfare"},
 			Description:   "One council for every army in every version of events.",

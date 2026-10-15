@@ -66,13 +66,14 @@ func TestAppeasePricesFitTheWarning(t *testing.T) {
 		}
 		// Longer than any doom's lead (three fifths of the age at most) and
 		// no longer than the age: two thirds of it.
-		if age := config.AgeTargetTicks(r.Age); r.WarningTicks <= 0.6*age || r.WarningTicks > age {
+		if age := config.LatePriceTargetTicks(r.Age); r.WarningTicks <= 0.6*age || r.WarningTicks > age {
 			t.Errorf("the Last Passage in %s: warning %v ticks of an age of %v, want two thirds of it", r.Age, r.WarningTicks, age)
 		}
 	}
 
 	// The check fires on broken numbers. The old era price (3.1B faith, 48B
-	// culture in every age) is more than the Interstellar Age makes; a doom's
+	// culture in every age, on the late price climb) is more than the
+	// Interstellar Age makes; a doom's
 	// own price is not above a doom's; a price with the culture left out is
 	// caught too.
 	income := rules.Core().FlowIncome
@@ -100,7 +101,8 @@ func TestAppeasePricesFitTheWarning(t *testing.T) {
 		}
 	}
 	want("the old era price", alter(func(r *PriceRow) {
-		r.AppeaseL1 = map[string]float64{"faith": 3.1e9, "culture": 48e9}
+		c := config.LatePriceMultiplier(cosmic[0])
+		r.AppeaseL1 = map[string]float64{"faith": float64(3.1e9 * c), "culture": float64(48e9 * c)}
 	}), AppeaseRuleWarning, "culture", "faith")
 	var ordinary map[string]float64
 	for _, r := range rows {
@@ -150,7 +152,9 @@ func TestBraceTakesEffort(t *testing.T) {
 				slowest = c / rate
 			}
 		}
-		hours := slowest * config.TickSeconds / 3600
+		// In hours of the age before the late price climb, which lengthens
+		// the age and the Brace price alike.
+		hours := slowest * config.TickSeconds / 3600 / config.LatePriceMultiplier(r.Age)
 		switch {
 		case r.TargetEpoch == "":
 			passages++

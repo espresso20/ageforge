@@ -776,14 +776,16 @@ func lastPassageAppeaseCostIn(set *rules.Set, epochKey, age string, level int) m
 }
 
 // shortestWarningTicks is the shortest warning a thread is priced on, in
-// ticks at 1x: a share of the pacing target of the age its harbinger arrives
-// in, lastPassageWarning for the Last Passage's thread (its Appease and its
-// Brace) and harbingerLeadMin for a doom's (its Appease). Pure.
+// ticks at 1x: a share of the price-derived target stay of the age its
+// harbinger arrives in, lastPassageWarning for the Last Passage's thread
+// (its Appease and its Brace) and harbingerLeadMin for a doom's (its
+// Appease). Pure.
 func shortestWarningTicks(set *rules.Set, age string, lastPassage bool) float64 {
+	target := set.PriceTargetTicks(age)
 	if lastPassage {
-		return float64(lastPassageWarning * set.TargetTicks(age))
+		return float64(lastPassageWarning * target)
 	}
-	return float64(harbingerLeadMin * set.TargetTicks(age))
+	return float64(harbingerLeadMin * target)
 }
 
 // warningAppeaseCostIn is the price of Appease level (1 or 2) in a thread of

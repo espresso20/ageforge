@@ -6,6 +6,9 @@ All notable changes to AgeForge are documented here.
 
 ## [Unreleased]
 
+### Changed
+- Prices in later ages now climb by 1.2 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.
+
 ### Added
 - **Prestige points are a lasting production bonus.** Every point ever earned applies the 0.282 square-root coefficient to production in every age, including new ages. Points are no longer spent. Plan Template, Roster and Old Friends are free after the first prestige. Old saves keep what they bought and every earned point counts. The prestige shop is gone, and the Maxed Out and Fully Invested badges are retired.
 - **Quarrying.** A new Iron Age tech in the Materials lane, after Bronze Working. It adds 8% to marble and iron ore output. It is optional: no wonder and no tech stands on it. The game has 203 techs. An old save keeps everything and sees one more tech to research; it gets no grace age and no update line, because Quarrying locks nothing.
