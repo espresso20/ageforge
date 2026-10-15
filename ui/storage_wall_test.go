@@ -130,9 +130,11 @@ func TestBuildingsPanelStashNextCopyFits(t *testing.T) {
 	for k, b := range eng.GetState().Buildings {
 		all[k] = b.Count
 	}
-	all["stash"] = 5
+	// stagedDashboard already has one Stash under construction, and next-copy
+	// prices include queued copies. Four completed plus that one queued copy
+	// stage exactly five owned Stashes.
+	all["stash"] = 4
 	eng.Buildings.LoadCounts(all)
-	eng.StepTicks(1)
 	st := eng.GetState()
 	if got := st.Buildings["stash"].NextCost["wood"]; got != 574 {
 		t.Fatalf("staging: the sixth Stash costs %v wood, want 574", got)

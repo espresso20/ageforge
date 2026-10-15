@@ -98,10 +98,19 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 		var bad []string
 		for _, r := range sortedKeys(bs.Resources) {
 			b, k := bs.Resources[r], ks.Resources[r]
-			wantStore := 2 * b.Storage
-			if k.Rate != 2*b.Rate || k.Storage != wantStore {
+			if k.Rate != 2*b.Rate {
 				bad = append(bad, fmt.Sprintf("%s rate %g vs %g, storage %g vs %g", r, k.Rate, b.Rate, k.Storage, b.Storage))
 			}
+		}
+		// Stash is priced only in wood; compare storage for a resource no
+		// owned storage building is priced in, so its floor cannot interfere.
+		if b, ok := bs.Resources["stone"]; ok {
+			k := ks.Resources["stone"]
+			if k.Storage != 2*b.Storage {
+				bad = append(bad, fmt.Sprintf("stone storage %g vs %g", k.Storage, b.Storage))
+			}
+		} else {
+			bad = append(bad, "base town has no stone resource")
 		}
 		check("mastery twin: k = 2 doubles rates and storage", ks.Mastery.K == 2 && len(bad) == 0, "k %v; %s", ks.Mastery.K, strings.Join(bad, "; "))
 	}
