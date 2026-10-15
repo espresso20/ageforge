@@ -48,7 +48,8 @@ func TestPrestigeConfirmSaysAnEarlyPrestigePaysLittle(t *testing.T) {
 
 // A real engine's state, rather than a hand-written snapshot, drives every
 // prestige surface. This catches a field that is present in types but missing
-// from the engine snapshot or rate calculation.
+// from the engine snapshot. That production really scales is checked in game
+// (the bonus truth tests).
 func TestPrestigedStateShowsLastingBonus(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	engine := game.NewGameEngine()
