@@ -98,6 +98,8 @@ func (gs *GameStats) Snapshot() StatsSnapshot {
 	}
 	ages := make([]string, len(gs.AgesReached))
 	copy(ages, gs.AgesReached)
+	ageLog := make([]AgeEntry, len(gs.AgeLog))
+	copy(ageLog, gs.AgeLog)
 	return StatsSnapshot{
 		TotalBuilt:     gs.TotalBuilt,
 		TotalRecruited: gs.TotalRecruited,
@@ -105,5 +107,6 @@ func (gs *GameStats) Snapshot() StatsSnapshot {
 		GameStarted:    gs.GameStarted,
 		PlayTime:       time.Since(gs.GameStarted),
 		AgesReached:    ages,
+		AgeLog:         ageLog,
 	}
 }
