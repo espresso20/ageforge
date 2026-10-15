@@ -54,6 +54,18 @@ func (ge *GameEngine) prestigeCueLocked() PrestigeCue {
 		}
 		remaining = math.Max(remaining, shortfall/rate)
 	}
+	queuedGate := make(map[string]bool, len(reqs)+1)
+	for key := range reqs {
+		queuedGate[key] = true
+	}
+	if wonder := ge.progress.WonderForAge(ge.age); wonder != "" {
+		queuedGate[wonder] = true
+	}
+	for _, item := range ge.buildQueue {
+		if queuedGate[item.BuildingKey] {
+			remaining = math.Max(remaining, float64(item.TicksLeft))
+		}
+	}
 	if keystone := ge.rules.Keystone(ge.age); keystone != "" && !ge.Research.IsResearched(keystone) {
 		def, ok := ge.Research.defs[keystone]
 		if !ok {

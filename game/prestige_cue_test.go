@@ -66,6 +66,35 @@ func TestPrestigeCueUsesGateShortfallAndRunElapsed(t *testing.T) {
 	}
 }
 
+func TestPrestigeCueIncludesQueuedGateConstruction(t *testing.T) {
+	ge := prestigeCueEngine(t)
+	reqs := ge.progress.GetRequirementsForNext(ge.age)
+	var want int
+	for i, key := range sortedKeys(reqs) {
+		ge.Buildings.counts[key]--
+		ticks := 120 + i
+		ge.buildQueue = append(ge.buildQueue, BuildQueueItem{BuildingKey: key, TicksLeft: ticks, TotalTicks: ticks})
+		want = max(want, ticks)
+	}
+	wonder := ge.progress.WonderForAge(ge.age)
+	ge.buildQueue = append(ge.buildQueue, BuildQueueItem{BuildingKey: wonder, TicksLeft: 250, TotalTicks: 250})
+	want = max(want, 250)
+	if got := ge.prestigeCueLocked().FinishTicks; got < want {
+		t.Fatalf("FinishTicks = %d, want at least %d", got, want)
+	}
+}
+
+func TestPrestigeCueClearsOnAgeAdvance(t *testing.T) {
+	ge := prestigeCueEngine(t)
+	ge.prestigeCue = PrestigeCue{Age: ge.age, Ready: true, FinishTicks: 12, Seen: true}
+	ge.prestigeCueSeenAge = ge.age
+	ge.advanceAge("renaissance_age")
+	state := ge.GetState()
+	if state.PrestigeCue.Ready || state.PrestigeCue.FinishTicks != 0 || state.PrestigeCue.Seen {
+		t.Fatalf("cue after age advance = %+v, want cleared", state.PrestigeCue)
+	}
+}
+
 func TestPrestigeCueReadinessGates(t *testing.T) {
 	t.Run("cannot prestige", func(t *testing.T) {
 		ge := prestigeCueEngine(t)
@@ -137,6 +166,17 @@ func TestPrestigeCueSeenPersistsAndResets(t *testing.T) {
 	}
 	if loaded.GetState().PrestigeCue.Seen {
 		t.Fatal("seen cue survived prestige")
+	}
+	loaded.MarkPrestigeCueSeen()
+	succumbIn(t, loaded, "iron_age")
+	if loaded.prestigeCueSeenAge != "" {
+		t.Fatalf("seen age after Succumb = %q, want empty", loaded.prestigeCueSeenAge)
+	}
+	loaded.age = "medieval_age"
+	loaded.MarkPrestigeCueSeen()
+	loaded.Reset()
+	if loaded.prestigeCueSeenAge != "" {
+		t.Fatalf("seen age after Reset = %q, want empty", loaded.prestigeCueSeenAge)
 	}
 }
 

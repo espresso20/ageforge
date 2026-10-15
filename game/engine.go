@@ -2388,6 +2388,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// in. It ends here (GameSave.TreeGraceAge).
 	ge.Buildings.graceAge = ""
 	ge.Prestige.NoteAgeEntered(newAge)
+	ge.prestigeCue = PrestigeCue{}
+	ge.prestigeCueSeenAge = ""
 	ge.ageReady = false
 	ge.Workers.SetAge(newAge)
 
