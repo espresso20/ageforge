@@ -277,6 +277,7 @@ All notable changes to AgeForge are documented here.
 - Milestone chains rebalanced: completion speed-boosts normalized across all six chains (Military was 18× weaker than Settlement — now in line); the Trade chain expanded 3 → 6 milestones (5 via the milestone revamp, then a sixth — Maritime Empire — with the Trade System Expansion); and Military/Trade/Scholar capstones now pay out broad `production_all` instead of domain-only bonuses, so finishing any chain helps your whole economy.
 
 ### Changed
+- **A storage building's next copy always fits.** Owning one raises each store it uses to at least the price of its next copy.
 - **The Next Age bar shows the wonder's bank.** An unbuilt wonder reads like `Wonder: Sacred Grove 40% banked`, the same figure the wonders list shows.
 - **Knowledge is no longer a resource.** It is not held, spent, stored or priced. The game has 25 resources, and the Resources box has no knowledge row.
 - **Fifteen buildings and the Great Library that were priced in knowledge are priced in materials,** at the same price in units of their age.

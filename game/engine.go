@@ -2227,11 +2227,14 @@ func (ge *GameEngine) recalculateRates() {
 	allBonus += permanentBonuses["all"]
 	techStorage := 1 + ge.Research.Bonus(config.EffectStorage, "")
 
+	floors := ge.storageFloors()
 	for _, def := range ge.Resources.defs {
 		specific := storageBonuses[def.Key]
 		specific += permanentBonuses[def.Key]
 		r := ge.Resources.resources[def.Key]
 		r.Storage = ge.storeSize(def, allBonus, specific, k, techStorage)
+		// Owned storage keeps its next queued-aware copy price within reach.
+		r.Storage = floorStore(floors, def.Key, r.Storage)
 		// Storage can shrink (a storage building sold or destroyed). Add clamps
 		// on the way in, but a resource with no production never passes through
 		// Add again, so without this it sat above its new cap indefinitely.
@@ -2288,6 +2291,35 @@ func (ge *GameEngine) storeSize(def config.ResourceDef, allBonus, specific, k, t
 	return size
 }
 
+// storageFloors is, per resource, the dearest next copy of an owned storage
+// building: a store is never smaller, so that copy always fits.
+func (ge *GameEngine) storageFloors() map[string]float64 {
+	var floors map[string]float64
+	for _, key := range ge.Buildings.storageKeys {
+		if ge.Buildings.counts[key] < 1 {
+			continue
+		}
+		cost, ok := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
+		if !ok {
+			continue
+		}
+		if floors == nil {
+			floors = make(map[string]float64, len(cost))
+		}
+		for res, price := range cost {
+			if price > floors[res] {
+				floors[res] = price
+			}
+		}
+	}
+	return floors
+}
+
+// floorStore is size raised to the storage floor for res.
+func floorStore(floors map[string]float64, res string, size float64) float64 {
+	return math.Max(size, floors[res])
+}
+
 // storeIf is the size of res's store were the buildings to give extraAll more
 // on every store and extraOwn more on res alone, in raw building bonus, before
 // Era Mastery and the techs multiply it: what the copies in the build queue
@@ -2300,7 +2332,8 @@ func (ge *GameEngine) storeIf(res string, extraAll, extraOwn float64) float64 {
 	bonuses, permanent := ge.Buildings.GetStorageBonuses(), ge.permanentBonusMap()
 	allBonus := bonuses["all"] + permanent["all"] + extraAll
 	specific := bonuses[res] + permanent[res] + extraOwn
-	return ge.storeSize(def, allBonus, specific, ge.speedK(), 1+ge.Research.Bonus(config.EffectStorage, ""))
+	size := ge.storeSize(def, allBonus, specific, ge.speedK(), 1+ge.Research.Bonus(config.EffectStorage, ""))
+	return floorStore(ge.storageFloors(), res, size)
 }
 
 // Age-transition resource carryover tuning (EPIC: age-pacing economy rebalance).
@@ -3645,6 +3678,9 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 			TotalTicks:  ticks,
 			FromPlan:    quiet,
 		})
+		if def.Category == "storage" && ge.Buildings.GetCount(key) > 0 {
+			ge.recalculateRates()
+		}
 		if !quiet {
 			ge.addLog(LogRoutine, fmt.Sprintf("Started building %s (%s).", def.Name, ge.durationLocked(ticks)))
 		}
@@ -3768,6 +3804,9 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	}
 
 	if def.BuildTicks > 0 {
+		if def.Category == "storage" && ge.Buildings.GetCount(key) > 0 {
+			ge.recalculateRates()
+		}
 		ge.addLog(LogRoutine, fmt.Sprintf("Queued %s.", buildingCountIn(ge.rules, built, key)))
 	} else {
 		ge.recalculateRates()

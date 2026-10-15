@@ -40,8 +40,13 @@ func TestBonusTruthEraMastery(t *testing.T) {
 				case strings.HasPrefix(meter, "aux:"), meter == "base:research", meter == "stock:research":
 					// Not rates: the layer and the pool the work is read
 					// through, the building figures it is made of, and work done.
-				case strings.HasPrefix(meter, "rate:"), strings.HasPrefix(meter, "storage:"):
+					continue
+				case strings.HasPrefix(meter, "rate:"):
 					want *= k
+				case strings.HasPrefix(meter, "storage:"):
+					// The next-copy floor is an explicit exception to the
+					// otherwise linear store scaling under Era Mastery.
+					want = truthStoreWithNextCopyFloor(ge, strings.TrimPrefix(meter, "storage:"))
 				case meter == "research", meter == "buildtime":
 					want = math.Ceil(before[meter]*truthRefTicks/k) / truthRefTicks
 				case meter == "morale":
