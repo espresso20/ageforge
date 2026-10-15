@@ -16,6 +16,10 @@ You can prestige from the **Medieval Age (Age 5)** or any later age. A prestige 
 
 A first run is paced to reach the Medieval Age in about 20 hours and the Modern Age in about **a week of real time** (the smoke-test bot gets there in about 5.6 days). The game keeps playing while you are away: offline progress runs for up to 24 hours, at 50% of your normal production. That is the first run. Later runs are faster, because the ages a past run completed run 2x to 4.2x as fast (see [Era Mastery](#era-mastery)).
 
+## When to prestige
+
+The game compares how long the current age will take at today's income with how long a new run with the higher bonus would take to get back and past it. When the new run is quicker, it says so once per age, and stats keeps a line about it. The estimate leaves out Era Mastery and catch-up, which only make a new run faster.
+
 Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first. Before the Cosmic Era, a doom fated for your era that hasn't struck yet ends with the run when you prestige, so a taste in the Medieval Age escapes an Iron Era doom, at the price of the run.
 
 In the Cosmic Era, confirming prestige first settles the era's own doom if one is still open, then can bring the [Last Passage](#the-last-passage). If it comes, the prestige waits until you choose Endure or Succumb.

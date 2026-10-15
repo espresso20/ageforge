@@ -179,6 +179,11 @@ func statsProvider(state game.GameState, _ int) string {
 
 	fmt.Fprintf(&sb, " [gold]Level:[-] [cyan]%d[-]\n", p.Level)
 	fmt.Fprintf(&sb, " [gold]Prestige:[-] [green]x%.2f[-] production\n", p.ProductionMultiplier)
+	if cue := state.PrestigeCue; cue.Ready {
+		iv := tickInterval(state)
+		fmt.Fprintf(&sb, " [gray]A new run would pass this age in about %s; finishing it takes about %s at today's income.[-]\n",
+			game.DurationText(cue.FreshTicks, iv), game.DurationText(cue.FinishTicks, iv))
+	}
 	if p.CanPrestige {
 		fmt.Fprintf(&sb, " [gold]After this prestige:[-] [green]x%.2f[-] production\n", p.NextProductionMultiplier)
 	}

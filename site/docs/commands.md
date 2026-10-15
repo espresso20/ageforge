@@ -331,7 +331,7 @@ With something typed, `Tab` and `Enter` act on the prompt instead. Each style li
 | `prestige` | View total points earned, the current and next lasting production multipliers, Plan Template, Roster and Old Friends, and [Era Mastery](prestige.md#era-mastery). In the Cosmic Era it also shows the Last Passage outlook |
 | `prestige confirm` | Explain the points and production multiplier a prestige would add, what resets, and what persists. In the Cosmic Era this includes the Last Passage outcome |
 | `prestige confirm yes` | Prestige now. It requires the Medieval Age. Points stay earned and the three carry-overs are active from the first prestige |
-| `stats` | Open the **Stats** panel: empire statistics, bonuses, rates, lasting prestige multiplier, carry-overs and [Era Mastery](prestige.md#era-mastery). It also lists the ages of this run and the time spent in each. |
+| `stats` | Open the **Stats** panel: empire statistics, bonuses, rates, lasting prestige multiplier, carry-overs and [Era Mastery](prestige.md#era-mastery). It also lists the ages of this run and the time spent in each, plus the prestige cue when a new run would pass the current age sooner. |
 
 ```
 prestige confirm yes
