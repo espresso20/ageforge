@@ -362,6 +362,7 @@ type StatsSnapshot struct {
 	GameStarted    time.Time
 	PlayTime       time.Duration
 	AgesReached    []string
+	AgeLog         []AgeEntry
 }
 
 // WorkerInfo is used for save/load serialization

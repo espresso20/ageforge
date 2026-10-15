@@ -619,6 +619,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	}
 	agesReached := make([]string, len(ge.Stats.AgesReached))
 	copy(agesReached, ge.Stats.AgesReached)
+	ageLog := make([]AgeEntry, len(ge.Stats.AgeLog))
+	copy(ageLog, ge.Stats.AgeLog)
 
 	rngDraws, quipDraws := ge.rngDraws()
 
@@ -644,6 +646,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			TotalGathered:   statsGathered,
 			GameStarted:     ge.Stats.GameStarted,
 			AgesReached:     agesReached,
+			AgeLog:          ageLog,
 			SoldiersTrained: ge.Stats.SoldiersTrained,
 			ResearchWork:    ge.Stats.ResearchWork,
 			Defense:         ge.Stats.Defense.clone(),
@@ -902,12 +905,15 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		}
 		ages := make([]string, len(save.Stats.AgesReached))
 		copy(ages, save.Stats.AgesReached)
+		ageLog := make([]AgeEntry, len(save.Stats.AgeLog))
+		copy(ageLog, save.Stats.AgeLog)
 		ge.Stats = &GameStats{
 			TotalBuilt:      save.Stats.TotalBuilt,
 			TotalRecruited:  save.Stats.TotalRecruited,
 			TotalGathered:   gathered,
 			GameStarted:     save.Stats.GameStarted,
 			AgesReached:     ages,
+			AgeLog:          ageLog,
 			SoldiersTrained: save.Stats.SoldiersTrained,
 			ResearchWork:    save.Stats.ResearchWork,
 			Defense:         save.Stats.Defense.clone(),

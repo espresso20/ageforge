@@ -559,6 +559,8 @@ func (ge *GameEngine) Succumb() error {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
+	ge.Stats.AgeLog[0].Tick = ge.tick
+	ge.Stats.AgeLog[0].Age = ge.age
 	ge.permanentBonuses = make(map[string]float64)
 	ge.buildQueue = nil
 	ge.plan = nil
