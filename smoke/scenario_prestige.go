@@ -163,17 +163,6 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 	if _, _, ok := prestige(ctl, "prestige 1 (twin)"); !ok {
 		return steps
 	}
-	// The first shop's perks are retired: none can be bought, and the legacy
-	// kit sells instead (prestigeKitHooked).
-	var sold []string
-	for _, def := range up.Rules().PrestigeUpgrades() {
-		if def.Retired && up.BuyPrestigeUpgrade(def.Key) == nil {
-			sold = append(sold, def.Key)
-		}
-	}
-	check("retired perks can't be bought", len(sold) == 0, "the shop sold retired perks: %s", strings.Join(sold, ", "))
-	prestigeKitHooked(e, check)
-	prestigeRefundHooked(check)
 	_, _, ok1 := prestige(up, "prestige 2")
 	_, _, ok2 := prestige(ctl, "prestige 2 (twin)")
 	if !ok1 || !ok2 {
@@ -347,7 +336,7 @@ func prestigeRefundHooked(check func(string, bool, string, ...interface{}) bool)
 				held = append(held, key)
 			}
 		}
-		check("refund: "+name+" gives 600 points", p.Available == 600 && p.TotalEarned == 600 && len(held) == 0 && p.ShopVersion == config.PrestigeShopVersion,
+		check("legacy save: "+name+" keeps earned points", p.Available == 3 && p.TotalEarned == 86 && len(held) == 0 && p.ShopVersion == 0,
 			"available %d, total %d, old tiers still held %v, shop version %d", p.Available, p.TotalEarned, held, p.ShopVersion)
 		if i == 0 {
 			if err := ge.SaveGame("level5"); !check("refund: save after the refund", err == nil, "%v", err) {

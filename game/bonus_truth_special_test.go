@@ -4,6 +4,7 @@ import (
 	"math"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -311,35 +312,131 @@ func TestBonusTruthEpochEventsAtOnce(t *testing.T) {
 	run(config.ChallengingEpochEvents(), false)
 }
 
-// TestBonusTruthPrestigeShop: every item the shop sells is a legacy kit
-// item whose promise has a test of its own, and the retired perks of the
-// first shop give nothing at any tier.
-func TestBonusTruthPrestigeShop(t *testing.T) {
-	// Each kit item's promise is a behavior, not a rate: these tests hold it.
-	held := map[string]string{
-		config.LegacyPlan:     "TestPlanTemplateChainsAcrossAdvance, TestPlanTemplateCarriesPlannedResearch (legacy_test.go); the smoke suite's prestige scenario",
-		config.LegacyWorkers:  "TestWorkerSharesCarryOver (legacy_test.go); the smoke suite's prestige scenario",
-		config.LegacyFactions: "TestOldFriendsMetAtTheirAge (legacy_test.go); the smoke suite's prestige scenario",
-	}
-	pm := NewPrestigeManager()
-	for _, def := range config.PrestigeUpgrades() {
-		if def.Retired {
-			pm.upgrades[def.Key] = def.MaxTier
-			continue
-		}
-		if def.EffectType != "legacy" {
-			t.Errorf("shop item %s has effect type %q: the bonus truth guard measures no shop bonus. Give it a meter in bonus_truth_test.go.", def.Key, def.EffectType)
-			continue
-		}
-		if held[def.Key] == "" {
-			t.Errorf("legacy kit item %s (%q) has no test named here that holds its promise", def.Key, def.Description)
+// TestBonusTruthPrestige verifies the permanent multiplier against real
+// production and the resolver's named source.
+func TestBonusTruthPrestige(t *testing.T) {
+	ge := newTruthEngine("information_age", truthClean)
+	before := readTruth(t, ge)
+	ge.Prestige.LoadState(1, 201, 0, nil)
+	after := readTruth(t, ge)
+	want := ge.Prestige.ProductionMultiplier()
+	for meter, value := range before {
+		if strings.HasPrefix(meter, "rate:") && meter != "rate:research" && value != 0 && !near(after[meter], value*want) {
+			t.Errorf("%s = %v, want %v after prestige multiplier %v", meter, after[meter], value*want, want)
 		}
 	}
-	if b := pm.GetBonuses(); len(b) != 0 {
-		t.Errorf("retired perks at their top tier still give bonuses: %v", b)
+	found := false
+	for _, mod := range ge.GetState().Modifiers {
+		if mod.Source == "prestige" && mod.Target == "prestige_production" && near(mod.Value, want) {
+			found = true
+		}
 	}
-	if r := pm.GetStartingResources(); len(r) != 0 {
-		t.Errorf("retired perks at their top tier still give starting resources: %v", r)
+	if !found {
+		t.Errorf("prestige multiplier missing from breakdown: %+v", ge.GetState().Modifiers)
+	}
+}
+
+// TestPrestigeProductionFrontierOnlineOffline holds the lasting bonus to the
+// real online and offline rate paths in an age with no mastery.
+func TestPrestigeProductionFrontierOnlineOffline(t *testing.T) {
+	const age = "information_age"
+	newTown := func(points int) (*GameEngine, string) {
+		ge := newTruthEngine(age, truthClean)
+		ge.Prestige.LoadState(1, points, 0, nil)
+		ge.recalculateRates()
+		for _, key := range ge.Resources.order {
+			if ge.Resources.resources[key].Rate > 0 {
+				return ge, key
+			}
+		}
+		t.Fatal("frontier town has no positive production")
+		return nil, ""
+	}
+	base, key := newTown(0)
+	bonus, _ := newTown(201)
+	factor := bonus.Prestige.ProductionMultiplier()
+	if got, want := bonus.Resources.resources[key].Rate, base.Resources.resources[key].Rate*factor; !near(got, want) {
+		t.Errorf("online %s rate = %v, want %v", key, got, want)
+	}
+	startBase, startBonus := base.Resources.Get(key), bonus.Resources.Get(key)
+	base.StepTicks(10)
+	bonus.StepTicks(10)
+	if got, want := bonus.Resources.Get(key)-startBonus, (base.Resources.Get(key)-startBase)*factor; !near(got, want) {
+		t.Errorf("online %s gain = %v, want %v", key, got, want)
+	}
+	base, key = newTown(0)
+	bonus, _ = newTown(201)
+	startBase, startBonus = base.Resources.Get(key), bonus.Resources.Get(key)
+	base.SimulateOffline(time.Second)
+	bonus.SimulateOffline(time.Second)
+	if got, want := bonus.Resources.Get(key)-startBonus, (base.Resources.Get(key)-startBase)*factor; !near(got, want) {
+		t.Errorf("offline %s gain = %v, want %v", key, got, want)
+	}
+
+	// Prestige multiplies the net rate too: a food drain remains a deficit,
+	// just a larger one. This holds the final-stage order away from positive
+	// production alone.
+	base, _ = newTown(0)
+	bonus, _ = newTown(201)
+	extraWorkers := int(base.Resources.resources["food"].Rate/base.Workers.FoodCostPerWorker()) + 1
+	base.Workers.domains["worker"].count += extraWorkers
+	bonus.Workers.domains["worker"].count += extraWorkers
+	base.recalculateRates()
+	bonus.recalculateRates()
+	if base.Resources.resources["food"].Rate >= 0 {
+		t.Fatalf("setup: food rate = %v, want a deficit", base.Resources.resources["food"].Rate)
+	}
+	if got, want := bonus.Resources.resources["food"].Rate, base.Resources.resources["food"].Rate*factor; !near(got, want) {
+		t.Errorf("deficit food rate = %v, want %v", got, want)
+	}
+}
+
+// TestPrestigeProductionRateEventSizesBeforePrestige holds rate-sized events
+// to the same final-stage order: a +50% event is sized before the lasting
+// multiplier, then receives that multiplier exactly once online and away.
+func TestPrestigeProductionRateEventSizesBeforePrestige(t *testing.T) {
+	const (
+		age    = "information_age"
+		points = 201 // L is about 5x under the square-root curve.
+	)
+	newTown := func() (*GameEngine, string) {
+		ge := newTruthEngine(age, truthClean)
+		ge.Prestige.LoadState(1, points, 0, nil)
+		ge.recalculateRates()
+		for _, key := range ge.Resources.order {
+			if ge.Resources.resources[key].Rate > 0 {
+				return ge, key
+			}
+		}
+		t.Fatal("frontier town has no positive production")
+		return nil, ""
+	}
+	withEvent := func() (*GameEngine, string) {
+		ge, key := newTown()
+		effects := ge.sizeEffects([]config.Effect{{Type: config.EventRate, Target: key, Value: 0.50}})
+		if len(effects) != 1 || effects[0].Type != "production" || effects[0].Target != key {
+			t.Fatalf("sized event = %+v, want one production effect for %s", effects, key)
+		}
+		ge.Events.InjectEvent(ActiveEvent{Key: "prestige_rate_test", Name: "Prestige Rate Test", TicksLeft: 1 << 20, Effects: effects})
+		ge.recalculateRates()
+		return ge, key
+	}
+
+	base, key := newTown()
+	online, _ := withEvent()
+	if got, want := online.Resources.resources[key].Rate, base.Resources.resources[key].Rate*1.5; !near(got, want) {
+		t.Errorf("online %s rate with +50%% event = %v, want %v", key, got, want)
+	}
+
+	base, key = newTown()
+	offline, _ := withEvent()
+	truthRoom(base, key, base.Resources.resources[key].Rate*10)
+	truthRoom(offline, key, offline.Resources.resources[key].Rate*10)
+	startBase, startOffline := base.Resources.Get(key), offline.Resources.Get(key)
+	base.SimulateOffline(10 * time.Second)
+	offline.SimulateOffline(10 * time.Second)
+	if got, want := offline.Resources.Get(key)-startOffline, (base.Resources.Get(key)-startBase)*1.5; !near(got, want) {
+		t.Errorf("offline %s gain with +50%% event = %v, want %v", key, got, want)
 	}
 }
 

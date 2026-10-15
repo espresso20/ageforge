@@ -1,12 +1,12 @@
 # Prestige System
 
-Prestige is the reset loop. From the **Medieval Age** (Age 5) on, you can give up your entire civilization to earn **Prestige Points**, and the deeper the run went, the more it pays: every age the run completed adds points, and each era's ages are worth three times the era before. Points buy the **legacy kit**, three items that carry your run's automation into every future run: your build plan, your roster and the civilizations you met. Every age the run completed also runs faster from then on: see [Era Mastery](#era-mastery).
+Prestige is the reset loop. From the **Medieval Age** (Age 5) on, you can give up your civilization to earn **Prestige Points**. Every point ever earned gives a lasting production bonus in every age, including ages you have not reached yet. The three carry-overs, Plan Template, Roster and Old Friends, turn on after your first prestige. Every age the run completed also runs faster from then on: see [Era Mastery](#era-mastery).
 
 ```
 prestige confirm yes
 ```
 
-> Prestige resets your age, resources, buildings, workers, and research. Prestige points, the legacy kit and what it remembers, Era Mastery, legacy bonuses from Succumb, the Cosmic Legacy and ruins are **permanent**.
+> Prestige resets your age, resources, buildings, workers, and research. Prestige points, the lasting production bonus, Plan Template, Roster, Old Friends, Era Mastery, legacy bonuses from Succumb, the Cosmic Legacy and ruins are **permanent**.
 
 ---
 
@@ -26,7 +26,7 @@ To check your current prestige status:
 prestige
 ```
 
-This shows your current level, available points, how many legacy kit items you own, the points you would earn right now and what prestiging from the next age would pay instead (and how many more), and your [Era Mastery](#era-mastery): how fast the age you are in runs and which ages your next prestige would raise. Before the Modern Age it adds a note that a prestige now is an early taste. Before the Medieval Age it says where prestige opens and what a prestige there pays. To view the shop without committing:
+This shows your total points earned, the lasting production multiplier now and after a prestige, and whether Plan Template, Roster and Old Friends are on. It also shows your [Era Mastery](#era-mastery).
 
 <figure class="screen" data-screen="prestige-ending"><figcaption>A prestige begins with an ending: the town you built, on the whole screen, burning down from its edges until one ember is left.</figcaption></figure>
 
@@ -38,19 +38,15 @@ Any key skips to the next part, and on the last part closes it. `Esc` counts as 
 
 <figure class="screen" data-screen="prestige"><figcaption>Prestige has no panel of its own: the command answers in the log, read here in the Logs panel in the Medieval Age, where an early taste would pay 9 points.</figcaption></figure>
 
-```
-prestige shop
-```
-
 When you're ready:
 
 ```
 prestige confirm yes
 ```
 
-`prestige confirm` on its own first says how many points you would earn, that everything else resets, and what you keep: prestige points, the legacy kit and what it remembers, and Era Mastery. Before the Modern Age it also says that this is an early taste, what it pays and what a full run pays (see [Early Tastes and Full Runs](#early-tastes-and-full-runs)). The double confirmation (`confirm yes`) is deliberate, because prestige can't be undone.
+`prestige confirm` first says how many points you would earn and the production multiplier before and after. It also says what resets and what persists. The double confirmation (`confirm yes`) is deliberate, because prestige cannot be undone.
 
-The **Stats** panel (`stats`) has a Prestige section too: your level, Era Mastery, points, what a prestige pays now and from the next age, and the kit items you own.
+The **Stats** panel (`stats`) has a Prestige section too: your level, total points earned, production multiplier, carry-overs and Era Mastery.
 
 Every prestige, from any age, ends with one closing line in the log, written for the age the run ended in. Before the Cosmic Era the civilization simply winds down: in the Modern Age the offices empty and the last tram runs, in the Space Age the orbital yards shut. In the Cosmic Era the age's harbinger is there at the end, and the lines turn to cosmic dread ("Your unmade self took your hand.").
 
@@ -116,7 +112,7 @@ Prestige opens at the Medieval Age, but the points reward depth. A prestige from
 
 - **A taste pays little.** On a first run, a prestige pays about 12 points per day of play at the Medieval Age, 24 at the Modern Age and 38 for a run through the Digital Age (from the smoke-test bot's first-run times). Going deeper pays far more per day.
 - **A second taste adds little.** A Medieval Age reset right after a Modern Age run adds 9 points to that run's 120 (7.5%).
-- **What a taste is for.** Its 9 points buy the [Plan Template](#plan-template), the first kit item. It raises [Era Mastery](#era-mastery) like any prestige: every age below the one you prestiged from gains a level, so a Medieval Age taste speeds up the Primitive to the Classical Age. And it ends an Iron Era doom that hasn't struck yet, though it costs you the run.
+- **What a taste is for.** Its 9 points add to the lasting production bonus. It raises [Era Mastery](#era-mastery) like any prestige: every age below the one you prestiged from gains a level, so a Medieval Age taste speeds up the Primitive to the Classical Age. And it ends an Iron Era doom that hasn't struck yet, though it costs you the run.
 - **The game says so, before and after.** `prestige confirm` before the Modern Age carries a line like this one, and the new run's log repeats it in the past tense right after "Prestige complete":
 
   ```
@@ -128,40 +124,24 @@ Prestige opens at the Medieval Age, but the points reward depth. A prestige from
 
 ---
 
-## The Legacy Kit
+## Lasting Production Bonus
 
-The prestige shop sells the **legacy kit**: three items that carry your run's automation across every prestige, and across a Succumb too. Each is bought once and kept for good. Costs are in Prestige Points.
+Every earned point is permanent. The game calculates the production multiplier as **1 + 0.282 × the square root of all points ever earned**. It multiplies production in every age, including a new age reached after the points were earned. Points are never spent.
 
-| Item | Key | Cost | What it does |
-|------|-----|------|--------------|
-| Plan Template | `legacy_plan` | 9 | Your build plan carries over: each age's part of the plan you wrote is added again when you enter that age |
-| Roster | `legacy_workers` | 36 | Your roster carries over to each new run |
-| Old Friends | `legacy_factions` | 54 | Civilizations you have met are met again as soon as your age reaches theirs, at neutral opinion |
+| Total points | Production multiplier |
+|---:|---:|
+| 10 | x1.89 |
+| 50 | x2.99 |
+| 120 | x4.09 |
+| 201 | x5.00 |
+| 500 | x7.31 |
+| 1000 | x9.92 |
 
-The whole kit costs 99 points: a Medieval Age taste (9 points) buys the Plan Template, and a first Modern Age run (120) buys the rest and leaves 21.
+<a id="the-legacy-kit"></a>
 
-```
-prestige shop                  # the kit: each item's price (or "owned") and what the kit remembers
-prestige buy legacy_plan       # buy the Plan Template
-prestige buy legacy_workers    # buy Roster
-```
+## Carry-overs
 
-You can buy kit items at any time, not only right after a prestige. Points left over from earlier runs can be spent as soon as you log in.
-
-### The kit remembers before you buy it
-
-From your first prestige or Succumb on, the game remembers your runs whether or not you own any kit items: the plan you wrote, your roster and every civilization you met. An item bought later puts that memory to work at once, on the run you are in: the Plan Template adds the current age's part of the template to the plan (unless you have already planned something in this age), your remembered roster is set (unless you have set some shares), and remembered civilizations within reach are met.
-
-`prestige shop` lists what the kit remembers under the items, for example:
-
-```
-  What the kit remembers from your runs
-  Plan: 41 items over 9 ages.
-  Roster: 3 domains.
-  Civilizations met: 4.
-```
-
-Before your first prestige the shop says: "The kit remembers your plan, roster and the civilizations you meet. Nothing is remembered yet: it starts with your first prestige."
+After the first prestige, three carry-overs are free and remain on: **Plan Template**, **Roster** and **Old Friends**. They work after prestige and Succumb.
 
 ### Plan Template
 
@@ -169,7 +149,7 @@ Before your first prestige the shop says: "The kit remembers your plan, roster a
 
 **When it becomes the template.** At each prestige and Succumb, age by age. An age the run wrote in takes this run's part (with the Plan Template owned, so does every age the run entered). Ages the run never reached keep the part an older run wrote, so a short run never wipes a deeper one: a Medieval Age taste after a Modern Age run keeps that run's plan for the Renaissance to the Atomic Age.
 
-**What it does.** With the Plan Template owned, the start of every run and every advance add that age's part of the template to the plan, the advance item included if you planned one. So a plan written once chains ages while you are away: the plan advances, the next age's part goes in, the plan works through it and advances again. Each item goes through the same checks as the plan commands and the plan's 60-item limit, and one log line says what went in:
+**What it does.** From the first prestige, the start of every run and every advance add that age's part of the template to the plan, the advance item included if you planned one. So a plan written once chains ages while you are away: the plan advances, the next age's part goes in, the plan works through it and advances again. Each item goes through the same checks as the plan commands and the plan's 60-item limit, and one log line says what went in:
 
 ```
 Plan Template: added 12 items for the Bronze Age.
@@ -181,13 +161,13 @@ If the plan is full, the line also says how many items waited out, and an item t
 
 ### Roster
 
-With Roster owned, the [roster](workers-and-domains.md#the-roster) you set carries over into each new run, and into the rebuild after a Succumb, instead of going back to auto. The new run's log says so ("Roster: your shares carry over.", with the split). Auto-recruit was already kept across prestige.
+From the first prestige, the [roster](workers-and-domains.md#the-roster) you set carries over into each new run, and into the rebuild after a Succumb, instead of going back to auto. The new run's log says so ("Roster: your shares carry over.", with the split). Auto-recruit was already kept across prestige.
 
 The kit remembers the shares you had when the run ended. If a run ends with every domain on auto, the kit keeps the shares it remembered before, unless you own Roster, in which case the next run starts on auto too.
 
 ### Old Friends
 
-Every civilization you meet is remembered, from every run. With Old Friends owned, each is met again as soon as your age reaches its own, with no mission and no wait for the two-age fallback, at neutral opinion, as at first contact. The log says so:
+Every civilization you meet is remembered, from every run. From the first prestige, each is met again as soon as your age reaches its own, with no mission and no wait for the two-age fallback, at neutral opinion, as at first contact. The log says so:
 
 ```
 Old friends: the Riverlands Tribes remember your people and make contact again.
@@ -197,31 +177,9 @@ A civilization you have never met still has to be found by sending missions (see
 
 ---
 
-## The Old Shop and Its Refund
+## The Retired Shop
 
-Before the legacy kit, the shop sold nine perks bought in tiers: Gather Boost, Storage Bonus, Knowledge Production, Military Power, Starting Food, Starting Wood, Housing Bonus, Expedition Loot and Temporal Mastery. They are retired: hidden, with no effect, and they can't be bought (`prestige buy` refuses them and says their points were refunded).
-
-The first time a save from before the legacy kit loads, the game refunds the old perks once, after checking the save's signature. The save is marked, so it never happens twice.
-
-1. Your **old points** are what you spent on the perks, at their old prices, plus the points you had left.
-2. They are converted at the new rate: each past prestige counts as one Modern Age run (120 points), or your old points × 4.44 (120 new points for every 27 old: a first Modern Age run used to pay 27), if that is more.
-3. Your available points and your lifetime total both become the refund, and the old tiers go to 0. Your prestige level is kept.
-
-One line in the log says what you got:
-
-```
-The prestige shop changed. Your old perks were refunded as 600 points (5 prestiges at 120 each).
-```
-
-When your old points at the new rate are the bigger number, the line ends "(your N old points at the new rate)" instead.
-
-| Save | Old points | Refund |
-|------|------------|--------|
-| Level 5: 83 points spent on perks, 3 left | 86 | 5 × 120 = **600** (86 × 4.44 = 382 is less) |
-| Level 38, every perk at its top tier (277 points spent) | 277 or more | 38 × 120 = **4,560** |
-| Level 0 | none | nothing |
-
-The level-5 save's 600 points buy the whole kit (99) and leave 501. Its next Modern Age prestige pays 120 points; its last one under the old formula paid 12.
+The prestige shop and its two badges, **Maxed Out** and **Fully Invested**, are retired. Old saves keep every point they earned, including points once spent in the shop. Those points count toward the lasting production bonus. The three former kit effects are now free carry-overs after the first prestige.
 
 ---
 
@@ -263,7 +221,7 @@ What does not change:
 
 - **The clock.** Mastery doesn't make ticks come faster. Each tick produces more, and builds and research need fewer ticks.
 - **Timers on the clock.** Events, raids, trade routes, expeditions, campaigns and cooldowns keep their length, so a mastered age, being shorter, holds fewer of them.
-- **Prestige points and the legacy kit.** Both work as described on this page.
+- **Prestige points and carry-overs.** Both work as described on this page.
 
 ### Catch-up
 
@@ -349,7 +307,7 @@ Once you own all three, the shop has nothing more to sell, and the points you ea
 - The run's timers: the ready-to-advance notice, a famine in progress and the Geographic Society's survey countdown
 
 ### Persists Across Prestige
-- Prestige level, prestige points and the legacy kit items you own
+- Prestige level, prestige points and carry-overs
 - What the kit remembers: the plan template (the techs you planned included), your roster and the civilizations you have met (it is used only by the items you own)
 - Your auto-recruit and wonder overflow settings
 - Era Mastery: every age's mastery, and your record (the deepest age you have ever entered)
@@ -494,11 +452,11 @@ A one-time, permanent reward for Succumbing to the Last Passage.
 
 ## Tips
 
-- Spend banked points from earlier runs as soon as you log in. You don't need to prestige to spend them, and a kit item works the moment you buy it.
+- Points are never spent. After your first prestige, every carry-over is on.
 - Write your plan the way you want the next run to play it, `plan advance` included. The Plan Template replays each age's part when you enter that age, so a plan that ends in an advance chains into the next age's part while you are away.
 - Queue your techs with `plan research` instead of starting them by hand. Only planned techs are recorded, so they are the ones the Plan Template lines up again on the next run.
 - Don't rush the first prestige. A Medieval Age taste pays about 12 points per day of play, a Modern Age prestige about 24 and a run through the Digital Age about 38.
-- Take a taste for what it does, not for its points: it buys the Plan Template early, or escapes an Iron Era doom.
+- Take a taste for what it does, not for its points: it starts the carry-overs early, or escapes an Iron Era doom.
 - Milestones and the structure count reset on prestige, and neither changes the points.
 - Pushing past the Modern Age pays in points and in mastery. Each Digital Era age the run completes adds 81 points, and every age it completes gains a mastery level, so the next run is faster further in.
 - Prestiging from the Cosmic Era is a gamble. Appease before you confirm to lower the odds, Brace if you would Endure, Invite if you want the Cosmic Legacy.

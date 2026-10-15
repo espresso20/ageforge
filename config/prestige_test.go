@@ -41,44 +41,11 @@ func TestDepthPoints(t *testing.T) {
 	}
 }
 
-// TestPrestigeShop: nine retired perks (keys kept, costs frozen) and the
-// three-item legacy kit at 9, 36 and 54 points (99 in all). Research Memory
-// (18 points) was cut before release and is not in the shop.
-func TestPrestigeShop(t *testing.T) {
-	retired, kit := 0, 0
-	prices := map[string]int{}
-	for _, u := range PrestigeUpgrades() {
-		if len(u.Costs) != u.MaxTier {
-			t.Errorf("%s: %d costs for %d tiers", u.Key, len(u.Costs), u.MaxTier)
-		}
-		switch {
-		case u.Retired:
-			retired++
-		case u.EffectType == "legacy":
-			kit++
-			prices[u.Key] = u.Costs[0]
-			if u.MaxTier != 1 {
-				t.Errorf("%s has %d tiers, want 1", u.Key, u.MaxTier)
-			}
-		default:
-			t.Errorf("%s is neither retired nor a kit item", u.Key)
-		}
+func TestPrestigeBonusCoefficient(t *testing.T) {
+	if PrestigeBonusCoefficient != 0.282 {
+		t.Errorf("coefficient = %v, want 0.282", PrestigeBonusCoefficient)
 	}
-	if retired != 9 || kit != 3 || len(ActivePrestigeUpgrades()) != 3 {
-		t.Errorf("%d retired, %d kit items, %d active; want 9, 3, 3", retired, kit, len(ActivePrestigeUpgrades()))
-	}
-	if _, ok := PrestigeUpgradeByKey()["legacy_research"]; ok {
-		t.Error("the shop still holds legacy_research (Research Memory was cut)")
-	}
-	want := map[string]int{LegacyPlan: 9, LegacyWorkers: 36, LegacyFactions: 54}
-	sum := 0
-	for _, k := range LegacyKit() {
-		if prices[k] != want[k] {
-			t.Errorf("%s costs %d, want %d", k, prices[k], want[k])
-		}
-		sum += prices[k]
-	}
-	if sum != 99 {
-		t.Errorf("the kit costs %d in all, want 99", sum)
+	if got := PrestigeUpgrades(); len(got) != 0 {
+		t.Errorf("prestige shop still has %d items", len(got))
 	}
 }

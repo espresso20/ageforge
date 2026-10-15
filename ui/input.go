@@ -1566,6 +1566,9 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		if b.MasteryRate != 0 {
 			parts = append(parts, fmt.Sprintf("Era Mastery: %s", textfmt.RateValue(b.MasteryRate)))
 		}
+		if b.PrestigeRate != 0 {
+			parts = append(parts, fmt.Sprintf("Prestige: %s", textfmt.RateValue(b.PrestigeRate)))
+		}
 		if b.FoodDrain != 0 {
 			parts = append(parts, fmt.Sprintf("Drain: %s", textfmt.RateValue(b.FoodDrain)))
 		}
@@ -2004,27 +2007,17 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		var lines []string
 		lines = append(lines, "[yellow]⚠ Prestige warning[-]")
 		lines = append(lines, fmt.Sprintf("  You will earn [cyan]%d[-] prestige points.", p.PendingPoints))
+		lines = append(lines, fmt.Sprintf("  Prestige: [green]x%.2f[-] production now, [green]x%.2f[-] after this prestige.", p.ProductionMultiplier, p.NextProductionMultiplier))
 		// An early prestige pays little: say so before the player confirms.
 		if early := game.EarlyPrestigeLine(game.SightOf(&state), state.Age, p.PendingPoints, false); early != "" {
 			lines = append(lines, "  "+early)
 		}
 		lines = append(lines, "  [red]All progress is reset:[-] resources, buildings, workers, research and military.")
-		lines = append(lines, "  Kept: prestige points, the legacy kit and what it remembers, and Era Mastery.")
+		lines = append(lines, "  Kept: prestige points, Plan Template, Roster, Old Friends and Era Mastery.")
 		lines = append(lines, lastPassageWarningLines(state)...)
 		lines = append(lines, "")
 		lines = append(lines, "  Type [cyan]prestige confirm yes[-] to proceed.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
-	case "shop":
-		return cmdPrestigeShop(engine)
-	case "buy":
-		if len(args) < 2 {
-			return CommandResult{Message: usageFor("prestige buy"), Type: "error"}
-		}
-		key := strings.ToLower(strings.Join(args[1:], "_"))
-		if err := engine.BuyPrestigeUpgrade(key); err != nil {
-			return errorResult(err)
-		}
-		return CommandResult{Type: "success"} // the engine logs the purchase
 	default:
 		return CommandResult{Message: subUsage("prestige"), Type: "error"}
 	}
@@ -2037,7 +2030,11 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 
 	lines = append(lines, "[gold]Prestige Status[-]")
 	lines = append(lines, fmt.Sprintf("  Level: [cyan]%d[-]", p.Level))
-	lines = append(lines, fmt.Sprintf("  Points: [cyan]%d[-] available / [cyan]%d[-] total earned", p.Available, p.TotalEarned))
+	lines = append(lines, fmt.Sprintf("  Points earned: [cyan]%d[-] total", p.TotalEarned))
+	lines = append(lines, fmt.Sprintf("  Prestige: [green]x%.2f[-] production", p.ProductionMultiplier))
+	if p.CanPrestige {
+		lines = append(lines, fmt.Sprintf("  After this prestige: [green]x%.2f[-] production", p.NextProductionMultiplier))
+	}
 
 	lines = append(lines, masteryStatusLines(state)...)
 
@@ -2045,7 +2042,7 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, fmt.Sprintf("  Cosmic Legacy: [gold]+%.0f%%[-] production (permanent)", game.CosmicLegacyProductionBonus*100))
 	}
 
-	lines = append(lines, kitStatusLine(state))
+	lines = append(lines, carryoverStatusLines(state)...)
 	lines = append(lines, prestigePointsLines(state)...)
 	switch {
 	case state.LastPassage.Pending:
@@ -2056,12 +2053,7 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, "  Type [cyan]prestige confirm[-] to reset with bonuses.")
 	}
 
-	lines = append(lines, "\n  Type [cyan]prestige shop[-] to see the legacy kit.")
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
-}
-
-func cmdPrestigeShop(engine *game.GameEngine) CommandResult {
-	return CommandResult{Message: strings.Join(prestigeShopLines(engine.GetState()), "\n"), Type: "info"}
 }
 
 // cmdScoutingList prints only the available SCOUTING expeditions, with the

@@ -4,7 +4,7 @@ All commands are typed at the `>` prompt at the bottom of the screen. `↑`/`↓
 
 Counts (`recruit 5`, `build farm 3`, `sell hut 2`, ...) are whole numbers from 1 to 1,000,000, and amounts (`gather`, `trade`, `wonder collect`) are positive numbers. Anything else is refused with the command's usage line; the game doesn't guess.
 
-Command names and the game keys they take (buildings, techs, resources, civilizations, themes, expeditions, trade routes, legacy kit items) are not case-sensitive: `sell Hut` is `sell hut`, and `research Tool Making` is `research tool_making`.
+Command names and the game keys they take (buildings, techs, resources, civilizations, themes, expeditions and trade routes) are not case-sensitive: `sell Hut` is `sell hut`, and `research Tool Making` is `research tool_making`.
 
 This page lists every command. Each section links to the page that explains the system behind it.
 
@@ -73,7 +73,7 @@ See [Buildings](buildings.md) and [Ages](ages.md).
 
 ## Build Plan
 
-A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, not counting research, and an item whose price is larger than a store cannot start (it reads `blocked  needs more <resource> storage`). Full rules on the [Build Plan](plan.md) page. With the prestige legacy kit's [Plan Template](prestige.md#plan-template), later runs add each age's part of the plan you wrote when they enter that age.
+A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, not counting research, and an item whose price is larger than a store cannot start (it reads `blocked  needs more <resource> storage`). Full rules on the [Build Plan](plan.md) page. After the first prestige, [Plan Template](prestige.md#plan-template) adds each age's part of the plan you wrote when you enter that age.
 
 | Command | Description |
 |---|---|
@@ -172,7 +172,7 @@ The **Research** panel (`research`) is a map of the tech tree. Like the Map it l
 | `Enter` | Open the selected tech's card; on the card, do what its last line says (start the tech, or add it to the build plan) |
 | `Esc` | Close the card, then the panel |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`: it adds a tech with what it still needs first. The game never chooses what you research next, and with the prestige legacy kit's [Plan Template](prestige.md#plan-template) the techs you planned are planned again on later runs. See [Technologies](technologies.md) and [Scholars and Research](knowledge.md).
+With something typed, `Tab` and `Enter` act on the prompt instead. `research list` prints the keys of the techs you can start. To queue techs, use `plan research`: it adds a tech with what it still needs first. The game never chooses what you research next, and after the first prestige [Plan Template](prestige.md#plan-template) plans the techs again on later runs. See [Technologies](technologies.md) and [Scholars and Research](knowledge.md).
 
 ---
 
@@ -328,20 +328,16 @@ With something typed, `Tab` and `Enter` act on the prompt instead. Each style li
 
 | Command | Description |
 |---|---|
-| `prestige` | View prestige status and available points, how many legacy kit items you own, the points a prestige would pay now and what prestiging from the next age would pay (and how many more), the [Era Mastery](prestige.md#era-mastery) speed of the age you are in and the ages your next prestige would raise. Before the Modern Age it notes that a prestige now is an early taste. In the Cosmic Era it also shows the chance of the Last Passage and which figure is warning of it, and shows the Cosmic Legacy if you hold it |
-| `prestige confirm` | Explain what confirming would do: the points you would earn, what resets, and what you keep (prestige points, the legacy kit and what it remembers, and Era Mastery). Before the Modern Age it says that this is an early taste, what it pays and what a full run pays. In the Cosmic Era this includes what Endure (share of this run's points) and Succumb (the Cosmic Legacy) would give you if the Last Passage comes |
-| `prestige confirm yes` | Prestige now: a new run, keeping your points, the legacy kit and Era Mastery. It requires the Medieval Age, and before the Modern Age it is an early taste that pays little. In the Cosmic Era an open Reality Tear settles first, then it rolls the Last Passage; if either comes, prestige waits for your choice |
-| `prestige shop` | View the legacy kit: each item's price, or "owned", and what the kit remembers from your runs (plan items and the ages they cover, roster, civilizations met) |
-| `prestige buy <item>` | Buy a legacy kit item: `legacy_plan` (Plan Template, 9 points), `legacy_workers` (Roster, 36) or `legacy_factions` (Old Friends, 54). It works at once, on the run you are in |
-| `stats` | Open the **Stats** panel: empire statistics, active events, resource rates, active multipliers, your prestige points, what a prestige pays now and from the next age, your [Era Mastery](prestige.md#era-mastery) in the current age and the legacy kit items you own |
+| `prestige` | View total points earned, the current and next lasting production multipliers, Plan Template, Roster and Old Friends, and [Era Mastery](prestige.md#era-mastery). In the Cosmic Era it also shows the Last Passage outlook |
+| `prestige confirm` | Explain the points and production multiplier a prestige would add, what resets, and what persists. In the Cosmic Era this includes the Last Passage outcome |
+| `prestige confirm yes` | Prestige now. It requires the Medieval Age. Points stay earned and the three carry-overs are active from the first prestige |
+| `stats` | Open the **Stats** panel: empire statistics, bonuses, rates, lasting prestige multiplier, carry-overs and [Era Mastery](prestige.md#era-mastery) |
 
 ```
 prestige confirm yes
-prestige buy legacy_plan
-prestige buy legacy_workers
 ```
 
-A prestige pays for every age the run completed, and each era's ages pay three times what the era before paid: 9 points from the Medieval Age, 120 from the Modern Age, 363 for a run through the Digital Age. See [Prestige](prestige.md) for the [points](prestige.md#prestige-points-formula) and [the legacy kit](prestige.md#the-legacy-kit), and [The Last Passage](prestige.md#the-last-passage) for what can happen when you prestige from the Cosmic Era.
+A prestige pays for every age the run completed, and each era's ages pay three times what the era before paid: 9 points from the Medieval Age, 120 from the Modern Age, 363 for a run through the Digital Age. See [Prestige](prestige.md) for the [points](prestige.md#prestige-points-formula), [carry-overs](prestige.md#carry-overs), and [The Last Passage](prestige.md#the-last-passage) for what can happen when you prestige from the Cosmic Era.
 
 ---
 

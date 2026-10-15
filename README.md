@@ -61,10 +61,10 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements; on each advance, lineage buildings with a next tier can be upgraded to it (`upgrade`)
 - **Trade System**: 21 trade routes, harbors and a black market
 - **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, rotating faction trade deals, boons and setbacks
-- **Prestige**: Reset-and-grow system from the Medieval Age on. Points pay by depth (every completed age pays, 3 times as much for each era: 9 from the Medieval Age, 120 from the Modern Age) and buy the legacy kit, 3 kit items that carry your build plan, worker shares and the civilizations you met into later runs. Era Mastery: every age a run completes runs faster on later runs, up to 4.2x
+- **Prestige**: Reset-and-grow system from the Medieval Age on. Every point ever earned is a lasting production bonus in every age. Plan Template, Roster and Old Friends carry over automatically after the first prestige. Era Mastery: every age a run completes runs faster on later runs, up to 4.2x
 - **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name, and `help` lists every command
 - **Themes and accounts**: 16 themes, dark and light, including colorblind-safe and high-contrast palettes; local accounts with backups and a recovery code
-- **Badges**: 554 badges to earn on your account, kept in a badge case (`badges`): one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and one-off feats. Badges give points, titles and ten of the themes, and never change a run
+- **Badges**: 552 badges to earn on your account, kept in a badge case (`badges`): one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and one-off feats. Badges give points, titles and ten of the themes, and never change a run
 - **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
 - **Save/Load**: JSON save system with auto-save every 60s and offline progress; saves live in `data/` next to the binary
 
@@ -106,7 +106,7 @@ Everything is typed at the prompt. The full reference is the in-game `help` pane
 - `workers share <domain> [percent|auto]`: steer where your workers go
 - `wonder collect <resource|all> [amount|max]`: bank resources into the current wonder
 - `trade`, `factions`, `army`, `map`, `stats`: open a panel
-- `prestige`: view prestige status (it opens in the Medieval Age, and a run to the Modern Age pays far more); `prestige shop` and `prestige buy <item>` for the legacy kit
+- `prestige`: view prestige status, its lasting production bonus and carry-overs; it opens in the Medieval Age, and a run to the Modern Age pays far more
 - `save [name]` / `load [name]`, and `quit` to save and quit
 
 ### Keys

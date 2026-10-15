@@ -162,11 +162,15 @@ func statsProvider(state game.GameState, _ int) string {
 	p := state.Prestige
 
 	fmt.Fprintf(&sb, " [gold]Level:[-] [cyan]%d[-]\n", p.Level)
+	fmt.Fprintf(&sb, " [gold]Prestige:[-] [green]x%.2f[-] production\n", p.ProductionMultiplier)
+	if p.CanPrestige {
+		fmt.Fprintf(&sb, " [gold]After this prestige:[-] [green]x%.2f[-] production\n", p.NextProductionMultiplier)
+	}
 	fmt.Fprintf(&sb, " [gold]Era Mastery:[-] %s\n", masteryNowText(state))
 	if next := masteryNextText(state); next != "" {
 		fmt.Fprintf(&sb, " [gray]Next prestige: %s.[-]\n", next)
 	}
-	fmt.Fprintf(&sb, " [gold]Points:[-] [cyan]%d[-] available / %d total\n", p.Available, p.TotalEarned)
+	fmt.Fprintf(&sb, " [gold]Points earned:[-] [cyan]%d[-] total\n", p.TotalEarned)
 
 	if p.CanPrestige {
 		fmt.Fprintf(&sb, " [green]Prestige now for %s.[-]\n", textfmt.Count(p.PendingPoints, "point", "points"))
@@ -179,11 +183,8 @@ func statsProvider(state game.GameState, _ int) string {
 		fmt.Fprintf(&sb, " [yellow]Reach %s to prestige again.[-]\n", ageRef(state, game.PrestigeMinAge))
 	}
 
-	if kit := kitStatsLines(state); kit != "" {
-		sb.WriteString(kit)
-	} else if p.Level > 0 {
-		sb.WriteString("\n [gray]No legacy kit items bought yet.[-]\n")
-		sb.WriteString(" [gray]Browse them with: prestige shop[-]\n")
+	for _, line := range carryoverStatusLines(state) {
+		sb.WriteString(" " + line + "\n")
 	}
 
 	// ─── Resource Rates ───

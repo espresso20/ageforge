@@ -342,12 +342,8 @@ type PrestigeSave struct {
 	Furthest      string         `json:"furthest,omitempty"`
 	RunFurthest   string         `json:"run_furthest,omitempty"`
 	MasterySeeded bool           `json:"mastery_seeded,omitempty"`
-	// ShopVersion is the prestige shop the save was written under (absent:
-	// the first shop). Below config.PrestigeShopVersion a load refunds the
-	// retired perks once (refundShopLocked). The legacy kit's memory
-	// (legacy.go): the plan template, the civilizations met and the worker
-	// shares. All omitempty, so saves from before them keep their bytes and
-	// signatures.
+	// ShopVersion and the legacy-kit memory remain for signed old saves. They
+	// are read but no longer affect point spending or carry-over eligibility.
 	ShopVersion    int                `json:"shop_version,omitempty"`
 	LegacyPlan     []PlanTemplateItem `json:"legacy_plan,omitempty"`
 	LegacyFactions []string           `json:"legacy_factions,omitempty"`
@@ -602,12 +598,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	// Per-category active expeditions (Phase 2a: scouting + military concurrent).
 	activeScout, activeMilitary := ge.Military.GetActiveForSave()
 
-	// Deep copy prestige upgrades
-	upgrades := make(map[string]int, len(ge.Prestige.upgrades))
-	for k, v := range ge.Prestige.upgrades {
-		upgrades[k] = v
-	}
-
 	// Deep copy trade state
 	tradeActiveRoutes := make(map[string]ActiveRoute, len(ge.Trade.activeRoutes))
 	for k, v := range ge.Trade.activeRoutes {
@@ -689,14 +679,14 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Level:       ge.Prestige.level,
 			TotalEarned: ge.Prestige.totalEarned,
 			Available:   ge.Prestige.available,
-			Upgrades:    upgrades,
+			Upgrades:    nil,
 
 			Mastery:       ge.Prestige.masterySave(),
 			Furthest:      ge.Prestige.record,
 			RunFurthest:   ge.Prestige.runFurthest,
 			MasterySeeded: ge.Prestige.masterySeeded,
 
-			ShopVersion:    ge.Prestige.shopVersion,
+			ShopVersion:    0,
 			LegacyPlan:     clonePlanTemplate(ge.Prestige.legacyPlan),
 			LegacyFactions: slices.Clone(ge.Prestige.legacyFactions),
 			LegacyShares:   cloneShares(ge.Prestige.legacyShares),
@@ -1088,9 +1078,6 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// each age's speed.
 	ge.seedMasteryLocked()
 	ge.noteRunAgesLocked()
-	// The prestige shop: a save from before the legacy kit gets its old
-	// perks refunded, once (after the signature check, like the seeding).
-	ge.refundShopLocked()
 	ge.restoreCatastropheState(&save)
 	ge.restoreFateState(&save)
 	ge.restoreHarbingerState(&save)

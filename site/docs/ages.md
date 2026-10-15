@@ -384,7 +384,7 @@ Prestige becomes available at this age. A prestige from here to the Atomic Age i
 | Spiritual Center | 8 |
 | Uranium Processing Works | 8 |
 
-From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset for prestige points to spend on the legacy kit. See [Prestige System](prestige.md).
+From this age a prestige counts as a full run: it pays 120 points, against 93 from the Atomic Age before it. Type `prestige confirm yes` to reset and add those points to the lasting production bonus. See [Prestige System](prestige.md).
 
 **Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Seaport (after Containerization), Power Grid Hub (after Advanced Electrics), Titanium Smelter, Oil Refinery, Mainframe Hall, TV Studio, Space Program, Nano Foundry, Monument of Ages (after Television) · **Resources:** Data, Nanobots, Titanium Ore
 

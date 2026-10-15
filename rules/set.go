@@ -681,3 +681,6 @@ func (s *Set) PrestigeUpgrade(key string) (config.PrestigeUpgradeDef, bool) {
 
 // LegacyKit returns the legacy kit's keys in shop order.
 func (s *Set) LegacyKit() []string { return slices.Clone(s.kit) }
+
+// PrestigeBonusCoefficient is the lasting prestige-production rule.
+func (s *Set) PrestigeBonusCoefficient() float64 { return config.PrestigeBonusCoefficient }

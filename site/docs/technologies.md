@@ -67,7 +67,7 @@ To line techs up, add them to the [build plan](plan.md) with `plan research <tec
 - A tech already in the plan that loses a prerequisite (you removed it, moved it below, canceled it mid-research, or a game update changed what the tech needs) is not dropped: it waits, and the plan shows what it needs (`needs Philosophy first`). While it waits it does not hold the slot's turn, so you can plan the missing tech below it and that one starts first.
 - On the tree, a planned tech shows its place in the plan (`▸3`), and the second `Enter` on a locked tech's card plans it with its chain.
 
-The plan is the only research queue, and the game never chooses what you research next. The techs you plan are remembered with the rest of your plan: with the prestige legacy kit's [Plan Template](prestige.md#plan-template) owned, they are planned again on later runs, in the age you planned them in. Techs you start by hand with `research` are not remembered.
+The plan is the only research queue, and the game never chooses what you research next. The techs you plan are remembered with the rest of your plan: [Plan Template](prestige.md#plan-template) plans them again on later runs after your first prestige, in the age you planned them in. Techs you start by hand with `research` are not remembered.
 
 See [The research queue](plan.md#the-research-queue) and [How it runs](plan.md#how-it-runs) for the rest of the plan's rules.
 
@@ -935,7 +935,7 @@ Prices rise steeply from the first age to the last. The work of your scholars ri
 
 **The Dark Age epoch event** cancels your active research, loses its work and the head start you had kept. If an epoch transition is close, consider whether to delay a long research start until after its event resolves.
 
-**Prestige resets research** entirely, with every tech, its bonus and the milestones that gave research speed. What survives a prestige is **Ancient Knowledge** (research time ×0.8 per epoch) from Succumbing, faster research times in the ages a past run completed ([Era Mastery](prestige.md#era-mastery)), and, with the legacy kit's [Plan Template](prestige.md#plan-template), the techs you put in your build plan, which are planned again in the age you planned them in.
+**Prestige resets research** entirely, with every tech, its bonus and the milestones that gave research speed. What survives a prestige is **Ancient Knowledge** (research time ×0.8 per epoch) from Succumbing, faster research times in the ages a past run completed ([Era Mastery](prestige.md#era-mastery)), and, after the first prestige, the techs [Plan Template](prestige.md#plan-template) reads from your build plan.
 
 **Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but cuts research time to ×0.8 permanently, and each further epoch you Succumb in multiplies it by 0.8 again. The fallen run's completed ages also gain an [Era Mastery](prestige.md#era-mastery) level, so the rebuild is quicker. Players who Succumb at least once begin each later run with faster research from tick one. See [Succumb](catastrophe.md#succumb).
 
