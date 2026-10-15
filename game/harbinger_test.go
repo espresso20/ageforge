@@ -534,11 +534,11 @@ func TestHarbingerCostExamples(t *testing.T) {
 		{"electric_era", "electric_age", map[string]float64{"electricity": 33000000000, "oil": 7300000000, "steel": 52000000000}},
 		{"electric_era", "atomic_age", map[string]float64{"electricity": 270000000000, "oil": 9800000000, "steel": 280000000000}},
 		{"digital_era", "modern_age", map[string]float64{"data": 46000000000, "electricity": 1300000000000, "gold": 1300000000000}},
-		{"digital_era", "information_age", map[string]float64{"data": 930000000000, "electricity": 5800000000000, "gold": 5800000000000}},
-		{"digital_era", "digital_age", map[string]float64{"data": 3800000000000, "electricity": 15000000000000, "gold": 15000000000000}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 13000000000000, "electricity": 99000000000000}},
-		{"neon_era", "fusion_age", map[string]float64{"data": 16000000000000, "electricity": 360000000000000}},
-		{"neon_era", "space_age", map[string]float64{"data": 18000000000000, "electricity": 1.2e+15}},
+		{"digital_era", "information_age", map[string]float64{"data": 1.2e12, "electricity": 7e12, "gold": 7e12}},
+		{"digital_era", "digital_age", map[string]float64{"data": 5.4e12, "electricity": 2.2e13, "gold": 2.2e13}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 2.3e13, "electricity": 1.6e14}},
+		{"neon_era", "fusion_age", map[string]float64{"data": 3.2e13, "electricity": 7.6e14}},
+		{"neon_era", "space_age", map[string]float64{"data": 4.3e13, "electricity": 3.1e15}},
 	}
 	listed := 0
 	for _, ep := range config.Epochs() {
@@ -594,10 +594,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// Mining add 8% to titanium.
 		// Then Quantum Metallurgy adds 4% to titanium, and Cosmology and
 		// Zero-Point Energy add 8% to dark matter, on the output standard.
-		{"interstellar_age", map[string]float64{"dark_matter": 3.4e+15, "titanium": 2.7e+16}},
-		{"galactic_age", map[string]float64{"dark_matter": 9.5e+16, "titanium": 1.7e+17}},
-		{"quantum_age", map[string]float64{"dark_matter": 3.3e+18, "titanium": 2.4e+17}},
-		{"transcendent_age", map[string]float64{"dark_matter": 3.6e+18, "titanium": 2.7e+17}},
+		{"interstellar_age", map[string]float64{"dark_matter": 1e16, "titanium": 8.1e16}},
+		{"galactic_age", map[string]float64{"dark_matter": 3.4e17, "titanium": 6.5e17}},
+		{"quantum_age", map[string]float64{"dark_matter": 1.4e19, "titanium": 1.1e18}},
+		{"transcendent_age", map[string]float64{"dark_matter": 1.9e19, "titanium": 1.4e18}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(tears) {
 		t.Fatalf("the Cosmic Era has ages %v; the Reality Tear's brace is listed for %d", ages, len(tears))
@@ -633,7 +633,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 		{"steel_era", "industrial_age", map[string]float64{"faith": 150000, "culture": 1600000}},
 		// The Cosmic Era's row also carries the soft cap: the model's pool is
 		// past +200% there and a quarter of the rest counts, 5% more income.
-		{"cosmic_era", "interstellar_age", map[string]float64{"faith": 600000000, "culture": 9300000000}},
+		{"cosmic_era", "interstellar_age", map[string]float64{"faith": 1.8e9, "culture": 2.8e10}},
 	}
 	for _, c := range dooms {
 		if got := doomAppeaseCost(c.epoch, c.age, 1); !reflect.DeepEqual(got, c.appease) {
@@ -666,10 +666,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// the soft cap, as the Reality Tear's rows above: 5% to 20%.
 		// And by the tree's last techs: 4% more culture each from Neural
 		// Art, Galactic Memory and Reality Art, 8% more titanium.
-		{"interstellar_age", map[string]float64{"faith": 2000000000, "culture": 31000000000}, map[string]float64{"dark_matter": 6.7e+15, "titanium": 2.7e+16}},
-		{"galactic_age", map[string]float64{"faith": 4200000000, "culture": 67000000000}, map[string]float64{"dark_matter": 1.7e+17, "titanium": 1.7e+17}},
-		{"quantum_age", map[string]float64{"faith": 8700000000, "culture": 150000000000}, map[string]float64{"dark_matter": 6.5e+18, "titanium": 4.8e+17}},
-		{"transcendent_age", map[string]float64{"faith": 9400000000, "culture": 160000000000}, map[string]float64{"dark_matter": 7e+18, "titanium": 5.3e+17}},
+		{"interstellar_age", map[string]float64{"faith": 5.9e9, "culture": 9.2e10}, map[string]float64{"dark_matter": 2e16, "titanium": 8.1e16}},
+		{"galactic_age", map[string]float64{"faith": 1.5e10, "culture": 2.4e11}, map[string]float64{"dark_matter": 6.5e17, "titanium": 6.5e17}},
+		{"quantum_age", map[string]float64{"faith": 3.8e10, "culture": 6.2e11}, map[string]float64{"dark_matter": 2.8e19, "titanium": 2.1e18}},
+		{"transcendent_age", map[string]float64{"faith": 4.9e10, "culture": 8e11}, map[string]float64{"dark_matter": 3.6e19, "titanium": 2.7e18}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(passages) {
 		t.Fatalf("the Cosmic Era has ages %v; the Last Passage's price is listed for %d", ages, len(passages))
@@ -741,7 +741,7 @@ func TestThreadAppeaseCost(t *testing.T) {
 			if !reflect.DeepEqual(r.AppeaseL1, lastPassageAppeaseCost(r.Epoch, r.Age, 1)) || !reflect.DeepEqual(r.AppeaseL2, lastPassageAppeaseCost(r.Epoch, r.Age, 2)) ||
 				!reflect.DeepEqual(r.BraceL1, lastPassageBraceCost(r.Epoch, r.Age, 1)) || !reflect.DeepEqual(r.BraceL2, lastPassageBraceCost(r.Epoch, r.Age, 2)) ||
 				len(r.BraceL1) == 0 || !r.FinalEra ||
-				r.WarningTicks != lastPassageWarning*config.AgeTargetTicks(r.Age) || !config.IsFinalEpoch(r.Epoch) {
+				r.WarningTicks != lastPassageWarning*config.LatePriceTargetTicks(r.Age) || !config.IsFinalEpoch(r.Epoch) {
 				t.Errorf("table: Last Passage row %+v", r)
 			}
 			continue
@@ -750,7 +750,7 @@ func TestThreadAppeaseCost(t *testing.T) {
 		if !reflect.DeepEqual(r.AppeaseL1, doomAppeaseCost(r.Epoch, r.Age, 1)) || !reflect.DeepEqual(r.AppeaseL2, doomAppeaseCost(r.Epoch, r.Age, 2)) ||
 			!reflect.DeepEqual(r.BraceL1, doomBraceCost(r.Epoch, r.Age, 1)) || !reflect.DeepEqual(r.BraceL2, doomBraceCost(r.Epoch, r.Age, 2)) ||
 			len(r.BraceL1) == 0 || r.FinalEra != config.IsFinalEpoch(r.Epoch) ||
-			r.WarningTicks != harbingerLeadMin*config.AgeTargetTicks(r.Age) {
+			r.WarningTicks != harbingerLeadMin*config.LatePriceTargetTicks(r.Age) {
 			t.Errorf("table: row %+v", r)
 		}
 	}
@@ -1186,7 +1186,7 @@ func TestAppeasePayableWithinTheWarning(t *testing.T) {
 				if math.Abs(cost2[res]-wantTwo*l1) > 1e-6 {
 					t.Errorf("%s in %s: level 2 %s = %v, want %v times level 1's %v", ep.Key, age, res, cost2[res], wantTwo, l1)
 				}
-				rate, span := config.FlowIncome(res, age), config.AgeTargetTicks(age)
+				rate, span := config.FlowIncome(res, age), config.LatePriceTargetTicks(age)
 				shortest, longest := rate*span*harbingerLeadMin, rate*span*harbingerLeadMax
 				// Rounded up to two significant figures: within 10% of the share.
 				if l1 > 1.1*shortest*harbingerAppeaseWindowShare || l1 > shortest {
@@ -1237,7 +1237,7 @@ func TestLastPassageAppeasePayableWithinItsWarning(t *testing.T) {
 					t.Errorf("%s in %s: level 2 %s = %v, want level 1's %v again", ep.Key, age, res, cost2[res], l1)
 				}
 				rate := config.FlowIncome(res, age)
-				warning := rate * config.AgeTargetTicks(age) * lastPassageWarning
+				warning := rate * config.LatePriceTargetTicks(age) * lastPassageWarning
 				// Rounded up to two significant figures: within 10% of the share.
 				if l1 > 1.1*warning*harbingerAppeaseWindowShare || l1 > warning {
 					t.Errorf("%s in %s: level 1 %s (%v) is more than its share of what the warning makes (%v)", ep.Key, age, res, l1, warning*harbingerAppeaseWindowShare)
@@ -1317,7 +1317,7 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 					if th.cost2[res] != l1 {
 						t.Errorf("%s in %s: %s's level 2 %s = %v, want level 1's %v again", ep.Key, age, th.name, res, th.cost2[res], l1)
 					}
-					made := config.TypicalIncome(res, age) * config.AgeTargetTicks(age) * th.warning
+					made := config.TypicalIncome(res, age) * config.LatePriceTargetTicks(age) * th.warning
 					// Rounded up to two significant figures: within 10% of the
 					// share; every Brace, the final era's two threads included,
 					// no more than its ceiling, three fifths of a moderate

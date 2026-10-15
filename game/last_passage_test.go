@@ -87,11 +87,11 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 	}
 
 	// Answers carry across the handoffs.
-	setStock(ge, map[string][2]float64{"faith": {5e10, 5e10}, "culture": {5e10, 5e10}})
+	setStock(ge, map[string][2]float64{"faith": {1e12, 1e12}, "culture": {1e12, 1e12}})
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatalf("appease: %v", err)
 	}
-	fillBraceStock(ge, 5e16)
+	fillBraceStock(ge, 1e20)
 	if err := ge.HarbingerBrace(); err != nil {
 		t.Fatalf("brace: %v", err)
 	}
@@ -139,10 +139,10 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {2000000000, 31000000000, 6.7e+15, 2.7e+16},
-		"galactic_age":     {4200000000, 67000000000, 1.7e+17, 1.7e+17},
-		"quantum_age":      {8700000000, 150000000000, 6.5e+18, 4.8e+17},
-		"transcendent_age": {9400000000, 160000000000, 7e+18, 5.3e+17},
+		"interstellar_age": {5.9e9, 9.2e10, 2e16, 8.1e16},
+		"galactic_age":     {1.5e10, 2.4e11, 6.5e17, 6.5e17},
+		"quantum_age":      {3.8e10, 6.2e11, 2.8e19, 2.1e18},
+		"transcendent_age": {4.9e10, 8e11, 3.6e19, 2.7e18},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -248,11 +248,11 @@ func TestLastPassageChoice(t *testing.T) {
 	first := ages[0]
 	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
 	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
-	if math.Abs(braceHours-21.01) > 0.05 || math.Abs(appeaseHours-31.61) > 0.05 {
-		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 21.01 and 31.61", first, braceHours, appeaseHours)
+	if math.Abs(braceHours-62.71) > 0.05 || math.Abs(appeaseHours-93.25) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 62.71 and 93.25", first, braceHours, appeaseHours)
 	}
-	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.665) > 0.005 {
-		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.665", first, ratio)
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.673) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.673", first, ratio)
 	}
 
 	// The faith band moves the odds, not the choice: both savings scale with
@@ -449,7 +449,7 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 					capped = false
 				}
 			}
-			warning := harbingerLeadMin * config.AgeTargetTicks(age) * config.TickSeconds / 3600
+			warning := harbingerLeadMin * config.LatePriceTargetTicks(age) * config.TickSeconds / 3600
 			share := braceHours / warning
 			if want, listed := doomChoiceOnTheCeiling[age]; listed {
 				seen[age] = true

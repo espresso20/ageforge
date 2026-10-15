@@ -7,7 +7,7 @@ import (
 
 func TestLatePriceMultiplier(t *testing.T) {
 	for _, tc := range []struct {
-		age string
+		age  string
 		want float64
 	}{
 		{"atomic_age", 1},
@@ -38,10 +38,10 @@ func TestLatePriceClimbScalesEveryCostPart(t *testing.T) {
 }
 
 func TestLatePricePaybackAndDealsFollowTheCurve(t *testing.T) {
-	if got, want := MakerPaybackTicks["digital_age"], 40929*LatePriceMultiplier("digital_age"); got != want {
+	if got, want := MakerPaybackTicks["digital_age"], 40929*LatePriceMultiplier("digital_age"); math.Abs(got-want) > 1e-9 {
 		t.Errorf("digital maker payback = %g, want %g", got, want)
 	}
-	if got, want := DealPaybackTicks["information_age"], 14935.330237167702*LatePriceMultiplier("information_age"); got != want {
+	if got, want := DealPaybackTicks["information_age"], 14935.330237167702*LatePriceMultiplier("information_age"); math.Abs(got-want) > 1e-9 {
 		t.Errorf("information deal payback = %g, want %g", got, want)
 	}
 }

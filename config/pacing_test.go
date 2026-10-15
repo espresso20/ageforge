@@ -130,12 +130,12 @@ func TestBuildAndResearchCaps(t *testing.T) {
 		if d.Category == "storage" {
 			div = storageBuildShare
 		}
-		if limit := AgeTargetTicks(d.RequiredAge) / div; limit > 0 && float64(d.BuildTicks) > limit {
+		if limit := LatePriceTargetTicks(d.RequiredAge) / div; limit > 0 && float64(d.BuildTicks) > math.Ceil(limit) {
 			t.Errorf("%s builds in %d ticks, over its cap of %.0f", d.Key, d.BuildTicks, limit)
 		}
 	}
 	for _, tech := range Technologies() {
-		if limit := AgeTargetTicks(tech.Age) / researchShare; limit > 0 && float64(tech.ResearchTicks) > limit {
+		if limit := LatePriceTargetTicks(tech.Age) / researchShare; limit > 0 && float64(tech.ResearchTicks) > limit {
 			t.Errorf("%s researches in %d ticks, over its cap of %.0f", tech.Key, tech.ResearchTicks, limit)
 		}
 	}
