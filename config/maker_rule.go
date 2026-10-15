@@ -529,7 +529,7 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 				continue
 			}
 			ask := float64((gate[a.Key][res] + wonder[a.Key][res]) * lv[res])
-			if float64(supply(res)*AgeTargetTicks(a.Key)) >= ask {
+			if float64(supply(res)*LatePriceTargetTicks(a.Key)) >= ask {
 				continue // the carried copies make what is asked: no shortage
 			}
 			if makerAccepted(a.Key, res) {
@@ -629,7 +629,7 @@ func MakerShortageTargets(defs []BuildingDef, ages []AgeDef, age, res string) fl
 	gate, wonder := MakerAsks(defs, ages)
 	lv := priceLevels(defs)[age]
 	ask := float64((gate[age][res] + wonder[age][res]) * lv[res])
-	made := float64(makerSupply(defs, ages, i, res) * AgeTargetTicks(age))
+	made := float64(makerSupply(defs, ages, i, res) * LatePriceTargetTicks(age))
 	if ask <= 0 {
 		return 0
 	}

@@ -56,8 +56,9 @@ func rawHalf(v float64) float64 {
 }
 
 // TestRawMaterialsCostHalfTheirPartner proves the rule: every building it
-// names carries its raw at half its partner's amount, nothing else is priced
-// in a raw, and every price in units, and every price level, is what it was.
+// names carries its raw at half its partner's amount before the late-price
+// curve, nothing else is priced in a raw, and every price in units is what it
+// was. The curve multiplies every part of a price together after this split.
 func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 	defs := BaseBuildings()
 	master := rawMasterPrices(t)
@@ -65,7 +66,10 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 	copy(masterDefs, defs)
 	for i, d := range masterDefs {
 		if m, ok := master[d.Key]; ok {
-			masterDefs[i].BaseCost = m
+			masterDefs[i].BaseCost = make(map[string]float64, len(m))
+			for res, cost := range m {
+				masterDefs[i].BaseCost[res] = cost * LatePriceMultiplier(d.RequiredAge)
+			}
 		}
 	}
 	isRaw := map[string]bool{}
@@ -99,18 +103,19 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 				}
 				pays[d.Key+"/"+raw] = true
 				halved[d.Key+"/"+partner] = true
-				old := d.BaseCost[partner]
+				old := master[d.Key][partner]
+				curve := LatePriceMultiplier(age)
 				live := BuildingByKey()[d.Key]
 				got := live.BaseCost[raw]
-				want := rawHalf(old)
+				want := rawHalf(old) * curve
 				if got != want {
-					t.Errorf("%s (%s) costs %v %s, half of its %v %s is %v", d.Key, age, got, raw, old, partner, want)
+					t.Errorf("%s (%s) costs %v %s, curve-scaled half of its %v %s is %v", d.Key, age, got, raw, old, partner, want)
 				}
-				if math.Abs(got-old/2) > 0.001*old {
-					t.Errorf("%s: %s %v is not half of %v", d.Key, raw, got, old)
+				if math.Abs(got/curve-old/2) > 0.001*old {
+					t.Errorf("%s: %s %v is not half of pre-curve %v", d.Key, raw, got, old)
 				}
-				if live.BaseCost[partner]+got != old {
-					t.Errorf("%s: %v %s and %v %s add up to %v, not %v", d.Key, live.BaseCost[partner], partner, got, raw, live.BaseCost[partner]+got, old)
+				if live.BaseCost[partner]+got != old*curve {
+					t.Errorf("%s: %v %s and %v %s add up to %v, not curve-scaled %v", d.Key, live.BaseCost[partner], partner, got, raw, live.BaseCost[partner]+got, old*curve)
 				}
 			}
 		}
@@ -130,8 +135,9 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 				if halved[d.Key+"/"+res] {
 					continue // split in two above
 				}
-				if d.BaseCost[res] != v {
-					t.Errorf("%s: %s is %v, it was %v", d.Key, res, d.BaseCost[res], v)
+				want := v * LatePriceMultiplier(d.RequiredAge)
+				if d.BaseCost[res] != want {
+					t.Errorf("%s: %s is %v, want curve-scaled %v", d.Key, res, d.BaseCost[res], want)
 				}
 			}
 		}

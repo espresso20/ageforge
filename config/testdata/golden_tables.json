@@ -1047,7 +1047,7 @@
      "value": 0.5
     }
    ],
-   "build_ticks": 18720,
+   "build_ticks": 67077,
    "workers": 0,
    "max_count": 1
   },
@@ -1568,7 +1568,7 @@
      "value": 30
     }
    ],
-   "build_ticks": 17160,
+   "build_ticks": 42700,
    "workers": 0,
    "max_count": 1
   },
@@ -2273,7 +2273,7 @@
      "value": 0.3
     }
    ],
-   "build_ticks": 10920,
+   "build_ticks": 13104,
    "workers": 0,
    "max_count": 1
   },
@@ -3714,7 +3714,7 @@
      "value": 500
     }
    ],
-   "build_ticks": 14040,
+   "build_ticks": 24261,
    "workers": 0,
    "max_count": 1
   },
@@ -4785,7 +4785,7 @@
      "value": 0.5
     }
    ],
-   "build_ticks": 18720,
+   "build_ticks": 80493,
    "workers": 0,
    "max_count": 1
   },
@@ -5215,7 +5215,7 @@
      "value": 20
     }
    ],
-   "build_ticks": 18720,
+   "build_ticks": 96591,
    "workers": 0,
    "max_count": 1
   },
@@ -5767,7 +5767,7 @@
      "value": 200
     }
    ],
-   "build_ticks": 15600,
+   "build_ticks": 32348,
    "workers": 0,
    "max_count": 1
   },
@@ -6592,7 +6592,7 @@
      "value": 0.8
     }
    ],
-   "build_ticks": 18720,
+   "build_ticks": 55898,
    "workers": 0,
    "max_count": 1
   },
@@ -6698,7 +6698,7 @@
      "value": 15
     }
    ],
-   "build_ticks": 12480,
+   "build_ticks": 17971,
    "workers": 0,
    "max_count": 1
   },
@@ -6792,7 +6792,7 @@
   },
   "antimatter_synthesis": {
    "age": "galactic_age",
-   "cost": 18238390271.999996,
+   "cost": 18200000000,
    "ticks": 5616
   },
   "architecture": {
@@ -6802,7 +6802,7 @@
   },
   "armada_command": {
    "age": "galactic_age",
-   "cost": 148702003199.99997,
+   "cost": 149000000000,
    "ticks": 7020
   },
   "assembly_line": {
@@ -6812,22 +6812,22 @@
   },
   "asteroid_claims": {
    "age": "space_age",
-   "cost": 12690432000,
+   "cost": 12700000000,
    "ticks": 6435
   },
   "asteroid_refining": {
    "age": "space_age",
-   "cost": 21424435200,
+   "cost": 21500000000,
    "ticks": 6435
   },
   "augmented_soldiers": {
    "age": "cyberpunk_age",
-   "cost": 2695680000,
+   "cost": 2710000000,
    "ticks": 5265
   },
   "automated_logistics": {
    "age": "digital_age",
-   "cost": 210240000,
+   "cost": 211000000,
    "ticks": 4680
   },
   "aviation": {
@@ -6857,7 +6857,7 @@
   },
   "blockchain": {
    "age": "cyberpunk_age",
-   "cost": 1230336000,
+   "cost": 1230000000,
    "ticks": 5265
   },
   "boatbuilding": {
@@ -6912,12 +6912,12 @@
   },
   "closed_biospheres": {
    "age": "fusion_age",
-   "cost": 8667648000,
+   "cost": 8670000000,
    "ticks": 5850
   },
   "cloud_computing": {
    "age": "digital_age",
-   "cost": 1323360000,
+   "cost": 1320000000,
    "ticks": 4680
   },
   "coke_smelting": {
@@ -6952,7 +6952,7 @@
   },
   "cosmology": {
    "age": "galactic_age",
-   "cost": 40131624959.99999,
+   "cost": 40100000000,
    "ticks": 7020
   },
   "crop_rotation": {
@@ -6967,32 +6967,32 @@
   },
   "cybernetics": {
    "age": "cyberpunk_age",
-   "cost": 727488000,
+   "cost": 729000000,
    "ticks": 5265
   },
   "cybersecurity": {
    "age": "information_age",
-   "cost": 57480000,
+   "cost": 57600000,
    "ticks": 3276
   },
   "dark_crystal_mining": {
    "age": "cyberpunk_age",
-   "cost": 2073600000,
+   "cost": 2080000000,
    "ticks": 5265
   },
   "dark_energy": {
    "age": "cyberpunk_age",
-   "cost": 3507840000,
+   "cost": 3520000000,
    "ticks": 5265
   },
   "darknets": {
    "age": "cyberpunk_age",
-   "cost": 5944320000,
+   "cost": 5950000000,
    "ticks": 5265
   },
   "deep_space_astronomy": {
    "age": "space_age",
-   "cost": 9754214400,
+   "cost": 9770000000,
    "ticks": 6435
   },
   "drama": {
@@ -7002,17 +7002,17 @@
   },
   "drone_warfare": {
    "age": "digital_age",
-   "cost": 601920000,
+   "cost": 602000000,
    "ticks": 4680
   },
   "dyson_engineering": {
    "age": "galactic_age",
-   "cost": 88146247679.99998,
+   "cost": 88100000000,
    "ticks": 7020
   },
   "e_commerce": {
    "age": "information_age",
-   "cost": 164400000,
+   "cost": 165000000,
    "ticks": 4095
   },
   "electricity_tech": {
@@ -7032,7 +7032,7 @@
   },
   "embedded_systems": {
    "age": "information_age",
-   "cost": 361200000,
+   "cost": 362000000,
    "ticks": 4095
   },
   "encyclopedia": {
@@ -7052,7 +7052,7 @@
   },
   "federation_charter": {
    "age": "galactic_age",
-   "cost": 51956121599.99999,
+   "cost": 52100000000,
    "ticks": 7020
   },
   "fertilizers": {
@@ -7072,7 +7072,7 @@
   },
   "fleet_doctrine": {
    "age": "interstellar_age",
-   "cost": 141834240000,
+   "cost": 142000000000,
    "ticks": 7020
   },
   "fortification": {
@@ -7082,37 +7082,37 @@
   },
   "fusion_drives": {
    "age": "fusion_age",
-   "cost": 19056384000,
+   "cost": 19000000000,
    "ticks": 5850
   },
   "fusion_power": {
    "age": "fusion_age",
-   "cost": 3027456000,
+   "cost": 3030000000,
    "ticks": 5850
   },
   "galactic_memory": {
    "age": "galactic_age",
-   "cost": 30815354879.999996,
+   "cost": 30800000000,
    "ticks": 7020
   },
   "galactic_navigation": {
    "age": "galactic_age",
-   "cost": 23720656895.999996,
+   "cost": 23700000000,
    "ticks": 7020
   },
   "galactic_network": {
    "age": "interstellar_age",
-   "cost": 184533811199.99997,
+   "cost": 184000000000,
    "ticks": 7020
   },
   "gene_editing": {
    "age": "digital_age",
-   "cost": 273600000,
+   "cost": 274000000,
    "ticks": 4680
   },
   "general_ai": {
    "age": "digital_age",
-   "cost": 2232000000,
+   "cost": 2240000000,
    "ticks": 7488
   },
   "general_staff": {
@@ -7132,7 +7132,7 @@
   },
   "global_village": {
    "age": "digital_age",
-   "cost": 1713600000,
+   "cost": 1720000000,
    "ticks": 7488
   },
   "green_revolution": {
@@ -7142,7 +7142,7 @@
   },
   "grid_storage": {
    "age": "digital_age",
-   "cost": 783360000,
+   "cost": 783000000,
    "ticks": 4680
   },
   "guilds": {
@@ -7157,17 +7157,17 @@
   },
   "holography": {
    "age": "cyberpunk_age",
-   "cost": 946944000,
+   "cost": 948000000,
    "ticks": 5265
   },
   "hull_printing": {
    "age": "interstellar_age",
-   "cost": 83906150400,
+   "cost": 83900000000,
    "ticks": 7020
   },
   "hydroponics": {
    "age": "space_age",
-   "cost": 16497561600,
+   "cost": 16500000000,
    "ticks": 6435
   },
   "imperial_legions": {
@@ -7192,17 +7192,17 @@
   },
   "internet": {
    "age": "information_age",
-   "cost": 74760000,
+   "cost": 74900000,
    "ticks": 4095
   },
   "internet_of_things": {
    "age": "information_age",
-   "cost": 277200000,
+   "cost": 278000000,
    "ticks": 4095
   },
   "interstellar_trade": {
    "age": "interstellar_age",
-   "cost": 49567334399.99999,
+   "cost": 49600000000,
    "ticks": 7020
   },
   "iron_smelting": {
@@ -7222,17 +7222,17 @@
   },
   "lunar_outposts": {
    "age": "cyberpunk_age",
-   "cost": 4561920000,
+   "cost": 4580000000,
    "ticks": 5265
   },
   "machine_learning": {
    "age": "digital_age",
-   "cost": 96048000,
+   "cost": 96000000,
    "ticks": 4680
   },
   "maglev_transit": {
    "age": "fusion_age",
-   "cost": 6676992000,
+   "cost": 6670000000,
    "ticks": 5850
   },
   "map_making": {
@@ -7257,7 +7257,7 @@
   },
   "matter_conversion": {
    "age": "galactic_age",
-   "cost": 67722117119.99999,
+   "cost": 67700000000,
    "ticks": 7020
   },
   "mechanized_warfare": {
@@ -7267,7 +7267,7 @@
   },
   "medical_nanobots": {
    "age": "information_age",
-   "cost": 213600000,
+   "cost": 214000000,
    "ticks": 4095
   },
   "mercantilism": {
@@ -7292,7 +7292,7 @@
   },
   "mind_uploading": {
    "age": "galactic_age",
-   "cost": 251539292159.99997,
+   "cost": 252000000000,
    "ticks": 7020
   },
   "modern_physics": {
@@ -7302,7 +7302,7 @@
   },
   "molecular_assembly": {
    "age": "fusion_age",
-   "cost": 11280384000,
+   "cost": 11300000000,
    "ticks": 5850
   },
   "museums": {
@@ -7312,7 +7312,7 @@
   },
   "nano_alloys": {
    "age": "digital_age",
-   "cost": 463680000,
+   "cost": 463000000,
    "ticks": 4680
   },
   "nanofabrication": {
@@ -7327,17 +7327,17 @@
   },
   "neural_art": {
    "age": "fusion_age",
-   "cost": 3939840000,
+   "cost": 3940000000,
    "ticks": 5850
   },
   "neural_interface": {
    "age": "cyberpunk_age",
-   "cost": 559872000,
+   "cost": 561000000,
    "ticks": 4212
   },
   "neutron_mining": {
    "age": "galactic_age",
-   "cost": 114303467519.99998,
+   "cost": 114000000000,
    "ticks": 7020
   },
   "new_world_crops": {
@@ -7357,42 +7357,42 @@
   },
   "omniversal_command": {
    "age": "transcendent_age",
-   "cost": 29255954595.839996,
+   "cost": 1100000000000,
    "ticks": 7020
   },
   "omniversal_exchange": {
    "age": "transcendent_age",
-   "cost": 29255954595.839996,
+   "cost": 650000000000,
    "ticks": 7020
   },
   "open_science": {
    "age": "digital_age",
-   "cost": 162720000,
+   "cost": 162000000,
    "ticks": 4680
   },
   "orbital_defense": {
    "age": "space_age",
-   "cost": 27869184000,
+   "cost": 27900000000,
    "ticks": 6435
   },
   "orbital_mechanics": {
    "age": "space_age",
-   "cost": 5772902400,
+   "cost": 5780000000,
    "ticks": 6435
   },
   "orbital_relays": {
    "age": "space_age",
-   "cost": 47029248000,
+   "cost": 47100000000,
    "ticks": 6435
   },
   "orbital_solar": {
    "age": "space_age",
-   "cost": 36329472000,
+   "cost": 36300000000,
    "ticks": 6435
   },
   "overview_effect": {
    "age": "space_age",
-   "cost": 7514726400,
+   "cost": 7510000000,
    "ticks": 6435
   },
   "patronage": {
@@ -7407,12 +7407,12 @@
   },
   "plasma_physics": {
    "age": "fusion_age",
-   "cost": 2343168000,
+   "cost": 2330000000,
    "ticks": 4680
   },
   "plasma_weapons": {
    "age": "fusion_age",
-   "cost": 14660352000,
+   "cost": 14600000000,
    "ticks": 5850
   },
   "plastics": {
@@ -7432,7 +7432,7 @@
   },
   "precision_mining": {
    "age": "information_age",
-   "cost": 469200000,
+   "cost": 470000000,
    "ticks": 4095
   },
   "prefabrication": {
@@ -7457,17 +7457,17 @@
   },
   "probability_markets": {
    "age": "quantum_age",
-   "cost": 70516998143.99998,
+   "cost": 70500000000,
    "ticks": 7020
   },
   "probability_warfare": {
    "age": "quantum_age",
-   "cost": 155223392255.99997,
+   "cost": 155000000000,
    "ticks": 7020
   },
   "protein_synthesis": {
    "age": "interstellar_age",
-   "cost": 64497254399.99999,
+   "cost": 64500000000,
    "ticks": 7020
   },
   "public_education": {
@@ -7477,27 +7477,27 @@
   },
   "quantum_computing": {
    "age": "quantum_age",
-   "cost": 340975484927.99994,
+   "cost": 340000000000,
    "ticks": 7020
   },
   "quantum_cultivation": {
    "age": "quantum_age",
-   "cost": 92016082943.99998,
+   "cost": 91700000000,
    "ticks": 7020
   },
   "quantum_mechanics": {
    "age": "quantum_age",
-   "cost": 41794220851.2,
+   "cost": 41700000000,
    "ticks": 7020
   },
   "quantum_metallurgy": {
    "age": "quantum_age",
-   "cost": 119534911487.99998,
+   "cost": 119000000000,
    "ticks": 7020
   },
   "quantum_networking": {
    "age": "fusion_age",
-   "cost": 24675840000,
+   "cost": 24800000000,
    "ticks": 5850
   },
   "quarrying": {
@@ -7517,22 +7517,22 @@
   },
   "reality_art": {
    "age": "quantum_age",
-   "cost": 54177693695.99999,
+   "cost": 54200000000,
    "ticks": 7020
   },
   "reality_engineering": {
    "age": "quantum_age",
-   "cost": 576175472639.9999,
+   "cost": 575000000000,
    "ticks": 11232
   },
   "reality_manipulation": {
    "age": "quantum_age",
-   "cost": 32162630860.799995,
+   "cost": 32100000000,
    "ticks": 5616
   },
   "reusable_launchers": {
    "age": "digital_age",
-   "cost": 1018080000,
+   "cost": 1020000000,
    "ticks": 4680
   },
   "rifling": {
@@ -7582,7 +7582,7 @@
   },
   "search_engines": {
    "age": "information_age",
-   "cost": 126000000,
+   "cost": 127000000,
    "ticks": 4095
   },
   "seed_drill": {
@@ -7592,7 +7592,7 @@
   },
   "self_replication": {
    "age": "digital_age",
-   "cost": 357120000,
+   "cost": 356000000,
    "ticks": 4680
   },
   "siege_warfare": {
@@ -7602,32 +7602,32 @@
   },
   "singularity_engineering": {
    "age": "transcendent_age",
-   "cost": 29255954595.839996,
+   "cost": 845000000000,
    "ticks": 7020
   },
   "smart_grid": {
    "age": "information_age",
-   "cost": 609600000,
+   "cost": 611000000,
    "ticks": 4095
   },
   "social_media": {
    "age": "information_age",
-   "cost": 97200000,
+   "cost": 97400000,
    "ticks": 4095
   },
   "space_elevator": {
    "age": "space_age",
-   "cost": 79626240000,
+   "cost": 79700000000,
    "ticks": 10296
   },
   "space_mining": {
    "age": "space_age",
-   "cost": 4429209600,
+   "cost": 4450000000,
    "ticks": 5148
   },
   "space_stations": {
    "age": "information_age",
-   "cost": 793200000,
+   "cost": 795000000,
    "ticks": 4095
   },
   "special_forces": {
@@ -7652,17 +7652,17 @@
   },
   "stellar_cartography": {
    "age": "space_age",
-   "cost": 61212672000,
+   "cost": 61300000000,
    "ticks": 10296
   },
   "stellar_core_mining": {
    "age": "interstellar_age",
-   "cost": 109287014399.99998,
+   "cost": 109000000000,
    "ticks": 7020
   },
   "stellar_engineering": {
    "age": "interstellar_age",
-   "cost": 17408286720,
+   "cost": 17400000000,
    "ticks": 5616
   },
   "stoneworking": {
@@ -7677,7 +7677,7 @@
   },
   "superconductors": {
    "age": "fusion_age",
-   "cost": 1797811200,
+   "cost": 1800000000,
    "ticks": 4680
   },
   "surveying": {
@@ -7687,7 +7687,7 @@
   },
   "synthetic_food": {
    "age": "cyberpunk_age",
-   "cost": 1600128000,
+   "cost": 1600000000,
    "ticks": 5265
   },
   "telecommunications": {
@@ -7702,7 +7702,7 @@
   },
   "terraforming": {
    "age": "galactic_age",
-   "cost": 193491763199.99997,
+   "cost": 193000000000,
    "ticks": 7020
   },
   "the_plough": {
@@ -7722,7 +7722,7 @@
   },
   "timeless_archive": {
    "age": "quantum_age",
-   "cost": 442881146879.99994,
+   "cost": 442000000000,
    "ticks": 11232
   },
   "titanium_alloys": {
@@ -7737,27 +7737,27 @@
   },
   "transcendence": {
    "age": "transcendent_age",
-   "cost": 23373804994.559998,
+   "cost": 500000000000,
    "ticks": 7020
   },
   "unified_theory": {
    "age": "fusion_age",
-   "cost": 5142528000,
+   "cost": 5130000000,
    "ticks": 5850
   },
   "virtual_reality": {
    "age": "digital_age",
-   "cost": 124848000,
+   "cost": 125000000,
    "ticks": 4680
   },
   "void_contemplation": {
    "age": "interstellar_age",
-   "cost": 29411942399.999996,
+   "cost": 29400000000,
    "ticks": 7020
   },
   "warp_drive": {
    "age": "interstellar_age",
-   "cost": 22633758720,
+   "cost": 22600000000,
    "ticks": 7020
   },
   "wire_transfers": {
@@ -7772,22 +7772,22 @@
   },
   "wormholes": {
    "age": "quantum_age",
-   "cost": 262288834559.99997,
+   "cost": 262000000000,
    "ticks": 7020
   },
   "xenology": {
    "age": "interstellar_age",
-   "cost": 38220595200,
+   "cost": 38200000000,
    "ticks": 7020
   },
   "zero_g_manufacturing": {
    "age": "space_age",
-   "cost": 3408998400,
+   "cost": 3420000000,
    "ticks": 5148
   },
   "zero_point_energy": {
    "age": "quantum_age",
-   "cost": 201661415423.99997,
+   "cost": 201000000000,
    "ticks": 7020
   }
  },

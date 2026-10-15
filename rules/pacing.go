@@ -66,6 +66,10 @@ func (s *Set) Target(age string) time.Duration { return s.targets[age] }
 // TargetTicks is Target in ticks at 1x.
 func (s *Set) TargetTicks(age string) float64 { return s.targetTicks[age] }
 
+// PriceTargetTicks is the target stay that price-derived rules use. The
+// late-price curve lengthens the stay while leaving production unchanged.
+func (s *Set) PriceTargetTicks(age string) float64 { return config.LatePriceTargetTicks(age) }
+
 // StretchTicks re-times a clock typed in ticks for age: ticks times the
 // factor the age's clocks run at (1 for an age the set has no factor for),
 // rounded to the nearest tick.
