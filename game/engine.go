@@ -2418,7 +2418,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.lastAgeAdvanceSummary = summary
 
 	ge.applyAgeUnlocks(newAge)
-	ge.Stats.RecordAge(newAge)
+	ge.Stats.RecordAge(newAge, ge.tick, time.Now())
 
 	// Account lifetime stat (Phase 6): record the highest age reached IN-MEMORY only.
 	// advanceAge holds ge.mu, so RecordAgeReached must not do I/O or re-enter the
@@ -4592,6 +4592,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
+	ge.Stats.AgeLog[0].Tick = ge.tick
+	ge.Stats.AgeLog[0].Age = ge.age
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	// A new run starts at 1x, as after a Succumb or a wipe: the dev console's
@@ -4736,6 +4738,8 @@ func (ge *GameEngine) Reset() {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
+	ge.Stats.AgeLog[0].Tick = ge.tick
+	ge.Stats.AgeLog[0].Age = ge.age
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.tickSpeedBonus = 0
