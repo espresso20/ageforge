@@ -875,6 +875,7 @@ func (d *Dashboard) refresh() {
 
 	// Update overlay content and sidebar highlight
 	d.overlayMgr.Refresh(state)
+	d.maybeShowPrestigeCue(state)
 	d.updateSidebar(d.overlayMgr.ActiveName())
 	d.refreshWorkerMini(state)
 }

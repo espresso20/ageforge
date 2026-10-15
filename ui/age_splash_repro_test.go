@@ -433,6 +433,17 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 		// Let refresh() surface a catastrophe held back while the splash was up.
 		time.Sleep(550 * time.Millisecond)
 		switch h.frontPage() {
+		case prestigeCuePage:
+			// A valid prestige cue can surface after the arrival closes; dismiss
+			// this independent notice before asserting the arrival flow is settled.
+			h.key(tcell.KeyRune, 'x')
+			deadline := time.Now().Add(2 * time.Second)
+			for h.hasPage(prestigeCuePage) {
+				if time.Now().After(deadline) {
+					h.t.Fatalf("[%s] prestige cue ignored a key\n%s", label, h.describeUI())
+				}
+				time.Sleep(50 * time.Millisecond)
+			}
 		case "catastrophe":
 			h.catsSeen++
 			h.t.Logf("%s catastrophe modal in front; pressing %q", label, catChoice)
