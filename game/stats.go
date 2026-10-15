@@ -22,14 +22,26 @@ type GameStats struct {
 	// Defense is what the army's garrison has saved this run (raids, war
 	// raids, Endure). nil until it saves something; see DefenseTally.
 	Defense *DefenseTally `json:"defense,omitempty"`
+	// AgeLog is when each age of this run was entered: the game tick and the
+	// clock time. Omitted until there is an entry.
+	AgeLog []AgeEntry `json:"age_log,omitempty"`
+}
+
+// AgeEntry is one age entered this run.
+type AgeEntry struct {
+	Age  string    `json:"age"`
+	Tick int       `json:"tick"`
+	At   time.Time `json:"at"`
 }
 
 // NewGameStats creates a new stats tracker
 func NewGameStats() *GameStats {
+	now := time.Now()
 	return &GameStats{
 		TotalGathered: make(map[string]float64),
-		GameStarted:   time.Now(),
+		GameStarted:   now,
 		AgesReached:   []string{"primitive_age"},
+		AgeLog:        []AgeEntry{{Age: "primitive_age", Tick: 0, At: now}},
 	}
 }
 
@@ -57,14 +69,25 @@ func (gs *GameStats) RecordSoldiersTrained(amount float64) {
 	}
 }
 
-// RecordAge records reaching a new age
-func (gs *GameStats) RecordAge(age string) {
+// RecordAge records reaching a new age, and when (tick and clock time).
+// The log entry is added only the first time an age is entered this run.
+func (gs *GameStats) RecordAge(age string, tick int, at time.Time) {
+	seen := false
 	for _, a := range gs.AgesReached {
 		if a == age {
+			seen = true
+			break
+		}
+	}
+	if !seen {
+		gs.AgesReached = append(gs.AgesReached, age)
+	}
+	for _, e := range gs.AgeLog {
+		if e.Age == age {
 			return
 		}
 	}
-	gs.AgesReached = append(gs.AgesReached, age)
+	gs.AgeLog = append(gs.AgeLog, AgeEntry{Age: age, Tick: tick, At: at})
 }
 
 // Snapshot returns a stats snapshot for UI
