@@ -110,8 +110,10 @@ type GameEngine struct {
 	// one. Rebind swaps it under the write lock.
 	rules *rules.Set
 
-	tick int
-	age  string
+	tick               int
+	age                string
+	prestigeCue        PrestigeCue
+	prestigeCueSeenAge string
 
 	Resources  *ResourceManager
 	Buildings  *BuildingManager
@@ -1402,6 +1404,9 @@ func (ge *GameEngine) doTick() {
 	defer ge.mu.Unlock()
 
 	ge.tick++
+	if ge.tick%60 == 0 {
+		ge.prestigeCue = ge.prestigeCueLocked()
+	}
 
 	// Harbinger and fate: roll the era's fate if it has none (new game,
 	// Succumb, prestige, reset), bring a harbinger when one is due, strike at
@@ -4592,6 +4597,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
+	ge.prestigeCue = PrestigeCue{}
+	ge.prestigeCueSeenAge = ""
 	ge.Stats.AgeLog[0].Tick = ge.tick
 	ge.Stats.AgeLog[0].Age = ge.age
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
@@ -4738,6 +4745,8 @@ func (ge *GameEngine) Reset() {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
+	ge.prestigeCue = PrestigeCue{}
+	ge.prestigeCueSeenAge = ""
 	ge.Stats.AgeLog[0].Tick = ge.tick
 	ge.Stats.AgeLog[0].Age = ge.age
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
@@ -4936,6 +4945,7 @@ func (ge *GameEngine) GetState() GameState {
 		}),
 		ActiveEvents:          ge.Events.GetActive(),
 		Prestige:              prestigeSnap,
+		PrestigeCue:           func() PrestigeCue { cue := ge.prestigeCue; cue.Seen = ge.prestigeCueSeenAge == ge.age; return cue }(),
 		Mastery:               ge.Prestige.MasterySnapshot(ge.age),
 		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources()),
 		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),

@@ -40,6 +40,7 @@ type GameState struct {
 	Milestones     MilestoneState
 	ActiveEvents   []ActiveEventState
 	Prestige       PrestigeState
+	PrestigeCue    PrestigeCue
 	Mastery        MasteryState
 	Trade          TradeState
 	Diplomacy      DiplomacyState
@@ -153,6 +154,18 @@ type GameState struct {
 	// Distinct from Stats above, which is the per-save ge.Stats snapshot.
 	// Populated in GetState() from ge.account.LifetimeStats(); not in save JSON.
 	AccountStats *AccountStatsView `json:"-"`
+}
+
+// PrestigeCue is the engine's estimate of whether a prestige would reach the
+// current age's gate sooner on the next run.
+type PrestigeCue struct {
+	Ready          bool
+	Age            string
+	FinishTicks    int
+	FreshTicks     int
+	Multiplier     float64
+	NextMultiplier float64
+	Seen           bool
 }
 
 // AccountStatsView is the read-only UI projection of the account's lifetime stats

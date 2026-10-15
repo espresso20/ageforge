@@ -36,9 +36,10 @@ const saveHMACKey = "ageforge-v1-save-integrity"
 //   - Proof: HMAC of the Signature using forgeMasterKey. Present only when
 //     the player has the elite badge; verifying this clears the cheater badge.
 type GameSave struct {
-	Timestamp time.Time `json:"timestamp"`
-	Tick      int       `json:"tick"`
-	Age       string    `json:"age"`
+	Timestamp          time.Time `json:"timestamp"`
+	Tick               int       `json:"tick"`
+	Age                string    `json:"age"`
+	PrestigeCueSeenAge string    `json:"prestige_cue_seen_age,omitempty"`
 	// Seed is the run's master RNG seed (see GameEngine.seed). Persisted so a run's
 	// faction-encounter/buff stream is reproducible from its start. omitempty keeps
 	// legacy saves (which lack it) byte-identical; on load a zero seed means "no seed
@@ -625,13 +626,14 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	rngDraws, quipDraws := ge.rngDraws()
 
 	return GameSave{
-		Timestamp: time.Now(),
-		Tick:      ge.tick,
-		Age:       ge.age,
-		Seed:      ge.seed,
-		RNGDraws:  rngDraws,
-		QuipDraws: quipDraws,
-		Prose:     ge.prose.State(),
+		Timestamp:          time.Now(),
+		Tick:               ge.tick,
+		Age:                ge.age,
+		PrestigeCueSeenAge: ge.prestigeCueSeenAge,
+		Seed:               ge.seed,
+		RNGDraws:           rngDraws,
+		QuipDraws:          quipDraws,
+		Prose:              ge.prose.State(),
 
 		FestivalReadyTick:    ge.festivalReadyTick,
 		BlackMarketReadyTick: ge.blackMarketReadyTick,
@@ -869,6 +871,8 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	ge.tick = save.Tick
 	ge.age = save.Age
+	ge.prestigeCueSeenAge = save.PrestigeCueSeenAge
+	ge.prestigeCue = PrestigeCue{}
 	// Restore the run's master seed and both streams' positions, so the loaded
 	// game carries on drawing exactly where the saved one stopped. A zero seed
 	// means the save predates seed persistence — keep the fresh seed
