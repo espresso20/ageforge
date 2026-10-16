@@ -114,14 +114,10 @@ func TestSuccumbRaisesPrestigeFloorToLaterRunRecord(t *testing.T) {
 func TestPrestigeFinalAgeFloorDoesNotBlockNewRun(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := NewGameEngine()
-	for _, age := range ge.rules.AgeKeys()[1:] {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	// The floor a run that cleared the game leaves behind, set directly: a
+	// real prestige from the last age can be held up by a fated harbinger.
+	keys := ge.rules.AgeKeys()
+	ge.SetPrestigeFloorForTest(keys[len(keys)-1])
 	ge.mu.Lock()
 	ge.age = PrestigeMinAge
 	ge.mu.Unlock()
