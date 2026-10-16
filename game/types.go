@@ -630,11 +630,13 @@ type MilestoneSnapshotParams struct {
 // PrestigeState represents the prestige system state for UI
 type PrestigeState struct {
 	Level         int
+	Floor         string
 	TotalEarned   int
 	Available     int
 	Upgrades      map[string]PrestigeUpgradeState
 	PendingPoints int // points you'd get if you prestige now
 	CanPrestige   bool
+	FloorBlocks   bool    // true only when the prestige age floor is the current blocker
 	PassiveBonus  float64 // retired: always 0 (the passive became Era Mastery)
 	// ProductionMultiplier is the lasting multiplier from all points ever
 	// earned; NextProductionMultiplier includes PendingPoints.

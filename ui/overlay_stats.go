@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // statsProvider generates the stats overlay text from the current game state.
@@ -186,6 +187,14 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 	if p.CanPrestige {
 		fmt.Fprintf(&sb, " [gold]After this prestige:[-] [green]x%.2f[-] production\n", p.NextProductionMultiplier)
+	} else if p.FloorBlocks {
+		if p.Floor != "" {
+			floorName := state.Ruleset().Name(rules.KindAge, p.Floor)
+			if !strings.HasPrefix(strings.ToLower(floorName), "the ") {
+				floorName = "the " + floorName
+			}
+			fmt.Fprintf(&sb, " [yellow]Prestige opens once you pass %s, the furthest an earlier run reached.[-]\n", floorName)
+		}
 	}
 	fmt.Fprintf(&sb, " [gold]Era Mastery:[-] %s\n", masteryNowText(state))
 	if next := masteryNextText(state); next != "" {

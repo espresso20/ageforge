@@ -276,6 +276,7 @@ func TestSuccumbCommitsMastery(t *testing.T) {
 		}
 	}
 	ge.age, ge.currentEpoch = "medieval_age", config.EpochForAge("medieval_age")
+	ge.Prestige.floor = "" // Keep this focused on per-run mastery accounting.
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatal(err)
 	}

@@ -96,6 +96,17 @@ func TestPrestigeCueClearsOnAgeAdvance(t *testing.T) {
 }
 
 func TestPrestigeCueReadinessGates(t *testing.T) {
+	t.Run("floor blocks cue despite faster fresh run", func(t *testing.T) {
+		ge := prestigeCueEngine(t)
+		ge.Prestige.floor = ge.age
+		cue := ge.prestigeCueLocked()
+		if cue.FreshTicks >= cue.FinishTicks {
+			t.Fatalf("test setup lacks favorable time comparison: %+v", cue)
+		}
+		if cue.Ready {
+			t.Fatalf("cue is ready below prestige floor: %+v", cue)
+		}
+	})
 	t.Run("cannot prestige", func(t *testing.T) {
 		ge := prestigeCueEngine(t)
 		ge.age = "stone_age"

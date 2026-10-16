@@ -4547,6 +4547,17 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if !ge.Prestige.CanPrestige(ge.age, ageOrder) {
+		lastAgeOrder := -1
+		for _, order := range ageOrder {
+			lastAgeOrder = max(lastAgeOrder, order)
+		}
+		if floor := ge.Prestige.Floor(); floor != "" && ageOrder[ge.age] <= ageOrder[floor] && ageOrder[floor] != lastAgeOrder {
+			name := ge.rules.Name(rules.KindAge, floor)
+			if !strings.HasPrefix(strings.ToLower(name), "the ") {
+				name = "the " + name
+			}
+			return fmt.Errorf("Prestige opens once you pass %s, the furthest an earlier run reached.", name)
+		}
 		return fmt.Errorf("You can prestige once you reach %s.", ge.ageSightLocked().AgeRef(PrestigeMinAge))
 	}
 
@@ -4567,6 +4578,13 @@ func (ge *GameEngine) DoPrestige() error {
 	return nil
 }
 
+// setPrestigeFloorLocked records the current age before setting the next run's
+// floor to the Era Mastery record. Callers hold ge.mu.
+func (ge *GameEngine) setPrestigeFloorLocked() {
+	ge.Prestige.NoteAgeEntered(ge.age)
+	ge.Prestige.floor = ge.Prestige.record
+}
+
 // completePrestige awards the run's prestige points (all, part or none of
 // them, as how says), logs the run's last lines and resets for the new run.
 // Called by DoPrestige and by the Last Passage choice, under the write lock.
@@ -4584,11 +4602,11 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 		ge.cosmicLegacy = true
 	}
 
+	ge.setPrestigeFloorLocked()
 	ge.Prestige.Prestige(points)
 	// Era Mastery: every age this run completed gains a level. The age
 	// prestiged from counts as entered even if a test hook or the dev
 	// console moved the run there without an advance.
-	ge.Prestige.NoteAgeEntered(ge.age)
 	masteryLine := masteryCommitLine(ge.rules, ge.Prestige.CommitRun())
 	// The legacy kit remembers the run (plan, civilizations, shares) before
 	// the managers holding it are reset.
@@ -4898,6 +4916,15 @@ func (ge *GameEngine) GetState() GameState {
 	// Prestige snapshot with pending points
 	prestigeSnap := ge.Prestige.Snapshot()
 	prestigeSnap.CanPrestige = ge.Prestige.CanPrestige(ge.age, ageOrder)
+	if floor := ge.Prestige.Floor(); floor != "" {
+		currentIdx, currentOK := ageOrder[ge.age]
+		floorIdx, floorOK := ageOrder[floor]
+		lastIdx := -1
+		for _, order := range ageOrder {
+			lastIdx = max(lastIdx, order)
+		}
+		prestigeSnap.FloorBlocks = currentOK && floorOK && floorIdx != lastIdx && currentIdx <= floorIdx
+	}
 	prestigeSnap.PendingPoints = ge.Prestige.CalculatePoints(ge.age)
 	prestigeSnap.NextProductionMultiplier = ge.Prestige.NextProductionMultiplier(ge.age)
 	if next := ge.progress.GetNextAge(ge.age); next != "" {

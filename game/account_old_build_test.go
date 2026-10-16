@@ -305,6 +305,8 @@ func TestBothBuildsTakeTurns(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i := 0; i < 15; i++ {
+		// This test checks account compatibility, not when prestige opens.
+		ge.SetPrestigeFloorForTest("")
 		prestigeNow(t, ge)
 	}
 	if !hasBadge(acct, badgePrestige25) {

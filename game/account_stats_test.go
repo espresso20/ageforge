@@ -231,6 +231,7 @@ func TestCivilizationsStartedCountsEveryRun(t *testing.T) {
 	if started() != 3 {
 		t.Errorf("after a Succumb: %d, want 3", started())
 	}
+	ge.SetPrestigeFloorForTest("") // This test measures run accounting, not floor progression.
 
 	// It is saved with the account, in a key every build signs.
 	if err := acct.FlushIfDirty(); err != nil {

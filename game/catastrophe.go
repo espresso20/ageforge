@@ -532,7 +532,7 @@ func (ge *GameEngine) Succumb() error {
 	// starts on known ground. The commit starts the run's furthest age over,
 	// so a later prestige counts only what the rebuilt run completes: no age
 	// is counted twice for one run.
-	ge.Prestige.NoteAgeEntered(ge.age)
+	ge.setPrestigeFloorLocked()
 	masteryLine := masteryCommitLine(ge.rules, ge.Prestige.CommitRun())
 	// The legacy kit remembers the fallen civilization's plan, research
 	// order, civilizations met and shares before the reset.

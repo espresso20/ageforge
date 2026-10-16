@@ -329,10 +329,11 @@ type DiplomacySave struct {
 
 // PrestigeSave holds prestige state for save
 type PrestigeSave struct {
-	Level       int            `json:"level"`
-	TotalEarned int            `json:"total_earned"`
-	Available   int            `json:"available"`
-	Upgrades    map[string]int `json:"upgrades"`
+	Level         int            `json:"level"`
+	PrestigeFloor string         `json:"prestige_floor,omitempty"`
+	TotalEarned   int            `json:"total_earned"`
+	Available     int            `json:"available"`
+	Upgrades      map[string]int `json:"upgrades"`
 	// Era Mastery (mastery.go): each age's mastery (ages at 0 left out),
 	// the record (the deepest age ever entered), this run's furthest age,
 	// and the marker for the one-time seeding of saves written before Era
@@ -681,10 +682,11 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CurrentTitle:     ge.Milestones.GetCurrentTitle(),
 		PermanentBonuses: permBonuses,
 		Prestige: PrestigeSave{
-			Level:       ge.Prestige.level,
-			TotalEarned: ge.Prestige.totalEarned,
-			Available:   ge.Prestige.available,
-			Upgrades:    nil,
+			Level:         ge.Prestige.level,
+			PrestigeFloor: ge.Prestige.floor,
+			TotalEarned:   ge.Prestige.totalEarned,
+			Available:     ge.Prestige.available,
+			Upgrades:      nil,
 
 			Mastery:       ge.Prestige.masterySave(),
 			Furthest:      ge.Prestige.record,
@@ -972,6 +974,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	// Restore prestige
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
+	ge.Prestige.floor = save.Prestige.PrestigeFloor
 	ge.Prestige.LoadMastery(save.Prestige.Mastery, save.Prestige.Furthest, save.Prestige.RunFurthest, save.Prestige.MasterySeeded)
 	ge.Prestige.LoadLegacy(save.Prestige.ShopVersion, save.Prestige.LegacyPlan, save.Prestige.LegacyFactions, save.Prestige.LegacyShares)
 

@@ -145,6 +145,11 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 	prestige := func(ge *game.GameEngine, label string) (before, after game.GameState, ok bool) {
 		_ = ge.SummonHarbingerForTest("modern_age")
 		before = ge.GetState()
+		if before.Prestige.Level > 0 {
+			// This test checks hooked prestige mechanics, not when prestige opens.
+			ge.SetPrestigeFloorForTest("")
+			before = ge.GetState()
+		}
 		want := PrestigePoints(before)
 		if !check(label+": can prestige", before.Prestige.CanPrestige, "CanPrestige is false in %s", before.Age) {
 			return before, before, false
