@@ -9,11 +9,10 @@ import (
 	"github.com/espresso20/ageforge/detmath"
 )
 
-// The Storage Covenant: storage is a wall, and the wall is where the rule
-// puts it. A store sized to hours of income (the covenant's first form) held
-// too much in some ages and too little in others; since the storage rule
-// (config/storage_rule.go) a store is sized by what the age's buildings cost,
-// and the covenant checks the tables against that rule.
+// The Storage Covenant checks storage sized by the storage rule
+// (config/storage_rule.go) against what the age's buildings cost. A store
+// sized to hours of income (the covenant's first form) held too much in some
+// ages and too little in others.
 //
 // It is written out again here, from the tables alone, and does not call
 // config.StorageRuleSizes or read any of config/storage_rule.go's constants:
@@ -40,34 +39,18 @@ import (
 //     its buildings);
 //   - the gate out of the age asks for storageCopies copies of its storage
 //     building, so every town that passes arrives with the reference store;
-//   - the wall: in the first earlyWallAges ages that have storage, the store
-//     walls at exactly five copies (a sixth is priced over the store); in
-//     the later ages a player reaches at most lateReach times the reference
-//     store (the climb is 1.75, but the dearest buildings of the age are not
-//     the storage building).
+//   - a storage building's next copy always fits its store (PR #235).
 const (
 	storageCopies = 5
 	storageRoom   = 1.25
 	storageMargin = 1.05
 	storageClimb  = 1.75
-	earlyWallAges = 4
-	// lateReach is the reading of the Quantum Age, the only later age that
-	// is over 2.8: 35Qi reached against a reference store of 11.7Qi, 2.98
-	// times. It was 2.8 with a store for the town of five. The storage rule
-	// sizes the Quantum Vault to hold the dearest price of the town of eight
-	// (2.3Qi a copy), and the last age has no storage building of its own to
-	// take the load, so the wall stands further above the reference store
-	// than the climb alone puts it. The fix is a storage building for the
-	// last age; until then the bound follows the reading, rounded up to one
-	// decimal. Property 4 (properties.go) states the real target, 2 times,
-	// and stays a known failure with this reading.
-	lateReach = 3.0
 )
 
 // StorageProblem is a place the tables part from the storage rule.
 type StorageProblem struct {
 	Age  string `json:"age"`
-	Rule string `json:"rule"` // curve, hold, climb, arrive, gate_copies, wall
+	Rule string `json:"rule"` // curve, hold, climb, arrive, gate_copies
 	Why  string `json:"why"`
 }
 
@@ -80,9 +63,8 @@ type StorageRow struct {
 	PerCopy  float64 `json:"per_copy"`
 	// Dearest is the dearest price the age asks of the reference town; Store
 	// the reference store on leaving the age (five copies on the earlier
-	// stores); Reached the store a player reaches by buying every storage
-	// building to its wall, and Copies the copies of this age's building that
-	// bought.
+	// stores); Reached the store a player reaches by buying storage copies
+	// they can afford, and Copies the copies of this age's building bought.
 	Dearest float64 `json:"dearest_ask"`
 	Store   float64 `json:"reference_store"`
 	Reached float64 `json:"reached_store"`
@@ -200,13 +182,11 @@ func staticStorage(defs map[string]config.BuildingDef, ages []config.AgeDef) ([]
 	}
 
 	var rows []StorageRow
-	withStorage := 0
 	for i, age := range ages {
 		b, ok := storageOf(i)
 		if !ok {
 			continue
 		}
-		withStorage++
 		fail := func(rule, format string, args ...any) {
 			problems = append(problems, StorageProblem{Age: age.Key, Rule: rule, Why: fmt.Sprintf(format, args...)})
 		}
@@ -260,20 +240,13 @@ func staticStorage(defs map[string]config.BuildingDef, ages []config.AgeDef) ([]
 		reached := stores["wood"]
 		row := StorageRow{Age: age.Key, Building: b.Key, PerCopy: size, Dearest: dearest(i), Store: store[i], Reached: reached, Copies: copies[b.Key]}
 		rows = append(rows, row)
-		if withStorage <= earlyWallAges {
-			if row.Copies != storageCopies {
-				fail("wall", "%s walls at %d copies, want exactly %d in the first %d ages (a sixth is priced over the store)", b.Key, row.Copies, storageCopies, earlyWallAges)
-			}
-		} else if row.Ratio() > lateReach+1e-9 {
-			fail("wall", "a player reaches %s in %s, %.2f times the reference store (%s); at most %g times", num(row.Reached), age.Key, row.Ratio(), num(row.Store), lateReach)
-		}
 	}
 	return problems, rows
 }
 
 // writeStorage renders the Storage Covenant check.
 func writeStorage(sb *strings.Builder, problems []StorageProblem, rows []StorageRow) {
-	fmt.Fprintf(sb, "Storage is a wall, sized by the storage rule (config/storage_rule.go) and checked here from the tables alone: five copies of an age's storage building, on the earlier stores, hold the dearest price the age asks of the reference town and a quarter more; each copy up to the fifth fits under the copies before it; a town arrives able to pay the next age's first storage building and housing; each gate asks for five copies of the storage building of the age it leaves (and for no amount of any resource); the first %d ages wall at exactly five copies and the later ones reach at most %g times the reference store. `go test ./smoke` fails on any row below.\n\n", earlyWallAges, lateReach)
+	sb.WriteString("Storage is sized by the storage rule (config/storage_rule.go) and checked here from the tables alone: five copies of an age's storage building, on the earlier stores, hold the dearest price the age asks of the reference town and a quarter more; each copy up to the fifth fits under the copies before it; a town arrives able to pay the next age's first storage building and housing; each gate asks for five copies of the storage building of the age it leaves (and for no amount of any resource); a storage building's next copy always fits its store (PR #235). `go test ./smoke` fails on any row below.\n\n")
 	if len(problems) == 0 {
 		sb.WriteString("No problems.\n\n")
 	} else {
@@ -283,7 +256,7 @@ func writeStorage(sb *strings.Builder, problems []StorageProblem, rows []Storage
 		}
 		sb.WriteString("\n")
 	}
-	sb.WriteString("| age | storage building | per copy | dearest ask | reference store | player reaches | x reference | copies at the wall |\n|---|---|---|---|---|---|---|---|\n")
+	sb.WriteString("| age | storage building | per copy | dearest ask | reference store | player reaches | x reference | copies reached |\n|---|---|---|---|---|---|---|---|\n")
 	for _, r := range rows {
 		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %.2fx | %d |\n", r.Age, r.Building, num(r.PerCopy), num(r.Dearest), num(r.Store), num(r.Reached), r.Ratio(), r.Copies)
 	}

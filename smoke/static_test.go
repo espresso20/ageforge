@@ -132,13 +132,13 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 		}), ages, []string{"arrive/industrial_age", "climb/victorian_age"}},
 		// Storage with a copy limit, or climbing at the wrong rate.
 		{"a copy limit on the Warehouse", edit("warehouse", func(d *config.BuildingDef) { d.MaxCount = 25 }), ages, []string{"curve/bronze_age"}},
-		{"a slow Granary", edit("granary", func(d *config.BuildingDef) { d.CostScale = 1.15 }), ages, []string{"curve/iron_age", "wall/iron_age"}},
-		// A late store that climbs too slowly walls far past the reference.
-		{"a slow Fusion Vault", edit("fusion_vault", func(d *config.BuildingDef) { d.CostScale = 1.2 }), ages, []string{"curve/fusion_age", "wall/fusion_age"}},
+		{"a slow Granary", edit("granary", func(d *config.BuildingDef) { d.CostScale = 1.15 }), ages, []string{"curve/iron_age"}},
+		{"a slow Fusion Vault", edit("fusion_vault", func(d *config.BuildingDef) { d.CostScale = 1.2 }), ages, []string{"curve/fusion_age"}},
 		// Gates.
 		{"a gate without the storage copies", config.BuildingByKey(), editGate("iron_age", func(b map[string]int) { delete(b, "warehouse") }), []string{"gate_copies/bronze_age"}},
 		{"a gate asking for three copies", config.BuildingByKey(), editGate("classical_age", func(b map[string]int) { b["granary"] = 3 }), []string{"gate_copies/iron_age"}},
 	}
+	// The wall rules were retired in #235: a storage building's next copy always fits.
 	for _, c := range cases {
 		got := flagged(c.defs, c.ages)
 		for _, w := range c.wants {

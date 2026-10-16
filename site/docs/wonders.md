@@ -80,7 +80,7 @@ Once completed, the wonder appears as a landmark on the Map (`map` command).
 
 Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **64 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). Each wonder has its own resource mix.
 
-From the Modern Age on, the age price level rises by 1.2 times per age. Each wonder follows that price level, and its construction time follows the same curve, so its share of the age stays the same.
+From the Modern Age on, the age price level rises by 1.4 times per age. Each wonder follows that price level, and its construction time follows the same curve, so its share of the age stays the same.
 
 In the ages that make a raw material, a wonder pays half of its stone, iron, steel or electricity part in the raw instead, one for one: marble, iron ore, titanium ore or dark matter crystals. The Colosseum, the Parthenon, the Crystal Palace, the Space Program, the Global Network, the World Simulation, the Neon Citadel and the Stellar Cradle are paid that way, and the wonder's total in price units is unchanged. See [What the ores are for](resources.md#what-the-ores-are-for).
 
