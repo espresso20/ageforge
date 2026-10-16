@@ -14,20 +14,30 @@ import (
 // order the table has them, each to three significant figures.
 func TestKnowledgeTechPricesFollowTheLadder(t *testing.T) {
 	techs := config.Technologies()
-	ladders := KnowledgeLadders(techs, KnowledgeMade(), func(string) float64 { return KnowledgeLadderRatio })
+	made := KnowledgeMade()
+	for i, age := range config.Ages() {
+		made[i] /= config.LatePriceMultiplier(age.Key)
+	}
+	ladders := KnowledgeLadders(techs, made, func(string) float64 { return KnowledgeLadderRatio })
 	byKey := map[string]config.TechDef{}
 	for _, tc := range techs {
 		byKey[tc.Key] = tc
 	}
 	for _, l := range ladders {
 		for j, k := range l.Techs {
-			if got := byKey[k].Cost; got != l.Prices[j] {
-				t.Errorf("%s: %s costs %g, the ladder gives %g", l.Age, k, got, l.Prices[j])
+			got := byKey[k].Cost
+			first := l.Total * (l.Ratio - 1) / (math.Pow(l.Ratio, float64(len(l.Techs))) - 1)
+			want := first * math.Pow(l.Ratio, float64(j)) * config.LatePriceMultiplier(l.Age)
+			// Authored prices are rounded to three significant figures and the late
+			// price climb multiplies them, so a price sits within 1% of its ladder
+			// rung. Rungs are 30% apart, so this still pins each tech to its rung.
+			if math.Abs(got-want)/want > 0.01 {
+				t.Errorf("%s: %s runtime cost %g, the climbed unrounded ladder gives %g", l.Age, k, got, want)
 			}
 		}
 		if n := len(l.Prices); n > 0 {
-			if sum := sumOf(l.Prices); math.Abs(sum/l.Total-1) > 0.02 {
-				t.Errorf("%s: the techs total %g, the ladder asks %g", l.Age, sum, l.Total)
+			if sum := sumOf(l.Prices) * config.LatePriceMultiplier(l.Age); math.Abs(sum/(l.Total*config.LatePriceMultiplier(l.Age))-1) > 0.02 {
+				t.Errorf("%s: the techs total %g, the ladder asks %g", l.Age, sum, l.Total*config.LatePriceMultiplier(l.Age))
 			}
 		}
 	}

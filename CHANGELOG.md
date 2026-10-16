@@ -7,7 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
-- Prices in later ages now climb by 1.2 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.
+- Prices in later ages now climb by 1.4 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.
 
 ### Added
 - **Time to prestige.** When a new run with your next prestige bonus would pass your current age sooner than pushing on, the game says so once per age, and stats keeps a line about it. Every figure comes from your own run.
