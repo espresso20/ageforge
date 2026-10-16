@@ -10,7 +10,7 @@ import (
 // LatePriceStep is the per-age price step from the Modern Age on. Prices in
 // the Modern Age stay at their authored value; each following age costs this
 // factor more. Outputs do not move with this curve.
-const LatePriceStep = 1.2
+const LatePriceStep = 1.4
 
 // LatePriceStartAge is the first age on the late-price curve.
 const LatePriceStartAge = "modern_age"

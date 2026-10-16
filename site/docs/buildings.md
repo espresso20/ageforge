@@ -127,7 +127,7 @@ You can sell any building except wonders and storage from the **Stone Age onward
 
 ### Cost Scaling
 
-From the Modern Age on, every age's first-copy prices rise by **1.2 times** the previous age's. Modern prices are unchanged; Information is 1.2 times its authored price, Digital is 1.44 times, and the same curve continues through the Transcendent Age. Outputs do not change. Storage, wonders and upgrades read the resulting prices through their own rules.
+From the Modern Age on, every age's first-copy prices rise by **1.4 times** the previous age's. Modern prices are unchanged; Information is 1.4 times its authored price, Digital is 1.96 times, and the same curve continues through the Transcendent Age. Outputs do not change. Storage, wonders and upgrades read the resulting prices through their own rules.
 
 Each building has a first-copy price, and every copy after that costs a fixed percentage more than the one before. The price of the next copy depends on how many are already **built** plus how many are **in the build queue**:
 

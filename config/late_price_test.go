@@ -12,12 +12,12 @@ func TestLatePriceMultiplier(t *testing.T) {
 	}{
 		{"atomic_age", 1},
 		{"modern_age", 1},
-		{"information_age", 1.2},
-		{"digital_age", 1.44},
-		{"transcendent_age", math.Pow(1.2, 9)},
+		{"information_age", 1.4},
+		{"digital_age", 1.96},
+		{"transcendent_age", math.Pow(1.4, 9)},
 		{"not_an_age", 1},
 	} {
-		if got := LatePriceMultiplier(tc.age); got != tc.want {
+		if got := LatePriceMultiplier(tc.age); math.Abs(got-tc.want) > 1e-12 {
 			t.Errorf("%s multiplier = %g, want %g", tc.age, got, tc.want)
 		}
 	}
@@ -26,10 +26,10 @@ func TestLatePriceMultiplier(t *testing.T) {
 func TestLatePriceClimbScalesEveryCostPart(t *testing.T) {
 	defs := []BuildingDef{{RequiredAge: "information_age", BaseCost: map[string]float64{"steel": 100, "titanium_ore": 20}, Effects: []Effect{{Type: "production", Target: "steel", Value: 7}}}}
 	applyLatePriceClimb(defs)
-	if got, want := defs[0].BaseCost["steel"], 120.0; got != want {
+	if got, want := defs[0].BaseCost["steel"], 140.0; got != want {
 		t.Errorf("steel cost = %g, want %g", got, want)
 	}
-	if got, want := defs[0].BaseCost["titanium_ore"], 24.0; got != want {
+	if got, want := defs[0].BaseCost["titanium_ore"], 28.0; got != want {
 		t.Errorf("raw-material cost = %g, want %g", got, want)
 	}
 	if got, want := defs[0].Effects[0].Value, 7.0; got != want {
