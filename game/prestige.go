@@ -35,6 +35,7 @@ type PrestigeManager struct {
 	// changes (rebuildSpeeds).
 	mastery       map[string]int
 	record        string
+	floor         string
 	runFurthest   string
 	masterySeeded bool
 	speeds        map[string]float64
@@ -148,8 +149,27 @@ func (pm *PrestigeManager) CanPrestige(age string, ageOrder map[string]int) bool
 		return false
 	}
 	minIdx, ok := ageOrder[PrestigeMinAge]
-	return ok && idx >= minIdx
+	if !ok || idx < minIdx {
+		return false
+	}
+	if pm.floor != "" {
+		floorIdx, found := ageOrder[pm.floor]
+		if found {
+			lastIdx := -1
+			for _, order := range ageOrder {
+				lastIdx = max(lastIdx, order)
+			}
+			if floorIdx == lastIdx { // A cleared game can start its next run over.
+				return true
+			}
+		}
+		return found && idx > floorIdx
+	}
+	return true
 }
+
+// Floor is the furthest age reached before the current run.
+func (pm *PrestigeManager) Floor() string { return pm.floor }
 
 // Prestige increments level and adds points
 func (pm *PrestigeManager) Prestige(points int) {
@@ -213,6 +233,7 @@ func (pm *PrestigeManager) Snapshot() PrestigeState {
 	// The empty map keeps the existing snapshot field wire-compatible.
 	return PrestigeState{
 		Level:                pm.level,
+		Floor:                pm.floor,
 		TotalEarned:          pm.totalEarned,
 		Available:            pm.available,
 		Upgrades:             upgrades,

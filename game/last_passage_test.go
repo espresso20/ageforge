@@ -710,11 +710,14 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 
 	// Two more prestiges, one of them from the Cosmic Era.
 	ge.age, ge.currentEpoch = "modern_age", config.EpochForAge("modern_age")
+	// This test checks Cosmic Legacy carryover, not when prestige opens.
+	ge.SetPrestigeFloorForTest("")
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatal(err)
 	}
 	check("after a Modern Age prestige")
 	ge.age, ge.currentEpoch = "galactic_age", config.EpochForAge("galactic_age")
+	ge.SetPrestigeFloorForTest("")
 	quietFate(ge)
 	ge.harbingerTickCheck()
 	makeLastPassagePending(t, ge)

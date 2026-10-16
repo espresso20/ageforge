@@ -112,7 +112,7 @@ In the Cosmic Era the [Last Passage](#the-last-passage) can take part of a run's
 
 ## Early Tastes and Full Runs
 
-Prestige opens at the Medieval Age, but the points reward depth. A prestige from the Medieval Age to the Atomic Age is an **early taste**; from the Modern Age on it is a **full run**.
+Prestige opens at the Medieval Age, but the points reward depth. After a prestige, the next one opens once you pass the furthest age an earlier run reached. A prestige from the Medieval Age to the Atomic Age is an **early taste**; from the Modern Age on it is a **full run**.
 
 - **A taste pays little.** On a first run, a prestige pays about 12 points per day of play at the Medieval Age, 24 at the Modern Age and 38 for a run through the Digital Age (from the smoke-test bot's first-run times). Going deeper pays far more per day.
 - **A second taste adds little.** A Medieval Age reset right after a Modern Age run adds 9 points to that run's 120 (7.5%).

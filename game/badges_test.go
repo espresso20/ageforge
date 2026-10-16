@@ -137,7 +137,10 @@ func TestPrestigeLadderFromPlay(t *testing.T) {
 	if got := counter(acct, config.BadgeEvPrestige); got != 1 {
 		t.Errorf("prestige counter %v, want 1", got)
 	}
+	// This test checks badge ladders, not when prestige opens.
+	ge.SetPrestigeFloorForTest("")
 	prestigeNow(t, ge)
+	ge.SetPrestigeFloorForTest("")
 	prestigeNow(t, ge)
 	if !hasBadge(acct, badgePrestige3) {
 		t.Errorf("three prestiges did not earn %s: %v", badgePrestige3, acct.EarnedBadges())

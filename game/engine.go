@@ -4547,6 +4547,17 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if !ge.Prestige.CanPrestige(ge.age, ageOrder) {
+		lastAgeOrder := -1
+		for _, order := range ageOrder {
+			lastAgeOrder = max(lastAgeOrder, order)
+		}
+		if floor := ge.Prestige.Floor(); floor != "" && ageOrder[ge.age] <= ageOrder[floor] && ageOrder[floor] != lastAgeOrder {
+			name := ge.rules.Name(rules.KindAge, floor)
+			if !strings.HasPrefix(strings.ToLower(name), "the ") {
+				name = "the " + name
+			}
+			return fmt.Errorf("Prestige opens once you pass %s, the furthest an earlier run reached.", name)
+		}
 		return fmt.Errorf("You can prestige once you reach %s.", ge.ageSightLocked().AgeRef(PrestigeMinAge))
 	}
 
@@ -4584,6 +4595,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 		ge.cosmicLegacy = true
 	}
 
+	ge.Prestige.floor = ge.Prestige.record
 	ge.Prestige.Prestige(points)
 	// Era Mastery: every age this run completed gains a level. The age
 	// prestiged from counts as entered even if a test hook or the dev

@@ -630,6 +630,7 @@ type MilestoneSnapshotParams struct {
 // PrestigeState represents the prestige system state for UI
 type PrestigeState struct {
 	Level         int
+	Floor         string
 	TotalEarned   int
 	Available     int
 	Upgrades      map[string]PrestigeUpgradeState

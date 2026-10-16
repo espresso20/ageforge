@@ -301,6 +301,8 @@ func TestBoonSoak_BoundedAndDeterministic(t *testing.T) {
 		if t.Failed() {
 			return
 		}
+		// This test checks boon reset and RNG continuity, not when prestige opens.
+		ge.SetPrestigeFloorForTest("")
 		if err := ge.DoPrestige(); err != nil {
 			t.Fatalf("cycle %d DoPrestige failed: %v", cycle, err)
 		}

@@ -23,6 +23,65 @@ func TestPrestigeManager_CanPrestige(t *testing.T) {
 	}
 }
 
+func TestPrestigeManager_Floor(t *testing.T) {
+	pm := NewPrestigeManager()
+	order := map[string]int{}
+	for i, age := range ageKeys() {
+		order[age] = i
+	}
+	if !pm.CanPrestige("medieval_age", order) {
+		t.Fatal("first prestige should open at the minimum age")
+	}
+	pm.floor = "medieval_age"
+	for _, age := range []string{"primitive_age", "medieval_age"} {
+		if pm.CanPrestige(age, order) {
+			t.Errorf("CanPrestige(%s) = true below floor", age)
+		}
+	}
+	if !pm.CanPrestige("renaissance_age", order) {
+		t.Fatal("prestige should open one age past floor")
+	}
+	if got := pm.Snapshot().Floor; got != "medieval_age" {
+		t.Fatalf("snapshot floor = %q", got)
+	}
+}
+
+func TestPrestigeFloorAtFinalAgeAllowsClearedGame(t *testing.T) {
+	order := map[string]int{}
+	ages := ageKeys()
+	for i, age := range ages {
+		order[age] = i
+	}
+	pm := NewPrestigeManager()
+	pm.floor = ages[len(ages)-1]
+	if !pm.CanPrestige(PrestigeMinAge, order) {
+		t.Fatal("a cleared game should be able to prestige again from its minimum age")
+	}
+}
+
+func TestPrestigeFloorSurvivesSaveLoad(t *testing.T) {
+	t.Cleanup(SetDataDirForTest(t.TempDir()))
+	ge := NewGameEngine()
+	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
+		if err := ge.EnterAgeForTest(age); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := ge.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	if err := ge.SaveGame("floor"); err != nil {
+		t.Fatal(err)
+	}
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame("floor"); err != nil {
+		t.Fatal(err)
+	}
+	if got := loaded.GetState().Prestige.Floor; got != "medieval_age" {
+		t.Fatalf("loaded floor = %q", got)
+	}
+}
+
 // TestPrestigeManager_CalculatePoints: a prestige pays the depth table,
 // with no divisor and no milestone, tech or building terms.
 func TestPrestigeManager_CalculatePoints(t *testing.T) {
