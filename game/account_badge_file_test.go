@@ -324,9 +324,13 @@ func TestMigratedAccountKeepsEarning(t *testing.T) {
 	if err := ge.StartNewNamedGame("run"); err != nil {
 		t.Fatal(err)
 	}
+	// This test is about migrated badge counters; the imported mastery record
+	// would otherwise correctly gate these deliberately shallow prestige runs.
+	ge.SetPrestigeFloorForTest("")
 
 	advanceTo(ge, "stone_age") // held since the migration
 	prestigeNow(t, ge)
+	ge.SetPrestigeFloorForTest("")
 	prestigeNow(t, ge) // the third prestige of the account's life
 	earned := mainViews(ge.DrainEarnedBadges())
 	if len(earned) != 1 || earned[0].Key != badgePrestige3 {

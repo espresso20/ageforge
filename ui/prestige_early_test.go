@@ -110,6 +110,18 @@ func TestStatsShowsPrestigeFloorOnlyUntilPassed(t *testing.T) {
 	}
 }
 
+func TestStatsHidesPrestigeFloorWhenSnapshotSaysItDoesNotBlock(t *testing.T) {
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	engine := game.NewGameEngine()
+	state := engine.GetState()
+	state.Prestige.Floor = "medieval_age"
+	state.Prestige.FloorBlocks = false
+	got := untag(statsProvider(state, 0))
+	if strings.Contains(got, "Prestige opens once you pass") {
+		t.Fatalf("stats showed a non-blocking floor sentence:\n%s", got)
+	}
+}
+
 func TestPrestigeCommandExplainsFloor(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	engine := game.NewGameEngine()

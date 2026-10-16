@@ -187,10 +187,8 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 	if p.CanPrestige {
 		fmt.Fprintf(&sb, " [gold]After this prestige:[-] [green]x%.2f[-] production\n", p.NextProductionMultiplier)
-	} else if p.Floor != "" {
-		current, currentOK := state.Ruleset().Index(state.Age)
-		floor, floorOK := state.Ruleset().Index(p.Floor)
-		if currentOK && floorOK && current <= floor {
+	} else if p.FloorBlocks {
+		if p.Floor != "" {
 			floorName := state.Ruleset().Name(rules.KindAge, p.Floor)
 			if !strings.HasPrefix(strings.ToLower(floorName), "the ") {
 				floorName = "the " + floorName

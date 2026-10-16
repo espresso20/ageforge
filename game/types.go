@@ -636,6 +636,7 @@ type PrestigeState struct {
 	Upgrades      map[string]PrestigeUpgradeState
 	PendingPoints int // points you'd get if you prestige now
 	CanPrestige   bool
+	FloorBlocks   bool    // true only when the prestige age floor is the current blocker
 	PassiveBonus  float64 // retired: always 0 (the passive became Era Mastery)
 	// ProductionMultiplier is the lasting multiplier from all points ever
 	// earned; NextProductionMultiplier includes PendingPoints.

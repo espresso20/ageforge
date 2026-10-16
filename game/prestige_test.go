@@ -82,6 +82,81 @@ func TestPrestigeFloorSurvivesSaveLoad(t *testing.T) {
 	}
 }
 
+func TestSuccumbRaisesPrestigeFloorToLaterRunRecord(t *testing.T) {
+	t.Cleanup(SetDataDirForTest(t.TempDir()))
+	ge := NewGameEngine()
+	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
+		if err := ge.EnterAgeForTest(age); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := ge.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	for _, age := range []string{"renaissance_age", "colonial_age", "industrial_age", "victorian_age", "electric_age", "atomic_age", "modern_age"} {
+		if err := ge.EnterAgeForTest(age); err != nil {
+			t.Fatal(err)
+		}
+	}
+	succumbIn(t, ge, "modern_age")
+	order := ge.progress.GetAgeOrder()
+	if got := ge.Prestige.Floor(); got != "modern_age" {
+		t.Fatalf("floor after Succumb = %q, want modern_age", got)
+	}
+	if ge.Prestige.CanPrestige("modern_age", order) || ge.Prestige.CanPrestige("primitive_age", order) {
+		t.Fatal("new run can prestige before passing the later run's floor")
+	}
+	if !ge.Prestige.CanPrestige("information_age", order) {
+		t.Fatal("prestige should open after passing the later run's floor")
+	}
+}
+
+func TestPrestigeFinalAgeFloorDoesNotBlockNewRun(t *testing.T) {
+	t.Cleanup(SetDataDirForTest(t.TempDir()))
+	ge := NewGameEngine()
+	for _, age := range ge.rules.AgeKeys()[1:] {
+		if err := ge.EnterAgeForTest(age); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := ge.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	ge.mu.Lock()
+	ge.age = PrestigeMinAge
+	ge.mu.Unlock()
+	state := ge.GetState()
+	if state.Prestige.FloorBlocks {
+		t.Fatal("final-age floor blocks a new run")
+	}
+	if !state.Prestige.CanPrestige {
+		t.Fatal("new Medieval run should be eligible after clearing the final age")
+	}
+}
+
+func TestPrestigeFloorBlocksMatchesFloorGate(t *testing.T) {
+	t.Cleanup(SetDataDirForTest(t.TempDir()))
+	ge := NewGameEngine()
+	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
+		if err := ge.EnterAgeForTest(age); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := ge.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	for _, age := range []string{"primitive_age", "medieval_age", "renaissance_age"} {
+		if err := ge.EnterAgeForTest(age); err != nil {
+			t.Fatal(err)
+		}
+		state := ge.GetState()
+		blockedByFloor := age == "primitive_age" || age == "medieval_age"
+		if state.Prestige.FloorBlocks != blockedByFloor {
+			t.Errorf("at %s FloorBlocks=%v, want %v", age, state.Prestige.FloorBlocks, blockedByFloor)
+		}
+	}
+}
+
 // TestPrestigeManager_CalculatePoints: a prestige pays the depth table,
 // with no divisor and no milestone, tech or building terms.
 func TestPrestigeManager_CalculatePoints(t *testing.T) {
