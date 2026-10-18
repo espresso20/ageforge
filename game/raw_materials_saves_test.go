@@ -231,7 +231,7 @@ func TestRawMaterialsSave_ColosseumBankKeepsWhatItHeldAndAsksTheRest(t *testing.
 	if err := ge.BuildBuilding("colosseum"); err != nil {
 		t.Fatalf("building the Colosseum from a full bank: %v", err)
 	}
-	for i := 0; i < 5000 && ge.Buildings.GetCount("colosseum") == 0; i++ {
+	for i := 0; i < ge.Buildings.defs["colosseum"].BuildTicks+1 && ge.Buildings.GetCount("colosseum") == 0; i++ {
 		ge.StepTicks(1)
 	}
 	if ge.Buildings.GetCount("colosseum") != 1 {

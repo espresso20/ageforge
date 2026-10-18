@@ -126,11 +126,7 @@ func TestEveryAgeHasAFeed(t *testing.T) {
 // its age's share (the economy design's Law 2).
 func TestBuildAndResearchCaps(t *testing.T) {
 	for _, d := range BaseBuildings() {
-		div := buildShare
-		if d.Category == "storage" {
-			div = storageBuildShare
-		}
-		if limit := LatePriceTargetTicks(d.RequiredAge) / div; limit > 0 && float64(d.BuildTicks) > math.Ceil(limit) {
+		if limit := BuildingBuildCapTicks(d.RequiredAge, d.Category); limit > 0 && float64(d.BuildTicks) > math.Ceil(limit) {
 			t.Errorf("%s builds in %d ticks, over its cap of %.0f", d.Key, d.BuildTicks, limit)
 		}
 	}

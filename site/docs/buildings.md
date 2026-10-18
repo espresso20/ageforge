@@ -158,7 +158,7 @@ A handful of **milestone rewards** (Master Builder, Grand Architect and others) 
 
 ### Build times
 
-Build times are capped by the age's pace: nothing takes longer to build than **1/6 of its age's target time** (wonders included), and storage buildings take at most **1/48** of it (you can queue several copies at once, up to the cap). In practice that is 2m 30s in the Primitive Age, 2h 36m in the Renaissance and 10h 24m from the Interstellar Age on (storage: 18 seconds, 19m 30s and 1h 18m). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
+Build times are capped by the age's pace: ordinary buildings take at most **1/6 of their age's target time**, wonders take at most **1/3**, and storage buildings take at most **1/48** of it (you can queue several copies at once, up to the cap). In practice that is 2m 30s in the Primitive Age, 2h 36m in the Renaissance and 10h 24m from the Interstellar Age on (storage: 18 seconds, 19m 30s and 1h 18m). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
 
 These are first-run times. On known ground (an age a past run completed) every build time is divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick, and production and storage are multiplied by it. The time shown when you start a build is the real, shortened one.
 
@@ -536,7 +536,7 @@ build <wonder_key>                              start construction once it is fu
 
 Full stores bank into the wonder on their own ([overflow](wonders.md#overflow)), and a wonder in your [build plan](plan.md) banks and starts by itself once what you hold covers the rest.
 
-You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 64 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/6 of the age's target time to build.
+You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 64 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/3 of the age's target time to build.
 
 Every wonder adds a little production of one or two resources, and many add more: a percentage to all production (the Crystal Palace, Hoover Dam and the last four wonders), to research or to expedition rewards, or housing or storage. All-production bonuses add into [the all-production pool](resources.md#the-all-production-cap), which applies in full up to +200% and a quarter of every point past it.
 

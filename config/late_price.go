@@ -15,6 +15,9 @@ const LatePriceStep = 1.4
 // LatePriceStartAge is the first age on the late-price curve.
 const LatePriceStartAge = "modern_age"
 
+// WonderBuildFactor makes a wonder the long build that ends an age.
+const WonderBuildFactor = 2
+
 // LatePriceMultiplier is the price multiplier for age. It is one before and
 // in the Modern Age, and LatePriceStep for every age after it.
 func LatePriceMultiplier(age string) float64 {
@@ -54,6 +57,16 @@ func applyLatePriceClimb(defs []BuildingDef) {
 			// A wonder keeps its authored share of its age after prices extend
 			// the stay. Construction queues require whole ticks.
 			defs[i].BuildTicks = int(math.Round(float64(defs[i].BuildTicks) * c))
+		}
+	}
+}
+
+// applyWonderBuildFactor lengthens every runtime wonder after the late-price
+// curve has been applied. The authored building tables remain untouched.
+func applyWonderBuildFactor(defs []BuildingDef) {
+	for i := range defs {
+		if defs[i].Category == "wonder" {
+			defs[i].BuildTicks = int(math.Round(float64(defs[i].BuildTicks) * WonderBuildFactor))
 		}
 	}
 }
