@@ -897,6 +897,7 @@ func BaseBuildings() []BuildingDef {
 	// Apply the late-age price curve after every authored definition has joined
 	// the runtime table, including storage, wonders and raw-material parts.
 	applyLatePriceClimb(result)
+	applyWonderBuildFactor(result)
 	rederiveLatePriceStorage(result)
 	// Normalize cost curves at the single chokepoint so every consumer
 	// (BuildingByKey, the engine, the audit tool) inherits flattened values,

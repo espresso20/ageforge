@@ -237,7 +237,15 @@ func (h *reproHarness) dev(cmd string) string {
 // the submit clears the field.
 func (h *reproHarness) submit(cmd string) {
 	h.t.Helper()
-	h.waitFor("input focus before typing "+cmd, 3*time.Second, h.inputHasFocus)
+	// The time-to-prestige notice can come up on any refresh and take the
+	// focus; it is not what this walk tests, so close it while waiting.
+	h.waitFor("input focus before typing "+cmd, 3*time.Second, func() bool {
+		if h.hasPage(prestigeCuePage) {
+			h.key(tcell.KeyRune, 'x')
+			return false
+		}
+		return h.inputHasFocus()
+	})
 	h.typeText(cmd)
 	h.waitFor("typed text to land", 3*time.Second, func() bool { return h.inputText() == cmd })
 	h.key(tcell.KeyEnter, 0)

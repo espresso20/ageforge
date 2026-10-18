@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- **Wonders take longer to build.** Every wonder's construction takes twice as long. A wonder is the long build that ends an age.
 - **Prestige past your record.** After a prestige, the next one opens only once you pass the furthest age an earlier run reached.
 - Prices in later ages now climb by 1.4 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.
 
