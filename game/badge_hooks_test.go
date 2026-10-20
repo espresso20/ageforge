@@ -365,19 +365,20 @@ func TestDefaultLooksAreInTheCatalog(t *testing.T) {
 }
 
 // TestBadgeExpeditionsMatchTheGame: the catalog's table of mission badges
-// is one per era and kind of the game's missions, each in the age its era
-// opens with, and a successful mission of the game earns exactly its badge.
+// is one per era and kind of the game's missions (the board's tiers), each in
+// the age its era opens with.
 func TestBadgeExpeditionsMatchTheGame(t *testing.T) {
 	set := rules.Core()
-	order := set.Indexes()
-	mm := NewMilitaryManager()
 	type slot struct{ era, kind, first string }
 	game := map[string]slot{}
 	for _, age := range set.AgeKeys() {
-		for _, x := range mm.GetAvailableExpeditions(age, order) {
-			key := config.MissionBadgeKey(x.Era, x.Kind)
+		// Every age's board has offers of every tier, and an offer is
+		// judged by the era of its age and the kind of its tier.
+		for _, tier := range boardTiers {
+			era, kind := set.EraOf(age), tierKind(tier)
+			key := config.MissionBadgeKey(era, kind)
 			if _, seen := game[key]; !seen {
-				game[key] = slot{x.Era, x.Kind, age}
+				game[key] = slot{era, kind, age}
 			}
 		}
 	}

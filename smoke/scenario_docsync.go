@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui"
@@ -59,14 +58,9 @@ func GameCounts() map[string]int {
 	set := rules.Core()
 	c := set.Counts()
 	c[qThemes] = len(theme.All())
-	exps := map[string]bool{}
-	mm := game.NewMilitaryManagerWith(set)
-	for _, a := range set.AgeKeys() {
-		for _, x := range mm.GetAvailableExpeditions(a, set.Indexes()) {
-			exps[x.Key] = true
-		}
-	}
-	c[qExpeditions] = len(exps)
+	// The mission board is random, so the docs count the kinds of mission
+	// there are: a short, a long and a grand one for each era.
+	c[qExpeditions] = len(config.BadgeExpeditions())
 	return c
 }
 
@@ -244,11 +238,8 @@ func dynamicWords() map[string]bool {
 	for i, a := range config.AgeOrder() {
 		order[a] = i
 	}
-	mm := game.NewMilitaryManager()
-	for _, a := range config.AgeOrder() {
-		for _, x := range mm.GetAvailableExpeditions(a, order) {
-			out[x.Key] = true
-		}
+	for n := 1; n <= 9; n++ {
+		out[strconv.Itoa(n)] = true
 	}
 	return out
 }

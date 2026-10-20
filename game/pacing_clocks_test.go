@@ -183,34 +183,39 @@ func TestDealRefreshStretch(t *testing.T) {
 	}
 }
 
-// TestExpeditionClocksAreNotStretched: a mission's length is rolled in
-// its own range of minutes and no age stretches it; the panel shows the
-// same range.
+// TestExpeditionClocksAreNotStretched: a mission's length is rolled in minutes
+// when its offer is made and no age stretches it; the board shows the same
+// number of ticks, and so does the mission under way.
 func TestExpeditionClocksAreNotStretched(t *testing.T) {
-	for _, c := range []struct{ age, key string }{{baseAge, "scouting_party"}, {stretchedAge, "trade_caravan"}} {
+	for _, c := range []struct{ age, tier string }{{baseAge, TierShort}, {stretchedAge, TierLong}} {
 		ge := newSeededEngine(9)
 		learn(ge, "exploration") // the tech that opens expeditions
 		setAge(ge, c.age)
-		def := ge.Military.ExpeditionDefByKey(c.key)
 		for _, res := range []string{"food", "wood", "stone", "iron"} {
 			setResource(ge, res, 1e6)
 			setIncome(ge, res, 1)
 		}
-		lo, hi := def.DurationMin, def.DurationMax
-		if lo != int(math.Round(def.MinMinutes*ticksPerMinute)) || hi != int(math.Round(def.MaxMinutes*ticksPerMinute)) {
-			t.Fatalf("%s: %s lasts %d-%d ticks, want %v-%v minutes unstretched", c.age, c.key, lo, hi, def.MinMinutes, def.MaxMinutes)
+		ge.EnsureMissionBoard()
+		n := 1
+		if c.tier == TierLong {
+			n = config.BoardOffersPerTier + 1
 		}
-		if err := ge.LaunchExpedition(c.key); err != nil {
-			t.Fatalf("%s: launch %s: %v", c.age, c.key, err)
+		offer, err := ge.Military.BoardOffer(n)
+		if err != nil || offer.Tier != c.tier {
+			t.Fatalf("%s: offer %d is %+v (%v), want a %s offer", c.age, n, offer, err, c.tier)
 		}
-		active := ge.Military.ActiveByCategory(def.Category)
-		if active == nil || active.TicksLeft < lo || active.TicksLeft > hi {
-			t.Errorf("%s: %s rolled %+v, want ticks in [%d, %d]", c.age, c.key, active, lo, hi)
-		}
+		want := int(math.Round(offer.LengthMinutes * ticksPerMinute))
 		for _, info := range ge.GetState().Military.Expeditions {
-			if info.Key == c.key && (info.DurationMin != lo || info.DurationMax != hi) {
-				t.Errorf("%s: panel shows %s as %d-%d ticks, want %d-%d", c.age, c.key, info.DurationMin, info.DurationMax, lo, hi)
+			if info.Number == n && (info.DurationMin != want || info.DurationMax != want) {
+				t.Errorf("%s: the board shows offer %d as %d-%d ticks, want %d", c.age, n, info.DurationMin, info.DurationMax, want)
 			}
+		}
+		if err := ge.LaunchExpedition(n); err != nil {
+			t.Fatalf("%s: launch %d: %v", c.age, n, err)
+		}
+		active := ge.Military.ActiveByTier(c.tier)
+		if active == nil || active.TicksLeft != want {
+			t.Errorf("%s: %d rolled %+v, want %d ticks (%v minutes, unstretched)", c.age, n, active, want, offer.LengthMinutes)
 		}
 	}
 }

@@ -701,8 +701,7 @@ func TestResearchListMarksTheKeystone(t *testing.T) {
 	}
 }
 
-// TestPanelsMarkLockedCommands: the Army and Trade panels and `campaign
-// list` say when a command still waits for a tech, in the words of the
+// TestPanelsMarkLockedCommands: the Army and Trade panels and `expedition` say when a command still waits for a tech, in the words of the
 // refusal, once that tech's age is reached and never before.
 func TestPanelsMarkLockedCommands(t *testing.T) {
 	ge := game.NewGameEngine()
@@ -717,7 +716,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	if out := militaryProvider(st, 120); !strings.Contains(out, campaigns) {
 		t.Errorf("the Army panel does not say campaigns are locked:\n%s", out)
 	}
-	if out := cmdCampaignList(ge).Message; !strings.Contains(out, campaigns) {
+	if out := cmdMissionBoard(ge).Message; !strings.Contains(out, campaigns) {
 		t.Errorf("campaign list does not say campaigns are locked:\n%s", out)
 	}
 	// Railroads and Mercantilism are techs of later ages: not a word yet.
@@ -738,7 +737,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 		t.Errorf("the Expeditions panel lists Scout Nearby Ruins and does not say it waits for Exploration:\n%s", out)
 	}
 	ge.GrantTechsForTest("military_tactics")
-	if out := militaryProvider(ge.GetState(), 120) + cmdCampaignList(ge).Message; strings.Contains(out, "Military Tactics first") {
+	if out := militaryProvider(ge.GetState(), 120) + cmdMissionBoard(ge).Message; strings.Contains(out, "Military Tactics first") {
 		t.Errorf("with Military Tactics researched the lock is still shown:\n%s", out)
 	}
 	for _, a := range []string{"iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"} {

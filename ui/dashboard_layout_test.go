@@ -38,7 +38,7 @@ var layoutAges = []string{"primitive_age", "medieval_age", "quantum_age"}
 func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.GameEngine) {
 	t.Helper()
 	eng := game.NewGameEngine()
-	eng.SeedRNG(11)
+	eng.SeedRNG(12)
 	for _, a := range eng.Rules().AgeKeys() {
 		if eng.GetState().Age == age {
 			break

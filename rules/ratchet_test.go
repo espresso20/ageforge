@@ -30,7 +30,7 @@ import (
 // down; the test says which.
 var lookupBudget = map[string]lookupCount{
 	"game":     {config: 6, core: 25},
-	"ui":       {config: 23, core: 0},
+	"ui":       {config: 22, core: 0},
 	"mapmodel": {config: 4, core: 2},
 }
 
@@ -44,6 +44,7 @@ var pureConfig = map[string]bool{
 	"ClampMastery": true, "MasteryK": true, "AgeSpeed": true,
 	"DefenseMitigation": true, "AgeThreatAt": true,
 	"MilitaryScales": true, "MilitaryScaleIn": true, "MissionDifficulty": true,
+	"MissionKindTuning": true, "MissionKinds": true, "MissionBoardLongestMinutes": true,
 	"TypicalStorages": true, "MissionBadgeKey": true, "MissionKindWord": true,
 	"DurationText": true, "FormatAmount": true, "FormatPercent": true, "FormatRateValue": true,
 	"PickLogFlavor": true, "LogFlavorMoments": true,

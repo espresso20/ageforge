@@ -2,7 +2,9 @@ package game
 
 import (
 	"math"
+	"slices"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -36,83 +38,109 @@ func eraFirstAges() []string {
 	return out
 }
 
-// TestMissionRolls_WithinRangesAndSeeded: a launch rolls its length, its
-// chance and its haul inside the mission's ranges, and two engines with the
-// same seed roll the same.
-func TestMissionRolls_WithinRangesAndSeeded(t *testing.T) {
-	kinds := []string{config.MissionScout, config.MissionExpedition, config.MissionCampaign}
-	for _, age := range eraFirstAges() {
-		for _, kind := range kinds {
-			def := missionAt(NewGameEngine(), age, kind)
-			lengths := map[float64]bool{}
-			for seed := int64(1); seed <= 30; seed++ {
-				launch := func() *ActiveExpedition {
-					ge := missionReady(t, seed, age)
-					setSoldiers(ge, 1e6)
-					if err := ge.LaunchExpedition(def.Key); err != nil {
-						t.Fatalf("seed %d: launch %s: %v", seed, def.Key, err)
-					}
-					return ge.Military.ActiveByCategory(def.Category)
-				}
-				a, b := launch(), launch()
-				if a.LengthMinutes != b.LengthMinutes || a.SuccessChance != b.SuccessChance || a.HaulMinutes != b.HaulMinutes || a.TicksLeft != b.TicksLeft {
-					t.Fatalf("seed %d: %s rolled %+v and then %+v from one seed", seed, def.Key, a, b)
-				}
-				lengths[a.LengthMinutes] = true
+// tuningOf is the tuning an offer was rolled from.
+func tuningOf(o MissionOffer) (config.MissionTuning, float64) {
+	t, _ := config.MissionKindTuning(o.Kind())
+	base := t.BaseSuccess
+	if o.Tier == TierGrand && o.Grand == GrandCivil {
+		base = config.CivilGrandSuccess
+	}
+	return t, base
+}
 
-				if a.LengthMinutes < def.MinMinutes || a.LengthMinutes > def.MaxMinutes {
-					t.Errorf("%s: length %v outside [%v, %v] minutes", def.Key, a.LengthMinutes, def.MinMinutes, def.MaxMinutes)
+// TestMissionRolls_WithinRangesAndSeeded: an offer rolls its length, its
+// chance and its haul inside its tier's ranges (a Legendary one with its
+// changes), and two engines with the same seed roll the same board.
+func TestMissionRolls_WithinRangesAndSeeded(t *testing.T) {
+	for _, age := range eraFirstAges() {
+		lengths := map[float64]bool{}
+		for seed := int64(1); seed <= 30; seed++ {
+			board := func() []boardSlot {
+				ge := missionReady(t, seed, age)
+				ge.EnsureMissionBoard()
+				return ge.Military.board.clone().Slots
+			}
+			a, b := board(), board()
+			if len(a) != 9 {
+				t.Fatalf("seed %d: %d slots, want 9", seed, len(a))
+			}
+			for i := range a {
+				if *a[i].Offer != *b[i].Offer {
+					t.Fatalf("seed %d slot %d: rolled %+v and then %+v from one seed", seed, i+1, *a[i].Offer, *b[i].Offer)
 				}
-				if want := int(math.Round(a.LengthMinutes * ticksPerMinute)); a.TicksLeft != want {
-					t.Errorf("%s: %v minutes became %d ticks, want %d (no tech, no age stretch)", def.Key, a.LengthMinutes, a.TicksLeft, want)
+				o := *a[i].Offer
+				tuning, base := tuningOf(o)
+				lengths[o.LengthMinutes] = true
+				minLen, maxLen := tuning.MinMinutes, tuning.MaxMinutes
+				lo, hi := minLen*tuning.Yield*0.6, maxLen*tuning.Yield*1.6
+				loSuccess, hiSuccess := math.Max(0.10, base-0.1), math.Min(0.95, base+0.1)
+				if o.Rare {
+					minLen, maxLen = minLen*1.5, maxLen*1.5
+					lo, hi = lo*4, hi*4
+					loSuccess, hiSuccess = math.Max(0.10, loSuccess-0.15), math.Max(0.10, hiSuccess-0.15)
 				}
-				if a.SuccessChance < 0.10 || a.SuccessChance > 0.95 {
-					t.Errorf("%s: chance %v outside [0.10, 0.95]", def.Key, a.SuccessChance)
+				if o.LengthMinutes < minLen-1e-9 || o.LengthMinutes > maxLen+1e-9 {
+					t.Errorf("%s: length %v outside [%v, %v] minutes", o.Title, o.LengthMinutes, minLen, maxLen)
 				}
-				// The draw is +-0.10; a campaign's army term adds at most +-0.15.
-				slack := 0.10
-				if kind == config.MissionCampaign {
-					slack = 0.25
+				if o.SuccessChance < loSuccess-1e-9 || o.SuccessChance > hiSuccess+1e-9 {
+					t.Errorf("%s: chance %v outside [%v, %v]", o.Title, o.SuccessChance, loSuccess, hiSuccess)
 				}
-				if a.SuccessChance < def.BaseSuccess-slack-1e-9 || a.SuccessChance > def.BaseSuccess+slack+1e-9 {
-					t.Errorf("%s: chance %v is further than %v from the base %v", def.Key, a.SuccessChance, slack, def.BaseSuccess)
-				}
-				lo, hi := def.MinMinutes*def.Yield*0.6, def.MaxMinutes*def.Yield*1.6
-				if a.HaulMinutes < lo || a.HaulMinutes > hi {
-					t.Errorf("%s: haul minutes %v outside [%v, %v]", def.Key, a.HaulMinutes, lo, hi)
-				}
-				if own := a.LengthMinutes * def.Yield; a.HaulMinutes < own*0.6-1e-9 || a.HaulMinutes > own*1.6+1e-9 {
-					t.Errorf("%s: haul minutes %v outside [0.6, 1.6] x %v", def.Key, a.HaulMinutes, own)
+				if o.HaulMinutes < lo-1e-9 || o.HaulMinutes > hi+1e-9 {
+					t.Errorf("%s: haul minutes %v outside [%v, %v]", o.Title, o.HaulMinutes, lo, hi)
 				}
 			}
-			if len(lengths) < 20 {
-				t.Errorf("%s: 30 seeds gave %d different lengths, want them to differ", def.Key, len(lengths))
+		}
+		if len(lengths) < 150 {
+			t.Errorf("%s: 270 offers gave %d different lengths, want them to differ", age, len(lengths))
+		}
+	}
+}
+
+// TestMissionLaunch_TicksFollowTheRolledLength: a mission is out for its
+// rolled length in ticks (no tech here, no age stretch), and sent with the
+// odds it was offered with (a short mission is not changed by the army).
+func TestMissionLaunch_TicksFollowTheRolledLength(t *testing.T) {
+	for _, age := range eraFirstAges() {
+		ge := missionReady(t, 4, age)
+		setSoldiers(ge, 1e6)
+		for _, c := range []struct{ tier, grand string }{{TierShort, ""}, {TierLong, ""}, {TierGrand, GrandCivil}} {
+			n := plantOffer(ge, c.tier, c.grand)
+			offer, _ := ge.Military.BoardOffer(n)
+			if err := ge.LaunchExpedition(n); err != nil {
+				t.Fatalf("%s %s: %v", age, c.tier, err)
+			}
+			a := ge.Military.ActiveByTier(c.tier)
+			if want := int(math.Round(offer.LengthMinutes * ticksPerMinute)); a.TicksLeft != want {
+				t.Errorf("%s %s: %v minutes became %d ticks, want %d", age, c.tier, offer.LengthMinutes, a.TicksLeft, want)
+			}
+			if a.SuccessChance != offer.SuccessChance || a.HaulMinutes != offer.HaulMinutes || a.Title != offer.Title {
+				t.Errorf("%s %s: sent as %+v, offered as %+v", age, c.tier, a.MissionOffer, offer)
 			}
 		}
 	}
 }
 
-// TestMissionRolls_CampaignChanceFollowsPower: a campaign's chance moves
-// with the army (0.10 for each unit of power over typical, within +-0.15)
-// and a scout's does not.
-func TestMissionRolls_CampaignChanceFollowsPower(t *testing.T) {
-	roll := func(power float64, key string) float64 {
-		mm := NewMilitaryManager()
-		ge := missionReady(t, 3, "iron_age")
-		if err := mm.LaunchMission(ge.gameRNG(), key, "iron_age", ageOrders(), power, 100, nil, nil, 3); err != nil {
-			t.Fatal(err)
-		}
-		return mm.ActiveByCategory(mm.ExpeditionDefByKey(key).Category).SuccessChance
-	}
-	base := roll(100, "siege_campaign") // power = typical: no army term
-	for _, c := range []struct{ power, term float64 }{{200, 0.10}, {0, -0.10}, {1000, 0.15}, {-5000, -0.15}} {
-		got := roll(c.power, "siege_campaign") - base
-		if math.Abs(got-c.term) > 1e-9 {
+// TestArmyTerm_FollowsPower: a military grand mission's chance moves with
+// the army (0.10 for each unit of power over typical, within +-0.15).
+func TestArmyTerm_FollowsPower(t *testing.T) {
+	for _, c := range []struct{ power, term float64 }{{100, 0}, {200, 0.10}, {0, -0.10}, {1000, 0.15}, {-5000, -0.15}} {
+		if got := armyTerm(c.power, 100); math.Abs(got-c.term) > 1e-9 {
 			t.Errorf("power %v moves the chance by %v, want %v", c.power, got, c.term)
 		}
 	}
-	if a, b := roll(100, "road_survey"), roll(1000, "road_survey"); a != b {
-		t.Errorf("a scout's chance moved with power: %v and %v", a, b)
+	if got := armyTerm(1000, 0); got != 0 {
+		t.Errorf("no typical power moves the chance by %v", got)
+	}
+	// A civil grand mission and a short one are not changed by the army.
+	ge := missionReady(t, 3, "iron_age")
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	for _, o := range []MissionOffer{
+		{Tier: TierShort, SuccessChance: .8}, {Tier: TierLong, SuccessChance: .7}, {Tier: TierGrand, Grand: GrandCivil, SuccessChance: .6},
+	} {
+		if got := ge.offerSuccessLocked(o); got != o.SuccessChance {
+			t.Errorf("%s offer %v became %v with the army", o.Tier, o.SuccessChance, got)
+		}
 	}
 }
 
@@ -141,60 +169,64 @@ func chargedMost(ge *GameEngine, age string) []string {
 	return keys[:2]
 }
 
-// TestMissionCost_IsMinutesOfIncomeInTheMostChargedMaterials: a scout costs
-// 5 minutes and an expedition 15 minutes of the town's income, split in half
-// over the two materials the age charges most, rounded up; a material with
-// no income is left out.
+// TestMissionCost_IsMinutesOfIncomeInTheMostChargedMaterials: a short
+// mission costs 5 minutes, a long one 15 and a civil grand one 45 minutes of
+// the town's income, split in half over the two materials the age charges
+// most, rounded up; a material with no income is left out.
 func TestMissionCost_IsMinutesOfIncomeInTheMostChargedMaterials(t *testing.T) {
 	for _, age := range eraFirstAges() {
 		ge := missionReady(t, 1, age)
 		top := chargedMost(ge, age)
 		for _, c := range []struct {
-			kind    string
-			minutes float64
-		}{{config.MissionScout, 5}, {config.MissionExpedition, 15}} {
-			def := missionAt(ge, age, c.kind)
-			cost := ge.MissionCost(def.Key)
+			tier, grand string
+			minutes     float64
+		}{{TierShort, "", 5}, {TierLong, "", 15}, {TierGrand, GrandCivil, 45}} {
+			n := plantOffer(ge, c.tier, c.grand)
+			cost := ge.MissionCost(n)
 			if len(cost) != 2 {
-				t.Fatalf("%s in %s costs %v, want the two materials %v", def.Key, age, cost, top)
+				t.Fatalf("%s %s in %s costs %v, want the two materials %v", c.tier, c.grand, age, cost, top)
+			}
+			if _, soldiers := cost["soldiers"]; soldiers {
+				t.Errorf("%s %s in %s costs soldiers: %v", c.tier, c.grand, age, cost)
 			}
 			for _, res := range top {
 				want := math.Ceil(c.minutes / 2 * ticksPerMinute * ge.townIncomeLocked(res))
 				if cost[res] != want {
-					t.Errorf("%s in %s costs %v %s, want %v (%v minutes of income %v, half)", def.Key, age, cost[res], res, want, c.minutes, ge.townIncomeLocked(res))
+					t.Errorf("%s %s in %s costs %v %s, want %v (%v minutes of income %v, half)", c.tier, c.grand, age, cost[res], res, want, c.minutes, ge.townIncomeLocked(res))
 				}
 			}
 		}
 
 		// No income of the first: it is left out, and the third does not fill in.
 		setIncome(ge, top[0], 0)
-		def := missionAt(ge, age, config.MissionScout)
-		cost := ge.MissionCost(def.Key)
+		n := plantOffer(ge, TierShort, "")
+		cost := ge.MissionCost(n)
 		if _, ok := cost[top[0]]; ok || len(cost) != 1 || cost[top[1]] == 0 {
-			t.Errorf("%s in %s with no income of %s costs %v, want only %s", def.Key, age, top[0], cost, top[1])
+			t.Errorf("a short mission in %s with no income of %s costs %v, want only %s", age, top[0], cost, top[1])
 		}
 		setIncome(ge, top[1], 0)
-		if cost := ge.MissionCost(def.Key); len(cost) != 0 {
-			t.Errorf("%s in %s with no income at all costs %v, want nothing", def.Key, age, cost)
+		if cost := ge.MissionCost(n); len(cost) != 0 {
+			t.Errorf("a short mission in %s with no income at all costs %v, want nothing", age, cost)
 		}
 	}
 }
 
-// TestMissionCost_CampaignIsTenMinutesOfSoldiers: a campaign costs the
-// soldiers the town trains in ten minutes, rounded up, and at least one.
-func TestMissionCost_CampaignIsTenMinutesOfSoldiers(t *testing.T) {
+// TestMissionCost_MilitaryGrandIsTenMinutesOfSoldiers: a military grand
+// mission costs the soldiers the town trains in ten minutes, rounded up, and
+// at least one, and nothing else.
+func TestMissionCost_MilitaryGrandIsTenMinutesOfSoldiers(t *testing.T) {
 	for _, age := range eraFirstAges() {
 		ge := missionReady(t, 1, age)
-		def := missionAt(ge, age, config.MissionCampaign)
+		n := plantOffer(ge, TierGrand, GrandMilitary)
 		setIncome(ge, "soldiers", 0.037)
 		want := math.Ceil(10 * ticksPerMinute * ge.townIncomeLocked("soldiers"))
-		cost := ge.MissionCost(def.Key)
+		cost := ge.MissionCost(n)
 		if cost["soldiers"] != want || len(cost) != 1 {
-			t.Errorf("%s in %s costs %v, want %v soldiers and nothing else", def.Key, age, cost, want)
+			t.Errorf("a military grand mission in %s costs %v, want %v soldiers and nothing else", age, cost, want)
 		}
 		setIncome(ge, "soldiers", 0)
-		if got := ge.MissionCost(def.Key)["soldiers"]; got != 1 {
-			t.Errorf("%s in %s with no soldier income costs %v soldiers, want 1", def.Key, age, got)
+		if got := ge.MissionCost(n)["soldiers"]; got != 1 {
+			t.Errorf("a military grand mission in %s with no soldier income costs %v soldiers, want 1", age, got)
 		}
 	}
 }
@@ -236,45 +268,40 @@ func haulKeys(ge *GameEngine, age string) []string {
 // TestMissionHaul_FormulaOnSuccessAndFailure: the haul is half of
 // (income x ticks per minute x haul minutes) in each of two resources (an
 // age that makes only one priced material hauls that one, still at half); a
-// success brings it with the expedition bonus (and a campaign's pay), a
-// failure 30% of it.
+// success brings it with the expedition bonus (and a military grand
+// mission's pay), a failure 30% of it.
 func TestMissionHaul_FormulaOnSuccessAndFailure(t *testing.T) {
 	for _, age := range eraFirstAges() {
-		for _, kind := range []string{config.MissionScout, config.MissionExpedition, config.MissionCampaign} {
+		for _, c := range []struct{ tier, grand string }{{TierShort, ""}, {TierLong, ""}, {TierGrand, GrandCivil}, {TierGrand, GrandMilitary}} {
 			for _, win := range []bool{true, false} {
 				ge := missionReady(t, 5, age)
 				setSoldiers(ge, 1e6)
 				ge.mu.Lock()
 				ge.Military.campaignPay = 1.5
 				ge.mu.Unlock()
-				def := missionAt(ge, age, kind)
+				n := plantOffer(ge, c.tier, c.grand)
 				want := haulKeys(ge, age)
 				if len(want) == 0 || len(want) > 2 {
 					t.Fatalf("%s: the age hauls %v, want one or two resources", age, want)
 				}
-				if err := ge.LaunchExpedition(def.Key); err != nil {
-					t.Fatalf("%s: %v", def.Key, err)
+				if err := ge.LaunchExpedition(n); err != nil {
+					t.Fatalf("%s %s: %v", c.tier, c.grand, err)
 				}
-				active := ge.Military.ActiveByCategory(def.Category)
+				active := ge.Military.ActiveByTier(c.tier)
 				if len(active.BaseRewards) != len(want) {
-					t.Fatalf("%s hauls %v, want %v", def.Key, active.BaseRewards, want)
+					t.Fatalf("%s %s hauls %v, want %v", c.tier, c.grand, active.BaseRewards, want)
 				}
-				mult := 1.0
+				mult := failedLootShare
 				if win {
 					mult = 1 + ge.expeditionReward()
-					if kind == config.MissionCampaign {
-						mult *= 1.5
-					}
-				} else {
-					mult = failedLootShare
-					if kind == config.MissionCampaign {
-						mult *= 1.5
-					}
+				}
+				if c.grand == GrandMilitary {
+					mult *= 1.5
 				}
 				for _, res := range want {
 					base := ge.townIncomeLocked(res) * ticksPerMinute * active.HaulMinutes / 2
 					if math.Abs(active.BaseRewards[res]-base) > 1e-9*base {
-						t.Errorf("%s hauls %v %s, want %v", def.Key, active.BaseRewards[res], res, base)
+						t.Errorf("%s %s hauls %v %s, want %v", c.tier, c.grand, active.BaseRewards[res], res, base)
 					}
 				}
 
@@ -285,12 +312,12 @@ func TestMissionHaul_FormulaOnSuccessAndFailure(t *testing.T) {
 				results := ge.Military.Tick(ge.gameRNG(), 0, ge.expeditionReward())
 				ge.mu.Unlock()
 				if len(results) != 1 || results[0].Success != win {
-					t.Fatalf("%s came home as %+v, want success=%v", def.Key, results, win)
+					t.Fatalf("%s %s came home as %+v, want success=%v", c.tier, c.grand, results, win)
 				}
 				for _, res := range want {
 					base := active.BaseRewards[res]
 					if got := results[0].Rewards[res]; math.Abs(got-base*mult) > 1e-9*base*mult {
-						t.Errorf("%s (win=%v) brought %v %s, want %v (%v x %v)", def.Key, win, got, res, base*mult, base, mult)
+						t.Errorf("%s %s (win=%v) brought %v %s, want %v (%v x %v)", c.tier, c.grand, win, got, res, base*mult, base, mult)
 					}
 				}
 			}
@@ -298,9 +325,9 @@ func TestMissionHaul_FormulaOnSuccessAndFailure(t *testing.T) {
 	}
 }
 
-// TestCampaign_HalfTheSoldiersComeBackOnAWin: a campaign that wins returns
-// half the soldiers it sent, rounded down; one that loses returns none; a
-// scout or an expedition never took any.
+// TestCampaign_HalfTheSoldiersComeBackOnAWin: a military grand mission that
+// wins returns half the soldiers it sent, rounded down; one that loses
+// returns none; no other mission ever took any.
 func TestCampaign_HalfTheSoldiersComeBackOnAWin(t *testing.T) {
 	for _, c := range []struct {
 		income float64 // soldiers/tick: cost = ceil(10 min of it)
@@ -316,10 +343,11 @@ func TestCampaign_HalfTheSoldiersComeBackOnAWin(t *testing.T) {
 		ge := missionReady(t, 2, "iron_age")
 		setSoldiers(ge, 50)
 		setIncome(ge, "soldiers", c.income)
-		if got := int(ge.MissionCost("siege_campaign")["soldiers"]); got != c.sent {
-			t.Fatalf("income %v: the campaign costs %d soldiers, test wants %d", c.income, got, c.sent)
+		n := plantOffer(ge, TierGrand, GrandMilitary)
+		if got := int(ge.MissionCost(n)["soldiers"]); got != c.sent {
+			t.Fatalf("income %v: the mission costs %d soldiers, test wants %d", c.income, got, c.sent)
 		}
-		if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+		if err := ge.LaunchExpedition(n); err != nil {
 			t.Fatal(err)
 		}
 		if got := ge.Resources.Get("soldiers"); got != float64(50-c.sent) {
@@ -340,48 +368,45 @@ func TestCampaign_HalfTheSoldiersComeBackOnAWin(t *testing.T) {
 	}
 }
 
-// TestMissionEras_OnlyTheCurrentErasMissionsAreOffered: each age offers the
-// three missions of its own era and no other; a Neon mission is not offered
-// in the Digital Era, is in the Fusion Age, and cannot be sent from the
-// Digital Era.
-func TestMissionEras_OnlyTheCurrentErasMissionsAreOffered(t *testing.T) {
-	ge := NewGameEngine()
-	for _, era := range config.Epochs() {
-		for _, age := range era.Ages {
-			got := ge.Military.GetAvailableExpeditions(age, ageOrders())
-			if len(got) != 3 {
-				t.Errorf("%s offers %d missions, want 3", age, len(got))
+// TestMissionBoard_TitlesComeFromTheAgesWords: every offer of an age is
+// built from that age's words: a tier name, an objective and a place of the
+// age, and a twist of the age for its description; a Legendary offer has the
+// word in front. A different age has different words.
+func TestMissionBoard_TitlesComeFromTheAgesWords(t *testing.T) {
+	for _, age := range config.Ages() {
+		ge := missionReady(t, 11, age.Key)
+		ge.EnsureMissionBoard()
+		words, _ := config.MissionWordsFor(age.Key)
+		for i, slot := range ge.Military.board.Slots {
+			o := slot.Offer
+			title := strings.TrimPrefix(o.Title, config.RareTitleWord+" ")
+			if o.Rare != (title != o.Title) {
+				t.Errorf("%s: %q is rare=%v", age.Key, o.Title, o.Rare)
 			}
-			for _, def := range got {
-				if def.Era != era.Key {
-					t.Errorf("%s offers %s of the %s", age, def.Key, def.Era)
+			which := config.WordsShort
+			switch slotTier(i) {
+			case TierLong:
+				which = config.WordsLong
+			case TierGrand:
+				which = config.WordsGrandMilitary
+				if o.Grand == GrandCivil {
+					which = config.WordsGrandCivil
 				}
 			}
-		}
-	}
-	has := func(age, key string) bool {
-		for _, def := range ge.Military.GetAvailableExpeditions(age, ageOrders()) {
-			if def.Key == key {
-				return true
+			names, objs := []string{words.Tiers[which]}, words.ObjectivesFor(which)
+			ok := false
+			for _, obj := range objs {
+				for _, place := range words.Places {
+					ok = ok || title == names[0]+": "+obj+" "+place
+				}
+			}
+			if !ok {
+				t.Errorf("%s slot %d: %q is not built from the age's words", age.Key, i+1, o.Title)
+			}
+			if !slices.Contains(words.Twists[:], o.Description) {
+				t.Errorf("%s slot %d: description %q is not one of the age's twists", age.Key, i+1, o.Description)
 			}
 		}
-		return false
-	}
-	for _, key := range []string{"street_recon", "neon_heist", "fusion_plant_assault"} {
-		if has("digital_age", key) {
-			t.Errorf("the Digital Era offers %s", key)
-		}
-		if !has("fusion_age", key) {
-			t.Errorf("the Fusion Age does not offer %s", key)
-		}
-	}
-	digital := missionReady(t, 1, "digital_age")
-	before := digital.Resources.Get("data")
-	if err := digital.LaunchExpedition("neon_heist"); err == nil {
-		t.Error("a Neon Era mission went out from the Digital Era")
-	}
-	if digital.Military.HasActive() || digital.Resources.Get("data") != before {
-		t.Error("a refused launch took something")
 	}
 }
 
@@ -409,43 +434,69 @@ func TestEncounterChance_DoubledAndCapped(t *testing.T) {
 	}
 }
 
-// TestAutoExpedition_SendsTheEraScout: the Geographic Society sends the
-// scout of the era it stands in, whatever else it could afford, in every
-// era.
-func TestAutoExpedition_SendsTheEraScout(t *testing.T) {
+// TestAutoExpedition_SendsTheBestHaulPerMinute: the Geographic Society sends
+// the offer with the most haul minutes for each minute of length among those
+// it can pay for, in every era; one it cannot pay for is passed over.
+func TestAutoExpedition_SendsTheBestHaulPerMinute(t *testing.T) {
 	for _, age := range eraFirstAges() {
 		ge := autoExpeditionTestEngine(t, age, 1, 8, 1e9)
 		learn(ge, "military_tactics")
-		want := missionAt(ge, age, config.MissionScout)
-		def := ge.pickAutoScoutExpedition(ge.progress.ageOrder())
-		if def == nil || def.Key != want.Key {
-			t.Fatalf("%s: the picker chose %+v, want %s", age, def, want.Key)
+		ge.EnsureMissionBoard()
+		setSoldiers(ge, 1e6)
+		var wantN int
+		var bestRate float64
+		for i, slot := range ge.Military.board.Slots {
+			if slot.Offer.Tier == TierGrand {
+				continue // the Society never sends a grand offer
+			}
+			if rate := slot.Offer.HaulMinutes / slot.Offer.LengthMinutes; rate > bestRate {
+				wantN, bestRate = i+1, rate
+			}
 		}
+		if got := ge.pickAutoOffer(); got != wantN {
+			t.Fatalf("%s: the picker chose offer %d, want %d (rate %v)", age, got, wantN, bestRate)
+		}
+		want, _ := ge.Military.BoardOffer(wantN)
 		if launched, _ := runAutoTicks(ge, 1); launched != 1 {
 			t.Fatalf("%s: %d dispatches on the first tick, want 1", age, launched)
 		}
-		if active := ge.Military.ActiveByCategory(ExpeditionScouting); active == nil || active.Key != want.Key {
-			t.Errorf("%s: the society sent %+v, want %s", age, active, want.Key)
+		if active := ge.Military.ActiveByTier(want.Tier); active == nil || active.Title != want.Title {
+			t.Errorf("%s: the society sent %+v, want %s", age, active, want.Title)
 		}
-		if ge.Military.ActiveByCategory(ExpeditionMilitary) != nil {
-			t.Errorf("%s: the society sent a campaign", age)
+
+		// With no soldiers, a military offer is passed over.
+		ge2 := autoExpeditionTestEngine(t, age, 1, 8, 1e9)
+		learn(ge2, "military_tactics")
+		ge2.EnsureMissionBoard()
+		setSoldiers(ge2, 0)
+		if n := ge2.pickAutoOffer(); n != 0 {
+			o, _ := ge2.Military.BoardOffer(n)
+			if o.Military() {
+				t.Errorf("%s: the society chose %s with no soldiers to send", age, o.Title)
+			}
 		}
 	}
 }
 
-// TestMissionRefusals_ALaterErasMissionIsNotNamed: a mission of a later era
-// is refused as unknown, with no name and no era in the reply; one of an
-// earlier era is refused by name.
-func TestMissionRefusals_ALaterErasMissionIsNotNamed(t *testing.T) {
+// TestMissionRefusals_OnlyTheBoardsOffersCanBeSent: an offer number outside
+// 1 to 9 is refused, so is a slot waiting for its next offer, and a refused
+// launch takes nothing.
+func TestMissionRefusals_OnlyTheBoardsOffersCanBeSent(t *testing.T) {
 	ge := missionReady(t, 1, "iron_age")
-	err := ge.LaunchExpedition("galactic_conquest")
-	want := "unknown expedition or campaign 'galactic_conquest'. Type expedition or campaign to see what you can send"
-	if err == nil || err.Error() != want {
-		t.Errorf("a Cosmic Era mission in the Iron Era: %v, want %q", err, want)
+	for _, n := range []int{0, 10, -3} {
+		if err := ge.LaunchExpedition(n); err == nil || !strings.Contains(err.Error(), "no offer") {
+			t.Errorf("offer %d: %v, want a refusal that there is no such offer", n, err)
+		}
 	}
-	err = ge.LaunchExpedition("scouting_party")
-	if err == nil || err.Error() != "Scouting Party is a mission of the Stone Era, not of this age" {
-		t.Errorf("a Stone Era mission in the Iron Era: %v", err)
+	n := plantOffer(ge, TierShort, "")
+	ge.mu.Lock()
+	ge.Military.board.Slots[n-1].Offer = nil
+	ge.mu.Unlock()
+	if err := ge.LaunchExpedition(n); err == nil || !strings.Contains(err.Error(), "taken") {
+		t.Errorf("an empty slot: %v, want a refusal that the offer is taken", err)
+	}
+	if ge.Military.HasActive() {
+		t.Error("a refused launch sent something")
 	}
 }
 
@@ -457,7 +508,7 @@ func TestMissionRolls_SurviveASave(t *testing.T) {
 	ge := missionReady(t, 7, "iron_age")
 	setSoldiers(ge, 50)
 	setIncome(ge, "soldiers", 0.02)
-	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+	if err := ge.LaunchExpedition(plantOffer(ge, TierGrand, GrandMilitary)); err != nil {
 		t.Fatal(err)
 	}
 	before := *ge.Military.ActiveByCategory(ExpeditionMilitary)
@@ -466,7 +517,7 @@ func TestMissionRolls_SurviveASave(t *testing.T) {
 	if after == nil {
 		t.Fatal("the campaign is gone after the load")
 	}
-	if after.Key != before.Key || after.Soldiers != before.Soldiers || after.TicksLeft != before.TicksLeft ||
+	if after.Title != before.Title || after.Soldiers != before.Soldiers || after.TicksLeft != before.TicksLeft ||
 		after.LengthMinutes != before.LengthMinutes || after.SuccessChance != before.SuccessChance || after.HaulMinutes != before.HaulMinutes {
 		t.Errorf("after the load %+v, want %+v", *after, before)
 	}

@@ -8,11 +8,10 @@ import (
 )
 
 // newExpeditionTestEngine spins up a fresh engine in the Bronze Age, stocked
-// with enough food/wood/soldiers to launch the Stone Era scout and campaign
-// used by these tests. scouting_party (scouting) and raid_the_rival_clan
-// (military) are both missions of the Stone Era, which the Bronze Age is in. The age jump uses the dev console
-// (/age applies the age's unlocks); resource amounts are set via LoadAmounts so
-// they bypass nominal storage caps.
+// with enough food, wood and soldiers to launch any offer on its mission
+// board. The age jump uses the dev console (/age applies the age's unlocks);
+// resource amounts are set via LoadAmounts so they bypass nominal storage
+// caps.
 func newExpeditionTestEngine(t *testing.T) *game.GameEngine {
 	t.Helper()
 
@@ -21,7 +20,8 @@ func newExpeditionTestEngine(t *testing.T) *game.GameEngine {
 	t.Cleanup(func() { game.DevModeActive = prevDev })
 
 	engine := game.NewGameEngine()
-	engine.GrantTechsForTest("military_tactics") // the tech that opens campaigns
+	engine.SeedRNG(11)
+	engine.GrantTechsForTest("military_tactics", "exploration") // the techs that open campaigns and expeditions
 	if msg := game.DevExecCommand("/age bronze_age", engine); msg != "jumped to bronze_age" {
 		t.Fatalf("dev /age bronze_age failed: %q", msg)
 	}
@@ -33,96 +33,113 @@ func newExpeditionTestEngine(t *testing.T) *game.GameEngine {
 	return engine
 }
 
-// TestCmdExpeditionNoArgsOpensPanel verifies bare `expedition` opens the
-// Expeditions panel rather than launching anything.
-func TestCmdExpeditionNoArgsOpensPanel(t *testing.T) {
+// TestCmdExpeditionNoArgsPrintsTheBoard verifies bare `expedition` opens the
+// Expeditions panel and `expedition list` prints the mission board as plain
+// lines (nine numbered offers), neither launching anything.
+func TestCmdExpeditionNoArgsPrintsTheBoard(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
-	res := cmdExpedition(nil, engine)
-	if res.OverlayName != "expedition" {
-		t.Errorf("cmdExpedition(nil) OverlayName = %q, want %q", res.OverlayName, "expedition")
+	if bare := cmdExpedition(nil, engine); bare.OverlayName != "expedition" {
+		t.Errorf("cmdExpedition(nil) opens overlay %q, want the expedition panel", bare.OverlayName)
 	}
-}
-
-// TestCmdExpeditionMilitaryKeyRedirects verifies a MILITARY key passed to
-// `expedition` returns the redirect-to-campaign info message and does NOT
-// launch (no active scout, no active military).
-func TestCmdExpeditionMilitaryKeyRedirects(t *testing.T) {
-	engine := newExpeditionTestEngine(t)
-
-	res := cmdExpedition([]string{"raid", "the", "rival", "clan"}, engine)
-	if res.Type != "info" {
-		t.Errorf("cmdExpedition(raid_the_rival_clan) Type = %q, want %q", res.Type, "info")
+	res := cmdExpedition([]string{"list"}, engine)
+	if res.Type != "info" || res.OverlayName != "" {
+		t.Errorf("cmdExpedition(list) = type %q overlay %q, want a printed board", res.Type, res.OverlayName)
 	}
-	if !strings.Contains(res.Message, "campaign raid_the_rival_clan") {
-		t.Errorf("cmdExpedition(raid_the_rival_clan) message = %q, want it to redirect to 'campaign raid_the_rival_clan'", res.Message)
+	if !strings.Contains(res.Message, "Mission board") {
+		t.Errorf("the board has no heading:\n%s", res.Message)
+	}
+	for n := 1; n <= 9; n++ {
+		if want := string(rune('0'+n)) + ". "; !strings.Contains(res.Message, want) {
+			t.Errorf("the board does not list offer %d:\n%s", n, res.Message)
+		}
+	}
+	for _, heading := range []string{"Short:", "Long:", "Grand:"} {
+		if !strings.Contains(res.Message, heading) {
+			t.Errorf("the board has no %s section:\n%s", heading, res.Message)
+		}
 	}
 	st := engine.GetState()
-	if st.Military.ActiveScout != nil || st.Military.ActiveMilitary != nil {
-		t.Errorf("redirect should not launch anything; got scout=%v military=%v", st.Military.ActiveScout, st.Military.ActiveMilitary)
+	if st.Military.ActiveShort != nil || st.Military.ActiveLong != nil || st.Military.ActiveGrand != nil {
+		t.Error("printing the board launched something")
+	}
+	if list := cmdExpedition([]string{"list"}, engine); list.Message != res.Message {
+		t.Error("`expedition list` is not the board")
 	}
 }
 
-// TestCmdExpeditionScoutingKeyLaunches verifies a SCOUTING key launches and
-// sets the active scout.
-func TestCmdExpeditionScoutingKeyLaunches(t *testing.T) {
+// TestCmdExpeditionNumberLaunches verifies `expedition <n>` sends offer n and
+// fills its tier's slot; a second offer of the same tier is refused while one
+// is out, and another tier is still free.
+func TestCmdExpeditionNumberLaunches(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
-	res := cmdExpedition([]string{"scouting", "party"}, engine)
+	res := cmdExpedition([]string{"1"}, engine)
 	if res.Type != "success" {
-		t.Fatalf("cmdExpedition(scouting_party) Type = %q (msg %q), want %q", res.Type, res.Message, "success")
+		t.Fatalf("cmdExpedition(1) Type = %q (msg %q), want %q", res.Type, res.Message, "success")
 	}
-	if st := engine.GetState(); st.Military.ActiveScout == nil {
-		t.Errorf("after launching scouting_party, ActiveScout is nil; expected a running scouting expedition")
+	if st := engine.GetState(); st.Military.ActiveShort == nil {
+		t.Errorf("after sending offer 1, ActiveShort is nil; expected a short mission under way")
+	}
+	if res := cmdExpedition([]string{"2"}, engine); res.Type != "error" || !strings.Contains(res.Message, "already under way") {
+		t.Errorf("a second short mission: type %q, %q; want the slot's refusal", res.Type, res.Message)
+	}
+	if res := cmdExpedition([]string{"4"}, engine); res.Type != "success" {
+		t.Errorf("a long mission beside the short one: type %q, %q", res.Type, res.Message)
+	}
+	if st := engine.GetState(); st.Military.ActiveLong == nil || st.Military.ActiveShort == nil {
+		t.Error("the short and the long mission should both be out")
 	}
 }
 
-// TestCmdCampaignScoutingKeyRedirects verifies a SCOUTING key passed to
-// `campaign` returns the redirect-to-expedition info message and does NOT
-// launch.
-func TestCmdCampaignScoutingKeyRedirects(t *testing.T) {
+// TestCmdCampaignIsTheSameCommand verifies `campaign` prints the same board
+// and sends the same offers as `expedition`.
+func TestCmdCampaignIsTheSameCommand(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
-	res := cmdCampaign([]string{"scouting", "party"}, engine)
-	if res.Type != "info" {
-		t.Errorf("cmdCampaign(scouting_party) Type = %q, want %q", res.Type, "info")
+	if a, b := cmdCampaign([]string{"list"}, engine), cmdExpedition([]string{"list"}, engine); a.Message != b.Message || a.Type != "info" {
+		t.Errorf("campaign list prints %q, expedition list %q", a.Message, b.Message)
 	}
-	if !strings.Contains(res.Message, "expedition scouting_party") {
-		t.Errorf("cmdCampaign(scouting_party) message = %q, want it to redirect to 'expedition scouting_party'", res.Message)
+	if a := cmdCampaign(nil, engine); a.OverlayName != "expedition" {
+		t.Errorf("bare campaign opens overlay %q, want the expedition panel", a.OverlayName)
+	}
+	res := cmdCampaign([]string{"7"}, engine)
+	if res.Type != "success" {
+		t.Fatalf("cmdCampaign(7) Type = %q (msg %q), want %q", res.Type, res.Message, "success")
+	}
+	if st := engine.GetState(); st.Military.ActiveGrand == nil || st.Military.ActiveMilitary == nil {
+		t.Errorf("after sending offer 7, no grand mission is out: %+v", st.Military)
+	}
+}
+
+// TestCmdExpeditionBadArguments verifies a word, an offer number off the
+// board and a number with more after it are refused, and launch nothing.
+func TestCmdExpeditionBadArguments(t *testing.T) {
+	engine := newExpeditionTestEngine(t)
+
+	for _, args := range [][]string{{"scouting", "party"}, {"scouting_party"}, {"12"}, {"0"}, {"1", "2"}} {
+		res := cmdExpedition(args, engine)
+		if res.Type != "error" {
+			t.Errorf("cmdExpedition(%v) Type = %q (msg %q), want an error", args, res.Type, res.Message)
+		}
 	}
 	st := engine.GetState()
-	if st.Military.ActiveScout != nil || st.Military.ActiveMilitary != nil {
-		t.Errorf("redirect should not launch anything; got scout=%v military=%v", st.Military.ActiveScout, st.Military.ActiveMilitary)
+	if st.Military.ActiveShort != nil || st.Military.ActiveLong != nil || st.Military.ActiveGrand != nil {
+		t.Error("a refused command launched something")
 	}
 }
 
-// TestCmdCampaignMilitaryKeyLaunches verifies a MILITARY key launches and sets
-// the active military campaign.
-func TestCmdCampaignMilitaryKeyLaunches(t *testing.T) {
+// TestOfferLineMarksLegendaryOffers verifies a Legendary offer is marked in
+// the printed board and an ordinary one is not.
+func TestOfferLineMarksLegendaryOffers(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
-
-	res := cmdCampaign([]string{"raid", "the", "rival", "clan"}, engine)
-	if res.Type != "success" {
-		t.Fatalf("cmdCampaign(raid_the_rival_clan) Type = %q (msg %q), want %q", res.Type, res.Message, "success")
+	state := engine.GetState()
+	info := game.ExpeditionInfo{Number: 3, Name: "Legendary Hunt: track the herd across the Dry Creek", Rare: true, CanLaunch: true, SuccessChance: .6, DurationMin: 900}
+	if line := offerLine(info, state); !strings.Contains(line, "Legendary") || !strings.Contains(line, "★") || !strings.Contains(line, "3. ") || !strings.Contains(line, "60% odds") {
+		t.Errorf("a Legendary offer is not marked or lacks its numbers: %q", line)
 	}
-	if st := engine.GetState(); st.Military.ActiveMilitary == nil {
-		t.Errorf("after launching raid_the_rival_clan, ActiveMilitary is nil; expected a running campaign")
-	}
-}
-
-// TestCmdCampaignListReturnsCampaigns verifies bare `campaign` returns the
-// campaign list (info), naming a military campaign and not opening a panel.
-func TestCmdCampaignListReturnsCampaigns(t *testing.T) {
-	engine := newExpeditionTestEngine(t)
-
-	res := cmdCampaign(nil, engine)
-	if res.Type != "info" {
-		t.Errorf("cmdCampaign(nil) Type = %q, want %q", res.Type, "info")
-	}
-	if res.OverlayName != "" {
-		t.Errorf("cmdCampaign(nil) OverlayName = %q, want empty (list, not panel)", res.OverlayName)
-	}
-	if !strings.Contains(res.Message, "Campaigns") {
-		t.Errorf("cmdCampaign(nil) message = %q, want a campaign list", res.Message)
+	info.Rare, info.Name = false, "Hunt: track the herd across the Dry Creek"
+	if line := offerLine(info, state); strings.Contains(line, "★") {
+		t.Errorf("an ordinary offer is starred: %q", line)
 	}
 }

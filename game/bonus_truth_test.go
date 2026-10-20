@@ -386,21 +386,16 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 	if full := math.Max(festivalMinCost, ge.Resources.GetStorage("culture")*festivalCostFraction); full > 0 {
 		out[config.MechanicFestivalCost] = ge.festivalCost() / full
 	}
-	// A mission of each kind, launched off a fixed roll.
-	for cat, key := range map[string]string{ExpeditionScouting: config.MechanicExpeditionTicks, ExpeditionMilitary: config.MechanicCampaignTicks} {
-		defs := ge.Military.GetAvailableExpeditionsByCategory(cat, ge.age, ageOrders())
-		if len(defs) == 0 {
-			continue
+	// A mission of each kind, launched off a fixed offer.
+	for _, c := range []struct{ tier, grand, mechanic string }{
+		{TierShort, "", config.MechanicExpeditionTicks}, {TierGrand, GrandMilitary, config.MechanicCampaignTicks},
+	} {
+		held := ge.Military.active[c.tier]
+		ge.Military.active[c.tier] = nil
+		if err := ge.Military.LaunchOffer(testOffer(ge, c.tier, c.grand), ge.tick, 0, nil, nil); err == nil {
+			out[c.mechanic] = float64(ge.Military.active[c.tier].TicksLeft)
 		}
-		held := ge.Military.activeByCat[cat]
-		delete(ge.Military.activeByCat, cat)
-		if err := ge.Military.LaunchExpedition(rand.New(rand.NewSource(1)), defs[0].Key, ge.age, ageOrders()); err == nil {
-			out[key] = float64(ge.Military.activeByCat[cat].TicksLeft)
-		}
-		delete(ge.Military.activeByCat, cat)
-		if held != nil {
-			ge.Military.activeByCat[cat] = held
-		}
+		ge.Military.active[c.tier] = held
 	}
 	return out
 }
@@ -574,11 +569,6 @@ func (s *truthSureSource) Seed(seed int64) { s.rest.Seed(seed) }
 // engine: call it on one made for the reading.
 func truthLoot(t *testing.T, ge *GameEngine) float64 {
 	t.Helper()
-	defs := ge.Military.GetAvailableExpeditionsByCategory(ExpeditionScouting, ge.age, ageOrders())
-	if len(defs) == 0 {
-		t.Fatalf("loot meter: no expedition in %s", ge.age)
-	}
-	def := defs[0]
 	if age, ok := ge.rules.Age(ge.age); ok {
 		for _, buildingKey := range age.UnlockBuildings {
 			building, found := ge.rules.Building(buildingKey)
@@ -593,9 +583,9 @@ func truthLoot(t *testing.T, ge *GameEngine) float64 {
 		}
 	}
 	ge.rng = rand.New(&truthSureSource{rest: rand.NewSource(1)}) // the success roll is the tick's first draw
-	base := ge.missionHaulLocked(&def, def.MinMinutes*def.Yield)
-	ge.Military.activeByCat[ExpeditionScouting] = &ActiveExpedition{
-		Key: def.Key, Name: def.Name, TicksLeft: 1,
+	base := ge.missionHaulLocked(10)                             // ten minutes of income
+	ge.Military.active[TierShort] = &ActiveExpedition{
+		MissionOffer: testOffer(ge, TierShort, ""), TicksLeft: 1,
 		BaseRewards: base, SuccessRewards: scaleLoot(base, 1+ge.expeditionReward()),
 	}
 	ge.Military.totalLoot = map[string]float64{}

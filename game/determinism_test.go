@@ -22,9 +22,9 @@ import (
 const determinismTicks = 3000
 
 // determinismScript is the fixed script determinismRun drives: what to build,
-// and which expeditions to send.
+// and the offers to send, which the script picks by number.
 type determinismScript struct {
-	builds, scouting, military []string
+	builds []string
 }
 
 // determinismRun builds a mid-game engine from seed and drives it through a
@@ -96,25 +96,17 @@ func determinismSetup(t *testing.T, seed int64) (*GameEngine, determinismScript)
 	// techs those commands wait for.
 	learn(ge, "the_wheel", "exploration", "envoys", "drama", "military_tactics", "navigation")
 
-	var scouting, military []string
-	for _, def := range ge.Military.GetAvailableExpeditions(ge.age, ge.progress.GetAgeOrder()) {
-		if def.Category == ExpeditionScouting {
-			scouting = append(scouting, def.Key)
-		} else {
-			military = append(military, def.Key)
-		}
+	if len(builds) == 0 {
+		t.Fatalf("scenario setup: %d buildings", len(builds))
 	}
-	if len(builds) == 0 || len(scouting) == 0 || len(military) == 0 {
-		t.Fatalf("scenario setup: %d buildings, %d scouting, %d military expeditions", len(builds), len(scouting), len(military))
-	}
-	return ge, determinismScript{builds: builds, scouting: scouting, military: military}
+	return ge, determinismScript{builds: builds}
 }
 
 // play runs script iterations [from, to) on ge, one tick each, and returns
 // the log transcript. Split at any iteration, two calls play exactly what one
 // call over the whole range would.
 func (sc determinismScript) play(ge *GameEngine, from, to int) string {
-	builds, scouting, military := sc.builds, sc.scouting, sc.military
+	builds := sc.builds
 	// The engine keeps only the last MaxLogSize lines, so the log is sampled
 	// every iteration: each pass records the lines stamped with this
 	// iteration's ticks. Lines from one doTick are recorded twice (once in
@@ -139,8 +131,9 @@ func (sc determinismScript) play(ge *GameEngine, from, to int) string {
 		}
 		ge.mu.Unlock()
 		if i%40 == 0 {
-			_ = ge.LaunchExpedition(scouting[(i/40)%len(scouting)])
-			_ = ge.LaunchExpedition(military[(i/40)%len(military)])
+			// Two offers off the board, a different pair each time.
+			_ = ge.LaunchExpedition(1 + (i/40)%9)
+			_ = ge.LaunchExpedition(1 + (i/40+4)%9)
 		}
 		if i%90 == 0 {
 			_ = ge.RecruitWorker("worker", 2)

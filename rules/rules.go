@@ -53,8 +53,9 @@ type Source struct {
 	BadgeExpeditions []config.BadgeExpeditionDef
 	BadgeThemes      []config.BadgeThemeDef
 
-	// Missions is the era mission catalog (expeditions and campaigns).
-	Missions []config.MissionDef
+	// MissionWords is the words the mission board builds its offers from, an
+	// entry for each age.
+	MissionWords []config.MissionWords
 
 	// Events is the random pool; EraEvents the ones only one era rolls.
 	// GoodEraEvents and ChallengingEraEvents are the pools an era's entry
@@ -134,7 +135,7 @@ func FromConfig() Source {
 		BadgeWornTitles:      config.BadgeTitles(),
 		BadgeExpeditions:     config.BadgeExpeditions(),
 		BadgeThemes:          config.BadgeThemes(),
-		Missions:             config.Missions(),
+		MissionWords:         config.AllMissionWords(),
 		Events:               config.RandomEvents(),
 		EraEvents:            config.EpochExclusiveEvents(),
 		GoodEraEvents:        config.GoodEpochEvents(),

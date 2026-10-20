@@ -71,7 +71,7 @@ type Set struct {
 	badgeExpeditions []config.BadgeExpeditionDef
 	badgeThemes      []config.BadgeThemeDef
 
-	missions []config.MissionDef
+	missionWords []config.MissionWords
 
 	events        []config.EventDef
 	eraEvents     []config.EventDef
@@ -167,7 +167,7 @@ func Compile(src Source) *Set {
 	s.buildCounts()
 	s.badgeExpeditions, s.badgeThemes = slices.Clone(src.BadgeExpeditions), slices.Clone(src.BadgeThemes)
 	s.buildBadges(src.Badges, src.BadgeFamilies)
-	s.missions = slices.Clone(src.Missions)
+	s.missionWords = slices.Clone(src.MissionWords)
 	s.badgeTitles = slices.Clone(src.BadgeTitles)
 	s.badgeWornTitles = slices.Clone(src.BadgeWornTitles)
 	return s
@@ -357,17 +357,15 @@ func (s *Set) Wonder(age string) string { return s.wonders[age] }
 // Eras returns the eras in order.
 func (s *Set) Eras() []config.EpochDef { return slices.Clone(s.eras) }
 
-// Missions returns the era mission catalog in era and kind order.
-func (s *Set) Missions() []config.MissionDef { return slices.Clone(s.missions) }
-
-// Mission returns a mission by its key.
-func (s *Set) Mission(key string) (config.MissionDef, bool) {
-	for _, m := range s.missions {
-		if m.Key == key {
-			return m, true
+// MissionWords returns the words the mission board builds an age's offers
+// from; false for an age with none.
+func (s *Set) MissionWords(age string) (config.MissionWords, bool) {
+	for _, w := range s.missionWords {
+		if w.Age == age {
+			return w, true
 		}
 	}
-	return config.MissionDef{}, false
+	return config.MissionWords{}, false
 }
 
 // Era returns an era's definition by its key.

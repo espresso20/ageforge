@@ -224,13 +224,9 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 			return fmt.Sprintf("names the era %q, which does not exist", def.Subject)
 		}
 	case config.BadgeEvExpedition:
-		order := c.set.Indexes()
-		mm := game.NewMilitaryManager()
-		for _, a := range c.m.ages {
-			for _, x := range mm.GetAvailableExpeditions(a.Key, order) {
-				if config.MissionBadgeKey(x.Era, x.Kind) == def.Subject {
-					return ""
-				}
+		for _, x := range config.BadgeExpeditions() {
+			if x.Key == def.Subject {
+				return ""
 			}
 		}
 		return fmt.Sprintf("names the mission %q, which does not exist", def.Subject)
@@ -450,25 +446,19 @@ func (c *badgeCheck) moreAdded(counter string, through int) (n float64, basis st
 		}
 		return float64(n), "the milestone chains a run's ages can finish", true
 	case config.BadgeEvExpedition:
-		// One party out at a time, on the era's scout at its longest (a
+		// One party out at a time, on the short mission at its longest (a
 		// mission's length is rolled and no age stretches it): the one mission
 		// no tech locks. It comes back with a success half the time.
-		order := c.set.Indexes()
-		mm := game.NewMilitaryManager()
+		scout, _ := config.MissionKindTuning(config.MissionScout)
 		n := 0.0
 		for i := 0; i <= through; i++ {
 			age := m.ages[i].Key
-			slowest := 0
-			for _, x := range mm.GetAvailableExpeditions(age, order) {
-				if x.Kind == config.MissionScout {
-					slowest = max(slowest, x.DurationMax)
-				}
-			}
+			slowest := int(math.Round(scout.MaxMinutes * 60 / config.TickSeconds))
 			if slowest > 0 {
 				n += float64(c.set.TargetTicks(age) / float64(slowest) / 2)
 			}
 		}
-		return math.Floor(n), "one party out at a time on the era's scout at its longest, back with a success half the time", true
+		return math.Floor(n), "one party out at a time on the short mission at its longest, back with a success half the time", true
 	case config.BadgeEvDeal:
 		met := 0
 		for _, f := range c.set.Factions() {

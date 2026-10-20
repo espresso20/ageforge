@@ -2,7 +2,6 @@ package game
 
 import (
 	"math"
-	"math/rand"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -329,11 +328,11 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 	// A campaign keeps its time: the cut is for scouting expeditions.
 	plain := newTruthEngine("modern_age", truthClean)
 	march := func(e *GameEngine) int {
-		delete(e.Military.activeByCat, ExpeditionMilitary)
-		if err := e.Military.LaunchExpedition(rand.New(rand.NewSource(3)), "cyber_campaign", e.age, ageOrders()); err != nil {
+		e.Military.active[TierGrand] = nil
+		if err := e.Military.LaunchOffer(testOffer(e, TierGrand, GrandMilitary), e.tick, 0, nil, nil); err != nil {
 			t.Fatal(err)
 		}
-		return e.Military.activeByCat[ExpeditionMilitary].TicksLeft
+		return e.Military.active[TierGrand].TicksLeft
 	}
 	if a, b := march(plain), march(ge); a != b {
 		t.Errorf("a campaign takes %d ticks with Cartography and %d without, want the same", b, a)

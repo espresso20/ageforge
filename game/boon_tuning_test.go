@@ -411,6 +411,35 @@ type expDriver struct {
 	lastDur      int
 }
 
+// harnessDef is a kind of mission as the harness models it: the range of ticks
+// an offer of the kind rolls its length over, and how hard it is. The board
+// rolls those when an offer is made; a player who spams the shortest offer
+// sees the low end of the range.
+type harnessDef struct {
+	Category       string
+	DurationMin    int
+	DurationMax    int
+	DifficultyBase float64
+}
+
+// harnessDefs are the kinds of mission a category sends: short and long
+// missions are scouting, the grand one military.
+func harnessDefs(category string) []harnessDef {
+	var out []harnessDef
+	for _, kind := range config.MissionKinds() {
+		cat := ExpeditionScouting
+		if kind == config.MissionCampaign {
+			cat = ExpeditionMilitary
+		}
+		if cat != category {
+			continue
+		}
+		t, _ := config.MissionKindTuning(kind)
+		out = append(out, harnessDef{cat, minutesToTicks(t.MinMinutes), minutesToTicks(t.MaxMinutes), 1 - t.BaseSuccess})
+	}
+	return out
+}
+
 // effectiveExpeditionDuration is the shortest duration the RUNTIME can give a
 // def: the low end of its randomized [DurationMin, DurationMax] range.
 //
@@ -422,7 +451,7 @@ type expDriver struct {
 // field, so it simulated a cadence ~6.5x faster than the game can produce and
 // every number it reported about encounter frequency was wrong in the same
 // direction. The field is gone now; the range is the only source of truth.
-func effectiveExpeditionDuration(d ExpeditionDef) int {
+func effectiveExpeditionDuration(d harnessDef) int {
 	return d.DurationMin
 }
 
@@ -452,7 +481,7 @@ func newExpDriver(ge *GameEngine, category, age string, gap int, rng *rand.Rand)
 	if gap < 0 {
 		return expDriver{category: category}
 	}
-	defs := ge.Military.GetAvailableExpeditionsByCategory(category, age, ge.progress.GetAgeOrder())
+	defs := harnessDefs(category)
 	if len(defs) == 0 {
 		return expDriver{category: category}
 	}
@@ -477,26 +506,31 @@ func newExpDriver(ge *GameEngine, category, age string, gap int, rng *rand.Rand)
 
 // newAutoScoutDriver builds the scouting driver for an AUTOMATED scenario. Unlike
 // newExpDriver it does not guess at the cadence or the expedition: it asks the
-// shipped code for both — pickAutoScoutExpedition for which party goes out and
+// shipped code for both — pickAutoOffer for which party goes out and
 // autoExpeditionIntervalFor for how often — so what the harness reports is the
 // behaviour of the live tuning constants, not a re-implementation of them.
 // Caller must hold the engine lock.
 func newAutoScoutDriver(ge *GameEngine, rng *rand.Rand) expDriver {
-	def := ge.pickAutoScoutExpedition(ge.progress.GetAgeOrder())
-	if def == nil {
+	ge.ensureMissionBoardLocked()
+	n := ge.pickAutoOffer()
+	if n == 0 {
 		return expDriver{category: ExpeditionScouting}
 	}
+	offer, _ := ge.Military.BoardOffer(n)
 	count, fill := ge.autoExpeditionInvestment()
 	interval := autoExpeditionIntervalIn(ge.age, count, fill)
 	if interval <= 0 {
 		return expDriver{category: ExpeditionScouting}
 	}
+	// The party is the tier the society picked, its length rolled over the
+	// tier's range at every launch (a new offer is made each time).
+	tuning, _ := config.MissionKindTuning(offer.Kind())
 	d := expDriver{
 		age:          ge.age,
-		durMin:       def.DurationMin,
-		durMax:       def.DurationMax,
-		difficulty:   def.DifficultyBase,
-		category:     ExpeditionScouting,
+		durMin:       minutesToTicks(tuning.MinMinutes),
+		durMax:       minutesToTicks(tuning.MaxMinutes),
+		difficulty:   1 - offer.SuccessChance,
+		category:     offer.Category(),
 		autoInterval: interval,
 		live:         true,
 	}
@@ -1010,12 +1044,11 @@ func TestBoonTuning_HarnessClassifies(t *testing.T) {
 // shortest by EFFECTIVE duration.
 func TestBoonTuning_HarnessUsesRuntimeDurations(t *testing.T) {
 	ge := NewGameEngine()
-	order := ge.progress.GetAgeOrder()
 	rng := rand.New(rand.NewSource(1))
 
 	for _, category := range []string{ExpeditionScouting, ExpeditionMilitary} {
 		for _, age := range config.AgeOrder() {
-			defs := ge.Military.GetAvailableExpeditionsByCategory(category, age, order)
+			defs := harnessDefs(category)
 			if len(defs) == 0 {
 				continue
 			}
@@ -1030,7 +1063,7 @@ func TestBoonTuning_HarnessUsesRuntimeDurations(t *testing.T) {
 					want = e
 				}
 			}
-			if got := effectiveExpeditionDuration(ExpeditionDef{
+			if got := effectiveExpeditionDuration(harnessDef{
 				DurationMin: d.durMin, DurationMax: d.durMax,
 			}); got != want {
 				t.Errorf("%s at %s: driver picked effective duration %d, shortest available is %d",

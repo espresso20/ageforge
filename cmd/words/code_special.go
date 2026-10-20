@@ -350,22 +350,6 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 		}
 		r.area, r.rules, r.seen, r.age = areaSaveNames, rulesSaveNam, seenPool, 0
 		return r, "", true
-
-	case "game/military.go":
-		if s.typ == "game.ExpeditionDef" && !inCall {
-			key := s.sib["Key"]
-			switch s.field {
-			case "Name":
-				r := newRow("expedition."+idSafe(key)+".name", kindName, "The name of an expedition or campaign: in the Expeditions and Army panels, in the log, and as the {subject} of the story lines about it.")
-				r.area, r.age, r.seen = areaWorld, w.ageOf(s.sib["MinAge"]), seenRegular
-				return r, "", true
-			case "Description":
-				r := newRow("expedition."+idSafe(key)+".description", kindVoice, "The description of “"+s.sib["Name"]+"” in the Expeditions and Army panels.")
-				r.area, r.age, r.seen = areaWorld, w.ageOf(s.sib["MinAge"]), seenRegular
-				return r, "", true
-			}
-			return nil, whyKey, true
-		}
 	}
 
 	if cr.f.dir == "config" {
