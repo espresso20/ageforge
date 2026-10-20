@@ -11,6 +11,9 @@ All notable changes to AgeForge are documented here.
 - **Prestige past your record.** After a prestige, the next one opens only once you pass the furthest age an earlier run reached.
 - Prices in later ages now climb by 1.4 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.
 
+### Fixed
+- The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.
+
 ### Added
 - **Plan upgrades.** `plan upgrade <building> [count|all]` adds an upgrade to the plan. It upgrades one copy at a time as soon as each can be paid.
 - **Time to prestige.** When a new run with your next prestige bonus would pass your current age sooner than pushing on, the game says so once per age, and stats keeps a line about it. Every figure comes from your own run.

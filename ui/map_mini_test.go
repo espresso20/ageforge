@@ -273,3 +273,18 @@ func TestDumpDashboardWithMiniMap(t *testing.T) {
 		}
 	}
 }
+
+// TestMiniMapNotShownBeforeFirstRefresh: a dashboard that has been drawn but
+// not yet refreshed (the frame between showing it and the first tick) must
+// not show the mini map. It is off until the player turns it on, so the
+// dock starts off and a refresh reads the account's setting.
+func TestMiniMapNotShownBeforeFirstRefresh(t *testing.T) {
+	eng := game.NewGameEngine()
+	pages := tview.NewPages()
+	d := NewDashboard(tview.NewApplication(), eng, pages)
+	pages.AddPage("dashboard", d.Root(), true, true)
+	txt := drawDashboard(t, d, pages, 180, 56)
+	if d.mapDock.shown || strings.Contains(txt, " Map · ") {
+		t.Fatalf("the mini map shows before the first refresh, on a dashboard nobody turned it on for:\n%s", txt)
+	}
+}

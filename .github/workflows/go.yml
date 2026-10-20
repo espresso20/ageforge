@@ -25,8 +25,8 @@ jobs:
     # go test -race took about 10 minutes on master until 2026-10-02, when
     # the runners got about 40% slower and master itself started timing out
     # at 15 (the roguelike map tests were still running).
-    # 40, not 25: the race run takes 22 minutes on a slow runner, and a timeout here blocks every merge.
-    timeout-minutes: 40
+    # 55, not 40: the race run takes 22 to 30 minutes on a slow runner, and a timeout here blocks every merge.
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v7
 
@@ -66,8 +66,8 @@ jobs:
       # it timed out three times with nothing failing. 25 still reports a
       # real hang before the job's own limit above.
       - name: go test -race
-        # 25m a package, not 15: the ui package alone runs past 15 minutes under the race detector on a slow runner.
-        run: go test -race -timeout 25m ./...
+        # 40m a package: the ui package runs past 15 minutes and, since 2026-10-20, the smoke package past 25 under the race detector on a slow runner.
+        run: go test -race -timeout 40m ./...
 
   # The smoke suite's fast tier on every pull request (see CONTRIBUTING.md,
   # "Smoke testing"), without the scenarios that play the test bot: static
