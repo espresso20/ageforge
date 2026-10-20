@@ -191,7 +191,7 @@ func TestContentOldSaveGetsAnAgeOfGrace(t *testing.T) {
 		want string
 	}{
 		"a trade route, never started before": {ge.StartTradeRoute("local_barter"), "Trade routes need The Wheel first. Research it to start one."},
-		"scouting past the Scout Party":       {ge.LaunchExpedition("scout_ruins"), "Expeditions past the Scout Party need Exploration first. Research it to send one."},
+		"an expedition past the Scout Party":  {ge.LaunchExpedition("trade_caravan"), "Expeditions past the Scout Party need Exploration first. Research it to send one."},
 		"a festival":                          {ge.DoFestival(), "Festivals need Drama first. Research it to hold one."},
 	} {
 		if c.err == nil || c.err.Error() != c.want {
@@ -260,12 +260,12 @@ func TestContentOldSaveKeepsWhatItUsed(t *testing.T) {
 	if f := ge.GetState().Features[config.FeatureTradeRoutes]; !f.Live || !f.Open || !f.Granted || f.TechName != "The Wheel" {
 		t.Errorf("trade routes read %+v, want a live lock, open and granted", f)
 	}
-	// Never used: festivals and scouting past the Scout Party wait.
+	// Never used: festivals and expeditions past the Scout Party wait.
 	if err := ge.DoFestival(); err == nil || err.Error() != "Festivals need Drama first. Research it to hold one." {
 		t.Errorf("a festival, never held before: %v", err)
 	}
-	if err := ge.LaunchExpedition("scout_ruins"); err == nil || err.Error() != "Expeditions past the Scout Party need Exploration first. Research it to send one." {
-		t.Errorf("scouting past the Scout Party, never sent before: %v", err)
+	if err := ge.LaunchExpedition("trade_caravan"); err == nil || err.Error() != "Expeditions past the Scout Party need Exploration first. Research it to send one." {
+		t.Errorf("an expedition past the Scout Party, never sent before: %v", err)
 	}
 
 	again := saveAndLoad(t, ge, "tree_v2_iron_again")

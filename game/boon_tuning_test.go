@@ -417,7 +417,7 @@ type expDriver struct {
 // Getting this wrong is how the harness shipped broken. ExpeditionDef used to
 // carry a legacy fixed Duration field alongside the range, and LaunchExpedition
 // ignored it whenever a range was set — but the stale fixed values bore no
-// relation to the ranges (scout_party said Duration: 20 next to DurationMin/Max
+// relation to the ranges (scouting_party said Duration: 20 next to DurationMin/Max
 // of 100/160). This harness picked and timed its expeditions off that legacy
 // field, so it simulated a cadence ~6.5x faster than the game can produce and
 // every number it reported about encounter frequency was wrong in the same
@@ -428,7 +428,7 @@ func effectiveExpeditionDuration(d ExpeditionDef) int {
 
 // rollDuration draws one launch's active duration with the SAME rule
 // LaunchExpedition uses — a uniform value in [DurationMin, DurationMax],
-// stretched for the age — but off the harness's seeded rng so a scenario stays
+// not stretched by the age — but off the harness's seeded rng so a scenario stays
 // reproducible. Mirrors the runtime's guards: a def without a real range pins at
 // its floor, and the result is floored at 1 so a malformed def cannot spin the
 // driver.
@@ -440,7 +440,7 @@ func (d *expDriver) rollDuration(rng *rand.Rand) int {
 	if ticks < 1 {
 		ticks = 1
 	}
-	return expeditionTicks(d.age, ticks)
+	return ticks // a mission's length is rolled in minutes and no age stretches it
 }
 
 // newExpDriver picks the SHORTEST expedition available in a category at an age —
@@ -1038,7 +1038,7 @@ func TestBoonTuning_HarnessUsesRuntimeDurations(t *testing.T) {
 			}
 
 			// Every rolled launch must fall in the runtime's own range,
-			// stretched for the age. A def without a real range pins every
+			// unstretched. A def without a real range pins every
 			// roll at its floor (min 1).
 			lo, hi := d.durMin, d.durMax
 			if hi <= lo {
@@ -1047,7 +1047,6 @@ func TestBoonTuning_HarnessUsesRuntimeDurations(t *testing.T) {
 			if lo < 1 {
 				lo, hi = 1, 1
 			}
-			lo, hi = expeditionTicks(age, lo), expeditionTicks(age, hi)
 			for i := 0; i < 200; i++ {
 				if ticks := d.rollDuration(rng); ticks < lo || ticks > hi {
 					t.Fatalf("%s at %s: rolled duration %d outside runtime range [%d,%d]",

@@ -25,8 +25,7 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 	ge.age = age
 	ge.currentEpoch = config.EpochForAge(age)
 	ge.Events.nextEventTick = 1 << 40
-	// Expeditions past the Scout Party wait for Exploration, which a game
-	// this far along holds: the spine runs through it.
+	// Exploration gates every expedition mission, but not the era's scout.
 	learn(ge, "exploration")
 
 	for _, def := range config.BaseResources() {
@@ -34,7 +33,7 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 		if r, ok := ge.Resources.resources[def.Key]; ok {
 			r.Storage = stock*10 + 1
 			r.Amount = stock
-			r.Rate = 0
+			r.Rate = 1 // an income, so a scout's cost is sized on something
 		}
 	}
 	if n > 0 {
@@ -54,15 +53,17 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 // returns how many expeditions were auto-launched and how many resolved. It does
 // NOT run doTick, so nothing else in the economy moves.
 func runAutoTicks(ge *GameEngine, n int) (launched, resolved int) {
-	prevActive := ge.Military.ActiveByCategory(ExpeditionScouting) != nil
+	// A launch is a new active mission: a party that comes home and is sent
+	// out again in the same tick still counts.
+	prev := ge.Military.ActiveByCategory(ExpeditionScouting)
 	for i := 0; i < n; i++ {
 		resolved += len(ge.Military.Tick(ge.gameRNG(), 0, 0))
 		ge.processAutoExpeditions()
-		nowActive := ge.Military.ActiveByCategory(ExpeditionScouting) != nil
-		if nowActive && !prevActive {
+		now := ge.Military.ActiveByCategory(ExpeditionScouting)
+		if now != nil && now != prev {
 			launched++
 		}
-		prevActive = nowActive
+		prev = now
 	}
 	return launched, resolved
 }
@@ -202,7 +203,7 @@ func TestAutoExpedition_RespectsSingleSlot(t *testing.T) {
 	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, 1e9)
 
 	// Park a scouting expedition in the slot by hand and freeze its timer high.
-	if err := ge.launchExpeditionLocked("scout_ruins"); err != nil {
+	if err := ge.launchExpeditionLocked("aerial_survey"); err != nil {
 		t.Fatalf("manual launch failed: %v", err)
 	}
 	manual := ge.Military.ActiveByCategory(ExpeditionScouting)
@@ -244,12 +245,13 @@ func TestAutoExpedition_PaysTheCost(t *testing.T) {
 	if def == nil {
 		t.Fatal("picker returned nil with a full treasury")
 	}
-	if len(def.Cost) == 0 {
+	cost := ge.missionCostLocked(def)
+	if len(cost) == 0 {
 		t.Skip("the chosen scouting expedition is free — nothing to charge")
 	}
 
 	before := map[string]float64{}
-	for res := range def.Cost {
+	for res := range cost {
 		before[res] = ge.Resources.Get(res)
 	}
 
@@ -257,7 +259,7 @@ func TestAutoExpedition_PaysTheCost(t *testing.T) {
 	if launched != 1 {
 		t.Fatalf("expected 1 immediate dispatch on the first tick, got %d", launched)
 	}
-	for res, amount := range def.Cost {
+	for res, amount := range cost {
 		want := before[res] - amount
 		if got := ge.Resources.Get(res); got != want {
 			t.Errorf("%s: have %.2f after the auto-launch, want %.2f (cost %.2f unpaid or double-charged)",
@@ -327,6 +329,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 		ge := autoExpeditionTestEngine(t, "atomic_age", tc.count, tc.assigned, 1e12)
 		_, fill := ge.autoExpeditionInvestment()
 		want := autoExpeditionIntervalIn(ge.age, tc.count, fill)
+		scoutLongest := missionAt(ge, ge.age, config.MissionScout).DurationMax
 
 		launched, _ := runAutoTicks(ge, ticks)
 		if launched == 0 {
@@ -337,8 +340,8 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 			tc.name, want, cycle, launched, ticks/1000)
 
 		// The observed cycle is max(interval, expedition duration), so it can only
-		// be LONGER than the formula, and by at most the duration span (both are
-		// stretched for the age).
+		// be LONGER than the formula, and by at most the longest the era's scout
+		// can be out (rolled at every launch, the age does not stretch it).
 		//
 		// The 2% slack on the low side is a finite-window artefact, not slop: the
 		// society's first party leaves the tick the doors open (the countdown starts
@@ -349,7 +352,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 			t.Errorf("%s: observed cycle %.1f is shorter than the interval %d — the countdown is leaking",
 				tc.name, cycle, want)
 		}
-		if cycle > float64(want+config.StretchTicks(ge.age, 120)) {
+		if cycle > float64(want+scoutLongest) {
 			t.Errorf("%s: observed cycle %.1f is far longer than the interval %d",
 				tc.name, cycle, want)
 		}

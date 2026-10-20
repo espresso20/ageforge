@@ -1,6 +1,6 @@
 # Badges
 
-A **badge** is a permanent mark on your account for something you did in a game. There are 552 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
+A **badge** is a permanent mark on your account for something you did in a game. There are 557 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
 
 Badges are cosmetic. A badge gives points, sometimes a title or a theme, and nothing inside a run: the same game plays the same way whatever the account has earned. They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
 
@@ -45,7 +45,7 @@ Each badge has a tier, and a tier is worth points. Your points add up to a **sco
 | Platinum | 50 | Epic |
 | Legendary | 100 | Legendary |
 
-A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 12,825 points.
+A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 12,875 points.
 
 ## The families
 
@@ -62,7 +62,7 @@ A badge's rarity follows its tier unless the badge says otherwise: a few are rar
 | **Civilizations** | 44 | Four for each civilization: meeting it, allying with it, taking five of its deals, and making peace after a war with it |
 | **Harbingers** | 34 | Hearing out each of the 22 harbingers, and appeasing each of the first 12 |
 | **Catastrophes** | 15 | Enduring and succumbing to each of the six catastrophes, and the three ways the Last Passage can end |
-| **Expeditions** | 16 | Coming back from each expedition with a success |
+| **Expeditions** | 21 | Coming back with a success from a scout, a long or a grand mission in each era |
 | **Awakenings** | 7 | Witnessing each awakening |
 | **Ladders** | 70 | Counts kept across all your runs, in 22 ladders |
 | **Themes** | 16 | Advancing an age while wearing each theme |
@@ -92,7 +92,7 @@ These count across all your runs. A dot separates the rungs.
 | Techs researched | 5 · 77 · 1,200 |
 | Milestones | 5 · 70 · 1,000 |
 | Milestone chains | 1 · 10 · 30 |
-| Expeditions | 4 · 20 · 100 · 500 |
+| Expeditions | 1 · 20 · 100 · 500 |
 | Faction deals | 1 · 10 · 100 |
 | Raids blunted | 1 · 22 · 500 |
 | Returns | 1 · 25 · 100 |

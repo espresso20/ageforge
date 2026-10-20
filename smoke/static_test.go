@@ -430,7 +430,7 @@ func TestStaticFeatureLocks(t *testing.T) {
 			live = append(live, r.Key+" <- "+r.Tech+" ("+r.TechAge+")")
 		}
 	}
-	if got, want := strings.Join(live, "; "), "trade_routes <- the_wheel (bronze_age); campaigns <- military_tactics (bronze_age); expeditions <- exploration (iron_age); diplomacy <- envoys (classical_age); festivals <- drama (classical_age); naval_expedition <- navigation (renaissance_age); black_market <- mercantilism (colonial_age); route_rail_freight <- railroads (industrial_age); route_warp_commerce <- interstellar_trade (interstellar_age)"; got != want {
+	if got, want := strings.Join(live, "; "), "trade_routes <- the_wheel (bronze_age); campaigns <- military_tactics (bronze_age); expeditions <- exploration (iron_age); diplomacy <- envoys (classical_age); festivals <- drama (classical_age); black_market <- mercantilism (colonial_age); route_rail_freight <- railroads (industrial_age); route_warp_commerce <- interstellar_trade (interstellar_age)"; got != want {
 		t.Errorf("live locks:\n got %s\nwant %s", got, want)
 	}
 	if got := strings.Join(FeatureLocksWaiting(rows), " "); got != "" {

@@ -330,7 +330,7 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 	plain := newTruthEngine("modern_age", truthClean)
 	march := func(e *GameEngine) int {
 		delete(e.Military.activeByCat, ExpeditionMilitary)
-		if err := e.Military.LaunchExpedition(rand.New(rand.NewSource(3)), "raid_bandits", e.age, ageOrders()); err != nil {
+		if err := e.Military.LaunchExpedition(rand.New(rand.NewSource(3)), "cyber_campaign", e.age, ageOrders()); err != nil {
 			t.Fatal(err)
 		}
 		return e.Military.activeByCat[ExpeditionMilitary].TicksLeft

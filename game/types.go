@@ -527,17 +527,29 @@ type AutoExpeditionState struct {
 
 // ExpeditionSnapshot represents an active expedition for UI
 type ExpeditionSnapshot struct {
-	Name      string
-	Soldiers  int
-	TicksLeft int
+	Name          string
+	Soldiers      int
+	TicksLeft     int
+	LengthMinutes float64
+	SuccessChance float64
+	HaulMinutes   float64
+	SuccessHaul   map[string]float64
+	FailureHaul   map[string]float64
 }
 
 // ExpeditionInfo represents an available expedition for UI
 type ExpeditionInfo struct {
-	Name           string
-	Key            string
-	Category       string // "scouting" or "military"
-	SoldiersNeeded int
+	Name            string
+	Key             string
+	Description     string
+	Kind            string
+	MinMinutes      float64
+	MaxMinutes      float64
+	BaseSuccess     float64
+	ExpectedHaulMin map[string]float64
+	ExpectedHaulMax map[string]float64
+	Category        string // "scouting" or "military"
+	SoldiersNeeded  int
 	// DurationMin/DurationMax mirror the ExpeditionDef's randomized active-duration
 	// bounds so the available-expeditions preview can show the rolled range.
 	DurationMin int
@@ -546,10 +558,9 @@ type ExpeditionInfo struct {
 	// Chance is the mission's chance of failure now, with the player's
 	// military power counted on the current age's yardstick
 	// (config.MissionDifficulty). Difficulty is the listed one, before it.
-	Chance      float64
-	Cost        map[string]float64
-	Description string
-	CanLaunch   bool
+	Chance    float64
+	Cost      map[string]float64
+	CanLaunch bool
 	// LaunchBlockReason is a short, player-facing explanation of why the
 	// expedition can't be launched right now (e.g. "need 3 soldiers",
 	// "need 30 food"). Empty when CanLaunch is true.

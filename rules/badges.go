@@ -19,6 +19,7 @@ type badgeSubject struct {
 	name   string
 	age    string // the age its tier comes from (TierByEra)
 	reveal config.BadgeReveal
+	word   string // a word the text may name ({word}); a mission badge's kind
 }
 
 // buildBadges expands the families into badges, in table order, and puts
@@ -470,7 +471,7 @@ func (s *Set) badgeSubjects(src config.BadgeSource) []badgeSubject {
 		}
 	case config.BadgeSourceExpeditions:
 		for _, x := range s.badgeExpeditions {
-			out = append(out, badgeSubject{key: x.Key, name: x.Name, age: x.MinAge, reveal: s.revealAtAge(x.MinAge)})
+			out = append(out, badgeSubject{key: x.Key, name: x.Name, age: x.MinAge, reveal: s.revealAtAge(x.MinAge), word: config.MissionKindWord(x.Kind)})
 		}
 	case config.BadgeSourceThemes:
 		for _, t := range s.badgeThemes {
@@ -547,6 +548,8 @@ func (s *Set) fillAt(sub badgeSubject, rung config.BadgeRung, n int, count float
 		"{mid}", mid,
 		"{short}", strings.TrimSuffix(sub.name, " Age"),
 		"{lname}", strings.ToLower(sub.name),
+		"{word}", sub.word,
+		"{Word}", textfmt.Capitalize(sub.word),
 		"{rung}", rung.Name,
 		"{n}", strconv.Itoa(n),
 		"{count}", badgeCount(count),

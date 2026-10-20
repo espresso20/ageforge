@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math"
 	"math/rand"
 	"strings"
 	"testing"
@@ -182,18 +183,23 @@ func TestDealRefreshStretch(t *testing.T) {
 	}
 }
 
-// TestExpeditionClocksStretch: a launch rolls in the stretched range, the
-// panel shows that range, and the Stone Age keeps the typed one.
-func TestExpeditionClocksStretch(t *testing.T) {
-	for _, c := range []struct{ age, key string }{{baseAge, "scout_party"}, {stretchedAge, "trade_escort"}} {
+// TestExpeditionClocksAreNotStretched: a mission's length is rolled in
+// its own range of minutes and no age stretches it; the panel shows the
+// same range.
+func TestExpeditionClocksAreNotStretched(t *testing.T) {
+	for _, c := range []struct{ age, key string }{{baseAge, "scouting_party"}, {stretchedAge, "trade_caravan"}} {
 		ge := newSeededEngine(9)
-		learn(ge, "military_tactics") // the tech that opens campaigns
+		learn(ge, "exploration") // the tech that opens expeditions
 		setAge(ge, c.age)
-		setSoldiers(ge, 50)
-		setResource(ge, "food", 1000)
-		setResource(ge, "wood", 1000)
 		def := ge.Military.ExpeditionDefByKey(c.key)
-		lo, hi := config.StretchTicks(c.age, def.DurationMin), config.StretchTicks(c.age, def.DurationMax)
+		for _, res := range []string{"food", "wood", "stone", "iron"} {
+			setResource(ge, res, 1e6)
+			setIncome(ge, res, 1)
+		}
+		lo, hi := def.DurationMin, def.DurationMax
+		if lo != int(math.Round(def.MinMinutes*ticksPerMinute)) || hi != int(math.Round(def.MaxMinutes*ticksPerMinute)) {
+			t.Fatalf("%s: %s lasts %d-%d ticks, want %v-%v minutes unstretched", c.age, c.key, lo, hi, def.MinMinutes, def.MaxMinutes)
+		}
 		if err := ge.LaunchExpedition(c.key); err != nil {
 			t.Fatalf("%s: launch %s: %v", c.age, c.key, err)
 		}
@@ -215,8 +221,8 @@ func TestAutoExpeditionStretch(t *testing.T) {
 	if got := autoExpeditionIntervalIn("industrial_age", 1, 0); got != config.StretchTicks("industrial_age", autoExpeditionBaseInterval) || got != 2340 {
 		t.Errorf("one unstaffed society, industrial = %d, want 2340 (900 x 2.6)", got)
 	}
-	if got := autoExpeditionIntervalIn("industrial_age", 20, 1); got != 260 {
-		t.Errorf("the floor, industrial = %d, want 260 (100 x 2.6)", got)
+	if got := autoExpeditionIntervalIn("industrial_age", 20, 1); got != 780 {
+		t.Errorf("the floor, industrial = %d, want 780 (300 x 2.6)", got)
 	}
 	if got := autoExpeditionIntervalIn(baseAge, 1, 0); got != autoExpeditionBaseInterval {
 		t.Errorf("one unstaffed society, stone = %d, want %d", got, autoExpeditionBaseInterval)

@@ -226,15 +226,28 @@ func encounterChance(category string, success bool) float64 {
 	switch category {
 	case ExpeditionScouting:
 		if success {
-			return encounterChanceScoutSuccess
+			return missionEncounterChance(encounterChanceScoutSuccess)
 		}
-		return encounterChanceScoutFail
+		return missionEncounterChance(encounterChanceScoutFail)
 	default: // ExpeditionMilitary and any unknown category
 		if success {
-			return encounterChanceMilitarySuccess
+			return missionEncounterChance(encounterChanceMilitarySuccess)
 		}
-		return encounterChanceMilitaryFail
+		return missionEncounterChance(encounterChanceMilitaryFail)
 	}
+}
+
+// The era missions meet people twice as often as the old expeditions did,
+// and never more often than three times in five.
+const (
+	missionEncounterFactor = 2
+	missionEncounterCap    = 0.6
+)
+
+// missionEncounterChance is a base encounter chance as a mission rolls it:
+// doubled, capped.
+func missionEncounterChance(base float64) float64 {
+	return min(missionEncounterCap, missionEncounterFactor*base)
 }
 
 // eligibleFactions returns the roster factions whose MinAge floor is met at the

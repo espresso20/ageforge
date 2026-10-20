@@ -1687,8 +1687,13 @@ func (ge *GameEngine) processExpeditions() {
 		}
 		// Add rewards to resources
 		ge.applyExpeditionRewards(res.Rewards)
+		if res.Success && res.Category == ExpeditionMilitary && res.SoldiersSent > 1 {
+			ge.Resources.Add("soldiers", float64(res.SoldiersSent/2))
+		}
 		if res.Success {
-			ge.note(config.BadgeEvExpedition, res.Key)
+			if def, ok := ge.rules.Mission(res.Key); ok {
+				ge.note(config.BadgeEvExpedition, config.MissionBadgeKey(def.Era, def.Kind))
+			}
 		}
 		// A resolved expedition may turn up a civilization: roll a faction encounter
 		// (discovery and/or a specialty-production boon) on the seeded RNG.
@@ -4468,6 +4473,113 @@ func (ge *GameEngine) LaunchExpedition(key string) error {
 	return ge.launchExpeditionLocked(key)
 }
 
+// MissionCost reports the current launch cost for a mission.
+func (ge *GameEngine) MissionCost(key string) map[string]float64 {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	def := ge.Military.ExpeditionDefByKey(key)
+	if def == nil {
+		return nil
+	}
+	return ge.missionCostLocked(def)
+}
+
+func (ge *GameEngine) missionCostLocked(def *ExpeditionDef) map[string]float64 {
+	cost := make(map[string]float64)
+	if def.Kind == config.MissionCampaign {
+		soldiers := math.Ceil(def.CostMinutes * (60 / config.TickSeconds) * ge.townIncome("soldiers"))
+		cost["soldiers"] = math.Max(1, soldiers)
+		return cost
+	}
+	charges := make(map[string]int)
+	age, ok := ge.rules.Age(ge.age)
+	if !ok {
+		return cost
+	}
+	for _, key := range age.UnlockBuildings {
+		b, found := ge.rules.Building(key)
+		if !found {
+			continue
+		}
+		for res := range b.BaseCost {
+			charges[res]++
+		}
+	}
+	keys := make([]string, 0, len(charges))
+	for res := range charges {
+		keys = append(keys, res)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if charges[keys[i]] != charges[keys[j]] {
+			return charges[keys[i]] > charges[keys[j]]
+		}
+		return keys[i] < keys[j]
+	})
+	// The two the age charges most; one the town makes none of is left out
+	// (the next in line does not take its place).
+	if len(keys) > 2 {
+		keys = keys[:2]
+	}
+	for _, res := range keys {
+		income := ge.townIncome(res)
+		if income <= 0 {
+			continue
+		}
+		cost[res] = math.Ceil((def.CostMinutes / 2) * (60 / config.TickSeconds) * income)
+	}
+	return cost
+}
+
+func (ge *GameEngine) missionHaulLocked(def *ExpeditionDef, haulMinutes float64) map[string]float64 {
+	age, ok := ge.rules.Age(ge.age)
+	if !ok {
+		return nil
+	}
+	levels := ge.rules.PriceLevels(ge.age)
+	incomes := make(map[string]float64)
+	for _, key := range age.UnlockBuildings {
+		b, found := ge.rules.Building(key)
+		if !found {
+			continue
+		}
+		for _, effect := range b.Effects {
+			if effect.Type == "production" && ge.townIncome(effect.Target) > 0 {
+				incomes[effect.Target] = ge.townIncome(effect.Target)
+			}
+		}
+	}
+	type ranked struct {
+		key   string
+		score float64
+	}
+	var rankedIncomes []ranked
+	for res, income := range incomes {
+		// Income in price units: how many first copies of the resource's price
+		// (its median first-copy price in this age) the town makes each tick, so
+		// a cheap material and a dear one compare. Only the age's construction
+		// materials have a price level; the others are not hauled.
+		level := levels[res]
+		if level <= 0 {
+			continue
+		}
+		rankedIncomes = append(rankedIncomes, ranked{res, income / level})
+	}
+	sort.Slice(rankedIncomes, func(i, j int) bool {
+		if rankedIncomes[i].score != rankedIncomes[j].score {
+			return rankedIncomes[i].score > rankedIncomes[j].score
+		}
+		return rankedIncomes[i].key < rankedIncomes[j].key
+	})
+	if len(rankedIncomes) > 2 {
+		rankedIncomes = rankedIncomes[:2]
+	}
+	out := make(map[string]float64)
+	for _, entry := range rankedIncomes {
+		out[entry.key] = incomes[entry.key] * (60 / config.TickSeconds) * haulMinutes / 2
+	}
+	return out
+}
+
 // launchExpeditionLocked is the single expedition-launch path: it validates the
 // cost, the age range and the one-active-per-category rule, then deducts soldiers
 // and resources. Callers must already hold the write lock.
@@ -4489,15 +4601,22 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 	// --- Validate everything BEFORE any deduction so a failed launch never
 	// partially charges the player. ---
 
-	// Soldiers resource check (soldiers are now a real resource, not workers).
+	// A mission of another era first: its cost is sized on this age's materials.
+	if err := ge.Military.eraRefusal(def, ge.age); err != nil {
+		return err
+	}
+	cost := ge.missionCostLocked(def)
+	soldiers := cost["soldiers"]
+	delete(cost, "soldiers")
 	haveSoldiers := int(ge.Resources.Get("soldiers"))
-	if haveSoldiers < def.SoldiersNeeded {
-		return fmt.Errorf("%s needs %d soldiers (you have %d). Military buildings train them; see the Army panel", def.Name, def.SoldiersNeeded, haveSoldiers)
+	if haveSoldiers < int(soldiers) {
+		return fmt.Errorf("%s needs %d soldiers (you have %d). Military buildings train them; see the Army panel", def.Name, int(soldiers), haveSoldiers)
 	}
 
-	// Additional resource cost check.
-	for res, amount := range def.Cost {
-		if ge.Resources.Get(res) < amount {
+	// Additional resource cost check, in a fixed order so the refusal names
+	// the same material every time.
+	for _, res := range sortedKeys(cost) {
+		if amount := cost[res]; ge.Resources.Get(res) < amount {
 			return fmt.Errorf("%s needs %s %s (you have %s)", def.Name, amountText(amount), resourceLabel(res), amountText(ge.Resources.Get(res)))
 		}
 	}
@@ -4511,16 +4630,39 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 	}
 
 	// Age range + active-expedition validation (does NOT touch resources).
-	if err := ge.Military.LaunchExpedition(ge.gameRNG(), key, ge.age, ageOrder); err != nil {
+	typical := 0.0
+	if index, ok := ageOrder[ge.age]; ok {
+		scales := config.MilitaryScales(ge.rules.Techs(), ge.rules.AgeKeys())
+		if index >= 0 && index < len(scales) {
+			typical = scales[index].Then
+		}
+	}
+	if err := ge.Military.LaunchMission(ge.gameRNG(), key, ge.age, ageOrder, ge.missionPower(), typical, cost, nil, soldiers); err != nil {
 		return err
+	}
+	active := ge.Military.ActiveByCategory(def.Category)
+	active.BaseRewards = ge.missionHaulLocked(def, active.HaulMinutes)
+	active.SuccessRewards = scaleLoot(active.BaseRewards, 1+ge.expeditionReward())
+	active.FailureRewards = scaleLoot(active.BaseRewards, failedLootShare)
+	if def.Kind == config.MissionCampaign {
+		pay := ge.Military.campaignPay
+		if pay <= 1 {
+			pay = 1
+		}
+		for res := range active.SuccessRewards {
+			active.SuccessRewards[res] *= pay
+		}
+		for res := range active.FailureRewards {
+			active.FailureRewards[res] *= pay
+		}
 	}
 	ge.useFeature(expeditionFeatures(def)...)
 
 	// --- All checks passed: deduct soldiers + Cost. ---
-	if def.SoldiersNeeded > 0 {
-		ge.Resources.Remove("soldiers", float64(def.SoldiersNeeded))
+	if soldiers > 0 {
+		ge.Resources.Remove("soldiers", soldiers)
 	}
-	for res, amount := range def.Cost {
+	for res, amount := range cost {
 		ge.Resources.Remove(res, amount)
 	}
 
@@ -4944,9 +5086,54 @@ func (ge *GameEngine) GetState() GameState {
 	// Geographic Society's buildings, workers or dispatch countdown. Build the
 	// snapshot here and graft the automatic-dispatch view on afterwards.
 	militarySnap := ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus)
-	missionPower := ge.missionPower()
 	for i := range militarySnap.Expeditions {
-		militarySnap.Expeditions[i].Chance = config.MissionDifficulty(militarySnap.Expeditions[i].Difficulty, missionPower)
+		info := &militarySnap.Expeditions[i]
+		def := ge.Military.ExpeditionDefByKey(info.Key)
+		if def == nil {
+			continue
+		}
+		cost := ge.missionCostLocked(def)
+		info.SoldiersNeeded = int(cost["soldiers"])
+		delete(cost, "soldiers")
+		info.Cost = cost
+		info.ExpectedHaulMin = ge.missionHaulLocked(def, def.MinMinutes*def.Yield*0.6)
+		info.ExpectedHaulMax = ge.missionHaulLocked(def, def.MaxMinutes*def.Yield*1.6)
+		multiplier := 1 + expeditionBonus
+		if def.Kind == config.MissionCampaign {
+			pay := ge.Military.campaignPay
+			if pay <= 1 {
+				pay = 1
+			}
+			multiplier *= pay
+		}
+		for res := range info.ExpectedHaulMin {
+			info.ExpectedHaulMin[res] *= multiplier
+		}
+		for res := range info.ExpectedHaulMax {
+			info.ExpectedHaulMax[res] *= multiplier
+		}
+		info.Chance = 1 - def.BaseSuccess
+		active := ge.Military.ActiveByCategory(def.Category)
+		canLaunch := active == nil && int(ge.Resources.Get("soldiers")) >= info.SoldiersNeeded
+		reason := ""
+		if active != nil {
+			reason = categoryNoun(def.Category) + " is already under way"
+		}
+		for _, res := range sortedKeys(cost) {
+			if amount := cost[res]; ge.Resources.Get(res) < amount {
+				canLaunch = false
+				if reason == "" {
+					reason = fmt.Sprintf("needs %s %s", amountText(amount), resourceLabel(res))
+				}
+			}
+		}
+		if int(ge.Resources.Get("soldiers")) < info.SoldiersNeeded {
+			canLaunch = false
+			if reason == "" {
+				reason = fmt.Sprintf("needs %d soldiers: military buildings train them", info.SoldiersNeeded)
+			}
+		}
+		info.CanLaunch, info.LaunchBlockReason = canLaunch, reason
 	}
 	militarySnap.AutoExpedition = ge.autoExpeditionSnapshot()
 	militarySnap.Threat = ge.ageThreat(ge.age)

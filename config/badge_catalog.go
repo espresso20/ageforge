@@ -12,31 +12,38 @@ package config
 
 // ----- the tables a family may be made from that live outside config -----
 
-// BadgeExpeditionDef is an expedition as the catalog needs it. The
-// expeditions themselves belong to the game package, which checks this
+// BadgeExpeditionDef is a badge subject for the missions: one era and one
+// kind. Key is MissionBadgeKey, Name the era's name, MinAge the era's first
+// age. The missions themselves belong to the game package, which checks this
 // table against its own (TestBadgeExpeditionsMatchTheGame).
-type BadgeExpeditionDef struct{ Key, Name, MinAge string }
+type BadgeExpeditionDef struct{ Key, Name, MinAge, Kind string }
 
-// BadgeExpeditions lists every expedition, in the game's order.
-func BadgeExpeditions() []BadgeExpeditionDef {
-	return []BadgeExpeditionDef{
-		{"scout_party", "Scout Party", "primitive_age"},
-		{"scout_ruins", "Scout Nearby Ruins", "bronze_age"},
-		{"raid_bandits", "Raid Bandit Camp", "bronze_age"},
-		{"trade_escort", "Trade Escort", "iron_age"},
-		{"conquer_territory", "Conquer Territory", "iron_age"},
-		{"siege_castle", "Siege Enemy Castle", "medieval_age"},
-		{"naval_expedition", "Naval Expedition", "renaissance_age"},
-		{"colonial_campaign", "Colonial Campaign", "industrial_age"},
-		{"world_domination", "World Domination", "modern_age"},
-		{"cyber_raid", "Cyber Raid", "information_age"},
-		{"neon_heist", "Neon Heist", "cyberpunk_age"},
-		{"fusion_assault", "Fusion Plant Assault", "fusion_age"},
-		{"orbital_strike", "Orbital Strike", "space_age"},
-		{"warp_invasion", "Warp Invasion", "interstellar_age"},
-		{"galactic_conquest", "Galactic Conquest", "galactic_age"},
-		{"quantum_incursion", "Quantum Incursion", "quantum_age"},
+// MissionBadgeKey is the badge subject of an era's mission of one kind.
+func MissionBadgeKey(era, kind string) string { return "expedition_" + era + "_" + kind }
+
+// MissionKindWord is the word a badge uses for a mission kind.
+func MissionKindWord(kind string) string {
+	switch kind {
+	case MissionExpedition:
+		return "long"
+	case MissionCampaign:
+		return "grand"
 	}
+	return "scout"
+}
+
+// BadgeExpeditions lists every era and kind a mission badge exists for, in
+// the catalog's order.
+func BadgeExpeditions() []BadgeExpeditionDef {
+	out := make([]BadgeExpeditionDef, 0, len(Missions()))
+	for _, mission := range Missions() {
+		for _, era := range Epochs() {
+			if era.Key == mission.Era && len(era.Ages) > 0 {
+				out = append(out, BadgeExpeditionDef{MissionBadgeKey(mission.Era, mission.Kind), era.Name, era.Ages[0], mission.Kind})
+			}
+		}
+	}
+	return out
 }
 
 // BadgeThemeDef is a theme as the catalog needs it: its key, its name and
@@ -352,13 +359,13 @@ func BadgeFamilies() []BadgeFamilyDef {
 			RevealBySubject: true, Emblem: "ruin", Set: "doom.succumbed",
 			Proof: Occurs("A doom that strikes waits for the answer, and Succumb is always one of the two."),
 		},
-		// F12. Each expedition, come back from with a success.
+		// F12. Each era and kind of mission, come back from with a success.
 		{
 			Family: "expedition", Source: BadgeSourceExpeditions,
-			Key: "expedition.{key}", Name: "{name}", Desc: "Come back from a successful {name}.",
+			Key: "expedition.{key}", Name: "{name} {Word}", Desc: "Come back from a successful {word} mission in the {name}.",
 			Tier: BadgeSilver, Scope: BadgeMoment, Event: BadgeEvExpedition,
 			RevealBySubject: true, Emblem: "military",
-			Proof: Occurs("An expedition can be sent whenever its age and its soldiers are there, and every expedition has a chance to succeed that soldiers raise."),
+			Proof: Occurs("A mission of every era can be sent whenever its age and its lock are open, and every mission has a chance to succeed."),
 		},
 		// F13. Each theme, worn at an advance.
 		{
@@ -466,7 +473,7 @@ func badgeLadders() []BadgeFamilyDef {
 		ladder("chains", "Milestone chains", BadgeEvChain, "Complete {count} milestone chains across all your runs.", "Complete your first milestone chain.",
 			[]float64{1, 10, 30}, []string{"Linked", "Chain Smoker", "Unbroken"}, "star", visible, life),
 		ladder("expeditions", "Expeditions", BadgeEvExpedition, "Come back from {count} successful expeditions.", "",
-			[]float64{4, 20, 100, 500}, []string{"Day Tripper", "Seasoned Traveler", "Frequent Flyer", "Never Home"}, "military", visible, life),
+			[]float64{1, 20, 100, 500}, []string{"Day Tripper", "Seasoned Traveler", "Frequent Flyer", "Never Home"}, "military", visible, life),
 		ladder("deals", "Faction deals", BadgeEvDeal, "Take {count} deals from civilizations.", "Take a deal from a civilization.",
 			[]float64{1, 10, 100}, []string{"Deal Maker", "Preferred Customer", "Closer"}, "trade", RevealUntilSeen(BadgeEvCivMet), life),
 		ladder("raids", "Raids blunted", BadgeEvRaidBlunted, "Have your garrison blunt {count} raids.", "Have your garrison blunt a raid.",

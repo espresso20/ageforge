@@ -41,7 +41,9 @@ func TestArmyPanel_TrainingBeforeSoldiers(t *testing.T) {
 	if !strings.Contains(txt, "Training:  not yet. A military building trains soldiers.") || strings.Contains(txt, "/tick\n Defense") {
 		t.Errorf("a new game's Army panel should say nothing trains yet, with no rate:\n%s", txt)
 	}
-	if !strings.Contains(txt, "which military buildings train.") {
+	// Every era has a campaign now, so a new game lists one and the entry
+	// says what it waits for (the empty-list wording cannot show).
+	if !strings.Contains(txt, "military buildings train them") {
 		t.Errorf("the Army panel should say what trains soldiers:\n%s", txt)
 	}
 	if err := engine.EnterAgeForTest("stone_age"); err != nil {

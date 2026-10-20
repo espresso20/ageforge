@@ -367,7 +367,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 |---|---|---|---|---|---|
 | `patronage` | Patronage | **keystone** (Sistine Chapel) | 1h 41m | `banking` | +6% culture production |
 | `printing_press` | Printing Press | optional | 2h 12m | `alchemy`, `theology` | +6% scholar output, research takes 3% less time |
-| `navigation` | Navigation | spine | 1h 18m | `exploration`, `mathematics` | Opens the Naval Expedition, +10% expedition rewards |
+| `navigation` | Navigation | spine | 1h 18m | `exploration`, `mathematics` | +10% expedition rewards |
 | `crop_rotation` | Crop Rotation | optional | 2h 51m | `feudalism` | +6% food production |
 | `architecture` | Architecture | optional | 3h 43m | `civil_engineering` | Buildings cost 3% less, wonders take 25% less time to build |
 | `blast_furnace` | Blast Furnace | optional | 4h 50m | `steel_forging` | Opens the Foundry, +6% steel production |

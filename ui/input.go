@@ -1813,8 +1813,10 @@ func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
 
 	expKey := strings.ToLower(strings.Join(args, "_"))
 
-	// Reject military keys here — they belong to `campaign`.
-	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionScouting {
+	// Reject military keys here — they belong to `campaign`. Only a mission on
+	// offer in this age is named; any other falls through to the engine's
+	// refusal, which does not name a later era's mission.
+	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionScouting && missionOffered(engine, expKey) {
 		return CommandResult{
 			Message: fmt.Sprintf("%s is a military campaign. Wage it with 'campaign %s'.", def.Name, expKey),
 			Type:    "info",
@@ -1825,6 +1827,16 @@ func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
 		return errorResult(err)
 	}
 	return CommandResult{Type: "success"} // the engine logs the launch
+}
+
+// missionOffered reports whether the mission key is on offer in the current age.
+func missionOffered(engine *game.GameEngine, key string) bool {
+	for _, info := range engine.GetState().Military.Expeditions {
+		if info.Key == key {
+			return true
+		}
+	}
+	return false
 }
 
 // cmdCampaign handles the `campaign` command — the MILITARY surface. No args or
@@ -1841,8 +1853,9 @@ func cmdCampaign(args []string, engine *game.GameEngine) CommandResult {
 
 	expKey := strings.ToLower(strings.Join(args, "_"))
 
-	// Reject scouting keys here — they belong to `expedition`.
-	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionMilitary {
+	// Reject scouting keys here — they belong to `expedition`. Only a mission
+	// on offer in this age is named (see cmdExpedition).
+	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionMilitary && missionOffered(engine, expKey) {
 		return CommandResult{
 			Message: fmt.Sprintf("%s is a scouting expedition. Send it with 'expedition %s'.", def.Name, expKey),
 			Type:    "info",

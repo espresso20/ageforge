@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Feature locks (config.FeatureLocks): a command that waits for a tech.
@@ -100,19 +101,18 @@ func (ge *GameEngine) useFeature(keys ...string) {
 	}
 }
 
-// expeditionFeatures is the locks an expedition sits behind: campaigns for a
-// military one; for a scouting one past the Scout Party the expeditions
-// lock, and the Naval Expedition its own on top.
+// expeditionFeatures is the locks a mission sits behind: none for a scout,
+// the expeditions lock for an expedition, the campaigns lock for a campaign.
 func expeditionFeatures(def *ExpeditionDef) []string {
-	switch {
-	case def.Category == ExpeditionMilitary:
-		return []string{config.FeatureCampaigns}
-	case def.Key == "scout_party":
+	switch def.Kind {
+	case config.MissionScout:
 		return nil
-	case def.Key == "naval_expedition":
-		return []string{config.FeatureExpeditions, config.FeatureNavalExpedition}
+	case config.MissionCampaign:
+		return []string{config.FeatureCampaigns}
+	case config.MissionExpedition:
+		return []string{config.FeatureExpeditions}
 	}
-	return []string{config.FeatureExpeditions}
+	return nil
 }
 
 // routeFeatures is the locks a trade route sits behind: trade routes, and
@@ -178,7 +178,7 @@ func (ge *GameEngine) loadGrantedFeatures(keys []string) {
 //     the save has reached the age it sails from;
 //   - festivals and the black market: their cooldown has been set this run;
 //   - diplomacy: a civilization is met.
-func featuresInUse(save *GameSave, ageIndex func(string) (int, bool)) []string {
+func featuresInUse(save *GameSave, set *rules.Set, ageIndex func(string) (int, bool)) []string {
 	var out []string
 	routes := save.Trade.ActiveRoutes
 	if len(routes) > 0 || len(save.Trade.TotalImported) > 0 || len(save.Trade.TotalExported) > 0 {
@@ -193,20 +193,20 @@ func featuresInUse(save *GameSave, ageIndex func(string) (int, bool)) []string {
 		out = append(out, config.FeatureCampaigns)
 	}
 	for _, exp := range []*ActiveExpedition{save.Military.ActiveScout, save.Military.ActiveExpedition} {
-		if exp == nil || exp.Key == "scout_party" {
+		if exp == nil {
 			continue
 		}
-		out = append(out, config.FeatureExpeditions)
-		if exp.Key == "naval_expedition" {
-			out = append(out, config.FeatureNavalExpedition)
+		if def, ok := set.Mission(exp.Key); ok {
+			switch def.Kind {
+			case config.MissionExpedition:
+				out = append(out, config.FeatureExpeditions)
+			case config.MissionCampaign:
+				out = append(out, config.FeatureCampaigns)
+			}
 		}
 	}
 	if save.Military.CompletedCount > 0 {
 		out = append(out, config.FeatureCampaigns, config.FeatureExpeditions)
-		here, okHere := ageIndex(save.Age)
-		if sails, ok := ageIndex("renaissance_age"); ok && okHere && here >= sails {
-			out = append(out, config.FeatureNavalExpedition)
-		}
 	}
 	if save.FestivalReadyTick > 0 {
 		out = append(out, config.FeatureFestivals)

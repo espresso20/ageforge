@@ -287,7 +287,7 @@ func TestFeatureLocks(t *testing.T) {
 		return strings.Join(out, " ")
 	}
 	live, waiting := LiveFeatureLocks(locks, isTech)
-	if got, want := keys(live), "trade_routes campaigns expeditions diplomacy festivals naval_expedition black_market route_rail_freight route_warp_commerce"; got != want {
+	if got, want := keys(live), "trade_routes campaigns expeditions diplomacy festivals black_market route_rail_freight route_warp_commerce"; got != want {
 		t.Errorf("live locks: %s; want %s", got, want)
 	}
 	if got := keys(waiting); got != "" {
@@ -382,7 +382,7 @@ func TestTechChecks(t *testing.T) {
 		"quarrying":                   "out:marble:8; out:iron_ore:8 | rate(marble) x1.08; rate(iron_ore) x1.08",
 		"printing_press":              "out:research:6; research:3 | rate(research) x1.06; research_ticks x0.97",
 		"chronometry":                 "speed:5 | tick_speed +0.05",
-		"navigation":                  "exp:10; feature:naval_expedition | expedition_reward +0.1; allowed(naval_expedition) 0>1",
+		"navigation":                  "exp:10 | expedition_reward +0.1",
 	} {
 		if got := form(key); got != want {
 			t.Errorf("%s:\n got %s\nwant %s", key, got, want)

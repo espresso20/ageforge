@@ -364,37 +364,50 @@ func TestDefaultLooksAreInTheCatalog(t *testing.T) {
 	}
 }
 
-// TestBadgeExpeditionsMatchTheGame: the catalog's table of expeditions is
-// the game's, each in the age it comes with.
+// TestBadgeExpeditionsMatchTheGame: the catalog's table of mission badges
+// is one per era and kind of the game's missions, each in the age its era
+// opens with, and a successful mission of the game earns exactly its badge.
 func TestBadgeExpeditionsMatchTheGame(t *testing.T) {
 	set := rules.Core()
 	order := set.Indexes()
 	mm := NewMilitaryManager()
-	first := map[string]string{}
+	type slot struct{ era, kind, first string }
+	game := map[string]slot{}
 	for _, age := range set.AgeKeys() {
 		for _, x := range mm.GetAvailableExpeditions(age, order) {
-			if _, seen := first[x.Key]; !seen {
-				first[x.Key] = age
+			key := config.MissionBadgeKey(x.Era, x.Kind)
+			if _, seen := game[key]; !seen {
+				game[key] = slot{x.Era, x.Kind, age}
 			}
 		}
+	}
+	if got := len(config.BadgeExpeditions()); got != 21 {
+		t.Fatalf("badge mission catalog has %d entries, want 21", got)
 	}
 	listed := map[string]bool{}
 	for _, x := range config.BadgeExpeditions() {
 		listed[x.Key] = true
-		if first[x.Key] == "" {
-			t.Errorf("the catalog lists the expedition %s, which the game does not have", x.Key)
+		g, ok := game[x.Key]
+		if !ok {
+			t.Errorf("the catalog lists %s, which the game does not have", x.Key)
 			continue
 		}
-		if first[x.Key] != x.MinAge {
-			t.Errorf("%s comes in the %s; the catalog says %s", x.Key, first[x.Key], x.MinAge)
+		if g.first != x.MinAge {
+			t.Errorf("%s comes in the %s; the catalog says %s", x.Key, g.first, x.MinAge)
 		}
-		if _, ok := set.Badge("expedition." + x.Key); !ok {
-			t.Errorf("no badge for the expedition %s", x.Key)
+		b, ok := set.Badge("expedition." + x.Key)
+		if !ok {
+			t.Errorf("no badge for %s", x.Key)
+			continue
+		}
+		want := "Come back from a successful " + config.MissionKindWord(g.kind) + " mission in the " + x.Name + "."
+		if b.Desc != want {
+			t.Errorf("%s reads %q, want %q", x.Key, b.Desc, want)
 		}
 	}
-	for key := range first {
+	for key := range game {
 		if !listed[key] {
-			t.Errorf("the game has the expedition %s, which the catalog does not list", key)
+			t.Errorf("the game has %s, which the catalog does not list", key)
 		}
 	}
 }
