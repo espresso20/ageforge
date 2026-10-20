@@ -39,11 +39,11 @@ func TestLaunchExpedition_SpendsSoldiersAndCost(t *testing.T) {
 	learn(ge, "military_tactics") // the tech that opens campaigns
 	setAge(ge, "iron_age")
 
-	// trade_escort: iron_age, SoldiersNeeded 3, no Cost.
+	// trade_caravan: iron_age, SoldiersNeeded 3, no Cost.
 	setSoldiers(ge, 10)
 
-	if err := ge.LaunchExpedition("trade_escort"); err != nil {
-		t.Fatalf("LaunchExpedition(trade_escort) returned error: %v", err)
+	if err := ge.LaunchExpedition("trade_caravan"); err != nil {
+		t.Fatalf("LaunchExpedition(trade_caravan) returned error: %v", err)
 	}
 
 	got := ge.Resources.Get("soldiers")
@@ -53,7 +53,7 @@ func TestLaunchExpedition_SpendsSoldiersAndCost(t *testing.T) {
 }
 
 // TestLaunchExpedition_DeductsCostResources verifies an expedition with a Cost
-// map deducts those resources too (scout_party in stone_age, food+wood, no soldiers).
+// map deducts those resources too (scouting_party in stone_age, food+wood, no soldiers).
 func TestLaunchExpedition_DeductsCostResources(t *testing.T) {
 	ge := NewGameEngine()
 	setAge(ge, "stone_age")
@@ -61,15 +61,15 @@ func TestLaunchExpedition_DeductsCostResources(t *testing.T) {
 	setResource(ge, "food", 100)
 	setResource(ge, "wood", 100)
 
-	if err := ge.LaunchExpedition("scout_party"); err != nil {
-		t.Fatalf("LaunchExpedition(scout_party) returned error: %v", err)
+	if err := ge.LaunchExpedition("scouting_party"); err != nil {
+		t.Fatalf("LaunchExpedition(scouting_party) returned error: %v", err)
 	}
 
 	if food := ge.Resources.Get("food"); food != 70 {
-		t.Errorf("food after scout_party = %v, want 70 (100 - 30)", food)
+		t.Errorf("food after scouting_party = %v, want 70 (100 - 30)", food)
 	}
 	if wood := ge.Resources.Get("wood"); wood != 70 {
-		t.Errorf("wood after scout_party = %v, want 70 (100 - 30)", wood)
+		t.Errorf("wood after scouting_party = %v, want 70 (100 - 30)", wood)
 	}
 }
 
@@ -79,10 +79,10 @@ func TestLaunchExpedition_InsufficientSoldiers_NoDeduction(t *testing.T) {
 	ge := NewGameEngine()
 	setAge(ge, "iron_age")
 
-	// conquer_territory needs 10 soldiers; give only 4.
+	// siege_campaign needs 10 soldiers; give only 4.
 	setSoldiers(ge, 4)
 
-	err := ge.LaunchExpedition("conquer_territory")
+	err := ge.LaunchExpedition("siege_campaign")
 	if err == nil {
 		t.Fatalf("expected error launching with insufficient soldiers, got nil")
 	}
@@ -101,13 +101,13 @@ func TestLaunchExpedition_InsufficientCost_NoDeduction(t *testing.T) {
 	ge := NewGameEngine()
 	setAge(ge, "stone_age")
 
-	// scout_party costs food 30 + wood 30, no soldiers. Give enough food, too little wood.
+	// scouting_party costs food 30 + wood 30, no soldiers. Give enough food, too little wood.
 	setResource(ge, "food", 100)
 	setResource(ge, "wood", 10)
 
-	err := ge.LaunchExpedition("scout_party")
+	err := ge.LaunchExpedition("scouting_party")
 	if err == nil {
-		t.Fatalf("expected error launching scout_party with insufficient wood, got nil")
+		t.Fatalf("expected error launching scouting_party with insufficient wood, got nil")
 	}
 	if food := ge.Resources.Get("food"); food != 100 {
 		t.Errorf("food after failed launch = %v, want 100 (unchanged — no partial charge)", food)
@@ -120,7 +120,7 @@ func TestLaunchExpedition_InsufficientCost_NoDeduction(t *testing.T) {
 	}
 }
 
-// TestScoutParty_LaunchableInStoneAge_RejectedPastBronze verifies scout_party is
+// TestScoutParty_LaunchableInStoneAge_RejectedPastBronze verifies scouting_party is
 // available with food+wood and no soldiers in stone_age, and rejected past its
 // MaxAge (bronze_age) with no deduction.
 func TestScoutParty_LaunchableInStoneAge_RejectedPastBronze(t *testing.T) {
@@ -131,8 +131,8 @@ func TestScoutParty_LaunchableInStoneAge_RejectedPastBronze(t *testing.T) {
 	setResource(ge, "wood", 100)
 	// Note: no soldiers resource at all.
 
-	if err := ge.LaunchExpedition("scout_party"); err != nil {
-		t.Fatalf("scout_party should be launchable in stone_age, got: %v", err)
+	if err := ge.LaunchExpedition("scouting_party"); err != nil {
+		t.Fatalf("scouting_party should be launchable in stone_age, got: %v", err)
 	}
 
 	// Rejected past MaxAge (iron_age is past bronze_age).
@@ -141,9 +141,9 @@ func TestScoutParty_LaunchableInStoneAge_RejectedPastBronze(t *testing.T) {
 	setResource(ge2, "food", 100)
 	setResource(ge2, "wood", 100)
 
-	err := ge2.LaunchExpedition("scout_party")
+	err := ge2.LaunchExpedition("scouting_party")
 	if err == nil {
-		t.Fatalf("expected scout_party to be rejected past bronze_age, got nil")
+		t.Fatalf("expected scouting_party to be rejected past bronze_age, got nil")
 	}
 	if food := ge2.Resources.Get("food"); food != 100 {
 		t.Errorf("food after rejected past-MaxAge launch = %v, want 100 (unchanged)", food)
@@ -178,10 +178,10 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 		popBefore := ge.Workers.TotalPop()
 		ge.mu.Unlock()
 
-		if err := ge.LaunchExpedition("trade_escort"); err != nil {
+		if err := ge.LaunchExpedition("trade_caravan"); err != nil {
 			t.Fatalf("seed %d: LaunchExpedition error: %v", seed, err)
 		}
-		// trade_escort's active duration is randomized (up to ~100 ticks on
+		// trade_caravan's active duration is randomized (up to ~100 ticks on
 		// the base curve, Bug RQPHYAHC, stretched 2.6x from the Bronze Age on),
 		// so budget generously; the loop exits once it resolves.
 		for i := 0; i < 2*config.StretchTicks("iron_age", 100) && ge.Military.HasActive(); i++ {

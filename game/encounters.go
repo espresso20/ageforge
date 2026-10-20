@@ -226,14 +226,14 @@ func encounterChance(category string, success bool) float64 {
 	switch category {
 	case ExpeditionScouting:
 		if success {
-			return encounterChanceScoutSuccess
+			return min(0.6, 2*encounterChanceScoutSuccess)
 		}
-		return encounterChanceScoutFail
+		return min(0.6, 2*encounterChanceScoutFail)
 	default: // ExpeditionMilitary and any unknown category
 		if success {
-			return encounterChanceMilitarySuccess
+			return min(0.6, 2*encounterChanceMilitarySuccess)
 		}
-		return encounterChanceMilitaryFail
+		return min(0.6, 2*encounterChanceMilitaryFail)
 	}
 }
 

@@ -19,24 +19,17 @@ type BadgeExpeditionDef struct{ Key, Name, MinAge string }
 
 // BadgeExpeditions lists every expedition, in the game's order.
 func BadgeExpeditions() []BadgeExpeditionDef {
-	return []BadgeExpeditionDef{
-		{"scout_party", "Scout Party", "primitive_age"},
-		{"scout_ruins", "Scout Nearby Ruins", "bronze_age"},
-		{"raid_bandits", "Raid Bandit Camp", "bronze_age"},
-		{"trade_escort", "Trade Escort", "iron_age"},
-		{"conquer_territory", "Conquer Territory", "iron_age"},
-		{"siege_castle", "Siege Enemy Castle", "medieval_age"},
-		{"naval_expedition", "Naval Expedition", "renaissance_age"},
-		{"colonial_campaign", "Colonial Campaign", "industrial_age"},
-		{"world_domination", "World Domination", "modern_age"},
-		{"cyber_raid", "Cyber Raid", "information_age"},
-		{"neon_heist", "Neon Heist", "cyberpunk_age"},
-		{"fusion_assault", "Fusion Plant Assault", "fusion_age"},
-		{"orbital_strike", "Orbital Strike", "space_age"},
-		{"warp_invasion", "Warp Invasion", "interstellar_age"},
-		{"galactic_conquest", "Galactic Conquest", "galactic_age"},
-		{"quantum_incursion", "Quantum Incursion", "quantum_age"},
+	firstAge := make(map[string]string)
+	for _, era := range Epochs() {
+		if len(era.Ages) > 0 {
+			firstAge[era.Key] = era.Ages[0]
+		}
 	}
+	out := make([]BadgeExpeditionDef, 0, len(Missions()))
+	for _, mission := range Missions() {
+		out = append(out, BadgeExpeditionDef{mission.Key, mission.Name, firstAge[mission.Era]})
+	}
+	return out
 }
 
 // BadgeThemeDef is a theme as the catalog needs it: its key, its name and

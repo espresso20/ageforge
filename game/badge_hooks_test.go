@@ -378,6 +378,9 @@ func TestBadgeExpeditionsMatchTheGame(t *testing.T) {
 			}
 		}
 	}
+	if got := len(config.BadgeExpeditions()); got != 21 {
+		t.Fatalf("badge mission catalog has %d entries, want 21", got)
+	}
 	listed := map[string]bool{}
 	for _, x := range config.BadgeExpeditions() {
 		listed[x.Key] = true

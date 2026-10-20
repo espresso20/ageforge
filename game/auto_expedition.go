@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -193,6 +194,13 @@ func autoExpeditionInterval(set *rules.Set, age string, count int, fill float64)
 // affordable right now.
 func (ge *GameEngine) pickAutoScoutExpedition(ageOrder map[string]int) *ExpeditionDef {
 	defs := ge.Military.GetAvailableExpeditionsByCategory(ExpeditionScouting, ge.age, ageOrder)
+	scouts := defs[:0]
+	for _, def := range defs {
+		if def.Kind == config.MissionScout {
+			scouts = append(scouts, def)
+		}
+	}
+	defs = scouts
 	if len(defs) == 0 {
 		return nil
 	}
@@ -203,7 +211,8 @@ func (ge *GameEngine) pickAutoScoutExpedition(ageOrder map[string]int) *Expediti
 			continue
 		}
 		ok := true
-		for res, amount := range def.Cost {
+		cost := ge.missionCostLocked(&def)
+		for res, amount := range cost {
 			if ge.Resources.Get(res) < amount {
 				ok = false
 				break
@@ -218,7 +227,7 @@ func (ge *GameEngine) pickAutoScoutExpedition(ageOrder map[string]int) *Expediti
 	}
 
 	sort.Slice(affordable, func(i, j int) bool {
-		ci, cj := totalExpeditionCost(affordable[i]), totalExpeditionCost(affordable[j])
+		ci, cj := totalExpeditionCostMap(ge.missionCostLocked(&affordable[i])), totalExpeditionCostMap(ge.missionCostLocked(&affordable[j]))
 		if ci != cj {
 			return ci < cj
 		}
@@ -236,6 +245,14 @@ func (ge *GameEngine) pickAutoScoutExpedition(ageOrder map[string]int) *Expediti
 func totalExpeditionCost(def ExpeditionDef) float64 {
 	total := 0.0
 	for _, amount := range def.Cost {
+		total += amount
+	}
+	return total
+}
+
+func totalExpeditionCostMap(cost map[string]float64) float64 {
+	var total float64
+	for _, amount := range cost {
 		total += amount
 	}
 	return total

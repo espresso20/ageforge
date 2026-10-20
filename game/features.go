@@ -104,15 +104,24 @@ func (ge *GameEngine) useFeature(keys ...string) {
 // military one; for a scouting one past the Scout Party the expeditions
 // lock, and the Naval Expedition its own on top.
 func expeditionFeatures(def *ExpeditionDef) []string {
-	switch {
-	case def.Category == ExpeditionMilitary:
-		return []string{config.FeatureCampaigns}
-	case def.Key == "scout_party":
+	switch def.Kind {
+	case config.MissionScout:
 		return nil
-	case def.Key == "naval_expedition":
-		return []string{config.FeatureExpeditions, config.FeatureNavalExpedition}
+	case config.MissionCampaign:
+		return []string{config.FeatureCampaigns}
+	case config.MissionExpedition:
+		return []string{config.FeatureExpeditions}
 	}
-	return []string{config.FeatureExpeditions}
+	return nil
+}
+
+func findMissionDef(key string) *config.MissionDef {
+	for _, def := range config.Missions() {
+		if def.Key == key {
+			return &def
+		}
+	}
+	return nil
 }
 
 // routeFeatures is the locks a trade route sits behind: trade routes, and
@@ -193,12 +202,16 @@ func featuresInUse(save *GameSave, ageIndex func(string) (int, bool)) []string {
 		out = append(out, config.FeatureCampaigns)
 	}
 	for _, exp := range []*ActiveExpedition{save.Military.ActiveScout, save.Military.ActiveExpedition} {
-		if exp == nil || exp.Key == "scout_party" {
+		if exp == nil {
 			continue
 		}
-		out = append(out, config.FeatureExpeditions)
-		if exp.Key == "naval_expedition" {
-			out = append(out, config.FeatureNavalExpedition)
+		if def := findMissionDef(exp.Key); def != nil {
+			switch def.Kind {
+			case config.MissionExpedition:
+				out = append(out, config.FeatureExpeditions)
+			case config.MissionCampaign:
+				out = append(out, config.FeatureCampaigns)
+			}
 		}
 	}
 	if save.Military.CompletedCount > 0 {

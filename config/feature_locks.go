@@ -63,8 +63,6 @@ func FeatureLocks() []FeatureLockDef {
 			Needs: "need", Then: "deal with other civilizations", Opens: "opens diplomacy"},
 		{Key: FeatureFestivals, Name: "Festivals", Tech: "drama",
 			Needs: "need", Then: "hold one", Opens: "opens festivals"},
-		{Key: FeatureNavalExpedition, Name: "The Naval Expedition", Tech: "navigation",
-			Needs: "needs", Then: "send it", Opens: "opens the Naval Expedition"},
 		{Key: FeatureBlackMarket, Name: "The black market", Tech: "mercantilism",
 			Needs: "needs", Then: "deal there", Opens: "opens the black market"},
 		{Key: FeatureRouteRailFreight, Name: "The Rail Freight route", Tech: "railroads",

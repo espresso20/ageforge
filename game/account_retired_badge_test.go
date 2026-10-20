@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -17,6 +18,17 @@ var retiredTradeRungs = []string{
 
 const retiredTradeCounter = "market_trade"
 
+var retiredMissionBadges = []string{
+	"expedition.scout_party", "expedition.scout_ruins", "expedition.raid_bandits", "expedition.trade_escort",
+	"expedition.conquer_territory", "expedition.siege_castle", "expedition.world_domination", "expedition.cyber_raid",
+	"expedition.fusion_assault", "expedition.orbital_strike", "expedition.warp_invasion", "expedition.quantum_incursion",
+}
+
+var carriedMissionBadges = []string{
+	"expedition.naval_expedition", "expedition.neon_heist",
+	"expedition.colonial_campaign", "expedition.galactic_conquest",
+}
+
 // TestAccountWithRetiredTradeRungsLoadsClean: an account that earned the
 // market-trades rungs before the ladder was retired loads with no tamper
 // flag. Its rungs and counter stay in the file, signed as they were; the
@@ -26,6 +38,8 @@ func TestAccountWithRetiredTradeRungsLoadsClean(t *testing.T) {
 	ge0, acct := earnSome(t, "Ada")
 	id := acct.AccountID
 	_, before := ge0.Badges()
+	retired := slices.Concat(retiredTradeRungs, retiredMissionBadges)
+	legacy := slices.Concat(retired, carriedMissionBadges)
 
 	// The badge file as the game that still had the ladder signed it.
 	var bf badgeFile
@@ -38,7 +52,7 @@ func TestAccountWithRetiredTradeRungsLoadsClean(t *testing.T) {
 	if bf.Counters == nil {
 		bf.Counters = map[string]float64{}
 	}
-	for _, key := range retiredTradeRungs {
+	for _, key := range legacy {
 		bf.Badges[key] = BadgeEarned{At: 1760000000, Run: "old run"}
 	}
 	bf.Counters[retiredTradeCounter] = 5000
@@ -56,7 +70,7 @@ func TestAccountWithRetiredTradeRungsLoadsClean(t *testing.T) {
 	if loaded.BadgesTampered || loaded.Tampered {
 		t.Fatalf("an account with the retired rungs loads flagged: badge file tampered %v, account tampered %v", loaded.BadgesTampered, loaded.Tampered)
 	}
-	for _, key := range retiredTradeRungs {
+	for _, key := range legacy {
 		e, ok := loaded.Badges[key]
 		if !ok || e.Flags&BadgeFlagCrossed != 0 {
 			t.Errorf("%s after the load: held %v, flags %d; want held and not crossed", key, ok, e.Flags)
@@ -73,8 +87,8 @@ func TestAccountWithRetiredTradeRungsLoadsClean(t *testing.T) {
 			t.Errorf("the case still lists %s", v.Key)
 		}
 	}
-	if after.Earned != before.Earned || after.Points != before.Points {
-		t.Errorf("the retired rungs count: %d earned and %d points, were %d and %d without them", after.Earned, after.Points, before.Earned, before.Points)
+	if after.Earned != before.Earned+4 || after.Points != before.Points+40 {
+		t.Errorf("the retired badges count: %d earned and %d points, were %d and %d before the four carried keys", after.Earned, after.Points, before.Earned, before.Points)
 	}
 
 	// A save that writes the file anew keeps them in it, and the file still
@@ -94,7 +108,7 @@ func TestAccountWithRetiredTradeRungsLoadsClean(t *testing.T) {
 	if !verifyBadgeFile(&saved) || saved.Tampered {
 		t.Errorf("the badge file after a save: verifies %v, tampered %v", verifyBadgeFile(&saved), saved.Tampered)
 	}
-	for _, key := range retiredTradeRungs {
+	for _, key := range retired {
 		if _, ok := saved.Badges[key]; !ok {
 			t.Errorf("%s was dropped from the badge file by a save", key)
 		}

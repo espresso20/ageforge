@@ -185,7 +185,7 @@ func TestDealRefreshStretch(t *testing.T) {
 // TestExpeditionClocksStretch: a launch rolls in the stretched range, the
 // panel shows that range, and the Stone Age keeps the typed one.
 func TestExpeditionClocksStretch(t *testing.T) {
-	for _, c := range []struct{ age, key string }{{baseAge, "scout_party"}, {stretchedAge, "trade_escort"}} {
+	for _, c := range []struct{ age, key string }{{baseAge, "scouting_party"}, {stretchedAge, "trade_caravan"}} {
 		ge := newSeededEngine(9)
 		learn(ge, "military_tactics") // the tech that opens campaigns
 		setAge(ge, c.age)

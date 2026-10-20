@@ -93,13 +93,13 @@ func TestSoldiersTrained_NotDecreasedBySpending(t *testing.T) {
 	}
 
 	// Put us in iron_age with a healthy soldiers stockpile and launch
-	// trade_escort (needs 3 soldiers, no Cost). Spending must not touch the
+	// trade_caravan (needs 3 soldiers, no Cost). Spending must not touch the
 	// lifetime counter.
 	setAge(ge, "iron_age")
 	setSoldiers(ge, 10)
 
-	if err := ge.LaunchExpedition("trade_escort"); err != nil {
-		t.Fatalf("LaunchExpedition(trade_escort) error: %v", err)
+	if err := ge.LaunchExpedition("trade_caravan"); err != nil {
+		t.Fatalf("LaunchExpedition(trade_caravan) error: %v", err)
 	}
 	if got := ge.Resources.Get("soldiers"); got != 7 {
 		t.Fatalf("soldiers after launch = %v, want 7 (10 - 3)", got)
@@ -185,7 +185,7 @@ func TestSoldiersTrained_SaveLoadRoundTrip(t *testing.T) {
 }
 
 // TestCanLaunch_RespectsCost verifies the available-expedition snapshot's
-// CanLaunch flag accounts for Cost affordability: scout_party (food 30 + wood 30,
+// CanLaunch flag accounts for Cost affordability: scouting_party (food 30 + wood 30,
 // no soldiers) is not launchable without the resources and launchable with them.
 func TestCanLaunch_RespectsCost(t *testing.T) {
 	// --- Not affordable: no food/wood. ---
@@ -196,19 +196,19 @@ func TestCanLaunch_RespectsCost(t *testing.T) {
 	var scout ExpeditionInfo
 	ok := false
 	for _, exp := range state.Military.Expeditions {
-		if exp.Key == "scout_party" {
+		if exp.Key == "scouting_party" {
 			scout = exp
 			ok = true
 		}
 	}
 	if !ok {
-		t.Fatalf("scout_party not present in available expeditions at stone_age")
+		t.Fatalf("scouting_party not present in available expeditions at stone_age")
 	}
 	if scout.CanLaunch {
-		t.Errorf("scout_party CanLaunch=true with no food/wood, want false")
+		t.Errorf("scouting_party CanLaunch=true with no food/wood, want false")
 	}
 	if scout.LaunchBlockReason == "" {
-		t.Errorf("scout_party blocked but LaunchBlockReason empty")
+		t.Errorf("scouting_party blocked but LaunchBlockReason empty")
 	}
 
 	// --- Affordable: enough food + wood. ---
@@ -220,18 +220,18 @@ func TestCanLaunch_RespectsCost(t *testing.T) {
 
 	found := false
 	for _, exp := range state2.Military.Expeditions {
-		if exp.Key == "scout_party" {
+		if exp.Key == "scouting_party" {
 			found = true
 			if !exp.CanLaunch {
-				t.Errorf("scout_party CanLaunch=false with 100 food + 100 wood, want true (reason: %q)", exp.LaunchBlockReason)
+				t.Errorf("scouting_party CanLaunch=false with 100 food + 100 wood, want true (reason: %q)", exp.LaunchBlockReason)
 			}
 			if exp.LaunchBlockReason != "" {
-				t.Errorf("scout_party launchable but LaunchBlockReason=%q, want empty", exp.LaunchBlockReason)
+				t.Errorf("scouting_party launchable but LaunchBlockReason=%q, want empty", exp.LaunchBlockReason)
 			}
 		}
 	}
 	if !found {
-		t.Fatalf("scout_party not present in available expeditions with resources")
+		t.Fatalf("scouting_party not present in available expeditions with resources")
 	}
 }
 
@@ -275,36 +275,36 @@ func TestScoutingExpeditions_SoldierFree(t *testing.T) {
 }
 
 // TestScoutRuins_LaunchableWithZeroSoldiers guards the Phase 1 bug fix:
-// scout_ruins previously needed 2 (nonexistent, pre-iron_age) soldiers and so was
+// road_survey previously needed 2 (nonexistent, pre-iron_age) soldiers and so was
 // never launchable. It must now be launchable with zero soldiers given enough
 // resources for its Cost.
 func TestScoutRuins_LaunchableWithZeroSoldiers(t *testing.T) {
 	mm := NewMilitaryManager()
-	def := mm.ExpeditionDefByKey("scout_ruins")
+	def := mm.ExpeditionDefByKey("road_survey")
 	if def == nil {
-		t.Fatal("scout_ruins not found")
+		t.Fatal("road_survey not found")
 	}
 	if def.SoldiersNeeded != 0 {
-		t.Fatalf("scout_ruins SoldiersNeeded=%d, want 0", def.SoldiersNeeded)
+		t.Fatalf("road_survey SoldiersNeeded=%d, want 0", def.SoldiersNeeded)
 	}
 
 	// Resources covering its Cost, zero soldiers.
 	resources := map[string]float64{"food": 100, "wood": 100}
 	ok, reason := mm.launchability(*def, 0, resources)
 	if !ok {
-		t.Errorf("scout_ruins not launchable with 0 soldiers + sufficient resources: %q", reason)
+		t.Errorf("road_survey not launchable with 0 soldiers + sufficient resources: %q", reason)
 	}
 
 	// It should also be available in bronze_age (its MinAge).
 	available := mm.GetAvailableExpeditionsByCategory(ExpeditionScouting, "bronze_age", fullAgeOrder())
 	foundRuins := false
 	for _, d := range available {
-		if d.Key == "scout_ruins" {
+		if d.Key == "road_survey" {
 			foundRuins = true
 		}
 	}
 	if !foundRuins {
-		t.Error("scout_ruins not present among available scouting expeditions in bronze_age")
+		t.Error("road_survey not present among available scouting expeditions in bronze_age")
 	}
 }
 
@@ -337,29 +337,29 @@ func TestConcurrentExpeditions_ScoutAndMilitary(t *testing.T) {
 	setResource(ge, "wood", 200)
 	setSoldiers(ge, 20)
 
-	// scout_party is scouting (food+wood, no soldiers); raid_bandits is military
+	// scouting_party is scouting (food+wood, no soldiers); siege_campaign is military
 	// (5 soldiers). Both available in bronze_age.
-	if err := ge.LaunchExpedition("scout_party"); err != nil {
-		t.Fatalf("LaunchExpedition(scout_party) error: %v", err)
+	if err := ge.LaunchExpedition("scouting_party"); err != nil {
+		t.Fatalf("LaunchExpedition(scouting_party) error: %v", err)
 	}
-	if err := ge.LaunchExpedition("raid_bandits"); err != nil {
-		t.Fatalf("LaunchExpedition(raid_bandits) error: %v", err)
+	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+		t.Fatalf("LaunchExpedition(siege_campaign) error: %v", err)
 	}
 
 	if ge.Military.ActiveByCategory(ExpeditionScouting) == nil {
-		t.Error("scouting slot empty after launching scout_party")
+		t.Error("scouting slot empty after launching scouting_party")
 	}
 	if ge.Military.ActiveByCategory(ExpeditionMilitary) == nil {
-		t.Error("military slot empty after launching raid_bandits")
+		t.Error("military slot empty after launching siege_campaign")
 	}
 
 	// Snapshot should surface both as active.
 	state := ge.GetState()
 	if state.Military.ActiveScout == nil {
-		t.Error("Snapshot ActiveScout nil, want scout_party active")
+		t.Error("Snapshot ActiveScout nil, want scouting_party active")
 	}
 	if state.Military.ActiveMilitary == nil {
-		t.Error("Snapshot ActiveMilitary nil, want raid_bandits active")
+		t.Error("Snapshot ActiveMilitary nil, want siege_campaign active")
 	}
 }
 
@@ -375,17 +375,17 @@ func TestPerCategorySingleActive(t *testing.T) {
 
 	// Launch a scouting expedition. A second scouting one must be rejected, but a
 	// military one is allowed.
-	if err := ge.LaunchExpedition("scout_party"); err != nil {
-		t.Fatalf("LaunchExpedition(scout_party) error: %v", err)
+	if err := ge.LaunchExpedition("scouting_party"); err != nil {
+		t.Fatalf("LaunchExpedition(scouting_party) error: %v", err)
 	}
-	if err := ge.LaunchExpedition("scout_party"); err == nil {
+	if err := ge.LaunchExpedition("scouting_party"); err == nil {
 		t.Error("launching a second scouting expedition should be rejected")
 	}
-	if err := ge.LaunchExpedition("raid_bandits"); err != nil {
+	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
 		t.Fatalf("military expedition should be launchable alongside scouting: %v", err)
 	}
 	// Now the military slot is occupied: a second military one must be rejected.
-	if err := ge.LaunchExpedition("raid_bandits"); err == nil {
+	if err := ge.LaunchExpedition("siege_campaign"); err == nil {
 		t.Error("launching a second military expedition should be rejected")
 	}
 }
@@ -404,11 +404,11 @@ func TestExpeditionsTickIndependently(t *testing.T) {
 	// longer key assertions off fixed def durations. Launch both, then pin their
 	// remaining ticks to fixed, distinct values — the point of this test is that the
 	// two categories tick down and resolve INDEPENDENTLY, the shorter one first.
-	if err := ge.LaunchExpedition("scout_party"); err != nil {
-		t.Fatalf("LaunchExpedition(scout_party) error: %v", err)
+	if err := ge.LaunchExpedition("scouting_party"); err != nil {
+		t.Fatalf("LaunchExpedition(scouting_party) error: %v", err)
 	}
-	if err := ge.LaunchExpedition("raid_bandits"); err != nil {
-		t.Fatalf("LaunchExpedition(raid_bandits) error: %v", err)
+	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+		t.Fatalf("LaunchExpedition(siege_campaign) error: %v", err)
 	}
 
 	ge.mu.Lock()
@@ -453,29 +453,29 @@ func TestConcurrentExpeditions_SaveRoundTrip(t *testing.T) {
 	setResource(ge, "wood", 200)
 	setSoldiers(ge, 20)
 
-	if err := ge.LaunchExpedition("scout_party"); err != nil {
-		t.Fatalf("LaunchExpedition(scout_party) error: %v", err)
+	if err := ge.LaunchExpedition("scouting_party"); err != nil {
+		t.Fatalf("LaunchExpedition(scouting_party) error: %v", err)
 	}
-	if err := ge.LaunchExpedition("raid_bandits"); err != nil {
-		t.Fatalf("LaunchExpedition(raid_bandits) error: %v", err)
+	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+		t.Fatalf("LaunchExpedition(siege_campaign) error: %v", err)
 	}
 
 	scout, military := ge.Military.GetActiveForSave()
-	if scout == nil || scout.Key != "scout_party" {
-		t.Fatalf("GetActiveForSave scout = %+v, want scout_party", scout)
+	if scout == nil || scout.Key != "scouting_party" {
+		t.Fatalf("GetActiveForSave scout = %+v, want scouting_party", scout)
 	}
-	if military == nil || military.Key != "raid_bandits" {
-		t.Fatalf("GetActiveForSave military = %+v, want raid_bandits", military)
+	if military == nil || military.Key != "siege_campaign" {
+		t.Fatalf("GetActiveForSave military = %+v, want siege_campaign", military)
 	}
 
 	// Restore into a fresh manager and confirm both slots come back.
 	mm := NewMilitaryManager()
 	mm.LoadState(scout, military, 0, nil)
-	if got := mm.ActiveByCategory(ExpeditionScouting); got == nil || got.Key != "scout_party" {
-		t.Errorf("after LoadState scouting slot = %+v, want scout_party", got)
+	if got := mm.ActiveByCategory(ExpeditionScouting); got == nil || got.Key != "scouting_party" {
+		t.Errorf("after LoadState scouting slot = %+v, want scouting_party", got)
 	}
-	if got := mm.ActiveByCategory(ExpeditionMilitary); got == nil || got.Key != "raid_bandits" {
-		t.Errorf("after LoadState military slot = %+v, want raid_bandits", got)
+	if got := mm.ActiveByCategory(ExpeditionMilitary); got == nil || got.Key != "siege_campaign" {
+		t.Errorf("after LoadState military slot = %+v, want siege_campaign", got)
 	}
 }
 
@@ -486,33 +486,33 @@ func TestLegacyActiveExpedition_MigratesByCategory(t *testing.T) {
 	mm := NewMilitaryManager()
 
 	// Legacy military key → military slot.
-	milSave := MilitarySave{ActiveExpedition: &ActiveExpedition{Key: "raid_bandits", Name: "Raid Bandit Camp", Soldiers: 5, TicksLeft: 7}}
+	milSave := MilitarySave{ActiveExpedition: &ActiveExpedition{Key: "siege_campaign", Name: "Raid Bandit Camp", Soldiers: 5, TicksLeft: 7}}
 	scout, military := mm.migrateActives(milSave)
 	if scout != nil {
 		t.Errorf("legacy military expedition leaked into scouting slot: %+v", scout)
 	}
-	if military == nil || military.Key != "raid_bandits" {
+	if military == nil || military.Key != "siege_campaign" {
 		t.Errorf("legacy military expedition not routed to military slot: %+v", military)
 	}
 
 	// Legacy scouting key → scouting slot.
-	scoutSave := MilitarySave{ActiveExpedition: &ActiveExpedition{Key: "scout_party", Name: "Scout Party", Soldiers: 0, TicksLeft: 11}}
+	scoutSave := MilitarySave{ActiveExpedition: &ActiveExpedition{Key: "scouting_party", Name: "Scout Party", Soldiers: 0, TicksLeft: 11}}
 	scout, military = mm.migrateActives(scoutSave)
 	if military != nil {
 		t.Errorf("legacy scouting expedition leaked into military slot: %+v", military)
 	}
-	if scout == nil || scout.Key != "scout_party" {
+	if scout == nil || scout.Key != "scouting_party" {
 		t.Errorf("legacy scouting expedition not routed to scouting slot: %+v", scout)
 	}
 
 	// New fields present → legacy ignored.
 	bothSave := MilitarySave{
-		ActiveScout:      &ActiveExpedition{Key: "scout_party", TicksLeft: 3},
-		ActiveMilitary:   &ActiveExpedition{Key: "raid_bandits", TicksLeft: 4},
-		ActiveExpedition: &ActiveExpedition{Key: "conquer_territory", TicksLeft: 99},
+		ActiveScout:      &ActiveExpedition{Key: "scouting_party", TicksLeft: 3},
+		ActiveMilitary:   &ActiveExpedition{Key: "siege_campaign", TicksLeft: 4},
+		ActiveExpedition: &ActiveExpedition{Key: "siege_campaign", TicksLeft: 99},
 	}
 	scout, military = mm.migrateActives(bothSave)
-	if scout == nil || scout.Key != "scout_party" || military == nil || military.Key != "raid_bandits" {
+	if scout == nil || scout.Key != "scouting_party" || military == nil || military.Key != "siege_campaign" {
 		t.Errorf("new fields should win over legacy: scout=%+v military=%+v", scout, military)
 	}
 }

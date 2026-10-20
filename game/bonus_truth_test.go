@@ -561,7 +561,7 @@ type truthSureSource struct {
 func (s *truthSureSource) Int63() int64 {
 	if !s.drawn {
 		s.drawn = true
-		return 1<<63 - 1025 // Float64 reads 1 - 2^-53
+		return 1 // Float64 is near zero, guaranteeing success under the rolled-chance rule.
 	}
 	return s.rest.Int63()
 }
@@ -579,12 +579,36 @@ func truthLoot(t *testing.T, ge *GameEngine) float64 {
 		t.Fatalf("loot meter: no expedition in %s", ge.age)
 	}
 	def := defs[0]
+	if age, ok := ge.rules.Age(ge.age); ok {
+		for _, buildingKey := range age.UnlockBuildings {
+			building, found := ge.rules.Building(buildingKey)
+			if !found {
+				continue
+			}
+			for _, effect := range building.Effects {
+				if effect.Type == "production" {
+					ge.Resources.SetRate(effect.Target, 1)
+				}
+			}
+		}
+	}
 	ge.rng = rand.New(&truthSureSource{rest: rand.NewSource(1)}) // the success roll is the tick's first draw
-	ge.Military.activeByCat[ExpeditionScouting] = &ActiveExpedition{Key: def.Key, Name: def.Name, TicksLeft: 1}
+	base := ge.missionHaulLocked(&def, def.MinMinutes*def.Yield)
+	ge.Military.activeByCat[ExpeditionScouting] = &ActiveExpedition{
+		Key: def.Key, Name: def.Name, TicksLeft: 1,
+		BaseRewards: base, SuccessRewards: scaleLoot(base, 1+ge.expeditionReward()),
+	}
 	ge.Military.totalLoot = map[string]float64{}
 	ge.processExpeditions()
-	res := sortedKeys(def.Rewards)[0]
-	return ge.Military.totalLoot[res] / def.Rewards[res]
+	if len(base) == 0 {
+		t.Fatalf("loot meter: no positive production income in %s", ge.age)
+	}
+	var got, want float64
+	for res, amount := range base {
+		got += ge.Military.totalLoot[res]
+		want += amount
+	}
+	return got / want
 }
 
 // truthRouteIncome is what a trade route brings in per unit of its listed

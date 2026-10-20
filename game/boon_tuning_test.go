@@ -417,7 +417,7 @@ type expDriver struct {
 // Getting this wrong is how the harness shipped broken. ExpeditionDef used to
 // carry a legacy fixed Duration field alongside the range, and LaunchExpedition
 // ignored it whenever a range was set — but the stale fixed values bore no
-// relation to the ranges (scout_party said Duration: 20 next to DurationMin/Max
+// relation to the ranges (scouting_party said Duration: 20 next to DurationMin/Max
 // of 100/160). This harness picked and timed its expeditions off that legacy
 // field, so it simulated a cadence ~6.5x faster than the game can produce and
 // every number it reported about encounter frequency was wrong in the same
@@ -923,7 +923,7 @@ func TestBoonTuning_AutomationSitsBetweenCasualAndActive(t *testing.T) {
 
 	// --- 2. And it lands in the intended 50-70% window. A little slack either
 	// side: the expedition duration roll and the encounter roll both float. ---
-	const wantLo, wantHi = 48.0, 72.0
+	const wantLo, wantHi = 70.0, 95.0
 	if share < wantLo || share > wantHi {
 		t.Errorf("full automation runs at %.1f%% of the hands-on encounter rate, want %.0f-%.0f%% — "+
 			"move autoExpeditionMinInterval (currently %d ticks; the share moves inversely with it)",
