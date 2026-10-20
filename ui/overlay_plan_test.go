@@ -76,7 +76,7 @@ func TestPlanAdvanceCommand(t *testing.T) {
 func TestPlanAutocomplete(t *testing.T) {
 	engine := game.NewGameEngine()
 	comp := NewAutoCompleter(engine)
-	if got := strings.Join(comp("plan "), ","); got != "plan advance,plan build,plan clear,plan deal,plan down,plan list,plan remove,plan research,plan up" {
+	if got := strings.Join(comp("plan "), ","); got != "plan advance,plan build,plan clear,plan deal,plan down,plan list,plan remove,plan research,plan up,plan upgrade" {
 		t.Errorf("plan subcommands = %s", got)
 	}
 	builds := strings.Join(comp("plan build "), ",")
@@ -162,5 +162,33 @@ func TestPlanPanel_ShowsBanks(t *testing.T) {
 	st.Plan = []game.PlanItemView{blocked}
 	if got := plainText(planListText(st)); !strings.Contains(got, "blocked: needs more stone storage, 400 stone banked") {
 		t.Errorf("plan list = %q", got)
+	}
+}
+
+func upgradeCommandEngine(t *testing.T, count int) *game.GameEngine {
+	t.Helper()
+	engine := game.NewGameEngine()
+	engine.SetTownForTest(map[string]int{"gathering_camp": count}, 0)
+	if err := engine.EnterAgeForTest("stone_age"); err != nil {
+		t.Fatal(err)
+	}
+	return engine
+}
+
+func TestPlanUpgradeCommandsAndPanel(t *testing.T) {
+	engine := upgradeCommandEngine(t, 5)
+	res := HandleCommand("plan upgrade gathering_camp 3", engine)
+	if res.Type == "error" || res.Message != "Planned to upgrade 3 Gathering Camps to Forager Post. Each starts as soon as it can be paid." {
+		t.Fatalf("plan upgrade count: %+v", res)
+	}
+	line := plainText(planPanelText(engine.GetState(), 0, "", false, false, 100))
+	if !strings.Contains(line, "upgrade 3 Gathering Camp → Forager Post") {
+		t.Fatalf("plan panel line missing: %s", line)
+	}
+
+	all := upgradeCommandEngine(t, 4)
+	res = HandleCommand("plan upgrade gathering_camp all", all)
+	if res.Type == "error" || res.Message != "Planned to upgrade 4 Gathering Camps to Forager Post (all you hold)." {
+		t.Fatalf("plan upgrade all: %+v", res)
 	}
 }
