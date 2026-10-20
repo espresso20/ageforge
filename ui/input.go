@@ -1798,74 +1798,106 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
-// cmdExpedition handles the `expedition`/`exp` command — the civilian SCOUTING
-// surface. No args opens the Expeditions panel; "list" prints the scouting list;
-// a key launches a scouting expedition. Military keys are redirected to the
-// `campaign` command rather than launched here.
+// cmdExpedition handles the `expedition`/`exp` command and its alias
+// `campaign`: the mission board. No args (or "list") prints the board, nine
+// offers numbered short, then long, then grand; a number sends that offer.
 func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{OverlayName: "expedition"}
+	engine.EnsureMissionBoard()
+	if len(args) < 1 || strings.ToLower(args[0]) == "list" {
+		return cmdMissionBoard(engine)
 	}
-	subcmd := strings.ToLower(args[0])
-	if subcmd == "list" {
-		return cmdScoutingList(engine)
+	n, err := strconv.Atoi(strings.TrimSpace(args[0]))
+	if err != nil || len(args) > 1 {
+		return CommandResult{Message: "Usage: expedition <number>. Type expedition to see the board.", Type: "error"}
 	}
-
-	expKey := strings.ToLower(strings.Join(args, "_"))
-
-	// Reject military keys here — they belong to `campaign`. Only a mission on
-	// offer in this age is named; any other falls through to the engine's
-	// refusal, which does not name a later era's mission.
-	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionScouting && missionOffered(engine, expKey) {
-		return CommandResult{
-			Message: fmt.Sprintf("%s is a military campaign. Wage it with 'campaign %s'.", def.Name, expKey),
-			Type:    "info",
-		}
-	}
-
-	if err := engine.LaunchExpedition(expKey); err != nil {
+	if err := engine.LaunchExpedition(n); err != nil {
 		return errorResult(err)
 	}
 	return CommandResult{Type: "success"} // the engine logs the launch
 }
 
-// missionOffered reports whether the mission key is on offer in the current age.
-func missionOffered(engine *game.GameEngine, key string) bool {
-	for _, info := range engine.GetState().Military.Expeditions {
-		if info.Key == key {
-			return true
-		}
-	}
-	return false
-}
-
-// cmdCampaign handles the `campaign` command — the MILITARY surface. No args or
-// "list" prints the campaign list; a key wages a military campaign (costs
-// soldiers). Scouting keys are redirected to the `expedition` command.
+// cmdCampaign handles `campaign`, an alias of `expedition`.
 func cmdCampaign(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return cmdCampaignList(engine)
-	}
-	subcmd := strings.ToLower(args[0])
-	if subcmd == "list" {
-		return cmdCampaignList(engine)
-	}
+	return cmdExpedition(args, engine)
+}
 
-	expKey := strings.ToLower(strings.Join(args, "_"))
-
-	// Reject scouting keys here — they belong to `expedition`. Only a mission
-	// on offer in this age is named (see cmdExpedition).
-	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionMilitary && missionOffered(engine, expKey) {
-		return CommandResult{
-			Message: fmt.Sprintf("%s is a scouting expedition. Send it with 'expedition %s'.", def.Name, expKey),
-			Type:    "info",
+// cmdMissionBoard prints the mission board as plain lines, with the missions
+// under way as a footer: each offer's number, title, length, odds, haul and
+// cost. The board panel is a later change.
+func cmdMissionBoard(engine *game.GameEngine) CommandResult {
+	state := engine.GetState()
+	mil := state.Military
+	lines := []string{"[gold]Mission board:[-]"}
+	if note := strings.TrimRight(lockNotes(state, config.FeatureExpeditions, config.FeatureCampaigns), "\n"); note != "" {
+		lines = append(lines, note)
+	}
+	tier := ""
+	for _, slot := range mil.Board {
+		if slot.Tier != tier {
+			tier = slot.Tier
+			lines = append(lines, "[yellow]"+tierHeading(tier)+":[-]")
+		}
+		if slot.Offer == nil {
+			lines = append(lines, fmt.Sprintf("  [gray]%d. (taken: a new offer in %s)[-]", slot.Number, formatTicks(slot.RefillTicks, state)))
+			continue
+		}
+		lines = append(lines, offerLine(*slot.Offer, state))
+	}
+	if len(mil.Board) == 0 {
+		lines = append(lines, "  [gray]No offers yet.[-]")
+	}
+	for _, active := range []*game.ExpeditionSnapshot{mil.ActiveShort, mil.ActiveLong, mil.ActiveGrand} {
+		if active != nil {
+			lines = append(lines, fmt.Sprintf("[yellow]Under way: %s (%s left)[-]", active.Name, formatTicks(active.TicksLeft, state)))
 		}
 	}
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
 
-	if err := engine.LaunchExpedition(expKey); err != nil {
-		return errorResult(err)
+// tierHeading is the heading a tier's offers are printed under.
+func tierHeading(tier string) string {
+	switch tier {
+	case game.TierLong:
+		return "Long"
+	case game.TierGrand:
+		return "Grand"
 	}
-	return CommandResult{Type: "success"} // the engine logs the launch
+	return "Short"
+}
+
+// offerLine is one offer as a plain line: whether it can be sent, its number,
+// title, length, odds, haul and cost. A Legendary offer's title is gold with a
+// star.
+func offerLine(exp game.ExpeditionInfo, state game.GameState) string {
+	mark := "[red]✗[-]"
+	if exp.CanLaunch {
+		mark = "[green]✓[-]"
+	}
+	title := exp.Name
+	if exp.Rare {
+		title = "[gold]★ " + title + "[-]"
+	}
+	var cost []string
+	if exp.SoldiersNeeded > 0 {
+		cost = append(cost, fmt.Sprintf("%d soldiers", exp.SoldiersNeeded))
+	}
+	if c := formatExpeditionCost(exp.Cost, state); c != "" {
+		cost = append(cost, c)
+	}
+	costText := "free"
+	if len(cost) > 0 {
+		costText = strings.Join(cost, ", ")
+	}
+	haul := formatExpeditionCost(exp.ExpectedHaulMin, state)
+	if haul == "" {
+		haul = "nothing yet"
+	}
+	line := fmt.Sprintf("  %s %d. %s - %s, %.0f%% odds, haul %s, cost %s",
+		mark, exp.Number, title, formatTicks(exp.DurationMin, state), exp.SuccessChance*100, haul, costText)
+	if !exp.CanLaunch && exp.LaunchBlockReason != "" {
+		line += fmt.Sprintf(" [red](%s)[-]", strings.TrimRight(exp.LaunchBlockReason, "."))
+	}
+	return line
 }
 
 // cmdFestival handles the `festival` culture-sink command. Bare `festival`
@@ -2067,98 +2099,6 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 	}
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
-}
-
-// cmdScoutingList prints only the available SCOUTING expeditions, with the
-// active scout (if any) as a footer. This backs `expedition list`.
-func cmdScoutingList(engine *game.GameEngine) CommandResult {
-	state := engine.GetState()
-	var lines []string
-	lines = append(lines, "[gold]Available Expeditions:[-]")
-
-	appendExpeditionGroup(&lines, "Scouting", state.Military.Expeditions, game.ExpeditionScouting, state)
-
-	if state.Military.ActiveScout != nil {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Active expedition: %s (%s left)[-]",
-			state.Military.ActiveScout.Name, formatTicks(state.Military.ActiveScout.TicksLeft, state)))
-	}
-
-	if !hasCategory(state.Military.Expeditions, game.ExpeditionScouting) {
-		lines = append(lines, "  [gray]No expeditions available yet[-]")
-	}
-
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
-}
-
-// cmdCampaignList prints only the available MILITARY campaigns, with the active
-// campaign (if any) as a footer. This backs `campaign` and `campaign list`.
-func cmdCampaignList(engine *game.GameEngine) CommandResult {
-	state := engine.GetState()
-	var lines []string
-	lines = append(lines, "[gold]Available Campaigns:[-]")
-	if note := strings.TrimRight(lockNotes(state, config.FeatureCampaigns), "\n"); note != "" {
-		lines = append(lines, note)
-	}
-
-	appendExpeditionGroup(&lines, "Campaigns", state.Military.Expeditions, game.ExpeditionMilitary, state)
-
-	if state.Military.ActiveMilitary != nil {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Active campaign: %s (%s left)[-]",
-			state.Military.ActiveMilitary.Name, formatTicks(state.Military.ActiveMilitary.TicksLeft, state)))
-	}
-
-	if !hasCategory(state.Military.Expeditions, game.ExpeditionMilitary) {
-		lines = append(lines, "  [gray]No campaigns available yet[-]")
-	}
-
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
-}
-
-// hasCategory reports whether any expedition in exps matches the given category.
-func hasCategory(exps []game.ExpeditionInfo, category string) bool {
-	for _, exp := range exps {
-		if exp.Category == category {
-			return true
-		}
-	}
-	return false
-}
-
-// appendExpeditionGroup appends the subset of exps matching category to lines,
-// under a labeled header (e.g. "Scouting"). The header is omitted when no
-// expedition matches, so empty subsections produce no output.
-func appendExpeditionGroup(lines *[]string, label string, exps []game.ExpeditionInfo, category string, state game.GameState) {
-	first := true
-	for _, exp := range exps {
-		if exp.Category != category {
-			continue
-		}
-		if first {
-			*lines = append(*lines, fmt.Sprintf("[yellow]%s:[-]", label))
-			first = false
-		}
-		canStr := "[red]✗[-]"
-		if exp.CanLaunch {
-			canStr = "[green]✓[-]"
-		}
-		// Soldier-free scouting expeditions omit the soldier prefix; military
-		// campaigns lead with their soldier requirement.
-		var reqParts []string
-		if exp.SoldiersNeeded > 0 {
-			reqParts = append(reqParts, fmt.Sprintf("%d soldiers", exp.SoldiersNeeded))
-		}
-		if cost := formatExpeditionCost(exp.Cost, state); cost != "" {
-			reqParts = append(reqParts, cost)
-		}
-		// Duration is rolled per launch, so list the def's range, not one value.
-		reqParts = append(reqParts, formatTickRange(exp.DurationMin, exp.DurationMax, state))
-		reqs := strings.Join(reqParts, ", ")
-		line := fmt.Sprintf("  %s [cyan]%s[-] - %s (%s)", canStr, exp.Key, exp.Name, reqs)
-		if !exp.CanLaunch && exp.LaunchBlockReason != "" {
-			line += fmt.Sprintf(" [red](%s)[-]", strings.TrimRight(exp.LaunchBlockReason, "."))
-		}
-		*lines = append(*lines, line)
-	}
 }
 
 func cmdTrade(args []string, engine *game.GameEngine) CommandResult {

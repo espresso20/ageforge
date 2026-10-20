@@ -3,9 +3,7 @@ package game
 import (
 	"fmt"
 	"math"
-	"sort"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -22,11 +20,12 @@ import (
 //   - It models the repeating trade route (game/trade.go): a TicksLeft countdown
 //     that resets on completion. That is the engine's one existing pattern for a
 //     recurring automated action and there was no reason to invent a second.
-//   - SCOUTING ONLY. Scouting is what feeds encounters; automating conquest is a
-//     different feature with a different risk profile and is out of scope.
-//   - It respects the existing single-slot-per-category scheduler. An auto-dispatch
-//     happens only when the scouting slot is genuinely FREE. Nothing is queued and
-//     the one-active-per-category rule is never bypassed.
+//   - It sends an offer off the mission board: the one with the best haul in
+//     minutes of income for each minute of length, among those it can pay for
+//     (pickAutoOffer).
+//   - It respects the single-slot-per-tier scheduler. An auto-dispatch only sends
+//     an offer whose tier slot is genuinely FREE. Nothing is queued and the
+//     one-mission-per-tier rule is never bypassed.
 //   - It pays the full resource cost through the same launch path a player uses
 //     (launchExpeditionLocked). An unaffordable cycle is skipped, not discounted.
 //   - It is DELIBERATELY SLOWER THAN HANDS-ON PLAY. See the interval constants
@@ -183,82 +182,30 @@ func autoExpeditionInterval(set *rules.Set, age string, count int, fill float64)
 	return set.StretchTicks(age, autoExpeditionIntervalFor(count, fill))
 }
 
-// pickAutoScoutExpedition chooses which scouting expedition the society sends.
+// pickAutoOffer chooses which offer the society sends.
 //
-// RULE: the CHEAPEST expedition it can currently afford, where "cheapest" is the
-// plain sum of its Cost amounts. Ties break on the shorter DurationMin, then on Key
-// so the choice is fully deterministic and needs no RNG. The rule is frugal on
-// purpose — an automated office should be sending the routine local sweep, not
-// spending the treasury on a grand voyage the player never authorised — and the
-// crude cross-resource sum is safe here because the scouting pool's costs sit in
-// the same order of magnitude as each other at every age.
+// RULE: among the offers on the board it can send right now (their tier's slot
+// is free, the town can pay the cost and the lock is open), the one with the
+// best haul minutes per minute of length. Ties go to the bigger haul, then to
+// the lower number, so the choice is fully deterministic and needs no RNG.
 //
-// Returns nil when the age offers no scouting expedition, or when none is
-// affordable right now.
-func (ge *GameEngine) pickAutoScoutExpedition(ageOrder map[string]int) *ExpeditionDef {
-	defs := ge.Military.GetAvailableExpeditionsByCategory(ExpeditionScouting, ge.age, ageOrder)
-	scouts := defs[:0]
-	for _, def := range defs {
-		if def.Kind == config.MissionScout {
-			scouts = append(scouts, def)
-		}
-	}
-	defs = scouts
-	if len(defs) == 0 {
-		return nil
-	}
-
-	affordable := make([]ExpeditionDef, 0, len(defs))
-	for _, def := range defs {
-		if def.SoldiersNeeded > 0 && int(ge.Resources.Get("soldiers")) < def.SoldiersNeeded {
+// Returns 0 when nothing can be sent right now.
+func (ge *GameEngine) pickAutoOffer() int {
+	best, bestRate, bestHaul := 0, 0.0, 0.0
+	for i, slot := range ge.Military.board.Slots {
+		offer := slot.Offer
+		if offer == nil || offer.LengthMinutes <= 0 {
 			continue
 		}
-		ok := true
-		cost := ge.missionCostLocked(&def)
-		for res, amount := range cost {
-			if ge.Resources.Get(res) < amount {
-				ok = false
-				break
-			}
+		if _, err := ge.offerRefusalLocked(*offer, ge.missionCostLocked(*offer)); err != nil {
+			continue
 		}
-		if ok {
-			affordable = append(affordable, def)
+		rate := offer.HaulMinutes / offer.LengthMinutes
+		if best == 0 || rate > bestRate || (rate == bestRate && offer.HaulMinutes > bestHaul) {
+			best, bestRate, bestHaul = i+1, rate, offer.HaulMinutes
 		}
 	}
-	if len(affordable) == 0 {
-		return nil
-	}
-
-	sort.Slice(affordable, func(i, j int) bool {
-		ci, cj := totalExpeditionCostMap(ge.missionCostLocked(&affordable[i])), totalExpeditionCostMap(ge.missionCostLocked(&affordable[j]))
-		if ci != cj {
-			return ci < cj
-		}
-		if affordable[i].DurationMin != affordable[j].DurationMin {
-			return affordable[i].DurationMin < affordable[j].DurationMin
-		}
-		return affordable[i].Key < affordable[j].Key
-	})
-	best := affordable[0]
-	return &best
-}
-
-// totalExpeditionCost sums an expedition's resource Cost. See
-// pickAutoScoutExpedition for why a naive sum is acceptable as a "cheapness" score.
-func totalExpeditionCost(def ExpeditionDef) float64 {
-	total := 0.0
-	for _, amount := range def.Cost {
-		total += amount
-	}
-	return total
-}
-
-func totalExpeditionCostMap(cost map[string]float64) float64 {
-	var total float64
-	for _, amount := range cost {
-		total += amount
-	}
-	return total
+	return best
 }
 
 // processAutoExpeditions runs one tick of the Geographic Society's standing
@@ -295,18 +242,25 @@ func (ge *GameEngine) processAutoExpeditions() {
 		}
 	}
 
-	// The countdown is spent: a dispatch is DUE. It may still not happen — if the
-	// slot is busy or nothing is affordable we hold at zero and retry next tick
-	// rather than forfeiting the cycle.
-	if ge.Military.ActiveByCategory(ExpeditionScouting) != nil {
+	// The countdown is spent: a dispatch is DUE. It may still not happen — if
+	// every slot is busy or nothing is affordable we hold at zero and retry next
+	// tick rather than forfeiting the cycle.
+	ge.ensureMissionBoardLocked()
+	busy := true
+	for _, tier := range boardTiers {
+		if ge.Military.ActiveByTier(tier) == nil {
+			busy = false
+		}
+	}
+	if busy {
 		return
 	}
 
-	def := ge.pickAutoScoutExpedition(ge.progress.ageOrder())
-	if def == nil {
-		// Either the age has no scouting expedition at all, or the stores are too
-		// thin to outfit one. Warn ONCE per dry spell (state change only) — this is
-		// checked every tick and would otherwise bury the log.
+	n := ge.pickAutoOffer()
+	if n == 0 {
+		// Either the board has nothing the town can send, or the stores are too
+		// thin to outfit anything. Warn ONCE per dry spell (state change only) —
+		// this is checked every tick and would otherwise bury the log.
 		if !ge.autoExpeditionStarved {
 			ge.autoExpeditionStarved = true
 			ge.addLog("warning", fmt.Sprintf("%s: a survey party stands ready, but there are no supplies to outfit it.",
@@ -315,7 +269,8 @@ func (ge *GameEngine) processAutoExpeditions() {
 		return
 	}
 
-	if err := ge.launchExpeditionLocked(def.Key); err != nil {
+	offer, _ := ge.Military.BoardOffer(n)
+	if err := ge.launchExpeditionLocked(n); err != nil {
 		// Defensive: the affordability and slot checks above already cover every
 		// rejection the launch path can produce. Hold at zero and retry.
 		ge.addLog("debug", fmt.Sprintf("auto-dispatch declined: %v", err))
@@ -324,7 +279,7 @@ func (ge *GameEngine) processAutoExpeditions() {
 
 	ge.autoExpeditionStarved = false
 	ge.autoExpeditionTicksLeft = interval
-	ge.addLog(LogRoutine, fmt.Sprintf("%s dispatches a survey party: %s.", ge.autoExpeditionBuildingName(), def.Name))
+	ge.addLog(LogRoutine, fmt.Sprintf("%s dispatches a survey party: %s.", ge.autoExpeditionBuildingName(), offer.Title))
 }
 
 // autoExpeditionBuildingName is the society's player-facing name, read from the

@@ -482,12 +482,20 @@ type MilitaryState struct {
 	Saved           *DefenseTally
 	MilitaryBonus   float64
 	ExpeditionBonus float64
-	// ActiveScout / ActiveMilitary are the per-category active expeditions. A
-	// scouting and a military expedition can run concurrently, so either, both,
-	// or neither may be non-nil.
+	// ActiveShort / ActiveLong / ActiveGrand are the missions under way, one
+	// slot per tier; any, all or none may be non-nil.
+	ActiveShort *ExpeditionSnapshot
+	ActiveLong  *ExpeditionSnapshot
+	ActiveGrand *ExpeditionSnapshot
+	// ActiveScout (the short mission, else the long one) and ActiveMilitary
+	// (the grand mission) are the two slots the older panels and the map
+	// read.
 	ActiveScout    *ExpeditionSnapshot
 	ActiveMilitary *ExpeditionSnapshot
+	// Expeditions is the offers on the board, in number order; a slot
+	// waiting for its next offer has none. Board has all nine slots.
 	Expeditions    []ExpeditionInfo
+	Board          []BoardSlotInfo
 	CompletedCount int
 	TotalLoot      map[string]float64
 	// AutoExpedition is the Geographic Society's standing-orders state. It is
@@ -528,6 +536,9 @@ type AutoExpeditionState struct {
 // ExpeditionSnapshot represents an active expedition for UI
 type ExpeditionSnapshot struct {
 	Name          string
+	Tier          string
+	Grand         string
+	Rare          bool
 	Soldiers      int
 	TicksLeft     int
 	LengthMinutes float64
@@ -539,9 +550,22 @@ type ExpeditionSnapshot struct {
 
 // ExpeditionInfo represents an available expedition for UI
 type ExpeditionInfo struct {
-	Name            string
-	Key             string
-	Description     string
+	Name string
+	// Key is the offer's number on the board as text ("1" to "9"): what
+	// `expedition <number>` takes.
+	Key         string
+	Number      int
+	Tier        string
+	Grand       string
+	Rare        bool
+	Description string
+	// LengthMinutes, SuccessChance and HaulMinutes are the offer's rolls
+	// (SuccessChance counts the army for a military grand offer, now).
+	// ExpiresTicks is how long the offer stays up.
+	LengthMinutes   float64
+	SuccessChance   float64
+	HaulMinutes     float64
+	ExpiresTicks    int
 	Kind            string
 	MinMinutes      float64
 	MaxMinutes      float64
@@ -565,6 +589,16 @@ type ExpeditionInfo struct {
 	// expedition can't be launched right now (e.g. "need 3 soldiers",
 	// "need 30 food"). Empty when CanLaunch is true.
 	LaunchBlockReason string
+}
+
+// BoardSlotInfo is one place on the mission board for the UI: its number, its
+// tier, the offer in it (nil while a taken offer's replacement is awaited) and
+// how long until that replacement.
+type BoardSlotInfo struct {
+	Number      int
+	Tier        string
+	Offer       *ExpeditionInfo
+	RefillTicks int
 }
 
 // === Milestone Types ===

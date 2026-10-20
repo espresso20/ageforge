@@ -85,9 +85,19 @@ func militaryProvider(state game.GameState, _ int) string {
 	// Loot totals now live in the Expeditions panel (see overlay_expeditions.go),
 	// alongside the scouting/loot surface — not here in the Army panel.
 
-	sb.WriteString("\n [gray]Commands: campaign <key>[-]\n")
+	sb.WriteString("\n [gray]Commands: campaign <number>[-]\n")
 
 	return sb.String()
+}
+
+// hasCategory reports whether any offer in exps matches the given category.
+func hasCategory(exps []game.ExpeditionInfo, category string) bool {
+	for _, exp := range exps {
+		if exp.Category == category {
+			return true
+		}
+	}
+	return false
 }
 
 // writeActiveExpedition renders one active expedition under a kind label

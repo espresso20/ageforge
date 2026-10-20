@@ -2,10 +2,12 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1667,17 +1669,21 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 	}
 }
 
-// processExpeditions handles military expedition progress
+// processExpeditions advances the mission board and the missions under way.
 func (ge *GameEngine) processExpeditions() {
 	missionPower, expeditionBonus := ge.missionPower(), ge.expeditionReward()
-	for _, cat := range []string{ExpeditionScouting, ExpeditionMilitary} {
-		if active := ge.Military.ActiveByCategory(cat); active != nil {
-			ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Name, active.TicksLeft))
+	// The board first: a new age gets a whole new board, an offer that has
+	// expired is replaced at once and a taken one after its wait. Then the
+	// missions under way, one per tier, each of which may resolve this tick.
+	ge.ensureMissionBoardLocked()
+	ge.Military.RefreshBoard(ge.gameRNG(), ge.tick)
+	for _, tier := range boardTiers {
+		if active := ge.Military.ActiveByTier(tier); active != nil {
+			ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Title, active.TicksLeft))
 		}
 	}
-	// Tick all active expeditions (one per category); each may resolve this tick.
 	for _, res := range ge.Military.Tick(ge.gameRNG(), missionPower, expeditionBonus) {
-		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Key, len(res.Rewards)))
+		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Name, len(res.Rewards)))
 		ge.addLog("event", res.Message)
 		// Cosmetic flavour, generated HERE rather than in MilitaryManager because
 		// this is where the seeded rng lives. It is additive: res.Message above
@@ -1691,8 +1697,9 @@ func (ge *GameEngine) processExpeditions() {
 			ge.Resources.Add("soldiers", float64(res.SoldiersSent/2))
 		}
 		if res.Success {
-			if def, ok := ge.rules.Mission(res.Key); ok {
-				ge.note(config.BadgeEvExpedition, config.MissionBadgeKey(def.Era, def.Kind))
+			ge.note(config.BadgeEvExpedition, config.MissionBadgeKey(ge.rules.EraOf(res.Offer.Age), res.Offer.Kind()))
+			if res.Offer.Rare {
+				ge.note(config.BadgeEvLegendaryReturned, "")
 			}
 		}
 		// A resolved expedition may turn up a civilization: roll a faction encounter
@@ -1703,7 +1710,7 @@ func (ge *GameEngine) processExpeditions() {
 	}
 
 	// The Geographic Society's standing orders. Runs LAST so a party that resolved
-	// above has already freed the scouting slot — see processAutoExpeditions.
+	// above has already freed its slot — see processAutoExpeditions.
 	ge.processAutoExpeditions()
 }
 
@@ -2397,6 +2404,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.prestigeCueSeenAge = ""
 	ge.ageReady = false
 	ge.Workers.SetAge(newAge)
+	// A new age gets a whole new mission board.
+	ge.ensureMissionBoardLocked()
 
 	// Phase 7: Building lineage transformation pass.
 	// Collect transforms first (safe iteration), then apply.
@@ -4466,28 +4475,47 @@ func (ge *GameEngine) DeclineAncientMemory() {
 	ge.addLog("info", "You leave the ancient cache sealed. Its memories crumble to dust.")
 }
 
-// LaunchExpedition starts a military expedition
-func (ge *GameEngine) LaunchExpedition(key string) error {
+// LaunchExpedition sends offer n (1 to 9) off the mission board.
+func (ge *GameEngine) LaunchExpedition(n int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	return ge.launchExpeditionLocked(key)
+	return ge.launchExpeditionLocked(n)
 }
 
-// MissionCost reports the current launch cost for a mission.
-func (ge *GameEngine) MissionCost(key string) map[string]float64 {
+// EnsureMissionBoard makes the board when it is not made yet, or is made for
+// another age. The engine does it every tick and at every launch; the
+// `expedition` command calls it so the board it prints is never empty.
+func (ge *GameEngine) EnsureMissionBoard() {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.ensureMissionBoardLocked()
+}
+
+// ensureMissionBoardLocked makes the board for the current age if it is not
+// made. Caller holds the write lock.
+func (ge *GameEngine) ensureMissionBoardLocked() {
+	ge.Military.EnsureBoard(ge.gameRNG(), ge.age, ge.tick)
+}
+
+// MissionCost reports the current launch cost of offer n, soldiers under the
+// key "soldiers"; nil when there is no such offer.
+func (ge *GameEngine) MissionCost(n int) map[string]float64 {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	def := ge.Military.ExpeditionDefByKey(key)
-	if def == nil {
+	offer, err := ge.Military.BoardOffer(n)
+	if err != nil {
 		return nil
 	}
-	return ge.missionCostLocked(def)
+	return ge.missionCostLocked(offer)
 }
 
-func (ge *GameEngine) missionCostLocked(def *ExpeditionDef) map[string]float64 {
+// missionCostLocked is what sending an offer costs now: soldiers (under
+// "soldiers") for a military grand offer, minutes of income in the age's two
+// most-charged materials for any other.
+func (ge *GameEngine) missionCostLocked(offer MissionOffer) map[string]float64 {
 	cost := make(map[string]float64)
-	if def.Kind == config.MissionCampaign {
-		soldiers := math.Ceil(def.CostMinutes * (60 / config.TickSeconds) * ge.townIncome("soldiers"))
+	if offer.Military() {
+		soldiers := math.Ceil(offer.CostMinutes() * (60 / config.TickSeconds) * ge.townIncome("soldiers"))
 		cost["soldiers"] = math.Max(1, soldiers)
 		return cost
 	}
@@ -4525,12 +4553,12 @@ func (ge *GameEngine) missionCostLocked(def *ExpeditionDef) map[string]float64 {
 		if income <= 0 {
 			continue
 		}
-		cost[res] = math.Ceil((def.CostMinutes / 2) * (60 / config.TickSeconds) * income)
+		cost[res] = math.Ceil((offer.CostMinutes() / 2) * (60 / config.TickSeconds) * income)
 	}
 	return cost
 }
 
-func (ge *GameEngine) missionHaulLocked(def *ExpeditionDef, haulMinutes float64) map[string]float64 {
+func (ge *GameEngine) missionHaulLocked(haulMinutes float64) map[string]float64 {
 	age, ok := ge.rules.Age(ge.age)
 	if !ok {
 		return nil
@@ -4553,7 +4581,7 @@ func (ge *GameEngine) missionHaulLocked(def *ExpeditionDef, haulMinutes float64)
 		score float64
 	}
 	var rankedIncomes []ranked
-	for res, income := range incomes {
+	for _, res := range sortedKeys(incomes) {
 		// Income in price units: how many first copies of the resource's price
 		// (its median first-copy price in this age) the town makes each tick, so
 		// a cheap material and a dear one compare. Only the age's construction
@@ -4562,7 +4590,7 @@ func (ge *GameEngine) missionHaulLocked(def *ExpeditionDef, haulMinutes float64)
 		if level <= 0 {
 			continue
 		}
-		rankedIncomes = append(rankedIncomes, ranked{res, income / level})
+		rankedIncomes = append(rankedIncomes, ranked{res, incomes[res] / level})
 	}
 	sort.Slice(rankedIncomes, func(i, j int) bool {
 		if rankedIncomes[i].score != rankedIncomes[j].score {
@@ -4580,71 +4608,92 @@ func (ge *GameEngine) missionHaulLocked(def *ExpeditionDef, haulMinutes float64)
 	return out
 }
 
-// launchExpeditionLocked is the single expedition-launch path: it validates the
-// cost, the age range and the one-active-per-category rule, then deducts soldiers
-// and resources. Callers must already hold the write lock.
+// offerSuccessLocked is the chance an offer would be sent with now: its
+// rolled odds, and for a military grand offer the army on top (a stronger
+// army than the age's typical one helps, a weaker hurts, by at most 15
+// points), kept inside 10% to 95%.
+func (ge *GameEngine) offerSuccessLocked(offer MissionOffer) float64 {
+	success := offer.SuccessChance
+	if offer.Military() {
+		if index, ok := ge.progress.ageOrder()[ge.age]; ok {
+			scales := config.MilitaryScales(ge.rules.Techs(), ge.rules.AgeKeys())
+			if index >= 0 && index < len(scales) && scales[index].Then > 0 {
+				army := 0.10 * (ge.missionPower()/scales[index].Then - 1)
+				success += math.Max(-0.15, math.Min(0.15, army))
+			}
+		}
+	}
+	return math.Max(config.MissionSuccessMin, math.Min(config.MissionSuccessMax, success))
+}
+
+// offerRefusalLocked is why offer cannot be sent now: reason is the short
+// form a panel prints beside the offer, err the sentence the launch command
+// prints; both are empty when it can be sent. It checks, in a fixed order:
+// the tier's slot, the soldiers, each material, then the tech lock. cost is
+// what the offer costs, soldiers included.
+func (ge *GameEngine) offerRefusalLocked(offer MissionOffer, cost map[string]float64) (reason string, err error) {
+	if existing := ge.Military.ActiveByTier(offer.Tier); existing != nil {
+		return tierNoun(offer.Tier) + " is already under way",
+			fmt.Errorf("%s is already under way (%s left). Wait for it to come back", tierNoun(offer.Tier), approxTicks(existing.TicksLeft, BaseTickInterval))
+	}
+	if soldiers := cost["soldiers"]; soldiers > 0 {
+		if have := int(ge.Resources.Get("soldiers")); have < int(soldiers) {
+			return fmt.Sprintf("needs %d soldiers: military buildings train them", int(soldiers)),
+				fmt.Errorf("%s needs %d soldiers (you have %d). Military buildings train them; see the Army panel", offer.Title, int(soldiers), have)
+		}
+	}
+	// Materials, in a fixed order so the refusal names the same one every time.
+	for _, res := range sortedKeys(cost) {
+		if res == "soldiers" {
+			continue
+		}
+		if amount := cost[res]; ge.Resources.Get(res) < amount {
+			return fmt.Sprintf("needs %s %s", amountText(amount), resourceLabel(res)),
+				fmt.Errorf("%s needs %s %s (you have %s)", offer.Title, amountText(amount), resourceLabel(res), amountText(ge.Resources.Get(res)))
+		}
+	}
+	// The tech that opens this kind of mission.
+	if err := ge.featureErr(expeditionFeatures(offer)...); err != nil {
+		return strings.TrimRight(err.Error(), "."), err
+	}
+	return "", nil
+}
+
+// launchExpeditionLocked is the single mission-launch path: it validates the
+// offer, its tier's slot, the cost and the lock, then deducts the cost and
+// takes the offer off the board. Callers must already hold the write lock.
 //
-// Both entry points go through here — the player's `expedition` command
+// Both entry points go through here: the player's `expedition` command
 // (LaunchExpedition) and the Geographic Society's automatic dispatch (see
 // auto_expedition.go). An auto-launch is charged and validated identically to a
-// hand-dispatched one; nothing about the resulting expedition is special-cased,
+// hand-dispatched one; nothing about the resulting mission is special-cased,
 // so it resolves, rewards and rolls its faction encounter on exactly the same
 // path.
-func (ge *GameEngine) launchExpeditionLocked(key string) error {
-	ageOrder := ge.progress.ageOrder()
-
-	def := ge.Military.ExpeditionDefByKey(key)
-	if def == nil {
-		return fmt.Errorf("unknown expedition or campaign '%s'. Type expedition or campaign to see what you can send", key)
+func (ge *GameEngine) launchExpeditionLocked(n int) error {
+	ge.ensureMissionBoardLocked()
+	offer, err := ge.Military.BoardOffer(n)
+	if err != nil {
+		return err
 	}
 
 	// --- Validate everything BEFORE any deduction so a failed launch never
 	// partially charges the player. ---
-
-	// A mission of another era first: its cost is sized on this age's materials.
-	if err := ge.Military.eraRefusal(def, ge.age); err != nil {
+	cost := ge.missionCostLocked(offer)
+	if _, err := ge.offerRefusalLocked(offer, cost); err != nil {
 		return err
 	}
-	cost := ge.missionCostLocked(def)
 	soldiers := cost["soldiers"]
 	delete(cost, "soldiers")
-	haveSoldiers := int(ge.Resources.Get("soldiers"))
-	if haveSoldiers < int(soldiers) {
-		return fmt.Errorf("%s needs %d soldiers (you have %d). Military buildings train them; see the Army panel", def.Name, int(soldiers), haveSoldiers)
-	}
 
-	// Additional resource cost check, in a fixed order so the refusal names
-	// the same material every time.
-	for _, res := range sortedKeys(cost) {
-		if amount := cost[res]; ge.Resources.Get(res) < amount {
-			return fmt.Errorf("%s needs %s %s (you have %s)", def.Name, amountText(amount), resourceLabel(res), amountText(ge.Resources.Get(res)))
-		}
-	}
-
-	// The tech that opens this kind of expedition, once its age is reached
-	// (an expedition of a later age says so first).
-	if ageOrder[def.MinAge] <= ageOrder[ge.age] {
-		if err := ge.featureErr(expeditionFeatures(def)...); err != nil {
-			return err
-		}
-	}
-
-	// Age range + active-expedition validation (does NOT touch resources).
-	typical := 0.0
-	if index, ok := ageOrder[ge.age]; ok {
-		scales := config.MilitaryScales(ge.rules.Techs(), ge.rules.AgeKeys())
-		if index >= 0 && index < len(scales) {
-			typical = scales[index].Then
-		}
-	}
-	if err := ge.Military.LaunchMission(ge.gameRNG(), key, ge.age, ageOrder, ge.missionPower(), typical, cost, nil, soldiers); err != nil {
+	offer.SuccessChance = ge.offerSuccessLocked(offer)
+	base := ge.missionHaulLocked(offer.HaulMinutes)
+	if err := ge.Military.LaunchOffer(offer, ge.tick, int(soldiers), cost, base); err != nil {
 		return err
 	}
-	active := ge.Military.ActiveByCategory(def.Category)
-	active.BaseRewards = ge.missionHaulLocked(def, active.HaulMinutes)
-	active.SuccessRewards = scaleLoot(active.BaseRewards, 1+ge.expeditionReward())
-	active.FailureRewards = scaleLoot(active.BaseRewards, failedLootShare)
-	if def.Kind == config.MissionCampaign {
+	active := ge.Military.ActiveByTier(offer.Tier)
+	active.SuccessRewards = scaleLoot(base, 1+ge.expeditionReward())
+	active.FailureRewards = scaleLoot(base, failedLootShare)
+	if offer.Military() {
 		pay := ge.Military.campaignPay
 		if pay <= 1 {
 			pay = 1
@@ -4656,23 +4705,85 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 			active.FailureRewards[res] *= pay
 		}
 	}
-	ge.useFeature(expeditionFeatures(def)...)
+	// The offer leaves the board; its slot is filled again after a wait.
+	if _, err := ge.Military.board.take(n, ge.tick); err != nil {
+		return err
+	}
+	ge.useFeature(expeditionFeatures(offer)...)
 
 	// --- All checks passed: deduct soldiers + Cost. ---
 	if soldiers > 0 {
 		ge.Resources.Remove("soldiers", soldiers)
 	}
-	for res, amount := range cost {
-		ge.Resources.Remove(res, amount)
+	for _, res := range sortedKeys(cost) {
+		ge.Resources.Remove(res, cost[res])
 	}
 
-	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers spent: %d)", def.Name, def.SoldiersNeeded))
-	if def.Category == ExpeditionMilitary {
-		ge.addLog(LogRoutine, fmt.Sprintf("Campaign launched: %s (%d soldiers).", def.Name, def.SoldiersNeeded))
+	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers spent: %d)", offer.Title, int(soldiers)))
+	if offer.Military() {
+		ge.addLog(LogRoutine, fmt.Sprintf("Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
 	} else {
-		ge.addLog(LogRoutine, fmt.Sprintf("Expedition sent: %s.", def.Name))
+		ge.addLog(LogRoutine, fmt.Sprintf("Expedition sent: %s.", offer.Title))
 	}
 	return nil
+}
+
+// boardViewLocked is the mission board as the panels read it: all nine
+// slots, and the offers in them in number order. bonus is the techs' share on
+// loot. Under a lock.
+func (ge *GameEngine) boardViewLocked(bonus float64) ([]BoardSlotInfo, []ExpeditionInfo) {
+	var board []BoardSlotInfo
+	var offers []ExpeditionInfo
+	for i, slot := range ge.Military.board.Slots {
+		info := BoardSlotInfo{Number: i + 1, Tier: slotTier(i)}
+		if slot.Offer == nil {
+			info.RefillTicks = max(0, slot.RefillTick-ge.tick)
+			board = append(board, info)
+			continue
+		}
+		offer := ge.offerInfoLocked(i+1, *slot.Offer, bonus)
+		info.Offer = &offer
+		board = append(board, info)
+		offers = append(offers, offer)
+	}
+	return board, offers
+}
+
+// offerInfoLocked is offer n as the panels read it: its rolls, what it costs
+// now, the loot it would bring and whether it can be sent.
+func (ge *GameEngine) offerInfoLocked(n int, offer MissionOffer, bonus float64) ExpeditionInfo {
+	tuning, _ := config.MissionKindTuning(offer.Kind())
+	cost := ge.missionCostLocked(offer)
+	info := ExpeditionInfo{
+		Name: offer.Title, Key: strconv.Itoa(n), Number: n, Tier: offer.Tier, Grand: offer.Grand, Rare: offer.Rare,
+		Description: offer.Description, Kind: offer.Kind(), Category: offer.Category(),
+		LengthMinutes: offer.LengthMinutes, SuccessChance: ge.offerSuccessLocked(offer), HaulMinutes: offer.HaulMinutes,
+		ExpiresTicks: max(0, offer.ExpiresTick-ge.tick),
+		MinMinutes:   tuning.MinMinutes, MaxMinutes: tuning.MaxMinutes, BaseSuccess: tuning.BaseSuccess,
+		SoldiersNeeded: int(cost["soldiers"]),
+	}
+	ticks := ge.Military.missionTicks(offer.Category(), minutesToTicks(offer.LengthMinutes))
+	info.DurationMin, info.DurationMax = ticks, ticks
+	info.Chance = 1 - info.SuccessChance
+	info.Difficulty = 1 - offer.SuccessChance
+	multiplier := 1 + bonus
+	if offer.Military() {
+		pay := ge.Military.campaignPay
+		if pay <= 1 {
+			pay = 1
+		}
+		multiplier *= pay
+	}
+	haul := ge.missionHaulLocked(offer.HaulMinutes)
+	for res := range haul {
+		haul[res] *= multiplier
+	}
+	info.ExpectedHaulMin, info.ExpectedHaulMax = haul, maps.Clone(haul)
+	delete(cost, "soldiers")
+	info.Cost = cost
+	reason, err := ge.offerRefusalLocked(offer, ge.missionCostLocked(offer))
+	info.CanLaunch, info.LaunchBlockReason = err == nil, reason
+	return info
 }
 
 // DoPrestige resets the game with prestige bonuses
@@ -5085,56 +5196,8 @@ func (ge *GameEngine) GetState() GameState {
 	// MilitaryManager.Snapshot has no *GameEngine receiver, so it cannot see the
 	// Geographic Society's buildings, workers or dispatch countdown. Build the
 	// snapshot here and graft the automatic-dispatch view on afterwards.
-	militarySnap := ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus)
-	for i := range militarySnap.Expeditions {
-		info := &militarySnap.Expeditions[i]
-		def := ge.Military.ExpeditionDefByKey(info.Key)
-		if def == nil {
-			continue
-		}
-		cost := ge.missionCostLocked(def)
-		info.SoldiersNeeded = int(cost["soldiers"])
-		delete(cost, "soldiers")
-		info.Cost = cost
-		info.ExpectedHaulMin = ge.missionHaulLocked(def, def.MinMinutes*def.Yield*0.6)
-		info.ExpectedHaulMax = ge.missionHaulLocked(def, def.MaxMinutes*def.Yield*1.6)
-		multiplier := 1 + expeditionBonus
-		if def.Kind == config.MissionCampaign {
-			pay := ge.Military.campaignPay
-			if pay <= 1 {
-				pay = 1
-			}
-			multiplier *= pay
-		}
-		for res := range info.ExpectedHaulMin {
-			info.ExpectedHaulMin[res] *= multiplier
-		}
-		for res := range info.ExpectedHaulMax {
-			info.ExpectedHaulMax[res] *= multiplier
-		}
-		info.Chance = 1 - def.BaseSuccess
-		active := ge.Military.ActiveByCategory(def.Category)
-		canLaunch := active == nil && int(ge.Resources.Get("soldiers")) >= info.SoldiersNeeded
-		reason := ""
-		if active != nil {
-			reason = categoryNoun(def.Category) + " is already under way"
-		}
-		for _, res := range sortedKeys(cost) {
-			if amount := cost[res]; ge.Resources.Get(res) < amount {
-				canLaunch = false
-				if reason == "" {
-					reason = fmt.Sprintf("needs %s %s", amountText(amount), resourceLabel(res))
-				}
-			}
-		}
-		if int(ge.Resources.Get("soldiers")) < info.SoldiersNeeded {
-			canLaunch = false
-			if reason == "" {
-				reason = fmt.Sprintf("needs %d soldiers: military buildings train them", info.SoldiersNeeded)
-			}
-		}
-		info.CanLaunch, info.LaunchBlockReason = canLaunch, reason
-	}
+	militarySnap := ge.Military.Snapshot(soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), militaryBonus, expeditionBonus)
+	militarySnap.Board, militarySnap.Expeditions = ge.boardViewLocked(expeditionBonus)
 	militarySnap.AutoExpedition = ge.autoExpeditionSnapshot()
 	militarySnap.Threat = ge.ageThreat(ge.age)
 	militarySnap.Mitigation = config.DefenseMitigation(militarySnap.DefenseRating, militarySnap.Threat)

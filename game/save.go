@@ -369,20 +369,23 @@ type ResearchSave struct {
 	HeadStart float64 `json:"head_start,omitempty"`
 }
 
+// ActiveSlotSave is one mission under way in a save: the slot it holds (its
+// tier) and the mission, which carries a copy of the offer it was sent from.
+type ActiveSlotSave struct {
+	Slot    string            `json:"slot"`
+	Mission *ActiveExpedition `json:"mission"`
+}
+
 // MilitarySave holds military state for save.
 //
-// ActiveScout / ActiveMilitary are the per-category active expeditions (Phase 2a:
-// a scouting and a military expedition can run concurrently). ActiveExpedition is
-// the deprecated single-active field from pre-2a saves, kept read-only for
-// migration — on load it is routed to the correct category slot by its def's
-// Category (see migrateLegacyActive). It is never written by new saves.
+// Active is the missions under way, a list keyed by slot (short, long and
+// grand). Board is the mission board with the counters its rare rule runs on.
+// Older saves' active-mission fields are ignored (beta saves are disposable).
 type MilitarySave struct {
-	ActiveScout    *ActiveExpedition `json:"active_scout,omitempty"`
-	ActiveMilitary *ActiveExpedition `json:"active_military,omitempty"`
-	// Deprecated: pre-Phase-2a single-active field, read-only for migration.
-	ActiveExpedition *ActiveExpedition  `json:"active_expedition,omitempty"`
-	CompletedCount   int                `json:"completed_count"`
-	TotalLoot        map[string]float64 `json:"total_loot"`
+	Active         []ActiveSlotSave   `json:"active,omitempty"`
+	Board          *MissionBoard      `json:"board,omitempty"`
+	CompletedCount int                `json:"completed_count"`
+	TotalLoot      map[string]float64 `json:"total_loot"`
 	// AutoExpeditionTicksLeft is the Geographic Society's dispatch countdown (see
 	// game/auto_expedition.go). Persisted so a save/reload cannot reset the wait and
 	// hand out a free instant dispatch. Absent in pre-Phase-3 saves, where the zero
@@ -597,9 +600,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		totalLoot[k] = v
 	}
 
-	// Per-category active expeditions (Phase 2a: scouting + military concurrent).
-	activeScout, activeMilitary := ge.Military.GetActiveForSave()
-
 	// Deep copy trade state
 	tradeActiveRoutes := make(map[string]ActiveRoute, len(ge.Trade.activeRoutes))
 	for k, v := range ge.Trade.activeRoutes {
@@ -663,8 +663,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			HeadStart:   ge.headHeld(),
 		},
 		Military: MilitarySave{
-			ActiveScout:    activeScout,
-			ActiveMilitary: activeMilitary,
+			Active:         ge.Military.ActiveForSave(),
+			Board:          ge.Military.BoardForSave(),
 			CompletedCount: ge.Military.completedCount,
 			TotalLoot:      totalLoot,
 
@@ -956,8 +956,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	// Restore Phase 3 systems
 	ge.loadResearch(&save)
-	scoutActive, militaryActive := ge.Military.migrateActives(save.Military)
-	ge.Military.LoadState(scoutActive, militaryActive, save.Military.CompletedCount, save.Military.TotalLoot)
+	ge.Military.LoadState(save.Military)
 	ge.autoExpeditionTicksLeft = save.Military.AutoExpeditionTicksLeft
 	ge.autoExpeditionStarved = false
 	ge.Events.LoadState(save.Events.LastFired, save.Events.Active, save.Events.NextEventTick, save.Events.GoodStreak, save.Events.BadStreak)

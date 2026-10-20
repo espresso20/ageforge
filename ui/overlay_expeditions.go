@@ -68,7 +68,7 @@ func expeditionsProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n [gold]═══ Loot history ═══[-]\n\n")
 	if len(mil.TotalLoot) == 0 {
 		sb.WriteString(" [gray]No loot collected yet.[-]\n")
-		sb.WriteString(" [gray]Send an expedition: expedition <key>[-]\n")
+		sb.WriteString(" [gray]Send an expedition: expedition <number>[-]\n")
 	} else {
 		sb.WriteString(" [gold]Total loot collected:[-]\n\n")
 		lootKeys := make([]string, 0, len(mil.TotalLoot))
@@ -82,7 +82,7 @@ func expeditionsProvider(state game.GameState, _ int) string {
 		}
 	}
 
-	sb.WriteString("\n [gray]Commands: expedition <key>[-]\n")
+	sb.WriteString("\n [gray]Commands: expedition <number>[-]\n")
 
 	return sb.String()
 }

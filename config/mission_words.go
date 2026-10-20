@@ -225,7 +225,7 @@ var missionWords = []MissionWords{
 		Places: [6]string{"Ice Barrier", "Cape Frost", "Amber Falls", "Brass Harbor", "Gaslight Quarter", "Silver River"},
 		Objectives: [4][4]string{
 			{"prospect for gold in the", "chart the foothills of the", "survey the coast near the", "gather specimens from the"},
-			{"lead an expedition up the", "cross the unmapped", "trace the source of the", "bring back specimens from the"},
+			{"lead an expedition up the", "cross the unmapped lands of the", "trace the source of the", "bring back specimens from the"},
 			{"launch an offensive on the", "bombard the fort at the", "advance on the capital of the", "hold the line at the"},
 			{"sail for the pole beyond the", "raise the great exhibition at the", "chart the ice around the", "winter over at the"},
 		},

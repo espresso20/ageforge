@@ -71,8 +71,6 @@ type Set struct {
 	badgeExpeditions []config.BadgeExpeditionDef
 	badgeThemes      []config.BadgeThemeDef
 
-	missions []config.MissionDef
-
 	events        []config.EventDef
 	eraEvents     []config.EventDef
 	eventByKey    map[string]config.EventDef
@@ -167,7 +165,6 @@ func Compile(src Source) *Set {
 	s.buildCounts()
 	s.badgeExpeditions, s.badgeThemes = slices.Clone(src.BadgeExpeditions), slices.Clone(src.BadgeThemes)
 	s.buildBadges(src.Badges, src.BadgeFamilies)
-	s.missions = slices.Clone(src.Missions)
 	s.badgeTitles = slices.Clone(src.BadgeTitles)
 	s.badgeWornTitles = slices.Clone(src.BadgeWornTitles)
 	return s
@@ -356,19 +353,6 @@ func (s *Set) Wonder(age string) string { return s.wonders[age] }
 
 // Eras returns the eras in order.
 func (s *Set) Eras() []config.EpochDef { return slices.Clone(s.eras) }
-
-// Missions returns the era mission catalog in era and kind order.
-func (s *Set) Missions() []config.MissionDef { return slices.Clone(s.missions) }
-
-// Mission returns a mission by its key.
-func (s *Set) Mission(key string) (config.MissionDef, bool) {
-	for _, m := range s.missions {
-		if m.Key == key {
-			return m, true
-		}
-	}
-	return config.MissionDef{}, false
-}
 
 // Era returns an era's definition by its key.
 func (s *Set) Era(key string) (config.EpochDef, bool) {

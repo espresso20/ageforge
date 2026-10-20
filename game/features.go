@@ -101,15 +101,14 @@ func (ge *GameEngine) useFeature(keys ...string) {
 	}
 }
 
-// expeditionFeatures is the locks a mission sits behind: none for a scout,
-// the expeditions lock for an expedition, the campaigns lock for a campaign.
-func expeditionFeatures(def *ExpeditionDef) []string {
-	switch def.Kind {
-	case config.MissionScout:
-		return nil
-	case config.MissionCampaign:
+// expeditionFeatures is the locks an offer sits behind: none for a short
+// mission, the expeditions lock for a long mission or a civil grand one, the
+// campaigns lock for a military grand one.
+func expeditionFeatures(offer MissionOffer) []string {
+	switch {
+	case offer.Military():
 		return []string{config.FeatureCampaigns}
-	case config.MissionExpedition:
+	case offer.Tier == TierLong, offer.Tier == TierGrand:
 		return []string{config.FeatureExpeditions}
 	}
 	return nil
@@ -189,20 +188,9 @@ func featuresInUse(save *GameSave, set *rules.Set, ageIndex func(string) (int, b
 			out = append(out, f)
 		}
 	}
-	if save.Military.ActiveMilitary != nil {
-		out = append(out, config.FeatureCampaigns)
-	}
-	for _, exp := range []*ActiveExpedition{save.Military.ActiveScout, save.Military.ActiveExpedition} {
-		if exp == nil {
-			continue
-		}
-		if def, ok := set.Mission(exp.Key); ok {
-			switch def.Kind {
-			case config.MissionExpedition:
-				out = append(out, config.FeatureExpeditions)
-			case config.MissionCampaign:
-				out = append(out, config.FeatureCampaigns)
-			}
+	for _, entry := range save.Military.Active {
+		if entry.Mission != nil {
+			out = append(out, expeditionFeatures(entry.Mission.MissionOffer)...)
 		}
 	}
 	if save.Military.CompletedCount > 0 {

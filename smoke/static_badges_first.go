@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/game"
 )
 
 // static_badges_first.go holds the Badge Covenant's rule for the first rung
@@ -79,13 +78,8 @@ func (c *badgeCheck) firstAge(counter string) int {
 	}
 	switch counter {
 	case config.BadgeEvExpedition:
-		order := c.set.Indexes()
-		mm := game.NewMilitaryManager()
-		for i, a := range m.ages {
-			if len(mm.GetAvailableExpeditions(a.Key, order)) > 0 {
-				return i
-			}
-		}
+		// Every age has a board.
+		return 0
 	case config.BadgeEvDeal:
 		first := len(m.ages) - 1
 		for _, f := range c.set.Factions() {

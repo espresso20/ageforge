@@ -126,11 +126,9 @@ func buildUniverse() map[ArgKind]map[string]bool {
 	for i, a := range config.AgeOrder() {
 		order[a] = i
 	}
-	mm := game.NewMilitaryManager()
-	for _, a := range config.AgeOrder() {
-		for _, x := range mm.GetAvailableExpeditions(a, order) {
-			expeditions = append(expeditions, x.Key)
-		}
+	// The mission board takes its offers by number.
+	for n := 1; n <= 9; n++ {
+		expeditions = append(expeditions, strconv.Itoa(n))
 	}
 	b, r := set(buildings), set(resources)
 	return map[ArgKind]map[string]bool{
@@ -428,9 +426,9 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 	case ArgSave:
 		return saveNames()
 	case ArgExpedition:
-		return expeditionKeysByCategory(st, game.ExpeditionScouting)
+		return offerNumbers(st)
 	case ArgCampaign:
-		return expeditionKeysByCategory(st, game.ExpeditionMilitary)
+		return offerNumbers(st)
 	case ArgRouteAvailable:
 		return availableTradeRouteKeys(st)
 	case ArgRouteActive:
@@ -665,17 +663,14 @@ func assignedBuildingKeysAll(state game.GameState) []string {
 	return keys
 }
 
-// expeditionKeysByCategory returns the visible expedition keys of one
-// category (game.ExpeditionScouting or game.ExpeditionMilitary), sorted.
-// Locked entries are included; the engine enforces eligibility on launch.
-func expeditionKeysByCategory(state game.GameState, category string) []string {
+// offerNumbers returns the numbers of the offers on the mission board, in
+// order. Offers the town cannot afford are included; the engine enforces
+// that on launch.
+func offerNumbers(state game.GameState) []string {
 	var keys []string
 	for _, exp := range state.Military.Expeditions {
-		if exp.Category == category {
-			keys = append(keys, exp.Key)
-		}
+		keys = append(keys, exp.Key)
 	}
-	sort.Strings(keys)
 	return keys
 }
 
