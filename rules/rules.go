@@ -53,6 +53,9 @@ type Source struct {
 	BadgeExpeditions []config.BadgeExpeditionDef
 	BadgeThemes      []config.BadgeThemeDef
 
+	// Missions is the era mission catalog (expeditions and campaigns).
+	Missions []config.MissionDef
+
 	// Events is the random pool; EraEvents the ones only one era rolls.
 	// GoodEraEvents and ChallengingEraEvents are the pools an era's entry
 	// rolls from. Awakenings fire once, on entering their age.
@@ -131,6 +134,7 @@ func FromConfig() Source {
 		BadgeWornTitles:      config.BadgeTitles(),
 		BadgeExpeditions:     config.BadgeExpeditions(),
 		BadgeThemes:          config.BadgeThemes(),
+		Missions:             config.Missions(),
 		Events:               config.RandomEvents(),
 		EraEvents:            config.EpochExclusiveEvents(),
 		GoodEraEvents:        config.GoodEpochEvents(),

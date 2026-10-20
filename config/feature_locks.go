@@ -26,7 +26,6 @@ const (
 	FeatureExpeditions       = "expeditions"
 	FeatureDiplomacy         = "diplomacy"
 	FeatureFestivals         = "festivals"
-	FeatureNavalExpedition   = "naval_expedition"
 	FeatureBlackMarket       = "black_market"
 	FeatureRouteRailFreight  = "route_rail_freight"
 	FeatureRouteWarpCommerce = "route_warp_commerce"

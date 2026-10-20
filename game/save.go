@@ -1275,7 +1275,7 @@ func (ge *GameEngine) graceTreeLocked(save *GameSave) bool {
 		return false
 	}
 	ge.Buildings.graceAge = save.Age
-	ge.grantFeaturesLocked(featuresInUse(save, ge.rules.Index))
+	ge.grantFeaturesLocked(featuresInUse(save, ge.rules, ge.rules.Index))
 	return true
 }
 

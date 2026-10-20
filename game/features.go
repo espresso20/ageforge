@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Feature locks (config.FeatureLocks): a command that waits for a tech.
@@ -100,9 +101,8 @@ func (ge *GameEngine) useFeature(keys ...string) {
 	}
 }
 
-// expeditionFeatures is the locks an expedition sits behind: campaigns for a
-// military one; for a scouting one past the Scout Party the expeditions
-// lock, and the Naval Expedition its own on top.
+// expeditionFeatures is the locks a mission sits behind: none for a scout,
+// the expeditions lock for an expedition, the campaigns lock for a campaign.
 func expeditionFeatures(def *ExpeditionDef) []string {
 	switch def.Kind {
 	case config.MissionScout:
@@ -111,15 +111,6 @@ func expeditionFeatures(def *ExpeditionDef) []string {
 		return []string{config.FeatureCampaigns}
 	case config.MissionExpedition:
 		return []string{config.FeatureExpeditions}
-	}
-	return nil
-}
-
-func findMissionDef(key string) *config.MissionDef {
-	for _, def := range config.Missions() {
-		if def.Key == key {
-			return &def
-		}
 	}
 	return nil
 }
@@ -187,7 +178,7 @@ func (ge *GameEngine) loadGrantedFeatures(keys []string) {
 //     the save has reached the age it sails from;
 //   - festivals and the black market: their cooldown has been set this run;
 //   - diplomacy: a civilization is met.
-func featuresInUse(save *GameSave, ageIndex func(string) (int, bool)) []string {
+func featuresInUse(save *GameSave, set *rules.Set, ageIndex func(string) (int, bool)) []string {
 	var out []string
 	routes := save.Trade.ActiveRoutes
 	if len(routes) > 0 || len(save.Trade.TotalImported) > 0 || len(save.Trade.TotalExported) > 0 {
@@ -205,7 +196,7 @@ func featuresInUse(save *GameSave, ageIndex func(string) (int, bool)) []string {
 		if exp == nil {
 			continue
 		}
-		if def := findMissionDef(exp.Key); def != nil {
+		if def, ok := set.Mission(exp.Key); ok {
 			switch def.Kind {
 			case config.MissionExpedition:
 				out = append(out, config.FeatureExpeditions)
@@ -216,10 +207,6 @@ func featuresInUse(save *GameSave, ageIndex func(string) (int, bool)) []string {
 	}
 	if save.Military.CompletedCount > 0 {
 		out = append(out, config.FeatureCampaigns, config.FeatureExpeditions)
-		here, okHere := ageIndex(save.Age)
-		if sails, ok := ageIndex("renaissance_age"); ok && okHere && here >= sails {
-			out = append(out, config.FeatureNavalExpedition)
-		}
 	}
 	if save.FestivalReadyTick > 0 {
 		out = append(out, config.FeatureFestivals)

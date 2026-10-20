@@ -1,5 +1,10 @@
 package config
 
+import (
+	"slices"
+	"strings"
+)
+
 // badge_catalog.go is the badge catalog: the families made from the game's
 // tables, the ladders over the account's counters, and the hand-written
 // specials. badges.go has the types; rules/badges.go expands the families
@@ -12,22 +17,60 @@ package config
 
 // ----- the tables a family may be made from that live outside config -----
 
-// BadgeExpeditionDef is an expedition as the catalog needs it. The
-// expeditions themselves belong to the game package, which checks this
+// BadgeExpeditionDef is a badge subject for the missions: one era and one
+// kind. Key is MissionBadgeKey, Name the era's name, MinAge the era's first
+// age. The missions themselves belong to the game package, which checks this
 // table against its own (TestBadgeExpeditionsMatchTheGame).
-type BadgeExpeditionDef struct{ Key, Name, MinAge string }
+type BadgeExpeditionDef struct{ Key, Name, MinAge, Kind string }
 
-// BadgeExpeditions lists every expedition, in the game's order.
-func BadgeExpeditions() []BadgeExpeditionDef {
-	firstAge := make(map[string]string)
-	for _, era := range Epochs() {
-		if len(era.Ages) > 0 {
-			firstAge[era.Key] = era.Ages[0]
-		}
+// MissionBadgeKey is the badge subject of an era's mission of one kind.
+func MissionBadgeKey(era, kind string) string { return "expedition_" + era + "_" + kind }
+
+// MissionKindWord is the word a badge uses for a mission kind.
+func MissionKindWord(kind string) string {
+	switch kind {
+	case MissionExpedition:
+		return "long"
+	case MissionCampaign:
+		return "grand"
 	}
+	return "scout"
+}
+
+// BadgeExpeditions lists every era and kind a mission badge exists for, in
+// the catalog's order.
+func BadgeExpeditions() []BadgeExpeditionDef {
 	out := make([]BadgeExpeditionDef, 0, len(Missions()))
 	for _, mission := range Missions() {
-		out = append(out, BadgeExpeditionDef{mission.Key, mission.Name, firstAge[mission.Era]})
+		for _, era := range Epochs() {
+			if era.Key == mission.Era && len(era.Ages) > 0 {
+				out = append(out, BadgeExpeditionDef{MissionBadgeKey(mission.Era, mission.Kind), era.Name, era.Ages[0], mission.Kind})
+			}
+		}
+	}
+	return out
+}
+
+// missionBadgeFamilies is one family per mission kind, each over the keys
+// of that kind, so the text can name the kind.
+func missionBadgeFamilies() []BadgeFamilyDef {
+	var out []BadgeFamilyDef
+	for _, kind := range []string{MissionScout, MissionExpedition, MissionCampaign} {
+		var only []string
+		for _, x := range BadgeExpeditions() {
+			if x.Kind == kind {
+				only = append(only, x.Key)
+			}
+		}
+		word := MissionKindWord(kind)
+		out = append(out, BadgeFamilyDef{
+			Family: "expedition", Source: BadgeSourceExpeditions, Only: only,
+			Key: "expedition.{key}", Name: "{name} " + strings.ToUpper(word[:1]) + word[1:],
+			Desc: "Come back from a successful " + word + " mission in the {name}.",
+			Tier: BadgeSilver, Scope: BadgeMoment, Event: BadgeEvExpedition,
+			RevealBySubject: true, Emblem: "military",
+			Proof: Occurs("A mission of every era can be sent whenever its age and its lock are open, and every mission has a chance to succeed."),
+		})
 	}
 	return out
 }
@@ -345,14 +388,7 @@ func BadgeFamilies() []BadgeFamilyDef {
 			RevealBySubject: true, Emblem: "ruin", Set: "doom.succumbed",
 			Proof: Occurs("A doom that strikes waits for the answer, and Succumb is always one of the two."),
 		},
-		// F12. Each expedition, come back from with a success.
-		{
-			Family: "expedition", Source: BadgeSourceExpeditions,
-			Key: "expedition.{key}", Name: "{name}", Desc: "Come back from a successful {name}.",
-			Tier: BadgeSilver, Scope: BadgeMoment, Event: BadgeEvExpedition,
-			RevealBySubject: true, Emblem: "military",
-			Proof: Occurs("An expedition can be sent whenever its age and its soldiers are there, and every expedition has a chance to succeed that soldiers raise."),
-		},
+		// F12. Each era and kind of mission, come back from with a success.
 		// F13. Each theme, worn at an advance.
 		{
 			Family: "theme", Source: BadgeSourceThemes,
@@ -370,6 +406,9 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Proof: Occurs("An awakening fires by itself in its age, once the run has what it asks for there."),
 		},
 	}
+	// F12 sits before the themes.
+	at := slices.IndexFunc(fams, func(f BadgeFamilyDef) bool { return f.Family == "theme" })
+	fams = slices.Insert(fams, at, missionBadgeFamilies()...)
 	return append(fams, badgeLadders()...)
 }
 

@@ -148,7 +148,7 @@ func eraExpeditions(set *rules.Set) []ExpeditionDef {
 		byEra[age.EpochKey] = append(byEra[age.EpochKey], age.Key)
 	}
 	var defs []ExpeditionDef
-	for _, mission := range config.Missions() {
+	for _, mission := range set.Missions() {
 		bounds := byEra[mission.Era]
 		category := ExpeditionScouting
 		if mission.Kind == config.MissionCampaign {
@@ -200,7 +200,7 @@ func (mm *MilitaryManager) LaunchMission(rng *rand.Rand, key, currentAge string,
 		return fmt.Errorf("%s is already under way (%s left). Wait for it to come back", categoryNoun(def.Category), approxTicks(existing.TicksLeft, BaseTickInterval))
 	}
 
-	if def.Era != config.EpochForAge(currentAge) {
+	if def.Era != mm.rules.EraOf(currentAge) {
 		return fmt.Errorf("%s is available in the %s", def.Name, mm.rules.Name(rules.KindAge, def.MinAge))
 	}
 	length := def.MinMinutes + float64(rng.Float64()*(def.MaxMinutes-def.MinMinutes))
@@ -393,7 +393,7 @@ func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, mission
 func (mm *MilitaryManager) GetAvailableExpeditions(currentAge string, ageOrder map[string]int) []ExpeditionDef {
 	var available []ExpeditionDef
 	for _, def := range mm.expeditions {
-		if def.Era != config.EpochForAge(currentAge) {
+		if def.Era != mm.rules.EraOf(currentAge) {
 			continue
 		}
 		available = append(available, def)

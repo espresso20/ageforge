@@ -1691,7 +1691,9 @@ func (ge *GameEngine) processExpeditions() {
 			ge.Resources.Add("soldiers", float64(res.SoldiersSent/2))
 		}
 		if res.Success {
-			ge.note(config.BadgeEvExpedition, res.Key)
+			if def, ok := ge.rules.Mission(res.Key); ok {
+				ge.note(config.BadgeEvExpedition, config.MissionBadgeKey(def.Era, def.Kind))
+			}
 		}
 		// A resolved expedition may turn up a civilization: roll a faction encounter
 		// (discovery and/or a specialty-production boon) on the seeded RNG.
