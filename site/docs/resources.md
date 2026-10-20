@@ -245,7 +245,7 @@ There is no market to buy a material from. A material an age charges for comes f
 - **Crypto** in the Cyberpunk Age: the Black Market Hub, with a trickle from the Neon Citadel wonder.
 - **Plasma** in the Interstellar Age: the Warp Drive Plant. **Dark matter** in the Quantum Age: the Reality Forge.
 
-Two materials have no maker of their own age: wood in the Colonial Age and coal in the Electric Age. The older buildings you keep cover them.
+One material has no maker of its own age: coal in the Electric Age. The older buildings you keep cover it. A material nothing in an age makes any more is no longer charged there: the Colonial Age's buildings are priced in stone, not wood.
 
 ---
 

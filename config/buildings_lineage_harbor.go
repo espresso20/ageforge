@@ -26,10 +26,10 @@ func buildingsLineageHarbor() []BuildingDef {
 	// tier 0 — colonial_age
 	b = append(b, BuildingDef{
 		Name: "Harbor", Key: "harbor", Category: "production",
-		BaseCost:  map[string]float64{"wood": 2.4e07, "stone": 2e07, "gold": 1.2e07},
+		BaseCost:  map[string]float64{"stone": 5.43e+07, "gold": 5.43e+07},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "gold", Value: 26900},
+			{Type: "production", Target: "gold", Value: 23300},
 			{Type: "trade_route_income", Target: "trade_route_income", Value: 0.05},
 		},
 		BuildTicks:   3000,
