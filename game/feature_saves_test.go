@@ -269,7 +269,7 @@ func TestFeatureOldSaveLocksWhatItNeverUsed(t *testing.T) {
 	// Never sent: an expedition waits for Exploration, a campaign for its
 	// tech, and a scout for nothing.
 	err := ge.LaunchExpedition(keyOffer(ge, "rail_expedition"))
-	if err == nil || err.Error() != "Expeditions past the Scout Party need Exploration first. Research it to send one." {
+	if err == nil || err.Error() != "Long and grand missions need Exploration first. Research it to send one." {
 		t.Errorf("the Rail Expedition in the next age, never sent before: %v", err)
 	}
 	err = ge.LaunchExpedition(keyOffer(ge, "industrial_war"))
@@ -382,7 +382,7 @@ func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 	}
 	// Past the era's scout, an expedition waits for Exploration.
 	clearArmy(ge)
-	refused("the Long Hunt without Exploration", ge.LaunchExpedition(keyOffer(ge, "long_hunt")), "Expeditions past the Scout Party need Exploration first. Research it to send one.")
+	refused("the Long Hunt without Exploration", ge.LaunchExpedition(keyOffer(ge, "long_hunt")), "Long and grand missions need Exploration first. Research it to send one.")
 
 	// Trade routes: The Wheel first, then the route's own needs.
 	route(ge, "local_barter")
@@ -422,7 +422,7 @@ func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 	// The Naval Expedition, from the Renaissance Age: Exploration, and no
 	// tech of its own. The Steel Era scout waits for nothing.
 	ge = at("renaissance_age")
-	refused("the Naval Expedition without Exploration", ge.LaunchExpedition(keyOffer(ge, "naval_expedition")), "Expeditions past the Scout Party need Exploration first. Research it to send one.")
+	refused("the Naval Expedition without Exploration", ge.LaunchExpedition(keyOffer(ge, "naval_expedition")), "Long and grand missions need Exploration first. Research it to send one.")
 	if err := ge.LaunchExpedition(keyOffer(ge, "coastal_survey")); err != nil {
 		t.Errorf("the Coastal Survey without Exploration: %v", err)
 	}
