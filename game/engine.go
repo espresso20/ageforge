@@ -5410,6 +5410,11 @@ func (ge *GameEngine) RaidCivRoute(factionKey string) error {
 func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	return ge.upgradeBuildingLocked(key, count, all)
+}
+
+// upgradeBuildingLocked runs the upgrade path while the caller holds ge.mu.
+func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) error {
 
 	oldDef, hasOld := ge.rules.Building(key)
 	if !hasOld {

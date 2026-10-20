@@ -2658,6 +2658,39 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 			msg = fmt.Sprintf("Planned %s (the most its limit allows). It starts as soon as the resources are there.", game.BuildingCount(added, key))
 		}
 		return CommandResult{Message: msg, Type: game.LogRoutine}
+	case "upgrade":
+		if len(rest) == 0 || len(rest) > 2 {
+			return CommandResult{Message: usageFor("plan upgrade"), Type: "error"}
+		}
+		key := strings.ToLower(rest[0])
+		all := len(rest) == 2 && strings.EqualFold(rest[1], "all")
+		count := 1
+		if len(rest) == 2 && !all {
+			n, err := parseCount(rest[1])
+			if err != nil {
+				return usageError(usageFor("plan upgrade"), err)
+			}
+			count = n
+		}
+		if all {
+			count = 1000
+		}
+		added, err := engine.PlanAddUpgrade(key, count)
+		if err != nil {
+			return errorResult(err)
+		}
+		to := key
+		for _, u := range engine.GetAvailableUpgrades() {
+			if u.FromKey == key {
+				to = u.ToKey
+				break
+			}
+		}
+		msg := fmt.Sprintf("Planned to upgrade %s to %s. Each starts as soon as it can be paid.", game.BuildingCount(added, key), game.BuildingName(to))
+		if all {
+			msg = fmt.Sprintf("Planned to upgrade %s to %s (all you hold).", game.BuildingCount(added, key), game.BuildingName(to))
+		}
+		return CommandResult{Message: msg, Type: game.LogRoutine}
 	case "research", "res":
 		if len(rest) == 0 {
 			return CommandResult{Message: usageFor("plan research"), Type: "error"}
