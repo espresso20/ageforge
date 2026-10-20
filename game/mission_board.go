@@ -161,25 +161,20 @@ func (b *MissionBoard) rollRare(rng *rand.Rand) bool {
 }
 
 // makeOffer rolls one offer of a tier for age, made at tick.
-func (b *MissionBoard) makeOffer(rng *rand.Rand, tier, age string, tick int) *MissionOffer {
-	words, ok := config.MissionWordsFor(age)
-	if !ok {
-		return nil
-	}
+func (b *MissionBoard) makeOffer(rng *rand.Rand, words config.MissionWords, tier string, tick int) *MissionOffer {
+	age := words.Age
 	offer := &MissionOffer{Tier: tier, Age: age, ExpiresTick: tick + minutesToTicks(config.BoardExpireMinutes)}
-	name := words.Tiers[config.WordsShort]
-	objectives := words.Objectives[config.WordsShort]
+	which := config.WordsShort
 	switch tier {
 	case TierLong:
-		name, objectives = words.Tiers[config.WordsLong], words.Objectives[config.WordsLong]
+		which = config.WordsLong
 	case TierGrand:
-		offer.Grand = GrandMilitary
-		name, objectives = words.Tiers[config.WordsGrandMilitary], words.Objectives[config.WordsGrandMilitary]
+		offer.Grand, which = GrandMilitary, config.WordsGrandMilitary
 		if rng.Float64() < .5 {
-			offer.Grand = GrandCivil
-			name, objectives = words.Tiers[config.WordsGrandCivil], words.Objectives[config.WordsGrandCivil]
+			offer.Grand, which = GrandCivil, config.WordsGrandCivil
 		}
 	}
+	name, objectives := words.Tiers[which], words.ObjectivesFor(which)
 	offer.Rare = b.rollRare(rng)
 	objective := objectives[rng.Intn(len(objectives))]
 	place := words.Places[rng.Intn(len(words.Places))]
@@ -191,10 +186,10 @@ func (b *MissionBoard) makeOffer(rng *rand.Rand, tier, age string, tick int) *Mi
 	if tier == TierGrand && offer.Grand == GrandCivil {
 		base = config.CivilGrandSuccess
 	}
-	length := tuning.MinMinutes + rng.Float64()*(tuning.MaxMinutes-tuning.MinMinutes)
-	success := base + (rng.Float64()*0.2 - 0.1)
+	length := tuning.MinMinutes + float64(rng.Float64()*(tuning.MaxMinutes-tuning.MinMinutes))
+	success := base + (float64(rng.Float64()*0.2) - 0.1)
 	success = math.Max(config.MissionSuccessMin, math.Min(config.MissionSuccessMax, success))
-	haul := length*tuning.Yield*0.6 + length*tuning.Yield*rng.Float64()
+	haul := float64(length*tuning.Yield*0.6) + float64(length*tuning.Yield*rng.Float64())
 	if offer.Rare {
 		length *= config.RareLengthFactor
 		success = math.Max(config.RareSuccessFloor, success-config.RareSuccessCut)
@@ -207,24 +202,24 @@ func (b *MissionBoard) makeOffer(rng *rand.Rand, tier, age string, tick int) *Mi
 
 // regenerate throws the board away and makes nine new offers for age, in
 // slot order. Active missions are not touched.
-func (b *MissionBoard) regenerate(rng *rand.Rand, age string, tick int) {
-	b.Age = age
+func (b *MissionBoard) regenerate(rng *rand.Rand, words config.MissionWords, tick int) {
+	b.Age = words.Age
 	b.Slots = make([]boardSlot, boardSize)
 	for i := range b.Slots {
-		b.Slots[i].Offer = b.makeOffer(rng, slotTier(i), age, tick)
+		b.Slots[i].Offer = b.makeOffer(rng, words, slotTier(i), tick)
 	}
 }
 
 // refresh replaces the offers that expired, at once, and fills the slots
 // whose wait for a new offer is over, in slot order.
-func (b *MissionBoard) refresh(rng *rand.Rand, tick int) {
+func (b *MissionBoard) refresh(rng *rand.Rand, words config.MissionWords, tick int) {
 	for i := range b.Slots {
 		slot := &b.Slots[i]
 		switch {
 		case slot.Offer != nil && tick >= slot.Offer.ExpiresTick:
-			slot.Offer = b.makeOffer(rng, slotTier(i), b.Age, tick)
+			slot.Offer = b.makeOffer(rng, words, slotTier(i), tick)
 		case slot.Offer == nil && tick >= slot.RefillTick:
-			slot.Offer = b.makeOffer(rng, slotTier(i), b.Age, tick)
+			slot.Offer = b.makeOffer(rng, words, slotTier(i), tick)
 		}
 	}
 }
@@ -282,15 +277,22 @@ func (b *MissionBoard) clone() MissionBoard {
 // for another age: a new age gets a whole new board. Under the engine's
 // write lock.
 func (mm *MilitaryManager) EnsureBoard(rng *rand.Rand, age string, tick int) {
-	if !mm.board.ready(age) {
-		mm.board.regenerate(rng, age, tick)
+	if mm.board.ready(age) {
+		return
+	}
+	if words, ok := mm.rules.MissionWords(age); ok {
+		mm.board.regenerate(rng, words, tick)
 	}
 }
 
 // RefreshBoard expires old offers and fills the slots that are due. Call
 // EnsureBoard first.
 func (mm *MilitaryManager) RefreshBoard(rng *rand.Rand, tick int) {
-	mm.board.refresh(rng, tick)
+	words, ok := mm.rules.MissionWords(mm.board.Age)
+	if !ok {
+		return
+	}
+	mm.board.refresh(rng, words, tick)
 }
 
 // BoardOffer is offer n (1-based) on the board, or why there is none.

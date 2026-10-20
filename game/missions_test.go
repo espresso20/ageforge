@@ -383,17 +383,17 @@ func TestMissionBoard_TitlesComeFromTheAgesWords(t *testing.T) {
 			if o.Rare != (title != o.Title) {
 				t.Errorf("%s: %q is rare=%v", age.Key, o.Title, o.Rare)
 			}
-			names := []string{words.Tiers[config.WordsShort]}
-			objs := words.Objectives[config.WordsShort][:]
+			which := config.WordsShort
 			switch slotTier(i) {
 			case TierLong:
-				names, objs = []string{words.Tiers[config.WordsLong]}, words.Objectives[config.WordsLong][:]
+				which = config.WordsLong
 			case TierGrand:
-				names, objs = []string{words.Tiers[config.WordsGrandMilitary]}, words.Objectives[config.WordsGrandMilitary][:]
+				which = config.WordsGrandMilitary
 				if o.Grand == GrandCivil {
-					names, objs = []string{words.Tiers[config.WordsGrandCivil]}, words.Objectives[config.WordsGrandCivil][:]
+					which = config.WordsGrandCivil
 				}
 			}
+			names, objs := []string{words.Tiers[which]}, words.ObjectivesFor(which)
 			ok := false
 			for _, obj := range objs {
 				for _, place := range words.Places {

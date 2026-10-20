@@ -53,8 +53,8 @@ func TestMissionWordsCoverEveryAge(t *testing.T) {
 			}
 			seen[place] = true
 		}
-		for tier, objs := range w.Objectives {
-			for _, o := range objs {
+		for tier := 0; tier < 4; tier++ {
+			for _, o := range w.ObjectivesFor(tier) {
 				if !strings.HasSuffix(o, " the") {
 					t.Errorf("%s objective %q should end in 'the'", age.Key, o)
 				}

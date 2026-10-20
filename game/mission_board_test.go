@@ -345,13 +345,12 @@ func (s *fixedSource) Seed(int64)   {}
 // starts with the word. Offers are rolled on the same stream twice, once
 // made rare and once not, to see the change and nothing else.
 func TestRare_OfferModifiers(t *testing.T) {
-	// A fixed stream of draws makes the same ordinary offer; the Legendary one
-	// differs by exactly the three changes.
+	ironWords, _ := config.MissionWordsFor("iron_age")
 	for _, tier := range boardTiers {
 		var ordinary, rare *MissionOffer
 		for seed := int64(1); seed < 4000 && (ordinary == nil || rare == nil); seed++ {
 			var b MissionBoard
-			o := b.makeOffer(rand.New(rand.NewSource(seed)), tier, "iron_age", 0)
+			o := b.makeOffer(rand.New(rand.NewSource(seed)), ironWords, tier, 0)
 			if o.Grand == GrandCivil {
 				continue
 			}
@@ -382,6 +381,7 @@ func TestRare_OfferModifiers(t *testing.T) {
 
 	// The same draws, forced both ways, differ by exactly the changes.
 	roll := func(forceRare bool) MissionOffer {
+		ironWords, _ := config.MissionWordsFor("iron_age")
 		var b MissionBoard
 		if !forceRare {
 			b.Made, b.SinceRare = 20, 3 // a Legendary offer was made lately: this one cannot be
@@ -391,7 +391,7 @@ func TestRare_OfferModifiers(t *testing.T) {
 		// The rarity draw is the first (a long offer draws nothing before it);
 		// the remaining draws are the same stream in both runs.
 		src := rand.New(rand.NewSource(77))
-		return *b.makeOffer(src, TierLong, "iron_age", 100)
+		return *b.makeOffer(src, ironWords, TierLong, 100)
 	}
 	plain, legend := roll(false), roll(true)
 	if plain.Rare || !legend.Rare {
