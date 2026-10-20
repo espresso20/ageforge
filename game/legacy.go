@@ -101,7 +101,7 @@ func loadPlanTemplate(set *rules.Set, saved []PlanTemplateItem) []PlanTemplateIt
 			continue
 		}
 		switch it.Kind {
-		case PlanBuild:
+		case PlanBuild, PlanUpgrade:
 			if it.Key == "" || it.Count <= 0 {
 				continue
 			}
@@ -164,7 +164,7 @@ func uniqueKeys(keys []string) []string {
 // for the age is not recorded twice, and an age holds at most MaxPlanItems
 // entries. Caller holds the write lock.
 func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
-	if it.Kind == PlanDeal || (it.Kind == PlanBuild && count <= 0) {
+	if it.Kind == PlanDeal || ((it.Kind == PlanBuild || it.Kind == PlanUpgrade) && count <= 0) {
 		return
 	}
 	for i := range ge.planLog {
@@ -173,7 +173,7 @@ func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
 			continue
 		}
 		switch it.Kind {
-		case PlanBuild:
+		case PlanBuild, PlanUpgrade:
 			if e.Key == it.Key {
 				e.Count = min(e.Count+count, maxPlanCount)
 				return
@@ -191,7 +191,7 @@ func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
 	}
 	t := PlanTemplateItem{Age: ge.age, Kind: it.Kind, Key: it.Key}
 	switch it.Kind {
-	case PlanBuild:
+	case PlanBuild, PlanUpgrade:
 		t.Count = count
 	case PlanAdvance:
 		t.Key = ""
@@ -237,7 +237,7 @@ func (ge *GameEngine) unlogPlanItemLocked(it PlanItem) {
 		return
 	}
 	switch {
-	case it.Kind == PlanBuild:
+	case it.Kind == PlanBuild || it.Kind == PlanUpgrade:
 		ge.planLog[idx].Count -= it.Count
 		if ge.planLog[idx].Count > 0 {
 			return
@@ -285,6 +285,40 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 			return false, true
 		}
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: t.Key, Count: count})
+	case PlanUpgrade:
+		oldDef, ok := ge.rules.Building(t.Key)
+		newKey, pending := ge.Buildings.GetPendingUpgrade(t.Key)
+		newDef, hasNew := ge.rules.Building(newKey)
+		if !ok || !pending || !hasNew || oldDef.Scholars > 0 || ge.techLockErr(newDef) != nil {
+			return false, false
+		}
+		planned := 0
+		for _, it := range ge.plan {
+			if it.Kind == PlanUpgrade && it.Key == t.Key {
+				planned += it.Count
+			}
+		}
+		count := min(t.Count, ge.Buildings.GetCount(t.Key)-planned)
+		if newDef.MaxCount > 0 {
+			room := newDef.MaxCount - ge.Buildings.GetCount(newKey) - ge.Buildings.GetQueueCount(newKey, ge.buildQueue)
+			for _, it := range ge.plan {
+				if it.Kind == PlanUpgrade && it.Key == t.Key {
+					room -= it.Count
+				}
+			}
+			count = min(count, room)
+		}
+		if count <= 0 {
+			return false, false
+		}
+		if n > 0 && ge.plan[n-1].Kind == PlanUpgrade && ge.plan[n-1].Key == t.Key {
+			ge.plan[n-1].Count = min(ge.plan[n-1].Count+count, maxPlanCount)
+			return true, false
+		}
+		if full {
+			return false, true
+		}
+		ge.plan = append(ge.plan, PlanItem{Kind: PlanUpgrade, Key: t.Key, Count: count})
 	case PlanResearch:
 		if _, ok := ge.rules.Tech(t.Key); !ok {
 			return false, false

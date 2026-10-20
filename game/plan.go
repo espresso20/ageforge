@@ -76,6 +76,7 @@ import (
 // Plan item kinds.
 const (
 	PlanBuild    = "build"
+	PlanUpgrade  = "upgrade"
 	PlanResearch = "research"
 	PlanAdvance  = "advance"
 )
@@ -159,6 +160,7 @@ type PlanItemView struct {
 	Kind    string
 	Key     string
 	Name    string
+	Target  string
 	Count   int
 	Started int
 	// Cost is the price of the next start (for a wonder, what its bank still lacks).
@@ -236,7 +238,7 @@ func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 		} else {
 			it.Banked = nil
 		}
-		if (it.Kind != PlanBuild && it.Kind != PlanResearch && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 {
+		if (it.Kind != PlanBuild && it.Kind != PlanUpgrade && it.Kind != PlanResearch && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 {
 			continue
 		}
 		if load := planLoad(out); it.Kind != PlanResearch && load >= MaxPlanItems || it.Kind == PlanResearch && len(out)-load >= set.TechCount() {
@@ -245,7 +247,7 @@ func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 		if it.Kind == PlanDeal && (it.Key == "" || it.Deal <= 0) {
 			continue
 		}
-		if it.Kind != PlanBuild {
+		if it.Kind != PlanBuild && it.Kind != PlanUpgrade {
 			it.Count = 1
 		}
 		it.Count = min(it.Count, maxPlanCount)
@@ -253,6 +255,66 @@ func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 		out = append(out, it)
 	}
 	return out
+}
+
+// PlanAddUpgrade appends upgrades for held copies of key, merging into the
+// last matching item. Caller-facing validation mirrors `upgrade`.
+func (ge *GameEngine) PlanAddUpgrade(key string, count int) (int, error) {
+	if count <= 0 || count > maxPlanCount {
+		return 0, fmt.Errorf("The count must be a whole number from 1 to %d.", maxPlanCount)
+	}
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	oldDef, ok := ge.rules.Building(key)
+	if !ok {
+		return 0, ge.unknownBuildingErr(key)
+	}
+	newKey, pending := ge.Buildings.GetPendingUpgrade(key)
+	newDef, hasNew := ge.rules.Building(newKey)
+	if !pending || !hasNew || oldDef.Scholars > 0 {
+		return 0, fmt.Errorf("%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
+	}
+	if err := ge.techLockErr(newDef); err != nil {
+		return 0, err
+	}
+	planned := 0
+	for _, it := range ge.plan {
+		if it.Kind == PlanUpgrade && it.Key == key {
+			planned += it.Count
+		}
+	}
+	count = min(count, ge.Buildings.GetCount(key)-planned)
+	if count <= 0 {
+		return 0, fmt.Errorf("You have no %s to upgrade.", oldDef.Name)
+	}
+	if newDef.MaxCount > 0 {
+		room := newDef.MaxCount - ge.Buildings.GetCount(newKey) - ge.Buildings.GetQueueCount(newKey, ge.buildQueue)
+		for _, it := range ge.plan {
+			if it.Kind == PlanUpgrade && it.Key == key {
+				room -= it.Count
+			}
+		}
+		count = min(count, room)
+		if count <= 0 {
+			return 0, fmt.Errorf("%s is at its max count of %d.", newDef.Name, newDef.MaxCount)
+		}
+	}
+	if n := len(ge.plan); n > 0 && ge.plan[n-1].Kind == PlanUpgrade && ge.plan[n-1].Key == key {
+		add := min(count, maxPlanCount-ge.plan[n-1].Count)
+		if add <= 0 {
+			return 0, fmt.Errorf("That plan item already holds %d, the most one item can.", maxPlanCount)
+		}
+		ge.plan[n-1].Count += add
+		ge.logPlanAddLocked(ge.plan[n-1], add)
+		return add, nil
+	}
+	if planLoad(ge.plan) >= MaxPlanItems {
+		return 0, errPlanFull()
+	}
+	ge.plan = append(ge.plan, PlanItem{Kind: PlanUpgrade, Key: key, Count: count})
+	ge.notePlanSize()
+	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], count)
+	return count, nil
 }
 
 // ===== Public API =====
@@ -382,6 +444,9 @@ func (ge *GameEngine) planItemLabel(it PlanItem) string {
 	}
 	if it.Kind == PlanResearch {
 		return "research " + techDefName(ge.rules, it.Key)
+	}
+	if it.Kind == PlanUpgrade {
+		return "upgrade " + buildingCountIn(ge.rules, it.Count, it.Key)
 	}
 	return buildingCountIn(ge.rules, it.Count, it.Key)
 }
@@ -579,6 +644,40 @@ type planCheck struct {
 // whether it is the first research item still in the plan.
 func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 	switch it.Kind {
+	case PlanUpgrade:
+		oldDef, ok := ge.rules.Building(it.Key)
+		newKey, pending := ge.Buildings.GetPendingUpgrade(it.Key)
+		newDef, hasNew := ge.rules.Building(newKey)
+		if !ok || !pending || !hasNew || oldDef.Scholars > 0 {
+			return planCheck{blocked: "no upgrade available"}
+		}
+		if err := ge.techLockErr(newDef); err != nil {
+			return planCheck{blocked: err.Error()}
+		}
+		if ge.Buildings.GetCount(it.Key) <= 0 {
+			return planCheck{blocked: "no copies left"}
+		}
+		if room := ge.Buildings.UpgradeRoom(newKey, 1, ge.buildQueue); room <= 0 {
+			return planCheck{blocked: fmt.Sprintf("%s is at its max count of %d", newDef.Name, newDef.MaxCount)}
+		}
+		cost, ok := ge.Buildings.UpgradeCost(it.Key, newKey, 1)
+		if !ok {
+			return planCheck{blocked: "could not work out upgrade cost"}
+		}
+		if DevGodMode {
+			return planCheck{}
+		}
+		chk := planCheck{cost: cost}
+		if res := ge.overStore(cost); res != "" {
+			chk.blocked = ge.storeTooSmallText("Upgrading "+buildingCountIn(ge.rules, 1, it.Key), res, cost[res])
+			return chk
+		}
+		if res := ge.planUnfunded(cost); res != "" {
+			chk.blocked = "too little " + ge.rules.ResourceLabel(res) + " coming in"
+			return chk
+		}
+		chk.reserve = true
+		return chk
 	case PlanBuild:
 		def := ge.Buildings.defs[it.Key]
 		if def.RequiredAge != "" && def.RequiredAge != ge.age {
@@ -764,6 +863,16 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			// Copies the surviving items above will take first (their
 			// counts already net of what they started this walk).
 			reason = ge.planBuildInvalid(it.Key, plannedCopies(out, it.Key))
+		} else if it.Kind == PlanUpgrade {
+			oldDef, ok := ge.rules.Building(it.Key)
+			newKey, pending := ge.Buildings.GetPendingUpgrade(it.Key)
+			_, hasNew := ge.rules.Building(newKey)
+			if !ok || !pending || !hasNew || oldDef.Scholars > 0 {
+				reason = "no upgrade available"
+			}
+			if reason == "" && ge.Buildings.GetCount(it.Key) <= 0 {
+				reason = "no copies left"
+			}
 		} else if reason = ge.planResearchInvalid(it.Key); reason == "" {
 			// Prerequisites planned before this item count only while they
 			// are still in the plan: out holds the survivors so far.
@@ -811,6 +920,8 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 				}
 				if it.Kind == PlanBuild {
 					err = ge.startPlanBuild(&it, chk.banked)
+				} else if it.Kind == PlanUpgrade {
+					err = ge.upgradeBuildingLocked(it.Key, 1, false)
 				} else {
 					err = ge.startResearchLocked(it.Key, true)
 				}
@@ -833,8 +944,15 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 							it.Count = 0
 						}
 					}
+				} else if it.Kind == PlanUpgrade {
+					if ge.Buildings.GetCount(it.Key) <= 0 {
+						it.Count = 0
+					}
 				} else {
 					starts.techs = append(starts.techs, it.Key)
+				}
+				if it.Kind == PlanUpgrade {
+					break
 				}
 				continue
 			}
@@ -998,6 +1116,11 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		v := PlanItemView{Kind: it.Kind, Key: it.Key, Count: it.Count, Started: it.Started}
 		if it.Kind == PlanResearch {
 			v.Name = techDefName(ge.rules, it.Key)
+		} else if it.Kind == PlanUpgrade {
+			v.Name = ge.Buildings.defs[it.Key].Name
+			if target, ok := ge.Buildings.GetPendingUpgrade(it.Key); ok {
+				v.Target = ge.Buildings.defs[target].Name
+			}
 		} else {
 			v.Name = ge.Buildings.defs[it.Key].Name
 		}

@@ -7,6 +7,7 @@ Open it with `plan`. Add to it with commands:
 ```
 plan build hut 10              # ten huts, one after another along the cost curve
 plan build gathering_camp 5
+plan upgrade gathering_camp all # upgrade every camp you hold, as each price is ready
 plan research tool_making      # techs start one at a time, in plan order
 plan research imperial_legions # a tech that needs others: they go in first, in order
 plan advance                   # advance as soon as the requirements are met
@@ -27,6 +28,7 @@ plan build longhouse 15        # a next-age building waits for the advance
 - **A wonder pays its bank from what you hold.** A wonder's price in the plan is what its bank still lacks. Once what you hold (after what the items above it hold back) covers all of that, the plan banks it and starts construction, so you don't need to `wonder collect` for it. While it waits it holds nothing back: it is a big bill, and holding it would stall everything below it. A part bigger than a full store can't be paid at once; deposits and overflow fill it over time, and the plan's wonder takes overflow only while [wonder overflow](wonders.md#overflow) is on. A wonder whose [keystone tech](wonders.md#the-keystone-tech) is not researched yet waits for it (`waits for Stoneworking`) and starts once it is; overflow fills its bank in the meantime while wonder overflow is on.
 - **Techs queue.** Only the first research item in the plan can take the research slot when it frees up; a tech has no price to hold. See [The research queue](#the-research-queue) for what `plan research` adds and which techs it takes.
 - **Deals wait for their price.** A deal item (`plan deal <civ> <n>`, see [Trade deals](factions.md#trade-deals)) is a one-off purchase at a fixed price, so it runs like a single build: it holds its price back while it waits and takes the deal once what is left covers it. It holds nothing while the goods wouldn't fit in their store or the civilization won't trade (war, embargo, rivalry, hostility). It drops out once taken, or when the offer is gone: the civilization's offers rotated or you took it by hand. Offers don't rotate while you are away, so a deal planned before you leave is still there for the plan to take.
+- **Upgrades wait for their price.** `plan upgrade <building> [count|all]` adds upgrades for copies you hold. It upgrades one copy at a time, as soon as each can be paid, and drops the item if the upgrade is no longer available.
 - **Advance at its place.** An advance item advances the moment the requirements are met, when the walk reaches it: items above it go first, and items below wait for the next tick.
 - **Dead items drop out.** A building of an earlier age after an advance, a building at its limit, a tech already researched: each leaves the plan with a line in the log.
 - **Sell orders are gone.** The market no longer swaps resources, so a plan saved with sell orders loses them when it loads. See [Saving and Loading](saving-and-loading.md#saves-from-before-the-market-ended).

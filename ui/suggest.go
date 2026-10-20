@@ -135,7 +135,8 @@ func buildUniverse() map[ArgKind]map[string]bool {
 	b, r := set(buildings), set(resources)
 	return map[ArgKind]map[string]bool{
 		ArgBuilding: b, ArgPlanBuilding: b, ArgSellBuilding: b, ArgWorkerBuilding: b,
-		ArgStaffedBuilding: b, ArgUpgradeBuilding: b,
+		ArgPlanUpgradeBuilding: b,
+		ArgStaffedBuilding:     b, ArgUpgradeBuilding: b,
 		ArgTech: set(techs), ArgPlanTech: set(techs),
 		ArgResource: r, ArgWonderResource: r,
 		ArgFaction: set(factions), ArgTheme: set(themes),
@@ -402,6 +403,8 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return buildableBuildingKeys(st)
 	case ArgPlanBuilding:
 		return plannableBuildingKeys(st)
+	case ArgPlanUpgradeBuilding:
+		return upgradeableBuildingKeys(c.engine)
 	case ArgSellBuilding:
 		return sellableBuildingKeys(st)
 	case ArgWorkerBuilding:

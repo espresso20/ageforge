@@ -150,6 +150,13 @@ func planItemTitle(v game.PlanItemView) string {
 	case game.PlanAdvance:
 		return v.Name
 	}
+	if v.Kind == game.PlanUpgrade {
+		s := fmt.Sprintf("upgrade %d %s → %s", v.Count, v.Name, v.Target)
+		if v.Started > 0 {
+			s += fmt.Sprintf(" (%d started)", v.Started)
+		}
+		return s
+	}
 	s := v.Name
 	if v.Count > 1 {
 		s += fmt.Sprintf(" ×%d", v.Count)
@@ -303,7 +310,7 @@ func planPanelText(state game.GameState, sel int, note string, noteGood, clearAr
 
 	sb.WriteString("\n " + theme.Keycap("↑↓") + " select  " + theme.Keycap("U") + " up  " + theme.Keycap("D") + " down  " +
 		theme.Keycap("X") + " remove  " + theme.Keycap("C") + " clear\n")
-	sb.WriteString(" " + theme.Paint(theme.RoleDim, "Add with plan build / plan research; plan list, remove, up, down and clear work as commands too.") + "\n")
+	sb.WriteString(" " + theme.Paint(theme.RoleDim, "Add with plan build / plan upgrade / plan research; plan list, remove, up, down and clear work as commands too.") + "\n")
 
 	if note != "" {
 		role := theme.RoleNegative

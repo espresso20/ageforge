@@ -27,32 +27,33 @@ import (
 type ArgKind int
 
 const (
-	ArgText            ArgKind = iota // free text: a name, a path, a code
-	ArgNumber                         // a count or an amount (or one of Arg.Words)
-	ArgWord                           // one of Arg.Words and nothing else
-	ArgBuilding                       // a building buildable now (build)
-	ArgPlanBuilding                   // a building the plan takes: this age's, then the next age's
-	ArgSellBuilding                   // a built building sell takes: no wonder or storage
-	ArgWorkerBuilding                 // a built building that takes workers (assign)
-	ArgStaffedBuilding                // a building with workers in it (unassign, dismiss)
-	ArgUpgradeBuilding                // a building with an upgrade available
-	ArgTech                           // a tech available to research now
-	ArgPlanTech                       // a tech the plan takes
-	ArgResource                       // an unlocked resource
-	ArgWonderResource                 // a resource the current wonder's bank still needs
-	ArgFaction                        // a discovered civilization
-	ArgTheme                          // an unlocked theme
-	ArgSave                           // an existing save
-	ArgExpedition                     // a scouting expedition
-	ArgCampaign                       // a military campaign
-	ArgRouteAvailable                 // a trade route that can start
-	ArgRouteActive                    // a running trade route
-	ArgPrestigeUpgrade                // a legacy kit item not bought yet
-	ArgAccount                        // a local account's name
-	ArgPlanItem                       // a plan item's number
-	ArgDeal                           // a trade deal's number, of the civilization in the previous argument
-	ArgDomain                         // a worker domain (roster)
-	ArgPercent                        // a percent: a number, with or without a % sign
+	ArgText                ArgKind = iota // free text: a name, a path, a code
+	ArgNumber                             // a count or an amount (or one of Arg.Words)
+	ArgWord                               // one of Arg.Words and nothing else
+	ArgBuilding                           // a building buildable now (build)
+	ArgPlanBuilding                       // a building the plan takes: this age's, then the next age's
+	ArgPlanUpgradeBuilding                // a building the plan can upgrade now
+	ArgSellBuilding                       // a built building sell takes: no wonder or storage
+	ArgWorkerBuilding                     // a built building that takes workers (assign)
+	ArgStaffedBuilding                    // a building with workers in it (unassign, dismiss)
+	ArgUpgradeBuilding                    // a building with an upgrade available
+	ArgTech                               // a tech available to research now
+	ArgPlanTech                           // a tech the plan takes
+	ArgResource                           // an unlocked resource
+	ArgWonderResource                     // a resource the current wonder's bank still needs
+	ArgFaction                            // a discovered civilization
+	ArgTheme                              // an unlocked theme
+	ArgSave                               // an existing save
+	ArgExpedition                         // a scouting expedition
+	ArgCampaign                           // a military campaign
+	ArgRouteAvailable                     // a trade route that can start
+	ArgRouteActive                        // a running trade route
+	ArgPrestigeUpgrade                    // a legacy kit item not bought yet
+	ArgAccount                            // a local account's name
+	ArgPlanItem                           // a plan item's number
+	ArgDeal                               // a trade deal's number, of the civilization in the previous argument
+	ArgDomain                             // a worker domain (roster)
+	ArgPercent                            // a percent: a number, with or without a % sign
 )
 
 // Arg is one argument slot.
@@ -172,6 +173,7 @@ func registry() []*Command {
 			Help: []Usage{{"plan", "Open the Plan panel (reorder and remove with keys)"}},
 			Subs: []*Command{
 				sub("build", "plan build <building> [count]", "Add copies of a building (this age's, or the next age's to build after you advance)", Arg{Kind: ArgPlanBuilding}, optCount),
+				sub("upgrade", "plan upgrade <building> [count|all]", "Plan upgrades for held copies, one at a time as each can be paid", Arg{Kind: ArgPlanUpgradeBuilding}, optCountAll),
 				{Name: "research", Aliases: []string{"res"}, Args: []Arg{{Kind: ArgPlanTech}},
 					Help: []Usage{{"plan research <tech>", "Add a tech and, before it, the techs it still needs (techs start one at a time, in order)"}}},
 				sub("advance", "plan advance", "Advance as soon as the next age is ready"),
