@@ -527,6 +527,14 @@ func Badges() []BadgeDef {
 			Proof:  StaticProof(BadgeRuleRunCount),
 		},
 		{
+			Key: "special.once_in_a_legend", Family: "special",
+			Name: "Once in a Legend", Desc: "Come back from a successful Legendary mission.",
+			Hint: "The board offers one now and then.",
+			Tier: BadgeGold, Scope: BadgeMoment, Event: BadgeEvLegendaryReturned,
+			Reveal: secret, Emblem: "military",
+			Proof: Occurs("A Legendary offer turns up on the mission board now and then, it can be sent, and it has a chance to succeed."),
+		},
+		{
 			Key: "special.forgetful", Family: "special",
 			Name: "Forgetful", Desc: "Turn down an Ancient Memory.",
 			Hint: "Something about saying no.",

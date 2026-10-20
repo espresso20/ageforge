@@ -176,6 +176,10 @@ const (
 	// BadgeEvExpedition: an expedition came back with a success. Subject:
 	// the expedition.
 	BadgeEvExpedition = "expedition_returned"
+	// BadgeEvLegendaryReturned: a Legendary mission came back with a
+	// success. No subject. It is separate from BadgeEvExpedition so a
+	// Legendary return counts once on the expeditions ladder.
+	BadgeEvLegendaryReturned = "legendary_returned"
 	// BadgeEvFestival and BadgeEvBlackMarket: a festival held, a black
 	// market deal made (won or lost).
 	BadgeEvFestival    = "festival_held"
@@ -301,7 +305,7 @@ func BadgeEventKinds() []string {
 		BadgeEvBuildingSold, BadgeEvBuildingUpgraded, BadgeEvGathered, BadgeEvStarved,
 		BadgeEvEndured, BadgeEvSuccumbed, BadgeEvLastPassage,
 		BadgeEvHarbingerMet, BadgeEvHarbingerResolved, BadgeEvAppeased, BadgeEvBraced, BadgeEvInvited,
-		BadgeEvDeal, BadgeEvExpedition, BadgeEvFestival, BadgeEvBlackMarket,
+		BadgeEvDeal, BadgeEvExpedition, BadgeEvLegendaryReturned, BadgeEvFestival, BadgeEvBlackMarket,
 		BadgeEvMemoryAccepted, BadgeEvMemoryDeclined, BadgeEvEraEvent, BadgeEvAwakening,
 		BadgeEvCivMet, BadgeEvCivStatus, BadgeEvCivAllied,
 		BadgeEvRaidBlunted, BadgeEvLowMorale, BadgeEvPlanStarted,

@@ -35,12 +35,13 @@ func MissionKindWord(kind string) string {
 // BadgeExpeditions lists every era and kind a mission badge exists for, in
 // the catalog's order.
 func BadgeExpeditions() []BadgeExpeditionDef {
-	out := make([]BadgeExpeditionDef, 0, len(Missions()))
-	for _, mission := range Missions() {
-		for _, era := range Epochs() {
-			if era.Key == mission.Era && len(era.Ages) > 0 {
-				out = append(out, BadgeExpeditionDef{MissionBadgeKey(mission.Era, mission.Kind), era.Name, era.Ages[0], mission.Kind})
-			}
+	var out []BadgeExpeditionDef
+	for _, era := range Epochs() {
+		if len(era.Ages) == 0 {
+			continue
+		}
+		for _, kind := range MissionKinds() {
+			out = append(out, BadgeExpeditionDef{MissionBadgeKey(era.Key, kind), era.Name, era.Ages[0], kind})
 		}
 	}
 	return out
