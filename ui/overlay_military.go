@@ -195,6 +195,26 @@ func formatExpeditionCost(cost map[string]float64, state game.GameState) string 
 	return strings.Join(parts, ", ")
 }
 
+func expeditionHaul(exp game.ExpeditionInfo, state game.GameState) string {
+	if haul := formatExpeditionCost(exp.ExpectedHaulMin, state); haul != "" {
+		return haul
+	}
+	return fmt.Sprintf("about %.0f min of income", exp.HaulMinutes)
+}
+
+func expeditionOfferCost(exp game.ExpeditionInfo, state game.GameState) string {
+	if cost := formatExpeditionCost(exp.Cost, state); cost != "" {
+		return cost
+	}
+	if exp.Tier == game.TierGrand && exp.Grand == game.GrandCivil {
+		return "materials"
+	}
+	if exp.Tier == game.TierGrand && exp.Grand == game.GrandMilitary {
+		return "soldiers"
+	}
+	return "free"
+}
+
 // writeGarrison renders what the army does for the player: how much of a raid
 // the garrison would blunt against the current age's threat, and what it has
 // saved this run. Worded from the player's side.

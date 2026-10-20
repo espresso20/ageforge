@@ -638,7 +638,7 @@ func (s *siteStage) scout(n int) {
 			s.t.Fatalf("120 scouting parties met only %d civilizations", met())
 		}
 		s.stock()
-		if err := s.eng.LaunchExpedition("scout_ruins"); err != nil {
+		if err := s.eng.LaunchExpedition(1); err != nil {
 			s.t.Fatalf("scouting: %v", err)
 		}
 		for s.eng.GetState().Military.ActiveScout != nil {

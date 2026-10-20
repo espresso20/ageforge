@@ -1838,7 +1838,7 @@ func cmdMissionBoard(engine *game.GameEngine) CommandResult {
 	for _, slot := range mil.Board {
 		if slot.Tier != tier {
 			tier = slot.Tier
-			lines = append(lines, "[yellow]"+tierHeading(tier)+":[-]")
+			lines = append(lines, "[yellow]"+tierHeading(tier, state)+":[-]")
 		}
 		if slot.Offer == nil {
 			lines = append(lines, fmt.Sprintf("  [gray]%d. (taken: a new offer in %s)[-]", slot.Number, formatTicks(slot.RefillTicks, state)))
@@ -1858,14 +1858,13 @@ func cmdMissionBoard(engine *game.GameEngine) CommandResult {
 }
 
 // tierHeading is the heading a tier's offers are printed under.
-func tierHeading(tier string) string {
-	switch tier {
-	case game.TierLong:
-		return "Long"
-	case game.TierGrand:
+func tierHeading(tier string, state game.GameState) string {
+	words, _ := state.Ruleset().MissionWords(state.Age)
+	kind := map[string]int{game.TierShort: config.WordsShort, game.TierLong: config.WordsLong, game.TierGrand: config.WordsGrandMilitary}[tier]
+	if tier == game.TierGrand {
 		return "Grand"
 	}
-	return "Short"
+	return words.Tiers[kind]
 }
 
 // offerLine is one offer as a plain line: whether it can be sent, its number,
@@ -1880,23 +1879,15 @@ func offerLine(exp game.ExpeditionInfo, state game.GameState) string {
 	if exp.Rare {
 		title = "[gold]★ " + title + "[-]"
 	}
-	var cost []string
-	if exp.SoldiersNeeded > 0 {
-		cost = append(cost, fmt.Sprintf("%d soldiers", exp.SoldiersNeeded))
+	line := fmt.Sprintf("  %s %d. %s · %.0f min · %.0f%% odds · haul %s · cost %s",
+		mark, exp.Number, title, exp.LengthMinutes, exp.SuccessChance*100, expeditionHaul(exp, state), expeditionOfferCost(exp, state))
+	if exp.Tier == game.TierGrand {
+		if exp.Grand == game.GrandMilitary {
+			line += fmt.Sprintf(" · military · %d %s", exp.SoldiersNeeded, pluralize("soldier", exp.SoldiersNeeded))
+		} else {
+			line += " · civil · " + expeditionOfferCost(exp, state)
+		}
 	}
-	if c := formatExpeditionCost(exp.Cost, state); c != "" {
-		cost = append(cost, c)
-	}
-	costText := "free"
-	if len(cost) > 0 {
-		costText = strings.Join(cost, ", ")
-	}
-	haul := formatExpeditionCost(exp.ExpectedHaulMin, state)
-	if haul == "" {
-		haul = "nothing yet"
-	}
-	line := fmt.Sprintf("  %s %d. %s - %s, %.0f%% odds, haul %s, cost %s",
-		mark, exp.Number, title, formatTicks(exp.DurationMin, state), exp.SuccessChance*100, haul, costText)
 	if !exp.CanLaunch && exp.LaunchBlockReason != "" {
 		line += fmt.Sprintf(" [red](%s)[-]", strings.TrimRight(exp.LaunchBlockReason, "."))
 	}

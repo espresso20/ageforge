@@ -248,16 +248,14 @@ Some commands wait for a tech. Until it is researched, the command is refused wi
 | Command | Opened by | Age |
 |---|---|---|
 | Trade routes (`trade route start <route>`) | The Wheel | Bronze |
-| Campaigns (`campaign <key>`) | Military Tactics | Bronze |
-| Expeditions past the Scout Party (`expedition scout_ruins`) | Exploration | Iron |
+| Military grand offers (`expedition <number>`) | Military Tactics | Bronze |
 | Diplomacy: gifts, alliances, rivalries, embargoes and deals (`diplomacy ...`, `plan deal`) | Envoys | Classical |
 | Festivals (`festival confirm yes`) | Drama | Classical |
-| The Naval Expedition (`expedition naval_expedition`) | Navigation, after Exploration | Renaissance |
 | The black market (`blackmarket <resource>`) | Mercantilism | Colonial |
 | The Rail Freight route (`trade route start rail_freight`) | Railroads | Industrial |
 | The Warp Commerce route (`trade route start warp_commerce`) | Interstellar Trade | Interstellar |
 
-The Scout Party needs no tech: it is a walk into the hills, open from the first age through the Bronze Age. Scout Nearby Ruins is listed from the Bronze Age and waits for Exploration, an Iron Age tech, which needs Map Making or Boatbuilding. The panels say which tech a command waits for (the Trade, Expeditions, Army and Factions panels, and `festival`). Every lock has its tech now: Warp Commerce's, Interstellar Trade, was the last to arrive.
+The panels say which tech a command waits for (the Trade, Expeditions, Army and Factions panels, and `festival`). Every lock has its tech now: Warp Commerce's, Interstellar Trade, was the last to arrive.
 
 **Saves from before a lock.** A game saved before a command waited for its tech keeps every command open in the age it was in, and keeps for the rest of that run any command it was already using: a campaign under way, a route running, an ally, a festival held. In that age its buildings and its wonder wait for no tech either. One line in the log says so when the save is first loaded. The locks start with the next age for what that run never used, and with the next run for the rest. This covers the four commands and the seven buildings that found their tech with the Stone and Iron Eras' new techs, Stonehenge's keystone, the nine buildings that found theirs with the Steel and Electric Eras' techs, and the Warp Commerce route and the nineteen buildings that found theirs with the Digital, Neon and Cosmic Eras' (a game saved in one of those ages keeps its age's buildings open until it advances, and a Warp Commerce route it was running stays open for the run).
 
@@ -322,7 +320,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 |---|---|---|---|---|---|
 | `priesthood` | Priesthood | optional | 33m | `calendar` | Morale can rise 5 points higher |
 | `mathematics` | Mathematics | **keystone** (Colosseum) | 25m | `primitive_writing` | +8% scholar output |
-| `exploration` | Exploration | spine | 15m | one of `map_making` or `boatbuilding` | Opens expeditions past the Scout Party |
+| `exploration` | Exploration | spine | 15m | one of `map_making` or `boatbuilding` | Opens long and grand mission offers |
 | `irrigation` | Irrigation | optional | 43m | `agriculture` | +8% food production, +5% housing |
 | `road_building` | Road Building | optional | 56m | `masonry`, `the_wheel` | +8% gold production, trade routes take 15% less time |
 | `iron_smelting` | Iron Smelting | spine | 19m | `bronze_working` | Opens the Smelter, +8% iron production |

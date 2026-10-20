@@ -1,10 +1,14 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 // newExpeditionTestEngine spins up a fresh engine in the Bronze Age, stocked
@@ -54,12 +58,13 @@ func TestCmdExpeditionNoArgsPrintsTheBoard(t *testing.T) {
 			t.Errorf("the board does not list offer %d:\n%s", n, res.Message)
 		}
 	}
-	for _, heading := range []string{"Short:", "Long:", "Grand:"} {
+	st := engine.GetState()
+	words, _ := st.Ruleset().MissionWords(st.Age)
+	for _, heading := range []string{words.Tiers[0] + ":", words.Tiers[1] + ":", "Grand:"} {
 		if !strings.Contains(res.Message, heading) {
 			t.Errorf("the board has no %s section:\n%s", heading, res.Message)
 		}
 	}
-	st := engine.GetState()
 	if st.Military.ActiveShort != nil || st.Military.ActiveLong != nil || st.Military.ActiveGrand != nil {
 		t.Error("printing the board launched something")
 	}
@@ -141,5 +146,47 @@ func TestOfferLineMarksLegendaryOffers(t *testing.T) {
 	info.Rare, info.Name = false, "Hunt: track the herd across the Dry Creek"
 	if line := offerLine(info, state); strings.Contains(line, "★") {
 		t.Errorf("an ordinary offer is starred: %q", line)
+	}
+}
+
+func TestExpeditionsPanelBoardLayouts(t *testing.T) {
+	engine := newExpeditionTestEngine(t)
+	engine.EnsureMissionBoard()
+	state := engine.GetState()
+	state.Military.Board[0].Offer.Rare = true
+	state.Military.ActiveShort = &game.ExpeditionSnapshot{Name: "Test journey", Tier: game.TierShort, SuccessChance: .8, TicksLeft: 10}
+	for _, size := range []struct{ w, h int }{{80, 24}, {100, 30}} {
+		t.Run(fmt.Sprintf("%dx%d", size.w, size.h), func(t *testing.T) {
+			if got := cmdExpedition(nil, engine); got.OverlayName != "expedition" {
+				t.Fatalf("bare expedition opens %q", got.OverlayName)
+			}
+			out := expeditionsProvider(state, size.w)
+			for i, slot := range state.Military.Board {
+				if slot.Offer == nil {
+					t.Fatalf("offer %d missing", i+1)
+				}
+				name := strings.TrimPrefix(slot.Offer.Name, "Legendary ")
+				if !strings.Contains(out, fmt.Sprintf("%d.", slot.Number)) || !strings.Contains(out, name) {
+					t.Errorf("offer %d title missing at %dx%d", slot.Number, size.w, size.h)
+				}
+			}
+			if !strings.Contains(out, "Legendary") || !strings.Contains(out, "Under way") || !strings.Contains(out, state.Military.ActiveShort.Name) {
+				t.Errorf("legendary mark or under-way mission missing at %dx%d:\n%s", size.w, size.h, out)
+			}
+			sim := tcell.NewSimulationScreen("UTF-8")
+			if err := sim.Init(); err != nil {
+				t.Fatal(err)
+			}
+			defer sim.Fini()
+			sim.SetSize(size.w, size.h)
+			tv := tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetText(out)
+			tv.SetRect(0, 0, size.w, size.h)
+			tv.Draw(theme.WrapScreen(sim))
+			for _, line := range strings.Split(tv.GetText(true), "\n") {
+				if runeLen(line) > size.w {
+					t.Errorf("rendered line overflows %dx%d: %q", size.w, size.h, line)
+				}
+			}
+		})
 	}
 }
