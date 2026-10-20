@@ -7,6 +7,9 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- **Era missions.** The 16 fixed expeditions and campaigns become 21 missions, a scout, a long expedition and a campaign for each of the seven eras, offered in every age of their era. Every launch rolls its length (scouts 5 to 30 minutes, expeditions 30 to 60, campaigns 60 to 120), its chance of success and its haul. A scout costs 5 minutes and an expedition 15 minutes of your income, half in each of the two materials the age charges most; a campaign costs 10 minutes of your soldiers (at least one), and half of them come home on a win. Hauls are sized on your income in the age's materials. Expeditions and scouts meet other civilizations twice as often (never above 60%). The Geographic Society sends the era's scout. The Naval Expedition no longer needs Navigation.
+- **Mission badges are per era and kind.** The 16 per-mission badges are retired and 21 take their place, one for each era and kind of mission. The Expeditions ladder keeps its rungs. The game has 557 badges to earn, worth 12,875 points.
+- The Geographic Society's fastest cadence is now one party every 780 ticks in later ages (it was 260), so a fully staffed Society still sends about 58% of what a hands-on player does now that a scout can be out for up to 900 ticks.
 - **Wonders take longer to build.** Every wonder's construction takes twice as long. A wonder is the long build that ends an age.
 - **Prestige past your record.** After a prestige, the next one opens only once you pass the furthest age an earlier run reached.
 - Prices in later ages now climb by 1.4 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.

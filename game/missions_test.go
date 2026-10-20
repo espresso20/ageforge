@@ -448,3 +448,43 @@ func TestMissionRefusals_ALaterErasMissionIsNotNamed(t *testing.T) {
 		t.Errorf("a Stone Era mission in the Iron Era: %v", err)
 	}
 }
+
+// TestMissionRolls_SurviveASave: a mission under way keeps its rolled length,
+// chance, haul, cost and soldiers through a save and a load, and comes home
+// with the haul it left with.
+func TestMissionRolls_SurviveASave(t *testing.T) {
+	defer SetDataDirForTest(t.TempDir())()
+	ge := missionReady(t, 7, "iron_age")
+	setSoldiers(ge, 50)
+	setIncome(ge, "soldiers", 0.02)
+	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+		t.Fatal(err)
+	}
+	before := *ge.Military.ActiveByCategory(ExpeditionMilitary)
+	again := saveAndLoad(t, ge, "mission_rolls")
+	after := again.Military.ActiveByCategory(ExpeditionMilitary)
+	if after == nil {
+		t.Fatal("the campaign is gone after the load")
+	}
+	if after.Key != before.Key || after.Soldiers != before.Soldiers || after.TicksLeft != before.TicksLeft ||
+		after.LengthMinutes != before.LengthMinutes || after.SuccessChance != before.SuccessChance || after.HaulMinutes != before.HaulMinutes {
+		t.Errorf("after the load %+v, want %+v", *after, before)
+	}
+	for name, pair := range map[string][2]map[string]float64{
+		"base": {before.BaseRewards, after.BaseRewards}, "success": {before.SuccessRewards, after.SuccessRewards},
+		"failure": {before.FailureRewards, after.FailureRewards}, "cost": {before.Cost, after.Cost},
+	} {
+		if len(pair[0]) == 0 && name != "cost" {
+			t.Errorf("the %s haul was empty before the save", name)
+		}
+		if len(pair[0]) != len(pair[1]) {
+			t.Errorf("the %s amounts %v became %v", name, pair[0], pair[1])
+			continue
+		}
+		for res, v := range pair[0] {
+			if pair[1][res] != v {
+				t.Errorf("the %s amount of %s was %v, is %v", name, res, v, pair[1][res])
+			}
+		}
+	}
+}
