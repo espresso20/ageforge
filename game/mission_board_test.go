@@ -311,8 +311,8 @@ func TestRare_GapFloorAndShare(t *testing.T) {
 		}
 		last = i
 	}
-	if longest > config.RareOfferFloor {
-		t.Errorf("%d ordinary offers in a row, the next must be Legendary after %d", longest, config.RareOfferFloor)
+	if longest > config.RareOfferFloor-1 {
+		t.Errorf("%d ordinary offers in a row, but every %d offers must hold a Legendary one", longest, config.RareOfferFloor)
 	}
 	if share := float64(rares) / n; share < .03 || share > .05 {
 		t.Errorf("%.2f%% of offers are Legendary, want about 4%% (the chance is 5%%)", share*100)
@@ -320,13 +320,13 @@ func TestRare_GapFloorAndShare(t *testing.T) {
 	t.Logf("%d Legendary offers in %d (%.2f%%), longest wait %d", rares, n, float64(rares)/n*100, longest)
 
 	// The rules bind when the dice do not: a stream that never rolls low still
-	// gets one every forty-first offer, and one that always rolls low gets
+	// gets one every fortieth offer, and one that always rolls low gets
 	// one as soon as the gap allows.
 	never := rareRun(rand.New(&fixedSource{v: 0.99}), 200)
 	always := rareRun(rand.New(&fixedSource{v: 0}), 200)
 	for i := range never {
-		if want := i%(config.RareOfferFloor+1) == config.RareOfferFloor; never[i] != want {
-			t.Fatalf("with no luck, offer %d is Legendary=%v, want %v (every %dst)", i, never[i], want, config.RareOfferFloor+1)
+		if want := i%config.RareOfferFloor == config.RareOfferFloor-1; never[i] != want {
+			t.Fatalf("with no luck, offer %d is Legendary=%v, want %v (every %dth)", i, never[i], want, config.RareOfferFloor)
 		}
 		if want := i%(config.RareOfferGap+1) == 0; always[i] != want {
 			t.Fatalf("with every roll low, offer %d is Legendary=%v, want %v (every %dth)", i, always[i], want, config.RareOfferGap+1)
