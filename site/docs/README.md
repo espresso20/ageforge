@@ -21,7 +21,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 - **Catastrophes and harbingers**: from the Iron Era on, an era may hide a fated catastrophe. A harbinger always comes to warn you first, and when the doom strikes you choose to Endure or Succumb.
 - **Trade**: 21 trade routes, harbors and a black market.
 - **Factions**: an 11-civilization roster to meet, with opinion, diplomacy, trade deals, boons and setbacks, embassies and war.
-- **The army**: soldiers defend you against raids and fight campaigns. There are 16 expeditions in all (scouting missions and military campaigns), each a gamble of cost against reward.
+- **The army**: soldiers defend you against raids and fight campaigns. There are 21 expeditions in all (a scout, a long expedition and a campaign for each of the seven eras), each a gamble of cost against reward.
 - **77 milestones** in 6 chains, with civilization titles.
 - **Prestige** from the Medieval Age on: start over with points that become a lasting production bonus in every age. Plan Template, Roster and Old Friends carry over after the first prestige.
 - **Era Mastery**: every age a run completes runs faster on your later runs, twice as fast after one completion and up to 4.2x after ten (4x at once for ages 6 or more behind your record), so later runs reach the Modern Age much sooner than the first.

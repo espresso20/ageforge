@@ -5114,8 +5114,8 @@ func (ge *GameEngine) GetState() GameState {
 		if active != nil {
 			reason = categoryNoun(def.Category) + " is already under way"
 		}
-		for res, amount := range cost {
-			if ge.Resources.Get(res) < amount {
+		for _, res := range sortedKeys(cost) {
+			if amount := cost[res]; ge.Resources.Get(res) < amount {
 				canLaunch = false
 				if reason == "" {
 					reason = fmt.Sprintf("needs %s %s", amountText(amount), resourceLabel(res))

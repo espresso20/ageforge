@@ -228,12 +228,12 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 		mm := game.NewMilitaryManager()
 		for _, a := range c.m.ages {
 			for _, x := range mm.GetAvailableExpeditions(a.Key, order) {
-				if x.Key == def.Subject {
+				if config.MissionBadgeKey(x.Era, x.Kind) == def.Subject {
 					return ""
 				}
 			}
 		}
-		return fmt.Sprintf("names the expedition %q, which does not exist", def.Subject)
+		return fmt.Sprintf("names the mission %q, which does not exist", def.Subject)
 	case config.BadgeEvAwakening:
 		for _, a := range c.m.ages {
 			if aw, ok := c.set.Awakening(a.Key); ok && aw.Key == def.Subject {
@@ -450,8 +450,9 @@ func (c *badgeCheck) moreAdded(counter string, through int) (n float64, basis st
 		}
 		return float64(n), "the milestone chains a run's ages can finish", true
 	case config.BadgeEvExpedition:
-		// One party out at a time; the slowest expedition an age offers,
-		// coming back with a success half the time.
+		// One party out at a time, on the era's scout at its longest (a
+		// mission's length is rolled and no age stretches it): the one mission
+		// no tech locks. It comes back with a success half the time.
 		order := c.set.Indexes()
 		mm := game.NewMilitaryManager()
 		n := 0.0
@@ -459,13 +460,15 @@ func (c *badgeCheck) moreAdded(counter string, through int) (n float64, basis st
 			age := m.ages[i].Key
 			slowest := 0
 			for _, x := range mm.GetAvailableExpeditions(age, order) {
-				slowest = max(slowest, x.DurationMax)
+				if x.Kind == config.MissionScout {
+					slowest = max(slowest, x.DurationMax)
+				}
 			}
 			if slowest > 0 {
-				n += float64(c.set.TargetTicks(age) / float64(c.set.StretchTicks(age, slowest)) / 2)
+				n += float64(c.set.TargetTicks(age) / float64(slowest) / 2)
 			}
 		}
-		return math.Floor(n), "one party out at a time on an age's slowest expedition, back with a success half the time", true
+		return math.Floor(n), "one party out at a time on the era's scout at its longest, back with a success half the time", true
 	case config.BadgeEvDeal:
 		met := 0
 		for _, f := range c.set.Factions() {
