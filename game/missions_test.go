@@ -432,3 +432,19 @@ func TestAutoExpedition_SendsTheEraScout(t *testing.T) {
 		}
 	}
 }
+
+// TestMissionRefusals_ALaterErasMissionIsNotNamed: a mission of a later era
+// is refused as unknown, with no name and no era in the reply; one of an
+// earlier era is refused by name.
+func TestMissionRefusals_ALaterErasMissionIsNotNamed(t *testing.T) {
+	ge := missionReady(t, 1, "iron_age")
+	err := ge.LaunchExpedition("galactic_conquest")
+	want := "unknown expedition or campaign 'galactic_conquest'. Type expedition or campaign to see what you can send"
+	if err == nil || err.Error() != want {
+		t.Errorf("a Cosmic Era mission in the Iron Era: %v, want %q", err, want)
+	}
+	err = ge.LaunchExpedition("scouting_party")
+	if err == nil || err.Error() != "Scouting Party is a mission of the Stone Era, not of this age" {
+		t.Errorf("a Stone Era mission in the Iron Era: %v", err)
+	}
+}

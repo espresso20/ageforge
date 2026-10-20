@@ -4601,6 +4601,10 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 	// --- Validate everything BEFORE any deduction so a failed launch never
 	// partially charges the player. ---
 
+	// A mission of another era first: its cost is sized on this age's materials.
+	if err := ge.Military.eraRefusal(def, ge.age); err != nil {
+		return err
+	}
 	cost := ge.missionCostLocked(def)
 	soldiers := cost["soldiers"]
 	delete(cost, "soldiers")
@@ -4609,9 +4613,10 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 		return fmt.Errorf("%s needs %d soldiers (you have %d). Military buildings train them; see the Army panel", def.Name, int(soldiers), haveSoldiers)
 	}
 
-	// Additional resource cost check.
-	for res, amount := range cost {
-		if ge.Resources.Get(res) < amount {
+	// Additional resource cost check, in a fixed order so the refusal names
+	// the same material every time.
+	for _, res := range sortedKeys(cost) {
+		if amount := cost[res]; ge.Resources.Get(res) < amount {
 			return fmt.Errorf("%s needs %s %s (you have %s)", def.Name, amountText(amount), resourceLabel(res), amountText(ge.Resources.Get(res)))
 		}
 	}
@@ -5125,7 +5130,7 @@ func (ge *GameEngine) GetState() GameState {
 		if int(ge.Resources.Get("soldiers")) < info.SoldiersNeeded {
 			canLaunch = false
 			if reason == "" {
-				reason = fmt.Sprintf("needs %d soldiers", info.SoldiersNeeded)
+				reason = fmt.Sprintf("needs %d soldiers: military buildings train them", info.SoldiersNeeded)
 			}
 		}
 		info.CanLaunch, info.LaunchBlockReason = canLaunch, reason

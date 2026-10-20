@@ -8,9 +8,9 @@ import (
 )
 
 // newExpeditionTestEngine spins up a fresh engine in the Bronze Age, stocked
-// with enough food/wood/soldiers to launch the early scouting/military
-// expeditions used by these tests. scout_party (scouting) and raid_bandits
-// (military) both unlock by the Bronze Age. The age jump uses the dev console
+// with enough food/wood/soldiers to launch the Stone Era scout and campaign
+// used by these tests. scouting_party (scouting) and raid_the_rival_clan
+// (military) are both missions of the Stone Era, which the Bronze Age is in. The age jump uses the dev console
 // (/age applies the age's unlocks); resource amounts are set via LoadAmounts so
 // they bypass nominal storage caps.
 func newExpeditionTestEngine(t *testing.T) *game.GameEngine {
@@ -50,12 +50,12 @@ func TestCmdExpeditionNoArgsOpensPanel(t *testing.T) {
 func TestCmdExpeditionMilitaryKeyRedirects(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
-	res := cmdExpedition([]string{"raid", "bandits"}, engine)
+	res := cmdExpedition([]string{"raid", "the", "rival", "clan"}, engine)
 	if res.Type != "info" {
-		t.Errorf("cmdExpedition(raid_bandits) Type = %q, want %q", res.Type, "info")
+		t.Errorf("cmdExpedition(raid_the_rival_clan) Type = %q, want %q", res.Type, "info")
 	}
-	if !strings.Contains(res.Message, "campaign raid_bandits") {
-		t.Errorf("cmdExpedition(raid_bandits) message = %q, want it to redirect to 'campaign raid_bandits'", res.Message)
+	if !strings.Contains(res.Message, "campaign raid_the_rival_clan") {
+		t.Errorf("cmdExpedition(raid_the_rival_clan) message = %q, want it to redirect to 'campaign raid_the_rival_clan'", res.Message)
 	}
 	st := engine.GetState()
 	if st.Military.ActiveScout != nil || st.Military.ActiveMilitary != nil {
@@ -68,12 +68,12 @@ func TestCmdExpeditionMilitaryKeyRedirects(t *testing.T) {
 func TestCmdExpeditionScoutingKeyLaunches(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
-	res := cmdExpedition([]string{"scout", "party"}, engine)
+	res := cmdExpedition([]string{"scouting", "party"}, engine)
 	if res.Type != "success" {
-		t.Fatalf("cmdExpedition(scout_party) Type = %q (msg %q), want %q", res.Type, res.Message, "success")
+		t.Fatalf("cmdExpedition(scouting_party) Type = %q (msg %q), want %q", res.Type, res.Message, "success")
 	}
 	if st := engine.GetState(); st.Military.ActiveScout == nil {
-		t.Errorf("after launching scout_party, ActiveScout is nil; expected a running scouting expedition")
+		t.Errorf("after launching scouting_party, ActiveScout is nil; expected a running scouting expedition")
 	}
 }
 
@@ -83,12 +83,12 @@ func TestCmdExpeditionScoutingKeyLaunches(t *testing.T) {
 func TestCmdCampaignScoutingKeyRedirects(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
-	res := cmdCampaign([]string{"scout", "party"}, engine)
+	res := cmdCampaign([]string{"scouting", "party"}, engine)
 	if res.Type != "info" {
-		t.Errorf("cmdCampaign(scout_party) Type = %q, want %q", res.Type, "info")
+		t.Errorf("cmdCampaign(scouting_party) Type = %q, want %q", res.Type, "info")
 	}
-	if !strings.Contains(res.Message, "expedition scout_party") {
-		t.Errorf("cmdCampaign(scout_party) message = %q, want it to redirect to 'expedition scout_party'", res.Message)
+	if !strings.Contains(res.Message, "expedition scouting_party") {
+		t.Errorf("cmdCampaign(scouting_party) message = %q, want it to redirect to 'expedition scouting_party'", res.Message)
 	}
 	st := engine.GetState()
 	if st.Military.ActiveScout != nil || st.Military.ActiveMilitary != nil {
@@ -101,12 +101,12 @@ func TestCmdCampaignScoutingKeyRedirects(t *testing.T) {
 func TestCmdCampaignMilitaryKeyLaunches(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
-	res := cmdCampaign([]string{"raid", "bandits"}, engine)
+	res := cmdCampaign([]string{"raid", "the", "rival", "clan"}, engine)
 	if res.Type != "success" {
-		t.Fatalf("cmdCampaign(raid_bandits) Type = %q (msg %q), want %q", res.Type, res.Message, "success")
+		t.Fatalf("cmdCampaign(raid_the_rival_clan) Type = %q (msg %q), want %q", res.Type, res.Message, "success")
 	}
 	if st := engine.GetState(); st.Military.ActiveMilitary == nil {
-		t.Errorf("after launching raid_bandits, ActiveMilitary is nil; expected a running campaign")
+		t.Errorf("after launching raid_the_rival_clan, ActiveMilitary is nil; expected a running campaign")
 	}
 }
 

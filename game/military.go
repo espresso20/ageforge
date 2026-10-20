@@ -200,8 +200,8 @@ func (mm *MilitaryManager) LaunchMission(rng *rand.Rand, key, currentAge string,
 		return fmt.Errorf("%s is already under way (%s left). Wait for it to come back", categoryNoun(def.Category), approxTicks(existing.TicksLeft, BaseTickInterval))
 	}
 
-	if def.Era != mm.rules.EraOf(currentAge) {
-		return fmt.Errorf("%s is a mission of the %s, not of this age", def.Name, mm.rules.Name(rules.KindAge, def.MinAge))
+	if err := mm.eraRefusal(def, currentAge); err != nil {
+		return err
 	}
 	length := def.MinMinutes + float64(rng.Float64()*(def.MaxMinutes-def.MinMinutes))
 	success := def.BaseSuccess + (float64(rng.Float64()*0.2) - 0.1)
@@ -230,6 +230,20 @@ func (mm *MilitaryManager) LaunchMission(rng *rand.Rand, key, currentAge string,
 		BaseRewards: maps.Clone(haul), Cost: maps.Clone(cost),
 	}
 	return nil
+}
+
+// eraRefusal is why a mission cannot be sent in currentAge: it belongs to
+// another era. A later era's mission is not named: the player has not met it.
+func (mm *MilitaryManager) eraRefusal(def *ExpeditionDef, currentAge string) error {
+	if def.Era == mm.rules.EraOf(currentAge) {
+		return nil
+	}
+	now, _ := mm.rules.Era(mm.rules.EraOf(currentAge))
+	then, _ := mm.rules.Era(def.Era)
+	if then.Order > now.Order {
+		return fmt.Errorf("unknown expedition or campaign '%s'. Type expedition or campaign to see what you can send", def.Key)
+	}
+	return fmt.Errorf("%s is a mission of the %s, not of this age", def.Name, then.Name)
 }
 
 // categoryNoun is the player-facing noun phrase for one mission of a

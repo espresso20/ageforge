@@ -519,7 +519,7 @@ func (s *siteStage) bronzeTown() {
 	s.level(map[string]float64{"food": 0.71, "wood": 0.34, "stone": 0.83, "gold": 0.37, "iron": 0.22, "faith": 0.41})
 	s.eng.SetWonderOverflow(true)
 	// The Scout Party needs no tech; scouting past it waits for Exploration.
-	s.say("expedition scout_party")
+	s.say("expedition scouting_party")
 	s.say("wonder collect stone")
 	s.say("wonder collect wood 9000")
 	s.say("build farm 2")
