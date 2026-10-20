@@ -473,7 +473,7 @@ func badgeLadders() []BadgeFamilyDef {
 		ladder("chains", "Milestone chains", BadgeEvChain, "Complete {count} milestone chains across all your runs.", "Complete your first milestone chain.",
 			[]float64{1, 10, 30}, []string{"Linked", "Chain Smoker", "Unbroken"}, "star", visible, life),
 		ladder("expeditions", "Expeditions", BadgeEvExpedition, "Come back from {count} successful expeditions.", "",
-			[]float64{4, 20, 100, 500}, []string{"Day Tripper", "Seasoned Traveler", "Frequent Flyer", "Never Home"}, "military", visible, life),
+			[]float64{1, 20, 100, 500}, []string{"Day Tripper", "Seasoned Traveler", "Frequent Flyer", "Never Home"}, "military", visible, life),
 		ladder("deals", "Faction deals", BadgeEvDeal, "Take {count} deals from civilizations.", "Take a deal from a civilization.",
 			[]float64{1, 10, 100}, []string{"Deal Maker", "Preferred Customer", "Closer"}, "trade", RevealUntilSeen(BadgeEvCivMet), life),
 		ladder("raids", "Raids blunted", BadgeEvRaidBlunted, "Have your garrison blunt {count} raids.", "Have your garrison blunt a raid.",

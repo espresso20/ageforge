@@ -92,7 +92,7 @@ These count across all your runs. A dot separates the rungs.
 | Techs researched | 5 · 77 · 1,200 |
 | Milestones | 5 · 70 · 1,000 |
 | Milestone chains | 1 · 10 · 30 |
-| Expeditions | 4 · 20 · 100 · 500 |
+| Expeditions | 1 · 20 · 100 · 500 |
 | Faction deals | 1 · 10 · 100 |
 | Raids blunted | 1 · 22 · 500 |
 | Returns | 1 · 25 · 100 |
