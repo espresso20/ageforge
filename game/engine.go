@@ -4515,15 +4515,17 @@ func (ge *GameEngine) missionCostLocked(def *ExpeditionDef) map[string]float64 {
 		}
 		return keys[i] < keys[j]
 	})
+	// The two the age charges most; one the town makes none of is left out
+	// (the next in line does not take its place).
+	if len(keys) > 2 {
+		keys = keys[:2]
+	}
 	for _, res := range keys {
 		income := ge.townIncome(res)
 		if income <= 0 {
 			continue
 		}
 		cost[res] = math.Ceil((def.CostMinutes / 2) * (60 / config.TickSeconds) * income)
-		if len(cost) == 2 {
-			break
-		}
 	}
 	return cost
 }

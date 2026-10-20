@@ -185,8 +185,7 @@ func TestDealRefreshStretch(t *testing.T) {
 
 // TestExpeditionClocksAreNotStretched: a mission's length is rolled in
 // its own range of minutes and no age stretches it; the panel shows the
-// same range, and a Stone Age and an Iron Age mission of one kind have
-// ranges of one size in minutes.
+// same range.
 func TestExpeditionClocksAreNotStretched(t *testing.T) {
 	for _, c := range []struct{ age, key string }{{baseAge, "scouting_party"}, {stretchedAge, "trade_caravan"}} {
 		ge := newSeededEngine(9)
