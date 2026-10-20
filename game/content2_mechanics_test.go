@@ -136,18 +136,8 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 		}
 		return ticks, listedMin
 	}
-	var campaign, scouting string
-	for _, def := range plain.Military.expeditions {
-		if ageOrders()[def.MinAge] > ageOrders()["victorian_age"] || def.MaxAge != "" {
-			continue
-		}
-		if def.Category == ExpeditionMilitary && campaign == "" {
-			campaign = def.Key
-		}
-		if def.Category == ExpeditionScouting && scouting == "" {
-			scouting = def.Key
-		}
-	}
+	// victorian_age opens the Electric Era: its campaign and its scout.
+	campaign, scouting := "industrial_war", "aerial_survey"
 	a, aMin := launch(plain, campaign)
 	b, bMin := launch(staff, campaign)
 	if b != int(float64(float64(a)*0.85)) || bMin != int(float64(float64(aMin)*0.85)) {
@@ -175,13 +165,39 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 	if a, b := plain.Resources.GetStorage("food"), mic.Resources.GetStorage("food"); a != b {
 		t.Errorf("the food store is %v, %v with the Military-Industrial Complex; want the same", a, b)
 	}
+	// A mission is sent the way a player sends it, so its haul is sized on
+	// the town's income and the campaign pay is read at the launch.
 	loot := func(ge *GameEngine, key string) float64 {
 		t.Helper()
+		learn(ge, "exploration", "military_tactics")
+		ge.mu.Lock()
+		ge.age = "victorian_age"
+		ge.pushMechanics()
+		age, _ := ge.rules.Age(ge.age)
+		for _, b := range age.UnlockBuildings {
+			def, found := ge.rules.Building(b)
+			if !found {
+				continue
+			}
+			for _, effect := range def.Effects {
+				if effect.Type == "production" {
+					ge.Resources.UnlockResource(effect.Target)
+					ge.Resources.SetRate(effect.Target, 1)
+				}
+			}
+		}
+		ge.mu.Unlock()
+		setSoldiers(ge, 100)
+		stockFor(ge, key)
+		if err := ge.LaunchExpedition(key); err != nil {
+			t.Fatalf("send %s: %v", key, err)
+		}
 		ge.mu.Lock()
 		defer ge.mu.Unlock()
 		def := ge.Military.ExpeditionDefByKey(key)
-		ge.Military.activeByCat[def.Category] = &ActiveExpedition{Key: key, Name: def.Name, TicksLeft: 1}
-		// A roll of 0.9 succeeds: no expedition's difficulty is that high.
+		active := ge.Military.activeByCat[def.Category]
+		active.TicksLeft = 1
+		active.SuccessChance = 0.95 // the cap; the roll below is a 0.9
 		res := ge.Military.Tick(rand.New(alwaysHigh{}), 0, 0)
 		if len(res) != 1 || !res[0].Success {
 			t.Fatalf("%s did not come home a success: %+v", key, res)
