@@ -664,9 +664,8 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		if !ok {
 			return planCheck{blocked: "could not work out upgrade cost"}
 		}
-		if DevGodMode {
-			return planCheck{}
-		}
+		// note: no God Mode shortcut here; the upgrade path still charges,
+		// so a planned upgrade waits for its price like a typed one.
 		chk := planCheck{cost: cost}
 		if res := ge.overStore(cost); res != "" {
 			chk.blocked = ge.storeTooSmallText("Upgrading "+buildingCountIn(ge.rules, 1, it.Key), res, cost[res])
