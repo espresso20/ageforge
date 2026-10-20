@@ -446,6 +446,9 @@ func TestAutoExpedition_SendsTheBestHaulPerMinute(t *testing.T) {
 		var wantN int
 		var bestRate float64
 		for i, slot := range ge.Military.board.Slots {
+			if slot.Offer.Tier == TierGrand {
+				continue // the Society never sends a grand offer
+			}
 			if rate := slot.Offer.HaulMinutes / slot.Offer.LengthMinutes; rate > bestRate {
 				wantN, bestRate = i+1, rate
 			}

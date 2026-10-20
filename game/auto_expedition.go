@@ -197,6 +197,11 @@ func (ge *GameEngine) pickAutoOffer() int {
 		if offer == nil || offer.LengthMinutes <= 0 {
 			continue
 		}
+		// The Society sends parties, not armies: grand offers (soldiers or a
+		// big outlay) are the player's call.
+		if offer.Tier == TierGrand {
+			continue
+		}
 		if _, err := ge.offerRefusalLocked(*offer, ge.missionCostLocked(*offer)); err != nil {
 			continue
 		}
