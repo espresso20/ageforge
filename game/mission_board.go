@@ -143,15 +143,14 @@ func (b *MissionBoard) ready(age string) bool {
 // rollRare decides whether the next offer is Legendary and moves the
 // counters. The chance is always drawn, so the stream does not depend on the
 // rules. Never two Legendary offers within config.RareOfferGap offers of
-// each other; the next after config.RareOfferFloor ordinary ones is one.
+// each other (at least that many ordinary ones between), and the next after
+// config.RareOfferFloor ordinary ones in a row is one. A board that has had
+// no Legendary offer yet is held to the floor only.
 func (b *MissionBoard) rollRare(rng *rand.Rand) bool {
-	if b.Made == 0 && b.SinceRare == 0 {
-		// A new board has no Legendary offer behind it.
-		b.SinceRare = config.RareOfferGap
-	}
 	roll := rng.Float64()
+	seenRare := b.SinceRare < b.Made
 	rare := b.SinceRare >= config.RareOfferFloor ||
-		(b.SinceRare >= config.RareOfferGap && roll < config.RareOfferChance)
+		((!seenRare || b.SinceRare >= config.RareOfferGap) && roll < config.RareOfferChance)
 	b.Made++
 	if rare {
 		b.SinceRare = 0

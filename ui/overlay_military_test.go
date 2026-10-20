@@ -37,13 +37,14 @@ func TestArmyPanel_NoGarrison(t *testing.T) {
 // rate and what the garrison does.
 func TestArmyPanel_TrainingBeforeSoldiers(t *testing.T) {
 	engine := game.NewGameEngine()
+	engine.EnsureMissionBoard()
 	txt := untag(militaryProvider(engine.GetState(), 0))
 	if !strings.Contains(txt, "Training:  not yet. A military building trains soldiers.") || strings.Contains(txt, "/tick\n Defense") {
 		t.Errorf("a new game's Army panel should say nothing trains yet, with no rate:\n%s", txt)
 	}
-	// Every era has a campaign now, so a new game lists one and the entry
-	// says what it waits for (the empty-list wording cannot show).
-	if !strings.Contains(txt, "military buildings train them") {
+	// A new game's board may offer a military grand mission, whose entry says
+	// what it waits for, or none, and the empty-list wording says so.
+	if !strings.Contains(txt, "military buildings train") {
 		t.Errorf("the Army panel should say what trains soldiers:\n%s", txt)
 	}
 	if err := engine.EnterAgeForTest("stone_age"); err != nil {

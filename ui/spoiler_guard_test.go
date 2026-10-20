@@ -171,7 +171,7 @@ func TestFreshGameRefusalsShowNoSpoilers(t *testing.T) {
 		"diplomacy deals ironhold_clans", "diplomacy deals iron", "diplomacy gift iron", "diplomacy gift ironhold_clans",
 		"diplomacy ally merchant_guild", "diplomacy accept ironhold_clans 1", "plan deal ironhold_clans 1",
 		"research " + lastTech, "plan research " + lastTech, "trade route start " + lastRoute,
-		"expedition " + lastExpeditionKey(t), "blackmarket gold", "prestige confirm yes",
+		"expedition 9", "blackmarket gold", "prestige confirm yes",
 	}
 	for _, cmd := range cmds {
 		reply := guardRendered(HandleCommand(cmd, engine).Message)
@@ -191,24 +191,6 @@ func TestFreshGameRefusalsShowNoSpoilers(t *testing.T) {
 			t.Errorf("completion for %q offers %v before first contact", line, got)
 		}
 	}
-}
-
-// lastExpeditionKey is an expedition from the last age that has one.
-func lastExpeditionKey(t *testing.T) string {
-	t.Helper()
-	order := map[string]int{}
-	for i, a := range config.AgeOrder() {
-		order[a] = i
-	}
-	mm := game.NewMilitaryManager()
-	ages := config.AgeOrder()
-	for i := len(ages) - 1; i >= 0; i-- {
-		if xs := mm.GetAvailableExpeditions(ages[i], order); len(xs) > 0 {
-			return xs[len(xs)-1].Key
-		}
-	}
-	t.Fatal("no expeditions in config")
-	return ""
 }
 
 func containsWord(words []string, w string) bool {

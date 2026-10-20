@@ -583,7 +583,7 @@ func truthLoot(t *testing.T, ge *GameEngine) float64 {
 		}
 	}
 	ge.rng = rand.New(&truthSureSource{rest: rand.NewSource(1)}) // the success roll is the tick's first draw
-	base := ge.missionHaulLocked(10) // ten minutes of income
+	base := ge.missionHaulLocked(10)                             // ten minutes of income
 	ge.Military.active[TierShort] = &ActiveExpedition{
 		MissionOffer: testOffer(ge, TierShort, ""), TicksLeft: 1,
 		BaseRewards: base, SuccessRewards: scaleLoot(base, 1+ge.expeditionReward()),

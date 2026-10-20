@@ -1,6 +1,6 @@
 # Badges
 
-A **badge** is a permanent mark on your account for something you did in a game. There are 557 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
+A **badge** is a permanent mark on your account for something you did in a game. There are 558 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
 
 Badges are cosmetic. A badge gives points, sometimes a title or a theme, and nothing inside a run: the same game plays the same way whatever the account has earned. They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
 
@@ -45,7 +45,7 @@ Each badge has a tier, and a tier is worth points. Your points add up to a **sco
 | Platinum | 50 | Epic |
 | Legendary | 100 | Legendary |
 
-A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 12,875 points.
+A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 12,900 points.
 
 ## The families
 
@@ -67,7 +67,7 @@ A badge's rarity follows its tier unless the badge says otherwise: a few are rar
 | **Ladders** | 70 | Counts kept across all your runs, in 22 ladders |
 | **Themes** | 16 | Advancing an age while wearing each theme |
 | **Maps** | 5 | Advancing an age with each map style and each glyph set |
-| **Specials** | 66 | One-off feats, from the easy to the very hard. Maxed Out and Fully Invested are retired with the prestige shop |
+| **Specials** | 67 | One-off feats, from the easy to the very hard. Maxed Out and Fully Invested are retired with the prestige shop |
 
 Three more badges sit outside the families. They are worth no points, count toward nothing, and are not listed until they are earned.
 
@@ -173,7 +173,7 @@ The badge case never names something the game has not shown you yet:
 - A **family** with nothing in sight has no tab and no heading.
 - The case counts what you can see, for example `3 of 127 earned, 15 points, ??? hidden`. It does not say how many badges are hidden until an account has reached the last age.
 
-**13 badges are secret.** A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
+**14 badges are secret.** A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
 
 ## Titles
 
