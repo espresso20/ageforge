@@ -84,3 +84,20 @@ func TestBadgeExpeditionsAreEveryEraAndKind(t *testing.T) {
 		t.Errorf("order: %+v", got[:3])
 	}
 }
+
+// TestBoardRuleNumbers pins the numbers the mission board runs on.
+func TestBoardRuleNumbers(t *testing.T) {
+	for name, c := range map[string][2]float64{
+		"offers per tier": {BoardOffersPerTier, 3}, "refill minutes": {BoardRefillMinutes, 5}, "expire minutes": {BoardExpireMinutes, 60},
+		"rare chance": {RareOfferChance, .05}, "rare gap": {RareOfferGap, 10}, "rare floor": {RareOfferFloor, 40},
+		"rare length": {RareLengthFactor, 1.5}, "rare success cut": {RareSuccessCut, .15}, "rare success floor": {RareSuccessFloor, .10},
+		"rare haul": {RareHaulFactor, 4}, "civil success": {CivilGrandSuccess, .60}, "civil cost minutes": {CivilGrandCostMinutes, 45},
+	} {
+		if c[0] != c[1] {
+			t.Errorf("%s is %v, want %v", name, c[0], c[1])
+		}
+	}
+	if RareTitleWord != "Legendary" {
+		t.Errorf("the rare word is %q", RareTitleWord)
+	}
+}
