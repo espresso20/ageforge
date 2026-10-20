@@ -55,17 +55,17 @@ const (
 	// investment from buying back-to-back play.
 	//
 	// CALIBRATION (measured — see TestBoonTuning_Scenarios, scenarios A and F).
-	// A resolved scouting run rolls an encounter at encounterChanceScoutSuccess /
-	// Fail, so the encounter rate is (resolutions per 10k ticks) × ~0.156. The
-	// shortest scouting expedition available from the bronze age on runs 60-100
-	// ticks, and a dispatch cycle is max(interval, that duration) because the
-	// countdown runs from launch and the slot must be free. Therefore:
+	// A resolved mission rolls an encounter (doubled, capped at 0.6), so the
+	// encounter rate follows the resolutions per 10k ticks. The era scout is
+	// out for 150 to 900 ticks, and a dispatch cycle is max(interval, that
+	// duration) because the countdown runs from launch and the slot must be
+	// free. Atomic Age, as measured:
 	//
-	//	hands-on player (both categories, back-to-back):  ~26 enc/10k, 97.5% uptime
-	//	casual player (a scout every ~1000 ticks):        ~1.4 enc/10k, 15.8% uptime
-	//	FULL automation at the floor (100-tick cycle):    ~15.6 enc/10k
+	//	hands-on player (both categories, back-to-back):  ~6.9 enc/10k, 90% uptime
+	//	casual player (a scout every ~1000 ticks):        ~2.1 enc/10k, 49% uptime
+	//	FULL automation at the floor (780-tick cycle):    ~4.0 enc/10k, 76% uptime
 	//
-	// which is ~60% of the hands-on rate: automation keeps an idle empire fed
+	// which is ~58% of the hands-on rate: automation keeps an idle empire fed
 	// without making the keyboard pointless. Move autoExpeditionMinInterval and
 	// that ratio moves inversely and immediately — re-run the tuning harness.
 	//
@@ -80,11 +80,14 @@ const (
 	autoExpeditionWorkerRelief = 0.35
 	// autoExpeditionMinInterval is the FLOOR — the fastest an automated empire can
 	// ever dispatch, no matter how many societies are staffed. This single number
-	// holds the engagement gradient: at 100 ticks a fully-invested idler sits at
-	// ~60% of a continuously-exploring player's encounter rate. The floor binds at
-	// 6 fully-staffed societies (900 × 0.65 ÷ 6 ≈ 98); past that, further copies buy
-	// only resilience against a party coming home late.
-	autoExpeditionMinInterval = 100
+	// holds the engagement gradient: at 300 ticks a fully-invested idler sits at
+	// ~58% of a continuously-exploring player's encounter rate. The era scouts
+	// are out for 5 to 30 minutes (150 to 900 ticks), so a floor under their
+	// mean length (100 before the era missions) bound nothing and put the idler
+	// at 87%. The floor binds at 2 fully-staffed societies (900 × 0.65 ÷ 2 ≈ 293);
+	// past that, further copies buy only resilience against a party coming home
+	// late.
+	autoExpeditionMinInterval = 300
 )
 
 // autoExpeditionInvestment returns how many Geographic Societies stand and their

@@ -33,11 +33,7 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 		if r, ok := ge.Resources.resources[def.Key]; ok {
 			r.Storage = stock*10 + 1
 			r.Amount = stock
-			if stock > 0 {
-				r.Rate = 1
-			} else {
-				r.Rate = 1
-			}
+			r.Rate = 1 // an income, so a scout's cost is sized on something
 		}
 	}
 	if n > 0 {
@@ -57,15 +53,17 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 // returns how many expeditions were auto-launched and how many resolved. It does
 // NOT run doTick, so nothing else in the economy moves.
 func runAutoTicks(ge *GameEngine, n int) (launched, resolved int) {
-	prevActive := ge.Military.ActiveByCategory(ExpeditionScouting) != nil
+	// A launch is a new active mission: a party that comes home and is sent
+	// out again in the same tick still counts.
+	prev := ge.Military.ActiveByCategory(ExpeditionScouting)
 	for i := 0; i < n; i++ {
 		resolved += len(ge.Military.Tick(ge.gameRNG(), 0, 0))
 		ge.processAutoExpeditions()
-		nowActive := ge.Military.ActiveByCategory(ExpeditionScouting) != nil
-		if nowActive && !prevActive {
+		now := ge.Military.ActiveByCategory(ExpeditionScouting)
+		if now != nil && now != prev {
 			launched++
 		}
-		prevActive = nowActive
+		prev = now
 	}
 	return launched, resolved
 }
@@ -331,6 +329,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 		ge := autoExpeditionTestEngine(t, "atomic_age", tc.count, tc.assigned, 1e12)
 		_, fill := ge.autoExpeditionInvestment()
 		want := autoExpeditionIntervalIn(ge.age, tc.count, fill)
+		scoutLongest := missionAt(ge, ge.age, config.MissionScout).DurationMax
 
 		launched, _ := runAutoTicks(ge, ticks)
 		if launched == 0 {
@@ -341,8 +340,8 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 			tc.name, want, cycle, launched, ticks/1000)
 
 		// The observed cycle is max(interval, expedition duration), so it can only
-		// be LONGER than the formula, and by at most the duration span (both are
-		// stretched for the age).
+		// be LONGER than the formula, and by at most the longest the era's scout
+		// can be out (rolled at every launch, the age does not stretch it).
 		//
 		// The 2% slack on the low side is a finite-window artefact, not slop: the
 		// society's first party leaves the tick the doors open (the countdown starts
@@ -353,7 +352,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 			t.Errorf("%s: observed cycle %.1f is shorter than the interval %d — the countdown is leaking",
 				tc.name, cycle, want)
 		}
-		if cycle > float64(want+config.StretchTicks(ge.age, 1800)) {
+		if cycle > float64(want+scoutLongest) {
 			t.Errorf("%s: observed cycle %.1f is far longer than the interval %d",
 				tc.name, cycle, want)
 		}
@@ -362,7 +361,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 		// cases differ only by the per-launch duration roll — which comes off the
 		// global rand inside LaunchExpedition and is therefore not reproducible
 		// between runs. Without the slack this check flaps on noise.
-		if i > 0 && cycle > prev*1.5+1 {
+		if i > 0 && cycle > prev*1.05+1 {
 			t.Errorf("%s: cycle %.1f is meaningfully slower than the smaller investment before it (%.1f)",
 				tc.name, cycle, prev)
 		}

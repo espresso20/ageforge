@@ -222,8 +222,8 @@ func TestAutoExpeditionStretch(t *testing.T) {
 	if got := autoExpeditionIntervalIn("industrial_age", 1, 0); got != config.StretchTicks("industrial_age", autoExpeditionBaseInterval) || got != 2340 {
 		t.Errorf("one unstaffed society, industrial = %d, want 2340 (900 x 2.6)", got)
 	}
-	if got := autoExpeditionIntervalIn("industrial_age", 20, 1); got != 260 {
-		t.Errorf("the floor, industrial = %d, want 260 (100 x 2.6)", got)
+	if got := autoExpeditionIntervalIn("industrial_age", 20, 1); got != 780 {
+		t.Errorf("the floor, industrial = %d, want 780 (300 x 2.6)", got)
 	}
 	if got := autoExpeditionIntervalIn(baseAge, 1, 0); got != autoExpeditionBaseInterval {
 		t.Errorf("one unstaffed society, stone = %d, want %d", got, autoExpeditionBaseInterval)
