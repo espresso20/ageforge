@@ -181,28 +181,24 @@ With something typed, `Tab` and `Enter` act on the prompt instead. `research lis
 
 | Command | Description |
 |---|---|
-| `expedition` | Open the **Expeditions** panel for scouting missions (shorthand: `exp`) |
-| `expedition list` | List the scouting expeditions available in your current age (shorthand: `exp list`) |
-| `expedition <key>` | Send a scouting expedition. It costs resources, never soldiers (e.g. `expedition scout_party`; shorthand: `exp <key>`). Past the Scout Party it waits for the Exploration tech |
-| `army` | Open the **Army** panel: soldier overview and military campaigns |
-| `campaign list` | List the military campaigns available in your current age (`campaign` alone does the same) |
-| `campaign <key>` | Wage a military campaign. It spends soldiers, plus any resource cost (e.g. `campaign raid_bandits`). Campaigns wait for the Military Tactics tech |
+| `expedition` | Open the **Expeditions** panel with the mission board (shorthand: `exp`) |
+| `expedition list` | Print the mission board (shorthand: `exp list`) |
+| `expedition <number>` | Send the numbered offer (shorthand: `exp <number>`) |
+| `campaign` | Alias for `expedition` |
+| `campaign list` | Alias for `expedition list` |
+| `campaign <number>` | Alias for `expedition <number>` |
+| `army` | Open the **Army** panel with your soldier count and defense rating |
 
 ```
 expedition
 expedition list
-expedition scout_party
-expedition scout_ruins
-army
+expedition 1
+campaign 2
 campaign list
-campaign raid_bandits
+army
 ```
 
-**Scouting** expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) cost only resources and are available before soldiers appear in the Iron Age; they are how you meet other civilizations. **Military campaigns** (everything else) spend soldiers at launch, plus any resource cost. Either way you pay whether the mission succeeds or fails; only the reward differs. One scouting expedition and one military campaign can run at the same time, but not two of the same kind.
-
-**Commands a tech opens.** Nine commands wait for a tech: trade routes (The Wheel), campaigns (Military Tactics), expeditions past the Scout Party (Exploration), diplomacy (Envoys), festivals (Drama), the Naval Expedition (Navigation), the black market (Mercantilism), the Rail Freight route (Railroads) and the Warp Commerce route (Interstellar Trade). Used before the tech, the command is refused and names it: `Campaigns need Military Tactics first. Research it to send one.` See [Commands a Tech Opens](technologies.md#commands-a-tech-opens).
-
-Keys with underscores can be typed with spaces: `expedition scout ruins` is the same as `expedition scout_ruins`. A campaign key given to `expedition` is refused with a pointer to `campaign <key>`, and the other way round. From the Industrial Age a **Geographic Society** sends scouting parties out by itself; a party you send by hand always goes first. See [Military](military.md).
+The board has short, long and grand offers. Each shows its length, odds, haul and cost. One mission per tier can be under way at once. A grand offer is military or civil. The Geographic Society sends offers automatically once available. See [Military](military.md).
 
 ---
 

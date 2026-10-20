@@ -1,6 +1,6 @@
 # Army & Missions
 
-Soldiers are a resource your military buildings train. You spend them on **campaigns**; **scouting expeditions** cost a little food and wood instead. Mission loot is a fixed bundle that never grows with the age, so it matters early and hardly at all later. What missions are really for is meeting the other civilizations: every resolved mission can bring an encounter, which is how you make first contact and collect boons (or, when a run fails, setbacks). The soldiers you keep in stock are your garrison: they blunt raids and soften catastrophes. Ignore the army and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. The soldiers you train also count toward the military milestones.
+Soldiers are a resource your military buildings train. Military grand offers cost soldiers; short, long and civil grand offers cost materials. Mission hauls scale with the current age's income. What missions are really for is meeting the other civilizations: every resolved mission can bring an encounter, which is how you make first contact and collect boons (or, when a run fails, setbacks). The soldiers you keep in stock are your garrison: they blunt raids and soften catastrophes. Ignore the army and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. The soldiers you train also count toward the military milestones.
 
 ---
 
@@ -8,19 +8,14 @@ Soldiers are a resource your military buildings train. You spend them on **campa
 
 The military system covers four things:
 
-- **Missions.** Scouting expeditions (`expedition <key>`) cost resources; military campaigns (`campaign <key>`) cost soldiers. Each one resolves after a rolled time, pays a fixed bundle of loot and may bring an encounter with a civilization; see [Missions](#missions).
+- **Missions.** The mission board has short, long and grand offers, each with rolled length, odds and haul; see [Missions](#missions).
 - **Defense rating.** A figure on the Army panel worked out from your soldier count and military power. Measured against the raid threat of your current age, it blunts part of what raids, war raids and an Endure take from you (at most 45%); see [Defense](#defense-what-your-army-blunts).
 - **Milestones.** Five military milestones form a chain with a title at the end. The early ones grant permanent military power; the later ones grant all production.
 - **Prestige.** The army resets with the run. Prestige points give a lasting production bonus, not military power or mission rewards. From the first prestige, [Old Friends](prestige.md#old-friends) meets every civilization you have met again on later runs without a mission.
 
-**Soldiers are a resource**, not a count of workers. Your military buildings produce and store them: staff a War Camp or Barracks with workers and it adds to the `soldiers` resource every tick, the same way a Farm adds food. Soldiers begin with your first military building: a War Camp can be built in the Stone Age and trains them from the day it stands. A town with no military building has none until the **Iron Age**, which brings them to every town. The scouting expeditions (see [Missions](#missions)) let you explore without any soldiers.
+**Soldiers are a resource**, not a count of workers. Your military buildings produce and store them: staff a War Camp or Barracks with workers and it adds to the `soldiers` resource every tick, the same way a Farm adds food. Soldiers begin with your first military building: a War Camp can be built in the Stone Age and trains them from the day it stands. A town with no military building has none until the **Iron Age**, which brings them to every town. Short, long and civil grand offers (see [Missions](#missions)) let you explore without soldiers.
 
-There are two kinds of mission:
-
-| Kind | Command | Costs | Available |
-|---|---|---|---|
-| Scouting expedition | `expedition <key>` | resources only, 0 soldiers | from the start; there are three: `scout_party`, `scout_ruins`, `naval_expedition`. The last two wait for the Exploration tech, and the Naval Expedition for Navigation as well |
-| Military campaign | `campaign <key>` | soldiers | the first opens in the Bronze Age, once Military Tactics is researched; it costs soldiers, which a War Camp or a Barracks trains |
+The mission board has three tiers. A grand offer is either military or civil. See [The board](#the-board) for the costs and odds.
 
 ---
 
@@ -67,7 +62,7 @@ This opens the **Army** panel: soldier count, defense rating, the running campai
 - "Your garrison would blunt about N% of a raid.": the share it takes off raids and war raids in your current age (an Endure measures it against the age the catastrophe strikes in). After it comes what twice the garrison would blunt, and a reminder that no army blunts more than 45%. With no soldiers it reads "You have no garrison: raids hit you with full force."
 - **Saved this run:** once the garrison has saved something, the buildings, workers and resources (the four largest) it kept, and how many raids it blunted. Like other run stats, it resets with the run.
 
-The running scouting expedition shows in the separate **Expeditions** panel (`expedition`). You can run one scouting expedition and one campaign at the same time. The Loot History (total loot collected) is on the Expeditions panel.
+The running missions show in the separate **Expeditions** panel (`expedition`), which also displays the board and the Geographic Society.
 
 ---
 
@@ -112,143 +107,94 @@ Five of them wait for a tech of their own age: the Barracks (Military Tactics), 
 
 ## Missions
 
-### What missions are
+### The board
 
-Missions are timed and paid from your stockpiles. There are two kinds:
+The mission board holds nine offers, three short, three long and three grand. Each offer has a title and description made from the current age's words. The board is saved with the run and uses its seeded random generator.
 
-- **Scouting expeditions** (`scout_party`, `scout_ruins`, `naval_expedition`) cost resources and 0 soldiers. These need no military building.
-- **Military campaigns** (the other 13) cost soldiers.
+| Tier | Length | Base odds | Haul |
+|---|---:|---:|---:|
+| Short | 5 to 30 minutes | 85%, plus or minus 10 points | 2 times the rolled length in minutes of income |
+| Long | 30 to 60 minutes | 75%, plus or minus 10 points | 3 times the rolled length in minutes of income |
+| Grand | 60 to 120 minutes | 65%, plus or minus 10 points | 4 times the rolled length in minutes of income |
 
-The cost comes out of your stockpiles the moment you launch, and there's no refund. The mission then runs for a number of ticks rolled at launch within its own range, and resolves. A success pays full loot and a failure 30% of it; the cost is gone either way. Loot goes into your stores, and a store takes only what it has room for: the rest is lost, and the log says `Storage was nearly full: only ... fit.` A failure is also less likely to meet a civilization, and a meeting on a failed run never brings a gift, usually a setback (see [What missions are worth](#what-missions-are-worth)). You can run one scouting expedition and one campaign at the same time, but not two of the same kind.
+The board's offer shows the rolled length, success odds, haul and launch cost. The haul is based on the current age's income and reward bonuses. Failure pays 30% of the haul. A Legendary offer is longer, has lower odds and pays four times the ordinary haul. About 5% of offers are Legendary, never two within 10 offers of each other, with at least one in every 41 offers.
 
-<figure class="screen" data-screen="expeditions"><figcaption>The Expeditions panel with scouts on the road: the expedition under way, then the ones this age offers, each with its time, risk and cost.</figcaption></figure>
+Short and long offers cost the two materials the current age's buildings charge most, sized to about 5 and 15 minutes of their income. A military grand offer costs soldiers and uses the army in its odds. A civil grand offer costs about 45 minutes of income in the age's two most-charged materials and uses plain odds. The offer shows its cost before you send it.
 
-Times on this page are at the base tick of 2 seconds. Tick-speed bonuses (some techs, a Time Dilation boon) make every tick a little shorter.
+| Age | Short | Long | Grand, military | Grand, civil |
+|---|---|---|---|---|
+| Primitive | Forage | Hunt | Raid | Great Migration |
+| Stone | Forage | Trek | Raid | Hill Fort Raising |
+| Bronze | Scout | Trade Trek | Skirmish | Trade Mission |
+| Iron | Survey | Caravan | Siege | Founding Expedition |
+| Classical | Survey | Trade Voyage | Legion March | Embassy |
+| Medieval | Patrol | Pilgrimage | Siege | Grand Pilgrimage |
+| Renaissance | Exploration | Voyage | Campaign | Grand Voyage |
+| Colonial | Survey | Colony Run | Campaign | Found a Colony |
+| Industrial | Prospect | Rail Expedition | Offensive | Great Railway |
+| Victorian | Prospect | Expedition | Offensive | Polar Expedition |
+| Electric | Aerial Survey | Expedition | Offensive | Grand Exhibition |
+| Atomic | Recon Flight | Research Expedition | Operation | Manhattan-scale Project |
+| Modern | Recon | Field Op | Strike | Moonshot |
+| Information | Data Run | Satellite Op | Cyber Strike | Global Launch |
+| Digital | Data Run | Network Op | Cyber Strike | Network Founding |
+| Cyberpunk | Recon | Heist | Assault | Arcology Raising |
+| Fusion | Sweep | Salvage | Assault | Fusion City |
+| Space | Probe | Orbital Mission | Orbital Strike | Colony Ship |
+| Interstellar | Probe | Deep-Space Mission | Invasion | Generation Ship |
+| Galactic | Survey Drone | Star Voyage | Invasion | Stellar Settlement |
+| Quantum | Phase Probe | Rift Expedition | Incursion | Pocket Universe |
+| Transcendent | Glimpse | Pilgrimage of Light | Reality Incursion | Ascension Rite |
 
-### Cost, age range and rewards
+Sending an offer removes it temporarily. A replacement arrives after five minutes. Untaken offers expire after an hour, and entering a new age creates a new board. You can have one mission of each tier under way at once. The panel and `expedition list` show why an offer cannot be sent now. A taken slot shows when its replacement arrives.
 
-Campaigns spend soldiers at launch, and you can't launch one you can't afford. The scouting expeditions charge resources up front: `scout_party` costs 30 food and 30 wood, `scout_ruins` 40 food and 30 wood, and `naval_expedition` 150 food and 100 wood.
-
-Every mission has a first age, and some have a last age after which they disappear. `scout_party` runs from the Primitive Age through the Bronze Age and is gone once you reach the Iron Age. `scout_ruins` opens in the Bronze Age and `naval_expedition` in the Renaissance Age.
-
-The reward is paid when the mission resolves. The soldiers and resources you paid don't come into it; they were spent at launch.
+<figure class="screen" data-screen="expeditions"><figcaption>The Expeditions panel shows the board, missions under way and the Geographic Society.</figcaption></figure>
 
 ### Commands
 
-Scouting expeditions and campaigns have separate commands:
-
 ```
-expedition list         # scouting expeditions open in your current age
-expedition <key>        # send a scouting expedition (e.g. expedition scout_ruins); costs resources, never soldiers
-exp list                # shorthand
-exp <key>               # shorthand
-
-campaign list           # military campaigns open in your current age
-campaign <key>          # wage a campaign (e.g. campaign raid_bandits); spends soldiers
+expedition              # open the mission board
+expedition list         # print the mission board
+expedition <number>     # send the numbered offer
+campaign                # alias for expedition
+campaign <number>       # alias for expedition <number>
 ```
 
-`expedition` with no arguments opens the **Expeditions** panel, `campaign` (or `campaign list`) lists the campaigns you can wage, and `army` opens the **Army** panel. You can type spaces for the underscores in a key: `expedition scout ruins` is the same as `expedition scout_ruins`.
-
-If you mix the two up, the game points you to the right one. `expedition raid_bandits` is refused with a note to use `campaign <key>`, and a scouting key given to `campaign` sends you to `expedition <key>`.
-
-**Three techs open missions.** Campaigns wait for **Military Tactics** (Bronze Age), every scouting expedition past the Scout Party for **Exploration** (Iron Age, after Map Making or Boatbuilding), and the Naval Expedition for **Navigation** (Renaissance Age) on top. Until the tech is researched the command is refused and names it: `Campaigns need Military Tactics first. Research it to send one.` The Scout Party needs no tech. Scout Nearby Ruins is listed from the Bronze Age, an age before Exploration can be researched, and the Expeditions panel says so. Two military buildings wait for a tech too: the Barracks for Military Tactics and the Legion Fort for Siege Warfare. A game saved before this rule keeps what it was already sending for the rest of that run (see [Commands a Tech Opens](technologies.md#commands-a-tech-opens)).
+`expedition` with no arguments opens the **Expeditions** panel. A mission's resource or soldier cost is spent at launch, whether it succeeds or fails. One mission per tier can be under way at once.
 
 ### Automatic dispatch: the Geographic Society
 
-From the **Industrial Age** you can stop sending every party by hand. The **Geographic Society** is a building that sends scouting parties out on its own for the rest of the run. It waits for the **Geographic Societies** tech of that age, which needs Cartography.
+From the **Industrial Age** the **Geographic Society** sends short or long offers on its own for the rest of the run. It waits for the **Geographic Societies** tech of that age, which needs Cartography.
 
 It only ever scouts. A Society never wages a campaign; those stay yours to order.
 
-It uses your one scouting slot, and only when the slot is free. Nothing is queued. If a scouting party is out, whether you sent it or the Society did, the Society waits, so a party you launch by hand always goes first.
+It uses the offer's tier slot, and only when that slot is free. Nothing is queued. A party you launch by hand always goes first for its tier.
 
-It pays full price. Each automatic party costs the same resources you would pay. If your stores can't outfit one, the Society holds it back, tells you once, and sends it as soon as the supplies are there. It never runs up a debt.
+It pays full price. Each automatic mission costs the same materials you would pay. If your stores can't outfit one, the Society holds it back, tells you once, and sends it as soon as the supplies are there. It never runs up a debt.
 
-It sends the cheapest scouting mission your age offers that you can currently afford, so it won't spend your treasury on a voyage you didn't ask for.
+It sends the affordable short or long offer with the best haul per minute, so it won't spend your treasury on a grand mission.
 
-Its parties are ordinary parties. They succeed and fail at the same odds, pay the same loot, and roll civilization encounters, boons and setbacks exactly like the ones you send.
+Its missions are ordinary missions. They use the same odds, pay the same haul and roll civilization encounters, boons and setbacks exactly like the ones you send.
 
 The more you invest, the faster it goes. A single unstaffed Society sends about one party every 2,340 ticks (about 1h 18m), roughly what you'd manage by remembering to send one now and then. Staffing it fully cuts that by about a third, and each extra Society shortens the wait again, down to a floor of about **one party every 260 ticks** (about 8m 40s) with six fully staffed Societies. More than that only helps when a party comes home late. Societies are staffed by military-domain workers, so they count toward the [military share of your population](#morale-and-military-ratio).
 
 The **Expeditions** panel (`expedition`) shows one line for it: the time until the next party leaves, or a warning that a party is due and your stores are too thin to outfit it. The full status (Societies built, staffing, the interval, and a countdown with a progress bar) is on the **Factions** panel (`factions`); see [The Factions panel](factions.md#the-factions-panel). Both show approximate wall-clock time rather than ticks.
 
-A Society is always slower than doing it yourself, by design. A fully invested Society runs at about **60% of the pace of a player who chains expeditions by hand and runs campaigns alongside them**. That keeps an idle empire meeting other civilizations and keeps its boons topped up, while playing by hand stays worth it.
+A Society is always slower than doing it yourself, by design. The Society keeps missions moving while you are away. Sending offers by hand gives you control over the odds, haul and cost.
 
-The **Expeditions** panel (`expedition`) lists only the scouting expeditions open in your current age. The **Army** panel (`army`) lists only the campaigns, next to your soldier count and defense rating. The Expeditions panel also carries the **Loot History**, the running total of loot from expeditions and campaigns alike.
+The **Expeditions** panel (`expedition`) shows every offer and all missions under way. The **Army** panel (`army`) shows your soldier count and defense rating.
 
 ### Success chance
 
-```
-mission power = military power × the age's mission scale
-difficulty    = base difficulty - (mission power × 0.3)
-difficulty    = max(difficulty, 0.05)
-success if a random roll (0 to 1) beats difficulty
-```
-
-Military power lowers the effective difficulty. With no military power, a 0.8-difficulty mission succeeds about 20% of the time. The Army panel prints the chance of failure for every campaign, and the chance with your army beside it whenever the army lowers it.
-
-**The mission scale** is the age's [military yardstick](#the-military-yardstick). The missions were sized when techs gave far more military power than the finished tree does (+670% by the Cyberpunk Age, where the tree now gives +176%). The scale puts the difference back: a player who holds every military tech up to their age and the two milestones any garrison earns has the odds the missions were built for, which from the Industrial Age on is the 5% floor on every campaign. With fewer military techs you are proportionally short of it.
-
-| Age | Typical military power | Mission scale | Hardest campaign open | It fails, for the typical player |
-|-----|------------------------|---------------|-----------------------|-------------------------------|
-| Bronze Age | +15% | 1.33 | `raid_bandits` (0.40) | 34% |
-| Iron Age | +45% | 1.44 | `conquer_territory` (0.60) | 40% |
-| Classical Age | +60% | 1.75 | `conquer_territory` (0.60) | 28% |
-| Medieval Age | +70% | 1.50 | `siege_castle` (0.70) | 38% |
-| Renaissance Age | +82% | 1.89 | `siege_castle` (0.70) | 24% |
-| Colonial Age | +94% | 1.97 | `siege_castle` (0.70) | 15% |
-| Industrial to Electric Age | +106% to +116% | 2.22 to 2.03 | `siege_castle` (0.70) | 5% |
-| Atomic and Modern Age | +136% | 3.57 | `world_domination` (0.80, Modern) | 5% |
-| Information to Transcendent Age | +146% to +216% | 4.01 to 3.17 | `quantum_incursion` (0.85, Quantum) | 5% |
-
-The soldier and resource cost is already spent at launch, so the outcome only changes the reward and the encounter:
-
-| Outcome | Reward |
-|---|---|
-| Success | full rewards × (1 + expedition reward bonus) |
-| Failure | 30% of the base rewards |
-
-A failure costs no extra soldiers. The launch cost is the whole cost, win or lose. With the **Military-Industrial Complex** researched a campaign brings back 20% more of either row, and with **Probability Warfare** 15% more again; scouting expeditions are not campaigns and keep theirs.
-
-Every resolution logs a plain line: which mission, whether it succeeded, and that loot came in. About one resolution in three also gets a short gray account of how it went underneath. It's kept rare on purpose so those lines stay worth reading. The account depends on the kind of mission, whether it succeeded and your age (a Bronze Age party and a Quantum Age crew come home to different places). It won't repeat a sentence you saw in roughly the last screenful of log, and it's cosmetic only: it never contains a number that isn't on the line above it.
-
-### Full mission table
-
-This table covers all 16 missions. The three scouting expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) are sent with `expedition <key>`; every other row is a campaign, waged with `campaign <key>`. The Soldier Cost column is spent from your soldiers at launch.
-
-| Key | Name | Min Age | Soldier Cost | Resource Cost | Duration | Difficulty | Rewards on Success |
-|-----|------|---------|--------------|---------------|----------|------------|-------------------|
-| `scout_party` | Scout Party | Primitive Age (last: Bronze Age) | 0 | 30 food, 30 wood | 100-160t (260-416t in the Bronze Age) | 0.20 | 60 food, 60 wood, 20 stone |
-| `scout_ruins` | Scout Nearby Ruins | Bronze Age | 0 | 40 food, 30 wood | 156-260t | 0.20 | 30 food, 20 wood, 15 stone |
-| `raid_bandits` | Raid Bandit Camp | Bronze Age | 5 | none | 156-260t | 0.40 | 30 gold, 15 iron, 20 food |
-| `trade_escort` | Trade Escort | Iron Age | 3 | none | 156-260t | 0.30 | 50 gold, research progress |
-| `conquer_territory` | Conquer Territory | Iron Age | 10 | none | 156-260t | 0.60 | 80 gold, 40 iron, 50 food |
-| `siege_castle` | Siege Enemy Castle | Medieval Age | 15 | none | 156-260t | 0.70 | 150 gold, 30 steel, 20 faith |
-| `naval_expedition` | Naval Expedition | Renaissance Age | 0 | 150 food, 100 wood | 156-260t | 0.50 | 200 gold, 30 culture, research progress |
-| `colonial_campaign` | Colonial Campaign | Industrial Age | 20 | none | 156-260t | 0.60 | 300 gold, 50 oil, 40 steel |
-| `world_domination` | World Domination | Modern Age | 50 | none | 156-260t | 0.80 | 1K gold, 200 electricity, research progress |
-| `cyber_raid` | Cyber Raid | Information Age | 30 | none | 156-260t | 0.60 | 200 data, 50 crypto, 500 gold |
-| `neon_heist` | Neon Heist | Cyberpunk Age | 25 | none | 156-260t | 0.55 | 100 crypto, 150 data, 800 gold |
-| `fusion_assault` | Fusion Plant Assault | Fusion Age | 35 | none | 156-260t | 0.65 | 120 plasma, 500 electricity, 50 uranium |
-| `orbital_strike` | Orbital Strike | Space Age | 40 | none | 156-260t | 0.70 | 100 titanium, 80 plasma, research progress |
-| `warp_invasion` | Warp Invasion | Interstellar Age | 60 | none | 169-273t | 0.75 | 50 dark matter, 200 titanium, 2K gold |
-| `galactic_conquest` | Galactic Conquest | Galactic Age | 80 | none | 208-338t | 0.80 | 30 antimatter, 100 dark matter, 5K gold |
-| `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | none | 234-377t | 0.85 | 20 quantum flux, 50 antimatter, research progress |
-
-That is 3 scouting expeditions and 13 campaigns.
-
-The Duration column is each mission's range in ticks, as the panel shows it. From the Bronze Age on, where ages and their timers run 2.6 times as long, every range is 2.6 times its base length, so the column already includes that. The actual time is rolled evenly within that range at launch, so nothing resolves in under 100 ticks (156 from the Bronze Age on), and `scout_party` runs 100-160 ticks (about 130 on average; 260-416 in the Bronze Age). The time-left readout counts down the rolled value. Techs shorten the range, and the panels list it as it stands: Cartography, Aviation, Reusable Launchers and Fusion Drives take 10% each off scouting expeditions, Wormholes 15% and Stellar Cartography 20% (45% of the listed time with all six), and a **General Staff** (Victorian Age) and **Special Forces** (Modern Age) take 15% each off campaigns.
-
-Before your first military building there are no soldiers, so scouting fills the gap. `scout_party` costs 30 food and 30 wood, runs 100-160 ticks (260-416 in the Bronze Age) and pays about 60 food, 60 wood and 20 stone, a net gain worth repeating through the Primitive, Stone and Bronze ages. It disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 40 food and 30 wood) carries scouting on from there, and `naval_expedition` (Renaissance Age, 150 food and 100 wood) is the late scouting option, harder (0.50) than `scout_ruins` (0.20).
-
-`campaign trade_escort` (Iron Age, 3 soldiers, 156-260 ticks, 0.30 difficulty) is the cheapest, easiest campaign to keep running. Durations are rolled, so keep one of each kind running rather than counting on a fixed timer.
+Each offer rolls its success odds when it appears. A military grand offer also adjusts its odds for your army. The panel shows the odds that apply now. The army's military power and its effects on raids are covered in [Defense](#defense-what-your-army-blunts).
 
 ### What missions are worth
 
-**Loot is fixed.** Every mission pays the same bundle in every age it runs, and the bundles were sized for a much smaller economy. World Domination's 1K gold arrives in the Modern Age, where a typical building costs tens of billions of gold. Early on, `scout_party` and the first campaigns are a real help; from about the Iron Age, loot is small change.
+**Hauls scale with income.** The board shows the expected resource haul before launch. Longer missions and Legendary offers can pay more, while failure pays 30% of the haul.
 
-**Encounters are the payoff.** Every resolved mission rolls a chance to meet a civilization: about 18% for a successful scouting run and 8% for a successful campaign, and much less for failures (6% and 2%). An encounter is how you make first contact, and it usually brings a boon: a timed production boost, a lump of resources or a crew of workers. It brings a setback instead when the run failed, and sometimes when the civilization is at war with you. A player who keeps a scouting party and a campaign in the field all the time meets someone about every 975 ticks (about 32 minutes). The full rules (what the boons and setbacks are, the five-boon limit, war) are on [Factions & Diplomacy](factions.md#encounters-boons-and-setbacks).
+**Encounters are one payoff.** Every resolved mission can meet a civilization. An encounter is how you make first contact, and it usually brings a boon: a timed production boost, a lump of resources or a crew of workers. It brings a setback instead when the run failed, and sometimes when the civilization is at war with you. The full rules (what the boons and setbacks are, the five-boon limit, war) are on [Factions & Diplomacy](factions.md#encounters-boons-and-setbacks).
 
-So keep one scouting expedition and one campaign running after you have met everyone, and prefer missions you're likely to win: a success is three to four times as likely to meet someone, and a failure that does meet someone brings trouble home.
+One mission per tier can be under way at once. Compare its odds and haul before sending it.
 
 ---
 
@@ -464,7 +410,7 @@ The five military milestones form a chain. Completing all five grants a title, a
 
 ### Early game (Stone Age to Classical Age)
 
-- Before the Iron Age, run `expedition scout_party` on repeat. It costs 30 food and 30 wood and pays about 60 food, 60 wood and 20 stone, with no soldiers needed. From the Bronze Age its encounters can also meet your first civilization.
+- Use short offers when you want a quick, lower-cost mission. Grand military offers use your army, while civil grand offers need materials.
 - War Camps and Barracks train nothing before the Iron Age, when soldiers unlock. Build Barracks for `iron_legion` (10 Barracks), not for early soldiers.
 - Once soldiers unlock, staff your military buildings (the Hunting Lodge costs only wood) and train 5 soldiers for `first_soldiers` and its +0.05 military power.
 - `campaign trade_escort` (3 soldiers, Iron Age, 156-260 ticks, 0.30 difficulty) is the easiest early campaign: keep it running next to a scouting party for the encounters.
@@ -474,7 +420,7 @@ The five military milestones form a chain. Completing all five grants a title, a
 
 - Go for `iron_legion` (train 500 soldiers, build 10 Barracks) for its +5% all production.
 - Pick the easiest campaign you can afford rather than the one with the best loot. With no military power, `conquer_territory` (0.60) fails more often than it wins, and each failure that meets someone brings a setback.
-- For scouting, `scout_ruins` (0.20) is cheaper and easier than `naval_expedition` (0.50), so it meets more civilizations per run. The Geographic Society sends the cheapest one on its own.
+- The Geographic Society sends the offer with the best haul per minute that you can afford.
 - The age gates ask for military buildings (15 Hunting Lodges, 15 Military Academies, 5 Castle Keeps), and staffed they build your garrison too.
 - Research military techs as they appear. Each one counts for more than its figure: a mission reads military power through the age's mission scale, so +0.15 in the Iron Age takes about 6 points off a campaign's chance to fail.
 

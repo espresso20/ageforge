@@ -519,9 +519,9 @@ Monuments are one way to spend culture; the `festival` command is another. See [
 
 Unlocked in the **Industrial Age** by the **Geographic Societies** tech (which needs Cartography), the Geographic Society is the one building that plays part of the game for you. It costs gold, steel and coal, holds **8 military workers**, and produces no resource. Instead it **sends out scouting expeditions on its own**, so an empire left to run keeps exploring and keeps meeting the world's civilizations, which is where civilization boons come from.
 
-You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party about every 2,340 ticks (**1h 18m** at the base tick), and six fully staffed ones bottom out at around one every 260 ticks (about **8m 40s**). Game speed bonuses shorten these in real time; the **Factions** panel shows the countdown to the next dispatch in wall-clock time. It sends **scouting parties only**, never military campaigns. It uses your one scouting slot only when it is free, and it pays the full resource cost of every party: if your stores can't outfit one, it waits and sends it as soon as they can.
+You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them. Game speed bonuses shorten the wait in real time; the **Factions** panel shows the countdown to the next dispatch. The Society sends the affordable short or long offer with the best haul per minute, never a grand offer. It uses that tier's slot only when it is free, and pays the offer's full resource cost. If your stores can't outfit one, it waits and sends it as soon as they can.
 
-It is deliberately **slower than sending expeditions yourself**: even fully built and staffed, it runs at about 60% of the pace of a player chaining expeditions by hand. Treat it as a floor under your exploration rather than a substitute for it. Full details in [Army & Missions](military.md#automatic-dispatch-the-geographic-society).
+It keeps missions moving while you are away. Full details in [Army & Missions](military.md#automatic-dispatch-the-geographic-society).
 
 ---
 

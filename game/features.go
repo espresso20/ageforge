@@ -170,7 +170,7 @@ func (ge *GameEngine) loadGrantedFeatures(keys []string) {
 //     exported this run; Rail Freight and Warp Commerce when that route is
 //     running;
 //   - campaigns: a campaign under way;
-//   - expeditions past the Scout Party, and the Naval Expedition: that
+//   - long and grand mission offers (civil grand included): that
 //     expedition under way;
 //   - a finished expedition (the save counts them but not their kind) counts
 //     for campaigns and expeditions alike, and for the Naval Expedition once

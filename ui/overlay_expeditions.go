@@ -2,87 +2,73 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 )
 
-// expeditionsProvider generates the Expeditions panel text: the civilian
-// SCOUTING surface. It shows ONLY scouting: the active scouting expedition and
-// the available scouting expeditions (resource cost / rewards / age). No
-// soldiers, no defense, no military bonuses live here — those belong to the
-// Army panel. Formatting mirrors the militaryProvider sections.
+// expeditionsProvider renders the current mission board and missions underway.
 func expeditionsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	mil := state.Military
-
-	fmt.Fprintf(&sb, " [gold]═══ Expeditions ═══[-]\n\n")
-	sb.WriteString(" [gray]Send scouts to explore. Expeditions cost resources,[-]\n")
-	sb.WriteString(" [gray]not soldiers, and run alongside Army campaigns.[-]\n")
-
-	if mil.ExpeditionBonus > 0 {
-		fmt.Fprintf(&sb, "\n [green]Expedition rewards %s[-]\n", textfmt.SignedPercent(mil.ExpeditionBonus))
+	fmt.Fprintf(&sb, " [gold]═══ Expeditions · %s ═══[-]\n", state.AgeName)
+	tier := ""
+	for _, slot := range mil.Board {
+		if slot.Tier != tier {
+			tier = slot.Tier
+			words, _ := state.Ruleset().MissionWords(state.Age)
+			kind := map[string]int{game.TierShort: config.WordsShort, game.TierLong: config.WordsLong, game.TierGrand: config.WordsGrandMilitary}[tier]
+			heading := words.Tiers[kind]
+			if tier == game.TierGrand {
+				heading = "Grand"
+			}
+			fmt.Fprintf(&sb, "\n [gold]═══ %s ═══[-]\n", heading)
+		}
+		if slot.Offer == nil {
+			fmt.Fprintf(&sb, " %d. Taken · new offer in %s\n", slot.Number, formatTicks(slot.RefillTicks, state))
+			continue
+		}
+		e := *slot.Offer
+		name := e.Name
+		if e.Rare {
+			name = strings.TrimPrefix(name, "Legendary ")
+			name = "[gold]Legendary[-] " + name
+		}
+		fmt.Fprintf(&sb, " %d. %s\n", slot.Number, name)
+		fmt.Fprintf(&sb, "   [gray]%.0f min · %.0f%% odds · haul %s · cost %s[-]\n", e.LengthMinutes, e.SuccessChance*100, expeditionHaul(e, state), expeditionOfferCost(e, state))
+		if e.Tier == game.TierGrand {
+			if e.Grand == game.GrandMilitary {
+				fmt.Fprintf(&sb, "   military · %d %s\n", e.SoldiersNeeded, pluralize("soldier", e.SoldiersNeeded))
+			} else {
+				fmt.Fprintf(&sb, "   civil · %s\n", expeditionOfferCost(e, state))
+			}
+		}
+		fmt.Fprintf(&sb, "   %s\n", e.Description)
+		if !e.CanLaunch && e.LaunchBlockReason != "" {
+			fmt.Fprintf(&sb, "   [red]%s[-]\n", e.LaunchBlockReason)
+		}
 	}
-
-	// Standing orders. This panel is the scouting surface, so it has to say
-	// whether scouting is being done for you: a built Geographic Society was
-	// otherwise invisible here. Full status lives in the Factions panel.
+	sb.WriteString("\n [gold]═══ Under way ═══[-]\n")
+	for _, active := range []*game.ExpeditionSnapshot{mil.ActiveShort, mil.ActiveLong, mil.ActiveGrand} {
+		if active != nil {
+			fmt.Fprintf(&sb, " %s · %s · %.0f%% odds · %s left\n", active.Tier, active.Name, active.SuccessChance*100, formatTicks(active.TicksLeft, state))
+		}
+	}
 	if auto := mil.AutoExpedition; auto.Active {
-		switch {
-		case auto.Starved:
-			sb.WriteString("\n [yellow]Geographic Society: a party is due, but you cannot pay the expedition cost.[-]\n")
-		default:
-			fmt.Fprintf(&sb, "\n [cyan]Geographic Society:[-] next party goes out in %s [gray](details: factions)[-]\n",
-				formatTicks(auto.TicksLeft, state))
+		if auto.Starved {
+			sb.WriteString("\n [yellow]Geographic Society: cannot pay the expedition cost.[-]\n")
+		} else {
+			fmt.Fprintf(&sb, "\n [cyan]Geographic Society:[-] next party in %s\n", formatTicks(auto.TicksLeft, state))
 		}
 	} else {
-		sb.WriteString("\n" + theme.Paint(theme.RoleDim, fmt.Sprintf(" A Geographic Society scouts automatically. %s brings it.",
-			ageRefCap(state, buildingAge(state, "geographic_society", "industrial_age")))) + "\n")
-	}
-
-	// === Active expedition ===
-	sb.WriteString("\n [gold]═══ Active expedition ═══[-]\n\n")
-	if mil.ActiveScout == nil {
-		sb.WriteString(" [gray]No expedition out right now.[-]\n")
-	} else {
-		writeActiveExpedition(&sb, "Scouting", mil.ActiveScout, state)
-	}
-
-	// === Available expeditions ===
-	sb.WriteString("\n [gold]═══ Available expeditions ═══[-]\n\n")
-	sb.WriteString(lockNotesInSight(state, config.FeatureExpeditions))
-	if !hasCategory(mil.Expeditions, game.ExpeditionScouting) {
-		sb.WriteString(" [gray]No expeditions available yet.[-]\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" Reach %s to unlock more scouting.", ageRef(state, "bronze_age"))) + "\n")
-	} else {
-		writeExpeditionGroup(&sb, "Scouting", mil.Expeditions, game.ExpeditionScouting, state)
-	}
-
-	// === Loot history ===
-	// Total loot lives with Expeditions (the scouting/loot surface), not the Army
-	// panel: loot accrues from resolving expeditions and campaigns alike.
-	sb.WriteString("\n [gold]═══ Loot history ═══[-]\n\n")
-	if len(mil.TotalLoot) == 0 {
-		sb.WriteString(" [gray]No loot collected yet.[-]\n")
-		sb.WriteString(" [gray]Send an expedition: expedition <number>[-]\n")
-	} else {
-		sb.WriteString(" [gold]Total loot collected:[-]\n\n")
-		lootKeys := make([]string, 0, len(mil.TotalLoot))
-		for k := range mil.TotalLoot {
-			lootKeys = append(lootKeys, k)
+		hint := "A later age brings it."
+		if state.Age == "colonial_age" {
+			hint = "The Industrial Age brings it."
 		}
-		sort.Strings(lootKeys)
-		for _, key := range lootKeys {
-			amount := mil.TotalLoot[key]
-			fmt.Fprintf(&sb, " %-14s [green]%s[-]\n", textfmt.Capitalize(game.ResourceName(key)), FormatNumber(amount))
-		}
+		sb.WriteString("\n" + theme.Paint(theme.RoleDim, " A Geographic Society scouts automatically. "+hint) + "\n")
 	}
-
-	sb.WriteString("\n [gray]Commands: expedition <number>[-]\n")
-
+	sb.WriteString("\n [gray]expedition <n> to send · expedition list[-]\n")
 	return sb.String()
 }
