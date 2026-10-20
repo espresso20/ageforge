@@ -146,7 +146,10 @@ type mapDock struct {
 	*tview.Box
 	mini *miniMap
 	body tview.Primitive
-	// off is the minimap setting turned off: the body gets the column.
+	// off is the minimap setting turned off: the body gets the column. It
+	// starts true: the mini map is off until asked for, and the dashboard
+	// sets this from the account's setting on every refresh, so a draw before
+	// the first refresh must not show it.
 	off bool
 	// shown reports whether the last draw showed the mini map; drawn that
 	// there was a draw at all (before it, the dock has no real size).
@@ -154,7 +157,7 @@ type mapDock struct {
 }
 
 func newMapDock(mini *miniMap, body tview.Primitive) *mapDock {
-	return &mapDock{Box: tview.NewBox(), mini: mini, body: body}
+	return &mapDock{Box: tview.NewBox(), mini: mini, body: body, off: true}
 }
 
 // wantsModel reports whether the mini map needs a model: it is on and
