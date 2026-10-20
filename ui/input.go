@@ -1803,12 +1803,15 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 // offers numbered short, then long, then grand; a number sends that offer.
 func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
 	engine.EnsureMissionBoard()
-	if len(args) < 1 || strings.ToLower(args[0]) == "list" {
+	if len(args) < 1 {
+		return CommandResult{OverlayName: "expedition"}
+	}
+	if strings.ToLower(args[0]) == "list" {
 		return cmdMissionBoard(engine)
 	}
 	n, err := strconv.Atoi(strings.TrimSpace(args[0]))
 	if err != nil || len(args) > 1 {
-		return CommandResult{Message: "Usage: expedition <number>. Type expedition to see the board.", Type: "error"}
+		return CommandResult{Message: "Usage: expedition <number>. Type expedition list to see the board.", Type: "error"}
 	}
 	if err := engine.LaunchExpedition(n); err != nil {
 		return errorResult(err)

@@ -33,15 +33,18 @@ func newExpeditionTestEngine(t *testing.T) *game.GameEngine {
 	return engine
 }
 
-// TestCmdExpeditionNoArgsPrintsTheBoard verifies bare `expedition` prints the
-// mission board as plain lines (nine numbered offers) rather than opening a
-// panel or launching anything.
+// TestCmdExpeditionNoArgsPrintsTheBoard verifies bare `expedition` opens the
+// Expeditions panel and `expedition list` prints the mission board as plain
+// lines (nine numbered offers), neither launching anything.
 func TestCmdExpeditionNoArgsPrintsTheBoard(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
-	res := cmdExpedition(nil, engine)
+	if bare := cmdExpedition(nil, engine); bare.OverlayName != "expedition" {
+		t.Errorf("cmdExpedition(nil) opens overlay %q, want the expedition panel", bare.OverlayName)
+	}
+	res := cmdExpedition([]string{"list"}, engine)
 	if res.Type != "info" || res.OverlayName != "" {
-		t.Errorf("cmdExpedition(nil) = type %q overlay %q, want a printed board", res.Type, res.OverlayName)
+		t.Errorf("cmdExpedition(list) = type %q overlay %q, want a printed board", res.Type, res.OverlayName)
 	}
 	if !strings.Contains(res.Message, "Mission board") {
 		t.Errorf("the board has no heading:\n%s", res.Message)
@@ -94,8 +97,11 @@ func TestCmdExpeditionNumberLaunches(t *testing.T) {
 func TestCmdCampaignIsTheSameCommand(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
-	if a, b := cmdCampaign(nil, engine), cmdExpedition(nil, engine); a.Message != b.Message || a.Type != "info" {
-		t.Errorf("campaign prints %q, expedition %q", a.Message, b.Message)
+	if a, b := cmdCampaign([]string{"list"}, engine), cmdExpedition([]string{"list"}, engine); a.Message != b.Message || a.Type != "info" {
+		t.Errorf("campaign list prints %q, expedition list %q", a.Message, b.Message)
+	}
+	if a := cmdCampaign(nil, engine); a.OverlayName != "expedition" {
+		t.Errorf("bare campaign opens overlay %q, want the expedition panel", a.OverlayName)
 	}
 	res := cmdCampaign([]string{"7"}, engine)
 	if res.Type != "success" {
