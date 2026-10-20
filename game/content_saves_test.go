@@ -191,7 +191,7 @@ func TestContentOldSaveGetsAnAgeOfGrace(t *testing.T) {
 		want string
 	}{
 		"a trade route, never started before": {ge.StartTradeRoute("local_barter"), "Trade routes need The Wheel first. Research it to start one."},
-		"an expedition past the Scout Party":  {ge.LaunchExpedition("trade_caravan"), "Expeditions past the Scout Party need Exploration first. Research it to send one."},
+		"an expedition past the Scout Party":  {ge.LaunchExpedition(keyOffer(ge, "trade_caravan")), "Expeditions past the Scout Party need Exploration first. Research it to send one."},
 		"a festival":                          {ge.DoFestival(), "Festivals need Drama first. Research it to hold one."},
 	} {
 		if c.err == nil || c.err.Error() != c.want {
@@ -264,7 +264,7 @@ func TestContentOldSaveKeepsWhatItUsed(t *testing.T) {
 	if err := ge.DoFestival(); err == nil || err.Error() != "Festivals need Drama first. Research it to hold one." {
 		t.Errorf("a festival, never held before: %v", err)
 	}
-	if err := ge.LaunchExpedition("trade_caravan"); err == nil || err.Error() != "Expeditions past the Scout Party need Exploration first. Research it to send one." {
+	if err := ge.LaunchExpedition(keyOffer(ge, "trade_caravan")); err == nil || err.Error() != "Expeditions past the Scout Party need Exploration first. Research it to send one." {
 		t.Errorf("an expedition past the Scout Party, never sent before: %v", err)
 	}
 

@@ -55,15 +55,23 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 func runAutoTicks(ge *GameEngine, n int) (launched, resolved int) {
 	// A launch is a new active mission: a party that comes home and is sent
 	// out again in the same tick still counts.
-	prev := ge.Military.ActiveByCategory(ExpeditionScouting)
+	prev := map[string]*ActiveExpedition{}
+	for _, tier := range boardTiers {
+		prev[tier] = ge.Military.ActiveByTier(tier)
+	}
 	for i := 0; i < n; i++ {
+		ge.tick++ // the board's refills and expiries run on the clock
+		ge.ensureMissionBoardLocked()
+		ge.Military.RefreshBoard(ge.gameRNG(), ge.tick)
 		resolved += len(ge.Military.Tick(ge.gameRNG(), 0, 0))
 		ge.processAutoExpeditions()
-		now := ge.Military.ActiveByCategory(ExpeditionScouting)
-		if now != nil && now != prev {
-			launched++
+		for _, tier := range boardTiers {
+			now := ge.Military.ActiveByTier(tier)
+			if now != nil && now != prev[tier] {
+				launched++
+			}
+			prev[tier] = now
 		}
-		prev = now
 	}
 	return launched, resolved
 }
@@ -174,53 +182,55 @@ func TestAutoExpedition_NoBuildingNoDispatch(t *testing.T) {
 	}
 }
 
-// TestAutoExpedition_ScoutingOnly is the hard constraint: automation must never
-// dispatch a military campaign, and must never touch the military slot.
-func TestAutoExpedition_ScoutingOnly(t *testing.T) {
+// TestAutoExpedition_NeverSendsWhatItCannotPay: the society sends only what
+// the town can pay for. With no soldiers it never sends a military grand
+// mission, whatever its haul per minute; with soldiers it can.
+func TestAutoExpedition_NeverSendsWhatItCannotPay(t *testing.T) {
 	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, 1e9)
+	learn(ge, "military_tactics")
+	setSoldiers(ge, 0)
 	launched, _ := runAutoTicks(ge, 20000)
 	if launched == 0 {
 		t.Fatal("nothing auto-launched at full investment — the dispatcher is inert")
 	}
-	if active := ge.Military.ActiveByCategory(ExpeditionMilitary); active != nil {
-		t.Errorf("auto-dispatch launched a MILITARY expedition (%s)", active.Name)
+	if active := ge.Military.ActiveByCategory(ExpeditionMilitary); active != nil && active.Military() {
+		t.Errorf("auto-dispatch launched a military mission (%s) with no soldiers", active.Title)
 	}
-	// Every dispatch the picker can produce must be a scouting def.
+	ge.EnsureMissionBoard()
 	for i := 0; i < 50; i++ {
-		def := ge.pickAutoScoutExpedition(ge.progress.GetAgeOrder())
-		if def == nil {
-			t.Fatal("picker returned nil with a full treasury at the atomic age")
+		n := ge.pickAutoOffer()
+		if n == 0 {
+			break
 		}
-		if def.Category != ExpeditionScouting {
-			t.Fatalf("picker chose a %s expedition (%s)", def.Category, def.Name)
+		if o, _ := ge.Military.BoardOffer(n); o.Military() {
+			t.Fatalf("picker chose %s with no soldiers", o.Title)
 		}
 	}
 }
 
-// TestAutoExpedition_RespectsSingleSlot: a manually-launched scouting expedition
-// blocks auto-dispatch for its whole duration — never two at once, never a queue.
-func TestAutoExpedition_RespectsSingleSlot(t *testing.T) {
+// TestAutoExpedition_RespectsTheTierSlots: a mission launched by hand blocks
+// auto-dispatch of its tier for its whole duration, whatever the society
+// would rather send: never two of a tier at once, never a queue.
+func TestAutoExpedition_RespectsTheTierSlots(t *testing.T) {
 	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, 1e9)
+	learn(ge, "military_tactics")
 
-	// Park a scouting expedition in the slot by hand and freeze its timer high.
-	if err := ge.launchExpeditionLocked("aerial_survey"); err != nil {
-		t.Fatalf("manual launch failed: %v", err)
+	// Park a mission in every tier by hand and freeze their timers high.
+	var manual [3]*ActiveExpedition
+	for i, c := range []struct{ tier, grand string }{{TierShort, ""}, {TierLong, ""}, {TierGrand, GrandCivil}} {
+		if err := ge.launchExpeditionLocked(plantOffer(ge, c.tier, c.grand)); err != nil {
+			t.Fatalf("manual launch of a %s mission failed: %v", c.tier, err)
+		}
+		manual[i] = ge.Military.ActiveByTier(c.tier)
+		manual[i].TicksLeft = 4000
 	}
-	manual := ge.Military.ActiveByCategory(ExpeditionScouting)
-	if manual == nil {
-		t.Fatal("manual launch did not occupy the scouting slot")
-	}
-	manual.TicksLeft = 4000
-	name := manual.Name
 
 	for i := 0; i < 2000; i++ {
 		ge.processAutoExpeditions()
-		active := ge.Military.ActiveByCategory(ExpeditionScouting)
-		if active == nil {
-			t.Fatalf("tick %d: the slot emptied — auto-dispatch replaced the manual expedition", i)
-		}
-		if active != manual {
-			t.Fatalf("tick %d: auto-dispatch overwrote the active expedition (%s -> %s)", i, name, active.Name)
+		for n, tier := range boardTiers {
+			if ge.Military.ActiveByTier(tier) != manual[n] {
+				t.Fatalf("tick %d: auto-dispatch replaced the manual %s mission", i, tier)
+			}
 		}
 	}
 	// The countdown must be spent and WAITING, not forfeited.
@@ -229,10 +239,11 @@ func TestAutoExpedition_RespectsSingleSlot(t *testing.T) {
 			ge.autoExpeditionTicksLeft)
 	}
 
-	// Free the slot: the pending dispatch must fire on the very next tick.
-	ge.Military.activeByCat[ExpeditionScouting] = nil
+	// Free the long slot: the pending dispatch must fire on the very next tick,
+	// and send a long offer, the only tier with room.
+	ge.Military.active[TierLong] = nil
 	ge.processAutoExpeditions()
-	if ge.Military.ActiveByCategory(ExpeditionScouting) == nil {
+	if got := ge.Military.ActiveByTier(TierLong); got == nil {
 		t.Error("the pending dispatch did not fire once the slot freed")
 	}
 }
@@ -241,13 +252,15 @@ func TestAutoExpedition_RespectsSingleSlot(t *testing.T) {
 // launch is charged.
 func TestAutoExpedition_PaysTheCost(t *testing.T) {
 	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, 1e9)
-	def := ge.pickAutoScoutExpedition(ge.progress.GetAgeOrder())
-	if def == nil {
-		t.Fatal("picker returned nil with a full treasury")
+	ge.EnsureMissionBoard()
+	n := ge.pickAutoOffer()
+	if n == 0 {
+		t.Fatal("picker returned nothing with a full treasury")
 	}
-	cost := ge.missionCostLocked(def)
+	offer, _ := ge.Military.BoardOffer(n)
+	cost := ge.missionCostLocked(offer)
 	if len(cost) == 0 {
-		t.Skip("the chosen scouting expedition is free — nothing to charge")
+		t.Skip("the chosen mission is free — nothing to charge")
 	}
 
 	before := map[string]float64{}
@@ -329,7 +342,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 		ge := autoExpeditionTestEngine(t, "atomic_age", tc.count, tc.assigned, 1e12)
 		_, fill := ge.autoExpeditionInvestment()
 		want := autoExpeditionIntervalIn(ge.age, tc.count, fill)
-		scoutLongest := missionAt(ge, ge.age, config.MissionScout).DurationMax
+		scoutLongest := minutesToTicks(config.MissionBoardLongestMinutes())
 
 		launched, _ := runAutoTicks(ge, ticks)
 		if launched == 0 {
@@ -380,10 +393,8 @@ func TestAutoExpedition_CountdownSurvivesSaveReload(t *testing.T) {
 		t.Fatalf("countdown = %d after 101 ticks, expected a partially-served wait", want)
 	}
 
-	scout, military := ge.Military.GetActiveForSave()
 	save := MilitarySave{
-		ActiveScout:             scout,
-		ActiveMilitary:          military,
+		Active:                  ge.Military.ActiveForSave(),
 		AutoExpeditionTicksLeft: ge.autoExpeditionTicksLeft,
 	}
 
@@ -398,37 +409,41 @@ func TestAutoExpedition_CountdownSurvivesSaveReload(t *testing.T) {
 	}
 }
 
-// TestAutoExpedition_PickerIsDeterministicAndCheapest pins the selection rule:
-// the cheapest affordable scouting expedition, stable across repeated calls.
-func TestAutoExpedition_PickerIsDeterministicAndCheapest(t *testing.T) {
+// TestAutoExpedition_PickerIsDeterministicAndBest pins the selection rule:
+// the offer with the best haul per minute of length that can be sent, stable
+// across repeated calls.
+func TestAutoExpedition_PickerIsDeterministicAndBest(t *testing.T) {
 	ge := autoExpeditionTestEngine(t, "atomic_age", 1, 0, 1e9)
-	order := ge.progress.GetAgeOrder()
+	learn(ge, "military_tactics")
+	ge.EnsureMissionBoard()
 
-	first := ge.pickAutoScoutExpedition(order)
-	if first == nil {
-		t.Fatal("picker returned nil at the atomic age with a full treasury")
+	first := ge.pickAutoOffer()
+	if first == 0 {
+		t.Fatal("picker returned nothing at the atomic age with a full treasury")
 	}
 	for i := 0; i < 20; i++ {
-		again := ge.pickAutoScoutExpedition(order)
-		if again == nil || again.Key != first.Key {
-			t.Fatalf("picker is not deterministic: %v then %v", first.Key, again)
+		if again := ge.pickAutoOffer(); again != first {
+			t.Fatalf("picker is not deterministic: %d then %d", first, again)
 		}
 	}
 
-	// Nothing cheaper may exist among the affordable scouting defs.
-	for _, def := range ge.Military.GetAvailableExpeditionsByCategory(ExpeditionScouting, ge.age, order) {
-		if totalExpeditionCost(def) < totalExpeditionCost(*first) {
-			t.Errorf("picker chose %s (cost %.0f) over the cheaper %s (cost %.0f)",
-				first.Key, totalExpeditionCost(*first), def.Key, totalExpeditionCost(def))
+	// Nothing on the board may beat it among the offers that can be sent.
+	chosen, _ := ge.Military.BoardOffer(first)
+	for i, slot := range ge.Military.board.Slots {
+		if _, err := ge.offerRefusalLocked(*slot.Offer, ge.missionCostLocked(*slot.Offer)); err != nil {
+			continue
+		}
+		if rate, best := slot.Offer.HaulMinutes/slot.Offer.LengthMinutes, chosen.HaulMinutes/chosen.LengthMinutes; rate > best {
+			t.Errorf("picker chose %d (rate %.3f) over %d (rate %.3f)", first, best, i+1, rate)
 		}
 	}
 
-	// An age with no scouting expedition at all must yield nil, not a panic.
-	ge.age = "primitive_age"
-	ge.Resources.resources["food"].Amount = 0
-	ge.Resources.resources["wood"].Amount = 0
-	if def := ge.pickAutoScoutExpedition(order); def != nil {
-		t.Errorf("picker returned %s with an empty treasury", def.Key)
+	// An empty treasury yields nothing, not a panic.
+	for _, def := range config.BaseResources() {
+		ge.Resources.resources[def.Key].Amount = 0
+	}
+	if n := ge.pickAutoOffer(); n != 0 {
+		t.Errorf("picker returned offer %d with an empty treasury", n)
 	}
 }
 

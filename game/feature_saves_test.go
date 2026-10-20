@@ -76,7 +76,7 @@ func TestWriteFeatureFixtures(t *testing.T) {
 		}
 	}
 	write(featureFixtureInUse, "pre_features_bronze", "bronze_age", func(ge *GameEngine) {
-		ge.Military.activeByCat[ExpeditionMilitary] = &ActiveExpedition{Key: "siege_campaign", Name: "Raid Bandit Camp", Soldiers: 5, TicksLeft: 200}
+		ge.Military.active[TierGrand] = &ActiveExpedition{MissionOffer: MissionOffer{Tier: TierGrand, Grand: GrandMilitary, Title: "Raid Bandit Camp"}, Soldiers: 5, TicksLeft: 200}
 		ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 10}
 		ge.festivalReadyTick = ge.tick + 250
 		ge.Diplomacy.factions["riverlands_tribes"] = &FactionState{Discovered: true, Opinion: 60, Status: "allied"}
@@ -126,7 +126,7 @@ func stock(ge *GameEngine, soldiers float64) {
 // clearArmy calls every expedition home, so the next can be sent.
 func clearArmy(ge *GameEngine) {
 	ge.mu.Lock()
-	ge.Military.activeByCat = map[string]*ActiveExpedition{}
+	ge.Military.clearActive()
 	ge.mu.Unlock()
 }
 
@@ -156,8 +156,10 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 	if ge.Research.IsResearched("military_tactics") {
 		t.Fatal("Military Tactics is researched: the save does not test the grant")
 	}
-	// What the save was using: a campaign, a route, a festival, an ally.
-	if got, want := grantedList(ge), "campaigns diplomacy festivals trade_routes"; got != want {
+	// What the save was using: a route, a festival, an ally. Its campaign
+	// under way is not read any more (beta saves are disposable: the board
+	// kept no missions of the old kind).
+	if got, want := grantedList(ge), "diplomacy festivals trade_routes"; got != want {
 		t.Errorf("granted on load: %q, want %q", got, want)
 	}
 	// One line, in the words for a save that already knew the keystones.
@@ -170,7 +172,7 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 	// In the save's age a campaign goes out without the tech.
 	stock(ge, 50)
 	clearArmy(ge)
-	if err := ge.LaunchExpedition("raid_the_rival_clan"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "raid_the_rival_clan")); err != nil {
 		t.Fatalf("a campaign in the save's age: %v", err)
 	}
 
@@ -184,7 +186,7 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 	}
 	stock(ge, 50)
 	clearArmy(ge)
-	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 		t.Errorf("a campaign in the next age, in a run that was already sending them: %v", err)
 	}
 	if f := ge.GetState().Features[config.FeatureCampaigns]; !f.Live || !f.Open || !f.Granted || f.TechName != "Military Tactics" {
@@ -204,7 +206,7 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 	}
 	stock(again, 50)
 	clearArmy(again)
-	if err := again.LaunchExpedition("siege_campaign"); err != nil {
+	if err := again.LaunchExpedition(keyOffer(again, "siege_campaign")); err != nil {
 		t.Errorf("a campaign after a second load: %v", err)
 	}
 
@@ -219,12 +221,12 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 		}
 	}
 	stock(again, 50)
-	err := again.LaunchExpedition("raid_the_rival_clan")
+	err := again.LaunchExpedition(keyOffer(again, "raid_the_rival_clan"))
 	if err == nil || err.Error() != "Campaigns need Military Tactics first. Research it to send one." {
 		t.Errorf("a campaign on a new run without Military Tactics: %v", err)
 	}
 	learn(again, "military_tactics")
-	if err := again.LaunchExpedition("raid_the_rival_clan"); err != nil {
+	if err := again.LaunchExpedition(keyOffer(again, "raid_the_rival_clan")); err != nil {
 		t.Errorf("a campaign with Military Tactics researched: %v", err)
 	}
 }
@@ -266,15 +268,15 @@ func TestFeatureOldSaveLocksWhatItNeverUsed(t *testing.T) {
 	clearArmy(ge)
 	// Never sent: an expedition waits for Exploration, a campaign for its
 	// tech, and a scout for nothing.
-	err := ge.LaunchExpedition("rail_expedition")
+	err := ge.LaunchExpedition(keyOffer(ge, "rail_expedition"))
 	if err == nil || err.Error() != "Expeditions past the Scout Party need Exploration first. Research it to send one." {
 		t.Errorf("the Rail Expedition in the next age, never sent before: %v", err)
 	}
-	err = ge.LaunchExpedition("industrial_war")
+	err = ge.LaunchExpedition(keyOffer(ge, "industrial_war"))
 	if err == nil || err.Error() != "Campaigns need Military Tactics first. Research it to send one." {
 		t.Errorf("a campaign in the next age, never sent before: %v", err)
 	}
-	if err := ge.LaunchExpedition("aerial_survey"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "aerial_survey")); err != nil {
 		t.Errorf("a scout in the next age, never sent before: %v", err)
 	}
 	clearArmy(ge)
@@ -293,7 +295,7 @@ func TestFeatureOldSaveLocksWhatItNeverUsed(t *testing.T) {
 	}
 	// Researching the tech opens the rest.
 	learn(ge, "exploration")
-	if err := ge.LaunchExpedition("rail_expedition"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "rail_expedition")); err != nil {
 		t.Errorf("the Rail Expedition with Exploration researched: %v", err)
 	}
 
@@ -319,7 +321,7 @@ func TestFeatureGraceCoversASaveFromBeforeTheTree(t *testing.T) {
 	}
 	stock(ge, 50)
 	clearArmy(ge)
-	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 		t.Errorf("a campaign in the grace age of a save from before the tree: %v", err)
 	}
 	// Sent in the grace age, so the run keeps it.
@@ -328,7 +330,7 @@ func TestFeatureGraceCoversASaveFromBeforeTheTree(t *testing.T) {
 	}
 	clearArmy(ge)
 	stock(ge, 50)
-	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 		t.Errorf("a campaign after the grace age, in a run that sent one during it: %v", err)
 	}
 }
@@ -370,17 +372,17 @@ func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 
 	// Campaigns, from the Bronze Age. The Scout Party walks out regardless.
 	ge := at("bronze_age")
-	if err := ge.LaunchExpedition("scouting_party"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "scouting_party")); err != nil {
 		t.Errorf("the Scout Party: %v", err)
 	}
-	refused("a campaign without Military Tactics", ge.LaunchExpedition("raid_the_rival_clan"), "Campaigns need Military Tactics first. Research it to send one.")
+	refused("a campaign without Military Tactics", ge.LaunchExpedition(keyOffer(ge, "raid_the_rival_clan")), "Campaigns need Military Tactics first. Research it to send one.")
 	learn(ge, "military_tactics")
-	if err := ge.LaunchExpedition("raid_the_rival_clan"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "raid_the_rival_clan")); err != nil {
 		t.Errorf("a campaign with Military Tactics: %v", err)
 	}
 	// Past the era's scout, an expedition waits for Exploration.
 	clearArmy(ge)
-	refused("the Long Hunt without Exploration", ge.LaunchExpedition("long_hunt"), "Expeditions past the Scout Party need Exploration first. Research it to send one.")
+	refused("the Long Hunt without Exploration", ge.LaunchExpedition(keyOffer(ge, "long_hunt")), "Expeditions past the Scout Party need Exploration first. Research it to send one.")
 
 	// Trade routes: The Wheel first, then the route's own needs.
 	route(ge, "local_barter")
@@ -420,13 +422,13 @@ func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 	// The Naval Expedition, from the Renaissance Age: Exploration, and no
 	// tech of its own. The Steel Era scout waits for nothing.
 	ge = at("renaissance_age")
-	refused("the Naval Expedition without Exploration", ge.LaunchExpedition("naval_expedition"), "Expeditions past the Scout Party need Exploration first. Research it to send one.")
-	if err := ge.LaunchExpedition("coastal_survey"); err != nil {
+	refused("the Naval Expedition without Exploration", ge.LaunchExpedition(keyOffer(ge, "naval_expedition")), "Expeditions past the Scout Party need Exploration first. Research it to send one.")
+	if err := ge.LaunchExpedition(keyOffer(ge, "coastal_survey")); err != nil {
 		t.Errorf("the Coastal Survey without Exploration: %v", err)
 	}
 	clearArmy(ge)
 	learn(ge, "exploration")
-	if err := ge.LaunchExpedition("naval_expedition"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "naval_expedition")); err != nil {
 		t.Errorf("the Naval Expedition with Exploration: %v", err)
 	}
 

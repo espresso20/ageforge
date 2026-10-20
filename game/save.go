@@ -380,10 +380,16 @@ type ActiveSlotSave struct {
 //
 // Active is the missions under way, a list keyed by slot (short, long and
 // grand). Board is the mission board with the counters its rare rule runs on.
-// Older saves' active-mission fields are ignored (beta saves are disposable).
+// ActiveScout, ActiveMilitary and ActiveExpedition are the missions of the
+// older game: they are never read or written, and only held as the bytes
+// they came in, so an older save re-marshals to the bytes it was signed on
+// and is not taken for a tampered one. Beta saves are disposable: the
+// missions in them are gone.
 type MilitarySave struct {
-	Active         []ActiveSlotSave   `json:"active,omitempty"`
-	Board          *MissionBoard      `json:"board,omitempty"`
+	ActiveScout      json.RawMessage `json:"active_scout,omitempty"`
+	ActiveMilitary   json.RawMessage `json:"active_military,omitempty"`
+	ActiveExpedition json.RawMessage `json:"active_expedition,omitempty"`
+
 	CompletedCount int                `json:"completed_count"`
 	TotalLoot      map[string]float64 `json:"total_loot"`
 	// AutoExpeditionTicksLeft is the Geographic Society's dispatch countdown (see
@@ -391,6 +397,9 @@ type MilitarySave struct {
 	// hand out a free instant dispatch. Absent in pre-Phase-3 saves, where the zero
 	// value simply means "due now" — a single early party, which is harmless.
 	AutoExpeditionTicksLeft int `json:"auto_expedition_ticks_left,omitempty"`
+
+	Active []ActiveSlotSave `json:"active,omitempty"`
+	Board  *MissionBoard    `json:"board,omitempty"`
 }
 
 // EventSave holds event state for save

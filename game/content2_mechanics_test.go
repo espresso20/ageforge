@@ -117,20 +117,24 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 	launch := func(ge *GameEngine, key string) (ticks int, listedMin int) {
 		t.Helper()
 		ge.mu.Lock()
-		defer ge.mu.Unlock()
 		ge.age = "victorian_age"
 		ge.pushMechanics()
-		def := ge.Military.ExpeditionDefByKey(key)
-		if def == nil {
-			t.Fatalf("no expedition %s", key)
-		}
-		if err := ge.Military.LaunchExpedition(rand.New(rand.NewSource(3)), key, ge.age, ageOrders()); err != nil {
+		ge.mu.Unlock()
+		n := keyOffer(ge, key)
+		ge.mu.Lock()
+		defer ge.mu.Unlock()
+		offer, err := ge.Military.BoardOffer(n)
+		if err != nil {
 			t.Fatal(err)
 		}
-		ticks = ge.Military.activeByCat[def.Category].TicksLeft
-		delete(ge.Military.activeByCat, def.Category)
-		for _, info := range ge.Military.Snapshot(ge.age, ageOrders(), 0, 0, 0, nil, 0, 0).Expeditions {
-			if info.Key == key {
+		if err := ge.Military.LaunchOffer(offer, ge.tick, 0, nil, nil); err != nil {
+			t.Fatal(err)
+		}
+		ticks = ge.Military.active[offer.Tier].TicksLeft
+		ge.Military.active[offer.Tier] = nil
+		_, infos := ge.boardViewLocked(0)
+		for _, info := range infos {
+			if info.Number == n {
 				listedMin = info.DurationMin
 			}
 		}
@@ -188,14 +192,18 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 		}
 		ge.mu.Unlock()
 		setSoldiers(ge, 100)
-		stockFor(ge, key)
-		if err := ge.LaunchExpedition(key); err != nil {
+		n := keyOffer(ge, key)
+		stockFor(ge, n)
+		if err := ge.LaunchExpedition(n); err != nil {
 			t.Fatalf("send %s: %v", key, err)
 		}
 		ge.mu.Lock()
 		defer ge.mu.Unlock()
-		def := ge.Military.ExpeditionDefByKey(key)
-		active := ge.Military.activeByCat[def.Category]
+		category := ExpeditionScouting
+		if oldKinds[key] == config.MissionCampaign {
+			category = ExpeditionMilitary
+		}
+		active := ge.Military.ActiveByCategory(category)
 		active.TicksLeft = 1
 		active.SuccessChance = 0.95 // the cap; the roll below is a 0.9
 		res := ge.Military.Tick(rand.New(alwaysHigh{}), 0, 0)

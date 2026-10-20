@@ -2,6 +2,7 @@ package game
 
 import (
 	"math/rand"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -39,10 +40,10 @@ func TestFlavorCallSitesCoverEveryAge(t *testing.T) {
 	for _, age := range config.AgeOrder() {
 		ge := flavorTestEngine(int64(len(age)), age)
 		ge.mu.Lock()
-		for _, def := range ge.Military.expeditions {
+		for _, def := range flavorDefs(ge) {
 			for _, success := range []bool{true, false} {
 				res := ExpeditionResult{
-					Key: def.Key, Name: def.Name, Category: def.Category, Success: success,
+					Name: def.Name, Category: def.Category, Success: success,
 					Rewards: def.Rewards,
 				}
 				line := ""
@@ -98,9 +99,9 @@ func callSiteRun(seed int64) []string {
 	var out []string
 	defs := config.BaseFactions()
 	for i := 0; i < 120; i++ {
-		exp := ge.Military.expeditions[i%len(ge.Military.expeditions)]
+		exp := flavorDefs(ge)[i%len(flavorDefs(ge))]
 		out = append(out, ge.expeditionFlavorLine(ExpeditionResult{
-			Key: exp.Key, Name: exp.Name, Category: exp.Category, Success: i%3 != 0, Rewards: exp.Rewards,
+			Name: exp.Name, Category: exp.Category, Success: i%3 != 0, Rewards: exp.Rewards,
 		}))
 		def := defs[i%len(defs)]
 		out = append(out, ge.factionEncounterFlavor(flavor.EncounterStandoff, def))
@@ -135,11 +136,11 @@ func TestExpeditionFlavorOdds(t *testing.T) {
 	ge := flavorTestEngine(5, "classical_age")
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	exp := ge.Military.expeditions[0]
+	exp := flavorDefs(ge)[0]
 	const n = 6000
 	got := 0
 	for i := 0; i < n; i++ {
-		if ge.expeditionFlavorLine(ExpeditionResult{Key: exp.Key, Name: exp.Name, Category: exp.Category, Success: true}) != "" {
+		if ge.expeditionFlavorLine(ExpeditionResult{Name: exp.Name, Category: exp.Category, Success: true}) != "" {
 			got++
 		}
 	}
@@ -240,8 +241,8 @@ func TestFlavorIsRaceFreeUnderTheEngineLock(t *testing.T) {
 			fs.LastProvocationTick = ge.tick // keep every war alive
 		}
 		ge.rollExpeditionEncounter(ExpeditionScouting, rng.Intn(2) == 0)
-		exp := ge.Military.expeditions[i%len(ge.Military.expeditions)]
-		_ = ge.expeditionFlavorLine(ExpeditionResult{Key: exp.Key, Name: exp.Name, Category: exp.Category, Success: i%2 == 0, Rewards: exp.Rewards})
+		exp := flavorDefs(ge)[i%len(flavorDefs(ge))]
+		_ = ge.expeditionFlavorLine(ExpeditionResult{Name: exp.Name, Category: exp.Category, Success: i%2 == 0, Rewards: exp.Rewards})
 		_ = ge.factionEncounterFlavor(flavor.EncounterAtCapacity, defs[i%len(defs)])
 		ge.mu.Unlock()
 	}
@@ -259,4 +260,22 @@ func TestFlavorIsRaceFreeUnderTheEngineLock(t *testing.T) {
 	if raids == 0 {
 		t.Fatal("400 ticks at war with every civ produced no raid entries; the raid path was not exercised")
 	}
+}
+
+// flavorDef is an offer as the flavour tests send it through an adapter.
+type flavorDef struct {
+	Key, Name, Category string
+	Rewards             map[string]float64
+}
+
+// flavorDefs is the offers on the engine's board, one flavorDef each. The
+// caller holds the engine lock.
+func flavorDefs(ge *GameEngine) []flavorDef {
+	ge.ensureMissionBoardLocked()
+	var out []flavorDef
+	for i, slot := range ge.Military.board.Slots {
+		o := slot.Offer
+		out = append(out, flavorDef{Key: strconv.Itoa(i + 1), Name: o.Title, Category: o.Category()})
+	}
+	return out
 }

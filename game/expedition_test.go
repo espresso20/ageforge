@@ -43,12 +43,12 @@ func TestLaunchExpedition_SpendsSoldiersAndCost(t *testing.T) {
 	// siege_campaign: iron_era, ten minutes of soldier income.
 	setSoldiers(ge, 10)
 	setIncome(ge, "soldiers", 0.02)
-	need := int(ge.MissionCost("siege_campaign")["soldiers"])
+	need := int(ge.MissionCost(keyOffer(ge, "siege_campaign"))["soldiers"])
 	if want := int(math.Ceil(10 * ticksPerMinute * 0.02)); need != want || need >= 10 {
 		t.Fatalf("campaign cost = %d soldiers, want %d (under the 10 held)", need, want)
 	}
 
-	if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 		t.Fatalf("LaunchExpedition(siege_campaign) returned error: %v", err)
 	}
 
@@ -71,7 +71,7 @@ func TestLaunchExpedition_DeductsCostResources(t *testing.T) {
 	setIncome(ge, "wood", 0.5)
 	want := math.Ceil(2.5 * ticksPerMinute * 0.5)
 
-	if err := ge.LaunchExpedition("scouting_party"); err != nil {
+	if err := ge.LaunchExpedition(keyOffer(ge, "scouting_party")); err != nil {
 		t.Fatalf("LaunchExpedition(scouting_party) returned error: %v", err)
 	}
 
@@ -94,7 +94,7 @@ func TestLaunchExpedition_InsufficientSoldiers_NoDeduction(t *testing.T) {
 	setSoldiers(ge, 4)
 	setIncome(ge, "soldiers", 10.0/(10*ticksPerMinute))
 
-	err := ge.LaunchExpedition("siege_campaign")
+	err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign"))
 	if err == nil {
 		t.Fatalf("expected error launching with insufficient soldiers, got nil")
 	}
@@ -118,7 +118,7 @@ func TestLaunchExpedition_InsufficientCost_NoDeduction(t *testing.T) {
 	setIncome(ge, "stone", 0.5)
 	setIncome(ge, "wood", 0.5)
 
-	err := ge.LaunchExpedition("scouting_party")
+	err := ge.LaunchExpedition(keyOffer(ge, "scouting_party"))
 	if err == nil {
 		t.Fatalf("expected error launching scouting_party with insufficient wood, got nil")
 	}
@@ -133,10 +133,11 @@ func TestLaunchExpedition_InsufficientCost_NoDeduction(t *testing.T) {
 	}
 }
 
-// TestScout_LaunchableInItsEra_RejectedOutsideIt verifies the Stone Era scout
-// is launchable with no soldiers in every age of the Stone Era, and rejected
-// in any other era with no deduction.
-func TestScout_LaunchableInItsEra_RejectedOutsideIt(t *testing.T) {
+// TestScout_LaunchableInItsEra_NotCarriedToTheNextAge verifies a short
+// mission is launchable with no soldiers in every age of the Stone Era, and
+// that an offer made in one age is gone when the next begins: a launch after
+// the advance sends an offer of the new age, built from its words.
+func TestScout_LaunchableInItsEra_NotCarriedToTheNextAge(t *testing.T) {
 	for _, age := range config.Epochs()[0].Ages {
 		ge := NewGameEngine()
 		setAge(ge, age)
@@ -146,28 +147,27 @@ func TestScout_LaunchableInItsEra_RejectedOutsideIt(t *testing.T) {
 		setIncome(ge, "wood", 0.5)
 		// Note: no soldiers resource at all.
 
-		if err := ge.LaunchExpedition("scouting_party"); err != nil {
-			t.Fatalf("scouting_party should be launchable in %s, got: %v", age, err)
+		if err := ge.LaunchExpedition(keyOffer(ge, "scouting_party")); err != nil {
+			t.Fatalf("a short mission should be launchable in %s, got: %v", age, err)
 		}
 	}
 
-	// Rejected in the Iron Era.
 	ge2 := NewGameEngine()
-	setAge(ge2, "iron_age")
+	setAge(ge2, "stone_age")
 	setResource(ge2, "stone", 1000)
 	setResource(ge2, "wood", 1000)
+	setResource(ge2, "iron", 1000)
 	setIncome(ge2, "stone", 0.5)
 	setIncome(ge2, "wood", 0.5)
-
-	err := ge2.LaunchExpedition("scouting_party")
-	if err == nil {
-		t.Fatalf("expected scouting_party to be rejected in the Iron Era, got nil")
+	setIncome(ge2, "iron", 0.5)
+	n := keyOffer(ge2, "scouting_party")
+	setAge(ge2, "iron_age")
+	if err := ge2.LaunchExpedition(n); err != nil {
+		t.Fatalf("offer %d should be sent from the new age's board: %v", n, err)
 	}
-	if stone := ge2.Resources.Get("stone"); stone != 1000 {
-		t.Errorf("stone after rejected out-of-era launch = %v, want 1000 (unchanged)", stone)
-	}
-	if ge2.Military.HasActive() {
-		t.Errorf("expedition should not be active after a rejected launch")
+	words, _ := config.MissionWordsFor("iron_age")
+	if got := ge2.Military.ActiveByTier(TierShort); got == nil || got.Age != "iron_age" || !strings.HasPrefix(got.Title, words.Tiers[config.WordsShort]+": ") {
+		t.Errorf("the old age's offer was sent in the Iron Age: %+v", got)
 	}
 }
 
@@ -197,10 +197,10 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 		popBefore := ge.Workers.TotalPop()
 		ge.mu.Unlock()
 
-		if err := ge.LaunchExpedition("siege_campaign"); err != nil {
+		if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 			t.Fatalf("seed %d: LaunchExpedition error: %v", seed, err)
 		}
-		// siege_campaign's length is rolled at launch (60 to 120 minutes), so
+		// a grand offer's length is rolled when it is made (60 to 120 minutes), so
 		// budget for the longest; the loop exits once it resolves.
 		for i := 0; i < int(130*ticksPerMinute) && ge.Military.HasActive(); i++ {
 			ge.mu.Lock()
@@ -218,9 +218,9 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 		}
 		clean++
 		switch {
-		case logContains(ge, "Siege Campaign succeeded. Loot:"):
+		case logContains(ge, "Test grand military succeeded. Loot:"):
 			won++
-		case logContains(ge, "Siege Campaign failed. You kept 30% of the loot:"):
+		case logContains(ge, "Test grand military failed. You kept 30% of the loot:"):
 			lost++
 		}
 		if popAfter := ge.Workers.TotalPop(); popAfter != popBefore {

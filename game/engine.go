@@ -2404,8 +2404,6 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.prestigeCueSeenAge = ""
 	ge.ageReady = false
 	ge.Workers.SetAge(newAge)
-	// A new age gets a whole new mission board.
-	ge.ensureMissionBoardLocked()
 
 	// Phase 7: Building lineage transformation pass.
 	// Collect transforms first (safe iteration), then apply.
@@ -2570,6 +2568,10 @@ func (ge *GameEngine) advanceAge(newAge string) {
 
 	// Age advancement celebration morale boost
 	ge.applyMorale(0.08)
+
+	// A new age gets a whole new mission board. Last, so it draws from the
+	// seeded RNG after everything else the advance rolls.
+	ge.ensureMissionBoardLocked()
 }
 
 // applyAgeUnlocks unlocks all content for an age
@@ -4618,8 +4620,7 @@ func (ge *GameEngine) offerSuccessLocked(offer MissionOffer) float64 {
 		if index, ok := ge.progress.ageOrder()[ge.age]; ok {
 			scales := config.MilitaryScales(ge.rules.Techs(), ge.rules.AgeKeys())
 			if index >= 0 && index < len(scales) && scales[index].Then > 0 {
-				army := 0.10 * (ge.missionPower()/scales[index].Then - 1)
-				success += math.Max(-0.15, math.Min(0.15, army))
+				success += armyTerm(ge.missionPower(), scales[index].Then)
 			}
 		}
 	}

@@ -302,3 +302,13 @@ func (mm *MilitaryManager) BoardOffer(n int) (MissionOffer, error) {
 	}
 	return *offer, nil
 }
+
+// armyTerm is what the army adds to a military grand mission's odds: 0.10 for
+// each unit of mission power over the age's typical power, within 15 points
+// either way. power is the army on the age's yardstick (missionPower).
+func armyTerm(power, typical float64) float64 {
+	if typical <= 0 {
+		return 0
+	}
+	return math.Max(-0.15, math.Min(0.15, 0.10*(power/typical-1)))
+}

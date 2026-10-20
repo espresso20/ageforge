@@ -75,3 +75,13 @@ const (
 	MissionSuccessMin = .10
 	MissionSuccessMax = .95
 )
+
+// MissionBoardLongestMinutes is the longest an ordinary offer can be out: the
+// grand tier's top length. A Legendary offer is longer still.
+func MissionBoardLongestMinutes() float64 {
+	longest := 0.0
+	for _, t := range missionKinds {
+		longest = max(longest, t.MaxMinutes)
+	}
+	return longest
+}
