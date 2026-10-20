@@ -4552,6 +4552,10 @@ func (ge *GameEngine) missionHaulLocked(def *ExpeditionDef, haulMinutes float64)
 	}
 	var rankedIncomes []ranked
 	for res, income := range incomes {
+		// Income in price units: how many first copies of the resource's price
+		// (its median first-copy price in this age) the town makes each tick, so
+		// a cheap material and a dear one compare. Only the age's construction
+		// materials have a price level; the others are not hauled.
 		level := levels[res]
 		if level <= 0 {
 			continue

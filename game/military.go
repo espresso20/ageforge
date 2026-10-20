@@ -201,7 +201,7 @@ func (mm *MilitaryManager) LaunchMission(rng *rand.Rand, key, currentAge string,
 	}
 
 	if def.Era != mm.rules.EraOf(currentAge) {
-		return fmt.Errorf("%s is available in the %s", def.Name, mm.rules.Name(rules.KindAge, def.MinAge))
+		return fmt.Errorf("%s is a mission of the %s, not of this age", def.Name, mm.rules.Name(rules.KindAge, def.MinAge))
 	}
 	length := def.MinMinutes + float64(rng.Float64()*(def.MaxMinutes-def.MinMinutes))
 	success := def.BaseSuccess + (float64(rng.Float64()*0.2) - 0.1)
