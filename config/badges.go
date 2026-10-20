@@ -761,6 +761,8 @@ type BadgeRung struct {
 //	{n}     the rung's number, from 1   {count} the threshold, written out
 //	{era}   the order of the subject's era, from 0
 //	{Name}  the name with its first letter in upper case
+//	{word}  the subject's own word (a mission badge's kind: scout, long, grand)
+//	{Word}  the word with its first letter in upper case
 //	{techs} "all 6", "both" or "the one", for the subject age's techs
 type BadgeFamilyDef struct {
 	// Family is the badges' Family.

@@ -21,63 +21,51 @@ type MissionDef struct {
 	CostMinutes float64
 }
 
+// missionTable is each mission's identity and words: the key, the name and
+// the description, with the era and the kind. The tuning comes from the kind
+// (missionKinds). Names and descriptions are placeholders for the owner's
+// copy pass.
+var missionTable = []MissionDef{
+	{Key: "scouting_party", Name: "Scouting Party", Description: "The party scouts the nearby wilderness.", Era: "stone_era", Kind: MissionScout},
+	{Key: "long_hunt", Name: "Long Hunt", Description: "The party hunts across the open plains.", Era: "stone_era", Kind: MissionExpedition},
+	{Key: "raid_the_rival_clan", Name: "Raid the Rival Clan", Description: "The party raids a rival clan's settlement.", Era: "stone_era", Kind: MissionCampaign},
+	{Key: "road_survey", Name: "Road Survey", Description: "The party surveys the roads beyond the city.", Era: "iron_era", Kind: MissionScout},
+	{Key: "trade_caravan", Name: "Trade Caravan", Description: "The party escorts a caravan along a distant trade route.", Era: "iron_era", Kind: MissionExpedition},
+	{Key: "siege_campaign", Name: "Siege Campaign", Description: "The army lays siege to a rival stronghold.", Era: "iron_era", Kind: MissionCampaign},
+	{Key: "coastal_survey", Name: "Coastal Survey", Description: "The party surveys a distant coastline.", Era: "steel_era", Kind: MissionScout},
+	{Key: "naval_expedition", Name: "Naval Expedition", Description: "The party sails to explore distant shores.", Era: "steel_era", Kind: MissionExpedition},
+	{Key: "colonial_campaign", Name: "Colonial Campaign", Description: "The army campaigns across a faraway colony.", Era: "steel_era", Kind: MissionCampaign},
+	{Key: "aerial_survey", Name: "Aerial Survey", Description: "The party surveys the land from above.", Era: "electric_era", Kind: MissionScout},
+	{Key: "rail_expedition", Name: "Rail Expedition", Description: "The party follows the rail line into new territory.", Era: "electric_era", Kind: MissionExpedition},
+	{Key: "industrial_war", Name: "Industrial War", Description: "The army advances on an industrial rival.", Era: "electric_era", Kind: MissionCampaign},
+	{Key: "data_run", Name: "Data Run", Description: "The party traces data through a remote network.", Era: "digital_era", Kind: MissionScout},
+	{Key: "satellite_survey", Name: "Satellite Survey", Description: "The party maps distant regions by satellite.", Era: "digital_era", Kind: MissionExpedition},
+	{Key: "cyber_campaign", Name: "Cyber Campaign", Description: "The army launches a campaign across enemy networks.", Era: "digital_era", Kind: MissionCampaign},
+	{Key: "street_recon", Name: "Street Recon", Description: "The party scouts the neon streets.", Era: "neon_era", Kind: MissionScout},
+	{Key: "neon_heist", Name: "Neon Heist", Description: "The party breaks into a vault in the neon district.", Era: "neon_era", Kind: MissionExpedition},
+	{Key: "fusion_plant_assault", Name: "Fusion Plant Assault", Description: "The army assaults a rival fusion plant.", Era: "neon_era", Kind: MissionCampaign},
+	{Key: "orbital_survey", Name: "Orbital Survey", Description: "The party surveys a nearby planet from orbit.", Era: "cosmic_era", Kind: MissionScout},
+	{Key: "deep_space_expedition", Name: "Deep Space Expedition", Description: "The party explores a distant star system.", Era: "cosmic_era", Kind: MissionExpedition},
+	{Key: "galactic_conquest", Name: "Galactic Conquest", Description: "The army advances to conquer a galactic sector.", Era: "cosmic_era", Kind: MissionCampaign},
+}
+
+// missionKinds is what a kind of mission is: how long it is out, how likely
+// it is to come back with a success, how many minutes of the town's income
+// its haul is worth for each minute out, and what it costs in minutes of
+// income (of soldier income, for a campaign).
+var missionKinds = map[string]struct{ min, max, success, yield, cost float64 }{
+	MissionScout:      {5, 30, .85, 2, 5},
+	MissionExpedition: {30, 60, .75, 3, 15},
+	MissionCampaign:   {60, 120, .65, 4, 10},
+}
+
 // Missions returns the era mission catalog in epoch and kind order.
 func Missions() []MissionDef {
-	var out []MissionDef
-	for _, era := range Epochs() {
-		for _, item := range []struct {
-			name, description, kind        string
-			min, max, success, yield, cost float64
-		}{
-			{"", "", MissionScout, 5, 30, .85, 2, 5},
-			{"", "", MissionExpedition, 30, 60, .75, 3, 15},
-			{"", "", MissionCampaign, 60, 120, .65, 4, 10},
-		} {
-			name, description := missionCopy(era.Key, item.kind)
-			out = append(out, MissionDef{
-				Key: missionKey(name), Name: name, Description: description,
-				Era: era.Key, Kind: item.kind, MinMinutes: item.min,
-				MaxMinutes: item.max, BaseSuccess: item.success,
-				Yield: item.yield, CostMinutes: item.cost,
-			})
-		}
+	out := make([]MissionDef, 0, len(missionTable))
+	for _, m := range missionTable {
+		k := missionKinds[m.Kind]
+		m.MinMinutes, m.MaxMinutes, m.BaseSuccess, m.Yield, m.CostMinutes = k.min, k.max, k.success, k.yield, k.cost
+		out = append(out, m)
 	}
 	return out
-}
-
-func missionCopy(era, kind string) (string, string) {
-	copy := map[string][6]string{
-		"stone_era":    {"Scouting Party", "The party scouts the nearby wilderness.", "Long Hunt", "The party hunts across the open plains.", "Raid the Rival Clan", "The party raids a rival clan's settlement."},
-		"iron_era":     {"Road Survey", "The party surveys the roads beyond the city.", "Trade Caravan", "The party escorts a caravan along a distant trade route.", "Siege Campaign", "The army lays siege to a rival stronghold."},
-		"steel_era":    {"Coastal Survey", "The party surveys a distant coastline.", "Naval Expedition", "The party sails to explore distant shores.", "Colonial Campaign", "The army campaigns across a faraway colony."},
-		"electric_era": {"Aerial Survey", "The party surveys the land from above.", "Rail Expedition", "The party follows the rail line into new territory.", "Industrial War", "The army advances on an industrial rival."},
-		"digital_era":  {"Data Run", "The party traces data through a remote network.", "Satellite Survey", "The party maps distant regions by satellite.", "Cyber Campaign", "The army launches a campaign across enemy networks."},
-		"neon_era":     {"Street Recon", "The party scouts the neon streets.", "Neon Heist", "The party breaks into a vault in the neon district.", "Fusion Plant Assault", "The army assaults a rival fusion plant."},
-		"cosmic_era":   {"Orbital Survey", "The party surveys a nearby planet from orbit.", "Deep Space Expedition", "The party explores a distant star system.", "Galactic Conquest", "The army advances to conquer a galactic sector."},
-	}
-	values := copy[era]
-	index := map[string]int{MissionScout: 0, MissionExpedition: 1, MissionCampaign: 2}[kind] * 2
-	return values[index], values[index+1]
-}
-
-func missionKey(name string) string {
-	key := make([]byte, 0, len(name))
-	underscore := false
-	for i := 0; i < len(name); i++ {
-		c := name[i]
-		if c >= 'A' && c <= 'Z' {
-			c += 'a' - 'A'
-		}
-		if c >= 'a' && c <= 'z' || c >= '0' && c <= '9' {
-			key = append(key, c)
-			underscore = false
-		} else if len(key) > 0 && !underscore {
-			key = append(key, '_')
-			underscore = true
-		}
-	}
-	for len(key) > 0 && key[len(key)-1] == '_' {
-		key = key[:len(key)-1]
-	}
-	return string(key)
 }
