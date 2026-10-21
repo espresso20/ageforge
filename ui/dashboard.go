@@ -966,8 +966,8 @@ func (d *Dashboard) refreshStatus(game.GameState) {
 // the hint, then all of it, the wording of the catastrophe and harbinger
 // badges (and long counts are written short), what morale does to
 // production, the civilization's title, the account's name, the rest of the
-// badges' words, the epoch's name and the wide spacing. The age, the
-// epoch's mark, the badges, the population and morale always show.
+// badges' words and the wide spacing. The age, the badges, the population
+// and morale always show.
 func statusLine(state game.GameState, w int) string {
 	// note: the next age lives on the Next Age bar below, so the status bar
 	// no longer repeats it (it used to print the raw key).
@@ -1015,18 +1015,6 @@ func statusLine(state game.GameState, w int) string {
 		if state.Harbinger != nil {
 			badge(theme.RoleOnAccent, theme.RoleAccent, "⚑ Harbinger. Type harbinger to read it.", "⚑ Harbinger: type harbinger", "⚑ Harbinger")
 		}
-		// Epoch badge
-		epochStr := ""
-		if state.EpochKey != "" {
-			name := " " + state.EpochName
-			if state.EpochSurvived {
-				name += " · endured"
-			}
-			if level >= 8 {
-				name = ""
-			}
-			epochStr = fmt.Sprintf("  %s%s%s[-]", theme.NameTag(state.EpochColor), state.EpochIcon, name)
-		}
 		moraleDelta := ""
 		if mBand.DeltaLabel != "" && level < 4 {
 			moraleDelta = fmt.Sprintf(" (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)
@@ -1058,8 +1046,8 @@ func statusLine(state game.GameState, w int) string {
 		if level >= 3 {
 			pop = FormatNumber(float64(state.Workers.TotalPop)) + "/" + FormatNumber(float64(state.Workers.MaxPop))
 		}
-		line := fmt.Sprintf("%s[gold]%s[-]%s%s%s%s%s  |  Pop: %s%s%s",
-			acctStr, state.AgeName, prestigeStr, titleStr, epochStr, catStr, devStr, pop, moraleStr, hint)
+		line := fmt.Sprintf("%s[gold]%s[-]%s%s%s%s  |  Pop: %s%s%s",
+			acctStr, state.AgeName, prestigeStr, titleStr, catStr, devStr, pop, moraleStr, hint)
 		if level >= 9 {
 			line = strings.ReplaceAll(line, "  ", " ")
 		}
