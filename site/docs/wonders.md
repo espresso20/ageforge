@@ -199,7 +199,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 | Resource | Cost |
 |---|---|
-| Stone | 256M |
+| Stone | 320M |
 | Gold | 192M |
 | Steel | 36.8M |
 

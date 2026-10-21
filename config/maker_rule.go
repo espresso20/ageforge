@@ -654,7 +654,6 @@ type MakerShortage struct {
 // making (a Coal Works making wood, a Power Generator making coal).
 func MakerAcceptedShortages() []MakerShortage {
 	return []MakerShortage{
-		{Age: "colonial_age", Material: "wood", Targets: 2.16},
 		{Age: "electric_age", Material: "coal", Targets: 2.51},
 	}
 }

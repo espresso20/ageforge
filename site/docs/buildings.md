@@ -348,7 +348,7 @@ Times are at the base tick of 2 seconds; game speed bonuses shorten them in real
 
 Every material an age charges for, in a building its gate asks for or in its wonder, has a maker in that age: a building of that age that makes it. Every maker is set on one standard, so a maker repays the price of its first copy in the same number of ticks as the age's other makers (the Payback Rule above). The rule covers building materials. It leaves out nanobots and the flow resources, food, faith, culture and soldiers.
 
-Two shortages are left as they are. The Colonial Age has no maker of wood and the Electric Age has none of coal, and the older buildings you keep cover them. One exception is listed: the last age's wonder is paid from the Quantum Age's makers, because the Transcendent Age has none of its own.
+One shortage is left as it is. The Electric Age has no maker of coal, and the older buildings you keep cover it. A building is never priced in a material nothing in its age makes any more: the Colonial Age's Settlement Block, Harbor and Colonial Warehouse are priced in stone, not wood. One exception is listed: the last age's wonder is paid from the Quantum Age's makers, because the Transcendent Age has none of its own.
 
 There is no market that swaps one material for another, so a town that wants a material builds a maker of it. The output tables below give a building's second material after the word with.
 
@@ -461,8 +461,8 @@ Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one
 | Classical Vault | Classical | +210K |
 | Strongroom | Medieval | +820K |
 | Renaissance Vault | Renaissance | +4.1M |
-| Colonial Warehouse | Colonial | +27M |
-| Industrial Depot | Industrial | +88M |
+| Colonial Warehouse | Colonial | +29M |
+| Industrial Depot | Industrial | +83M |
 | Victorian Vault | Victorian | +1.4B |
 | Electric Warehouse | Electric | +16B |
 | Atomic Vault | Atomic | +79B |

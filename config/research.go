@@ -524,7 +524,7 @@ func rawTechnologies() []TechDef {
 
 		// === COLONIAL AGE ===
 		{
-			Name: "Baroque Arts", Key: "baroque_arts", Cost: 10900000, ResearchTicks: 2048, Emblem: "❦",
+			Name: "Baroque Arts", Key: "baroque_arts", Cost: 11200000, ResearchTicks: 2048, Emblem: "❦",
 			Age: "colonial_age", Lane: LaneFaith,
 			Prerequisites: []string{"patronage"},
 			Description:   "Music and ornament on a scale built to overwhelm.",
@@ -533,7 +533,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Scientific Method", Key: "scientific_method", Cost: 14200000, ResearchTicks: 2048, Emblem: "⊢",
+			Name: "Scientific Method", Key: "scientific_method", Cost: 14600000, ResearchTicks: 2048, Emblem: "⊢",
 			Age: "colonial_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"printing_press"},
 			Description:   "Guess, test, write it down, and let someone else try to break it.",
@@ -542,7 +542,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Cartography", Key: "cartography", Cost: 8420000, ResearchTicks: 2048, Emblem: "⊞",
+			Name: "Cartography", Key: "cartography", Cost: 8630000, ResearchTicks: 2048, Emblem: "⊞",
 			Age: "colonial_age", Lane: LaneTrade,
 			Prerequisites: []string{"navigation"},
 			Description:   "Detailed maps bring expeditions home sooner and richer.",
@@ -552,13 +552,13 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Mercantilism", Key: "mercantilism", Cost: 18500000, ResearchTicks: 2048, Code: "MERC", Emblem: "£",
+			Name: "Mercantilism", Key: "mercantilism", Cost: 19000000, ResearchTicks: 2048, Code: "MERC", Emblem: "£",
 			Age: "colonial_age", Lane: LaneTrade,
 			Prerequisites: []string{"banking", "navigation"},
 			Description:   "National trade policies maximize wealth.",
 		},
 		{
-			Name: "Embassies", Key: "embassies", Cost: 24000000, ResearchTicks: 2048, Emblem: "⚐",
+			Name: "Embassies", Key: "embassies", Cost: 24700000, ResearchTicks: 2048, Emblem: "⚐",
 			Age: "colonial_age", Lane: LaneTrade,
 			Prerequisites: []string{"envoys"},
 			Description:   "A resident envoy in every court, and a house to keep them in.",
@@ -567,7 +567,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "New World Crops", Key: "new_world_crops", Cost: 31300000, ResearchTicks: 2048, Code: "MAIZE", Emblem: "✿",
+			Name: "New World Crops", Key: "new_world_crops", Cost: 32000000, ResearchTicks: 2048, Code: "MAIZE", Emblem: "✿",
 			Age: "colonial_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"crop_rotation"},
 			Description:   "Maize, potatoes and beans cross the ocean and feed twice the mouths.",
@@ -577,7 +577,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Surveying", Key: "surveying", Cost: 40600000, ResearchTicks: 2048, Code: "SURVY", Emblem: "∠",
+			Name: "Surveying", Key: "surveying", Cost: 41700000, ResearchTicks: 2048, Code: "SURVY", Emblem: "∠",
 			Age: "colonial_age", Lane: LaneCraft,
 			Prerequisites: []string{"architecture"},
 			Description:   "Chain, level and theodolite: the ground is measured before it is built on.",
@@ -588,7 +588,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Coke Smelting", Key: "coke_smelting", Cost: 52800000, ResearchTicks: 2048, Emblem: "●",
+			Name: "Coke Smelting", Key: "coke_smelting", Cost: 54200000, ResearchTicks: 2048, Emblem: "●",
 			Age: "colonial_age", Lane: LaneMaterials,
 			Prerequisites: []string{"blast_furnace"},
 			Description:   "Coal baked into coke burns hot enough to smelt without a forest.",
@@ -598,7 +598,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Colonialism", Key: "colonialism", Cost: 68700000, ResearchTicks: 2048, Code: "COLNY", Emblem: "⚔",
+			Name: "Colonialism", Key: "colonialism", Cost: 70400000, ResearchTicks: 2048, Code: "COLNY", Emblem: "⚔",
 			Age: "colonial_age", Lane: LaneMilitary,
 			Prerequisites: []string{"cartography", "gunpowder"},
 			Description:   "Overseas territorial expansion.",
@@ -609,7 +609,7 @@ func rawTechnologies() []TechDef {
 
 		// === INDUSTRIAL AGE ===
 		{
-			Name: "Romanticism", Key: "romanticism", Cost: 6.06e06, ResearchTicks: 2340, Emblem: "♥",
+			Name: "Romanticism", Key: "romanticism", Cost: 6.25e06, ResearchTicks: 2340, Emblem: "♥",
 			Age: "industrial_age", Lane: LaneFaith,
 			Prerequisites: []string{"baroque_arts"},
 			Description:   "Feeling over reason, on the stage and on the page.",
@@ -618,7 +618,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Encyclopedia", Key: "encyclopedia", Cost: 7.88e06, ResearchTicks: 2340, Emblem: "Æ",
+			Name: "Encyclopedia", Key: "encyclopedia", Cost: 8.12e06, ResearchTicks: 2340, Emblem: "Æ",
 			Age: "industrial_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"scientific_method"},
 			Description:   "Everything known, set in order and put in print.",
@@ -627,7 +627,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Railroads", Key: "railroads", Cost: 1.02e07, ResearchTicks: 2340, Code: "RAIL", Emblem: "‡",
+			Name: "Railroads", Key: "railroads", Cost: 1.06e07, ResearchTicks: 2340, Code: "RAIL", Emblem: "‡",
 			Age: "industrial_age", Lane: LaneTrade,
 			Prerequisites: []string{"steam_power", "road_building"},
 			Description:   "Rail networks connect your civilization.",
@@ -636,14 +636,14 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Geographic Societies", Key: "geographic_societies", Cost: 1.33e07, ResearchTicks: 2340, Code: "GEOG", Emblem: "◎",
+			Name: "Geographic Societies", Key: "geographic_societies", Cost: 1.37e07, ResearchTicks: 2340, Code: "GEOG", Emblem: "◎",
 			Age: "industrial_age", Lane: LaneTrade,
 			Prerequisites: []string{"cartography"},
 			Description:   "Learned societies fund the expeditions and publish what they find.",
 		},
 		{
 			// The Steel Era's Trade capstone.
-			Name: "Concert of Nations", Key: "concert_of_nations", Cost: 4.95e07, ResearchTicks: 3744, Code: "CONCT", Emblem: "⚖",
+			Name: "Concert of Nations", Key: "concert_of_nations", Cost: 5.1e07, ResearchTicks: 3744, Code: "CONCT", Emblem: "⚖",
 			Age: "industrial_age", Lane: LaneTrade, Capstone: true,
 			Prerequisites: []string{"embassies", "geographic_societies"},
 			Description:   "The great powers settle their quarrels at a table and keep the peace by treaty.",
@@ -652,7 +652,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Seed Drill", Key: "seed_drill", Cost: 1.73e07, ResearchTicks: 2340, Code: "DRILL", Emblem: "∷",
+			Name: "Seed Drill", Key: "seed_drill", Cost: 1.78e07, ResearchTicks: 2340, Code: "DRILL", Emblem: "∷",
 			Age: "industrial_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"new_world_crops"},
 			Description:   "Seed sown in rows at an even depth, and none thrown to the birds.",
@@ -661,7 +661,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Industrialization", Key: "industrialization", Cost: 4.66e06, ResearchTicks: 2340, Emblem: "⚙",
+			Name: "Industrialization", Key: "industrialization", Cost: 4.81e06, ResearchTicks: 2340, Emblem: "⚙",
 			Age: "industrial_age", Lane: LaneCraft,
 			Prerequisites: []string{"steam_power"},
 			Description:   "Factory systems raise all production.",
@@ -670,7 +670,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Clockwork Automation", Key: "clockwork_automation", Cost: 2.25e07, ResearchTicks: 2340, Emblem: "✲",
+			Name: "Clockwork Automation", Key: "clockwork_automation", Cost: 2.32e07, ResearchTicks: 2340, Emblem: "✲",
 			Age: "industrial_age", Lane: LaneCraft,
 			Prerequisites: []string{"chronometry"},
 			Description:   "Mechanical automation raises game speed.",
@@ -680,7 +680,7 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The Steel Era's Craft capstone.
-			Name: "Interchangeable Parts", Key: "interchangeable_parts", Cost: 6.43e07, ResearchTicks: 3744, Code: "PARTS", Emblem: "❖",
+			Name: "Interchangeable Parts", Key: "interchangeable_parts", Cost: 6.62e07, ResearchTicks: 3744, Code: "PARTS", Emblem: "❖",
 			Age: "industrial_age", Lane: LaneCraft, Capstone: true,
 			Prerequisites: []string{"industrialization", "clockwork_automation"},
 			Description:   "Every part made to one gauge fits every machine of its kind.",
@@ -690,7 +690,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Steam Pumps", Key: "steam_pumps", Cost: 2.93e07, ResearchTicks: 2340, Code: "PUMPS", Emblem: "⇕",
+			Name: "Steam Pumps", Key: "steam_pumps", Cost: 3.02e07, ResearchTicks: 2340, Code: "PUMPS", Emblem: "⇕",
 			Age: "industrial_age", Lane: LaneMaterials,
 			Prerequisites: []string{"coke_smelting"},
 			Description:   "Engines drain the deep workings, and the mines go further down.",
@@ -700,7 +700,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Rifling", Key: "rifling", Cost: 3.8e07, ResearchTicks: 2340, Code: "RIFLE", Emblem: "✛",
+			Name: "Rifling", Key: "rifling", Cost: 3.92e07, ResearchTicks: 2340, Code: "RIFLE", Emblem: "✛",
 			Age: "industrial_age", Lane: LaneMilitary,
 			Prerequisites: []string{"gunpowder"},
 			Description:   "Precision firearms improve military effectiveness.",
@@ -709,7 +709,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Steam Power", Key: "steam_power", Cost: 3.59e06, ResearchTicks: 1872, Emblem: "≈",
+			Name: "Steam Power", Key: "steam_power", Cost: 3.7e06, ResearchTicks: 1872, Emblem: "≈",
 			Age: "industrial_age", Lane: LaneEnergy,
 			Prerequisites: []string{"steel_forging"},
 			Description:   "Steam engines drive the mills and the mines.",
@@ -721,7 +721,7 @@ func rawTechnologies() []TechDef {
 
 		// === VICTORIAN AGE ===
 		{
-			Name: "Museums", Key: "museums", Cost: 2.71e07, ResearchTicks: 2633, Code: "MUSEM", Emblem: "Π",
+			Name: "Museums", Key: "museums", Cost: 2.74e07, ResearchTicks: 2633, Code: "MUSEM", Emblem: "Π",
 			Age: "victorian_age", Lane: LaneFaith,
 			Prerequisites: []string{"romanticism"},
 			Description:   "The nation's treasures behind glass, open to anyone on a Sunday.",
@@ -740,7 +740,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Telecommunications", Key: "telecommunications", Cost: 4.58e07, ResearchTicks: 2633, Code: "TELEG", Emblem: "∿",
+			Name: "Telecommunications", Key: "telecommunications", Cost: 4.63e07, ResearchTicks: 2633, Code: "TELEG", Emblem: "∿",
 			Age: "victorian_age", Lane: LaneTrade,
 			Prerequisites: []string{"electrification"},
 			Description:   "Telegraph and early telephone networks.",
@@ -787,7 +787,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Electrification", Key: "electrification", Cost: 1.6e07, ResearchTicks: 2106, Code: "ELEC", Emblem: "ϟ",
+			Name: "Electrification", Key: "electrification", Cost: 1.62e07, ResearchTicks: 2106, Code: "ELEC", Emblem: "ϟ",
 			Age: "victorian_age", Lane: LaneEnergy,
 			Prerequisites: []string{"industrialization"},
 			Description:   "Electric power reaches homes and factories.",

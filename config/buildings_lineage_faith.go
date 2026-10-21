@@ -117,7 +117,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 7 — colonial_age  rate=0.256
 	b = append(b, BuildingDef{
 		Name: "Mission", Key: "mission", Category: "research",
-		BaseCost:    map[string]float64{"gold": 14900000, "stone": 9920000},
+		BaseCost:    map[string]float64{"gold": 14900000, "stone": 1.24e+07},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.256}, {Type: "morale", Value: 0.0013}},
 		BuildTicks:  3600,

@@ -271,7 +271,7 @@ Both answers are priced by the age the harbinger arrives in, and keep that price
 |  | Classical Age | 720K gold, 720K iron, 600K stone | 37 min | 3.3K faith | 1.8 h to 5.5 h |
 |  | Medieval Age | 3.1M gold, 3.1M iron, 3.1M stone | 26 min | 6.6K faith | 2.3 h to 7.0 h |
 | Steel Era | Renaissance Age | 14M gold, 7.2M steel | 1.0 h | 15K faith, 150K culture | 3.1 h to 9.4 h |
-|  | Colonial Age | 95M gold, 95M steel | 1.0 h | 41K faith, 360K culture | 3.6 h to 10.9 h |
+|  | Colonial Age | 110M gold, 110M steel | 1.2 h | 41K faith, 360K culture | 3.6 h to 10.9 h |
 |  | Industrial Age | 350M gold, 350M steel | 7 min | 150K faith, 1.6M culture | 4.2 h to 12.5 h |
 | Electric Era | Victorian Age | 2.9B steel, 2.2B oil, 2.7M electricity | 1.6 h | 310K faith, 3.8M culture | 4.7 h to 14.0 h |
 |  | Electric Age | 50B steel, 33B electricity, 7.3B oil | 1.7 h | 760K faith, 9.8M culture | 5.2 h to 15.6 h |

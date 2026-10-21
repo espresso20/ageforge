@@ -237,7 +237,7 @@ var fieldRules = map[string]fieldRule{
 // hiddenFields are struct fields no player reads as text, by "Type.Field" or
 // by the field's bare name when it means the same in every struct.
 var hiddenFields = map[string]string{
-	"Key": "a key", "key": "a key", "Category": "a key", "RequiredAge": "an age key", "RequiredTech": "a tech key",
+	"Key": "a key", "config.EndedPart.Building": "a building key", "key": "a key", "Category": "a key", "RequiredAge": "an age key", "RequiredTech": "a tech key",
 	"LineageKey": "a key", "WorkerDomain": "a key", "EpochKey": "an era key", "OutputResource": "a resource key",
 	"MinAge": "an age key", "Age": "an age key", "AgeKey": "an age key", "TriggerAge": "an age key", "InAge": "an age key",
 	"Type": "a key", "Target": "a key", "Family": "a key", "Subject": "a key", "Counter": "a key", "Event": "a key",

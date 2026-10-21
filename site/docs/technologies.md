@@ -373,53 +373,53 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 
 ---
 
-### Colonial Age (~1h 31m to 12h 29m/tech)
+### Colonial Age (~1h 34m to 12h 47m/tech)
 
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `baroque_arts` | Baroque Arts | optional | 1h 58m | `patronage` | Festivals last 25% longer |
-| `scientific_method` | Scientific Method | optional | 2h 34m | `printing_press` | Research takes 4% less time |
-| `cartography` | Cartography | **keystone** (Grand Lighthouse) | 1h 31m | `navigation` | +10% expedition rewards, expeditions take 10% less time |
-| `mercantilism` | Mercantilism | optional | 3h 21m | `banking`, `navigation` | Opens the black market, opens the Harbor |
-| `embassies` | Embassies | optional | 4h 21m | `envoys` | Opens the Embassy, gifts raise opinion 50% more |
-| `new_world_crops` | New World Crops | optional | 5h 41m | `crop_rotation` | +6% food production, +4% housing |
-| `surveying` | Surveying | optional | 7h 22m | `architecture` | +6% iron ore production, construction takes 5% less time, buildings cost 2% less |
-| `coke_smelting` | Coke Smelting | optional | 9h 35m | `blast_furnace` | Opens the Colonial Steelworks, +6% steel production, +6% coal production |
-| `colonialism` | Colonialism | optional | 12h 29m | `cartography`, `gunpowder` | +12% military power |
+| `baroque_arts` | Baroque Arts | optional | 2h 2m | `patronage` | Festivals last 25% longer |
+| `scientific_method` | Scientific Method | optional | 2h 39m | `printing_press` | Research takes 4% less time |
+| `cartography` | Cartography | **keystone** (Grand Lighthouse) | 1h 34m | `navigation` | +10% expedition rewards, expeditions take 10% less time |
+| `mercantilism` | Mercantilism | optional | 3h 27m | `banking`, `navigation` | Opens the black market, opens the Harbor |
+| `embassies` | Embassies | optional | 4h 29m | `envoys` | Opens the Embassy, gifts raise opinion 50% more |
+| `new_world_crops` | New World Crops | optional | 5h 48m | `crop_rotation` | +6% food production, +4% housing |
+| `surveying` | Surveying | optional | 7h 34m | `architecture` | +6% iron ore production, construction takes 5% less time, buildings cost 2% less |
+| `coke_smelting` | Coke Smelting | optional | 9h 51m | `blast_furnace` | Opens the Colonial Steelworks, +6% steel production, +6% coal production |
+| `colonialism` | Colonialism | optional | 12h 47m | `cartography`, `gunpowder` | +12% military power |
 
 ---
 
-### Industrial Age (~38m to 11h 26m/tech)
+### Industrial Age (~39m to 11h 47m/tech)
 
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `romanticism` | Romanticism | optional | 1h 4m | `baroque_arts` | +6% culture production |
-| `encyclopedia` | Encyclopedia | optional | 1h 24m | `scientific_method` | +6% scholar output |
-| `railroads` | Railroads | optional | 1h 48m | `steam_power`, `road_building` | Opens the Rail Freight route, trade routes take 15% less time |
-| `geographic_societies` | Geographic Societies | optional | 2h 22m | `cartography` | Opens the Geographic Society |
-| `concert_of_nations` | Concert of Nations | capstone | 8h 48m | `embassies`, `geographic_societies` | Opens the Grand Embassy, alliances give 25% more |
-| `seed_drill` | Seed Drill | optional | 3h 4m | `new_world_crops` | +6% food production |
-| `industrialization` | Industrialization | **keystone** (Crystal Palace) | 49m | `steam_power` | +5% all production |
-| `clockwork_automation` | Clockwork Automation | optional | 4h | `chronometry` | +10% game speed |
-| `interchangeable_parts` | Interchangeable Parts | capstone | 11h 26m | `industrialization`, `clockwork_automation` | Buildings cost 4% less, upgrades cost 15% less |
-| `steam_pumps` | Steam Pumps | optional | 5h 12m | `coke_smelting` | +6% iron ore production, +6% coal production |
-| `rifling` | Rifling | optional | 6h 45m | `gunpowder` | +12% military power |
-| `steam_power` | Steam Power | spine | 38m | `steel_forging` | Opens the Coal Plant, +6% steel production, +6% coal production |
+| `romanticism` | Romanticism | optional | 1h 6m | `baroque_arts` | +6% culture production |
+| `encyclopedia` | Encyclopedia | optional | 1h 26m | `scientific_method` | +6% scholar output |
+| `railroads` | Railroads | optional | 1h 53m | `steam_power`, `road_building` | Opens the Rail Freight route, trade routes take 15% less time |
+| `geographic_societies` | Geographic Societies | optional | 2h 26m | `cartography` | Opens the Geographic Society |
+| `concert_of_nations` | Concert of Nations | capstone | 9h 4m | `embassies`, `geographic_societies` | Opens the Grand Embassy, alliances give 25% more |
+| `seed_drill` | Seed Drill | optional | 3h 10m | `new_world_crops` | +6% food production |
+| `industrialization` | Industrialization | **keystone** (Crystal Palace) | 51m | `steam_power` | +5% all production |
+| `clockwork_automation` | Clockwork Automation | optional | 4h 7m | `chronometry` | +10% game speed |
+| `interchangeable_parts` | Interchangeable Parts | capstone | 11h 47m | `industrialization`, `clockwork_automation` | Buildings cost 4% less, upgrades cost 15% less |
+| `steam_pumps` | Steam Pumps | optional | 5h 22m | `coke_smelting` | +6% iron ore production, +6% coal production |
+| `rifling` | Rifling | optional | 6h 58m | `gunpowder` | +12% military power |
+| `steam_power` | Steam Power | spine | 39m | `steel_forging` | Opens the Coal Plant, +6% steel production, +6% coal production |
 
 ---
 
-### Victorian Age (~2h 41m to 17h/tech)
+### Victorian Age (~2h 43m to 17h/tech)
 
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `museums` | Museums | optional | 4h 33m | `romanticism` | +5% culture production |
+| `museums` | Museums | optional | 4h 36m | `romanticism` | +5% culture production |
 | `public_education` | Public Education | optional | 5h 56m | `encyclopedia` | +5% scholar output, research takes 3% less time |
-| `telecommunications` | Telecommunications | optional | 7h 42m | `electrification` | Deals refresh 30% sooner, gifts cost 25% less |
+| `telecommunications` | Telecommunications | optional | 7h 47m | `electrification` | Deals refresh 30% sooner, gifts cost 25% less |
 | `sanitation` | Sanitation | optional | 10h 2m | `seed_drill` | +6% housing |
 | `mass_production` | Mass Production | **keystone** (Eiffel Tower) | 3h 31m | `industrialization` | Construction takes 8% less time |
 | `geology` | Geology | optional | 13h 2m | `steam_pumps` | +5% iron ore production, +5% coal production |
 | `general_staff` | General Staff | optional | 17h | `rifling` | Campaigns take 15% less time |
-| `electrification` | Electrification | spine | 2h 41m | `industrialization` | Opens the Steam Works, +5% electricity production |
+| `electrification` | Electrification | spine | 2h 43m | `industrialization` | Opens the Steam Works, +5% electricity production |
 
 ---
 

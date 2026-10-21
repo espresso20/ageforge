@@ -101,7 +101,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 7 — colonial_age
 	b = append(b, BuildingDef{
 		Name: "Settlement Block", Key: "settlement_block", Category: "housing",
-		BaseCost:    map[string]float64{"wood": 1800000, "stone": 1400000},
+		BaseCost:    map[string]float64{"stone": 5.55e+06},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 960}},
 		BuildTicks:  3600,

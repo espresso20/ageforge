@@ -504,7 +504,7 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // a third of the warning outgrows more ceilings. The Industrial Age's Brace
 // is 350M of each of gold and steel, 0.03 of the warning (seven minutes of
 // income): 0.06x, under the bar (0.05 of the warning and 0.10x at five
-// copies). The Colonial Age's is 95M of each, 0.29 of the warning, 0.60x: its
+// copies). The Colonial Age's is 110M of each, 0.33 of the warning, 0.69x: its
 // steel was 69M, a third of the warning, until the town grew. The Modern
 // Age's was 960B of electricity and gold, 0.27 of the warning, 0.56x; it left
 // the list when the Mainframe Hall gave the age a maker of data, which Brace
@@ -528,7 +528,7 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 var doomChoiceOnTheCeiling = map[string]float64{
 	"iron_age":       0.61,
 	"medieval_age":   0.61,
-	"colonial_age":   0.60,
+	"colonial_age":   0.69,
 	"industrial_age": 0.06,
 }
 

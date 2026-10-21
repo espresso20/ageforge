@@ -130,9 +130,9 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BaseCost:  map[string]float64{"gold": 9000000, "steel": 5400000},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "iron_ore", Value: 139},
-			{Type: "production", Target: "iron", Value: 139},
-			{Type: "production", Target: "stone", Value: 1660},
+			{Type: "production", Target: "iron_ore", Value: 112},
+			{Type: "production", Target: "iron", Value: 112},
+			{Type: "production", Target: "stone", Value: 2090},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
