@@ -706,7 +706,7 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 		Morale: 1.1, MoraleMultiplier: 1.2, Workers: game.WorkerState{TotalPop: 216, MaxPop: 875},
 		Milestones: game.MilestoneState{CurrentTitle: "Aspiring"}, Harbinger: &game.HarbingerView{}}
 	full := untag(statusLine(st, 0))
-	for _, want := range []string{"Bronze Age", "\"Aspiring\"", "◈ Stone Era", "⚑ Harbinger. Type harbinger to read it.", "Pop: 216/875", "Morale 110% (production +20%)", "type a panel name to open it · Esc: close or menu"} {
+	for _, want := range []string{"Bronze Age", "\"Aspiring\"", "⚑ Harbinger. Type harbinger to read it.", "Pop: 216/875", "Morale 110% (production +20%)", "type a panel name to open it · Esc: close or menu"} {
 		if !strings.Contains(full, want) {
 			t.Errorf("the whole line is missing %q: %q", want, full)
 		}
@@ -716,7 +716,7 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 		if runeLen(line) > w {
 			t.Errorf("width %d: the line is %d cells: %q", w, runeLen(line), line)
 		}
-		for _, want := range []string{"Bronze Age", "◈", "⚑ Harbinger", "Pop: 216/875", "Morale 110%"} {
+		for _, want := range []string{"Bronze Age", "⚑ Harbinger", "Pop: 216/875", "Morale 110%"} {
 			if !strings.Contains(line, want) {
 				t.Errorf("width %d: the line lost %q: %q", w, want, line)
 			}
@@ -728,8 +728,11 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 	if line := untag(statusLine(st, 130)); strings.Contains(line, "Esc:") || !strings.Contains(line, "Type harbinger to read it.") {
 		t.Errorf("130 cells: the whole hint goes before the badge is shortened: %q", line)
 	}
-	if line := untag(statusLine(st, 120)); !strings.Contains(line, "⚑ Harbinger: type harbinger") || !strings.Contains(line, "(production +20%)") {
-		t.Errorf("120 cells: the badge is shortened before morale's effect goes: %q", line)
+	// note: the era badge used to take the room that shortens this badge at
+	// 120 cells; without it the full badge fits down to 113, so the shortened
+	// one is checked at 112.
+	if line := untag(statusLine(st, 112)); !strings.Contains(line, "⚑ Harbinger: type harbinger") || !strings.Contains(line, "(production +20%)") {
+		t.Errorf("112 cells: the badge is shortened before morale's effect goes: %q", line)
 	}
 	// Developer mode adds its own badge, and the line still fits.
 	game.DevModeActive = true
