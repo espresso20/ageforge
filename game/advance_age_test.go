@@ -1,111 +1,61 @@
 package game
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
-func TestAdvanceAge_SetsUpgradesForGatheringCamp(t *testing.T) {
+// An advance moves nothing and offers nothing: it turns the buildings of the
+// age left into older buildings, which the summary lists and the log names.
+func TestAdvanceAge_TurnsBuildingsOlder(t *testing.T) {
 	ge := NewGameEngine()
-	// Don't call Start() — just manipulate internal state directly
-
-	// Unlock and build gathering_camps
 	ge.Buildings.UnlockBuilding("gathering_camp")
 	ge.Buildings.counts["gathering_camp"] = 2
 
-	// Verify gathering_camp def has correct lineage info
-	def, ok := ge.Buildings.defs["gathering_camp"]
-	if !ok {
-		t.Fatal("gathering_camp not in defs")
+	if ge.Buildings.IsOlder("gathering_camp") {
+		t.Fatal("a Gathering Camp is older in the Primitive Age")
 	}
-	t.Logf("gathering_camp def: LineageKey=%q LineageTier=%d", def.LineageKey, def.LineageTier)
-	if def.LineageKey != "food" {
-		t.Errorf("expected LineageKey=food, got %q", def.LineageKey)
-	}
-	if def.LineageTier != 0 {
-		t.Errorf("expected LineageTier=0, got %d", def.LineageTier)
-	}
-
-	// Call advanceAge directly (no ticker running)
 	ge.advanceAge("stone_age")
 
-	// Check pending upgrades map
-	t.Logf("pendingUpgrades: %v", ge.Buildings.pendingUpgrades)
-	if len(ge.Buildings.pendingUpgrades) == 0 {
-		t.Error("pendingUpgrades is empty after advancing to stone_age with gathering_camp built")
+	target, ok := ge.Buildings.UpgradeTarget("gathering_camp")
+	if !ok || target.Key != "forager_post" {
+		t.Fatalf("gathering_camp upgrades to %q (%v) in the Stone Age, want forager_post", target.Key, ok)
 	}
-
-	target, found := ge.Buildings.GetPendingUpgrade("gathering_camp")
-	if !found {
-		t.Error("expected gathering_camp to have a pending upgrade, got none")
-	} else {
-		t.Logf("gathering_camp -> %s", target)
-		if target != "forager_post" {
-			t.Errorf("expected upgrade target=forager_post, got %q", target)
+	if got := ge.Buildings.GetCount("gathering_camp"); got != 2 {
+		t.Errorf("the advance moved copies: %d Gathering Camps, want 2", got)
+	}
+	if got := ge.Buildings.GetCount("forager_post"); got != 0 {
+		t.Errorf("the advance made %d Forager Posts, want none", got)
+	}
+	var listed bool
+	for _, tr := range ge.lastAgeAdvanceSummary.BuildingsTransformed {
+		if tr.OldKey == "gathering_camp" && tr.NewKey == "forager_post" && tr.Count == 2 {
+			listed = true
 		}
 	}
-
-	// Now test GetAvailableUpgrades
-	upgrades := ge.GetAvailableUpgrades()
-	t.Logf("GetAvailableUpgrades returned %d entries", len(upgrades))
-	for _, u := range upgrades {
-		t.Logf("  %s -> %s (count=%d canAfford=%v)", u.FromKey, u.ToKey, u.Count, u.CanAfford)
+	if !listed {
+		t.Errorf("the advance summary does not list the Gathering Camps: %+v", ge.lastAgeAdvanceSummary)
 	}
-	if len(upgrades) == 0 {
-		t.Error("GetAvailableUpgrades returned 0 — bug confirmed")
+	if len(ge.lastAgeAdvanceSummary.BuildingsLegacy) != 0 {
+		t.Errorf("the advance flagged legacy buildings %v; nothing is flagged any more", ge.lastAgeAdvanceSummary.BuildingsLegacy)
 	}
-}
-
-// TestLoadGame_RestoresPendingUpgrades verifies that pending upgrades are
-// reconstructed from legacy buildings after a save/load cycle.
-// Regression test for: "upgrade shows 0 buildings available after reload".
-//
-// This test simulates the LoadGame restore path directly (without disk I/O)
-// by manually applying the same restore steps that LoadGame performs, then
-// asserting that GetAvailableUpgrades returns the expected upgrades.
-func TestLoadGame_RestoresPendingUpgrades(t *testing.T) {
-	// Simulate the state that a saved game would have:
-	//   - age: stone_age
-	//   - gathering_camp: 3 built, flagged legacy (primitive→stone advance happened)
-	//   - pendingUpgrades: empty (as it would be before the fix)
-	legacyBuildings := []string{"gathering_camp"}
-	buildingCounts := map[string]int{"gathering_camp": 3}
-	age := "stone_age"
-
-	// Fresh engine — simulates what NewGameEngine() gives us at LoadGame entry
-	ge := NewGameEngine()
-
-	// Apply the same restore calls that LoadGame makes
-	ge.age = age
-	ge.Buildings.LoadCounts(buildingCounts)
-	ge.Buildings.LoadLegacyBuildings(legacyBuildings)
-	// NOTE: before the fix, LoadGame stopped here; pendingUpgrades stayed empty.
-
-	// The fix: reconstruct pending upgrades from legacy buildings + current age
-	// (what LoadGame does for a save without a persisted pending set).
-	ge.Buildings.LoadPendingUpgrades(ge.rebuildPendingUpgrades(legacyBuildings, age))
-
-	// The pending upgrade must now be present
-	target, found := ge.Buildings.GetPendingUpgrade("gathering_camp")
-	if !found {
-		t.Error("after simulated LoadGame restore, gathering_camp has no pending upgrade")
-	} else if target != "forager_post" {
-		t.Errorf("expected forager_post, got %q", target)
-	} else {
-		t.Logf("gathering_camp -> %s (correctly reconstructed)", target)
+	if len(ge.GetAvailableUpgrades()) == 0 {
+		t.Error("upgrade lists nothing after the advance")
 	}
-
-	// GetAvailableUpgrades must return a non-empty list
-	upgrades := ge.GetAvailableUpgrades()
-	if len(upgrades) == 0 {
-		t.Error("GetAvailableUpgrades returned 0 after restore — 'upgrade' command would show nothing")
+	var named bool
+	for _, l := range ge.GetState().Log {
+		if strings.Contains(l.Message, "Gathering Camps can upgrade to Forager Post") {
+			named = true
+		}
 	}
-	for _, u := range upgrades {
-		t.Logf("  upgrade: %s -> %s (count=%d)", u.FromKey, u.ToKey, u.Count)
+	if !named {
+		t.Error("the log does not name the Gathering Camps that can upgrade")
 	}
 }
 
-// TestAdvanceAge_LinesNeverSwitchResource: an age turn offers an upgrade only
-// along a building's own one-resource line. The sawmill is the last of the
-// wood line, so the coal age offers it nothing and never makes it legacy; a
-// line that paused (titanium) is offered its next rung when it resumes.
+// A building turns older again each time its line gets a newer rung, and one
+// that is last in its line never does. A paused line keeps its last rung as
+// current until it resumes.
 func TestAdvanceAge_LinesNeverSwitchResource(t *testing.T) {
 	ge := NewGameEngine()
 	// Each step stays in the epoch the engine is in: an epoch crossing rolls a
@@ -114,49 +64,45 @@ func TestAdvanceAge_LinesNeverSwitchResource(t *testing.T) {
 		ge.currentEpoch = ge.rules.EraOf(age)
 		ge.advanceAge(age)
 	}
+	to := func(key string) string {
+		target, ok := ge.Buildings.UpgradeTarget(key)
+		if !ok {
+			return ""
+		}
+		return target.Key
+	}
 	for _, k := range []string{"wood_workshop", "sawmill", "crypto_exchange", "black_market", "nano_alloy_plant"} {
 		ge.Buildings.UnlockBuilding(k)
 		ge.Buildings.counts[k] = 1
 	}
 	advance("medieval_age")
-	if got, ok := ge.Buildings.GetPendingUpgrade("wood_workshop"); !ok || got != "sawmill" {
-		t.Errorf("wood_workshop upgrade = %q, %v; want sawmill", got, ok)
+	if got := to("wood_workshop"); got != "sawmill" {
+		t.Errorf("wood_workshop upgrades to %q in the Medieval Age, want sawmill", got)
 	}
 	advance("renaissance_age")
 	advance("colonial_age")
-	if got, ok := ge.Buildings.GetPendingUpgrade("sawmill"); ok {
-		t.Errorf("sawmill is the last of the wood line but is offered %s", got)
+	if got := to("sawmill"); got != "" {
+		t.Errorf("sawmill is the last of the wood line but upgrades to %s", got)
 	}
-	if ge.Buildings.IsLegacy("sawmill") {
-		t.Error("sawmill is the last of its line and must not be legacy")
+	if ge.Buildings.IsOlder("sawmill") {
+		t.Error("sawmill is the last of its line and must not be older")
 	}
 	advance("cyberpunk_age")
-	if got, ok := ge.Buildings.GetPendingUpgrade("crypto_exchange"); ok {
-		t.Errorf("crypto_exchange is offered %s in the Cyberpunk Age, which makes crypto, not gold", got)
+	if got := to("crypto_exchange"); got != "" {
+		t.Errorf("crypto_exchange upgrades to %s in the Cyberpunk Age, which makes crypto, not gold", got)
 	}
 	advance("fusion_age")
-	if got, ok := ge.Buildings.GetPendingUpgrade("crypto_exchange"); !ok || got != "energy_exchange" {
-		t.Errorf("crypto_exchange upgrade in the Fusion Age = %q, %v; want energy_exchange", got, ok)
+	if got := to("crypto_exchange"); got != "energy_exchange" {
+		t.Errorf("crypto_exchange upgrades to %q in the Fusion Age, want energy_exchange", got)
 	}
-	if got, ok := ge.Buildings.GetPendingUpgrade("black_market"); ok {
-		t.Errorf("black_market is the last of the crypto line but is offered %s", got)
+	if got := to("black_market"); got != "" {
+		t.Errorf("black_market is the last of the crypto line but upgrades to %s", got)
+	}
+	if got := to("nano_alloy_plant"); got != "" {
+		t.Errorf("the titanium line is paused in the Fusion Age, so nano_alloy_plant is current, but it upgrades to %s", got)
 	}
 	advance("space_age")
-	if got, ok := ge.Buildings.GetPendingUpgrade("nano_alloy_plant"); !ok || got != "orbital_refinery" {
-		t.Errorf("nano_alloy_plant upgrade in the Space Age = %q, %v; want orbital_refinery", got, ok)
-	}
-}
-
-// An old save's upgrade offers follow the lines too (rebuildPendingUpgrades).
-func TestRebuildPendingUpgrades_FollowsTheLine(t *testing.T) {
-	ge := NewGameEngine()
-	ge.Buildings.counts["nano_alloy_plant"] = 1
-	ge.Buildings.counts["sawmill"] = 1
-	got := ge.rebuildPendingUpgrades([]string{"nano_alloy_plant", "sawmill"}, "space_age")
-	if got["nano_alloy_plant"] != "orbital_refinery" {
-		t.Errorf("nano_alloy_plant offer = %q, want orbital_refinery", got["nano_alloy_plant"])
-	}
-	if v, ok := got["sawmill"]; ok {
-		t.Errorf("sawmill is the last of the wood line but is offered %s", v)
+	if got := to("nano_alloy_plant"); got != "orbital_refinery" {
+		t.Errorf("nano_alloy_plant upgrades to %q in the Space Age, want orbital_refinery", got)
 	}
 }

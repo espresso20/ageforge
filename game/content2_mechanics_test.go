@@ -92,20 +92,22 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 	parts := with("interchangeable_parts")
 	for _, ge := range []*GameEngine{plain, parts} {
 		ge.mu.Lock()
+		ge.age = "industrial_age" // the Manor is an older building here
 		ge.Buildings.counts["manor"] = 1
 		ge.mu.Unlock()
 	}
-	full, _ := plain.Buildings.UpgradeCost("manor", "tenement", 1)
-	cut, ok := parts.Buildings.UpgradeCost("manor", "tenement", 1)
-	if !ok || len(cut) == 0 {
+	full := plain.Buildings.UpgradeCopyCost("manor", 0, nil)
+	cut := parts.Buildings.UpgradeCopyCost("manor", 0, nil)
+	if len(cut) == 0 {
 		t.Fatal("no price for a Manor's upgrade")
 	}
 	parts.mu.Lock()
 	parts.Buildings.upgradeCost = 1
-	uncut, _ := parts.Buildings.UpgradeCost("manor", "tenement", 1)
+	uncut := parts.Buildings.UpgradeCopyCost("manor", 0, nil)
 	parts.mu.Unlock()
+	newCopy := parts.Buildings.CopyCost("tenement", 0, nil) // after the tech's own cut of building costs
 	for _, res := range sortedKeys(full) {
-		if want := math.Floor(float64(uncut[res] * 0.85)); cut[res] != want || cut[res] >= full[res] {
+		if want := math.Floor(float64(float64(newCopy[res]*config.UpgradeShare) * 0.85)); cut[res] != want || cut[res] >= full[res] {
 			t.Errorf("upgrading a Manor costs %v %s with Interchangeable Parts (%v without the tech, %v with its cut of building costs alone), want %v",
 				cut[res], res, full[res], uncut[res], want)
 		}

@@ -68,7 +68,9 @@ func (pm *ProgressManager) CheckAdvancement(currentKey string, buildings *Buildi
 	nextAge := pm.ages[pm.ageIndex[nextKey]]
 
 	for bld, count := range nextAge.BuildingReqs {
-		if buildings.GetCount(bld) < count {
+		// An upgraded copy counts as the building it became, and a gate that
+		// asks for an older rung counts the later ones of its line.
+		if buildings.CountFrom(bld) < count {
 			return ""
 		}
 	}

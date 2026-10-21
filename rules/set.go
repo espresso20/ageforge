@@ -43,6 +43,8 @@ type Set struct {
 
 	buildings     []config.BuildingDef
 	buildingByKey map[string]config.BuildingDef
+	lineRungs     map[string][]config.BuildingDef // line -> its rungs, first rung first
+	rungsFrom     map[string][]string             // building key -> itself and the later rungs of its line
 	techs         []config.TechDef
 	techByKey     map[string]config.TechDef
 	techsByAge    map[string][]config.TechDef
@@ -238,6 +240,17 @@ func (s *Set) indexDefs() {
 	s.buildingByKey = make(map[string]config.BuildingDef, len(s.buildings))
 	for _, b := range s.buildings {
 		s.buildingByKey[b.Key] = b
+	}
+	s.lineRungs = config.LineRungs(s.buildings)
+	s.rungsFrom = make(map[string][]string, len(s.buildings))
+	for _, rungs := range s.lineRungs {
+		for i, r := range rungs {
+			keys := make([]string, 0, len(rungs)-i)
+			for _, up := range rungs[i:] {
+				keys = append(keys, up.Key)
+			}
+			s.rungsFrom[r.Key] = keys
+		}
 	}
 	s.wonders = map[string]string{}
 	for _, a := range s.ages {
@@ -468,14 +481,33 @@ func (s *Set) Building(key string) (config.BuildingDef, bool) {
 // BuildingMap returns a map of every building by key.
 func (s *Set) BuildingMap() map[string]config.BuildingDef { return maps.Clone(s.buildingByKey) }
 
-// NextTier returns the next rung of line above tier when newAge is the age it
-// needs: what a building of that tier becomes when the age turns. A line never
-// switches resource, so the rung is always in the same line (BuildingDef.Line).
-func (s *Set) NextTier(line string, tier int, newAge string) (config.BuildingDef, bool) {
-	if b, ok := config.NextRung(s.buildings, line, tier); ok && b.RequiredAge == newAge {
-		return b, true
+// CurrentRung is the rung of line that belongs to age: the highest rung that
+// age or an earlier one has. A line that pauses keeps its last rung. ok is
+// false for an unknown line, or one that has no rung yet in age.
+func (s *Set) CurrentRung(line, age string) (config.BuildingDef, bool) {
+	return config.CurrentRung(s.lineRungs[line], s.agePos, age)
+}
+
+// UpgradeTarget is the building an older building is upgraded to in age: the
+// current rung of its line, when that belongs to a later age than its own. ok
+// is false for a building that is in no line, that is not older (the current
+// rung, or one that shares its age), or an unknown key.
+func (s *Set) UpgradeTarget(key, age string) (config.BuildingDef, bool) {
+	def, ok := s.buildingByKey[key]
+	if !ok {
+		return config.BuildingDef{}, false
 	}
-	return config.BuildingDef{}, false
+	return config.UpgradeTarget(s.lineRungs[def.Line()], s.agePos, def, age)
+}
+
+// RungKeysFrom is the keys of a building and every later rung of its line, the
+// building first. A building in no line is alone. The slice is the set's: do
+// not write to it.
+func (s *Set) RungKeysFrom(key string) []string {
+	if keys, ok := s.rungsFrom[key]; ok {
+		return keys
+	}
+	return []string{key}
 }
 
 // AgeEntryCosts returns, per resource, the cheapest first-copy price of it

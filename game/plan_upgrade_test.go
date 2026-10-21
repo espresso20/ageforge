@@ -47,8 +47,9 @@ func TestPlanUpgradeRunsOneAtATimeAndWaits(t *testing.T) {
 	if _, err := ge.PlanAddUpgrade("gathering_camp", 2); err != nil {
 		t.Fatal(err)
 	}
-	to, _ := ge.Buildings.GetPendingUpgrade("gathering_camp")
-	cost, _ := ge.Buildings.UpgradeCost("gathering_camp", to, 1)
+	target, _ := ge.Buildings.UpgradeTarget("gathering_camp")
+	to := target.Key
+	cost := ge.Buildings.UpgradeCopyCost("gathering_camp", 0, nil)
 	for res := range cost {
 		setAmount(ge, res, 0)
 	}
@@ -63,7 +64,7 @@ func TestPlanUpgradeRunsOneAtATimeAndWaits(t *testing.T) {
 	if ge.Buildings.GetCount("gathering_camp") != 4 || ge.Buildings.GetCount(to) != 1 || ge.plan[0].Count != 1 {
 		t.Fatalf("after first: plan=%+v old=%d new=%d", ge.plan, ge.Buildings.GetCount("gathering_camp"), ge.Buildings.GetCount(to))
 	}
-	cost, _ = ge.Buildings.UpgradeCost("gathering_camp", to, 1)
+	cost = ge.Buildings.UpgradeCopyCost("gathering_camp", 0, nil)
 	for res, amount := range cost {
 		setAmount(ge, res, amount)
 	}
@@ -76,7 +77,7 @@ func TestPlanUpgradeRunsOneAtATimeAndWaits(t *testing.T) {
 	if _, err := stale.PlanAddUpgrade("gathering_camp", 1); err != nil {
 		t.Fatal(err)
 	}
-	stale.Buildings.ClearPendingUpgrade("gathering_camp")
+	stale.Buildings.counts["gathering_camp"] = 0 // the copies are gone (sold, or lost to a catastrophe)
 	stale.runPlanTick()
 	if len(stale.plan) != 0 || !logHas(stale, "Plan: dropped") {
 		t.Fatalf("stale upgrade was not dropped: plan=%+v", stale.plan)

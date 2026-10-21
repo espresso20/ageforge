@@ -1024,10 +1024,7 @@ func (b *Bot) upgrade(p *plan) bool {
 		if to.MaxCount > 0 || u.Count <= 0 {
 			continue
 		}
-		per := make(map[string]float64, len(u.Cost))
-		for r, c := range u.Cost {
-			per[r] = c / float64(u.Count)
-		}
+		per := u.Cost // the next copy's price
 		n := 0
 		switch {
 		case p.needBld[u.ToKey] > 0:

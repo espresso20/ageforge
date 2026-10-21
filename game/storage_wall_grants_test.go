@@ -319,7 +319,7 @@ func TestWallGrants_SaleRefundIsLostAndSaid(t *testing.T) {
 	wallHeld(t, ge)
 
 	up := wallUpgradeEngine(t)
-	cost, _ := up.Buildings.UpgradeCost("wood_camp", "woodcutter_camp", 1)
+	cost := up.Buildings.UpgradeCopyCost("wood_camp", 0, nil)
 	for res, c := range cost {
 		if c < 0 {
 			t.Errorf("an upgrade pays out %v %s", c, res)

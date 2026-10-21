@@ -251,7 +251,7 @@ func (ge *GameEngine) newStaffView() *staffView {
 		}
 		sv.doms[i].slots += def.WorkerCapacity * count
 		sv.doms[i].assigned += ge.Workers.GetAssignedCount("worker", key)
-		order[i] = append(order[i], fillKey{key, ge.Buildings.IsLegacy(key), ages[def.RequiredAge], def.LineageTier})
+		order[i] = append(order[i], fillKey{key, ge.Buildings.IsOlder(key), ages[def.RequiredAge], def.LineageTier})
 	})
 	for i, keys := range order {
 		sort.Slice(keys, func(a, b int) bool {

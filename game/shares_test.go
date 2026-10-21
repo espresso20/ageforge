@@ -387,7 +387,7 @@ func TestShares_FillOrder(t *testing.T) {
 	if got := ge.Workers.GetAssignedCount("worker", "forager_post"); got != slotsOf(ge, "forager_post") {
 		t.Errorf("forager posts have %d of %d workers: this age's food buildings fill first", got, slotsOf(ge, "forager_post"))
 	}
-	if !ge.Buildings.IsLegacy("gathering_camp") {
+	if !ge.Buildings.IsOlder("gathering_camp") {
 		t.Fatal("setup: the gathering camp is not superseded")
 	}
 	// The same state staffs the same way.
@@ -586,7 +586,7 @@ func TestShares_PlanStaffingFollowsTheShares(t *testing.T) {
 		}
 		ge.advanceAge("stone_age")
 		ge.pendingCatastrophe = ""
-		if !ge.Buildings.IsLegacy("wood_camp") {
+		if !ge.Buildings.IsOlder("wood_camp") {
 			t.Fatal("setup: wood camps are not superseded in the Stone Age")
 		}
 		ge.Buildings.counts["stone_camp"]++

@@ -44,7 +44,6 @@ func main() {
 	write(outDir, "trade_routes.json", config.BaseTradeRoutes())
 	write(outDir, "factions.json", config.BaseFactions())
 	write(outDir, "worker_classes.json", config.WorkerClasses())
-	write(outDir, "building_upgrades.json", config.BuildingUpgrades())
 	write(outDir, "prestige_upgrades.json", config.PrestigeUpgrades())
 
 	// Buildings: one file per lineage + storage/wonders

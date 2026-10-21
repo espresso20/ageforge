@@ -95,8 +95,6 @@ func TestUpgradeKnowledgeBuilding_IsRefused(t *testing.T) {
 	for _, c := range cases {
 		ge := catEngine(t, c.age, 1)
 		ge.Buildings.counts[c.from] = 4
-		// Even an offer an older game made stands for nothing.
-		ge.Buildings.pendingUpgrades[c.from] = c.to
 		ge.recalculateRates()
 		for res := range ge.Resources.GetAllStorage() {
 			ge.Resources.AddStorage(res, 1e12)

@@ -80,12 +80,12 @@ type GameSave struct {
 	Diplomacy        DiplomacySave                 `json:"diplomacy"`
 	SpeedMultiplier  float64                       `json:"speed_multiplier"`
 	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
-	// Phase 7: legacy building keys
-	LegacyBuildings []string `json:"legacy_buildings,omitempty"`
-	// PendingUpgrades is the live oldKey -> newKey upgrade offer set, and
-	// PendingUpgradesSaved marks saves that carry it (an empty set is omitted,
-	// so the flag tells "no offers" apart from "saved before this field").
-	// Older saves rebuild the set from LegacyBuildings (rebuildPendingUpgrades).
+	// LegacyBuildings, PendingUpgrades and PendingUpgradesSaved belonged to
+	// the upgrade offers an age advance used to make. Which buildings are
+	// older is now read from the line and the age (older.go): nothing writes
+	// these fields and nothing reads them. They stay so a beta save still
+	// parses.
+	LegacyBuildings      []string          `json:"legacy_buildings,omitempty"`
 	PendingUpgrades      map[string]string `json:"pending_upgrades,omitempty"`
 	PendingUpgradesSaved bool              `json:"pending_upgrades_saved,omitempty"`
 	// Phase 8: epoch system
@@ -721,9 +721,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		},
 		SpeedMultiplier:        ge.speedMultiplier,
 		WonderBanks:            ge.Buildings.GetWonderBanks(),
-		LegacyBuildings:        ge.Buildings.GetLegacyBuildings(),
-		PendingUpgrades:        ge.Buildings.GetAllPendingUpgrades(),
-		PendingUpgradesSaved:   true,
 		CheaterBadge:           ge.cheaterBadge,
 		EliteBadge:             ge.eliteBadge,
 		DevTouched:             ge.devTouched,
@@ -1004,20 +1001,6 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// written), and before the offline catch-up, which may build a wonder.
 	treeGraced := ge.graceTreeLocked(&save)
 
-	// Restore Phase 7: legacy buildings
-	if len(save.LegacyBuildings) > 0 {
-		ge.Buildings.LoadLegacyBuildings(save.LegacyBuildings)
-	}
-
-	// Restore the pending upgrade offers. Saves written since they were
-	// persisted carry the exact live set; older ones rebuild it from the
-	// legacy set and the loaded age.
-	if save.PendingUpgradesSaved {
-		ge.Buildings.LoadPendingUpgrades(save.PendingUpgrades)
-	} else {
-		ge.Buildings.LoadPendingUpgrades(ge.rebuildPendingUpgrades(save.LegacyBuildings, save.Age))
-	}
-
 	// Restore the speed multiplier, clamped to the player cap: a save written
 	// while wonders raised a speed cap (or with the dev console's /speed on)
 	// would otherwise load, and run its offline catch-up below, at that speed.
@@ -1216,44 +1199,6 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	ge.Bus.Publish(EventData{Type: EventGameLoaded, Payload: map[string]interface{}{"save": filename}})
 
 	return nil
-}
-
-// rebuildPendingUpgrades derives the upgrade offers for a save that predates
-// PendingUpgrades, following the rule advanceAge applies live: on entering
-// an age, every built lineage building whose next tier belongs to that age
-// is offered that tier, and the offer stands through later ages until the
-// building is upgraded away. So a legacy building still standing is offered
-// its next tier from the latest age up to the loaded one that has it. (The
-// old rebuild only looked at the loaded age, and dropped every offer from an
-// earlier age whose lineage has no tier in the current one.) Must be called
-// under the write lock.
-func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[string]string {
-	out := make(map[string]string)
-	cur, ok := ge.progress.ageIndex[age]
-	if !ok {
-		return out
-	}
-	all := ge.rules.Buildings()
-	for _, key := range legacy {
-		if ge.Buildings.GetCount(key) <= 0 {
-			continue
-		}
-		def, ok := ge.Buildings.defs[key]
-		// Storage and knowledge buildings never transform (see advanceAge),
-		// so a save with legacy stashes gets no stash -> storage_pit offer
-		// back, nor a knowledge building its next tier.
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || keepsItsTier(def) {
-			continue
-		}
-		// The next rung of the building's own line, as rules.Set.NextTier finds
-		// it: a line never switches resource, so a line's last rung has none.
-		if next, ok := config.NextRung(all, def.Line(), def.LineageTier); ok {
-			if order, ok := ge.progress.ageIndex[next.RequiredAge]; ok && order <= cur {
-				out[key] = next.Key
-			}
-		}
-	}
-	return out
 }
 
 // graceTreeLocked restores the tech tree's grace age and the run's granted

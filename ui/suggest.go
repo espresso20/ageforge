@@ -757,7 +757,7 @@ func upgradeableBuildingKeys(engine *game.GameEngine) []string {
 		if _, seen := afford[u.FromKey]; !seen {
 			keys = append(keys, u.FromKey)
 		}
-		afford[u.FromKey] = afford[u.FromKey] || u.CanAfford
+		afford[u.FromKey] = afford[u.FromKey] || u.Affordable > 0
 	}
 	return byRank(keys, func(k string) int {
 		if afford[k] {

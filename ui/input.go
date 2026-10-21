@@ -701,15 +701,19 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 			return CommandResult{Message: "No building upgrades available right now.", Type: "info"}
 		}
 		var lines []string
-		lines = append(lines, "[gold]Upgrades you can make[-] (pays the difference in cost: the new copy's cost less a 50% refund on the old one)")
+		lines = append(lines, fmt.Sprintf("[gold]Older buildings you can upgrade[-] (each copy costs %d%% of a new copy of the building it becomes)", int(config.UpgradeShare*100)))
 		sort.Slice(upgrades, func(i, j int) bool { return upgrades[i].FromKey < upgrades[j].FromKey })
 		for _, u := range upgrades {
 			affordable := "[red]✗[-]"
-			if u.CanAfford {
+			if u.Affordable > 0 {
 				affordable = "[green]✓[-]"
 			}
-			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] → [cyan]%s[-]: %s, cost for all: %s",
-				affordable, u.FromKey, u.ToKey, textfmt.Count(u.Count, "copy", "copies"), FormatCost(u.Cost)))
+			row := fmt.Sprintf("  %s [cyan]%s[-] → [cyan]%s[-]: %s held, next copy %s, %d affordable now",
+				affordable, u.FromKey, u.ToKey, textfmt.Int(u.Count), FormatCost(u.Cost), u.Affordable)
+			if u.Lock != "" {
+				row += ". [gray]" + u.Lock + "[-]"
+			}
+			lines = append(lines, row)
 		}
 		lines = append(lines, "\n  Type [cyan]"+lit(strings.TrimPrefix(usageFor("upgrade"), "Usage: "))+"[-]")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}

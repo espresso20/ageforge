@@ -489,48 +489,6 @@ func TestConfig_EventKeysExist(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Upgrade config validation
-// ---------------------------------------------------------------------------
-
-func TestConfig_UpgradeKeysExist(t *testing.T) {
-	buildingKeys := BuildingByKey()
-	ageKeys := buildKeySet(Ages(), func(a AgeDef) string { return a.Key })
-
-	for _, upg := range BuildingUpgrades() {
-		if _, ok := buildingKeys[upg.From]; !ok {
-			t.Errorf("\n"+
-				"  Bad building key in upgrade definition\n"+
-				"  File:     config/upgrades.go\n"+
-				"  Upgrade:  %s -> %s\n"+
-				"  Field:    From\n"+
-				"  Got:      %q  <-- this building doesn't exist\n"+
-				"  Fix:      Check config/buildings.go for valid building keys%s\n",
-				upg.From, upg.To, upg.From, hintFromMap(upg.From, buildingKeys))
-		}
-		if _, ok := buildingKeys[upg.To]; !ok {
-			t.Errorf("\n"+
-				"  Bad building key in upgrade definition\n"+
-				"  File:     config/upgrades.go\n"+
-				"  Upgrade:  %s -> %s\n"+
-				"  Field:    To\n"+
-				"  Got:      %q  <-- this building doesn't exist\n"+
-				"  Fix:      Check config/buildings.go for valid building keys%s\n",
-				upg.From, upg.To, upg.To, hintFromMap(upg.To, buildingKeys))
-		}
-		if upg.MinAge != "" && !ageKeys[upg.MinAge] {
-			t.Errorf("\n"+
-				"  Bad age key in upgrade definition\n"+
-				"  File:     config/upgrades.go\n"+
-				"  Upgrade:  %s -> %s\n"+
-				"  Field:    MinAge\n"+
-				"  Got:      %q  <-- this age doesn't exist\n"+
-				"  Fix:      Check config/ages.go for valid age keys%s\n",
-				upg.From, upg.To, upg.MinAge, hint(upg.MinAge, ageKeys))
-		}
-	}
-}
-
-// ---------------------------------------------------------------------------
 // Duplicate key detection
 // ---------------------------------------------------------------------------
 
@@ -704,7 +662,7 @@ func TestConfig_EffectTargetsValid(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestConfig_Summary(t *testing.T) {
-	t.Logf("Config inventory: %d ages, %d resources, %d buildings, %d techs, %d milestones, %d events, %d trade routes, %d factions, %d upgrades",
+	t.Logf("Config inventory: %d ages, %d resources, %d buildings, %d techs, %d milestones, %d events, %d trade routes, %d factions",
 		len(Ages()),
 		len(BaseResources()),
 		len(BaseBuildings()),
@@ -713,7 +671,6 @@ func TestConfig_Summary(t *testing.T) {
 		len(RandomEvents()),
 		len(BaseTradeRoutes()),
 		len(BaseFactions()),
-		len(BuildingUpgrades()),
 	)
 }
 

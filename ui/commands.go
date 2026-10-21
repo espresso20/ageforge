@@ -164,8 +164,8 @@ func registry() []*Command {
 		{Name: "upgrade", Section: secActions,
 			Args: []Arg{{Kind: ArgUpgradeBuilding, Optional: true}, optCountAll},
 			Help: []Usage{
-				{"upgrade", "List the building upgrades you can make"},
-				{"upgrade <building> [count|all]", "Upgrade copies to the next tier (no count: all of them; pays the difference in cost)"},
+				{"upgrade", "List the older buildings you hold and what upgrading them costs"},
+				{"upgrade <building> [count|all]", "Upgrade copies of an older building to this age's building at half the price of a new copy (no count: as many as you can pay for)"},
 			}},
 
 		// Build Plan

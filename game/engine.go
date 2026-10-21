@@ -493,6 +493,7 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 func (ge *GameEngine) newBuildingManager() *BuildingManager {
 	bm := NewBuildingManagerWith(ge.rules)
 	bm.researched = func(tech string) bool { return ge.Research != nil && ge.Research.IsResearched(tech) }
+	bm.age = func() string { return ge.age }
 	return bm
 }
 
@@ -2385,8 +2386,7 @@ const (
 )
 
 // advanceAge advances to newAge and applies all transition consequences:
-//   - Building lineage transformation (old tier → new tier per lineage definition)
-//   - Legacy flags for any lower-tier buildings that now have an unlocked replacement
+//   - The buildings the new age makes older are listed in the summary
 //   - Age-gated unlock application (resources, buildings, workers)
 //   - Resource carryover capped to ~a handful of new-age starter buildings
 //   - Epoch detection and epoch event roll if the new age crosses an epoch boundary
@@ -2405,68 +2405,25 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.ageReady = false
 	ge.Workers.SetAge(newAge)
 
-	// Phase 7: Building lineage transformation pass.
-	// Collect transforms first (safe iteration), then apply.
-	type pendingTransform struct {
-		oldKey, oldName, newKey, newName string
-		count                            int
-	}
-	var transforms []pendingTransform
-	for _, key := range sortedKeys(ge.Buildings.counts) {
-		count := ge.Buildings.counts[key]
-		if count == 0 {
-			continue
-		}
-		def, ok := ge.Buildings.defs[key]
-		// Storage and knowledge buildings never transform (keepsItsTier):
-		// storage is cumulative, and an upgrade would trade a copy the age
-		// lock never lets you rebuild for one of the new tier, lowering the
-		// most you can ever store.
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || keepsItsTier(def) {
-			continue
-		}
-		next, ok := ge.rules.NextTier(def.Line(), def.LineageTier, newAge)
-		if !ok {
-			continue
-		}
-		transforms = append(transforms, pendingTransform{
-			oldKey: key, oldName: def.Name,
-			newKey: next.Key, newName: next.Name,
-			count: count,
-		})
-	}
+	// What the advance turned into older buildings: every held building that
+	// was its line's current rung in the age left and is not in the new one.
+	// Nothing moves and nothing is offered; they keep producing and can be
+	// upgraded (older.go).
 	summary := AgeAdvanceSummary{OldAge: oldAge, NewAge: newAge}
-	for _, t := range transforms {
-		ge.Buildings.SetPendingUpgrade(t.oldKey, t.newKey)
-		ge.Buildings.MarkLegacy(t.oldKey)
+	for _, key := range ge.Buildings.OlderKeys() {
+		if _, wasOlder := ge.rules.UpgradeTarget(key, oldAge); wasOlder {
+			continue
+		}
+		target, _ := ge.Buildings.UpgradeTarget(key)
+		def := ge.Buildings.defs[key]
+		count := ge.Buildings.counts[key]
 		summary.BuildingsTransformed = append(summary.BuildingsTransformed, BuildingTransform{
-			OldKey: t.oldKey, OldName: t.oldName,
-			NewKey: t.newKey, NewName: t.newName,
-			Count: t.count,
+			OldKey: key, OldName: def.Name,
+			NewKey: target.Key, NewName: target.Name,
+			Count: count,
 		})
 		ge.addLog("info", fmt.Sprintf("↑ %s can upgrade to %s. Type 'upgrade %s'.",
-			buildingCountIn(ge.rules, t.count, t.oldKey), t.newName, t.oldKey))
-	}
-	// Mark buildings as legacy if their line now has a higher-tier unlocked equivalent
-	// (a line never switches resource: the last of a line is never legacy).
-	for _, key := range sortedKeys(ge.Buildings.counts) {
-		count := ge.Buildings.counts[key]
-		if count == 0 || ge.Buildings.IsLegacy(key) {
-			continue
-		}
-		def, ok := ge.Buildings.defs[key]
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" {
-			continue
-		}
-		for otherKey, otherDef := range ge.Buildings.defs {
-			if otherDef.Line() == def.Line() &&
-				otherDef.LineageTier > def.LineageTier &&
-				ge.Buildings.IsUnlocked(otherKey) {
-				ge.Buildings.MarkLegacy(key)
-				summary.BuildingsLegacy = append(summary.BuildingsLegacy, key)
-				break
-			}
-		}
+			buildingCountIn(ge.rules, count, key), target.Name, key))
 	}
 	ge.lastAgeAdvanceSummary = summary
 
@@ -3616,11 +3573,11 @@ func (ge *GameEngine) bankWonderLocked(wonderKey, resource string, amount float6
 }
 
 // previousAgeBuildError explains why an older age's building can't be built.
-// Only point at 'upgrade' when an upgrade is actually on offer: storage never
-// transforms, and some lineages have no next tier this age.
+// An older building held in copies points at the upgrade; storage never
+// upgrades, and the last of a line has nothing to upgrade to.
 func (ge *GameEngine) previousAgeBuildError(key string, def config.BuildingDef) error {
-	if _, ok := ge.Buildings.GetPendingUpgrade(key); ok && ge.Buildings.GetCount(key) > 0 {
-		return fmt.Errorf("%s belongs to a previous age. Type 'upgrade %s' to upgrade the ones you have.", def.Name, key)
+	if target, ok := ge.Buildings.UpgradeTarget(key); ok && ge.Buildings.GetCount(key) > 0 {
+		return fmt.Errorf("%s belongs to a previous age. Type 'upgrade %s' to upgrade the ones you have to %s.", def.Name, key, target.Name)
 	}
 	if def.Category == "storage" {
 		return fmt.Errorf("%s belongs to a previous age and can no longer be built. The ones you have still count, so build this age's storage instead.", def.Name)
@@ -5262,6 +5219,7 @@ func (ge *GameEngine) GetState() GameState {
 			ResearchedTechs: ge.getResearchedTechMap(),
 			Sight:           &sight,
 			activeEvents:    ge.Events.GetActive(),
+			held:            ge.Buildings,
 		}),
 		ActiveEvents:          ge.Events.GetActive(),
 		Prestige:              prestigeSnap,
@@ -5656,9 +5614,13 @@ func (ge *GameEngine) RaidCivRoute(factionKey string) error {
 	return nil
 }
 
-// UpgradeBuilding converts count copies of a legacy building to its pending next-tier
-// equivalent, charging the cost delta (new copy cost minus 50% refund on old copy) per unit.
-// Pass all=true or count<=0 to upgrade all available copies.
+// UpgradeBuilding upgrades copies of an older building to the building its
+// line has for the town's age, one copy at a time, each at config.UpgradeShare
+// of what the next new copy of the target costs. count > 0 upgrades up to that
+// many; all, or no count, upgrades as many as the town can pay for (all of
+// them, if it can). It stops at the first copy that cannot be paid, a store
+// too small for its price, or the target's cap, and says why. An error means
+// no copy was upgraded.
 func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -5666,142 +5628,210 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 }
 
 // upgradeBuildingLocked runs the upgrade path while the caller holds ge.mu.
+// The build plan upgrades through it too, one copy per start.
 func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) error {
-
 	oldDef, hasOld := ge.rules.Building(key)
 	if !hasOld {
 		return ge.unknownBuildingErr(key)
 	}
-	newKey, hasPending := ge.Buildings.GetPendingUpgrade(key)
-	newDef, hasNew := ge.rules.Building(newKey)
-	if !hasPending || !hasNew || oldDef.Scholars > 0 {
+	target, older := ge.Buildings.UpgradeTarget(key)
+	if !older {
 		return fmt.Errorf("%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
 	}
-	if err := ge.techLockErr(newDef); err != nil {
-		return err
-	}
-
-	oldCount := ge.Buildings.GetCount(key)
-	if all || count <= 0 {
-		count = oldCount
-	}
-	if count > oldCount {
-		count = oldCount
-	}
-	if count <= 0 {
+	held := ge.Buildings.GetCount(key)
+	if held <= 0 {
 		return fmt.Errorf("You have no %s to upgrade.", oldDef.Name)
 	}
-	if room := ge.Buildings.UpgradeRoom(newKey, count, ge.buildQueue); room < count {
-		if room <= 0 {
-			return fmt.Errorf("%s is at its max count of %d.", newDef.Name, newDef.MaxCount)
+	limit := held
+	if !all && count > 0 {
+		limit = min(count, held)
+	}
+
+	var spent map[string]float64
+	done := 0
+	var stop error
+	for done < limit {
+		cost, err := ge.upgradeOneLocked(key, oldDef, target, done > 0)
+		if err != nil {
+			stop = err
+			break
 		}
-		count = room
+		if spent == nil {
+			spent = map[string]float64{}
+		}
+		for res, amt := range cost {
+			spent[res] += amt
+		}
+		done++
+	}
+	if done == 0 {
+		return stop
 	}
 
-	cost, ok := ge.Buildings.UpgradeCost(key, newKey, count)
-	if !ok {
-		return fmt.Errorf("Could not work out the cost to upgrade %s. Please report this bug.", oldDef.Name)
-	}
-
-	if res := ge.overStore(cost); res != "" {
-		return fmt.Errorf("%s", ge.storeTooSmallText("Upgrading "+buildingCountIn(ge.rules, count, key), res, cost[res]))
-	}
-	if !ge.Resources.CanAfford(cost) {
-		return fmt.Errorf("Cannot afford to upgrade %s: need %s.", buildingCountIn(ge.rules, count, key), ge.shortfallText(cost))
-	}
-
-	// Deduct resources
-	for res, amt := range cost {
-		ge.Resources.Add(res, -amt)
-	}
-
-	// Perform partial transform
-	moved := ge.Buildings.PartialTransform(key, newKey, count, ge.Workers.RenameAssignment)
-	ge.rehomeUpgradedWorkers(key, newKey, oldDef, newDef)
 	ge.holdStaffing()
-	if moved > 0 {
-		ge.report(Event{Kind: config.BadgeEvBuildingUpgraded, Subject: key, N: float64(moved)})
-	}
-
+	ge.report(Event{Kind: config.BadgeEvBuildingUpgraded, Subject: key, N: float64(done)})
 	ge.recalculateRates()
 
-	costStr := Amounts(cost)
+	costStr := Amounts(spent)
 	if costStr == "nothing" {
 		costStr = "free"
 	}
-	ge.addLog(LogRoutine, fmt.Sprintf("Upgraded %s to %s. Cost: %s.",
-		buildingCountIn(ge.rules, moved, key), pluralName(moved, newDef.Name), costStr))
+	line := fmt.Sprintf("Upgraded %s to %s. Cost: %s.",
+		buildingCountIn(ge.rules, done, key), pluralName(done, target.Name), costStr)
+	switch {
+	case stop != nil:
+		line += " Stopped: " + stop.Error()
+	case ge.Buildings.GetCount(key) > 0:
+		line += " The next copy costs " + Amounts(ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue)) + "."
+	}
+	ge.addLog(LogRoutine, line)
 	return nil
 }
 
-// rehomeUpgradedWorkers settles workers after an upgrade. A partial upgrade
-// left the old key's workers where they were, which could be more than the
-// copies left can hold (upgrade 7 of 46 wood camps and 138 workers sat in
-// 117 slots). The overflow follows the upgraded copies to the new building
-// while it has room; the rest go back to the idle pool. Under the write lock.
-func (ge *GameEngine) rehomeUpgradedWorkers(oldKey, newKey string, oldDef, newDef config.BuildingDef) {
-	excess := ge.Workers.GetAssignedCount("worker", oldKey) - oldDef.WorkerCapacity*ge.Buildings.GetCount(oldKey)
-	if excess <= 0 {
+// upgradeOneLocked upgrades one copy of key to target: every check, the
+// payment, and the move. The copy keeps its workers; target is what the key's
+// line has for the age. next says an earlier copy of this run went through, so
+// a refusal reads as the next copy's. It returns the price paid.
+func (ge *GameEngine) upgradeOneLocked(key string, oldDef, target config.BuildingDef, next bool) (map[string]float64, error) {
+	if err := ge.upgradeTechErr(target); err != nil {
+		return nil, err
+	}
+	if ge.Buildings.UpgradeRoom(target.Key, 1, ge.buildQueue) <= 0 {
+		return nil, fmt.Errorf("%s is at its max count of %d.", target.Name, target.MaxCount)
+	}
+	cost := ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue)
+	what := "Upgrading 1 " + oldDef.Name
+	if next {
+		what = "Upgrading the next " + oldDef.Name
+	}
+	if res := ge.overStore(cost); res != "" {
+		return nil, fmt.Errorf("%s", ge.storeTooSmallText(what, res, cost[res]))
+	}
+	if !ge.Resources.CanAfford(cost) {
+		return nil, fmt.Errorf("Cannot afford to upgrade %s: need %s.", articleName(oldDef.Name), ge.shortfallText(cost))
+	}
+	ge.Resources.Pay(cost)
+
+	held := ge.Buildings.counts[key]
+	ge.Buildings.counts[key]--
+	ge.Buildings.counts[target.Key]++
+	ge.Buildings.unlocked[target.Key] = true
+	ge.moveUpgradedWorkers(key, held, oldDef, target)
+	return cost, nil
+}
+
+// upgradeTechErr is why a copy can't be upgraded to target yet: the tech it
+// needs, named.
+func (ge *GameEngine) upgradeTechErr(target config.BuildingDef) error {
+	if !ge.Buildings.TechLocked(target.Key) {
+		return nil
+	}
+	return fmt.Errorf("%s needs %s first. Research it to upgrade to it.", target.Name, ge.techName(target.RequiredTech))
+}
+
+// moveUpgradedWorkers settles the workers of an upgraded copy. held is the
+// copies of the old building before this one went. The copy takes its share
+// of the old building's workers with it (more, if the copies left cannot
+// hold what is assigned), to the extent the target's slots take them; the
+// rest go idle. Under the write lock.
+func (ge *GameEngine) moveUpgradedWorkers(oldKey string, held int, oldDef, target config.BuildingDef) {
+	assigned := ge.Workers.GetAssignedCount("worker", oldKey)
+	if assigned <= 0 || held <= 0 {
 		return
 	}
-	ge.Workers.Unassign("worker", oldKey, excess)
-	room := newDef.WorkerCapacity*ge.Buildings.GetCount(newKey) - ge.Workers.GetAssignedCount("worker", newKey)
-	if room > excess {
-		room = excess
+	move := max(assigned/held, assigned-oldDef.WorkerCapacity*(held-1))
+	move = min(move, assigned)
+	if move <= 0 {
+		return
 	}
-	if room > 0 {
-		ge.Workers.Assign("worker", newKey, room)
+	ge.Workers.Unassign("worker", oldKey, move)
+	room := target.WorkerCapacity*ge.Buildings.GetCount(target.Key) - ge.Workers.GetAssignedCount("worker", target.Key)
+	if give := min(move, room); give > 0 {
+		ge.Workers.Assign("worker", target.Key, give)
 	}
 }
 
-// GetAvailableUpgrades returns upgrade info for buildings that have a pending player-driven upgrade.
+// articleName is a building's name with "a" or "an" before it.
+func articleName(name string) string {
+	if name != "" && strings.ContainsRune("AEIOU", rune(name[0])) {
+		return "an " + name
+	}
+	return "a " + name
+}
+
+// GetAvailableUpgrades lists the older buildings the town holds: one row for
+// each, with the copies held, the building they upgrade to, the price of the
+// next copy, how many copies the town can pay for now, and what locks the
+// upgrade (a tech to research, a store too small for the price).
 func (ge *GameEngine) GetAvailableUpgrades() []UpgradeInfo {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
 
 	var result []UpgradeInfo
-
-	for oldKey, newKey := range ge.Buildings.pendingUpgrades {
-		count := ge.Buildings.counts[oldKey]
-		if count <= 0 {
+	for _, key := range ge.Buildings.OlderKeys() {
+		target, ok := ge.Buildings.UpgradeTarget(key)
+		oldDef, ok2 := ge.rules.Building(key)
+		if !ok || !ok2 {
 			continue
 		}
-		oldDef, ok1 := ge.rules.Building(oldKey)
-		newDef, ok2 := ge.rules.Building(newKey)
-		if !ok1 || !ok2 {
-			continue
+		held := ge.Buildings.counts[key]
+		info := UpgradeInfo{
+			FromKey: key, ToKey: target.Key,
+			FromName: oldDef.Name, ToName: target.Name,
+			Count: held,
+			Cost:  ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue),
 		}
-		if count = ge.Buildings.UpgradeRoom(newKey, count, ge.buildQueue); count <= 0 {
-			continue
+		info.CanAfford = ge.Resources.CanAfford(info.Cost)
+		if err := ge.upgradeTechErr(target); err != nil {
+			info.Lock = err.Error()
+		} else {
+			info.Affordable, info.Lock = ge.upgradesAffordableLocked(key, target, held)
 		}
-		cost, ok := ge.Buildings.UpgradeCost(oldKey, newKey, count)
-		if !ok {
-			cost = make(map[string]float64)
-		}
-		canAfford := ge.Resources.CanAfford(cost)
-		result = append(result, UpgradeInfo{
-			FromKey:   oldKey,
-			ToKey:     newKey,
-			FromName:  oldDef.Name,
-			ToName:    newDef.Name,
-			Count:     count,
-			Cost:      cost,
-			CanAfford: canAfford,
-		})
+		result = append(result, info)
 	}
-	sort.Slice(result, func(i, j int) bool { return result[i].FromKey < result[j].FromKey })
 	return result
 }
 
-// UpgradeInfo describes an available building upgrade for display
+// upgradesAffordableLocked is how many of held copies of key the town can
+// upgrade now, one at a time with each price after the last, and the reason
+// the next one cannot be ("" when all can). Nothing is paid or moved.
+func (ge *GameEngine) upgradesAffordableLocked(key string, target config.BuildingDef, held int) (int, string) {
+	total := map[string]float64{}
+	for i := 0; i < held; i++ {
+		if room := target.MaxCount - ge.Buildings.counts[target.Key] - ge.Buildings.GetQueueCount(target.Key, ge.buildQueue) - i; target.MaxCount > 0 && room <= 0 {
+			return i, fmt.Sprintf("%s is at its max count of %d.", target.Name, target.MaxCount)
+		}
+		cost := ge.Buildings.UpgradeCopyCost(key, i, ge.buildQueue)
+		if res := ge.overStore(cost); res != "" {
+			return i, fmt.Sprintf("costs %s, more than your %s storage holds (%s).", Amount(cost[res], res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
+		}
+		for res, amt := range cost {
+			total[res] += amt
+		}
+		if !ge.Resources.CanAfford(total) {
+			return i, ""
+		}
+	}
+	return held, ""
+}
+
+// UpgradeInfo describes one older building the town holds, for display.
 type UpgradeInfo struct {
-	FromKey   string
-	ToKey     string
-	FromName  string
-	ToName    string
-	Count     int
-	Cost      map[string]float64
-	CanAfford bool
+	FromKey  string
+	ToKey    string
+	FromName string
+	ToName   string
+	// Count is the copies held; Cost the price of the next one.
+	Count int
+	Cost  map[string]float64
+	// CanAfford is whether the next copy can be paid now; Affordable how
+	// many copies can be, one at a time.
+	CanAfford  bool
+	Affordable int
+	// Lock is what stops the upgrade past the copies Affordable counts: a
+	// tech to research, a store too small for the next price, the target's
+	// cap. "" when only money does.
+	Lock string
 }
 
 // countWonders returns the total number of wonders built (must be called with lock held)

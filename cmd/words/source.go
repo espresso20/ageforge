@@ -43,19 +43,18 @@ var scanned = []struct {
 // its strings. TestEveryPackageIsAccountedFor fails on a package in neither
 // list, so a new package cannot go unread by accident.
 var notScanned = map[string]string{
-	"cmd/balanceaudit":      "a developer tool",
-	"cmd/export_config":     "a developer tool",
-	"cmd/smoke":             "the smoke suite's runner",
-	"cmd/spritegen":         "a developer tool",
-	"cmd/validate_upgrades": "a developer tool",
-	"cmd/words":             "this tool",
-	"smoke":                 "the smoke suite",
-	"detmath":               "arithmetic, no text",
-	"mapmodel/fixture":      "test fixtures",
-	"pkg/nerdfont":          "the icon font installer's glyph table and system paths",
-	"pkg/sprites":           "pixel art",
-	"ui/mapstyle/all":       "registers the map styles, no text",
-	"ui/mapstyle/capture":   "a developer capture tool, never shown in the game",
+	"cmd/balanceaudit":    "a developer tool",
+	"cmd/export_config":   "a developer tool",
+	"cmd/smoke":           "the smoke suite's runner",
+	"cmd/spritegen":       "a developer tool",
+	"cmd/words":           "this tool",
+	"smoke":               "the smoke suite",
+	"detmath":             "arithmetic, no text",
+	"mapmodel/fixture":    "test fixtures",
+	"pkg/nerdfont":        "the icon font installer's glyph table and system paths",
+	"pkg/sprites":         "pixel art",
+	"ui/mapstyle/all":     "registers the map styles, no text",
+	"ui/mapstyle/capture": "a developer capture tool, never shown in the game",
 }
 
 type scanMode int
