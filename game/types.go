@@ -187,7 +187,7 @@ type AgeAdvanceSummary struct {
 	OldAge               string
 	NewAge               string
 	BuildingsTransformed []BuildingTransform
-	BuildingsLegacy      []string // keys of buildings newly marked legacy this transition
+	BuildingsLegacy      []string // unused: nothing is marked legacy any more
 }
 
 // clone returns a copy that shares no slices with s.
@@ -197,7 +197,8 @@ func (s AgeAdvanceSummary) clone() AgeAdvanceSummary {
 	return s
 }
 
-// BuildingTransform describes one building that upgraded during an age advance.
+// BuildingTransform describes one building the age advance made older: the
+// copies held, and the building its line has for the new age.
 type BuildingTransform struct {
 	OldKey  string
 	OldName string

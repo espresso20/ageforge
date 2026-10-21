@@ -1010,7 +1010,7 @@ func (b *Bot) buyOrBootstrap(p *plan, key, kind string, depth int) bool {
 	return false
 }
 
-// upgrade converts legacy buildings to their next tier, one copy at a time.
+// upgrade converts older buildings to their line's building, one copy at a time.
 // It upgrades toward a required building whenever it can afford to, and
 // otherwise only while investing and only when a copy is cheap. It never
 // upgrades into a building with a MaxCount: an upgrade would spend one of the

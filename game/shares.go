@@ -235,11 +235,11 @@ func (ge *GameEngine) newStaffView() *staffView {
 			sv.food = i
 		}
 	}
-	// Fill order: this age's buildings before superseded ones, then the
+	// Fill order: this age's buildings before older ones, then the
 	// newest age first, then the higher tier of its line, then by key.
 	type fillKey struct {
 		key       string
-		legacy    bool
+		older     bool
 		age, tier int
 	}
 	order := make([][]fillKey, len(domains))
@@ -257,8 +257,8 @@ func (ge *GameEngine) newStaffView() *staffView {
 		sort.Slice(keys, func(a, b int) bool {
 			ka, kb := keys[a], keys[b]
 			switch {
-			case ka.legacy != kb.legacy:
-				return !ka.legacy
+			case ka.older != kb.older:
+				return !ka.older
 			case ka.age != kb.age:
 				return ka.age > kb.age
 			case ka.tier != kb.tier:

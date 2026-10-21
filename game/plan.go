@@ -1014,8 +1014,8 @@ func (ge *GameEngine) startPlanBuild(it *PlanItem, used map[string]float64) erro
 // staffed, and otherwise it would run at the unstaffed 20% until they came
 // back. Idle workers go first: into the copy, or, with worker shares set,
 // wherever the shares say (shares.go; the copy's domain may already have its
-// share). Then come workers in buildings an advance superseded (legacy: a
-// higher tier of their lineage is open), the same lineage's first: after a
+// share). Then come workers in older buildings (their line has a newer
+// building for the age), the same lineage's first: after a
 // `plan advance` the old age's copies have usually taken every idle hand,
 // and the new age's producers would otherwise wait for the next visit. With
 // shares set, only the copy's own domain gives workers, so the split holds.
@@ -1063,7 +1063,7 @@ func (ge *GameEngine) staffPlanCopy(key string) {
 }
 
 // planStaffSource reports whether staffPlanCopy may take workers from a
-// legacy building of def: a producer (production or research) that makes no
+// older building of def: a producer (production or research) that makes no
 // food. Soldiers, priests and the like stay where they are.
 func planStaffSource(def config.BuildingDef) bool {
 	if def.Category != "production" && def.Category != "research" {

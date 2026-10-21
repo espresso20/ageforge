@@ -86,26 +86,24 @@ Every age can be finished, and an automated test checks this in every release. T
 When your civilization crosses into a new age:
 
 1. **Carryover is capped.** Each resource the new age *uses as a build cost* is capped to roughly **8× the cheapest new-age starter building's cost** in that resource, enough to pay for a handful of opening buildings. If you were already below that cap, your stockpile carries over untouched. Anything above the cap is lost, so stockpiling before an advance doesn't pay. Resources the new age does **not** build with (mainly food) keep **10%** of what you had, and **faith is exempt** (it carries over in full). You enter each age with a small head start.
-2. **Buildings whose next rung arrives in the new age are marked as upgradeable.** The next rung is the next building of the same line, which makes the same resource (see [The 39 Building Lines](buildings.md#the-39-building-lines)), so a Sawmill is never offered a Coal Mine. They are not converted automatically. Storage buildings never upgrade: every stash, storage pit or vault you built keeps counting toward your storage for the rest of the run. Each upgradeable building shows a gold hint in the Economy panel:
-   ```
-   ↑ Upgrade available → Forager Post  type: upgrade gathering_camp
-   ```
-3. **Production continues at the old rate** until you upgrade. Leaving buildings un-upgraded costs nothing; the reason to upgrade is the new tier's higher output.
+2. **Buildings of earlier ages become older buildings.** Wherever a building's line has a newer building for the new age, the old one is an older building. The newer building is in the same line and makes the same resource (see [The 39 Building Lines](buildings.md#the-39-building-lines)), so a Sawmill is never offered a Coal Mine. Nothing is converted automatically. Storage buildings are in no line: every stash, storage pit or vault you built keeps counting toward your storage for the rest of the run.
+3. **Production continues at the old rate** until you upgrade. Leaving older buildings as they are costs nothing; the reason to upgrade is the new building's higher output, and an upgraded copy counts toward the next age's building requirements.
 4. **New-tier buildings are available at once** in the Buildings panel, so you can build fresh copies of the new tier right away.
 5. **The age's speed is set.** On known ground the log says how much faster the age runs (`Known ground: the Bronze Age runs 2.4x faster (mastery 2).`). Stepping from known ground onto an age no run has completed logs that it runs at 1x; storage shrinks back with the speed, but stock already above the new cap stays until you spend it (see [The grace rule](prestige.md#the-grace-rule)).
 
 ### Upgrading buildings after an advance
 
-Use the `upgrade` command to convert old copies to new ones, paying only the cost delta (new build cost minus 50% of the old building's value):
+Use the `upgrade` command to turn older buildings into the building their line has for your age. Each copy costs half of what a new copy of that building costs, and the command upgrades as many copies as you can pay for:
 
 ```
-upgrade gathering_camp       # upgrade all Gathering Camps to Forager Posts
-upgrade gathering_camp 3     # upgrade exactly 3 copies
+upgrade                      # list the older buildings you hold
+upgrade gathering_camp       # upgrade as many Gathering Camps as you can pay for
+upgrade gathering_camp 3     # upgrade up to 3 copies
 ```
 
-Workers transfer automatically when all copies of a building are upgraded. For partial upgrades, workers stay on the old building. An upgrade never takes the new building past its max count; copies beyond that stay as they are.
+An upgraded copy keeps its workers, and it counts as the new building for the next age's gate. A building from several ages back goes straight to the building of the current age. An upgrade never takes the new building past its max count.
 
-See [Buildings: Building Upgrades](buildings.md#building-upgrades) for the full cost formula, strategic timing advice, and worker transfer rules.
+See [Buildings: Building Upgrades](buildings.md#building-upgrades) for the price rule, the limits and worker moves.
 
 ## Epoch Overview
 

@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- **Upgrades are half price.** A building from an earlier age keeps producing and can be upgraded straight to its line's building for the current age, at half the price of a new copy. Upgraded copies count toward the next age.
 - **One resource per line.** The six building lines that changed resource partway are split, 39 lines in all; a line never switches resource, and an older building only upgrades to a building that makes the same resource.
 - **Ended resources stay ended.** A resource is priced for at most one age after the last age that builds a maker for it, never later. The Colonial Age's three wood prices are gone: the settlement block and the colonial warehouse pay in stone, the harbor in stone and gold.
 - **The Expeditions panel is the mission board.** It shows every offer with its length, odds, haul and cost, the missions under way, and the Geographic Society.

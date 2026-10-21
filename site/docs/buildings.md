@@ -1,6 +1,6 @@
 # Buildings
 
-AgeForge uses a **14-lineage system**, split into **39 building lines**, with 302 total buildings spanning production lineages, storage, wonders, cultural monuments and four standalone buildings (two embassies, the Geographic Society and the Nano Foundry). Buildings belong to lineages that span the full 22-age arc, and each lineage is made of lines: a line makes one resource from its first building to its last. When you advance an age, buildings that have a next rung in their line do **not** change on their own. They get a pending upgrade marker, and you upgrade them at your own pace with the `upgrade` command.
+AgeForge uses a **14-lineage system**, split into **39 building lines**, with 302 total buildings spanning production lineages, storage, wonders, cultural monuments and four standalone buildings (two embassies, the Geographic Society and the Nano Foundry). Buildings belong to lineages that span the full 22-age arc, and each lineage is made of lines: a line makes one resource from its first building to its last. A building from an earlier age is an **older building**: it keeps producing, and you can upgrade it to its line's building for your current age at half the price of a new copy with the `upgrade` command.
 
 For the full wonder list see [Wonders](wonders.md).
 
@@ -36,75 +36,56 @@ build                    list all available buildings with costs and count built
 
 ## Building Upgrades
 
-When you advance to a new age, buildings that have a next rung in their line do **not** change on their own. Each one gets a **pending upgrade** marker and keeps producing at its old rate. You choose when to upgrade, one building type at a time. A building only upgrades to a building that makes the same resource (see [The 39 Building Lines](#the-39-building-lines)): the last building of a line, such as the Sawmill, gets no offer, and the next age's building in that lineage, which makes a new resource, is built fresh.
+A building from an earlier age is an **older building**. It keeps producing what it always made. You can upgrade it to its line's building for your current age, at half the price of a new copy, and it then counts as that building.
 
-Storage buildings never get an upgrade: your stashes, storage pits and vaults keep counting toward your storage for the rest of the run (see [Storage Buildings](#storage-buildings-21-tiers)). Knowledge buildings never get one either: they keep their tier, and each age's knowledge building is built new in its own age (see [Scholars and Research](knowledge.md#what-a-scholar-is)).
+A building is older when its line has a newer building for the age you are in. Nothing is stored or marked: it is read from the line and the age, so it follows you through every advance. A Hut in the Iron Age is an older building, and it upgrades straight to the Iron Age's house, not one step at a time. A building only upgrades along its own line, to a building that makes the same resource (see [The 39 Building Lines](#the-39-building-lines)). A line that has no newer building for your age keeps its last building as its current one, so the last building of a line, such as the Sawmill, is never older, and a line that pauses for an age or two has nothing to upgrade to until it resumes.
 
-### The upgrade hint
+Some buildings are in no line and are never older: storage (your stashes, storage pits and vaults keep counting toward your storage for the rest of the run, see [Storage Buildings](#storage-buildings-21-tiers)), knowledge buildings (they keep their tier, and each age's knowledge building is built new in its own age, see [Scholars and Research](knowledge.md#what-a-scholar-is)), wonders and monuments.
 
-In the Economy panel's building list, a building with an upgrade waiting shows a gold hint line under it:
-
-```
-↑ Upgrade available: Forager Post. Type: upgrade gathering_camp
-```
-
-The log also lists each upgrade when you advance (`↑ 12 Gathering Camps can upgrade to Forager Post. Type 'upgrade gathering_camp'.`). Until you upgrade, the old building keeps producing normally, with no penalty for leaving it pending. The reason to upgrade is the higher production rate of the new tier.
+When you advance, the log names the buildings that became older (`↑ 12 Gathering Camps can upgrade to Forager Post. Type 'upgrade gathering_camp'.`). Leaving them as they are costs nothing: they keep producing at their old rate. You cannot build new copies of an older building; `build` says so and names the building it upgrades to.
 
 ### Upgrade commands
 
 ```
-upgrade                    list the upgrades you can make
-upgrade <building>         upgrade ALL copies of that building (default)
-upgrade <building> <n>     upgrade exactly n copies
-upgrade <building> all     same as no count argument
+upgrade                    list the older buildings you hold
+upgrade <building>         upgrade as many copies as you can pay for now
+upgrade <building> <n>     upgrade up to n copies
+upgrade <building> all     upgrade every copy you hold, as far as you can pay
 ```
 
-Bare `upgrade` prints one line per building with an upgrade waiting: the old and new keys, how many copies, the cost to upgrade all of them, and a check mark if you can afford it (a cross if not).
+Bare `upgrade` prints one line per older building you hold: the old and new keys, how many copies you hold, the price of the next copy, how many you can pay for now, and the reason if something blocks the next one (a tech to research, or a price larger than a store can hold).
 
-There is no global `upgrade all` command. Upgrades are per building, so you control the order and pacing. An upgrade takes effect at once: there is no build time.
-
-An upgrade stops at the new building's max count. If the target is capped and has room for fewer copies than you asked for, only that many are upgraded and the rest stay as they are; if it is already full, the upgrade is refused.
+Copies are upgraded one at a time, each at its own price, and the command stops at the first copy it cannot pay for. It says how many it upgraded, what they cost, and what the next copy costs or why it stopped. An upgrade takes effect at once: there is no build time. Upgrades are per building, so you control the order. An upgrade stops at the new building's max count, if it has one.
 
 **Examples:**
 ```
 upgrade gathering_camp
-upgrade forager_post 3
-upgrade forager_post all
+upgrade gathering_camp 3
+upgrade gathering_camp all
 ```
 
 ### Upgrade cost
 
-Each copy you upgrade costs the price of a new copy minus the old copy's sell value (half of what it cost). In other words, **you trade in the old building at 50% of its price toward the new one.** The sum is done per resource, and no resource goes below zero. Old copies are traded in from the most expensive down, and new copies are priced up the new building's cost curve as usual. Build-cost reductions apply to the new copy's price but not to the trade-in value. **Interchangeable Parts**, the Industrial Age's Craft capstone, then takes 15% off what is left to pay, in every resource.
+One upgraded copy costs **half** of what the next new copy of the building it becomes would cost right now, in every resource. The price is worked out the way a build is priced, with the same cost curve and the same build-cost cuts, and copies are priced one at a time: after each upgrade there is one more of the new building, so the next copy costs more. **Interchangeable Parts**, the Industrial Age's Craft capstone, takes another 15% off an upgrade's price.
 
-Because it is done per resource, the trade-in only counts in resources the new building costs. If the old building cost wood and the new one costs none, that part of its value is lost; so is any trade-in beyond the new price in a resource. An upgrade therefore never costs less than selling the old copy and building a new one, and sometimes a little more. What it saves is time: it is instant, with no build time, and the workers stay.
+The old copy is given up, and nothing is paid back for it. Selling an older building pays back half of its own price, but the copy stops producing, so an older building is better kept or upgraded than sold.
 
-How much the trade-in covers depends on how many old copies you have. With 10, the most expensive copy typically covers 10% to 40% of the first new copy's price. Around 20 to 25 copies it can cover all of it, if the two buildings cost the same resources; those upgrades are free.
+A price larger than a store can hold cannot be paid, however long you wait: the command refuses that copy and names the store. Build more storage first.
 
 ### Workers and upgrades
 
-- **Full upgrade** (all copies upgraded): workers move to the new building automatically. No reassignment needed.
-- **Partial upgrade** (only some copies upgraded): workers stay on the old building as far as its remaining copies can hold them. Any extra workers move to the new building while it has room, and the rest go back to the idle pool.
+An upgraded copy keeps its workers. They move from the old building's slots to the new building's, one copy's share at a time. If the new building has fewer slots, the extra workers go back to the idle pool.
 
-### Legacy buildings (pending upgrade)
+### Counting toward the next age
 
-Once a building has a pending upgrade:
-
-- It **keeps producing** at its current rate, with no penalty.
-- You **cannot build more** copies of the old tier; `build` refuses it.
-- You **can still** `assign`, `unassign` and `sell` copies of the old tier as normal.
-- It counts toward your civilization stats as usual.
-
-Don't let pending upgrades pile up during high-demand periods. Upgrading your food lineage before a resource squeeze is almost always the right call.
-
-**Upgrade before you advance again.** Upgrade offers are made only when you advance, one tier at a time. Copies you carry through a second advance can still upgrade into the tier they were offered, but the copies that upgrade produces may never be offered another upgrade (Wood Camps upgraded to Woodcutter Camps in the Bronze Age, for example, get no offer in the Iron Age or after). Build the newer tier fresh instead, and clear each age's upgrades before you leave it.
+An upgraded copy is the building it became. It counts for the next age's building requirements, for milestones and badges, and for the price of the next copy. A requirement that names an older building (a milestone that asks for Wood Camps, a gate that asks for Stone Camps, a trade route that needs Markets) also counts the later buildings of the same line, so upgrading copies away never takes that progress back.
 
 ### Strategic advice
 
-- **Upgrade high-count buildings early.** The most expensive old copies give the biggest trade-in, so a civilization with 15 Gathering Camps gets proportionally cheaper upgrades than one with 3.
+- **Older copies are a head start.** Upgrading a Gathering Camp costs half of a new Forager Post, and the upgraded copy counts toward the next age's gate like any other.
 - **Upgrade before a food crunch.** A Forager Post makes 1.5 food/tick fully staffed against a Gathering Camp's 1. If a [harbinger](harbinger.md) warns that a catastrophe is coming, upgraded food buildings give you a wider safety margin.
-- **You control the order.** You might upgrade your food lineage as soon as you advance and leave military or knowledge buildings pending until you've banked enough resources. Within the age there is no time pressure, because pending buildings still produce; just finish before your next advance (see above).
-- **Keep pending buildings until you upgrade them.** Selling a pending copy pays back its 50% at once, about what it brings as a trade-in, but the copy stops producing. Sell only when you need those resources right now.
-- **A tech-gated tier waits for its tech.** In the ages where the new tier needs a tech first (see [Buildings a tech opens](#buildings-a-tech-opens)), `upgrade` refuses until the tech is done, even though the hint already shows.
+- **You control the order.** You might upgrade your food line as soon as you advance and leave military buildings as they are until you have banked enough resources. Older buildings keep producing in the meantime.
+- **A tech-gated building waits for its tech.** Where the new building needs a tech first (see [Buildings a tech opens](#buildings-a-tech-opens)), `upgrade` refuses and names the tech.
 
 ---
 
@@ -209,7 +190,7 @@ Most buildings unlock the moment you enter their age. Forty wait for a tech from
 | Omniversal War Council | Transcendent | Omniversal Command |
 | Omniversal Bazaar | Transcendent | Omniversal Exchange |
 
-Until the tech is done the building is missing from the build list, and `build` and `upgrade` say which tech it needs. Each of these buildings is its lineage's tier for that age, so the upgrade hint for the old tier shows when you advance, but the upgrade itself waits for the tech. The build plan takes it early and waits. Copies you already have keep working. See [Technologies](technologies.md#tech-tree-by-age).
+Until the tech is done the building is missing from the build list, and `build` and `upgrade` say which tech it needs. Each of these buildings is its line's building for that age, so the older buildings of its line list it as their upgrade when you advance, but the upgrade itself waits for the tech. The build plan takes it early and waits. Copies you already have keep working. See [Technologies](technologies.md#tech-tree-by-age).
 
 A tech only takes a building when the age keeps another way to make the same thing (the Mill beside the Foundry, the Port beside the Harbor), or when the tech is one a run researches anyway. A building that is its age's only source of what it makes is open from the first tick of its age: every age's knowledge and culture building and most of its military ones, the Steam Mine, the Uranium Mine, the Financial District, the Corporate HQ, the Petroleum Refinery, the Nano Foundry, the titanium smelters and mines and the data buildings from the Cyber Hub on among them. The Transcendent Age is the exception: nothing comes after it, so nothing can be stuck behind a tech, and its Singularity Engine, Omniversal Bazaar and Omniversal War Council each wait for one of its three last techs.
 
@@ -221,11 +202,11 @@ Wonders wait for a tech too, in their own way: from the Stone Age on each one ne
 
 Each lineage starts at a specific age and gets a new tier in most ages after that. A lineage that makes the same resource all the way is one line. A lineage whose resource changes partway is split into one line for each resource, and a building only ever upgrades along its own line. When your civilization enters a new age:
 
-1. Buildings whose line has a next rung in the new age get a **pending upgrade** marker.
-2. The old building becomes **legacy**: it keeps producing at its old rate but cannot be built again. The last building of a line has no next rung and never becomes legacy.
-3. The new building becomes available to build (fresh copies) and to upgrade into (from old copies of its own line).
+1. Each line has one **current building** for your age: its newest building that the age has. Buildings of the line from earlier ages are **older buildings**.
+2. Older buildings keep producing at their old rate but cannot be built again. The last building of a line has no newer building and is never older.
+3. The current building is available to build (fresh copies) and to upgrade into (from older copies of its own line).
 
-You keep all your progress and production. A Gathering Camp in the Food lineage upgrades to a Forager Post, then a Farm, then Field Works; use `upgrade <building>` after each advance to convert your existing copies. See [Building Upgrades](#building-upgrades) for cost details and strategy.
+You keep all your progress and production. A Gathering Camp in the Food lineage upgrades to a Forager Post, then a Farm, then Field Works; use `upgrade <building>` after an advance to convert the copies you hold. See [Building Upgrades](#building-upgrades) for cost details and strategy.
 
 ---
 
@@ -474,13 +455,13 @@ Metallurgy buildings produce metal directly; they do not use up ore.
 
 ---
 
-## Legacy Buildings
+## Older Buildings
 
-When an age advance gives a building a pending upgrade, or unlocks a later building of its line, it becomes legacy. The last building of a line never does. Legacy buildings:
+A building is older when its line has a newer building for the age you are in (see [Building Upgrades](#building-upgrades)). Older buildings:
 
 - Keep producing at their normal rate (you lose nothing when you advance)
-- Cannot be built again
-- Show a gold `↑ Upgrade available` hint with the target building's name in the Economy panel
+- Cannot be built again; `build` names the building they upgrade to
+- Can be upgraded, at half the price of a new copy of that building
 - Count toward building totals in your civilization stats
 - Can still have workers assigned and unassigned, and can be sold as normal
 
