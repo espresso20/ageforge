@@ -101,3 +101,56 @@ func TestLoadGame_RestoresPendingUpgrades(t *testing.T) {
 		t.Logf("  upgrade: %s -> %s (count=%d)", u.FromKey, u.ToKey, u.Count)
 	}
 }
+
+// TestAdvanceAge_LinesNeverSwitchResource: an age turn offers an upgrade only
+// along a building's own one-resource line. The sawmill is the last of the
+// wood line, so the coal age offers it nothing and never makes it legacy; a
+// line that paused (titanium) is offered its next rung when it resumes.
+func TestAdvanceAge_LinesNeverSwitchResource(t *testing.T) {
+	ge := NewGameEngine()
+	for _, k := range []string{"wood_workshop", "sawmill", "crypto_exchange", "black_market", "nano_alloy_plant"} {
+		ge.Buildings.UnlockBuilding(k)
+		ge.Buildings.counts[k] = 1
+	}
+	ge.advanceAge("medieval_age")
+	if got, ok := ge.Buildings.GetPendingUpgrade("wood_workshop"); !ok || got != "sawmill" {
+		t.Errorf("wood_workshop upgrade = %q, %v; want sawmill", got, ok)
+	}
+	ge.advanceAge("renaissance_age")
+	ge.advanceAge("colonial_age")
+	if got, ok := ge.Buildings.GetPendingUpgrade("sawmill"); ok {
+		t.Errorf("sawmill is the last of the wood line but is offered %s", got)
+	}
+	if ge.Buildings.IsLegacy("sawmill") {
+		t.Error("sawmill is the last of its line and must not be legacy")
+	}
+	ge.advanceAge("cyberpunk_age")
+	if got, ok := ge.Buildings.GetPendingUpgrade("crypto_exchange"); ok {
+		t.Errorf("crypto_exchange is offered %s in the Cyberpunk Age, which makes crypto, not gold", got)
+	}
+	ge.advanceAge("fusion_age")
+	if got, ok := ge.Buildings.GetPendingUpgrade("crypto_exchange"); !ok || got != "energy_exchange" {
+		t.Errorf("crypto_exchange upgrade in the Fusion Age = %q, %v; want energy_exchange", got, ok)
+	}
+	if got, ok := ge.Buildings.GetPendingUpgrade("black_market"); ok {
+		t.Errorf("black_market is the last of the crypto line but is offered %s", got)
+	}
+	ge.advanceAge("space_age")
+	if got, ok := ge.Buildings.GetPendingUpgrade("nano_alloy_plant"); !ok || got != "orbital_refinery" {
+		t.Errorf("nano_alloy_plant upgrade in the Space Age = %q, %v; want orbital_refinery", got, ok)
+	}
+}
+
+// An old save's upgrade offers follow the lines too (rebuildPendingUpgrades).
+func TestRebuildPendingUpgrades_FollowsTheLine(t *testing.T) {
+	ge := NewGameEngine()
+	ge.Buildings.counts["nano_alloy_plant"] = 1
+	ge.Buildings.counts["sawmill"] = 1
+	got := ge.rebuildPendingUpgrades([]string{"nano_alloy_plant", "sawmill"}, "space_age")
+	if got["nano_alloy_plant"] != "orbital_refinery" {
+		t.Errorf("nano_alloy_plant offer = %q, want orbital_refinery", got["nano_alloy_plant"])
+	}
+	if v, ok := got["sawmill"]; ok {
+		t.Errorf("sawmill is the last of the wood line but is offered %s", v)
+	}
+}

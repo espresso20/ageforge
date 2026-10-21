@@ -74,13 +74,13 @@ func State(o Options) game.GameState {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	// the highest tier each lineage has reached
+	// the highest tier each line has reached (a line never switches resource)
 	top := map[string]int{}
 	for _, k := range keys {
 		d := defs[k]
 		if ageIdx[d.RequiredAge] <= ai && d.LineageKey != "" && d.Category != "wonder" {
-			if t, seen := top[d.LineageKey]; !seen || d.LineageTier > t {
-				top[d.LineageKey] = d.LineageTier
+			if t, seen := top[d.Line()]; !seen || d.LineageTier > t {
+				top[d.Line()] = d.LineageTier
 			}
 		}
 	}
@@ -108,7 +108,7 @@ func State(o Options) game.GameState {
 		if h(k, 1)%6 == 0 && da < ai {
 			continue // not every player builds everything
 		}
-		legacy := d.LineageKey != "" && d.LineageTier < top[d.LineageKey] && d.Category != "storage"
+		legacy := d.LineageKey != "" && d.LineageTier < top[d.Line()] && d.Category != "storage"
 		n := 2 + int(h(k, 2)%9)
 		if da == ai {
 			n = 1 + int(h(k, 3)%6)

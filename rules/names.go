@@ -72,6 +72,7 @@ const (
 	CountDomains     = "worker domains"
 	CountShopItems   = "prestige shop items"
 	CountLineages    = "lineages"
+	CountLines       = "building lines"
 	CountWonders     = "wonders"
 	CountCivs        = "civilizations"
 	CountRoutes      = "trade routes"
@@ -91,7 +92,7 @@ func (s *Set) buildCounts() {
 		CountEras: len(s.eras), CountDomains: len(s.domains), CountShopItems: len(s.shop),
 		CountCivs: len(s.factions), CountRoutes: len(s.routes),
 	}
-	lineages := map[string]bool{}
+	lineages, lines := map[string]bool{}, map[string]bool{}
 	for _, d := range s.buildings {
 		switch {
 		case d.Category == "wonder":
@@ -103,11 +104,13 @@ func (s *Set) buildCounts() {
 		case d.LineageKey != "" && d.LineageKey != lineageStorage && d.LineageKey != lineageWonder && d.LineageKey != lineageMonuments:
 			c[CountLineageBld]++
 			lineages[d.LineageKey] = true
+			lines[d.Line()] = true
 		default:
 			c[CountStandalone]++
 		}
 	}
 	c[CountLineages] = len(lineages)
+	c[CountLines] = len(lines)
 	s.counts = c
 }
 

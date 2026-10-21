@@ -25,7 +25,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  20,
 		RequiredAge: "primitive_age",
 		Description: "A basic camp for collecting wood.",
-		LineageKey:  "organic_extraction", LineageTier: 0,
+		LineageKey:  "organic_extraction", LineageTier: 0, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 3,
 		EpochKey: "stone_era", OutputResource: "wood",
 	})
@@ -38,7 +38,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  50,
 		RequiredAge: "stone_age",
 		Description: "Choppers fell trees with stone axes.",
-		LineageKey:  "organic_extraction", LineageTier: 1,
+		LineageKey:  "organic_extraction", LineageTier: 1, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 4,
 		EpochKey: "stone_era", OutputResource: "wood",
 	})
@@ -51,7 +51,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  150,
 		RequiredAge: "bronze_age",
 		Description: "Bronze-saw lumber processing.",
-		LineageKey:  "organic_extraction", LineageTier: 2,
+		LineageKey:  "organic_extraction", LineageTier: 2, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 5,
 		EpochKey: "stone_era", OutputResource: "wood",
 	})
@@ -64,7 +64,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "Iron-saw timber processing yard.",
-		LineageKey:  "organic_extraction", LineageTier: 3,
+		LineageKey:  "organic_extraction", LineageTier: 3, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 5,
 		EpochKey: "iron_era", OutputResource: "wood",
 	})
@@ -77,7 +77,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "Skilled carpenters working at full tilt.",
-		LineageKey:  "organic_extraction", LineageTier: 4,
+		LineageKey:  "organic_extraction", LineageTier: 4, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "wood",
 	})
@@ -90,7 +90,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "Water-wheel-powered sawmill.",
-		LineageKey:  "organic_extraction", LineageTier: 5,
+		LineageKey:  "organic_extraction", LineageTier: 5, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "wood",
 	})
@@ -103,7 +103,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
 		Description: "Early coal extraction for industry.",
-		LineageKey:  "organic_extraction", LineageTier: 6,
+		LineageKey:  "organic_extraction", LineageTier: 6, LineKey: "organic_extraction_coal",
 		WorkerDomain: "lumber", WorkerCapacity: 7,
 		EpochKey: "steel_era", OutputResource: "coal",
 	})
@@ -118,7 +118,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
 		Description: "Organized coal extraction and processing.",
-		LineageKey:  "organic_extraction", LineageTier: 7,
+		LineageKey:  "organic_extraction", LineageTier: 7, LineKey: "organic_extraction_coal",
 		WorkerDomain: "lumber", WorkerCapacity: 8,
 		EpochKey: "steel_era", OutputResource: "coal",
 	})
@@ -131,7 +131,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
 		Description: "Steam-powered coal extraction plant.",
-		LineageKey:  "organic_extraction", LineageTier: 8,
+		LineageKey:  "organic_extraction", LineageTier: 8, LineKey: "organic_extraction_coal",
 		WorkerDomain: "lumber", WorkerCapacity: 10,
 		EpochKey: "steel_era", OutputResource: "coal",
 	})
@@ -144,7 +144,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
 		Description: "Early oil extraction derrick.",
-		LineageKey:  "organic_extraction", LineageTier: 9,
+		LineageKey:  "organic_extraction", LineageTier: 9, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 10,
 		EpochKey: "electric_era", OutputResource: "oil",
 	})
@@ -157,7 +157,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "electric_age",
 		Description: "Electrified oil field operations.",
-		LineageKey:  "organic_extraction", LineageTier: 10,
+		LineageKey:  "organic_extraction", LineageTier: 10, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 12,
 		EpochKey: "electric_era", OutputResource: "oil",
 	})
@@ -170,7 +170,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
 		Description: "Advanced petroleum refinery.",
-		LineageKey:  "organic_extraction", LineageTier: 11,
+		LineageKey:  "organic_extraction", LineageTier: 11, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 12,
 		EpochKey: "electric_era", OutputResource: "oil",
 	})
@@ -185,7 +185,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
 		Description: "Offshore AI-monitored oil platform.",
-		LineageKey:  "organic_extraction", LineageTier: 12,
+		LineageKey:  "organic_extraction", LineageTier: 12, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 14,
 		EpochKey: "digital_era", OutputResource: "oil",
 	})
@@ -198,7 +198,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "information_age",
 		Description: "AI-optimized smart petroleum refinery.",
-		LineageKey:  "organic_extraction", LineageTier: 13,
+		LineageKey:  "organic_extraction", LineageTier: 13, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 15,
 		EpochKey: "digital_era", OutputResource: "oil",
 	})
@@ -211,7 +211,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "digital_age",
 		Description: "Digital-biological nanofabrication.",
-		LineageKey:  "organic_extraction", LineageTier: 14,
+		LineageKey:  "organic_extraction", LineageTier: 14, LineKey: "organic_extraction_nanobots",
 		WorkerDomain: "lumber", WorkerCapacity: 16,
 		EpochKey: "digital_era", OutputResource: "nanobots",
 	})
@@ -224,7 +224,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
 		Description: "Vat-grown nanobot manufacturing.",
-		LineageKey:  "organic_extraction", LineageTier: 15,
+		LineageKey:  "organic_extraction", LineageTier: 15, LineKey: "organic_extraction_nanobots",
 		WorkerDomain: "lumber", WorkerCapacity: 18,
 		EpochKey: "neon_era", OutputResource: "nanobots",
 	})
@@ -237,7 +237,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "fusion_age",
 		Description: "Plasma-powered molecular synthesis.",
-		LineageKey:  "organic_extraction", LineageTier: 16,
+		LineageKey:  "organic_extraction", LineageTier: 16, LineKey: "organic_extraction_nanobots",
 		WorkerDomain: "lumber", WorkerCapacity: 20,
 		EpochKey: "neon_era", OutputResource: "nanobots",
 	})
@@ -250,7 +250,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "space_age",
 		Description: "Quantum-state organic matter extraction.",
-		LineageKey:  "organic_extraction", LineageTier: 17,
+		LineageKey:  "organic_extraction", LineageTier: 17, LineKey: "organic_extraction_quantum_flux",
 		WorkerDomain: "lumber", WorkerCapacity: 20,
 		EpochKey: "neon_era", OutputResource: "quantum_flux",
 	})
@@ -263,7 +263,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
 		Description: "Weaves reality matter into quantum flux.",
-		LineageKey:  "organic_extraction", LineageTier: 18,
+		LineageKey:  "organic_extraction", LineageTier: 18, LineKey: "organic_extraction_quantum_flux",
 		WorkerDomain: "lumber", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})
@@ -276,7 +276,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "galactic_age",
 		Description: "Galactic-scale cosmic organic works.",
-		LineageKey:  "organic_extraction", LineageTier: 19,
+		LineageKey:  "organic_extraction", LineageTier: 19, LineKey: "organic_extraction_quantum_flux",
 		WorkerDomain: "lumber", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})
@@ -291,7 +291,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
 		Description: "Harvests raw quantum flux from reality itself.",
-		LineageKey:  "organic_extraction", LineageTier: 20,
+		LineageKey:  "organic_extraction", LineageTier: 20, LineKey: "organic_extraction_quantum_flux",
 		WorkerDomain: "lumber", WorkerCapacity: 30,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})

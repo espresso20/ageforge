@@ -43,6 +43,7 @@ const (
 	qThemes      = "themes"
 	qDomains     = rules.CountDomains
 	qLineages    = rules.CountLineages
+	qLines       = rules.CountLines
 	qWonders     = rules.CountWonders
 	qFactions    = rules.CountCivs
 	qRoutes      = rules.CountRoutes
@@ -74,6 +75,7 @@ var claimWords = []struct {
 }{
 	{regexp.MustCompile(`(?i)\b(\d+)[- ]lineage buildings\b`), qLineageBld, 50},
 	{regexp.MustCompile(`(?i)\b(\d+)[- ](?:production )?lineages?\b`), qLineages, 5},
+	{regexp.MustCompile(`(?i)\b(\d+) (?:building|production) lines\b`), qLines, 5},
 	{regexp.MustCompile(`(?i)\b(\d+) (?:total )?buildings\b`), qBuildings, 100},
 	{regexp.MustCompile(`(?i)\b(\d+) (?:technologies|techs)\b`), qTechs, 20},
 	{regexp.MustCompile(`(?i)\b(\d+) milestones\b`), qMilestones, 20},
