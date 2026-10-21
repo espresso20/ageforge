@@ -1,6 +1,6 @@
 # Buildings
 
-AgeForge uses a **14-lineage system** with 302 total buildings spanning production lineages, storage, wonders, cultural monuments and four standalone buildings (two embassies, the Geographic Society and the Nano Foundry). Buildings belong to lineages that span the full 22-age arc. When you advance an age, buildings that have a next-tier equivalent do **not** change on their own. They get a pending upgrade marker, and you upgrade them at your own pace with the `upgrade` command.
+AgeForge uses a **14-lineage system**, split into **39 building lines**, with 302 total buildings spanning production lineages, storage, wonders, cultural monuments and four standalone buildings (two embassies, the Geographic Society and the Nano Foundry). Buildings belong to lineages that span the full 22-age arc, and each lineage is made of lines: a line makes one resource from its first building to its last. When you advance an age, buildings that have a next rung in their line do **not** change on their own. They get a pending upgrade marker, and you upgrade them at your own pace with the `upgrade` command.
 
 For the full wonder list see [Wonders](wonders.md).
 
@@ -36,7 +36,7 @@ build                    list all available buildings with costs and count built
 
 ## Building Upgrades
 
-When you advance to a new age, buildings that have a next-tier equivalent do **not** change on their own. Each one gets a **pending upgrade** marker and keeps producing at its old rate. You choose when to upgrade, one building type at a time.
+When you advance to a new age, buildings that have a next rung in their line do **not** change on their own. Each one gets a **pending upgrade** marker and keeps producing at its old rate. You choose when to upgrade, one building type at a time. A building only upgrades to a building that makes the same resource (see [The 39 Building Lines](#the-39-building-lines)): the last building of a line, such as the Sawmill, gets no offer, and the next age's building in that lineage, which makes a new resource, is built fresh.
 
 Storage buildings never get an upgrade: your stashes, storage pits and vaults keep counting toward your storage for the rest of the run (see [Storage Buildings](#storage-buildings-21-tiers)). Knowledge buildings never get one either: they keep their tier, and each age's knowledge building is built new in its own age (see [Scholars and Research](knowledge.md#what-a-scholar-is)).
 
@@ -219,11 +219,11 @@ Wonders wait for a tech too, in their own way: from the Stone Age on each one ne
 
 ## Lineage System
 
-Each lineage starts at a specific age and gets a new tier in most ages after that. When your civilization enters a new age:
+Each lineage starts at a specific age and gets a new tier in most ages after that. A lineage that makes the same resource all the way is one line. A lineage whose resource changes partway is split into one line for each resource, and a building only ever upgrades along its own line. When your civilization enters a new age:
 
-1. Buildings in active lineages that have a next tier get a **pending upgrade** marker.
-2. The old tier becomes **legacy**: it keeps producing at its old rate but cannot be built again.
-3. The new tier becomes available to build (fresh copies) and to upgrade into (from old copies).
+1. Buildings whose line has a next rung in the new age get a **pending upgrade** marker.
+2. The old building becomes **legacy**: it keeps producing at its old rate but cannot be built again. The last building of a line has no next rung and never becomes legacy.
+3. The new building becomes available to build (fresh copies) and to upgrade into (from old copies of its own line).
 
 You keep all your progress and production. A Gathering Camp in the Food lineage upgrades to a Forager Post, then a Farm, then Field Works; use `upgrade <building>` after each advance to convert your existing copies. See [Building Upgrades](#building-upgrades) for cost details and strategy.
 
@@ -253,6 +253,48 @@ You keep all your progress and production. A Gathering Camp in the Food lineage 
 The **Knowledge** lineage is the one that comes with scholars. Each copy comes with its scholars, from 2 for a Story Circle to 20 for a Reality Academy, who take no workers, and each copy costs 50% more than the one before it. A knowledge building cannot be built past its cap, the count its age's gate asks for, 5 to 10 copies. [Scholars and Research](knowledge.md#what-a-scholar-is) has each building's scholars, work and cap.
 
 The **Mainframe Hall** (Modern Age) is the first tier of the Hacker/Digital lineage and the first building that makes data. It uses `hacker` workers, the Modern Age's gate asks for eight of it, and its next tier is the Server Farm in the Information Age.
+
+---
+
+## The 39 Building Lines
+
+A **line** is a run of buildings in one lineage that make the same resource. A line never switches resource: when a lineage moves on to a new resource, the new buildings start a new line, and an old building only ever upgrades to the next building of its own line. Eight lineages never change what they make, so each is one line: Housing, Food, Knowledge, Faith, Military, Culture/Arts, Hacker/Digital and Harbor. The other six are split into 31 lines, 39 in all.
+
+A line can pause and pick up again. Energy's electricity line stops for the Modern Age, when the Oil Refinery makes oil, and picks up in the Information Age; Metallurgy's titanium line skips the Cyberpunk and Fusion Ages, when the Dark Matter Refinery and the Exotic Matter Forge make dark matter, and Trade's gold line skips the Cyberpunk Age, when the Black Market Hub makes crypto. A building whose line comes back is offered the next building of its line when its age arrives.
+
+| Lineage | Makes | Ages | Buildings | First | Last |
+|---------|-------|------|-----------|-------|------|
+| Organic Extraction | wood | Primitive to Medieval | 6 | Wood Camp | Sawmill |
+| Organic Extraction | coal | Renaissance to Industrial | 3 | Coal Mine | Steam Colliery |
+| Organic Extraction | oil | Victorian to Information | 5 | Oil Derrick | Smart Refinery |
+| Organic Extraction | nanobots | Digital to Fusion | 3 | Bio Fabrication Lab | Molecular Synthesizer |
+| Organic Extraction | quantum flux | Space to Quantum | 4 | Quantum Organic Extractor | Reality Harvester |
+| Geological Extraction | stone | Stone to Classical | 5 | Stone Camp | Marble Works |
+| Geological Extraction | iron ore | Medieval to Industrial | 4 | Stonemason's Guild | Steam Mine |
+| Geological Extraction | uranium | Victorian to Atomic | 3 | Uranium Mine | Uranium Processing Works |
+| Geological Extraction | titanium ore | Modern to Digital | 3 | Titanium Mine | Nano Drill Complex |
+| Geological Extraction | dark matter crystals | Cyberpunk to Space | 3 | Dark Crystal Mine | Asteroid Crystal Mine |
+| Geological Extraction | antimatter | Interstellar to Quantum | 3 | Stellar Core Drill | Reality Excavator |
+| Trade | gold | Bronze to Digital and Fusion to Transcendent | 19 | Market | Omniversal Bazaar |
+| Trade | crypto | Cyberpunk | 1 | Black Market Hub | Black Market Hub |
+| Engineering | iron | Bronze to Medieval | 4 | Smithy | Workshop |
+| Engineering | steel | Renaissance to Victorian | 4 | Mill | Steam Works |
+| Engineering | electricity | Electric to Digital | 5 | Power Station | Neural Grid |
+| Engineering | plasma | Cyberpunk to Space | 3 | Augmentation Foundry | Launch Complex |
+| Engineering | dark matter | Interstellar to Galactic | 2 | Warp Drive Plant | Dyson Assembly |
+| Engineering | quantum flux | Quantum to Transcendent | 2 | Reality Forge | Singularity Engine |
+| Metallurgy | iron | Iron to Medieval | 3 | Smelter | Ironmonger |
+| Metallurgy | steel | Renaissance to Atomic | 6 | Foundry | Advanced Alloy Plant |
+| Metallurgy | titanium | Modern to Digital and Space | 4 | Titanium Smelter | Orbital Refinery |
+| Metallurgy | dark matter | Cyberpunk to Fusion | 2 | Dark Matter Refinery | Exotic Matter Forge |
+| Metallurgy | antimatter | Interstellar to Galactic | 2 | Antimatter Forge | Stellar Metallurgy |
+| Metallurgy | quantum flux | Quantum | 1 | Quantum Metal Works | Quantum Metal Works |
+| Energy | coal | Industrial | 1 | Coal Plant | Coal Plant |
+| Energy | electricity | Victorian to Atomic and Information to Cyberpunk | 6 | Steam Turbine | Dark Energy Tap |
+| Energy | oil | Modern | 1 | Oil Refinery | Oil Refinery |
+| Energy | plasma | Fusion to Interstellar | 3 | Tokamak Array | Pulsar Tap |
+| Energy | dark matter | Galactic | 1 | Quasar Tap | Quasar Tap |
+| Energy | quantum flux | Quantum | 1 | Zero Point Generator | Zero Point Generator |
 
 ---
 
@@ -358,7 +400,7 @@ Four raw materials are made and spent like wood or stone, in the ages that make 
 
 ## Lineage Output Progression
 
-Several lineages change which resource they produce as you move through the ages. Each new tier simply produces the new resource, so you don't need to rebuild or reconfigure anything.
+Several lineages change which resource they make as you move through the ages. The new resource starts a new line (see [The 39 Building Lines](#the-39-building-lines)): its first building is built fresh, the old line's buildings keep making the old resource, and nothing upgrades across from one to the other. A Sawmill never turns into a Coal Mine.
 
 **Some tiers arrive before their resource does.** A resource gathers nothing until the age that unlocks it, whatever makes it. These buildings say `once unlocked` beside that output in their description:
 
@@ -434,7 +476,7 @@ Metallurgy buildings produce metal directly; they do not use up ore.
 
 ## Legacy Buildings
 
-When an age advance gives a lineage tier a pending upgrade, those buildings become legacy. Legacy buildings:
+When an age advance gives a building a pending upgrade, or unlocks a later building of its line, it becomes legacy. The last building of a line never does. Legacy buildings:
 
 - Keep producing at their normal rate (you lose nothing when you advance)
 - Cannot be built again

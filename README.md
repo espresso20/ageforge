@@ -58,7 +58,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **The Map**: your town drawn from your real buildings, in two styles (a roguelike glyph world and a side-on skyline), changing with every age, with a mini map on the dashboard
 - **Random Events**: 61 events (26 base + 35 epoch-exclusive) with streak balancing
 - **Milestones**: 77 milestones across 6 chains with civilization titles and temporary speed boosts
-- **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements; on each advance, lineage buildings with a next tier can be upgraded to it (`upgrade`)
+- **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements; on each advance, buildings with a next rung in their line (a line never switches resource) can be upgraded to it (`upgrade`)
 - **Trade System**: 21 trade routes, harbors and a black market
 - **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, rotating faction trade deals, boons and setbacks
 - **Prestige**: Reset-and-grow system from the Medieval Age on. Every point ever earned is a lasting production bonus in every age. Plan Template, Roster and Old Friends carry over automatically after the first prestige. Era Mastery: every age a run completes runs faster on later runs, up to 4.2x

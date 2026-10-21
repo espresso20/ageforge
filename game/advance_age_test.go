@@ -108,34 +108,40 @@ func TestLoadGame_RestoresPendingUpgrades(t *testing.T) {
 // line that paused (titanium) is offered its next rung when it resumes.
 func TestAdvanceAge_LinesNeverSwitchResource(t *testing.T) {
 	ge := NewGameEngine()
+	// Each step stays in the epoch the engine is in: an epoch crossing rolls a
+	// random event that could cost a copy.
+	advance := func(age string) {
+		ge.currentEpoch = ge.rules.EraOf(age)
+		ge.advanceAge(age)
+	}
 	for _, k := range []string{"wood_workshop", "sawmill", "crypto_exchange", "black_market", "nano_alloy_plant"} {
 		ge.Buildings.UnlockBuilding(k)
 		ge.Buildings.counts[k] = 1
 	}
-	ge.advanceAge("medieval_age")
+	advance("medieval_age")
 	if got, ok := ge.Buildings.GetPendingUpgrade("wood_workshop"); !ok || got != "sawmill" {
 		t.Errorf("wood_workshop upgrade = %q, %v; want sawmill", got, ok)
 	}
-	ge.advanceAge("renaissance_age")
-	ge.advanceAge("colonial_age")
+	advance("renaissance_age")
+	advance("colonial_age")
 	if got, ok := ge.Buildings.GetPendingUpgrade("sawmill"); ok {
 		t.Errorf("sawmill is the last of the wood line but is offered %s", got)
 	}
 	if ge.Buildings.IsLegacy("sawmill") {
 		t.Error("sawmill is the last of its line and must not be legacy")
 	}
-	ge.advanceAge("cyberpunk_age")
+	advance("cyberpunk_age")
 	if got, ok := ge.Buildings.GetPendingUpgrade("crypto_exchange"); ok {
 		t.Errorf("crypto_exchange is offered %s in the Cyberpunk Age, which makes crypto, not gold", got)
 	}
-	ge.advanceAge("fusion_age")
+	advance("fusion_age")
 	if got, ok := ge.Buildings.GetPendingUpgrade("crypto_exchange"); !ok || got != "energy_exchange" {
 		t.Errorf("crypto_exchange upgrade in the Fusion Age = %q, %v; want energy_exchange", got, ok)
 	}
 	if got, ok := ge.Buildings.GetPendingUpgrade("black_market"); ok {
 		t.Errorf("black_market is the last of the crypto line but is offered %s", got)
 	}
-	ge.advanceAge("space_age")
+	advance("space_age")
 	if got, ok := ge.Buildings.GetPendingUpgrade("nano_alloy_plant"); !ok || got != "orbital_refinery" {
 		t.Errorf("nano_alloy_plant upgrade in the Space Age = %q, %v; want orbital_refinery", got, ok)
 	}

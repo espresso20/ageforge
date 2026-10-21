@@ -86,7 +86,7 @@ Every age can be finished, and an automated test checks this in every release. T
 When your civilization crosses into a new age:
 
 1. **Carryover is capped.** Each resource the new age *uses as a build cost* is capped to roughly **8× the cheapest new-age starter building's cost** in that resource, enough to pay for a handful of opening buildings. If you were already below that cap, your stockpile carries over untouched. Anything above the cap is lost, so stockpiling before an advance doesn't pay. Resources the new age does **not** build with (mainly food) keep **10%** of what you had, and **faith is exempt** (it carries over in full). You enter each age with a small head start.
-2. **Buildings whose next tier arrives in the new age are marked as upgradeable.** They are not converted automatically. Storage buildings never upgrade: every stash, storage pit or vault you built keeps counting toward your storage for the rest of the run. Each upgradeable building shows a gold hint in the Economy panel:
+2. **Buildings whose next rung arrives in the new age are marked as upgradeable.** The next rung is the next building of the same line, which makes the same resource (see [The 39 Building Lines](buildings.md#the-39-building-lines)), so a Sawmill is never offered a Coal Mine. They are not converted automatically. Storage buildings never upgrade: every stash, storage pit or vault you built keeps counting toward your storage for the rest of the run. Each upgradeable building shows a gold hint in the Economy panel:
    ```
    ↑ Upgrade available → Forager Post  type: upgrade gathering_camp
    ```
