@@ -69,10 +69,10 @@ type storeWall struct {
 }
 
 // line is the over-the-store line for bs, or "" for a building whose next
-// copy can be paid. A wonder is paid through its bank, a superseded building
-// cannot be built at all, and one at its limit has no next copy.
+// copy can be paid. A wonder is paid through its bank, an older building or
+// one of another age cannot be built at all, and one at its limit has no next copy.
 func (sw *storeWall) line(bs game.BuildingState) string {
-	if bs.Category == "wonder" || bs.IsLegacy || bs.AtMaxCount || !bs.Unlocked {
+	if bs.Category == "wonder" || bs.IsLegacy || bs.AtMaxCount || !bs.Unlocked || (bs.AgeKey != "" && bs.AgeKey != sw.state.Age) {
 		return ""
 	}
 	res := overStoreRes(sw.state, bs.NextCost)

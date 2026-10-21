@@ -489,7 +489,8 @@ func byRank(keys []string, rank func(string) int) []string {
 func buildableBuildingKeys(state game.GameState) []string {
 	var keys []string
 	for key, bs := range state.Buildings {
-		if bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount {
+		// A building of another age is refused by the age lock.
+		if bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount && (bs.AgeKey == "" || bs.AgeKey == state.Age) {
 			keys = append(keys, key)
 		}
 	}

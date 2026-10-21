@@ -83,12 +83,16 @@ func TestSuggestBuildGameAware(t *testing.T) {
 	eng.Resources.Add("food", 30)
 	checkBuildSuggestions(t, eng)
 
-	// Later on, superseded buildings drop out and the age's new ones come in.
+	// Later on, other ages' buildings drop out and the age's new ones come in.
 	if err := eng.SummonHarbingerForTest("bronze_age"); err != nil {
 		t.Fatal(err)
 	}
+	// The Bronze Age's buildings cost more than the starting stores hold, so
+	// the stores grow first: some of its buildings are then within reach and
+	// the rest are not.
 	for _, r := range []string{"wood", "stone", "food"} {
-		eng.Resources.Add(r, 200)
+		eng.Resources.AddStorage(r, 1000)
+		eng.Resources.Add(r, 1000)
 	}
 	checkBuildSuggestions(t, eng)
 }

@@ -1031,6 +1031,12 @@ func (bm *BuildingManager) StorageLimit(key string, resources *ResourceManager, 
 	return ""
 }
 
+// ageLocked reports whether a building belongs to another age than the town's:
+// the age lock refuses to build it, whatever its line.
+func (bm *BuildingManager) ageLocked(def config.BuildingDef) bool {
+	return bm.age != nil && def.RequiredAge != "" && def.RequiredAge != bm.age()
+}
+
 // Snapshot returns building states for UI.
 // queue is the engine's current build queue, used to compute queue-aware next costs.
 // getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
@@ -1062,7 +1068,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 			state.WonderBankFull = bm.IsWonderBankFull(key)
 			state.CanBuild = state.Unlocked && count == 0 && state.WonderBankFull && !bm.TechLocked(key)
 		} else {
-			state.CanBuild = state.Unlocked && !state.AtMaxCount && resources.CanAfford(cost)
+			state.CanBuild = state.Unlocked && !state.AtMaxCount && resources.CanAfford(cost) && !bm.ageLocked(def)
 		}
 		if bm.unlocked[key] && bm.TechLocked(key) {
 			state.NeedsTech = def.RequiredTech
