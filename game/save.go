@@ -1245,19 +1245,12 @@ func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[st
 		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || keepsItsTier(def) {
 			continue
 		}
-		best, bestOrder := "", -1
-		for _, b := range all {
-			if b.LineageKey != def.LineageKey || b.LineageTier != def.LineageTier+1 {
-				continue
+		// The next rung of the building's own line, as rules.Set.NextTier finds
+		// it: a line never switches resource, so a line's last rung has none.
+		if next, ok := config.NextRung(all, def.Line(), def.LineageTier); ok {
+			if order, ok := ge.progress.ageIndex[next.RequiredAge]; ok && order <= cur {
+				out[key] = next.Key
 			}
-			// A later age's offer overwrites an earlier one; within one age the
-			// first match wins, as in rules.Set.NextTier.
-			if order, ok := ge.progress.ageIndex[b.RequiredAge]; ok && order <= cur && order > bestOrder {
-				best, bestOrder = b.Key, order
-			}
-		}
-		if best != "" {
-			out[key] = best
 		}
 	}
 	return out

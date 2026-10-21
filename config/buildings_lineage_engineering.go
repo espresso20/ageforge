@@ -25,7 +25,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  150,
 		RequiredAge: "bronze_age",
 		Description: "A forge smelting iron tools.",
-		LineageKey:  "engineering", LineageTier: 0,
+		LineageKey:  "engineering", LineageTier: 0, LineKey: "engineering_iron",
 		WorkerDomain: "engineering", WorkerCapacity: 4,
 		EpochKey: "stone_era", OutputResource: "iron",
 	})
@@ -38,7 +38,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "Organized iron working and tools.",
-		LineageKey:  "engineering", LineageTier: 1,
+		LineageKey:  "engineering", LineageTier: 1, LineKey: "engineering_iron",
 		WorkerDomain: "engineering", WorkerCapacity: 5,
 		EpochKey: "iron_era", OutputResource: "iron",
 	})
@@ -51,7 +51,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "Roman engineering feats improve iron output.",
-		LineageKey:  "engineering", LineageTier: 2,
+		LineageKey:  "engineering", LineageTier: 2, LineKey: "engineering_iron",
 		WorkerDomain: "engineering", WorkerCapacity: 5,
 		EpochKey: "iron_era", OutputResource: "iron",
 	})
@@ -64,7 +64,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "A skilled craftsman's workshop.",
-		LineageKey:  "engineering", LineageTier: 3,
+		LineageKey:  "engineering", LineageTier: 3, LineKey: "engineering_iron",
 		WorkerDomain: "engineering", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "iron",
 	})
@@ -80,7 +80,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
 		Description: "Water-powered mill begins steel production.",
-		LineageKey:  "engineering", LineageTier: 4,
+		LineageKey:  "engineering", LineageTier: 4, LineKey: "engineering_steel",
 		WorkerDomain: "engineering", WorkerCapacity: 6,
 		EpochKey: "steel_era", OutputResource: "steel",
 	})
@@ -93,7 +93,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
 		Description: "Naval dockyard producing steel ships.",
-		LineageKey:  "engineering", LineageTier: 5,
+		LineageKey:  "engineering", LineageTier: 5, LineKey: "engineering_steel",
 		WorkerDomain: "engineering", WorkerCapacity: 7,
 		EpochKey: "steel_era", OutputResource: "steel",
 	})
@@ -106,7 +106,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
 		Description: "Large-scale industrial iron and steel works.",
-		LineageKey:  "engineering", LineageTier: 6,
+		LineageKey:  "engineering", LineageTier: 6, LineKey: "engineering_steel",
 		WorkerDomain: "engineering", WorkerCapacity: 8,
 		EpochKey: "steel_era", OutputResource: "steel",
 	})
@@ -123,7 +123,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		RequiredAge:  "victorian_age",
 		RequiredTech: "electrification",
 		Description:  "Steam-powered steelworks with electricity generation.",
-		LineageKey:   "engineering", LineageTier: 7,
+		LineageKey:   "engineering", LineageTier: 7, LineKey: "engineering_steel",
 		WorkerDomain: "engineering", WorkerCapacity: 9,
 		EpochKey: "electric_era", OutputResource: "steel",
 	})
@@ -136,7 +136,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "electric_age",
 		Description: "Coal-fired power station.",
-		LineageKey:  "engineering", LineageTier: 8,
+		LineageKey:  "engineering", LineageTier: 8, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 10,
 		EpochKey: "electric_era", OutputResource: "electricity",
 	})
@@ -150,7 +150,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		RequiredAge:  "atomic_age",
 		RequiredTech: "civilian_reactors",
 		Description:  "Nuclear fission power generation.",
-		LineageKey:   "engineering", LineageTier: 9,
+		LineageKey:   "engineering", LineageTier: 9, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 11,
 		EpochKey: "electric_era", OutputResource: "electricity",
 	})
@@ -166,7 +166,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		RequiredAge:  "modern_age",
 		RequiredTech: "electricity_tech",
 		Description:  "Smart power grid distribution hub.",
-		LineageKey:   "engineering", LineageTier: 10,
+		LineageKey:   "engineering", LineageTier: 10, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 12,
 		EpochKey: "digital_era", OutputResource: "electricity",
 	})
@@ -179,7 +179,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "information_age",
 		Description: "AI-managed smart grid node.",
-		LineageKey:  "engineering", LineageTier: 11,
+		LineageKey:  "engineering", LineageTier: 11, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 13,
 		EpochKey: "digital_era", OutputResource: "electricity",
 	})
@@ -192,7 +192,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "digital_age",
 		Description: "Neural-network managed power grid.",
-		LineageKey:  "engineering", LineageTier: 12,
+		LineageKey:  "engineering", LineageTier: 12, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 14,
 		EpochKey: "digital_era", OutputResource: "electricity",
 	})
@@ -208,7 +208,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
 		Description: "Cyberpunk foundry producing plasma and power.",
-		LineageKey:  "engineering", LineageTier: 13,
+		LineageKey:  "engineering", LineageTier: 13, LineKey: "engineering_plasma",
 		WorkerDomain: "engineering", WorkerCapacity: 15,
 		EpochKey: "neon_era", OutputResource: "plasma",
 	})
@@ -224,7 +224,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "fusion_age",
 		Description: "Fusion reactor generating plasma and electricity.",
-		LineageKey:  "engineering", LineageTier: 14,
+		LineageKey:  "engineering", LineageTier: 14, LineKey: "engineering_plasma",
 		WorkerDomain: "engineering", WorkerCapacity: 18,
 		EpochKey: "neon_era", OutputResource: "plasma",
 	})
@@ -237,7 +237,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "space_age",
 		Description: "Space launch complex generating plasma thrust.",
-		LineageKey:  "engineering", LineageTier: 15,
+		LineageKey:  "engineering", LineageTier: 15, LineKey: "engineering_plasma",
 		WorkerDomain: "engineering", WorkerCapacity: 20,
 		EpochKey: "neon_era", OutputResource: "plasma",
 	})
@@ -253,7 +253,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
 		Description: "Warp drive manufacturing harnessing dark matter.",
-		LineageKey:  "engineering", LineageTier: 16,
+		LineageKey:  "engineering", LineageTier: 16, LineKey: "engineering_dark_matter",
 		WorkerDomain: "engineering", WorkerCapacity: 22,
 		EpochKey: "cosmic_era", OutputResource: "dark_matter",
 	})
@@ -266,7 +266,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "galactic_age",
 		Description: "Assembly of Dyson sphere panels harvesting dark matter.",
-		LineageKey:  "engineering", LineageTier: 17,
+		LineageKey:  "engineering", LineageTier: 17, LineKey: "engineering_dark_matter",
 		WorkerDomain: "engineering", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "dark_matter",
 	})
@@ -282,7 +282,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
 		Description: "Forges structures from the quantum fabric.",
-		LineageKey:  "engineering", LineageTier: 18,
+		LineageKey:  "engineering", LineageTier: 18, LineKey: "engineering_quantum_flux",
 		WorkerDomain: "engineering", WorkerCapacity: 30,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})
@@ -296,7 +296,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		RequiredAge:  "transcendent_age",
 		RequiredTech: "singularity_engineering",
 		Description:  "A singularity-powered engine generating quantum flux.",
-		LineageKey:   "engineering", LineageTier: 19,
+		LineageKey:   "engineering", LineageTier: 19, LineKey: "engineering_quantum_flux",
 		WorkerDomain: "engineering", WorkerCapacity: 35,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})

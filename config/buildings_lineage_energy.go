@@ -24,7 +24,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		RequiredAge:  "industrial_age",
 		RequiredTech: "steam_power",
 		Description:  "Industrial coal processing plant.",
-		LineageKey:   "energy", LineageTier: 0,
+		LineageKey:   "energy", LineageTier: 0, LineKey: "energy_coal",
 		WorkerDomain: "energy", WorkerCapacity: 6,
 		EpochKey: "steel_era", OutputResource: "coal",
 	})
@@ -40,7 +40,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		BuildTicks:  7020,
 		RequiredAge: "victorian_age",
 		Description: "A steam turbine hall with its own coal seam.",
-		LineageKey:  "energy", LineageTier: 1,
+		LineageKey:  "energy", LineageTier: 1, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 7,
 		EpochKey: "electric_era", OutputResource: "electricity",
 	})
@@ -56,7 +56,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		RequiredAge:  "electric_age",
 		RequiredTech: "power_distribution",
 		Description:  "Electric power generator.",
-		LineageKey:   "energy", LineageTier: 2,
+		LineageKey:   "energy", LineageTier: 2, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 8,
 		EpochKey: "electric_era", OutputResource: "electricity",
 	})
@@ -69,7 +69,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		BuildTicks:  9360,
 		RequiredAge: "atomic_age",
 		Description: "Nuclear fission reactor.",
-		LineageKey:  "energy", LineageTier: 3,
+		LineageKey:  "energy", LineageTier: 3, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 9,
 		EpochKey: "electric_era", OutputResource: "electricity",
 	})
@@ -86,7 +86,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		BuildTicks:  9360,
 		RequiredAge: "modern_age",
 		Description: "Modern oil refinery and power generation.",
-		LineageKey:  "energy", LineageTier: 4,
+		LineageKey:  "energy", LineageTier: 4, LineKey: "energy_oil",
 		WorkerDomain: "energy", WorkerCapacity: 10,
 		EpochKey: "digital_era", OutputResource: "oil",
 	})
@@ -100,7 +100,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		RequiredAge:  "information_age",
 		RequiredTech: "smart_grid",
 		Description:  "AI-optimized microgrid batteries.",
-		LineageKey:   "energy", LineageTier: 5,
+		LineageKey:   "energy", LineageTier: 5, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 11,
 		EpochKey: "digital_era", OutputResource: "electricity",
 	})
@@ -114,7 +114,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		RequiredAge:  "digital_age",
 		RequiredTech: "grid_storage",
 		Description:  "Quantum-state battery arrays.",
-		LineageKey:   "energy", LineageTier: 6,
+		LineageKey:   "energy", LineageTier: 6, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 12,
 		EpochKey: "digital_era", OutputResource: "electricity",
 	})
@@ -128,7 +128,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		RequiredAge:  "cyberpunk_age",
 		RequiredTech: "dark_energy",
 		Description:  "Taps dark energy streams for electricity.",
-		LineageKey:   "energy", LineageTier: 7,
+		LineageKey:   "energy", LineageTier: 7, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 13,
 		EpochKey: "neon_era", OutputResource: "electricity",
 	})
@@ -144,7 +144,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		BuildTicks:  15600,
 		RequiredAge: "fusion_age",
 		Description: "Array of fusion reactors producing plasma.",
-		LineageKey:  "energy", LineageTier: 8,
+		LineageKey:  "energy", LineageTier: 8, LineKey: "energy_plasma",
 		WorkerDomain: "energy", WorkerCapacity: 15,
 		EpochKey: "neon_era", OutputResource: "plasma",
 	})
@@ -161,7 +161,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		BuildTicks:  17160,
 		RequiredAge: "space_age",
 		Description: "Orbital solar collectors feeding plasma energy.",
-		LineageKey:  "energy", LineageTier: 9,
+		LineageKey:  "energy", LineageTier: 9, LineKey: "energy_plasma",
 		WorkerDomain: "energy", WorkerCapacity: 16,
 		EpochKey: "neon_era", OutputResource: "plasma",
 	})
@@ -180,7 +180,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		RequiredAge:  "interstellar_age",
 		RequiredTech: "stellar_engineering",
 		Description:  "Taps pulsar radiation for plasma and electricity.",
-		LineageKey:   "energy", LineageTier: 10,
+		LineageKey:   "energy", LineageTier: 10, LineKey: "energy_plasma",
 		WorkerDomain: "energy", WorkerCapacity: 18,
 		EpochKey: "cosmic_era", OutputResource: "plasma",
 	})
@@ -197,7 +197,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		RequiredAge:  "galactic_age",
 		RequiredTech: "antimatter_synthesis",
 		Description:  "Taps quasar jets for dark matter.",
-		LineageKey:   "energy", LineageTier: 11,
+		LineageKey:   "energy", LineageTier: 11, LineKey: "energy_dark_matter",
 		WorkerDomain: "energy", WorkerCapacity: 20,
 		EpochKey: "cosmic_era", OutputResource: "dark_matter",
 	})
@@ -211,7 +211,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		RequiredAge:  "quantum_age",
 		RequiredTech: "zero_point_energy",
 		Description:  "Generates energy from quantum zero-point fields.",
-		LineageKey:   "energy", LineageTier: 12,
+		LineageKey:   "energy", LineageTier: 12, LineKey: "energy_quantum_flux",
 		WorkerDomain: "energy", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})

@@ -1052,7 +1052,7 @@ func (ge *GameEngine) staffPlanCopy(key string) {
 		if !ge.Buildings.legacyBuildings[src] || !planStaffSource(sdef) || shares && sdef.WorkerDomain != def.WorkerDomain {
 			continue
 		}
-		if sdef.LineageKey == def.LineageKey {
+		if sdef.Line() == def.Line() {
 			same = append(same, src)
 		} else {
 			other = append(other, src)

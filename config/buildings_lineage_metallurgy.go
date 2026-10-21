@@ -25,7 +25,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		RequiredAge:  "iron_age",
 		RequiredTech: "iron_smelting",
 		Description:  "A furnace that smelts iron.",
-		LineageKey:   "metallurgy", LineageTier: 0,
+		LineageKey:   "metallurgy", LineageTier: 0, LineKey: "metallurgy_iron",
 		WorkerDomain: "metallurgy", WorkerCapacity: 4,
 		EpochKey: "iron_era", OutputResource: "iron",
 	})
@@ -39,7 +39,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		RequiredAge:  "classical_age",
 		RequiredTech: "metal_casting",
 		Description:  "A proper forge for working iron.",
-		LineageKey:   "metallurgy", LineageTier: 1,
+		LineageKey:   "metallurgy", LineageTier: 1, LineKey: "metallurgy_iron",
 		WorkerDomain: "metallurgy", WorkerCapacity: 4,
 		EpochKey: "iron_era", OutputResource: "iron",
 	})
@@ -52,7 +52,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "Specialist iron trade and metalworking.",
-		LineageKey:  "metallurgy", LineageTier: 2,
+		LineageKey:  "metallurgy", LineageTier: 2, LineKey: "metallurgy_iron",
 		WorkerDomain: "metallurgy", WorkerCapacity: 5,
 		EpochKey: "iron_era", OutputResource: "iron",
 	})
@@ -68,7 +68,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		RequiredAge:  "renaissance_age",
 		RequiredTech: "blast_furnace",
 		Description:  "Crucible furnaces that turn out steel.",
-		LineageKey:   "metallurgy", LineageTier: 3,
+		LineageKey:   "metallurgy", LineageTier: 3, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 5,
 		EpochKey: "steel_era", OutputResource: "steel",
 	})
@@ -82,7 +82,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		RequiredAge:  "colonial_age",
 		RequiredTech: "coke_smelting",
 		Description:  "Colonial iron works processing steel.",
-		LineageKey:   "metallurgy", LineageTier: 4,
+		LineageKey:   "metallurgy", LineageTier: 4, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 6,
 		EpochKey: "steel_era", OutputResource: "steel",
 	})
@@ -95,7 +95,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  5000,
 		RequiredAge: "industrial_age",
 		Description: "Industrial-scale steel production.",
-		LineageKey:  "metallurgy", LineageTier: 5,
+		LineageKey:  "metallurgy", LineageTier: 5, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 7,
 		EpochKey: "steel_era", OutputResource: "steel",
 	})
@@ -111,7 +111,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  7020,
 		RequiredAge: "victorian_age",
 		Description: "Bessemer converter for mass steel and iron production.",
-		LineageKey:  "metallurgy", LineageTier: 6,
+		LineageKey:  "metallurgy", LineageTier: 6, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 8,
 		EpochKey: "electric_era", OutputResource: "steel",
 	})
@@ -127,7 +127,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  7800,
 		RequiredAge: "electric_age",
 		Description: "Electric arc furnace for high-grade steel and iron.",
-		LineageKey:  "metallurgy", LineageTier: 7,
+		LineageKey:  "metallurgy", LineageTier: 7, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 9,
 		EpochKey: "electric_era", OutputResource: "steel",
 	})
@@ -143,7 +143,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  9360,
 		RequiredAge: "atomic_age",
 		Description: "Atomic-era advanced alloy manufacturing.",
-		LineageKey:  "metallurgy", LineageTier: 8,
+		LineageKey:  "metallurgy", LineageTier: 8, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 10,
 		EpochKey: "electric_era", OutputResource: "steel",
 	})
@@ -161,7 +161,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  9360,
 		RequiredAge: "modern_age",
 		Description: "Refines titanium and steel for precision work.",
-		LineageKey:  "metallurgy", LineageTier: 9,
+		LineageKey:  "metallurgy", LineageTier: 9, LineKey: "metallurgy_titanium",
 		WorkerDomain: "metallurgy", WorkerCapacity: 11,
 		EpochKey: "digital_era", OutputResource: "titanium",
 	})
@@ -177,7 +177,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  10920,
 		RequiredAge: "information_age",
 		Description: "Precision aerospace-grade titanium and steel foundry.",
-		LineageKey:  "metallurgy", LineageTier: 10,
+		LineageKey:  "metallurgy", LineageTier: 10, LineKey: "metallurgy_titanium",
 		WorkerDomain: "metallurgy", WorkerCapacity: 12,
 		EpochKey: "digital_era", OutputResource: "titanium",
 	})
@@ -193,7 +193,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  12480,
 		RequiredAge: "digital_age",
 		Description: "Nano-scale titanium and steel alloy production.",
-		LineageKey:  "metallurgy", LineageTier: 11,
+		LineageKey:  "metallurgy", LineageTier: 11, LineKey: "metallurgy_titanium",
 		WorkerDomain: "metallurgy", WorkerCapacity: 13,
 		EpochKey: "digital_era", OutputResource: "titanium",
 	})
@@ -211,7 +211,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  14040,
 		RequiredAge: "cyberpunk_age",
 		Description: "Distills dark matter and steel from the void.",
-		LineageKey:  "metallurgy", LineageTier: 12,
+		LineageKey:  "metallurgy", LineageTier: 12, LineKey: "metallurgy_dark_matter",
 		WorkerDomain: "metallurgy", WorkerCapacity: 14,
 		EpochKey: "neon_era", OutputResource: "dark_matter",
 	})
@@ -227,7 +227,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  15600,
 		RequiredAge: "fusion_age",
 		Description: "Plasma-forged exotic matter and steel manufacturing.",
-		LineageKey:  "metallurgy", LineageTier: 13,
+		LineageKey:  "metallurgy", LineageTier: 13, LineKey: "metallurgy_dark_matter",
 		WorkerDomain: "metallurgy", WorkerCapacity: 16,
 		EpochKey: "neon_era", OutputResource: "dark_matter",
 	})
@@ -249,7 +249,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  17160,
 		RequiredAge: "space_age",
 		Description: "Zero-gravity orbital titanium and steel refinery.",
-		LineageKey:  "metallurgy", LineageTier: 14,
+		LineageKey:  "metallurgy", LineageTier: 14, LineKey: "metallurgy_titanium",
 		WorkerDomain: "metallurgy", WorkerCapacity: 18,
 		EpochKey: "neon_era", OutputResource: "titanium",
 	})
@@ -267,7 +267,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  18720,
 		RequiredAge: "interstellar_age",
 		Description: "Forges antimatter and titanium in magnetic containment.",
-		LineageKey:  "metallurgy", LineageTier: 15,
+		LineageKey:  "metallurgy", LineageTier: 15, LineKey: "metallurgy_antimatter",
 		WorkerDomain: "metallurgy", WorkerCapacity: 20,
 		EpochKey: "cosmic_era", OutputResource: "antimatter",
 	})
@@ -283,7 +283,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		BuildTicks:  18720,
 		RequiredAge: "galactic_age",
 		Description: "Stellar-scale antimatter and titanium metallurgy.",
-		LineageKey:  "metallurgy", LineageTier: 16,
+		LineageKey:  "metallurgy", LineageTier: 16, LineKey: "metallurgy_antimatter",
 		WorkerDomain: "metallurgy", WorkerCapacity: 22,
 		EpochKey: "cosmic_era", OutputResource: "antimatter",
 	})
@@ -299,7 +299,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		RequiredAge:  "quantum_age",
 		RequiredTech: "quantum_metallurgy",
 		Description:  "Quantum-state metalworking across dimensions.",
-		LineageKey:   "metallurgy", LineageTier: 17,
+		LineageKey:   "metallurgy", LineageTier: 17, LineKey: "metallurgy_quantum_flux",
 		WorkerDomain: "metallurgy", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})

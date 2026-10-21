@@ -152,7 +152,7 @@ func main() {
 		if b.LineageKey == "" || b.Category != "production" {
 			continue
 		}
-		lineageMap[b.LineageKey] = append(lineageMap[b.LineageKey], b)
+		lineageMap[b.Line()] = append(lineageMap[b.Line()], b)
 	}
 
 	// Sort each lineage by tier

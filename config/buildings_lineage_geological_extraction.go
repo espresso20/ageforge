@@ -24,7 +24,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  80,
 		RequiredAge: "stone_age",
 		Description: "A basic camp for gathering stones.",
-		LineageKey:  "geological_extraction", LineageTier: 0,
+		LineageKey:  "geological_extraction", LineageTier: 0, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 3,
 		EpochKey: "stone_era", OutputResource: "stone",
 	})
@@ -37,7 +37,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  200,
 		RequiredAge: "stone_age",
 		Description: "A shallow pit dug for stone.",
-		LineageKey:  "geological_extraction", LineageTier: 1,
+		LineageKey:  "geological_extraction", LineageTier: 1, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 4,
 		EpochKey: "stone_era", OutputResource: "stone",
 	})
@@ -50,7 +50,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  150,
 		RequiredAge: "bronze_age",
 		Description: "Organized stone quarrying.",
-		LineageKey:  "geological_extraction", LineageTier: 2,
+		LineageKey:  "geological_extraction", LineageTier: 2, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 5,
 		EpochKey: "stone_era", OutputResource: "stone",
 	})
@@ -68,7 +68,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "Marble, iron ore, stone and iron extraction.",
-		LineageKey:  "geological_extraction", LineageTier: 3,
+		LineageKey:  "geological_extraction", LineageTier: 3, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 5,
 		EpochKey: "iron_era", OutputResource: "stone",
 	})
@@ -86,7 +86,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "Classical marble, ore, stone and iron works.",
-		LineageKey:  "geological_extraction", LineageTier: 4,
+		LineageKey:  "geological_extraction", LineageTier: 4, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "stone",
 	})
@@ -103,7 +103,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "Guild of stonemasons extracting iron ore, iron and stone.",
-		LineageKey:  "geological_extraction", LineageTier: 5,
+		LineageKey:  "geological_extraction", LineageTier: 5, LineKey: "geological_extraction_iron_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "iron_ore",
 	})
@@ -120,7 +120,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
 		Description: "Deep iron ore, iron and stone mining.",
-		LineageKey:  "geological_extraction", LineageTier: 6,
+		LineageKey:  "geological_extraction", LineageTier: 6, LineKey: "geological_extraction_iron_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 7,
 		EpochKey: "steel_era", OutputResource: "iron_ore",
 	})
@@ -137,7 +137,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
 		Description: "Colonial deep iron ore, iron and stone extraction.",
-		LineageKey:  "geological_extraction", LineageTier: 7,
+		LineageKey:  "geological_extraction", LineageTier: 7, LineKey: "geological_extraction_iron_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 8,
 		EpochKey: "steel_era", OutputResource: "iron_ore",
 	})
@@ -154,7 +154,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
 		Description: "Steam-powered industrial iron ore, iron and stone mine.",
-		LineageKey:  "geological_extraction", LineageTier: 8,
+		LineageKey:  "geological_extraction", LineageTier: 8, LineKey: "geological_extraction_iron_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 10,
 		EpochKey: "steel_era", OutputResource: "iron_ore",
 	})
@@ -170,7 +170,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
 		Description: "Early uranium ore and stone extraction.",
-		LineageKey:  "geological_extraction", LineageTier: 9,
+		LineageKey:  "geological_extraction", LineageTier: 9, LineKey: "geological_extraction_uranium",
 		WorkerDomain: "masonry", WorkerCapacity: 10,
 		EpochKey: "electric_era", OutputResource: "uranium",
 	})
@@ -183,7 +183,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "electric_age",
 		Description: "High-tech nuclear material extraction.",
-		LineageKey:  "geological_extraction", LineageTier: 10,
+		LineageKey:  "geological_extraction", LineageTier: 10, LineKey: "geological_extraction_uranium",
 		WorkerDomain: "masonry", WorkerCapacity: 12,
 		EpochKey: "electric_era", OutputResource: "uranium",
 	})
@@ -199,7 +199,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
 		Description: "Industrial uranium and stone processing.",
-		LineageKey:  "geological_extraction", LineageTier: 11,
+		LineageKey:  "geological_extraction", LineageTier: 11, LineKey: "geological_extraction_uranium",
 		WorkerDomain: "masonry", WorkerCapacity: 12,
 		EpochKey: "electric_era", OutputResource: "uranium",
 	})
@@ -212,7 +212,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
 		Description: "High-precision titanium ore extraction.",
-		LineageKey:  "geological_extraction", LineageTier: 12,
+		LineageKey:  "geological_extraction", LineageTier: 12, LineKey: "geological_extraction_titanium_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 14,
 		EpochKey: "digital_era", OutputResource: "titanium_ore",
 	})
@@ -225,7 +225,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "information_age",
 		Description: "AI-guided precision titanium mining.",
-		LineageKey:  "geological_extraction", LineageTier: 13,
+		LineageKey:  "geological_extraction", LineageTier: 13, LineKey: "geological_extraction_titanium_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 15,
 		EpochKey: "digital_era", OutputResource: "titanium_ore",
 	})
@@ -238,7 +238,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "digital_age",
 		Description: "Nanoscale drilling for titanium ore.",
-		LineageKey:  "geological_extraction", LineageTier: 14,
+		LineageKey:  "geological_extraction", LineageTier: 14, LineKey: "geological_extraction_titanium_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 16,
 		EpochKey: "digital_era", OutputResource: "titanium_ore",
 	})
@@ -251,7 +251,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
 		Description: "Extraction of dark matter crystals.",
-		LineageKey:  "geological_extraction", LineageTier: 15,
+		LineageKey:  "geological_extraction", LineageTier: 15, LineKey: "geological_extraction_dark_matter_crystals",
 		WorkerDomain: "masonry", WorkerCapacity: 18,
 		EpochKey: "neon_era", OutputResource: "dark_matter_crystals",
 	})
@@ -264,7 +264,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "fusion_age",
 		Description: "Plasma-assisted exotic mineral extraction.",
-		LineageKey:  "geological_extraction", LineageTier: 16,
+		LineageKey:  "geological_extraction", LineageTier: 16, LineKey: "geological_extraction_dark_matter_crystals",
 		WorkerDomain: "masonry", WorkerCapacity: 20,
 		EpochKey: "neon_era", OutputResource: "dark_matter_crystals",
 	})
@@ -277,7 +277,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "space_age",
 		Description: "Asteroid belt dark matter crystal mining.",
-		LineageKey:  "geological_extraction", LineageTier: 17,
+		LineageKey:  "geological_extraction", LineageTier: 17, LineKey: "geological_extraction_dark_matter_crystals",
 		WorkerDomain: "masonry", WorkerCapacity: 20,
 		EpochKey: "neon_era", OutputResource: "dark_matter_crystals",
 	})
@@ -291,7 +291,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		RequiredAge:  "interstellar_age",
 		RequiredTech: "stellar_core_mining",
 		Description:  "Drills into stellar cores for antimatter.",
-		LineageKey:   "geological_extraction", LineageTier: 18,
+		LineageKey:   "geological_extraction", LineageTier: 18, LineKey: "geological_extraction_antimatter",
 		WorkerDomain: "masonry", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "antimatter",
 	})
@@ -305,7 +305,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		RequiredAge:  "galactic_age",
 		RequiredTech: "neutron_mining",
 		Description:  "Mining neutron stars for antimatter.",
-		LineageKey:   "geological_extraction", LineageTier: 19,
+		LineageKey:   "geological_extraction", LineageTier: 19, LineKey: "geological_extraction_antimatter",
 		WorkerDomain: "masonry", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "antimatter",
 	})
@@ -320,7 +320,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
 		Description: "Excavates antimatter from the quantum foam.",
-		LineageKey:  "geological_extraction", LineageTier: 20,
+		LineageKey:  "geological_extraction", LineageTier: 20, LineKey: "geological_extraction_antimatter",
 		WorkerDomain: "masonry", WorkerCapacity: 30,
 		EpochKey: "cosmic_era", OutputResource: "antimatter",
 	})

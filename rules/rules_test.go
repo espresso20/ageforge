@@ -371,6 +371,9 @@ func TestCounts(t *testing.T) {
 	if sum := c[CountWonders] + c[CountStorage] + c[CountMonuments] + c[CountLineageBld] + c[CountStandalone]; sum != c[CountBuildings] {
 		t.Errorf("the building groups add up to %d of %d buildings", sum, c[CountBuildings])
 	}
+	if c[CountLineages] != 14 || c[CountLines] != 39 {
+		t.Errorf("%d lineages and %d building lines, want 14 and 39", c[CountLineages], c[CountLines])
+	}
 	if c[CountWonders] != c[CountAges] {
 		t.Errorf("%d wonders for %d ages", c[CountWonders], c[CountAges])
 	}

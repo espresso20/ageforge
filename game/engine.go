@@ -2425,7 +2425,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || keepsItsTier(def) {
 			continue
 		}
-		next, ok := ge.rules.NextTier(def.LineageKey, def.LineageTier, newAge)
+		next, ok := ge.rules.NextTier(def.Line(), def.LineageTier, newAge)
 		if !ok {
 			continue
 		}
@@ -2447,7 +2447,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 		ge.addLog("info", fmt.Sprintf("↑ %s can upgrade to %s. Type 'upgrade %s'.",
 			buildingCountIn(ge.rules, t.count, t.oldKey), t.newName, t.oldKey))
 	}
-	// Mark buildings as legacy if their lineage now has a higher-tier unlocked equivalent.
+	// Mark buildings as legacy if their line now has a higher-tier unlocked equivalent
+	// (a line never switches resource: the last of a line is never legacy).
 	for _, key := range sortedKeys(ge.Buildings.counts) {
 		count := ge.Buildings.counts[key]
 		if count == 0 || ge.Buildings.IsLegacy(key) {
@@ -2458,7 +2459,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			continue
 		}
 		for otherKey, otherDef := range ge.Buildings.defs {
-			if otherDef.LineageKey == def.LineageKey &&
+			if otherDef.Line() == def.Line() &&
 				otherDef.LineageTier > def.LineageTier &&
 				ge.Buildings.IsUnlocked(otherKey) {
 				ge.Buildings.MarkLegacy(key)

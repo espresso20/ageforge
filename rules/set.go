@@ -468,13 +468,12 @@ func (s *Set) Building(key string) (config.BuildingDef, bool) {
 // BuildingMap returns a map of every building by key.
 func (s *Set) BuildingMap() map[string]config.BuildingDef { return maps.Clone(s.buildingByKey) }
 
-// NextTier returns the building one tier up lineage from tier that newAge
-// unlocks: what a building of that tier becomes when the age turns.
-func (s *Set) NextTier(lineage string, tier int, newAge string) (config.BuildingDef, bool) {
-	for _, b := range s.buildings {
-		if b.LineageKey == lineage && b.LineageTier == tier+1 && b.RequiredAge == newAge {
-			return b, true
-		}
+// NextTier returns the next rung of line above tier when newAge is the age it
+// needs: what a building of that tier becomes when the age turns. A line never
+// switches resource, so the rung is always in the same line (BuildingDef.Line).
+func (s *Set) NextTier(line string, tier int, newAge string) (config.BuildingDef, bool) {
+	if b, ok := config.NextRung(s.buildings, line, tier); ok && b.RequiredAge == newAge {
+		return b, true
 	}
 	return config.BuildingDef{}, false
 }

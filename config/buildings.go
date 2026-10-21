@@ -47,8 +47,9 @@ type BuildingDef struct {
 	// rates, worker counts) — it is additive humor only and is safe to be empty.
 	Flavor string
 	// Lineage / economy metadata (added in Phase 5+)
-	LineageKey     string // which of the 13 production lineages (e.g. "food", "metallurgy", "wonder")
+	LineageKey     string // which of the 14 production lineages (e.g. "food", "metallurgy", "wonder")
 	LineageTier    int    // 0-indexed position within the lineage; higher tier = later age
+	LineKey        string // one-resource line, set where a lineage changes resource (e.g. "organic_extraction_wood"); "" = the lineage is the line; read via Line()
 	WorkerDomain   string // worker domain key for assignment (e.g. "food", "knowledge"); "" = no workers
 	WorkerCapacity int    // max workers assignable per individual building instance; 0 = not applicable
 	EpochKey       string // epoch this building belongs to (e.g. "stone_era", "iron_era")
@@ -941,15 +942,42 @@ func AgeEntryCosts(ageKey string) map[string]float64 {
 	return out
 }
 
-// BuildingNextTierForAge returns the next-tier BuildingDef in a lineage for the given new age.
-// Returns nil if no building at tier+1 with RequiredAge == newAgeKey exists in that lineage.
-// Used by the age-transition transformation pass to find what each building evolves into.
-func BuildingNextTierForAge(lineageKey string, currentTier int, newAgeKey string) *BuildingDef {
-	for _, b := range BaseBuildings() {
-		if b.LineageKey == lineageKey && b.LineageTier == currentTier+1 && b.RequiredAge == newAgeKey {
-			result := b
-			return &result
+// Line is the one-resource line a building belongs to: its LineKey, or its
+// lineage when the lineage never changes resource. A line never switches
+// resource, so a building only upgrades to the next rung of its own line.
+func (d BuildingDef) Line() string {
+	if d.LineKey != "" {
+		return d.LineKey
+	}
+	return d.LineageKey
+}
+
+// NextRung is the building one rung up the line from tier: the one with the
+// lowest tier above it in the same line. A line that pauses (titanium after
+// Modern, electricity while oil runs) has its next rung in a later age, which
+// is still the next rung. ok is false when tier is the last of its line.
+func NextRung(defs []BuildingDef, line string, tier int) (next BuildingDef, ok bool) {
+	if line == "" {
+		return BuildingDef{}, false
+	}
+	for _, b := range defs {
+		if b.Line() != line || b.LineageTier <= tier {
+			continue
 		}
+		if !ok || b.LineageTier < next.LineageTier {
+			next, ok = b, true
+		}
+	}
+	return next, ok
+}
+
+// BuildingNextTierForAge returns the next rung of a line when newAgeKey is the
+// age that rung needs: what a building of that tier becomes as the age turns.
+// Returns nil if the line has no later rung, or its next rung is for another age.
+// Used by the age-transition transformation pass to find what each building evolves into.
+func BuildingNextTierForAge(line string, currentTier int, newAgeKey string) *BuildingDef {
+	if next, ok := NextRung(BaseBuildings(), line, currentTier); ok && next.RequiredAge == newAgeKey {
+		return &next
 	}
 	return nil
 }

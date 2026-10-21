@@ -21,7 +21,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  150,
 		RequiredAge: "bronze_age",
 		Description: "A trading market for barter and coin.",
-		LineageKey:  "trade", LineageTier: 0,
+		LineageKey:  "trade", LineageTier: 0, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 3,
 		EpochKey: "stone_era", OutputResource: "gold",
 	})
@@ -38,7 +38,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "A regional trading post.",
-		LineageKey:  "trade", LineageTier: 1,
+		LineageKey:  "trade", LineageTier: 1, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 3,
 		EpochKey: "iron_era", OutputResource: "gold",
 	})
@@ -51,7 +51,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "An urban merchant district.",
-		LineageKey:  "trade", LineageTier: 2,
+		LineageKey:  "trade", LineageTier: 2, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 4,
 		EpochKey: "iron_era", OutputResource: "gold",
 	})
@@ -64,7 +64,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "Merchant guilds organize regional trade.",
-		LineageKey:  "trade", LineageTier: 3,
+		LineageKey:  "trade", LineageTier: 3, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 4,
 		EpochKey: "iron_era", OutputResource: "gold",
 	})
@@ -77,7 +77,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
 		Description: "A commodity exchange for international trade.",
-		LineageKey:  "trade", LineageTier: 4,
+		LineageKey:  "trade", LineageTier: 4, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 5,
 		EpochKey: "steel_era", OutputResource: "gold",
 	})
@@ -90,7 +90,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
 		Description: "A colonial maritime trade port.",
-		LineageKey:  "trade", LineageTier: 5,
+		LineageKey:  "trade", LineageTier: 5, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 5,
 		EpochKey: "steel_era", OutputResource: "gold",
 	})
@@ -103,7 +103,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
 		Description: "Industrial-era stock exchange.",
-		LineageKey:  "trade", LineageTier: 6,
+		LineageKey:  "trade", LineageTier: 6, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 6,
 		EpochKey: "steel_era", OutputResource: "gold",
 	})
@@ -116,7 +116,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
 		Description: "A Victorian national bank.",
-		LineageKey:  "trade", LineageTier: 7,
+		LineageKey:  "trade", LineageTier: 7, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 6,
 		EpochKey: "electric_era", OutputResource: "gold",
 	})
@@ -129,7 +129,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "electric_age",
 		Description: "Electric-age financial district.",
-		LineageKey:  "trade", LineageTier: 8,
+		LineageKey:  "trade", LineageTier: 8, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 7,
 		EpochKey: "electric_era", OutputResource: "gold",
 	})
@@ -144,7 +144,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
 		Description: "Multinational corporate headquarters.",
-		LineageKey:  "trade", LineageTier: 9,
+		LineageKey:  "trade", LineageTier: 9, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 7,
 		EpochKey: "electric_era", OutputResource: "gold",
 	})
@@ -157,7 +157,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
 		Description: "Global investment and wealth management.",
-		LineageKey:  "trade", LineageTier: 10,
+		LineageKey:  "trade", LineageTier: 10, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 8,
 		EpochKey: "digital_era", OutputResource: "gold",
 	})
@@ -170,7 +170,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "information_age",
 		Description: "Digital venture capital hub.",
-		LineageKey:  "trade", LineageTier: 11,
+		LineageKey:  "trade", LineageTier: 11, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 8,
 		EpochKey: "digital_era", OutputResource: "gold",
 	})
@@ -183,7 +183,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "digital_age",
 		Description: "Decentralized digital currency exchange.",
-		LineageKey:  "trade", LineageTier: 12,
+		LineageKey:  "trade", LineageTier: 12, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 10,
 		EpochKey: "digital_era", OutputResource: "gold",
 	})
@@ -199,7 +199,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
 		Description: "Underground black market network.",
-		LineageKey:  "trade", LineageTier: 13,
+		LineageKey:  "trade", LineageTier: 13, LineKey: "trade_crypto",
 		WorkerDomain: "trade", WorkerCapacity: 10,
 		EpochKey: "neon_era", OutputResource: "crypto",
 	})
@@ -213,7 +213,7 @@ func buildingsLineageTrade() []BuildingDef {
 		RequiredAge:  "fusion_age",
 		RequiredTech: "maglev_transit",
 		Description:  "Interplanetary energy trading exchange.",
-		LineageKey:   "trade", LineageTier: 14,
+		LineageKey:   "trade", LineageTier: 14, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 12,
 		EpochKey: "neon_era", OutputResource: "gold",
 	})
@@ -226,7 +226,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "space_age",
 		Description: "Mineral trading hub in the asteroid belt.",
-		LineageKey:  "trade", LineageTier: 15,
+		LineageKey:  "trade", LineageTier: 15, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 12,
 		EpochKey: "neon_era", OutputResource: "gold",
 	})
@@ -239,7 +239,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
 		Description: "Interstellar trade network hub.",
-		LineageKey:  "trade", LineageTier: 16,
+		LineageKey:  "trade", LineageTier: 16, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 15,
 		EpochKey: "cosmic_era", OutputResource: "gold",
 	})
@@ -252,7 +252,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "galactic_age",
 		Description: "Galaxy-spanning stellar exchange.",
-		LineageKey:  "trade", LineageTier: 17,
+		LineageKey:  "trade", LineageTier: 17, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 15,
 		EpochKey: "cosmic_era", OutputResource: "gold",
 	})
@@ -265,7 +265,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
 		Description: "Trades across all probable timelines.",
-		LineageKey:  "trade", LineageTier: 18,
+		LineageKey:  "trade", LineageTier: 18, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 18,
 		EpochKey: "cosmic_era", OutputResource: "gold",
 	})
@@ -279,7 +279,7 @@ func buildingsLineageTrade() []BuildingDef {
 		RequiredAge:  "transcendent_age",
 		RequiredTech: "omniversal_exchange",
 		Description:  "Omniversal trading bazaar beyond spacetime.",
-		LineageKey:   "trade", LineageTier: 19,
+		LineageKey:   "trade", LineageTier: 19, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 20,
 		EpochKey: "cosmic_era", OutputResource: "gold",
 	})
