@@ -9,7 +9,7 @@ A guided walkthrough of the Primitive Age, your first age. The steps follow the 
 The game opens on its [main menu](how-to-play.md#the-main-menu). On a first visit that is the forge and a title page, with **New game** first: press `Enter` (or `n`), name your civilization, and the game starts.
 
 You're in the **Primitive Age**. The screen shows:
-- The status bar: your account name, `Primitive Age`, the epoch (`◈ Stone Era`), `Pop: 0/0` and `Morale 50%`
+- The status bar: your account name, `Primitive Age`, `Pop: 0/0` and `Morale 50%`
 - The Next Age row: what the Stone Age asks for, each item marked ✓ or ✗
 - The Economy panel, which is always on screen: Resources, Under construction and the Log on the left, the Buildings list on the right, with the Getting started guide under it
 
