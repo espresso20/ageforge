@@ -467,7 +467,7 @@
    "build_ticks": 500,
    "workers": 4,
    "max_count": 0,
-   "soldiers": 123
+   "soldiers": 16
   },
   "basilica": {
    "category": "research",
@@ -1149,7 +1149,7 @@
    "build_ticks": 3600,
    "workers": 15,
    "max_count": 0,
-   "soldiers": 238235
+   "soldiers": 29780
   },
   "cyber_hub": {
    "category": "production",
@@ -2576,7 +2576,7 @@
    "build_ticks": 80,
    "workers": 5,
    "max_count": 0,
-   "soldiers": 15
+   "soldiers": 10
   },
   "hut": {
    "category": "housing",
@@ -2884,7 +2884,7 @@
    "build_ticks": 300,
    "workers": 6,
    "max_count": 0,
-   "soldiers": 15
+   "soldiers": 10
   },
   "library": {
    "category": "research",
@@ -3865,7 +3865,7 @@
    "build_ticks": 3600,
    "workers": 35,
    "max_count": 0,
-   "soldiers": 55047630
+   "soldiers": 6880954
   },
   "opera_house": {
    "category": "production",

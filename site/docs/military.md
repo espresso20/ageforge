@@ -65,17 +65,17 @@ All military buildings belong to the **military lineage** (22 tiers, Stone Age t
 The soldiers a copy comes with come from the town an age is priced for. The army that town holds when it opens the gate out of the age is about 14% of its homes, so a copy comes with
 
 ```
-soldiers a copy = ceil(14% of the homes at the end of the age ÷ military buildings the gate out of the age asks for)
+soldiers a copy = ceil(14% of the homes at the end of the age ÷ copies of the age's military buildings that town holds)
 ```
 
-(a gate that asks for none counts as one). The homes are those of the town the age gates are priced for: eight copies of every housing building so far, or the gate's count where it asks for more.
+The town holds eight copies of each of the age's military buildings, or the gate's count where it asks for more (a building the gate leaves out is in the town all the same). Its homes are eight copies of every housing building so far, or the gate's count where it asks for more.
 
 | Tier | Key | Name | Age Unlocked | Soldiers a copy | Worker Slots |
 |------|-----|------|-------------|-----------------|--------------|
 | 0 | `war_camp` | War Camp | Stone Age | 9 | 3 |
-| 1 | `barracks` | Barracks | Bronze Age | 123 | 4 |
-| 2 | `hunting_lodge` | Hunting Lodge | Iron Age | 15 | 5 |
-| 3 | `legion_fort` | Legion Fort | Iron Age | 15 | 6 |
+| 1 | `barracks` | Barracks | Bronze Age | 16 | 4 |
+| 2 | `hunting_lodge` | Hunting Lodge | Iron Age | 10 | 5 |
+| 3 | `legion_fort` | Legion Fort | Iron Age | 10 | 6 |
 | 4 | `military_academy` | Military Academy | Classical Age | 24 | 6 |
 | 5 | `castle_keep` | Castle Keep | Medieval Age | 77 | 7 |
 | 6 | `fortress` | Fortress | Renaissance Age | 145 | 7 |
@@ -85,7 +85,7 @@ soldiers a copy = ceil(14% of the homes at the end of the age ÷ military buildi
 | 10 | `command_post` | Command Post | Electric Age | 2,900 | 12 |
 | 11 | `bunker_complex` | Bunker Complex | Atomic Age | 2,245 | 12 |
 | 12 | `special_ops_hq` | Special Ops HQ | Modern Age | 21,178 | 14 |
-| 13 | `cyber_command` | Cyber Command | Information Age | 238,235 | 15 |
+| 13 | `cyber_command` | Cyber Command | Information Age | 29,780 | 15 |
 | 14 | `drone_warfare_center` | Drone Warfare Center | Digital Age | 46,983 | 16 |
 | 15 | `combat_aug_center` | Combat Aug Center | Cyberpunk Age | 154,503 | 18 |
 | 16 | `plasma_command` | Plasma Command | Fusion Age | 178,653 | 20 |
@@ -93,7 +93,7 @@ soldiers a copy = ceil(14% of the homes at the end of the age ÷ military buildi
 | 18 | `fleet_command` | Fleet Command | Interstellar Age | 1,513,556 | 25 |
 | 19 | `stellar_armada_hq` | Stellar Armada HQ | Galactic Age | 3,577,940 | 25 |
 | 20 | `probability_war_room` | Probability War Room | Quantum Age | 2,495,437 | 30 |
-| 21 | `omniversal_war_council` | Omniversal War Council | Transcendent Age | 55,047,630 | 35 |
+| 21 | `omniversal_war_council` | Omniversal War Council | Transcendent Age | 6,880,954 | 35 |
 
 The soldiers count per building: two Barracks bring twice the soldiers of one.
 
@@ -356,7 +356,7 @@ The doubling curve was measured from the Iron Age on. Before it, the only milita
 |-----|--------|----------------------------------------|--------------------------|
 | Primitive Age | 1K | none | no military building yet |
 | Stone Age | 4.8K | 2,400 | War Camp: 9 soldiers a copy, 72 with the eight the gate asks for |
-| Bronze Age | 69K | 34.5K | Barracks (after Military Tactics): 123 soldiers a copy |
+| Bronze Age | 69K | 34.5K | Barracks (after Military Tactics): 16 soldiers a copy |
 
 The soldiers a building comes with are sized to the army a town holds when it opens the gate, about 14% of its homes, and not yet to these threats: the threat figures on this page are the ones measured when soldiers were a stockpile, and they have not been re-fitted to an army of posted soldiers. A garrison carried into the next age meets that age's larger threat, so it has to keep growing, as it does later.
 

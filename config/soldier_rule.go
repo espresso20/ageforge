@@ -15,8 +15,10 @@ import "math"
 //	posts = ceil(SoldierSharePercent/100 x RefHousing(A) / GateMilitaryCopies(A))
 //
 // RefHousing(A) is the housing of the reference town at the end of age A, and
-// GateMilitaryCopies(A) the copies of military buildings the gate out of A
-// asks for (at least 1, so an age whose gate asks for none still divides).
+// GateMilitaryCopies(A) the copies of military buildings of age A that town
+// holds: the gate's count of each, or TownCopies where the gate asks for
+// fewer or none (refCopiesOf). A military building the gate does not ask for
+// (the Barracks, say) is in the town all the same, so it shares the army.
 // Every military building of one age has the same number of posts.
 const SoldierSharePercent = 14
 
@@ -80,9 +82,11 @@ func RefHousing(defs []BuildingDef, ages []AgeDef) []float64 {
 	return out
 }
 
-// GateMilitaryCopies is the copies of military buildings the gate out of each
-// age asks for, by the age's place in ages: the gate's count of every military
-// building of that age, summed (0 where it asks for none).
+// GateMilitaryCopies is the copies of military buildings of each age the
+// reference town holds, by the age's place in ages: the reference count
+// (refCopiesOf) of every military building of that age, summed. It is the
+// copies the gate out of the age asks for, with TownCopies standing in for a
+// building the gate leaves out.
 func GateMilitaryCopies(defs []BuildingDef, ages []AgeDef) []int {
 	idx := make(map[string]int, len(ages))
 	for i, a := range ages {
@@ -94,15 +98,14 @@ func GateMilitaryCopies(defs []BuildingDef, ages []AgeDef) []int {
 			continue
 		}
 		if i, ok := idx[d.RequiredAge]; ok {
-			out[i] += gateOutOf(ages, i)[d.Key]
+			out[i] += refCopiesOf(d, gateOutOf(ages, i))
 		}
 	}
 	return out
 }
 
-// SoldierPostsFor is the posts a copy of a military building of the age at
-// place i comes with, from that age's reference housing and the copies its
-// gate asks for.
+// SoldierPostsFor is the posts a copy of a military building comes with, from
+// the reference housing of its age and the copies the reference town holds.
 func SoldierPostsFor(housing float64, gateCopies int) int {
 	// Whole numbers in the numerator and the divisor, so a share that comes out
 	// exact is not rounded up by the float form of 0.14.

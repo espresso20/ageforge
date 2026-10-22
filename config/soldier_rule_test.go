@@ -48,8 +48,8 @@ func refHousingOracle(t *testing.T) map[string]int64 {
 
 // TestSoldierPostsFollowTheRule: every military building comes with
 // ceil(14% of the reference town's housing at the end of its age / the copies
-// of military buildings the gate out of the age asks for, at least 1) soldiers
-// a copy, worked here in whole numbers.
+// of the age's military buildings the reference town holds) soldiers a copy,
+// worked here in whole numbers.
 func TestSoldierPostsFollowTheRule(t *testing.T) {
 	housing := refHousingOracle(t)
 	ages := Ages()
@@ -63,17 +63,18 @@ func TestSoldierPostsFollowTheRule(t *testing.T) {
 			continue
 		}
 		military++
+		// The copies of the age's military buildings the reference town
+		// holds: eight of each, or the gate's count where it asks for more.
 		gate := 0
 		for _, m := range BaseBuildings() {
 			if m.LineageKey == "military" && m.RequiredAge == d.RequiredAge {
-				gate += next[d.RequiredAge].BuildingReqs[m.Key]
+				gate += max(TownCopies, next[d.RequiredAge].BuildingReqs[m.Key])
 			}
 		}
-		gate = max(gate, 1)
 		h := housing[d.RequiredAge]
 		want := int((14*h + int64(100*gate) - 1) / int64(100*gate))
 		if d.Soldiers != want {
-			t.Errorf("%s (%s): %d soldiers a copy, want ceil(0.14 x %d / %d) = %d", d.Key, d.RequiredAge, d.Soldiers, h, gate, want)
+			t.Errorf("%s (%s): %d soldiers a copy, want ceil(0.14 x %d / %d copies) = %d", d.Key, d.RequiredAge, d.Soldiers, h, gate, want)
 		}
 		if d.Soldiers < 1 {
 			t.Errorf("%s comes with no soldiers", d.Key)
