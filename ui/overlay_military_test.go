@@ -11,10 +11,10 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// armyGarrison is a Classical Age garrison: 2,108,000 soldiers, defense
-// 4.216M. It was sized to blunt 28% of a raid against a threat of 2.56M;
-// against the 2M the age's threat is on the military yardstick it blunts 31%.
-const armyGarrison = 2108000
+// armyGarrison is a Classical Age garrison: 2,000 soldiers, defense 4,000,
+// against the age's threat of 1.94K (the threat is measured in soldiers at
+// their posts): it blunts 30% of a raid.
+const armyGarrison = 2000
 
 func TestArmyPanel_NoGarrison(t *testing.T) {
 	txt := untag(militaryProvider(game.NewGameEngine().GetState(), 0))
@@ -80,12 +80,9 @@ func TestArmyPanel_Garrison(t *testing.T) {
 	engine.SetGarrisonForTest("classical_age", armyGarrison)
 	txt := untag(militaryProvider(engine.GetState(), 0))
 	for _, want := range []string{
-		// The Classical Age's threat on the military yardstick: 2.56M
-		// times 0.78 (config.MilitaryScaleAt), so this garrison, with no
-		// military power of its own, blunts more than the 28% it was
-		// sized for.
-		"Threat:    2M (raids in the Classical Age)",
-		"Your garrison would blunt about 31% of a raid.",
+		// The Classical Age's threat in soldiers at their posts: 1.94K.
+		"Threat:    1.94K (raids in the Classical Age)",
+		"Your garrison would blunt about 30% of a raid.",
 		"Raids, war raids and an Endure's losses all hit you that much softer.",
 		"Twice the garrison: about 36%. No army blunts more than 45%.",
 	} {
@@ -100,8 +97,8 @@ func TestArmyPanel_GarrisonOutmatchedLater(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("industrial_age", armyGarrison)
 	txt := untag(militaryProvider(engine.GetState(), 0))
-	if !strings.Contains(txt, "Your garrison would blunt about 6% of a raid.") {
-		t.Errorf("an outmatched garrison should blunt about 6%%:\n%s", txt)
+	if !strings.Contains(txt, "Your garrison would blunt about 17% of a raid.") {
+		t.Errorf("an outmatched garrison should blunt about 17%%:\n%s", txt)
 	}
 }
 
@@ -130,7 +127,7 @@ func TestArmyPanel_OnScreen(t *testing.T) {
 	if !d.overlayMgr.Show("army", engine.GetState()) {
 		t.Fatal("overlay army not registered")
 	}
-	if !gridHas(screenGrid(t, pages, w, h), "Your garrison would blunt about 31% of a raid.") {
+	if !gridHas(screenGrid(t, pages, w, h), "Your garrison would blunt about 30% of a raid.") {
 		t.Error("the garrison line is not on screen")
 	}
 }

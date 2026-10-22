@@ -306,7 +306,7 @@ Your defense rating is measured against the **raid threat** of the age you are i
 
 ```
 defense  = soldiers × 2.0 × (1 + military power)
-threat   = 160,000 × 2^(age order) × the age's threat scale      # from the Iron Age (order 3) on
+threat   = the age's raid threat, in soldiers at their posts      # the table below
 blunted  = 45% × defense ÷ (defense + threat)
 ```
 
@@ -322,43 +322,43 @@ The blunted share is the part of a raid's losses the garrison takes off. It is 0
 | four times the threat | 36% |
 | nine times the threat | about 40% |
 
-The threat **about doubles every age** (the Atomic Age is the exception: its threat is a quarter above the Electric Age's). An army that is strong for one age is ordinary for the next and a rounding error a few ages later, so a garrison has to grow with you. The threat scale is the age's [military yardstick](#the-military-yardstick).
+The threat is sized to the army of the town an age is priced for: the soldiers that town has at its posts (see [Military Buildings](#military-buildings)) would blunt the same share of a raid they blunted when soldiers were a stockpile your buildings made, in every age. So the threat rises with the army the age's buildings bring, not by a fixed doubling, and it dips in the Atomic Age, where the gate asks for more copies of a building with fewer posts each. An army that is strong for one age is ordinary for the next, so a garrison has to grow with you. The threat scale column is the age's [military yardstick](#the-military-yardstick).
 
 | Age | Threat scale | Threat | Soldiers for 22.5% (no military bonus) |
 |-----|--------------|--------|----------------------------------------|
-| Iron Age | 0.88 | 1.12M | 562K |
-| Classical Age | 0.78 | 2M | 999K |
-| Medieval Age | 0.83 | 4.25M | 2.12M |
-| Renaissance Age | 0.71 | 7.31M | 3.65M |
-| Colonial Age | 0.68 | 13.9M | 6.97M |
-| Industrial Age | 0.61 | 25.2M | 12.6M |
-| Victorian Age | 0.61 | 50.4M | 25.2M |
-| Electric Age | 0.64 | 106M | 52.8M |
-| Atomic Age | 0.40 | 132M | 66.1M |
-| Modern Age | 0.40 | 264M | 132M |
-| Information Age | 0.36 | 471M | 235M |
-| Digital Age | 0.37 | 980M | 490M |
-| Cyberpunk Age | 0.35 | 1.84B | 922M |
-| Fusion Age | 0.36 | 3.82B | 1.91B |
-| Space Age | 0.36 | 7.64B | 3.82B |
-| Interstellar Age | 0.38 | 15.8B | 7.91B |
-| Galactic Age | 0.39 | 32.7B | 16.3B |
-| Quantum Age | 0.40 | 67.5B | 33.8B |
-| Transcendent Age | 0.40 | 135B | 67.5B |
+| Iron Age | 0.88 | 1.72K | 861 |
+| Classical Age | 0.78 | 1.94K | 971 |
+| Medieval Age | 0.83 | 2.81K | 1.41K |
+| Renaissance Age | 0.71 | 3.29K | 1.64K |
+| Colonial Age | 0.68 | 5K | 2.5K |
+| Industrial Age | 0.61 | 6.39K | 3.2K |
+| Victorian Age | 0.61 | 10.6K | 5.3K |
+| Electric Age | 0.64 | 15.1K | 7.55K |
+| Atomic Age | 0.40 | 13K | 6.52K |
+| Modern Age | 0.40 | 33.3K | 16.6K |
+| Information Age | 0.36 | 45.9K | 22.9K |
+| Digital Age | 0.37 | 68.3K | 34.2K |
+| Cyberpunk Age | 0.35 | 138K | 68.8K |
+| Fusion Age | 0.36 | 234K | 117K |
+| Space Age | 0.36 | 420K | 210K |
+| Interstellar Age | 0.38 | 1.01M | 504K |
+| Galactic Age | 0.39 | 2.42M | 1.21M |
+| Quantum Age | 0.40 | 4.27M | 2.13M |
+| Transcendent Age | 0.40 | 6.38M | 3.19M |
 
 A `military_power` bonus cuts the soldiers needed: at +1.0, half as many.
 
 ### Before the Iron Age
 
-The doubling curve was measured from the Iron Age on. Before it, the only military building a gate asks for is the War Camp (eight of them, to leave the Stone Age), so a garrison is the War Camps and Barracks you chose to build, and the three early ages have their own raid threats:
+The threat curve was first measured from the Iron Age on. Before it, the only military building a gate asks for is the War Camp (eight of them, to leave the Stone Age), so a garrison is the War Camps and Barracks you chose to build, and the three early ages have their own raid threats:
 
 | Age | Threat | Soldiers for 22.5% (no military bonus) | Where soldiers come from |
 |-----|--------|----------------------------------------|--------------------------|
-| Primitive Age | 1K | none | no military building yet |
-| Stone Age | 4.8K | 2,400 | War Camp: 9 soldiers a copy, 72 with the eight the gate asks for |
-| Bronze Age | 69K | 34.5K | Barracks (after Military Tactics): 16 soldiers a copy |
+| Primitive Age | 33 | none | no military building yet |
+| Stone Age | 160 | 80 | War Camp: 9 soldiers a copy, 72 with the eight the gate asks for |
+| Bronze Age | 410 | 205 | Barracks (after Military Tactics): 16 soldiers a copy |
 
-The soldiers a building comes with are sized to the army a town holds when it opens the gate, about 14% of its homes, and not yet to these threats: the threat figures on this page are the ones measured when soldiers were a stockpile, and they have not been re-fitted to an army of posted soldiers. A garrison carried into the next age meets that age's larger threat, so it has to keep growing, as it does later.
+The reference town's army (72 soldiers in the Stone Age, 200 with its eight Barracks in the Bronze) blunts about a fifth of a raid, and half of it about an eighth. A garrison carried into the next age meets that age's larger threat, so it has to keep growing, as it does later.
 
 The raids of these ages are Tribal Raid and Beast Stampede (Stone Era) and Bandit Raid (Bronze Age on). See [Raids and your garrison](events.md#raids-and-your-garrison).
 
@@ -402,11 +402,11 @@ The Last Passage in the Cosmic Era costs prestige points, not buildings or stock
 
 ### Worked example
 
-You hold 2,108,000 soldiers with no `military_power` bonus: defense 2,108,000 × 2 = 4,216,000.
+You hold 2,000 soldiers with no `military_power` bonus: defense 2,000 × 2 = 4,000.
 
-- **In the Classical Age** (threat 2M): 45% × 4.216M / (4.216M + 2M) = about **31%**. A war raid that would take 1,000 gold takes about 690; the Army panel says twice the garrison would blunt about 36%.
-- **In the Industrial Age** (threat 25.2M): 45% × 4.216M / (4.216M + 25.2M) = about **6%**. The same army barely matters four ages later.
-- **Endure at the Renaissance** (threat 7.31M) with Brace 1, 150 buildings that can fall (everything but wonders, storage and knowledge buildings) and 1,827,500 soldiers (defense 3.655M, half the threat): the garrison share is 15%. Brace 1 alone would destroy 22 buildings and keep 30% of stock; with the garrison, 19 fall (22 × 15% = 3.3, rounded down to 3 saved) and about 40% of stock is kept.
+- **In the Classical Age** (threat 1.94K): 45% × 4,000 / (4,000 + 1,943) = about **30%**. A war raid that would take 1,000 gold takes about 700; the Army panel says twice the garrison would blunt about 37%.
+- **In the Industrial Age** (threat 6.39K): 45% × 4,000 / (4,000 + 6,394) = about **17%**. The same army matters less four ages later.
+- **Endure at the Renaissance** (threat 3.29K) with Brace 1, 150 buildings that can fall (everything but wonders, storage and knowledge buildings) and 822 soldiers (defense 1,644, half the threat): the garrison share is 15%. Brace 1 alone would destroy 22 buildings and keep 30% of stock; with the garrison, 19 fall (22 × 15% = 3.3, rounded down to 3 saved) and about 40% of stock is kept.
 
 ---
 
@@ -456,8 +456,8 @@ The five military milestones form a chain. Completing all five grants a title, a
 
 The Army panel shows your **defense rating** (soldiers × 2.0 × (1 + military power)). It is measured against the raid threat of your age, and the resulting share (at most 45%) comes off raid events, war raids from civilizations at war with you, and the buildings and stock an Endure takes. It never stops a raid or a catastrophe from happening, and it does nothing against disasters such as plague or earthquakes. A civilization at war with you raids every 104 ticks and takes 50 × its strength (1-5) of its specialty resource; your garrison keeps its share of that, but only staying out of wars, or ending them with tribute, stops the raids: see [War & Peace](factions.md#war-amp-peace). See [Defense](#defense-what-your-army-blunts) for the numbers.
 
-- **Keep up with the age.** The threat about doubles every age, so a garrison you stop growing fades fast. Adding the current age's military buildings keeps pace, since each age's building comes with more soldiers.
-- **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat about doubles and your garrison blunts less than the preview showed.
+- **Keep up with the age.** The threat rises with the army each age's buildings bring, so a garrison you stop growing fades. Adding the current age's military buildings keeps pace, since each age's building comes with more soldiers.
+- **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat rises and your garrison blunts less than the preview showed.
 - **Brace and garrison stack, up to a point.** Together they cut an Endure's losses by at most 60%. With Brace 2, a garrison that blunts 20% already reaches the building cap (8% fall), so extra soldiers mostly buy stock kept, up to 66%.
 - **Soldiers cost food and homes.** Every soldier eats like a worker and takes a place in your homes. Only the workers in military buildings count toward the morale ratio below.
 - **Research military power.** It multiplies the defense rating of the soldiers you already have.
