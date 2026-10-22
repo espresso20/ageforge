@@ -31,7 +31,7 @@ func (ge *GameEngine) sessionMarkLocked(savedAt time.Time) *SessionMark {
 	m := &SessionMark{
 		Tick: ge.tick, SavedAt: savedAt, Age: ge.age,
 		Buildings: ge.Buildings.GetAll(), Ruins: ge.Buildings.GetAllRuins(),
-		Pop: ge.Workers.TotalPop(), Civs: map[string]string{},
+		Pop: ge.popLocked(), Civs: map[string]string{},
 		Routes: ge.Trade.ActiveRouteCount(), Expeditions: ge.Military.completedCount,
 	}
 	for k, n := range m.Buildings {

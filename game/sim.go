@@ -165,7 +165,7 @@ func (ge *GameEngine) SetTownForTest(buildings map[string]int, people int) {
 	ge.recalculateRates()
 	ge.Workers.UnlockType("worker")
 	if more := people - ge.Workers.TotalPop(); more > 0 {
-		ge.Workers.Recruit("worker", more, ge.popCapLocked())
+		ge.Workers.Recruit("worker", more, ge.workerCapLocked())
 	}
 	ge.recalculateRates()
 }

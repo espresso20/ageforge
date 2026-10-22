@@ -11,9 +11,9 @@ import (
 )
 
 // Scholars. Knowledge is not a thing a town holds: a knowledge building comes
-// with its scholars (config.BuildingDef.Scholars a copy), who need no housing
-// or food and work from the moment the copy stands. The rules are in
-// config/knowledge_rule.go.
+// with its scholars (config.BuildingDef.Scholars a copy), who work from the
+// moment the copy stands. They are people: they live in the homes and eat like
+// anyone (population.go). The rules are in config/knowledge_rule.go.
 //
 //   - A tech has a price (the work it needs) and a progress. The work the
 //     researching scholars do each tick goes straight into the tech in
@@ -106,12 +106,17 @@ func (ge *GameEngine) scholarGroups() ([]ScholarGroup, int) {
 
 // scholarTotal is every scholar the town has.
 func (ge *GameEngine) scholarTotal() int {
+	// A plain loop, not eachBuiltOf: this runs on every pass of the staffing
+	// routine, which allocates nothing once the town is settled.
 	total := 0
-	ge.Buildings.eachBuiltOf(ge.Buildings.scholarKeys, func(_ string, count int, def config.BuildingDef) {
-		if def.Scholars > 0 && count > 0 {
-			total += count * def.Scholars
+	bm := ge.Buildings
+	for _, key := range bm.scholarKeys {
+		if n := bm.counts[key]; n > 0 {
+			if s := bm.defs[key].Scholars; s > 0 {
+				total += n * s
+			}
 		}
-	})
+	}
 	return total
 }
 

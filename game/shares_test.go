@@ -579,6 +579,16 @@ func TestShares_ShareRows(t *testing.T) {
 // ticks, and GetState and the tick have tight budgets.
 func TestShares_SettledRunAllocatesNothing(t *testing.T) {
 	ge := newLateGameEngine(t)
+	// The scholars eat too: the late-game town's farms have to feed them and
+	// the workers, or the food margin holds the routine at work every pass.
+	for key, def := range ge.Buildings.defs {
+		for _, eff := range def.Effects {
+			if eff.Type == "production" && eff.Target == "food" && ge.Buildings.counts[key] > 0 {
+				ge.Buildings.counts[key] = 200
+			}
+		}
+	}
+	ge.recalculateRates()
 	growFully(ge)
 	if allocs := testing.AllocsPerRun(50, ge.keepSharesLive); allocs != 0 {
 		t.Errorf("a settled routine run allocates %v times", allocs)

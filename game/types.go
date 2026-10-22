@@ -328,10 +328,15 @@ type BuildingState struct {
 
 // WorkerState represents all worker info
 type WorkerState struct {
-	Types     map[string]WorkerDomainState
+	Types map[string]WorkerDomainState
+	// TotalPop is the population: workers, the reserve and scholars (the
+	// soldiers join it in a later change). MaxPop is the housing.
 	TotalPop  int
 	MaxPop    int
 	TotalIdle int
+	// Scholars is the scholars living in the homes: the knowledge buildings'
+	// own. They are part of TotalPop and eat like anyone (population.go).
+	Scholars  int
 	FoodDrain float64
 	// Shares is the split of the workforce the player set (shares.go):
 	// domain → percent, only the domains set; nil when every domain is on
@@ -352,6 +357,14 @@ type WorkerState struct {
 	FoodNet   float64
 	FoodFeeds int
 }
+
+// Reserve is the people with no job yet, who live in the homes and wait for
+// one: the same number as TotalIdle.
+func (w WorkerState) Reserve() int { return w.TotalIdle }
+
+// Working is the people who have a job: the population less the reserve and
+// the scholars.
+func (w WorkerState) Working() int { return max(0, w.TotalPop-w.TotalIdle-w.Scholars) }
 
 // WorkerDomainState represents one worker domain's state
 type WorkerDomainState struct {

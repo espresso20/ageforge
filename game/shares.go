@@ -343,7 +343,7 @@ func (ge *GameEngine) applyStaffPlan(sv *staffView, plan []int) {
 // worker's food and the margin a recruit must leave. All three are in the
 // units a worker eats in, before Era Mastery's speed-up (foodBeforeMastery).
 func (ge *GameEngine) recruitFood() (net, perWorker, margin float64) {
-	drain := ge.Workers.FoodDrain()
+	drain := ge.foodDrainLocked()
 	if r := ge.Resources.resources["food"]; r != nil {
 		net = foodBeforeMastery(r.Rate, r.Breakdown) - drain
 	}
@@ -442,8 +442,8 @@ func (ge *GameEngine) staffByShares(recruit bool) staffCounts {
 		// Jobs fill at once, as far as housing and food allow; growth past
 		// the free slots, into the reserve, is a share of the population a
 		// pass.
-		room = ge.popCapLocked() - ge.Workers.TotalPop()
-		reserve = popGrowthStep(ge.Workers.TotalPop())
+		room = ge.popCapLocked() - ge.popLocked()
+		reserve = popGrowthStep(ge.popLocked())
 		if room > 0 && free <= 0 {
 			// Nowhere to put them: the newcomers join the reserve, which only
 			// the food margin can refuse.
@@ -577,7 +577,7 @@ func (ge *GameEngine) recruitByShares(sv *staffView, room, reserve int) int {
 		net = net + gain - per
 		n++
 	}
-	if n == 0 || !ge.Workers.Recruit("worker", n, ge.popCapLocked()) {
+	if n == 0 || !ge.Workers.Recruit("worker", n, ge.workerCapLocked()) {
 		return 0
 	}
 	ge.Stats.RecordRecruit(n)
@@ -689,7 +689,7 @@ func (ge *GameEngine) keepSharesLive() {
 		return
 	}
 	ge.recalculateRates()
-	ge.addLog(LogRoutine, "Roster: "+c.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
+	ge.addLog(LogRoutine, "Roster: "+c.describe(ge.popLocked(), ge.popCapLocked())+".")
 	if before == 0 && c.hired > 0 {
 		// The first recruits of a run (or after everyone died): say once,
 		// as a note rather than a routine line, that this happens on its
@@ -815,7 +815,7 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 		line += " Moved " + textfmt.Count(moved, "worker", "workers") + " to match."
 	}
 	if c.any() {
-		line += " " + textfmt.Capitalize(c.describe(ge.Workers.TotalPop(), ge.popCapLocked())) + "."
+		line += " " + textfmt.Capitalize(c.describe(ge.popLocked(), ge.popCapLocked())) + "."
 	}
 	total := 0.0
 	for _, d := range ge.rules.WorkerDomains() {
@@ -919,7 +919,7 @@ func (ge *GameEngine) popHoldLocked() (by string, net float64, feeds int) {
 		feeds = int(net / per)
 	}
 	switch {
-	case ge.popCapLocked()-ge.Workers.TotalPop() <= 0:
+	case ge.popCapLocked()-ge.popLocked() <= 0:
 		return HeldHousing, net, feeds
 	case ge.Resources.Get("food") <= 0:
 		return HeldFood, net, feeds

@@ -1490,7 +1490,7 @@ func (ge *GameEngine) doTick() {
 
 	// Starvation: when food is at 0 with active drain, one worker dies every
 	// starvationDeathInterval ticks.
-	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
+	if ge.Resources.Get("food") <= 0 && ge.foodDrainLocked() > 0 {
 		ge.starvationTicks++
 		if ge.starvationTicks == 1 {
 			ge.addLog("warning", fmt.Sprintf("⚠ Food has run out. One worker dies every %s until you have food again.",
@@ -1503,7 +1503,7 @@ func (ge *GameEngine) doTick() {
 			killed := ge.Workers.KillWorker(1)
 			if killed > 0 {
 				ge.report(Event{Kind: config.BadgeEvStarved, N: float64(killed)})
-				ge.addLog("error", fmt.Sprintf("☠ A worker starved to death. Population: %d.", ge.Workers.TotalPop()))
+				ge.addLog("error", fmt.Sprintf("☠ A worker starved to death. Population: %d.", ge.popLocked()))
 			}
 		}
 	} else if ge.starvationTicks > 0 {
@@ -1562,7 +1562,7 @@ func (ge *GameEngine) doTick() {
 		knowRate = ge.researchPerTick
 		faith := snap["faith"].Amount
 		ge.History.Sample(ge.tick, HistorySample{
-			Population: float64(ge.Workers.TotalPop()),
+			Population: float64(ge.popLocked()),
 			FoodRate:   foodRate,
 			KnowRate:   knowRate,
 			Faith:      faith,
@@ -1861,7 +1861,7 @@ func (ge *GameEngine) checkMilestones() {
 	completed := ge.Milestones.CheckMilestones(
 		ge.tick, ge.age, ageOrder,
 		ge.Resources, ge.Buildings,
-		ge.Workers.TotalPop(),
+		ge.popLocked(),
 		ge.Research.ResearchedCount(),
 		ge.Stats.TotalBuilt,
 		researchedTechs,
@@ -2159,7 +2159,7 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Food consumption
-	drain := ge.Workers.FoodDrain()
+	drain := ge.foodDrainLocked()
 	if drain > 0 {
 		r := ge.Resources.resources["food"]
 		if r != nil {
@@ -2757,7 +2757,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		ge.Workers.AddPctAll(0.15)
 		if gained := ge.Workers.TotalPop() - before; gained > 0 {
 			ge.addLog("success", fmt.Sprintf("  → %s joined (population now %d).",
-				textfmt.Count(gained, "new worker", "new workers"), ge.Workers.TotalPop()))
+				textfmt.Count(gained, "new worker", "new workers"), ge.popLocked()))
 		}
 	case "ancient_cache":
 		// Minutes of the town's own income of every unlocked resource,
@@ -3821,18 +3821,18 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 
 	popCap := ge.popCapLocked()
 
-	available := popCap - ge.Workers.TotalPop()
+	available := popCap - ge.popLocked()
 	if available <= 0 {
-		return 0, fmt.Errorf("No housing left (%d/%d). Build housing to recruit more.", ge.Workers.TotalPop(), popCap)
+		return 0, fmt.Errorf("No housing left (%d/%d). Build housing to recruit more.", ge.popLocked(), popCap)
 	}
 
-	if !ge.Workers.Recruit(vType, available, popCap) {
+	if !ge.Workers.Recruit(vType, available, ge.workerCapLocked()) {
 		return 0, fmt.Errorf("Could not recruit any workers.")
 	}
 	ge.Stats.RecordRecruit(available)
 	ge.holdStaffing()
 	ge.addLog(LogRoutine, fmt.Sprintf("Recruited %s (population %d/%d).",
-		textfmt.Count(available, "worker", "workers"), ge.Workers.TotalPop(), popCap))
+		textfmt.Count(available, "worker", "workers"), ge.popLocked(), popCap))
 	return available, nil
 }
 
@@ -3846,8 +3846,8 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 
 	popCap := ge.popCapLocked()
 
-	if !ge.Workers.Recruit(vType, count, popCap) {
-		totalPop := ge.Workers.TotalPop()
+	if !ge.Workers.Recruit(vType, count, ge.workerCapLocked()) {
+		totalPop := ge.popLocked()
 		if !ge.Workers.IsUnlocked(vType) {
 			return fmt.Errorf("Worker type '%s' is not unlocked yet.", vType)
 		}
@@ -3859,9 +3859,9 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	}
 	ge.Stats.RecordRecruit(count)
 	ge.holdStaffing()
-	ge.addLog("debug", fmt.Sprintf("Recruit: %d (pop: %d/%d)", count, ge.Workers.TotalPop(), popCap))
+	ge.addLog("debug", fmt.Sprintf("Recruit: %d (pop: %d/%d)", count, ge.popLocked(), popCap))
 	ge.addLog(LogRoutine, fmt.Sprintf("Recruited %s (population %d/%d).",
-		textfmt.Count(count, "worker", "workers"), ge.Workers.TotalPop(), popCap))
+		textfmt.Count(count, "worker", "workers"), ge.popLocked(), popCap))
 	return nil
 }
 
@@ -4004,7 +4004,7 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 	ge.holdStaffing()
 	ge.recalculateRates()
 	ge.addLog(LogRoutine, fmt.Sprintf("Dismissed %s from %s. They left your population (now %d).",
-		textfmt.Count(dismissed, "worker", "workers"), def.Name, ge.Workers.TotalPop()))
+		textfmt.Count(dismissed, "worker", "workers"), def.Name, ge.popLocked()))
 	return nil
 }
 
@@ -5171,6 +5171,10 @@ func (ge *GameEngine) GetState() GameState {
 	workers.AutoRecruit = !ge.autoRecruitOff
 	workers.HoldTicks = max(0, ge.staffHoldUntil-ge.tick)
 	workers.HeldBy, workers.FoodNet, workers.FoodFeeds = ge.popHoldLocked()
+	// Scholars are people: they live in the homes and eat (population.go).
+	workers.Scholars = ge.scholarTotal()
+	workers.TotalPop += workers.Scholars
+	workers.FoodDrain = ge.foodDrainLocked()
 
 	return GameState{
 		Rules:                ge.rules,
@@ -5196,7 +5200,7 @@ func (ge *GameEngine) GetState() GameState {
 			AgeOrder:        ageOrder,
 			Resources:       ge.milestoneResources(),
 			Buildings:       ge.Buildings.GetAll(),
-			Population:      ge.Workers.TotalPop(),
+			Population:      ge.popLocked(),
 			TechCount:       ge.Research.ResearchedCount(),
 			TotalBuilt:      ge.Stats.TotalBuilt,
 			SoldierCount:    soldierResource,
@@ -5463,7 +5467,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.rules)+".")
 	}
 	if staffed.any() {
-		ge.addLog("info", "While you were away, your roster "+staffed.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
+		ge.addLog("info", "While you were away, your roster "+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
 	}
 }
 

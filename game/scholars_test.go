@@ -26,8 +26,8 @@ func scholarEngine(t *testing.T) *GameEngine {
 	return ge
 }
 
-// Scholars exist from the moment a knowledge building stands, take no
-// population and need no assignment.
+// Scholars exist from the moment a knowledge building stands, are part of
+// the population and need no assignment.
 func TestScholarsComeWithTheBuilding(t *testing.T) {
 	ge := scholarEngine(t)
 	st := ge.GetState()
@@ -35,8 +35,10 @@ func TestScholarsComeWithTheBuilding(t *testing.T) {
 	if st.Scholars.Total != want {
 		t.Fatalf("scholars = %d, want %d", st.Scholars.Total, want)
 	}
-	if pop := st.Workers.TotalPop; pop != 0 {
-		t.Errorf("the population is %d: scholars are not staffed from it", pop)
+	// They are people (population.go): the town is its scholars, and the
+	// workers' pool is empty.
+	if pop, idle := st.Workers.TotalPop, st.Workers.TotalIdle; pop != want || idle != 0 {
+		t.Errorf("the population is %d (%d in the reserve): want %d, all of them scholars", pop, idle, want)
 	}
 	if bs := st.Buildings["story_circle"]; bs.Scholars != 2 || bs.ScholarCap != config.KnowledgeCap("story_circle") || bs.WorkerCapacity != 0 {
 		t.Errorf("story circle state: scholars %d, cap %d (want %d), worker slots %d", bs.Scholars, bs.ScholarCap, config.KnowledgeCap("story_circle"), bs.WorkerCapacity)
