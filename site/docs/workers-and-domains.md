@@ -1,6 +1,8 @@
-# Workers
+# People
 
-Workers are your civilization's labor force. Every building that produces resources has worker slots, and staffing it raises its output from a 20% floor up to 100%. Workers come from a **single generic pool**: any worker can go to any building. There are 11 worker domains, and a worker's domain comes from the building it staffs, not from the worker.
+Everyone in your town is a person, and there are four kinds: **workers**, who have a job; the **reserve**, who live in your homes and wait for one; **soldiers**; and **scholars**. Each age has its own word for each kind. In the Bronze Age the scholars are Scribes, in the Cyberpunk Age they are Netrunners, and the game shows the word of the age you are in. This page says workers, the reserve, soldiers and scholars.
+
+Every building that produces resources has worker slots, and staffing it raises its output from a 20% floor up to 100%. Workers come from a **single generic pool**: any worker can go to any building. There are 11 worker domains, and a worker's domain comes from the building it staffs, not from the worker.
 
 ---
 
@@ -9,18 +11,34 @@ Workers are your civilization's labor force. Every building that produces resour
 - **Workers come on their own.** Build housing and buildings with worker slots. With auto-recruit on (the default), your population grows toward your housing while food allows, new workers fill the empty slots first, and the rest wait in the **reserve**. Workers in the reserve go to work by your [roster](#the-roster) as soon as a slot opens.
 - **Steer, or take over.** `roster faith 40` sends more workers to faith; `roster military 0` keeps military empty. `recruit` and `assign` still work by hand, and a worker you place stays where you put it.
 - **Every worker eats.** Each worker eats the current age's food rate every tick, whatever it does. Keep the food rate positive (see [Food Drain](#food-drain)).
-- **Look at the panel.** `workers` opens the Workers panel: morale, food, the roster, open slots and who works where.
+- **Scholars move in with their building.** A knowledge building comes with its scholars. They live in your homes and eat like anyone, with no recruiting and no assignment.
+- **Look at the panel.** `people` (or `workers`) opens the People panel: the whole town on one tab, then your work areas, your army and your scholars.
 
 The first age, step by step, is in [Your First Ten Minutes](first-ten-minutes.md).
 
 ---
 
-## The Worker Pool
+## The People of Your Town
 
-There is a single pool of workers. Workers have no domain until they are assigned to a building. Your population is:
+Your **population** is every person who lives in your homes:
 
 ```
-total_workers = reserve (idle workers) + sum of all building assignments
+population = workers at work + the reserve + scholars
+```
+
+- **Workers** have a job: they are assigned to a building with worker slots.
+- **The reserve** is the workers with no slot yet. They eat like any worker and produce nothing; they take a new slot the moment one opens.
+- **Scholars** come with a knowledge building and work its research from the moment the copy stands (see [Scholars and Research](knowledge.md)). They are part of the population: they take a place in your homes and eat the same food as a worker. If your homes are full when the building stands, they still move in, and the reserve stops growing until there is room again. Knowledge buildings cannot be sold, so scholars do not leave.
+- **Soldiers** are listed with the rest of your people. Today they are the soldier stock your military buildings make (see [Army & Missions](military.md)), and they do not take a place in your homes.
+
+Housing caps the population. The room left for newcomers is your housing less your population.
+
+## The Worker Pool
+
+There is a single pool of workers. Workers have no domain until they are assigned to a building. The pool is:
+
+```
+pool = reserve (idle workers) + sum of all building assignments
 ```
 
 An assigned worker takes on the **class name** for that building's domain at the current age. A worker on a `gathering_camp` in the Primitive Age is a **Forager**; the same worker on a `story_circle` is a **Shaman**. The class name is only a label: it changes nothing about what the worker produces or eats. There are no separate domain pools.
@@ -28,7 +46,7 @@ An assigned worker takes on the **class name** for that building's domain at the
 - You don't choose a domain when recruiting.
 - Workers can move freely between any buildings that have worker slots.
 - Your population is limited by housing (huts, longhouses and so on).
-- Idle workers are your reserve. They eat like any worker and produce nothing; they take a new slot the moment one opens.
+- Idle workers are your reserve.
 
 ---
 
@@ -57,7 +75,7 @@ The roster used to be called worker shares, and `workers share` still works in p
 | `workers auto-recruit` | Show whether auto-recruit is on |
 | `workers auto-recruit off` | Stop recruiting automatically; `on` starts it again (`workers autorecruit` works too) |
 
-Each line of `roster` reads like `Faith: 40% (set), 8 workers in 10 slots` or `Food: 34% (auto), 12 workers in 15 slots`. The Workers panel (`workers`) shows the same in its **Roster** section, under a line that says what auto-recruit is doing: growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out.
+Each line of `roster` reads like `Faith: 40% (set), 8 workers in 10 slots` or `Food: 34% (auto), 12 workers in 15 slots`. The People panel's **Work** tab (`people`, or `workers`) shows the same, with a line that says what auto-recruit is doing: growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out.
 
 ### How the split works
 
@@ -95,7 +113,7 @@ Within a domain, buildings fill in this order: buildings that are not superseded
 
 **Auto-recruit off.** With `workers auto-recruit off`, your population stops growing on its own, but idle workers still go to work by your shares after that minute. `workers auto-recruit on` starts growth again at once.
 
-**What holds your population.** The Workers box and the Workers panel say it: `Held by: housing` when every home is full, and `Held by: food` with the net food a tick and how many more workers it feeds when the food margin stops the next newcomer. Nothing is shown while the population is growing.
+**What holds your population.** The People box and the People panel say it: `Held by: housing` when every home is full, and `Held by: food` with the net food a tick and how many more workers it feeds when the food margin stops the next newcomer. Nothing is shown while the population is growing.
 
 **Logs.** What the routine does is a routine line in the log (plain text color, and marked `·` in the **Logs** panel): `Roster: recruited 3 workers (population 12/20), put 2 idle workers to work.` The replies to setting a share or switching auto-recruit are routine lines too, except the warning for food at 0. The first time workers arrive in a run (when your population was 0), a note says: "Workers arrive on their own: the game recruits into empty worker slots while housing and food allow, and puts them to work by your roster. Type workers to see them; workers auto-recruit off to recruit by hand." After time away, the welcome back adds what the routine did, for example "While you were away, your roster recruited 12 workers (population 40/50), put 3 idle workers to work."
 
@@ -109,7 +127,7 @@ Within a domain, buildings fill in this order: buildings that are not superseded
 
 | Command | Shortcut | Effect |
 |---------|----------|--------|
-| `workers` | | Open the Workers panel |
+| `people` | | Open the People panel (`workers` opens it too) |
 | `roster ...` | | Set or show the roster (see [The Roster](#the-roster)) |
 | `workers auto-recruit on`, `off` | | Turn auto-recruit on or off; bare `workers auto-recruit` shows it |
 | `recruit [count]` | `r` | Recruit workers into free housing (default 1); `recruit max` fills all of it |
@@ -171,19 +189,18 @@ If you leave them idle, the roster routine puts them back to work a minute after
 
 Use it in a food deficit (idle workers still eat, so `unassign` doesn't help) or to free housing. With auto-recruit on, the game recruits into the emptied slots again once housing and food allow. To keep a building empty, sell it, set its domain's share to 0, or turn auto-recruit off.
 
-### The Workers panel
+### The People panel
 
-`workers` opens the Workers panel. Before your first worker it says how workers arrive and shows your roster. After that it has five sections:
+`people` (or `workers`) opens the People panel over the whole screen. **Left** and **Right** switch tabs, **Up** and **Down** pick a row, and **Esc** closes it. The prompt keeps working while it is open: `roster faith 40` sets a share and the panel shows it at once.
 
-- **Morale**: your morale as a colored bar (green for a bonus, red for a penalty), its cap once wonders have raised it above 100%, and what it does to production.
-- **Summary**: population over housing, the reserve (idle workers), housing left and what holds your population back; food use per tick (and each worker's share of it) and net food per tick, green when rising and red when falling; then how many workers your food production can feed, or a warning that food is falling.
-- **Roster**: what auto-recruit is doing (growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out), then each domain's share (set, or auto) with a bar of its workers over its slots.
-- **Building slots**: filled slots over total slots across every worker building, with a bar and a percent, and the four buildings with the most open slots (or "All slots filled").
-- **By domain**: each domain with workers, its current class name and head count, and a bar per building showing workers over slots.
+- **Overview**: your homes as one bar, with each kind of person in its own color and the empty homes dim; the homes, the empty ones and what holds your population back; what everyone eats, what food nets, your morale and how many people your food production can feed; one card for each kind (workers at work and the slots they fill, the reserve, soldiers at home and away, scholars at their desks); and a **Lately** list of what has happened to your people: workers recruited, scholars moved in, starvation, soldiers sent out and lost.
+- **Work**: each work area with its share (set, or auto), a bar of its workers over its slots and its buildings; the picked area's buildings, its share, the command that sets it, and what auto-recruit is doing (growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out).
+- **Army**: your military buildings with their copies and staffing, the soldier stock with its cap and rate, your defense and what it blunts of a raid, the missions that have soldiers away with how long they have left, and the soldiers' news.
+- **Scholars**: your knowledge buildings with their copies and scholars, the research in progress with its progress, time left and rate, how many of your scholars research and how many teach, and what is queued next.
 
-<figure class="screen" data-screen="workers"><figcaption>The Workers panel in the Bronze Age: morale, food and housing, then the share of each domain with its workers over its slots.</figcaption></figure>
+<figure class="screen" data-screen="people"><figcaption>The People panel in the Bronze Age: the homes as one bar, a card for each kind of person, and what has happened lately.</figcaption></figure>
 
-On the accessible [themes](themes.md) the panel's greens and reds are blue and orange. The Workers box in the sidebar is always visible: population over housing, the reserve, housing left, food use, net food and, when something holds your population back, what it is.
+On the accessible [themes](themes.md) the panel's greens and reds are blue and orange. The **People box** in the sidebar is always visible: the population over the housing, one line for each kind of person with the age's word for it and the count (the soldiers add how many are out on missions when there is room), and, when something holds your population back, what it is. The food use and net food are on the Overview.
 
 ### Completion
 
@@ -286,7 +303,7 @@ For every building see [Buildings](buildings.md).
 
 ## Food Drain
 
-Every worker eats food each tick. The amount is set by the current age and is the same for every worker, whatever building it staffs, idle workers included:
+Every person eats food each tick. The amount is set by the current age and is the same for everyone, whatever building a worker staffs, the reserve and the scholars included:
 
 ```
 total_food_drain = food_per_worker(current age) × population
@@ -307,7 +324,7 @@ A worker eats **0.06 food/tick** in the Primitive Age. The rate rises 12% with e
 | Quantum | 0.579 | 5.79 | 28.94 |
 
 - Make sure food income exceeds food drain before recruiting by hand. Auto-recruit does this for you: it keeps a margin of one worker's food, or 5% of food production if that is more.
-- The Workers panel shows food use and net food per tick; `status` shows the drain.
+- The People panel's Overview shows food use and net food per tick; `status` shows the drain.
 - `unassign` returns workers to the idle pool, where they still eat. `dismiss` is the way to cut drain at once.
 
 ---
@@ -337,7 +354,7 @@ Morale multiplies the output of every worker-driven building:
 output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity) × morale_multiplier
 ```
 
-It starts at 50%, where it has no effect, and the further it moves from 50% the bigger the effect: half output at the 10% floor, up to +20% at its cap. Starvation, military workers over 30% of your population and more than half your workers idle pull it down; worship and culture buildings, your faith income and good events push it up. The Workers panel shows it as a colored bar. Everything else is on [Morale](morale.md).
+It starts at 50%, where it has no effect, and the further it moves from 50% the bigger the effect: half output at the 10% floor, up to +20% at its cap. Starvation, military workers over 30% of your workers and more than half your workers idle pull it down; worship and culture buildings, your faith income and good events push it up. The People panel's Overview shows it beside the food figures, and the status bar shows it all the time. Everything else is on [Morale](morale.md).
 
 ---
 

@@ -144,6 +144,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return CommandResult{OverlayName: "stats"}
 	case "wonders":
 		return CommandResult{OverlayName: "wonders"}
+	case "people":
+		return CommandResult{OverlayName: "people"}
 	case "workers":
 		return cmdWorkers(args, engine)
 	case "roster":
@@ -516,12 +518,12 @@ func cmdWonderOverflow(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: "Usage: wonder overflow [on|off]", Type: "error"}
 }
 
-// cmdWorkers is `workers`: bare opens the Workers panel and `workers
+// cmdWorkers is `workers`: bare opens the People panel (as `people` does) and `workers
 // auto-recruit [on|off]` shows or sets recruiting. `workers share` is the
 // roster's old name and still runs it.
 func cmdWorkers(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return CommandResult{OverlayName: "workers"}
+		return CommandResult{OverlayName: "people"}
 	}
 	switch strings.ToLower(args[0]) {
 	case "share":

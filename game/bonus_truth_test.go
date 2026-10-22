@@ -1427,7 +1427,7 @@ var truthKinds = map[string]truthKind{
 			res := p.Eff.Target
 			gross := before["rate:"+res]
 			if res == "food" {
-				gross += ge.Workers.FoodDrain() * ge.speedK()
+				gross += ge.foodDrainLocked() * ge.speedK()
 			}
 			if gross <= 0 {
 				return truthMeasured{Skip: "no " + res + " comes in here"}

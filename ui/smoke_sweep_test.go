@@ -47,7 +47,7 @@ var sweepOverlays = []struct{ cmd, overlay string }{
 	{"factions", "factions"},
 	{"stats", "stats"},
 	{"wonders", "wonders"},
-	{"workers", "workers"},
+	{"people", "people"},
 	{"logs", "logs"},
 	{"epoch", "epoch"},
 	{"history", "history"},

@@ -10,6 +10,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **People.** Every person in your town is in one place: workers, the reserve, soldiers and scholars, each with its own name in every age. Scholars live in your homes and eat. A People box replaces the Workers box, and the People panel has tabs for your work, your army and your scholars.
 - **Homes fill up.** Population grows toward your housing while food lasts, faster for a bigger town. Villagers without a job wait in the reserve and take new jobs at once; the Workers box says what holds your population back.
 - **No more instant techs.** Research left over from a finished tech no longer carries into the next one, gifts of research (events, milestones, expeditions, trade) add at most half a tech, and Grand Discovery only grants techs you could start.
 - **A new Expeditions panel.** The Ready Room shows the age's lands as a map with every offer as a pin and a briefing for the one you pick; the Expedition Report follows every party out and lists what came home. Send with the arrow keys and Enter, or type part of an offer's name.

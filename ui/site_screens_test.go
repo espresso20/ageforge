@@ -803,7 +803,7 @@ func TestWriteSiteScreens(t *testing.T) {
 		{"buildings", "buildings", "Bronze Age (current)"},
 		{"plan", "plan", ""},
 		{"rates", "stats", "Resource rates"},
-		{"workers", "workers", ""},
+		{"people", "people", ""},
 		{"trade", "trade", "Trade routes"},
 		{"wonders", "wonders", ""},
 		{"milestones", "milestones", ""},
@@ -823,7 +823,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	s.close()
 	s.say("map style roguelike")
 	// One panel in two themes, at the game's smallest size, for the themes page.
-	s.open("workers", "")
+	s.open("people", "")
 	shots.takeIn(s, "theme-forge", "forge", sitePairW, sitePairH)
 	shots.takeIn(s, "theme-daylight", "daylight", sitePairW, sitePairH)
 	s.close()

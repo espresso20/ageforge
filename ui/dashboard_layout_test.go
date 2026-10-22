@@ -178,9 +178,9 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 	for _, age := range layoutAges {
 		d, pages, eng := stagedDashboard(t, age)
 		st := eng.GetState()
-		unlocked := 0
-		for _, rs := range st.Resources {
-			if rs.Unlocked {
+		unlocked := 0 // the soldiers are people: the People box lists them, not this one
+		for k, rs := range st.Resources {
+			if rs.Unlocked && k != "soldiers" {
 				unlocked++
 			}
 		}
@@ -233,16 +233,16 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 				}
 			}
 
-			// The status bar and the Workers box are one line a fact.
+			// The status bar and the People box are one line a fact.
 			_, sy, _, _ := d.statusTV.GetInnerRect()
 			if status := rectText(cells, w, 0, sy, w, 1)[0]; !strings.Contains(status, st.AgeName) || !strings.Contains(status, "Pop:") || !strings.Contains(status, "Morale") {
 				t.Errorf("%s: the status bar lost the age, the population or morale: %q", where, status)
 			}
 			wx, wy, ww, wh := d.workerMiniTV.GetInnerRect()
 			mini := strings.Join(rectText(cells, w, wx, wy, ww, wh), "\n")
-			for _, want := range []string{"Reserve:", "Housing left:", "Food use:", "Food net:"} {
+			for _, want := range []string{"Pop ", st.Term("workers").Many, st.Term("reserve").Many, st.Term("soldiers").Many, st.Term("scholars").Many} {
 				if !strings.Contains(mini, want) {
-					t.Errorf("%s: the Workers box does not show %q:\n%s", where, want, mini)
+					t.Errorf("%s: the People box does not show %q:\n%s", where, want, mini)
 				}
 			}
 		}
@@ -258,12 +258,12 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 	var names []string
 	st := eng.GetState()
 	for _, k := range sortedKeysOf(st.Resources) {
-		if rs := st.Resources[k]; rs.Unlocked {
+		if rs := st.Resources[k]; rs.Unlocked && k != "soldiers" {
 			names = append(names, rs.Name)
 		}
 	}
-	if len(names) != 25 {
-		t.Fatalf("the Quantum Age has %d resources unlocked, want all 25", len(names))
+	if len(names) != 24 {
+		t.Fatalf("the Quantum Age has %d resources unlocked besides the soldiers, want all 24", len(names))
 	}
 	press := func() {
 		if ev := d.root.GetInputCapture()(tcell.NewEventKey(resourcePageKey, 0, tcell.ModNone)); ev != nil {

@@ -71,7 +71,7 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 
 The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row leads with the age's wonder, and its keystone tech while that is still to research, until they are done. Then it marks each building the next age asks for ✓ or ✗, with your count beside it. When the list is longer than the row, the row counts what is met (`✓ 3 met`) and what it has no room for (`+4 more`), so the buildings still to build come first. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
 
-<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, construction and the log on the left, the Buildings list in the middle, the panel names and the Workers box on the right.</figcaption></figure>
+<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, construction and the log on the left, the Buildings list in the middle, the panel names and the People box on the right.</figcaption></figure>
 
 The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row: its amount over its cap, its rate, a bar, and a marker when the store is nearly full (`◈`) or falling (`▼`). On a narrow terminal the rows give up the bar first, then the cap, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`; it then shows from 105 columns by 34 rows.
 
@@ -114,7 +114,7 @@ From the Iron Era on, each era may hide a fated catastrophe. It can strike at an
 ## Resource management tips
 
 - Each resource has a storage limit. Once a resource is full, anything more it would produce is wasted, unless wonder overflow banks it. A price larger than a store cannot be paid, so build storage before the building that needs it.
-- **Food drain:** every worker eats the same amount, whatever building it staffs. That amount is set by your age: 0.06 food/tick per worker in the Primitive Age, rising 12% with each age. Keep food production above total drain. If food hits zero, one worker dies every 5 ticks (10 seconds) until food recovers. See [Food drain](workers-and-domains.md#food-drain) and [Starvation](workers-and-domains.md#starvation).
+- **Food drain:** everyone eats the same amount, whatever building a worker staffs, scholars and the reserve included. That amount is set by your age: 0.06 food/tick per worker in the Primitive Age, rising 12% with each age. Keep food production above total drain. If food hits zero, one worker dies every 5 ticks (10 seconds) until food recovers. See [Food drain](workers-and-domains.md#food-drain) and [Starvation](workers-and-domains.md#starvation).
 - **Food** runs out first early on. Keep your gathering camps staffed before anything else, then build a Story Circle: its scholars start research with no workers.
 - Watch the rates in the Resources box. A negative rate is draining you.
 
@@ -122,7 +122,7 @@ From the Iron Era on, each era may hide a fated catastrophe. It can strike at an
 
 Morale is a percentage that multiplies **all worker output**. It **starts at 50%**, which is neutral. Above 50% your workers get a bonus that grows to **+20%** at the morale cap (100%, plus 5% for every wonder you build); below 50% they take a penalty that deepens to **x0.50** at the 10% floor. Morale drifts back toward 50% each tick, so a bonus has to be kept up.
 
-Worship and culture buildings, your faith income, good events and age advances raise it. Starvation, a large army, many idle workers, bad events and catastrophes lower it. It shows as `Morale NN%` on the status bar, green for a bonus and red for a penalty, and as a bar in the Workers panel. See [Morale](morale.md) for the full system.
+Worship and culture buildings, your faith income, good events and age advances raise it. Starvation, a large army, many idle workers, bad events and catastrophes lower it. It shows as `Morale NN%` on the status bar, green for a bonus and red for a penalty, and on the People panel. See [Morale](morale.md) for the full system.
 
 ---
 
@@ -130,7 +130,7 @@ Worship and culture buildings, your faith income, good events and age advances r
 
 Workers fall into 11 worker domains (food, lumber, masonry, faith and so on), each tied to its own buildings. A worker takes the domain of the building it works in. Workers move in on their own toward your housing while food allows, and go to work by your roster (`roster`; every domain is on auto by default). You can also recruit with `recruit [count|max]` and assign with `assign <building> [count|all]`.
 
-Assigned workers raise a building's output. A building with no workers still produces at 20% (the floor), and a fully staffed one at 100%. Only food workers make food, but every worker eats it. See [Workers & Domains](workers-and-domains.md) for the full guide.
+Assigned workers raise a building's output. A building with no workers still produces at 20% (the floor), and a fully staffed one at 100%. Only food workers make food, but every worker eats it. See [People](workers-and-domains.md) for the full guide.
 
 ---
 

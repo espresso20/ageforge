@@ -59,11 +59,11 @@ type resRow struct {
 }
 
 // resourceRows is the box's rows for a snapshot: every unlocked resource, in
-// key order.
+// key order, but the soldiers: they are people, and the People box lists them.
 func resourceRows(state game.GameState) []resRow {
 	keys := make([]string, 0, len(state.Resources))
 	for k, rs := range state.Resources {
-		if rs.Unlocked {
+		if rs.Unlocked && k != "soldiers" {
 			keys = append(keys, k)
 		}
 	}

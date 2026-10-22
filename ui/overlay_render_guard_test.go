@@ -35,7 +35,7 @@ func guardPanels(t *testing.T, engine *game.GameEngine) map[string]OverlayProvid
 	for name, e := range d.overlayMgr.entries {
 		out[name] = e.provide
 	}
-	if len(out) < 15 {
+	if len(out) < 14 {
 		t.Fatalf("only %d text panels registered; the dashboard registration list moved?", len(out))
 	}
 	return out

@@ -114,6 +114,11 @@ func helpProvider(_ game.GameState, screenW int) string {
 	keys(expeditionKeys...)
 	note("Sending by name is a command: expedition <name>, with as much of the name as it takes to tell the offers apart.")
 
+	sb.WriteString("\n[gold]═══ The People panel ═══[-]\n")
+	note("Every person in the town: workers, the reserve, soldiers and scholars, each by the name the age gives them. The prompt keeps working while it is open; the panel takes the keys that print nothing.")
+	keys(peopleKeys...)
+	note("Shares are a command: roster <area> <percent|auto>. The panel opens with people or workers.")
+
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	var short []string
 	for _, c := range reg {

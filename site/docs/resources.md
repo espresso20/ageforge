@@ -270,4 +270,6 @@ Soldiers are a stockpiled resource (the 26th). They unlock when your first milit
 
 **How soldiers are spent:** launching a campaign costs soldiers, taken from your stockpile at launch whether the campaign succeeds or fails. Scouting expeditions cost none. Enduring a catastrophe also cuts your soldiers along with every other stored resource.
 
+Soldiers are one of the four kinds of [people](workers-and-domains.md#the-people-of-your-town), so the People box lists them (with how many are out on missions) rather than the Resources box, and the People panel's Army tab shows them. They do not take a place in your homes yet.
+
 See [Military](military.md) for production formulas, per-building soldier caps, and the full campaign and expedition table.

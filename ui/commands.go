@@ -97,7 +97,7 @@ type Command struct {
 const (
 	secActions  = "Actions"
 	secPlan     = "Build Plan"
-	secWorkers  = "Workers"
+	secPeople   = "People"
 	secResearch = "Research, Expeditions & Army"
 	secTrade    = "Trade & Diplomacy"
 	secWonders  = "Wonders & Prestige"
@@ -109,7 +109,7 @@ const (
 var helpSections = []struct{ name, note string }{
 	{secActions, ""},
 	{secPlan, "Queue builds and techs; each starts, and is paid for, when the resources are there, even while you are away."},
-	{secWorkers, "The roster used to be called worker shares: workers share still works."},
+	{secPeople, "The roster used to be called worker shares: workers share still works."},
 	{secResearch, ""},
 	{secTrade, ""},
 	{secWonders, ""},
@@ -186,27 +186,29 @@ func registry() []*Command {
 			}},
 
 		// Workers
-		{Name: "recruit", Aliases: []string{"r"}, Section: secWorkers,
+		{Name: "recruit", Aliases: []string{"r"}, Section: secPeople,
 			Args: []Arg{optCountMax},
 			Help: []Usage{{"recruit [count|max]", "Recruit workers into free housing (default 1). They start idle."}}},
-		{Name: "assign", Aliases: []string{"a"}, Section: secWorkers,
+		{Name: "assign", Aliases: []string{"a"}, Section: secPeople,
 			Args: []Arg{{Kind: ArgWorkerBuilding}, optCountAll},
 			Help: []Usage{{"assign <building> [count|all]", "Put idle workers to work in a building (default 1)"}}},
-		{Name: "unassign", Aliases: []string{"u"}, Section: secWorkers,
+		{Name: "unassign", Aliases: []string{"u"}, Section: secPeople,
 			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
 			Help: []Usage{{"unassign <building> [count|all]", "Take workers out of a building; they go idle (default 1)"}}},
-		{Name: "dismiss", Section: secWorkers, Dangerous: true,
+		{Name: "dismiss", Section: secPeople, Dangerous: true,
 			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
 			Help: []Usage{{"dismiss <building> [count|all]", "Dismiss workers from a building; they leave your population (default 1)"}}},
-		{Name: "roster", Section: secWorkers, BareOK: true,
+		{Name: "roster", Section: secPeople, BareOK: true,
 			Args: []Arg{{Kind: ArgDomain, Words: []string{"auto"}}, {Kind: ArgPercent, Words: []string{"auto"}, Optional: true}},
 			Help: []Usage{
 				{"roster", "Show your roster: each domain's part of the workforce"},
 				{"roster <domain> [percent|auto]", "Set a domain's share of your workers (0 keeps it empty; auto, the default, follows its buildings' slots); no percent shows it"},
 				{"roster auto", "Put every domain back on auto"},
 			}},
-		{Name: "workers", Section: secWorkers, BareOK: true, Panel: "Workers: domains, roster & assignments",
-			Help: []Usage{{"workers", "Open the Workers panel (domains, roster, assignments)"}},
+		{Name: "people", Section: secPeople, BareOK: true, Panel: "People: workers, the reserve, soldiers and scholars",
+			Help: []Usage{{"people", "Open the People panel: your workers and their work areas, the reserve, your soldiers and your scholars"}}},
+		{Name: "workers", Section: secPeople, BareOK: true,
+			Help: []Usage{{"workers", "Open the People panel (the same as people)"}},
 			Subs: []*Command{
 				// The roster's old name: `workers share ...` is `roster ...`.
 				{Name: "share", BareOK: true, Quiet: true,
@@ -399,7 +401,7 @@ func registry() []*Command {
 // panelOrder is the Help panel's Panels list order (the sidebar's, then the rest).
 var panelOrder = []string{
 	"milestones", "badges", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders",
-	"workers", "logs", "epoch", "harbinger", "history", "buildings", "map", "theme", "help",
+	"people", "logs", "epoch", "harbinger", "history", "buildings", "map", "theme", "help",
 }
 
 // devCommand is one dev-console command. They are not player commands: the
