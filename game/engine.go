@@ -5197,7 +5197,7 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:          nextAgeName,
 		NextAgeBldReqs:       nextAgeBldReqs,
 		Resources:            ge.Resources.Snapshot(),
-		Buildings:            ge.withScholarFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.storeIf)),
+		Buildings:            ge.withLockHints(ge.withScholarFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.storeIf))),
 		Scholars:             ge.scholarsStateLocked(),
 		BuildQueue:           queue,
 		Workers:              workers,

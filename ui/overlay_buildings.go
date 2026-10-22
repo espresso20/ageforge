@@ -55,25 +55,34 @@ func buildingsProvider(state game.GameState, screenW int) string {
 			continue
 		}
 
-		// Collect buildings that belong to this age and are unlocked.
+		// Collect buildings that belong to this age and are unlocked, and in
+		// the current age the ones a tech still locks (listed after them).
 		type entry struct {
 			key string
 			bs  game.BuildingState
 		}
-		var entries []entry
+		var entries, locked []entry
 		for key, bs := range state.Buildings {
-			if bs.AgeKey == ageKey && bs.Unlocked {
+			switch {
+			case bs.AgeKey == ageKey && bs.Unlocked:
 				entries = append(entries, entry{key: key, bs: bs})
+			case bs.AgeKey == ageKey && ageKey == state.Age && !bs.Unlocked && bs.LockTech != "":
+				locked = append(locked, entry{key: key, bs: bs})
 			}
 		}
-		if len(entries) == 0 {
+		if len(entries)+len(locked) == 0 {
 			continue
 		}
 
 		// Sort by name for stable, readable output.
-		sort.Slice(entries, func(a, b int) bool {
-			return entries[a].bs.Name < entries[b].bs.Name
-		})
+		byName := func(es []entry) {
+			sort.Slice(es, func(a, b int) bool {
+				return es[a].bs.Name < es[b].bs.Name
+			})
+		}
+		byName(entries)
+		byName(locked)
+		entries = append(entries, locked...)
 
 		// Age header.
 		isCurrent := (ageKey == state.Age)
@@ -85,6 +94,22 @@ func buildingsProvider(state game.GameState, screenW int) string {
 
 		for _, e := range entries {
 			bs := e.bs
+
+			// A building a tech still locks: greyed out, the research it
+			// needs, its cost and what it does, a word from the scholars.
+			if !bs.Unlocked {
+				width := overlayTextWidth(screenW)
+				fmt.Fprintf(&sb, " [gray]%s %s (%s)[-]\n", lockedMarker, bs.Name, e.key)
+				sb.WriteString(hangingRow("   ", "[gray]"+lockedNeedsLine(bs)+"[-]", width))
+				if price := buildingPrice(&state, e.key, bs); len(price) > 0 {
+					sb.WriteString("[gray]" + costRow("   Cost: ", price, width) + "[-]")
+				}
+				if text := buildingText(bs); text != "" {
+					fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)
+				}
+				sb.WriteString(hangingRow("   ", "[gray::i]"+lockedHintLine(e.key)+"[-:-:-]", width))
+				continue
+			}
 
 			// Build status indicator.
 			builtPart := ""
