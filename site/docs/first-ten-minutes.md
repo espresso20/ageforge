@@ -57,7 +57,7 @@ Builds run at the same time, not one after another, so start each one as soon as
 
 ## Step 3: Watch your workers arrive
 
-Once a hut stands and your camps are built, workers arrive on their own. Your population grows toward your housing while food allows, and each new worker takes an empty camp slot first: within a few minutes your camps are staffed. Workers past the slots wait in the reserve. The first time, the log says so.
+Once a hut stands and your camps are built, workers arrive on their own. Your population grows toward your housing while food allows, and new workers fill your empty camp slots at once: within seconds your camps are staffed. Workers past the slots wait in the reserve. The first time, the log says so.
 
 ```
 workers

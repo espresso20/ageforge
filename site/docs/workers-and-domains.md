@@ -79,11 +79,11 @@ Faith takes its 50% first. Food and lumber split the other 50% by their slots, w
 
 ### The roster routine
 
-Every 5 ticks (10 seconds), and once per step of the offline catch-up (one-minute steps), the game:
+Every 5 ticks (10 seconds), and offline once for every 5 ticks of the catch-up, so time away grows your town as much as time at the screen, the game:
 
 1. moves workers out of domains set to 0 into free slots elsewhere,
 2. puts idle workers to work, each in the domain furthest below its share,
-3. with auto-recruit on, brings in new workers toward your housing: 1% of your population each pass, and at least one, never past the housing, and only while the net food rate stays at or above a margin: one worker's food, or 5% of the food production if that is more. New workers fill the empty slots first, by the shares; the rest stay idle in the reserve. A bigger town fills faster. On known ground ([Era Mastery](prestige.md#era-mastery)) the margin is measured before the age's speed-up, so the same buildings feed the same workforce at any speed.
+3. with auto-recruit on, recruits workers into every empty worker slot at once, by the shares, as far as housing allows and while the net food rate stays at or above a margin: one worker's food, or 5% of the food production if that is more. Past the slots, the population keeps growing toward the housing, by 1% of your population each pass and at least one, under the same food margin; those workers wait idle in the reserve. A bigger town fills faster. On known ground ([Era Mastery](prestige.md#era-mastery)) the margin is measured before the age's speed-up, so the same buildings feed the same workforce at any speed.
 
 Within a domain, buildings fill in this order: buildings that are not superseded before those that are (a building is superseded once a higher tier of its line is open), the newest age first, then the higher tier of its line.
 
