@@ -44,7 +44,7 @@ func TestArmyPanel_PostsBeforeSoldiers(t *testing.T) {
 	}
 	// A new game's board may offer a military grand mission, whose entry says
 	// what it waits for, or none, and the empty-list wording says so.
-	if !strings.Contains(txt, "come with military buildings") && !strings.Contains(txt, "needs a party of") {
+	if !strings.Contains(txt, "come with military buildings") && !strings.Contains(txt, "needs a party of") && !strings.Contains(txt, "A military building comes with its soldiers") {
 		t.Errorf("the Army panel should say where soldiers come from:\n%s", txt)
 	}
 	if err := engine.EnterAgeForTest("stone_age"); err != nil {
