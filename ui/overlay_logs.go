@@ -75,7 +75,7 @@ func logsProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n[gold]═══ Engine state ═══[-]\n")
 	fmt.Fprintf(&sb, " Tick: [cyan]%d[-]  Age: [cyan]%s[-]  Population: [cyan]%d/%d[-]\n",
 		state.Tick, state.AgeName, state.Workers.TotalPop, state.Workers.MaxPop)
-	fmt.Fprintf(&sb, " Food use: [yellow]%s[-]  Idle: [yellow]%d[-]\n",
+	fmt.Fprintf(&sb, " Food use: [yellow]%s[-]  Reserve: [yellow]%d[-]\n",
 		textfmt.Rate(-state.Workers.FoodDrain), state.Workers.TotalIdle)
 	if state.TickSpeedBonus > 0 {
 		fmt.Fprintf(&sb, " Game speed: [green]%s[-] (one tick every [cyan]%dms[-])\n",
@@ -154,7 +154,7 @@ func logsProvider(state game.GameState, _ int) string {
 			}
 		}
 		for _, d := range domains {
-			fmt.Fprintf(&sb, "  [cyan]%s[-] ×%d (idle: %d)\n", d.name, d.count, d.idle)
+			fmt.Fprintf(&sb, "  [cyan]%s[-] ×%d (reserve: %d)\n", d.name, d.count, d.idle)
 			bldKeys := make([]string, 0, len(d.assignments))
 			for k, count := range d.assignments {
 				if count > 0 {

@@ -765,7 +765,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	sb.WriteString(fmt.Sprintf("Timestamp: %s\n", time.Now().Format(time.RFC3339)))
 	sb.WriteString(fmt.Sprintf("Tick: %d\n", state.Tick))
 	sb.WriteString(fmt.Sprintf("Age: %s (%s)\n", state.AgeName, state.Age))
-	sb.WriteString(fmt.Sprintf("Population: %d/%d (idle: %d, food drain: %.2f/tick)\n",
+	sb.WriteString(fmt.Sprintf("Population: %d/%d (reserve: %d, food drain: %.2f/tick)\n",
 		state.Workers.TotalPop, state.Workers.MaxPop, state.Workers.TotalIdle, state.Workers.FoodDrain))
 	sb.WriteString("\n--- Resources ---\n")
 	for _, rs := range state.Resources {
@@ -1001,13 +1001,13 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 
 	// Population
 	v := state.Workers
-	lines = append(lines, fmt.Sprintf("[gold]Population:[-] %d/%d (idle: %d, food drain: %s/tick)",
+	lines = append(lines, fmt.Sprintf("[gold]Population:[-] %d/%d (reserve: %d, food drain: %s/tick)",
 		v.TotalPop, v.MaxPop, v.TotalIdle, textfmt.Number(v.FoodDrain)))
 	for _, vt := range v.Types {
 		if !vt.Unlocked {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  %-10s %d (idle: %d)", vt.Name, vt.Count, vt.IdleCount))
+		lines = append(lines, fmt.Sprintf("  %-10s %d (reserve: %d)", vt.Name, vt.Count, vt.IdleCount))
 		for _, building := range sortedKeysOf(vt.Assignments) {
 			if count := vt.Assignments[building]; count > 0 {
 				lines = append(lines, fmt.Sprintf("    → %s: %d", game.BuildingName(building), count))
