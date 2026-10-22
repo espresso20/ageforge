@@ -5438,8 +5438,14 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.runPlan(&starts)
 		// The shares routine staffs and recruits as the time passes, so
 		// what the plan builds gets workers and the workforce grows.
+		// As many passes as the step's ticks hold, as live play runs them,
+		// so an hour away grows the town as an hour at the screen does.
 		if !ge.workersHeld() {
-			if c := ge.staffByShares(true); c.any() {
+			for pass := 0; pass < max(1, n/staffEveryTicks); pass++ {
+				c := ge.staffByShares(true)
+				if !c.any() {
+					break
+				}
 				ge.recalculateRates()
 				staffed.add(c)
 			}

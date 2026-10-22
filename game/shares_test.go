@@ -61,17 +61,15 @@ func TestShares_FreshRunGetsStaffed(t *testing.T) {
 	for i := 0; i < 500 && len(ge.buildQueue) > 0; i++ {
 		ge.StepTicks(1)
 	}
-	// One villager moves in per pass at this size, and takes a free slot.
-	for i := 0; i < 20 && ge.Workers.TotalPop() < 6; i++ {
-		ge.StepTicks(staffEveryTicks)
-	}
+	// One pass fills both camps at once; whoever came past the 6 slots waits.
+	ge.StepTicks(staffEveryTicks)
 
 	st := ge.GetState()
 	if st.Workers.TotalPop == 0 {
 		t.Fatal("nobody was recruited into the new camps")
 	}
-	if st.Workers.TotalIdle != 0 {
-		t.Errorf("%d workers left idle while the camps had free slots", st.Workers.TotalIdle)
+	if st.Workers.TotalIdle != st.Workers.TotalPop-6 {
+		t.Errorf("%d idle of %d: the camps' 6 slots should hold the rest", st.Workers.TotalIdle, st.Workers.TotalPop)
 	}
 	for _, k := range []string{"gathering_camp", "wood_camp"} {
 		if bs := st.Buildings[k]; bs.WorkersAssigned != bs.WorkerCapacity*bs.Count {
@@ -312,8 +310,8 @@ func TestShares_AutoRecruitOff(t *testing.T) {
 		t.Error("auto-recruit reads on")
 	}
 	ge.SetAutoRecruit(true)
-	if pop := ge.Workers.TotalPop(); pop != 6 {
-		t.Errorf("turning auto-recruit on brought the population to %d, want 6 (the 5 and one more)", pop)
+	if pop := ge.Workers.TotalPop(); pop != 13 {
+		t.Errorf("turning auto-recruit on brought the population to %d, want 13 (the camps' 12 slots at once, and one more for the reserve)", pop)
 	}
 	growFully(ge)
 	if pop := ge.Workers.TotalPop(); pop <= 12 || pop > 50 {

@@ -1,6 +1,9 @@
 package game
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 // A pass brings in 1% of the population, rounded up, and at least one.
 func TestReserve_GrowthStepIsAShareOfThePopulation(t *testing.T) {
@@ -11,10 +14,10 @@ func TestReserve_GrowthStepIsAShareOfThePopulation(t *testing.T) {
 	}
 }
 
-// One pass of the routine adds the step and no more, in a town with housing
-// and food to spare.
+// Past the free slots, one pass adds the step and no more, in a town with
+// housing and food to spare (the 130 camps' 390 slots are full).
 func TestReserve_OnePassAddsOnePercent(t *testing.T) {
-	ge := sharesEngine(t, 100, map[string]int{"gathering_camp": 300})
+	ge := sharesEngine(t, 100, map[string]int{"gathering_camp": 130})
 	ge.Workers.UnlockType("worker")
 	ge.Workers.Recruit("worker", 400, ge.popCapLocked())
 	ge.recalculateRates()
@@ -117,5 +120,40 @@ func TestReserve_ManualRecruitWithNoFreeSlot(t *testing.T) {
 	}
 	if err := ge.RecruitWorker("worker", 14); err == nil {
 		t.Error("recruited past the housing's 20")
+	}
+}
+
+// A fresh town staffs at once: the first pass fills every free slot, and only
+// the growth past them is a share of the population.
+func TestReserve_JobsFillAtOnce(t *testing.T) {
+	ge := sharesEngine(t, 20, map[string]int{"gathering_camp": 20, "wood_camp": 20})
+	slots := slotsOf(ge, "gathering_camp") + slotsOf(ge, "wood_camp")
+	ge.keepSharesLive()
+	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp") + ge.Workers.GetAssignedCount("worker", "wood_camp"); got != slots {
+		t.Errorf("%d of %d slots filled by the first pass", got, slots)
+	}
+	if got, want := ge.Workers.IdleCount("worker"), popGrowthStep(0); got != want {
+		t.Errorf("reserve %d after the first pass, want the step's %d", got, want)
+	}
+}
+
+// An hour away grows the town as an hour at the screen does: the offline
+// catch-up runs one pass for every staffEveryTicks ticks of its steps.
+func TestReserve_OfflineGrowsLikeLive(t *testing.T) {
+	const ticks = 5 * OfflineStepTicks
+	town := map[string]int{"gathering_camp": 200}
+	live := sharesEngine(t, 100, town)
+	away := sharesEngine(t, 100, town)
+	growFullyFor := func(ge *GameEngine) { ge.Workers.UnlockType("worker") }
+	growFullyFor(live)
+	growFullyFor(away)
+	live.StepTicks(ticks)
+	away.SimulateOffline(time.Duration(ticks) * BaseTickInterval)
+	lp, ap := live.Workers.TotalPop(), away.Workers.TotalPop()
+	if lp <= slotsOf(live, "gathering_camp") {
+		t.Fatalf("live population %d never passed the %d slots: the test shows nothing", lp, slotsOf(live, "gathering_camp"))
+	}
+	if lp != ap {
+		t.Errorf("after %d ticks: %d live, %d offline", ticks, lp, ap)
 	}
 }
