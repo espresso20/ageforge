@@ -5,32 +5,9 @@ import (
 	"strings"
 )
 
-// villager_panel.go holds the morale and assignment helpers the Workers panel
-// (overlay_workers.go) and the status bar share. The old standalone worker
-// panel that lived here was unreachable and has been removed.
-
-// panelDomainLabels maps domain key to display label for the Workers panel.
-var panelDomainLabels = map[string]string{
-	"food":        "Food",
-	"lumber":      "Lumber",
-	"masonry":     "Masonry",
-	"faith":       "Faith",
-	"military":    "Military",
-	"trade":       "Trade",
-	"engineering": "Engineering",
-	"metallurgy":  "Metallurgy",
-	"energy":      "Energy",
-	"hacker":      "Hacker",
-	"astronaut":   "Astronaut",
-}
-
-// buildingRow holds one row of the assignment display.
-type buildingRow struct {
-	Key             string
-	Name            string
-	WorkersAssigned int
-	Capacity        int
-}
+// villager_panel.go holds the morale band the status bar and the People panel
+// share. The old standalone worker panel that lived here was unreachable and
+// has been removed, and so has the Workers text panel the People panel replaced.
 
 // moraleBand describes how to render the banded morale state for the UI.
 // It is derived purely from the live morale fraction and the production
@@ -116,19 +93,4 @@ func moraleBandBar(filled, total, w int, fillColor string) string {
 		f = 0
 	}
 	return "[" + fillColor + "]" + strings.Repeat("█", f) + BarEmptyColor() + strings.Repeat("░", w-f) + "[-]"
-}
-
-// assignBar renders a small tview-colored progress bar of width w.
-func assignBar(filled, total, w int) string {
-	if total <= 0 {
-		return BarEmptyColor() + strings.Repeat("░", w) + "[-]"
-	}
-	f := (filled * w) / total
-	if f > w {
-		f = w
-	}
-	if f < 0 {
-		f = 0
-	}
-	return BarFillColor() + strings.Repeat("█", f) + BarEmptyColor() + strings.Repeat("░", w-f) + "[-]"
 }
