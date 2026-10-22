@@ -75,7 +75,7 @@ func (p *expeditionPanel) open(state game.GameState) tview.Primitive {
 	p.state = state
 	p.view = expView{}
 	p.selIdx, p.accounted = 0, mil.ReturnsMade
-	if mil.ActiveShort != nil || mil.ActiveLong != nil || mil.ActiveGrand != nil || mil.ReturnsMade > mil.ReturnsSeen {
+	if len(mil.Active) > 0 || mil.ReturnsMade > mil.ReturnsSeen {
 		p.setReport(true)
 	}
 	p.update(state)

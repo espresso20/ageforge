@@ -186,7 +186,7 @@ func (c peopleBody) card(i int, k peopleKind) []string {
 		if k.out > 0 {
 			out = num(k.out) + " out"
 		}
-		return []string{num(k.count) + " at their posts", out, "defense " + num(int(st.Military.DefenseRating)), "see Army"}
+		return []string{num(k.count-k.out) + " at their posts", out, "defense " + num(int(st.Military.DefenseRating)), "see Army"}
 	}
 	s := st.Scholars
 	return []string{num(k.count) + " at desks", num(s.Researching) + " researching", num(s.Teaching) + " teaching", "come with buildings"}
@@ -368,7 +368,7 @@ func (c peopleBody) army() {
 	// Away: each party out.
 	y := c.y + 1
 	away := 0
-	for _, m := range []*game.ExpeditionSnapshot{mil.ActiveShort, mil.ActiveLong, mil.ActiveGrand} {
+	for _, m := range mil.Active {
 		if m == nil {
 			continue
 		}

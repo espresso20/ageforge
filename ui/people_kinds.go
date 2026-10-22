@@ -36,12 +36,7 @@ type peopleKind struct {
 // buildings' own), with those on missions counted apart.
 func peopleKinds(st game.GameState) []peopleKind {
 	ws := st.Workers
-	out := 0
-	for _, m := range []*game.ExpeditionSnapshot{st.Military.ActiveShort, st.Military.ActiveLong, st.Military.ActiveGrand} {
-		if m != nil {
-			out += m.Soldiers
-		}
-	}
+	out := st.Military.SoldiersAway
 	mk := func(key string, count int, role theme.Role, kind xk) peopleKind {
 		w := st.Term(key)
 		return peopleKind{key: key, one: w.One, name: w.Many, count: count, role: role, kind: kind}

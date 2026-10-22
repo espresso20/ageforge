@@ -141,7 +141,7 @@ func buildScene(state game.GameState, w, h int) *expScene {
 	sc := &expScene{terrain: buildTerrain(state.Seed, state.Age, w, h), town: townAt(w, h)}
 	mil := state.Military
 	var specs []pinSpec
-	for _, a := range []*game.ExpeditionSnapshot{mil.ActiveShort, mil.ActiveLong, mil.ActiveGrand} {
+	for _, a := range mil.Active {
 		if a != nil {
 			sc.acts = append(sc.acts, expPinItem{key: expKey(a.Name, a.ExpiresTick), tier: a.Tier, rare: a.Rare, act: a})
 			specs = append(specs, pinSpec{pinHash(a.Name, a.ExpiresTick), a.Tier})
@@ -344,7 +344,8 @@ func header(g *xgrid, state game.GameState, v expView, l expLayout) {
 		g.put(x+1, 1, fmt.Sprintf("● %d new", mil.ReturnsMade-mil.ReturnsSeen), xLegend)
 	}
 	home := FormatNumber(float64(state.Military.SoldierCount))
-	g.segs(l.w-3-len([]rune("Soldiers "+home+" at home"))+1, 1, xseg{"Soldiers ", xDim}, xseg{home, xText}, xseg{" at home", xDim})
+	posted := FormatNumber(float64(state.Military.SoldierCount + state.Military.SoldiersAway))
+	g.segs(l.w-3-len([]rune("Soldiers "+home+" of "+posted+" at home"))+1, 1, xseg{"Soldiers ", xDim}, xseg{home, xText}, xseg{" of ", xDim}, xseg{posted, xText}, xseg{" at home", xDim})
 }
 
 // drawMap draws the terrain, the town, the routes and the pins inside the
@@ -515,7 +516,7 @@ type xline []xseg
 func outNow(state game.GameState, room int) []xline {
 	mil := state.Military
 	var parts []string
-	for _, a := range []*game.ExpeditionSnapshot{mil.ActiveShort, mil.ActiveLong, mil.ActiveGrand} {
+	for _, a := range mil.Active {
 		if a != nil {
 			parts = append(parts, fmt.Sprintf("%s, back in %s", goingTo(a.Label, a.Place), expDur(a.TicksLeft, state)))
 		}
@@ -608,13 +609,12 @@ func briefing(state game.GameState, o game.ExpeditionInfo, cw int) (body, foot [
 		body = append(body, cardLine{parts: []xseg{{ln, xGold}}, italic: true, prio: 5 - i})
 	}
 	add(1)
-	if o.Tier == game.TierGrand && o.Grand == game.GrandMilitary {
-		kind := xText
-		if state.Military.SoldierCount < o.SoldiersNeeded {
-			kind = xBad
-		}
-		add(0, xseg{"Party  ", xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize("soldier", o.SoldiersNeeded)), kind})
+	// Every mission takes a party: green when the soldiers at home cover it.
+	kind := xGood
+	if state.Military.SoldierCount < o.SoldiersNeeded {
+		kind = xBad
 	}
+	add(0, xseg{"Party  ", xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize("soldier", o.SoldiersNeeded)), kind})
 	add(0, xseg{"Odds   ", xDim}, xseg{expBar(o.SuccessChance, 10, "█", "░"), oddsKind(o.SuccessChance)},
 		xseg{fmt.Sprintf(" %.0f%%", o.SuccessChance*100), oddsKind(o.SuccessChance)})
 	add(0, xseg{"Out    ", xDim}, xseg{expDur(o.DurationMin, state) + " and back", xText})
@@ -651,9 +651,9 @@ func briefing(state game.GameState, o game.ExpeditionInfo, cw int) (body, foot [
 		add(0, xseg{"Cost   ", xDim}, xseg{"free", xGood})
 	}
 
-	fail := "If it fails, the cost is spent and a third of the haul is kept."
+	fail := "If it fails, the cost is spent, many of the party fall and a third of the haul is kept."
 	if o.Rare {
-		fail = "Legendary: it pays more, and the road is harder. A third of the haul is kept on a failure."
+		fail = "Legendary: it pays more, and the road is harder. On a failure more of the party fall and a third of the haul is kept."
 	}
 	for i, ln := range limitLines(wrapText(fail, cw), 2, cw) {
 		foot = append(foot, cardLine{parts: []xseg{{ln, xDim}}, prio: 3 - i})
@@ -780,8 +780,12 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 		row++
 	}
 	row = y + 4
-	if o.Tier == game.TierGrand && o.Grand == game.GrandMilitary {
-		g.segs(x+2, row, xseg{"Party ", xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize("soldier", o.SoldiersNeeded)), xText},
+	{
+		kind := xGood
+		if state.Military.SoldierCount < o.SoldiersNeeded {
+			kind = xBad
+		}
+		g.segs(x+2, row, xseg{"Party ", xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize("soldier", o.SoldiersNeeded)), kind},
 			xseg{fmt.Sprintf("  (%s stay home)", FormatNumber(float64(max(0, state.Military.SoldierCount-o.SoldiersNeeded)))), xDim})
 		row++
 	}
@@ -829,6 +833,12 @@ func returnLine(r game.MissionReturn) string {
 	}
 	if r.RoadEvents > 0 {
 		line += fmt.Sprintf(" It met %d road events.", r.RoadEvents)
+	}
+	switch {
+	case r.Fell > 0:
+		line += fmt.Sprintf(" %s of %s %s fell.", FormatNumber(float64(r.Fell)), FormatNumber(float64(r.Party)), pluralize("soldier", r.Party))
+	case r.Party > 0:
+		line += fmt.Sprintf(" All %s %s came home.", FormatNumber(float64(r.Party)), pluralize("soldier", r.Party))
 	}
 	return line
 }
@@ -892,7 +902,11 @@ func drawReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expS
 			g.segsFit(x+3, row+1, cw-2, xseg{expBar(progress, 14, "▰", "▱"), xGood}, xseg{" back in " + expDur(a.TicksLeft, state), xText})
 			parts := []xseg{}
 			if a.Soldiers > 0 {
-				parts = append(parts, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(a.Soldiers)), pluralize("soldier", a.Soldiers)), xText}, xseg{" · ", xFaint})
+				who := FormatNumber(float64(a.Soldiers))
+				if a.Party > a.Soldiers {
+					who += " of " + FormatNumber(float64(a.Party))
+				}
+				parts = append(parts, xseg{fmt.Sprintf("%s %s", who, pluralize("soldier", a.Soldiers)), xText}, xseg{" · ", xFaint})
 			}
 			parts = append(parts, xseg{fmt.Sprintf("%.0f%% odds", a.SuccessChance*100), oddsKind(a.SuccessChance)},
 				xseg{fmt.Sprintf(" · haul %.0f min", a.HaulMinutes), xDim})

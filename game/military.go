@@ -193,18 +193,6 @@ func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, c
 	return a, nil
 }
 
-// tierNoun is the player-facing noun phrase for one mission of a tier,
-// sentence-initial.
-func tierNoun(tier string) string {
-	switch tier {
-	case TierLong:
-		return "A long mission"
-	case TierGrand:
-		return "A grand mission"
-	}
-	return "A short mission"
-}
-
 // ActiveByTier returns the oldest mission under way in a tier, or nil. The
 // returned pointer is the live manager state.
 func (mm *MilitaryManager) ActiveByTier(tier string) *ActiveExpedition {
