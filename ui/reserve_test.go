@@ -148,3 +148,43 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 		}
 	}
 }
+
+// A late-game town, with counts that need the whole box, still leaves the
+// Panels list whole at 80x24 with the Held-by line up.
+func TestReserve_BigTownAt80x24(t *testing.T) {
+	restoreForge(t)
+	d, pages, _ := stagedDashboard(t, "quantum_age")
+	drawnDashboard(t, d, pages, 80, 24)
+	st := *d.lastState
+	st.Workers.TotalPop, st.Workers.MaxPop, st.Workers.TotalIdle = 7680, 97800000, 4321
+	st.Workers.HeldBy = game.HeldFood
+	d.lastState = &st
+	d.refreshWorkerMini(st)
+	sim := tcell.NewSimulationScreen("UTF-8")
+	if err := sim.Init(); err != nil {
+		t.Fatal(err)
+	}
+	defer sim.Fini()
+	sim.SetSize(80, 24)
+	screen := theme.WrapScreen(sim)
+	for i := 0; i < 2; i++ {
+		screen.Clear()
+		pages.SetRect(0, 0, 80, 24)
+		pages.Draw(screen)
+		screen.Show()
+	}
+	cells, _, _ := sim.GetContents()
+	cells = append([]tcell.SimCell(nil), cells...)
+	text := strings.Join(checkFitted(t, "big town, Workers", d.workerMiniTV, cells, 80), "\n")
+	for _, s := range []string{"Reserve:", "Held by: food", "Food net:"} {
+		if !strings.Contains(text, s) {
+			t.Errorf("the Workers box does not show %q:\n%s", s, text)
+		}
+	}
+	panels := strings.Join(checkFitted(t, "big town, Panels", d.sidebar, cells, 80), "\n")
+	for _, name := range sidebarPanels {
+		if !strings.Contains(panels, name) {
+			t.Errorf("the Panels list does not show %q", name)
+		}
+	}
+}

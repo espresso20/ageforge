@@ -949,7 +949,7 @@ const workerDetailMinRows = 30
 
 // workerMiniBaseRows is the Workers box's lines when nothing holds the
 // population back: the headcount, housing left, food use and food net.
-const workerMiniBaseRows = 4
+const workerMiniBaseRows = 4 // (five when the reserve needs a line of its own)
 
 // heldByLines says what holds the population back, for a box w cells wide (0:
 // any width), as "Held by: food" and, for food, a second line with the net
@@ -1003,17 +1003,34 @@ func workerMiniText(state game.GameState, w int, detail bool) string {
 	short := func(n int) string { return FormatNumber(float64(n)) }
 	var sb strings.Builder
 
+	// "pop/housing  Reserve: n" on one line while it fits (counts written short,
+	// then one space, when that helps); otherwise the reserve gets a line of
+	// its own.
 	pop, housing, idle := num(ws.TotalPop), num(ws.MaxPop), num(ws.TotalIdle)
-	if !fits(pop + "/" + housing + "  Reserve: " + idle) {
+	gap := "  "
+	if !fits(pop + "/" + housing + gap + "Reserve: " + idle) {
 		pop, housing, idle = short(ws.TotalPop), short(ws.MaxPop), short(ws.TotalIdle)
 	}
-	fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]  [gray]Reserve:[white] %s[-]\n", pop, housing, idle)
-
-	left := num(ws.MaxPop - ws.TotalPop)
-	if !fits("Housing left: " + left) {
-		left = short(ws.MaxPop - ws.TotalPop)
+	if !fits(pop + "/" + housing + gap + "Reserve: " + idle) {
+		gap = " "
 	}
-	fmt.Fprintf(&sb, "[gray]Housing left:[white] %s[-]\n", left)
+	split := !fits(pop + "/" + housing + gap + "Reserve: " + idle)
+	if split {
+		fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]\n[gray]Reserve:[white] %s[-]\n", pop, housing, idle)
+	} else {
+		fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]%s[gray]Reserve:[white] %s[-]\n", pop, housing, gap, idle)
+	}
+
+	// On a short terminal, a reserve line of its own and a Held-by line take
+	// the row of Housing left (the first line already says population over
+	// housing): the Panels list needs every row the box leaves it.
+	if !(split && !detail && ws.HeldBy != game.HeldNone) {
+		left := num(ws.MaxPop - ws.TotalPop)
+		if !fits("Housing left: " + left) {
+			left = short(ws.MaxPop - ws.TotalPop)
+		}
+		fmt.Fprintf(&sb, "[gray]Housing left:[white] %s[-]\n", left)
+	}
 
 	// note: textfmt.Rate carries its own sign, so no manual "+"/"-" prefixes here.
 	rate := func(label string, v float64) string {
