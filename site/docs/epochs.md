@@ -154,7 +154,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 |-------|--------|----------|
 | Age of Plenty | +100% all production (double) | 562 ticks (~18m 44s) |
 | Population Surge | +15% workers added | Instant |
-| Ancient Cache | Pays 15 minutes of your town's income of every unlocked resource (in research, progress on the tech in progress or a head start, at most the work of the cheapest tech of the age you entered). A store takes only what it has room for, and the log says `Storage was nearly full: only ... fit.` when one took less | Instant |
+| Ancient Cache | Pays 15 minutes of your town's income of every unlocked resource (in research, progress on the tech in progress, at most half of that tech's price, and lost with nothing in progress; the research share is at most the work of the cheapest tech of the age you entered). A store takes only what it has room for, and the log says `Storage was nearly full: only ... fit.` when one took less | Instant |
 | Trade Winds | Gold production +50% | 374 ticks (~12m 28s) |
 | Cultural Festival | +30% of your culture and +20% of your faith at once, then culture production +50% and faith production +50%. Never rolled on entering the Iron Era: culture unlocks in the Classical Age | 374 ticks |
 
@@ -190,7 +190,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 | Resource Drought | Epoch's primary resource: production -40% | 234 ticks |
 | Political Instability | Lose 60% of your faith, then research speed -30% | 156 ticks |
 | Economic Crash | Lose half your gold, then gold production -40% | 562 ticks |
-| The Dark Age | Current research canceled and its work lost, lose the head start you kept, then research speed -40% | 374 ticks |
+| The Dark Age | Current research canceled and its work lost, then research speed -40% | 374 ticks |
 
 The Great Fire and Epidemic are the two you least want to see. Eight lost buildings in the early game set you back a long way. Lost workers come back on their own: with auto-recruit on (the default), the game recruits into the empty worker slots as housing and food allow (see [The roster](workers-and-domains.md#the-roster)), but output dips until they do.
 
