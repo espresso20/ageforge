@@ -1999,9 +1999,9 @@ func (ge *GameEngine) recalculateRates() {
 	// 1.0+moraleMaxBonus when morale is high, down to moraleMinMult when low.
 	mMult := ge.moraleMultiplier()
 	production, workerOutput := ge.Buildings.productionWithWorkerOutput(ge.Workers.GetAssignedCount)
-	// A resource its own buildings unlock (ResourceDef.BuiltUnlocks:
-	// soldiers) is unlocked by the first standing building that makes it,
-	// whatever the age: a War Camp trains soldiers from the day it stands.
+	// A resource its own buildings unlock (ResourceDef.BuiltUnlocks) is
+	// unlocked by the first standing building that makes it, whatever the age.
+	// (The soldiers are unlocked by syncSoldiers: no building makes them.)
 	for _, def := range ge.Resources.defs {
 		if def.BuiltUnlocks && production[def.Key] > 0 && !ge.Resources.unlocked[def.Key] {
 			ge.Resources.UnlockResource(def.Key)

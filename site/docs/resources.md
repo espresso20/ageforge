@@ -58,9 +58,9 @@ These four come from Geological Extraction mines. In the ages that make one, bui
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Soldiers | `soldiers` | Iron Age, or your first military building | 0 | Made by military buildings; they stand as your garrison and are spent on campaigns |
+| Soldiers | `soldiers` | Iron Age, or your first military building | 0 | Not made or stored: military buildings come with them, and they stand at its posts as your garrison |
 
-Soldiers are a true stockpiled resource (the 26th). See [Soldiers](#soldiers) below and [Military](military.md) for the full mechanics.
+Soldiers are the 26th entry, but not a stockpile: the number is the soldiers at the posts of your military buildings. See [Soldiers](#soldiers) below and [Military](military.md) for the full mechanics.
 
 ---
 
@@ -262,14 +262,14 @@ Gold pays for diplomacy gifts and many mid-to-late game buildings.
 
 ## Soldiers
 
-Soldiers are a stockpiled resource (the 26th). They unlock when your first military building stands (a War Camp can be built in the Stone Age), and at the **Iron Age** for a town that built none. Only military buildings produce them.
+Soldiers are not a stockpile: they are the people at the posts of your military buildings (the 26th resource entry holds that number for the panels that read it). The number unlocks when your first military building stands (a War Camp can be built in the Stone Age), and at the **Iron Age** for a town that built none.
 
-**How soldiers are produced:** each military building (War Camp, Barracks and their successors) produces soldiers every tick when military-domain workers staff it, the same way food or wood production scales with workers. A fully staffed military building produces its soldier cap ÷ 50 soldiers per tick (at least 0.1/tick). War Camps and Barracks come before the Iron Age but make no soldiers until it.
+**Where soldiers come from:** each copy of a military building (War Camp, Barracks and their successors) comes with a fixed number of soldiers, who move in the moment the copy stands. Nothing produces or stores them, so no staffing, storage building or storage tech changes the number. A copy that is lost takes its soldiers with it.
 
-**How soldiers are stored:** each military building adds its soldier cap to soldier storage: a War Camp 10, a Barracks 20, doubling with each tier up the lineage. Your shared storage (storage buildings and storage techs) counts toward the soldier cap too.
+**What soldiers need:** they are people, so they take a place in your homes and eat the same food as a worker. If your homes are full when a military building stands, its soldiers still move in and your reserve stops growing until there is room.
 
-**How soldiers are spent:** launching a campaign costs soldiers, taken from your stockpile at launch whether the campaign succeeds or fails. Scouting expeditions cost none. Enduring a catastrophe also cuts your soldiers along with every other stored resource.
+**How soldiers are spent:** launching a campaign needs the soldiers it asks for at home and takes none of them from their posts. Scouting expeditions need none. An Endure leaves the soldiers at their posts.
 
-Soldiers are one of the four kinds of [people](workers-and-domains.md#the-people-of-your-town), so the People box lists them (with how many are out on missions) rather than the Resources box, and the People panel's Army tab shows them. They do not take a place in your homes yet.
+Soldiers are one of the four kinds of [people](workers-and-domains.md#the-people-of-your-town), so the People box lists them (with how many are out on missions) rather than the Resources box, and the People panel's Army tab shows them building by building.
 
-See [Military](military.md) for production formulas, per-building soldier caps, and the full campaign and expedition table.
+See [Military](military.md) for the soldiers each building comes with, and the full campaign and expedition table.

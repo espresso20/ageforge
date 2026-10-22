@@ -90,7 +90,7 @@ func (c *badgeCheck) firstAge(counter string) int {
 		return first
 	case config.BadgeEvRaidBlunted:
 		// A raid is blunted once a garrison stands: the first age a
-		// building that trains soldiers can be built in, soldiers allowed.
+		// building that comes with soldiers can be built in, soldiers allowed.
 		first := len(m.ages) - 1
 		for _, k := range sortedKeys(m.defs) {
 			if d := m.defs[k]; d.Category == "military" {

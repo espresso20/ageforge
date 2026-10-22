@@ -31,35 +31,35 @@ func TestArmyPanel_NoGarrison(t *testing.T) {
 	}
 }
 
-// Until a military building stands the panel says nothing trains yet, and
-// what does. A War Camp trains soldiers from the day it stands, two ages
-// before the age that brings them to every town: the panel then shows the
-// rate and what the garrison does.
-func TestArmyPanel_TrainingBeforeSoldiers(t *testing.T) {
+// Until a military building stands the panel says nobody is posted yet, and
+// what brings soldiers. A War Camp comes with its soldiers from the day it
+// stands, two ages before the age that brings them to every town: the panel
+// then shows the posts and what the garrison does.
+func TestArmyPanel_PostsBeforeSoldiers(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.EnsureMissionBoard()
 	txt := untag(militaryProvider(engine.GetState(), 0))
-	if !strings.Contains(txt, "Training:  not yet. A military building trains soldiers.") || strings.Contains(txt, "/tick\n Defense") {
-		t.Errorf("a new game's Army panel should say nothing trains yet, with no rate:\n%s", txt)
+	if !strings.Contains(txt, "Posts:     none yet. A military building comes with its soldiers.") || strings.Contains(txt, "/tick") {
+		t.Errorf("a new game's Army panel should say nobody is posted yet, with no rate:\n%s", txt)
 	}
 	// A new game's board may offer a military grand mission, whose entry says
 	// what it waits for, or none, and the empty-list wording says so.
-	if !strings.Contains(txt, "military buildings train") {
-		t.Errorf("the Army panel should say what trains soldiers:\n%s", txt)
+	if !strings.Contains(txt, "come with military buildings") && !strings.Contains(txt, "military buildings come with them") {
+		t.Errorf("the Army panel should say where soldiers come from:\n%s", txt)
 	}
 	if err := engine.EnterAgeForTest("stone_age"); err != nil {
 		t.Fatal(err)
 	}
-	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Training:  not yet. A military building trains soldiers.") {
-		t.Errorf("a Stone Age town with no War Camp should still say nothing trains:\n%s", txt)
+	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Posts:     none yet.") {
+		t.Errorf("a Stone Age town with no War Camp should still say nobody is posted:\n%s", txt)
 	}
-	// A garrison in the Stone Age: the panel shows the rate, and what the
+	// A garrison in the Stone Age: the panel shows the army, and what the
 	// garrison does against a Stone Age raid.
 	engine.SetGarrisonForTest("stone_age", 1500)
 	state := engine.GetState()
 	txt = untag(militaryProvider(state, 0))
 	blunt := config.DefenseMitigation(state.Military.DefenseRating, config.AgeThreat(config.AgeByKey()["stone_age"].Order)) * 100
-	for _, want := range []string{"Training:  +0.0/tick", "(raids in the Stone Age)", fmt.Sprintf("Your garrison would blunt about %.0f%% of a raid.", blunt)} {
+	for _, want := range []string{"Soldiers:  1.5K posted of", "(raids in the Stone Age)", fmt.Sprintf("Your garrison would blunt about %.0f%% of a raid.", blunt)} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("the Stone Age Army panel with a garrison is missing %q:\n%s", want, txt)
 		}
@@ -70,8 +70,8 @@ func TestArmyPanel_TrainingBeforeSoldiers(t *testing.T) {
 	if err := engine.EnterAgeForTest("iron_age"); err != nil {
 		t.Fatal(err)
 	}
-	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Training:  +0.0/tick") {
-		t.Errorf("the Iron Age Army panel should show the training rate:\n%s", txt)
+	if txt = untag(militaryProvider(engine.GetState(), 0)); strings.Contains(txt, "Training:") || strings.Contains(txt, "/tick") {
+		t.Errorf("nothing trains soldiers any more, yet the Iron Age Army panel shows a rate:\n%s", txt)
 	}
 }
 

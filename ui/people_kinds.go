@@ -29,8 +29,8 @@ type peopleKind struct {
 }
 
 // peopleKinds lists the four kinds in the order the game shows them. The
-// soldiers are still the soldiers resource (at home), with those on missions
-// counted apart.
+// soldiers are the soldiers at their posts (Workers.Soldiers: the military
+// buildings' own), with those on missions counted apart.
 func peopleKinds(st game.GameState) []peopleKind {
 	ws := st.Workers
 	out := 0
@@ -46,7 +46,7 @@ func peopleKinds(st game.GameState) []peopleKind {
 	kinds := []peopleKind{
 		mk(config.TermWorkers, ws.Working(), theme.RoleHighlight, xWork),
 		mk(config.TermReserve, ws.Reserve(), theme.RolePositive, xRes),
-		mk(config.TermSoldiers, st.Military.SoldierCount, theme.RoleNegative, xArmy),
+		mk(config.TermSoldiers, ws.Soldiers, theme.RoleNegative, xArmy),
 		mk(config.TermScholars, ws.Scholars, theme.RoleLabel, xLore),
 	}
 	kinds[2].out = out

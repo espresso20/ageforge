@@ -167,6 +167,7 @@ func TestReserve_BigTownAt80x24(t *testing.T) {
 	drawnDashboard(t, d, pages, 80, 24)
 	st := *d.lastState
 	st.Workers.TotalPop, st.Workers.MaxPop, st.Workers.TotalIdle, st.Workers.Scholars = 7680, 97800000, 4321, 120
+	st.Workers.Soldiers = 1234567
 	st.Military.SoldierCount = 1234567
 	st.Workers.HeldBy = game.HeldFood
 	d.lastState = &st

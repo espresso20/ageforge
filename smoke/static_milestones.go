@@ -10,7 +10,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/rules"
 )
 
 // The Milestone Covenant: every milestone, every chain and the title ladder
@@ -45,7 +44,8 @@ import (
 //   - knowledge workers: at most MilestonePopShare of the worker slots in
 //     knowledge buildings (every copy at its storage limit), and no more
 //     than housing holds.
-//   - soldiers trained: made by then at a moderate soldier income
+//   - soldiers trained: the soldiers the reference town's military buildings
+//     have brought by then (each copy brings its own, once)
 //     (config.FlowIncome, the Gate Covenant's flow model) over each age's
 //     pacing target.
 //   - play time (MinTick) always passes, so it never limits anything.
@@ -267,10 +267,15 @@ func newMilestoneModel(defs map[string]config.BuildingDef, prestigeAge string) *
 		m.housing[i] = float64(m.housing[i] * (1 + housePct[i]))
 	}
 
+	// Soldiers come with the military buildings (config.BuildingDef.Soldiers a
+	// copy): the reference town's copies of each one, as they arrive.
+	ref := newRefTables()
 	made := 0.0
-	for i, a := range ages {
-		if i >= m.resAge["soldiers"] {
-			made += float64(rules.Core().FlowIncome("soldiers", a.Key) * config.AgeTargetTicks(a.Key))
+	for i := range ages {
+		for _, d := range ref.byAge[i] {
+			if config.IsMilitaryBuilding(d) {
+				made += float64(d.Soldiers * ref.refCount(d))
+			}
 		}
 		m.soldiers[i] = made
 	}
@@ -727,9 +732,9 @@ func (m *milestoneModel) soldiersReq(need int) milestoneReq {
 	q.why = func(due int) string {
 		last := len(m.ages) - 1
 		if q.first < 0 {
-			return fmt.Sprintf("needs %s soldiers trained, but a moderate soldier income makes only %s in the whole game.", grouped(need), grouped(int(m.soldiers[last])))
+			return fmt.Sprintf("needs %s soldiers trained, but the reference town's military buildings bring only %s in the whole game.", grouped(need), grouped(int(m.soldiers[last])))
 		}
-		return fmt.Sprintf("needs %s soldiers trained %s, but a moderate soldier income makes only %s by then. The first age where it fits is the %s.", grouped(need), m.due(due), grouped(int(m.soldiers[due])), m.ageName(q.first))
+		return fmt.Sprintf("needs %s soldiers trained %s, but the reference town's military buildings bring only %s by then. The first age where it fits is the %s.", grouped(need), m.due(due), grouped(int(m.soldiers[due])), m.ageName(q.first))
 	}
 	return q
 }
@@ -756,7 +761,7 @@ func grouped(n int) string {
 
 // writeMilestones renders the milestone feasibility check.
 func writeMilestones(sb *strings.Builder, problems []MilestoneProblem, reach []MilestoneReach) {
-	fmt.Fprintf(sb, "From config alone: every milestone must be completable by the end of the last age a run plays before prestige opens, or of its own age when that is later. A building count must fit the most storage buildable in the building's own age (the only age it can be built in), undiscounted, within its max count; a population at most %g%% of the housing ceiling (every housing building so far at its storage limit, never upgraded); structures built at most %g%% of the build ceiling (every building so far at its storage limit, built once); a resource the most storage buildable with %gx to spare; techs and wonders what can be researched and built by then; soldiers what a moderate income trains. Every chain and the title ladder must be completable too. `go test ./smoke` fails on any problem here.\n\n",
+	fmt.Fprintf(sb, "From config alone: every milestone must be completable by the end of the last age a run plays before prestige opens, or of its own age when that is later. A building count must fit the most storage buildable in the building's own age (the only age it can be built in), undiscounted, within its max count; a population at most %g%% of the housing ceiling (every housing building so far at its storage limit, never upgraded); structures built at most %g%% of the build ceiling (every building so far at its storage limit, built once); a resource the most storage buildable with %gx to spare; techs and wonders what can be researched and built by then; soldiers what the reference town's military buildings bring. Every chain and the title ladder must be completable too. `go test ./smoke` fails on any problem here.\n\n",
 		MilestonePopShare*100, MilestoneBuildShare*100, GateResourceMargin)
 	if len(problems) == 0 {
 		sb.WriteString("No problems.\n\n")

@@ -48,11 +48,8 @@ func (c peopleBody) overview() {
 	legend := [][]xseg{}
 	line := []xseg{}
 	used := 0
-	for i, k := range kinds {
+	for _, k := range kinds {
 		text := []xseg{{"█ " + k.name + " ", k.kind}, {num(k.count), xText}}
-		if i == 2 {
-			text[0].s = "· " + k.name + " " // soldiers are not housed yet: no block of the bar
-		}
 		n := runeLen(text[0].s) + runeLen(text[1].s)
 		if len(line) > 0 && used+3+n > iw {
 			legend = append(legend, line)
@@ -86,7 +83,7 @@ func (c peopleBody) overview() {
 	g.segsFit(3, y, iw, xseg{"Homes ", xDim}, xseg{num(ws.MaxPop), xText}, xseg{"   empty ", xDim},
 		xseg{num(max(0, ws.MaxPop-ws.TotalPop)), xText}, xseg{"   held by ", xDim}, xseg{held, xText})
 	y++
-	stackBar(g, 3, y, iw, []stackPart{{ws.Working(), xWork}, {ws.Reserve(), xRes}, {ws.Scholars, xLore}}, ws.MaxPop)
+	stackBar(g, 3, y, iw, []stackPart{{ws.Working(), xWork}, {ws.Reserve(), xRes}, {ws.Soldiers, xArmy}, {ws.Scholars, xLore}}, ws.MaxPop)
 	y++
 	for _, l := range legend {
 		g.segsFit(3, y, iw, l...)
@@ -189,7 +186,7 @@ func (c peopleBody) card(i int, k peopleKind) []string {
 		if k.out > 0 {
 			out = num(k.out) + " out"
 		}
-		return []string{num(k.count) + " at home", out, "defense " + num(int(st.Military.DefenseRating)), "see Army"}
+		return []string{num(k.count) + " at their posts", out, "defense " + num(int(st.Military.DefenseRating)), "see Army"}
 	}
 	s := st.Scholars
 	return []string{num(k.count) + " at desks", num(s.Researching) + " researching", num(s.Teaching) + " teaching", "come with buildings"}
@@ -338,33 +335,33 @@ func (c peopleBody) army() {
 	g.box(c.x, c.y, lw, topH, xBorder, "Military buildings", xTitle, false)
 	g.box(c.x+lw, c.y, rw, topH, xBorder, fmt.Sprintf("Away · %s", num(soldiers.out)), xTitle, false)
 
-	// The buildings, then the soldier stock and the defense under them.
+	// The buildings with their posts, then the army and the defense under them.
 	blds := militaryBuildings(st)
 	per := max(0, (topH-2-3)/2)
 	if len(blds) == 0 {
 		g.putFit(c.x+2, c.y+1, lw-4, "No military buildings yet.", xFaint)
+	}
+	posts := map[string]game.SoldierPost{}
+	for _, p := range mil.Posts {
+		posts[p.Key] = p
 	}
 	first := window(len(blds), per, c.v.row)
 	for n := 0; n < per && first+n < len(blds); n++ {
 		i := first + n
 		b := blds[i]
 		y := c.y + 1 + n*2
-		cap := b.WorkerCapacity * b.Count
-		staff := fmt.Sprintf("workers %s/%s", num(b.WorkersAssigned), num(cap))
+		p := posts[b.key]
+		staff := fmt.Sprintf("%s/%s posted", num(p.Posted), num(p.Posts))
 		pickName(g, c.x+2, y, lw-6-runeLen(staff), fmt.Sprintf("%s x%d", b.Name, b.Count), i == c.v.row)
 		sk := xGood
-		if b.WorkersAssigned < cap {
+		if p.Posted < p.Posts {
 			sk = xBad
 		}
 		g.rput(rightOf(c.x, lw), y, staff, sk)
 		g.putFit(c.x+4, y+1, lw-8, b.Description, xDim)
 	}
 	sy := c.y + topH - 4
-	capText := ""
-	if mil.SoldierCap > 0 {
-		capText = " / " + num(mil.SoldierCap)
-	}
-	g.segsFit(c.x+2, sy, lw-4, xseg{soldiers.name + " ", xDim}, xseg{num(mil.SoldierCount) + capText, xText}, xseg{"  " + textfmt.Rate(mil.SoldierRate), xDim})
+	g.segsFit(c.x+2, sy, lw-4, xseg{soldiers.name + " ", xDim}, xseg{num(soldiers.count) + " posted of " + num(mil.SoldierCap), xText})
 	g.segsFit(c.x+2, sy+1, lw-4, xseg{"Defense ", xDim}, xseg{num(int(mil.DefenseRating)), xText},
 		xseg{"  threat " + num(int(mil.Threat)) + ", blunts " + textfmt.Percent(mil.Mitigation), xDim})
 
