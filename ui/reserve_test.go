@@ -27,8 +27,9 @@ func reserveState(t *testing.T, by string, net float64, feeds int) game.GameStat
 	return st
 }
 
-// The Workers box says Reserve, and what holds the population back, in the
-// 20 cells it has, with every row whole.
+// The People box names each kind of person in the age's own word, says what
+// holds the population back, and keeps every row whole in the 20 cells it
+// has.
 func TestReserve_DashboardBox(t *testing.T) {
 	cases := []struct {
 		by    string
@@ -42,9 +43,14 @@ func TestReserve_DashboardBox(t *testing.T) {
 	}
 	for _, c := range cases {
 		st := reserveState(t, c.by, c.net, c.feeds)
-		text := plainText(workerMiniText(st, sidebarW-2, true))
-		if !strings.Contains(text, "Reserve: 3") || strings.Contains(text, "Idle") {
-			t.Errorf("held by %q: the box does not show the reserve:\n%s", c.by, text)
+		text := plainText(peopleBoxText(st, sidebarW-2, true))
+		for _, want := range []string{"Pop ", "Gatherers", "Clanfolk", "Hunters", "Elders"} {
+			if !strings.Contains(text, want) {
+				t.Errorf("held by %q: the box does not show %q:\n%s", c.by, want, text)
+			}
+		}
+		if reserve := lineContaining(text, "Clanfolk"); !strings.HasSuffix(reserve, " 3") {
+			t.Errorf("held by %q: the reserve's line should end with its count, 3: %q", c.by, reserve)
 		}
 		for _, want := range c.want {
 			if !strings.Contains(text, want) {
@@ -67,31 +73,26 @@ func TestReserve_DashboardBox(t *testing.T) {
 	}
 }
 
-// The Workers panel shows Reserve and the Held-by line in its Summary, and
-// its Auto-recruit line names what holds growth rather than a filled-slots
-// limit.
-func TestReserve_RosterPanel(t *testing.T) {
+// The People panel's Overview shows the Held-by line and the age's names, and
+// its Work tab names what holds growth rather than a filled-slots limit.
+func TestReserve_PeoplePanel(t *testing.T) {
 	for _, c := range []struct{ by, held, recruit string }{
-		{game.HeldHousing, "Held by: housing", "held by housing"},
-		{game.HeldFood, "Held by: food (+0.45 food a tick feeds 4 more)", "held by food"},
+		{game.HeldHousing, "held by housing", "held by housing"},
+		{game.HeldFood, "held by food (+0.45 food a tick feeds 4 more)", "held by food"},
 	} {
 		st := reserveState(t, c.by, 0.45, 4)
-		text := plainText(workersProvider(st, 80))
-		if !strings.Contains(text, "Reserve: 3") || !strings.Contains(text, c.held) {
-			t.Errorf("held by %q: the panel's summary lacks the reserve or %q:\n%s", c.by, c.held, text)
+		over := renderPeople(st, peopleView{tab: tabOverview}, 100, 30).String()
+		if !strings.Contains(over, "Clanfolk") || !strings.Contains(over, c.held) {
+			t.Errorf("held by %q: the Overview lacks the reserve or %q:\n%s", c.by, c.held, over)
 		}
-		if !strings.Contains(text, c.recruit) || strings.Contains(text, "every worker slot is filled") {
-			t.Errorf("held by %q: the Auto-recruit line does not say %q, or still blames the slots:\n%s", c.by, c.recruit, text)
-		}
-		for _, row := range strings.Split(text, "\n") {
-			if runeLen(row) > 80 {
-				t.Errorf("held by %q: panel row wider than 80 cells: %q", c.by, row)
-			}
+		work := renderPeople(st, peopleView{tab: tabWork}, 100, 30).String()
+		if !strings.Contains(work, c.recruit) || strings.Contains(work, "every worker slot is filled") {
+			t.Errorf("held by %q: the Work tab's auto-recruit line does not say %q, or still blames the slots:\n%s", c.by, c.recruit, work)
 		}
 	}
 }
 
-// On the real dashboard at the smallest sizes the Workers box grows by the
+// On the real dashboard at the smallest sizes the People box grows by the
 // lines that say what holds the population back, and nothing else gives:
 // every row of the box and of the Panels list is whole.
 func TestReserve_DashboardAt80x24(t *testing.T) {
@@ -123,7 +124,7 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 			cells = append([]tcell.SimCell(nil), cells...)
 			sim.Fini()
 			where := fmt.Sprintf("held by %s at %dx%d", by, w, h)
-			rows := checkFitted(t, where+", Workers", d.workerMiniTV, cells, w)
+			rows := checkFitted(t, where+", People", d.workerMiniTV, cells, w)
 			text := strings.Join(rows, "\n")
 			want := []string{"Held by: housing"}
 			if by == game.HeldFood {
@@ -134,10 +135,19 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 					t.Errorf("%s: the food detail line takes a row a 24-row terminal needs:\n%s", where, text)
 				}
 			}
-			for _, s := range append([]string{"Reserve: 494", "Housing left:", "Food net:"}, want...) {
-				if !strings.Contains(text, s) {
-					t.Errorf("%s: the Workers box does not show %q:\n%s", where, s, text)
+			for _, s := range append([]string{"Craftsfolk", "Villagers 494", "Spearmen", "Scribes"}, want...) {
+				if !strings.Contains(text, s) && !strings.Contains(strings.Join(strings.Fields(text), " "), s) {
+					t.Errorf("%s: the People box does not show %q:\n%s", where, s, text)
 				}
+			}
+			// The headcount is a line of its own, or, on a short terminal with
+			// a Held-by line up, in the box's title.
+			if h >= workerDetailMinRows {
+				if !strings.Contains(text, "Pop ") {
+					t.Errorf("%s: the People box has no Pop line:\n%s", where, text)
+				}
+			} else if title := d.workerMiniTV.GetTitle(); !strings.Contains(title, "People ") || !strings.Contains(title, "/") {
+				t.Errorf("%s: the title %q does not carry the headcount", where, title)
 			}
 			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
 			for _, name := range sidebarPanels {
@@ -156,7 +166,8 @@ func TestReserve_BigTownAt80x24(t *testing.T) {
 	d, pages, _ := stagedDashboard(t, "quantum_age")
 	drawnDashboard(t, d, pages, 80, 24)
 	st := *d.lastState
-	st.Workers.TotalPop, st.Workers.MaxPop, st.Workers.TotalIdle = 7680, 97800000, 4321
+	st.Workers.TotalPop, st.Workers.MaxPop, st.Workers.TotalIdle, st.Workers.Scholars = 7680, 97800000, 4321, 120
+	st.Military.SoldierCount = 1234567
 	st.Workers.HeldBy = game.HeldFood
 	d.lastState = &st
 	d.refreshWorkerMini(st)
@@ -175,10 +186,13 @@ func TestReserve_BigTownAt80x24(t *testing.T) {
 	}
 	cells, _, _ := sim.GetContents()
 	cells = append([]tcell.SimCell(nil), cells...)
-	text := strings.Join(checkFitted(t, "big town, Workers", d.workerMiniTV, cells, 80), "\n")
-	for _, s := range []string{"Reserve:", "Held by: food", "Food net:"} {
+	text := strings.Join(checkFitted(t, "big town, People", d.workerMiniTV, cells, 80), "\n")
+	if title := d.workerMiniTV.GetTitle(); !strings.Contains(title, "People") {
+		t.Errorf("the title %q lost the box's name", title)
+	}
+	for _, s := range []string{"Operators", "Entangled", "Wardens", "Quantum minds", "Held by: food"} {
 		if !strings.Contains(text, s) {
-			t.Errorf("the Workers box does not show %q:\n%s", s, text)
+			t.Errorf("the People box does not show %q:\n%s", s, text)
 		}
 	}
 	panels := strings.Join(checkFitted(t, "big town, Panels", d.sidebar, cells, 80), "\n")

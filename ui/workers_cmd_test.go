@@ -24,7 +24,7 @@ func sharesTestEngine(t *testing.T) *game.GameEngine {
 // The workers command: bare opens the panel; auto-recruit shows and sets
 // recruiting. The roster command shows, sets and clears shares, under its
 // name and under its old one (workers share), which still runs it. Changes reply as routine
-// lines (the Workers panel shows the result), a food share of 0 as a
+// lines (the People panel's Work tab shows the result), a food share of 0 as a
 // warning, and bad input with the usage.
 func TestWorkersCommand(t *testing.T) {
 	for _, roster := range []string{"roster", "workers share"} {
@@ -37,8 +37,10 @@ func testRosterCommand(t *testing.T, roster string) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	ge := sharesTestEngine(t)
 
-	if res := HandleCommand("workers", ge); res.OverlayName != "workers" {
-		t.Errorf("bare workers = %+v, want the Workers panel", res)
+	for _, bare := range []string{"workers", "people"} {
+		if res := HandleCommand(bare, ge); res.OverlayName != "people" {
+			t.Errorf("bare %s = %+v, want the People panel", bare, res)
+		}
 	}
 	res := HandleCommand(roster+" faith 40", ge)
 	if res.Type != game.LogRoutine || !strings.Contains(res.Message, "Faith 40%") {
@@ -152,13 +154,13 @@ func TestWorkersCompletion(t *testing.T) {
 	}
 }
 
-// The Help panel lists the roster and the workers commands under Workers
+// The Help panel lists the roster, people and workers commands under People
 // (the roster's old name in one line, not as a command of its own), and the
-// Workers panel shows the roster and what auto-recruit is doing.
+// People panel's Work tab shows the roster and what auto-recruit is doing.
 func TestWorkersHelpAndPanel(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	help := helpProvider(game.GameState{}, 0)
-	for _, want := range []string{"roster", "roster auto", "workers auto-recruit", "Put every domain back on auto", "workers share still works"} {
+	for _, want := range []string{"roster", "roster auto", "workers auto-recruit", "Put every domain back on auto", "workers share still works", "people"} {
 		if !strings.Contains(help, want) {
 			t.Errorf("the Help panel has no %q", want)
 		}
@@ -171,19 +173,26 @@ func TestWorkersHelpAndPanel(t *testing.T) {
 	if res := HandleCommand("roster faith 50", ge); res.Type == "error" {
 		t.Fatal(res.Message)
 	}
-	panel := workersProvider(ge.GetState(), 0)
+	panel := renderPeople(ge.GetState(), peopleView{tab: tabWork}, 100, 30).String()
 	if strings.Contains(panel, "workers share") || strings.Contains(panel, "Shares") {
-		t.Errorf("the Workers panel still uses the roster's old name:\n%s", panel)
+		t.Errorf("the People panel still uses the roster's old name:\n%s", panel)
 	}
-	for _, want := range []string{"Roster", "Auto-recruit:", "Faith", "set", "auto", "roster <domain> <percent|auto>"} {
-		if !strings.Contains(panel, want) {
-			t.Errorf("the Workers panel has no %q:\n%s", want, panel)
+	faith := peopleView{tab: tabWork}
+	for i, r := range game.ShareRows(ge.GetState()) {
+		if r.Domain == "faith" {
+			faith.row = i
 		}
 	}
-	// A fresh game shows the shares too, and says workers come on their own.
+	panel = renderPeople(ge.GetState(), faith, 100, 30).String()
+	for _, want := range []string{"Work areas", "Auto-recruit", "Faith", "set", "auto", "roster faith <percent|auto>"} {
+		if !strings.Contains(panel, want) {
+			t.Errorf("the People panel's Work tab has no %q:\n%s", want, panel)
+		}
+	}
+	// A fresh game shows the tab too, and says there is nothing to staff yet.
 	fresh := game.NewGameEngine()
-	panel = workersProvider(fresh.GetState(), 0)
-	if !strings.Contains(panel, "come on their own") || !strings.Contains(panel, "Auto-recruit:") {
-		t.Errorf("a fresh game's Workers panel:\n%s", panel)
+	panel = renderPeople(fresh.GetState(), peopleView{tab: tabWork}, 100, 30).String()
+	if !strings.Contains(panel, "No worker buildings yet") {
+		t.Errorf("a fresh game's Work tab:\n%s", panel)
 	}
 }

@@ -38,6 +38,10 @@ const (
 	xSel               // the selection
 	xSelGold           // the selection on a Legendary pin
 	xLabel             // a place name on the map
+	xWork              // people: workers
+	xRes               // people: the reserve
+	xArmy              // people: soldiers
+	xLore              // people: scholars
 	xCount
 )
 
@@ -283,6 +287,10 @@ func newExpPalette() *expPalette {
 	s[xSel] = tcell.StyleDefault.Background(sel).Foreground(theme.Legible(theme.Color(theme.RoleSelectionText), sel, 4.5)).Bold(true)
 	s[xSelGold] = tcell.StyleDefault.Background(gold).Foreground(theme.Legible(bg, gold, 4.5)).Bold(true)
 	chip := theme.Color(theme.RoleChip)
+	s[xWork] = role(theme.RoleHighlight, 3)
+	s[xRes] = role(theme.RolePositive, 3)
+	s[xArmy] = role(theme.RoleNegative, 3)
+	s[xLore] = role(theme.RoleLabel, 3)
 	s[xLabel] = tcell.StyleDefault.Background(chip).Foreground(theme.Legible(theme.Color(theme.RoleHighlight), chip, 4.5))
 	return p
 }

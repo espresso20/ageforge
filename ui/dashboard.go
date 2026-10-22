@@ -38,7 +38,7 @@ const promptRows = 3
 
 // The dashboard's other fixed sizes: the rows over the boxes (the badge
 // line, the status bar, the toast line and the two of the Next Age strip)
-// and the width of the right column (the Panels list and the Workers box).
+// and the width of the right column (the Panels list and the People box).
 const (
 	dashHeaderRows = 1 + 1 + 1 + 2
 	sidebarW       = 22
@@ -57,8 +57,8 @@ type Dashboard struct {
 	sidebar       *fitView
 	sidebarActive string // the open panel, highlighted in the list
 	workerMiniTV  *fitView
-	workerCol     *tview.Flex // the right column, which sizes the Workers box to its lines
-	workerDetail  bool        // the terminal has the rows for the Workers box's food detail line
+	workerCol     *tview.Flex // the right column, which sizes the People box to its lines
+	workerDetail  bool        // the terminal has the rows for the People box's food detail line
 
 	// Shared UI
 	logTV            *tview.TextView
@@ -136,6 +136,10 @@ type Dashboard struct {
 	// expPanel is the Expeditions panel: the Ready Room and the Expedition
 	// Report (expedition_panel.go).
 	expPanel *expeditionPanel
+
+	// peoplePanel is the People panel: Overview, Work, Army and Scholars.
+	peoplePanel *peoplePanel
+
 	miniMap  *miniMap
 	mapDock  *mapDock
 	mapLocal *mapSettings
@@ -165,6 +169,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		researchPanel: newResearchPanel(),
 		badgePanel:    newBadgePanel(),
 		expPanel:      newExpeditionPanel(),
+		peoplePanel:   newPeoplePanel(),
 		miniMap:       newMiniMap(mv),
 		pages:         pages,
 		stopCh:        make(chan struct{}),
@@ -212,7 +217,11 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("diplomacy", "Factions", factionsProvider)
 	d.overlayMgr.Register("stats", "Statistics", statsProvider)
 	d.overlayMgr.Register("wonders", "Wonders", wondersProvider)
-	d.overlayMgr.Register("workers", "Workers", workersProvider)
+	// The People panel, which `workers` opens too, leaves the keyboard with
+	// the command bar as well.
+	d.peoplePanel.settings = d.mapSettings
+	d.peoplePanel.toPrompt = d.researchPanel.toPrompt
+	d.overlayMgr.RegisterWidget("people", "People", d.peoplePanel.open, d.peoplePanel.update, true)
 	d.overlayMgr.Register("logs", "Logs", logsProvider)
 	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
 	d.overlayMgr.Register("harbinger", "Harbinger", d.harbPanel.provider)
@@ -494,17 +503,17 @@ func (d *Dashboard) build() {
 		return d.mapDock
 	})
 
-	// Mini worker summary box — sits below the sidebar in the right column
+	// People box: the population and its four kinds, below the sidebar in the right column
 	d.workerMiniTV = newFitView(func(w, _ int) string {
 		if d.lastState == nil {
 			return ""
 		}
-		return workerMiniText(*d.lastState, w, d.workerDetail)
+		return peopleBoxText(*d.lastState, w, d.workerDetail)
 	})
-	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ")
+	d.workerMiniTV.SetBorder(true).SetTitle(" People ")
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Color(theme.RoleAccent)) })
 
-	// The Workers box is its lines (four, and one or two that say what holds
+	// The People box is its lines (five, and one or two that say what holds
 	// the population back) and its border: every other row of the column is
 	// the Panels list's (refreshWorkerMini sizes the box).
 	rightCol := tview.NewFlex().SetDirection(tview.FlexRow).
@@ -558,6 +567,11 @@ func (d *Dashboard) build() {
 			(d.expPanel.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && d.expPanel.closeConfirm()) {
 			return nil
 		}
+		// The open People panel, which takes the arrows while the bar is empty.
+		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "people" && d.inputField.HasFocus() &&
+			d.peoplePanel.routeKey(event, d.inputField.GetText()) {
+			return nil
+		}
 		switch event.Key() {
 		case resourcePageKey:
 			// The Resources box's next page, when it has more rows than it
@@ -604,7 +618,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 // sidebarPanels is the Panels list, in order.
-var sidebarPanels = []string{"milestones", "badges", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "map", "help"}
+var sidebarPanels = []string{"milestones", "badges", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "people", "logs", "epoch", "harbinger", "history", "map", "help"}
 
 // buildSidebarText is the Panels list in one column, the open panel
 // highlighted: the list as it shows when the screen is tall enough for it.
@@ -937,19 +951,20 @@ func (d *Dashboard) refreshWorkerMini(game.GameState) {
 		// at 24 rows the Panels list needs every row the box leaves it.
 		_, _, _, rootH := d.root.GetRect()
 		d.workerDetail = rootH >= workerDetailMinRows
-		rows := strings.Count(workerMiniText(*d.lastState, sidebarW-2, d.workerDetail), "\n")
+		rows := strings.Count(peopleBoxText(*d.lastState, sidebarW-2, d.workerDetail), "\n")
 		d.workerCol.ResizeItem(d.workerMiniTV, rows+2, 0)
+		d.workerMiniTV.SetTitle(peopleBoxTitle(*d.lastState, d.workerDetail))
 	}
 	d.workerMiniTV.changed()
 }
 
-// workerDetailMinRows is the terminal height from which the Workers box adds
+// workerDetailMinRows is the terminal height from which the People box adds
 // the line that says how much food is spare and how many it feeds.
 const workerDetailMinRows = 30
 
-// workerMiniBaseRows is the Workers box's lines when nothing holds the
-// population back: the headcount, housing left, food use and food net.
-const workerMiniBaseRows = 4 // (five when the reserve needs a line of its own)
+// workerMiniBaseRows is the People box's lines when nothing holds the
+// population back: the headcount over the housing and the four kinds.
+const workerMiniBaseRows = 5
 
 // heldByLines says what holds the population back, for a box w cells wide (0:
 // any width), as "Held by: food" and, for food, a second line with the net
@@ -991,62 +1006,60 @@ func heldByText(ws game.WorkerState) string {
 	return lines[0] + " (" + lines[1] + ")"
 }
 
-// workerMiniText writes the Workers box for a box w cells wide (0: any
-// width): population over housing and the reserve, housing left, what the
-// workers eat, what food nets and what holds the population back (with the
-// food detail line when detail is set). A count too long for its line is written
-// short (51.8M for 51785785), and a rate too long drops to "/t".
-func workerMiniText(state game.GameState, w int, detail bool) string {
+// peopleBoxCompact says whether the People box is short a row: on a short
+// terminal (detail unset) with something holding the population back, the
+// Held-by line takes the row of the headcount, which moves to the title. The
+// Panels list needs every row the box leaves it.
+func peopleBoxCompact(state game.GameState, detail bool) bool {
+	return !detail && state.Workers.HeldBy != game.HeldNone
+}
+
+// peopleBoxTitle is the People box's title: " People ", with the headcount
+// over the housing in it when the box is compact and it fits.
+func peopleBoxTitle(state game.GameState, detail bool) string {
+	if !peopleBoxCompact(state, detail) {
+		return " People "
+	}
+	ws := state.Workers
+	for _, t := range []string{
+		fmt.Sprintf(" People %d/%d ", ws.TotalPop, ws.MaxPop),
+		fmt.Sprintf(" People %s/%s ", FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))),
+	} {
+		if runeLen(t) <= sidebarW-2 {
+			return t
+		}
+	}
+	return " People "
+}
+
+// peopleBoxText writes the People box for a box w cells wide (0: any width):
+// the population over the housing, one line for each kind of person in this
+// age's own word with its count (the soldiers carry "· N out" for those on
+// missions when it fits), and what holds the population back (with the food
+// detail line when detail is set). A count too long for its line is written
+// short (51.8M for 51785785). The food use and net are on the People panel.
+func peopleBoxText(state game.GameState, w int, detail bool) string {
 	ws := state.Workers
 	fits := func(plain string) bool { return w <= 0 || runeLen(plain) <= w }
-	num := func(n int) string { return fmt.Sprintf("%d", n) }
-	short := func(n int) string { return FormatNumber(float64(n)) }
 	var sb strings.Builder
 
-	// "pop/housing  Reserve: n" on one line while it fits (counts written short,
-	// then one space, when that helps); otherwise the reserve gets a line of
-	// its own.
-	pop, housing, idle := num(ws.TotalPop), num(ws.MaxPop), num(ws.TotalIdle)
-	gap := "  "
-	if !fits(pop + "/" + housing + gap + "Reserve: " + idle) {
-		pop, housing, idle = short(ws.TotalPop), short(ws.MaxPop), short(ws.TotalIdle)
-	}
-	if !fits(pop + "/" + housing + gap + "Reserve: " + idle) {
-		gap = " "
-	}
-	split := !fits(pop + "/" + housing + gap + "Reserve: " + idle)
-	if split {
-		fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]\n[gray]Reserve:[white] %s[-]\n", pop, housing, idle)
-	} else {
-		fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]%s[gray]Reserve:[white] %s[-]\n", pop, housing, gap, idle)
+	// On a short terminal with a Held-by line up, the headcount moves to the
+	// box's title (peopleBoxTitle) and its row goes to the Panels list.
+	if !peopleBoxCompact(state, detail) {
+		pop, housing := fmt.Sprintf("%d", ws.TotalPop), fmt.Sprintf("%d", ws.MaxPop)
+		if !fits("Pop " + pop + "/" + housing) {
+			pop, housing = FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))
+		}
+		popColor := "yellow"
+		if ws.TotalPop > ws.MaxPop {
+			popColor = "red" // the scholars moved in past the homes
+		}
+		fmt.Fprintf(&sb, "[gray]Pop[white] [%s]%s[white]/[green]%s[-]\n", popColor, pop, housing)
 	}
 
-	// On a short terminal, a reserve line of its own and a Held-by line take
-	// the row of Housing left (the first line already says population over
-	// housing): the Panels list needs every row the box leaves it.
-	if !(split && !detail && ws.HeldBy != game.HeldNone) {
-		left := num(ws.MaxPop - ws.TotalPop)
-		if !fits("Housing left: " + left) {
-			left = short(ws.MaxPop - ws.TotalPop)
-		}
-		fmt.Fprintf(&sb, "[gray]Housing left:[white] %s[-]\n", left)
-	}
-
-	// note: textfmt.Rate carries its own sign, so no manual "+"/"-" prefixes here.
-	rate := func(label string, v float64) string {
-		text := textfmt.Rate(v)
-		if !fits(label + " " + text) {
-			text = strings.TrimSuffix(text, "ick")
-		}
-		return text
-	}
-	fmt.Fprintf(&sb, "[gray]Food use:[red] %s[-]\n", rate("Food use:", -ws.FoodDrain))
-	if food, ok := state.Resources["food"]; ok {
-		netColor := "green"
-		if food.Rate < 0 {
-			netColor = "red"
-		}
-		fmt.Fprintf(&sb, "[gray]Food net:[%s] %s[-]\n", netColor, rate("Food net:", food.Rate))
+	for _, k := range peopleKinds(state) {
+		sb.WriteString(k.boxLine(w))
+		sb.WriteString("\n")
 	}
 	if lines := heldByLines(ws, w); len(lines) > 0 {
 		fmt.Fprintf(&sb, "[gray]%s[-]\n", lines[0])
@@ -1528,7 +1541,7 @@ func (d *Dashboard) submitInput() {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
 		d.updateSidebar(result.OverlayName)
-		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" || result.OverlayName == "expedition" {
+		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" || result.OverlayName == "expedition" || result.OverlayName == "people" {
 			// The command bar keeps the keyboard while the map is open.
 			d.overlayMgr.FocusOn(d.inputField)
 		}
@@ -1536,6 +1549,10 @@ func (d *Dashboard) submitInput() {
 		// A command typed over the case (map glyphs, motion): show what it
 		// changed now rather than at the next refresh.
 		d.badgePanel.update(d.engine.GetState())
+	} else if d.overlayMgr.ActiveName() == "people" {
+		// A command typed over the panel (roster, recruit): show what it
+		// changed now rather than at the next refresh.
+		d.peoplePanel.update(d.engine.GetState())
 	} else if d.overlayMgr.ActiveName() == "expedition" {
 		// An offer sent by name: the map shows it gone now.
 		d.expPanel.update(d.engine.GetState())
