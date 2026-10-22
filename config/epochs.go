@@ -310,7 +310,7 @@ func ChallengingEpochEvents() []EpochEventDef {
 		},
 		{
 			Key: "the_dark_age", Name: "The Dark Age", Type: "bad_challenging",
-			FlavorText: "Your scholars fall silent. Current research is canceled and its work is lost, you lose the head start you had kept, and research speed -40% for {dur}.",
+			FlavorText: "Your scholars fall silent. Current research is canceled and its work is lost, and research speed -40% for {dur}.",
 			Duration:   374,
 			Rates:      []Effect{{Type: EventRate, Target: ResearchTarget, Value: -0.4}},
 		},

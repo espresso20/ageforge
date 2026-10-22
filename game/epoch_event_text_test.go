@@ -171,6 +171,7 @@ func TestEpochAndAwakeningLogsDoNotRepeatText(t *testing.T) {
 	}
 	apply := func(key string) []LogEntry {
 		ge := newTruthEngine("classical_age", truthClean)
+		truthStartLab(ge)
 		before := len(ge.log)
 		if ev := byKey[key]; strings.HasPrefix(ev.Type, "good") {
 			ge.applyGoodEpochEvent(ev)
@@ -180,7 +181,7 @@ func TestEpochAndAwakeningLogsDoNotRepeatText(t *testing.T) {
 		return ge.log[before:]
 	}
 	// The Ancient Cache also says what it gave the scholars (a share of the
-	// tech in progress, or a head start): that is new, not repeated.
+	// tech in progress): that is new, not repeated.
 	if got := apply("ancient_cache"); len(got) != 2 || !strings.Contains(got[1].Message, "The cache gave ") {
 		t.Errorf("ancient_cache should log its headline and one line for the scholars' share: %v", got)
 	}

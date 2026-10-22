@@ -37,7 +37,7 @@ func TestResearchBonusesIndependentOfCompletionOrder(t *testing.T) {
 	mixed := complete(shuffled)
 
 	loaded := NewResearchManager()
-	loaded.LoadState(forward.GetResearched(), "", 0, false, 0)
+	loaded.LoadState(forward.GetResearched(), "", 0, false)
 
 	for name, rm := range map[string]*ResearchManager{"backward": backward, "shuffled": mixed, "loaded": loaded} {
 		if !maps.Equal(rm.bonuses, forward.bonuses) {

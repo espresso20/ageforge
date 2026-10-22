@@ -92,8 +92,8 @@ func scholarsShort(state game.GameState) string {
 	return fmt.Sprintf("Scholars %d research, %d teach, %s", s.Researching, s.Teaching, textfmt.SignedPercent(s.TeachingBonus))
 }
 
-// queueLines are the techs queued after the one in progress, in order, and
-// the head start held for the next one. nil when there is neither.
+// queueLines are the techs queued after the one in progress, in order. nil
+// when there are none.
 func queueLines(state game.GameState) []string {
 	r := state.Research
 	var out []string
@@ -104,24 +104,5 @@ func queueLines(state game.GameState) []string {
 		}
 		out = append(out, fmt.Sprintf("%d. %s", i+1, name))
 	}
-	if r.HeadStart > 0 {
-		out = append(out, headStartLine(state))
-	}
 	return out
-}
-
-// headStartLine says the head start held: a share of the next tech queued,
-// else the time of work kept at the scholars' pace now.
-func headStartLine(state game.GameState) string {
-	r := state.Research
-	for _, key := range r.Queue {
-		if ts, ok := r.Techs[key]; ok && ts.Cost > 0 {
-			share := math.Min(r.HeadStart/ts.Cost, 1) * 100
-			if share < 1 {
-				return fmt.Sprintf("Head start: under 1%% of %s", ts.Name)
-			}
-			return fmt.Sprintf("Head start: %d%% of %s", int(share), ts.Name)
-		}
-	}
-	return "Head start: kept for the next tech"
 }
