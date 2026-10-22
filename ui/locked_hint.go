@@ -43,7 +43,13 @@ func lockedNeedsLine(bs game.BuildingState) string {
 	if len(bs.LockTechPath) == 0 {
 		return fmt.Sprintf("Needs %s (research)", bs.LockTech)
 	}
-	return fmt.Sprintf("Needs %s (research), after %s", bs.LockTech, strings.Join(bs.LockTechPath, ", then "))
+	// LockTechPath is nearest first; the line reads in research order, so
+	// the first tech named is the one to research first.
+	order := make([]string, len(bs.LockTechPath))
+	for i, name := range bs.LockTechPath {
+		order[len(order)-1-i] = name
+	}
+	return fmt.Sprintf("Needs %s (research), after %s", bs.LockTech, strings.Join(order, ", then "))
 }
 
 // lockedBuildingEntry is a building its age has unlocked and a tech still
