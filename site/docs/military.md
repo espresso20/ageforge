@@ -4,7 +4,7 @@
 
 Parties can meet road events while an expedition is out. Storms delay them, helpers save time, finds increase the haul, tolls cost gold, foes lower the odds, ambushes cost soldiers or loot, and fair weather raises the odds. A party can also mark ruins, adding a short offer to the board. Events are rolled when a mission launches and appear in the log and its Expedition Report.
 
-Soldiers come with your military buildings. Military grand offers need soldiers; short, long and civil grand offers cost materials. Mission hauls scale with the current age's income. What missions are really for is meeting the other civilizations: every resolved mission can bring an encounter, which is how you make first contact and collect boons (or, when a run fails, setbacks). The soldiers at their posts are your garrison: they blunt raids and soften catastrophes. Ignore the army and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. The soldiers who arrive with new military buildings also count toward the military milestones.
+Soldiers come with your military buildings. Every mission takes a party of soldiers out of the army at home; short, long and civil grand offers also cost materials. Mission hauls scale with the current age's income. What missions are really for is meeting the other civilizations: every resolved mission can bring an encounter, which is how you make first contact and collect boons (or, when a run fails, setbacks). The soldiers at their posts are your garrison: they blunt raids and soften catastrophes. Ignore the army and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. The soldiers who arrive with new military buildings also count toward the military milestones.
 
 ---
 
@@ -17,7 +17,7 @@ The military system covers four things:
 - **Milestones.** Five military milestones form a chain with a title at the end. The early ones grant permanent military power; the later ones grant all production.
 - **Prestige.** The army resets with the run. Prestige points give a lasting production bonus, not military power or mission rewards. From the first prestige, [Old Friends](prestige.md#old-friends) meets every civilization you have met again on later runs without a mission.
 
-**Soldiers come with your military buildings.** A military building does not train soldiers and has no soldier store: each copy has posts, and soldiers take them from the reserve first and then as new arrivals, as the food allows. The soldiers are people, so they live in your homes and eat like anyone (see [People](workers-and-domains.md#the-people-of-your-town)). A War Camp can be built in the Stone Age and its soldiers move in as the food allows. A town with no military building has no soldiers. Short, long and civil grand offers (see [Missions](#missions)) let you explore without soldiers.
+**Soldiers come with your military buildings.** A military building does not train soldiers and has no soldier store: each copy has posts, and soldiers take them from the reserve first and then as new arrivals, as the food allows. The soldiers are people, so they live in your homes and eat like anyone (see [People](workers-and-domains.md#the-people-of-your-town)). A War Camp can be built in the Stone Age and its soldiers move in as the food allows. A town with no military building has no soldiers. Every mission (see [Missions](#missions)) takes a party of them, so a town with no army sends nobody.
 
 The mission board has three tiers. A grand offer is either military or civil. See [The board](#the-board) for the costs and odds.
 
@@ -27,7 +27,7 @@ The mission board has three tiers. A grand offer is either military or civil. Se
 
 ### What soldiers are
 
-Soldiers are people at the posts of your military buildings. A copy of a military building comes with a fixed number of them (see [Military Buildings](#military-buildings) for the number in each age), they take their posts from the reserve first and then as new arrivals, whether or not your homes have room, and they leave with the copy if it is lost. They are listed with your other [people](workers-and-domains.md#the-people-of-your-town), under the age's own word for them, in the People box and on the People panel's Army tab, not in the Resources box. The army is the soldiers at their posts, and that is the number the rest of this page calls your soldiers: the defense rating, raids, the Brace preview and a campaign's soldier cost all count it.
+Soldiers are people at the posts of your military buildings. A copy of a military building comes with a fixed number of them (see [Military Buildings](#military-buildings) for the number in each age), they take their posts from the reserve first and then as new arrivals, whether or not your homes have room, and they leave with the copy if it is lost. They are listed with your other [people](workers-and-domains.md#the-people-of-your-town), under the age's own word for them, in the People box and on the People panel's Army tab, not in the Resources box. The army is the soldiers at their posts, and that is the number the rest of this page calls your soldiers: the defense rating, raids and the Brace preview count the soldiers at home, and a mission's party is taken from them.
 
 Posts fill only while the food margin holds (net food stays at or above one person's food, or 5% of the food made, after the newcomer eats), so soldiers arriving never starve the town. A post food cannot fill waits and fills as the food allows; the Army tab shows posted over posts, and the log says once for each building that its posts are waiting. Nothing trains soldiers and nothing stores them. Workers you put in a military building's slots do not make soldiers, and the techs that once raised soldier storage no longer change the army.
 
@@ -35,9 +35,45 @@ Posts fill only while the food margin holds (net food stays at or above one pers
 
 Every soldier eats the same amount of food as a worker (see [Food drain](workers-and-domains.md#food-drain)), and so do the workers in a military building's slots. A big army costs food because it is a lot of people, so check your food rate after you build a military building, and your homes: soldiers take a place in them like everyone else, and a town whose army fills the homes stops growing until you build more.
 
-### Losing soldiers
+### Parties and losses
 
-A campaign's soldiers stay at their posts in this version: launching a campaign needs the soldiers it asks for at home, and takes none of them from their posts. No random event and no setback takes soldiers, and an Endure leaves them at their posts too.
+Every mission takes a party of soldiers, a share of the army an ordinary town holds in the age you send it: 4% for a short offer, 10% for a long one, 30% for a military grand offer and 12% for a civil grand offer, rounded up and at least one. In the Bronze Age that is 8, 20, 60 and 24 soldiers.
+
+| Age | Army | Short | Long | Grand, military | Grand, civil |
+|---|---:|---:|---:|---:|---:|
+| Primitive | 0 | 1 | 1 | 1 | 1 |
+| Stone | 72 | 3 | 8 | 22 | 9 |
+| Bronze | 200 | 8 | 20 | 60 | 24 |
+| Iron | 430 | 18 | 43 | 129 | 52 |
+| Classical | 790 | 32 | 79 | 237 | 95 |
+| Medieval | 1,406 | 57 | 141 | 422 | 169 |
+| Renaissance | 2,566 | 103 | 257 | 770 | 308 |
+| Colonial | 4,798 | 192 | 480 | 1,440 | 576 |
+| Industrial | 15,094 | 604 | 1,510 | 4,529 | 1,812 |
+| Victorian | 29,694 | 1,188 | 2,970 | 8,909 | 3,564 |
+| Electric | 52,894 | 2,116 | 5,290 | 15,869 | 6,348 |
+| Atomic | 93,304 | 3,733 | 9,331 | 27,992 | 11,197 |
+| Modern | 262,728 | 10,510 | 26,273 | 78,819 | 31,528 |
+| Information | 500,968 | 20,039 | 50,097 | 150,291 | 60,117 |
+| Digital | 876,832 | 35,074 | 87,684 | 263,050 | 105,220 |
+| Cyberpunk | 2,112,856 | 84,515 | 211,286 | 633,857 | 253,543 |
+| Fusion | 3,899,386 | 155,976 | 389,939 | 1,169,816 | 467,927 |
+| Space | 7,750,298 | 310,012 | 775,030 | 2,325,090 | 930,036 |
+| Interstellar | 19,858,746 | 794,350 | 1,985,875 | 5,957,624 | 2,383,050 |
+| Galactic | 48,482,266 | 1,939,291 | 4,848,227 | 14,544,680 | 5,817,872 |
+| Quantum | 85,913,821 | 3,436,553 | 8,591,383 | 25,774,147 | 10,309,659 |
+| Transcendent | 140,961,453 | 5,638,459 | 14,096,146 | 42,288,436 | 16,915,375 |
+
+The party leaves its posts while it is out. Soldiers away are not at home: the defense rating, raids and every other launch count only the soldiers at home, and the Ready Room shows them as home over posted. They are still people, so they still take a place in your homes and eat. There is no limit on how many missions are out at once except the army: you can send a second short mission, or a third, while the soldiers at home still cover another party. An offer you cannot staff says so, naming the party and the soldiers at home.
+
+Soldiers fall:
+
+- **On a failure,** between 40% and 70% of the party that came home (60% to 90% on a Legendary mission), rounded up.
+- **On a success,** three times in ten, up to 15% of the party, rounded up.
+- **On the road,** an ambush takes a tenth of the party of any mission, at least one.
+- **At home,** when a raid lands and your soldiers blunt it, a twentieth of the soldiers at home fall, at least one. A raid that finds nobody at home costs no soldiers.
+
+The returns log and the mission's message say how many fell, for example "36 of 60 soldiers fell". The fallen leave the population and their posts stay empty. Empty posts fill again from the reserve, a few at a time (1% of all your posts in each staffing pass, at least one), while the food margin holds; nobody arrives from outside to take them. The Army tab shows posted over posts while they train. Offline the same rules run, so a mission that comes home while you are away loses its soldiers and the posts retrain just as they would at the screen.
 
 ### Viewing your army
 
@@ -115,7 +151,7 @@ The mission board holds nine offers, three short, three long and three grand. Ea
 
 The board's offer shows the rolled length, success odds, haul and launch cost. The haul is based on the current age's income and reward bonuses. Failure pays 30% of the haul. A Legendary offer is longer, has lower odds and pays four times the ordinary haul. About 5% of offers are Legendary, never two within 10 offers of each other, with at least one in every 41 offers.
 
-Short and long offers cost the two materials the current age's buildings charge most, sized to about 5 and 15 minutes of their income. A military grand offer costs soldiers and uses the army in its odds. A civil grand offer costs about 45 minutes of income in the age's two most-charged materials and uses plain odds. The offer shows its cost before you send it.
+Short and long offers cost the two materials the current age's buildings charge most, sized to about 5 and 15 minutes of their income. Every offer also takes its party of soldiers (see [Parties and losses](#parties-and-losses)); a military grand offer costs nothing else and uses the army in its odds. A civil grand offer costs about 45 minutes of income in the age's two most-charged materials and uses plain odds. The offer shows its cost before you send it.
 
 | Age | Short | Long | Grand, military | Grand, civil |
 |---|---|---|---|---|
@@ -142,7 +178,7 @@ Short and long offers cost the two materials the current age's buildings charge 
 | Quantum | Phase Probe | Rift Expedition | Incursion | Pocket Universe |
 | Transcendent | Glimpse | Pilgrimage of Light | Reality Incursion | Ascension Rite |
 
-Sending an offer removes it temporarily. A replacement arrives after five minutes. Untaken offers expire after an hour, and entering a new age creates a new board. You can have one mission of each tier under way at once. The panel and `expedition list` show why an offer cannot be sent now. A taken slot shows when its replacement arrives.
+Sending an offer removes it temporarily. A replacement arrives after five minutes. Untaken offers expire after an hour, and entering a new age creates a new board. Any number of missions can be under way at once, as many as your army can staff. The panel and `expedition list` show why an offer cannot be sent now. A taken slot shows when its replacement arrives.
 
 ### The Expeditions panel
 
@@ -162,11 +198,11 @@ The **Ready Room** is where you read the map and send a party. The map shows the
 
 Short offers lie near the town, long ones farther out and grand ones at the edge of the map. The land is drawn from your run and the age, so it holds still while the age lasts and changes with the next. A mission under way shows a dotted route from the town, an `@` where its party is and a ◆ at its goal.
 
-The highlighted pin has a dotted route from the town and its place name beside it. Next to the map the briefing for that offer gives its twist, its odds, how long it is out and back, how long the offer stays up, its haul in minutes of income and in resources, and its cost (green where you can pay it, red where you cannot). A military grand offer also lists the soldiers it takes as its party. The card ends with `Enter send`, or with the reason the offer cannot be sent now. Under the map are the missions out now, a key to the pins and the time until the board next changes.
+The highlighted pin has a dotted route from the town and its place name beside it. Next to the map the briefing for that offer gives its twist, its odds, how long it is out and back, how long the offer stays up, its haul in minutes of income and in resources, and its cost (green where you can pay it, red where you cannot). Every offer lists its party, in green when the soldiers at home cover it and in red when they do not. The card ends with `Enter send`, or with the reason the offer cannot be sent now. Under the map are the missions out now, a key to the pins and the time until the board next changes.
 
 The arrow keys hop to the nearest pin in that direction. `Enter` opens a box that asks before the party goes, and `Enter` again sends it. `Esc` takes the question back, and closes the panel when there is no question.
 
-The **Expedition Report** follows the parties out. It shows the same map with every mission under way, and a block for each: where it goes, a progress bar, the time left, its odds and the soldiers of a military mission. `Up` and `Down` pick a party, and its route lights up on the map. Below, **Came home** lists the last ten missions to return, newest first, with a ● on the ones that came home since you last looked, and the Geographic Society's line. With nobody out, the Report says so and how many offers are waiting in the Ready Room.
+The **Expedition Report** follows the parties out. It shows the same map with every mission under way, and a block for each: where it goes, a progress bar, the time left, its odds and the soldiers marching with it. The returns list how many soldiers fell. `Up` and `Down` pick a party, and its route lights up on the map. Below, **Came home** lists the last ten missions to return, newest first, with a ● on the ones that came home since you last looked, and the Geographic Society's line. With nobody out, the Report says so and how many offers are waiting in the Ready Room.
 
 The panel opens on the Report while a party is out or one has come home since you last looked at it, and on the Ready Room otherwise. Looking at the Report clears the `● new` count beside its tab. The prompt keeps working while the panel is open; with something typed, `Tab` and `Enter` act on the prompt instead.
 
@@ -182,7 +218,7 @@ campaign <name>         # alias for expedition <name>
 
 Offers have no numbers. To send one from the prompt, type part of its title after `expedition`. Case does not matter, and "the", "of", "a" and "an" are left out. An exact title wins; otherwise a title that starts with what you typed; otherwise any title in which every word you typed begins one of its words. If one offer matches, it is sent. If several do, the game lists them and asks you to type more of the name. If none does, it says so.
 
-A mission's resource cost is spent at launch, whether it succeeds or fails. A military mission needs its soldiers at home and leaves them at their posts. One mission per tier can be under way at once.
+A mission's resource cost is spent at launch, whether it succeeds or fails. Every mission needs its party at home and takes it out of the posts until it returns.
 
 ### Automatic dispatch: the Geographic Society
 
@@ -190,7 +226,7 @@ From the **Industrial Age** the **Geographic Society** sends short or long offer
 
 It only ever scouts. A Society never wages a campaign; those stay yours to order.
 
-It uses the offer's tier slot, and only when that slot is free. Nothing is queued. A party you launch by hand always goes first for its tier.
+It sends a party only when the soldiers at home can make one up, as a hand-sent mission does. Nothing is queued.
 
 It pays full price. Each automatic mission costs the same materials you would pay. If your stores can't outfit one, the Society holds it back, tells you once, and sends it as soon as the supplies are there. It never runs up a debt.
 
@@ -216,7 +252,7 @@ Each offer rolls its success odds when it appears. A military grand offer also a
 
 **Encounters are one payoff.** Every resolved mission can meet a civilization. An encounter is how you make first contact, and it usually brings a boon: a timed production boost, a lump of resources or a crew of workers. It brings a setback instead when the run failed, and sometimes when the civilization is at war with you. The full rules (what the boons and setbacks are, the five-boon limit, war) are on [Factions & Diplomacy](factions.md#encounters-boons-and-setbacks).
 
-One mission per tier can be under way at once. Compare its odds and haul before sending it.
+Compare an offer's odds, haul and party before sending it.
 
 ---
 
