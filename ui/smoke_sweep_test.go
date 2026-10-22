@@ -288,11 +288,26 @@ func (s *sweeper) expeditionTour(where string) {
 	if s.activeOverlay() != "expedition" {
 		s.fail("the expedition panel's keys closed it")
 	}
-	if strings.Contains(s.liveScreen(), "Send this") {
+	// Keys travel on their own queue: wait until the last Enter was answered,
+	// by the question or by the refusal on the key bar.
+	s.wait("Enter to be answered", func() bool {
+		var done bool
+		s.ui(func() { v := s.a.dashboard.expPanel.view; done = v.confirm || v.flash != "" })
+		return done
+	})
+	asking := func() bool {
+		var ok bool
+		s.ui(func() { ok = s.a.dashboard.expPanel.view.confirm })
+		return ok
+	}
+	if asking() {
+		// The question is on the screen, and Esc takes it back and leaves the
+		// panel open.
+		s.wait("the question to be drawn", func() bool { return strings.Contains(s.liveScreen(), "Send this") })
 		s.press(tcell.KeyEsc, 0)
-		s.ping()
-		if s.activeOverlay() != "expedition" || strings.Contains(s.liveScreen(), "Send this") {
-			s.fail("Esc did not take back the question and leave the panel open")
+		s.wait("the question taken back", func() bool { return !asking() })
+		if s.activeOverlay() != "expedition" {
+			s.fail("Esc closed the panel instead of taking back the question")
 		}
 	}
 	if txt := s.liveScreen(); !strings.Contains(txt, "READY ROOM") || !strings.Contains(txt, "EXPEDITION REPORT") {
