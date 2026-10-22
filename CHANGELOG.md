@@ -6,6 +6,9 @@ All notable changes to AgeForge are documented here.
 
 ## [Unreleased]
 
+### Added
+- **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
+
 ### Changed
 - **Homes fill up.** Population grows toward your housing while food lasts, faster for a bigger town. Villagers without a job wait in the reserve and take new jobs at once; the Workers box says what holds your population back.
 - **No more instant techs.** Research left over from a finished tech no longer carries into the next one, gifts of research (events, milestones, expeditions, trade) add at most half a tech, and Grand Discovery only grants techs you could start.

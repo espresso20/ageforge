@@ -1,5 +1,9 @@
 # Army & Missions
 
+## Road events
+
+Parties can meet road events while an expedition is out. Storms delay them, helpers save time, finds increase the haul, tolls cost gold, foes lower the odds, ambushes cost soldiers or loot, and fair weather raises the odds. A party can also mark ruins, adding a short offer to the board. Events are rolled when a mission launches and appear in the log and its Expedition Report.
+
 Soldiers are a resource your military buildings train. Military grand offers cost soldiers; short, long and civil grand offers cost materials. Mission hauls scale with the current age's income. What missions are really for is meeting the other civilizations: every resolved mission can bring an encounter, which is how you make first contact and collect boons (or, when a run fails, setbacks). The soldiers you keep in stock are your garrison: they blunt raids and soften catastrophes. Ignore the army and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. The soldiers you train also count toward the military milestones.
 
 ---

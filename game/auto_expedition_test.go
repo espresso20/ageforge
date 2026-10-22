@@ -63,7 +63,7 @@ func runAutoTicks(ge *GameEngine, n int) (launched, resolved int) {
 		ge.tick++ // the board's refills and expiries run on the clock
 		ge.ensureMissionBoardLocked()
 		ge.Military.RefreshBoard(ge.gameRNG(), ge.tick)
-		resolved += len(ge.Military.Tick(ge.gameRNG(), 0, 0))
+		resolved += len(ge.Military.Tick(0, 0))
 		ge.processAutoExpeditions()
 		for _, tier := range boardTiers {
 			now := ge.Military.ActiveByTier(tier)
