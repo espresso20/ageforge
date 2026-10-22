@@ -44,8 +44,6 @@ const (
 	ArgFaction                            // a discovered civilization
 	ArgTheme                              // an unlocked theme
 	ArgSave                               // an existing save
-	ArgExpedition                         // a mission on the board, by number
-	ArgCampaign                           // a mission on the board, by number (the campaign alias)
 	ArgRouteAvailable                     // a trade route that can start
 	ArgRouteActive                        // a running trade route
 	ArgPrestigeUpgrade                    // a legacy kit item not bought yet
@@ -235,19 +233,19 @@ func registry() []*Command {
 				{"scholars <percent>", "Set the share of your scholars that research (100 by default); the rest teach"},
 			}},
 		panel("techs", ""),
-		{Name: "expedition", Aliases: []string{"exp"}, Section: secResearch, Panel: "The mission board (expeditions and campaigns)",
-			Args: []Arg{{Kind: ArgExpedition, Optional: true}},
+		{Name: "expedition", Aliases: []string{"exp"}, Section: secResearch, Panel: "The Expeditions panel (Ready Room and Expedition Report)",
+			Args: []Arg{{Kind: ArgText, Optional: true}},
 			Help: []Usage{
-				{"expedition", "Show the mission board: nine offers, three short, three long, three grand"},
-				{"expedition <number>", "Send the board's offer with that number (1 to 9); one of each tier may be out at a time"},
+				{"expedition", "Open the Expeditions panel: the map of the age's lands with nine offers on it, and the report of the parties out"},
+				{"expedition <name>", "Send the offer with that name (a part of it will do); one of each tier may be out at a time"},
 			},
-			Subs: []*Command{sub("list", "expedition list", "Show the mission board")}},
+			Subs: []*Command{sub("list", "expedition list", "Print the mission board")}},
 		{Name: "army", Section: secResearch, Panel: "Army overview & military campaigns",
 			Help: []Usage{{"army", "Open the Army (military) panel"}}},
 		{Name: "campaign", Section: secResearch,
-			Args: []Arg{{Kind: ArgCampaign, Optional: true}},
-			Help: []Usage{{"campaign <number>", "Same as expedition: send the board's offer with that number"}},
-			Subs: []*Command{sub("list", "campaign list", "Show the mission board")}},
+			Args: []Arg{{Kind: ArgText, Optional: true}},
+			Help: []Usage{{"campaign <name>", "Same as expedition: send the offer with that name"}},
+			Subs: []*Command{sub("list", "campaign list", "Print the mission board")}},
 
 		// Trade & Diplomacy
 		{Name: "trade", Aliases: []string{"t"}, Section: secTrade, BareOK: true, Panel: "Trade routes",

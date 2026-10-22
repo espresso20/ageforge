@@ -109,6 +109,11 @@ func helpProvider(_ game.GameState, screenW int) string {
 	keys(badgeKeys...)
 	note("Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off holds everything still.")
 
+	sb.WriteString("\n[gold]═══ The Expeditions panel ═══[-]\n")
+	note("The Ready Room shows the age's lands with every offer as a pin; the Expedition Report follows the parties out. The prompt keeps working while it is open; the panel takes the keys that print nothing.")
+	keys(expeditionKeys...)
+	note("Sending by name is a command: expedition <name>, with as much of the name as it takes to tell the offers apart.")
+
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	var short []string
 	for _, c := range reg {

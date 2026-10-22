@@ -755,10 +755,10 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	// and stops once it is researched.
 	late := ge.GetState()
 	for what, c := range map[string][2]string{
-		"the mission board":     {cmdExpedition([]string{"list"}, ge).Message, "Long and grand missions need Exploration first. Research it to send one"},
-		"the Factions panel":    {factionsProvider(late, 120), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
-		"festival":              {cmdFestival(nil, ge).Message, "Festivals need Drama first. Research it to hold one."},
-		"festival confirm":      {cmdFestival([]string{"confirm"}, ge).Message, "Festivals need Drama first. Research it to hold one."},
+		"the mission board":  {cmdExpedition([]string{"list"}, ge).Message, "Long and grand missions need Exploration first. Research it to send one"},
+		"the Factions panel": {factionsProvider(late, 120), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
+		"festival":           {cmdFestival(nil, ge).Message, "Festivals need Drama first. Research it to hold one."},
+		"festival confirm":   {cmdFestival([]string{"confirm"}, ge).Message, "Festivals need Drama first. Research it to hold one."},
 	} {
 		if !strings.Contains(c[0], c[1]) {
 			t.Errorf("%s is missing %q:\n%s", what, c[1], c[0])

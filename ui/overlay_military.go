@@ -82,10 +82,7 @@ func militaryProvider(state game.GameState, _ int) string {
 		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary, state)
 	}
 
-	// Loot totals now live in the Expeditions panel (see overlay_expeditions.go),
-	// alongside the scouting/loot surface — not here in the Army panel.
-
-	sb.WriteString("\n [gray]Commands: campaign <number>[-]\n")
+	sb.WriteString("\n [gray]Commands: expedition opens the Expeditions panel; expedition <name> sends an offer[-]\n")
 
 	return sb.String()
 }
@@ -161,14 +158,8 @@ func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.Expedit
 			fmt.Fprintf(sb, "   Cost: %s\n", cost)
 		}
 
-		// Launch hint uses the command that owns this category: scouting →
-		// `expedition`, military → `campaign`.
-		launchCmd := "expedition"
-		if exp.Category == game.ExpeditionMilitary {
-			launchCmd = "campaign"
-		}
 		if exp.CanLaunch {
-			fmt.Fprintf(sb, "   [green]%s %s[-]\n", launchCmd, exp.Key)
+			sb.WriteString("   [green]Ready: send it from the Expeditions panel[-]\n")
 		} else {
 			fmt.Fprintf(sb, "   [red]%s[-]\n", exp.LaunchBlockReason)
 		}

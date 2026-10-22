@@ -150,13 +150,10 @@ func (p *expeditionPanel) setReport(report bool) {
 	}
 }
 
-// motion reports whether the game's motion setting is on.
-func (p *expeditionPanel) motion() bool { return p.settings == nil || p.settings().Motion }
-
 // frame is the animation frame: the clock's, or atRest when the motion
 // setting is off.
-func (p *expeditionPanel) frame() int {
-	if !p.motion() {
+func (p *expeditionPanel) frame(motion bool) int {
+	if !motion {
 		return atRest
 	}
 	return int(p.now().Sub(p.start) / (4 * mapAnimStep))
@@ -169,18 +166,23 @@ func (p *expeditionPanel) Draw(scr tcell.Screen) {
 		return
 	}
 	p.w, p.h = w, h
+	motion, plain := true, false
+	if p.settings != nil {
+		set := p.settings()
+		motion, plain = set.Motion, set.Tier == mapmodel.TierASCII
+	}
 	v := p.view
-	v.frame = p.frame()
+	v.frame = p.frame(motion)
 	if v.flash != "" && p.now().Sub(p.flashAt) > expFlashFor {
 		p.view.flash, v.flash = "", ""
 	}
 	grid := renderExpedition(p.state, v, w, h)
-	if p.settings != nil && p.settings().Tier == mapmodel.TierASCII {
+	if plain {
 		grid.fold()
 	}
 	paintExpedition(scr, grid, x, y, newExpPalette())
 	sc := p.scene()
-	p.moving.Store(p.motion() && (len(sc.acts) > 0 && v.report || len(sc.offers) > 0 && !v.report))
+	p.moving.Store(motion && (len(sc.acts) > 0 && v.report || len(sc.offers) > 0 && !v.report))
 }
 
 // InputHandler takes the panel's keys when it has the focus itself and

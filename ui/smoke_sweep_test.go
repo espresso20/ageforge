@@ -275,6 +275,33 @@ func (s *sweeper) mapTour(where string) {
 	s.submit("map glyphs unicode")
 }
 
+// expeditionTour presses the Expeditions panel's keys: the arrows hop between
+// pins, Tab switches views, Enter asks before a party is sent and Esc takes
+// the question back. The panel must stay open throughout.
+func (s *sweeper) expeditionTour(where string) {
+	s.t.Helper()
+	s.step = where + " expedition keys"
+	for _, k := range []tcell.Key{tcell.KeyRight, tcell.KeyDown, tcell.KeyLeft, tcell.KeyUp, tcell.KeyTab, tcell.KeyDown, tcell.KeyUp, tcell.KeyBacktab, tcell.KeyRight, tcell.KeyEnter} {
+		s.press(k, 0)
+		s.ping()
+	}
+	if s.activeOverlay() != "expedition" {
+		s.fail("the expedition panel's keys closed it")
+	}
+	if strings.Contains(s.liveScreen(), "Send this") {
+		s.press(tcell.KeyEsc, 0)
+		s.ping()
+		if s.activeOverlay() != "expedition" || strings.Contains(s.liveScreen(), "Send this") {
+			s.fail("Esc did not take back the question and leave the panel open")
+		}
+	}
+	if txt := s.liveScreen(); !strings.Contains(txt, "READY ROOM") || !strings.Contains(txt, "EXPEDITION REPORT") {
+		s.fail("the Expeditions panel has lost its tabs\n%s", txt)
+	}
+	s.press(tcell.KeyCtrlU, 0)
+	s.wait("an empty prompt", func() bool { return s.inputText() == "" })
+}
+
 // miniMapShown reports whether the dashboard's last draw showed the mini map.
 func (s *sweeper) miniMapShown() bool {
 	var ok bool
@@ -420,6 +447,9 @@ func TestSmokeUISmallTerminals(t *testing.T) {
 					if o.cmd == "map" {
 						s.mapTour(fmt.Sprintf("[%dx%d %s]", sz[0], sz[1], key))
 					}
+					if o.cmd == "expedition" {
+						s.expeditionTour(fmt.Sprintf("[%dx%d %s]", sz[0], sz[1], key))
+					}
 					s.press(tcell.KeyEsc, 0)
 					s.wait("overlay closed", func() bool { return s.activeOverlay() == "" && s.inputFocused() })
 					steps++
@@ -511,6 +541,9 @@ func TestSmokeUISweep(t *testing.T) {
 			}
 			if o.cmd == "map" {
 				s.mapTour("[" + key + "]")
+			}
+			if o.cmd == "expedition" {
+				s.expeditionTour("[" + key + "]")
 			}
 			s.press(tcell.KeyEsc, 0)
 			s.wait("overlay closed", func() bool { return s.activeOverlay() == "" && s.inputFocused() })
