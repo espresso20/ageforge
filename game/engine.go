@@ -1678,7 +1678,8 @@ func (ge *GameEngine) processExpeditions() {
 	for _, tier := range boardTiers {
 		if active := ge.Military.ActiveByTier(tier); active != nil {
 			active.ElapsedTicks++
-			ge.fireRoadEvents(active, active.ElapsedTicks)
+			// A ruins offer is the mission's draw, from its own stream.
+			ge.withLuck(active.luckStream(), func() { ge.fireRoadEvents(active, active.ElapsedTicks) })
 		}
 	}
 	for _, tier := range boardTiers {
@@ -1686,7 +1687,7 @@ func (ge *GameEngine) processExpeditions() {
 			ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Title, active.TicksLeft))
 		}
 	}
-	for _, res := range ge.Military.Tick(ge.gameRNG(), missionPower, expeditionBonus) {
+	for _, res := range ge.Military.Tick(missionPower, expeditionBonus) {
 		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Name, len(res.Rewards)))
 		ge.Military.recordReturn(res, ge.tick)
 		ge.addLog("event", res.Message)
@@ -1711,8 +1712,11 @@ func (ge *GameEngine) processExpeditions() {
 			}
 		}
 		// A resolved expedition may turn up a civilization: roll a faction encounter
-		// (discovery and/or a specialty-production boon) on the seeded RNG.
-		for _, msg := range ge.rollExpeditionEncounter(res.Category, res.Success) {
+		// (discovery and/or a specialty-production boon) on the mission's own
+		// stream, so it is the same encounter however late the mission is processed.
+		var msgs []string
+		ge.withLuck(res.luck, func() { msgs = ge.rollExpeditionEncounter(res.Category, res.Success) })
+		for _, msg := range msgs {
 			ge.addLog("event", msg)
 		}
 	}
@@ -4646,6 +4650,10 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	active := ge.Military.ActiveByTier(offer.Tier)
 	words, _ := ge.rules.MissionWords(offer.Age)
 	active.RoadEvents = rollRoadEvents(ge.gameRNG(), offer, active.TotalTicks, words)
+	// The mission's own luck: a seed from the game's RNG, and the success draw
+	// from the mission's stream. Everything else about it draws from that stream.
+	active.LuckSeed = ge.gameRNG().Int63()
+	active.Luck = active.luckStream().Float64()
 	active.SuccessRewards = scaleLoot(base, 1+ge.expeditionReward())
 	active.FailureRewards = scaleLoot(base, failedLootShare)
 	if offer.Military() {

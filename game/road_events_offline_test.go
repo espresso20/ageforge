@@ -2,6 +2,7 @@ package game
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 )
@@ -20,6 +21,7 @@ type roadRun struct {
 	failure   map[string]float64
 	gold      float64
 	returns   []MissionReturn
+	met       []string
 }
 
 // roadMissionEngine is a seeded engine with a long mission sent, at least two
@@ -64,7 +66,7 @@ func roadMissionEngine(t *testing.T) (*GameEngine, int) {
 func snapRoadRun(ge *GameEngine) roadRun {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	r := roadRun{gold: ge.Resources.Get("gold"), returns: append([]MissionReturn(nil), ge.Military.returns...)}
+	r := roadRun{gold: ge.Resources.Get("gold"), returns: append([]MissionReturn(nil), ge.Military.returns...), met: factionKeys(ge)}
 	a := ge.Military.ActiveByTier(TierLong)
 	if a == nil {
 		return r
@@ -136,6 +138,21 @@ func TestRoadEventsFireOfflineLikeLive(t *testing.T) {
 		t.Fatalf("live play wrote %d returns, want 1", len(want.returns))
 	}
 	compareRoadRuns(t, "home", want, got)
+	// The check of the encounter means something only if one happened.
+	if len(want.met) == 0 {
+		t.Fatal("live play brought the mission home with no civilization met; the encounter check needs one")
+	}
+}
+
+// factionKeys is the civilizations the town has met, sorted: an encounter on
+// return adds to it.
+func factionKeys(ge *GameEngine) []string {
+	keys := make([]string, 0, len(ge.Diplomacy.factions))
+	for k := range ge.Diplomacy.factions {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // compareRoadRuns reports every way the offline run differs from the live one.
@@ -161,6 +178,9 @@ func compareRoadRuns(t *testing.T, when string, want, got roadRun) {
 	}
 	if !reflect.DeepEqual(got.returns, want.returns) {
 		t.Errorf("%s: returns differ offline:\n live %+v\n away %+v", when, want.returns, got.returns)
+	}
+	if !reflect.DeepEqual(got.met, want.met) {
+		t.Errorf("%s: civilizations met differ offline %v, live %v", when, got.met, want.met)
 	}
 	if got.gold != want.gold {
 		t.Errorf("%s: gold offline %v, live %v", when, got.gold, want.gold)
@@ -194,5 +214,24 @@ func TestMissionLaunchedBeforeAwayComesHomeWhileAway(t *testing.T) {
 	// not always launch plus length; it must still be inside the time away.
 	if back := ge.Military.returns[0].Tick; back <= launched || back >= ge.tick {
 		t.Fatalf("mission came home at tick %d, outside the time away (launched %d, now %d)", back, launched, ge.tick)
+	}
+}
+
+// TestMissionLuckResumesAfterSaveAndLoad: a mission's own stream picks up where
+// it stood when the game is saved and loaded, so its luck is the same after a
+// reload as it would have been without one.
+func TestMissionLuckResumesAfterSaveAndLoad(t *testing.T) {
+	ge, _ := roadMissionEngine(t)
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	a := ge.Military.ActiveByTier(TierLong)
+	a.luckStream().Float64()
+	a.luckStream().Float64()
+
+	loaded := NewMilitaryManagerWith(ge.rules)
+	loaded.LoadState(MilitarySave{Active: ge.Military.ActiveForSave()})
+	got := loaded.ActiveByTier(TierLong).luckStream().Float64()
+	if want := a.luckStream().Float64(); got != want {
+		t.Fatalf("after a reload the mission's next draw is %v, want %v", got, want)
 	}
 }
