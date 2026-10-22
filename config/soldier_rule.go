@@ -22,6 +22,10 @@ import "math"
 // Every military building of one age has the same number of posts.
 const SoldierSharePercent = 14
 
+// SoldiersKey is the soldiers resource: the number the panels and the rules
+// read for the army at its posts.
+const SoldiersKey = "soldiers"
+
 // IsMilitaryBuilding reports whether d is of the military lineage.
 func IsMilitaryBuilding(d BuildingDef) bool { return d.LineageKey == "military" }
 
@@ -100,6 +104,33 @@ func GateMilitaryCopies(defs []BuildingDef, ages []AgeDef) []int {
 		if i, ok := idx[d.RequiredAge]; ok {
 			out[i] += refCopiesOf(d, gateOutOf(ages, i))
 		}
+	}
+	return out
+}
+
+// RefSoldiers is the soldiers the reference town has at its posts at the end
+// of each age, by the age's place in ages: every military building of the age
+// and before at its reference count, with its soldiers a copy. (smoke's
+// reference town posts these as far as its food margin allows.)
+func RefSoldiers(defs []BuildingDef, ages []AgeDef) []float64 {
+	idx := make(map[string]int, len(ages))
+	for i, a := range ages {
+		idx[a.Key] = i
+	}
+	perAge := make([]float64, len(ages))
+	for _, d := range defs {
+		if !IsMilitaryBuilding(d) {
+			continue
+		}
+		if i, ok := idx[d.RequiredAge]; ok {
+			perAge[i] += float64(d.Soldiers * refCopiesOf(d, gateOutOf(ages, i)))
+		}
+	}
+	out := make([]float64, len(ages))
+	sum := 0.0
+	for i := range ages {
+		sum += perAge[i]
+		out[i] = sum
 	}
 	return out
 }

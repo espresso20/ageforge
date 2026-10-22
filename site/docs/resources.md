@@ -264,9 +264,9 @@ Gold pays for diplomacy gifts and many mid-to-late game buildings.
 
 Soldiers are not a stockpile: they are the people at the posts of your military buildings (the 26th resource entry holds that number for the panels that read it). The number unlocks when your first military building stands (a War Camp can be built in the Stone Age), and at the **Iron Age** for a town that built none.
 
-**Where soldiers come from:** each copy of a military building (War Camp, Barracks and their successors) comes with a fixed number of soldiers, who move in the moment the copy stands. Nothing produces or stores them, so no staffing, storage building or storage tech changes the number. A copy that is lost takes its soldiers with it.
+**Where soldiers come from:** each copy of a military building (War Camp, Barracks and their successors) has a fixed number of posts, which fill from the reserve and then with new arrivals as the food allows. Nothing produces or stores them, so no staffing, storage building or storage tech changes the number. A copy that is lost takes its soldiers with it.
 
-**What soldiers need:** they are people, so they take a place in your homes and eat the same food as a worker. If your homes are full when a military building stands, its soldiers still move in and your reserve stops growing until there is room.
+**What soldiers need:** they are people, so they take a place in your homes and eat the same food as a worker. If your homes are full when a military building stands, its soldiers still arrive (as far as the food margin allows) and your reserve stops growing until there is room.
 
 **How soldiers are spent:** launching a campaign needs the soldiers it asks for at home and takes none of them from their posts. Scouting expeditions need none. An Endure leaves the soldiers at their posts.
 

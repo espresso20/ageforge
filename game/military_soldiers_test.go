@@ -291,3 +291,26 @@ func TestSoldiersArrivalIsLoggedAndCounted(t *testing.T) {
 		t.Errorf("trained %v soldiers after the copy went, want the %d it brought", got, posts)
 	}
 }
+
+// The posted soldiers are saved: a load brings the same army back at its
+// posts, and the army that stands is not counted as trained again.
+func TestPostedSoldiersSurviveASaveAndLoad(t *testing.T) {
+	ge := peopleEngine(t)
+	standWarCamps(ge, 2)
+	isolateAccountDir(t)
+	if err := ge.SaveGame("posted"); err != nil {
+		t.Fatal(err)
+	}
+	trained := ge.Stats.SoldiersTrained
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame("posted"); err != nil {
+		t.Fatal(err)
+	}
+	st := loaded.GetState()
+	if want := 2 * warCampPosts(t); st.Workers.Soldiers != want || st.Military.SoldierCount != want {
+		t.Errorf("after a load %d soldiers in the town and %d in the army, want %d", st.Workers.Soldiers, st.Military.SoldierCount, want)
+	}
+	if loaded.Stats.SoldiersTrained != trained {
+		t.Errorf("trained %v after a load, was %v", loaded.Stats.SoldiersTrained, trained)
+	}
+}

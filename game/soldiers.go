@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -125,16 +126,20 @@ func (ge *GameEngine) fillSoldierPosts() int {
 	total := 0
 	for _, key := range waiting {
 		added := 0
-		for ge.soldiersPosted[key] < ge.soldierPostsOf(key) {
-			if !fed || net-per < margin {
-				break
+		if need := ge.soldierPostsOf(key) - ge.soldiersPosted[key]; need > 0 && fed && net-per >= margin {
+			// The reserve first: a person who already eats takes a post.
+			fromReserve := ge.Workers.TakeIdle(need)
+			need -= fromReserve
+			added += fromReserve
+			// Then arrivals, each of whom eats: as many as leave the margin
+			// (arrival j is allowed while net - j x per stays at or above it).
+			if need > 0 && per > 0 {
+				k := int(math.Floor((net - margin) / per))
+				k = max(0, min(k, need))
+				net -= float64(k) * per
+				added += k
 			}
-			if ge.Workers.TakeIdle(1) == 0 {
-				// A new arrival eats: it must leave the margin.
-				net -= per
-			}
-			ge.soldiersPosted[key]++
-			added++
+			ge.soldiersPosted[key] += added
 		}
 		total += added
 		def := ge.Buildings.defs[key]
@@ -175,6 +180,14 @@ func (ge *GameEngine) syncSoldiers() {
 	posted := ge.soldierTotal()
 	if posted > ge.soldiersSeen {
 		ge.Stats.RecordSoldiersTrained(float64(posted - ge.soldiersSeen))
+		// The soldiers who take their posts are what the soldiers' badge
+		// ladder counts as produced (nothing makes them).
+		if ge.account != nil && ge.badges != nil && ge.badges.countsProduction {
+			if ge.produced == nil {
+				ge.produced = make(map[string]float64, len(ge.Resources.order))
+			}
+			ge.produced[config.SoldiersKey] += float64(posted - ge.soldiersSeen)
+		}
 	}
 	ge.soldiersSeen = posted
 	home := float64(posted)

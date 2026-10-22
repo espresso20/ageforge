@@ -69,14 +69,15 @@ func TestMilitaryYardstick(t *testing.T) {
 		}
 		curve *= DefenseThreatGrowth
 	}
-	// Before it, the threat is sized to the garrison a moderate set of the
-	// age's military buildings trains over the age's pacing target: that
-	// garrison blunts about a fifth of a raid, and half of it about an
-	// eighth.
+	// Before it, the threat is sized to the garrison a moderate town has at
+	// its posts: the reference town's military buildings, each with its
+	// soldiers. That garrison blunts about a fifth of a raid, and half of it
+	// about an eighth.
+	posted := RefSoldiers(BaseBuildings(), Ages())
 	for i, age := range order[1:3] {
-		garrison := FlowIncome("soldiers", age) * AgeTargetTicks(age)
+		garrison := posted[i+1]
 		if garrison <= 0 {
-			t.Fatalf("%s: a moderate town trains no soldiers", age)
+			t.Fatalf("%s: a moderate town has no soldiers at its posts", age)
 		}
 		rating := 2 * garrison * (1 + MilitaryScaleAt(i+1).Now)
 		full := DefenseMitigation(rating, AgeThreat(i+1))

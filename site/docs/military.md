@@ -17,7 +17,7 @@ The military system covers four things:
 - **Milestones.** Five military milestones form a chain with a title at the end. The early ones grant permanent military power; the later ones grant all production.
 - **Prestige.** The army resets with the run. Prestige points give a lasting production bonus, not military power or mission rewards. From the first prestige, [Old Friends](prestige.md#old-friends) meets every civilization you have met again on later runs without a mission.
 
-**Soldiers come with your military buildings.** A military building does not train soldiers and has no soldier store: each copy brings its soldiers with it the moment it stands, and they stand at its posts. The soldiers are people, so they live in your homes and eat like anyone (see [People](workers-and-domains.md#the-people-of-your-town)). A War Camp can be built in the Stone Age and its soldiers move in with it. A town with no military building has no soldiers. Short, long and civil grand offers (see [Missions](#missions)) let you explore without soldiers.
+**Soldiers come with your military buildings.** A military building does not train soldiers and has no soldier store: each copy has posts, and soldiers take them from the reserve first and then as new arrivals, as the food allows. The soldiers are people, so they live in your homes and eat like anyone (see [People](workers-and-domains.md#the-people-of-your-town)). A War Camp can be built in the Stone Age and its soldiers move in as the food allows. A town with no military building has no soldiers. Short, long and civil grand offers (see [Missions](#missions)) let you explore without soldiers.
 
 The mission board has three tiers. A grand offer is either military or civil. See [The board](#the-board) for the costs and odds.
 
@@ -27,9 +27,9 @@ The mission board has three tiers. A grand offer is either military or civil. Se
 
 ### What soldiers are
 
-Soldiers are people at the posts of your military buildings. A copy of a military building comes with a fixed number of them (see [Military Buildings](#military-buildings) for the number in each age), they move in whether or not your homes have room, and they leave with the copy if it is lost. They are listed with your other [people](workers-and-domains.md#the-people-of-your-town), under the age's own word for them, in the People box and on the People panel's Army tab, not in the Resources box. The army is the soldiers at their posts, and that is the number the rest of this page calls your soldiers: the defense rating, raids, the Brace preview and a campaign's soldier cost all count it.
+Soldiers are people at the posts of your military buildings. A copy of a military building comes with a fixed number of them (see [Military Buildings](#military-buildings) for the number in each age), they take their posts from the reserve first and then as new arrivals, whether or not your homes have room, and they leave with the copy if it is lost. They are listed with your other [people](workers-and-domains.md#the-people-of-your-town), under the age's own word for them, in the People box and on the People panel's Army tab, not in the Resources box. The army is the soldiers at their posts, and that is the number the rest of this page calls your soldiers: the defense rating, raids, the Brace preview and a campaign's soldier cost all count it.
 
-Nothing trains soldiers and nothing stores them. Workers you put in a military building's slots do not make soldiers, and the techs that once raised soldier storage no longer change the army.
+Posts fill only while the food margin holds (net food stays at or above one person's food, or 5% of the food made, after the newcomer eats), so soldiers arriving never starve the town. A post food cannot fill waits and fills as the food allows; the Army tab shows posted over posts, and the log says once for each building that its posts are waiting. Nothing trains soldiers and nothing stores them. Workers you put in a military building's slots do not make soldiers, and the techs that once raised soldier storage no longer change the army.
 
 ### Food drain
 

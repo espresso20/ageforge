@@ -27,6 +27,11 @@ func (s *Set) derive() {
 	s.flowStaffed = config.StaffedOutputs(s.buildings, s.ageKeys, config.IsFlowResource)
 	s.military = config.MilitaryScales(s.techs, s.ageKeys)
 	s.typStore = config.TypicalStorages(s.buildings, s.resources, s.ageKeys)
+	army := config.RefSoldiers(s.buildings, s.ages)
+	s.refArmy = make(map[string]float64, len(s.ages))
+	for i, a := range s.ages {
+		s.refArmy[a.Key] = army[i]
+	}
 }
 
 // TypicalStorage is what a moderate builder's store holds of res in age:

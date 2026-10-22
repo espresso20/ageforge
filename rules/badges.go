@@ -112,6 +112,12 @@ func (s *Set) RunProduction(res string) (perRun float64, deep bool) {
 	if !ok {
 		return 0, false
 	}
+	if res == config.SoldiersKey {
+		// No building makes soldiers: they come with the military
+		// buildings, and a run "produces" those who take their posts, the
+		// army the reference town holds at the end of the run.
+		return s.refArmy[s.ageKeys[s.runEndPos()]], false
+	}
 	first, last := 0, s.runEndPos()
 	if pos, ok := s.agePos[def.Age]; ok && pos > last {
 		first, last, deep = pos, min(pos+1, len(s.ageKeys)-1), true
@@ -148,6 +154,9 @@ func (s *Set) ProductionThrough(res, age string) float64 {
 	if !ok {
 		return 0
 	}
+	if res == config.SoldiersKey {
+		return s.refArmy[age]
+	}
 	sum := 0.0
 	for i := 0; i <= last; i++ {
 		a := s.ageKeys[i]
@@ -169,6 +178,14 @@ func (s *Set) FirstProduction(res string) (age string, made float64) {
 	from := s.agePos[def.Age]
 	if def.BuiltUnlocks {
 		from = 0
+	}
+	if res == config.SoldiersKey {
+		for _, a := range s.ageKeys[from:] {
+			if army := s.refArmy[a]; army > 0 {
+				return a, army
+			}
+		}
+		return "", 0
 	}
 	for _, a := range s.ageKeys[from:] {
 		if inc := s.typIncome[a][res]; inc > 0 {

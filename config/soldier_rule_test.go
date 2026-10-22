@@ -168,3 +168,21 @@ func TestGatesAskForMilitaryBuildingsAsBefore(t *testing.T) {
 		t.Errorf("the derived gate list has %d entries, want the 201 it had", total)
 	}
 }
+
+// TestRefSoldiersAreTheReferenceTownsArmy: the reference town has eight War
+// Camps in the Stone Age, and eight Barracks more in the Bronze Age.
+func TestRefSoldiersAreTheReferenceTownsArmy(t *testing.T) {
+	army := RefSoldiers(BaseBuildings(), Ages())
+	idx := map[string]int{}
+	for i, a := range Ages() {
+		idx[a.Key] = i
+	}
+	byKey := BuildingByKey()
+	stone := float64(8 * byKey["war_camp"].Soldiers)
+	if got := army[idx["stone_age"]]; got != stone {
+		t.Errorf("Stone Age army %v, want %v", got, stone)
+	}
+	if got, want := army[idx["bronze_age"]], stone+float64(8*byKey["barracks"].Soldiers); got != want {
+		t.Errorf("Bronze Age army %v, want %v", got, want)
+	}
+}
