@@ -279,7 +279,7 @@ func TestEveryOfferCostsItsParty(t *testing.T) {
 			} else if kind == TierGrand {
 				kind = "civil"
 			}
-			want := max(1, (shares[kind]*int(army[order])+99)/100)
+			want := (shares[kind]*int(army[order]) + 99) / 100 // none where there is no army
 			offers++
 			if got := ge.MissionCost(i + 1)["soldiers"]; got != float64(want) {
 				t.Errorf("%s: %s costs %v soldiers, want %d", age.Key, slot.Offer.Title, got, want)
@@ -321,7 +321,7 @@ func TestMilitaryExpeditions_RequireSoldiers(t *testing.T) {
 		ge := NewGameEngine()
 		setAge(ge, age.Key)
 		n := plantOffer(ge, TierGrand, GrandMilitary)
-		if got := ge.MissionCost(n)["soldiers"]; got < 1 {
+		if got := ge.MissionCost(n)["soldiers"]; got < 1 && age.Key != "primitive_age" {
 			t.Errorf("%s: a military grand mission costs %v soldiers with no soldier income, want at least 1", age.Key, got)
 		}
 	}

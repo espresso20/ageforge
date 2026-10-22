@@ -37,11 +37,11 @@ Every soldier eats the same amount of food as a worker (see [Food drain](workers
 
 ### Parties and losses
 
-Every mission takes a party of soldiers, a share of the army an ordinary town holds in the age you send it: 4% for a short offer, 10% for a long one, 30% for a military grand offer and 12% for a civil grand offer, rounded up and at least one. In the Bronze Age that is 8, 20, 60 and 24 soldiers.
+Every mission takes a party of soldiers, a share of the army an ordinary town holds in the age you send it: 4% for a short offer, 10% for a long one, 30% for a military grand offer and 12% for a civil grand offer, rounded up and at least one. The Primitive Age has no army and no military building, so its missions take no party. In the Bronze Age that is 8, 20, 60 and 24 soldiers.
 
 | Age | Army | Short | Long | Grand, military | Grand, civil |
 |---|---:|---:|---:|---:|---:|
-| Primitive | 0 | 1 | 1 | 1 | 1 |
+| Primitive | 0 | 0 | 0 | 0 | 0 |
 | Stone | 72 | 3 | 8 | 22 | 9 |
 | Bronze | 200 | 8 | 20 | 60 | 24 |
 | Iron | 430 | 18 | 43 | 129 | 52 |

@@ -610,11 +610,13 @@ func briefing(state game.GameState, o game.ExpeditionInfo, cw int) (body, foot [
 	}
 	add(1)
 	// Every mission takes a party: green when the soldiers at home cover it.
-	kind := xGood
-	if state.Military.SoldierCount < o.SoldiersNeeded {
-		kind = xBad
+	if o.SoldiersNeeded > 0 {
+		kind := xGood
+		if state.Military.SoldierCount < o.SoldiersNeeded {
+			kind = xBad
+		}
+		add(0, xseg{"Party  ", xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize("soldier", o.SoldiersNeeded)), kind})
 	}
-	add(0, xseg{"Party  ", xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize("soldier", o.SoldiersNeeded)), kind})
 	add(0, xseg{"Odds   ", xDim}, xseg{expBar(o.SuccessChance, 10, "█", "░"), oddsKind(o.SuccessChance)},
 		xseg{fmt.Sprintf(" %.0f%%", o.SuccessChance*100), oddsKind(o.SuccessChance)})
 	add(0, xseg{"Out    ", xDim}, xseg{expDur(o.DurationMin, state) + " and back", xText})
@@ -780,7 +782,7 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 		row++
 	}
 	row = y + 4
-	{
+	if o.SoldiersNeeded > 0 {
 		kind := xGood
 		if state.Military.SoldierCount < o.SoldiersNeeded {
 			kind = xBad

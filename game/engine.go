@@ -4496,8 +4496,10 @@ func (ge *GameEngine) MissionCost(n int) map[string]float64 {
 // materials.
 func (ge *GameEngine) missionCostLocked(offer MissionOffer) map[string]float64 {
 	cost := make(map[string]float64)
-	// Every mission takes its party, under "soldiers".
-	cost["soldiers"] = float64(ge.partySizeLocked(offer))
+	// Every mission takes its party, under "soldiers" (none in an age with no army).
+	if party := ge.partySizeLocked(offer); party > 0 {
+		cost["soldiers"] = float64(party)
+	}
 	if offer.Military() {
 		return cost
 	}
@@ -4705,7 +4707,11 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	if offer.Military() {
 		ge.addLog(LogRoutine, fmt.Sprintf("Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
 	} else {
-		ge.addLog(LogRoutine, fmt.Sprintf("Expedition sent: %s (%d soldiers).", offer.Title, int(soldiers)))
+		if soldiers > 0 {
+			ge.addLog(LogRoutine, fmt.Sprintf("Expedition sent: %s (%d soldiers).", offer.Title, int(soldiers)))
+		} else {
+			ge.addLog(LogRoutine, fmt.Sprintf("Expedition sent: %s.", offer.Title))
+		}
 	}
 	return nil
 }

@@ -129,7 +129,11 @@ func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
 		ge.soldiersFall(lost)
 		a.Soldiers -= lost
 		story = value(story, "<n>", fmt.Sprint(lost))
-		if !a.Military() {
+		if a.Party == 0 && a.Soldiers == 0 {
+			// No party went (an age with no army): the ambush takes haul only.
+			scaleActiveRewards(a, .85)
+			story = value(e.AmbushStory, "<foe>", foe)
+		} else if !a.Military() {
 			// A civil or scouting party also loses part of its haul.
 			scaleActiveRewards(a, .85)
 			story += " " + value(e.AmbushStory, "<foe>", foe)

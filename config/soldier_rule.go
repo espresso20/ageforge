@@ -202,9 +202,13 @@ func RefArmy(order int) float64 {
 }
 
 // PartySizeOf is the party of a mission of the given kind (PartyShort, ...)
-// out of an army: its share of it, rounded up, at least 1.
+// out of an army: its share of it, rounded up, at least 1. An age with no army
+// (the Primitive Age, before any military building) sends no soldiers: 0.
 func PartySizeOf(kind string, army float64) int {
 	n := int(math.Round(army))
+	if n <= 0 {
+		return 0
+	}
 	return max(1, (PartyShares[kind]*n+99)/100)
 }
 

@@ -491,3 +491,59 @@ func (ge *GameEngine) vacantTotal() int {
 	}
 	return n
 }
+
+// The Primitive Age has no army and no military building: its missions take
+// no party, so a town with no soldiers can send an offer, with no refusal, no
+// losses and no party on the briefing.
+func TestPrimitiveAgeSendsWithoutAParty(t *testing.T) {
+	ge := NewGameEngine()
+	ge.SeedRNG(5)
+	setAge(ge, "primitive_age")
+	for _, res := range []string{"wood", "food", "stone"} {
+		setResource(ge, res, 1e6)
+		setIncome(ge, res, 1)
+	}
+	n := plantOffer(ge, TierShort, "")
+	if got := ge.MissionCost(n)["soldiers"]; got != 0 {
+		t.Fatalf("a Primitive Age mission costs %v soldiers, want none", got)
+	}
+	for _, o := range ge.GetState().Military.Expeditions {
+		if o.SoldiersNeeded != 0 {
+			t.Errorf("offer %d needs %d soldiers in the Primitive Age", o.Number, o.SoldiersNeeded)
+		}
+	}
+	if err := ge.LaunchExpedition(n); err != nil {
+		t.Fatalf("a town with no soldiers could not send an offer: %v", err)
+	}
+	a := ge.Military.ActiveByTier(TierShort)
+	if a == nil || a.Soldiers != 0 || a.Party != 0 {
+		t.Fatalf("the mission is %+v, want one with no party", a)
+	}
+	a.TicksLeft, a.Luck, a.SuccessChance = 1, .999, .1
+	ge.mu.Lock()
+	ge.processExpeditions()
+	ge.mu.Unlock()
+	if ge.Military.HasActive() {
+		t.Fatal("the mission did not come home")
+	}
+	r := ge.Military.returns[0]
+	if r.Party != 0 || r.Fell != 0 {
+		t.Errorf("returns entry %+v, want no party and nobody fallen", r)
+	}
+	if logContains(ge, "soldiers fell") || logContains(ge, "soldiers came home") {
+		t.Error("the log talks of soldiers for a mission that sent none")
+	}
+	// An ambush on a party-less mission takes haul only, with no soldiers line.
+	learn(ge, "exploration")
+	if err := ge.LaunchExpedition(plantOffer(ge, TierLong, "")); err != nil {
+		t.Fatal(err)
+	}
+	b := ge.Military.ActiveByTier(TierLong)
+	words, _ := ge.rules.MissionWords(b.Age)
+	ge.mu.Lock()
+	story := ge.applyRoadEvent(b, &RoadEvent{Kind: "ambush", Story: words.RoadTemplate("ambush", 0), AmbushStory: words.RoadTemplate("ambush_haul", 0)})
+	ge.mu.Unlock()
+	if strings.Contains(story, "soldiers fell") || strings.Contains(story, "<") {
+		t.Errorf("ambush story %q", story)
+	}
+}

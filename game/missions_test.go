@@ -184,7 +184,7 @@ func TestMissionCost_IsMinutesOfIncomeInTheMostChargedMaterials(t *testing.T) {
 			n := plantOffer(ge, c.tier, c.grand)
 			cost := ge.MissionCost(n)
 			// Every mission also takes its party (TestEveryOfferCostsItsParty).
-			if cost["soldiers"] < 1 {
+			if cost["soldiers"] < 1 && age != "primitive_age" {
 				t.Errorf("%s %s in %s costs no party: %v", c.tier, c.grand, age, cost)
 			}
 			delete(cost, "soldiers")
@@ -227,7 +227,7 @@ func TestMissionCost_MilitaryGrandIsItsParty(t *testing.T) {
 		want := float64(config.PartySizeOf(config.PartyMilitary, config.RefArmy(order)))
 		setIncome(ge, "soldiers", 0.037)
 		cost := ge.MissionCost(n)
-		if cost["soldiers"] != want || len(cost) != 1 {
+		if cost["soldiers"] != want || len(cost) != min(1, int(want)) {
 			t.Errorf("era %d: a military grand mission in %s costs %v, want %v soldiers and nothing else", i, age, cost, want)
 		}
 		setIncome(ge, "soldiers", 0)

@@ -1926,7 +1926,7 @@ func offerLine(exp game.ExpeditionInfo, state game.GameState) string {
 		}
 	}
 	// Every mission takes a party.
-	if !(exp.Tier == game.TierGrand && exp.Grand == game.GrandMilitary) {
+	if exp.SoldiersNeeded > 0 && !(exp.Tier == game.TierGrand && exp.Grand == game.GrandMilitary) {
 		line += fmt.Sprintf(" · party %d %s", exp.SoldiersNeeded, pluralize("soldier", exp.SoldiersNeeded))
 	}
 	if !exp.CanLaunch && exp.LaunchBlockReason != "" {

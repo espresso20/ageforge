@@ -632,3 +632,27 @@ func TestReturnLinesCountTheFallen(t *testing.T) {
 		t.Errorf("a success that lost one: %q", line)
 	}
 }
+
+// With no party to send (the Primitive Age) the briefing and the send box
+// leave the Party row out.
+func TestNoPartyRowWhenNoPartyGoes(t *testing.T) {
+	engine := game.NewGameEngine()
+	engine.SeedRNG(3)
+	if err := engine.EnterAgeForTest("primitive_age"); err != nil {
+		t.Skip("cannot stage the Primitive Age")
+	}
+	engine.EnsureMissionBoard()
+	state := engine.GetState()
+	for _, o := range state.Military.Expeditions {
+		body, _ := briefing(state, o, 40)
+		for _, ln := range body {
+			if len(ln.parts) > 0 && strings.TrimSpace(ln.parts[0].s) == "Party" {
+				t.Errorf("offer %d has a Party row with no party", o.Number)
+			}
+		}
+	}
+	text := renderExpedition(state, expView{confirm: true}, 100, 30).String()
+	if strings.Contains(text, "stay home") || strings.Contains(text, "Party") {
+		t.Errorf("the send box shows a party:\n%s", text)
+	}
+}
