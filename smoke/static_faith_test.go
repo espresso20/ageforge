@@ -149,8 +149,8 @@ const (
 // town of eight makes. Worked out from the tables; a store or an income that
 // moves it either way fails the test.
 var reachesMiddleBand = map[string]map[string]bool{
-	devotedEconomy: {"primitive_age": true, "stone_age": true, "bronze_age": true, "iron_age": true, "classical_age": true},
-	moderateHoard:  {"iron_age": true, "classical_age": true},
+	devotedEconomy: {"primitive_age": true, "iron_age": true},
+	moderateHoard:  {"iron_age": true},
 }
 
 // TestFaithNeverFilledTheGeneralStore keeps the arithmetic that retired the
@@ -172,7 +172,13 @@ var reachesMiddleBand = map[string]map[string]bool{
 // moderate hoard 40% of it in the Iron Age and 26% in the Classical. The old
 // measure could have reached the middle band there, and a devoted economy
 // holds 13% of the Iron Age's typical store. The test says so, in those ages
-// only, so a store that moves it either way is seen. The rule it retired stays
+// only, so a store that moves it either way is seen.
+//
+// Every new copy costs NewCopyPriceFactor more and the stores were sized to
+// the dearest first copy, so they grew with it and faith did not: a devoted
+// economy holds 24% of the least store in the Stone Age, 23% in the Bronze Age
+// and 20% in the Classical, and a moderate hoard 17% of it in the Classical.
+// Those ages left the list; the Primitive Age (26%) and the Iron Age stay. The rule it retired stays
 // retired: faith has a store of its own.
 func TestFaithNeverFilledTheGeneralStore(t *testing.T) {
 	for _, d := range config.BaseBuildings() {

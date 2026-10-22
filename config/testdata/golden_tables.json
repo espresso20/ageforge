@@ -6774,1017 +6774,1017 @@
  "techs": {
   "agriculture": {
    "age": "bronze_age",
-   "cost": 9660,
+   "cost": 12600,
    "ticks": 439
   },
   "alchemy": {
    "age": "medieval_age",
-   "cost": 479000,
+   "cost": 545000,
    "ticks": 1316
   },
   "animal_husbandry": {
    "age": "stone_age",
-   "cost": 2450,
+   "cost": 2850,
    "ticks": 84
   },
   "antimatter_synthesis": {
    "age": "galactic_age",
-   "cost": 53655473535.99997,
+   "cost": 61877726847.99996,
    "ticks": 5616
   },
   "architecture": {
    "age": "renaissance_age",
-   "cost": 5350000,
+   "cost": 8210000,
    "ticks": 1755
   },
   "armada_command": {
    "age": "galactic_age",
-   "cost": 437466041599.99976,
+   "cost": 504930684159.9997,
    "ticks": 7020
   },
   "assembly_line": {
    "age": "electric_age",
-   "cost": 156000000,
+   "cost": 190000000,
    "ticks": 2925
   },
   "asteroid_claims": {
    "age": "space_age",
-   "cost": 27429023999.999992,
+   "cost": 24901251199.999992,
    "ticks": 6435
   },
   "asteroid_refining": {
    "age": "space_age",
-   "cost": 46306646399.999985,
+   "cost": 42057836799.999985,
    "ticks": 6435
   },
   "augmented_soldiers": {
    "age": "cyberpunk_age",
-   "cost": 4280639999.999999,
+   "cost": 6064239999.999998,
    "ticks": 5265
   },
   "automated_logistics": {
    "age": "digital_age",
-   "cost": 286159999.99999994,
+   "cost": 321439999.99999994,
    "ticks": 4680
   },
   "aviation": {
    "age": "electric_age",
-   "cost": 32400000,
+   "cost": 39300000,
    "ticks": 2340
   },
   "banking": {
    "age": "medieval_age",
-   "cost": 218000,
+   "cost": 248000,
    "ticks": 1053
   },
   "baroque_arts": {
    "age": "colonial_age",
-   "cost": 11200000,
+   "cost": 12100000,
    "ticks": 2048
   },
   "big_science": {
    "age": "atomic_age",
-   "cost": 286000000,
+   "cost": 300000000,
    "ticks": 5616
   },
   "blast_furnace": {
    "age": "renaissance_age",
-   "cost": 6950000,
+   "cost": 10700000,
    "ticks": 1755
   },
   "blockchain": {
    "age": "cyberpunk_age",
-   "cost": 1953727999.9999995,
+   "cost": 2771439999.9999995,
    "ticks": 5265
   },
   "boatbuilding": {
    "age": "bronze_age",
-   "cost": 7430,
+   "cost": 9670,
    "ticks": 439
   },
   "bronze_working": {
    "age": "bronze_age",
-   "cost": 3380,
+   "cost": 4400,
    "ticks": 351
   },
   "calendar": {
    "age": "bronze_age",
-   "cost": 4390,
+   "cost": 5720,
    "ticks": 439
   },
   "cartography": {
    "age": "colonial_age",
-   "cost": 8630000,
+   "cost": 9300000,
    "ticks": 2048
   },
   "chemical_engineering": {
    "age": "electric_age",
-   "cost": 24900000,
+   "cost": 30300000,
    "ticks": 2340
   },
   "chronometry": {
    "age": "medieval_age",
-   "cost": 809000,
+   "cost": 921000,
    "ticks": 1316
   },
   "cinema": {
    "age": "atomic_age",
-   "cost": 45500000,
+   "cost": 47800000,
    "ticks": 3510
   },
   "civil_engineering": {
    "age": "classical_age",
-   "cost": 151000,
+   "cost": 177000,
    "ticks": 1024
   },
   "civilian_reactors": {
    "age": "atomic_age",
-   "cost": 220000000,
+   "cost": 231000000,
    "ticks": 3510
   },
   "clockwork_automation": {
    "age": "industrial_age",
-   "cost": 23200000,
+   "cost": 24100000,
    "ticks": 2340
   },
   "closed_biospheres": {
    "age": "fusion_age",
-   "cost": 16057887999.999994,
+   "cost": 17594527999.999996,
    "ticks": 5850
   },
   "cloud_computing": {
    "age": "digital_age",
-   "cost": 1801239999.9999998,
+   "cost": 2018799999.9999998,
    "ticks": 4680
   },
   "coke_smelting": {
    "age": "colonial_age",
-   "cost": 54200000,
+   "cost": 58400000,
    "ticks": 2048
   },
   "colonialism": {
    "age": "colonial_age",
-   "cost": 70400000,
+   "cost": 75900000,
    "ticks": 2048
   },
   "computers": {
    "age": "modern_age",
-   "cost": 64600000,
+   "cost": 79300000,
    "ticks": 2808
   },
   "concert_of_nations": {
    "age": "industrial_age",
-   "cost": 51000000,
+   "cost": 53000000,
    "ticks": 3744
   },
   "containerization": {
    "age": "modern_age",
-   "cost": 185000000,
+   "cost": 226000000,
    "ticks": 3510
   },
   "corporations": {
    "age": "atomic_age",
-   "cost": 59200000,
+   "cost": 62200000,
    "ticks": 3510
   },
   "cosmology": {
    "age": "galactic_age",
-   "cost": 118063124479.99992,
+   "cost": 135983420159.99992,
    "ticks": 7020
   },
   "crop_rotation": {
    "age": "renaissance_age",
-   "cost": 4110000,
+   "cost": 6320000,
    "ticks": 1755
   },
   "currency": {
    "age": "bronze_age",
-   "cost": 2600,
+   "cost": 3390,
    "ticks": 351
   },
   "cybernetics": {
    "age": "cyberpunk_age",
-   "cost": 1155223999.9999998,
+   "cost": 1635423999.9999995,
    "ticks": 5265
   },
   "cybersecurity": {
    "age": "information_age",
-   "cost": 67059999.99999999,
+   "cost": 57120000,
    "ticks": 3276
   },
   "dark_crystal_mining": {
    "age": "cyberpunk_age",
-   "cost": 3292799999.999999,
+   "cost": 4664799999.999999,
    "ticks": 5265
   },
   "dark_energy": {
    "age": "cyberpunk_age",
-   "cost": 5570319999.999999,
+   "cost": 7902719999.999998,
    "ticks": 5265
   },
   "darknets": {
    "age": "cyberpunk_age",
-   "cost": 9439359999.999998,
+   "cost": 13335839999.999996,
    "ticks": 5265
   },
   "deep_space_astronomy": {
    "age": "space_age",
-   "cost": 21082700799.999992,
+   "cost": 19146534399.999992,
    "ticks": 6435
   },
   "drama": {
    "age": "classical_age",
-   "cost": 68700,
+   "cost": 80600,
    "ticks": 1024
   },
   "drone_warfare": {
    "age": "digital_age",
-   "cost": 819279999.9999999,
+   "cost": 919239999.9999999,
    "ticks": 4680
   },
   "dyson_engineering": {
    "age": "galactic_age",
-   "cost": 259317219839.99985,
+   "cost": 299374351359.9998,
    "ticks": 7020
   },
   "e_commerce": {
    "age": "information_age",
-   "cost": 191800000,
+   "cost": 162400000,
    "ticks": 4095
   },
   "electricity_tech": {
    "age": "modern_age",
-   "cost": 49700000,
+   "cost": 61000000,
    "ticks": 2808
   },
   "electrification": {
    "age": "victorian_age",
-   "cost": 16200000,
+   "cost": 21000000,
    "ticks": 2106
   },
   "embassies": {
    "age": "colonial_age",
-   "cost": 24700000,
+   "cost": 26600000,
    "ticks": 2048
   },
   "embedded_systems": {
    "age": "information_age",
-   "cost": 421400000,
+   "cost": 358400000,
    "ticks": 4095
   },
   "encyclopedia": {
    "age": "industrial_age",
-   "cost": 8120000,
+   "cost": 8450000,
    "ticks": 2340
   },
   "envoys": {
    "age": "classical_age",
-   "cost": 89300,
+   "cost": 105000,
    "ticks": 1024
   },
   "exploration": {
    "age": "iron_age",
-   "cost": 11400,
+   "cost": 14700,
    "ticks": 585
   },
   "federation_charter": {
    "age": "galactic_age",
-   "cost": 152849580799.9999,
+   "cost": 177094686719.99988,
    "ticks": 7020
   },
   "fertilizers": {
    "age": "electric_age",
-   "cost": 120000000,
+   "cost": 146000000,
    "ticks": 2925
   },
   "feudalism": {
    "age": "medieval_age",
-   "cost": 622000,
+   "cost": 709000,
    "ticks": 1316
   },
   "fire_mastery": {
    "age": "primitive_age",
-   "cost": 398,
+   "cost": 543,
    "ticks": 28
   },
   "fleet_doctrine": {
    "age": "interstellar_age",
-   "cost": 357652959999.9998,
+   "cost": 513514355199.99976,
    "ticks": 7020
   },
   "fortification": {
    "age": "medieval_age",
-   "cost": 1050000,
+   "cost": 1200000,
    "ticks": 1316
   },
   "fusion_drives": {
    "age": "fusion_age",
-   "cost": 35304303999.99999,
+   "cost": 38800159999.999985,
    "ticks": 5850
   },
   "fusion_power": {
    "age": "fusion_age",
-   "cost": 5608735999.999998,
+   "cost": 6146559999.999998,
    "ticks": 5850
   },
   "galactic_memory": {
    "age": "galactic_age",
-   "cost": 90655613439.99994,
+   "cost": 104675609471.99994,
    "ticks": 7020
   },
   "galactic_navigation": {
    "age": "galactic_age",
-   "cost": 69783739647.99995,
+   "cost": 80535917055.99995,
    "ticks": 7020
   },
   "galactic_network": {
    "age": "interstellar_age",
-   "cost": 465325324799.9998,
+   "cost": 667116889599.9998,
    "ticks": 7020
   },
   "gene_editing": {
    "age": "digital_age",
-   "cost": 372399999.99999994,
+   "cost": 419439999.99999994,
    "ticks": 4680
   },
   "general_ai": {
    "age": "digital_age",
-   "cost": 3037999999.9999995,
+   "cost": 3410399999.9999995,
    "ticks": 7488
   },
   "general_staff": {
    "age": "victorian_age",
-   "cost": 101000000,
+   "cost": 132000000,
    "ticks": 2633
   },
   "geographic_societies": {
    "age": "industrial_age",
-   "cost": 13700000,
+   "cost": 14300000,
    "ticks": 2340
   },
   "geology": {
    "age": "victorian_age",
-   "cost": 77500000,
+   "cost": 101000000,
    "ticks": 2633
   },
   "global_village": {
    "age": "digital_age",
-   "cost": 2332399999.9999995,
+   "cost": 2626399999.9999995,
    "ticks": 7488
   },
   "green_revolution": {
    "age": "atomic_age",
-   "cost": 76900000,
+   "cost": 80800000,
    "ticks": 3510
   },
   "grid_storage": {
    "age": "digital_age",
-   "cost": 1066239999.9999999,
+   "cost": 1195599999.9999998,
    "ticks": 4680
   },
   "guilds": {
    "age": "medieval_age",
-   "cost": 1780000,
+   "cost": 2020000,
    "ticks": 2106
   },
   "gunpowder": {
    "age": "renaissance_age",
-   "cost": 9040000,
+   "cost": 13900000,
    "ticks": 1755
   },
   "holography": {
    "age": "cyberpunk_age",
-   "cost": 1503711999.9999995,
+   "cost": 2126599999.9999995,
    "ticks": 5265
   },
   "hull_printing": {
    "age": "interstellar_age",
-   "cost": 211579961599.9999,
+   "cost": 303440300799.9999,
    "ticks": 7020
   },
   "hydroponics": {
    "age": "space_age",
-   "cost": 35657731199.999985,
+   "cost": 32377004799.99999,
    "ticks": 6435
   },
   "imperial_legions": {
    "age": "classical_age",
-   "cost": 255000,
+   "cost": 299000,
    "ticks": 1024
   },
   "industrialization": {
    "age": "industrial_age",
-   "cost": 4810000,
+   "cost": 5000000,
    "ticks": 2340
   },
   "information_theory": {
    "age": "modern_age",
-   "cost": 142000000,
+   "cost": 174000000,
    "ticks": 3510
   },
   "interchangeable_parts": {
    "age": "industrial_age",
-   "cost": 66200000,
+   "cost": 68900000,
    "ticks": 3744
   },
   "internet": {
    "age": "information_age",
-   "cost": 87220000,
+   "cost": 74200000,
    "ticks": 4095
   },
   "internet_of_things": {
    "age": "information_age",
-   "cost": 323400000,
+   "cost": 275800000,
    "ticks": 4095
   },
   "interstellar_trade": {
    "age": "interstellar_age",
-   "cost": 124990297599.99994,
+   "cost": 179955910399.9999,
    "ticks": 7020
   },
   "iron_smelting": {
    "age": "iron_age",
-   "cost": 14900,
+   "cost": 19200,
    "ticks": 585
   },
   "irrigation": {
    "age": "iron_age",
-   "cost": 32600,
+   "cost": 42100,
    "ticks": 731
   },
   "language": {
    "age": "primitive_age",
-   "cost": 236,
+   "cost": 321,
    "ticks": 23
   },
   "lunar_outposts": {
    "age": "cyberpunk_age",
-   "cost": 7244159999.999998,
+   "cost": 10262559999.999998,
    "ticks": 5265
   },
   "machine_learning": {
    "age": "digital_age",
-   "cost": 130731999.99999999,
+   "cost": 146607999.99999997,
    "ticks": 4680
   },
   "maglev_transit": {
    "age": "fusion_age",
-   "cost": 12369951999.999996,
+   "cost": 13522431999.999996,
    "ticks": 5850
   },
   "map_making": {
    "age": "bronze_age",
-   "cost": 5710,
+   "cost": 7440,
    "ticks": 439
   },
   "masonry": {
    "age": "bronze_age",
-   "cost": 16300,
+   "cost": 21300,
    "ticks": 439
   },
   "mass_production": {
    "age": "victorian_age",
-   "cost": 20900000,
+   "cost": 27300000,
    "ticks": 2633
   },
   "mathematics": {
    "age": "iron_age",
-   "cost": 19300,
+   "cost": 24900,
    "ticks": 731
   },
   "matter_conversion": {
    "age": "galactic_age",
-   "cost": 199231522559.99988,
+   "cost": 229801438719.99985,
    "ticks": 7020
   },
   "mechanized_warfare": {
    "age": "electric_age",
-   "cost": 203000000,
+   "cost": 247000000,
    "ticks": 2925
   },
   "medical_nanobots": {
    "age": "information_age",
-   "cost": 249199999.99999997,
+   "cost": 211400000,
    "ticks": 4095
   },
   "mercantilism": {
    "age": "colonial_age",
-   "cost": 19000000,
+   "cost": 20400000,
    "ticks": 2048
   },
   "metal_casting": {
    "age": "classical_age",
-   "cost": 196000,
+   "cost": 230000,
    "ticks": 1024
   },
   "military_industrial_complex": {
    "age": "atomic_age",
-   "cost": 371000000,
+   "cost": 390000000,
    "ticks": 5616
   },
   "military_tactics": {
    "age": "bronze_age",
-   "cost": 21200,
+   "cost": 27600,
    "ticks": 439
   },
   "mind_uploading": {
    "age": "galactic_age",
-   "cost": 740002798079.9995,
+   "cost": 853849382399.9995,
    "ticks": 7020
   },
   "modern_physics": {
    "age": "electric_age",
-   "cost": 71200000,
+   "cost": 86400000,
    "ticks": 2925
   },
   "molecular_assembly": {
    "age": "fusion_age",
-   "cost": 20898303999.999992,
+   "cost": 22857519999.999992,
    "ticks": 5850
   },
   "museums": {
    "age": "victorian_age",
-   "cost": 27400000,
+   "cost": 35500000,
    "ticks": 2633
   },
   "nano_alloys": {
    "age": "digital_age",
-   "cost": 631119999.9999999,
+   "cost": 707559999.9999999,
    "ticks": 4680
   },
   "nanofabrication": {
    "age": "modern_age",
-   "cost": 312000000,
+   "cost": 383000000,
    "ticks": 3510
   },
   "navigation": {
    "age": "renaissance_age",
-   "cost": 1870000,
+   "cost": 2880000,
    "ticks": 1404
   },
   "neural_art": {
    "age": "fusion_age",
-   "cost": 7299039999.999998,
+   "cost": 7990527999.999997,
    "ticks": 5850
   },
   "neural_interface": {
    "age": "cyberpunk_age",
-   "cost": 889055999.9999998,
+   "cost": 1259495999.9999998,
    "ticks": 4212
   },
   "neutron_mining": {
    "age": "galactic_age",
-   "cost": 336269077759.9998,
+   "cost": 388975829759.99976,
    "ticks": 7020
   },
   "new_world_crops": {
    "age": "colonial_age",
-   "cost": 32000000,
+   "cost": 34500000,
    "ticks": 2048
   },
   "nuclear_deterrence": {
    "age": "atomic_age",
-   "cost": 169000000,
+   "cost": 178000000,
    "ticks": 3510
   },
   "nuclear_fission": {
    "age": "atomic_age",
-   "cost": 35000000,
+   "cost": 36800000,
    "ticks": 3510
   },
   "omniversal_command": {
    "age": "transcendent_age",
-   "cost": 4400802964991.997,
+   "cost": 3718988421119.9976,
    "ticks": 7020
   },
   "omniversal_exchange": {
    "age": "transcendent_age",
-   "cost": 2603291894783.998,
+   "cost": 2190070959103.9985,
    "ticks": 7020
   },
   "open_science": {
    "age": "digital_age",
-   "cost": 221479999.99999997,
+   "cost": 246959999.99999997,
    "ticks": 4680
   },
   "orbital_defense": {
    "age": "space_age",
-   "cost": 60236287999.99998,
+   "cost": 54858047999.999985,
    "ticks": 6435
   },
   "orbital_mechanics": {
    "age": "space_age",
-   "cost": 12477516799.999996,
+   "cost": 11348086399.999996,
    "ticks": 6435
   },
   "orbital_relays": {
    "age": "space_age",
-   "cost": 101648735999.99997,
+   "cost": 92505727999.99997,
    "ticks": 6435
   },
   "orbital_solar": {
    "age": "space_age",
-   "cost": 78522303999.99997,
+   "cost": 70992767999.99997,
    "ticks": 6435
   },
   "overview_effect": {
    "age": "space_age",
-   "cost": 16242284799.999994,
+   "cost": 14736377599.999994,
    "ticks": 6435
   },
   "patronage": {
    "age": "renaissance_age",
-   "cost": 2430000,
+   "cost": 3740000,
    "ticks": 1755
   },
   "philosophy": {
    "age": "classical_age",
-   "cost": 52800,
+   "cost": 62000,
    "ticks": 1024
   },
   "plasma_physics": {
    "age": "fusion_age",
-   "cost": 4341007999.999999,
+   "cost": 4725167999.999998,
    "ticks": 4680
   },
   "plasma_weapons": {
    "age": "fusion_age",
-   "cost": 27160111999.999992,
+   "cost": 29733983999.999992,
    "ticks": 5850
   },
   "plastics": {
    "age": "atomic_age",
-   "cost": 130000000,
+   "cost": 137000000,
    "ticks": 3510
   },
   "pottery": {
    "age": "stone_age",
-   "cost": 1880,
+   "cost": 2200,
    "ticks": 84
   },
   "power_distribution": {
    "age": "electric_age",
-   "cost": 42100000,
+   "cost": 51100000,
    "ticks": 2925
   },
   "precision_mining": {
    "age": "information_age",
-   "cost": 547400000,
+   "cost": 464800000,
    "ticks": 4095
   },
   "prefabrication": {
    "age": "atomic_age",
-   "cost": 100000000,
+   "cost": 105000000,
    "ticks": 3510
   },
   "priesthood": {
    "age": "iron_age",
-   "cost": 25100,
+   "cost": 32400,
    "ticks": 731
   },
   "primitive_writing": {
    "age": "stone_age",
-   "cost": 1110,
+   "cost": 1300,
    "ticks": 68
   },
   "printing_press": {
    "age": "renaissance_age",
-   "cost": 3160000,
+   "cost": 4860000,
    "ticks": 1755
   },
   "probability_markets": {
    "age": "quantum_age",
-   "cost": 242029405183.99985,
+   "cost": 352713584383.99976,
    "ticks": 7020
   },
   "probability_warfare": {
    "age": "quantum_age",
-   "cost": 532759849215.9997,
+   "cost": 776265043455.9995,
    "ticks": 7020
   },
   "protein_synthesis": {
    "age": "interstellar_age",
-   "cost": 162637977599.99994,
+   "cost": 233415615999.9999,
    "ticks": 7020
   },
   "public_education": {
    "age": "victorian_age",
-   "cost": 35300000,
+   "cost": 46200000,
    "ticks": 2633
   },
   "quantum_computing": {
    "age": "quantum_age",
-   "cost": 1170300721407.9993,
+   "cost": 1697157414399.999,
    "ticks": 7020
   },
   "quantum_cultivation": {
    "age": "quantum_age",
-   "cost": 315818857983.9998,
+   "cost": 458970396415.9997,
    "ticks": 7020
   },
   "quantum_mechanics": {
    "age": "quantum_age",
-   "cost": 143446696243.19992,
+   "cost": 209562045951.99988,
    "ticks": 7020
   },
   "quantum_metallurgy": {
    "age": "quantum_age",
-   "cost": 410269357567.99976,
+   "cost": 596218778623.9996,
    "ticks": 7020
   },
   "quantum_networking": {
    "age": "fusion_age",
-   "cost": 45715039999.999985,
+   "cost": 50324959999.999985,
    "ticks": 5850
   },
   "quarrying": {
    "age": "iron_age",
-   "cost": 55200,
+   "cost": 71100,
    "ticks": 731
   },
   "radio": {
    "age": "electric_age",
-   "cost": 54700000,
+   "cost": 66500000,
    "ticks": 2925
   },
   "railroads": {
    "age": "industrial_age",
-   "cost": 10600000,
+   "cost": 11000000,
    "ticks": 2340
   },
   "reality_art": {
    "age": "quantum_age",
-   "cost": 185949421055.99988,
+   "cost": 271545186303.99985,
    "ticks": 7020
   },
   "reality_engineering": {
    "age": "quantum_age",
-   "cost": 1977557335039.9988,
+   "cost": 2877788659199.998,
    "ticks": 11232
   },
   "reality_manipulation": {
    "age": "quantum_age",
-   "cost": 110389021388.79993,
+   "cost": 160861007103.9999,
    "ticks": 5616
   },
   "reusable_launchers": {
    "age": "digital_age",
-   "cost": 1385719999.9999998,
+   "cost": 1554279999.9999998,
    "ticks": 4680
   },
   "rifling": {
    "age": "industrial_age",
-   "cost": 39200000,
+   "cost": 40800000,
    "ticks": 2340
   },
   "ritual": {
    "age": "stone_age",
-   "cost": 856,
+   "cost": 999,
    "ticks": 68
   },
   "road_building": {
    "age": "iron_age",
-   "cost": 42400,
+   "cost": 54700,
    "ticks": 731
   },
   "rocketry": {
    "age": "atomic_age",
-   "cost": 26900000,
+   "cost": 28300000,
    "ticks": 2808
   },
   "romanticism": {
    "age": "industrial_age",
-   "cost": 6250000,
+   "cost": 6500000,
    "ticks": 2340
   },
   "sanitation": {
    "age": "victorian_age",
-   "cost": 59600000,
+   "cost": 78000000,
    "ticks": 2633
   },
   "satellite_tech": {
    "age": "modern_age",
-   "cost": 84000000,
+   "cost": 103000000,
    "ticks": 3510
   },
   "scholasticism": {
    "age": "medieval_age",
-   "cost": 1370000,
+   "cost": 1560000,
    "ticks": 2106
   },
   "scientific_method": {
    "age": "colonial_age",
-   "cost": 14600000,
+   "cost": 15700000,
    "ticks": 2048
   },
   "search_engines": {
    "age": "information_age",
-   "cost": 147000000,
+   "cost": 125299999.99999999,
    "ticks": 4095
   },
   "seed_drill": {
    "age": "industrial_age",
-   "cost": 17800000,
+   "cost": 18600000,
    "ticks": 2340
   },
   "self_replication": {
    "age": "digital_age",
-   "cost": 486079999.99999994,
+   "cost": 544879999.9999999,
    "ticks": 4680
   },
   "siege_warfare": {
    "age": "iron_age",
-   "cost": 71700,
+   "cost": 92500,
    "ticks": 731
   },
   "singularity_engineering": {
    "age": "transcendent_age",
-   "cost": 3388411672575.9976,
+   "cost": 2851224456191.998,
    "ticks": 7020
   },
   "smart_grid": {
    "age": "information_age",
-   "cost": 711200000,
+   "cost": 604800000,
    "ticks": 4095
   },
   "social_media": {
    "age": "information_age",
-   "cost": 113400000,
+   "cost": 96460000,
    "ticks": 4095
   },
   "space_elevator": {
    "age": "space_age",
-   "cost": 172103679999.99994,
+   "cost": 155968959999.99994,
    "ticks": 10296
   },
   "space_mining": {
    "age": "space_age",
-   "cost": 9573267199.999996,
+   "cost": 8712748799.999996,
    "ticks": 5148
   },
   "space_stations": {
    "age": "information_age",
-   "cost": 925400000,
+   "cost": 786800000,
    "ticks": 4095
   },
   "special_forces": {
    "age": "modern_age",
-   "cost": 527000000,
+   "cost": 647000000,
    "ticks": 3510
   },
   "steam_power": {
    "age": "industrial_age",
-   "cost": 3700000,
+   "cost": 3850000,
    "ticks": 1872
   },
   "steam_pumps": {
    "age": "industrial_age",
-   "cost": 30200000,
+   "cost": 31400000,
    "ticks": 2340
   },
   "steel_forging": {
    "age": "medieval_age",
-   "cost": 283000,
+   "cost": 323000,
    "ticks": 1053
   },
   "stellar_cartography": {
    "age": "space_age",
-   "cost": 132304703999.99995,
+   "cost": 119934751999.99995,
    "ticks": 10296
   },
   "stellar_core_mining": {
    "age": "interstellar_age",
-   "cost": 275581017599.9999,
+   "cost": 394547686399.9998,
    "ticks": 7020
   },
   "stellar_engineering": {
    "age": "interstellar_age",
-   "cost": 43897194879.99998,
+   "cost": 62946920959.99997,
    "ticks": 5616
   },
   "stoneworking": {
    "age": "stone_age",
-   "cost": 1450,
+   "cost": 1690,
    "ticks": 84
   },
   "suburbs": {
    "age": "modern_age",
-   "cost": 240000000,
+   "cost": 294000000,
    "ticks": 3510
   },
   "superconductors": {
    "age": "fusion_age",
-   "cost": 3330667199.999999,
+   "cost": 3645678399.999999,
    "ticks": 4680
   },
   "surveying": {
    "age": "colonial_age",
-   "cost": 41700000,
+   "cost": 44900000,
    "ticks": 2048
   },
   "synthetic_food": {
    "age": "cyberpunk_age",
-   "cost": 2540943999.9999995,
+   "cost": 3594639999.999999,
    "ticks": 5265
   },
   "telecommunications": {
    "age": "victorian_age",
-   "cost": 46300000,
+   "cost": 60000000,
    "ticks": 2633
   },
   "television": {
    "age": "modern_age",
-   "cost": 109000000,
+   "cost": 134000000,
    "ticks": 3510
   },
   "terraforming": {
    "age": "galactic_age",
-   "cost": 569232921599.9996,
+   "cost": 656726129919.9996,
    "ticks": 7020
   },
   "the_plough": {
    "age": "classical_age",
-   "cost": 116000,
+   "cost": 136000,
    "ticks": 1024
   },
   "the_wheel": {
    "age": "bronze_age",
-   "cost": 12600,
+   "cost": 16400,
    "ticks": 439
   },
   "theology": {
    "age": "medieval_age",
-   "cost": 368000,
+   "cost": 419000,
    "ticks": 1316
   },
   "timeless_archive": {
    "age": "quantum_age",
-   "cost": 1520062727679.999,
+   "cost": 2213683583999.9985,
    "ticks": 11232
   },
   "titanium_alloys": {
    "age": "modern_age",
-   "cost": 405000000,
+   "cost": 497000000,
    "ticks": 3510
   },
   "tool_making": {
    "age": "primitive_age",
-   "cost": 306,
+   "cost": 417,
    "ticks": 23
   },
   "transcendence": {
    "age": "transcendent_age",
-   "cost": 2002055433369.5986,
+   "cost": 1688007522252.7988,
    "ticks": 7020
   },
   "unified_theory": {
    "age": "fusion_age",
-   "cost": 9527167999.999996,
+   "cost": 10410735999.999996,
    "ticks": 5850
   },
   "virtual_reality": {
    "age": "digital_age",
-   "cost": 169931999.99999997,
+   "cost": 190511999.99999997,
    "ticks": 4680
   },
   "void_contemplation": {
    "age": "interstellar_age",
-   "cost": 74165929599.99997,
+   "cost": 106166457599.99995,
    "ticks": 7020
   },
   "warp_drive": {
    "age": "interstellar_age",
-   "cost": 57073882879.99998,
+   "cost": 82071942399.99997,
    "ticks": 7020
   },
   "wire_transfers": {
    "age": "electric_age",
-   "cost": 92500000,
+   "cost": 112000000,
    "ticks": 2925
   },
   "woodworking": {
    "age": "stone_age",
-   "cost": 3180,
+   "cost": 3710,
    "ticks": 84
   },
   "wormholes": {
    "age": "quantum_age",
-   "cost": 900231324159.9995,
+   "cost": 1310500681727.9993,
    "ticks": 7020
   },
   "xenology": {
    "age": "interstellar_age",
-   "cost": 96378060799.99995,
+   "cost": 138543462399.99994,
    "ticks": 7020
   },
   "zero_g_manufacturing": {
    "age": "space_age",
-   "cost": 7368188799.999997,
+   "cost": 6722799999.999998,
    "ticks": 5148
   },
   "zero_point_energy": {
    "age": "quantum_age",
-   "cost": 692145067263.9996,
+   "cost": 1007963925247.9994,
    "ticks": 7020
   }
  },
