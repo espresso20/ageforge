@@ -139,10 +139,10 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {1.5e10, 2.4e11, 5e16, 2e17},
-		"galactic_age":     {4.4e10, 7.1e11, 1.8e18, 1.8e18},
+		"interstellar_age": {1.5e10, 2.4e11, 5e16, 3e17},
+		"galactic_age":     {4.4e10, 7.1e11, 2.1e18, 2.7e18},
 		"quantum_age":      {1.3e11, 2.2e12, 9.6e19, 7.1e18},
-		"transcendent_age": {2e11, 3.2e12, 1.4e20, 1.1e19},
+		"transcendent_age": {2e11, 3.2e12, 1.5e20, 1.1e19},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -497,7 +497,15 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // Brace level 1. Brace is made in less than its third of the warning
 // there, so the ratio falls, and may fall under doomChoiceMinRatio.
 //
-// The Colonial, Industrial and Modern Ages are. Since the storage wall a
+// Only the Industrial Age is, now: every new copy costs NewCopyPriceFactor
+// more, the stores were sized to the dearest first copy and grew with it, and
+// with the ceiling three fifths of them the Iron, Medieval and Colonial Ages
+// (0.61x, 0.61x and 0.69x) have a material under it again and Brace takes its
+// third of the warning there (0.35, 0.34 and 0.36 of it, 0.74x, 0.71x and
+// 0.76x). The Industrial Age reads 0.10x (0.06x before), still every material
+// on its ceiling.
+//
+// What follows is the record from before that factor. The Colonial, Industrial and Modern Ages were. Since the storage wall a
 // store is sized by what the age's buildings cost, not by what the age makes,
 // and the moderate economy of eight copies makes 1.6 times what five did
 // against the same store (the storage rule's five copies of each vault), so
@@ -526,10 +534,7 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // room before, which counted this age), and its Brace takes 0.34 of the
 // warning, the ratio 0.70x.
 var doomChoiceOnTheCeiling = map[string]float64{
-	"iron_age":       0.61,
-	"medieval_age":   0.61,
-	"colonial_age":   0.69,
-	"industrial_age": 0.06,
+	"industrial_age": 0.10,
 }
 
 // incomeHoursOfMade is incomeHours over the resources of cost the age makes
