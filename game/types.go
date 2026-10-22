@@ -285,6 +285,13 @@ type BuildingState struct {
 	// waiting for its keystone stays Unlocked, so its bank fills meanwhile:
 	// only CanBuild waits.
 	NeedsTech string
+	// LockTech is the display name of the tech a building of an age that
+	// has unlocked it still waits for; "" when it needs none or the tech
+	// is researched. LockTechPath is the display names of that tech's
+	// prerequisites not researched yet, nearest first and recursively;
+	// empty when LockTech can be researched now.
+	LockTech     string
+	LockTechPath []string
 	// Cost for next building
 	NextCost   map[string]float64
 	CanBuild   bool

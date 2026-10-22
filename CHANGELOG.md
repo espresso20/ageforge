@@ -24,6 +24,7 @@ All notable changes to AgeForge are documented here.
 - The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.
 
 ### Added
+- **Locked buildings show up.** The Buildings panel lists this age's buildings that still need a tech, greyed out, with the research they need and a word from your scholars.
 - **Plan upgrades.** `plan upgrade <building> [count|all]` adds an upgrade to the plan. It upgrades one copy at a time as soon as each can be paid.
 - **Time to prestige.** When a new run with your next prestige bonus would pass your current age sooner than pushing on, the game says so once per age, and stats keeps a line about it. Every figure comes from your own run.
 - **Prestige points are a lasting production bonus.** Every point ever earned applies the 0.282 square-root coefficient to production in every age, including new ages. Points are no longer spent. Plan Template, Roster and Old Friends are free after the first prestige. Old saves keep what they bought and every earned point counts. The prestige shop is gone, and the Maxed Out and Fully Invested badges are retired.
