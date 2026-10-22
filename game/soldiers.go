@@ -136,7 +136,7 @@ func (ge *GameEngine) fillSoldierPosts() int {
 			if need > 0 && per > 0 {
 				k := int(math.Floor((net - margin) / per))
 				k = max(0, min(k, need))
-				net -= float64(k) * per
+				net -= float64(float64(k) * per)
 				added += k
 			}
 			ge.soldiersPosted[key] += added

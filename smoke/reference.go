@@ -210,7 +210,7 @@ type townState struct {
 	// top of them, as the game lets them.
 	scholars, soldiers float64
 	eaten              float64 // food everyone eats per tick
-	grown   float64 // food made per tick, before they eat
+	grown              float64 // food made per tick, before they eat
 }
 
 // state works out a town standing in age i. speed is the Era Mastery speed
@@ -299,7 +299,7 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 		s.income["food"] += float64(RefHandGather * speed)
 	}
 	s.grown = s.income["food"]
-	s.eaten = float64((s.workers+s.scholars+s.soldiers) * fc * speed)
+	s.eaten = float64((s.workers + s.scholars + s.soldiers) * fc * speed)
 	s.income["food"] -= s.eaten
 	for r, b := range t.base {
 		s.caps[r] = float64((b + capAll + own[r]) * speed)
