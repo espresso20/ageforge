@@ -42,7 +42,8 @@ type expLayout struct {
 	w, h  int
 	small bool // too small to draw
 	// outH is the height of the Out now box: 4 on a tall panel, 3 on a
-	// short one, 1 (a plain line, no box) on the smallest.
+	// short one, 1 (a plain line, no box) on the smallest. The legend row
+	// goes first when the panel is short.
 	outH int
 	// legendY is the legend row, -1 when the panel is too short for it.
 	legendY int
@@ -65,6 +66,8 @@ func layoutFor(w, h int) expLayout {
 	switch {
 	case h >= 30:
 		l.outH, legend = 4, 1
+	case h >= 26:
+		l.outH, legend = 3, 1
 	case h >= 22:
 		l.outH = 3
 	default:
