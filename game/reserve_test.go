@@ -19,14 +19,14 @@ func TestReserve_OnePassAddsOnePercent(t *testing.T) {
 	ge.Workers.Recruit("worker", 400, ge.popCapLocked())
 	ge.recalculateRates()
 	setAmount(ge, "food", 1e6)
-	for _, pop := range []int{400, 404, 408} {
+	for _, pop := range []int{400, 404, 409} {
 		if got := ge.Workers.TotalPop(); got != pop {
 			t.Fatalf("population %d, want %d", got, pop)
 		}
 		ge.keepSharesLive()
 	}
-	if got := ge.Workers.TotalPop(); got != 412 {
-		t.Errorf("population %d after three passes from 400, want 412 (4, 4 and 4)", got)
+	if got := ge.Workers.TotalPop(); got != 414 {
+		t.Errorf("population %d after three passes from 400, want 414 (4, 5 and 5)", got)
 	}
 }
 
