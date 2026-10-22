@@ -150,7 +150,7 @@ See [Workers](workers-and-domains.md) for the domain table and the efficiency fo
 | `research tree [close\|far]` | Open the tree zoomed in on big badges (close) or out on the whole tree (far) |
 | `research card <tech>` | Open the tree on a tech's card: what it does, how long it takes and what it needs |
 | `techs` | Opens the same **Research** panel |
-| `research list` | List the techs you can research now, with the time each would take your scholars. A ★ marks the keystone its age's wonder needs. Under the list: the tech in progress with its bar, percent and time left, the queue in order with the head start if you hold one, and your scholars |
+| `research list` | List the techs you can research now, with the time each would take your scholars. A ★ marks the keystone its age's wonder needs. Under the list: the tech in progress with its bar, percent and time left, the queue in order, and your scholars |
 | `research <tech>` | Start researching a tech. It costs nothing; it needs its prerequisites and its age |
 | `research cancel` | Cancel the current research. The work done on it is lost |
 | `scholars` | Show your scholars: the kinds and counts, how many research and how many teach, and what teaching adds to what workers make |

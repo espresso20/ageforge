@@ -36,7 +36,7 @@ Storage changed. A storage building's price now climbs much faster with each cop
 
 A game saved before scholars loads as usual and keeps every building copy. Knowledge was a stock before, and it is not any more:
 
-- Knowledge you held becomes a head start on the next tech you start, never more than that tech's work.
+- Knowledge you held becomes a gift of work for the tech in progress, at most half of that tech's price. With nothing in progress it is lost.
 - A tech that was paid for and waiting out its research time completes on load.
 - Workers on knowledge buildings return to the idle pool, and the knowledge buildings come with their scholars.
 - A share you had set for the knowledge domain is ignored.

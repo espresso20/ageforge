@@ -122,7 +122,7 @@ Adds a tech to the build plan, with the techs it still needs before it. The plan
 ```
 research list
 ```
-Prints the techs you can start now (age reached, prerequisites done, not yet researched) with their keys and the time each would take your scholars now (`~4m 44s`, or that it needs scholars researching), then the active research with its bar and the time left, the queue in order with the head start if you hold one, and your scholars. See [Timers and durations](commands.md#timers-and-durations).
+Prints the techs you can start now (age reached, prerequisites done, not yet researched) with their keys and the time each would take your scholars now (`~4m 44s`, or that it needs scholars researching), then the active research with its bar and the time left, the queue in order, and your scholars. See [Timers and durations](commands.md#timers-and-durations).
 
 ---
 
@@ -907,9 +907,9 @@ Canceling costs you the work done on the tech. It only makes sense when a differ
 
 ### The Grand Discovery Epoch Event
 
-**The Grand Discovery**, a major good epoch event, instantly completes up to 3 unresearched techs of your current age or earlier, for free. It can come at an epoch transition when your culture strength is over 40% (see [Good Epoch Events](epochs.md#good-epoch-events)).
+**The Grand Discovery**, a major good epoch event, instantly completes up to 3 techs you could start now (their age reached and their prerequisites done), cheapest first, for free. It can come at an epoch transition when your culture strength is over 40% (see [Good Epoch Events](epochs.md#good-epoch-events)).
 
-It doesn't weigh which techs are worth most: it takes the first three unresearched techs in alphabetical order of their keys, prerequisites or not. You can shape what it takes by researching the alphabetically early techs of your age first, which leaves the slots for the rest.
+It takes the cheapest of the techs you could start now, up to three. A tech whose prerequisites you have not all researched, or whose either-or group you have none of, is not one of them. If fewer than three can be started, it completes the ones there are.
 
 If Grand Discovery completes the tech you are researching, the research slot clears automatically.
 
@@ -931,7 +931,7 @@ Prices rise steeply from the first age to the last. The work of your scholars ri
 
 **Prerequisites stack.** Before typing `research banking`, check that you have both `currency` and `mathematics`. `research list` shows only the techs you can start now; on the tech tree a tech that still waits has a dashed frame, and its card names what it builds on, with the techs you lack dimmed.
 
-**The Dark Age epoch event** cancels your active research, loses its work and the head start you had kept. If an epoch transition is close, consider whether to delay a long research start until after its event resolves.
+**The Dark Age epoch event** cancels your active research and loses its work. If an epoch transition is close, consider whether to delay a long research start until after its event resolves.
 
 **Prestige resets research** entirely, with every tech, its bonus and the milestones that gave research speed. What survives a prestige is **Ancient Knowledge** (research time ×0.8 per epoch) from Succumbing, faster research times in the ages a past run completed ([Era Mastery](prestige.md#era-mastery)), and, after the first prestige, the techs [Plan Template](prestige.md#plan-template) reads from your build plan.
 

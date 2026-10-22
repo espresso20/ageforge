@@ -188,6 +188,7 @@ func TestEventLineStatesWhatHappened(t *testing.T) {
 			before[key] = ge.Resources.resources[key].Amount
 		}
 		popBefore := ge.Workers.TotalPop()
+		truthStartLab(ge)
 		logged := len(ge.log)
 		ge.Events.active = nil
 		if def.Duration > 0 {
@@ -231,11 +232,11 @@ func TestEventLineStatesWhatHappened(t *testing.T) {
 				take(Amount(-d, key), "the "+key+" lost")
 			}
 		}
-		// A gift of research lands on the tech in progress or is kept as a
-		// head start: the line says which, as a share or as a head start.
-		if strings.Contains(rest, "a head start on the next tech") {
+		// A gift of research lands on the tech in progress (the lab's, dearer
+		// than any gift here), so the line says a share under 1%.
+		if strings.Contains(rest, "under 1% of lab tech") {
 			changed++
-			take("a head start on the next tech", "the research kept")
+			take("under 1% of lab tech", "the research gained")
 		}
 		if lost := popBefore - ge.Workers.TotalPop(); lost > 0 {
 			changed++

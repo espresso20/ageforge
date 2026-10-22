@@ -185,8 +185,8 @@ func TestIdleScholarsStillShowATechTime(t *testing.T) {
 	}
 }
 
-// The queue is shown in order, with the head start if one is held, and the
-// scholars line says how many research and teach and what teaching adds.
+// The queue is shown in order, and the scholars line says how many research
+// and teach and what teaching adds.
 func TestResearchListShowsQueueAndScholars(t *testing.T) {
 	ge := scholarGame(t)
 	if err := ge.PlanAddResearch("ritual"); err != nil {

@@ -361,11 +361,12 @@ type ResearchSave struct {
 	// set holds a tech that was paid for and completes on load.
 	TicksLeft  int `json:"ticks_left"`
 	TotalTicks int `json:"total_ticks"`
-	// Progress is the work done on the tech in progress, Slowed marks an
-	// Ancient Memory research and HeadStart is work kept for the next tech.
-	// Each is omitted when empty.
-	Progress  float64 `json:"progress,omitempty"`
-	Slowed    bool    `json:"slowed,omitempty"`
+	// Progress is the work done on the tech in progress and Slowed marks an
+	// Ancient Memory research. Each is omitted when empty.
+	Progress float64 `json:"progress,omitempty"`
+	Slowed   bool    `json:"slowed,omitempty"`
+	// HeadStart is no longer written or read: research never carries over.
+	// An old save that has it loads clean and the value is dropped.
 	HeadStart float64 `json:"head_start,omitempty"`
 }
 
@@ -676,7 +677,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			CurrentTech: ge.Research.currentTech,
 			Progress:    ge.Research.progress,
 			Slowed:      ge.Research.slowed,
-			HeadStart:   ge.headHeld(),
 		},
 		Military: MilitarySave{
 			Active:         ge.Military.ActiveForSave(),

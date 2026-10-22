@@ -309,7 +309,7 @@ func (ge *GameEngine) processResearch() {
 		return
 	}
 	// A tech whose progress already covers its price completes now, work or
-	// no work (a head start that covered it, a load).
+	// no work (a load).
 	if completed := ge.Research.CompleteIfFull(); completed != "" {
 		ge.finishResearch(completed)
 		return
@@ -350,9 +350,9 @@ func (ge *GameEngine) advanceResearch(n int, eff float64, starts *planStarts) bo
 		if n <= 0 {
 			break
 		}
-		// The next tech starts in the tick its predecessor finished. A tech
-		// a head start covers completes as it starts, and the plan's next
-		// one starts a tick later, as on a live tick.
+		// The next tech starts in the tick its predecessor finished, at zero
+		// progress, and the plan's next one starts a tick later, as on a live
+		// tick.
 		ge.runPlan(starts)
 		for n > 0 && ge.Research.currentTech == "" && ge.runPlan(starts) {
 			n--
@@ -374,28 +374,29 @@ func (ge *GameEngine) workResearch(w float64) string {
 
 // grantResearch gives work that did not come from the scholars' tick: an
 // event, loot, a milestone, a route, the Ancient Cache. It lands on the tech
-// in progress; with none in progress it is kept for the next tech started,
-// which never starts with more than its price. It returns the line to say
-// what it did ("" when nothing was given): the share of the tech in progress
-// it gave ("12% of Banking"), that it finished the tech, or that it is kept;
-// it reads after "Gained".
+// in progress, at most half that tech's price (Research.Grant). With no tech
+// in progress it is lost, and the log says so. It returns the line to say
+// what it did ("" when nothing landed): the share of the tech in progress it
+// gave ("12% of Banking") or that it finished the tech; it reads after
+// "Gained". When the cap cut the gift, the log says the scholars gained some
+// ground.
 func (ge *GameEngine) grantResearch(work float64) string {
 	if work <= 0 {
 		return ""
 	}
 	key := ge.Research.currentTech
 	if key == "" {
-		ge.Research.Grant(work)
-		if ge.clampHead() > 0 {
-			return "a head start on the next tech (part is lost: a head start never exceeds the price of the dearest tech you can start now)"
-		}
-		return "a head start on the next tech"
+		ge.addLog("info", "Your scholars had nothing to study, so the insight was lost.")
+		return ""
 	}
 	def := ge.Research.defs[key]
 	before := ge.Research.progress
 	ge.Stats.ResearchWork += work
 	ge.Milestones.researchDone = ge.Stats.ResearchWork
-	_, completed := ge.Research.Grant(work)
+	landed, completed := ge.Research.Grant(work)
+	if landed < work {
+		ge.addLog("info", fmt.Sprintf("Your scholars gained some ground on %s.", def.Name))
+	}
 	if completed != "" {
 		ge.finishResearch(completed)
 		return fmt.Sprintf("enough to complete %s", def.Name)
@@ -404,30 +405,6 @@ func (ge *GameEngine) grantResearch(work float64) string {
 		return ""
 	}
 	return fmt.Sprintf("%s of %s", shareOfTech((ge.Research.progress-before)/def.Cost), def.Name)
-}
-
-// headCap is the most a held head start may be worth: the price of the
-// dearest tech that could be started now.
-func (ge *GameEngine) headCap() float64 {
-	return ge.Research.HeadCap(ge.age, ge.progress.GetAgeOrder())
-}
-
-// headHeld is the head start the town holds, never above headCap. Safe under
-// the read lock (it changes nothing).
-func (ge *GameEngine) headHeld() float64 {
-	return min(ge.Research.head, ge.headCap())
-}
-
-// clampHead brings the head start held down to headCap and returns what it
-// cut off (lost).
-func (ge *GameEngine) clampHead() float64 {
-	capped := ge.headCap()
-	if ge.Research.head <= capped {
-		return 0
-	}
-	lost := ge.Research.head - capped
-	ge.Research.head = capped
-	return lost
 }
 
 // shareOfTech is a fraction as a percent, "12%" (under 1% as "under 1%").
@@ -562,7 +539,7 @@ func (ge *GameEngine) loadResearch(save *GameSave) {
 	if current != "" && rs.TotalTicks > 0 {
 		paidAndWaiting, current = current, ""
 	}
-	ge.Research.LoadState(rs.Researched, current, rs.Progress, rs.Slowed, rs.HeadStart)
+	ge.Research.LoadState(rs.Researched, current, rs.Progress, rs.Slowed)
 	if paidAndWaiting != "" {
 		if _, ok := ge.Research.defs[paidAndWaiting]; ok {
 			ge.Research.researched[paidAndWaiting] = true
@@ -570,7 +547,6 @@ func (ge *GameEngine) loadResearch(save *GameSave) {
 			ge.loadedCompletions = append(ge.loadedCompletions, paidAndWaiting)
 		}
 	}
-	ge.clampHead()
 	ge.scholarShare, ge.scholarShareSet = 100, false
 	if save.ScholarShare != nil && *save.ScholarShare >= 0 && *save.ScholarShare < 100 {
 		ge.scholarShare, ge.scholarShareSet = *save.ScholarShare, true
@@ -578,15 +554,18 @@ func (ge *GameEngine) loadResearch(save *GameSave) {
 }
 
 // turnKnowledgeIntoWork is what a save from before the scholars does with the
-// knowledge it held: the stock becomes work for the tech in progress, or a
-// head start for the next tech started (never more than that tech's price,
-// the rest is lost). A tech that was paid for and waiting completes on load
-// (loadResearch), so it is the next tech that takes the head start.
+// knowledge it held: the stock becomes a gift of work for the tech in progress
+// (Research.Grant: at most half that tech's price, the rest is lost). With no
+// tech in progress it is lost. A tech that was paid for and waiting completes
+// on load (loadResearch) before this runs.
 func (ge *GameEngine) turnKnowledgeIntoWork(save *GameSave) {
 	stock := save.Resources["knowledge"]
 	if stock > 0 {
-		ge.Research.Grant(stock)
-		ge.clampHead()
+		if ge.Research.currentTech == "" {
+			ge.addLog("info", "Your scholars had nothing to study, so the insight was lost.")
+		} else if landed, _ := ge.Research.Grant(stock); landed < stock {
+			ge.addLog("info", fmt.Sprintf("Your scholars gained some ground on %s.", ge.Research.defs[ge.Research.currentTech].Name))
+		}
 	}
 	for _, key := range ge.loadedCompletions {
 		ge.addLog(LogRoutine, fmt.Sprintf("Research complete: %s.", ge.rules.Name(rules.KindTech, key)))

@@ -79,7 +79,7 @@ To line techs up, add them to the [Build Plan](plan.md) with `plan research <tec
 
 The plan is the only research queue: the game never chooses what you research next. `research list` shows the queue in order. The techs you plan are remembered with the plan, and [Plan Template](prestige.md#plan-template) plans them again on later runs after your first prestige, in the age you planned them in.
 
-**A head start.** Work that has no tech to land on is kept for the next tech you start, never more than that tech's price. `research list` shows it (`Head start: 12% of Banking`).
+**Nothing carries over.** Work past a finished tech's price is discarded, and the next tech you start begins at zero. Research that arrives while nothing is in progress is lost.
 
 ---
 
@@ -124,7 +124,7 @@ The Stats panel lists each of these that you have. See [Technologies](technologi
 
 ## What Used to Give Knowledge
 
-Events, loot, milestone rewards, the Ancient Cache and two trade routes (the colonial exchange and the cotton exchange) still give research. A gain is **progress on the tech in progress**, worth the minutes of your scholars' work it is sized in. With nothing in progress it is a **head start** on the next tech you start. It is never more than that tech's work, and a gain that fills the bar finishes the tech. The log says which: `Gained 12% of Banking.`, `Gained enough to complete Banking.` or `Gained a head start on the next tech.`
+Events, loot, milestone rewards, the Ancient Cache and two trade routes (the colonial exchange and the cotton exchange) still give research. A gain is **progress on the tech in progress**, worth the minutes of your scholars' work it is sized in. A gain adds at most half of that tech's price, so a big one cannot finish a tech by itself unless the bar is already past halfway. With nothing in progress the gain is lost. The log says which: `Gained 12% of Banking.`, `Gained enough to complete Banking.` or `Your scholars had nothing to study, so the insight was lost.` When the cap cut a gain, the log adds `Your scholars gained some ground on Banking.`
 
 ---
 
@@ -134,9 +134,9 @@ Three epoch transition events affect research directly:
 
 | Event | Type | Effect |
 |-------|------|--------|
-| The Grand Discovery | Good (Major) | Completes up to 3 techs of your current age or earlier that you haven't researched yet, free |
+| The Grand Discovery | Good (Major) | Completes up to 3 techs you could start now (age reached, prerequisites done), cheapest first, free |
 | Political Instability | Challenging | Research speed -30% for a spell (plus 60% of your faith lost) |
-| The Dark Age | Challenging | Cancels your current research (its work is lost), takes the head start you had kept, then research speed -40% for a spell |
+| The Dark Age | Challenging | Cancels your current research (its work is lost), then research speed -40% for a spell |
 
 The Dark Age is the most punishing event for a research-heavy civilization. High faith lowers the chance of every bad epoch event, the Dark Age included. A [culture strength](epochs.md#culture-strength) over 40% at an epoch transition makes Major good events like The Grand Discovery possible. See [Faith](faith.md) and [Epochs](epochs.md).
 
@@ -152,7 +152,7 @@ The Transcendent Age has no knowledge building of its own. Your scholars from th
 
 ## Old Saves
 
-A save made before scholars loads clean. Stored knowledge becomes a head start. A tech that was paid for and waiting out its time completes on load. Workers on knowledge buildings return to the idle pool. The log says once: `Knowledge is no longer stored. Your scholars now work on one technology at a time.` See [Saving and Loading](saving-and-loading.md).
+A save made before scholars loads clean. Stored knowledge becomes a gift of work for the tech in progress (at most half its price), and is lost when nothing is in progress. A tech that was paid for and waiting out its time completes on load. Workers on knowledge buildings return to the idle pool. The log says once: `Knowledge is no longer stored. Your scholars now work on one technology at a time.` See [Saving and Loading](saving-and-loading.md).
 
 ---
 

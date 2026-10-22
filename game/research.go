@@ -1,6 +1,7 @@
 package game
 
 import (
+	"cmp"
 	"fmt"
 	"maps"
 	"slices"
@@ -30,10 +31,6 @@ type ResearchManager struct {
 	// slowed marks an Ancient Memory research: the cache recalls a
 	// half-forgotten technology, so its scholars do half the work a tick.
 	slowed bool
-	// head is work done ahead of any tech, kept for the next tech started: a
-	// gain that arrived with none in progress. A tech starts with it, never
-	// with more than its price; the rest is lost.
-	head float64
 	// bonuses is what the researched techs come to together, by what each
 	// effect changes: its kind and its target (config.TechEffectKey). Output
 	// of gold and gold a tick are two keys, so neither can leak into the
@@ -82,7 +79,7 @@ func (rm *ResearchManager) Rebind(set *rules.Set) {
 
 // StartResearch begins researching a technology. A tech can be started
 // whenever its age and prerequisites allow: it has no price to afford. It
-// starts with the head start the town holds, never more than its price.
+// starts at zero progress.
 func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder map[string]int) error {
 	def, ok := rm.defs[key]
 	if !ok {
@@ -115,12 +112,12 @@ func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder
 	return nil
 }
 
-// begin puts tech key in progress with the head start the town holds.
+// begin puts tech key in progress at zero progress: research never carries
+// over from one tech to the next.
 func (rm *ResearchManager) begin(key string, slowed bool) {
 	rm.currentTech = key
 	rm.slowed = slowed
-	rm.progress = min(rm.head, rm.defs[key].Cost)
-	rm.head = 0
+	rm.progress = 0
 }
 
 // orList joins names as a choice: "Map Making or Boatbuilding", "A, B or C".
@@ -215,8 +212,7 @@ func (rm *ResearchManager) indexPools() {
 
 // AddWork adds work the scholars did to the tech in progress and completes
 // it when its price is reached. Returns the completed tech key, or "" if
-// none completed. Work past the price is kept as a head start for the next
-// tech.
+// none completed. Work past the price is discarded.
 func (rm *ResearchManager) AddWork(w float64) string {
 	if rm.currentTech == "" {
 		return ""
@@ -228,36 +224,20 @@ func (rm *ResearchManager) AddWork(w float64) string {
 }
 
 // CompleteIfFull completes the tech in progress when its progress has reached
-// its price, whatever brought it there: work, a grant, or a head start that
-// covered the price when the tech was started. It is the one way a tech
-// completes. Returns the tech completed, "" if none was.
+// its price, whatever brought it there: work or a grant. It is the one way a
+// tech completes. Returns the tech completed, "" if none was.
 func (rm *ResearchManager) CompleteIfFull() string {
 	if rm.currentTech == "" {
 		return ""
 	}
-	price := rm.defs[rm.currentTech].Cost
-	if rm.progress < price {
+	if rm.progress < rm.defs[rm.currentTech].Cost {
 		return ""
 	}
-	return rm.complete(rm.progress - price)
+	return rm.complete()
 }
 
-// HeadCap is the most a head start may be worth while it is held: the price
-// of the dearest tech that could be started now (its age reached, its
-// prerequisites met, not yet researched). 0 when there is none.
-func (rm *ResearchManager) HeadCap(currentAge string, ageOrder map[string]int) float64 {
-	top := 0.0
-	for _, def := range rm.defs {
-		if rm.researched[def.Key] || ageOrder[def.Age] > ageOrder[currentAge] || !def.PrereqsMet(rm.IsResearched) {
-			continue
-		}
-		top = max(top, def.Cost)
-	}
-	return top
-}
-
-// complete finishes the tech in progress; over is the work past its price.
-func (rm *ResearchManager) complete(over float64) string {
+// complete finishes the tech in progress. Work past its price is discarded.
+func (rm *ResearchManager) complete() string {
 	done := rm.currentTech
 	rm.researched[done] = true
 	// Apply effects as permanent bonuses
@@ -265,24 +245,22 @@ func (rm *ResearchManager) complete(over float64) string {
 	rm.currentTech = ""
 	rm.progress = 0
 	rm.slowed = false
-	rm.head += max(over, 0)
 	return done
 }
 
 // Grant adds work that did not come from the scholars' tick (an event, loot,
-// a milestone). It goes to the tech in progress; with none in progress it is
-// kept as a head start for the next tech started (never more than that
-// tech's price). It returns the work that landed on the tech in progress
-// (0 when it was kept), and the tech completed by it, if any.
+// a milestone). It goes to the tech in progress, and at most half that tech's
+// price lands: the rest is cut off. So a gift completes the tech only when
+// progress was already past half. With no tech in progress the work is lost.
+// It returns the work that landed (0 when none did) and the tech completed by
+// it, if any.
 func (rm *ResearchManager) Grant(w float64) (landed float64, completed string) {
-	if w <= 0 {
+	if w <= 0 || rm.currentTech == "" {
 		return 0, ""
 	}
-	if rm.currentTech == "" {
-		rm.head += w
-		return 0, ""
-	}
-	return w, rm.AddWork(w)
+	landed = min(w, rm.defs[rm.currentTech].Cost/2)
+	rm.progress += landed
+	return landed, rm.CompleteIfFull()
 }
 
 // CancelResearch cancels current research; the work done on it is lost.
@@ -297,40 +275,35 @@ func (rm *ResearchManager) CancelResearch() (string, bool) {
 	return tech, true
 }
 
-// ForceCompleteN instantly completes up to n unresearched techs available in
-// the current age. Used by the "Grand Discovery" good epoch event to give the
-// player a few free techs without queuing them. Any in-progress research that
-// gets completed by this call is also cleared to avoid a stale state where
-// currentTech is already in the researched map.
-// Returns the keys of techs that were completed.
-func (rm *ResearchManager) ForceCompleteN(n int, currentAge string, ageOrder map[string]int) []string {
-	var completed []string
-	for _, key := range sortedKeys(rm.defs) {
+// StartableTechs lists the techs the player could start right now: the age
+// reached, the prerequisites met (every one, and one of the either-or group),
+// not yet researched. Cheapest first, ties by key.
+func (rm *ResearchManager) StartableTechs(currentAge string, ageOrder map[string]int) []string {
+	var keys []string
+	for _, key := range rm.order {
 		def := rm.defs[key]
-		if len(completed) >= n {
-			break
-		}
-		if rm.researched[key] {
+		if rm.researched[key] || ageOrder[def.Age] > ageOrder[currentAge] || !def.PrereqsMet(rm.IsResearched) {
 			continue
 		}
-		if ageOrder[def.Age] > ageOrder[currentAge] {
-			continue
-		}
-		rm.researched[key] = true
-		completed = append(completed, key)
+		keys = append(keys, key)
 	}
-	if len(completed) > 0 {
-		rm.rebuildBonuses()
+	slices.SortStableFunc(keys, func(a, b string) int {
+		return cmp.Compare(rm.defs[a].Cost, rm.defs[b].Cost)
+	})
+	return keys
+}
+
+// Learn marks tech key researched, for a free tech the Grand Discovery gives.
+// The caller finishes it (finishResearch). If key is the tech in progress,
+// its progress is dropped with it.
+func (rm *ResearchManager) Learn(key string) {
+	rm.researched[key] = true
+	if rm.currentTech == key {
+		rm.currentTech = ""
+		rm.progress = 0
+		rm.slowed = false
 	}
-	// Also cancel any in-progress research to avoid state inconsistency
-	if len(completed) > 0 && rm.currentTech != "" {
-		if rm.researched[rm.currentTech] {
-			rm.currentTech = ""
-			rm.progress = 0
-			rm.slowed = false
-		}
-	}
-	return completed
+	rm.rebuildBonuses()
 }
 
 // IsResearched returns whether a tech has been completed
@@ -482,7 +455,6 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 		CurrentTechName: currentName,
 		Progress:        rm.progress,
 		Price:           rm.currentPrice(),
-		HeadStart:       min(rm.head, rm.HeadCap(currentAge, ageOrder)),
 		TotalResearched: len(rm.researched),
 		Bonuses:         rm.GetBonuses(),
 		Flat:            rm.byTarget(config.EffectFlatOutput),
@@ -509,7 +481,7 @@ func (rm *ResearchManager) currentPrice() float64 {
 // Bonuses are always recomputed by replaying the effect list of every
 // researched tech — this ensures correct values even if tech definitions
 // changed between versions.
-func (rm *ResearchManager) LoadState(researched []string, currentTech string, progress float64, slowed bool, head float64) {
+func (rm *ResearchManager) LoadState(researched []string, currentTech string, progress float64, slowed bool) {
 	rm.researched = make(map[string]bool)
 	for _, key := range researched {
 		rm.researched[key] = true
@@ -518,5 +490,4 @@ func (rm *ResearchManager) LoadState(researched []string, currentTech string, pr
 	rm.currentTech = currentTech
 	rm.progress = max(progress, 0)
 	rm.slowed = slowed && currentTech != ""
-	rm.head = max(head, 0)
 }

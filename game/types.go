@@ -415,9 +415,8 @@ type ResearchState struct {
 	CurrentTech     string
 	CurrentTechName string
 	// Progress is the work done on the tech in progress and Price the work
-	// it needs (its price); both 0 with none in progress. HeadStart is work
-	// kept for the next tech started.
-	Progress, Price, HeadStart float64
+	// it needs (its price); both 0 with none in progress.
+	Progress, Price float64
 	// PerTick is the work the researching scholars do each tick, with every
 	// bonus. TicksLeft and TotalTicks are the time the tech in progress has
 	// left and takes at that work (0 when no scholar is researching: it has

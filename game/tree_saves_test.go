@@ -215,7 +215,7 @@ func TestTreeOldSaveFinishesItsResearch(t *testing.T) {
 // prerequisite the tree now asks for missing, ticks to its end.
 func TestResearchInProgressOutOfOrderFinishes(t *testing.T) {
 	ge := NewGameEngine()
-	ge.Research.LoadState(treeFixtureTechs, "alchemy", 0, false, 0)
+	ge.Research.LoadState(treeFixtureTechs, "alchemy", 0, false)
 	if def, _ := ge.rules.Tech("alchemy"); def.PrereqsMet(ge.Research.IsResearched) {
 		t.Fatal("Alchemy's prerequisites are met: nothing is out of order")
 	}
