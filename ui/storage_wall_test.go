@@ -136,8 +136,8 @@ func TestBuildingsPanelStashNextCopyFits(t *testing.T) {
 	all["stash"] = 4
 	eng.Buildings.LoadCounts(all)
 	st := eng.GetState()
-	if got := st.Buildings["stash"].NextCost["wood"]; got != 861 {
-		t.Fatalf("staging: the sixth Stash costs %v wood, want 861", got)
+	if got := st.Buildings["stash"].NextCost["wood"]; got != 741 {
+		t.Fatalf("staging: the sixth Stash costs %v wood, want 741", got)
 	}
 	if store := st.Resources["wood"].Storage; store < st.Buildings["stash"].NextCost["wood"] {
 		t.Fatalf("the sixth Stash costs %v wood but store holds %v", st.Buildings["stash"].NextCost["wood"], store)

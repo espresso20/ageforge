@@ -35,11 +35,11 @@ func TestLateGameStoresPrintInThreeDigits(t *testing.T) {
 		}
 		largest = max(largest, size)
 	}
-	if got := FormatNumber(smallest); got != "150" {
-		t.Errorf("the smallest store prints %q, want 150", got)
+	if got := FormatNumber(smallest); got != "130" {
+		t.Errorf("the smallest store prints %q, want 130", got)
 	}
-	if got := FormatNumber(largest); got != "72Qi" {
-		t.Errorf("the largest store prints %q, want 72Qi", got)
+	if got := FormatNumber(largest); got != "62Qi" {
+		t.Errorf("the largest store prints %q, want 62Qi", got)
 	}
 	for copies := 1; copies <= 40; copies++ {
 		for _, size := range []float64{smallest, largest} {
