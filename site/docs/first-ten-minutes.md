@@ -57,15 +57,15 @@ Builds run at the same time, not one after another, so start each one as soon as
 
 ## Step 3: Watch your workers arrive
 
-Once a hut stands and your camps are built, workers arrive on their own. The game recruits into empty worker slots while housing and food allow, and puts each new worker to work: within seconds your camps are staffed. The first time, the log says so.
+Once a hut stands and your camps are built, workers arrive on their own. Your population grows toward your housing while food allows, and each new worker takes an empty camp slot first: within a few minutes your camps are staffed. Workers past the slots wait in the reserve. The first time, the log says so.
 
 ```
 workers
 ```
 
-`workers` opens the Workers panel: your population, idle count and food use, and the **Roster** section, which says what auto-recruit is doing (recruiting, no housing left, every worker slot filled, waiting for food) and how your workers are spread across the domains. Every worker eats food each tick, so the game recruits only while your food rate stays positive with a margin to spare. More huts make room for more workers, and more buildings give them more slots to fill.
+`workers` opens the Workers panel: your population, the reserve and food use, what holds your population back, and the **Roster** section, which says what auto-recruit is doing (growing, held by housing, held by food) and how your workers are spread across the domains. Every worker eats food each tick, so your population grows only while your food rate stays positive with a margin to spare. More huts make room for more workers, and more buildings give them more slots to fill.
 
-You don't pick a domain for a worker. It takes the class of the building it works in: a worker on a `gathering_camp` is a Forager, one on a `story_circle` a Shaman. Type `status` for population, idle count and food drain.
+You don't pick a domain for a worker. It takes the class of the building it works in: a worker on a `gathering_camp` is a Forager, one on a `story_circle` a Shaman. Type `status` for population, the idle count (your reserve) and food drain.
 
 ---
 
@@ -88,7 +88,7 @@ assign story_circle 1
 workers auto-recruit off
 ```
 
-The Workers box in the sidebar should show **Idle: 0**. The game recruits only into empty slots and puts idle workers to work within seconds; after a worker command of yours, it waits a minute first. See [The Roster](workers-and-domains.md#the-roster) for the details.
+The Workers box in the sidebar shows your **Reserve**: workers without a slot. They take any slot that opens within seconds; after a worker command of yours, the game waits a minute first. See [The Roster](workers-and-domains.md#the-roster) for the details.
 
 ---
 
@@ -189,7 +189,7 @@ Before you advance, you should have:
 - [ ] 5 story circles
 - [ ] The Sacred Grove built
 - [ ] Staffed gathering camps and wood camps
-- [ ] 10+ workers, none idle
+- [ ] 10+ workers, every slot staffed
 - [ ] Food rate positive by at least +3/tick
 - [ ] Tool Making researched (optional)
 
