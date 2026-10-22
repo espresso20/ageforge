@@ -493,16 +493,21 @@ func TestFactionsOverlayWiring(t *testing.T) {
 	}
 }
 
-// TestExpeditionsProvider_ShowsSocietyStatus verifies the scouting surface says
+// expeditionReportText is the Expedition Report as text at the design size.
+func expeditionReportText(state game.GameState) string {
+	return renderExpedition(state, expView{report: true}, 100, 30).String()
+}
+
+// TestExpeditionReport_ShowsSocietyStatus verifies the scouting surface says
 // whether scouting is being done for you. It was silent on automation entirely,
 // so a built Geographic Society was invisible on the one panel about scouting.
-func TestExpeditionsProvider_ShowsSocietyStatus(t *testing.T) {
+func TestExpeditionReport_ShowsSocietyStatus(t *testing.T) {
 	t.Run("not built", func(t *testing.T) {
-		out := expeditionsProvider(game.GameState{}, panelWidth)
+		out := expeditionReportText(game.GameState{})
 		if !strings.Contains(out, "A Geographic Society scouts automatically. A later age brings it.") {
 			t.Errorf("expeditions panel should hint at the Society without naming its age, got:\n%s", out)
 		}
-		if next := expeditionsProvider(game.GameState{Age: "colonial_age"}, panelWidth); !strings.Contains(next, "The Industrial Age brings it.") {
+		if next := expeditionReportText(game.GameState{Age: "colonial_age"}); !strings.Contains(next, "The Industrial Age brings it.") {
 			t.Errorf("one age before the Society the hint should name its age, got:\n%s", next)
 		}
 	})
@@ -511,7 +516,7 @@ func TestExpeditionsProvider_ShowsSocietyStatus(t *testing.T) {
 		state.Military.AutoExpedition = game.AutoExpeditionState{
 			Active: true, TicksLeft: 77, Interval: 192, Count: 1, Assigned: 3, Capacity: 5,
 		}
-		line := lineContaining(expeditionsProvider(state, panelWidth), "Geographic Society")
+		line := lineContaining(expeditionReportText(state), "Geographic Society")
 		if !strings.Contains(line, "~2m 34s") {
 			t.Errorf("expeditions panel should show the next dispatch in wall-clock, got %q", line)
 		}
@@ -521,7 +526,7 @@ func TestExpeditionsProvider_ShowsSocietyStatus(t *testing.T) {
 		state.Military.AutoExpedition = game.AutoExpeditionState{
 			Active: true, Starved: true, Interval: 192, Count: 1,
 		}
-		line := lineContaining(expeditionsProvider(state, panelWidth), "Geographic Society")
+		line := lineContaining(expeditionReportText(state), "Geographic Society")
 		if !strings.Contains(line, "cannot pay the expedition cost") {
 			t.Errorf("expeditions panel should flag a starved Society, got %q", line)
 		}

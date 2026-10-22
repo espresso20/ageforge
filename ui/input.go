@@ -1803,24 +1803,55 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 }
 
 // cmdExpedition handles the `expedition`/`exp` command and its alias
-// `campaign`: the mission board. No args (or "list") prints the board, nine
-// offers numbered short, then long, then grand; a number sends that offer.
+// `campaign`. Bare, it opens the Expeditions panel; `list` prints the board;
+// anything else is part of an offer's name, and sends that offer when it
+// names just one. A bare number still sends the offer at that place on the
+// board, without a word.
 func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
 	engine.EnsureMissionBoard()
 	if len(args) < 1 {
 		return CommandResult{OverlayName: "expedition"}
 	}
-	if strings.ToLower(args[0]) == "list" {
+	if len(args) == 1 && strings.ToLower(args[0]) == "list" {
 		return cmdMissionBoard(engine)
 	}
-	n, err := strconv.Atoi(strings.TrimSpace(args[0]))
-	if err != nil || len(args) > 1 {
-		return CommandResult{Message: "Usage: expedition <number>. Type expedition list to see the board.", Type: "error"}
+	input := strings.Join(args, " ")
+	n, err := strconv.Atoi(strings.TrimSpace(input))
+	if err != nil {
+		var titles []string
+		var numbers []int
+		for _, slot := range engine.GetState().Military.Board {
+			if slot.Offer != nil {
+				titles, numbers = append(titles, slot.Offer.Name), append(numbers, slot.Offer.Number)
+			}
+		}
+		hits := matchOffers(titles, input)
+		switch {
+		case len(hits) == 0:
+			return CommandResult{Message: fmt.Sprintf("No offer called %q. Type expedition list to see the board.", input), Type: "error"}
+		case len(hits) > 1 && !sameTitles(titles, hits):
+			names := make([]string, len(hits))
+			for i, h := range hits {
+				names[i] = titles[h]
+			}
+			return CommandResult{Message: "Which one? " + strings.Join(names, ", ") + ". Type more of the name.", Type: "warning"}
+		}
+		n = numbers[hits[0]]
 	}
 	if err := engine.LaunchExpedition(n); err != nil {
 		return errorResult(err)
 	}
 	return CommandResult{Type: "success"} // the engine logs the launch
+}
+
+// sameTitles reports whether the titles at hits are all one title.
+func sameTitles(titles []string, hits []int) bool {
+	for _, h := range hits {
+		if titles[h] != titles[hits[0]] {
+			return false
+		}
+	}
+	return true
 }
 
 // cmdCampaign handles `campaign`, an alias of `expedition`.
@@ -1829,8 +1860,8 @@ func cmdCampaign(args []string, engine *game.GameEngine) CommandResult {
 }
 
 // cmdMissionBoard prints the mission board as plain lines, with the missions
-// under way as a footer: each offer's number, title, length, odds, haul and
-// cost. The board panel is a later change.
+// under way as a footer: each offer's title, length, odds, haul and cost.
+// The offers carry no numbers; `expedition <name>` sends one.
 func cmdMissionBoard(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	mil := state.Military
@@ -1845,7 +1876,7 @@ func cmdMissionBoard(engine *game.GameEngine) CommandResult {
 			lines = append(lines, "[yellow]"+tierHeading(tier, state)+":[-]")
 		}
 		if slot.Offer == nil {
-			lines = append(lines, fmt.Sprintf("  [gray]%d. (taken: a new offer in %s)[-]", slot.Number, formatTicks(slot.RefillTicks, state)))
+			lines = append(lines, fmt.Sprintf("  [gray](taken: a new offer in %s)[-]", formatTicks(slot.RefillTicks, state)))
 			continue
 		}
 		lines = append(lines, offerLine(*slot.Offer, state))
@@ -1871,9 +1902,9 @@ func tierHeading(tier string, state game.GameState) string {
 	return words.Tiers[kind]
 }
 
-// offerLine is one offer as a plain line: whether it can be sent, its number,
-// title, length, odds, haul and cost. A Legendary offer's title is gold with a
-// star.
+// offerLine is one offer as a plain line: whether it can be sent, its
+// title, length, odds, haul and cost. A Legendary offer's title is gold with
+// a star.
 func offerLine(exp game.ExpeditionInfo, state game.GameState) string {
 	mark := "[red]✗[-]"
 	if exp.CanLaunch {
@@ -1883,8 +1914,8 @@ func offerLine(exp game.ExpeditionInfo, state game.GameState) string {
 	if exp.Rare {
 		title = "[gold]★ " + title + "[-]"
 	}
-	line := fmt.Sprintf("  %s %d. %s · %.0f min · %.0f%% odds · haul %s · cost %s",
-		mark, exp.Number, title, exp.LengthMinutes, exp.SuccessChance*100, expeditionHaul(exp, state), expeditionOfferCost(exp, state))
+	line := fmt.Sprintf("  %s %s · %.0f min · %.0f%% odds · haul %s · cost %s",
+		mark, title, exp.LengthMinutes, exp.SuccessChance*100, expeditionHaul(exp, state), expeditionOfferCost(exp, state))
 	if exp.Tier == game.TierGrand {
 		if exp.Grand == game.GrandMilitary {
 			line += fmt.Sprintf(" · military · %d %s", exp.SoldiersNeeded, pluralize("soldier", exp.SoldiersNeeded))

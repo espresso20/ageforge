@@ -131,9 +131,12 @@ type Dashboard struct {
 	researchPanel *researchPanel
 	// badgePanel is the badge case (badge_panel.go).
 	badgePanel *badgePanel
-	miniMap    *miniMap
-	mapDock    *mapDock
-	mapLocal   *mapSettings
+	// expPanel is the Expeditions panel: the Ready Room and the Expedition
+	// Report (expedition_panel.go).
+	expPanel *expeditionPanel
+	miniMap  *miniMap
+	mapDock  *mapDock
+	mapLocal *mapSettings
 	// icons is the guided icons check (icons.go).
 	icons *iconsFlow
 	// mapOpen is set while the Map panel is open, so the refresh loop
@@ -159,6 +162,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		mapPanel:      newMapPanel(mv),
 		researchPanel: newResearchPanel(),
 		badgePanel:    newBadgePanel(),
+		expPanel:      newExpeditionPanel(),
 		miniMap:       newMiniMap(mv),
 		pages:         pages,
 		stopCh:        make(chan struct{}),
@@ -189,7 +193,12 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.badgePanel.toPrompt = d.researchPanel.toPrompt
 	d.overlayMgr.RegisterWidget("badges", "Badges", d.badgePanel.open, d.badgePanel.update, true)
 	d.overlayMgr.Register("army", "Army", militaryProvider)
-	d.overlayMgr.Register("expedition", "Expeditions", expeditionsProvider)
+	// The Expeditions panel leaves the keyboard with the command bar too.
+	d.expPanel.engine = d.engine
+	d.expPanel.settings = d.mapSettings
+	d.expPanel.prompt = d.researchPanel.prompt
+	d.expPanel.toPrompt = d.researchPanel.toPrompt
+	d.overlayMgr.RegisterWidget("expedition", "Expeditions", d.expPanel.open, d.expPanel.update, true)
 	d.overlayMgr.Register("trade", "Trade routes", tradeProvider)
 	// The Factions panel, under two names pointing at one provider (the
 	// citymap/map precedent below). "factions" is the primary — it is what the
@@ -539,6 +548,12 @@ func (d *Dashboard) build() {
 			(d.badgePanel.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && d.badgePanel.closeCard()) {
 			return nil
 		}
+		// The open Expeditions panel, where Esc takes back the question to
+		// send a party first.
+		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "expedition" && d.inputField.HasFocus() &&
+			(d.expPanel.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && d.expPanel.closeConfirm()) {
+			return nil
+		}
 		switch event.Key() {
 		case resourcePageKey:
 			// The Resources box's next page, when it has more rows than it
@@ -739,13 +754,16 @@ func (d *Dashboard) StartUpdates() {
 				// is enough, since its frame counter runs on the clock.
 				// So does the badge case, while it shows a badge that moves,
 				// and a theme with an ambient effect.
-				if d.mapOpen.Load() || d.badgePanel.moving.Load() || d.fxOn.Load() {
+				if d.mapOpen.Load() || d.badgePanel.moving.Load() || d.expPanel.moving.Load() || d.fxOn.Load() {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
 						}
 						if d.overlayMgr.ActiveName() != "badges" {
 							d.badgePanel.moving.Store(false)
+						}
+						if d.overlayMgr.ActiveName() != "expedition" {
+							d.expPanel.moving.Store(false)
 						}
 					})
 				}
@@ -1426,7 +1444,7 @@ func (d *Dashboard) submitInput() {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
 		d.updateSidebar(result.OverlayName)
-		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" {
+		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" || result.OverlayName == "expedition" {
 			// The command bar keeps the keyboard while the map is open.
 			d.overlayMgr.FocusOn(d.inputField)
 		}
@@ -1434,6 +1452,9 @@ func (d *Dashboard) submitInput() {
 		// A command typed over the case (map glyphs, motion): show what it
 		// changed now rather than at the next refresh.
 		d.badgePanel.update(d.engine.GetState())
+	} else if d.overlayMgr.ActiveName() == "expedition" {
+		// An offer sent by name: the map shows it gone now.
+		d.expPanel.update(d.engine.GetState())
 	} else if d.overlayMgr.ActiveName() == "techs" {
 		// A command typed over the tree (research <tech>, plan research):
 		// show what it changed now rather than at the next refresh.
