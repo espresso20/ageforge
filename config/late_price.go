@@ -15,6 +15,12 @@ const LatePriceStep = 1.4
 // LatePriceStartAge is the first age on the late-price curve.
 const LatePriceStartAge = "modern_age"
 
+// NewCopyPriceFactor is what every new copy of a building costs, as a multiple
+// of the price it was authored at. Upgrading an older building costs
+// UpgradeShare of a new copy, so the factor is what keeps the upgrade road from
+// shortening the game. Wonders and monuments are not scaled.
+const NewCopyPriceFactor = 1.29
+
 // WonderBuildFactor makes a wonder the long build that ends an age.
 const WonderBuildFactor = 2
 
@@ -57,6 +63,22 @@ func applyLatePriceClimb(defs []BuildingDef) {
 			// A wonder keeps its authored share of its age after prices extend
 			// the stay. Construction queues require whole ticks.
 			defs[i].BuildTicks = int(math.Round(float64(defs[i].BuildTicks) * c))
+		}
+	}
+}
+
+// applyNewCopyPrice multiplies the price of every building that is not a
+// wonder or a monument by NewCopyPriceFactor. It runs on the loaded definitions
+// after the late-age climb, so every reader sees one price. The cost map is
+// cloned first: the authored tables keep their maps between calls.
+func applyNewCopyPrice(defs []BuildingDef) {
+	for i := range defs {
+		if defs[i].Category == "wonder" || defs[i].Category == "monument" {
+			continue
+		}
+		defs[i].BaseCost = maps.Clone(defs[i].BaseCost)
+		for resource, price := range defs[i].BaseCost {
+			defs[i].BaseCost[resource] = price * NewCopyPriceFactor
 		}
 	}
 }

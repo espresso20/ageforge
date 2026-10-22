@@ -55,12 +55,28 @@ func rawHalf(v float64) float64 {
 	return math.Floor(v/2/mag+1e-9) * mag
 }
 
+// newCopyScale is the factor a building's price took on top of the age curve:
+// NewCopyPriceFactor, or 1 for a wonder or a monument.
+func newCopyScale(d BuildingDef) float64 {
+	if d.Category == "wonder" || d.Category == "monument" {
+		return 1
+	}
+	return NewCopyPriceFactor
+}
+
 // TestRawMaterialsCostHalfTheirPartner proves the rule: every building it
 // names carries its raw at half its partner's amount before the late-price
 // curve, nothing else is priced in a raw, and every price in units is what it
-// was. The curve multiplies every part of a price together after this split.
+// was. The curve and NewCopyPriceFactor multiply every part of a price together after
+// this split.
 func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 	defs := BaseBuildings()
+	held := map[string]float64{} // "building/resource" -> the price the cold-start rule held it to
+	heldBuilding := map[string]bool{}
+	for _, c := range ColdStartCaps() {
+		held[c.Building+"/"+c.Resource] = c.After
+		heldBuilding[c.Building] = true
+	}
 	master := rawMasterPrices(t)
 	masterDefs := make([]BuildingDef, len(defs))
 	copy(masterDefs, defs)
@@ -68,7 +84,7 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 		if m, ok := master[d.Key]; ok {
 			masterDefs[i].BaseCost = make(map[string]float64, len(m))
 			for res, cost := range m {
-				masterDefs[i].BaseCost[res] = cost * LatePriceMultiplier(d.RequiredAge)
+				masterDefs[i].BaseCost[res] = cost * LatePriceMultiplier(d.RequiredAge) * newCopyScale(d)
 			}
 		}
 	}
@@ -107,15 +123,16 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 				curve := LatePriceMultiplier(age)
 				live := BuildingByKey()[d.Key]
 				got := live.BaseCost[raw]
-				want := rawHalf(old) * curve
+				factor := newCopyScale(d)
+				want := rawHalf(old) * curve * factor
 				if got != want {
 					t.Errorf("%s (%s) costs %v %s, curve-scaled half of its %v %s is %v", d.Key, age, got, raw, old, partner, want)
 				}
-				if math.Abs(got/curve-old/2) > 0.001*old {
+				if math.Abs(got/curve/factor-old/2) > 0.001*old {
 					t.Errorf("%s: %s %v is not half of pre-curve %v", d.Key, raw, got, old)
 				}
-				if live.BaseCost[partner]+got != old*curve {
-					t.Errorf("%s: %v %s and %v %s add up to %v, not curve-scaled %v", d.Key, live.BaseCost[partner], partner, got, raw, live.BaseCost[partner]+got, old*curve)
+				if math.Abs(live.BaseCost[partner]+got-old*curve*factor) > 1e-9*old*curve*factor {
+					t.Errorf("%s: %v %s and %v %s add up to %v, not curve-scaled %v", d.Key, live.BaseCost[partner], partner, got, raw, live.BaseCost[partner]+got, old*curve*factor)
 				}
 			}
 		}
@@ -135,7 +152,10 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 				if halved[d.Key+"/"+res] {
 					continue // split in two above
 				}
-				want := v * LatePriceMultiplier(d.RequiredAge)
+				want := v * LatePriceMultiplier(d.RequiredAge) * newCopyScale(d)
+				if h, ok := held[d.Key+"/"+res]; ok {
+					want = h
+				}
 				if d.BaseCost[res] != want {
 					t.Errorf("%s: %s is %v, want curve-scaled %v", d.Key, res, d.BaseCost[res], want)
 				}
@@ -159,7 +179,7 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 	for i, d := range defs {
 		a := priceUnits(d.BaseCost, live[d.RequiredAge])
 		b := priceUnits(masterDefs[i].BaseCost, was[d.RequiredAge])
-		if b > 0 && math.Abs(a/b-1) > 1e-9 {
+		if b > 0 && !heldBuilding[d.Key] && math.Abs(a/b-1) > 1e-9 {
 			t.Errorf("%s costs %.9g price units, it cost %.9g", d.Key, a, b)
 		}
 	}

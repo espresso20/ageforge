@@ -1,5 +1,7 @@
 package config
 
+import "math"
+
 // ResourceDef defines a single game resource. There are 26 resources in total,
 // unlocking progressively through the 22 ages.
 //
@@ -20,6 +22,13 @@ type ResourceDef struct {
 	BuiltUnlocks bool
 }
 
+// WoodBaseStorage is the wood a new game stores: the 50 it was authored at times
+// NewCopyPriceFactor, rounded up to a multiple of five. The first Stash is the
+// only way to raise a store, so the first copy has to fit under it with room to
+// spare (TestStash_FirstCopyAffordableWithinBaseWoodCap), and it costs the
+// factor more than it did.
+var WoodBaseStorage = math.Ceil(50*NewCopyPriceFactor/5) * 5
+
 // BaseResources returns all resource definitions
 // Base storage is intentionally low — players must build storage buildings to hold more
 // The slice order is load-bearing (boon pools and a few UI lists walk it), so a
@@ -28,7 +37,7 @@ func BaseResources() []ResourceDef {
 	return []ResourceDef{
 		// Primitive Age (Stone Era)
 		{Name: "Food", Key: "food", BaseStorage: 50, Age: "primitive_age", Description: "Feeds your population"},
-		{Name: "Wood", Key: "wood", BaseStorage: 50, Age: "primitive_age", Description: "Basic building material"},
+		{Name: "Wood", Key: "wood", BaseStorage: WoodBaseStorage, Age: "primitive_age", Description: "Basic building material"},
 		{Name: "Faith", Key: "faith", BaseStorage: 50, Age: "primitive_age", Description: "Spiritual influence. Faith income raises morale"},
 		// Stone Age (Stone Era)
 		{Name: "Stone", Key: "stone", BaseStorage: 50, Age: "stone_age", Description: "Durable building material"},

@@ -86,7 +86,7 @@ Tech Master asks for more techs than the tree holds before the Information Age, 
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| Stone Mason | Build 23 Stone Pits | +10% stone rate |
+| Stone Mason | Build 22 Stone Pits | +10% stone rate |
 | Master Builder | Build 1,000 total structures | -5% build cost |
 | Wonder Builder *(hidden)* | Build 1 wonder | +5% all production |
 | Grand Architect *(hidden)* | Build 1,365 structures (Medieval Age) | -5% build cost, +5% all production |
@@ -218,7 +218,7 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Granary Keeper | Build 5 Granaries (Bronze Age) | +5% food rate |
 | Lumber Operation | Build 25 Wood Camps (Stone Age) | +10% wood rate |
 | Early Builder | Build 250 structures (Bronze Age) | -3% build cost |
-| Mining Syndicate | Build 23 Stone Pits and 10 Iron Mines (Iron Age) | +10% iron rate |
+| Mining Syndicate | Build 22 Stone Pits and 10 Iron Mines (Iron Age) | +10% iron rate |
 | Forge Master | Build 15 Smithies (Iron Age) | +5% iron rate, -3% build cost |
 | Seasoned Builder | Build 500 structures (Iron Age) | -3% build cost |
 | Wonder Empire *(hidden)* | Build 15 wonders (Digital Age) | +15% all production |

@@ -165,7 +165,7 @@ func TestBuildingManager_GetQueueCount(t *testing.T) {
 
 // TestBuildingManager_CostMultiplier is the Fix A unit test: the build_cost
 // factor folded into costMult must scale GetCost/BuildBatchCost and never zero
-// out a positive cost. hut: BaseCost={"wood":14}.
+// out a positive cost. hut: BaseCost={"wood":14 as first written, times the new-copy factor; a charged cost is a whole number}.
 //   - no modifier (default 1.0) → exactly base (14)
 //   - -10% build_cost (costMult 0.90) → floor(14*0.90)=12 (~90% of base)
 //   - extreme stacking clamped to the engine floor (0.10) → floor(14*0.10)=1,
@@ -176,8 +176,8 @@ func TestBuildingManager_CostMultiplier(t *testing.T) {
 	base := bm.defs["hut"].BaseCost["wood"] // 14
 
 	// Default: no build_cost applied.
-	if got := bm.GetCost("hut")["wood"]; got != base {
-		t.Errorf("default costMult: GetCost wood = %v, want base %v", got, base)
+	if got := bm.GetCost("hut")["wood"]; got != math.Floor(base) {
+		t.Errorf("default costMult: GetCost wood = %v, want base %v floored", got, base)
 	}
 
 	// -10% reduction.
@@ -217,8 +217,8 @@ func TestEngine_BuildCostFactorWired(t *testing.T) {
 
 	// No build_cost yet → costMult 1.0 → full base.
 	ge.recalculateRates()
-	if got, _ := ge.Buildings.BuildBatchCost("hut", 1, nil); got["wood"] != base {
-		t.Errorf("no build_cost: charged wood = %v, want base %v", got["wood"], base)
+	if got, _ := ge.Buildings.BuildBatchCost("hut", 1, nil); got["wood"] != math.Floor(base) {
+		t.Errorf("no build_cost: charged wood = %v, want base %v floored", got["wood"], base)
 	}
 
 	// Grant a -10% build_cost reduction via permanentBonuses (the same pool

@@ -43,4 +43,10 @@ const (
 	WonderUnitsPerTownCopy = 8.0
 	// WonderPriceUnits is the price units of its age one wonder costs.
 	WonderPriceUnits = WonderUnitsPerTownCopy * TownCopies
+	// WonderPriceUnitsToday is the same price in the price units of today. A
+	// wonder is set against what the town earns, and earnings did not move when
+	// every new copy took NewCopyPriceFactor, so a wonder keeps its price; the
+	// price units (medians of first-copy prices) did move, and a wonder is that
+	// many fewer of them. WonderPriceUnits is in the units from before.
+	WonderPriceUnitsToday = WonderPriceUnits / NewCopyPriceFactor
 )

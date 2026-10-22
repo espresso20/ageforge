@@ -30,6 +30,13 @@ import (
 //     offline rule), the plan buys the cheapest thing with no limit, and he
 //     advances at the first visit, RefVisitHours apart, after the gate opens.
 //
+// Every player also upgrades (refTables.upgrades, on unless a reading wants
+// "buy new only"): in each age, for each line, the town upgrades as many
+// older copies as the current rung's reference count asks for, or as it holds
+// of older ones if fewer, oldest first. An upgrade costs config.UpgradeShare
+// of the next new copy of the current rung; the older copy is given up and
+// the upgraded one counts as the rung. Storage and knowledge are in no line.
+//
 // An age's length for a player is the first moment the town has made what
 // that player bought. It is an output of the tables, not a target.
 const (
@@ -38,7 +45,7 @@ const (
 	// asks for is the town these players build. Storage is held to the
 	// storage rule's own (config.StorageRuleCopies: refCopies).
 	RefCopies      = config.TownCopies
-	RefWonderUnits = config.WonderPriceUnits
+	RefWonderUnits = config.WonderPriceUnitsToday
 	RefLinger      = 3.0
 	RefAwayRate    = 0.5
 	RefVisitHours  = 8.0
@@ -65,10 +72,15 @@ type refTables struct {
 	base   map[string]float64     // a resource's storage before any building
 	techs  [][]float64            // an age's tech prices, cheapest first
 	defs   map[string]config.BuildingDef
+	// upgrades says the players upgrade older copies (the game's rule). Off,
+	// every copy is bought new: the model as it was before upgrades.
+	upgrades bool
+	rungs    map[string][]config.BuildingDef // a line's rungs, first rung first
+	pos      map[string]int                  // an age's place in the order
 }
 
 func newRefTables() *refTables {
-	t := &refTables{ages: config.Ages(), idx: map[string]int{}, base: map[string]float64{}, defs: map[string]config.BuildingDef{}}
+	t := &refTables{ages: config.Ages(), idx: map[string]int{}, base: map[string]float64{}, defs: map[string]config.BuildingDef{}, upgrades: true}
 	order := make([]string, len(t.ages))
 	for i, a := range t.ages {
 		t.idx[a.Key] = i
@@ -77,6 +89,8 @@ func newRefTables() *refTables {
 	all := config.BaseBuildings()
 	techs := config.Technologies()
 	pos := config.AgePositions(order)
+	t.pos = pos
+	t.rungs = config.LineRungs(all)
 	lv := config.PriceLevelsByAge(all)
 	resources := config.BaseResources()
 	t.byAge = make([][]config.BuildingDef, len(t.ages))
@@ -306,6 +320,15 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 	for _, d := range blds {
 		ref[d.Key] = t.refCount(d)
 	}
+	older, nUp := t.upgradePlan(i, counts, ref)
+	// price is what the next copy of d costs with n held: the upgrade price
+	// while the town still has older copies to upgrade into d.
+	price := func(d config.BuildingDef, n int) (map[string]float64, bool) {
+		if n < nUp[d.Key] {
+			return upgradePrice(copyPrice(d, n)), true
+		}
+		return copyPrice(d, n), false
+	}
 	run := refRun{gate: -1}
 	st := t.state(counts, i, p.speed)
 	stock, wonder, now, next := 0.0, RefWonderUnits, 0.0, 2.0
@@ -337,13 +360,15 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 		now += dt
 		feasible := false
 		for !(met && wonder > 0) {
-			best, bestCost := -1, 0.0
+			best, bestCost, bestUp := -1, 0.0, false
 			blocked := false
 			if p.only != nil && !p.overflow {
 				for _, d := range blds {
-					if d.Category != "storage" && counts[d.Key] < p.only[d.Key] && overCap(copyPrice(d, counts[d.Key]), st.caps) {
-						blocked = true
-						break
+					if d.Category != "storage" && counts[d.Key] < p.only[d.Key] {
+						if pr, _ := price(d, counts[d.Key]); overCap(pr, st.caps) {
+							blocked = true
+							break
+						}
 					}
 				}
 			}
@@ -361,19 +386,28 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 						continue
 					}
 				}
-				price := copyPrice(d, n)
-				if !p.overflow && overCap(price, st.caps) {
+				pr, up := price(d, n)
+				if !p.overflow && overCap(pr, st.caps) {
 					continue
 				}
 				feasible = true
-				if u := units(price, lv); u <= stock && (best < 0 || u < bestCost) {
-					best, bestCost = bi, u
+				if u := units(pr, lv); u <= stock && (best < 0 || u < bestCost) {
+					best, bestCost, bestUp = bi, u, up
 				}
 			}
 			if best < 0 {
 				break
 			}
 			stock -= bestCost
+			if bestUp {
+				// The oldest older copy the town still holds is given up.
+				for _, od := range older[blds[best].Key] {
+					if counts[od.Key] > 0 {
+						counts[od.Key]--
+						break
+					}
+				}
+			}
 			counts[blds[best].Key]++
 			st = t.state(counts, i, p.speed)
 		}
@@ -405,6 +439,55 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 	}
 	run.counts, run.end, run.ticks = counts, st, now
 	return run
+}
+
+// upgradePrice is what upgrading a copy costs when a new copy of its target
+// would ask for newPrice: config.UpgradeShare of each part, a whole number and
+// never nothing (the game's own rounding, BuildingManager.upgradePrice).
+func upgradePrice(newPrice map[string]float64) map[string]float64 {
+	out := make(map[string]float64, len(newPrice))
+	for r, v := range newPrice {
+		out[r] = math.Max(1, math.Floor(float64(v*config.UpgradeShare)))
+	}
+	return out
+}
+
+// upgradePlan works out, for a stay in age i that starts with counts, the
+// older copies each rung of age i can be upgraded from (oldest first, by
+// target key) and how many upgrades the town makes into it: the rung's
+// reference count (ref) or the older copies held, whichever is fewer. Both
+// are empty when the players buy everything new. The line, the rung and which
+// buildings are older are the game's own (config.CurrentRung,
+// config.UpgradeTarget), so the model cannot drift from the engine.
+func (t *refTables) upgradePlan(i int, counts, ref map[string]int) (older map[string][]config.BuildingDef, nUp map[string]int) {
+	older, nUp = map[string][]config.BuildingDef{}, map[string]int{}
+	if !t.upgrades {
+		return older, nUp
+	}
+	age := t.ages[i].Key
+	for _, d := range t.byAge[i] {
+		if !config.InLine(d) {
+			continue
+		}
+		rungs := t.rungs[d.Line()]
+		if cur, ok := config.CurrentRung(rungs, t.pos, age); !ok || cur.Key != d.Key {
+			continue
+		}
+		held := 0
+		for _, od := range rungs {
+			if tg, ok := config.UpgradeTarget(rungs, t.pos, od, age); ok && tg.Key == d.Key && counts[od.Key] > 0 {
+				older[d.Key] = append(older[d.Key], od)
+				held += counts[od.Key]
+			}
+		}
+		sort.SliceStable(older[d.Key], func(a, b int) bool {
+			return older[d.Key][a].LineageTier < older[d.Key][b].LineageTier
+		})
+		if n := min(ref[d.Key], held); n > 0 {
+			nUp[d.Key] = n
+		}
+	}
+	return older, nUp
 }
 
 func overCap(price, caps map[string]float64) bool {

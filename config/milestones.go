@@ -322,15 +322,15 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "food_rate", Value: 0.05},
 			},
 		},
-		// stone_mason: 23 stone pits (it was 30). Stone Pits are built only in
-		// the Stone Age, where the walled store lets 23 stand.
+		// stone_mason: 22 stone pits (it was 30). Stone Pits are built only in
+		// the Stone Age, where the walled store lets 22 stand.
 		{
 			Name: "Stone Mason", Key: "stone_mason",
-			Description:  "Build 23 Stone Pits.",
+			Description:  "Build 22 Stone Pits.",
 			Flavor:       "Thirty pits of honest stone. Your masons can finally stop improvising with mud.",
 			Category:     "builder",
 			MinAge:       "stone_age",
-			MinBuildings: map[string]int{"stone_pit": 23},
+			MinBuildings: map[string]int{"stone_pit": 22},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "stone_rate", Value: 0.10},
 			},
@@ -362,14 +362,14 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.03},
 			},
 		},
-		// mining_syndicate — 23 stone pits (it was 25) + 10 iron mines; iron age
+		// mining_syndicate — 22 stone pits (it was 25) + 10 iron mines; iron age
 		{
 			Name: "Mining Syndicate", Key: "mining_syndicate",
-			Description:  "Build 23 Stone Pits and 10 Iron Mines.",
+			Description:  "Build 22 Stone Pits and 10 Iron Mines.",
 			Flavor:       "Stone and iron in industrial quantities. The hills are getting visibly nervous.",
 			Category:     "builder",
 			MinAge:       "iron_age",
-			MinBuildings: map[string]int{"stone_pit": 23, "iron_mine": 10},
+			MinBuildings: map[string]int{"stone_pit": 22, "iron_mine": 10},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "iron_rate", Value: 0.10},
 			},

@@ -327,9 +327,9 @@ func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
 		}
 		return ge
 	}
-	base := config.ResourceByKey()["food"].BaseStorage
-	if base != 50 || config.ResourceByKey()["wood"].BaseStorage != 50 {
-		t.Fatalf("base food and wood storage are %v and %v, want 50: adjust the test", base, config.ResourceByKey()["wood"].BaseStorage)
+	base := map[string]float64{"food": config.ResourceByKey()["food"].BaseStorage, "wood": config.ResourceByKey()["wood"].BaseStorage}
+	if base["food"] != 50 || base["wood"] != config.WoodBaseStorage {
+		t.Fatalf("base food and wood storage are %v and %v, want 50 and %v: adjust the test", base["food"], base["wood"], config.WoodBaseStorage)
 	}
 
 	ge := fallen(21)
@@ -339,7 +339,7 @@ func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
 		t.Fatalf("the rebuild starts at %vx, want %vx", k, config.CatchUpK)
 	}
 	for _, res := range []string{"food", "wood"} {
-		if got, want := st.Resources[res].Storage, float64(base*config.CatchUpK); got != want {
+		if got, want := st.Resources[res].Storage, float64(base[res]*config.CatchUpK); got != want {
 			t.Errorf("%s storage %v in the first snapshot after a Succumb, want %v (sized before the first tick)", res, got, want)
 		}
 	}
@@ -350,14 +350,14 @@ func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
 	// With starting stock above the base stores: all of it lands, the same
 	// amounts a prestige starts with.
 	ge = fallen(22)
-	withStartingStock(ge, 100, 90)
+	withStartingStock(ge, 100, 150)
 	succumbIn(t, ge, "renaissance_age")
 	st = ge.GetState()
-	if food, wood := st.Resources["food"].Amount, st.Resources["wood"].Amount; food != 115 || wood != 102 {
-		t.Errorf("a Succumb with +100 food and +90 wood starts with %v food and %v wood, want 115 and 102 (it was cut off at %v)", food, wood, base)
+	if food, wood := st.Resources["food"].Amount, st.Resources["wood"].Amount; food != 115 || wood != 162 {
+		t.Errorf("a Succumb with +100 food and +150 wood starts with %v food and %v wood, want 115 and 162 (it was cut off at %v and %v)", food, wood, base["food"], base["wood"])
 	}
 	pr := fallen(22)
-	withStartingStock(pr, 100, 90)
+	withStartingStock(pr, 100, 150)
 	if err := pr.DoPrestige(); err != nil {
 		t.Fatal(err)
 	}

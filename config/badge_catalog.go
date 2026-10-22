@@ -191,7 +191,7 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Tier:  BadgeGold, Rarity: BadgeEpic,
 			Scope: BadgeRun, Event: BadgeEvBuildingBuilt, InAge: "{key}", Counter: "standing_age.{key}",
 			Thresholds: map[string]float64{
-				"primitive_age": 81, "stone_age": 137, "bronze_age": 136, "iron_age": 173, "classical_age": 175,
+				"primitive_age": 81, "stone_age": 135, "bronze_age": 136, "iron_age": 173, "classical_age": 175,
 				"medieval_age": 132, "renaissance_age": 183, "colonial_age": 192, "industrial_age": 163,
 				"victorian_age": 162, "electric_age": 203, "atomic_age": 236, "modern_age": 234,
 				"information_age": 183, "digital_age": 198, "cyberpunk_age": 201, "fusion_age": 150,

@@ -119,7 +119,7 @@ Use it to turn a culture surplus into whatever you're short on, if you can live 
 
 ### What routes are worth
 
-Route payouts are fixed amounts, set per route, and they don't grow with the age. They were sized for a much smaller economy: Colonial Exports pays 150 gold a cycle in an age where a Port costs about 23M gold, and Quantum Trade pays 5K gold in an age where no building costs gold at all (none has since the Digital Age). Harbor and ally bonuses add a percentage to those amounts, which keeps them small. A route's goods are a small help in the Bronze and Iron Ages and close to nothing after that, so don't build for them.
+Route payouts are fixed amounts, set per route, and they don't grow with the age. They were sized for a much smaller economy: Colonial Exports pays 150 gold a cycle in an age where a Port costs about 30M gold, and Quantum Trade pays 5K gold in an age where no building costs gold at all (none has since the Digital Age). Harbor and ally bonuses add a percentage to those amounts, which keeps them small. A route's goods are a small help in the Bronze and Iron Ages and close to nothing after that, so don't build for them.
 
 What a route pays all run long is **opinion**. Each completed cycle adds +1 opinion with every civilization you have met that isn't at war with you, all at once. Local Barter, which costs 10 food a cycle, adds about 70 opinion an hour with each of them on its own, more than any personality drift takes away. Opinion is what opens better deals, alliances and worker loans (see [Factions & Diplomacy](factions.md#opinion-and-status)), and mercantile civilizations warm to you just for having a route running.
 
