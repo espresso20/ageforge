@@ -38,7 +38,7 @@ const (
 	// asks for is the town these players build. Storage is held to the
 	// storage rule's own (config.StorageRuleCopies: refCopies).
 	RefCopies      = config.TownCopies
-	RefWonderUnits = config.WonderPriceUnits
+	RefWonderUnits = config.WonderPriceUnitsToday
 	RefLinger      = 3.0
 	RefAwayRate    = 0.5
 	RefVisitHours  = 8.0

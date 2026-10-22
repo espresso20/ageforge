@@ -38,7 +38,7 @@ func TestLatePriceClimbScalesEveryCostPart(t *testing.T) {
 }
 
 func TestLatePricePaybackAndDealsFollowTheCurve(t *testing.T) {
-	if got, want := MakerPaybackTicks["digital_age"], 40929*LatePriceMultiplier("digital_age"); math.Abs(got-want) > 1e-9 {
+	if got, want := MakerPaybackTicks["digital_age"], 40929*LatePriceMultiplier("digital_age")*NewCopyPriceFactor; math.Abs(got-want) > 1e-9 {
 		t.Errorf("digital maker payback = %g, want %g", got, want)
 	}
 	if got, want := DealPaybackTicks["information_age"], 14935.330237167702*LatePriceMultiplier("information_age"); math.Abs(got-want) > 1e-9 {

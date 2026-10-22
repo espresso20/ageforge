@@ -115,11 +115,17 @@ func TestFirstStorageCopyFitsTheStoreArrivedWith(t *testing.T) {
 // sixth is allowed to be the first that does not. The last copy a town can buy
 // is worked out from the tables here for every storage building; it is where
 // the engine's "at its limit" begins (game/stash_loop_test.go plays the Stash,
-// whose last copy is the fifth: 550 wood held, the sixth costs 574).
+// whose last copy is the fifth: 825 wood held, the sixth costs 861).
 func TestEveryStorageBuildingHasALastCopyAtLeastTheFifth(t *testing.T) {
 	defs, ages := BaseBuildings(), Ages()
-	sizes, store := StorageRuleSizes(defs, ages, 50)
-	last := StorageLastCopy(defs, ages, 50, sizes, store)
+	base := 0.0
+	for _, r := range BaseResources() {
+		if r.Key == "wood" {
+			base = r.BaseStorage
+		}
+	}
+	sizes, store := StorageRuleSizes(defs, ages, base)
+	last := StorageLastCopy(defs, ages, base, sizes, store)
 	n := 0
 	for _, d := range defs {
 		if d.Category != "storage" {
@@ -138,6 +144,6 @@ func TestEveryStorageBuildingHasALastCopyAtLeastTheFifth(t *testing.T) {
 		t.Fatalf("%d storage buildings, %d last copies", n, len(last))
 	}
 	if last["stash"] != 5 {
-		t.Errorf("stash last copy = %d, want 5 (550 wood held, the sixth costs 574)", last["stash"])
+		t.Errorf("stash last copy = %d, want 5 (825 wood held, the sixth costs 861)", last["stash"])
 	}
 }
