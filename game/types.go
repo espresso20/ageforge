@@ -511,6 +511,13 @@ type MilitaryState struct {
 	Board          []BoardSlotInfo
 	CompletedCount int
 	TotalLoot      map[string]float64
+	// Returns is the last missions to come home, newest first (at most
+	// config.MissionReturnsKept). ReturnsMade counts every mission that has
+	// come home this run; ReturnsSeen how many of them the player has seen
+	// on the Expedition Report. The difference is the new ones.
+	Returns     []MissionReturn
+	ReturnsMade int
+	ReturnsSeen int
 	// AutoExpedition is the Geographic Society's standing-orders state. It is
 	// NOT filled by MilitaryManager.Snapshot (which has no engine receiver and
 	// cannot see the buildings or the countdown) — GetState populates it.
@@ -548,7 +555,16 @@ type AutoExpeditionState struct {
 
 // ExpeditionSnapshot represents an active expedition for UI
 type ExpeditionSnapshot struct {
-	Name          string
+	Name string
+	// Place is the place the mission goes to; ExpiresTick is the tick its
+	// offer would have expired (with Name it is the offer's identity, which
+	// the panel's map places the destination from); TotalTicks is its whole
+	// length in ticks, of which TicksLeft remain.
+	Place       string
+	ExpiresTick int
+	TotalTicks  int
+	// Label is the mission's tier name in the age it was sent in.
+	Label         string
 	Tier          string
 	Grand         string
 	Rare          bool
@@ -566,8 +582,14 @@ type ExpeditionInfo struct {
 	Name string
 	// Key is the offer's number on the board as text ("1" to "9"): what
 	// `expedition <number>` takes.
-	Key         string
-	Number      int
+	Key    string
+	Number int
+	// Place is the place the offer goes to. ExpiresTick is the tick it
+	// expires at: it never changes, so with Name it identifies the offer.
+	Place       string
+	ExpiresTick int
+	// Label is the offer's tier name in its age ("Scout", "Trade Trek").
+	Label       string
 	Tier        string
 	Grand       string
 	Rare        bool

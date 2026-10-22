@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"math/rand"
+	"slices"
 
 	"github.com/espresso20/ageforge/rules"
 )
@@ -26,9 +27,11 @@ const failedLootShare = 0.3
 // from, what it cost, and how long is left.
 type ActiveExpedition struct {
 	MissionOffer
-	Soldiers       int                `json:"soldiers,omitempty"`
-	LaunchTick     int                `json:"launch_tick,omitempty"`
-	TicksLeft      int                `json:"ticks_left"`
+	Soldiers   int `json:"soldiers,omitempty"`
+	LaunchTick int `json:"launch_tick,omitempty"`
+	TicksLeft  int `json:"ticks_left"`
+	// TotalTicks is the mission's whole length in ticks when it was sent.
+	TotalTicks     int                `json:"total_ticks,omitempty"`
 	BaseRewards    map[string]float64 `json:"base_rewards,omitempty"`
 	SuccessRewards map[string]float64 `json:"success_rewards,omitempty"`
 	FailureRewards map[string]float64 `json:"failure_rewards,omitempty"`
@@ -51,6 +54,11 @@ type MilitaryManager struct {
 	completedCount int
 	totalLoot      map[string]float64
 	defenseRating  float64
+	// returns is the returns log, newest first (mission_returns.go);
+	// returnsMade counts every mission that has come home this run and
+	// returnsSeen how many of those the Expedition Report has shown.
+	returns                  []MissionReturn
+	returnsMade, returnsSeen int
 	// scoutTime is the techs' term on the time a short, long or civil
 	// mission takes (config.MechanicExpeditionTicks). The engine sets it
 	// (SetScoutTime); 0 reads as 1. Military grand missions keep their time.
@@ -121,6 +129,7 @@ func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, c
 		Soldiers:     soldiers,
 		LaunchTick:   tick,
 		TicksLeft:    ticks,
+		TotalTicks:   ticks,
 		BaseRewards:  maps.Clone(baseHaul),
 		Cost:         maps.Clone(cost),
 	}
@@ -253,7 +262,11 @@ func (mm *MilitaryManager) CalculateDefense(soldierCount int, militaryBonus floa
 func (mm *MilitaryManager) Snapshot(soldierCount, soldierCap int, soldierRate, militaryBonus, expeditionBonus float64) MilitaryState {
 	var activeShort, activeLong, activeGrand *ExpeditionSnapshot
 	snap := func(tier string) *ExpeditionSnapshot {
-		return snapshotActive(mm.active[tier], expeditionBonus)
+		snap := snapshotActive(mm.active[tier], expeditionBonus)
+		if snap != nil {
+			snap.Label = mm.Label(mm.active[tier].MissionOffer)
+		}
+		return snap
 	}
 	activeShort, activeLong, activeGrand = snap(TierShort), snap(TierLong), snap(TierGrand)
 
@@ -283,6 +296,9 @@ func (mm *MilitaryManager) Snapshot(soldierCount, soldierCap int, soldierRate, m
 		ActiveMilitary:  activeGrand,
 		CompletedCount:  mm.completedCount,
 		TotalLoot:       loot,
+		Returns:         slices.Clone(mm.returns),
+		ReturnsMade:     mm.returnsMade,
+		ReturnsSeen:     mm.returnsSeen,
 	}
 }
 
@@ -299,8 +315,15 @@ func snapshotActive(active *ActiveExpedition, expeditionBonus float64) *Expediti
 	if failure == nil {
 		failure = scaleLoot(active.BaseRewards, failedLootShare)
 	}
+	total := active.TotalTicks
+	if total < active.TicksLeft {
+		total = max(active.TicksLeft, minutesToTicks(active.LengthMinutes))
+	}
 	return &ExpeditionSnapshot{
 		Name:          active.Title,
+		Place:         active.Place,
+		ExpiresTick:   active.ExpiresTick,
+		TotalTicks:    total,
 		Tier:          active.Tier,
 		Grand:         active.Grand,
 		Rare:          active.Rare,
@@ -338,6 +361,8 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 		mm.board = save.Board.clone()
 	}
 	mm.completedCount = save.CompletedCount
+	mm.returns = slices.Clone(save.Returns)
+	mm.returnsMade, mm.returnsSeen = save.ReturnsMade, save.ReturnsSeen
 	if save.TotalLoot != nil {
 		mm.totalLoot = save.TotalLoot
 	}

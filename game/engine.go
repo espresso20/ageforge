@@ -1685,6 +1685,7 @@ func (ge *GameEngine) processExpeditions() {
 	}
 	for _, res := range ge.Military.Tick(ge.gameRNG(), missionPower, expeditionBonus) {
 		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Name, len(res.Rewards)))
+		ge.Military.recordReturn(res, ge.tick)
 		ge.addLog("event", res.Message)
 		// Cosmetic flavour, generated HERE rather than in MilitaryManager because
 		// this is where the seeded rng lives. It is additive: res.Message above
@@ -4715,6 +4716,7 @@ func (ge *GameEngine) offerInfoLocked(n int, offer MissionOffer, bonus float64) 
 	cost := ge.missionCostLocked(offer)
 	info := ExpeditionInfo{
 		Name: offer.Title, Key: strconv.Itoa(n), Number: n, Tier: offer.Tier, Grand: offer.Grand, Rare: offer.Rare,
+		Place: offer.Place, ExpiresTick: offer.ExpiresTick, Label: ge.Military.Label(offer),
 		Description: offer.Description, Kind: offer.Kind(), Category: offer.Category(),
 		LengthMinutes: offer.LengthMinutes, SuccessChance: ge.offerSuccessLocked(offer), HaulMinutes: offer.HaulMinutes,
 		ExpiresTicks: max(0, offer.ExpiresTick-ge.tick),
