@@ -151,7 +151,7 @@ A raw can also be a deal good in a faction trade, in the ages that price it (see
 The ores count toward two milestones:
 
 - **Industrial Titan** (Industrial Age): stockpile 10,000 coal and 5,000 iron ore.
-- **Mining Syndicate**: build 23 stone pits and 10 iron mines.
+- **Mining Syndicate**: build 22 stone pits and 10 iron mines.
 
 The quarries and mines of the Iron to the Industrial Age make stone, iron and iron ore, and the Marble Quarry and Marble Works make marble too. The titanium mines and the crystal mines make only their raw, at the standard rate. Within a domain, workers fill the newest buildings first, so a mine that makes only a raw draws masonry workers away from your older quarries.
 

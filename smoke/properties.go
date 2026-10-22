@@ -33,7 +33,7 @@ type Property struct {
 // today's reading. Later changes to the economy shorten it.
 var KnownPropertyFailures = map[int]string{
 	1:  "22 buildings climb at another rate (1.13)",
-	2:  "fails in 2 of 22 ages; worst 0.31 of the age in the Primitive Age",
+	2:  "fails in 2 of 22 ages; worst 0.30 of the age in the Primitive Age",
 	3:  "fails in 5 of 22 ages; worst 3.0 times in the Primitive Age",
 	4:  "fails in 3 of 22 ages; worst 2.4 times in the Quantum Age",
 	8:  "fails in 16 of 22 ages; worst 0.0% eaten in the Transcendent Age",
