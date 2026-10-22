@@ -644,6 +644,10 @@ func prepareTuningEngine(sc tuningScenario, seed int64) *GameEngine {
 		}
 	}
 	ge.Workers.AddLentWorkers(tuningStartPop)
+	// Every mission takes a party: the scenario's town has an army at home
+	// that covers any number of them.
+	ge.garrisonForTest, ge.garrisonForTestSet = 1e12, true
+	ge.syncSoldiers()
 
 	// Automated scenarios stand up the Geographic Societies and staff them, so the
 	// shipped investment/cadence functions see a real installation to read.

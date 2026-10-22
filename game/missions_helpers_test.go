@@ -90,19 +90,17 @@ func keyOffer(ge *GameEngine, key string) int {
 // for ExpeditionMilitary.
 func (mm *MilitaryManager) ActiveByCategory(category string) *ActiveExpedition {
 	if category == ExpeditionMilitary {
-		return mm.active[TierGrand]
+		return mm.ActiveByTier(TierGrand)
 	}
-	if a := mm.active[TierShort]; a != nil {
+	if a := mm.ActiveByTier(TierShort); a != nil {
 		return a
 	}
-	return mm.active[TierLong]
+	return mm.ActiveByTier(TierLong)
 }
 
 // clearActive empties every tier's slot.
 func (mm *MilitaryManager) clearActive() {
-	for _, tier := range boardTiers {
-		mm.active[tier] = nil
-	}
+	mm.active = nil
 }
 
 // stockFor sets the stock of every resource offer n costs to twice its
@@ -110,6 +108,11 @@ func (mm *MilitaryManager) clearActive() {
 func stockFor(ge *GameEngine, n int) map[string]float64 {
 	cost := ge.MissionCost(n)
 	for res, amount := range cost {
+		if res == "soldiers" {
+			// The party: a garrison twice its size at home.
+			setSoldiers(ge, 2*amount)
+			continue
+		}
 		setIncomeKeep := ge.townIncomeLocked(res)
 		setResource(ge, res, 2*amount)
 		setIncome(ge, res, setIncomeKeep)
@@ -133,8 +136,29 @@ func stoneEraReady(ge *GameEngine, age string) {
 	setAge(ge, age)
 	setResource(ge, "stone", 1000)
 	setResource(ge, "wood", 1000)
-	setSoldiers(ge, 20)
+	setSoldiers(ge, 1000)
 	setIncome(ge, "stone", 0.5)
 	setIncome(ge, "wood", 0.5)
 	setIncome(ge, "soldiers", 0.01)
+}
+
+// setActive puts a at the place of the oldest mission under way in tier (or
+// last, when there is none); nil takes that mission away.
+func (mm *MilitaryManager) setActive(tier string, a *ActiveExpedition) {
+	if a != nil && a.Tier == "" {
+		a.Tier = tier
+	}
+	for i, held := range mm.active {
+		if held.Tier == tier {
+			if a == nil {
+				mm.active = append(mm.active[:i:i], mm.active[i+1:]...)
+			} else {
+				mm.active[i] = a
+			}
+			return
+		}
+	}
+	if a != nil {
+		mm.active = append(mm.active, a)
+	}
 }

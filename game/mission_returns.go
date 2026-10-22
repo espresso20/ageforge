@@ -20,6 +20,10 @@ type MissionReturn struct {
 	Haul       string `json:"haul,omitempty"`
 	Tick       int    `json:"tick"`
 	RoadEvents int    `json:"road_events,omitempty"`
+	// Party is the soldiers that set out and Fell how many did not come home
+	// (on the road and on the way back).
+	Party int `json:"party,omitempty"`
+	Fell  int `json:"fell,omitempty"`
 }
 
 // wordsKind is the index of the offer's tier name in the age's words.
@@ -53,6 +57,7 @@ func (mm *MilitaryManager) recordReturn(res ExpeditionResult, tick int) {
 	entry := MissionReturn{
 		Label: mm.Label(res.Offer), Tier: res.Offer.Tier, Title: res.Name, Place: res.Offer.Place,
 		Success: res.Success, Haul: amountsText(res.Rewards), Tick: tick, RoadEvents: res.RoadEvents,
+		Party: res.Party, Fell: res.Party - res.Marching + res.SoldiersFell,
 	}
 	mm.returns = append([]MissionReturn{entry}, mm.returns...)
 	if len(mm.returns) > config.MissionReturnsKept {

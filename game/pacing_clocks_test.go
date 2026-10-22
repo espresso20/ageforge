@@ -191,6 +191,7 @@ func TestExpeditionClocksAreNotStretched(t *testing.T) {
 		ge := newSeededEngine(9)
 		learn(ge, "exploration") // the tech that opens expeditions
 		setAge(ge, c.age)
+		setSoldiers(ge, 1e12)
 		for _, res := range []string{"food", "wood", "stone", "iron"} {
 			setResource(ge, res, 1e6)
 			setIncome(ge, res, 1)

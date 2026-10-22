@@ -95,22 +95,21 @@ func TestSoldiersTrained_NotDecreasedBySpending(t *testing.T) {
 		t.Fatalf("expected SoldiersTrained > 0 after warmup, got %v", trainedBefore)
 	}
 
-	// Put us in iron_age with a healthy soldiers stockpile and launch
-	// a military grand mission (ten minutes of soldier income: 3 soldiers here).
-	// Spending must not touch the lifetime counter.
+	// Put us in iron_age with an army at home and launch a military grand
+	// mission (a party of 129 here). Sending a party must not touch the
+	// lifetime counter.
 	setAge(ge, "iron_age")
-	setSoldiers(ge, 10)
-	setIncome(ge, "soldiers", 0.01)
+	setSoldiers(ge, 1000)
 
 	if err := ge.LaunchExpedition(plantOffer(ge, TierGrand, GrandMilitary)); err != nil {
 		t.Fatalf("LaunchExpedition(military grand) error: %v", err)
 	}
-	if got := ge.Resources.Get("soldiers"); got != 10 {
-		t.Fatalf("soldiers after launch = %v, want all 10 still at their posts", got)
+	if got := ge.Resources.Get("soldiers"); got != 871 {
+		t.Fatalf("soldiers at home after launch = %v, want 871 (1000 less the party of 129)", got)
 	}
 
 	if got := ge.Stats.SoldiersTrained; got != trainedBefore {
-		t.Errorf("SoldiersTrained changed by spending soldiers: before=%v after=%v (must be unchanged)", trainedBefore, got)
+		t.Errorf("SoldiersTrained changed by sending a party: before=%v after=%v (must be unchanged)", trainedBefore, got)
 	}
 }
 
@@ -223,6 +222,7 @@ func TestCanLaunch_RespectsCost(t *testing.T) {
 	// --- Affordable: enough stone + wood. ---
 	ge2 := NewGameEngine()
 	setAge(ge2, "stone_age")
+	setSoldiers(ge2, 100)
 	setResource(ge2, "stone", 1000)
 	setResource(ge2, "wood", 1000)
 	setIncome(ge2, "stone", 0.5)
@@ -260,23 +260,29 @@ func TestExpeditionCategory_AllValid(t *testing.T) {
 	}
 }
 
-// TestScoutingExpeditions_SoldierFree verifies every offer that is not a
-// military grand mission costs zero soldiers whatever the town makes of them:
-// scouting must be playable before the soldiers resource exists.
-func TestScoutingExpeditions_SoldierFree(t *testing.T) {
+// TestEveryOfferCostsItsParty verifies every offer on the board, in every
+// age, costs a party of soldiers: the tier's share of the reference army,
+// whatever the town makes of them.
+func TestEveryOfferCostsItsParty(t *testing.T) {
+	shares := map[string]int{"short": 4, "long": 10, "military": 30, "civil": 12}
+	army := config.RefSoldiers(config.BaseBuildings(), config.Ages())
 	offers := 0
-	for _, age := range config.Ages() {
+	for order, age := range config.Ages() {
 		ge := NewGameEngine()
 		setAge(ge, age.Key)
 		setIncome(ge, "soldiers", 5)
 		ge.EnsureMissionBoard()
 		for i, slot := range ge.Military.board.Slots {
+			kind := slot.Offer.Tier
 			if slot.Offer.Military() {
-				continue
+				kind = "military"
+			} else if kind == TierGrand {
+				kind = "civil"
 			}
+			want := max(1, (shares[kind]*int(army[order])+99)/100)
 			offers++
-			if got := ge.MissionCost(i + 1)["soldiers"]; got != 0 {
-				t.Errorf("%s: %s costs %v soldiers, want 0", age.Key, slot.Offer.Title, got)
+			if got := ge.MissionCost(i + 1)["soldiers"]; got != float64(want) {
+				t.Errorf("%s: %s costs %v soldiers, want %d", age.Key, slot.Offer.Title, got, want)
 			}
 		}
 	}
@@ -285,24 +291,24 @@ func TestScoutingExpeditions_SoldierFree(t *testing.T) {
 	}
 }
 
-// TestScoutRuins_LaunchableWithZeroSoldiers guards the Phase 1 bug fix: a
-// short mission is launchable with zero soldiers given the materials its cost
-// asks for, in every age of the Iron Era.
-func TestScoutRuins_LaunchableWithZeroSoldiers(t *testing.T) {
+// TestScoutRuins_LaunchableWithItsParty guards the Phase 1 bug fix: a short
+// mission is launchable given the materials its cost asks for and its party at
+// home, in every age of the Iron Era.
+func TestScoutRuins_LaunchableWithItsParty(t *testing.T) {
 	for _, age := range config.EpochByKey()["iron_era"].Ages {
 		ge := NewGameEngine()
 		setAge(ge, age)
+		setSoldiers(ge, 1e7)
 		for _, res := range []string{"iron", "stone", "wood", "food", "gold"} {
 			setResource(ge, res, 10000)
 			setIncome(ge, res, 1)
 		}
-		// Note: no soldiers resource at all.
 		n := plantOffer(ge, TierShort, "")
-		if ge.MissionCost(n)["soldiers"] != 0 {
-			t.Fatalf("a short mission costs soldiers in %s", age)
+		if ge.MissionCost(n)["soldiers"] < 1 {
+			t.Fatalf("a short mission costs no party in %s", age)
 		}
 		if err := ge.LaunchExpedition(n); err != nil {
-			t.Errorf("a short mission not launchable with 0 soldiers + sufficient resources in %s: %v", age, err)
+			t.Errorf("a short mission not launchable with its party at home + sufficient resources in %s: %v", age, err)
 		}
 	}
 }
@@ -354,26 +360,27 @@ func TestConcurrentExpeditions_ScoutAndMilitary(t *testing.T) {
 	}
 }
 
-// TestPerCategorySingleActive verifies a second expedition of the SAME category
-// is rejected while one is running, but the OTHER category is still launchable.
-func TestPerCategorySingleActive(t *testing.T) {
+// TestSameTierMissionsRunTogether verifies a second mission of the same tier
+// goes while the first is out, as long as the soldiers at home cover its
+// party; the army is the only limit.
+func TestSameTierMissionsRunTogether(t *testing.T) {
 	ge := NewGameEngine()
 	stoneEraReady(ge, "bronze_age")
 
-	// Launch a scouting expedition. A second scouting one must be rejected, but a
-	// military one is allowed.
-	if err := ge.LaunchExpedition(keyOffer(ge, "scouting_party")); err != nil {
-		t.Fatalf("LaunchExpedition(scouting_party) error: %v", err)
+	for i := 0; i < 2; i++ {
+		if err := ge.LaunchExpedition(keyOffer(ge, "scouting_party")); err != nil {
+			t.Fatalf("short mission %d: %v", i+1, err)
+		}
+		if err := ge.LaunchExpedition(keyOffer(ge, "raid_the_rival_clan")); err != nil {
+			t.Fatalf("military expedition %d: %v", i+1, err)
+		}
 	}
-	if err := ge.LaunchExpedition(keyOffer(ge, "scouting_party")); err == nil {
-		t.Error("launching a second short mission should be rejected")
+	if got := len(ge.Military.ActiveOf(TierShort)) + len(ge.Military.ActiveOf(TierGrand)); got != 4 {
+		t.Errorf("%d missions out, want 4 (two short, two grand)", got)
 	}
-	if err := ge.LaunchExpedition(keyOffer(ge, "raid_the_rival_clan")); err != nil {
-		t.Fatalf("military expedition should be launchable alongside scouting: %v", err)
-	}
-	// Now the military slot is occupied: a second military one must be rejected.
-	if err := ge.LaunchExpedition(keyOffer(ge, "raid_the_rival_clan")); err == nil {
-		t.Error("launching a second military expedition should be rejected")
+	// Two short parties of 8 and two campaigns of 60 left 1000 - 136 home.
+	if got := ge.Resources.Get("soldiers"); got != 864 {
+		t.Errorf("%v soldiers at home, want 864", got)
 	}
 }
 

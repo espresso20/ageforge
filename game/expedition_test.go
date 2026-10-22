@@ -26,6 +26,7 @@ func setResource(ge *GameEngine, key string, amount float64) {
 func setSoldiers(ge *GameEngine, amount float64) {
 	ge.mu.Lock()
 	ge.garrisonForTest, ge.garrisonForTestSet = amount, true
+	ge.syncSoldiers()
 	ge.mu.Unlock()
 	setResource(ge, "soldiers", amount)
 }
@@ -36,31 +37,33 @@ func setAge(ge *GameEngine, age string) {
 	ge.mu.Unlock()
 }
 
-// TestLaunchExpedition_SpendsSoldiersAndCost verifies a campaign's launch
-// sends the soldiers it needs and leaves every post full: the soldiers the
-// town holds are its posted army, and nobody leaves a post until parties come
-// out of it.
-func TestLaunchExpedition_SendsSoldiersAndLeavesThePostsFull(t *testing.T) {
+// TestLaunchExpedition_TakesThePartyOutOfThePosts verifies a campaign's launch
+// takes its party (a share of the age's reference army) out of the soldiers at
+// home: they leave their posts, so the army at home is that much smaller, and
+// they are still people.
+func TestLaunchExpedition_TakesThePartyOutOfThePosts(t *testing.T) {
 	ge := NewGameEngine()
 	learn(ge, "military_tactics") // the tech that opens campaigns
 	setAge(ge, "iron_age")
 
-	// siege_campaign: iron_era, ten minutes of soldier income.
-	setSoldiers(ge, 10)
-	setIncome(ge, "soldiers", 0.02)
+	party := config.PartySizeOf(config.PartyMilitary, config.RefArmy(3))
+	if party != 129 {
+		t.Fatalf("the Iron Age campaign party is %d, want 129 (30%% of the reference army of 430)", party)
+	}
+	setSoldiers(ge, float64(party+71))
 	need := int(ge.MissionCost(keyOffer(ge, "siege_campaign"))["soldiers"])
-	if want := int(math.Ceil(10 * ticksPerMinute * 0.02)); need != want || need >= 10 {
-		t.Fatalf("campaign cost = %d soldiers, want %d (under the 10 held)", need, want)
+	if need != party {
+		t.Fatalf("campaign cost = %d soldiers, want its party of %d", need, party)
 	}
 
 	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 		t.Fatalf("LaunchExpedition(siege_campaign) returned error: %v", err)
 	}
 
-	if got := ge.Resources.Get("soldiers"); got != 10 {
-		t.Errorf("soldiers after launch = %v, want all 10 still at their posts", got)
+	if got := ge.Resources.Get("soldiers"); got != 71 {
+		t.Errorf("soldiers at home after launch = %v, want 71 (200 less the party of %d)", got, party)
 	}
-	if active := ge.Military.ActiveByTier(TierGrand); active == nil || active.Soldiers != need {
+	if active := ge.Military.ActiveByTier(TierGrand); active == nil || active.Soldiers != need || active.Party != need {
 		t.Errorf("the party is %+v, want %d soldiers", active, need)
 	}
 }
@@ -72,6 +75,7 @@ func TestLaunchExpedition_DeductsCostResources(t *testing.T) {
 	ge := NewGameEngine()
 	setAge(ge, "stone_age")
 
+	setSoldiers(ge, 100)
 	setResource(ge, "stone", 1000)
 	setResource(ge, "wood", 1000)
 	setIncome(ge, "stone", 0.5)
@@ -97,9 +101,8 @@ func TestLaunchExpedition_InsufficientSoldiers_NoDeduction(t *testing.T) {
 	learn(ge, "military_tactics") // the tech that opens campaigns
 	setAge(ge, "iron_age")
 
-	// siege_campaign needs ten minutes of soldier income, 10 here; give only 4.
+	// siege_campaign takes a party of 129 here; give only 4.
 	setSoldiers(ge, 4)
-	setIncome(ge, "soldiers", 10.0/(10*ticksPerMinute))
 
 	err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign"))
 	if err == nil {
@@ -141,18 +144,18 @@ func TestLaunchExpedition_InsufficientCost_NoDeduction(t *testing.T) {
 }
 
 // TestScout_LaunchableInItsEra_NotCarriedToTheNextAge verifies a short
-// mission is launchable with no soldiers in every age of the Stone Era, and
+// mission is launchable with its party at home in every age of the Stone Era, and
 // that an offer made in one age is gone when the next begins: a launch after
 // the advance sends an offer of the new age, built from its words.
 func TestScout_LaunchableInItsEra_NotCarriedToTheNextAge(t *testing.T) {
 	for _, age := range config.Epochs()[0].Ages {
 		ge := NewGameEngine()
 		setAge(ge, age)
+		setSoldiers(ge, 1000)
 		setResource(ge, "stone", 1000)
 		setResource(ge, "wood", 1000)
 		setIncome(ge, "stone", 0.5)
 		setIncome(ge, "wood", 0.5)
-		// Note: no soldiers resource at all.
 
 		if err := ge.LaunchExpedition(keyOffer(ge, "scouting_party")); err != nil {
 			t.Fatalf("a short mission should be launchable in %s, got: %v", age, err)
@@ -161,6 +164,7 @@ func TestScout_LaunchableInItsEra_NotCarriedToTheNextAge(t *testing.T) {
 
 	ge2 := NewGameEngine()
 	setAge(ge2, "stone_age")
+	setSoldiers(ge2, 1e6)
 	setResource(ge2, "stone", 1000)
 	setResource(ge2, "wood", 1000)
 	setResource(ge2, "iron", 1000)
@@ -173,7 +177,7 @@ func TestScout_LaunchableInItsEra_NotCarriedToTheNextAge(t *testing.T) {
 		t.Fatalf("offer %d should be sent from the new age's board: %v", n, err)
 	}
 	words, _ := config.MissionWordsFor("iron_age")
-	if got := ge2.Military.ActiveByTier(TierShort); got == nil || got.Age != "iron_age" || !strings.HasPrefix(got.Title, words.Tiers[config.WordsShort]+": ") {
+	if got := ge2.Military.ActiveByTier(TierShort); got == nil || got.Age != "iron_age" || !strings.HasPrefix(strings.TrimPrefix(got.Title, config.RareTitleWord+" "), words.Tiers[config.WordsShort]+": ") {
 		t.Errorf("the old age's offer was sent in the Iron Age: %+v", got)
 	}
 }
@@ -195,8 +199,7 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 		ge := newSeededEngine(seed)
 		learn(ge, "military_tactics") // the tech that opens campaigns
 		setAge(ge, "iron_age")
-		setSoldiers(ge, 10)
-		setIncome(ge, "soldiers", 0.01)
+		setSoldiers(ge, 500)
 
 		ge.mu.Lock()
 		ge.Workers.UnlockType("worker")

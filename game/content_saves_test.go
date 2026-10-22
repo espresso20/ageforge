@@ -160,7 +160,7 @@ func TestContentOldSaveGetsAnAgeOfGrace(t *testing.T) {
 			t.Errorf("in the save's age %s is shut", key)
 		}
 	}
-	stock(ge, 0)
+	stock(ge)
 	if bs := ge.GetState().Buildings["altar"]; bs.NeedsTech != "" && !bs.Unlocked {
 		t.Errorf("the Altar in the grace age: %+v, want open", bs)
 	}
@@ -182,7 +182,7 @@ func TestContentOldSaveGetsAnAgeOfGrace(t *testing.T) {
 	if ge.Buildings.GetCount("stonehenge")+queued(ge, "stonehenge") != 1 || ge.Buildings.GetCount("altar")+queued(ge, "altar") != 1 {
 		t.Error("what was built in the grace age did not stay")
 	}
-	stock(ge, 0)
+	stock(ge)
 	ge.mu.Lock()
 	ge.Buildings.counts[ge.Trade.routeDefs["local_barter"].RequiredBld] = ge.Trade.routeDefs["local_barter"].MinCount
 	ge.mu.Unlock()
@@ -246,7 +246,7 @@ func TestContentOldSaveKeepsWhatItUsed(t *testing.T) {
 	if err := ge.EnterAgeForTest("classical_age"); err != nil {
 		t.Fatal(err)
 	}
-	stock(ge, 0)
+	stock(ge)
 	// In use: the route stops and starts again, and the ally takes a gift.
 	if err := ge.StopTradeRoute("local_barter"); err != nil {
 		t.Fatalf("stopping the route: %v", err)
@@ -289,7 +289,7 @@ func TestContentOldSaveKeepsWhatItUsed(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	stock(again, 0)
+	stock(again)
 	again.mu.Lock()
 	again.Buildings.counts[again.Trade.routeDefs["local_barter"].RequiredBld] = again.Trade.routeDefs["local_barter"].MinCount
 	again.mu.Unlock()

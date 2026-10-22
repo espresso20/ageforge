@@ -274,6 +274,7 @@ func (ge *GameEngine) applyWarRaids() {
 		guard = ge.raidMitigation()
 	}
 	for _, raid := range raids {
+		fall := ""
 		// The garrison blunts part of every war raid (config/defense.go). A
 		// raid bigger than the stock takes nothing (Remove refuses it), so
 		// only a raid that would have landed in full is blunted: an army
@@ -305,10 +306,14 @@ func (ge *GameEngine) applyWarRaids() {
 				ge.recordSavedResource(raid.Resource, kept)
 				ge.defenseTally().Raids++
 				ge.note(config.BadgeEvRaidBlunted, "")
+				fall = ge.raidFallLocked()
 			}
 			ge.Resources.Remove(raid.Resource, raid.Amount)
 		}
 		ge.addLog("event", ge.raidLogLine(raid))
+		if fall != "" {
+			ge.addLog("warning", fall)
+		}
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       "war_raid",
 			Name:      "Under Raid",

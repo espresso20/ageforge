@@ -170,6 +170,7 @@ type GameEngine struct {
 	soldiersSeen       int
 	soldiersPosted     map[string]int  // military building key: soldiers at its posts
 	soldierWaitLogged  map[string]bool // building keys whose waiting posts were said
+	soldiersVacant     map[string]int  // military building key: posts the fallen left, to train from the reserve
 	garrisonForTest    float64
 	garrisonForTestSet bool
 	researchPerTick    float64
@@ -1672,6 +1673,12 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 	}
 	if garrison != "" {
 		ge.addLog("success", garrison)
+		// The garrison blunted a raid that landed: some of it fell doing so.
+		if def.Raid {
+			if fall := ge.raidFallLocked(); fall != "" {
+				ge.addLog("warning", fall)
+			}
+		}
 	}
 }
 
@@ -1680,22 +1687,23 @@ func (ge *GameEngine) processExpeditions() {
 	missionPower, expeditionBonus := ge.missionPower(), ge.expeditionReward()
 	// The board first: a new age gets a whole new board, an offer that has
 	// expired is replaced at once and a taken one after its wait. Then the
-	// missions under way, one per tier, each of which may resolve this tick.
+	// missions under way, each of which may resolve this tick.
 	ge.ensureMissionBoardLocked()
 	ge.Military.RefreshBoard(ge.gameRNG(), ge.tick)
-	for _, tier := range boardTiers {
-		if active := ge.Military.ActiveByTier(tier); active != nil {
-			active.ElapsedTicks++
-			// A ruins offer is the mission's draw, from its own stream.
-			ge.withLuck(active.luckStream(), func() { ge.fireRoadEvents(active, active.ElapsedTicks) })
-		}
+	for _, active := range slices.Clone(ge.Military.active) {
+		active.ElapsedTicks++
+		// A ruins offer is the mission's draw, from its own stream.
+		ge.withLuck(active.luckStream(), func() { ge.fireRoadEvents(active, active.ElapsedTicks) })
 	}
-	for _, tier := range boardTiers {
-		if active := ge.Military.ActiveByTier(tier); active != nil {
-			ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Title, active.TicksLeft))
-		}
+	for _, active := range ge.Military.active {
+		ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Title, active.TicksLeft))
 	}
 	for _, res := range ge.Military.Tick(missionPower, expeditionBonus) {
+		// The party is home: the soldiers who fell on the way back leave the
+		// population, and the casualty line joins the mission's message.
+		ge.soldiersFall(res.SoldiersFell)
+		ge.syncSoldiers()
+		res.Message += ge.casualtyLine(res)
 		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Name, len(res.Rewards)))
 		ge.Military.recordReturn(res, ge.tick)
 		ge.addLog("event", res.Message)
@@ -4482,14 +4490,15 @@ func (ge *GameEngine) MissionCost(n int) map[string]float64 {
 	return ge.missionCostLocked(offer)
 }
 
-// missionCostLocked is what sending an offer costs now: soldiers (under
-// "soldiers") for a military grand offer, minutes of income in the age's two
-// most-charged materials for any other.
+// missionCostLocked is what sending an offer costs now: the party of soldiers
+// every mission takes (under "soldiers"; a military grand offer costs nothing
+// else) and, for any other, minutes of income in the age's two most-charged
+// materials.
 func (ge *GameEngine) missionCostLocked(offer MissionOffer) map[string]float64 {
 	cost := make(map[string]float64)
+	// Every mission takes its party, under "soldiers".
+	cost["soldiers"] = float64(ge.partySizeLocked(offer))
 	if offer.Military() {
-		soldiers := math.Ceil(offer.CostMinutes() * (60 / config.TickSeconds) * ge.townIncome("soldiers"))
-		cost["soldiers"] = math.Max(1, soldiers)
 		return cost
 	}
 	charges := make(map[string]int)
@@ -4601,17 +4610,13 @@ func (ge *GameEngine) offerSuccessLocked(offer MissionOffer) float64 {
 // offerRefusalLocked is why offer cannot be sent now: reason is the short
 // form a panel prints beside the offer, err the sentence the launch command
 // prints; both are empty when it can be sent. It checks, in a fixed order:
-// the tier's slot, the soldiers, each material, then the tech lock. cost is
-// what the offer costs, soldiers included.
+// the party against the soldiers at home, each material, then the tech lock.
+// cost is what the offer costs, the party included.
 func (ge *GameEngine) offerRefusalLocked(offer MissionOffer, cost map[string]float64) (reason string, err error) {
-	if existing := ge.Military.ActiveByTier(offer.Tier); existing != nil {
-		return tierNoun(offer.Tier) + " is already under way",
-			fmt.Errorf("%s is already under way (%s left). Wait for it to come back", tierNoun(offer.Tier), approxTicks(existing.TicksLeft, BaseTickInterval))
-	}
-	if soldiers := cost["soldiers"]; soldiers > 0 {
-		if have := int(ge.Resources.Get("soldiers")); have < int(soldiers) {
-			return fmt.Sprintf("needs %d soldiers: military buildings come with them", int(soldiers)),
-				fmt.Errorf("%s needs %d soldiers (you have %d). Military buildings come with their soldiers; see the Army panel", offer.Title, int(soldiers), have)
+	if party := int(cost["soldiers"]); party > 0 {
+		if home := ge.soldiersHome(); home < party {
+			return fmt.Sprintf("needs a party of %d soldiers (%d at home)", party, home),
+				fmt.Errorf("%s needs a party of %d soldiers, and %d are at home. Soldiers come with the military buildings; see the Army panel", offer.Title, party, home)
 		}
 	}
 	// Materials, in a fixed order so the refusal names the same one every time.
@@ -4654,17 +4659,17 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	if _, err := ge.offerRefusalLocked(offer, cost); err != nil {
 		return err
 	}
-	// The party is at most the soldiers at home, and none of them leaves his
-	// post: the posted army stays full until parties come out of it.
-	soldiers := math.Min(cost["soldiers"], ge.Resources.Get("soldiers"))
+	// The party leaves its posts: it is the soldiers at home no more.
+	soldiers := cost["soldiers"]
 	delete(cost, "soldiers")
 
 	offer.SuccessChance = ge.offerSuccessLocked(offer)
 	base := ge.missionHaulLocked(offer.HaulMinutes)
-	if err := ge.Military.LaunchOffer(offer, ge.tick, int(soldiers), cost, base); err != nil {
+	active, err := ge.Military.LaunchOffer(offer, ge.tick, int(soldiers), cost, base)
+	if err != nil {
 		return err
 	}
-	active := ge.Military.ActiveByTier(offer.Tier)
+	ge.syncSoldiers()
 	words, _ := ge.rules.MissionWords(offer.Age)
 	active.RoadEvents = rollRoadEvents(ge.gameRNG(), offer, active.TotalTicks, words)
 	// The mission's own luck: a seed from the game's RNG, and the success draw
@@ -4691,7 +4696,7 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	}
 	ge.useFeature(expeditionFeatures(offer)...)
 
-	// --- All checks passed: deduct the Cost (the soldiers stay at their posts). ---
+	// --- All checks passed: deduct the Cost (the party is already on the road). ---
 	for _, res := range sortedKeys(cost) {
 		ge.Resources.Remove(res, cost[res])
 	}
@@ -4700,7 +4705,7 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	if offer.Military() {
 		ge.addLog(LogRoutine, fmt.Sprintf("Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
 	} else {
-		ge.addLog(LogRoutine, fmt.Sprintf("Expedition sent: %s.", offer.Title))
+		ge.addLog(LogRoutine, fmt.Sprintf("Expedition sent: %s (%d soldiers).", offer.Title, int(soldiers)))
 	}
 	return nil
 }
@@ -4887,7 +4892,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
-	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersSeen = nil, nil, 0
+	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
 	ge.prestigeCue = PrestigeCue{}
 	ge.prestigeCueSeenAge = ""
 	ge.Stats.AgeLog[0].Tick = ge.tick
@@ -5036,7 +5041,7 @@ func (ge *GameEngine) Reset() {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
-	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersSeen = nil, nil, 0
+	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
 	ge.prestigeCue = PrestigeCue{}
 	ge.prestigeCueSeenAge = ""
 	ge.Stats.AgeLog[0].Tick = ge.tick
@@ -5211,6 +5216,7 @@ func (ge *GameEngine) GetState() GameState {
 	// Scholars are people: they live in the homes and eat (population.go).
 	workers.Scholars = ge.scholarTotal()
 	workers.Soldiers = ge.soldierTotal()
+	workers.SoldiersAway = min(ge.soldiersAway(), workers.Soldiers)
 	workers.TotalPop += workers.Scholars + workers.Soldiers
 	workers.FoodDrain = ge.foodDrainLocked()
 

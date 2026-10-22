@@ -225,6 +225,9 @@ type GameSave struct {
 	// (soldiers.go). omitempty: a town with no military building writes
 	// nothing.
 	SoldiersPosted map[string]int `json:"soldiers_posted,omitempty"`
+	// SoldiersVacant is the posts the fallen left, by military building: they
+	// train from the reserve a few at a time.
+	SoldiersVacant map[string]int `json:"soldiers_vacant,omitempty"`
 	// SoldiersWaiting are the military buildings whose waiting posts the log
 	// has said so for (so a load does not say it again).
 	SoldiersWaiting []string `json:"soldiers_waiting,omitempty"`
@@ -782,6 +785,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		ScholarRules:           scholarRules,
 		ScholarShare:           ge.scholarShareSave(),
 		SoldiersPosted:         ge.soldiersPostedSave(),
+		SoldiersVacant:         ge.soldiersVacantSave(),
 		SoldiersWaiting:        sortedKeys(ge.soldierWaitLogged),
 		TreeVersion:            config.TechTreeVersion,
 		TreeGraceAge:           ge.Buildings.graceAge,

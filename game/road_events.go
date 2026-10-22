@@ -124,16 +124,15 @@ func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
 		a.SuccessChance = math.Min(.95, a.SuccessChance+.06)
 		story = value(story, "<odds>", fmt.Sprint(int(a.SuccessChance*100)))
 	case "ambush":
-		if a.Military() {
-			lost := max(1, int(math.Ceil(float64(a.Soldiers)*.10)))
-			lost = min(lost, a.Soldiers)
-			a.Soldiers -= lost
-			story = value(story, "<n>", fmt.Sprint(lost))
-		} else {
+		// An ambush falls on the party, whatever the mission: a tenth of it.
+		lost := min(a.Soldiers, max(1, int(math.Ceil(float64(float64(a.Soldiers)*.10)))))
+		ge.soldiersFall(lost)
+		a.Soldiers -= lost
+		story = value(story, "<n>", fmt.Sprint(lost))
+		if !a.Military() {
+			// A civil or scouting party also loses part of its haul.
 			scaleActiveRewards(a, .85)
-			story = e.Story
-			story = e.AmbushStory
-			story = value(story, "<foe>", foe)
+			story += " " + value(e.AmbushStory, "<foe>", foe)
 		}
 	case "ruins":
 		if w, ok := ge.rules.MissionWords(a.Age); ok {
