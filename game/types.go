@@ -596,6 +596,7 @@ type ExpeditionSnapshot struct {
 	HaulMinutes   float64
 	SuccessHaul   map[string]float64
 	FailureHaul   map[string]float64
+	RoadStories   []string
 }
 
 // ExpeditionInfo represents an available expedition for UI

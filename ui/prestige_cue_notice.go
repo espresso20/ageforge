@@ -59,7 +59,11 @@ func shouldShowPrestigeCue(state game.GameState, blocked bool) bool {
 func (d *Dashboard) maybeShowPrestigeCue(state game.GameState) {
 	blocked := d.overlayMgr.HasActive() || d.overlayMgr.FullScreenUp() ||
 		d.pages.HasPage(catastrophePage) || d.pages.HasPage(ancientMemoryPage) ||
-		d.pages.HasPage(prestigeCuePage) || d.pages.HasPage(arrivalPageName)
+		d.pages.HasPage(prestigeCuePage) || d.pages.HasPage(arrivalPageName) ||
+		// Any key closes the notice, so over a half-typed command it would
+		// swallow a keystroke and leave a command nobody typed. It waits
+		// for the prompt to be empty.
+		d.inputField.GetText() != ""
 	if !shouldShowPrestigeCue(state, blocked) {
 		return
 	}

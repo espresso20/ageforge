@@ -6,6 +6,9 @@ All notable changes to AgeForge are documented here.
 
 ## [Unreleased]
 
+### Added
+- **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
+
 ### Changed
 - **People.** Every person in your town is in one place: workers, the reserve, soldiers and scholars, each with its own name in every age. Scholars live in your homes and eat. A People box replaces the Workers box, and the People panel has tabs for your work, your army and your scholars.
 - **Homes fill up.** Population grows toward your housing while food lasts, faster for a bigger town. Villagers without a job wait in the reserve and take new jobs at once; the Workers box says what holds your population back.

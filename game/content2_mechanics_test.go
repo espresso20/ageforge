@@ -2,7 +2,6 @@ package game
 
 import (
 	"math"
-	"math/rand"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -208,7 +207,8 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 		active := ge.Military.ActiveByCategory(category)
 		active.TicksLeft = 1
 		active.SuccessChance = 0.95 // the cap; the roll below is a 0.9
-		res := ge.Military.Tick(rand.New(alwaysHigh{}), 0, 0)
+		active.Luck = 0.9
+		res := ge.Military.Tick(0, 0)
 		if len(res) != 1 || !res[0].Success {
 			t.Fatalf("%s did not come home a success: %+v", key, res)
 		}
@@ -225,9 +225,3 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 		t.Errorf("the %s expedition brings back %v, %v with the Military-Industrial Complex; want the same", scouting, a, b)
 	}
 }
-
-// alwaysHigh is a random source that only ever rolls 0.9.
-type alwaysHigh struct{}
-
-func (alwaysHigh) Int63() int64 { return 9 << 59 / 10 * 16 }
-func (alwaysHigh) Seed(int64)   {}

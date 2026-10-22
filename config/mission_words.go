@@ -19,6 +19,43 @@ const (
 	WordsGrandCivil
 )
 
+// Road event weights are relative odds within a rolled event.
+const (
+	RoadStormWeight   = 3
+	RoadHelpersWeight = 3
+	RoadFindWeight    = 2
+	RoadTollWeight    = 2
+	RoadFoesWeight    = 2
+	RoadAmbushWeight  = 2
+	RoadFairWeight    = 2
+	RoadRuinsWeight   = 1
+)
+
+// roadEventTemplates are short player-facing stories, selected by kind.
+var roadEventTemplates = map[string][]string{
+	"storm":       {"<weather> pinned the party down near the <place>. <time> lost.", "The party waited out <weather> by the <place>, losing <time>.", "<weather> turned the road near the <place> to trouble. The delay cost <time>."},
+	"helpers":     {"<helper> showed the party a shorter way. <time> saved.", "A tip from <helper> cut <time> off the journey.", "The party took a shortcut with help from <helper>, saving <time>."},
+	"find":        {"The party found <find>. The haul grows by <percent>%.", "A lucky find, <find>, adds <percent>% to the haul.", "<find> was waiting by the road. The haul grows by <percent>%."},
+	"toll":        {"On the <place> road, <foe> blocked the way. The captain decided his hide was worth more than a fight and paid <gold> gold to pass.", "<foe> demanded <gold> gold at the <place>. The captain paid and kept moving.", "The party paid <gold> gold to <foe> for safe passage near the <place>."},
+	"foes":        {"<foe> shadowed the party for days. The odds fall to <odds>%.", "The party spotted <foe> on the trail. Odds drop to <odds>%.", "<foe> made the road dangerous. Success odds are now <odds>%."},
+	"ambush":      {"<foe> struck at dusk. <n> soldiers fell.", "<foe> caught the soldiers off guard. <n> fell in the ambush.", "At dusk, <foe> attacked. The party lost <n> soldiers."},
+	"ambush_haul": {"<foe> made off with part of the haul.", "<foe> raided the supplies and took part of the haul.", "The party fought off <foe>, but some of the haul was lost."},
+	"fair":        {"Fair skies and a good guide. The odds rise to <odds>%.", "A clear stretch lifted spirits. Success odds are now <odds>%.", "The party found its rhythm. Odds rise to <odds>%."},
+	"ruins":       {"The party marked ruins off the road near the <place>. They are on the board now.", "An old ruin near the <place> is now marked on the board.", "The party found ruins near the <place>. A new offer is on the board."},
+}
+
+// RoadTemplate returns a kind's story template at index n.
+func (MissionWords) RoadTemplate(kind string, n int) string {
+	pool := roadEventTemplates[kind]
+	if len(pool) == 0 {
+		return ""
+	}
+	return pool[n%len(pool)]
+}
+
+// RoadTemplateCount is the number of story templates for kind.
+func (MissionWords) RoadTemplateCount(kind string) int { return len(roadEventTemplates[kind]) }
+
 // MissionWords is one age's words for the mission board.
 type MissionWords struct {
 	Age string
@@ -33,6 +70,10 @@ type MissionWords struct {
 	MilitaryObjectives [4]string
 	CivilObjectives    [4]string
 	Twists             [6]string
+	Weather            [3]string
+	Foes               [3]string
+	Helpers            [3]string
+	Finds              [3]string
 }
 
 // ObjectivesFor is the four objectives of a tier, by the index of its name
@@ -68,7 +109,8 @@ func AllMissionWords() []MissionWords {
 
 var missionWords = []MissionWords{
 	{
-		Age:                "primitive_age",
+		Age:     "primitive_age",
+		Weather: [3]string{"a dust storm", "a flash flood", "a hailstorm"}, Foes: [3]string{"wolves", "rival clan", "raiders"}, Helpers: [3]string{"a friendly camp", "a shepherd", "a trading party"}, Finds: [3]string{"a bone cache", "a flint hoard", "a buried shrine"},
 		Tiers:              [4]string{"Forage", "Hunt", "Raid", "Great Migration"},
 		Places:             [6]string{"Dry Creek", "Birch Hollow", "Mud Flats", "Flint Ridge", "Fern Valley", "Long Meadow"},
 		ShortObjectives:    [4]string{"gather roots along the", "pick berries near the", "follow animal tracks to the", "dig for grubs by the"},
@@ -85,7 +127,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "stone_age",
+		Age:     "stone_age",
+		Weather: [3]string{"a dust storm", "a flash flood", "a hailstorm"}, Foes: [3]string{"bandits", "raiders", "a rival clan"}, Helpers: [3]string{"a friendly village", "a shepherd", "a trading post"}, Finds: [3]string{"a flint cache", "a stone hoard", "a buried shrine"},
 		Tiers:              [4]string{"Forage", "Trek", "Raid", "Hill Fort Raising"},
 		Places:             [6]string{"Salt Lick", "Flint Pits", "Cave Mouth", "Standing Stones", "Red Clay Bank", "Bone Hills"},
 		ShortObjectives:    [4]string{"gather flint at the", "pick herbs around the", "scout game trails near the", "fish the pools below the"},
@@ -102,7 +145,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "bronze_age",
+		Age:     "bronze_age",
+		Weather: [3]string{"a dust storm", "a flash flood", "a hailstorm"}, Foes: [3]string{"bandits", "raiders", "a rival clan"}, Helpers: [3]string{"a friendly village", "a shepherd", "a trading post"}, Finds: [3]string{"an amber hoard", "a tin cache", "a buried shrine"},
 		Tiers:              [4]string{"Scout", "Trade Trek", "Skirmish", "Trade Mission"},
 		Places:             [6]string{"Copper Hills", "Tin Road", "Harbor Town", "Clay Terraces", "Amber Coast", "Cedar Pass"},
 		ShortObjectives:    [4]string{"scout the road to the", "count the herds near the", "check the wells along the", "watch the border at the"},
@@ -119,7 +163,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "iron_age",
+		Age:     "iron_age",
+		Weather: [3]string{"a hard rain", "a cold snap", "a windstorm"}, Foes: [3]string{"raiders", "warriors", "a rival clan"}, Helpers: [3]string{"a roadside village", "a shepherd", "a trading post"}, Finds: [3]string{"an iron cache", "a coin hoard", "a buried shrine"},
 		Tiers:              [4]string{"Survey", "Caravan", "Siege", "Founding Expedition"},
 		Places:             [6]string{"Ironhill", "Black Gate", "Salt Road", "Stone Bridge", "Border Keep", "Wolf Forest"},
 		ShortObjectives:    [4]string{"survey the roads around the", "map the iron seams under the", "check the milestones near the", "measure the wall at the"},
@@ -136,7 +181,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "classical_age",
+		Age:     "classical_age",
+		Weather: [3]string{"a sea squall", "a heat wave", "a hard rain"}, Foes: [3]string{"pirates", "mercenaries", "a rival city"}, Helpers: [3]string{"a village guide", "a merchant", "a way station"}, Finds: [3]string{"a coin hoard", "a bronze cache", "a buried shrine"},
 		Tiers:              [4]string{"Survey", "Trade Voyage", "Legion March", "Embassy"},
 		Places:             [6]string{"Marble Harbor", "Olive Coast", "Forum Road", "Hill of Oaks", "Amber Strait", "Great Aqueduct"},
 		ShortObjectives:    [4]string{"survey the roads of the", "count the columns at the", "inspect the aqueduct near the", "chart the coast near the"},
@@ -153,7 +199,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "medieval_age",
+		Age:     "medieval_age",
+		Weather: [3]string{"a snow squall", "a hard rain", "a windstorm"}, Foes: [3]string{"brigands", "soldiers", "a rival lord"}, Helpers: [3]string{"a village guide", "a ferryman", "an innkeeper"}, Finds: [3]string{"a silver hoard", "a locked chest", "a buried shrine"},
 		Tiers:              [4]string{"Patrol", "Pilgrimage", "Siege", "Grand Pilgrimage"},
 		Places:             [6]string{"Oak Abbey", "Grey Castle", "Pilgrim's Ford", "Wolf Moor", "King's Road", "Mill Town"},
 		ShortObjectives:    [4]string{"patrol the lanes around the", "ride the bounds of the", "watch the road near the", "check the beacon fires at the"},
@@ -170,7 +217,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "renaissance_age",
+		Age:     "renaissance_age",
+		Weather: [3]string{"a spring storm", "a hard rain", "a sea squall"}, Foes: [3]string{"privateers", "mercenaries", "a rival court"}, Helpers: [3]string{"a local guide", "a merchant", "a harbor master"}, Finds: [3]string{"a coin hoard", "a spice cache", "a buried shrine"},
 		Tiers:              [4]string{"Exploration", "Voyage", "Campaign", "Grand Voyage"},
 		Places:             [6]string{"Gilded Coast", "Spice Isles", "Painted Harbor", "Inkwell Bay", "Silk Quarter", "Far Meridian"},
 		ShortObjectives:    [4]string{"explore the shore of the", "draw maps of the", "scout inland from the", "take soundings off the"},
@@ -187,7 +235,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "colonial_age",
+		Age:     "colonial_age",
+		Weather: [3]string{"a monsoon", "a hard rain", "a sea squall"}, Foes: [3]string{"privateers", "raiders", "a rival company"}, Helpers: [3]string{"a local guide", "a trader", "a harbor master"}, Finds: [3]string{"a silver cache", "a spice hoard", "a buried shrine"},
 		Tiers:              [4]string{"Survey", "Colony Run", "Campaign", "Found a Colony"},
 		Places:             [6]string{"Cape Harbor", "New Bay", "Tobacco Coast", "Fur River", "Fort Haven", "Green Islands"},
 		ShortObjectives:    [4]string{"survey the coast of the", "map the river mouth at the", "scout trails inland from the", "count the stores at the"},
@@ -204,7 +253,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "industrial_age",
+		Age:     "industrial_age",
+		Weather: [3]string{"a coal haze", "a hard rain", "a boiler burst"}, Foes: [3]string{"bandits", "rival workers", "a street gang"}, Helpers: [3]string{"a rail porter", "a station agent", "a trading post"}, Finds: [3]string{"a tool cache", "a coin hoard", "a buried store"},
 		Tiers:              [4]string{"Prospect", "Rail Expedition", "Offensive", "Great Railway"},
 		Places:             [6]string{"Coal Valley", "Iron Basin", "Canal Junction", "Smoke Hills", "Steam Harbor", "Mill Row"},
 		ShortObjectives:    [4]string{"prospect for coal in the", "test the seams of the", "survey a rail line through the", "count the furnaces of the"},
@@ -221,7 +271,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "victorian_age",
+		Age:     "victorian_age",
+		Weather: [3]string{"a London fog", "a hard rain", "a gale"}, Foes: [3]string{"highwaymen", "rival agents", "a street gang"}, Helpers: [3]string{"a station porter", "a local guide", "a trading post"}, Finds: [3]string{"a brass cache", "a coin hoard", "a buried store"},
 		Tiers:              [4]string{"Prospect", "Expedition", "Offensive", "Polar Expedition"},
 		Places:             [6]string{"Ice Barrier", "Cape Frost", "Amber Falls", "Brass Harbor", "Gaslight Quarter", "Silver River"},
 		ShortObjectives:    [4]string{"prospect for gold in the", "chart the foothills of the", "survey the coast near the", "gather specimens from the"},
@@ -238,7 +289,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "electric_age",
+		Age:     "electric_age",
+		Weather: [3]string{"a blackout", "a heat wave", "a thunderstorm"}, Foes: [3]string{"gangsters", "rival agents", "a street gang"}, Helpers: [3]string{"a station agent", "a local guide", "a relay operator"}, Finds: [3]string{"a parts cache", "a coin hoard", "a buried store"},
 		Tiers:              [4]string{"Aerial Survey", "Expedition", "Offensive", "Grand Exhibition"},
 		Places:             [6]string{"Sparkling Plains", "Lightning Ridge", "Dynamo Hill", "Copper Valley", "Lamp City", "Power Gorge"},
 		ShortObjectives:    [4]string{"survey from the air above the", "photograph the", "check the power lines across the", "count the pylons of the"},
@@ -255,7 +307,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "atomic_age",
+		Age:     "atomic_age",
+		Weather: [3]string{"a radiation storm", "a blackout", "a dust storm"}, Foes: [3]string{"raiders", "rival patrol", "a street gang"}, Helpers: [3]string{"a field medic", "a relay operator", "a trading post"}, Finds: [3]string{"a supply cache", "a reactor part", "a buried vault"},
 		Tiers:              [4]string{"Recon Flight", "Research Expedition", "Operation", "Manhattan-scale Project"},
 		Places:             [6]string{"Desert Range", "Radar Hill", "Blue Lab", "Silver Coast", "Pine Ridge", "Test Flats"},
 		ShortObjectives:    [4]string{"fly recon over the", "photograph the", "track weather over the", "map the coast by air near the"},
@@ -272,7 +325,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "modern_age",
+		Age:     "modern_age",
+		Weather: [3]string{"a thunderstorm", "a flash flood", "a heat wave"}, Foes: [3]string{"smugglers", "a rival crew", "a street gang"}, Helpers: [3]string{"a local guide", "a relief station", "a trading post"}, Finds: [3]string{"a supply cache", "a rare mineral", "a buried vault"},
 		Tiers:              [4]string{"Recon", "Field Op", "Strike", "Moonshot"},
 		Places:             [6]string{"Harbor Terminal", "Border Ridge", "Silicon Park", "Salt Desert", "Grey Tower", "Ring Road"},
 		ShortObjectives:    [4]string{"run recon on the", "scout the perimeter of the", "tail a convoy near the", "watch the airstrip at the"},
@@ -289,7 +343,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "information_age",
+		Age:     "information_age",
+		Weather: [3]string{"a thunderstorm", "a flash flood", "a heat wave"}, Foes: [3]string{"hackers", "a rival crew", "a street gang"}, Helpers: [3]string{"a local guide", "a relay station", "a trading post"}, Finds: [3]string{"a data cache", "a server part", "a buried drive"},
 		Tiers:              [4]string{"Data Run", "Satellite Op", "Cyber Strike", "Global Launch"},
 		Places:             [6]string{"Server Farm", "Fiber Trunk", "Data Haven", "Relay Hub", "Glass Campus", "Cable Landing"},
 		ShortObjectives:    [4]string{"trace packets through the", "scrape records from the", "map the network of the", "test the firewall of the"},
@@ -306,7 +361,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "digital_age",
+		Age:     "digital_age",
+		Weather: [3]string{"a packet storm", "a power surge", "a network flood"}, Foes: [3]string{"rogue agents", "malware swarms", "a rival process"}, Helpers: [3]string{"a helper daemon", "a relay station", "a trusted node"}, Finds: [3]string{"an old server", "a data cache", "a buried backup"},
 		Tiers:              [4]string{"Data Run", "Network Op", "Cyber Strike", "Network Founding"},
 		Places:             [6]string{"Cloud Vault", "Packet Plaza", "Mirror Site", "Dark Port", "Deep Cache", "Open Grid"},
 		ShortObjectives:    [4]string{"run a data sweep through the", "crawl the index of the", "audit the keys of the", "trace a signal into the"},
@@ -323,7 +379,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "cyberpunk_age",
+		Age:     "cyberpunk_age",
+		Weather: [3]string{"a smog squall", "a power surge", "an acid rainstorm"}, Foes: [3]string{"a street gang", "corporate enforcers", "a rival crew"}, Helpers: [3]string{"a street medic", "a fixer", "a relay station"}, Finds: [3]string{"a data cache", "a chrome stash", "a buried server"},
 		Tiers:              [4]string{"Recon", "Heist", "Assault", "Arcology Raising"},
 		Places:             [6]string{"Chrome Market", "Neon Alley", "Rain Towers", "Static Docks", "Ash Arcade", "Black Plaza"},
 		ShortObjectives:    [4]string{"scout the streets of the", "tap the cameras of the", "tail a courier through the", "scan the rooftops above the"},
@@ -340,7 +397,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "fusion_age",
+		Age:     "fusion_age",
+		Weather: [3]string{"a solar storm", "a plasma squall", "a coolant leak"}, Foes: [3]string{"raiders", "a rival crew", "rogue drones"}, Helpers: [3]string{"a station crew", "a relay station", "a trading post"}, Finds: [3]string{"a fuel cache", "a reactor part", "a buried module"},
 		Tiers:              [4]string{"Sweep", "Salvage", "Assault", "Fusion City"},
 		Places:             [6]string{"Reactor Ring", "Slag Fields", "Coolant Lake", "Burned Quarter", "Flux Yard", "Bright Dome"},
 		ShortObjectives:    [4]string{"sweep the ruins around the", "scan the shielding of the", "check the coolant lines near the", "map the heat vents of the"},
@@ -357,7 +415,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "space_age",
+		Age:     "space_age",
+		Weather: [3]string{"a solar flare", "a meteor shower", "a radiation storm"}, Foes: [3]string{"pirates", "raiders", "a rival fleet"}, Helpers: [3]string{"a relay station", "a station crew", "a cargo hauler"}, Finds: [3]string{"a mineral cache", "an old probe", "a buried module"},
 		Tiers:              [4]string{"Probe", "Orbital Mission", "Orbital Strike", "Colony Ship"},
 		Places:             [6]string{"Low Orbit", "Moon Shadow", "Red Plain", "Ring of Ice", "Dust Belt", "Sunward Station"},
 		ShortObjectives:    [4]string{"launch a probe past the", "scan the surface of the", "skim the dust of the", "map the craters of the"},
@@ -374,7 +433,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "interstellar_age",
+		Age:     "interstellar_age",
+		Weather: [3]string{"a solar flare", "a meteor shower", "a radiation storm"}, Foes: [3]string{"pirates", "raiders", "a rival fleet"}, Helpers: [3]string{"a relay station", "a colony crew", "a cargo hauler"}, Finds: [3]string{"an alien relic", "a mineral cache", "a lost probe"},
 		Tiers:              [4]string{"Probe", "Deep-Space Mission", "Invasion", "Generation Ship"},
 		Places:             [6]string{"Proxima Gate", "Cold Giant", "Long Dark", "Twin Suns", "Drift Station", "Ember Nebula"},
 		ShortObjectives:    [4]string{"launch a probe toward the", "scan the planets of the", "sample the dust of the", "listen for signals from the"},
@@ -391,7 +451,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "galactic_age",
+		Age:     "galactic_age",
+		Weather: [3]string{"a nebula squall", "a solar flare", "a meteor shower"}, Foes: [3]string{"pirates", "raiders", "a rival fleet"}, Helpers: [3]string{"a relay station", "a colony crew", "a trade envoy"}, Finds: [3]string{"an alien relic", "a star map", "a lost probe"},
 		Tiers:              [4]string{"Survey Drone", "Star Voyage", "Invasion", "Stellar Settlement"},
 		Places:             [6]string{"Orion Reach", "Crimson Rim", "Quiet Arm", "Core Gate", "Lantern Cluster", "Pale Spiral"},
 		ShortObjectives:    [4]string{"send a survey drone through the", "count the stars of the", "scan the worlds of the", "map the lanes around the"},
@@ -408,7 +469,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "quantum_age",
+		Age:     "quantum_age",
+		Weather: [3]string{"a probability storm", "a phase shift", "a temporal squall"}, Foes: [3]string{"rogue agents", "a rival timeline", "a quantum swarm"}, Helpers: [3]string{"a relay mind", "a phase guide", "a trading node"}, Finds: [3]string{"a qubit cache", "a lost archive", "a buried simulation"},
 		Tiers:              [4]string{"Phase Probe", "Rift Expedition", "Incursion", "Pocket Universe"},
 		Places:             [6]string{"Fold Garden", "Mirror Gap", "Null Shore", "Still Point", "Hollow Spiral", "Echo Vault"},
 		ShortObjectives:    [4]string{"phase a probe through the", "measure the noise of the", "sample a mirror from the", "trace the edges of the"},
@@ -425,7 +487,8 @@ var missionWords = []MissionWords{
 		},
 	},
 	{
-		Age:                "transcendent_age",
+		Age:     "transcendent_age",
+		Weather: [3]string{"a reality storm", "a dimensional tide", "a time squall"}, Foes: [3]string{"rogue minds", "a rival cosmos", "a void swarm"}, Helpers: [3]string{"a guide intelligence", "a relay mind", "a trading nexus"}, Finds: [3]string{"a memory hoard", "a lost world", "a buried universe"},
 		Tiers:              [4]string{"Glimpse", "Pilgrimage of Light", "Reality Incursion", "Ascension Rite"},
 		Places:             [6]string{"First Dawn", "Silent Choir", "Open Horizon", "Garden of Hours", "Last Shore", "Shining Stair"},
 		ShortObjectives:    [4]string{"catch a glimpse of the", "listen at the edge of the", "follow a thread of light to the", "gather echoes from the"},

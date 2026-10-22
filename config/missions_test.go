@@ -69,9 +69,39 @@ func TestMissionWordsCoverEveryAge(t *testing.T) {
 				t.Errorf("%s twist %q should be a sentence", age.Key, twist)
 			}
 		}
+		for _, pool := range [][3]string{w.Weather, w.Foes, w.Helpers, w.Finds} {
+			poolSeen := map[string]bool{}
+			for _, word := range pool {
+				word = strings.TrimSpace(word)
+				if word == "" || poolSeen[word] {
+					t.Errorf("%s has an empty or repeated road-event word %q", age.Key, word)
+				}
+				poolSeen[word] = true
+			}
+		}
 	}
 	if _, ok := MissionWordsFor("no_age"); ok {
 		t.Error("an unknown age has words")
+	}
+}
+
+func TestRoadEventStoryPools(t *testing.T) {
+	w := MissionWords{}
+	for _, kind := range []string{"storm", "helpers", "find", "toll", "foes", "ambush", "ambush_haul", "fair", "ruins"} {
+		if w.RoadTemplateCount(kind) < 3 {
+			t.Errorf("%s has fewer than three road story templates", kind)
+		}
+		seen := map[string]bool{}
+		for i := 0; i < w.RoadTemplateCount(kind); i++ {
+			template := w.RoadTemplate(kind, i)
+			if strings.ContainsAny(template, "!—") {
+				t.Errorf("%s has forbidden punctuation: %q", kind, template)
+			}
+			if seen[template] {
+				t.Errorf("%s repeats template %q", kind, template)
+			}
+			seen[template] = true
+		}
 	}
 }
 

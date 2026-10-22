@@ -32,10 +32,68 @@ type ActiveExpedition struct {
 	TicksLeft  int `json:"ticks_left"`
 	// TotalTicks is the mission's whole length in ticks when it was sent.
 	TotalTicks     int                `json:"total_ticks,omitempty"`
+	ElapsedTicks   int                `json:"elapsed_ticks,omitempty"`
 	BaseRewards    map[string]float64 `json:"base_rewards,omitempty"`
 	SuccessRewards map[string]float64 `json:"success_rewards,omitempty"`
 	FailureRewards map[string]float64 `json:"failure_rewards,omitempty"`
 	Cost           map[string]float64 `json:"cost,omitempty"`
+	RoadEvents     []RoadEvent        `json:"road_events,omitempty"`
+	RoadEventsSeen []string           `json:"road_events_seen,omitempty"`
+	// LuckSeed seeds the mission's own random stream, drawn from the game's
+	// RNG at launch; LuckDraws is how far that stream has been drawn, so a
+	// load resumes it where it stood. Luck is the first draw: the success
+	// roll, made against the odds the mission has at its resolution.
+	LuckSeed  int64   `json:"luck_seed,omitempty"`
+	LuckDraws uint64  `json:"luck_draws,omitempty"`
+	Luck      float64 `json:"luck,omitempty"`
+	luckSrc   *countingSource
+	luckRNG   *rand.Rand
+}
+
+// luckStream is the mission's own random stream. It is built on first use from
+// LuckSeed, skipped forward to LuckDraws after a load, so every draw about the
+// mission (the encounter on return, a ruins offer) comes from its own stream
+// and not from the game's shared one, wherever in the run the mission is
+// processed.
+func (a *ActiveExpedition) luckStream() *rand.Rand {
+	if a.luckRNG == nil {
+		a.luckSrc = newCountingSource(a.LuckSeed)
+		a.luckSrc.skip(min(a.LuckDraws, maxRNGReplay))
+		a.luckRNG = rand.New(a.luckSrc)
+	}
+	return a.luckRNG
+}
+
+// luckDraws is how far the mission's stream has been drawn, for a save.
+func (a *ActiveExpedition) luckDraws() uint64 {
+	if a.luckSrc != nil {
+		return a.luckSrc.draws
+	}
+	return a.LuckDraws
+}
+
+// withLuck runs fn with the mission's own stream standing in for the game's
+// seeded RNG, so the draws fn makes (the encounter, a boon, a ruins offer) are
+// the mission's. Call under the write lock.
+func (ge *GameEngine) withLuck(rng *rand.Rand, fn func()) {
+	saved := ge.rng
+	ge.rng = rng
+	defer func() { ge.rng = saved }()
+	fn()
+}
+
+// RoadEvent is a deterministic launch-time event, ordered by mission tick.
+type RoadEvent struct {
+	Tick         int    `json:"tick"`
+	Kind         string `json:"kind"`
+	Story        string `json:"story,omitempty"`
+	AuxStory     string `json:"aux_story,omitempty"`
+	AmbushStory  string `json:"ambush_story,omitempty"`
+	FoeIndex     int    `json:"foe_index,omitempty"`
+	HelperIndex  int    `json:"helper_index,omitempty"`
+	WeatherIndex int    `json:"weather_index,omitempty"`
+	FindIndex    int    `json:"find_index,omitempty"`
+	Fired        bool   `json:"fired,omitempty"`
 }
 
 // MilitaryManager handles the mission board, the missions under way and the
@@ -183,7 +241,11 @@ type ExpeditionResult struct {
 	SoldiersSent int
 	// Offer is the offer the mission was sent from: its tier, age and
 	// Legendary mark are what the badges read.
-	Offer MissionOffer
+	Offer       MissionOffer
+	RoadEvents  int
+	RoadStories []string
+	// luck is the mission's own stream, for the encounter on return.
+	luck *rand.Rand
 }
 
 // Tick advances every mission under way (one per tier) by one tick and
@@ -193,12 +255,15 @@ type ExpeditionResult struct {
 // The success roll is the mission's own SuccessChance (rolled when the offer
 // was made; the army was counted when it was sent). expeditionBonus is not
 // used here: the loot was sized at launch. Soldiers are spent at launch; a
-// failure differs from a success only in the loot (30%). The roll comes from
-// rng, one draw per resolving mission, short before long before grand.
-func (mm *MilitaryManager) Tick(rng *rand.Rand, missionPower, expeditionBonus float64) []ExpeditionResult {
+// failure differs from a success only in the loot (30%).
+//
+// The roll is the mission's own draw from its luck stream, taken at launch
+// (ActiveExpedition.Luck): it succeeds when that draw is under the odds it
+// has now, so a road event that moves the odds still counts.
+func (mm *MilitaryManager) Tick(missionPower, expeditionBonus float64) []ExpeditionResult {
 	var results []ExpeditionResult
 	for _, tier := range boardTiers {
-		if res, ok := mm.tickTier(rng, tier); ok {
+		if res, ok := mm.tickTier(tier); ok {
 			results = append(results, res)
 		}
 	}
@@ -207,7 +272,7 @@ func (mm *MilitaryManager) Tick(rng *rand.Rand, missionPower, expeditionBonus fl
 
 // tickTier advances one tier's mission. ok is true only on the tick it
 // resolves.
-func (mm *MilitaryManager) tickTier(rng *rand.Rand, tier string) (ExpeditionResult, bool) {
+func (mm *MilitaryManager) tickTier(tier string) (ExpeditionResult, bool) {
 	active := mm.active[tier]
 	if active == nil {
 		return ExpeditionResult{}, false
@@ -217,7 +282,7 @@ func (mm *MilitaryManager) tickTier(rng *rand.Rand, tier string) (ExpeditionResu
 		return ExpeditionResult{}, false
 	}
 
-	success := rng.Float64() < active.SuccessChance
+	success := active.Luck < active.SuccessChance
 	rewards := make(map[string]float64)
 	var message string
 	if success {
@@ -244,6 +309,9 @@ func (mm *MilitaryManager) tickTier(rng *rand.Rand, tier string) (ExpeditionResu
 		Success:      success,
 		SoldiersSent: active.Soldiers,
 		Offer:        active.MissionOffer,
+		RoadEvents:   len(active.RoadEventsSeen),
+		RoadStories:  slices.Clone(active.RoadEventsSeen),
+		luck:         active.luckStream(),
 	}, true
 }
 
@@ -334,6 +402,7 @@ func snapshotActive(active *ActiveExpedition, expeditionBonus float64) *Expediti
 		HaulMinutes:   active.HaulMinutes,
 		SuccessHaul:   success,
 		FailureHaul:   failure,
+		RoadStories:   append([]string(nil), active.RoadEventsSeen...),
 	}
 }
 
@@ -354,6 +423,9 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 			continue
 		}
 		mission := *entry.Mission
+		mission.luckSrc, mission.luckRNG = nil, nil
+		mission.RoadEvents = append([]RoadEvent(nil), entry.Mission.RoadEvents...)
+		mission.RoadEventsSeen = append([]string(nil), entry.Mission.RoadEventsSeen...)
 		mm.active[entry.Slot] = &mission
 	}
 	mm.board = MissionBoard{}
@@ -377,6 +449,11 @@ func (mm *MilitaryManager) ActiveForSave() []ActiveSlotSave {
 			c := *active
 			c.BaseRewards, c.SuccessRewards = maps.Clone(active.BaseRewards), maps.Clone(active.SuccessRewards)
 			c.FailureRewards, c.Cost = maps.Clone(active.FailureRewards), maps.Clone(active.Cost)
+			c.RoadEvents = append([]RoadEvent(nil), active.RoadEvents...)
+			c.RoadEventsSeen = append([]string(nil), active.RoadEventsSeen...)
+			// The copy starts its own stream from the seed and draw count, so it
+			// never shares the live mission's stream.
+			c.LuckDraws, c.luckSrc, c.luckRNG = active.luckDraws(), nil, nil
 			out = append(out, ActiveSlotSave{Slot: tier, Mission: &c})
 		}
 	}

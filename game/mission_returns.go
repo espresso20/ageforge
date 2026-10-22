@@ -16,9 +16,10 @@ type MissionReturn struct {
 	// Success says how it ended. Haul is the loot as the log words it
 	// ("1.2M wood, 408K stone"); a failure brings back its share, a mission
 	// that brought nothing home has none.
-	Success bool   `json:"success"`
-	Haul    string `json:"haul,omitempty"`
-	Tick    int    `json:"tick"`
+	Success    bool   `json:"success"`
+	Haul       string `json:"haul,omitempty"`
+	Tick       int    `json:"tick"`
+	RoadEvents int    `json:"road_events,omitempty"`
 }
 
 // wordsKind is the index of the offer's tier name in the age's words.
@@ -51,7 +52,7 @@ func (mm *MilitaryManager) Label(o MissionOffer) string {
 func (mm *MilitaryManager) recordReturn(res ExpeditionResult, tick int) {
 	entry := MissionReturn{
 		Label: mm.Label(res.Offer), Tier: res.Offer.Tier, Title: res.Name, Place: res.Offer.Place,
-		Success: res.Success, Haul: amountsText(res.Rewards), Tick: tick,
+		Success: res.Success, Haul: amountsText(res.Rewards), Tick: tick, RoadEvents: res.RoadEvents,
 	}
 	mm.returns = append([]MissionReturn{entry}, mm.returns...)
 	if len(mm.returns) > config.MissionReturnsKept {
