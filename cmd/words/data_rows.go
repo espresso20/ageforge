@@ -253,6 +253,10 @@ var hiddenFields = map[string]string{
 	"Ages": "age keys", "Resource": "a resource key", "UnlockBadge": "a badge key", "Effect": "a key",
 	"from": "an age key", "until": "an age key", "GainGlyph": "a glyph", "LossGlyph": "a glyph",
 
+	"config.lexiconRow.age":               "an age key",
+	"config.lexiconRow.terms":             "the lexicon's words, by term key (config/lexicon.go; not in the export yet)",
+	"config.Word.One":                     "a lexicon word (config/lexicon.go; not in the export yet)",
+	"config.Word.Many":                    "a lexicon word (config/lexicon.go; not in the export yet)",
 	"config.BadgeFamilyDef.Key":           "a template for badge keys",
 	"config.BadgeDef.Aliases":             "keys older saves used",
 	"config.BadgeReveal.Key":              "a key",

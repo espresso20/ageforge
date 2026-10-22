@@ -150,3 +150,24 @@ func TestStateTermsFollowTheAge(t *testing.T) {
 		t.Errorf("bronze worker = %q", got)
 	}
 }
+
+// A knowledge building says, when it stands, that its scholars moved in.
+func TestScholarsArrivalIsLogged(t *testing.T) {
+	ge := peopleEngine(t)
+	for key := range ge.Resources.resources {
+		setAmount(ge, key, 1e6)
+	}
+	ge.Buildings.UnlockBuilding("elders_hall")
+	if err := ge.BuildBuilding("elders_hall"); err != nil {
+		t.Fatalf("build: %v", err)
+	}
+	for i := 0; i < 500 && len(ge.buildQueue) > 0; i++ {
+		ge.StepTicks(1)
+	}
+	if ge.Buildings.GetCount("elders_hall") != 1 {
+		t.Fatal("the Elders' Hall did not finish")
+	}
+	if !logHas(ge, "2 storytellers moved in with the Elders' Hall.") {
+		t.Errorf("no line for the scholars arriving: %v", ge.log)
+	}
+}

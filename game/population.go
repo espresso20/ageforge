@@ -1,6 +1,12 @@
 package game
 
-import "github.com/espresso20/ageforge/config"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
+)
 
 // Population. "People" is the parent of every kind of person in the town:
 // workers (they have a job), the reserve (they live in the homes and have no
@@ -32,7 +38,7 @@ func (ge *GameEngine) workerCapLocked() int { return ge.popCapLocked() - ge.scho
 func (ge *GameEngine) foodDrainLocked() float64 {
 	drain := ge.Workers.FoodDrain()
 	if s := ge.scholarTotal(); s > 0 {
-		drain += float64(s) * ge.Workers.FoodCostPerWorker()
+		drain += float64(float64(s) * ge.Workers.FoodCostPerWorker())
 	}
 	return drain
 }
@@ -41,3 +47,13 @@ func (ge *GameEngine) foodDrainLocked() float64 {
 // "soldiers", "scholars" (config.Term). The UI names people through it, so
 // every age has its own name for them.
 func (st GameState) Term(key string) config.Word { return config.Term(st.Age, key) }
+
+// logScholarsArrived says, for a knowledge building that has just been built,
+// that its scholars have moved in. Caller holds the lock.
+func (ge *GameEngine) logScholarsArrived(def config.BuildingDef) {
+	if def.Scholars <= 0 {
+		return
+	}
+	w := config.Term(ge.age, config.TermScholars)
+	ge.addLog(LogRoutine, fmt.Sprintf("%s moved in with the %s.", textfmt.Count(def.Scholars, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
+}

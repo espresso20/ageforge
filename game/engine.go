@@ -3416,6 +3416,7 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
 	done := buildDoneLog(def)
 	ge.addLog(done, fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
+	ge.logScholarsArrived(def)
 	if def.Category == "wonder" || def.Category == "monument" {
 		// Their bonuses join the pools; one a cap keeps from counting says so.
 		for _, capped := range ge.capLinesLocked(def.Effects, true) {
@@ -3806,6 +3807,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	} else {
 		ge.recalculateRates()
 		ge.addLog(buildDoneLog(def), fmt.Sprintf("Built %s (you have %d).", buildingCountIn(ge.rules, built, key), ge.Buildings.GetCount(key)))
+		ge.logScholarsArrived(def)
 	}
 	return built, nil
 }
