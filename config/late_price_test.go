@@ -45,3 +45,48 @@ func TestLatePricePaybackAndDealsFollowTheCurve(t *testing.T) {
 		t.Errorf("information deal payback = %g, want %g", got, want)
 	}
 }
+
+func TestNewCopyPriceScalesEveryBuildingButWondersAndMonuments(t *testing.T) {
+	authored := map[string]float64{"wood": 100, "stone": 40}
+	defs := []BuildingDef{
+		{Key: "camp", Category: "production", RequiredAge: "stone_age", BaseCost: authored},
+		{Key: "pit", Category: "storage", RequiredAge: "stone_age", BaseCost: map[string]float64{"wood": 10}},
+		{Key: "grove", Category: "wonder", RequiredAge: "stone_age", BaseCost: map[string]float64{"wood": 1000}},
+		{Key: "obelisk", Category: "monument", RequiredAge: "stone_age", BaseCost: map[string]float64{"culture": 500}},
+	}
+	applyNewCopyPrice(defs)
+	if got, want := defs[0].BaseCost["wood"], 100*NewCopyPriceFactor; got != want {
+		t.Errorf("production wood = %g, want %g", got, want)
+	}
+	if got, want := defs[0].BaseCost["stone"], 40*NewCopyPriceFactor; got != want {
+		t.Errorf("production stone = %g, want %g", got, want)
+	}
+	if got, want := defs[1].BaseCost["wood"], 10*NewCopyPriceFactor; got != want {
+		t.Errorf("storage wood = %g, want %g", got, want)
+	}
+	if got := defs[2].BaseCost["wood"]; got != 1000 {
+		t.Errorf("wonder wood = %g, want 1000 (a wonder is not scaled)", got)
+	}
+	if got := defs[3].BaseCost["culture"]; got != 500 {
+		t.Errorf("monument culture = %g, want 500 (a monument is not scaled)", got)
+	}
+	// The authored table keeps its map: a second pass from it must not compound.
+	if authored["wood"] != 100 || authored["stone"] != 40 {
+		t.Errorf("the authored map was changed to %v", authored)
+	}
+}
+
+// TestLiveBuildingsTookTheNewCopyFactor: the loaded table carries the factor,
+// so every reader sees one price; a wonder is as authored.
+func TestLiveBuildingsTookTheNewCopyFactor(t *testing.T) {
+	live := BuildingByKey()
+	if got, want := live["gathering_camp"].BaseCost["wood"], 16*NewCopyPriceFactor; got != want {
+		t.Errorf("a Gathering Camp costs %g wood, want %g (16 as first written, times the factor)", got, want)
+	}
+	if got, want := live["sacred_grove"].BaseCost["wood"], 1600.0; got != want {
+		t.Errorf("the Sacred Grove costs %g wood, want %g (a wonder is not scaled)", got, want)
+	}
+	if again := BuildingByKey(); again["gathering_camp"].BaseCost["wood"] != live["gathering_camp"].BaseCost["wood"] {
+		t.Error("a second load of the table priced a camp differently: the factor compounded")
+	}
+}

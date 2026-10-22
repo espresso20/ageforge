@@ -13,7 +13,7 @@ Amounts print with up to three figures and a unit from a thousand up: K, M, B, T
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
 | Food | `food` | Primitive Age | 50 | Every worker eats it every tick, so the rate must stay positive |
-| Wood | `wood` | Primitive Age | 50 | The first building material |
+| Wood | `wood` | Primitive Age | 75 | The first building material |
 | Faith | `faith` | Primitive Age | 50 | Never drains on its own; your faith strength (your faith buildings against a moderate set, times the share of your faith you have kept) sets the epoch and catastrophe odds, and faith income lifts morale |
 | Stone | `stone` | Stone Age | 50 | Durable construction material |
 | Iron | `iron` | Bronze Age | 50 | Metal for tools, weapons and early engineering |

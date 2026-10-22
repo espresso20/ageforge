@@ -32,7 +32,7 @@ Hand-gathering is an early-game crutch. It works through the **Medieval Age** an
 
 ## Step 1: Build a gathering camp and a wood camp
 
-Food runs short before anything else, so get production going first. Both camps cost **16 wood**, and you start with 50.
+Food runs short before anything else, so get production going first. Both camps cost **24 wood**, and you start with 50.
 
 ```
 build gathering_camp
@@ -45,7 +45,7 @@ A gathering camp makes **+1.0 food/tick** and a wood camp about **+0.57 wood/tic
 
 ## Step 2: Build huts
 
-A hut costs **14 wood**, takes 8 ticks (16 seconds) and adds **10 housing**. More housing means more workers, and they come on their own. The Stone Age wants 10 huts, so keep adding them as wood comes in.
+A hut costs **21 wood**, takes 8 ticks (16 seconds) and adds **10 housing**. More housing means more workers, and they come on their own. The Stone Age wants 10 huts, so keep adding them as wood comes in.
 
 ```
 build hut
@@ -94,7 +94,7 @@ The Workers box in the sidebar should show **Idle: 0**. The game recruits only i
 
 ## Step 5: Build stashes
 
-Food and wood start with only 50 storage each. Storage fills fast, and anything past it is wasted. A stash costs **35 wood** and gives **+100 storage** for every resource. There is no limit on copies, but each one costs 1.75 times the one before it.
+Food starts with only 50 storage and wood with 75. Storage fills fast, and anything past it is wasted. A stash costs **52 wood** and gives **+150 storage** for every resource. There is no limit on copies, but each one costs 1.75 times the one before it.
 
 ```
 build stash
@@ -106,13 +106,13 @@ Build two early so there is room to hold what comes in. The Stone Age asks for *
 
 ## Step 6: Build story circles and a shrine
 
-Story circles come with **2 scholars** each. Scholars are not workers: they need no housing, no food and no assignment, and they start research the moment the circle stands. The Stone Age needs **5 story circles**, and a circle cannot be built past 5. A story circle costs 60 wood and takes 75 ticks (2m 30s) to build, so start them early.
+Story circles come with **2 scholars** each. Scholars are not workers: they need no housing, no food and no assignment, and they start research the moment the circle stands. The Stone Age needs **5 story circles**, and a circle cannot be built past 5. A story circle costs 90 wood and takes 75 ticks (2m 30s) to build, so start them early.
 
 ```
 build story_circle
 ```
 
-Also build **shrines** (60 wood for the first). The Stone Age asks for **8 shrines**. Shrines produce faith and lift morale a little. Faith matters later: it lowers the odds that a catastrophe strikes and pays to appease a harbinger (see [Faith](faith.md)).
+Also build **shrines** (90 wood for the first). The Stone Age asks for **8 shrines**. Shrines produce faith and lift morale a little. Faith matters later: it lowers the odds that a catastrophe strikes and pays to appease a harbinger (see [Faith](faith.md)).
 
 ```
 build shrine
@@ -138,7 +138,7 @@ Once you have a story circle, its scholars can research:
 research tool_making
 ```
 
-It costs nothing to start. A bar fills as your scholars work, and the screens show its percent and the time left. With five story circles it takes about 10 minutes; each circle you add shortens it. It gives +10% food and +10% wood for the rest of the run, and every `gather` brings 2 more. Get it here if you can: Stoneworking, the tech the Stone Age's wonder needs, stands on it. If you'd rather advance first, queue it with `plan research tool_making` and the [build plan](plan.md) starts it when the research slot is free. Language (+10% research speed) and Fire Mastery (+10% food and +5% housing) are the age's other two techs. `research list` shows the time each would take your scholars now.
+It costs nothing to start. A bar fills as your scholars work, and the screens show its percent and the time left. With five story circles it takes about 13 minutes; each circle you add shortens it. It gives +10% food and +10% wood for the rest of the run, and every `gather` brings 2 more. Get it here if you can: Stoneworking, the tech the Stone Age's wonder needs, stands on it. If you'd rather advance first, queue it with `plan research tool_making` and the [build plan](plan.md) starts it when the research slot is free. Language (+10% research speed) and Fire Mastery (+10% food and +5% housing) are the age's other two techs. `research list` shows the time each would take your scholars now.
 
 ---
 
