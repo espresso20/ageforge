@@ -240,7 +240,16 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 			}
 			wx, wy, ww, wh := d.workerMiniTV.GetInnerRect()
 			mini := strings.Join(rectText(cells, w, wx, wy, ww, wh), "\n")
-			for _, want := range []string{"Pop ", st.Term("workers").Many, st.Term("reserve").Many, st.Term("soldiers").Many, st.Term("scholars").Many} {
+			// With something holding the population back the headcount moves to
+			// the box's title (peopleBoxTitle) and its row goes to the Panels list.
+			pop := "Pop "
+			if peopleBoxCompact(st, d.workerDetail) {
+				pop = ""
+				if title := peopleBoxTitle(st, d.workerDetail); !strings.Contains(title, "/") {
+					t.Errorf("%s: the People box is compact but its title has no headcount: %q", where, title)
+				}
+			}
+			for _, want := range []string{pop, st.Term("workers").Many, st.Term("reserve").Many, st.Term("soldiers").Many, st.Term("scholars").Many} {
 				if !strings.Contains(mini, want) {
 					t.Errorf("%s: the People box does not show %q:\n%s", where, want, mini)
 				}

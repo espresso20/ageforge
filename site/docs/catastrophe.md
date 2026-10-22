@@ -109,7 +109,7 @@ Soldiers soften an Endure too. After Brace has done its part, your garrison blun
 - **Buildings:** the braced share of buildings destroyed shrinks by the garrison's share. The number of buildings the garrison saves is rounded down, so it never saves more than its share, and at least 1 building still falls if you have any.
 - **Stock:** the garrison keeps its share of the stock that Brace would have let go.
 - Worker loss, the production debuff and the morale hit are unchanged.
-- Your soldiers are measured before the blow lands. They are stock like everything else, so afterwards they drop with the rest of your resources.
+- Your soldiers are measured before the blow lands. They stay at their posts afterwards: an Endure takes no soldiers.
 
 **The combined cap.** Brace and garrison together can cut the unbraced loss by at most **60%**. However strong your army, at least **8%** of buildings fall and at most **66%** of stock is kept. The cap only bites at Brace level 2: level 2 already takes the building loss from 20% to 10%, so the garrison can add at most a fifth on top (10% down to 8%).
 
@@ -122,7 +122,7 @@ Soldiers soften an Endure too. After Brace has done its part, your garrison blun
 | 2 | 20% | 8% | 56% |
 | 2 | 40% or more | 8% (cap) | 66% (cap) |
 
-A player with no soldiers takes exactly the Brace-only numbers above. Few players have none: the military buildings the age gates require train a small garrison on their own, enough to blunt roughly 8-19% of a raid. See [The garrison you already have](military.md#the-garrison-you-already-have).
+A player with no soldiers takes exactly the Brace-only numbers above. Few players have none: the military buildings the age gates require come with a small garrison. See [The garrison you already have](military.md#the-garrison-you-already-have).
 
 **What you see.** The catastrophe window's Endure section shows the real numbers, after Brace and garrison. Under them it adds a line for each: the Brace level with its own numbers ("before your garrison"), then how many buildings the garrison saves and how much stock it keeps compared with Brace alone. With no soldiers it says so and points you to the Army panel. If the cap cut in, a gray line says Brace and garrison together soften an Endure by at most 60%. After you Endure, the log adds:
 

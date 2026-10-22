@@ -74,14 +74,68 @@ const (
 // ruleset's threat (rules.Set.AgeThreat), which calls this with its own
 // tree's scale.
 func AgeThreatAt(order int, scale float64) float64 {
+	army := ArmyThreatScale(order)
 	if t, early := earlyThreat(order); early {
-		return float64(t * scale)
+		return float64(float64(t*scale) * army)
 	}
 	t := DefenseThreatBase
 	for i := 0; i < order; i++ {
 		t *= DefenseThreatGrowth
 	}
-	return float64(t * scale)
+	return float64(float64(t*scale) * army)
+}
+
+// The threat is measured in soldiers at their posts. It was sized, age by
+// age, against the garrison a moderate town's military buildings trained over
+// the age (FlowIncome of soldiers times the age's pacing target, when
+// soldiers were a stockpile those buildings made): masterGarrison, recorded
+// from that rule as it stood. Soldiers now come with the military buildings
+// (soldier_rule.go) and the moderate town's garrison is the army it has at its
+// posts (RefSoldiers), so each age's threat is scaled by the one over the
+// other: the reference town's army blunts exactly the share the moderate
+// garrison did, in every age, and so does any army in proportion.
+//
+// Recorded at 6b3a4162, the last commit with soldier production.
+var masterGarrison = [...]float64{
+	0, 2160, 33696.000000000007, 280800, 812448, 2122848.0000000005, 5705856.0000000009,
+	13366080, 59461758.720000006, 141158777.75999999, 370169654.40000004,
+	946577923.20000005, 2086589756.1600003, 5139506998.0800009, 12572210327.040001,
+	28287904881.600002, 63635389927.199997, 141131982111.12003, 311634850625.28003,
+	655423128360.00012, 1360312801848, 2984915659714.5605,
+}
+
+var (
+	armyThreatOnce  sync.Once
+	armyThreatScale []float64
+)
+
+// ArmyThreatScale is what the threat of the age with the given order is
+// multiplied by to measure it in soldiers at their posts: the reference
+// town's army there over the garrison the threat was sized against
+// (masterGarrison). 1 where either is 0 (the Primitive Age has no army; its threat is scaled as the Stone Age's, so it stays under it).
+func ArmyThreatScale(order int) float64 {
+	armyThreatOnce.Do(func() {
+		army := RefSoldiers(BaseBuildings(), Ages())
+		armyThreatScale = make([]float64, len(masterGarrison))
+		for i := range armyThreatScale {
+			armyThreatScale[i] = 1
+			if i < len(army) && army[i] > 0 && masterGarrison[i] > 0 {
+				armyThreatScale[i] = float64(army[i] / masterGarrison[i])
+			}
+		}
+	})
+	if order < 0 {
+		order = 0
+	}
+	if order == 0 {
+		// No military building yet: the Primitive Age's threat keeps its place
+		// under the Stone Age's, scaled with it.
+		order = 1
+	}
+	if order >= len(armyThreatScale) {
+		order = len(armyThreatScale) - 1
+	}
+	return armyThreatScale[order]
 }
 
 // The threat before the Iron Age.

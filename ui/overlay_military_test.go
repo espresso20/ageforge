@@ -11,10 +11,10 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// armyGarrison is a Classical Age garrison: 2,108,000 soldiers, defense
-// 4.216M. It was sized to blunt 28% of a raid against a threat of 2.56M;
-// against the 2M the age's threat is on the military yardstick it blunts 31%.
-const armyGarrison = 2108000
+// armyGarrison is a Classical Age garrison: 2,000 soldiers, defense 4,000,
+// against the age's threat of 1.94K (the threat is measured in soldiers at
+// their posts): it blunts 30% of a raid.
+const armyGarrison = 2000
 
 func TestArmyPanel_NoGarrison(t *testing.T) {
 	txt := untag(militaryProvider(game.NewGameEngine().GetState(), 0))
@@ -31,35 +31,35 @@ func TestArmyPanel_NoGarrison(t *testing.T) {
 	}
 }
 
-// Until a military building stands the panel says nothing trains yet, and
-// what does. A War Camp trains soldiers from the day it stands, two ages
-// before the age that brings them to every town: the panel then shows the
-// rate and what the garrison does.
-func TestArmyPanel_TrainingBeforeSoldiers(t *testing.T) {
+// Until a military building stands the panel says nobody is posted yet, and
+// what brings soldiers. A War Camp comes with its soldiers from the day it
+// stands, two ages before the age that brings them to every town: the panel
+// then shows the posts and what the garrison does.
+func TestArmyPanel_PostsBeforeSoldiers(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.EnsureMissionBoard()
 	txt := untag(militaryProvider(engine.GetState(), 0))
-	if !strings.Contains(txt, "Training:  not yet. A military building trains soldiers.") || strings.Contains(txt, "/tick\n Defense") {
-		t.Errorf("a new game's Army panel should say nothing trains yet, with no rate:\n%s", txt)
+	if !strings.Contains(txt, "Posts:     none yet. A military building comes with its soldiers.") || strings.Contains(txt, "/tick") {
+		t.Errorf("a new game's Army panel should say nobody is posted yet, with no rate:\n%s", txt)
 	}
 	// A new game's board may offer a military grand mission, whose entry says
 	// what it waits for, or none, and the empty-list wording says so.
-	if !strings.Contains(txt, "military buildings train") {
-		t.Errorf("the Army panel should say what trains soldiers:\n%s", txt)
+	if !strings.Contains(txt, "come with military buildings") && !strings.Contains(txt, "military buildings come with them") {
+		t.Errorf("the Army panel should say where soldiers come from:\n%s", txt)
 	}
 	if err := engine.EnterAgeForTest("stone_age"); err != nil {
 		t.Fatal(err)
 	}
-	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Training:  not yet. A military building trains soldiers.") {
-		t.Errorf("a Stone Age town with no War Camp should still say nothing trains:\n%s", txt)
+	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Posts:     none yet.") {
+		t.Errorf("a Stone Age town with no War Camp should still say nobody is posted:\n%s", txt)
 	}
-	// A garrison in the Stone Age: the panel shows the rate, and what the
+	// A garrison in the Stone Age: the panel shows the army, and what the
 	// garrison does against a Stone Age raid.
 	engine.SetGarrisonForTest("stone_age", 1500)
 	state := engine.GetState()
 	txt = untag(militaryProvider(state, 0))
 	blunt := config.DefenseMitigation(state.Military.DefenseRating, config.AgeThreat(config.AgeByKey()["stone_age"].Order)) * 100
-	for _, want := range []string{"Training:  +0.0/tick", "(raids in the Stone Age)", fmt.Sprintf("Your garrison would blunt about %.0f%% of a raid.", blunt)} {
+	for _, want := range []string{"Soldiers:  1.5K posted of", "(raids in the Stone Age)", fmt.Sprintf("Your garrison would blunt about %.0f%% of a raid.", blunt)} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("the Stone Age Army panel with a garrison is missing %q:\n%s", want, txt)
 		}
@@ -70,8 +70,8 @@ func TestArmyPanel_TrainingBeforeSoldiers(t *testing.T) {
 	if err := engine.EnterAgeForTest("iron_age"); err != nil {
 		t.Fatal(err)
 	}
-	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Training:  +0.0/tick") {
-		t.Errorf("the Iron Age Army panel should show the training rate:\n%s", txt)
+	if txt = untag(militaryProvider(engine.GetState(), 0)); strings.Contains(txt, "Training:") || strings.Contains(txt, "/tick") {
+		t.Errorf("nothing trains soldiers any more, yet the Iron Age Army panel shows a rate:\n%s", txt)
 	}
 }
 
@@ -80,12 +80,9 @@ func TestArmyPanel_Garrison(t *testing.T) {
 	engine.SetGarrisonForTest("classical_age", armyGarrison)
 	txt := untag(militaryProvider(engine.GetState(), 0))
 	for _, want := range []string{
-		// The Classical Age's threat on the military yardstick: 2.56M
-		// times 0.78 (config.MilitaryScaleAt), so this garrison, with no
-		// military power of its own, blunts more than the 28% it was
-		// sized for.
-		"Threat:    2M (raids in the Classical Age)",
-		"Your garrison would blunt about 31% of a raid.",
+		// The Classical Age's threat in soldiers at their posts: 1.94K.
+		"Threat:    1.94K (raids in the Classical Age)",
+		"Your garrison would blunt about 30% of a raid.",
 		"Raids, war raids and an Endure's losses all hit you that much softer.",
 		"Twice the garrison: about 36%. No army blunts more than 45%.",
 	} {
@@ -100,8 +97,8 @@ func TestArmyPanel_GarrisonOutmatchedLater(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("industrial_age", armyGarrison)
 	txt := untag(militaryProvider(engine.GetState(), 0))
-	if !strings.Contains(txt, "Your garrison would blunt about 6% of a raid.") {
-		t.Errorf("an outmatched garrison should blunt about 6%%:\n%s", txt)
+	if !strings.Contains(txt, "Your garrison would blunt about 17% of a raid.") {
+		t.Errorf("an outmatched garrison should blunt about 17%%:\n%s", txt)
 	}
 }
 
@@ -130,7 +127,7 @@ func TestArmyPanel_OnScreen(t *testing.T) {
 	if !d.overlayMgr.Show("army", engine.GetState()) {
 		t.Fatal("overlay army not registered")
 	}
-	if !gridHas(screenGrid(t, pages, w, h), "Your garrison would blunt about 31% of a raid.") {
+	if !gridHas(screenGrid(t, pages, w, h), "Your garrison would blunt about 30% of a raid.") {
 		t.Error("the garrison line is not on screen")
 	}
 }

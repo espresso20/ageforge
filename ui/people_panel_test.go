@@ -18,6 +18,8 @@ func peopleTown(t *testing.T) game.GameState {
 	restoreForge(t)
 	_, _, eng := stagedDashboard(t, "bronze_age")
 	st := eng.GetState()
+	st.Workers.Soldiers = 108
+	st.Workers.TotalPop += 108
 	st.Military.SoldierCount = 108
 	st.Military.ActiveShort = &game.ExpeditionSnapshot{Name: "Trade Trek to the Cedar Pass", Soldiers: 20, TicksLeft: 300}
 	return st
@@ -29,7 +31,7 @@ func TestPeopleNamesFollowTheAge(t *testing.T) {
 	for _, age := range config.AgeOrder() {
 		st := game.GameState{Age: age, AgeName: age}
 		st.Workers.TotalPop, st.Workers.MaxPop, st.Workers.TotalIdle, st.Workers.Scholars = 40, 50, 7, 3
-		st.Military.SoldierCount = 9
+		st.Workers.Soldiers = 9
 		box := plainText(peopleBoxText(st, 0, true))
 		over := renderPeople(st, peopleView{}, 100, 30).String()
 		for _, key := range config.PeopleTerms() {
@@ -45,9 +47,9 @@ func TestPeopleNamesFollowTheAge(t *testing.T) {
 	// And in the Bronze Age, the owner's example line.
 	st := game.GameState{Age: "bronze_age"}
 	st.Workers.TotalPop, st.Workers.MaxPop, st.Workers.TotalIdle, st.Workers.Scholars = 1061, 1113, 412, 30
-	st.Military.SoldierCount = 108
+	st.Workers.Soldiers = 108
 	box := plainText(peopleBoxText(st, 0, false))
-	for _, want := range []string{"Craftsfolk 619", "Villagers 412", "Spearmen 108", "Scribes 30"} {
+	for _, want := range []string{"Craftsfolk 511", "Villagers 412", "Spearmen 108", "Scribes 30"} {
 		if !strings.Contains(strings.Join(strings.Fields(box), " "), want) {
 			t.Errorf("the Bronze Age box lacks %q:\n%s", want, box)
 		}
@@ -74,7 +76,7 @@ func TestSoldiersLeaveTheResourcesBox(t *testing.T) {
 // A party out shows beside the soldiers' count when there is room.
 func TestPeopleBoxSoldiersOut(t *testing.T) {
 	st := game.GameState{Age: "modern_age"}
-	st.Military.SoldierCount = 108
+	st.Workers.Soldiers = 108
 	st.Military.ActiveShort = &game.ExpeditionSnapshot{Soldiers: 20}
 	if line := plainText(peopleBoxText(st, 0, false)); !strings.Contains(line, "Soldiers 108 · 20 out") && !strings.Contains(strings.Join(strings.Fields(line), " "), "Soldiers 108 · 20 out") {
 		t.Errorf("no soldiers out on the line:\n%s", line)
@@ -230,5 +232,41 @@ func TestPeopleKindsHaveColours(t *testing.T) {
 			t.Errorf("kinds %d and %d share a style", k, other)
 		}
 		seen[p.styles[k]] = k
+	}
+}
+
+// The Army tab shows each military building's soldiers as posted over posts,
+// from the state, at 80x24 and 100x30; the People box's soldier line reads the
+// posts (the town's soldiers), not the stock.
+func TestPeopleArmyTabShowsPosts(t *testing.T) {
+	st := peopleTown(t)
+	st.Military.Posts = []game.SoldierPost{
+		{Key: "war_camp", Name: "War Camp", Count: 3, PerCopy: 9, Posted: 27, Posts: 27},
+		{Key: "barracks", Name: "Barracks", Count: 2, PerCopy: 16, Posted: 32, Posts: 32},
+	}
+	for _, key := range []string{"war_camp", "barracks"} {
+		b := st.Buildings[key]
+		b.Category = "military"
+		b.Count = map[string]int{"war_camp": 3, "barracks": 2}[key]
+		st.Buildings[key] = b
+	}
+	for _, size := range [][2]int{{80, 24}, {100, 30}} {
+		army := renderPeople(st, peopleView{tab: tabArmy}, size[0], size[1]).String()
+		for _, want := range []string{"27/27 posted", "32/32 posted"} {
+			if !strings.Contains(army, want) {
+				t.Errorf("the Army tab at %dx%d lacks %q:\n%s", size[0], size[1], want, army)
+			}
+		}
+	}
+	// A building short of its posts says so in the same words.
+	st.Military.Posts[0].Posted = 20
+	if army := renderPeople(st, peopleView{tab: tabArmy}, 100, 30).String(); !strings.Contains(army, "20/27 posted") {
+		t.Errorf("a short post is not shown:\n%s", army)
+	}
+	// The box reads the town's soldiers.
+	st.Workers.Soldiers = 59
+	st.Military.SoldierCount = 7
+	if box := strings.Join(strings.Fields(plainText(peopleBoxText(st, 0, false))), " "); !strings.Contains(box, "Spearmen 59") {
+		t.Errorf("the People box does not read the posts:\n%s", box)
 	}
 }

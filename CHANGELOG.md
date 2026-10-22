@@ -10,6 +10,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **Soldiers are people.** A military building comes with its soldiers: they fill its posts from the reserve and then as new arrivals, while the food allows, live in your homes and eat, and the army is the soldiers at their posts. Military buildings no longer train a stockpile.
 - **People.** Every person in your town is in one place: workers, the reserve, soldiers and scholars, each with its own name in every age. Scholars live in your homes and eat. A People box replaces the Workers box, and the People panel has tabs for your work, your army and your scholars.
 - **Homes fill up.** Population grows toward your housing while food lasts, faster for a bigger town. Villagers without a job wait in the reserve and take new jobs at once; the Workers box says what holds your population back.
 - **No more instant techs.** Research left over from a finished tech no longer carries into the next one, gifts of research (events, milestones, expeditions, trade) add at most half a tech, and Grand Discovery only grants techs you could start.

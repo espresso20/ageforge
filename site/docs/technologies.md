@@ -314,18 +314,18 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 
 ---
 
-### Iron Age (~16m to 1h 46m/tech)
+### Iron Age (~19m to 2h 1m/tech)
 
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `priesthood` | Priesthood | optional | 37m | `calendar` | Morale can rise 5 points higher |
-| `mathematics` | Mathematics | **keystone** (Colosseum) | 28m | `primitive_writing` | +8% scholar output |
-| `exploration` | Exploration | spine | 16m | one of `map_making` or `boatbuilding` | Opens long and grand mission offers |
-| `irrigation` | Irrigation | optional | 48m | `agriculture` | +8% food production, +5% housing |
-| `road_building` | Road Building | optional | 1h 2m | `masonry`, `the_wheel` | +8% gold production, trade routes take 15% less time |
-| `iron_smelting` | Iron Smelting | spine | 22m | `bronze_working` | Opens the Smelter, +8% iron production |
-| `quarrying` | Quarrying | optional | 1h 21m | `bronze_working` | +8% marble production, +8% iron ore production |
-| `siege_warfare` | Siege Warfare | optional | 1h 46m | `military_tactics` | Opens the Legion Fort, +15% military power |
+| `priesthood` | Priesthood | optional | 42m | `calendar` | Morale can rise 5 points higher |
+| `mathematics` | Mathematics | **keystone** (Colosseum) | 32m | `primitive_writing` | +8% scholar output |
+| `exploration` | Exploration | spine | 19m | one of `map_making` or `boatbuilding` | Opens long and grand mission offers |
+| `irrigation` | Irrigation | optional | 55m | `agriculture` | +8% food production, +5% housing |
+| `road_building` | Road Building | optional | 1h 11m | `masonry`, `the_wheel` | +8% gold production, trade routes take 15% less time |
+| `iron_smelting` | Iron Smelting | spine | 25m | `bronze_working` | Opens the Smelter, +8% iron production |
+| `quarrying` | Quarrying | optional | 1h 33m | `bronze_working` | +8% marble production, +8% iron ore production |
+| `siege_warfare` | Siege Warfare | optional | 2h 1m | `military_tactics` | Opens the Legion Fort, +15% military power |
 
 ---
 

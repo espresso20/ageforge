@@ -57,6 +57,9 @@ const (
 	// in the first age. It is an assumption of the reference players, not a
 	// number from the tables: without it an empty town never starts.
 	RefHandGather = 0.5
+	// RefFoodMarginShare is the share of the food made that a newcomer must
+	// leave unspent: the game's recruitFoodMarginShare.
+	RefFoodMarginShare = 0.05
 )
 
 const refTicksPerHour = 3600.0 / config.TickSeconds
@@ -202,8 +205,12 @@ type townState struct {
 	workers float64 // people at work
 	room    float64 // people the houses hold
 	jobs    float64
-	eaten   float64 // food the workers eat per tick
-	grown   float64 // food made per tick, before they eat
+	// scholars and soldiers come with their buildings and eat; the scholars
+	// live in the houses, the soldiers (the ones posted: see state) arrive on
+	// top of them, as the game lets them.
+	scholars, soldiers float64
+	eaten              float64 // food everyone eats per tick
+	grown              float64 // food made per tick, before they eat
 }
 
 // state works out a town standing in age i. speed is the Era Mastery speed
@@ -211,6 +218,7 @@ type townState struct {
 func (t *refTables) state(counts map[string]int, i int, speed float64) townState {
 	staffed, free := map[string]float64{}, map[string]float64{}
 	capAll := 0.0
+	posts := 0.0 // the soldiers' posts the town's military buildings have
 	own := map[string]float64{}
 	s := townState{income: map[string]float64{}, caps: map[string]float64{}}
 	keys := make([]string, 0, len(counts))
@@ -225,11 +233,14 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 			continue
 		}
 		s.jobs += float64(n * float64(d.WorkerCapacity))
+		s.scholars += float64(n * float64(d.Scholars))
+		posts += float64(n * float64(d.Soldiers))
 		for _, e := range d.Effects {
 			switch {
 			case e.Type == "research":
 				// Scholars come with the building and work at a full crew
-				// from the day it stands: no staffing, no housing.
+				// from the day it stands: no staffing. They live in the
+				// houses and eat (counted below).
 				free[config.ResearchTarget] += float64(n * e.Value)
 			case e.Type == "production" && d.WorkerCapacity > 0:
 				staffed[e.Target] += float64(n * e.Value)
@@ -246,8 +257,10 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 	}
 	fac := t.factor[i]
 	fc := t.food[i]
-	s.workers = math.Min(s.room, s.jobs)
+	// The scholars live in the houses and eat before anyone is recruited.
+	s.workers = math.Min(math.Max(s.room-s.scholars, 0), s.jobs)
 	fst, fun := float64(staffed["food"]*fac["food"]), float64(free["food"]*fac["food"])
+	fun -= float64(s.scholars * fc)
 	if s.jobs > 0 {
 		// A town recruits no one it cannot feed.
 		if net := fun + float64(fst*(0.2+float64(0.8*s.workers/s.jobs))) - float64(s.workers*fc); net < 0 {
@@ -255,6 +268,20 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 				s.workers = math.Max(0, math.Min(s.workers, (fun+float64(0.2*fst))/den))
 			}
 		}
+	}
+	// The soldiers take their posts last, while the food margin holds: net
+	// food stays at or above one person's food, or recruitFoodMarginShare of
+	// the food made, after each one eats (the game's own test, game.recruitFoodMargin).
+	gross := fun + float64(s.scholars*fc)
+	if s.jobs > 0 {
+		gross += float64(fst * (0.2 + float64(0.8*s.workers/s.jobs)))
+	} else {
+		gross += fst
+	}
+	net := gross - float64((s.workers+s.scholars)*fc)
+	margin := math.Max(fc, float64(RefFoodMarginShare*gross))
+	if fc > 0 {
+		s.soldiers = math.Max(0, math.Min(posts, math.Floor(float64(net-margin)/fc)))
 	}
 	fill := 1.0
 	if s.jobs > 0 {
@@ -272,7 +299,7 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 		s.income["food"] += float64(RefHandGather * speed)
 	}
 	s.grown = s.income["food"]
-	s.eaten = float64(s.workers * fc * speed)
+	s.eaten = float64((s.workers + s.scholars + s.soldiers) * fc * speed)
 	s.income["food"] -= s.eaten
 	for r, b := range t.base {
 		s.caps[r] = float64((b + capAll + own[r]) * speed)

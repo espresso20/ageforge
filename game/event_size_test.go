@@ -173,7 +173,7 @@ var eventDigits = regexp.MustCompile(`\d`)
 func TestEventLineStatesWhatHappened(t *testing.T) {
 	for _, def := range append(config.RandomEvents(), config.EpochExclusiveEvents()...) {
 		ge := newTruthEngine(truthEventAge(def), truthTypical)
-		ge.Resources.resources["soldiers"].Amount = 0 // no garrison: the losses land whole
+		noGarrison(ge) // no garrison: the losses land whole
 		setWorkers(ge, 200)
 		// Half of every store, and room for the whole of every gain: a gain
 		// a full store cuts short has a line of its own
@@ -301,7 +301,7 @@ func TestEventSizeFollowsTheTown(t *testing.T) {
 	def := config.EventByKey()["beast_stampede"]
 	stampede := func(stock float64) (food, wood float64, line string) {
 		ge := newTruthEngine("stone_age", truthClean)
-		ge.Resources.resources["soldiers"].Amount = 0
+		noGarrison(ge)
 		// The town holds stock of each: it has the storage for it (the
 		// event works the stores out afresh, so a store typed in here would
 		// not last).

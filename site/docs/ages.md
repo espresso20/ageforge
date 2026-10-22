@@ -57,7 +57,7 @@ The age progress bar shows `✗ Keystone: <tech>` beside the wonder until the te
 
 An age asks for the town it is priced for. **No age asks you to hold an amount of any resource**, and advancing spends nothing. To leave an age you need:
 
-- **Eight copies of every building of that age that makes something.** That means food, wood, stone, metals, gold, power, faith, culture or soldiers.
+- **Eight copies of every building of that age that makes something.** That means food, wood, stone, metals, gold, power, faith or culture. A military building counts too: it makes nothing, but it comes with soldiers.
 - **Fewer copies of the age's knowledge building**, because each copy costs 50% more than the one before it (a producer's costs 15% more). The tables below give the count, from 5 to 10. See [Scholars and Research](knowledge.md#what-a-scholar-is).
 - **Every building count the age asked for already.** A building the age asked for in more copies keeps that count.
 - **Five copies of the age's storage building.**
@@ -78,7 +78,7 @@ Every age can be finished, and an automated test checks this in every release. T
 - The last required copy of each building costs at most **80%** of the store the gates force you to hold, so a town that met the earlier gates can always afford it.
 - The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age.
 - Every resource a required building, the wonder or the keystone costs has a source in the age itself, even for a town that skipped every building no earlier gate asked for. See [The Maker Rule](buildings.md#the-maker-rule).
-- A food, faith, culture or soldiers cost is something a moderate economy makes in the age.
+- A food, faith or culture cost is something a moderate economy makes in the age.
 - A town that arrives in a new age with empty stores, and only the buildings the gates asked for, can buy the first copy of every building the age opens, except those that wait for a tech you may never research.
 
 ## What Happens on Age Advance

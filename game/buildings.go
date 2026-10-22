@@ -57,6 +57,7 @@ type BuildingManager struct {
 	wonderKeys         []string
 	wonderMonumentKeys []string
 	scholarKeys        []string
+	soldierKeys        []string
 	storageKeys        []string
 
 	// costMult is the global build-cost multiplier applied to every computed
@@ -110,6 +111,7 @@ func (bm *BuildingManager) rebuildOrder() {
 	bm.wonderKeys = nil
 	bm.wonderMonumentKeys = nil
 	bm.scholarKeys = nil
+	bm.soldierKeys = nil
 	bm.storageKeys = nil
 	for i, key := range bm.order {
 		def := bm.defs[key]
@@ -122,6 +124,9 @@ func (bm *BuildingManager) rebuildOrder() {
 		}
 		if def.Scholars > 0 {
 			bm.scholarKeys = append(bm.scholarKeys, key)
+		}
+		if def.Soldiers > 0 {
+			bm.soldierKeys = append(bm.soldierKeys, key)
 		}
 		if def.Category == "storage" {
 			bm.storageKeys = append(bm.storageKeys, key)

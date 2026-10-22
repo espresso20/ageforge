@@ -163,8 +163,6 @@ func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 			switch e.Target {
 			case "all":
 				parts = append(parts, "+"+FormatAmount(e.Value)+" storage for every resource")
-			case "soldiers":
-				parts = append(parts, "+"+FormatAmount(e.Value)+" soldier storage")
 			default:
 				parts = append(parts, "+"+FormatAmount(e.Value)+" "+ResourceLabel(e.Target)+" storage")
 			}
@@ -177,7 +175,18 @@ func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 			parts = append(parts, "+"+FormatAmount(e.Value)+" opinion/tick per worker, split across the civilizations that are not hostile")
 		}
 	}
+	if d.Soldiers > 0 {
+		parts = append(parts, "comes with "+soldierCount(d.Soldiers))
+	}
 	return parts
+}
+
+// soldierCount is "2 soldiers", "1 soldier".
+func soldierCount(n int) string {
+	if n == 1 {
+		return "1 soldier"
+	}
+	return fmt.Sprintf("%d soldiers", n)
 }
 
 // scholarCount is "2 scholars", "1 scholar".

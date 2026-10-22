@@ -18,14 +18,15 @@ func militaryProvider(state game.GameState, _ int) string {
 
 	// === Army Overview ===
 	fmt.Fprintf(&sb, " [gold]═══ Army Overview ═══[-]\n\n")
-	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %s / %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap)))
+	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %s posted of %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap)))
 	if rs, ok := state.Resources["soldiers"]; ok && !rs.Unlocked {
-		// Soldiers begin with the first military building (a War Camp
-		// trains them from the day it stands): until one is built there is
-		// nobody to train, and the panel says so.
-		fmt.Fprintf(&sb, " [gold]Training:[-]  %s\n", theme.Paint(theme.RoleDim, "not yet. A military building trains soldiers."))
+		// Soldiers begin with the first military building: until one is built
+		// there is nobody at a post, and the panel says so.
+		fmt.Fprintf(&sb, " [gold]Posts:[-]     %s\n", theme.Paint(theme.RoleDim, "none yet. A military building comes with its soldiers."))
 	} else {
-		fmt.Fprintf(&sb, " [gold]Training:[-]  %s/tick\n", FormatRate(mil.SoldierRate))
+		for _, p := range mil.Posts {
+			fmt.Fprintf(&sb, " [gold]Posts:[-]     %s x%d: %s/%s\n", p.Name, p.Count, FormatNumber(float64(p.Posted)), FormatNumber(float64(p.Posts)))
+		}
 	}
 	fmt.Fprintf(&sb, " [gold]Defense:[-]   %s\n", FormatNumber(mil.DefenseRating))
 	writeGarrison(&sb, state)
@@ -77,7 +78,7 @@ func militaryProvider(state game.GameState, _ int) string {
 	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
 		sb.WriteString(" [gray]No campaigns available yet.[-]\n")
 		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" Campaigns open in %s and cost soldiers,", ageRef(state, "bronze_age"))) + "\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, " which military buildings train.") + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, " which come with military buildings.") + "\n")
 	} else {
 		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary, state)
 	}

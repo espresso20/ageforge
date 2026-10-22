@@ -112,7 +112,7 @@ The `-5% build cost` rewards here (Master Builder, Grand Architect) are real dis
 | Fortress State *(hidden)* | Build 13 Castle Keeps (Medieval Age) | +10% military power, +5% all production |
 | Military Superpower *(hidden)* | Train 2,000 soldiers (Industrial Age) | +15% all production |
 
-Soldier counts are soldiers trained over the run, not the size of your current army.
+Soldier counts are the soldiers who have come with your military buildings over the run, not the size of your current army.
 
 **Chain reward:** Title "The Conquerors" · game speed +250% for 150 ticks
 

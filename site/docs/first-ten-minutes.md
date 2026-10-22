@@ -207,7 +207,7 @@ When you reach the Stone Age:
 - **Standing Stones**: a better faith building, once you research Ritual (it needs Language, a Primitive Age tech)
 - **Longhouse**: bigger housing (+25 housing each)
 - **Storage Pit**: +1.2K storage for every resource
-- **War Camp**: an early military building. It trains soldiers from the day it stands, and a garrison blunts the raids of the Stone and Bronze Ages (see [Military](military.md))
+- **War Camp**: an early military building. Its soldiers move in the day it stands, and a garrison blunts the raids of the Stone and Bronze Ages (see [Military](military.md))
 - **Great Monolith**: the Stone Age wonder, required to reach the Bronze Age
 
 Your older buildings don't change on their own. Type `upgrade` to see which ones can become their Stone Age version (gathering camps into forager posts, for example); see [Building Upgrades](buildings.md#building-upgrades).

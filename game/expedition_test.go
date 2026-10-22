@@ -24,6 +24,9 @@ func setResource(ge *GameEngine, key string, amount float64) {
 }
 
 func setSoldiers(ge *GameEngine, amount float64) {
+	ge.mu.Lock()
+	ge.garrisonForTest, ge.garrisonForTestSet = amount, true
+	ge.mu.Unlock()
 	setResource(ge, "soldiers", amount)
 }
 
@@ -34,8 +37,10 @@ func setAge(ge *GameEngine, age string) {
 }
 
 // TestLaunchExpedition_SpendsSoldiersAndCost verifies a campaign's launch
-// deducts the soldiers it needs: the soldiers the town trains in ten minutes.
-func TestLaunchExpedition_SpendsSoldiersAndCost(t *testing.T) {
+// sends the soldiers it needs and leaves every post full: the soldiers the
+// town holds are its posted army, and nobody leaves a post until parties come
+// out of it.
+func TestLaunchExpedition_SendsSoldiersAndLeavesThePostsFull(t *testing.T) {
 	ge := NewGameEngine()
 	learn(ge, "military_tactics") // the tech that opens campaigns
 	setAge(ge, "iron_age")
@@ -52,9 +57,11 @@ func TestLaunchExpedition_SpendsSoldiersAndCost(t *testing.T) {
 		t.Fatalf("LaunchExpedition(siege_campaign) returned error: %v", err)
 	}
 
-	got := ge.Resources.Get("soldiers")
-	if want := float64(10 - need); got != want {
-		t.Errorf("soldiers after launch = %v, want %v (10 - %d)", got, want, need)
+	if got := ge.Resources.Get("soldiers"); got != 10 {
+		t.Errorf("soldiers after launch = %v, want all 10 still at their posts", got)
+	}
+	if active := ge.Military.ActiveByTier(TierGrand); active == nil || active.Soldiers != need {
+		t.Errorf("the party is %+v, want %d soldiers", active, need)
 	}
 }
 

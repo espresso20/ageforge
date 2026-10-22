@@ -322,6 +322,9 @@ type BuildingState struct {
 	// that can be built (0 where there is no cap).
 	Scholars   int
 	ScholarCap int
+	// Soldiers is the soldiers one copy of this building comes with (0 for
+	// every building but a military building).
+	Soldiers int
 	// Phase 9: ruins
 	RuinCount int // ruins of this building type (produce at 50%, no workers, can't rebuild)
 }
@@ -329,14 +332,17 @@ type BuildingState struct {
 // WorkerState represents all worker info
 type WorkerState struct {
 	Types map[string]WorkerDomainState
-	// TotalPop is the population: workers, the reserve and scholars (the
-	// soldiers join it in a later change). MaxPop is the housing.
+	// TotalPop is the population: workers, the reserve, scholars and
+	// soldiers. MaxPop is the housing.
 	TotalPop  int
 	MaxPop    int
 	TotalIdle int
 	// Scholars is the scholars living in the homes: the knowledge buildings'
 	// own. They are part of TotalPop and eat like anyone (population.go).
-	Scholars  int
+	Scholars int
+	// Soldiers is the soldiers at their posts: the military buildings' own.
+	// They are part of TotalPop and eat like anyone.
+	Soldiers  int
 	FoodDrain float64
 	// Shares is the split of the workforce the player set (shares.go):
 	// domain → percent, only the domains set; nil when every domain is on
@@ -362,9 +368,9 @@ type WorkerState struct {
 // one: the same number as TotalIdle.
 func (w WorkerState) Reserve() int { return w.TotalIdle }
 
-// Working is the people who have a job: the population less the reserve and
-// the scholars.
-func (w WorkerState) Working() int { return max(0, w.TotalPop-w.TotalIdle-w.Scholars) }
+// Working is the people who have a job: the population less the reserve, the
+// scholars and the soldiers.
+func (w WorkerState) Working() int { return max(0, w.TotalPop-w.TotalIdle-w.Scholars-w.Soldiers) }
 
 // WorkerDomainState represents one worker domain's state
 type WorkerDomainState struct {
@@ -498,13 +504,16 @@ type TechState struct {
 
 // MilitaryState represents military system state for UI
 type MilitaryState struct {
-	// SoldierCount is the current soldiers resource amount.
+	// SoldierCount is the soldiers at home: the soldiers resource, which is
+	// held at the posted army (soldiers.go).
 	SoldierCount int
-	// SoldierCap is the soldiers resource storage cap (sum of built military
-	// buildings' storage effects). SoldierRate is the per-tick soldiers
-	// production rate (net). Both are populated from the soldiers resource.
-	SoldierCap    int
-	SoldierRate   float64
+	// SoldierCap is the army's whole strength: the posts of every standing
+	// military building. SoldierRate is always 0: nothing trains soldiers.
+	SoldierCap  int
+	SoldierRate float64
+	// Posts is the soldiers' posts building by building, oldest first: the
+	// army at home over the army's whole strength.
+	Posts         []SoldierPost
 	DefenseRating float64
 	// Threat is the current age's raid threat (rules.Set.AgeThreat) and
 	// Mitigation the share of a raid the garrison would blunt against it

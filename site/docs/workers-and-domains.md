@@ -11,7 +11,7 @@ Every building that produces resources has worker slots, and staffing it raises 
 - **Workers come on their own.** Build housing and buildings with worker slots. With auto-recruit on (the default), your population grows toward your housing while food allows, new workers fill the empty slots first, and the rest wait in the **reserve**. Workers in the reserve go to work by your [roster](#the-roster) as soon as a slot opens.
 - **Steer, or take over.** `roster faith 40` sends more workers to faith; `roster military 0` keeps military empty. `recruit` and `assign` still work by hand, and a worker you place stays where you put it.
 - **Every worker eats.** Each worker eats the current age's food rate every tick, whatever it does. Keep the food rate positive (see [Food Drain](#food-drain)).
-- **Scholars move in with their building.** A knowledge building comes with its scholars. They live in your homes and eat like anyone, with no recruiting and no assignment.
+- **Scholars and soldiers move in with their building.** A knowledge building comes with its scholars and a military building with its soldiers. They live in your homes and eat like anyone, with no recruiting and no assignment.
 - **Look at the panel.** `people` (or `workers`) opens the People panel: the whole town on one tab, then your work areas, your army and your scholars.
 
 The first age, step by step, is in [Your First Ten Minutes](first-ten-minutes.md).
@@ -23,13 +23,13 @@ The first age, step by step, is in [Your First Ten Minutes](first-ten-minutes.md
 Your **population** is every person who lives in your homes:
 
 ```
-population = workers at work + the reserve + scholars
+population = workers at work + the reserve + scholars + soldiers
 ```
 
 - **Workers** have a job: they are assigned to a building with worker slots.
 - **The reserve** is the workers with no slot yet. They eat like any worker and produce nothing; they take a new slot the moment one opens.
 - **Scholars** come with a knowledge building and work its research from the moment the copy stands (see [Scholars and Research](knowledge.md)). They are part of the population: they take a place in your homes and eat the same food as a worker. If your homes are full when the building stands, they still move in, and the reserve stops growing until there is room again. Knowledge buildings cannot be sold, so scholars do not leave.
-- **Soldiers** are listed with the rest of your people. Today they are the soldier stock your military buildings make (see [Army & Missions](military.md)), and they do not take a place in your homes.
+- **Soldiers** come with a military building (see [Army & Missions](military.md)) and stand at its posts. A copy has a fixed number of posts, more in the later ages. Posts fill from the reserve first, then with new arrivals, who need no room in your homes, and only while the food margin holds: the same test that lets the reserve grow, so soldiers arriving never starve the town. A post that food cannot fill waits, and fills as the food allows; the log says so once for each building. Soldiers are part of the population: they take a place in your homes and eat the same food as a worker, and when your homes are full they still arrive, and the reserve stops growing until there is room again. A military building no longer trains a stock of soldiers: the army is the soldiers at their posts.
 
 Housing caps the population. The room left for newcomers is your housing less your population.
 
@@ -193,9 +193,9 @@ Use it in a food deficit (idle workers still eat, so `unassign` doesn't help) or
 
 `people` (or `workers`) opens the People panel over the whole screen. **Left** and **Right** switch tabs, **Up** and **Down** pick a row, and **Esc** closes it. The prompt keeps working while it is open: `roster faith 40` sets a share and the panel shows it at once.
 
-- **Overview**: your homes as one bar, with each kind of person in its own color and the empty homes dim; the homes, the empty ones and what holds your population back; what everyone eats, what food nets, your morale and how many people your food production can feed; one card for each kind (workers at work and the slots they fill, the reserve, soldiers at home and away, scholars at their desks); and a **Lately** list of what has happened to your people: workers recruited, scholars moved in, starvation, soldiers sent out and lost.
+- **Overview**: your homes as one bar, with each kind of person in its own color and the empty homes dim; the homes, the empty ones and what holds your population back; what everyone eats, what food nets, your morale and how many people your food production can feed; one card for each kind (workers at work and the slots they fill, the reserve, soldiers at their posts and away, scholars at their desks); and a **Lately** list of what has happened to your people: workers recruited, scholars moved in, starvation, soldiers sent out and lost.
 - **Work**: each work area with its share (set, or auto), a bar of its workers over its slots and its buildings; the picked area's buildings, its share, the command that sets it, and what auto-recruit is doing (growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out).
-- **Army**: your military buildings with their copies and staffing, the soldier stock with its cap and rate, your defense and what it blunts of a raid, the missions that have soldiers away with how long they have left, and the soldiers' news.
+- **Army**: your military buildings with their copies and the soldiers posted over the posts they have (the People box shows the same as posted/posts while some wait on food), the army's size, your defense and what it blunts of a raid, the missions that have soldiers away with how long they have left, and the soldiers' news.
 - **Scholars**: your knowledge buildings with their copies and scholars, the research in progress with its progress, time left and rate, how many of your scholars research and how many teach, and what is queued next.
 
 <figure class="screen" data-screen="people"><figcaption>The People panel in the Bronze Age: the homes as one bar, a card for each kind of person, and what has happened lately.</figcaption></figure>
@@ -239,7 +239,7 @@ roster food 150           # a share is a percent from 0 to 100
 output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity)
 ```
 
-`total_capacity` is the building count times the building's worker slots. `base_rate` is the fully staffed rate shown in the building's description. For construction resources it is set by the Payback Rule; food, faith, culture and soldiers keep hand-set rates (see [How Production Rates Are Set](buildings.md#how-production-rates-are-set)).
+`total_capacity` is the building count times the building's worker slots. `base_rate` is the fully staffed rate shown in the building's description. For construction resources it is set by the Payback Rule; food, faith and culture keep hand-set rates (see [How Production Rates Are Set](buildings.md#how-production-rates-are-set)).
 
 | Workers Assigned | Efficiency |
 |-----------------|------------|
@@ -303,7 +303,7 @@ For every building see [Buildings](buildings.md).
 
 ## Food Drain
 
-Every person eats food each tick. The amount is set by the current age and is the same for everyone, whatever building a worker staffs, the reserve and the scholars included:
+Every person eats food each tick. The amount is set by the current age and is the same for everyone, whatever building a worker staffs, the reserve, the scholars and the soldiers included:
 
 ```
 total_food_drain = food_per_worker(current age) × population
@@ -368,7 +368,7 @@ A building's domain decides which worker class staffs it. "First Building" is th
 | `lumber` | Organic Extraction | wood, then coal, oil, nanobots and quantum flux | `wood_camp`, `woodcutter_camp`, `lumber_mill`, `coal_mine` | Primitive Age |
 | `faith` | Faith | faith | `shrine`, `standing_stones`, `altar`, `temple` | Primitive Age |
 | `masonry` | Geological Extraction | stone and iron, then [ores](resources.md#what-the-ores-are-for), uranium and antimatter | `stone_camp`, `stone_pit`, `quarry`, `uranium_mine` | Stone Age |
-| `military` | Military | soldiers (from the Iron Age) | `war_camp`, `barracks`, `hunting_lodge`, `legion_fort` | Stone Age |
+| `military` | Military | nothing (its soldiers come with the building) | `war_camp`, `barracks`, `hunting_lodge`, `legion_fort` | Stone Age |
 | `trade` | Trade, Harbor | gold | `market`, `trading_post`, `merchant_quarter`, `harbor` | Bronze Age |
 | `engineering` | Engineering | iron, steel, electricity, plasma, dark matter, quantum flux | `smithy`, `ironworks`, `mill`, `power_station`, `fusion_reactor` | Bronze Age |
 | `metallurgy` | Metallurgy | iron, steel, titanium, dark matter, antimatter, quantum flux | `smelter`, `forge`, `foundry`, `steel_mill`, `orbital_refinery` | Iron Age |
@@ -521,7 +521,7 @@ Build gathering camps and huts together. Each camp holds 3 workers and new worke
 ### Mid game (Bronze and Iron Age)
 
 - Lumber and masonry buildings are staffed as they finish, as far as housing and food allow. Stone and wood go into most building costs, so keep your housing ahead of your worker slots: workers in the reserve take a new building's slots at once.
-- A `war_camp` produces the `soldiers` resource from the Iron Age, spent on campaigns. On auto its slots draw workers like any other building's; if you don't need soldiers yet, `roster military 0` keeps those workers for your producers.
+- A `war_camp` comes with its soldiers the moment it stands: they live in your homes and eat, so watch your food after a military building. Its worker slots make nothing now; on auto they draw workers like any other building's, so `roster military 0` keeps those workers for your producers.
 - From the Iron Age, this age's masonry building makes stone, iron and iron ore, and from the Iron Age to the Classical marble too. The routine fills the newest buildings first. A mine that makes only a raw (the titanium and crystal mines, later on) is worth building for the buildings that cost it (see [What the ores are for](resources.md#what-the-ores-are-for)).
 
 ### Late game

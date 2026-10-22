@@ -188,7 +188,7 @@ With something typed, `Tab` and `Enter` act on the prompt instead. `research lis
 | `campaign` | Alias for `expedition` |
 | `campaign list` | Alias for `expedition list` |
 | `campaign <name>` | Alias for `expedition <name>` |
-| `army` | Open the **Army** panel with your soldier count and defense rating |
+| `army` | Open the **Army** panel with the soldiers at your posts and your defense rating |
 
 ```
 expedition

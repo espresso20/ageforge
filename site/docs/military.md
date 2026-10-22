@@ -4,7 +4,7 @@
 
 Parties can meet road events while an expedition is out. Storms delay them, helpers save time, finds increase the haul, tolls cost gold, foes lower the odds, ambushes cost soldiers or loot, and fair weather raises the odds. A party can also mark ruins, adding a short offer to the board. Events are rolled when a mission launches and appear in the log and its Expedition Report.
 
-Soldiers are a resource your military buildings train. Military grand offers cost soldiers; short, long and civil grand offers cost materials. Mission hauls scale with the current age's income. What missions are really for is meeting the other civilizations: every resolved mission can bring an encounter, which is how you make first contact and collect boons (or, when a run fails, setbacks). The soldiers you keep in stock are your garrison: they blunt raids and soften catastrophes. Ignore the army and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. The soldiers you train also count toward the military milestones.
+Soldiers come with your military buildings. Military grand offers need soldiers; short, long and civil grand offers cost materials. Mission hauls scale with the current age's income. What missions are really for is meeting the other civilizations: every resolved mission can bring an encounter, which is how you make first contact and collect boons (or, when a run fails, setbacks). The soldiers at their posts are your garrison: they blunt raids and soften catastrophes. Ignore the army and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. The soldiers who arrive with new military buildings also count toward the military milestones.
 
 ---
 
@@ -13,11 +13,11 @@ Soldiers are a resource your military buildings train. Military grand offers cos
 The military system covers four things:
 
 - **Missions.** The mission board has short, long and grand offers, each with rolled length, odds and haul; see [Missions](#missions).
-- **Defense rating.** A figure on the Army panel worked out from your soldier count and military power. Measured against the raid threat of your current age, it blunts part of what raids, war raids and an Endure take from you (at most 45%); see [Defense](#defense-what-your-army-blunts).
+- **Defense rating.** A figure on the Army panel worked out from the soldiers at your posts and military power. Measured against the raid threat of your current age, it blunts part of what raids, war raids and an Endure take from you (at most 45%); see [Defense](#defense-what-your-army-blunts).
 - **Milestones.** Five military milestones form a chain with a title at the end. The early ones grant permanent military power; the later ones grant all production.
 - **Prestige.** The army resets with the run. Prestige points give a lasting production bonus, not military power or mission rewards. From the first prestige, [Old Friends](prestige.md#old-friends) meets every civilization you have met again on later runs without a mission.
 
-**Soldiers are a resource**, not a count of workers. Your military buildings produce and store them: staff a War Camp or Barracks with workers and it adds to the `soldiers` resource every tick, the same way a Farm adds food. Soldiers begin with your first military building: a War Camp can be built in the Stone Age and trains them from the day it stands. A town with no military building has none until the **Iron Age**, which brings them to every town. Short, long and civil grand offers (see [Missions](#missions)) let you explore without soldiers.
+**Soldiers come with your military buildings.** A military building does not train soldiers and has no soldier store: each copy has posts, and soldiers take them from the reserve first and then as new arrivals, as the food allows. The soldiers are people, so they live in your homes and eat like anyone (see [People](workers-and-domains.md#the-people-of-your-town)). A War Camp can be built in the Stone Age and its soldiers move in as the food allows. A town with no military building has no soldiers. Short, long and civil grand offers (see [Missions](#missions)) let you explore without soldiers.
 
 The mission board has three tiers. A grand offer is either military or civil. See [The board](#the-board) for the costs and odds.
 
@@ -27,31 +27,17 @@ The mission board has three tiers. A grand offer is either military or civil. Se
 
 ### What soldiers are
 
-Soldiers are a stockpiled resource (`soldiers`). They unlock when your first military building stands, whatever the age (a War Camp in the Stone Age, a Barracks in the Bronze), and in the **Iron Age** for a town that built none. You bank them the way you bank food or wood, then spend them on campaigns. They are listed with your other [people](workers-and-domains.md#the-people-of-your-town), under the age's own word for them, in the People box and on the People panel's Army tab, not in the Resources box. Until then they stand as your garrison, which blunts raids.
+Soldiers are people at the posts of your military buildings. A copy of a military building comes with a fixed number of them (see [Military Buildings](#military-buildings) for the number in each age), they take their posts from the reserve first and then as new arrivals, whether or not your homes have room, and they leave with the copy if it is lost. They are listed with your other [people](workers-and-domains.md#the-people-of-your-town), under the age's own word for them, in the People box and on the People panel's Army tab, not in the Resources box. The army is the soldiers at their posts, and that is the number the rest of this page calls your soldiers: the defense rating, raids, the Brace preview and a campaign's soldier cost all count it.
 
-Staffed military buildings produce soldiers every tick. A fully staffed building makes about its soldier cap ÷ 50 per tick (at least 0.1/tick), so more workers and more buildings mean faster soldiers. Your soldier storage is the sum of every military building's soldier cap, plus every storage effect that raises all resources (the general storage buildings and the "all storage" techs). That second part is most of it: by the Iron Age a typical civilization can hold a couple of hundred thousand soldiers, far more than the military buildings' own caps. The **Military-Industrial Complex**, the Atomic Age's Military capstone, adds 20% to the whole of it, and **Augmented Soldiers** (Cyberpunk Age) 10% more. Campaigns spend soldiers from the stockpile at launch (see [Missions](#missions)).
-
-### Producing soldiers
-
-```
-recruit [count|max]     # recruit workers into free housing
-assign war_camp 5       # staff a military building; it starts producing soldiers
-assign barracks all     # fill a building for its full soldier output
-```
-
-`recruit 5` recruits 5 workers into free housing, and `recruit max` fills all of it at once. Workers you leave idle go to work by your [roster](workers-and-domains.md#the-roster) a minute later, and with auto-recruit on (the default) the game recruits into empty slots on its own, military buildings included. A worker assigned to a military building produces soldiers each tick. To keep workers out of military buildings, set `roster military 0`.
+Posts fill only while the food margin holds (net food stays at or above one person's food, or 5% of the food made, after the newcomer eats), so soldiers arriving never starve the town. A post food cannot fill waits and fills as the food allows; the Army tab shows posted over posts, and the log says once for each building that its posts are waiting. Nothing trains soldiers and nothing stores them. Workers you put in a military building's slots do not make soldiers, and the techs that once raised soldier storage no longer change the army.
 
 ### Food drain
 
-Every worker eats the same amount of food, whatever building it works in (see [Food drain](workers-and-domains.md#food-drain)). Military workers cost no more food than farmers do, and soldiers themselves eat nothing once they're trained. A big military workforce still costs food because it's a big workforce, so check your food rate before you staff up.
+Every soldier eats the same amount of food as a worker (see [Food drain](workers-and-domains.md#food-drain)), and so do the workers in a military building's slots. A big army costs food because it is a lot of people, so check your food rate after you build a military building, and your homes: soldiers take a place in them like everyone else, and a town whose army fills the homes stops growing until you build more.
 
 ### Losing soldiers
 
-Soldiers leave your stockpile when you launch a campaign. The cost is spent up front, whether the campaign then succeeds or fails. The three scouting expeditions cost 0 soldiers. No random event and no setback takes soldiers.
-
-An Endure also costs soldiers: it cuts every stored resource to the share it keeps, soldiers included, so your garrison is weaker afterwards. Your soldiers are measured before the blow lands, so the garrison still counts for that Endure.
-
-To refill the stockpile, keep workers assigned to your military buildings.
+A campaign's soldiers stay at their posts in this version: launching a campaign needs the soldiers it asks for at home, and takes none of them from their posts. No random event and no setback takes soldiers, and an Endure leaves them at their posts too.
 
 ### Viewing your army
 
@@ -59,9 +45,9 @@ To refill the stockpile, keep workers assigned to your military buildings.
 army
 ```
 
-This opens the **Army** panel: soldier count, defense rating, the running campaign (if any) and how many campaigns you've completed. Under the defense rating it shows what the army does for you:
+This opens the **Army** panel: the soldiers at their posts, defense rating, the running campaign (if any) and how many campaigns you've completed. Under the defense rating it shows what the army does for you:
 
-- **Training:** soldiers per tick. Before your first military building it reads "not yet. A military building trains soldiers."
+- **Posts:** the soldiers at their posts building by building. Before your first military building it reads "none yet. A military building comes with its soldiers."
 - **Threat:** the raid threat of your current age.
 - "Your garrison would blunt about N% of a raid.": the share it takes off raids and war raids in your current age (an Endure measures it against the age the catastrophe strikes in). After it comes what twice the garrison would blunt, and a reminder that no army blunts more than 45%. With no soldiers it reads "You have no garrison: raids hit you with full force."
 - **Saved this run:** once the garrison has saved something, the buildings, workers and resources (the four largest) it kept, and how many raids it blunted. Like other run stats, it resets with the run.
@@ -72,38 +58,44 @@ The running missions show in the separate **Expeditions** panel (`expedition`), 
 
 ## Military Buildings
 
-Military buildings give workers somewhere to work, produce soldiers every tick while staffed, and each one adds its soldier cap to your soldier storage. Your soldier storage is their combined cap plus every storage effect that raises all resources (see Soldiers above).
+Military buildings give workers somewhere to work, and each copy comes with its soldiers (see Soldiers above). They make and store nothing else.
 
 All military buildings belong to the **military lineage** (22 tiers, Stone Age through Transcendent Age). Each extra copy of a building costs 15% more than the one before.
 
-A fully staffed military building produces about **its soldier cap ÷ 50 per tick** (at least 0.1/tick). A staffed Barracks (cap 20) makes about 0.4 soldiers/tick; a Castle Keep (cap 320) makes about 6.4/tick. Output scales with staffing the same way every other building's does; see [Military Domain Workers](#military-domain-workers).
+The soldiers a copy comes with come from the town an age is priced for. The army that town holds when it opens the gate out of the age is about 14% of its homes, so a copy comes with
 
-| Tier | Key | Name | Age Unlocked | Soldier Cap | Worker Slots |
-|------|-----|------|-------------|-------------|--------------|
-| 0 | `war_camp` | War Camp | Stone Age | +10 | 3 |
-| 1 | `barracks` | Barracks | Bronze Age | +20 | 4 |
-| 2 | `hunting_lodge` | Hunting Lodge | Iron Age | +40 | 5 |
-| 3 | `legion_fort` | Legion Fort | Iron Age | +80 | 6 |
-| 4 | `military_academy` | Military Academy | Classical Age | +160 | 6 |
-| 5 | `castle_keep` | Castle Keep | Medieval Age | +320 | 7 |
-| 6 | `fortress` | Fortress | Renaissance Age | +640 | 7 |
-| 7 | `fort` | Fort | Colonial Age | +1.28K | 8 |
-| 8 | `military_base` | Military Base | Industrial Age | +2.56K | 10 |
-| 9 | `garrison` | Garrison | Victorian Age | +5.12K | 10 |
-| 10 | `command_post` | Command Post | Electric Age | +10.2K | 12 |
-| 11 | `bunker_complex` | Bunker Complex | Atomic Age | +20.5K | 12 |
-| 12 | `special_ops_hq` | Special Ops HQ | Modern Age | +41.0K | 14 |
-| 13 | `cyber_command` | Cyber Command | Information Age | +81.9K | 15 |
-| 14 | `drone_warfare_center` | Drone Warfare Center | Digital Age | +164K | 16 |
-| 15 | `combat_aug_center` | Combat Aug Center | Cyberpunk Age | +328K | 18 |
-| 16 | `plasma_command` | Plasma Command | Fusion Age | +655K | 20 |
-| 17 | `space_force_base` | Space Force Base | Space Age | +1.31M | 20 |
-| 18 | `fleet_command` | Fleet Command | Interstellar Age | +2.62M | 25 |
-| 19 | `stellar_armada_hq` | Stellar Armada HQ | Galactic Age | +5.24M | 25 |
-| 20 | `probability_war_room` | Probability War Room | Quantum Age | +10.5M | 30 |
-| 21 | `omniversal_war_council` | Omniversal War Council | Transcendent Age | +21.0M | 35 |
+```
+soldiers a copy = ceil(14% of the homes at the end of the age ÷ copies of the age's military buildings that town holds)
+```
 
-The soldier cap counts per building: two Barracks give 40 soldier storage and, when both are staffed, twice the soldier output.
+The town holds eight copies of each of the age's military buildings, or the gate's count where it asks for more (a building the gate leaves out is in the town all the same). Its homes are eight copies of every housing building so far, or the gate's count where it asks for more.
+
+| Tier | Key | Name | Age Unlocked | Soldiers a copy | Worker Slots |
+|------|-----|------|-------------|-----------------|--------------|
+| 0 | `war_camp` | War Camp | Stone Age | 9 | 3 |
+| 1 | `barracks` | Barracks | Bronze Age | 16 | 4 |
+| 2 | `hunting_lodge` | Hunting Lodge | Iron Age | 10 | 5 |
+| 3 | `legion_fort` | Legion Fort | Iron Age | 10 | 6 |
+| 4 | `military_academy` | Military Academy | Classical Age | 24 | 6 |
+| 5 | `castle_keep` | Castle Keep | Medieval Age | 77 | 7 |
+| 6 | `fortress` | Fortress | Renaissance Age | 145 | 7 |
+| 7 | `fort` | Fort | Colonial Age | 279 | 8 |
+| 8 | `military_base` | Military Base | Industrial Age | 1,287 | 10 |
+| 9 | `garrison` | Garrison | Victorian Age | 1,825 | 10 |
+| 10 | `command_post` | Command Post | Electric Age | 2,900 | 12 |
+| 11 | `bunker_complex` | Bunker Complex | Atomic Age | 2,245 | 12 |
+| 12 | `special_ops_hq` | Special Ops HQ | Modern Age | 21,178 | 14 |
+| 13 | `cyber_command` | Cyber Command | Information Age | 29,780 | 15 |
+| 14 | `drone_warfare_center` | Drone Warfare Center | Digital Age | 46,983 | 16 |
+| 15 | `combat_aug_center` | Combat Aug Center | Cyberpunk Age | 154,503 | 18 |
+| 16 | `plasma_command` | Plasma Command | Fusion Age | 178,653 | 20 |
+| 17 | `space_force_base` | Space Force Base | Space Age | 481,364 | 20 |
+| 18 | `fleet_command` | Fleet Command | Interstellar Age | 1,513,556 | 25 |
+| 19 | `stellar_armada_hq` | Stellar Armada HQ | Galactic Age | 3,577,940 | 25 |
+| 20 | `probability_war_room` | Probability War Room | Quantum Age | 2,495,437 | 30 |
+| 21 | `omniversal_war_council` | Omniversal War Council | Transcendent Age | 6,880,954 | 35 |
+
+The soldiers count per building: two Barracks bring twice the soldiers of one.
 
 Five of them wait for a tech of their own age: the Barracks (Military Tactics), the Legion Fort (Siege Warfare), the Cyber Command (Cybersecurity), the Combat Aug Center (Cybernetics) and the Omniversal War Council (Omniversal Command). The others open with their age.
 
@@ -190,7 +182,7 @@ campaign <name>         # alias for expedition <name>
 
 Offers have no numbers. To send one from the prompt, type part of its title after `expedition`. Case does not matter, and "the", "of", "a" and "an" are left out. An exact title wins; otherwise a title that starts with what you typed; otherwise any title in which every word you typed begins one of its words. If one offer matches, it is sent. If several do, the game lists them and asks you to type more of the name. If none does, it says so.
 
-A mission's resource or soldier cost is spent at launch, whether it succeeds or fails. One mission per tier can be under way at once.
+A mission's resource cost is spent at launch, whether it succeeds or fails. A military mission needs its soldiers at home and leaves them at their posts. One mission per tier can be under way at once.
 
 ### Automatic dispatch: the Geographic Society
 
@@ -266,9 +258,9 @@ assign barracks all
 assign castle_keep 7
 ```
 
-Workers in military buildings produce soldiers; they aren't soldiers themselves, and the soldiers they make are a separate resource. You can only assign workers to a building you have built at least one of.
+Workers in a military building are not its soldiers: the soldiers come with the building, and the workers in its slots make nothing of their own. You can only assign workers to a building you have built at least one of.
 
-Staffing sets output: a building runs at `20% + 80% × (assigned ÷ worker slots)` of its full effect. Fill your military buildings to get their full soldier output.
+Staffing sets output for buildings that make something. A military building makes nothing, so staffing it changes no soldier count; the workers in its slots still count toward the [morale](#morale-and-military-ratio) ratio below.
 
 ---
 
@@ -306,7 +298,7 @@ The expedition reward bonus (from techs, milestones and some wonders) is separat
 
 ## Defense: what your army blunts
 
-Soldiers you keep in stock are your **garrison**. They are never spent by defending: the garrison takes a share off what raids and catastrophes cost you, and the soldiers stay where they are.
+The soldiers at your posts are your **garrison**. They are never spent by defending: the garrison takes a share off what raids and catastrophes cost you, and the soldiers stay where they are.
 
 ### The formula
 
@@ -314,7 +306,7 @@ Your defense rating is measured against the **raid threat** of the age you are i
 
 ```
 defense  = soldiers × 2.0 × (1 + military power)
-threat   = 160,000 × 2^(age order) × the age's threat scale      # from the Iron Age (order 3) on
+threat   = the age's raid threat, in soldiers at their posts      # the table below
 blunted  = 45% × defense ÷ (defense + threat)
 ```
 
@@ -330,49 +322,49 @@ The blunted share is the part of a raid's losses the garrison takes off. It is 0
 | four times the threat | 36% |
 | nine times the threat | about 40% |
 
-The threat **about doubles every age**, the same rate at which each new military building's soldier cap doubles (the Atomic Age is the exception: its threat is a quarter above the Electric Age's). An army that is strong for one age is ordinary for the next and a rounding error a few ages later, so a garrison has to grow with you. The threat scale is the age's [military yardstick](#the-military-yardstick).
+The threat is sized to the army of the town an age is priced for: the soldiers that town has at its posts (see [Military Buildings](#military-buildings)) would blunt the same share of a raid they blunted when soldiers were a stockpile your buildings made, in every age. So the threat rises with the army the age's buildings bring, not by a fixed doubling, and it dips in the Atomic Age, where the gate asks for more copies of a building with fewer posts each. An army that is strong for one age is ordinary for the next, so a garrison has to grow with you. The threat scale column is the age's [military yardstick](#the-military-yardstick).
 
 | Age | Threat scale | Threat | Soldiers for 22.5% (no military bonus) |
 |-----|--------------|--------|----------------------------------------|
-| Iron Age | 0.88 | 1.12M | 562K |
-| Classical Age | 0.78 | 2M | 999K |
-| Medieval Age | 0.83 | 4.25M | 2.12M |
-| Renaissance Age | 0.71 | 7.31M | 3.65M |
-| Colonial Age | 0.68 | 13.9M | 6.97M |
-| Industrial Age | 0.61 | 25.2M | 12.6M |
-| Victorian Age | 0.61 | 50.4M | 25.2M |
-| Electric Age | 0.64 | 106M | 52.8M |
-| Atomic Age | 0.40 | 132M | 66.1M |
-| Modern Age | 0.40 | 264M | 132M |
-| Information Age | 0.36 | 471M | 235M |
-| Digital Age | 0.37 | 980M | 490M |
-| Cyberpunk Age | 0.35 | 1.84B | 922M |
-| Fusion Age | 0.36 | 3.82B | 1.91B |
-| Space Age | 0.36 | 7.64B | 3.82B |
-| Interstellar Age | 0.38 | 15.8B | 7.91B |
-| Galactic Age | 0.39 | 32.7B | 16.3B |
-| Quantum Age | 0.40 | 67.5B | 33.8B |
-| Transcendent Age | 0.40 | 135B | 67.5B |
+| Iron Age | 0.88 | 1.72K | 861 |
+| Classical Age | 0.78 | 1.94K | 971 |
+| Medieval Age | 0.83 | 2.81K | 1.41K |
+| Renaissance Age | 0.71 | 3.29K | 1.64K |
+| Colonial Age | 0.68 | 5K | 2.5K |
+| Industrial Age | 0.61 | 6.39K | 3.2K |
+| Victorian Age | 0.61 | 10.6K | 5.3K |
+| Electric Age | 0.64 | 15.1K | 7.55K |
+| Atomic Age | 0.40 | 13K | 6.52K |
+| Modern Age | 0.40 | 33.3K | 16.6K |
+| Information Age | 0.36 | 45.9K | 22.9K |
+| Digital Age | 0.37 | 68.3K | 34.2K |
+| Cyberpunk Age | 0.35 | 138K | 68.8K |
+| Fusion Age | 0.36 | 234K | 117K |
+| Space Age | 0.36 | 420K | 210K |
+| Interstellar Age | 0.38 | 1.01M | 504K |
+| Galactic Age | 0.39 | 2.42M | 1.21M |
+| Quantum Age | 0.40 | 4.27M | 2.13M |
+| Transcendent Age | 0.40 | 6.38M | 3.19M |
 
 A `military_power` bonus cuts the soldiers needed: at +1.0, half as many.
 
 ### Before the Iron Age
 
-The doubling curve was measured from the Iron Age on, where every town carries the military buildings the age gates asked for. Before it, the only military building a gate asks for is the War Camp (eight of them, to leave the Stone Age), so a garrison is mostly the War Camps and Barracks you chose to build, and the three early ages have raid threats sized to that:
+The threat curve was first measured from the Iron Age on. Before it, the only military building a gate asks for is the War Camp (eight of them, to leave the Stone Age), so a garrison is the War Camps and Barracks you chose to build, and the three early ages have their own raid threats:
 
-| Age | Threat | Soldiers for 22.5% (no military bonus) | What trains them |
-|-----|--------|----------------------------------------|------------------|
-| Primitive Age | 1K | none can train | no military building yet |
-| Stone Age | 4.8K | 2,400 | War Camp: 0.2 soldiers/tick with its 3 posts staffed, a fifth of that with none |
-| Bronze Age | 69K | 34.5K | Barracks (after Military Tactics): 0.4 soldiers/tick with its 4 posts staffed |
+| Age | Threat | Soldiers for 22.5% (no military bonus) | Where soldiers come from |
+|-----|--------|----------------------------------------|--------------------------|
+| Primitive Age | 33 | none | no military building yet |
+| Stone Age | 160 | 80 | War Camp: 9 soldiers a copy, 72 with the eight the gate asks for |
+| Bronze Age | 410 | 205 | Barracks (after Military Tactics): 16 soldiers a copy |
 
-Eight staffed War Camps train 1.6 soldiers a tick. Over a Stone Age of ordinary length that garrison comes to blunt about a fifth of a raid, and half of it about an eighth. In the Bronze Age the same holds for eight War Camps and eight Barracks. A garrison carried into the next age meets that age's larger threat, so it has to keep growing, as it does later.
+The reference town's army (72 soldiers in the Stone Age, 200 with its eight Barracks in the Bronze) blunts about a fifth of a raid, and half of it about an eighth. A garrison carried into the next age meets that age's larger threat, so it has to keep growing, as it does later.
 
 The raids of these ages are Tribal Raid and Beast Stampede (Stone Era) and Bandit Raid (Bronze Age on). See [Raids and your garrison](events.md#raids-and-your-garrison).
 
 ### The garrison you already have
 
-Every player carries a garrison without trying. The age gates ask for military buildings (8 War Camps for the Bronze Age, 15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 8 Castle Keeps for the Renaissance, 18 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent, and eight of each age's own military building in most of the ages between; see [Advancement Requirements](ages.md#advancement-requirements)). You keep those buildings into every later age, and they train soldiers even with no workers assigned, at a fifth of the staffed rate. A player who builds only what the gates ask for blunts roughly **8-19%** of a raid from the Iron Age on (measured on the smoke-test bot, which does nothing else for its army).
+Every player carries a garrison without trying. The age gates ask for military buildings (8 War Camps for the Bronze Age, 15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 8 Castle Keeps for the Renaissance, 18 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent, and eight of each age's own military building in most of the ages between; see [Advancement Requirements](ages.md#advancement-requirements)). You keep those buildings into every later age, and their soldiers stay with them, whether or not any worker is assigned. The soldiers a gate's worth of buildings brings is about 14% of the homes of the town that age is priced for, which is how many soldiers each building comes with (see [Military Buildings](#military-buildings)).
 
 A deliberate army is what pushes toward the 45% ceiling: more military buildings of the current age, workers staffed into them, and `military_power` research.
 
@@ -390,7 +382,7 @@ A player with **no soldiers** takes exactly the losses they always did. From the
 
 ### Endure: Brace first, then the garrison
 
-A catastrophe strikes at a fated moment anywhere in its era (Iron to Cosmic), so the garrison meets the threat of whatever age you are in when it strikes. A town that built no War Camp or Barracks has its first soldiers in the Iron Age, so an Iron Era doom that strikes early in the Iron Age finds little garrison to count.
+A catastrophe strikes at a fated moment anywhere in its era (Iron to Cosmic), so the garrison meets the threat of whatever age you are in when it strikes. A town that built no military building has no soldiers, so an Iron Era doom that strikes before it builds one finds no garrison to count.
 
 1. **Brace** applies first: 20% / 15% / 10% of buildings fall and 15% / 30% / 45% of stock is kept at Brace 0 / 1 / 2.
 2. **The garrison** then blunts its share of what is left: the braced share of buildings destroyed shrinks by that share, and it keeps that share of the stock Brace would have let go. Buildings saved round down, so the garrison never saves more than its share.
@@ -410,17 +402,17 @@ The Last Passage in the Cosmic Era costs prestige points, not buildings or stock
 
 ### Worked example
 
-You hold 2,108,000 soldiers with no `military_power` bonus: defense 2,108,000 × 2 = 4,216,000.
+You hold 2,000 soldiers with no `military_power` bonus: defense 2,000 × 2 = 4,000.
 
-- **In the Classical Age** (threat 2M): 45% × 4.216M / (4.216M + 2M) = about **31%**. A war raid that would take 1,000 gold takes about 690; the Army panel says twice the garrison would blunt about 36%.
-- **In the Industrial Age** (threat 25.2M): 45% × 4.216M / (4.216M + 25.2M) = about **6%**. The same army barely matters four ages later.
-- **Endure at the Renaissance** (threat 7.31M) with Brace 1, 150 buildings that can fall (everything but wonders, storage and knowledge buildings) and 1,827,500 soldiers (defense 3.655M, half the threat): the garrison share is 15%. Brace 1 alone would destroy 22 buildings and keep 30% of stock; with the garrison, 19 fall (22 × 15% = 3.3, rounded down to 3 saved) and about 40% of stock is kept.
+- **In the Classical Age** (threat 1.94K): 45% × 4,000 / (4,000 + 1,943) = about **30%**. A war raid that would take 1,000 gold takes about 700; the Army panel says twice the garrison would blunt about 37%.
+- **In the Industrial Age** (threat 6.39K): 45% × 4,000 / (4,000 + 6,394) = about **17%**. The same army matters less four ages later.
+- **Endure at the Renaissance** (threat 3.29K) with Brace 1, 150 buildings that can fall (everything but wonders, storage and knowledge buildings) and 822 soldiers (defense 1,644, half the threat): the garrison share is 15%. Brace 1 alone would destroy 22 buildings and keep 30% of stock; with the garrison, 19 fall (22 × 15% = 3.3, rounded down to 3 saved) and about 40% of stock is kept.
 
 ---
 
 ## Military Milestones
 
-The five military milestones form a chain. Completing all five grants a title, and between them they give **+0.25 military power** and **+25% all production** (which adds into [the all-production pool](resources.md#the-all-production-cap)). Soldier counts in these milestones are soldiers trained over the run, not the number in stock; missions don't count toward any of them.
+The five military milestones form a chain. Completing all five grants a title, and between them they give **+0.25 military power** and **+25% all production** (which adds into [the all-production pool](resources.md#the-all-production-cap)). Soldier counts in these milestones are the soldiers who have come with your military buildings over the run, not the number in stock; missions don't count toward any of them.
 
 | Key | Name | Requirement | Min Age | Reward |
 |-----|------|-------------|----------|--------|
@@ -441,22 +433,22 @@ The five military milestones form a chain. Completing all five grants a title, a
 ### Early game (Stone Age to Classical Age)
 
 - Use short offers when you want a quick, lower-cost mission. Grand military offers use your army, while civil grand offers need materials.
-- War Camps and Barracks train nothing before the Iron Age, when soldiers unlock. Build Barracks for `iron_legion` (10 Barracks), not for early soldiers.
-- Once soldiers unlock, staff your military buildings (the Hunting Lodge costs only wood) and train 5 soldiers for `first_soldiers` and its +0.05 military power.
+- A War Camp's soldiers move in the day it stands, and a Barracks needs Military Tactics. Build Barracks for `iron_legion` (10 Barracks).
+- Your first military building brings the 5 soldiers `first_soldiers` asks for, and its +0.05 military power. The Hunting Lodge costs only wood.
 - `campaign trade_escort` (3 soldiers, Iron Age, 156-260 ticks, 0.30 difficulty) is the easiest early campaign: keep it running next to a scouting party for the encounters.
-- Workers in military buildings eat the same food as everyone else, but every worker you move there is one fewer farmer. Keep your food rate positive.
+- Soldiers and the workers in military buildings eat the same food as everyone else. Soldiers also take places in your homes. Keep your food rate positive.
 
 ### Mid game (Classical to Industrial Age)
 
 - Go for `iron_legion` (train 500 soldiers, build 10 Barracks) for its +5% all production.
 - Pick the easiest campaign you can afford rather than the one with the best loot. With no military power, `conquer_territory` (0.60) fails more often than it wins, and each failure that meets someone brings a setback.
 - The Geographic Society sends the offer with the best haul per minute that you can afford.
-- The age gates ask for military buildings (15 Hunting Lodges, 15 Military Academies, 5 Castle Keeps), and staffed they build your garrison too.
+- The age gates ask for military buildings (15 Hunting Lodges, 15 Military Academies, 5 Castle Keeps), and their soldiers build your garrison too.
 - Research military techs as they appear. Each one counts for more than its figure: a mission reads military power through the age's mission scale, so +0.15 in the Iron Age takes about 6 points off a campaign's chance to fail.
 
 ### Late game (Modern Age onward)
 
-- Campaign soldier costs (at most 100) are tiny next to what your buildings train by now, so wage whatever campaign is open. The loot doesn't matter; the encounter roll does.
+- Campaign soldier costs are small next to the army your posts hold by now, so wage whatever campaign is open. The loot doesn't matter; the encounter roll does.
 - With the military techs of each age researched, every campaign sits at the 0.05 difficulty floor from the Industrial Age on, so nearly every run succeeds and its encounters can bring boons. Skip them and the late campaigns are a gamble again.
 - The `military_superpower` milestone (train 2,000 soldiers) adds +15% all production.
 
@@ -464,15 +456,15 @@ The five military milestones form a chain. Completing all five grants a title, a
 
 The Army panel shows your **defense rating** (soldiers × 2.0 × (1 + military power)). It is measured against the raid threat of your age, and the resulting share (at most 45%) comes off raid events, war raids from civilizations at war with you, and the buildings and stock an Endure takes. It never stops a raid or a catastrophe from happening, and it does nothing against disasters such as plague or earthquakes. A civilization at war with you raids every 104 ticks and takes 50 × its strength (1-5) of its specialty resource; your garrison keeps its share of that, but only staying out of wars, or ending them with tribute, stops the raids: see [War & Peace](factions.md#war-amp-peace). See [Defense](#defense-what-your-army-blunts) for the numbers.
 
-- **Keep up with the age.** The threat about doubles every age, so a garrison you stop growing fades fast. Adding the current age's military buildings keeps pace, since each tier's soldier cap doubles too.
-- **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat about doubles and your garrison blunts less than the preview showed.
+- **Keep up with the age.** The threat rises with the army each age's buildings bring, so a garrison you stop growing fades. Adding the current age's military buildings keeps pace, since each age's building comes with more soldiers.
+- **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat rises and your garrison blunts less than the preview showed.
 - **Brace and garrison stack, up to a point.** Together they cut an Endure's losses by at most 60%. With Brace 2, a garrison that blunts 20% already reaches the building cap (8% fall), so extra soldiers mostly buy stock kept, up to 66%.
-- **Soldiers cost nothing to hold.** The stock has no upkeep; only the military workers producing it eat food and count toward the morale ratio below. You can staff up to bank a garrison, then move the workers back.
+- **Soldiers cost food and homes.** Every soldier eats like a worker and takes a place in your homes. Only the workers in military buildings count toward the morale ratio below.
 - **Research military power.** It multiplies the defense rating of the soldiers you already have.
 
 ### Army size and food
 
-Soldiers eat nothing, and a worker in a military building eats no more than any other worker. The food cost of an army is simply that its workers are workers. Rough rules:
+Soldiers eat like any worker, and so does a worker in a military building. The food cost of an army is that of its people. Rough rules:
 
 - Before you recruit, check `rates` and make sure your food rate stays positive with the new workers added.
 - Use `recruit max` only when food is overflowing, so a big recruit doesn't tip you into a deficit.
@@ -491,7 +483,7 @@ A large army has a second cost: **morale**. If more than **30% of your populatio
 
 Morale multiplies the output of every worker in your civilization, on a continuous curve centered on 50%. Below 50% it cuts production, down to ×0.50 at the 10% floor. Above 50% it raises production, up to +20% at the top. An oversized army that drags morale down therefore slows every domain at once (food, research, trade and the rest), and the army's food gets harder to cover as your farmers produce less. A lean army leaves room to push morale above 50% instead.
 
-**Keep military workers at 25-28% of your population or less.** That leaves a buffer below 30% if you lose workers to an event. If you need a large soldier stockpile, staff your military buildings heavily to bank soldiers, then move the extra workers back to civilian buildings. The stored soldiers stay, and the morale drain stops.
+**Keep military workers at 25-28% of your population or less.** That leaves a buffer below 30% if you lose workers to an event. The soldiers come with the buildings, so there is nothing to gain by staffing a military building: move its workers to buildings that make something.
 
 Morale drifts back toward 50% by itself, a little each tick, once you're back under 30%. If morale is falling and more than 30% of your workers are in military buildings, unassign some of them or recruit more workers for other buildings.
 
@@ -505,7 +497,7 @@ See [Morale](morale.md) for the full system.
 
 **Don't wage hard campaigns without military power.** `campaign siege_castle` (0.70) and `campaign world_domination` (0.80) fail often with no bonus, and a failure meets fewer civilizations and brings setbacks home. Research a few military techs first.
 
-**A failed mission still costs its launch.** The soldiers and any resources are spent when you launch. Failure doesn't refund them; it only cuts the reward to 30%.
+**A failed mission still costs its launch.** Any resources are spent when you launch and failure doesn't refund them; it only cuts the reward to 30%. A campaign's soldiers stay at their posts.
 
 **Workers need a built building.** You can't assign workers to a building you haven't built yet.
 

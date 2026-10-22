@@ -59,6 +59,11 @@ type BuildingDef struct {
 	// staffed from the population. They need no housing or food, and work from
 	// the moment the copy stands. 0 for every other building.
 	Scholars int
+	// Soldiers is the soldiers one copy of a military building comes with
+	// (soldier_rule.go): people who live in the homes and eat, at their posts
+	// from the moment the copy stands. Derived when the table is built; 0 for
+	// every other building.
+	Soldiers int
 	// levelCost is the price before capColdStartBridge held a part of it, for
 	// the price levels (levelPrice). nil when no part was held.
 	levelCost map[string]float64
@@ -922,6 +927,7 @@ func buildBase() ([]BuildingDef, []ColdStartCap) {
 	// then derive production rates and build times from those prices and the
 	// age targets (pacing.go). The mechanical half of every Description is
 	// written last, from those final values (effect_text.go).
+	applySoldierPosts(result)
 	return appendEffectText(result), caps
 }
 

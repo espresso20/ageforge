@@ -66,6 +66,7 @@ func (ge *GameEngine) SetGarrisonForTest(age string, n float64) {
 	defer ge.mu.Unlock()
 	ge.age = age
 	ge.currentEpoch = ge.rules.EraOf(age)
+	ge.garrisonForTest, ge.garrisonForTestSet = n, true
 	ge.Resources.UnlockResource("soldiers")
 	if short := n - ge.Resources.GetStorage("soldiers"); short > 0 {
 		ge.Resources.AddStorage("soldiers", short)
@@ -162,6 +163,8 @@ func (ge *GameEngine) SetTownForTest(buildings map[string]int, people int) {
 		ge.Buildings.counts[key] = buildings[key]
 		ge.Buildings.unlocked[key] = true
 	}
+	// A town set up by hand starts with its army at its posts.
+	ge.postAllSoldiers()
 	ge.recalculateRates()
 	ge.Workers.UnlockType("worker")
 	if more := people - ge.Workers.TotalPop(); more > 0 {

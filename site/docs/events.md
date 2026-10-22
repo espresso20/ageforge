@@ -140,7 +140,7 @@ The raids are:
 | The Great Breach | `epoch_data_breach` | Digital Era | data taken (not the research speed penalty) |
 | Corporate Espionage | `corporate_espionage` | Neon Era | gold and data taken |
 
-Soldiers train as soon as a military building stands, and a War Camp can be built in the Stone Age, so a garrison blunts the two Stone Era raids and a Bandit Raid in the Bronze Age too. The raid threat of the Stone and Bronze Ages is sized to a War Camp and Barracks garrison (see [Military](military.md)). Only the stolen resources and lost workers are blunted; a raid's production penalty runs in full. Disasters and unrest are not raids, and soldiers do nothing against them: `plague`, `mine_collapse`, `industrial_accident`, `crypto_winter`, `earthquake` and the rest take their full toll.
+A military building's soldiers move in as soon as it stands, and a War Camp can be built in the Stone Age, so a garrison blunts the two Stone Era raids and a Bandit Raid in the Bronze Age too (see [Military](military.md)). Only the stolen resources and lost workers are blunted; a raid's production penalty runs in full. Disasters and unrest are not raids, and soldiers do nothing against them: `plague`, `mine_collapse`, `industrial_accident`, `crypto_winter`, `earthquake` and the rest take their full toll.
 
 When the garrison blunts a raid, the log adds a green line under the event, for example:
 

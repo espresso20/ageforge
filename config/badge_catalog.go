@@ -284,6 +284,15 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Scope: BadgeLifetime, Counter: BadgeEvProduced + ".{key}",
 			Rungs:   resourceRungs,
 			Measure: BadgeMeasureProduction, TopRuns: BadgeMaxRuns,
+			// Nothing makes soldiers: they come with the military buildings.
+			// Their ladder counts the soldiers who take their posts, across
+			// all your runs (game.syncSoldiers reports them as produced).
+			Descs: map[string]string{
+				"resource.soldiers.1": "Post {count} {lname} across all your runs.",
+				"resource.soldiers.2": "Post {count} {lname} across all your runs.",
+				"resource.soldiers.3": "Post {count} {lname} across all your runs.",
+				"resource.soldiers.4": "Post {count} {lname} across all your runs.",
+			},
 			RevealBySubject: true,
 			Proof:           StaticProof(BadgeRuleLifetime),
 			Emblem:          "store", Ladder: "{name}",

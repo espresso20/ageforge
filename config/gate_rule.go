@@ -16,7 +16,8 @@ package config
 //  1. TownCopies copies of every building introduced in A that makes
 //     something: a production effect with a positive value. That is food,
 //     wood, stone, metals, gold, power and the rest; knowledge, faith and
-//     culture; and soldiers, for a military building. The gate keeps the
+//     culture; and a military building, which makes no resource but comes
+//     with its soldiers (BuildingDef.Soldiers). The gate keeps the
 //     larger of this and the count it already asks.
 //  2. Not asked: the wonder (the gate asks for it already, apart from the
 //     buildings), a monument or an embassy (they make no resource), housing
@@ -87,8 +88,12 @@ func GateTownHeldTechs(defs []BuildingDef, ages []AgeDef, techs []TechDef) []map
 }
 
 // makesSomething reports whether d has a production effect: it makes a
-// resource (food, gold, knowledge, faith, culture, soldiers and the rest).
+// resource (food, gold, knowledge, faith, culture and the rest), or it is a
+// military building, which comes with its soldiers.
 func makesSomething(d BuildingDef) bool {
+	if d.Soldiers > 0 {
+		return true
+	}
 	for _, e := range d.Effects {
 		if _, ok := producedBy(e); ok && e.Value > 0 {
 			return true

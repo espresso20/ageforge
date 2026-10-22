@@ -463,21 +463,11 @@
     "wood": 4902
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 20
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 0.4
-    }
-   ],
+   "effects": [],
    "build_ticks": 500,
    "workers": 4,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 16
   },
   "basilica": {
    "category": "research",
@@ -603,21 +593,11 @@
     "stone": 43860000000
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 20480
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 409.6
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 12,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 2245
   },
   "castle_keep": {
    "category": "military",
@@ -629,21 +609,11 @@
     "stone": 1199700
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 320
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 6.4
-    }
-   ],
+   "effects": [],
    "build_ticks": 1200,
    "workers": 7,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 77
   },
   "cathedral": {
    "category": "research",
@@ -889,21 +859,11 @@
     "electricity": 16459883999999.996
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 327680
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 6553.6
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 18,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 154503
   },
   "command_post": {
    "category": "military",
@@ -914,21 +874,11 @@
     "steel": 6579000000
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 10240
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 204.8
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 12,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 2900
   },
   "concert_hall": {
    "category": "production",
@@ -1195,21 +1145,11 @@
     "gold": 1228080000000
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 81920
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 1638.4
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 15,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 29780
   },
   "cyber_hub": {
    "category": "production",
@@ -1510,21 +1450,11 @@
     "titanium_ore": 3539759999999.9995
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 163840
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 3276.8
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 16,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 46983
   },
   "dyson_assembly": {
    "category": "production",
@@ -1917,21 +1847,11 @@
     "titanium": 31081924607999984
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 2621440
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 52428.8
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 25,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 1513556
   },
   "forager_post": {
    "category": "production",
@@ -1980,21 +1900,11 @@
     "steel": 10965000
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 1280
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 25.6
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 8,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 279
   },
   "fortress": {
    "category": "military",
@@ -2005,21 +1915,11 @@
     "stone": 3870000
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 640
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 12.8
-    }
-   ],
+   "effects": [],
    "build_ticks": 2400,
    "workers": 7,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 145
   },
   "foundry": {
    "category": "production",
@@ -2181,21 +2081,11 @@
     "steel": 1096500000
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 5120
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 102.4
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 10,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 1825
   },
   "gathering_camp": {
    "category": "production",
@@ -2682,21 +2572,11 @@
     "wood": 141.9
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 40
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 0.8
-    }
-   ],
+   "effects": [],
    "build_ticks": 80,
    "workers": 5,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 10
   },
   "hut": {
    "category": "housing",
@@ -3000,21 +2880,11 @@
     "stone": 19350
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 80
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 1.6
-    }
-   ],
+   "effects": [],
    "build_ticks": 300,
    "workers": 6,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 10
   },
   "library": {
    "category": "research",
@@ -3396,21 +3266,11 @@
     "stone": 109650
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 160
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 3.2
-    }
-   ],
+   "effects": [],
    "build_ticks": 600,
    "workers": 6,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 24
   },
   "military_base": {
    "category": "military",
@@ -3421,21 +3281,11 @@
     "steel": 167700000
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 2560
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 51.2
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 10,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 1287
   },
   "mill": {
    "category": "production",
@@ -4011,21 +3861,11 @@
     "quantum_flux": 237209478127103840
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 20971520
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 419430.4
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 35,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 6880954
   },
   "opera_house": {
    "category": "production",
@@ -4317,21 +4157,11 @@
     "steel": 376630463999999.94
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 655360
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 13107.2
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 20,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 178653
   },
   "port": {
    "category": "production",
@@ -4461,21 +4291,11 @@
     "quantum_flux": 16943534151935990
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 10485760
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 209715.2
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 30,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 2495437
   },
   "protein_synthesizer": {
    "category": "production",
@@ -5442,21 +5262,11 @@
     "titanium": 2358896063999999
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 1310720
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 26214.4
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 20,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 481364
   },
   "space_program": {
    "category": "wonder",
@@ -5494,21 +5304,11 @@
     "titanium_ore": 96750000000
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 40960
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 819.2
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 14,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 21178
   },
   "spiritual_center": {
    "category": "research",
@@ -5706,21 +5506,11 @@
     "titanium": 271966840319999840
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 5242880
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 104857.6
-    }
-   ],
+   "effects": [],
    "build_ticks": 3600,
    "workers": 25,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 3577940
   },
   "stellar_core_drill": {
    "category": "production",
@@ -6508,21 +6298,11 @@
     "wood": 980.4
    },
    "rate": 1.15,
-   "effects": [
-    {
-     "type": "storage",
-     "target": "soldiers",
-     "value": 10
-    },
-    {
-     "type": "production",
-     "target": "soldiers",
-     "value": 0.2
-    }
-   ],
+   "effects": [],
    "build_ticks": 200,
    "workers": 3,
-   "max_count": 0
+   "max_count": 0,
+   "soldiers": 9
   },
   "warehouse": {
    "category": "storage",
@@ -7044,7 +6824,7 @@
   },
   "exploration": {
    "age": "iron_age",
-   "cost": 12800,
+   "cost": 14700,
    "ticks": 585
   },
   "federation_charter": {
@@ -7204,12 +6984,12 @@
   },
   "iron_smelting": {
    "age": "iron_age",
-   "cost": 16700,
+   "cost": 19100,
    "ticks": 585
   },
   "irrigation": {
    "age": "iron_age",
-   "cost": 36600,
+   "cost": 41900,
    "ticks": 731
   },
   "language": {
@@ -7249,7 +7029,7 @@
   },
   "mathematics": {
    "age": "iron_age",
-   "cost": 21700,
+   "cost": 24800,
    "ticks": 731
   },
   "matter_conversion": {
@@ -7439,7 +7219,7 @@
   },
   "priesthood": {
    "age": "iron_age",
-   "cost": 28200,
+   "cost": 32200,
    "ticks": 731
   },
   "primitive_writing": {
@@ -7499,7 +7279,7 @@
   },
   "quarrying": {
    "age": "iron_age",
-   "cost": 61900,
+   "cost": 70800,
    "ticks": 731
   },
   "radio": {
@@ -7544,7 +7324,7 @@
   },
   "road_building": {
    "age": "iron_age",
-   "cost": 47600,
+   "cost": 54400,
    "ticks": 731
   },
   "rocketry": {
@@ -7594,7 +7374,7 @@
   },
   "siege_warfare": {
    "age": "iron_age",
-   "cost": 80400,
+   "cost": 92000,
    "ticks": 731
   },
   "singularity_engineering": {
@@ -8292,7 +8072,6 @@
    "marble": 728.89068,
    "oil": 2603586.3840000005,
    "research": 20564.41726500001,
-   "soldiers": 16855.02,
    "steel": 88907658.00000003,
    "stone": 30655214.22163201,
    "uranium": 2374249.2928000004,
@@ -8304,7 +8083,6 @@
    "gold": 48.136,
    "iron": 21.208000000000002,
    "research": 18.291000000000004,
-   "soldiers": 4.800000000000001,
    "stone": 80.64160000000001,
    "wood": 136.69440000000003
   },
@@ -8317,7 +8095,6 @@
    "iron_ore": 71.3664,
    "marble": 284.3424,
    "research": 75.43820000000002,
-   "soldiers": 49.6,
    "stone": 544.7577600000001,
    "wood": 843.2544000000001
   },
@@ -8331,7 +8108,6 @@
    "iron_ore": 1236.9456,
    "marble": 284.3424,
    "research": 4897.552000000002,
-   "soldiers": 408,
    "steel": 50463.00000000001,
    "stone": 29646.197760000006,
    "wood": 904.6944000000002
@@ -8354,7 +8130,6 @@
    "oil": 36650512.88,
    "plasma": 20987.904000000002,
    "research": 150906.49700000006,
-   "soldiers": 335801.34,
    "steel": 29890016587.234383,
    "stone": 38162613.62284801,
    "titanium": 89.67,
@@ -8376,7 +8151,6 @@
    "nanobots": 94191.80800000002,
    "oil": 36650512.88,
    "research": 98826.92106000004,
-   "soldiers": 167898.108,
    "steel": 12688260587.234379,
    "stone": 38162613.62284801,
    "titanium": 89.67,
@@ -8396,7 +8170,6 @@
    "marble": 684.26472,
    "oil": 2329624,
    "research": 15468.750510000003,
-   "soldiers": 7909.608000000001,
    "steel": 23406732.000000004,
    "stone": 1413884.3713280002,
    "uranium": 2374.0416,
@@ -8420,7 +8193,6 @@
    "oil": 37101133.940000005,
    "plasma": 14457920864.6912,
    "research": 253933.1047500001,
-   "soldiers": 679865.277,
    "steel": 98427046791.1758,
    "stone": 38631826.085424006,
    "titanium": 90.7725,
@@ -8448,7 +8220,6 @@
    "plasma": 3150642796448.014,
    "quantum_flux": 5105909.760000001,
    "research": 1827895.438275001,
-   "soldiers": 5835319.875000001,
    "steel": 190359210476.7774,
    "stone": 41447100.86088001,
    "titanium": 11901269250108.518,
@@ -8466,7 +8237,6 @@
    "iron_ore": 5487.655000000001,
    "marble": 550.3868400000001,
    "research": 9885.842595000006,
-   "soldiers": 1588.188,
    "steel": 1562486.2968750005,
    "stone": 151012.42041600004,
    "wood": 1743.4215000000004
@@ -8485,7 +8255,6 @@
    "nanobots": 1915.2,
    "oil": 34247200.56,
    "research": 54316.16839500003,
-   "soldiers": 78441.80400000002,
    "steel": 5085961531.031252,
    "stone": 35660147.15577601,
    "titanium": 35.910000000000004,
@@ -8513,7 +8282,6 @@
    "plasma": 2996082961150.5645,
    "quantum_flux": 2080899.0720000004,
    "research": 895956.4240200003,
-   "soldiers": 2774526.8040000005,
    "steel": 181020834113.7657,
    "stone": 39413846.85638401,
    "titanium": 4182305400103.1943,
@@ -8529,7 +8297,6 @@
    "iron_ore": 16.3296,
    "marble": 38.9664,
    "research": 35.97660000000001,
-   "soldiers": 24,
    "stone": 146.05760000000004,
    "wood": 321.0144
   },
@@ -8542,7 +8309,6 @@
    "iron_ore": 158.6304,
    "marble": 284.3424,
    "research": 407.89980000000014,
-   "soldiers": 100.80000000000001,
    "steel": 0.25,
    "stone": 4287.317760000001,
    "wood": 904.6944000000002
@@ -8561,7 +8327,6 @@
    "nanobots": 1814.4000000000003,
    "oil": 32404018.464000005,
    "research": 34528.023090000024,
-   "soldiers": 37154.376000000004,
    "steel": 593056006.5937501,
    "stone": 33783297.30547201,
    "titanium": 11.340000000000002,
@@ -8595,7 +8360,6 @@
    "plasma": 3269534977446.0522,
    "quantum_flux": 6379703202287.36,
    "research": 5573442.224625003,
-   "soldiers": 12111047.025,
    "steel": 197542576909.86334,
    "stone": 43011142.402800016,
    "titanium": 12772608750116.465,
@@ -8613,7 +8377,6 @@
    "iron_ore": 204.16320000000002,
    "marble": 284.3424,
    "research": 1281.5520000000004,
-   "soldiers": 203.20000000000002,
    "steel": 3833.2250000000004,
    "stone": 6572.597760000002,
    "wood": 904.6944000000002
@@ -8637,7 +8400,6 @@
    "plasma": 260973437920.37802,
    "quantum_flux": 685375.488,
    "research": 469169.4441150002,
-   "soldiers": 1370745.7470000002,
    "steel": 178865824183.83987,
    "stone": 38944634.39380801,
    "titanium": 277149450098.4795,
@@ -8649,7 +8411,6 @@
    "faith": 0.05280000000000001,
    "food": 26.065000000000005,
    "research": 4.824,
-   "soldiers": 1.6,
    "stone": 33.0352,
    "wood": 60.75840000000001
   },
@@ -8673,7 +8434,6 @@
    "plasma": 3565586333931.2505,
    "quantum_flux": 27163417436154.914,
    "research": 5979975.657480002,
-   "soldiers": 26575103.808000006,
    "steel": 213917720391.0001,
    "stone": 46619375.30265602,
    "titanium": 13929148800127.012,
@@ -8693,7 +8453,6 @@
    "marble": 580.13748,
    "oil": 753480,
    "research": 11339.911440000005,
-   "soldiers": 3351.348,
    "steel": 6424757.015625001,
    "stone": 1198728.0539520003,
    "uranium": 670.9248,
@@ -9352,94 +9111,79 @@
   "atomic_age": {
    "culture": 502578.6794007196,
    "faith": 39519.71310938041,
-   "food": 9429046.536076989,
-   "soldiers": 2541891.8588947947
+   "food": 9429046.536076989
   },
   "bronze_age": {
    "faith": 2.346969448248277,
-   "food": 701.9240502414062,
-   "soldiers": 59.07360039685459
+   "food": 701.9240502414062
   },
   "classical_age": {
    "culture": 355.0232488814758,
    "faith": 30.84980723724824,
-   "food": 5402.311815147492,
-   "soldiers": 1384.325596036799
+   "food": 5402.311815147492
   },
   "colonial_age": {
    "culture": 9901.354299721494,
    "faith": 535.0645501442282,
-   "food": 221287.41038107724,
-   "soldiers": 51793.58583532334
+   "food": 221287.41038107724
   },
   "cyberpunk_age": {
    "culture": 48011281.514548376,
    "faith": 3904640.139840535,
    "food": 860406652.1698682,
-   "nanobots": 312210237.68846875,
-   "soldiers": 224782596.2516512
+   "nanobots": 312210237.68846875
   },
   "digital_age": {
    "culture": 13246929.148532804,
    "faith": 1526833.7491475474,
    "food": 231857199.99551082,
-   "nanobots": 99539520.82492574,
-   "soldiers": 59555463.47421423
+   "nanobots": 99539520.82492574
   },
   "electric_age": {
    "culture": 195290.6249578912,
    "faith": 16446.95094753001,
-   "food": 2942714.262670811,
-   "soldiers": 890484.4176931378
+   "food": 2942714.262670811
   },
   "fusion_age": {
    "culture": 352716408.63209367,
    "faith": 25871127.23167602,
    "food": 5425750294.420942,
-   "nanobots": 2472493805.0525813,
-   "soldiers": 1636818524.5739155
+   "nanobots": 2472493805.0525813
   },
   "galactic_age": {
    "culture": 10205918395.636625,
    "faith": 685168606.2197697,
-   "food": 156066182527.83646,
-   "soldiers": 46819854758.35094
+   "food": 156066182527.83646
   },
   "industrial_age": {
    "culture": 23106.103663289072,
    "faith": 1376.8050734539142,
-   "food": 416374.56970002915,
-   "soldiers": 109667.20048830983
+   "food": 416374.56970002915
   },
   "information_age": {
    "culture": 1811026.867479471,
    "faith": 143649.7905847784,
-   "food": 30262607.690388486,
-   "soldiers": 8104810.851021077
+   "food": 30262607.690388486
   },
   "interstellar_age": {
    "culture": 1709355560.1624248,
    "faith": 117590752.12699372,
-   "food": 26294598739.508316,
-   "soldiers": 8022080971.375421
+   "food": 26294598739.508316
   },
   "iron_age": {
    "faith": 9.727561783052062,
-   "food": 1889.3918078620352,
-   "soldiers": 44862.186623041736
+   "food": 1889.3918078620352
   },
   "medieval_age": {
    "culture": 1009.6964836991876,
    "faith": 63.202568609734726,
-   "food": 15273.954080685893,
-   "soldiers": 3626.190537141256
+   "food": 15273.954080685893
   },
   "modern_age": {
    "culture": 1320634.1591056318,
    "faith": 73476.12399607449,
    "food": 25491670.43743178,
-   "nanobots": 452182.6607865655,
-   "soldiers": 6834298.899046179
+   "nanobots": 452182.6607865655
   },
   "primitive_age": {
    "faith": 0.023906249999999997,
@@ -9448,34 +9192,26 @@
   "quantum_age": {
    "culture": 8851867959.761034,
    "faith": 622123617.9461691,
-   "food": 146406197538.39706,
-   "soldiers": 39976747110.577545
+   "food": 146406197538.39706
   },
   "renaissance_age": {
    "culture": 6054.187753234155,
    "faith": 327.3637908013842,
-   "food": 92813.64521439758,
-   "soldiers": 23575.873871162596
+   "food": 92813.64521439758
   },
   "space_age": {
    "culture": 687380246.4242421,
    "faith": 54270463.74269068,
-   "food": 11416312449.982107,
-   "soldiers": 3355936143.0148745
+   "food": 11416312449.982107
   },
   "stone_age": {
    "faith": 0.23849386147548168,
-   "food": 72.87312433973051,
-   "soldiers": 5.662084481072587
-  },
-  "transcendent_age": {
-   "soldiers": 140211306309.60437
+   "food": 72.87312433973051
   },
   "victorian_age": {
    "culture": 69760.65673661263,
    "faith": 4673.863211962509,
-   "food": 1310466.8554374047,
-   "soldiers": 313152.8748412564
+   "food": 1310466.8554374047
   }
  }
 }
