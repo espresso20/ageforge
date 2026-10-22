@@ -138,7 +138,9 @@ func TestBuildAndResearchCaps(t *testing.T) {
 }
 
 // TestWondersSizedToTheirAge: every wonder costs WonderPriceUnits of its age
-// in construction resources (rounding aside).
+// in construction resources (rounding aside), counted in the price units from
+// before new copies took NewCopyPriceFactor: a wonder is set against what the
+// town earns, which did not move, so it is WonderPriceUnitsToday of today's.
 func TestWondersSizedToTheirAge(t *testing.T) {
 	levels := priceLevels(BaseBuildings())
 	for _, d := range BaseBuildings() {
@@ -146,8 +148,8 @@ func TestWondersSizedToTheirAge(t *testing.T) {
 			continue
 		}
 		u := priceUnits(d.BaseCost, levels[d.RequiredAge])
-		if math.Abs(u/WonderPriceUnits-1) > 0.05 {
-			t.Errorf("%s costs %.1f price units of %s, want %.0f", d.Key, u, d.RequiredAge, WonderPriceUnits)
+		if math.Abs(u/WonderPriceUnitsToday-1) > 0.05 {
+			t.Errorf("%s costs %.1f price units of %s, want %.1f (%.0f before the new-copy factor)", d.Key, u, d.RequiredAge, WonderPriceUnitsToday, WonderPriceUnits)
 		}
 	}
 }

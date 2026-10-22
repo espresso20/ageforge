@@ -212,7 +212,26 @@ func priceLevels(defs []BuildingDef) map[string]map[string]float64 {
 // repricedFrom).
 func levelPrice(d BuildingDef) map[string]float64 {
 	if old, ok := repricedFrom[d.Key]; ok {
-		return old
+		// The amounts from before are authored prices, so they take the same
+		// factor every new copy took (applyNewCopyPrice): the levels move with
+		// the prices, and a price in units stays what it was.
+		scaled := make(map[string]float64, len(old))
+		for res, c := range old {
+			scaled[res] = c * NewCopyPriceFactor
+		}
+		return scaled
+	}
+	if d.levelCost != nil {
+		return d.levelCost
+	}
+	if d.Category == "monument" {
+		// A monument keeps its authored price, but the levels are medians of
+		// prices that took the factor: count it at the price it would have had.
+		scaled := make(map[string]float64, len(d.BaseCost))
+		for res, c := range d.BaseCost {
+			scaled[res] = c * NewCopyPriceFactor
+		}
+		return scaled
 	}
 	return d.BaseCost
 }

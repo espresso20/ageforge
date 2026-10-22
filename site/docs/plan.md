@@ -71,13 +71,13 @@ A save from before this rule had banked part of its items' prices in the plan. T
 ```
 ═══ Build Plan ═══
  ▸  1. Hut ×3
-       ready    starts next tick for 14 wood
+       ready    starts next tick for 18 wood
     2. Story Circle
        blocked  needs more wood storage
     3. Wood Camp
-       ready    starts next tick for 16 wood
+       ready    starts next tick for 20 wood
     4. Stash ×2
-       waiting  ████░░░░  57%  wood 20 / 35 (30 held for items above)
+       waiting  ████░░░░  57%  wood 26 / 45 (35 held for items above)
     5. research Tool Making
        blocked  research slot busy
 

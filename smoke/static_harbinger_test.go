@@ -227,20 +227,28 @@ func TestBraceTakesEffort(t *testing.T) {
 	// capped material is given), so the Classical Age, whose stone is a third
 	// of the warning and under it, is not. The Modern Age left the
 	// all-capped list when the Mainframe Hall gave it a maker of data: its
-	// data Brace is under the ceiling. The counts are read from the price
-	// table.
+	// data Brace is under the ceiling. Every new copy costs NewCopyPriceFactor
+	// more and the stores were sized to the dearest first copy, so they grew
+	// with it while what the age makes did not: a third of the warning is
+	// under the ceiling of more materials, and the Iron, Medieval and Colonial
+	// Ages are off the all-capped list (the Atomic, Electric and Modern Ages
+	// have none on it). The counts are read from the price table.
 	wantCapped := map[string]int{
-		"iron_age": 3, "classical_age": 2, "medieval_age": 3,
-		"renaissance_age": 1, "colonial_age": 2, "industrial_age": 2,
-		"victorian_age": 1, "electric_age": 1, "atomic_age": 1,
-		"modern_age": 2, "information_age": 2, "digital_age": 2,
+		"iron_age": 3, "classical_age": 2, "medieval_age": 1,
+		"renaissance_age": 1, "colonial_age": 1, "industrial_age": 2,
+		"victorian_age": 1, "electric_age": 1, "atomic_age": 0,
+		"modern_age": 1, "information_age": 2, "digital_age": 2,
 		"cyberpunk_age": 1, "fusion_age": 1, "space_age": 1,
 	}
 	if !maps.Equal(capped, wantCapped) {
 		t.Errorf("materials on their ceiling by age: %v; want %v", capped, wantCapped)
 	}
-	if want := []string{"iron_age", "medieval_age", "colonial_age", "industrial_age"}; !slices.Equal(allCapped, want) {
-		t.Errorf("every material is on its ceiling in %v, want %v: the test in package game that holds Appease against Brace lists the same four", allCapped, want)
+	// (The Iron Age's three prices equal the ceiling by chance: a third of the
+	// warning, rounded up, is the same figure. The ceiling did not cut them,
+	// and the test in package game that holds Appease against Brace counts
+	// only the Industrial Age.)
+	if want := []string{"iron_age", "industrial_age"}; !slices.Equal(allCapped, want) {
+		t.Errorf("every material is on its ceiling in %v, want %v", allCapped, want)
 	}
 	// The final era's two threads have the ceiling a doom has, and a moderate
 	// builder's store holds them with room to spare. The Last Passage's takes
@@ -330,7 +338,7 @@ func TestBraceTakesEffort(t *testing.T) {
 		// One dear resource is enough: the price takes as long as its slowest part.
 		// (The Last Passage's real titanium sits on its ceiling, under the least;
 		// give the slowest part the least it may take.)
-		if got := alter(func(r *PriceRow) { r.BraceL1[tg.a] = income(tg.a, r.Age) * least; r.BraceL1[tg.b] = 1 }); len(got) != 0 {
+		if got := alter(func(r *PriceRow) { r.BraceL1[tg.a] = income(tg.a, r.Age) * least * (1 + 1e-9); r.BraceL1[tg.b] = 1 }); len(got) != 0 {
 			t.Errorf("%sa price with one cheap resource and the rest dear: %v, want no problem", tg.name, got)
 		}
 		want("nothing asked", alter(func(r *PriceRow) {

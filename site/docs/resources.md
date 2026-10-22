@@ -13,7 +13,7 @@ Amounts print with up to three figures and a unit from a thousand up: K, M, B, T
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
 | Food | `food` | Primitive Age | 50 | Every worker eats it every tick, so the rate must stay positive |
-| Wood | `wood` | Primitive Age | 50 | The first building material |
+| Wood | `wood` | Primitive Age | 65 | The first building material |
 | Faith | `faith` | Primitive Age | 50 | Never drains on its own; your faith strength (your faith buildings against a moderate set, times the share of your faith you have kept) sets the epoch and catastrophe odds, and faith income lifts morale |
 | Stone | `stone` | Stone Age | 50 | Durable construction material |
 | Iron | `iron` | Bronze Age | 50 | Metal for tools, weapons and early engineering |
@@ -151,7 +151,7 @@ A raw can also be a deal good in a faction trade, in the ages that price it (see
 The ores count toward two milestones:
 
 - **Industrial Titan** (Industrial Age): stockpile 10,000 coal and 5,000 iron ore.
-- **Mining Syndicate**: build 23 stone pits and 10 iron mines.
+- **Mining Syndicate**: build 22 stone pits and 10 iron mines.
 
 The quarries and mines of the Iron to the Industrial Age make stone, iron and iron ore, and the Marble Quarry and Marble Works make marble too. The titanium mines and the crystal mines make only their raw, at the standard rate. Within a domain, workers fill the newest buildings first, so a mine that makes only a raw draws masonry workers away from your older quarries.
 

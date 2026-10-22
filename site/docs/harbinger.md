@@ -267,21 +267,21 @@ Both answers are priced by the age the harbinger arrives in, and keep that price
 | Era | Harbinger arrives in | Brace (level 1) | Hours of income | Appease (level 1) | The warning lasts |
 |-----|----------------------|-----------------|-----------------|-------------------|-------------------|
 | Stone Era | any age | refused: nothing can strike there | | refused | |
-| Iron Era | Iron Age | 99K gold, 99K iron, 99K stone | 23 min | 1.8K faith | 1.3 h to 3.9 h |
-|  | Classical Age | 720K gold, 720K iron, 600K stone | 37 min | 3.3K faith | 1.8 h to 5.5 h |
-|  | Medieval Age | 3.1M gold, 3.1M iron, 3.1M stone | 26 min | 6.6K faith | 2.3 h to 7.0 h |
-| Steel Era | Renaissance Age | 14M gold, 7.2M steel | 1.0 h | 15K faith, 150K culture | 3.1 h to 9.4 h |
-|  | Colonial Age | 110M gold, 110M steel | 1.2 h | 41K faith, 360K culture | 3.6 h to 10.9 h |
-|  | Industrial Age | 350M gold, 350M steel | 7 min | 150K faith, 1.6M culture | 4.2 h to 12.5 h |
-| Electric Era | Victorian Age | 2.9B steel, 2.2B oil, 2.7M electricity | 1.6 h | 310K faith, 3.8M culture | 4.7 h to 14.0 h |
-|  | Electric Age | 50B steel, 33B electricity, 7.3B oil | 1.7 h | 760K faith, 9.8M culture | 5.2 h to 15.6 h |
-|  | Atomic Age | 270B electricity, 270B steel, 9.8B oil | 2.1 h | 1.9M faith, 26M culture | 6.2 h to 18.7 h |
-| Digital Era | Modern Age | 570B electricity, 570B gold, 46B data | 2.1 h | 4.1M faith, 56M culture | 6.2 h to 18.7 h |
-|  | Information Age | 2.5T electricity, 2.5T gold, 930B data | 2.4 h | 9.9M faith, 150M culture | 7.3 h to 21.8 h |
-|  | Digital Age | 10T electricity, 10T gold, 3.8T data | 2.8 h | 24M faith, 360M culture | 8.3 h to 25.0 h |
-| Neon Era | Cyberpunk Age | 97T electricity, 13T data | 3.1 h | 54M faith, 820M culture | 9.4 h to 28.1 h |
-|  | Fusion Age | 360T electricity, 16T data | 3.7 h | 130M faith, 1.9B culture | 10.4 h to 31.2 h |
-|  | Space Age | 1.2Q electricity, 18T data | 4.0 h | 270M faith, 4.2B culture | 11.4 h to 34.3 h |
+| Iron Era | Iron Age | 120K gold, 120K iron, 120K stone | 27 min | 1.8K faith | 1.3 h to 3.9 h |
+|  | Classical Age | 930K gold, 930K iron, 600K stone | 37 min | 3.3K faith | 1.8 h to 5.5 h |
+|  | Medieval Age | 6.6M gold, 6.3M iron, 6.1M stone | 47 min | 6.6K faith | 2.3 h to 7.0 h |
+| Steel Era | Renaissance Age | 30M gold, 7.2M steel | 1.0 h | 15K faith, 150K culture | 3.1 h to 9.4 h |
+|  | Colonial Age | 140M gold, 120M steel | 1.3 h | 41K faith, 360K culture | 3.6 h to 10.9 h |
+|  | Industrial Age | 470M gold, 470M steel | 10 min | 150K faith, 1.6M culture | 4.2 h to 12.5 h |
+| Electric Era | Victorian Age | 5.8B steel, 2.2B oil, 2.7M electricity | 1.6 h | 310K faith, 3.8M culture | 4.7 h to 14.0 h |
+|  | Electric Age | 65B steel, 33B electricity, 7.3B oil | 1.7 h | 760K faith, 9.8M culture | 5.2 h to 15.6 h |
+|  | Atomic Age | 340B steel, 270B electricity, 9.8B oil | 2.1 h | 1.9M faith, 26M culture | 6.2 h to 18.7 h |
+| Digital Era | Modern Age | 1.6T gold, 1.4T electricity, 46B data | 2.2 h | 4.1M faith, 56M culture | 6.2 h to 18.7 h |
+|  | Information Age | 10T electricity, 10T gold, 1.3T data | 3.4 h | 9.9M faith, 150M culture | 7.3 h to 21.8 h |
+|  | Digital Age | 38T electricity, 38T gold, 7.4T data | 5.5 h | 24M faith, 360M culture | 8.3 h to 25.0 h |
+| Neon Era | Cyberpunk Age | 360T electricity, 36T data | 8.7 h | 54M faith, 820M culture | 9.4 h to 28.1 h |
+|  | Fusion Age | 1.7Q electricity, 58T data | 13.4 h | 130M faith, 1.9B culture | 10.4 h to 31.2 h |
+|  | Space Age | 8.9Q electricity, 93T data | 20.6 h | 270M faith, 4.2B culture | 11.4 h to 34.3 h |
 | Cosmic Era: the Reality Tear | Interstellar Age | 27Q titanium, 3.4Q dark matter | 10.7 h | 600M faith, 9.3B culture | 12.5 h to 37.4 h |
 |  | Galactic Age | 170Q titanium, 95Q dark matter | 10.4 h | 1.3B faith, 20B culture | 12.5 h to 37.4 h |
 |  | Quantum Age | 3.3Qi dark matter, 240Q titanium | 10.7 h | 2.6B faith, 43B culture | 12.5 h to 37.4 h |

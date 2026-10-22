@@ -67,12 +67,24 @@ func TestStoneAgeIsReachableBuyingExactlyTheGate(t *testing.T) {
 	t.Fatalf("never reached the Stone Age; wood store %v, advance: %v", st.Resources["wood"].Storage, ge.AdvanceAge())
 }
 
+// woodBase is the wood store a new game holds; stashSize is what one Stash adds.
+func woodBase() float64 { return config.ResourceByKey()["wood"].BaseStorage }
+
+func stashSize() float64 {
+	for _, e := range config.BuildingByKey()["stash"].Effects {
+		if e.Type == "storage" && e.Target == "all" {
+			return e.Value
+		}
+	}
+	return 0
+}
+
 // stashTown is a Primitive Age game holding n Stashes and a full wood store.
 func stashTown(t *testing.T, n int) *GameEngine {
 	t.Helper()
 	ge := newSeededEngine(1)
 	ge.SetTownForTest(map[string]int{"stash": n}, 0)
-	flat := 50 + 100*float64(n)
+	flat := woodBase() + stashSize()*float64(n)
 	next, _ := ge.Buildings.BuildBatchCost("stash", 1, ge.buildQueue)
 	want := flat
 	if n > 0 && next["wood"] > want {
@@ -112,12 +124,12 @@ func TestStorageNextCopyAlwaysFits(t *testing.T) {
 
 func TestStoragePriceFloorOnlyLiftsWhenNeeded(t *testing.T) {
 	ge := stashTown(t, 1)
-	if got, want := ge.Resources.GetStorage("wood"), float64(150); got != want {
+	if got, want := ge.Resources.GetStorage("wood"), woodBase()+stashSize(); got != want {
 		t.Errorf("one Stash store = %v, want flat bonus %v", got, want)
 	}
 
 	ge = newSeededEngine(1)
-	if got, want := ge.Resources.GetStorage("wood"), float64(50); got != want {
+	if got, want := ge.Resources.GetStorage("wood"), woodBase(); got != want {
 		t.Errorf("no Stash store = %v, want base store %v", got, want)
 	}
 }
@@ -159,9 +171,9 @@ func TestQueuedStorageCountsWithMasteryAndStorageTech(t *testing.T) {
 		limit   bool // the next copy (going+1) is really out of reach of the finished store
 	}{
 		{"neither", 0, false, 5, true},  // no Stash is owned, so no floor applies
-		{"mastery", 1, false, 6, false}, // k = 2: 1005 against 1300; unmultiplied queue said 700
-		{"tech", 0, true, 5, false},     // 574 against 605; unmultiplied queue said 555
-		{"both", 1, true, 6, false},     // 1005 against 1430; unmultiplied queue said 710
+		{"mastery", 1, false, 6, false}, // k = 2: the finished store is double; an unmultiplied queue said out of reach
+		{"tech", 0, true, 5, false},     // the tech lifts the finished store; an unmultiplied queue said out of reach
+		{"both", 1, true, 6, false},     // both lift it; an unmultiplied queue said out of reach
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			// A town with none built and five going up (the queue is filled

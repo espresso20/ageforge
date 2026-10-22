@@ -54,30 +54,33 @@ const MakerHealthyShare = 0.01
 // MakerPaybackTicks is payback(A) for every age, in ticks: the median payback
 // of the age's healthy makers, typed here and recomputed by a test. It is what
 // the old payback rule set the ages' buildings by (DealPaybackTicks still
-// holds that rule's figures, for the flow resources).
+// holds that rule's figures, for the flow resources). Outputs did not move when
+// new copies took NewCopyPriceFactor, so every payback is that much longer: the
+// figures below are the ones from before times the factor, which is also what
+// the median of the healthy makers comes to now.
 var MakerPaybackTicks = map[string]float64{
-	"primitive_age":    28.12,
-	"stone_age":        109.38,
-	"bronze_age":       764.57,
-	"iron_age":         1365.7,
-	"classical_age":    2193.1,
-	"medieval_age":     3183.9,
-	"renaissance_age":  9438.1,
-	"colonial_age":     6056.4,
-	"industrial_age":   8667.1,
-	"victorian_age":    14896,
-	"electric_age":     20116,
-	"atomic_age":       25407,
-	"modern_age":       25950,
-	"information_age":  15227 * LatePriceStep,
-	"digital_age":      40929 * LatePriceStep * LatePriceStep,
-	"cyberpunk_age":    50249 * LatePriceStep * LatePriceStep * LatePriceStep,
-	"fusion_age":       129379 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
-	"space_age":        96530 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
-	"interstellar_age": 79991 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
-	"galactic_age":     169450 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
-	"quantum_age":      51348 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
-	"transcendent_age": 47204 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep,
+	"primitive_age":    28.12 * NewCopyPriceFactor,
+	"stone_age":        109.38 * NewCopyPriceFactor,
+	"bronze_age":       764.57 * NewCopyPriceFactor,
+	"iron_age":         1365.7 * NewCopyPriceFactor,
+	"classical_age":    2193.1 * NewCopyPriceFactor,
+	"medieval_age":     3183.9 * NewCopyPriceFactor,
+	"renaissance_age":  9438.1 * NewCopyPriceFactor,
+	"colonial_age":     6056.4 * NewCopyPriceFactor,
+	"industrial_age":   8667.1 * NewCopyPriceFactor,
+	"victorian_age":    14896 * NewCopyPriceFactor,
+	"electric_age":     20116 * NewCopyPriceFactor,
+	"atomic_age":       25407 * NewCopyPriceFactor,
+	"modern_age":       25950 * NewCopyPriceFactor,
+	"information_age":  15227 * LatePriceStep * NewCopyPriceFactor,
+	"digital_age":      40929 * LatePriceStep * LatePriceStep * NewCopyPriceFactor,
+	"cyberpunk_age":    50249 * LatePriceStep * LatePriceStep * LatePriceStep * NewCopyPriceFactor,
+	"fusion_age":       129379 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * NewCopyPriceFactor,
+	"space_age":        96530 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * NewCopyPriceFactor,
+	"interstellar_age": 79991 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * NewCopyPriceFactor,
+	"galactic_age":     169450 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * NewCopyPriceFactor,
+	"quantum_age":      51348 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * NewCopyPriceFactor,
+	"transcendent_age": 47204 * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * LatePriceStep * NewCopyPriceFactor,
 }
 
 // MakerFill is one hole the rules fill: in Age, Building also makes Material,
@@ -654,7 +657,7 @@ type MakerShortage struct {
 // making (a Coal Works making wood, a Power Generator making coal).
 func MakerAcceptedShortages() []MakerShortage {
 	return []MakerShortage{
-		{Age: "electric_age", Material: "coal", Targets: 2.51},
+		{Age: "electric_age", Material: "coal", Targets: 3.25},
 	}
 }
 
