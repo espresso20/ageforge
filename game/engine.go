@@ -5421,8 +5421,16 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 			})
 		ge.accrueFaith(float64(n) * OfflineEfficiency)
 		ge.accrueCulture(float64(n) * OfflineEfficiency)
+		// Missions move tick by tick, as doTick runs them, so a road event
+		// fires at its own tick and a mission comes home at its own tick.
+		// The step's production is already in, so loot lands on the right stock.
+		base := ge.tick
 		ge.tick += n
 		done += n
+		for j := 1; j <= n; j++ {
+			ge.tick = base + j
+			ge.processExpeditions()
+		}
 		changed := ge.advanceBuildQueue(n)
 		if ge.advanceResearch(n, OfflineEfficiency, &starts) {
 			changed = true
