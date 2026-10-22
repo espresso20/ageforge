@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"github.com/espresso20/ageforge/detmath"
 	"math"
 	"math/rand"
 	"strings"
@@ -35,7 +36,7 @@ func rollRoadEvents(rng *rand.Rand, offer MissionOffer, ticks int, words config.
 		mean = offer.LengthMinutes / 80
 	}
 	// Knuth Poisson draw; cap only protects pathological migrated saves.
-	l, p, n := math.Exp(-mean), 1.0, 0
+	l, p, n := detmath.Exp(-mean), 1.0, 0
 	for p > l && n < 100 {
 		n++
 		p *= rng.Float64()
@@ -46,7 +47,7 @@ func rollRoadEvents(rng *rand.Rand, offer MissionOffer, ticks int, words config.
 	}
 	out := make([]RoadEvent, n)
 	for i := range out {
-		at := int(math.Round(float64(ticks) * (.1 + .8*rng.Float64())))
+		at := int(math.Round(float64(ticks) * (.1 + float64(.8*rng.Float64()))))
 		at = max(1, min(ticks, at))
 		kind := roadKinds[rng.Intn(len(roadKinds))]
 		out[i] = RoadEvent{
