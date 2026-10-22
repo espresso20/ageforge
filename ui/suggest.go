@@ -100,7 +100,7 @@ func buildUniverse() map[ArgKind]map[string]bool {
 		}
 		return m
 	}
-	var buildings, techs, resources, factions, themes, routes, upgrades, expeditions []string
+	var buildings, techs, resources, factions, themes, routes, upgrades []string
 	for k := range config.BuildingByKey() {
 		buildings = append(buildings, k)
 	}
@@ -126,10 +126,6 @@ func buildUniverse() map[ArgKind]map[string]bool {
 	for i, a := range config.AgeOrder() {
 		order[a] = i
 	}
-	// The mission board takes its offers by number.
-	for n := 1; n <= 9; n++ {
-		expeditions = append(expeditions, strconv.Itoa(n))
-	}
 	b, r := set(buildings), set(resources)
 	return map[ArgKind]map[string]bool{
 		ArgBuilding: b, ArgPlanBuilding: b, ArgSellBuilding: b, ArgWorkerBuilding: b,
@@ -138,7 +134,6 @@ func buildUniverse() map[ArgKind]map[string]bool {
 		ArgTech: set(techs), ArgPlanTech: set(techs),
 		ArgResource: r, ArgWonderResource: r,
 		ArgFaction: set(factions), ArgTheme: set(themes),
-		ArgExpedition: set(expeditions), ArgCampaign: set(expeditions),
 		ArgRouteAvailable: set(routes), ArgRouteActive: set(routes),
 		ArgPrestigeUpgrade: set(upgrades),
 		ArgDomain:          set(config.WorkerDomains()),
@@ -425,10 +420,6 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return unlockedThemeKeys(c.engine)
 	case ArgSave:
 		return saveNames()
-	case ArgExpedition:
-		return offerNumbers(st)
-	case ArgCampaign:
-		return offerNumbers(st)
 	case ArgRouteAvailable:
 		return availableTradeRouteKeys(st)
 	case ArgRouteActive:
@@ -661,17 +652,6 @@ func assignedBuildingKeysAll(state game.GameState) []string {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	return keys
-}
-
-// offerNumbers returns the numbers of the offers on the mission board, in
-// order. Offers the town cannot afford are included; the engine enforces
-// that on launch.
-func offerNumbers(state game.GameState) []string {
-	var keys []string
-	for _, exp := range state.Military.Expeditions {
-		keys = append(keys, exp.Key)
-	}
 	return keys
 }
 

@@ -58,6 +58,9 @@ const (
 	// BoardExpireMinutes is how long an offer stays up before it expires and
 	// is replaced.
 	BoardExpireMinutes = 60
+	// MissionReturnsKept is how many returned missions the returns log
+	// keeps (the Expedition Report lists them).
+	MissionReturnsKept = 10
 	// RareOfferChance is the chance a new offer is rare (Legendary).
 	RareOfferChance = .05
 	// RareOfferGap is how many ordinary offers must be made after a rare one

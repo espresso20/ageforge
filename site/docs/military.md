@@ -148,19 +148,45 @@ Short and long offers cost the two materials the current age's buildings charge 
 
 Sending an offer removes it temporarily. A replacement arrives after five minutes. Untaken offers expire after an hour, and entering a new age creates a new board. You can have one mission of each tier under way at once. The panel and `expedition list` show why an offer cannot be sent now. A taken slot shows when its replacement arrives.
 
-<figure class="screen" data-screen="expeditions"><figcaption>The Expeditions panel shows the board, missions under way and the Geographic Society.</figcaption></figure>
+### The Expeditions panel
+
+<figure class="screen" data-screen="expeditions"><figcaption>The Expeditions panel: the Ready Room, a map of the age's lands with every offer as a pin, and the briefing for the one you pick.</figcaption></figure>
+
+`expedition` opens the **Expeditions** panel. It has two views, and `Tab` switches between them. The soldiers at home are on the right of the top line.
+
+The **Ready Room** is where you read the map and send a party. The map shows the age's lands with your town in the middle and every offer on the board as a pin:
+
+| Pin | Offer |
+|---|---|
+| ○ | Short |
+| ◇ | Long |
+| ▲ | Grand, military |
+| ■ | Grand, civil |
+| ◈ | Legendary, in gold |
+
+Short offers lie near the town, long ones farther out and grand ones at the edge of the map. The land is drawn from your run and the age, so it holds still while the age lasts and changes with the next. A mission under way shows a dotted route from the town, an `@` where its party is and a ◆ at its goal.
+
+The highlighted pin has a dotted route from the town and its place name beside it. Next to the map the briefing for that offer gives its twist, its odds, how long it is out and back, how long the offer stays up, its haul in minutes of income and in resources, and its cost (green where you can pay it, red where you cannot). A military grand offer also lists the soldiers it takes as its party. The card ends with `Enter send`, or with the reason the offer cannot be sent now. Under the map are the missions out now, a key to the pins and the time until the board next changes.
+
+The arrow keys hop to the nearest pin in that direction. `Enter` opens a box that asks before the party goes, and `Enter` again sends it. `Esc` takes the question back, and closes the panel when there is no question.
+
+The **Expedition Report** follows the parties out. It shows the same map with every mission under way, and a block for each: where it goes, a progress bar, the time left, its odds and the soldiers of a military mission. `Up` and `Down` pick a party, and its route lights up on the map. Below, **Came home** lists the last ten missions to return, newest first, with a ● on the ones that came home since you last looked, and the Geographic Society's line. With nobody out, the Report says so and how many offers are waiting in the Ready Room.
+
+The panel opens on the Report while a party is out or one has come home since you last looked at it, and on the Ready Room otherwise. Looking at the Report clears the `● new` count beside its tab. The prompt keeps working while the panel is open; with something typed, `Tab` and `Enter` act on the prompt instead.
 
 ### Commands
 
 ```
-expedition              # open the mission board
+expedition              # open the Expeditions panel
 expedition list         # print the mission board
-expedition <number>     # send the numbered offer
+expedition <name>       # send the offer with that name
 campaign                # alias for expedition
-campaign <number>       # alias for expedition <number>
+campaign <name>         # alias for expedition <name>
 ```
 
-`expedition` with no arguments opens the **Expeditions** panel. A mission's resource or soldier cost is spent at launch, whether it succeeds or fails. One mission per tier can be under way at once.
+Offers have no numbers. To send one from the prompt, type part of its title after `expedition`. Case does not matter, and "the", "of", "a" and "an" are left out. An exact title wins; otherwise a title that starts with what you typed; otherwise any title in which every word you typed begins one of its words. If one offer matches, it is sent. If several do, the game lists them and asks you to type more of the name. If none does, it says so.
+
+A mission's resource or soldier cost is spent at launch, whether it succeeds or fails. One mission per tier can be under way at once.
 
 ### Automatic dispatch: the Geographic Society
 
@@ -178,7 +204,7 @@ Its missions are ordinary missions. They use the same odds, pay the same haul an
 
 The more you invest, the faster it goes. A single unstaffed Society sends about one party every 2,340 ticks (about 1h 18m), roughly what you'd manage by remembering to send one now and then. Staffing it fully cuts that by about a third, and each extra Society shortens the wait again, down to a floor of about **one party every 260 ticks** (about 8m 40s) with six fully staffed Societies. More than that only helps when a party comes home late. Societies are staffed by military-domain workers, so they count toward the [military share of your population](#morale-and-military-ratio).
 
-The **Expeditions** panel (`expedition`) shows one line for it: the time until the next party leaves, or a warning that a party is due and your stores are too thin to outfit it. The full status (Societies built, staffing, the interval, and a countdown with a progress bar) is on the **Factions** panel (`factions`); see [The Factions panel](factions.md#the-factions-panel). Both show approximate wall-clock time rather than ticks.
+The **Expedition Report** (the second view of the `expedition` panel) shows one line for it: the time until the next party leaves, or a warning that a party is due and your stores are too thin to outfit it. The full status (Societies built, staffing, the interval, and a countdown with a progress bar) is on the **Factions** panel (`factions`); see [The Factions panel](factions.md#the-factions-panel). Both show approximate wall-clock time rather than ticks.
 
 A Society is always slower than doing it yourself, by design. The Society keeps missions moving while you are away. Sending offers by hand gives you control over the odds, haul and cost.
 

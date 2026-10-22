@@ -2,13 +2,11 @@ package ui
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/theme"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 // newExpeditionTestEngine spins up a fresh engine in the Bronze Age, stocked
@@ -37,9 +35,12 @@ func newExpeditionTestEngine(t *testing.T) *game.GameEngine {
 	return engine
 }
 
+// numbered matches an offer number at the start of a line ("3. Scout...").
+var numbered = regexp.MustCompile(`(?m)^\W*\d+\. `)
+
 // TestCmdExpeditionNoArgsPrintsTheBoard verifies bare `expedition` opens the
 // Expeditions panel and `expedition list` prints the mission board as plain
-// lines (nine numbered offers), neither launching anything.
+// lines (nine offers, no numbers), neither launching anything.
 func TestCmdExpeditionNoArgsPrintsTheBoard(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
@@ -53,9 +54,12 @@ func TestCmdExpeditionNoArgsPrintsTheBoard(t *testing.T) {
 	if !strings.Contains(res.Message, "Mission board") {
 		t.Errorf("the board has no heading:\n%s", res.Message)
 	}
-	for n := 1; n <= 9; n++ {
-		if want := string(rune('0'+n)) + ". "; !strings.Contains(res.Message, want) {
-			t.Errorf("the board does not list offer %d:\n%s", n, res.Message)
+	if numbered.MatchString(res.Message) {
+		t.Errorf("the printed board carries offer numbers:\n%s", res.Message)
+	}
+	for _, slot := range engine.GetState().Military.Board {
+		if slot.Offer != nil && !strings.Contains(res.Message, slot.Offer.Name) {
+			t.Errorf("the board does not list %q:\n%s", slot.Offer.Name, res.Message)
 		}
 	}
 	st := engine.GetState()
@@ -140,8 +144,8 @@ func TestOfferLineMarksLegendaryOffers(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 	state := engine.GetState()
 	info := game.ExpeditionInfo{Number: 3, Name: "Legendary Hunt: track the herd across the Dry Creek", Rare: true, CanLaunch: true, SuccessChance: .6, DurationMin: 900}
-	if line := offerLine(info, state); !strings.Contains(line, "Legendary") || !strings.Contains(line, "★") || !strings.Contains(line, "3. ") || !strings.Contains(line, "60% odds") {
-		t.Errorf("a Legendary offer is not marked or lacks its numbers: %q", line)
+	if line := offerLine(info, state); !strings.Contains(line, "Legendary") || !strings.Contains(line, "★") || !strings.Contains(line, "60% odds") {
+		t.Errorf("a Legendary offer is not marked or lacks its odds: %q", line)
 	}
 	info.Rare, info.Name = false, "Hunt: track the herd across the Dry Creek"
 	if line := offerLine(info, state); strings.Contains(line, "★") {
@@ -149,44 +153,82 @@ func TestOfferLineMarksLegendaryOffers(t *testing.T) {
 	}
 }
 
-func TestExpeditionsPanelBoardLayouts(t *testing.T) {
+// TestMatchOffers verifies a typed name finds the offers it means: exact, else
+// starts-with, else every word a prefix of a title word, with "the", "of",
+// "a" and "an" left out and case ignored.
+func TestMatchOffers(t *testing.T) {
+	titles := []string{
+		"Scout: count the herds near the Copper Hills",                   // 0
+		"Scout: check the wells along the Cedar Pass",                    // 1
+		"Trade Trek: carry copper to the Cedar Pass",                     // 2
+		"Legendary Trade Trek: follow the amber road to the Amber Coast", // 3
+		"Skirmish: hold the ford",                                        // 4
+		"Skirmish: hold the ford near the Clay Terraces",                 // 5
+		"Trade Mission: chart a trade route through the Clay Terraces",   // 6
+	}
+	for _, c := range []struct {
+		input string
+		want  []int
+	}{
+		{"scout count herds near copper hills", []int{0}},          // exact, once the small words are gone
+		{"Scout: Count the Herds near the Copper Hills", []int{0}}, // case, colon and small words
+		{"skirmish hold ford", []int{4}},                           // exact beats starts-with
+		{"skirmish: hold the ford near", []int{5}},                 // starts with
+		{"scout", []int{0, 1}},                                     // starts with, two of them
+		{"sco", []int{0, 1}},                                       // a part of a word
+		{"cedar pass", []int{1, 2}},                                // words of the title, any place
+		{"pass cedar", []int{1, 2}},                                // in any order
+		{"the cedar", []int{1, 2}},                                 // "the" is not a word
+		{"a copper", []int{0, 2}},                                  // nor is "a"
+		{"of an the", nil},                                         // nothing left to match
+		{"legendary", []int{3}},                                    // the mark is part of the title
+		{"amber", []int{3}},                                        // the first of the words
+		{"terraces chart", []int{6}},                               // two words, one title
+		{"dragon", nil},
+		{"", nil},
+	} {
+		got := matchOffers(titles, c.input)
+		if fmt.Sprint(got) != fmt.Sprint(c.want) {
+			t.Errorf("matchOffers(%q) = %v, want %v", c.input, got, c.want)
+		}
+	}
+}
+
+// TestCmdExpeditionSendsByName verifies `expedition <part of a name>` sends the
+// one offer it names, asks which when several match, and says when none does.
+func TestCmdExpeditionSendsByName(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 	engine.EnsureMissionBoard()
-	state := engine.GetState()
-	state.Military.Board[0].Offer.Rare = true
-	state.Military.ActiveShort = &game.ExpeditionSnapshot{Name: "Test journey", Tier: game.TierShort, SuccessChance: .8, TicksLeft: 10}
-	for _, size := range []struct{ w, h int }{{80, 24}, {100, 30}} {
-		t.Run(fmt.Sprintf("%dx%d", size.w, size.h), func(t *testing.T) {
-			if got := cmdExpedition(nil, engine); got.OverlayName != "expedition" {
-				t.Fatalf("bare expedition opens %q", got.OverlayName)
+	board := engine.GetState().Military.Board
+
+	if res := cmdExpedition([]string{"scout"}, engine); res.Type == "success" || !strings.HasPrefix(res.Message, "Which one? ") || !strings.HasSuffix(res.Message, ". Type more of the name.") {
+		t.Errorf("an ambiguous name: type %q, %q", res.Type, res.Message)
+	} else {
+		for _, slot := range board[:3] {
+			if !strings.Contains(res.Message, slot.Offer.Name) {
+				t.Errorf("the question leaves out %q: %q", slot.Offer.Name, res.Message)
 			}
-			out := expeditionsProvider(state, size.w)
-			for i, slot := range state.Military.Board {
-				if slot.Offer == nil {
-					t.Fatalf("offer %d missing", i+1)
-				}
-				name := strings.TrimPrefix(slot.Offer.Name, "Legendary ")
-				if !strings.Contains(out, fmt.Sprintf("%d.", slot.Number)) || !strings.Contains(out, name) {
-					t.Errorf("offer %d title missing at %dx%d", slot.Number, size.w, size.h)
-				}
-			}
-			if !strings.Contains(out, "Legendary") || !strings.Contains(out, "Under way") || !strings.Contains(out, state.Military.ActiveShort.Name) {
-				t.Errorf("legendary mark or under-way mission missing at %dx%d:\n%s", size.w, size.h, out)
-			}
-			sim := tcell.NewSimulationScreen("UTF-8")
-			if err := sim.Init(); err != nil {
-				t.Fatal(err)
-			}
-			defer sim.Fini()
-			sim.SetSize(size.w, size.h)
-			tv := tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetText(out)
-			tv.SetRect(0, 0, size.w, size.h)
-			tv.Draw(theme.WrapScreen(sim))
-			for _, line := range strings.Split(tv.GetText(true), "\n") {
-				if runeLen(line) > size.w {
-					t.Errorf("rendered line overflows %dx%d: %q", size.w, size.h, line)
-				}
-			}
-		})
+		}
+	}
+	if st := engine.GetState(); st.Military.ActiveShort != nil {
+		t.Fatal("asking which one sent something")
+	}
+
+	if res, want := cmdExpedition([]string{"dragon", "keep"}, engine), `No offer called "dragon keep". Type expedition list to see the board.`; res.Message != want || res.Type != "error" {
+		t.Errorf("no match: type %q, %q; want %q", res.Type, res.Message, want)
+	}
+
+	// The whole of one title, typed as words: it is the one offer.
+	name := board[3].Offer.Name
+	res := cmdExpedition(strings.Fields(strings.ToLower(name)), engine)
+	if res.Type != "success" {
+		t.Fatalf("sending %q by its name: type %q, %q", name, res.Type, res.Message)
+	}
+	if st := engine.GetState(); st.Military.ActiveLong == nil || st.Military.ActiveLong.Name != name {
+		t.Errorf("under way: %+v, want %q", st.Military.ActiveLong, name)
+	}
+	// A name that matches an offer whose slot is taken is refused by the game.
+	if res := cmdExpedition(strings.Fields(strings.ToLower(board[4].Offer.Name)), engine); res.Type != "error" || !strings.Contains(res.Message, "already under way") {
+		t.Errorf("a second long mission by name: type %q, %q", res.Type, res.Message)
 	}
 }

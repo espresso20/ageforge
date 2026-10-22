@@ -248,7 +248,7 @@ Some commands wait for a tech. Until it is researched, the command is refused wi
 | Command | Opened by | Age |
 |---|---|---|
 | Trade routes (`trade route start <route>`) | The Wheel | Bronze |
-| Military grand offers (`expedition <number>`) | Military Tactics | Bronze |
+| Military grand offers (`expedition <name>`) | Military Tactics | Bronze |
 | Diplomacy: gifts, alliances, rivalries, embargoes and deals (`diplomacy ...`, `plan deal`) | Envoys | Classical |
 | Festivals (`festival confirm yes`) | Drama | Classical |
 | The black market (`blackmarket <resource>`) | Mercantilism | Colonial |

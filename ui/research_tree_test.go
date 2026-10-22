@@ -733,8 +733,8 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	if out := factionsProvider(st, 120) + festival(); strings.Contains(out, "Envoys") || strings.Contains(out, "Drama") {
 		t.Errorf("a panel names a tech of an age not in sight:\n%s", out)
 	}
-	if out := expeditionsProvider(st, 120); !strings.Contains(out, "Long and grand missions need Exploration first. Research it to send one") {
-		t.Errorf("the Expeditions panel lists Scout Nearby Ruins and does not say it waits for Exploration:\n%s", out)
+	if out := cmdExpedition([]string{"list"}, ge).Message; !strings.Contains(out, "Long and grand missions need Exploration first. Research it to send one") {
+		t.Errorf("the mission board lists a long offer and does not say it waits for Exploration:\n%s", out)
 	}
 	ge.GrantTechsForTest("military_tactics")
 	if out := militaryProvider(ge.GetState(), 120) + cmdMissionBoard(ge).Message; strings.Contains(out, "Military Tactics first") {
@@ -755,10 +755,10 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	// and stops once it is researched.
 	late := ge.GetState()
 	for what, c := range map[string][2]string{
-		"the Expeditions panel": {expeditionsProvider(late, 120), "Long and grand missions need Exploration first. Research it to send one"},
-		"the Factions panel":    {factionsProvider(late, 120), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
-		"festival":              {cmdFestival(nil, ge).Message, "Festivals need Drama first. Research it to hold one."},
-		"festival confirm":      {cmdFestival([]string{"confirm"}, ge).Message, "Festivals need Drama first. Research it to hold one."},
+		"the mission board":  {cmdExpedition([]string{"list"}, ge).Message, "Long and grand missions need Exploration first. Research it to send one"},
+		"the Factions panel": {factionsProvider(late, 120), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
+		"festival":           {cmdFestival(nil, ge).Message, "Festivals need Drama first. Research it to hold one."},
+		"festival confirm":   {cmdFestival([]string{"confirm"}, ge).Message, "Festivals need Drama first. Research it to hold one."},
 	} {
 		if !strings.Contains(c[0], c[1]) {
 			t.Errorf("%s is missing %q:\n%s", what, c[1], c[0])
@@ -766,7 +766,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	}
 	ge.GrantTechsForTest("exploration", "envoys", "drama", "the_wheel")
 	late = ge.GetState()
-	if out := expeditionsProvider(late, 120) + factionsProvider(late, 120) + festival() + tradeProvider(late, 120); strings.Contains(out, "Exploration first") || strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
+	if out := cmdExpedition([]string{"list"}, ge).Message + factionsProvider(late, 120) + festival() + tradeProvider(late, 120); strings.Contains(out, "Exploration first") || strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
 		t.Errorf("with the techs researched a lock is still shown:\n%s", out)
 	}
 	if strings.Contains(out, "Interstellar Trade") || strings.Contains(out, "interstellar_trade") {

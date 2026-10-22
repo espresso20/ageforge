@@ -46,7 +46,7 @@ func plantOffer(ge *GameEngine, tier, grand string) int {
 // kind's ranges, with the kind's base odds, made in the engine's age. It
 // touches nothing, so it can be built under the engine lock.
 func testOffer(ge *GameEngine, tier, grand string) MissionOffer {
-	offer := MissionOffer{Tier: tier, Grand: grand, Age: ge.age, Description: "A test offer.", ExpiresTick: ge.tick + 1<<30}
+	offer := MissionOffer{Tier: tier, Grand: grand, Age: ge.age, Place: "the Test Hills", Description: "A test offer.", ExpiresTick: ge.tick + 1<<30}
 	tuning, _ := config.MissionKindTuning(offer.Kind())
 	offer.Title = "Test " + tier + " " + grand
 	offer.LengthMinutes = (tuning.MinMinutes + tuning.MaxMinutes) / 2

@@ -75,8 +75,11 @@ type MissionOffer struct {
 	Grand string `json:"grand,omitempty"`
 	// Age is the age the offer was made in; its era is the one a badge for
 	// the mission is earned in.
-	Age         string `json:"age"`
-	Title       string `json:"title"`
+	Age   string `json:"age"`
+	Title string `json:"title"`
+	// Place is the place the title names: the Expeditions panel puts the
+	// offer's pin there and labels it.
+	Place       string `json:"place,omitempty"`
 	Description string `json:"description"`
 	// LengthMinutes, SuccessChance and HaulMinutes are the rolls. The haul is
 	// in minutes of the town's income; the resources are worked out at launch.
@@ -181,6 +184,7 @@ func (b *MissionBoard) makeOffer(rng *rand.Rand, words config.MissionWords, tier
 	place := words.Places[rng.Intn(len(words.Places))]
 	offer.Description = words.Twists[rng.Intn(len(words.Twists))]
 	offer.Title = fmt.Sprintf("%s: %s %s", name, objective, place)
+	offer.Place = place
 
 	tuning, _ := config.MissionKindTuning(offer.Kind())
 	base := tuning.BaseSuccess

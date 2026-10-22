@@ -181,24 +181,24 @@ With something typed, `Tab` and `Enter` act on the prompt instead. `research lis
 
 | Command | Description |
 |---|---|
-| `expedition` | Open the **Expeditions** panel with the mission board (shorthand: `exp`) |
+| `expedition` | Open the **Expeditions** panel: the Ready Room and the Expedition Report (shorthand: `exp`) |
 | `expedition list` | Print the mission board (shorthand: `exp list`) |
-| `expedition <number>` | Send the numbered offer (shorthand: `exp <number>`) |
+| `expedition <name>` | Send the offer with that name; a part of the name will do (shorthand: `exp <name>`) |
 | `campaign` | Alias for `expedition` |
 | `campaign list` | Alias for `expedition list` |
-| `campaign <number>` | Alias for `expedition <number>` |
+| `campaign <name>` | Alias for `expedition <name>` |
 | `army` | Open the **Army** panel with your soldier count and defense rating |
 
 ```
 expedition
 expedition list
-expedition 1
-campaign 2
+expedition copper hills
+campaign skirmish
 campaign list
 army
 ```
 
-The board has short, long and grand offers. Each shows its length, odds, haul and cost. One mission per tier can be under way at once. A grand offer is military or civil. The Geographic Society sends offers automatically once available. See [Military](military.md).
+The board has short, long and grand offers, each shown as a pin on the Ready Room's map with its length, odds, haul and cost. Arrow keys hop between pins, `Enter` asks and `Enter` again sends, and `Tab` switches to the Expedition Report. Offers have no numbers: type part of a title to send one, and the game asks which when several fit. One mission per tier can be under way at once. A grand offer is military or civil. The Geographic Society sends offers automatically once available. See [Military](military.md#the-expeditions-panel).
 
 ---
 

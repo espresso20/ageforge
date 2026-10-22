@@ -275,6 +275,48 @@ func (s *sweeper) mapTour(where string) {
 	s.submit("map glyphs unicode")
 }
 
+// expeditionTour presses the Expeditions panel's keys: the arrows hop between
+// pins, Tab switches views, Enter asks before a party is sent and Esc takes
+// the question back. The panel must stay open throughout.
+func (s *sweeper) expeditionTour(where string) {
+	s.t.Helper()
+	s.step = where + " expedition keys"
+	for _, k := range []tcell.Key{tcell.KeyRight, tcell.KeyDown, tcell.KeyLeft, tcell.KeyUp, tcell.KeyTab, tcell.KeyDown, tcell.KeyUp, tcell.KeyBacktab, tcell.KeyRight, tcell.KeyEnter} {
+		s.press(k, 0)
+		s.ping()
+	}
+	if s.activeOverlay() != "expedition" {
+		s.fail("the expedition panel's keys closed it")
+	}
+	// Keys travel on their own queue: wait until the last Enter was answered,
+	// by the question or by the refusal on the key bar.
+	s.wait("Enter to be answered", func() bool {
+		var done bool
+		s.ui(func() { v := s.a.dashboard.expPanel.view; done = v.confirm || v.flash != "" })
+		return done
+	})
+	asking := func() bool {
+		var ok bool
+		s.ui(func() { ok = s.a.dashboard.expPanel.view.confirm })
+		return ok
+	}
+	if asking() {
+		// The question is on the screen, and Esc takes it back and leaves the
+		// panel open.
+		s.wait("the question to be drawn", func() bool { return strings.Contains(s.liveScreen(), "Send this") })
+		s.press(tcell.KeyEsc, 0)
+		s.wait("the question taken back", func() bool { return !asking() })
+		if s.activeOverlay() != "expedition" {
+			s.fail("Esc closed the panel instead of taking back the question")
+		}
+	}
+	if txt := s.liveScreen(); !strings.Contains(txt, "READY ROOM") || !strings.Contains(txt, "EXPEDITION REPORT") {
+		s.fail("the Expeditions panel has lost its tabs\n%s", txt)
+	}
+	s.press(tcell.KeyCtrlU, 0)
+	s.wait("an empty prompt", func() bool { return s.inputText() == "" })
+}
+
 // miniMapShown reports whether the dashboard's last draw showed the mini map.
 func (s *sweeper) miniMapShown() bool {
 	var ok bool
@@ -420,6 +462,9 @@ func TestSmokeUISmallTerminals(t *testing.T) {
 					if o.cmd == "map" {
 						s.mapTour(fmt.Sprintf("[%dx%d %s]", sz[0], sz[1], key))
 					}
+					if o.cmd == "expedition" {
+						s.expeditionTour(fmt.Sprintf("[%dx%d %s]", sz[0], sz[1], key))
+					}
 					s.press(tcell.KeyEsc, 0)
 					s.wait("overlay closed", func() bool { return s.activeOverlay() == "" && s.inputFocused() })
 					steps++
@@ -511,6 +556,9 @@ func TestSmokeUISweep(t *testing.T) {
 			}
 			if o.cmd == "map" {
 				s.mapTour("[" + key + "]")
+			}
+			if o.cmd == "expedition" {
+				s.expeditionTour("[" + key + "]")
 			}
 			s.press(tcell.KeyEsc, 0)
 			s.wait("overlay closed", func() bool { return s.activeOverlay() == "" && s.inputFocused() })

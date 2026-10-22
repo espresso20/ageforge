@@ -400,6 +400,13 @@ type MilitarySave struct {
 
 	Active []ActiveSlotSave `json:"active,omitempty"`
 	Board  *MissionBoard    `json:"board,omitempty"`
+
+	// Returns is the returns log, newest first; ReturnsMade and
+	// ReturnsSeen count the missions home and the ones the Expedition
+	// Report has shown (mission_returns.go).
+	Returns     []MissionReturn `json:"returns,omitempty"`
+	ReturnsMade int             `json:"returns_made,omitempty"`
+	ReturnsSeen int             `json:"returns_seen,omitempty"`
 }
 
 // EventSave holds event state for save
@@ -676,6 +683,9 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Board:          ge.Military.BoardForSave(),
 			CompletedCount: ge.Military.completedCount,
 			TotalLoot:      totalLoot,
+			Returns:        slices.Clone(ge.Military.returns),
+			ReturnsMade:    ge.Military.returnsMade,
+			ReturnsSeen:    ge.Military.returnsSeen,
 
 			AutoExpeditionTicksLeft: ge.autoExpeditionTicksLeft,
 		},
