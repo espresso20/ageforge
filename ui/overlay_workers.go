@@ -260,7 +260,7 @@ func recruitLine(state game.GameState) string {
 	case game.RecruitHeld:
 		return "[yellow]waiting[-] [gray]after your last worker command, " + formatTicks(state.Workers.HoldTicks, state) + " more[-]"
 	case game.RecruitHousing:
-		return "[green]on[-] [gray](held by housing: build more homes for more villagers)[-]"
+		return "[green]on[-] [gray](held by housing: build more homes for more workers)[-]"
 	case game.RecruitFood:
 		return "[green]on[-] [yellow](held by food: build or staff food buildings)[-]"
 	case game.RecruitStarve:

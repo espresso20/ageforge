@@ -58,6 +58,7 @@ type Dashboard struct {
 	sidebarActive string // the open panel, highlighted in the list
 	workerMiniTV  *fitView
 	workerCol     *tview.Flex // the right column, which sizes the Workers box to its lines
+	workerDetail  bool        // the terminal has the rows for the Workers box's food detail line
 
 	// Shared UI
 	logTV            *tview.TextView
@@ -498,7 +499,7 @@ func (d *Dashboard) build() {
 		if d.lastState == nil {
 			return ""
 		}
-		return workerMiniText(*d.lastState, w)
+		return workerMiniText(*d.lastState, w, d.workerDetail)
 	})
 	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ")
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Color(theme.RoleAccent)) })
@@ -932,11 +933,19 @@ func (d *Dashboard) refreshWorkerMini(game.GameState) {
 	// Written from d.lastState for the box's width at its next draw
 	// (workerMiniText). The box is as tall as its lines.
 	if d.workerCol != nil && d.lastState != nil {
-		rows := strings.Count(workerMiniText(*d.lastState, sidebarW-2), "\n")
+		// The food detail line is the one that goes first on a short terminal:
+		// at 24 rows the Panels list needs every row the box leaves it.
+		_, _, _, rootH := d.root.GetRect()
+		d.workerDetail = rootH >= workerDetailMinRows
+		rows := strings.Count(workerMiniText(*d.lastState, sidebarW-2, d.workerDetail), "\n")
 		d.workerCol.ResizeItem(d.workerMiniTV, rows+2, 0)
 	}
 	d.workerMiniTV.changed()
 }
+
+// workerDetailMinRows is the terminal height from which the Workers box adds
+// the line that says how much food is spare and how many it feeds.
+const workerDetailMinRows = 30
 
 // workerMiniBaseRows is the Workers box's lines when nothing holds the
 // population back: the headcount, housing left, food use and food net.
@@ -984,9 +993,10 @@ func heldByText(ws game.WorkerState) string {
 
 // workerMiniText writes the Workers box for a box w cells wide (0: any
 // width): population over housing and the reserve, housing left, what the
-// workers eat, what food nets and what holds the population back. A count too long for its line is written
+// workers eat, what food nets and what holds the population back (with the
+// food detail line when detail is set). A count too long for its line is written
 // short (51.8M for 51785785), and a rate too long drops to "/t".
-func workerMiniText(state game.GameState, w int) string {
+func workerMiniText(state game.GameState, w int, detail bool) string {
 	ws := state.Workers
 	fits := func(plain string) bool { return w <= 0 || runeLen(plain) <= w }
 	num := func(n int) string { return fmt.Sprintf("%d", n) }
@@ -1023,7 +1033,7 @@ func workerMiniText(state game.GameState, w int) string {
 	}
 	if lines := heldByLines(ws, w); len(lines) > 0 {
 		fmt.Fprintf(&sb, "[gray]%s[-]\n", lines[0])
-		if len(lines) > 1 {
+		if len(lines) > 1 && detail {
 			fmt.Fprintf(&sb, "[gray]%s[-]\n", lines[1])
 		}
 	}

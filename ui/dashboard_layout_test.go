@@ -240,7 +240,7 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 			}
 			wx, wy, ww, wh := d.workerMiniTV.GetInnerRect()
 			mini := strings.Join(rectText(cells, w, wx, wy, ww, wh), "\n")
-			for _, want := range []string{"Idle:", "Housing left:", "Food use:", "Food net:"} {
+			for _, want := range []string{"Reserve:", "Housing left:", "Food use:", "Food net:"} {
 				if !strings.Contains(mini, want) {
 					t.Errorf("%s: the Workers box does not show %q:\n%s", where, want, mini)
 				}
