@@ -32,10 +32,27 @@ type ActiveExpedition struct {
 	TicksLeft  int `json:"ticks_left"`
 	// TotalTicks is the mission's whole length in ticks when it was sent.
 	TotalTicks     int                `json:"total_ticks,omitempty"`
+	ElapsedTicks   int                `json:"elapsed_ticks,omitempty"`
 	BaseRewards    map[string]float64 `json:"base_rewards,omitempty"`
 	SuccessRewards map[string]float64 `json:"success_rewards,omitempty"`
 	FailureRewards map[string]float64 `json:"failure_rewards,omitempty"`
 	Cost           map[string]float64 `json:"cost,omitempty"`
+	RoadEvents     []RoadEvent        `json:"road_events,omitempty"`
+	RoadEventsSeen []string           `json:"road_events_seen,omitempty"`
+}
+
+// RoadEvent is a deterministic launch-time event, ordered by mission tick.
+type RoadEvent struct {
+	Tick         int    `json:"tick"`
+	Kind         string `json:"kind"`
+	Story        string `json:"story,omitempty"`
+	AuxStory     string `json:"aux_story,omitempty"`
+	AmbushStory  string `json:"ambush_story,omitempty"`
+	FoeIndex     int    `json:"foe_index,omitempty"`
+	HelperIndex  int    `json:"helper_index,omitempty"`
+	WeatherIndex int    `json:"weather_index,omitempty"`
+	FindIndex    int    `json:"find_index,omitempty"`
+	Fired        bool   `json:"fired,omitempty"`
 }
 
 // MilitaryManager handles the mission board, the missions under way and the
@@ -183,7 +200,9 @@ type ExpeditionResult struct {
 	SoldiersSent int
 	// Offer is the offer the mission was sent from: its tier, age and
 	// Legendary mark are what the badges read.
-	Offer MissionOffer
+	Offer       MissionOffer
+	RoadEvents  int
+	RoadStories []string
 }
 
 // Tick advances every mission under way (one per tier) by one tick and
@@ -244,6 +263,8 @@ func (mm *MilitaryManager) tickTier(rng *rand.Rand, tier string) (ExpeditionResu
 		Success:      success,
 		SoldiersSent: active.Soldiers,
 		Offer:        active.MissionOffer,
+		RoadEvents:   len(active.RoadEventsSeen),
+		RoadStories:  slices.Clone(active.RoadEventsSeen),
 	}, true
 }
 
@@ -334,6 +355,7 @@ func snapshotActive(active *ActiveExpedition, expeditionBonus float64) *Expediti
 		HaulMinutes:   active.HaulMinutes,
 		SuccessHaul:   success,
 		FailureHaul:   failure,
+		RoadStories:   append([]string(nil), active.RoadEventsSeen...),
 	}
 }
 
@@ -354,6 +376,8 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 			continue
 		}
 		mission := *entry.Mission
+		mission.RoadEvents = append([]RoadEvent(nil), entry.Mission.RoadEvents...)
+		mission.RoadEventsSeen = append([]string(nil), entry.Mission.RoadEventsSeen...)
 		mm.active[entry.Slot] = &mission
 	}
 	mm.board = MissionBoard{}
@@ -377,6 +401,8 @@ func (mm *MilitaryManager) ActiveForSave() []ActiveSlotSave {
 			c := *active
 			c.BaseRewards, c.SuccessRewards = maps.Clone(active.BaseRewards), maps.Clone(active.SuccessRewards)
 			c.FailureRewards, c.Cost = maps.Clone(active.FailureRewards), maps.Clone(active.Cost)
+			c.RoadEvents = append([]RoadEvent(nil), active.RoadEvents...)
+			c.RoadEventsSeen = append([]string(nil), active.RoadEventsSeen...)
 			out = append(out, ActiveSlotSave{Slot: tier, Mission: &c})
 		}
 	}

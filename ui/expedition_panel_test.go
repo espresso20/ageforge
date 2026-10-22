@@ -417,6 +417,33 @@ func TestExpeditionPanelFitsItsSizes(t *testing.T) {
 	}
 }
 
+func TestExpeditionRoadStoriesFitCompactReports(t *testing.T) {
+	engine, _ := expFixture(t)
+	state := engine.GetState()
+	state.Military.ActiveShort = &game.ExpeditionSnapshot{Label: "Scout", Place: "Tin Road", TotalTicks: 100, TicksLeft: 50, SuccessChance: .65, HaulMinutes: 20,
+		RoadStories: []string{"The party found an amber hoard. The haul grows by 40%.", "A friendly village showed the party a shorter way. 6 minutes saved.", "Bandits shadowed the party for days. The odds fall to 57%."}}
+	for _, sz := range [][2]int{{80, 24}, {100, 30}} {
+		g := renderExpedition(state, expView{report: true}, sz[0], sz[1])
+		lines := g.Lines()
+		if len(lines) != sz[1] {
+			t.Fatalf("%dx%d produced %d rows", sz[0], sz[1], len(lines))
+		}
+		for y, line := range lines {
+			if runeLen(line) > sz[0] {
+				t.Errorf("%dx%d row %d is too wide: %d", sz[0], sz[1], y, runeLen(line))
+			}
+		}
+		if !strings.Contains(g.String(), "On the road") {
+			t.Errorf("%dx%d omitted the road event heading", sz[0], sz[1])
+		}
+		for _, storyWord := range []string{"amber", "friendly village", "Bandits"} {
+			if !strings.Contains(g.String(), storyWord) {
+				t.Errorf("%dx%d omitted newest road story %q:\n%s", sz[0], sz[1], storyWord, g.String())
+			}
+		}
+	}
+}
+
 func TestExpeditionPanelNeverNumbersAnOffer(t *testing.T) {
 	engine, p := expFixture(t)
 	p.open(engine.GetState())

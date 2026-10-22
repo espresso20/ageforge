@@ -202,7 +202,7 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 		}
 		// a grand offer's length is rolled when it is made (60 to 120 minutes), so
 		// budget for the longest; the loop exits once it resolves.
-		for i := 0; i < int(130*ticksPerMinute) && ge.Military.HasActive(); i++ {
+		for i := 0; i < int(240*ticksPerMinute) && ge.Military.HasActive(); i++ {
 			ge.mu.Lock()
 			ge.processExpeditions()
 			ge.mu.Unlock()

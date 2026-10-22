@@ -1677,6 +1677,12 @@ func (ge *GameEngine) processExpeditions() {
 	ge.Military.RefreshBoard(ge.gameRNG(), ge.tick)
 	for _, tier := range boardTiers {
 		if active := ge.Military.ActiveByTier(tier); active != nil {
+			active.ElapsedTicks++
+			ge.fireRoadEvents(active, active.ElapsedTicks)
+		}
+	}
+	for _, tier := range boardTiers {
+		if active := ge.Military.ActiveByTier(tier); active != nil {
 			ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Title, active.TicksLeft))
 		}
 	}
@@ -1684,6 +1690,9 @@ func (ge *GameEngine) processExpeditions() {
 		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Name, len(res.Rewards)))
 		ge.Military.recordReturn(res, ge.tick)
 		ge.addLog("event", res.Message)
+		if res.RoadEvents > 0 {
+			ge.addLog("info", fmt.Sprintf("The mission met %d road events.", res.RoadEvents))
+		}
 		// Cosmetic flavour, generated HERE rather than in MilitaryManager because
 		// this is where the seeded rng lives. It is additive: res.Message above
 		// already carried the mechanical outcome and the loot.
@@ -4635,6 +4644,8 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 		return err
 	}
 	active := ge.Military.ActiveByTier(offer.Tier)
+	words, _ := ge.rules.MissionWords(offer.Age)
+	active.RoadEvents = rollRoadEvents(ge.gameRNG(), offer, active.TotalTicks, words)
 	active.SuccessRewards = scaleLoot(base, 1+ge.expeditionReward())
 	active.FailureRewards = scaleLoot(base, failedLootShare)
 	if offer.Military() {

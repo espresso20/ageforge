@@ -14,7 +14,9 @@ func sendAndResolve(t *testing.T, ge *GameEngine) {
 		t.Fatalf("LaunchExpedition: %v", err)
 	}
 	ge.mu.Lock()
-	ge.Military.ActiveByTier(TierShort).TicksLeft = 1
+	active := ge.Military.ActiveByTier(TierShort)
+	active.RoadEvents = nil // This helper forces an immediate return for the log test.
+	active.TicksLeft = 1
 	ge.processExpeditions()
 	ge.mu.Unlock()
 }

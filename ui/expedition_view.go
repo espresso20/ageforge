@@ -816,15 +816,21 @@ func returnLine(r game.MissionReturn) string {
 	if r.Place == "" && r.Title != "" {
 		name = r.Title
 	}
+	var line string
 	switch {
 	case r.Success && r.Haul != "":
-		return name + " came back: +" + r.Haul + "."
+		line = name + " came back: +" + r.Haul + "."
 	case r.Success:
-		return name + " came back."
+		line = name + " came back."
 	case r.Haul != "":
-		return name + " failed. It kept " + r.Haul + "."
+		line = name + " failed. It kept " + r.Haul + "."
+	default:
+		line = name + " failed."
 	}
-	return name + " failed."
+	if r.RoadEvents > 0 {
+		line += fmt.Sprintf(" It met %d road events.", r.RoadEvents)
+	}
+	return line
 }
 
 func drawReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScene) {
@@ -854,6 +860,20 @@ func drawReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expS
 	} else {
 		area := h - 2 - foot
 		per := 4
+		var roadLines []string
+		if hi >= 0 && len(sc.acts[hi].act.RoadStories) > 0 {
+			stories := sc.acts[hi].act.RoadStories
+			start := max(0, len(stories)-3)
+			for j := len(stories) - 1; j >= start; j-- {
+				story := stories[j]
+				if len(roadLines) == 0 {
+					story = "On the road: " + story
+				}
+				roadLines = append(roadLines, wrapText(story, cw-3)...)
+			}
+			roadLines = roadLines[:min(len(roadLines), max(0, area-3))]
+			per = max(per, 3+len(roadLines))
+		}
 		visible := max(1, (area+1)/per)
 		first := clamp(hi-visible+1, 0, max(0, len(sc.acts)-visible))
 		row := y + 1
@@ -877,6 +897,15 @@ func drawReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expS
 			parts = append(parts, xseg{fmt.Sprintf("%.0f%% odds", a.SuccessChance*100), oddsKind(a.SuccessChance)},
 				xseg{fmt.Sprintf(" · haul %.0f min", a.HaulMinutes), xDim})
 			g.segsFit(x+3, row+2, cw-2, parts...)
+			if i == hi && len(roadLines) > 0 {
+				for j, line := range roadLines {
+					kind := xDim
+					if j == 0 {
+						kind = xAccent
+					}
+					g.putFit(x+3, row+3+j, cw-3, line, kind)
+				}
+			}
 			row += per
 		}
 	}
