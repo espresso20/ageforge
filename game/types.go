@@ -504,11 +504,11 @@ type TechState struct {
 
 // MilitaryState represents military system state for UI
 type MilitaryState struct {
-	// SoldierCount is the current soldiers resource amount.
+	// SoldierCount is the soldiers at home: the soldiers resource, which is
+	// held at the posted army (soldiers.go).
 	SoldierCount int
-	// SoldierCap is the soldiers resource storage cap (sum of built military
-	// buildings' storage effects). SoldierRate is the per-tick soldiers
-	// production rate (net). Both are populated from the soldiers resource.
+	// SoldierCap is the army's whole strength: the posts of every standing
+	// military building. SoldierRate is always 0: nothing trains soldiers.
 	SoldierCap  int
 	SoldierRate float64
 	// Posts is the soldiers' posts building by building, oldest first: the
