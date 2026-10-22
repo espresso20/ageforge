@@ -57,6 +57,7 @@ type Dashboard struct {
 	sidebar       *fitView
 	sidebarActive string // the open panel, highlighted in the list
 	workerMiniTV  *fitView
+	workerCol     *tview.Flex // the right column, which sizes the Workers box to its lines
 
 	// Shared UI
 	logTV            *tview.TextView
@@ -502,11 +503,13 @@ func (d *Dashboard) build() {
 	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ")
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Color(theme.RoleAccent)) })
 
-	// The Workers box is its four lines and its border: every other row of
-	// the column is the Panels list's.
+	// The Workers box is its lines (four, and one or two that say what holds
+	// the population back) and its border: every other row of the column is
+	// the Panels list's (refreshWorkerMini sizes the box).
 	rightCol := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(d.sidebar, 0, 1, false).
-		AddItem(d.workerMiniTV, 6, 0, false)
+		AddItem(d.workerMiniTV, workerMiniBaseRows+2, 0, false)
+	d.workerCol = rightCol
 
 	// Main horizontal: economy (permanent, full height) + right column (sidebar + worker mini)
 	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -927,13 +930,61 @@ func (d *Dashboard) announceBadges() {
 
 func (d *Dashboard) refreshWorkerMini(game.GameState) {
 	// Written from d.lastState for the box's width at its next draw
-	// (workerMiniText).
+	// (workerMiniText). The box is as tall as its lines.
+	if d.workerCol != nil && d.lastState != nil {
+		rows := strings.Count(workerMiniText(*d.lastState, sidebarW-2), "\n")
+		d.workerCol.ResizeItem(d.workerMiniTV, rows+2, 0)
+	}
 	d.workerMiniTV.changed()
 }
 
+// workerMiniBaseRows is the Workers box's lines when nothing holds the
+// population back: the headcount, housing left, food use and food net.
+const workerMiniBaseRows = 4
+
+// heldByLines says what holds the population back, for a box w cells wide (0:
+// any width), as "Held by: food" and, for food, a second line with the net
+// food and the villagers it feeds. Nothing when the population can grow.
+func heldByLines(ws game.WorkerState, w int) []string {
+	fits := func(plain string) bool { return w <= 0 || runeLen(plain) <= w }
+	switch ws.HeldBy {
+	case game.HeldHousing:
+		return []string{"Held by: housing"}
+	case game.HeldFood:
+		x := textfmt.RateValue(ws.FoodNet) // "+0.45"
+		feeds := fmt.Sprintf("feeds %d more", ws.FoodFeeds)
+		for _, line := range []string{
+			x + " food a tick " + feeds,
+			x + "/tick " + feeds,
+			x + " " + feeds,
+			feeds,
+		} {
+			if fits(line) {
+				return []string{"Held by: food", line}
+			}
+		}
+		return []string{"Held by: food"}
+	}
+	return nil
+}
+
+// heldByText is heldByLines for one line (the roster command and panel): the
+// food form joins its two parts, "Held by: food (+0.45 food a tick feeds 3
+// more)".
+func heldByText(ws game.WorkerState) string {
+	lines := heldByLines(ws, 0)
+	switch len(lines) {
+	case 0:
+		return ""
+	case 1:
+		return lines[0]
+	}
+	return lines[0] + " (" + lines[1] + ")"
+}
+
 // workerMiniText writes the Workers box for a box w cells wide (0: any
-// width): population over housing and the idle, housing left, what the
-// workers eat and what food nets. A count too long for its line is written
+// width): population over housing and the reserve, housing left, what the
+// workers eat, what food nets and what holds the population back. A count too long for its line is written
 // short (51.8M for 51785785), and a rate too long drops to "/t".
 func workerMiniText(state game.GameState, w int) string {
 	ws := state.Workers
@@ -943,10 +994,10 @@ func workerMiniText(state game.GameState, w int) string {
 	var sb strings.Builder
 
 	pop, housing, idle := num(ws.TotalPop), num(ws.MaxPop), num(ws.TotalIdle)
-	if !fits(pop + "/" + housing + "  Idle: " + idle) {
+	if !fits(pop + "/" + housing + "  Reserve: " + idle) {
 		pop, housing, idle = short(ws.TotalPop), short(ws.MaxPop), short(ws.TotalIdle)
 	}
-	fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]  [gray]Idle:[white] %s[-]\n", pop, housing, idle)
+	fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]  [gray]Reserve:[white] %s[-]\n", pop, housing, idle)
 
 	left := num(ws.MaxPop - ws.TotalPop)
 	if !fits("Housing left: " + left) {
@@ -969,6 +1020,12 @@ func workerMiniText(state game.GameState, w int) string {
 			netColor = "red"
 		}
 		fmt.Fprintf(&sb, "[gray]Food net:[%s] %s[-]\n", netColor, rate("Food net:", food.Rate))
+	}
+	if lines := heldByLines(ws, w); len(lines) > 0 {
+		fmt.Fprintf(&sb, "[gray]%s[-]\n", lines[0])
+		if len(lines) > 1 {
+			fmt.Fprintf(&sb, "[gray]%s[-]\n", lines[1])
+		}
 	}
 	return sb.String()
 }

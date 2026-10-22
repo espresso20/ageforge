@@ -61,8 +61,11 @@ func workersProvider(state game.GameState, _ int) string {
 
 	// ── Summary ──────────────────────────────────
 	sb.WriteString(workerSection("Summary"))
-	fmt.Fprintf(&sb, "  [white]Population:[white] [yellow]%d[white] / [green]%d[-]   [white]Idle:[white] [cyan]%d[-]   [white]Housing left:[white] [green]%d[-]\n",
+	fmt.Fprintf(&sb, "  [white]Population:[white] [yellow]%d[white] / [green]%d[-]   [white]Reserve:[white] [cyan]%d[-]   [white]Housing left:[white] [green]%d[-]\n",
 		total, maxPop, idle, housingLeft)
+	if held := heldByText(state.Workers); held != "" {
+		fmt.Fprintf(&sb, "  [white]%s[-]\n", held)
+	}
 
 	// Food sustainability. Every worker eats the same amount, whatever it
 	// does: the age's food-class cost (game.WorkerManager.FoodDrain), so the
@@ -197,7 +200,7 @@ func workersProvider(state game.GameState, _ int) string {
 	}
 
 	if len(groupOrder) == 0 {
-		fmt.Fprintf(&sb, "  [cyan]Idle: %d[white]. Assign with: [cyan]assign <building> [count|all][-]\n", idle)
+		fmt.Fprintf(&sb, "  [cyan]Reserve: %d[white]. Assign with: [cyan]assign <building> [count|all][-]\n", idle)
 	} else {
 		for _, domain := range groupOrder {
 			grp := groupMap[domain]
@@ -221,7 +224,7 @@ func workersProvider(state game.GameState, _ int) string {
 			fmt.Fprintln(&sb)
 		}
 		if idle > 0 {
-			fmt.Fprintf(&sb, "  [yellow]Idle: %d[white]. Assign with: [cyan]assign <building> [count|all][-]\n", idle)
+			fmt.Fprintf(&sb, "  [yellow]Reserve: %d[white]. Assign with: [cyan]assign <building> [count|all][-]\n", idle)
 		}
 	}
 
@@ -257,13 +260,11 @@ func recruitLine(state game.GameState) string {
 	case game.RecruitHeld:
 		return "[yellow]waiting[-] [gray]after your last worker command, " + formatTicks(state.Workers.HoldTicks, state) + " more[-]"
 	case game.RecruitHousing:
-		return "[green]on[-] [gray](no housing left: build housing for more workers)[-]"
-	case game.RecruitSlots:
-		return "[green]on[-] [gray](every worker slot is filled)[-]"
+		return "[green]on[-] [gray](held by housing: build more homes for more villagers)[-]"
 	case game.RecruitFood:
-		return "[green]on[-] [yellow](waiting for food: build or staff food buildings)[-]"
+		return "[green]on[-] [yellow](held by food: build or staff food buildings)[-]"
 	case game.RecruitStarve:
 		return "[green]on[-] [red](paused: food has run out)[-]"
 	}
-	return "[green]on[-] [gray](recruiting as slots open)[-]"
+	return "[green]on[-] [gray](the population is growing toward your housing)[-]"
 }

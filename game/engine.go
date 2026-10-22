@@ -5186,6 +5186,7 @@ func (ge *GameEngine) GetState() GameState {
 	workers.Shares = cloneShares(ge.workerShares)
 	workers.AutoRecruit = !ge.autoRecruitOff
 	workers.HoldTicks = max(0, ge.staffHoldUntil-ge.tick)
+	workers.HeldBy, workers.FoodNet, workers.FoodFeeds = ge.popHoldLocked()
 
 	return GameState{
 		Rules:                ge.rules,
