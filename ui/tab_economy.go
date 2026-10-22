@@ -400,14 +400,20 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 		entries = append(entries, strings.Split(strings.TrimRight(text, "\n"), "\n"))
 	}
 
-	// Only the current age's buildings.
-	keys := make([]string, 0)
+	// Only the current age's buildings: the unlocked ones, then the ones a
+	// tech still locks (greyed out, lockedBuildingEntry).
+	keys, locked := make([]string, 0), make([]string, 0)
 	for key, bs := range state.Buildings {
-		if bs.Unlocked && bs.AgeKey == state.Age {
+		switch {
+		case bs.Unlocked && bs.AgeKey == state.Age:
 			keys = append(keys, key)
+		case !bs.Unlocked && bs.LockTech != "" && bs.AgeKey == state.Age:
+			locked = append(locked, key)
 		}
 	}
 	sort.Strings(keys)
+	sort.Strings(locked)
+	keys = append(keys, locked...)
 
 	if len(keys) > 0 {
 		ageName := state.Age
@@ -417,8 +423,12 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 		head = fmt.Sprintf(" [gold]── %s ──[-]", truncate(ageName, w-7))
 		wall := &storeWall{state: state}
 		for _, key := range keys {
-			var sb strings.Builder
 			bs := state.Buildings[key]
+			if !bs.Unlocked {
+				entry(lockedBuildingEntry(state, key, bs, w))
+				continue
+			}
+			var sb strings.Builder
 			icon, iconW := "[red]✗[-]", 1
 			switch {
 			case bs.AtMaxCount:
