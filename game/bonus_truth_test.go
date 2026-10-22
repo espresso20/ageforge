@@ -143,7 +143,7 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 		}
 		ge.Research.rebuildBonuses()
 	}
-	// A head start holds no more than the dearest tech that could be started.
+	// A gift of work lands at most half the tech in progress (Research.Grant).
 	// The typical town has every tech of its ages, so give the lab one tech
 	// that is always startable and dearer than any gift: a gift of work is
 	// then measured whole.
@@ -156,6 +156,15 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 		r.Amount = r.Storage / 2
 	}
 	return ge
+}
+
+// truthStartLab puts the lab's tech in progress (newTruthEngine defines it),
+// so a gift of research has a tech to land on.
+func truthStartLab(ge *GameEngine) {
+	if err := ge.StartResearch("lab_tech"); err != nil {
+		panic(err)
+	}
+	ge.recalculateRates()
 }
 
 // truthRoom gives a lab town room for amount more of res: copies of the
@@ -291,7 +300,7 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 	// The scholars' work, with every scholar researching, and the building
 	// figures it is made of (scholars.go). Both read under "rate:", so a
 	// bonus that moves every rate (all production) may move them.
-	out["stock:research"] = ge.Research.progress + ge.Research.head
+	out["stock:research"] = ge.Research.progress
 	out["aux:layer-research"] = ge.Research.OutputFactor(config.ResearchTarget)
 	out["aux:pool-research"] = poolFactor("knowledge_rate", ge.buildResolver().AddTotal("knowledge_rate"), ge.rules.SoftCap())
 	out["rate:research"] = ge.researchFull
@@ -1139,8 +1148,8 @@ var truthKinds = map[string]truthKind{
 			return truthMeasured{Delivered: d / before["rate:research"], Noise: noise / before["rate:research"], Allowed: meterIs("rate:research", "stock:research")}
 		},
 	},
-	// Work given at once lands on the tech in progress, or as a head start:
-	// the reading is the work on the tech in progress and the head start.
+	// Work given at once lands on the tech in progress (at most half its
+	// price): the reading is the work on the tech in progress.
 	"research_gain": {
 		Unit: "of work on a tech",
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
@@ -1149,7 +1158,7 @@ var truthKinds = map[string]truthKind{
 		},
 	},
 	// An event's gift of minutes of the scholars' work, read as the work on
-	// the tech in progress and the head start, over a minute of it.
+	// the tech in progress, over a minute of it.
 	"research_event_gain": {
 		Unit: "minutes of income",
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
@@ -1757,6 +1766,16 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 		return out
 	}
 	snap := takeTruthSnapshot(ge)
+	// A gift of research lands on the tech in progress and is lost with none,
+	// so the lab's tech is in progress for the gift to land on. It is cancelled
+	// after the reading.
+	if (p.Kind == "research_gain" || p.Kind == "research_event_gain") && ge.Research.currentTech == "" {
+		truthStartLab(ge)
+		defer func() {
+			ge.Research.CancelResearch()
+			ge.recalculateRates()
+		}()
+	}
 	sw := p.wire(ge)
 	pool := truthKneePool(p)
 	sw.off()

@@ -1603,9 +1603,6 @@ func (ge *GameEngine) finishResearch(completed string) {
 		Payload: map[string]interface{}{"tech": completed},
 	})
 	ge.note(config.BadgeEvResearchDone, completed)
-	// The work past the price became a head start, and the techs that can be
-	// started have changed: what is held fits the new limit.
-	ge.clampHead()
 }
 
 // processEvents handles random events
@@ -2800,15 +2797,20 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		}
 		ge.injectEpochRates("epoch_cultural_festival", ev, "success", "")
 	case "grand_discovery":
-		// Complete 3 free techs from current age
-		completed := ge.Research.ForceCompleteN(3, ge.age, ageOrder)
-		for _, key := range completed {
-			ge.addLog("success", fmt.Sprintf("  → Free tech: %s.", ge.rules.Name(rules.KindTech, key)))
+		// Complete up to 3 of the techs the player could start now, cheapest
+		// first. Each goes through finishResearch, as a researched tech does.
+		startable := ge.Research.StartableTechs(ge.age, ageOrder)
+		if len(startable) > 3 {
+			startable = startable[:3]
 		}
-		if len(completed) == 0 {
+		for _, key := range startable {
+			ge.Research.Learn(key)
+			ge.addLog("success", fmt.Sprintf("  → Free tech: %s.", ge.rules.Name(rules.KindTech, key)))
+			ge.finishResearch(key)
+		}
+		if len(startable) == 0 {
 			ge.addLog("success", "  → No techs were left to research this age.")
 		}
-		ge.clampHead()
 	case "worker_innovation":
 		// Permanent +10% production_all
 		ge.permanentBonuses["production_all"] += 0.10
@@ -2892,10 +2894,6 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 	case "the_dark_age":
 		if tech, ok := ge.Research.CancelResearch(); ok {
 			ge.addLog("warning", fmt.Sprintf("  → Research on %s canceled (no refund).", ge.rules.Name(rules.KindTech, tech)))
-		}
-		if lost := ge.Research.head; lost > 0 {
-			ge.Research.head = 0
-			ge.addLog("warning", "  → The head start you had kept for your next tech is lost.")
 		}
 		ge.injectEpochRates("epoch_dark_age", ev, "warning", "")
 	}
@@ -4237,18 +4235,11 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 		return err
 	}
 	def, _ := ge.rules.Tech(techKey)
-	// A head start that covers the price completes the tech at once, by the
-	// same route work and grants take.
-	if completed := ge.Research.CompleteIfFull(); completed != "" {
-		ge.recalculateRates()
-		ge.finishResearch(completed)
-		return nil
-	}
 	// The posts change with a tech in hand (scholars who taught research).
 	ge.recalculateRates()
 	if DevGodMode {
 		// complete immediately
-		ge.finishResearch(ge.Research.complete(0))
+		ge.finishResearch(ge.Research.complete())
 	}
 	ge.addLog("debug", fmt.Sprintf("Research start: %s (work: %.0f, %d ticks)", def.Name, def.Cost, ge.researchTicksFor(def.Cost)))
 	if !quiet {
@@ -4404,13 +4395,6 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 		return err
 	}
 	def, _ := ge.rules.Tech(techKey)
-	if completed := ge.Research.CompleteIfFull(); completed != "" {
-		ge.recalculateRates()
-		ge.finishResearch(completed)
-		ge.addLog("success", fmt.Sprintf("Recovered the memory of %s. Your head start covered it.", def.Name))
-		ge.note(config.BadgeEvMemoryAccepted, techKey)
-		return nil
-	}
 	ge.recalculateRates()
 	if ticks := ge.researchTicksLeft(); ticks > 0 {
 		ge.addLog("success", fmt.Sprintf("Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ticks)))
