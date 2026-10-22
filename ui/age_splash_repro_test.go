@@ -212,6 +212,10 @@ func (h *reproHarness) describeUI() string {
 			fmt.Fprintf(&sb, "  page %-12q item.HasFocus()=%v\n", n, h.a.pages.GetPage(n).HasFocus())
 		}
 		fmt.Fprintf(&sb, "overlayMgr.active=%q\n", h.a.dashboard.overlayMgr.active)
+		fmt.Fprintf(&sb, "input text=%q\n", h.a.dashboard.inputField.GetText())
+		for _, n := range []string{prestigeCuePage, catastrophePage, ancientMemoryPage, arrivalPageName} {
+			fmt.Fprintf(&sb, "  notice page %-14q up=%v\n", n, h.a.pages.HasPage(n))
+		}
 	})
 	return sb.String()
 }
@@ -238,7 +242,12 @@ func (h *reproHarness) dev(cmd string) string {
 func (h *reproHarness) submit(cmd string) {
 	h.t.Helper()
 	// The time-to-prestige notice can come up on any refresh and take the
-	// focus; it is not what this walk tests, so close it while waiting.
+	// focus; it is not what this walk tests. Mark this age's notice seen (the
+	// way showing it does), then run one UI turn so a refresh already under
+	// way, which may still show it, has finished: after that none can come
+	// up over the typing. One that did come up first is closed while waiting.
+	h.eng.MarkPrestigeCueSeen()
+	h.onUI(func() {})
 	h.waitFor("input focus before typing "+cmd, 3*time.Second, func() bool {
 		if h.hasPage(prestigeCuePage) {
 			h.key(tcell.KeyRune, 'x')
@@ -720,4 +729,23 @@ func TestReproHarnessPutsDevModeBack(t *testing.T) {
 	if game.DevModeActive {
 		t.Error("dev mode is still on after the harness's test ended")
 	}
+}
+
+// TestReproPrestigeCueWaitsForTypedCommand: the time-to-prestige notice can
+// come up on any refresh, and any key closes it. Typed over a half-written
+// command it swallowed a keystroke and left a command nobody typed (CI saw
+// "advance" land short). The notice now waits until the prompt is empty.
+func TestReproPrestigeCueWaitsForTypedCommand(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow end-to-end UI regression test; skipped with -short")
+	}
+	h := newReproHarness(t)
+	h.typeText("adv")
+	h.waitFor("typed text to land", 3*time.Second, func() bool { return h.inputText() == "adv" })
+	h.onUI(func() { h.a.dashboard.maybeShowPrestigeCue(prestigeCueTestState()) })
+	if h.hasPage(prestigeCuePage) {
+		t.Fatalf("the prestige notice came up over a half-typed command\n%s", h.describeUI())
+	}
+	h.typeText("ance")
+	h.waitFor("the whole command to land", 3*time.Second, func() bool { return h.inputText() == "advance" })
 }
