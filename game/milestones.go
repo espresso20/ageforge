@@ -138,17 +138,15 @@ func (mm *MilestoneManager) checkMilestone(
 	}
 
 	// Check buildings
+	// A building named by key counts the building and every later rung of its
+	// line: upgrading copies away never takes the progress back.
 	for bld, required := range def.MinBuildings {
-		if buildings.GetCount(bld) < required {
+		if buildings.CountFrom(bld) < required {
 			return false
 		}
 	}
 	if sum := def.MinBuildingSum; sum.Count > 0 {
-		have := 0
-		for _, bld := range sum.Keys {
-			have += buildings.GetCount(bld)
-		}
-		if have < sum.Count {
+		if buildings.CountFromAny(sum.Keys) < sum.Count {
 			return false
 		}
 	}
@@ -303,7 +301,7 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 	sort.Strings(bldKeys)
 	for _, bld := range bldKeys {
 		required := def.MinBuildings[bld]
-		current := float64(params.Buildings[bld])
+		current := float64(params.heldFrom(bld))
 		progress = append(progress, MilestoneProgress{
 			Label:   mm.rules.Name(rules.KindBuilding, bld),
 			Current: current,
@@ -313,10 +311,9 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 	}
 	// A building sum is one row: "Trading Posts and Merchant Quarters".
 	if sum := def.MinBuildingSum; sum.Count > 0 {
-		have := 0
+		have := params.heldFromAny(sum.Keys)
 		names := make([]string, 0, len(sum.Keys))
 		for _, bld := range sum.Keys {
-			have += params.Buildings[bld]
 			names = append(names, pluralName(2, mm.rules.Name(rules.KindBuilding, bld)))
 		}
 		progress = append(progress, MilestoneProgress{

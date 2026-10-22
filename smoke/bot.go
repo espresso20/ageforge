@@ -1010,7 +1010,7 @@ func (b *Bot) buyOrBootstrap(p *plan, key, kind string, depth int) bool {
 	return false
 }
 
-// upgrade converts legacy buildings to their next tier, one copy at a time.
+// upgrade converts older buildings to their line's building, one copy at a time.
 // It upgrades toward a required building whenever it can afford to, and
 // otherwise only while investing and only when a copy is cheap. It never
 // upgrades into a building with a MaxCount: an upgrade would spend one of the
@@ -1024,10 +1024,7 @@ func (b *Bot) upgrade(p *plan) bool {
 		if to.MaxCount > 0 || u.Count <= 0 {
 			continue
 		}
-		per := make(map[string]float64, len(u.Cost))
-		for r, c := range u.Cost {
-			per[r] = c / float64(u.Count)
-		}
+		per := u.Cost // the next copy's price
 		n := 0
 		switch {
 		case p.needBld[u.ToKey] > 0:

@@ -132,24 +132,23 @@ func TestUpgradesKeepTheResource(t *testing.T) {
 	}
 }
 
-// TestLastRungOfALineHasNoUpgrade: the old copy whose line has no later rung
-// is the last of its line: no age offers it an upgrade.
+// TestLastRungOfALineHasNoUpgrade: the building whose line has no later rung
+// is the last of its line: nothing is above it, in any age.
 func TestLastRungOfALineHasNoUpgrade(t *testing.T) {
+	defs := BaseBuildings()
 	for _, key := range []string{"sawmill", "steam_coal_plant", "smart_refinery", "molecular_synthesizer", "black_market", "coal_plant", "ironmonger"} {
 		var d BuildingDef
-		for _, b := range BaseBuildings() {
+		for _, b := range defs {
 			if b.Key == key {
 				d = b
 			}
 		}
-		for _, a := range Ages() {
-			if next := BuildingNextTierForAge(d.Line(), d.LineageTier, a.Key); next != nil {
-				t.Errorf("%s is the last of line %s but %s offers it %s", key, d.Line(), a.Key, next.Key)
-			}
+		if next, ok := NextRung(defs, d.Line(), d.LineageTier); ok {
+			t.Errorf("%s is the last of line %s but %s is above it", key, d.Line(), next.Key)
 		}
 	}
 	// A line that pauses still has its next rung: titanium after Modern.
-	if next := BuildingNextTierForAge("metallurgy_titanium", 11, "space_age"); next == nil || next.Key != "orbital_refinery" {
-		t.Errorf("nano_alloy_plant should upgrade to orbital_refinery in the Space Age, got %v", next)
+	if next, ok := NextRung(defs, "metallurgy_titanium", 11); !ok || next.Key != "orbital_refinery" || next.RequiredAge != "space_age" {
+		t.Errorf("nano_alloy_plant should be below orbital_refinery in the Space Age, got %v", next)
 	}
 }

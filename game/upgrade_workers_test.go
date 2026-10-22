@@ -12,10 +12,11 @@ func TestUpgradeBuilding_PartialUpgradeRehomesWorkers(t *testing.T) {
 	ge.Buildings.counts["gathering_camp"] = 10
 	ge.advanceAge("stone_age")
 	ge.pendingCatastrophe = ""
-	newKey, ok := ge.Buildings.GetPendingUpgrade("gathering_camp")
+	target, ok := ge.Buildings.UpgradeTarget("gathering_camp")
 	if !ok {
-		t.Fatal("setup: no pending upgrade for gathering_camp")
+		t.Fatal("setup: gathering_camp has no upgrade in the Stone Age")
 	}
+	newKey := target.Key
 	oldCap := ge.Buildings.defs["gathering_camp"].WorkerCapacity
 	newCap := ge.Buildings.defs[newKey].WorkerCapacity
 	ge.Workers.UnlockType("worker")

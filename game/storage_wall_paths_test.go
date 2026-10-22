@@ -30,10 +30,10 @@ func wallUpgradeEngine(t *testing.T) *GameEngine {
 	ge.mu.Lock()
 	ge.advanceAge("stone_age")
 	ge.mu.Unlock()
-	if to, ok := ge.Buildings.GetPendingUpgrade("wood_camp"); !ok || to != "woodcutter_camp" {
-		t.Fatalf("setup: wood_camp upgrades to %q (%v)", to, ok)
+	if to, ok := ge.Buildings.UpgradeTarget("wood_camp"); !ok || to.Key != "woodcutter_camp" {
+		t.Fatalf("setup: wood_camp upgrades to %q (%v)", to.Key, ok)
 	}
-	one, _ := ge.Buildings.UpgradeCost("wood_camp", "woodcutter_camp", 1)
+	one := ge.Buildings.UpgradeCopyCost("wood_camp", 0, nil)
 	if res := ge.overStore(one); res == "" {
 		t.Fatalf("setup: one upgrade costs %v and fits every store", one)
 	}

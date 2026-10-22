@@ -187,7 +187,7 @@ type AgeAdvanceSummary struct {
 	OldAge               string
 	NewAge               string
 	BuildingsTransformed []BuildingTransform
-	BuildingsLegacy      []string // keys of buildings newly marked legacy this transition
+	BuildingsLegacy      []string // unused: nothing is marked legacy any more
 }
 
 // clone returns a copy that shares no slices with s.
@@ -197,7 +197,8 @@ func (s AgeAdvanceSummary) clone() AgeAdvanceSummary {
 	return s
 }
 
-// BuildingTransform describes one building that upgraded during an age advance.
+// BuildingTransform describes one building the age advance made older: the
+// copies held, and the building its line has for the new age.
 type BuildingTransform struct {
 	OldKey  string
 	OldName string
@@ -300,10 +301,15 @@ type BuildingState struct {
 	WorkerDomain    string
 	WorkerCapacity  int // per-building-instance capacity
 	WorkersAssigned int // total workers assigned across all instances
-	// Phase 7: lineage legacy flag
-	IsLegacy bool // functional but superseded — can't build more; grayed in UI
-	// Player-driven upgrade: key of next-tier building this can be upgraded to; "" if none
+	// IsLegacy is set for an older building (older.go): functional but its
+	// line has a newer rung for this age, so no more are built. Read live.
+	IsLegacy bool
+	// PendingUpgrade is the building an older building held in copies can be
+	// upgraded to; "" if none.
 	PendingUpgrade string
+	// HeldWithLater is the copies held of this building and of every later
+	// rung of its line: what a requirement that names this building counts.
+	HeldWithLater int
 	// Scholars is the scholars one copy of this building comes with (0 for
 	// every building but a knowledge building) and ScholarCap the most copies
 	// that can be built (0 where there is no cap).
@@ -668,6 +674,31 @@ type MilestoneSnapshotParams struct {
 	// player cannot see named yet (spoilers.go). nil shows them all.
 	Sight        *AgeSight
 	activeEvents []ActiveEventState // unexported — only set by engine
+	// held, when set (the engine sets it), counts a building named by key as
+	// the building and every later rung of its line (BuildingManager.CountFrom);
+	// without it the counts in Buildings are read as they are.
+	held *BuildingManager
+}
+
+// heldFrom is the copies counted toward a requirement that names bld.
+func (p MilestoneSnapshotParams) heldFrom(bld string) int {
+	if p.held != nil {
+		return p.held.CountFrom(bld)
+	}
+	return p.Buildings[bld]
+}
+
+// heldFromAny is the copies counted toward a requirement that names keys
+// together, each building once.
+func (p MilestoneSnapshotParams) heldFromAny(keys []string) int {
+	if p.held != nil {
+		return p.held.CountFromAny(keys)
+	}
+	n := 0
+	for _, k := range keys {
+		n += p.Buildings[k]
+	}
+	return n
 }
 
 // === Prestige Types ===

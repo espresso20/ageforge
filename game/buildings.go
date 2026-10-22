@@ -14,26 +14,26 @@ import (
 )
 
 // BuildingManager manages all buildings, including production buildings, wonders,
-// storage structures, wonder construction banks, legacy flags, and ruins.
+// storage structures, wonder construction banks, and ruins.
 //
 // Key invariants:
 //   - counts[key] is the number of fully-constructed instances of building key.
 //   - ruins[key] are separate from counts; they produce at 50% base rate with no
 //     worker scaling and cannot be rebuilt or demolished.
-//   - legacyBuildings marks old-tier buildings that are still functional but
-//     must not be queued for construction (CanBuild = false in snapshot).
 //   - wonderBanks hold incremental resource deposits; a wonder is only completed
 //     when the bank meets the full BaseCost (via BankResource + IsWonderBankFull).
 type BuildingManager struct {
-	rules           *rules.Set
-	counts          map[string]int
-	defs            map[string]config.BuildingDef
-	unlocked        map[string]bool
-	wonderBanks     map[string]map[string]float64 // wonderKey -> resource -> banked amount
-	legacyBuildings map[string]bool               // buildings superseded by lineage progression; functional but unbuildable
-	ruins           map[string]int                // ruins from Succumb — produce at 50% base rate, no worker scaling
-	pendingUpgrades map[string]string             // oldKey -> newKey: player-driven upgrade awaiting payment
+	rules       *rules.Set
+	counts      map[string]int
+	defs        map[string]config.BuildingDef
+	unlocked    map[string]bool
+	wonderBanks map[string]map[string]float64 // wonderKey -> resource -> banked amount
+	ruins       map[string]int                // ruins from Succumb — produce at 50% base rate, no worker scaling
 
+	// age reports the town's current age, which decides which buildings are
+	// older (older.go). nil (a bare manager with no engine) has no older
+	// buildings.
+	age func() string
 	// researched reports whether a tech is finished. A building with a
 	// RequiredTech stays locked until it is, even in its own age. nil (a bare
 	// manager with no engine) gates nothing.
@@ -80,15 +80,13 @@ func NewBuildingManager() *BuildingManager { return NewBuildingManagerWith(rules
 func NewBuildingManagerWith(set *rules.Set) *BuildingManager {
 	defs := set.BuildingMap()
 	bm := &BuildingManager{
-		rules:           set,
-		counts:          make(map[string]int),
-		defs:            defs,
-		unlocked:        make(map[string]bool),
-		wonderBanks:     make(map[string]map[string]float64),
-		legacyBuildings: make(map[string]bool),
-		ruins:           make(map[string]int),
-		pendingUpgrades: make(map[string]string),
-		costMult:        1.0,
+		rules:       set,
+		counts:      make(map[string]int),
+		defs:        defs,
+		unlocked:    make(map[string]bool),
+		wonderBanks: make(map[string]map[string]float64),
+		ruins:       make(map[string]int),
+		costMult:    1.0,
 	}
 	bm.rebuildOrder()
 	return bm
@@ -683,71 +681,6 @@ func (bm *BuildingManager) LoadWonderBanks(banks map[string]map[string]float64) 
 	}
 }
 
-// MarkLegacy flags a building type as legacy — functional but superseded, unbuildable.
-func (bm *BuildingManager) MarkLegacy(key string) {
-	bm.legacyBuildings[key] = true
-}
-
-// IsLegacy returns whether a building is flagged as legacy.
-func (bm *BuildingManager) IsLegacy(key string) bool {
-	return bm.legacyBuildings[key]
-}
-
-// GetLegacyBuildings returns all legacy building keys, sorted, for save
-// serialization (in map order, two saves of one game differed byte for byte).
-func (bm *BuildingManager) GetLegacyBuildings() []string {
-	return sortedKeys(bm.legacyBuildings)
-}
-
-// LoadLegacyBuildings restores legacy building flags from a save.
-func (bm *BuildingManager) LoadLegacyBuildings(keys []string) {
-	for _, key := range keys {
-		bm.legacyBuildings[key] = true
-	}
-}
-
-// === Player-driven upgrade system ===
-
-// SetPendingUpgrade marks oldKey as having a player-driven upgrade available to newKey.
-// The buildings are not transformed immediately; the player must issue `upgrade <oldKey>`.
-func (bm *BuildingManager) SetPendingUpgrade(oldKey, newKey string) {
-	bm.pendingUpgrades[oldKey] = newKey
-}
-
-// GetPendingUpgrade returns the upgrade target for oldKey, or ("", false) if none.
-func (bm *BuildingManager) GetPendingUpgrade(oldKey string) (string, bool) {
-	v, ok := bm.pendingUpgrades[oldKey]
-	return v, ok
-}
-
-// ClearPendingUpgrade removes the pending upgrade marker for oldKey.
-func (bm *BuildingManager) ClearPendingUpgrade(oldKey string) {
-	delete(bm.pendingUpgrades, oldKey)
-}
-
-// GetAllPendingUpgrades returns a copy of the pending upgrades map (oldKey -> newKey).
-func (bm *BuildingManager) GetAllPendingUpgrades() map[string]string {
-	out := make(map[string]string, len(bm.pendingUpgrades))
-	for k, v := range bm.pendingUpgrades {
-		out[k] = v
-	}
-	return out
-}
-
-// LoadPendingUpgrades replaces the pending upgrade markers with a save's set,
-// so a load into a running engine doesn't keep the old game's offers.
-func (bm *BuildingManager) LoadPendingUpgrades(upgrades map[string]string) {
-	clear(bm.pendingUpgrades)
-	for k, v := range upgrades {
-		// An offer an older game made to a building that now keeps its tier
-		// (a knowledge building) is dropped; the copies stay as they are.
-		if def, ok := bm.defs[k]; ok && def.Scholars > 0 {
-			continue
-		}
-		bm.pendingUpgrades[k] = v
-	}
-}
-
 // UpgradeRoom is how many more copies of key an upgrade may create: the room
 // left under its MaxCount (queued copies included), or n when it has none.
 func (bm *BuildingManager) UpgradeRoom(key string, n int, queue []BuildQueueItem) int {
@@ -768,83 +701,50 @@ func (bm *BuildingManager) UpgradeRoom(key string, n int, queue []BuildQueueItem
 // SetUpgradeCostTerm sets the techs' term on what an upgrade costs.
 func (bm *BuildingManager) SetUpgradeCostTerm(f float64) { bm.upgradeCost = f }
 
-// upgradePrice is delta, what one copy's upgrade asks for in one resource,
-// with the techs' cut: a whole number, and delta itself with no cut.
-func (bm *BuildingManager) upgradePrice(delta float64) float64 {
-	if bm.upgradeCost <= 0 || bm.upgradeCost >= 1 {
-		return delta
+// upgradePrice is what one copy's upgrade asks for in one resource when a new
+// copy of its target would ask for newPrice: config.UpgradeShare of it, with the
+// techs' cut, a whole number. A price above nothing is never rounded to nothing.
+func (bm *BuildingManager) upgradePrice(newPrice float64) float64 {
+	p := float64(newPrice * config.UpgradeShare)
+	if t := bm.upgradeCost; t > 0 && t < 1 {
+		p = float64(p * t)
 	}
-	return math.Floor(float64(delta * bm.upgradeCost))
+	if p = math.Floor(p); p < 1 && newPrice > 0 {
+		p = 1
+	}
+	return p
 }
 
-// UpgradeCost computes the total cost delta to upgrade upgradeCount copies of oldKey to newKey.
-// Cost per copy = max(0, new_copy_cost[res] - old_copy_sell_value[res]) per resource.
-// Old sell value = floor(old_copy_cost * 0.5). New copy cost is at the current new count + i.
-func (bm *BuildingManager) UpgradeCost(oldKey, newKey string, upgradeCount int) (map[string]float64, bool) {
-	oldDef, ok1 := bm.defs[oldKey]
-	newDef, ok2 := bm.defs[newKey]
-	if !ok1 || !ok2 || upgradeCount <= 0 {
-		return nil, false
+// CopyCost is what a new copy of key costs when ahead more copies of it are
+// bought first, the built and queued ones counted: the price BuildBatchCost
+// charges for copy ahead of a batch, to the bit. Nil for an unknown key.
+func (bm *BuildingManager) CopyCost(key string, ahead int, queue []BuildQueueItem) map[string]float64 {
+	def, ok := bm.defs[key]
+	if !ok {
+		return nil
 	}
-	oldCount := bm.counts[oldKey]
-	newCount := bm.counts[newKey]
-	total := make(map[string]float64)
-	for i := 0; i < upgradeCount; i++ {
-		// Old copy being traded in: remove most expensive first (oldCount-1-i)
-		oldExp := float64(oldCount - 1 - i)
-		if oldExp < 0 {
-			oldExp = 0
-		}
-		// New copy being created: the (newCount+i)th copy
-		newExp := float64(newCount + i)
-		for res, base := range newDef.BaseCost {
-			// New copy gets the build_cost discount (you're paying to build it).
-			newCopyCost := applyCostMult(base*detmath.Pow(newDef.CostScale, newExp), bm.costMult)
-			// Old sell value for this resource (0 if old building doesn't cost this
-			// resource). Refund is NOT discounted — it reflects what was paid, not
-			// the current build_cost reductions.
-			oldBase := oldDef.BaseCost[res]
-			oldCopyCost := math.Floor(oldBase * detmath.Pow(oldDef.CostScale, oldExp))
-			oldSellValue := math.Floor(oldCopyCost * 0.5)
-			delta := newCopyCost - oldSellValue
-			if delta < 0 {
-				delta = 0
-			}
-			total[res] += bm.upgradePrice(delta)
-		}
+	exp := float64(bm.counts[key] + bm.GetQueueCount(key, queue) + ahead)
+	cost := make(map[string]float64, len(def.BaseCost))
+	for res, base := range def.BaseCost {
+		cost[res] = applyCostMult(base*detmath.Pow(def.CostScale, exp), bm.costMult)
 	}
-	return total, true
+	return cost
 }
 
-// PartialTransform moves count copies of oldKey to newKey, returning actual moved.
-// If oldKey count reaches 0, the pending upgrade is cleared automatically.
-// If all copies are moved, worker assignments are transferred via renameWorker callback;
-// partial upgrades leave remaining workers on the old key.
-func (bm *BuildingManager) PartialTransform(oldKey, newKey string, count int, renameWorker func(domain, oldKey, newKey string)) int {
-	have := bm.counts[oldKey]
-	if count > have {
-		count = have
+// UpgradeCopyCost is what upgrading one more copy of oldKey costs when ahead
+// copies have been upgraded before it: the share of what the next new copy of
+// the target would cost, with the target's count ahead higher. Nil when oldKey
+// has no target.
+func (bm *BuildingManager) UpgradeCopyCost(oldKey string, ahead int, queue []BuildQueueItem) map[string]float64 {
+	target, ok := bm.UpgradeTarget(oldKey)
+	if !ok {
+		return nil
 	}
-	// MaxCount holds for upgrades too: an upgrade must not push newKey past its cap.
-	count = bm.UpgradeRoom(newKey, count, nil)
-	if count <= 0 {
-		return 0
+	price := bm.CopyCost(target.Key, ahead, queue)
+	for res, p := range price {
+		price[res] = bm.upgradePrice(p)
 	}
-	bm.counts[oldKey] -= count
-	bm.counts[newKey] += count
-	bm.unlocked[newKey] = true
-	if renameWorker != nil {
-		newDef := bm.defs[newKey]
-		if newDef.WorkerDomain != "" && bm.counts[oldKey] == 0 {
-			// All copies moved — transfer worker assignments
-			renameWorker(newDef.WorkerDomain, oldKey, newKey)
-		}
-		// Partial upgrade: workers stay on old key; player reassigns manually
-	}
-	if bm.counts[oldKey] == 0 {
-		bm.ClearPendingUpgrade(oldKey)
-	}
-	return count
+	return price
 }
 
 // === Phase 9: Ruins ===
@@ -1086,27 +986,6 @@ func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]
 	return destroyed, names
 }
 
-// TransformBuilding is called during age transition to upgrade all instances of
-// a lower-tier building into the higher-tier lineage equivalent. It moves the
-// count atomically, unlocks the new key, and delegates worker assignment
-// renaming to the WorkerManager so that no assigned workers become stranded.
-// NOTE: oldKey count is zeroed — do not hold a reference to it afterward.
-func (bm *BuildingManager) TransformBuilding(oldKey, newKey string, renameWorker func(domain, oldKey, newKey string)) {
-	count := bm.counts[oldKey]
-	if count == 0 {
-		return
-	}
-	bm.counts[newKey] += count
-	bm.counts[oldKey] = 0
-	bm.unlocked[newKey] = true
-	if renameWorker != nil {
-		newDef := bm.defs[newKey]
-		if newDef.WorkerDomain != "" {
-			renameWorker(newDef.WorkerDomain, oldKey, newKey)
-		}
-	}
-}
-
 // StorageLimit is the first resource (in key order) in which the next copy
 // of storage building key costs more than the store would hold with the
 // copies already queued built, and more than is held; "" when the next copy
@@ -1152,6 +1031,12 @@ func (bm *BuildingManager) StorageLimit(key string, resources *ResourceManager, 
 	return ""
 }
 
+// ageLocked reports whether a building belongs to another age than the town's:
+// the age lock refuses to build it, whatever its line.
+func (bm *BuildingManager) ageLocked(def config.BuildingDef) bool {
+	return bm.age != nil && def.RequiredAge != "" && def.RequiredAge != bm.age()
+}
+
 // Snapshot returns building states for UI.
 // queue is the engine's current build queue, used to compute queue-aware next costs.
 // getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
@@ -1176,13 +1061,14 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		if def.MaxCount > 0 && count >= def.MaxCount {
 			state.AtMaxCount = true
 		}
+		state.HeldWithLater = bm.CountFrom(key)
 		state.StoreLimit = bm.StorageLimit(key, resources, queue, storeIf) != ""
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)
 			state.CanBuild = state.Unlocked && count == 0 && state.WonderBankFull && !bm.TechLocked(key)
 		} else {
-			state.CanBuild = state.Unlocked && !state.AtMaxCount && resources.CanAfford(cost)
+			state.CanBuild = state.Unlocked && !state.AtMaxCount && resources.CanAfford(cost) && !bm.ageLocked(def)
 		}
 		if bm.unlocked[key] && bm.TechLocked(key) {
 			state.NeedsTech = def.RequiredTech
@@ -1195,14 +1081,14 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 				state.WorkersAssigned = getWorkerCount(def.WorkerDomain, key)
 			}
 		}
-		// Phase 7: legacy flag — functional but unbuildable
-		if bm.legacyBuildings[key] {
+		// An older building is functional but no more are built: its copies
+		// can be upgraded to the target.
+		if target, older := bm.UpgradeTarget(key); older {
 			state.IsLegacy = true
 			state.CanBuild = false
-		}
-		// Player-driven upgrade: populate pending upgrade target if set and building has copies
-		if upgradeTarget, hasPending := bm.pendingUpgrades[key]; hasPending && count > 0 {
-			state.PendingUpgrade = upgradeTarget
+			if count > 0 {
+				state.PendingUpgrade = target.Key
+			}
 		}
 		out[key] = state
 	}

@@ -259,7 +259,7 @@ Yes. A milestone that doesn't name a later age fits inside a normal run: everyth
 | Trade | the Modern Age (Maritime Empire's Seaports) |
 | Scholar | the Information Age (Tech Master's 114 techs, counted from the Information Age on) |
 
-Some milestones count buildings you can only build in their own age: Stone Pits, Temples, Trading Posts, Coal Plants, Castle Keeps and others. Build them before you advance. If a milestone still needs them in a later age (Devout Settlement's Shrines in the Stone Age, Power Grid's Coal Plants in the Victorian Age), don't upgrade them away when the game offers.
+Some milestones count buildings you can only build in their own age: Stone Pits, Temples, Trading Posts, Coal Plants, Castle Keeps and others. Build them before you advance. A milestone that asks for a building also counts the later buildings of its line, so upgrading Shrines or Coal Plants to the newer building never takes that progress back.
 
 ---
 

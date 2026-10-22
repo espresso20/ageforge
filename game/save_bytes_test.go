@@ -9,16 +9,37 @@ import (
 	"time"
 )
 
+// olderBuildingsGame builds a Bronze Age game the way live play gets there:
+// every Primitive Age building built, then two age advances. Gathering camps,
+// huts and the rest are older buildings in it.
+func olderBuildingsGame(t *testing.T) *GameEngine {
+	t.Helper()
+	ge := newSeededEngine(1)
+	for key, def := range ge.Buildings.defs {
+		if def.RequiredAge == "primitive_age" && def.Category != "wonder" && ge.Buildings.IsUnlocked(key) {
+			ge.Buildings.counts[key] = 2
+		}
+	}
+	ge.advanceAge("stone_age")
+	ge.pendingCatastrophe = ""
+	ge.advanceAge("bronze_age")
+	ge.pendingCatastrophe = ""
+	if !ge.Buildings.IsOlder("gathering_camp") {
+		t.Fatal("setup: gathering_camp is not older in the Bronze Age")
+	}
+	return ge
+}
+
 // TestSaveGame_ByteStable: two saves of the same state must be the same
-// bytes. legacy_buildings was written in map order, so they weren't (the
-// smoke suite's save_map_order warning). Map iteration order is randomized
-// per range, so a map-ordered slice shows up within a few tries.
+// bytes. A list written in map order would not be (the smoke suite's
+// save_map_order warning). Map iteration order is randomized per range, so a
+// map-ordered slice shows up within a few tries.
 func TestSaveGame_ByteStable(t *testing.T) {
 	isolateAccountDir(t)
-	ge := pendingUpgradeGame(t)
+	ge := olderBuildingsGame(t)
 	ge.StepTicks(50)
-	if n := len(ge.Buildings.GetLegacyBuildings()); n < 3 {
-		t.Fatalf("setup: only %d legacy buildings; the test needs several to catch map order", n)
+	if n := len(ge.Buildings.OlderKeys()); n < 3 {
+		t.Fatalf("setup: only %d older buildings; the test needs several to catch map order", n)
 	}
 
 	marshal := func() []byte {

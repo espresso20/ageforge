@@ -277,6 +277,11 @@ func TestCoreMatchesConfigPerBuilding(t *testing.T) {
 	s := Core()
 	ages := config.AgeByKey()
 	wonders := map[string]string{}
+	lines := config.LineRungs(config.BaseBuildings())
+	ageIdx := map[string]int{}
+	for i, k := range config.AgeOrder() {
+		ageIdx[k] = i
+	}
 	for key, want := range config.BuildingByKey() {
 		got, ok := s.Building(key)
 		if !ok || !reflect.DeepEqual(got, want) {
@@ -291,13 +296,17 @@ func TestCoreMatchesConfigPerBuilding(t *testing.T) {
 				}
 			}
 		}
-		// The age after the building's own is the one the engine asks about
-		// (config rebuilds every building per call, so one age each).
-		age := s.Next(want.RequiredAge)
-		next, okN := s.NextTier(want.LineageKey, want.LineageTier, age)
-		wantNext := config.BuildingNextTierForAge(want.LineageKey, want.LineageTier, age)
-		if okN != (wantNext != nil) || (okN && !reflect.DeepEqual(next, *wantNext)) {
-			t.Errorf("NextTier(%q, %d, %q) differs from config", want.LineageKey, want.LineageTier, age)
+		// The upgrade target in a building's own age and the one after it
+		// (config rebuilds every building per call, so two ages each).
+		for _, age := range []string{want.RequiredAge, s.Next(want.RequiredAge)} {
+			if age == "" {
+				continue
+			}
+			wantTo, wantOK := config.UpgradeTarget(lines[want.Line()], ageIdx, want, age)
+			to, ok := s.UpgradeTarget(key, age)
+			if ok != wantOK || (ok && !reflect.DeepEqual(to, wantTo)) {
+				t.Errorf("UpgradeTarget(%q, %q) differs from config", key, age)
+			}
 		}
 	}
 	for _, age := range probeAges {

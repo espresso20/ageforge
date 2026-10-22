@@ -269,12 +269,12 @@ func (ge *GameEngine) PlanAddUpgrade(key string, count int) (int, error) {
 	if !ok {
 		return 0, ge.unknownBuildingErr(key)
 	}
-	newKey, pending := ge.Buildings.GetPendingUpgrade(key)
-	newDef, hasNew := ge.rules.Building(newKey)
-	if !pending || !hasNew || oldDef.Scholars > 0 {
+	newDef, pending := ge.Buildings.UpgradeTarget(key)
+	if !pending {
 		return 0, fmt.Errorf("%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
 	}
-	if err := ge.techLockErr(newDef); err != nil {
+	newKey := newDef.Key
+	if err := ge.upgradeTechErr(newDef); err != nil {
 		return 0, err
 	}
 	planned := 0
@@ -645,25 +645,20 @@ type planCheck struct {
 func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 	switch it.Kind {
 	case PlanUpgrade:
-		oldDef, ok := ge.rules.Building(it.Key)
-		newKey, pending := ge.Buildings.GetPendingUpgrade(it.Key)
-		newDef, hasNew := ge.rules.Building(newKey)
-		if !ok || !pending || !hasNew || oldDef.Scholars > 0 {
+		newDef, pending := ge.Buildings.UpgradeTarget(it.Key)
+		if !pending {
 			return planCheck{blocked: "no upgrade available"}
 		}
-		if err := ge.techLockErr(newDef); err != nil {
+		if err := ge.upgradeTechErr(newDef); err != nil {
 			return planCheck{blocked: err.Error()}
 		}
 		if ge.Buildings.GetCount(it.Key) <= 0 {
 			return planCheck{blocked: "no copies left"}
 		}
-		if room := ge.Buildings.UpgradeRoom(newKey, 1, ge.buildQueue); room <= 0 {
+		if room := ge.Buildings.UpgradeRoom(newDef.Key, 1, ge.buildQueue); room <= 0 {
 			return planCheck{blocked: fmt.Sprintf("%s is at its max count of %d", newDef.Name, newDef.MaxCount)}
 		}
-		cost, ok := ge.Buildings.UpgradeCost(it.Key, newKey, 1)
-		if !ok {
-			return planCheck{blocked: "could not work out upgrade cost"}
-		}
+		cost := ge.Buildings.UpgradeCopyCost(it.Key, 0, ge.buildQueue)
 		// note: no God Mode shortcut here; the upgrade path still charges,
 		// so a planned upgrade waits for its price like a typed one.
 		chk := planCheck{cost: cost}
@@ -863,10 +858,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			// counts already net of what they started this walk).
 			reason = ge.planBuildInvalid(it.Key, plannedCopies(out, it.Key))
 		} else if it.Kind == PlanUpgrade {
-			oldDef, ok := ge.rules.Building(it.Key)
-			newKey, pending := ge.Buildings.GetPendingUpgrade(it.Key)
-			_, hasNew := ge.rules.Building(newKey)
-			if !ok || !pending || !hasNew || oldDef.Scholars > 0 {
+			if !ge.Buildings.IsOlder(it.Key) {
 				reason = "no upgrade available"
 			}
 			if reason == "" && ge.Buildings.GetCount(it.Key) <= 0 {
@@ -1022,8 +1014,8 @@ func (ge *GameEngine) startPlanBuild(it *PlanItem, used map[string]float64) erro
 // staffed, and otherwise it would run at the unstaffed 20% until they came
 // back. Idle workers go first: into the copy, or, with worker shares set,
 // wherever the shares say (shares.go; the copy's domain may already have its
-// share). Then come workers in buildings an advance superseded (legacy: a
-// higher tier of their lineage is open), the same lineage's first: after a
+// share). Then come workers in older buildings (their line has a newer
+// building for the age), the same lineage's first: after a
 // `plan advance` the old age's copies have usually taken every idle hand,
 // and the new age's producers would otherwise wait for the next visit. With
 // shares set, only the copy's own domain gives workers, so the split holds.
@@ -1043,13 +1035,13 @@ func (ge *GameEngine) staffPlanCopy(key string) {
 		ge.Workers.Assign("worker", key, n)
 	}
 	free := ge.slotsFree(key)
-	if p, set := ge.workerShares[def.WorkerDomain]; free <= 0 || ge.Buildings.IsLegacy(key) || set && p <= 0 {
+	if p, set := ge.workerShares[def.WorkerDomain]; free <= 0 || ge.Buildings.IsOlder(key) || set && p <= 0 {
 		return
 	}
 	var same, other []string
-	for _, src := range sortedKeys(ge.Buildings.legacyBuildings) {
+	for _, src := range ge.Buildings.OlderKeys() {
 		sdef := ge.Buildings.defs[src]
-		if !ge.Buildings.legacyBuildings[src] || !planStaffSource(sdef) || shares && sdef.WorkerDomain != def.WorkerDomain {
+		if !planStaffSource(sdef) || shares && sdef.WorkerDomain != def.WorkerDomain {
 			continue
 		}
 		if sdef.Line() == def.Line() {
@@ -1071,7 +1063,7 @@ func (ge *GameEngine) staffPlanCopy(key string) {
 }
 
 // planStaffSource reports whether staffPlanCopy may take workers from a
-// legacy building of def: a producer (production or research) that makes no
+// older building of def: a producer (production or research) that makes no
 // food. Soldiers, priests and the like stay where they are.
 func planStaffSource(def config.BuildingDef) bool {
 	if def.Category != "production" && def.Category != "research" {
@@ -1117,8 +1109,8 @@ func (ge *GameEngine) planViews() []PlanItemView {
 			v.Name = techDefName(ge.rules, it.Key)
 		} else if it.Kind == PlanUpgrade {
 			v.Name = ge.Buildings.defs[it.Key].Name
-			if target, ok := ge.Buildings.GetPendingUpgrade(it.Key); ok {
-				v.Target = ge.Buildings.defs[target].Name
+			if target, ok := ge.Buildings.UpgradeTarget(it.Key); ok {
+				v.Target = target.Name
 			}
 		} else {
 			v.Name = ge.Buildings.defs[it.Key].Name

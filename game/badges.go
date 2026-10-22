@@ -473,7 +473,7 @@ func (ge *GameEngine) badgeCtxLocked(ev Event) badgeCtx {
 				}
 				return float64(n), true
 			case strings.HasPrefix(name, factStanding):
-				return float64(ge.Buildings.GetCount(strings.TrimPrefix(name, factStanding))), true
+				return float64(ge.Buildings.CountFrom(strings.TrimPrefix(name, factStanding))), true
 			case strings.HasPrefix(name, factEvent):
 				v, ok := ev.Attrs[strings.TrimPrefix(name, factEvent)]
 				return v, ok

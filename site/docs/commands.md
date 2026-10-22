@@ -48,8 +48,8 @@ Balance values are *defined* in ticks (a tech costs so many ticks of research, a
 |---|---|
 | `build <building> [count\|max]` | Start constructing a building (default 1; `max` builds as many as you can afford, up to the building's limit). A price larger than a store can hold cannot be bought: the game says so and names the storage building to build. The age's wonder is the one exception |
 | `sell <building> [count]` | Demolish copies of a building and get back 50% of what they cost; their workers go back to idle. Wonders, storage and knowledge buildings can't be sold, nothing can be sold in the Primitive Age, and a building with a copy under construction can't be sold until it finishes. A refund your storage can't hold is lost. |
-| `upgrade` | List the buildings you can upgrade now, with the cost of upgrading every copy |
-| `upgrade <building> [count\|all]` | Turn copies of a building into the next age's tier of the same line. With no count it upgrades all copies. Each copy costs the new building's price minus what the old copy would sell for (half of what it cost), resource by resource and never below zero. It stops at the new building's max count, and a price larger than a store can hold cannot be paid. Storage buildings are never upgraded; older storage keeps counting. |
+| `upgrade` | List the older buildings you hold: copies, the building each becomes, the price of the next copy, how many you can pay for now, and what blocks the next one |
+| `upgrade <building> [count\|all]` | Turn copies of an older building into its line's building for your age, one copy at a time, each at half the price of a new copy of that building. With no count it upgrades as many as you can pay for now; `all` tries every copy you hold. It stops at the first copy it cannot pay for, a price larger than a store can hold, or the new building's max count, and says how many it upgraded and why it stopped. A building that waits for a tech refuses and names it. The copy keeps its workers. Storage and knowledge buildings are never upgraded. |
 | `advance` | Advance to the next age once its requirements are met. The age never advances by itself (see `plan advance` to queue it) |
 | `gather <food\|wood\|stone> [amount]` | Gather food, wood or stone by hand: 3 by default, at most 25 per use. With Tool Making researched every gather brings 2 more. Not available after the Medieval Age. |
 | `buildings` | Open the **Buildings** panel |
@@ -62,8 +62,8 @@ build hut max
 sell lumber_mill
 sell gathering_camp 3
 upgrade
-upgrade forager_post
-upgrade forager_post 3
+upgrade gathering_camp
+upgrade gathering_camp 3
 gather wood 5
 ```
 

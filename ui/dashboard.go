@@ -1093,7 +1093,8 @@ func ageGoals(state game.GameState) []ageGoal {
 		req := state.NextAgeBldReqs[key]
 		current := 0
 		if bs, ok := state.Buildings[key]; ok {
-			current = bs.Count
+			// A gate counts the building and the later rungs of its line.
+			current = max(bs.Count, bs.HeldWithLater)
 		}
 		goals = append(goals, ageGoal{fmt.Sprintf("%s %d/%d", game.BuildingName(key), current, req), current >= req})
 	}

@@ -147,7 +147,7 @@ Assigned workers raise a building's output. A building with no workers still pro
 
 ### Upgrading buildings after an age advance
 
-Advancing an age does **not** convert your buildings. Instead, each one that has a newer version gets a pending upgrade marker, and a gold hint in the Economy panel names the target building. Use `upgrade <building>` to convert your existing copies to the new tier. For example, `upgrade gathering_camp` after entering the Stone Age turns your Gathering Camps into Forager Posts. An upgrade costs the new building's price minus what the old copy would sell for (half what it cost), takes effect at once and keeps the building's workers. Upgrade your food buildings first after every advance. Storage buildings never upgrade: the ones you built keep counting, so start on the new age's storage. See [Buildings](buildings.md#building-upgrades) for the full guide.
+Advancing an age does **not** convert your buildings. Each one whose line has a newer building for the new age becomes an older building: it keeps producing, and you can upgrade it. Use `upgrade <building>` to convert your existing copies to the building of your age. For example, `upgrade gathering_camp` after entering the Stone Age turns your Gathering Camps into Forager Posts. An upgraded copy costs half of what a new copy of the new building costs, takes effect at once, keeps the building's workers, and counts toward the next age's building requirements. Upgrade your food buildings first after every advance. Storage buildings never upgrade: the ones you built keep counting, so start on the new age's storage. See [Buildings](buildings.md#building-upgrades) for the full guide.
 
 ---
 

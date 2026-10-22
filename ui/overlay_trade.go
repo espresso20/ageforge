@@ -69,7 +69,7 @@ func tradeProvider(state game.GameState, _ int) string {
 			} else {
 				fmt.Fprintf(&sb, "   [red]needs %s (have %s)[-]\n",
 					game.BuildingCount(route.MinCount, route.RequiredBld),
-					textfmt.Int(state.Buildings[route.RequiredBld].Count))
+					textfmt.Int(max(state.Buildings[route.RequiredBld].Count, state.Buildings[route.RequiredBld].HeldWithLater)))
 			}
 			sb.WriteString("\n")
 		}

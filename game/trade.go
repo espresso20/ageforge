@@ -162,8 +162,8 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 	}
 
 	// Check building requirement
-	if buildings.GetCount(def.RequiredBld) < def.MinCount {
-		return fmt.Errorf("%s needs %s (you have %s).", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld), textfmt.Int(buildings.GetCount(def.RequiredBld)))
+	if buildings.CountFrom(def.RequiredBld) < def.MinCount {
+		return fmt.Errorf("%s needs %s (you have %s).", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld), textfmt.Int(buildings.CountFrom(def.RequiredBld)))
 	}
 
 	// Check not already active
@@ -223,7 +223,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 		}
 
 		// Check building still meets requirements
-		if buildings.GetCount(def.RequiredBld) < def.MinCount {
+		if buildings.CountFrom(def.RequiredBld) < def.MinCount {
 			messages = append(messages, fmt.Sprintf("Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)))
 			delete(tm.activeRoutes, key)
 			continue
@@ -382,7 +382,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		if _, active := tm.activeRoutes[def.Key]; active {
 			continue
 		}
-		canStart := buildings.GetCount(def.RequiredBld) >= def.MinCount
+		canStart := buildings.CountFrom(def.RequiredBld) >= def.MinCount
 		availableRoutes = append(availableRoutes, TradeRouteInfo{
 			Name:        def.Name,
 			Key:         def.Key,

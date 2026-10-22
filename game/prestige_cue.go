@@ -22,7 +22,7 @@ func (ge *GameEngine) prestigeCueLocked() PrestigeCue {
 	reqs := ge.progress.GetRequirementsForNext(ge.age)
 	for _, key := range slices.Sorted(maps.Keys(reqs)) {
 		wanted := reqs[key]
-		missing := max(0, wanted-ge.Buildings.GetCount(key)-ge.Buildings.GetQueueCount(key, ge.buildQueue))
+		missing := max(0, wanted-ge.Buildings.CountFrom(key)-ge.Buildings.GetQueueCount(key, ge.buildQueue))
 		if missing == 0 {
 			continue
 		}

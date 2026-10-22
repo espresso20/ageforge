@@ -205,17 +205,6 @@ func (vm *WorkerManager) GetAssignedCount(_, buildingKey string) int {
 	return vm.domains["worker"].assignments[buildingKey]
 }
 
-// RenameAssignment transfers all worker assignments from oldBuildingKey to newBuildingKey.
-// Called during the age-transition building transformation pass. Domain arg is ignored.
-func (vm *WorkerManager) RenameAssignment(_, oldKey, newKey string) {
-	rt := vm.domains["worker"]
-	count := rt.assignments[oldKey]
-	if count > 0 {
-		rt.assignments[newKey] += count
-		delete(rt.assignments, oldKey)
-	}
-}
-
 // GetDomainCount returns the number of workers assigned to buildings of the given domain.
 // This is used for e.g. soldierCount (domain "military") — workers assigned to military buildings.
 func (vm *WorkerManager) GetDomainCount(domain string) int {

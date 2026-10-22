@@ -970,14 +970,3 @@ func NextRung(defs []BuildingDef, line string, tier int) (next BuildingDef, ok b
 	}
 	return next, ok
 }
-
-// BuildingNextTierForAge returns the next rung of a line when newAgeKey is the
-// age that rung needs: what a building of that tier becomes as the age turns.
-// Returns nil if the line has no later rung, or its next rung is for another age.
-// Used by the age-transition transformation pass to find what each building evolves into.
-func BuildingNextTierForAge(line string, currentTier int, newAgeKey string) *BuildingDef {
-	if next, ok := NextRung(BaseBuildings(), line, currentTier); ok && next.RequiredAge == newAgeKey {
-		return &next
-	}
-	return nil
-}

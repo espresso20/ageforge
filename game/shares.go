@@ -235,11 +235,11 @@ func (ge *GameEngine) newStaffView() *staffView {
 			sv.food = i
 		}
 	}
-	// Fill order: this age's buildings before superseded ones, then the
+	// Fill order: this age's buildings before older ones, then the
 	// newest age first, then the higher tier of its line, then by key.
 	type fillKey struct {
 		key       string
-		legacy    bool
+		older     bool
 		age, tier int
 	}
 	order := make([][]fillKey, len(domains))
@@ -251,14 +251,14 @@ func (ge *GameEngine) newStaffView() *staffView {
 		}
 		sv.doms[i].slots += def.WorkerCapacity * count
 		sv.doms[i].assigned += ge.Workers.GetAssignedCount("worker", key)
-		order[i] = append(order[i], fillKey{key, ge.Buildings.IsLegacy(key), ages[def.RequiredAge], def.LineageTier})
+		order[i] = append(order[i], fillKey{key, ge.Buildings.IsOlder(key), ages[def.RequiredAge], def.LineageTier})
 	})
 	for i, keys := range order {
 		sort.Slice(keys, func(a, b int) bool {
 			ka, kb := keys[a], keys[b]
 			switch {
-			case ka.legacy != kb.legacy:
-				return !ka.legacy
+			case ka.older != kb.older:
+				return !ka.older
 			case ka.age != kb.age:
 				return ka.age > kb.age
 			case ka.tier != kb.tier:

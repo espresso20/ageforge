@@ -286,12 +286,11 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		}
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: t.Key, Count: count})
 	case PlanUpgrade:
-		oldDef, ok := ge.rules.Building(t.Key)
-		newKey, pending := ge.Buildings.GetPendingUpgrade(t.Key)
-		newDef, hasNew := ge.rules.Building(newKey)
-		if !ok || !pending || !hasNew || oldDef.Scholars > 0 || ge.techLockErr(newDef) != nil {
+		newDef, pending := ge.Buildings.UpgradeTarget(t.Key)
+		if !pending || ge.upgradeTechErr(newDef) != nil {
 			return false, false
 		}
+		newKey := newDef.Key
 		planned := 0
 		for _, it := range ge.plan {
 			if it.Kind == PlanUpgrade && it.Key == t.Key {
