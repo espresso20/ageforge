@@ -38,7 +38,7 @@ func TestNanobots_NanofabricationReducesBuildCost(t *testing.T) {
 
 	// Baseline: no tech → full base cost.
 	ge.recalculateRates()
-	if got, _ := ge.Buildings.BuildBatchCost("hut", 1, nil); got["wood"] != base {
+	if got, _ := ge.Buildings.BuildBatchCost("hut", 1, nil); got["wood"] != math.Floor(base) {
 		t.Fatalf("pre-research: charged wood = %v, want base %v", got["wood"], base)
 	}
 

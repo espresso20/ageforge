@@ -221,6 +221,9 @@ func levelPrice(d BuildingDef) map[string]float64 {
 		}
 		return scaled
 	}
+	if d.levelCost != nil {
+		return d.levelCost
+	}
 	if d.Category == "monument" {
 		// A monument keeps its authored price, but the levels are medians of
 		// prices that took the factor: count it at the price it would have had.

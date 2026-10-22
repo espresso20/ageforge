@@ -224,8 +224,8 @@ type coldStart struct {
 // CarriedSupplyTargets is how many targets of the new age the carried required
 // copies get to make a first copy's price in: one. A carried supply that
 // cannot make the price in that time is a trickle against it, and does not
-// count.
-const CarriedSupplyTargets = 1.0
+// count. It is config's: the prices are held to it (config.capColdStartBridge).
+const CarriedSupplyTargets = config.CarriedSupplyTargets
 
 // handGatherable mirrors the gather command: food, wood and stone, by hand,
 // up to and including the Medieval Age.

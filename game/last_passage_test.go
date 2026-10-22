@@ -139,8 +139,8 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {1.5e10, 2.4e11, 5e16, 3e17},
-		"galactic_age":     {4.4e10, 7.1e11, 2.1e18, 2.7e18},
+		"interstellar_age": {1.5e10, 2.4e11, 5e16, 2.6e17},
+		"galactic_age":     {4.4e10, 7.1e11, 2.1e18, 2.3e18},
 		"quantum_age":      {1.3e11, 2.2e12, 9.6e19, 7.1e18},
 		"transcendent_age": {2e11, 3.2e12, 1.5e20, 1.1e19},
 	}
@@ -444,8 +444,12 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 					row = r
 				}
 			}
+			// A material is on its ceiling when the ceiling cut its price: what
+			// a third of the warning asks is over it. A price that is a third
+			// of the warning and equals the ceiling by chance was not cut.
+			asked := warningBraceCostIn(rules.Core(), ep.Key, age, shortestWarningTicks(rules.Core(), age, false), ordinaryDoomBraceShare, 1)
 			for res, c := range doomBraceCost(ep.Key, age, 1) {
-				if limit, ok := row.BraceCeiling[res]; !ok || c < limit {
+				if limit, ok := row.BraceCeiling[res]; !ok || c < limit || asked[res] <= limit {
 					capped = false
 				}
 			}
@@ -501,8 +505,9 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // more, the stores were sized to the dearest first copy and grew with it, and
 // with the ceiling three fifths of them the Iron, Medieval and Colonial Ages
 // (0.61x, 0.61x and 0.69x) have a material under it again and Brace takes its
-// third of the warning there (0.35, 0.34 and 0.36 of it, 0.74x, 0.71x and
-// 0.76x). The Industrial Age reads 0.10x (0.06x before), still every material
+// third of the warning there (about 0.35 of it, 0.7x to 0.76x). The Iron Age's
+// three prices equal the ceiling by chance; the ceiling did not cut them, and
+// the test counts a material as on it only when it did. The Industrial Age reads 0.08x (0.06x before), still every material
 // on its ceiling.
 //
 // What follows is the record from before that factor. The Colonial, Industrial and Modern Ages were. Since the storage wall a
@@ -534,7 +539,7 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // room before, which counted this age), and its Brace takes 0.34 of the
 // warning, the ratio 0.70x.
 var doomChoiceOnTheCeiling = map[string]float64{
-	"industrial_age": 0.10,
+	"industrial_age": 0.08,
 }
 
 // incomeHoursOfMade is incomeHours over the resources of cost the age makes

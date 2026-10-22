@@ -328,8 +328,8 @@ func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
 		return ge
 	}
 	base := map[string]float64{"food": config.ResourceByKey()["food"].BaseStorage, "wood": config.ResourceByKey()["wood"].BaseStorage}
-	if base["food"] != 50 || base["wood"] != 75 {
-		t.Fatalf("base food and wood storage are %v and %v, want 50 and 75: adjust the test", base["food"], base["wood"])
+	if base["food"] != 50 || base["wood"] != config.WoodBaseStorage {
+		t.Fatalf("base food and wood storage are %v and %v, want 50 and %v: adjust the test", base["food"], base["wood"], config.WoodBaseStorage)
 	}
 
 	ge := fallen(21)

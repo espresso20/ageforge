@@ -59,6 +59,9 @@ type BuildingDef struct {
 	// staffed from the population. They need no housing or food, and work from
 	// the moment the copy stands. 0 for every other building.
 	Scholars int
+	// levelCost is the price before capColdStartBridge held a part of it, for
+	// the price levels (levelPrice). nil when no part was held.
+	levelCost map[string]float64
 }
 
 // baseBuildingsRaw returns only the storage and wonder BuildingDef entries,
@@ -871,6 +874,18 @@ func roundSignificant(v float64, sig int) float64 {
 }
 
 func BaseBuildings() []BuildingDef {
+	defs, _ := buildBase()
+	return defs
+}
+
+// ColdStartCaps lists the price parts the cold-start rule held on the loaded
+// table (capColdStartBridge), in age order.
+func ColdStartCaps() []ColdStartCap {
+	_, caps := buildBase()
+	return caps
+}
+
+func buildBase() ([]BuildingDef, []ColdStartCap) {
 	// Start with the new 13-lineage production buildings (all metadata inline).
 	result := NewProductionBuildings()
 
@@ -899,6 +914,7 @@ func BaseBuildings() []BuildingDef {
 	// the runtime table, including storage, wonders and raw-material parts.
 	applyLatePriceClimb(result)
 	applyNewCopyPrice(result)
+	caps := capColdStartBridge(result)
 	applyWonderBuildFactor(result)
 	rederiveLatePriceStorage(result)
 	// Normalize cost curves at the single chokepoint so every consumer
@@ -906,7 +922,7 @@ func BaseBuildings() []BuildingDef {
 	// then derive production rates and build times from those prices and the
 	// age targets (pacing.go). The mechanical half of every Description is
 	// written last, from those final values (effect_text.go).
-	return appendEffectText(result)
+	return appendEffectText(result), caps
 }
 
 // BuildingByKey returns a map of building key → BuildingDef, sourced from BaseBuildings().

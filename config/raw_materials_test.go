@@ -71,6 +71,12 @@ func newCopyScale(d BuildingDef) float64 {
 // this split.
 func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 	defs := BaseBuildings()
+	held := map[string]float64{} // "building/resource" -> the price the cold-start rule held it to
+	heldBuilding := map[string]bool{}
+	for _, c := range ColdStartCaps() {
+		held[c.Building+"/"+c.Resource] = c.After
+		heldBuilding[c.Building] = true
+	}
 	master := rawMasterPrices(t)
 	masterDefs := make([]BuildingDef, len(defs))
 	copy(masterDefs, defs)
@@ -147,6 +153,9 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 					continue // split in two above
 				}
 				want := v * LatePriceMultiplier(d.RequiredAge) * newCopyScale(d)
+				if h, ok := held[d.Key+"/"+res]; ok {
+					want = h
+				}
 				if d.BaseCost[res] != want {
 					t.Errorf("%s: %s is %v, want curve-scaled %v", d.Key, res, d.BaseCost[res], want)
 				}
@@ -170,7 +179,7 @@ func TestRawMaterialsCostHalfTheirPartner(t *testing.T) {
 	for i, d := range defs {
 		a := priceUnits(d.BaseCost, live[d.RequiredAge])
 		b := priceUnits(masterDefs[i].BaseCost, was[d.RequiredAge])
-		if b > 0 && math.Abs(a/b-1) > 1e-9 {
+		if b > 0 && !heldBuilding[d.Key] && math.Abs(a/b-1) > 1e-9 {
 			t.Errorf("%s costs %.9g price units, it cost %.9g", d.Key, a, b)
 		}
 	}
