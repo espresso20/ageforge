@@ -2,7 +2,7 @@
 
 AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources and worker domains, and adds a new district to your [skyline](map.md#skyline). Advancement requires the buildings each age asks for **and** completing the age's wonder. No age asks you to hold an amount of any resource.
 
-From the Modern Age on, first-copy prices rise by 1.4 times each age. The Modern Age keeps its authored prices. Stores, wonders and research scale with the price level; resource outputs do not. In every age a new copy of a building (wonders and monuments aside) also costs 1.5 times what it was written at.
+From the Modern Age on, first-copy prices rise by 1.4 times each age. The Modern Age keeps its authored prices. Stores, wonders and research scale with the price level; resource outputs do not. In every age a new copy of a building (wonders and monuments aside) also costs 1.29 times what it was written at.
 
 <figure class="screen" data-screen="age-arrival"><figcaption>Reaching a new age, here the Bronze Age: its name is struck in iron, sparks fly, and the town turns from the age you left into the new one.</figcaption></figure>
 
