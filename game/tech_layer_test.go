@@ -108,6 +108,10 @@ func TestTechStorageAndHousing(t *testing.T) {
 	ge.recalculateRates()
 	bonuses := ge.Buildings.GetStorageBonuses()
 	for _, key := range ge.Resources.order {
+		if key == "soldiers" {
+			// The posted army, not a store (soldiers.go).
+			continue
+		}
 		// The knowledge store is the knowledge buildings' alone: a tech's
 		// bonus to every store does not raise it.
 		factor := 1.20

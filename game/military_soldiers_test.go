@@ -1,210 +1,214 @@
 package game
 
 import (
+	"math"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
 )
 
-// militarySoldierCap returns the per-building soldier storage cap (the existing
-// {capacity, military} value) for the given military building key, sourced from
-// config so the test stays in sync with the building definitions.
-func militarySoldierCap(t *testing.T, key string) float64 {
+// warCampPosts is the soldiers one War Camp comes with, from the tables.
+func warCampPosts(t *testing.T) int {
 	t.Helper()
-	def, ok := config.BuildingByKey()[key]
-	if !ok {
-		t.Fatalf("building %q not found in config", key)
+	def, ok := config.BuildingByKey()["war_camp"]
+	if !ok || def.Soldiers <= 0 {
+		t.Fatalf("the War Camp has %d posts", def.Soldiers)
 	}
-	for _, eff := range def.Effects {
-		if eff.Type == "storage" && eff.Target == "soldiers" {
-			return eff.Value
-		}
-	}
-	t.Fatalf("building %q has no soldiers storage effect", key)
-	return 0
+	return def.Soldiers
 }
 
-// TestMilitaryBuildings_ProduceAndStoreSoldiers verifies the Stage-1 military
-// rework foundation: military buildings produce the `soldiers` resource, the
-// soldiers storage cap equals the sum of built military buildings' storage
-// effects, and the soldiers amount is clamped at that cap.
-func TestMilitaryBuildings_ProduceAndStoreSoldiers(t *testing.T) {
-	ge := NewGameEngine()
-
-	const barracks = "barracks"
-	def := config.BuildingByKey()[barracks]
-	if def.WorkerDomain != "military" {
-		t.Fatalf("expected barracks WorkerDomain=military, got %q", def.WorkerDomain)
+// No building makes soldiers or stores them any more: a military building
+// comes with its soldiers (config.BuildingDef.Soldiers) and nothing else
+// writes the resource.
+func TestNoBuildingMakesOrStoresSoldiers(t *testing.T) {
+	military := 0
+	for _, d := range config.BaseBuildings() {
+		for _, e := range d.Effects {
+			if e.Target == "soldiers" {
+				t.Errorf("%s has a %s effect on soldiers", d.Key, e.Type)
+			}
+		}
+		if config.IsMilitaryBuilding(d) {
+			military++
+			if d.Soldiers <= 0 {
+				t.Errorf("%s comes with %d soldiers", d.Key, d.Soldiers)
+			}
+		} else if d.Soldiers != 0 {
+			t.Errorf("%s is not a military building and comes with %d soldiers", d.Key, d.Soldiers)
+		}
 	}
+	if military != 22 {
+		t.Errorf("%d military buildings, want 22", military)
+	}
+}
 
-	// Build 2 barracks, unlock + fully staff them, and unlock the soldiers resource.
+// A new military building brings its soldiers at once, with the housing full:
+// they move in, the reserve stops growing and recruiting is refused.
+func TestSoldiersMoveInWithHousingFull(t *testing.T) {
+	posts := warCampPosts(t)
+	ge := peopleEngine(t)
+	before := ge.GetState()
+	if before.Workers.TotalPop != before.Workers.MaxPop || before.Workers.TotalPop == 0 {
+		t.Fatalf("setup: population %d of %d housing, want full", before.Workers.TotalPop, before.Workers.MaxPop)
+	}
 	ge.mu.Lock()
-	const numBarracks = 2
-	ge.Buildings.counts[barracks] = numBarracks
-	ge.Buildings.unlocked[barracks] = true
-	ge.Resources.UnlockResource("soldiers")
-	ge.Resources.UnlockResource("food")
-	ge.Resources.AddStorage("food", 1e9)
-	ge.Workers.UnlockType("worker")
-	// Recruit and assign a full crew (popCap high enough not to gate the test).
-	totalSlots := def.WorkerCapacity * numBarracks
-	if !ge.Workers.Recruit("worker", totalSlots, 100000) {
-		ge.mu.Unlock()
-		t.Fatalf("failed to recruit %d workers", totalSlots)
-	}
-	if !ge.Workers.Assign("worker", barracks, totalSlots) {
-		ge.mu.Unlock()
-		t.Fatalf("failed to assign %d workers to barracks", totalSlots)
-	}
-	ge.mu.Unlock()
-
-	expectedCap := militarySoldierCap(t, barracks) * numBarracks
-
-	// --- Soldiers production rate is positive once buildings are worked. ---
-	ge.mu.Lock()
+	ge.Buildings.counts["war_camp"] = 2
 	ge.recalculateRates()
-	rate := ge.Resources.resources["soldiers"].Rate
-	gotCap := ge.Resources.resources["soldiers"].Storage
 	ge.mu.Unlock()
-
-	if rate <= 0 {
-		t.Errorf("soldiers production rate = %v, want > 0", rate)
+	st := ge.GetState()
+	if st.Workers.Soldiers != 2*posts {
+		t.Fatalf("soldiers = %d, want %d", st.Workers.Soldiers, 2*posts)
 	}
-
-	// --- Soldiers storage cap == sum of built military buildings' storage. ---
-	if gotCap != expectedCap {
-		t.Errorf("soldiers storage cap = %v, want %v (sum of %d barracks)", gotCap, expectedCap, numBarracks)
+	if st.Workers.TotalPop != before.Workers.TotalPop+2*posts {
+		t.Errorf("population %d, want %d: the soldiers move in at once", st.Workers.TotalPop, before.Workers.TotalPop+2*posts)
 	}
-
-	// tick advances one engine tick. Food is topped up and morale pinned to 1.0
-	// before each tick so this test isolates soldiers production/clamping from the
-	// food-starvation and high-military-ratio morale penalties (those are exercised
-	// by the morale tests, and an all-military workforce would otherwise drag morale
-	// to its floor and throttle production).
-	tick := func() {
-		ge.mu.Lock()
-		ge.Resources.Add("food", 1e6)
-		ge.morale = 1.0
-		ge.mu.Unlock()
-		ge.doTick()
-		ge.mu.Lock()
-		ge.morale = 1.0
-		ge.mu.Unlock()
+	if st.Workers.TotalPop <= st.Workers.MaxPop {
+		t.Errorf("population %d should be past the housing %d", st.Workers.TotalPop, st.Workers.MaxPop)
 	}
-
-	// --- Soldiers amount increases after a few ticks. ---
-	for i := 0; i < 5; i++ {
-		tick()
+	if got := st.Workers.Working() + st.Workers.Reserve() + st.Workers.Scholars + st.Workers.Soldiers; got != st.Workers.TotalPop {
+		t.Errorf("working + reserve + scholars + soldiers = %d, population %d", got, st.Workers.TotalPop)
 	}
-	afterFew := ge.Resources.Get("soldiers")
-	if afterFew <= 0 {
-		t.Errorf("soldiers after 5 ticks = %v, want > 0", afterFew)
+	ge.StepTicks(staffEveryTicks * 4)
+	if after := ge.GetState(); after.Workers.TotalPop != st.Workers.TotalPop || after.Workers.TotalIdle != st.Workers.TotalIdle {
+		t.Errorf("the town grew from %d (%d idle) to %d (%d idle) with no room", st.Workers.TotalPop, st.Workers.TotalIdle, after.Workers.TotalPop, after.Workers.TotalIdle)
 	}
-
-	// --- Soldiers amount clamps at the storage cap. ---
-	// fully-worked 2 barracks produce ~0.8/tick into a cap of 40 → ~50 ticks to
-	// fill; 300 ticks guarantees it saturates and holds.
-	for i := 0; i < 300; i++ {
-		tick()
+	if err := ge.RecruitWorker("worker", 1); err == nil {
+		t.Error("recruited into a full town")
 	}
-	atCap := ge.Resources.Get("soldiers")
-	if atCap != expectedCap {
-		t.Errorf("soldiers after saturation = %v, want clamped at cap %v", atCap, expectedCap)
+	if st.Workers.HeldBy != HeldHousing {
+		t.Errorf("held by %q, want housing", st.Workers.HeldBy)
 	}
 }
 
-// TestSoldiersTrainFromTheFirstMilitaryBuilding: soldiers are locked until
-// the Iron Age for a town with no military building, and nothing is held or
-// counted before then. The first military building to stand unlocks them,
-// whatever the age (config.ResourceDef.BuiltUnlocks): a War Camp trains
-// soldiers in the Stone Age, staffed or not, and every post in it produces.
-func TestSoldiersTrainFromTheFirstMilitaryBuilding(t *testing.T) {
-	const camp = "war_camp"
-	def := config.BuildingByKey()[camp]
-	run := func(ge *GameEngine, ticks int) {
-		for i := 0; i < ticks; i++ {
-			ge.mu.Lock()
-			ge.Resources.Add("food", 1e6)
-			ge.morale = 1.0
-			ge.mu.Unlock()
-			ge.StepTicks(1)
-		}
-	}
-	stone := func() *GameEngine {
-		ge := NewGameEngine()
-		ge.mu.Lock()
-		ge.applyAgeUnlocks("stone_age")
-		ge.age, ge.currentEpoch = "stone_age", ge.rules.EraOf("stone_age")
-		ge.Workers.SetAge("stone_age")
-		ge.Resources.AddStorage("food", 1e9)
-		ge.Workers.UnlockType("worker")
-		ge.mu.Unlock()
-		return ge
-	}
-
-	// No military building: soldiers stay locked, and nothing counts.
-	ge := stone()
-	run(ge, 40)
-	st := ge.GetState()
-	if st.Resources["soldiers"].Unlocked || st.Resources["soldiers"].Rate != 0 || st.Military.SoldierCount != 0 {
-		t.Errorf("a Stone Age town with no War Camp has soldiers: %+v", st.Resources["soldiers"])
-	}
-	if got := st.Stats.TotalGathered["soldiers"]; got != 0 || ge.Stats.SoldiersTrained != 0 {
-		t.Errorf("the stats count %v soldiers gathered and %v trained in a town with no War Camp", got, ge.Stats.SoldiersTrained)
-	}
-
-	// One War Camp, unstaffed: soldiers unlock and train at the unstaffed
-	// rate.
+// Soldiers eat like any person: the same food a tick as a worker.
+func TestSoldiersEat(t *testing.T) {
+	posts := warCampPosts(t)
+	ge := peopleEngine(t)
 	ge.mu.Lock()
-	ge.Buildings.counts[camp] = 1
-	ge.Buildings.unlocked[camp] = true
+	base := ge.foodDrainLocked()
+	ge.Buildings.counts["war_camp"] = 1
+	ge.recalculateRates()
+	drain := ge.foodDrainLocked()
+	per := ge.Workers.FoodCostPerWorker()
 	ge.mu.Unlock()
-	run(ge, 1)
-	st = ge.GetState()
+	if per <= 0 {
+		t.Fatalf("a person eats %v", per)
+	}
+	if want := base + float64(posts)*per; math.Abs(drain-want) > 1e-9 {
+		t.Errorf("food drain %v, want %v + %d soldiers x %v = %v", drain, base, posts, per, want)
+	}
+	st := ge.GetState()
+	if math.Abs(st.Workers.FoodDrain-drain) > 1e-9 {
+		t.Errorf("the state says %v, the engine %v", st.Workers.FoodDrain, drain)
+	}
+	if got := st.Resources["food"].Breakdown.FoodDrain; math.Abs(got+drain) > 1e-9 {
+		t.Errorf("the food rate's breakdown has drain %v, want %v", got, -drain)
+	}
+}
+
+// The soldiers resource is the posted army, every tick: it follows the copies
+// that stand, a sold copy takes its soldiers with it, and nothing else moves it.
+func TestSoldiersResourceIsThePostedArmyEachTick(t *testing.T) {
+	posts := warCampPosts(t)
+	ge := peopleEngine(t)
+	army := func() (resource float64, posted int, rate float64) {
+		ge.mu.RLock()
+		defer ge.mu.RUnlock()
+		return ge.Resources.Get("soldiers"), ge.soldierTotal(), ge.Resources.GetRate("soldiers")
+	}
+	if r, p, _ := army(); r != 0 || p != 0 {
+		t.Fatalf("no military building, yet %v soldiers (%d posted)", r, p)
+	}
+	ge.mu.Lock()
+	ge.Buildings.counts["war_camp"] = 3
+	ge.mu.Unlock()
+	for i := 0; i < 5; i++ {
+		ge.StepTicks(1)
+		r, p, rate := army()
+		if p != 3*posts || r != float64(p) || rate != 0 {
+			t.Fatalf("tick %d: %v soldiers, %d posted, rate %v; want %d, %d and no rate", i, r, p, rate, 3*posts, 3*posts)
+		}
+	}
+	st := ge.GetState()
+	if st.Military.SoldierCount != 3*posts || st.Workers.Soldiers != 3*posts {
+		t.Errorf("the state says %d soldiers in the army and %d in the town, want %d", st.Military.SoldierCount, st.Workers.Soldiers, 3*posts)
+	}
 	if !st.Resources["soldiers"].Unlocked {
-		t.Fatal("a standing War Camp did not unlock soldiers")
+		t.Error("a standing War Camp did not unlock the soldiers")
 	}
-	idle := st.Resources["soldiers"].Rate
-	if idle <= 0 || st.Military.SoldierRate != idle {
-		t.Errorf("an unstaffed War Camp trains %v soldiers a tick (the Army panel says %v), want more than none", idle, st.Military.SoldierRate)
+	ge.mu.Lock()
+	ge.Buildings.counts["war_camp"] = 1
+	ge.mu.Unlock()
+	ge.StepTicks(1)
+	if r, p, _ := army(); p != posts || r != float64(posts) {
+		t.Errorf("after two copies went: %v soldiers, %d posted, want %d", r, p, posts)
 	}
+	// Defense reads the posted army.
+	ge.mu.RLock()
+	rating := ge.defenseRating()
+	ge.mu.RUnlock()
+	if want := ge.Military.CalculateDefense(posts, ge.militaryPower()); rating != want {
+		t.Errorf("defense rating %v, want %v for %d soldiers", rating, want, posts)
+	}
+}
 
-	// Staffed, every post adds to it: no post in a War Camp produces
-	// nothing.
-	prev := idle
-	for post := 1; post <= def.WorkerCapacity; post++ {
-		ge.mu.Lock()
-		ok := ge.Workers.Recruit("worker", 1, 100000) && ge.Workers.Assign("worker", camp, 1)
-		ge.mu.Unlock()
-		if !ok {
-			t.Fatalf("could not staff post %d of the War Camp", post)
-		}
-		run(ge, 1)
-		rate := ge.GetState().Resources["soldiers"].Rate
-		if rate <= prev {
-			t.Errorf("post %d of the War Camp adds nothing: %v soldiers a tick, %v before", post, rate, prev)
-		}
-		prev = rate
+// The state lists the posts building by building: the army at home over the
+// posts the copies have.
+func TestSoldierPostsInTheState(t *testing.T) {
+	posts := warCampPosts(t)
+	ge := peopleEngine(t)
+	ge.mu.Lock()
+	ge.Buildings.counts["war_camp"] = 2
+	ge.recalculateRates()
+	ge.mu.Unlock()
+	st := ge.GetState()
+	if len(st.Military.Posts) != 1 {
+		t.Fatalf("posts %+v, want one row", st.Military.Posts)
 	}
-	run(ge, 20)
-	st = ge.GetState()
-	if st.Military.SoldierCount <= 0 || st.Stats.TotalGathered["soldiers"] <= 0 || ge.Stats.SoldiersTrained <= 0 {
-		t.Errorf("a staffed War Camp trained nobody: %d held, %v gathered, %v trained", st.Military.SoldierCount, st.Stats.TotalGathered["soldiers"], ge.Stats.SoldiersTrained)
+	row := st.Military.Posts[0]
+	if row.Key != "war_camp" || row.Count != 2 || row.PerCopy != posts || row.Posted != 2*posts || row.Posts != 2*posts {
+		t.Errorf("War Camp row %+v, want 2 copies of %d posts, all posted", row, posts)
 	}
-	if st.Military.Mitigation <= 0 {
-		t.Errorf("a Stone Age garrison of %d blunts nothing of a raid (threat %v)", st.Military.SoldierCount, st.Military.Threat)
+	if st.Buildings["war_camp"].Soldiers != posts {
+		t.Errorf("the building says %d soldiers a copy, want %d", st.Buildings["war_camp"].Soldiers, posts)
 	}
+	if st.Military.SoldierCap != 2*posts {
+		t.Errorf("the army's strength is %d, want %d", st.Military.SoldierCap, 2*posts)
+	}
+}
 
-	// The unlock is the run's: it is saved and comes back.
-	isolateAccountDir(t)
-	if err := ge.SaveGame("garrison"); err != nil {
-		t.Fatal(err)
+// A military building says, when it stands, that its soldiers moved in, and
+// the soldiers count as trained once (a sold copy does not take them back).
+func TestSoldiersArrivalIsLoggedAndCounted(t *testing.T) {
+	posts := warCampPosts(t)
+	ge := peopleEngine(t)
+	for key := range ge.Resources.resources {
+		if key != "soldiers" {
+			setAmount(ge, key, 1e6)
+		}
 	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("garrison"); err != nil {
-		t.Fatal(err)
+	ge.Buildings.UnlockBuilding("war_camp")
+	if err := ge.BuildBuilding("war_camp"); err != nil {
+		t.Fatalf("build: %v", err)
 	}
-	if got := loaded.GetState(); !got.Resources["soldiers"].Unlocked || got.Military.SoldierCount != st.Military.SoldierCount {
-		t.Errorf("after a load the garrison is %d soldiers (unlocked %v), want %d", got.Military.SoldierCount, got.Resources["soldiers"].Unlocked, st.Military.SoldierCount)
+	for i := 0; i < 1000 && len(ge.buildQueue) > 0; i++ {
+		ge.StepTicks(1)
+	}
+	if ge.Buildings.GetCount("war_camp") != 1 {
+		t.Fatal("the War Camp did not finish")
+	}
+	ge.StepTicks(1)
+	if !logHas(ge, "moved in with the War Camp.") {
+		t.Errorf("no line for the soldiers arriving: %v", ge.log)
+	}
+	if got := ge.Stats.SoldiersTrained; got != float64(posts) {
+		t.Errorf("trained %v soldiers, want %d", got, posts)
+	}
+	ge.mu.Lock()
+	ge.Buildings.counts["war_camp"] = 0
+	ge.mu.Unlock()
+	ge.StepTicks(1)
+	if got := ge.Stats.SoldiersTrained; got != float64(posts) {
+		t.Errorf("trained %v soldiers after the copy went, want the %d it brought", got, posts)
 	}
 }

@@ -287,6 +287,10 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 	ge.recalculateTickSpeed()
 	out := truthReading{}
 	for _, key := range ge.Resources.order {
+		if key == "soldiers" {
+			// The posted army, not a store or a flow (soldiers.go).
+			continue
+		}
 		r := ge.Resources.resources[key]
 		out["rate:"+key] = r.Rate
 		out["made:"+key] = r.Breakdown.BuildingRate
@@ -959,7 +963,7 @@ var truthKinds = map[string]truthKind{
 				// The knowledge store is the knowledge buildings' alone
 				// (knowledge_store.go): a tech's bonus to every store, and
 				// a storage building's, do not reach it.
-				if key == "knowledge" {
+				if key == "knowledge" || key == "soldiers" { // soldiers: the posted army
 					continue
 				}
 				base := truthStoreWithTechScale(ge, key, 1)
@@ -1229,8 +1233,8 @@ var truthKinds = map[string]truthKind{
 			m := truthMeasured{Allowed: meterHasPrefix("storage:")}
 			lo, hi := math.Inf(1), math.Inf(-1)
 			for _, key := range ge.Resources.order {
-				if key == "knowledge" {
-					continue // its own store (knowledge_store.go)
+				if key == "knowledge" || key == "soldiers" {
+					continue // its own store (knowledge_store.go); the posted army
 				}
 				scale := count * truthStoreScale(ge, key)
 				d, noise := truthDiff(before, after, "aux:storage-raw:"+key)
@@ -2100,7 +2104,7 @@ func truthEventAge(def config.EventDef) string {
 func truthEventSwitch(ge *GameEngine, def config.EventDef, eff config.Effect) truthSwitch {
 	return truthSwitch{
 		off: func() {
-			ge.Resources.resources["soldiers"].Amount = 0 // no garrison: a raid takes its full share
+			noGarrison(ge) // no garrison: a raid takes its full share
 			if eff.Type == config.EventGain {
 				// Room for the whole gain: the meter reads it off the stock.
 				truthRoom(ge, eff.Target, config.EventSize(eff, ge.eventTown(eff.Target, false)))

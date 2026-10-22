@@ -66,6 +66,7 @@ func (ge *GameEngine) SetGarrisonForTest(age string, n float64) {
 	defer ge.mu.Unlock()
 	ge.age = age
 	ge.currentEpoch = ge.rules.EraOf(age)
+	ge.garrisonForTest, ge.garrisonForTestSet = n, true
 	ge.Resources.UnlockResource("soldiers")
 	if short := n - ge.Resources.GetStorage("soldiers"); short > 0 {
 		ge.Resources.AddStorage("soldiers", short)

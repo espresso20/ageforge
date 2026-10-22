@@ -161,7 +161,16 @@ type GameEngine struct {
 	// pass and not saved.
 	scholarShare    int
 	scholarShareSet bool
-	researchPerTick float64
+
+	// Soldiers (soldiers.go). soldiersSeen is the posted army the last rates
+	// pass saw (a load sets it to the army that stands, so that army is not
+	// counted as trained). garrisonForTest, when garrisonForTestSet, holds the
+	// soldiers resource instead of the posts: a hook for tests, not reachable
+	// from play.
+	soldiersSeen       int
+	garrisonForTest    float64
+	garrisonForTestSet bool
+	researchPerTick    float64
 	// researchIfStarted is the work each tick a tech started now would get:
 	// the scholars the share setting puts on research, whether or not a tech
 	// is in progress (so the idle teaching does not zero it).
@@ -1440,10 +1449,6 @@ func (ge *GameEngine) doTick() {
 	// Apply building production
 	ge.recalculateRates()
 
-	// Snapshot the soldiers amount before rates are applied so we can credit
-	// only the soldiers actually trained this tick (post-storage-clamp delta).
-	soldiersBefore := ge.Resources.Get("soldiers")
-
 	// Apply resource rates (production - consumption); what a cap cuts off
 	// goes to the wonder bank while overflow is on (overflow.go).
 	ge.noteProduced(1)
@@ -1452,11 +1457,6 @@ func (ge *GameEngine) doTick() {
 	// culture.go).
 	ge.accrueFaith(1)
 	ge.accrueCulture(1)
-
-	// Credit the lifetime soldiers-trained counter with the post-clamp delta.
-	// Soldiers discarded at the storage cap don't count; the helper floors at 0
-	// so a net drain never reduces the lifetime total.
-	ge.Stats.RecordSoldiersTrained(ge.Resources.Get("soldiers") - soldiersBefore)
 
 	// The build plan starts whatever this tick's income pays for (plan.go).
 	ge.runPlanTick()
@@ -1703,9 +1703,6 @@ func (ge *GameEngine) processExpeditions() {
 		}
 		// Add rewards to resources
 		ge.applyExpeditionRewards(res.Rewards)
-		if res.Success && res.Category == ExpeditionMilitary && res.SoldiersSent > 1 {
-			ge.Resources.Add("soldiers", float64(res.SoldiersSent/2))
-		}
 		if res.Success {
 			ge.note(config.BadgeEvExpedition, config.MissionBadgeKey(ge.rules.EraOf(res.Offer.Age), res.Offer.Kind()))
 			if res.Offer.Rare {
@@ -2293,6 +2290,10 @@ func (ge *GameEngine) recalculateRates() {
 			delete(ge.Resources.grace, def.Key)
 		}
 	}
+
+	// The soldiers resource is the posted army, last, over the store above
+	// (soldiers.go).
+	ge.syncSoldiers()
 }
 
 // permanentBonusMap is every permanent bonus summed by name: the engine's own,
@@ -3431,6 +3432,7 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 	done := buildDoneLog(def)
 	ge.addLog(done, fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
 	ge.logScholarsArrived(def)
+	ge.logSoldiersArrived(def)
 	if def.Category == "wonder" || def.Category == "monument" {
 		// Their bonuses join the pools; one a cap keeps from counting says so.
 		for _, capped := range ge.capLinesLocked(def.Effects, true) {
@@ -3822,6 +3824,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		ge.recalculateRates()
 		ge.addLog(buildDoneLog(def), fmt.Sprintf("Built %s (you have %d).", buildingCountIn(ge.rules, built, key), ge.Buildings.GetCount(key)))
 		ge.logScholarsArrived(def)
+		ge.logSoldiersArrived(def)
 	}
 	return built, nil
 }
@@ -4598,8 +4601,8 @@ func (ge *GameEngine) offerRefusalLocked(offer MissionOffer, cost map[string]flo
 	}
 	if soldiers := cost["soldiers"]; soldiers > 0 {
 		if have := int(ge.Resources.Get("soldiers")); have < int(soldiers) {
-			return fmt.Sprintf("needs %d soldiers: military buildings train them", int(soldiers)),
-				fmt.Errorf("%s needs %d soldiers (you have %d). Military buildings train them; see the Army panel", offer.Title, int(soldiers), have)
+			return fmt.Sprintf("needs %d soldiers: military buildings come with them", int(soldiers)),
+				fmt.Errorf("%s needs %d soldiers (you have %d). Military buildings come with their soldiers; see the Army panel", offer.Title, int(soldiers), have)
 		}
 	}
 	// Materials, in a fixed order so the refusal names the same one every time.
@@ -4642,7 +4645,9 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	if _, err := ge.offerRefusalLocked(offer, cost); err != nil {
 		return err
 	}
-	soldiers := cost["soldiers"]
+	// The party is at most the soldiers at home, and none of them leaves his
+	// post: the posted army stays full until parties come out of it.
+	soldiers := math.Min(cost["soldiers"], ge.Resources.Get("soldiers"))
 	delete(cost, "soldiers")
 
 	offer.SuccessChance = ge.offerSuccessLocked(offer)
@@ -4677,15 +4682,12 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	}
 	ge.useFeature(expeditionFeatures(offer)...)
 
-	// --- All checks passed: deduct soldiers + Cost. ---
-	if soldiers > 0 {
-		ge.Resources.Remove("soldiers", soldiers)
-	}
+	// --- All checks passed: deduct the Cost (the soldiers stay at their posts). ---
 	for _, res := range sortedKeys(cost) {
 		ge.Resources.Remove(res, cost[res])
 	}
 
-	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers spent: %d)", offer.Title, int(soldiers)))
+	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (party of %d soldiers)", offer.Title, int(soldiers)))
 	if offer.Military() {
 		ge.addLog(LogRoutine, fmt.Sprintf("Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
 	} else {
@@ -5127,9 +5129,9 @@ func (ge *GameEngine) GetState() GameState {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	knowledgeCount := ge.scholarTotal()
-	// Soldiers are now a real resource; the military panel reflects the resource
-	// amount, not the derived military-worker count. The soldier milestones key
-	// off the cumulative lifetime trained count instead (ge.Stats.SoldiersTrained).
+	// The military panel reflects the soldiers resource, which syncSoldiers
+	// holds at the posted army. The soldier milestones key off the cumulative
+	// lifetime trained count instead (ge.Stats.SoldiersTrained).
 	soldierResource := int(ge.Resources.Get("soldiers"))
 	militaryBonus, expeditionBonus := ge.militaryPower(), ge.expeditionReward()
 
@@ -5164,6 +5166,8 @@ func (ge *GameEngine) GetState() GameState {
 	// Geographic Society's buildings, workers or dispatch countdown. Build the
 	// snapshot here and graft the automatic-dispatch view on afterwards.
 	militarySnap := ge.Military.Snapshot(soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), militaryBonus, expeditionBonus)
+	militarySnap.SoldierCap = ge.soldierTotal()
+	militarySnap.Posts = ge.soldierPosts()
 	militarySnap.Board, militarySnap.Expeditions = ge.boardViewLocked(expeditionBonus)
 	militarySnap.AutoExpedition = ge.autoExpeditionSnapshot()
 	militarySnap.Threat = ge.ageThreat(ge.age)
@@ -5195,7 +5199,8 @@ func (ge *GameEngine) GetState() GameState {
 	workers.HeldBy, workers.FoodNet, workers.FoodFeeds = ge.popHoldLocked()
 	// Scholars are people: they live in the homes and eat (population.go).
 	workers.Scholars = ge.scholarTotal()
-	workers.TotalPop += workers.Scholars
+	workers.Soldiers = ge.soldierTotal()
+	workers.TotalPop += workers.Scholars + workers.Soldiers
 	workers.FoodDrain = ge.foodDrainLocked()
 
 	return GameState{
@@ -5210,7 +5215,7 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:          nextAgeName,
 		NextAgeBldReqs:       nextAgeBldReqs,
 		Resources:            ge.Resources.Snapshot(),
-		Buildings:            ge.withLockHints(ge.withScholarFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.storeIf))),
+		Buildings:            ge.withLockHints(ge.withSoldierFigures(ge.withScholarFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.storeIf)))),
 		Scholars:             ge.scholarsStateLocked(),
 		BuildQueue:           queue,
 		Workers:              workers,

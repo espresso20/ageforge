@@ -1,0 +1,130 @@
+package config
+
+import "math"
+
+// The soldier rule: a military building comes with its soldiers. Soldiers are
+// people, not a stock a building trains: a copy of a military building
+// (BuildingDef.Soldiers a copy) brings its soldiers with it the moment it
+// stands, they live in the homes and eat like anyone (game/population.go), and
+// the army is the soldiers at their posts.
+//
+// How many. The army an ordinary town holds when it opens the gate out of an
+// age is SoldierSharePercent of the homes that town has. For the military building of
+// age A:
+//
+//	posts = ceil(SoldierSharePercent/100 x RefHousing(A) / GateMilitaryCopies(A))
+//
+// RefHousing(A) is the housing of the reference town at the end of age A, and
+// GateMilitaryCopies(A) the copies of military buildings the gate out of A
+// asks for (at least 1, so an age whose gate asks for none still divides).
+// Every military building of one age has the same number of posts.
+const SoldierSharePercent = 14
+
+// IsMilitaryBuilding reports whether d is of the military lineage.
+func IsMilitaryBuilding(d BuildingDef) bool { return d.LineageKey == "military" }
+
+// refCopiesOf is the copies of d the reference town holds: the same count
+// smoke's reference players build (smoke.refTables.refCount). A knowledge
+// building is the gate's count alone; storage is the storage rule's copies and
+// everything else TownCopies, or the gate's count where the gate asks for
+// more. gate is the buildings the gate out of d's age asks for.
+func refCopiesOf(d BuildingDef, gate map[string]int) int {
+	if IsKnowledgeBuilding(d) {
+		return gate[d.Key]
+	}
+	n := TownCopies
+	if d.Category == "storage" {
+		n = StorageRuleCopies
+	}
+	return max(n, gate[d.Key])
+}
+
+// gateOutOf is the buildings the gate that leaves ages[i] asks for (nil for
+// the last age).
+func gateOutOf(ages []AgeDef, i int) map[string]int {
+	if i+1 >= len(ages) {
+		return nil
+	}
+	return ages[i+1].BuildingReqs
+}
+
+// RefHousing is the housing of the reference town at the end of each age, by
+// the age's place in ages: the sum of the population capacity of every
+// building the town holds, each at its reference count, over this age and all
+// before it (wonders and monuments aside, as in the reference players).
+// smoke.refTables.state works out the same sum.
+func RefHousing(defs []BuildingDef, ages []AgeDef) []float64 {
+	idx := make(map[string]int, len(ages))
+	for i, a := range ages {
+		idx[a.Key] = i
+	}
+	perAge := make([]float64, len(ages))
+	for _, d := range defs {
+		i, ok := idx[d.RequiredAge]
+		if !ok || d.Category == "wonder" || d.Category == "monument" {
+			continue
+		}
+		n := float64(refCopiesOf(d, gateOutOf(ages, i)))
+		for _, e := range d.Effects {
+			if e.Type == "capacity" && e.Target == "population" {
+				perAge[i] += float64(n * e.Value)
+			}
+		}
+	}
+	out := make([]float64, len(ages))
+	sum := 0.0
+	for i := range ages {
+		sum += perAge[i]
+		out[i] = sum
+	}
+	return out
+}
+
+// GateMilitaryCopies is the copies of military buildings the gate out of each
+// age asks for, by the age's place in ages: the gate's count of every military
+// building of that age, summed (0 where it asks for none).
+func GateMilitaryCopies(defs []BuildingDef, ages []AgeDef) []int {
+	idx := make(map[string]int, len(ages))
+	for i, a := range ages {
+		idx[a.Key] = i
+	}
+	out := make([]int, len(ages))
+	for _, d := range defs {
+		if !IsMilitaryBuilding(d) {
+			continue
+		}
+		if i, ok := idx[d.RequiredAge]; ok {
+			out[i] += gateOutOf(ages, i)[d.Key]
+		}
+	}
+	return out
+}
+
+// SoldierPostsFor is the posts a copy of a military building of the age at
+// place i comes with, from that age's reference housing and the copies its
+// gate asks for.
+func SoldierPostsFor(housing float64, gateCopies int) int {
+	// Whole numbers in the numerator and the divisor, so a share that comes out
+	// exact is not rounded up by the float form of 0.14.
+	return int(math.Ceil(float64(SoldierSharePercent*housing) / float64(100*max(gateCopies, 1))))
+}
+
+// applySoldierPosts gives every military building its soldiers a copy, and
+// the table nothing else: a military building makes and stores no soldiers.
+func applySoldierPosts(defs []BuildingDef) {
+	ages := Ages()
+	housing := RefHousing(defs, ages)
+	gate := GateMilitaryCopies(defs, ages)
+	idx := make(map[string]int, len(ages))
+	for i, a := range ages {
+		idx[a.Key] = i
+	}
+	for i := range defs {
+		if !IsMilitaryBuilding(defs[i]) {
+			continue
+		}
+		if at, ok := idx[defs[i].RequiredAge]; ok {
+			defs[i].Soldiers = SoldierPostsFor(housing[at], gate[at])
+		}
+	}
+}

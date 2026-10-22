@@ -918,6 +918,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.Resources.LoadStorage(save.Storage)
 	}
 	ge.Buildings.LoadCounts(save.Buildings)
+	ge.soldiersSeen = ge.soldierTotal()
 	ge.Workers.LoadWorkers(save.Workers)
 	if save.Stats != nil {
 		// Deep copy stats to avoid aliasing with the deserialized save

@@ -325,33 +325,48 @@ func TestMissionHaul_FormulaOnSuccessAndFailure(t *testing.T) {
 	}
 }
 
-// TestCampaign_HalfTheSoldiersComeBackOnAWin: a military grand mission that
-// wins returns half the soldiers it sent, rounded down; one that loses
-// returns none; no other mission ever took any.
-func TestCampaign_HalfTheSoldiersComeBackOnAWin(t *testing.T) {
+// TestCampaign_LeavesThePostsFull: a military grand mission sends a party of
+// at most the soldiers at home, and takes none from the posts: the army is the
+// same before the launch, while the party is out, and after a win or a loss.
+// (Parties come out of the posts in a later change.)
+func TestCampaign_LeavesThePostsFull(t *testing.T) {
 	for _, c := range []struct {
 		income float64 // soldiers/tick: cost = ceil(10 min of it)
+		held   float64
 		sent   int
 		win    bool
-		back   int
 	}{
-		{0.02, 6, true, 3},
-		{0.0147, 5, true, 2}, // odd: rounded down
-		{0.0033, 1, true, 0}, // one soldier: none come back
-		{0.02, 6, false, 0},
+		{0.02, 50, 6, true},
+		{0.0147, 50, 5, true},
+		{0.0033, 50, 1, true},
+		{0.02, 50, 6, false},
+		{0.5, 4, 0, true}, // the cost (150) is more than the 4 at home: refused, nothing sent
 	} {
 		ge := missionReady(t, 2, "iron_age")
-		setSoldiers(ge, 50)
+		setSoldiers(ge, c.held)
 		setIncome(ge, "soldiers", c.income)
 		n := plantOffer(ge, TierGrand, GrandMilitary)
-		if got := int(ge.MissionCost(n)["soldiers"]); got != c.sent {
-			t.Fatalf("income %v: the mission costs %d soldiers, test wants %d", c.income, got, c.sent)
+		cost := int(ge.MissionCost(n)["soldiers"])
+		if c.held > float64(cost) {
+			if cost != c.sent {
+				t.Fatalf("income %v: the mission costs %d soldiers, test wants %d", c.income, cost, c.sent)
+			}
 		}
-		if err := ge.LaunchExpedition(n); err != nil {
-			t.Fatal(err)
+		if c.held >= float64(cost) {
+			if err := ge.LaunchExpedition(n); err != nil {
+				t.Fatal(err)
+			}
+		} else {
+			if err := ge.LaunchExpedition(n); err == nil {
+				t.Fatalf("income %v: launched with %v soldiers at home for a cost of %d", c.income, c.held, cost)
+			}
+			continue
 		}
-		if got := ge.Resources.Get("soldiers"); got != float64(50-c.sent) {
-			t.Fatalf("soldiers after the launch = %v, want %d", got, 50-c.sent)
+		if active := ge.Military.ActiveByCategory(ExpeditionMilitary); active == nil || active.Soldiers != c.sent {
+			t.Fatalf("income %v: the party is %+v, want %d soldiers", c.income, active, c.sent)
+		}
+		if got := ge.Resources.Get("soldiers"); got != c.held {
+			t.Fatalf("soldiers after the launch = %v, want all %v still at their posts", got, c.held)
 		}
 		ge.mu.Lock()
 		active := ge.Military.ActiveByCategory(ExpeditionMilitary)
@@ -362,8 +377,8 @@ func TestCampaign_HalfTheSoldiersComeBackOnAWin(t *testing.T) {
 		if ge.Military.HasActive() {
 			t.Fatal("the campaign did not come home")
 		}
-		if got, want := ge.Resources.Get("soldiers"), float64(50-c.sent+c.back); got != want {
-			t.Errorf("sent %d, win=%v: %v soldiers at home, want %v (%d back)", c.sent, c.win, got, want, c.back)
+		if got := ge.Resources.Get("soldiers"); got != c.held {
+			t.Errorf("sent %d, win=%v: %v soldiers at home, want %v", c.sent, c.win, got, c.held)
 		}
 	}
 }

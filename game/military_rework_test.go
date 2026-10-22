@@ -8,10 +8,9 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// stageSoldierProduction builds & fully staffs `numBarracks` barracks so the
-// engine produces the soldiers resource, then returns the per-tick training rate
-// and the soldiers storage cap. Caller must NOT hold the engine lock. Food is
-// topped up and morale pinned by the caller's tick helper.
+// stageSoldierProduction stands and fully staffs `numBarracks` barracks, whose
+// soldiers move in. Caller must NOT hold the engine lock. Food is topped up and
+// morale pinned by the caller's tick helper.
 func stageSoldierProduction(t *testing.T, ge *GameEngine, numBarracks int) {
 	t.Helper()
 	const barracks = "barracks"
@@ -51,7 +50,8 @@ func tickWithFood(ge *GameEngine) {
 }
 
 // TestSoldiersTrained_AccruesAcrossTicks verifies the cumulative lifetime
-// soldiers-trained counter increments by the soldiers actually added each tick.
+// soldiers-trained counter increments by the soldiers that arrive with a new
+// military building.
 func TestSoldiersTrained_AccruesAcrossTicks(t *testing.T) {
 	ge := NewGameEngine()
 	stageSoldierProduction(t, ge, 2)
@@ -103,8 +103,8 @@ func TestSoldiersTrained_NotDecreasedBySpending(t *testing.T) {
 	if err := ge.LaunchExpedition(plantOffer(ge, TierGrand, GrandMilitary)); err != nil {
 		t.Fatalf("LaunchExpedition(military grand) error: %v", err)
 	}
-	if got := ge.Resources.Get("soldiers"); got != 7 {
-		t.Fatalf("soldiers after launch = %v, want 7 (10 - 3)", got)
+	if got := ge.Resources.Get("soldiers"); got != 10 {
+		t.Fatalf("soldiers after launch = %v, want all 10 still at their posts", got)
 	}
 
 	if got := ge.Stats.SoldiersTrained; got != trainedBefore {

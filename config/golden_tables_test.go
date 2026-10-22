@@ -21,6 +21,7 @@ type goldenBuilding struct {
 	BuildTicks int                `json:"build_ticks"`
 	Workers    int                `json:"workers"`
 	MaxCount   int                `json:"max_count"`
+	Soldiers   int                `json:"soldiers,omitempty"`
 }
 
 type goldenEffect struct {
@@ -65,7 +66,7 @@ func liveGoldenTables() goldenTables {
 	defs := BaseBuildings()
 	for _, d := range defs {
 		b := goldenBuilding{Category: d.Category, Age: d.RequiredAge, Cost: d.BaseCost, Rate: d.CostScale,
-			BuildTicks: d.BuildTicks, Workers: d.WorkerCapacity, MaxCount: d.MaxCount, Effects: []goldenEffect{}}
+			BuildTicks: d.BuildTicks, Workers: d.WorkerCapacity, MaxCount: d.MaxCount, Soldiers: d.Soldiers, Effects: []goldenEffect{}}
 		for _, e := range d.Effects {
 			b.Effects = append(b.Effects, goldenEffect{Type: e.Type, Target: e.Target, Value: e.Value})
 		}
