@@ -10,7 +10,9 @@ No age asks you to hold anything for research to advance. The gates do ask for k
 
 ## What a Scholar Is
 
-A scholar is not a worker. He is not recruited, takes no housing, eats no food and needs no assignment. Build a Story Circle and its 2 scholars are at work. Knowledge buildings cannot be sold.
+A scholar is a person, but not a worker. He is not recruited and needs no assignment: build a Story Circle and its 2 scholars move in and are at work. They live in your homes and eat like anyone (see [People](workers-and-domains.md#the-people-of-your-town)). If your homes are full, they still move in, and the reserve stops growing until there is room again. Knowledge buildings cannot be sold.
+
+Each age has its own word for its scholars, and the game shows it.
 
 A scholar's **kind** is the worker class of the age of his building: a Shaman in the Primitive Age, an Elder in the Stone Age, a Scribe in the Bronze Age, and so on up to the Quantum Theorist. The `scholars` command lists your kinds and counts (see [Commands](commands.md#research)).
 

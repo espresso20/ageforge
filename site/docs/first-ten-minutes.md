@@ -60,10 +60,10 @@ Builds run at the same time, not one after another, so start each one as soon as
 Once a hut stands and your camps are built, workers arrive on their own. Your population grows toward your housing while food allows, and new workers fill your empty camp slots at once: within seconds your camps are staffed. Workers past the slots wait in the reserve. The first time, the log says so.
 
 ```
-workers
+people
 ```
 
-`workers` opens the Workers panel: your population, the reserve and food use, what holds your population back, and the **Roster** section, which says what auto-recruit is doing (growing, held by housing, held by food) and how your workers are spread across the domains. Every worker eats food each tick, so your population grows only while your food rate stays positive with a margin to spare. More huts make room for more workers, and more buildings give them more slots to fill.
+`people` opens the People panel (`workers` does too): your population over your homes, every kind of person, food use and what holds your population back, and on its **Work** tab what auto-recruit is doing (growing, held by housing, held by food) and how your workers are spread across the domains. Everyone eats food each tick, so your population grows only while your food rate stays positive with a margin to spare. More huts make room for more workers, and more buildings give them more slots to fill.
 
 You don't pick a domain for a worker. It takes the class of the building it works in: a worker on a `gathering_camp` is a Forager, one on a `story_circle` a Shaman. Type `status` for population, the idle count (your reserve) and food drain.
 
@@ -88,7 +88,7 @@ assign story_circle 1
 workers auto-recruit off
 ```
 
-The Workers box in the sidebar shows your **Reserve**: workers without a slot. They take any slot that opens within seconds; after a worker command of yours, the game waits a minute first. See [The Roster](workers-and-domains.md#the-roster) for the details.
+The People box in the sidebar shows your reserve: workers without a slot. They take any slot that opens within seconds; after a worker command of yours, the game waits a minute first. See [The Roster](workers-and-domains.md#the-roster) for the details.
 
 ---
 
@@ -106,7 +106,7 @@ Build two early so there is room to hold what comes in. The Stone Age asks for *
 
 ## Step 6: Build story circles and a shrine
 
-Story circles come with **2 scholars** each. Scholars are not workers: they need no housing, no food and no assignment, and they start research the moment the circle stands. The Stone Age needs **5 story circles**, and a circle cannot be built past 5. A story circle costs 77 wood and takes 75 ticks (2m 30s) to build, so start them early.
+Story circles come with **2 scholars** each. Scholars are not workers: they need no assignment, and they start research the moment the circle stands. They are people, though: they live in your homes and eat like anyone. The Stone Age needs **5 story circles**, and a circle cannot be built past 5. A story circle costs 77 wood and takes 75 ticks (2m 30s) to build, so start them early.
 
 ```
 build story_circle
@@ -227,7 +227,7 @@ Your first priority: start stone with **Stone Camps** (or `gather stone 25`), th
 | Build a stash | `build stash` |
 | Build a story circle | `build story_circle` |
 | Build a shrine | `build shrine` |
-| See your workers, the roster and what auto-recruit is doing | `workers` |
+| See your people, the roster and what auto-recruit is doing | `people` |
 | Put more workers on faith | `roster faith 40` |
 | Put every domain back on auto | `roster auto` |
 | Place a worker by hand | `assign shrine 1` |

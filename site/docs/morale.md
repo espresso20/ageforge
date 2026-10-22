@@ -14,7 +14,7 @@ output = base rate × buildings × (0.20 + 0.80 × workers assigned / worker slo
 
 Morale is **not** part of the all-production pool. That pool (wonders, milestones, events and the rest) applies in full up to +200% and a quarter of every point past it (see [The all-production cap](resources.md#the-all-production-cap)). Morale multiplies building output separately, so its bonus counts in full however much the pool holds.
 
-For how morale fits the rest of the worker system, see [Workers](workers-and-domains.md).
+For how morale fits the rest of the worker system, see [People](workers-and-domains.md).
 
 ---
 
@@ -72,7 +72,7 @@ Neutral is the resting state. Living above it takes a steady source of lift, and
 | Source | Effect |
 |--------|--------|
 | **Starvation** | -0.5 points a tick while your food store is empty and food is falling. |
-| **Too large an army** | Military workers above **30% of your population** drain 0.3 points a tick for every 10 percentage points over (at 40% military, -0.3 a tick; at 50%, -0.6). |
+| **Too large an army** | Military workers above **30% of your workers** drain 0.3 points a tick for every 10 percentage points over (at 40% military, -0.3 a tick; at 50%, -0.6). |
 | **Idle workforce** | -0.2 points a tick while more than **50% of your workers** sit idle. |
 | **Bad events** | -4 points when a bad random event fires. |
 | **Enduring a catastrophe** | -10 points. |
@@ -118,7 +118,7 @@ The worship buildings also make faith, which adds its own lift once your faith r
 ## Where Morale Is Shown
 
 - **Status bar**: `Morale 62% (production +5%)`, green when morale boosts production and red when it costs production. At exactly 50% it reads just `Morale 50%`.
-- **Workers panel** (`workers`): a colored morale bar with the same reading, for example `▲ Morale 62% (production +5%)`, or `Morale 50% (production steady)` at neutral.
+- **People panel** (`people`): the Overview shows morale beside the food figures, for example `morale 62%`, green when morale boosts production and red when it costs production.
 - **Stats panel** (`stats`): when morale is off neutral it appears under **Active Multipliers** in the **All Production** line as a `Morale ×N.NN` factor, next to your research, wonder, milestone and active-event bonuses. Each source is listed and colored on its own, so a penalty is never hidden by a bonus on the same line.
 - **Load Game browser**: each save's detail pane shows its morale.
 
@@ -130,7 +130,7 @@ On the colorblind-safe and high-contrast [themes](themes.md) the boost and penal
 
 1. **Build two Shrines early.** One Shrine (0.06) can't beat the drift; two can, and morale starts climbing toward the +20% bonus in the first age.
 2. **Keep food positive.** Starvation (-0.5 a tick) is more than six times the drift. Fix the food deficit and the drift heals the rest. See [Starvation](workers-and-domains.md#starvation).
-3. **Keep the army in proportion.** Hold military workers under 30% of population; past that, morale drains faster the more lopsided your army gets. See [Military](military.md).
+3. **Keep the army in proportion.** Hold military workers under 30% of your workers; past that, morale drains faster the more lopsided your army gets. See [Military](military.md).
 4. **Don't leave workers idle.** More than half your population sitting idle drains morale on top of wasting food. The roster routine puts idle workers to work when there are free slots; with no free slots, build worker buildings or `dismiss` them.
 5. **Keep a faith economy going.** From about 4 faith per tick, faith alone holds morale up, and at 20 per tick it adds five times the drift.
 6. **Build wonders to raise the ceiling.** Each wonder adds +5% to the cap, which keeps the full +20% within reach as long as your lift can carry morale up to it. See [Wonders](wonders.md).
@@ -139,7 +139,7 @@ On the colorblind-safe and high-contrast [themes](themes.md) the boost and penal
 
 ## See Also
 
-- [Workers](workers-and-domains.md): the production formula and the worker system
+- [People](workers-and-domains.md): the production formula and the worker system
 - [Faith](faith.md): faith production, which also lifts morale
 - [Military](military.md): the military-ratio morale drain in detail
 - [Buildings](buildings.md): the worship and culture lines

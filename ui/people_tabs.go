@@ -151,6 +151,15 @@ func (c peopleBody) foodLine(x, y, w int) {
 		net = xBad
 	}
 	parts := []xseg{{"Food ", xDim}, {textfmt.Rate(-ws.FoodDrain), xText}, {" for everyone", xDim}, {"   net ", xDim}, {textfmt.Rate(rs.Rate), net}}
+	// Morale, which the old Workers panel showed, before the figure that goes
+	// first on a narrow panel.
+	mk := xText
+	if band := computeMoraleBand(c.st.Morale, c.st.MoraleMultiplier); band.Bonus {
+		mk = xGood
+	} else if band.Penalty {
+		mk = xBad
+	}
+	parts = append(parts, xseg{"   morale ", xDim}, xseg{fmt.Sprintf("%.0f%%", c.st.Morale*100), mk})
 	if grown := game.FoodBeforeMastery(rs.Rate, rs.Breakdown); per > 0 && grown > 0 && rs.Rate >= 0 {
 		parts = append(parts, xseg{"   feeds up to ", xDim}, xseg{num(int(grown / per)), xText})
 	}
@@ -183,7 +192,7 @@ func (c peopleBody) card(i int, k peopleKind) []string {
 		return []string{num(k.count) + " at home", out, "defense " + num(int(st.Military.DefenseRating)), "see Army"}
 	}
 	s := st.Scholars
-	return []string{num(k.count) + " at desks", fmt.Sprintf("%s research, %s teach", num(s.Researching), num(s.Teaching)), "research " + num(int(st.Research.PerTick)) + " a tick", "come with buildings"}
+	return []string{num(k.count) + " at desks", num(s.Researching) + " researching", num(s.Teaching) + " teaching", "come with buildings"}
 }
 
 // ===== Work =====
@@ -279,23 +288,24 @@ func (c peopleBody) work() {
 		y++
 	}
 	y++
-	share := "on auto: it follows its buildings' slots"
+	share := "auto, by its buildings' slots"
 	if r.Set {
 		share = "set to " + game.SharePercent(float64(int(r.Percent+0.5)))
 	}
-	g.segsFit(rx, y, ri, xseg{"Share ", xDim}, xseg{share, xText})
+	g.segsFit(rx, y, ri, xseg{"Share  ", xDim}, xseg{share, xText})
 	y++
-	g.segsFit(rx, y, ri, xseg{"Set it  ", xDim}, xseg{"roster " + strings.ToLower(r.Name) + " <percent|auto>", xText})
+	g.segsFit(rx, y, ri, xseg{"Set it  ", xDim}, xseg{"roster " + strings.ToLower(r.Name) + " <%|auto>", xText})
 	y += 2
-	for _, l := range wrapText(recruitText(st), ri) {
+	for _, l := range append(wrapText(recruitText(st), ri), wrapText("Open slots fill from the reserve.", ri)...) {
 		if y >= c.y+c.h-1 {
 			break
 		}
-		g.put(rx, y, l, xDim)
+		k := xDim
+		if strings.HasPrefix(l, "Open") {
+			k = xGold
+		}
+		g.put(rx, y, l, k)
 		y++
-	}
-	if y < c.y+c.h-1 {
-		g.putFit(rx, y, ri, "Open slots fill from the reserve.", xGold)
 	}
 	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", "pick an area"}}, "roster <area> <%|auto>")
 }
@@ -411,8 +421,7 @@ func (c peopleBody) scholars() {
 		each := fmt.Sprintf("%s each", num(b.Scholars))
 		pickName(g, c.x+2, y, lw-6-runeLen(each), fmt.Sprintf("%s x%d", b.Name, b.Count), i == c.v.row)
 		g.rput(rightOf(c.x, lw), y, each, xDim)
-		total := fmt.Sprintf("%s %s", num(b.Count*b.Scholars), strings.ToLower(sch.name))
-		bw := min(20, lw-8-runeLen(total))
+		const bw = 10
 		fill := bw
 		if b.ScholarCap > 0 {
 			fill = bw * min(b.Count, b.ScholarCap) / b.ScholarCap
@@ -424,10 +433,11 @@ func (c peopleBody) scholars() {
 				g.set(c.x+4+k, y+1, '░', xFaint)
 			}
 		}
-		g.put(c.x+4+bw+1, y+1, total, xText)
+		total := fmt.Sprintf("%s %s", num(b.Count*b.Scholars), strings.ToLower(sch.name))
 		if b.ScholarCap > 0 {
-			g.rput(rightOf(c.x, lw), y+1, fmt.Sprintf("of %d copies", b.ScholarCap), xDim)
+			total += fmt.Sprintf(", %d of %d copies", b.Count, b.ScholarCap)
 		}
+		g.putFit(c.x+4+bw+1, y+1, lw-4-bw-4, total, xText)
 	}
 
 	// Research.

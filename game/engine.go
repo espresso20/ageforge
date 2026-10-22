@@ -1489,8 +1489,9 @@ func (ge *GameEngine) doTick() {
 	}
 
 	// Starvation: when food is at 0 with active drain, one worker dies every
-	// starvationDeathInterval ticks.
-	if ge.Resources.Get("food") <= 0 && ge.foodDrainLocked() > 0 {
+	// starvationDeathInterval ticks. Only workers (and the reserve) can: the
+	// scholars eat, but they go with their building, not with the food.
+	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
 		ge.starvationTicks++
 		if ge.starvationTicks == 1 {
 			ge.addLog("warning", fmt.Sprintf("⚠ Food has run out. One worker dies every %s until you have food again.",

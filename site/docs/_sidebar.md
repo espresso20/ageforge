@@ -8,7 +8,7 @@
 
 - **Core Loop**
   - [Resources](resources.md)
-  - [Workers](workers-and-domains.md)
+  - [People](workers-and-domains.md)
   - [Buildings](buildings.md)
   - [The Build Plan](plan.md)
   - [Technologies](technologies.md)

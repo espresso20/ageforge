@@ -262,7 +262,7 @@ func drawLog(g *xgrid, x, y, w, rows int, lines []game.LogEntry, none string) {
 	}
 }
 
-// tagPattern is a colour tag in a log line ("[comment]", "[-]").
+// tagPattern is a colour tag in a log line, such as a flavor tag or "[-]".
 var tagPattern = regexp.MustCompile(`\[[a-zA-Z#0-9:_\-]*\]`)
 
 // plainLogText strips the colour tags a log line may carry.

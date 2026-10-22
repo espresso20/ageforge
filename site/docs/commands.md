@@ -109,7 +109,8 @@ plan rm 4
 | `assign <building> [count\|all]` | Assign idle workers to a building (the building sets their domain) |
 | `unassign <building> [count\|all]` | Take workers out of a building and back to idle |
 | `dismiss <building> [count\|all]` | Remove workers from a building and from your population for good |
-| `workers` | Open the **Workers** panel (summary, the roster and what auto-recruit is doing, slot use, domain breakdown) |
+| `people` | Open the **People** panel: your homes and every kind of person in them, then tabs for your work areas, your army and your scholars (Left and Right switch tabs, Up and Down pick a row). `workers` opens it too |
+| `workers` | The same as `people`; `workers auto-recruit` shows or sets auto-recruit |
 | `roster` | Print each domain's share of your workforce with its workers and slots (`Faith: 40% (set), 8 workers in 10 slots`), and whether auto-recruit is on |
 | `roster <domain> [percent\|auto]` | With a percent from 0 to 100, set that domain's share of your workforce; decimals and a `%` sign are allowed (`roster lumber 12.5%`), and 0 keeps the domain empty. With `auto`, put the domain back on auto. With neither, print its line |
 | `roster auto` | Put every domain back on auto, the default: workers follow your buildings' worker slots |
@@ -138,7 +139,7 @@ roster auto
 workers auto-recruit off
 ```
 
-See [Workers](workers-and-domains.md) for the domain table and the efficiency formula.
+See [People](workers-and-domains.md) for the domain table and the efficiency formula.
 
 ---
 

@@ -178,9 +178,9 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 	for _, age := range layoutAges {
 		d, pages, eng := stagedDashboard(t, age)
 		st := eng.GetState()
-		unlocked := 0
-		for _, rs := range st.Resources {
-			if rs.Unlocked {
+		unlocked := 0 // the soldiers are people: the People box lists them, not this one
+		for k, rs := range st.Resources {
+			if rs.Unlocked && k != "soldiers" {
 				unlocked++
 			}
 		}
@@ -258,12 +258,12 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 	var names []string
 	st := eng.GetState()
 	for _, k := range sortedKeysOf(st.Resources) {
-		if rs := st.Resources[k]; rs.Unlocked {
+		if rs := st.Resources[k]; rs.Unlocked && k != "soldiers" {
 			names = append(names, rs.Name)
 		}
 	}
-	if len(names) != 25 {
-		t.Fatalf("the Quantum Age has %d resources unlocked, want all 25", len(names))
+	if len(names) != 24 {
+		t.Fatalf("the Quantum Age has %d resources unlocked besides the soldiers, want all 24", len(names))
 	}
 	press := func() {
 		if ev := d.root.GetInputCapture()(tcell.NewEventKey(resourcePageKey, 0, tcell.ModNone)); ev != nil {
