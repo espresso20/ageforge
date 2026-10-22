@@ -106,7 +106,10 @@ func TestDefenseMitigation_Curve(t *testing.T) {
 func TestDefenseMitigation_ScaledByAgeThreat(t *testing.T) {
 	ages := config.AgeOrder()
 	for i := 1; i < len(ages); i++ {
-		if config.AgeThreat(i) <= config.AgeThreat(i-1) {
+		// In the garrison the threat was sized against: measured in soldiers at
+		// their posts it also follows the reference town's army, which dips in
+		// the Atomic Age (config.ArmyThreatScale).
+		if config.AgeThreat(i)/config.ArmyThreatScale(i) <= config.AgeThreat(i-1)/config.ArmyThreatScale(i-1) {
 			t.Fatalf("threat does not grow from %s to %s", ages[i-1], ages[i])
 		}
 	}
@@ -139,7 +142,7 @@ func TestRaidMitigation_NoSoldiersIsZero(t *testing.T) {
 		t.Fatalf("no soldiers blunts %v, want 0", m)
 	}
 	giveSoldiers(ge, soldiersFor("iron_age"))
-	if m := ge.raidMitigation(); math.Abs(m-matched("iron_age")) > 1e-12 || math.Abs(m-config.DefenseMitigationCap/2) > 1e-6 {
+	if m := ge.raidMitigation(); math.Abs(m-matched("iron_age")) > 1e-12 || math.Abs(m-config.DefenseMitigationCap/2) > 1e-3 { // whole soldiers: the Iron Age threat is about 1,700 now
 		t.Fatalf("defense == threat blunts %v, want %v (half the cap)", m, matched("iron_age"))
 	}
 }
