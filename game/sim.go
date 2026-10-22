@@ -163,6 +163,8 @@ func (ge *GameEngine) SetTownForTest(buildings map[string]int, people int) {
 		ge.Buildings.counts[key] = buildings[key]
 		ge.Buildings.unlocked[key] = true
 	}
+	// A town set up by hand starts with its army at its posts.
+	ge.postAllSoldiers()
 	ge.recalculateRates()
 	ge.Workers.UnlockType("worker")
 	if more := people - ge.Workers.TotalPop(); more > 0 {

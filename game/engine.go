@@ -168,6 +168,8 @@ type GameEngine struct {
 	// soldiers resource instead of the posts: a hook for tests, not reachable
 	// from play.
 	soldiersSeen       int
+	soldiersPosted     map[string]int  // military building key: soldiers at its posts
+	soldierWaitLogged  map[string]bool // building keys whose waiting posts were said
 	garrisonForTest    float64
 	garrisonForTestSet bool
 	researchPerTick    float64
@@ -1465,6 +1467,11 @@ func (ge *GameEngine) doTick() {
 	// the empty slots, every few ticks.
 	if ge.tick%staffEveryTicks == 0 {
 		ge.keepSharesLive()
+		// The soldiers' posts fill after the jobs, from what the jobs left
+		// in the reserve (soldiers.go).
+		if ge.fillSoldierPosts() > 0 {
+			ge.recalculateRates()
+		}
 	}
 
 	// Log net food rate and capped resources every 10 ticks
@@ -3432,7 +3439,7 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 	done := buildDoneLog(def)
 	ge.addLog(done, fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
 	ge.logScholarsArrived(def)
-	ge.logSoldiersArrived(def)
+	ge.fillSoldierPosts()
 	if def.Category == "wonder" || def.Category == "monument" {
 		// Their bonuses join the pools; one a cap keeps from counting says so.
 		for _, capped := range ge.capLinesLocked(def.Effects, true) {
@@ -3824,7 +3831,9 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		ge.recalculateRates()
 		ge.addLog(buildDoneLog(def), fmt.Sprintf("Built %s (you have %d).", buildingCountIn(ge.rules, built, key), ge.Buildings.GetCount(key)))
 		ge.logScholarsArrived(def)
-		ge.logSoldiersArrived(def)
+		if ge.fillSoldierPosts() > 0 {
+			ge.recalculateRates()
+		}
 	}
 	return built, nil
 }
@@ -4878,6 +4887,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
+	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersSeen = nil, nil, 0
 	ge.prestigeCue = PrestigeCue{}
 	ge.prestigeCueSeenAge = ""
 	ge.Stats.AgeLog[0].Tick = ge.tick
@@ -5026,6 +5036,7 @@ func (ge *GameEngine) Reset() {
 	ge.Trade = NewTradeManagerWith(ge.rules)
 	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
 	ge.Stats = NewGameStats()
+	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersSeen = nil, nil, 0
 	ge.prestigeCue = PrestigeCue{}
 	ge.prestigeCueSeenAge = ""
 	ge.Stats.AgeLog[0].Tick = ge.tick
@@ -5166,7 +5177,7 @@ func (ge *GameEngine) GetState() GameState {
 	// Geographic Society's buildings, workers or dispatch countdown. Build the
 	// snapshot here and graft the automatic-dispatch view on afterwards.
 	militarySnap := ge.Military.Snapshot(soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), militaryBonus, expeditionBonus)
-	militarySnap.SoldierCap = ge.soldierTotal()
+	militarySnap.SoldierCap = ge.soldierPostsTotal()
 	militarySnap.Posts = ge.soldierPosts()
 	militarySnap.Board, militarySnap.Expeditions = ge.boardViewLocked(expeditionBonus)
 	militarySnap.AutoExpedition = ge.autoExpeditionSnapshot()
@@ -5472,6 +5483,13 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 				ge.recalculateRates()
 				staffed.add(c)
 			}
+		}
+		// The soldiers' posts fill as the food allows, a pass at a time.
+		for pass := 0; pass < max(1, n/staffEveryTicks); pass++ {
+			if ge.fillSoldierPosts() == 0 {
+				break
+			}
+			ge.recalculateRates()
 		}
 		// A fated doom keeps its hour offline: the harbinger comes and the doom
 		// strikes at its tick, and a struck doom waits, pending, for the player.

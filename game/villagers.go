@@ -169,6 +169,17 @@ func (vm *WorkerManager) IdleCount(_ string) int {
 	return rt.count - assigned
 }
 
+// TakeIdle removes up to n workers with no job from the pool (they leave it
+// for a post as soldiers) and returns how many went.
+func (vm *WorkerManager) TakeIdle(n int) int {
+	n = min(n, vm.IdleCount("worker"))
+	if n <= 0 {
+		return 0
+	}
+	vm.domains["worker"].count -= n
+	return n
+}
+
 // TotalPop returns total population
 func (vm *WorkerManager) TotalPop() int {
 	return vm.domains["worker"].count

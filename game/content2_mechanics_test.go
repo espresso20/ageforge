@@ -162,6 +162,7 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 		ge.mu.Lock()
 		ge.Resources.UnlockResource("soldiers")
 		ge.Buildings.counts["garrison"] = 3
+		ge.postAllSoldiers()
 		ge.recalculateRates()
 		ge.mu.Unlock()
 	}

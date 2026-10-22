@@ -22,6 +22,9 @@ type peopleKind struct {
 	count int
 	// out is the soldiers away on missions (the soldiers only).
 	out int
+	// posts is every post the soldiers have; more than count when posts wait
+	// on food (the soldiers only, 0 when none do).
+	posts int
 	// role colours the kind in the People box and in the panel's bar.
 	role theme.Role
 	// kind is the panel's colour kind for the same role.
@@ -50,6 +53,9 @@ func peopleKinds(st game.GameState) []peopleKind {
 		mk(config.TermScholars, ws.Scholars, theme.RoleLabel, xLore),
 	}
 	kinds[2].out = out
+	if st.Military.SoldierCap > ws.Soldiers {
+		kinds[2].posts = st.Military.SoldierCap
+	}
 	return kinds
 }
 
@@ -58,6 +64,9 @@ func peopleKinds(st game.GameState) []peopleKind {
 // N out" after the count when there is room.
 func (k peopleKind) boxLine(w int) string {
 	count := FormatNumber(float64(k.count))
+	if k.posts > k.count {
+		count += "/" + FormatNumber(float64(k.posts))
+	}
 	if k.out > 0 {
 		// Only when the whole name still fits beside it.
 		for _, with := range []string{

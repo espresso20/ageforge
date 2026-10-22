@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -42,25 +43,33 @@ func TestNoBuildingMakesOrStoresSoldiers(t *testing.T) {
 	}
 }
 
-// A new military building brings its soldiers at once, with the housing full:
-// they move in, the reserve stops growing and recruiting is refused.
-func TestSoldiersMoveInWithHousingFull(t *testing.T) {
+// standWarCamps stands n War Camps and runs the staffing pass for the posts,
+// as a tick does, so the soldiers the food allows take their posts.
+func standWarCamps(ge *GameEngine, n int) {
+	ge.mu.Lock()
+	ge.Buildings.counts["war_camp"] = n
+	ge.fillSoldierPosts()
+	ge.recalculateRates()
+	ge.mu.Unlock()
+}
+
+// With the homes full and no reserve, a new military building's soldiers
+// arrive anyway, as far as the food margin allows: they move in past the
+// homes, the reserve stops growing and recruiting is refused.
+func TestSoldiersArriveWithHousingFull(t *testing.T) {
 	posts := warCampPosts(t)
 	ge := peopleEngine(t)
 	before := ge.GetState()
-	if before.Workers.TotalPop != before.Workers.MaxPop || before.Workers.TotalPop == 0 {
-		t.Fatalf("setup: population %d of %d housing, want full", before.Workers.TotalPop, before.Workers.MaxPop)
+	if before.Workers.TotalPop != before.Workers.MaxPop || before.Workers.TotalIdle != 0 || before.Workers.TotalPop == 0 {
+		t.Fatalf("setup: population %d of %d housing with %d in reserve, want full and no reserve", before.Workers.TotalPop, before.Workers.MaxPop, before.Workers.TotalIdle)
 	}
-	ge.mu.Lock()
-	ge.Buildings.counts["war_camp"] = 2
-	ge.recalculateRates()
-	ge.mu.Unlock()
+	standWarCamps(ge, 2)
 	st := ge.GetState()
 	if st.Workers.Soldiers != 2*posts {
 		t.Fatalf("soldiers = %d, want %d", st.Workers.Soldiers, 2*posts)
 	}
 	if st.Workers.TotalPop != before.Workers.TotalPop+2*posts {
-		t.Errorf("population %d, want %d: the soldiers move in at once", st.Workers.TotalPop, before.Workers.TotalPop+2*posts)
+		t.Errorf("population %d, want %d: the soldiers arrive on top of the town", st.Workers.TotalPop, before.Workers.TotalPop+2*posts)
 	}
 	if st.Workers.TotalPop <= st.Workers.MaxPop {
 		t.Errorf("population %d should be past the housing %d", st.Workers.TotalPop, st.Workers.MaxPop)
@@ -78,6 +87,77 @@ func TestSoldiersMoveInWithHousingFull(t *testing.T) {
 	if st.Workers.HeldBy != HeldHousing {
 		t.Errorf("held by %q, want housing", st.Workers.HeldBy)
 	}
+	// Arriving never starved the town: the food margin held.
+	ge.mu.Lock()
+	net, per, margin := ge.recruitFood()
+	ge.mu.Unlock()
+	if net < per && net < margin {
+		t.Errorf("net food %v after the soldiers arrived, below one person's food %v and the margin %v", net, per, margin)
+	}
+}
+
+// Posts fill from the reserve first: a person with no job takes a post and
+// the population does not change; only the rest are new arrivals.
+func TestSoldiersTakePostsFromTheReserveFirst(t *testing.T) {
+	posts := warCampPosts(t)
+	ge := peopleEngine(t)
+	ge.mu.Lock()
+	ge.Workers.Recruit("worker", 5, 1000) // five more than the jobs: the reserve
+	ge.mu.Unlock()
+	before := ge.GetState()
+	idle := before.Workers.TotalIdle
+	if idle <= 0 || idle >= posts {
+		t.Fatalf("setup: %d in the reserve, want some but fewer than the %d posts", idle, posts)
+	}
+	standWarCamps(ge, 1)
+	st := ge.GetState()
+	if st.Workers.Soldiers != posts || st.Workers.TotalIdle != 0 {
+		t.Fatalf("soldiers %d, reserve %d; want %d soldiers and the reserve used up", st.Workers.Soldiers, st.Workers.TotalIdle, posts)
+	}
+	if want := before.Workers.TotalPop + posts - idle; st.Workers.TotalPop != want {
+		t.Errorf("population %d, want %d: %d came out of the reserve, %d arrived", st.Workers.TotalPop, want, idle, posts-idle)
+	}
+}
+
+// With the food margin failing, the posts wait: nobody arrives, nobody starves,
+// the log says so once, and the posts fill when the food is back.
+func TestSoldierPostsWaitOnFood(t *testing.T) {
+	posts := warCampPosts(t)
+	ge := peopleEngine(t)
+	ge.mu.Lock()
+	camps := ge.Buildings.counts["gathering_camp"]
+	ge.Buildings.counts["gathering_camp"] = 0
+	ge.recalculateRates()
+	ge.mu.Unlock()
+	popBefore := ge.GetState().Workers.TotalPop
+	standWarCamps(ge, 1)
+	for i := 0; i < 6; i++ {
+		ge.StepTicks(staffEveryTicks)
+	}
+	st := ge.GetState()
+	if st.Workers.Soldiers != 0 || st.Workers.TotalPop > popBefore {
+		t.Fatalf("with no food margin %d soldiers arrived (population %d, was %d)", st.Workers.Soldiers, st.Workers.TotalPop, popBefore)
+	}
+	if st.Military.SoldierCap != posts || st.Military.Posts[0].Posted != 0 || st.Military.Posts[0].Posts != posts {
+		t.Errorf("posts %+v, cap %d: want 0 of %d posted", st.Military.Posts, st.Military.SoldierCap, posts)
+	}
+	lines := 0
+	for _, l := range ge.log {
+		if strings.Contains(l.Message, "posts waiting on food") {
+			lines++
+		}
+	}
+	if lines != 1 {
+		t.Errorf("the log says the posts wait %d times, want once", lines)
+	}
+	ge.mu.Lock()
+	ge.Buildings.counts["gathering_camp"] = camps
+	ge.recalculateRates()
+	ge.mu.Unlock()
+	ge.StepTicks(staffEveryTicks * 4)
+	if got := ge.GetState().Workers.Soldiers; got != posts {
+		t.Errorf("with the food back %d soldiers are posted, want %d", got, posts)
+	}
 }
 
 // Soldiers eat like any person: the same food a tick as a worker.
@@ -86,8 +166,9 @@ func TestSoldiersEat(t *testing.T) {
 	ge := peopleEngine(t)
 	ge.mu.Lock()
 	base := ge.foodDrainLocked()
-	ge.Buildings.counts["war_camp"] = 1
-	ge.recalculateRates()
+	ge.mu.Unlock()
+	standWarCamps(ge, 1)
+	ge.mu.Lock()
 	drain := ge.foodDrainLocked()
 	per := ge.Workers.FoodCostPerWorker()
 	ge.mu.Unlock()
@@ -106,8 +187,8 @@ func TestSoldiersEat(t *testing.T) {
 	}
 }
 
-// The soldiers resource is the posted army, every tick: it follows the copies
-// that stand, a sold copy takes its soldiers with it, and nothing else moves it.
+// The soldiers resource is the posted army, every tick: it follows the posts
+// that fill, a lost copy takes its soldiers with it, and nothing else moves it.
 func TestSoldiersResourceIsThePostedArmyEachTick(t *testing.T) {
 	posts := warCampPosts(t)
 	ge := peopleEngine(t)
@@ -122,6 +203,7 @@ func TestSoldiersResourceIsThePostedArmyEachTick(t *testing.T) {
 	ge.mu.Lock()
 	ge.Buildings.counts["war_camp"] = 3
 	ge.mu.Unlock()
+	ge.StepTicks(staffEveryTicks * 2)
 	for i := 0; i < 5; i++ {
 		ge.StepTicks(1)
 		r, p, rate := army()
@@ -157,10 +239,7 @@ func TestSoldiersResourceIsThePostedArmyEachTick(t *testing.T) {
 func TestSoldierPostsInTheState(t *testing.T) {
 	posts := warCampPosts(t)
 	ge := peopleEngine(t)
-	ge.mu.Lock()
-	ge.Buildings.counts["war_camp"] = 2
-	ge.recalculateRates()
-	ge.mu.Unlock()
+	standWarCamps(ge, 2)
 	st := ge.GetState()
 	if len(st.Military.Posts) != 1 {
 		t.Fatalf("posts %+v, want one row", st.Military.Posts)

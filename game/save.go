@@ -221,6 +221,13 @@ type GameSave struct {
 	// ScholarShare is the research setting, the percent of the scholars that
 	// research. Absent when it is the default, 100.
 	ScholarShare *int `json:"scholar_share,omitempty"`
+	// SoldiersPosted is the soldiers at the posts of each military building
+	// (soldiers.go). omitempty: a town with no military building writes
+	// nothing.
+	SoldiersPosted map[string]int `json:"soldiers_posted,omitempty"`
+	// SoldiersWaiting are the military buildings whose waiting posts the log
+	// has said so for (so a load does not say it again).
+	SoldiersWaiting []string `json:"soldiers_waiting,omitempty"`
 	// TreeVersion is the tech tree's rules the save was written under
 	// (config.TechTreeVersion; absent on saves from before the tree's first
 	// lock). TreeGraceAge is the age a save from an older version was in
@@ -774,6 +781,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		StorageRules:           config.StorageRules,
 		ScholarRules:           scholarRules,
 		ScholarShare:           ge.scholarShareSave(),
+		SoldiersPosted:         ge.soldiersPostedSave(),
+		SoldiersWaiting:        sortedKeys(ge.soldierWaitLogged),
 		TreeVersion:            config.TechTreeVersion,
 		TreeGraceAge:           ge.Buildings.graceAge,
 		GrantedFeatures:        ge.grantedFeatureKeys(),
@@ -918,7 +927,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.Resources.LoadStorage(save.Storage)
 	}
 	ge.Buildings.LoadCounts(save.Buildings)
-	ge.soldiersSeen = ge.soldierTotal()
+	ge.loadSoldiersPosted(&save)
 	ge.Workers.LoadWorkers(save.Workers)
 	if save.Stats != nil {
 		// Deep copy stats to avoid aliasing with the deserialized save

@@ -19,6 +19,8 @@ func stageSoldierProduction(t *testing.T, ge *GameEngine, numBarracks int) {
 	ge.mu.Lock()
 	ge.Buildings.counts[barracks] = numBarracks
 	ge.Buildings.unlocked[barracks] = true
+	// Food enough that the food margin lets the soldiers take their posts.
+	ge.Buildings.counts["gathering_camp"] = 60
 	ge.Resources.UnlockResource("soldiers")
 	ge.Resources.UnlockResource("food")
 	ge.Resources.AddStorage("food", 1e9)
@@ -60,13 +62,13 @@ func TestSoldiersTrained_AccruesAcrossTicks(t *testing.T) {
 		t.Fatalf("SoldiersTrained before any tick = %v, want 0", got)
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 2*staffEveryTicks; i++ {
 		tickWithFood(ge)
 	}
 
 	trained := ge.Stats.SoldiersTrained
 	if trained <= 0 {
-		t.Fatalf("SoldiersTrained after 10 ticks = %v, want > 0", trained)
+		t.Fatalf("SoldiersTrained after two staffing passes = %v, want > 0", trained)
 	}
 
 	// The cumulative counter should track the soldiers resource amount while the
@@ -85,7 +87,7 @@ func TestSoldiersTrained_NotDecreasedBySpending(t *testing.T) {
 
 	// Accrue some trained soldiers, then jump the resource amount high enough to
 	// launch an expedition that costs soldiers.
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 2*staffEveryTicks; i++ {
 		tickWithFood(ge)
 	}
 	trainedBefore := ge.Stats.SoldiersTrained
