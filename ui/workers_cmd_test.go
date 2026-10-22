@@ -184,7 +184,7 @@ func TestWorkersHelpAndPanel(t *testing.T) {
 		}
 	}
 	panel = renderPeople(ge.GetState(), faith, 100, 30).String()
-	for _, want := range []string{"Work areas", "Auto-recruit", "Faith", "set", "auto", "roster faith <percent|auto>"} {
+	for _, want := range []string{"Work areas", "Auto-recruit", "Faith", "set", "auto", "roster faith <%|auto>"} {
 		if !strings.Contains(panel, want) {
 			t.Errorf("the People panel's Work tab has no %q:\n%s", want, panel)
 		}
