@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Changed
+- **Homes fill up.** Population grows toward your housing while food lasts, faster for a bigger town. Villagers without a job wait in the reserve and take new jobs at once; the Workers box says what holds your population back.
 - **No more instant techs.** Research left over from a finished tech no longer carries into the next one, gifts of research (events, milestones, expeditions, trade) add at most half a tech, and Grand Discovery only grants techs you could start.
 - **A new Expeditions panel.** The Ready Room shows the age's lands as a map with every offer as a pin and a briefing for the one you pick; the Expedition Report follows every party out and lists what came home. Send with the arrow keys and Enter, or type part of an offer's name.
 - **New buildings cost more.** Every new copy of a building costs about a quarter more than it did, and stores grew to match; wonders are unchanged. Upgrading an older building costs half a new copy, so upgrading first is the cheaper road.

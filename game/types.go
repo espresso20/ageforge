@@ -342,6 +342,15 @@ type WorkerState struct {
 	// HoldTicks is how long the routine still waits after a worker command
 	// (0: it is running).
 	HoldTicks int
+	// HeldBy is what keeps the population from growing toward the housing:
+	// HeldHousing (no room), HeldFood (the food margin test fails) or "" (it
+	// can grow). Reserve is the idle villagers, the same number as TotalIdle.
+	// FoodNet is the net food a tick before Era Mastery, in the units the
+	// villagers eat in, and FoodFeeds the villagers it would feed (FoodNet
+	// over one villager's food, 0 when it is not above zero).
+	HeldBy    string
+	FoodNet   float64
+	FoodFeeds int
 }
 
 // WorkerDomainState represents one worker domain's state

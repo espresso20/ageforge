@@ -6,7 +6,7 @@ Workers are your civilization's labor force. Every building that produces resour
 
 ## Quick Start
 
-- **Workers come on their own.** Build housing and buildings with worker slots. With auto-recruit on (the default), the game recruits into empty slots while housing and food allow, and puts idle workers to work by your [roster](#the-roster).
+- **Workers come on their own.** Build housing and buildings with worker slots. With auto-recruit on (the default), your population grows toward your housing while food allows, new workers fill the empty slots first, and the rest wait in the **reserve**. Workers in the reserve go to work by your [roster](#the-roster) as soon as a slot opens.
 - **Steer, or take over.** `roster faith 40` sends more workers to faith; `roster military 0` keeps military empty. `recruit` and `assign` still work by hand, and a worker you place stays where you put it.
 - **Every worker eats.** Each worker eats the current age's food rate every tick, whatever it does. Keep the food rate positive (see [Food Drain](#food-drain)).
 - **Look at the panel.** `workers` opens the Workers panel: morale, food, the roster, open slots and who works where.
@@ -20,7 +20,7 @@ The first age, step by step, is in [Your First Ten Minutes](first-ten-minutes.md
 There is a single pool of workers. Workers have no domain until they are assigned to a building. Your population is:
 
 ```
-total_workers = idle_workers + sum of all building assignments
+total_workers = reserve (idle workers) + sum of all building assignments
 ```
 
 An assigned worker takes on the **class name** for that building's domain at the current age. A worker on a `gathering_camp` in the Primitive Age is a **Forager**; the same worker on a `story_circle` is a **Shaman**. The class name is only a label: it changes nothing about what the worker produces or eats. There are no separate domain pools.
@@ -28,13 +28,13 @@ An assigned worker takes on the **class name** for that building's domain at the
 - You don't choose a domain when recruiting.
 - Workers can move freely between any buildings that have worker slots.
 - Your population is limited by housing (huts, longhouses and so on).
-- Idle workers eat and produce nothing.
+- Idle workers are your reserve. They eat like any worker and produce nothing; they take a new slot the moment one opens.
 
 ---
 
 ## The Roster
 
-You don't have to recruit or assign workers yourself. The game recruits into empty worker slots while housing and food allow (**auto-recruit**, on by default), and puts idle workers to work by your **roster**: how your workforce splits across the 11 domains. You can steer the split, or take over by hand. A worker you place by hand stays where you put it.
+You don't have to recruit or assign workers yourself. Your population grows toward your housing while food allows (**auto-recruit**, on by default), and the game puts idle workers to work by your **roster**: how your workforce splits across the 11 domains. You can steer the split, or take over by hand. A worker you place by hand stays where you put it.
 
 ```
 roster
@@ -57,7 +57,7 @@ The roster used to be called worker shares, and `workers share` still works in p
 | `workers auto-recruit` | Show whether auto-recruit is on |
 | `workers auto-recruit off` | Stop recruiting automatically; `on` starts it again (`workers autorecruit` works too) |
 
-Each line of `roster` reads like `Faith: 40% (set), 8 workers in 10 slots` or `Food: 34% (auto), 12 workers in 15 slots`. The Workers panel (`workers`) shows the same in its **Roster** section, under a line that says what auto-recruit is doing: on, off, waiting after your last worker command, no housing left, every worker slot is filled, waiting for food, or paused because food ran out.
+Each line of `roster` reads like `Faith: 40% (set), 8 workers in 10 slots` or `Food: 34% (auto), 12 workers in 15 slots`. The Workers panel (`workers`) shows the same in its **Roster** section, under a line that says what auto-recruit is doing: growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out.
 
 ### How the split works
 
@@ -79,21 +79,23 @@ Faith takes its 50% first. Food and lumber split the other 50% by their slots, w
 
 ### The roster routine
 
-Every 5 ticks (10 seconds), and once per step of the offline catch-up (one-minute steps), the game:
+Every 5 ticks (10 seconds), and offline once for every 5 ticks of the catch-up, so time away grows your town as much as time at the screen, the game:
 
 1. moves workers out of domains set to 0 into free slots elsewhere,
 2. puts idle workers to work, each in the domain furthest below its share,
-3. with auto-recruit on, recruits into the empty worker slots as far as housing allows, while the net food rate stays at or above a margin: one worker's food, or 5% of the food production if that is more. It never recruits more workers than there are empty slots, so it never adds idle workers. On known ground ([Era Mastery](prestige.md#era-mastery)) the margin is measured before the age's speed-up, so the same buildings feed the same workforce at any speed.
+3. with auto-recruit on, recruits workers into every empty worker slot at once, by the shares, as far as housing allows and while the net food rate stays at or above a margin: one worker's food, or 5% of the food production if that is more. Past the slots, the population keeps growing toward the housing, by 1% of your population each pass and at least one, under the same food margin; those workers wait idle in the reserve. A bigger town fills faster. On known ground ([Era Mastery](prestige.md#era-mastery)) the margin is measured before the age's speed-up, so the same buildings feed the same workforce at any speed.
 
 Within a domain, buildings fill in this order: buildings that are not superseded before those that are (a building is superseded once a higher tier of its line is open), the newest age first, then the higher tier of its line.
 
-**Food safety.** A recruit your food income can't feed can still come as a food worker, if a food building has a free slot and the worker grows more food than they eat. A staffed food slot adds 80% of the building's food divided by its slots: a worker in a Primitive gathering camp grows about 0.27 food a tick and eats 0.06. So a small food share never stops growth; the extra recruits go to food buildings. While food is short, idle workers go to food buildings first. Nothing is recruited while food is at 0 and workers are starving. The manual `recruit max` still does not check food.
+**Food safety.** A newcomer your food income can't feed can still come as a food worker, if a food building has a free slot and the worker grows more food than they eat. A staffed food slot adds 80% of the building's food divided by its slots: a worker in a Primitive gathering camp grows about 0.27 food a tick and eats 0.06. So a small food share never stops growth; the extra newcomers go to food buildings. While food is short, idle workers go to food buildings first. Nothing is recruited while food is at 0 and workers are starving. The manual `recruit max` still does not check food.
 
 **Your workers stay put.** The routine never takes a worker out of a building, except out of a domain set to 0, so your own `assign` and `unassign` stick. Setting or clearing a share (`roster ...`) moves workers once to match the new shares: one at a time, from the domain furthest over its share to the one furthest under it that has a free slot. Food workers stay where moving them would make the food rate fall below zero.
 
 **The minute's wait.** After a worker command (`recruit`, `assign`, `unassign`, `dismiss`, `sell`, `upgrade`) the routine waits a minute (30 ticks), so it never grabs workers you are moving by hand. After that, workers still idle go to work by your shares. So `unassign` alone may keep a building empty for only a minute; to keep a domain empty, set its share to 0.
 
-**Auto-recruit off.** With `workers auto-recruit off`, nothing is recruited automatically, but idle workers still go to work by your shares after that minute. `workers auto-recruit on` starts recruiting again at once.
+**Auto-recruit off.** With `workers auto-recruit off`, your population stops growing on its own, but idle workers still go to work by your shares after that minute. `workers auto-recruit on` starts growth again at once.
+
+**What holds your population.** The Workers box and the Workers panel say it: `Held by: housing` when every home is full, and `Held by: food` with the net food a tick and how many more workers it feeds when the food margin stops the next newcomer. Nothing is shown while the population is growing.
 
 **Logs.** What the routine does is a routine line in the log (plain text color, and marked `·` in the **Logs** panel): `Roster: recruited 3 workers (population 12/20), put 2 idle workers to work.` The replies to setting a share or switching auto-recruit are routine lines too, except the warning for food at 0. The first time workers arrive in a run (when your population was 0), a note says: "Workers arrive on their own: the game recruits into empty worker slots while housing and food allow, and puts them to work by your roster. Type workers to see them; workers auto-recruit off to recruit by hand." After time away, the welcome back adds what the routine did, for example "While you were away, your roster recruited 12 workers (population 40/50), put 3 idle workers to work."
 
@@ -118,7 +120,7 @@ Within a domain, buildings fill in this order: buildings that are not superseded
 
 ### Recruiting
 
-Workers arrive on their own: with auto-recruit on, the game recruits into empty worker slots while housing and food allow. `recruit` still works when you want workers now, or when you turn auto-recruit off. Workers are recruited from free housing, and you don't name a domain.
+Workers arrive on their own: with auto-recruit on, your population grows toward your housing while food allows. `recruit` still works when you want workers now, or when you turn auto-recruit off. Workers are recruited from free housing, with or without a free slot, and you don't name a domain.
 
 | Command | Effect |
 |---------|--------|
@@ -128,7 +130,7 @@ Workers arrive on their own: with auto-recruit on, the game recruits into empty 
 
 New workers start idle. Put them to work with `assign`, or leave them: a minute after your last worker command, the roster routine puts any still idle to work by your shares.
 
-Recruiting is free, but every worker eats from the moment it joins (see [Food Drain](#food-drain)). **`recruit max`** fills all your free housing and does not check your food income, so it can put you into a deficit. Auto-recruit does check it: it keeps a food margin and fills only empty worker slots.
+Recruiting is free, but every worker eats from the moment it joins (see [Food Drain](#food-drain)). **`recruit max`** fills all your free housing and does not check your food income, so it can put you into a deficit. Auto-recruit does check it: it keeps a food margin.
 
 ### Assigning
 
@@ -174,14 +176,14 @@ Use it in a food deficit (idle workers still eat, so `unassign` doesn't help) or
 `workers` opens the Workers panel. Before your first worker it says how workers arrive and shows your roster. After that it has five sections:
 
 - **Morale**: your morale as a colored bar (green for a bonus, red for a penalty), its cap once wonders have raised it above 100%, and what it does to production.
-- **Summary**: population over housing, idle workers and housing left; food use per tick (and each worker's share of it) and net food per tick, green when rising and red when falling; then how many workers your food production can feed, or a warning that food is falling.
-- **Roster**: what auto-recruit is doing (recruiting as slots open, off, waiting after your last worker command, no housing left, every worker slot filled, waiting for food, or paused because food ran out), then each domain's share (set, or auto) with a bar of its workers over its slots.
+- **Summary**: population over housing, the reserve (idle workers), housing left and what holds your population back; food use per tick (and each worker's share of it) and net food per tick, green when rising and red when falling; then how many workers your food production can feed, or a warning that food is falling.
+- **Roster**: what auto-recruit is doing (growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out), then each domain's share (set, or auto) with a bar of its workers over its slots.
 - **Building slots**: filled slots over total slots across every worker building, with a bar and a percent, and the four buildings with the most open slots (or "All slots filled").
 - **By domain**: each domain with workers, its current class name and head count, and a bar per building showing workers over slots.
 
 <figure class="screen" data-screen="workers"><figcaption>The Workers panel in the Bronze Age: morale, food and housing, then the share of each domain with its workers over its slots.</figcaption></figure>
 
-On the accessible [themes](themes.md) the panel's greens and reds are blue and orange. The Workers box in the sidebar is always visible: population over housing, idle workers, housing left, food use and net food.
+On the accessible [themes](themes.md) the panel's greens and reds are blue and orange. The Workers box in the sidebar is always visible: population over housing, the reserve, housing left, food use, net food and, when something holds your population back, what it is.
 
 ### Completion
 
@@ -497,11 +499,11 @@ Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explore
 
 ### Early game (Primitive and Stone Age)
 
-Build gathering camps and huts together. Each camp holds 3 workers and auto-recruit fills only empty slots, so build camps as you build housing. A worker eats 0.06 food/tick, and a fully staffed camp makes 1.0 food/tick, so a camp covers its own three workers' drain (0.18) several times over. Once food is stable, build a story circle: its two scholars start research at once, with no workers needed. The full walkthrough is [Your First Ten Minutes](first-ten-minutes.md).
+Build gathering camps and huts together. Each camp holds 3 workers and new workers fill empty slots first, so build camps as you build housing. A worker eats 0.06 food/tick, and a fully staffed camp makes 1.0 food/tick, so a camp covers its own three workers' drain (0.18) several times over. Once food is stable, build a story circle: its two scholars start research at once, with no workers needed. The full walkthrough is [Your First Ten Minutes](first-ten-minutes.md).
 
 ### Mid game (Bronze and Iron Age)
 
-- Lumber and masonry buildings are staffed as they finish, as far as housing and food allow. Stone and wood go into most building costs, so keep your housing ahead of your worker slots.
+- Lumber and masonry buildings are staffed as they finish, as far as housing and food allow. Stone and wood go into most building costs, so keep your housing ahead of your worker slots: workers in the reserve take a new building's slots at once.
 - A `war_camp` produces the `soldiers` resource from the Iron Age, spent on campaigns. On auto its slots draw workers like any other building's; if you don't need soldiers yet, `roster military 0` keeps those workers for your producers.
 - From the Iron Age, this age's masonry building makes stone, iron and iron ore, and from the Iron Age to the Classical marble too. The routine fills the newest buildings first. A mine that makes only a raw (the titanium and crystal mines, later on) is worth building for the buildings that cost it (see [What the ores are for](resources.md#what-the-ores-are-for)).
 
@@ -509,7 +511,7 @@ Build gathering camps and huts together. Each camp holds 3 workers and auto-recr
 
 - As food buildings get more productive, you need fewer food workers. Give food a small share (not 0) to move the rest elsewhere. The routine still sends extra recruits to food buildings when the food income can't feed them.
 - Every worker eats the age's rate, and that rate keeps rising, so a large late-game population needs a large food income. Scale food before headcount.
-- After an age advance, the new buildings fill from idle workers and new recruits. When housing is full, `unassign <old building> all` frees workers, and a minute later the routine puts them to work by your shares, newer buildings first. Or `assign <new building> all` places them yourself.
+- After an age advance, the new buildings fill from the reserve and new workers. When housing is full, `unassign <old building> all` frees workers, and a minute later the routine puts them to work by your shares, newer buildings first. Or `assign <new building> all` places them yourself.
 
 ### Milestone: scholars_haven
 
@@ -524,7 +526,7 @@ Focusing on one domain can finish milestone chains faster; spreading protects yo
 - **Let the roster do the busywork.** Set a share when you want more workers in one domain or none in it, and `roster auto` to go back.
 - **Food first.** Auto-recruit recruits only while food allows, so early on your food buildings set the pace of growth.
 - **Faith workers before epoch transitions.** Your faith strength sets the epoch and catastrophe odds, and fully staffed faith buildings are what raise it (see [Faith](faith.md#faith-threshold-bands)).
-- **Watch the idle count.** `status` (or `s`) shows it. The game puts idle workers to work every 5 ticks, so workers who stay idle have no free slot to go to: build more worker buildings.
+- **Watch the reserve.** `status` (or `s`) shows it as the idle count. Workers in the reserve have no free slot to go to: build more worker buildings and they take the slots at once.
 - **`dismiss` cuts drain, `unassign` doesn't.** Idle workers still eat.
 
 ---

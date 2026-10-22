@@ -34,6 +34,11 @@ import (
 // game.BaseTickInterval (a game test checks it).
 const TickSeconds = 2.0
 
+// PopGrowthShare is the part of the population that moves in on each staffing
+// pass while there is housing and food for them (at least one villager). The
+// bigger the town, the faster it fills.
+const PopGrowthShare = 0.01
+
 // PacingStretch is how much longer every age from the Bronze Age on runs than
 // on the curve the game's tick clocks were first typed for (about three days
 // to the Modern Age). AgeTargets already holds the stretched lengths. Every

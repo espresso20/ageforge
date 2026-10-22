@@ -105,7 +105,7 @@ plan rm 4
 
 | Command | Description |
 |---|---|
-| `recruit [count\|max]` | Recruit workers into free housing. New workers start idle; put them to work with `assign`, or leave them: a minute later any still idle go to work by your roster |
+| `recruit [count\|max]` | Recruit workers into free housing, with or without a free slot. New workers start idle, in the reserve; put them to work with `assign`, or leave them: a minute later any still idle go to work by your roster |
 | `assign <building> [count\|all]` | Assign idle workers to a building (the building sets their domain) |
 | `unassign <building> [count\|all]` | Take workers out of a building and back to idle |
 | `dismiss <building> [count\|all]` | Remove workers from a building and from your population for good |
@@ -114,9 +114,9 @@ plan rm 4
 | `roster <domain> [percent\|auto]` | With a percent from 0 to 100, set that domain's share of your workforce; decimals and a `%` sign are allowed (`roster lumber 12.5%`), and 0 keeps the domain empty. With `auto`, put the domain back on auto. With neither, print its line |
 | `roster auto` | Put every domain back on auto, the default: workers follow your buildings' worker slots |
 | `workers share ...` | The roster's old name. It still works, with the same arguments |
-| `workers auto-recruit [on\|off]` (or `workers autorecruit`) | Bare, show whether auto-recruit is on. `on` (the default) lets the game recruit into empty worker slots while housing and food allow; `off` leaves recruiting to you |
+| `workers auto-recruit [on\|off]` (or `workers autorecruit`) | Bare, show whether auto-recruit is on. `on` (the default) lets your population grow toward your housing while food allows, filling empty worker slots at once; `off` leaves recruiting to you |
 
-You don't have to recruit or assign workers yourself. With auto-recruit on (the default), the game recruits into empty worker slots while housing and food allow, and every 5 ticks (about 10 seconds) it puts idle workers to work by your **roster**: each domain's percent of your whole workforce, with domains on auto splitting the rest by their worker slots. It never takes a worker out of a building to keep to the shares, except out of a domain set to 0, so your own `assign` and `unassign` stick, and after any worker command it waits a minute before it places anyone. The full rules are in [Roster](workers-and-domains.md#the-roster).
+You don't have to recruit or assign workers yourself. With auto-recruit on (the default), your population grows toward your housing while food allows (empty worker slots fill at once, and past them 1% of it every 5 ticks, at least one worker, waits in the reserve), and every 5 ticks (about 10 seconds) it puts idle workers to work by your **roster**: each domain's percent of your whole workforce, with domains on auto splitting the rest by their worker slots. It never takes a worker out of a building to keep to the shares, except out of a domain set to 0, so your own `assign` and `unassign` stick, and after any worker command it waits a minute before it places anyone. The full rules are in [Roster](workers-and-domains.md#the-roster).
 
 ```
 recruit

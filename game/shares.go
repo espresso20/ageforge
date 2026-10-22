@@ -22,11 +22,16 @@ import (
 //     set shares leave in proportion to their worker slots. With no shares
 //     set, the default, every domain is on auto, so the workers follow the
 //     buildings you have. A share of 0 keeps a domain empty.
-//   - The routine runs every staffEveryTicks ticks and once per offline step.
+//   - The routine runs every staffEveryTicks ticks, and offline as many times
+//     as the ticks of each catch-up step hold.
 //     It puts idle workers to work, then, with auto-recruit on (the default),
-//     recruits into the empty worker slots while housing allows and the food
-//     income stays positive. Each worker goes to the domain furthest below its
-//     share; within a domain, this age's buildings fill first, newest first.
+//     recruits into every empty worker slot at once while housing allows and
+//     the food income stays positive, and past the slots the population grows
+//     toward the housing by config.PopGrowthShare of itself (at least one
+//     worker) a pass. Workers without a slot wait idle in the reserve and
+//     take the next slot that opens. Each worker goes to the
+//     domain furthest below its share; within a domain, this age's buildings
+//     fill first, newest first.
 //   - It never takes a worker out of a building, except out of a domain whose
 //     share is 0. A share command moves workers once, to match the new
 //     shares; after that the player's own assign and unassign stick.
@@ -430,13 +435,25 @@ func (ge *GameEngine) staffByShares(recruit bool) staffCounts {
 	// Cheap checks first: in a settled game every slot is filled or nobody
 	// can come, and this runs every few ticks.
 	zero := ge.zeroShareStaffed()
-	if !zero && ge.freeSlots() <= 0 {
-		return c
-	}
+	free := ge.freeSlots()
 	idle := ge.Workers.IdleCount("worker")
-	room := 0
+	room, reserve := 0, 0
 	if recruit && !ge.autoRecruitOff && ge.Resources.Get("food") > 0 {
+		// Jobs fill at once, as far as housing and food allow; growth past
+		// the free slots, into the reserve, is a share of the population a
+		// pass.
 		room = ge.popCapLocked() - ge.Workers.TotalPop()
+		reserve = popGrowthStep(ge.Workers.TotalPop())
+		if room > 0 && free <= 0 {
+			// Nowhere to put them: the newcomers join the reserve, which only
+			// the food margin can refuse.
+			if net, per, margin := ge.recruitFood(); net-per < margin {
+				room = 0
+			}
+		}
+	}
+	if !zero && free <= 0 && room <= 0 {
+		return c
 	}
 	if idle <= 0 && room <= 0 && !zero {
 		return c
@@ -445,7 +462,7 @@ func (ge *GameEngine) staffByShares(recruit bool) staffCounts {
 	c.moved = ge.drainZeroShares(sv)
 	c.placed = ge.placeIdle(sv)
 	if room > 0 {
-		c.hired = ge.recruitByShares(sv, room)
+		c.hired = ge.recruitByShares(sv, room, reserve)
 	}
 	return c
 }
@@ -512,22 +529,29 @@ func (ge *GameEngine) placeIdle(sv *staffView) int {
 	return n
 }
 
-// recruitByShares recruits up to room workers into the free slots, by the
-// shares, while the food rate stays at or above the margin. A recruit the
+// popGrowthStep is how many villagers move in on one pass of the routine: a
+// share of the population (config.PopGrowthShare), at least one.
+func popGrowthStep(pop int) int {
+	return max(1, int(math.Ceil(float64(float64(pop)*config.PopGrowthShare)-1e-9)))
+}
+
+// recruitByShares recruits up to room workers while the food rate stays at
+// or above the margin. They fill every free slot at once, by the shares; past
+// the slots, up to reserve of them stay idle, in the reserve. A recruit the
 // food won't feed goes to a food building instead when that worker grows
 // more than they eat. Returns how many it recruited.
-func (ge *GameEngine) recruitByShares(sv *staffView, room int) int {
+func (ge *GameEngine) recruitByShares(sv *staffView, room, reserve int) int {
 	net, per, margin := ge.recruitFood()
 	factor := ge.foodWorkerFactor()
 	plan := make([]int, len(sv.doms))
-	n, food := 0, 0
+	n, food, joined := 0, 0, 0
 	for n < room {
 		i := nextShareDomain(sv.doms, -1)
-		if i < 0 {
+		if i < 0 && joined >= reserve {
 			break
 		}
 		gain := 0.0
-		if i == sv.food {
+		if i >= 0 && i == sv.food {
 			gain = ge.foodGainAt(sv, food, factor)
 		}
 		if net+gain-per < margin {
@@ -541,12 +565,16 @@ func (ge *GameEngine) recruitByShares(sv *staffView, room int) int {
 			}
 			i, gain = f, g
 		}
-		if i == sv.food {
-			food++
+		if i >= 0 {
+			if i == sv.food {
+				food++
+			}
+			plan[i]++
+			sv.doms[i].assigned++
+		} else {
+			joined++
 		}
 		net = net + gain - per
-		plan[i]++
-		sv.doms[i].assigned++
 		n++
 	}
 	if n == 0 || !ge.Workers.Recruit("worker", n, ge.popCapLocked()) {
@@ -666,7 +694,7 @@ func (ge *GameEngine) keepSharesLive() {
 		// The first recruits of a run (or after everyone died): say once,
 		// as a note rather than a routine line, that this happens on its
 		// own.
-		ge.addLog("info", "Workers arrive on their own: the game recruits into empty worker slots while housing and food allow, and puts them to work by your roster. Type workers to see them; workers auto-recruit off to recruit by hand.")
+		ge.addLog("info", "Workers arrive on their own: the game recruits workers while housing and food allow, puts them to work by your roster, and keeps the rest in the reserve. Type workers to see them; workers auto-recruit off to recruit by hand.")
 	}
 }
 
@@ -875,13 +903,50 @@ func ShareRows(st GameState) []ShareRow {
 	return rows
 }
 
+// What holds the population back (WorkerState.HeldBy).
+const (
+	HeldNone    = ""        // it can grow
+	HeldHousing = "housing" // no room in the housing
+	HeldFood    = "food"    // the food margin test fails (or the store is empty)
+)
+
+// popHoldLocked says what holds the population back right now, with the net
+// food a tick and how many villagers it feeds (WorkerState.HeldBy). Caller
+// holds the lock.
+func (ge *GameEngine) popHoldLocked() (by string, net float64, feeds int) {
+	net, per, margin := ge.recruitFood()
+	if per > 0 && net > 0 {
+		feeds = int(net / per)
+	}
+	switch {
+	case ge.popCapLocked()-ge.Workers.TotalPop() <= 0:
+		return HeldHousing, net, feeds
+	case ge.Resources.Get("food") <= 0:
+		return HeldFood, net, feeds
+	case net-per >= margin:
+		return HeldNone, net, feeds
+	}
+	// The food won't feed an idle villager, but a food building with a free
+	// slot can still take one that grows more than they eat
+	// (recruitByShares).
+	if ge.freeSlots() > 0 {
+		sv := ge.newStaffView()
+		if f := sv.food; f >= 0 && !sv.doms[f].zero && sv.doms[f].free() > 0 {
+			g := ge.foodGainAt(sv, 0, ge.foodWorkerFactor())
+			if g > per && net+g-per >= margin {
+				return HeldNone, net, feeds
+			}
+		}
+	}
+	return HeldFood, net, feeds
+}
+
 // Recruit statuses, for the Workers panel (RecruitStatus).
 const (
-	RecruitActive  = ""        // recruiting as slots open
+	RecruitActive  = ""        // the population is growing
 	RecruitOff     = "off"     // auto-recruit is off
 	RecruitHeld    = "held"    // waiting after a worker command
 	RecruitHousing = "housing" // no housing left
-	RecruitSlots   = "slots"   // every worker slot is filled or has an idle worker for it
 	RecruitFood    = "food"    // the food income won't feed another worker
 	RecruitStarve  = "starve"  // workers are starving
 )
@@ -895,28 +960,11 @@ func RecruitStatus(st GameState) string {
 		return RecruitOff
 	case ws.HoldTicks > 0:
 		return RecruitHeld
-	case ws.MaxPop-ws.TotalPop <= 0:
+	case ws.HeldBy == HeldHousing:
 		return RecruitHousing
-	}
-	free := 0
-	for _, r := range ShareRows(st) {
-		if !(r.Set && r.Percent <= 0) {
-			free += max(0, r.Slots-r.Workers)
-		}
-	}
-	if free-ws.TotalIdle <= 0 {
-		return RecruitSlots
-	}
-	food := st.Resources["food"]
-	if food.Amount <= 0 {
+	case st.Resources["food"].Amount <= 0:
 		return RecruitStarve
-	}
-	per := 0.0
-	if cls, ok := st.Ruleset().WorkerClass("food", st.Age); ok {
-		per = cls.FoodCost
-	}
-	net := foodBeforeMastery(food.Rate, food.Breakdown) - ws.FoodDrain
-	if net-per < recruitFoodMargin(net, ws.FoodDrain, per) {
+	case ws.HeldBy == HeldFood:
 		return RecruitFood
 	}
 	return RecruitActive

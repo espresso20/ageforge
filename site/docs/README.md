@@ -13,7 +13,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 - **22 ages in 7 epochs**, from the Primitive Age to the Transcendent Age.
 - **About a week for a first run**: that is real time, to the Modern Age and a full run's prestige. The game is paced for checking in a few times a day.
 - **Offline progress**: when you load a save, the game credits the time since you saved, up to 24 hours at 50% of your production. Construction and research finish, the build plan runs and your workers keep staffing as that time passes.
-- **Workers that staff themselves**: workers arrive on their own while housing and food allow (auto-recruit) and go to work by your roster across 11 worker domains. You can still recruit and assign by hand.
+- **Workers that staff themselves**: workers move in on their own toward your housing while food allows (auto-recruit), and the ones without a job wait in the reserve and go to work by your roster across 11 worker domains. You can still recruit and assign by hand.
 - **The build plan**: queue up to 60 builds, techs, trades and an advance. The game starts each one as the resources come in, while you play and while you are away.
 - **302 buildings**: a 14-lineage production system plus storage, monuments and 22 wonders, one per age. You need each age's wonder to advance.
 - **25 resources**, from food and wood up to Quantum Flux (soldiers included), and **203 technologies** in prerequisite chains.

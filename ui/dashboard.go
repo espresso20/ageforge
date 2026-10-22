@@ -57,6 +57,8 @@ type Dashboard struct {
 	sidebar       *fitView
 	sidebarActive string // the open panel, highlighted in the list
 	workerMiniTV  *fitView
+	workerCol     *tview.Flex // the right column, which sizes the Workers box to its lines
+	workerDetail  bool        // the terminal has the rows for the Workers box's food detail line
 
 	// Shared UI
 	logTV            *tview.TextView
@@ -497,16 +499,18 @@ func (d *Dashboard) build() {
 		if d.lastState == nil {
 			return ""
 		}
-		return workerMiniText(*d.lastState, w)
+		return workerMiniText(*d.lastState, w, d.workerDetail)
 	})
 	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ")
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Color(theme.RoleAccent)) })
 
-	// The Workers box is its four lines and its border: every other row of
-	// the column is the Panels list's.
+	// The Workers box is its lines (four, and one or two that say what holds
+	// the population back) and its border: every other row of the column is
+	// the Panels list's (refreshWorkerMini sizes the box).
 	rightCol := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(d.sidebar, 0, 1, false).
-		AddItem(d.workerMiniTV, 6, 0, false)
+		AddItem(d.workerMiniTV, workerMiniBaseRows+2, 0, false)
+	d.workerCol = rightCol
 
 	// Main horizontal: economy (permanent, full height) + right column (sidebar + worker mini)
 	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -927,32 +931,106 @@ func (d *Dashboard) announceBadges() {
 
 func (d *Dashboard) refreshWorkerMini(game.GameState) {
 	// Written from d.lastState for the box's width at its next draw
-	// (workerMiniText).
+	// (workerMiniText). The box is as tall as its lines.
+	if d.workerCol != nil && d.lastState != nil {
+		// The food detail line is the one that goes first on a short terminal:
+		// at 24 rows the Panels list needs every row the box leaves it.
+		_, _, _, rootH := d.root.GetRect()
+		d.workerDetail = rootH >= workerDetailMinRows
+		rows := strings.Count(workerMiniText(*d.lastState, sidebarW-2, d.workerDetail), "\n")
+		d.workerCol.ResizeItem(d.workerMiniTV, rows+2, 0)
+	}
 	d.workerMiniTV.changed()
 }
 
+// workerDetailMinRows is the terminal height from which the Workers box adds
+// the line that says how much food is spare and how many it feeds.
+const workerDetailMinRows = 30
+
+// workerMiniBaseRows is the Workers box's lines when nothing holds the
+// population back: the headcount, housing left, food use and food net.
+const workerMiniBaseRows = 4 // (five when the reserve needs a line of its own)
+
+// heldByLines says what holds the population back, for a box w cells wide (0:
+// any width), as "Held by: food" and, for food, a second line with the net
+// food and the villagers it feeds. Nothing when the population can grow.
+func heldByLines(ws game.WorkerState, w int) []string {
+	fits := func(plain string) bool { return w <= 0 || runeLen(plain) <= w }
+	switch ws.HeldBy {
+	case game.HeldHousing:
+		return []string{"Held by: housing"}
+	case game.HeldFood:
+		x := textfmt.RateValue(ws.FoodNet) // "+0.45"
+		feeds := fmt.Sprintf("feeds %d more", ws.FoodFeeds)
+		for _, line := range []string{
+			x + " food a tick " + feeds,
+			x + "/tick " + feeds,
+			x + " " + feeds,
+			feeds,
+		} {
+			if fits(line) {
+				return []string{"Held by: food", line}
+			}
+		}
+		return []string{"Held by: food"}
+	}
+	return nil
+}
+
+// heldByText is heldByLines for one line (the roster command and panel): the
+// food form joins its two parts, "Held by: food (+0.45 food a tick feeds 3
+// more)".
+func heldByText(ws game.WorkerState) string {
+	lines := heldByLines(ws, 0)
+	switch len(lines) {
+	case 0:
+		return ""
+	case 1:
+		return lines[0]
+	}
+	return lines[0] + " (" + lines[1] + ")"
+}
+
 // workerMiniText writes the Workers box for a box w cells wide (0: any
-// width): population over housing and the idle, housing left, what the
-// workers eat and what food nets. A count too long for its line is written
+// width): population over housing and the reserve, housing left, what the
+// workers eat, what food nets and what holds the population back (with the
+// food detail line when detail is set). A count too long for its line is written
 // short (51.8M for 51785785), and a rate too long drops to "/t".
-func workerMiniText(state game.GameState, w int) string {
+func workerMiniText(state game.GameState, w int, detail bool) string {
 	ws := state.Workers
 	fits := func(plain string) bool { return w <= 0 || runeLen(plain) <= w }
 	num := func(n int) string { return fmt.Sprintf("%d", n) }
 	short := func(n int) string { return FormatNumber(float64(n)) }
 	var sb strings.Builder
 
+	// "pop/housing  Reserve: n" on one line while it fits (counts written short,
+	// then one space, when that helps); otherwise the reserve gets a line of
+	// its own.
 	pop, housing, idle := num(ws.TotalPop), num(ws.MaxPop), num(ws.TotalIdle)
-	if !fits(pop + "/" + housing + "  Idle: " + idle) {
+	gap := "  "
+	if !fits(pop + "/" + housing + gap + "Reserve: " + idle) {
 		pop, housing, idle = short(ws.TotalPop), short(ws.MaxPop), short(ws.TotalIdle)
 	}
-	fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]  [gray]Idle:[white] %s[-]\n", pop, housing, idle)
-
-	left := num(ws.MaxPop - ws.TotalPop)
-	if !fits("Housing left: " + left) {
-		left = short(ws.MaxPop - ws.TotalPop)
+	if !fits(pop + "/" + housing + gap + "Reserve: " + idle) {
+		gap = " "
 	}
-	fmt.Fprintf(&sb, "[gray]Housing left:[white] %s[-]\n", left)
+	split := !fits(pop + "/" + housing + gap + "Reserve: " + idle)
+	if split {
+		fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]\n[gray]Reserve:[white] %s[-]\n", pop, housing, idle)
+	} else {
+		fmt.Fprintf(&sb, "[yellow]%s[white]/[green]%s[-]%s[gray]Reserve:[white] %s[-]\n", pop, housing, gap, idle)
+	}
+
+	// On a short terminal, a reserve line of its own and a Held-by line take
+	// the row of Housing left (the first line already says population over
+	// housing): the Panels list needs every row the box leaves it.
+	if !(split && !detail && ws.HeldBy != game.HeldNone) {
+		left := num(ws.MaxPop - ws.TotalPop)
+		if !fits("Housing left: " + left) {
+			left = short(ws.MaxPop - ws.TotalPop)
+		}
+		fmt.Fprintf(&sb, "[gray]Housing left:[white] %s[-]\n", left)
+	}
 
 	// note: textfmt.Rate carries its own sign, so no manual "+"/"-" prefixes here.
 	rate := func(label string, v float64) string {
@@ -969,6 +1047,12 @@ func workerMiniText(state game.GameState, w int) string {
 			netColor = "red"
 		}
 		fmt.Fprintf(&sb, "[gray]Food net:[%s] %s[-]\n", netColor, rate("Food net:", food.Rate))
+	}
+	if lines := heldByLines(ws, w); len(lines) > 0 {
+		fmt.Fprintf(&sb, "[gray]%s[-]\n", lines[0])
+		if len(lines) > 1 && detail {
+			fmt.Fprintf(&sb, "[gray]%s[-]\n", lines[1])
+		}
 	}
 	return sb.String()
 }
