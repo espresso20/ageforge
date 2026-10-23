@@ -46,6 +46,9 @@ const (
 	leftState    = "state: it ends up in the state or a save, which never holds a script's text"
 	leftKey      = "key: a key, a file name, a header or a format the code reads back, not words"
 	leftDev      = "developers: a line of the debug log, a dev command or an audit, which a player does not read"
+	leftUnits    = "units: the suffix of a number (Qi, Oc, No), which reads the same in any script"
+	leftGlue     = "glue: a joining word the code also splits a name by or looks for in it, put back as it was found"
+	leftSearch   = "search: a word the code looks for in a line written in plain English (a line under a script is read by its tags)"
 	leftOnce     = "once: made when the game starts or in a constant, so it cannot follow the switch"
 )
 
@@ -390,7 +393,10 @@ func fixImports(rel string, src []byte) ([]byte, error) {
 		return edit{lo, hi, ""}
 	}
 
-	if usesVibe && block != nil && !block.Lparen.IsValid() {
+	if usesVibe && block == nil {
+		// A file with no imports at all: the import goes in after the package clause.
+		edits = append(edits, edit{off(f.Name.End()), off(f.Name.End()), "\n\nimport " + vibeImport})
+	} else if usesVibe && block != nil && !block.Lparen.IsValid() {
 		// A single import with no parentheses: "fmt" alone, or something else.
 		spec := block.Specs[0].(*ast.ImportSpec)
 		switch {

@@ -180,7 +180,7 @@ func TestBoard_RegeneratedOnAnAgeAdvance(t *testing.T) {
 		if slot.Offer == nil || slot.Offer.Age != "bronze_age" {
 			t.Fatalf("slot %d after the advance: %+v", i+1, slot.Offer)
 		}
-		tier := strings.TrimPrefix(slot.Offer.Title, config.RareTitleWord+" ")
+		tier := strings.TrimPrefix(slot.Offer.Title, config.RareTitleWord()+" ")
 		found := false
 		for _, name := range words.Tiers {
 			found = found || strings.HasPrefix(tier, name+": ")
@@ -371,7 +371,7 @@ func TestRare_OfferModifiers(t *testing.T) {
 			t.Fatalf("%s: no Legendary and ordinary pair found", tier)
 		}
 		tuning, base := tuningOf(*rare)
-		if !strings.HasPrefix(rare.Title, config.RareTitleWord+" ") || strings.HasPrefix(ordinary.Title, config.RareTitleWord) {
+		if !strings.HasPrefix(rare.Title, config.RareTitleWord()+" ") || strings.HasPrefix(ordinary.Title, config.RareTitleWord()) {
 			t.Errorf("%s: titles %q and %q", tier, rare.Title, ordinary.Title)
 		}
 		if rare.LengthMinutes < tuning.MinMinutes*1.5-1e-9 || rare.LengthMinutes > tuning.MaxMinutes*1.5+1e-9 {
@@ -403,7 +403,7 @@ func TestRare_OfferModifiers(t *testing.T) {
 	if plain.Rare || !legend.Rare {
 		t.Fatalf("rarity forced wrong: %v and %v", plain.Rare, legend.Rare)
 	}
-	if legend.Title != config.RareTitleWord+" "+plain.Title || legend.Description != plain.Description {
+	if legend.Title != config.RareTitleWord()+" "+plain.Title || legend.Description != plain.Description {
 		t.Errorf("titles %q and %q", plain.Title, legend.Title)
 	}
 	tuning, _ := config.MissionKindTuning(config.MissionExpedition)
