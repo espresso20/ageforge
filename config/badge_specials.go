@@ -59,7 +59,7 @@ func Badges() []BadgeDef {
 			Name: "Hut Hoarder",
 			// The prices quoted are checked against the cost curve
 			// (TestHutHoarderQuotesRealPrices).
-			Desc: "Have 30 huts standing before you leave the Primitive Age. The 30th costs 625 wood, 34 times the first.",
+			Desc: "Have 30 huts standing before you leave the Primitive Age. The 30th costs 693 wood, 34 times the first.",
 			Tier: BadgeGold, Rarity: BadgeEpic,
 			Scope: BadgeRun, Event: BadgeEvBuildingBuilt, InAge: "primitive_age",
 			Counter: "standing.hut", Threshold: 30,

@@ -19,7 +19,7 @@ const LatePriceStartAge = "modern_age"
 // of the price it was authored at. Upgrading an older building costs
 // UpgradeShare of a new copy, so the factor is what keeps the upgrade road from
 // shortening the game. Wonders and monuments are not scaled.
-const NewCopyPriceFactor = 1.29
+const NewCopyPriceFactor = 1.43
 
 // WonderBuildFactor makes a wonder the long build that ends an age.
 const WonderBuildFactor = 2

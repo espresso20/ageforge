@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"math"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -14,8 +15,8 @@ import (
 // the Maximalist badges, event stock shares) are measured on this.
 func TestSetCarriesTheReferenceStore(t *testing.T) {
 	set := Core()
-	if got := set.ReferenceStorePerCopy("stash"); got != 130 {
-		t.Errorf("a Stash held %v in the reference store, want 130", got)
+	if got := set.ReferenceStorePerCopy("stash"); got != 150 {
+		t.Errorf("a Stash held %v in the reference store, want 150", got)
 	}
 	if got := set.ReferenceStorePerCopy("lumber_mill"); got != 0 {
 		t.Errorf("a building that is not a storage building has a reference size %v", got)
@@ -30,7 +31,7 @@ func TestSetCarriesTheReferenceStore(t *testing.T) {
 		if got := set.ReferenceStore(a.Key); got != want {
 			t.Errorf("%s: reference store %v, want %v", a.Key, got, want)
 		}
-		if typical := set.TypicalStorage("wood", a.Key); typical != want {
+		if typical := set.TypicalStorage("wood", a.Key); math.Abs(typical-want) > 1e-9*want {
 			t.Errorf("%s: the typical store of wood is %v, the reference store %v", a.Key, typical, want)
 		}
 	}

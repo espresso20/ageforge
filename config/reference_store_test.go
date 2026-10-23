@@ -1,35 +1,34 @@
 package config
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
-// masterStoreSizes is what one copy of each storage building held when the
-// stores were real (master at #268), pinned. The reference store is that, so
-// the rules that still read a store size (the festival and Black Market
-// prices, deals, the Brace ceiling, the Maximalist badges, event stock
-// shares) behave as they did until they are redone.
-var masterStoreSizes = map[string]float64{
-	"stash": 130, "storage_pit": 1500, "warehouse": 8800, "granary": 32000,
-	"classical_vault": 270000, "keep": 1.9e6, "renaissance_vault": 7.8e6,
-	"colonial_warehouse": 3.7e7, "industrial_depot": 1.1e8, "victorian_vault": 1.8e9,
-	"electric_warehouse": 2e10, "atomic_vault": 1.1e11, "modern_depot": 4.3e11,
-	"info_vault": 3e12, "digital_archive": 9.4e12, "cyber_vault": 1.1e14,
-	"fusion_vault": 4.7e14, "orbital_depot": 2.4e15, "stellar_vault": 8.5e16,
-	"galactic_vault": 7.1e17, "quantum_vault": 6.2e19,
+// referenceStoreSizes is what one copy of each storage building held in the
+// reference store, pinned. They follow the first-copy prices (the store was
+// sized to hold five copies and the dearest ask of the age), so they moved
+// when new copies took NewCopyPriceFactor 1.43 (they were 130, 1.5K, 8.8K ... at
+// 1.29). The rules that still read a store size (the festival and Black Market
+// prices, deals, the Brace ceiling, the Maximalist badges, event stock shares)
+// are measured on them.
+var referenceStoreSizes = map[string]float64{
+	"stash": 150, "storage_pit": 1700, "warehouse": 9700, "granary": 35000, "classical_vault": 290000, "keep": 2.1e+06, "renaissance_vault": 8.6e+06, "colonial_warehouse": 4.1e+07, "industrial_depot": 1.2e+08, "victorian_vault": 2e+09, "electric_warehouse": 2.2e+10, "atomic_vault": 1.2e+11, "modern_depot": 4.8e+11, "info_vault": 3.3e+12, "digital_archive": 1.1e+13, "cyber_vault": 1.2e+14, "fusion_vault": 5.3e+14, "orbital_depot": 2.6e+15, "stellar_vault": 9.4e+16, "galactic_vault": 7.9e+17, "quantum_vault": 6.8e+19,
 }
 
-// TestReferenceStoreIsWhatTheStoresWere: the size a copy held, by building,
+// TestReferenceStoreSizesArePinned: the size a copy held, by building,
 // is the one master had, and the reference store on leaving an age is the base
 // store and five copies of every storage building up to it.
-func TestReferenceStoreIsWhatTheStoresWere(t *testing.T) {
+func TestReferenceStoreSizesArePinned(t *testing.T) {
 	defs := BaseBuildings()
 	sizes, stores := ReferenceStoreSizes(defs, Ages(), ReferenceBaseStore())
-	for key, want := range masterStoreSizes {
+	for key, want := range referenceStoreSizes {
 		if got := sizes[key]; got != want {
-			t.Errorf("%s: reference store per copy %v, master held %v", key, got, want)
+			t.Errorf("%s: reference store per copy %v, pinned %v", key, got, want)
 		}
 	}
-	if len(sizes) != len(masterStoreSizes) {
-		t.Errorf("%d sizes, master had %d storage buildings", len(sizes), len(masterStoreSizes))
+	if len(sizes) != len(referenceStoreSizes) {
+		t.Errorf("%d sizes, master had %d storage buildings", len(sizes), len(referenceStoreSizes))
 	}
 	want := ReferenceBaseStore()
 	for _, a := range Ages() {
@@ -52,7 +51,7 @@ func TestReferenceStoreFollowsTheTypicalStore(t *testing.T) {
 	_, stores := ReferenceStoreSizes(BaseBuildings(), Ages(), ReferenceBaseStore())
 	for _, age := range AgeOrder() {
 		got := typical[age]["wood"]
-		if want := stores[age]; got != want {
+		if want := stores[age]; math.Abs(got-want) > 1e-9*want {
 			t.Errorf("%s: typical wood store %v, reference store %v", age, got, want)
 		}
 	}

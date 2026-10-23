@@ -139,8 +139,8 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {1.5e10, 2.4e11, 5e16, 2.6e17},
-		"galactic_age":     {4.4e10, 7.1e11, 2.1e18, 2.3e18},
+		"interstellar_age": {1.5e10, 2.4e11, 5e16, 2.9e17},
+		"galactic_age":     {4.4e10, 7.1e11, 2.1e18, 2.6e18},
 		"quantum_age":      {1.3e11, 2.2e12, 9.6e19, 7.1e18},
 		"transcendent_age": {2e11, 3.2e12, 1.5e20, 1.1e19},
 	}
