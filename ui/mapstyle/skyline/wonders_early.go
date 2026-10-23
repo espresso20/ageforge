@@ -3,42 +3,47 @@ package skyline
 // wonders_early.go: the landmarks of the first ages, drawn rows tall (the
 // sprite is exactly that high, its foot on the ground row).
 
-// grove: the Sacred Grove, one great tree whose roots hold a lit shrine,
-// a young conifer and a bush either side, a ring of standing stones in front.
+// grove: the Sacred Grove, one great tree whose roots hold a lit shrine, a
+// young conifer on one side and a lesser tree on the other, lanterns hung in
+// the boughs and a ring of standing stones, two of them carved with runes.
 func grove(h int) *sprite {
 	w := atLeast(h*2+1, 15) | 1
 	s := newSprite(w, h)
 	base := h - 1
 	cx := w / 2
 	canopy := atLeast(h*68/100, 4) // rows of canopy
-	rx := float64(w) * 0.31
-	ry := float64(canopy)
-	leaf := func(x, py int, dx, dy float64) {
-		if dx*dx+dy*dy > 0.74 && hash(x, py, 5)%3 == 0 {
-			return // a ragged edge
-		}
-		sl := sLeaf
-		if hash(x, py, 6)%4 == 0 || (dy > 0 && dx > -0.15 && hash(x, py, 7)%2 == 0) {
-			sl = sLeafDark
-		}
-		s.pset(x, py, sl)
+	rx, ry := float64(w)*0.31, float64(canopy)
+	// a crown of leaves: ragged at the edge, darker low and to the right
+	crown := func(ccx, ccy, crx, cry float64) {
+		ellipse(ccx, ccy, crx, cry, func(x, py int, dx, dy float64) {
+			if dx*dx+dy*dy > 0.74 && hash(x, py, 5)%3 == 0 {
+				return
+			}
+			sl := sLeaf
+			if hash(x, py, 6)%4 == 0 || (dy > 0 && dx > -0.15 && hash(x, py, 7)%2 == 0) {
+				sl = sLeafDark
+			}
+			s.pset(x, py, sl)
+		})
 	}
-	// the young conifer, left
-	ct := base - atLeast(h*45/100, 3)
-	for i, y := 0, ct; y < base-1; i, y = i+1, y+1 {
-		half := 1 + i*5/atLeast(base-1-ct, 1)/1
-		for x := 2 - half/2; x <= 2+half/2+1; x++ {
-			s.put(x, y, '█', []slot{sLeaf, sLeafDark}[(x+y)%2], sNone)
+	// the young conifer, left: a stack of widening boughs on a short trunk
+	conH := atLeast(h*45/100, 3)
+	for i := 0; i < conH-1; i++ {
+		half := 1 + i*3/atLeast(conH-1, 1)
+		for x := 2 - half; x <= 2+half; x++ {
+			s.put(x, base-conH+1+i, '█', []slot{sLeaf, sLeafDark}[(x+i)%2], sNone)
 		}
 	}
 	s.put(2, base-1, '█', sTrunk, sNone)
 	s.put(2, base, '█', sTrunk, sNone)
-	// the bush, right
-	bw := atLeast(h/4, 3)
-	ellipse(float64(w-1-bw), float64(2*base-1), float64(bw)+0.5, float64(atLeast(h/6, 2)), func(x, py int, dx, dy float64) {
-		s.pset(x, py, []slot{sLeaf, sLeafDark}[hash(x, py, 3)%2])
-	})
-	// the trunk, and the great canopy over it
+	// the lesser tree, right: a round crown on a thin trunk
+	lh := atLeast(h*40/100, 3)
+	lx := w - 1 - atLeast(w/10, 3)
+	crown(float64(lx)+0.5, float64(2*(base-lh)+lh), float64(lh)*0.8+0.5, float64(lh)+0.5)
+	for y := base - lh + lh/2; y <= base; y++ {
+		s.put(lx, y, '█', sTrunk, sNone)
+	}
+	// the great trunk, flared at the roots, and the canopy over it
 	tw := 3
 	if h < 9 {
 		tw = 2
@@ -48,7 +53,7 @@ func grove(h int) *sprite {
 		if y >= base-1 {
 			flare = 1
 		}
-		for x := cx - tw/2 - flare; x <= cx+tw/2+flare+(tw+1)%2*0; x++ {
+		for x := cx - tw/2 - flare; x <= cx+tw/2+flare; x++ {
 			sl := sTrunk
 			if x > cx {
 				sl = sWallShade
@@ -56,19 +61,18 @@ func grove(h int) *sprite {
 			s.put(x, y, '█', sl, sNone)
 		}
 	}
-	ellipse(float64(cx)+0.5, ry, rx, ry, leaf)
+	crown(float64(cx)+0.5, ry, rx, ry)
 	// the shrine in the roots: a low arch, lit within
 	s.put(cx, base, '▄', sGlow, sWallDark)
 	s.put(cx, base-1, '▀', sWallDark, sTrunk)
 	// lanterns hanging under the canopy
 	for _, d := range []float64{-0.58, 0.55} {
-		lx := cx + int(d*rx)
-		ly := canopy + int(0.5*float64(canopy)*(1-0.2))
-		ly = min(ly, base-2)
-		s.put(lx, ly, '•', sGlow, sNone)
-		s.put(lx, ly-1, '│', sTrunk, sNone)
+		x := cx + int(d*rx)
+		y := min(canopy+canopy*2/5, base-2)
+		s.put(x, y, '•', sGlow, sNone)
+		s.put(x, y-1, '│', sTrunk, sNone)
 	}
-	// a ring of standing stones in front
+	// a ring of standing stones in front, some carved
 	for i, dx := range []int{-9, -6, 6, 9} {
 		x := cx + dx*w/31
 		if x < 5 || x > w-4 {
@@ -85,10 +89,16 @@ func grove(h int) *sprite {
 	}
 	s.text(0, base, "▄▄", sLeafDark, sNone)
 	// close: leaf and bark detail
-	for y := 0; y < canopy; y++ {
+	dark := func(sl slot) slot {
+		if sl == sLeaf {
+			return sLeafDark
+		}
+		return sLeaf
+	}
+	for y := 0; y < base; y++ {
 		for x := 0; x < w; x++ {
 			if c := s.at(x, y); c.ch == '█' && (c.fg == sLeaf || c.fg == sLeafDark) && hash(x, y, 9)%3 == 0 {
-				s.detail(x, y, []rune("▘▗▖▝")[hash(x, y, 4)%4], map[slot]slot{sLeaf: sLeafDark, sLeafDark: sLeaf}[c.fg])
+				s.detail(x, y, []rune("▘▗▖▝")[hash(x, y, 4)%4], dark(c.fg))
 			}
 		}
 	}

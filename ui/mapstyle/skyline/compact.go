@@ -177,7 +177,7 @@ func (s *scene) compactScene() {
 			switch {
 			case s.v.changes && isNew:
 				s.fb.fg(x, s.Y(ay), '▼', fresh, dTag)
-			case lv.ml.Wonder:
+			case lv.ml.Wonder && lv.ml.X >= a && lv.ml.X < b: // one star, on the wonder's own column
 				s.fb.fg(x, s.Y(ay), mapmodel.R(mapmodel.SymWonder, s.tier), gold, dTag)
 			case lv.producer && lv.staff > 0.05 && hash(x, 3)%3 == 0:
 				s.fb.fg(x, s.Y(ay), [2]rune{'░', '▒'}[(s.anim/4+x)%2], smoke, dTag)
