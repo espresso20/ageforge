@@ -245,7 +245,7 @@ Graced stock is saved with your game.
 
 ### Catastrophes on known ground
 
-A fated doom's window and the harbinger's lead are measured in each age's target time divided by its speed. In a mastered era the doom and its warning both fall inside the shorter era, and warnings are shorter in the same proportion: at 4x the harbinger's lead in the Iron Age is about 20 minutes to an hour instead of 1.3 to 3.9 hours. Mastery is fixed for the run, so a fate rolled when you enter an era never shifts under you. See [The Harbinger](harbinger.md#when-the-harbinger-arrives).
+A fated doom's window is measured in each age's target time divided by its speed, and the harbinger's lead in the age's price length (its target time with the price climb) divided by its speed. In a mastered era the doom and its warning both fall inside the shorter era, and warnings are shorter in the same proportion: at 4x the harbinger's lead in the Iron Age is about 20 minutes to an hour instead of 1.3 to 3.9 hours. Mastery is fixed for the run, so a fate rolled when you enter an era never shifts under you. See [The Harbinger](harbinger.md#when-the-harbinger-arrives).
 
 ### Saves from before Era Mastery
 
@@ -397,7 +397,7 @@ Prestige from before the Cosmic Era never rolls for it.
 
 ### The roll
 
-When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith strength at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). A typical town rolls at 18%. Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most; each costs 2B faith and 31B culture: see [What it costs](harbinger.md#what-it-costs-by-epoch)). Invite makes it certain.
+When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith strength at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). A typical town rolls at 18%. Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most; each costs 15B faith and 240B culture: see [What it costs](harbinger.md#what-it-costs-by-epoch)). Invite makes it certain.
 
 `prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
 
@@ -432,7 +432,7 @@ Both finish the prestige and raise your prestige level. Both add a line to the c
 
 The result is rounded down, so a small run can keep 0 points. Here Brace changes only the points share: buildings and resources reset anyway, and your soldiers don't change it. The log records a Vindicated verdict, or Fulfilled if you invited it.
 
-Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 6.7Q dark matter and 27Q titanium, about 21 hours of a moderate economy's income. Appease (2B faith and 31B culture a level, about 32 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
+Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 50Q dark matter and 260Q titanium, about 157 hours of a moderate economy's income. Appease (15B faith and 240B culture a level, about 243 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
 
 **Succumb** earns no points from this run and grants the [Cosmic Legacy](#cosmic-legacy). If you already carry it, Succumb is closed ("You already carry the Cosmic Legacy. Succumb is closed to you.") and Endure is the only choice.
 

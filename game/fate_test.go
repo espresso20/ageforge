@@ -1140,7 +1140,10 @@ func TestNoCosmicFateLeaksBeforeItsHarbinger(t *testing.T) {
 	mk := func(fated bool) *GameEngine {
 		ge := lpEngine(t, "galactic_age", 33)
 		if fated {
-			forceFate(t, ge, 150000)
+			// Further off than the longest lead reaches back (0.6 of the
+			// Galactic Age's price target, about 710,000 ticks), so no harbinger
+			// has come when the two are compared.
+			forceFate(t, ge, 1000000)
 		}
 		return ge
 	}
@@ -1229,5 +1232,80 @@ func TestCosmicDoomSparesStorage(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// --- the warning and its price share one target --------------------------------------
+
+// A harbinger's lead is a share of the age's price target (the one Appease
+// and Brace are priced on), divided by the age's Era Mastery speed: from the
+// Information Age on that is longer than the plain pacing target, which the
+// era's window and the forecast still use.
+func TestWarningFollowsThePriceTarget(t *testing.T) {
+	for _, age := range []string{"iron_age", "modern_age", "information_age", "space_age", "interstellar_age", "transcendent_age"} {
+		ge := fateEngine(t, age, 7)
+		want := config.LatePriceTargetTicks(age)
+		if got := ge.warningAgeTicks(age); got != want {
+			t.Errorf("%s: lead measured on %v ticks, want the price target %v", age, got, want)
+		}
+		if mult := config.LatePriceMultiplier(age); mult > 1 && ge.warningAgeTicks(age) <= ge.expectedAgeTicks(age) {
+			t.Errorf("%s: the lead (%v) is no longer than the plain target (%v) with a price climb of %v", age, ge.warningAgeTicks(age), ge.expectedAgeTicks(age), mult)
+		}
+		// The arrival is the strike minus that lead.
+		ge.fate = &FateSave{EpochKey: ge.currentEpoch, EntryTick: ge.tick, StrikeTick: 10000000, LeadFrac: 0.4, Fated: true}
+		if got, want := ge.fateArrivalTick(), 10000000-int(0.4*want); got != want {
+			t.Errorf("%s: harbinger due at %d, want %d", age, got, want)
+		}
+		// On known ground both targets are cut by the speed, and so is the lead.
+		ge.Prestige.SetMastery(age, 4)
+		fast := ge.warningAgeTicks(age)
+		if speed := ge.Prestige.AgeSpeed(age); math.Abs(fast*speed-config.LatePriceTargetTicks(age)) > 1e-6 {
+			t.Errorf("%s: a mastered lead is %v ticks at speed %v, want the price target over it", age, fast, speed)
+		}
+	}
+}
+
+// The warning pays for its own answers: in every age a harbinger can arrive
+// in, level 1 of Brace (at a moderate economy's TypicalIncome) and of Appease
+// (at its FlowIncome) takes no more income than the shortest warning the age
+// can roll lasts, for an ordinary doom and for the final era's Reality Tear.
+// The Last Passage is not rolled: it runs until the prestige. Hours of income
+// are the largest cost over the material's income per tick, as the wiki gives
+// them.
+func TestShortestWarningCoversTheAnswers(t *testing.T) {
+	ge := NewGameEngine()
+	hours := func(ticks float64) float64 { return ticks * config.TickSeconds / 3600 }
+	rows := 0
+	for _, r := range HarbingerPriceTable() {
+		if r.LastPassage {
+			continue
+		}
+		rows++
+		shortest := harbingerLeadMin * ge.warningAgeTicks(r.Age)
+		if shortest != r.WarningTicks {
+			t.Errorf("%s in %s: the shortest warning rolled is %v ticks, the price is set on %v", r.Epoch, r.Age, shortest, r.WarningTicks)
+		}
+		slowest := func(cost map[string]float64, income func(res, age string) float64) (string, float64) {
+			worst, res := 0.0, ""
+			for k, c := range cost {
+				rate := income(k, r.Age)
+				if rate <= 0 {
+					return k, math.Inf(1)
+				}
+				if t := c / rate; t > worst {
+					worst, res = t, k
+				}
+			}
+			return res, worst
+		}
+		if res, ticks := slowest(r.BraceL1, config.TypicalIncome); ticks > shortest {
+			t.Errorf("%s in %s: Brace level 1 takes %.1f hours of %s income, the shortest warning lasts %.1f", r.Epoch, r.Age, hours(ticks), res, hours(shortest))
+		}
+		if res, ticks := slowest(r.AppeaseL1, config.FlowIncome); ticks > shortest {
+			t.Errorf("%s in %s: Appease level 1 takes %.1f hours of %s income, the shortest warning lasts %.1f", r.Epoch, r.Age, hours(ticks), res, hours(shortest))
+		}
+	}
+	if rows == 0 {
+		t.Fatal("no doom rows in the price table")
 	}
 }

@@ -19,7 +19,8 @@ import (
 //   - storage: × k, so the hours a store holds are the same at any k;
 //   - build and research times: ÷ k, rounded up, at least one tick
 //     (MasteryTicks);
-//   - the fate window and the harbinger's lead: ÷ k (expectedAgeTicks).
+//   - the fate window and the harbinger's lead: ÷ k (expectedAgeTicks, and
+//     warningAgeTicks for the lead).
 //
 // Events, raids, trade routes and the other real-clock timers are never
 // divided. Mastery is fixed for a run: it changes only when a run ends, at a
