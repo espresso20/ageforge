@@ -38,8 +38,8 @@ import (
 // made once, at start-up) it reports and leaves for the code to change.
 
 // Why a text of the code is not wired. A reason that is "for good" is not
-// asked of the script's writer; the others are work for whoever restructures
-// the code.
+// asked of the script's writer; the others (compared, once) are work for
+// whoever changes the code around the text.
 const (
 	leftCovered  = "covered: its words are written as lexicon.* rows"
 	leftCompared = "compared: the code matches the text it is given against it"
@@ -49,8 +49,12 @@ const (
 	leftOnce     = "once: made when the game starts or in a constant, so it cannot follow the switch"
 )
 
-// forGood says whether a reason is final.
-func forGood(reason string) bool { return reason != "" && reason != leftOnce }
+// forGood says whether a reason is final. A text the code compares, or makes
+// once, can be wired once the code is changed to match on a key or to make
+// the text when it is wanted; the others never can.
+func forGood(reason string) bool {
+	return reason != "" && reason != leftOnce && reason != leftCompared
+}
 
 // leftAlone are the texts a person has judged are not to follow the switch,
 // by row id, with the reason. The rest are decided from the syntax.
