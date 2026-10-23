@@ -83,10 +83,11 @@ func TestGateMeasuresCoverEveryGate(t *testing.T) {
 	}
 }
 
-// The ordinary player's walk under the measured gate reaches every gate at
-// about the point he reaches today's: the measures are what his town has when
-// it meets the building list, so he meets them at the last purchase or one
-// copy before it. The readings are logged.
+// The ordinary player's walk under the measured gate meets every gate, and no
+// later than under the building counts: the measures are what his town has at
+// the end of the counts' stay, and the population (the reserve fills the homes
+// as the food allows) can be there before the last building is. The readings
+// are logged.
 func TestGatePacingReading(t *testing.T) {
 	v1, v2 := ReferenceGatePacing(false), ReferenceGatePacing(true)
 	total1, total2 := 0.0, 0.0
@@ -94,12 +95,38 @@ func TestGatePacingReading(t *testing.T) {
 		total1 += v1.Hours[i]
 		total2 += v2.Hours[i]
 		t.Logf("%2d %-20s v1 %10.3f h  v2 %10.3f h", i+1, v1.Names[i], v1.Hours[i], v2.Hours[i])
-		if v2.Hours[i] < 0.95*v1.Hours[i] || v2.Hours[i] > 1.01*v1.Hours[i] {
+		if v2.Hours[i] <= 0 || v2.Hours[i] > 1.01*v1.Hours[i] {
 			t.Errorf("%s: %.3f h under the measured gate against %.3f h under the building counts", v1.Names[i], v2.Hours[i], v1.Hours[i])
 		}
 	}
 	t.Logf("all ages: v1 %.2f d, v2 %.2f d", total1/24, total2/24)
-	if total2 < 0.99*total1 || total2 > 1.01*total1 {
-		t.Errorf("all ages: %.2f d under the measured gate against %.2f d under the building counts", total2/24, total1/24)
+}
+
+// The model's population is the game's count: the workers, the reserve, the
+// scholars and the soldiers, no more than the homes hold (but for the scholars
+// and soldiers, who move in regardless), and every measure is that count at
+// the end of the ordinary player's stay.
+func TestGatePopulationCountsTheReserve(t *testing.T) {
+	tb := newRefTables()
+	walk := tb.walk("ordinary", 1, tb.refIncomes())
+	sawReserve := 0
+	for i, m := range config.GateMeasures() {
+		end := walk.Runs[i].end
+		heads := end.workers + end.scholars + end.soldiers
+		if end.population < heads {
+			t.Errorf("%s: population %.0f is below the %.0f people at work", m.Age, end.population, heads)
+		}
+		if limit := max(end.room, end.scholars+end.soldiers); end.population > limit {
+			t.Errorf("%s: population %.0f is more than the homes hold (%.0f)", m.Age, end.population, limit)
+		}
+		if end.reserve > 0 {
+			sawReserve++
+		}
+		if float64(m.People) > end.population || float64(m.People) < end.population-1 {
+			t.Errorf("%s: the measure is %d, the town at the gate has %.1f", m.Age, m.People, end.population)
+		}
+	}
+	if sawReserve < 10 {
+		t.Errorf("the reserve is part of the population in only %d gates", sawReserve)
 	}
 }

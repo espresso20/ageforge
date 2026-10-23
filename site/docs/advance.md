@@ -78,7 +78,7 @@ The four pillars stay, and so does everything around them: the panel, the `advan
 | Pillar | What it asks under the new gate |
 |---|---|
 | **Knowledge** | The age's keystone tech, and one more key tech of the age |
-| **People** | The population of your town, whatever mix of homes it lives in |
+| **People** | The population of your town, everyone who lives in it (workers, the idle, scholars and soldiers), whatever mix of homes it lives in |
 | **Industry** | The income a tick of the age's main materials together, whatever mix of producers makes it |
 | **Monument** | Unchanged: the wonder's bank filled, and the wonder built |
 
@@ -86,6 +86,6 @@ The rows read like this: `Population 412 / 500`, `Iron + Coal income 210 / 300 a
 
 The key tech is the tech of the age, besides the keystone and the techs the keystone stands on, that most of the age's buildings need. When no building needs one, it is the tech most other techs are built on. The main materials, two at most, are the ones that the age's producers make and the age's building prices use most.
 
-The numbers are not set by hand. For each age they are what the town the game is balanced around has, at the moment it meets the building list: its population, and its income of the main materials. A town built the ordinary way meets them as it meets the list, and a town that reaches them some other way advances just as well.
+The numbers are not set by hand. For each age they are what the town the game is balanced around has, at the moment it meets the building list: its population, counted as the game counts yours with the homes filled as far as the food allows, and its income of the main materials. A town built the ordinary way meets them by the time it has the list, and a town that reaches them some other way advances just as well.
 
 This is a trial. The numbers, the choice of materials and key techs, and the rule itself may change or be dropped.

@@ -20,12 +20,13 @@ import (
 // reaches the measures and advances when it is paid.
 
 // measured is what the measured gate reads of a town in age i: its
-// population (the workers, the scholars and the soldiers the model counts;
-// the reserve is not counted, the game's population is that and more) and
-// its income of materials a tick. Hand gathering in the first age is not
+// population and its income of materials a tick. The population is what the
+// game itself would show for the town (WorkerState.TotalPop): the workers,
+// the reserve, the scholars and the soldiers, with the homes filled as the
+// food allows (townState.population). Hand gathering in the first age is not
 // the makers' income, so it is left out.
 func (t *refTables) measured(st townState, i int, materials []string) (pop, income float64) {
-	pop = st.workers + st.scholars + st.soldiers
+	pop = st.population
 	for _, res := range materials {
 		income += st.income[res]
 	}

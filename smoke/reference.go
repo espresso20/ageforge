@@ -222,6 +222,10 @@ type townState struct {
 	scholars, soldiers float64
 	eaten              float64 // food everyone eats per tick
 	grown              float64 // food made per tick, before they eat
+	// reserve is the people with no job who live in the houses while the food
+	// lasts, and population everyone the game would count in the town: the
+	// workers, the reserve, the scholars and the soldiers (see state).
+	reserve, population float64
 }
 
 // state works out a town standing in age i. speed is the Era Mastery speed
@@ -305,6 +309,21 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 	if fc > 0 {
 		s.soldiers = math.Max(0, math.Min(posts, math.Floor(float64(net-margin)/fc)))
 	}
+	// The reserve. The game fills its houses with villagers as long as the
+	// food margin holds (game.recruitFoodMargin), and a villager with no job
+	// waits idle in the reserve. So the idle are the people the food above
+	// the margin feeds after the workers, the scholars and the soldiers have
+	// eaten, up to the houses left once those have moved in (the soldiers
+	// live in the houses too). Everyone counts toward the population, which
+	// the houses hold at most, but for scholars and soldiers, who move in
+	// regardless.
+	if left := net - float64(s.soldiers*fc); fc > 0 {
+		homes := math.Max(s.room-s.scholars-s.soldiers-s.workers, 0)
+		s.reserve = math.Max(0, math.Min(homes, math.Floor(float64(left-margin)/fc)))
+	} else {
+		s.reserve = math.Max(s.room-s.scholars-s.soldiers-s.workers, 0)
+	}
+	s.population = math.Min(math.Max(s.room, s.scholars+s.soldiers), s.workers+s.reserve+s.scholars+s.soldiers)
 	fill := 1.0
 	if s.jobs > 0 {
 		fill = s.workers / s.jobs
