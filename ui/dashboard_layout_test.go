@@ -25,8 +25,10 @@ import (
 // rate.
 
 // layoutSizes are the terminals the dashboard is drawn at: the minimum, the
-// small-terminal size, the size the docs call large, and a roomy one.
-var layoutSizes = [][2]int{{80, 24}, {100, 30}, {120, 40}, {144, 46}}
+// small-terminal size, the size the docs call large, a roomy one, a big
+// laptop's and a very big one. The first two get the classic layout, the rest
+// the rich one (dash_layout.go).
+var layoutSizes = [][2]int{{80, 24}, {100, 30}, {120, 40}, {144, 46}, {160, 45}, {240, 60}}
 
 // layoutAges are an early, a middle and a late age: four resources, twelve
 // (culture and soldiers among them), and all twenty-six.
@@ -245,10 +247,10 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 			if status := rectText(cells, w, 0, sy, w, 1)[0]; !strings.Contains(status, st.AgeName) || !strings.Contains(status, "Pop:") || !strings.Contains(status, "Morale") {
 				t.Errorf("%s: the status bar lost the age, the population or morale: %q", where, status)
 			}
-			wx, wy, ww, wh := d.workerMiniTV.GetInnerRect()
-			mini := strings.Join(rectText(cells, w, wx, wy, ww, wh), "\n")
+			mini := strings.Join(checkFitted(t, where+", People", d.workerMiniTV, cells, w), "\n")
 			// With something holding the population back the headcount moves to
 			// the box's title (peopleBoxTitle) and its row goes to the Panels list.
+			// The rich layout's box (dash_layout.go) has a row for it.
 			pop := "Pop "
 			if peopleBoxCompact(st, d.workerDetail) {
 				pop = ""
@@ -780,7 +782,7 @@ func TestDashboardLayoutInEveryTheme(t *testing.T) {
 			t.Fatal(err)
 		}
 		d, pages, _ := stagedDashboard(t, "quantum_age")
-		for _, sz := range [][2]int{{80, 24}, {120, 40}} {
+		for _, sz := range [][2]int{{80, 24}, {120, 40}, {240, 60}} {
 			w, h := sz[0], sz[1]
 			bad := 0
 			for i, c := range drawnDashboard(t, d, pages, w, h) {

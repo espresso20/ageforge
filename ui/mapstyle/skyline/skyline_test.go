@@ -465,13 +465,13 @@ func TestKeys(t *testing.T) {
 	if v.cam != 0 {
 		t.Errorf("Home: cam %d", v.cam)
 	}
-	key(tcell.KeyPgDn, 0, 0)
+	key(tcell.KeyRight, 0, tcell.ModShift)
 	if v.cam != 50 {
-		t.Errorf("PgDn scrolls half a screen: cam %d", v.cam)
+		t.Errorf("Shift-Right scrolls half a screen: cam %d", v.cam)
 	}
-	key(tcell.KeyPgUp, 0, 0)
+	key(tcell.KeyLeft, 0, tcell.ModShift)
 	if v.cam != 0 {
-		t.Errorf("PgUp scrolls back half a screen: cam %d", v.cam)
+		t.Errorf("Shift-Left scrolls back half a screen: cam %d", v.cam)
 	}
 	key(tcell.KeyEnd, 0, 0)
 	_ = draw(v, m, 100, 30, 0, mapmodel.TierUnicode, false)

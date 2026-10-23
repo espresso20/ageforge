@@ -39,7 +39,12 @@ type view struct {
 	changes bool
 	legend  bool
 
+	// zoom is how close the view looks (zoom.go); lastW is the world's
+	// columns the last frame showed (what the cursor maths assume), sw the
+	// screen's.
+	zoom  zoom
 	lastW int
+	sw    int
 
 	lay     *layout
 	clay    *layout // the compact view's
@@ -49,6 +54,7 @@ type view struct {
 	md      *mandalaLayout // the Transcendent Age's mandala (orbit_mandala.go)
 	sprites map[spriteKey]*sprite
 	fb      fb
+	lfb     fb // the world's frame when it is not the screen's (zoom.go)
 	vis     []int
 
 	palM   *mapmodel.Model
@@ -97,12 +103,14 @@ func (v *view) SetOption(o mapstyle.Option, on bool) {
 	}
 }
 
-// HandleKey takes only keys that print nothing, so typing reaches the
-// prompt: ← → scroll (or move the cursor while inspecting), Shift-← → or
-// PgUp PgDn half a screen, Home End the oldest district and the present,
-// ↑ ↓ between depth rows and the ridge while inspecting, Tab Shift-Tab
-// through every target (the first Tab puts the cursor out), Esc puts it
-// away. The flows overlay is the map flows command (SetOption).
+// HandleKey: ← → scroll (or move the cursor while inspecting), Shift-← →
+// half a screen, PgDn PgUp (and + and -, = too) zoom in and out, [ and ]
+// jump to the previous and next district, Home End the oldest district and
+// the present, ↑ ↓ between depth rows and the ridge while inspecting, Tab
+// Shift-Tab through every target (the first Tab puts the cursor out), Esc
+// puts it away. The flows overlay is the map flows command (SetOption). The
+// Map panel hands this view the printable keys (+ - = [ ]) only while its
+// prompt is empty; the rest of the keys print nothing.
 func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	m := f.Model
 	if m != nil && m.Sky() == mapmodel.SkyMandala {
@@ -115,6 +123,7 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		v.follow = false
 		v.cam += dx
 	}
+	ground := m != nil && m.Sky() == mapmodel.SkyGround // the sky arc has no zoom
 	switch {
 	case key == tcell.KeyTab || key == tcell.KeyBacktab:
 		if m == nil {
@@ -139,16 +148,31 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		v.follow, v.cam = false, 0
 	case key == tcell.KeyEnd:
 		v.follow = true
-	case key == tcell.KeyPgUp || key == tcell.KeyLeft && shift:
+	case key == tcell.KeyPgDn || key == tcell.KeyRune && (ev.Rune() == '+' || ev.Rune() == '='):
+		if !ground {
+			return false
+		}
+		v.setZoom(v.zoom.in())
+	case key == tcell.KeyPgUp || key == tcell.KeyRune && (ev.Rune() == '-' || ev.Rune() == '_'):
+		if !ground {
+			return false
+		}
+		v.setZoom(v.zoom.out())
+	case key == tcell.KeyRune && (ev.Rune() == '[' || ev.Rune() == ']'):
+		if m == nil {
+			return false
+		}
+		v.jumpDistrict(m, map[bool]int{true: -1, false: 1}[ev.Rune() == '['])
+	case key == tcell.KeyLeft && shift:
 		scroll(-w / 2)
-	case key == tcell.KeyPgDn || key == tcell.KeyRight && shift:
+	case key == tcell.KeyRight && shift:
 		scroll(w / 2)
 	case key == tcell.KeyLeft || key == tcell.KeyRight:
 		dx := map[bool]int{true: -1, false: 1}[key == tcell.KeyLeft]
 		if v.inspect && m != nil {
 			v.step(m, f.VisitFrame(), dx, 0, 0)
 		} else {
-			scroll(4 * dx)
+			scroll(v.zoom.scrollStep() * dx)
 		}
 	case key == tcell.KeyUp || key == tcell.KeyDown:
 		if !v.inspect || m == nil {
@@ -159,6 +183,56 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		return false
 	}
 	return true
+}
+
+// ZoomLevel and SetZoom are mapstyle.Zoomable: the level persists in the map
+// settings.
+func (v *view) ZoomLevel() string { return v.zoom.String() }
+
+func (v *view) SetZoom(level string) {
+	if z, ok := parseZoom(level); ok {
+		v.setZoom(z)
+	}
+}
+
+// setZoom changes the zoom level and keeps the view centred on the same
+// spot of the town (a view that follows the present keeps following it).
+func (v *view) setZoom(z zoom) {
+	if z == v.zoom {
+		return
+	}
+	sw := v.sw
+	if sw <= 0 {
+		sw = 160
+	}
+	if !v.follow {
+		c := v.cam + v.zoom.cols(sw)/2
+		v.cam = c - z.cols(sw)/2
+	}
+	v.zoom = z
+	v.reveal = v.inspect // the cursor stays in view
+}
+
+// jumpDistrict puts the left edge of the view on the start of the district
+// before (dir < 0) or after (dir > 0) the one the view is at, and stops
+// following the present. With none that way it stays where it is.
+func (v *view) jumpDistrict(m *mapmodel.Model, dir int) {
+	cam := v.cam
+	to := -1
+	for _, d := range m.Skyline.Districts {
+		switch {
+		case dir > 0 && d.X0 > cam:
+			if to < 0 {
+				to = d.X0
+			}
+		case dir < 0 && d.X0 < cam:
+			to = d.X0
+		}
+	}
+	if to < 0 {
+		return
+	}
+	v.follow, v.cam = false, to
 }
 
 func (v *view) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
@@ -215,33 +289,45 @@ func presentCam(m *mapmodel.Model, w int) int {
 	return m.Skyline.FrontierX + 34 - w
 }
 
-// compose builds the frame into v.fb.
+// compose builds the frame into v.fb and returns the scene as the screen
+// sees it. The world is composed at today's scale into a frame of its own
+// (v.lfb, or v.fb itself at mid), and the zoom decides how that frame
+// reaches the screen (zoom.go); the bars and the text are then drawn on the
+// screen.
 func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	if sky := f.Model.Sky(); sky != mapmodel.SkyGround {
+		v.sw = W
 		return v.composeSky(f, W, H, sky) // the sky arc: orbit.go
 	}
 	m := f.Model
-	v.lastW = W
-	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H, S: H - 3, top: 1, sel: -1}
+	z := v.zoom
+	lw, lh := z.cols(W), z.frameRows(H)
+	world := &v.fb
+	if z != zMid {
+		world = &v.lfb
+	}
+	v.sw, v.lastW = W, lw
+	s := &scene{v: v, m: m, fb: world, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: lw, H: lh, S: lh - 3, top: 1, sel: -1,
+		zm: z, lw: lw, ls: lh - 3, sw: W, sh: H}
 	s.groundY = s.S - 3
 	s.band = bandOf(m.AgeIdx)
 	s.p, s.mp = v.palettes(m)
-	s.lay = v.layoutFor(m, s.groundY)
+	s.lay = v.layoutSized(m, s.groundY, H-6)
 	s.vis = v.vis
 	s.city, s.inCity = mapmodel.CityLookAt(m.AgeIdx)
 	defer func() { v.vis = s.vis }()
 	if v.follow {
-		v.cam = presentCam(m, W)
+		v.cam = presentCam(m, lw)
 	}
 	if v.inspect {
-		ts := v.targetsFor(m, W, v.cam)
+		ts := v.targetsFor(m, lw, v.cam)
 		if i := v.resolve(m, ts, f.VisitFrame()); i >= 0 && v.reveal {
-			v.revealTarget(m, ts[i], W)
+			v.revealTarget(m, ts[i], lw)
 		}
 	}
-	v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-W))
+	v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-lw))
 	s.cam = v.cam
-	s.ridge = ridgeItems(m, W, s.cam)
+	s.ridge = ridgeItems(m, lw, s.cam)
 	if v.inspect && v.cur.kind == tLot {
 		s.sel = s.lay.find(v.cur.key, v.cur.cp)
 	}
@@ -249,7 +335,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 		e := m.Catalog.EpochIdx[ep]
 		s.gridOut = e == 3 || e == 4 || e == 5
 	}
-	v.fb.reset(W, H)
+	world.reset(lw, lh)
 	s.sky()
 	s.celestial()
 	s.skyStructures()
@@ -264,9 +350,10 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	s.smoke()
 	s.weather()
 	s.catastrophe()
-	s.markers()
-	s.chrome()
-	return s
+	sc := s.present()
+	sc.markers()
+	sc.chrome()
+	return sc
 }
 
 // revealTarget scrolls so the cursor's target is on screen.

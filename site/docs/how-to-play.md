@@ -57,23 +57,37 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ Name · Stone Age  ◈ Stone Era  |  Pop: 18/30  Morale 54%  |  hint        │  status bar
 │ Next Age: Bronze Age  ✗ Wonder: Great Monolith  ✗ Elders' Hall 3/5 ...   │  next age row
-├─ Resources ──────────┬─ Buildings ──────────────────────┬─ Panels ───────┤
-│ amounts and rates    │ (mini map above it: minimap on)  │ panel names    │
-├─ Under construction ─┤ what you can build, what you own │ ...            │
-│ progress bars        │ PgUp / PgDn turn the page        │                │
-├─ Log ────────────────┤                                  ├─ Workers ──────┤
-│ ...                  │                                  │ pop, idle,     │
-│                      │                                  │ housing, food  │
-├─ Command ────────────┴──────────────────────────────────┴────────────────┤
+├─ Resources ───────────────────────────┬─ Buildings ───────┬─ Panels ─────┤
+│ amounts and rates                     │ what you can      │ TOWN         │
+│                                       │ build, and what   │ people ...   │
+│                                       │ you own           │ PROGRESS     │
+│                                       │ (minimap on: a    │ research ... │
+│                                       │ map above it)     │ WORLD        │
+├─ Under construction ───┬─ People ─────┤                   │ trade ...    │
+│ progress bars          │ pop and bar  │                   │ YOU          │
+│                        │ four kinds,  │                   │ badges ...   │
+│                        │ held back by │                   │              │
+├─ Log ──────────────────┴──────────────┤                   │              │
+│ events and news                       ├─ Skyline ─────────┤              │
+│                                       │ your skyline      │              │
+├─ Command ─────────────────────────────┴───────────────────┴──────────────┤
 │ > _                                                                      │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
+That is the layout on a terminal of 120 columns by 36 rows or more. On a smaller one the Under construction box has its row to itself, the People box sits under the Panels list, and there is no Skyline strip (see below).
+
 The status bar also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. The Next Age row leads with the age's wonder, and its keystone tech while that is still to research, until they are done. Then it marks each building the next age asks for ✓ or ✗, with your count beside it. When the list is longer than the row, the row counts what is met (`✓ 3 met`) and what it has no room for (`+4 more`), so the buildings still to build come first. Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
 
-<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, construction and the log on the left, the Buildings list in the middle, the panel names and the People box on the right.</figcaption></figure>
+<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, then construction and the People box side by side, then the log on the left; the Buildings list in the middle; the Panels list on the right.</figcaption></figure>
 
 The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row: its amount over its cap, its rate, a bar, and a marker when the store is nearly full (`◈`) or falling (`▼`). On a narrow terminal the rows give up the bar first, then the cap, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`; it then shows from 105 columns by 34 rows.
+
+**The People box.** From 120 columns by 36 rows the People box is the right half of the Under construction row, and the row is as tall as the box. It shows the headcount over your homes (with how full they are when there is room to say so), one bar across the homes in the colors of the four kinds of person (workers, the reserve, soldiers and scholars), a line for each kind in the age's own word, and what holds your population back. The soldiers' line shows the soldiers at their posts over all the posts they have while some wait on food, and how many are out on a mission. `Held by: food` carries the net food a tick and how many more it would feed once the terminal is 42 rows tall. When nothing holds the population back the box says so and counts the empty homes. On a smaller terminal the box is the short one under the Panels list, with the same lines in less room. The [People panel](workers-and-domains.md#the-people-of-your-town) has the whole picture.
+
+**The Panels list.** On the same terminals the Panels column is wider, and the panels are set in four groups, each with a few words on what it is for: Town (`people`, `plan`, `wonders`, `map`), Progress (`milestones`, `research`, `epoch`, `history`), World (`expedition`, `army`, `trade`, `factions`, `harbinger`) and You (`badges`, `stats`, `logs`, `help`). The panel that is open is marked. On a smaller terminal, or when the column is too short for the groups, the list is the panel names alone, and it never drops one.
+
+**The skyline strip.** Under the Buildings list a strip titled Skyline draws your town's skyline, whatever your map style is. It is a picture: it takes no keys and has no cursor, it moves with the Map when the motion setting is on and holds still when it is off, and `map` still opens the full Map. It is as wide as the Buildings list and half as tall as the Log box beside it, and it needs 6 rows inside its border, so it shows when the Log box is 16 rows or more: a terminal of 120 columns needs about 60 rows, and one under 120 columns about 53. A terminal under 100 columns by 30 rows never shows it. Where it hides, the Buildings list has the whole column.
 
 ---
 

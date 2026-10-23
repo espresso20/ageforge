@@ -97,18 +97,13 @@ func (m *miniMap) pointAt(p *mapPanel) {
 	dst.Point(mapstyle.Pointer{}, false)
 }
 
-// Draw draws the border, the compact view inside it and the news line.
-func (m *miniMap) Draw(scr tcell.Screen) {
-	t0 := time.Now()
-	defer func() { m.lastDraw = time.Since(t0) }()
-	x, y, w, h := m.GetRect()
-	if w < 3 || h < 3 {
-		return
-	}
+// drawMapFrame draws the border of a map box w by h cells at the canvas's
+// origin, with title in the top border. The mini map and the skyline strip
+// (dash_skyline.go) are framed alike.
+func drawMapFrame(cv *mapstyle.Canvas, w, h int, title string) {
 	bg := theme.Color(theme.RoleBackground)
 	border := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleBorder), bg, 1.8))
-	title := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleAccent), bg, 3)).Bold(true)
-	cv := &mapstyle.Canvas{Scr: scr, R: mapstyle.Rect{X: x, Y: y, W: w, H: h}, Tier: m.set.Tier}
+	accent := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleAccent), bg, 3)).Bold(true)
 	for i := 1; i < w-1; i++ {
 		cv.Put(i, 0, '─', border)
 		cv.Put(i, h-1, '─', border)
@@ -121,7 +116,20 @@ func (m *miniMap) Draw(scr tcell.Screen) {
 	cv.Put(w-1, 0, '┐', border)
 	cv.Put(0, h-1, '└', border)
 	cv.Put(w-1, h-1, '┘', border)
-	cv.Text(1, 0, w-2, " Map · "+styleTitle(m.mv.reg, m.set.Style)+" ", title)
+	cv.Text(1, 0, w-2, title, accent)
+}
+
+// Draw draws the border, the compact view inside it and the news line.
+func (m *miniMap) Draw(scr tcell.Screen) {
+	t0 := time.Now()
+	defer func() { m.lastDraw = time.Since(t0) }()
+	x, y, w, h := m.GetRect()
+	if w < 3 || h < 3 {
+		return
+	}
+	bg := theme.Color(theme.RoleBackground)
+	cv := &mapstyle.Canvas{Scr: scr, R: mapstyle.Rect{X: x, Y: y, W: w, H: h}, Tier: m.set.Tier}
+	drawMapFrame(cv, w, h, " Map · "+styleTitle(m.mv.reg, m.set.Style)+" ")
 
 	f := mapFrame(m.model, m.set, m.now().Sub(m.start))
 	m.styles.get(m.set.Style).DrawCompact(scr, mapstyle.Rect{X: x + 1, Y: y + 1, W: w - 2, H: h - 2}, f)
@@ -137,11 +145,13 @@ func (m *miniMap) Draw(scr tcell.Screen) {
 	}
 }
 
-// mapDock stacks the mini map above a body (the Buildings list) and lays
-// the two out itself on every draw: the mini map shows only when it is on
-// and the dock has room for it and dockMinBody rows of body, so on a small
-// terminal (80x24) it hides and the body gets the whole column, with no
-// flicker between refreshes.
+// mapDock stacks the mini map above a body (the Buildings list) and, under
+// it, the skyline strip (dash_skyline.go), and lays them out itself on every
+// draw: the mini map shows only when it is on and the dock has room for it
+// and dockMinBody rows of body, so on a small terminal (80x24) it hides and
+// the body gets the whole column, with no flicker between refreshes. The
+// strip shows when the Log box beside the dock is tall enough for it
+// (stripHeight) on a terminal that fits it (stripFits).
 type mapDock struct {
 	*tview.Box
 	mini *miniMap
@@ -154,6 +164,14 @@ type mapDock struct {
 	// shown reports whether the last draw showed the mini map; drawn that
 	// there was a draw at all (before it, the dock has no real size).
 	shown, drawn bool
+
+	// strip is the skyline strip; logRows is the Log box's height in a
+	// column h rows tall and screen the terminal's size. A dock without a
+	// strip (or without the means to size it) has none.
+	strip      *skylineStrip
+	logRows    func(h int) int
+	screen     func() (w, h int)
+	stripShown bool // the last draw showed the strip
 }
 
 func newMapDock(mini *miniMap, body tview.Primitive) *mapDock {
@@ -167,21 +185,47 @@ func (d *mapDock) wantsModel() bool {
 	return !d.off && (!d.drawn || miniHeight(w, h) > 0)
 }
 
+// wantsStrip reports whether the strip needs a model: it is showing, or
+// nothing has been laid out yet.
+func (d *mapDock) wantsStrip() bool {
+	return d.strip != nil && (!d.drawn || d.stripShown)
+}
+
+// stripRows is the strip's height in a dock h rows tall that has mh rows of
+// mini map: 0 when the strip does not show.
+func (d *mapDock) stripRows(h, mh int) int {
+	if d.strip == nil || d.logRows == nil || d.screen == nil {
+		return 0
+	}
+	if tw, th := d.screen(); !stripFits(tw, th) {
+		return 0
+	}
+	sh := stripHeight(d.logRows(h))
+	if sh == 0 || h-mh-sh < stripMinBody {
+		return 0
+	}
+	return sh
+}
+
 func (d *mapDock) Draw(scr tcell.Screen) {
 	x, y, w, h := d.GetRect()
 	mh := miniHeight(w, h)
 	if d.off {
 		mh = 0
 	}
+	sh := d.stripRows(h, mh)
 	d.shown, d.drawn = mh > 0, true
+	d.stripShown = sh > 0
 	if d.shown {
 		d.mini.SetRect(x, y, w, mh)
 		d.mini.Draw(scr)
-		d.body.SetRect(x, y+mh, w, h-mh)
-	} else {
-		d.body.SetRect(x, y, w, h)
 	}
+	d.body.SetRect(x, y+mh, w, h-mh-sh)
 	d.body.Draw(scr)
+	if sh > 0 {
+		d.strip.SetRect(x, y+h-sh, w, sh)
+		d.strip.Draw(scr)
+	}
 }
 
 // Focus and input go to the body; the mini map takes no keys.

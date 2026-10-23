@@ -224,7 +224,7 @@ func (rm *ResourceManager) LoadStorage(storage map[string]float64) {
 
 // Snapshot returns resource states for UI
 func (rm *ResourceManager) Snapshot() map[string]ResourceState {
-	out := make(map[string]ResourceState)
+	out := make(map[string]ResourceState, len(rm.resources))
 	for key, r := range rm.resources {
 		def := rm.defs[key]
 		out[key] = ResourceState{

@@ -7,7 +7,8 @@ import (
 )
 
 // map_settings.go holds the display settings a command sets: "map style",
-// "map glyphs", "minimap" and "motion". They travel with the account
+// "map glyphs", "minimap" and "motion" (and the skyline's zoom, which its
+// + and - keys set). They travel with the account
 // (AccountPrefs, like the active theme; motion in the account's settings
 // file), so a save/load keeps them and an account switch swaps them. The
 // game still runs without an account: the dashboard then keeps them for
@@ -17,6 +18,8 @@ import (
 type mapSettings struct {
 	Style string
 	Tier  mapmodel.GlyphTier
+	// Zoom is the skyline's zoom level ("far", "mid" or "close"); "" is mid.
+	Zoom string
 	// Minimap: the dashboard shows the mini map above the Buildings list.
 	// Off unless the player turned it on (minimap on).
 	Minimap bool
@@ -48,6 +51,7 @@ func resolveMapSettings(acct *game.Account, reg *mapstyle.Registry) mapSettings 
 	if t, ok := mapmodel.ParseTier(glyphs); ok {
 		out.Tier = t
 	}
+	out.Zoom = acct.MapZoom()
 	out.Minimap = acct.MinimapOn()
 	out.HintShown = hint
 	out.Motion = acct.MotionOn()
@@ -121,6 +125,9 @@ func (d *Dashboard) saveMapSettings(s mapSettings) {
 	}
 	if cur.Tier != s.Tier && err == nil {
 		err = acct.SetMapGlyphs(s.Tier.String())
+	}
+	if cur.Zoom != s.Zoom && err == nil {
+		err = acct.SetMapZoom(s.Zoom)
 	}
 	if cur.Minimap != s.Minimap && err == nil {
 		err = acct.SetMinimap(s.Minimap)

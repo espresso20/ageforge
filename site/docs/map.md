@@ -23,11 +23,13 @@ Because typing goes to the command bar, the Map takes only the keys that print n
 |---|---|
 | Arrows | Move the cursor or scroll (see each style below) |
 | `Tab` / `Shift-Tab` | Jump to the next or previous thing to inspect |
-| `PgUp` / `PgDn` | Zoom out and in (roguelike) or scroll half a screen (skyline) |
+| `PgUp` / `PgDn` | Zoom out and in |
 | `Enter` | Put the command for what the cursor is on into the prompt. It is not run: press Enter again to run it |
 | `Esc` | Close the Map |
 
 Once you have typed something, `Tab`, `Shift-Tab` and `Enter` act on the prompt instead (complete the command, run it), as they do everywhere else. The arrows stay with the Map.
+
+The skyline also takes five keys that print: `+`, `-` and `=` zoom and `[` and `]` jump between districts. They are the Map's only while the prompt is empty (no command begins with one), and the roguelike does not use them.
 
 The settings are commands you can type with the Map open: `map style`, `map glyphs`, `map flows` and `minimap` (see Settings below).
 
@@ -143,12 +145,26 @@ From the Modern Age the skyline shows the same city as the roguelike, side on:
 
 The mini map wears the age's window light, and shows the megacity's rain and the tether. With the legend on, the status line names the age's city.
 
+### Zoom and the overview bar
+
+The skyline has three zoom levels, and the footer says which one you are at (`zoom: close`).
+
+- **Mid** is the scale the skyline always had.
+- **Far** draws the town at half scale. A young town fits the width, a big one is a long skyline either way, and the buildings read as a silhouette against the sky.
+- **Close** draws every building twice the size, every cell of it as a 2x2 block, so you can see roofs, windows, the people at the door and the traffic in the street. The view stands on the street, so a tall tower runs off the top of the screen.
+
+People, traffic, smoke and weather scale with the buildings. Names, the cursor's label and the bars do not: text always keeps its own size. `+` and `-` (or `=`, or `PgDn` and `PgUp`) zoom in and out. The view stays centered on the spot you were looking at (a view that follows the present keeps following it), the inspect cursor works at every level, and the level is kept with your account like the map style. From the Space Age the sky keeps its one scale and the zoom keys do nothing.
+
+The bar along the bottom is an **overview** of the whole town. It draws your real skyline: each column as tall as the tallest building there and in the color of that building's top, a `◆` on every wonder, the name of each district where it fits, buildings new since your last visit in the positive color, and a bright box over the part of the town you are looking at. The box widens when you zoom out and narrows when you zoom in. `[` and `]` jump to the start of the previous and next district, so you can steer the view by the bar.
+
 ### Skyline keys
 
 | Key | Action |
 |---|---|
-| `←` `→` | Scroll (or move the cursor while inspecting) |
-| `Shift`+`←` `→`, `PgUp` `PgDn` | Scroll half a screen |
+| `←` `→` | Scroll four columns of the screen (or move the cursor while inspecting) |
+| `Shift`+`←` `→` | Scroll half a screen |
+| `PgDn` / `PgUp`, `+` / `-` (or `=`) | Zoom in and out: far, mid, close |
+| `[` `]` | Jump to the start of the previous or next district |
 | `Home` | The oldest district |
 | `End` | The present |
 | `Tab` / `Shift-Tab` | Put the inspect cursor out, then step through every target |

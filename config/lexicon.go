@@ -1,5 +1,12 @@
 package config
 
+import (
+	"sort"
+
+	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/words"
+)
+
 // The lexicon: the game's general words, each with its own name in every age.
 // A scholar in the Bronze Age is a Scribe; in the Cyberpunk Age, a Netrunner.
 // Game text that names a kind of person reads the current age's word through
@@ -126,20 +133,77 @@ var lexiconRows = []lexiconRow{
 
 // Term is the word key has in age: its singular and plural. A term the age
 // has no entry for gives its plain English word; a key with none gives the
-// key itself.
+// key itself. With VibeMode on, a word the script has a line for reads as
+// that line (see LexiconCells for the ids).
 func Term(age, key string) Word {
+	w, scope := plainTerm(age, key)
+	if scope != "" && vibe.On() {
+		if s, ok := vibe.Text(lexiconID(scope, key, "one")); ok {
+			w.One = s
+		}
+		if s, ok := vibe.Text(lexiconID(scope, key, "many")); ok {
+			w.Many = s
+		}
+	}
+	return w
+}
+
+// plainTerm is the word as the lexicon has it, and the scope its VibeMode
+// rows are named by: the age when the age has its own entry, "plain" when
+// the word is the plain English one, "" for a key nobody knows.
+func plainTerm(age, key string) (Word, string) {
 	for _, row := range lexiconRows {
 		if row.age == age {
 			if w, ok := row.terms[key]; ok {
-				return w
+				return w, age
 			}
 			break
 		}
 	}
 	if w, ok := plainTerms[key]; ok {
-		return w
+		return w, lexiconPlain
 	}
-	return Word{One: key, Many: key}
+	return Word{One: key, Many: key}, ""
+}
+
+// lexiconPlain is the scope of the plain English words in a row id.
+const lexiconPlain = "plain"
+
+// lexiconID is the row id of one form of a term: lexicon.<age>.<key>.one,
+// or .many. The plain English words are lexicon.plain.<key>.one.
+func lexiconID(scope, key, form string) string {
+	return "lexicon." + scope + "." + key + "." + form
+}
+
+// LexiconCells lists every word of the lexicon as a text row: the singular
+// and plural of each term in each age, and then the plain English words.
+// They are the lines VibeMode's script may replace, by the ids it gives.
+func LexiconCells() []words.Cell {
+	var cells []words.Cell
+	add := func(scope, key string, w Word) {
+		cells = append(cells,
+			words.Cell{ID: lexiconID(scope, key, "one"), Field: "config.Word.One", Text: w.One},
+			words.Cell{ID: lexiconID(scope, key, "many"), Field: "config.Word.Many", Text: w.Many})
+	}
+	for _, row := range lexiconRows {
+		keys := make([]string, 0, len(row.terms))
+		for k := range row.terms {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			add(row.age, k, row.terms[k])
+		}
+	}
+	keys := make([]string, 0, len(plainTerms))
+	for k := range plainTerms {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		add(lexiconPlain, k, plainTerms[k])
+	}
+	return cells
 }
 
 // TermsFor is every term the lexicon holds for age, by key; a term the age

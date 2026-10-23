@@ -7,10 +7,13 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- **Skyline zoom.** Zoom out to see the whole town or in to see every building up close, and steer by the overview bar, which now shows your real skyline and a box for where you are looking.
+- **VibeMode (early).** A setting that swaps the game's words for a GenZ script; this release has the switch and a first handful of lines.
 - **plan optimize.** Reorders your planned buildings for the fastest growth, interleaving homes and producers, and says how much sooner the plan finishes.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **A new dashboard layout.** Your skyline sits under the Buildings box, the People box takes the right half of Under construction with more detail, and the Panels list says what each panel is for.
 - **Storage buildings boost production.** With no caps to raise, every storage building now adds 1% to all production, and older ones keep counting.
 - **Nothing reads a store any more.** Festival and Black Market prices, faction deals, the Brace ceiling and the Maximalist badges now follow your income instead of a store size.
 - **A skyline that looks like your town.** The skyline draws far more of your buildings, gives them outlines, lit windows and depth, and varies their shapes, so a big town looks big.

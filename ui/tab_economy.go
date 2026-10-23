@@ -184,6 +184,21 @@ func (t *EconomyTab) AddToLeftColumn(item tview.Primitive) {
 	t.leftCol.log = item
 }
 
+// AddPeopleBox hands the left column the People box, which it draws in the
+// right half of the Under construction row when rich says the terminal gets
+// the rich layout (dash_layout.go); height is the box's height in that layout.
+func (t *EconomyTab) AddPeopleBox(people tview.Primitive, rich func() bool, height func() int) {
+	t.leftCol.people, t.leftCol.rich, t.leftCol.peopleHeight = people, rich, height
+}
+
+// LogRows is the height of the Log box, border included, in a column h rows
+// tall (the Buildings column beside it is as tall): what the skyline strip
+// takes half of.
+func (t *EconomyTab) LogRows(h int) int {
+	_, _, lh := t.leftCol.heights(h)
+	return lh
+}
+
 // WrapBuildings replaces the Buildings list in the layout with wrap(list),
 // so the Dashboard can dock the mini map above it (mapDock).
 func (t *EconomyTab) WrapBuildings(wrap func(list tview.Primitive) tview.Primitive) {
@@ -221,10 +236,21 @@ func (t *EconomyTab) NextResourcePage() bool {
 // Flex it replaces did, and gives the Resources box more when its rows do
 // not fit that share, as far as a floor for the two boxes under it: late
 // ages hold many more resources than the first ones.
+//
+// In the rich layout (dash_layout.go) the Under construction row is shared
+// by two boxes, Under construction on the left and the People box on the
+// right, and is as tall as the People box.
 type econColumn struct {
 	*tview.Box
 	resources, construction tview.Primitive
 	log                     tview.Primitive
+	// people is the People box, drawn in the right half of the Under
+	// construction row when rich says the terminal gets the rich layout.
+	people tview.Primitive
+	// rich reports the layout; peopleHeight is the People box's height,
+	// border included, in it (for a terminal that tall).
+	rich         func() bool
+	peopleHeight func() int
 	// resourceRows is how many rows the Resources box needs inside to show
 	// everything.
 	resourceRows func() int
@@ -248,16 +274,60 @@ func econHeights(h, want int) (resources, construction, log int) {
 	return resources, construction, rest - construction
 }
 
+// econHeightsRich is econHeights for the rich layout, where the row under
+// the Resources box is the People box's height, people rows. The Resources
+// box gives way before the People box or the log do, down to a floor.
+func econHeightsRich(h, want, people int) (resources, construction, log int) {
+	const minLog, minResources = 5, 6
+	construction = max(3, people)
+	resources = h * 3 / 6
+	most := max(minResources, h-construction-minLog)
+	if want > resources {
+		resources = want
+	}
+	resources = min(resources, most)
+	if construction > h-resources {
+		construction = h - resources
+	}
+	return resources, construction, h - resources - construction
+}
+
+// heights shares a column h rows tall out between its boxes, for the layout
+// it is drawn in.
+func (c *econColumn) heights(h int) (resources, construction, log int) {
+	want := c.resourceRows() + 2
+	if c.log == nil {
+		resources, _, _ = econHeights(h, want)
+		return resources, h - resources, 0
+	}
+	if c.richLayout() {
+		return econHeightsRich(h, want, c.peopleHeight())
+	}
+	return econHeights(h, want)
+}
+
+// richLayout reports whether the column holds the People box.
+func (c *econColumn) richLayout() bool {
+	return c.people != nil && c.rich != nil && c.rich()
+}
+
 func (c *econColumn) Draw(screen tcell.Screen) {
 	x, y, w, h := c.GetRect()
-	rh, ch, lh := econHeights(h, c.resourceRows()+2)
-	if c.log == nil {
-		ch, lh = h-rh, 0
-	}
+	rh, ch, lh := c.heights(h)
 	c.resources.SetRect(x, y, w, rh)
 	c.resources.Draw(screen)
-	c.construction.SetRect(x, y+rh, w, ch)
-	c.construction.Draw(screen)
+	if c.log != nil && c.richLayout() {
+		// Under construction has the wider half when the width is odd: its
+		// title is 22 cells with the border.
+		half := w - w/2
+		c.construction.SetRect(x, y+rh, half, ch)
+		c.construction.Draw(screen)
+		c.people.SetRect(x+half, y+rh, w-half, ch)
+		c.people.Draw(screen)
+	} else {
+		c.construction.SetRect(x, y+rh, w, ch)
+		c.construction.Draw(screen)
+	}
 	if c.log != nil {
 		c.log.SetRect(x, y+rh+ch, w, lh)
 		c.log.Draw(screen)

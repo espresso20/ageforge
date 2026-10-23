@@ -1,7 +1,6 @@
 package game
 
 import (
-	"slices"
 	"sort"
 	"strings"
 
@@ -36,6 +35,9 @@ type MilestoneManager struct {
 	// titles is the count-based fallback title ladder, held so
 	// recalculateTitle (run every tick from checkMilestones) doesn't rebuild it.
 	titles []config.TitleDef
+	// plans holds, for each milestone in defs, the text of its snapshot row that
+	// only the ruleset decides, built once in Rebind (see milestonePlan).
+	plans []milestonePlan
 }
 
 // NewMilestoneManager creates a new milestone manager on the core ruleset.
@@ -64,6 +66,10 @@ func (mm *MilestoneManager) Rebind(set *rules.Set) {
 		for _, mk := range c.MilestoneKeys {
 			mm.milestoneToChain[mk] = c.Key
 		}
+	}
+	mm.plans = make([]milestonePlan, len(mm.defs))
+	for i, def := range mm.defs {
+		mm.plans[i] = mm.planFor(def)
 	}
 }
 
@@ -203,26 +209,43 @@ func (mm *MilestoneManager) CheckChains() []config.MilestoneChainDef {
 // the count-based fallback sequence. Among chain titles the last completed
 // chain (in config order) wins, giving later chains a natural prestige upgrade.
 func (mm *MilestoneManager) recalculateTitle() {
+	mm.currentTitle = mm.titleFor(mm.chains, mm.titles)
+}
+
+// titleFor is the title the completed milestones earn from these chains and
+// this ladder of count-based titles.
+func (mm *MilestoneManager) titleFor(chains []config.MilestoneChainDef, titles []config.TitleDef) string {
 	// Chain titles take priority (use latest completed chain's title)
 	bestChainTitle := ""
-	for _, chain := range mm.chains {
+	for _, chain := range chains {
 		if mm.chainsCompleted[chain.Key] {
 			bestChainTitle = chain.Title
 		}
 	}
 	if bestChainTitle != "" {
-		mm.currentTitle = bestChainTitle
-		return
+		return bestChainTitle
 	}
 
 	// Fallback to count-based titles
 	count := len(mm.completed)
-	mm.currentTitle = ""
-	for _, t := range mm.titles {
+	title := ""
+	for _, t := range titles {
 		if count >= t.MinMilestones {
-			mm.currentTitle = t.Title
+			title = t.Title
 		}
 	}
+	return title
+}
+
+// savedTitle is the title a save holds: in plain English whatever script the
+// game is read in, so a save made under VibeMode reads the same as one made
+// without it. The title in play is worked out again every tick.
+func (mm *MilestoneManager) savedTitle() string {
+	plain := rules.CoreFor(false)
+	if mm.rules == plain || !rules.IsCore(mm.rules) {
+		return mm.currentTitle
+	}
+	return mm.titleFor(plain.MilestoneChains(), plain.MilestoneTitles())
 }
 
 // IsCompleted checks if a milestone has been achieved
@@ -250,9 +273,78 @@ func (mm *MilestoneManager) GetCurrentTitle() string {
 	return mm.currentTitle
 }
 
+// milestonePlan is what a milestone's snapshot row holds that only the ruleset
+// decides: the reward line, the label of each progress row and the order of the
+// resource and building rows. A snapshot is taken twice a second; this is built
+// once (Rebind), so a snapshot only fills in the numbers.
+type milestonePlan struct {
+	rewardText string
+	ageLabel   string
+	resKeys    []string // sorted: map order would make the bars flicker
+	resLabels  []string
+	bldKeys    []string // sorted, same reason
+	bldLabels  []string
+	sumLabel   string
+	rows       int // how many progress rows the milestone has
+}
+
+// planFor builds def's plan.
+func (mm *MilestoneManager) planFor(def config.MilestoneDef) milestonePlan {
+	plan := milestonePlan{rewardText: formatRewards(def.Rewards)}
+	if def.MinTick > 0 {
+		plan.rows++
+	}
+	if def.MinAge != "" {
+		plan.ageLabel = "Age: " + mm.rules.Name(rules.KindAge, def.MinAge)
+		plan.rows++
+	}
+	// Sort resource keys before iterating — map iteration order is random,
+	// which would cause progress bar lines to flicker each tick.
+	plan.resKeys = make([]string, 0, len(def.MinResources))
+	for res := range def.MinResources {
+		plan.resKeys = append(plan.resKeys, res)
+	}
+	sort.Strings(plan.resKeys)
+	for _, res := range plan.resKeys {
+		plan.resLabels = append(plan.resLabels, textfmt.Capitalize(ResourceName(res)))
+	}
+	// Sort building keys before iterating — same reason as resources.
+	plan.bldKeys = make([]string, 0, len(def.MinBuildings))
+	for bld := range def.MinBuildings {
+		plan.bldKeys = append(plan.bldKeys, bld)
+	}
+	sort.Strings(plan.bldKeys)
+	for _, bld := range plan.bldKeys {
+		plan.bldLabels = append(plan.bldLabels, mm.rules.Name(rules.KindBuilding, bld))
+	}
+	plan.rows += len(plan.resKeys) + len(plan.bldKeys)
+	// A building sum is one row: "Trading Posts and Merchant Quarters".
+	if sum := def.MinBuildingSum; sum.Count > 0 {
+		names := make([]string, 0, len(sum.Keys))
+		for _, bld := range sum.Keys {
+			names = append(names, pluralName(2, mm.rules.Name(rules.KindBuilding, bld)))
+		}
+		plan.sumLabel = textfmt.List(names)
+		plan.rows++
+	}
+	for _, need := range []int{def.MinPopulation, def.MinTechCount, def.MinTotalBuilt, def.MinSoldiersTrained, def.MinWonders, def.MinKnowledgeWorkers} {
+		if need > 0 {
+			plan.rows++
+		}
+	}
+	return plan
+}
+
 // computeProgress computes progress indicators for a milestone definition
 func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params MilestoneSnapshotParams) []MilestoneProgress {
-	var progress []MilestoneProgress
+	plan := mm.planFor(def)
+	return mm.progressFor(def, &plan, params, nil)
+}
+
+// progressFor fills in def's progress rows from its plan and the town's
+// numbers, in room taken from rows (nil: its own).
+func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestonePlan, params MilestoneSnapshotParams, rows *sliceArena[MilestoneProgress]) []MilestoneProgress {
+	progress := rows.take(plan.rows)
 
 	if def.MinTick > 0 {
 		progress = append(progress, MilestoneProgress{
@@ -268,56 +360,38 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		targetOrder := params.AgeOrder[def.MinAge]
 		met := currentOrder >= targetOrder
 		progress = append(progress, MilestoneProgress{
-			Label:   "Age: " + mm.rules.Name(rules.KindAge, def.MinAge),
+			Label:   plan.ageLabel,
 			Current: float64(currentOrder),
 			Target:  float64(targetOrder),
 			Met:     met,
 		})
 	}
 
-	// Sort resource keys before iterating — map iteration order is random,
-	// which would cause progress bar lines to flicker each tick.
-	resKeys := make([]string, 0, len(def.MinResources))
-	for res := range def.MinResources {
-		resKeys = append(resKeys, res)
-	}
-	sort.Strings(resKeys)
-	for _, res := range resKeys {
+	for i, res := range plan.resKeys {
 		required := def.MinResources[res]
 		current := params.Resources[res]
 		progress = append(progress, MilestoneProgress{
-			Label:   textfmt.Capitalize(ResourceName(res)),
+			Label:   plan.resLabels[i],
 			Current: current,
 			Target:  required,
 			Met:     current >= required,
 		})
 	}
 
-	// Sort building keys before iterating — same reason as resources.
-	bldKeys := make([]string, 0, len(def.MinBuildings))
-	for bld := range def.MinBuildings {
-		bldKeys = append(bldKeys, bld)
-	}
-	sort.Strings(bldKeys)
-	for _, bld := range bldKeys {
+	for i, bld := range plan.bldKeys {
 		required := def.MinBuildings[bld]
 		current := float64(params.heldFrom(bld))
 		progress = append(progress, MilestoneProgress{
-			Label:   mm.rules.Name(rules.KindBuilding, bld),
+			Label:   plan.bldLabels[i],
 			Current: current,
 			Target:  float64(required),
 			Met:     int(current) >= required,
 		})
 	}
-	// A building sum is one row: "Trading Posts and Merchant Quarters".
 	if sum := def.MinBuildingSum; sum.Count > 0 {
 		have := params.heldFromAny(sum.Keys)
-		names := make([]string, 0, len(sum.Keys))
-		for _, bld := range sum.Keys {
-			names = append(names, pluralName(2, mm.rules.Name(rules.KindBuilding, bld)))
-		}
 		progress = append(progress, MilestoneProgress{
-			Label:   textfmt.List(names),
+			Label:   plan.sumLabel,
 			Current: float64(have),
 			Target:  float64(sum.Count),
 			Met:     have >= sum.Count,
@@ -343,26 +417,25 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 	}
 
 	// Run counters
-	for _, c := range []struct {
-		label         string
-		current, need int
-	}{
-		{"Buildings built", params.TotalBuilt, def.MinTotalBuilt},
-		{"Soldiers trained", params.SoldiersTrained, def.MinSoldiersTrained},
-		{"Wonders", params.WonderCount, def.MinWonders},
-		{"Knowledge workers", params.KnowledgeCount, def.MinKnowledgeWorkers},
-	} {
-		if c.need > 0 {
-			progress = append(progress, MilestoneProgress{
-				Label:   c.label,
-				Current: float64(c.current),
-				Target:  float64(c.need),
-				Met:     c.current >= c.need,
-			})
-		}
-	}
+	progress = appendCounter(progress, "Buildings built", params.TotalBuilt, def.MinTotalBuilt)
+	progress = appendCounter(progress, "Soldiers trained", params.SoldiersTrained, def.MinSoldiersTrained)
+	progress = appendCounter(progress, "Wonders", params.WonderCount, def.MinWonders)
+	progress = appendCounter(progress, "Knowledge workers", params.KnowledgeCount, def.MinKnowledgeWorkers)
 
 	return progress
+}
+
+// appendCounter adds a run-counter row when the milestone asks for any.
+func appendCounter(progress []MilestoneProgress, label string, current, need int) []MilestoneProgress {
+	if need <= 0 {
+		return progress
+	}
+	return append(progress, MilestoneProgress{
+		Label:   label,
+		Current: float64(current),
+		Target:  float64(need),
+		Met:     current >= need,
+	})
 }
 
 // overallProgress returns 0.0-1.0 progress ratio for a milestone
@@ -407,12 +480,26 @@ func formatRewards(effects []config.Effect) string {
 
 // Snapshot returns milestone state for UI with progress, chains, and titles
 func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneState {
-	milestones := make(map[string]MilestoneInfo)
+	milestones := make(map[string]MilestoneInfo, len(mm.defs))
 	visibleCount := 0
+	plans := mm.plans
+	if len(plans) != len(mm.defs) { // defs were swapped in place, not through Rebind
+		plans = make([]milestonePlan, len(mm.defs))
+		for i, def := range mm.defs {
+			plans[i] = mm.planFor(def)
+		}
+	}
+	var rewards sliceArena[config.Effect] // one backing array for every milestone's copy
+	var rows sliceArena[MilestoneProgress]
+	for i, def := range mm.defs {
+		rewards.reserve(def.Rewards)
+		rows.want += plans[i].rows
+	}
 
-	for _, def := range mm.defs {
+	for i, def := range mm.defs {
 		completed := mm.completed[def.Key]
-		progress := mm.computeProgress(def, params)
+		plan := &plans[i]
+		progress := mm.progressFor(def, plan, params, &rows)
 		ratio := overallProgress(progress)
 
 		// Visibility: completed || !hidden || progress > 0.5
@@ -445,8 +532,8 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 			Hidden:      def.Hidden,
 			Visible:     visible,
 			Completed:   completed,
-			RewardText:  formatRewards(def.Rewards),
-			Rewards:     slices.Clone(def.Rewards), // def is the manager's table
+			RewardText:  plan.rewardText,
+			Rewards:     rewards.clone(def.Rewards), // def is the manager's table
 			Progress:    progress,
 			ChainKey:    chainKey,
 		}

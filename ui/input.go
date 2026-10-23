@@ -18,6 +18,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle/all"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // CommandResult is the return value of HandleCommand. The caller (Dashboard)
@@ -50,6 +51,9 @@ type CommandResult struct {
 	// the account; with no account loaded the dashboard keeps it for the
 	// session.
 	MapPref mapPref
+	// Vibe says VibeMode was switched: the game's words are now in the other
+	// script, and the dashboard redraws them at once.
+	Vibe bool
 	// MapFlows asks the dashboard to turn the Map's flows overlay "on",
 	// "off" or over ("switch"); it then writes the reply.
 	MapFlows string
@@ -171,6 +175,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdMinimap(args, engine)
 	case "motion":
 		return cmdMotion(args, engine)
+	case "vibemode":
+		return cmdVibemode(args, engine)
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "harbinger", "harb":
@@ -2989,6 +2995,39 @@ func cmdMotion(args []string, engine *game.GameEngine) CommandResult {
 	}
 	if err := acct.SetMotion(on); err != nil {
 		return errorResult(fmt.Errorf("the motion setting could not be saved: %w", err))
+	}
+	return res
+}
+
+// cmdVibemode shows or sets VibeMode: whether the game's words read in the
+// VibeMode script. Off by default. It changes words and nothing else, so the
+// run in play carries on exactly as it was.
+func cmdVibemode(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		state := "off"
+		if vibe.On() {
+			state = "on"
+		}
+		return CommandResult{Type: "info", Message: "VibeMode: " + state + ". Type vibemode on or vibemode off to change it."}
+	}
+	if len(args) > 1 {
+		return usageError(usageFor("vibemode"), fmt.Errorf("on or off, please"))
+	}
+	val := strings.ToLower(args[0])
+	if val != "on" && val != "off" {
+		return usageError(usageFor("vibemode"), fmt.Errorf("vibemode takes on or off, not %q", args[0]))
+	}
+	on := val == "on"
+	if err := engine.SetVibeMode(on); err != nil {
+		return errorResult(fmt.Errorf("the VibeMode setting could not be saved: %w", err))
+	}
+	res := CommandResult{Type: game.LogRoutine, Vibe: true,
+		Message: "VibeMode off. The words are plain again. Type vibemode on to bring it back."}
+	if on {
+		res.Message = "VibeMode on. The words of the game read in a second script. Type vibemode off to go back."
+	}
+	if engine.Account() == nil {
+		res.Type, res.Message = "info", res.Message+mapSessionOnly
 	}
 	return res
 }

@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/espresso20/ageforge/words"
 )
 
 // data_rows.go reads the data definitions: the struct literals in config,
@@ -25,7 +26,11 @@ const (
 
 // fieldRule says how a struct field becomes a row.
 type fieldRule struct {
-	id    string // template for the row's id
+	// id is the template for the row's id. The table below leaves it empty:
+	// the ids of a struct field live in words.FieldIDs, shared with the
+	// ruleset overlay. Only a rule written inline by the code reader
+	// (code_special.go) carries its own.
+	id    string
 	kind  string
 	area  *area
 	where string // template for the where sentence
@@ -44,201 +49,201 @@ type fieldRule struct {
 
 var fieldRules = map[string]fieldRule{
 	// ----- ages and eras -----
-	"config.AgeDef.Name": {id: "age.{Key}.name", kind: kindName, area: areaAges, age: "{Key}", seen: seenAlways,
+	"config.AgeDef.Name": {kind: kindName, area: areaAges, age: "{Key}", seen: seenAlways,
 		where: "The name of an age: in the header of the main window, on the splash when you reach it, and wherever the game names it. Several screens cut a closing “ Age” off the name, so keep that ending."},
-	"config.AgeDef.Description": {id: "age.{Key}.description", kind: kindVoice, area: areaAges, age: "{Key}", seen: seenRare,
+	"config.AgeDef.Description": {kind: kindVoice, area: areaAges, age: "{Key}", seen: seenRare,
 		where: "The one-line description of the {Name}, in quotes on the splash when you reach it."},
-	"config.AgeDef.Quip": {id: "age.{Key}.quip", kind: kindVoice, area: areaAges, age: "{Key}", seen: seenRare,
+	"config.AgeDef.Quip": {kind: kindVoice, area: areaAges, age: "{Key}", seen: seenRare,
 		where: "The quip under the description on the splash when you reach the {Name}."},
-	"config.EpochDef.Name": {id: "era.{Key}.name", kind: kindName, area: areaAges, age: "{Key}", seen: seenOften,
+	"config.EpochDef.Name": {kind: kindName, area: areaAges, age: "{Key}", seen: seenOften,
 		where: "The name of an era (a group of ages): in the Epoch panel, in the log when the era begins, and in badges."},
-	"config.EpochDef.Description": {id: "era.{Key}.description", kind: kindVoice, area: areaAges, age: "{Key}", seen: seenRare,
+	"config.EpochDef.Description": {kind: kindVoice, area: areaAges, age: "{Key}", seen: seenRare,
 		where: "What the log says after “The {Name} begins.”, and the era's line in the Epoch panel."},
-	"config.ResourceDef.Name": {id: "resource.{Key}.name", kind: kindName, area: areaAges, age: "res:{Key}", seen: seenAlways,
+	"config.ResourceDef.Name": {kind: kindName, area: areaAges, age: "res:{Key}", seen: seenAlways,
 		where: "The name of a resource: in the Resources box of the main window, in every cost and in the log."},
-	"config.ResourceDef.Description": {id: "resource.{Key}.description", kind: kindVoice, area: areaAges, age: "res:{Key}", seen: seenRegular,
+	"config.ResourceDef.Description": {kind: kindVoice, area: areaAges, age: "res:{Key}", seen: seenRegular,
 		where: "The one-line description of the resource {Name}."},
-	"config.WorkerClassDef.ClassName": {id: "worker_class.{Domain}.{AgeKey}", kind: kindName, area: areaAges, age: "{AgeKey}", seen: seenRegular,
+	"config.WorkerClassDef.ClassName": {kind: kindName, area: areaAges, age: "{AgeKey}", seen: seenRegular,
 		where: "What the Workers panel calls the workers of the {Domain} domain from the {name:AgeKey} on."},
 
 	// ----- buildings and wonders -----
-	"config.BuildingDef.Name": {id: "building.{Key}.name", kind: kindName, area: areaBuildings, age: "{Key}", seen: seenOften, fix: wonderArea,
+	"config.BuildingDef.Name": {kind: kindName, area: areaBuildings, age: "{Key}", seen: seenOften, fix: wonderArea,
 		where: "The name of a building: in the Buildings list, on the map, in costs and in the log."},
-	"config.BuildingDef.Description": {id: "building.{Key}.description", kind: kindVoice, area: areaBuildings, age: "{Key}", seen: seenRegular, fix: wonderArea,
+	"config.BuildingDef.Description": {kind: kindVoice, area: areaBuildings, age: "{Key}", seen: seenRegular, fix: wonderArea,
 		where: "The description of {Name} in the Buildings list and the Buildings panel. The game writes what the building does after it."},
-	"config.BuildingDef.Flavor": {id: "building.{Key}.flavor", kind: kindVoice, area: areaBuildings, age: "{Key}", seen: seenRegular, fix: wonderArea,
+	"config.BuildingDef.Flavor": {kind: kindVoice, area: areaBuildings, age: "{Key}", seen: seenRegular, fix: wonderArea,
 		where: "The line in italics under the description of {Name} in the Buildings list and the Buildings panel."},
 
 	// ----- techs -----
-	"config.TechDef.Name": {id: "tech.{Key}.name", kind: kindName, area: areaTechs, age: "tech:{Key}", seen: seenOften,
+	"config.TechDef.Name": {kind: kindName, area: areaTechs, age: "tech:{Key}", seen: seenOften,
 		where: "The name of a tech: on its card in the Research panel, in the research list and in the log."},
-	"config.TechDef.Code": {id: "tech.{Key}.code", kind: kindLabel, area: areaTechs, age: "tech:{Key}", seen: seenRegular, max: 5,
+	"config.TechDef.Code": {kind: kindLabel, area: areaTechs, age: "tech:{Key}", seen: seenRegular, max: 5,
 		where: "The short code in capitals on the card of {Name} in the Research panel. At most five capital letters, and no two techs may share one."},
-	"config.TechDef.Description": {id: "tech.{Key}.description", kind: kindVoice, area: areaTechs, age: "tech:{Key}", seen: seenRegular,
+	"config.TechDef.Description": {kind: kindVoice, area: areaTechs, age: "tech:{Key}", seen: seenRegular,
 		where: "The description on the card of {Name} in the Research panel."},
-	"config.TechLaneDef.Name": {id: "tech_lane.{Key}.name", kind: kindLabel, area: areaTechs, age: "primitive_age", seen: seenRegular,
+	"config.TechLaneDef.Name": {kind: kindLabel, area: areaTechs, age: "primitive_age", seen: seenRegular,
 		where: "The name of a lane of the tech tree, written down the side of the Research panel."},
-	"config.MechanicDef.Name": {id: "mechanic.{Key}.name", kind: kindLabel, area: areaTechs, seen: seenRegular,
+	"config.MechanicDef.Name": {kind: kindLabel, area: areaTechs, seen: seenRegular,
 		where: "What the game calls a number a tech can change, in the lists of what a tech does."},
-	"config.MechanicDef.Text": {id: "mechanic.{Key}.text", kind: kindMessage, area: areaTechs, seen: seenRegular,
+	"config.MechanicDef.Text": {kind: kindMessage, area: areaTechs, seen: seenRegular,
 		where: "How a tech's card says it changes “{Name}”. The %s is the size of the change (“15%”)."},
-	"config.FeatureLockDef.Name": {id: "feature.{Key}.name", kind: kindMessage, area: areaTechs, age: "feature:{Key}", seen: seenNews,
+	"config.FeatureLockDef.Name": {kind: kindMessage, area: areaTechs, age: "feature:{Key}", seen: seenNews,
 		where: "The start of the refusal when a command waits for a tech: “{Name} {Needs} <tech> first. Research it to {Then}.” It also starts the log line when the tech is done: “{Name} {Opens}.”"},
-	"config.FeatureLockDef.Needs": {id: "feature.{Key}.needs", kind: kindMessage, area: areaTechs, age: "feature:{Key}", seen: seenNews,
+	"config.FeatureLockDef.Needs": {kind: kindMessage, area: areaTechs, age: "feature:{Key}", seen: seenNews,
 		where: "The verb of the refusal “{Name} {Needs} <tech> first. Research it to {Then}.” It must agree with “{Name}”: need after a plural, needs after a singular."},
-	"config.FeatureLockDef.Then": {id: "feature.{Key}.then", kind: kindMessage, area: areaTechs, age: "feature:{Key}", seen: seenNews,
+	"config.FeatureLockDef.Then": {kind: kindMessage, area: areaTechs, age: "feature:{Key}", seen: seenNews,
 		where: "The end of the refusal “{Name} {Needs} <tech> first. Research it to {Then}.”"},
-	"config.FeatureLockDef.Opens": {id: "feature.{Key}.opens", kind: kindMessage, area: areaTechs, age: "feature:{Key}", seen: seenRegular,
+	"config.FeatureLockDef.Opens": {kind: kindMessage, area: areaTechs, age: "feature:{Key}", seen: seenRegular,
 		where: "What a tech's card says it unlocks, after the word “It” (“It {Opens}.”), and the log line when the tech is done."},
 
 	// ----- milestones -----
-	"config.MilestoneDef.Name": {id: "milestone.{Key}.name", kind: kindName, area: areaMilestones, age: "milestone:{Key}", seen: seenRegular,
+	"config.MilestoneDef.Name": {kind: kindName, area: areaMilestones, age: "milestone:{Key}", seen: seenRegular,
 		where: "The name of a milestone: in the Milestones panel and in the log line and toast when it is completed."},
-	"config.MilestoneDef.Description": {id: "milestone.{Key}.description", kind: kindMessage, area: areaMilestones, age: "milestone:{Key}", seen: seenRegular,
+	"config.MilestoneDef.Description": {kind: kindMessage, area: areaMilestones, age: "milestone:{Key}", seen: seenRegular,
 		where: "What the Milestones panel says you must do for {Name}."},
-	"config.MilestoneDef.Flavor": {id: "milestone.{Key}.flavor", kind: kindVoice, area: areaMilestones, age: "milestone:{Key}", seen: seenRare, rules: rulesNoMark,
+	"config.MilestoneDef.Flavor": {kind: kindVoice, area: areaMilestones, age: "milestone:{Key}", seen: seenRare, rules: rulesNoMark,
 		where: "The quip the log adds in gray when the milestone {Name} is completed."},
-	"config.MilestoneChainDef.Name": {id: "milestone_chain.{Key}.name", kind: kindName, area: areaMilestones, seen: seenRegular,
+	"config.MilestoneChainDef.Name": {kind: kindName, area: areaMilestones, seen: seenRegular,
 		where: "The name of a chain of milestones, in the Milestones panel and in the log when the chain is completed."},
-	"config.MilestoneChainDef.Title": {id: "milestone_chain.{Key}.title", kind: kindName, area: areaMilestones, seen: seenRare,
+	"config.MilestoneChainDef.Title": {kind: kindName, area: areaMilestones, seen: seenRare,
 		where: "The title the chain {Name} gives when it is completed."},
-	"config.MilestoneChainDef.Flavor": {id: "milestone_chain.{Key}.flavor", kind: kindVoice, area: areaMilestones, seen: seenRare, rules: rulesNoMark,
+	"config.MilestoneChainDef.Flavor": {kind: kindVoice, area: areaMilestones, seen: seenRare, rules: rulesNoMark,
 		where: "The quip the log adds in gray when the chain {Name} is completed."},
-	"config.TitleDef.Title": {id: "milestone_title.{sn}", kind: kindName, area: areaMilestones, seen: seenRare,
+	"config.TitleDef.Title": {kind: kindName, area: areaMilestones, seen: seenRare,
 		where: "A title a run earns by the number of milestones completed."},
 
 	// ----- badges -----
-	"config.BadgeDef.Name": {id: "badge.{Key}.name", kind: kindName, area: areaBadges, age: "{InAge}", seen: seenRegular,
+	"config.BadgeDef.Name": {kind: kindName, area: areaBadges, age: "{InAge}", seen: seenRegular,
 		where: "The name of a badge: in the badge case, and in the toast and log line when it is earned."},
-	"config.BadgeDef.Desc": {id: "badge.{Key}.description", kind: kindVoice, area: areaBadges, age: "{InAge}", seen: seenRegular,
+	"config.BadgeDef.Desc": {kind: kindVoice, area: areaBadges, age: "{InAge}", seen: seenRegular,
 		where: "What the badge case says the badge {Name} is for."},
-	"config.BadgeDef.Hint": {id: "badge.{Key}.hint", kind: kindMessage, area: areaBadges, age: "{InAge}", seen: seenRegular,
+	"config.BadgeDef.Hint": {kind: kindMessage, area: areaBadges, age: "{InAge}", seen: seenRegular,
 		where: "The hint the badge case shows in place of the description while the badge {Name} is still secret."},
-	"config.BadgeDef.Ladder": {id: "badge.{Key}.ladder", kind: kindLabel, area: areaBadges, seen: seenRegular,
+	"config.BadgeDef.Ladder": {kind: kindLabel, area: areaBadges, seen: seenRegular,
 		where: "The heading the badge case puts over the ladder the badge {Name} belongs to."},
-	"config.BadgeFamilyDef.Name": {id: "badge_family.{Key}.name", kind: kindName, area: areaBadges, seen: seenRegular,
+	"config.BadgeFamilyDef.Name": {kind: kindName, area: areaBadges, seen: seenRegular,
 		where: "The name of each badge of the “{Family}” family. The game fills in the slot for each badge."},
-	"config.BadgeFamilyDef.Desc": {id: "badge_family.{Key}.description", kind: kindVoice, area: areaBadges, seen: seenRegular,
+	"config.BadgeFamilyDef.Desc": {kind: kindVoice, area: areaBadges, seen: seenRegular,
 		where: "What the badge case says each badge of the “{Family}” family is for. The game fills in the slots for each badge."},
-	"config.BadgeFamilyDef.Names": {id: "badge.{k}.name", kind: kindName, area: areaBadges, age: "{k}", seen: seenRegular,
+	"config.BadgeFamilyDef.Names": {kind: kindName, area: areaBadges, age: "{k}", seen: seenRegular,
 		where: "The name of the badge {k}, used in place of its family's usual name: in the badge case, and in the toast and log line when it is earned."},
-	"config.BadgeFamilyDef.Descs": {id: "badge.{k}.description", kind: kindVoice, area: areaBadges, age: "{k}", seen: seenRegular,
+	"config.BadgeFamilyDef.Descs": {kind: kindVoice, area: areaBadges, age: "{k}", seen: seenRegular,
 		where: "What the badge case says the badge {k} is for, in place of its family's usual line."},
-	"config.BadgeFamilyDef.Ladder": {id: "badge_family.{Key}.ladder", kind: kindLabel, area: areaBadges, seen: seenRegular,
+	"config.BadgeFamilyDef.Ladder": {kind: kindLabel, area: areaBadges, seen: seenRegular,
 		where: "The heading the badge case puts over each ladder of the “{Family}” family. The game fills in the slot."},
-	"config.BadgeFamilyDef.Hint": {id: "badge_family.{Key}.hint", kind: kindMessage, area: areaBadges, seen: seenRegular,
+	"config.BadgeFamilyDef.Hint": {kind: kindMessage, area: areaBadges, seen: seenRegular,
 		where: "The hint the badge case shows while a badge of the “{Family}” family is still secret."},
-	"config.BadgeRung.Name": {id: "badge_rung.{decl}.{sn}", kind: kindName, area: areaBadges, seen: seenRegular,
+	"config.BadgeRung.Name": {kind: kindName, area: areaBadges, seen: seenRegular,
 		where: "The name of rung {sn} of a badge ladder ({decl}). A ladder's badges are named by their rung."},
-	"config.BadgeReward.Title": {id: "badge_reward.{k}{^Key}.title", kind: kindName, area: areaBadges, seen: seenRare,
+	"config.BadgeReward.Title": {kind: kindName, area: areaBadges, seen: seenRare,
 		where: "The title the badge {k}{^Key} gives. Keep it the same as the title's own row."},
-	"config.BadgeTitleDef.Title": {id: "badge_title.{Badge}{Set}", kind: kindName, area: areaBadges, seen: seenRare,
+	"config.BadgeTitleDef.Title": {kind: kindName, area: areaBadges, seen: seenRare,
 		where: "A title an account can wear once it holds the badge or set {Badge}{Set}."},
-	"config.BadgeScoreTitle.Title": {id: "badge_score_title.{sn}", kind: kindName, area: areaBadges, seen: seenRare,
+	"config.BadgeScoreTitle.Title": {kind: kindName, area: areaBadges, seen: seenRare,
 		where: "A title an account earns by its badge points."},
-	"config.BadgeExpeditionDef.Name": {id: "badge_expedition.{Key}.name", kind: kindName, area: areaBadges, age: "{MinAge}", seen: seenRegular,
+	"config.BadgeExpeditionDef.Name": {kind: kindName, area: areaBadges, age: "{MinAge}", seen: seenRegular,
 		where: "The name of an era as the mission badges of that era write it. Keep it the same as the era's own name."},
-	"config.MissionWords.Tiers": {id: "mission.{Age}.tier.{n}", kind: kindName, area: areaWorld, age: "{Age}", seen: seenRegular,
+	"config.MissionWords.Tiers": {kind: kindName, area: areaWorld, age: "{Age}", seen: seenRegular,
 		where: "One of the four names of a kind of mission on the mission board in this age (1 short, 2 long, 3 grand military, 4 grand civil): the start of every offer's title, before the colon. Placeholder text."},
-	"config.MissionWords.Places": {id: "mission.{Age}.place.{n}", kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.Places": {kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "A place in this age that a mission on the board can go to: the end of an offer's title, after “the”. Placeholder text."},
-	"config.MissionWords.ShortObjectives": {id: "mission.{Age}.short.{n}", kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.ShortObjectives": {kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "What a short mission on the board sets out to do: the middle of its title, after the colon, ending in “the” with a place after it. Placeholder text."},
-	"config.MissionWords.LongObjectives": {id: "mission.{Age}.long.{n}", kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.LongObjectives": {kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "What a long mission on the board sets out to do: the middle of its title, after the colon, ending in “the” with a place after it. Placeholder text."},
-	"config.MissionWords.MilitaryObjectives": {id: "mission.{Age}.military.{n}", kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.MilitaryObjectives": {kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "What a military grand mission on the board sets out to do: the middle of its title, after the colon, ending in “the” with a place after it. Placeholder text."},
-	"config.MissionWords.CivilObjectives": {id: "mission.{Age}.civil.{n}", kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.CivilObjectives": {kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "What a civil grand mission on the board sets out to do: the middle of its title, after the colon, ending in “the” with a place after it. Placeholder text."},
-	"config.MissionWords.Twists": {id: "mission.{Age}.twist.{n}", kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.Twists": {kind: kindVoice, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "The one-line description of an offer on the mission board in this age: a twist, whatever the kind of mission. Placeholder text."},
-	"config.MissionWords.Weather": {id: "mission.{Age}.weather.{n}", kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.Weather": {kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "Bad weather a party can meet on the road in this age, in a road event's story (\"<weather> pinned the party down\"). Starts with \"a\" or \"an\". Placeholder text."},
-	"config.MissionWords.Foes": {id: "mission.{Age}.foes.{n}", kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.Foes": {kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "Who blocks, shadows or ambushes a party on the road in this age, in a road event's story (\"<foe> blocked the way\"). Placeholder text."},
-	"config.MissionWords.Helpers": {id: "mission.{Age}.helpers.{n}", kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.Helpers": {kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "Who helps a party find a shorter way in this age, in a road event's story (\"<helper> showed the party a shorter way\"). Starts with \"a\" or \"an\". Placeholder text."},
-	"config.MissionWords.Finds": {id: "mission.{Age}.finds.{n}", kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
+	"config.MissionWords.Finds": {kind: kindName, area: areaWorld, age: "{Age}", seen: seenPool,
 		where: "Something valuable a party finds by the road in this age, which grows its haul (\"The party found <find>\"). Starts with \"a\" or \"an\". Placeholder text."},
-	"config.BadgeThemeDef.Name": {id: "badge_theme.{Key}.name", kind: kindName, area: areaBadges, seen: seenRegular,
+	"config.BadgeThemeDef.Name": {kind: kindName, area: areaBadges, seen: seenRegular,
 		where: "The name of a theme as the badge case writes it. Keep it the same as the theme's own name."},
 
 	// ----- events, catastrophes and harbingers -----
-	"config.EventDef.Name": {id: "event.{Key}.name", kind: kindName, area: areaEvents, age: "{MinAge}", seen: seenNews,
+	"config.EventDef.Name": {kind: kindName, area: areaEvents, age: "{MinAge}", seen: seenNews,
 		where: "The name of a random event: in the Events box of the main window while it lasts, and in the toast when it starts."},
-	"config.EventDef.Description": {id: "event.{Key}.description", kind: kindVoice, area: areaEvents, age: "{MinAge}", seen: seenRare,
+	"config.EventDef.Description": {kind: kindVoice, area: areaEvents, age: "{MinAge}", seen: seenRare,
 		where: "The description of the event {Name}, shown with it while it lasts."},
-	"config.EventDef.LogMessage": {id: "event.{Key}.log", kind: kindVoice, area: areaEvents, age: "{MinAge}", seen: seenNews, rules: rulesNoMark,
+	"config.EventDef.LogMessage": {kind: kindVoice, area: areaEvents, age: "{MinAge}", seen: seenNews, rules: rulesNoMark,
 		where: "What the log says when the event {Name} happens. It carries no numbers: the game writes what the event did after it (what was lost and gained, each rate and how long it lasts), so leave numbers out."},
-	"config.EpochEventDef.Name": {id: "era_event.{Key}.name", kind: kindName, area: areaEvents, age: "iron_age", seen: seenRare,
+	"config.EpochEventDef.Name": {kind: kindName, area: areaEvents, age: "iron_age", seen: seenRare,
 		where: "The name of an era event: in the log when it happens, in the Epoch panel and on the age splash."},
-	"config.EpochEventDef.FlavorText": {id: "era_event.{Key}.text", kind: kindVoice, area: areaEvents, age: "iron_age", seen: seenRare,
+	"config.EpochEventDef.FlavorText": {kind: kindVoice, area: areaEvents, age: "iron_age", seen: seenRare,
 		where: "What the log says after the name when the era event {Name} happens. The numbers in it are checked against what the event does; {dur} is how long it lasts."},
-	"config.AwakeningDef.Name": {id: "awakening.{Key}.name", kind: kindName, area: areaEvents, age: "{TriggerAge}", seen: seenRare,
+	"config.AwakeningDef.Name": {kind: kindName, area: areaEvents, age: "{TriggerAge}", seen: seenRare,
 		where: "The name of an awakening: a one-time discovery the log announces on reaching the {name:TriggerAge}."},
-	"config.AwakeningDef.FlavorText": {id: "awakening.{Key}.text", kind: kindVoice, area: areaEvents, age: "{TriggerAge}", seen: seenRare,
+	"config.AwakeningDef.FlavorText": {kind: kindVoice, area: areaEvents, age: "{TriggerAge}", seen: seenRare,
 		where: "What the log says after “Awakening: {Name}.” The numbers in it are checked against what the awakening gives."},
-	"config.HarbingerDef.Name": {id: "harbinger.{Key}.name", kind: kindName, area: areaEvents, age: "{Age}", seen: seenRare,
+	"config.HarbingerDef.Name": {kind: kindName, area: areaEvents, age: "{Age}", seen: seenRare,
 		where: "The name of the harbinger of the {name:Age}: in the Harbinger panel, the log and the flavor lines about it. It starts in lower case because it is used in the middle of sentences."},
-	"config.HarbingerDef.Description": {id: "harbinger.{Key}.description", kind: kindVoice, area: areaEvents, age: "{Age}", seen: seenRare,
+	"config.HarbingerDef.Description": {kind: kindVoice, area: areaEvents, age: "{Age}", seen: seenRare,
 		where: "The description of {Name} at the top of the Harbinger panel."},
-	"config.HarbingerDef.AppeaseLabel": {id: "harbinger.{Key}.appease", kind: kindLabel, area: areaEvents, age: "{Age}", seen: seenRare,
+	"config.HarbingerDef.AppeaseLabel": {kind: kindLabel, area: areaEvents, age: "{Age}", seen: seenRare,
 		where: "What appeasing {Name} is called: after “Appease: ” in the Harbinger panel, and in the log when you do it."},
-	"config.HarbingerDef.BraceLabel": {id: "harbinger.{Key}.brace", kind: kindLabel, area: areaEvents, age: "{Age}", seen: seenRare,
+	"config.HarbingerDef.BraceLabel": {kind: kindLabel, area: areaEvents, age: "{Age}", seen: seenRare,
 		where: "What bracing in the {name:Age} is called: after “Brace: ” in the Harbinger panel, and in the log when you do it."},
-	"config.HarbingerDef.InviteLabel": {id: "harbinger.{Key}.invite", kind: kindLabel, area: areaEvents, age: "{Age}", seen: seenRare,
+	"config.HarbingerDef.InviteLabel": {kind: kindLabel, area: areaEvents, age: "{Age}", seen: seenRare,
 		where: "What inviting the doom is called with {Name}: after “Invite: ” in the Harbinger panel, and in the log when you do it."},
 
 	// ----- trade, civilizations, prestige, boons -----
-	"config.TradeRouteDef.Name": {id: "route.{Key}.name", kind: kindName, area: areaWorld, age: "{MinAge}", seen: seenRegular,
+	"config.TradeRouteDef.Name": {kind: kindName, area: areaWorld, age: "{MinAge}", seen: seenRegular,
 		where: "The name of a trade route, in the Trade panel and the log. The map picks how the route travels (land, sea or air) from words in its name and description, such as rail, ship or warp."},
-	"config.TradeRouteDef.Description": {id: "route.{Key}.description", kind: kindVoice, area: areaWorld, age: "{MinAge}", seen: seenRegular,
+	"config.TradeRouteDef.Description": {kind: kindVoice, area: areaWorld, age: "{MinAge}", seen: seenRegular,
 		where: "The description of the route {Name} in the Trade panel. It must read “<what you send> for <what you get>”, naming each resource. The map picks how the route travels from words in it, such as rail, ship or warp."},
-	"config.FactionDef.Name": {id: "civ.{Key}.name", kind: kindName, area: areaWorld, age: "{MinAge}", seen: seenRegular,
+	"config.FactionDef.Name": {kind: kindName, area: areaWorld, age: "{MinAge}", seen: seenRegular,
 		where: "The name of another civilization: in the Factions panel, on the map and in the log."},
-	"config.FactionDef.Backstory": {id: "civ.{Key}.backstory", kind: kindVoice, area: areaWorld, age: "{MinAge}", seen: seenRare,
+	"config.FactionDef.Backstory": {kind: kindVoice, area: areaWorld, age: "{MinAge}", seen: seenRare,
 		where: "The introduction of the {Name}: in the log when you first meet them, and under their name in the Factions panel."},
-	"config.FactionDef.Description": {id: "civ.{Key}.description", kind: kindVoice, area: areaWorld, age: "{MinAge}", seen: seenRare,
+	"config.FactionDef.Description": {kind: kindVoice, area: areaWorld, age: "{MinAge}", seen: seenRare,
 		where: "The one-line description of the {Name}."},
-	"config.PrestigeUpgradeDef.Name": {id: "prestige.{Key}.name", kind: kindName, area: areaWorld, age: "medieval_age", seen: seenRare,
+	"config.PrestigeUpgradeDef.Name": {kind: kindName, area: areaWorld, age: "medieval_age", seen: seenRare,
 		where: "The name of an item in the prestige shop."},
-	"config.PrestigeUpgradeDef.Description": {id: "prestige.{Key}.description", kind: kindMessage, area: areaWorld, age: "medieval_age", seen: seenRare,
+	"config.PrestigeUpgradeDef.Description": {kind: kindMessage, area: areaWorld, age: "medieval_age", seen: seenRare,
 		where: "What the prestige shop says {Name} does, and the log when you buy it."},
-	"boon.Def.Name": {id: "boon.{decl}.{sn}.name", kind: kindName, area: areaWorld, age: "bronze_age", seen: seenRare,
+	"boon.Def.Name": {kind: kindName, area: areaWorld, age: "bronze_age", seen: seenRare,
 		where: "The name of a boon or setback another civilization can leave you with, in the log and the Factions panel."},
-	"boon.Def.Flavors": {id: "boon.{decl}.{sn}.line.{n}", kind: kindVoice, area: areaWorld, age: "bronze_age", seen: seenPool,
+	"boon.Def.Flavors": {kind: kindVoice, area: areaWorld, age: "bronze_age", seen: seenPool,
 		where: "One of the lines the log picks from when an expedition comes back with “{Name}”. The slots are filled with what it gives or takes."},
 
 	// ----- themes and the map -----
-	"theme.Theme.Name": {id: "theme.{Key}.name", kind: kindName, area: areaMap, age: "primitive_age", seen: seenRegular,
+	"theme.Theme.Name": {kind: kindName, area: areaMap, age: "primitive_age", seen: seenRegular,
 		where: "The name of a color theme, in the theme picker."},
-	"theme.Theme.Blurb": {id: "theme.{Key}.blurb", kind: kindVoice, area: areaMap, age: "primitive_age", seen: seenRegular,
+	"theme.Theme.Blurb": {kind: kindVoice, area: areaMap, age: "primitive_age", seen: seenRegular,
 		where: "The description of the theme {Name} in the theme picker."},
-	"theme.Theme.UnlockHint": {id: "theme.{Key}.unlock_hint", kind: kindMessage, area: areaMap, age: "primitive_age", seen: seenRegular,
+	"theme.Theme.UnlockHint": {kind: kindMessage, area: areaMap, age: "primitive_age", seen: seenRegular,
 		where: "What the theme picker says you must do to unlock the theme {Name}."},
-	"mapmodel.cityFeatureDef.name": {id: "map.city.{key}.name", kind: kindName, area: areaMap, age: "{from}", seen: seenRare,
+	"mapmodel.cityFeatureDef.name": {kind: kindName, area: areaMap, age: "{from}", seen: seenRare,
 		where: "What the map calls a part of the late-game city in a sentence."},
-	"mapmodel.cityFeatureDef.title": {id: "map.city.{key}.title", kind: kindLabel, area: areaMap, age: "{from}", seen: seenRare,
+	"mapmodel.cityFeatureDef.title": {kind: kindLabel, area: areaMap, age: "{from}", seen: seenRare,
 		where: "The heading when you inspect this part of the city on the map."},
-	"mapmodel.cityFeatureDef.lines": {id: "map.city.{key}.line.{n}", kind: kindVoice, area: areaMap, age: "{from}", seen: seenRare,
+	"mapmodel.cityFeatureDef.lines": {kind: kindVoice, area: areaMap, age: "{from}", seen: seenRare,
 		where: "A line the map shows when you inspect “{title}” in the city."},
-	"mapmodel.moverDef.name": {id: "map.mover.{key}.name", kind: kindName, area: areaMap, age: "{from}", seen: seenRare,
+	"mapmodel.moverDef.name": {kind: kindName, area: areaMap, age: "{from}", seen: seenRare,
 		where: "What the map calls something that moves across it, in a sentence."},
-	"mapmodel.moverDef.title": {id: "map.mover.{key}.title", kind: kindLabel, area: areaMap, age: "{from}", seen: seenRare,
+	"mapmodel.moverDef.title": {kind: kindLabel, area: areaMap, age: "{from}", seen: seenRare,
 		where: "The heading when you inspect this moving thing on the map."},
-	"mapmodel.moverDef.lines": {id: "map.mover.{key}.line.{n}", kind: kindVoice, area: areaMap, age: "{from}", seen: seenRare,
+	"mapmodel.moverDef.lines": {kind: kindVoice, area: areaMap, age: "{from}", seen: seenRare,
 		where: "A line the map shows when you inspect “{title}” as it moves."},
-	"mapmodel.cityLookDef.name": {id: "map.city_look.{key}.name", kind: kindName, area: areaMap, age: "{key}", seen: seenRare,
+	"mapmodel.cityLookDef.name": {kind: kindName, area: areaMap, age: "{key}", seen: seenRare,
 		where: "What the map calls the city of the {name:key}."},
-	"mapmodel.cityLookDef.structure": {id: "map.city_look.{key}.structure", kind: kindVoice, area: areaMap, age: "{key}", seen: seenRare,
+	"mapmodel.cityLookDef.structure": {kind: kindVoice, area: areaMap, age: "{key}", seen: seenRare,
 		where: "What the map says the city of the {name:key} is built of."},
-	"mapmodel.cityLookDef.ambient": {id: "map.city_look.{key}.ambient", kind: kindVoice, area: areaMap, age: "{key}", seen: seenRare,
+	"mapmodel.cityLookDef.ambient": {kind: kindVoice, area: areaMap, age: "{key}", seen: seenRare,
 		where: "What the map says moves in the city of the {name:key}."},
-	"mapmodel.skyPartDef.name": {id: "map.sky.{k2}.{k}", kind: kindName, area: areaMap, age: "space_age", seen: seenRare,
+	"mapmodel.skyPartDef.name": {kind: kindName, area: areaMap, age: "space_age", seen: seenRare,
 		where: "What the map calls a part of your station or fleet in the space ages."},
-	"mapmodel.AlienKind.Color": {id: "map.alien.{sn}.color", kind: kindLabel, area: areaMap, age: "galactic_age", seen: seenRare,
+	"mapmodel.AlienKind.Color": {kind: kindLabel, area: areaMap, age: "galactic_age", seen: seenRare,
 		where: "The color the map names a visiting craft by when you inspect it."},
-	"mapmodel.AlienKind.Lines": {id: "map.alien.{sn}.line.{n}", kind: kindVoice, area: areaMap, age: "galactic_age", seen: seenRare,
+	"mapmodel.AlienKind.Lines": {kind: kindVoice, area: areaMap, age: "galactic_age", seen: seenRare,
 		where: "A line the map shows when you inspect a visiting craft."},
 }
 
@@ -362,7 +367,7 @@ func readField(c *catalog, u *unit) (*row, string) {
 				return nil, whyNoWords
 			}
 			return &row{
-				id:     fmt.Sprintf("unclassified.%s.%d_%d", idSafe(full), u.line, u.start),
+				id:     fmt.Sprintf("unclassified.%s.%d_%d", words.IDSafe(full), u.line, u.start),
 				kind:   kindVoice,
 				where:  "A field of a definition (" + full + ") the tool has not been told about.",
 				unsure: true, age: -1, seen: seenRare, area: areaUnsure,
@@ -373,6 +378,7 @@ func readField(c *catalog, u *unit) (*row, string) {
 	if !hasWord(u.text) {
 		return nil, whyNoWords
 	}
+	rule.id = words.FieldIDs[full]
 	return c.fromRule(rule, u), ""
 }
 
@@ -407,25 +413,10 @@ func (c *catalog) fromRule(rule fieldRule, u *unit) *row {
 	return r
 }
 
-var tmplRe = regexp.MustCompile(`\{(name:)?(\^)?([A-Za-z]+[0-9]*)\}`)
-
 // expand fills a template's slots from the unit's surroundings. For an id,
 // each value is made safe to be part of one.
 func (c *catalog) expand(t string, u *unit, forID bool) string {
-	return tmplRe.ReplaceAllStringFunc(t, func(m string) string {
-		parts := tmplRe.FindStringSubmatch(m)
-		v, known := u.lookup(parts[3], parts[2] == "^")
-		if !known {
-			return m
-		}
-		if parts[1] != "" {
-			return c.w.called(v)
-		}
-		if forID {
-			return idSafe(v)
-		}
-		return v
-	})
+	return words.Expand(t, u.lookup, forID, c.w.called)
 }
 
 // lookup resolves one template slot.

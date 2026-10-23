@@ -320,6 +320,9 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 
 	// Active routes
 	var activeRoutes []ActiveRouteInfo
+	if len(tm.activeRoutes) > 0 {
+		activeRoutes = make([]ActiveRouteInfo, 0, len(tm.activeRoutes))
+	}
 	var disruptedResources []string
 	seenDisrupt := make(map[string]bool)
 	for key, route := range tm.activeRoutes {
@@ -344,6 +347,17 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 
 	// Available routes
 	var availableRoutes []TradeRouteInfo
+	open := 0
+	for _, def := range tm.routeList {
+		if ageOrder[def.MinAge] <= ageOrder[age] {
+			if _, active := tm.activeRoutes[def.Key]; !active {
+				open++
+			}
+		}
+	}
+	if open > 0 {
+		availableRoutes = make([]TradeRouteInfo, 0, open)
+	}
 	for _, def := range tm.routeList {
 		if ageOrder[def.MinAge] > ageOrder[age] {
 			continue

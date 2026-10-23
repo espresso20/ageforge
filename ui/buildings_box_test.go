@@ -14,8 +14,12 @@ import (
 // 160 people with 32 huts, 20 stashes and 15 gathering camps. The mini map
 // took the top third of that column and the Buildings list was cut off
 // mid-entry at the bottom ("Stash x20" showed its name and nothing else).
+//
+// The playtest's terminal is big enough for the rich layout, whose Panels
+// column is richSidebarW wide, so the screen is the 120 columns of the two
+// middle columns and that.
 const (
-	playtestCols = 2*60 + sidebarW
+	playtestCols = 2*60 + richSidebarW
 	playtestRows = 45 + dashHeaderRows + promptRows
 )
 
@@ -93,8 +97,8 @@ func wholeEntries(t *testing.T, where string, d *Dashboard, rows []string) int {
 }
 
 // TestBuildingsBoxOnThePlaytestScreen: on the playtest's screen and town
-// the dashboard has no mini map (it is off until asked for) and the
-// Buildings list has the whole column. With more entries than fit, the box
+// the dashboard has no mini map (it is off until asked for); the Buildings
+// list shares its column only with the skyline strip under it. With more entries than fit, the box
 // shows whole entries only, says how many are below and names the key; a
 // page down shows the rest, with how many are above.
 func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
@@ -105,8 +109,8 @@ func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
 	}
 	rows := buildingsBox(t, d, pages, playtestCols, playtestRows)
 	_, _, bw, bh := d.economyTab.buildingTV.GetInnerRect()
-	if bw < 55 || bw > 65 || bh < 40 {
-		t.Fatalf("the Buildings box is %d by %d inside; the playtest's column was about 60 by 45", bw, bh)
+	if bw < 55 || bw > 65 || bh < 30 {
+		t.Fatalf("the Buildings box is %d by %d inside; the playtest's column (less the skyline strip) was about 60 by 37", bw, bh)
 	}
 	_, entries := buildingEntries(d.economyTab.state, bw)
 	first := wholeEntries(t, "the first page", d, rows)

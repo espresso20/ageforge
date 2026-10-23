@@ -313,11 +313,11 @@ The command bar keeps working while the Map is open: type commands as usual. The
 |---|---|
 | Arrows | Move the cursor or scroll |
 | `Tab` / `Shift-Tab` | Next or previous thing to inspect |
-| `PgUp` / `PgDn` | Zoom out and in (roguelike) or scroll half a screen (skyline) |
+| `PgUp` / `PgDn` | Zoom out and in |
 | `Enter` | Put the command for what the cursor is on into the prompt (not run: press Enter again to run it) |
 | `Esc` | Close the Map |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. Each style lists its keys along its bottom edge.
+The skyline also takes `+`, `-` and `=` (zoom: far, mid, close) and `[` and `]` (the previous and next district) while the prompt is empty; its zoom level is saved with your account. With something typed, `Tab` and `Enter` act on the prompt instead. Each style lists its keys along its bottom edge.
 
 ---
 
@@ -526,6 +526,21 @@ motion off
 ```
 
 Your theme is saved per account, not in any game save, so it carries across every save and new game. See [Themes & Accessibility](themes.md) for the themes and the [badges](badges.md#themes-from-badges) that unlock them. `motion` is saved per account too; with no account loaded it lasts for the session.
+
+---
+
+## VibeMode
+
+| Command | Description |
+|---|---|
+| `vibemode [on\|off]` | Bare, show whether VibeMode is on. `on` swaps the game's words for a second script, written in GenZ: the names and descriptions of buildings and techs, the log, the words for the people of your town. `off` brings the plain words back. The words change at once, with no restart (default off). Saved per account |
+
+```
+vibemode on
+vibemode off
+```
+
+VibeMode changes words and nothing else. Costs, rates, rules, saves and badges are exactly what they are with it off, and a save made in one script loads in the other. This release carries the switch and a first handful of lines: a few buildings, a tech, a badge, an event, a title, some of the words for the people of your town and two lines of the interface. Every line that has no VibeMode version yet reads as it always did. The setting is saved per account; with no account loaded it lasts for the session.
 
 ---
 
