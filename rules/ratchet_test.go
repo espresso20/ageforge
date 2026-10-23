@@ -55,6 +55,11 @@ var pureConfig = map[string]bool{
 	"Term": true, "TermsFor": true, "PeopleTerms": true,
 	"ArmyExperienceFor": true, "ArmyRankOf": true, "ArmyRankFloor": true, "ArmyRankKey": true,
 	"ArmyOddsBonus": true, "ArmyHaulFactor": true, "ArmyRareFactor": true, "MissionTiersOpen": true,
+	// The gate's pillars and the calendar's arithmetic: formulas and
+	// formatters on their arguments alone. The years themselves are read
+	// from the set (Set.AgeYears).
+	"GatePillar": true, "GatePillars": true, "PillarName": true,
+	"YearBetween": true, "YearLabel": true,
 }
 
 const (

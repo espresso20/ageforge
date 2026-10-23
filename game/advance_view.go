@@ -20,6 +20,10 @@ import (
 // "all four stand" and "CheckAdvancement says ready" are the same fact
 // (advance_view_test.go holds the two together for every age).
 
+// charterHint ends the advance command's refusals: where to see the whole
+// gate.
+const charterHint = "Type 'charter' to see everything the advance needs."
+
 // GateRowKind says how a row is counted and written.
 type GateRowKind int
 
@@ -129,7 +133,7 @@ func (st GameState) AdvanceView() AdvanceView {
 	keys := set.AgeKeys()
 	here, _ := set.Index(st.Age)
 	next := set.Next(st.Age)
-	years := config.AgeStartYears(keys)
+	years := set.AgeYears()
 	sight := SightOf(&st)
 
 	v := AdvanceView{
@@ -143,7 +147,7 @@ func (st GameState) AdvanceView() AdvanceView {
 		stop := MarchStop{Key: k}
 		if sight.Age(k) {
 			stop.Name = set.Name(rules.KindAge, k)
-			stop.Year = ageYearText(k, years[i])
+			stop.Year = ageYearText(set, k, years[i])
 		}
 		v.March = append(v.March, stop)
 	}
@@ -152,7 +156,7 @@ func (st GameState) AdvanceView() AdvanceView {
 	}
 	if v.Final {
 		v.Blockers = append(v.Blockers, "This is the final age. There is no age beyond it.")
-		v.Year, v.YearText = v.YearFrom, ageYearText(st.Age, v.YearFrom)
+		v.Year, v.YearText = v.YearFrom, ageYearText(set, st.Age, v.YearFrom)
 		return v
 	}
 	v.YearTo = years[here+1]
@@ -203,8 +207,8 @@ func (v *AdvanceView) setCalendar(share float64) {
 
 // ageYearText is the start of age as the march writes it: a number of years,
 // or the age's own word.
-func ageYearText(age string, year int) string {
-	if w := config.AgeYearLabel(age); w != "" {
+func ageYearText(set *rules.Set, age string, year int) string {
+	if w := set.AgeYearLabel(age); w != "" {
 		return w
 	}
 	return config.YearLabel(year)
@@ -331,7 +335,7 @@ func (st GameState) monumentRows(set *rules.Set, wonderKey string, built bool, w
 	build := GateRow{Kind: GateRowDone, Key: wonderKey, Label: name, Need: 1}
 	switch {
 	case built:
-		build.Have, build.Met, build.Progress, build.Note = 1, true, 1, "standing"
+		build.Have, build.Met, build.Progress, build.Note = 1, true, 1, "built"
 	default:
 		for _, q := range st.BuildQueue {
 			if q.Name == name && q.TotalTicks > 0 {

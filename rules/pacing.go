@@ -15,6 +15,7 @@ import (
 // so a set and config can never disagree about a rate.
 
 func (s *Set) derive() {
+	s.deriveCalendar()
 	s.priceLevels = config.PriceLevelsByAge(s.buildings)
 	s.priced = make(map[string][]string, len(s.priceLevels))
 	for age, lv := range s.priceLevels {
