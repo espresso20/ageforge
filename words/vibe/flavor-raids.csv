@@ -1,391 +1,391 @@
 id,text
-flavor.words.war_raid_damage.001,the big outer wall
-flavor.words.war_raid_damage.002,the poor north door
-flavor.words.war_raid_damage.003,the water stash
-flavor.words.war_raid_damage.004,the busted door frame
-flavor.words.war_raid_damage.005,the welcome light over the entrance
-flavor.words.war_raid_damage.006,the good long ladder
-flavor.words.war_raid_damage.007,the store room lock
-flavor.words.war_raid_damage.008,the big lock on the main door
-flavor.words.war_raid_damage.009,the passage ceiling
-flavor.words.war_raid_damage.010,the covered walkway down to the water
-flavor.words.war_raid_damage.011,the inner door seals
-flavor.words.war_raid_damage.012,the string of passage lights
-flavor.words.war_raid_damage.013,the steps down to the stash
-flavor.words.war_raid_damage.014,the panel by the entrance
-flavor.words.war_raid_damage.015,the far end wall
-flavor.words.war_raid_damage.016,the front room floor
-flavor.words.war_raid_damage.017,both doors' hinges
-flavor.words.war_raid_trace.001,a snapped knife
-flavor.words.war_raid_trace.002,a laceless boot
-flavor.words.war_raid_trace.003,a ripped strip of cloth
-flavor.words.war_raid_trace.004,a coil of genuinely good rope
-flavor.words.war_raid_trace.005,a kid's shoe
-flavor.words.war_raid_trace.006,a ripped glove
-flavor.words.war_raid_trace.007,a bone-dry water flask
-flavor.words.war_raid_trace.008,a helmet with its strap sliced
-flavor.words.war_raid_trace.009,a knife missing its tip
-flavor.words.war_raid_trace.010,a bundle nobody is brave enough to open
-flavor.words.war_raid_trace.011,a long run of chain
-flavor.words.war_raid_trace.012,a bag of someone else's snacks
-flavor.words.war_raid_trace.013,a still half-full flask
-flavor.words.war_raid_trace.014,a strap with bite marks in it
-flavor.words.war_raid_trace.015,a blood-soaked rag
-flavor.words.war_raid_trace.016,a cap two sizes too big for anyone
-flavor.words.war_raid_trace.017,a ring strung on a cord
-flavor.words.war_raid_trace.018,a scorched glove
-flavor.raid.any.001,"The outer wall got breached and is just standing open now, security stats at zero"
-flavor.raid.any.002,"Two kids are still missing, not a single sighting yet"
-flavor.raid.any.003,The rain spent the whole day doing a will-they-won't-they
+flavor.words.war_raid_damage.001,the OG outer wall
+flavor.words.war_raid_damage.002,the iconic north door
+flavor.words.war_raid_damage.003,the goated water stash
+flavor.words.war_raid_damage.004,the cooked door frame
+flavor.words.war_raid_damage.005,the main character light over the entrance
+flavor.words.war_raid_damage.006,the goated long ladder
+flavor.words.war_raid_damage.007,the lil lock on the store room
+flavor.words.war_raid_damage.008,the final boss lock on the main door
+flavor.words.war_raid_damage.009,the highkey load-bearing passage ceiling
+flavor.words.war_raid_damage.010,the aesthetic covered walkway down to the water
+flavor.words.war_raid_damage.011,the lowkey crucial seals around the inner door
+flavor.words.war_raid_damage.012,the aesthetic string of passage lights
+flavor.words.war_raid_damage.013,the cursed steps down to the stash
+flavor.words.war_raid_damage.014,the cursed panel by the entrance
+flavor.words.war_raid_damage.015,the OG wall at the far end
+flavor.words.war_raid_damage.016,the absolutely cooked front room floor
+flavor.words.war_raid_damage.017,both doors' cooked hinges
+flavor.words.war_raid_trace.001,a snapped and very mid knife
+flavor.words.war_raid_trace.002,a laceless boot with zero rizz
+flavor.words.war_raid_trace.003,a sad lil strip of torn cloth
+flavor.words.war_raid_trace.004,a coil of genuinely goated rope
+flavor.words.war_raid_trace.005,a lil kid's shoe
+flavor.words.war_raid_trace.006,a ripped glove with big sad energy
+flavor.words.war_raid_trace.007,a water flask that took the L and went bone dry
+flavor.words.war_raid_trace.008,a cooked helmet with the strap cut
+flavor.words.war_raid_trace.009,a mid knife with the tip snapped off
+flavor.words.war_raid_trace.010,a cursed bundle nobody will open
+flavor.words.war_raid_trace.011,an iconic length of chain
+flavor.words.war_raid_trace.012,a bag of someone else's lowkey bussin snacks
+flavor.words.war_raid_trace.013,a still half-full W of a flask
+flavor.words.war_raid_trace.014,a strap with feral bite marks in it
+flavor.words.war_raid_trace.015,a highkey bloodied rag
+flavor.words.war_raid_trace.016,a cap two sizes too big in its oversized era
+flavor.words.war_raid_trace.017,an aesthetic lil ring on a string
+flavor.words.war_raid_trace.018,a literally cooked glove
+flavor.raid.any.001,"Wide open and fully cooked, that's the outer wall now"
+flavor.raid.any.002,"No cap, two kids still haven't been found"
+flavor.raid.any.003,"The rain was in a situationship with the town all day, on and off"
 flavor.raid.any.004,Sen went full ride-or-die and is sitting with her sister
-flavor.raid.any.005,"Wet ash is the signature scent of the whole place now, and it's in everything"
-flavor.raid.any.006,"Somebody bit clean through their own lip, that's how tense it got"
-flavor.raid.any.007,The best evidence we have is a kid's crayon drawing of the men
-flavor.raid.any.008,"Loud, then quiet, and the quiet part hit way harder"
-flavor.raid.any.009,The carpenter's to-do list just went feral with four doors needing new frames
+flavor.raid.any.005,The town's whole aura is wet ash now
+flavor.raid.any.006,Somebody was so stressed they went feral and bit clean through their own lip
+flavor.raid.any.007,Our best evidence is a kid's crayon receipts of the men
+flavor.raid.any.008,The loud part was bad but the quiet after hit different
+flavor.raid.any.009,"The carpenter's side quest list went feral, four doors need new frames"
 flavor.raid.any.010,The repair arc kicks off with ~ and only goes downhill from there
 flavor.raid.any.011,Two guys grinded on ~ until it got too dark to see their own hands
-flavor.raid.any.012,Nobody could bring themselves to look at ~ until mid-morning
-flavor.raid.any.013,The kids are banned from going anywhere near ~
-flavor.raid.any.014,"Whatever they did to ~ took time and both hands, this was no quick drive-by"
-flavor.raid.any.015,"Someone already started fixing ~ without being asked, unsung hero behavior"
-flavor.raid.any.016,A full-on beef has broken out over who pays for ~
-flavor.raid.any.017,"Nothing moves in or out until somebody sorts ~, the supply chain is on pause"
-flavor.raid.any.018,"They dropped ~ in the doorway and just kept moving, zero explanation"
-flavor.raid.any.019,"Nobody has claimed ~, and it's been sitting there two days like an unanswered text"
+flavor.raid.any.012,Nobody could even side-eye ~ until the middle of the morning
+flavor.raid.any.013,"~ is gatekept from the kids, nobody small allowed near it"
+flavor.raid.any.014,"Whoever did ~ was locked in, because that took time and both hands"
+flavor.raid.any.015,A real one already started on ~ without being asked
+flavor.raid.any.016,There's a full-on beef over who pays for ~
+flavor.raid.any.017,"~ is the final boss blocking all traffic, nothing in or out until somebody sees to it"
+flavor.raid.any.018,They dropped ~ in the doorway and dipped
+flavor.raid.any.019,"~ has been left on read for two days, nobody claiming it"
 flavor.raid.any.020,"Half the people claiming they slept through it are capping, and the other half really did"
-flavor.raid.any.021,"The bravest one in this raid was a girl of about seven who bit one of them on the hand, periodt"
-flavor.raid.any.022,"They left a mark on the door, and it's not decoration, it's a message we're meant to read"
-flavor.raid.any.023,"The after-quiet lasted most of an hour, and nobody dared break it"
-flavor.raid.any.024,"The neighbors two doors down are packing whatever they've got left, not sticking around for the sequel"
-flavor.raid.any.025,"The rumor mill is cooking, and the story going round already has forty men in it"
-flavor.raid.any.026,A guy called Hest went out to scout and is still MIA
-flavor.raid.any.027,"On the table by the door sits ~, and nobody has laid a finger on it since it got carried in"
-flavor.raid.any.028,"Two people who were nowhere near the door that night have quit roles they gave themselves in the first place, and a third is expected to rage quit next"
-flavor.raid.any.029,"There's talk of going after them, and now the talk has actual names in it, and the elders have started pulling up to listen, so it's getting real"
-flavor.raid.any.030,"Nobody decided it, but the blame landed on the guy who sleeps nearest the door, and now he's skipping meals, villain by default without even auditioning"
-flavor.raid.any.031,"The count of what's missing got started twice and dropped twice, once because the woman doing it got called away and once because the guy who took over couldn't read her notes, so it's round three this evening"
-flavor.raid.any.032,"The men who showed up from the far end an hour late have spent all day explaining where they were, the excuse gets shorter every time, and nobody has asked to hear it since noon"
-flavor.raid.any.033,"It went down in broad daylight, the audacity"
-flavor.raid.any.034,"They came in loud and slow, stealth stats nonexistent"
-flavor.raid.any.035,"They stood out in the open long enough for everyone to count them, the confidence is unreal"
-flavor.raid.any.036,"Not one face anybody here recognized, complete strangers"
-flavor.raid.any.037,"They didn't say a word to anyone and took only what two men could carry, in and out, no small talk"
-flavor.raid.any.038,"Not even the elders can ID the marks on the door, and the elders know everything"
-flavor.raid.any.039,"They went through the place without raising their voices once, and lowkey that's what everyone's talking about, more than the damage"
-flavor.raid.any.040,"The blood got scrubbed off twice, and round two of scrubbing still didn't feel like enough"
-flavor.raid.any.041,"Two of the dead are lying in the same room as the living, and nobody's pretending that's okay"
-flavor.raid.any.042,The name's officially out there now that somebody said {subject} out loud
-flavor.raid.any.043,"{subject} is the only topic in town right now, living rent free in every conversation"
-flavor.raid.any.044,"Someone scratched a name into the door frame, and that name is {subject}, receipts carved in wood"
-flavor.raid.any.045,The spelling list nobody wanted: the kids can all spell {subject} this week
-flavor.raid.any.046,"Nobody here ever traded with {subject}, and that block is permanent"
-flavor.raid.any.047,Someone in the back room has {subject} on repeat and can't stop
-flavor.raid.any.048,The old beef with {subject} went from bad to so much worse last night
-flavor.raid.any.049,"The only lead we've got is two of the wounded saying {subject} before going under, plus a word from a third that nobody here knows, written down as best anyone could"
-flavor.raid.any.050,Whoever came in beelined straight for the {res} like they had the map
-flavor.raid.any.051,"They stepped right over everything else on the way to the {res}, tunnel vision activated"
-flavor.raid.any.052,The floor where the {res} used to sit has been swept and swept again by a guy who got told to stop an hour ago and is simply not stopping
-flavor.raid.any.053,"Somebody body-blocked {res_stores} with both arms out, got put on the floor for it, and has been reenacting the story since mid-morning with the arms still out"
-flavor.raid.any.054,"The number going round out loud this evening is {amt_res}, the two who actually counted wrote down a different number, and the gap is being argued over in the back room by people who counted nothing, a classic"
-flavor.raid.grounded.001,"Whoever tipped them off about the {res} lives here, eats here, and was standing in the lane this morning with the rest of us, so there's a snake at the dinner table"
-flavor.raid.grounded.002,"A boy chalked {amt_res} on the wall by the door because he heard it said, two people rubbed it out, and the kid refused to be silenced, it's gone back up twice in a bigger hand"
-flavor.raid.grounded.003,Two names are up in chalk now
-flavor.raid.grounded.004,Only half the animals made it home
-flavor.raid.grounded.005,At first light the dogs dug up ~ under the wall
-flavor.raid.grounded.006,Halfway up the lane someone found ~
-flavor.raid.grounded.007,"The dogs were going off a full hour before anyone woke up, and nobody listened to the real ones"
-flavor.raid.grounded.008,The only reliable headcount came from a woman down the lane who counted them going past and got to nine
-flavor.raid.grounded.009,"The grey dog didn't make it, a true good boy, and the kids have been told"
-flavor.raid.grounded.010,The baker went full hero with a shovel and got hurt for it
-flavor.raid.grounded.011,"A boy who hid in the loft the whole time has described the men twice, and both times he described the exact same guy"
-flavor.raid.grounded.012,"Somebody's been going door to door with chalk logging what each place lost, and every single house has let them in"
-flavor.raid.grounded.013,"Every roof on the water side needs fixing before the cold hits, and the roofer is one of the two still missing, so that's a problem on top of a problem"
-flavor.raid.grounded.014,"The washing was out on the line when it kicked off and it's still out there, and the woman it belongs to hasn't set foot back in the house"
-flavor.raid.grounded.015,"At first light an old man walked down to the water with a bucket, filled it, stared at the far bank for a while, and carried it back up"
-flavor.raid.grounded.016,"Two of ours fell in the lane and one of theirs fell with them, and ours have been carried in, washed and laid out, while theirs is still lying right where he dropped"
-flavor.raid.grounded.017,"By mid-morning the word was they came through the water side, by evening it was down the lane, and now it's that someone here walked out and showed them in, the rumor gets a sequel every few hours"
-flavor.raid.grounded.018,"A woman's been at the door since first light asking if anyone saw her son go past, she's asked everyone on the row, and two of them have started dodging the lane so they won't get asked again"
-flavor.raid.grounded.019,"They didn't even try to sneak in, strolled out the same way, and one of them stopped in the lane for a drink, the disrespect is unreal"
-flavor.raid.grounded.020,"One man at the end of the lane did absolutely nothing but stand and watch the rest work, four separate people have described him, and all four match, so he's officially sus"
-flavor.raid.grounded.021,"Nobody's getting down the lane, it's still blocked solid"
-flavor.raid.grounded.022,"Three graves, and one of them is kid-sized"
-flavor.raid.grounded.023,"The kids were kept in the back room all morning while the lane got cleared, let out at noon, and beelined straight to the wall to look"
-flavor.raid.grounded.024,"One version going round has it lasting an hour with thirty of them, a shorter one comes from the two who were actually out in the lane, and the long one is winning, because the long one always wins"
-flavor.raid.grounded.025,A boy flat out refuses to hand over ~ he found in the mud
-flavor.raid.grounded.026,Not even their own got respect: they left one of theirs face down in the mud
-flavor.raid.grounded.027,Nine barrows of rubble hauled so far and still counting
-flavor.raid.grounded.028,Anyone who can still grip a spade is on digging duty
-flavor.raid.grounded.029,"A woman has been keeping a body company since dawn, and everyone's giving her space"
-flavor.raid.grounded.030,The council met before sunrise and by midday had bravely agreed to have another meeting
-flavor.raid.grounded.031,"The lamps stayed on all night and they're on now, and nobody has said out loud that they'll be on again tomorrow"
-flavor.raid.grounded.032,"The well got cleaned out and the water's being hauled up from further along, and that's the plan until someone can say the well's safe to drink from"
-flavor.raid.grounded.033,The wounded got brought inside and the doors were barred right behind them
-flavor.raid.grounded.034,"Night three of lamps on, sleep is a myth"
-flavor.raid.grounded.035,Whoever let them in clearly had insider knowledge of which way the bar lifted
-flavor.raid.grounded.036,"The gossip outran the boats, and the next place along the water heard before first light"
-flavor.raid.grounded.037,There's blood in the wash water now
-flavor.raid.grounded.038,"It smells like burning down by the water, and that smell has signed a lease for days"
-flavor.raid.grounded.039,"Somebody carved a calling card into the wall down by the water, some kind of shape nobody asked for"
-flavor.raid.grounded.040,"Whoever they were, they walked a long way just to pull up here"
-flavor.raid.grounded.041,The woman who washes the dead low-key kept back ~ and slid it to the boy who sweeps her step
-flavor.raid.grounded.042,"Zero moon that night, and they 100% knew, because the two nights before were bright enough to read by, the timing is way too clean"
-flavor.raid.grounded.043,"The guy on watch tonight also pulled last night and the night before, everyone passing the ladder has told him to go lie down, and he's still up on the wall refusing to log off"
-flavor.raid.grounded.044,The bread got left outside to fend for itself
-flavor.raid.grounded.045,"The man on the wall clocked them and didn't move a muscle, and now everyone has questions"
-flavor.raid.grounded.046,"Somebody opened the back door from the inside, and nobody can unsee that detail"
-flavor.raid.grounded.047,Two houses on the corner had plot armor and got skipped entirely
-flavor.raid.grounded.048,"The wall goes back up in the morning, taller this time, and the guy who said it was tall enough two years ago is getting reminded by every single person hauling stone"
-flavor.raid.grounded.049,"Everything movable got dragged indoors before sunrise, and most of it has been dragged back out since because the houses are full, the furniture is on a side quest"
-flavor.raid.grounded.050,"The wind was howling all evening and drowned out most of the noise, so the first anyone knew was a door caving in"
-flavor.raid.grounded.051,"The littlest kid hid under the floor the whole time without a sound, has been carried around by three different people today, and has slept through most of it, tiny legend"
-flavor.raid.grounded.052,"Two guys who'd been up all night started rebuilding before the ash even cooled, nobody asked them to, and now there's a ton of fresh timber lying in all the wrong places, chaotic good"
-flavor.raid.grounded.053,"A trail of spilled {res} runs down the back stairs and along the passage, and it's not going anywhere soon"
-flavor.raid.grounded.054,"Two of them strolled out the low door carrying {res_haul} between them in zero hurry, one looked back at the house before leaving, four people saw it, and no two describe him the same way"
-flavor.raid.grounded.055,"Nobody thought to bring the {res} indoors, and the two who told everyone to move it have very loudly not said I told you so, which everyone has clocked"
-flavor.raid.grounded.056,"The loudest wall-is-tall-enough people have gone indoors, and the quiet ones are being kind about it, mostly, with minimal side-eye"
-flavor.raid.late.001,The damage report is still buffering
-flavor.raid.late.002,"They went for the backups first, so they knew exactly where the backups lived, and that's big sus"
-flavor.raid.late.003,"Four sections are sealed off and the people inside have been told help is on the way, which is technically true, it's on the calendar"
+flavor.raid.any.021,A girl of about seven became the main character of this raid by biting one of them on the hand
+flavor.raid.any.022,"No cap, the mark they left on the door is a message we're meant to read"
+flavor.raid.any.023,The vibes stayed heavy and silent for most of an hour afterwards
+flavor.raid.any.024,The neighbors two doors down are packing what's left and dipping out
+flavor.raid.any.025,The rumor mill is cooking and the story going round already has forty men in it
+flavor.raid.any.026,Deadass nobody's heard from Hest since he went out to look
+flavor.raid.any.027,"~ sits on the table by the door with an untouchable aura, nobody's laid a finger on it since it was carried in"
+flavor.raid.any.028,"Two people who were nowhere near the door that night rage-quit roles they gave themselves in the first place, and a third is expected to follow"
+flavor.raid.any.029,"The talk of going after them has names in it now, and the elders have started pulling up to listen, so it's getting real"
+flavor.raid.any.030,"Nobody voted, but the blame landed on the guy who sleeps nearest the door, and he's stopped coming to meals, a villain arc he never auditioned for"
+flavor.raid.any.031,"The count of what's missing has been started twice and fumbled twice, once because the woman doing it got called away and once because the guy who took over couldn't read her marks, so it's round three this evening"
+flavor.raid.any.032,"The men who showed up from the far end an hour late have spent all day yapping about where they were, the explanation getting shorter each time, and nobody's asked since noon"
+flavor.raid.any.033,The audacity of doing it in broad daylight
+flavor.raid.any.034,"Their entrance was giving loud and slow, nothing quiet or quick about it"
+flavor.raid.any.035,With full main character confidence they stood in the open long enough to be counted
+flavor.raid.any.036,"Nobody here clocked a single face, total strangers"
+flavor.raid.any.037,They yapped at nobody and took only what two men could carry
+flavor.raid.any.038,"Not even the elders, the OG lore keepers, can put a name to the marks on the door"
+flavor.raid.any.039,"They went through the place without raising their voices once, and that eerie calm is living rent free in everyone's heads more than the damage"
+flavor.raid.any.040,Ngl the blood needed two full rounds of washing
+flavor.raid.any.041,"No cap, two of the dead are lying in the same room as the living"
+flavor.raid.any.042,{subject} officially entered the chat when somebody said the name out loud
+flavor.raid.any.043,{subject} is living rent free in every conversation
+flavor.raid.any.044,"Somebody scratched receipts into the door frame, and the name is {subject}"
+flavor.raid.any.045,"The kids' new vocab word this week is {subject}, and that's deadass the spelling list nobody wanted"
+flavor.raid.any.046,"That bridge with {subject} is cooked, nobody here ever traded with them and nobody ever will"
+flavor.raid.any.047,"Somebody in the back room has {subject} on repeat, and every time it hits different"
+flavor.raid.any.048,The old beef with {subject} got way worse last night
+flavor.raid.any.049,"The only receipts we've got: two of the wounded said {subject} before going under, a third said a word nobody here knows, and it's been written down as best anyone could"
+flavor.raid.any.050,"Whoever came in beelined to the {res} like they had insider lore, highkey sus"
+flavor.raid.any.051,"They speedran straight to the {res}, stepping over everything else on the way"
+flavor.raid.any.052,"A guy who got told to stop an hour ago is still locked in, sweeping and re-sweeping the floor where the {res} used to sit"
+flavor.raid.any.053,"Somebody went final boss in front of {res_stores} with both arms out, got put on the floor for it, and has been reenacting it since mid-morning, arms still out"
+flavor.raid.any.054,"The number being said out loud this evening is {amt_res}, the two who actually counted wrote down a different one, and the beef over the gap is happening in the back room among people who counted nothing"
+flavor.raid.grounded.001,"There's an opp among us: whoever tipped them off about the {res} lives here, eats here, and was in the lane this morning with everyone else"
+flavor.raid.grounded.002,"A boy chalked {amt_res} on the wall by the door because he heard it said, two people rubbed it out, and the lil guy is not backing down, it's gone back up twice in a bigger hand"
+flavor.raid.grounded.003,Two names got highkey chalked up for everyone to see
+flavor.raid.grounded.004,"Half the animals made it home, which is lowkey a W and lowkey an L"
+flavor.raid.grounded.005,The dogs went full detective era at first light and turned up ~ under the wall
+flavor.raid.grounded.006,"Halfway up the lane someone found ~, a side quest item nobody wanted"
+flavor.raid.grounded.007,"The dogs were going off a full hour before anyone got up, and nobody listened to the real ones"
+flavor.raid.grounded.008,The only goated headcount came from a woman down the lane who counted them going past and got to nine
+flavor.raid.grounded.009,"The grey dog didn't make it, a real one to the end, and the kids have been told"
+flavor.raid.grounded.010,The baker understood the assignment with a shovel and got hurt for it
+flavor.raid.grounded.011,"The loft kid's lore is mid, both his descriptions of the men are the exact same guy"
+flavor.raid.grounded.012,"Somebody's been going door to door with chalk logging what each place lost, and every house has let them in, the census era nobody asked for"
+flavor.raid.grounded.013,"The roofs on the water side need work before the cold, and lowkey the worst part is the roofer is one of the two still missing"
+flavor.raid.grounded.014,"The washing's still on the line from when it kicked off, and ngl the woman it belongs to hasn't set foot back in the house"
+flavor.raid.grounded.015,"At first light an old man came down to the water with a bucket, filled it, side-eyed the far bank for a while, and carried it back up"
+flavor.raid.grounded.016,"Two of ours fell in the lane and one of theirs went down with them, and ours have been carried in and washed and laid out like the real ones they were, while theirs is still lying where he fell"
+flavor.raid.grounded.017,"By mid-morning the tea was they came through the water side, by evening it was the lane, and now it's that someone here walked out and showed them in, the rumor's on its third sequel"
+flavor.raid.grounded.018,"Since first light a woman's been at the door asking if anyone saw her son go past, she's asked the whole row, and two of them are now dodging the lane so they won't get asked again, which is lowkey the saddest part"
+flavor.raid.grounded.019,"The audacity: no attempt to come in unseen, out the same way, and one of them stopped in the lane for a drink"
+flavor.raid.grounded.020,"Officially sus: one man at the end of the lane did nothing but watch the rest work, and four separate people describe him exactly the same"
+flavor.raid.grounded.021,"Nobody's speedrunning through the lane anytime soon, it's still blocked"
+flavor.raid.grounded.022,"Three graves, and the small one hits different"
+flavor.raid.grounded.023,"The kids got stuck in a back room loading screen all morning while the lane got cleared, then let out at noon, and went straight to the wall to look"
+flavor.raid.grounded.024,"There's a version going round with thirty of them and an hour of chaos, and a shorter one from the two who were actually out in the lane, and the long one is winning because the lore always wins"
+flavor.raid.grounded.025,A boy is gatekeeping ~ he found in the mud and will not give it up
+flavor.raid.grounded.026,"They ghosted one of their own, leaving him face down in the mud"
+flavor.raid.grounded.027,The rubble grind is up to nine barrows so far
+flavor.raid.grounded.028,The real ones who can still hold a spade are doing the digging
+flavor.raid.grounded.029,"Since dawn a woman has stayed with a body, and no cap, nobody's asking her to move"
+flavor.raid.grounded.030,Peak NPC behavior from the council: they met before sunrise and by midday had agreed to meet again
+flavor.raid.grounded.031,"The lamps have been in their always-on era all night and now, and nobody's said out loud that they'll be on tomorrow too"
+flavor.raid.grounded.032,"The well got cleaned out and water's being hauled up from further along, a grind that keeps going until someone can say the well's safe to drink"
+flavor.raid.grounded.033,"No cap, the doors got barred the second the wounded were brought inside"
+flavor.raid.grounded.034,Night three of the lamps-on era
+flavor.raid.grounded.035,Inside job vibes: whoever let them in had already clocked which way the bar lifts
+flavor.raid.grounded.036,Gossip speedran the tea to the next place along the water before first light
+flavor.raid.grounded.037,"Ngl, there's blood in the wash water"
+flavor.raid.grounded.038,"It smells of burning down by the water, and that smell is staying rent free for days"
+flavor.raid.grounded.039,There's a cursed new shape carved into the wall down by the water
+flavor.raid.grounded.040,"Whoever they were, they took a long side quest just to get here"
+flavor.raid.grounded.041,"The woman who washes the dead pulled a real one move, keeping back ~ for the boy who sweeps her step"
+flavor.raid.grounded.042,"They clocked that there'd be no moon at all, since the two nights before were bright enough to read by"
+flavor.raid.grounded.043,"The guy on watch tonight is on his third night straight, everyone passing the ladder has told him to go lie down, and he's still up there locked in"
+flavor.raid.grounded.044,The bread got abandoned outside like a side character
+flavor.raid.grounded.045,"The man on the wall clocked them and froze in place, and now everyone has questions"
+flavor.raid.grounded.046,Inside job vibes: the back door was opened from the inside
+flavor.raid.grounded.047,Two houses on the corner had plot armor and got missed entirely
+flavor.raid.grounded.048,"The wall's getting a glow-up in the morning, higher this time, and the guy who said it was high enough two years ago is getting the receipts read to him by everyone carrying stone"
+flavor.raid.grounded.049,"Everything movable got speedrun indoors before sunrise, and most of it has been dragged back out since because the houses are full"
+flavor.raid.grounded.050,"The wind was yapping all evening and drowned out most of the noise, so the first anyone knew was a door caving in"
+flavor.raid.grounded.051,"The smallest kid stayed silent under the floor the whole time, an absolute real one, and has been carried round by three different people today while sleeping through most of it"
+flavor.raid.grounded.052,"Two all-nighter guys went feral and started the rebuild before the ash had even cooled, unasked, and now there's fresh timber lying in all the wrong places"
+flavor.raid.grounded.053,"A trail of spilled {res} runs down the back stairs and along the passage, and it's staying rent free a while yet"
+flavor.raid.grounded.054,"Two of them strolled out the low door with {res_haul} between them at zero urgency, one side-eyed the house before leaving, four people saw it, and no two describe him the same"
+flavor.raid.grounded.055,"Nobody thought to bring the {res} indoors, and everyone has clocked how loudly the two who told them to move it are not saying I told you so"
+flavor.raid.grounded.056,"The loudest wall-is-high-enough people have gone indoors, while the quiet ones are mostly being kind and keeping the side-eye to a minimum"
+flavor.raid.late.001,The damage report is stuck on a loading screen
+flavor.raid.late.002,"Highkey sus that they went for the backups first, like they knew exactly where the backups lived"
+flavor.raid.late.003,"Four sealed sections got told help is coming, which is technically not capping, it's scheduled"
 flavor.raid.late.004,"Every screen in the sector pulled a creepy flex, going dark at the same moment and coming back a minute later showing the correct time"
-flavor.raid.late.005,Every grim refresh of the live casualty list changes something
-flavor.raid.late.006,"Emergency lighting is the new normal on the residential levels, and the kids have already stopped asking when the real lights come back"
-flavor.raid.late.007,"Survivors, please check in at the nearest terminal that's still in one piece"
-flavor.raid.late.008,"The insurers have officially ruled it an act of war, which anyone who was there could've told them for free, groundbreaking research"
-flavor.raid.late.009,"The what-got-taken audit is going to outlast the raid itself, and the people doing it need more people"
-flavor.raid.late.010,The security doors basically rolled out the welcome mat and opened for them
-flavor.raid.late.011,The sirens screamed all night and nobody got a wink
-flavor.raid.late.012,"Triage ran all the way into the morning, no breaks"
-flavor.raid.late.013,"Every single camera was filming the wrong corridor, a flawless fail"
-flavor.raid.late.014,The evacuation drill finally earned its W and actually worked
-flavor.raid.late.015,"Level four is fully unplugged, lights out, nothing on"
-flavor.raid.late.016,"Every access code got reset, new passwords for everyone, sorry in advance"
-flavor.raid.late.017,They got in with a maintenance code that was supposed to be retired years ago and was somehow still out here working
+flavor.raid.late.005,Every refresh of the live casualty list hits different
+flavor.raid.late.006,"The residential levels are in their emergency-lighting era for good, and the kids have already stopped asking when the proper lights come back"
+flavor.raid.late.007,"Survivors, please pull up to the nearest terminal that's still in one piece"
+flavor.raid.late.008,"The NPCs at the insurer ruled it an act of war, which anyone who lived through it could've told them for free"
+flavor.raid.late.009,"The audit of what got taken will outlast the raid itself, a whole grind, and the people doing it need more people"
+flavor.raid.late.010,The security doors were simping and opened right up for them
+flavor.raid.late.011,The sirens were yapping all night
+flavor.raid.late.012,Triage was a grind that ran till morning
+flavor.raid.late.013,Skill issue: every single camera was recording the wrong corridor
+flavor.raid.late.014,The evacuation drill secured a rare W and actually worked
+flavor.raid.late.015,"Level four is in its lights-out era, zero power, it's giving abandoned mall"
+flavor.raid.late.016,"Every access code got reset, so everyone's in their new-password era"
+flavor.raid.late.017,They got in with a maintenance code that was supposed to be retired years ago and was somehow still out here grinding
 flavor.raid.late.018,"The medics took over the lobby, and the lobby has been in its field hospital era ever since"
-flavor.raid.late.019,Half the residents lost the coin flip and ended up on the wrong side of the emergency shutters
-flavor.raid.late.020,"The security review dropped a self-own: every procedure was followed, and the procedures were the problem"
-flavor.raid.late.021,The backup generators kicked in and powered the lights and literally nothing else
-flavor.raid.late.022,The injured got sorted with color-coded tags until the tag supply hit zero
-flavor.raid.late.023,"The insurers want an itemized list of what was taken, with receipts, like actual paper receipts"
-flavor.raid.late.024,"A security guard held one door for twenty minutes straight, hero with no cape and no ego, and has asked not to be thanked in public"
-flavor.raid.late.025,"The alarm system logged every breach and yeeted the alerts into the void, an address that closed last year"
-flavor.raid.late.026,"The residential levels aren't buying the official count, theirs is higher"
-flavor.raid.late.027,"They knew exactly which lift to take, zero wrong turns, straight down to whatever they came for on the lower levels"
-flavor.raid.late.028,Families from the damaged section are crashing in the sports hall for now
-flavor.raid.late.029,"The facial recognition flagged every single one of them as staff, so that system is deeply cooked"
-flavor.raid.late.030,"The missing list on the screen in the main hall updates every hour, and the crowd in front of it shrinks a little each time a name comes off"
-flavor.raid.late.031,"A minister pulled up by evening for the damage tour, promised lessons would be learned, and got driven out through the very breach the raiders used, so the lesson is still loading"
+flavor.raid.late.019,"The emergency shutters handed half the residents a massive L, slamming down on the wrong side of them"
+flavor.raid.late.020,"The security review ratioed itself: every procedure was followed, and the procedures were the problem"
+flavor.raid.late.021,"The backup generators gave a mid performance, running the lights and nothing else"
+flavor.raid.late.022,"The color-coded tags carried triage until they ran out, then the medics had to lock in on judgment alone"
+flavor.raid.late.023,"The insurers want an itemized list with receipts, which is giving out of touch"
+flavor.raid.late.024,The goated guard who held one door for twenty minutes straight has asked to skip the public thank-yous
+flavor.raid.late.025,Left on read by a dead address: the alarm system logged every breach and sent the alerts to an inbox that closed last year
+flavor.raid.late.026,"The residential levels say the official count is capping, theirs is higher"
+flavor.raid.late.027,Highkey sus how they knew exactly which lift to take down to whatever they came for on the lower levels
+flavor.raid.late.028,"The sports hall is in its emergency sleepover era, families from the damaged section crashing there"
+flavor.raid.late.029,"The facial recognition flagged every single one of them as staff, so that system is fully cooked"
+flavor.raid.late.030,"The missing list on the main hall screen updates every hour, and no cap, the crowd in front of it gets smaller each time a name comes off"
+flavor.raid.late.031,"A minister pulled up by evening for a damage tour cutscene, said lessons would be learned, and got driven back out through the very breach the raiders used"
 flavor.raid.late.032,"The door logs show a speedrun with a shopping list, in one end of the complex and out the other in under twenty minutes, stopping only at the stores"
-flavor.raid.late.033,"Every resident got a loss report form built for a burglary, complete with a box for the make of your bicycle, super helpful"
-flavor.raid.late.034,"A teen who hid in a vent duct the whole time has been interviewed four times and nails the same details every time, which makes him the MVP witness"
-flavor.raid.late.035,"The hole in the outer wall is getting covered with temporary panels, and the kids have already turned them into a mural"
+flavor.raid.late.033,"Every resident got a loss form built for a burglary, complete with a box for the make of your bicycle, very NPC energy from the admin"
+flavor.raid.late.034,"The goated witness is a teen who hid in a vent duct the whole time, interviewed four times and nailing the same details every time"
+flavor.raid.late.035,"The breach in the outer wall is getting covered with temporary panels, and the kids have already given them an aesthetic glow-up with drawings"
 flavor.raid.late.036,"The automated defenses spent the raid guarding the parts of the complex nobody was attacking, exactly as programmed, and the engineer who wrote that code has been on a line-by-line debugging arc at a terminal ever since"
-flavor.raid.late.037,"The canteen woman refused to close and stayed open all night, and by morning she'd fed the medics, the guards and the families from the damaged section, goated behavior, and she's gone home now and is not to be called"
-flavor.raid.late.038,The lifts are on full lockdown
-flavor.raid.late.039,Neither of the two missing guards has pinged in yet
-flavor.raid.late.040,"Emergency powers got declared first and read second, the order of operations is wild"
-flavor.raid.late.041,"The atrium went open-air overnight, the glass is just gone"
-flavor.raid.late.042,The power rebooted in the wrong order and left the east side doors sealed until noon
-flavor.raid.late.043,"The residents' forum did its own detective work and named who let them in, all four different people"
-flavor.raid.late.044,The field hospital in the car park ran out of beds and is now using the recliners from the staff lounge
-flavor.raid.late.045,"The repairs got an estimate, and the estimate got sent back with a request for a smaller one, as if that's how numbers work"
-flavor.raid.late.046,"An unbothered little king was found asleep under a desk in the admin block next morning, having slept through the entire thing"
-flavor.raid.late.047,"The night shift wants to know why the raid alert pinged the day shift first, and they want it in writing"
-flavor.raid.late.048,"The sprinklers traded one problem for another, the fire in the stores out and the level below, where the spare gear lived, flooded"
-flavor.raid.late.049,"At noon the names of the dead went out over the PA, and every corridor in the complex went still to listen"
-flavor.raid.late.050,"Still no ETA on the shutters, they're staying down"
-flavor.raid.late.051,"Not a coincidence, probably, but every door log has a gap in it"
-flavor.raid.late.052,"Two stairwells are taped off, hard no entry"
-flavor.raid.late.053,The lost property office now just holds the belongings of the missing
-flavor.raid.late.054,Everyone got handed a foil blanket and most are still rocking the shiny survivor look
+flavor.raid.late.037,"The canteen woman was goated and refused to close all night, and by morning she'd fed the medics, the guards and the families from the damaged section, and she's gone home now and is not to be called"
+flavor.raid.late.038,"The lifts are on lockdown, so the stairs are the main character now"
+flavor.raid.late.039,"Ngl, the two guards still unaccounted for are the part nobody can stop thinking about"
+flavor.raid.late.040,"In a backwards speedrun, emergency powers got declared first and read after"
+flavor.raid.late.041,"The atrium entered its open-air era, the glass just gone"
+flavor.raid.late.042,A reboot skill issue brought the power back in the wrong order and kept the east side doors sealed until noon
+flavor.raid.late.043,"The residents' forum did its own detective arc and named who let them in, four different people"
+flavor.raid.late.044,"The car park field hospital went full loungecore after running out of beds, using the recliners from the staff room"
+flavor.raid.late.045,"In a delulu budgeting move, the repair estimate got sent back with a request for a smaller one"
+flavor.raid.late.046,An unbothered lil king slept through the whole thing under a desk in the admin block and was found there the next morning
+flavor.raid.late.047,The night shift is pressed that the raid alert pinged the day shift first
+flavor.raid.late.048,"The sprinklers fumbled, putting out the fire in the stores and flooding the level below where the spare gear lived"
+flavor.raid.late.049,"No cap, every corridor in the complex stopped to listen when the names of the dead were read over the PA at noon"
+flavor.raid.late.050,"No ETA on the shutters, still stuck in their down era"
+flavor.raid.late.051,Highkey sus: every single door log has a gap in it
+flavor.raid.late.052,"Two stairwells got the hard pass treatment, sealed with tape"
+flavor.raid.late.053,It hits different that the lost property office now holds the belongings of the missing
+flavor.raid.late.054,Everyone got handed a foil blanket and most are still rocking the shiny survivorcore look
 flavor.raid.late.055,"The blood bank was running low by midnight, so humanity said bet and lined up down the corridor to give more"
 flavor.raid.late.056,The insurance assessors had the audacity to pull up before the fire crews were even done
-flavor.raid.late.057,The one lift still working has a line and a bouncer
-flavor.raid.late.058,"The names of the missing went up on the canteen whiteboard and got wiped off one at a time through the day as people turned up, and the last three are circled"
-flavor.raid.late.059,The tea on the residential levels is that they had a floor plan
-flavor.raid.late.060,Residents are asked to please not post pics of the breach
-flavor.raid.late.061,"Damage recap: four doors breached, two stores cleaned out, one guard still in surgery"
-flavor.raid.late.062,"The maintenance crew is on hour thirty and has started timestamping every work order they sign, receipts for the overtime"
-flavor.raid.late.063,"On the way out they set off every alarm on purpose, pure menace"
-flavor.raid.late.064,"They didn't make small talk with anyone and their suits had zero brand identity, no markings at all"
-flavor.raid.late.065,The morgue ran out of drawers and had to borrow a cold store
-flavor.raid.late.066,"A woman from the damaged section has been knocking door to door on the upper levels with a photo of her son on her phone, every door has opened for her, and nobody behind any of them has seen him"
-flavor.raid.ancient.001,"Two huts got flattened, just gone"
-flavor.raid.ancient.002,"Someone scooped out the store-pit by hand, one handful at a time"
-flavor.raid.ancient.003,The drums kicked off way too late
-flavor.raid.ancient.004,Smoke sat on the ridge till noon like it paid rent there
-flavor.raid.ancient.005,"Nobody walks past the racks anymore, that's a no-go zone now"
-flavor.raid.ancient.006,They drove off half the herd and killed whatever wouldn't walk
-flavor.raid.ancient.007,Somebody left a spear standing in the ground by the store-pit as a very loud message
-flavor.raid.ancient.008,"Somebody let the watch-fire die way before midnight, and everyone wants a name"
-flavor.raid.ancient.009,"Nobody wanted to hear the words wrong hut, but an arrow came through its roof"
-flavor.raid.ancient.010,"They crossed at the ford, the exact spot everyone swore they never would"
-flavor.raid.ancient.011,The hides that were drying are either gone or stomped into the mud
-flavor.raid.ancient.012,"The spring below camp has blood in it, so it's off limits for now"
-flavor.raid.ancient.013,A boy chased them down with a spear and had to be carried back
-flavor.raid.ancient.014,"Half the harvest was still in the ground, and that procrastination is what saved it"
-flavor.raid.ancient.015,"The valley people watched them go right past and lit zero signal fires, thanks for nothing"
-flavor.raid.ancient.016,A hide with a handprint on it got tied to the path post like a signed note nobody asked for
-flavor.raid.ancient.017,"The elders have been in session since before light and sent for the lore keeper, the old woman who remembers the last time, and she's coming up the slope now"
-flavor.raid.ancient.018,"The water run from the ford has gone all morning with whoever could be spared, and the two women doing most of it haven't been subbed out once"
-flavor.raid.ancient.019,"The column that came through was longer than the camp is wide, two people have said it out loud now, and nobody's arguing"
-flavor.raid.ancient.020,"An old woman stood in her doorway holding a spear the wrong way and they went round her, and she's been planted in the exact same spot most of the day"
-flavor.raid.ancient.021,"The tracks head up the valley and stop where the ground turns hard, two men followed them that far, came back, and have barely said a word since"
-flavor.raid.ancient.022,"Someone cut marks into the post by the store-pit, one for each of ours, and a boy got sent to ask the elders if that's even allowed"
-flavor.raid.ancient.023,"Three huts stand open and empty, the families have doubled up with other families, and the old man who lived alone in the fourth has gone to sit by the store-pit"
-flavor.raid.ancient.024,"They torched the drying racks on the way out and the dogs scattered everywhere, half back before dawn and the rest still somewhere up the slope"
-flavor.raid.feudal.001,"The gate was just standing there wide open, no gatekeeping whatsoever"
-flavor.raid.feudal.002,"Nobody came back for supper, so it went cold in the hall"
-flavor.raid.feudal.003,Two carts are straight up gone
-flavor.raid.feudal.004,"The bells were fashionably late, which is not a compliment here"
-flavor.raid.feudal.005,"The wax on the letter is still soft, fresh off the seal"
-flavor.raid.feudal.006,Riders had already blown through the village before the bells even started
-flavor.raid.feudal.007,The storehouse doors got yanked off their hinges and dumped in the yard
-flavor.raid.feudal.008,"Two pickets were found tied up without a scratch on them, and they're getting a lot of questions"
-flavor.raid.feudal.009,"The steward counted what's left, refused to believe the number, and started over from the top"
-flavor.raid.feudal.010,A clerk got hurt carrying the rolls out but gets to keep the hand
-flavor.raid.feudal.011,Nobody hit up the militia until it was all over
-flavor.raid.feudal.012,Muster is called for dawn and expectations are on the floor
-flavor.raid.feudal.013,An arrow went through the shutter and nailed the beam like a bullseye
-flavor.raid.feudal.014,The torn banner somebody hung over the gate arch is not subtle at all
-flavor.raid.feudal.015,"The undercroft was found open and mostly cleaned out, the stash is a ghost town"
-flavor.raid.feudal.016,"The column came up the road past the ford annoyingly organized, every rank perfect"
-flavor.raid.feudal.017,"A herald pulled up next morning with something on parchment, the steward read it once, folded it, and tucked it in his coat without a word, the most sus silence in the castle"
-flavor.raid.feudal.018,"The village below lost most of its roofs and is blaming the gate, and two families have already hauled their stuff up the road to relatives"
-flavor.raid.feudal.019,"The quartermaster is stuck in a loop where he won't count until the yard's cleared, the yard won't clear until the carts are fixed, and the carter is at the ford"
-flavor.raid.feudal.020,"The gate keeper is dead, and his son has been round the whole village asking who had the bar up last, and has gotten polite answers at every door"
-flavor.raid.feudal.021,"Smoke hung over the harvest fields until the afternoon rain rolled in, and the men who went out to beat it down came back black to the elbows"
-flavor.raid.feudal.022,"By the steward's order the bells ring again at first light, and the bell boy has been given a stool and told he lives by the rope now"
-flavor.raid.feudal.023,"Two wagons got taken and a third ended up in the ditch at the bend, it's been pulled out and now stands in the yard with a broken axle and a crowd of opinions around it"
-flavor.raid.feudal.024,"The horns went up in the wrong order, sending the militia sprinting to the ford while the riders were already in the yard, and the guy who blew them has been benched and is sitting in the hall"
-flavor.raid.industrial.001,"They cut the telephone line first, so nobody could even call it in"
-flavor.raid.industrial.002,Two men still haven't clocked back in from the night
-flavor.raid.industrial.003,"The depot clock caught a bullet at twenty past four, so the timestamp is locked in"
-flavor.raid.industrial.004,The yard stayed smoked out till dawn
-flavor.raid.industrial.005,Freight just abandoned in the mud like nobody cares
-flavor.raid.industrial.006,"They came in along the rail siding on foot, walking the tracks like it was a commute"
-flavor.raid.industrial.007,"The lock's left dangling on its chain from the cut warehouse doors, mocking everyone who walks past"
+flavor.raid.late.057,"The one working lift has exclusive club energy now, with a queue and a guard"
+flavor.raid.late.058,"The names of the missing went up on the canteen whiteboard and got rubbed off one at a time as people turned up, and ngl the last three circled ones are hard to look at"
+flavor.raid.late.059,The residential levels are spilling the tea that they had a floor plan
+flavor.raid.late.060,Residents are asked to please not post pics of the breach for clout
+flavor.raid.late.061,"The damage recap is giving grim: four doors breached, two stores emptied, one guard still in surgery"
+flavor.raid.late.062,The maintenance crew is on hour thirty of the grind and has started timestamping every work order they sign
+flavor.raid.late.063,"They were absolute menaces on the way out, setting off every alarm on purpose"
+flavor.raid.late.064,"They were giving faceless NPCs, talking to nobody, no markings on their suits"
+flavor.raid.late.065,"Deadass, the morgue ran out of drawers and had to borrow a cold store"
+flavor.raid.late.066,"No cap, a woman from the damaged section has knocked on every door on the upper levels with her son's photo on her phone, every door has opened for her, and nobody has seen him"
+flavor.raid.ancient.001,Two huts took the L and went down
+flavor.raid.ancient.002,Someone grinded the store-pit empty by hand
+flavor.raid.ancient.003,A skill issue nobody's laughing about: the drums went up way too late
+flavor.raid.ancient.004,Smoke stayed rent-free on the ridge till noon
+flavor.raid.ancient.005,"The racks are a hard pass zone now, nobody walks past"
+flavor.raid.ancient.006,The opps drove off half the herd and killed whatever wouldn't walk
+flavor.raid.ancient.007,A spear left standing by the store-pit is giving very loud message
+flavor.raid.ancient.008,Somebody fumbled the watch-fire and let it go out well before midnight
+flavor.raid.ancient.009,Plot twist nobody wanted: an arrow came through the roof of the wrong hut
+flavor.raid.ancient.010,"Everyone's take was mid, because they crossed at the ford, the exact spot people swore they wouldn't"
+flavor.raid.ancient.011,"The drying hides took an L, either gone or trampled into the mud"
+flavor.raid.ancient.012,"The spring below camp got the hard pass, there's blood in it"
+flavor.raid.ancient.013,A brave lil guy went after them with a spear and had to be carried back
+flavor.raid.ancient.014,"That procrastination W, half the harvest still in the ground, is what saved it"
+flavor.raid.ancient.015,The NPCs in the valley watched them go right past and lit nothing at all
+flavor.raid.ancient.016,The red flag of the week is a hide with a handprint tied to the post by the path
+flavor.raid.ancient.017,"The elders have been locked in since before light and have sent for the lore keeper, the old woman who remembers the last time, who's coming up the slope now"
+flavor.raid.ancient.018,"Water's been hauled up from the ford all morning by whoever could be spared, and the two women grinding hardest haven't been subbed out once"
+flavor.raid.ancient.019,"Nobody's calling cap: the column that came through was longer than the camp is wide, and two people have said it out loud"
+flavor.raid.ancient.020,"An iconic old woman stood in her doorway holding a spear the wrong way, they went round her, and she's been standing in that same spot most of the day"
+flavor.raid.ancient.021,"The tracks go up the valley and vanish where the ground turns hard, and the two men who followed that far came back in their quiet era"
+flavor.raid.ancient.022,"Somebody cut marks into the post by the store-pit, one for each of ours, and a lil boy got sent to ask the elders if that's even allowed"
+flavor.raid.ancient.023,"Three huts stand empty and open, the families have doubled up with others, and lowkey heartbreaking, the old man who lived alone in the fourth has gone up to sit by the store-pit"
+flavor.raid.ancient.024,"They torched the drying racks on the way out and the dogs went feral in every direction, half back before dawn and the rest still out on the slope"
+flavor.raid.feudal.001,"The gate had zero gatekeeping, it just stood open"
+flavor.raid.feudal.002,Everyone left supper on read and it went cold in the hall
+flavor.raid.feudal.003,Two carts straight up ghosted
+flavor.raid.feudal.004,The bells took the L and rang way too late
+flavor.raid.feudal.005,The tea is fresh: wax still soft on the letter
+flavor.raid.feudal.006,Riders speedran through the village before the bells even started
+flavor.raid.feudal.007,The storehouse doors got yeeted off their hinges and dumped in the yard
+flavor.raid.feudal.008,"Two pickets were found tied up without a scratch, which is highkey sus, so they're getting a lot of questions"
+flavor.raid.feudal.009,"The steward counted what's left, refused to believe the number, and ran it back from the top"
+flavor.raid.feudal.010,"Small W, the clerk who got hurt carrying the rolls out gets to keep the hand"
+flavor.raid.feudal.011,The militia call got fumbled until the whole thing was already over
+flavor.raid.feudal.012,Muster's called for dawn and the expectations are lowkey on the floor
+flavor.raid.feudal.013,A sus bullseye of an arrow went through the shutter and stuck in the beam
+flavor.raid.feudal.014,Highkey not subtle: somebody hung a torn banner over the gate arch
+flavor.raid.feudal.015,The undercroft got found open with its stash mostly cooked
+flavor.raid.feudal.016,The column came up the road past the ford in annoyingly goated formation
+flavor.raid.feudal.017,"The most sus silence in the castle: a herald pulled up next morning with something on parchment, and the steward read it once, folded it, and tucked it into his coat without a word"
+flavor.raid.feudal.018,"The village below lost most of its roofs and is blaming the gate, and two families have already dipped up the road to relatives"
+flavor.raid.feudal.019,"The quartermaster's in a whole situation: he won't count until the yard is cleared, the yard can't be cleared until the carts are mended, and the carter is at the ford"
+flavor.raid.feudal.020,"The gate keeper is dead, and his son has been round the whole village asking who had the bar up last, and ngl everyone's answered him politely"
+flavor.raid.feudal.021,The real ones who went out to beat down the smoke over the harvest fields came back black to the elbow before the afternoon rain finally came in
+flavor.raid.feudal.022,"By the steward's order the bells go again at first light, and the bell boy's main quest is to sit on a stool by the rope"
+flavor.raid.feudal.023,"Two wagons got taken and a third went into the ditch at the bend, and it's now in the yard with a broken axle and a whole crowd yapping opinions around it"
+flavor.raid.feudal.024,"The horn guy fumbled the order, sending the militia to the ford while the riders were already in the yard, and he's been stood down and is sitting in the hall"
+flavor.raid.industrial.001,"Big sus energy: they cut the telephone line first, so nobody could call it in"
+flavor.raid.industrial.002,"No cap, two men still haven't come back in"
+flavor.raid.industrial.003,"The depot clock caught a bullet at twenty past four, so at least the receipts are timestamped"
+flavor.raid.industrial.004,The yard stayed in its smoked-out era till dawn
+flavor.raid.industrial.005,Freight got left on read in the mud
+flavor.raid.industrial.006,They pulled up along the rail siding on foot
+flavor.raid.industrial.007,"The lock's left hanging off its chain on the cut warehouse doors, lowkey mocking everyone who walks past"
 flavor.raid.industrial.008,"The night watchman's in hospital but keeping the eye, the only W of the night"
-flavor.raid.industrial.009,"The foreman stood on the platform for the entire thing, front row seat he never asked for"
-flavor.raid.industrial.010,Two lorries chased after them and came back with absolutely nothing
-flavor.raid.industrial.011,The payroll safe got cracked with something heavy and in no hurry whatsoever
+flavor.raid.industrial.009,"The foreman had a front row seat on the platform for the whole thing, a cutscene he never asked for"
+flavor.raid.industrial.010,Two lorries went after them and came back with a big fat L
+flavor.raid.industrial.011,Someone unbothered opened the payroll safe with something heavy and zero urgency
 flavor.raid.industrial.012,The wire to the next station ghosted everyone all night
-flavor.raid.industrial.013,It'll get the full triplicate write-up and a readership of zero
+flavor.raid.industrial.013,"Peak NPC paperwork: written up in triplicate, read by nobody"
 flavor.raid.industrial.014,"Somebody fumbled the telegraph, hit the wrong office, and lost forty minutes"
-flavor.raid.industrial.015,"The depot cat has been MIA since Tuesday night, and that's the update everyone actually wants"
-flavor.raid.industrial.016,"They walked right past two sheds to the one with the good stock, insider knowledge on full display"
-flavor.raid.industrial.017,"The office clock froze the minute the wall took the hit, three men have written that time down separately, and two of the three actually agree, which is a record"
-flavor.raid.industrial.018,"Men are camping in the warehouse tonight with the lamps burning, and the foreman hasn't said one word about the oil bill, which is how you know it's serious"
-flavor.raid.industrial.019,"They blocked the valley road behind them with a felled tree, the two men sent to clear it took until noon, and they came back reporting the cuts were fresh, premeditated behavior"
-flavor.raid.industrial.020,"The shareholders will hear about the fence and the lock eventually, the meeting where they hear it just got pushed back a week, the art of the delay"
-flavor.raid.industrial.021,"A column of them strolled out along the rail line in the dark, and the goods train that rolled through at half past four was the least helpful witness ever, because nobody thought to stop it and it saw nothing"
-flavor.raid.industrial.022,"The annexe roof has two holes and the paper under it is ruined, so the two women who keep the files are drying sheets on the office stove, the archive on life support"
-flavor.raid.industrial.023,"The telegram only went out an hour after they'd gone, and HQ's reply next morning told the yard to secure the fence, which is where the fence used to be"
-flavor.raid.industrial.024,"The foreman's story and the watchman's story disagree on how many and what hour, both got asked to write it out again, and both wrote out the exact same thing again, standing on business"
-flavor.raid.digital.001,"The feed cut out early, the first red flag"
-flavor.raid.digital.002,"They hit the power first, then the doors, order of operations on lock"
-flavor.raid.digital.003,"Two guards ended up in hospital, the night shift took the hit"
-flavor.raid.digital.004,"Running on adrenaline and bad coffee, the night analyst still hasn't logged off"
-flavor.raid.digital.005,Nobody wants to be in the room for tomorrow's after-action
-flavor.raid.digital.006,Two drones launched late to a whole lot of dust and one cold engine
-flavor.raid.digital.007,Snipping the uplink at the pole outside the fence was all it took
-flavor.raid.digital.008,"An analyst watched the whole thing live, completely powerless, the worst stream ever"
-flavor.raid.digital.009,The network's back but half the cameras are still offline
-flavor.raid.digital.010,Somebody leaked the footage before the shift was even over
-flavor.raid.digital.011,The channel got flooded with hot takes from people who were nowhere near it
-flavor.raid.digital.012,"Stealth mode maxed, they took the service road in and out with every light off"
-flavor.raid.digital.013,All we get from the last clean frame is a shoulder and half a face
-flavor.raid.digital.014,Forty entries in one minute turned the badge reader into a glorified turnstile
-flavor.raid.digital.015,The guards got schooled on their own camera angles
-flavor.raid.digital.016,"Three doors said sure, why not, to credentials that expired last year"
-flavor.raid.digital.017,"The drones are grounded until somebody explains the missing eleven minutes, and the one person who can went home at four and is not picking up"
-flavor.raid.digital.018,"A junior analyst called it in four minutes early and got told to hold, and now she's had to explain exactly what she saw to everyone above her, the it-girl of being right"
-flavor.raid.digital.019,"Half the floor has rewatched the same nine seconds of footage since morning, and the room agrees on how many there were and absolutely nothing else"
-flavor.raid.digital.020,"Somebody's phone is still transmitting from inside a bag somewhere past the fence, it's been listened to for six hours, and so far it's given up two coughs"
-flavor.raid.digital.021,"The network filed the whole thing under maintenance window, because it was told to, and the person who scheduled that window is on leave until Thursday, the timing is diabolical"
+flavor.raid.industrial.015,"The depot cat has been MIA since Tuesday night, and that's the tea everyone actually wants"
+flavor.raid.industrial.016,"Big insider energy, they walked right past two sheds to the one with the good stock"
+flavor.raid.industrial.017,"The office clock froze the minute the wall took the hit, three men wrote that time down separately, and in a rare W, two of the three agree"
+flavor.raid.industrial.018,"Men are camping in the warehouse tonight with the lamps burning, and the foreman hasn't said one word about the oil bill, which is lowkey how you know it's serious"
+flavor.raid.industrial.019,"They blocked the valley road behind them with a felled tree, the two men sent to clear it took until noon, and they came back with the tea that the cuts were fresh"
+flavor.raid.industrial.020,"The shareholders will get the tea about the fence and the lock eventually, the meeting where they'd hear it just got pushed back a week"
+flavor.raid.industrial.021,"A column of them strolled out along the rail line in the dark, and the goods train that rolled through at half past four was a total NPC, seeing nothing because nobody thought to stop it"
+flavor.raid.industrial.022,"The annexe roof has two holes and the paper under it is cooked, so the two women who keep the files are drying sheets on the office stove"
+flavor.raid.industrial.023,"The telegram only went out an hour after they'd gone, and HQ's mid reply next morning said to secure the fence, which is where the fence used to be"
+flavor.raid.industrial.024,"Both men are standing on business: the foreman and the watchman disagree on how many and what hour, got asked to write it out again, and wrote the exact same thing again"
+flavor.raid.digital.001,The feed ghosted early
+flavor.raid.digital.002,"They speedran it: power first, then the doors"
+flavor.raid.digital.003,"Ngl, two guards ended up in hospital"
+flavor.raid.digital.004,"Running on adrenaline and bad coffee, the night analyst is locked in and still up"
+flavor.raid.digital.005,Tomorrow's after-action is a boss fight nobody wants
+flavor.raid.digital.006,"Two late drones had a mid little side quest, finding only dust and a cold engine"
+flavor.raid.digital.007,Snipping the uplink at the pole outside the fence was the whole speedrun
+flavor.raid.digital.008,"Worst stream of her life fr, an analyst watched the whole thing live and could do nothing"
+flavor.raid.digital.009,The network respawned but half the cameras are still down
+flavor.raid.digital.010,Somebody chasing clout leaked the footage before the shift was even over
+flavor.raid.digital.011,Chronically online people who were nowhere near it flooded the channel with hot takes
+flavor.raid.digital.012,Stealth era: they used the service road both ways with every light off
+flavor.raid.digital.013,"A shoulder and half a face, that's all the last clean frame is giving"
+flavor.raid.digital.014,Forty entries in one minute turned the badge reader into a speedrun turnstile
+flavor.raid.digital.015,The guards got ratioed on their own camera angles
+flavor.raid.digital.016,Three doors said bet to credentials that expired last year
+flavor.raid.digital.017,"The drones are grounded until someone explains the missing eleven minutes, and the one person who can went home at four and is ghosting every call"
+flavor.raid.digital.018,"A junior analyst was the main character of being right, calling it in four minutes before it started, getting told to hold, and explaining what she saw to everyone above her ever since"
+flavor.raid.digital.019,"Half the floor has been doomscrolling the same nine seconds of footage since morning, and the room agrees on how many there were and nothing else"
+flavor.raid.digital.020,"Somebody's phone is still transmitting from a bag somewhere past the fence, it's been listened to for six hours, and the full lore so far is two coughs"
+flavor.raid.digital.021,"The network logged it all as a maintenance window because it was told to, and in devious timing, the person who scheduled that window is on leave until Thursday"
 flavor.raid.digital.022,"Four hours later a drone found the vehicles on a track behind the reservoir, all three burnt out and parked in a neat little line by some very tidy menaces"
-flavor.raid.digital.023,"The channel logs blank out for nine minutes and start again clean, and the only two people who could say why were on the desk and have both been sent home to sleep"
-flavor.raid.digital.024,"The uplink rebooted itself at ten to six, and the first thing through was a maintenance ticket from the night before about a door sensor on the east side, which has now gone viral with about forty readers"
-flavor.raid.digital.025,"Our drones got hacked first, so our own eyes went dark"
-flavor.raid.digital.026,The raid was trending before it was even over
-flavor.raid.digital.027,All the feeds blacked out in one synchronized moment
-flavor.raid.digital.028,The accounts got drained in seconds and the bank has opened its famously slow investigation
-flavor.raid.digital.029,"Their malware is still lurking somewhere on the network, and the analysts are playing hide and seek with it floor by floor"
+flavor.raid.digital.023,"The channel logs ghosted for nine minutes and came back clean, and the only two people who could say why were on the desk and have both been sent home to sleep"
+flavor.raid.digital.024,"The uplink came back on its own at ten to six, and the first thing through was a maintenance ticket from the night before about a door sensor on the east side, which about forty people have now read in its main character moment"
+flavor.raid.digital.025,Our own drones got hacked first and turned into NPCs
+flavor.raid.digital.026,The chronically online had the raid trending before it was even over
+flavor.raid.digital.027,Every feed ghosted at the same moment
+flavor.raid.digital.028,"The accounts got drained in seconds, and the bank is investigating in its famously slow era"
+flavor.raid.digital.029,"Their malware is still lurking somewhere on the network, and the analysts are fighting a floor-by-floor boss fight with it"
 flavor.raid.digital.030,An analyst on the couch at home clocked it on a feed and called it in before the building's own systems noticed
 flavor.raid.digital.031,The compound's own drones got turned against it in a full betrayal arc
-flavor.raid.digital.032,"The raiders left a message on every screen in the building with a typo in it, and the analysts are treating the typo as a clue"
-flavor.raid.digital.033,"When the grid dropped the fusion plant panicked into safe mode, and the city went dark for an hour"
-flavor.raid.digital.034,"The after-action review is stalling, asking for more time to explain how an attack this big got through a network this closely watched"
-flavor.raid.digital.035,"People filming from the flats across the street outshot the whole security system, their phone footage beats anything it kept"
-flavor.raid.digital.036,"Their implants made them invisible to our cameras and very visible to a cleaner with a mop, who passed them in the service corridor and assumed they were contractors"
-flavor.raid.digital.037,"It was drone-on-drone violence, theirs jamming ours"
-flavor.raid.digital.038,"The fusion plant didn't get touched, so there's one small W"
-flavor.raid.digital.039,"Polite criminals are somehow worse, and the lobby feed shows them holding the door for each other"
-flavor.raid.digital.040,The police showed up just in time to photograph the tyre marks
-flavor.raid.digital.041,"An analyst traced their vehicles to a rented garage across the city, and they'd cleaned up after themselves so well it was swept spotless"
-flavor.raid.digital.042,The street outside is shut and glittering with broken glass
-flavor.raid.digital.043,"People in the flats opposite keep posting clips, and the analysts are going frame by frame through every single one"
-flavor.raid.digital.044,"Their malware wiped the stores database and spared the canteen menu, so at least they respect lunch"
-flavor.raid.digital.045,"The hospital across the road took the wounded, then the families, then the press, and is now begging the network team to make the press go away"
-flavor.raid.digital.046,"The door security company put out a statement saying its system performed as designed, so the analysts spent the day reading the design docs, four hundred pages that mention the east door once"
-flavor.raid.digital.047,Two of the night staff just crashed under their desks rather than go home
-flavor.raid.digital.048,The office tea is that one of the raiders used to work here
-flavor.raid.digital.049,"Everyone has to redo their fingerprints by Friday, mandatory fun for all"
-flavor.raid.digital.050,"Only six of the forty cameras were even on, and all six were pointed away from the door they used"
-flavor.raid.digital.051,The cleaners were told to wait for forensics and have been on hold since six
-flavor.raid.digital.052,They made a lights-out entrance by shooting every streetlight on the way in
-flavor.raid.digital.053,The office has put flowers on two empty desks
-flavor.raid.cosmic.001,"They didn't even look at the reactor, not what they came for"
-flavor.raid.cosmic.002,Bay three is straight up open to space now
-flavor.raid.cosmic.003,We lost two of the dock crew
-flavor.raid.cosmic.004,The cold got in and frosted the whole port corridor
-flavor.raid.cosmic.005,The airlock seals got sliced clean through
-flavor.raid.cosmic.006,"With their transponder dead they walked right in, and the bouncer was asleep"
-flavor.raid.cosmic.007,The cargo bay doors got carved open from the outside like a tin can
-flavor.raid.cosmic.008,The hull has a table-sized new window nobody ordered
-flavor.raid.cosmic.009,A bulkhead caved inward and the section is still on lockdown
-flavor.raid.cosmic.010,"The manifest is pure fiction now, nothing in the bay matches it"
-flavor.raid.cosmic.011,They left through the aft airlock and didn't even close it behind them
+flavor.raid.digital.032,"The raiders left a message on every screen in the building, it has a typo, and the analysts are treating the typo as lore"
+flavor.raid.digital.033,When the grid dropped the fusion plant panicked into safe mode and the whole city went into a lights-out era for an hour
+flavor.raid.digital.034,"The after-action review is giving stall tactics, asking for more time to explain how an attack this big got through a network this closely watched"
+flavor.raid.digital.035,"People filming from the flats across the street ratioed the whole security system, their phone footage beats anything it kept"
+flavor.raid.digital.036,"Their implants made them invisible to our cameras but not to a cleaner with a mop, who clocked them in the service corridor and figured they were contractors"
+flavor.raid.digital.037,Their drones ratioed ours with a jam
+flavor.raid.digital.038,One lowkey W: the fusion plant didn't get touched
+flavor.raid.digital.039,"The lobby feed is giving polite menace, them holding the door for each other"
+flavor.raid.digital.040,The police pulled up just in time to photograph the tyre marks
+flavor.raid.digital.041,"An analyst traced their vehicles to a rented garage across the city, and they'd left no crumbs, the place swept spotless"
+flavor.raid.digital.042,"The street outside is giving post-apocalypse, shut and covered in broken glass"
+flavor.raid.digital.043,"People in the flats opposite keep posting clips, and the analysts are grinding through every single one frame by frame"
+flavor.raid.digital.044,At least they're based about lunch: their malware wiped the stores database and left the canteen menu alone
+flavor.raid.digital.045,"The hospital across the road took the wounded, then the families, then the press, and is now begging the network team to make the press log off"
+flavor.raid.digital.046,"The door security company put out a statement saying its system performed as designed, so the analysts spent the day reading mid design docs, four hundred pages that mention the east door once"
+flavor.raid.digital.047,Two of the night staff just crashed under their desks rather than dip out
+flavor.raid.digital.048,Office gossip has entered its one-of-the-raiders-used-to-work-here era
+flavor.raid.digital.049,The mandatory side quest of the week is re-enrolling your fingerprints by Friday
+flavor.raid.digital.050,"Huge skill issue: of the forty cameras only six were working, and not one of the six faced the door they used"
+flavor.raid.digital.051,The cleaners were told to wait for forensics and have been left on read since six
+flavor.raid.digital.052,They hard-launched their entrance by shooting out every streetlight on the way in
+flavor.raid.digital.053,It hits different walking past the two empty desks the office has put flowers on
+flavor.raid.cosmic.001,"The reactor wasn't on their side quest list, they left it alone"
+flavor.raid.cosmic.002,"Deadass, bay three went full open-air straight into space"
+flavor.raid.cosmic.003,We lost two real ones from the dock crew
+flavor.raid.cosmic.004,"The port corridor has a frost aesthetic now, the cold got in"
+flavor.raid.cosmic.005,"Cooked and sliced clean through, that's the airlock seals"
+flavor.raid.cosmic.006,The bouncer was asleep: they pulled up with the transponder dead and nobody challenged it
+flavor.raid.cosmic.007,Some menace cut through the cargo bay doors from outside
+flavor.raid.cosmic.008,"The hull has a table-sized glow-up nobody wanted, a brand new hole"
+flavor.raid.cosmic.009,"It's a whole situation down there, a bulkhead caved inward and the section's still sealed"
+flavor.raid.cosmic.010,"The manifest is pure fanfic now, nothing in the bay matches it"
+flavor.raid.cosmic.011,They dipped through the aft airlock and couldn't be bothered to close it
 flavor.raid.cosmic.012,The relay logged them on pure vibes and flagged absolutely nothing
-flavor.raid.cosmic.013,Vacuum claimed the forward compartment before anyone could reach the doors
-flavor.raid.cosmic.014,A freighter three hours out clocked them and kept its mouth shut
-flavor.raid.cosmic.015,"Orbital watch got ghosted, losing them behind the moon after having them right on scope"
-flavor.raid.cosmic.016,"That inner door opened on a code that actually worked, and that's an awkward conversation waiting to happen"
-flavor.raid.cosmic.017,"The hull plating outside the bay is scored in long parallel lines, which one engineer swears was a cutting head and the other insists was something else"
-flavor.raid.cosmic.018,"Air is rationed until the bay is sealed, and the four-in-the-morning notice about it has been read by everybody and argued with by most"
-flavor.raid.cosmic.019,"The transponder code they used belonged to a ship scrapped eleven years ago, and the woman who figured that out hasn't left the terminal since, fully locked in"
-flavor.raid.cosmic.020,"Two relays went quiet for a minute and came back clean, and the log for that minute is a character-for-character copy of the minute before, deeply sus"
-flavor.raid.cosmic.021,"A kid was found sealed in a storage locker on the lower level, breathing, and refused to come out for the first two people who opened it"
-flavor.raid.cosmic.022,"The manifest was edited before anyone thought to check it, and the edit is neat, in the right hand, and dated three days before any of this"
-flavor.raid.cosmic.023,"Somebody was in the bay when it went and didn't get out, and the dock crew have been welding along the seam all night with the lights up and the talk down"
-flavor.raid.cosmic.024,"Half the ring has no pressure and the other half has questions, mainly the one the dock crew have answered about forty times now, opened from inside or cut from outside"
-flavor.raid.cosmic.025,Three sections vented straight to vacuum
+flavor.raid.cosmic.013,"Ngl, vacuum took the forward compartment before anyone could reach the doors"
+flavor.raid.cosmic.014,"A freighter three hours out pulled NPC behavior, clocking them and staying quiet"
+flavor.raid.cosmic.015,"Orbital watch got ghosted, losing them behind the moon after having them on scope"
+flavor.raid.cosmic.016,"There's an opp with a working code, because whoever opened the inner door had one"
+flavor.raid.cosmic.017,"The hull plating outside the bay is scored in long parallel lines, one engineer swears it was a cutting head and the other one is calling cap"
+flavor.raid.cosmic.018,"Air is rationed until the bay is sealed, and the four a.m. notice about it has been read by everybody and beefed with by most"
+flavor.raid.cosmic.019,"The transponder code they used belonged to a ship scrapped eleven years ago, and the woman who figured that out has been locked in at the terminal ever since"
+flavor.raid.cosmic.020,"Deeply sus: two relays went quiet for a minute and came back clean, and the log for that minute is a character-for-character copy of the one before"
+flavor.raid.cosmic.021,"A brave lil survivor turned up sealed in a lower-level storage locker, still breathing, and wouldn't come out for the first two people who opened it"
+flavor.raid.cosmic.022,"Premeditated lore: the manifest was edited before anyone thought to check, neat, in the right hand, and dated three days before any of this"
+flavor.raid.cosmic.023,"The dock crew, real ones, have been welding along the seam all night with the lights up and the talk down, because somebody was in the bay when it went and didn't get out"
+flavor.raid.cosmic.024,"Half the ring has no pressure and the other half has questions, and the dock crew are lowkey losing it after answering the same one about forty times, opened from inside or cut from outside"
+flavor.raid.cosmic.025,"The station took a massive L, three sections vented"
 flavor.raid.cosmic.026,"The dead are getting restored from backup, a respawn nobody should ever need"
-flavor.raid.cosmic.027,They walked off with the entire cargo ring
-flavor.raid.cosmic.028,"The raid was over in a ninety-second blink, local time"
-flavor.raid.cosmic.029,The station is spinning at half speed now and everyone's a little floaty
-flavor.raid.cosmic.030,The bodies recovered from outside are being brought in one at a time through the small lock
-flavor.raid.cosmic.031,"Some of the restored have asked to be told how they died, and some have asked to be spared it"
-flavor.raid.cosmic.032,"Matching our spin before they fired is stalker behavior, they'd been studying the station for ages"
-flavor.raid.cosmic.033,"The station administrator asked the ship's mind for an honest estimate of the next raid and is gatekeeping the answer, which tells us plenty"
-flavor.raid.cosmic.034,"Everyone from the damaged ring got moved inward, and the inner rings are so packed that people are hallway camping under the emergency lights"
-flavor.raid.cosmic.035,The attack came from so far out that the ships behind it are still accelerating away from a hit and run they finished weeks ago
-flavor.raid.cosmic.036,"The raiders took nothing anyone can identify and left a small device bolted to the outer hull, counting down in a notation nobody on the station can read, which is not the vibe"
-flavor.raid.cosmic.037,The ring is still wobbling and nobody is walking straight
-flavor.raid.cosmic.038,Sleep got cancelled by pressure alarms going all night
-flavor.raid.cosmic.039,"They grabbed the seed vault, the whole future in one heist"
-flavor.raid.cosmic.040,"Hydroponics lost an entire tier to decompression, rest in peace to the lettuce"
+flavor.raid.cosmic.027,They yeeted off with the entire cargo ring
+flavor.raid.cosmic.028,"The raid was a ninety-second speedrun, local time"
+flavor.raid.cosmic.029,Half spin era: everyone on the station is floaty now
+flavor.raid.cosmic.030,"Real ones carrying real ones, the bodies recovered from outside come in one at a time through the small lock"
+flavor.raid.cosmic.031,"Some of the restored want the lore on how they died, and some have asked to be spared it"
+flavor.raid.cosmic.032,"They'd been studying the station for ages, highkey stalker behavior, matching our spin before they fired"
+flavor.raid.cosmic.033,The station administrator is gatekeeping the honest estimate the ship's mind gave her about the next raid
+flavor.raid.cosmic.034,"Everyone from the damaged ring got moved inward, and the inner rings are so packed people are in their hallway-camping era under the emergency lights"
+flavor.raid.cosmic.035,The menaces launched from so far out that their ships are still accelerating away from a hit and run they finished weeks ago
+flavor.raid.cosmic.036,"Not the vibe: the raiders took nothing anyone can identify and left a small device bolted to the outer hull, counting down in a notation nobody on the station can read"
+flavor.raid.cosmic.037,"The ring's vibes are still wobbly, literally, it hasn't stopped wobbling"
+flavor.raid.cosmic.038,The pressure alarms were yapping all night
+flavor.raid.cosmic.039,"The audacity of grabbing the seed vault, the whole future in one heist"
+flavor.raid.cosmic.040,"Hydroponics took an L, an entire tier gone to decompression"
 flavor.raid.cosmic.041,Cold burns have kept the medical bay grinding since the second watch
-flavor.raid.cosmic.042,Their boarding craft left creepy handprint-looking scorch rings all over the hull
-flavor.raid.cosmic.043,"The station's kids got moved to the core, where gravity's lighter, and were sold it as a holiday"
-flavor.raid.cosmic.044,"An empty suit was found walking the outer hull on its last instructions, nobody home"
-flavor.raid.cosmic.045,"The raiders came in through a cargo lock welded shut thirty years ago, the weld was cut from the inside, and the security chief now wants every long-timer aboard interviewed, the suspect list just got old"
-flavor.raid.cosmic.046,"The comms mast took a hit, so the station has been texting the fleet by flashing its docking lights"
-flavor.raid.cosmic.047,Everyone's breathing that stale backup-scrubber air now
-flavor.raid.cosmic.048,"The crews swear the raiders never took their helmets off, and some are convinced nobody was home inside them"
-flavor.raid.cosmic.049,Walks outside the inner ring are paused until the hull crews give the all clear
+flavor.raid.cosmic.042,Their boarding craft left cursed handprint-looking scorch rings all over the hull
+flavor.raid.cosmic.043,"The station's kids got the softest gaslight ever, moved to the core where the gravity's lighter and told it's a holiday"
+flavor.raid.cosmic.044,"An empty suit is out there on its last instructions, walking the outer hull in full NPC mode"
+flavor.raid.cosmic.045,"The suspect list just went OG: the raiders came in through a cargo lock welded shut thirty years ago, the weld was cut from the inside, and the security chief wants every long-timer aboard interviewed"
+flavor.raid.cosmic.046,"The comms mast took a hit, so the station's been sliding into the fleet's DMs by flashing its docking lights"
+flavor.raid.cosmic.047,"The air is giving backup scrubbers, stale and twice recycled"
+flavor.raid.cosmic.048,"The crews swear the raiders kept their helmets on the whole time, and the creepiest lore is that some think there was nothing inside them"
+flavor.raid.cosmic.049,Every side quest outside the inner ring is paused until the hull crews say otherwise
 flavor.raid.cosmic.050,"When three decks vented, all forty people sealed in came out alive, the biggest W in a terrible week"
-flavor.raid.cosmic.051,"The hull crews pinned last month's request for more patrols to the mess door, receipts on display"
+flavor.raid.cosmic.051,"The hull crews put the receipts on display, pinning last month's request for more patrols to the mess door"
 flavor.raid.cosmic.052,"Their ships flexed on us long after the raid, hanging in view lit up and slow"
-flavor.raid.cosmic.053,The dead are being kept in the cold hold until the burial ship comes
+flavor.raid.cosmic.053,"No cap, the dead are resting in the cold hold until the burial ship comes"
 flavor.raid.cosmic.054,"Their boarders were giving mystery villain, no insignia and only hand signals"
