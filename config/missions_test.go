@@ -209,5 +209,7 @@ func TestTheScriptTellsRoadTemplatesWithTheirSlots(t *testing.T) {
 			}
 		}
 	}
-	t.Logf("%d road templates have a line in the script", told)
+	if told != 27 {
+		t.Errorf("%d of the 27 road templates have a line in the script", told)
+	}
 }

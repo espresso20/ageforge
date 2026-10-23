@@ -579,3 +579,41 @@ func TestAnOldSaveGetsItsNoticeInTheScript(t *testing.T) {
 		t.Error("the save holds a text of the script")
 	}
 }
+
+// TestRoadStoriesReadInTheShippedScript: with the script the game ships, every
+// slot of every story is filled in (a line that dropped a slot, or a story that
+// was not found, would leave a <slot> showing or a plain sentence), and the
+// stories are not the plain ones.
+func TestRoadStoriesReadInTheShippedScript(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	vibeOff(t)
+	defer vibe.Set(false)
+	vibe.Set(true)
+	told := playRoad(t)
+	seen, kept, _ := told.read()
+	vibe.Set(false)
+	plain := playRoad(t)
+	plainSeen, plainKept, _ := plain.read()
+	sameTexts(t, "the stories as kept", kept, plainKept)
+	if len(seen) != len(plainSeen) {
+		t.Fatalf("%d stories under the script, %d in plain English", len(seen), len(plainSeen))
+	}
+	shown := 0
+	for i, s := range seen {
+		if strings.ContainsAny(s, "<>") || strings.Contains(s, "%!") {
+			t.Errorf("story %d has a slot or a bad verb left in it: %q", i, s)
+		}
+		if s == plainSeen[i] {
+			shown++
+		}
+	}
+	// The words of the place and the people are the ruleset's own, so a few
+	// stories can coincide; most are the script's.
+	if shown > len(seen)/10 {
+		t.Errorf("%d of %d stories under the script are the plain ones", shown, len(seen))
+	}
+	for _, i := range []int{0, 5, 12, 25, 40, 60} {
+		t.Logf("%s", seen[i])
+	}
+}

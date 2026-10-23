@@ -1,2 +1,48 @@
 id,text
 game.engine.NewGameEngineWith.01,"Welcome to AgeForge. You have literally nothing but your hands, so lock in."
+config.mission_words.roadEventTemplates.01,"<weather> had the party stuck near the <place>, no cap. <time> gone, just like that."
+config.mission_words.roadEventTemplates.02,The party sat out <weather> by the <place> and lost <time>. Lowkey a whole L.
+config.mission_words.roadEventTemplates.03,"<weather> made the road near the <place> a whole mess, it's giving chaos. The delay ate <time>."
+config.mission_words.roadEventTemplates.04,"<helper> pulled up with a shortcut for the party. <time> saved, we love to see it."
+config.mission_words.roadEventTemplates.05,<helper> dropped a tip and the trip got <time> shorter. Main character energy.
+config.mission_words.roadEventTemplates.06,The party took a shortcut thanks to <helper> and saved <time>. Big W.
+config.mission_words.roadEventTemplates.07,"The party stumbled onto <find>, no cap. The haul just grew by <percent>%."
+config.mission_words.roadEventTemplates.08,"Lucky find, it's <find>, and the haul gets <percent>% bigger. We ate."
+config.mission_words.roadEventTemplates.09,"<find> was just sitting there by the road. The haul grew by <percent>%, free loot."
+config.mission_words.roadEventTemplates.10,"On the <place> road, <foe> blocked the way. The captain chose his own hide over a fight, no cap, and paid <gold> gold to get through."
+config.mission_words.roadEventTemplates.11,<foe> wanted <gold> gold at the <place>. The captain paid up and kept it moving.
+config.mission_words.roadEventTemplates.12,"The party handed <gold> gold to <foe> for safe passage near the <place>. Pay to play, fr."
+config.mission_words.roadEventTemplates.13,"<foe> was lowkey stalking the party for days. The odds fall to <odds>%, rip."
+config.mission_words.roadEventTemplates.14,"The party clocked <foe> on the trail. Odds drop to <odds>%, not it."
+config.mission_words.roadEventTemplates.15,"<foe> made the road sketchy. Success odds are now <odds>%, big yikes."
+config.mission_words.roadEventTemplates.16,"<foe> hit at dusk. <n> soldiers fell, brutal."
+config.mission_words.roadEventTemplates.17,"<foe> caught the soldiers off guard. <n> fell in the ambush, that's cooked."
+config.mission_words.roadEventTemplates.18,"At dusk, <foe> came out of nowhere. The party lost <n> soldiers, huge L."
+config.mission_words.roadEventTemplates.19,"<foe> ran off with part of the haul, rude."
+config.mission_words.roadEventTemplates.20,<foe> raided the supplies and took part of the haul. Not it.
+config.mission_words.roadEventTemplates.21,"The party fought off <foe>, but some of the haul got lost anyway, rip."
+config.mission_words.roadEventTemplates.22,"Fair skies and a good guide, it's giving smooth sailing. The odds rise to <odds>%."
+config.mission_words.roadEventTemplates.23,"A clear stretch lifted the vibes. Success odds are now <odds>%, lowkey a W."
+config.mission_words.roadEventTemplates.24,The party found its rhythm and is in the zone. Odds rise to <odds>%.
+config.mission_words.roadEventTemplates.25,"The party marked ruins off the road near the <place>, and they're on the board now. Side quest unlocked."
+config.mission_words.roadEventTemplates.26,"An old ruin near the <place> is now marked on the board, plot twist."
+config.mission_words.roadEventTemplates.27,"The party found ruins near the <place>. A new offer is on the board, bet."
+game.catastrophe.startReconstruction.01,Rebuild Arc
+game.defense.applyWarRaids.01,Getting Raided
+game.engine.processDiplomacy.01,Besties on Loan
+game.engine.DoFestival.03,Culture Fest Szn
+game.catastrophe.historyLines.01,"Tick %d: Endured %s (%s). %d buildings lost, but we're still here."
+game.catastrophe.historyLines.02,"Tick %d: Succumbed to %s (%s). Civilization reset, fresh start energy. %s"
+game.catastrophe.historyLines.03,"Legacy bonus earned, that's a W."
+game.catastrophe.historyLines.04,"Legacy bonus already held, no double dipping."
+game.catastrophe.historyLines.05,"Tick %d: Endured %s (%s). Prestige kept %d of %d points, lowkey decent."
+game.catastrophe.historyLines.06,"Tick %d: Succumbed to %s (%s). No prestige points, rip. Cosmic Legacy earned, main character move."
+game.save.treeNotice.02," Any command you were already using stays open for the rest of this run, and everything you researched or built stays put, no cap."
+game.save.pacingNotice.01,"Pacing patch: a first run now takes about a week, fr. From the Bronze Age on, each age runs about 2.6 times as long, and events, raids, trade routes and other timers stretch to match, so each age still packs the same amount of them. Your game picks up right where you left it, no cap."
+game.save.marketSwapNotice.01,"The market doesn't swap resources anymore, that era is over. The sell orders in your plan got removed, rip."
+game.save.scholarsNotice.01,"Knowledge doesn't get stored anymore, plot twist. Your scholars now lock in on one technology at a time."
+game.save.storageWallNotice.01,"Storage got a glow-up. A storage building's price now climbs way faster with each copy, and stock has no ceiling, so nothing you make goes to waste. You keep every building you have, and whatever your plan had banked got handed back to you, no cap."
+config.missions.RareTitleWord.01,Goated
+game.engine.ancientMemoryFlavor.01,"You found an old cache, no cap. It looks like it holds memories of a civilization that's long gone."
+game.harbinger.lastPassageCame.01,the Last Passage already pulled up
+game.mission_board.ruinsFound.01,This mission stumbled on it near the ruins at 
