@@ -409,7 +409,7 @@ ui.help.commands.diplomacy.accept,Say bet to a civilization's trade deal n
 ui.help.commands.diplomacy.raid,Raid a civilization's trade route (major opp energy: it provokes war)
 ui.help.commands.wonder,Vibe check on the current wonder bank
 ui.help.commands.wonder.collect,Stack resources into the current wonder's bag (alias: bank; no amount: as much as it needs)
-ui.help.panels.wonders,The flex wall: wonder bank & wonders you built
+ui.help.panels.wonders,"The flex wall: wonder bank, wonders you built and a gallery to stare at them (G)"
 ui.help.commands.prestige,Peep your prestige status
 ui.help.commands.festival,"Blow culture on a short production buff, party mode"
 ui.help.commands.catastrophe,"Reopen a pending catastrophe or Last Passage (or peep the outlook), the doom menu"
@@ -1883,182 +1883,182 @@ ui.overlay_stats.statsProvider.40," [gray]A new run would speedrun this age in a
 "
 ui.overlay_stats.statsProvider.41," [gold]After this glow-up:[-] [green]x%.2f[-] production
 "
-ui.overlay_stats.statsProvider.43," [yellow]Prestige opens once you pass %s, the furthest an earlier run got, the bar.[-]
+ui.overlay_stats.statsProvider.43," [yellow]Prestige unlocks once you pass %s, the PB an earlier run set.[-]
 "
-ui.overlay_stats.statsProvider.44," [gold]Era Mastery, the glow-up:[-] %s
+ui.overlay_stats.statsProvider.44," [gold]Era Mastery aura:[-] %s
 "
-ui.overlay_stats.statsProvider.45," [gray]Next prestige, the reset: %s.[-]
+ui.overlay_stats.statsProvider.45," [gray]Next glow-up reset: %s.[-]
 "
 ui.overlay_stats.statsProvider.46," [gold]Points bagged:[-] [cyan]%d[-] total
 "
-ui.overlay_stats.statsProvider.47," [green]Prestige now for %s, bussin.[-]
+ui.overlay_stats.statsProvider.47," [green]Prestige rn for %s.[-]
 "
 ui.overlay_stats.statsProvider.48,point
 ui.overlay_stats.statsProvider.49,points
-ui.overlay_stats.statsProvider.50," [gray]From %s: %s, the receipts.[-]
+ui.overlay_stats.statsProvider.50," [gray]Receipts from %s: %s.[-]
 "
 ui.overlay_stats.statsProvider.51,point
 ui.overlay_stats.statsProvider.52,points
-ui.overlay_stats.statsProvider.53," [gray]Reach %s to prestige, the goal.[-]
+ui.overlay_stats.statsProvider.53," [gray]Reach %s to unlock the prestige glow-up.[-]
 "
-ui.overlay_stats.statsProvider.54," [yellow]Reach %s to prestige again, the rematch.[-]
+ui.overlay_stats.statsProvider.54," [yellow]Hit %s and you can glow up again.[-]
 "
 ui.overlay_stats.statsProvider.55,"
-[gold]═══ Research bonuses, the brain perks ═══[-]
+[gold]═══ Big Brain Buffs ═══[-]
 
 "
 ui.overlay_stats.statsProvider.56,"
-[gold]═══ Resource rates, the bag ═══[-]
+[gold]═══ Bag Rates ═══[-]
 
 "
-ui.overlay_stats.statsProvider.57," [gray]No unlocked resources, the bag is empty, fr.[-]
+ui.overlay_stats.statsProvider.57," [gray]Zero resources unlocked, the bag is empty.[-]
 "
 ui.overlay_stats.statsProvider.58,"
-[gold]═══ Active multipliers, the boost ═══[-]
+[gold]═══ Active Buffs ═══[-]
 
 "
-ui.overlay_stats.renderActiveMultipliers.01," [gray]No active multipliers, quiet vibes.[-]
+ui.overlay_stats.renderActiveMultipliers.01," [gray]No buffs active rn.[-]
 "
-ui.overlay_stats.multiplierSourceLabel.01,"Event, the plot: "
-ui.overlay_stats.multiplierSourceLabel.02,Brain work
-ui.overlay_stats.multiplierSourceLabel.03,"Prestige, the reset"
-ui.overlay_stats.multiplierSourceLabel.04,"Wonders, the flex"
-ui.overlay_stats.multiplierSourceLabel.05,Forever
-ui.overlay_stats.multiplierSourceLabel.06,"Morale, the mood"
-ui.overlay_stats.multiplierSourceLabel.07,"Event, the plot"
-ui.overlay_stats.multiplierSourceLabel.08,"Diplomacy, the deals"
-ui.overlay_stats.multiplierSourceLabel.09,"Legacy, the goodies"
-ui.overlay_stats.multiplierSourceLabel.10,"Cosmic Legacy, goated"
-ui.overlay_trade.tradeProvider.01," [gold]═══ Trade routes, the bag bridge ═══[-]
+ui.overlay_stats.multiplierSourceLabel.01,Plot twist: 
+ui.overlay_stats.multiplierSourceLabel.02,Big brain
+ui.overlay_stats.multiplierSourceLabel.03,Glow-up
+ui.overlay_stats.multiplierSourceLabel.04,Wonder flex
+ui.overlay_stats.multiplierSourceLabel.05,Rent free
+ui.overlay_stats.multiplierSourceLabel.06,Vibes
+ui.overlay_stats.multiplierSourceLabel.07,Plot twist
+ui.overlay_stats.multiplierSourceLabel.08,Civ besties
+ui.overlay_stats.multiplierSourceLabel.09,Legacy buff
+ui.overlay_stats.multiplierSourceLabel.10,Cosmic aura
+ui.overlay_trade.tradeProvider.01," [gold]═══ Bag Routes ═══[-]
 
 "
-ui.overlay_trade.tradeProvider.02," [red]⚠ Routes importing %s are suspended (a war, or your embargo), L.[-]
+ui.overlay_trade.tradeProvider.02," [red]⚠ Routes importing %s are on pause (a war, or your embargo), the bag is blocked.[-]
 "
-ui.overlay_trade.tradeProvider.03," [gray]Lift your embargo with: diplomacy neutral <civ>, easy W[-]
+ui.overlay_trade.tradeProvider.03," [gray]End your embargo beef with: diplomacy neutral <civ>[-]
 
 "
-ui.overlay_trade.tradeProvider.04," [gold]Active routes, rolling:[-]
+ui.overlay_trade.tradeProvider.04," [gold]Routes live rn:[-]
 
 "
-ui.overlay_trade.tradeProvider.05,"   Export, the outbound: %s
+ui.overlay_trade.tradeProvider.05,"   Outbound drip: %s
 "
-ui.overlay_trade.tradeProvider.06,"   Import, the inbound: %s
+ui.overlay_trade.tradeProvider.06,"   Inbound drip: %s
 "
-ui.overlay_trade.tradeProvider.07,"   [red]Suspended: %s imports are blockaded, L[-]
+ui.overlay_trade.tradeProvider.07,"   [red]Paused: %s imports are blockaded, the opps cut the line[-]
 
 "
-ui.overlay_trade.tradeProvider.08,"   %s left in this cycle  [gray](%s done), the progress[-]
+ui.overlay_trade.tradeProvider.08,"   %s left in this cycle  [gray](%s secured)[-]
 
 "
 ui.overlay_trade.tradeProvider.09,cycle
 ui.overlay_trade.tradeProvider.10,cycles
-ui.overlay_trade.tradeProvider.11," [gold]Available routes, up for grabs:[-]
+ui.overlay_trade.tradeProvider.11," [gold]Routes up for grabs:[-]
 
 "
-ui.overlay_trade.tradeProvider.12,"   Export: %s → Import: %s, the pair
+ui.overlay_trade.tradeProvider.12,"   Out: %s → In: %s, a trade situationship
 "
-ui.overlay_trade.tradeProvider.13,"   [green]trade route start %s, the go-button[-]
+ui.overlay_trade.tradeProvider.13,"   [green]send it: trade route start %s[-]
 "
-ui.overlay_trade.tradeProvider.14,"   [red]needs %s (have %s), the bill[-]
+ui.overlay_trade.tradeProvider.14,"   [red]needs %s (your bag: %s)[-]
 "
-ui.overlay_trade.tradeProvider.15," [gray]No trade routes in this age yet, we're early.[-]
+ui.overlay_trade.tradeProvider.15," [gray]No trade routes this age yet, so early.[-]
 "
-ui.overlay_trade.tradeProvider.16," [gray]Commands, the menu: trade route start/stop <key>[-]
+ui.overlay_trade.tradeProvider.16," [gray]Cheat codes: trade route start/stop <key>[-]
 "
 ui.overlay_trade.tradeProvider.17,"
- [gray]Opinion and deals with other civilizations, the social scene: type factions[-]
+ [gray]Civ tea, opinion and deals: type factions[-]
 "
-ui.overlay_trade.writeAllyTradeBonuses.01," [gold]Allied bonuses, the squad perks:[-]
+ui.overlay_trade.writeAllyTradeBonuses.01," [gold]Ride or die perks:[-]
 "
-ui.overlay_trade.writeAllyTradeBonuses.02,"   %s: [green]%s %s[-] [gray](route imports and production), bussin[-]
+ui.overlay_trade.writeAllyTradeBonuses.02,"   %s: [green]%s %s[-] [gray](buffs route imports and production)[-]
 "
-ui.overlay_wonders.renderCurrentWonderSummary.01,"[gold]═══ This age's wonder, the flex ═══[-]
+ui.overlay_wonders.renderCurrentWonderSummary.01,"[gold]═══ This Age's Flex ═══[-]
 "
-ui.overlay_wonders.renderCurrentWonderSummary.02," %s [gold]★ %s[-]  [green]Built, W[-]  [gray]%s, the flex[-]
+ui.overlay_wonders.renderCurrentWonderSummary.02," %s [gold]★ %s[-]  [green]Built, it ate[-]  [gray]%s[-]
 "
-ui.overlay_wonders.renderCurrentWonderSummary.03," [yellow]○ %s[-]  [gray]%s, not built yet, the queue[-]
+ui.overlay_wonders.renderCurrentWonderSummary.03," [yellow]○ %s[-]  [gray]%s, still loading[-]
 "
 ui.overlay_wonders.renderCurrentWonderSummary.04,"
- [cyan]Wonder bank, the vault:[-]
+ [cyan]Wonder bag:[-]
 "
-ui.overlay_wonders.wondersProvider.01,"[gold]═══ Wonders: %d / %d, the W wall ═══[-]
+ui.overlay_wonders.wondersProvider.01,"[gold]═══ Wonder Flexes: %d / %d ═══[-]
 "
-ui.overlay_wonders.wondersProvider.02,"   [green]Built, W[-]
+ui.overlay_wonders.wondersProvider.02,"   [green]It ate[-]
 "
-ui.overlay_wonders.wondersProvider.03,"   [cyan]Effects, the perks:[-]
+ui.overlay_wonders.wondersProvider.03,"   [cyan]Buffs:[-]
 "
-ui.overlay_wonders.wondersProvider.04,"[green](bank full, ready to build, let's go)[-]"
-ui.overlay_wonders.wondersProvider.05,"[yellow](bank full, waiting for its keystone, sus)[-]"
-ui.overlay_wonders.wondersProvider.06," [yellow]○ %s[-]   [gray]%s, the stash[-]   [yellow](%.0f%% banked)[-]
+ui.overlay_wonders.wondersProvider.04,"[green](bag full, ready to cook)[-]"
+ui.overlay_wonders.wondersProvider.05,"[yellow](bag full, but its keystone is gatekeeping)[-]"
+ui.overlay_wonders.wondersProvider.06," [yellow]○ %s[-]   [gray]%s[-]   [yellow](%.0f%% of the bag)[-]
 "
-ui.overlay_wonders.wondersProvider.07,"   [gray]Bank resources to build it, the stash: "
-ui.overlay_wonders.wondersProvider.08,"   [cyan]Effects when built, the payoff:[-]
+ui.overlay_wonders.wondersProvider.07,"   [gray]Fill its bag to build it: "
+ui.overlay_wonders.wondersProvider.08,"   [cyan]Buffs once built:[-]
 "
-ui.overlay_wonders.wondersProvider.09," [gray]? ???[-]   [gray]%s, locked, the mystery[-]
+ui.overlay_wonders.wondersProvider.09," [gray]? ???[-]   [gray]%s, gatekept[-]
 "
-ui.overlay_wonders.wondersProvider.10,"? ???   %s in ages still to come, locked, the mystery"
+ui.overlay_wonders.wondersProvider.10,"? ???   %s in ages still to come, gatekept"
 ui.overlay_wonders.wondersProvider.11,more wonder
 ui.overlay_wonders.wondersProvider.12,more wonders
-ui.overlay_wonders.wondersProvider.13,"[gray]No wonders built yet, the W wall is blank.[-]
+ui.overlay_wonders.wondersProvider.13,"[gray]No wonders built yet, the flex wall is bare.[-]
 "
-ui.overlay_wonders.wondersProvider.14,"[gold]Built, the W list:[-] %s
+ui.overlay_wonders.wondersProvider.14,"[gold]Flexed:[-] %s
 "
-ui.panels_table.panelGroups.01,"Town, the home base"
-ui.panels_table.panelGroups.02,"the squad, bet"
-ui.panels_table.panelGroups.03,"queue, then build"
+ui.panels_table.panelGroups.01,Town Era
+ui.panels_table.panelGroups.02,squad and army
+ui.panels_table.panelGroups.03,"queue builds, bet"
 ui.panels_table.panelGroups.04,the big flexes
-ui.panels_table.panelGroups.05,"your town, vibed"
-ui.panels_table.panelGroups.06,"Progress, the grind"
-ui.panels_table.panelGroups.07,goals & W's
-ui.panels_table.panelGroups.08,the brain tree
+ui.panels_table.panelGroups.05,your town in 4K
+ui.panels_table.panelGroups.06,The Grind
+ui.panels_table.panelGroups.07,goals and Ws
+ui.panels_table.panelGroups.08,the big brain tree
 ui.panels_table.panelGroups.09,what advance wants
-ui.panels_table.panelGroups.10,eras and doom
-ui.panels_table.panelGroups.11,the story so far
-ui.panels_table.panelGroups.12,"World, the lore"
+ui.panels_table.panelGroups.10,eras and doomcore
+ui.panels_table.panelGroups.11,your lore so far
+ui.panels_table.panelGroups.12,World Arc
 ui.panels_table.panelGroups.13,send the squad
-ui.panels_table.panelGroups.14,"soldiers, the rank"
-ui.panels_table.panelGroups.15,"routes, the bag"
-ui.panels_table.panelGroups.16,the nosy neighbors
-ui.panels_table.panelGroups.17,"warnings, sus"
-ui.panels_table.panelGroups.18,"You, main character"
+ui.panels_table.panelGroups.14,soldier rank drip
+ui.panels_table.panelGroups.15,routes and the bag
+ui.panels_table.panelGroups.16,the neighbor tea
+ui.panels_table.panelGroups.17,the omen tea
+ui.panels_table.panelGroups.18,Main Character
 ui.panels_table.panelGroups.19,the trophy drip
-ui.panels_table.panelGroups.20,"numbers, the math"
+ui.panels_table.panelGroups.20,"the math, mathing"
 ui.panels_table.panelGroups.21,the full tea
 ui.panels_table.panelGroups.22,how to vibe
-ui.people_kinds.boxLine.01," out, on tour"
-ui.people_kinds.boxLine.02," out, bussin"
-ui.people_rich.peopleRichTitle.01," People, the crew "
-ui.people_rich.peopleRichTitle.02," Crowd %s/%s, the squad "
-ui.people_rich.peopleRichHeld.01,"Held by, the crib: "
-ui.people_rich.peopleRichHeld.02,"every home is packed, bussin"
-ui.people_rich.peopleRichHeld.03,"%s homes empty, the vacancy"
-ui.people_rich.peopleRichHeld.04,"%s empty, lowkey roomy"
+ui.people_kinds.boxLine.01," on tour"
+ui.people_kinds.boxLine.02," on tour"
+ui.people_rich.peopleRichTitle.01," The Crew "
+ui.people_rich.peopleRichTitle.02," Squad %s/%s "
+ui.people_rich.peopleRichHeld.01,Gatekept by: 
+ui.people_rich.peopleRichHeld.02,every crib is packed
+ui.people_rich.peopleRichHeld.03,%s cribs empty
+ui.people_rich.peopleRichHeld.04,"%s empty, roomy era"
 ui.people_rich.peopleRichHeld.05,Room to glow up
-ui.people_rich.peopleRichText.02,"%sPop, the crowd[-] %s%s[-]/%s%s[-]"
-ui.people_rich.peopleRichText.03,"%d%% full, the vibe"
-ui.people_tabs.overview.01,"Your people, the squad"
+ui.people_rich.peopleRichText.02,%sSquad[-] %s%s[-]/%s%s[-]
+ui.people_rich.peopleRichText.03,"%d%% full, cozy era"
+ui.people_tabs.overview.01,Your squad
 ui.people_tabs.overview.02,"nothing, glowing up"
-ui.people_tabs.overview.03,"food, the munchies "
-ui.people_tabs.overview.04,"Homes, the crib "
-ui.people_tabs.overview.05,"   empty, roomy "
-ui.people_tabs.overview.06,"   locked up by "
-ui.people_tabs.overview.07,"Lately, the recap"
-ui.people_tabs.overview.08,"Nothing yet. People slide in as you build homes, bet."
-ui.people_tabs.foodLine.01,"Food, the munchies "
-ui.people_tabs.foodLine.02," for everyone, bussin"
-ui.people_tabs.foodLine.03,"   net, the math "
-ui.people_tabs.foodLine.04,"   morale, the mood "
-ui.people_tabs.foodLine.05,"   feeds, like, up to "
+ui.people_tabs.overview.03,snacks 
+ui.people_tabs.overview.04,Cribs 
+ui.people_tabs.overview.05,"   up for grabs "
+ui.people_tabs.overview.06,"   gatekept by "
+ui.people_tabs.overview.07,Recent tea
+ui.people_tabs.overview.08,Nothing yet. People slide in as you build homes.
+ui.people_tabs.foodLine.01,Snacks 
+ui.people_tabs.foodLine.02," for the whole squad"
+ui.people_tabs.foodLine.03,"   net drip "
+ui.people_tabs.foodLine.04,"   vibes "
+ui.people_tabs.foodLine.05,"   snacks cover up to "
 ui.people_tabs.card.01,roster locked in
-ui.people_tabs.card.02," at work, the grind"
-ui.people_tabs.card.03,"slots %s/%s, the bench"
-ui.people_tabs.card.04,work area
-ui.people_tabs.card.05,work areas
-ui.people_tabs.card.06," waiting, bet"
-ui.people_tabs.card.07,"fill the jobs first, bussin"
+ui.people_tabs.card.02," on the grind"
+ui.people_tabs.card.03,%s/%s slots locked in
+ui.people_tabs.card.04,grind spot
+ui.people_tabs.card.05,grind spots
+ui.people_tabs.card.06," on the bench"
+ui.people_tabs.card.07,"jobs first, no NPCs"
 ui.people_tabs.card.08,glow up with homes
 ui.people_tabs.card.09,peep Work
-ui.people_tabs.card.10,"none out, chilling"
+ui.people_tabs.card.10,none on tour
 ui.people_tabs.card.11," out, on the road"
 ui.people_tabs.card.12," at their posts, locked in"
 ui.people_tabs.card.13,"defense, the shield "
@@ -2399,4 +2399,13 @@ ui.wonder_gallery.UpdateState.07,"
 ui.building_text.buildingText.07,"Past %s, each one researches at half rate, the nerf hits."
 ui.building_text.buildingText.05,dupe
 ui.building_text.buildingText.06,dupes
+ui.overlay_help.helpProvider.66,"Skyline, close zoom: pan up and down a tall tower like a doomscroll, Shift for half a screen (Home drops you back at the foot)"
+ui.overlay_wonders.wondersProvider.15,"[gray]Press G for the flex gallery of every wonder you built.[-]
+"
 ui.people_tabs.scholars.23,", %d dupes, %d nerfed to half rate"
+ui.wonders_view.galleryKeys.01,[gray]Tab or G the list   Esc dip[-]
+ui.wonders_view.galleryKeys.02,"[gray]◄ ► scroll the flexes   Home End day one, final boss   Tab or G the list   Esc dip[-]"
+ui.wonders_view.galleryText.01,[gold]═══ The Flex Gallery ═══[-]
+ui.wonders_view.galleryText.02,"[gray]Zero wonders built so far. Every one you build gets hung here, drawn exactly like the map serves it.[-]"
+ui.wonders_view.galleryText.03,[gray]%d of %d flexed[-]
+ui.wonders_view.galleryText.04,"  [gray]the age dropped %s[-]"
