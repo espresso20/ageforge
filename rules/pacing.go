@@ -3,6 +3,7 @@ package rules
 import (
 	"maps"
 	"slices"
+	"sort"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
@@ -30,10 +31,50 @@ func (s *Set) derive() {
 	s.refSize, s.refStore = config.ReferenceStoreSizes(s.buildings, s.ages, config.ReferenceBaseStore())
 	army := config.RefSoldiers(s.buildings, s.ages)
 	s.refArmy = make(map[string]float64, len(s.ages))
+	s.charged = make(map[string][2]string, len(s.ages))
 	for i, a := range s.ages {
 		s.refArmy[a.Key] = army[i]
+		s.charged[a.Key] = s.chargedBy(a)
 	}
 }
+
+// chargedBy is the two resources most of the buildings age unlocks cost
+// something in, the more charged first and a tie broken by key; "" for a
+// place not filled.
+func (s *Set) chargedBy(age config.AgeDef) [2]string {
+	charges := map[string]int{}
+	for _, key := range age.UnlockBuildings {
+		b, found := s.buildingByKey[key]
+		if !found {
+			continue
+		}
+		for res := range b.BaseCost {
+			charges[res]++
+		}
+	}
+	keys := make([]string, 0, len(charges))
+	for res := range charges {
+		keys = append(keys, res)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if charges[keys[i]] != charges[keys[j]] {
+			return charges[keys[i]] > charges[keys[j]]
+		}
+		return keys[i] < keys[j]
+	})
+	var out [2]string
+	copy(out[:], keys)
+	return out
+}
+
+// ChargedMaterials is the two resources the buildings age unlocks charge most
+// (a mission's cost is minutes of the town's income in them), the more
+// charged first; "" for a place not filled. Both are "" for an unknown age.
+func (s *Set) ChargedMaterials(age string) [2]string { return s.charged[age] }
+
+// PriceLevel is res's price level in age (PriceLevels), 0 for a resource that
+// is not one of the age's construction materials.
+func (s *Set) PriceLevel(age, res string) float64 { return s.priceLevels[age][res] }
 
 // TypicalStorage is what a moderate builder's store holds of res in age:
 // its base storage and config.StorageRuleCopies copies of every storage building

@@ -4389,59 +4389,44 @@ func (ge *GameEngine) MissionCost(n int) map[string]float64 {
 // else) and, for any other, minutes of income in the age's two most-charged
 // materials.
 func (ge *GameEngine) missionCostLocked(offer MissionOffer) map[string]float64 {
-	cost := make(map[string]float64)
-	// Every mission takes its party, under "soldiers" (none in an age with no army).
-	if party := ge.partySizeLocked(offer); party > 0 {
-		cost["soldiers"] = float64(party)
-	}
-	if offer.Military() {
-		return cost
-	}
-	charges := make(map[string]int)
-	age, ok := ge.rules.Age(ge.age)
-	if !ok {
-		return cost
-	}
-	for _, key := range age.UnlockBuildings {
-		b, found := ge.rules.Building(key)
-		if !found {
-			continue
-		}
-		for res := range b.BaseCost {
-			charges[res]++
-		}
-	}
-	keys := make([]string, 0, len(charges))
-	for res := range charges {
-		keys = append(keys, res)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		if charges[keys[i]] != charges[keys[j]] {
-			return charges[keys[i]] > charges[keys[j]]
-		}
-		return keys[i] < keys[j]
-	})
-	// The two the age charges most; one the town makes none of is left out
-	// (the next in line does not take its place).
-	if len(keys) > 2 {
-		keys = keys[:2]
-	}
-	for _, res := range keys {
-		income := ge.townIncome(res)
-		if income <= 0 {
-			continue
-		}
-		cost[res] = math.Ceil((offer.CostMinutes() / 2) * (60 / config.TickSeconds) * income)
-	}
-	return cost
+	prices := ge.missionPricesLocked()
+	return ge.missionCostWith(&prices, offer)
 }
 
-func (ge *GameEngine) missionHaulLocked(haulMinutes float64) map[string]float64 {
+// resourceIncome is the town's income in one resource.
+type resourceIncome struct {
+	res    string
+	income float64
+}
+
+// missionPrices is what the costs and hauls of the offers on the board are
+// worked out from, the same for every offer: the town's income in the age's
+// most-charged materials (the cost), and in the two materials that earn the
+// most in price units (the haul). The board view works it out once for all of
+// its offers.
+type missionPrices struct {
+	known      bool             // the town's age is a known age
+	charged    []resourceIncome // the age's most-charged materials the town makes any of
+	hauled     []resourceIncome // the two hauled materials, the best first
+	haulFactor float64          // the army's rank on every haul
+}
+
+func (ge *GameEngine) missionPricesLocked() missionPrices {
 	age, ok := ge.rules.Age(ge.age)
 	if !ok {
-		return nil
+		return missionPrices{}
 	}
-	levels := ge.rules.PriceLevels(ge.age)
+	prices := missionPrices{known: true, haulFactor: config.ArmyHaulFactor(ge.Military.Rank())}
+	// The two the age charges most; one the town makes none of is left out
+	// (the next in line does not take its place).
+	for _, res := range ge.rules.ChargedMaterials(ge.age) {
+		if res == "" {
+			continue
+		}
+		if income := ge.townIncome(res); income > 0 {
+			prices.charged = append(prices.charged, resourceIncome{res, income})
+		}
+	}
 	incomes := make(map[string]float64)
 	for _, key := range age.UnlockBuildings {
 		b, found := ge.rules.Building(key)
@@ -4449,8 +4434,10 @@ func (ge *GameEngine) missionHaulLocked(haulMinutes float64) map[string]float64 
 			continue
 		}
 		for _, effect := range b.Effects {
-			if effect.Type == "production" && ge.townIncome(effect.Target) > 0 {
-				incomes[effect.Target] = ge.townIncome(effect.Target)
+			if effect.Type == "production" {
+				if income := ge.townIncome(effect.Target); income > 0 {
+					incomes[effect.Target] = income
+				}
 			}
 		}
 	}
@@ -4459,16 +4446,16 @@ func (ge *GameEngine) missionHaulLocked(haulMinutes float64) map[string]float64 
 		score float64
 	}
 	var rankedIncomes []ranked
-	for _, res := range sortedKeys(incomes) {
+	for res, income := range incomes {
 		// Income in price units: how many first copies of the resource's price
 		// (its median first-copy price in this age) the town makes each tick, so
 		// a cheap material and a dear one compare. Only the age's construction
 		// materials have a price level; the others are not hauled.
-		level := levels[res]
+		level := ge.rules.PriceLevel(ge.age, res)
 		if level <= 0 {
 			continue
 		}
-		rankedIncomes = append(rankedIncomes, ranked{res, incomes[res] / level})
+		rankedIncomes = append(rankedIncomes, ranked{res, income / level})
 	}
 	sort.Slice(rankedIncomes, func(i, j int) bool {
 		if rankedIncomes[i].score != rankedIncomes[j].score {
@@ -4479,9 +4466,41 @@ func (ge *GameEngine) missionHaulLocked(haulMinutes float64) map[string]float64 
 	if len(rankedIncomes) > 2 {
 		rankedIncomes = rankedIncomes[:2]
 	}
-	out := make(map[string]float64)
 	for _, entry := range rankedIncomes {
-		out[entry.key] = incomes[entry.key] * (60 / config.TickSeconds) * haulMinutes / 2 * config.ArmyHaulFactor(ge.Military.Rank())
+		prices.hauled = append(prices.hauled, resourceIncome{entry.key, incomes[entry.key]})
+	}
+	return prices
+}
+
+// missionCostWith is missionCostLocked on prices already worked out.
+func (ge *GameEngine) missionCostWith(prices *missionPrices, offer MissionOffer) map[string]float64 {
+	cost := make(map[string]float64, 3)
+	// Every mission takes its party, under "soldiers" (none in an age with no army).
+	if party := ge.partySizeLocked(offer); party > 0 {
+		cost["soldiers"] = float64(party)
+	}
+	if offer.Military() || !prices.known {
+		return cost
+	}
+	for _, c := range prices.charged {
+		cost[c.res] = math.Ceil((offer.CostMinutes() / 2) * (60 / config.TickSeconds) * c.income)
+	}
+	return cost
+}
+
+func (ge *GameEngine) missionHaulLocked(haulMinutes float64) map[string]float64 {
+	prices := ge.missionPricesLocked()
+	return ge.missionHaulWith(&prices, haulMinutes)
+}
+
+// missionHaulWith is missionHaulLocked on prices already worked out.
+func (ge *GameEngine) missionHaulWith(prices *missionPrices, haulMinutes float64) map[string]float64 {
+	if !prices.known {
+		return nil
+	}
+	out := make(map[string]float64, len(prices.hauled))
+	for _, h := range prices.hauled {
+		out[h.res] = h.income * (60 / config.TickSeconds) * haulMinutes / 2 * prices.haulFactor
 	}
 	return out
 }
@@ -4510,23 +4529,62 @@ func (ge *GameEngine) offerSuccessLocked(offer MissionOffer) float64 {
 // tier: the board offers the tiers the era (and the army's rank) opens.
 // cost is what the offer costs, the party included.
 func (ge *GameEngine) offerRefusalLocked(offer MissionOffer, cost map[string]float64) (reason string, err error) {
+	block := ge.offerBlockLocked(cost)
+	return block.reason(), block.err(offer)
+}
+
+// offerBlock is what keeps an offer from being sent: the zero value is
+// nothing. It holds the figures, so the board view can read the short reason
+// of every offer on it without building the sentence for the launch command.
+type offerBlock struct {
+	party, home  int     // the party it needs and the soldiers at home, when too few
+	res          string  // else the material that is short
+	amount, have float64 // what it takes and what the town holds of res
+}
+
+// offerBlockLocked is the first thing in the way of sending an offer that costs
+// cost: the party against the soldiers at home, then each material in a fixed
+// order, so the refusal names the same one every time.
+func (ge *GameEngine) offerBlockLocked(cost map[string]float64) offerBlock {
 	if party := int(cost["soldiers"]); party > 0 {
 		if home := ge.soldiersHome(); home < party {
-			return fmt.Sprintf("needs a party of %d soldiers (%d at home)", party, home),
-				fmt.Errorf("%s needs a party of %d soldiers, and %d are at home. Soldiers come with the military buildings; see the Army panel", offer.Title, party, home)
+			return offerBlock{party: party, home: home}
 		}
 	}
-	// Materials, in a fixed order so the refusal names the same one every time.
 	for _, res := range sortedKeys(cost) {
 		if res == "soldiers" {
 			continue
 		}
 		if amount := cost[res]; ge.Resources.Get(res) < amount {
-			return fmt.Sprintf("needs %s %s", amountText(amount), resourceLabel(res)),
-				fmt.Errorf("%s needs %s %s (you have %s)", offer.Title, amountText(amount), resourceLabel(res), amountText(ge.Resources.Get(res)))
+			return offerBlock{res: res, amount: amount, have: ge.Resources.Get(res)}
 		}
 	}
-	return "", nil
+	return offerBlock{}
+}
+
+// blocked reports whether something is in the way.
+func (b offerBlock) blocked() bool { return b.party > 0 || b.res != "" }
+
+// reason is the short form a panel prints beside the offer; "" when sendable.
+func (b offerBlock) reason() string {
+	switch {
+	case b.party > 0:
+		return fmt.Sprintf("needs a party of %d soldiers (%d at home)", b.party, b.home)
+	case b.res != "":
+		return fmt.Sprintf("needs %s %s", amountText(b.amount), resourceLabel(b.res))
+	}
+	return ""
+}
+
+// err is the sentence the launch command prints for offer; nil when sendable.
+func (b offerBlock) err(offer MissionOffer) error {
+	switch {
+	case b.party > 0:
+		return fmt.Errorf("%s needs a party of %d soldiers, and %d are at home. Soldiers come with the military buildings; see the Army panel", offer.Title, b.party, b.home)
+	case b.res != "":
+		return fmt.Errorf("%s needs %s %s (you have %s)", offer.Title, amountText(b.amount), resourceLabel(b.res), amountText(b.have))
+	}
+	return nil
 }
 
 // launchExpeditionLocked is the single mission-launch path: it validates the
@@ -4612,14 +4670,31 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 func (ge *GameEngine) boardViewLocked(bonus float64) ([]BoardSlotInfo, []ExpeditionInfo) {
 	var board []BoardSlotInfo
 	var offers []ExpeditionInfo
-	for i, slot := range ge.Military.board.Slots {
+	slots := ge.Military.board.Slots
+	posted := 0
+	for _, slot := range slots {
+		if slot.Offer != nil {
+			posted++
+		}
+	}
+	if len(slots) > 0 {
+		board = make([]BoardSlotInfo, 0, len(slots))
+	}
+	if posted > 0 {
+		offers = make([]ExpeditionInfo, 0, posted)
+	}
+	var prices missionPrices
+	if posted > 0 {
+		prices = ge.missionPricesLocked()
+	}
+	for i, slot := range slots {
 		info := BoardSlotInfo{Number: i + 1, Tier: slotTier(i)}
 		if slot.Offer == nil {
 			info.RefillTicks = max(0, slot.RefillTick-ge.tick)
 			board = append(board, info)
 			continue
 		}
-		offer := ge.offerInfoLocked(i+1, *slot.Offer, bonus)
+		offer := ge.offerInfoLocked(i+1, *slot.Offer, bonus, &prices)
 		info.Offer = &offer
 		board = append(board, info)
 		offers = append(offers, offer)
@@ -4629,9 +4704,9 @@ func (ge *GameEngine) boardViewLocked(bonus float64) ([]BoardSlotInfo, []Expedit
 
 // offerInfoLocked is offer n as the panels read it: its rolls, what it costs
 // now, the loot it would bring and whether it can be sent.
-func (ge *GameEngine) offerInfoLocked(n int, offer MissionOffer, bonus float64) ExpeditionInfo {
+func (ge *GameEngine) offerInfoLocked(n int, offer MissionOffer, bonus float64, prices *missionPrices) ExpeditionInfo {
 	tuning, _ := config.MissionKindTuning(offer.Kind())
-	cost := ge.missionCostLocked(offer)
+	cost := ge.missionCostWith(prices, offer)
 	info := ExpeditionInfo{
 		Name: offer.Title, Key: strconv.Itoa(n), Number: n, Tier: offer.Tier, Grand: offer.Grand, Rare: offer.Rare,
 		Place: offer.Place, ExpiresTick: offer.ExpiresTick, Label: ge.Military.Label(offer),
@@ -4653,17 +4728,17 @@ func (ge *GameEngine) offerInfoLocked(n int, offer MissionOffer, bonus float64) 
 		}
 		multiplier *= pay
 	}
-	haul := ge.missionHaulLocked(offer.HaulMinutes)
+	haul := ge.missionHaulWith(prices, offer.HaulMinutes)
 	for res := range haul {
 		haul[res] *= multiplier
 	}
 	info.ExpectedHaulMin, info.ExpectedHaulMax = haul, maps.Clone(haul)
 	// The refusal reads the party too, so it is judged on the cost before the
 	// panel's copy drops the soldiers.
-	reason, err := ge.offerRefusalLocked(offer, cost)
+	block := ge.offerBlockLocked(cost)
 	delete(cost, "soldiers")
 	info.Cost = cost
-	info.CanLaunch, info.LaunchBlockReason = err == nil, reason
+	info.CanLaunch, info.LaunchBlockReason = !block.blocked(), block.reason()
 	return info
 }
 

@@ -121,6 +121,9 @@ type Set struct {
 	// refArmy is the soldiers the reference town has at its posts at the end
 	// of each age (config.RefSoldiers), by age key.
 	refArmy map[string]float64
+	// charged is, by age key, the two materials the age's buildings charge
+	// most (see ChargedMaterials).
+	charged map[string][2]string
 
 	names  [numKinds]map[string]string
 	counts map[string]int
