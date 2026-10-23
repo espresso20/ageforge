@@ -1,0 +1,1039 @@
+id,text
+flavor.words.exp_fail_kit.001,the clutch spare rope
+flavor.words.exp_fail_kit.002,the boots with the drip
+flavor.words.exp_fail_kit.003,the goated maps
+flavor.words.exp_fail_kit.004,the lowkey essential spare gloves
+flavor.words.exp_fail_kit.005,the absolute unit of a cook pot
+flavor.words.exp_fail_kit.006,the side-character second pack
+flavor.words.exp_fail_kit.007,the main-character drinking water
+flavor.words.exp_fail_kit.008,the chonky axe
+flavor.words.exp_fail_kit.009,the slept-on spare boots
+flavor.words.exp_fail_kit.010,the MVP first-aid kit
+flavor.words.exp_fail_kit.011,the plot-armor climbing line
+flavor.words.exp_fail_kit.012,the villain-coded long knife
+flavor.words.exp_fail_kit.013,the cozy-core folded bedding
+flavor.words.exp_fail_kit.014,the last dry fit
+flavor.words.exp_fail_kit.015,the DM-by-sunlight signal mirror
+flavor.words.exp_fail_kit.016,the grindset digging tools
+flavor.words.exp_fail_kit.017,the lowkey sacred spare water
+flavor.words.exp_fail_kit.018,the final girl dinner
+flavor.words.exp_fail_wound.001,the highkey bad hand
+flavor.words.exp_fail_wound.002,the burrito-core wrapped ribs
+flavor.words.exp_fail_wound.003,the split lip that took an L
+flavor.words.exp_fail_wound.004,the knee swollen to absolute-unit size
+flavor.words.exp_fail_wound.005,the forearm that got cooked
+flavor.words.exp_fail_wound.006,the shoulder that's not lifting rn
+flavor.words.exp_fail_wound.007,the eye that deadass hasn't opened
+flavor.words.exp_fail_wound.008,the cut under the jaw that's lowkey deep
+flavor.words.exp_fail_wound.009,the leg that's dragging for real
+flavor.words.exp_fail_wound.010,the foot in a full bandage fit
+flavor.words.exp_fail_wound.011,the arm serving sling
+flavor.words.exp_fail_wound.012,the wrist that got bodied
+flavor.words.exp_fail_wound.013,the gash across the back that's highkey bad
+flavor.words.exp_fail_wound.014,the ankle nobody's tryna look at
+flavor.words.exp_fail_wound.015,the two fingers that are deadass gone
+flavor.words.exp_fail_wound.016,the hand that's not closing rn
+flavor.words.exp_fail_wound.017,the sus bite on the calf
+flavor.words.exp_fail_wound.018,the tooth that dipped on the way
+flavor.expedition_fail.any.001,"The vibe is heavy, seven home out of nine"
+flavor.expedition_fail.any.002,The first-aid kit ghosted somewhere out there
+flavor.expedition_fail.any.003,"Girl dinner went untouched tonight, not one of them has eaten"
+flavor.expedition_fail.any.004,Something hit different about both stretchers coming back full
+flavor.expedition_fail.any.005,It was a nineteen-day side quest
+flavor.expedition_fail.any.006,"Kel going on mute is so valid, nobody's pushing"
+flavor.expedition_fail.any.007,The water out there was deadass bad
+flavor.expedition_fail.any.008,It's giving heavy that just one boot made it home
+flavor.expedition_fail.any.009,The receipts will be pulled at the hearing that's coming
+flavor.expedition_fail.any.010,Somebody's mom is at the door and nobody in the room has the aura to open it
+flavor.expedition_fail.any.011,"The wounded got carried in round the back, low-key, away from the crowd"
+flavor.expedition_fail.any.012,Serit said her piece and left no crumbs
+flavor.expedition_fail.any.013,"Nobody's tryna sit, so everybody is eating on their feet"
+flavor.expedition_fail.any.014,The group chat had the news a day before they got home
+flavor.expedition_fail.any.015,Blame is being passed round in a full group-project crashout
+flavor.expedition_fail.any.016,"It was a whole L, zero loot found out there"
+flavor.expedition_fail.any.017,Two names came off the list and their spots are respectfully left empty
+flavor.expedition_fail.any.018,"The math is brutal fr: nine left, and with the man they carried in, it's seven"
+flavor.expedition_fail.any.019,"The youngest has been outside touching grass, not moving, since they got in"
+flavor.expedition_fail.any.020,Somebody made the hard but valid call to take the boots off the dead
+flavor.expedition_fail.any.021,"Nobody's spilled who was carrying ~ yet, the question hasn't been asked"
+flavor.expedition_fail.any.022,Nobody is tryna look at ~ for too long
+flavor.expedition_fail.any.023,The dressing on ~ is on its fourth fit change of the day
+flavor.expedition_fail.any.024,There's beef over who should have been carrying ~
+flavor.expedition_fail.any.025,"A kid keeps asking about ~ and keeps getting sent out, the gatekeeping is for their own good"
+flavor.expedition_fail.any.026,The trail marks on the far side stop halfway and respawn nowhere
+flavor.expedition_fail.any.027,The last stretch of the map's artist has gone fully anon and won't come forward
+flavor.expedition_fail.any.028,"Periodt, says the man in the back room, the boots are staying on"
+flavor.expedition_fail.any.029,The one who wanted to turn back on day four is respectfully sitting on a massive told-you-so
+flavor.expedition_fail.any.030,Two of them have already asked to run it back
+flavor.expedition_fail.any.031,It's highkey haunting that nobody can say where the third one went
+flavor.expedition_fail.any.032,"The count of what came home was a one-and-done, and nobody is tryna run it back"
+flavor.expedition_fail.any.033,"What came back got locked in the small room, gatekept for now"
+flavor.expedition_fail.any.034,It's so not it that the quietest of them is the one catching the blame
+flavor.expedition_fail.any.035,"NPCs have hijacked the story and are telling it badly, all the wrong people"
+flavor.expedition_fail.any.036,"There's a version going round that gives them a glow-up, braver and taller"
+flavor.expedition_fail.any.037,Two of them showed up without their packs and won't spill where
+flavor.expedition_fail.any.038,"Sleep was not it for the ones who managed some, they'd rather have stayed awake"
+flavor.expedition_fail.any.039,Some random man walked in behind them and nobody's asked his business yet
+flavor.expedition_fail.any.040,This crowd is green-flagging hard by leaving the one who was meant to be watching alone about it
+flavor.expedition_fail.any.041,There's a sus smell in the packs that nobody will name
+flavor.expedition_fail.any.042,"The second count was a dupe of the first, same bad number"
+flavor.expedition_fail.any.043,"Half the town found out before the other half, and the group chat situation went badly"
+flavor.expedition_fail.any.044,Two of them are already gaslighting the story into one where they were somewhere else
+flavor.expedition_fail.any.045,"Somebody's been sent back for ~ on a chill side quest, and nobody said hurry"
+flavor.expedition_fail.any.046,The audacity of somebody who wasn't there putting a price on ~
+flavor.expedition_fail.any.047,"The lore on how they came by ~ doesn't match, two people, two accounts"
+flavor.expedition_fail.any.048,"The names were read out once this morning by a man who got two of them wrong, and the beef about that is easier to have than the other conversation"
+flavor.expedition_fail.any.049,"Serit came in last and walked past everybody without stopping, and it's heavy fr: she's had the youngest one's kit in her lap since mid-afternoon"
+flavor.expedition_fail.any.050,"Somebody's lowkey falling apart logging what's left on the floor, stopping and restarting the same line"
+flavor.expedition_fail.any.051,"The math isn't mathing on two accounts of the same afternoon, which agree about the weather and nothing else at all"
+flavor.expedition_fail.any.052,The man who gave the order to turn back took the L himself: it came a full day after the point everybody now says it should have been given
+flavor.expedition_fail.any.053,"What came home is nine items out of forty on the list, and the man reading it aloud quietly quit around number twenty"
+flavor.expedition_fail.any.054,"The blame landed on the youngest for no reason but being the youngest, which is so not it, and two people who were there said so out loud and got ignored"
+flavor.expedition_fail.any.055,"A swelling on one of them went from delulu nothing on the fourth day to manageable on the seventh, and now three people are looking at it at once"
+flavor.expedition_fail.any.056,"The names written on the wall by the door hit different, getting shakier the further down the list they go"
+flavor.expedition_fail.any.057,"Everybody who argued for the route before they left, in front of witnesses, has spent the evening speedrunning a backpedal: they only argued for it conditionally"
+flavor.expedition_fail.any.058,"Two of them won't go in the back room with the others, which is valid, and they've stood in the passage long enough that somebody brought them chairs"
+flavor.expedition_fail.any.059,"The list of what went out fills two full sides, the list of what came home fits on the back of the second, and the man who wrote both has left them on the table and gone outside to touch grass"
+flavor.expedition_fail.any.060,"Two of them are gaslighting a decision from day five that everybody agreed with at the time, and the man who made it can't be asked, being one of the ones still out there"
+flavor.expedition_fail.any.061,"What came home fits in one small room and has been counted, written down, counted again by somebody with trust issues about the first count, and written a second time on the same sheet in a different hand"
+flavor.expedition_fail.any.062,The green flag of the night: a woman who stopped asking is bringing food anyway to the man by the door who said no four times
+flavor.expedition_fail.any.063,"Two accounts of the last afternoon are out, one from a man there for all of it and one from a man there for the first hour, and it's the first-hour guy's version that went viral round the town"
+flavor.expedition_fail.any.064,"Four days out, then the fifth day said nah and they turned"
+flavor.expedition_fail.any.065,"Nobody reached the far side, so we'll have to run it back"
+flavor.expedition_fail.any.066,"The sketch stops mid-line, giving unfinished business"
+flavor.expedition_fail.any.067,Girl dinner ran out before the fighting did
+flavor.expedition_fail.any.068,Nobody is okay rn with four hurt and one dead
+flavor.expedition_fail.any.069,Whoever they ran into mogged them on skill and knew the ground
+flavor.expedition_fail.any.070,The tellings are gatekeeping the second half: they took the place at about noon as ordered and held it until roughly the middle of the night
+flavor.expedition_fail.any.071,"Nobody's ready fr, so the dead haven't been counted aloud yet"
+flavor.expedition_fail.any.072,"The table is giving more empty places than full ones, and nobody is saying it"
+flavor.expedition_fail.any.073,"Everyone crossing the room gives the two under the sheet by the wall a pause, respectfully, slowing at the same spot on the floor, then walking on"
+flavor.expedition_fail.any.074,Everyone who stayed home is suddenly an expert with a hot take
+flavor.expedition_fail.any.075,The man who wrote the plan is coping hard by calling it ambitious
+flavor.expedition_fail.any.076,The hindsight math is not mathing: so many people now recall having reservations at the time that the reservations outnumber the people who were in the room when it was decided
+flavor.expedition_fail.any.077,There's already a ranked tier list of whose fault it was
+flavor.expedition_fail.any.078,"Nobody wants to perceive the page marked {subject}, so it's been turned face down"
+flavor.expedition_fail.any.079,Whoever wrote the {subject} order has conveniently dipped from the room
+flavor.expedition_fail.any.080,The vibe died when somebody reading out hit the line that reads {subject} and stopped
+flavor.expedition_fail.any.081,"Everything filed under {subject} came home different, not one thing survived the vibe check intact"
+flavor.expedition_fail.any.082,"The board is still delulu, showing the {subject} order as out"
+flavor.expedition_fail.any.083,"Two men are being lowkey avoided tonight for refusing the {subject} order before it went out, noted down for it, by people who would rather not talk to them just now"
+flavor.expedition_fail.any.084,"The whole {subject} file got archived for real: back in its box, box up on the high shelf, date on the lid"
+flavor.expedition_fail.any.085,The {res} haul that came back is smol enough to fit in one hand
+flavor.expedition_fail.any.086,"There's a minimalism-core single box now, holding what's left of the {res}"
+flavor.expedition_fail.any.087,There's so little {res} here it's not even worth the beef
+flavor.expedition_fail.any.088,Nobody's tryna ask why nobody was put on the {res} tonight
+flavor.expedition_fail.any.089,"Everyone has NPC-pathed round the {res} all evening, set down in the middle of the floor by the first man through the door and never moved"
+flavor.expedition_fail.any.090,They set down {res_haul} while everyone else stood there like background characters
+flavor.expedition_fail.any.091,"Since the count, {res_stores} have just been left on read"
+flavor.expedition_fail.any.092,The one lowkey W is a top share of {amt_res}
+flavor.expedition_fail.any.093,"The man who wrote up the largest figure, {amt_res}, left the question about the rest on read without looking up"
+flavor.expedition_fail.grounded.001,The real emotional damage is the dog going missing
+flavor.expedition_fail.grounded.002,"The wounded got laid along the wall in arrival order, not the order anyone would pick, so the two worst are at the far end in the draught, and the should-we-move-them discourse has gone on all evening"
+flavor.expedition_fail.grounded.003,"The dog that went out with them came home alone two days ahead, and in a moment that hit different everybody understood, fed it, and said nothing"
+flavor.expedition_fail.grounded.004,"It's real one hours at the two new graves, dug but with no markers yet"
+flavor.expedition_fail.grounded.005,"Some of the washing was deadass beyond saving, so after two rounds it got burnt"
+flavor.expedition_fail.grounded.006,The wind bodied the shelter at the worst possible hour
+flavor.expedition_fail.grounded.007,"Nobody is ready fr, so the two by the wall are still under their blankets"
+flavor.expedition_fail.grounded.008,"The wounded came in on planks cut from the shelter, so nobody slept dry for four nights, and the goated part is nobody complained"
+flavor.expedition_fail.grounded.009,"The stick with fourteen notches is a core memory now: kept by the one who marked the days to the end, carried home in somebody else's pack"
+flavor.expedition_fail.grounded.010,"In a highkey worrying trickle, the animals came back without their loads, in ones and twos over most of a day, and one still hasn't turned up"
+flavor.expedition_fail.grounded.011,"Nobody is ready fr to open the door, so the bread a woman from the outer houses left on the step without knocking is still sitting there"
+flavor.expedition_fail.grounded.012,"No cap the hardest job tonight: telling the woman who's been at the door since first light, which happens soon"
+flavor.expedition_fail.grounded.013,"A man in the outer houses got caught in 4K claiming all evening he said from the start it would go this way, as four separate people told him to his face he said the opposite in front of them"
+flavor.expedition_fail.grounded.014,"The council meets the day after next, giving everyone two clear days to get their stories twinning"
+flavor.expedition_fail.grounded.015,"The families were told before the council was, and whoever was snitching is being looked into"
+flavor.expedition_fail.grounded.016,"It's so not it that the good lamp, which went over at the crossing along with the man holding it, keeps coming up more than he does"
+flavor.expedition_fail.grounded.017,"The order paper came home in a wet pack with the ink washed out, and someone is lowkey still drying it flat on the table with a weight on each corner"
+flavor.expedition_fail.grounded.018,The salt is fully cooked
+flavor.expedition_fail.grounded.019,They held the ground for one night and fumbled it back at dawn
+flavor.expedition_fail.grounded.020,The walk back hit different: {amt_res} and a man on a plank
+flavor.expedition_fail.grounded.021,"Word went round the outer houses, then the middle ones, then reached the family last, the classic group chat leak order that always gets called unfortunate after"
+flavor.expedition_fail.grounded.022,Rest easy to whoever's name got carved into the rock at the last camp and left behind
+flavor.expedition_fail.grounded.023,"Nobody had the energy for one more hour, so the last camp went in a bad place instead of the good one further on"
+flavor.expedition_fail.grounded.024,Home saw the light out on the ridge and fumbled what it meant
+flavor.expedition_fail.grounded.025,The man who mapped the crossing agreed to come explain it and has now sent a sus little message saying he's unwell
+flavor.expedition_fail.grounded.026,The river yoinked ~ on the second morning
+flavor.expedition_fail.grounded.027,They left ~ on read at the second camp and never went back
+flavor.expedition_fail.grounded.028,The only lore on the crossing comes from the one of the two scouts who came back to describe it
+flavor.expedition_fail.grounded.029,Whatever's past the tree line stayed in its lane out there
+flavor.expedition_fail.grounded.030,"A stranger walked with them for two days on the way back and was a total green flag, sharing what he had, taking nothing, and turning off before home could see them"
+flavor.expedition_fail.grounded.031,"In the most cursed timing, the best of the water turned up the day after they turned back"
+flavor.expedition_fail.grounded.032,"The weather gatekept the country past the water for four days, and then they had no days left to spend"
+flavor.expedition_fail.grounded.033,"The map was delulu about the water, and everything after it followed"
+flavor.expedition_fail.grounded.034,"The marks were capping: the water they counted on was a day further along, which was survivable, and the next water wasn't there at all, which is what did the damage"
+flavor.expedition_fail.grounded.035,"The river trolled them: up when they reached it, two days of waiting, down on the third, and by then the food was already a problem"
+flavor.expedition_fail.grounded.036,They went no-contact with words on the last stretch and haven't broken it
+flavor.expedition_fail.grounded.037,"The sheet by the door listing what went into the water with ~ is living rent free in everyone's head, people keep stopping to read it"
+flavor.expedition_fail.grounded.038,"Everything carryable got carried and everything draggable got dragged, and a good deal of it got yeeted down again within sight of home"
+flavor.expedition_fail.grounded.039,The sky had zero chill and rained for six days
+flavor.expedition_fail.grounded.040,Nobody has the energy tonight for the blades that came home dull
+flavor.expedition_fail.grounded.041,"Ngl the heaviest pack that came home was one man's full water share, hauled for nine days after he stopped needing it"
+flavor.expedition_fail.grounded.042,The cold is the main character of every account since the weather turned on the sixth night and stayed turned
+flavor.expedition_fail.grounded.043,The math is not mathing on three packs to one man
+flavor.expedition_fail.grounded.044,The daylight dipped early
+flavor.expedition_fail.grounded.045,Somebody traded ~ for directions that were pure cap
+flavor.expedition_fail.grounded.046,"No cap, the hardest job tonight belongs to the boy sent round the doors with the names"
+flavor.expedition_fail.grounded.047,"Someone is protecting their peace behind a door on the far side of the house, shut all evening"
+flavor.expedition_fail.grounded.048,Whoever gave them the directions has dipped from the district entirely
+flavor.expedition_fail.grounded.049,A menace animal raided the food stores on the fifth night
+flavor.expedition_fail.grounded.050,"No cap, they burned the last of the light looking for one man"
+flavor.expedition_fail.grounded.051,One look at ~ and the woman doing the bandaging red-flagged it and sent for her sister
+flavor.expedition_fail.grounded.052,"Somebody's kindly-meant door-to-door went faster than the truth, like a group chat leak, every house in the row already reached"
+flavor.expedition_fail.grounded.053,"A boy of about nine is standing at the corner watching the door, and every time he's sent home he respawns from a different street"
+flavor.expedition_fail.grounded.054,"The woman who cooked for twelve is deadass frozen over the rest of it, an hour untouched, because seven came in"
+flavor.expedition_fail.grounded.055,"No cap, whoever tells her will have to sit down beside her: a woman has been on the step since the afternoon with a bag of her son's clothes in her lap"
+flavor.expedition_fail.grounded.056,"The eldest has been protecting his peace out at the wall since they got in, doing a job that didn't need doing, and all three people sent to fetch him came back alone saying he's busy"
+flavor.expedition_fail.grounded.057,"On god, people who cannot read are standing there reading the list on the wall"
+flavor.expedition_fail.grounded.058,The route back mogged the route out by three days
+flavor.expedition_fail.grounded.059,"It was so over by day nine: food gone on the eighth, water on the ninth"
+flavor.expedition_fail.grounded.060,"Girl dinner at its bleakest: they ate what they had, then the crumbs of what was left"
+flavor.expedition_fail.grounded.061,Pure cap in the briefing: the ground out there is way worse than anyone let on
+flavor.expedition_fail.late.001,"In the most cursed permission setup, the mission clock keeps running since the one person allowed to stop it is on the mission"
+flavor.expedition_fail.late.002,The room is deadass silent with three lights left on the tracking board
+flavor.expedition_fail.late.003,"The system sent the families a bot message before anyone could stop it, the ick, and now someone has to call each of them and apologise for the tone"
+flavor.expedition_fail.late.004,Highkey the worst silence is their gear still transmitting positions that haven't changed in four days
+flavor.expedition_fail.late.005,"Their names are still on next week's duty roster, and deleting them is a no shot situation for anyone"
+flavor.expedition_fail.late.006,A rest-easy memorial is on the calendar now
+flavor.expedition_fail.late.007,The review board is giving villain: it wants it understood the loss was within projected tolerances and has asked for the projection to go to the families so they can understand it too
+flavor.expedition_fail.late.008,"No cap, the stretchers weren't needed, and everyone knows why"
+flavor.expedition_fail.late.009,The countdown sits un-reset because nobody is tryna touch it
+flavor.expedition_fail.late.010,The room is fr shattered: two recovered out of six launched
+flavor.expedition_fail.late.011,Somebody respectfully sealed their lockers
+flavor.expedition_fail.late.012,"It's so over for leave, cancelled across the board"
+flavor.expedition_fail.late.013,"Routine was the whole vibe of the last message, nothing in it said goodbye"
+flavor.expedition_fail.late.014,"Nobody is okay rn, not with the tracking screen gone blank"
+flavor.expedition_fail.late.015,"Kel hasn't logged off, he's still at his desk"
+flavor.expedition_fail.late.016,"The next-of-kin calls are done, and whoever made them deserves flowers fr"
+flavor.expedition_fail.late.017,"The audacity of legal, here before anyone else"
+flavor.expedition_fail.late.018,"No cap, the recovery team came back with one helmet"
+flavor.expedition_fail.late.019,Ngl the still-full car park is the part that breaks people
+flavor.expedition_fail.late.020,Serit asked for alone time to protect her peace
+flavor.expedition_fail.late.021,"The comms log just stops mid-word, and that one's living in everyone's head rent free"
+flavor.expedition_fail.late.022,"The press has zero chill, they're already in the car park"
+flavor.expedition_fail.late.023,"The injuries are highkey bad, mostly burns"
+flavor.expedition_fail.late.024,The alarms have zero chill and are still going
+flavor.expedition_fail.late.025,The receipts are coming via a review somebody ordered
+flavor.expedition_fail.late.026,Nobody is taking their names off the door rn
+flavor.expedition_fail.late.027,"Nine signals turned into four, and the math is not mathing in the worst way"
+flavor.expedition_fail.late.028,"Girl dinner sits abandoned on the desks, lunch left where it was"
+flavor.expedition_fail.late.029,"Like a pinned post, the last position they sent stays up on the main screen"
+flavor.expedition_fail.late.030,"Caught lacking, the people who signed the mission plan without reading it are reading the printout now"
+flavor.expedition_fail.late.031,It's giving zero empathy: the families were put in a room with a view of the landing area
+flavor.expedition_fail.late.032,"The hardest minute, no cap: their suit telemetry cutting out one by one over about sixty seconds"
+flavor.expedition_fail.late.033,"Emotional damage nobody was braced for: a recorded message from one of them, an hour after the others went silent"
+flavor.expedition_fail.late.034,"The press office is in choose-your-fighter mode, three statements drafted, waiting to hear which one is true"
+flavor.expedition_fail.late.035,"Nobody was tryna lift the visor, so the recovered helmet went to the lab with it still down"
+flavor.expedition_fail.late.036,"Hindsight caught everyone who approved the launch window in 4K, they're all rereading the weather report"
+flavor.expedition_fail.late.037,"On god, nobody has the words when one survivor keeps asking after the others by first name"
+flavor.expedition_fail.late.038,"The medics went full grindset on the two who came back, working until the morning shift arrived and then past it"
+flavor.expedition_fail.late.039,The one-in-several-hundred odds in the risk assessment aged like milk
+flavor.expedition_fail.late.040,"A second search was soft-launched, authorised, and then called off before it ever left"
+flavor.expedition_fail.late.041,"The audacity of accounts, already sending round a form about the lost equipment"
+flavor.expedition_fail.late.042,"Nobody's ready to log off mission time, the operations room clocks still show it"
+flavor.expedition_fail.late.043,A cleaner read the room at the usual hour and dipped right back out
+flavor.expedition_fail.late.044,"It's fr heavy that their spare suits still hang in the prep room, name labels and all"
+flavor.expedition_fail.late.045,"No plot armor in the rerun: the simulation they trained on, given the new numbers, ends the same way"
+flavor.expedition_fail.late.046,It's so not it that the drafted condolence message is waiting on a signature from someone who's asleep
+flavor.expedition_fail.late.047,Two survivors in one room who haven't spoken to each other make a lowkey deafening silence
+flavor.expedition_fail.late.048,The tea on the floor is that a spreadsheet chose the route
+flavor.expedition_fail.late.049,"The recovery team understood the assignment, bringing back what they could and listing what they couldn't"
+flavor.expedition_fail.late.050,"The mission commander is protecting her peace: calendar cleared for the week, office door shut"
+flavor.expedition_fail.late.051,"Sedation on arrival is lowkey a mercy, the survivors should sleep until tomorrow afternoon"
+flavor.expedition_fail.late.052,"Running on hopium, they've widened the search grid on the wall three times since morning"
+flavor.expedition_fail.late.053,"For an hour after it was over, the automated systems kept logging normal readings like clueless NPCs"
+flavor.expedition_fail.late.054,A child's drawing taped inside one of the empty lockers is the core memory nobody wanted
+flavor.expedition_fail.late.055,"If you need to protect your peace, counselling runs on the third floor from nine"
+flavor.expedition_fail.late.056,"The cause field on the incident report is left on read, blank"
+flavor.expedition_fail.late.057,The pilot who flew them out deserves her flowers for asking to face the families herself
+flavor.expedition_fail.late.058,It's so valid that one survivor came back in someone else's jacket and won't take it off
+flavor.expedition_fail.late.059,The system's automated annual training reminder to all of them this morning was peak ick
+flavor.expedition_fail.late.060,Their call signs got retired like legends' jerseys
+flavor.expedition_fail.late.061,The team lead's no-quit era sent the search team back over the site three more times than ordered
+flavor.expedition_fail.late.062,"The inquiry panel is so neutral it's NPC-tier: chosen from people with nothing to do with the mission, including two who had never heard of it"
+flavor.expedition_fail.late.063,"The official notification got ratioed by reality: the families arrived first, since one of them works in the building and saw the screens heading to lunch"
+flavor.expedition_fail.late.064,"The pause at the end of the last voice recording, after two minutes of routine checks, is living rent free in everyone, replayed more than any of the rest"
+flavor.expedition_fail.late.065,"The summary for the board has three starts and no finish, each writer quietly quitting at the second paragraph"
+flavor.expedition_fail.late.066,"The medical team is out of its skill tree: one of the two who made it back has injuries they'd only read about, and they've been on with specialists since midnight"
+flavor.expedition_fail.late.067,"The engineers spent the day writing hindsight patch notes: a test the failed equipment, which passed every test it was given, would not have passed"
+flavor.expedition_fail.late.068,"The survivors' separate debriefs are twinning except for one detail about the order things happened in, parked for later"
+flavor.expedition_fail.late.069,The realest part: the desk neighbours are boxing up the personal effects because nobody else can ID whose mug belonged to whom
+flavor.expedition_fail.late.070,"A senior official flew in, spoke to the staff for four minutes, and dipped before anyone could ask him anything"
+flavor.expedition_fail.late.071,"The status board is delulu, still calling the mission active, its timer counting up from the moment contact dropped"
+flavor.expedition_fail.late.072,"The planning software is so tone-deaf it's cringe, its schedule-a-follow-up prompt has sat on screen all day"
+flavor.expedition_fail.late.073,"That part hits different: the youngest of the dead had been on the team a month, and most of the building knew her only by sight"
+flavor.expedition_fail.late.074,"In a group self-own, the engineers blame the procedure and the planners blame the engineers, and the two of them wrote the procedure together"
+flavor.expedition_fail.late.075,"The instant emotional damage came from a delayed message from one of the dead this morning, cheerful and ordinary, about the heating in her quarters"
+flavor.expedition_fail.late.076,"Most of what they took is out there left on read, logged and tagged and transmitting, with no plan yet to go back for any of it"
+flavor.expedition_fail.late.077,"The irony is chronically online: staff got told to keep the mission off personal accounts, via a request posted on every official account the organisation runs"
+flavor.expedition_fail.late.078,A man from the families' liaison office has been NPC-wandering the building since morning and has yet to find the right room
+flavor.expedition_fail.late.079,"Zero glazing from the team lead, whose report in the plainest language anyone here has ever read goes up unedited: the recovery team found them where the tracking said and brought back all they could carry"
+flavor.expedition_fail.late.080,"The organisation speedran approval of its statement, which calls the loss a tragedy and promises a full review, in under an hour, faster than anything else here in living memory"
+flavor.expedition_fail.late.081,"One survivor has sat in the corridor outside the medical unit since she was discharged, and the staff, real ones, stopped asking her to move and started bringing her tea, which she drinks without looking up"
+flavor.expedition_fail.late.082,"The failure analysis traced it to a component flagged for replacement in a maintenance report two years ago, and the plot twist nobody wanted is the name at the bottom: one of the people who did not come back"
+flavor.expedition_fail.late.083,"The liaison officer is a real one: after news within the hour, then the next hour, by evening she had stopped giving times and simply sat with the families, who understood before she said anything"
+flavor.expedition_fail.late.084,"Every mission document is locked for the inquiry, including the menu for the celebration dinner booked for the night they were due back, and a junior assistant got the side quest of explaining it to the restaurant"
+flavor.expedition_fail.late.085,"It hits different that the reply to their last message, a weather request in the normal format with the normal sign-off, is still sitting in the outbox with no one to deliver it to"
+flavor.expedition_fail.late.086,"The spare parts took the L, there weren't enough"
+flavor.expedition_fail.late.087,"The emergency beacon ghosted when it mattered most, not one signal"
+flavor.expedition_fail.late.088,"The whole fleet logged off, grounded until the review is done"
+flavor.expedition_fail.late.089,"Nobody has the aura for reception, where the team leader's husband sits waiting"
+flavor.expedition_fail.late.090,"The failure warning fumbled the timing, pinging every phone about ten minutes too late to be useful"
+flavor.expedition_fail.late.091,The receipts are in a sealed case on the way to the lab: the flight recorders have been recovered
+flavor.expedition_fail.late.092,"The mission's website is still delulu, counting down to a return that has been and gone"
+flavor.expedition_fail.late.093,"It's so valid that one of the survivors, given fresh clothes, asked for her old ones back"
+flavor.expedition_fail.late.094,"Upstairs got the equipment losses number in a total say less move, zero comment"
+flavor.expedition_fail.late.095,Most of the families made the valid choice to stay in the building over the nearby hotel they were offered
+flavor.expedition_fail.late.096,Pushing their chairs in was a quiet core memory for whoever did it
+flavor.expedition_fail.late.097,The badge readers are still in their expecting-them era
+flavor.expedition_fail.late.098,Real ones put in their leave requests for the funeral before it even had a date
+flavor.expedition_fail.late.099,"Four calls down, five to go, the liaison officer is doing the hardest grind there is"
+flavor.expedition_fail.late.100,"The realest detail: their staff fridge shelf hasn't been touched, and the milk on it is going off"
+flavor.expedition_fail.late.101,Bare minimum design: the post-incident form gives a short description just one line
+flavor.expedition_fail.late.102,The automatic process that revoked their access and emailed each of them politely about it is giving dystopia
+flavor.expedition_fail.late.103,"Three days of hopium kept a bed made up in the medical unit, just in case"
+flavor.expedition_fail.late.104,"Handwriting everybody knows hits different: one locker combination is written on the inside of a door, and nobody from the team has cleared the lockers out"
+flavor.expedition_fail.late.105,"Admin fumbled at the worst possible time, two of them had next of kin forms out of date"
+flavor.expedition_fail.late.106,"The last photo they sent was a sunrise, and four people have made it their lock screen"
+flavor.expedition_fail.late.107,"The review panel sat nine hours with the plan, the revised plan, the plan actually followed and every message in between, and the chair's only hot take at the end was a request for a glass of water"
+flavor.expedition_fail.late.108,It's valid that one of the two survivors keeps her helmet on the desk while she types
+flavor.expedition_fail.late.109,"The coffee machine outside the operations room was cooked from about three until noon, bone dry"
+flavor.expedition_fail.late.110,"The small meeting room is a safe space now, a counsellor inside and a sign on the door that says knock"
+flavor.expedition_fail.late.111,Accounts said bye to their meal allowance for next month with zero chill
+flavor.expedition_fail.late.112,Emotional damage nobody talks about: the return flight flew four seats short of full
+flavor.expedition_fail.late.113,"Kel is doomscrolling the tracking page, refresh after refresh"
+flavor.expedition_fail.late.114,"Two escorts short, the strike package came back with a heavy L"
+flavor.expedition_fail.late.115,"The map's lore ends at the edge of the second grid square, where the survey stopped, and the rest is shaded the colour that means nobody has been there"
+flavor.expedition_fail.late.116,"At the start of the shift the names were read out and the whole room stood, respectfully, for as long as it took"
+flavor.expedition_fail.late.117,The planning software's green tick for the mission is the most tone-deaf W ever handed out
+flavor.expedition_fail.ancient.001,"Every spear they took ghosted, still out there somewhere"
+flavor.expedition_fail.ancient.002,We're cooked with the store-pit half empty and midwinter not even here yet
+flavor.expedition_fail.ancient.003,The hides got absolutely bodied and came home ruined
+flavor.expedition_fail.ancient.004,"The elders' silence has major aura, they have not said a word"
+flavor.expedition_fail.ancient.005,A slow beat that hit different came off the drums at dusk
+flavor.expedition_fail.ancient.006,"Rest easy to the two the ford took, running higher than anyone remembered"
+flavor.expedition_fail.ancient.007,An arrow came out of the trees from someone who stayed fully anon
+flavor.expedition_fail.ancient.008,The herd ghosted on the second night and never respawned
+flavor.expedition_fail.ancient.009,"They respectfully laid a hide over the two who fell, right where it happened"
+flavor.expedition_fail.ancient.010,"Somebody fumbled the watch-fire, unlit on the night it mattered"
+flavor.expedition_fail.ancient.011,"Being perceived on the ridge was not an option, so they came back along the low ground"
+flavor.expedition_fail.ancient.012,"The elders' asks are valid and in order: the names, then the spears"
+flavor.expedition_fail.ancient.013,Walking past the empty hut at the end of the row hits different now
+flavor.expedition_fail.ancient.014,"The spring on the far side turned out dry, which two of them predicted before setting out, and they're too much of a green flag to say it again"
+flavor.expedition_fail.ancient.015,"The old man who read the ridge for them took the L, knows it, and has sat outside his own doorway since mid-afternoon"
+flavor.expedition_fail.ancient.016,"A boy is coping by telling everyone about the water, not the spear he carried the whole way out and dropped in it on the way back"
+flavor.expedition_fail.ancient.017,"The vibe is gone: the drums stopped early, and the man who beats them says he'll start again when there's something to beat them for"
+flavor.expedition_fail.ancient.018,"The hide count everybody gives is one, which is cap but kind: two hides came home and one of them is over a man who cannot be moved yet"
+flavor.expedition_fail.ancient.019,"Smoke went up on the ridge behind them for two days straight, and whose it was is tea nobody has spilled"
+flavor.expedition_fail.ancient.020,"The harvest got left on read while everyone watched the low ground, and tomorrow somebody will have to say something about it"
+flavor.expedition_fail.ancient.021,"Rest easy, king: they buried him where he fell, the only soft ground for most of a day in either direction"
+flavor.expedition_fail.ancient.022,"The elders called everybody to the fire at first light, and while most read it one way, two people are spiralling into something worse"
+flavor.expedition_fail.ancient.023,"Somebody planted a spear at the turn-back point on purpose, and nobody has a hot take against it"
+flavor.expedition_fail.ancient.024,The man who told them about the valley has been handed the receipts by four separate people: it held water most of the way across
+flavor.expedition_fail.feudal.001,"It's so over, a single cart returned"
+flavor.expedition_fail.feudal.002,The unrung bells hit different
+flavor.expedition_fail.feudal.003,"Nobody wants to perceive the muster roll again, it was read and put away"
+flavor.expedition_fail.feudal.004,Two banners left as a slay and came home wet
+flavor.expedition_fail.feudal.005,The steward logged off early tonight
+flavor.expedition_fail.feudal.006,"The vibe was understood, so the gate opened for them without the horn"
+flavor.expedition_fail.feudal.007,The ford yoinked a cart and everything on it
+flavor.expedition_fail.feudal.008,Everyone clocked what it meant when the rider who went out to meet them came back at a walk
+flavor.expedition_fail.feudal.009,The clerks did the paperwork and gatekept it in a drawer
+flavor.expedition_fail.feudal.010,The untouched half of the supper laid for the whole company hits different
+flavor.expedition_fail.feudal.011,"A herald rode ahead capping, with better news than turned out to be true"
+flavor.expedition_fail.feudal.012,"The wagons spilled it before any words did, the village heard them first"
+flavor.expedition_fail.feudal.013,"The undercroft has extra room now, the kind of W nobody asked for"
+flavor.expedition_fail.feudal.014,"The pickets saw them at first light and rang nothing, and there's been discourse since about whether that was a kindness"
+flavor.expedition_fail.feudal.015,"It's valid that the steward, muster roll on his table since noon with a candle beside it, hasn't yet drawn a line through anything"
+flavor.expedition_fail.feudal.016,"The clerk is cooked: wax got spilled across the fair copy, noticed an hour later, and the whole thing is being written out again by lamplight"
+flavor.expedition_fail.feudal.017,"A cart was left at the crossing with a wheel off and its load in the water, and two men went out with rope on a salvage side quest"
+flavor.expedition_fail.feudal.018,"The village priest's grind tonight: three doors done, two more before he can go home"
+flavor.expedition_fail.feudal.019,"Only about six real ones were still in the line at the gate by the time the last of them came through, after the militia turned out to bring them in and stood a long while"
+flavor.expedition_fail.feudal.020,"In a cringe moment, somebody rang the bells at the wrong hour out of habit, realised halfway, and stopped, worse than either finishing or never starting"
+flavor.expedition_fail.feudal.021,"The road past the ford is cut again and the long way round adds two days, and a man who has explained it before is running it back for the steward"
+flavor.expedition_fail.feudal.022,"The woman who made the first banner is a green flag and has offered to make the second, since the one that came home has to be replaced rather than mended"
+flavor.expedition_fail.feudal.023,"The quartermaster is gatekeeping the count until the steward has had it, which is correct and is making him unpopular in the yard"
+flavor.expedition_fail.feudal.024,"Two real ones went back along the road with lamps looking for anybody still walking, told to turn round at midnight, and they have not"
+flavor.expedition_fail.industrial.001,The telegram was a brutal tldr
+flavor.expedition_fail.industrial.002,The return freight was an L that weighed almost nothing
+flavor.expedition_fail.industrial.003,Zero chill in the announcement that payroll is getting adjusted
+flavor.expedition_fail.industrial.004,"The receipts left with the foreman, the freight book went home in his coat"
+flavor.expedition_fail.industrial.005,"Nobody logged off, so the depot stayed open"
+flavor.expedition_fail.industrial.006,"After signing for what came back, the foreman went out to touch grass"
+flavor.expedition_fail.industrial.007,The only W of the night was the late train bringing freight with two men riding on it
+flavor.expedition_fail.industrial.008,A sus page has been torn out of the middle of the warehouse book
+flavor.expedition_fail.industrial.009,A wire went out at four and sat on delivered until half past nine
+flavor.expedition_fail.industrial.010,The office telephone has been blowing up since the news hit town
+flavor.expedition_fail.industrial.011,The triplicate write-up got speedrun into the files
+flavor.expedition_fail.industrial.012,"The saddest convoy aesthetic: lorries in single file, lamps still on"
+flavor.expedition_fail.industrial.013,The night shift understood the assignment and stayed on without being asked
+flavor.expedition_fail.industrial.014,"The version reaching the company will be through three offices, and by then the weather in it will have had a full glow-up into something way worse"
+flavor.expedition_fail.industrial.015,"A wire that came in this afternoon is still sitting where it landed, left on read: two people have picked it up and put it down unopened"
+flavor.expedition_fail.industrial.016,Everyone on the platform clocked it before the doors opened: the eleven o'clock came in with its lamps down
+flavor.expedition_fail.industrial.017,"The foreman's tally and the office tally agree for once, and two men who have not thought it through are calling that a W"
+flavor.expedition_fail.industrial.018,"The lore is gone on one crate that came back: opened, gone through, closed again, put in the annexe, and nobody can say what was supposed to be in it"
+flavor.expedition_fail.industrial.019,"About half the men off the train, sent home on full-week pay, chose the squad over going home and have been in the yard since"
+flavor.expedition_fail.industrial.020,Pure hopium has kept the siding clear all evening for a second train mentioned once in a garbled wire and never confirmed
+flavor.expedition_fail.industrial.021,"Somebody can't perceive it right now, so the photo the town paper took on the platform when they left three weeks ago is down off the office wall"
+flavor.expedition_fail.industrial.022,"Time has no vibe here anymore: the depot clock stopped this afternoon, nobody has wound it, and the building runs off a pocket watch on the counter"
+flavor.expedition_fail.industrial.023,"The man writing the shareholders' letter, due Friday, has been in his blank-page arc since six and has twice asked what the weather was like out there"
+flavor.expedition_fail.industrial.024,"Two came in on stretchers and one walked off his at the platform, and the doctor wrote that down with a full side-eye in ink"
+flavor.expedition_fail.digital.001,The uplink crashed out twice
+flavor.expedition_fail.digital.002,One drone hard-carried most of the telemetry
+flavor.expedition_fail.digital.003,"The channel is a dead group chat, open with nobody on it"
+flavor.expedition_fail.digital.004,Not a single person has logged off and left the building
+flavor.expedition_fail.digital.005,It was so joever at twenty past six when the feed ran out
+flavor.expedition_fail.digital.006,The after-action report is on its fourth respawn
+flavor.expedition_fail.digital.007,"The same nine seconds have lived rent free in one analyst's head all afternoon, watched on loop"
+flavor.expedition_fail.digital.008,The network's flawless W was carrying every bit of it home
+flavor.expedition_fail.digital.009,"Too shook to sit, people drifted back to their desks after the channel closed at four and stayed standing"
+flavor.expedition_fail.digital.010,"That era is over for the owner of a badge left on a desk, who won't want it back"
+flavor.expedition_fail.digital.011,"The uplink logs are the receipts now, pulled and sent upstairs"
+flavor.expedition_fail.digital.012,A clutch drone came back on one rotor and landed itself on the pad
+flavor.expedition_fail.digital.013,"The feed fumbled, cutting right at the moment everybody has since wanted to see"
+flavor.expedition_fail.digital.014,"Two analysts came out of the frame-by-frame review of the last hour twinning on the same account, the first thing all evening anybody could rely on"
+flavor.expedition_fail.digital.015,"The second team's channel logs stop in the middle of a sentence, read aloud exactly once, and the room has silently agreed to say less"
+flavor.expedition_fail.digital.016,"Someone's about to get exposed: a junior analyst flagged the ground conditions four days ago in a note to three people, and one of them spent tonight finding out which of the other two read it"
+flavor.expedition_fail.digital.017,The after-action briefing got pushed to morning because the man giving it has been locked in on the floor since before it happened and can't be got to stop
+flavor.expedition_fail.digital.018,"The hopium ran out: a drone still out there on its last power keeps sending the same position every forty seconds, and the room has stopped pretending it will move"
+flavor.expedition_fail.digital.019,"A cold-cup aesthetic has taken over the floor: coffee going since about four, a cup on every desk, most of them cold, none thrown out"
+flavor.expedition_fail.digital.020,"The engineer who taped up a drone three weeks ago is a humble king: it's one of the two that came home, and he has not said a word about it"
+flavor.expedition_fail.digital.021,"Protecting its peace, the room rearranged its chairs so fewer people face the lead element's feed, on the wall screen for the fourth replay"
+flavor.expedition_fail.digital.022,"In the most boomer move of the night, three people hit reply-all to a note asking everyone to keep the channel clear, just to say they would"
+flavor.expedition_fail.digital.023,"The network is still gaslighting everyone by flagging the whole thing as routine, and somebody has been given the job of going in and changing that"
+flavor.expedition_fail.digital.024,"Two side characters who weren't on the operation have been on the floor since mid-evening asking what happened, answered politely, and are still asking"
+flavor.expedition_fail.digital.025,"Three drones ghosted for good, no check-in"
+flavor.expedition_fail.digital.026,The hashtag was trending before the announcement even dropped
+flavor.expedition_fail.digital.027,"Left on delivered forever, every call to their phones goes to voicemail"
+flavor.expedition_fail.digital.028,The math is not mathing with only two feeds live and the other four dark
+flavor.expedition_fail.digital.029,"Staff have been told to log off social media, it's suspended for now"
+flavor.expedition_fail.digital.030,"Nobody can stop perceiving the final frame of the feed, which is just a ceiling"
+flavor.expedition_fail.digital.031,"Her supervisor is a green flag, standing beside the analyst crying in the stairwell and pretending to read something"
+flavor.expedition_fail.digital.032,"The network gaslit the outage into scheduled maintenance, and whoever scheduled it has been asked to come in"
+flavor.expedition_fail.digital.033,"Like an unanswered DM, their implants keep pinging a location nobody can reach"
+flavor.expedition_fail.digital.034,"A video of the last minute is already going viral, and it's the wrong video"
+flavor.expedition_fail.digital.035,"Their messages are still the last ones in the group chat, and nobody can scroll past them"
+flavor.expedition_fail.digital.036,Big aura from an empty box: the after-action template's lessons-learned section is blank on purpose
+flavor.expedition_fail.digital.037,"The analyst who planned the route got sent home and can't log off, they keep logging back in"
+flavor.expedition_fail.digital.038,The client has the audacity to ask whether the deadline still stands
+flavor.expedition_fail.digital.039,"Gatekept for good reason, the pictures a drone brought back when sent for them have been shown to four people and locked away"
+flavor.expedition_fail.digital.040,"The smart building chose violence and dimmed the operations room at the usual hour, and staff have been in the half-dark since because the override needs a code only the facilities manager has"
+flavor.expedition_fail.digital.041,"Nobody has the aura to answer the phone that keeps ringing in the prep room, a family member who has not been told yet"
+flavor.expedition_fail.digital.042,The discourse is split down the middle on cutting the feed from the public stream within seconds
+flavor.expedition_fail.digital.043,"The analyst who received what the medical drone sent back from the site, first to arrive, asked to be replaced at her console to protect her peace"
+flavor.expedition_fail.digital.044,"The vendor's rep has so far offered a brochure, which is unserious after every system reported green right until they all went down together"
+flavor.expedition_fail.digital.045,"Four people couldn't log off when the shift ended, staying at their consoles watching feeds that showed nothing at all"
+flavor.expedition_fail.digital.046,The engineer who signed the fusion plant's safety report clearing the route a week ago is spiralling and wants to read it again with the lights on
+flavor.expedition_fail.digital.047,"One of them posted a photo from the field an hour before contact was lost, his boots with a view behind them, and it has gone viral for the saddest reason, shared several hundred thousand times"
+flavor.expedition_fail.digital.048,"The crisis team assembled in the conference room had a tech skill issue, spending its first hour trying to get the video link to work"
+flavor.expedition_fail.digital.049,"The cyber team is ride or die, still in the target system holding a door for people who won't be coming back through it"
+flavor.expedition_fail.digital.050,Rent free in every head: the frozen frame of a hand where the feed stopped
+flavor.expedition_fail.digital.051,"On god, not one drone brought anybody home"
+flavor.expedition_fail.digital.052,"The app is delulu, still showing their status as online"
+flavor.expedition_fail.digital.053,The analysts are grinding in total silence
+flavor.expedition_fail.digital.054,"Too much to perceive alone: an analyst replayed the uplink audio at half speed hunting for a word, found it, and asked for somebody else to listen"
+flavor.expedition_fail.digital.055,"The team's car is stuck in an NPC idle outside the building, engine running, because the key code went out with the driver"
+flavor.expedition_fail.digital.056,Green lights all the way to the hospital: the city traffic grid understood the assignment for the ambulances
+flavor.expedition_fail.digital.057,"Their channel logged off for good, grey in the sidebar"
+flavor.expedition_fail.digital.058,The most cursed request yet is the hospital asking for their implant passwords
+flavor.expedition_fail.digital.059,"Caught lacking on a borrowed badge, a reporter in the lobby got walked out by two ops staff"
+flavor.expedition_fail.digital.060,"One clutch drone of four made it back, on a battery warning the whole way"
+flavor.expedition_fail.digital.061,"Emotional damage on repeat: for a day and a half the network kept routing messages to them, and every one bounced back to the operations desk"
+flavor.expedition_fail.digital.062,"Make it make sense: most of the people who were there can't access the drone footage, classified that high"
+flavor.expedition_fail.digital.063,"At the fusion plant the shift change went ahead on schedule, and the incoming crew had a whole moment outside the turbine hall before going in"
+flavor.expedition_fail.digital.064,"The security guard is a green flag, bringing coffee to the news vans parked on the road outside since the morning"
+flavor.expedition_fail.digital.065,"The analyst who flagged the weather is spiralling, taking her warning out of the log and putting it back three times until her supervisor told her to leave it"
+flavor.expedition_fail.digital.066,"The security guard is the realest one: a ground team phone in the lockers downstairs has rung on and off since evening, and he has started going down to sit with it"
+flavor.expedition_fail.digital.067,The vendor has the audacity to email asking how the product performed
+flavor.expedition_fail.digital.068,"Chronically online timing: by the time the alphabetical phone calls reached the last family, they'd already seen it online"
+flavor.expedition_fail.digital.069,The spot that a drone sent back for the bodies is circling is one the analysts are not tryna name
+flavor.expedition_fail.digital.070,"The thermal map was capping, and two squads went in on it"
+flavor.expedition_fail.digital.071,The mapping drone got as far as the flood barrier before its low battery said nah
+flavor.expedition_fail.digital.072,"An analyst has built a shrine-core edge to her monitor, a taped photo of each of them"
+flavor.expedition_fail.digital.073,"In an iykyk move, the union rep is filing the overtime sheets in a folder marked later"
+flavor.expedition_fail.digital.074,The tea by the lifts: a director changed the route at the last minute
+flavor.expedition_fail.cosmic.001,"The hull got bodied, opened along one seam"
+flavor.expedition_fail.cosmic.002,Bay two returning empty is the emotional damage the dock can't shake
+flavor.expedition_fail.cosmic.003,"The relay got ghosted, not one sound"
+flavor.expedition_fail.cosmic.004,"Three suits returned, and the count is not mathing against how many went out"
+flavor.expedition_fail.cosmic.005,"The airlock is tweaking, cycling over and over"
+flavor.expedition_fail.cosmic.006,"It was a clutch arrival on emergency air, reactor down"
+flavor.expedition_fail.cosmic.007,"Ride or die to the last hour, the transponder never stopped answering"
+flavor.expedition_fail.cosmic.008,A repair patch gave up on the way in and yeeted a panel with it
+flavor.expedition_fail.cosmic.009,"The dock crew came out, clocked it, and stopped right where they were"
+flavor.expedition_fail.cosmic.010,The manifest is capping compared to what's actually in the bay
+flavor.expedition_fail.cosmic.011,"No cap, by day two vacuum had breached the forward compartment"
+flavor.expedition_fail.cosmic.012,Rest easy to the two new names on the plate by the lock
+flavor.expedition_fail.cosmic.013,"Orbital watch was a green flag, logging the approach and skipping the count"
+flavor.expedition_fail.cosmic.014,"The relay is still manifesting: it caught an empty carrier on day three, held it two hours, lost it, and has listened on that frequency ever since without being told to"
+flavor.expedition_fail.cosmic.015,"The bay doors opened before the ship was even down, the whole deck already clocking how many suits were standing up inside"
+flavor.expedition_fail.cosmic.016,"The freighter crew deserves their flowers: they answered the distress and got there six hours after it went out, as fast as anybody could, and people keep saying so tonight"
+flavor.expedition_fail.cosmic.017,"The engineer who ran the reactor past every limit on the way home, and it held, is the MVP sitting alone in the corridor outside the bay since they docked"
+flavor.expedition_fail.cosmic.018,"Nobody is ready to perceive the boot that's been in the cargo net since the unload, so the dock crew have worked round it all evening"
+flavor.expedition_fail.cosmic.019,"The hull sensors have been double-texting the same fault every ninety seconds since they came in, and somebody muted the panel"
+flavor.expedition_fail.cosmic.020,"Emotional damage in two columns: the man who signed the manifest at the far end is on the other list as well, and the lists sit side by side on the counter"
+flavor.expedition_fail.cosmic.021,"Protecting their peace, two crew have sat in their suits in the bay for most of an hour, and the medical officer is letting it run"
+flavor.expedition_fail.cosmic.022,"Nobody is going in there rn: everything in the forward bay is scorched down one side, the smell has reached the corridor, and the door at the end is shut and taped"
+flavor.expedition_fail.cosmic.023,"Certified green flag: the officer who ordered the dock lights left burning the whole last watch, still lit when they came in, has been thanked by three people"
+flavor.expedition_fail.cosmic.024,"A sus crate came home sealed, numbered to match nothing on either bay list, and sits unopened in the corner of the office"
+flavor.expedition_fail.cosmic.025,"Like a pinned post nobody can take down, their suits are still up in orbit"
+flavor.expedition_fail.cosmic.026,Light-lag left the news on delivered for a month: they died last month
+flavor.expedition_fail.cosmic.027,"Nobody has the aura for the arrival of the next of kin, already on the shuttle up"
+flavor.expedition_fail.cosmic.028,The cursed part is the distress call still arriving
+flavor.expedition_fail.cosmic.029,"The neighbours are green flags, watering the plants in their sealed quarters"
+flavor.expedition_fail.cosmic.030,The ship's mind has gone no-contact on questions about the last day
+flavor.expedition_fail.cosmic.031,"The restored copies of the crew remember leaving and nothing after, and everyone is being very careful about spoilers"
+flavor.expedition_fail.cosmic.032,"Their signal will live rent free in the receivers for years, still arriving"
+flavor.expedition_fail.cosmic.033,"The dock crew recovered one pod intact, and nobody has the aura to break the seal"
+flavor.expedition_fail.cosmic.034,"The unhinged legal discourse of the week: whether the crew who died and the crew being restored from backup are owed the same pension, now with the lawyers"
+flavor.expedition_fail.cosmic.035,The wreck is drifting out of the system at a speed that means it's so over for recovery in anyone's lifetime
+flavor.expedition_fail.cosmic.036,"Delulu bot behavior: for three days the relay kept forwarding their automated status reports, each one saying all systems nominal"
+flavor.expedition_fail.cosmic.037,"By the time the news reached the families on the inner stations, two had moved away and one had forgotten there was a mission, the slowest group chat in the universe"
+flavor.expedition_fail.cosmic.038,"Big mood from one survivor, who wants to sleep the inquiry out back in cold sleep"
+flavor.expedition_fail.cosmic.039,Nobody can shake the jumpscare of finding the hull with no one in it
+flavor.expedition_fail.cosmic.040,"Rest easy among the stars, literally: the navigation system's most likely answer for where they ended up is a star"
+flavor.expedition_fail.cosmic.041,"To save the ship on the way down, the cargo bay got yeeted, and everything they went for left with it"
+flavor.expedition_fail.cosmic.042,The freighter crew who found them want to stay anon and have put in for leave
+flavor.expedition_fail.cosmic.043,Theology has entered its physics era: the station chaplain wants the procedure for a crew that might still be alive in a different reference frame
+flavor.expedition_fail.cosmic.044,"Time is deeply unserious: the funeral has been held on the station, and on the ship, if it is anywhere, it's still the same afternoon"
+flavor.expedition_fail.cosmic.045,"Whoever was at the reactor understood the assignment to the end: the telemetry shows a controlled shutdown, by the book, a few minutes after the last voice contact"
+flavor.expedition_fail.cosmic.046,"The inquiry chair was picked for being unbothered: findings are due in a century or so, when the last of the signal arrives"
+flavor.expedition_fail.cosmic.047,"Maybe it was hopium: the airlock cycled for them on schedule and again an hour later, by a dock officer who says he did it by mistake"
+flavor.expedition_fail.cosmic.048,"The ship's name has legend status now, retired for a thousand years by rule, and nobody here will live to see it lifted"
+flavor.expedition_fail.cosmic.049,"Something beat the rescue ship to the distress call, and what it said is gatekept above the clearance of anyone who can read it"
+flavor.expedition_fail.cosmic.050,"Four empty berths, and nobody on the ring is okay rn"
+flavor.expedition_fail.cosmic.051,The realest minute of the year: the whole ring went silent together
+flavor.expedition_fail.cosmic.052,"Their names got removed from the airlock roster, the quietest way to say rest easy"
+flavor.expedition_fail.cosmic.053,The lore is gone on the escape pod found with its hatch open and nobody in it
+flavor.expedition_fail.cosmic.054,One suit walked home on NPC autopilot
+flavor.expedition_fail.cosmic.055,"Creepiest plot twist yet: the long-range array heard their beacon for three days, and on a fourth it repeated something it had never been programmed to say"
+flavor.expedition_fail.cosmic.056,"Hydroponics gave them their flowers, literally, grown in a corner of the lettuce tier"
+flavor.expedition_fail.cosmic.057,"Mood lighting for grief, the station ran at half lights for a day"
+flavor.expedition_fail.cosmic.058,"Mutuals in real life, every person on the ring knew one of them at least, from the gym or the galley queue"
+flavor.expedition_fail.cosmic.059,"On god, the outer stations will hear them say they're fine next week, when their last transmission finally arrives"
+flavor.expedition_fail.cosmic.060,"The fourth pod's readings are sus enough that the manufacturer would prefer they weren't discussed on an open line: the return ship came in on autopilot with the crew in cold sleep, and three of the four have been woken"
+flavor.expedition_fail.cosmic.061,The bleakest loot run ever: the recovery tug netted what was left of the lander
+flavor.expedition_fail.cosmic.062,"The navigation office named the debris field after them, a wholesome-but-oof gesture that was meant kindly"
+flavor.expedition_fail.cosmic.063,Admin has zero chill and returned their personal mass allowance to the general pool
+flavor.expedition_fail.cosmic.064,"A whole safe space situation has formed at the chaplain's office, a queue out the door since the second watch"
+flavor.expedition_fail.cosmic.065,"A ferry pilot fumbled the flash from the far side of the moon, logging it as a meteor"
+flavor.expedition_fail.cosmic.066,"Protecting its peace, the station's mind has opted out of writing a summary"
+flavor.expedition_fail.cosmic.067,"The lore keeps changing with the only one who came back, a different telling every time, and the medic has stopped writing the versions down"
+flavor.expedition_fail.cosmic.068,"No cap the most haunted thing: the recovered voice logs carry a calm fifth voice in the last few minutes, reading out the crew's call signs in the right order"
+flavor.expedition_fail.cosmic.069,The mess turned their mugs on the rack into a core memory nobody will move
+flavor.expedition_fail.cosmic.070,"Gone no-contact, the escort frigate captains came home silent with magazines empty"
+flavor.expedition_fail.cosmic.071,The survey probe got through half a moon of mapping before its signal dipped
+flavor.expedition_fail.cosmic.072,Serious aura hangs in the ready room with four suits the station has decided to leave there
+flavor.expedition_fail.cosmic.073,The ring's insurers asked for proof of loss and got the telemetry as receipts
+flavor.expedition_fail.cosmic.074,The dock crew are spilling that the second launch window was never on their board
+flavor.expedition_fail.cosmic.075,"It's so not it that grief leave on the ring runs on station days, the short kind"
+flavor.expedition_fail.cosmic.076,"In the most haunting grindset, their uploaded copies kept filing reports on time for a week after the bodies stopped"
+flavor.words.exp_success_haul.001,the chonky cases
+flavor.words.exp_success_haul.002,the bussin bundles
+flavor.words.exp_success_haul.003,the loot crates
+flavor.words.exp_success_haul.004,the absolute unit bags
+flavor.words.exp_success_haul.005,the gatekept sealed boxes
+flavor.words.exp_success_haul.006,the packs that ate
+flavor.words.exp_success_haul.007,the whole W of a load
+flavor.words.exp_success_haul.008,the final-boss last two bundles
+flavor.words.exp_success_haul.009,the roped bundles that secured the bag
+flavor.words.exp_success_haul.010,the smol cases
+flavor.words.exp_success_haul.011,the aura-heavy long crates
+flavor.words.exp_success_haul.012,the unopened bags still in their mystery era
+flavor.words.exp_success_haul.013,the cozy-core padded boxes
+flavor.words.exp_success_haul.014,the split bags that are absolutely cooked
+flavor.words.exp_success_haul.015,the aesthetic folded canvas
+flavor.words.exp_success_haul.016,the final-boss heavy end of it
+flavor.words.exp_success_haul.017,the burnt crates that got fully roasted
+flavor.words.exp_success_haul.018,the final pack drop
+flavor.words.exp_success_kit.001,drip flask
+flavor.words.exp_success_kit.002,clutch rope
+flavor.words.exp_success_kit.003,lowkey sharp knife
+flavor.words.exp_success_kit.004,goated coat
+flavor.words.exp_success_kit.005,smol tent peg
+flavor.words.exp_success_kit.006,spare boot with understudy energy
+flavor.words.exp_success_kit.007,bestie-tier spare jacket
+flavor.words.exp_success_kit.008,tin cup that slaps
+flavor.words.exp_success_kit.009,small bonk hammer
+flavor.words.exp_success_kit.010,main-character water bottle
+flavor.words.exp_success_kit.011,villain-arc belt knife
+flavor.words.exp_success_kit.012,comfort-core blanket
+flavor.words.exp_success_kit.013,goated long rope
+flavor.words.exp_success_kit.014,brass whistle that ate
+flavor.words.exp_success_kit.015,pocket-core folding knife
+flavor.words.exp_success_kit.016,cottagecore canvas satchel
+flavor.words.exp_success_kit.017,MVP spare pin
+flavor.words.exp_success_kit.018,pair of gloves that understood the assignment
+flavor.expedition_success.any.001,Two of them are in their limping era
+flavor.expedition_success.any.002,"Somebody's math is not mathing, counting eleven when nine came in"
+flavor.expedition_success.any.003,"Serit, queen of rest, slept eleven hours"
+flavor.expedition_success.any.004,Everyone's suddenly a bestie now that there's a share going
+flavor.expedition_success.any.005,The tea got home before they did
+flavor.expedition_success.any.006,The rope was goated and held
+flavor.expedition_success.any.007,Some random walked in right behind them
+flavor.expedition_success.any.008,Four men sharing three teeth is a cooked dental situation
+flavor.expedition_success.any.009,Rest easy to the two names that are gone
+flavor.expedition_success.any.010,Half of them have gone goblin mode asleep sitting up
+flavor.expedition_success.any.011,"Nobody warned the cook, so the cook is salty"
+flavor.expedition_success.any.012,Kel has beef with Serit and is not speaking to her
+flavor.expedition_success.any.013,The discourse starts the second the boots come off
+flavor.expedition_success.any.014,Battle-damaged aesthetic unlocked thanks to whoever bled on this
+flavor.expedition_success.any.015,The youngest one has been yapping nonstop since the moment he got in
+flavor.expedition_success.any.016,A fully anon prisoner in the back room will not give a name
+flavor.expedition_success.any.017,"The oldest of them sat down in the doorway, said nah, and stayed"
+flavor.expedition_success.any.018,Two of them have new scars and two different lore versions of how they got them
+flavor.expedition_success.any.019,The W came with an L: the list of names got shorter than it was on the way out
+flavor.expedition_success.any.020,"One of them found his forever side quest out there and stayed, and they let him"
+flavor.expedition_success.any.021,"The load came in whole, and ~ came too, a plot twist nobody wrote down on the way out"
+flavor.expedition_success.any.022,"The math on ~ is not mathing, counted twice, two answers"
+flavor.expedition_success.any.023,Nobody is spilling whose blood is on ~
+flavor.expedition_success.any.024,The audacity of one man calling dibs on ~ three separate times today
+flavor.expedition_success.any.025,Two men are locked in on top of ~ and will not move off it
+flavor.expedition_success.any.026,They fumbled the second ~ on night one and were built different enough to manage without
+flavor.expedition_success.any.027,"A W for the kid, who got the broken ~ to play with"
+flavor.expedition_success.any.028,The lore says somebody left a ~ behind on purpose
+flavor.expedition_success.any.029,The MVP that came home whole is a ~
+flavor.expedition_success.any.030,"A satisfying flat lay of the whole haul covers the floor, getting sorted by size"
+flavor.expedition_success.any.031,"The coastline discourse is real: the map has grown since the morning they left, a whole corner now taken up by a coastline two of them swear is there and the third says he never saw"
+flavor.expedition_success.any.032,A kid has already dropped a banger about the whole business
+flavor.expedition_success.any.033,"A name nobody knew this morning is tonight's overnight main character, repeated everywhere"
+flavor.expedition_success.any.034,"Something was in a two-day talking stage with them, following along, and then it stopped"
+flavor.expedition_success.any.035,"The weather understood the assignment, saving the rain for an hour after the last of them got indoors"
+flavor.expedition_success.any.036,"Serit was the quiet MVP, most of the work and none of the talking"
+flavor.expedition_success.any.037,The tall one is capping by calling the wound on their arm nothing much
+flavor.expedition_success.any.038,"Two of them came home failing the fit check, in boots belonging to somebody else"
+flavor.expedition_success.any.039,The whole crew went goblin mode straight into the wrong beds
+flavor.expedition_success.any.040,Somebody is so delulu they promised half of it away before the count even happened
+flavor.expedition_success.any.041,Three of them are beefing over who saw the place first
+flavor.expedition_success.any.042,The tall one is wearing the receipts: a bruise shaped exactly like a boot
+flavor.expedition_success.any.043,One of them lost a tooth out there and is based enough to call it a fair swap
+flavor.expedition_success.any.044,"Open-house vibes all round, every door in the place has stood open since noon"
+flavor.expedition_success.any.045,"The story is paywalled now, anyone who wants it told again will have to pay"
+flavor.expedition_success.any.046,The adrenaline is so unhinged nobody has slept or looks likely to start
+flavor.expedition_success.any.047,A sus something came back with them that nobody can ID
+flavor.expedition_success.any.048,"The share discourse is in its third round: before anyone washed, after the evening meal, and this morning with two people who did not even go"
+flavor.expedition_success.any.049,"The vibes in the corner are off: two of them eating without speaking since they got in, and the third keeps getting up to check the door"
+flavor.expedition_success.any.050,"The wall has become a callout post: what came back on one list, the shorter list of what was promised beside it, and strangers comparing them all afternoon"
+flavor.expedition_success.any.051,"Iconic denial from the tall one: she told everybody she's fine, said it sitting down, and is now being carried indoors by two people she is still telling"
+flavor.expedition_success.any.052,"Kel's route lore is inconsistent: explained to four separate people, drawn each time on the back of the same sheet, and no two drawings agree"
+flavor.expedition_success.any.053,"Somebody is on a price-check side quest, asking what each thing is worth, getting a different number from every person, and writing all of them down"
+flavor.expedition_success.any.054,"A boy nobody asked ate, no crumbs: two people at the door disagreed, one in the back room did not care, and his is the number written up"
+flavor.expedition_success.any.055,"The man who started the they're-all-dead rumour three days ago, heard from a man who was not there, got caught in 4K and has found a reason to be out of town since noon"
+flavor.expedition_success.any.056,"The heaviest load is still in the passage where it was dropped, because moving it needs four people and all four have goated excuses to be elsewhere"
+flavor.expedition_success.any.057,"The trip was a speedrun, three days going and two coming home"
+flavor.expedition_success.any.058,"Sheesh, they stopped counting the lights on the far side at forty"
+flavor.expedition_success.any.059,Nobody has gone that far and come back still yapping until now
+flavor.expedition_success.any.060,The realest priority came first: the wounded
+flavor.expedition_success.any.061,"Rest easy to the two who died, nine came home"
+flavor.expedition_success.any.062,"The way in was all shouting and zero orders, a full hype-squad situation"
+flavor.expedition_success.any.063,The function went so hard the drinks are already gone
+flavor.expedition_success.any.064,Somebody is glazing so hard they want a statue for this
+flavor.expedition_success.any.065,"There's dancing and most of it is deeply cringe, and nobody cares"
+flavor.expedition_success.any.066,The cope is strong: nobody will admit the plan was mostly an accident
+flavor.expedition_success.any.067,The fanfic tonight has a sea monster in it
+flavor.expedition_success.any.068,"Running on copium, somebody worked out that counting the days generously and the losses charitably makes this the best thing anyone here has done in a decade"
+flavor.expedition_success.any.069,"It was mostly luck, and the two who know are not snitching"
+flavor.expedition_success.any.070,The armchair main characters who stayed behind are telling everyone what they would have done
+flavor.expedition_success.any.071,The {subject} orders came back with battle-worn drip: signed and filthy
+flavor.expedition_success.any.072,Somebody put the {subject} order in the slapped folder
+flavor.expedition_success.any.073,"On god, three names on the {subject} page are crossed out now"
+flavor.expedition_success.any.074,The line that reads {subject} caught a thumbprint in 4K
+flavor.expedition_success.any.075,Nobody's tryna stay up guarding the {res} tonight
+flavor.expedition_success.any.076,Two people have already had beef over the {res} this evening
+flavor.expedition_success.any.077,Somebody has already yoinked a bit of the {res}
+flavor.expedition_success.any.078,Trust issues mean everything is counted twice and the {res} three times
+flavor.expedition_success.any.079,"Whatever room the {res} went into first turned out damp, so it moved, and the second room has a lock whose key somebody fumbled"
+flavor.expedition_success.any.080,We're so back: {res_stores} are fuller than anyone around here expected
+flavor.expedition_success.any.081,Two different counts came back twinning at {amt_res}
+flavor.expedition_success.any.082,The number going viral tonight is {amt_res}
+flavor.expedition_success.grounded.001,The dog returned absolutely chonky
+flavor.expedition_success.grounded.002,"Peak unbothered: they left with one dog and came back with a different dog, and nobody involved finds this worth discussing"
+flavor.expedition_success.grounded.003,"The story this evening is three parts fanfic: a night crossing, a wolf, a broken bridge and a stranger who gave directions and refused payment, and only one of those happened"
+flavor.expedition_success.grounded.004,The wet-leather smell on everything is so not it
+flavor.expedition_success.grounded.005,"Delulu math by the door: somebody chalked {amt_res} on the wall, and somebody else has rubbed out the last figure and written a bigger one"
+flavor.expedition_success.grounded.006,The dogs are absolutely obsessed with ~
+flavor.expedition_success.grounded.007,"They brought a dog back and unlocked a new bestie, because it's staying"
+flavor.expedition_success.grounded.008,"It's over for half the washing out on the line, too far gone to ever come clean"
+flavor.expedition_success.grounded.009,Mic drop from the woman who counted twelve sacks at the door after the first count said nine: she has gone to bed
+flavor.expedition_success.grounded.010,"The younger brother's lore keeps expanding: four tellings in, it has a river, a night crossing and a wolf that weren't in the first version"
+flavor.expedition_success.grounded.011,"They snuck in the back way to dodge the fuss, which worked for about four minutes until the dogs exposed them"
+flavor.expedition_success.grounded.012,"The scorched-cloth smell is canon now: the blankets are all wet, the heat has been on since noon, and everyone has stopped mentioning it"
+flavor.expedition_success.grounded.013,Whoever packed nine water skins for thirteen people got away with it in the cold weeks and will be roasted for years
+flavor.expedition_success.grounded.014,Everything is serving mud
+flavor.expedition_success.grounded.015,"One of them is fully in his rag-foot era: lost a boot in the mud on the second day, walked the remaining nine with rags on, and refuses every replacement pair"
+flavor.expedition_success.grounded.016,"It's heavy fr: an old man at the door since first light is asking after a name that's on neither list, and both lists have been read out to him slowly"
+flavor.expedition_success.grounded.017,The bare minimum haul filed under {subject} is one lamp and one knife
+flavor.expedition_success.grounded.018,The water turned salty out there
+flavor.expedition_success.grounded.019,"Serit was a stubborn queen on a bad ankle, refused to be carried through the last stretch, and so they all got in after dark to a shut kitchen"
+flavor.expedition_success.grounded.020,The function has been loud since dusk and shows no sign of stopping
+flavor.expedition_success.grounded.021,"The rope, the good lamp and both spare knives went over the side at the crossing, and the man who let go has been roasted at every meal since"
+flavor.expedition_success.grounded.022,"The whole lot came in at dusk without a word to anyone they passed, ate the evening meal's leftovers cold, and were asleep in full goblin mode before the light had properly gone"
+flavor.expedition_success.grounded.023,"Before the council heard about the {res}, the whole group chat of a town already knew"
+flavor.expedition_success.grounded.024,They took the place at dawn and dipped before noon
+flavor.expedition_success.grounded.025,"Two randoms who have never met are toasting each other by the fire, and one wasn't here this morning and can't say who invited him"
+flavor.expedition_success.grounded.026,A little king walked three miles out to meet them and carried somebody's pack the last of the way
+flavor.expedition_success.grounded.027,"The marker left at the crossing for whoever comes next is mid: cut at about a man's height, which several people say is wrong for when the water is up"
+flavor.expedition_success.grounded.028,Kel is demanding receipts in writing that he called the hills passable
+flavor.expedition_success.grounded.029,They did a main character walk over the frozen crossing without looking down
+flavor.expedition_success.grounded.030,"The far side of the hills got an iconic new name, and it's rude"
+flavor.expedition_success.grounded.031,The fight was a quick main quest and the walk home was a nine-day side quest
+flavor.expedition_success.grounded.032,"Delulu decision of the trip: the last four miles in the dark because nobody wanted to make camp that close to home, which everyone now agrees was poor"
+flavor.expedition_success.grounded.033,"The old man who gave them the crossing wants a share, his ask is fair, and nobody has the aura to tell him no"
+flavor.expedition_success.grounded.034,"The sketch of the far bank is good enough to work from, a huge glow-up from the last one, which was a circle"
+flavor.expedition_success.grounded.035,The story levelled up every time it was told on the walk back
+flavor.expedition_success.grounded.036,"The most mid travel review ever: asked about the country beyond the hills, they've offered a hand gesture, a long silence, and the word steep"
+flavor.expedition_success.grounded.037,"There was a vibe shift on the last mile home, no singing, and people noticed"
+flavor.expedition_success.grounded.038,"In some sus behavior, two of them went up the ridge to look over, came down without saying anything, and went back up next morning with the third"
+flavor.expedition_success.grounded.039,The audacity of whoever found the trail asking for a bigger share of the {res}
+flavor.expedition_success.grounded.040,"The most mysterious side character joined them for half a day: a woman none of them recognised, saying nothing anyone could understand, who turned off at the water without looking back"
+flavor.expedition_success.grounded.041,A local secured the bag selling them directions for a ~
+flavor.expedition_success.grounded.042,"The weather failed the vibe check, raining the whole way"
+flavor.expedition_success.grounded.043,"Girl dinner forensics: with no note of when they crossed the water, the days-out count is being rebuilt from people's memories of meals"
+flavor.expedition_success.grounded.044,One of them is now fully no-contact with water and will not say why
+flavor.expedition_success.grounded.045,"Still locked in, one of them is gripping the blade and won't set it down yet"
+flavor.expedition_success.grounded.046,"Serit's hot take on the country beyond the water, given at length to four different people: much the same as here, except the birds are wrong"
+flavor.expedition_success.grounded.047,"The dried meat ran out two days short of home, and walking the rest hungry is living rent free in everyone, more than the distance covered"
+flavor.expedition_success.grounded.048,"The ink fully dipped on the {subject} orders, read once at the start and then carried nine days in a wet pack"
+flavor.expedition_success.grounded.049,"The route home mogged the route out at twice the length, and nobody who walked it has offered an explanation"
+flavor.expedition_success.grounded.050,"The bussin water they found coming out of the rock was cold enough to hurt, they drank until they were sick, and they've talked about very little else since"
+flavor.expedition_success.grounded.051,The old marks were capping: water turned up where they said there was none
+flavor.expedition_success.grounded.052,"The first stop failed the vibe check, a smell about it, so they walked past it, past the next one too, and did the whole last stretch in one go"
+flavor.expedition_success.grounded.053,"The timing was goofy: three days late for the water, then two days early once it dropped, so nobody was waiting when they finally came in"
+flavor.expedition_success.grounded.054,"Rest easy to the two buried on the way out at a bend in the water nobody marked, which the man who dug for them can no longer place"
+flavor.expedition_success.grounded.055,Water got into ~ on the final night and did it dirty
+flavor.expedition_success.grounded.056,"Protecting his peace, the man who cleaned and put away the blades has been staring at the wall ever since"
+flavor.expedition_success.grounded.057,The bread came back moldmaxxing
+flavor.expedition_success.grounded.058,"Off-key and unbothered, the cook is belting it out"
+flavor.expedition_success.grounded.059,A kid has started a side hustle charging admission
+flavor.expedition_success.grounded.060,"In an iykyk situation, one of them came home barefoot and won't discuss it"
+flavor.expedition_success.grounded.061,The kitchen is big mad that they came back a day early
+flavor.expedition_success.grounded.062,"The kids do not miss: sent to bed, they listened from the stairs anyway"
+flavor.expedition_success.grounded.063,The old woman who pointed them where to look deserves her flowers and some payment
+flavor.expedition_success.grounded.064,All four agree on the hot take: the water was worse than the fighting
+flavor.expedition_success.grounded.065,"Somebody abandoned their doorframe side quest, a mark for every day they were out, stopping on the ninth and never finishing"
+flavor.expedition_success.grounded.066,"The passage has an unclaimed bundle that's left on read by everyone, while the heavy stuff went to the back room and the light stuff to the front"
+flavor.expedition_success.grounded.067,"The heavy end is an absolute unit: four of them to get it through the door, and six to get it out again once somebody decides where it goes"
+flavor.expedition_success.grounded.068,Two of them went straight back out to secure the bag cached at the halfway point before somebody else takes it
+flavor.expedition_success.grounded.069,"Everything wet is hanging up, everything broken is in a pile by the door, and everything whole has already been yoinked by somebody"
+flavor.expedition_success.grounded.070,"The kitchen cooked for twelve and fifteen showed up, two of them total randoms, so the late evening meal got stretched with water and a great deal of bread"
+flavor.expedition_success.grounded.071,"A woman waited by the door since mid-afternoon with a clean shirt for one of them, and he had the audacity to walk straight past her to the food"
+flavor.expedition_success.grounded.072,"The new CEO of sorting is a boy of about ten, handed the whole lot after it came through the same door within an hour in no order, and taking it more seriously than anyone expected"
+flavor.expedition_success.grounded.073,"Being extra, they overshot the distance they were told to walk by a good deal"
+flavor.expedition_success.grounded.074,"Shaky hand, but the new marks on the map still ate"
+flavor.expedition_success.grounded.075,"Everything filed under {subject} came home mud-core, even the paper it was written on, which somebody had folded into a boot"
+flavor.expedition_success.late.001,"The data dump was unhinged, more readings than anybody alive will have time to look at"
+flavor.expedition_success.late.002,The most extra storage plan ever: the recovered samples are in a vault built to outlast everyone with the clearance to open it
+flavor.expedition_success.late.003,"Full squad, all nine home, we're so back"
+flavor.expedition_success.late.004,"One of them is in his what-day-is-it era: each answer goes on the back of his hand, and by the evening meal both hands were full and he'd started on his wrist"
+flavor.expedition_success.late.005,"The surveyed region is mid: mapped complete and accurate to the metre, and nothing on it worth going back for"
+flavor.expedition_success.late.006,One suit came back from the cleaners with a sus question attached
+flavor.expedition_success.late.007,"The welcome-home drinks are the function now, usual time, usual place, and attendance will be noted"
+flavor.expedition_success.late.008,"The youngest asked to see a window, the closest thing to touching grass out here"
+flavor.expedition_success.late.009,Quarantine was a four-hour speedrun
+flavor.expedition_success.late.010,The whole team slayed the medical
+flavor.expedition_success.late.011,The samples arrived as a still-warm fresh drop
+flavor.expedition_success.late.012,"The calendar left the debrief on read, postponed indefinitely"
+flavor.expedition_success.late.013,Two suits are cooked and need replacing
+flavor.expedition_success.late.014,Decontamination ran it back three times
+flavor.expedition_success.late.015,The cameras caught every second in 4K
+flavor.expedition_success.late.016,Somebody leaked the footage and it's already viral
+flavor.expedition_success.late.017,We're so back and the badges still scan
+flavor.expedition_success.late.018,The pilot is shooting their shot for a raise
+flavor.expedition_success.late.019,"Private-account mode is on for every personal log, all sealed"
+flavor.expedition_success.late.020,The coffee dipped before anything else
+flavor.expedition_success.late.021,"The medic was absolutely fried after signing every one of them off, and needed a long sit"
+flavor.expedition_success.late.022,"One of them wants the footage deleted, including the bits with himself in it, he does not want to be perceived"
+flavor.expedition_success.late.023,"Three layers of gloves, one sealed room, and very valid paranoia went into opening the sample cases"
+flavor.expedition_success.late.024,Their clearance got an instant glow-up before the boots were even off
+flavor.expedition_success.late.025,Plot twist: nobody predicted the time the mission clock stopped at
+flavor.expedition_success.late.026,"A locked-in lawyer was posted at the door, folder ready, pen already uncapped"
+flavor.expedition_success.late.027,The recovered hardware is getting the full photo dump treatment from every side before anybody can touch it
+flavor.expedition_success.late.028,The press requests are getting ghosted in the exact order they arrived
+flavor.expedition_success.late.029,Three of them want to run it back as soon as possible
+flavor.expedition_success.late.030,"The debrief yap outran the mission plan, the transcript has more pages"
+flavor.expedition_success.late.031,The lead suit's helmet camera served floor content the whole time
+flavor.expedition_success.late.032,"A cleaning robot has gone parasocial, following the returning team up and down the corridor"
+flavor.expedition_success.late.033,"The galley made rage bait in cake form, which none of them are cleared to eat yet"
+flavor.expedition_success.late.034,The haul is so main character it has its own security detail now
+flavor.expedition_success.late.035,Their day off was spent in hibernation era
+flavor.expedition_success.late.036,"The families fumbled the return time they'd been given, off by a day"
+flavor.expedition_success.late.037,Every screen in the room froze on the same arrival frame like a screenshot
+flavor.expedition_success.late.038,The audacity of smiling got the official photographs retaken
+flavor.expedition_success.late.039,"The last hour of comms is one man's personal playlist and it slaps, apparently"
+flavor.expedition_success.late.040,"Procurement wants the glove lore documented, a signed statement from each of them"
+flavor.expedition_success.late.041,The suits got speedrun into evidence bags before they were properly out of them
+flavor.expedition_success.late.042,One of them has made the issued wristband their whole personality and will not take it off
+flavor.expedition_success.late.043,"The return window? They ate it, met to the second"
+flavor.expedition_success.late.044,The audacity of discussing their promotions in a meeting they were not invited to
+flavor.expedition_success.late.045,"The debrief ran six hours on everything in the mission plan, then another hour on the one thing that wasn't, the side quest got its own episode"
+flavor.expedition_success.late.046,"The medical team found nothing on the first scan and ran it back anyway, since the machine had been booked all afternoon"
+flavor.expedition_success.late.047,The lab sent a polite written side-eye asking where exactly they heard the recovered material was inert
+flavor.expedition_success.late.048,"The team lead's report glazes everyone by name, including one person who stayed behind and is now asking to be taken off it"
+flavor.expedition_success.late.049,It's giving lockdown flashbacks now that one specialist's cough has sent the whole floor to video calls until the lab knows what it is
+flavor.expedition_success.late.050,One of them is protecting his peace and hasn't opened his clear plastic bag of returned personal effects
+flavor.expedition_success.late.051,"The landing video went viral in-house, watched so often the playback counter is a topic of conversation in its own right"
+flavor.expedition_success.late.052,"A new name has been soft-launched in marker on the operations room wall beside the mission code, and whether it stays has been put off"
+flavor.expedition_success.late.053,A junior engineer locked in on their vital signs the whole return window and was first at the door when they came in
+flavor.expedition_success.late.054,The equipment came back with an unexplained glow-up: it works perfectly and does something the gear they took out was never designed to do
+flavor.expedition_success.late.055,"Every rating form came back with the scale crossed out, which is the most based review possible"
+flavor.expedition_success.late.056,"Rest easy to the name missing from the reprinted mission patch, designed before launch"
+flavor.expedition_success.late.057,The only one of them with the rizz to wave back at the crowd of phones has been asked not to do that again
+flavor.expedition_success.late.058,"Coordinated cope: the team came back through the doors in the order they had left, unplanned, so the people waiting shuffled along the corridor to greet them in sequence and pretended that was the idea"
+flavor.expedition_success.late.059,"Recovery outlasted the mission, a whole side quest of medical checks, decontamination, interviews, a second round of checks since the first was out of sequence, and a long wait for a signature from another floor"
+flavor.expedition_success.late.060,"The sampling kit's designer has taken every piece apart on a lab table, found nothing wrong, put it back together, and is sitting with it as though it might spill"
+flavor.expedition_success.late.061,"The press office did the bare minimum: their return made the evening news after the weather, with a clip of the wrong team, and that's being left alone as close enough"
+flavor.expedition_success.late.062,"The OG of the four has been in the business longer than the building they came back to has existed, and walked in checking the ceilings for damp"
+flavor.expedition_success.late.063,Everyone was too locked in to sleep on the flight
+flavor.expedition_success.late.064,"The sensor count was a full W, every one accounted for"
+flavor.expedition_success.late.065,Kel is manifesting his old desk back
+flavor.expedition_success.late.066,The gloves are getting yeeted into the fire
+flavor.expedition_success.late.067,PR is cooking up a statement
+flavor.expedition_success.late.068,"They ate and left barely a scratch, just a cracked rib and a sprain between them"
+flavor.expedition_success.late.069,Main character credit is being claimed by the autopilot
+flavor.expedition_success.late.070,Girl dinner is at risk now the overflow from the full sample freezer is in the staff fridge with a warning label
+flavor.expedition_success.late.071,Unbothered queen Serit has started calling the whole thing a normal week
+flavor.expedition_success.late.072,"We're so back, with the survey already feeding the plan for the next trip"
+flavor.expedition_success.late.073,The lift-lobby fanfic has them outrunning something
+flavor.expedition_success.late.074,The most clutch secret of the trip: nobody on the ground knew the lead suit's life support was on reserve for the last stretch
+flavor.expedition_success.late.075,"Accounts is delulu, asking for receipts from a place that does not issue receipts"
+flavor.expedition_success.late.076,"Still in their other-schedule era a day after getting back, they're eating breakfast at the wrong hour in an empty canteen"
+flavor.expedition_success.late.077,"Legal is coping hard, calling it a formality that the consent forms they signed before leaving were for a different mission"
+flavor.expedition_success.late.078,The squad's all home before midnight
+flavor.expedition_success.late.079,The minister is clout-chasing and wants to shake hands
+flavor.expedition_success.late.080,"Every system aboard came home built different, in better shape than the maintenance logs said it left in"
+flavor.expedition_success.late.081,"The sponsor is down bad for screen time: their logo on the lead vehicle has been in every news shot, and now they want it bigger"
+flavor.expedition_success.late.082,"Ride or die, the medic who signed off their trip was waiting at the door to check them again, unprompted"
+flavor.expedition_success.late.083,"The bags are just vibing, still packed, nobody's touched them"
+flavor.expedition_success.late.084,Two haircuts ago is the era their badge photos are stuck in
+flavor.expedition_success.late.085,"The office held a vote on the emotional damage schedule: Serit's desk plant died while she was away, so tell her before the debrief or after"
+flavor.expedition_success.late.086,Customs yoinked one man's belt
+flavor.expedition_success.late.087,One of the four hands that labelled the sample tubes was clearly shook
+flavor.expedition_success.late.088,A crime against girl dinner: security walked them from the door to medical without a vending machine stop
+flavor.expedition_success.late.089,Their inboxes were forwarded to a shared folder that's now an unhinged four thousand unread messages
+flavor.expedition_success.late.090,"The pay system nerfs any trip at thirty days, so the last nine are going through as a manual claim that needs four signatures"
+flavor.expedition_success.late.091,The sealed room's aesthetic is cold metal and somebody's orange
+flavor.expedition_success.late.092,"A sus splinter that has no business existing where they went came out of one of them, and it's in a labelled dish now"
+flavor.expedition_success.late.093,"Analog girlboss move: the survey came in as one file so big it froze the first three terminals that tried it, so the fourth person printed the index and has read it on paper since lunch"
+flavor.expedition_success.late.094,"In an iconic customs moment, one of them declared the stone he brought back for his daughter as a stone"
+flavor.expedition_success.late.095,"The lobby screens fumbled the welcome-back message, misspelling two of their names"
+flavor.expedition_success.late.096,"The cake that arrived is an absolute unit, big enough to need a permit"
+flavor.expedition_success.late.097,"The survey grid came back fully filled in, plus one square with a margin note that's giving cliffhanger"
+flavor.expedition_success.late.098,"They pulled off a pacifist run, every magazine they signed out coming back full"
+flavor.expedition_success.late.099,The press release yaps for nine hundred words about how routine the whole thing was
+flavor.expedition_success.late.100,Kel's goblin mode peaked with a nap in the decontamination shower
+flavor.expedition_success.ancient.001,Two spears took the L and came home in pieces
+flavor.expedition_success.ancient.002,"The hides came back salty, literally stiff with it"
+flavor.expedition_success.ancient.003,We're eating good with the store-pit fully stacked
+flavor.expedition_success.ancient.004,"The function didn't stop, drums going until dawn"
+flavor.expedition_success.ancient.005,They got a W crossing with the ford running low
+flavor.expedition_success.ancient.006,"Very NPC dialogue from the elders, who looked over what came back and offered nothing useful"
+flavor.expedition_success.ancient.007,"They yoinked a bit extra driving the herd back, not all of it is theirs"
+flavor.expedition_success.ancient.008,Somebody soft-launched a claim with a spear outside a doorway that isn't his
+flavor.expedition_success.ancient.009,The grind went unrewarded: the watch-fire burned three nights for nothing
+flavor.expedition_success.ancient.010,"A built-different shoulder came back with an arrow in it, still whole"
+flavor.expedition_success.ancient.011,"Absolutely thirsty, they drank a spring on the far side down low"
+flavor.expedition_success.ancient.012,The valley beyond passed the grass vibe check and failed the people one
+flavor.expedition_success.ancient.013,The elders said no girl dinner until the spears are counted
+flavor.expedition_success.ancient.014,"The camp's glow-up is moving fast, a new hut going up before the mud has dried"
+flavor.expedition_success.ancient.015,"The stone they brought back slaps, literally, it rings when you strike it"
+flavor.expedition_success.ancient.016,"Encrypted lore came back on a hide, marks nobody can read"
+flavor.expedition_success.ancient.017,"The old man who knows the ford is in his told-you-so era, proved right again and insufferable about it in the way of a man who has waited years"
+flavor.expedition_success.ancient.018,"The vibes demanded an encore: the drums fell silent once the last of them was counted in, then kicked off again an hour later for reasons nobody has explained"
+flavor.expedition_success.ancient.019,A boy who carried a spear the whole way and never used it has been main-charactering around the huts with it all evening in case anybody asks
+flavor.expedition_success.ancient.020,It's so valid that the boy watching the herd has cried since mid-afternoon over the two it lost on the way
+flavor.expedition_success.ancient.021,The discourse is about which two of the three under one hide on the last stretch actually stayed dry
+flavor.expedition_success.ancient.022,"The elders are still beefing over the stone, so it goes to nobody yet, while the hides go to the women who worked the last lot and the spears to whoever carried them"
+flavor.expedition_success.ancient.023,"A side quest with no loot: two of them walked most of a day toward the smoke on the ridge and most of a day back, to confirm it was somebody else's trouble"
+flavor.expedition_success.ancient.024,"The harvest can wait, apparently, because everyone who should be out in it is standing around the store-pit staring at hides like they might glow up"
+flavor.expedition_success.feudal.001,Eager gatekeepers opened the gate early
+flavor.expedition_success.feudal.002,One clutch cart made it back on three wheels
+flavor.expedition_success.feudal.003,The bells dropped a bop at dusk
+flavor.expedition_success.feudal.004,Wax got fumbled all over the only clean parchment
+flavor.expedition_success.feudal.005,"We're thriving, the undercroft is stacked full"
+flavor.expedition_success.feudal.006,The quartermaster counted it and wants to run it back
+flavor.expedition_success.feudal.007,"A rider dropped the spoiler an hour early, racing ahead with the news"
+flavor.expedition_success.feudal.008,The paperwork is mogging supper: the clerks are still writing and it's going cold
+flavor.expedition_success.feudal.009,One banner came home shredded and gets its needle-and-thread glow-up tonight
+flavor.expedition_success.feudal.010,"The militia are coping hard, acting like turning out for nothing wasn't for nothing"
+flavor.expedition_success.feudal.011,The wagons are in the yard and nobody's tryna unload them
+flavor.expedition_success.feudal.012,A herald has already yapped the story longer than it was
+flavor.expedition_success.feudal.013,"Zero chill coming through the village at dusk, they woke all of it"
+flavor.expedition_success.feudal.014,The pickets were so unbothered they saw them coming and didn't ring a thing
+flavor.expedition_success.feudal.015,Rest easy to the two names missing from the muster roll now
+flavor.expedition_success.feudal.016,The steward is gatekeeping supper until he gets the tally
+flavor.expedition_success.feudal.017,"A mid little fanfare from the gate horn, half of it flat"
+flavor.expedition_success.feudal.018,The village priest's claim on a share is being left on read
+flavor.expedition_success.feudal.019,"The steward sent to the monastery for more ink and a boy who can spell, since the clerks have been writing since noon and the spelling is not passing the vibe check"
+flavor.expedition_success.feudal.020,"A cart wheel came off in the yard at walking pace in front of about thirty people, and the carter is getting roasted for every second of it"
+flavor.expedition_success.feudal.021,"Two riders came in muddy to the waist and won't say how, and the steward stopped asking because the lore keeps changing"
+flavor.expedition_success.feudal.022,"A boy on a stool is so locked in watching the storehouse doors, open since noon, exactly as told"
+flavor.expedition_success.feudal.023,The steward has said his piece about the harvest sitting untouched all afternoon while everybody who should have been in it stood on the wall doomscrolling the road
+flavor.expedition_success.feudal.024,"The sus bell schedule: they go again at first light by nobody's nameable order, and the boy who rang them last night is being watched by several people at once"
+flavor.expedition_success.industrial.001,Logged off for good: the depot clock stopped
+flavor.expedition_success.industrial.002,Two crates have ghosted the inventory
+flavor.expedition_success.industrial.003,The wagons are mud-core up to the axles
+flavor.expedition_success.industrial.004,"Payroll took another L, short again"
+flavor.expedition_success.industrial.005,"The paperwork is so extra, everything in triplicate"
+flavor.expedition_success.industrial.006,The telegram dropped the spoiler a full day before the men got home
+flavor.expedition_success.industrial.007,Freight came in on the evening train and just vibed on the platform
+flavor.expedition_success.industrial.008,The foreman signed for all of it and logged off home
+flavor.expedition_success.industrial.009,"Two in the morning, and somebody made an unhinged call to the office telephone"
+flavor.expedition_success.industrial.010,Nobody is tryna open the wire on the foreman's desk
+flavor.expedition_success.industrial.011,We're so back that the annexe is full and the corridor is taking the rest
+flavor.expedition_success.industrial.012,"The shareholders will hear a heavily glazed, considerably tidier version"
+flavor.expedition_success.industrial.013,The vibe police struck: the men stepped off the train singing and got told to knock it off
+flavor.expedition_success.industrial.014,"In a galaxy brain storage move, it all went under the warehouse roof that leaks"
+flavor.expedition_success.industrial.015,Pure grindset has kept the telegraph operator awake for two days
+flavor.expedition_success.industrial.016,The depot cat moved into the new crates and is living rent free
+flavor.expedition_success.industrial.017,"The group pic is mid, everybody in it squinting"
+flavor.expedition_success.industrial.018,"A petty paper war has broken out: the foreman's tally and the office tally differ by one crate, and both men have written at length explaining why it isn't theirs"
+flavor.expedition_success.industrial.019,"A rail truck left uncoupled at the top of the siding rolled into the fence at walking pace, and the fence is mended but the beef is not"
+flavor.expedition_success.industrial.020,The yard got gaslit by a garbled telegram into preparing all afternoon for eleven horses the original never mentioned
+flavor.expedition_success.industrial.021,"The doctor is pressed: two of the column came home on stretchers and walked off them at the platform, and he intends to take it up with both"
+flavor.expedition_success.industrial.022,The night shift worked through after being told to go home and has spent the morning humblebragging about it to everybody
+flavor.expedition_success.industrial.023,"The siding is in a softlock: blocked until somebody moves the empty trucks, and the man who moves them is on the evening train, which can't get in because the siding is blocked"
+flavor.expedition_success.industrial.024,"Goofy security on the warehouse door: a new lock, three keys cut, two of them unaccounted for, the third in a drawer nobody can open"
+flavor.expedition_success.digital.001,The uplink was goated and held
+flavor.expedition_success.digital.002,"The drone came home filming its own POV in reverse, camera facing backwards"
+flavor.expedition_success.digital.003,The channel logs have ghosted
+flavor.expedition_success.digital.004,The whole floor has been chronically online since the weekend
+flavor.expedition_success.digital.005,Coffee got spilled all over the console
+flavor.expedition_success.digital.006,"The feed trolled everyone, dropping out at the worst moment and returning at the dullest"
+flavor.expedition_success.digital.007,Two analysts are still beefing over the same forty seconds
+flavor.expedition_success.digital.008,The after-action report out-yapped the operation itself
+flavor.expedition_success.digital.009,The whole floor got the tea for free when somebody left the channel open
+flavor.expedition_success.digital.010,The network crashed out for six minutes and not one person noticed
+flavor.expedition_success.digital.011,A junior analyst who spotted it first has entered a permanent main character era about it
+flavor.expedition_success.digital.012,"The second team's feed is in its loading-screen era, still buffering hours later"
+flavor.expedition_success.digital.013,One drone took a side quest home by a route it had never been given
+flavor.expedition_success.digital.014,A sus gap in the uplink logs is something nobody wants to explain
+flavor.expedition_success.digital.015,Four hours of sleep at home was all one grindset analyst took before coming back in
+flavor.expedition_success.digital.016,"The drone is officially our pookie, and the name it was given has stuck"
+flavor.expedition_success.digital.017,The night channel went absolutely feral after two hours of silence
+flavor.expedition_success.digital.018,"The drone footage has been watched sixty-odd times this evening, mostly by people who weren't on the operation and have hot takes about how it went"
+flavor.expedition_success.digital.019,"The briefing's been moved twice: once for a taken room, once because its presenter has been logged off asleep at his desk since noon"
+flavor.expedition_success.digital.020,"Two laptops came back and one still switches on, which is the better ratio of the two operations this month and is being treated like a W"
+flavor.expedition_success.digital.021,"Full NPC behavior all afternoon: people walking past someone's badge, still on the desk where it was left, deciding it's not their business"
+flavor.expedition_success.digital.022,"The engineer who bolted the uplink dish together is flexing: it took a stone in the second week and kept working, and she is not surprised"
+flavor.expedition_success.digital.023,"Drone besties: the second one went to find the first, found it, and the two came home together at a speed the flight log calls unusual"
+flavor.expedition_success.digital.024,"It's the misinformation era in the channel: everybody's asking what happened, the four who could answer are asleep, and the two answering weren't there"
+flavor.expedition_success.digital.025,The group chat hard-launched a new name
+flavor.expedition_success.digital.026,Their faces have gone trending all over the feeds
+flavor.expedition_success.digital.027,Every drone that went out came back for a flawless W
+flavor.expedition_success.digital.028,The feed was goated and never dropped once
+flavor.expedition_success.digital.029,"Every analyst on the floor has a hot take on the footage, and two of them have the same one"
+flavor.expedition_success.digital.030,One man's implant logged the whole route in 4K nobody asked for
+flavor.expedition_success.digital.031,Their expense claims speedran home ahead of them
+flavor.expedition_success.digital.032,Camera rolls ghosted: their phones were wiped before being handed back at the door
+flavor.expedition_success.digital.033,"The comments on the livestream of their return, which beat the departure one on viewers, are mostly a fit check on one man's haircut"
+flavor.expedition_success.digital.034,The server room was gatekept so the recovered drives could be copied in private
+flavor.expedition_success.digital.035,Two of the drones came back with bonus loot they weren't sent to carry
+flavor.expedition_success.digital.036,The iconic fortieth slide of the after-action deck is a photograph of a sandwich
+flavor.expedition_success.digital.037,The network team is asking what sus thing they plugged into
+flavor.expedition_success.digital.038,"In a plot twist, their location pings went quiet for a day and came back a long way from where they stopped"
+flavor.expedition_success.digital.039,"The tea has had the ops channel busy since noon, everyone asking whether it is true"
+flavor.expedition_success.digital.040,"The analyst who called the route wrong got flowers from the team, and he's trying to work out if it's a roast"
+flavor.expedition_success.digital.041,"They picked up an anon stan, a drone that tailed them in from the city's edge, filmed everything, and belongs to nobody anyone can find"
+flavor.expedition_success.digital.042,"The contract that paid for it has a clause about exactly this outcome, and the lawyers are reading it aloud to each other all morning like it's fanfic"
+flavor.expedition_success.digital.043,"Every one of their accounts got locked for security the moment they came back online, and the helpdesk is in its ticket-queue era"
+flavor.expedition_success.digital.044,"The first thing one of them did was check his messages, and his phone crashed out from the notifications before it finished loading them"
+flavor.expedition_success.digital.045,"Structural trust issues: everything recovered was copied onto separate drives in separate rooms, and the people holding the keys may not eat lunch together"
+flavor.expedition_success.digital.046,"The whole operation's origin story is a rented office above a phone shop, now being asked for its security footage"
+flavor.expedition_success.digital.047,The W of the day: biometrics on the way in matched the ones taken going out
+flavor.expedition_success.digital.048,It's giving transfer window: the fusion plant's drone team wants to borrow them for a week
+flavor.expedition_success.digital.049,"Wholesome lore: under the encryption and several decoy layers on the device they brought back, the cyber team found a plain-text comment from the programmer asking whoever read it to say hello to his mother"
+flavor.expedition_success.digital.050,"Peak cinema is the drone footage, mostly car parks"
+flavor.expedition_success.digital.051,The skill issue tally is four password resets and one locked account
+flavor.expedition_success.digital.052,The analysts want the raw feed and are being fed the glazed edit instead
+flavor.expedition_success.digital.053,"Rush hour, last case, one courier on a motorbike: absolute clutch across the city"
+flavor.expedition_success.digital.054,"The team's shared calendar is delulu, still showing them out of office until Thursday"
+flavor.expedition_success.digital.055,"Kel's route printout came out in a magenta aesthetic, since the black cartridge has been empty since March"
+flavor.expedition_success.digital.056,"The office fumbled their taxi home, sending it to the wrong entrance"
+flavor.expedition_success.digital.057,Passive-aggressive glazing: a sticky note saying good work on top of the fortnight's uplink bill on the director's desk
+flavor.expedition_success.digital.058,One of them came back on implant firmware so cursed no clinic in the city will touch it
+flavor.expedition_success.digital.059,"Forty people love-bombed the team channel by evening to say welcome back, after it was muted all afternoon so they could sleep"
+flavor.expedition_success.digital.060,"The reactor team gave them their flowers, and an invoice"
+flavor.expedition_success.digital.061,"Caught in 4K four times on the way in, their van already has fines in the post"
+flavor.expedition_success.digital.062,Chronically online floor alert: everyone watched the drone feed live and kept correcting the team's account of its own route in the debrief
+flavor.expedition_success.digital.063,"The route planner's flex: she framed the final position report, hung it by the lifts, and is often standing near it at odd hours in case anybody has questions"
+flavor.expedition_success.digital.064,The trip's network logs are a chonky four terabytes
+flavor.expedition_success.digital.065,Kel is unhinged and read all nine hundred of his notifications standing in the lobby
+flavor.expedition_success.digital.066,"The function was pizza for twelve, and it got crashed by most of the floor on top of the nine of them"
+flavor.expedition_success.digital.067,"A drone written off on day two respawned this morning on a loading ramp behind the building, battery flat, camera running, with forty hours of footage of a car park nobody has the heart to delete"
+flavor.expedition_success.digital.068,Unofficial merch alert: their faces are on stickers sold by street vendors outside the building
+flavor.expedition_success.digital.069,The map layer they built got hard-launched to every phone in the department
+flavor.expedition_success.cosmic.001,The hull got roasted down one side
+flavor.expedition_success.cosmic.002,Bay three came back absolutely full of loot
+flavor.expedition_success.cosmic.003,Vacuum frost has the whole ship giving freezer
+flavor.expedition_success.cosmic.004,"The new scrape along the outer seam is already iconic, it has a nickname"
+flavor.expedition_success.cosmic.005,The reactor ticks away like it's unbothered by the trip
+flavor.expedition_success.cosmic.006,Coming out of orbit hot got them roasted by the dock crew
+flavor.expedition_success.cosmic.007,The transponder ghosted for eleven hours and then acted like nothing happened
+flavor.expedition_success.cosmic.008,"Something sus behind a bulkhead has worked loose, and nobody can find it"
+flavor.expedition_success.cosmic.009,"The airlock ran it back on the way in, two cycles"
+flavor.expedition_success.cosmic.010,The relay clocked them before the watch officer did
+flavor.expedition_success.cosmic.011,A freighter crew ratioed them by logging their pass as debris
+flavor.expedition_success.cosmic.012,The fit is staying on: two of the crew haven't taken their suits off yet
+flavor.expedition_success.cosmic.013,"The math is almost mathing, the manifest and the bay count off by one crate"
+flavor.expedition_success.cosmic.014,"The dock lights were a green flag, burning all night for them"
+flavor.expedition_success.cosmic.015,The bay doors froze half open and got bonked with a wrench
+flavor.expedition_success.cosmic.016,The last day of the run was a clutch emergency-air situation
+flavor.expedition_success.cosmic.017,"Valid laziness at that hour: the transponder code came back wrong, but the watch officer recognised the approach and skipped the paperwork"
+flavor.expedition_success.cosmic.018,"A bulkhead panel came off in somebody's hand three days out and has been held since by a strap, a wedge and a mutual agreement not to perceive it"
+flavor.expedition_success.cosmic.019,"Collective side-eye from the four people on the deck at the time, who have politely and separately declined to comment on orbital watch logging the approach as clean"
+flavor.expedition_success.cosmic.020,"The scorched-insulation vibe has spread from the forward bay to the corridor, the mess and, according to one of them, the food"
+flavor.expedition_success.cosmic.021,"A boot the dock crew found in the cargo net during the unload is living rent free on the ledge by the airlock, unclaimed"
+flavor.expedition_success.cosmic.022,"The hull sensors are capping, reporting the ship sound while it makes a noise every ninety seconds that the engineer has started timing"
+flavor.expedition_success.cosmic.023,"The inspector went full say less this morning: signed the sheet on a tape-and-panel repair patch holding a whole compartment, remarks box left empty"
+flavor.expedition_success.cosmic.024,The freighter that lent them fuel at the halfway point has asked for it back four times on the relay since yesterday and is being left on read
+flavor.expedition_success.cosmic.025,The dock logging them home was the W
+flavor.expedition_success.cosmic.026,"Light-lag means we're late to the tea, this is already old news"
+flavor.expedition_success.cosmic.027,It slaps that their backups weren't needed
+flavor.expedition_success.cosmic.028,"Relativity did everyone aboard dirty, all of them aging differently"
+flavor.expedition_success.cosmic.029,"A generational collab: their return signal was sent before most of its receivers were born, and the grandchildren of the people who waved them off organised the welcome"
+flavor.expedition_success.cosmic.030,"One of the crew wants to respawn from a backup taken before the trip, and the request is being considered on its merits"
+flavor.expedition_success.cosmic.031,The relay hard-launched their arrival before they were even through the airlock
+flavor.expedition_success.cosmic.032,"They mapped a star system that's in its final era, it won't exist in this form by the time anyone else gets there"
+flavor.expedition_success.cosmic.033,"Two of them came back with memories of the voyage that don't match the log, and the log is being treated as canon"
+flavor.expedition_success.cosmic.034,The ship's mind has beef with the captain about the second week
+flavor.expedition_success.cosmic.035,"Their samples were too sus to bring inside, so they're parked in orbit around the station"
+flavor.expedition_success.cosmic.036,The medical scans found nothing wrong with any of them and are being gaslit into thinking that's suspicious
+flavor.expedition_success.cosmic.037,Crew rotation lists them as returned pending a metaphysical vibe check that they are the same crew
+flavor.expedition_success.cosmic.038,"The freighter that towed them in sent the most boomer invoice, payable in a currency that stopped existing while they were out"
+flavor.expedition_success.cosmic.039,"The ship's memory holds some deep lore, a message from one of them to herself, dated a year before they launched"
+flavor.expedition_success.cosmic.040,"The cargo bay is fully unserious, nothing in it behaving the way the manifest says it should"
+flavor.expedition_success.cosmic.041,The clocks aboard are all twinning with each other and with none of the station's
+flavor.expedition_success.cosmic.042,"They came home to a station mid-rebrand era, a different name on it"
+flavor.expedition_success.cosmic.043,"The navigator's main character request: a window seat on the next trip, and logistics has started looking into it"
+flavor.expedition_success.cosmic.044,"Their descent ate, so clean that orbital traffic control wants it repeated for training footage"
+flavor.expedition_success.cosmic.045,"Gatekeeping whatever she was looking at, one of the crew stood at the observation port most of the first watch home"
+flavor.expedition_success.cosmic.046,"They were gone long enough for the station's language to drift, so the first hour back was a translation side quest over whether the dock crew's word for the samples meant close enough to theirs, which it didn't, not for a form"
+flavor.expedition_success.cosmic.047,"A committee rebuilt while they were away declared the mission a success, and its chair, a child when they left, read the verdict like a nervous stan trying to get their names right"
+flavor.expedition_success.cosmic.048,"Before the return burn, long-range caught something moving the wrong way at the edge of the system, and it has been filed as sus for later"
+flavor.expedition_success.cosmic.049,The hab ring pulled a late one for them like it was the function of the year
+flavor.expedition_success.cosmic.050,Their suits have a space-core scent: pure ozone
+flavor.expedition_success.cosmic.051,"The docking clamps were goated, holding on the first try"
+flavor.expedition_success.cosmic.052,"One of them brought back sand from a world the survey called not worth the fuel, and the slept-on jar of it sits on the mess table"
+flavor.expedition_success.cosmic.053,"The samples are fully anon, not one with a name yet"
+flavor.expedition_success.cosmic.054,The purest parasocial moment: the station's kids filled the observation gallery waving at a ship that had no way of seeing them
+flavor.expedition_success.cosmic.055,"Relativity did two of them dirty, a few days older than the rest, and the medic wrote it down without comment"
+flavor.expedition_success.cosmic.056,"No notes on hydroponics' welcome: a bowl of fresh tomatoes, one each, names written on the stalks in pen"
+flavor.expedition_success.cosmic.057,"Dock control gave the approach gold star energy, literally a small star drawn beside the log entry"
+flavor.expedition_success.cosmic.058,"The navigator is petty about her chair, which the night crew moved one centimetre, and she wants it put back where she left it"
+flavor.expedition_success.cosmic.059,Make it make sense: customs on the ring wants a duty value on a sealed flask of another star's light
+flavor.expedition_success.cosmic.060,"A signal from the edge of the system that sounds like singing is living rent free in four specialists, played once in a locked room, and all four asked to hear it again without being able to say why"
+flavor.expedition_success.cosmic.061,"The crew are giving VIP in the quarantine berth, planet view and the good chairs"
+flavor.expedition_success.cosmic.062,The merch dropped already: their mission patch is on a mug in the station shop
+flavor.expedition_success.cosmic.063,Every suit radio was goated
+flavor.expedition_success.cosmic.064,Relativity is so unserious that four years out was one weekend on the ship's clock
+flavor.expedition_success.cosmic.065,"Rest easy, little probe: the long-range crew are mourning the one left behind with a small wake"
+flavor.expedition_success.cosmic.066,"A creepy talking stage: something followed their drive plume past the gas giant and turned back at the system's edge, and the log shows the turn though the watch officer saw nothing on her screens"
+flavor.expedition_success.cosmic.067,Pacifist king energy got their gunnery officer bought drinks despite firing nothing
+flavor.expedition_success.cosmic.068,Three new names and one sus question mark are on the star charts they brought back
+flavor.expedition_success.cosmic.069,"Rest easy to the name still on the lid of the empty cryo pod, strapped in its cradle on the way home"
+flavor.expedition_success.cosmic.070,"Two of the crew uploaded on the way home to save mass, and the other two literally carried the team on a drive in a padded case"
+flavor.resource.countSingular.01,nanobot
+flavor.resource.countSingular.02,dark matter crystal
+flavor.resource.phraseStores.01,your 
+flavor.resource.phraseStores.02," stash"
+flavor.resource.phraseHaul.01,a whole haul of 

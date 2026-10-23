@@ -1,0 +1,880 @@
+id,text
+flavor.words.enc_cap_gift.001,a girl-dinner haul of dried fruit
+flavor.words.enc_cap_gift.002,a fit-check mirror the size of a wall
+flavor.words.enc_cap_gift.003,two more bird besties in cages
+flavor.words.enc_cap_gift.004,a cabinet painted in full cottagecore
+flavor.words.enc_cap_gift.005,a chonky bolt of cloth
+flavor.words.enc_cap_gift.006,a sus little jar of something sweet
+flavor.words.enc_cap_gift.007,another twinning set of cups
+flavor.words.enc_cap_gift.008,a life-size statue of some random NPC
+flavor.words.enc_cap_gift.009,a box of smol carved figures
+flavor.words.enc_cap_gift.010,three crates of bussin wine
+flavor.words.enc_cap_gift.011,a bundle of aesthetic dried flowers
+flavor.words.enc_cap_gift.012,an absolute unit of a glass bowl
+flavor.words.enc_cap_gift.013,a bag of seed with zero lore
+flavor.words.enc_cap_gift.014,a cage of feral white rabbits
+flavor.words.enc_cap_gift.015,a villain-arc set of ceremonial knives
+flavor.words.enc_cap_gift.016,a woven hanging so big it's a whole personality
+flavor.words.enc_cap_gift.017,a case of foreign cash with zero rizz at the market
+flavor.words.enc_cap_gift.018,a portrait of some main character
+flavor.words.enc_cap_place.001,"the shadow realm, back-corner edition"
+flavor.words.enc_cap_place.002,the room everybody left on read
+flavor.words.enc_cap_place.003,the side-quest end of the hall
+flavor.words.enc_cap_place.004,a back room that's giving freezer
+flavor.words.enc_cap_place.005,the hallway outside in its storage era
+flavor.words.enc_cap_place.006,the dungeon-core stairwell
+flavor.words.enc_cap_place.007,the ghosting zone behind the door
+flavor.words.enc_cap_place.008,a red-flag cupboard that sticks already
+flavor.words.enc_cap_place.009,the corner where the lighting is not it
+flavor.words.enc_cap_place.010,the empty room by the kitchen with goated snack access
+flavor.words.enc_cap_place.011,a gatekept locked room upstairs
+flavor.words.enc_cap_place.012,the alcove where everyone walking in can perceive it
+flavor.words.enc_cap_place.013,the situationship gap between two cabinets
+flavor.words.enc_cap_place.014,the low-ceiling side room that bonks every head
+flavor.words.enc_cap_place.015,the aggressively mid landing halfway up the stairs
+flavor.words.enc_cap_place.016,the lore-heavy passage behind the curtain
+flavor.words.enc_cap_place.017,a former store room in its comeback era
+flavor.words.enc_cap_place.018,the gremlin zone under the stairs
+flavor.encounter_full.any.001,"The corridor is in its blocked era, not one single person is getting down it"
+flavor.encounter_full.any.002,Fourteen visitors vs seven chairs is a math problem that is not mathing
+flavor.encounter_full.any.003,Somebody said bet and signed for the whole haul
+flavor.encounter_full.any.004,"The bird has entered its silent era, not one note since"
+flavor.encounter_full.any.005,The tall crate has big jumpscare energy and nobody will open it
+flavor.encounter_full.any.006,The morning speedran three whole arrivals before noon even hit
+flavor.encounter_full.any.007,"Somebody hard-launched their stuff into the far room, so it's claimed now"
+flavor.encounter_full.any.008,"One name got written down twice, like one entry wasn't main character enough"
+flavor.encounter_full.any.009,"The whole place is hoarder-core now, every stack waist-high"
+flavor.encounter_full.any.010,The interpreter talked herself straight into a no-voice era
+flavor.encounter_full.any.011,The hype for ~ flopped so fast it's got dust on it already
+flavor.encounter_full.any.012,The corridor wall has been a gift-stacking side quest for over a week now
+flavor.encounter_full.any.013,The list keeper ran out of page because the lore is simply too long
+flavor.encounter_full.any.014,An envoy has the audacity to red-pen the spelling on every notice we posted
+flavor.encounter_full.any.015,"This morning's animal has left every meal on read, nothing offered got eaten"
+flavor.encounter_full.any.016,"Two delegations with active beef have been put in one room together, who approved this"
+flavor.encounter_full.any.017,Somebody brought up the cost of feeding everyone at the table and the vibe shift was immediate
+flavor.encounter_full.any.018,Something in the far corner is giving fish market and getting stronger
+flavor.encounter_full.any.019,There's a standing rule about this and nobody wants to be the first to fumble it
+flavor.encounter_full.any.020,"One visitor soft-launched moving into an upstairs room, his stuff is already up there"
+flavor.encounter_full.any.021,The door lady is so real for this: she's writing names on her hand now
+flavor.encounter_full.any.022,"The kids got told the far room is off limits, which is the fastest way to make it a side quest"
+flavor.encounter_full.any.023,Somebody threw a cloth over the big mirror because the lighting was not it
+flavor.encounter_full.any.024,"Two of the gifts are basically twinning, same gift give or take"
+flavor.encounter_full.any.025,"The welcome speech is in its fourth draft era, one rewrite per arrival"
+flavor.encounter_full.any.026,"Nobody's counted the line outside, and it has lowkey doubled since morning"
+flavor.encounter_full.any.027,A gift showed up in wrapping cloth that mogs the actual gift on price
+flavor.encounter_full.any.028,Somebody's delulu fix for the cupboard door was a rope tied across it
+flavor.encounter_full.any.029,The pile by the door is in its consuming era and took ~ as well
+flavor.encounter_full.any.030,"The newest drop got carried straight to ~, nobody even did an unboxing"
+flavor.encounter_full.any.031,"Everybody brainstormed with no thoughts, just vibes, and the best they had was ~"
+flavor.encounter_full.any.032,"The ruling is that ~ gets to live where it is, rent free, forever"
+flavor.encounter_full.any.033,This week's whole haul has been yeeted into ~
+flavor.encounter_full.any.034,Whoever styled the hall gatekept ~ behind a curtain
+flavor.encounter_full.any.035,The kids got their hands on ~ and everyone is just letting them cook
+flavor.encounter_full.any.036,Something soft has been sitting way too long in ~ and it's getting sus
+flavor.encounter_full.any.037,The guest room has a man asleep in it who rolled in with the second lot and has been a free-roaming NPC attached to nobody since
+flavor.encounter_full.any.038,"The list keeper asked for a second book, got a ""we're looking"", and has gone feral in the margins of the first one"
+flavor.encounter_full.any.039,Who signed for the second load is now lost lore: the paper got used as wrapping and the wrapped thing went upstairs
+flavor.encounter_full.any.040,"For the second time this month someone moved ~ unprompted, and the sequel took an L, landing somewhere worse than the first"
+flavor.encounter_full.any.041,"Some list has ~ scrawled at the far end in handwriting nobody can ID, and the item ghosted the second it came through the door"
+flavor.encounter_full.any.042,"Two waiting parties have too much beef to share a room, so one has the front, one has the back, and the passage between them has a chair with somebody sitting on it"
+flavor.encounter_full.any.043,"Delegation three rolled in while delegation two was still waiting, and two has now waited long enough to have hot takes on three, which it shares with anyone walking past"
+flavor.encounter_full.any.044,"The interpreter has clocked in daily since the first party arrived, got thanked exactly once, and this morning quiet-quit a long formal greeting down to a short casual one that nobody in the room queried"
+flavor.encounter_full.any.045,"The math is not mathing: one count of this month's haul said forty-one items, the next day's said thirty-eight, and both are on the same wall in the same hand"
+flavor.encounter_full.any.046,"A woman pulled up on day four with a small box and a long yap session, got heard out, got water and a chair, and is still in that chair with the box on her knees"
+flavor.encounter_full.any.047,The samples got left on read and sent back unopened
+flavor.encounter_full.any.048,The traders took an L: they brought samples and they're leaving with the samples
+flavor.encounter_full.any.049,"They brought flowers that are giving four days, tops"
+flavor.encounter_full.any.050,The visitors' patience has been a total green flag
+flavor.encounter_full.any.051,"Their whole side quest was travel a long way, then stand in a doorway"
+flavor.encounter_full.any.052,"The delegation is committed to the bit: no to food, no to chairs, no to a room, and standing in the same spot in the hall since mid-morning"
+flavor.encounter_full.any.053,"Their guards are in a permanent standing era, sitting just isn't in their lore"
+flavor.encounter_full.any.054,"The escort was so pressed about it, but after four asks the weapons finally got left by the door"
+flavor.encounter_full.any.055,The cup lore now covers four sets of six matching cups
+flavor.encounter_full.any.056,It's giving don't-ask-don't-tell: the chairs have never once been counted
+flavor.encounter_full.any.057,"The room got renamed after what's inside it, the gifts are its whole personality now"
+flavor.encounter_full.any.058,Are they in a group chat? Three different peoples have now gifted the exact same bird species
+flavor.encounter_full.any.059,"Two people caught it in 4K, a gift we sent out last year has come back to us regifted"
+flavor.encounter_full.any.060,"Somebody started a second list of the first list, since the first one stopped being a list and entered its wall era"
+flavor.encounter_full.any.061,"A visitor asked where the gifts are kept and got sent on a side quest: four rooms, four guides, never the same room twice"
+flavor.encounter_full.any.062,"The tea reached {subject} first, they were first in the group chat"
+flavor.encounter_full.any.063,The seating team took a rare W and found chairs for {subject}
+flavor.encounter_full.any.064,Someone in the queue side-quested the note from {subject} into a fan
+flavor.encounter_full.any.065,We're gatekeeping from {subject} exactly how long this wait has been running
+flavor.encounter_full.any.066,"Bombastic side-eye incoming, because the seating chart put {subject} behind a pillar"
+flavor.encounter_full.any.067,The corner where everything from {subject} got piled is basically a stan shrine now
+flavor.encounter_full.any.068,Somebody found an interpreter for {subject} and then fumbled it by sending her away again
+flavor.encounter_full.any.069,"The visitor list is lore-heavy now, {subject} appears on it twice in two different hands"
+flavor.encounter_full.any.070,"The bill for feeding {subject} dropped at dinner, read out by somebody who had clearly waited all day for that main character moment"
+flavor.encounter_full.any.071,"The wrong line of the wrong list now says {subject}, and two more copies got made by people with zero reason to be sus of the first"
+flavor.encounter_full.any.072,"The crew who came with {subject} took over the back room, the room beside it and the passage between, and four of them are still crashing in the hall in full sleepover era"
+flavor.encounter_full.any.073,"Nobody knows what to do with what {subject} sent, so it stays where it landed and everyone walks around it like NPCs dodging a rock"
+flavor.encounter_full.grounded.001,"This morning's plot twist: a basket of soft fruit, hiding behind a chest"
+flavor.encounter_full.grounded.002,"The door servant can now say {subject} without a pause in the middle, a four-day grind, and it's the one thing from this week she's gatekeeping for herself"
+flavor.encounter_full.grounded.003,A servant hard-launched {subject} into a room where two delegations were already standing around
+flavor.encounter_full.grounded.004,"The same stack is living rent free in a servant's head, counted four times this week"
+flavor.encounter_full.grounded.005,Management is delulu and told a servant to find room for ~
+flavor.encounter_full.grounded.006,"A treaty got read out in full to an NPC-heavy room of one servant, two envoys from somewhere else entirely and a kid who came to look at the birds, and none of them was asked to leave"
+flavor.encounter_full.grounded.007,An old woman has been in her chest-throne era since first light
+flavor.encounter_full.grounded.008,All four people who asked where the new chests go got ghosted
+flavor.encounter_full.grounded.009,One sealed jar has been sus this whole time and is leaking down the inside of a chest
+flavor.encounter_full.grounded.010,"One visitor now has a bed, a chest, a seat at the table and a water-carrying job, and his origin lore is gone: nobody remembers which delegation brought him or whether one did"
+flavor.encounter_full.grounded.011,"This guy understood the assignment: he's slept in the far room since day three, the household thinks he came with a delegation, and the delegations think he lives here"
+flavor.encounter_full.grounded.012,"Somebody spilled the tea that the visitors ate more in nine days than the household gets through in a month, and it has been re-spilled at every meal since"
+flavor.encounter_full.grounded.013,"The best room in the house went to a crate, and the man evicted to make space is sleeping on a bench in the passage and yapping to everyone about it"
+flavor.encounter_full.grounded.014,The chest marked {subject} is gatekeeping hard and stays shut
+flavor.encounter_full.grounded.015,"The day-one chests got ratioed: pushed against the wall to make room for the second lot, which then went right in front of them"
+flavor.encounter_full.grounded.016,"The door servant's glow-up is complete, she's now the most consulted person in the house"
+flavor.encounter_full.grounded.017,"The woman who does the buying has entered her acceptance era: after nine days of nine to fourteen extra mouths at every meal, she's stopped asking how long and shops for twenty"
+flavor.encounter_full.grounded.018,"The household's bowl-to-plate ratio is cooked, there are more ceremonial bowls than plates now"
+flavor.encounter_full.grounded.019,"The interpreter got ghosted all morning after being called for first light, and now she's been called for first light tomorrow too"
+flavor.encounter_full.grounded.020,The merchants waiting outside the door for two days have pivoted to selling to the household staff at a so-called bestie discount
+flavor.encounter_full.grounded.021,"The tall visitor went chronically online on the notice wall: read every one by the door in order, and now quizzes the servants about the ones he does not understand"
+flavor.encounter_full.grounded.022,"There's a cap on how many of these the household may take, everyone knows it, and the household speedran past it on day two"
+flavor.encounter_full.grounded.023,Plot twist at dusk: two more arrived
+flavor.encounter_full.grounded.024,"Two servants hauled a crate from {subject} up the stairs, got told it belonged downstairs, and carried it back down in silence, no thoughts, just stairs"
+flavor.encounter_full.grounded.025,"Two servants had an NPC morning shifting ~ across a room, then shifting it back after somebody senior walked through"
+flavor.encounter_full.grounded.026,"A jar that came in sealed got opened, vibe-checked by four noses in a row, and resealed with a cloth and some string"
+flavor.encounter_full.grounded.027,The smell has hard-launched itself onto the stairs
+flavor.encounter_full.grounded.028,The bread situation is giving last-loaf energy
+flavor.encounter_full.grounded.029,The bucket grindset continues: water is going upstairs
+flavor.encounter_full.grounded.030,"The big grey animal is the kitchen staff's pookie now, they've given him a name"
+flavor.encounter_full.grounded.031,The kitchen is in its cook-for-forty era and has stopped asking how many are eating
+flavor.encounter_full.grounded.032,Hospitality is lowkey glitching: a man who showed up at midday with a folded letter and an animal on a rope has been offered water three times by three different people
+flavor.encounter_full.grounded.033,"The animal's diet is unknown lore, so it got offered bread, fruit, boiled grain and a bowl of water, and it took the water like a hydration king"
+flavor.encounter_full.grounded.034,"Bread and meat have been going out at double speed since the first party showed, and the woman who buys both is now keeping receipts on the wall"
+flavor.encounter_full.grounded.035,"An envoy who arrived before the cold weather has gone full local-core: dresses like everybody else, eats with the house, and was heard this morning moaning about the price of fish"
+flavor.encounter_full.grounded.036,A boy was sent out to feed {subject} the sus line that the hall is being cleaned
+flavor.encounter_full.grounded.037,"The gifts from {subject} came in three loads over two days, and load three is still outside under a cloth because load two is gatekeeping the doorway"
+flavor.encounter_full.late.001,"It's so over for the gift registry, zero storage left"
+flavor.encounter_full.late.002,"One delegation's gift is giving infinite scroll, it still hasn't finished arriving"
+flavor.encounter_full.late.003,"Protocol has us cooked: every gift needs an in-person acknowledgement, and at current rates they'll finish after the last person able to give them has died"
+flavor.encounter_full.late.004,"The guest quarters are full of envoys stuck in a situationship with us, waiting to be told they can go home"
+flavor.encounter_full.late.005,An envoy asked what we needed and we clapped back with the list of everything we've already been given
+flavor.encounter_full.late.006,Storage is giving zero bytes left
+flavor.encounter_full.late.007,The guest suites ate and left no vacancy
+flavor.encounter_full.late.008,"Further gifts? Bestie, we literally cannot accept them"
+flavor.encounter_full.late.009,The overflow room got ratioed by its own overflow
+flavor.encounter_full.late.010,"The welcome screen is gatekeeping now, there's a waitlist just to be welcomed"
+flavor.encounter_full.late.011,Four interpreters are getting absolutely cooked by nine delegations
+flavor.encounter_full.late.012,"The protocol officer's comeback arc is cancelled, she has resigned again"
+flavor.encounter_full.late.013,"Catering has left every order on read, it's stopped taking them"
+flavor.encounter_full.late.014,The security scanner is so cooked it needs a nap
+flavor.encounter_full.late.015,One envoy is celebrating a full year in his waiting-room era
+flavor.encounter_full.late.016,"Every gift has to be logged and thanked for, and the vibes died right at the thanking part"
+flavor.encounter_full.late.017,The embassy wing got a temporary glow-up that spills into the car park
+flavor.encounter_full.late.018,"One delegation is running a side hustle: taking the other delegations' gifts off our hands, for a fee"
+flavor.encounter_full.late.019,"The interpreters work in shifts, and one has hit the dreaming-in-the-visitors'-language level of brain rot"
+flavor.encounter_full.late.020,"An envoy who came to open talks is basically one of the girlies now, invited to the office party and everything"
+flavor.encounter_full.late.021,"Four different gifts got caught in 4K by the entrance scanner, same undeclared item every time"
+flavor.encounter_full.late.022,The thank-you letters are template-core now and it's starting to show
+flavor.encounter_full.late.023,"A robot cleaner has been circling this morning's unmoved crate on loop, stuck in a full NPC pathing glitch"
+flavor.encounter_full.late.024,The diplomatic calendar has gone delulu and is booked beyond the current government's term of office
+flavor.encounter_full.late.025,Two envoys from rival delegations were seated together at lunch three days running and are now besties
+flavor.encounter_full.late.026,The cleaning staff want the tea on which of the gifts are rubbish
+flavor.encounter_full.late.027,"A delegation nobody invited showed up, and taking their gift was lowkey easier than figuring out who they even are"
+flavor.encounter_full.late.028,"The customs duty on the gifts is doing emotional damage, it exceeds the budget of the office receiving them"
+flavor.encounter_full.late.029,The lift flopped from transport to gift storage and has been taken out of service for the purpose
+flavor.encounter_full.late.030,The lanyard team has fumbled every delegation's name at least once
+flavor.encounter_full.late.031,Visiting hours for foreign envoys dropped and got ratioed by every envoy ignoring them
+flavor.encounter_full.late.032,"Every delegation brought food, most of it needs refrigerating, and the fridges were cooked by Monday"
+flavor.encounter_full.late.033,"The entrance facial recognition now greets the regular envoys by name, it's giving barista who knows your order"
+flavor.encounter_full.late.034,"An envoy's big brain move: count his delegation's gift as an advance on next year's, and finance has spent a week trying to work out whether that is allowed"
+flavor.encounter_full.late.035,"The head of protocol, receiving delegations since seven, has switched to a standing-up speedrun strat to keep the meetings short"
+flavor.encounter_full.late.036,"The gift register's lore got so deep it now needs its own register, listing which volume each gift appears in"
+flavor.encounter_full.late.037,"A second reception area soft-launched in the old training suite, with a sign on the door and a coffee machine that only works for the first hour"
+flavor.encounter_full.late.038,"One ambassador's waiting-room arc: she waited so long for an audience she got appointed to a committee, and the committee now meets in the waiting room"
+flavor.encounter_full.late.039,"The auto-reply got a rizz upgrade to sound less automated, and now three delegations write back to the automated reply by name"
+flavor.encounter_full.late.040,"One delegation gifted a gift-sorting machine, it's unpacked and switched on, and it's the only thing in the building that's thriving"
+flavor.encounter_full.late.041,"One delegation is collecting receipts: every new arrival hears the court is honoured and cannot receive them yet, and they want that in writing so they can frame it"
+flavor.encounter_full.late.042,"A kid from one delegation is the main character of the building now, running tours for the other delegations' kids and knowing the place better than half the staff"
+flavor.encounter_full.late.043,The gift insurance is so unhinged it costs more per month than the building holding them
+flavor.encounter_full.late.044,"The incoming-delegations office took an L: its staffing request went into the queue behind the delegations, and the delegations are asking whether that office has been told they are here"
+flavor.encounter_full.late.045,"Every meeting room went to a delegation, so staff now meet standing in the corridor by the lifts while the envoys stroll past and sometimes stop to listen in on the tea"
+flavor.encounter_full.late.046,"The newest envoy arrived with a long goodwill speech and an intro letter from a government history has ghosted, and he's getting full honours and the same slow answer as everyone else"
+flavor.encounter_full.late.047,"Two delegations had the audacity to swap gifts in the lobby while waiting, and one now holds the gift the other brought for us and has offered to give it to us again"
+flavor.encounter_full.late.048,"The lobby sofas are sold out, it's standing room only for the NPCs"
+flavor.encounter_full.late.049,The visitor app had a full crashout
+flavor.encounter_full.late.050,The spare offices upstairs got a borrowed-chair glow-up for the envoys who showed up without appointments
+flavor.encounter_full.late.051,The gift shop is now selling dupes of the gifts
+flavor.encounter_full.late.052,"One delegation has main-charactered its way into running its own reception desk inside ours, receiving the delegations that arrive after it"
+flavor.encounter_full.late.053,The old mail room is giving lost and found now that envoys wait in it among the parcels
+flavor.encounter_full.late.054,"Three envoys are in a charger situationship, one cable between them"
+flavor.encounter_full.late.055,"Visitor passes are handwritten-core now, pen and all"
+flavor.encounter_full.late.056,Every chair in the atrium is under coat-based gatekeeping by some delegation
+flavor.encounter_full.late.057,An envoy is double-texting his greeting every hour on the hour
+flavor.encounter_full.late.058,"Every meeting room is booked till Friday, mostly by envoys with the very valid agenda of sitting down"
+flavor.encounter_full.late.059,The one goated sofa now has a rota drawn up by the delegations
+flavor.encounter_full.late.060,A crate marked fragile is built different: it's been a desk for three different envoys this week
+flavor.encounter_full.late.061,"Protocol's flag supply flopped, so they're printing them on paper"
+flavor.encounter_full.late.062,"One delegation's gift is a thirsty live plant, and the only person who waters it is one of their own envoys"
+flavor.encounter_full.late.063,Two envoys from week one are now the senior girlies training this week's arrivals
+flavor.encounter_full.late.064,"The reception desk is giving deli counter: numbered tickets the envoys take without complaint, and a ticket roll changed three times since Monday by a facilities man who keeps asking what is going on upstairs"
+flavor.encounter_full.late.065,"It's over for the cleaners: their list of gifts they may throw away came through, and the list is blank"
+flavor.encounter_full.late.066,The lobby envoys have started a side quest betting on who gets seen first
+flavor.encounter_full.late.067,Facilities has flagged the gifts on the emergency exits as a literal red flag and wants them moved
+flavor.encounter_full.late.068,"Envoys charging their gear off the emergency lighting is a menace move, and they've been asked to stop"
+flavor.encounter_full.late.069,"An envoy entered goblin mode in the lift, asleep and riding between floors for most of the afternoon"
+flavor.encounter_full.late.070,The trade delegation said it's giving billable hours and started invoicing us for the waiting
+flavor.encounter_full.late.071,They are so unbothered about waiting they brought books
+flavor.encounter_full.late.072,"Their security detail hard-launched its own corridor, signs and all"
+flavor.encounter_full.late.073,"They are in their atrium camping era: no to the guest rooms, yes to a small tent"
+flavor.encounter_full.late.074,One delegation threw shade by gifting us a book about patience
+flavor.encounter_full.ancient.001,"No shot the store-pit is shutting, it's stuffed past the lid"
+flavor.encounter_full.ancient.002,"Every drying frame is serving hides, not one free"
+flavor.encounter_full.ancient.003,"Nobody manifested it, but dawn brought another herd"
+flavor.encounter_full.ancient.004,The elders have quietly quit counting
+flavor.encounter_full.ancient.005,The drums slapped for the first three arrivals only and then went silent
+flavor.encounter_full.ancient.006,Someone soft-launched a claim with two spears outside a hut that already has guests in it
+flavor.encounter_full.ancient.007,The hides saved for winter got yoinked as bedding by sleeping strangers
+flavor.encounter_full.ancient.008,"A watch-fire was kept going for a crew who came a day early, they understood the assignment a little too well"
+flavor.encounter_full.ancient.009,The visitors are absolutely thirsty and drinking the spring below camp dry
+flavor.encounter_full.ancient.010,Somebody's hut has a new aesthetic: four carved things and one sleeping man
+flavor.encounter_full.ancient.011,The elders had beef over who sits nearest the fire until the fire just gave up and went out
+flavor.encounter_full.ancient.012,An arrow was handed over as a token and somebody has already fumbled it
+flavor.encounter_full.ancient.013,"Three parties crossed the ford in two days, and the going-home arc has not started for any of them"
+flavor.encounter_full.ancient.014,"The old woman minding the visitors is setting a very valid boundary: fewer visitors, please"
+flavor.encounter_full.ancient.015,Smoke on the far ridge is the soft launch for another lot walking in
+flavor.encounter_full.ancient.016,"Nobody can perceive the hide painted with strangers' marks, it hangs in the dead zone"
+flavor.encounter_full.ancient.017,"The boy minding the gift herd caught a nerf: it ate the grass down to the mud, and now he has been told to mind three more"
+flavor.encounter_full.ancient.018,"The elders have run out of creative ways to say wait, and the woman who does the saying has been yapping it from the doorway since the light came up"
+flavor.encounter_full.ancient.019,"Spears from four peoples are stacked against one wall, each one handed over with a speech that was an unskippable cutscene"
+flavor.encounter_full.ancient.020,"Make it make sense: the store-pit is full of food nobody intends to eat, including two sacks of seed from people who do not grow anything here"
+flavor.encounter_full.ancient.021,"The woman who put the cold-months hides by is pressed, guests are sleeping under them, and she's said her piece to three separate people"
+flavor.encounter_full.ancient.022,"The drums went off for the first three arrivals and none of the next six, and lot six caught it in 4K and mentioned it before even sitting down"
+flavor.encounter_full.ancient.023,"One gift got flipped the morning after it arrived for a spear, a hide and a promise of two more hides, and the man who did it has gaslit four separate people with four answers about where it went"
+flavor.encounter_full.ancient.024,"The valley people brought stone, got parasocial about what we'd do with it, were still watching when the next lot came up the road with more stone, and now have a hut of their own"
+flavor.encounter_full.feudal.001,"Zero gatekeeping at the gate, it's been left wide open"
+flavor.encounter_full.feudal.002,Four carts are just vibing in the yard with nobody unloading them
+flavor.encounter_full.feudal.003,The undercroft's whole personality is presents now
+flavor.encounter_full.feudal.004,A clerk fumbled the wax onto the wrong parchment
+flavor.encounter_full.feudal.005,The third delegation got a lowkey tired round of bells
+flavor.encounter_full.feudal.006,The steward is unbothered now and no longer goes down to meet new arrivals
+flavor.encounter_full.feudal.007,Two heralds pulled up together and immediately had beef over who speaks first
+flavor.encounter_full.feudal.008,"The clerks' patch notes never change: the same welcome, written six times this month"
+flavor.encounter_full.feudal.009,A muster got called off because the wagons took the W and the yard had to be cleared
+flavor.encounter_full.feudal.010,Based quartermaster refuses to sign for any more of it
+flavor.encounter_full.feudal.011,"The pickets have given up counting the riders that keep pulling up, no thoughts, head empty"
+flavor.encounter_full.feudal.012,The village found a side hustle and started charging the waiting parties for bread
+flavor.encounter_full.feudal.013,The steward took an L and handed his own room over to an envoy to sleep in
+flavor.encounter_full.feudal.014,Supper got served twice because the two parties are too pressed to share a table
+flavor.encounter_full.feudal.015,The most cringe horn of the year went off for a delegation who'd already gone home
+flavor.encounter_full.feudal.016,Somebody's cart was being a menace and blocked the gate most of the afternoon
+flavor.encounter_full.feudal.017,"The visitors' list clerk asked in writing to be moved to other work, and the steward has the request and has left it on read"
+flavor.encounter_full.feudal.018,"Sacks of foreign grain are stacked against the storehouse wall under a cloth with a messy situationship history: taken twice for other uses, put back once"
+flavor.encounter_full.feudal.019,"All the polite no-thank-yous have nerfed the parchment supply, so the clerks write the newest ones on the backs of old muster lists"
+flavor.encounter_full.feudal.020,"The main quest was a lie: the militia answered the muster and got carrying chests up two flights of stairs, way less than any of them had in mind"
+flavor.encounter_full.feudal.021,"Wagons have rolled up since before first light, and the gate stays open on the big brain logic that shutting and opening it is more work"
+flavor.encounter_full.feudal.022,Somebody regifted a cup at midsummer and it boomeranged back to the undercroft within the month with a glow-up: better cloth and a longer letter
+flavor.encounter_full.feudal.023,"A boy earns a coin a day reciting the hall-is-being-cleaned line to arriving parties at the gate, and day four of the bit is going strong"
+flavor.encounter_full.feudal.024,"The banner has plot armor: up for arrival one, down for two, back up for three because leaving it down seemed rude, and up ever since through two more that nobody bothered to greet"
+flavor.encounter_full.industrial.001,The annexe roof has sprung a leak and is not passing the vibe check
+flavor.encounter_full.industrial.002,"Nobody's claiming the platform freight, it's sitting there like a dead group chat"
+flavor.encounter_full.industrial.003,Two deeply unserious crates arrived with no forms
+flavor.encounter_full.industrial.004,The telephone got unplugged in a peak touch-grass move
+flavor.encounter_full.industrial.005,The delivery book is unsigned and nobody's taking the L for it
+flavor.encounter_full.industrial.006,The telegram meant to soft-launch the delegation showed up a day after they did
+flavor.encounter_full.industrial.007,Somebody's ceremonial engine has main character privileges: it gets a whole siding
+flavor.encounter_full.industrial.008,The foreman clapped back in writing when asked to find space: declined
+flavor.encounter_full.industrial.009,The grindset went sideways: two men now draw wages purely to move boxes about
+flavor.encounter_full.industrial.010,The yellow visitor forms have sold out at the depot office like limited merch
+flavor.encounter_full.industrial.011,The shareholders have been gaslit into thinking the reception went off extremely well
+flavor.encounter_full.industrial.012,A wire came in double-texting to ask whether the previous wire had come in
+flavor.encounter_full.industrial.013,The lorries that came at six are living in the yard rent free now
+flavor.encounter_full.industrial.014,The scheduler gave us big yikes by booking three delegations into the same Thursday afternoon
+flavor.encounter_full.industrial.015,A brass band got hired for arrival four and was benched after one bop
+flavor.encounter_full.industrial.016,"The visitors' cigar smoke gives the upper corridor the ick, it's filled to the ceiling"
+flavor.encounter_full.industrial.017,"Everything's filed in triplicate in three separate places, and the man with the cheat codes for which three has been off sick since the second delegation came in"
+flavor.encounter_full.industrial.018,The warehouse manager has a very valid reason for not answering the telephone: every call this week was about somewhere to put something
+flavor.encounter_full.industrial.019,"The station master is in his entrepreneur arc: two gift crates have sat on the platform all week under a tarpaulin, so he's charging demurrage on them to somebody"
+flavor.encounter_full.industrial.020,"The fourth floor is loudly salty: the freight elevator is gifts-only until Friday, so they carry everything up by hand"
+flavor.encounter_full.industrial.021,"A porter has spent two days in a background-character loop, hauling the same chest from the annexe to the depot office and back, and nobody's stopped him because nobody noticed"
+flavor.encounter_full.industrial.022,"The welcome for the visitors' train was mid: one man with an umbrella and a sheet of paper, and the paper had the wrong name on it in a very good hand"
+flavor.encounter_full.industrial.023,"The company photographer is booked for arrival five and has already shot four sets of visitors in front of the same crates, which have sat in the annexe long enough to photobomb all four"
+flavor.encounter_full.industrial.024,"The annexe roof leak has reached the stacked crates, and the man who reported it in March is doing a victory lap round the offices with his receipts: the copy of the report he kept"
+flavor.encounter_full.digital.001,The visitor badges sold out faster than a drop
+flavor.encounter_full.digital.002,Reception has zero chill left with four ambassadors waiting in it
+flavor.encounter_full.digital.003,The gift closet door is fighting for its life and still will not shut
+flavor.encounter_full.digital.004,"The visiting choir is unowned and roaming, a full side character with no main quest"
+flavor.encounter_full.digital.005,The lobby cam is serving queue content
+flavor.encounter_full.digital.006,Some delulu scheduler added the delegation to a calendar with no gaps in it
+flavor.encounter_full.digital.007,A drone wasted its whole rizz delivering flowers to a floor nobody works on
+flavor.encounter_full.digital.008,"The foreign relations group chat got muted by somebody in it, big mood"
+flavor.encounter_full.digital.009,"Two analysts drew the most mid assignment in history: read the same greeting, twice"
+flavor.encounter_full.digital.010,"Invitation fourteen, identical to the other thirteen, got red-flagged as spam by the network"
+flavor.encounter_full.digital.011,"Chef's kiss to the translation service, running all morning on an empty room"
+flavor.encounter_full.digital.012,"No shot at the conference room until the end of the quarter, it's booked out solid"
+flavor.encounter_full.digital.013,"Three envoys are waiting in reception, and one has unlocked the nap stage"
+flavor.encounter_full.digital.014,"The welcome screen is serving the wrong name again, courtesy of somebody"
+flavor.encounter_full.digital.015,Two drones are stuck orbiting the building in a landing-clearance talking stage
+flavor.encounter_full.digital.016,The downstairs storage room is so extra it has its own spreadsheet now
+flavor.encounter_full.digital.017,An assistant has moved the same meeting for eleven weeks and has quadruple-texted it to a person who left in March
+flavor.encounter_full.digital.018,"The uplink stayed open through the whole welcome speech, and the far end has since asked, politely, for a copy of the tea that got spilled afterwards"
+flavor.encounter_full.digital.019,"An analyst took emotional damage: sixty gifts photographed for insurance, and then the insurance office said it wants them shot against a plain wall"
+flavor.encounter_full.digital.020,The office manager turns arrivals away politely at the door now with a script so iconic the whole floor can recite it
+flavor.encounter_full.digital.021,"Four embassies sent four twinning gift boxes the same afternoon, three got opened and one got banished to a cupboard"
+flavor.encounter_full.digital.022,"The security desk stopped logging deliveries sometime Wednesday, and the log respawned Thursday in a different hand, with a note about the missing day"
+flavor.encounter_full.digital.023,"A crate of ceremonial hardware is living rent free under a second-floor desk, and the person at it has worked knees-at-an-angle for nine days and raised it with facilities three times"
+flavor.encounter_full.digital.024,"Girl dinner is cancelled: diplomatic vehicles have held the parking since Monday, which is fine, except the delivery entrance is behind them and the sandwich order has been left at the barrier three days running"
+flavor.encounter_full.digital.025,The embassy's inbox has hit capacity and is crying
+flavor.encounter_full.digital.026,"The hottest function in town is apparently the drone pad, which has a waitlist now"
+flavor.encounter_full.digital.027,"They gifted us a subscription, which is lowkey a recurring red flag"
+flavor.encounter_full.digital.028,"An analyst's whole job now is tracking which delegation is pressed about waiting, and in what order"
+flavor.encounter_full.digital.029,Diplomatic video calls have hogged the network so hard that the rest of the building has gone full boomer and back to phoning
+flavor.encounter_full.digital.030,"One delegation went maximum extra and sent its greeting by every channel at once, including the fax"
+flavor.encounter_full.digital.031,The queue outside the embassy got its own livestream and it ratioed the embassy on followers
+flavor.encounter_full.digital.032,One delegation flexed with a server rack that arrived already switched on
+flavor.encounter_full.digital.033,Lazy-king move: last week's after-action notes went out as the plan for next week's reception
+flavor.encounter_full.digital.034,"A gift drone has been hovering over the forecourt for six hours, pure patience grindset, because the delivery app needs a signature and the person who can sign is in another meeting"
+flavor.encounter_full.digital.035,The intern running the gift database understood the assignment and already found three gifts logged by two different people
+flavor.encounter_full.digital.036,"The fusion plant gifted power credits and the accounts system is shook, there's no field for them"
+flavor.encounter_full.digital.037,"Every reception screen is looping one delegation's welcome video like it's a banger, because it was uploaded first and the setting to change it hides in a menu the receptionist has yet to find"
+flavor.encounter_full.digital.038,"One delegation renamed the embassy channel, and the new name is a greeting in their language the analysts are still beefing over"
+flavor.encounter_full.digital.039,"One delegation's ambassador is a humanoid robot that has waited in reception with perfect patience since Tuesday, and it's become the human envoys' bestie, they sit next to it for company"
+flavor.encounter_full.digital.040,Courier drones are lining up like it's the drop of the year
+flavor.encounter_full.digital.041,Reception's wifi has fully flopped
+flavor.encounter_full.digital.042,"Nobody passes the guest network password vibe check, it's unspellable"
+flavor.encounter_full.digital.043,The hold music has had an ambassador in a chokehold since lunch
+flavor.encounter_full.digital.044,The front desk has a sweepstake going on which delegation dips first
+flavor.encounter_full.digital.045,One envoy is chronically online enough to livestream the wait to his audience at home
+flavor.encounter_full.digital.046,"The road outside is a whole function now: delegation cars up front, food trucks parked in behind them"
+flavor.encounter_full.digital.047,The office printer crashed out on the fortieth welcome letter
+flavor.encounter_full.digital.048,"One gift is a know-it-all smart speaker with zero chill, answering every question anyone asks in the lobby"
+flavor.encounter_full.digital.049,"The gift scanner has a skill issue: one item at a time, with a queue trailing back past the lifts"
+flavor.encounter_full.digital.050,The fusion plant's liaison waited in the lobby long enough to level up into running its coffee rota
+flavor.encounter_full.digital.051,A junior press officer has been told to doomscroll every delegation's socials for signs of offence
+flavor.encounter_full.digital.052,"Enemies to cable-sharers, the arc we needed: two envoys from delegations at war with each other are splitting a charger in the corner"
+flavor.encounter_full.digital.053,The embassy liaison's out-of-office reply went full extra: three paragraphs and a map of the building
+flavor.encounter_full.digital.054,A delegation hiring a lobbyist to lobby for them to get into the lobby is sending me
+flavor.encounter_full.digital.055,A food truck outside did a collab sandwich named after the delegation that has waited longest
+flavor.encounter_full.digital.056,Security has stopped scanning the gifts and pivoted to photo dumps of them instead
+flavor.encounter_full.digital.057,The server room has a new side hustle keeping the perishable gifts cold
+flavor.encounter_full.digital.058,Analysts have flagged the third delegation's gift as sus: it's listening
+flavor.encounter_full.digital.059,The night guard is asking chat which delegation the parrot belongs to
+flavor.encounter_full.digital.060,Girl dinner for visiting envoys runs strictly between two and three in the staff canteen
+flavor.encounter_full.digital.061,This is not a speedrun: the embassy inbox is being answered in arrival order and has crawled up to last Tuesday
+flavor.encounter_full.digital.062,"The trade envoys' lobby pop-up was a total W, sold out by noon"
+flavor.encounter_full.digital.063,"Their bodyguards are aura farming with sunglasses on indoors, not once taken off"
+flavor.encounter_full.digital.064,The peace envoys are being total green flags and volunteering on the front desk
+flavor.encounter_full.digital.065,"It's so over for one delegation, which has now waited long enough to qualify for the staff pension scheme"
+flavor.encounter_full.cosmic.001,The forward bay is diplomacy-coded now
+flavor.encounter_full.cosmic.002,"Three freighters are on hold at the marker, stuck in a talking stage with the dock"
+flavor.encounter_full.cosmic.003,Somebody was let cook and the result is a welded-up shelf
+flavor.encounter_full.cosmic.004,"The relay is holding forty unanswered greetings, the most chronically offline we have ever been"
+flavor.encounter_full.cosmic.005,"The strapped crate has zero rizz, nobody's claimed it"
+flavor.encounter_full.cosmic.006,"The dock schedule's patch notes: rewritten twice this shift, and once more since"
+flavor.encounter_full.cosmic.007,"A delegation has been doing a nine-hour transit lounge speedrun, except the opposite of speed"
+flavor.encounter_full.cosmic.008,"The manifest is being so iykyk about one item, listed only as ceremonial"
+flavor.encounter_full.cosmic.009,"Two visiting envoys have hard-launched their new home: a maintenance corridor, bags and all"
+flavor.encounter_full.cosmic.010,Vacuum did a gift dirty: it got left out there and is now a different shape
+flavor.encounter_full.cosmic.011,"In a galaxy brain move, the perishables got sent down to the reactor deck because it runs warm"
+flavor.encounter_full.cosmic.012,Waiting has been so unhinged that an ambassador can now recite the whole station safety briefing
+flavor.encounter_full.cosmic.013,"Dock security is vibes-based now, nobody gets asked who they are anymore"
+flavor.encounter_full.cosmic.014,"A live animal came aboard and got full pookie treatment, its own cabin and all"
+flavor.encounter_full.cosmic.015,"Four transponders are twinning on the same friendly broadcast, all at once"
+flavor.encounter_full.cosmic.016,Somebody's ceremonial statue is an absolute unit and will not go through the hatch
+flavor.encounter_full.cosmic.017,"Two junior officers spent the morning min-maxing the airlock queue, now a matter of protocol, for the order that offends the smallest number of people"
+flavor.encounter_full.cosmic.018,"A freighter captain is big mad: stuck behind three diplomatic ships since yesterday, four calls to the relay about it, and a machine answering every one"
+flavor.encounter_full.cosmic.019,"Touching grass is cancelled: the station gardens closed for a reception mid last week, the reception moved to next week, and nobody reopened the gardens"
+flavor.encounter_full.cosmic.020,"The manifest ate and left no details: ninety crates, none described, and the officer who wrote it has been off shift since the third delegation docked"
+flavor.encounter_full.cosmic.021,"Two delegations in orbit have beef with the landing order the dock gave them, so the dock dropped orders entirely and is offering times instead"
+flavor.encounter_full.cosmic.022,"A crew that hasn't touched grass, or gone outside for any other reason, in two years has polished the hull by the visitors' berth twice this month"
+flavor.encounter_full.cosmic.023,"Snack-based rizz unlocked: rations got traded for foreign delicacies most of the crew won't eat, and the two who will are very popular at the wrong end of the day"
+flavor.encounter_full.cosmic.024,"Somebody's founder has plot armor: the hologram stands in a service corridor with its feet in a puddle of condensate, switched off twice by maintenance and back on twice by protocol staff"
+flavor.encounter_full.cosmic.025,The approach lane is still serving more ships
+flavor.encounter_full.cosmic.026,"Their gifts are literal boomers, they left home centuries ago"
+flavor.encounter_full.cosmic.027,"One envoy is literally a dupe, a backup copy of another"
+flavor.encounter_full.cosmic.028,"A gift is so huge it got yeeted into orbit, no door on the station fits it"
+flavor.encounter_full.cosmic.029,"In a plot twist, this morning's delegation came in answer to a message we have no memory of sending"
+flavor.encounter_full.cosmic.030,"The visiting crews got the most mid shore leave ever: allowed off ship, nowhere left on the station to go"
+flavor.encounter_full.cosmic.031,"One gift's progress bar is delulu, it's been uploading since the start of the month and still is"
+flavor.encounter_full.cosmic.032,"The ship's mind said hear me out, define importance first, then it'll arrange the gifts by it"
+flavor.encounter_full.cosmic.033,"The slowest W ever: a delegation that set out with gifts for our grandparents has arrived, and was told the gifts will be accepted on their behalf"
+flavor.encounter_full.cosmic.034,"The government that signed the treaty obliging us to receive every delegation fumbled hard, it never expected anyone to come this far"
+flavor.encounter_full.cosmic.035,"One visiting ship with no crew anyone has seen understood the assignment and delivered its gift itself, carefully, through the cargo lock"
+flavor.encounter_full.cosmic.036,"The bureaucracy is so not it: an envoy whose home civilisation has ceased to exist wants to stay, and his application goes to a meeting that happens once every ten years"
+flavor.encounter_full.cosmic.037,The storage ring is full and the overflow is now an aesthetic: tethered outside in a long line you can see from the observation deck
+flavor.encounter_full.cosmic.038,"Thanking this delegation takes so long that by the end, the civilisation that sent it will have respawned as a different civilisation"
+flavor.encounter_full.cosmic.039,"The station's oldest envoy is the most unbothered queen alive: waiting for an audience since before the current administrator was born, three previous ones outlived, and in no hurry"
+flavor.encounter_full.cosmic.040,"It's over for the docking ring, every slot is taken"
+flavor.encounter_full.cosmic.041,A holding-pattern vibe has diplomatic ships doing laps around the moon
+flavor.encounter_full.cosmic.042,"Every guest berth has unlocked the roommate arc, two envoys apiece"
+flavor.encounter_full.cosmic.043,An envoy's gift has spent a week thawing in the cargo bay and is getting sus
+flavor.encounter_full.cosmic.044,Accounting is shook now that delegations have their own line in the air budget
+flavor.encounter_full.cosmic.045,"A delegation arrived in cold sleep and is honestly a mood, left asleep until there's a room for it"
+flavor.encounter_full.cosmic.046,Canon event for every station: a spacewalk crew is out untangling the gift tethers
+flavor.encounter_full.cosmic.047,One envoy is a whole swarm that's been asked to squad up in a single room and wait
+flavor.encounter_full.cosmic.048,"As a courtesy, the ambassador made of light got a dark room to wait in so she can slay in peace"
+flavor.encounter_full.cosmic.049,The embassy module was docked at a cursed angle that has everyone inside seasick
+flavor.encounter_full.cosmic.050,"The greeting order is boomer-coded: delegations from three star systems go in the order their messages were sent, which was before any of the greeters were born"
+flavor.encounter_full.cosmic.051,"The newest delegation arrived as a signal with no ship behind it, and it's been living rent free in the station's memory since, taking a bit more each day, and the archivists have been told to keep acknowledging it"
+flavor.encounter_full.cosmic.052,"The dock officer gets an A for effort and an L for accuracy: a greeting learned in each envoy's language, most of them wrong"
+flavor.encounter_full.cosmic.053,One delegation flexed astronomically and gifted a small moon
+flavor.encounter_full.cosmic.054,"The transit lounge crews say one envoy ship is the true OG, here before the station was built"
+flavor.encounter_full.cosmic.055,"The dock crew want lead-lined gloves for the hot envoy's gifts, they are not tryna glow up like that"
+flavor.encounter_full.cosmic.056,"The observation deck slaps for naps, but visitors are reminded it is not a sleeping area"
+flavor.encounter_full.cosmic.057,The math is not mathing: fourteen ships holding for six free berths
+flavor.encounter_full.cosmic.058,A habitat on the far side of the ring is securing the bag by offering to take the overflow envoys at a nightly rate
+flavor.encounter_full.cosmic.059,"The trade fleet has popped off with a market in orbit, selling to the other delegations"
+flavor.encounter_full.cosmic.060,Their warship has been aura farming with its guns trained on the gift bay for three days straight
+flavor.encounter_full.cosmic.061,Their delegation is so introvert-coded it won't dock and speaks only through a little probe
+flavor.encounter_full.cosmic.062,"The peace envoys literally volunteered to touch grass, hydroponics duty while they wait"
+flavor.encounter_full.cosmic.063,"The audacity of the station's gift registry, which now wants its own seat at the protocol table"
+flavor.encounter_full.cosmic.064,"The envoy from the dead world keeps asking if his world has left him on read or just hasn't answered yet, and nobody can tell him"
+flavor.words.enc_standoff_distance.001,twenty paces of pure side-eye
+flavor.words.enc_standoff_distance.002,forty paces of zero rizz
+flavor.words.enc_standoff_distance.003,sixty paces of don't-perceive-me
+flavor.words.enc_standoff_distance.004,a hundred ick-filled paces
+flavor.words.enc_standoff_distance.005,two hundred introvert-coded paces
+flavor.words.enc_standoff_distance.006,a dozen sus paces
+flavor.words.enc_standoff_distance.007,a lowkey brave ten paces
+flavor.words.enc_standoff_distance.008,a highkey nervous fifty paces
+flavor.words.enc_standoff_distance.009,eighty paces of aura-heavy open ground
+flavor.words.enc_standoff_distance.010,thirty paces of mid-at-best footing
+flavor.words.enc_standoff_distance.011,a short yeet
+flavor.words.enc_standoff_distance.012,a long yeet
+flavor.words.enc_standoff_distance.013,ninety-ish vibes-measured paces
+flavor.words.enc_standoff_distance.014,the yap radius of one shout
+flavor.words.enc_standoff_distance.015,full yapping distance
+flavor.words.enc_standoff_distance.016,a too-close-for-the-vibes arm's length
+flavor.words.enc_standoff_distance.017,"nature's block button, the full width of the water"
+flavor.words.enc_standoff_distance.018,a hundred and fifty keep-it-pushing paces
+flavor.words.enc_standoff_gesture.001,a hey-bestie hand raise
+flavor.words.enc_standoff_gesture.002,a nod that got ghosted
+flavor.words.enc_standoff_gesture.003,a flat open no-beef palm
+flavor.words.enc_standoff_gesture.004,a head bow that said respectfully
+flavor.words.enc_standoff_gesture.005,two fingers up in a sus peace sign
+flavor.words.enc_standoff_gesture.006,a slow cringe-but-brave wave
+flavor.words.enc_standoff_gesture.007,a full-body idk shrug
+flavor.words.enc_standoff_gesture.008,a stiff rizzless nod
+flavor.words.enc_standoff_gesture.009,a long bombastic side-eye
+flavor.words.enc_standoff_gesture.010,a physical-nah step backwards
+flavor.words.enc_standoff_gesture.011,a head shake meaning no shot
+flavor.words.enc_standoff_gesture.012,an empty hand held out as receipts of no weapon
+flavor.words.enc_standoff_gesture.013,a whistle ratioed by silence
+flavor.words.enc_standoff_gesture.014,a mouthed maybe-bet
+flavor.words.enc_standoff_gesture.015,a half-wave that flopped mid-air
+flavor.words.enc_standoff_gesture.016,a big-mood knuckle to the forehead
+flavor.words.enc_standoff_gesture.017,a wave that was almost bestie-coded
+flavor.words.enc_standoff_gesture.018,a weapon lowered for a quiet W
+flavor.encounter_standoff.any.001,Goated stubbornness on both sides: neither ate first
+flavor.encounter_standoff.any.002,The waiting was a four-hour brain rot marathon
+flavor.encounter_standoff.any.003,"No shot anybody sat down, not even once"
+flavor.encounter_standoff.any.004,The wind stayed on full send the whole time
+flavor.encounter_standoff.any.005,Roll call but make it hostile: two names got yelled across the gap
+flavor.encounter_standoff.any.006,"The ratio was nine of us to forty of them, brutal"
+flavor.encounter_standoff.any.007,"The interpreter flopped, zero use whatsoever"
+flavor.encounter_standoff.any.008,The silence hit different when a body got handed back across the gap
+flavor.encounter_standoff.any.009,"Not one person sat, everyone stayed locked in on their feet"
+flavor.encounter_standoff.any.010,The far side flexed by sitting down
+flavor.encounter_standoff.any.011,Nobody got the tea on anything
+flavor.encounter_standoff.any.012,The single plot twist to cross the gap was ~
+flavor.encounter_standoff.any.013,"The man on watch counted sixty, on god, and will not be talked down from it"
+flavor.encounter_standoff.any.014,The whole group had a skill issue making out whatever the far side shouted
+flavor.encounter_standoff.any.015,Our interpreter caught three words and delulu-guessed the rest
+flavor.encounter_standoff.any.016,"In a real one move, they brought a body to the halfway point, handed it over and stepped back"
+flavor.encounter_standoff.any.017,The waiting was so long that people quiet-quit standing and sat down
+flavor.encounter_standoff.any.018,A lowkey swap happened in the middle and both men are denying it
+flavor.encounter_standoff.any.019,The remix going round tonight goes hard: twice the shouting of the original story
+flavor.encounter_standoff.any.020,The officers did the bare minimum: logged the hour it started and very little else
+flavor.encounter_standoff.any.021,One of ours reached for his weapon in a menace moment and got sat on immediately
+flavor.encounter_standoff.any.022,"The most tense girl dinner ever: cold food, eaten standing, everybody watching everybody else"
+flavor.encounter_standoff.any.023,A man near the front went white and shook when a name got shouted
+flavor.encounter_standoff.any.024,"The kids do not miss: kept back, they watched the whole thing anyway"
+flavor.encounter_standoff.any.025,Nobody on either side was tryna be the one who moved
+flavor.encounter_standoff.any.026,"Their estimated numbers inflated from sixty to ninety, then everyone said say less and left it"
+flavor.encounter_standoff.any.027,An old woman on our side clapped back with something rude in their own language
+flavor.encounter_standoff.any.028,"Two faces over there were recognised, and the no-comment-coded silence means neither name has been said aloud"
+flavor.encounter_standoff.any.029,Somebody's been hard-selling it as a huge W since about noon
+flavor.encounter_standoff.any.030,The left flank has been salty about the ground ever since
+flavor.encounter_standoff.any.031,"Anyone claiming they slept well afterwards is capping, it was poor all round"
+flavor.encounter_standoff.any.032,"A bet went down on which side would dip first, and nobody has paid"
+flavor.encounter_standoff.any.033,"The far side's boots had better drip, and everyone here clocked it"
+flavor.encounter_standoff.any.034,Their oldest man served ~ before turning away
+flavor.encounter_standoff.any.035,One of ours offered ~ and has been the main topic in the group chat since
+flavor.encounter_standoff.any.036,"The whole thing was peak cinema, featuring ~ and a great deal of standing about"
+flavor.encounter_standoff.any.037,The finale was ~ from some random nobody here can name
+flavor.encounter_standoff.any.038,"Pocket-snack survival mode unlocked: nobody had thought about food at all, so the afternoon ran on whatever was in people's pockets"
+flavor.encounter_standoff.any.039,"A trade went down at the left-hand end while everybody watched the middle, and the two men involved are twinning in their denials, word for word"
+flavor.encounter_standoff.any.040,"The official write-up roasts the ground in one line, after the hour it began, the hour it ended and a guess at their strength"
+flavor.encounter_standoff.any.041,A woman four ranks back in ours got caught in 4K answering a name someone on their side shouted across the gap before she could stop herself
+flavor.encounter_standoff.any.042,An old man walked out from their line with both hands open and had a whole moment alone in the middle before anybody would come and hear him
+flavor.encounter_standoff.any.043,The math on what was said is not mathing: the nearest ones gave four different answers and can't agree on the language it was in
+flavor.encounter_standoff.any.044,"The aura on the woman at their front: one hand raised, held a moment and dropped, and the men behind her were packing up before she'd turned round"
+flavor.encounter_standoff.any.045,"Somebody near the middle replied with ~, and insists it felt valid at the hour"
+flavor.encounter_standoff.any.046,"Our interpreter learned the language forty years ago from a trader dead for twenty of them, caught maybe half of the shouting, and will lowkey only admit to a third of that"
+flavor.encounter_standoff.any.047,"A man in the second row put his hand up and shouted something that could have kicked the whole thing off, and he has since ghosted his own front door"
+flavor.encounter_standoff.any.048,"The write-up is a beige-flag classic of nine lines: six on the ground and the weather, three saying contact was made at the stated hour and the far side withdrew at its own pace"
+flavor.encounter_standoff.any.049,They came in chasing blood with fully feral energy
+flavor.encounter_standoff.any.050,Their front rank came in on full send and then hit the brakes
+flavor.encounter_standoff.any.051,"One of them spat, the pettiest mic drop, and left it at that"
+flavor.encounter_standoff.any.052,"They came out for a fight and stood around for four hours instead, and the man who led them out has been getting roasted for it since"
+flavor.encounter_standoff.any.053,"A captain over there did the most silent flex: drew a weapon, held it up over his head for everybody on both sides to see, and put it away again without one word"
+flavor.encounter_standoff.any.054,The audacity of pulling out a sales pitch halfway through a standoff
+flavor.encounter_standoff.any.055,A deeply unserious price got shouted across the gap
+flavor.encounter_standoff.any.056,The most introvert-coded army alive kept the whole thing on mute
+flavor.encounter_standoff.any.057,"Get out, not die, was their energy: wanting us gone beat wanting us dead"
+flavor.encounter_standoff.any.058,"They hard-launched a boundary marker at the edge of the ground they claim, walked back behind it, every one of them, and stood there until we'd gone"
+flavor.encounter_standoff.any.059,Two armies stood in the rain doing unhinged levels of politeness
+flavor.encounter_standoff.any.060,The scariest jumpscare of the afternoon was a sneeze
+flavor.encounter_standoff.any.061,Both sides marched home with the same cope: it was a win
+flavor.encounter_standoff.any.062,"It ended because everyone got bored at once, a collective vibe shift that took way longer than anyone will admit to in the morning"
+flavor.encounter_standoff.any.063,"The oldest man on the line has a hot take: if standing about counts as fighting, this was the longest engagement anybody here has ever been in"
+flavor.encounter_standoff.any.064,Very touch-grass of them to take the long way back
+flavor.encounter_standoff.any.065,It hit different that nobody knew the face on the body that came over
+flavor.encounter_standoff.any.066,"Rest easy, king: the wounded man they let through didn't make it past the night"
+flavor.encounter_standoff.any.067,"The two men who held the left are not okay, no cap: they haven't eaten since, won't be spoken to, and one has sat in the same spot since dark"
+flavor.encounter_standoff.any.068,The drinks are out and somebody was sending it so hard they've already fallen over
+flavor.encounter_standoff.any.069,Somebody shouted the name {subject} across the gap and got left on seen
+flavor.encounter_standoff.any.070,"Standing that close to {subject} was a core memory for everyone here, nobody had before"
+flavor.encounter_standoff.any.071,The men spent the whole evening in a hot-take war about what {subject} wanted out of it
+flavor.encounter_standoff.any.072,Two of ours did an iconic same-pace walk out to {subject} and back
+flavor.encounter_standoff.any.073,Trust issues fr: the order not to fire on {subject} without a word from the front went round three times before anybody believed it came from where it said
+flavor.encounter_standoff.any.074,"There's an iykyk old man here who fought {subject} thirty years ago elsewhere, walked the length of our line during it, looking, and has never said what he was looking for"
+flavor.encounter_standoff.any.075,Somebody shot their shot with {res} across the gap and got a shaken head
+flavor.encounter_standoff.any.076,"Purely for the plot, everything, the {res} included, was carried up to the line and back down unopened"
+flavor.encounter_standoff.any.077,Nobody was tryna guard the {res} with all that going on
+flavor.encounter_standoff.any.078,Everyone's been pressed since about who was meant to be watching the {res}
+flavor.encounter_standoff.any.079,"The far side jumpscared us by asking after the {res} by name, and nobody here can explain it"
+flavor.encounter_standoff.any.080,The store where the {res} lives was left wide open the whole time and nothing got yoinked
+flavor.encounter_standoff.any.081,"Two men were pulled off the {res} and put on the line, nobody has put them back, and both are salty enough to mention it"
+flavor.encounter_standoff.any.082,The viral number tonight is {amt_res}
+flavor.encounter_standoff.any.083,Somebody did the emotional damage math and the afternoon cost {amt_res} in lost work
+flavor.encounter_standoff.any.084,"A man on our side calculated that four hours of standing about cost the town roughly {amt_res}, told nine people, and two asked him to run it again because it is not mathing"
+flavor.encounter_standoff.any.085,Everybody was capping: both sides brought more people than they needed and fewer than they claimed
+flavor.encounter_standoff.any.086,"The two commanders never came within speaking distance, and each has since clapped back that the other was afraid to"
+flavor.encounter_standoff.any.087,The rain respectfully sat this one out all day
+flavor.encounter_standoff.grounded.001,A dog crossed the open ground like the main character it is and had to be fetched back
+flavor.encounter_standoff.grounded.002,Somebody's dog defected to the other side like a total pick-me
+flavor.encounter_standoff.grounded.003,"The dog, owned by somebody in the second row, went straight across, and a clutch boy of about nine had to walk out into the open and carry it back"
+flavor.encounter_standoff.grounded.004,"The dog went over in hour two and was eating good, fed by three separate people on the far side, until a boy sent out with both hands up and no idea what he was doing walked it back"
+flavor.encounter_standoff.grounded.005,"The fanfic is thriving: told in town four times since last night, the story has gained, in order, a river, a wolf, an insult in a language nobody there speaks, and a man who walked out alone and came back grinning"
+flavor.encounter_standoff.grounded.006,"The ground between them failed the vibe check, churned to mud from all the standing"
+flavor.encounter_standoff.grounded.007,The chain of command said idk: a runner went back for orders and came back with a question
+flavor.encounter_standoff.grounded.008,"One man counted the far side at eighty, another at two hundred and forty, and the two were still in a full debate arc after dark"
+flavor.encounter_standoff.grounded.009,The long war with {subject} took one afternoon off and respawned by dark
+flavor.encounter_standoff.grounded.010,"The man on the left of our line had been up since before dawn, and his fried account afterwards had the far side arriving from two different directions"
+flavor.encounter_standoff.grounded.011,"Their side counted our numbers twice, carefully, big brain style, the way a man counts out coin before he hands it over"
+flavor.encounter_standoff.grounded.012,"A quarter of an hour of shouting, then the plot twist: both sides were just using different words for the same river"
+flavor.encounter_standoff.grounded.013,"The town's version tonight goes hard: triple the numbers, a river crossing, and a speech nobody who was there remembers hearing"
+flavor.encounter_standoff.grounded.014,"The kids on the slope behind us respawned within the quarter hour after being sent away at the start, and stayed the entire time"
+flavor.encounter_standoff.grounded.015,"What got eaten in those four hours: two loaves passed down the line, a bag of dried fruit from an unthanked legend, and the water meant for the walk home"
+flavor.encounter_standoff.grounded.016,The mist lay between the lines until noon and both sides waited for it to dip before moving
+flavor.encounter_standoff.grounded.017,"Their drummer and ours traded turns until dark, and ours has been told he got mogged"
+flavor.encounter_standoff.grounded.018,"Both sides are in a situationship with the same hedge, dug in at opposite ends of it"
+flavor.encounter_standoff.grounded.019,"A cook on their side sent a bussin pot of something across under a white cloth, and it came back scraped clean"
+flavor.encounter_standoff.grounded.020,Both lines locked in at ~ and did not move
+flavor.encounter_standoff.grounded.021,Afterwards somebody paced the gap for receipts and got ~
+flavor.encounter_standoff.grounded.022,"Our side was personal-space-maxxing, nobody closer than ~ all afternoon"
+flavor.encounter_standoff.grounded.023,A boy sent out with water did the most clutch walk of ~ and came back the same way
+flavor.encounter_standoff.grounded.024,"The two front ranks settled at ~, which held all day and was measured afterwards by a man with no thoughts and no other plans"
+flavor.encounter_standoff.grounded.025,"The roasts carried fine across ~, and they landed well enough on both sides that two men were told to stop"
+flavor.encounter_standoff.grounded.026,Somebody drew some unflattering fan art of {subject} in the dirt and rubbed it out before the officers came past
+flavor.encounter_standoff.grounded.027,The water got shared in the most begrudging collab ever
+flavor.encounter_standoff.grounded.028,"Standing-up bread slaps less than you'd think, and that's how it got eaten"
+flavor.encounter_standoff.grounded.029,"In a valid hydration ceasefire, both sides took turns at the same water"
+flavor.encounter_standoff.grounded.030,"The rain was an equal-opportunity menace, soaking both sides all afternoon"
+flavor.encounter_standoff.grounded.031,"Halfway through the weather turned and the rain came in sideways, and both sides stayed petty, nobody would give the other the satisfaction of moving into the lee of the hill"
+flavor.encounter_standoff.grounded.032,Whatever they were eating smelled bussin and drifted across on the wind for two hours
+flavor.encounter_standoff.grounded.033,"The cook is salty: no warning, and she says so to anyone who passes"
+flavor.encounter_standoff.grounded.034,A mom came out to perceive the standoff and was walked back indoors
+flavor.encounter_standoff.grounded.035,Both sides were too petty to use the one patch of shade
+flavor.encounter_standoff.grounded.036,"Two real ones of ours went and got the body, unasked, after four of theirs carried it to the middle and left it on the grass"
+flavor.encounter_standoff.grounded.037,"Both sides drank the same water within an hour of each other, upstream and down, and the who-got-the-better-end discourse has been going ever since"
+flavor.encounter_standoff.grounded.038,"Nobody here has much to say about the far side's numbers, weapons or intentions, but the discourse about standing in one place that long with wet feet is endless"
+flavor.encounter_standoff.late.001,Both sides were chronically online enough to spend the afternoon simulating the afternoon
+flavor.encounter_standoff.late.002,"Cope is universal: both sides' ships held position six hours at a range neither could quite reach, and the tacticians on both sides now call it the correct range"
+flavor.encounter_standoff.late.003,"The trigger discipline was goated, not a single shot fired"
+flavor.encounter_standoff.late.004,"Their envoy's message had zero tldr: polite, formally correct, four thousand pages"
+flavor.encounter_standoff.late.005,"Existential crisis unlocked: an officer on our side worked out that at this rate the war could go on longer than the sun has left, and the figure has been classified"
+flavor.encounter_standoff.late.006,"They flexed with a greeting in every language we've ever used, including two we stopped using"
+flavor.encounter_standoff.late.007,The targeting systems were locked in all afternoon
+flavor.encounter_standoff.late.008,Both sides' jamming was polite in a passive-aggressive group chat way
+flavor.encounter_standoff.late.009,Machine translation was simping for their side
+flavor.encounter_standoff.late.010,"The de-escalation ate and left no crumbs, not one weapon armed on either side"
+flavor.encounter_standoff.late.011,The negotiators kept their aura up by never sitting down
+flavor.encounter_standoff.late.012,Somebody gaslit the incident into a whole new classification
+flavor.encounter_standoff.late.013,They stayed perceived on radar all day
+flavor.encounter_standoff.late.014,The ultimatum arrived with a cringe typo in it
+flavor.encounter_standoff.late.015,Their targeting systems stared ours down for a full hour and then logged off without a word
+flavor.encounter_standoff.late.016,Machine translation said let them cook and turned their demands into a recipe
+flavor.encounter_standoff.late.017,"Networking but make it war, as our envoy and theirs swapped business cards at the halfway marker"
+flavor.encounter_standoff.late.018,Both governments put out statements calling the same afternoon a W
+flavor.encounter_standoff.late.019,"The satellites overhead caught both positions in 4K, and the third party who owns them is selling the footage"
+flavor.encounter_standoff.late.020,Brain rot in the command tent: three read-alouds of the rules of engagement before anybody agreed what they meant
+flavor.encounter_standoff.late.021,"Their loudspeakers were earworm-maxxing, one announcement on loop for four hours"
+flavor.encounter_standoff.late.022,"Both sides signed the ceasefire document with zero receipts kept, neither has a copy"
+flavor.encounter_standoff.late.023,"The talks meant to prevent the standoff got mogged by the standoff, which lasted longer"
+flavor.encounter_standoff.late.024,"Both commanders went petty online, posting pictures of the other's commander looking nervous"
+flavor.encounter_standoff.late.025,"It was all bark and no shot: weapons on both sides aimed at something the whole time, not one fired"
+flavor.encounter_standoff.late.026,Our side sent a formal warning and their dry-texter system sent back an automated acknowledgement
+flavor.encounter_standoff.late.027,A camera on their side kept zooming in on us like a parasocial fan
+flavor.encounter_standoff.late.028,The crews are manifesting hazard pay for sitting still
+flavor.encounter_standoff.late.029,"The timeline is healing: both sides agreed on the line on the map, which has never happened before"
+flavor.encounter_standoff.late.030,"In full villain origin story style, a liaison officer on their side asked for our liaison's name and wrote it down slowly"
+flavor.encounter_standoff.late.031,The watch officers rotated every two hours and each one's report was a dupe of the last
+flavor.encounter_standoff.late.032,Rations were eaten at the posts and someone was extra enough to collect and count the wrappers
+flavor.encounter_standoff.late.033,"The two delegations' most unserious two hours: arguing first about which language the meeting would be held in, then about whether that had been the meeting"
+flavor.encounter_standoff.late.034,"The most documented jumpscare ever: a targeting error on our side locked onto their command vehicle for a few seconds before it was caught, and three separate reports now cover those seconds"
+flavor.encounter_standoff.late.035,"Their side politely doxxed us: our names, ranks and home addresses, all correct, broadcast and then signed off with a wish for our good health"
+flavor.encounter_standoff.late.036,"One of their soldiers went viral by waving at our camera: the image has been enlarged, enhanced and circulated to every intelligence desk that will take it"
+flavor.encounter_standoff.late.037,Peak lawyer pettiness: both sides agree nothing happened and are arguing about who is entitled to say so first
+flavor.encounter_standoff.late.038,"Their countermeasures and ours cancelled each other out so completely that neither side could see a thing all afternoon, so everyone stayed put, no thoughts, just static"
+flavor.encounter_standoff.late.039,The most extra appendix ever: thirty pages explaining why the official summary of the afternoon is a single paragraph
+flavor.encounter_standoff.late.040,"A countdown on an open display on their side was pure rage bait: it ran the whole time, hit zero, and got reset"
+flavor.encounter_standoff.late.041,"Biggest fumble in history: an opening offer from their negotiator that would have ended the war, pulled before anyone on our side could finish reading it"
+flavor.encounter_standoff.late.042,"The youngest officer on our side had the only script-reading skill tree, and spent the afternoon translating signs about toilets and parking"
+flavor.encounter_standoff.late.043,"Committed to the bit: the standoff has a code name, a case number and a small working group, which met, found it needs more information, and scheduled a second meeting where it expects to find the same thing"
+flavor.encounter_standoff.late.044,"Accidental twinning: their long formal protest on every frequency we monitor and the one ours sent back are word for word identical, because both sides downloaded the same template"
+flavor.encounter_standoff.late.045,"The bots were tweaking: the autonomous defences on both sides spent the afternoon tagging each other as threats, escalating, standing down, and filing reports to people a few metres away who watched it all"
+flavor.encounter_standoff.late.046,"When it was over the two commanders walked back without turning round, and the only one who looked back was a real one, a medic on their side who lifted a hand, and one of ours lifted a hand back before anyone could stop him"
+flavor.encounter_standoff.late.047,The sensors did not miss a single movement
+flavor.encounter_standoff.late.048,Both medics did a little collab and compared notes
+flavor.encounter_standoff.late.049,The storm hard-carried the peace by grounding everything
+flavor.encounter_standoff.late.050,"Headquarters got its hourly updates, each one a dupe of the same sentence with a new time on it"
+flavor.encounter_standoff.late.051,Our gunners got workplace-goals hourly rotations so nobody's hands would get tired
+flavor.encounter_standoff.late.052,The only use of the hotline between the two headquarters was a dry-texter check that it worked
+flavor.encounter_standoff.late.053,"Two soldiers on opposite sides share a surname, and their officers have asked them to stop making it their whole personality"
+flavor.encounter_standoff.late.054,The tea in the ranks: both generals went to the same school and are now not speaking
+flavor.encounter_standoff.late.055,"Peak cinema in the command post was two lines of dots on every screen, and the dots did not move"
+flavor.encounter_standoff.late.056,"Being called up to stand in a field got a complaint from the reservists, and they are so real for it"
+flavor.encounter_standoff.late.057,Both sides scanned the ground between the lines for mines and published the receipts
+flavor.encounter_standoff.late.058,"The real MVP is the delivery driver, let through the lines twice after both command posts ordered food from the same place by evening"
+flavor.encounter_standoff.late.059,"The sensors stayed locked in, not one blink"
+flavor.encounter_standoff.late.060,Both interpreters synced their breaks in an iykyk kind of way
+flavor.encounter_standoff.late.061,Their surrender demand got left on read until it expired
+flavor.encounter_standoff.late.062,"Commitment issues on both sides: a neutral party proposed a peace conference, both accepted it in principle, and both rejected every date"
+flavor.encounter_standoff.late.063,"The rota gaslit our missile crews on purpose, arming and disarming the batteries so nobody got used to either"
+flavor.encounter_standoff.late.064,One vendor's neutral side hustle: coffee to both lines from the same van
+flavor.encounter_standoff.late.065,The afternoon felt like a week to everybody there and got slept on with a single line in the evening briefing
+flavor.encounter_standoff.late.066,"The officers held a fan art war: one of theirs sketched our vehicles all afternoon, and one of ours sketched him"
+flavor.encounter_standoff.late.067,"Both sides ran their sensors on highkey alert, hot the whole time"
+flavor.encounter_standoff.late.068,"The fit was non-negotiable, the envoy kept those gloves on all day"
+flavor.encounter_standoff.late.069,The enemy negotiator's girl dinner was four coffees and zero food
+flavor.encounter_standoff.late.070,Our interpreter's one translated joke came back from theirs so different it hit different
+flavor.encounter_standoff.late.071,"The ceasefire line on the shared map got nudged forty metres by each side in turn, a full edit war, until an officer locked the file"
+flavor.encounter_standoff.late.072,"The officers opposite had more drip: dress uniform, medals and all, while ours wore working kit"
+flavor.encounter_standoff.late.073,"Nobody wants to be perceived, so both sides wait for the weather satellite that passes over the line every ninety minutes before doing anything"
+flavor.encounter_standoff.late.074,Medics are real ones: theirs asked ours for a painkiller and got one
+flavor.encounter_standoff.late.075,"Both delegations ate lunch in a mutual-ick formation: one corridor, opposite walls"
+flavor.encounter_standoff.late.076,The demands arrived in a cursed font nobody here has installed
+flavor.encounter_standoff.late.077,"The only contact all afternoon was one handshake, hard-launched with a form filed by both sides to confirm it"
+flavor.encounter_standoff.late.078,"The two chief negotiators met once at a conference years ago, and for the first ten minutes they committed to the bit of pretending they'd forgotten"
+flavor.encounter_standoff.late.079,"Three separate systems transcribed everything said aloud, the transcripts disagree in fourteen places, and a panel has been formed to settle the discourse about an afternoon where both sides mostly stood and looked at each other"
+flavor.encounter_standoff.late.080,The canteen's hot take of the day: their commander has a cold
+flavor.encounter_standoff.late.081,The night crew are salty that the whole standoff ran on their shift
+flavor.encounter_standoff.late.082,"Their side soft-launched with a test-fire at nothing in particular, then did nothing else for six hours"
+flavor.encounter_standoff.late.083,"War but make it retail, with a price list slid across the table alongside their demands"
+flavor.encounter_standoff.late.084,Vanish-mode flex: their demands came in a sealed file that self-deleted after one read
+flavor.encounter_standoff.late.085,"A real one move with deeply unsettling intel behind it: their side asked how our wounded were doing, by name"
+flavor.encounter_standoff.late.086,"It's the ego for me: both press offices released photographs of the one handshake, cropped to show only their own side"
+flavor.encounter_standoff.late.087,"It was real one hours, quiet and respectful: two bodies crossed over under a white sheet and a camera"
+flavor.encounter_standoff.ancient.001,The drums dipped out early
+flavor.encounter_standoff.ancient.002,Two spears planted and left behind were the most say less message possible
+flavor.encounter_standoff.ancient.003,Both herds went co-op on the same slope
+flavor.encounter_standoff.ancient.004,"The ford got nerfed, running low"
+flavor.encounter_standoff.ancient.005,The elders pulled an all-nighter of pure discourse
+flavor.encounter_standoff.ancient.006,An arrow got nocked and flopped back into the quiver without being drawn
+flavor.encounter_standoff.ancient.007,Both sides watered at the ford and were too petty to hurry
+flavor.encounter_standoff.ancient.008,Two boys grinded on the watch-fire all night and saw nothing
+flavor.encounter_standoff.ancient.009,Somebody rolled a hide out on the grass and watched from it purely for the content
+flavor.encounter_standoff.ancient.010,"The spears on the far side mogged ours on craftsmanship, and every man here saw it"
+flavor.encounter_standoff.ancient.011,A spear was yeeted short on purpose and left where it landed
+flavor.encounter_standoff.ancient.012,The elders are obsessed and want a full replay of the whole thing in the morning
+flavor.encounter_standoff.ancient.013,The store-pit was respectfully avoided by everyone while they stood out there
+flavor.encounter_standoff.ancient.014,"An old woman roasted them from behind our spears, and they heard every word"
+flavor.encounter_standoff.ancient.015,Their fires and ours put up an aesthetic of straight smoke columns all afternoon
+flavor.encounter_standoff.ancient.016,"Nobody relieved the watch-fire boys, periodt, and they want that known"
+flavor.encounter_standoff.ancient.017,"The W of the day: the herds were driven apart before anything could start, taking most of an hour and a good deal of shouting at animals rather than at people"
+flavor.encounter_standoff.ancient.018,"Aura loss in real time: one of the elders walked out alone to the middle, stood there a while, and came back considerably slower than he went out"
+flavor.encounter_standoff.ancient.019,"A hide went across as a gift and came straight back, and the man who carried it is too fried to agree with himself about what was said to him"
+flavor.encounter_standoff.ancient.020,The old men are still shook that the harvest stood in the valley the whole time and neither lot went into it
+flavor.encounter_standoff.ancient.021,"The dogs were built different: theirs and ours worked out the line long before the men did, and settled it at the water without anybody getting bitten"
+flavor.encounter_standoff.ancient.022,"Frost on the grass at first light, two lines of men standing in it, and a boy of about ten carrying the whole team, up and down our side with a water skin"
+flavor.encounter_standoff.ancient.023,"After three nights of talking the elders say the spears should have gone in on the first afternoon, which is pure cap, none of them said so that afternoon"
+flavor.encounter_standoff.ancient.024,"In the second hour a young man on their side had a crashout, his spear came down beside the ford, and he was taken by the arm and walked back through his own line, nothing else crossing all day"
+flavor.encounter_standoff.feudal.001,"The gate stayed literally gatekept, shut all day"
+flavor.encounter_standoff.feudal.002,"The bells did the shortest bop in history: one ring, then nothing"
+flavor.encounter_standoff.feudal.003,Supper being late was the real L of the day
+flavor.encounter_standoff.feudal.004,The banners on both sides logged off at the same time
+flavor.encounter_standoff.feudal.005,"The muster got stood down, and everyone said say less and went home"
+flavor.encounter_standoff.feudal.006,"A herald went out, delivered his whole yap, and came back very thirsty"
+flavor.encounter_standoff.feudal.007,Two riders met at the ford and did boomer small talk about the weather
+flavor.encounter_standoff.feudal.008,The clerks wrote it up and somehow nerfed it into something even duller than it was
+flavor.encounter_standoff.feudal.009,"The grain cart had plot armor: let through the middle, untouched by anyone"
+flavor.encounter_standoff.feudal.010,"Not the stewards talking about the harvest, of all things"
+flavor.encounter_standoff.feudal.011,"The pickets on both sides side-eyed each other all night, never out of sight"
+flavor.encounter_standoff.feudal.012,"Somebody sent a jug over and the far side understood the assignment, it came back empty"
+flavor.encounter_standoff.feudal.013,The village between the two camps stayed in its lane and both sides left it alone
+flavor.encounter_standoff.feudal.014,A horn blew on their side and got left on seen
+flavor.encounter_standoff.feudal.015,"The militia were so back to farming, they went home to the harvest glad of it"
+flavor.encounter_standoff.feudal.016,"An arrow stuck in the gate post is part of the aesthetic now, nobody's moving it"
+flavor.encounter_standoff.feudal.017,"The quartermaster counted their column at four hundred, quit, wrote four hundred, and now has haters: the men who counted more keep coming to find him"
+flavor.encounter_standoff.feudal.018,"No rider would go, so a clutch boy carried the message across on foot, got fed bread on the far side, and came back with nothing written down"
+flavor.encounter_standoff.feudal.019,"Neither steward believed in the agreement for a second, ngl, and its sealed parchment is already folded into somebody's boot"
+flavor.encounter_standoff.feudal.020,"The storehouse doors got shut for the first time since spring, which meant finding the man with the key, who was in goblin mode asleep in the undercroft"
+flavor.encounter_standoff.feudal.021,"The most awkward function ever: both columns eating supper in sight of one another in the yard beyond the ford, at about the same hour, silent but for the carts being unloaded"
+flavor.encounter_standoff.feudal.022,"Tbh the militia deserve it on record: they showed up on time and stood in the wet five hours, and not one of them got told what for"
+flavor.encounter_standoff.feudal.023,"The way this boy has explained himself to three different people all morning: told to ring the bells if anything happened, he rang them once at about noon and never again"
+flavor.encounter_standoff.feudal.024,"A clerk read the terms off parchment in a voice nobody past the second rank could hear, read them louder when the militia complained, and by the third reading their whole column had turned round and logged off up the road"
+flavor.encounter_standoff.industrial.001,The depot cat made the based call to stay indoors
+flavor.encounter_standoff.industrial.002,"Nobody secured the bag, and two shifts of wages are just sitting there unclaimed"
+flavor.encounter_standoff.industrial.003,"Two lorries spent the afternoon idling, a full sigma grindset of doing nothing"
+flavor.encounter_standoff.industrial.004,Not the telephone getting zero calls the whole time
+flavor.encounter_standoff.industrial.005,The wire got cut and the connection was so joever
+flavor.encounter_standoff.industrial.006,"A freight train passed between the two lines like the final boss, slowly, twice"
+flavor.encounter_standoff.industrial.007,"The foreman pulled a no-notes handshake: walked over, shook a hand, walked straight back"
+flavor.encounter_standoff.industrial.008,"Both work parties had a goofy standoff on the platform, standing about for most of the morning"
+flavor.encounter_standoff.industrial.009,The triplicate report getting mislaid by the afternoon is a certified bruh moment
+flavor.encounter_standoff.industrial.010,"The men on both sides smoked in the yard ten feet apart, a cold war of side-eyes and cigarettes"
+flavor.encounter_standoff.industrial.011,"The night shift's POV was the annexe roof, and they watched the whole thing from it"
+flavor.encounter_standoff.industrial.012,Somebody sent the tldr of the whole affair by telegraph in about nine words
+flavor.encounter_standoff.industrial.013,Upstairs is already glazing the story into a version fit for the shareholders
+flavor.encounter_standoff.industrial.014,The rail line between the two camps is built different and stayed open the whole week
+flavor.encounter_standoff.industrial.015,The works whistle blew and both sides were shook for no reason
+flavor.encounter_standoff.industrial.016,"Their foreman and ours were basically fam once, working the same siding years back"
+flavor.encounter_standoff.industrial.017,The night shift are big mad about the extra hours and want to know who's paying
+flavor.encounter_standoff.industrial.018,"A wholesome pick-me carried a crate of tools straight back over within the hour after it changed hands at the siding, because he'd been told to stop being helpful"
+flavor.encounter_standoff.industrial.019,"The freight sat on the siding four hours, guarded by men from both sides who were deadass silent with one another the entire time"
+flavor.encounter_standoff.industrial.020,"Nobody in the depot office is snitching on who moved first, and the telegram that went out at six says only that a meeting took place"
+flavor.encounter_standoff.industrial.021,Highkey oblivious trams ran between them on the hour while two columns stood a street apart in the rain and neither advanced
+flavor.encounter_standoff.industrial.022,"A photo from the annexe roof came out badly blurred, and the men at the front have all tagged themselves in it anyway"
+flavor.encounter_standoff.industrial.023,"The foreman was locked in all day: warehouse padlocked at half past ten in the morning, key in his coat pocket, him out on the line until dark, doors still shut when the night shift came on"
+flavor.encounter_standoff.industrial.024,"Big mood from the foreman: the wages office priced four hours of two hundred men standing about in a wet yard, put the figure on his desk, and he set a mug on top of it"
+flavor.encounter_standoff.digital.001,Ngl the uplink staying open the whole time was eerie
+flavor.encounter_standoff.digital.002,"Their drone went parasocial on ours, watching it for an hour"
+flavor.encounter_standoff.digital.003,Commitment issues all round meant not one person closed the channel
+flavor.encounter_standoff.digital.004,"The feed is so joever, there's nothing on it"
+flavor.encounter_standoff.digital.005,One analyst's hot take: it was close
+flavor.encounter_standoff.digital.006,Their drone and ours did a same-height trend together for eleven minutes
+flavor.encounter_standoff.digital.007,"A cursed call happened: somebody opened a channel, just breathed, and closed it"
+flavor.encounter_standoff.digital.008,The after-action briefing is bare minimum: one line and a lot of white space
+flavor.encounter_standoff.digital.009,The network glazed the whole thing by logging it as an engagement
+flavor.encounter_standoff.digital.010,"Two vehicles had a whole moment nose to nose for most of the morning, motors idling, nobody blinking"
+flavor.encounter_standoff.digital.011,"An analyst is down bad, with until morning to explain the gap in the logs"
+flavor.encounter_standoff.digital.012,The oop was mutual when both sides' comms landed on one channel by accident
+flavor.encounter_standoff.digital.013,The uplink delivered forty minutes of wind-and-boots ASMR and nothing else
+flavor.encounter_standoff.digital.014,The algorithm said no: somebody streamed the whole afternoon to four viewers
+flavor.encounter_standoff.digital.015,"Nobody was tryna cross the road between the two positions, it stayed empty all night"
+flavor.encounter_standoff.digital.016,One analyst clocked both sides carrying the same rifles
+flavor.encounter_standoff.digital.017,The channel logs are twenty minutes of somebody breathing and four seconds of a man saying a name that's been replayed so much the audio is fighting for its life
+flavor.encounter_standoff.digital.018,"The feed cut out for four seconds in hour two and came back to the exact same picture, which has several people more shook than the rest of it"
+flavor.encounter_standoff.digital.019,"The responsibility dodge is goated: nobody wants to be the one who logged it, so three people logged it three times with three different timestamps"
+flavor.encounter_standoff.digital.020,"The drone footage, reviewed frame by frame by people who weren't there, shows two groups standing still and one MVP scratching his neck"
+flavor.encounter_standoff.digital.021,"A phone went off loudly in the middle of it, heard on both sides of the ground, and its owner has been roasted for every second since"
+flavor.encounter_standoff.digital.022,"The boot discourse is winning: two of the ground team put in about the state of their issued boots, and that's now more paperwork than the afternoon itself generated"
+flavor.encounter_standoff.digital.023,"The pilot is mother: she flew a drone low over their position and back, got spoken to by two people who outrank her and one who doesn't, and told all three the same thing"
+flavor.encounter_standoff.digital.024,"It's the boots for me: four hours of open uplink carried one sentence from the man on the left flank about the state of his boots, and the rest is wind"
+flavor.encounter_standoff.digital.025,Both firewalls were built different and held
+flavor.encounter_standoff.digital.026,"In a girlboss move, their hackers left a polite note"
+flavor.encounter_standoff.digital.027,The drones did a lap and logged off
+flavor.encounter_standoff.digital.028,The livestream lost the vibe check first
+flavor.encounter_standoff.digital.029,"Their drones and ours did a photo dump exchange, snapping each other all afternoon"
+flavor.encounter_standoff.digital.030,Their side slid into a chat channel at one point and sent a thumbs-up
+flavor.encounter_standoff.digital.031,The hacking was goofy on both sides: a whole day probing each other's network and nobody got past the login screen
+flavor.encounter_standoff.digital.032,An analyst on our side clocked one of theirs from a conference
+flavor.encounter_standoff.digital.033,Certified brain rot on the forward camera feed: four hours of two lines of people standing in the rain
+flavor.encounter_standoff.digital.034,Not their cyber team trying to drain our accounts and ending up in the canteen payment system instead
+flavor.encounter_standoff.digital.035,"Sheesh, we even handed back their drone after it landed on our side with a flat battery"
+flavor.encounter_standoff.digital.036,"The uplink carried more roasts than orders, and most of the roasts were misspelt"
+flavor.encounter_standoff.digital.037,"Their deepfake of our commander surrendering got caught in 4K, released an hour early while our commander was live on camera doing the opposite"
+flavor.encounter_standoff.digital.038,The fusion plant between the two lines stayed in its lane and kept supplying power to both all afternoon
+flavor.encounter_standoff.digital.039,"The analysts can't decide whether their drone was waving or tweaking, and they've argued about it all evening"
+flavor.encounter_standoff.digital.040,"Both sides livestreamed the standoff and pulled almost the same number of viewers, most of them watching both like multitasking legends"
+flavor.encounter_standoff.digital.041,"The after-action report auto-generated from the logs is delulu and describes a battle, so it's being rewritten by hand to describe what happened"
+flavor.encounter_standoff.digital.042,"Four hours of the heaviest network traffic in the war between the two lines turned out to be a nothingburger, all of it now archived for study"
+flavor.encounter_standoff.digital.043,"The drones are in a talking stage that never progresses, keeping their distance"
+flavor.encounter_standoff.digital.044,"The riot line opposite had zero movement, it understood the assignment of standing still"
+flavor.encounter_standoff.digital.045,A sergeant counted forty of their vehicles and got told to run it back
+flavor.encounter_standoff.digital.046,Their drone was so down bad for our line it hovered until it needed a battery swap
+flavor.encounter_standoff.digital.047,"The whole thing had commuters pressed, with traffic diverted round it for six hours"
+flavor.encounter_standoff.digital.048,Their side's neon stayed lit all night like the function never ended
+flavor.encounter_standoff.digital.049,"Chronically online on both ends, analysts from the two sides were live-posting it on the same forum"
+flavor.encounter_standoff.digital.050,Enemy hackers trolled the lobby screens into showing the time in their capital
+flavor.encounter_standoff.digital.051,Their drone shot its shot with a leaflet carrying nothing but a phone number
+flavor.encounter_standoff.digital.052,"Our commander rang theirs and got left on delivered, straight to voicemail"
+flavor.encounter_standoff.digital.053,The city force manning the police cordon between the two lines belongs to neither side and secured the bag by billing both for the overtime
+flavor.encounter_standoff.digital.054,The way the shops on the street pulled their shutters down and put them back up the second the drones left
+flavor.encounter_standoff.digital.055,"The fusion plant is tweaking at an alert level it raised itself, and nobody has told it to come back down"
+flavor.encounter_standoff.digital.056,"Their cyber team slayed politely, spending the afternoon in our building's heating system and leaving the thermostat at a considerate twenty-one degrees"
+flavor.encounter_standoff.digital.057,The parasocial hours paid off when one of our signals officers knew the voice on their channel from a training video
+flavor.encounter_standoff.digital.058,"The metro kept running under both lines, and a few people rode from one side to the other just for the plot"
+flavor.encounter_standoff.digital.059,"At the start both sides launched so many drones the air above the line hummed, and the two swarms spent the first hour burning battery on a chaotic get-out-of-my-way choreo"
+flavor.encounter_standoff.digital.060,"The analysts have spilled that their drone pilots are teenagers, and ours too"
+flavor.encounter_standoff.digital.061,"Staff, bffr, stop waving at the enemy drones"
+flavor.encounter_standoff.digital.062,The afternoon's casualties: two drones yeeted by the wind and one analyst taken out by a migraine
+flavor.encounter_standoff.digital.063,The far side's drones are sponsored content now
+flavor.encounter_standoff.digital.064,"Their feed went private-account mode, encrypted end to end, showing us only a test card"
+flavor.encounter_standoff.digital.065,"Their armoured cars were try-hards, revving engines on the hour across the way"
+flavor.encounter_standoff.digital.066,"One analyst protected their peace once the stretcher feed got too much, and has been moved onto traffic"
+flavor.encounter_standoff.cosmic.001,Goated patience from both hulls: six hours without moving
+flavor.encounter_standoff.cosmic.002,The relay basically screenshotted it
+flavor.encounter_standoff.cosmic.003,Their reactor was running absolute fire temperatures
+flavor.encounter_standoff.cosmic.004,"Nobody was leaving rn, so the airlock stayed uncycled"
+flavor.encounter_standoff.cosmic.005,The chef's kiss spacing was four hundred metres on the dot
+flavor.encounter_standoff.cosmic.006,Their transponder answered ours and then left us on delivered for an hour
+flavor.encounter_standoff.cosmic.007,"Both ships stayed in orbit doing the bombastic side-eye, neither turning to face the other"
+flavor.encounter_standoff.cosmic.008,It was so over the moment a freighter slid between them
+flavor.encounter_standoff.cosmic.009,The manifest they sent over was a nothingburger of a list
+flavor.encounter_standoff.cosmic.010,Someone in their forward bay gave an iykyk wave at something none of ours could see
+flavor.encounter_standoff.cosmic.011,"The patience grind continues for the dock crew, stood down and told to wait longer"
+flavor.encounter_standoff.cosmic.012,Core memory unlocked for two crews who locked eyes through the same stretch of vacuum
+flavor.encounter_standoff.cosmic.013,Their hull markings were read out loud and transcribed with a skill issue
+flavor.encounter_standoff.cosmic.014,"Halfway across, a shuttle said nah and turned back on its own"
+flavor.encounter_standoff.cosmic.015,"Pure rage bait from both ships: bay doors open, bay doors shut, nothing comes out"
+flavor.encounter_standoff.cosmic.016,Orbital watch is coping by logging it as a routine transit
+flavor.encounter_standoff.cosmic.017,The dock crew are salty about being held over six hours and want to know why
+flavor.encounter_standoff.cosmic.018,"No cap, it was heavy: a dead crewman went across in a sealed bag, their side took him in without a word on the relay, and the bag came back empty an hour later"
+flavor.encounter_standoff.cosmic.019,"Emotional damage for our helm officer: their pilot matched our vector to the metre and held it most of the watch, the worst three hours of her career"
+flavor.encounter_standoff.cosmic.020,"The reactor alarm went off in hour two and everyone here assumed the worst, but it was the same sensor that's been tweaking for a fortnight"
+flavor.encounter_standoff.cosmic.021,"One terrible joke on an open frequency was all that crossed the gap in four hours, their side didn't laugh, and ours has committed to the bit ever since"
+flavor.encounter_standoff.cosmic.022,"A boarding party's most anticlimactic side quest: as far as the tube, twenty minutes standing in it fully suited, then back through the airlock without anybody saying why"
+flavor.encounter_standoff.cosmic.023,"The transponder codes were exchanged, logged, checked against the list, found twelve years out of date on their side, and passed anyway by an officer who has since written a four-hundred-word cope about why"
+flavor.encounter_standoff.cosmic.024,"Somebody in the forward bay soft-launched a name, scratched into the frame beside the port in the second hour. It's been found and left as is, and the should-it-stay discourse is ongoing"
+flavor.encounter_standoff.cosmic.025,The relay went no-contact both ways
+flavor.encounter_standoff.cosmic.026,"Light-lag left every message on delivered, so it was a monologue"
+flavor.encounter_standoff.cosmic.027,Weapons nobody used were drawing power from both reactors purely for the aesthetic
+flavor.encounter_standoff.cosmic.028,"Possibly, a year ago, they fired, which is a jumpscare on a very long delay"
+flavor.encounter_standoff.cosmic.029,Both fleets stayed in their lane and kept off the far side of the marker buoy
+flavor.encounter_standoff.cosmic.030,Their crew were dupes of their crew
+flavor.encounter_standoff.cosmic.031,"The enemy ships held station behind the gas giant like a private account, visible only to the dock's long-range sensors"
+flavor.encounter_standoff.cosmic.032,It's sending me that their single compressed file of demands took nine hours to unpack and opened with a greeting
+flavor.encounter_standoff.cosmic.033,By the time our reply reached them their commander had respawned as her own successor
+flavor.encounter_standoff.cosmic.034,"Their negotiator was an instance of someone who died centuries ago, and she ate, better than anyone on our side"
+flavor.encounter_standoff.cosmic.035,"In a deeply unserious threat, both fleets kept weapons trained across a gap so wide any shot would arrive after everyone involved had retired"
+flavor.encounter_standoff.cosmic.036,"Nobody is getting a tldr of the treaty terms they sent, written to be read over several hundred years"
+flavor.encounter_standoff.cosmic.037,Something on their flagship lurked the whole time behind a window that should not have been there
+flavor.encounter_standoff.cosmic.038,Hardest vibe check ever: their envoy wanted to know if our crew have souls and wouldn't say which answer helps
+flavor.encounter_standoff.cosmic.039,"Speedrun mode on their ships: time runs at a different rate there, so the standoff was over before most of the people who started it were awake"
+flavor.encounter_standoff.cosmic.040,Our ship's mind and theirs refuse to spill what they swapped in the first second of contact
+flavor.encounter_standoff.cosmic.041,"Thousands of their crew lined the observation windows along their whole hull, totally still, and after an hour they all logged off at once"
+flavor.encounter_standoff.cosmic.042,"This standoff is a canon event: an old woman on our station remembers the war starting and says it was already like this, and her grandmother told her the same thing"
+flavor.encounter_standoff.cosmic.043,Their stealth-maxxing fleet showed on our sensors as nothing but a gap in the stars
+flavor.encounter_standoff.cosmic.044,"Our captain and theirs are the OG and the newbie of the same academy, three hundred years apart"
+flavor.encounter_standoff.cosmic.045,"The station's lights did a highkey haunted dim every time their weapons cycled, with both sides powered up for the whole watch"
+flavor.encounter_standoff.cosmic.046,"Orbital watch is doing big brain logging: the encounter is ongoing, technically, for anyone standing far enough away"
+flavor.encounter_standoff.cosmic.047,"Sheesh, their flagship's only message was a timestamp, and it was from next week"
+flavor.encounter_standoff.cosmic.048,"Not a single ship in either fleet went out of pocket, formation held"
+flavor.encounter_standoff.cosmic.049,The enemy captain's no-blink stare on camera was sigma behavior
+flavor.encounter_standoff.cosmic.050,"Loading-screen-core comms: every reply took forty minutes, so the officers on both sides played cards in the gaps"
+flavor.encounter_standoff.cosmic.051,"The habitat refused to perceive any of it, blast shutters closed the whole watch"
+flavor.encounter_standoff.cosmic.052,"The math was not mathing for the kids on the observation deck, a different count of their ships every time"
+flavor.encounter_standoff.cosmic.053,"An envoy projected across from their flagship and unlocked a signature fragrance, a faint smell of ozone left behind"
+flavor.encounter_standoff.cosmic.054,Both fleets sat close enough to read each other's hull numbers and exposed them out loud
+flavor.encounter_standoff.cosmic.055,A maintenance crew on their side grinded on the outer hull the whole time and waved once
+flavor.encounter_standoff.cosmic.056,"Our long-range scopes caught one of their crew lacking, eating a sandwich at a window"
+flavor.encounter_standoff.cosmic.057,"Our engineers spent the watch taking notes on their warships like a thrift haul, a design our navy retired a century ago"
+flavor.encounter_standoff.cosmic.058,"Halfway through the watch every station screen flashed their commander's face, then ours, then a third face nobody on either side knew, and within the hour both fleets had noped out"
+flavor.encounter_standoff.cosmic.059,"Their demands went out on a frequency that also reaches the colony ships still in transit, so they get a surprise DM in about eighty years"
+flavor.encounter_standoff.cosmic.060,Gravity on the ring got nerfed by a tenth to buff the guns
+flavor.encounter_standoff.cosmic.061,Two pilots from the same training class flew on opposite sides and shouted out each other's call signs on an open frequency
+flavor.encounter_standoff.cosmic.062,Our envoy's patience is slept on: the whole watch in a pressure suit in a neutral airlock
+flavor.encounter_standoff.cosmic.063,Villain behavior from the other fleet: not one light on
+flavor.encounter_standoff.cosmic.064,"Trust issues all round: talks in a derelict station halfway between the fleets, both delegations bringing their own air"
+flavor.encounter_standoff.cosmic.065,"It's so joever for shore leave on the ring, cancelled until their fleet is out of sensor range"
+flavor.encounter_standoff.cosmic.066,"Each fleet's goated precision: one course correction over six hours, timestamped to the second"
+flavor.encounter_standoff.cosmic.067,The gunnery crews refuse to be slept on and want it logged that they were ready
+flavor.encounter_standoff.cosmic.068,"The engineers say their ships were grown, not built, and the team to find out how gives everyone the ick"
+flavor.encounter_standoff.cosmic.069,"Pure psychological rage bait: one tone from their ships all watch long, at a pitch the medics say is bad for sleep"
+flavor.encounter_standoff.cosmic.070,"Their fleet played toxic with three practice attacks on the station, stopping short on every run"
+flavor.encounter_standoff.cosmic.071,"The audacity of the enemy flagship, offering to sell us the coordinates of our own reinforcements"
+flavor.encounter_standoff.cosmic.072,"Rest easy to whoever was in the sealed suit, passed along a tether from their airlock to ours"
