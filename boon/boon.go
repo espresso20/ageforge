@@ -161,7 +161,7 @@ type Boon struct {
 	Kind          Kind
 	Polarity      Polarity // Positive = boon, Negative = malus (copied from the Def)
 	Resource      string   // target resource key, where relevant ("" if none)
-	Magnitude     float64  // fractional buff, e.g. 0.13 = +13%; NEGATIVE for a malus
+	Magnitude     float64  // fractional buff, e.g. 0.13 = +13%; negative for a malus
 	DurationTicks int      // buff/loan/debuff length in ticks; 0 = instant
 	InstantAmount float64  // lump grant, worker count, or drain fraction (see above)
 	Name          string   // catalog name; used as the injected effect's name

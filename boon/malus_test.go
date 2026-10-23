@@ -162,7 +162,7 @@ func TestApplyResourceDrainRoutesToDrain(t *testing.T) {
 
 func TestApplyResourceDrainWithDipAlsoInjectsNegativeEffect(t *testing.T) {
 	f := &fakeApplier{}
-	// Lost Scouts shape: drain + a short NEGATIVE production dip.
+	// Lost Scouts shape: a drain plus a short negative production dip.
 	Apply(Boon{
 		Kind: ResourceDrain, Polarity: Negative, Resource: "wood",
 		InstantAmount: 0.04, Magnitude: -0.05, DurationTicks: 900,

@@ -317,7 +317,7 @@ func TestNoGameImport(t *testing.T) {
 }
 
 // TestDefaultProfileRollsMultipleKinds checks that DefaultProfile keeps every
-// catalogued kind reachable.
+// cataloged kind reachable.
 func TestDefaultProfileRollsMultipleKinds(t *testing.T) {
 	p := DefaultProfile()
 	p.Age = "space_age"
@@ -326,7 +326,7 @@ func TestDefaultProfileRollsMultipleKinds(t *testing.T) {
 	for _, b := range rollN(p, 1, 3000) {
 		seen[b.Kind] = true
 	}
-	// All five catalogued kinds should appear over many neutral rolls.
+	// All five cataloged kinds should appear over many neutral rolls.
 	for _, k := range []Kind{RateBuff, AllProduction, TickSpeed, InstantResource, TempWorkers} {
 		if !seen[k] {
 			t.Errorf("kind %v never rolled under DefaultProfile", k)
