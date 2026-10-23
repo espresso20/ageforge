@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
 // cityview.go draws the Earth arc's city (city.go): the age's inks, a cell
@@ -45,14 +46,14 @@ func (p *pal) cityLook(look mapmodel.CityLook) {
 	if look.Night && !p.Light {
 		p.Bg = theme.Mix(p.Bg, theme.CityColor(theme.CityNight), 0.5)
 		for c := mapmodel.Class(0); c < mapmodel.NumClasses; c++ {
-			p.Fg[c] = theme.Legible(p.Fg[c], p.Bg, mapmodel.ClassSpecs[c].MinContrast)
+			p.Fg[c] = theme.Legible(p.Fg[c], p.Bg, mapstyle.MinContrast(c))
 		}
 		p.WaterBg = theme.Mix(p.Bg, theme.MapHueColor(theme.HueWaterDeep), 0.10)
 		p.FreshBg = theme.Mix(p.Bg, theme.Color(theme.RolePositive), 0.25)
 		p.FlowBg = theme.Mix(p.Bg, theme.Color(theme.RoleWarning), 0.22)
 	}
 	set := func(c mapmodel.Class, h theme.CityHue, k float64) {
-		p.Fg[c] = theme.Legible(theme.Mix(p.Fg[c], theme.CityColor(h), k), p.Bg, mapmodel.ClassSpecs[c].MinContrast)
+		p.Fg[c] = theme.Legible(theme.Mix(p.Fg[c], theme.CityColor(h), k), p.Bg, mapstyle.MinContrast(c))
 	}
 	switch look.Key {
 	case "modern_age":
