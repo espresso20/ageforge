@@ -15,9 +15,8 @@ import (
 	"testing"
 )
 
-// The tests read the real source once and share the result. Reading is the
-// slow part (a second or two under the race detector), so only the
-// determinism test reads it a second time.
+// The tests read the real source once and share the result, because reading is
+// the slow part. Only the determinism test reads it a second time.
 
 var (
 	catOnce sync.Once
@@ -52,8 +51,8 @@ func realCatalog(t *testing.T) *catalog {
 
 // pick returns the first row that passes ok. The tests choose their rows by
 // what they are (a log line with two format verbs, a label the code matches
-// on), never by what they say: the wording is what this tool is for
-// changing, and a test that quoted it would break on the first import.
+// on), never by what they say. The wording is what this tool exists to change,
+// and a test that quoted it would break on the first import.
 func pick(t *testing.T, c *catalog, what string, ok func(*row) bool) *row {
 	t.Helper()
 	for _, r := range c.rows {
@@ -203,8 +202,9 @@ func TestExportCoversKnownLines(t *testing.T) {
 	}
 }
 
-// TestFirstHours: first-hours.csv holds rows of the main menu and the first
-// six ages only, and every one of them is also in its own sheet.
+// TestFirstHours: first-hours.csv takes rows of the main menu and the first
+// six ages only, none of them unsure, with the main menu ahead of the names of
+// buildings.
 func TestFirstHours(t *testing.T) {
 	c := realCatalog(t)
 	n := 0
@@ -267,8 +267,9 @@ func TestExportCarriesFilledCells(t *testing.T) {
 
 // TestConfigFieldsAreAllClassified fails when a struct in package config
 // gains a field that can hold text and the export has not been told whether
-// a player reads it. Add the field to fieldRules (data_rows.go) with its id,
-// kind and where sentence, or to hiddenFields with why not.
+// a player reads it. Add the field to fieldRules (data_rows.go) with its kind
+// and where sentence, and its id to words.FieldIDs; or add it to hiddenFields
+// with why not.
 func TestConfigFieldsAreAllClassified(t *testing.T) {
 	root := realRoot(t)
 	files, err := goFiles(filepath.Join(root, "config"))

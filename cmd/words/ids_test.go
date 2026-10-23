@@ -8,8 +8,8 @@ import (
 
 // TestFieldIDsAreTheTablesOwn: the id of every field the export reads from a
 // definition comes from words.FieldIDs, the table the ruleset overlay reads
-// too. A rule that is missing from it would export no id, and an id with no
-// rule would be a row the export never writes.
+// too. A rule with no entry in it would export no id, and an id with no rule
+// would be a row the export never writes.
 func TestFieldIDsAreTheTablesOwn(t *testing.T) {
 	for full, rule := range fieldRules {
 		if rule.id != "" {

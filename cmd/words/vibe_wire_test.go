@@ -55,7 +55,7 @@ func TestEveryWiredTextReadsPlainWhileVibeModeIsOff(t *testing.T) {
 	}
 	was := vibe.On()
 	defer vibe.Set(was)
-	var none []any // a format is put together with no arguments, as vet wants of a format it cannot see
+	var none []any // spread into a format that is not a constant: vet flags such a call with no arguments at all
 	read := func(lc lineCall) string {
 		switch lc.kind {
 		case "Sprintf":
