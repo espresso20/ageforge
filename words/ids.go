@@ -26,8 +26,8 @@ import (
 //	{aN}      the Nth argument of the call around it (the source only)
 //
 // A template with {decl} or {aN} can be filled from the source but not from
-// a running ruleset, so the overlay leaves those rows to the code-string
-// hook.
+// a running ruleset, so the overlay skips those rows (they are in the export
+// all the same).
 var FieldIDs = map[string]string{
 	// ----- ages and eras -----
 	"config.AgeDef.Name":              "age.{Key}.name",

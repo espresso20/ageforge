@@ -1083,9 +1083,6 @@ func (ge *GameEngine) followVibe(on bool) {
 	}
 }
 
-// VibeMode reports whether the game's words are in the VibeMode script now.
-func (ge *GameEngine) VibeMode() bool { return vibe.On() }
-
 // Account returns the per-player account, or nil if none was loaded at boot.
 // Future phases (unlocks, themes, lifetime stats) read it through here.
 func (ge *GameEngine) Account() *Account {
