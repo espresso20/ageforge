@@ -161,7 +161,7 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 	switch def.Event {
 	case config.BadgeEvBuildingBuilt, config.BadgeEvBuilt, config.BadgeEvBuildingSold, config.BadgeEvBuildingUpgraded:
 		return building()
-	case config.BadgeEvWonderRaised, config.BadgeEvWonderBanked:
+	case config.BadgeEvWonderRaised:
 		for _, a := range c.m.ages {
 			if c.set.Wonder(a.Key) == def.Subject {
 				return ""

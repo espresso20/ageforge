@@ -13,9 +13,8 @@ import (
 //
 //   - It has the priority of its place in the plan: while it waits for its
 //     price it reserves it, and items below only see the rest.
-//   - It is blocked, reserving nothing, while the goods would not fit in
-//     their store or the civ won't trade (war, embargo, rivalry, hostility);
-//     standing can recover within the round.
+//   - It is blocked, reserving nothing, while the civ won't trade (war,
+//     embargo, rivalry, hostility); standing can recover within the round.
 //   - It drops out once taken, or when the offer is gone: the civ's offers
 //     rotated (an hour of live play, or an age advance) or it was taken by
 //     hand. Offline catch-up does not rotate offers, so a deal planned

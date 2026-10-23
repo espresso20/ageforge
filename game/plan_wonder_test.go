@@ -6,7 +6,6 @@ import "testing"
 // that covers all of it, and holds nothing back while it waits.
 func TestPlan_WonderPaysItsBankFromStock(t *testing.T) {
 	ge := planTestEngine(t)
-	ge.wonderOverflowOff = true
 	w := ge.progress.WonderForAge(ge.age)
 	need := ge.Buildings.defs[w].BaseCost
 	for res := range need {
@@ -73,23 +72,29 @@ func TestPlan_WonderPaysItsBankFromStock(t *testing.T) {
 	}
 }
 
-// A part bigger than a full store can't be paid in one go: the wonder waits
-// for deposits and overflow, blocked.
-func TestPlan_WonderPartOverStorageIsBlocked(t *testing.T) {
+// A part bigger than the store is no obstacle: nothing limits stock, so the
+// wonder is not blocked on its bank. It waits for the stock like any price,
+// and starts once what is held covers all of it.
+func TestPlan_WonderPartOverStoreIsNotBlocked(t *testing.T) {
 	ge := planTestEngine(t)
-	ge.wonderOverflowOff = true
 	w := ge.progress.WonderForAge(ge.age)
 	res := sortedKeys(ge.Buildings.defs[w].BaseCost)[0]
 	ge.Resources.resources[res].Storage = ge.Buildings.defs[w].BaseCost[res] / 2
-	setAmount(ge, res, ge.Resources.resources[res].Storage)
 	if _, err := ge.PlanAddBuild(w, 1); err != nil {
 		t.Fatal(err)
 	}
-	if v := ge.planViews()[0]; v.Status != PlanStatusBlocked || v.Note != "bank not full" {
-		t.Errorf("view = %+v, want blocked: bank not full", v)
+	if v := ge.planViews()[0]; v.Note == "bank not full" {
+		t.Errorf("view = %+v, want a wonder waiting on stock, not blocked on a store", v)
 	}
 	ge.runPlanTick()
-	if queued(ge, w) != 0 || ge.Buildings.wonderBanks[w][res] != 0 {
-		t.Error("a part over storage was banked or the wonder started")
+	if queued(ge, w) != 0 {
+		t.Error("the wonder started without the stock")
+	}
+	for r, c := range ge.Buildings.defs[w].BaseCost {
+		setAmount(ge, r, c)
+	}
+	ge.runPlanTick()
+	if queued(ge, w) != 1 {
+		t.Errorf("the wonder did not start with the stock to pay it: plan %+v", ge.plan)
 	}
 }

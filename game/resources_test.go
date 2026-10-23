@@ -26,19 +26,31 @@ func TestResourceManager_AddAndGet(t *testing.T) {
 	}
 }
 
-func TestResourceManager_StorageCap(t *testing.T) {
+// Stock has no ceiling: a credit past the base store is kept whole, a
+// production tick adds to it, and an offline credit does too.
+func TestResourceManager_StockIsUncapped(t *testing.T) {
 	rm := NewResourceManager()
 	rm.UnlockResource("food")
 
-	// Food has BaseStorage 50 — adding 999 should cap at 50
+	// Food has BaseStorage 50; adding 999 keeps all 999.
 	rm.Add("food", 999)
-	got := rm.Get("food")
-	storage := rm.GetStorage("food")
-	if got > storage {
-		t.Errorf("food %v exceeded storage cap %v", got, storage)
+	if got, store := rm.Get("food"), rm.GetStorage("food"); got != 999 || got <= store {
+		t.Errorf("food = %v after adding 999 to a store of %v, want all 999", got, store)
 	}
-	if got != storage {
-		t.Errorf("food should be at cap: got %v, cap %v", got, storage)
+	rm.SetRate("food", 7)
+	rm.ApplyRates()
+	if got := rm.Get("food"); got != 1006 {
+		t.Errorf("food = %v after a tick at +7 from 999, want 1006", got)
+	}
+	gained := 0.0
+	rm.AddProduced(100, func(_ string, g float64) { gained += g })
+	if got := rm.Get("food"); got != 1706 || gained != 700 {
+		t.Errorf("food = %v, gained %v after 100 ticks away at +7, want 1706 and 700", got, gained)
+	}
+	// Spending still works down to nothing, and stock never goes below it.
+	rm.Add("food", -5000)
+	if got := rm.Get("food"); got != 0 {
+		t.Errorf("food = %v after a debit past zero, want 0", got)
 	}
 }
 

@@ -530,32 +530,6 @@ func TestPlanSizeIsReported(t *testing.T) {
 	wantBadges(t, acct, "twenty items planned", []string{"special.long_game"})
 }
 
-// TestWonderOverflowIsReported: the first unit the caps put into a wonder's
-// bank is reported once a run (Exact Change asks for a run without it),
-// and a wonder that finishes from its bank says whether the player was
-// away.
-func TestWonderOverflowIsReported(t *testing.T) {
-	isolateAccountDir(t)
-	ge, acct := devEngine(t, "Ada")
-	for i := 0; i < 5; i++ {
-		say(ge, config.BadgeEvWonderRaised, "sacred_grove", nil)
-	}
-	wantBadges(t, acct, "five wonders with no overflow", []string{"special.exact_change"})
-
-	isolateAccountDir(t)
-	ge, acct = devEngine(t, "Bea")
-	say(ge, config.BadgeEvWonderOverflow, "", nil)
-	for i := 0; i < 5; i++ {
-		say(ge, config.BadgeEvWonderRaised, "sacred_grove", nil)
-	}
-	wantBadges(t, acct, "five wonders after overflow", nil, "special.exact_change")
-
-	say(ge, config.BadgeEvWonderBanked, "sacred_grove", map[string]float64{"away": 0})
-	wantBadges(t, acct, "a wonder banked at the keyboard", nil, "special.nothing_wasted")
-	say(ge, config.BadgeEvWonderBanked, "sacred_grove", map[string]float64{"away": 1})
-	wantBadges(t, acct, "a wonder banked while away", []string{"special.nothing_wasted"})
-}
-
 // TestDaysWithinASpan: Regular asks for seven different days played within
 // ten calendar days, read from the account's own list of days.
 func TestDaysWithinASpan(t *testing.T) {

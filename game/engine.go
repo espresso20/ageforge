@@ -3506,15 +3506,7 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 		ge.note(config.BadgeEvGathered, resource)
 	}
 	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
-	// Log what storage actually took, not what was asked for.
-	switch gained := actual - before; {
-	case gained <= 0:
-		ge.addLog("warning", fmt.Sprintf("%s storage is full. Gathered nothing.", textfmt.Capitalize(ResourceName(resource))))
-	case gained < amount:
-		ge.addLog(LogRoutine, fmt.Sprintf("Gathered %s (%s storage is now full).", Amount(gained, resource), ResourceName(resource)))
-	default:
-		ge.addLog(LogRoutine, fmt.Sprintf("Gathered %s.", Amount(gained, resource)))
-	}
+	ge.addLog(LogRoutine, fmt.Sprintf("Gathered %s.", Amount(actual-before, resource)))
 	return actual, nil
 }
 
@@ -4118,22 +4110,15 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 		}
 	}
 
-	// Add refund to resources, keeping what storage actually took.
+	// Add the refund to resources.
 	got := make(map[string]float64, len(refund))
-	clipped := false
 	for _, res := range sortedKeys(refund) {
 		got[res] = ge.gainResource(res, refund[res])
-		if got[res] < refund[res] {
-			clipped = true
-		}
 	}
 
 	ge.holdStaffing()
 	ge.recalculateRates()
 	line := fmt.Sprintf("Sold %s. Refund: %s.", buildingCountIn(ge.rules, n, key), Amounts(got))
-	if clipped {
-		line += " Storage was full, so part of the refund was lost."
-	}
 	ge.addLog(LogRoutine, line)
 	return nil
 }
