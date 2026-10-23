@@ -1,6 +1,10 @@
 package config
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/espresso20/ageforge/vibe"
+)
 
 // The calendar: the year each age begins, for the Advance panel's march of
 // ages. It is a picture of the town's history, not a length of play: the year
@@ -92,7 +96,7 @@ func YearBetween(start, next int, share float64) int {
 // YearLabel writes a year as the panel shows it: "3,300 BC", "1,948 AD".
 // There is no year 0; it reads "1 AD".
 func YearLabel(year int) string {
-	suffix := " AD"
+	suffix := vibe.Line("config.age_years.YearLabel.01", " AD")
 	if year < 0 {
 		year, suffix = -year, " BC"
 	}

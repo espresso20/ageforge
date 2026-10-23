@@ -32,6 +32,9 @@ type unit struct {
 	chain    *chain       // set when it is joined with + to things that are not text
 	caseKey  string       // the first value of the switch case it is under, if any
 	ret      int          // its place among the values a return statement gives back
+
+	vibeID  string // the row id of the vibe call it is the string of (vibe.Line, Sprintf, Errorf), if it is
+	vibeKey bool   // it is the row id a vibe call carries, not text
 }
 
 // callSite is a call the text is an argument of.
@@ -143,7 +146,34 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 				near("compare")
 			}
 		case *ast.CallExpr:
-			if child != p.Fun {
+			if kind, ok := vibeCallKind(f, p); ok && child != p.Fun {
+				// A vibe call is the string it carries, said another way: it adds no
+				// call of its own to what is around the text (vibe.Line), or is the
+				// fmt call it stands for, with the id left out of the arguments.
+				idx := -1
+				for i, a := range p.Args {
+					if a == child {
+						idx = i
+					}
+				}
+				if kind == "Line" && inChain == child {
+					inChain = p // vibe.Line is the string it carries, in the line it stands in
+				}
+				switch {
+				case idx == 0:
+					u.vibeKey = true
+				case idx == 1 && j == len(stack)-2:
+					u.vibeID, _ = stringLit(p.Args[0])
+				}
+				if kind != "Line" {
+					near("call")
+					cs := callSite{pkg: "fmt", fn: kind, arg: idx - 1, out: len(u.structs)}
+					for _, a := range p.Args[1:] {
+						cs.args = append(cs.args, m.constString(f.pkg, a))
+					}
+					u.calls = append(u.calls, cs)
+				}
+			} else if child != p.Fun {
 				near("call")
 				cs := callSite{arg: -1, out: len(u.structs)}
 				switch fun := p.Fun.(type) {
@@ -304,6 +334,40 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 	return u
 }
 
+// isVibeCall reports whether call is, as written, a call of vibe.Line,
+// vibe.Sprintf or vibe.Errorf.
+func isVibeCall(call *ast.CallExpr) bool {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || len(call.Args) < 2 {
+		return false
+	}
+	if x, ok := sel.X.(*ast.Ident); !ok || x.Name != "vibe" {
+		return false
+	}
+	switch sel.Sel.Name {
+	case "Line", "Sprintf", "Errorf":
+		return true
+	}
+	return false
+}
+
+// vibeCallKind says whether call is a call of the vibe package that carries a
+// row id and a string (Line, Sprintf, Errorf), and which.
+func vibeCallKind(f *srcFile, call *ast.CallExpr) (string, bool) {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || len(call.Args) < 2 {
+		return "", false
+	}
+	if x, ok := sel.X.(*ast.Ident); !ok || x.Name != "vibe" || !f.imports["vibe"] {
+		return "", false
+	}
+	switch sel.Sel.Name {
+	case "Line", "Sprintf", "Errorf":
+		return sel.Sel.Name, true
+	}
+	return "", false
+}
+
 // chainOf describes the + expression top from the point of view of the
 // literal at.
 func chainOf(top ast.Expr, at ast.Expr) *chain {
@@ -313,6 +377,13 @@ func chainOf(top ast.Expr, at ast.Expr) *chain {
 		switch x := e.(type) {
 		case *ast.ParenExpr:
 			flatten(x.X)
+		case *ast.CallExpr:
+			// vibe.Line is the string it carries.
+			if sel, ok := x.Fun.(*ast.SelectorExpr); ok && isVibeCall(x) && sel.Sel.Name == "Line" {
+				flatten(x.Args[1])
+				return
+			}
+			leaves = append(leaves, e)
 		case *ast.BinaryExpr:
 			if x.Op == token.ADD && x != at {
 				flatten(x.X)

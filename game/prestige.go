@@ -7,6 +7,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // PrestigeManager manages the prestige meta-progression layer.
@@ -128,17 +129,17 @@ func EarlyPrestigeLine(sight AgeSight, from string, points int, done bool) strin
 	if !ok || at >= run {
 		return ""
 	}
-	full := textfmt.Count(set.DepthPoints(PrestigeRunAge), "prestige point", "prestige points")
-	deeper := "a run to the " + set.Name(rules.KindAge, PrestigeRunAge) + " pays " + full
+	full := textfmt.Count(set.DepthPoints(PrestigeRunAge), vibe.Line("game.prestige.EarlyPrestigeLine.01", "prestige point"), vibe.Line("game.prestige.EarlyPrestigeLine.02", "prestige points"))
+	deeper := vibe.Line("game.prestige.EarlyPrestigeLine.03", "a run to the ") + set.Name(rules.KindAge, PrestigeRunAge) + vibe.Line("game.prestige.EarlyPrestigeLine.04", " pays ") + full
 	if !sight.Age(PrestigeRunAge) {
-		deeper = "a full run, " + textfmt.Count(run-at, "age", "ages") + " further on, pays " + full
+		deeper = vibe.Line("game.prestige.EarlyPrestigeLine.05", "a full run, ") + textfmt.Count(run-at, vibe.Line("game.prestige.EarlyPrestigeLine.06", "age"), vibe.Line("game.prestige.EarlyPrestigeLine.07", "ages")) + vibe.Line("game.prestige.EarlyPrestigeLine.08", " further on, pays ") + full
 	}
-	lead := "This is an early taste: a prestige from the %s pays %s, for the %s this run completed."
+	lead := vibe.Line("game.prestige.EarlyPrestigeLine.09", "This is an early taste: a prestige from the %s pays %s, for the %s this run completed.")
 	if done {
-		lead = "That was an early taste: a prestige from the %s paid %s, for the %s the run completed."
+		lead = vibe.Line("game.prestige.EarlyPrestigeLine.10", "That was an early taste: a prestige from the %s paid %s, for the %s the run completed.")
 	}
-	return fmt.Sprintf(lead+" Going deeper pays far more: each era's ages are worth 3 times the era before, and %s.",
-		set.Name(rules.KindAge, from), textfmt.Count(points, "prestige point", "prestige points"), textfmt.Count(at, "age", "ages"), deeper)
+	return fmt.Sprintf(lead+vibe.Line("game.prestige.EarlyPrestigeLine.11", " Going deeper pays far more: each era's ages are worth 3 times the era before, and %s."),
+		set.Name(rules.KindAge, from), textfmt.Count(points, vibe.Line("game.prestige.EarlyPrestigeLine.12", "prestige point"), vibe.Line("game.prestige.EarlyPrestigeLine.13", "prestige points")), textfmt.Count(at, vibe.Line("game.prestige.EarlyPrestigeLine.14", "age"), vibe.Line("game.prestige.EarlyPrestigeLine.15", "ages")), deeper)
 }
 
 // CanPrestige returns true if the player has reached PrestigeMinAge or later,
@@ -192,7 +193,7 @@ func (pm *PrestigeManager) NextProductionMultiplier(age string) float64 {
 // BuyUpgrade purchases the next tier of an upgrade. Returns error if can't
 // afford, maxed or retired.
 func (pm *PrestigeManager) BuyUpgrade(key string) error {
-	return fmt.Errorf("prestige points are now a permanent production bonus; upgrades are no longer sold")
+	return vibe.Errorf("game.prestige.BuyUpgrade.01", "prestige points are now a permanent production bonus; upgrades are no longer sold")
 }
 
 // Owns reports whether the shop item key (a legacy kit item) is bought.
@@ -260,20 +261,20 @@ func (pm *PrestigeManager) GetLevel() int {
 
 func formatPrestigeEffect(def config.PrestigeUpgradeDef, tier int) string {
 	if def.Retired {
-		return "Retired: refunded with the old shop"
+		return vibe.Line("game.prestige.formatPrestigeEffect.01", "Retired: refunded with the old shop")
 	}
 	if tier == 0 {
-		return "Not purchased"
+		return vibe.Line("game.prestige.formatPrestigeEffect.02", "Not purchased")
 	}
 	if def.EffectType == "legacy" {
-		return "Owned"
+		return vibe.Line("game.prestige.formatPrestigeEffect.03", "Owned")
 	}
 	v := def.PerTier * float64(tier)
 	switch def.EffectType {
 	case "rate_bonus":
 		return textfmt.SignedPercent(v) + " " + EffectTargetName(def.EffectKey)
 	case "starting_resource":
-		return textfmt.Signed(v) + " starting " + ResourceName(def.EffectKey)
+		return textfmt.Signed(v) + vibe.Line("game.prestige.formatPrestigeEffect.05", " starting ") + ResourceName(def.EffectKey)
 	}
 	return ""
 }

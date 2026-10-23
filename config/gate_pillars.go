@@ -1,5 +1,7 @@
 package config
 
+import "github.com/espresso20/ageforge/vibe"
+
 // The gate's four pillars. What stands between a town and the next age is
 // shown as four groups (the Advance panel): Knowledge, People, Industry and
 // Monument. This file is the one place that says which group a building
@@ -23,13 +25,13 @@ func GatePillars() []string {
 func PillarName(pillar string) string {
 	switch pillar {
 	case PillarKnowledge:
-		return "Knowledge"
+		return vibe.Line("config.gate_pillars.PillarName.01", "Knowledge")
 	case PillarPeople:
-		return "People"
+		return vibe.Line("config.gate_pillars.PillarName.02", "People")
 	case PillarIndustry:
-		return "Industry"
+		return vibe.Line("config.gate_pillars.PillarName.03", "Industry")
 	case PillarMonument:
-		return "Monument"
+		return vibe.Line("config.gate_pillars.PillarName.04", "Monument")
 	}
 	return pillar
 }

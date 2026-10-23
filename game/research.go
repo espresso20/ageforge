@@ -2,13 +2,13 @@ package game
 
 import (
 	"cmp"
-	"fmt"
 	"maps"
 	"slices"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // ResearchManager manages the tech tree and research progress.
@@ -83,30 +83,30 @@ func (rm *ResearchManager) Rebind(set *rules.Set) {
 func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder map[string]int) error {
 	def, ok := rm.defs[key]
 	if !ok {
-		return unknownKeyError("tech", key, rm.defs, "Type research list to see what you can research.")
+		return unknownKeyError(vibe.Line("game.research.StartResearch.01", "tech"), key, rm.defs, vibe.Line("game.research.StartResearch.02", "Type research list to see what you can research."))
 	}
 	if rm.researched[key] {
-		return fmt.Errorf("%s is already researched.", def.Name)
+		return vibe.Errorf("game.research.StartResearch.03", "%s is already researched.", def.Name)
 	}
 	if rm.currentTech != "" {
 		currentDef := rm.defs[rm.currentTech]
-		return fmt.Errorf("Already researching %s. Type research cancel to stop it.", currentDef.Name)
+		return vibe.Errorf("game.research.StartResearch.04", "Already researching %s. Type research cancel to stop it.", currentDef.Name)
 	}
 	// Check age requirement
 	if ageOrder[def.Age] > ageOrder[currentAge] {
-		return fmt.Errorf("%s needs %s.", def.Name, laterAgeRef(rm.rules, currentAge, def.Age))
+		return vibe.Errorf("game.research.StartResearch.05", "%s needs %s.", def.Name, laterAgeRef(rm.rules, currentAge, def.Age))
 	}
 	// Check prerequisites: every one of them, and one of the either-or
 	// group when the tech has one.
 	if prereq := def.MissingPrereq(rm.IsResearched); prereq != "" {
-		return fmt.Errorf("%s needs %s researched first.", def.Name, rm.defs[prereq].Name)
+		return vibe.Errorf("game.research.StartResearch.06", "%s needs %s researched first.", def.Name, rm.defs[prereq].Name)
 	}
 	if !def.AnyOfMet(rm.IsResearched) {
 		names := make([]string, len(def.AnyOf))
 		for i, k := range def.AnyOf {
 			names[i] = rm.defs[k].Name
 		}
-		return fmt.Errorf("%s needs %s researched first.", def.Name, orList(names))
+		return vibe.Errorf("game.research.StartResearch.07", "%s needs %s researched first.", def.Name, orList(names))
 	}
 	rm.begin(key, false)
 	return nil
@@ -125,7 +125,7 @@ func orList(names []string) string {
 	if len(names) < 2 {
 		return strings.Join(names, "")
 	}
-	return strings.Join(names[:len(names)-1], ", ") + " or " + names[len(names)-1]
+	return strings.Join(names[:len(names)-1], ", ") + vibe.Line("game.research.orList.01", " or ") + names[len(names)-1]
 }
 
 // techTimeTicks multiplies ticks by the techs' factor on a time, rounded
@@ -163,14 +163,14 @@ const memoryResearchSlowdown = 0.5
 func (rm *ResearchManager) StartMemoryResearch(key string) error {
 	def, ok := rm.defs[key]
 	if !ok {
-		return unknownKeyError("tech", key, rm.defs, "Type research list to see what you can research.")
+		return unknownKeyError(vibe.Line("game.research.StartMemoryResearch.01", "tech"), key, rm.defs, vibe.Line("game.research.StartMemoryResearch.02", "Type research list to see what you can research."))
 	}
 	if rm.researched[key] {
-		return fmt.Errorf("%s is already researched.", def.Name)
+		return vibe.Errorf("game.research.StartMemoryResearch.03", "%s is already researched.", def.Name)
 	}
 	if rm.currentTech != "" {
 		currentDef := rm.defs[rm.currentTech]
-		return fmt.Errorf("Already researching %s. Type research cancel to stop it.", currentDef.Name)
+		return vibe.Errorf("game.research.StartMemoryResearch.04", "Already researching %s. Type research cancel to stop it.", currentDef.Name)
 	}
 	// NOTE: age gate and prerequisite loop are intentionally omitted — that
 	// is the whole point of an Ancient Memory.

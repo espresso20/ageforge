@@ -1,11 +1,11 @@
 package game
 
 import (
-	"fmt"
 	"math"
 	"time"
 
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // plan optimize (card 6PEgLKVM): reorder the plan's builds so the town grows
@@ -104,7 +104,7 @@ func (ge *GameEngine) PlanOptimize() (PlanOptimizeResult, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	if len(ge.plan) == 0 {
-		return PlanOptimizeResult{}, fmt.Errorf("The plan is empty.")
+		return PlanOptimizeResult{}, vibe.Errorf("game.plan_optimize.PlanOptimize.01", "The plan is empty.")
 	}
 	ge.recalculateRates()
 

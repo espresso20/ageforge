@@ -103,6 +103,7 @@ type codeReader struct {
 	f      *srcFile
 	note   fileNote
 	n      map[string]int              // rows made so far, by function
+	vibed  map[string]bool             // the row ids the file's vibe calls carry: they are theirs for good
 	dupFn  map[string]bool             // function names more than one receiver has
 	prose  map[*ast.CompositeLit]bool  // lists and maps that hold worded text
 	parent map[*unit]*ast.CompositeLit // the list or map a unit is an element of
@@ -110,8 +111,13 @@ type codeReader struct {
 
 func newCodeReader(c *catalog, f *srcFile, units []*unit) *codeReader {
 	cr := &codeReader{
-		c: c, f: f, note: noteFor(f), n: map[string]int{}, dupFn: map[string]bool{},
+		c: c, f: f, note: noteFor(f), n: map[string]int{}, vibed: map[string]bool{}, dupFn: map[string]bool{},
 		prose: map[*ast.CompositeLit]bool{}, parent: map[*unit]*ast.CompositeLit{},
+	}
+	for _, u := range units {
+		if u.vibeID != "" {
+			cr.vibed[u.vibeID] = true
+		}
 	}
 	seen := map[string]string{}
 	for _, d := range f.ast.Decls {
@@ -161,6 +167,9 @@ func newCodeReader(c *catalog, f *srcFile, units []*unit) *codeReader {
 func (cr *codeReader) read(u *unit) (*row, string) {
 	if cr.note.skip != "" {
 		return nil, cr.note.skip
+	}
+	if u.vibeKey {
+		return nil, whyKey // the row id of a vibe call
 	}
 	if !hasWord(u.text) {
 		return nil, whyNoWords
@@ -237,11 +246,24 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	if fn == "" {
 		fn = "top"
 	}
-	cr.n[fn]++
-	r.id = fmt.Sprintf("%s.%s.%s.%02d", strings.ReplaceAll(strings.Trim(cr.f.dir, "."), "/", "."), strings.TrimSuffix(path.Base(cr.f.rel), ".go"), fn, cr.n[fn])
-	r.id = strings.TrimPrefix(r.id, ".")
-	if cr.f.dir == "." {
-		r.id = "main" + "." + strings.TrimPrefix(r.id, ".")
+	// A row is its place in its function (the nth text of it), unless a vibe
+	// call carries its id: that id is the row's for good, wherever the text
+	// moves, and the places it holds are not counted for the texts without
+	// one (a text added before it takes the next number nobody holds).
+	if u.vibeID != "" {
+		r.id = u.vibeID
+	} else {
+		for {
+			cr.n[fn]++
+			r.id = fmt.Sprintf("%s.%s.%s.%02d", strings.ReplaceAll(strings.Trim(cr.f.dir, "."), "/", "."), strings.TrimSuffix(path.Base(cr.f.rel), ".go"), fn, cr.n[fn])
+			r.id = strings.TrimPrefix(r.id, ".")
+			if cr.f.dir == "." {
+				r.id = "main" + "." + strings.TrimPrefix(r.id, ".")
+			}
+			if !cr.vibed[r.id] {
+				break
+			}
+		}
 	}
 
 	words := countWords(u.text)

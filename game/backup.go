@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // backupsDirName is the subdirectory under the data ROOT that holds full account snapshots:
@@ -58,7 +60,7 @@ func BackupAccount(id string) (string, error) {
 	srcAccount := filepath.Join(slot, accountFileName)
 	if _, err := os.Stat(srcAccount); err != nil {
 		// No account.json in the slot → nothing to snapshot (absent or unreadable).
-		return "", fmt.Errorf("There is no account with the ID %s.", id)
+		return "", vibe.Errorf("game.backup.BackupAccount.01", "There is no account with the ID %s.", id)
 	}
 
 	// Resolve the display name READ-ONLY for the dir name; fall back to "account" when the slot

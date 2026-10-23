@@ -165,17 +165,20 @@ func TestVibeLintCatches(t *testing.T) {
 	}
 }
 
-// TestVibeLintReadsTheLineCalls: a vibe.Line call must name an export row and
-// quote its text.
+// TestVibeLintReadsTheLineCalls: a vibe call (Line, Sprintf, Errorf) must name
+// an export row and quote its text.
 func TestVibeLintReadsTheLineCalls(t *testing.T) {
 	src := `package game
 import "github.com/espresso20/ageforge/vibe"
-func f(x string) {
+func f(x string, a ...any) {
 	_ = vibe.Line("a.b.01", "Plain one")
 	_ = vibe.Line("a.b.02", x)
 	_ = vibe.Line("a.b.03")
 	_ = other.Line("a.b.04", "Not ours")
 	_ = vibe.Text("a.b.05", "Not a Line")
+	_ = vibe.Sprintf("a.b.06", "%s and "+"%d", x, 1)
+	_ = vibe.Errorf("a.b.07", "none")
+	_ = vibe.Sprintf("a.b.08", x, a...)
 }
 `
 	fset := token.NewFileSet()
@@ -185,9 +188,20 @@ func f(x string) {
 	}
 	m := &module{fset: fset, files: []*srcFile{{rel: "game/x.go", ast: f}}}
 	got := lineCalls(m)
-	if len(got) != 2 || got[0] != (lineCall{id: "a.b.01", plain: "Plain one", file: "game/x.go", line: 4, literal: true}) ||
-		got[1].id != "a.b.02" || got[1].literal {
-		t.Errorf("lineCalls: %+v", got)
+	want := []lineCall{
+		{id: "a.b.01", plain: "Plain one", kind: "Line", file: "game/x.go", line: 4, literal: true},
+		{id: "a.b.02", kind: "Line", file: "game/x.go", line: 5},
+		{id: "a.b.06", plain: "%s and %d", kind: "Sprintf", file: "game/x.go", line: 9, literal: true, args: 2},
+		{id: "a.b.07", plain: "none", kind: "Errorf", file: "game/x.go", line: 10, literal: true},
+		{id: "a.b.08", kind: "Sprintf", file: "game/x.go", line: 11, args: -1},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("lineCalls found %d calls, want %d: %+v", len(got), len(want), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("call %d: %+v, want %+v", i, got[i], want[i])
+		}
 	}
 }
 
@@ -253,6 +267,13 @@ func TestVibeExport(t *testing.T) {
 	want := 0
 	for _, r := range c.rows {
 		if !have[r.id] {
+			if reason := c.wireVerdict(r).reason; forGood(reason) {
+				// Nothing will read a line for it: it is not asked for.
+				if _, ok := ids[r.id]; ok {
+					t.Errorf("%s is left alone for good (%s) and is in a to-do sheet", r.id, reason)
+				}
+				continue
+			}
 			want++
 			if _, ok := ids[r.id]; !ok {
 				t.Errorf("the export row %s is in no to-do sheet", r.id)

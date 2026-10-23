@@ -388,6 +388,10 @@ type LogEntry struct {
 	// LogRoutine or "debug". It decides the color, the logs panel's tag, and
 	// whether a player sees the line at all ("debug" is for dumps only).
 	Type string
+	// Tags say what the line is about, set where it is written, so a panel
+	// can pick lines by subject without reading their words (which VibeMode's
+	// script writes its own way). Never saved: the log is not.
+	Tags LogTag
 }
 
 // LogRoutine is the log category for routine confirmations: a line whose

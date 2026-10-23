@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Bonus caps: where a pool of bonuses stops counting in full, and how the
@@ -219,7 +220,7 @@ func CapPhrase(p BonusPool, v float64, held bool) string {
 	if note == "" || knee {
 		return note
 	}
-	return "is " + note
+	return vibe.Line("game.caps.CapPhrase.01", "is ") + note
 }
 
 // capNote is CapNote, and whether a knee (not a hard limit) is what holds
@@ -237,12 +238,12 @@ func capNote(p BonusPool, v float64, held bool) (note string, knee bool) {
 		without -= v
 	}
 	if poolPastKnee(p.Target, math.Max(without, without+v), p.soft) && !floored(p.Target, math.Min(without, without+v)) {
-		return kneeText(p.soft) + ": " + pointsText(counts) + " now", true
+		return kneeText(p.soft) + ": " + pointsText(counts) + vibe.Line("game.caps.capNote.01", " now"), true
 	}
 	if math.Abs(counts) <= 1e-6 {
-		return "capped: no effect now", false
+		return vibe.Line("game.caps.capNote.02", "capped: no effect now"), false
 	}
-	return "capped: " + textfmt.SignedPercent(counts) + " of it counts now", false
+	return vibe.Line("game.caps.capNote.03", "capped: ") + textfmt.SignedPercent(counts) + vibe.Line("game.caps.capNote.04", " of it counts now"), false
 }
 
 // floored reports whether a pool that has earned bonuses in all sits under
@@ -254,7 +255,7 @@ func floored(target string, earned float64) bool {
 
 // kneeText is the soft cap in a few words: "counts a quarter past +200%".
 func kneeText(soft config.SoftCap) string {
-	return "counts " + shareText(soft.PastKnee) + " past " + textfmt.SignedPercent(soft.Knee)
+	return vibe.Line("game.caps.kneeText.01", "counts ") + shareText(soft.PastKnee) + vibe.Line("game.caps.kneeText.02", " past ") + textfmt.SignedPercent(soft.Knee)
 }
 
 // shareText names a share the way a person would: "a quarter", "half", "a
@@ -262,11 +263,11 @@ func kneeText(soft config.SoftCap) string {
 func shareText(share float64) string {
 	switch {
 	case math.Abs(share-0.25) < 1e-9:
-		return "a quarter"
+		return vibe.Line("game.caps.shareText.01", "a quarter")
 	case math.Abs(share-0.5) < 1e-9:
 		return "half"
 	case math.Abs(share-1.0/3) < 1e-9:
-		return "a third"
+		return vibe.Line("game.caps.shareText.02", "a third")
 	}
 	return textfmt.Percent(share)
 }
@@ -288,12 +289,12 @@ func PoolNote(p BonusPool) string {
 		return ""
 	}
 	if p.Target == "research_speed" {
-		return "capped: a tech takes one tick at least, so only +100% counts"
+		return vibe.Line("game.caps.PoolNote.01", "capped: a tech takes one tick at least, so only +100% counts")
 	}
 	if p.Soft {
-		return kneeText(p.soft) + ": " + textfmt.SignedPercent(p.Earned) + " earned"
+		return kneeText(p.soft) + ": " + textfmt.SignedPercent(p.Earned) + vibe.Line("game.caps.PoolNote.02", " earned")
 	}
-	return "capped at " + textfmt.SignedPercent(p.Limit) + ": " + textfmt.SignedPercent(p.Earned) + " earned"
+	return vibe.Line("game.caps.PoolNote.03", "capped at ") + textfmt.SignedPercent(p.Limit) + ": " + textfmt.SignedPercent(p.Earned) + vibe.Line("game.caps.PoolNote.04", " earned")
 }
 
 // PoolLine is a pool that applies less (or more) than it has earned, as one
@@ -303,9 +304,9 @@ func PoolLine(p BonusPool) string {
 	if !p.Limited {
 		return ""
 	}
-	line := textfmt.Capitalize(EffectTargetName(p.Target)) + ": " + textfmt.SignedPercent(p.Earned) + " earned, " + pointsText(p.Applied) + " counts."
+	line := textfmt.Capitalize(EffectTargetName(p.Target)) + ": " + textfmt.SignedPercent(p.Earned) + vibe.Line("game.caps.PoolLine.01", " earned, ") + pointsText(p.Applied) + vibe.Line("game.caps.PoolLine.02", " counts.")
 	if p.Soft {
-		return line + " Past " + textfmt.SignedPercent(p.soft.Knee) + " a bonus counts " + shareText(p.soft.PastKnee) + "."
+		return line + vibe.Line("game.caps.PoolLine.03", " Past ") + textfmt.SignedPercent(p.soft.Knee) + vibe.Line("game.caps.PoolLine.04", " a bonus counts ") + shareText(p.soft.PastKnee) + "."
 	}
 	return line
 }
@@ -350,11 +351,11 @@ func (ge *GameEngine) capLinesLocked(effects []config.Effect, held bool) []strin
 		applied, limit, _ := poolApplied(target, earned, ge.speedMultiplier, p.soft)
 		switch {
 		case target == "research_speed":
-			line += "A tech takes one tick at least, so research speed counts up to +100%, and you have earned " + textfmt.SignedPercent(earned) + "."
+			line += vibe.Line("game.caps.capLinesLocked.01", "A tech takes one tick at least, so research speed counts up to +100%, and you have earned ") + textfmt.SignedPercent(earned) + "."
 		case poolPastKnee(target, earned, p.soft):
-			line += "You have earned " + textfmt.SignedPercent(earned) + " " + name + ", and " + pointsText(applied) + " of it counts."
+			line += vibe.Line("game.caps.capLinesLocked.02", "You have earned ") + textfmt.SignedPercent(earned) + " " + name + vibe.Line("game.caps.capLinesLocked.03", ", and ") + pointsText(applied) + vibe.Line("game.caps.capLinesLocked.04", " of it counts.")
 		default:
-			line += textfmt.Capitalize(name) + " counts up to " + textfmt.SignedPercent(limit) + ", and you have earned " + textfmt.SignedPercent(earned) + "."
+			line += textfmt.Capitalize(name) + vibe.Line("game.caps.capLinesLocked.05", " counts up to ") + textfmt.SignedPercent(limit) + vibe.Line("game.caps.capLinesLocked.06", ", and you have earned ") + textfmt.SignedPercent(earned) + "."
 		}
 		out = append(out, line)
 	}

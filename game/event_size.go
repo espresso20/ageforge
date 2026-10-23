@@ -5,6 +5,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // event_size.go turns an event's sized effects (config/event_size.go) into
@@ -134,15 +135,15 @@ type eventOutcome struct {
 func eventLine(sentence string, out eventOutcome, duration string) string {
 	parts := []string{"[comment]" + strings.TrimSpace(sentence) + "[-]"}
 	if lost := lossParts(out.lost, out.workers); len(lost) > 0 {
-		parts = append(parts, "Lost "+joinAnd(lost)+".")
+		parts = append(parts, vibe.Line("game.event_size.eventLine.01", "Lost ")+joinAnd(lost)+".")
 	}
 	gained := lossParts(out.gained, 0)
 	gained = append(gained, out.research...)
 	if len(gained) > 0 {
-		parts = append(parts, "Gained "+joinAnd(gained)+".")
+		parts = append(parts, vibe.Line("game.event_size.eventLine.02", "Gained ")+joinAnd(gained)+".")
 	}
 	if text := effectsText(out.rates); text != "" {
-		parts = append(parts, textfmt.Capitalize(text)+" for "+duration+".")
+		parts = append(parts, textfmt.Capitalize(text)+vibe.Line("game.event_size.eventLine.03", " for ")+duration+".")
 	}
 	return strings.Join(parts, " ")
 }

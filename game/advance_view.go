@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // advance_view.go is the gate into the next age as the Advance panel shows
@@ -19,10 +20,6 @@ import (
 // the wonder's keystone tech (which the wonder cannot be built without), so
 // "all four stand" and "CheckAdvancement says ready" are the same fact
 // (advance_view_test.go holds the two together for every age).
-
-// charterHint ends the advance command's refusals: where to see the whole
-// gate.
-const charterHint = "Type 'charter' to see everything the advance needs."
 
 // GateRowKind says how a row is counted and written.
 type GateRowKind int
@@ -155,7 +152,7 @@ func (st GameState) AdvanceView() AdvanceView {
 		v.YearFrom, v.YearTo = years[here], years[here]
 	}
 	if v.Final {
-		v.Blockers = append(v.Blockers, "This is the final age. There is no age beyond it.")
+		v.Blockers = append(v.Blockers, vibe.Line("game.advance_view.AdvanceView.01", "This is the final age. There is no age beyond it."))
 		v.Year, v.YearText = v.YearFrom, ageYearText(set, st.Age, v.YearFrom)
 		return v
 	}
@@ -183,14 +180,14 @@ func (st GameState) AdvanceView() AdvanceView {
 
 	if st.PendingCatastrophe != "" {
 		name, _ := set.Catastrophe(st.PendingCatastrophe)
-		v.Blockers = append(v.Blockers, fmt.Sprintf("%s is upon you. Type 'catastrophe' to choose Endure or Succumb before advancing.", name))
+		v.Blockers = append(v.Blockers, vibe.Sprintf("game.advance_view.AdvanceView.02", "%s is upon you. Type 'catastrophe' to choose Endure or Succumb before advancing.", name))
 	}
 	if h := st.Harbinger; h != nil && !h.LastPassage {
 		// The same test the advance makes (fateBeforeAdvance), on what the
 		// figure has said: a doom promised for this age, or any open doom
 		// when the advance leaves the era. Nothing hidden is read.
 		if h.When == WhenThisAge || set.EraOf(next) != set.EraOf(st.Age) {
-			v.Notices = append(v.Notices, fmt.Sprintf("%s stands in your way. Type 'harbinger' to answer, or advance to meet it.", h.Name))
+			v.Notices = append(v.Notices, vibe.Sprintf("game.advance_view.AdvanceView.03", "%s stands in your way. Type 'harbinger' to answer, or advance to meet it.", h.Name))
 		}
 	}
 	v.Ready = v.AllStand && st.PendingCatastrophe == ""
@@ -289,19 +286,19 @@ func (st GameState) keystoneRow(set *rules.Set, tech string, built bool, wonder 
 	ts := st.Research.Techs[tech]
 	name := set.Name(rules.KindTech, tech)
 	waived := !ts.Researched && wonder.NeedsTech == ""
-	r := GateRow{Kind: GateRowDone, Key: tech, Label: "Keystone: " + name, Need: 1}
+	r := GateRow{Kind: GateRowDone, Key: tech, Label: vibe.Line("game.advance_view.keystoneRow.01", "Keystone: ") + name, Need: 1}
 	switch {
 	case ts.Researched:
 		r.Have, r.Met, r.Progress, r.Note = 1, true, 1, "researched"
 	case built || waived:
-		r.Have, r.Met, r.Progress, r.Note = 1, true, 1, "not needed"
+		r.Have, r.Met, r.Progress, r.Note = 1, true, 1, vibe.Line("game.advance_view.keystoneRow.02", "not needed")
 	case st.Research.CurrentTech == tech:
 		if st.Research.Price > 0 {
 			r.Progress = clampShare(st.Research.Progress / st.Research.Price)
 		}
-		r.Note = fmt.Sprintf("researching, %d%%", int(r.Progress*100))
+		r.Note = vibe.Sprintf("game.advance_view.keystoneRow.03", "researching, %d%%", int(r.Progress*100))
 	default:
-		r.Note = "not started"
+		r.Note = vibe.Line("game.advance_view.keystoneRow.04", "not started")
 		for _, q := range st.Research.Queue {
 			if q == tech {
 				r.Note = "queued"
@@ -326,7 +323,7 @@ func (st GameState) monumentRows(set *rules.Set, wonderKey string, built bool, w
 	if share < 1 {
 		pct = min(pct, 99)
 	}
-	bank := GateRow{Kind: GateRowShare, Key: wonderKey, Label: name + " bank", Have: pct, Need: 100,
+	bank := GateRow{Kind: GateRowShare, Key: wonderKey, Label: name + vibe.Line("game.advance_view.monumentRows.01", " bank"), Have: pct, Need: 100,
 		Met: share >= 1, Progress: share}
 	if bank.Met {
 		bank.Have, bank.Note = 100, "full"
@@ -340,17 +337,17 @@ func (st GameState) monumentRows(set *rules.Set, wonderKey string, built bool, w
 		for _, q := range st.BuildQueue {
 			if q.Name == name && q.TotalTicks > 0 {
 				build.Progress = clampShare(1 - float64(q.TicksLeft)/float64(q.TotalTicks))
-				build.Note = fmt.Sprintf("building, %d%%", int(build.Progress*100))
+				build.Note = vibe.Sprintf("game.advance_view.monumentRows.02", "building, %d%%", int(build.Progress*100))
 			}
 		}
 		if build.Note == "" {
 			switch {
 			case wonder.NeedsTech != "":
-				build.Note = "needs " + set.Name(rules.KindTech, wonder.NeedsTech) + " first"
+				build.Note = vibe.Line("game.advance_view.monumentRows.03", "needs ") + set.Name(rules.KindTech, wonder.NeedsTech) + vibe.Line("game.advance_view.monumentRows.04", " first")
 			case !bank.Met:
-				build.Note = "bank it first"
+				build.Note = vibe.Line("game.advance_view.monumentRows.05", "bank it first")
 			default:
-				build.Note = "ready to build"
+				build.Note = vibe.Line("game.advance_view.monumentRows.06", "ready to build")
 			}
 		}
 	}
@@ -363,12 +360,12 @@ func (st GameState) pillarFacts(pillar string) []string {
 	ws := st.Workers
 	switch pillar {
 	case config.PillarKnowledge:
-		return []string{fmt.Sprintf("%s at work: %d", capFirst(st.Term(config.TermScholars).Many), ws.Scholars)}
+		return []string{vibe.Sprintf("game.advance_view.pillarFacts.01", "%s at work: %d", capFirst(st.Term(config.TermScholars).Many), ws.Scholars)}
 	case config.PillarPeople:
 		return []string{
 			fmt.Sprintf("%s: %d", capFirst(st.Term(config.TermWorkers).Many), ws.Working()),
 			fmt.Sprintf("%s: %d", capFirst(st.Term(config.TermReserve).Many), ws.Reserve()),
-			fmt.Sprintf("Homes: %d", ws.MaxPop),
+			vibe.Sprintf("game.advance_view.pillarFacts.02", "Homes: %d", ws.MaxPop),
 		}
 	}
 	return nil

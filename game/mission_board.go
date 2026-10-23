@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // The mission board: three offers of each open tier, rolled up front. The
@@ -326,11 +327,11 @@ func (b *MissionBoard) take(n, tick int) (*MissionOffer, error) {
 // slot is board slot n (1-based), or why there is no such offer.
 func (b *MissionBoard) slot(n int) (*boardSlot, error) {
 	if n < 1 || n > len(b.Slots) {
-		return nil, fmt.Errorf("there is no offer %d. The board has offers 1 to %d. Type expedition to see them", n, len(b.Slots))
+		return nil, vibe.Errorf("game.mission_board.slot.01", "there is no offer %d. The board has offers 1 to %d. Type expedition to see them", n, len(b.Slots))
 	}
 	slot := &b.Slots[n-1]
 	if slot.Offer == nil {
-		return nil, fmt.Errorf("offer %d has been taken. A new one comes in a few minutes", n)
+		return nil, vibe.Errorf("game.mission_board.slot.02", "offer %d has been taken. A new one comes in a few minutes", n)
 	}
 	return slot, nil
 }

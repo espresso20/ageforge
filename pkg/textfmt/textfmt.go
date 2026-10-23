@@ -12,6 +12,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // units are the suffixes Number prints, smallest first, each a thousand of
@@ -189,12 +193,18 @@ func Ticks(ticks int, interval time.Duration) string {
 	return "~" + Duration(time.Duration(ticks)*interval)
 }
 
-// Capitalize upper-cases the first letter of s.
+// Capitalize upper-cases the first letter of s. The first letter is a rune,
+// not a byte: a line that begins with an accented letter or a symbol (a
+// script's line may) comes back whole.
 func Capitalize(s string) string {
-	if s == "" {
+	r, n := utf8.DecodeRuneInString(s)
+	if n == 0 || (r == utf8.RuneError && n == 1) {
 		return s
 	}
-	return strings.ToUpper(s[:1]) + s[1:]
+	if u := unicode.ToUpper(r); u != r {
+		return string(u) + s[n:]
+	}
+	return s
 }
 
 // Sentence capitalizes s and makes sure it ends with terminal punctuation.
@@ -219,7 +229,7 @@ func List(items []string) string {
 	case 1:
 		return items[0]
 	}
-	return strings.Join(items[:len(items)-1], ", ") + " and " + items[len(items)-1]
+	return strings.Join(items[:len(items)-1], ", ") + vibe.Line("pkg.textfmt.textfmt.List.01", " and ") + items[len(items)-1]
 }
 
 func trimZeros(s string) string {

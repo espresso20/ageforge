@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // badges.go is the one place the game says what happened, and where both
@@ -625,13 +626,13 @@ func (ge *GameEngine) DrainBadgeCatchUp() int {
 // BadgeCatchUpLine is the one line for n badges an account was given from
 // its own record when it was loaded.
 func BadgeCatchUpLine(n int) string {
-	return textfmt.Count(n, "badge", "badges") + " earned from your earlier play."
+	return textfmt.Count(n, vibe.Line("game.badges.BadgeCatchUpLine.01", "badge"), vibe.Line("game.badges.BadgeCatchUpLine.02", "badges")) + vibe.Line("game.badges.BadgeCatchUpLine.03", " earned from your earlier play.")
 }
 
 // BadgeLogLine is the log line for a badge just earned. It is fixed per
 // badge: no quip, so earning one draws nothing from the run's streams.
 func BadgeLogLine(v BadgeView) string {
-	line := "Badge earned: " + v.Name
+	line := vibe.Line("game.badges.BadgeLogLine.01", "Badge earned: ") + v.Name
 	if v.Tier != "" {
 		line += " (" + v.Tier + ")"
 	}

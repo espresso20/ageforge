@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // account_settings.go keeps the account's settings that came after
@@ -71,7 +73,7 @@ func (a *Account) settingsLocked() *accountSettings {
 // atomically. Callers hold a.mu.
 func (a *Account) saveSettingsLocked() error {
 	if !validAccountID(a.AccountID) {
-		return fmt.Errorf("cannot save settings for an account with the ID %q", a.AccountID)
+		return vibe.Errorf("game.account_settings.saveSettingsLocked.01", "cannot save settings for an account with the ID %q", a.AccountID)
 	}
 	dir := accountDir(a.AccountID)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -148,7 +150,7 @@ func (a *Account) SetTitle(title string, held []string) error {
 			}
 		}
 		if !found {
-			return fmt.Errorf("You do not hold the title %q.", title)
+			return vibe.Errorf("game.account_settings.SetTitle.01", "You do not hold the title %q.", title)
 		}
 	}
 	a.settingsLocked().Title = title
