@@ -540,7 +540,7 @@ vibemode on
 vibemode off
 ```
 
-VibeMode changes words and nothing else. Costs, rates, rules, saves and badges are exactly what they are with it off, and a save made in one script loads in the other. The log lines and the refusals follow the switch as the rest of the words do: a line that is already in the log keeps the words it was written in, and new ones come in the script you have on. This release carries the switch and a first handful of lines: a few buildings, a tech, a badge, an event, a title, some of the words for the people of your town and two lines of the interface. Every line that has no VibeMode version yet reads as it always did. The setting is saved per account; with no account loaded it lasts for the session.
+VibeMode changes words and nothing else. Costs, rates, rules, saves and badges are exactly what they are with it off, and a save made in one script loads in the other. The log lines and the refusals follow the switch as the rest of the words do: a line that is already in the log keeps the words it was written in, and new ones come in the script you have on. The script covers the buildings, techs, civilizations, wonders and ages, events, milestones, badges and the names of your people. Log lines and refusals switch too once their VibeMode lines are written; any line that has no VibeMode version yet reads as it always did. The setting is saved per account; with no account loaded it lasts for the session.
 
 ---
 
