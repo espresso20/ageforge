@@ -1,2 +1,242 @@
 id,text
 game.engine.NewGameEngineWith.01,"Welcome to AgeForge. You have literally nothing but your hands, so lock in."
+pkg.textfmt.textfmt.List.01, n' 
+game.account.SwitchAccount.01,"Bestie, there is no account with the ID %s. Not a real one, no cap."
+game.account.ExportAccountByID.01,"No account has the ID %s. That's a miss, no cap."
+game.account.RecoveryCodeForID.01,The ID %s has no account attached. Vibe check failed.
+game.account.WipeAccountByID.01,"Wiping needs an ID first, bestie. No ID, no wipe."
+game.account.Save.01,"can't save an account with the ID %q, that's not it."
+game.account.crockfordDecode.01,"Bestie, that recovery code has a character it can't have ('%s'). Check it and try again, no cap."
+game.account.crockfordDecode.02,"That recovery code is way too short, the math isn't mathing. Check it and try again."
+game.account.RecoveryCodeID.01,"The recovery code is empty, it's giving nothing. Type account recover <code>, no cap."
+game.account.RecoveryCodeID.02,"That recovery code is sus (a character is probably wrong). Check it and try again, fr."
+game.account.ImportRecoveryCode.01,The account file for that code is cooked and couldn't be set aside: %w
+game.account.decodeAccountExport.01,"That file is not a readable progress export, it's mid: %w"
+game.account.decodeAccountExport.02,"This progress export got changed or damaged after it was made, so it's cooked and can't be imported."
+game.account.decodeAccountExport.03,"That progress export has no account ID (old-version vibes) and can't be imported, bestie."
+game.account.decodeAccountExport.04,"The progress export has an account ID the game can't use, so the import is a no. Rizz denied."
+game.account.decodeAccountExport.05,"This progress export got messed with after it was made, so no import, fr."
+game.account_settings.saveSettingsLocked.01,"can't save settings for an account with the ID %q, that's a no."
+game.account_settings.SetTitle.01,You don't own the title %q. Delulu if you thought so.
+game.auto_expedition.processAutoExpeditions.01,"%s: the survey party is standing there ready to slay, but there are no supplies to outfit it. Tragic."
+game.auto_expedition.processAutoExpeditions.03,Off goes a survey party from %s: %s. Main character move.
+game.auto_expedition.autoExpeditionBuildingName.01,The survey office
+game.backup.BackupAccount.01,"Zero account with the ID %s. The backup can't find it, bestie."
+game.badges.BadgeCatchUpLine.01,W
+game.badges.BadgeCatchUpLine.02,Ws
+game.badges.BadgeCatchUpLine.03," earned from your earlier play, no cap."
+game.badges.BadgeLogLine.01,"Badge bagged, bestie: "
+game.buildings.unknownKeyError.01,Never heard of this %s '%s'.
+game.buildings.unknownKeyError.02," Was it '%s' you meant, fr?"
+game.buildings.BankResource.01,wonder
+game.buildings.BankResource.02,Type wonders to see the receipts.
+game.buildings.BankResource.03,"%s is not a wonder, don't even try it."
+game.buildings.BankResource.04,"%s isn't unlocked yet, it's not your era yet."
+game.buildings.BankResource.05,"%s is already built, it's giving done."
+game.buildings.BankResource.06,"%s doesn't need %s, it wants %s. Read the room, fr."
+game.buildings.BankResource.07,"%s is already stacked with all the %s it needs, no cap."
+game.buildings.BankResource.08,"you have zero %s to bank, big yikes."
+game.buildings.BankResource.09,"Not enough %s rn: need %s, have %s. It's cooked."
+game.buildings.BankResource.10,"Broke on %s, that's a no rn."
+game.caps.CapPhrase.01,is 
+game.caps.capNote.01, rn
+game.caps.capNote.02,"zero effect, fully maxed rn"
+game.caps.capNote.03,maxed out: 
+game.caps.capNote.04, of it counts rn
+game.caps.kneeText.01,counts 
+game.caps.kneeText.02, past 
+game.caps.shareText.01,one quarter
+game.caps.shareText.02,a third
+game.caps.PoolNote.01,"maxed out, bestie: a tech takes one tick at least, so only +100% counts."
+game.caps.PoolNote.02, earned
+game.caps.PoolNote.03,maxed at 
+game.caps.PoolNote.04, banked
+game.caps.PoolLine.01," earned, "
+game.caps.PoolLine.02, counts.
+game.caps.PoolLine.03, Past 
+game.caps.PoolLine.04, any bonus counts 
+game.caps.capLinesLocked.01,"A tech takes one tick at least, so research speed maxes out at +100%, and you've already earned "
+game.caps.capLinesLocked.02,You've earned 
+game.caps.capLinesLocked.03,", and "
+game.caps.capLinesLocked.04," of it counts, no cap."
+game.caps.capLinesLocked.05, tops out at 
+game.caps.capLinesLocked.06,", and you've earned "
+game.catastrophe.catastropheBlockErr.01,%s is upon you. Type 'catastrophe' to pick Endure or Succumb before %s
+game.catastrophe.triggerCatastrophe.01,"☄ %s comes for the %s. Brace yourself, bestie."
+game.catastrophe.triggerCatastrophe.02,"  Type 'catastrophe' to pick Endure or Succumb. Advancing and prestige wait till you do, no skipping."
+game.catastrophe.Endure.01,"no catastrophe pending, so there's nothing to endure, bestie."
+game.catastrophe.Endure.02,"☄ ENDURE, no cap: %s. [comment]%s[-]"
+game.catastrophe.Endure.03,  Buildings gone rn: %d
+game.catastrophe.Endure.04,"  → %s, big L"
+game.catastrophe.Endure.05,"  Braced up (level %d): only %d%% of buildings lost instead of %d%%, and %.0f%% of stock kept instead of %.0f%%, bestie."
+game.catastrophe.Endure.06,"  Every resource drops to %.0f%% of what's stored, rip."
+game.catastrophe.Endure.07,  %.0f%% of your workers got yeeted.
+game.catastrophe.Endure.08,"  Reconstruction arc: all production %.0f%% for %s. Morale %+.0f points, it's giving comeback."
+game.catastrophe.Endure.09,"  ✦ You survived the %s, main character era. Its badge keeps the receipts."
+game.catastrophe.Succumb.01,"no catastrophe is pending, so there's nothing to succumb to, no drama."
+game.catastrophe.Succumb.06,"☄ %s: civilization is cooked. New era, new vibes."
+game.catastrophe.Succumb.07,"%s legacy bonus (forever, no cap): %s."
+game.catastrophe.Succumb.08,"You already got the %s legacy, so no new bonus."
+game.catastrophe.Succumb.09,"Ancient Knowledge: research time %s per epoch you succumbed in, now %s (forever, no cap)."
+game.catastrophe.Succumb.10,"%s from fallen civs carry forward (max %d), it's a glow-up."
+game.catastrophe.Succumb.11,L
+game.catastrophe.Succumb.12,Ls
+game.catastrophe.Succumb.13,"%s got bulldozed to make room, no feelings."
+game.catastrophe.Succumb.14,"older, lower-value L"
+game.catastrophe.Succumb.15,"old, lower-value Ls"
+game.catastrophe.Succumb.16,Type [cyan]help[-] to glow back up.
+game.catastrophe.legacyBonusText.01,%s hits +%.0f%% production
+game.current_game.WipeSavesByID.01,there's no account with the ID %q. Big miss.
+game.deals.dealBlocked.01,beefing with you
+game.deals.dealBlocked.02,cancelled by your embargo
+game.deals.dealBlocked.03,your nemesis
+game.deals.dealBlocked.04,giving hostile (opinion %d)
+game.deals.dealProblem.01,they're 
+game.deals.dealProblem.02,already spoken for
+game.deals.dealProblem.03,the offer ghosted with the age
+game.deals.dealProblem.04," isn't unlocked yet, not your era"
+game.deals.takeDeal.01,Sealed the deal with the %s. %s.
+game.deals.DealKindLabel.01,Sell
+game.deals.DealKindLabel.02,Goodwill
+game.deals.DealKindLabel.03,Rare
+game.deals.DealKindLabel.04,Buy
+game.deals.DealGets.01,+%d rizz
+game.deals.DealTerms.01,%s: drop %s %s → get %s
+game.deals.dealLogTerms.01,"%s: slide %s, get %s"
+game.deals.AcceptFactionDeal.01,"The %s won't trade, they're %s. Not the vibe."
+game.deals.AcceptFactionDeal.02,Out of offers from the %s rn. New drops arrive with each rotation.
+game.deals.AcceptFactionDeal.03,There's no deal %d with the %s (they offer %d). Type diplomacy deals to see them.
+game.deals.AcceptFactionDeal.04,Can't take deal %d with the %s: %s. Big nope.
+game.deals.AcceptFactionDeal.05,"Broke on %s for deal %d: need %s, have %s."
+game.defense.garrisonSavedLine.01,"  [green]Your garrison ate about %.0f%% of that raid, bestie: you kept %s.[-]"
+game.defense.endureGarrisonLine.01,"1 building still standing that was supposed to fall, and "
+game.defense.endureGarrisonLine.02,"%d buildings still standing that were supposed to fall, and "
+game.defense.endureGarrisonLine.03,"  [green]The garrison ate, no cap: %syou keep %.0f%% of your stock instead of %.0f%%.[-]"
+game.defense.endureGarrisonLine.04," [gray](Brace and garrison together soften an Endure by at most %.0f%%, that's the max, no cap.)[-]"
+game.diplomacy.errUnknownCiv.01,"You haven't met a civ called '%s' yet, not on your timeline."
+game.diplomacy.errUnknownCiv.02," Did you mean '%s', or nah?"
+game.diplomacy.errUnknownCiv.03,%s Scouting expeditions are how you slide into their DMs. Type diplomacy deals to see the ones you've met.
+game.diplomacy.SetStatus.01,"The %s need opinion %d before they'll ally (now %d), it's a whole process."
+game.diplomacy.SetStatus.02,"Not a real diplomatic status '%s', bestie. Use allied, rival, embargo or neutral."
+game.diplomacy.SetStatus.03,"Too broke to ally with the %s: need %s, have %s."
+game.diplomacy.SetStatus.04,"The %s just declared war on you, we're cooked."
+game.diplomacy.SendTribute.01,"Not at war with the %s, so tribute isn't a thing rn."
+game.diplomacy.SendTribute.02,"Gold check failed for tribute to the %s: need %s, have %s."
+game.diplomacy.SendTribute.03,"Culture is giving broke for tribute to the %s: need %s, have %s."
+game.diplomacy.SendGift.01,"Bestie, gold is short for a gift to the %s: need %s, have %s."
+game.diplomacy.processLending.01,%s bounced back home to the %s.
+game.diplomacy.processLending.02,bestie on loan
+game.diplomacy.processLending.03,besties on loan
+game.diplomacy.processWar.01,"The war with the %s burned out. Peace is here, sort of, fr."
+game.diplomacy.firstContactMessage.01,"[gold]✦ First contact, bestie: %s[-] [gray](%s)[-]. %s Type diplomacy to see their offers."
+game.diplomacy.lendMessage.01,(they're back in %s)
+game.diplomacy.lendMessage.02,"(sticking around forever, no cap)"
+game.diplomacy.lendMessage.03,[green]+%s on loan from the %s[-] %s. Generous W.
+game.diplomacy.lendMessage.04,bestie
+game.diplomacy.lendMessage.05,besties
+game.diplomacy.raidMessage.01,"[red]⚔ The %s raided you, you lost %s %s. Big yikes.[-]"
+game.diplomacy.raidMissedMessage.01,"[yellow]⚔ Raid by the %s came up empty: too little %s to carry off. You lost nothing, W.[-]"
+game.diplomacy.raidMessageDefended.01,"[red]⚔ The %s raided you, you lost %s %s.[-] [green]Your garrison ate and saved %s %s from them (about %.0f%% of the raid), bestie.[-]"
+game.engine.techLockErr.01,"%s needs %s first, so research it to build here, fr."
+game.engine.wonderNextStep.01,"Research %s, then type 'build %s' and let the construction arc begin."
+game.engine.wonderNextStep.02,Type 'build %s' to start the construction glow-up.
+game.engine.updateMoraleTick.01,⚠ Morale's in the basement (%s): all production %s. Faith output lifts the mood.
+game.engine.Start.01,"Autosave bombed: could not write the save file (%v). Save it by hand, bestie."
+game.engine.Start.03,"Your lifetime stats refused to save (%v). The game will try again at the next autosave, no cap."
+game.engine.safeTick.01,This tick glitched out and got skipped. Save your game and report the bug: %v
+game.engine.SwitchAccount.01,"No account wears the ID %s. Ghost town, fr."
+game.engine.doTick.05,"⚠ Food ran out, bestie. One worker dies every %s until you have food again."
+game.engine.doTick.06,"☠ A worker starved, big L. Population: %d."
+game.engine.doTick.07,"✓ Food is back, we're so back. Workers have stopped starving."
+game.engine.doTick.09,"✦ Ready to advance to the %s, no cap. Type 'advance' when you're ready."
+game.engine.finishResearch.02,Research complete: %s. We ate that.
+game.engine.finishResearch.03,"With %s researched, %s is buildable once its bank fills, real."
+game.engine.processEvents.03,"%s is over, the era's closed.%s"
+game.engine.processExpeditions.03,Your army is now %s. Iconic.
+game.engine.processExpeditions.04,"The mission hit %d road events, the plot thickens."
+game.engine.applyExpeditionRewards.01,  → Netted 
+game.engine.checkMilestones.01,"Milestone unlocked: %s, main character moment."
+game.engine.checkMilestones.02,"Chain complete: %s. Title: %s. Game speed %s for %s, lock in."
+game.engine.applyMilestoneRewards.01,  → Scored 
+game.engine.advanceAge.01,"↑ %s can upgrade to %s, glow-up time. Type 'upgrade %s'."
+game.engine.advanceAge.02,for the advance
+game.engine.advanceAge.03,"Stockpiles trimmed for the new age, no cap: each resource maxes out at %d times the cost of the cheapest new building that uses it, resources no new building uses keep %s, and faith is untouched."
+game.engine.advanceAge.05,Glowed up from the %s to the %s.
+game.engine.advanceAge.06,"★ A wonder just dropped: %s. Bank its cost and research %s, its keystone, then build it."
+game.engine.advanceAge.07,"★ Wonder unlocked: %s. Bank its cost, then build it, slay."
+game.engine.detectEpochTransition.01,"[%s]✦ The %s begins, new era energy. %s[-]"
+game.engine.fireAwakening.01,[%s]✦ Awakening arc: %s. %s[-]
+game.engine.applyGoodEpochEvent.01,"  → %s moved in (population now %d), bestie."
+game.engine.applyGoodEpochEvent.02,new bestie
+game.engine.applyGoodEpochEvent.03,fresh besties
+game.engine.applyGoodEpochEvent.04,  → The cache dropped 
+game.engine.applyGoodEpochEvent.05,"  → Free tech, no cap: %s."
+game.engine.applyGoodEpochEvent.06,"  → Ran out of techs to research this age, nothing left to grab."
+game.engine.applyGoodEpochEvent.07,"  → %s, on the house."
+game.engine.applyChallengingEpochEvent.01,  → Wrecked: %s.
+game.engine.applyChallengingEpochEvent.02,  → The fire fizzled out before it reached any buildings.
+game.engine.applyChallengingEpochEvent.03,"  → %s lost, rip."
+game.engine.applyChallengingEpochEvent.04,bestie
+game.engine.applyChallengingEpochEvent.05,besties
+game.engine.applyChallengingEpochEvent.06,"  → Research on %s got canceled (no refund, rough)."
+game.engine.logTimedEffects.01,"  → %s for %s, still cooking."
+game.engine.loseShare.01,"  → Lost %s (%s of your stock), oof."
+game.engine.effectsText.01,all production 
+game.engine.effectsText.02,research speed 
+game.engine.DoFestival.01,The next festival drops in %s.
+game.engine.DoFestival.02,"Culture's too low for a festival: need %s, have %s."
+game.engine.DoFestival.04,Threw a cultural festival for %s: all production %s for %s. Vibes immaculate.
+game.engine.DoBlackMarket.01,The black market pops up in %s.
+game.engine.DoBlackMarket.02,Smugglers are in hiding rn. Try again in %s.
+game.engine.DoBlackMarket.03,Never heard of the resource '%s'.
+game.engine.DoBlackMarket.04,"Broke on culture for a smuggling run: need %s, have %s."
+game.engine.DoBlackMarket.05,"Smugglers don't deal in %s. Pick another resource, not that one."
+game.engine.DoBlackMarket.06,The smuggling run ate: %s bought %s.
+game.engine.DoBlackMarket.07,"That smuggling run flopped. You lost %s, rip."
+game.engine.finishBuild.02,"%s built (you have %d), slay."
+game.engine.AdvanceAge.01,"The %s wonder comes before advancing, bestie. Research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'."
+game.engine.AdvanceAge.02,"Build the %s wonder before advancing, it's the main quest. Bank its cost with 'wonder collect', then type 'build %s'."
+game.engine.AdvanceAge.03,"Not ready to advance, bestie. The Next Age bar lists what's missing."
+game.engine.AdvanceAge.04,"You're already in the final age, no more glow-ups."
+game.engine.GatherResource.01,Hand-gathering is cooked after the Medieval Age. Build producers and assign workers instead.
+game.engine.GatherResource.02,"No gathering %s yet, bestie. Gather food, wood or stone."
+game.engine.GatherResource.04,Scooped up %s.
+game.engine.bankWonderLocked.01,"Banked %s toward %s (%s of %s), the bag is filling."
+game.engine.bankWonderLocked.02,"%s is fully banked, we're cooking. %s"
+game.engine.previousAgeBuildError.01,"%s belongs to a previous age, bestie. Type 'upgrade %s' to upgrade the ones you have to %s."
+game.engine.previousAgeBuildError.02,"%s is from a previous age and can't be built anymore. The ones you have still count, so build this age's storage instead."
+game.engine.previousAgeBuildError.03,Retired: %s belongs to a previous age and can't be built anymore.
+game.engine.startBuildPaid.01,%s isn't unlocked yet.
+game.engine.startBuildPaid.02,"%s is already under construction (%s left), no cap."
+game.engine.startBuildPaid.03,"%s has hit its max count of %d, full house."
+game.engine.startBuildPaid.04,"%s isn't fully banked yet, bestie. Bank its cost first with 'wonder collect <resource|all> [amount|all]'."
+game.engine.startBuildPaid.05,"Can't afford %s, bestie: need %s."
+game.engine.startBuildPaid.07,"Started building %s (%s), the grind begins."
+game.engine.startBuildPaid.08,"%s built, you have %d now, slay."
+game.engine.BuildMultiple.01,"Build count has to be positive (got %d), bestie."
+game.engine.BuildMultiple.02,"%s isn't unlocked yet, not your era."
+game.engine.BuildMultiple.03,"%s is at max count (%d), no more room."
+game.engine.BuildMultiple.04,Too broke for %s: need %s.
+game.engine.BuildMultiple.05,"Queued up %s, bestie."
+game.engine.BuildMultiple.06,"Built %s, you've got %d now."
+game.engine.RecruitMax.01,"Worker type '%s' isn't unlocked yet, not your era."
+game.engine.RecruitMax.02,"No housing left (%d/%d), we're out of room. Build housing to recruit more."
+game.engine.RecruitMax.03,"Couldn't recruit a single worker, bestie."
+game.engine.RecruitMax.04,"Recruited %s (population %d/%d), W."
+game.engine.RecruitMax.05,bestie
+game.engine.RecruitMax.06,besties
+game.engine.RecruitWorker.01,"Recruit count needs to be positive (got %d), no cap."
+game.engine.RecruitWorker.02,"Never heard of worker type '%s', bestie."
+game.engine.RecruitWorker.03,Out of housing (%d/%d). Build housing to recruit more.
+game.engine.RecruitWorker.04,Housing is too tight for %s (%d/%d). Build housing to recruit more.
+game.engine.RecruitWorker.05,more bestie
+game.engine.RecruitWorker.06,extra besties
+game.engine.RecruitWorker.08,Hired on: %s (population %d/%d).
+game.engine.RecruitWorker.09,bestie
+game.engine.RecruitWorker.10,besties
+game.engine.AssignWorker.01,"Assign count has to be above zero (got %d), bestie."
+game.engine.AssignWorker.02,"Every %s at %s is stacked, no room left."
+game.engine.AssignWorker.03,job slot
+game.engine.AssignWorker.04,spots
+game.engine.AssignWorker.05,"Only %s free at %s (%d/%d filled), that's tight."
+game.engine.AssignWorker.06,job slot is
