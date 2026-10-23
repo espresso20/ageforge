@@ -377,9 +377,20 @@ The export finds the text by parsing the source (`go/parser`), so nothing has to
 
 When you add content, three guards in `go test ./cmd/words` keep the export whole:
 
-- A struct in `config` that gains a field holding text fails `TestConfigFieldsAreAllClassified` until the field is in `fieldRules` (a player reads it: its id, kind and where sentence) or `hiddenFields` (a key or a note), both in `cmd/words/data_rows.go`.
+- A struct in `config` that gains a field holding text fails `TestConfigFieldsAreAllClassified` until the field is in `fieldRules` (a player reads it: its kind and where sentence, with its id template in `words/ids.go`) or `hiddenFields` (a key or a note), both in `cmd/words/data_rows.go`.
 - A new package fails `TestEveryPackageIsAccountedFor` until it is in `scanned` or `notScanned` (`cmd/words/source.go`).
 - A new flavor pool fails `TestFlavorPoolsAreAllRead` until its catalog is in `moments` (`cmd/words/flavor_rows.go`).
+
+### VibeMode's script
+
+VibeMode (`vibemode on`) swaps the game's words for a second script. The script is the sheets in `words/vibe/*.csv`, embedded in the binary: a header row with `id` and `text`, then a row per line, keyed by the same ids as the export. A row with no text is no row; a line without one reads as it always did.
+
+```bash
+go run ./cmd/words vibe-export   # the rows with no VibeMode line yet, sheet by sheet, in words/vibe-todo/ (git-ignored)
+go run ./cmd/words vibe-lint     # every id is a row of the export or the lexicon, kept pieces and limits hold, vibe.Line calls agree
+```
+
+Three things read the script. The ruleset overlay (`rules.Vibed`) swaps the text of any definition field that has a row; it finds the row by the id templates in `words/ids.go`, filled from the running ruleset, and `TestRuntimeIdsAreTheExportsOwn` keeps those ids the export's own. The lexicon (`config.Term`) reads `lexicon.<age>.<term>.one|many` rows. A line of code reads `vibe.Line(id, plain)`, with the id the export gives that string and the string itself as a literal; `vibe-lint` checks both. The `wired` column of a to-do sheet says whether the game reads a row yet.
 
 Text built in ordinary code (panels, log lines, refusals) needs no entry: the reader keeps what reaches the screen and leaves out keys, command syntax, file names and the dev console. A new source file gets a better where sentence from a line in `fileNotes` (`cmd/words/code_special.go`). `TestRulesAreRead` fails if a lint's list is renamed or changes shape, which is the cue to update `loadRules` (`cmd/words/lint.go`).
 
