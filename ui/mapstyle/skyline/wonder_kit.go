@@ -14,6 +14,7 @@ const (
 	beamFan    beamKind = iota // a lighthouse's: a flat fan that sweeps out to both sides
 	beamSky                    // a searchlight: a slanted shaft that swings across the sky
 	beamPillar                 // a column of light straight up
+	beamDown                   // a lamp at the top of a tall landmark: a fan that sweeps out and down over the roofs
 )
 
 // beam is a lamp on a sprite: its cell, how it throws its light and how far

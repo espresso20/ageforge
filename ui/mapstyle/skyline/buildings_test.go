@@ -354,8 +354,11 @@ func TestLitWindows(t *testing.T) {
 	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	_ = theme.SetActive("forge")
 	for _, age := range []string{"bronze_age", "medieval_age", "modern_age", "cyberpunk_age"} {
-		night := build(fixture.Options{Age: age, Seed: 5, Scale: 2, Tick: tickAt(0.95)}, 0)
-		day := build(fixture.Options{Age: age, Seed: 5, Scale: 2, Tick: tickAt(0.5)}, 0)
+		// seed 6: the Bronze Age has a dozen windowed buildings and few
+		// elsewhere; the landmark on the plot hides some of any seed's, so the
+		// scene is one where enough of them stand clear of it
+		night := build(fixture.Options{Age: age, Seed: 6, Scale: 2, Tick: tickAt(0.95)}, 0)
+		day := build(fixture.Options{Age: age, Seed: 6, Scale: 2, Tick: tickAt(0.5)}, 0)
 		a := windowColours(t, night, 40)
 		d := windowColours(t, day, 40)
 		if len(a) < 10 {

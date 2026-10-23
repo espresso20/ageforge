@@ -2,6 +2,7 @@ package skyline
 
 import (
 	"math"
+	"strconv"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -70,6 +71,25 @@ func (s *scene) wonderLight(lv *lotView, spr *sprite, x0, y0 int, glow tcell.Col
 					s.fb.tint(bx+dir*j, s.Y(by+dy), glow, aa, d)
 				}
 			}
+		case beamDown:
+			// the same turning lamp, its light falling away toward the roofs
+			c := math.Cos(t/10 + ph)
+			n := int(float64(b.n) * math.Abs(c))
+			dir := 1
+			if c < 0 {
+				dir = -1
+			}
+			for j := 1; j <= n; j++ {
+				a := 0.5 * k * (1 - float64(j)/float64(b.n+1))
+				y := by + j*2/5
+				for dy := 0; dy <= 1+j/8; dy++ {
+					aa := a
+					if dy > 0 {
+						aa *= 0.55
+					}
+					s.fb.tint(bx+dir*j, s.Y(y+dy), glow, aa, d)
+				}
+			}
 		case beamSky:
 			// a searchlight swinging over the roofs
 			ang := 0.55 * math.Sin(t/13+ph)
@@ -89,4 +109,79 @@ func (s *scene) wonderLight(lv *lotView, spr *sprite, x0, y0 int, glow tcell.Col
 			}
 		}
 	}
+}
+
+// plaqueReach is how far (in world columns, past the landmark's own width)
+// the inspect cursor may stand for the landmark to show its plaque.
+const plaqueReach = 10
+
+// plaques puts a small plaque with its name on the ground under every
+// landmark the inspect cursor is near: on a lot within plaqueReach columns of
+// it, but not on the landmark itself (the cursor labels that one). A wonder
+// still going up also says how much of it is banked. It is drawn on the
+// screen like the other labels, over the ground and its traffic but under the
+// cursor, the weather and the tags.
+func (s *scene) plaques() {
+	if !s.v.inspect || s.sel < 0 || s.sel >= len(s.lay.lots) {
+		return
+	}
+	cur := &s.lay.lots[s.sel]
+	var gold tcell.Color
+	row := s.sy(s.groundY + 1)                                                       // the road: the cursor's own bar is the row under it
+	mark := s.sx(cur.x0-s.cam) + (s.sx(cur.x0-s.cam+cur.spr.w)-s.sx(cur.x0-s.cam))/2 // the cursor's pointer
+	draw := func(lv *lotView, label string) {
+		reach := lv.spr.w/2 + plaqueReach
+		if abs(cur.ml.X-lv.ml.X) > reach || cur == lv {
+			return
+		}
+		if gold == 0 {
+			gold = s.p.hue(theme.SkyWonderGold, mEmit, 0)
+		}
+		text := " " + label + " "
+		n := textLen(text)
+		x := clampInt(s.sx(lv.ml.X-s.cam)-n/2, 0, max(0, s.W-n))
+		if mark >= x-1 && mark <= x+n { // keep clear of the cursor's pointer
+			if lv.ml.X >= cur.ml.X {
+				x = min(mark+2, max(0, s.W-n))
+			} else {
+				x = max(0, mark-n-1)
+			}
+		}
+		for i, r := range []rune(text) {
+			c := s.fb.at(x+i, s.Y(row))
+			if c == nil || c.d < dTag {
+				continue // the cursor, the weather and the tags stay on top
+			}
+			bg := theme.Shade(c.show(), 0.45)
+			s.fb.set(x+i, s.Y(row), r, theme.Legible(gold, bg, 4), bg, dTag)
+		}
+	}
+	for _, li := range s.vis {
+		if lv := &s.lay.lots[li]; lv.ml.Wonder {
+			draw(lv, s.m.Catalog.Defs[lv.ml.Key].Name)
+		}
+	}
+	for i := range s.lay.sites {
+		lv := &s.lay.sites[i]
+		if lv.x0 >= s.cam+s.W+12 || lv.x0+lv.spr.w <= s.cam-12 {
+			continue
+		}
+		pct := 0
+		for _, w := range s.m.Wonders {
+			if w.Key == lv.ml.Key {
+				pct = int(w.Progress*100 + 0.5)
+			}
+		}
+		draw(lv, s.m.Catalog.Defs[lv.ml.Key].Name+" "+strconv.Itoa(pct)+"%")
+	}
+}
+
+// natural reports a slot that is rock or growth: a landmark's night outline
+// follows its built edges, not the hill under it.
+func natural(sl slot) bool {
+	switch sl {
+	case sRock, sRockDark, sLeaf, sLeafDark, sTrunk, sWater:
+		return true
+	}
+	return false
 }

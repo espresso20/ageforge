@@ -293,7 +293,7 @@ func simulation(h int) *sprite {
 			s.put(cx+dx, i, ch, sl, sNone)
 		}
 	}
-	s.lamp(cx, 0, beamPillar, atLeast(u(6), 3))
+	s.lamp(cx, 0, beamDown, atLeast(u(12), 6))
 	// close: more data, finer
 	for y := base - tower - 1; y <= base-2; y++ {
 		for x := cx - hx + 1; x < cx+hx; x++ {
@@ -379,9 +379,8 @@ func citadel(h int) *sprite {
 	s.put(cx-2, ct, '┬', sMetal, sNone)
 	s.put(cx+2, ct, '┬', sMetal, sNone)
 	s.beacons = append(s.beacons, pt{cx, max(0, ct-atLeast(u(3), 2)-1)}, pt{cx - 2, max(0, ct-1)}, pt{cx + 2, max(0, ct-1)})
-	s.lamp(cx, max(0, ct-atLeast(u(3), 2)-1), beamPillar, atLeast(u(10), 4))
-	s.lamp(cx-2, max(0, ct-1), beamSky, atLeast(u(14), 6))
-	s.lamp(cx+2, max(0, ct-1), beamSky, atLeast(u(14), 6))
+	s.lamp(cx, max(0, ct-atLeast(u(3), 2)-1), beamDown, atLeast(u(14), 6))
+	s.lamp(cx-2, max(0, ct-1), beamDown, atLeast(u(10), 5))
 	// close: the windows in the glass, panelling on the edges
 	for y := base - top + 1; y <= base; y++ {
 		for x := 4; x < w-4; x++ {
@@ -456,7 +455,7 @@ func cradle(h int) *sprite {
 	s.put(cx+1, base-1, '▀', sGlow, sNone)
 	s.hline(0, w-1, base, '▀', sMetalDark, sNone)
 	s.beacons = append(s.beacons, pt{cx, max(0, base-3-sh)})
-	s.lamp(cx, max(0, base-3-sh), beamPillar, atLeast(u(8), 3))
+	s.lamp(cx, max(0, base-3-sh), beamDown, atLeast(u(12), 6))
 	// close: the hull's panelling, rungs on the gantries
 	for i := 0; i < sh; i++ {
 		s.detail(cx, base-2-i, '▌', sWallDark)

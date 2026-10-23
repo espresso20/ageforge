@@ -1,7 +1,6 @@
 package skyline
 
 import (
-	"math"
 	"sort"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -142,7 +141,7 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 			if ml.Row > 0 {
 				h *= 1.12
 			}
-			sk = spriteKey{ml.Key, ml.Seed, softCap(clampInt(int(h+0.5), 2, maxH), capOf(ml.Age))}
+			sk = spriteKey{ml.Key, ml.Seed, softCap(clampInt(int(h+0.5), 2, maxH), capOf(ml.Age), maxH)}
 		}
 		spr := v.sprites[sk]
 		if spr == nil {
@@ -263,18 +262,18 @@ func wonderKeys(c *mapmodel.Catalog) []string {
 func districtCap(wonderRows int) int { return max(2, wonderRows*2/3) }
 
 // softCap bends a building's height so it stays under capH without a row of
-// flat roofs: it is unchanged under 60% of the cap, then eases toward the cap
-// (reaching it only for ever taller buildings), keeping their order.
-func softCap(h, capH int) int {
+// flat roofs: it is unchanged under 60% of the cap, and from there up to the
+// tallest a scene allows (maxH) the heights are laid evenly between the knee
+// and the cap, so the order and the variety of a skyline survive the squeeze.
+func softCap(h, capH, maxH int) int {
 	knee := capH * 6 / 10
 	if h <= knee {
 		return h
 	}
-	span := float64(capH - knee)
-	if span <= 0 {
+	if maxH <= knee || capH <= knee {
 		return min(h, capH)
 	}
-	v := float64(knee) + span*(1-math.Exp(-float64(h-knee)/span))
+	v := float64(knee) + float64(h-knee)*float64(capH-knee)/float64(maxH-knee)
 	return clampInt(int(v+0.5), 2, capH)
 }
 
@@ -319,7 +318,6 @@ func (v *view) layoutSites(lay *layout) {
 		return
 	}
 	lots := make([]mapmodel.Lot, 0, len(m.Wonders))
-	steel := m.Catalog.AgeIdx["industrial_age"]
 	for _, w := range m.Wonders {
 		if w.Built || w.Age < 0 || w.Age >= len(m.Skyline.Districts) {
 			continue
@@ -330,7 +328,7 @@ func (v *view) layoutSites(lay *layout) {
 		sk := spriteKey{key + "/site", uint64(built), rows}
 		spr := v.sprites[sk]
 		if spr == nil {
-			spr = scaffoldArt(key, rows, built, w.Age >= steel)
+			spr = scaffoldArt(key, rows, built, scaffoldEraOf(w.Age, m.Catalog))
 			v.sprites[sk] = spr
 		}
 		x := wonderX(m.Skyline.Districts[w.Age], key)

@@ -161,7 +161,7 @@ func monolith(h int) *sprite {
 // framing a low sun, a lesser pair either side, outliers beyond them and a
 // back row of smaller stones showing between.
 func henge(h int) *sprite {
-	w := atLeast(h*2+1, 21) | 1
+	w := atLeast(h*7/4+1, 21) | 1
 	s := newSprite(w, h)
 	base := h - 1
 	cx := w / 2
@@ -189,7 +189,7 @@ func henge(h int) *sprite {
 		stone(cx+at(float64(dx)), base-bh+1, base, atLeast(at(2.5), 2), true)
 	}
 	// the low sun in the great gap
-	gap := atLeast(at(5), 3)
+	gap := atLeast(at(5.5), 3)
 	sr := float64(gap)/2 + 0.2
 	ellipse(float64(cx)+0.5, float64(2*base+2)-sr*2, sr, sr, func(x, py int, dx, dy float64) {
 		s.pset(x, py, sGlow)
@@ -208,14 +208,14 @@ func henge(h int) *sprite {
 	}
 	big := atLeast(h*76/100, 5)
 	mid := atLeast(h*58/100, 4)
-	tri(cx, atLeast(at(5), 3), gap, big-2)
-	tri(cx-at(15), atLeast(at(3), 2), atLeast(at(3), 2), mid-2)
-	tri(cx+at(15), atLeast(at(3), 2), atLeast(at(3), 2), mid-2)
+	tri(cx, atLeast(at(6.5), 3), gap, big-2)
+	tri(cx-at(16), atLeast(at(4), 2), atLeast(at(3), 2), mid-2)
+	tri(cx+at(16), atLeast(at(4), 2), atLeast(at(3), 2), mid-2)
 	// outliers
 	oh := atLeast(h*34/100, 3)
-	stone(cx-at(21), base-oh+1, base, atLeast(at(3), 2), false)
-	stone(cx+at(19), base-oh, base, atLeast(at(3), 2), false)
-	s.put(cx+at(19), base-oh, '▄', sRock, sNone)
+	stone(cx-at(22), base-oh+1, base, atLeast(at(3.5), 2), false)
+	stone(cx+at(20), base-oh, base, atLeast(at(3.5), 2), false)
+	s.put(cx+at(20), base-oh, '▄', sRock, sNone)
 	s.hline(0, w-1, base, '▄', sRockDark, sNone)
 	// close: weathering and lichen on the faces
 	for y := 0; y < h; y++ {

@@ -1,20 +1,22 @@
 package skyline
 
+import "github.com/espresso20/ageforge/mapmodel"
+
 // wonders.go: the landmarks. Each age's wonder is a short drawing on the
 // same cell grammar as the buildings, the tallest and most detailed thing in
 // its district: wonderRows sizes it, wonderArt draws it, and while it is
 // still being built scaffoldArt shows how much of it is banked.
 
 // wonderFamily lets a landmark wear a later period's finish.
-var wonderFamily = map[string]int{"crystal_palace": 7, "great_monolith": 8, "hoover_dam": 7}
+var wonderFamily = map[string]int{"crystal_palace": 7, "great_monolith": 8, "hoover_dam": 7, "particle_accelerator": 9}
 
 // wonderNominal is each wonder's height in rows in a scene sized for a
 // 45-row terminal at scale 1. A wonder is drawn this tall times the scene's
 // scale, within the scene's own room (wonderRows).
 var wonderNominal = map[string]float64{
-	"sacred_grove": 14, "great_monolith": 22, "stonehenge": 18, "colosseum": 18, "parthenon": 20,
+	"sacred_grove": 14, "great_monolith": 22, "stonehenge": 22, "colosseum": 18, "parthenon": 20,
 	"great_library": 26, "sistine_chapel": 30, "grand_lighthouse": 32, "crystal_palace": 28,
-	"eiffel_tower": 34, "hoover_dam": 32, "particle_accelerator": 30, "space_program": 34,
+	"eiffel_tower": 34, "hoover_dam": 24, "particle_accelerator": 22, "space_program": 34,
 	"global_network": 34, "world_simulation": 32, "neon_citadel": 34, "stellar_cradle": 34,
 	"dyson_scaffold": 26, "warp_nexus": 24, "cosmic_beacon": 32, "reality_anchor": 24, "singularity_core": 22,
 }
@@ -107,6 +109,25 @@ func wonderArt(key string, rows int) *sprite {
 	return fitRows(s, rows)
 }
 
+// scaffoldEra is how an age raises its scaffolding: lashed timber before the
+// industrial age, riveted iron in it and the electric and atomic ages,
+// tubular steel from the modern age on.
+type scaffoldEra struct {
+	slot         slot
+	up, bar, tee rune // the upright, the plank, the joint at the top corners
+}
+
+func scaffoldEraOf(age int, c *mapmodel.Catalog) scaffoldEra {
+	industrial, modern := c.AgeIdx["industrial_age"], c.AgeIdx["modern_age"]
+	switch {
+	case age < industrial:
+		return scaffoldEra{sTrunk, '│', '─', '┬'}
+	case age < modern:
+		return scaffoldEra{sMetalDark, '┃', '━', '┳'}
+	}
+	return scaffoldEra{sMetal, '║', '═', '╦'}
+}
+
 // siteRows is how many rows of a rows-tall wonder are standing when share of
 // its cost is banked: none only while nothing is, one at least once anything is.
 func siteRows(share float64, rows int) int {
@@ -121,7 +142,7 @@ func siteRows(share float64, rows int) int {
 // scaffolding round them and two rows above, so the frame climbs as the
 // wonder is banked. With nothing built it is a footing and two posts; with
 // all of it built, the whole wonder in its frame.
-func scaffoldArt(key string, rows, built int, steel bool) *sprite {
+func scaffoldArt(key string, rows, built int, era scaffoldEra) *sprite {
 	fin := wonderArt(key, rows)
 	const lift = 2
 	h := min(rows, built+lift)
@@ -147,40 +168,37 @@ func scaffoldArt(key string, rows, built int, steel bool) *sprite {
 		x0, x1 = 0, fin.w-1
 	}
 	x0, x1 = max(0, x0-1), min(fin.w-1, x1+1)
-	pole := sTrunk
-	if steel {
-		pole = sMetal
-	}
-	// a footing of trodden earth
+	pole, up, bar, tee := era.slot, era.up, era.bar, era.tee
+	// a footing of trodden earth, in patches
 	for x := x0; x <= x1; x++ {
-		if s.at(x, h-1).ch == 0 {
+		if s.at(x, h-1).ch == 0 && (x-x0)%3 != 1 {
 			s.put(x, h-1, '▄', sRockDark, sNone)
 		}
 	}
+	const top = 0 // the working deck, the topmost row of the frame
 	posts := []int{x0, x1}
 	for x := x0 + 6; x < x1-2; x += 6 {
 		posts = append(posts, x)
 	}
-	top := 0
 	for _, px := range posts {
 		for y := top; y < h-1; y++ {
 			if s.at(px, y).ch == 0 {
-				s.put(px, y, '│', pole, sNone)
+				s.put(px, y, up, pole, sNone)
 			}
 		}
 	}
 	// the working deck at the top, planks every few rows below it
 	for x := x0; x <= x1; x++ {
 		if s.at(x, top).ch == 0 {
-			s.put(x, top, '─', pole, sNone)
+			s.put(x, top, bar, pole, sNone)
 		}
 	}
-	s.put(x0, top, '┬', pole, sNone)
-	s.put(x1, top, '┬', pole, sNone)
+	s.put(x0, top, tee, pole, sNone)
+	s.put(x1, top, tee, pole, sNone)
 	for y := top + 4; y < h-1; y += 4 {
 		for x := x0; x <= x1; x++ {
 			if s.at(x, y).ch == 0 {
-				s.put(x, y, '─', pole, sNone)
+				s.put(x, y, bar, pole, sNone)
 			}
 		}
 	}

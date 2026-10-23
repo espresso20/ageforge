@@ -703,7 +703,7 @@ func (s *scene) lots() {
 					fg = s.leafFade(lv, sx, sy, fg, hz)
 				}
 				if rim {
-					fg = s.rimShade(fg, lit, glow, glowK)
+					fg = s.rimShade(fg, lit && !natural(c.fg), glow, glowK)
 				}
 				if dim {
 					fg = theme.Shade(fg, 0.55)
@@ -729,7 +729,7 @@ func (s *scene) lots() {
 					bg = s.neonFix(bg, hz)
 				}
 				if rim {
-					bg = s.rimShade(bg, lit, glow, glowK)
+					bg = s.rimShade(bg, lit && !natural(c.bg), glow, glowK)
 				}
 				if dim {
 					bg = theme.Shade(bg, 0.55)
@@ -1385,6 +1385,7 @@ func (s *scene) markers() {
 			}
 		}
 	}
+	s.plaques()
 	s.cursor()
 }
 

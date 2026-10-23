@@ -412,7 +412,7 @@ func lattice(h int) *sprite {
 	}
 	s.put(cx, 0, '┼', sMetal, sNone)
 	s.beacons = append(s.beacons, pt{cx, 0})
-	s.lamp(cx, 1, beamSky, atLeast(u(20), 8))
+	s.lamp(cx, 1, beamDown, atLeast(u(16), 8))
 	// strings of lights up the legs
 	for i := 2; i < body; i += 3 {
 		hw := half(i)
