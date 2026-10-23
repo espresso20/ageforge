@@ -263,13 +263,19 @@ func TestPlacementStable(t *testing.T) {
 		key string
 		cp  int
 	}
+	// (a district widens to fit what it holds, which carries the districts
+	// east of it: a lot keeps its place against its district's east edge)
+	at := func(m *mapmodel.Model, l mapmodel.Lot) int {
+		d := m.Skyline.Districts[l.Age]
+		return l.X - (d.X0 + d.LandW)
+	}
 	pos := map[id]int{}
 	for _, l := range m1.Skyline.Lots {
-		pos[id{l.Key, l.Copy}] = l.X
+		pos[id{l.Key, l.Copy}] = at(m1, l)
 	}
 	moved := 0
 	for _, l := range m2.Skyline.Lots {
-		if x, ok := pos[id{l.Key, l.Copy}]; ok && x != l.X {
+		if x, ok := pos[id{l.Key, l.Copy}]; ok && x != at(m2, l) {
 			moved++
 		}
 	}
