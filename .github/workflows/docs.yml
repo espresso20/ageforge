@@ -148,7 +148,8 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          typos --format brief | tee typos.txt
+          # The report goes outside the workspace, or typos would read it too.
+          typos --format brief | tee "$RUNNER_TEMP/typos.txt"
 
       - name: Job summary
         if: ${{ always() }}
@@ -156,12 +157,12 @@ jobs:
           {
             echo "### typos"
             echo
-            total=$(grep -c ': error: ' typos.txt || true)
+            total=$(grep -c ': error: ' "$RUNNER_TEMP/typos.txt" || true)
             echo "Findings: **${total}**"
             if [ "${total}" != "0" ]; then
               echo
               echo '```'
-              head -n 100 typos.txt
+              head -n 100 "$RUNNER_TEMP/typos.txt"
               echo '```'
               echo
               echo "Reporting only: this check does not fail the run yet."
@@ -172,7 +173,7 @@ jobs:
         if: ${{ always() }}
         with:
           name: typos
-          path: typos.txt
+          path: ${{ runner.temp }}/typos.txt
           if-no-files-found: ignore
 
   links:

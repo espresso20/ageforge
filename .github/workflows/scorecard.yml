@@ -1,11 +1,14 @@
 name: OpenSSF Scorecard
 
-# Weekly supply-chain score for the repository (pinned actions, token
-# permissions, dependency updates, and so on). The result goes to the Security
-# tab as SARIF and is kept as an artifact. Nothing is published to the
-# Scorecard API (publish_results is off), so no id-token permission is needed.
+# Supply-chain score for the repository (pinned actions, token permissions,
+# dependency updates, and so on), weekly and after each push to master. The
+# result goes to the Security tab as SARIF and is kept as an artifact. Nothing
+# is published to the Scorecard API (publish_results is off), so no id-token
+# permission is needed. The action only runs on the default branch.
 
 on:
+  push:
+    branches: [master]
   schedule:
     - cron: "47 3 * * 2" # weekly, Tuesday
   workflow_dispatch:
