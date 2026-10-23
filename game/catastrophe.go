@@ -663,7 +663,8 @@ func (ge *GameEngine) startReconstruction() int {
 	debuff := ge.rules.StretchTicks(ge.age, endureDebuffTicks)
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       "endure_reconstruction",
-		Name:      "Reconstruction Effort",
+		Src:       nameFromCode,
+		Ref:       "endure_reconstruction",
 		TicksLeft: debuff,
 		Effects: []config.Effect{
 			{Type: "production_all", Value: endureDebuffProduction},

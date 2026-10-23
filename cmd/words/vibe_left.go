@@ -17,11 +17,6 @@ func init() {
 		"game.catastrophe.Succumb.04", "game.catastrophe.Succumb.05",
 		"game.last_passage.recordLastPassageOutcome.01", "game.last_passage.recordLastPassageOutcome.02",
 		"game.last_passage.recordLastPassageOutcome.03", "game.last_passage.recordLastPassageOutcome.04",
-		// The name of a timed effect with no Src is kept in the save as it is
-		// (ActiveEvent.Name); a name drawn from a ruleset is kept as a key.
-		"game.catastrophe.startReconstruction.01", "game.defense.applyWarRaids.01",
-		"game.engine.processDiplomacy.01", "game.engine.startChainBoost.01",
-		"game.engine.DoFestival.03",
 		// The description of a ruins offer written by hand is kept in the save as it was written.
 		"game.mission_board.ruinsFoundPlain.01",
 	)

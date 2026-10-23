@@ -1850,7 +1850,8 @@ func (ge *GameEngine) processDiplomacy() {
 		// Surface as a timed event so it shows in the active-events panel too.
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       "worker_lending",
-			Name:      "Workers on Loan",
+			Src:       nameFromCode,
+			Ref:       "worker_lending",
 			TicksLeft: lendEventDisplayTicks,
 		})
 	}
@@ -2016,7 +2017,6 @@ func (ge *GameEngine) applyMilestoneRewards(rewards []config.Effect) {
 func (ge *GameEngine) startChainBoost(chain config.MilestoneChainDef, ticks int) {
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       chain.Key + "_boost",
-		Name:      chain.Name + " Speed Boost",
 		Src:       nameFromChain,
 		Ref:       chain.Key,
 		TicksLeft: ticks,
@@ -3040,7 +3040,8 @@ func (ge *GameEngine) DoFestival() error {
 	buff := ge.festivalLength()
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       "cultural_festival",
-		Name:      "Cultural Festival",
+		Src:       nameFromCode,
+		Ref:       "cultural_festival",
 		TicksLeft: buff,
 		Effects:   []config.Effect{{Type: "production_all", Value: festivalBuffPercent}},
 	})

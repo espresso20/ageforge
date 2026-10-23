@@ -316,7 +316,8 @@ func (ge *GameEngine) applyWarRaids() {
 		}
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       "war_raid",
-			Name:      "Under Raid",
+			Src:       nameFromCode,
+			Ref:       "war_raid",
 			TicksLeft: lendEventDisplayTicks,
 		})
 	}

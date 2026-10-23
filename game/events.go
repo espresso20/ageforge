@@ -112,6 +112,9 @@ const (
 	nameFromAwakening = "awakening"
 	nameFromEra       = "era"
 	nameFromCiv       = "civ"
+	// nameFromCode is a timed effect the code names itself (Endure's
+	// Reconstruction Effort, a raid, a loan, a festival): Ref is its Key.
+	nameFromCode = "code"
 )
 
 // nameOf is the name of an active event drawn from the words of the ruleset
@@ -140,6 +143,25 @@ func (em *EventManager) nameOf(ae ActiveEvent) (string, bool) {
 	case nameFromCiv:
 		d, ok := em.rules.Faction(ae.Ref)
 		return d.Name + ": " + ae.Tail, ok
+	case nameFromCode:
+		return codeEventName(ae.Ref)
+	}
+	return "", false
+}
+
+// codeEventName is the name of a timed effect the code names itself, by its
+// key, in the words of the script in force. A save holds the key and not the
+// name (ActiveEvent.Src).
+func codeEventName(key string) (string, bool) {
+	switch key {
+	case "endure_reconstruction":
+		return vibe.Line("game.catastrophe.startReconstruction.01", "Reconstruction Effort"), true
+	case "war_raid":
+		return vibe.Line("game.defense.applyWarRaids.01", "Under Raid"), true
+	case "worker_lending":
+		return vibe.Line("game.engine.processDiplomacy.01", "Workers on Loan"), true
+	case "cultural_festival":
+		return vibe.Line("game.engine.DoFestival.03", "Cultural Festival"), true
 	}
 	return "", false
 }
@@ -321,6 +343,12 @@ func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[st
 // boosts and epoch event side-effects that must fire unconditionally.
 // IMPORTANT: Must be called under the engine write lock (same as doTick).
 func (em *EventManager) InjectEvent(event ActiveEvent) {
+	// An event with no name of its own is named from what it is drawn from.
+	if event.Name == "" {
+		if name, ok := em.nameOf(event); ok {
+			event.Name = name
+		}
+	}
 	em.active = append(em.active, event)
 }
 
