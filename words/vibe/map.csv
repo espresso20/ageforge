@@ -449,3 +449,453 @@ mapmodel.world.syllA.09,Ivy
 mapmodel.world.syllA.10,Kest
 mapmodel.world.syllA.11,Luna
 mapmodel.world.syllA.12,Mood
+mapmodel.world.syllA.13,Nova
+mapmodel.world.syllA.14,Oat
+mapmodel.world.syllA.15,Rave
+mapmodel.world.syllA.16,Sel
+mapmodel.world.syllA.17,Thorn
+mapmodel.world.syllA.18,Umbra
+mapmodel.world.syllA.19,Vibe
+mapmodel.world.syllA.20,Wyn
+ui.mapstyle.roguelike.chrome.Draw.01,"No map yet, it's giving empty canvas."
+ui.mapstyle.roguelike.chrome.header.01,crew 
+ui.mapstyle.roguelike.chrome.header.02,chilling 
+ui.mapstyle.roguelike.chrome.header.03,  rivals 
+ui.mapstyle.roguelike.chrome.news.01,BIG YIKES: 
+ui.mapstyle.roguelike.chrome.news.02, is breathing down your neck
+ui.mapstyle.roguelike.chrome.news.03,cooked: 
+ui.mapstyle.roguelike.chrome.news.04,"all quiet, bestie"
+ui.mapstyle.roguelike.chrome.bottom.01,arrows steer  Shift go fast  PgUp PgDn zoom  Tab next  Home center  map flows
+ui.mapstyle.roguelike.chrome.bottom.02,Arrow keys steer  PgUp PgDn zoom  Tab next
+ui.mapstyle.roguelike.chrome.bottom.03,"cursor's ghosting; move it with the arrow keys, bestie"
+ui.mapstyle.roguelike.chrome.bottom.04,"nothing to type here, bestie; Tab jumps to the next building"
+ui.mapstyle.roguelike.chrome.bottom.05,type this: 
+ui.mapstyle.roguelike.chrome.bottom.06, · the flow tea
+ui.mapstyle.roguelike.chrome.sidebar.01,FLOWS
+ui.mapstyle.roguelike.chrome.flowLines.01,LEAKY
+ui.mapstyle.roguelike.chrome.flowLines.02,LAZY 
+ui.mapstyle.roguelike.chrome.flowLines.03,grinder
+ui.mapstyle.roguelike.chrome.flowLines.04,grinders
+ui.mapstyle.roguelike.chrome.flowLines.05,BROKE
+ui.mapstyle.roguelike.chrome.flowLines.06,build
+ui.mapstyle.roguelike.chrome.flowLines.07,builds
+ui.mapstyle.roguelike.chrome.flowLines.08,W   
+ui.mapstyle.roguelike.chrome.flowLines.09,"nothing stuck, bestie"
+ui.mapstyle.roguelike.chrome.box.01,FLOWS
+ui.mapstyle.roguelike.chrome.drawLegend.01,THE KEY
+ui.mapstyle.roguelike.chrome.DrawCompact.01,"Map? Not yet, bestie."
+ui.mapstyle.roguelike.chrome.DrawCompact.02, · crew 
+ui.mapstyle.roguelike.chrome.DrawCompact.03, · chilling 
+ui.mapstyle.roguelike.city.megacorps.01,Kessler-Oda Group
+ui.mapstyle.roguelike.city.megacorps.02,KOG
+ui.mapstyle.roguelike.city.megacorps.03,Novatek Holdings
+ui.mapstyle.roguelike.city.megacorps.04,Helix Dynamics
+ui.mapstyle.roguelike.city.megacorps.05,Ombra Industries
+ui.mapstyle.roguelike.city.megacorps.06,OMB
+ui.mapstyle.roguelike.city.megacorps.07,Sunrise Heavy Industries
+ui.mapstyle.roguelike.city.megacorps.08,SHI
+ui.mapstyle.roguelike.city.megacorps.09,Vektor Systems
+ui.mapstyle.roguelike.city.megacorps.10,Halcyon Data
+ui.mapstyle.roguelike.city.megacorps.11,Mirai Kogyo
+ui.mapstyle.roguelike.city.megacorps.12,MKY
+ui.mapstyle.roguelike.city.megacorps.13,Black Lotus Holdings
+ui.mapstyle.roguelike.city.megacorps.14,Zenith Arms
+ui.mapstyle.roguelike.city.megacorps.15,ZNA
+ui.mapstyle.roguelike.city.megacorps.16,Pacifica Telecom
+ui.mapstyle.roguelike.city.megacorps.17,Talos Biotech
+ui.mapstyle.roguelike.city.megacorps.18,Yamanaka Heavy
+ui.mapstyle.roguelike.city.megacorps.19,YMH
+ui.mapstyle.roguelike.city.megacorps.20,Aurum Logistics
+ui.mapstyle.roguelike.city.megacorps.21,AUL
+ui.mapstyle.roguelike.city.megacorps.22,Crimson Spire Media
+ui.mapstyle.roguelike.city.megacorps.23,Kuroda Neural
+ui.mapstyle.roguelike.city.holoAds.01,OPEN
+ui.mapstyle.roguelike.city.holoAds.02,DEAL
+ui.mapstyle.roguelike.city.holoAds.03,LIVE
+ui.mapstyle.roguelike.city.holoAds.04,BARS
+ui.mapstyle.roguelike.city.holoAds.05,DRIP
+ui.mapstyle.roguelike.city.holoAds.06,AUGS
+ui.mapstyle.roguelike.city.holoAds.07,VIBE
+ui.mapstyle.roguelike.city.holoAds.08,FIRE
+ui.mapstyle.roguelike.city.holoAds.09,COP
+ui.mapstyle.roguelike.city.holoAds.10,DROP
+ui.mapstyle.roguelike.citylines.skyRails.01,the 
+ui.mapstyle.roguelike.citylines.skyRails.02," line, bestie"
+ui.mapstyle.roguelike.citylines.tetherLine.01,the sky ladder
+ui.mapstyle.roguelike.cityview.describeLine.01,", way up over the street, no fear"
+ui.mapstyle.roguelike.cityview.describeLine.02,", humming with pure juice"
+ui.mapstyle.roguelike.cityview.describeCity.01,Strip
+ui.mapstyle.roguelike.cityview.describeCity.02,tucked in between the blocks of 
+ui.mapstyle.roguelike.cityview.describeCity.03," tower, big flex"
+ui.mapstyle.roguelike.cityview.describeCity.04," in neon, a block high, very loud"
+ui.mapstyle.roguelike.cityview.describeCity.05,Glow ad
+ui.mapstyle.roguelike.cityview.describeCity.06,flexing 
+ui.mapstyle.roguelike.cityview.describeCity.07," over the street, no cap"
+ui.mapstyle.roguelike.cityview.describeCity.08,Arcology
+ui.mapstyle.roguelike.cityview.describeCity.09,"home to a hundred thousand, a whole group chat"
+ui.mapstyle.roguelike.glyph.lgInfo.08,crossing vibes
+ui.mapstyle.roguelike.glyph.lgInfo.09,trail to a rival
+ui.mapstyle.roguelike.glyph.lgInfo.11,the big wall
+ui.mapstyle.roguelike.glyph.lgInfo.12,lookout tower
+ui.mapstyle.roguelike.glyph.lgInfo.13,hangout spot
+ui.mapstyle.roguelike.glyph.lgInfo.14,wonder loading
+ui.mapstyle.roguelike.glyph.lgInfo.16,legacy (OG town)
+ui.mapstyle.roguelike.glyph.lgInfo.17,short-staffed (dim)
+ui.mapstyle.roguelike.glyph.lgInfo.18,new since last peek
+ui.mapstyle.roguelike.glyph.lgInfo.19,no hands on deck
+ui.mapstyle.roguelike.glyph.lgInfo.20,rival settlement
+ui.mapstyle.roguelike.glyph.lgInfo.21,grinder in the grind
+ui.mapstyle.roguelike.glyph.lgInfo.22,NPC on a break
+ui.mapstyle.roguelike.glyph.lgInfo.24,route got cooked
+ui.mapstyle.roguelike.glyph.lgInfo.27,beef on this trail
+ui.mapstyle.roguelike.glyph.lgInfo.28,smoke over the works
+ui.mapstyle.roguelike.glyph.lgInfo.30,maglev lane
+ui.mapstyle.roguelike.glyph.lgGroups.01,turf
+ui.mapstyle.roguelike.glyph.lgGroups.02,builds
+ui.mapstyle.roguelike.glyph.lgGroups.03,"roads, walls, vibes"
+ui.mapstyle.roguelike.glyph.lgGroups.04,rivals
+ui.mapstyle.roguelike.glyph.lgGroups.05,the powers
+ui.mapstyle.roguelike.glyph.lgGroups.06,vibes
+ui.mapstyle.roguelike.glyph.lgGroups.07,the jams
+ui.mapstyle.roguelike.inspect.Inspect.01,map spot 
+ui.mapstyle.roguelike.inspect.terrainNames.01,Big blue
+ui.mapstyle.roguelike.inspect.terrainNames.02,Shallow vibes
+ui.mapstyle.roguelike.inspect.terrainNames.03,Water road
+ui.mapstyle.roguelike.inspect.terrainNames.04,Beachfront
+ui.mapstyle.roguelike.inspect.terrainNames.05,Touch grass
+ui.mapstyle.roguelike.inspect.terrainNames.06,Woodsy
+ui.mapstyle.roguelike.inspect.terrainNames.07,Hill country
+ui.mapstyle.roguelike.inspect.terrainNames.08,Peak mode
+ui.mapstyle.roguelike.inspect.terrainNotes.01,"harbors and mills set up shop on its banks, the hustle is real."
+ui.mapstyle.roguelike.inspect.terrainNotes.02,"wood: woodcutters pitch camp at its edge, lowkey cozy."
+ui.mapstyle.roguelike.inspect.terrainNotes.03,"stone and ore: quarries dig here, the rock run is real."
+ui.mapstyle.roguelike.inspect.terrainNotes.04,"Ore and stone: mines dig here, deep rock grind."
+ui.mapstyle.roguelike.inspect.describe.01,"The edge of the known world, the map is blank, no cap."
+ui.mapstyle.roguelike.inspect.describe.02,chances 
+ui.mapstyle.roguelike.inspect.describe.03,beef level 
+ui.mapstyle.roguelike.inspect.describe.04,Chilling grinders
+ui.mapstyle.roguelike.inspect.describe.05,bestie
+ui.mapstyle.roguelike.inspect.describe.06,besties
+ui.mapstyle.roguelike.inspect.describe.07," with nothing to do, lowkey sad"
+ui.mapstyle.roguelike.inspect.describe.08, crowding the town
+ui.mapstyle.roguelike.inspect.describe.09,Nobody's been there
+ui.mapstyle.roguelike.inspect.describe.10,"send an expedition to lift the fog, bestie"
+ui.mapstyle.roguelike.inspect.describe.11,Recon squad: 
+ui.mapstyle.roguelike.inspect.describe.12, ticks until they spill the tea
+ui.mapstyle.roguelike.inspect.describe.13,Main hangout of 
+ui.mapstyle.roguelike.inspect.describe.14,bestie
+ui.mapstyle.roguelike.inspect.describe.15,besties
+ui.mapstyle.roguelike.inspect.describe.16, chilling
+ui.mapstyle.roguelike.inspect.describe.17,The main hearth of 
+ui.mapstyle.roguelike.inspect.describe.18," is within reach, no cap"
+ui.mapstyle.roguelike.inspect.describe.19,Crossing
+ui.mapstyle.roguelike.inspect.describe.20,Loop road
+ui.mapstyle.roguelike.inspect.describe.21,Main drag
+ui.mapstyle.roguelike.inspect.describe.22,Side street
+ui.mapstyle.roguelike.inspect.describe.23,in 
+ui.mapstyle.roguelike.inspect.describe.24,Watch tower
+ui.mapstyle.roguelike.inspect.describe.25,Big wall
+ui.mapstyle.roguelike.inspect.describe.26,Stake fence
+ui.mapstyle.roguelike.inspect.describe.27,"the town is outgrowing it, lowkey"
+ui.mapstyle.roguelike.inspect.describe.28,"seen once, now ghosted"
+ui.mapstyle.roguelike.inspect.describeTile.01,Old bones
+ui.mapstyle.roguelike.inspect.describeTile.02,Busted ruins of 
+ui.mapstyle.roguelike.inspect.describeTile.03," in ruins, rip"
+ui.mapstyle.roguelike.inspect.describeTile.04,", OG era"
+ui.mapstyle.roguelike.inspect.describeTile.05, grinders
+ui.mapstyle.roguelike.inspect.describeTile.06,", no hands on deck"
+ui.mapstyle.roguelike.inspect.describeTile.07,glows up to 
+ui.mapstyle.roguelike.inspect.describeTile.08,"superseded, but kept in the OG town, lowkey iconic."
+ui.mapstyle.roguelike.inspect.describeTile.09, since your last peek
+ui.mapstyle.roguelike.inspect.describeTile.10, fewer since you last peeked
+ui.mapstyle.roguelike.inspect.describeTile.11," in shambles, rip"
+ui.mapstyle.roguelike.inspect.describeWonder.01,the W of the 
+ui.mapstyle.roguelike.inspect.describeWonder.03, (loading)
+ui.mapstyle.roguelike.inspect.describeWonder.04,% of its cost stashed
+ui.mapstyle.roguelike.inspect.describeWonder.05,done since your last peek
+ui.mapstyle.roguelike.inspect.describeCiv.01,", vibe check "
+ui.mapstyle.roguelike.inspect.describeCiv.02,power level 
+ui.mapstyle.roguelike.inspect.describeCiv.03,", hustles in "
+ui.mapstyle.roguelike.inspect.describeCiv.04,hustle
+ui.mapstyle.roguelike.inspect.describeCiv.05,hustles
+ui.mapstyle.roguelike.inspect.describeCiv.06," so far, no cap"
+ui.mapstyle.roguelike.inspect.describeCiv.07,grinder
+ui.mapstyle.roguelike.inspect.describeCiv.08,grinders
+ui.mapstyle.roguelike.inspect.describeCiv.09," lent to you, the W"
+ui.mapstyle.roguelike.inspect.describeTrail.01,Path to the 
+ui.mapstyle.roguelike.inspect.describeTrail.02,beefing: the trail is closed
+ui.mapstyle.roguelike.inspect.describeTrail.03, got cooked
+ui.mapstyle.roguelike.inspect.describeTrail.04, the convoys bring 
+ui.mapstyle.roguelike.inspect.describeTrail.05, convoys
+ui.mapstyle.roguelike.inspect.describeTrail.06,"no convoys on it, so quiet"
+ui.mapstyle.roguelike.plates.plates.01,"charcoal on hide, aesthetic"
+ui.mapstyle.roguelike.plates.plates.02,"the lands we know, drawn by the fire of %s, certified aesthetic."
+ui.mapstyle.roguelike.plates.plates.03,vintage map drip
+ui.mapstyle.roguelike.plates.plates.04,"Carta of %s, the OG"
+ui.mapstyle.roguelike.plates.plates.05,etched and aesthetic
+ui.mapstyle.roguelike.plates.plates.06,"Totally Accurate Map of %s, no cap"
+ui.mapstyle.roguelike.plates.plates.07,scouting sheet
+ui.mapstyle.roguelike.plates.plates.08,Recon of %s
+ui.mapstyle.roguelike.plates.plates.09,sky photo dump
+ui.mapstyle.roguelike.plates.plates.10,EARTH CHECK  %s
+ui.mapstyle.roguelike.plates.plates.11,orbit night shift
+ui.mapstyle.roguelike.plates.plates.12,NIGHT SHIFT  %s
+ui.mapstyle.roguelike.plates.plates.13,"planet, peeking from orbit"
+ui.mapstyle.roguelike.plates.plates.14,"%s from up high, bestie"
+ui.mapstyle.roguelike.plates.starNames.01,Vega
+ui.mapstyle.roguelike.plates.starNames.02,Altair
+ui.mapstyle.roguelike.plates.starNames.03,Deneb
+ui.mapstyle.roguelike.plates.starNames.04,Rigel
+ui.mapstyle.roguelike.plates.starNames.05,Sirius
+ui.mapstyle.roguelike.plates.starNames.06,Capella
+ui.mapstyle.roguelike.plates.starNames.07,Arcturus
+ui.mapstyle.roguelike.plates.starNames.08,Procyon
+ui.mapstyle.roguelike.plates.starNames.09,Spica
+ui.mapstyle.roguelike.plates.starNames.10,Antares
+ui.mapstyle.roguelike.plates.furniture.01,"here be dragons, lowkey"
+ui.mapstyle.roguelike.plates.furniture.02,FLYBY 
+ui.mapstyle.roguelike.plates.furniture.03,DATA DROP
+ui.mapstyle.roguelike.scene.dials.01,"space rocks, bestie"
+ui.mapstyle.roguelike.scene.dials.02,raid squad
+ui.mapstyle.roguelike.scene.dials.03,"toxic smog, very not it"
+ui.mapstyle.roguelike.scene.dials.05,glitch spiral
+ui.mapstyle.roguelike.scene.dials.06,"solar flare, the sun is cooking"
+ui.mapstyle.roguelike.scene.dials.07,"reality cracking, no cap"
+ui.mapstyle.roguelike.space_chrome.skyViewNames.01,HIGH SKY
+ui.mapstyle.roguelike.space_chrome.skyViewNames.02,DEEP VIBES
+ui.mapstyle.roguelike.space_chrome.skyViewNames.03,BASE CAMP
+ui.mapstyle.roguelike.space_chrome.skyViewNames.04,MAYBE STATE
+ui.mapstyle.roguelike.space_chrome.skyViewNames.05,MANDALA
+ui.mapstyle.roguelike.space_chrome.viewName.01, UP CLOSE
+ui.mapstyle.roguelike.space_chrome.Draw.01,"Nothing mapped yet, lowkey empty."
+ui.mapstyle.roguelike.space_chrome.header.01,crew 
+ui.mapstyle.roguelike.space_chrome.header.02,chilling 
+ui.mapstyle.roguelike.space_chrome.header.03,  rivals 
+ui.mapstyle.roguelike.space_chrome.news.01,RED ALERT: 
+ui.mapstyle.roguelike.space_chrome.news.02, is about to hit
+ui.mapstyle.roguelike.space_chrome.news.03,stuck lowkey: 
+ui.mapstyle.roguelike.space_chrome.news.04,"all quiet, nothing sus"
+ui.mapstyle.roguelike.space_chrome.bottom.01,arrows steer  Shift go fast  PgUp world  PgDn close  Tab next  Home hub  map flows
+ui.mapstyle.roguelike.space_chrome.bottom.02,arrow keys drive  PgUp PgDn zoom  Tab next
+ui.mapstyle.roguelike.space_chrome.bottom.03,"cursor is invisible; slide it with the arrow keys, bestie."
+ui.mapstyle.roguelike.space_chrome.bottom.04,no typing needed here; Tab hops to the next building
+ui.mapstyle.roguelike.space_chrome.bottom.05,drop in: 
+ui.mapstyle.roguelike.space_chrome.bottom.06," · flow tea, no cap"
+ui.mapstyle.roguelike.space_chrome.sidebar.01,FLOWS
+ui.mapstyle.roguelike.space_chrome.flowLines.01,BLEED
+ui.mapstyle.roguelike.space_chrome.flowLines.02,NAP 
+ui.mapstyle.roguelike.space_chrome.flowLines.03,grinder
+ui.mapstyle.roguelike.space_chrome.flowLines.04,grinders
+ui.mapstyle.roguelike.space_chrome.flowLines.05,THIN
+ui.mapstyle.roguelike.space_chrome.flowLines.06,build
+ui.mapstyle.roguelike.space_chrome.flowLines.07,builds
+ui.mapstyle.roguelike.space_chrome.flowLines.08,A+   
+ui.mapstyle.roguelike.space_chrome.flowLines.09,"all clear, nothing stuck"
+ui.mapstyle.roguelike.space_chrome.box.01,FLOWS
+ui.mapstyle.roguelike.space_chrome.DrawCompact.01,"Still blank, no map yet."
+ui.mapstyle.roguelike.space_chrome.DrawCompact.02, · crew 
+ui.mapstyle.roguelike.space_chrome.DrawCompact.03, · chilling 
+ui.mapstyle.roguelike.space_deep.gateFrame.01,"Gate scaffold, WIP"
+ui.mapstyle.roguelike.space_deep.gateFrame.02,"the warp gate's ring, still under construction, lowkey"
+ui.mapstyle.roguelike.space_deep.gateFrame.03,Warp gate era
+ui.mapstyle.roguelike.space_deep.gateFrame.04,"its ring rises segment by segment, slow and steady"
+ui.mapstyle.roguelike.space_deep.colonies.01,"a colony world, all yours, bestie"
+ui.mapstyle.roguelike.space_deep.relayChain.01,Ping chain
+ui.mapstyle.roguelike.space_deep.relayChain.02,it carries the tea from world to world
+ui.mapstyle.roguelike.space_galaxy.starbase.01,Base core
+ui.mapstyle.roguelike.space_galaxy.starbase.02,"where the base's heart beats, lore central"
+ui.mapstyle.roguelike.space_galaxy.starbase.03,Crash ring
+ui.mapstyle.roguelike.space_galaxy.starbase.04,"decks of crash pads, snack farms and halls"
+ui.mapstyle.roguelike.space_galaxy.starbase.05,Dock ring
+ui.mapstyle.roguelike.space_galaxy.starbase.06,the base's hustle edge
+ui.mapstyle.roguelike.space_galaxy.starbase.07,Dock pylon
+ui.mapstyle.roguelike.space_galaxy.starbase.08,"ships park up at its tip, very neat"
+ui.mapstyle.roguelike.space_galaxy.pulsar.01,Pulsar Pal
+ui.mapstyle.roguelike.space_galaxy.pulsar.02,"industry grinds its light and matter, no pause"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.01,Empty vibes
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.02,"low orbit, dead quiet tonight"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.03,Deep void
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.04,"light-years of nothing much, lowkey boring"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.05,"Between the stars, bestie"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.06,the lanes are somewhere else
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.07,Kinda maybe
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.08,"nothing's certain here, the vibes are fuzzy"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.09,Starlight
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.10,"everything you built, remembered, the receipts"
+ui.mapstyle.roguelike.space_inspect.describe.01,Space junk
+ui.mapstyle.roguelike.space_inspect.describe.02,"spent stages and old satellites, still circling, lol."
+ui.mapstyle.roguelike.space_inspect.describe.03,The OG planet
+ui.mapstyle.roguelike.space_inspect.describe.04,"where it all began, the origin story"
+ui.mapstyle.roguelike.space_inspect.describe.05,bestie
+ui.mapstyle.roguelike.space_inspect.describe.06,besties
+ui.mapstyle.roguelike.space_inspect.describe.07," in total, no cap"
+ui.mapstyle.roguelike.space_inspect.describe.08,"A planet of the home system, the OG crew"
+ui.mapstyle.roguelike.space_inspect.describe.09,"it keeps its old orbit, very loyal"
+ui.mapstyle.roguelike.space_inspect.describe.10,build
+ui.mapstyle.roguelike.space_inspect.describe.11,builds
+ui.mapstyle.roguelike.space_inspect.describe.12, of 
+ui.mapstyle.roguelike.space_inspect.describe.13,room to cook
+ui.mapstyle.roguelike.space_inspect.describe.14,Space lift
+ui.mapstyle.roguelike.space_inspect.describe.15,that tether from 
+ui.mapstyle.roguelike.space_inspect.describe.16," to the ring, no cap"
+ui.mapstyle.roguelike.space_inspect.describe.17,"climbers ride it day and night, nonstop"
+ui.mapstyle.roguelike.space_inspect.describe.18,", from orbit, no cap"
+ui.mapstyle.roguelike.space_inspect.describe.19,bestie
+ui.mapstyle.roguelike.space_inspect.describe.20,besties
+ui.mapstyle.roguelike.space_inspect.describe.21," below, lowkey tiny"
+ui.mapstyle.roguelike.space_inspect.describe.22,dark side
+ui.mapstyle.roguelike.space_inspect.describe.23,City glow of 
+ui.mapstyle.roguelike.space_inspect.describe.24,build
+ui.mapstyle.roguelike.space_inspect.describe.25,builds
+ui.mapstyle.roguelike.space_inspect.describe.26, napping
+ui.mapstyle.roguelike.space_inspect.describe.27,Rock belt
+ui.mapstyle.roguelike.space_inspect.describe.28,"free ore, no cap"
+ui.mapstyle.roguelike.space_inspect.describe.29,Moon bestie
+ui.mapstyle.roguelike.space_inspect.describe.30,"it used to be out of reach, now it's giving home"
+ui.mapstyle.roguelike.space_inspect.describe.31,Big OG sun
+ui.mapstyle.roguelike.space_inspect.describe.32,"the orrery of the home system, the clockwork flex"
+ui.mapstyle.roguelike.space_inspect.describe.33," still spins around it, very hypnotic"
+ui.mapstyle.roguelike.space_inspect.describe.34,Home turf
+ui.mapstyle.roguelike.space_inspect.describe.35,"a world on every ring, stacked and proud"
+ui.mapstyle.roguelike.space_inspect.describe.36,Baby planet
+ui.mapstyle.roguelike.space_inspect.describe.37,"a world all yours, far out, bestie"
+ui.mapstyle.roguelike.space_inspect.describe.38,Colony ping
+ui.mapstyle.roguelike.space_inspect.describe.39,"a world calling home, the group chat is pinging"
+ui.mapstyle.roguelike.space_inspect.describe.40,Warp zone
+ui.mapstyle.roguelike.space_inspect.describe.41,"open: the stars are one step away, bestie"
+ui.mapstyle.roguelike.space_inspect.describe.42,Glow cloud
+ui.mapstyle.roguelike.space_inspect.describe.43,"the first color out here, very aesthetic"
+ui.mapstyle.roguelike.space_inspect.describe.44,Galaxy brain
+ui.mapstyle.roguelike.space_inspect.describe.45,"its arms turn slower than history, lowkey wild"
+ui.mapstyle.roguelike.space_inspect.describe.46,Maybe cloud
+ui.mapstyle.roguelike.space_inspect.describe.47,"where the station might be, or not"
+ui.mapstyle.roguelike.space_inspect.describe.48,Echo of the OG town
+ui.mapstyle.roguelike.space_inspect.describe.49,", as it stood on the ground, the OG vibe"
+ui.mapstyle.roguelike.space_inspect.describe.50,Main star
+ui.mapstyle.roguelike.space_inspect.describeUnit.01,"Rubble, rip"
+ui.mapstyle.roguelike.space_inspect.describeUnit.02,Wreckage of 
+ui.mapstyle.roguelike.space_inspect.describeUnit.03," in ruins, F"
+ui.mapstyle.roguelike.space_inspect.describeUnit.04,", an OG section"
+ui.mapstyle.roguelike.space_inspect.describeUnit.05, grinders
+ui.mapstyle.roguelike.space_inspect.describeUnit.06,", short-staffed"
+ui.mapstyle.roguelike.space_inspect.describeUnit.07,levels up to 
+ui.mapstyle.roguelike.space_inspect.describeUnit.08," since your last peek, bestie"
+ui.mapstyle.roguelike.space_inspect.describeUnit.09," fewer since last time, bestie"
+ui.mapstyle.roguelike.space_inspect.describeUnit.10, in shambles
+ui.mapstyle.roguelike.space_inspect.describeSkyWonder.01,the big W of the 
+ui.mapstyle.roguelike.space_inspect.describeSkyWonder.02,"it shines among the stars, iconic"
+ui.mapstyle.roguelike.space_inspect.describeSkyWonder.03, (loading)
+ui.mapstyle.roguelike.space_inspect.describeSkyWonder.04,% of its cost bagged
+ui.mapstyle.roguelike.space_inspect.describeSkyWonder.05,finished since your last log-on
+ui.mapstyle.roguelike.space_inspect.describeLane.01,Route to the 
+ui.mapstyle.roguelike.space_inspect.describeLane.02,"beefing, the lane is shut"
+ui.mapstyle.roguelike.space_inspect.describeLane.03, is glitching
+ui.mapstyle.roguelike.space_inspect.describeLane.04, hauls 
+ui.mapstyle.roguelike.space_inspect.describeLane.05,"no freight on it, ghost lane"
+ui.mapstyle.roguelike.space_inspect.describeHub.01,Ring HQ of 
+ui.mapstyle.roguelike.space_inspect.describeHub.02,Home turf of 
+ui.mapstyle.roguelike.space_inspect.describeHub.03,Base 
+ui.mapstyle.roguelike.space_inspect.describeHub.04,Main anchor of 
+ui.mapstyle.roguelike.space_inspect.describeHub.05,Heart of 
+ui.mapstyle.roguelike.space_inspect.describeHub.06,bestie
+ui.mapstyle.roguelike.space_inspect.describeHub.07,besties
+ui.mapstyle.roguelike.space_inspect.describeHub.08, slacking
+ui.mapstyle.roguelike.space_inspect.describeHub.09, is in striking distance
+ui.mapstyle.roguelike.space_legend.skyLgInfo.02,a W's star
+ui.mapstyle.roguelike.space_legend.skyLgInfo.03,W in the making
+ui.mapstyle.roguelike.space_legend.skyLgInfo.04,the OG world
+ui.mapstyle.roguelike.space_legend.skyLgInfo.06,city glow
+ui.mapstyle.roguelike.space_legend.skyLgInfo.07,the space lift
+ui.mapstyle.roguelike.space_legend.skyLgInfo.09,base ring
+ui.mapstyle.roguelike.space_legend.skyLgInfo.10,outer loop
+ui.mapstyle.roguelike.space_legend.skyLgInfo.12,"slip, hull level up"
+ui.mapstyle.roguelike.space_legend.skyLgInfo.14,moon bae
+ui.mapstyle.roguelike.space_legend.skyLgInfo.16,the OG sun
+ui.mapstyle.roguelike.space_legend.skyLgInfo.18,warp gate
+ui.mapstyle.roguelike.space_legend.skyLgInfo.19,gate scaffolding
+ui.mapstyle.roguelike.space_legend.skyLgInfo.20,warp aura
+ui.mapstyle.roguelike.space_legend.skyLgInfo.21,new colony
+ui.mapstyle.roguelike.space_legend.skyLgInfo.22,colony beam
+ui.mapstyle.roguelike.space_legend.skyLgInfo.23,relay squad
+ui.mapstyle.roguelike.space_legend.skyLgInfo.24,the big spiral
+ui.mapstyle.roguelike.space_legend.skyLgInfo.25,bag route
+ui.mapstyle.roguelike.space_legend.skyLgInfo.26,star squad
+ui.mapstyle.roguelike.space_legend.skyLgInfo.27,base loop
+ui.mapstyle.roguelike.space_legend.skyLgInfo.28,docking tower
+ui.mapstyle.roguelike.space_legend.skyLgInfo.29,odds cloud
+ui.mapstyle.roguelike.space_legend.skyLgInfo.30,echo of the OG town
+ui.mapstyle.roguelike.space_legend.skyLgInfo.31,the main crown
+ui.mapstyle.roguelike.space_legend.skyLgInfo.32,core glow
+ui.mapstyle.roguelike.space_legend.skyLgInfo.35,OG section (dim)
+ui.mapstyle.roguelike.space_legend.skyLgInfo.36,no hands (dim)
+ui.mapstyle.roguelike.space_legend.skyLgInfo.37,new since you peeked
+ui.mapstyle.roguelike.space_legend.skyLgInfo.38,"no hands, no cap"
+ui.mapstyle.roguelike.space_legend.skyLgInfo.39,beam me up
+ui.mapstyle.roguelike.space_legend.skyLgInfo.40,the pulse
+ui.mapstyle.roguelike.space_legend.drawSkyLegend.01,KEY VIBES
+ui.mapstyle.roguelike.space_mandala.describeMark.01,The main core
+ui.mapstyle.roguelike.space_mandala.describeMark.02,"every age you lived through, in light, no skips"
+ui.mapstyle.roguelike.space_mandala.describeMark.03,bestie
+ui.mapstyle.roguelike.space_mandala.describeMark.04,besties
+ui.mapstyle.roguelike.space_mandala.describeMark.05,"A petal of the crown, lowkey serene"
+ui.mapstyle.roguelike.space_mandala.describeMark.06,"it glows with what you build in this age, bestie"
+ui.mapstyle.roguelike.space_mandala.describeMark.07,built in the 
+ui.mapstyle.roguelike.space_mandala.describeRing.01,an arc
+ui.mapstyle.roguelike.space_mandala.describeRing.02,the 
+ui.mapstyle.roguelike.space_mandala.describeRing.03,kind of build
+ui.mapstyle.roguelike.space_mandala.describeRing.04,kinds of builds
+ui.mapstyle.roguelike.space_mandala.describeRing.05," still standing, no cap"
+ui.mapstyle.roguelike.space_mandala.describeRing.06,flex
+ui.mapstyle.roguelike.space_mandala.describeRing.07,flexes
+ui.mapstyle.roguelike.space_mandala.describeRing.08,Loop of 
+ui.mapstyle.roguelike.space_orbit.station.01,Home ring
+ui.mapstyle.roguelike.space_orbit.station.02,"the main ring of the station, the crown jewel"
+ui.mapstyle.roguelike.space_orbit.station.03,Spoke lane
+ui.mapstyle.roguelike.space_orbit.station.04,"from the hub to the ring, a short commute"
+ui.mapstyle.roguelike.space_orbit.station.05,Outer loop
+ui.mapstyle.roguelike.space_orbit.station.06,"the station grows outward, no notes"
+ui.mapstyle.roguelike.space_orbit.wings.01,Spine
+ui.mapstyle.roguelike.space_orbit.wings.02,"it carries the solar wings, so sleek"
+ui.mapstyle.roguelike.space_orbit.slips.01,Launch slot
+ui.mapstyle.roguelike.space_orbit.slips.02,"a hull is rising here, it's giving glow-up"
+ui.mapstyle.roguelike.space_orbit.foundry.01,Forge pipes
+ui.mapstyle.roguelike.space_orbit.foundry.02,"ore in, metal out, bussin"
+ui.mapstyle.roguelike.space_orbit.relays.01,Ping orbit
+ui.mapstyle.roguelike.space_orbit.relays.02,the ping sats' track
+ui.mapstyle.roguelike.space_quantum.recursion.01,Maybe base
+ui.mapstyle.roguelike.space_quantum.recursion.02,"it is also, smaller, inside itself, like a nesting doll"
+ui.mapstyle.roguelike.space_visitor.skyVisitorAt.01,Mystery craft
+ui.mapstyle.roguelike.traffic.railName.01,Glide rail
+ui.mapstyle.roguelike.traffic.railName.02,Rail vibes
+ui.mapstyle.roguelike.traffic.railLine.01,s run through 
+ui.mapstyle.roguelike.traffic.railLine.02,in 
+ui.mapstyle.roguelike.view.zoomNames.01,BIG VIEW
+ui.mapstyle.roguelike.view.zoomNames.02,TOWN VIBES
+ui.mapstyle.roguelike.view.zoomNames.03,THE BLOCK
+ui.mapstyle.roguelike.view.Entry.01,Roguelike
+ui.mapstyle.roguelike.view.Entry.02,"A glyph world with an inspect cursor, your town, its people and the lands around it, very cozy."
+ui.mapstyle.roguelike.visitor.saucerLines.01,"Not from around here, bestie."
+ui.mapstyle.roguelike.visitor.saucerLines.02,"It hums, then it ghosts."
+ui.mapstyle.roguelike.visitor.saucerLines.03,"Lights in the sky. Nobody's gonna believe you, sorry."
+ui.mapstyle.roguelike.visitor.walkerLines.01,"It waves, then it's gone, no cap."
+ui.mapstyle.roguelike.visitor.walkerLines.02,"A small visitor, far from home, big heart."
+ui.mapstyle.roguelike.visitor.walkerLines.03,"It seems lost, and honestly fine with that."
+ui.mapstyle.roguelike.visitor.visitorAt.01,Random craft
+ui.mapstyle.roguelike.visitor.visitorAt.02,Guest
+ui.mapstyle.skyline.chrome.panoramaHints.01,slide  
+ui.mapstyle.skyline.chrome.panoramaHints.02,zoom  
+ui.mapstyle.skyline.chrome.panoramaHints.03,block  
+ui.mapstyle.skyline.chrome.panoramaHints.05,old vs now  
+ui.mapstyle.skyline.chrome.panoramaHints.07,peek  
+ui.mapstyle.skyline.chrome.panoramaHints.08,layer  
+ui.mapstyle.skyline.chrome.panoramaHints.09,slide  
+ui.mapstyle.skyline.chrome.panoramaHints.10,zoom  
+ui.mapstyle.skyline.chrome.panoramaHints.11,block  
+ui.mapstyle.skyline.chrome.panoramaHints.13,then vs now  
+ui.mapstyle.skyline.chrome.panoramaHints.15,peek  
+ui.mapstyle.skyline.chrome.panoramaHints.16,slide  
+ui.mapstyle.skyline.chrome.panoramaHints.17,zoom  
+ui.mapstyle.skyline.chrome.panoramaHints.18,block  
+ui.mapstyle.skyline.chrome.panoramaHints.21,peek  
+ui.mapstyle.skyline.chrome.panoramaHints.22,slide  
+ui.mapstyle.skyline.chrome.panoramaHints.23,zoom  
