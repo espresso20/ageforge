@@ -15,16 +15,16 @@ func TestGoLiteral(t *testing.T) {
 		v    float64
 		want string
 	}{
-		{7.54e7, "75.4 * Million"},
-		{1.52e6, "1.52 * Million"},
-		{2.5e15, "2.5 * Quadrillion"},
-		{1e6, "Million"},
-		{1e21, "Sextillion"},
-		{1e33, "Decillion"},
-		{999_999_999, "999.999999 * Million"},
-		{3e9, "3 * Billion"},
-		{-3e9, "-3 * Billion"},
-		{344.4363246e18, "344.4363246 * Quintillion"},
+		{75.4 * Million, "75.4 * Million"},
+		{1.52 * Million, "1.52 * Million"},
+		{2.5 * Quadrillion, "2.5 * Quadrillion"},
+		{Million, "Million"},
+		{Sextillion, "Sextillion"},
+		{Decillion, "Decillion"},
+		{999.999999 * Million, "999.999999 * Million"},
+		{3 * Billion, "3 * Billion"},
+		{-3 * Billion, "-3 * Billion"},
+		{344.4363246 * Quintillion, "344.4363246 * Quintillion"},
 		{22700, "22_700"},
 		{950000, "950_000"},
 		{999_999, "999_999"},
@@ -37,7 +37,7 @@ func TestGoLiteral(t *testing.T) {
 		{0, "0"},
 		{1e-9, "1e-09"},
 		{1e300, "1e+300"},
-		{1e36, "1e+36"},
+		{1000 * Decillion, "1e+36"},
 		{math.Inf(1), "+Inf"},
 	} {
 		if got := GoLiteral(c.v); got != c.want {
@@ -78,7 +78,7 @@ func TestGoLiteralReadsBackExactly(t *testing.T) {
 		f, _ := r.Float64()
 		return f
 	}
-	for _, v := range []float64{1e6, 1e9, 1e15, 1e33, 2.5e15, 75.4e6, 999.999999e6} {
+	for _, v := range []float64{Million, Billion, Quadrillion, Decillion, 2.5 * Quadrillion, 75.4 * Million, 999.999999 * Million} {
 		if got := read(GoLiteral(v)); got != v {
 			t.Errorf("GoLiteral(%v) = %q reads back as %v", v, GoLiteral(v), got)
 		}

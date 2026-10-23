@@ -30,7 +30,7 @@ func GoLiteral(v float64) string {
 	mant, expo, _ := strings.Cut(s, "e")
 	x, _ := strconv.Atoi(expo)
 	digits := strings.Replace(mant, ".", "", 1)
-	point := x + 1 // digits before the decimal point; 7.54e+07 has 8
+	point := x + 1 // digits before the decimal point; 75400000 has 8
 	switch {
 	case point >= 7:
 		k := (point - 1) / 3 // thousands: 2 is a million
