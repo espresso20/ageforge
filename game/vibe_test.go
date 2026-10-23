@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/words"
@@ -205,13 +206,15 @@ func TestVibeModeChangesWordsNotNumbers(t *testing.T) {
 	if moved.StateDigest() != was {
 		t.Error("turning VibeMode on changed the run's state")
 	}
-	moved.StepTicks(300)
-	control.StepTicks(300)
+	// Long enough for the board to expire and make new offers, and for
+	// missions to be sent, meet the road and come home, under the script.
+	moved.StepTicks(2500)
+	control.StepTicks(2500)
 	a, b := stateMap(t, moved), stateMap(t, control)
 	if !reflect.DeepEqual(a, b) {
 		for k := range a {
 			if !reflect.DeepEqual(a[k], b[k]) {
-				t.Errorf("after 300 ticks under VibeMode, %q differs from the twin that never switched", k)
+				t.Errorf("after 2,500 ticks under VibeMode, %q differs from the twin that never switched", k)
 			}
 		}
 	}
@@ -291,13 +294,72 @@ func TestVibeModeSwitchesWhileTheGameRuns(t *testing.T) {
 	}
 }
 
-// TestEveryTextCanChangeWithoutTouchingANumber is the strongest form of
-// "words only": a script that rewrites every text of the ruleset that has an
-// id, the names of ages, resources, buildings and techs included, and a run
-// under it comes out in the state of the same run in plain English, to the
-// last bit.
-func TestEveryTextCanChangeWithoutTouchingANumber(t *testing.T) {
-	vibeOff(t)
+// wholeRun plays a run on set that reaches the places a text could be kept
+// in the state: the board and missions on the road, every age's awakening and
+// era event, the civilizations met, a harbinger's thread, dooms endured and
+// succumbed to and the Last Passage.
+func wholeRun(t *testing.T, set *rules.Set) *GameEngine {
+	t.Helper()
+	ge := NewGameEngineWith(set)
+	ge.SeedRNG(7)
+	for i, age := range config.AgeOrder()[1:] {
+		if err := ge.EnterAgeForTest(age); err != nil {
+			t.Fatal(err)
+		}
+		ge.GrantTechsForTest()
+		for _, f := range rules.CoreFor(false).Factions() {
+			_ = ge.MeetFactionForTest(f.Key, 40)
+		}
+		_ = ge.SummonHarbingerForTest(age)
+		ge.StepTicks(350)
+		if i%3 == 0 && ge.ForceCatastropheForTest() == nil {
+			if i%2 == 0 {
+				_ = ge.Endure()
+			} else {
+				_ = ge.Succumb()
+			}
+		}
+		ge.StepTicks(350)
+	}
+	steps := []struct {
+		name string
+		do   func() error
+	}{
+		{"enter the quantum age", func() error { return ge.EnterAgeForTest("quantum_age") }},
+		{"a harbinger", func() error { return ge.SummonHarbingerForTest("quantum_age") }},
+		{"step", func() error { ge.StepTicks(300); return nil }},
+		{"clear the doom", func() error { _ = ge.Endure(); return nil }},
+		{"the Last Passage", func() error { return ge.ForceLastPassageForTest("transcendent_age") }},
+		{"step", func() error { ge.StepTicks(100); return nil }},
+		{"endure it", ge.EndureLastPassage},
+		{"step", func() error { ge.StepTicks(300); return nil }},
+		{"an earlier age", func() error { return ge.EnterAgeForTest(config.AgeOrder()[8]) }},
+		{"step", func() error { ge.StepTicks(300); return nil }},
+	}
+	for _, st := range steps {
+		if err := st.do(); err != nil {
+			t.Fatalf("%s: %v", st.name, err)
+		}
+	}
+	return ge
+}
+
+// thenPrestige ends the run wholeRun played with a prestige and plays on in
+// the new one.
+func thenPrestige(t *testing.T, ge *GameEngine) {
+	t.Helper()
+	_ = ge.Endure()
+	if err := ge.DoPrestige(); err != nil {
+		t.Fatal(err)
+	}
+	ge.StepTicks(300)
+}
+
+// rewrittenSet is the core ruleset with every text that has an id rewritten
+// ("~Hut~"): a script of a different size from the shipped one, which changes
+// everything there is to change.
+func rewrittenSet(t *testing.T) *rules.Set {
+	t.Helper()
 	script := map[string]string{}
 	for _, c := range words.Cells(rules.FromConfig()) {
 		if c.Field == "config.TechDef.Code" {
@@ -305,103 +367,140 @@ func TestEveryTextCanChangeWithoutTouchingANumber(t *testing.T) {
 		}
 		script[c.ID] = "~" + c.Text + "~"
 	}
-	restore := vibe.UseScriptForTest(script)
-	set := rules.Compile(rules.Vibed(rules.FromConfig()))
-	restore()
+	defer vibe.UseScriptForTest(script)()
+	return rules.Compile(rules.Vibed(rules.FromConfig()))
+}
+
+// TestEveryTextCanChangeWithoutTouchingANumber is the strongest form of
+// "words only": a script that rewrites every text of the ruleset that has an
+// id, the names of ages, resources, buildings and techs included, and a whole
+// run under it comes out in the state of the same run in plain English, to
+// the last bit. Nothing a script writes is kept in the state.
+func TestEveryTextCanChangeWithoutTouchingANumber(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	vibeOff(t)
+	set := rewrittenSet(t)
 	if set.Digest() == rules.CoreFor(false).Digest() {
 		t.Fatal("the rewritten set reads the same as the plain one")
 	}
-	play := func(set *rules.Set) *GameEngine {
-		ge := NewGameEngineWith(set)
-		ge.SeedRNG(42)
-		ge.age = "industrial_age"
-		ageOrder := ge.progress.GetAgeOrder()
-		for key, def := range ge.Buildings.defs {
-			if ageOrder[def.RequiredAge] > ageOrder[ge.age] || def.Category == "wonder" {
-				continue
-			}
-			ge.Buildings.UnlockBuilding(key)
-			ge.Buildings.counts[key] = 3
+	plain, vibed := wholeRun(t, rules.CoreFor(false)), wholeRun(t, set)
+	for stage := 0; stage < 2; stage++ {
+		if stage == 1 {
+			thenPrestige(t, plain)
+			thenPrestige(t, vibed)
 		}
-		ge.GrantTechsForTest()
-		ge.recalculateRates()
-		ge.StepTicks(400)
-		return ge
+		sameStateButTheTitle(t, plain, vibed, "under a script that rewrites every text")
 	}
-	plain, vibed := play(rules.CoreFor(false)), play(set)
+}
+
+// sameStateButTheTitle fails the test for every key of the two engines' states
+// that differs, but current_title, which the core sets alone write in plain
+// English (TestASaveHoldsThePlainTitle).
+func sameStateButTheTitle(t *testing.T, plain, vibed *GameEngine, when string) {
+	t.Helper()
 	a, b := stateMap(t, plain), stateMap(t, vibed)
-	// An offer on the board and a party on the road keep the title, place and
-	// story they were generated with, in the save as in play: they are words
-	// frozen into the state when the offer was made, and the one place where a
-	// script reaches a save (open: the board's text should be drawn from the
-	// script in force, not stored).
-	dropText(a["military"])
-	dropText(b["military"])
 	// The title is written to a save in plain English for the two core sets
 	// (TestASaveHoldsThePlainTitle); this set is a set of its own.
 	delete(a, "current_title")
 	delete(b, "current_title")
 	for k := range a {
 		if !reflect.DeepEqual(a[k], b[k]) {
-			t.Errorf("under a script that rewrites every text, %q is not what it is in plain English: %.300v vs %.300v", k, a[k], b[k])
+			t.Errorf("%s, %q is not what it is in plain English: %.300v vs %.300v", when, k, a[k], b[k])
 		}
 	}
 }
 
-// dropText removes the keys that hold a generated line from a decoded JSON
-// value, wherever they sit in it.
-func dropText(v any) {
-	switch x := v.(type) {
-	case map[string]any:
-		for k, e := range x {
-			switch k {
-			case "title", "place", "description", "story", "ambush_story", "aux_story":
-				delete(x, k)
-			default:
-				dropText(e)
-			}
-		}
-	case []any:
-		for _, e := range x {
-			dropText(e)
-		}
-	}
-}
-
-// TestASaveHoldsThePlainTitle: the title a civilization wears is the one
-// text a save writes besides names the player gave, so a save made under
-// VibeMode holds the plain title, and the same save read in either script
-// shows the title of that script.
-func TestASaveHoldsThePlainTitle(t *testing.T) {
+// TestAWholeRunUnderTheShippedScript is the same on the two core sets: a
+// whole run read in VibeMode ends in the state of the run read in plain
+// English, and a save of it is the same save.
+func TestAWholeRunUnderTheShippedScript(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
 	vibeOff(t)
-	titleOf := func(ge *GameEngine) (worn, saved string) {
-		ge.Milestones.recalculateTitle()
-		var save GameSave
-		b, err := ge.StateJSON()
+	plain, vibed := wholeRun(t, rules.CoreFor(false)), wholeRun(t, rules.CoreFor(true))
+	a, b := stateMap(t, plain), stateMap(t, vibed)
+	for k := range a {
+		if !reflect.DeepEqual(a[k], b[k]) {
+			t.Errorf("under the shipped script, %q is not what it is in plain English: %.300v vs %.300v", k, a[k], b[k])
+		}
+	}
+	if plain.StateDigest() != vibed.StateDigest() {
+		t.Error("the state digests differ")
+	}
+	thenPrestige(t, plain)
+	thenPrestige(t, vibed)
+	if plain.StateDigest() != vibed.StateDigest() {
+		t.Error("the state digests differ after a prestige")
+	}
+	if err := vibed.SaveGame("vibed"); err != nil {
+		t.Fatal(err)
+	}
+	if err := plain.SaveGame("plain"); err != nil {
+		t.Fatal(err)
+	}
+	read := func(name string) map[string]any {
+		raw, err := os.ReadFile(savePath(name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := json.Unmarshal(b, &save); err != nil {
+		var m map[string]any
+		if err := json.Unmarshal(raw, &m); err != nil {
 			t.Fatal(err)
 		}
-		return ge.Milestones.GetCurrentTitle(), save.CurrentTitle
+		for _, k := range []string{"timestamp", "_sig"} {
+			delete(m, k)
+		}
+		if stats, ok := m["stats"].(map[string]any); ok {
+			delete(stats, "game_started") // the wall clock
+		}
+		return m
 	}
-	ge := NewGameEngine()
-	for i, def := range ge.Milestones.defs {
-		if i < 5 {
-			ge.Milestones.completed[def.Key] = true
+	rv, rp := read("vibed"), read("plain")
+	for k := range rv {
+		if !reflect.DeepEqual(rv[k], rp[k]) {
+			t.Errorf("the save of a run read in VibeMode is not the save of the run read in plain English: %q is %.200v and %.200v", k, rv[k], rp[k])
 		}
 	}
-	if worn, saved := titleOf(ge); worn != "Aspiring" || saved != "Aspiring" {
-		t.Fatalf("in plain English the title is %q and the save holds %q", worn, saved)
+}
+
+// TestSwitchingRedrawsEveryText: texts the state keeps by index or by key
+// (offers, missions, returns, event names, the histories) read in the script
+// in force. A run played in plain English and then moved onto a ruleset that
+// rewrites every text reads as the run played on it all along, text for text;
+// and back. (The moves are Rebind, which is what the VibeMode switch calls.)
+func TestSwitchingRedrawsEveryText(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	vibeOff(t)
+	set := rewrittenSet(t)
+	texts := func(ge *GameEngine) map[string]any {
+		st := ge.GetState()
+		return map[string]any{
+			"military": st.Military, "events": st.ActiveEvents, "epoch": st.EpochEventHistory,
+			"harbingers": st.HarbingerHistory, "dooms": st.CatastropheHistory, "title": st.Milestones.CurrentTitle,
+		}
 	}
-	ge.followVibe(true)
-	if worn, saved := titleOf(ge); worn != "Lowkey Cooking" || saved != "Aspiring" {
-		t.Errorf("under VibeMode the title worn is %q (want Lowkey Cooking) and the save holds %q (want Aspiring)", worn, saved)
+	rewrittenAllAlong := wholeRun(t, set)
+	switched := wholeRun(t, rules.CoreFor(false))
+	plainTexts := texts(switched)
+	switched.Rebind(set)
+	got, want := texts(switched), texts(rewrittenAllAlong)
+	changed := 0
+	for k := range want {
+		if !reflect.DeepEqual(got[k], want[k]) {
+			t.Errorf("after the switch, %q reads %.300v, want %.300v", k, got[k], want[k])
+		}
+		if !reflect.DeepEqual(got[k], plainTexts[k]) {
+			changed++
+		}
 	}
-	ge.followVibe(false)
-	if worn, saved := titleOf(ge); worn != "Aspiring" || saved != "Aspiring" {
-		t.Errorf("back in plain English the title is %q and the save holds %q", worn, saved)
+	if changed < 5 {
+		t.Errorf("the switch changed the words of only %d of %d kinds of kept text", changed, len(want))
+	}
+	switched.Rebind(rules.CoreFor(false))
+	if back := texts(switched); !reflect.DeepEqual(back, plainTexts) {
+		for k := range back {
+			if !reflect.DeepEqual(back[k], plainTexts[k]) {
+				t.Errorf("after switching back, %q reads %.300v, want %.300v", k, back[k], plainTexts[k])
+			}
+		}
 	}
 }

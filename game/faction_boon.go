@@ -200,6 +200,9 @@ func (a boonApplier) InjectTimedEffects(effects []config.Effect, ticks int, name
 	a.ge.Events.InjectEvent(ActiveEvent{
 		Key:       a.eventKey(),
 		Name:      a.name + ": " + name,
+		Src:       nameFromCiv,
+		Ref:       a.key,
+		Tail:      name,
 		TicksLeft: ticks,
 		Effects:   effects,
 	})

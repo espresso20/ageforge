@@ -12,8 +12,19 @@ import (
 
 // ActiveEvent represents a currently active timed event
 type ActiveEvent struct {
-	Key           string
-	Name          string
+	Key  string
+	Name string
+	// Src, Ref and Tail say what Name was drawn from when it is drawn from
+	// the words of a ruleset: a random event (Ref its key), a milestone
+	// chain's speed boost (Ref the chain), an awakening or an era event (Ref
+	// its key) or a civilization's boon (Ref the civilization, Tail the
+	// boon's name). A save holds them in place of the Name, so it reads the
+	// same in any script (VibeMode), and nameOf draws the Name again from the
+	// words of the script in force. An event with no Src has a Name that is
+	// just what it is.
+	Src           string `json:",omitempty"`
+	Ref           string `json:",omitempty"`
+	Tail          string `json:",omitempty"`
 	TicksLeft     int
 	Effects       []config.Effect
 	WorkersLost   int                // accumulated workers lost during this event
@@ -84,11 +95,62 @@ func NewEventManagerWith(set *rules.Set) *EventManager {
 }
 
 // Rebind moves the manager onto set: it takes set's events. Active events,
-// cooldowns and the next event's tick stay.
+// cooldowns and the next event's tick stay, and their names are drawn again
+// from set's words.
 func (em *EventManager) Rebind(set *rules.Set) {
 	em.rules = set
 	em.defs = set.Events()
 	em.defMap = set.EventMap()
+	em.redraw()
+}
+
+// What an active event's Name is drawn from (ActiveEvent.Src).
+const (
+	nameFromEvent     = "event"
+	nameFromChain     = "chain"
+	nameFromAwakening = "awakening"
+	nameFromEra       = "era"
+	nameFromCiv       = "civ"
+)
+
+// nameOf is the name of an active event drawn from the words of the ruleset
+// in force, or false when it is not drawn from them (or what it was drawn from
+// is not in the ruleset).
+func (em *EventManager) nameOf(ae ActiveEvent) (string, bool) {
+	if em.rules == nil {
+		return "", false
+	}
+	switch ae.Src {
+	case nameFromEvent:
+		d, ok := em.defMap[ae.Ref]
+		return d.Name, ok
+	case nameFromChain:
+		for _, c := range em.rules.MilestoneChains() {
+			if c.Key == ae.Ref {
+				return c.Name + " Speed Boost", true
+			}
+		}
+	case nameFromAwakening:
+		d, ok := em.rules.AwakeningByKey(ae.Ref)
+		return d.Name, ok
+	case nameFromEra:
+		d, ok := em.rules.EraEvent(ae.Ref)
+		return d.Name, ok
+	case nameFromCiv:
+		d, ok := em.rules.Faction(ae.Ref)
+		return d.Name + ": " + ae.Tail, ok
+	}
+	return "", false
+}
+
+// redraw writes the names of the active events again from the words of the
+// ruleset in force.
+func (em *EventManager) redraw() {
+	for i := range em.active {
+		if name, ok := em.nameOf(em.active[i]); ok {
+			em.active[i].Name = name
+		}
+	}
 }
 
 // Tick processes one tick: checks for new events, processes active event durations.
@@ -152,6 +214,8 @@ func (em *EventManager) Tick(rng *rand.Rand, tick int, currentAge string, ageOrd
 				em.active = append(em.active, ActiveEvent{
 					Key:       def.Key,
 					Name:      def.Name,
+					Src:       nameFromEvent,
+					Ref:       def.Key,
 					TicksLeft: em.rules.StretchTicks(currentAge, def.Duration),
 					Effects:   def.Effects,
 				})
@@ -338,6 +402,7 @@ func (em *EventManager) LoadState(lastFired map[string]int, active []ActiveEvent
 		em.lastFired = lastFired
 	}
 	em.active = active
+	em.redraw()
 	if nextEventTick > 0 {
 		em.nextEventTick = nextEventTick
 	}
@@ -363,6 +428,12 @@ func (em *EventManager) GetLastFired() map[string]int {
 func (em *EventManager) GetActiveForSave() []ActiveEvent {
 	out := make([]ActiveEvent, len(em.active))
 	copy(out, em.active)
+	for i := range out {
+		// A save holds what the name is drawn from, not the name.
+		if _, ok := em.nameOf(out[i]); ok {
+			out[i].Name = ""
+		}
+	}
 	return out
 }
 

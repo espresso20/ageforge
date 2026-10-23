@@ -637,6 +637,16 @@ func (s *Set) EraEvents() []config.EventDef { return slices.Clone(s.eraEvents) }
 // EventMap returns a map of every event by key, the era ones included.
 func (s *Set) EventMap() map[string]config.EventDef { return maps.Clone(s.eventByKey) }
 
+// AwakeningByKey returns an awakening by its key.
+func (s *Set) AwakeningByKey(key string) (config.AwakeningDef, bool) {
+	for _, a := range s.awakenings {
+		if a.Key == key {
+			return a, true
+		}
+	}
+	return config.AwakeningDef{}, false
+}
+
 // GoodEraEvents returns the good events an era's entry can roll.
 func (s *Set) GoodEraEvents() []config.EpochEventDef { return slices.Clone(s.goodEvents) }
 
