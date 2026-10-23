@@ -394,7 +394,7 @@ func TestPeopleBarMatchesThePanel(t *testing.T) {
 func TestPanelsTableCoversEveryPanel(t *testing.T) {
 	want := map[string][]string{
 		"Town":     {"people", "plan", "wonders", "map"},
-		"Progress": {"milestones", "research", "epoch", "history"},
+		"Progress": {"milestones", "research", "charter", "epoch", "history"},
 		"World":    {"expedition", "army", "trade", "factions", "harbinger"},
 		"You":      {"badges", "stats", "logs", "help"},
 	}

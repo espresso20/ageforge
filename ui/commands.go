@@ -159,6 +159,8 @@ func registry() []*Command {
 			Help: []Usage{{"sell <building> [count]", "Demolish copies of a building and get back 50% of the build cost (not wonders, storage or knowledge buildings)"}}},
 		{Name: "advance", Section: secActions,
 			Help: []Usage{{"advance", "Advance to the next age (when ready)"}}},
+		{Name: "charter", Section: secActions, Panel: "The Advance panel: the four pillars the next age asks for, the march of ages and what the next age brings",
+			Help: []Usage{{"charter", "Open the Advance panel (Enter there advances when all four pillars stand)"}}},
 		{Name: "upgrade", Section: secActions,
 			Args: []Arg{{Kind: ArgUpgradeBuilding, Optional: true}, optCountAll},
 			Help: []Usage{
@@ -402,7 +404,7 @@ func registry() []*Command {
 
 // panelOrder is the Help panel's Panels list order (the sidebar's, then the rest).
 var panelOrder = []string{
-	"milestones", "badges", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders",
+	"milestones", "badges", "research", "plan", "charter", "expedition", "army", "trade", "factions", "stats", "wonders",
 	"people", "logs", "epoch", "harbinger", "history", "buildings", "map", "theme", "help",
 }
 

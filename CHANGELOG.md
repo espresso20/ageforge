@@ -7,12 +7,14 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- **The Advance panel.** A full-screen view of what stands between you and the next age: the march of ages with a moving calendar year, the age's four pillars (Knowledge, People, Industry, Monument), and what the next age brings.
 - **Skyline zoom.** Zoom out to see the whole town or in to see every building up close, and steer by the overview bar, which now shows your real skyline and a box for where you are looking.
 - **VibeMode (early).** A setting that swaps the game's words for a GenZ script; this release has the switch and a first handful of lines.
 - **plan optimize.** Reorders your planned buildings for the fastest growth, interleaving homes and producers, and says how much sooner the plan finishes.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **A wonder's banked share counts each resource at its worth.** The percent the Next Age strip, the Wonders panel and the Map show for a wonder's bank weighs each resource by its price in the age, so a resource named in huge amounts no longer outweighs a dear one.
 - **VibeMode reaches the log.** Log lines and refusals switch to the slang script too.
 - **Wonders you can recognise.** Every age's wonder is a landmark on the skyline, the tallest thing in its district, lit at night, with scaffolding that rises as you bank it.
 - **The last of storage.** Techs and bonuses that raised storage now raise production a little instead, culture buildings drop their storage, and the screens and wiki no longer mention stores.
