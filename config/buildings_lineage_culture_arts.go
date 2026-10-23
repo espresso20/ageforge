@@ -48,7 +48,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 2 — renaissance_age  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Art Studio", Key: "art_studio", Category: "production",
-		BaseCost:  map[string]float64{"gold": 2950000, "stone": 1330000},
+		BaseCost:  map[string]float64{"gold": 2.95 * Million, "stone": 1.33 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 2},
@@ -63,7 +63,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 3 — colonial_age  rate=4.0
 	b = append(b, BuildingDef{
 		Name: "Concert Hall", Key: "concert_hall", Category: "production",
-		BaseCost:  map[string]float64{"gold": 12 * Million, "stone": 7500000, "steel": 2400000},
+		BaseCost:  map[string]float64{"gold": 12 * Million, "stone": 7.5 * Million, "steel": 2.4 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 4},

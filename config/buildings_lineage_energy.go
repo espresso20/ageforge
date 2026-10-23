@@ -65,7 +65,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Name: "Breeder Reactor", Key: "nuclear_reactor", Category: "production",
 		BaseCost:    map[string]float64{"steel": 25 * Billion, "electricity": 10 * Billion, "uranium": 2.5 * Billion},
 		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 1290000}},
+		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 1.29 * Million}},
 		BuildTicks:  9360,
 		RequiredAge: "atomic_age",
 		Description: "Nuclear fission reactor.",
@@ -81,7 +81,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "oil", Value: 540000},
-			{Type: "production", Target: "electricity", Value: 2860000},
+			{Type: "production", Target: "electricity", Value: 2.86 * Million},
 		},
 		BuildTicks:  9360,
 		RequiredAge: "modern_age",

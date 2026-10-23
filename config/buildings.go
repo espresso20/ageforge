@@ -178,7 +178,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== COLONIAL AGE (costs: 5M-15M) =====
 		{
 			Name: "Colonial Warehouse", Key: "colonial_warehouse", Category: "storage",
-			BaseCost:  map[string]float64{"stone": 7.7 * Million, "gold": 1000000},
+			BaseCost:  map[string]float64{"stone": 7.7 * Million, "gold": Million},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -435,7 +435,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Medieval Age — normal costs: 180k-360k
 		{
 			Name: "Great Library", Key: "great_library", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 10500000, "gold": 8070000},
+			BaseCost:  map[string]float64{"stone": 10.5 * Million, "gold": 8.07 * Million},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "research", Value: 2},

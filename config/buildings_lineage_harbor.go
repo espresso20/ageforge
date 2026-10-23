@@ -62,7 +62,7 @@ func buildingsLineageHarbor() []BuildingDef {
 		BaseCost:  map[string]float64{"steel": 105 * Billion, "titanium_ore": 105 * Billion, "electricity": 72 * Billion, "gold": 4.8 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "gold", Value: 4370000},
+			{Type: "production", Target: "gold", Value: 4.37 * Million},
 			{Type: "trade_route_income", Target: "trade_route_income", Value: 0.15},
 		},
 		BuildTicks:   3600,

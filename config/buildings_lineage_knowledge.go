@@ -94,7 +94,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 6 — renaissance_age  rate=3.2
 	b = append(b, BuildingDef{
 		Name: "University", Key: "university", Category: "research",
-		BaseCost:    map[string]float64{"gold": 2700000, "steel": 900000},
+		BaseCost:    map[string]float64{"gold": 2.7 * Million, "steel": 900000},
 		CostScale:   1.5,
 		Effects:     []Effect{{Type: "research", Value: 76.3}},
 		BuildTicks:  2400,
@@ -107,7 +107,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// tier 7 — colonial_age  rate=6.4
 	b = append(b, BuildingDef{
 		Name: "Natural Philosophy Hall", Key: "natural_philosophy_hall", Category: "research",
-		BaseCost:    map[string]float64{"gold": 16400000, "steel": 6700000},
+		BaseCost:    map[string]float64{"gold": 16.4 * Million, "steel": 6.7 * Million},
 		CostScale:   1.5,
 		Effects:     []Effect{{Type: "research", Value: 452}},
 		BuildTicks:  3600,

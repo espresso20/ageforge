@@ -110,7 +110,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 6 — renaissance_age  rate=5.12  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Iron Mine", Key: "iron_mine", Category: "production",
-		BaseCost:  map[string]float64{"gold": 2330000, "steel": 839000},
+		BaseCost:  map[string]float64{"gold": 2.33 * Million, "steel": 839000},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "iron_ore", Value: 5.27},
@@ -127,7 +127,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 7 — colonial_age  rate=10.24  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Deep Iron Mine", Key: "deep_iron_mine", Category: "production",
-		BaseCost:  map[string]float64{"gold": 9000000, "steel": 5400000},
+		BaseCost:  map[string]float64{"gold": 9 * Million, "steel": 5.4 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "iron_ore", Value: 112},
@@ -194,7 +194,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "uranium", Value: 110000},
-			{Type: "production", Target: "stone", Value: 1040000},
+			{Type: "production", Target: "stone", Value: 1.04 * Million},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
@@ -208,7 +208,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Name: "Titanium Mine", Key: "titanium_mine", Category: "production",
 		BaseCost:    map[string]float64{"steel": 84 * Billion, "electricity": 30 * Billion, "data": 2.4 * Billion},
 		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 9170000}},
+		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 9.17 * Million}},
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
 		Description: "High-precision titanium ore extraction.",

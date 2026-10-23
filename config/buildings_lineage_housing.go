@@ -113,7 +113,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 8 — industrial_age
 	b = append(b, BuildingDef{
 		Name: "Tenement", Key: "tenement", Category: "housing",
-		BaseCost:    map[string]float64{"stone": 11 * Million, "iron": 7400000},
+		BaseCost:    map[string]float64{"stone": 11 * Million, "iron": 7.4 * Million},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 1920}},
 		BuildTicks:  3600,

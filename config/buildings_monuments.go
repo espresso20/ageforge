@@ -65,7 +65,7 @@ func buildingsMonuments() []BuildingDef {
 		// Modern Age — late-game culture runs to the billions; the heavy sink.
 		{
 			Name: "Monument of Ages", Key: "monument_of_ages", Category: "monument",
-			BaseCost:  map[string]float64{"culture": 7100000, "gold": 14 * Million},
+			BaseCost:  map[string]float64{"culture": 7.1 * Million, "gold": 14 * Million},
 			CostScale: 1.15,
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.05},

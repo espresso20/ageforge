@@ -33,7 +33,7 @@ func buildingsLineageHacker() []BuildingDef {
 		BaseCost:  map[string]float64{"electricity": 596 * Billion, "steel": 565 * Billion, "titanium_ore": 565 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "data", Value: 7900000},
+			{Type: "production", Target: "data", Value: 7.9 * Million},
 		},
 		BuildTicks:  10920,
 		RequiredAge: "information_age",

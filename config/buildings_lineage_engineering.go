@@ -74,7 +74,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		// note: no steel in the price. Every steel producer cost steel, with a
 		// 0.1/tick tech the only way in, so the Renaissance walled at ~850K
 		// steel per mill. The mill is the bootstrap; the foundry still costs steel.
-		BaseCost:    map[string]float64{"gold": 2500000, "iron": 210000, "iron_ore": 210000},
+		BaseCost:    map[string]float64{"gold": 2.5 * Million, "iron": 210000, "iron_ore": 210000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "steel", Value: 191}},
 		BuildTicks:  2400,
@@ -87,7 +87,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 5 — colonial_age  output=steel  rate=3.20
 	b = append(b, BuildingDef{
 		Name: "Dockyard", Key: "dockyard", Category: "production",
-		BaseCost:    map[string]float64{"gold": 16 * Million, "steel": 8500000},
+		BaseCost:    map[string]float64{"gold": 16 * Million, "steel": 8.5 * Million},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "steel", Value: 2590}},
 		BuildTicks:  3600,
@@ -145,7 +145,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Name: "Nuclear Plant", Key: "nuclear_plant", Category: "production",
 		BaseCost:     map[string]float64{"steel": 25 * Billion, "electricity": 11 * Billion, "uranium": 2.1 * Billion},
 		CostScale:    1.15,
-		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 1260000}},
+		Effects:      []Effect{{Type: "production", Target: "electricity", Value: 1.26 * Million}},
 		BuildTicks:   3600,
 		RequiredAge:  "atomic_age",
 		RequiredTech: "civilian_reactors",
@@ -160,7 +160,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BaseCost:  map[string]float64{"steel": 75 * Billion, "titanium_ore": 75 * Billion, "electricity": 59 * Billion, "data": 6.4 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "electricity", Value: 7290000},
+			{Type: "production", Target: "electricity", Value: 7.29 * Million},
 		},
 		BuildTicks:   3600,
 		RequiredAge:  "modern_age",

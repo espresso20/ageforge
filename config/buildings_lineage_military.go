@@ -87,7 +87,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 6 — renaissance_age
 	b = append(b, BuildingDef{
 		Name: "Fortress", Key: "fortress", Category: "military",
-		BaseCost:    map[string]float64{"stone": 3000000, "gold": 1300000, "steel": 640000},
+		BaseCost:    map[string]float64{"stone": 3 * Million, "gold": 1.3 * Million, "steel": 640000},
 		CostScale:   1.15,
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
@@ -98,7 +98,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 7 — colonial_age
 	b = append(b, BuildingDef{
 		Name: "Fort", Key: "fort", Category: "military",
-		BaseCost:    map[string]float64{"gold": 17 * Million, "steel": 8500000},
+		BaseCost:    map[string]float64{"gold": 17 * Million, "steel": 8.5 * Million},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",

@@ -58,7 +58,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 3 — medieval_age  rate=0.40
 	b = append(b, BuildingDef{
 		Name: "Guildhall", Key: "guildhall", Category: "production",
-		BaseCost:    map[string]float64{"stone": 1910000, "gold": 653000},
+		BaseCost:    map[string]float64{"stone": 1.91 * Million, "gold": 653000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 405}},
 		BuildTicks:  1200,
@@ -71,7 +71,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 4 — renaissance_age  rate=0.80
 	b = append(b, BuildingDef{
 		Name: "Exchange", Key: "exchange", Category: "production",
-		BaseCost:    map[string]float64{"gold": 6210000, "steel": 2270000},
+		BaseCost:    map[string]float64{"gold": 6.21 * Million, "steel": 2.27 * Million},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 1380}},
 		BuildTicks:  2400,
@@ -139,7 +139,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BaseCost:  map[string]float64{"steel": 32 * Billion, "electricity": 13 * Billion, "gold": 21 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "gold", Value: 2390000},
+			{Type: "production", Target: "gold", Value: 2.39 * Million},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
@@ -153,7 +153,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Name: "Investment Firm", Key: "investment_firm", Category: "production",
 		BaseCost:    map[string]float64{"steel": 95 * Billion, "titanium_ore": 95 * Billion, "electricity": 70 * Billion, "data": 7 * Billion},
 		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6160000}},
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6.16 * Million}},
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
 		Description: "Global investment and wealth management.",
@@ -193,7 +193,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BaseCost:  map[string]float64{"data": 1.84 * Trillion, "electricity": 18.4 * Trillion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "crypto", Value: 337000000},
+			{Type: "production", Target: "crypto", Value: 337 * Million},
 			{Type: "production", Target: "gold", Value: 409.6},
 		},
 		BuildTicks:  3600,
