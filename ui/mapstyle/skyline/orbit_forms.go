@@ -99,7 +99,7 @@ func skyFormFor(sc mapmodel.SkyScene, def *mapmodel.Def, ml *mapmodel.Lot, keyst
 			return skyForm{fn: keystoneFn[sc], height: 9, key: scene + "key:" + def.Key}
 		case skyEraWonder[def.Key] > 0:
 			k := def.Key
-			return skyForm{fn: func(r *rnd, h int) *sprite { return wonderSprite(k, float64(h)/20) },
+			return skyForm{fn: func(r *rnd, h int) *sprite { return wonderArt(k, h) },
 				height: 20 * skyEraWonder[def.Key], key: scene + "w:" + def.Key}
 		}
 		return skyForm{fn: landmarkFn[sc], height: landmarkH[sc], key: scene + "lm:" + def.Key}
