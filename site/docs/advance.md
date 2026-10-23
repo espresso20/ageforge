@@ -2,6 +2,8 @@
 
 The Advance panel is one screen for the question "what is left before the age turns?" It shows the march of ages with a calendar year, the four pillars the next age stands on, and what the next age brings. Type `charter` to open it and `Esc` to close it. Opening it, moving about it and closing it change nothing in your game.
 
+<figure class="screen" data-screen="advance"><figcaption>The Advance panel in the Bronze Age, partway: the march of ages with the year, the four pillars with the Knowledge pillar picked, and what the Iron Age brings.</figcaption></figure>
+
 It is a view of the same gate the `advance` command checks: the buildings the next age lists and the wonder of the age you are in. The panel adds no requirement and takes none away. `advance` still works from the prompt, and when the gate is not met it points you at `charter`.
 
 ---
