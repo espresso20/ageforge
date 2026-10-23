@@ -205,7 +205,6 @@ game.engine.DoBlackMarket.07,"The smugglers fumbled the run, %s gone."
 game.engine.finishBuild.02,%s just dropped (%d in your collection).
 game.engine.AdvanceAge.01,"No advancing until the %s wonder is up, that's the main quest: research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' for the full checklist."
 game.engine.AdvanceAge.02,"The %s wonder is the boss fight before you advance: bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs."
-game.engine.AdvanceAge.03,Advancing rn? Not yet. The Next Age bar spills the tea on what's missing. Type 'charter' to see everything the advance needs.
 game.engine.AdvanceAge.04,"This is the final age, bestie, you've hit the end of the map."
 game.engine.GatherResource.01,"Hand-gathering retires after the Lore Dump Age. Build producers and assign workers instead, let them cook."
 game.engine.GatherResource.02,"You can't gather %s yet, that's a later-age flex. Gather food, wood or stone."

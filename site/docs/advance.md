@@ -6,6 +6,8 @@ The Advance panel is one screen for the question "what is left before the age tu
 
 It is a view of the same gate the `advance` command checks: the buildings the next age lists and the wonder of the age you are in. The panel adds no requirement and takes none away. `advance` still works from the prompt, and when the gate is not met it points you at `charter`.
 
+The top of the dashboard shows the same figures at a glance: a long bar to the next age with the percent, the four pillars as small meters, and a line naming what is still missing (see [The screen layout](how-to-play.md#the-screen-layout)). They are read from the same gate, so the percents match.
+
 ---
 
 ## The march of ages
@@ -33,7 +35,7 @@ The Charter is the four pillars the next age asks for, each with a bar and a per
 
 A pillar's bar is the average of its rows. A pillar with nothing to ask in some age reads `nothing needed this age` and counts as met. `↑` and `↓` pick a pillar, and the box under the four lists what it asks for: a building as `7 of 10`, the keystone as researched or not, the wonder's bank as a percent, the wonder as built or not. A row that is met is green. When a pillar has more rows than the screen has room for, the ones still to do come first.
 
-The wonder's bank counts each resource at what it is worth in the age's prices, so a resource named in huge amounts does not outweigh a dear one. The Next Age bar, the [Wonders](wonders.md) panel and the [map](map.md) show the same banked share. The wonder needs its [keystone tech](ages.md#keystone-techs) before it can be built, and the pillars show it: the keystone leads Knowledge, and the Monument's last row says what the wonder is waiting for.
+The wonder's bank counts each resource at what it is worth in the age's prices, so a resource named in huge amounts does not outweigh a dear one. The Waiting on line at the top of the dashboard, the [Wonders](wonders.md) panel and the [map](map.md) show the same banked share. The wonder needs its [keystone tech](ages.md#keystone-techs) before it can be built, and the pillars show it: the keystone leads Knowledge, and the Monument's last row says what the wonder is waiting for.
 
 ## What the next age brings
 

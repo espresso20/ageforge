@@ -3424,7 +3424,7 @@ func (ge *GameEngine) AdvanceAge() error {
 					return vibe.Errorf("game.engine.AdvanceAge.02", "Build the %s wonder before advancing: bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs.", def.Name, wonderKey)
 				}
 			}
-			return vibe.Errorf("game.engine.AdvanceAge.03", "Not ready to advance. The Next Age bar lists what is missing. Type 'charter' to see everything the advance needs.")
+			return vibe.Errorf("game.engine.AdvanceAge.05", "Not ready to advance. The bar at the top lists what it is waiting on. Type 'charter' to see everything the advance needs.")
 		}
 	}
 	nextAge := ge.progress.GetNextAge(ge.age)

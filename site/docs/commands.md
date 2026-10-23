@@ -304,7 +304,7 @@ worldmap
 icons
 ```
 
-`map style`, `map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The **mini map** is off until you type `minimap on`. Then, on terminals of 105 columns by 34 rows and larger, the dashboard shows a short mini map of the active style above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
+`map style`, `map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The **mini map** is off until you type `minimap on`. Then, on terminals of 105 columns by 36 rows and larger, the dashboard shows a short mini map of the active style above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
 
 The command bar keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing, in every style:
 
