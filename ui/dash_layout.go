@@ -64,6 +64,11 @@ type dashBody struct {
 	// classic layout (it grows by the lines that say what holds the
 	// population back).
 	classicPeople func() int
+	// switched is told when the layout changes, before the boxes are drawn
+	// in it: the People box is written differently in each, and may come out
+	// the same size.
+	switched func()
+	rich     bool
 }
 
 func newDashBody(econ, panels, people tview.Primitive, screen func() (w, h int), classicPeople func() int) *dashBody {
@@ -77,6 +82,12 @@ func (b *dashBody) Draw(scr tcell.Screen) {
 	}
 	tw, th := b.screen()
 	rich := dashRich(tw, th)
+	if rich != b.rich {
+		b.rich = rich
+		if b.switched != nil {
+			b.switched()
+		}
+	}
 	side := sidebarW
 	if rich {
 		side = richSidebarW

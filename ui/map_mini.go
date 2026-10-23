@@ -168,11 +168,10 @@ type mapDock struct {
 	// strip is the skyline strip; logRows is the Log box's height in a
 	// column h rows tall and screen the terminal's size. A dock without a
 	// strip (or without the means to size it) has none.
-	strip       *skylineStrip
-	logRows     func(h int) int
-	screen      func() (w, h int)
-	stripShown  bool
-	stripHeight int // its height at the last draw, border included
+	strip      *skylineStrip
+	logRows    func(h int) int
+	screen     func() (w, h int)
+	stripShown bool // the last draw showed the strip
 }
 
 func newMapDock(mini *miniMap, body tview.Primitive) *mapDock {
@@ -216,7 +215,7 @@ func (d *mapDock) Draw(scr tcell.Screen) {
 	}
 	sh := d.stripRows(h, mh)
 	d.shown, d.drawn = mh > 0, true
-	d.stripShown, d.stripHeight = sh > 0, sh
+	d.stripShown = sh > 0
 	if d.shown {
 		d.mini.SetRect(x, y, w, mh)
 		d.mini.Draw(scr)

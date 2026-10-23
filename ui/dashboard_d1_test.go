@@ -571,3 +571,56 @@ func TestSkylineStripInEveryTheme(t *testing.T) {
 		}
 	}
 }
+
+// TestPeopleBoxFollowsAResize: a terminal resized across the rich layout's
+// edge redraws the People box in the other layout's words at once, without
+// waiting for the next refresh.
+func TestPeopleBoxFollowsAResize(t *testing.T) {
+	restoreForge(t)
+	d, pages, _ := stagedDashboard(t, "bronze_age")
+	drawn := func(w, h int) {
+		sim := tcell.NewSimulationScreen("UTF-8")
+		if err := sim.Init(); err != nil {
+			t.Fatal(err)
+		}
+		defer sim.Fini()
+		sim.SetSize(w, h)
+		scr := theme.WrapScreen(sim)
+		pages.SetRect(0, 0, w, h)
+		pages.Draw(scr)
+		scr.Show()
+	}
+	hasBar := func() bool { return strings.Contains(d.workerMiniTV.GetText(true), "█") }
+	drawnDashboard(t, d, pages, 100, 30)
+	if hasBar() {
+		t.Fatalf("the classic People box has a bar")
+	}
+	for i, c := range []struct {
+		w, h int
+		bar  bool
+	}{{120, 40, true}, {100, 30, false}, {160, 45, true}, {119, 40, false}, {120, 35, false}, {120, 36, true}} {
+		drawn(c.w, c.h)
+		if hasBar() != c.bar {
+			t.Errorf("step %d, resized to %dx%d: the People box has a bar = %v, want %v", i, c.w, c.h, hasBar(), c.bar)
+		}
+	}
+	// The edge can be crossed with the box the same size on both sides: one
+	// row taller at 121 columns, with something holding the population back.
+	drawnDashboard(t, d, pages, 121, 35)
+	st := *d.lastState
+	st.Workers.HeldBy, st.Workers.FoodNet, st.Workers.FoodFeeds = game.HeldFood, 0.45, 3
+	d.lastState = &st
+	d.refreshWorkerMini(st)
+	drawn(121, 35)
+	if x, y, w, h := d.workerMiniTV.GetInnerRect(); hasBar() {
+		t.Fatalf("the classic People box at 121x35 has a bar (%d,%d %dx%d)", x, y, w, h)
+	}
+	_, _, cw, ch := d.workerMiniTV.GetInnerRect()
+	drawn(121, 36)
+	if _, _, w, h := d.workerMiniTV.GetInnerRect(); w != cw || h != ch {
+		t.Skipf("the box changed size across the edge (%dx%d to %dx%d), so the resize alone rewrites it", cw, ch, w, h)
+	}
+	if !hasBar() {
+		t.Errorf("a box the same size on both sides of the edge was not rewritten:\n%s", d.workerMiniTV.GetText(true))
+	}
+}

@@ -532,6 +532,7 @@ func (d *Dashboard) build() {
 	// column, with the People box under the list unless the layout is rich.
 	d.peopleH = workerMiniBaseRows + 2
 	mainHoriz := newDashBody(d.economyTab.Root(), d.sidebar, d.workerMiniTV, d.screenSize, func() int { return d.peopleH })
+	mainHoriz.switched = func() { d.workerMiniTV.stale = true }
 
 	// Content area is just mainHoriz: no bottom strip
 	d.contentArea = mainHoriz
