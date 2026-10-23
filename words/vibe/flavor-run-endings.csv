@@ -21,7 +21,7 @@ flavor.run_ending.plain.011,"One guy finally pulled up to apologize to his broth
 flavor.run_ending.plain.012,The hot take going round: the end of the world dropping on a weekday is honestly a choice
 flavor.run_ending.industrial.001,"The factories let the last shift clock out early, the one early dismissal in factory history"
 flavor.run_ending.industrial.002,"The chimneys finally quit smoking, cold turkey, a lung glow-up nobody saw coming"
-flavor.run_ending.industrial.003,"The power station got wound down one boiler at a time, a slow fade with no encore"
+flavor.run_ending.industrial.003,The power station soft-launched its shutdown one boiler at a time
 flavor.run_ending.industrial.004,"Offices were ghost towns by noon, half day for the entire civilization"
 flavor.run_ending.industrial.005,"The papers dropped their final edition, the series finale of headlines"
 flavor.run_ending.industrial.006,"The last tram of the night ran its whole route lit up like a parade with zero passengers, main character of an empty city"
@@ -33,28 +33,28 @@ flavor.run_ending.industrial.011,"Families posed for photos in front of their ho
 flavor.run_ending.industrial.012,On the final broadcast a dance band played to an empty studio and still ate
 flavor.run_ending.industrial.013,"The rolling mill crew walked home together in their work gear one last time and hung around the corner, nobody wanting to be first to dip"
 flavor.run_ending.industrial.014,"At the town hall the typists locked in all evening copying the deeds, the registers and the lists of the dead, so whoever comes after finds the full record in order and knows who lived here"
-flavor.run_ending.industrial.015,"The tax office sent out its final demands right on schedule, the audacity is unmatched"
-flavor.run_ending.digital.001,"The network dropped region by region, every group chat going grey in turn"
-flavor.run_ending.digital.002,"Phones stopped ringing, the whole town on do not disturb forever"
-flavor.run_ending.digital.003,"Most of the final posts were pics of the sky, the last trend ever and honestly a good one"
+flavor.run_ending.industrial.015,Not the tax office sending its final demands bang on schedule at the literal end of the world
+flavor.run_ending.digital.001,"Region by region the network logged off, and every group chat went grey in turn"
+flavor.run_ending.digital.002,"Phones went full do-not-disturb, and not one ring was left in the whole town"
+flavor.run_ending.digital.003,"The last trend ever was sky pics, most of the final posts just the sky, and honestly it ate"
 flavor.run_ending.digital.004,"Every balance froze at midnight, final scores locked, the leaderboard is closed"
-flavor.run_ending.digital.005,"Customers are tilted that the promised update never shipped, patch notes forever pending"
-flavor.run_ending.digital.006,"Staff get to keep their company phones, the final perk drop"
+flavor.run_ending.digital.005,"The promised update is stuck in its coming-soon era forever, and customers are tilted about it to the very end"
+flavor.run_ending.digital.006,Final perk drop: staff get to keep their company phones
 flavor.run_ending.digital.007,"The feeds are saying the corporations knew the whole time and sold tickets, conspiracy brain to the very end"
 flavor.run_ending.digital.008,"The delivery drones got called home and parked in neat little rows on the pads, just sitting there blinking like they're waiting on one more order"
-flavor.run_ending.digital.009,"The fusion plants idled down one after another and the city dimmed in stages over three nights, a whole slow-fade outro"
+flavor.run_ending.digital.009,The fusion plants idled down one by one and the city did a three-night slow fade into the dark
 flavor.run_ending.digital.010,"In the arcades, the kids who'd run the same game every night for years ran it back one last time together, then left the cabinets on, demo screens looping for an empty room"
 flavor.run_ending.digital.011,"Block by block the whole skyline logged off, screens going dark like the city hit sleep mode"
-flavor.run_ending.digital.012,"Every server farm stayed up as long as the power held, humming to itself in the dark, still grinding with nobody to grind for"
-flavor.run_ending.digital.013,"People stayed logged in to the very end, scrolling back through years of their own posts and pics, the biggest throwback of all time"
+flavor.run_ending.digital.012,"Every server farm kept grinding as long as the power held, humming to itself in the dark with nobody left to grind for"
+flavor.run_ending.digital.013,"People stayed logged in till the very end, doing one last deep scroll through years of their own posts and pics"
 flavor.run_ending.digital.014,"Every personal file goes to the permanent archive, nothing gets deleted, your camera roll lives forever"
-flavor.run_ending.digital.015,"The final message went to every address the city ever had, even the ones dead for years, and it said thank you and goodbye in every language anyone there ever spoke, the realest mass text ever sent"
-flavor.run_ending.space.001,"The orbital yards got shut down, no more fresh ships rolling off the line"
+flavor.run_ending.digital.015,"The final mass text went to every address the city ever had, even the long-dead ones, and it said thank you and goodbye in every language anyone there ever spoke"
+flavor.run_ending.space.001,The orbital yards clocked out for good and the ship line went still
 flavor.run_ending.space.002,"Every launch got scrubbed, the countdowns left hanging on whatever number they hit"
 flavor.run_ending.space.003,"The last shuttle up packed seed stock, photos and basically nothing else, carry-on only"
-flavor.run_ending.space.004,"Stations mothballed, crews sent home, orbits logged, the shutdown checklist cleared in record time"
+flavor.run_ending.space.004,"Stations mothballed, crews sent home, orbits logged: the shutdown checklist got speedrun"
 flavor.run_ending.space.005,"All craft: back to the dock and power down, joyriding era officially over"
-flavor.run_ending.space.006,"The moon base is salty it got told last, left out of the group chat yet again"
+flavor.run_ending.space.006,The moon base got left out of the group chat yet again and is salty it heard last
 flavor.run_ending.space.007,Up on the station they say the view has never been this goated
 flavor.run_ending.space.008,The belt mining crews clocked out and rolled home for good
 flavor.run_ending.space.009,"The ring station got turned so its windows faced home, and the crew took turns in the window seats through the last watch"
@@ -63,7 +63,7 @@ flavor.run_ending.space.011,"Mission control signed off for good, the cleanest m
 flavor.run_ending.space.012,The crew on the far side of the moon got the news last of all over a laggy signal and wrote down every single word by hand
 flavor.run_ending.space.013,"All the fuel got poured back into the tanks, rocket juice returned to sender"
 flavor.run_ending.space.014,"The orbital hotel refunded every booking, minus a handling fee, because of course it did"
-flavor.run_ending.space.015,"Kids at the observation windows waved at every ship coming in until the very last one had docked, wholesome to the final second"
+flavor.run_ending.space.015,Kids at the observation windows gave every incoming ship the full wholesome wave until the last one docked
 flavor.run_ending.cosmic.001,"{subject} got the last word, as main characters do"
 flavor.run_ending.cosmic.002,"Out past the last charted star something stirred, like a sleeper rolling over when a door shuts somewhere else in the house, the creepiest wake-up call ever logged"
 flavor.run_ending.cosmic.003,"Through the entire shutdown {subject} stuck around, just watching, chronically present"
@@ -74,38 +74,38 @@ flavor.run_ending.cosmic.007,"All logs stay open for {subject} to read, full acc
 flavor.run_ending.cosmic.008,"On the command deck they're saying {subject} knew the exact hour the whole time, menace behavior"
 flavor.run_ending.cosmic.009,"The stars just kept on starring, unbothered by any of it"
 flavor.run_ending.cosmic.010,"Air fine, power dipping, every soul on the headcount, the last vibe check passed"
-flavor.run_ending.cosmic.011,"When the colony's last lights went out, {subject} stayed up in the dark after the crew had gone to their berths, last one left at the party"
-flavor.run_ending.cosmic.012,"The instruments kept recording long after anyone stopped reading them, no audience, still on the clock"
+flavor.run_ending.cosmic.011,"{subject} was the last one left at the party, still up in the dark after the colony's last lights went out and the crew had gone to their berths"
+flavor.run_ending.cosmic.012,"The instruments kept on recording long after anyone stopped reading, performing for an audience of zero"
 flavor.run_ending.cosmic.013,The colony clocked off its watch for the last time
-flavor.run_ending.cosmic.014,"Right up to the end {subject} gave no comfort and no blame, the most neutral aura in existence"
+flavor.run_ending.cosmic.014,"{subject} kept a perfectly neutral aura to the end, serving no comfort and no blame"
 flavor.run_ending.cosmic.015,"Way past the colony's instruments, where only one probe still checked in, the thing it had been warned about for four ages turned away in zero hurry, and the probe lost it within the hour"
-flavor.run_ending.cosmic.016,"Engineering filed one last maintenance ticket, marked urgent, as is tradition"
-flavor.run_ending.cosmic.017,"The colonists took turns sitting with {subject} through the last watch, and not one of them could say afterwards what got said, that lore stays locked"
+flavor.run_ending.cosmic.016,"Engineering stayed in character to the end and filed one last maintenance ticket, marked urgent"
+flavor.run_ending.cosmic.017,"The colonists took turns sitting with {subject} through the last watch, and whatever got said is locked lore none of them could repeat afterwards"
 flavor.run_ending.cosmic.018,"The kids snoozed straight through the apocalypse, sleep schedule undefeated"
 flavor.run_ending.cosmic.019,The hydroponics bays were left lit so the plants could keep their glow
-flavor.run_ending.cosmic.020,"At the end the only voice left on comms was {subject}, doing a solo set"
+flavor.run_ending.cosmic.020,"At the end {subject} had the comms all to itself, the only voice left, doing a solo set"
 flavor.run_ending.cosmic.021,"The old hands say the dark had been patient long enough, and it was only ever waiting for the colony to log off"
-flavor.run_ending.interstellar_age.001,"The beacon's loop ended on your name, you just got added to its tracklist"
-flavor.run_ending.interstellar_age.002,"The beacon kept looping after the last lights went out, posting to a feed with zero followers left"
-flavor.run_ending.interstellar_age.003,"For eighty years the beacon warned about this, and at the end it just added the colony to its list, no fanfare, no drama"
-flavor.run_ending.interstellar_age.004,"The dead colony's beacon and the living colony's last transmission overlapped for a few seconds, two recordings of the end playing over each other on one frequency, a duet nobody asked for, and then the living one went quiet"
-flavor.run_ending.interstellar_age.005,The comms officer swears on everything the beacon said goodbye
+flavor.run_ending.interstellar_age.001,Your name became the final track on the beacon's loop
+flavor.run_ending.interstellar_age.002,Long after the last lights went out the beacon kept posting on loop to a feed with zero followers left
+flavor.run_ending.interstellar_age.003,"After eighty years of warnings the beacon just low-key added the colony to its list, no fanfare"
+flavor.run_ending.interstellar_age.004,"For a few seconds the dead colony's beacon and the living colony's last transmission went full duet, two recordings of the end playing over each other on one frequency, and then the living one went quiet"
+flavor.run_ending.interstellar_age.005,The comms officer is deadass sure the beacon said goodbye
 flavor.run_ending.interstellar_age.006,"Beacon still posting, colony on permanent mute"
-flavor.run_ending.galactic_age.001,"The relay folded the colony into its geometry and went silent, colony absorbed, no take-backs"
-flavor.run_ending.galactic_age.002,"The linguists stayed at their posts translating the last of it, committed to the bit until the end"
+flavor.run_ending.galactic_age.001,"The relay absorbed the colony into its geometry, no take-backs, and went silent"
+flavor.run_ending.galactic_age.002,"The linguists stayed locked in at their posts, translating the last of it"
 flavor.run_ending.galactic_age.003,The relay's hum locked onto a single note and refused to switch tracks
-flavor.run_ending.galactic_age.004,"The relay had said this to others before, and the linguists found the colony's own name already written into its oldest geometry, right among peoples who ended long before anyone here learned to talk, so we were in the lore all along"
-flavor.run_ending.galactic_age.005,"The linguists are fuming that the relay's last message has no verb, grammar crimes at the end of everything"
+flavor.run_ending.galactic_age.004,"Plot twist from the linguists: the relay had said this before, and the colony's own name was already in its oldest geometry, filed among peoples who ended long before anyone here learned to talk"
+flavor.run_ending.galactic_age.005,"The relay's last message has no verb, and the linguists are treating it as a grammar crime"
 flavor.run_ending.galactic_age.006,Keep the relay powered after we've all logged off for good
 flavor.run_ending.quantum_age.001,Your future self left you on read this time
-flavor.run_ending.quantum_age.002,"From nine years out came one last message, and it was just the sound of your own breathing, no caption"
+flavor.run_ending.quantum_age.002,"One last message dropped from nine years out, and it was just the sound of your own breathing, no caption"
 flavor.run_ending.quantum_age.003,"Your future self said this is the part you always forget, so please, no pressure, try to remember it this time"
-flavor.run_ending.quantum_age.004,"The timestamps on your future self's messages had been running backwards for weeks, creeping closer to today each time, and at the end they landed on today and stopped"
-flavor.run_ending.quantum_age.005,"Your future self said it was all worth it, and you chose to believe that, delulu or not"
+flavor.run_ending.quantum_age.004,"The timestamps on your future self's DMs had been running backwards for weeks, inching closer to today, and at the end they caught up with now and stopped"
+flavor.run_ending.quantum_age.005,"Your future self swore it was all worth it, and you chose to be delulu enough to believe it"
 flavor.run_ending.quantum_age.006,"In the last hour a message came from nine years out in your own handwriting, the letters a little off from a hand out of practice, and all it said was that it was glad you waited up"
 flavor.run_ending.transcendent_age.001,Your unmade self slid in and took your hand
 flavor.run_ending.transcendent_age.002,"This is how mine ended too, it said, and its grip stayed locked in"
 flavor.run_ending.transcendent_age.003,The branch you stood on and the branch that ended finally linked up
 flavor.run_ending.transcendent_age.004,"Your unmade self came all this way to see if this branch ends the way its own did, stuck around to watch it happen, and seemed almost relieved to have a plus one"
-flavor.run_ending.transcendent_age.005,Half the station is heated that the other you never explains itself
+flavor.run_ending.transcendent_age.005,"The other you never explains itself, and half the station has the ick about it"
 flavor.run_ending.transcendent_age.006,"Every door on the station got unlocked, by order, so the other you could free roam wherever it liked"
