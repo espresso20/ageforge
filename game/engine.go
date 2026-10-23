@@ -139,6 +139,12 @@ type GameEngine struct {
 	stopOnce   sync.Once
 	// exitMu makes SaveOnExit one at a time.
 	exitMu sync.Mutex
+	// calendar is the furthest the Advance panel has shown the town on its
+	// way to the next age (advance_view.go). Derived from what was shown,
+	// never saved; calendarMu guards it, apart from mu, since the panel's
+	// read does not take the engine's lock.
+	calendarMu sync.Mutex
+	calendar   calendarMark
 	// loopDone is closed when the current Start loop has returned; nil until
 	// Start first runs. Stop waits on it, so once Stop returns no tick,
 	// autosave or account flush from that loop is still in flight. Guarded
@@ -2312,6 +2318,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	oldAge := ge.age
 	prevK := ge.speedK()
 	ge.age = newAge
+	ge.resetCalendar()
 	// An old save's grace from the tech tree's locks covered the age it was
 	// in. It ends here (GameSave.TreeGraceAge).
 	ge.Buildings.graceAge = ""
