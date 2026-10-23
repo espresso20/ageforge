@@ -215,7 +215,7 @@ The test suite covers all game systems with **86 tests** across 11 files:
 | File | Tests | What it covers |
 |------|-------|----------------|
 | `config/validate_test.go` | 12 | Cross-validates all config keys: no bad references, no duplicates, all content reachable |
-| `game/resources_test.go` | 7 | Add, storage cap, remove, pay/afford, rates, unlock, save/load |
+| `game/resources_test.go` | 7 | Add (no cap), remove, pay/afford, rates, unlock, save/load |
 | `game/buildings_test.go` | 5 | Unlock, cost scaling, pop capacity, get all, load counts |
 | `game/villagers_test.go` | 9 | Recruit, cap limits, assign/unassign, food drain, production, soldiers, save/load |
 | `game/research_test.go` | 9 | Start, afford check, age gating, prereqs, tick completion, bonuses, cancel, duplicate, save/load |
@@ -250,9 +250,9 @@ AGEFORGE_LONG_TESTS=1 go test ./smoke -run TestOrdinaryPath   # the engine walk 
 go test ./smoke -run '^$' -fuzz=FuzzCommand -fuzztime=1m      # fuzz the command handler from its kept corpus
 ```
 
-- **The golden record** (`config/testdata/golden_tables.json`) holds every building, tech, gate and age target, and the price levels, typical incomes and stores worked out from them. `TestGoldenTables` names each entry that differs. A pull request that changes a number shows it twice: in the table and in the record's diff.
+- **The golden record** (`config/testdata/golden_tables.json`) holds every building, tech, gate and age target, and the price levels and typical incomes worked out from them. `TestGoldenTables` names each entry that differs. A pull request that changes a number shows it twice: in the table and in the record's diff.
 - **The reference players** (`smoke/reference.go`) are three ways of playing written as rules: an ordinary player who builds the reference town, pays the wonder and advances; a lingering one who buys everything and stays three times as long; a check-in one who is away at half rate and advances at the first eight-hour visit after the gate opens. Their path through the 22 ages is arithmetic on the tables. No bot plays it.
-- **The properties** (`smoke/properties.go`) are what must be true for the game to be in proportion for all three: how long income takes to double against the length of the age, what a full store can pay for, what a trade route pays against what buildings make, and so on. The ones that do not hold today are listed in `KnownPropertyFailures` with today's reading. The static scenario and `go test` fail when a listed property starts to hold (delete its line), when an unlisted one stops holding, or when a listed reading changes (write the new reading down). A change to the economy should make that list shorter.
+- **The properties** (`smoke/properties.go`) are what must be true for the game to be in proportion for all three: how long income takes to double against the length of the age, what a trade route pays against what buildings make, and so on. The ones that do not hold today are listed in `KnownPropertyFailures` with today's reading. The static scenario and `go test` fail when a listed property starts to hold (delete its line), when an unlisted one stops holding, or when a listed reading changes (write the new reading down). A change to the economy should make that list shorter.
 - **The ordinary path** (`smoke/ordinary_path_test.go`) drives the real engine along the ordinary player's purchases with the resources granted: every purchase accepted, every wonder built, every gate opened, a save from every age loading back to the same game.
 
 ### Smoke testing
@@ -455,7 +455,7 @@ A hidden dev console is available for playtesting without grinding through all 2
 |---|---|
 | `/ages` | List all 22 age keys |
 | `/age <key>` | Jump to any age instantly |
-| `/fill` | Fill all resources to storage cap |
+| `/fill` | Add a large amount of every resource |
 | `/give <resource> <amount>` | Add a specific resource |
 | `/techs` | Unlock all techs up to current age |
 | `/build <key>` | Instantly place any building |
@@ -577,7 +577,7 @@ A prestige or a Succumb raises every age below the run's furthest age by one lev
 ```
 offline_ticks = min(elapsed, 24h) / tick_interval
 # in steps of 30 ticks (game.OfflineStepTicks), each:
-resource_gain = rate × 30 × 0.5     # 50% efficiency, capped at storage; overflow to the wonder bank
+resource_gain = rate × 30 × 0.5     # 50% efficiency; stock has no cap
 construction and research advance 30 ticks; the build plan starts what the step paid for
 the worker shares routine staffs idle workers and recruits into empty slots (shares.go)
 ```
