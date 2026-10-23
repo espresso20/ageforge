@@ -319,7 +319,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 |---|---|---|---|---|---|
 | `priesthood` | Priesthood | optional | 35m | `calendar` | Morale can rise 5 points higher |
 | `mathematics` | Mathematics | **keystone** (Colosseum) | 27m | `primitive_writing` | +8% scholar output |
-| `exploration` | Exploration | spine | 16m | one of `map_making` or `boatbuilding` |  |
+| `exploration` | Exploration | spine | 16m | one of `map_making` or `boatbuilding` | +10% expedition rewards |
 | `irrigation` | Irrigation | optional | 45m | `agriculture` | +8% food production, +5% housing |
 | `road_building` | Road Building | optional | 59m | `masonry`, `the_wheel` | +8% gold production, trade routes take 15% less time |
 | `iron_smelting` | Iron Smelting | spine | 20m | `bronze_working` | Opens the Smelter, +8% iron production |

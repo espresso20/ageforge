@@ -256,9 +256,9 @@ A mission's resource cost is spent at launch, whether it succeeds or fails. Ever
 
 ### Automatic dispatch: the Geographic Society
 
-From the **Industrial Age** the **Geographic Society** sends short or long offers on its own for the rest of the run. It waits for the **Geographic Societies** tech of that age, which needs Cartography.
+From the **Industrial Age** the **Geographic Society** sends short offers on its own for the rest of the run. It waits for the **Geographic Societies** tech of that age, which needs Cartography.
 
-It only ever scouts. A Society never wages a campaign; those stay yours to order.
+It only ever sends the era's short scout. Long and grand missions, and every campaign, stay yours to order.
 
 It sends a party only when the soldiers at home can make one up, as a hand-sent mission does. Nothing is queued.
 

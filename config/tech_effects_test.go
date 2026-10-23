@@ -220,7 +220,7 @@ func TestTechHeadroom(t *testing.T) {
 		{TechEffectKey{Kind: EffectResearchTime}, 0.97 * 0.97 * 0.97 * 0.94 * 0.96 * 0.97 * 0.94 * 0.97 * 0.94 * 0.97 * 0.97 * 0.97 * 0.94},
 		{TechEffectKey{Kind: EffectGameSpeed}, 0.30},
 		{TechEffectKey{Kind: EffectMilitaryPower}, 2.01},
-		{TechEffectKey{Kind: EffectExpeditionReward}, 0.96},
+		{TechEffectKey{Kind: EffectExpeditionReward}, 1.06},
 		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRouteTicks}, 0.85 * 0.85 * 0.85 * 0.80},
 		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRouteIncome}, 1.10 * 1.10 * 1.10},
 		{TechEffectKey{Kind: EffectMechanic, Target: MechanicRaidLoss}, 0.81 * 0.85 * 0.90},
@@ -331,9 +331,7 @@ func TestTechChecks(t *testing.T) {
 	}
 	for _, tech := range Technologies() {
 		checks := all[tech.Key]
-		// Exploration is a link in the tree and nothing more since the mission
-		// board stopped asking for it: the era opens the tiers.
-		if len(checks) == 0 && tech.Key != "exploration" {
+		if len(checks) == 0 {
 			t.Errorf("%s promises nothing: no effect, no building, no command", tech.Key)
 		}
 		for _, c := range checks {
@@ -390,6 +388,7 @@ func TestTechChecks(t *testing.T) {
 		"printing_press":              "out:research:6; research:3 | rate(research) x1.06; research_ticks x0.97",
 		"chronometry":                 "speed:5 | tick_speed +0.05",
 		"navigation":                  "exp:10 | expedition_reward +0.1",
+		"exploration":                 "exp:10 | expedition_reward +0.1",
 	} {
 		if got := form(key); got != want {
 			t.Errorf("%s:\n got %s\nwant %s", key, got, want)
