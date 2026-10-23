@@ -45,6 +45,19 @@ func playRun(t *testing.T, set *rules.Set) ([]string, []LogEntry, *GameEngine) {
 			rec("%s|log|%s|%s", label, l.Type, l.Message)
 			entries = append(entries, l)
 		}
+		// What else the player reads and the code writes itself: the names
+		// of the timed effects under way and the civilization log.
+		for _, ae := range ge.Events.active {
+			rec("%s|timed|%s|%s", label, ae.Key, ae.Name)
+		}
+		for _, h := range ge.historyLines() {
+			rec("%s|history|%s", label, h)
+		}
+		for _, a := range ge.Military.active {
+			for _, story := range a.RoadEventsSeen {
+				rec("%s|road|%s", label, story)
+			}
+		}
 	}
 	refuse := func(label string) {
 		errs := []struct {
@@ -145,6 +158,9 @@ func playRun(t *testing.T, set *rules.Set) ([]string, []LogEntry, *GameEngine) {
 			_ = ge.MeetFactionForTest(f.Key, 40)
 		}
 		_ = ge.SummonHarbingerForTest(age)
+		if i%2 == 0 {
+			sendRoadMission(t, ge, i)
+		}
 		ge.StepTicks(350)
 		grab(age + "-a")
 		if i%4 == 0 {
@@ -192,6 +208,39 @@ func playRun(t *testing.T, set *rules.Set) ([]string, []LogEntry, *GameEngine) {
 	ge.StepTicks(300)
 	grab("after-prestige")
 	return texts, entries, ge
+}
+
+// sendRoadMission sends a short mission that meets a road event of every kind,
+// each told from a template of the table, so the run reads every story in the
+// words of the script in force. The templates are the ones the event drew
+// (a mission is launched and rolls its own events; they are replaced here by
+// events at known ticks).
+func sendRoadMission(t *testing.T, ge *GameEngine, turn int) {
+	t.Helper()
+	setSoldiers(ge, 500)
+	n := plantOffer(ge, TierShort, "")
+	if err := ge.LaunchExpedition(n); err != nil {
+		return // the mission could not be paid: the run goes on without it
+	}
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	a := ge.Military.ActiveByTier(TierShort)
+	if a == nil {
+		return
+	}
+	words, _ := ge.rules.MissionWords(a.Age)
+	a.RoadEvents = a.RoadEvents[:0]
+	for j, kind := range []string{"storm", "helpers", "find", "toll", "foes", "ambush", "fair", "ruins", "toll", "ambush"} {
+		k := (turn + j) % words.RoadTemplateCount(kind)
+		a.RoadEvents = append(a.RoadEvents, RoadEvent{
+			Tick: 2 + j, Kind: kind,
+			Story:       words.RoadTemplate(kind, k),
+			AuxStory:    words.RoadTemplate("foes", (k+1)%3),
+			AmbushStory: words.RoadTemplate("ambush_haul", (k+2)%3),
+			FoeIndex:    j % 3, HelperIndex: (j + 1) % 3, WeatherIndex: (j + 2) % 3, FindIndex: j % 3,
+		})
+	}
+	a.TotalTicks, a.TicksLeft = max(a.TotalTicks, 60), max(a.TicksLeft, 60)
 }
 
 // playWith plays the run with VibeMode set to on and, when rewrite is not
@@ -310,6 +359,23 @@ func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
 	}
 	if len(changed) < 400 {
 		t.Errorf("the script reached only %d different texts of the run", len(changed))
+	}
+	// The things the code names itself and the save keeps as keys or in
+	// English are told in the script's words too, and every kind was met.
+	for _, what := range []struct {
+		kind string
+		min  int
+	}{{"|road|", 10}, {"|timed|", 5}, {"|history|", 5}} {
+		told := map[string]bool{}
+		for i := range plain {
+			if marked[i] != plain[i] && strings.Contains(plain[i], what.kind) {
+				told[marked[i]] = true
+			}
+		}
+		t.Logf("%d different texts of the kind %s were told in the script's words", len(told), what.kind)
+		if len(told) < what.min {
+			t.Errorf("the script told only %d different texts of the kind %s, want at least %d", len(told), what.kind, what.min)
+		}
 	}
 
 	a, b := stateMap(t, plainGE), stateMap(t, markedGE)

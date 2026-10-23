@@ -144,7 +144,7 @@ func read(root string) (*catalog, error) {
 				why = whyMatched
 			case f.mode == modeFlavor:
 				r, why = fl.read(c, u)
-			case f.mode == modeData && len(u.structs) > 0:
+			case f.mode == modeData && len(u.structs) > 0 && !u.vibeTable && !u.vibeKey:
 				r, why = readField(c, u)
 			}
 			if r == nil && why == "" {

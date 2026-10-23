@@ -117,7 +117,14 @@ type OfferWords struct {
 }
 
 // ruinsFound is what a ruins offer's description says before the place.
-const ruinsFound = "Found by this mission near the ruins at "
+func ruinsFound() string {
+	return vibe.Line("game.mission_board.ruinsFound.01", "Found by this mission near the ruins at ")
+}
+
+// ruinsFoundPlain is ruinsFound for an offer written by hand: it has no words
+// to draw from, so a save holds its description as it was written, in plain
+// English whatever script the game is read in.
+const ruinsFoundPlain = "Found by this mission near the ruins at "
 
 // wordAt is list[i], with an index a hand-edited save may have put out of range
 // brought back into it.
@@ -141,11 +148,11 @@ func (o *MissionOffer) draw(words config.MissionWords) {
 	o.Place = place
 	o.Title = fmt.Sprintf("%s: %s %s", words.Tiers[which], wordAt(objectives[:], w.Objective), place)
 	if o.Rare {
-		o.Title = config.RareTitleWord + " " + o.Title
+		o.Title = config.RareTitleWord() + " " + o.Title
 	}
 	o.Description = wordAt(words.Twists[:], w.Twist)
 	if w.Found > 0 {
-		o.Description = ruinsFound + wordAt(words.Places[:], w.Found-1) + "."
+		o.Description = ruinsFound() + wordAt(words.Places[:], w.Found-1) + "."
 	}
 }
 

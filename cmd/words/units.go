@@ -33,9 +33,15 @@ type unit struct {
 	caseKey  string       // the first value of the switch case it is under, if any
 	ret      int          // its place among the values a return statement gives back
 
-	vibeID  string // the row id of the vibe call it is the string of (vibe.Line, Sprintf, Errorf), if it is
-	vibeKey bool   // it is the row id a vibe call carries, not text
+	vibeID    string // the row id of the vibe call it is the string of (vibe.Line, Sprintf, Errorf), if it is
+	vibeKey   bool   // it is the row id a vibe call carries, not text
+	vibeTable bool   // its vibeID is the vibeRow field of the table entry it is in, read by vibe.Line when the entry is drawn
 }
+
+// vibeRowField is the name of the struct field that holds the row id of a
+// table entry (see unit.vibeTable): config's road event templates are the
+// first.
+const vibeRowField = "vibeRow"
 
 // callSite is a call the text is an argument of.
 type callSite struct {
@@ -231,6 +237,15 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 					if el == child || (pendingKV && val == child) {
 						site.field = name
 					}
+				}
+				// An entry of a table that is read through vibe.Line when it is
+				// drawn carries its row id in a field of its own, since a table is
+				// made once and cannot call vibe.Line itself.
+				switch {
+				case site.field == vibeRowField:
+					u.vibeKey = true
+				case site.field != "" && u.vibeID == "" && site.sib[vibeRowField] != "":
+					u.vibeID, u.vibeTable = site.sib[vibeRowField], true
 				}
 				if len(u.structs) == 0 {
 					u.coll = steps

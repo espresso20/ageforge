@@ -98,10 +98,16 @@ type vibeWiring struct {
 	lexicon map[string]words.Cell // the words of the lexicon, by row id
 	code    map[string]lineCall   // the vibe.Line calls, by row id
 	calls   []lineCall            // all of them, in file order
+	tables  map[string]bool       // the row ids of table entries the code reads through vibe.Line when it draws them
 }
 
 func newVibeWiring(c *catalog) *vibeWiring {
-	w := &vibeWiring{data: map[string]words.Cell{}, lexicon: map[string]words.Cell{}, code: map[string]lineCall{}}
+	w := &vibeWiring{data: map[string]words.Cell{}, lexicon: map[string]words.Cell{}, code: map[string]lineCall{}, tables: map[string]bool{}}
+	for _, r := range c.rows {
+		if r.u.vibeTable {
+			w.tables[r.id] = true
+		}
+	}
 	for _, cell := range words.Cells(rules.FromConfig()) {
 		if _, dup := w.data[cell.ID]; !dup {
 			w.data[cell.ID] = cell
@@ -125,6 +131,9 @@ func (w *vibeWiring) wired(id string) bool {
 		return true
 	}
 	if _, ok := w.lexicon[id]; ok {
+		return true
+	}
+	if w.tables[id] {
 		return true
 	}
 	_, ok := w.code[id]

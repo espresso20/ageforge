@@ -100,15 +100,15 @@ func TestMarketSwapSave_LoadsDropsTheSellOrdersAndSaysSoOnce(t *testing.T) {
 	}
 
 	// The line: once, and only the one line about the market.
-	if n := countLines(ge, marketSwapNotice); n != 1 {
+	if n := countLines(ge, marketSwapNotice()); n != 1 {
 		t.Fatalf("the notice appears %d times on the first load, want 1", n)
 	}
-	if marketSwapNotice != "The market no longer swaps resources. The sell orders in your plan were removed." {
-		t.Errorf("the notice reads %q", marketSwapNotice)
+	if marketSwapNotice() != "The market no longer swaps resources. The sell orders in your plan were removed." {
+		t.Errorf("the notice reads %q", marketSwapNotice())
 	}
 	// The template rows went without a line of their own.
 	for _, l := range ge.GetLogs() {
-		if strings.Contains(l.Message, "sell order") && l.Message != marketSwapNotice {
+		if strings.Contains(l.Message, "sell order") && l.Message != marketSwapNotice() {
 			t.Errorf("an extra line about the sell orders: %q", l.Message)
 		}
 	}
@@ -116,7 +116,7 @@ func TestMarketSwapSave_LoadsDropsTheSellOrdersAndSaysSoOnce(t *testing.T) {
 	// Saved again: the notice does not come back, the swap's fields are
 	// written empty, and nothing else of the town is lost.
 	again := saveAndLoad(t, ge, "swap_again")
-	if n := countLines(again, marketSwapNotice); n != 0 {
+	if n := countLines(again, marketSwapNotice()); n != 0 {
 		t.Errorf("the notice appears %d times on the second load, want 0", n)
 	}
 	data, err := os.ReadFile(savePath("swap_again"))
@@ -177,7 +177,7 @@ func TestMarketSwapSave_LoadsDropsTheSellOrdersAndSaysSoOnce(t *testing.T) {
 func TestMarketSwapSave_NoSellOrdersNoLine(t *testing.T) {
 	isolateAccountDir(t)
 	ge := loadFixture(t, marketSwapFixture, "swap")
-	if n := countLines(ge, marketSwapNotice); n != 1 {
+	if n := countLines(ge, marketSwapNotice()); n != 1 {
 		t.Fatalf("setup: the notice appears %d times on the first load", n)
 	}
 	// The re-saved game still has the signed, empty swap fields; a hand-made
@@ -194,7 +194,7 @@ func TestMarketSwapSave_NoSellOrdersNoLine(t *testing.T) {
 	if again.cheaterBadge {
 		t.Error("a save with leftover pressure failed its signature check")
 	}
-	if n := countLines(again, marketSwapNotice); n != 0 {
+	if n := countLines(again, marketSwapNotice()); n != 0 {
 		t.Errorf("the notice appears %d times for a plan with no sell orders", n)
 	}
 }
