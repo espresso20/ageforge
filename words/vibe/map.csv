@@ -299,3 +299,153 @@ map.mover.climber.name,the tether climber
 map.mover.climber.title,Up We Go
 map.mover.climber.line.01,"A climber riding the tether up, the climb is giving glow-up."
 map.mover.climber.line.02,"Hauling cargo to orbit, a real cargo run."
+map.mover.mining_drone.name,the mining drone
+map.mover.mining_drone.title,Rock Bot
+map.mover.mining_drone.line.01,"Hauling ore from the belt, the rock run never stops."
+map.mover.mining_drone.line.02,"Out for another rock, the grind is endless."
+map.mover.generation_ship.name,the generation ship
+map.mover.generation_ship.title,Multigen Vibes
+map.mover.generation_ship.line.01,"Its crew's grandkids will land, the long game is real."
+map.mover.generation_ship.line.02,"A whole town in a hull, the cruise is a lifestyle."
+map.mover.starship.name,the starship
+map.mover.starship.title,Warp Core
+map.mover.starship.line.01,"About to jump to warp, the starship is so ready."
+map.mover.starship.line.02,"Home from the far side of the arm, big trip, big W."
+map.mover.alien_ship.name,the alien ship
+map.mover.alien_ship.title,Visitor Vibes
+map.mover.alien_ship.line.01,"On ordinary business, the alien ship is so chill."
+map.mover.alien_ship.line.02,"Docking like everyone else, very normal energy."
+map.mover.phase_ship.name,the phase ship
+map.mover.phase_ship.title,Phase Glitch
+map.mover.phase_ship.line.01,"In several places at once, the phase ship is multitasking."
+map.mover.phase_ship.line.02,"Arriving before it left, the timeline is chaos."
+map.mover.mote.name,light mote
+map.mover.mote.title,Tiny Glow
+map.mover.mote.line.01,"Drifting home, a mote of light with no plan."
+map.mover.mote.line.02,"Once a whole city, now a tiny glow, lowkey heartbreaking."
+map.city_look.modern_age.name,the doomscroll city
+map.city_look.modern_age.structure,"highways, a glass downtown, and parks fenced into blocks, the whole starter kit"
+map.city_look.modern_age.ambient,"headlights streaming down the highways at night, the commute never sleeps."
+map.city_look.information_age.name,the group chat city
+map.city_look.information_age.structure,"server farms, fiber lines, and satellite dishes, all online."
+map.city_look.information_age.ambient,"screens flickering in every window, nobody sleeps."
+map.city_look.digital_age.name,the upload city
+map.city_look.digital_age.structure,"a walled reserve, the last green, all in concrete and landfill, a hot mess."
+map.city_look.digital_age.ambient,"data glow pulsing under the servers, it's glowing for real."
+map.city_look.cyberpunk_age.name,the neon megacity
+map.city_look.cyberpunk_age.structure,"megacorp towers flexing their initials, and arcologies, the skyline is loud."
+map.city_look.cyberpunk_age.ambient,"acid rain and flickering neon, the moody arc."
+map.city_look.fusion_age.name,the sun mode city
+map.city_look.fusion_age.structure,"fusion reactors in their plasma rings, and the space elevator, big flex."
+map.city_look.fusion_age.ambient,"plasma pulsing through the conduits, the juice is everywhere."
+mapmodel.recap.recap.01, is coming in hot
+mapmodel.recap.recap.02,finally entered the 
+mapmodel.recap.recap.03, is officially done
+mapmodel.recap.recap.04,and lowkey 
+mapmodel.recap.recap.05," more, no cap"
+mapmodel.recap.recap.06,just met the 
+mapmodel.recap.recap.07,the 
+mapmodel.recap.recap.08," declared war, the beef is real"
+mapmodel.recap.recap.09,making peace with the 
+mapmodel.recap.recap.10,besties with the 
+mapmodel.recap.recap.11,hustle lane
+mapmodel.recap.recap.12,trade lanes
+mapmodel.recap.recap.13, popped open
+mapmodel.recap.recap.14,field trip
+mapmodel.recap.recap.15,road trips
+mapmodel.recap.recap.16, rolled home
+mapmodel.recap.recap.17," has come through, bestie"
+mapmodel.recap.recap.18,build
+mapmodel.recap.recap.19,builds
+mapmodel.recap.recap.20, lost or glowed up
+mapmodel.recap.recap.21, besties
+mapmodel.recap.Headline.01,since you last logged on (
+map.sky.SkyOrbit.housing,crash pod
+map.sky.SkyOrbit.food,snack garden
+map.sky.SkyOrbit.storage,stash pod
+map.sky.SkyOrbit.organic_extraction,goo vat
+map.sky.SkyOrbit.geological_extraction,asteroid grind
+map.sky.SkyOrbit.metallurgy,space forge
+map.sky.SkyOrbit.engineering,hull hub
+map.sky.SkyOrbit.energy,sun catcher
+map.sky.SkyOrbit.harbor,docking drip
+map.sky.SkyOrbit.hacker,signal boost
+map.sky.SkyOrbit.knowledge,star lab
+map.sky.SkyOrbit.faith,chill chapel
+map.sky.SkyOrbit.culture_arts,zero-g gallery
+map.sky.SkyOrbit.monument,big beacon
+map.sky.SkyOrbit.trade,hustle dock
+map.sky.SkyOrbit.military,moon bunker
+map.sky.SkyOrbit.diplomacy,diplo embassy
+map.sky.SkyDeep.housing,colony ark
+map.sky.SkyDeep.food,snack planet
+map.sky.SkyDeep.storage,stash moon
+map.sky.SkyDeep.organic_extraction,green world
+map.sky.SkyDeep.geological_extraction,rock world
+map.sky.SkyDeep.metallurgy,forge planet
+map.sky.SkyDeep.engineering,warp gate glow-up
+map.sky.SkyDeep.energy,star siphon
+map.sky.SkyDeep.harbor,dock world
+map.sky.SkyDeep.hacker,ping tower
+map.sky.SkyDeep.knowledge,brain world
+map.sky.SkyDeep.faith,chapel world
+map.sky.SkyDeep.culture_arts,aesthetic world
+map.sky.SkyDeep.monument,legacy world
+map.sky.SkyDeep.trade,hustle world
+map.sky.SkyDeep.military,escort squad
+map.sky.SkyDeep.diplomacy,diplo world
+map.sky.SkyGalaxy.housing,crash deck
+map.sky.SkyGalaxy.food,snack deck
+map.sky.SkyGalaxy.storage,stash hold
+map.sky.SkyGalaxy.organic_extraction,goo works
+map.sky.SkyGalaxy.geological_extraction,neutron star grind
+map.sky.SkyGalaxy.metallurgy,star forge
+map.sky.SkyGalaxy.engineering,fix-it pylon
+map.sky.SkyGalaxy.energy,quasar juice
+map.sky.SkyGalaxy.harbor,dock lounge
+map.sky.SkyGalaxy.hacker,uplink glow
+map.sky.SkyGalaxy.knowledge,brain deck
+map.sky.SkyGalaxy.faith,chapel deck
+map.sky.SkyGalaxy.culture_arts,archive vibe
+map.sky.SkyGalaxy.monument,big beacon spire
+map.sky.SkyGalaxy.trade,hustle deck
+map.sky.SkyGalaxy.military,squad at dock
+map.sky.SkyGalaxy.diplomacy,diplo deck
+map.sky.SkyQuantum.housing,folded crash pad
+map.sky.SkyQuantum.food,maybe garden
+map.sky.SkyQuantum.storage,linked stash
+map.sky.SkyQuantum.organic_extraction,reality crop
+map.sky.SkyQuantum.geological_extraction,what-if mine
+map.sky.SkyQuantum.metallurgy,quantum forge
+map.sky.SkyQuantum.engineering,reality smithy
+map.sky.SkyQuantum.energy,zero-point juice
+map.sky.SkyQuantum.harbor,phase port
+map.sky.SkyQuantum.hacker,reality hack shop
+map.sky.SkyQuantum.knowledge,academy of maybes
+map.sky.SkyQuantum.faith,echo chapel
+map.sky.SkyQuantum.culture_arts,art that might be
+map.sky.SkyQuantum.monument,anchor point
+map.sky.SkyQuantum.trade,odds market
+map.sky.SkyQuantum.military,war room
+map.sky.SkyQuantum.diplomacy,embassy of selves
+map.alien.01.color,matcha green
+map.alien.01.line.01,"A green saucer, waving its lights, the vibes are immaculate."
+map.alien.01.line.02,"Trading songs, a green saucer with a whole playlist."
+map.alien.02.color,grape
+map.alien.02.line.01,"A violet saucer humming a scale, vocal coach energy."
+map.alien.02.line.02,"Here for the view, a violet saucer, no thoughts, just vibes."
+map.alien.03.color,golden hour
+map.alien.03.line.01,"Running late, an amber saucer with zero chill."
+map.alien.03.line.02,"An amber saucer haggling by light, the deals are bussin."
+mapmodel.world.syllA.01,Smoke
+mapmodel.world.syllA.02,Brim
+mapmodel.world.syllA.03,Zen
+mapmodel.world.syllA.04,Drip
+mapmodel.world.syllA.05,Eld
+mapmodel.world.syllA.06,Fen
+mapmodel.world.syllA.07,Glam
+mapmodel.world.syllA.08,Holo
+mapmodel.world.syllA.09,Ivy
+mapmodel.world.syllA.10,Kest
+mapmodel.world.syllA.11,Luna
+mapmodel.world.syllA.12,Mood
