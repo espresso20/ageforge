@@ -57,18 +57,22 @@ type scene struct {
 	// fit says the frame is the far level's (fit.go): a frame column stands
 	// for kx world columns, and the camera is at the town's west edge.
 	// pan raises the close level's window over the frame, in world rows.
-	fit     bool
-	kx      float64
-	pan     int
-	ovBox   [2]int // the cells of the overview bar's box (chrome.go)
-	band    int    // traffic band of the current age
-	gridOut bool
-	farTops []float64
-	emit    []emitter
-	labels  []label
-	vis     []int
-	sel     int // the lot under the cursor, -1
-	ridge   []ridgeItem
+	fit bool
+	kx  float64
+	pan int
+	// offX is how many frame columns in from the frame's edge the close
+	// level's window starts (the mandala's frame is as wide as the screen),
+	// and sS the screen's scene rows when its bars are not the usual three.
+	offX, sS int
+	ovBox    [2]int // the cells of the overview bar's box (chrome.go)
+	band     int    // traffic band of the current age
+	gridOut  bool
+	farTops  []float64
+	emit     []emitter
+	labels   []label
+	vis      []int
+	sel      int // the lot under the cursor, -1
+	ridge    []ridgeItem
 	// city is the Earth arc's look for this frame (city.go), inCity
 	// whether the age has one.
 	city   mapmodel.CityLook
@@ -78,7 +82,14 @@ type scene struct {
 // Y converts a scene row to a frame row.
 func (s *scene) Y(y int) int { return y + s.top }
 
-func (s *scene) wx(x int) int { return x + s.cam }
+// wx is the world column of frame column x (the far frame's columns stand for
+// several of the town's).
+func (s *scene) wx(x int) int {
+	if s.fit {
+		return int(float64(x)*s.kx) + s.cam
+	}
+	return x + s.cam
+}
 
 // ------------------------------------------------------------------ sky
 

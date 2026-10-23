@@ -54,6 +54,8 @@ type view struct {
 	// rows from where it starts; panLo and panHi are what the last frame
 	// let it be (the foot of the scene up to its top).
 	pan, panLo, panHi int
+	// the mandala's close window pans along as well as up (orbit_mandala.go)
+	panX, panXLo, panXHi int
 
 	lay     *layout
 	clay    *layout // the compact view's
@@ -426,7 +428,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	sc := s.present()
 	if fit {
 		sc.farFlags()
-		sc.districtNames()
+		sc.districtNames(1)
 	}
 	sc.markers()
 	sc.panBar()
@@ -443,6 +445,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 func (v *view) panFor(z zoom, S, def int) int {
 	hi := S - 1 - (S-1)/2 // the window's top reaches the scene's top
 	v.panLo, v.panHi = -def, hi-def
+	v.panXLo, v.panXHi = 0, 0
 	if z != zClose {
 		return 0
 	}

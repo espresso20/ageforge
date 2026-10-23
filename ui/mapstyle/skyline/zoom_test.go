@@ -218,18 +218,31 @@ func TestZoomKeys(t *testing.T) {
 			t.Errorf("%s: Shift-Right moved %d columns of %d", z, v.cam-600, z.cols(100))
 		}
 	}
-	// the sky arc has no zoom
-	for _, age := range []string{"space_age", "quantum_age"} {
-		sm := build(fixture.Options{Age: age, Seed: 3}, 0)
+	// the sky arc zooms with the same keys: its scenes step far, wide, mid,
+	// close, and the Transcendent Age's mandala steps mid, close
+	for _, age := range skyAges {
+		sm := skyModel(age, 3, 0)
 		sv := newView()
 		_ = sv.compose(mapstyle.Frame{Model: sm}, 100, 30)
-		for _, r := range "+-=_" {
-			if press(sv, sm, tcell.KeyRune, r, 0) {
-				t.Errorf("%s: %q was used in the sky arc", age, r)
-			}
+		type step struct {
+			r    rune
+			want string
 		}
-		if press(sv, sm, tcell.KeyPgUp, 0, 0) || press(sv, sm, tcell.KeyPgDn, 0, 0) {
-			t.Errorf("%s: PgUp or PgDn was used in the sky arc", age)
+		steps := []step{{'+', "close"}, {'+', "close"}, {'-', "mid"}, {'-', "wide"}, {'-', "far"}, {'_', "far"}, {'=', "wide"}, {'+', "mid"}, {'+', "close"}}
+		if sm.Sky() == mapmodel.SkyMandala { // nothing wider than the mandala to show
+			steps = []step{{'+', "close"}, {'+', "close"}, {'-', "mid"}, {'-', "mid"}, {'=', "close"}}
+		}
+		for i, st := range steps {
+			if !press(sv, sm, tcell.KeyRune, st.r, 0) {
+				t.Errorf("%s step %d: %q was not used", age, i, st.r)
+			}
+			if got := sv.ZoomLevel(); got != st.want {
+				t.Fatalf("%s step %d (%q): the zoom is %s, want %s", age, i, st.r, got, st.want)
+			}
+			_ = sv.compose(mapstyle.Frame{Model: sm}, 100, 30) // and the frame draws at every level
+		}
+		if !press(sv, sm, tcell.KeyPgUp, 0, 0) || !press(sv, sm, tcell.KeyPgDn, 0, 0) {
+			t.Errorf("%s: PgUp or PgDn was not used in the sky arc", age)
 		}
 	}
 }
@@ -628,7 +641,7 @@ func TestZoomTransforms(t *testing.T) {
 	}
 	dst := &fb{}
 	dst.reset(6, 3+5) // 5 scene rows: two and a half world rows
-	magnify(dst, src, 0)
+	magnify(dst, src, 5, 0, 0)
 	for r := 0; r < 5; r++ {
 		wantRow := 3 - (4-r)/2 // the bottom screen row is half of the last world row
 		for x := 0; x < 6; x++ {

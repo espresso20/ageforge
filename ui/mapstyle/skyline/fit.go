@@ -172,6 +172,51 @@ func (s *scene) fitTown() {
 	}
 }
 
+// fitLots draws the sky scene's forms into the far frame: the same read of
+// the town as fitTown, in the scene's own inks.
+func (o *orb) fitLots() {
+	lay := o.lay
+	o.vis = lay.visible(0, lay.width+lay.maxW, o.vis)
+	paint := func(x int, lv *lotView, sx int) {
+		spr := lv.spr
+		y0 := o.groundY - spr.h
+		hz := lv.ml.Row
+		warm := o.c(mapmodel.InkLight, iEmit, hz)
+		for sy := 0; sy < spr.h; sy++ {
+			c := spr.c[sy*spr.w+sx]
+			if c.ch == 0 {
+				continue
+			}
+			fg := o.lotCol(lv, c.fg, hz)
+			if hz > 0 && !c.fg.emissive() {
+				fg = theme.Shade(fg, rowDim[min(hz, 2)])
+			}
+			if c.fg == sWin && o.windowLit(lv, sx, sy) {
+				fg = warm
+			}
+			bg := fg
+			if c.bg != sNone {
+				bg = o.lotCol(lv, c.bg, hz)
+			}
+			o.fb.set(x, o.Y(y0+sy), '█', fg, bg, lv.depth)
+		}
+	}
+	for x, fc := range lay.fitCols(o.W) {
+		if fc.lot >= 0 {
+			lv := &lay.lots[fc.lot]
+			paint(x, lv, int(fc.at)-lv.x0)
+		}
+	}
+	for i := range lay.lots { // this age's wonder, however low it stands
+		if lv := &lay.lots[i]; lv.ml.Wonder {
+			x := o.fx(lv.ml.X - o.cam)
+			if x >= 0 && x < o.W {
+				paint(x, lv, lv.spr.w/2)
+			}
+		}
+	}
+}
+
 // fitGround draws the ground under the far frame: grass, cobble or slab by
 // the age of the district a column stands in, the road, and the bay.
 func (s *scene) fitGround() {
@@ -225,10 +270,10 @@ func (s *scene) fitGround() {
 	}
 }
 
-// districtNames writes each district's name on the road under the far view,
-// where it fits between its neighbours, and a tick where each begins.
-func (s *scene) districtNames() {
-	y := s.Y(s.sy(s.groundY + 1))
+// districtNames writes each district's name under the far view, off rows
+// below the ground or the baseline, where it fits between its neighbours.
+func (s *scene) districtNames(off int) {
+	y := s.Y(s.sy(s.groundY + off))
 	cbg := chromeBg()
 	for _, d := range s.m.Skyline.Districts {
 		a, b := s.wsx(d.X0), s.wsx(d.X0+d.W)

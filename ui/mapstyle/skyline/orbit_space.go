@@ -188,7 +188,7 @@ func (o *orb) cityDensity() []float64 {
 	}
 	di := -1
 	for x := range out {
-		wx := x + o.cam
+		wx := o.wx(x)
 		if di < 0 || di >= len(ds) || !inDistrict(ds[di], wx) {
 			di = o.m.Skyline.DistrictAt(wx)
 		}
@@ -323,7 +323,7 @@ func (o *orb) tetherX() int {
 	if x < 0 {
 		return -1
 	}
-	return x - o.cam
+	return o.fx(x - o.cam)
 }
 
 // tether is the space elevator's cable, from its anchor on the limb up

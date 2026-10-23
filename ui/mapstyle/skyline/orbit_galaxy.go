@@ -226,7 +226,7 @@ func (o *orb) hub() {
 		spr = hubSprite(W, H)
 		o.v.sprites[k] = spr
 	}
-	x0 := o.present.Centre - spr.w/2 - o.cam
+	x0 := o.fx(o.present.Centre-o.cam) - spr.w/2
 	if x0+spr.w < 0 || x0 > o.W {
 		return
 	}

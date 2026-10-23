@@ -139,7 +139,7 @@ func floorDiv2(x int) int {
 func (s *scene) sx(x int) int {
 	switch s.zm {
 	case zClose:
-		return 2 * x
+		return 2 * (x - s.offX)
 	case zFar, zWide:
 		return floorDiv2(x)
 	}
@@ -168,37 +168,59 @@ func (s *scene) present() *scene {
 	sc := *s
 	sc.fb = &s.v.fb
 	sc.W, sc.H, sc.S = s.sw, s.sh, s.sh-3
+	if s.sS > 0 {
+		sc.S = s.sS
+	}
 	sc.fb.reset(sc.W, sc.H)
 	if s.zm == zClose {
-		magnify(sc.fb, &s.v.lfb, s.pan)
+		magnify(sc.fb, &s.v.lfb, sc.S, s.pan, s.offX)
 	} else {
 		shrink(sc.fb, &s.v.lfb, s.tier == mapmodel.TierASCII)
 	}
 	return &sc
 }
 
-// panBar shows where the close level's window stands over the scene taller
+// panBar shows where the close level's window stands over a scene bigger
 // than it: a thin line down the right edge with a thick stretch where the
-// window is. It is drawn on the screen, after the scene is scaled.
+// window is, and for the mandala, which is wider than the window too, the
+// same along the bottom. It is drawn on the screen, after the scene is
+// scaled.
 func (s *scene) panBar() {
-	if s.zm != zClose || s.v.panHi <= s.v.panLo || s.W < 2 {
+	if s.zm != zClose || s.W < 2 {
 		return
 	}
-	S := s.ls
-	hi := S - 1 - s.pan // the window's lowest world row
-	lo := hi - (S-1)/2  // and its highest
-	x := s.W - 1
-	acc := theme.Color(theme.RoleAccent)
-	for r := 0; r < S; r++ {
-		c := s.fb.at(x, s.Y(r))
-		if c == nil {
-			continue
+	acc, dim := theme.Color(theme.RoleAccent), theme.Color(theme.RoleDim)
+	if S := s.ls; s.v.panHi > s.v.panLo {
+		hi := S - 1 - s.pan // the window's lowest world row
+		lo := hi - (S-1)/2  // and its highest
+		x := s.W - 1
+		for r := 0; r < S; r++ {
+			c := s.fb.at(x, s.Y(r))
+			if c == nil {
+				continue
+			}
+			bg := c.show()
+			if r >= lo && r <= hi {
+				s.fb.set(x, s.Y(r), '▐', theme.Legible(acc, bg, 3), bg, dBar)
+			} else {
+				s.fb.set(x, s.Y(r), '▕', theme.Legible(dim, bg, 2), bg, dBar)
+			}
 		}
-		bg := c.show()
-		if r >= lo && r <= hi {
-			s.fb.set(x, s.Y(r), '▐', theme.Legible(acc, bg, 3), bg, dBar)
-		} else {
-			s.fb.set(x, s.Y(r), '▕', theme.Legible(theme.Color(theme.RoleDim), bg, 2), bg, dBar)
+	}
+	if s.v.panXHi > s.v.panXLo && s.ls > 0 {
+		lo, hi := s.offX, s.offX+(s.W+1)/2-1
+		y := s.Y(s.ls - 1)
+		for x := 0; x < s.W-1; x++ { // (the corner is the other bar's)
+			c := s.fb.at(x, y)
+			if c == nil {
+				continue
+			}
+			bg := c.show()
+			if x >= lo && x <= hi {
+				s.fb.set(x, y, '▄', theme.Legible(acc, bg, 3), bg, dBar)
+			} else {
+				s.fb.set(x, y, '▁', theme.Legible(dim, bg, 2), bg, dBar)
+			}
 		}
 	}
 }
@@ -229,19 +251,20 @@ func bgDepth(d uint8) uint8 {
 
 // magnify draws a window of src (the world frame) at 2x into dst: every
 // cell is a 2x2 block. The window is the foot of the frame, raised by pan
-// world rows. A block glyph is exact (each of its four quadrants becomes
-// one solid cell); any other glyph is repeated.
-func magnify(dst, src *fb, pan int) {
-	S := dst.h - 3 // screen scene rows; the world frame has as many
+// world rows and starting offX columns in; S is the scene rows of dst. A
+// block glyph is exact (each of its four quadrants becomes one solid cell);
+// any other glyph is repeated.
+func magnify(dst, src *fb, S, pan, offX int) {
+	srows := src.h - (dst.h - S) // the frame's scene rows: it has the same bars
 	for r := 0; r < S; r++ {
 		k := S - 1 - r // rows above the bottom one
-		ly := (src.h - 3) - 1 - k/2 - pan
+		ly := srows - 1 - k/2 - pan
 		if ly < 0 {
 			continue
 		}
 		low := k%2 == 0
 		for x := 0; x < dst.w; x++ {
-			c := src.at(x/2, ly+1)
+			c := src.at(x/2+offX, ly+1)
 			if c == nil {
 				continue
 			}
