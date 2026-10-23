@@ -80,6 +80,7 @@ const (
 	wireErrorf           // fmt.Errorf likewise
 	wireEntry            // a text of a table made once (a package-level var) becomes vibe.E(id, "text")
 	wireFprintf          // fmt.Fprintf(w, "format", ...) becomes fmt.Fprint(w, vibe.Sprintf(id, "format", ...))
+	wireSame             // vibe.Same("text"), the entry of a string that had no row, becomes vibe.E(id, "text")
 )
 
 // verdict is what vibe-wire makes of a row.
@@ -134,6 +135,9 @@ func (m *module) nodeCtxs(f *srcFile) map[[2]int]nodeCtx {
 			}
 			if j >= 0 {
 				if call, ok := stack[j].(*ast.CallExpr); ok && len(call.Args) > 0 {
+					if isVibeSame(call) && call.Args[0] == e {
+						ctx.call, ctx.kind = call, wireSame
+					}
 					if sel, ok := call.Fun.(*ast.SelectorExpr); ok {
 						if x, ok := sel.X.(*ast.Ident); ok && x.Name == "fmt" && f.imports["fmt"] {
 							switch {
@@ -201,7 +205,11 @@ func (c *catalog) wireVerdict(r *row) verdict {
 		c.ctxs[r.u.f] = idx
 	}
 	ctx, ok := idx[[2]int{r.u.start, r.u.end}]
-	if ok && r.area == areaScreens && !ctx.inFunc && !ctx.inConst && ctx.inVar && tableEntry(r.u.near) {
+	if ok && ctx.kind == wireSame {
+		// A table entry made for a string that had no row, and now has one.
+		return verdict{kind: wireSame, call: ctx.call}
+	}
+	if ok && (r.area == areaScreens || r.area == areaMap) && !ctx.inFunc && !ctx.inConst && ctx.inVar && tableEntry(r.u.near) {
 		// A table made once: its entries carry their ids and read when used.
 		return verdict{kind: wireEntry}
 	}
@@ -263,6 +271,15 @@ func vibeWire(c *catalog, root, sheet, only string, dry bool, out io.Writer) err
 		}
 		id := strconv.Quote(r.id)
 		switch v.kind {
+		case wireSame:
+			// vibe.Same("text") becomes vibe.E("id", "text"): the call's name is
+			// replaced and the id goes in front of the text.
+			sel := v.call.Fun.(*ast.SelectorExpr)
+			lo := c.m.fset.Position(sel.Sel.Pos()).Offset
+			hi := c.m.fset.Position(sel.Sel.End()).Offset
+			perFile[f] = append(perFile[f],
+				edit{lo, hi, "E"},
+				edit{r.u.start, r.u.start, id + ", "})
 		case wireLine, wireEntry:
 			name := "vibe.Line("
 			if v.kind == wireEntry {
@@ -297,8 +314,8 @@ func vibeWire(c *catalog, root, sheet, only string, dry bool, out io.Writer) err
 	}
 
 	fmt.Fprintf(out, "%s: %d rows already wired, %d to wire now (%d vibe.Line, %d vibe.Sprintf, %d vibe.Errorf, %d vibe.E) in %d files\n",
-		sheet, already, count[wireLine]+count[wireSprintf]+count[wireFprintf]+count[wireErrorf]+count[wireEntry],
-		count[wireLine], count[wireSprintf]+count[wireFprintf], count[wireErrorf], count[wireEntry], len(files))
+		sheet, already, count[wireLine]+count[wireSprintf]+count[wireFprintf]+count[wireErrorf]+count[wireEntry]+count[wireSame],
+		count[wireLine], count[wireSprintf]+count[wireFprintf], count[wireErrorf], count[wireEntry]+count[wireSame], len(files))
 	reasons := make([]string, 0, len(left))
 	for reason := range left {
 		reasons = append(reasons, reason)

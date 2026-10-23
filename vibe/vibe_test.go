@@ -165,3 +165,26 @@ func TestEntryReadsWhenItIsUsed(t *testing.T) {
 		t.Errorf("turned off again, the entry reads %q", got)
 	}
 }
+
+// TestSameHasNoRow: an entry made with Same reads as it was written, with
+// VibeMode off and on, even where a rewriter changes every other text.
+func TestSameHasNoRow(t *testing.T) {
+	defer Set(false)
+	defer UseRewriterForTest(func(id, plain string) string { return "<" + plain + ">" })()
+	table := []Entry{E("x.one", "one"), Same("NVT"), {}}
+	Set(true)
+	for i, want := range []string{"<one>", "NVT", ""} {
+		if got := table[i].String(); got != want {
+			t.Errorf("entry %d reads %q with VibeMode on, want %q", i, got, want)
+		}
+	}
+	Set(false)
+	for i, want := range []string{"one", "NVT", ""} {
+		if got := table[i].String(); got != want {
+			t.Errorf("entry %d reads %q with VibeMode off, want %q", i, got, want)
+		}
+	}
+	if Same("NVT").Plain() != "NVT" {
+		t.Error("Plain of a Same entry")
+	}
+}

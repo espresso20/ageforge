@@ -366,6 +366,17 @@ func isVibeCall(call *ast.CallExpr) bool {
 	return false
 }
 
+// isVibeSame reports whether call is, as written, vibe.Same("text"): the entry
+// of a table for a string that has no row.
+func isVibeSame(call *ast.CallExpr) bool {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || len(call.Args) != 1 {
+		return false
+	}
+	x, ok := sel.X.(*ast.Ident)
+	return ok && x.Name == "vibe" && sel.Sel.Name == "Same"
+}
+
 // vibeCallKind says whether call is a call of the vibe package that carries a
 // row id and a string (Line, Sprintf, Errorf), and which.
 func vibeCallKind(f *srcFile, call *ast.CallExpr) (string, bool) {

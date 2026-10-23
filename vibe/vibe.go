@@ -158,10 +158,20 @@ type Entry struct {
 // E is the text of a table entry: the row id and the plain string.
 func E(id, plain string) Entry { return Entry{id: id, plain: plain} }
 
+// Same is the entry of a string that has no row, to stand in a table beside
+// entries that do (a mark that is no word: "NVT", "24H"): it reads as s
+// whatever the switch says. A table of entries is then one type all through.
+func Same(s string) Entry { return Entry{plain: s} }
+
 // String is the text as Line would give it now: the script's line for the row
 // while VibeMode is on and the script has one, else plain. Being a Stringer,
 // an Entry prints as its line with %s and %v.
-func (t Entry) String() string { return Line(t.id, t.plain) }
+func (t Entry) String() string {
+	if t.id == "" {
+		return t.plain // no row (Same, or the zero Entry): nothing to look up
+	}
+	return Line(t.id, t.plain)
+}
 
 // Plain is the text in the game's own English, whatever the switch says. It is
 // for the few places that must match or measure the English.
