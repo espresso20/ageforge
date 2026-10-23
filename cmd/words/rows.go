@@ -27,7 +27,7 @@ type row struct {
 
 	area   *area
 	u      *unit
-	twins  []*unit // literals the code compares this text with, rewritten along with it
+	twins  []*unit // literals in the same file that the code matches this text against, rewritten along with it
 	unsure bool    // the reader could not confirm a player sees it
 	seen   int     // how often a player meets it: lower is more often
 	rules  ruleSet // which of the game's copy rules a rewrite must pass

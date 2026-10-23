@@ -144,7 +144,7 @@ func TestVibeWireAddsTheImportToAFileWithNone(t *testing.T) {
 
 // TestATableEntryCarriesItsRowIdAndCountsAsWired: the road event templates are a
 // table made once, so each entry holds its own row id (vibeRow) and whoever
-// draws one reads it through vibe.Line. The export honours the id, takes the
+// draws one reads it through vibe.Line. The export uses the id, takes the
 // id's own string for a key, and calls the row wired.
 func TestATableEntryCarriesItsRowIdAndCountsAsWired(t *testing.T) {
 	c := realCatalog(t)
