@@ -15,6 +15,7 @@ All notable changes to AgeForge are documented here.
 - **An experimental gate.** Start the game with AGEFORGE_GATES=v2 to try pillars measured by population, industry income and key techs instead of building counts.
 
 ### Changed
+- **Lineage badges on a real idle scale.** Each lineage's badges now count to numbers set by how much of that lineage a dedicated player builds across many runs, with Legendary a long-term goal.
 - **A new top panel.** The top of the dashboard is a ledger: the age and the year, your people and morale, the four pillars to the next age, a long bar to the next age with what it is waiting on, and every resource with its rate and a trend line.
 - **The mini map shows from 105x36.** The new top panel takes two more rows at that size, so the mini map needs two more (it was 105x34); the wiki and the `minimap on` reply say so.
 - **No ceiling on bonuses.** Production bonuses apply in full however large they grow, and knowledge buildings past their cap still build and research at half rate.

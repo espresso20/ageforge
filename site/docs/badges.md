@@ -109,7 +109,7 @@ One more ladder of three rungs is secret.
 
 The ladder that counted market trades (Haggler, Day Trader and Market Maker) is retired with the market's swap. An account that had earned its rungs loads as before. The rungs no longer show and no longer score.
 
-The first rung of a ladder is one a first run earns early: by the Bronze Age, or by the second age after the thing it counts first appears. Many first rungs ask for one of something. The top rung of a ladder that counts play is set so that about 25 full runs reach it, and no ladder asks for more. Returns counts the times you came back to a game, so it climbs with the days, not the runs.
+The first rung of a ladder is one a first run earns early: by the Bronze Age, or by the second age after the thing it counts first appears (the lineage ladders are the exception, set out below). Many first rungs ask for one of something. The top rung of a ladder that counts play is set so that about 25 full runs reach it, and no ladder asks for more. Returns counts the times you came back to a game, so it climbs with the days, not the runs.
 
 A ladder can be lowered between versions of the game. An account that had already passed a rung is given it the next time it is loaded, and the log says how many badges that was in one line.
 
@@ -119,23 +119,25 @@ A rung keeps the count it was earned at. If a later version of the game moves th
 
 Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contractor, Magnate, Tycoon and Dynasty. They count buildings of the lineage built across all your runs.
 
+Each lineage is on its own scale, because lineages differ a great deal in how many copies a town can build: a dedicated player's full clear builds about a thousand houses and about a hundred and thirty harbors. Dynasty is set to what such a player builds of the lineage over about 25 runs, so it is a long-term goal. The player in mind stays in every age well past the gate, buys new copies instead of upgrading old ones (an upgrade is not a built copy), prestiges early in the first runs and clears every age in the later ones. Each rung below Dynasty is two fifths of the one above, so the first rung falls within your first couple of runs. Energy and Hacker begin in later ages, so their first rungs take a run or two longer.
+
 | Lineage | Rungs |
 |---|---|
-| Culture arts | 3 · 16 · 52 · 160 · 390 |
-| Energy | 2 · 10 · 40 · 100 · 170 |
-| Engineering | 3 · 19 · 62 · 200 · 420 |
-| Faith | 3 · 26 · 87 · 280 · 600 |
-| Food | 4 · 28 · 92 · 290 · 610 |
-| Geological extraction | 8 · 40 · 160 · 400 · 670 |
-| Hacker | 2 · 17 · 68 · 170 · 370 |
-| Harbor | 2 · 4 · 10 · 24 · 55 |
-| Housing | 6 · 36 · 120 · 410 · 1,000 |
-| Knowledge | 1 · 10 · 27 · 71 · 190 |
-| Metallurgy | 3 · 16 · 53 · 170 · 370 |
-| Military | 3 · 23 · 78 · 260 · 570 |
-| Organic extraction | 4 · 29 · 93 · 300 · 640 |
-| Storage | 1 · 3 · 13 · 49 · 180 |
-| Trade | 2 · 24 · 96 · 240 · 360 |
+| Culture arts | 310 · 770 · 1,900 · 4,800 · 12,000 |
+| Energy | 200 · 510 · 1,300 · 3,200 · 8,000 |
+| Engineering | 310 · 770 · 1,900 · 4,800 · 12,000 |
+| Faith | 380 · 960 · 2,400 · 6,000 · 15,000 |
+| Food | 380 · 960 · 2,400 · 6,000 · 15,000 |
+| Geological extraction | 410 · 1,000 · 2,600 · 6,400 · 16,000 |
+| Hacker | 140 · 350 · 860 · 2,200 · 5,400 |
+| Harbor | 79 · 200 · 500 · 1,200 · 3,100 |
+| Housing | 610 · 1,500 · 3,800 · 9,600 · 24,000 |
+| Knowledge | 130 · 330 · 830 · 2,100 · 5,200 |
+| Metallurgy | 280 · 700 · 1,800 · 4,400 · 11,000 |
+| Military | 380 · 960 · 2,400 · 6,000 · 15,000 |
+| Organic extraction | 380 · 960 · 2,400 · 6,000 · 15,000 |
+| Storage | 110 · 280 · 690 · 1,700 · 4,300 |
+| Trade | 280 · 700 · 1,800 · 4,400 · 11,000 |
 
 ### Payrolls
 

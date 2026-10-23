@@ -1,6 +1,7 @@
 package smoke
 
 import (
+	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -27,6 +28,75 @@ func TestBadgesAreReachable(t *testing.T) {
 			t.Logf("%-34s %-17s asks %-6s of %-8s (%s)", r.Key, r.Proof, config.FormatAmount(r.Need), config.FormatAmount(r.Limit), r.Basis)
 		} else {
 			t.Logf("%-34s %-17s", r.Key, r.Proof)
+		}
+	}
+}
+
+// lineageLegendaryBefore is each lineage's top rung (Dynasty) before the
+// lineage ladders moved to a scale set by what a dedicated player builds
+// across many runs. The new top rungs must stand well above them.
+var lineageLegendaryBefore = map[string]float64{
+	"culture_arts": 390, "energy": 170, "engineering": 420, "faith": 600, "food": 610,
+	"geological_extraction": 670, "hacker": 370, "harbor": 55, "housing": 1000, "knowledge": 190,
+	"metallurgy": 370, "military": 570, "organic_extraction": 640, "storage": 180, "trade": 360,
+}
+
+// lineageLegendaryFloor is how many times the old top rung the new one is at
+// least: a legendary badge that counts across all runs of an idle game is a
+// long-term goal, not a thousand buildings. Hacker, which starts in the
+// Modern Age and so builds the fewest copies, is the lineage nearest it.
+const lineageLegendaryFloor = 10
+
+// TestLineageLegendariesAreOnAnIdleScale: every lineage's Dynasty rung asks at
+// least lineageLegendaryFloor times what it asked before, still sits inside
+// the reach rule (25 runs of a tenth of what a run can hold), and is what the
+// reference model gives it (lineageTotals, to two significant figures), with
+// every rung below it lineageRungRatio of the one above. If a balance change
+// moves the model, this fails: derive the ladders again (TestLineageDerivation).
+func TestLineageLegendariesAreOnAnIdleScale(t *testing.T) {
+	problems, reach := StaticBadges()
+	for _, p := range problems {
+		t.Errorf("[%s] %s", p.Kind, p.Why)
+	}
+	totals, _ := lineageTotals()
+	rungs := map[string]map[string]float64{} // lineage -> rung key -> count
+	for _, r := range reach {
+		lineage, ok := strings.CutPrefix(r.Key, "lineage.")
+		if !ok {
+			continue
+		}
+		lineage = lineage[:strings.LastIndex(lineage, ".")]
+		if rungs[lineage] == nil {
+			rungs[lineage] = map[string]float64{}
+		}
+		rungs[lineage][r.Key] = r.Need
+		if !strings.HasSuffix(r.Key, fmt.Sprintf(".%d", lineageRungCount)) {
+			continue
+		}
+		before, known := lineageLegendaryBefore[lineage]
+		if !known {
+			t.Errorf("%s: a lineage with no entry in lineageLegendaryBefore", r.Key)
+			continue
+		}
+		if r.Need < lineageLegendaryFloor*before {
+			t.Errorf("%s asks %s, under %dx the old %s", r.Key, config.FormatAmount(r.Need), lineageLegendaryFloor, config.FormatAmount(before))
+		}
+		if r.Limit <= 0 || r.Need > r.Limit {
+			t.Errorf("%s asks %s, past the reach rule's %s (%s)", r.Key, config.FormatAmount(r.Need), config.FormatAmount(r.Limit), r.Basis)
+		}
+	}
+	for lineage := range lineageLegendaryBefore {
+		total, ok := totals[lineage]
+		if !ok || rungs[lineage] == nil {
+			t.Errorf("lineage %s is not in both the catalog and the model", lineage)
+			continue
+		}
+		for n, want := range lineageLadder(total) {
+			key := fmt.Sprintf("lineage.%s.%d", lineage, n+1)
+			if got := rungs[lineage][key]; math.Abs(got-want) > 0.5 {
+				t.Errorf("%s asks %s, the model gives %s (%s built over %d runs, top rung to two figures, then %.1f of the rung above)",
+					key, config.FormatAmount(got), config.FormatAmount(want), config.FormatAmount(total), config.BadgeMaxRuns, lineageRungRatio)
+			}
 		}
 	}
 }
