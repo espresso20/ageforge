@@ -285,8 +285,6 @@ ui.badge_panel.badgeKeys.10,"Bounce from the detail, then the panel"
 ui.building_text.buildingText.01,scholar
 ui.building_text.buildingText.02,scholars
 ui.building_text.buildingText.03," a copy"
-ui.building_text.buildingText.04,"%d of %d built, bussin"
-ui.building_text.atLimit.01,"Building cap hit, we're maxed out."
 ui.catastrophe_modal.buildCatastropheModalLayout.01,"[white]── ENDURE: weather the catastrophe, main character era ──[-]"
 ui.catastrophe_modal.buildCatastropheModalLayout.02,"• %s of buildings get wrecked (wonders, storage and knowledge buildings are spared)"
 ui.catastrophe_modal.buildCatastropheModalLayout.03,"  [red]• All resources cut down to %s, rough[-]"
