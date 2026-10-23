@@ -132,7 +132,7 @@ func TestSkylineStripNeedsA100x30Terminal(t *testing.T) {
 }
 
 func TestStripHeight(t *testing.T) {
-	for logRows, want := range map[int]int{0: 0, 11: 0, 15: 0, 16: 8, 17: 8, 18: 9, 40: 20} {
+	for logRows, want := range map[int]int{0: 0, 11: 0, 12: 6, 15: 7, 16: 8, 17: 8, 18: 9, 40: 20} {
 		if got := stripHeight(logRows); got != want {
 			t.Errorf("a %d-row Log box: strip %d rows, want %d", logRows, got, want)
 		}

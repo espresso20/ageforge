@@ -26,7 +26,7 @@ import (
 
 const (
 	// stripMinInner is the fewest rows inside the strip's border.
-	stripMinInner = 6
+	stripMinInner = 4
 	// stripMinCols and stripMinRows are the smallest terminal the strip is
 	// shown on: under them the Buildings list needs the column.
 	stripMinCols = 100
