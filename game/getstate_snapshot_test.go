@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
 	"slices"
 	"sort"
@@ -183,6 +184,30 @@ func snapshotCases(tb testing.TB) map[string]*GameEngine {
 		late.doTick()
 	}
 	cases["late_bench"] = late
+	// A town after a fall: ruins standing, the age's wonder part banked and
+	// the wonder of the age before it banked in full and still unbuilt.
+	fallen := newTruthEngine("medieval_age", truthTypical)
+	busyUp(fallen)
+	fallen.mu.Lock()
+	for i, key := range fallen.Buildings.order {
+		if fallen.Buildings.counts[key] > 0 && i%7 == 0 {
+			fallen.Buildings.ruins[key] = 1 + i%3
+		}
+	}
+	fallen.mu.Unlock()
+	if wonder := fallen.progress.WonderForAge(fallen.age); wonder != "" {
+		def := fallen.Buildings.defs[wonder]
+		res := slices.Sorted(maps.Keys(def.BaseCost))
+		for i, r := range res {
+			if i%2 == 0 {
+				_, _ = fallen.BankWonderResource(wonder, r, def.BaseCost[r]/3)
+			}
+		}
+	}
+	for i := 0; i < 40; i++ {
+		fallen.doTick()
+	}
+	cases["medieval_fallen"] = fallen
 	held := newStaffedLateGameEngine(tb, true)
 	busyUp(held)
 	for i := 0; i < 40; i++ {
@@ -316,5 +341,22 @@ func TestSliceArena(t *testing.T) {
 	}
 	if rows.take(0) != nil {
 		t.Error("take(0) should be nil")
+	}
+}
+
+// TestGetStateAllocationCeiling guards the cost of the snapshot the dashboard
+// takes twice a second. On the late-game bench town it was about 2,800
+// allocations (0.5 MB); it is about 1,550 now, nearly all of them the copies a
+// caller is owed: a map or slice per building, per tech and per milestone. A
+// static table rebuilt per call, a definition copied out of its map, or a
+// pointer that makes the compiler move a loop's values to the heap brings the
+// count back up. The ceiling leaves room for content to grow; if it is hit,
+// profile BenchmarkGetState (-memprofile, alloc_objects) before raising it.
+func TestGetStateAllocationCeiling(t *testing.T) {
+	ge := newLateGameEngine(t)
+	ge.doTick()
+	const ceiling = 1900
+	if got := testing.AllocsPerRun(20, func() { _ = ge.GetState() }); got > ceiling {
+		t.Errorf("GetState allocates %.0f times on the late-game town, over the ceiling of %d", got, ceiling)
 	}
 }
