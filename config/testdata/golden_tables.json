@@ -18,7 +18,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 7
+   "max_count": 0,
+   "full_rate_copies": 7
   },
   "advanced_alloy_plant": {
    "category": "production",
@@ -91,7 +92,8 @@
    ],
    "build_ticks": 300,
    "workers": 0,
-   "max_count": 7
+   "max_count": 0,
+   "full_rate_copies": 7
   },
   "agri_complex": {
    "category": "production",
@@ -173,7 +175,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 8
+   "max_count": 0,
+   "full_rate_copies": 8
   },
   "altar": {
    "category": "research",
@@ -1013,7 +1016,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "crypto_exchange": {
    "category": "production",
@@ -1325,7 +1329,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "demesne": {
    "category": "production",
@@ -1533,7 +1538,8 @@
    ],
    "build_ticks": 200,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "electric_arc_furnace": {
    "category": "production",
@@ -2645,7 +2651,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 8
+   "max_count": 0,
+   "full_rate_copies": 8
   },
   "investment_firm": {
    "category": "production",
@@ -2856,7 +2863,8 @@
    ],
    "build_ticks": 600,
    "workers": 0,
-   "max_count": 8
+   "max_count": 0,
+   "full_rate_copies": 8
   },
   "logistics_hub": {
    "category": "production",
@@ -3334,7 +3342,8 @@
    ],
    "build_ticks": 1200,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "monument_of_ages": {
    "category": "monument",
@@ -3482,7 +3491,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "neon_citadel": {
    "category": "wonder",
@@ -3604,7 +3614,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "neutron_star_mine": {
    "category": "production",
@@ -4061,7 +4072,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 8
+   "max_count": 0,
+   "full_rate_copies": 8
   },
   "plantation": {
    "category": "production",
@@ -4510,7 +4522,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 10
+   "max_count": 0,
+   "full_rate_copies": 10
   },
   "reality_anchor": {
    "category": "wonder",
@@ -4720,7 +4733,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 9
+   "max_count": 0,
+   "full_rate_copies": 9
   },
   "research_institute": {
    "category": "research",
@@ -4740,7 +4754,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "revival_hall": {
    "category": "research",
@@ -4847,7 +4862,8 @@
    ],
    "build_ticks": 150,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "seaport": {
    "category": "production",
@@ -5718,7 +5734,8 @@
    ],
    "build_ticks": 75,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "temple": {
    "category": "research",
@@ -5785,7 +5802,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "think_tank": {
    "category": "research",
@@ -5806,7 +5824,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 10
+   "max_count": 0,
+   "full_rate_copies": 10
   },
   "timber_yard": {
    "category": "production",
@@ -6023,7 +6042,8 @@
    ],
    "build_ticks": 2400,
    "workers": 0,
-   "max_count": 7
+   "max_count": 0,
+   "full_rate_copies": 7
   },
   "uranium_mine": {
    "category": "production",
@@ -6412,7 +6432,8 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
-   "max_count": 5
+   "max_count": 0,
+   "full_rate_copies": 5
   },
   "zero_g_gallery": {
    "category": "production",

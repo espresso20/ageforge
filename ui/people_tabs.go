@@ -423,8 +423,8 @@ func (c peopleBody) scholars() {
 		g.rput(rightOf(c.x, lw), y, each, xDim)
 		const bw = 10
 		fill := bw
-		if b.ScholarCap > 0 {
-			fill = bw * min(b.Count, b.ScholarCap) / b.ScholarCap
+		if b.FullRateCopies > 0 {
+			fill = bw * min(b.Count, b.FullRateCopies) / b.FullRateCopies
 		}
 		for k := 0; k < bw; k++ {
 			if k < fill {
@@ -434,8 +434,12 @@ func (c peopleBody) scholars() {
 			}
 		}
 		total := fmt.Sprintf("%s %s", num(b.Count*b.Scholars), strings.ToLower(sch.name))
-		if b.ScholarCap > 0 {
-			total += fmt.Sprintf(", %d of %d copies", b.Count, b.ScholarCap)
+		if b.FullRateCopies > 0 {
+			if b.Count > b.FullRateCopies {
+				total += fmt.Sprintf(", %d copies, %d at half rate", b.Count, b.Count-b.FullRateCopies)
+			} else {
+				total += fmt.Sprintf(", %d of %d copies", b.Count, b.FullRateCopies)
+			}
 		}
 		g.putFit(c.x+4+bw+1, y+1, lw-4-bw-4, total, xText)
 	}

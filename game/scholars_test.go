@@ -40,8 +40,8 @@ func TestScholarsComeWithTheBuilding(t *testing.T) {
 	if pop, idle := st.Workers.TotalPop, st.Workers.TotalIdle; pop != want || idle != 0 {
 		t.Errorf("the population is %d (%d in the reserve): want %d, all of them scholars", pop, idle, want)
 	}
-	if bs := st.Buildings["story_circle"]; bs.Scholars != 2 || bs.ScholarCap != config.KnowledgeCap("story_circle") || bs.WorkerCapacity != 0 {
-		t.Errorf("story circle state: scholars %d, cap %d (want %d), worker slots %d", bs.Scholars, bs.ScholarCap, config.KnowledgeCap("story_circle"), bs.WorkerCapacity)
+	if bs := st.Buildings["story_circle"]; bs.Scholars != 2 || bs.FullRateCopies != config.KnowledgeCap("story_circle") || bs.WorkerCapacity != 0 {
+		t.Errorf("story circle state: scholars %d, copies at full rate %d (want %d), worker slots %d", bs.Scholars, bs.FullRateCopies, config.KnowledgeCap("story_circle"), bs.WorkerCapacity)
 	}
 	if err := ge.AssignWorker("story_circle", 1); err == nil {
 		t.Error("a worker was assigned to a knowledge building")
@@ -250,23 +250,65 @@ func TestQueueAdvances(t *testing.T) {
 	}
 }
 
-// A knowledge building cannot be built past its cap.
-func TestKnowledgeBuildingStopsAtItsCap(t *testing.T) {
+// A knowledge building builds past its cap: nothing refuses the copy, it costs
+// the normal climb, and each copy past the cap researches at half rate.
+func TestKnowledgeBuildingBuildsPastItsCapAtHalfRate(t *testing.T) {
 	ge := scholarEngine(t)
 	cap := config.KnowledgeCap("elders_hall")
+	def := ge.Buildings.defs["elders_hall"]
+	var per float64
+	for _, e := range def.Effects {
+		if e.Type == "research" {
+			per = e.Value
+		}
+	}
+	if per <= 0 || cap <= 1 {
+		t.Fatalf("setup: the Elders' Hall researches %v a copy with a cap of %d", per, cap)
+	}
+	baseAt := func(copies int) float64 {
+		ge.mu.Lock()
+		defer ge.mu.Unlock()
+		ge.Buildings.counts["elders_hall"] = copies
+		ge.Buildings.counts["story_circle"] = 0
+		ge.recalculateRates()
+		return ge.researchBase
+	}
+	// Up to the cap every copy researches at full rate, exactly.
+	if got, want := baseAt(cap), float64(per*float64(cap)); got != want {
+		t.Errorf("%d copies at the cap research %v, want %v", cap, got, want)
+	}
+	// Past it each copy adds half.
+	if got, want := baseAt(cap+4), float64(per*float64(float64(cap)+2)); math.Abs(got-want) > 1e-9*want {
+		t.Errorf("%d copies research %v, want %v: %d at full rate and 4 at half", cap+4, got, want, cap)
+	}
+	// Nothing refuses a copy at the cap, and the copy costs the next step of the climb.
+	baseAt(cap)
+	if bs := ge.GetState().Buildings["elders_hall"]; bs.AtMaxCount {
+		t.Errorf("at the cap the building reads as at its limit")
+	}
 	ge.mu.Lock()
-	ge.Buildings.counts["elders_hall"] = cap
+	ge.Buildings.unlocked["elders_hall"] = true
 	ge.mu.Unlock()
-	if bs := ge.GetState().Buildings["elders_hall"]; !bs.AtMaxCount || bs.CanBuild {
-		t.Errorf("at its cap: at max %v, can build %v", bs.AtMaxCount, bs.CanBuild)
+	ge.Resources.Add("wood", 1e12)
+	ge.Resources.Add("stone", 1e12)
+	want := ge.Buildings.GetCost("elders_hall")
+	for res, base := range def.BaseCost {
+		if exact := math.Floor(base * math.Pow(def.CostScale, float64(cap))); math.Abs(want[res]-exact) > 1 {
+			t.Errorf("the copy past the cap costs %v %s, want the normal climb %v", want[res], res, exact)
+		}
 	}
-	ge.Resources.Add("wood", 1e6)
-	ge.Resources.Add("stone", 1e6)
-	if err := ge.BuildBuilding("elders_hall"); err == nil {
-		t.Error("a copy was built past the cap")
+	if bs := ge.GetState().Buildings["elders_hall"]; !bs.CanBuild {
+		t.Error("a copy past the cap cannot be built")
 	}
-	if _, err := ge.PlanAddBuild("elders_hall", 1); err == nil {
-		t.Error("a copy past the cap was planned")
+	before := ge.Resources.Get("wood")
+	if err := ge.BuildBuilding("elders_hall"); err != nil {
+		t.Fatalf("a copy past the cap was refused: %v", err)
+	}
+	if ge.Resources.Get("wood") >= before {
+		t.Error("the copy past the cap cost no wood")
+	}
+	if n, err := ge.PlanAddBuild("elders_hall", 2); err != nil || n != 2 {
+		t.Errorf("planning two copies past the cap added %d: %v", n, err)
 	}
 }
 

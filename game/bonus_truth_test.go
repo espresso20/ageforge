@@ -1862,6 +1862,10 @@ func truthBuildingPromises() []truthPromise {
 				// A wonder or monument stands once; a storage building's
 				// bonus is promised per copy, so the lab holds one.
 				count = 1
+			} else if def.FullRateCopies > 0 {
+				// A knowledge building's figure is promised per copy up to its
+				// cap; each copy past it does half (TestKnowledgeBuildingBuildsPastItsCapAtHalfRate).
+				count = float64(min(truthCopies, def.FullRateCopies))
 			}
 			// An output the building's own text marks "once unlocked".
 			text, later := truthEffectText(eff), false

@@ -287,10 +287,11 @@ func buildingsLineageKnowledge() []BuildingDef {
 		EpochKey: "cosmic_era",
 	})
 
-	// A knowledge building cannot be built past the count its gate asks for
-	// (KnowledgeCap): an age's research has a ceiling.
+	// A knowledge building researches at full rate up to the count its gate
+	// asks for (KnowledgeCap); each copy past it researches at half rate. An
+	// age's research has a soft ceiling, and nothing refuses a copy.
 	for i := range b {
-		b[i].MaxCount = KnowledgeCap(b[i].Key)
+		b[i].FullRateCopies = KnowledgeCap(b[i].Key)
 	}
 	return b
 }

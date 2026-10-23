@@ -316,9 +316,10 @@ func StaticProperties() Properties {
 	// with 5, and the list has no 17.
 
 	// 22. The cap is the cap: no town makes more research than the ceiling
-	// property 10 reads. The most copies of a knowledge building the game lets
-	// a town build is the count its gate asks for (MaxCount), so the reference
-	// town, which holds exactly those, is the best a town can do by building.
+	// property 10 reads at full rate. A knowledge building researches at full
+	// rate up to the count its gate asks for (FullRateCopies) and at half rate
+	// past it, so the reference town, which holds exactly those, is the best a
+	// town can do by building to the cap.
 	bad, where, val = 0, "", ""
 	for i := range t.ages {
 		most := map[string]int{}
@@ -328,7 +329,7 @@ func StaticProperties() Properties {
 		for j := 0; j <= i; j++ {
 			for _, d := range t.byAge[j] {
 				if config.IsKnowledgeBuilding(d) {
-					most[d.Key] = d.MaxCount
+					most[d.Key] = d.FullRateCopies
 				}
 			}
 		}
@@ -337,7 +338,7 @@ func StaticProperties() Properties {
 			where, val = t.ages[i].Name, fmt.Sprintf("%.2f times the ceiling", got/ceiling)
 		}
 	}
-	add(22, "building every knowledge building the game allows makes no more research than the ceiling of property 10", bad == 0, worst(bad, where, val))
+	add(22, "building every knowledge building to its cap makes no more research than the ceiling of property 10", bad == 0, worst(bad, where, val))
 
 	// 18 needs the game's own formulas and is stated, not worked out.
 	add(18, "the reference town's faith and culture strength fall in the middle band", false, "not worked out here yet")

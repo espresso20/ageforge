@@ -147,9 +147,6 @@ func buildingsProvider(state game.GameState, screenW int) string {
 			if text := buildingText(bs); text != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)
 			}
-			if limit := atLimit(bs); limit != "" {
-				fmt.Fprintf(&sb, "   [yellow]%s[-]\n", limit)
-			}
 			if bs.Flavor != "" {
 				fmt.Fprintf(&sb, "   [comment::i]%s[-:-:-]\n", bs.Flavor)
 			}

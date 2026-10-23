@@ -201,9 +201,12 @@ func (ge *GameEngine) scholarModifiers() []Modifier {
 func (ge *GameEngine) researchWork(r *Resolver, mMult, prodAllFactor float64) float64 {
 	base := 0.0
 	ge.Buildings.eachBuilt(func(key string, count int, def config.BuildingDef) {
+		// A knowledge building researches at full rate up to its cap, and
+		// each copy past it at half rate (BuildingDef.ResearchCopies).
+		copies := def.ResearchCopies(count)
 		for _, eff := range def.Effects {
 			if eff.Type == "research" {
-				base += float64(eff.Value * float64(count))
+				base += float64(eff.Value * copies)
 			}
 		}
 	})
