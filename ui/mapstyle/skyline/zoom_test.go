@@ -316,7 +316,20 @@ func TestOverviewBox(t *testing.T) {
 // the colour of the tops, the wonders are marked, districts are named where
 // the name fits, and what is new is in the positive colour.
 func TestOverviewShowsTheSkyline(t *testing.T) {
-	m := build(fixture.Options{Age: "medieval_age", Seed: 3, Tick: tickAt(0.5)}, 2)
+	// the present age's wonder is built, so the bar has a wonder to mark
+	// (the skyline draws no other), and the town grows past the baseline
+	b := mapmodel.NewBuilder(catalog())
+	st := fixture.State(fixture.Options{Age: "medieval_age", Seed: 3, Tick: tickAt(0.5)})
+	key := wonderKeyOf(catalog().AgeIdx["medieval_age"])
+	bs := st.Buildings[key]
+	bs.Count, bs.WonderBank, bs.WonderBankFull = 1, nil, false
+	st.Buildings[key] = bs
+	st.CurrentAgeWonderKey, st.CurrentAgeWonderName = "", ""
+	since := mapmodel.VisitOf(b.Build(&st, nil))
+	for i := 1; i <= 2; i++ {
+		st = fixture.Grow(st, i)
+	}
+	m := b.Build(&st, since)
 	v, _ := zoomed(m, zMid, m.Skyline.Width/2, 160, 45)
 	v.changes = true
 	s := v.compose(mapstyle.Frame{Model: m, Anim: 3}, 160, 45)

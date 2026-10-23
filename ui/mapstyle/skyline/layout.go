@@ -100,20 +100,11 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 	}
 	lay := &layout{m: m, groundY: groundY, ref: ref, scale: sceneScale(ref), width: max(m.Skyline.Width, 1)}
 	maxH := max(2, ref-3)
-	// Every district's landmark is the tallest thing in it, at least half as
-	// tall again as the tallest building: the buildings of an age stop short of
-	// what that age's wonder stands at (districtCap).
-	wonderKey := wonderKeys(m.Catalog)
-	capOf := func(age int) int {
-		if age < 0 || age >= len(wonderKey) || wonderKey[age] == "" {
-			return maxH
-		}
-		return min(maxH, districtCap(wonderRows(wonderKey[age], lay.scale, ref)))
-	}
+	present := presentAge(m)
 	for i := range m.Skyline.Lots {
 		ml := &m.Skyline.Lots[i]
 		def := m.Catalog.Defs[ml.Key]
-		if def == nil {
+		if def == nil || hidden(ml, present) {
 			continue
 		}
 		b := m.Building(ml.Key)
@@ -141,14 +132,14 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 			if ml.Row > 0 {
 				h *= 1.12
 			}
-			sk = spriteKey{ml.Key, ml.Seed, softCap(clampInt(int(h+0.5), 2, maxH), capOf(ml.Age), maxH)}
+			sk = spriteKey{ml.Key, ml.Seed, clampInt(int(h+0.5), 2, maxH)}
 		}
 		spr := v.sprites[sk]
 		if spr == nil {
 			if ml.Wonder {
 				spr = wonderArt(ml.Key, sk.h)
 			} else {
-				spr = dressedUnder(fm, ml, lv.variant, sk.h, capOf(ml.Age), maxH)
+				spr = dress(fm.fn(newRnd(ml.Seed), sk.h), lv.variant, ml.Seed, ml.Age, maxH)
 				if hash(int(ml.Seed), 5)%2 == 0 {
 					spr = spr.mirror()
 				}
@@ -244,55 +235,18 @@ func clamp01(v float64) float64 {
 	return v
 }
 
-// wonderKeys is the key of each age's wonder, by age index ("" for none).
-func wonderKeys(c *mapmodel.Catalog) []string {
-	out := make([]string, len(c.ByAge))
-	for a, ds := range c.ByAge {
-		for _, d := range ds {
-			if d.Wonder {
-				out[a] = d.Key
-			}
-		}
+// presentAge is the age the skyline is at: its newest district's. It is the
+// one age whose wonder the map draws.
+func presentAge(m *mapmodel.Model) int {
+	if n := len(m.Skyline.Districts); n > 0 {
+		return m.Skyline.Districts[n-1].Age
 	}
-	return out
+	return m.AgeIdx
 }
 
-// districtCap is the most rows a building of a district may stand when its
-// wonder is rows tall: the wonder is at least half as tall again.
-func districtCap(wonderRows int) int { return max(2, wonderRows*2/3) }
-
-// softCap bends a building's height so it stays under capH without a row of
-// flat roofs: it is unchanged under 60% of the cap, and from there up to the
-// tallest a scene allows (maxH) the heights are laid evenly between the knee
-// and the cap, so the order and the variety of a skyline survive the squeeze.
-func softCap(h, capH, maxH int) int {
-	knee := capH * 6 / 10
-	if h <= knee {
-		return h
-	}
-	if maxH <= knee || capH <= knee {
-		return min(h, capH)
-	}
-	v := float64(knee) + float64(h-knee)*float64(capH-knee)/float64(maxH-knee)
-	return clampInt(int(v+0.5), 2, capH)
-}
-
-// dressedUnder draws a building h rows tall dressed for its variant, never
-// over capH rows: a form that comes out taller than it was asked to (a spire,
-// a stack) is asked again for less.
-func dressedUnder(fm form, ml *mapmodel.Lot, variant, h, capH, maxH int) *sprite {
-	build := func(req int) *sprite {
-		return dress(fm.fn(newRnd(ml.Seed), req), variant, ml.Seed, ml.Age, maxH)
-	}
-	spr := build(h)
-	for req := h - 1; spr.h > capH && req >= 2; req-- {
-		spr = build(req)
-	}
-	if spr.h > capH {
-		spr = spr.cropTop(capH)
-	}
-	return spr
-}
+// hidden reports a wonder of an age gone by: the skyline shows one wonder at
+// a time, this age's (the Wonders panel's gallery keeps the rest).
+func hidden(l *mapmodel.Lot, present int) bool { return l.Wonder && l.Age != present }
 
 // wonderIn is where a district's landmark stands, in columns from its east
 // edge, and wonderBayIn the grand lighthouse's, in from the bay's east end:

@@ -56,9 +56,10 @@ func targets(m *mapmodel.Model, w, cam int) []tgt {
 		return mandalaTargets(m)
 	}
 	out := make([]tgt, 0, len(m.Skyline.Lots)+8)
+	present := presentAge(m)
 	for i := range m.Skyline.Lots {
 		l := &m.Skyline.Lots[i]
-		if m.Catalog.Defs[l.Key] == nil {
+		if m.Catalog.Defs[l.Key] == nil || hidden(l, present) {
 			continue
 		}
 		out = append(out, tgt{target{tLot, l.Key, l.Copy}, l.Row, l.X})

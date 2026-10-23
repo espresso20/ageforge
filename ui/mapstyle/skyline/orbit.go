@@ -846,15 +846,12 @@ func (v *view) skyLayoutFor(m *mapmodel.Model, sc mapmodel.SkyScene, groundY int
 	}
 	lay := &layout{m: m, groundY: key, scale: skyScale(groundY), width: max(m.Skyline.Width, 1)}
 	maxH := max(2, groundY-2)
-	present := m.AgeIdx
+	present := presentAge(m)
 	keystone := keystoneWonder[sc]
-	if n := len(m.Skyline.Districts); n > 0 {
-		present = m.Skyline.Districts[n-1].Age
-	}
 	for i := range m.Skyline.Lots {
 		ml := &m.Skyline.Lots[i]
 		def := m.Catalog.Defs[ml.Key]
-		if def == nil {
+		if def == nil || hidden(ml, present) {
 			continue
 		}
 		b := m.Building(ml.Key)
