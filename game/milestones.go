@@ -465,16 +465,23 @@ func formatRewards(effects []config.Effect) string {
 func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneState {
 	milestones := make(map[string]MilestoneInfo, len(mm.defs))
 	visibleCount := 0
+	plans := mm.plans
+	if len(plans) != len(mm.defs) { // defs were swapped in place, not through Rebind
+		plans = make([]milestonePlan, len(mm.defs))
+		for i, def := range mm.defs {
+			plans[i] = mm.planFor(def)
+		}
+	}
 	var rewards sliceArena[config.Effect] // one backing array for every milestone's copy
 	var rows sliceArena[MilestoneProgress]
 	for i, def := range mm.defs {
 		rewards.reserve(def.Rewards)
-		rows.want += mm.plans[i].rows
+		rows.want += plans[i].rows
 	}
 
 	for i, def := range mm.defs {
 		completed := mm.completed[def.Key]
-		plan := &mm.plans[i]
+		plan := &plans[i]
 		progress := mm.progressFor(def, plan, params, &rows)
 		ratio := overallProgress(progress)
 
