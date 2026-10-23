@@ -64,7 +64,6 @@ func leaveTownAlone(t *testing.T, tb *refTables, i, horizon, step int) aloneAge 
 	_ = ge.ForceQuietFateForTest(tb.ages[i].EpochKey)
 	ge.GrantTechsForTest()
 	ge.SetTownForTest(town, int(ref.workers))
-	ge.SetWonderOverflow(true)
 	for _, d := range tb.byAge[i] {
 		n := 1000
 		if d.MaxCount > 0 {
