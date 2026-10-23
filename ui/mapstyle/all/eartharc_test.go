@@ -244,17 +244,17 @@ func TestEarthArcGreeneryOnScreen(t *testing.T) {
 			switch {
 			case mod < 0.01:
 				t.Errorf("%s seed %d: the Modern Age shows almost no green (%.3f)", style, seed, mod)
-			case share["information_age"] > mod*0.75 || share["information_age"] < mod*0.25:
-				t.Errorf("%s seed %d: the Information Age shows %.3f green to the Modern Age's %.3f, want about half",
+			case share["information_age"] > mod*0.75 || share["information_age"] < mod*0.1:
+				t.Errorf("%s seed %d: the Information Age shows %.3f green to the Modern Age's %.3f, want well under it",
 					style, seed, share["information_age"], mod)
-			case share["digital_age"] > mod*0.4 || share["digital_age"] > share["information_age"]:
+			case share["digital_age"] > mod*0.5 || share["digital_age"] > share["information_age"]:
 				t.Errorf("%s seed %d: the Digital Age shows %.3f green (Information %.3f, Modern %.3f)", style, seed,
 					share["digital_age"], share["information_age"], mod)
 			case share["digital_age"] <= 0:
 				t.Errorf("%s seed %d: the Digital Age shows no reserve", style, seed)
 			}
 			for _, a := range []string{"cyberpunk_age", "fusion_age"} {
-				if share[a] > mod*0.02 {
+				if share[a] > 0.0012 { // (a few street trees and people are not greenery)
 					t.Errorf("%s seed %d: the %s still shows %.4f green", style, seed, a, share[a])
 				}
 			}

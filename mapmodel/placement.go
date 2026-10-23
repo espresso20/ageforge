@@ -267,6 +267,11 @@ type District struct {
 	BayW   int
 }
 
+// TetherX is the world column of a district's tall landmark (the space
+// elevator): a few columns in from the district's east edge, where the camera
+// finds it when that district is the present one.
+func (d District) TetherX() int { return d.X0 + d.LandW - skyTetherIn }
+
 // Lot is one silhouette on the skyline.
 type Lot struct {
 	Key     string
@@ -289,32 +294,31 @@ const (
 	SkyEastPad   = 46
 	skyLotStep   = 3
 	skyBayW      = 20
+	skyMinLandW  = 30
+	// skyLotInset is where a district's first lot column starts, from its
+	// west edge; skyLotMargin is the room kept past the last column.
+	skyLotInset  = 4
+	skyLotMargin = 6
+	// skyWonderAt is where a district's landmark stands, from its west edge.
+	skyWonderAt = 16
+	skyTetherIn = 10
+	// SkyCopiesPer is how many buildings one silhouette stands for.
+	SkyCopiesPer = 1
 	// SkyMaxCopies caps the silhouettes one type draws.
-	SkyMaxCopies = 6
+	SkyMaxCopies = 24
 )
 
-// SkyCopies is how many silhouettes n copies draw: one each while small,
-// then about √n, capped.
+// SkyCopies is how many silhouettes n copies draw: one for every
+// SkyCopiesPer, rounded up, capped.
 func SkyCopies(n int) int {
 	if n <= 0 {
 		return 0
 	}
-	if n <= 3 {
-		return n
-	}
-	c := int(math.Ceil(float64(math.Sqrt(float64(n)) * 1.15)))
+	c := (n + SkyCopiesPer - 1) / SkyCopiesPer
 	if c > SkyMaxCopies {
 		c = SkyMaxCopies
 	}
 	return c
-}
-
-func districtWidth(n int) int {
-	w := 12 + n*10/3
-	if w < 30 {
-		w = 30
-	}
-	return w
 }
 
 func hasBay(ds []*Def) bool {
@@ -326,17 +330,57 @@ func hasBay(ds []*Def) bool {
 	return false
 }
 
+// skySlot is the slot a silhouette stands in: copy c of the age's t-th type
+// among nt. It depends on nothing that grows, so a lot never moves once it is
+// drawn; the district is as wide as the slots in use need.
+func skySlot(c, t, nt int) (col, row int) {
+	l := c*nt + t
+	col = l / 3
+	return col, (l + col) % 3
+}
+
 func skylineFor(m *Model) Skyline {
 	cat := m.Catalog
 	sk := Skyline{}
 	x := SkyWestPad
 	for a := 0; a <= m.AgeIdx && a < len(cat.ByAge); a++ {
 		ds := cat.ByAge[a]
-		d := District{Age: a, X0: x, W: districtWidth(len(ds))}
-		d.LandW = d.W
-		if hasBay(ds) {
-			d.Bay, d.BayW, d.BayX = true, skyBayW, x+d.W
-			d.W += skyBayW + 2
+		nt := len(ds)
+		cols, quays := 0, 0
+		nh := 0
+		for _, def := range ds {
+			if def.Lineage == LinHarbor {
+				nh++
+			}
+		}
+		bay := hasBay(ds)
+		th := 0
+		for t, def := range ds {
+			b := m.byKey[def.Key]
+			if b == nil || b.Count <= 0 {
+				if def.Lineage == LinHarbor {
+					th++
+				}
+				continue
+			}
+			n := SkyCopies(b.Count)
+			switch {
+			case def.Wonder:
+			case def.Lineage == LinHarbor && bay:
+				quays = max(quays, (n-1)*nh+th+1)
+				th++
+			default:
+				col, _ := skySlot(n-1, t, nt)
+				cols = max(cols, col+1)
+			}
+		}
+		d := District{Age: a, X0: x}
+		d.LandW = max(skyMinLandW, skyLotInset+skyLotStep*cols+skyLotMargin)
+		d.W = d.LandW
+		if bay {
+			d.Bay, d.BayX = true, x+d.LandW
+			d.BayW = max(skyBayW, 2*quays+8)
+			d.W += d.BayW + 2
 		}
 		d.Centre = d.X0 + d.LandW/2
 		sk.Districts = append(sk.Districts, d)
@@ -348,11 +392,19 @@ func skylineFor(m *Model) Skyline {
 	for a, d := range sk.Districts {
 		ds := cat.ByAge[a]
 		nt := len(ds)
-		capRow := d.LandW / skyLotStep
-		if capRow < 4 {
-			capRow = 4
+		nh := 0
+		for _, def := range ds {
+			if def.Lineage == LinHarbor {
+				nh++
+			}
 		}
+		th := 0
 		for t, def := range ds {
+			harbour := def.Lineage == LinHarbor
+			ith := th
+			if harbour {
+				th++
+			}
 			b := m.byKey[def.Key]
 			if b == nil || b.Count <= 0 {
 				continue
@@ -367,31 +419,17 @@ func skylineFor(m *Model) Skyline {
 					Seed: Hash(m.Seed, int64(a), int64(t), int64(c)), New: b.Delta > 0 && c >= prevN}
 				switch {
 				case def.Wonder:
-					lot.Wonder, lot.X, lot.Row = true, d.Centre, 0
+					lot.Wonder, lot.X, lot.Row = true, d.X0+skyWonderAt, 0
 					if d.Bay && def.Key == "grand_lighthouse" {
-						lot.X = d.BayX + d.BayW - 4
+						lot.X = d.BayX + skyBayW - 4
 					}
-				case def.Lineage == LinHarbor && d.Bay:
-					lot.Quay, lot.X, lot.Row = true, d.BayX+2+c*skyLotStep, c%2
+				case harbour && d.Bay:
+					q := c*nh + ith
+					lot.Quay, lot.X, lot.Row = true, d.BayX+2+q*2, q%2
 				default:
-					L := c*nt + t
-					s := L % capRow
-					lot.Row = L / capRow
-					if lot.Row > 2 {
-						lot.Row = 2
-					}
-					off := (s + 1) / 2 * skyLotStep
-					if s%2 == 1 {
-						off = -off
-					}
-					off += int(Hash(int64(lot.Seed), 3)%3) - 1
-					lot.X = d.Centre + off
-					if lot.X < d.X0+2 {
-						lot.X = d.X0 + 2
-					}
-					if lot.X > d.X0+d.LandW-3 {
-						lot.X = d.X0 + d.LandW - 3
-					}
+					col, row := skySlot(c, t, nt)
+					lot.Row = row
+					lot.X = d.X0 + skyLotInset + col*skyLotStep + int(Hash(int64(lot.Seed), 3)%3) - 1
 				}
 				sk.Lots = append(sk.Lots, lot)
 				if def.Wonder {
