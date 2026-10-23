@@ -24,10 +24,10 @@ func (d *Dashboard) showSaveChoiceModal() {
 	modal := tview.NewModal().
 		SetText(fmt.Sprintf("Save %q?", active)).
 		AddButtons([]string{"Overwrite", "Branch new", "Cancel"}).
-		SetDoneFunc(func(_ int, label string) {
+		SetDoneFunc(func(button int, _ string) {
 			d.pages.RemovePage(saveChoicePage)
-			switch label {
-			case "Overwrite":
+			switch button {
+			case 0: // "Overwrite"
 				name := d.engine.ActiveSaveName()
 				if err := d.engine.SaveGame(name); err != nil {
 					d.engine.AddLog("error", err.Error())
@@ -35,7 +35,7 @@ func (d *Dashboard) showSaveChoiceModal() {
 					d.engine.AddLog("info", "[positive]Saved → "+name)
 				}
 				d.app.SetFocus(d.inputField)
-			case "Branch new":
+			case 1: // "Branch new"
 				showSaveNameModal(d.app, d.pages, " Branch a new save ", branchNamePage, d.inputField, func(name string) {
 					// showSaveNameModal validates the name format; BranchSave guards
 					// against an existing name and logs an error if it's taken.

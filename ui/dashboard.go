@@ -1256,10 +1256,11 @@ func (d *Dashboard) refreshAgeProgress(game.GameState) {
 }
 
 // ageGoal is one thing the next age asks for: its text ("Hut 7/10")
-// and whether it is met.
+// and whether it is met. The wonder and its keystone are red all through (red).
 type ageGoal struct {
 	text string
 	met  bool
+	red  bool
 }
 
 // ageGoals lists what the next age asks for: the age's wonder and its
@@ -1270,10 +1271,10 @@ func ageGoals(state game.GameState) []ageGoal {
 	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
 	if state.CurrentAgeWonderKey != "" {
 		banked := wonderBankPercent(state, state.CurrentAgeWonderKey)
-		goals = append(goals, ageGoal{fmt.Sprintf("Wonder: %s %.0f%% banked", state.CurrentAgeWonderName, banked), false})
+		goals = append(goals, ageGoal{fmt.Sprintf("Wonder: %s %.0f%% banked", state.CurrentAgeWonderName, banked), false, true})
 		// Its keystone tech, while that is still to research.
 		if tech := state.Buildings[state.CurrentAgeWonderKey].NeedsTech; tech != "" {
-			goals = append(goals, ageGoal{"Keystone: " + game.TechName(tech), false})
+			goals = append(goals, ageGoal{"Keystone: " + game.TechName(tech), false, true})
 		}
 	}
 	for _, key := range sortedKeysOf(state.NextAgeBldReqs) {
@@ -1283,7 +1284,7 @@ func ageGoals(state game.GameState) []ageGoal {
 			// A gate counts the building and the later rungs of its line.
 			current = max(bs.Count, bs.HeldWithLater)
 		}
-		goals = append(goals, ageGoal{fmt.Sprintf("%s %d/%d", game.BuildingName(key), current, req), current >= req})
+		goals = append(goals, ageGoal{fmt.Sprintf("%s %d/%d", game.BuildingName(key), current, req), current >= req, false})
 	}
 	return goals
 }
@@ -1326,7 +1327,7 @@ func ageStripLines(state game.GameState, w, h int) []string {
 	title := truncate("Next Age: "+state.NextAgeName, w-1)
 	goalCell := func(g ageGoal) cell {
 		// The wonder and its keystone are red all through, as they were.
-		if strings.HasPrefix(g.text, "Wonder: ") || strings.HasPrefix(g.text, "Keystone: ") {
+		if g.red {
 			return cell{"[red]✗ " + g.text + "[-]", 2 + runeLen(g.text)}
 		}
 		if g.met {

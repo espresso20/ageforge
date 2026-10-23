@@ -39,6 +39,7 @@ type onboardingStep struct {
 	Commands []string
 	Join     string // "/", "and", "then"; unused for a single command
 	Note     string
+	Comma    bool // the note follows the commands after a comma ("..., then build"), not a colon
 }
 
 // onboardingSteps is the first-steps guide in the Buildings panel. It is data
@@ -49,7 +50,7 @@ var onboardingSteps = []onboardingStep{
 	{Commands: []string{"build gathering_camp", "build wood_camp"}, Join: "and", Note: "food runs short first"},
 	{Commands: []string{"build hut"}, Note: "shelter; raises your housing"},
 	{Commands: []string{"workers"}, Note: "workers come on their own and staff the camps (staffed camps make 5x)"},
-	{Commands: []string{"wonder collect all"}, Note: "then build the [gold]wonder[-] once its bank is full. You need it to advance."},
+	{Commands: []string{"wonder collect all"}, Comma: true, Note: "then build the [gold]wonder[-] once its bank is full. You need it to advance."},
 }
 
 // onboardingCommands flattens onboardingSteps into the commands in the order a
@@ -78,7 +79,7 @@ func renderOnboarding(w int) string {
 			fmt.Fprintf(&text, "[cyan]%s[-]", strings.ReplaceAll(c, " ", glue))
 		}
 		sep := ": "
-		if strings.HasPrefix(st.Note, "then ") {
+		if st.Comma {
 			sep = ", "
 		}
 		text.WriteString(sep + st.Note)

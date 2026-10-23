@@ -229,8 +229,12 @@ func unknownCommandText(cmd string) string {
 // exactly as the Help panel does. The log escapes the [slot] brackets on the
 // way to the screen (safeTags).
 func usageFor(path string) string {
-	return "Usage: " + helpRow(path).Form
+	return "Usage: " + usageForm(path)
 }
+
+// usageForm is the registry's help form for the command path, without the
+// "Usage: " that usageFor puts in front of it.
+func usageForm(path string) string { return helpRow(path).Form }
 
 // helpRow is the registry help row for the command path: the form that is
 // the path, or the path followed by its argument slots (the longest such
@@ -711,7 +715,7 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 			}
 			lines = append(lines, row)
 		}
-		lines = append(lines, "\n  Type [cyan]"+lit(strings.TrimPrefix(usageFor("upgrade"), "Usage: "))+"[-]")
+		lines = append(lines, "\n  Type [cyan]"+lit(usageForm("upgrade"))+"[-]")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 

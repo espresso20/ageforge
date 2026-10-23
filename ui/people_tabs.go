@@ -293,12 +293,15 @@ func (c peopleBody) work() {
 	y++
 	g.segsFit(rx, y, ri, xseg{"Set it  ", xDim}, xseg{"roster " + strings.ToLower(r.Name) + " <%|auto>", xText})
 	y += 2
-	for _, l := range append(wrapText(recruitText(st), ri), wrapText("Open slots fill from the reserve.", ri)...) {
+	lines := wrapText(recruitText(st), ri)
+	openAt := len(lines) // the first line of the note after it is gold
+	lines = append(lines, wrapText("Open slots fill from the reserve.", ri)...)
+	for i, l := range lines {
 		if y >= c.y+c.h-1 {
 			break
 		}
 		k := xDim
-		if strings.HasPrefix(l, "Open") {
+		if i == openAt {
 			k = xGold
 		}
 		g.put(rx, y, l, k)

@@ -541,9 +541,9 @@ func (p *accountsPanel) doWipe() {
 			name,
 		)).
 		AddButtons([]string{"Keep it", "Wipe it"}).
-		SetDoneFunc(func(_ int, label string) {
+		SetDoneFunc(func(button int, _ string) {
 			p.pages.RemovePage(accountsWipeConfirm1)
-			if label == "Wipe it" {
+			if button == 1 { // "Wipe it"; the other button and Esc (-1) keep the account
 				p.showWipeTypeGate(s.AccountID, name, wasActive)
 				return
 			}

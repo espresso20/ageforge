@@ -387,10 +387,10 @@ func (b *loadGameBrowser) doDelete() {
 	modal := tview.NewModal().
 		SetText(fmt.Sprintf("Delete '%s'?\n\nThis can't be undone.", s.Name)).
 		AddButtons([]string{"Cancel", "Delete"}).
-		SetDoneFunc(func(_ int, label string) {
+		SetDoneFunc(func(button int, _ string) {
 			b.pages.RemovePage(page)
 			b.app.SetFocus(b.list)
-			if label != "Delete" {
+			if button != 1 { // "Delete" is the second button; Cancel and Esc (-1) keep the save
 				return
 			}
 			if err := game.DeleteSave(s.Name); err != nil {

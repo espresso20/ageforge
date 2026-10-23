@@ -57,10 +57,10 @@ func showAccountNameConfirmModal(app *tview.Application, pages *tview.Pages, nam
 	modal := tview.NewModal().
 		SetText(fmt.Sprintf("Create your AgeForge account as %q?\nThis name is your identity. To restore your account on another device, enter it exactly as written here.", name)).
 		AddButtons([]string{"Create", "Re-type"}).
-		SetDoneFunc(func(_ int, label string) {
+		SetDoneFunc(func(button int, _ string) {
 			pages.RemovePage(accountNameConfirmPage)
-			switch label {
-			case "Create":
+			switch button {
+			case 0: // "Create"
 				onCreate(name)
 			default:
 				// "Re-type" or any close (Esc) — never abort into a no-account state.

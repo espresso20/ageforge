@@ -54,9 +54,9 @@ func showUpdateConfirm(app *tview.Application, pages *tview.Pages, result game.U
 	modal := tview.NewModal().
 		SetText(msg).
 		AddButtons([]string{"Update now", "Later"}).
-		SetDoneFunc(func(_ int, label string) {
+		SetDoneFunc(func(button int, _ string) {
 			pages.RemovePage(updateModalPage)
-			if label == "Update now" {
+			if button == 0 { // "Update now"; Later and Esc (-1) do not
 				showUpdateInstall(app, pages, result)
 			}
 		})
