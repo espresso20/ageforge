@@ -15,7 +15,7 @@ func UnlockHintFor(themeKey string) string {
 	if !ok {
 		return ""
 	}
-	return t.UnlockHint
+	return t.UnlockHint.String()
 }
 
 // GivenBy returns the keys of the themes the badge gives, in registry order.

@@ -1,6 +1,10 @@
 package theme
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/gdamore/tcell/v2"
+
+	"github.com/espresso20/ageforge/vibe"
+)
 
 // Light themes (the theming design §4). Both are always available: Daylight sits in the
 // Standard group next to Forge, High Contrast Light in Accessibility next to its
@@ -18,8 +22,8 @@ import "github.com/gdamore/tcell/v2"
 // ink, and deep-amber brand accents that echo Forge's gold.
 var Daylight = define(Theme{
 	Key:        "daylight",
-	Name:       "Daylight",
-	Blurb:      "Clean light theme — charcoal ink on a bright page, amber accents.",
+	Name:       vibe.E("theme.daylight.name", "Daylight"),
+	Blurb:      vibe.E("theme.daylight.blurb", "Clean light theme — charcoal ink on a bright page, amber accents."),
 	Accessible: false,
 	Standard:   true,
 	Colors: [numRoles]tcell.Color{
@@ -49,8 +53,8 @@ var Daylight = define(Theme{
 // accessible on both axes — contrast and color vision.
 var HighContrastLight = define(Theme{
 	Key:        "high_contrast_light",
-	Name:       "High Contrast Light",
-	Blurb:      "Maximum legibility on a white page: black ink, bold roles.",
+	Name:       vibe.E("theme.high_contrast_light.name", "High Contrast Light"),
+	Blurb:      vibe.E("theme.high_contrast_light.blurb", "Maximum legibility on a white page: black ink, bold roles."),
 	Accessible: true,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0xff, 0xff, 0xff),

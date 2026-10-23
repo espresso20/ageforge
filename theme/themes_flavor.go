@@ -1,6 +1,10 @@
 package theme
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/gdamore/tcell/v2"
+
+	"github.com/espresso20/ageforge/vibe"
+)
 
 // Flavor themes (the theming design §4) are cosmetic, curated palettes that an
 // account badge gives (UnlockBadge): the badge of an age for the five age
@@ -26,8 +30,8 @@ const (
 var Parchment = define(Theme{
 	Key:        "parchment",
 	Duotone:    true,
-	Name:       "Parchment",
-	Blurb:      "Ink on warm parchment — a sepia manuscript page.",
+	Name:       vibe.E("theme.parchment.name", "Parchment"),
+	Blurb:      vibe.E("theme.parchment.blurb", "Ink on warm parchment — a sepia manuscript page."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0xf2, 0xe8, 0xd0), // warm cream
@@ -47,15 +51,15 @@ var Parchment = define(Theme{
 	// The Renaissance Age's badge gives it: the manuscript page for the age of
 	// letters and printing.
 	UnlockBadge: "age.renaissance_age",
-	UnlockHint:  "Reach the Renaissance Age",
+	UnlockHint:  vibe.E("theme.parchment.unlock_hint", "Reach the Renaissance Age"),
 })
 
 // Bronze is a warm metallic look: copper/bronze accent, amber highlight, olive
 // gains and burnt-orange losses on a dark warm brown-black background.
 var Bronze = define(Theme{
 	Key:        "bronze",
-	Name:       "Bronze",
-	Blurb:      "Burnished copper and amber over dark, warm metal.",
+	Name:       vibe.E("theme.bronze.name", "Bronze"),
+	Blurb:      vibe.E("theme.bronze.blurb", "Burnished copper and amber over dark, warm metal."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x1c, 0x14, 0x0c), // dark warm brown-black
@@ -75,7 +79,7 @@ var Bronze = define(Theme{
 	// The Bronze Age's badge gives it: burnished metal for the age that first
 	// worked it. The earliest of the gated themes.
 	UnlockBadge: "age.bronze_age",
-	UnlockHint:  "Reach the Bronze Age",
+	UnlockHint:  vibe.E("theme.bronze.unlock_hint", "Reach the Bronze Age"),
 })
 
 // Cyberpunk is neon on near-black: hot magenta accent, neon-cyan highlight, neon
@@ -83,8 +87,8 @@ var Bronze = define(Theme{
 // palette, the theming design §4).
 var Cyberpunk = define(Theme{
 	Key:        "cyberpunk",
-	Name:       "Cyberpunk",
-	Blurb:      "Hot magenta and neon cyan over near-black violet.",
+	Name:       vibe.E("theme.cyberpunk.name", "Cyberpunk"),
+	Blurb:      vibe.E("theme.cyberpunk.blurb", "Hot magenta and neon cyan over near-black violet."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x0a, 0x06, 0x12), // near-black violet
@@ -103,7 +107,7 @@ var Cyberpunk = define(Theme{
 	LossGlyph: flavorLossGlyph,
 	// The Cyberpunk Age's badge gives it; the theme riffs on that age's palette.
 	UnlockBadge: "age.cyberpunk_age",
-	UnlockHint:  "Reach the Cyberpunk Age",
+	UnlockHint:  vibe.E("theme.cyberpunk.unlock_hint", "Reach the Cyberpunk Age"),
 })
 
 // Monochrome is a stylistic greyscale terminal: a single hue's shades. Accent and
@@ -114,8 +118,8 @@ var Cyberpunk = define(Theme{
 var Monochrome = define(Theme{
 	Key:        "monochrome",
 	Duotone:    true,
-	Name:       "Monochrome",
-	Blurb:      "Greyscale terminal — meaning carried by lightness, not hue.",
+	Name:       vibe.E("theme.monochrome.name", "Monochrome"),
+	Blurb:      vibe.E("theme.monochrome.blurb", "Greyscale terminal — meaning carried by lightness, not hue."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x12, 0x12, 0x12), // near-black grey
@@ -135,7 +139,7 @@ var Monochrome = define(Theme{
 	// The Information Age's badge gives it: the retro terminal look for the age
 	// that put a terminal on every desk.
 	UnlockBadge: "age.information_age",
-	UnlockHint:  "Reach the Information Age",
+	UnlockHint:  vibe.E("theme.monochrome.unlock_hint", "Reach the Information Age"),
 })
 
 // Cosmic is deep-space: a dark indigo/violet background, starlight text, and
@@ -143,8 +147,8 @@ var Monochrome = define(Theme{
 // the theming design §4).
 var Cosmic = define(Theme{
 	Key:        "cosmic",
-	Name:       "Cosmic",
-	Blurb:      "Deep indigo with starlight and nebula accents.",
+	Name:       vibe.E("theme.cosmic.name", "Cosmic"),
+	Blurb:      vibe.E("theme.cosmic.blurb", "Deep indigo with starlight and nebula accents."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x0c, 0x0a, 0x1f), // deep indigo
@@ -163,7 +167,7 @@ var Cosmic = define(Theme{
 	LossGlyph: flavorLossGlyph,
 	// The Galactic Age's badge gives it; the theme riffs on that age's palette.
 	UnlockBadge: "age.galactic_age",
-	UnlockHint:  "Reach the Galactic Age",
+	UnlockHint:  vibe.E("theme.cosmic.unlock_hint", "Reach the Galactic Age"),
 })
 
 // Source is a phosphor terminal: green on green-black, with code falling down
@@ -171,8 +175,8 @@ var Cosmic = define(Theme{
 // its hint does not say how it is earned.
 var Source = define(Theme{
 	Key:        "source",
-	Name:       "Source",
-	Blurb:      "Phosphor green on black, with code rain in the empty columns.",
+	Name:       vibe.E("theme.source.name", "Source"),
+	Blurb:      vibe.E("theme.source.blurb", "Phosphor green on black, with code rain in the empty columns."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x00, 0x0a, 0x03), // green-black
@@ -191,7 +195,7 @@ var Source = define(Theme{
 	GainGlyph:   flavorGainGlyph,
 	LossGlyph:   flavorLossGlyph,
 	UnlockBadge: "special.touched_by_the_source",
-	UnlockHint:  "Given by a secret badge",
+	UnlockHint:  vibe.E("theme.source.unlock_hint", "Given by a secret badge"),
 	Effect:      EffectRain,
 })
 
@@ -200,8 +204,8 @@ var Source = define(Theme{
 // Creative Accounting badge, so its hint does not say how it is earned.
 var Glitch = define(Theme{
 	Key:        "glitch",
-	Name:       "Glitch",
-	Blurb:      "Cyan and magenta on violet black, with a tear of static now and then.",
+	Name:       vibe.E("theme.glitch.name", "Glitch"),
+	Blurb:      vibe.E("theme.glitch.blurb", "Cyan and magenta on violet black, with a tear of static now and then."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x07, 0x06, 0x0d), // violet black
@@ -220,7 +224,7 @@ var Glitch = define(Theme{
 	GainGlyph:   flavorGainGlyph,
 	LossGlyph:   flavorLossGlyph,
 	UnlockBadge: "special.creative_accounting",
-	UnlockHint:  "Given by a secret badge",
+	UnlockHint:  vibe.E("theme.glitch.unlock_hint", "Given by a secret badge"),
 	Effect:      EffectGlitch,
 })
 
@@ -230,8 +234,8 @@ var Glitch = define(Theme{
 // not name it.
 var Ashfall = define(Theme{
 	Key:        "ashfall",
-	Name:       "Ashfall",
-	Blurb:      "Ember orange on soot, with sparks rising in the empty columns.",
+	Name:       vibe.E("theme.ashfall.name", "Ashfall"),
+	Blurb:      vibe.E("theme.ashfall.blurb", "Ember orange on soot, with sparks rising in the empty columns."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x15, 0x11, 0x0f), // soot
@@ -250,7 +254,7 @@ var Ashfall = define(Theme{
 	GainGlyph:   flavorGainGlyph,
 	LossGlyph:   flavorLossGlyph,
 	UnlockBadge: "special.connoisseur_of_endings",
-	UnlockHint:  "Given by a legendary badge",
+	UnlockHint:  vibe.E("theme.ashfall.unlock_hint", "Given by a legendary badge"),
 	Effect:      EffectEmbers,
 })
 
@@ -259,8 +263,8 @@ var Ashfall = define(Theme{
 // top rung of the deals ladder.
 var Ledger = define(Theme{
 	Key:        "ledger",
-	Name:       "Ledger",
-	Blurb:      "Ink and bookkeeper's green on green-bar paper.",
+	Name:       vibe.E("theme.ledger.name", "Ledger"),
+	Blurb:      vibe.E("theme.ledger.blurb", "Ink and bookkeeper's green on green-bar paper."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0xf4, 0xf6, 0xee), // ledger paper
@@ -279,7 +283,7 @@ var Ledger = define(Theme{
 	GainGlyph:   flavorGainGlyph,
 	LossGlyph:   flavorLossGlyph,
 	UnlockBadge: "ladder.deals.3",
-	UnlockHint:  "Given by the top rung of a badge ladder",
+	UnlockHint:  vibe.E("theme.ledger.unlock_hint", "Given by the top rung of a badge ladder"),
 	Effect:      EffectGreenbar,
 })
 
@@ -288,8 +292,8 @@ var Ledger = define(Theme{
 // of Museum Piece, the badge for earning most of the others.
 var Prismatic = define(Theme{
 	Key:        "prismatic",
-	Name:       "Prismatic",
-	Blurb:      "Starlight on blue-black, with glints that turn through the spectrum.",
+	Name:       vibe.E("theme.prismatic.name", "Prismatic"),
+	Blurb:      vibe.E("theme.prismatic.blurb", "Starlight on blue-black, with glints that turn through the spectrum."),
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x0b, 0x0b, 0x10), // blue-black
@@ -308,7 +312,7 @@ var Prismatic = define(Theme{
 	GainGlyph:   flavorGainGlyph,
 	LossGlyph:   flavorLossGlyph,
 	UnlockBadge: "special.museum_piece",
-	UnlockHint:  "Earn 400 badges",
+	UnlockHint:  vibe.E("theme.prismatic.unlock_hint", "Earn 400 badges"),
 	Effect:      EffectPrism,
 })
 

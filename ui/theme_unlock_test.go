@@ -38,8 +38,8 @@ func TestThemeDetailShowsLockCondition(t *testing.T) {
 	if !strings.Contains(d, "🔒") || !strings.Contains(d, "Locked") {
 		t.Errorf("locked detail should show a lock marker\ngot: %s", d)
 	}
-	if !strings.Contains(d, cp.UnlockHint) {
-		t.Errorf("locked detail should show the unlock hint %q\ngot: %s", cp.UnlockHint, d)
+	if !strings.Contains(d, cp.UnlockHint.Plain()) {
+		t.Errorf("locked detail should show the unlock hint %q\ngot: %s", cp.UnlockHint.Plain(), d)
 	}
 	// Swatch preview still present (the role label "Accent" appears in the swatch rows).
 	if !strings.Contains(d, "Accent") {
@@ -63,8 +63,8 @@ func TestCmdThemeListShowsLockHints(t *testing.T) {
 	}
 	// Cyberpunk is a gated flavor theme this account hasn't unlocked → its hint shows.
 	cp, _ := theme.ByKey("cyberpunk")
-	if !strings.Contains(res.Message, cp.UnlockHint) {
-		t.Errorf("theme list should show locked %q's hint %q\ngot: %s", cp.Key, cp.UnlockHint, res.Message)
+	if !strings.Contains(res.Message, cp.UnlockHint.Plain()) {
+		t.Errorf("theme list should show locked %q's hint %q\ngot: %s", cp.Key, cp.UnlockHint.Plain(), res.Message)
 	}
 	if !strings.Contains(res.Message, "🔒") {
 		t.Errorf("theme list should show a 🔒 marker for locked themes\ngot: %s", res.Message)

@@ -37,8 +37,8 @@ func TestCmdThemeListShowsAllThemes(t *testing.T) {
 	}
 	// Every registered theme's name and key must appear in the listing.
 	for _, th := range theme.All() {
-		if !strings.Contains(res.Message, th.Name) {
-			t.Errorf("theme list missing name %q\ngot: %s", th.Name, res.Message)
+		if !strings.Contains(res.Message, th.Name.Plain()) {
+			t.Errorf("theme list missing name %q\ngot: %s", th.Name.Plain(), res.Message)
 		}
 		if !strings.Contains(res.Message, th.Key) {
 			t.Errorf("theme list missing key %q\ngot: %s", th.Key, res.Message)

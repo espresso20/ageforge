@@ -32,8 +32,8 @@ func TestGivenByRoundTrip(t *testing.T) {
 func TestGatedThemeRegistryConsistency(t *testing.T) {
 	for _, th := range All() {
 		if th.AlwaysAvailable() {
-			if th.UnlockBadge != "" || th.UnlockHint != "" || th.Gated() {
-				t.Errorf("theme %q is always available but declares an unlock (badge %q, hint %q)", th.Key, th.UnlockBadge, th.UnlockHint)
+			if th.UnlockBadge != "" || th.UnlockHint.Plain() != "" || th.Gated() {
+				t.Errorf("theme %q is always available but declares an unlock (badge %q, hint %q)", th.Key, th.UnlockBadge, th.UnlockHint.Plain())
 			}
 			if th.Effect != "" {
 				t.Errorf("theme %q is always available and carries the effect %q: an accessible theme holds still", th.Key, th.Effect)
@@ -43,7 +43,7 @@ func TestGatedThemeRegistryConsistency(t *testing.T) {
 		if th.UnlockBadge == "" || !th.Gated() {
 			t.Errorf("gated theme %q names no badge that gives it", th.Key)
 		}
-		if th.UnlockHint == "" {
+		if th.UnlockHint.Plain() == "" {
 			t.Errorf("gated theme %q has an empty UnlockHint; a locked theme must explain how to unlock it", th.Key)
 		}
 		switch th.Effect {
@@ -57,8 +57,8 @@ func TestGatedThemeRegistryConsistency(t *testing.T) {
 // TestUnlockHintFor checks the hint accessor for known/unknown keys.
 func TestUnlockHintFor(t *testing.T) {
 	// A gated theme's hint matches its struct field.
-	if got := UnlockHintFor("cyberpunk"); got != Cyberpunk.UnlockHint {
-		t.Errorf("UnlockHintFor(\"cyberpunk\") = %q, want %q", got, Cyberpunk.UnlockHint)
+	if got := UnlockHintFor("cyberpunk"); got != Cyberpunk.UnlockHint.Plain() {
+		t.Errorf("UnlockHintFor(\"cyberpunk\") = %q, want %q", got, Cyberpunk.UnlockHint.Plain())
 	}
 	if got := UnlockHintFor("cyberpunk"); got == "" {
 		t.Error("UnlockHintFor(\"cyberpunk\") is empty; want a hint")

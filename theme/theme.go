@@ -18,7 +18,11 @@
 //   - code that needs a concrete color calls Color(role) / the derive helpers.
 package theme
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/gdamore/tcell/v2"
+
+	"github.com/espresso20/ageforge/vibe"
+)
 
 // Role enumerates the semantic color slots a theme must fill. Order is fixed and
 // load-bearing: themes declare their palette as a [numRoles]tcell.Color indexed by
@@ -107,11 +111,11 @@ func (r Role) String() string {
 // true RGB via tcell.NewRGBColor so themes are not at the mercy of a terminal's
 // 16-color palette on truecolor terminals (the theming design §3.1).
 type Theme struct {
-	Key        string // "forge", "deuteranopia", ... — stable identifier
-	Name       string // "Forge" — shown in the picker
-	Blurb      string // one-line flavor for the picker detail pane
-	Accessible bool   // true => never milestone-gated, always unlocked
-	Standard   bool   // true => always unlocked, listed under Standard (Forge, Daylight)
+	Key        string     // "forge", "deuteranopia", ... — stable identifier
+	Name       vibe.Entry // "Forge" — shown in the picker
+	Blurb      vibe.Entry // one-line flavor for the picker detail pane
+	Accessible bool       // true => never milestone-gated, always unlocked
+	Standard   bool       // true => always unlocked, listed under Standard (Forge, Daylight)
 
 	Colors [numRoles]tcell.Color
 
@@ -137,7 +141,7 @@ type Theme struct {
 	// UnlockHint is the human-readable unlock condition shown for a LOCKED theme in
 	// the picker detail pane and `theme list` (e.g. "Reach the Cyberpunk Age").
 	// Required for gated themes; empty for always-available ones.
-	UnlockHint string
+	UnlockHint vibe.Entry
 
 	// Effect names an ambient effect the theme carries (the Effect constants):
 	// something drawn in cells that are otherwise empty. "" for none. The UI
@@ -188,11 +192,11 @@ var Groups = []Group{GroupStandard, GroupAccessibility, GroupUnlockable}
 func (g Group) String() string {
 	switch g {
 	case GroupAccessibility:
-		return "Accessibility"
+		return vibe.Line("theme.theme.Group.String.01", "Accessibility")
 	case GroupUnlockable:
-		return "Unlockable"
+		return vibe.Line("theme.theme.Group.String.02", "Unlockable")
 	default:
-		return "Standard"
+		return vibe.Line("theme.theme.Group.String.03", "Standard")
 	}
 }
 
@@ -230,9 +234,9 @@ func (t Theme) IsLight() bool {
 // Variant is "Light" or "Dark" — the picker tag for IsLight.
 func (t Theme) Variant() string {
 	if t.IsLight() {
-		return "Light"
+		return vibe.Line("theme.theme.Variant.01", "Light")
 	}
-	return "Dark"
+	return vibe.Line("theme.theme.Variant.02", "Dark")
 }
 
 // registry holds every built-in theme, keyed by Key. Populated by the
