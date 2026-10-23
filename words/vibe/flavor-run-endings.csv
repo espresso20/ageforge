@@ -46,7 +46,7 @@ flavor.run_ending.digital.009,The fusion plants idled down one by one and the ci
 flavor.run_ending.digital.010,"In the arcades the kids who'd played the same game every night for years ran it back one last time together, then left the cabinets on, demo screens looping for an empty room"
 flavor.run_ending.digital.011,"Block by block the skyline logged off, every screen going dark like the city hit sleep mode"
 flavor.run_ending.digital.012,"Every server farm kept grinding as long as the power held, humming to itself in the dark with nobody left to grind for"
-flavor.run_ending.digital.013,"People stayed logged in to the very end, doomscrolling back through years of their own posts and pics"
+flavor.run_ending.digital.013,"Doomscrolling to the very end, people stayed logged in and scrolled back through years of their own posts and pics"
 flavor.run_ending.digital.014,"Every personal file is going to the permanent archive, so your lore lives rent free forever"
 flavor.run_ending.digital.015,"The city's final group chat message went to every address it ever had, even the long-dead ones, and said thank you and goodbye in every language anyone there ever spoke"
 flavor.run_ending.space.001,The orbital yards clocked off for good
@@ -86,12 +86,12 @@ flavor.run_ending.cosmic.019,The hydroponics bays were left lit so the plants co
 flavor.run_ending.cosmic.020,"At the end the comms were {subject}'s solo era, the only voice left"
 flavor.run_ending.cosmic.021,"The old hands say the dark's patience had hit its limit, and it was only ever waiting for the colony to log off"
 flavor.run_ending.interstellar_age.001,"The beacon's loop had you as its main character at the end, closing on your name"
-flavor.run_ending.interstellar_age.002,"The beacon stayed chronically online after the last lights went out, looping to a feed with zero followers"
+flavor.run_ending.interstellar_age.002,"Chronically online even after the last lights went out, the beacon kept looping to a feed with zero followers"
 flavor.run_ending.interstellar_age.003,"After eighty years of warnings the beacon just lowkey added the colony to its list, no drama"
 flavor.run_ending.interstellar_age.004,"For a few seconds the dead colony's beacon and the living colony's last transmission went full duet, two recordings of the end playing over each other on one frequency, and then the living one left the chat"
 flavor.run_ending.interstellar_age.005,The comms officer is deadass sure the beacon said goodbye
 flavor.run_ending.interstellar_age.006,The beacon's still posting and the colony left it on read for good
-flavor.run_ending.galactic_age.001,"The relay folded the colony into its geometry and then gave no notes, just silence"
+flavor.run_ending.galactic_age.001,The relay folded the colony into its geometry and went NPC silent
 flavor.run_ending.galactic_age.002,The linguists stayed locked in at their posts translating the last of it
 flavor.run_ending.galactic_age.003,The relay's doomcore hum held a single note
 flavor.run_ending.galactic_age.004,"Plot twist from the linguists: the relay had said this before, and the colony's name was already written into its oldest geometry, filed among peoples who ended long before anyone here learned to talk"
