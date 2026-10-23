@@ -86,7 +86,7 @@ game.catastrophe.Succumb.01,"no catastrophe pending, you can't take an L against
 game.catastrophe.Succumb.06,"☄ %s: it's so over, civilization fell. A new dawn, we're so back."
 game.catastrophe.Succumb.07,"%s legacy perk, living rent free forever: %s."
 game.catastrophe.Succumb.08,"Already got the %s legacy, bestie, no second helping of that bonus."
-game.catastrophe.Succumb.09,"Ancient Knowledge: research time %s per epoch you folded in, now %s, locked in forever."
+game.catastrophe.Succumb.09,"Ancient Knowledge: research time %s per epoch you folded in, now %s, permanent buff."
 game.catastrophe.Succumb.10,"Fallen civs leave their %s behind for you, up to %d, generational lore."
 game.catastrophe.Succumb.11,L
 game.catastrophe.Succumb.12,Ls
@@ -451,7 +451,7 @@ game.milestones.progressFor.01,Survival streak
 game.milestones.progressFor.02,Squad size
 game.milestones.progressFor.03,Big brain count
 game.milestones.progressFor.04,Building Ws
-game.milestones.progressFor.05,Soldiers who locked in
+game.milestones.progressFor.05,Soldiers who leveled up
 game.milestones.progressFor.06,Wonder Ws
 game.milestones.progressFor.07,Big-brain staff
 game.milestones.formatRewards.01,research XP
@@ -535,7 +535,7 @@ game.plan_advance.planAdvanceView.02,level up to the
 game.plan_deal.PlanAddDeal.01,"Deal %d with the %s does not exist, chat, they offer %d. Type diplomacy deals to see them."
 game.plan_deal.PlanAddDeal.02,Deal %d with the %s got snatched already.
 game.plan_deal.PlanAddDeal.03,The %s are giving closed for business: they're %s.
-game.plan_deal.PlanAddDeal.04,That deal is already locked in the plan.
+game.plan_deal.PlanAddDeal.04,"That deal is already in the plan, no double dipping, bestie."
 game.plan_deal.planDealGone.01,"mystery civ, who is that"
 game.plan_deal.planDealGone.02,the offer ghosted
 game.plan_deal.planDealGone.03,already snatched
@@ -580,7 +580,7 @@ game.research.orList.01, or
 game.research.StartMemoryResearch.01,tech
 game.research.StartMemoryResearch.02,Type research list to see what you can cook next.
 game.research.StartMemoryResearch.03,"%s is done already, that tech is so last era."
-game.research.StartMemoryResearch.04,"%s is already in the lab, locked in. Type research cancel to stop it."
+game.research.StartMemoryResearch.04,%s is already cooking in the lab. Type research cancel to stop it.
 game.road_events.expRoadDuration.01,%d secs
 game.road_events.expRoadDuration.02,%d mins
 game.save.SaveGame.01,"the account behind this game got wiped, so the save had nowhere to go, it's over"
