@@ -94,7 +94,7 @@ func TestBlackMarketMakesCryptoAtTheStandard(t *testing.T) {
 
 // TestWonderPartsFitTheirAge: a flow part of a wonder's price (food, faith,
 // culture) is covered by the age's income within its target, and the Space
-// Program asks nothing its age does not price. It asked 6e11 knowledge, which
+// Program asks nothing its age does not price. It asked 600B knowledge, which
 // the Modern Age does not price and no town made from buildings; the Sistine
 // Chapel asked 12.8M culture where the Renaissance Age's income makes 967K in
 // its target, and now asks 960K, the largest figure of two significant digits
@@ -121,7 +121,7 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 			t.Errorf("space_program asks %s, which %s does not price", res, space.RequiredAge)
 		}
 	}
-	// The Hoover Dam asked 8e10 stone, a material no Electric Age building is
+	// The Hoover Dam asked 80B stone, a material no Electric Age building is
 	// priced in: it sat outside the wonder's units, as the Space Program's
 	// knowledge did, and no building of the age made it. It asks none now.
 	if _, has := BuildingByKey()["hoover_dam"].BaseCost["stone"]; has {

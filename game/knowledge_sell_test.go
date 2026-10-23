@@ -86,7 +86,7 @@ func TestSellBuilding_StorageKeepsItsRefusal(t *testing.T) {
 // Before this, an advance offered every lineage building its next tier (but
 // storage) and `upgrade` took the offer; the per-copy figures do not rise by
 // tier, so upgrading 4 Natural Philosophy Halls to Research Institutes took
-// the knowledge store from 3.36e7 to 3.64e6.
+// the knowledge store from 33.6M to 3.64M.
 func TestUpgradeKnowledgeBuilding_IsRefused(t *testing.T) {
 	cases := []struct{ age, from, to string }{
 		{"stone_age", "story_circle", "elders_hall"},

@@ -435,7 +435,7 @@ func TestHarbingerSecondLevelPrices(t *testing.T) {
 
 // TestNumReadsAsTheGameDoes: the report prints large numbers the way the
 // game does, quadrillions included. It stopped at T and printed the Last
-// Passage's Brace as 8.9e+03T.
+// Passage's Brace as 8900T in scientific form.
 func TestNumReadsAsTheGameDoes(t *testing.T) {
 	for _, c := range []struct {
 		v    float64

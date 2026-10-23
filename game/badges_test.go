@@ -1055,7 +1055,7 @@ func TestLoweredLaddersCatchUpInOneLine(t *testing.T) {
 	book := coreBook()
 	acct.mu.Lock()
 	acct.Counters = map[string]float64{
-		config.BadgeEvProduced + ".food":        1.712 * config.Million, // 1.07e6 then, times the 1.6 the town grew by
+		config.BadgeEvProduced + ".food":        1.712 * config.Million, // 1.07M then, times the 1.6 the town grew by
 		config.BadgeEvProduced + ".wood":        900_000,
 		config.BadgeEvBuiltLineage + ".housing": 32,
 		config.BadgeEvWonderRaised:              2,

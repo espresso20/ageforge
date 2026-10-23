@@ -81,7 +81,7 @@ func TestNumberUnitBoundaries(t *testing.T) {
 		prev = w.suffix
 	}
 	if got := Number(-2.5 * sextillion); got != "-2.5Sx" {
-		t.Errorf("Number(-2.5e21) = %q", got)
+		t.Errorf("Number(-2.5 * sextillion) = %q", got)
 	}
 }
 

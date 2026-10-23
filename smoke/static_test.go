@@ -504,7 +504,7 @@ func TestColdStartIgnoresThinCarriedSources(t *testing.T) {
 	cs := coldStarts(ages, oldWorks())[atomic]
 	made := cs.made["uranium"] * config.AgeTargetTicks("atomic_age")
 	if made <= 0 || made >= 1.2*config.Billion {
-		t.Fatalf("setup: the carried mines make %.4g uranium in the Atomic Age's target, want something under the works' 1.2e9", made)
+		t.Fatalf("setup: the carried mines make %.4g uranium in the Atomic Age's target, want something under the works' 1.2B", made)
 	}
 	if !cs.affords("uranium", made/2) {
 		t.Errorf("a price of half what the carried copies make in a target: want it payable")

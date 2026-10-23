@@ -17,7 +17,7 @@ var hostileNumbers = []string{
 }
 
 // TestRecruitMaxIntRejected is the smoke fuzzer's repro: this recruit used to
-// overflow the pop-cap check and leave the population at about -9.2e18.
+// overflow the pop-cap check and leave the population at about -9.2Qi.
 func TestRecruitMaxIntRejected(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	ge := game.NewGameEngine()
