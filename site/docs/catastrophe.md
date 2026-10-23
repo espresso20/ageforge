@@ -81,7 +81,7 @@ Pay a cost and keep your civilization. With no Brace and no soldiers, enduring c
 | Loss | Amount |
 |------|--------|
 | Buildings destroyed | 20% of your buildings other than wonders, storage and knowledge buildings, rounded down (`floor(those buildings / 5)`), at least 1 if you have any. Wonders, storage and knowledge buildings are never destroyed and don't count. Brace lowers this to 15% or 10%, and your garrison lowers it further. |
-| Stored resources | Every unlocked resource drops to 15% of its stored amount. Brace raises this to 30% or 45%, and your garrison raises it further. |
+| Stock | Every unlocked resource drops to 15% of what you hold. Brace raises this to 30% or 45%, and your garrison raises it further. |
 | Workers | 25% of the worker pool is lost. |
 | Production | Reconstruction Effort: all production −10% for 562 ticks (about 18m 44s). |
 | Morale | −10 points. |
@@ -92,9 +92,9 @@ Workers of the destroyed buildings go idle first, the same as when you sell a bu
 
 ### Brace
 
-If the harbinger warned you and you paid to **Brace**, Endure costs less. Brace changes only the share of buildings destroyed and the share of stored resources kept; worker loss, the production debuff and the morale hit stay the same.
+If the harbinger warned you and you paid to **Brace**, Endure costs less. Brace changes only the share of buildings destroyed and the share of your stock kept; worker loss, the production debuff and the morale hit stay the same.
 
-| Brace level | Buildings destroyed | Stored resources kept |
+| Brace level | Buildings destroyed | Stock kept |
 |-------------|---------------------|-----------------------|
 | none | 20% | 15% |
 | 1 | 15% | 30% |
@@ -144,7 +144,7 @@ If morale was already low, the −10 can push it into the low band, where output
 
 Every built building except wonders, storage and knowledge buildings goes into a pool in a fixed order (sorted by building key). The pool is shuffled with your run's seeded random generator and the first N are destroyed. Destroyed buildings are removed entirely; they don't become ruins. Because the generator is seeded per run, the same run state destroys the same buildings.
 
-Storage is never destroyed by an Endure (nor by The Great Fire epoch event), because it is what raises your caps, and once its age has passed it can never be rebuilt. Losing some could leave your caps too small to pay for this age's storage, and then they could never rise again. Knowledge buildings are spared for the same reason: they come with your scholars, and an older age's copy can never be rebuilt.
+Storage is never destroyed by an Endure (nor by The Great Fire epoch event), because every copy adds to all production for the rest of the run, and once its age has passed it can never be rebuilt. Knowledge buildings are spared for the same reason: they come with your scholars, and an older age's copy can never be rebuilt.
 
 **Recovery checklist:**
 

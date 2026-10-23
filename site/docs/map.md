@@ -212,7 +212,7 @@ All of them work while the Map is open, so you see the change at once.
 
 ### The flows overlay
 
-`map flows` marks where your economy is stuck: stores that are full and still filling (what flows into them is wasted), stores that are falling and will run dry within about a minute, buildings short of workers, and idle workers. In the roguelike a flows panel lists each of those, then the five lineages that make most of your output, with a bar for each one's share, so you can see what your settlement actually runs on. The skyline sums it up in one line along the bottom row (for example *Iron runs dry · 2 stores full · 12 idle workers*) and suggests a command for the idle hands. In the roguelike, the inspect cursor on the town square gives the same one-line summary.
+`map flows` marks where your economy is stuck: stocks that are falling and will run dry within about a minute, buildings short of workers, and idle workers. In the roguelike a flows panel lists each of those, then the five lineages that make most of your output, with a bar for each one's share, so you can see what your settlement actually runs on. The skyline sums it up in one line along the bottom row (for example *Iron runs dry · 12 idle workers*) and suggests a command for the idle hands. In the roguelike, the inspect cursor on the town square gives the same one-line summary.
 
 ---
 

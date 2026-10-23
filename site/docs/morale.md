@@ -63,7 +63,7 @@ Neutral is the resting state. Living above it takes a steady source of lift, and
 | Source | Effect |
 |--------|--------|
 | **Worship and culture buildings** | The main lever. Each built copy adds a fixed amount every tick, with or without workers (table below). Older tiers keep counting. |
-| **Faith production rate** | +0.02 points a tick for each faith per tick you produce, at most +0.4 points a tick (reached at 20 faith per tick). A faith rate of 4 per tick on its own matches the drift. Your faith *rate* counts, not your stored faith. |
+| **Faith production rate** | +0.02 points a tick for each faith per tick you produce, at most +0.4 points a tick (reached at 20 faith per tick). A faith rate of 4 per tick on its own matches the drift. Your faith *rate* counts, not the faith you hold. |
 | **Good events** | +4 points when a good random event fires. |
 | **Advancing to a new age** | +8 points, once per advance. |
 
@@ -71,7 +71,7 @@ Neutral is the resting state. Living above it takes a steady source of lift, and
 
 | Source | Effect |
 |--------|--------|
-| **Starvation** | -0.5 points a tick while your food store is empty and food is falling. |
+| **Starvation** | -0.5 points a tick while you have no food and it is falling. |
 | **Too large an army** | Workers in military buildings above **30% of your workers** (only the Geographic Society has them) drain 0.3 points a tick for every 10 percentage points over (at 40% military, -0.3 a tick; at 50%, -0.6). |
 | **Idle workforce** | -0.2 points a tick while more than **50% of your workers** sit idle. |
 | **Bad events** | -4 points when a bad random event fires. |

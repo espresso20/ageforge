@@ -1,6 +1,6 @@
 # The Build Plan
 
-AgeForge is paced for a player who checks in a few times a day. The build plan is how you put the hours between visits to work: a list of builds, techs, deals with other civilizations and an advance that the game starts for you, in order, as the resources come in. It runs while you play, and it runs while you are away (offline catch-up executes it as the time passes, not in one lump at the end). A price larger than a store cannot be paid, so the plan will not start it (see [Full stores and the plan](#full-stores-and-the-plan)). The plan holds up to **60 items**, not counting research.
+AgeForge is paced for a player who checks in a few times a day. The build plan is how you put the hours between visits to work: a list of builds, techs, deals with other civilizations and an advance that the game starts for you, in order, as the resources come in. It runs while you play, and it runs while you are away (offline catch-up executes it as the time passes, not in one lump at the end). An item waits only for what it costs against what you hold (see [Big prices and the plan](#big-prices-and-the-plan)). The plan holds up to **60 items**, not counting research.
 
 Open it with `plan`. Add to it with commands:
 
@@ -28,7 +28,7 @@ plan optimize                  # reorder the buildings for the fastest growth
 - **Some items hold nothing.** An item that can't start for a reason money won't fix holds nothing back: a resource the current income won't bring in within a day (it needs a producer first), or the next age's building before the advance.
 - **A wonder pays its bank from what you hold.** A wonder's price in the plan is what its bank still lacks. Once what you hold (after what the items above it hold back) covers all of that, the plan banks it and starts construction, so you don't need to `wonder collect` for it. While it waits it holds nothing back: it is a big bill, and holding it would stall everything below it. The size of a store does not matter: stock has no limit, so the whole price can build up in your stores. A wonder whose [keystone tech](wonders.md#the-keystone-tech) is not researched yet waits for it (`waits for Stoneworking`) and starts once it is.
 - **Techs queue.** Only the first research item in the plan can take the research slot when it frees up; a tech has no price to hold. See [The research queue](#the-research-queue) for what `plan research` adds and which techs it takes.
-- **Deals wait for their price.** A deal item (`plan deal <civ> <n>`, see [Trade deals](factions.md#trade-deals)) is a one-off purchase at a fixed price, so it runs like a single build: it holds its price back while it waits and takes the deal once what is left covers it. It holds nothing while the goods wouldn't fit in their store or the civilization won't trade (war, embargo, rivalry, hostility). It drops out once taken, or when the offer is gone: the civilization's offers rotated or you took it by hand. Offers don't rotate while you are away, so a deal planned before you leave is still there for the plan to take.
+- **Deals wait for their price.** A deal item (`plan deal <civ> <n>`, see [Trade deals](factions.md#trade-deals)) is a one-off purchase at a fixed price, so it runs like a single build: it holds its price back while it waits and takes the deal once what is left covers it. It holds nothing while the civilization won't trade (war, embargo, rivalry, hostility). It drops out once taken, or when the offer is gone: the civilization's offers rotated or you took it by hand. Offers don't rotate while you are away, so a deal planned before you leave is still there for the plan to take.
 - **Upgrades wait for their price.** `plan upgrade <building> [count|all]` adds upgrades for copies you hold. It upgrades one copy at a time, as soon as each can be paid, and drops the item if the upgrade is no longer available.
 - **Advance at its place.** An advance item advances the moment the requirements are met, when the walk reaches it: items above it go first, and items below wait for the next tick.
 - **Dead items drop out.** A building of an earlier age after an advance, a building at its limit, a tech already researched: each leaves the plan with a line in the log.
@@ -81,13 +81,13 @@ Planned research: Imperial Legions, after the 2 techs it needs first (Military T
 
 `research <tech>` itself is unchanged: it starts one tech now and refuses one whose prerequisites you do not hold.
 
-## Stores and the plan
+## Big prices and the plan
 
-Stock has no limit, so a plan item is never blocked by the size of a store. An item waits only for what it costs against what you hold, after the items above it hold back their share. Nothing overflows into the plan or into a wonder's bank.
+Stock has no limit, so a plan item is never held up by how large its price is. An item waits only for what it costs against what you hold, after the items above it hold back their share. Nothing overflows into the plan or into a wonder's bank.
 
-A tech has no price to pay, so it is never blocked by a store. Research starts in plan order, so the techs behind the first one read `after the research above it`, and the first reads `research slot busy` while another tech is in progress.
+Research is never held up by stock. It starts in plan order, so the techs behind the first one read `after the research above it`, and the first reads `research slot busy` while another tech is in progress.
 
-A save from before stock had no limit had banked part of its items' prices in the plan. Those banks are returned to your stores when the save loads (see [Old saves](saving-and-loading.md#saves-from-before-the-storage-wall)).
+A save from before stock had no limit had banked part of its items' prices in the plan. Those banks are given back to you when the save loads (see [Old saves](saving-and-loading.md#saves-from-before-the-storage-wall)).
 
 ## The Plan panel
 
@@ -131,4 +131,4 @@ The plan is saved with your game and comes back exactly as it was. Prestige, Suc
 
 ## See also
 
-- [Storage](buildings.md#storage-buildings-21-tiers): no copy limit, 1.75 times more for each copy, and no price is refused for being larger than a store.
+- [Storage](buildings.md#storage-buildings-21-tiers): each copy adds 1% to all production, with no copy limit and 1.75 times the price for each copy.

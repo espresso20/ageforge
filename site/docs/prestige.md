@@ -189,7 +189,7 @@ The prestige shop and its two badges, **Maxed Out** and **Fully Invested**, are 
 
 ## Era Mastery
 
-Every age remembers how many of your runs completed it and then ended, in a prestige or a Succumb. That count is the age's **mastery**, from 0 to 10, and an age you have mastered runs faster: its production, storage, build times and research times all move **k** times as fast, where k = 1 + √mastery.
+Every age remembers how many of your runs completed it and then ended, in a prestige or a Succumb. That count is the age's **mastery**, from 0 to 10, and an age you have mastered runs faster: its production, build times and research times all move **k** times as fast, where k = 1 + √mastery.
 
 ### How mastery grows
 
@@ -216,7 +216,6 @@ An age at mastery 0 is the **frontier**: no run has completed it, and it runs at
 On **known ground** (an age running faster than 1x, through mastery or [catch-up](#catch-up)):
 
 - **Production.** Every resource's net rate is multiplied by k. This comes last, after the production pools and every other bonus, food drain included, so a balanced food supply stays balanced. The `rates` breakdown shows it as its own **Era Mastery** part.
-- **Storage.** Every cap is multiplied by k too, so a store holds the same hours of income it would at 1x.
 - **Build times** are divided by k, rounded up, never below one tick.
 - **Research times** are divided by k after your research speed is applied, rounded up, never below one tick. The Research and Wonders panels show the shortened times.
 - **Catastrophe timing.** A fated doom's window and the harbinger's lead shrink with each age's speed (see [Catastrophes on known ground](#catastrophes-on-known-ground)).
@@ -232,16 +231,6 @@ What does not change:
 Your **record** is the deepest age you have ever entered, in any run. An age **6 or more ages behind your record** runs at least **4x**, or at its own speed if that is higher (4.2x at mastery 10). With a record in the Interstellar Age, every age up to the Modern Age runs at 4x or better, whatever its mastery.
 
 Catch-up applies after a Succumb too, even on a run that has never prestiged: the rebuild runs the ages 6 or more behind your record at least 4x. Fall in the Steel Era from the Industrial Age, and the next run's Primitive, Stone and Bronze Ages run at 4x; the Iron to the Colonial Age, which the fallen run completed, run at 2x.
-
-### The grace rule
-
-When your speed drops, as you step from known ground onto new ground or out of catch-up, storage shrinks with it. Stock already above the new cap is not cut:
-
-- it stays until you spend it;
-- production adds nothing to that resource while it is over the cap;
-- once it falls under the cap, the grace ends and the resource fills normally again.
-
-Graced stock is saved with your game.
 
 ### Catastrophes on known ground
 
@@ -313,7 +302,7 @@ Once you own all three, the shop has nothing more to sell, and the points you ea
 ### Persists Across Prestige
 - Prestige level, prestige points and carry-overs
 - What the kit remembers: the plan template (the techs you planned included), your roster and the civilizations you have met (it is used only by the items you own)
-- Your auto-recruit and wonder overflow settings
+- Your auto-recruit setting
 - Era Mastery: every age's mastery, and your record (the deepest age you have ever entered)
 - Ruins (from past Succumb events), which carry into the new run
 - Legacy bonuses (from Succumb events), active from tick 1

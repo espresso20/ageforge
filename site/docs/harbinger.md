@@ -214,7 +214,7 @@ A thread's price is set when its harbinger arrives and stays the same for as lon
 | 1 | 15% of what the age the harbinger arrives in makes, in faith (and the same in culture, from the Steel Era on) | ×0.6 |
 | 2 | the same again as level 1 | ×0.36 (×0.6 again) |
 
-- **15% of the age** is three quarters of what the shortest warning makes. A harbinger comes 20% to 60% of an age before its doom, measured on the length the price is set from, and an advance can cut that short. So level 1 is priced on faith you can gather while the warning lasts, not on faith you had to save before it. Level 2 costs the same again, so both levels together cost 30% of what the age makes, about what an average warning brings in: the second level takes a warning of ordinary length or faith you kept in storage.
+- **15% of the age** is three quarters of what the shortest warning makes. A harbinger comes 20% to 60% of an age before its doom, measured on the length the price is set from, and an advance can cut that short. So level 1 is priced on faith you can gather while the warning lasts, not on faith you had to save before it. Level 2 costs the same again, so both levels together cost 30% of what the age makes, about what an average warning brings in: the second level takes a warning of ordinary length or faith you saved up.
 - **What an age makes** is what a player who invests moderately in faith makes in it: eight fully staffed copies of every faith building so far, the faith of every wonder already built, the flat faith of the techs, all multiplied by the production bonuses a typical player holds by then: the all-production pool of milestones and wonders (past +200% from the Digital Age on, where a point counts a quarter) and the techs' own bonus on top. Culture is counted the same way.
 - The price belongs to the thread. It is set from the age the harbinger arrives in and does not change when the thread passes to the next age's figure. It is the same on known ground: a mastered age makes more per tick for a shorter warning.
 - Culture is only charged if you already had it when the era began. It unlocks in the Classical Age, so Iron Era threads cost faith only.
@@ -239,7 +239,7 @@ Brace spends the materials your age makes. Level 1 costs a third of what a moder
 
 The Cosmic Era's two threads are priced by the same rule and cost more of the warning: the Reality Tear's five sixths of its shortest warning, the Last Passage's half of its much longer one, both under the same ceiling (see [What it costs](#what-it-costs-by-epoch)).
 
-| Level | Cost | If you Endure: buildings destroyed | If you Endure: stored resources kept |
+| Level | Cost | If you Endure: buildings destroyed | If you Endure: stock kept |
 |-------|------|------------------------------------|--------------------------------------|
 | 0 (unbraced) | none | 20% | 15% |
 | 1 | a third of what the shortest warning makes of each material, or the ceiling for that age if that is less | 15% | 30% |
@@ -257,7 +257,7 @@ Things to know:
 - Brace only matters if the catastrophe comes **and** you choose Endure. If no catastrophe comes, or you Succumb, the resources are simply spent.
 - The Brace is attached to the pending catastrophe. If you close the choice with Esc and Endure later, or save and load in between, it still applies.
 - Brace is allowed after Invite.
-- **Against the Last Passage, Brace protects points, not your civilization, and it takes real effort.** An Endure at the Last Passage keeps 50% of the run's prestige points unbraced, 70% at level 1 and 85% at level 2. The building and resource numbers above don't apply there, and your garrison doesn't count. It costs more than a doom's: each level costs a third of what the Interstellar Age makes of dark matter and titanium at a moderate economy, under the storage ceiling, about 157 hours of income. See [Brace or Appease against the Last Passage](#brace-or-appease-against-the-last-passage) and [The Last Passage](prestige.md#the-last-passage). Against the Cosmic Era's fated doom, the Reality Tear, Brace works as above, garrison included, under the same ceiling: a sixth of what the age makes, about 78 hours of income a level.
+- **Against the Last Passage, Brace protects points, not your civilization, and it takes real effort.** An Endure at the Last Passage keeps 50% of the run's prestige points unbraced, 70% at level 1 and 85% at level 2. The building and resource numbers above don't apply there, and your garrison doesn't count. It costs more than a doom's: each level costs a third of what the Interstellar Age makes of dark matter and titanium at a moderate economy, under the ceiling, about 157 hours of income. See [Brace or Appease against the Last Passage](#brace-or-appease-against-the-last-passage) and [The Last Passage](prestige.md#the-last-passage). Against the Cosmic Era's fated doom, the Reality Tear, Brace works as above, garrison included, under the same ceiling: a sixth of what the age makes, about 78 hours of income a level.
 
 ### What it costs, by epoch
 
@@ -332,7 +332,7 @@ What each step costs, for the thread a run meets (foretold in the Interstellar A
 
 #### Can you afford it?
 
-Against a doom: Appease level 1, in about three warnings out of four. Brace, whenever your store is about what five copies of each storage building make it: on the prices as they stand now the bot's store held the price in four dooms' threads of six, and it had the whole price in hand in two without saving for it. Level 2 was affordable in about half while it cost double; it costs the same again now. The table below was measured before an ordinary doom's Brace was priced on the warning and before second levels came down, and the Cosmic Era's two threads have not been measured at their prices either (see the notes under the table).
+Against a doom: Appease level 1, in about three warnings out of four. Brace, whenever your stock is about what the age's gates leave a town holding: on the prices as they stood then the bot's stock held the price in four dooms' threads of six, and it had the whole price in hand in two without saving for it. Level 2 was affordable in about half while it cost double; it costs the same again now. The table below was measured before an ordinary doom's Brace was priced on the warning and before second levels came down, and the Cosmic Era's two threads have not been measured at their prices either (see the notes under the table).
 
 A doom's Brace is priced in materials the age makes, a third of the shortest warning's worth: a player who keeps their producers running gathers it well inside the warning, and it sits under its ceiling (see [Brace](#brace-soften-an-endure)). Appease is priced in faith (plus culture from the Steel Era on). Level 1 costs less than the shortest warning makes at a moderate faith economy, so a player who keeps faith buildings staffed can pay it from what they hold or gather it before the doom's moment. Level 2 takes a long warning, or faith and culture kept in storage.
 
@@ -359,7 +359,7 @@ The Last Passage's row was measured at its old prices. Appease cost 3.1B faith a
 
 The Reality Tear's row is from the same runs, when its Brace was the era's price and its second Appease level cost double. Its Brace level 1 is now 25Q dark matter and 260Q titanium, about 78 hours of a moderate economy's income, and has no count yet either.
 
-All of these runs were played while the faith bands read storage, so every doom in them rolled at the bottom band's 90% (see [Why it isn't a share of storage](faith.md#faith-threshold-bands)). That is still what a typical town rolls at, and the bot is one.
+All of these runs were played while the faith bands read a share of the faith held, so every doom in them rolled at the bottom band's 90% (see [Faith threshold bands](faith.md#faith-threshold-bands)). That is still what a typical town rolls at, and the bot is one.
 
 Faith you spend on Appease is faith the Sistine Chapel can't use: keep what it still needs before you appease.
 
