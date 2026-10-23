@@ -217,16 +217,16 @@ func (ge *GameEngine) newPlanModel(keys []string) *planModel {
 				continue
 			}
 			if def.WorkerCapacity > 0 {
-				m.worker0[m.ridx[eff.Target]] += eff.Value * float64(count)
+				m.worker0[m.ridx[eff.Target]] += float64(eff.Value * float64(count))
 			} else {
-				m.fixed0[m.ridx[eff.Target]] += eff.Value * float64(count)
+				m.fixed0[m.ridx[eff.Target]] += float64(eff.Value * float64(count))
 			}
 		}
 	})
 	for _, k := range sortedKeys(bm.ruins) {
 		for _, eff := range bm.defs[k].Effects {
 			if eff.Type == "production" {
-				m.fixed0[m.ridx[eff.Target]] += eff.Value * float64(bm.ruins[k]) * 0.50
+				m.fixed0[m.ridx[eff.Target]] += float64(float64(eff.Value*float64(bm.ruins[k])) * 0.50)
 			}
 		}
 	}
@@ -331,9 +331,9 @@ func (m *planModel) income(arrived []int, out []float64) {
 				continue
 			}
 			if b.slots > 0 {
-				w[r] += float64(n) * v
+				w[r] += float64(float64(n) * v)
 			} else {
-				fx[r] += float64(n) * v
+				fx[r] += float64(float64(n) * v)
 			}
 		}
 	}
@@ -344,7 +344,9 @@ func (m *planModel) income(arrived []int, out []float64) {
 		return float64(e) / float64(slots)
 	}
 	gross := func(r, e int) float64 {
-		return m.flat[r] + m.mult[r]*(fx[r]+(config.UnstaffedShare+config.StaffedShare*fill(e))*w[r])
+		crew := float64(config.StaffedShare * fill(e))
+		made := fx[r] + float64(float64(config.UnstaffedShare+crew)*w[r])
+		return m.flat[r] + float64(m.mult[r]*made)
 	}
 
 	room := max(0, TechHousing(home, m.bonus)-others)
@@ -358,7 +360,7 @@ func (m *planModel) income(arrived []int, out []float64) {
 	e := top
 	for i := 0; i < 24 && e > stay; i++ {
 		g := gross(m.food, e)
-		net := g - m.perHead*float64(max(e, m.people0)+others)
+		net := g - float64(m.perHead*float64(max(e, m.people0)+others))
 		margin := math.Max(m.perHead, 0.05*g)
 		if net >= margin {
 			break
@@ -372,7 +374,7 @@ func (m *planModel) income(arrived []int, out []float64) {
 	for r := range out {
 		out[r] = m.pk * gross(r, e)
 	}
-	out[m.food] -= m.pk * m.perHead * float64(max(e, m.people0)+others)
+	out[m.food] -= float64(float64(m.pk*m.perHead) * float64(max(e, m.people0)+others))
 }
 
 // simRun is the town played forward.
@@ -419,7 +421,7 @@ func (r *simRun) income() []float64 {
 // under construction when the run began, and the ones it has bought, come first.
 func (r *simRun) next(k int) []float64 { return r.m.cost(k, r.bought[k]) }
 
-func costTol(c float64) float64 { return 1e-9 * math.Max(1, c) }
+func costTol(c float64) float64 { return float64(1e-9 * math.Max(1, c)) }
 
 // wait is how many ticks the income takes to cover cost, +Inf when a
 // resource it is short of has no income.
@@ -446,7 +448,7 @@ func (r *simRun) flow(dt float64) {
 	}
 	inc := r.income()
 	for i := range r.stock {
-		r.stock[i] = math.Max(0, r.stock[i]+inc[i]*dt)
+		r.stock[i] = math.Max(0, r.stock[i]+float64(inc[i]*dt))
 	}
 }
 

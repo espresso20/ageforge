@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/espresso20/ageforge/detmath"
 )
 
 // plan optimize (card 6PEgLKVM): reorder the plan's builds so the town grows
@@ -436,7 +438,7 @@ func (r *simRun) payback(a, b int) float64 {
 		per := math.Max(inc[i], floor)
 		weight := 1.0
 		if slowest > 0 {
-			weight = math.Pow(math.Max(0, r.demand[i]-r.stock[i])/per/slowest, 3)
+			weight = detmath.Pow(math.Max(0, r.demand[i]-r.stock[i])/per/slowest, 3)
 		}
 		num += weight * price[i] / per
 		den += weight * (r.scratch[i] - inc[i]) / per
