@@ -224,18 +224,26 @@ func (ge *GameEngine) noteCensus() {
 	for _, d := range ge.badges.domains {
 		attrs["staffed."+d] = float64(staffed[d])
 	}
-	full, capped := true, 0
+	// Full: the town holds MaximalistHours hours of its income in every
+	// resource it can save up. A flow resource is spent as it is made, and so
+	// is one with no income (a resource nothing makes, or the people eat, asks
+	// for nothing and is left out); at least one resource must count.
+	hold := float64(config.MaximalistHours * config.TicksPerHour)
+	full, counted := true, 0
 	for _, key := range ge.Resources.order {
-		r := ge.Resources.resources[key]
-		if !ge.Resources.unlocked[key] || r.Storage <= 0 || ge.rules.IsFlowResource(key) {
+		if !ge.Resources.unlocked[key] || ge.rules.IsFlowResource(key) {
 			continue
 		}
-		capped++
-		if r.Amount < r.Storage {
+		income := ge.incomeOf(key)
+		if income <= 0 {
+			continue
+		}
+		counted++
+		if ge.Resources.resources[key].Amount < float64(income*hold) {
 			full = false
 		}
 	}
-	attrs["full"] = boolFact(full && capped > 0)
+	attrs["full"] = boolFact(full && counted > 0)
 	if pos, ok := ge.rules.Index(ge.age); ok {
 		attrs["age"] = float64(pos)
 	}

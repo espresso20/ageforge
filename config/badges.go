@@ -234,8 +234,8 @@ const (
 	BadgeEvProduced = "produced"
 	// BadgeEvCensus: the state of the run, every BadgeCensusTicks ticks.
 	// Attributes: "staffed.<domain>" (workers at work in a domain), "full"
-	// (1 when every capped resource in use is at its cap), "age" (the
-	// age's place in the order, from 0).
+	// (1 when you hold MaximalistHours hours of your income in every resource
+	// you can save up), "age" (the age's place in the order, from 0).
 	BadgeEvCensus = "census"
 	// BadgeEvWarStarted: a civilization went to war with the player.
 	// Subject: the civilization. Attribute: "wars" (wars under way now).
@@ -315,6 +315,13 @@ func BadgeEventKinds() []string {
 
 // BadgeCensusTicks is how often the run's state is reported (BadgeEvCensus).
 const BadgeCensusTicks = 50
+
+// MaximalistHours is how many hours of its income a town holds of each
+// resource at once for the census to call it full (BadgeEvCensus, the
+// "full" fact; Everything Full). Holding that many hours of everything takes
+// that long without spending any of it, so the badge asks for restraint and
+// not for a build; income that rises while you wait raises the bar with it.
+const MaximalistHours = 6
 
 // BadgeProducedTicks is how often production is reported (BadgeEvProduced).
 const BadgeProducedTicks = 10

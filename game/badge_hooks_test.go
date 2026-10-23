@@ -173,10 +173,11 @@ func TestCensusReadsThePayroll(t *testing.T) {
 	}
 }
 
-// TestCensusSeesEveryStoreFull: Everything Full asks for every capped
-// resource the run has unlocked to be full at once, from the Industrial Age
-// on. A resource that is spent as it is made (a flow resource) is left out:
-// it cannot be saved up.
+// TestCensusSeesEveryStoreFull: Everything Full asks for MaximalistHours
+// hours of the town's income in every resource it can save up, all at once,
+// from the Industrial Age on. A resource that is spent as it is made (a flow
+// resource) is left out, and so is one with no income: neither can be saved
+// up.
 func TestCensusSeesEveryStoreFull(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada")
@@ -186,16 +187,24 @@ func TestCensusSeesEveryStoreFull(t *testing.T) {
 		ge.noteCensus()
 		ge.mu.Unlock()
 	}
+	hours := float64(config.MaximalistHours * config.TicksPerHour)
+	// fill gives every unlocked resource an income of 10 a tick (a flow
+	// resource none to hold: it is left empty), and holds exactly the hours
+	// asked of it, or a unit less of short.
 	fill := func(short string) {
 		ge.mu.Lock()
 		for _, key := range ge.Resources.order {
 			r := ge.Resources.resources[key]
-			if !ge.Resources.unlocked[key] || r.Storage <= 0 {
+			if !ge.Resources.unlocked[key] {
 				continue
 			}
-			r.Amount = r.Storage
+			r.Rate = 10
+			r.Amount = float64(ge.incomeOf(key) * hours)
+			if ge.rules.IsFlowResource(key) {
+				r.Amount = 0
+			}
 			if key == short {
-				r.Amount = r.Storage - 1
+				r.Amount--
 			}
 		}
 		ge.mu.Unlock()
@@ -212,14 +221,30 @@ func TestCensusSeesEveryStoreFull(t *testing.T) {
 	fill("wood")
 	census()
 	wantBadges(t, acct, "one store a unit short", nil, "special.everything_full")
+
+	// Income that rises past what is held asks for more.
 	fill("")
-	// A flow resource below its cap does not stand in the way.
 	ge.mu.Lock()
-	flows := 0
+	ge.Resources.resources["wood"].Rate = 11
+	ge.mu.Unlock()
+	census()
+	wantBadges(t, acct, "wood's income rose and the hours held did not", nil, "special.everything_full")
+
+	// A flow resource below the hours does not stand in the way, nor does a
+	// resource with no income.
+	fill("")
+	ge.mu.Lock()
+	flows, idle := 0, 0
 	for _, key := range ge.Resources.order {
-		if r := ge.Resources.resources[key]; ge.Resources.unlocked[key] && r.Storage > 0 && ge.rules.IsFlowResource(key) {
-			r.Amount = 0
+		r := ge.Resources.resources[key]
+		if !ge.Resources.unlocked[key] {
+			continue
+		}
+		if ge.rules.IsFlowResource(key) {
 			flows++
+		} else if idle == 0 && key != "wood" {
+			r.Rate, r.Amount = 0, 0
+			idle++
 		}
 	}
 	ge.mu.Unlock()
@@ -228,6 +253,27 @@ func TestCensusSeesEveryStoreFull(t *testing.T) {
 	if flows == 0 {
 		t.Log("no flow resource is unlocked by the Industrial Age: the exemption was not exercised")
 	}
+	if idle == 0 {
+		t.Log("no resource but wood is unlocked by the Industrial Age: the exemption of an idle one was not exercised")
+	}
+}
+
+// TestCensusNeedsSomethingToHold: with no resource that has an income there
+// is nothing to hold, and a full house of stock is not "full".
+func TestCensusNeedsSomethingToHold(t *testing.T) {
+	isolateAccountDir(t)
+	ge, acct := devEngine(t, "Ada")
+	ge.mu.Lock()
+	ge.age = "industrial_age"
+	ge.applyAgeUnlocks("industrial_age")
+	ge.ageTold = ge.age
+	for _, key := range ge.Resources.order {
+		ge.Resources.resources[key].Rate, ge.Resources.resources[key].Amount = 0, 1e30
+	}
+	ge.tick = (ge.tick/config.BadgeCensusTicks + 1) * config.BadgeCensusTicks
+	ge.noteCensus()
+	ge.mu.Unlock()
+	wantBadges(t, acct, "plenty held, no income anywhere", nil, "special.everything_full")
 }
 
 // TestWarsAreReported: a war starting, a war ending by waiting it out and
