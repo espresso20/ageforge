@@ -2306,96 +2306,96 @@ ui.tab_economy.cultureThresholdLabels.01,+5% big brain speed
 ui.tab_economy.cultureThresholdLabels.02,+10% big brain speed
 ui.tab_economy.cultureThresholdLabels.03,"+15% big brain speed, wonder tier unlocked"
 ui.tab_economy.cultureThresholdLabels.04,+20% big brain speed
-ui.tab_economy.cultureThresholdLabels.05,"+25% research speed, culture events, the party"
-ui.tab_economy.cultureThresholdLabels.06,"+30% research speed, goated"
-ui.tab_economy.cultureThresholdLabels.07,"+research speed, the boost"
-ui.tab_economy.cultureThresholdLabels.08,"+research speed, bet"
-ui.tab_economy.cultureThresholdLabels.09,"+research speed, W"
-ui.tab_economy.cultureThresholdLabels.10,"+research speed, sus"
-ui.tab_economy.cultureThresholdLabels.11,"+research speed, fr"
-ui.tab_economy.NewEconomyTab.01," Resources, the bag "
-ui.tab_economy.NewEconomyTab.02," Buildings, the stuff "
-ui.tab_economy.NewEconomyTab.03," Under construction, the build queue "
-ui.tab_economy.layoutConstruction.01," (nothing under construction, chill)"
-ui.tab_economy.layoutConstruction.02," (nothing building, the quiet era)"
-ui.tab_economy.layoutConstruction.03," (none, the blank slate)"
-ui.tab_economy.layoutConstruction.07," %d under way, the first in %s, bussin"
-ui.tab_economy.layoutConstruction.08," %d under way, %s, the countdown"
-ui.tab_economy.layoutConstruction.09," %d under way, bet"
-ui.tab_economy.layoutConstruction.10," +%d more under way, the queue"
-ui.tab_economy.buildingEntries.01,"[yellow]MAX, the cap[-]"
-ui.tab_economy.buildingEntries.02,"[yellow]Building limit reached, no more room, fr.[-]"
-ui.tab_economy.buildingEntries.03,"   The bill: "
-ui.tab_economy.buildingEntries.04,"   [green]Workers, the crew:[-] "
-ui.tab_economy.buildingEntries.05,"[gold]↑ Upgrade available, bussin: %s. Type: upgrade %s[-]"
-ui.tab_economy.buildingEntries.06," [gray]No buildings unlocked yet, we're early[-]"
-ui.tab_economy.layoutBuildings.01," ↑ %d more above, scroll: PgUp"
-ui.tab_economy.layoutBuildings.02," ↓ %d more below, scroll: PgDn"
-ui.tab_economy.domainToLabel.01,"Food, the munchies"
-ui.tab_economy.domainToLabel.02,"Faith, the glow"
-ui.tab_economy.domainToLabel.03,"Military, the muscle"
-ui.tab_economy.domainToLabel.04,"Trade, the bag"
-ui.tab_economy.domainToLabel.05,Engineering
-ui.tab_economy.domainToLabel.06,Hacker
-ui.tab_economy.domainToLabel.07,Astronaut
-ui.theme_account.themeUnavailableMsg.01,"That theme's locked. Type 'theme list' to see how to earn it, bet."
-ui.theme_picker.swatchRoles.01,"Background, the canvas"
-ui.theme_picker.swatchRoles.02,"Surface, the layer"
-ui.theme_picker.swatchRoles.03,"Text, the words"
-ui.theme_picker.swatchRoles.04,"Accent, the pop"
-ui.theme_picker.swatchRoles.05,"Positive, W"
-ui.theme_picker.swatchRoles.06,"Negative, L"
-ui.theme_picker.swatchRoles.07,"Highlight, the spotlight"
-ui.theme_picker.swatchRoles.08,"Dim, lowkey"
-ui.theme_picker.swatchRoles.09,"Selection, the pick"
-ui.theme_picker.CreateThemePickerPage.01,"[gold]═══ Themes, the fit ═══[-]"
-ui.theme_picker.CreateThemePickerPage.02,"[gray]The preview is live, bussin. Pick a theme that reads well in your terminal; light or dark, every theme paints its own background, no cap.[-]"
-ui.theme_picker.CreateThemePickerPage.03," Themes, the closet "
+ui.tab_economy.cultureThresholdLabels.05,"+25% big brain speed, culture events unlocked"
+ui.tab_economy.cultureThresholdLabels.06,+30% big brain speed
+ui.tab_economy.cultureThresholdLabels.07,+big brain speed
+ui.tab_economy.cultureThresholdLabels.08,+big brain speed
+ui.tab_economy.cultureThresholdLabels.09,+big brain speed
+ui.tab_economy.cultureThresholdLabels.10,+big brain speed
+ui.tab_economy.cultureThresholdLabels.11,+big brain speed
+ui.tab_economy.NewEconomyTab.01," The Bag "
+ui.tab_economy.NewEconomyTab.02," Builds "
+ui.tab_economy.NewEconomyTab.03," Currently Cooking "
+ui.tab_economy.layoutConstruction.01," (nothing cooking)"
+ui.tab_economy.layoutConstruction.02," (zero builds cooking)"
+ui.tab_economy.layoutConstruction.03," (blank slate)"
+ui.tab_economy.layoutConstruction.07," %d cooking, the first drops in %s"
+ui.tab_economy.layoutConstruction.08," %d cooking, %s"
+ui.tab_economy.layoutConstruction.09," %d cooking"
+ui.tab_economy.layoutConstruction.10," +%d more cooking"
+ui.tab_economy.buildingEntries.01,[yellow]MAXED[-]
+ui.tab_economy.buildingEntries.02,"[yellow]Maxed out on this building, no more slots.[-]"
+ui.tab_economy.buildingEntries.03,"   Damage: "
+ui.tab_economy.buildingEntries.04,"   [green]Grinders[-] "
+ui.tab_economy.buildingEntries.05,[gold]↑ Glow-up ready: %s. Type: upgrade %s[-]
+ui.tab_economy.buildingEntries.06," [gray]No buildings unlocked yet, so early[-]"
+ui.tab_economy.layoutBuildings.01," ↑ %d more above, scroll up bestie: PgUp"
+ui.tab_economy.layoutBuildings.02," ↓ %d more below, keep doomscrolling: PgDn"
+ui.tab_economy.domainToLabel.01,Food squad
+ui.tab_economy.domainToLabel.02,Faith squad
+ui.tab_economy.domainToLabel.03,Military squad
+ui.tab_economy.domainToLabel.04,Trade squad
+ui.tab_economy.domainToLabel.05,Engineering squad
+ui.tab_economy.domainToLabel.06,Hacker squad
+ui.tab_economy.domainToLabel.07,Astronaut squad
+ui.theme_account.themeUnavailableMsg.01,That theme is gatekept. Type 'theme list' to see how to earn it.
+ui.theme_picker.swatchRoles.01,Base vibe
+ui.theme_picker.swatchRoles.02,Layer drip
+ui.theme_picker.swatchRoles.03,Yap text
+ui.theme_picker.swatchRoles.04,Accent pop
+ui.theme_picker.swatchRoles.05,W color
+ui.theme_picker.swatchRoles.06,L color
+ui.theme_picker.swatchRoles.07,Main character
+ui.theme_picker.swatchRoles.08,Lowkey
+ui.theme_picker.swatchRoles.09,The pick
+ui.theme_picker.CreateThemePickerPage.01,[gold]═══ Fit Check ═══[-]
+ui.theme_picker.CreateThemePickerPage.02,"[gray]Live preview, no cap. Pick a fit that reads well in your terminal; light or dark, every theme paints its own background.[-]"
+ui.theme_picker.CreateThemePickerPage.03," The Closet "
 ui.theme_picker.CreateThemePickerPage.04," Deets "
-ui.theme_picker.themeRowLabel.01," (current, the fit)[-]"
-ui.theme_picker.themeRowLabel.02,"  [cyan]accessible, W[-]"
-ui.theme_picker.themeRowLabel.03,"  [gray]🔒 locked, the vault[-]"
-ui.theme_picker.themeDetailText.01,"[gold]%s[-]  [dim]%s theme · %s, the vibe[-]"
-ui.theme_picker.themeDetailText.02,"[cyan]Accessible, the inclusive pick:[-] [gray]colorblind-safe or high-contrast, always unlocked, W[-]"
-ui.theme_picker.themeDetailText.03," [gray](gain %s / loss %s), the math[-]"
-ui.theme_picker.themeDetailText.04,"unlocked by a milestone, the grind"
-ui.theme_picker.themeDetailText.05,"[red]🔒 Locked, sus:[-] [gray]%s[-]"
-ui.theme_picker.themeFooterBar.01,"Preview, the sneak peek"
-ui.theme_picker.themeFooterBar.03,"Keep it, bet"
-ui.theme_picker.themeFooterBar.05,"Nah, bail"
-ui.theme_picker.drawThemeSample.01,"Sample, the taste: "
-ui.theme_picker.drawThemeSample.02," Resources, the bag "
-ui.theme_picker.drawThemeSample.03,"Food, the munchies "
-ui.theme_picker.drawThemeSample.04,"Wood, the logs "
-ui.theme_picker.drawThemeSample.05,"Body text, the words "
-ui.theme_picker.drawThemeSample.06,"and a dim hint, lowkey"
-ui.theme_picker.drawThemeSample.07," ▸ selected row, the pick "
-ui.theme_picker.drawThemeSample.09," Keep it "
-ui.theme_picker.drawThemeSample.10," danger, sus "
-ui.theme_unlock.themeUnlockToast.01,"%s🎨 New theme unlocked, W: %s. Type theme to use it, bussin.[-]"
-ui.toast.chainToast.01,"Chain complete, W: %s. Title: %s."
-ui.toast.chainToast.02," Game speed %s for %s, the tempo."
-ui.villager_panel.computeMoraleBand.01,"▲ Morale %.0f%% (production %s), the vibe"
-ui.villager_panel.computeMoraleBand.02,"▼ Morale %.0f%% (production %s), sus"
-ui.villager_panel.computeMoraleBand.03,"Morale %.0f%% (production steady), bussin"
-ui.wonder_gallery.NewWonderPanel.01," Wonder, the flex "
-ui.wonder_gallery.UpdateState.01,"[gray]No wonder in this age, we're early.[-]"
-ui.wonder_gallery.UpdateState.02,"[green]Built, W[-] [gray](%s), the flex[-]
+ui.theme_picker.themeRowLabel.01," (wearing rn)[-]"
+ui.theme_picker.themeRowLabel.02,"  [cyan]accessible, green flag[-]"
+ui.theme_picker.themeRowLabel.03,"  [gray]🔒 gatekept[-]"
+ui.theme_picker.themeDetailText.01,[gold]%s[-]  [dim]%s fit · %s[-]
+ui.theme_picker.themeDetailText.02,"[cyan]Accessible:[-] [gray]colorblind-safe or high-contrast, never gatekept[-]"
+ui.theme_picker.themeDetailText.03," [gray](W %s / L %s)[-]"
+ui.theme_picker.themeDetailText.04,grind a milestone for it
+ui.theme_picker.themeDetailText.05,[red]🔒 Gatekept:[-] [gray]%s[-]
+ui.theme_picker.themeFooterBar.01,Sneak peek
+ui.theme_picker.themeFooterBar.03,Lock it in
+ui.theme_picker.themeFooterBar.05,Nah
+ui.theme_picker.drawThemeSample.01,Fit check: 
+ui.theme_picker.drawThemeSample.02," The Bag "
+ui.theme_picker.drawThemeSample.03,Snacks 
+ui.theme_picker.drawThemeSample.04,Sticks 
+ui.theme_picker.drawThemeSample.05,Yap text 
+ui.theme_picker.drawThemeSample.06,and a lowkey hint
+ui.theme_picker.drawThemeSample.07," ▸ main character row "
+ui.theme_picker.drawThemeSample.09," Lock in "
+ui.theme_picker.drawThemeSample.10," red flag "
+ui.theme_unlock.themeUnlockToast.01,%s🎨 New fit unlocked: %s. Type theme to wear it.[-]
+ui.toast.chainToast.01,"Chain complete, it ate: %s. New title flex: %s."
+ui.toast.chainToast.02," Speedrun factor %s for %s."
+ui.villager_panel.computeMoraleBand.01,▲ Vibes %.0f%% (production %s)
+ui.villager_panel.computeMoraleBand.02,▼ Vibes %.0f%% (production %s)
+ui.villager_panel.computeMoraleBand.03,Vibes %.0f%% (production holding steady)
+ui.wonder_gallery.NewWonderPanel.01," Wonder Flex "
+ui.wonder_gallery.UpdateState.01,"[gray]This age has no wonder, zero flex.[-]"
+ui.wonder_gallery.UpdateState.02,"[green]It ate[-] [gray](%s)[-]
 
 "
-ui.wonder_gallery.UpdateState.03,"[gray]%s, not built yet, the queue[-]
+ui.wonder_gallery.UpdateState.03,"[gray]%s, still loading[-]
 
 "
-ui.wonder_gallery.UpdateState.04,"[cyan]Perks, the goodies:[-]
+ui.wonder_gallery.UpdateState.04,"[cyan]Buffs:[-]
 "
 ui.wonder_gallery.UpdateState.05,"
-[cyan]Wonder bank, the vault:[-]
+[cyan]Wonder bag:[-]
 "
 ui.wonder_gallery.UpdateState.06,"
-[gray]Build time, the clock: %s[-]
+[gray]Cook time: %s[-]
 "
 ui.wonder_gallery.UpdateState.07,"
-[gold]Wonders built, the W count: %d[-]"
+[gold]Wonder flexes: %d[-]"
 ui.building_text.buildingText.07,"Past %s, each one researches at half rate, the nerf hits."
 ui.building_text.buildingText.05,dupe
 ui.building_text.buildingText.06,dupes
