@@ -1,6 +1,10 @@
 package theme
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/gdamore/tcell/v2"
+
+	"github.com/espresso20/ageforge/vibe"
+)
 
 // Forge is the default theme: AgeForge's current dark + gold look, formalized as
 // roles (the theming design §4). Accessible is false — it relies on green/red for ± — but
@@ -23,8 +27,8 @@ import "github.com/gdamore/tcell/v2"
 //     borders/titles via Accent.)
 var Forge = define(Theme{
 	Key:        "forge",
-	Name:       "Forge",
-	Blurb:      "The classic dark-and-gold AgeForge look.",
+	Name:       vibe.E("theme.forge.name", "Forge"),
+	Blurb:      vibe.E("theme.forge.blurb", "The classic dark-and-gold AgeForge look."),
 	Accessible: false,
 	Standard:   true,
 	Colors: [numRoles]tcell.Color{

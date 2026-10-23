@@ -512,7 +512,7 @@ func TestCopy(t *testing.T) {
 			return true
 		})
 	}
-	if e := Entry(); e.Name != "skyline" || e.Title != "Skyline" || e.Blurb == "" || e.New() == nil {
+	if e := Entry(); e.Name != "skyline" || e.Title.Plain() != "Skyline" || e.Blurb.Plain() == "" || e.New() == nil {
 		t.Errorf("bad entry %+v", e)
 	}
 }

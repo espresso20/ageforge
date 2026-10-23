@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // cityview.go draws the Earth arc's city (city.go): the age's inks, a cell
@@ -323,14 +324,15 @@ func (v *view) cityGlyph(x, y int, t mapmodel.Terrain) (glyph, bool) {
 			g.fg, g.attr = cp.lit, 0
 		}
 	case uAd:
-		word := holoAds[(int(cl.aux[i]>>3)+f/40)%len(holoAds)]
+		word := []rune(holoAds[(int(cl.aux[i]>>3)+f/40)%len(holoAds)].String())
 		g = glyph{r: ' ', fg: v.neonInk(cl, int(cl.aux[i]>>3)), bg: cp.night, attr: tcell.AttrBold, sal: 12}
 		if p := int(cl.aux[i] & 7); p < len(word) {
-			g.r = rune(word[p])
+			g.r = word[p]
 		}
 	case uCorp:
 		c := megacorps[int(cl.aux[i]>>2)%len(megacorps)]
-		g = glyph{r: rune(c.initials[int(cl.aux[i]&3)%len(c.initials)]), fg: v.neonInk(cl, int(cl.aux[i]>>2)),
+		ini := []rune(c.initials.String())
+		g = glyph{r: ini[int(cl.aux[i]&3)%len(ini)], fg: v.neonInk(cl, int(cl.aux[i]>>2)),
 			bg: cp.lit, attr: tcell.AttrBold, sal: 33}
 		if mapmodel.Hash(int64(cl.aux[i]>>2), int64(f/3))%41 == 0 {
 			g.attr = 0
@@ -525,9 +527,9 @@ func describeLine(ln *cityLine, n int) insp {
 	in := insp{Title: info.Title, Lines: []string{info.Line(n)}}
 	switch ln.feat {
 	case mapmodel.FeatSkyRail:
-		in.Lines = []string{ln.name + ", high over the street"}
+		in.Lines = []string{ln.name + vibe.Line("ui.mapstyle.roguelike.cityview.describeLine.01", ", high over the street")}
 	case mapmodel.FeatMaglevLine:
-		in.Lines = []string{ln.name + ", humming with power"}
+		in.Lines = []string{ln.name + vibe.Line("ui.mapstyle.roguelike.cityview.describeLine.02", ", humming with power")}
 	}
 	return in
 }
@@ -559,16 +561,16 @@ func (v *view) describeCity(s *scene, p mapmodel.Pt, k kind) (insp, bool) {
 	case uNone:
 		return insp{}, false
 	case uStreet:
-		return insp{Title: "Street", Lines: []string{"between the blocks of " + s.w.Name}}, true
+		return insp{Title: vibe.Line("ui.mapstyle.roguelike.cityview.describeCity.01", "Street"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.cityview.describeCity.02", "between the blocks of ") + s.w.Name}}, true
 	case uCorp:
 		c := megacorps[int(cl.aux[i]>>2)%len(megacorps)]
-		return insp{Title: c.name + " tower", Lines: []string{c.initials + " in neon, a block high",
+		return insp{Title: c.name.String() + vibe.Line("ui.mapstyle.roguelike.cityview.describeCity.03", " tower"), Lines: []string{c.initials.String() + vibe.Line("ui.mapstyle.roguelike.cityview.describeCity.04", " in neon, a block high"),
 			mapmodel.FeatCorpTower.Info().Line(n)}}, true
 	case uAd:
-		word := holoAds[(int(cl.aux[i]>>3)+v.anim/40)%len(holoAds)]
-		return insp{Title: "Holo-ad", Lines: []string{"flashing " + strings.TrimSpace(word) + " over the street"}}, true
+		word := holoAds[(int(cl.aux[i]>>3)+v.anim/40)%len(holoAds)].String()
+		return insp{Title: vibe.Line("ui.mapstyle.roguelike.cityview.describeCity.05", "Holo-ad"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.cityview.describeCity.06", "flashing ") + strings.TrimSpace(word) + vibe.Line("ui.mapstyle.roguelike.cityview.describeCity.07", " over the street")}}, true
 	case uArco:
-		return insp{Title: "Arcology", Lines: []string{mapmodel.FeatArcology.Info().Line(n), "home to a hundred thousand"}}, true
+		return insp{Title: vibe.Line("ui.mapstyle.roguelike.cityview.describeCity.08", "Arcology"), Lines: []string{mapmodel.FeatArcology.Info().Line(n), vibe.Line("ui.mapstyle.roguelike.cityview.describeCity.09", "home to a hundred thousand")}}, true
 	}
 	f := useFeature[u]
 	if f == mapmodel.FeatNone {

@@ -453,7 +453,11 @@ func TestVisitor(t *testing.T) {
 				if vi.saucer {
 					lines = saucerLines
 				}
-				if ins.Kind != mapstyle.KindAlien || len(ins.Lines) != 1 || !strings.Contains(strings.Join(lines, "|"), ins.Lines[0]) {
+				var told []string
+				for _, l := range lines {
+					told = append(told, l.String())
+				}
+				if ins.Kind != mapstyle.KindAlien || len(ins.Lines) != 1 || !strings.Contains(strings.Join(told, "|"), ins.Lines[0]) {
 					t.Errorf("%s: inspecting the visitor says %+v", c.age, ins)
 				}
 				lg := strings.ToLower(strings.Join(legendLabels(scr, 160, 48), "|"))

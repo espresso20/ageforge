@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // compact.go is the glanceable form for a sidebar (40x15). The whole city is
@@ -66,7 +67,7 @@ func (v *view) composeCompact(f mapstyle.Frame, W, H int) {
 		parts = append(parts, seg{" ▼" + strconv.Itoa(n), theme.RolePositive})
 	}
 	if n := idleProducers(m); n > 0 {
-		parts = append(parts, seg{" " + strconv.Itoa(n) + " idle", theme.RoleWarning})
+		parts = append(parts, seg{" " + strconv.Itoa(n) + vibe.Line("ui.mapstyle.skyline.compact.composeCompact.01", " idle"), theme.RoleWarning})
 	}
 	if m.Harbinger != nil {
 		parts = append(parts, seg{" " + string(mapmodel.R(mapmodel.SymHarbinger, f.Tier)), theme.RoleWarning})

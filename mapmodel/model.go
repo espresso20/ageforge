@@ -18,6 +18,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Model is one snapshot laid out for the maps.
@@ -159,7 +160,7 @@ const (
 )
 
 func (r Relation) String() string {
-	return [...]string{"neutral", "friendly", "allied", "rival", "embargo", "at war"}[r]
+	return [...]string{"neutral", "friendly", "allied", "rival", "embargo", vibe.Line("mapmodel.model.String.06", "at war")}[r]
 }
 
 // Faction is a civilization.
@@ -221,6 +222,7 @@ type QueueItem struct {
 // none). It is a pure function of its inputs; Builder caches the parts that
 // depend only on the seed.
 func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
+	b.follow()
 	cat := b.cat
 	m := &Model{Seed: st.Seed, Tick: st.Tick, Age: st.Age, AgeName: st.AgeName, AgeIdx: cat.AgeIdx[st.Age],
 		NextAge: st.NextAge, NextAgeName: st.NextAgeName, AgeReady: st.AgeReady, Catalog: cat,
@@ -286,6 +288,9 @@ func layoutKey(m *Model) uint64 {
 	}
 	h := Hash(m.Seed, int64(m.AgeIdx), int64(m.Workers.Staffed), int64(m.Workers.Idle), int64(m.Workers.Pop),
 		HashStr(m.Catastrophe.Pending), int64(m.Expeditions.Completed))
+	if vibe.On() { // the model holds words, so a scene built from the other script's is not reused
+		h = Hash(int64(h), 1)
+	}
 	for _, b := range m.Buildings {
 		h = Hash(int64(h), HashStr(b.Key), int64(b.Count), int64(b.Ruins), int64(b.Workers), b2i(b.Legacy), int64(b.Delta))
 	}
@@ -479,7 +484,7 @@ func (m *Model) lineages() {
 		}
 		l := idx[b.Lineage]
 		if l == nil {
-			l = &Lineage{Key: b.Lineage, Name: LineageNames[b.Lineage], Class: LineageClass(b.Lineage),
+			l = &Lineage{Key: b.Lineage, Name: LineageName(b.Lineage), Class: LineageClass(b.Lineage),
 				Sym: LineageSym(b.Lineage, m.Epoch)}
 			idx[b.Lineage] = l
 			m.Lineages = append(m.Lineages, l)
@@ -603,7 +608,7 @@ func (m *Model) world(st *game.GameState) {
 		c.Pending = st.PendingCatastrophe
 		c.PendingName = cat.Catastrophes[st.PendingCatastrophe]
 		if c.PendingName == "" {
-			c.PendingName = "Catastrophe"
+			c.PendingName = vibe.Line("mapmodel.model.world.01", "Catastrophe")
 		}
 		c.Pressure = 1
 	} else {

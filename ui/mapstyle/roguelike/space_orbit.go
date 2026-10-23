@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // space_orbit.go is the Space Age: actual space. The camera has left the
@@ -191,8 +192,8 @@ func (b *skyBase) station() {
 	hx, hy := orbHubX, orbHubY
 	fx, fy := float64(hx), float64(hy)
 	ring, strokes := smoothRing(fx, fy, orbRX, orbRY)
-	fr := b.frame("Station ring", "the main ring of the station", slRing, "")
-	spoke := b.frame("Spoke", "from the hub to the ring", 0, "")
+	fr := b.frame(vibe.Line("ui.mapstyle.roguelike.space_orbit.station.01", "Station ring"), vibe.Line("ui.mapstyle.roguelike.space_orbit.station.02", "the main ring of the station"), slRing, "")
+	spoke := b.frame(vibe.Line("ui.mapstyle.roguelike.space_orbit.station.03", "Spoke"), vibe.Line("ui.mapstyle.roguelike.space_orbit.station.04", "from the hub to the ring"), 0, "")
 	on := map[mapmodel.Pt]bool{}
 	for i, p := range ring {
 		on[p] = true
@@ -234,7 +235,7 @@ func (b *skyBase) station() {
 			b.addBand(lin, centreOut(sector(l, i, len(orbRingLins))))
 		}
 	}
-	b.frame("Outer ring", "the station grows outward", slArc, "")
+	b.frame(vibe.Line("ui.mapstyle.roguelike.space_orbit.station.05", "Outer ring"), vibe.Line("ui.mapstyle.roguelike.space_orbit.station.06", "the station grows outward"), slArc, "")
 }
 
 // rotate starts a clockwise ring n cells later (so no sector straddles the
@@ -269,7 +270,7 @@ func (b *skyBase) frameNamed(lg skyLgID) int32 {
 // and a strut every sixth column.
 func (b *skyBase) wings() {
 	hy := orbHubY
-	truss := b.frame("Truss", "it carries the solar wings", slTruss, mapmodel.LinEnergy)
+	truss := b.frame(vibe.Line("ui.mapstyle.roguelike.space_orbit.wings.01", "Truss"), vibe.Line("ui.mapstyle.roguelike.space_orbit.wings.02", "it carries the solar wings"), slTruss, mapmodel.LinEnergy)
 	for x := orbHubX - orbWingIn; x < skyW && b.at(x, hy).k != skFrame; x++ {
 		b.put(x, hy, skyCell{r: '═', ink: mapmodel.InkFrameDim, lv: 1, k: skFrame, ref: truss})
 	}
@@ -311,7 +312,7 @@ func (b *skyBase) slips() {
 		}
 		b.addBand(mapmodel.LinEngineer, band)
 	}
-	b.frame("Slip", "a hull is rising here", slSlip, mapmodel.LinEngineer)
+	b.frame(vibe.Line("ui.mapstyle.roguelike.space_orbit.slips.01", "Slip"), vibe.Line("ui.mapstyle.roguelike.space_orbit.slips.02", "a hull is rising here"), slSlip, mapmodel.LinEngineer)
 }
 
 // foundry reserves the foundry's tanks, three rows deep, nearest the
@@ -324,14 +325,14 @@ func (b *skyBase) foundry() {
 		}
 		b.addBand(mapmodel.LinMetal, band)
 	}
-	b.frame("Foundry pipes", "ore in, metal out", slTruss, mapmodel.LinMetal)
+	b.frame(vibe.Line("ui.mapstyle.roguelike.space_orbit.foundry.01", "Foundry pipes"), vibe.Line("ui.mapstyle.roguelike.space_orbit.foundry.02", "ore in, metal out"), slTruss, mapmodel.LinMetal)
 }
 
 // relays dots the relay satellites' low orbit over the limb and reserves
 // its stations, nearest the tether first.
 func (b *skyBase) relays() {
 	p := &b.planet
-	orbit := b.frame("Relay orbit", "the relay satellites' track", slOrbitLine, mapmodel.LinHacker)
+	orbit := b.frame(vibe.Line("ui.mapstyle.roguelike.space_orbit.relays.01", "Relay orbit"), vibe.Line("ui.mapstyle.roguelike.space_orbit.relays.02", "the relay satellites' track"), slOrbitLine, mapmodel.LinHacker)
 	at := func(x int) mapmodel.Pt { return pt(x, int(math.Round(p.limb(x)-3))) }
 	for x := 1; x < skyW-1; x += 2 {
 		if q := at(x); x != orbHubX && b.free(q.X, q.Y) {

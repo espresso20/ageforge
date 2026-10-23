@@ -5,6 +5,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // space_mandala.go is the Transcendent Age: beyond matter. The map becomes
@@ -179,15 +180,15 @@ func (v *skyView) breathe(s *skyScene, c skyCell, l look, x, y int) look {
 func (v *skyView) describeMark(s *skyScene, c skyCell, p mapmodel.Pt) (mapstyle.Inspection, bool) {
 	m := s.m
 	if c.k == skCore {
-		in := mapstyle.Inspection{Title: "The core", Command: m.SquareCommand(),
-			Lines: []string{"every age you lived through, in light", plural(m.Workers.Pop, "person", "people")}}
+		in := mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_mandala.describeMark.01", "The core"), Command: m.SquareCommand(),
+			Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_mandala.describeMark.02", "every age you lived through, in light"), plural(m.Workers.Pop, vibe.Line("ui.mapstyle.roguelike.space_mandala.describeMark.03", "person"), vibe.Line("ui.mapstyle.roguelike.space_mandala.describeMark.04", "people"))}}
 		return in, true
 	}
 	ring, j := int(c.ref>>10), int(c.ref&1023)
 	var mk mapmodel.MandalaMark
 	switch {
 	case ring == mdPetal && len(s.crown) == 0:
-		return mapstyle.Inspection{Title: "A petal of the crown", Lines: []string{"it lights with what you build in this age"}}, true
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_mandala.describeMark.05", "A petal of the crown"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_mandala.describeMark.06", "it lights with what you build in this age")}}, true
 	case ring == mdPetal:
 		mk = s.crown[j%len(s.crown)]
 	case ring < len(s.rings) && len(s.rings[ring].Marks) == 0:
@@ -210,7 +211,7 @@ func (v *skyView) describeMark(s *skyScene, c skyCell, p mapmodel.Pt) (mapstyle.
 	}
 	age := ""
 	if mk.Age >= 0 && mk.Age < len(m.Catalog.AgeNames) {
-		age = "raised in the " + m.Catalog.AgeNames[mk.Age]
+		age = vibe.Line("ui.mapstyle.roguelike.space_mandala.describeMark.07", "raised in the ") + m.Catalog.AgeNames[mk.Age]
 	}
 	in := mapstyle.Inspection{Title: b.Name + " ×" + strconv.Itoa(b.Count), Command: m.BuildingCommand(b),
 		Lines: []string{lineageLabel(mk.Lineage), age}}
@@ -224,9 +225,9 @@ func (v *skyView) describeMark(s *skyScene, c skyCell, p mapmodel.Pt) (mapstyle.
 // in it.
 func describeRing(s *skyScene, ring int) mapstyle.Inspection {
 	r := s.rings[ring]
-	name := "an era"
+	name := vibe.Line("ui.mapstyle.roguelike.space_mandala.describeRing.01", "an era")
 	if r.Epoch < len(s.m.Catalog.EpochName) {
-		name = "the " + s.m.Catalog.EpochName[r.Epoch]
+		name = vibe.Line("ui.mapstyle.roguelike.space_mandala.describeRing.02", "the ") + s.m.Catalog.EpochName[r.Epoch]
 	}
 	wonders := 0
 	for _, mk := range r.Marks {
@@ -234,11 +235,11 @@ func describeRing(s *skyScene, ring int) mapstyle.Inspection {
 			wonders++
 		}
 	}
-	lines := []string{plural(len(r.Marks)-wonders, "kind of building", "kinds of building") + " still standing"}
+	lines := []string{plural(len(r.Marks)-wonders, vibe.Line("ui.mapstyle.roguelike.space_mandala.describeRing.03", "kind of building"), vibe.Line("ui.mapstyle.roguelike.space_mandala.describeRing.04", "kinds of building")) + vibe.Line("ui.mapstyle.roguelike.space_mandala.describeRing.05", " still standing")}
 	if wonders > 0 {
-		lines = append(lines, plural(wonders, "wonder", "wonders"))
+		lines = append(lines, plural(wonders, vibe.Line("ui.mapstyle.roguelike.space_mandala.describeRing.06", "wonder"), vibe.Line("ui.mapstyle.roguelike.space_mandala.describeRing.07", "wonders")))
 	}
-	return mapstyle.Inspection{Title: "Ring of " + name, Lines: lines}
+	return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_mandala.describeRing.08", "Ring of ") + name, Lines: lines}
 }
 
 // compactMandala draws the mandala for the mini view at its own scale (a

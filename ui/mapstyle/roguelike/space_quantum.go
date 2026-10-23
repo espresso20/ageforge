@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // space_quantum.go is the Quantum Age: reality bends. The starbase is
@@ -35,7 +36,7 @@ func (b *skyBase) layQuantum() {
 // levels are structure only.
 func (b *skyBase) recursion() {
 	cx, cy := float64(qX), float64(qY)
-	fr := b.frame("Superposed starbase", "it is also, smaller, inside itself", slStarbase, "")
+	fr := b.frame(vibe.Line("ui.mapstyle.roguelike.space_quantum.recursion.01", "Superposed starbase"), vibe.Line("ui.mapstyle.roguelike.space_quantum.recursion.02", "it is also, smaller, inside itself"), slStarbase, "")
 	used := map[mapmodel.Pt]bool{}
 	ring := func(rx, ry float64, ink mapmodel.SkyInk) map[mapmodel.Pt]bool {
 		ps, rs := smoothRing(cx, cy, rx, ry)

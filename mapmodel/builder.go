@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Builder builds models. It owns the catalogue and caches the parts that
@@ -12,6 +13,11 @@ import (
 // It is not safe for concurrent use; the UI keeps one per map view.
 type Builder struct {
 	cat *Catalog
+
+	// ownCat says the builder made its catalogue itself, so it makes it again
+	// when VibeMode is switched; vibeOn is the switch as it last looked.
+	ownCat bool
+	vibeOn bool
 
 	seed  int64
 	world *World
@@ -23,10 +29,25 @@ type Builder struct {
 
 // NewBuilder makes a builder over a catalogue (NewCatalog when nil).
 func NewBuilder(cat *Catalog) *Builder {
-	if cat == nil {
+	own := cat == nil
+	if own {
 		cat = NewCatalog()
 	}
-	return &Builder{cat: cat}
+	return &Builder{cat: cat, ownCat: own, vibeOn: vibe.On()}
+}
+
+// follow lets what the builder holds follow the VibeMode switch: the words of
+// a catalogue it made, the name the world was given and the last model are
+// built again when the switch has moved since it last looked. A switch is
+// rare, and a world and its plan take about 10 ms.
+func (b *Builder) follow() {
+	if on := vibe.On(); on != b.vibeOn {
+		b.vibeOn = on
+		if b.ownCat {
+			b.cat = NewCatalog()
+		}
+		b.world, b.plan, b.last = nil, nil, nil
+	}
 }
 
 // Catalog returns the builder's catalogue.
@@ -44,6 +65,7 @@ func (b *Builder) seedParts(seed int64) (*World, *Plan) {
 // Model returns the model for a snapshot, reusing the last one when the
 // snapshot has not changed in anything the maps draw.
 func (b *Builder) Model(st *game.GameState, since *Visit) *Model {
+	b.follow()
 	sig := Signature(st, since)
 	if b.last != nil && sig == b.lastSig {
 		return b.last

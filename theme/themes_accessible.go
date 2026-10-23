@@ -1,6 +1,10 @@
 package theme
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/gdamore/tcell/v2"
+
+	"github.com/espresso20/ageforge/vibe"
+)
 
 // The accessible themes (the theming design §4) are Accessible: true — never milestone-
 // gated, always unlocked. Their defining constraint: AgeForge uses green=gain /
@@ -25,8 +29,8 @@ const (
 // (avoiding an accent≈positive collision).
 var Deuteranopia = define(Theme{
 	Key:        "deuteranopia",
-	Name:       "Deuteranopia-safe",
-	Blurb:      "Red-green safe: blue gains, orange losses, ▲/▼ signs.",
+	Name:       vibe.E("theme.deuteranopia.name", "Deuteranopia-safe"),
+	Blurb:      vibe.E("theme.deuteranopia.blurb", "Red-green safe: blue gains, orange losses, ▲/▼ signs."),
 	Accessible: true,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x10, 0x14, 0x1a),
@@ -51,8 +55,8 @@ var Deuteranopia = define(Theme{
 // it separately serves protanopes better than a single "colorblind" catch-all.
 var Protanopia = define(Theme{
 	Key:        "protanopia",
-	Name:       "Protanopia-safe",
-	Blurb:      "Red-green safe (L-cone): blue gains, amber losses, ▲/▼ signs.",
+	Name:       vibe.E("theme.protanopia.name", "Protanopia-safe"),
+	Blurb:      vibe.E("theme.protanopia.blurb", "Red-green safe (L-cone): blue gains, amber losses, ▲/▼ signs."),
 	Accessible: true,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x10, 0x14, 0x1a),
@@ -77,8 +81,8 @@ var Protanopia = define(Theme{
 // colorblind-safe as well as high-contrast.
 var HighContrast = define(Theme{
 	Key:        "high_contrast",
-	Name:       "High Contrast",
-	Blurb:      "Maximum legibility: near-black on near-white, bold roles.",
+	Name:       vibe.E("theme.high_contrast.name", "High Contrast"),
+	Blurb:      vibe.E("theme.high_contrast.blurb", "Maximum legibility: near-black on near-white, bold roles."),
 	Accessible: true,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x00, 0x00, 0x00),

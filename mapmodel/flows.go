@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // flows.go is the "flows" summary the maps can overlay: where the economy is
@@ -81,13 +82,13 @@ func flowsFor(m *Model, st *game.GameState) Flows {
 	sort.SliceStable(f.Shares, func(i, j int) bool { return f.Shares[i].Share > f.Shares[j].Share })
 	var worst []string
 	if len(f.Draining) > 0 {
-		worst = append(worst, f.Draining[0].Name+" runs dry")
+		worst = append(worst, f.Draining[0].Name+vibe.Line("mapmodel.flows.flowsFor.01", " runs dry"))
 	}
 	if f.IdleWorkers > 0 {
-		worst = append(worst, plural(f.IdleWorkers, "idle worker", "idle workers"))
+		worst = append(worst, plural(f.IdleWorkers, vibe.Line("mapmodel.flows.flowsFor.02", "idle worker"), vibe.Line("mapmodel.flows.flowsFor.03", "idle workers")))
 	}
 	if n := len(f.Understaffed) + len(f.Idle); n > 0 {
-		worst = append(worst, plural(n, "building short of hands", "buildings short of hands"))
+		worst = append(worst, plural(n, vibe.Line("mapmodel.flows.flowsFor.04", "building short of hands"), vibe.Line("mapmodel.flows.flowsFor.05", "buildings short of hands")))
 	}
 	for i, w := range worst {
 		if i == 0 {

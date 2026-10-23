@@ -5,6 +5,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Phase-2 bridge tests (the theming design §6): boot-apply, account-wide persistence, and
@@ -153,7 +154,7 @@ func TestThemeAvailableGate(t *testing.T) {
 		t.Fatal("precondition: deuteranopia not registered")
 	}
 	// Synthetic locked flavor theme: not accessible, not the default key.
-	fakeLocked := theme.Theme{Key: "fake_locked_flavor", Name: "Fake", Accessible: false}
+	fakeLocked := theme.Theme{Key: "fake_locked_flavor", Name: vibe.Same("Fake"), Accessible: false}
 
 	// Accessible + Forge are available regardless of account (incl. nil).
 	if !themeAvailable(nil, forge) {
@@ -191,7 +192,7 @@ func TestThemeAvailableGate_DevBypass(t *testing.T) {
 	prev := game.DevModeActive
 	t.Cleanup(func() { game.DevModeActive = prev })
 
-	locked := theme.Theme{Key: "fake_locked_flavor", Name: "Fake", Accessible: false}
+	locked := theme.Theme{Key: "fake_locked_flavor", Name: vibe.Same("Fake"), Accessible: false}
 
 	game.DevModeActive = false
 	if themeAvailable(nil, locked) {

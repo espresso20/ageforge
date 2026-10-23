@@ -405,15 +405,15 @@ func TestBadgeThemesSayHowTheyAreEarned(t *testing.T) {
 		if hint == "" || strings.Contains(hint, def.Name) {
 			t.Errorf("the hint for %s is %q", key, hint)
 		}
-		if !strings.Contains(def.Desc, "Unlocks the "+th.Name+" theme.") {
-			t.Errorf("%s does not say it unlocks %s: %q", badge, th.Name, def.Desc)
+		if !strings.Contains(def.Desc, "Unlocks the "+th.Name.Plain()+" theme.") {
+			t.Errorf("%s does not say it unlocks %s: %q", badge, th.Name.Plain(), def.Desc)
 		}
 	}
 	// Museum Piece is in plain sight, so its theme's hint is the badge's
 	// own count.
 	museum, _ := rules.Core().Badge("special.museum_piece")
-	if th, _ := theme.ByKey("prismatic"); !strings.Contains(th.UnlockHint, fmt.Sprintf("%d badges", int(museum.Threshold))) {
-		t.Errorf("Prismatic's hint %q does not match Museum Piece's %v badges", th.UnlockHint, museum.Threshold)
+	if th, _ := theme.ByKey("prismatic"); !strings.Contains(th.UnlockHint.Plain(), fmt.Sprintf("%d badges", int(museum.Threshold))) {
+		t.Errorf("Prismatic's hint %q does not match Museum Piece's %v badges", th.UnlockHint.Plain(), museum.Threshold)
 	}
 	// An age's theme: "a later age" until the age is in sight.
 	cosmic, _ := theme.ByKey("cosmic")
@@ -451,8 +451,8 @@ func TestBadgeLooksMatchTheGame(t *testing.T) {
 			t.Errorf("the theme %s has no row in the catalog's table (config.BadgeThemes)", th.Key)
 			continue
 		}
-		if row.Name != th.Name || row.Badge != th.UnlockBadge {
-			t.Errorf("the theme %s: the catalog says %q, given by %q; the registry says %q, given by %q", th.Key, row.Name, row.Badge, th.Name, th.UnlockBadge)
+		if row.Name != th.Name.Plain() || row.Badge != th.UnlockBadge {
+			t.Errorf("the theme %s: the catalog says %q, given by %q; the registry says %q, given by %q", th.Key, row.Name, row.Badge, th.Name.Plain(), th.UnlockBadge)
 		}
 		if _, ok := set.Badge("theme." + th.Key); !ok {
 			t.Errorf("no badge for advancing in the theme %s", th.Key)
@@ -572,7 +572,7 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 	for _, th := range theme.All() {
 		if th.UnlockBadge != "" {
 			given++
-			has("the theme "+th.Name, "| "+th.Name+" |")
+			has("the theme "+th.Name.Plain(), "| "+th.Name.Plain()+" |")
 		}
 	}
 	has("the number of themes badges give", fmt.Sprintf("%s [themes](themes.md) are the reward of a badge", strings.ToUpper(wikiNumber(given)[:1])+wikiNumber(given)[1:]))

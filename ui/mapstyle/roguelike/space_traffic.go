@@ -268,7 +268,7 @@ func (v *skyView) moverAt(p mapmodel.Pt) (mapstyle.Inspection, bool) {
 		in := mapstyle.Inspection{Title: mv.info.Title, Lines: []string{mv.info.Line(mv.n)}, Kind: mapstyle.KindMover}
 		if mv.kind == smAlien {
 			a := mapmodel.Aliens[mv.alien%len(mapmodel.Aliens)]
-			in.Lines = []string{a.Lines[int(mapmodel.Hash(int64(mv.n), 7)%uint64(len(a.Lines)))]}
+			in.Lines = []string{a.Lines[int(mapmodel.Hash(int64(mv.n), 7)%uint64(len(a.Lines)))].String()}
 		}
 		return in, true
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // traffic.go is the age's traffic, from the roster both styles share
@@ -591,19 +592,19 @@ func (v *view) railGlyph(t mapmodel.Terrain) glyph {
 // railName is what the railway is called in this age.
 func (v *view) railName() string {
 	if mapmodel.MoverMaglev.Info().In(v.sc.m.AgeIdx) {
-		return "Maglev line"
+		return vibe.Line("ui.mapstyle.roguelike.traffic.railName.01", "Maglev line")
 	}
-	return "Railway"
+	return vibe.Line("ui.mapstyle.roguelike.traffic.railName.02", "Railway")
 }
 
 // railLine says what runs on the railway now.
 func (v *view) railLine() string {
 	for _, k := range mapmodel.MoversAt(v.sc.m.AgeIdx) {
 		if i := k.Info(); i.Way == mapmodel.WayRail {
-			return i.Name + "s run through " + v.sc.w.Name
+			return i.Name + vibe.Line("ui.mapstyle.roguelike.traffic.railLine.01", "s run through ") + v.sc.w.Name
 		}
 	}
-	return "in " + v.sc.w.Name
+	return vibe.Line("ui.mapstyle.roguelike.traffic.railLine.02", "in ") + v.sc.w.Name
 }
 
 // trafficPresent works out which movers' lanes cross the view (cached per
